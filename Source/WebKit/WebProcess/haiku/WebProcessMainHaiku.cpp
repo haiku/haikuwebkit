@@ -30,19 +30,23 @@
 #include "WebProcess.h"
 
 #include <Application.h>
-namespace WebKit {
+#include<Message.h>
+
 using namespace WebCore;
+
+namespace WebKit {
 
 class WebProcessMain final : public AuxiliaryProcessMainBase {
 public:
     bool platformInitialize() override
     {
-        BApplication* app = new BApplication("application/x-vnd.haiku-webkit.webprocess");
+        WebProcessApp* app = new WebProcessApp();
+        app->Run();
         return true;
     }
 };
 
-int WebProcessMainUnix(int argc, char** argv)
+int WebProcessMain(int argc, char** argv)
 {
     return AuxiliaryProcessMain<WebProcess, WebProcessMain>(argc, argv);
 }
