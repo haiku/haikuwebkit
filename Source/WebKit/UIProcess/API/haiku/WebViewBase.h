@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010 Apple Inc. All rights reserved.
- * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
- * Copyright (C) 2011 Igalia S.L.
+ * Copyright (C) 2019 Haiku, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,22 +22,36 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "APIObject.h"
+#include "APIPageConfiguration.h"
+#include "WebPageProxy.h"
+#include "PageClientImplHaiku.h"
 
-#ifndef WKView_h
-#define WKView_h
-
-#include <WebKit/WKBase.h>
+#include <Rect.h>
+#include <View.h>
 #include <Window.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+using namespace WebKit;
+namespace WebKit
+{
+    class WebViewBase: public API::ObjectImpl<API::Object::Type::View>, public BView
+    {
+        public:
+            static RefPtr<WebViewBase> create(const char*name,BRect rect,
+                BWindow* parentWindow,const API::PageConfiguration& config)
+            {
+                auto fWebView=adoptRef(*new WebViewBase(name, rect, parentWindow, config));
+                return fWebView;
+            }
+            WebPageProxy* page() const { return fPage.get(); }
+            BView* getView() const { return fViewPort; }
+        private:
+            WebViewBase(const char*, BRect, BWindow*, const API::PageConfiguration&);
 
-WK_EXPORT WKViewRef WKViewCreate(const char*,BRect,BWindow*,WKPageConfigurationRef pageRef);
-WK_EXPORT WKPageRef WKViewGetPage(WKViewRef view);
-#ifdef __cplusplus
+            void paint(const WebCore::IntRect&);
+
+            BView* fViewPort {nullptr};
+            RefPtr<WebPageProxy> fPage;
+            std::unique_ptr<PageClientImpl> fPageClient;
+    };
 }
-#endif
-
-#endif /* WKView_h */
-

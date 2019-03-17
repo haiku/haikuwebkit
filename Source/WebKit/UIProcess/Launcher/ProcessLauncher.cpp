@@ -75,7 +75,7 @@ void ProcessLauncher::didFinishLaunchingProcess(ProcessID processIdentifier, IPC
 #endif
         return;
     }
-    
+
     m_client->didFinishLaunching(this, identifier);
 }
 
