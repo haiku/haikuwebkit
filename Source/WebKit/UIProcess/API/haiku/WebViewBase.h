@@ -22,21 +22,43 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once
 
-#include "WKPage.h"
-#include "WKView.h"
-#include "WKContext.h"
-#include "WKRetainPtr.h"
+#include "APIObject.h"
 
-using namespace WebKit;
+#include <Rect.h>
+#include <View.h>
+#include <Window.h>
 
-class BWebView
-{
-    public:
-        BWebView(BRect,BWindow*);
-        void initializeOnce();
-    private:
-        WKRetainPtr<WKViewRef> fViewPort;
-        WKRetainPtr<WKContextRef> fContext;
+namespace API {
+    class PageConfiguration;
 };
 
+namespace WebKit
+{
+    class PageClientImpl;
+    class WebPageProxy;
+
+    class WebViewBase: public API::ObjectImpl<API::Object::Type::View>, public BView
+    {
+        public:
+            static RefPtr<WebViewBase> create(const char*name,BRect rect,
+                BWindow* parentWindow,const API::PageConfiguration& config)
+            {
+                auto fWebView=adoptRef(*new WebViewBase(name, rect, parentWindow, config));
+                return fWebView;
+            }
+            WebPageProxy* page() const { return fPage.get(); }
+            BView* getView() const { return fViewPort; }
+        private:
+            WebViewBase(const char*, BRect, BWindow*, const API::PageConfiguration&);
+
+            void paint(const WebCore::IntRect&);
+
+            BView* fViewPort {nullptr};
+            RefPtr<WebPageProxy> fPage;
+            std::unique_ptr<PageClientImpl> fPageClient;
+    };
+}
+
+using namespace WebKit;

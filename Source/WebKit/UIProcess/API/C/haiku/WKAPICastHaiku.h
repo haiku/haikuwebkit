@@ -26,13 +26,15 @@
 
 namespace WebKit {
 
-class WebView;
-class WebPopupItemHaiku;
-class WebPopupMenuListenerHaiku;
+class WebViewBase;
 
-WK_ADD_API_MAPPING(WKViewRef, WebView)
-WK_ADD_API_MAPPING(WKPopupItemRef, WebPopupItemHaiku)
-WK_ADD_API_MAPPING(WKPopupMenuListenerRef, WebPopupMenuListenerHaiku)
+WK_ADD_API_MAPPING(WKViewRef, WebViewBase)
+
+template<>
+inline WebViewBase* toImpl<>(WKViewRef view)
+{
+    return static_cast<WebViewBase*>(static_cast<void*>(const_cast<typename std::remove_const<typename std::remove_pointer<WKViewRef>::type>::type*>(view)));
+}
 
 }
 
