@@ -26,13 +26,31 @@
 #include "config.h"
 #include "WebProcess.h"
 
-#include "NotImplemented.h"
+#include "LogInitialization.h"
+#include <WebCore/LogInitialization.h>
+#include <wtf/LogInitialization.h>
+
+#include <WebCore/NotImplemented.h>
 
 namespace WebKit {
 
-void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters&& parameters)
+void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& parameters)
 {
-    notImplemented();
+#if !LOG_DISABLED || !RELEASE_LOG_DISABLED
+    WTF::logChannels().initializeLogChannelsIfNecessary(parameters.wtfLoggingChannels);
+    WebCore::logChannels().initializeLogChannelsIfNecessary(parameters.webCoreLoggingChannels);
+    WebKit::logChannels().initializeLogChannelsIfNecessary(parameters.webKitLoggingChannels);
+#else
+    UNUSED_PARAM(parameters);
+#endif
+}
+
+void WebProcess::platformInitializeProcess(const AuxiliaryProcessInitializationParameters&)
+{
+}
+
+void WebProcess::platformSetWebsiteDataStoreParameters(WebProcessDataStoreParameters&&)
+{
 }
 
 void WebProcess::platformTerminate()
@@ -41,7 +59,18 @@ void WebProcess::platformTerminate()
 
 void WebProcess::platformSetCacheModel(CacheModel cacheModel)
 {
-    notImplemented();
+}
+
+void WebProcess::grantAccessToAssetServices(WTF::Vector<WebKit::SandboxExtension::Handle>&&)
+{
+}
+
+void WebProcess::revokeAccessToAssetServices()
+{
+}
+
+void WebProcess::switchFromStaticFontRegistryToUserFontRegistry(WTF::Vector<WebKit::SandboxExtension::Handle>&&)
+{
 }
 
 }

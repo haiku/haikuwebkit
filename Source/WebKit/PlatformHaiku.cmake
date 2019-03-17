@@ -10,40 +10,46 @@ list(APPEND WebKit_SOURCES
     NetworkProcess/haiku/NetworkProcessHaiku.cpp
     NetworkProcess/haiku/NetworkProcessMainHaiku.cpp
 
-    Platform/IPC/unix/AttachmentUnix.cpp
-    Platform/IPC/unix/ConnectionUnix.cpp
     Platform/haiku/LoggingHaiku.cpp
     Platform/haiku/ModuleHaiku.cpp
     Platform/unix/SharedMemoryUnix.cpp
 
     Shared/WebCoreArgumentCoders.cpp
-    Shared/haiku/AuxiliaryProcessMainHaiku.cpp
+    #Shared/haiku/AuxiliaryProcessMainHaiku.cpp
+    Shared/unix/AuxiliaryProcessMain.cpp
     Shared/haiku/ProcessExecutablePathHaiku.cpp
     Shared/haiku/ShareableBitmapHaiku.cpp
     Shared/haiku/WebCoreArgumentCodersHaiku.cpp
     Shared/haiku/WebMemorySamplerHaiku.cpp
 
-    UIProcess/API/haiku/APIWebsiteDataStoreHaiku.cpp
+    UIProcess/API/C/haiku/WKView.cpp
+
     UIProcess/DefaultUndoController.cpp
+    UIProcess/BackingStore.cpp
+
+    UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
+
     UIProcess/Launcher/haiku/ProcessLauncherHaiku.cpp
     UIProcess/LegacySessionStateCodingNone.cpp
     UIProcess/WebsiteData/haiku/WebsiteDataStoreHaiku.cpp
     UIProcess/haiku/BackingStoreHaiku.cpp
     UIProcess/haiku/TextCheckerHaiku.cpp
-    UIProcess/haiku/WebInspectorProxyHaiku.cpp
     UIProcess/haiku/WebPageProxyHaiku.cpp
     UIProcess/haiku/WebProcessPoolHaiku.cpp
+    UIProcess/API/haiku/WebViewBase.cpp
+    UIProcess/API/haiku/WebView.cpp
+    UIProcess/API/haiku/PageClientImplHaiku.cpp
 
     WebProcess/Cookies/haiku/WebCookieManagerHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/WebCoreSupport/haiku/WebFrameNetworkingContext.cpp
-    WebProcess/WebPage/AcceleratedDrawingArea.cpp
-    WebProcess/WebPage/CoordinatedGraphics/CoordinatedLayerTreeHost.cpp
-    WebProcess/WebPage/DrawingAreaImpl.cpp
-    WebProcess/WebPage/LayerTreeHost.cpp
+    WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
+    WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
+
     WebProcess/WebPage/haiku/WebInspectorHaiku.cpp
     WebProcess/WebPage/haiku/WebPageHaiku.cpp
+
     WebProcess/haiku/WebProcessHaiku.cpp
     WebProcess/haiku/WebProcessMainHaiku.cpp
 )
@@ -55,6 +61,7 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/Platform/IPC/unix"
     "${WEBKIT_DIR}/Shared/API/c/haiku"
     "${WEBKIT_DIR}/Shared/CoordinatedGraphics"
+    "${WEBKIT_DIR}/Shared/CoordinatedGraphics/threadedcompositor"
     "${WEBKIT_DIR}/Shared/unix"
     "${WEBKIT_DIR}/Shared/haiku"
     "${WEBKIT_DIR}/UIProcess/API/C/CoordinatedGraphics"
