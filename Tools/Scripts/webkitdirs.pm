@@ -3522,6 +3522,10 @@ sub runMiniBrowser
     if (isIOSWebKit()) {
         return runIOSWebKitApp(mobileMiniBrowserBundle());
     }
+    if(isHaiku()){
+       my $webKitLauncherPath = File::Spec->catfile(productDir(), "MiniBrowser");
+       return system {  $webKitLauncherPath } $webKitLauncherPath, @ARGV;
+    }
     return 1;
 }
 
