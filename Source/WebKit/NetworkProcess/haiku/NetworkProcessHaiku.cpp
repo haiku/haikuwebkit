@@ -54,12 +54,6 @@ void NetworkProcess::platformTerminate()
     notImplemented();
 }
 
-void NetworkProcess::platformPrepareToSuspend(CompletionHandler<void()>&& completionHandler)
-{
-    notImplemented();
-    completionHandler();
-}
-
 void NetworkProcess::clearDiskCache(WallTime modifiedSince, CompletionHandler<void()>&& completionHandler)
 {
     notImplemented();
