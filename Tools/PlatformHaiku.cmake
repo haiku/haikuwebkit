@@ -1,4 +1,7 @@
-add_subdirectory(TestRunnerShared)
-add_subdirectory(DumpRenderTree)
-add_subdirectory(HaikuLauncher)
-add_subdirectory(ImageDiff)
+if (ENABLE_WEBKIT)
+    add_subdirectory(MiniBrowser/haiku)
+endif ()
+
+if (ENABLE_WEBKIT_LEGACY EQUAL ON)
+    add_subdirectory(HaikuLauncher)
+endif ()
