@@ -30,8 +30,10 @@
 #include "WebProcess.h"
 
 #include <Application.h>
-namespace WebKit {
+
 using namespace WebCore;
+
+namespace WebKit {
 
 class WebProcessMain final : public AuxiliaryProcessMainBase {
 public:
@@ -42,7 +44,7 @@ public:
     }
 };
 
-int WebProcessMainUnix(int argc, char** argv)
+int WebProcessMain(int argc, char** argv)
 {
     return AuxiliaryProcessMain<WebProcess, WebProcessMain>(argc, argv);
 }

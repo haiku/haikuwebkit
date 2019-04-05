@@ -18,8 +18,15 @@ list(APPEND WebKit_SOURCES
     Shared/haiku/WebCoreArgumentCodersHaiku.cpp
     Shared/haiku/WebMemorySamplerHaiku.cpp
 
+    UIProcess/API/C/haiku/WKView.cpp
     UIProcess/API/haiku/APIWebsiteDataStoreHaiku.cpp
+
     UIProcess/DefaultUndoController.cpp
+    UIProcess/DrawingAreaProxyImpl.cpp
+    UIProcess/BackingStore.cpp
+
+    UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
+
     UIProcess/Launcher/haiku/ProcessLauncherHaiku.cpp
     UIProcess/LegacySessionStateCodingNone.cpp
     UIProcess/WebsiteData/haiku/WebsiteDataStoreHaiku.cpp
@@ -28,29 +35,30 @@ list(APPEND WebKit_SOURCES
     UIProcess/haiku/WebInspectorProxyHaiku.cpp
     UIProcess/haiku/WebPageProxyHaiku.cpp
     UIProcess/haiku/WebProcessPoolHaiku.cpp
+    UIProcess/API/haiku/WebView.cpp
+    UIProcess/API/haiku/PageClientImplHaiku.cpp
 
     WebProcess/Cookies/haiku/WebCookieManagerHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/WebCoreSupport/haiku/WebFrameNetworkingContext.cpp
-    WebProcess/WebPage/AcceleratedDrawingArea.cpp
-    WebProcess/WebPage/CoordinatedGraphics/CoordinatedLayerTreeHost.cpp
-    WebProcess/WebPage/DrawingAreaImpl.cpp
-    WebProcess/WebPage/LayerTreeHost.cpp
+    WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
+    WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
+
     WebProcess/WebPage/haiku/WebInspectorHaiku.cpp
     WebProcess/WebPage/haiku/WebPageHaiku.cpp
+
     WebProcess/haiku/WebProcessHaiku.cpp
     WebProcess/haiku/WebProcessMainHaiku.cpp
 )
 
 list(APPEND WebKit_INCLUDE_DIRECTORIES
-    #"${WEBCORE_DIR}/platform/graphics/opentype"
-    #"${WEBCORE_DIR}/platform/network/haiku"
     "${WEBKIT_DIR}/NetworkProcess/unix"
     "${WEBKIT_DIR}/Platform"
     "${WEBKIT_DIR}/Platform/IPC/unix"
     "${WEBKIT_DIR}/Shared/API/c/haiku"
     "${WEBKIT_DIR}/Shared/CoordinatedGraphics"
+    "${WEBKIT_DIR}/Shared/CoordinatedGraphics/threadedcompositor"
     "${WEBKIT_DIR}/Shared/unix"
     "${WEBKIT_DIR}/Shared/haiku"
     "${WEBKIT_DIR}/UIProcess/API/C/CoordinatedGraphics"
@@ -66,19 +74,21 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     ${SQLITE_INCLUDE_DIRS}
     ${WTF_DIR}
     ${WTF_DIR}
-    "${DERIVED_SOURCES_WEBCORE_DIR}"
     "${WEBCORE_DIR}/platform"
     "${WEBCORE_DIR}/platform/text"
     "${WEBCORE_DIR}/fileapi"
+    "${FORWARDING_HEADERS_DIR}/WebCore"
+    "${DERIVED_SOURCES_WEBCORE_DIR}"
 )
 
-list(APPEND WebKit_LOCAL_INCLUDE_DIRECTORIES
+set(WebKit_LOCAL_INCLUDE_DIRECTORIES
+    "${WEBCORE_DIR}/css"
     "${WEBCORE_DIR}/platform/graphics"
     "${WEBCORE_DIR}/platform/graphics/transforms"
     "${WEBCORE_DIR}/rendering/shapes"
 )
 
-foreach(inc ${WebKitLegacy_LOCAL_INCLUDE_DIRECTORIES})
+foreach(inc ${WebKit_LOCAL_INCLUDE_DIRECTORIES})
     ADD_DEFINITIONS(-iquote ${inc})
 endforeach(inc)
 
