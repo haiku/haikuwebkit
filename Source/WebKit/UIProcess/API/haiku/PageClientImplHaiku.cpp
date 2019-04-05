@@ -26,7 +26,6 @@
 
 #include "PageClientImplHaiku.h"
 #include "WebProcessProxy.h"
-#include "DrawingAreaProxyImpl.h"
 #include "WebView.h"
 
 namespace WebKit
