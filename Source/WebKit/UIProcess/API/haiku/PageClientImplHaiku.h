@@ -80,9 +80,8 @@ namespace WebKit
 	    void handleDownloadRequest(DownloadProxy*) override;
 	    void didChangeContentSize(const WebCore::IntSize&) override;
 	    void didCommitLoadForMainFrame(const String& mimeType, bool useCustomContentProvider) override;
-	    void didFailLoadForMainFrame() override { }
-	    
-	    
+
+
 	    void didFinishLoadingDataForCustomContentProvider(const String& suggestedFilename, const IPC::DataReference&) override;
 	    void navigationGestureDidBegin() override;
 	    void navigationGestureWillEnd(bool, WebBackForwardListItem&) override;
@@ -92,9 +91,8 @@ namespace WebKit
 	    void didRemoveNavigationGestureSnapshot() override;
 	
 	    void didFirstVisuallyNonEmptyLayoutForMainFrame() override;
-	    void didFinishLoadForMainFrame() override;
 	    void didSameDocumentNavigationForMainFrame(SameDocumentNavigationType) override;
-	    
+
 	    void wheelEventWasNotHandledByWebCore(const NativeWebWheelEvent&) override;
 
 	    void didChangeBackgroundColor() override;
@@ -108,14 +106,14 @@ namespace WebKit
 	
 	    WebCore::UserInterfaceLayoutDirection userInterfaceLayoutDirection() override { return WebCore::UserInterfaceLayoutDirection::LTR; }
 	
-	    void didFinishProcessingAllPendingMouseEvents() final { }
+		WebCore::IntPoint accessibilityScreenToRootView(const WebCore::IntPoint& point) final { return point; }
+		WebCore::IntRect rootViewToAccessibilityScreen(const WebCore::IntRect& rect) final { return rect; }
+		void requestDOMPasteAccess(const WebCore::IntRect& elementRect, const String& originIdentifier, CompletionHandler<void(WebCore::DOMPasteAccessResponse)>&&) final {}
 	
-	    
-	    DefaultUndoController fUndoController;
-		
-		//haiku def
-		BWebView& fWebView;
-	};	
-	
-	
+	private:
+		DefaultUndoController fUndoController;
+
+		WebViewBase& fWebView;
+	};
+
 }

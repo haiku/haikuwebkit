@@ -10,14 +10,14 @@ list(APPEND WebKit_SOURCES
     Platform/unix/SharedMemoryUnix.cpp
 
     Shared/WebCoreArgumentCoders.cpp
-    Shared/haiku/AuxiliaryProcessMainHaiku.cpp
+    #Shared/haiku/AuxiliaryProcessMainHaiku.cpp
+    Shared/unix/AuxiliaryProcessMain.cpp
     Shared/haiku/ProcessExecutablePathHaiku.cpp
     Shared/haiku/ShareableBitmapHaiku.cpp
     Shared/haiku/WebCoreArgumentCodersHaiku.cpp
     Shared/haiku/WebMemorySamplerHaiku.cpp
 
     UIProcess/API/C/haiku/WKView.cpp
-    UIProcess/API/haiku/APIWebsiteDataStoreHaiku.cpp
 
     UIProcess/DefaultUndoController.cpp
     UIProcess/BackingStore.cpp
@@ -29,7 +29,6 @@ list(APPEND WebKit_SOURCES
     UIProcess/WebsiteData/haiku/WebsiteDataStoreHaiku.cpp
     UIProcess/haiku/BackingStoreHaiku.cpp
     UIProcess/haiku/TextCheckerHaiku.cpp
-    UIProcess/haiku/WebInspectorProxyHaiku.cpp
     UIProcess/haiku/WebPageProxyHaiku.cpp
     UIProcess/haiku/WebProcessPoolHaiku.cpp
     UIProcess/API/haiku/WebView.cpp
