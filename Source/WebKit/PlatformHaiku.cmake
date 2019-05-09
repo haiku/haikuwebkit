@@ -146,3 +146,4 @@ list(APPEND WebKit_PUBLIC_FRAMEWORK_HEADERS
     Shared/API/c/haiku/WKBaseHaiku.h
 )
 
+set(WebProcess_RESOURCES DEPENDS ${WEBKIT_DIR}/haiku/WebProcess.rdef)
