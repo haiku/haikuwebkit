@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2003, 2006 Apple Computer, Inc.  All rights reserved.
  * Copyright (C) 2006 Samuel Weinig <sam.weinig@gmail.com>
+ * Copyright (C) 2019 Haiku, Inc. All rights reserved
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,6 +61,7 @@ namespace WebCore {
         {
         }
 
+        WEBCORE_EXPORT ResourceRequestBase::RequestData getRequestDataToSerialize() const;
         BPrivate::Network::BUrlRequest* toNetworkRequest(BPrivate::Network::BUrlContext*);
 
         void setCredentials(const char* username, const char* password);
@@ -78,6 +80,7 @@ namespace WebCore {
         BString fUsername;
         BString fPassword;
     };
+
 } // namespace WebCore
 
 #endif // ResourceRequest_h

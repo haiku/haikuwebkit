@@ -167,7 +167,7 @@ private:
 #elif OS(WINDOWS)
     Win32Handle m_handle;
 #elif OS(HAIKU)
-        area_id m_areaid;
+    area_id m_areaid;
 #else
         #error Missing platform specific code
 #endif
