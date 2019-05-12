@@ -72,6 +72,10 @@
 #include "NetworkSessionCurl.h"
 #endif
 
+#if PLATFORM(HAIKU)
+#include "NetworkSessionHaiku.h"
+#endif
+
 namespace WebKit {
 using namespace WebCore;
 
@@ -90,6 +94,9 @@ std::unique_ptr<NetworkSession> NetworkSession::create(NetworkProcess& networkPr
 #endif
 #if USE(CURL)
     return NetworkSessionCurl::create(networkProcess, parameters);
+#endif
+#if PLATFORM(HAIKU)
+    return NetworkSessionHaiku::create(networkProcess, parameters);
 #endif
 }
 

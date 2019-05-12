@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
  * Copyright (C) 2019 Haiku, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -24,17 +25,26 @@
  */
 
 #include "config.h"
-#include "AuxiliaryProcessMain.h"
+#include "NetworkSessionHaiku.h"
 
-#include "NotImplemented.h"
-
+#include "NetworkProcess.h"
+#include "NetworkSessionCreationParameters.h"
+#include "WebCookieManager.h"
+#include <WebCore/NotImplemented.h>
 
 namespace WebKit {
 
-bool AuxiliaryProcessMainBase::parseCommandLine(int argc, char** argv)
+using namespace WebCore;
+
+NetworkSessionHaiku::NetworkSessionHaiku(NetworkProcess& networkProcess, const NetworkSessionCreationParameters& parameters)
+    : NetworkSession(networkProcess, parameters)
 {
-	notImplemented();
-    return true;
+    notImplemented();
+}
+
+NetworkSessionHaiku::~NetworkSessionHaiku()
+{
+
 }
 
 } // namespace WebKit
