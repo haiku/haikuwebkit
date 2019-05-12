@@ -29,25 +29,24 @@
 
 #include <Entry.h>
 #include <String.h>
+#include <wtf/NeverDestroyed.h>
 
 namespace WebKit {
 
 String executablePathOfWebProcess()
 {
-    return BString("./bin/WebProcess");
+    return "./bin/WebProcess"_s;
 }
 
 String executablePathOfPluginProcess()
 {
-    return BString("./bin/PluginProcess");
+    return "./bin/PluginProcess"_s;
 }
 
-#if ENABLE(NETWORK_PROCESS)
 String executablePathOfNetworkProcess()
 {
-    return BString("./bin/NetworkProcess");
+    return "./bin/NetworkProcess"_s;
 }
-#endif
 
 } // namespace WebKit
 
