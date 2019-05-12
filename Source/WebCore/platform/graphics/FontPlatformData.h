@@ -308,6 +308,8 @@ struct FontPlatformSerializedData {
 };
 #elif USE(HAIKU)
 struct CustomFontCreationData {
+    Vector<uint8_t> fontFaceData;
+    String itemInCollection;
 };
 
 struct FontPlatformSerializedData {
