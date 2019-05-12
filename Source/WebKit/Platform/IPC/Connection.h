@@ -67,6 +67,12 @@
 #include <wtf/glib/GSocketMonitor.h>
 #endif
 
+#if PLATFORM(HAIKU)
+#include <Handler.h>
+#include <Messenger.h>
+#include <String.h>
+#endif
+
 #if ENABLE(IPC_TESTING_API)
 #include "MessageObserver.h"
 #endif
@@ -301,6 +307,16 @@ public:
     xpc_connection_t xpcConnection() const { return m_xpcConnection.get(); }
     std::optional<audit_token_t> getAuditToken();
     pid_t remoteProcessID() const;
+#elif PLATFORM(HAIKU)
+    struct Identifier
+    {
+        team_id connectedProcess;
+        BString key;
+    };
+    static bool identifierIsValid(Identifier identifier) { return BMessenger(NULL,identifier.connectedProcess).IsValid(); }//FIXME: make this less expensive
+    void prepareIncomingMessage(BMessage*);
+    void finalizeConnection(BMessage*);
+    team_id getConnection() { return m_connectedProcess.connectedProcess; }
 #endif
 
     static Ref<Connection> createServerConnection(Identifier);
@@ -672,6 +688,15 @@ private:
     std::unique_ptr<Encoder> m_pendingWriteEncoder;
     EventListener m_writeListener;
     HANDLE m_connectionPipe { INVALID_HANDLE_VALUE };
+#elif PLATFORM(HAIKU)
+    Identifier m_connectedProcess;
+    BHandler* m_readHandler;
+    BMessenger m_messenger;
+    BMessenger targetMessenger;
+    void runReadEventLoop();
+    void runWriteEventLoop();
+    Vector<uint8_t> m_readBuffer;
+    std::unique_ptr<Encoder> m_pendingWriteEncoder;
 #endif
     friend class StreamClientConnection;
 };

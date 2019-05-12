@@ -34,6 +34,11 @@
 #include <wtf/unix/UnixFileDescriptor.h>
 #endif
 
+#if PLATFORM(HAIKU)
+#include <OS.h>
+#include <String.h>
+#endif
+
 namespace IPC {
 
 // IPC::Attachment is a type representing objects that cannot be transferred as data,
@@ -44,6 +49,8 @@ using Attachment = MachSendRight;
 using Attachment = int; // Windows does not need attachments at the moment.
 #elif USE(UNIX_DOMAIN_SOCKETS)
 using Attachment = UnixFileDescriptor;
+#elif USE(HAIKU)
+using Attachment = int;
 #else
 #error Unsupported platform
 #endif

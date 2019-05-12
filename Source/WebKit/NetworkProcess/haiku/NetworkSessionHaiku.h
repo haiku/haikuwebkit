@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2012 Samsung Electronics
- * Copyright (C) 2014,2019 Haiku, inc.
+ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
+ * Copyright (C) 2019 Haiku, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,29 +24,22 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "ProcessExecutablePath.h"
+#pragma once
 
-#include <Entry.h>
-#include <String.h>
-#include <wtf/NeverDestroyed.h>
+#include "NetworkSession.h"
 
 namespace WebKit {
 
-String executablePathOfWebProcess()
-{
-    return "./bin/WebProcess"_s;
-}
+struct NetworkSessionCreationParameters;
 
-String executablePathOfPluginProcess()
-{
-    return "./bin/PluginProcess"_s;
-}
-
-String executablePathOfNetworkProcess()
-{
-    return "./bin/NetworkProcess"_s;
-}
+class NetworkSessionHaiku final : public NetworkSession {
+public:
+    static std::unique_ptr<NetworkSession> create(NetworkProcess& networkProcess, const NetworkSessionCreationParameters& parameters)
+    {
+        return makeUnique<NetworkSessionHaiku>(networkProcess, parameters);
+    }
+    NetworkSessionHaiku(NetworkProcess&, const NetworkSessionCreationParameters&);
+    ~NetworkSessionHaiku();
+};
 
 } // namespace WebKit
-

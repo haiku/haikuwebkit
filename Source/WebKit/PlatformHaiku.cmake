@@ -9,18 +9,20 @@ list(APPEND WebKit_SOURCES
     NetworkProcess/cache/NetworkCacheIOChannelHaiku.cpp
     NetworkProcess/haiku/NetworkProcessHaiku.cpp
     NetworkProcess/haiku/NetworkProcessMainHaiku.cpp
+    NetworkProcess/haiku/NetworkSessionHaiku.cpp
+
+    Platform/IPC/haiku/ConnectionHaiku.cpp
 
     Platform/haiku/LoggingHaiku.cpp
     Platform/haiku/ModuleHaiku.cpp
-    Platform/unix/SharedMemoryUnix.cpp
+    Platform/haiku/SharedMemoryHaiku.cpp
 
     Shared/WebCoreArgumentCoders.cpp
-    #Shared/haiku/AuxiliaryProcessMainHaiku.cpp
-    Shared/unix/AuxiliaryProcessMain.cpp
     Shared/haiku/ProcessExecutablePathHaiku.cpp
     Shared/haiku/ShareableBitmapHaiku.cpp
     Shared/haiku/WebCoreArgumentCodersHaiku.cpp
     Shared/haiku/WebMemorySamplerHaiku.cpp
+    Shared/haiku/AuxiliaryProcessMainHaiku.cpp
 
     UIProcess/API/C/haiku/WKView.cpp
 
@@ -72,6 +74,7 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/WebProcess/unix"
     "${WEBKIT_DIR}/WebProcess/WebCoreSupport/haiku"
     "${WEBKIT_DIR}/WebProcess/WebPage/CoordinatedGraphics"
+    "${WEBKIT_DIR}/NetworkProcess/haiku"
     ${LIBXML2_INCLUDE_DIR}
     ${LIBXSLT_INCLUDE_DIRS}
     ${SQLITE_INCLUDE_DIRS}
@@ -133,4 +136,3 @@ list(APPEND WebKit_PUBLIC_FRAMEWORK_HEADERS
     Shared/API/c/haiku/WKBaseHaiku.h
 )
 
-set(WebProcess_RESOURCES DEPENDS ${WEBKIT_DIR}/haiku/WebProcess.rdef)

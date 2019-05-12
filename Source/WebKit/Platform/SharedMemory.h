@@ -41,6 +41,10 @@
 #include <wtf/MachSendRight.h>
 #endif
 
+#if PLATFORM(HAIKU)
+#include <OS.h>
+#endif
+
 namespace IPC {
 class Decoder;
 class Encoder;
@@ -111,6 +115,8 @@ public:
     static RefPtr<SharedMemory> wrapMap(void*, size_t, int fileDescriptor);
 #elif OS(DARWIN)
     static RefPtr<SharedMemory> wrapMap(void*, size_t, Protection);
+#elif PLATFORM(HAIKU)
+    static RefPtr<SharedMemory> wrapMap(area_id, size_t , Protection);
 #endif
 
     ~SharedMemory();
@@ -152,6 +158,8 @@ private:
     MachSendRight m_sendRight;
 #elif OS(WINDOWS)
     Win32Handle m_handle;
+#elif PLATFORM(HAIKU)
+    area_id m_areaid;
 #endif
 };
 
