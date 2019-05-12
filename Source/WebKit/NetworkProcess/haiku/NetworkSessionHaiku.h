@@ -1,4 +1,5 @@
 /*
+ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
  * Copyright (C) 2019 Haiku, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -10,7 +11,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS ``AS IS''
+ * THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
  * AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
  * THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
  * PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
@@ -23,39 +24,22 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include "config.h"
-#include "NetworkProcessMain.h"
+#pragma once
 
-#include "AuxiliaryProcessMainHaiku.h"
-#include "NetworkProcess.h"
-#include <Application.h>
+#include "NetworkSession.h"
 
 namespace WebKit {
 
-class NetworkProcessMainBase: public AuxiliaryProcessMainBase
-{
+struct NetworkSessionCreationParameters;
+
+class NetworkSessionHaiku final : public NetworkSession {
 public:
-    ProcessApp* app = nullptr;
-    bool platformInitialize(char* sign) override
+    static std::unique_ptr<NetworkSession> create(NetworkProcess& networkProcess, const NetworkSessionCreationParameters& parameters)
     {
-        app = new ProcessApp(sign);
-        return true;
+        return makeUnique<NetworkSessionHaiku>(networkProcess, parameters);
     }
-    void runApp()
-    {
-        app->Run();
-    }
+    NetworkSessionHaiku(NetworkProcess&, const NetworkSessionCreationParameters&);
+    ~NetworkSessionHaiku();
 };
-
-template<>
-void initializeAuxiliaryProcess<NetworkProcess>(AuxiliaryProcessInitializationParameters&& parameters)
-{
-    static NeverDestroyed<NetworkProcess> networkProcess(WTFMove(parameters));
-}
-
-int NetworkProcessMain(int argc, char** argv)
-{
-    return AuxiliaryProcessMain<NetworkProcess,NetworkProcessMainBase>(argc, argv);
-}
 
 } // namespace WebKit
