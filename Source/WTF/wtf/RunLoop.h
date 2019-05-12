@@ -56,7 +56,8 @@
 #endif
 
 #if USE(HAIKU_EVENT_LOOP)
-class BHandler;
+#include <Handler.h>
+
 class BMessageRunner;
 class BLooper;
 #endif
@@ -147,7 +148,7 @@ public:
     WTF_EXPORT_PRIVATE void observeEvent(const EventObserver&);
 #endif
 
-#if USE(GENERIC_EVENT_LOOP) || USE(WINDOWS_EVENT_LOOP)
+#if USE(GENERIC_EVENT_LOOP) || USE(HAIKU_EVENT_LOOP) || USE(WINDOWS_EVENT_LOOP)
     WTF_EXPORT_PRIVATE static void setWakeUpCallback(WTF::Function<void()>&&);
 #endif
 
