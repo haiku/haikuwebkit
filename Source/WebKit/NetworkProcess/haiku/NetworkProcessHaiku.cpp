@@ -27,13 +27,7 @@
 #include "NetworkProcess.h"
 
 #include "NetworkProcessCreationParameters.h"
-#include <WebCore/NetworkStorageSession.h>
 #include <WebCore/NotImplemented.h>
-
-namespace WebCore
-{
-	class NetworkStorageSession;
-}
 
 namespace WebKit {
 
