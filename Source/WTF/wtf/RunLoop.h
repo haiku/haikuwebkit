@@ -51,6 +51,7 @@
 #endif
 
 #if USE(HAIKU_EVENT_LOOP)
+#include <Handler.h>
 class BHandler;
 class BMessageRunner;
 class BLooper;
@@ -112,6 +113,10 @@ public:
     enum class Event { WillDispatch, DidDispatch };
     using Observer = WTF::Observer<void(Event, const String&)>;
     WTF_EXPORT_PRIVATE void observe(const Observer&);
+#endif
+
+#if USE(HAIKU_EVENT_LOOP)
+	WTF_EXPORT_PRIVATE BLooper* runLoopLooper() const { return m_handler->Looper(); }
 #endif
 
 #if USE(GENERIC_EVENT_LOOP) || USE(HAIKU_EVENT_LOOP) || USE(WINDOWS_EVENT_LOOP)

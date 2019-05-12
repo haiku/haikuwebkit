@@ -1371,8 +1371,6 @@ WebProcessProxy& WebPageProxy::ensureRunningProcess()
 
 RefPtr<API::Navigation> WebPageProxy::loadRequest(ResourceRequest&& request, ShouldOpenExternalURLsPolicy shouldOpenExternalURLsPolicy, API::Object* userData)
 {
-	fprintf(stderr,"Access:");
-	fprintf(stderr,"loadRequest: %d",m_isClosed);
     if (m_isClosed)
         return nullptr;
 

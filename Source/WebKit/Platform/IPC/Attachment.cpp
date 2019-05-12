@@ -50,7 +50,7 @@ void Attachment::release()
 }
 #endif
 
-#if !OS(WINDOWS)
+#if !OS(WINDOWS) && !PLATFORM(HAIKU)
 void Attachment::encode(Encoder& encoder) const
 {
     encoder.addAttachment(WTFMove(*const_cast<Attachment*>(this)));

@@ -26,31 +26,31 @@
 #include "config.h"
 #include "WebProcessMain.h"
 
-#include "AuxiliaryProcessMain.h"
+#include "AuxiliaryProcessMainHaiku.h"
 #include "WebProcess.h"
-
 #include <Application.h>
-#include<Message.h>
 
 using namespace WebCore;
 
 namespace WebKit {
-
-class WebProcessMain final : public AuxiliaryProcessMainBase {
-public:
-    bool platformInitialize() override
-    {
-    	WebProcessApp* app= new WebProcessApp();
-		fprintf(stderr, "%s\n", __PRETTY_FUNCTION__);
-    	app->Run();
-    	return true;
-    }
+class WebProcessMainBase: public AuxiliaryProcessMainBase
+{
+	public:
+	ProcessApp* app = nullptr;
+	bool platformInitialize(char* sign) override
+	{
+		app = new ProcessApp(sign);
+		return true;
+	}
+	void runApp()
+	{
+		app->Run();
+	}	
 };
 
 int WebProcessMain(int argc, char** argv)
 {
-	fprintf(stderr, "%s\n", __PRETTY_FUNCTION__);
-    return AuxiliaryProcessMain<WebProcess, WebProcessMain>(argc, argv);
+    return AuxiliaryProcessMain<WebProcess,WebProcessMainBase>(argc,argv);
 }
 
 } // namespace WebKit

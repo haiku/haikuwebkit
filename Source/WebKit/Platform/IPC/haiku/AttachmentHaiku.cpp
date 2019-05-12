@@ -1,6 +1,5 @@
 /*
- * Copyright (C) 2012 Samsung Electronics
- * Copyright (C) 2014,2019 Haiku, inc.
+ * Copyright (C) 2019 Haiku, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,32 +24,35 @@
  */
 
 #include "config.h"
-#include "ProcessExecutablePath.h"
+#include "Attachment.h"
 
-#include <Entry.h>
-#include <String.h>
-#include <wtf/NeverDestroyed.h>
+#include "Decoder.h"
+#include "Encoder.h"
+#include <OS.h>
 
-namespace WebKit {
-using namespace std;
+namespace IPC {
 
-String executablePathOfWebProcess()
+void Attachment::encode(Encoder& encoder) const
 {
-	static NeverDestroyed<const String> WebKitWebProcessName("./bin/WebProcess");
-	return WebKitWebProcessName;
+    //int encoding is easier
+    encoder << (int64_t)m_connectionID;
+	encoder << m_key;
 }
 
-String executablePathOfPluginProcess()
+bool Attachment::decode(Decoder& decoder, Attachment& attachment)
 {
-	static NeverDestroyed<const String> WebKitPluginProcessName("./bin/PluginProcess");
-	return WebKitPluginProcessName;
+
+    int64_t sourceID;
+    if (!decoder.decode(sourceID))
+        return false;
+
+    uint32_t sourceKey;
+    if (!decoder.decode(sourceKey))
+        return false;
+
+    attachment.m_connectionID = (team_id)sourceID;
+    attachment.m_key = sourceKey;
+    return true;
 }
 
-String executablePathOfNetworkProcess()
-{
-	static NeverDestroyed<const String> WebKitNetworkProcessName("./bin/NetworkProcess");
-	return WebKitNetworkProcessName;
-}
-
-} // namespace WebKit
-
+} // namespace IPC

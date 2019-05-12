@@ -237,7 +237,7 @@ void NetworkProcessConnection::didFinishPreconnection(WebCore::ResourceLoaderIde
 }
 
 void NetworkProcessConnection::setOnLineState(bool isOnLine)
-{
+{fprintf(stderr,"\n$$$$$$$$$$$$ %s $$$$$$$$$$$$ \n",__PRETTY_FUNCTION__);
     WebProcess::singleton().webLoaderStrategy().setOnLineState(isOnLine);
 }
 

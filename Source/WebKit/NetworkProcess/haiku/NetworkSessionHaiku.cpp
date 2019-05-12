@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2012 Samsung Electronics
- * Copyright (C) 2014,2019 Haiku, inc.
+ * Copyright (C) 2018 Sony Interactive Entertainment Inc.
+ * Copyright (C) 2019 Haiku, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,32 +25,26 @@
  */
 
 #include "config.h"
-#include "ProcessExecutablePath.h"
+#include "NetworkSessionHaiku.h"
 
-#include <Entry.h>
-#include <String.h>
-#include <wtf/NeverDestroyed.h>
+#include "NetworkProcess.h"
+#include "NetworkSessionCreationParameters.h"
+#include "WebCookieManager.h"
+#include "NotImplemented.h"
 
 namespace WebKit {
-using namespace std;
 
-String executablePathOfWebProcess()
+using namespace WebCore;
+
+NetworkSessionHaiku::NetworkSessionHaiku(NetworkProcess& networkProcess, NetworkSessionCreationParameters&& parameters)
+    : NetworkSession(networkProcess, parameters)
 {
-	static NeverDestroyed<const String> WebKitWebProcessName("./bin/WebProcess");
-	return WebKitWebProcessName;
+    notImplemented();
 }
 
-String executablePathOfPluginProcess()
+NetworkSessionHaiku::~NetworkSessionHaiku()
 {
-	static NeverDestroyed<const String> WebKitPluginProcessName("./bin/PluginProcess");
-	return WebKitPluginProcessName;
-}
 
-String executablePathOfNetworkProcess()
-{
-	static NeverDestroyed<const String> WebKitNetworkProcessName("./bin/NetworkProcess");
-	return WebKitNetworkProcessName;
 }
 
 } // namespace WebKit
-
