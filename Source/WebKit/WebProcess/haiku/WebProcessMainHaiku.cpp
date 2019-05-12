@@ -29,26 +29,27 @@
 #include "AuxiliaryProcessMain.h"
 #include "WebProcess.h"
 
-#include <Application.h>
-#include<Message.h>
-
 using namespace WebCore;
 
 namespace WebKit {
 
-class WebProcessMain final : public AuxiliaryProcessMainBase {
+class WebProcessMainBase: public AuxiliaryProcessMainBase<WebProcess>
+{
 public:
     bool platformInitialize() override
     {
-        WebProcessApp* app = new WebProcessApp();
-        app->Run();
+        RunLoop::current().setAppMIMEType("application/x-vnd-HaikuWebKit-WebProcess");
         return true;
+    }
+
+    void platformFinalize() override
+    {
     }
 };
 
 int WebProcessMain(int argc, char** argv)
 {
-    return AuxiliaryProcessMain<WebProcess, WebProcessMain>(argc, argv);
+    return AuxiliaryProcessMain<WebProcessMainBase>(argc, argv);
 }
 
 } // namespace WebKit
