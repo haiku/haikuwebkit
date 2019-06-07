@@ -16,8 +16,9 @@ list(APPEND WebKit_SOURCES
 
     Platform/classifier/ResourceLoadStatisticsClassifier.cpp
 
-    Platform/haiku/LoggingHaiku.cpp
     Platform/haiku/ModuleHaiku.cpp
+
+    Platform/unix/LoggingUnix.cpp
 
     Shared/WebCoreArgumentCoders.cpp
     Shared/haiku/ProcessExecutablePathHaiku.cpp

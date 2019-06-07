@@ -21,6 +21,11 @@ posix/CPUTimePOSIX.cpp
 
     text/haiku/TextBreakIteratorInternalICUHaiku.cpp
 
+    unix/LoggingUnix.cpp
+)
+
+list(APPEND WTF_PUBLIC_HEADERS
+    haiku/BeDC.h
 )
 
 LIST(APPEND WTF_LIBRARIES
