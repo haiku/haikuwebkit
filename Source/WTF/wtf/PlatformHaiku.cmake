@@ -25,6 +25,8 @@ list(APPEND WTF_SOURCES
 )
 
 list(APPEND WTF_PUBLIC_HEADERS
+    haiku/BeDC.h
+
     unix/UnixFileDescriptor.h
 )
 
