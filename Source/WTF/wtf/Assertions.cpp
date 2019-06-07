@@ -146,6 +146,12 @@ static void logToStderr([[maybe_unused]] WTFLogChannel* channel, const char* buf
     os_log(channel ? channel->osLogChannel : webkitSubsystemForGenericOSLog(), "%s", buffer);
 #elif OS(ANDROID)
     __android_log_write(ANDROID_LOG_VERBOSE, LOG_CHANNEL_WEBKIT_SUBSYSTEM, buffer);
+#elif USE(HAIKU)
+    app_info appInfo;
+    be_app->GetAppInfo(&appInfo);
+    BeDC dc(appInfo.signature, DC_WHITE);
+    dc.SendMessage(buffer);
+    return;
 #endif
     fputs(buffer, stderr);
 }
@@ -205,6 +211,19 @@ ALLOW_NONLITERAL_FORMAT_END
         } while (size > 1024);
     }
 #endif
+
+#if USE(HAIKU)
+    app_info appInfo;
+    be_app->GetAppInfo(&appInfo);
+    BeDC dc(appInfo.signature, DC_BLACK);
+
+    va_list copyOfArgs;
+    va_copy(copyOfArgs, args);
+    dc.SendFormatV(format, args);
+    va_end(copyOfArgs);
+    return;
+#endif
+
     vfprintf(stderr, format, args);
 }
 
