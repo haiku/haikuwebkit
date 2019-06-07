@@ -131,6 +131,12 @@ static void logToStderr(const char* buffer)
 {
 #if PLATFORM(COCOA)
     os_log(OS_LOG_DEFAULT, "%s", buffer);
+#elif USE(HAIKU)
+    app_info appInfo;
+    be_app->GetAppInfo(&appInfo);
+    BeDC dc(appInfo.signature, DC_WHITE);
+    dc.SendMessage(buffer);
+    return;
 #endif
     fputs(buffer, stderr);
 }
@@ -180,6 +186,19 @@ ALLOW_NONLITERAL_FORMAT_END
         } while (size > 1024);
     }
 #endif
+
+#if USE(HAIKU)
+    app_info appInfo;
+    be_app->GetAppInfo(&appInfo);
+    BeDC dc(appInfo.signature, DC_BLACK);
+
+    va_list copyOfArgs;
+    va_copy(copyOfArgs, args);
+    dc.SendFormatV(format, args);
+    va_end(copyOfArgs);
+    return;
+#endif
+
     vfprintf(stderr, format, args);
 }
 
@@ -623,6 +642,11 @@ void WTFReleaseLogStackTrace(WTFLogChannel* channel)
             out.printf("%-3d %p", frameNumber, stackFrame);
 #if ENABLE(JOURNALD_LOG)
         sd_journal_send("WEBKIT_SUBSYSTEM=%s", channel->subsystem, "WEBKIT_CHANNEL=%s", channel->name, "MESSAGE=%s", out.toCString().data(), nullptr);
+#elif USE(HAIKU)
+        app_info appInfo;
+        be_app->GetAppInfo(&appInfo);
+        BeDC dc(appInfo.signature, DC_BLACK);
+        dc.SendFormat("[%s:%s:-] %s\n", channel->subsystem, channel->name, out.toCString().data());
 #else
         fprintf(stderr, "[%s:%s:-] %s\n", channel->subsystem, channel->name, out.toCString().data());
 #endif

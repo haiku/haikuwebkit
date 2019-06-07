@@ -27,6 +27,7 @@
 #include "NotImplemented.h"
 
 #include "Logging.h"
+#include <string>
 
 namespace WebCore {
 

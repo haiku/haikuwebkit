@@ -13,9 +13,10 @@ list(APPEND WebKit_SOURCES
 
     Platform/IPC/haiku/ConnectionHaiku.cpp
 
-    Platform/haiku/LoggingHaiku.cpp
     Platform/haiku/ModuleHaiku.cpp
     Platform/haiku/SharedMemoryHaiku.cpp
+
+    Platform/unix/LoggingUnix.cpp
 
     Shared/WebCoreArgumentCoders.cpp
     Shared/haiku/ProcessExecutablePathHaiku.cpp
