@@ -35,6 +35,7 @@
 #include <wtf/CompletionHandler.h>
 #include <wtf/ProcessID.h>
 #include <wtf/StdLibExtras.h>
+#include "NotImplemented.h"
 
 namespace IPC {
 
