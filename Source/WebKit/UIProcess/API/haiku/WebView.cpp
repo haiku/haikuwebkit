@@ -64,3 +64,11 @@ void BWebView::initializeOnce()
     looper->AddHandler(handle);
     looper->SetNextHandler(handle);
 }
+
+void BWebView::loadURI(const char* uri)
+{
+    auto page = WKViewGetPage( fViewPort.get());
+    WKRetainPtr<WKURLRef> wuri;
+    wuri = adoptWK(WKURLCreateWithUTF8CString(uri));
+    WKPageLoadURL(page,wuri.get());
+}
