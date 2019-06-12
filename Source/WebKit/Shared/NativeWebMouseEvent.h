@@ -89,6 +89,8 @@ public:
     NativeWebMouseEvent(struct wpe_input_pointer_event*, float deviceScaleFactor, WebMouseEventSyntheticClickType = WebMouseEventSyntheticClickType::NoTap);
 #elif PLATFORM(WIN)
     NativeWebMouseEvent(HWND, UINT message, WPARAM, LPARAM, bool, float deviceScaleFactor);
+#elif PLATFORM(HAIKU)
+    NativeWebMouseEvent(BMessage*);
 #endif
 
 #if USE(APPKIT)
@@ -99,6 +101,8 @@ public:
     ::WebEvent* nativeEvent() const { return m_nativeEvent.get(); }
 #elif PLATFORM(WIN)
     const MSG* nativeEvent() const { return &m_nativeEvent; }
+#elif PLATFORM(HAIKU)
+    const BMessage* nativeEvent() const { return m_nativeEvent; }
 #else
     const void* nativeEvent() const { return nullptr; }
 #endif
@@ -114,6 +118,8 @@ private:
     RetainPtr<::WebEvent> m_nativeEvent;
 #elif PLATFORM(WIN)
     MSG m_nativeEvent;
+#elif PLATFORM(HAIKU)
+    BMessage* m_nativeEvent;
 #endif
 };
 
