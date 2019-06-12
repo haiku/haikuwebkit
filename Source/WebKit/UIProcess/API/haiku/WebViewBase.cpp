@@ -35,10 +35,8 @@ using namespace WebCore;
 WebKit::WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     const API::PageConfiguration& pageConfig)
     : BView(name, B_WILL_DRAW),
-    fViewPort(new BView(name, B_WILL_DRAW)),
     fPageClient(std::make_unique<PageClientImpl>(*this))
 {
-    parentWindow->AddChild(fViewPort);
     auto config = pageConfig.copy();
     auto* preferences = config->preferences();
 
@@ -61,8 +59,6 @@ WebKit::WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWi
         fPage->drawingArea()->setSize(IntSize(rect.right - rect.left,
             rect.top - rect.bottom));
     }
-    BRect p(0, 0, 10, 20);
-    paint(WebCore::IntRect(p));
 }
 
 void WebViewBase::paint(const IntRect& dirtyRect)
@@ -72,6 +68,9 @@ void WebViewBase::paint(const IntRect& dirtyRect)
         return;
     }
     fPage->endPrinting();
-    // TODO actually paint
+}
+
+void WebViewBase::MouseMoved(BPoint where,uint32 code,const BMessage* dragMessage)
+{
 }
 
