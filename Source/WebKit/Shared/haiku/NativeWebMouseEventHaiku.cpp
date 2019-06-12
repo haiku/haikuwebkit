@@ -23,22 +23,19 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef WebEventFactory_h
-#define WebEventFactory_h
+#include "config.h"
+#include "NativeWebMouseEvent.h"
 
-#include "WebEvent.h"
-
-class BMessage;
+#include "WebEventFactory.h"
+#include "WebCore/NotImplemented.h"
 
 namespace WebKit {
 
-class WebEventFactory {
-public:
-    static WebMouseEvent createWebMouseEvent(const BMessage*);
-    static WebWheelEvent createWebWheelEvent(const BMessage*);
-    static WebKeyboardEvent createWebKeyboardEvent(const BMessage*);
-};
+NativeWebMouseEvent::NativeWebMouseEvent(BMessage* mouseEvent)
+    : WebMouseEvent(WebEventFactory::createWebMouseEvent(mouseEvent))
+    , m_nativeEvent(mouseEvent)
+{
+    notImplemented();
+}
 
-} // namespace WebKit
-
-#endif // WebEventFactory_h
+}
