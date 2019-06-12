@@ -389,6 +389,27 @@ void DrawingAreaProxyCoordinatedGraphics::discardBackingStore()
 }
 #endif
 
+#if USE(TEXTURE_MAPPER_GL) && PLATFORM(GTK) && PLATFORM(X11) && !USE(REDIRECTED_XCOMPOSITE_WINDOW)
+void DrawingAreaProxyCoordinatedGraphics::setNativeSurfaceHandleForCompositing(uint64_t handle)
+{
+    if (!m_hasReceivedFirstUpdate) {
+        m_pendingNativeSurfaceHandleForCompositing = handle;
+        return;
+    }
+    send(Messages::DrawingArea::SetNativeSurfaceHandleForCompositing(handle), IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
+}
+
+void DrawingAreaProxyCoordinatedGraphics::destroyNativeSurfaceHandleForCompositing()
+{
+    if (m_pendingNativeSurfaceHandleForCompositing) {
+        m_pendingNativeSurfaceHandleForCompositing = 0;
+        return;
+    }
+    bool handled;
+    sendSync(Messages::DrawingArea::DestroyNativeSurfaceHandleForCompositing(), Messages::DrawingArea::DestroyNativeSurfaceHandleForCompositing::Reply(handled));
+}
+#endif
+
 DrawingAreaProxyCoordinatedGraphics::DrawingMonitor::DrawingMonitor(WebPageProxy& webPage)
     : m_timer(RunLoop::main(), this, &DrawingMonitor::stop)
 #if PLATFORM(GTK)
@@ -400,6 +421,7 @@ DrawingAreaProxyCoordinatedGraphics::DrawingMonitor::DrawingMonitor(WebPageProxy
     // Give redraws more priority.
     m_timer.setPriority(GDK_PRIORITY_REDRAW - 10);
 #else
+fprintf(stderr,"\n&&&& %s &&& \n",__PRETTY_FUNCTION__);
     m_timer.setPriority(RunLoopSourcePriority::RunLoopDispatcher);
 #endif
 #endif
