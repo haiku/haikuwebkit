@@ -24,6 +24,7 @@
 #include <StringView.h>
 #include <TextControl.h>
 
+#include "WebViewConstants.h"
 enum {
 	OPEN_LOCATION = 'open',
 	OPEN_INSPECTOR = 'insp',
@@ -76,14 +77,19 @@ App::App(void)
 	menu->AddItem(new BMenuItem("Reset size", new BMessage(TEXT_SIZE_RESET), '0'));
 	m_menuBar->AddItem(menu);
 
-	m_BackButton = new BButton("Back",new BMessage(GO_BACK));
-    m_ForwardButton = new BButton("Forward", new BMessage(GO_FORWARD));
-    m_StopButton = new BButton("Stop", new BMessage(STOP));
+	m_BackButton = new BButton("", "Back", new BMessage(GO_BACK));
+	m_ForwardButton = new BButton("", "Forward", new BMessage(GO_FORWARD));
+	m_StopButton = new BButton("", "Stop", new BMessage(STOP));
 
 	m_url = new BTextControl("url", "", "", NULL);
 
 	m_goButton = new BButton("", "Go", new BMessage(GOTO_URL));
+	
 	m_goButton->SetTarget(this);
+	m_BackButton->SetTarget(this);
+	m_ForwardButton->SetTarget(this);
+	m_StopButton->SetTarget(this);
+	
 	m_statusText = new BStringView("status", "");
 	m_statusText->SetAlignment(B_ALIGN_LEFT);
 	m_statusText->SetExplicitMaxSize(BSize(B_SIZE_UNLIMITED, B_SIZE_UNSET));
@@ -160,9 +166,34 @@ App::MessageReceived(BMessage *message)
 		break;
 		
 		case GOTO_URL:
-		fprintf(stderr,"Gotoooooooo");
+		SetStatus(m_url->Text());
 		webView->loadURI(m_url->Text());
 		break;
+		
+		case GO_BACK:
+		webView->goBackward();
+		break;
+		
+		case GO_FORWARD:
+		webView->goForward();
+		break;
+		
+		case DID_COMMIT_NAVIGATION:
+		SetStatus("loading");
+		break;
+		
+		case DID_FINISH_NAVIGATION:
+		SetStatus("finished");
+		break;
+		
+		case URL_CHANGE:
+		ChangeUrl(message);
+		break;
+		
+		case STOP:
+		SetStatus("cancelling");
+		webView->stop();
+		break; 
 		
 		default:
 		BApplication::MessageReceived(message);
@@ -173,6 +204,7 @@ App::MessageReceived(BMessage *message)
 void App::ReadyToRun()
 {
 	webView = new BWebView(frame,myWindow);
+	webView->navigationCallbacks(Looper());
 	const float kInsetSpacing = 5;
 	const float kElementSpacing = 7;
 	myWindow->AddChild(BGroupLayoutBuilder(B_VERTICAL)
@@ -198,6 +230,22 @@ void App::ReadyToRun()
 
 	m_url->MakeFocus(true);
 	myWindow->Show();
+}
+
+void App::SetStatus(const char* str)
+{
+	m_statusText->Looper()->Lock();
+	m_statusText->SetText(str);
+	m_statusText->Looper()->Unlock();
+}
+
+void App::ChangeUrl(BMessage* message)
+{
+	BString str;
+	message->FindString("url", &str);
+	m_url->Looper()->Lock();
+	m_url->SetText(str.String());
+	m_url->Looper()->Unlock();
 }
 
 void
