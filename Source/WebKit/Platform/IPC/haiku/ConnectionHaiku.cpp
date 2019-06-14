@@ -60,11 +60,14 @@ namespace IPC{
 	};
 	void Connection::finalizeConnection(BMessage* message)
 	{
-		
 		//unwrap the message
 		status_t result = message->FindMessenger("target",&targetMessenger);	
 		if(result == B_OK)
 			m_isConnected = true;
+			
+		m_connectionQueue->dispatch([protectedThis = makeRef(*this)]() mutable {
+        protectedThis->sendOutgoingMessages();
+    	});
 	}
     void Connection::platformInitialize(Identifier identifier)
     {
