@@ -53,6 +53,11 @@ WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     }
 }
 
+const char* WebViewBase::currentURL() const
+{
+    return page()->pageLoadState().activeURL().utf8().data();
+}
+
 void WebViewBase::paint(const IntRect& dirtyRect)
 {
     if(dirtyRect.isEmpty()) {
