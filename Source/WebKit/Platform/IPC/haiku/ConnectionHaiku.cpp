@@ -65,6 +65,10 @@ namespace IPC
         status_t result = message->FindMessenger("target", &targetMessenger);
         if (result == B_OK)
             m_isConnected = true;
+
+        m_connectionQueue->dispatch([protectedThis = Ref(*this)]() mutable {
+            protectedThis->sendOutgoingMessages();
+        });
     }
 
     void Connection::platformInitialize(Identifier identifier)
@@ -88,7 +92,7 @@ namespace IPC
         {
             Vector<Attachment> attachments(0);
             auto decoder = Decoder::create(Buffer, size, nullptr, WTFMove(attachments));
-            processIncomingMessage(std::move(decoder));
+            processIncomingMessage(WTFMove(decoder));
         }
         else
         {

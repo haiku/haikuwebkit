@@ -39,9 +39,21 @@ class BWebView
         void initializeOnce();
         void loadHTML();
         void loadURI(const char*);
-        BView* getRenderView() { return toImpl(fViewPort.get())->getView(); }
+        void goForward();
+        void goBackward();
+        void stop();
+        WebViewBase* getRenderView() { return toImpl(fViewPort.get()); }
+        const char* getCurrentURL() { return getRenderView()->currentURL(); }
+
+        void navigationCallbacks(BLooper* app);
     private:
         WKRetainPtr<WKViewRef> fViewPort;
         WKRetainPtr<WKContextRef> fContext;
+        static void didCommitNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
+        static void didReceiveServerRedirectForProvisionalNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
+        static void didFinishDocumentLoad(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
+        static void didFinishProgress(WKPageRef, const void*);
+        static void didFinishNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
+        static void didFailNavigation(WKPageRef page, WKNavigationRef navigation, WKErrorRef, WKTypeRef userData, const void* clientInfo);
 };
 

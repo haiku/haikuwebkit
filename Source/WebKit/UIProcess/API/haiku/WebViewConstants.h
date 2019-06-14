@@ -22,38 +22,13 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "APIObject.h"
-#include "APIPageConfiguration.h"
-#include "WebPageProxy.h"
-#include "PageClientImplHaiku.h"
+#ifndef WEBVIEW_CONSTANTS_H
+#define WEBVIEW_CONSTANTS_H
 
-#include <Rect.h>
-#include <View.h>
-#include <Window.h>
+enum{
+    DID_COMMIT_NAVIGATION = 'dcna',
+    DID_FINISH_NAVIGATION = 'dfna',
+    URL_CHANGE = 'urlc',
+};
 
-using namespace WebKit;
-namespace WebKit
-{
-    class WebViewBase: public API::ObjectImpl<API::Object::Type::View>, public BView
-    {
-        public:
-            static RefPtr<WebViewBase> create(const char* name, BRect rect,
-                BWindow* parentWindow, const API::PageConfiguration& config)
-            {
-                auto fWebView = adoptRef(*new WebViewBase(name, rect, parentWindow, config));
-                return fWebView;
-            }
-            WebPageProxy* page() const { return fPage.get(); }
-            const char* currentURL() { return page()->pageLoadState().activeURL().utf8().data(); }
-
-            //hook methods
-            virtual void MouseMoved(BPoint, uint32, const BMessage*);
-        private:
-            WebViewBase(const char*, BRect, BWindow*, const API::PageConfiguration&);
-
-            void paint(const WebCore::IntRect&);
-
-            RefPtr<WebPageProxy> fPage;
-            std::unique_ptr<PageClientImpl> fPageClient;
-    };
-}
+#endif // WEBVIEW_CONSTANTS_H
