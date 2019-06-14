@@ -86,7 +86,7 @@ namespace IPC{
     	{
     		Vector<Attachment> attachments(0);
     		auto decoder = Decoder::create(Buffer,size,nullptr,WTFMove(attachments));
-    		processIncomingMessage(std::move(decoder));
+    		processIncomingMessage(WTFMove(decoder));
     	}
     	else
     	{

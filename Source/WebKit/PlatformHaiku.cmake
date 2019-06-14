@@ -79,15 +79,15 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/platform"
     "${WEBCORE_DIR}/platform/text"
     "${WEBCORE_DIR}/fileapi"
-    "${FORWARDING_HEADERS_DIR}/WebCore"
     "${DERIVED_SOURCES_WEBCORE_DIR}"
     /system/develop/headers/private/netservices
 )
 
 set(WebKit_LOCAL_INCLUDE_DIRECTORIES
+    "${FORWARDING_HEADERS_DIR}/WebKit"
+    "${FORWARDING_HEADERS_DIR}/WebCore"
     "${WEBCORE_DIR}/css"
     "${WEBCORE_DIR}/platform/graphics"
-    "${WEBCORE_DIR}/platform/graphics/transforms"
     "${WEBCORE_DIR}/rendering/shapes"
 )
 
