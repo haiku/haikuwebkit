@@ -34,11 +34,14 @@
 namespace WebKit {
 
 SharedMemory::Handle::Handle()
+	: m_areaid(0),
+	m_size(0)
 {
 }
 
 SharedMemory::Handle::~Handle()
 {
+	clear();
 }
 
 SharedMemory::Handle::Handle(Handle&&) = default;
@@ -46,10 +49,16 @@ SharedMemory::Handle& SharedMemory::Handle::operator=(Handle&& other) = default;
 
 void SharedMemory::Handle::clear()
 {
+	if (!m_areaid)
+		return;
+
+	delete_area(m_areaid);
+	m_areaid = 0;
 }
 
 bool SharedMemory::Handle::isNull() const
 {
+	return !m_areaid;
 }
 
 static uint32 protectionMode(SharedMemory::Protection protection)
@@ -57,44 +66,68 @@ static uint32 protectionMode(SharedMemory::Protection protection)
 	switch(protection)
 	{
 		case SharedMemory::Protection::ReadOnly:
-		return B_READ_AREA;
+			return B_READ_AREA;
 		case SharedMemory::Protection::ReadWrite:
-		return B_READ_AREA | B_WRITE_AREA;
+			return B_READ_AREA | B_WRITE_AREA;
 	}
 }
 
 RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
 {
 	void* baseAddress;
-	//size = ROUND_UP_TO_PAGE(size); if its not a multiple of a page then do this
-	area_id sharedArea = create_area("WebKit-Shared-Memory",&baseAddress,B_ANY_ADDRESS,
-		size,B_NO_LOCK,B_READ_AREA | B_WRITE_AREA);
+
+	area_id sharedArea = create_area("WebKit-Shared-Memory", &baseAddress, B_ANY_ADDRESS,
+		size, B_NO_LOCK, B_READ_AREA | B_WRITE_AREA);
 	
-	if(sharedArea<0)
-	return nullptr;
-	
+	if (sharedArea < 0)
+		return nullptr;
+
 	RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
 	memory->m_size = size;
 	memory->m_data = baseAddress;
 	memory->m_areaid = sharedArea;
+
+	return memory;
 }
 
 RefPtr<SharedMemory> SharedMemory::map(const Handle& handle, Protection protection)
 {
+	RefPtr<SharedMemory> memory = adopt(handle.m_areaid, handle.m_size, protection);
+	if(!memory)
+		return nullptr;
 
+	handle.m_areaid = 0;
+	return memory;
 }
 
 RefPtr<SharedMemory> SharedMemory::adopt(area_id area, size_t size, Protection protection)
 {
-	
+	//not completed
+	if(!area)
+		return nullptr;
+
+	void* baseAddress;
+
+	area_id clonedArea = clone_area("WebKit-Shared-Memory", &baseAddress, B_CLONE_ADDRESS,
+		protectionMode(protection),area);
+
+	RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
+	memory->m_size = size;
+	memory->m_data = baseAddress;
+	memory->m_areaid = clonedArea;
+
+	return memory;
 }
 
 SharedMemory::~SharedMemory()
 {
+	delete_area(m_areaid);
+	m_areaid = 0;
 }
 
 bool SharedMemory::createHandle(Handle& handle, Protection)
 {
+	//todo
 }
 
 unsigned SharedMemory::systemPageSize()
