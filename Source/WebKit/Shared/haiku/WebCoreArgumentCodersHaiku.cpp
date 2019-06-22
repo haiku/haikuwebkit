@@ -24,11 +24,13 @@
  */
 
 #include "config.h"
-#include "DataReference.h"
 #include "WebCoreArgumentCoders.h"
 
+#include "DaemonDecoder.h"
+#include "DaemonEncoder.h"
+#include "DataReference.h"
+
 #include <WebCore/CertificateInfo.h>
-#include <WebCore/DictionaryPopupInfo.h>
 #include <WebCore/FontAttributes.h>
 #include <WebCore/NotImplemented.h>
 #include <WebCore/ResourceError.h>
@@ -40,67 +42,52 @@ using namespace WebCore;
 
 namespace IPC {
 
-void ArgumentCoder<ResourceRequest>::encodePlatformData(Encoder& encoder, const ResourceRequest& resourceRequest)
-{
-    resourceRequest.encodePlatformData(encoder);
-}
-
-bool ArgumentCoder<ResourceRequest>::decodePlatformData(Decoder& decoder, ResourceRequest& resourceRequest)
-{
-    return resourceRequest.decodePlatformData(decoder);
-}
-
-#if 0
-void ArgumentCoder<ResourceResponse>::encodePlatformData(Encoder& encoder, const ResourceResponse& resourceResponse)
-{
-    //encoder << static_cast<uint32_t>(resourceResponse.soupMessageFlags());
-}
-
-bool ArgumentCoder<ResourceResponse>::decodePlatformData(Decoder& decoder, ResourceResponse& resourceResponse)
-{
-    /*
-    uint32_t soupMessageFlags;
-    if (!decoder.decode(soupMessageFlags))
-        return false;
-    resourceResponse.setSoupMessageFlags(static_cast<SoupMessageFlags>(soupMessageFlags));
-    return true;
-    */
-
-    return false;
-}
-#endif
-
+#if !USE(CURL)
+template<typename Encoder>
 void ArgumentCoder<CertificateInfo>::encode(Encoder& encoder, const CertificateInfo& certificateInfo)
 {
     //nothing to encode ceriticateinfo is null
 }
+template void ArgumentCoder<WebCore::CertificateInfo>::encode<Encoder>(Encoder&, const WebCore::CertificateInfo&);
+template void ArgumentCoder<WebCore::CertificateInfo>::encode<WebKit::Daemon::Encoder>(WebKit::Daemon::Encoder&, const WebCore::CertificateInfo&);
 
-bool ArgumentCoder<CertificateInfo>::decode(Decoder& decoder, CertificateInfo& certificateInfo)
+template<typename Decoder>
+std::optional<WebCore::CertificateInfo> ArgumentCoder<CertificateInfo>::decode(Decoder& decoder)
 {
     //nothing to decode just return true
-    return true;
+    return {};
 }
+template std::optional<WebCore::CertificateInfo> ArgumentCoder<WebCore::CertificateInfo>::decode<Decoder>(Decoder&);
+template std::optional<WebCore::CertificateInfo> ArgumentCoder<WebCore::CertificateInfo>::decode<WebKit::Daemon::Decoder>(WebKit::Daemon::Decoder&);
 
 void ArgumentCoder<ResourceError>::encodePlatformData(Encoder& encoder, const ResourceError& resourceError)
 {
-    bool errorIsNull = resourceError.isNull();
-    encoder << errorIsNull;
-    if (errorIsNull)
-        return;
-
     encoder << resourceError.domain();
     encoder << resourceError.errorCode();
-    encoder << resourceError.failingURL();
+    encoder << resourceError.failingURL().string();
     encoder << resourceError.localizedDescription();
-    encoder << resourceError.isCancellation();
-    encoder << resourceError.isTimeout();
-
 }
 
 bool ArgumentCoder<ResourceError>::decodePlatformData(Decoder& decoder, ResourceError& resourceError)
 {
-    notImplemented();
-    return false;
+    String domain;
+    if (!decoder.decode(domain))
+        return false;
+
+    int errorCode;
+    if (!decoder.decode(errorCode))
+        return false;
+
+    String failingURL;
+    if (!decoder.decode(failingURL))
+        return false;
+
+    String localizedDescription;
+    if (!decoder.decode(localizedDescription))
+        return false;
+
+    resourceError = ResourceError(domain, errorCode, URL(URL(), failingURL), localizedDescription);
+    return true;
 }
 
 void ArgumentCoder<ProtectionSpace>::encodePlatformData(Encoder&, const ProtectionSpace&)
@@ -124,19 +111,64 @@ bool ArgumentCoder<Credential>::decodePlatformData(Decoder&, Credential&)
     ASSERT_NOT_REACHED();
     return false;
 }
+#endif
 
-Optional<FontAttributes> ArgumentCoder<FontAttributes>::decodePlatformData(Decoder&, FontAttributes&)
+void ArgumentCoder<BMessenger>::encode(Encoder& encoder, BMessenger&& messenger)
 {
-    ASSERT_NOT_REACHED();
-    return WTF::nullopt;
+    constexpr size_t count = sizeof(BMessenger) / sizeof(uint32_t);
+    uint32_t* data = (uint32_t*)&messenger;
+    for (size_t i = 0; i < count; i++) {
+        encoder << data[i];
+    }
 }
 
-bool ArgumentCoder<DictionaryPopupInfo>::decodePlatformData(Decoder&, DictionaryPopupInfo&)
+std::optional<BMessenger> ArgumentCoder<BMessenger>::decode(Decoder& decoder)
+{
+    constexpr size_t count = sizeof(BMessenger) / sizeof(uint32_t);
+    uint32_t data[count];
+    for (size_t i = 0; i < count; i++) {
+        std::optional<uint32_t> value;
+        if (decoder.decode(value))
+            data[i] = *value;
+    }
+    BMessenger* messenger = (BMessenger*)data;
+    return *messenger;
+}
+
+void ArgumentCoder<Font>::encodePlatformData(Encoder& encoder, const Font& font)
+{
+    ASSERT_NOT_REACHED();
+}
+
+std::optional<FontPlatformData> ArgumentCoder<Font>::decodePlatformData(Decoder&)
+{
+    ASSERT_NOT_REACHED();
+    return std::nullopt;
+}
+
+void ArgumentCoder<WebCore::FontPlatformData::Attributes>::encodePlatformData(Encoder&, const WebCore::FontPlatformData::Attributes&)
+{
+    ASSERT_NOT_REACHED();
+}
+
+bool ArgumentCoder<WebCore::FontPlatformData::Attributes>::decodePlatformData(Decoder&, WebCore::FontPlatformData::Attributes&)
 {
     ASSERT_NOT_REACHED();
     return false;
 }
 
+#if ENABLE(VIDEO) && !USE(CURL)
+void ArgumentCoder<SerializedPlatformDataCueValue>::encodePlatformData(Encoder& encoder, const SerializedPlatformDataCueValue& value)
+{
+    ASSERT_NOT_REACHED();
 }
 
+std::optional<SerializedPlatformDataCueValue>  ArgumentCoder<SerializedPlatformDataCueValue>::decodePlatformData(Decoder& decoder, WebCore::SerializedPlatformDataCueValue::PlatformType platformType)
+{
+    ASSERT_NOT_REACHED();
+    return std::nullopt;
+}
+#endif
+
+}
 

@@ -10,6 +10,7 @@ list(APPEND WebKit_SOURCES
     NetworkProcess/haiku/NetworkProcessHaiku.cpp
     NetworkProcess/haiku/NetworkProcessMainHaiku.cpp
     NetworkProcess/haiku/NetworkSessionHaiku.cpp
+    NetworkProcess/haiku/NetworkDataTaskHaiku.cpp
 
     Platform/IPC/haiku/ConnectionHaiku.cpp
 
