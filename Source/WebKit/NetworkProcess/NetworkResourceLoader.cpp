@@ -1487,6 +1487,7 @@ void NetworkResourceLoader::startBufferingTimerIfNeeded()
     if (m_bufferingTimer.isActive())
         return;
     m_bufferingTimer.startOneShot(m_parameters.maximumBufferingTime);
+
 }
 
 void NetworkResourceLoader::bufferingTimerFired()

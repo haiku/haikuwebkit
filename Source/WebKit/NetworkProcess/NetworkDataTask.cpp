@@ -47,6 +47,9 @@
 #if USE(CURL)
 #include "NetworkDataTaskCurl.h"
 #endif
+#if PLATFORM(HAIKU)
+#include "NetworkDataTaskHaiku.h"
+#endif
 
 namespace WebKit {
 using namespace WebCore;
@@ -57,6 +60,8 @@ Ref<NetworkDataTask> NetworkDataTask::create(NetworkSession& session, NetworkDat
     auto dataTask = [&] {
 #if PLATFORM(COCOA)
         return NetworkDataTaskCocoa::create(session, client, parameters);
+#elif PLATFORM(HAIKU) && !USE(CURL)
+    return NetworkDataTaskHaiku::create(session, client, parameters.request, parameters.storedCredentialsPolicy, parameters.contentSniffingPolicy, parameters.contentEncodingSniffingPolicy, parameters.shouldClearReferrerOnHTTPSToHTTPRedirect, parameters.isMainFrameNavigation);
 #else
         if (parameters.request.url().protocolIsData())
             return NetworkDataTaskDataURL::create(session, client, parameters);
