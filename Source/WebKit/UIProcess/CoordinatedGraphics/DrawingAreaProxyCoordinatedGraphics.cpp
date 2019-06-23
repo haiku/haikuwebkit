@@ -421,7 +421,7 @@ DrawingAreaProxyCoordinatedGraphics::DrawingMonitor::DrawingMonitor(WebPageProxy
     // Give redraws more priority.
     m_timer.setPriority(GDK_PRIORITY_REDRAW - 10);
 #else
-fprintf(stderr,"\n&&&& %s &&& \n",__PRETTY_FUNCTION__);
+
     m_timer.setPriority(RunLoopSourcePriority::RunLoopDispatcher);
 #endif
 #endif

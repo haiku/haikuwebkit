@@ -312,7 +312,6 @@ namespace WebKit
 	
 	BView* PageClientImpl::viewWidget()
 	{
-		fprintf(stderr,"&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&&\n");
 	    return fWebView.getView();
 	}
 
