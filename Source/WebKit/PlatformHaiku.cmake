@@ -55,7 +55,6 @@ list(APPEND WebKit_SOURCES
 )
 
 list(APPEND WebKit_INCLUDE_DIRECTORIES
-    "${CMAKE_SOURCE_DIR}/Source"
     "${WEBKIT_DIR}/NetworkProcess/unix"
     "${WEBKIT_DIR}/Platform"
     "${WEBKIT_DIR}/Platform/IPC/unix"
@@ -76,26 +75,10 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     ${LIBXML2_INCLUDE_DIR}
     ${LIBXSLT_INCLUDE_DIRS}
     ${SQLITE_INCLUDE_DIRS}
-    /system/develop/headers/private/netservices/
     ${WTF_DIR}
-    "${WEBCORE_DIR}/platform"
-    "${WEBCORE_DIR}/platform/text"
-    "${WEBCORE_DIR}/fileapi"
     "${DERIVED_SOURCES_WEBCORE_DIR}"
     /system/develop/headers/private/netservices
 )
-
-set(WebKit_LOCAL_INCLUDE_DIRECTORIES
-    "${FORWARDING_HEADERS_DIR}/WebKit"
-    "${FORWARDING_HEADERS_DIR}/WebCore"
-    "${WEBCORE_DIR}/css"
-    "${WEBCORE_DIR}/platform/graphics"
-    "${WEBCORE_DIR}/rendering/shapes"
-)
-
-foreach(inc ${WebKit_LOCAL_INCLUDE_DIRECTORIES})
-    ADD_DEFINITIONS(-iquote ${inc})
-endforeach(inc)
 
 list(APPEND WebKit_LIBRARIES
     ${CMAKE_DL_LIBS}

@@ -26,8 +26,8 @@
 #include "config.h"
 #include "ShareableBitmap.h"
 
-#include "NotImplemented.h"
 #include <WebCore/BitmapImage.h>
+#include <WebCore/NotImplemented.h>
 #include <WebCore/GraphicsContext.h>
 
 #include <Bitmap.h>
