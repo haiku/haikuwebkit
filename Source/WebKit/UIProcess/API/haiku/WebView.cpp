@@ -61,7 +61,7 @@ BWebView::BWebView(BRect frame, BWindow* myWindow)
     fViewPort=adoptWK(WKViewCreate("Webkit", frame, myWindow, config.get()));
 }
 
-void BWebView::navigationCallbacks(BLooper* app)
+void BWebView::navigationCallbacks(BWebView* app)
 {
     auto page = WKViewGetPage(fViewPort.get());
     WKPageNavigationClientV0 navigationClient = {};
@@ -75,6 +75,9 @@ void BWebView::navigationCallbacks(BLooper* app)
     navigationClient.didFinishNavigation = didFinishNavigation;
     navigationClient.didReceiveServerRedirectForProvisionalNavigation = didReceiveServerRedirectForProvisionalNavigation;
     WKPageSetPageNavigationClient(page, &navigationClient.base);
+
+    observer = new PageLoadStateObserver();
+    getRenderView()->page()->pageLoadState().addObserver(*observer);
 }
 
 void BWebView::initializeOnce()
@@ -83,7 +86,6 @@ void BWebView::initializeOnce()
     BHandler* handle = new ProcessInitHaiku();
     BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
     looper->AddHandler(handle);
-    looper->SetNextHandler(handle);
 }
 
 void BWebView::loadHTML()
@@ -136,6 +138,9 @@ void BWebView::didCommitNavigation(WKPageRef page, WKNavigationRef navigation, W
 
 void BWebView::didReceiveServerRedirectForProvisionalNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
 {
+    BMessage message(URL_CHANGE);
+    message.AddString("url", BString(((BWebView*)clientInfo)->getCurrentURL()));
+    be_app->PostMessage(&message);
 }
 
 void BWebView::didFinishDocumentLoad(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
@@ -154,4 +159,15 @@ void BWebView::didFailNavigation(WKPageRef page, WKNavigationRef navigation,WKEr
 
 void BWebView::didFinishProgress(WKPageRef page,const void* clientInfo)
 {
+}
+
+double BWebView::didChangeProgress()
+{
+    auto page = WKViewGetPage(fViewPort.get());
+    return WKPageGetEstimatedProgress(page);
+}
+
+const char* BWebView::title()
+{
+    return getRenderView()->page()->pageLoadState().title().utf8().data();
 }
