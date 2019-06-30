@@ -30,13 +30,20 @@
 #include <WebCore/CookieJar.h>
 #include <WebCore/NetworkStorageSession.h>
 #include <WebCore/ResourceError.h>
+#include <WebCore/ResourceResponse.h>
 #include <WebCore/SameSiteInfo.h>
 #include <WebCore/SharedBuffer.h>
+#include <WebCore/HTTPParsers.h>
+#include <wtf/MainThread.h>
+#include <wtf/text/CString.h>
 
 #include <Url.h>
 #include <UrlRequest.h>
 #include <HttpRequest.h>
 #include <assert.h>
+#include "BeDC.h"
+
+static const int gMaxRecursionLimit = 10;
 
 namespace WebKit {
 
@@ -49,6 +56,10 @@ NetworkDataTaskHaiku::NetworkDataTaskHaiku(NetworkSession& session, NetworkDataT
     : NetworkDataTask(session, client, requestWithCredentials, storedCredentialsPolicy,
         shouldClearReferrerOnHTTPSToHTTPRedirect, dataTaskIsForMainFrameNavigation)
     , m_postData(NULL)
+    , m_responseDataSent(false)
+    , m_redirected(false)
+    , m_redirectionTries(gMaxRecursionLimit)
+    , m_position(0)
 {
     if (m_scheduledFailureType != NoFailure)
         return;
@@ -68,6 +79,10 @@ NetworkDataTaskHaiku::NetworkDataTaskHaiku(NetworkSession& session, NetworkDataT
 
 NetworkDataTaskHaiku::~NetworkDataTaskHaiku()
 {
+    cancel();
+    if (m_request)
+        m_request->SetListener(NULL);
+    delete m_request;
 }
 
 void NetworkDataTaskHaiku::createRequest(ResourceRequest&& request)
@@ -103,6 +118,19 @@ void NetworkDataTaskHaiku::createRequest(ResourceRequest&& request)
     } else {
         m_request->SetListener(this);
     }
+
+    if (m_request->Run() < B_OK)
+    {
+        if (!m_client)
+            return;
+
+        ResourceError error("BUrlProtocol", 42, m_baseUrl,
+            "The service kit failed to start the request.");
+
+        m_networkLoadMetrics.responseEnd = MonotonicTime::now() - m_startTime;
+        m_networkLoadMetrics.markComplete();
+        m_client->didCompleteWithError(error, m_networkLoadMetrics);
+    }
 }
 
 void NetworkDataTaskHaiku::cancel()
@@ -122,11 +150,13 @@ void NetworkDataTaskHaiku::resume()
         return;
 
     m_state = State::Running;
+
+    if (m_request)
+        m_request->Resume();
 }
 
 void NetworkDataTaskHaiku::invalidateAndCancel()
 {
-
 }
 
 NetworkDataTask::State NetworkDataTaskHaiku::state() const
@@ -134,23 +164,154 @@ NetworkDataTask::State NetworkDataTaskHaiku::state() const
     return m_state;
 }
 
+void NetworkDataTaskHaiku::runOnMainThread(Function<void()>&& task)
+{
+    if(isMainThread())
+        task();
+    else
+        callOnMainThreadAndWait(WTFMove(task));
+}
+
+
 void NetworkDataTaskHaiku::ConnectionOpened(BUrlRequest*)
 {
+    m_responseDataSent = false;
 }
 
 void NetworkDataTaskHaiku::HeadersReceived(BUrlRequest* caller, const BUrlResult& result)
 {
+    if (m_currentRequest.isNull())
+        return;
+
+    const BHttpResult* httpResult = dynamic_cast<const BHttpResult*>(&result);
+
+    WTF::String contentType = result.ContentType();
+    int contentLength = result.Length();
+    URL url;
+
+    WTF::String encoding = extractCharsetFromMediaType(contentType);
+    WTF::String mimeType = extractMIMETypeFromMediaType(contentType);
+
+    if (httpResult) {
+        url = URL(httpResult->Url());
+
+        BString location = httpResult->Headers()["Location"];
+        if (location.Length() > 0) {
+            m_redirected = true;
+            url = URL(url, location);
+        } else {
+            m_redirected = false;
+        }
+    } else {
+        url = m_baseUrl;
+    }
+
+    ResourceResponse response(url, mimeType, contentLength, encoding);
+
+    if (httpResult) {
+        int statusCode = httpResult->StatusCode();
+
+        String suggestedFilename = filenameFromHTTPContentDisposition(
+            httpResult->Headers()["Content-Disposition"]);
+
+        if (!suggestedFilename.isEmpty())
+            response.setSuggestedFilename(suggestedFilename);
+
+        response.setHTTPStatusCode(statusCode);
+        response.setHTTPStatusText(httpResult->StatusText());
+
+        // Add remaining headers.
+        const BHttpHeaders& resultHeaders = httpResult->Headers();
+        for (int i = 0; i < resultHeaders.CountHeaders(); i++) {
+            BHttpHeader& headerPair = resultHeaders.HeaderAt(i);
+            response.setHTTPHeaderField(headerPair.Name(), headerPair.Value());
+        }
+
+        if (statusCode == 401) {
+
+            //TODO
+
+            //AuthenticationNeeded((BHttpRequest*)m_request, response);
+            // AuthenticationNeeded may have aborted the request
+            // so we need to make sure we can continue.
+
+            if (m_currentRequest.isNull())
+                return;
+        }
+    }
+
+    if (!m_client)
+        return;
+
+    if (m_redirected) {
+        m_redirectionTries--;
+
+        if (m_redirectionTries == 0) {
+            ResourceError error(url.host().utf8().data(), 400, url,
+                "Redirection limit reached");
+
+            m_networkLoadMetrics.responseEnd = MonotonicTime::now() - m_startTime;
+            m_networkLoadMetrics.markComplete();
+            m_client->didCompleteWithError(error,m_networkLoadMetrics);
+            return;
+        }
+
+        // Notify the client that we are redirecting.
+        ResourceRequest request = m_currentRequest;
+        ResourceResponse responseCopy = response;
+        request.setURL(url);
+        m_client->willPerformHTTPRedirection(WTFMove(responseCopy),WTFMove(request),
+            [this](const ResourceRequest& newRequest)
+            {
+
+                if(newRequest.isNull() || m_state == State::Canceling)
+                    return;
+
+                m_startTime = MonotonicTime::now();//network metrics
+
+                if (m_state != State::Suspended) {
+                    m_state = State::Suspended;
+                    resume();
+                }
+            });
+    } else {
+        ResourceResponse responseCopy = response;
+        m_client->didReceiveResponse(WTFMove(responseCopy),[this](WebCore::PolicyAction policyAction){
+            if (m_state == State::Canceling || m_state == State::Completed) {
+                return;
+            }
+        });
+    }
 }
 
 void NetworkDataTaskHaiku::DataReceived(BUrlRequest* caller, const char* data, off_t position,
         ssize_t size)
 {
-    if (size < 0 )
+    if (m_currentRequest.isNull())
+        return;
+
+    if (!m_client)
+        return;
+
+    // don't emit the "Document has moved here" type of HTML
+    if (m_redirected)
+        return;
+
+    if (position != m_position)
     {
+        debugger("bad redirect");
         return;
     }
 
-    m_client->didReceiveData(SharedBuffer::create(data,size));
+    if (size > 0) {
+        m_responseDataSent = true;
+
+        runOnMainThread([this,data = data, size = size]{
+            m_client->didReceiveData(SharedBuffer::create(data,size));
+        });
+    }
+
+    m_position += size;
 }
 
 void NetworkDataTaskHaiku::UploadProgress(BUrlRequest* caller, ssize_t bytesSent, ssize_t bytesTotal)
@@ -162,6 +323,10 @@ void NetworkDataTaskHaiku::RequestCompleted(BUrlRequest* caller, bool success)
 }
 
 bool NetworkDataTaskHaiku::CertificateVerificationFailed(BUrlRequest* caller, BCertificate& certificate, const char* message)
+{
+}
+
+void NetworkDataTaskHaiku::DebugMessage(BUrlRequest* caller,BUrlProtocolDebugMessage type,const char* text)
 {
 }
 
