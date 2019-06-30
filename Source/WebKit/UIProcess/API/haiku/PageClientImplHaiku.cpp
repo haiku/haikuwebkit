@@ -310,7 +310,7 @@ namespace WebKit
 	    notImplemented();
 	}
 	
-	BView* PageClientImpl::viewWidget()
+	WebViewBase* PageClientImpl::viewWidget()
 	{
 	    return &fWebView;
 	}
