@@ -29,6 +29,7 @@
 #include "WKRetainPtr.h"
 #include "WKAPICast.h"
 #include "WebViewBase.h"
+#include "PageLoadStateObserver.h"
 
 using namespace WebKit;
 
@@ -45,6 +46,8 @@ class BWebView
         const char* getCurrentURL() { return getRenderView()->currentURL(); }
 
         void navigationCallbacks(BLooper* app);
+        double didChangeProgress();
+        const char* title();
     private:
         WKRetainPtr<WKViewRef> fViewPort;
         WKRetainPtr<WKContextRef> fContext;
@@ -54,5 +57,7 @@ class BWebView
         static void didFinishProgress(WKPageRef, const void*);
         static void didFinishNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
         static void didFailNavigation(WKPageRef page, WKNavigationRef navigation, WKErrorRef, WKTypeRef userData, const void* clientInfo);
+
+        PageLoadStateObserver* observer;
 };
 

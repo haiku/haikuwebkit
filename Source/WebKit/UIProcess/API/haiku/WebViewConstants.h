@@ -25,10 +25,12 @@
 #ifndef WEBVIEW_CONSTANTS_H
 #define WEBVIEW_CONSTANTS_H
 
-enum{
+enum {
     DID_COMMIT_NAVIGATION = 'dcna',
     DID_FINISH_NAVIGATION = 'dfna',
     URL_CHANGE = 'urlc',
+    DID_CHANGE_PROGRESS = 'dcpr',
+    DID_CHANGE_TITLE = 'dctt'
 };
 
 #endif // WEBVIEW_CONSTANTS_H
