@@ -46,9 +46,8 @@
 #include "WebViewConstants.h"
 
 BWebView::BWebView(BRect frame, BWindow* myWindow)
+    : fAppLooper(NULL)
 {
-    initializeOnce();
-    //webkit stuff
     auto config = adoptWK(WKPageConfigurationCreate());
     auto prefs = WKPreferencesCreate();
 
@@ -59,9 +58,10 @@ BWebView::BWebView(BRect frame, BWindow* myWindow)
     WKPageConfigurationSetContext(config.get(), fContext.get());
 
     fViewPort=adoptWK(WKViewCreate("Webkit", frame, myWindow, config.get()));
+    fAppLooper = myWindow->Looper(); 
 }
 
-void BWebView::navigationCallbacks(BWebView* app)
+void BWebView::navigationCallbacks()
 {
     auto page = WKViewGetPage(fViewPort.get());
     WKPageNavigationClientV0 navigationClient = {};
@@ -76,8 +76,8 @@ void BWebView::navigationCallbacks(BWebView* app)
     navigationClient.didReceiveServerRedirectForProvisionalNavigation = didReceiveServerRedirectForProvisionalNavigation;
     WKPageSetPageNavigationClient(page, &navigationClient.base);
 
-    observer = new PageLoadStateObserver();
-    getRenderView()->page()->pageLoadState().addObserver(*observer);
+    fObserver = new PageLoadStateObserver(fAppLooper);
+    getRenderView()->page()->pageLoadState().addObserver(*fObserver);
 }
 
 void BWebView::initializeOnce()
@@ -98,8 +98,17 @@ void BWebView::loadHTML()
     WKPageLoadHTMLString(page, str.get(), uri.get());
 }
 
-void BWebView::loadURI(const char* uri)
+void BWebView::loadURIRequest(const char* uri)
 {
+    BMessage message(URL_LOAD_HANDLE);
+    message.AddString("url", uri);
+    be_app->PostMessage(&message);
+}
+
+void BWebView::loadURI(BMessage* message)
+{
+    const char* uri;
+    message->FindString("url", &uri);
     auto page = WKViewGetPage(fViewPort.get());
     WKRetainPtr<WKURLRef> wuri;
     wuri = adoptWK(WKURLCreateWithUTF8CString(uri));
@@ -112,7 +121,7 @@ void BWebView::goForward()
     WKPageGoForward(page);
     BMessage message(URL_CHANGE);
     message.AddString("url", BString(getCurrentURL()));
-    be_app->PostMessage(&message);
+    fAppLooper->PostMessage(&message);
 }
 
 void BWebView::goBackward()
@@ -121,7 +130,7 @@ void BWebView::goBackward()
     WKPageGoBack(page);
     BMessage message(URL_CHANGE);
     message.AddString("url", BString(getCurrentURL()));
-    be_app->PostMessage(&message);
+    fAppLooper->PostMessage(&message);
 }
 
 void BWebView::stop()
@@ -132,15 +141,17 @@ void BWebView::stop()
 
 void BWebView::didCommitNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
 {
+    BLooper* looper = ((BWebView*)clientInfo)->getAppLooper();
     BMessage message(DID_COMMIT_NAVIGATION);
-    be_app->PostMessage(&message);
+    looper->PostMessage(&message);
 }
 
 void BWebView::didReceiveServerRedirectForProvisionalNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
 {
+    BLooper* looper = ((BWebView*)clientInfo)->getAppLooper();
     BMessage message(URL_CHANGE);
     message.AddString("url", BString(((BWebView*)clientInfo)->getCurrentURL()));
-    be_app->PostMessage(&message);
+    looper->PostMessage(&message);
 }
 
 void BWebView::didFinishDocumentLoad(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
@@ -149,8 +160,9 @@ void BWebView::didFinishDocumentLoad(WKPageRef page, WKNavigationRef navigation,
 
 void BWebView::didFinishNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData,const void* clientInfo)
 {
+    BLooper* looper = ((BWebView*)clientInfo)->getAppLooper();
     BMessage message(DID_FINISH_NAVIGATION);
-    be_app->PostMessage(&message);
+    looper->PostMessage(&message);
 }
 
 void BWebView::didFailNavigation(WKPageRef page, WKNavigationRef navigation,WKErrorRef, WKTypeRef userData,const void* clientInfo)

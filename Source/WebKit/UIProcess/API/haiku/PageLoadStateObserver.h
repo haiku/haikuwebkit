@@ -34,7 +34,8 @@ namespace WebKit{
 class PageLoadStateObserver final: public PageLoadState::Observer
 {
     public:
-        PageLoadStateObserver() {}
+        PageLoadStateObserver(BLooper* looper) {}
+
         void willChangeIsLoading() override {}
         void didChangeIsLoading() override {}
 
