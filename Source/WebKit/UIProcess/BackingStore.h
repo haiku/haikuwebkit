@@ -42,6 +42,7 @@ interface ID3D11Texture2D;
 #endif
 
 #if USE(HAIKU)
+#include <WebCore/BitmapImage.h>
 #include <View.h>
 #endif
 
@@ -70,8 +71,7 @@ public:
         ID3D11Texture2D* backBuffer { nullptr };
     };
     typedef DXConnections PlatformGraphicsContext;
-#endif
-#if USE(HAIKU)
+#elif USE(HAIKU)
     typedef BView* PlatformGraphicsContext;
 #endif
 
@@ -95,6 +95,11 @@ private:
     std::unique_ptr<WebCore::BackingStoreBackendCairo> m_backend;
 #elif USE(DIRECT2D)
     std::unique_ptr<WebCore::BackingStoreBackendDirect2D> m_backend;
+#endif
+#if PLATFORM(HAIKU)
+    // FIXME move these into a BackingStoreBackendHaiku class
+    WebCore::PlatformImagePtr m_bitmap;
+    BView* m_surface;
 #endif
 };
 

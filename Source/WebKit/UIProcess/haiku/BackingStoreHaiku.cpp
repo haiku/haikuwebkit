@@ -25,22 +25,45 @@
 
 #include "config.h"
 #include "BackingStore.h"
+#include "ShareableBitmap.h"
 
-#include <WebCore/NotImplemented.h>
+#include <WebCore/IntRect.h>
+#include <WebCore/GraphicsContext.h>
+#include "UpdateInfo.h"
 
+#include <Bitmap.h>
+#include <View.h>
 using namespace WebCore;
 
 namespace WebKit {
 
+#if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
 void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& updateInfo)
 {
-    notImplemented();
+	if(!m_bitmap)
+	{
+		printf("%p has no backing bitmap yet, create it\n", this);
+		m_bitmap = new BitmapRef(BRect(BPoint(0,0),BSize(m_size)),B_RGBA32,true);
+		BView* m_surface = new BView(m_bitmap->Bounds(),"view surface",0,0);
+		m_bitmap->AddChild(m_surface);
+	}
+		
+	IntPoint updateRectLocation = updateInfo.updateRectBounds.location();
+	
+	GraphicsContext graphicsContext(m_surface);
+	
+	for(auto const& updateRect : updateInfo.updateRects)
+	{
+		IntRect srcRect = updateRect;
+		srcRect.move(-updateRectLocation.x(), -updateRectLocation.y());
+		bitmap->paint(graphicsContext,updateRect.location(),srcRect);
+	}
 }
 
 void BackingStore::paint(BView* context,const IntRect& rect)
 {
-    //needs to be filled
-    notImplemented();
+	context->DrawBitmap(&(*m_bitmap));
 }
+#endif
 
 }

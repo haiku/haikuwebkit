@@ -27,6 +27,9 @@
  */
 
 #include "config.h"
+
+#if USE(CAIRO)
+
 #include "NicosiaCairoOperationRecorder.h"
 
 #include "CairoOperations.h"
@@ -1121,3 +1124,4 @@ void CairoOperationRecorder::paintFrameForMedia(MediaPlayer& player, const Float
 #endif
 
 } // namespace Nicosia
+#endif

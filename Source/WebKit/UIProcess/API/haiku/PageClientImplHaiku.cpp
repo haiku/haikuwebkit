@@ -61,10 +61,12 @@ namespace WebKit
 	
 	WebCore::IntSize PageClientImpl::viewSize()
 	{
-		notImplemented();
-	    /*if (fWebView.drawingArea())
-	        return fWebView.drawingArea()->size();
-		*/
+		WebCore::IntSize stuff;
+	    if (fWebView.page()->drawingArea())
+        {
+        	return fWebView.page()->drawingArea()->size();
+        }
+		
 	    return IntSize();
 	}
 	
@@ -193,6 +195,7 @@ namespace WebKit
 	
 	void PageClientImpl::enterAcceleratedCompositingMode(const LayerTreeContext& layerTreeContext)
 	{
+		fprintf(stderr,"\n %s \n",__PRETTY_FUNCTION__);
 	    notImplemented();
 	}
 	
