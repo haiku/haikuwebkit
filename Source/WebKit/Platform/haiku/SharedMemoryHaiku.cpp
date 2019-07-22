@@ -26,26 +26,18 @@
 #include "config.h"
 #include "SharedMemory.h"
 
+#include "ArgumentCoders.h"
 #include "Decoder.h"
 #include "Encoder.h"
 
-#include<OS.h>
+#include <OS.h>
+#include <WebCore/BitmapImage.h>
+#include <WebCore/IntSize.h>
+#include <Bitmap.h>
 
+using namespace WebCore;
 namespace WebKit {
 
-SharedMemory::Handle::Handle()
-	: m_areaid(0),
-	m_size(0)
-{
-}
-
-SharedMemory::Handle::~Handle()
-{
-	clear();
-}
-
-SharedMemory::Handle::Handle(Handle&& other) = default;
-SharedMemory::Handle& SharedMemory::Handle::operator=(Handle&& other) = default;
 void SharedMemory::Handle::clear()
 {
 	if (!m_areaid)
@@ -56,17 +48,35 @@ void SharedMemory::Handle::clear()
 
 bool SharedMemory::Handle::isNull() const
 {
-	return !m_areaid;
+    return !m_areaid;
+}
+
+void SharedMemory::Handle::encode(IPC::Encoder& encoder) const
+{
+    encoder << m_areaid;
+    encoder << m_size;
+}
+
+bool SharedMemory::Handle::decode(IPC::Decoder& decoder, Handle& ipcHandle)
+{
+    ASSERT_ARG(ipcHandle.handle, ipcHandle.isNull());
+    if (!decoder.decode(ipcHandle.m_areaid))
+        return false;
+    if (!decoder.decode(ipcHandle.m_size))
+        return false;
+    return true;
 }
 
 static uint32 protectionMode(SharedMemory::Protection protection)
 {
-	switch(protection)
+	switch (protection)
 	{
 		case SharedMemory::Protection::ReadOnly:
 			return B_READ_AREA;
 		case SharedMemory::Protection::ReadWrite:
 			return B_READ_AREA | B_WRITE_AREA;
+		default:
+			return 0;
 	}
 }
 
@@ -79,7 +89,7 @@ RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
 
 	if (sharedArea < 0)
 		return nullptr;
-	
+
 	RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
 	memory->m_size = size;
 	memory->m_data = baseAddress;
@@ -105,7 +115,7 @@ RefPtr<SharedMemory> SharedMemory::adopt(area_id area, size_t size, Protection p
 
 	void* baseAddress;
 
-	area_id clonedArea = clone_area("WebKit-Shared-Memory", &baseAddress, B_CLONE_ADDRESS,
+	area_id clonedArea = clone_area("WebKit-Shared-Memory", &baseAddress, B_ANY_ADDRESS,
 		protectionMode(protection),area);
 
 	if (clonedArea < 0)
@@ -129,19 +139,14 @@ SharedMemory::~SharedMemory()
 	m_areaid = 0;
 }
 
-bool SharedMemory::createHandle(Handle& handle, Protection)
+std::optional<SharedMemory::Handle> SharedMemory::createHandle(Protection)
 {
-	ASSERT_ARG(handle,handle.isNull());
-	ASSERT(m_areaid);
+    ASSERT(m_areaid);
 
+	SharedMemory::Handle handle;
 	handle.m_areaid = m_areaid;
 	handle.m_size = m_size;
-	return true;
-}
-
-unsigned SharedMemory::systemPageSize()
-{
-	return B_PAGE_SIZE;
+	return handle;
 }
 
 } // namespace WebKit

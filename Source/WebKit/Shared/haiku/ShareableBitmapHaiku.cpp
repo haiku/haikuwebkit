@@ -28,6 +28,7 @@
 
 #include <WebCore/BitmapImage.h>
 #include <WebCore/GraphicsContext.h>
+#include <WebCore/GraphicsContextHaiku.h>
 #include <WebCore/IntRect.h>
 #include <WebCore/NotImplemented.h>
 
@@ -38,31 +39,28 @@ using namespace WebCore;
 
 namespace WebKit {
 
-static inline NativeImagePtr createSurfaceFromData(void* data, const WebCore::IntSize& size)
-{
-    BitmapRef* bitmap = new BitmapRef(BRect(B_ORIGIN, size), B_RGBA32, false);
-
-    bitmap->ImportBits(static_cast<unsigned char*>(data),
-        size.width() * size.height() * 4, 32 * size.height(), 0, B_RGB32);
-    NativeImagePtr image = StillImage::create(adoptRef(bitmap));
-    return image;
-}
-
 std::unique_ptr<GraphicsContext> ShareableBitmap::createGraphicsContext()
 {
-    RefPtr<StillImage> image = createBitmapSurface();
-    BView* surface = new BView(image->nativeImageForCurrentFrame(nullptr)->Bounds(),
-        "Shareable", 0, 0);
-    image->nativeImageForCurrentFrame(nullptr)->AddChild(surface);
+    PlatformImagePtr image = createPlatformImage();
+
+    BView* surface = new BView(image->Bounds(), "Shareable", 0, 0);
+    image->AddChild(surface);
     surface->LockLooper();
-    return std::make_unique<GraphicsContext>(surface);
+
+    return std::make_unique<GraphicsContextHaiku>(surface);
 }
 
 void ShareableBitmap::paint(GraphicsContext& context, const IntPoint& dstPoint, const IntRect& srcRect)
 {
-    RefPtr<StillImage> bitmapImage = createBitmapSurface();
-    context.platformContext()->DrawBitmap(bitmapImage->nativeImageForCurrentFrame(nullptr).get(),
-        BPoint(dstPoint));
+    BBitmap bitmap(BRect(B_ORIGIN, size()), B_RGBA32, true);
+    bitmap.ImportBits(data(), size().width() * size().height() * 4, 4 * size().width(), 0, B_RGBA32);
+
+    BView* viewSurface = context.platformContext();
+
+    viewSurface->LockLooper();
+    viewSurface->DrawBitmap(&bitmap);
+    viewSurface->Sync();
+    viewSurface->UnlockLooper();
 }
 
 void ShareableBitmap::paint(GraphicsContext& context, float scaleFactor, const IntPoint& dstPoint, const IntRect& srcRect)
@@ -73,33 +71,34 @@ void ShareableBitmap::paint(GraphicsContext& context, float scaleFactor, const I
     notImplemented();
 }
 
-RefPtr<StillImage> ShareableBitmap::createBitmapSurface()
+WebCore::PlatformImagePtr ShareableBitmap::createPlatformImage(WebCore::BackingStoreCopy, WebCore::ShouldInterpolate)
 {
-    RefPtr<StillImage> image = createSurfaceFromData(data(), m_size);
-
-    ref(); // Balanced by deref in releaseSurfaceData.
-    return image;
+    return WebCore::PlatformImagePtr(new BitmapRef(m_sharedMemory->area(), 0, bounds(), 0, /*m_configuration.platformColorSpace()*/ B_RGBA32, bytesPerRow()));
 }
 
 RefPtr<Image> ShareableBitmap::createImage()
 {
-    RefPtr<StillImage> surface = createBitmapSurface();
+    WebCore::PlatformImagePtr surface = createPlatformImage();
     if (!surface)
-        return 0;
+        return nullptr;
 
-    return BitmapImage::create(surface->nativeImageForCurrentFrame(nullptr));
+    return BitmapImage::create(std::move(surface));
 }
 
-Checked<unsigned, RecordOverflow> ShareableBitmap::calculateBytesPerRow(WebCore::IntSize size,
-    const ShareableBitmap::Configuration& config)
+Checked<unsigned, RecordOverflow> ShareableBitmapConfiguration::calculateBytesPerRow(const WebCore::IntSize& size,
+    const WebCore::DestinationColorSpace& config)
 {
-    unsigned bytes = calculateBytesPerPixel(config)*size.width();
-
-    return bytes;
+    return 4 * size.width();
 }
 
-unsigned ShareableBitmap::calculateBytesPerPixel(const Configuration&)
+Checked<unsigned int, RecordOverflow> ShareableBitmapConfiguration::calculateBytesPerPixel(const WebCore::DestinationColorSpace&)
 {
     return 4;
 }
+
+std::optional<WebCore::DestinationColorSpace> WebKit::ShareableBitmapConfiguration::validateColorSpace(std::optional<WebCore::DestinationColorSpace> space)
+{
+	return space;
+}
+
 }

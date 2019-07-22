@@ -43,6 +43,7 @@
 
 #if PLATFORM(HAIKU)
 #include <OS.h>
+#include <WebCore/IntSize.h>
 #endif
 
 namespace IPC {
