@@ -40,6 +40,7 @@
 
 #if PLATFORM(HAIKU)
 #include <OS.h>
+#include <WebCore/IntSize.h>
 #endif
 
 namespace IPC {
@@ -106,8 +107,8 @@ public:
         mutable HANDLE m_handle;
         size_t m_size;
 #elif PLATFORM(HAIKU)
-		mutable area_id m_areaid;
-		size_t m_size;
+        mutable area_id m_areaid;
+        size_t m_size;
 #endif
     };
 
@@ -137,7 +138,7 @@ public:
 #if OS(WINDOWS)
     static RefPtr<SharedMemory> adopt(HANDLE, size_t, Protection);
 #elif PLATFORM(HAIKU)
-	static RefPtr<SharedMemory> adopt(area_id, size_t , Protection);
+    static RefPtr<SharedMemory> adopt(area_id, size_t , Protection);
 #endif
 
     ~SharedMemory();
@@ -183,7 +184,7 @@ private:
 #elif OS(WINDOWS)
     HANDLE m_handle;
 #elif PLATFORM(HAIKU)
-	area_id m_areaid;
+    area_id m_areaid;
 #endif
 };
 

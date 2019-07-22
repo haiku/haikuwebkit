@@ -29,8 +29,12 @@
 #include "Decoder.h"
 #include "Encoder.h"
 
-#include<OS.h>
+#include <OS.h>
+#include <WebCore/BitmapImage.h>
+#include <WebCore/IntSize.h>
+#include <Bitmap.h>
 
+using namespace WebCore;
 namespace WebKit {
 
 SharedMemory::Handle::Handle()
@@ -72,6 +76,7 @@ static uint32 protectionMode(SharedMemory::Protection protection)
 
 RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
 {
+<<<<<<< HEAD
 	void* baseAddress;
 	
 	area_id sharedArea = create_area("WebKit-shared-memory",&baseAddress,B_ANY_ADDRESS,
@@ -84,8 +89,27 @@ RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
 	memory->m_size = size;
 	memory->m_data = baseAddress;
 	memory->m_areaid = sharedArea;
+	memory->m_bitmap = NULL;
 	
 	return memory;
+}
+
+RefPtr<SharedMemory> SharedMemory::bitmapAllocate(WebCore::IntSize bounds)
+{
+    void* baseAddress;
+
+    area_id sharedArea = create_area("WebKit-shared-memory",&baseAddress,B_ANY_ADDRESS,
+        size,B_NO_LOCK,B_READ_AREA | B_WRITE_AREA);
+
+    if(sharedArea<0)
+    return nullptr;
+
+    RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
+    memory->m_size = size;
+    memory->m_data = baseAddress;
+    memory->m_areaid = sharedArea;
+
+    return memory;
 }
 
 RefPtr<SharedMemory> SharedMemory::map(const Handle& handle, Protection protection)
@@ -100,23 +124,23 @@ RefPtr<SharedMemory> SharedMemory::map(const Handle& handle, Protection protecti
 
 RefPtr<SharedMemory> SharedMemory::adopt(area_id area, size_t size, Protection protection)
 {
-	if(!area)
-	return nullptr;
-	
-	void* baseAddress;
-	
-	area_id clonedArea = clone_area("WebKit-cloned-memory",&baseAddress,B_ANY_ADDRESS,
-	protectionMode(protection),area);
-	
-	if(clonedArea<0)
-	return nullptr;
-	
-	RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
-	memory->m_size = size;
-	memory->m_data = baseAddress;
-	memory->m_areaid = clonedArea;
-	
-	return memory;
+    if(!area)
+    return nullptr;
+
+    void* baseAddress;
+
+    area_id clonedArea = clone_area("WebKit-cloned-memory",&baseAddress,B_ANY_ADDRESS,
+    protectionMode(protection),area);
+
+    if(clonedArea<0)
+    return nullptr;
+
+    RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
+    memory->m_size = size;
+    memory->m_data = baseAddress;
+    memory->m_areaid = clonedArea;
+
+    return memory;
 }
 
 SharedMemory::~SharedMemory()
@@ -130,12 +154,13 @@ SharedMemory::~SharedMemory()
 
 bool SharedMemory::createHandle(Handle& handle, Protection)
 {
-	ASSERT_ARG(handle,handle.isNull());
-	ASSERT(m_areaid);
-	
-	handle.m_areaid = m_areaid;
-	handle.m_size = m_size;
-	return true;
+    ASSERT_ARG(handle,handle.isNull());
+    ASSERT(m_areaid);
+
+    handle.m_areaid = m_areaid;
+    handle.m_size = m_size;
+
+    return true;
 }
 
 unsigned SharedMemory::systemPageSize()

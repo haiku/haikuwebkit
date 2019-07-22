@@ -44,12 +44,13 @@ void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& 
 	{
 		printf("%p has no backing bitmap yet, create it\n", this);
 		m_bitmap = new BitmapRef(BRect(BPoint(0,0),BSize(m_size)),B_RGBA32,true);
-		BView* m_surface = new BView(m_bitmap->Bounds(),"view surface",0,0);
+		m_surface = new BView(m_bitmap->Bounds(),"view surface",B_FOLLOW_ALL_SIDES,B_WILL_DRAW);
 		m_bitmap->AddChild(m_surface);
+		
 	}
 		
 	IntPoint updateRectLocation = updateInfo.updateRectBounds.location();
-	
+
 	GraphicsContext graphicsContext(m_surface);
 	
 	for(auto const& updateRect : updateInfo.updateRects)
@@ -62,7 +63,7 @@ void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& 
 
 void BackingStore::paint(BView* context,const IntRect& rect)
 {
-	context->DrawBitmap(&(*m_bitmap));
+	context->DrawBitmap(m_bitmap,BRect(rect),BRect(rect));
 }
 #endif
 

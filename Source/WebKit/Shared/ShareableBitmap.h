@@ -50,6 +50,10 @@ interface IDXGISurface1;
 #include <WebCore/COMPtr.h>
 #endif
 
+#if PLATFORM(HAIKU)
+#include <WebCore/BitmapImage.h>
+#endif
+
 namespace WebCore {
 class Image;
 class GraphicsContext;
@@ -175,6 +179,9 @@ private:
     static void releaseSurfaceData(void* typelessBitmap);
 #endif
 
+#if PLATFORM(HAIKU)
+    WebCore::BitmapRef* bitmapObject() const;
+#endif
 public:
     void* data() const;
     size_t bytesPerRow() const { return calculateBytesPerRow(m_size, m_configuration); }
