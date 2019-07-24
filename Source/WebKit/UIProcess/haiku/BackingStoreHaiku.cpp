@@ -48,7 +48,7 @@ void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& 
 		m_bitmap->AddChild(m_surface);
 		
 	}
-		
+	
 	IntPoint updateRectLocation = updateInfo.updateRectBounds.location();
 
 	GraphicsContext graphicsContext(m_surface);
@@ -59,11 +59,12 @@ void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& 
 		srcRect.move(-updateRectLocation.x(), -updateRectLocation.y());
 		bitmap->paint(graphicsContext,updateRect.location(),srcRect);
 	}
+	
 }
 
 void BackingStore::paint(BView* context,const IntRect& rect)
 {
-	context->DrawBitmap(m_bitmap,BRect(rect),BRect(rect));
+	context->DrawBitmap(m_bitmap);
 }
 #endif
 
