@@ -68,9 +68,9 @@ private:
     void resume() override;
     void invalidateAndCancel() override;
     NetworkDataTask::State state() const override;
-    
+
     void runOnMainThread(Function<void()>&&);
-    
+
     void ConnectionOpened(BUrlRequest* caller) override;
     void HeadersReceived(BUrlRequest* caller) override;
     void BytesWritten(BUrlRequest* caller, size_t size) override;
