@@ -45,53 +45,52 @@ m_size(0)
 
 SharedMemory::Handle::~Handle()
 {
-	clear();
+    clear();
 }
 
 SharedMemory::Handle::Handle(Handle&& other) = default;
 SharedMemory::Handle& SharedMemory::Handle::operator=(Handle&& other) = default;
 void SharedMemory::Handle::clear()
 {
-	if(!m_areaid)
-	return;
-	
-	m_areaid = 0;
+    if(!m_areaid)
+    return;
+    
+    m_areaid = 0;
 }
 
 bool SharedMemory::Handle::isNull() const
 {
-	return !m_areaid;
+    return !m_areaid;
 }
 
 static uint32 protectionMode(SharedMemory::Protection protection)
 {
-	switch(protection)
-	{
-		case SharedMemory::Protection::ReadOnly:
-		return B_READ_AREA;
-		case SharedMemory::Protection::ReadWrite:
-		return B_READ_AREA | B_WRITE_AREA;
-	}
+    switch(protection)
+    {
+        case SharedMemory::Protection::ReadOnly:
+        return B_READ_AREA;
+        case SharedMemory::Protection::ReadWrite:
+        return B_READ_AREA | B_WRITE_AREA;
+    }
 }
 
 RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
 {
-<<<<<<< HEAD
-	void* baseAddress;
-	
-	area_id sharedArea = create_area("WebKit-shared-memory",&baseAddress,B_ANY_ADDRESS,
-		size,B_NO_LOCK,B_READ_AREA | B_WRITE_AREA);
+    void* baseAddress;
 
-	if(sharedArea<0)
-	return nullptr;
-	
-	RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
-	memory->m_size = size;
-	memory->m_data = baseAddress;
-	memory->m_areaid = sharedArea;
-	memory->m_bitmap = NULL;
-	
-	return memory;
+    area_id sharedArea = create_area("WebKit-shared-memory",&baseAddress,B_ANY_ADDRESS,
+        size,B_NO_LOCK,B_READ_AREA | B_WRITE_AREA);
+
+    if(sharedArea<0)
+    return nullptr;
+
+    RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
+    memory->m_size = size;
+    memory->m_data = baseAddress;
+    memory->m_areaid = sharedArea;
+    memory->m_bitmap = NULL;
+
+    return memory;
 }
 
 RefPtr<SharedMemory> SharedMemory::bitmapAllocate(WebCore::IntSize bounds)
@@ -114,12 +113,12 @@ RefPtr<SharedMemory> SharedMemory::bitmapAllocate(WebCore::IntSize bounds)
 
 RefPtr<SharedMemory> SharedMemory::map(const Handle& handle, Protection protection)
 {
-	RefPtr<SharedMemory> memory = adopt(handle.m_areaid, handle.m_size, protection);
-	if(!memory)
-	return nullptr;
-	
-	handle.m_areaid = 0;
-	return memory;
+    RefPtr<SharedMemory> memory = adopt(handle.m_areaid, handle.m_size, protection);
+    if(!memory)
+    return nullptr;
+    
+    handle.m_areaid = 0;
+    return memory;
 }
 
 RefPtr<SharedMemory> SharedMemory::adopt(area_id area, size_t size, Protection protection)
@@ -145,11 +144,11 @@ RefPtr<SharedMemory> SharedMemory::adopt(area_id area, size_t size, Protection p
 
 SharedMemory::~SharedMemory()
 {
-	if(!m_areaid)
-	return;
-	//unset
-	delete_area(m_areaid);
-	m_areaid = 0;
+    if(!m_areaid)
+    return;
+    //unset
+    delete_area(m_areaid);
+    m_areaid = 0;
 }
 
 bool SharedMemory::createHandle(Handle& handle, Protection)
@@ -165,7 +164,7 @@ bool SharedMemory::createHandle(Handle& handle, Protection)
 
 unsigned SharedMemory::systemPageSize()
 {
-	return B_PAGE_SIZE;
+    return B_PAGE_SIZE;
 }
 
 } // namespace WebKit

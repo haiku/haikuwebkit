@@ -117,5 +117,5 @@ namespace WebKit
 	    DefaultUndoController fUndoController;
 		
 		WebViewBase& fWebView;
-	};	
+	};
 }

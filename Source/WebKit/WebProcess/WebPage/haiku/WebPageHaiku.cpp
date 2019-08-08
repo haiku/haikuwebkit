@@ -121,7 +121,7 @@ const char* WebPage::interpretKeyEvent(const KeyboardEvent* event)
 
 String WebPage::platformUserAgent(const URL& url) const
 {
-	notImplemented();
+    notImplemented();
     return String();
 }
 

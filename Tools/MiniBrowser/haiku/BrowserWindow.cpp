@@ -39,8 +39,8 @@ enum {
 	TEXT_SIZE_RESET = 'tsrs',
 	
 	NEW_WINDOW = 'nwnd',
-    WINDOW_OPENED = 'wndo',
-    WINDOW_CLOSED = 'wndc',
+	WINDOW_OPENED = 'wndo',
+	WINDOW_CLOSED = 'wndc',
 };
 
 BrowserWindow::BrowserWindow()

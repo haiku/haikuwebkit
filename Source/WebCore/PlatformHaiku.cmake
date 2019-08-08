@@ -121,17 +121,17 @@ list(APPEND WebCore_SOURCES
   platform/text/haiku/StringHaiku.cpp
 )
 if(ENABLE_GRAPHICS_CONTEXT_3D)
-	list(APPEND WebCore_SOURCES
-		platform/graphics/haiku/GraphicsContext3DHaiku.cpp
-		platform/graphics/opengl/Extensions3DOpenGL.cpp
-		platform/graphics/opengl/Extensions3DOpenGLCommon.cpp
-		platform/graphics/GLContext.cpp
-		platform/graphics/OpenGLShims.cpp
-		platform/graphics/PlatformDisplay.cpp
-		platform/graphics/opengl/GraphicsContext3DOpenGLCommon.cpp
-		platform/graphics/opengl/GraphicsContext3DOpenGL.cpp
-		platform/graphics/opengl/TemporaryOpenGLSetting.cpp
-	)
+    list(APPEND WebCore_SOURCES
+        platform/graphics/haiku/GraphicsContext3DHaiku.cpp
+        platform/graphics/opengl/Extensions3DOpenGL.cpp
+        platform/graphics/opengl/Extensions3DOpenGLCommon.cpp
+        platform/graphics/GLContext.cpp
+        platform/graphics/OpenGLShims.cpp
+        platform/graphics/PlatformDisplay.cpp
+        platform/graphics/opengl/GraphicsContext3DOpenGLCommon.cpp
+        platform/graphics/opengl/GraphicsContext3DOpenGL.cpp
+        platform/graphics/opengl/TemporaryOpenGLSetting.cpp
+    )
 endif()
 if (ENABLE_WEB_CRYPTO)
     list(APPEND WebCore_SOURCES
@@ -189,8 +189,8 @@ endif ()
 
 if (ENABLE_WEB_AUDIO)
     list(APPEND WebCore_SOURCES
-		platform/audio/haiku/AudioDestinationHaiku.cpp
-	)
+        platform/audio/haiku/AudioDestinationHaiku.cpp
+    )
 endif ()
 
 list(APPEND WebCore_USER_AGENT_STYLE_SHEETS

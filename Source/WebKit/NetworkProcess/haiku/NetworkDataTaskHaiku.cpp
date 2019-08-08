@@ -78,7 +78,7 @@ NetworkDataTaskHaiku::NetworkDataTaskHaiku(NetworkSession& session, NetworkDataT
 
 NetworkDataTaskHaiku::~NetworkDataTaskHaiku()
 {
-	cancel();
+    cancel();
     if (m_request)
         m_request->SetListener(NULL);
     delete m_request;
@@ -86,9 +86,9 @@ NetworkDataTaskHaiku::~NetworkDataTaskHaiku()
 
 void NetworkDataTaskHaiku::createRequest(ResourceRequest&& request)
 {
-	m_currentRequest = WTFMove(request);
-	m_request = m_currentRequest.toNetworkRequest(nullptr);
-	
+    m_currentRequest = WTFMove(request);
+    m_request = m_currentRequest.toNetworkRequest(nullptr);
+    
     BString method = BString(m_currentRequest.httpMethod());
 
     m_postData = NULL;
@@ -135,25 +135,25 @@ void NetworkDataTaskHaiku::createRequest(ResourceRequest&& request)
 
 void NetworkDataTaskHaiku::cancel()
 {
-	if(m_state == State::Canceling || m_state == State::Completed)
-	return;
-	
-	m_state = State::Canceling;
+    if(m_state == State::Canceling || m_state == State::Completed)
+    return;
+    
+    m_state = State::Canceling;
 
-	if(m_request)
-	m_request->Stop();
-	
+    if(m_request)
+    m_request->Stop();
+    
 }
 
 void NetworkDataTaskHaiku::resume()
 {
-	if(m_state == State::Completed || m_state == State::Canceling)
-	return;
-	
-	m_state = State::Running;
-	
-	if(m_request)
-	m_request->Resume();
+    if(m_state == State::Completed || m_state == State::Canceling)
+    return;
+    
+    m_state = State::Running;
+    
+    if(m_request)
+    m_request->Resume();
 }
 
 void NetworkDataTaskHaiku::invalidateAndCancel()
@@ -162,16 +162,16 @@ void NetworkDataTaskHaiku::invalidateAndCancel()
 
 NetworkDataTask::State NetworkDataTaskHaiku::state() const
 {
-	return m_state;	
+    return m_state;	
 }
 
 void NetworkDataTaskHaiku::ConnectionOpened(BUrlRequest*)
 {
-	m_responseDataSent = false;
+    m_responseDataSent = false;
 }
 void NetworkDataTaskHaiku::HeadersReceived(BUrlRequest* caller)
 {
-	if (m_currentRequest.isNull())
+    if (m_currentRequest.isNull())
         return;
 
     const BHttpResult* httpResult = dynamic_cast<const BHttpResult*>(&caller->Result());
@@ -219,9 +219,9 @@ void NetworkDataTaskHaiku::HeadersReceived(BUrlRequest* caller)
         }
 
         if (statusCode == 401) {
-        	
-        	//TODO
-        	
+            
+            //TODO
+            
             //AuthenticationNeeded((BHttpRequest*)m_request, response);
             // AuthenticationNeeded may have aborted the request
             // so we need to make sure we can continue.
@@ -240,7 +240,7 @@ void NetworkDataTaskHaiku::HeadersReceived(BUrlRequest* caller)
         if (m_redirectionTries == 0) {
             ResourceError error(url.host().utf8().data(), 400, url,
                 "Redirection limit reached");
-            
+
             m_networkLoadMetrics.responseEnd = MonotonicTime::now() - m_startTime;
             m_networkLoadMetrics.markComplete();
             m_client->didCompleteWithError(error,m_networkLoadMetrics);
@@ -295,7 +295,7 @@ void NetworkDataTaskHaiku::BytesWritten(BUrlRequest* caller, size_t size)
     if (size > 0) {
         m_responseDataSent = true;
         runOnMainThread([this,data=data,size=size]{
-		m_client->didReceiveData(SharedBuffer::create(data,size));
+        m_client->didReceiveData(SharedBuffer::create(data,size));
         });
     }
 
@@ -310,34 +310,34 @@ void NetworkDataTaskHaiku::RequestCompleted(BUrlRequest* caller, bool success)
 }
 bool NetworkDataTaskHaiku::CertificateVerificationFailed(BUrlRequest* caller, BCertificate& certificate, const char* message)
 {
-	//TODO
-	return true;
+    //TODO
+    return true;
 }
 void NetworkDataTaskHaiku::DebugMessage(BUrlRequest* caller,BUrlProtocolDebugMessage type,const char* text)
 {
-	int8 color;
-	switch(type)
-	{
-		case B_URL_PROTOCOL_DEBUG_TEXT:
-		case B_URL_PROTOCOL_DEBUG_HEADER_IN:
-		case B_URL_PROTOCOL_DEBUG_TRANSFER_IN:
-		color = DC_GREEN;
-		break;
-		case B_URL_PROTOCOL_DEBUG_HEADER_OUT:
-		case B_URL_PROTOCOL_DEBUG_TRANSFER_OUT:
-		color = DC_BLUE;
-		break;
-		case B_URL_PROTOCOL_DEBUG_ERROR:
-		color = DC_RED;
-	}
-	BeDC dc("network-request",type);
-	dc.SendMessage((char*)text);
+    int8 color;
+    switch(type)
+    {
+        case B_URL_PROTOCOL_DEBUG_TEXT:
+        case B_URL_PROTOCOL_DEBUG_HEADER_IN:
+        case B_URL_PROTOCOL_DEBUG_TRANSFER_IN:
+        color = DC_GREEN;
+        break;
+        case B_URL_PROTOCOL_DEBUG_HEADER_OUT:
+        case B_URL_PROTOCOL_DEBUG_TRANSFER_OUT:
+        color = DC_BLUE;
+        break;
+        case B_URL_PROTOCOL_DEBUG_ERROR:
+        color = DC_RED;
+    }
+    BeDC dc("network-request",type);
+    dc.SendMessage((char*)text);
 }
 void NetworkDataTaskHaiku::runOnMainThread(Function<void()>&& task)
 {
-	if(isMainThread())
-	task();
-	else
-	callOnMainThreadAndWait(WTFMove(task));
+    if(isMainThread())
+    task();
+    else
+    callOnMainThreadAndWait(WTFMove(task));
 }
 }

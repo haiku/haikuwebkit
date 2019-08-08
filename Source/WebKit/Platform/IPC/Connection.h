@@ -208,11 +208,11 @@ public:
     static bool createServerAndClientIdentifiers(Identifier& serverIdentifier, Identifier& clientIdentifier);
     static bool identifierIsValid(Identifier identifier) { return !!identifier; }
 #elif PLATFORM(HAIKU)
-	struct connectionData
-	{
-		team_id connectedProcess;
-		BString key;	
-	};
+    struct connectionData
+    {
+        team_id connectedProcess;
+        BString key;
+    };
     typedef connectionData Identifier;
     static bool identifierIsValid(Identifier identifier) { return BMessenger(NULL,identifier.connectedProcess).IsValid(); }//FIXME: make this less expensive
     void prepareIncomingMessage(BMessage*);
