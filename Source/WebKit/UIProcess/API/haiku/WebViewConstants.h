@@ -30,5 +30,6 @@ enum {
     URL_CHANGE = 'urlc',
     DID_CHANGE_PROGRESS = 'dcpr',
     DID_CHANGE_TITLE = 'dctt',
-    URL_LOAD_HANDLE = 'urlh'
+    URL_LOAD_HANDLE = 'urlh',
+    READY_TO_PAINT = 'retp'
 };
