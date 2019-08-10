@@ -29,6 +29,9 @@
 
 #include "config.h"
 
+#include "PageLoadStateObserver.h"
+
+#include "WKAPICast.h"
 #include "WKPageConfigurationRef.h"
 #include "WKPage.h"
 #include "WKView.h"
@@ -42,8 +45,10 @@
 #include "wtf/FastMalloc.h"
 #include "wtf/RunLoop.h"
 
+#include "WebPageProxy.h"
 #include "WebView.h"
 #include "WebViewConstants.h"
+#include "ProcessInitHaiku.h"
 
 BWebView::BWebView(BRect frame, BWindow* myWindow)
     : fAppLooper(NULL)
@@ -105,6 +110,23 @@ void BWebView::loadURIRequest(const char* uri)
     be_app->PostMessage(&message);
 }
 
+void BWebView::paintContent()
+{
+    getRenderView()->LockLooper();
+    getRenderView()->Invalidate();
+    getRenderView()->UnlockLooper();
+}
+
+WebViewBase* BWebView::getRenderView()
+{
+    return toImpl(fViewPort.get());
+}
+
+const char* BWebView::getCurrentURL()
+{
+    return getRenderView()->currentURL();
+}
+
 void BWebView::loadURI(BMessage* message)
 {
     const char* uri;
@@ -141,10 +163,6 @@ void BWebView::stop()
 
 void BWebView::didCommitNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
 {
-    BView* view = ((BWebView*)clientInfo)->getRenderView();
-    view->LockLooper();
-    view->Invalidate();
-    view->UnlockLooper();
     BLooper* looper = ((BWebView*)clientInfo)->getAppLooper();
     BMessage message(DID_COMMIT_NAVIGATION);
     looper->PostMessage(&message);
