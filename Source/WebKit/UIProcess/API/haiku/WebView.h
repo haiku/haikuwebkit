@@ -23,15 +23,14 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "config.h"
-#include "WKPage.h"
-#include "WKView.h"
-#include "WKContext.h"
-#include "WKRetainPtr.h"
-#include "WKAPICast.h"
-#include "WebViewBase.h"
-#include "PageLoadStateObserver.h"
 
-using namespace WebKit;
+#include <WebKit/WKRetainPtr.h>
+#include "WKView.h"
+#include "WebViewBase.h"
+
+namespace WebKit {
+    class PageLoadStateObserver;
+}
 
 class BWebView
 {
@@ -44,8 +43,9 @@ class BWebView
         void goForward();
         void goBackward();
         void stop();
-        WebViewBase* getRenderView() { return toImpl(fViewPort.get()); }
-        const char* getCurrentURL() { return getRenderView()->currentURL(); }
+        void paintContent();
+        WebKit::WebViewBase* getRenderView();
+        const char* getCurrentURL();
         BLooper* getAppLooper() { return fAppLooper; }
 
         void navigationCallbacks();
@@ -62,7 +62,7 @@ class BWebView
         static void didFinishNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
         static void didFailNavigation(WKPageRef page, WKNavigationRef navigation, WKErrorRef, WKTypeRef userData, const void* clientInfo);
 
-        PageLoadStateObserver* fObserver;
+        WebKit::PageLoadStateObserver* fObserver;
         BLooper* fAppLooper;
 };
 
