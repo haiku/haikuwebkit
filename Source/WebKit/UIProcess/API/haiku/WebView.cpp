@@ -44,6 +44,7 @@
 
 #include "WebView.h"
 #include "WebViewConstants.h"
+#include "ProcessInitHaiku.h"
 
 BWebView::BWebView(BRect frame,BWindow* myWindow)
 :fAppLooper(NULL)
@@ -109,6 +110,13 @@ void BWebView::loadURIRequest(const char* uri)
     message.AddString("url",uri);
     be_app->PostMessage(&message);
 }
+
+void BWebView::paintContent()
+{
+	getRenderView()->LockLooper();
+	getRenderView()->Invalidate();
+	getRenderView()->UnlockLooper();
+}
     
 void BWebView::loadURI(BMessage* message)
 {
@@ -142,10 +150,6 @@ void BWebView::stop()
 }
 void BWebView::didCommitNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
 {
-    BView* view = ((BWebView*)clientInfo)->getRenderView();
-    view->LockLooper();
-    view->Invalidate();
-    view->UnlockLooper();
     BLooper* looper = ((BWebView*)clientInfo)->getAppLooper();
     BMessage message(DID_COMMIT_NAVIGATION);
     looper->PostMessage(&message);
