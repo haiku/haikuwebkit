@@ -41,6 +41,10 @@ typedef const struct __CFURL* CFURLRef;
 OBJC_CLASS NSURL;
 #endif
 
+#if PLATFORM(HAIKU)
+class BUrl;
+#endif
+
 namespace WTF {
 
 class PrintStream;
@@ -189,6 +193,10 @@ public:
     URL(GUri*);
     GRefPtr<GUri> createGUri() const;
 #endif
+
+#if PLATFORM(HAIKU)
+    explicit URL(const BUrl&);
+    operator BUrl() const;
 
 #ifndef NDEBUG
     void print() const;
