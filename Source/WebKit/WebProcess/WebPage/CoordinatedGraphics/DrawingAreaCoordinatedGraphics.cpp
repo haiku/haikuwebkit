@@ -356,7 +356,7 @@ void DrawingAreaCoordinatedGraphics::triggerRenderingUpdate()
     if (m_layerTreeHost)
         m_layerTreeHost->scheduleLayerFlush();
     else
-        setNeedsDisplay();
+        scheduleDisplay();
 }
 
 #if USE(COORDINATED_GRAPHICS)
@@ -385,7 +385,7 @@ RefPtr<DisplayRefreshMonitor> DrawingAreaCoordinatedGraphics::createDisplayRefre
     return m_layerTreeHost->createDisplayRefreshMonitor(displayID);
 }
 
-void DrawingAreaCoordinatedGraphics::activityStateDidChange(OptionSet<ActivityState::Flag> changed, ActivityStateChangeID, const Vector<CallbackID>&)
+void DrawingAreaCoordinatedGraphics::activityStateDidChange(OptionSet<ActivityState::Flag> changed, ActivityStateChangeID, CompletionHandler<void()>&& completionHandler)
 {
     if (changed & ActivityState::IsVisible) {
         if (m_webPage.isVisible())
@@ -393,6 +393,7 @@ void DrawingAreaCoordinatedGraphics::activityStateDidChange(OptionSet<ActivitySt
         else
             suspendPainting();
     }
+    completionHandler();
 }
 
 void DrawingAreaCoordinatedGraphics::attachViewOverlayGraphicsLayer(GraphicsLayer* viewOverlayRootLayer)
@@ -471,6 +472,10 @@ void DrawingAreaCoordinatedGraphics::didUpdate()
         return;
 
     m_isWaitingForDidUpdate = false;
+
+    if (!m_scheduledWhileWaitingForDidUpdate)
+        return;
+    m_scheduledWhileWaitingForDidUpdate = false;
 
     // Display if needed. We call displayTimerFired here since it will throttle updates to 60fps.
     displayTimerFired();
@@ -676,13 +681,12 @@ void DrawingAreaCoordinatedGraphics::scheduleDisplay()
 {
     ASSERT(!m_layerTreeHost);
 
-    if (m_isWaitingForDidUpdate)
+    if (m_isWaitingForDidUpdate) {
+        m_scheduledWhileWaitingForDidUpdate = true;
         return;
+    }
 
     if (m_isPaintingSuspended)
-        return;
-
-    if (m_dirtyRegion.isEmpty())
         return;
 
     if (m_displayTimer.isActive())
@@ -708,9 +712,6 @@ void DrawingAreaCoordinatedGraphics::display()
     if (m_isPaintingSuspended)
         return;
 
-    if (m_dirtyRegion.isEmpty())
-        return;
-
     if (m_shouldSendDidUpdateBackingStoreState) {
         sendDidUpdateBackingStoreState();
         return;
@@ -718,6 +719,9 @@ void DrawingAreaCoordinatedGraphics::display()
 
     UpdateInfo updateInfo;
     display(updateInfo);
+
+    if (updateInfo.updateRectBounds.isEmpty())
+        return;
 
     if (m_layerTreeHost) {
         // The call to update caused layout which turned on accelerated compositing.
@@ -727,6 +731,7 @@ void DrawingAreaCoordinatedGraphics::display()
 
     send(Messages::DrawingAreaProxy::Update(m_backingStoreStateID, updateInfo));
     m_isWaitingForDidUpdate = true;
+    m_scheduledWhileWaitingForDidUpdate = false;
 }
 
 static bool shouldPaintBoundsRect(const IntRect& bounds, const Vector<IntRect, 1>& rects)
@@ -754,7 +759,6 @@ void DrawingAreaCoordinatedGraphics::display(UpdateInfo& updateInfo)
 {
     ASSERT(!m_isPaintingSuspended);
     ASSERT(!m_layerTreeHost);
-    ASSERT(!m_webPage.size().isEmpty());
 
     m_webPage.updateRendering();
     m_webPage.finalizeRenderingUpdate({ });
@@ -763,6 +767,9 @@ void DrawingAreaCoordinatedGraphics::display(UpdateInfo& updateInfo)
     // The layout may have put the page into accelerated compositing mode. If the LayerTreeHost is
     // in charge of displaying, we have nothing more to do.
     if (m_layerTreeHost)
+        return;
+
+    if (m_dirtyRegion.isEmpty())
         return;
 
     updateInfo.viewSize = m_webPage.size();

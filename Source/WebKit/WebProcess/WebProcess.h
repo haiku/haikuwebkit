@@ -127,6 +127,8 @@ class WebFrame;
 class WebLoaderStrategy;
 class WebPage;
 class WebPageGroupProxy;
+struct GPUProcessConnectionInfo;
+struct GPUProcessConnectionParameters;
 struct UserMessage;
 struct WebProcessCreationParameters;
 struct WebProcessDataStoreParameters;
@@ -338,7 +340,7 @@ public:
 #endif
 
 #if PLATFORM(IOS)
-    void grantAccessToAssetServices(WebKit::SandboxExtension::Handle&& mobileAssetHandle,  WebKit::SandboxExtension::Handle&& mobileAssetV2Handle);
+    void grantAccessToAssetServices(WebKit::SandboxExtension::Handle&& mobileAssetV2Handle);
     void revokeAccessToAssetServices();
 #endif
 
@@ -511,6 +513,12 @@ private:
     void displayWasRefreshed(uint32_t displayID);
 #endif
 
+#if PLATFORM(MAC)
+    void systemWillPowerOn();
+    void systemWillSleep();
+    void systemDidWake();
+#endif
+    
     void platformInitializeProcess(const AuxiliaryProcessInitializationParameters&);
 
     // IPC::Connection::Client
@@ -528,11 +536,17 @@ private:
 
 #if PLATFORM(COCOA)
     void setScreenProperties(const WebCore::ScreenProperties&);
-    void updateProcessName();
+
+    enum class IsInProcessInitialization : bool { No, Yes };
+    void updateProcessName(IsInProcessInitialization);
 #endif
 
 #if PLATFORM(IOS_FAMILY) && !PLATFORM(MACCATALYST)
     void backlightLevelDidChange(float backlightLevel);
+#endif
+
+#if PLATFORM(MAC) || PLATFORM(MACCATALYST)
+    void colorPreferencesDidChange();
 #endif
 
 #if PLATFORM(IOS_FAMILY)
@@ -540,6 +554,11 @@ private:
 
     bool shouldFreezeOnSuspension() const;
     void updateFreezerStatus();
+#endif
+
+#if ENABLE(GPU_PROCESS)
+    static GPUProcessConnectionInfo getGPUProcessConnection(IPC::Connection&);
+    static void platformInitializeGPUProcessConnectionParameters(GPUProcessConnectionParameters&);
 #endif
 
 #if ENABLE(VIDEO)
@@ -690,7 +709,6 @@ private:
 #endif
 
 #if PLATFORM(IOS)
-    RefPtr<SandboxExtension> m_assetServiceExtension;
     RefPtr<SandboxExtension> m_assetServiceV2Extension;
 #endif
 

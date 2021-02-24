@@ -105,9 +105,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if ([NSThread isMainThread])
         WebKit::WebProcessPool::registerGlobalURLSchemeAsHavingCustomProtocolHandlers(scheme);
     else {
-        RunLoop::main().dispatch([scheme = retainPtr(scheme)] {
+        // This cannot be RunLoop::main().dispatch because it is called before the main runloop is initialized.  See rdar://problem/73615999
+        dispatch_async(dispatch_get_main_queue(), makeBlockPtr([scheme = retainPtr(scheme)] {
             WebKit::WebProcessPool::registerGlobalURLSchemeAsHavingCustomProtocolHandlers(scheme.get());
-        });
+        }).get());
     }
 }
 
@@ -116,9 +117,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if ([NSThread isMainThread])
         WebKit::WebProcessPool::unregisterGlobalURLSchemeAsHavingCustomProtocolHandlers(scheme);
     else {
-        RunLoop::main().dispatch([scheme = retainPtr(scheme)] {
+        // This cannot be RunLoop::main().dispatch because it is called before the main runloop is initialized.  See rdar://problem/73615999
+        dispatch_async(dispatch_get_main_queue(), makeBlockPtr([scheme = retainPtr(scheme)] {
             WebKit::WebProcessPool::unregisterGlobalURLSchemeAsHavingCustomProtocolHandlers(scheme.get());
-        });
+        }).get());
     }
 }
 
@@ -457,7 +459,7 @@ static WKPolicyDecisionHandler makePolicyDecisionBlock(WKFramePolicyListenerRef 
 {
     WKRetain(listener); // Released in the decision handler below.
 
-    return [[^(WKPolicyDecision decision) {
+    return adoptNS([^(WKPolicyDecision decision) {
         switch (decision) {
         case WKPolicyDecisionCancel:
             WKFramePolicyListenerIgnore(listener);                    
@@ -473,7 +475,7 @@ static WKPolicyDecisionHandler makePolicyDecisionBlock(WKFramePolicyListenerRef 
         };
 
         WKRelease(listener); // Retained in the context above.
-    } copy] autorelease];
+    } copy]).autorelease();
 }
 
 static void setUpPagePolicyClient(WKBrowsingContextController *browsingContext, WebKit::WebPageProxy& page)
@@ -492,21 +494,21 @@ static void setUpPagePolicyClient(WKBrowsingContextController *browsingContext, 
         auto policyDelegate = browsingContext->_policyDelegate.get();
 
         if ([policyDelegate respondsToSelector:@selector(browsingContextController:decidePolicyForNavigationAction:decisionHandler:)]) {
-            NSDictionary *actionDictionary = @{
+            auto actionDictionary = retainPtr(@{
                 WKActionIsMainFrameKey: @(WKFrameIsMainFrame(frame)),
                 WKActionNavigationTypeKey: @(navigationType),
                 WKActionModifierFlagsKey: @(modifiers),
                 WKActionMouseButtonKey: @(mouseButton),
                 WKActionOriginalURLRequestKey: adoptNS(WKURLRequestCopyNSURLRequest(originalRequest)).get(),
                 WKActionURLRequestKey: adoptNS(WKURLRequestCopyNSURLRequest(request)).get()
-            };
+            });
 
             if (originatingFrame) {
-                actionDictionary = [[actionDictionary mutableCopy] autorelease];
-                [(NSMutableDictionary *)actionDictionary setObject:[NSURL _web_URLWithWTFString:WebKit::toImpl(originatingFrame)->url().string()] forKey:WKActionOriginatingFrameURLKey];
+                actionDictionary = adoptNS([actionDictionary mutableCopy]);
+                [(NSMutableDictionary *)actionDictionary.get() setObject:[NSURL _web_URLWithWTFString:WebKit::toImpl(originatingFrame)->url().string()] forKey:WKActionOriginatingFrameURLKey];
             }
             
-            [policyDelegate browsingContextController:browsingContext decidePolicyForNavigationAction:actionDictionary decisionHandler:makePolicyDecisionBlock(listener)];
+            [policyDelegate browsingContextController:browsingContext decidePolicyForNavigationAction:actionDictionary.get() decisionHandler:makePolicyDecisionBlock(listener)];
         } else
             WKFramePolicyListenerUse(listener);
     };
@@ -732,7 +734,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
 - (WKBrowsingContextHandle *)handle
 {
-    return [[[WKBrowsingContextHandle alloc] _initWithPageProxy:*_page] autorelease];
+    return adoptNS([[WKBrowsingContextHandle alloc] _initWithPageProxy:*_page]).autorelease();
 }
 
 - (_WKRemoteObjectRegistry *)_remoteObjectRegistry

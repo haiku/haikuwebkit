@@ -58,12 +58,14 @@
 #include "Page.h"
 #include "Range.h"
 #include "RenderLayer.h"
+#include "RenderLayerScrollableArea.h"
 #include "RenderText.h"
 #include "RenderTextControl.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
 #include "RenderWidget.h"
 #include "RenderedPosition.h"
+#include "ScriptDisallowedScope.h"
 #include "Settings.h"
 #include "SimpleRange.h"
 #include "SpatialNavigation.h"
@@ -332,17 +334,11 @@ bool FrameSelection::setSelectionWithoutUpdatingAppearance(const VisibleSelectio
     if (shouldAlwaysUseDirectionalSelection(m_document.get()))
         newSelection.setIsDirectional(true);
 
-    if (!m_document || !m_document->frame()) {
-        m_selection = newSelection;
-        updateAssociatedLiveRange();
-        return false;
-    }
-
     // <http://bugs.webkit.org/show_bug.cgi?id=23464>: Infinite recursion at FrameSelection::setSelection
     // if document->frame() == m_document->frame() we can get into an infinite loop
     if (Document* newSelectionDocument = newSelection.base().document()) {
         if (RefPtr<Frame> newSelectionFrame = newSelectionDocument->frame()) {
-            if (newSelectionFrame != m_document->frame() && newSelectionDocument != m_document) {
+            if (m_document && newSelectionFrame != m_document->frame() && newSelectionDocument != m_document) {
                 newSelectionDocument->selection().setSelection(newSelection, options, AXTextStateChangeIntent(), align, granularity);
                 // It's possible that during the above set selection, this FrameSelection has been modified by
                 // selectFrameElementInParentIfFullySelected, but that the selection is no longer valid since
@@ -354,27 +350,41 @@ bool FrameSelection::setSelectionWithoutUpdatingAppearance(const VisibleSelectio
         }
     }
 
-    m_granularity = granularity;
-
-    if (closeTyping)
-        TypingCommand::closeTyping(*m_document);
-
-    if (shouldClearTypingStyle)
-        clearTypingStyle();
-
     VisibleSelection oldSelection = m_selection;
-    bool didMutateSelection = oldSelection != newSelection;
-    if (didMutateSelection)
+    bool willMutateSelection = oldSelection != newSelection;
+    if (willMutateSelection && m_document)
         m_document->editor().selectionWillChange();
 
-    m_selection = newSelection;
-    updateAssociatedLiveRange();
+    {
+        ScriptDisallowedScope::InMainThread scriptDisallowedScope;
+        if (newSelection.isOrphan()) {
+            ASSERT_NOT_REACHED();
+            clear();
+            return false;
+        }
+
+        if (!m_document || !m_document->frame()) {
+            m_selection = newSelection;
+            updateAssociatedLiveRange();
+            return false;
+        }
+
+        if (closeTyping)
+            TypingCommand::closeTyping(*m_document);
+
+        if (shouldClearTypingStyle)
+            clearTypingStyle();
+
+        m_granularity = granularity;
+        m_selection = newSelection;
+        updateAssociatedLiveRange();
+    }
 
     // Selection offsets should increase when LF is inserted before the caret in InsertLineBreakCommand. See <https://webkit.org/b/56061>.
     if (HTMLTextFormControlElement* textControl = enclosingTextFormControl(newSelection.start()))
         textControl->selectionChanged(options.contains(FireSelectEvent));
 
-    if (!didMutateSelection)
+    if (!willMutateSelection)
         return false;
 
     setCaretRectNeedsUpdate();
@@ -736,13 +746,11 @@ VisiblePosition FrameSelection::nextWordPositionForPlatform(const VisiblePositio
     return positionAfterCurrentWord;
 }
 
-#if ENABLE(USERSELECT_ALL)
 static void adjustPositionForUserSelectAll(VisiblePosition& pos, bool isForward)
 {
     if (Node* rootUserSelectAll = Position::rootUserSelectAllForNode(pos.deepEquivalent().anchorNode()))
         pos = isForward ? positionAfterNode(rootUserSelectAll).downstream(CanCrossEditingBoundary) : positionBeforeNode(rootUserSelectAll).upstream(CanCrossEditingBoundary);
 }
-#endif
 
 VisiblePosition FrameSelection::modifyExtendingRight(TextGranularity granularity)
 {
@@ -785,9 +793,7 @@ VisiblePosition FrameSelection::modifyExtendingRight(TextGranularity granularity
         ASSERT_NOT_REACHED();
         break;
     }
-#if ENABLE(USERSELECT_ALL)
     adjustPositionForUserSelectAll(pos, directionOfEnclosingBlock() == TextDirection::LTR);
-#endif
     return pos;
 }
 
@@ -830,9 +836,7 @@ VisiblePosition FrameSelection::modifyExtendingForward(TextGranularity granulari
             pos = endOfDocument(pos);
         break;
     }
-#if ENABLE(USERSELECT_ALL)
     adjustPositionForUserSelectAll(pos, directionOfEnclosingBlock() == TextDirection::LTR);
-#endif
     return pos;
 }
 
@@ -1001,9 +1005,7 @@ VisiblePosition FrameSelection::modifyExtendingLeft(TextGranularity granularity)
         ASSERT_NOT_REACHED();
         break;
     }
-#if ENABLE(USERSELECT_ALL)
     adjustPositionForUserSelectAll(pos, !(directionOfEnclosingBlock() == TextDirection::LTR));
-#endif
     return pos;
 }
        
@@ -1051,9 +1053,7 @@ VisiblePosition FrameSelection::modifyExtendingBackward(TextGranularity granular
         ASSERT_NOT_REACHED();
         break;
     }
-#if ENABLE(USERSELECT_ALL)
     adjustPositionForUserSelectAll(pos, !(directionOfEnclosingBlock() == TextDirection::LTR));
-#endif
     return pos;
 }
 
@@ -2391,9 +2391,10 @@ void FrameSelection::revealSelection(SelectionRevealMode revealMode, const Scrol
 #if PLATFORM(IOS_FAMILY)
         if (RenderLayer* layer = start.deprecatedNode()->renderer()->enclosingLayer()) {
             if (!m_scrollingSuppressCount) {
-                layer->setAdjustForIOSCaretWhenScrolling(true);
+                auto* scrollableArea = layer->ensureLayerScrollableArea();
+                scrollableArea->setAdjustForIOSCaretWhenScrolling(true);
                 layer->scrollRectToVisible(rect, insideFixed, { revealMode, alignment, alignment, ShouldAllowCrossOriginScrolling::Yes });
-                layer->setAdjustForIOSCaretWhenScrolling(false);
+                scrollableArea->setAdjustForIOSCaretWhenScrolling(false);
                 updateAppearance();
                 if (m_document->page())
                     m_document->page()->chrome().client().notifyRevealedSelectionByScrollingFrame(*m_document->frame());

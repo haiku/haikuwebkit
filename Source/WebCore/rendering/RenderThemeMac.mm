@@ -89,18 +89,9 @@
 // FIXME: This should go into an SPI.h file in the spi directory.
 #if USE(APPLE_INTERNAL_SDK)
 #import <AppKit/AppKitDefines_Private.h>
-#import <AppKit/NSServicesRolloverButtonCell.h>
 #else
 #define APPKIT_PRIVATE_CLASS
-@interface NSServicesRolloverButtonCell : NSButtonCell
-@end
 #endif
-
-// FIXME: This should go into an SPI.h file in the spi directory.
-@interface NSServicesRolloverButtonCell ()
-+ (NSServicesRolloverButtonCell *)serviceRolloverButtonCellForStyle:(NSSharingServicePickerStyle)style;
-- (NSRect)rectForBounds:(NSRect)bounds preferredEdge:(NSRectEdge)preferredEdge;
-@end
 
 #endif // ENABLE(SERVICE_CONTROLS)
 
@@ -360,15 +351,6 @@ String RenderThemeMac::mediaControlsBase64StringForIconNameAndType(const String&
     return [[NSData dataWithContentsOfFile:[bundle pathForResource:iconName ofType:iconType inDirectory:directory]] base64EncodedStringWithOptions:0];
 }
 
-#if ENABLE(SERVICE_CONTROLS)
-
-String RenderThemeMac::imageControlsStyleSheet() const
-{
-    return String(imageControlsMacUserAgentStyleSheet, sizeof(imageControlsMacUserAgentStyleSheet));
-}
-
-#endif
-
 Color RenderThemeMac::platformActiveSelectionBackgroundColor(OptionSet<StyleColor::Options> options) const
 {
     LocalDefaultSystemAppearance localAppearance(options.contains(StyleColor::Options::UseDarkAppearance));
@@ -506,7 +488,7 @@ static SRGBA<uint8_t> menuBackgroundColor()
     NSUInteger pixel[4];
     [offscreenRep getPixel:pixel atX:0 y:0];
 
-    return clampToComponentBytes<SRGBA>(pixel[0], pixel[1], pixel[2], pixel[3]);
+    return makeFromComponentsClamping<SRGBA<uint8_t>>(pixel[0], pixel[1], pixel[2], pixel[3]);
 }
 
 Color RenderThemeMac::systemColor(CSSValueID cssValueID, OptionSet<StyleColor::Options> options) const
@@ -747,26 +729,26 @@ Color RenderThemeMac::systemColor(CSSValueID cssValueID, OptionSet<StyleColor::O
         case CSSValueActiveborder:
             // Hardcoded to avoid exposing a user appearance preference to the web for fingerprinting.
             if (localAppearance.usingDarkAppearance())
-                return { SRGBA<uint8_t> { 26, 169, 255 }, Color::Semantic };
-            return { SRGBA<uint8_t> { 0, 103, 244 }, Color::Semantic };
+                return { SRGBA<uint8_t> { 26, 169, 255 }, Color::Flags::Semantic };
+            return { SRGBA<uint8_t> { 0, 103, 244 }, Color::Flags::Semantic };
 
         case CSSValueAppleSystemControlAccent:
             // Hardcoded to avoid exposing a user appearance preference to the web for fingerprinting.
             // Same color in light and dark appearances.
-            return { SRGBA<uint8_t> { 0, 122, 255 }, Color::Semantic };
+            return { SRGBA<uint8_t> { 0, 122, 255 }, Color::Flags::Semantic };
 
         case CSSValueAppleSystemSelectedContentBackground:
             // Hardcoded to avoid exposing a user appearance preference to the web for fingerprinting.
             if (localAppearance.usingDarkAppearance())
-                return { SRGBA<uint8_t> { 0, 88, 208 }, Color::Semantic };
-            return { SRGBA<uint8_t> { 0, 99, 225 }, Color::Semantic };
+                return { SRGBA<uint8_t> { 0, 88, 208 }, Color::Flags::Semantic };
+            return { SRGBA<uint8_t> { 0, 99, 225 }, Color::Flags::Semantic };
 
         case CSSValueHighlight:
         case CSSValueAppleSystemSelectedTextBackground:
             // Hardcoded to avoid exposing a user appearance preference to the web for fingerprinting.
             if (localAppearance.usingDarkAppearance())
-                return { SRGBA<uint8_t> { 63, 99, 139, 204 }, Color::Semantic };
-            return { SRGBA<uint8_t> { 128, 188, 254, 153 }, Color::Semantic };
+                return { SRGBA<uint8_t> { 63, 99, 139, 204 }, Color::Flags::Semantic };
+            return { SRGBA<uint8_t> { 128, 188, 254, 153 }, Color::Flags::Semantic };
 
 #if !HAVE(OS_DARK_MODE_SUPPORT)
         case CSSValueAppleSystemContainerBorder:
@@ -1007,9 +989,9 @@ void RenderThemeMac::setSizeFromFont(RenderStyle& style, const IntSize* sizes) c
     // FIXME: Check is flawed, since it doesn't take min-width/max-width into account.
     IntSize size = sizeForFont(style, sizes);
     if (style.width().isIntrinsicOrAuto() && size.width() > 0)
-        style.setWidth(Length(size.width(), Fixed));
+        style.setWidth(Length(size.width(), LengthType::Fixed));
     if (style.height().isAuto() && size.height() > 0)
-        style.setHeight(Length(size.height(), Fixed));
+        style.setHeight(Length(size.height(), LengthType::Fixed));
 }
 
 void RenderThemeMac::setFontFromControlSize(RenderStyle& style, NSControlSize controlSize) const
@@ -1087,9 +1069,9 @@ void RenderThemeMac::adjustListButtonStyle(RenderStyle& style, const Element*) c
 {
     // Add a margin to place the button at end of the input field.
     if (style.isLeftToRightDirection())
-        style.setMarginRight(Length(-4, Fixed));
+        style.setMarginRight(Length(-4, LengthType::Fixed));
     else
-        style.setMarginLeft(Length(-4, Fixed));
+        style.setMarginLeft(Length(-4, LengthType::Fixed));
 }
 
 #endif
@@ -1376,7 +1358,7 @@ bool RenderThemeMac::paintProgressBar(const RenderObject& renderObject, const Pa
     const auto& renderProgress = downcast<RenderProgress>(renderObject);
     float deviceScaleFactor = renderObject.document().deviceScaleFactor();
     bool isIndeterminate = renderProgress.position() < 0;
-    auto imageBuffer = ImageBuffer::createCompatibleBuffer(inflatedRect.size(), deviceScaleFactor, ColorSpace::SRGB, paintInfo.context());
+    auto imageBuffer = ImageBuffer::createCompatibleBuffer(inflatedRect.size(), deviceScaleFactor, DestinationColorSpace::SRGB, paintInfo.context());
     if (!imageBuffer)
         return true;
 
@@ -1624,7 +1606,7 @@ void RenderThemeMac::adjustMenuListStyle(RenderStyle& style, const Element* e) c
     style.resetPadding();
 
     // Height is locked to auto.
-    style.setHeight(Length(Auto));
+    style.setHeight(Length(LengthType::Auto));
 
     // White-space is locked to pre
     style.setWhiteSpace(WhiteSpace::Pre);
@@ -1701,7 +1683,7 @@ void RenderThemeMac::adjustMenuListButtonStyle(RenderStyle& style, const Element
     style.setBorderRadius(IntSize(int(baseBorderRadius + fontScale - 1), int(baseBorderRadius + fontScale - 1))); // FIXME: Round up?
 
     const int minHeight = 15;
-    style.setMinHeight(Length(minHeight, Fixed));
+    style.setMinHeight(Length(minHeight, LengthType::Fixed));
 
     style.setLineHeight(RenderStyle::initialLineHeight());
 }
@@ -1947,15 +1929,15 @@ void RenderThemeMac::adjustSearchFieldStyle(RenderStyle& style, const Element*) 
     setFontFromControlSize(style, controlSizeForFont(style));
 
     // Override height.
-    style.setHeight(Length(Auto));
+    style.setHeight(Length(LengthType::Auto));
     setSearchFieldSize(style);
 
     // Override padding size to match AppKit text positioning.
     const int padding = 1 * style.effectiveZoom();
-    style.setPaddingLeft(Length(padding, Fixed));
-    style.setPaddingRight(Length(padding, Fixed));
-    style.setPaddingTop(Length(padding, Fixed));
-    style.setPaddingBottom(Length(padding, Fixed));
+    style.setPaddingLeft(Length(padding, LengthType::Fixed));
+    style.setPaddingRight(Length(padding, LengthType::Fixed));
+    style.setPaddingTop(Length(padding, LengthType::Fixed));
+    style.setPaddingBottom(Length(padding, LengthType::Fixed));
 
     style.setBoxShadow(nullptr);
 }
@@ -2023,8 +2005,8 @@ const IntSize* RenderThemeMac::cancelButtonSizes() const
 void RenderThemeMac::adjustSearchFieldCancelButtonStyle(RenderStyle& style, const Element*) const
 {
     IntSize size = sizeForSystemFont(style, cancelButtonSizes());
-    style.setWidth(Length(size.width(), Fixed));
-    style.setHeight(Length(size.height(), Fixed));
+    style.setWidth(Length(size.width(), LengthType::Fixed));
+    style.setHeight(Length(size.height(), LengthType::Fixed));
     style.setBoxShadow(nullptr);
 }
 
@@ -2039,8 +2021,8 @@ const int emptyResultsOffset = 9;
 void RenderThemeMac::adjustSearchFieldDecorationPartStyle(RenderStyle& style, const Element*) const
 {
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
-    style.setWidth(Length(size.width() - emptyResultsOffset, Fixed));
-    style.setHeight(Length(size.height(), Fixed));
+    style.setWidth(Length(size.width() - emptyResultsOffset, LengthType::Fixed));
+    style.setHeight(Length(size.height(), LengthType::Fixed));
     style.setBoxShadow(nullptr);
 }
 
@@ -2052,8 +2034,8 @@ bool RenderThemeMac::paintSearchFieldDecorationPart(const RenderObject&, const P
 void RenderThemeMac::adjustSearchFieldResultsDecorationPartStyle(RenderStyle& style, const Element*) const
 {
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
-    style.setWidth(Length(size.width(), Fixed));
-    style.setHeight(Length(size.height(), Fixed));
+    style.setWidth(Length(size.width(), LengthType::Fixed));
+    style.setHeight(Length(size.height(), LengthType::Fixed));
     style.setBoxShadow(nullptr);
 }
 
@@ -2080,7 +2062,7 @@ bool RenderThemeMac::paintSearchFieldResultsDecorationPart(const RenderBox& box,
     FloatPoint paintingPos = convertToPaintingPosition(inputBox, box, localBounds.location(), r.location());
     localBounds.setLocation(paintingPos);
 
-    [[search searchButtonCell] drawWithFrame:localBounds inView:documentViewFor(box)];
+    paintCellAndSetFocusedElementNeedsRepaintIfNecessary([search searchButtonCell], inputBox, paintInfo, localBounds);
     [[search searchButtonCell] setControlView:nil];
     return false;
 }
@@ -2088,8 +2070,8 @@ bool RenderThemeMac::paintSearchFieldResultsDecorationPart(const RenderBox& box,
 void RenderThemeMac::adjustSearchFieldResultsButtonStyle(RenderStyle& style, const Element*) const
 {
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
-    style.setWidth(Length(size.width() + resultsArrowWidth, Fixed));
-    style.setHeight(Length(size.height(), Fixed));
+    style.setWidth(Length(size.width() + resultsArrowWidth, LengthType::Fixed));
+    style.setHeight(Length(size.height(), LengthType::Fixed));
     style.setBoxShadow(nullptr);
 }
 
@@ -2170,8 +2152,8 @@ void RenderThemeMac::adjustSliderThumbSize(RenderStyle& style, const Element*) c
 {
     float zoomLevel = style.effectiveZoom();
     if (style.appearance() == SliderThumbHorizontalPart || style.appearance() == SliderThumbVerticalPart) {
-        style.setWidth(Length(static_cast<int>(sliderThumbWidth * zoomLevel), Fixed));
-        style.setHeight(Length(static_cast<int>(sliderThumbHeight * zoomLevel), Fixed));
+        style.setWidth(Length(static_cast<int>(sliderThumbWidth * zoomLevel), LengthType::Fixed));
+        style.setHeight(Length(static_cast<int>(sliderThumbHeight * zoomLevel), LengthType::Fixed));
     }
 }
 
@@ -2274,56 +2256,6 @@ String RenderThemeMac::fileListNameForWidth(const FileList* fileList, const Font
 
     return StringTruncator::centerTruncate(strToTruncate, width, font);
 }
-
-#if ENABLE(SERVICE_CONTROLS)
-NSServicesRolloverButtonCell* RenderThemeMac::servicesRolloverButtonCell() const
-{
-    if (!m_servicesRolloverButton) {
-        m_servicesRolloverButton = [NSServicesRolloverButtonCell serviceRolloverButtonCellForStyle:NSSharingServicePickerStyleRollover];
-        [m_servicesRolloverButton setBezelStyle:NSBezelStyleRoundedDisclosure];
-        [m_servicesRolloverButton setButtonType:NSButtonTypePushOnPushOff];
-        [m_servicesRolloverButton setImagePosition:NSImageOnly];
-        [m_servicesRolloverButton setState:NO];
-    }
-
-    return m_servicesRolloverButton.get();
-}
-
-bool RenderThemeMac::paintImageControlsButton(const RenderObject& renderer, const PaintInfo& paintInfo, const IntRect& rect)
-{
-    if (paintInfo.phase != PaintPhase::BlockBackground)
-        return true;
-
-    NSServicesRolloverButtonCell *cell = servicesRolloverButtonCell();
-
-    LocalCurrentGraphicsContext localContext(paintInfo.context());
-    GraphicsContextStateSaver stateSaver(paintInfo.context());
-
-    paintInfo.context().translate(rect.location());
-
-    IntRect innerFrame(IntPoint(), rect.size());
-    [cell drawWithFrame:innerFrame inView:documentViewFor(renderer)];
-    [cell setControlView:nil];
-
-    return true;
-}
-
-IntSize RenderThemeMac::imageControlsButtonSize(const RenderObject&) const
-{
-    return IntSize(servicesRolloverButtonCell().cellSize);
-}
-
-IntSize RenderThemeMac::imageControlsButtonPositionOffset() const
-{
-    // FIXME: Currently the offsets will always be the same no matter what image rect you try with.
-    // This may not always be true in the future.
-    static const int dummyDimension = 100;
-    IntRect dummyImageRect(0, 0, dummyDimension, dummyDimension);
-    NSRect bounds = [servicesRolloverButtonCell() rectForBounds:dummyImageRect preferredEdge:NSMinYEdge];
-
-    return IntSize(dummyDimension - bounds.origin.x, bounds.origin.y);
-}
-#endif
 
 #if ENABLE(ATTACHMENT_ELEMENT)
 const CGFloat attachmentIconSize = 48;
@@ -2659,8 +2591,10 @@ static std::pair<RefPtr<Image>, float> createAttachmentPlaceholderImage(float de
     imageSize.scale(std::min(imageSizeScales.width(), imageSizeScales.height()));
     auto imageRect = NSMakeRect(0, 0, imageSize.width(), imageSize.height());
     auto cgImage = [image CGImageForProposedRect:&imageRect context:nil hints:@{
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         NSImageHintSymbolFont : [NSFont systemFontOfSize:32],
         NSImageHintSymbolScale : @(NSImageSymbolScaleMedium)
+        ALLOW_DEPRECATED_DECLARATIONS_END
     }];
     return { BitmapImage::create(cgImage), deviceScaleFactor };
 #else

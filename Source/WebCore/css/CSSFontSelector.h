@@ -48,7 +48,7 @@ class CachedFont;
 class Document;
 class StyleRuleFontFace;
 
-class CSSFontSelector final : public FontSelector, public CSSFontFaceSetClient, public CanMakeWeakPtr<CSSFontSelector>, public ActiveDOMObject {
+class CSSFontSelector final : public FontSelector, public CSSFontFace::Client, public CanMakeWeakPtr<CSSFontSelector>, public ActiveDOMObject {
 public:
     static Ref<CSSFontSelector> create(Document& document)
     {
@@ -63,14 +63,13 @@ public:
     size_t fallbackFontCount() final;
     RefPtr<Font> fallbackFontAt(const FontDescription&, size_t) final;
 
-    void clearDocument();
+    void stopLoadingAndClearFonts();
     void emptyCaches();
     void buildStarted();
     void buildCompleted();
 
     void addFontFaceRule(StyleRuleFontFace&, bool isInitiatingElementInUserAgentShadowTree);
 
-    void fontLoaded();
     void fontCacheInvalidated() final;
 
     bool isEmpty() const;
@@ -91,6 +90,10 @@ public:
 
     void loadPendingFonts();
 
+    // CSSFontFace::Client needs to be able to be held in a RefPtr.
+    void ref() final { FontSelector::ref(); }
+    void deref() final { FontSelector::deref(); }
+
 private:
     explicit CSSFontSelector(Document&);
 
@@ -98,8 +101,11 @@ private:
 
     void opportunisticallyStartFontDataURLLoading(const FontCascadeDescription&, const AtomString& family) final;
 
-    void fontModified() final;
+    // CSSFontFace::Client
+    void fontLoaded(CSSFontFace&) final;
+    void fontStyleUpdateNeeded(CSSFontFace&) final;
 
+    void fontModified();
     void fontLoadingTimerFired();
 
     // ActiveDOMObject
@@ -123,6 +129,8 @@ private:
     HashSet<RefPtr<CSSFontFace>> m_cssConnectionsPossiblyToRemove;
     HashSet<RefPtr<StyleRuleFontFace>> m_cssConnectionsEncounteredDuringBuild;
 
+    CSSFontFaceSet::FontModifiedObserver m_fontModifiedObserver;
+
     Timer m_fontLoadingTimer;
     bool m_isFontLoadingSuspended { false };
 
@@ -131,6 +139,7 @@ private:
     unsigned m_computingRootStyleFontCount { 0 };
     bool m_creatingFont { false };
     bool m_buildIsUnderway { false };
+    bool m_isStopped { false };
 };
 
 } // namespace WebCore

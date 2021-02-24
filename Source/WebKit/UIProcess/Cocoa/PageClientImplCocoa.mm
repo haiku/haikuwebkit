@@ -28,6 +28,7 @@
 
 #import "WKWebViewConfigurationPrivate.h"
 #import "WKWebViewInternal.h"
+#import "WKWebViewPrivate.h"
 #import "WKWebViewPrivateForTesting.h"
 #import <WebCore/AlternativeTextUIController.h>
 #import <wtf/Vector.h>
@@ -44,6 +45,26 @@ PageClientImplCocoa::PageClientImplCocoa(WKWebView *webView)
 
 PageClientImplCocoa::~PageClientImplCocoa() = default;
 
+void PageClientImplCocoa::themeColorWillChange()
+{
+    [m_webView willChangeValueForKey:@"_themeColor"];
+}
+
+void PageClientImplCocoa::themeColorDidChange()
+{
+    [m_webView didChangeValueForKey:@"_themeColor"];
+}
+
+void PageClientImplCocoa::pageExtendedBackgroundColorWillChange()
+{
+    [m_webView willChangeValueForKey:@"_pageExtendedBackgroundColor"];
+}
+
+void PageClientImplCocoa::pageExtendedBackgroundColorDidChange()
+{
+    [m_webView didChangeValueForKey:@"_pageExtendedBackgroundColor"];
+}
+
 void PageClientImplCocoa::isPlayingAudioWillChange()
 {
     [m_webView willChangeValueForKey:NSStringFromSelector(@selector(_isPlayingAudio))];
@@ -57,6 +78,11 @@ void PageClientImplCocoa::isPlayingAudioDidChange()
 bool PageClientImplCocoa::scrollingUpdatesDisabledForTesting()
 {
     return [m_webView _scrollingUpdatesDisabledForTesting];
+}
+
+void PageClientImplCocoa::setHasBlankOverlay(bool hasBlankOverlay)
+{
+    [m_webView _setHasBlankOverlay:hasBlankOverlay];
 }
 
 #if ENABLE(ATTACHMENT_ELEMENT)
@@ -92,6 +118,13 @@ NSSet *PageClientImplCocoa::serializableFileWrapperClasses() const
 }
 
 #endif
+
+#if ENABLE(APP_HIGHLIGHTS)
+void PageClientImplCocoa::storeAppHighlight(const WebCore::AppHighlight &highlight)
+{
+    [m_webView _storeAppHighlight:highlight];
+}
+#endif // ENABLE(APP_HIGHLIGHTS)
 
 void PageClientImplCocoa::pageClosed()
 {

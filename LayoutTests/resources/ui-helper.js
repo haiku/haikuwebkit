@@ -423,8 +423,8 @@ window.UIHelper = class UIHelper {
     {
         return new Promise(resolve => setTimeout(resolve, ms));
     }
-    
-    static immediateScrollTo(x, y)
+
+    static scrollTo(x, y, unconstrained)
     {
         if (!this.isWebKit2()) {
             window.scrollTo(x, y);
@@ -433,11 +433,29 @@ window.UIHelper = class UIHelper {
 
         return new Promise(resolve => {
             testRunner.runUIScript(`
-                uiController.immediateScrollToOffset(${x}, ${y});`, resolve);
+                (function() {
+                    uiController.didEndScrollingCallback = function() {
+                        uiController.uiScriptComplete();
+                    }
+                    uiController.scrollToOffset(${x}, ${y}, { unconstrained: ${unconstrained} });
+                })()`, resolve);
+        });
+    }
+    
+    static immediateScrollTo(x, y, unconstrained)
+    {
+        if (!this.isWebKit2()) {
+            window.scrollTo(x, y);
+            return Promise.resolve();
+        }
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`
+                uiController.immediateScrollToOffset(${x}, ${y}, { unconstrained: ${unconstrained} });`, resolve);
         });
     }
 
-    static immediateUnstableScrollTo(x, y)
+    static immediateUnstableScrollTo(x, y, unconstrained)
     {
         if (!this.isWebKit2()) {
             window.scrollTo(x, y);
@@ -447,7 +465,7 @@ window.UIHelper = class UIHelper {
         return new Promise(resolve => {
             testRunner.runUIScript(`
                 uiController.stableStateOverride = false;
-                uiController.immediateScrollToOffset(${x}, ${y});`, resolve);
+                uiController.immediateScrollToOffset(${x}, ${y}, { unconstrained: ${unconstrained} });`, resolve);
         });
     }
 
@@ -650,6 +668,22 @@ window.UIHelper = class UIHelper {
         });
     }
 
+    static waitForContextMenuToShow()
+    {
+        if (!this.isWebKit2() || !this.isIOSFamily())
+            return Promise.resolve();
+
+        return new Promise(resolve => {
+            testRunner.runUIScript(`
+                (function() {
+                    if (!uiController.isShowingContextMenu)
+                        uiController.didShowContextMenuCallback = () => uiController.uiScriptComplete();
+                    else
+                        uiController.uiScriptComplete();
+                })()`, resolve);
+        });
+    }
+
     static waitForContextMenuToHide()
     {
         if (!this.isWebKit2() || !this.isIOSFamily())
@@ -830,6 +864,12 @@ window.UIHelper = class UIHelper {
         });
     }
 
+    static setSelectedColorForColorPicker(red, green, blue)
+    {
+        const selectColorScript = `uiController.setSelectedColorForColorPicker(${red}, ${green}, ${blue})`;
+        return new Promise(resolve => testRunner.runUIScript(selectColorScript, resolve));
+    }
+
     static enterText(text)
     {
         const escapedText = text.replace(/`/g, "\\`");
@@ -904,6 +944,16 @@ window.UIHelper = class UIHelper {
             testRunner.runUIScript(`(() => {
                 uiController.uiScriptComplete(uiController.dateTimePickerValue);
             })()`, valueAsString => resolve(parseFloat(valueAsString)));
+        });
+    }
+
+    static chooseDateTimePickerValue()
+    {
+        return new Promise((resolve) => {
+            testRunner.runUIScript(`
+                uiController.chooseDateTimePickerValue();
+                uiController.uiScriptComplete();
+            `, resolve);
         });
     }
 
@@ -1228,6 +1278,33 @@ window.UIHelper = class UIHelper {
         });
     }
 
+    static waitForTargetScrollAnimationToSettle(scrollTarget)
+    {
+        return new Promise((resolved) => {
+            let lastObservedScrollPosition = [scrollTarget.scrollLeft, scrollTarget.scrollTop];
+            let frameOfLastChange = 0;
+            let totalFrames = 0;
+
+            function animationFrame() {
+                if (lastObservedScrollPosition[0] != scrollTarget.scrollLeft ||
+                    lastObservedScrollPosition[1] != scrollTarget.scrollTop) {
+                    lastObservedScrollPosition = [scrollTarget.scrollLeft, scrollTarget.scrollTop];
+                    frameOfLastChange = totalFrames;
+                }
+
+                // If we have gone 20 frames without changing, resolve. If we have gone 500, then time out.
+                // This matches the amount of frames used in the WPT scroll animation helper.
+                if (totalFrames - frameOfLastChange >= 20 || totalFrames > 500)
+                    resolved();
+
+                totalFrames++;
+                requestAnimationFrame(animationFrame);
+            }
+
+            requestAnimationFrame(animationFrame);
+        });
+    }
+
     static rotateDevice(orientationName, animatedResize = false)
     {
         if (!this.isWebKit2() || !this.isIOSFamily())
@@ -1480,6 +1557,11 @@ UIHelper.EventStreamBuilder = class {
         });
         this.currentX = x;
         this.currentY = y;
+        return this;
+    }
+
+    wait(duration) {
+        this.currentTimeOffset += duration;
         return this;
     }
 

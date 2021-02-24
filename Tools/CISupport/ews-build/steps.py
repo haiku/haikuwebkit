@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2020 Apple Inc. All rights reserved.
+# Copyright (C) 2018-2021 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -37,8 +37,13 @@ import os
 import re
 import requests
 import socket
+import sys
+
+if sys.version_info > (3, 0):
+    unicode = str
 
 BUG_SERVER_URL = 'https://bugs.webkit.org/'
+COMMITS_INFO_URL = 'https://commits.webkit.org/'
 S3URL = 'https://s3-us-west-2.amazonaws.com/'
 S3_RESULTS_URL = 'https://ews-build.s3-us-west-2.amazonaws.com/'
 CURRENT_HOSTNAME = socket.gethostname().strip()
@@ -47,6 +52,8 @@ EWS_URL = 'https://ews.webkit.org/'
 RESULTS_DB_URL = 'https://results.webkit.org/'
 WithProperties = properties.WithProperties
 Interpolate = properties.Interpolate
+GITHUB_COM_USERNAME = 'GITHUB_COM_USERNAME'
+GITHUB_COM_ACCESS_TOKEN = 'GITHUB_COM_ACCESS_TOKEN'
 
 
 class ConfigureBuild(buildstep.BuildStep):
@@ -104,7 +111,7 @@ class CheckOutSource(git.Git):
     haltOnFailure = False
 
     def __init__(self, **kwargs):
-        self.repourl = 'https://git.webkit.org/git/WebKit.git'
+        self.repourl = 'https://github.com/WebKit/WebKit.git'
         super(CheckOutSource, self).__init__(repourl=self.repourl,
                                                 retry=self.CHECKOUT_DELAY_AND_MAX_RETRIES_PAIR,
                                                 timeout=2 * 60 * 60,
@@ -163,6 +170,67 @@ class CheckOutSpecificRevision(shell.ShellCommand):
         return shell.ShellCommand.start(self)
 
 
+class ShowIdentifier(shell.ShellCommand):
+    name = 'show-identifier'
+    identifier_re = '^Identifier: (.*)$'
+    flunkOnFailure = False
+    haltOnFailure = False
+
+    def __init__(self, **kwargs):
+        shell.ShellCommand.__init__(self, timeout=5 * 60, logEnviron=False, **kwargs)
+
+    def start(self):
+        self.workerEnvironment[GITHUB_COM_USERNAME] = os.getenv(GITHUB_COM_USERNAME)
+        self.workerEnvironment[GITHUB_COM_ACCESS_TOKEN] = os.getenv(GITHUB_COM_ACCESS_TOKEN)
+
+        self.log_observer = logobserver.BufferLogObserver()
+        self.addLogObserver('stdio', self.log_observer)
+        revision = self.getProperty('ews_revision', self.getProperty('got_revision'))
+        if not revision:
+            revision = 'HEAD'
+        self.setCommand(['python', 'Tools/Scripts/git-webkit', '-C', 'https://github.com/WebKit/Webkit', 'find', revision])
+        return shell.ShellCommand.start(self)
+
+    def evaluateCommand(self, cmd):
+        rc = shell.ShellCommand.evaluateCommand(self, cmd)
+        if rc != SUCCESS:
+            return rc
+
+        log_text = self.log_observer.getStdout()
+        match = re.search(self.identifier_re, log_text, re.MULTILINE)
+        if match:
+            identifier = match.group(1)
+            self.setProperty('identifier', identifier)
+            ews_revision = self.getProperty('ews_revision')
+            if ews_revision:
+                step = self.getLastBuildStepByName(CheckOutSpecificRevision.name)
+            else:
+                step = self.getLastBuildStepByName(CheckOutSource.name)
+            if not step:
+                step = self
+            step.addURL('Updated to {}'.format(identifier), self.url_for_identifier(identifier))
+            self.descriptionDone = 'Identifier: {}'.format(identifier)
+        else:
+            self.descriptionDone = 'Failed to find identifier'
+        return rc
+
+    def getLastBuildStepByName(self, name):
+        for step in reversed(self.build.executedSteps):
+            if name in step.name:
+                return step
+        return None
+
+    def url_for_identifier(self, identifier):
+        return '{}{}'.format(COMMITS_INFO_URL, identifier)
+
+    def getResultSummary(self):
+        if self.results != SUCCESS:
+            return {u'step': u'Failed to find identifier'}
+        return shell.ShellCommand.getResultSummary(self)
+
+    def hideStepIf(self, results, step):
+        return results == SUCCESS
+
 class CleanWorkingDirectory(shell.ShellCommand):
     name = 'clean-working-directory'
     description = ['clean-working-directory running']
@@ -184,13 +252,24 @@ class CleanWorkingDirectory(shell.ShellCommand):
 class UpdateWorkingDirectory(shell.ShellCommand):
     name = 'update-working-directory'
     description = ['update-workring-directory running']
-    descriptionDone = ['Updated working directory']
     flunkOnFailure = True
     haltOnFailure = True
     command = ['perl', 'Tools/Scripts/update-webkit']
 
     def __init__(self, **kwargs):
         super(UpdateWorkingDirectory, self).__init__(logEnviron=False, **kwargs)
+
+    def getResultSummary(self):
+        if self.results != SUCCESS:
+            return {u'step': u'Failed to updated working directory'}
+        else:
+            return {u'step': u'Updated working directory'}
+
+    def evaluateCommand(self, cmd):
+        rc = shell.ShellCommand.evaluateCommand(self, cmd)
+        if rc == FAILURE:
+            self.build.buildFinished(['Git issue, retrying build'], RETRY)
+        return rc
 
 
 class ApplyPatch(shell.ShellCommand, CompositeStepMixin):
@@ -264,23 +343,13 @@ class CheckPatchRelevance(buildstep.BuildStep):
     ]
 
     jsc_paths = [
+        '.*jsc.*',
+        '.*javascriptcore.*',
         'JSTests/',
-        'Source/JavaScriptCore/',
         'Source/WTF/',
         'Source/bmalloc/',
-        'Makefile',
-        'Makefile.shared',
-        'Source/Makefile',
-        'Source/Makefile.shared',
+        '.*Makefile.*',
         'Tools/Scripts/build-webkit',
-        'Tools/Scripts/build-jsc',
-        'Tools/Scripts/jsc-stress-test-helpers/',
-        'Tools/Scripts/run-jsc',
-        'Tools/Scripts/run-jsc-benchmarks',
-        'Tools/Scripts/run-jsc-stress-tests',
-        'Tools/Scripts/run-javascriptcore-tests',
-        'Tools/Scripts/run-layout-jsc',
-        'Tools/Scripts/update-javascriptcore-test-results',
         'Tools/Scripts/webkitdirs.pm',
     ]
 
@@ -304,6 +373,8 @@ class CheckPatchRelevance(buildstep.BuildStep):
     webkitpy_paths = [
         'Tools/Scripts/webkitpy',
         'Tools/Scripts/libraries',
+        'Tools/Scripts/commit-log-editor',
+        'Source/WebKit/Scripts',
     ]
 
     group_to_paths_mapping = {
@@ -724,7 +795,7 @@ class ValidatePatch(buildstep.BuildStep, BugzillaMixin):
 class ValidateCommiterAndReviewer(buildstep.BuildStep):
     name = 'validate-commiter-and-reviewer'
     descriptionDone = ['Validated commiter and reviewer']
-    url = 'https://svn.webkit.org/repository/webkit/trunk/Tools/Scripts/webkitpy/common/config/contributors.json'
+    url = 'https://raw.githubusercontent.com/WebKit/WebKit/main/Tools/Scripts/webkitpy/common/config/contributors.json'
     contributors = {}
 
     def load_contributors_from_disk(self):
@@ -737,7 +808,7 @@ class ValidateCommiterAndReviewer(buildstep.BuildStep):
             self._addToLog('stdio', 'Failed to load {}\n'.format(contributors_path))
             return {}
 
-    def load_contributors_from_trac(self):
+    def load_contributors_from_github(self):
         try:
             response = requests.get(self.url, timeout=60)
             if response.status_code != 200:
@@ -749,12 +820,12 @@ class ValidateCommiterAndReviewer(buildstep.BuildStep):
             return {}
 
     def load_contributors(self):
-        contributors_json = self.load_contributors_from_trac()
+        contributors_json = self.load_contributors_from_github()
         if not contributors_json:
             contributors_json = self.load_contributors_from_disk()
 
         contributors = {}
-        for key, value in contributors_json.iteritems():
+        for key, value in contributors_json.items():
             emails = value.get('emails')
             if emails:
                 bugzilla_email = emails[0].lower()  # We're requiring that the first email is the primary bugzilla email
@@ -875,7 +946,12 @@ class SetCommitQueueMinusFlagOnPatch(buildstep.BuildStep, BugzillaMixin):
     def getResultSummary(self):
         if self.results == SUCCESS:
             return {u'step': u'Set cq- flag on patch'}
+        elif self.results == SKIPPED:
+            return buildstep.BuildStep.getResultSummary(self)
         return {u'step': u'Failed to set cq- flag on patch'}
+
+    def doStepIf(self, step):
+        return CURRENT_HOSTNAME == EWS_BUILD_HOSTNAME
 
 
 class RemoveFlagsOnPatch(buildstep.BuildStep, BugzillaMixin):
@@ -946,7 +1022,12 @@ class CommentOnBug(buildstep.BuildStep, BugzillaMixin):
     def getResultSummary(self):
         if self.results == SUCCESS:
             return {u'step': u'Added comment on bug {}'.format(self.bug_id)}
+        elif self.results == SKIPPED:
+            return buildstep.BuildStep.getResultSummary(self)
         return {u'step': u'Failed to add comment on bug {}'.format(self.bug_id)}
+
+    def doStepIf(self, step):
+        return CURRENT_HOSTNAME == EWS_BUILD_HOSTNAME
 
 
 class UnApplyPatchIfRequired(CleanWorkingDirectory):
@@ -1028,7 +1109,7 @@ class CheckStyle(TestWithFailureCount):
     descriptionDone = ['check-webkit-style']
     flunkOnFailure = True
     failedTestsFormatString = '%d style error%s'
-    command = ['python', 'Tools/Scripts/check-webkit-style']
+    command = ['python3', 'Tools/Scripts/check-webkit-style']
 
     def __init__(self, **kwargs):
         super(CheckStyle, self).__init__(logEnviron=False, **kwargs)
@@ -1126,17 +1207,20 @@ class ReRunWebKitPerlTests(RunWebKitPerlTests):
 
 
 class RunBuildWebKitOrgUnitTests(shell.ShellCommand):
-    name = 'build-webkit-old-unit-tests'
+    name = 'build-webkit-org-unit-tests'
     description = ['build-webkit-unit-tests running']
-    command = ['python', 'steps_unittest_old.py']
+    command = ['python3', 'runUnittests.py', 'build-webkit-org']
 
     def __init__(self, **kwargs):
-        shell.ShellCommand.__init__(self, workdir='build/Tools/CISupport/build-webkit-org', timeout=2 * 60, logEnviron=False, **kwargs)
+        super(RunBuildWebKitOrgUnitTests, self).__init__(workdir='build/Tools/CISupport', timeout=2 * 60, logEnviron=False, **kwargs)
+
+    def start(self):
+        return shell.ShellCommand.start(self)
 
     def getResultSummary(self):
         if self.results == SUCCESS:
-            return {u'step': u'Passed build.webkit.org old unit tests'}
-        return {u'step': u'Failed build.webkit.org old unit tests'}
+            return {u'step': u'Passed build.webkit.org unit tests'}
+        return {u'step': u'Failed build.webkit.org unit tests'}
 
 
 class RunEWSUnitTests(shell.ShellCommand):
@@ -1701,7 +1785,7 @@ class ReRunJavaScriptCoreTests(RunJavaScriptCoreTests):
         first_run_failures = set(self.getProperty('jsc_stress_test_failures', []) + self.getProperty('jsc_binary_failures', []))
         second_run_failures = set(self.getProperty('jsc_rerun_stress_test_failures', []) + self.getProperty('jsc_rerun_binary_failures', []))
         flaky_failures = first_run_failures.union(second_run_failures) - first_run_failures.intersection(second_run_failures)
-        flaky_failures_string = ', '.join(flaky_failures)
+        flaky_failures_string = ', '.join(sorted(flaky_failures))
 
         if rc == SUCCESS or rc == WARNINGS:
             pluralSuffix = 's' if len(flaky_failures) > 1 else ''
@@ -1750,13 +1834,13 @@ class AnalyzeJSCTestsResults(buildstep.BuildStep):
 
         flaky_stress_failures = first_run_stress_failures.union(second_run_stress_failures) - first_run_stress_failures.intersection(second_run_stress_failures)
         flaky_binary_failures = first_run_binary_failures.union(second_run_binary_failures) - first_run_binary_failures.intersection(second_run_binary_failures)
-        flaky_failures = (list(flaky_binary_failures) + list(flaky_stress_failures))[:self.NUM_FAILURES_TO_DISPLAY]
+        flaky_failures = sorted(list(flaky_binary_failures) + list(flaky_stress_failures))[:self.NUM_FAILURES_TO_DISPLAY]
         flaky_failures_string = ', '.join(flaky_failures)
 
         new_stress_failures = stress_failures_with_patch - clean_tree_stress_failures
         new_binary_failures = binary_failures_with_patch - clean_tree_binary_failures
-        new_stress_failures_to_display = ', '.join(list(new_stress_failures)[:self.NUM_FAILURES_TO_DISPLAY])
-        new_binary_failures_to_display = ', '.join(list(new_binary_failures)[:self.NUM_FAILURES_TO_DISPLAY])
+        new_stress_failures_to_display = ', '.join(sorted(list(new_stress_failures))[:self.NUM_FAILURES_TO_DISPLAY])
+        new_binary_failures_to_display = ', '.join(sorted(list(new_binary_failures))[:self.NUM_FAILURES_TO_DISPLAY])
 
         self._addToLog('stderr', '\nFailures in first run: {}'.format((list(first_run_binary_failures) + list(first_run_stress_failures))[:self.NUM_FAILURES_TO_DISPLAY]))
         self._addToLog('stderr', '\nFailures in second run: {}'.format((list(second_run_binary_failures) + list(second_run_stress_failures))[:self.NUM_FAILURES_TO_DISPLAY]))
@@ -1850,12 +1934,13 @@ class KillOldProcesses(shell.Compile):
     command = ['python', 'Tools/CISupport/kill-old-processes', 'buildbot']
 
     def __init__(self, **kwargs):
-        super(KillOldProcesses, self).__init__(timeout=60, logEnviron=False, **kwargs)
+        super(KillOldProcesses, self).__init__(timeout=2 * 60, logEnviron=False, **kwargs)
 
     def evaluateCommand(self, cmd):
-        if self.results in [FAILURE, EXCEPTION]:
+        rc = shell.Compile.evaluateCommand(self, cmd)
+        if rc in [FAILURE, EXCEPTION]:
             self.build.buildFinished(['Failed to kill old processes, retrying build'], RETRY)
-        return shell.Compile.evaluateCommand(self, cmd)
+        return rc
 
     def getResultSummary(self):
         if self.results in [FAILURE, EXCEPTION]:
@@ -1996,7 +2081,7 @@ class RunWebKitTests(shell.Test):
 
         if first_results:
             self.setProperty('first_results_exceed_failure_limit', first_results.did_exceed_test_failure_limit)
-            self.setProperty('first_run_failures', first_results.failing_tests)
+            self.setProperty('first_run_failures', sorted(first_results.failing_tests))
             if first_results.failing_tests:
                 self._addToLog(self.test_failures_log_name, '\n'.join(first_results.failing_tests))
         self._parseRunWebKitTestsOutput(logText)
@@ -2063,7 +2148,7 @@ class ReRunWebKitTests(RunWebKitTests):
         second_results_failing_tests = set(self.getProperty('second_run_failures', []))
         tests_that_consistently_failed = first_results_failing_tests.intersection(second_results_failing_tests)
         flaky_failures = first_results_failing_tests.union(second_results_failing_tests) - first_results_failing_tests.intersection(second_results_failing_tests)
-        flaky_failures = list(flaky_failures)[:self.NUM_FAILURES_TO_DISPLAY]
+        flaky_failures = sorted(list(flaky_failures))[:self.NUM_FAILURES_TO_DISPLAY]
         flaky_failures_string = ', '.join(flaky_failures)
 
         if rc == SUCCESS or rc == WARNINGS:
@@ -2098,7 +2183,7 @@ class ReRunWebKitTests(RunWebKitTests):
 
         if second_results:
             self.setProperty('second_results_exceed_failure_limit', second_results.did_exceed_test_failure_limit)
-            self.setProperty('second_run_failures', second_results.failing_tests)
+            self.setProperty('second_run_failures', sorted(second_results.failing_tests))
             if second_results.failing_tests:
                 self._addToLog(self.test_failures_log_name, '\n'.join(second_results.failing_tests))
         self._parseRunWebKitTestsOutput(logText)
@@ -2842,7 +2927,7 @@ class PrintConfiguration(steps.ShellSequence):
             '10.5': 'Leopard',
         }
 
-        for key, value in build_to_name_mapping.iteritems():
+        for key, value in build_to_name_mapping.items():
             if build.startswith(key):
                 return value
         return 'Unknown'
@@ -3007,6 +3092,7 @@ class PushCommitToWebKitRepo(shell.ShellCommand):
     command = ['git', 'svn', 'dcommit', '--rmdir']
     commit_success_regexp = '^Committed r(?P<svn_revision>\d+)$'
     haltOnFailure = False
+    MAX_RETRY = 2
 
     def __init__(self, **kwargs):
         shell.ShellCommand.__init__(self, timeout=5 * 60, logEnviron=False, **kwargs)
@@ -3028,18 +3114,26 @@ class PushCommitToWebKitRepo(shell.ShellCommand):
             self.build.addStepsAfterCurrentStep([CommentOnBug(), RemoveFlagsOnPatch(), CloseBug()])
             self.addURL('r{}'.format(svn_revision), self.url_for_revision(svn_revision))
         else:
+            retry_count = int(self.getProperty('retry_count', 0))
+            if retry_count < self.MAX_RETRY:
+                self.setProperty('retry_count', retry_count + 1)
+                self.build.addStepsAfterCurrentStep([CheckOutSource(), ShowIdentifier(), UpdateWorkingDirectory(), ApplyPatch(), CreateLocalGITCommit(), PushCommitToWebKitRepo()])
+                return rc
+
             self.setProperty('bugzilla_comment_text', self.comment_text_for_bug())
             self.setProperty('build_finish_summary', 'Failed to commit to WebKit repository')
             self.build.addStepsAfterCurrentStep([CommentOnBug(), SetCommitQueueMinusFlagOnPatch()])
         return rc
 
     def url_for_revision(self, revision):
-        return 'https://trac.webkit.org/changeset/{}'.format(revision)
+        return 'https://commits.webkit.org/r{}'.format(revision)
 
     def comment_text_for_bug(self, svn_revision=None):
         patch_id = self.getProperty('patch_id', '')
         if not svn_revision:
-            return 'commit-queue failed to commit attachment {} to WebKit repository.'.format(patch_id)
+            comment = 'commit-queue failed to commit attachment {} to WebKit repository.'.format(patch_id)
+            comment += ' To retry, please set cq+ flag again.'
+            return comment
         comment = 'Committed r{}: <{}>'.format(svn_revision, self.url_for_revision(svn_revision))
         comment += '\n\nAll reviewed patches have been landed. Closing bug and clearing flags on attachment {}.'.format(patch_id)
         return comment
@@ -3052,6 +3146,9 @@ class PushCommitToWebKitRepo(shell.ShellCommand):
         if self.results != SUCCESS:
             return {u'step': u'Failed to push commit to Webkit repository'}
         return shell.ShellCommand.getResultSummary(self)
+
+    def doStepIf(self, step):
+        return CURRENT_HOSTNAME == EWS_BUILD_HOSTNAME
 
 
 class CheckPatchStatusOnEWSQueues(buildstep.BuildStep, BugzillaMixin):

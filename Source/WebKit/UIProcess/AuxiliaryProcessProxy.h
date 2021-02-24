@@ -57,7 +57,7 @@ public:
     template<typename T> SendSyncResult sendSync(T&& message, typename T::Reply&&, uint64_t destinationID, Seconds timeout = 1_s, OptionSet<IPC::SendSyncOption> sendSyncOptions = { });
 
     enum class ShouldStartProcessThrottlerActivity : bool { No, Yes };
-    template<typename T, typename C> void sendWithAsyncReply(T&&, C&&, uint64_t destinationID = 0, OptionSet<IPC::SendOption> = { }, ShouldStartProcessThrottlerActivity = ShouldStartProcessThrottlerActivity::Yes);
+    template<typename T, typename C> uint64_t sendWithAsyncReply(T&&, C&&, uint64_t destinationID = 0, OptionSet<IPC::SendOption> = { }, ShouldStartProcessThrottlerActivity = ShouldStartProcessThrottlerActivity::Yes);
     
     template<typename T, typename U>
     bool send(T&& message, ObjectIdentifier<U> destinationID, OptionSet<IPC::SendOption> sendOptions = { })
@@ -163,7 +163,7 @@ bool AuxiliaryProcessProxy::send(T&& message, uint64_t destinationID, OptionSet<
     COMPILE_ASSERT(!T::isSync, AsyncMessageExpected);
 
     auto encoder = makeUnique<IPC::Encoder>(T::name(), destinationID);
-    encoder->encode(message.arguments());
+    *encoder << message.arguments();
 
     return sendMessage(WTFMove(encoder), sendOptions);
 }
@@ -182,20 +182,21 @@ AuxiliaryProcessProxy::SendSyncResult AuxiliaryProcessProxy::sendSync(U&& messag
 }
 
 template<typename T, typename C>
-void AuxiliaryProcessProxy::sendWithAsyncReply(T&& message, C&& completionHandler, uint64_t destinationID, OptionSet<IPC::SendOption> sendOptions, ShouldStartProcessThrottlerActivity shouldStartProcessThrottlerActivity)
+uint64_t AuxiliaryProcessProxy::sendWithAsyncReply(T&& message, C&& completionHandler, uint64_t destinationID, OptionSet<IPC::SendOption> sendOptions, ShouldStartProcessThrottlerActivity shouldStartProcessThrottlerActivity)
 {
     COMPILE_ASSERT(!T::isSync, AsyncMessageExpected);
 
     auto encoder = makeUnique<IPC::Encoder>(T::name(), destinationID);
     uint64_t listenerID = IPC::nextAsyncReplyHandlerID();
-    encoder->encode(listenerID);
-    encoder->encode(message.arguments());
+    *encoder << listenerID;
+    *encoder << message.arguments();
     sendMessage(WTFMove(encoder), sendOptions, {{ [completionHandler = WTFMove(completionHandler)] (IPC::Decoder* decoder) mutable {
         if (decoder && decoder->isValid())
             T::callReply(*decoder, WTFMove(completionHandler));
         else
             T::cancelReply(WTFMove(completionHandler));
     }, listenerID }}, shouldStartProcessThrottlerActivity);
+    return listenerID;
 }
     
 } // namespace WebKit

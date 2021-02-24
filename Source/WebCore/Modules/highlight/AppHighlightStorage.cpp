@@ -27,7 +27,9 @@
 #include "config.h"
 #include "AppHighlightStorage.h"
 
-#include "AppHighlightListData.h"
+#include "AppHighlight.h"
+#include "AppHighlightRangeData.h"
+#include "Chrome.h"
 #include "Document.h"
 #include "DocumentMarkerController.h"
 #include "HTMLBodyElement.h"
@@ -39,10 +41,11 @@
 #include "StaticRange.h"
 #include "TextIterator.h"
 
-
 namespace WebCore {
 
 #if ENABLE(APP_HIGHLIGHTS)
+
+static constexpr unsigned textPreviewLength = 100;
 
 static RefPtr<Node> findNodeByPathIndex(const Node& parent, unsigned pathIndex, const String& nodeName)
 {
@@ -195,8 +198,10 @@ static AppHighlightRangeData::NodePath makeNodePath(RefPtr<Node>&& node)
 
 static AppHighlightRangeData createAppHighlightRangeData(const StaticRange& range)
 {
+    auto text = plainText(range);
+    text.truncate(textPreviewLength);
     return {
-        plainText(range),
+        text,
         makeNodePath(&range.startContainer()),
         range.startOffset(),
         makeNodePath(&range.endContainer()),
@@ -209,45 +214,35 @@ AppHighlightStorage::AppHighlightStorage(Document& document)
 {
 }
 
-AppHighlightListData AppHighlightStorage::createAppHighlightListData()
+void AppHighlightStorage::storeAppHighlight(StaticRange& range, CreateNewGroupForHighlight isNewGroup)
 {
-    Vector<AppHighlightRangeData> data;
+    auto data = createAppHighlightRangeData(range);
+    Optional<String> text;
 
-    if (!m_document)
-        return { WTFMove(data) };
+    if (!data.text().isEmpty())
+        text = data.text();
 
-    if (auto appHighlightRegister = m_document->appHighlightRegisterIfExists()) {
-        for (auto& highlight : appHighlightRegister->map()) {
-            for (auto& rangeData : highlight.value->rangesData())
-                data.append(createAppHighlightRangeData(rangeData->range));
-        }
-    }
+    AppHighlight highlight = {data.toSharedBuffer(), text, isNewGroup};
 
-    return { WTFMove(data) };
+    m_document->page()->chrome().storeAppHighlight(highlight);
 }
 
-Vector<AppHighlightRangeData> AppHighlightStorage::restoreAppHighlights(Ref<SharedBuffer>&& buffer)
+bool AppHighlightStorage::restoreAppHighlight(Ref<SharedBuffer>&& buffer)
 {
-    auto appHighlightListData = AppHighlightListData::create(buffer);
-    Vector<AppHighlightRangeData> unrestoredRanges;
-    Vector<AppHighlightRangeData> restoredRanges;
+    auto strongDocument = makeRefPtr(m_document.get());
 
     if (!m_document)
-        return unrestoredRanges;
+        return false;
 
-    auto strongDocument = m_document.get();
+    auto appHighlightRangeData = AppHighlightRangeData::create(buffer);
+    if (!appHighlightRangeData)
+        return false;
 
-    for (auto& appHighlightListData : appHighlightListData.ranges()) {
-        auto range = findRange(appHighlightListData, *strongDocument);
-        if (!range) {
-            unrestoredRanges.append(appHighlightListData);
-            continue;
-        }
+    auto range = findRange(*appHighlightRangeData, *strongDocument);
 
-        restoredRanges.append(appHighlightListData);
-        strongDocument->appHighlightRegister().addAppHighlight(StaticRange::create(*range));
-    }
-    return unrestoredRanges;
+    strongDocument->appHighlightRegister().addAppHighlight(StaticRange::create(*range));
+
+    return true;
 }
 
 #endif

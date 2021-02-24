@@ -539,14 +539,14 @@ public:
             break;
         case Slice:
             // Masks have a different initial value for slices. Preserve the value of "0 fill" for backwards compatibility.
-            image.setImageSlices(type == BorderImage ? LengthBox(Length(100, Percent), Length(100, Percent), Length(100, Percent), Length(100, Percent)) : LengthBox());
+            image.setImageSlices(type == BorderImage ? LengthBox(Length(100, LengthType::Percent), Length(100, LengthType::Percent), Length(100, LengthType::Percent), Length(100, LengthType::Percent)) : LengthBox());
             image.setFill(type != BorderImage);
             break;
         case Width:
             // FIXME: This is a local variable to work around a bug in the GCC 8.1 Address Sanitizer.
             // Might be slightly less efficient when the type is not BorderImage since this is unused in that case.
             // Should be switched back to a temporary when possible. See https://webkit.org/b/186980
-            LengthBox lengthBox(Length(1, Relative), Length(1, Relative), Length(1, Relative), Length(1, Relative));
+            LengthBox lengthBox(Length(1, LengthType::Relative), Length(1, LengthType::Relative), Length(1, LengthType::Relative), Length(1, LengthType::Relative));
             // Masks have a different initial value for widths. They use an 'auto' value rather than trying to fit to the border.
             image.setBorderSlices(type == BorderImage ? lengthBox : LengthBox());
             break;
@@ -654,8 +654,11 @@ void maybeUpdateFontForLetterSpacing(BuilderState& builderState, CSSValue& value
     // actually a font-relative unit passed to letter-spacing, and 2. updateFont() internally has logic
     // to only do work if the font is actually dirty.
 
-    if (is<CSSPrimitiveValue>(value) && downcast<CSSPrimitiveValue>(value).isFontRelativeLength())
-        builderState.updateFont();
+    if (is<CSSPrimitiveValue>(value)) {
+        auto& primitiveValue = downcast<CSSPrimitiveValue>(value);
+        if (primitiveValue.isFontRelativeLength() || primitiveValue.isCalculated())
+            builderState.updateFont();
+    }
 }
 
 inline void BuilderCustom::applyValueLetterSpacing(BuilderState& builderState, CSSValue& value)
@@ -1176,9 +1179,14 @@ inline void BuilderCustom::applyValueAspectRatio(BuilderState& builderState, CSS
         return;
     }
 
-    builderState.style().setAspectRatioType(AspectRatioType::Ratio);
     ASSERT(list.length() == 2);
-    builderState.style().setAspectRatio(downcast<CSSPrimitiveValue>(list.item(0))->doubleValue(), downcast<CSSPrimitiveValue>(list.item(1))->doubleValue());
+    auto width = downcast<CSSPrimitiveValue>(list.item(0))->doubleValue();
+    auto height = downcast<CSSPrimitiveValue>(list.item(1))->doubleValue();
+    if (!width || !height)
+        builderState.style().setAspectRatioType(AspectRatioType::AutoZero);
+    else
+        builderState.style().setAspectRatioType(AspectRatioType::Ratio);
+    builderState.style().setAspectRatio(width, height);
 }
 
 inline void BuilderCustom::applyValueWebkitTextEmphasisStyle(BuilderState& builderState, CSSValue& value)

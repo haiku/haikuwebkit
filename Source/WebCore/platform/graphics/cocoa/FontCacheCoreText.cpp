@@ -31,7 +31,7 @@
 #include "FontFamilySpecificationCoreText.h"
 #include "RenderThemeCocoa.h"
 #include "SystemFontDatabaseCoreText.h"
-#include <pal/spi/cocoa/CoreTextSPI.h>
+#include <pal/spi/cf/CoreTextSPI.h>
 
 #include <CoreText/SFNTLayoutTypes.h>
 
@@ -1604,6 +1604,7 @@ void FontCache::prewarm(const PrewarmInformation& prewarmInformation)
 
 void FontCache::prewarmGlobally()
 {
+#if !HAVE(STATIC_FONT_REGISTRY)
     if (MemoryPressureHandler::singleton().isUnderMemoryPressure())
         return;
 
@@ -1623,6 +1624,7 @@ void FontCache::prewarmGlobally()
     FontCache::PrewarmInformation prewarmInfo;
     prewarmInfo.seenFamilies = WTFMove(families);
     FontCache::singleton().prewarm(prewarmInfo);
+#endif
 }
 
 }

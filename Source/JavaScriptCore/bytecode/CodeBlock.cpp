@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2021 Apple Inc. All rights reserved.
  * Copyright (C) 2008 Cameron Zwarich <cwzwarich@uwaterloo.ca>
  *
  * Redistribution and use in source and binary forms, with or without
@@ -281,7 +281,7 @@ CodeBlock::CodeBlock(VM& vm, Structure* structure, CopyParsedBlockTag, CodeBlock
     , m_didFailFTLCompilation(false)
     , m_hasBeenCompiledWithFTL(false)
     , m_hasLinkedOSRExit(false)
-    , m_isEligibleForLLIntDowngrade(false) 
+    , m_isEligibleForLLIntDowngrade(false)
     , m_numCalleeLocals(other.m_numCalleeLocals)
     , m_numVars(other.m_numVars)
     , m_numberOfArgumentsToSkip(other.m_numberOfArgumentsToSkip)
@@ -422,9 +422,6 @@ bool CodeBlock::finishCreation(VM& vm, ScriptExecutable* ownerExecutable, Unlink
     if (unlinkedCodeBlock->hasRareData()) {
         createRareDataIfNecessary();
 
-        setConstantIdentifierSetRegisters(vm, unlinkedCodeBlock->constantIdentifierSets());
-        RETURN_IF_EXCEPTION(throwScope, false);
-
         if (size_t count = unlinkedCodeBlock->numberOfExceptionHandlers()) {
             m_rareData->m_exceptionHandlers.resizeToFit(count);
             for (size_t i = 0; i < count; i++) {
@@ -543,6 +540,9 @@ bool CodeBlock::finishCreation(VM& vm, ScriptExecutable* ownerExecutable, Unlink
         LINK(OpPutByVal)
         LINK(OpPutByValDirect)
         LINK(OpPutPrivateName)
+
+        LINK(OpSetPrivateBrand)
+        LINK(OpCheckPrivateBrand)
 
         LINK(OpNewArray)
         LINK(OpNewArrayWithSize)
@@ -887,28 +887,6 @@ CodeBlock::~CodeBlock()
 #endif // ENABLE(JIT)
 }
 
-void CodeBlock::setConstantIdentifierSetRegisters(VM& vm, const RefCountedArray<ConstantIdentifierSetEntry>& constants)
-{
-    auto scope = DECLARE_THROW_SCOPE(vm);
-    JSGlobalObject* globalObject = m_globalObject.get();
-
-    for (const auto& entry : constants) {
-        const IdentifierSet& set = entry.first;
-
-        Structure* setStructure = globalObject->setStructure();
-        RETURN_IF_EXCEPTION(scope, void());
-        JSSet* jsSet = JSSet::create(globalObject, vm, setStructure, set.size());
-        RETURN_IF_EXCEPTION(scope, void());
-
-        for (const auto& setEntry : set) {
-            JSString* jsString = jsOwnedString(vm, setEntry.get()); 
-            jsSet->add(globalObject, jsString);
-            RETURN_IF_EXCEPTION(scope, void());
-        }
-        m_constantRegisters[entry.second].set(vm, this, jsSet);
-    }
-}
-
 void CodeBlock::setConstantRegisters(const RefCountedArray<WriteBarrier<Unknown>>& constants, const RefCountedArray<SourceCodeRepresentation>& constantsSourceCodeRepresentation, ScriptExecutable* topLevelExecutable)
 {
     VM& vm = *m_vm;
@@ -998,7 +976,8 @@ size_t CodeBlock::estimatedSize(JSCell* cell, VM& vm)
     return Base::estimatedSize(cell, vm) + extraMemoryAllocated;
 }
 
-void CodeBlock::visitChildren(JSCell* cell, SlotVisitor& visitor)
+template<typename Visitor>
+void CodeBlock::visitChildrenImpl(JSCell* cell, Visitor& visitor)
 {
     CodeBlock* thisObject = jsCast<CodeBlock*>(cell);
     ASSERT_GC_OBJECT_INHERITS(thisObject, info());
@@ -1007,9 +986,17 @@ void CodeBlock::visitChildren(JSCell* cell, SlotVisitor& visitor)
     thisObject->visitChildren(visitor);
 }
 
-void CodeBlock::visitChildren(SlotVisitor& visitor)
+DEFINE_VISIT_CHILDREN(CodeBlock);
+
+template<typename Visitor>
+void CodeBlock::visitChildren(Visitor& visitor)
 {
     ConcurrentJSLocker locker(m_lock);
+
+    // In CodeBlock::shouldVisitStrongly() we may have decided to skip visiting this
+    // codeBlock. However, if we end up visiting it anyway due to other references,
+    // we can clear this flag and allow the verifier GC to visit it as well.
+    m_visitChildrenSkippedDueToOldAge = false;
     if (CodeBlock* otherBlock = specialOSREntryBlockOrNull())
         visitor.appendUnbarriered(otherBlock);
 
@@ -1026,13 +1013,22 @@ void CodeBlock::visitChildren(SlotVisitor& visitor)
     VM::SpaceAndSet::setFor(*subspace()).add(this);
 }
 
-bool CodeBlock::shouldVisitStrongly(const ConcurrentJSLocker& locker)
+template<typename Visitor>
+bool CodeBlock::shouldVisitStrongly(const ConcurrentJSLocker& locker, Visitor& visitor)
 {
     if (Options::forceCodeBlockLiveness())
         return true;
 
-    if (shouldJettisonDueToOldAge(locker))
+    if (shouldJettisonDueToOldAge(locker, visitor)) {
+        if (Options::verifyGC())
+            m_visitChildrenSkippedDueToOldAge = true;
         return false;
+    }
+
+    if (UNLIKELY(m_visitChildrenSkippedDueToOldAge)) {
+        RELEASE_ASSERT(Options::verifyGC());
+        return false;
+    }
 
     // Interpreter and Baseline JIT CodeBlocks don't need to be jettisoned when
     // their weak references go stale. So if a basline JIT CodeBlock gets
@@ -1042,6 +1038,9 @@ bool CodeBlock::shouldVisitStrongly(const ConcurrentJSLocker& locker)
 
     return false;
 }
+
+template bool CodeBlock::shouldVisitStrongly(const ConcurrentJSLocker&, AbstractSlotVisitor&);
+template bool CodeBlock::shouldVisitStrongly(const ConcurrentJSLocker&, SlotVisitor&);
 
 bool CodeBlock::shouldJettisonDueToWeakReference(VM& vm)
 {
@@ -1083,9 +1082,10 @@ static Seconds timeToLive(JITType jitType)
     }
 }
 
-bool CodeBlock::shouldJettisonDueToOldAge(const ConcurrentJSLocker&)
+template<typename Visitor>
+ALWAYS_INLINE bool CodeBlock::shouldJettisonDueToOldAge(const ConcurrentJSLocker&, Visitor& visitor)
 {
-    if (m_vm->heap.isMarked(this))
+    if (visitor.isMarked(this))
         return false;
 
     if (UNLIKELY(Options::forceCodeBlockToJettisonDueToOldAge()))
@@ -1098,12 +1098,13 @@ bool CodeBlock::shouldJettisonDueToOldAge(const ConcurrentJSLocker&)
 }
 
 #if ENABLE(DFG_JIT)
-static bool shouldMarkTransition(VM& vm, DFG::WeakReferenceTransition& transition)
+template<typename Visitor>
+static inline bool shouldMarkTransition(Visitor& visitor, DFG::WeakReferenceTransition& transition)
 {
-    if (transition.m_codeOrigin && !vm.heap.isMarked(transition.m_codeOrigin.get()))
+    if (transition.m_codeOrigin && !visitor.isMarked(transition.m_codeOrigin.get()))
         return false;
     
-    if (!vm.heap.isMarked(transition.m_from.get()))
+    if (!visitor.isMarked(transition.m_from.get()))
         return false;
     
     return true;
@@ -1119,8 +1120,10 @@ BytecodeIndex CodeBlock::bytecodeIndexForExit(BytecodeIndex exitIndex) const
 }
 #endif // ENABLE(DFG_JIT)
 
-void CodeBlock::propagateTransitions(const ConcurrentJSLocker&, SlotVisitor& visitor)
+template<typename Visitor>
+void CodeBlock::propagateTransitions(const ConcurrentJSLocker&, Visitor& visitor)
 {
+    typename Visitor::SuppressGCVerifierScope suppressScope(visitor);
     VM& vm = *m_vm;
 
     if (jitType() == JITType::InterpreterThunk) {
@@ -1130,12 +1133,12 @@ void CodeBlock::propagateTransitions(const ConcurrentJSLocker&, SlotVisitor& vis
                 StructureID newStructureID = metadata.m_newStructureID;
                 if (!oldStructureID || !newStructureID)
                     return;
-                Structure* oldStructure =
-                    vm.heap.structureIDTable().get(oldStructureID);
-                Structure* newStructure =
-                    vm.heap.structureIDTable().get(newStructureID);
-                if (vm.heap.isMarked(oldStructure))
+
+                Structure* oldStructure = vm.heap.structureIDTable().get(oldStructureID);
+                if (visitor.isMarked(oldStructure)) {
+                    Structure* newStructure = vm.heap.structureIDTable().get(newStructureID);
                     visitor.appendUnbarriered(newStructure);
+                }
             });
 
             m_metadata->forEach<OpPutPrivateName>([&] (auto& metadata) {
@@ -1146,15 +1149,32 @@ void CodeBlock::propagateTransitions(const ConcurrentJSLocker&, SlotVisitor& vis
 
                 JSCell* property = metadata.m_property.get();
                 ASSERT(property);
-                if (!vm.heap.isMarked(property))
+                if (!visitor.isMarked(property))
                     return;
 
-                Structure* oldStructure =
-                    vm.heap.structureIDTable().get(oldStructureID);
-                Structure* newStructure =
-                    vm.heap.structureIDTable().get(newStructureID);
-                if (vm.heap.isMarked(oldStructure))
+                Structure* oldStructure = vm.heap.structureIDTable().get(oldStructureID);
+                if (visitor.isMarked(oldStructure)) {
+                    Structure* newStructure = vm.heap.structureIDTable().get(newStructureID);
                     visitor.appendUnbarriered(newStructure);
+                }
+            });
+
+            m_metadata->forEach<OpSetPrivateBrand>([&] (auto& metadata) {
+                StructureID oldStructureID = metadata.m_oldStructureID;
+                StructureID newStructureID = metadata.m_newStructureID;
+                if (!oldStructureID || !newStructureID)
+                    return;
+
+                JSCell* brand = metadata.m_brand.get();
+                ASSERT(brand);
+                if (!visitor.isMarked(brand))
+                    return;
+
+                Structure* oldStructure = vm.heap.structureIDTable().get(oldStructureID);
+                if (visitor.isMarked(oldStructure)) {
+                    Structure* newStructure = vm.heap.structureIDTable().get(newStructureID);
+                    visitor.appendUnbarriered(newStructure);
+                }
             });
         }
     }
@@ -1178,7 +1198,7 @@ void CodeBlock::propagateTransitions(const ConcurrentJSLocker&, SlotVisitor& vis
             vm.getStructure(structureID)->markIfCheap(visitor);
 
         for (auto& transition : dfgCommon->transitions) {
-            if (shouldMarkTransition(vm, transition)) {
+            if (shouldMarkTransition(visitor, transition)) {
                 // If the following three things are live, then the target of the
                 // transition is also live:
                 //
@@ -1205,13 +1225,17 @@ void CodeBlock::propagateTransitions(const ConcurrentJSLocker&, SlotVisitor& vis
 #endif // ENABLE(DFG_JIT)
 }
 
-void CodeBlock::determineLiveness(const ConcurrentJSLocker&, SlotVisitor& visitor)
+template void CodeBlock::propagateTransitions(const ConcurrentJSLocker&, AbstractSlotVisitor&);
+template void CodeBlock::propagateTransitions(const ConcurrentJSLocker&, SlotVisitor&);
+
+template<typename Visitor>
+void CodeBlock::determineLiveness(const ConcurrentJSLocker&, Visitor& visitor)
 {
     UNUSED_PARAM(visitor);
     
 #if ENABLE(DFG_JIT)
     VM& vm = *m_vm;
-    if (vm.heap.isMarked(this))
+    if (visitor.isMarked(this))
         return;
     
     // In rare and weird cases, this could be called on a baseline CodeBlock. One that I found was
@@ -1228,7 +1252,7 @@ void CodeBlock::determineLiveness(const ConcurrentJSLocker&, SlotVisitor& visito
     for (unsigned i = 0; i < dfgCommon->weakReferences.size(); ++i) {
         JSCell* reference = dfgCommon->weakReferences[i].get();
         ASSERT(!jsDynamicCast<CodeBlock*>(vm, reference));
-        if (!vm.heap.isMarked(reference)) {
+        if (!visitor.isMarked(reference)) {
             allAreLiveSoFar = false;
             break;
         }
@@ -1236,7 +1260,7 @@ void CodeBlock::determineLiveness(const ConcurrentJSLocker&, SlotVisitor& visito
     if (allAreLiveSoFar) {
         for (StructureID structureID : dfgCommon->weakStructureReferences) {
             Structure* structure = vm.getStructure(structureID);
-            if (!vm.heap.isMarked(structure)) {
+            if (!visitor.isMarked(structure)) {
                 allAreLiveSoFar = false;
                 break;
             }
@@ -1253,6 +1277,9 @@ void CodeBlock::determineLiveness(const ConcurrentJSLocker&, SlotVisitor& visito
     visitor.appendUnbarriered(this);
 #endif // ENABLE(DFG_JIT)
 }
+
+template void CodeBlock::determineLiveness(const ConcurrentJSLocker&, AbstractSlotVisitor&);
+template void CodeBlock::determineLiveness(const ConcurrentJSLocker&, SlotVisitor&);
 
 void CodeBlock::finalizeLLIntInlineCaches()
 {
@@ -1336,6 +1363,33 @@ void CodeBlock::finalizeLLIntInlineCaches()
             metadata.m_offset = 0;
             metadata.m_newStructureID = 0;
             metadata.m_property.clear();
+        });
+
+        m_metadata->forEach<OpSetPrivateBrand>([&] (auto& metadata) {
+            StructureID oldStructureID = metadata.m_oldStructureID;
+            StructureID newStructureID = metadata.m_newStructureID;
+            JSCell* brand = metadata.m_brand.get();
+            if ((!oldStructureID || vm.heap.isMarked(vm.heap.structureIDTable().get(oldStructureID)))
+                && (!brand || vm.heap.isMarked(brand))
+                && (!newStructureID || vm.heap.isMarked(vm.heap.structureIDTable().get(newStructureID))))
+                return;
+
+            dataLogLnIf(Options::verboseOSR(), "Clearing LLInt set_private_brand transition.");
+            metadata.m_oldStructureID = 0;
+            metadata.m_newStructureID = 0;
+            metadata.m_brand.clear();
+        });
+
+        m_metadata->forEach<OpCheckPrivateBrand>([&] (auto& metadata) {
+            StructureID structureID = metadata.m_structureID;
+            JSCell* brand = metadata.m_brand.get();
+            if ((!structureID || vm.heap.isMarked(vm.heap.structureIDTable().get(structureID)))
+                && (!brand || vm.heap.isMarked(brand)))
+                return;
+
+            dataLogLnIf(Options::verboseOSR(), "Clearing LLInt set_private_brand transition.");
+            metadata.m_structureID = 0;
+            metadata.m_brand.clear();
         });
 
         m_metadata->forEach<OpToThis>([&] (auto& metadata) {
@@ -1570,6 +1624,11 @@ void CodeBlock::finalizeUnconditionally(VM& vm)
     updateActivity();
 
     VM::SpaceAndSet::setFor(*subspace()).remove(this);
+
+    // In CodeBlock::shouldVisitStrongly() we may have decided to skip visiting this
+    // codeBlock. By the time we get here, we're done with the verifier GC. So, let's
+    // reset this flag for the next GC cycle.
+    m_visitChildrenSkippedDueToOldAge = false;
 }
 
 void CodeBlock::destroy(JSCell* cell)
@@ -1762,7 +1821,8 @@ void CodeBlock::resetJITData()
 }
 #endif
 
-void CodeBlock::visitOSRExitTargets(const ConcurrentJSLocker&, SlotVisitor& visitor)
+template<typename Visitor>
+void CodeBlock::visitOSRExitTargets(const ConcurrentJSLocker&, Visitor& visitor)
 {
     // We strongly visit OSR exits targets because we don't want to deal with
     // the complexity of generating an exit target CodeBlock on demand and
@@ -1782,7 +1842,8 @@ void CodeBlock::visitOSRExitTargets(const ConcurrentJSLocker&, SlotVisitor& visi
 #endif
 }
 
-void CodeBlock::stronglyVisitStrongReferences(const ConcurrentJSLocker& locker, SlotVisitor& visitor)
+template<typename Visitor>
+void CodeBlock::stronglyVisitStrongReferences(const ConcurrentJSLocker& locker, Visitor& visitor)
 {
     UNUSED_PARAM(locker);
     
@@ -1818,7 +1879,8 @@ void CodeBlock::stronglyVisitStrongReferences(const ConcurrentJSLocker& locker, 
 #endif
 }
 
-void CodeBlock::stronglyVisitWeakReferences(const ConcurrentJSLocker&, SlotVisitor& visitor)
+template<typename Visitor>
+void CodeBlock::stronglyVisitWeakReferences(const ConcurrentJSLocker&, Visitor& visitor)
 {
     UNUSED_PARAM(visitor);
 

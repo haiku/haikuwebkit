@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,8 @@
 namespace JSC {
 
 template<typename Type>
-void GenericArguments<Type>::visitChildren(JSCell* thisCell, SlotVisitor& visitor)
+template<typename Visitor>
+void GenericArguments<Type>::visitChildrenImpl(JSCell* thisCell, Visitor& visitor)
 {
     Type* thisObject = static_cast<Type*>(thisCell);
     ASSERT_GC_OBJECT_INHERITS(thisObject, info());
@@ -40,6 +41,8 @@ void GenericArguments<Type>::visitChildren(JSCell* thisCell, SlotVisitor& visito
     if (thisObject->m_modifiedArgumentsDescriptor)
         visitor.markAuxiliary(thisObject->m_modifiedArgumentsDescriptor.getUnsafe());
 }
+
+DEFINE_VISIT_CHILDREN_WITH_MODIFIER(template<typename Type>, GenericArguments<Type>);
 
 template<typename Type>
 bool GenericArguments<Type>::getOwnPropertySlot(JSObject* object, JSGlobalObject* globalObject, PropertyName ident, PropertySlot& slot)
@@ -238,12 +241,12 @@ bool GenericArguments<Type>::defineOwnProperty(JSObject* object, JSGlobalObject*
         }
 
         bool status = thisObject->defineOwnIndexedProperty(globalObject, index, newDescriptor, shouldThrow);
+        RETURN_IF_EXCEPTION(scope, false);
         if (!status) {
             ASSERT(!isMapped || thisObject->isModifiedArgumentDescriptor(index));
-            RELEASE_AND_RETURN(scope, false);
+            return false;
         }
 
-        scope.assertNoException();
         thisObject->setModifiedArgumentDescriptor(globalObject, index);
         RETURN_IF_EXCEPTION(scope, false);
 

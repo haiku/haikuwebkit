@@ -23,6 +23,7 @@
 #include "TestMain.h"
 #include <wtf/Threading.h>
 #include <wtf/glib/GUniquePtr.h>
+#include <wtf/threads/BinarySemaphore.h>
 
 WebKitTestServer::WebKitTestServer(ServerOptionsBitSet options)
 {
@@ -31,63 +32,50 @@ WebKitTestServer::WebKitTestServer(ServerOptionsBitSet options)
         m_queue = WorkQueue::create("WebKitTestServer");
     }
 
-    GUniquePtr<char> sslCertificateFile;
-    GUniquePtr<char> sslKeyFile;
+    m_soupServer = adoptGRef(soup_server_new("server-header", "WebKitTestServer ", nullptr));
+
     if (options[ServerHTTPS]) {
         CString resourcesDir = Test::getResourcesDir();
-        sslCertificateFile.reset(g_build_filename(resourcesDir.data(), "test-cert.pem", NULL));
-        sslKeyFile.reset(g_build_filename(resourcesDir.data(), "test-key.pem", NULL));
+        GUniquePtr<char> sslCertificateFile(g_build_filename(resourcesDir.data(), "test-cert.pem", nullptr));
+        GUniquePtr<char> sslKeyFile(g_build_filename(resourcesDir.data(), "test-key.pem", nullptr));
+        g_assert_true(soup_server_set_ssl_cert_file(m_soupServer.get(), sslCertificateFile.get(), sslKeyFile.get(), nullptr));
     }
-
-    m_soupServer = adoptGRef(soup_server_new(
-        SOUP_SERVER_ASYNC_CONTEXT, m_queue ? m_queue->runLoop().mainContext() : nullptr,
-        SOUP_SERVER_SSL_CERT_FILE, sslCertificateFile.get(),
-        SOUP_SERVER_SSL_KEY_FILE, sslKeyFile.get(), nullptr));
-
-    GUniqueOutPtr<GError> error;
-    SoupServerListenOptions serverOptions = static_cast<SoupServerListenOptions>(options[ServerHTTPS] ? SOUP_SERVER_LISTEN_IPV4_ONLY : SOUP_SERVER_LISTEN_IPV4_ONLY | SOUP_SERVER_LISTEN_HTTPS);
-    bool serverStarted = false;
-    if (options[ServerNonLoopback]) {
-        GRefPtr<SoupAddress> address = adoptGRef(soup_address_new("localhost", SOUP_ADDRESS_ANY_PORT));
-        soup_address_resolve_sync(address.get(), nullptr);
-        serverStarted = soup_server_listen(m_soupServer.get(), soup_address_get_gsockaddr(address.get()), serverOptions, &error.outPtr());
-    } else
-        serverStarted = soup_server_listen_local(m_soupServer.get(), SOUP_ADDRESS_ANY_PORT, serverOptions, &error.outPtr());
-    if (!serverStarted) {
-        WTFLogAlways("Failed to start HTTP server: %s", error->message);
-        CRASH();
-    }
-
-    GSList* uris = soup_server_get_uris(m_soupServer.get());
-    ASSERT(uris);
-    m_baseURI = static_cast<SoupURI*>(g_object_ref(uris->data));
-    g_slist_free_full(uris, g_object_unref);
-}
-
-WebKitTestServer::~WebKitTestServer()
-{
-    soup_uri_free(m_baseURI);
-    if (m_baseWebSocketURI)
-        soup_uri_free(m_baseWebSocketURI);
 }
 
 void WebKitTestServer::run(SoupServerCallback serverCallback)
 {
+    soup_server_add_handler(m_soupServer.get(), nullptr, serverCallback, nullptr, nullptr);
+
+    unsigned options = SOUP_SERVER_LISTEN_IPV4_ONLY;
+    if (soup_server_is_https(m_soupServer.get()))
+        options |= SOUP_SERVER_LISTEN_HTTPS;
+
     if (m_queue) {
-        m_queue->dispatch([this, serverCallback] {
-            soup_server_run_async(m_soupServer.get());
-            soup_server_add_handler(m_soupServer.get(), nullptr, serverCallback, nullptr, nullptr);
+        BinarySemaphore semaphore;
+        m_queue->dispatch([&] {
+            g_assert_true(soup_server_listen_local(m_soupServer.get(), 0, static_cast<SoupServerListenOptions>(options), nullptr));
+            semaphore.signal();
         });
-    } else {
-        soup_server_run_async(m_soupServer.get());
-        soup_server_add_handler(m_soupServer.get(), nullptr, serverCallback, nullptr, nullptr);
-    }
+        semaphore.wait();
+    } else
+        g_assert_true(soup_server_listen_local(m_soupServer.get(), 0, static_cast<SoupServerListenOptions>(options), nullptr));
+
+    GSList* uris = soup_server_get_uris(m_soupServer.get());
+    g_assert_nonnull(uris);
+#if USE(SOUP2)
+    GUniquePtr<gchar> urlString(soup_uri_to_string(static_cast<SoupURI*>(uris->data), FALSE));
+    m_baseURL = URL({ }, String::fromUTF8(urlString.get()));
+    g_slist_free_full(uris, reinterpret_cast<GDestroyNotify>(soup_uri_free));
+#else
+    m_baseURL = static_cast<GUri*>(uris->data);
+    g_slist_free_full(uris, reinterpret_cast<GDestroyNotify>(g_uri_unref));
+#endif
 }
 
 void WebKitTestServer::addWebSocketHandler(SoupServerWebsocketCallback callback, gpointer userData)
 {
-    m_baseWebSocketURI = soup_uri_new_with_base(m_baseURI, "/websocket/");
-    m_baseWebSocketURI->scheme = m_baseWebSocketURI->scheme == SOUP_URI_SCHEME_HTTP ? SOUP_URI_SCHEME_WS : SOUP_URI_SCHEME_WSS;
+    m_baseWebSocketURL = URL(m_baseURL, "/websocket/");
+    m_baseWebSocketURL.setProtocol(m_baseWebSocketURL.protocolIs("http") ? "ws" : "wss");
 
     if (m_queue) {
         m_queue->dispatch([this, callback, userData] {
@@ -99,8 +87,7 @@ void WebKitTestServer::addWebSocketHandler(SoupServerWebsocketCallback callback,
 
 void WebKitTestServer::removeWebSocketHandler()
 {
-    soup_uri_free(m_baseWebSocketURI);
-    m_baseWebSocketURI = nullptr;
+    m_baseWebSocketURL = { };
 
     if (m_queue) {
         m_queue->dispatch([this] {
@@ -112,18 +99,17 @@ void WebKitTestServer::removeWebSocketHandler()
 
 CString WebKitTestServer::getWebSocketURIForPath(const char* path) const
 {
-    g_assert_nonnull(m_baseWebSocketURI);
+    g_assert_false(m_baseWebSocketURL.isNull());
     g_assert_true(path && *path == '/');
-    SoupURI* uri = soup_uri_new_with_base(m_baseWebSocketURI, path + 1); // Ignore the leading slash.
-    GUniquePtr<gchar> uriString(soup_uri_to_string(uri, FALSE));
-    soup_uri_free(uri);
-    return uriString.get();
+    return URL(m_baseWebSocketURL, path + 1).string().utf8(); // Ignore the leading slash.
 }
 
 CString WebKitTestServer::getURIForPath(const char* path) const
 {
-    SoupURI* uri = soup_uri_new_with_base(m_baseURI, path);
-    GUniquePtr<gchar> uriString(soup_uri_to_string(uri, FALSE));
-    soup_uri_free(uri);
-    return uriString.get();
+    return URL(m_baseURL, path).string().utf8();
+}
+
+unsigned WebKitTestServer::port() const
+{
+    return m_baseURL.port().valueOr(0);
 }

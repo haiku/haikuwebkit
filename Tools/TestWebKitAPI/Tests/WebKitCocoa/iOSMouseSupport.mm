@@ -286,10 +286,10 @@ TEST(iOSMouseSupport, WebsiteMouseEventPolicies)
 
     // If loaded with _WKWebsiteMouseEventPolicySynthesizeTouchEvents, it should send touch events instead.
 
-    WKWebpagePreferences *preferences = [[[WKWebpagePreferences alloc] init] autorelease];
-    preferences._mouseEventPolicy = _WKWebsiteMouseEventPolicySynthesizeTouchEvents;
+    auto preferences = adoptNS([[WKWebpagePreferences alloc] init]);
+    [preferences _setMouseEventPolicy:_WKWebsiteMouseEventPolicySynthesizeTouchEvents];
 
-    [webView synchronouslyLoadHTMLString:@"two" preferences:preferences];
+    [webView synchronouslyLoadHTMLString:@"two" preferences:preferences.get()];
 
     // FIXME: Because we're directly calling mouseGestureRecognizerChanged: to emulate the gesture recognizer,
     // we can't just tapAndWait() again and expect the fact that it's disabled to stop the mouse events.
@@ -306,14 +306,20 @@ TEST(iOSMouseSupport, WebsiteMouseEventPolicies)
 
 @interface WKMouseDeviceObserver
 + (WKMouseDeviceObserver *)sharedInstance;
-- (void)start;
+- (void)startWithCompletionHandler:(void (^)(void))completionHandler;
 - (void)_setHasMouseDeviceForTesting:(BOOL)hasMouseDevice;
 @end
 
 TEST(iOSMouseSupport, MouseInitiallyDisconnected)
 {
     WKMouseDeviceObserver *mouseDeviceObserver = [NSClassFromString(@"WKMouseDeviceObserver") sharedInstance];
-    [mouseDeviceObserver start];
+
+    __block bool didStartMouseDeviceObserver = false;
+    [mouseDeviceObserver startWithCompletionHandler:^{
+        didStartMouseDeviceObserver = true;
+    }];
+    TestWebKitAPI::Util::run(&didStartMouseDeviceObserver);
+
     [mouseDeviceObserver _setHasMouseDeviceForTesting:NO];
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
@@ -342,7 +348,13 @@ TEST(iOSMouseSupport, MouseInitiallyDisconnected)
 TEST(iOSMouseSupport, MouseInitiallyConnected)
 {
     WKMouseDeviceObserver *mouseDeviceObserver = [NSClassFromString(@"WKMouseDeviceObserver") sharedInstance];
-    [mouseDeviceObserver start];
+
+    __block bool didStartMouseDeviceObserver = false;
+    [mouseDeviceObserver startWithCompletionHandler:^{
+        didStartMouseDeviceObserver = true;
+    }];
+    TestWebKitAPI::Util::run(&didStartMouseDeviceObserver);
+
     [mouseDeviceObserver _setHasMouseDeviceForTesting:YES];
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
@@ -371,7 +383,13 @@ TEST(iOSMouseSupport, MouseInitiallyConnected)
 TEST(iOSMouseSupport, MouseLaterDisconnected)
 {
     WKMouseDeviceObserver *mouseDeviceObserver = [NSClassFromString(@"WKMouseDeviceObserver") sharedInstance];
-    [mouseDeviceObserver start];
+
+    __block bool didStartMouseDeviceObserver = false;
+    [mouseDeviceObserver startWithCompletionHandler:^{
+        didStartMouseDeviceObserver = true;
+    }];
+    TestWebKitAPI::Util::run(&didStartMouseDeviceObserver);
+
     [mouseDeviceObserver _setHasMouseDeviceForTesting:YES];
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
@@ -402,7 +420,13 @@ TEST(iOSMouseSupport, MouseLaterDisconnected)
 TEST(iOSMouseSupport, MouseLaterConnected)
 {
     WKMouseDeviceObserver *mouseDeviceObserver = [NSClassFromString(@"WKMouseDeviceObserver") sharedInstance];
-    [mouseDeviceObserver start];
+
+    __block bool didStartMouseDeviceObserver = false;
+    [mouseDeviceObserver startWithCompletionHandler:^{
+        didStartMouseDeviceObserver = true;
+    }];
+    TestWebKitAPI::Util::run(&didStartMouseDeviceObserver);
+
     [mouseDeviceObserver _setHasMouseDeviceForTesting:NO];
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);

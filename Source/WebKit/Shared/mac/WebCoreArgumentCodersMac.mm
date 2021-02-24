@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2021 Apple Inc. All rights reserved.
  * Copyright (C) 2013 Company 100 Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,11 +42,22 @@
 #import <wtf/MachSendRight.h>
 #import <wtf/cf/TypeCastsCF.h>
 
+#if USE(APPLE_INTERNAL_SDK)
+#include <WebKitAdditions/WebCoreArgumentCodersMacAdditions.h>
+#endif
+
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
 #import <WebCore/MediaPlaybackTargetContext.h>
 #import <objc/runtime.h>
-
 #import <pal/cocoa/AVFoundationSoftLink.h>
+#endif
+
+#ifndef WEBCORE_ARGUMENTCODERS_MAC_DECODE_ADDITIONS
+#define WEBCORE_ARGUMENTCODERS_MAC_DECODE_ADDITIONS
+#endif
+
+#ifndef WEBCORE_ARGUMENTCODERS_MAC_ENCODE_ADDITIONS
+#define WEBCORE_ARGUMENTCODERS_MAC_ENCODE_ADDITIONS
 #endif
 
 namespace IPC {
@@ -188,7 +199,7 @@ static RetainPtr<NSURLRequest> createNSURLRequestFromSerializableRepresentation(
     
     return adoptNS([[NSURLRequest alloc] _initWithCFURLRequest:cfRequest.get()]);
 }
-    
+
 void ArgumentCoder<WebCore::ResourceRequest>::encodePlatformData(Encoder& encoder, const WebCore::ResourceRequest& resourceRequest)
 {
     RetainPtr<NSURLRequest> requestToSerialize = resourceRequest.nsURLRequest(WebCore::HTTPBodyUpdatePolicy::DoNotUpdateHTTPBody);
@@ -210,10 +221,13 @@ void ArgumentCoder<WebCore::ResourceRequest>::encodePlatformData(Encoder& encode
     auto dictionary = createSerializableRepresentation(requestToSerialize.get(), IPC::tokenNullptrTypeRef());
     IPC::encode(encoder, dictionary.get());
 
+    WEBCORE_ARGUMENTCODERS_MAC_ENCODE_ADDITIONS
+
     // The fallback array is part of NSURLRequest, but it is not encoded by WKNSURLRequestCreateSerializableRepresentation.
     encoder << resourceRequest.responseContentDispositionEncodingFallbackArray();
     encoder << resourceRequest.requester();
     encoder << resourceRequest.cachePolicy();
+    encoder << resourceRequest.isAppBound();
 }
 
 bool ArgumentCoder<WebCore::ResourceRequest>::decodePlatformData(Decoder& decoder, WebCore::ResourceRequest& resourceRequest)
@@ -228,12 +242,14 @@ bool ArgumentCoder<WebCore::ResourceRequest>::decodePlatformData(Decoder& decode
     }
 
     RetainPtr<CFDictionaryRef> dictionary;
-    if (!IPC::decode(decoder, dictionary))
+    if (!IPC::decode(decoder, dictionary) || !dictionary)
         return false;
 
     auto nsURLRequest = createNSURLRequestFromSerializableRepresentation(dictionary.get(), IPC::tokenNullptrTypeRef());
     if (!nsURLRequest)
         return false;
+
+    WEBCORE_ARGUMENTCODERS_MAC_DECODE_ADDITIONS
 
     resourceRequest = WebCore::ResourceRequest(nsURLRequest.get());
     
@@ -256,6 +272,11 @@ bool ArgumentCoder<WebCore::ResourceRequest>::decodePlatformData(Decoder& decode
     if (!decoder.decode(cachePolicy))
         return false;
     resourceRequest.setCachePolicy(cachePolicy);
+
+    bool isAppBound;
+    if (!decoder.decode(isAppBound))
+        return false;
+    resourceRequest.setIsAppBound(isAppBound);
 
     return true;
 }
@@ -289,7 +310,7 @@ bool ArgumentCoder<WebCore::CertificateInfo>::decode(Decoder& decoder, WebCore::
 #if HAVE(SEC_TRUST_SERIALIZATION)
     case WebCore::CertificateInfo::Type::Trust: {
         RetainPtr<SecTrustRef> trust;
-        if (!IPC::decode(decoder, trust))
+        if (!IPC::decode(decoder, trust) || !trust)
             return false;
 
         certificateInfo = WebCore::CertificateInfo(WTFMove(trust));
@@ -298,7 +319,7 @@ bool ArgumentCoder<WebCore::CertificateInfo>::decode(Decoder& decoder, WebCore::
 #endif
     case WebCore::CertificateInfo::Type::CertificateChain: {
         RetainPtr<CFArrayRef> certificateChain;
-        if (!IPC::decode(decoder, certificateChain))
+        if (!IPC::decode(decoder, certificateChain) || !certificateChain)
             return false;
 
         certificateInfo = WebCore::CertificateInfo(WTFMove(certificateChain));
@@ -394,42 +415,41 @@ void ArgumentCoder<WebCore::ResourceError>::encodePlatformData(Encoder& encoder,
     encodeNSError(encoder, resourceError.nsError());
 }
 
-static WARN_UNUSED_RETURN bool decodeNSError(Decoder& decoder, RetainPtr<NSError>& nsError)
+static RetainPtr<NSError> decodeNSError(Decoder& decoder)
 {
     String domain;
     if (!decoder.decode(domain))
-        return false;
+        return nil;
 
     int64_t code;
     if (!decoder.decode(code))
-        return false;
+        return nil;
 
     RetainPtr<CFDictionaryRef> userInfo;
-    if (!IPC::decode(decoder, userInfo))
-        return false;
+    if (!IPC::decode(decoder, userInfo) || !userInfo)
+        return nil;
 
     bool hasUnderlyingError = false;
     if (!decoder.decode(hasUnderlyingError))
-        return false;
+        return nil;
 
     if (hasUnderlyingError) {
-        RetainPtr<NSError> underlyingNSError;
-        if (!decodeNSError(decoder, underlyingNSError))
-            return false;
+        auto underlyingNSError = decodeNSError(decoder);
+        if (!underlyingNSError)
+            return nil;
 
         auto mutableUserInfo = adoptCF(CFDictionaryCreateMutableCopy(kCFAllocatorDefault, CFDictionaryGetCount(userInfo.get()) + 1, userInfo.get()));
         CFDictionarySetValue(mutableUserInfo.get(), (__bridge CFStringRef)NSUnderlyingErrorKey, (__bridge CFTypeRef)underlyingNSError.get());
         userInfo = WTFMove(mutableUserInfo);
     }
 
-    nsError = adoptNS([[NSError alloc] initWithDomain:domain code:code userInfo:(__bridge NSDictionary *)userInfo.get()]);
-    return true;
+    return adoptNS([[NSError alloc] initWithDomain:domain code:code userInfo:(__bridge NSDictionary *)userInfo.get()]);
 }
 
 bool ArgumentCoder<WebCore::ResourceError>::decodePlatformData(Decoder& decoder, WebCore::ResourceError& resourceError)
 {
-    RetainPtr<NSError> nsError;
-    if (!decodeNSError(decoder, nsError))
+    auto nsError = decodeNSError(decoder);
+    if (!nsError)
         return false;
 
     resourceError = WebCore::ResourceError(nsError.get());
@@ -597,7 +617,7 @@ void ArgumentCoder<WebCore::ContentFilterUnblockHandler>::encode(Encoder& encode
 bool ArgumentCoder<WebCore::ContentFilterUnblockHandler>::decode(Decoder& decoder, WebCore::ContentFilterUnblockHandler& contentFilterUnblockHandler)
 {
     RetainPtr<CFDataRef> data;
-    if (!IPC::decode(decoder, data))
+    if (!IPC::decode(decoder, data) || !data)
         return false;
 
     auto unarchiver = adoptNS([[NSKeyedUnarchiver alloc] initForReadingFromData:(__bridge NSData *)data.get() error:nullptr]);

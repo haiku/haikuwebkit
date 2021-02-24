@@ -254,7 +254,7 @@ void DocumentLoader::setRequest(const ResourceRequest& req)
 void DocumentLoader::setMainDocumentError(const ResourceError& error)
 {
     if (!error.isNull())
-        RELEASE_LOG_IF_ALLOWED("setMainDocumentError: (type = %d, code = %d)", static_cast<int>(error.type()), error.errorCode());
+        RELEASE_LOG_IF_ALLOWED("setMainDocumentError: (type=%d, code=%d)", static_cast<int>(error.type()), error.errorCode());
 
     m_mainDocumentError = error;    
     frameLoader()->client().setMainDocumentError(this, error);
@@ -268,7 +268,7 @@ void DocumentLoader::mainReceivedError(const ResourceError& error)
         return;
 
     if (!error.isNull())
-        RELEASE_LOG_IF_ALLOWED("mainReceivedError: (type = %d, code = %d)", static_cast<int>(error.type()), error.errorCode());
+        RELEASE_LOG_IF_ALLOWED("mainReceivedError: (type=%d, code=%d)", static_cast<int>(error.type()), error.errorCode());
 
     if (m_identifierForLoadWithoutResourceLoader) {
         ASSERT(!mainResourceLoader());
@@ -337,7 +337,7 @@ void DocumentLoader::stopLoading()
     // Always cancel multipart loaders
     cancelAll(m_multipartSubresourceLoaders);
 
-    if (auto* document = m_frame->document())
+    if (auto* document = this->document())
         document->fontSelector().suspendFontLoadingTimer();
 
     // Appcache uses ResourceHandle directly, DocumentLoader doesn't count these loads.
@@ -431,7 +431,7 @@ void DocumentLoader::notifyFinished(CachedResource& resource, const NetworkLoadM
     }
 
     if (!m_mainResource->resourceError().isNull())
-        RELEASE_LOG_IF_ALLOWED("notifyFinished: canceling load (type = %d, code = %d)", static_cast<int>(m_mainResource->resourceError().type()), m_mainResource->resourceError().errorCode());
+        RELEASE_LOG_IF_ALLOWED("notifyFinished: canceling load (type=%d, code=%d)", static_cast<int>(m_mainResource->resourceError().type()), m_mainResource->resourceError().errorCode());
 
     mainReceivedError(m_mainResource->resourceError());
 }
@@ -1005,7 +1005,7 @@ void DocumentLoader::continueAfterContentPolicy(PolicyAction policy)
         return;
 
     if (!m_frame) {
-        RELEASE_LOG_IF_ALLOWED("continueAfterContentPolicy: Policy action %i received by DocumentLoader with null frame", (int)policy);
+        RELEASE_LOG_IF_ALLOWED("continueAfterContentPolicy: policyAction=%i received by DocumentLoader with null frame", (int)policy);
         return;
     }
 
@@ -1128,7 +1128,7 @@ void DocumentLoader::stopLoadingForPolicyChange()
 // https://w3c.github.io/ServiceWorker/#control-and-use-window-client
 static inline bool shouldUseActiveServiceWorkerFromParent(const Document& document, const Document& parent)
 {
-    return !document.url().protocolIsInHTTPFamily() && !document.securityOrigin().isUnique() && parent.securityOrigin().canAccess(document.securityOrigin());
+    return !document.url().protocolIsInHTTPFamily() && !document.securityOrigin().isUnique() && parent.securityOrigin().isSameOriginDomain(document.securityOrigin());
 }
 #endif
 
@@ -1137,6 +1137,9 @@ void DocumentLoader::commitData(const char* bytes, size_t length)
     if (!m_gotFirstByte) {
         m_gotFirstByte = true;
         bool hasBegun = m_writer.begin(documentURL(), false);
+        if (!hasBegun)
+            return;
+
         m_writer.setDocumentWasLoadedAsPartOfNavigation();
 
         auto* documentOrNull = m_frame ? m_frame->document() : nullptr;
@@ -1204,8 +1207,6 @@ void DocumentLoader::commitData(const char* bytes, size_t length)
         }
 
         m_writer.setEncoding(encoding, userChosen);
-
-        RELEASE_ASSERT(hasBegun);
     }
 
 #if ENABLE(CONTENT_EXTENSIONS)
@@ -1720,7 +1721,8 @@ void DocumentLoader::setTitle(const StringWithDirection& title)
 
     frameLoader()->willChangeTitle(this);
     m_pageTitle = title;
-    frameLoader()->didChangeTitle(this);
+    if (frameLoader())
+        frameLoader()->didChangeTitle(this);
 }
 
 URL DocumentLoader::urlForHistory() const
@@ -1819,7 +1821,7 @@ void DocumentLoader::addSubresourceLoader(ResourceLoader* loader)
         case Document::AboutToEnterBackForwardCache: {
             // A page about to enter the BackForwardCache should only be able to start ping loads.
             auto* cachedResource = MemoryCache::singleton().resourceForRequest(loader->request(), loader->frameLoader()->frame().page()->sessionID());
-            ASSERT(cachedResource && CachedResource::shouldUsePingLoad(cachedResource->type()));
+            ASSERT(cachedResource && (CachedResource::shouldUsePingLoad(cachedResource->type()) || cachedResource->options().keepAlive));
             break;
         }
         case Document::InBackForwardCache:
@@ -1931,7 +1933,7 @@ void DocumentLoader::startLoadingMainResource()
             auto url = request.url();
             matchRegistration(url, [request = WTFMove(request), protectedThis = WTFMove(protectedThis), this] (auto&& registrationData) mutable {
                 if (!m_mainDocumentError.isNull()) {
-                    RELEASE_LOG_IF_ALLOWED("startLoadingMainResource callback: Load canceled because of main document error (type = %d, code = %d)", static_cast<int>(m_mainDocumentError.type()), m_mainDocumentError.errorCode());
+                    RELEASE_LOG_IF_ALLOWED("startLoadingMainResource callback: Load canceled because of main document error (type=%d, code=%d)", static_cast<int>(m_mainDocumentError.type()), m_mainDocumentError.errorCode());
                     return;
                 }
                 if (!m_frame) {
@@ -2078,7 +2080,7 @@ void DocumentLoader::cancelMainResourceLoad(const ResourceError& resourceError)
     Ref<DocumentLoader> protectedThis(*this);
     ResourceError error = resourceError.isNull() ? frameLoader()->cancelledError(m_request) : resourceError;
 
-    RELEASE_LOG_IF_ALLOWED("cancelMainResourceLoad: (type = %d, code = %d)", static_cast<int>(error.type()), error.errorCode());
+    RELEASE_LOG_IF_ALLOWED("cancelMainResourceLoad: (type=%d, code=%d)", static_cast<int>(error.type()), error.errorCode());
 
     m_dataLoadToken.clear();
 

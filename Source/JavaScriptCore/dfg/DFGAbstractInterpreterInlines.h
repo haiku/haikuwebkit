@@ -30,6 +30,7 @@
 #include "ArrayConstructor.h"
 #include "ArrayPrototype.h"
 #include "CacheableIdentifierInlines.h"
+#include "CheckPrivateBrandStatus.h"
 #include "DFGAbstractInterpreter.h"
 #include "DFGAbstractInterpreterClobberState.h"
 #include "DOMJITGetterSetter.h"
@@ -47,6 +48,8 @@
 #include "MathCommon.h"
 #include "NumberConstructor.h"
 #include "PutByIdStatus.h"
+#include "RegExpObject.h"
+#include "SetPrivateBrandStatus.h"
 #include "StringObject.h"
 #include "StructureCache.h"
 #include "StructureRareDataInlines.h"
@@ -2324,6 +2327,44 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
             if (!storageEdge)
                 clobberWorld();
         }
+
+        if (node->op() == AtomicsStore) {
+            // The returned value from Atomics.store does not rely on typed array types. It is relying
+            // on input's UseKind. For example,
+            //
+            //     Atomics.store(uint8Array, /* index */ 0, Infinity) // => returned value is Infinity
+            //
+            // Since the other ReadModifyWrite atomics return values stored in the typed array previously,
+            // the returned values rely on the typed array types. On the other hand, Atomics.store's
+            // returned value is input value. This means that Atomics.store + Uint8Array can return doubles
+            // while the typed array is Uint8Array (the above one is the example).
+            switch (node->arrayMode().type()) {
+            case Array::Generic:
+                clobberWorld();
+                makeHeapTopForNode(node);
+                break;
+            default: {
+                Edge operand = m_graph.child(node, 2);
+                switch (operand.useKind()) {
+                case Int32Use:
+                    setNonCellTypeForNode(node, SpecInt32Only);
+                    break;
+                case Int52RepUse:
+                    setNonCellTypeForNode(node, SpecInt52Any);
+                    break;
+                case DoubleRepUse:
+                    setNonCellTypeForNode(node, SpecFullDouble);
+                    break;
+                default:
+                    DFG_CRASH(m_graph, node, "Bad use kind");
+                    break;
+                }
+                break;
+            }
+            }
+            break;
+        }
+
         switch (node->arrayMode().type()) {
         case Array::SelectUsingPredictions:
         case Array::Unprofiled:
@@ -2567,8 +2608,24 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
             if (JSGlobalObject* globalObject = jsDynamicCast<JSGlobalObject*>(m_vm, globalObjectValue)) {
                 if (!globalObject->isHavingABadTime()) {
                     m_graph.watchpoints().addLazily(globalObject->havingABadTimeWatchpoint());
+
+                    RegExp* regExp = nullptr;
+                    if (node->op() == RegExpExec) {
+                        if (Node* regExpObjectNode = node->child2().node()) {
+                            if (RegExpObject* regExpObject = regExpObjectNode->dynamicCastConstant<RegExpObject*>(m_vm))
+                                regExp = regExpObject->regExp();
+                            else if (regExpObjectNode->op() == NewRegexp)
+                                regExp = regExpObjectNode->castOperand<RegExp*>();
+                        }
+                    } else if (node->op() == RegExpExecNonGlobalOrSticky)
+                        regExp = node->castOperand<RegExp*>();
+
                     RegisteredStructureSet structureSet;
-                    structureSet.add(m_graph.registerStructure(globalObject->regExpMatchesArrayStructure()));
+                    // If regExp is unknown, we need to put both regExp MatchesArray structure variants in our set.
+                    if (!regExp || !regExp->hasIndices())
+                        structureSet.add(m_graph.registerStructure(globalObject->regExpMatchesArrayStructure()));
+                    if (!regExp || regExp->hasIndices())
+                        structureSet.add(m_graph.registerStructure(globalObject->regExpMatchesArrayWithIndicesStructure()));
                     setForNode(node, structureSet);
                     forNode(node).merge(SpecOther);
                     break;
@@ -3647,6 +3704,12 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         case Array::Float64Array:
             filter(node->child1(), SpecFloat64Array | admittedTypes);
             break;
+        case Array::BigInt64Array:
+            filter(node->child1(), SpecBigInt64Array | admittedTypes);
+            break;
+        case Array::BigUint64Array:
+            filter(node->child1(), SpecBigUint64Array | admittedTypes);
+            break;
         case Array::AnyTypedArray:
             filter(node->child1(), SpecTypedArrayView | admittedTypes);
             break;
@@ -4035,6 +4098,8 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         break;
     }
 
+    case CheckPrivateBrand:
+    case SetPrivateBrand:
     case PutPrivateName: {
         clobberWorld();
         break;
@@ -4365,6 +4430,8 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
     case FilterPutByIdStatus:
     case FilterInByIdStatus:
     case FilterDeleteByStatus:
+    case FilterCheckPrivateBrandStatus:
+    case FilterSetPrivateBrandStatus:
     case ClearCatchLocals:
         break;
 
@@ -4552,6 +4619,21 @@ void AbstractInterpreter<AbstractStateType>::filterICStatus(Node* node)
             node->deleteByStatus()->filter(value.m_structure.toStructureSet());
         break;
     }
+
+    case FilterCheckPrivateBrandStatus: {
+        AbstractValue& value = forNode(node->child1());
+        if (value.m_structure.isFinite())
+            node->checkPrivateBrandStatus()->filter(value.m_structure.toStructureSet());
+        break;
+    }
+
+    case FilterSetPrivateBrandStatus: {
+        AbstractValue& value = forNode(node->child1());
+        if (value.m_structure.isFinite())
+            node->setPrivateBrandStatus()->filter(value.m_structure.toStructureSet());
+        break;
+    }
+
 
     default:
         RELEASE_ASSERT_NOT_REACHED();

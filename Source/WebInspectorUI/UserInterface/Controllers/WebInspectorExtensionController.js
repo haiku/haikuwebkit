@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -84,6 +84,75 @@ WI.WebInspectorExtensionController = class WebInspectorExtensionController exten
 
         // The calling convention is to return an error string or a result object.
         return {extensionTabID};
+    }
+
+    evaluateScriptForExtension(extensionID, scriptSource, {frameURL, contextSecurityOrigin, useContentScriptContext} = {})
+    {
+        let extension = this._extensionForExtensionIDMap.get(extensionID);
+        if (!extension) {
+            WI.reportInternalError("Unable to evaluate script for extension with unknown ID: " + extensionID);
+            return WI.WebInspectorExtension.ErrorCode.InvalidRequest;
+        }
+
+        // FIXME: <rdar://problem/74180355> implement execution context selection options
+        if (frameURL) {
+            WI.reportInternalError("evaluateScriptForExtension: the 'frameURL' option is not yet implemented.");
+            return WI.WebInspectorExtension.ErrorCode.NotImplemented;
+        }
+
+        if (contextSecurityOrigin) {
+            WI.reportInternalError("evaluateScriptForExtension: the 'contextSecurityOrigin' option is not yet implemented.");
+            return WI.WebInspectorExtension.ErrorCode.NotImplemented;
+        }
+
+        if (useContentScriptContext) {
+            WI.reportInternalError("evaluateScriptForExtension: the 'useContentScriptContext' option is not yet implemented.");
+            return WI.WebInspectorExtension.ErrorCode.NotImplemented;
+        }
+
+        let evaluationContext = WI.runtimeManager.activeExecutionContext;
+        return evaluationContext.target.RuntimeAgent.evaluate.invoke({
+            expression: scriptSource,
+            objectGroup: "extension-evaluation",
+            includeCommandLineAPI: true,
+            returnByValue: true,
+            generatePreview: false,
+            saveResult: false,
+            contextId: evaluationContext.id,
+        }).then((payload) => {
+            let resultOrError = payload.result;
+            let wasThrown = payload.wasThrown;
+            let {type, value} = resultOrError;
+            return wasThrown ? {"error": resultOrError.description} : {"result": value};
+        }).catch((error) => error.description);
+    }
+    
+    reloadForExtension(extensionID, {ignoreCache, userAgent, injectedScript} = {})
+    {
+        let extension = this._extensionForExtensionIDMap.get(extensionID);
+        if (!extension) {
+            WI.reportInternalError("Unable to evaluate script for extension with unknown ID: " + extensionID);
+            return WI.WebInspectorExtension.ErrorCode.InvalidRequest;
+        }
+
+        // FIXME: <webkit.org/b/222328> Implement `userAgent` and `injectedScript` options for `devtools.inspectedWindow.reload` command
+        if (userAgent) {
+            WI.reportInternalError("reloadForExtension: the 'userAgent' option is not yet implemented.");
+            return WI.WebInspectorExtension.ErrorCode.NotImplemented;
+        }
+
+        if (injectedScript) {
+            WI.reportInternalError("reloadForExtension: the 'injectedScript' option is not yet implemented.");
+            return WI.WebInspectorExtension.ErrorCode.NotImplemented;
+        }
+        
+        let target = WI.assumingMainTarget();
+        if (!target.hasCommand("Page.reload"))
+            return WI.WebInspectorExtension.ErrorCode.InvalidRequest;
+        
+        return target.PageAgent.reload.invoke({ignoreCache});
+        
+        
     }
 };
 

@@ -25,6 +25,7 @@
 
 #import "PDFPluginIdentifier.h"
 #import "SameDocumentNavigationType.h"
+#import "WKBlankOverlayView.h"
 #import "WKShareSheet.h"
 #import "WKWebViewConfiguration.h"
 #import "WKWebViewPrivate.h"
@@ -66,6 +67,8 @@ class Attachment;
 }
 
 namespace WebCore {
+struct AppHighlight;
+struct ExceptionDetails;
 enum class WheelScrollGestureState : uint8_t;
 }
 
@@ -105,6 +108,7 @@ class ViewGestureController;
 
 @protocol _WKTextManipulationDelegate;
 @protocol _WKInputDelegate;
+@protocol _WKAppHighlightDelegate;
 
 @interface WKWebView () WK_WEB_VIEW_PROTOCOLS {
 
@@ -119,6 +123,7 @@ class ViewGestureController;
 
     WeakObjCPtr<id <_WKTextManipulationDelegate>> _textManipulationDelegate;
     WeakObjCPtr<id <_WKInputDelegate>> _inputDelegate;
+    WeakObjCPtr<id <_WKAppHighlightDelegate>> _appHighlightDelegate;
 
     RetainPtr<WKSafeBrowsingWarning> _safeBrowsingWarning;
 
@@ -127,6 +132,8 @@ class ViewGestureController;
     _WKSelectionAttributes _selectionAttributes;
     _WKRenderingProgressEvents _observedRenderingProgressEvents;
     BOOL _usePlatformFindUI;
+
+    RetainPtr<WKBlankOverlayView> _blankOverlayView;
 
 #if PLATFORM(MAC)
     std::unique_ptr<WebKit::WebViewImpl> _impl;
@@ -231,7 +238,7 @@ class ViewGestureController;
     RetainPtr<WKPasswordView> _passwordView;
 
     BOOL _hasScheduledVisibleRectUpdate;
-    BOOL _visibleContentRectUpdateScheduledFromScrollViewInStableState;
+    OptionSet<WebKit::ViewStabilityFlag> _viewStabilityWhenVisibleContentRectUpdateScheduled;
 
     Optional<WebCore::WheelScrollGestureState> _currentScrollGestureState;
     uint64_t _wheelEventCountInCurrentScrollGesture;
@@ -258,6 +265,10 @@ class ViewGestureController;
 - (void)_didInvalidateDataForAttachment:(API::Attachment&)attachment;
 #endif
 
+#if ENABLE(APP_HIGHLIGHTS)
+- (void)_storeAppHighlight:(const WebCore::AppHighlight&)info;
+#endif
+
 - (void)_internalDoAfterNextPresentationUpdate:(void (^)(void))updateBlock withoutWaitingForPainting:(BOOL)withoutWaitingForPainting withoutWaitingForAnimatedResize:(BOOL)withoutWaitingForAnimatedResize;
 
 - (void)_showSafeBrowsingWarning:(const WebKit::SafeBrowsingWarning&)warning completionHandler:(CompletionHandler<void(Variant<WebKit::ContinueUnsafeLoad, URL>&&)>&&)completionHandler;
@@ -272,6 +283,7 @@ class ViewGestureController;
 @end
 
 WKWebView* fromWebPageProxy(WebKit::WebPageProxy&);
+RetainPtr<NSError> nsErrorFromExceptionDetails(const WebCore::ExceptionDetails&);
 
 #if ENABLE(FULLSCREEN_API) && PLATFORM(IOS_FAMILY)
 @interface WKWebView (FullScreenAPI_Internal)

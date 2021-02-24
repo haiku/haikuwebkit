@@ -108,7 +108,7 @@ static Ref<CSSPrimitiveValue> valueForImageSliceSide(const Length& length)
     // a calculation that combines a percentage and a number.
     if (length.isPercent())
         return CSSValuePool::singleton().createValue(length.percent(), CSSUnitType::CSS_PERCENTAGE);
-    if (length.isFixed())
+    if (length.isAuto() || length.isFixed())
         return CSSValuePool::singleton().createValue(length.value(), CSSUnitType::CSS_NUMBER);
 
     // Calculating the actual length currently in use would require most of the code from RenderBoxModelObject::paintNinePieceImage.
@@ -227,23 +227,14 @@ static Ref<CSSValue> valueForNinePieceImage(const NinePieceImage& image)
     if (!image.hasImage())
         return CSSValuePool::singleton().createIdentifierValue(CSSValueNone);
 
-    // Image first.
     RefPtr<CSSValue> imageValue;
     if (image.image())
         imageValue = image.image()->cssValue();
 
-    // Create the image slice.
-    RefPtr<CSSBorderImageSliceValue> imageSlices = valueForNinePieceImageSlice(image);
-
-    // Create the border area slices.
-    RefPtr<CSSValue> borderSlices = valueForNinePieceImageQuad(image.borderSlices());
-
-    // Create the border outset.
-    RefPtr<CSSValue> outset = valueForNinePieceImageQuad(image.outset());
-
-    // Create the repeat rules.
-    RefPtr<CSSValue> repeat = valueForNinePieceImageRepeat(image);
-
+    auto imageSlices = valueForNinePieceImageSlice(image);
+    auto borderSlices = valueForNinePieceImageQuad(image.borderSlices());
+    auto outset = valueForNinePieceImageQuad(image.outset());
+    auto repeat = valueForNinePieceImageRepeat(image);
     return createBorderImageValue(WTFMove(imageValue), WTFMove(imageSlices), WTFMove(borderSlices), WTFMove(outset), WTFMove(repeat));
 }
 
@@ -1031,7 +1022,7 @@ static Ref<CSSValue> valueForGridTrackList(GridTrackSizingDirection direction, R
     }
 
     // Add the line names and track sizes that precede the auto repeat().
-    unsigned autoRepeatInsertionPoint = isRowAxis ? style.gridAutoRepeatColumnsInsertionPoint() : style.gridAutoRepeatRowsInsertionPoint();
+    int autoRepeatInsertionPoint = std::clamp<int>(isRowAxis ? style.gridAutoRepeatColumnsInsertionPoint() : style.gridAutoRepeatRowsInsertionPoint(), 0, trackSizes.size());
     populateGridTrackList(list.get(), collector, trackSizes, getTrackSize, 0, autoRepeatInsertionPoint);
 
     // Add a CSSGridAutoRepeatValue with the contents of the auto repeat().
@@ -1113,7 +1104,8 @@ static Ref<CSSValueList> valueForScrollSnapAlignment(const ScrollSnapAlign& alig
 {
     auto value = CSSValueList::createSpaceSeparated();
     value->append(CSSPrimitiveValue::create(alignment.y));
-    value->append(CSSPrimitiveValue::create(alignment.x));
+    if (alignment.x != alignment.y)
+        value->append(CSSPrimitiveValue::create(alignment.x));
     return value;
 }
 
@@ -3469,15 +3461,18 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
         case CSSPropertyWebkitAppearance:
             return cssValuePool.createValue(style.appearance());
         case CSSPropertyAspectRatio:
+            if (renderer && !renderer->settings().aspectRatioEnabled())
+                return nullptr;
             switch (style.aspectRatioType()) {
             case AspectRatioType::Auto:
                 return cssValuePool.createIdentifierValue(CSSValueAuto);
+            case AspectRatioType::AutoZero:
             case AspectRatioType::AutoAndRatio:
             case AspectRatioType::Ratio: {
                 auto ratioList = CSSValueList::createSlashSeparated();
                 ratioList->append(cssValuePool.createValue(style.aspectRatioWidth(), CSSUnitType::CSS_NUMBER));
                 ratioList->append(cssValuePool.createValue(style.aspectRatioHeight(), CSSUnitType::CSS_NUMBER));
-                if (style.aspectRatioType() == AspectRatioType::Ratio)
+                if (style.aspectRatioType() != AspectRatioType::AutoAndRatio)
                     return ratioList;
                 auto list = CSSValueList::createSpaceSeparated();
                 list->append(cssValuePool.createIdentifierValue(CSSValueAuto));
@@ -3617,7 +3612,18 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
         }
         case CSSPropertyTransformStyle:
         case CSSPropertyWebkitTransformStyle:
-            return cssValuePool.createIdentifierValue((style.transformStyle3D() == TransformStyle3D::Preserve3D) ? CSSValuePreserve3d : CSSValueFlat);
+            switch (style.transformStyle3D()) {
+            case TransformStyle3D::Flat:
+                return cssValuePool.createIdentifierValue(CSSValueFlat);
+            case TransformStyle3D::Preserve3D:
+                return cssValuePool.createIdentifierValue(CSSValuePreserve3d);
+#if ENABLE(CSS_TRANSFORM_STYLE_OPTIMIZED_3D)
+            case TransformStyle3D::Optimized3D:
+                return cssValuePool.createIdentifierValue(CSSValueOptimized3d);
+#endif
+            }
+            ASSERT_NOT_REACHED();
+            return nullptr;
         case CSSPropertyTranslate:
             if (renderer && !renderer->settings().cssIndividualTransformPropertiesEnabled())
                 return nullptr;
@@ -3826,6 +3832,10 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
             return zoomAdjustedPixelValueForLength(style.scrollMarginRight(), style);
         case CSSPropertyScrollMarginLeft:
             return zoomAdjustedPixelValueForLength(style.scrollMarginLeft(), style);
+        case CSSPropertyScrollMarginBlock:
+            return getCSSPropertyValuesFor2SidesShorthand(scrollMarginBlockShorthand());
+        case CSSPropertyScrollMarginInline:
+            return getCSSPropertyValuesFor2SidesShorthand(scrollMarginInlineShorthand());
         case CSSPropertyScrollPadding:
             return getCSSPropertyValuesFor4SidesShorthand(scrollPaddingShorthand());
         case CSSPropertyScrollPaddingBottom:
@@ -3836,11 +3846,17 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
             return zoomAdjustedPixelValueForLength(style.scrollPaddingRight(), style);
         case CSSPropertyScrollPaddingLeft:
             return zoomAdjustedPixelValueForLength(style.scrollPaddingLeft(), style);
+        case CSSPropertyScrollPaddingBlock:
+            return getCSSPropertyValuesFor2SidesShorthand(scrollPaddingBlockShorthand());
+        case CSSPropertyScrollPaddingInline:
+            return getCSSPropertyValuesFor2SidesShorthand(scrollPaddingInlineShorthand());
 #if ENABLE(CSS_SCROLL_SNAP)
-        case CSSPropertyScrollSnapType:
-            return valueForScrollSnapType(style.scrollSnapType());
         case CSSPropertyScrollSnapAlign:
             return valueForScrollSnapAlignment(style.scrollSnapAlign());
+        case CSSPropertyScrollSnapStop:
+            return CSSPrimitiveValue::create(style.scrollSnapStop());
+        case CSSPropertyScrollSnapType:
+            return valueForScrollSnapType(style.scrollSnapType());
 #endif
 
 #if ENABLE(CSS_TRAILING_WORD)
@@ -3959,6 +3975,14 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
         case CSSPropertyMaxInlineSize:
         case CSSPropertyMinBlockSize:
         case CSSPropertyMinInlineSize:
+        case CSSPropertyScrollMarginBlockEnd:
+        case CSSPropertyScrollMarginBlockStart:
+        case CSSPropertyScrollMarginInlineEnd:
+        case CSSPropertyScrollMarginInlineStart:
+        case CSSPropertyScrollPaddingBlockEnd:
+        case CSSPropertyScrollPaddingBlockStart:
+        case CSSPropertyScrollPaddingInlineEnd:
+        case CSSPropertyScrollPaddingInlineStart:
             ASSERT_NOT_REACHED();
             break;
 

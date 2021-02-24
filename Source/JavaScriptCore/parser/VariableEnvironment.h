@@ -45,7 +45,10 @@ public:
     ALWAYS_INLINE bool isFunction() const { return m_bits & IsFunction; }
     ALWAYS_INLINE bool isParameter() const { return m_bits & IsParameter; }
     ALWAYS_INLINE bool isSloppyModeHoistingCandidate() const { return m_bits & IsSloppyModeHoistingCandidate; }
-    ALWAYS_INLINE bool isPrivateName() const { return m_bits & IsPrivateName; }
+    ALWAYS_INLINE bool isPrivateField() const { return m_bits & IsPrivateField; }
+    ALWAYS_INLINE bool isPrivateMethod() const { return m_bits & IsPrivateMethod; }
+    ALWAYS_INLINE bool isPrivateSetter() const { return m_bits & IsPrivateSetter; }
+    ALWAYS_INLINE bool isPrivateGetter() const { return m_bits & IsPrivateGetter; }
 
     ALWAYS_INLINE void setIsCaptured() { m_bits |= IsCaptured; }
     ALWAYS_INLINE void setIsConst() { m_bits |= IsConst; }
@@ -57,7 +60,10 @@ public:
     ALWAYS_INLINE void setIsFunction() { m_bits |= IsFunction; }
     ALWAYS_INLINE void setIsParameter() { m_bits |= IsParameter; }
     ALWAYS_INLINE void setIsSloppyModeHoistingCandidate() { m_bits |= IsSloppyModeHoistingCandidate; }
-    ALWAYS_INLINE void setIsPrivateName() { m_bits |= IsPrivateName; }
+    ALWAYS_INLINE void setIsPrivateField() { m_bits |= IsPrivateField; }
+    ALWAYS_INLINE void setIsPrivateMethod() { m_bits |= IsPrivateMethod; }
+    ALWAYS_INLINE void setIsPrivateSetter() { m_bits |= IsPrivateSetter; }
+    ALWAYS_INLINE void setIsPrivateGetter() { m_bits |= IsPrivateGetter; }
 
     ALWAYS_INLINE void clearIsVar() { m_bits &= ~IsVar; }
 
@@ -80,7 +86,10 @@ private:
         IsFunction = 1 << 7,
         IsParameter = 1 << 8,
         IsSloppyModeHoistingCandidate = 1 << 9,
-        IsPrivateName = 1 << 10,
+        IsPrivateField = 1 << 10,
+        IsPrivateMethod = 1 << 11,
+        IsPrivateGetter = 1 << 12,
+        IsPrivateSetter = 1 << 13,
     };
     uint16_t m_bits { 0 };
 };
@@ -90,11 +99,20 @@ struct VariableEnvironmentEntryHashTraits : HashTraits<VariableEnvironmentEntry>
 };
 
 struct PrivateNameEntry {
+    friend class CachedPrivateNameEntry;
+
 public:
     PrivateNameEntry(uint16_t traits = 0) { m_bits = traits; }
 
     ALWAYS_INLINE bool isUsed() const { return m_bits & IsUsed; }
     ALWAYS_INLINE bool isDeclared() const { return m_bits & IsDeclared; }
+    ALWAYS_INLINE bool isMethod() const { return m_bits & IsMethod; }
+    ALWAYS_INLINE bool isSetter() const { return m_bits & IsSetter; }
+    ALWAYS_INLINE bool isGetter() const { return m_bits & IsGetter; }
+    ALWAYS_INLINE bool isField() const { return !isPrivateMethodOrAcessor(); }
+    ALWAYS_INLINE bool isStatic() const { return m_bits & IsStatic; }
+
+    bool isPrivateMethodOrAcessor() const { return isMethod() || isSetter() || isGetter(); }
 
     ALWAYS_INLINE void setIsUsed() { m_bits |= IsUsed; }
     ALWAYS_INLINE void setIsDeclared() { m_bits |= IsDeclared; }
@@ -107,8 +125,13 @@ public:
     }
 
     enum Traits : uint16_t {
+        None = 0,
         IsUsed = 1 << 0,
         IsDeclared = 1 << 1,
+        IsMethod = 1 << 2,
+        IsGetter = 1 << 3,
+        IsSetter = 1 << 4,
+        IsStatic = 1 << 5,
     };
 
 private:
@@ -116,15 +139,18 @@ private:
 };
 
 struct PrivateNameEntryHashTraits : HashTraits<PrivateNameEntry> {
-    static const bool needsDestruction = false;
+    static constexpr bool needsDestruction = false;
 };
+
+typedef HashMap<PackedRefPtr<UniquedStringImpl>, PrivateNameEntry, IdentifierRepHash, HashTraits<RefPtr<UniquedStringImpl>>, PrivateNameEntryHashTraits> PrivateNameEnvironment;
 
 class VariableEnvironment {
     WTF_MAKE_FAST_ALLOCATED;
 private:
     typedef HashMap<PackedRefPtr<UniquedStringImpl>, VariableEnvironmentEntry, IdentifierRepHash, HashTraits<RefPtr<UniquedStringImpl>>, VariableEnvironmentEntryHashTraits> Map;
-    typedef HashMap<PackedRefPtr<UniquedStringImpl>, PrivateNameEntry, IdentifierRepHash, HashTraits<RefPtr<UniquedStringImpl>>, PrivateNameEntryHashTraits> PrivateNames;
+
 public:
+
     VariableEnvironment() { }
     VariableEnvironment(VariableEnvironment&& other)
         : m_map(WTFMove(other.m_map))
@@ -146,6 +172,16 @@ public:
     ALWAYS_INLINE Map::const_iterator end() const { return m_map.end(); }
     ALWAYS_INLINE Map::AddResult add(const RefPtr<UniquedStringImpl>& identifier) { return m_map.add(identifier, VariableEnvironmentEntry()); }
     ALWAYS_INLINE Map::AddResult add(const Identifier& identifier) { return add(identifier.impl()); }
+
+    ALWAYS_INLINE PrivateNameEnvironment::AddResult addPrivateName(const Identifier& identifier) { return addPrivateName(identifier.impl()); }
+    ALWAYS_INLINE PrivateNameEnvironment::AddResult addPrivateName(const RefPtr<UniquedStringImpl>& identifier)
+    {
+        if (!m_rareData)
+            m_rareData = makeUnique<VariableEnvironment::RareData>();
+
+        return m_rareData->m_privateNames.add(identifier, PrivateNameEntry());
+    }
+
     ALWAYS_INLINE unsigned size() const { return m_map.size() + privateNamesSize(); }
     ALWAYS_INLINE unsigned mapSize() const { return m_map.size(); }
     ALWAYS_INLINE bool contains(const RefPtr<UniquedStringImpl>& identifier) const { return m_map.contains(identifier); }
@@ -162,19 +198,43 @@ public:
     void markVariableAsExported(const RefPtr<UniquedStringImpl>& identifier);
 
     bool isEverythingCaptured() const { return m_isEverythingCaptured; }
-    bool isEmpty() const { return !m_map.size(); }
+    bool isEmpty() const { return !m_map.size() && !privateNamesSize(); }
 
-    using PrivateNamesRange = WTF::IteratorRange<PrivateNames::iterator>;
+    using PrivateNamesRange = WTF::IteratorRange<PrivateNameEnvironment::iterator>;
 
-    ALWAYS_INLINE Map::AddResult declarePrivateName(const Identifier& identifier) { return declarePrivateName(identifier.impl()); }
+    ALWAYS_INLINE Map::AddResult declarePrivateField(const Identifier& identifier) { return declarePrivateField(identifier.impl()); }
     ALWAYS_INLINE void usePrivateName(const Identifier& identifier) { usePrivateName(identifier.impl()); }
 
-    Map::AddResult declarePrivateName(const RefPtr<UniquedStringImpl>& identifier)
+    bool declarePrivateMethod(const Identifier& identifier) { return declarePrivateMethod(identifier.impl()); }
+    bool declarePrivateMethod(const RefPtr<UniquedStringImpl>& identifier, PrivateNameEntry::Traits addionalTraits = PrivateNameEntry::Traits::None);
+
+    enum class PrivateDeclarationResult {
+        Success,
+        DuplicatedName,
+        InvalidStaticNonStatic
+    };
+
+    PrivateDeclarationResult declarePrivateAccessor(const RefPtr<UniquedStringImpl>&, PrivateNameEntry accessorTraits);
+    
+    bool declareStaticPrivateMethod(const Identifier& identifier)
+    {
+        return declarePrivateMethod(identifier.impl(), static_cast<PrivateNameEntry::Traits>(PrivateNameEntry::Traits::IsMethod | PrivateNameEntry::Traits::IsStatic));
+    }
+
+    PrivateDeclarationResult declarePrivateSetter(const Identifier& identifier) { return declarePrivateSetter(identifier.impl()); }
+    PrivateDeclarationResult declareStaticPrivateSetter(const Identifier& identifier) { return declarePrivateSetter(identifier.impl(), PrivateNameEntry::Traits::IsStatic); }
+    PrivateDeclarationResult declarePrivateSetter(const RefPtr<UniquedStringImpl>& identifier, PrivateNameEntry::Traits modifierTraits = PrivateNameEntry::Traits::None);
+
+    PrivateDeclarationResult declarePrivateGetter(const Identifier& identifier) { return declarePrivateGetter(identifier.impl()); }
+    PrivateDeclarationResult declareStaticPrivateGetter(const Identifier& identifier) { return declarePrivateGetter(identifier.impl(), PrivateNameEntry::Traits::IsStatic); }
+    PrivateDeclarationResult declarePrivateGetter(const RefPtr<UniquedStringImpl>& identifier, PrivateNameEntry::Traits modifierTraits = PrivateNameEntry::Traits::None);
+
+    Map::AddResult declarePrivateField(const RefPtr<UniquedStringImpl>& identifier)
     {
         auto& meta = getOrAddPrivateName(identifier.get());
         meta.setIsDeclared();
         auto entry = VariableEnvironmentEntry();
-        entry.setIsPrivateName();
+        entry.setIsPrivateField();
         entry.setIsConst();
         entry.setIsCaptured();
         return m_map.add(identifier, entry);
@@ -201,6 +261,39 @@ public:
         return m_rareData->m_privateNames.size();
     }
 
+    ALWAYS_INLINE const PrivateNameEnvironment* privateNameEnvironment() const
+    {
+        if (!m_rareData)
+            return nullptr;
+        return &m_rareData->m_privateNames;
+    }
+
+    ALWAYS_INLINE bool hasStaticPrivateMethodOrAccessor() const
+    {
+        if (!m_rareData)
+            return false;
+
+        for (auto entry : privateNames()) {
+            if (entry.value.isPrivateMethodOrAcessor() && entry.value.isStatic())
+                return true;
+        }
+        
+        return false;
+    }
+    
+    ALWAYS_INLINE bool hasInstancePrivateMethodOrAccessor() const
+    {
+        if (!m_rareData)
+            return false;
+        
+        for (auto entry : privateNames()) {
+            if (entry.value.isPrivateMethodOrAcessor() && !entry.value.isStatic())
+                return true;
+        }
+        
+        return false;
+    }
+
     ALWAYS_INLINE bool hasPrivateName(const Identifier& identifier)
     {
         if (!m_rareData)
@@ -219,6 +312,20 @@ public:
                 if (!(entry.value.isUsed() && entry.value.isDeclared()))
                     other.m_rareData->m_privateNames.add(entry.key, entry.value);
             }
+        }
+    }
+
+    ALWAYS_INLINE void addPrivateNamesFrom(const PrivateNameEnvironment* privateNameEnvironment)
+    {
+        if (!privateNameEnvironment)
+            return;
+
+        if (!m_rareData)
+            m_rareData = makeUnique<VariableEnvironment::RareData>();
+
+        for (auto entry : *privateNameEnvironment) {
+            ASSERT(entry.value.isDeclared());
+            m_rareData->m_privateNames.add(entry.key, entry.value);
         }
     }
 
@@ -244,7 +351,7 @@ public:
         }
         RareData(const RareData&) = default;
         RareData& operator=(const RareData&) = default;
-        PrivateNames m_privateNames;
+        PrivateNameEnvironment m_privateNames;
     };
 
 private:

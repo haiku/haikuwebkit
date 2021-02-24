@@ -346,8 +346,11 @@ public:
     void setPrivateClickMeasurementOverrideTimerForTesting(bool value);
     void markAttributedPrivateClickMeasurementsAsExpiredForTesting();
     void simulateResourceLoadStatisticsSessionRestart();
-    void setPrivateClickMeasurementConversionURLForTesting(WKURLRef);
+    void setPrivateClickMeasurementTokenPublicKeyURLForTesting(WKURLRef);
+    void setPrivateClickMeasurementTokenSignatureURLForTesting(WKURLRef);
+    void setPrivateClickMeasurementAttributionReportURLForTesting(WKURLRef);
     void markPrivateClickMeasurementsAsExpiredForTesting();
+    void setFraudPreventionValuesForTesting(WKStringRef secretToken, WKStringRef unlinkableToken, WKStringRef signature, WKStringRef keyID);
 
     void didSetAppBoundDomains() const;
 
@@ -355,6 +358,9 @@ public:
 
     void completeSpeechRecognitionPermissionCheck(WKSpeechRecognitionPermissionCallbackRef);
     void setIsSpeechRecognitionPermissionGranted(bool);
+
+    void completeMediaKeySystemPermissionCheck(WKMediaKeySystemPermissionCallbackRef);
+    void setIsMediaKeySystemPermissionGranted(bool);
 
 private:
     WKRetainPtr<WKPageConfigurationRef> generatePageConfiguration(const TestOptions&);
@@ -647,6 +653,8 @@ private:
 #endif
 
     bool m_isSpeechRecognitionPermissionGranted { false };
+
+    bool m_isMediaKeySystemPermissionGranted { true };
 };
 
 } // namespace WTR

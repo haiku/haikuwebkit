@@ -113,6 +113,7 @@ private:
 #endif
 #if ENABLE(IOS_TOUCH_EVENTS)
     void doneDeferringTouchStart(bool preventNativeGestures) override;
+    void doneDeferringTouchEnd(bool preventNativeGestures) override;
 #endif
     RefPtr<WebPopupMenuProxy> createPopupMenuProxy(WebPageProxy&) override;
     Ref<WebCore::ValidationBubble> createValidationBubble(const String& message, const WebCore::ValidationBubble::Settings&) final;
@@ -123,6 +124,10 @@ private:
 
 #if ENABLE(DATALIST_ELEMENT)
     RefPtr<WebDataListSuggestionsDropdown> createDataListSuggestionsDropdown(WebPageProxy&) final;
+#endif
+
+#if HAVE(PASTEBOARD_DATA_OWNER)
+    WebCore::DataOwnerType dataOwnerForPasteboard(PasteboardAccessIntent) const final;
 #endif
 
 #if ENABLE(DATE_AND_TIME_INPUT_TYPES)
@@ -261,6 +266,10 @@ private:
     void handleAutocorrectionContext(const WebAutocorrectionContext&) final;
 
     void setMouseEventPolicy(WebCore::MouseEventPolicy) final;
+
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    void showMediaControlsContextMenu(WebCore::FloatRect&&, Vector<WebCore::MediaControlsContextMenuItem>&&, CompletionHandler<void(WebCore::MediaControlsContextMenuItem::ID)>&&) final;
+#endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
 
 #if ENABLE(ATTACHMENT_ELEMENT)
     void writePromisedAttachmentToPasteboard(WebCore::PromisedAttachmentInfo&&) final;

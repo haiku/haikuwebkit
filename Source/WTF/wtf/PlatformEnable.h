@@ -225,6 +225,10 @@
 #define ENABLE_CSS_CONIC_GRADIENTS 0
 #endif
 
+#if !defined(ENABLE_CSS_TRANSFORM_STYLE_OPTIMIZED_3D)
+#define ENABLE_CSS_TRANSFORM_STYLE_OPTIMIZED_3D 0
+#endif
+
 #if !defined(ENABLE_CUSTOM_CURSOR_SUPPORT)
 #define ENABLE_CUSTOM_CURSOR_SUPPORT 1
 #endif
@@ -570,6 +574,12 @@
 #endif
 
 #if USE(JSVALUE32_64)
+/* Disable WebAssembly on all 32bit platforms. Its LLInt tier could
+ * work on them, but still needs some final touches. */
+#undef ENABLE_WEBASSEMBLY
+#define ENABLE_WEBASSEMBLY 0
+#undef ENABLE_WEBASSEMBLY_B3JIT
+#define ENABLE_WEBASSEMBLY_B3JIT 0
 #if (CPU(ARM_THUMB2) || CPU(MIPS)) && OS(LINUX)
 /* On ARMv7 and MIPS on Linux the JIT is enabled unless explicitly disabled. */
 #if !defined(ENABLE_JIT)
@@ -675,6 +685,7 @@
 
 #if !defined(ENABLE_WEBASSEMBLY) && (ENABLE(B3_JIT) && PLATFORM(COCOA) && CPU(ADDRESS64))
 #define ENABLE_WEBASSEMBLY 1
+#define ENABLE_WEBASSEMBLY_B3JIT 1
 #endif
 
 /* The SamplingProfiler is the probabilistic and low-overhead profiler used by
@@ -880,7 +891,7 @@
 #error "ENABLE(WHLSL_COMPILER) requires ENABLE(WEBGPU)"
 #endif
 
-#if OS(DARWIN) && ENABLE(JIT) && USE(APPLE_INTERNAL_SDK) && CPU(ARM64E) && defined(__IPHONE_OS_VERSION_MIN_REQUIRED) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 150000
+#if OS(DARWIN) && ENABLE(JIT) && USE(APPLE_INTERNAL_SDK) && CPU(ARM64E) && ((defined(__IPHONE_OS_VERSION_MIN_REQUIRED) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 150000) || (defined(__MAC_OS_X_VERSION_MIN_REQUIRED) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 120000))
 #define ENABLE_JIT_CAGE 1
 #endif
 

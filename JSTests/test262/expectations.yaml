@@ -741,6 +741,18 @@ test/built-ins/Function/prototype/toString/method-computed-property-name.js:
 test/built-ins/Function/prototype/toString/method-object.js:
   default: 'Test262Error: Conforms to NativeFunction Syntax: "function f( /* b */ ) /* c */ { /* d */ }" (f /* a */ ( /* b */ ) /* c */ { /* d */ })'
   strict mode: 'Test262Error: Conforms to NativeFunction Syntax: "function f( /* b */ ) /* c */ { /* d */ }" (f /* a */ ( /* b */ ) /* c */ { /* d */ })'
+test/built-ins/Function/prototype/toString/private-method-class-expression.js:
+  default: 'Test262Error: Conforms to NativeFunction Syntax: "function #f( /* b */ ) /* c */ { /* d */ }" (#f /* a */ ( /* b */ ) /* c */ { /* d */ })'
+  strict mode: 'Test262Error: Conforms to NativeFunction Syntax: "function #f( /* b */ ) /* c */ { /* d */ }" (#f /* a */ ( /* b */ ) /* c */ { /* d */ })'
+test/built-ins/Function/prototype/toString/private-method-class-statement.js:
+  default: 'Test262Error: Conforms to NativeFunction Syntax: "function #f( /* b */ ) /* c */ { /* d */ }" (#f /* a */ ( /* b */ ) /* c */ { /* d */ })'
+  strict mode: 'Test262Error: Conforms to NativeFunction Syntax: "function #f( /* b */ ) /* c */ { /* d */ }" (#f /* a */ ( /* b */ ) /* c */ { /* d */ })'
+test/built-ins/Function/prototype/toString/private-static-method-class-expression.js:
+  default: 'Test262Error: Conforms to NativeFunction Syntax: "function #f( /* b */ ) /* c */ { /* d */ }" (#f /* a */ ( /* b */ ) /* c */ { /* d */ })'
+  strict mode: 'Test262Error: Conforms to NativeFunction Syntax: "function #f( /* b */ ) /* c */ { /* d */ }" (#f /* a */ ( /* b */ ) /* c */ { /* d */ })'
+test/built-ins/Function/prototype/toString/private-static-method-class-statement.js:
+  default: 'Test262Error: Conforms to NativeFunction Syntax: "function #f( /* b */ ) /* c */ { /* d */ }" (#f /* a */ ( /* b */ ) /* c */ { /* d */ })'
+  strict mode: 'Test262Error: Conforms to NativeFunction Syntax: "function #f( /* b */ ) /* c */ { /* d */ }" (#f /* a */ ( /* b */ ) /* c */ { /* d */ })'
 test/built-ins/Function/prototype/toString/setter-class-expression-static.js:
   default: 'Test262Error: Conforms to NativeFunction Syntax: "function ( /* c */ a /* d */ ) /* e */ { /* f */ }" (set /* a */ f /* b */ ( /* c */ a /* d */ ) /* e */ { /* f */ })'
   strict mode: 'Test262Error: Conforms to NativeFunction Syntax: "function ( /* c */ a /* d */ ) /* e */ { /* f */ }" (set /* a */ f /* b */ ( /* c */ a /* d */ ) /* e */ { /* f */ })'
@@ -859,30 +871,18 @@ test/intl402/Intl/getCanonicalLocales/unicode-ext-canonicalize-region.js:
 test/intl402/Intl/getCanonicalLocales/unicode-ext-canonicalize-subdivision.js:
   default: 'Test262Error: Expected SameValue(«und-NO-u-sd-no23», «und-NO-u-sd-no50») to be true'
   strict mode: 'Test262Error: Expected SameValue(«und-NO-u-sd-no23», «und-NO-u-sd-no50») to be true'
-test/intl402/Intl/getCanonicalLocales/unicode-ext-key-with-digit.js:
-  default: 'Test262Error: Expected SameValue(«en-u-0c-yes», «en-u-0c») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«en-u-0c-yes», «en-u-0c») to be true'
 test/intl402/Locale/constructor-apply-options-canonicalizes-twice.js:
   default: 'Test262Error: Expected SameValue(«ru-Armn-SU», «ru-Armn-AM») to be true'
   strict mode: 'Test262Error: Expected SameValue(«ru-Armn-SU», «ru-Armn-AM») to be true'
-test/intl402/Locale/constructor-non-iana-canon.js:
-  default: 'Test262Error: new Intl.Locale("mo").maximize().toString() returns "ro-Latn-RO" Expected SameValue(«ro», «ro-Latn-RO») to be true'
-  strict mode: 'Test262Error: new Intl.Locale("mo").maximize().toString() returns "ro-Latn-RO" Expected SameValue(«ro», «ro-Latn-RO») to be true'
 test/intl402/Locale/constructor-options-region-valid.js:
   default: "Test262Error: new Intl.Locale('en', {region: \"554\"}).toString() returns \"en-NZ\" Expected SameValue(«en-554», «en-NZ») to be true"
   strict mode: "Test262Error: new Intl.Locale('en', {region: \"554\"}).toString() returns \"en-NZ\" Expected SameValue(«en-554», «en-NZ») to be true"
-test/intl402/Locale/constructor-tag.js:
-  default: 'Test262Error: new Intl.Locale("sl-ROZAJ-BISKE-1994").toString() returns "sl-1994-biske-rozaj" Expected SameValue(«sl-rozaj-biske-1994», «sl-1994-biske-rozaj») to be true'
-  strict mode: 'Test262Error: new Intl.Locale("sl-ROZAJ-BISKE-1994").toString() returns "sl-1994-biske-rozaj" Expected SameValue(«sl-rozaj-biske-1994», «sl-1994-biske-rozaj») to be true'
 test/intl402/Locale/extensions-grandfathered.js:
   default: 'Test262Error: Expected SameValue(«fr-Cyrl-FR-u-nu-latn-x-cel-gaulish», «fr-Cyrl-FR-u-nu-latn») to be true'
   strict mode: 'Test262Error: Expected SameValue(«fr-Cyrl-FR-u-nu-latn-x-cel-gaulish», «fr-Cyrl-FR-u-nu-latn») to be true'
 test/intl402/Locale/likely-subtags-grandfathered.js:
   default: 'Test262Error: Expected SameValue(«xtg-x-cel-gaulish», «xtg») to be true'
   strict mode: 'Test262Error: Expected SameValue(«xtg-x-cel-gaulish», «xtg») to be true'
-test/intl402/Locale/likely-subtags.js:
-  default: 'Test262Error: "en-u-co".maximize() should be "en-Latn-US-u-co" Expected SameValue(«en-Latn-US-u-co-yes», «en-Latn-US-u-co») to be true'
-  strict mode: 'Test262Error: "en-u-co".maximize() should be "en-Latn-US-u-co" Expected SameValue(«en-Latn-US-u-co-yes», «en-Latn-US-u-co») to be true'
 test/intl402/Locale/prototype/minimize/removing-likely-subtags-first-adds-likely-subtags.js:
   default: 'Test262Error: "und".minimize() should be "en" Expected SameValue(«en-u-va-posix», «en») to be true'
   strict mode: 'Test262Error: "und".minimize() should be "en" Expected SameValue(«en-u-va-posix», «en») to be true'
@@ -1982,9 +1982,6 @@ test/language/statements/switch/syntax/redeclaration/var-name-redeclaration-atte
 test/language/statements/switch/syntax/redeclaration/var-name-redeclaration-attempt-with-generator.js:
   default: 'Test262: This statement should not be evaluated.'
   strict mode: 'Test262: This statement should not be evaluated.'
-test/language/statements/try/completion-values.js:
-  default: 'Test262Error: Expected SameValue(«39», «42») to be true'
-  strict mode: 'Test262Error: Expected SameValue(«39», «42») to be true'
 test/language/statements/variable/dstr/ary-init-iter-get-err-array-prototype.js:
   default: 'TypeError: Spread syntax requires ...iterable[Symbol.iterator] to be a function'
   strict mode: 'TypeError: Spread syntax requires ...iterable[Symbol.iterator] to be a function'

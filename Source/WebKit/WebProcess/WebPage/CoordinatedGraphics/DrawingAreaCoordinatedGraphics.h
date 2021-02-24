@@ -77,7 +77,7 @@ private:
     
     RefPtr<WebCore::DisplayRefreshMonitor> createDisplayRefreshMonitor(WebCore::PlatformDisplayID) override;
 
-    void activityStateDidChange(OptionSet<WebCore::ActivityState::Flag>, ActivityStateChangeID, const Vector<CallbackID>& /* callbackIDs */) override;
+    void activityStateDidChange(OptionSet<WebCore::ActivityState::Flag>, ActivityStateChangeID, CompletionHandler<void()>&&) override;
     void attachViewOverlayGraphicsLayer(WebCore::GraphicsLayer*) override;
 
     // IPC message handlers.
@@ -143,6 +143,7 @@ private:
     // Whether we're waiting for a DidUpdate message. Used for throttling paints so that the 
     // web process won't paint more frequent than the UI process can handle.
     bool m_isWaitingForDidUpdate { false };
+    bool m_scheduledWhileWaitingForDidUpdate { false };
 
     bool m_alwaysUseCompositing { false };
     bool m_supportsAsyncScrolling { true };

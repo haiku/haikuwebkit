@@ -50,6 +50,7 @@ class Document;
 class Element;
 class Node;
 class NodeList;
+class RenderObject;
 class StyleRule;
 
 namespace Style {
@@ -81,6 +82,7 @@ public:
     };
 
     static CSSStyleRule* asCSSStyleRule(CSSRule&);
+    static Optional<Inspector::Protocol::CSS::LayoutContextType> layoutContextTypeForRenderer(RenderObject*);
 
     // InspectorAgentBase
     void didCreateFrontendAndBackend(Inspector::FrontendRouter*, Inspector::BackendDispatcher*);
@@ -104,6 +106,7 @@ public:
     Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::CSS::CSSPropertyInfo>>> getSupportedCSSProperties();
     Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<String>>> getSupportedSystemFontFamilyNames();
     Inspector::Protocol::ErrorStringOr<void> forcePseudoState(Inspector::Protocol::DOM::NodeId, Ref<JSON::Array>&& forcedPseudoClasses);
+    Inspector::Protocol::ErrorStringOr<void> setLayoutContextTypeChangedMode(Inspector::Protocol::CSS::LayoutContextTypeChangedMode);
 
     // InspectorStyleSheet::Listener
     void styleSheetChanged(InspectorStyleSheet*);
@@ -113,6 +116,7 @@ public:
     void mediaQueryResultChanged();
     void activeStyleSheetsUpdated(Document&);
     bool forcePseudoState(const Element&, CSSSelector::PseudoClassType);
+    void nodeLayoutContextTypeChanged(Node&, RenderObject*);
 
     // InspectorDOMAgent hooks
     void didRemoveDOMNode(Node&, Inspector::Protocol::DOM::NodeId);
@@ -168,6 +172,7 @@ private:
 
     int m_lastStyleSheetId { 1 };
     bool m_creatingViaInspectorStyleSheet { false };
+    Inspector::Protocol::CSS::LayoutContextTypeChangedMode m_layoutContextTypeChangedMode { Inspector::Protocol::CSS::LayoutContextTypeChangedMode::Observed };
 };
 
 } // namespace WebCore

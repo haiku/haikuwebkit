@@ -182,7 +182,7 @@ void OffscreenCanvas::createContextWebGL(RenderingContextType contextType, WebGL
     auto scriptExecutionContext = this->scriptExecutionContext();
     if (scriptExecutionContext->isWorkerGlobalScope()) {
         WorkerGlobalScope& workerGlobalScope = downcast<WorkerGlobalScope>(*scriptExecutionContext);
-        if (!shouldEnableWebGL(workerGlobalScope.webGLEnabled(), workerGlobalScope.acceleratedCompositingEnabled()))
+        if (!shouldEnableWebGL(workerGlobalScope.settingsValues().webGLEnabled, workerGlobalScope.settingsValues().acceleratedCompositingEnabled))
             return;
     } else if (scriptExecutionContext->isDocument()) {
         auto& settings = downcast<Document>(*scriptExecutionContext).settings();
@@ -284,7 +284,7 @@ ExceptionOr<RefPtr<ImageBitmap>> OffscreenCanvas::transferToImageBitmap()
             return { RefPtr<ImageBitmap> { nullptr } };
 
         auto* gc3d = webGLContext->graphicsContextGL();
-        gc3d->paintRenderingResultsToCanvas(imageBitmap->buffer());
+        gc3d->paintRenderingResultsToCanvas(*imageBitmap->buffer());
 
         // FIXME: The transfer algorithm requires that the canvas effectively
         // creates a new backing store. Since we're not doing that yet, we
@@ -432,14 +432,14 @@ void OffscreenCanvas::commitToPlaceholderCanvas()
         m_context->paintRenderingResultsToCanvas();
 
     if (m_placeholderData->bufferPipeSource) {
-        auto bufferCopy = imageBuffer->copyRectToBuffer(FloatRect(FloatPoint(), imageBuffer->logicalSize()), ColorSpace::SRGB, imageBuffer->context());
+        auto bufferCopy = imageBuffer->copyRectToBuffer(FloatRect(FloatPoint(), imageBuffer->logicalSize()), DestinationColorSpace::SRGB, imageBuffer->context());
         if (bufferCopy)
             m_placeholderData->bufferPipeSource->handle(WTFMove(bufferCopy));
     }
 
     auto locker = holdLock(m_placeholderData->bufferLock);
     bool shouldPushBuffer = !m_placeholderData->pendingCommitBuffer;
-    m_placeholderData->pendingCommitBuffer = imageBuffer->copyRectToBuffer(FloatRect(FloatPoint(), imageBuffer->logicalSize()), ColorSpace::SRGB, imageBuffer->context());
+    m_placeholderData->pendingCommitBuffer = imageBuffer->copyRectToBuffer(FloatRect(FloatPoint(), imageBuffer->logicalSize()), DestinationColorSpace::SRGB, imageBuffer->context());
     if (m_placeholderData->pendingCommitBuffer && shouldPushBuffer)
         pushBufferToPlaceholder();
 }

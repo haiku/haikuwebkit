@@ -362,8 +362,8 @@ public:
             if (m_graph.m_plan.mode() == FTLForOSREntryMode) {
                 auto* jitCode = m_ftlState.jitCode->ftlForOSREntry();
                 jitCode->argumentFlushFormats().reserveInitialCapacity(codeBlock()->numParameters());
-                for (unsigned i = codeBlock()->numParameters(); i--;)
-                    jitCode->argumentFlushFormats().append(m_graph.m_argumentFormats[0][i]);
+                for (int i = 0; i < codeBlock()->numParameters(); ++i)
+                    jitCode->argumentFlushFormats().uncheckedAppend(m_graph.m_argumentFormats[0][i]);
             } else {
                 for (unsigned i = codeBlock()->numParameters(); i--;) {
                     MethodOfGettingAValueProfile profile(&m_graph.m_profiledBlock->valueProfileForArgument(i));
@@ -960,6 +960,12 @@ private:
             break;
         case InByVal:
             compileInByVal();
+            break;
+        case CheckPrivateBrand:
+            compileCheckPrivateBrand();
+            break;
+        case SetPrivateBrand:
+            compileSetPrivateBrand();
             break;
         case HasOwnProperty:
             compileHasOwnProperty();
@@ -1638,6 +1644,8 @@ private:
         case FilterPutByIdStatus:
         case FilterInByIdStatus:
         case FilterDeleteByStatus:
+        case FilterCheckPrivateBrandStatus:
+        case FilterSetPrivateBrandStatus:
             compileFilterICStatus();
             break;
         case DateGetInt32OrNaN:
@@ -4083,6 +4091,93 @@ private:
         }
     }
 
+    void compilePrivateBrandAccess(LValue base, LValue brand, AccessType accessType)
+    {
+        Node* node = m_node;
+        PatchpointValue* patchpoint = m_out.patchpoint(Void);
+        patchpoint->appendSomeRegister(base);
+        patchpoint->appendSomeRegister(brand);
+        patchpoint->append(m_notCellMask, ValueRep::lateReg(GPRInfo::notCellMaskRegister));
+        patchpoint->append(m_numberTag, ValueRep::lateReg(GPRInfo::numberTagRegister));
+        patchpoint->clobber(RegisterSet::macroScratchRegisters());
+
+        RefPtr<PatchpointExceptionHandle> exceptionHandle = preparePatchpointForExceptions(patchpoint);
+
+        State* state = &m_ftlState;
+        bool baseIsCell = abstractValue(m_node->child1()).isType(SpecCell);
+        patchpoint->setGenerator([=] (CCallHelpers& jit, const StackmapGenerationParams& params) {
+            AllowMacroScratchRegisterUsage allowScratch(jit);
+
+            CallSiteIndex callSiteIndex = state->jitCode->common.codeOrigins->addUniqueCallSiteIndex(node->origin.semantic);
+
+            // This is the direct exit target for operation calls.
+            Box<CCallHelpers::JumpList> exceptions = exceptionHandle->scheduleExitCreation(params)->jumps(jit);
+
+            // This is the exit for call IC's created by the IC for getters. We don't have
+            // to do anything weird other than call this, since it will associate the exit with
+            // the callsite index.
+            exceptionHandle->scheduleExitCreationForUnwind(params, callSiteIndex);
+
+            GPRReg baseGPR = params[0].gpr();
+            GPRReg brandGPR = params[1].gpr();
+
+            auto generator = Box<JITPrivateBrandAccessGenerator>::create(
+                jit.codeBlock(), node->origin.semantic, callSiteIndex, accessType,
+                params.unavailableRegisters(), JSValueRegs(baseGPR), JSValueRegs(brandGPR));
+
+            CCallHelpers::Jump notCell;
+            if (!baseIsCell)
+                notCell = jit.branchIfNotCell(baseGPR);
+
+            generator->generateFastPath(jit);
+            CCallHelpers::Label done = jit.label();
+
+            params.addLatePath([=] (CCallHelpers& jit) {
+                AllowMacroScratchRegisterUsage allowScratch(jit);
+
+                auto appropriatePrivateAccessFunction = [=] (AccessType type) -> decltype(&operationCheckPrivateBrandOptimize) {
+                    switch (type) {
+                    case AccessType::CheckPrivateBrand:
+                        return operationCheckPrivateBrandOptimize;
+                    case AccessType::SetPrivateBrand:
+                        return operationSetPrivateBrandOptimize;
+                    default:
+                        RELEASE_ASSERT_NOT_REACHED();
+                        return nullptr;
+                    }
+                };
+
+                if (notCell.isSet())
+                    notCell.link(&jit);
+                generator->slowPathJump().link(&jit);
+                CCallHelpers::Label slowPathBegin = jit.label();
+                CCallHelpers::Call slowPathCall = callOperation(
+                    *state, params.unavailableRegisters(), jit, node->origin.semantic,
+                    exceptions.get(), appropriatePrivateAccessFunction(accessType), InvalidGPRReg,
+                    jit.codeBlock()->globalObjectFor(node->origin.semantic),
+                    CCallHelpers::TrustedImmPtr(generator->stubInfo()), baseGPR, brandGPR).call();
+                jit.jump().linkTo(done, &jit);
+
+                generator->reportSlowPathCall(slowPathBegin, slowPathCall);
+
+                jit.addLinkTask([=] (LinkBuffer& linkBuffer) {
+                    generator->finalize(linkBuffer, linkBuffer);
+                });
+            });
+        });
+    }
+
+    void compileCheckPrivateBrand()
+    {
+        compilePrivateBrandAccess(lowJSValue(m_node->child1()), lowSymbol(m_node->child2()), AccessType::CheckPrivateBrand);
+    }
+
+    void compileSetPrivateBrand()
+    {
+        DFG_ASSERT(m_graph, m_node, m_node->child1().useKind() == CellUse, m_node->child1().useKind());
+        compilePrivateBrandAccess(lowCell(m_node->child1()), lowSymbol(m_node->child2()), AccessType::SetPrivateBrand);
+    }
+
     void compilePutByIdWithThis()
     {
         JSGlobalObject* globalObject = m_graph.globalObjectFor(m_origin.semantic);
@@ -4275,7 +4370,27 @@ private:
 
         // We have to keep base alive since that keeps storage alive.
         ensureStillAliveHere(lowCell(baseEdge));
-        setIntTypedArrayLoadResult(result, type);
+
+        if (m_node->op() == AtomicsStore) {
+            Edge operand = argEdges[0];
+            switch (operand.useKind()) {
+            case Int32Use:
+                setInt32(lowInt32(operand));
+                break;
+            case Int52RepUse:
+                setStrictInt52(lowStrictInt52(operand));
+                break;
+            case DoubleRepUse:
+                setDouble(toIntegerOrInfinity(lowDouble(operand)));
+                break;
+            default:
+                DFG_CRASH(m_graph, m_node, "Bad result type");
+                break;
+            }
+            return;
+        }
+        constexpr bool canSpeculate = false;
+        setIntTypedArrayLoadResult(result, type, canSpeculate);
     }
     
     void compileAtomicsIsLockFree()
@@ -4295,10 +4410,11 @@ private:
         
         LBasicBlock lastNext = m_out.insertNewBlocksBefore(trueCase);
         
-        Vector<SwitchCase> cases;
+        Vector<SwitchCase, 4> cases;
         cases.append(SwitchCase(m_out.constInt32(1), trueCase, Weight()));
         cases.append(SwitchCase(m_out.constInt32(2), trueCase, Weight()));
         cases.append(SwitchCase(m_out.constInt32(4), trueCase, Weight()));
+        cases.append(SwitchCase(m_out.constInt32(8), trueCase, Weight()));
         m_out.switchInstruction(bytes, cases, falseCase, Weight());
         
         m_out.appendTo(trueCase, falseCase);
@@ -5063,6 +5179,8 @@ private:
             return;
         }
             
+        case Array::BigInt64Array:
+        case Array::BigUint64Array:
         case Array::Generic: {
             if (m_graph.m_slowGetByVal.contains(m_node)) {
                 if (m_graph.varArgChild(m_node, 0).useKind() == ObjectUse) {
@@ -5244,7 +5362,7 @@ private:
                     LValue result = loadFromIntTypedArray(pointer, type);
                     // We have to keep base alive since that keeps storage alive.
                     ensureStillAliveHere(base);
-                    bool canSpeculate = true;
+                    constexpr bool canSpeculate = true;
                     setIntTypedArrayLoadResult(result, type, canSpeculate);
                     return;
                 }
@@ -5358,6 +5476,8 @@ private:
         
         ArrayMode arrayMode = m_node->arrayMode().modeForPut();
         switch (arrayMode.type()) {
+        case Array::BigInt64Array:
+        case Array::BigUint64Array:
         case Array::Generic: {
             if (child1.useKind() == CellUse) {
                 V_JITOperation_GCCJ operation = nullptr;
@@ -5647,6 +5767,8 @@ private:
         case Array::SelectUsingPredictions:
         case Array::Undecided:
         case Array::Unprofiled:
+        case Array::BigInt64Array:
+        case Array::BigUint64Array:
             DFG_CRASH(m_graph, m_node, "Bad array type");
             break;
         }
@@ -15037,10 +15159,16 @@ private:
         if (LIKELY(!Options::returnEarlyFromInfiniteLoopsForFuzzing()))
             return;
 
-        CodeBlock* baselineCodeBlock = m_graph.baselineCodeBlockFor(m_origin.semantic);
-        if (!baselineCodeBlock->loopHintsAreEligibleForFuzzingEarlyReturn())
+        bool emitEarlyReturn = true;
+        m_origin.semantic.walkUpInlineStack([&](CodeOrigin origin) {
+            CodeBlock* baselineCodeBlock = m_graph.baselineCodeBlockFor(origin);
+            if (!baselineCodeBlock->loopHintsAreEligibleForFuzzingEarlyReturn())
+                emitEarlyReturn = false;
+        });
+        if (!emitEarlyReturn)
             return;
 
+        CodeBlock* baselineCodeBlock = m_graph.baselineCodeBlockFor(m_origin.semantic);
         BytecodeIndex bytecodeIndex = m_origin.semantic.bytecodeIndex();
         const Instruction* instruction = baselineCodeBlock->instructions().at(bytecodeIndex.offset()).ptr();
         VM* vm = &this->vm();
@@ -16879,7 +17007,7 @@ private:
         }
     }
     
-    void setIntTypedArrayLoadResult(LValue result, TypedArrayType type, bool canSpeculate = false)
+    void setIntTypedArrayLoadResult(LValue result, TypedArrayType type, bool canSpeculate)
     {
         if (elementSize(type) < 4 || isSigned(type)) {
             setInt32(result);
@@ -19619,6 +19747,14 @@ private:
     LValue toButterfly(LValue immutableButterfly)
     {
         return m_out.addPtr(immutableButterfly, JSImmutableButterfly::offsetOfData());
+    }
+
+    LValue toIntegerOrInfinity(LValue doubleValue)
+    {
+        // https://tc39.es/ecma262/#sec-tointegerorinfinity
+        // 1. If value is either of +0, -0, or NaN, return +0
+        // 2. Otherwise, return trunc(value)
+        return m_out.select(m_out.doubleNotEqualAndOrdered(doubleValue, m_out.doubleZero), m_out.doubleTrunc(doubleValue), m_out.doubleZero);
     }
 
     void addWeakReference(JSCell* target)

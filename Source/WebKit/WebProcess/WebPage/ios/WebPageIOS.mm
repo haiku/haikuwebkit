@@ -40,7 +40,9 @@
 #import "PluginView.h"
 #import "PrintInfo.h"
 #import "RemoteLayerTreeDrawingArea.h"
+#import "RemoteScrollingCoordinator.h"
 #import "SandboxUtilities.h"
+#import "ShareableBitmapUtilities.h"
 #import "SharedMemory.h"
 #import "SyntheticEditingCommandType.h"
 #import "TextCheckingControllerProxy.h"
@@ -112,6 +114,7 @@
 #import <WebCore/NodeRenderStyle.h>
 #import <WebCore/NotImplemented.h>
 #import <WebCore/Page.h>
+#import <WebCore/PagePasteboardContext.h>
 #import <WebCore/Pasteboard.h>
 #import <WebCore/PlatformKeyboardEvent.h>
 #import <WebCore/PlatformMouseEvent.h>
@@ -1515,23 +1518,24 @@ static Optional<SimpleRange> rangeForPointInRootViewCoordinates(Frame& frame, co
     Optional<SimpleRange> range;
 
     constexpr OptionSet<HitTestRequest::RequestType> hitType { HitTestRequest::ReadOnly, HitTestRequest::Active, HitTestRequest::AllowVisibleChildFrameContentOnly };
-    HitTestResult hitTest = frame.eventHandler().hitTestResultAtPoint(pointInDocument, hitType);
-    if (hitTest.targetNode())
-        result = frame.eventHandler().selectionExtentRespectingEditingBoundary(frame.selection().selection(), hitTest.localPoint(), hitTest.targetNode()).deepEquivalent();
+    auto hitTest = frame.eventHandler().hitTestResultAtPoint(pointInDocument, hitType);
+    auto targetNode = makeRefPtr(hitTest.targetNode());
+    if (targetNode)
+        result = frame.eventHandler().selectionExtentRespectingEditingBoundary(frame.selection().selection(), hitTest.localPoint(), targetNode.get()).deepEquivalent();
     else
         result = frame.visiblePositionForPoint(pointInDocument).deepEquivalent();
     
     if (baseIsStart) {
         if (result <= selectionStart)
             result = selectionStart.next();
-        else if (&selectionStart.deepEquivalent().anchorNode()->treeScope() != &hitTest.targetNode()->treeScope())
+        else if (targetNode && selectionStart.deepEquivalent().treeScope() != &targetNode->treeScope())
             result = VisibleSelection::adjustPositionForEnd(result.deepEquivalent(), selectionStart.deepEquivalent().containerNode());
 
         range = makeSimpleRange(selectionStart, result);
     } else {
         if (selectionEnd <= result)
             result = selectionEnd.previous();
-        else if (&hitTest.targetNode()->treeScope() != &selectionEnd.deepEquivalent().anchorNode()->treeScope())
+        else if (targetNode && selectionEnd.deepEquivalent().treeScope() != &targetNode->treeScope())
             result = VisibleSelection::adjustPositionForStart(result.deepEquivalent(), selectionEnd.deepEquivalent().containerNode());
 
         range = makeSimpleRange(result, selectionEnd);
@@ -2155,22 +2159,20 @@ void WebPage::selectTextWithGranularityAtPoint(const WebCore::IntPoint& point, W
 
 }
 
-void WebPage::beginSelectionInDirection(WebCore::SelectionDirection direction, CallbackID callbackID)
+void WebPage::beginSelectionInDirection(WebCore::SelectionDirection direction, CompletionHandler<void(bool)>&& completionHandler)
 {
     m_selectionAnchor = direction == SelectionDirection::Left ? Start : End;
-    send(Messages::WebPageProxy::UnsignedCallback(m_selectionAnchor == Start, callbackID));
+    completionHandler(m_selectionAnchor == Start);
 }
 
-void WebPage::updateSelectionWithExtentPointAndBoundary(const WebCore::IntPoint& point, WebCore::TextGranularity granularity, bool isInteractingWithFocusedElement, CallbackID callbackID)
+void WebPage::updateSelectionWithExtentPointAndBoundary(const WebCore::IntPoint& point, WebCore::TextGranularity granularity, bool isInteractingWithFocusedElement, CompletionHandler<void(bool)>&& callback)
 {
     auto& frame = m_page->focusController().focusedOrMainFrame();
     auto position = visiblePositionInFocusedNodeForPoint(frame, point, isInteractingWithFocusedElement);
     auto newRange = rangeForGranularityAtPoint(frame, point, granularity, isInteractingWithFocusedElement);
     
-    if (position.isNull() || !m_initialSelection || !newRange) {
-        send(Messages::WebPageProxy::UnsignedCallback(false, callbackID));
-        return;
-    }
+    if (position.isNull() || !m_initialSelection || !newRange)
+        return callback(false);
 
     auto initialSelectionStartPosition = makeDeprecatedLegacyPosition(m_initialSelection->start);
     auto initialSelectionEndPosition = makeDeprecatedLegacyPosition(m_initialSelection->end);
@@ -2185,18 +2187,16 @@ void WebPage::updateSelectionWithExtentPointAndBoundary(const WebCore::IntPoint&
     if (auto range = makeSimpleRange(selectionStart, selectionEnd))
         frame.selection().setSelectedRange(range, Affinity::Upstream, WebCore::FrameSelection::ShouldCloseTyping::Yes, UserTriggered);
 
-    send(Messages::WebPageProxy::UnsignedCallback(selectionStart == initialSelectionStartPosition, callbackID));
+    callback(selectionStart == initialSelectionStartPosition);
 }
 
-void WebPage::updateSelectionWithExtentPoint(const WebCore::IntPoint& point, bool isInteractingWithFocusedElement, RespectSelectionAnchor respectSelectionAnchor, CallbackID callbackID)
+void WebPage::updateSelectionWithExtentPoint(const WebCore::IntPoint& point, bool isInteractingWithFocusedElement, RespectSelectionAnchor respectSelectionAnchor, CompletionHandler<void(bool)>&& callback)
 {
     auto& frame = m_page->focusController().focusedOrMainFrame();
     auto position = visiblePositionInFocusedNodeForPoint(frame, point, isInteractingWithFocusedElement);
 
-    if (position.isNull()) {
-        send(Messages::WebPageProxy::UnsignedCallback(false, callbackID));
-        return;
-    }
+    if (position.isNull())
+        return callback(false);
 
     VisiblePosition selectionStart;
     VisiblePosition selectionEnd;
@@ -2234,7 +2234,7 @@ void WebPage::updateSelectionWithExtentPoint(const WebCore::IntPoint& point, boo
     if (auto range = makeSimpleRange(selectionStart, selectionEnd))
         frame.selection().setSelectedRange(range, Affinity::Upstream, WebCore::FrameSelection::ShouldCloseTyping::Yes, UserTriggered);
 
-    send(Messages::WebPageProxy::UnsignedCallback(m_selectionAnchor == Start, callbackID));
+    callback(m_selectionAnchor == Start);
 }
 
 void WebPage::requestDictationContext(CompletionHandler<void(const String&, const String&, const String&)>&& completionHandler)
@@ -2354,9 +2354,9 @@ void WebPage::requestAutocorrectionData(const String& textForAutocorrection, Com
     reply({ WTFMove(rootViewSelectionRects) , (__bridge UIFont *)font });
 }
 
-void WebPage::applyAutocorrection(const String& correction, const String& originalText, CallbackID callbackID)
+void WebPage::applyAutocorrection(const String& correction, const String& originalText, CompletionHandler<void(const String&)>&& callback)
 {
-    send(Messages::WebPageProxy::StringCallback(applyAutocorrectionInternal(correction, originalText) ? correction : String(), callbackID));
+    callback(applyAutocorrectionInternal(correction, originalText) ? correction : String());
 }
 
 Seconds WebPage::eventThrottlingDelay() const
@@ -2552,6 +2552,23 @@ static inline bool isAssistableElement(Element& element)
     return element.isContentEditable();
 }
 
+static inline bool isObscuredElement(Element& element)
+{
+    auto topDocument = makeRef(element.document().topDocument());
+    auto elementRectInMainFrame = element.clientRect();
+
+    constexpr OptionSet<HitTestRequest::RequestType> hitType { HitTestRequest::ReadOnly, HitTestRequest::Active, HitTestRequest::AllowChildFrameContent, HitTestRequest::DisallowUserAgentShadowContent };
+    HitTestResult result(elementRectInMainFrame.center());
+
+    topDocument->hitTest(hitType, result);
+    result.setToNonUserAgentShadowAncestor();
+
+    if (result.targetElement() == &element)
+        return false;
+
+    return true;
+}
+
 void WebPage::getPositionInformation(const InteractionInformationRequest& request, CompletionHandler<void(InteractionInformationAtPosition&&)>&& reply)
 {
     // Avoid UIProcess hangs when the WebContent process is stuck on a sync IPC.
@@ -2662,30 +2679,8 @@ static void imagePositionInformation(WebPage& page, Element& element, const Inte
     info.imageURL = element.document().completeURL(renderImage.cachedImage()->url().string());
     info.isAnimatedImage = image->isAnimated();
 
-    if (!request.includeSnapshot && !request.includeImageData)
-        return;
-
-    FloatSize screenSizeInPixels = screenSize();
-    FloatSize imageSize = renderImage.cachedImage()->imageSizeForRenderer(&renderImage);
-    
-    screenSizeInPixels.scale(page.corePage()->deviceScaleFactor());
-    FloatSize scaledSize = largestRectWithAspectRatioInsideRect(imageSize.width() / imageSize.height(), FloatRect(0, 0, screenSizeInPixels.width(), screenSizeInPixels.height())).size();
-    FloatSize bitmapSize = scaledSize.width() < imageSize.width() ? scaledSize : imageSize;
-    
-    // FIXME: Only select ExtendedColor on images known to need wide gamut
-    ShareableBitmap::Configuration bitmapConfiguration;
-    bitmapConfiguration.colorSpace.cgColorSpace = screenColorSpace(page.corePage()->mainFrame().view());
-
-    auto sharedBitmap = ShareableBitmap::createShareable(IntSize(bitmapSize), bitmapConfiguration);
-    if (!sharedBitmap)
-        return;
-
-    auto graphicsContext = sharedBitmap->createGraphicsContext();
-    if (!graphicsContext)
-        return;
-
-    graphicsContext->drawImage(*image, FloatRect(0, 0, bitmapSize.width(), bitmapSize.height()), { renderImage.imageOrientation() });
-    info.image = sharedBitmap;
+    if (request.includeSnapshot || request.includeImageData)
+        info.image = createShareableBitmap(renderImage, screenSize() * page.corePage()->deviceScaleFactor());
 }
 
 static void boundsPositionInformation(RenderObject& renderer, InteractionInformationAtPosition& info)
@@ -2993,7 +2988,7 @@ void WebPage::performActionOnElement(uint32_t action)
                     title = linkElement->textContent();
                 title = stripLeadingAndTrailingHTMLSpaces(title);
             }
-            m_interactionNode->document().editor().writeImageToPasteboard(*Pasteboard::createForCopyAndPaste(), element, url, title);
+            m_interactionNode->document().editor().writeImageToPasteboard(*Pasteboard::createForCopyAndPaste(PagePasteboardContext::create(element.document().pageID())), element, url, title);
         } else if (element.isLink())
             m_interactionNode->document().editor().copyURL(element.document().completeURL(stripLeadingAndTrailingHTMLSpaces(element.attributeWithoutSynchronization(HTMLNames::hrefAttr))), element.textContent());
 #if ENABLE(ATTACHMENT_ELEMENT)
@@ -3028,7 +3023,7 @@ static inline Element* nextAssistableElement(Node* startNode, Page& page, bool i
         nextElement = isForward
             ? page.focusController().nextFocusableElement(*nextElement)
             : page.focusController().previousFocusableElement(*nextElement);
-    } while (nextElement && !isAssistableElement(*nextElement));
+    } while (nextElement && (!isAssistableElement(*nextElement) || isObscuredElement(*nextElement)));
 
     return nextElement;
 }
@@ -3200,6 +3195,7 @@ void WebPage::getFocusedElementInformation(FocusedElementInformation& informatio
 #if ENABLE(INPUT_TYPE_COLOR)
         else if (element.isColorControl()) {
             information.elementType = InputType::Color;
+            information.colorValue = element.valueAsColor();
 #if ENABLE(DATALIST_ELEMENT)
             information.suggestedColors = element.suggestedColors();
 #endif
@@ -3207,6 +3203,7 @@ void WebPage::getFocusedElementInformation(FocusedElementInformation& informatio
 #endif
 
 #if ENABLE(DATALIST_ELEMENT)
+        information.isFocusingWithDataListDropdown = element.isFocusingWithDataListDropdown();
         information.hasSuggestions = !!element.list();
 #endif
         information.inputMode = element.canonicalInputMode();
@@ -3835,6 +3832,19 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
     FloatRect adjustedExposedContentRect = adjustExposedRectForNewScale(exposedContentRect, visibleContentRectUpdateInfo.scale(), scaleToUse);
     m_drawingArea->setExposedContentRect(adjustedExposedContentRect);
 
+    auto& frame = m_page->mainFrame();
+    FrameView& frameView = *frame.view();
+
+    if (auto* scrollingCoordinator = this->scrollingCoordinator()) {
+        auto& remoteScrollingCoordinator = downcast<RemoteScrollingCoordinator>(*scrollingCoordinator);
+        if (auto mainFrameScrollingNodeID = frameView.scrollingNodeID()) {
+            if (visibleContentRectUpdateInfo.viewStability().contains(ViewStabilityFlag::ScrollViewRubberBanding))
+                remoteScrollingCoordinator.addNodeWithActiveRubberBanding(mainFrameScrollingNodeID);
+            else
+                remoteScrollingCoordinator.removeNodeWithActiveRubberBanding(mainFrameScrollingNodeID);
+        }
+    }
+
     IntPoint scrollPosition = roundedIntPoint(visibleContentRectUpdateInfo.unobscuredContentRect().location());
 
     bool pageHasBeenScaledSinceLastLayerTreeCommitThatChangedPageScale = ([&] {
@@ -3870,8 +3880,6 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
         }
     }
 
-    auto& frame = m_page->mainFrame();
-    FrameView& frameView = *frame.view();
     if (scrollPosition != frameView.scrollPosition())
         m_dynamicSizeUpdateHistory.clear();
 
@@ -3920,14 +3928,15 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
         frameView.layoutOrVisualViewportChanged();
     }
 
-    if (!visibleContentRectUpdateInfo.isChangingObscuredInsetsInteractively())
+    bool isChangingObscuredInsetsInteractively = visibleContentRectUpdateInfo.viewStability().contains(ViewStabilityFlag::ChangingObscuredInsetsInteractively);
+    if (!isChangingObscuredInsetsInteractively)
         frameView.setCustomSizeForResizeEvent(expandedIntSize(visibleContentRectUpdateInfo.unobscuredRectInScrollViewCoordinates().size()));
 
-    if (ScrollingCoordinator* scrollingCoordinator = this->scrollingCoordinator()) {
-        ViewportRectStability viewportStability = ViewportRectStability::Stable;
-        ScrollingLayerPositionAction layerAction = ScrollingLayerPositionAction::Sync;
+    if (auto* scrollingCoordinator = this->scrollingCoordinator()) {
+        auto viewportStability = ViewportRectStability::Stable;
+        auto layerAction = ScrollingLayerPositionAction::Sync;
         
-        if (visibleContentRectUpdateInfo.isChangingObscuredInsetsInteractively()) {
+        if (isChangingObscuredInsetsInteractively) {
             viewportStability = ViewportRectStability::ChangingObscuredInsetsInteractively;
             layerAction = ScrollingLayerPositionAction::SetApproximate;
         } else if (!m_isInStableState) {
@@ -3945,30 +3954,40 @@ void WebPage::willStartUserTriggeredZooming()
 }
 
 #if ENABLE(IOS_TOUCH_EVENTS)
-void WebPage::dispatchAsynchronousTouchEvents(const Vector<std::pair<WebTouchEvent, Optional<CallbackID>>, 1>& queue)
+void WebPage::dispatchAsynchronousTouchEvents(Vector<std::pair<WebTouchEvent, CompletionHandler<void(bool)>>, 1>&& queue)
 {
     for (auto& eventAndCallbackID : queue) {
-        bool handled;
-        dispatchTouchEvent(eventAndCallbackID.first, handled);
-        if (eventAndCallbackID.second)
-            send(Messages::WebPageProxy::BoolCallback(handled, *eventAndCallbackID.second));
+        bool handled = dispatchTouchEvent(eventAndCallbackID.first);
+        if (auto& completionHandler = eventAndCallbackID.second)
+            completionHandler(handled);
     }
 }
 
-void WebPage::cancelAsynchronousTouchEvents(const Vector<std::pair<WebTouchEvent, Optional<CallbackID>>, 1>& queue)
+void WebPage::cancelAsynchronousTouchEvents(Vector<std::pair<WebTouchEvent, CompletionHandler<void(bool)>>, 1>&& queue)
 {
     for (auto& eventAndCallbackID : queue) {
-        if (!eventAndCallbackID.second)
-            continue;
-        send(Messages::WebPageProxy::BoolCallback(true, *eventAndCallbackID.second));
+        if (auto& completionHandler = eventAndCallbackID.second)
+            completionHandler(true);
     }
 }
 #endif
 
-void WebPage::computePagesForPrintingAndDrawToPDF(WebCore::FrameIdentifier frameID, const PrintInfo& printInfo, CallbackID callbackID, Messages::WebPage::ComputePagesForPrintingAndDrawToPDF::DelayedReply&& reply)
+void WebPage::computePagesForPrintingiOS(WebCore::FrameIdentifier frameID, const PrintInfo& printInfo, Messages::WebPage::ComputePagesForPrintingiOS::DelayedReply&& reply)
+{
+    ASSERT_WITH_MESSAGE(!printInfo.snapshotFirstPage, "If we are just snapshotting the first page, we don't need a synchronous message to determine the page count, which is 1.");
+
+    Vector<WebCore::IntRect> pageRects;
+    double totalScaleFactor;
+    auto margin = printInfo.margin;
+    computePagesForPrintingImpl(frameID, printInfo, pageRects, totalScaleFactor, margin);
+
+    ASSERT(pageRects.size() >= 1);
+    reply(pageRects.size());
+}
+
+void WebPage::drawToPDFiOS(WebCore::FrameIdentifier frameID, const PrintInfo& printInfo, size_t pageCount, Messages::WebPage::DrawToPDFiOSAsyncReply&& reply)
 {
     if (printInfo.snapshotFirstPage) {
-        reply(1);
         IntSize snapshotSize { FloatSize { printInfo.availablePaperWidth, printInfo.availablePaperHeight } };
         IntRect snapshotRect { {0, 0}, snapshotSize };
 
@@ -3979,23 +3998,13 @@ void WebPage::computePagesForPrintingAndDrawToPDF(WebCore::FrameIdentifier frame
         auto pdfData = pdfSnapshotAtSize(snapshotRect, snapshotSize, 0);
 
         frameView.setLayoutViewportOverrideRect(originalLayoutViewportOverrideRect);
-        send(Messages::WebPageProxy::DrawToPDFCallback(IPC::DataReference(CFDataGetBytePtr(pdfData.get()), CFDataGetLength(pdfData.get())), callbackID));
+        reply(IPC::DataReference(CFDataGetBytePtr(pdfData.get()), CFDataGetLength(pdfData.get())));
         return;
     }
 
-    Vector<WebCore::IntRect> pageRects;
-    double totalScaleFactor;
-    auto margin = printInfo.margin;
-    computePagesForPrintingImpl(frameID, printInfo, pageRects, totalScaleFactor, margin);
-
-    ASSERT(pageRects.size() >= 1);
-    std::size_t pageCount = pageRects.size();
-    ASSERT(pageCount <= std::numeric_limits<uint32_t>::max());
-    reply(pageCount);
-
     RetainPtr<CFMutableDataRef> pdfPageData;
     drawPagesToPDFImpl(frameID, printInfo, 0, pageCount, pdfPageData);
-    send(Messages::WebPageProxy::DrawToPDFCallback(IPC::DataReference(CFDataGetBytePtr(pdfPageData.get()), CFDataGetLength(pdfPageData.get())), callbackID));
+    reply(IPC::DataReference(CFDataGetBytePtr(pdfPageData.get()), CFDataGetLength(pdfPageData.get())));
 
     endPrinting();
 }

@@ -29,7 +29,10 @@
 #if ENABLE(MEDIA_STREAM) && PLATFORM(COCOA)
 
 #include "MediaRecorderPrivate.h"
+#include "WebPage.h"
 #include <WebCore/MediaRecorderPrivate.h>
+#include <WebCore/Page.h>
+#include <WebCore/Settings.h>
 
 namespace WebKit {
 using namespace WebCore;
@@ -37,7 +40,8 @@ using namespace WebCore;
 std::unique_ptr<WebCore::MediaRecorderPrivate> MediaRecorderProvider::createMediaRecorderPrivate(MediaStreamPrivate& stream, const MediaRecorderPrivateOptions& options)
 {
 #if ENABLE(GPU_PROCESS) && HAVE(AVASSETWRITERDELEGATE)
-    if (m_useGPUProcess)
+    auto* page = m_webPage.corePage();
+    if (page && page->settings().webRTCPlatformCodecsInGPUProcessEnabled())
         return makeUnique<MediaRecorderPrivate>(stream, options);
 #endif
     return WebCore::MediaRecorderProvider::createMediaRecorderPrivate(stream, options);

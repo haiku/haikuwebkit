@@ -169,6 +169,9 @@ static WARN_UNUSED_RETURN bool decodeSharedBuffer(Decoder& decoder, RefPtr<Share
     if (!sharedMemoryBuffer)
         return false;
 
+    if (sharedMemoryBuffer->size() < bufferSize)
+        return false;
+
     buffer = SharedBuffer::create(static_cast<unsigned char*>(sharedMemoryBuffer->data()), bufferSize);
 #endif
 
@@ -671,21 +674,6 @@ bool ArgumentCoder<FloatRoundedRect>::decode(Decoder& decoder, FloatRoundedRect&
     return SimpleArgumentCoder<FloatRoundedRect>::decode(decoder, roundedRect);
 }
 
-#if PLATFORM(IOS_FAMILY)
-void ArgumentCoder<FloatQuad>::encode(Encoder& encoder, const FloatQuad& floatQuad)
-{
-    SimpleArgumentCoder<FloatQuad>::encode(encoder, floatQuad);
-}
-
-Optional<FloatQuad> ArgumentCoder<FloatQuad>::decode(Decoder& decoder)
-{
-    FloatQuad floatQuad;
-    if (!SimpleArgumentCoder<FloatQuad>::decode(decoder, floatQuad))
-        return WTF::nullopt;
-    return floatQuad;
-}
-#endif // PLATFORM(IOS_FAMILY)
-
 #if ENABLE(META_VIEWPORT)
 void ArgumentCoder<ViewportArguments>::encode(Encoder& encoder, const ViewportArguments& viewportArguments)
 {
@@ -1087,18 +1075,6 @@ static WARN_UNUSED_RETURN bool decodeOptionalImage(Decoder& decoder, RefPtr<Imag
     return decodeImage(decoder, image);
 }
 
-void ArgumentCoder<ImageHandle>::encode(Encoder& encoder, const ImageHandle& imageHandle)
-{
-    encodeOptionalImage(encoder, imageHandle.image.get());
-}
-
-bool ArgumentCoder<ImageHandle>::decode(Decoder& decoder, ImageHandle& imageHandle)
-{
-    if (!decodeOptionalImage(decoder, imageHandle.image))
-        return false;
-    return true;
-}
-
 void ArgumentCoder<Ref<Font>>::encode(Encoder& encoder, const Ref<WebCore::Font>& font)
 {
     encoder << font->origin();
@@ -1433,6 +1409,7 @@ void ArgumentCoder<DragData>::encode(Encoder& encoder, const DragData& dragData)
     encoder << dragData.fileNames();
 #endif
     encoder << dragData.dragDestinationActionMask();
+    encoder << dragData.pageID();
 }
 
 bool ArgumentCoder<DragData>::decode(Decoder& decoder, DragData& dragData)
@@ -1467,7 +1444,11 @@ bool ArgumentCoder<DragData>::decode(Decoder& decoder, DragData& dragData)
     if (!decoder.decode(dragDestinationActionMask))
         return false;
 
-    dragData = DragData(pasteboardName, clientPosition, globalPosition, draggingSourceOperationMask, applicationFlags, dragDestinationActionMask);
+    Optional<PageIdentifier> pageID;
+    if (!decoder.decode(pageID))
+        return false;
+
+    dragData = DragData(pasteboardName, clientPosition, globalPosition, draggingSourceOperationMask, applicationFlags, dragDestinationActionMask, pageID);
     dragData.setFileNames(fileNames);
 
     return true;

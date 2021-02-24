@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -215,5 +215,19 @@ InspectorFrontendAPI = {
     createTabForExtension(extensionID, tabName, tabIconURL, sourceURL)
     {
         return WI.sharedApp.extensionController.createTabForExtension(extensionID, tabName, tabIconURL, sourceURL);
+    },
+
+    // Returns a string (WI.WebInspectorExtension.ErrorCode) if an error occurred that prevented evaluation.
+    // Returns an object with a 'result' key and value that is the result of the script evaluation.
+    // Returns an object with an 'error' key and value in the case that an exception was thrown.
+    evaluateScriptForExtension(extensionID, scriptSource, {frameURL, contextSecurityOrigin, useContentScriptContext} = {})
+    {
+        return WI.sharedApp.extensionController.evaluateScriptForExtension(extensionID, scriptSource, {frameURL, contextSecurityOrigin, useContentScriptContext});
+    },
+    
+    // Returns a string (WI.WebInspectorExtension.ErrorCode) if an error occurred that prevented reloading.
+    reloadForExtension(extensionID, {ignoreCache, userAgent, injectedScript} = {})
+    {
+        return WI.sharedApp.extensionController.reloadForExtension(extensionID, {ignoreCache, userAgent, injectedScript});
     },
 };

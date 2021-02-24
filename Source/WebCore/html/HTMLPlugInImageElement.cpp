@@ -25,6 +25,7 @@
 #include "ChromeClient.h"
 #include "CommonVM.h"
 #include "ContentSecurityPolicy.h"
+#include "DocumentLoader.h"
 #include "EventNames.h"
 #include "Frame.h"
 #include "FrameLoaderClient.h"
@@ -63,11 +64,6 @@ HTMLPlugInImageElement::HTMLPlugInImageElement(const QualifiedName& tagName, Doc
 {
 }
 
-void HTMLPlugInImageElement::finishCreating()
-{
-    scheduleUpdateForAfterStyleResolution();
-}
-
 HTMLPlugInImageElement::~HTMLPlugInImageElement()
 {
     if (m_needsDocumentActivationCallbacks)
@@ -101,7 +97,7 @@ bool HTMLPlugInImageElement::canLoadURL(const URL& completeURL) const
 {
     if (completeURL.protocolIsJavaScript()) {
         RefPtr<Document> contentDocument = this->contentDocument();
-        if (contentDocument && !document().securityOrigin().canAccess(contentDocument->securityOrigin()))
+        if (contentDocument && !document().securityOrigin().isSameOriginDomain(contentDocument->securityOrigin()))
             return false;
     }
 
@@ -268,6 +264,23 @@ void HTMLPlugInImageElement::resumeFromDocumentSuspension()
     HTMLPlugInElement::resumeFromDocumentSuspension();
 }
 
+bool HTMLPlugInImageElement::shouldBypassCSPForPDFPlugin(const String& contentType) const
+{
+#if ENABLE(PDFKIT_PLUGIN)
+    // We only consider bypassing this CSP check if plugins are disabled. In that case we know that
+    // any plugin used is a browser implementation detail. It is not safe to skip this check
+    // if plugins are enabled in case an external plugin is used to load PDF content.
+    // FIXME: Check for alternative PDF plugins here so we can bypass this CSP check for PDFPlugin even when plugins are enabled.
+    if (document().frame()->arePluginsEnabled())
+        return false;
+
+    return document().frame()->loader().client().shouldUsePDFPlugin(contentType, document().url().path());
+#else
+    UNUSED_PARAM(contentType);
+    return false;
+#endif
+}
+
 bool HTMLPlugInImageElement::canLoadPlugInContent(const String& relativeURL, const String& mimeType) const
 {
     // Elements in user agent show tree should load whatever the embedding document policy is.
@@ -283,7 +296,7 @@ bool HTMLPlugInImageElement::canLoadPlugInContent(const String& relativeURL, con
 
     contentSecurityPolicy.upgradeInsecureRequestIfNeeded(completedURL, ContentSecurityPolicy::InsecureRequestType::Load);
 
-    if (!contentSecurityPolicy.allowObjectFromSource(completedURL))
+    if (!shouldBypassCSPForPDFPlugin(mimeType) && !contentSecurityPolicy.allowObjectFromSource(completedURL))
         return false;
 
     auto& declaredMimeType = document().isPluginDocument() && document().ownerElement() ?

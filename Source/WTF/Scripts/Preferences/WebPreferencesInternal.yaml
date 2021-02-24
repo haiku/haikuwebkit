@@ -268,6 +268,18 @@ FasterClicksEnabled:
     WebKit:
       default: true
 
+ForcePageRenderingUpdatesAt60FPSEnabled:
+  type: bool
+  humanReadableName: "Force Page Rendering Updates at 60fps"
+  humanReadableDescription: "Force the rate for updates to software Web Animations, requestAnimationFrame() and anything triggering the page rendering steps to 60 frames per second rather than use the display's refresh rate"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+
 # FIXME: This should be reconciled with 'FrameFlattening' in WebPreferences.yaml .
 FrameFlatteningEnabled:
   type: bool
@@ -315,11 +327,11 @@ IOSFormControlRefreshEnabled:
   condition: ENABLE(IOS_FORM_CONTROL_REFRESH)
   defaultValue:
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
 
 IPCTestingAPIEnabled:
   type: bool
@@ -599,6 +611,29 @@ PrefixedWebAudioEnabled:
     WebCore:
       default: false
 
+QuickboardControllerForTextInputEnabled:
+  type: bool
+  humanReadableName: "Quickboard controller"
+  humanReadableDescription: "Enable quickboard controller for text input"
+  condition: HAVE(QUICKBOARD_CONTROLLER)
+  webcoreBinding: none
+  exposed: [ WebKit ]
+  defaultValue:
+    WebKit:
+      default: false
+
+ResourceLoadSchedulingEnabled:
+  type: bool
+  humanReadableName: "Resource Load Scheduling"
+  humanReadableDescription: "Network process side priority and visibility based resource load scheduling"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: true
+    WebCore:
+      default: true
+
 # FIXME: This is not relevent for WebKitLegacy, so should be excluded from WebKitLegacy entirely.
 RestrictedHTTPResponseAccess:
   type: bool
@@ -741,17 +776,6 @@ UseGPUProcessForDOMRenderingEnabled:
     WebKit:
       default: defaultUseGPUProcessForDOMRenderingEnabled()
 
-UseGPUProcessForMediaEnabled:
-  type: bool
-  humanReadableName: "GPU Process: Media"
-  humanReadableDescription: "Do all media loading and playback in the GPU Process"
-  webcoreBinding: none
-  condition: ENABLE(GPU_PROCESS)
-  exposed: [ WebKit ]
-  defaultValue:
-    WebKit:
-      default: defaultUseGPUProcessForMediaEnabled()
-
 UseGPUProcessForWebGLEnabled:
   type: bool
   humanReadableName: "GPU Process: WebGL"
@@ -762,6 +786,29 @@ UseGPUProcessForWebGLEnabled:
   defaultValue:
     WebKit:
       default: defaultUseGPUProcessForWebGLEnabled()
+
+UseThemeColorForScrollAreaBackgroundColor:
+  type: bool
+  humanReadableName: "Use theme-color for scroll area background color"
+  humanReadableDescription: "Use theme-color for scroll area background color"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+
+# FIXME: Remove once <rdar://73830961> has been fixed
+UseiTunesAVOutputContext:
+  type: bool
+  humanReadableName: "Use iTunes AVOutputContext"
+  humanReadableDescription: "Use iTunes AVOutputContext"
+  webcoreBinding: none
+  condition: ENABLE(WIRELESS_PLAYBACK_TARGET)
+  defaultValue:
+    WebKit:
+      default: true
 
 WebAPIStatisticsEnabled:
   type: bool

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2005-2021 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Alexey Proskuryakov
  *
  * Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,8 @@
 
 #if PLATFORM(COCOA)
 #include "LocaleCocoa.h"
-#include <pal/spi/cocoa/CoreTextSPI.h>
+#include <pal/cf/CoreTextSoftLink.h>
+#include <pal/spi/cf/CoreTextSPI.h>
 #else
 #include <pal/spi/win/CoreTextSPIWin.h>
 #endif
@@ -699,8 +700,8 @@ void Font::determinePitch()
 FloatRect Font::platformBoundsForGlyph(Glyph glyph) const
 {
     FloatRect boundingBox;
-    CGRect emptyRect;
-    boundingBox = CTFontGetBoundingRectsForGlyphs(m_platformData.ctFont(), platformData().orientation() == FontOrientation::Vertical ? kCTFontOrientationVertical : kCTFontOrientationHorizontal, &glyph, &emptyRect, 1);
+    CGRect ignoredRect = { };
+    boundingBox = CTFontGetBoundingRectsForGlyphs(m_platformData.ctFont(), platformData().orientation() == FontOrientation::Vertical ? kCTFontOrientationVertical : kCTFontOrientationHorizontal, &glyph, &ignoredRect, 1);
     boundingBox.setY(-boundingBox.maxY());
     if (m_syntheticBoldOffset)
         boundingBox.setWidth(boundingBox.width() + m_syntheticBoldOffset);
@@ -744,8 +745,8 @@ bool Font::isProbablyOnlyUsedToRenderIcons() const
     UniChar lowercaseACharacter = 'a';
     CGGlyph lowercaseAGlyph;
     if (CTFontGetGlyphsForCharacters(platformFont, &lowercaseACharacter, &lowercaseAGlyph, 1)) {
-        CGRect emptyRect;
-        if (!CGRectIsEmpty(CTFontGetBoundingRectsForGlyphs(platformFont, kCTFontOrientationDefault, &lowercaseAGlyph, &emptyRect, 1)))
+        CGRect ignoredRect = { };
+        if (!CGRectIsEmpty(CTFontGetBoundingRectsForGlyphs(platformFont, kCTFontOrientationDefault, &lowercaseAGlyph, &ignoredRect, 1)))
             return false;
     }
 
@@ -772,6 +773,35 @@ bool Font::isProbablyOnlyUsedToRenderIcons() const
     return notFound == boundingRects.findMatching([](auto& rect) {
         return !CGRectIsEmpty(rect);
     });
+}
+
+Optional<BitVector> Font::findOTSVGGlyphs(const GlyphBufferGlyph* glyphs, unsigned count) const
+{
+#if PLATFORM(COCOA)
+    if (!m_otSVGTable) {
+        if (auto tableData = adoptCF(CTFontCopyTable(platformData().ctFont(), kCTFontTableSVG, kCTFontTableOptionNoOptions)))
+            m_otSVGTable = PAL::OTSVGTable(tableData.get(), fontMetrics().unitsPerEm(), platformData().size());
+        else
+            m_otSVGTable = {{ }};
+    }
+
+    if (!PAL::isOTSVGFrameworkAvailable() || !m_otSVGTable.value().table)
+        return { };
+
+    Optional<BitVector> result;
+    for (unsigned i = 0; i < count; ++i) {
+        if (PAL::softLinkOTSVGOTSVGTableGetDocumentIndexForGlyph(m_otSVGTable.value().table, glyphs[i]) != kCFNotFound) {
+            if (!result)
+                result = BitVector(count);
+            result.value().quickSet(i);
+        }
+    }
+    return result;
+#else
+    UNUSED_PARAM(glyphs);
+    UNUSED_PARAM(count);
+    return { };
+#endif
 }
 
 } // namespace WebCore

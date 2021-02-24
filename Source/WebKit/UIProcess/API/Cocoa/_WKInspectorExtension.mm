@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,6 +26,13 @@
 #import "config.h"
 #import "_WKInspectorExtensionInternal.h"
 
+#import "InspectorExtensionTypes.h"
+#import "WKError.h"
+#import "WKWebViewInternal.h"
+#import <WebCore/ExceptionDetails.h>
+#import <wtf/BlockPtr.h>
+#import <wtf/URL.h>
+
 #if ENABLE(INSPECTOR_EXTENSIONS)
 
 @implementation _WKInspectorExtension
@@ -48,11 +55,52 @@
 {
     _extension->createTab(tabName, tabIconURL, sourceURL, [protectedSelf = retainPtr(self), capturedBlock = makeBlockPtr(completionHandler)] (Expected<WebKit::InspectorExtensionTabID, WebKit::InspectorExtensionError> result) mutable {
         if (!result) {
-            capturedBlock([NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:@{ NSLocalizedFailureReasonErrorKey: inspectorExtensionErrorToString(result.error())}], nil);
+            capturedBlock([NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:@{ NSLocalizedFailureReasonErrorKey: WebKit::inspectorExtensionErrorToString(result.error())}], nil);
             return;
         }
 
         capturedBlock(nil, result.value());
+    });
+}
+
+- (void)evaluateScript:(NSString *)scriptSource frameURL:(NSURL *)frameURL contextSecurityOrigin:(NSURL *)contextSecurityOrigin useContentScriptContext:(BOOL)useContentScriptContext completionHandler:(void(^)(NSError *, NSDictionary *))completionHandler
+{
+    Optional<URL> optionalFrameURL = frameURL ? makeOptional(URL(frameURL)) : WTF::nullopt;
+    Optional<URL> optionalContextSecurityOrigin = contextSecurityOrigin ? makeOptional(URL(contextSecurityOrigin)) : WTF::nullopt;
+    _extension->evaluateScript(scriptSource, optionalFrameURL, optionalContextSecurityOrigin, useContentScriptContext, [protectedSelf = retainPtr(self), capturedBlock = makeBlockPtr(WTFMove(completionHandler))] (WebKit::InspectorExtensionEvaluationResult&& result) mutable {
+        if (!result) {
+            capturedBlock([NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:@{ NSLocalizedFailureReasonErrorKey: WebKit::inspectorExtensionErrorToString(result.error())}], nil);
+            return;
+        }
+        
+        auto valueOrException = result.value();
+        if (!valueOrException) {
+            capturedBlock(nsErrorFromExceptionDetails(valueOrException.error()).get(), nil);
+            return;
+        }
+
+        id body = API::SerializedScriptValue::deserialize(valueOrException.value()->internalRepresentation(), 0);
+        capturedBlock(nil, body);
+    });
+}
+
+- (void)reloadIgnoringCache:(BOOL)ignoreCache userAgent:(NSString *)userAgent injectedScript:(NSString *)injectedScript completionHandler:(void(^)(NSError *))completionHandler
+{
+    Optional<String> optionalUserAgent = userAgent ? makeOptional(String(userAgent)) : WTF::nullopt;
+    Optional<String> optionalInjectedScript = injectedScript ? makeOptional(String(injectedScript)) : WTF::nullopt;
+    _extension->reloadIgnoringCache(ignoreCache, optionalUserAgent, optionalInjectedScript, [protectedSelf = retainPtr(self), capturedBlock = makeBlockPtr(WTFMove(completionHandler))] (WebKit::InspectorExtensionEvaluationResult&& result) mutable {
+        if (!result) {
+            capturedBlock([NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:@{ NSLocalizedFailureReasonErrorKey: WebKit::inspectorExtensionErrorToString(result.error()) }]);
+            return;
+        }
+        
+        auto valueOrException = result.value();
+        if (!valueOrException) {
+            capturedBlock(nsErrorFromExceptionDetails(valueOrException.error()).get());
+            return;
+        }
+
+        capturedBlock(nil);
     });
 }
 

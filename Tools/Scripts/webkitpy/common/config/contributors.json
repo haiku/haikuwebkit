@@ -4480,7 +4480,8 @@
       "nicks" : [
          "pgriffis",
          "TingPing"
-      ]
+      ],
+      "status" : "committer"
    },
    "Paulo Matos" : {
       "emails" : [
@@ -4750,6 +4751,14 @@
          "rtoy"
       ]
    },
+   "Razvan Caliman" : {
+      "emails" : [
+         "rcaliman@apple.com"
+      ],
+      "nicks" : [
+         "rcaliman"
+      ]
+   },
    "Rebecca Hauck" : {
       "emails" : [
          "rhauck@adobe.com"
@@ -4875,6 +4884,11 @@
          "rkirsling"
       ],
       "status" : "reviewer"
+   },
+   "Ruben Turcios" : {
+      "emails" : [
+         "rubent_22@apple.com"
+      ]
    },
    "Russell Epstein" : {
       "emails" : [

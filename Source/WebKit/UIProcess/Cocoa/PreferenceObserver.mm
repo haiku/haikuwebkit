@@ -118,12 +118,8 @@
 
 + (id)sharedInstance
 {
-    static WKPreferenceObserver *instance = nil;
-
-    if (!instance)
-        instance = [[[self class] alloc] init];
-
-    return instance;
+    static NeverDestroyed<RetainPtr<WKPreferenceObserver>> instance = adoptNS([[[self class] alloc] init]);
+    return instance.get().get();
 }
 
 - (instancetype)init
@@ -135,7 +131,6 @@
 #if PLATFORM(IOS_FAMILY)
         @"com.apple.Accessibility",
         @"com.apple.AdLib",
-        @"com.apple.Preferences",
         @"com.apple.SpeakSelection",
         @"com.apple.UIKit",
         @"com.apple.WebUI",

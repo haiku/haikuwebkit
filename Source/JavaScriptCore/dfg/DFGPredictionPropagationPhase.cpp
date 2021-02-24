@@ -515,6 +515,10 @@ private:
             case Array::Int32Array:
                 changed |= mergePrediction(SpecInt32Only);
                 break;
+            case Array::BigInt64Array:
+            case Array::BigUint64Array:
+                changed |= mergePrediction(SpecBigInt);
+                break;
             default:
                 changed |= mergePrediction(node->getHeapPrediction());
                 break;
@@ -1384,6 +1388,8 @@ private:
         case PutByVal:
         case PutPrivateName:
         case PutPrivateNameById:
+        case SetPrivateBrand:
+        case CheckPrivateBrand:
         case PutClosureVar:
         case PutInternalField:
         case PutToArguments:
@@ -1450,6 +1456,8 @@ private:
         case FilterPutByIdStatus:
         case FilterInByIdStatus:
         case FilterDeleteByStatus:
+        case FilterCheckPrivateBrandStatus:
+        case FilterSetPrivateBrandStatus:
         case ClearCatchLocals:
         case DataViewSet:
         case InvalidationPoint:

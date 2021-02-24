@@ -28,6 +28,7 @@
 #include "DataReference.h"
 #include "LayerTreeContext.h"
 #include "PDFPluginIdentifier.h"
+#include "PasteboardAccessIntent.h"
 #include "SameDocumentNavigationType.h"
 #include "ShareableBitmap.h"
 #include "WebColorPicker.h"
@@ -38,10 +39,12 @@
 #include <WebCore/AlternativeTextClient.h>
 #include <WebCore/ContactInfo.h>
 #include <WebCore/ContactsRequestData.h>
+#include <WebCore/DataOwnerType.h>
 #include <WebCore/DragActions.h>
 #include <WebCore/EditorClient.h>
 #include <WebCore/FocusDirection.h>
 #include <WebCore/InputMode.h>
+#include <WebCore/MediaControlsContextMenuItem.h>
 #include <WebCore/UserInterfaceLayoutDirection.h>
 #include <WebCore/ValidationBubble.h>
 #include <wtf/CompletionHandler.h>
@@ -57,6 +60,10 @@
 
 #if PLATFORM(IOS_FAMILY)
 #include <WebCore/InspectorOverlay.h>
+#endif
+
+#if ENABLE(IMAGE_EXTRACTION)
+#include <WebCore/ImageExtractionResult.h>
 #endif
 
 OBJC_CLASS CALayer;
@@ -87,6 +94,7 @@ namespace WebCore {
 class Color;
 class Cursor;
 class FloatQuad;
+class FloatRect;
 class Region;
 class TextIndicator;
 class WebMediaSessionManager;
@@ -102,6 +110,7 @@ enum class TextIndicatorWindowLifetime : uint8_t;
 enum class TextIndicatorWindowDismissalAnimation : uint8_t;
 enum class DOMPasteAccessResponse : uint8_t;
 
+struct AppHighlight;
 struct DictionaryPopupInfo;
 struct TextIndicatorData;
 struct ViewportAttributes;
@@ -308,7 +317,7 @@ public:
 #endif
 
 #if USE(APPKIT)
-    virtual void setPromisedDataForImage(const String& pasteboardName, Ref<WebCore::SharedBuffer>&& imageBuffer, const String& filename, const String& extension, const String& title, const String& url, const String& visibleUrl, RefPtr<WebCore::SharedBuffer>&& archiveBuffer) = 0;
+    virtual void setPromisedDataForImage(const String& pasteboardName, Ref<WebCore::SharedBuffer>&& imageBuffer, const String& filename, const String& extension, const String& title, const String& url, const String& visibleURL, RefPtr<WebCore::SharedBuffer>&& archiveBuffer, const String& originIdentifier) = 0;
 #endif
 
     virtual WebCore::FloatRect convertToDeviceSpace(const WebCore::FloatRect&) = 0;
@@ -340,6 +349,7 @@ public:
 #endif
 #if ENABLE(IOS_TOUCH_EVENTS)
     virtual void doneDeferringTouchStart(bool preventNativeGestures) = 0;
+    virtual void doneDeferringTouchEnd(bool preventNativeGestures) = 0;
 #endif
 
     virtual RefPtr<WebPopupMenuProxy> createPopupMenuProxy(WebPageProxy&) = 0;
@@ -491,6 +501,10 @@ public:
     virtual void didFailNavigation(API::Navigation*) = 0;
     virtual void didSameDocumentNavigationForMainFrame(SameDocumentNavigationType) = 0;
 
+    virtual void themeColorWillChange() { }
+    virtual void themeColorDidChange() { }
+    virtual void pageExtendedBackgroundColorWillChange() { }
+    virtual void pageExtendedBackgroundColorDidChange() { }
     virtual void didChangeBackgroundColor() = 0;
     virtual void isPlayingAudioWillChange() = 0;
     virtual void isPlayingAudioDidChange() = 0;
@@ -502,6 +516,20 @@ public:
     virtual bool hasSafeBrowsingWarning() const { return false; }
 
     virtual void setMouseEventPolicy(WebCore::MouseEventPolicy) { }
+
+    virtual void setHasBlankOverlay(bool) { }
+
+#if HAVE(PASTEBOARD_DATA_OWNER)
+    virtual WebCore::DataOwnerType dataOwnerForPasteboard(PasteboardAccessIntent) const { return WebCore::DataOwnerType::Undefined; }
+#endif
+
+#if ENABLE(IMAGE_EXTRACTION)
+    virtual void requestImageExtraction(const ShareableBitmap::Handle&, CompletionHandler<void(WebCore::ImageExtractionResult&&)>&& completion) { completion({ }); }
+#endif
+
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    virtual void showMediaControlsContextMenu(WebCore::FloatRect&&, Vector<WebCore::MediaControlsContextMenuItem>&&, CompletionHandler<void(WebCore::MediaControlsContextMenuItem::ID)>&& completionHandler) { completionHandler(WebCore::MediaControlsContextMenuItem::invalidID); }
+#endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
     
 #if PLATFORM(MAC)
     virtual void didPerformImmediateActionHitTest(const WebHitTestResultData&, bool contentPreventsDefault, API::Object*) = 0;
@@ -551,6 +579,10 @@ public:
     virtual NSFileWrapper *allocFileWrapperInstance() const { return nullptr; }
     virtual NSSet *serializableFileWrapperClasses() const { return nullptr; }
 #endif
+#endif
+
+#if ENABLE(APP_HIGHLIGHTS)
+    virtual void storeAppHighlight(const WebCore::AppHighlight&) = 0;
 #endif
 
 #if PLATFORM(COCOA)

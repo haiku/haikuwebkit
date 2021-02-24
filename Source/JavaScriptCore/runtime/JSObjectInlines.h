@@ -24,6 +24,7 @@
 #pragma once
 
 #include "AuxiliaryBarrierInlines.h"
+#include "BrandedStructure.h"
 #include "ButterflyInlines.h"
 #include "Error.h"
 #include "JSFunction.h"
@@ -578,6 +579,8 @@ inline JSValue JSObject::get(JSGlobalObject* globalObject, uint64_t propertyName
 
 JSObject* createInvalidPrivateNameError(JSGlobalObject*);
 JSObject* createRedefinedPrivateNameError(JSGlobalObject*);
+JSObject* createReinstallPrivateMethodError(JSGlobalObject*);
+JSObject* createPrivateMethodAccessError(JSGlobalObject*);
 
 ALWAYS_INLINE bool JSObject::getPrivateFieldSlot(JSObject* object, JSGlobalObject* globalObject, PropertyName propertyName, PropertySlot& slot)
 {
@@ -649,6 +652,63 @@ inline void JSObject::definePrivateField(JSGlobalObject* globalObject, PropertyN
 
     scope.release();
     putDirect(vm, propertyName, value, putSlot);
+}
+
+ALWAYS_INLINE void JSObject::getNonReifiedStaticPropertyNames(VM& vm, PropertyNameArray& propertyNames, DontEnumPropertiesMode mode)
+{
+    if (staticPropertiesReified(vm))
+        return;
+
+    // Add properties from the static hashtables of properties
+    for (const ClassInfo* info = classInfo(vm); info; info = info->parentClass) {
+        const HashTable* table = info->staticPropHashTable;
+        if (!table)
+            continue;
+
+        for (auto iter = table->begin(); iter != table->end(); ++iter) {
+            if (mode == DontEnumPropertiesMode::Include || !(iter->attributes() & PropertyAttribute::DontEnum))
+                propertyNames.add(Identifier::fromString(vm, iter.key()));
+        }
+    }
+}
+
+inline bool JSObject::checkPrivateBrand(JSGlobalObject* globalObject, JSValue brand)
+{
+    ASSERT(brand.isSymbol());
+    VM& vm = getVM(globalObject);
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    Structure* structure = this->structure(vm);
+    if (!structure->isBrandedStructure() || !jsCast<BrandedStructure*>(structure)->checkBrand(asSymbol(brand))) {
+        throwException(globalObject, scope, createPrivateMethodAccessError(globalObject));
+        RELEASE_AND_RETURN(scope, false);
+    }
+    EXCEPTION_ASSERT(!scope.exception());
+
+    return true;
+}
+
+inline void JSObject::setPrivateBrand(JSGlobalObject* globalObject, JSValue brand)
+{
+    ASSERT(brand.isSymbol());
+    VM& vm = getVM(globalObject);
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    Structure* structure = this->structure(vm);
+    if (structure->isBrandedStructure() && jsCast<BrandedStructure*>(structure)->checkBrand(asSymbol(brand))) {
+        throwException(globalObject, scope, createReinstallPrivateMethodError(globalObject));
+        RELEASE_AND_RETURN(scope, void());
+    }
+    EXCEPTION_ASSERT(!scope.exception());
+
+    scope.release();
+
+    DeferredStructureTransitionWatchpointFire deferredWatchpointFire(vm, structure);
+
+    Structure* newStructure = Structure::setBrandTransition(vm, structure, asSymbol(brand), &deferredWatchpointFire);
+    ASSERT(newStructure->isBrandedStructure());
+    ASSERT(newStructure->outOfLineCapacity() || !this->structure(vm)->outOfLineCapacity());
+    this->setStructure(vm, newStructure);
 }
 
 } // namespace JSC

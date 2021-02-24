@@ -70,9 +70,11 @@ struct LengthRaw {
 
 using LengthOrPercentRaw = Variant<LengthRaw, double>;
 
+Optional<int> consumeIntegerRaw(CSSParserTokenRange&, double minimumValue = -std::numeric_limits<double>::max());
 RefPtr<CSSPrimitiveValue> consumeInteger(CSSParserTokenRange&, double minimumValue = -std::numeric_limits<double>::max());
+Optional<unsigned> consumePositiveIntegerRaw(CSSParserTokenRange&);
 RefPtr<CSSPrimitiveValue> consumePositiveInteger(CSSParserTokenRange&);
-bool consumeNumberRaw(CSSParserTokenRange&, double& result, ValueRange = ValueRangeAll);
+Optional<double> consumeNumberRaw(CSSParserTokenRange&, ValueRange = ValueRangeAll);
 RefPtr<CSSPrimitiveValue> consumeNumber(CSSParserTokenRange&, ValueRange);
 Optional<double> consumeFontWeightNumberRaw(CSSParserTokenRange&);
 RefPtr<CSSPrimitiveValue> consumeFontWeightNumber(CSSParserTokenRange&);
@@ -100,17 +102,22 @@ RefPtr<CSSPrimitiveValue> consumeString(CSSParserTokenRange&);
 StringView consumeUrlAsStringView(CSSParserTokenRange&);
 RefPtr<CSSPrimitiveValue> consumeUrl(CSSParserTokenRange&);
 
-Color consumeColorWorkerSafe(CSSParserTokenRange&, CSSParserMode);
-RefPtr<CSSPrimitiveValue> consumeColor(CSSParserTokenRange&, CSSParserMode, bool acceptQuirkyColors = false);
+Color consumeColorWorkerSafe(CSSParserTokenRange&, const CSSParserContext&);
+RefPtr<CSSPrimitiveValue> consumeColor(CSSParserTokenRange&, const CSSParserContext&, bool acceptQuirkyColors = false);
 
 enum class PositionSyntax {
     Position, // <position>
     BackgroundPosition // <bg-position>
 };
 
+struct PositionCoordinates {
+    Ref<CSSPrimitiveValue> x;
+    Ref<CSSPrimitiveValue> y;
+};
+
 RefPtr<CSSPrimitiveValue> consumePosition(CSSParserTokenRange&, CSSParserMode, UnitlessQuirk, PositionSyntax);
-bool consumePosition(CSSParserTokenRange&, CSSParserMode, UnitlessQuirk, PositionSyntax, RefPtr<CSSPrimitiveValue>& resultX, RefPtr<CSSPrimitiveValue>& resultY);
-bool consumeOneOrTwoValuedPosition(CSSParserTokenRange&, CSSParserMode, UnitlessQuirk, RefPtr<CSSPrimitiveValue>& resultX, RefPtr<CSSPrimitiveValue>& resultY);
+Optional<PositionCoordinates> consumePositionCoordinates(CSSParserTokenRange&, CSSParserMode, UnitlessQuirk, PositionSyntax);
+Optional<PositionCoordinates> consumeOneOrTwoValuedPositionCoordinates(CSSParserTokenRange&, CSSParserMode, UnitlessQuirk);
 
 enum class AllowedImageType : uint8_t {
     URLFunction = 1 << 0,
@@ -119,9 +126,8 @@ enum class AllowedImageType : uint8_t {
     GeneratedImage = 1 << 3
 };
 
-RefPtr<CSSValue> consumeImage(CSSParserTokenRange&, CSSParserContext, OptionSet<AllowedImageType> = { AllowedImageType::URLFunction, AllowedImageType::ImageSet, AllowedImageType::GeneratedImage });
-
-RefPtr<CSSValue> consumeImageOrNone(CSSParserTokenRange&, CSSParserContext);
+RefPtr<CSSValue> consumeImage(CSSParserTokenRange&, const CSSParserContext&, OptionSet<AllowedImageType> = { AllowedImageType::URLFunction, AllowedImageType::ImageSet, AllowedImageType::GeneratedImage });
+RefPtr<CSSValue> consumeImageOrNone(CSSParserTokenRange&, const CSSParserContext&);
 
 enum class AllowedFilterFunctions {
     PixelFilters,
@@ -129,7 +135,7 @@ enum class AllowedFilterFunctions {
 };
 
 RefPtr<CSSValue> consumeFilter(CSSParserTokenRange&, const CSSParserContext&, AllowedFilterFunctions);
-RefPtr<CSSShadowValue> consumeSingleShadow(CSSParserTokenRange&, CSSParserMode, bool allowInset, bool allowSpread);
+RefPtr<CSSShadowValue> consumeSingleShadow(CSSParserTokenRange&, const CSSParserContext&, bool allowInset, bool allowSpread);
 
 struct FontStyleRaw {
     CSSValueID style;

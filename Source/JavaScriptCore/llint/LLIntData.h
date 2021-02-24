@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2011-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,9 +60,12 @@ private:
     friend Opcode* opcodeMap();
     friend Opcode* opcodeMapWide16();
     friend Opcode* opcodeMapWide32();
-    friend const Opcode& getOpcode(OpcodeID);
-    friend const Opcode& getOpcodeWide16(OpcodeID);
-    friend const Opcode& getOpcodeWide32(OpcodeID);
+    friend Opcode getOpcode(OpcodeID);
+    friend Opcode getOpcodeWide16(OpcodeID);
+    friend Opcode getOpcodeWide32(OpcodeID);
+    friend const Opcode* getOpcodeAddress(OpcodeID);
+    friend const Opcode* getOpcodeWide16Address(OpcodeID);
+    friend const Opcode* getOpcodeWide32Address(OpcodeID);
     template<PtrTag tag> friend MacroAssemblerCodePtr<tag> getCodePtr(OpcodeID);
     template<PtrTag tag> friend MacroAssemblerCodePtr<tag> getWide16CodePtr(OpcodeID);
     template<PtrTag tag> friend MacroAssemblerCodePtr<tag> getWide32CodePtr(OpcodeID);
@@ -96,7 +99,7 @@ inline Opcode* opcodeMapWide32()
     return g_opcodeMapWide32;
 }
 
-inline const Opcode& getOpcode(OpcodeID id)
+inline Opcode getOpcode(OpcodeID id)
 {
 #if ENABLE(COMPUTED_GOTO_OPCODES)
     return g_opcodeMap[id];
@@ -105,7 +108,7 @@ inline const Opcode& getOpcode(OpcodeID id)
 #endif
 }
 
-inline const Opcode& getOpcodeWide16(OpcodeID id)
+inline Opcode getOpcodeWide16(OpcodeID id)
 {
 #if ENABLE(COMPUTED_GOTO_OPCODES)
     return g_opcodeMapWide16[id];
@@ -115,7 +118,7 @@ inline const Opcode& getOpcodeWide16(OpcodeID id)
 #endif
 }
 
-inline const Opcode& getOpcodeWide32(OpcodeID id)
+inline Opcode getOpcodeWide32(OpcodeID id)
 {
 #if ENABLE(COMPUTED_GOTO_OPCODES)
     return g_opcodeMapWide32[id];
@@ -124,6 +127,24 @@ inline const Opcode& getOpcodeWide32(OpcodeID id)
     RELEASE_ASSERT_NOT_REACHED();
 #endif
 }
+
+
+#if ENABLE(COMPUTED_GOTO_OPCODES)
+inline const Opcode* getOpcodeAddress(OpcodeID id)
+{
+    return &g_opcodeMap[id];
+}
+
+inline const Opcode* getOpcodeWide16Address(OpcodeID id)
+{
+    return &g_opcodeMapWide16[id];
+}
+
+inline const Opcode* getOpcodeWide32Address(OpcodeID id)
+{
+    return &g_opcodeMapWide32[id];
+}
+#endif
 
 template<PtrTag tag>
 ALWAYS_INLINE MacroAssemblerCodePtr<tag> getCodePtrImpl(const Opcode opcode, const void* opcodeAddress)
@@ -134,25 +155,41 @@ ALWAYS_INLINE MacroAssemblerCodePtr<tag> getCodePtrImpl(const Opcode opcode, con
     return MacroAssemblerCodePtr<tag>::createFromExecutableAddress(retaggedOpcode);
 }
 
+#if ENABLE(ARM64E) && !ENABLE(COMPUTED_GOTO_OPCODES)
+#error ENABLE(ARM64E) requires ENABLE(COMPUTED_GOTO_OPCODES) for getCodePtr (and its variants).
+#endif
+
 template<PtrTag tag>
 ALWAYS_INLINE MacroAssemblerCodePtr<tag> getCodePtr(OpcodeID opcodeID)
 {
-    const Opcode& opcode = getOpcode(opcodeID);
-    return getCodePtrImpl<tag>(opcode, &opcode);
+#if ENABLE(COMPUTED_GOTO_OPCODES)
+    const Opcode* opcode = getOpcodeAddress(opcodeID);
+    return getCodePtrImpl<tag>(*opcode, opcode);
+#else
+    return getCodePtrImpl<tag>(getOpcode(opcodeID), nullptr);
+#endif
 }
 
 template<PtrTag tag>
 ALWAYS_INLINE MacroAssemblerCodePtr<tag> getWide16CodePtr(OpcodeID opcodeID)
 {
-    const Opcode& opcode = getOpcodeWide16(opcodeID);
-    return getCodePtrImpl<tag>(opcode, &opcode);
+#if ENABLE(COMPUTED_GOTO_OPCODES)
+    const Opcode* opcode = getOpcodeWide16Address(opcodeID);
+    return getCodePtrImpl<tag>(*opcode, opcode);
+#else
+    return getCodePtrImpl<tag>(getOpcodeWide16(opcodeID), nullptr);
+#endif
 }
 
 template<PtrTag tag>
 ALWAYS_INLINE MacroAssemblerCodePtr<tag> getWide32CodePtr(OpcodeID opcodeID)
 {
-    const Opcode& opcode = getOpcodeWide32(opcodeID);
-    return getCodePtrImpl<tag>(opcode, &opcode);
+#if ENABLE(COMPUTED_GOTO_OPCODES)
+    const Opcode* opcode = getOpcodeWide32Address(opcodeID);
+    return getCodePtrImpl<tag>(*opcode, opcode);
+#else
+    return getCodePtrImpl<tag>(getOpcodeWide32(opcodeID), nullptr);
+#endif
 }
 
 template<PtrTag tag>
@@ -206,7 +243,7 @@ ALWAYS_INLINE LLIntCode getWide32CodeFunctionPtr(OpcodeID opcodeID)
 
 #if ENABLE(WEBASSEMBLY)
 
-inline const Opcode& getOpcode(WasmOpcodeID id)
+inline Opcode getOpcode(WasmOpcodeID id)
 {
 #if ENABLE(COMPUTED_GOTO_OPCODES)
     return g_opcodeMap[numOpcodeIDs + id];
@@ -215,7 +252,7 @@ inline const Opcode& getOpcode(WasmOpcodeID id)
 #endif
 }
 
-inline const Opcode& getOpcodeWide16(WasmOpcodeID id)
+inline Opcode getOpcodeWide16(WasmOpcodeID id)
 {
 #if ENABLE(COMPUTED_GOTO_OPCODES)
     return g_opcodeMapWide16[numOpcodeIDs + id];
@@ -225,7 +262,7 @@ inline const Opcode& getOpcodeWide16(WasmOpcodeID id)
 #endif
 }
 
-inline const Opcode& getOpcodeWide32(WasmOpcodeID id)
+inline Opcode getOpcodeWide32(WasmOpcodeID id)
 {
 #if ENABLE(COMPUTED_GOTO_OPCODES)
     return g_opcodeMapWide32[numOpcodeIDs + id];
@@ -235,25 +272,54 @@ inline const Opcode& getOpcodeWide32(WasmOpcodeID id)
 #endif
 }
 
+#if ENABLE(COMPUTED_GOTO_OPCODES)
+inline const Opcode* getOpcodeAddress(WasmOpcodeID id)
+{
+    return &g_opcodeMap[numOpcodeIDs + id];
+}
+
+inline const Opcode* getOpcodeWide16Address(WasmOpcodeID id)
+{
+    return &g_opcodeMapWide16[numOpcodeIDs + id];
+}
+
+inline const Opcode* getOpcodeWide32Address(WasmOpcodeID id)
+{
+    return &g_opcodeMapWide32[numOpcodeIDs + id];
+}
+#endif
+
 template<PtrTag tag>
 ALWAYS_INLINE MacroAssemblerCodePtr<tag> getCodePtr(WasmOpcodeID opcodeID)
 {
-    const Opcode& opcode = getOpcode(opcodeID);
-    return getCodePtrImpl<tag>(opcode, &opcode);
+#if ENABLE(COMPUTED_GOTO_OPCODES)
+    const Opcode* opcode = getOpcodeAddress(opcodeID);
+    return getCodePtrImpl<tag>(*opcode, opcode);
+#else
+    return getCodePtrImpl<tag>(getOpcode(opcodeID), nullptr);
+#endif
 }
 
 template<PtrTag tag>
 ALWAYS_INLINE MacroAssemblerCodePtr<tag> getWide16CodePtr(WasmOpcodeID opcodeID)
 {
-    const Opcode& opcode = getOpcodeWide16(opcodeID);
-    return getCodePtrImpl<tag>(opcode, &opcode);
+#if ENABLE(COMPUTED_GOTO_OPCODES)
+    const Opcode* opcode = getOpcodeWide16Address(opcodeID);
+    return getCodePtrImpl<tag>(*opcode, opcode);
+#else
+    return getCodePtrImpl<tag>(getOpcodeWide16(opcodeID), nullptr);
+#endif
 }
 
 template<PtrTag tag>
 ALWAYS_INLINE MacroAssemblerCodePtr<tag> getWide32CodePtr(WasmOpcodeID opcodeID)
 {
-    const Opcode& opcode = getOpcodeWide32(opcodeID);
-    return getCodePtrImpl<tag>(opcode, &opcode);
+#if ENABLE(COMPUTED_GOTO_OPCODES)
+    const Opcode* opcode = getOpcodeWide32Address(opcodeID);
+    return getCodePtrImpl<tag>(*opcode, opcode);
+#else
+    return getCodePtrImpl<tag>(getOpcodeWide32(opcodeID), nullptr);
+#endif
 }
 
 template<PtrTag tag>

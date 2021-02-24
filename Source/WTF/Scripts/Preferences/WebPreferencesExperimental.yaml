@@ -1,4 +1,4 @@
-# Copyright (c) 2020 Apple Inc. All rights reserved.
+# Copyright (c) 2020-2021 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -102,6 +102,29 @@ BlankAnchorTargetImpliesNoOpenerEnabled:
     WebCore:
       default: true
 
+CFNetworkNetworkLoaderEnabled:
+  type: bool
+  humanReadableName: "Experimental network loader"
+  humanReadableDescription: "Enable experimental network loader"
+  webcoreBinding: none
+  condition: HAVE(NETWORK_LOADER)
+  exposed: [ WebKit ]
+  defaultValue:
+    WebKit:
+      default: false
+
+CSSColorMixEnabled:
+  type: bool
+  humanReadableName: "CSS color-mix()"
+  humanReadableDescription: "Enable support for CSS color-mix() defined in CSS Color 5"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+
 CSSCustomPropertiesAndValuesEnabled:
   type: bool
   humanReadableName: "CSS Custom Properties and Values API"
@@ -150,6 +173,18 @@ CSSPaintingAPIEnabled:
       default: false
     WebKit:
       "ENABLE(EXPERIMENTAL_FEATURES) && (PLATFORM(GTK) || PLATFORM(WPE))": true
+      default: false
+
+CSSRelativeColorSyntaxEnabled:
+  type: bool
+  humanReadableName: "CSS Relative Color Syntax"
+  humanReadableDescription: "Enable support for CSS Relative Color Syntax defined in CSS Color 5"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
       default: false
 
 CSSTypedOMEnabled:
@@ -270,6 +305,18 @@ FetchAPIKeepAliveEnabled:
       default: true
     WebKit:
       default: true
+
+FocusVisibleEnabled:
+  type: bool
+  humanReadableName: ":focus-visible pseudo-class"
+  humanReadableDescription: "Enable the focus-indicated pseudo-class :focus-visible"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
 
 # FIXME: This is on by default in WebKit2. Perhaps we should consider turning it on for WebKitLegacy as well.
 GenericCueAPIEnabled:
@@ -591,6 +638,18 @@ ModernUnprefixedWebAudioEnabled:
     WebCore:
       default: false
 
+OpusDecoderEnabled:
+  type: bool
+  humanReadableName: "Opus audio decoder"
+  humanReadableDescription: "Enable Opus audio decoder"
+  condition: ENABLE(OPUS)
+  webcoreBinding: RuntimeEnabledFeatures
+  defaultValue:
+    WebKitLegacy:
+      default: true
+    WebKit:
+      default: true
+
 OverscrollBehaviorEnabled:
   type: bool
   humanReadableName: "CSS Overscroll Behavior"
@@ -663,6 +722,16 @@ PrivateClickMeasurementDebugModeEnabled:
     WebKitLegacy:
       default: false
     WebKit:
+      default: false
+
+PrivateClickMeasurementFraudPreventionEnabled:
+  type: bool
+  humanReadableName: "Private Click Measurement Fraud Prevention"
+  humanReadableDescription: "Enable Private Click Measurement Fraud Prevention"
+  webcoreBinding: RuntimeEnabledFeatures
+  defaultValue:
+    WebKit:
+      "HAVE(RSA_BSSA)": true
       default: false
 
 ProcessSwapOnCrossSiteNavigationEnabled:
@@ -841,6 +910,17 @@ TransformStreamAPIEnabled:
       default: true
     WebKit:
       default: true
+
+UseGPUProcessForMediaEnabled:
+  type: bool
+  humanReadableName: "GPU Process: Media"
+  humanReadableDescription: "Do all media loading and playback in the GPU Process"
+  webcoreBinding: none
+  condition: ENABLE(GPU_PROCESS) && !USE(GSTREAMER)
+  exposed: [ WebKit ]
+  defaultValue:
+    WebKit:
+      default: WebKit::defaultUseGPUProcessForMediaEnabled()
 
 UserGesturePromisePropagationEnabled:
   type: bool
@@ -1064,13 +1144,14 @@ WebRTCPlatformCodecsInGPUProcessEnabled:
   type: bool
   humanReadableName: "WebRTC Platform Codecs in GPU Process"
   humanReadableDescription: "Enable WebRTC Platform Codecs in GPU Process"
-  webcoreBinding: RuntimeEnabledFeatures
   condition: ENABLE(WEB_RTC)
   defaultValue:
     WebKitLegacy:
       default: false
     WebKit:
       default: WebKit::defaultWebRTCCodecsInGPUProcess()
+    WebCore:
+      default: false
 
 WebRTCPlatformSocketsEnabled:
   type: bool
@@ -1090,9 +1171,9 @@ WebRTCVP9Profile0CodecEnabled:
   condition: ENABLE(WEB_RTC)
   defaultValue:
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
 
 WebRTCVP9Profile2CodecEnabled:
   type: bool

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2017 Caio Lima <ticaiolima@gmail.com>
- * Copyright (C) 2019-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2019-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -50,7 +50,7 @@ public:
     static constexpr unsigned StructureFlags = Base::StructureFlags | StructureIsImmortal | OverridesToThis;
     friend class CachedBigInt;
 
-    static void visitChildren(JSCell*, SlotVisitor&);
+    DECLARE_VISIT_CHILDREN;
 
     template<typename CellType, SubspaceAccess>
     static IsoSubspace* subspaceFor(VM& vm)
@@ -72,7 +72,7 @@ public:
     JS_EXPORT_PRIVATE static JSBigInt* createFrom(JSGlobalObject*, int32_t value);
     static JSBigInt* tryCreateFrom(VM&, int32_t value);
     static JSBigInt* createFrom(JSGlobalObject*, uint32_t value);
-    static JSBigInt* createFrom(JSGlobalObject*, int64_t value);
+    JS_EXPORT_PRIVATE static JSBigInt* createFrom(JSGlobalObject*, int64_t value);
     JS_EXPORT_PRIVATE static JSBigInt* createFrom(JSGlobalObject*, uint64_t value);
     static JSBigInt* createFrom(JSGlobalObject*, bool value);
     static JSBigInt* createFrom(JSGlobalObject*, double value);
@@ -97,6 +97,15 @@ public:
     {
 #if USE(BIGINT32)
         if (value <= INT_MAX && value >= INT_MIN)
+            return jsBigInt32(static_cast<int32_t>(value));
+#endif
+        return JSBigInt::createFrom(globalObject, value);
+    }
+
+    static JSValue makeHeapBigIntOrBigInt32(JSGlobalObject* globalObject, uint64_t value)
+    {
+#if USE(BIGINT32)
+        if (value <= INT_MAX)
             return jsBigInt32(static_cast<int32_t>(value));
 #endif
         return JSBigInt::createFrom(globalObject, value);
@@ -430,7 +439,7 @@ public:
         return toBigUInt64Heap(bigInt.asHeapBigInt());
     }
 
-    static uint64_t toBigInt64(JSValue bigInt)
+    static int64_t toBigInt64(JSValue bigInt)
     {
         ASSERT(bigInt.isBigInt());
 #if USE(BIGINT32)

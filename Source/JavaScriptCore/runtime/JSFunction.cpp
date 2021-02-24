@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 1999-2002 Harri Porten (porten@kde.org)
  *  Copyright (C) 2001 Peter Kelly (pmk@post.com)
- *  Copyright (C) 2003-2020 Apple Inc. All rights reserved.
+ *  Copyright (C) 2003-2021 Apple Inc. All rights reserved.
  *  Copyright (C) 2007 Cameron Zwarich (cwzwarich@uwaterloo.ca)
  *  Copyright (C) 2007 Maks Orlovich
  *  Copyright (C) 2015 Canon Inc. All rights reserved.
@@ -129,9 +129,9 @@ void JSFunction::finishCreation(VM& vm, NativeExecutable*, unsigned length, cons
     // JSBoundFunction instances use finishCreation(VM&) overload and lazily allocate their name string / length.
     ASSERT(!this->inherits<JSBoundFunction>(vm));
 
+    putDirect(vm, vm.propertyNames->length, jsNumber(length), PropertyAttribute::ReadOnly | PropertyAttribute::DontEnum);
     if (!name.isNull())
         putDirect(vm, vm.propertyNames->name, jsString(vm, name), PropertyAttribute::ReadOnly | PropertyAttribute::DontEnum);
-    putDirect(vm, vm.propertyNames->length, jsNumber(length), PropertyAttribute::ReadOnly | PropertyAttribute::DontEnum);
 }
 
 FunctionRareData* JSFunction::allocateRareData(VM& vm)
@@ -252,7 +252,8 @@ const SourceCode* JSFunction::sourceCode() const
     return &jsExecutable()->source();
 }
     
-void JSFunction::visitChildren(JSCell* cell, SlotVisitor& visitor)
+template<typename Visitor>
+void JSFunction::visitChildrenImpl(JSCell* cell, Visitor& visitor)
 {
     JSFunction* thisObject = jsCast<JSFunction*>(cell);
     ASSERT_GC_OBJECT_INHERITS(thisObject, info());
@@ -260,6 +261,8 @@ void JSFunction::visitChildren(JSCell* cell, SlotVisitor& visitor)
 
     visitor.appendUnbarriered(bitwise_cast<JSCell*>(bitwise_cast<uintptr_t>(thisObject->m_executableOrRareData) & ~rareDataTag));
 }
+
+DEFINE_VISIT_CHILDREN(JSFunction);
 
 CallData JSFunction::getCallData(JSCell* cell)
 {

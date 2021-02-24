@@ -1,4 +1,4 @@
-# Copyright (C) 2020 Apple Inc. All rights reserved.
+# Copyright (C) 2020-2021 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -31,15 +31,15 @@ import steps
 
 class TestCase(unittest.TestCase):
     def assertBuildSteps(self, actual_steps, expected_steps):
-        assert all(map(lambda step: isinstance(step, _BuildStepFactory), actual_steps))
-        assert all(map(lambda step: isinstance(step, _BuildStepFactory), expected_steps))
+        assert all([isinstance(step, _BuildStepFactory) for step in actual_steps])
+        assert all([isinstance(step, _BuildStepFactory) for step in expected_steps])
 
         # Convert to dictionaries because assertEqual() only knows how to diff Python built-in types.
         def step_to_dict(step):
             return {key: getattr(step, key) for key in step.compare_attrs}
 
-        actual_steps = map(step_to_dict, actual_steps)
-        expected_steps = map(step_to_dict, expected_steps)
+        actual_steps = [step_to_dict(step) for step in actual_steps]
+        expected_steps = [step_to_dict(step) for step in expected_steps]
         self.assertEqual(actual_steps, expected_steps)
 
 
@@ -56,6 +56,7 @@ class TestGenericFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
         ])
 
@@ -69,6 +70,7 @@ class TestGenericFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
         ])
 
@@ -85,6 +87,7 @@ class TestTestsFactory(TestCase):
             _BuildStepFactory(steps.ValidatePatch),
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.UpdateWorkingDirectory),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.CheckStyle),
@@ -98,6 +101,7 @@ class TestTestsFactory(TestCase):
             _BuildStepFactory(steps.ValidatePatch),
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.UpdateWorkingDirectory),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.ApplyWatchList),
@@ -113,6 +117,7 @@ class TestTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.RunBindingsTests),
         ])
@@ -126,6 +131,7 @@ class TestTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.RunWebKitPerlTests),
         ])
@@ -140,6 +146,7 @@ class TestTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.RunWebKitPyPython2Tests),
             _BuildStepFactory(steps.RunWebKitPyPython3Tests),
@@ -156,38 +163,41 @@ class TestTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
+            _BuildStepFactory(steps.RunBuildWebKitOrgUnitTests),
             _BuildStepFactory(steps.RunEWSUnitTests),
             _BuildStepFactory(steps.RunEWSBuildbotCheckConfig),
             _BuildStepFactory(steps.RunResultsdbpyTests),
-            _BuildStepFactory(steps.RunBuildWebKitOrgUnitTests),
         ])
 
 
 class TestBuildFactory(TestCase):
     def test_generic_build_factory(self):
-        factory = factories.BuildFactory(platform='mac-mojave', configuration='release', architectures=["x86_64"])
+        factory = factories.BuildFactory(platform='mac-catalina', configuration='release', architectures=["x86_64"])
         self.assertBuildSteps(factory.steps, [
-            _BuildStepFactory(steps.ConfigureBuild, platform='mac-mojave', configuration='release', architectures=["x86_64"],
+            _BuildStepFactory(steps.ConfigureBuild, platform='mac-catalina', configuration='release', architectures=["x86_64"],
                               buildOnly=False, triggers=None, triggered_by=None, remotes=None, additionalArguments=None),
             _BuildStepFactory(steps.ValidatePatch),
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileWebKit, skipUpload=False),
         ])
 
     def test_macos_build_factory(self):
-        factory = factories.macOSBuildFactory(platform='mac-mojave', configuration='release', architectures=["x86_64"])
+        factory = factories.macOSBuildFactory(platform='mac-catalina', configuration='release', architectures=["x86_64"])
         self.assertBuildSteps(factory.steps, [
-            _BuildStepFactory(steps.ConfigureBuild, platform='mac-mojave', configuration='release', architectures=["x86_64"],
+            _BuildStepFactory(steps.ConfigureBuild, platform='mac-catalina', configuration='release', architectures=["x86_64"],
                               buildOnly=False, triggers=None, triggered_by=None, remotes=None, additionalArguments=None),
             _BuildStepFactory(steps.ValidatePatch),
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileWebKit, skipUpload=False),
@@ -203,6 +213,7 @@ class TestBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileWebKit, skipUpload=True),
@@ -217,6 +228,7 @@ class TestBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileWebKit, skipUpload=False),
@@ -231,6 +243,7 @@ class TestBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileWebKit, skipUpload=True),
@@ -245,6 +258,7 @@ class TestBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileWebKit, skipUpload=True),
@@ -259,6 +273,7 @@ class TestBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileWebKit, skipUpload=True),
@@ -273,6 +288,7 @@ class TestBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.InstallGtkDependencies),
@@ -288,6 +304,7 @@ class TestBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.InstallWpeDependencies),
@@ -303,6 +320,7 @@ class TestBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileWebKit, skipUpload=True),
@@ -318,6 +336,7 @@ class TestBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileJSC),
@@ -333,6 +352,7 @@ class TestBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileJSC),
@@ -350,6 +370,7 @@ class TestBuildAndTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileWebKit, skipUpload=True),
@@ -361,14 +382,15 @@ class TestBuildAndTestsFactory(TestCase):
 
 class TestCommitQueueFactory(TestCase):
     def test_commit_queue_factory(self):
-        factory = factories.CommitQueueFactory(platform='mac-mojave', configuration='release', architectures=["x86_64"])
+        factory = factories.CommitQueueFactory(platform='mac-catalina', configuration='release', architectures=["x86_64"])
         self.assertBuildSteps(factory.steps, [
-            _BuildStepFactory(steps.ConfigureBuild, platform='mac-mojave', configuration='release', architectures=["x86_64"],
+            _BuildStepFactory(steps.ConfigureBuild, platform='mac-catalina', configuration='release', architectures=["x86_64"],
                               buildOnly=False, triggers=None, remotes=None, additionalArguments=None),
             _BuildStepFactory(steps.ValidatePatch, verifycqplus=True),
             _BuildStepFactory(steps.ValidateCommiterAndReviewer),
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.UpdateWorkingDirectory),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.ValidateChangeLogAndReviewer),
@@ -391,15 +413,16 @@ class TestCommitQueueFactory(TestCase):
 
 class TestLayoutTestsFactory(TestCase):
     def test_macos_wk1_release_factory(self):
-        factory = factories.macOSWK1Factory(platform='mac-mojave', configuration='release', architectures=["x86_64"])
+        factory = factories.macOSWK1Factory(platform='mac-catalina', configuration='release', architectures=["x86_64"])
         self.assertBuildSteps(factory.steps, [
-            _BuildStepFactory(steps.ConfigureBuild, platform='mac-mojave', configuration='release', architectures=["x86_64"],
+            _BuildStepFactory(steps.ConfigureBuild, platform='mac-catalina', configuration='release', architectures=["x86_64"],
                               buildOnly=False, triggers=None, triggered_by=None, remotes=None, additionalArguments=None),
             _BuildStepFactory(steps.CheckPatchRelevance),
             _BuildStepFactory(steps.ValidatePatch),
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.DownloadBuiltProduct),
             _BuildStepFactory(steps.ExtractBuiltProduct),
@@ -411,15 +434,16 @@ class TestLayoutTestsFactory(TestCase):
         ])
 
     def test_macos_wk1_debug_factory(self):
-        factory = factories.macOSWK1Factory(platform='mac-mojave', configuration='debug', architectures=["x86_64"])
+        factory = factories.macOSWK1Factory(platform='mac-catalina', configuration='debug', architectures=["x86_64"])
         self.assertBuildSteps(factory.steps, [
-            _BuildStepFactory(steps.ConfigureBuild, platform='mac-mojave', configuration='debug', architectures=["x86_64"],
+            _BuildStepFactory(steps.ConfigureBuild, platform='mac-catalina', configuration='debug', architectures=["x86_64"],
                               buildOnly=False, triggers=None, triggered_by=None, remotes=None, additionalArguments=None),
             _BuildStepFactory(steps.CheckPatchRelevance),
             _BuildStepFactory(steps.ValidatePatch),
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.DownloadBuiltProduct),
             _BuildStepFactory(steps.ExtractBuiltProduct),
@@ -431,14 +455,15 @@ class TestLayoutTestsFactory(TestCase):
         ])
 
     def test_macos_wk2_factory(self):
-        factory = factories.macOSWK2Factory(platform='mac-mojave', configuration='release', architectures=["x86_64"])
+        factory = factories.macOSWK2Factory(platform='mac-catalina', configuration='release', architectures=["x86_64"])
         self.assertBuildSteps(factory.steps, [
-            _BuildStepFactory(steps.ConfigureBuild, platform='mac-mojave', configuration='release', architectures=["x86_64"],
+            _BuildStepFactory(steps.ConfigureBuild, platform='mac-catalina', configuration='release', architectures=["x86_64"],
                               buildOnly=False, triggers=None, triggered_by=None, remotes=None, additionalArguments=None),
             _BuildStepFactory(steps.ValidatePatch),
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.DownloadBuiltProduct),
             _BuildStepFactory(steps.ExtractBuiltProduct),
@@ -458,6 +483,7 @@ class TestLayoutTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.DownloadBuiltProduct),
             _BuildStepFactory(steps.ExtractBuiltProduct),
@@ -477,6 +503,7 @@ class TestLayoutTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.InstallGtkDependencies),
             _BuildStepFactory(steps.DownloadBuiltProduct),
@@ -498,6 +525,7 @@ class TestJSCBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileJSC),
@@ -513,6 +541,7 @@ class TestJSCBuildFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileJSC),
@@ -530,6 +559,7 @@ class TestJSCBuildAndTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileJSC),
@@ -545,6 +575,7 @@ class TestJSCBuildAndTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.KillOldProcesses),
             _BuildStepFactory(steps.CompileJSC),
@@ -562,6 +593,7 @@ class TestJSCTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.DownloadBuiltProduct),
             _BuildStepFactory(steps.ExtractBuiltProduct),
@@ -579,6 +611,7 @@ class TestJSCTestsFactory(TestCase):
             _BuildStepFactory(steps.PrintConfiguration),
             _BuildStepFactory(steps.CheckOutSource),
             _BuildStepFactory(steps.CheckOutSpecificRevision),
+            _BuildStepFactory(steps.ShowIdentifier),
             _BuildStepFactory(steps.ApplyPatch),
             _BuildStepFactory(steps.DownloadBuiltProduct),
             _BuildStepFactory(steps.ExtractBuiltProduct),

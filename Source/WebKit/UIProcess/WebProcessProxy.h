@@ -98,6 +98,7 @@ class WebUserContentControllerProxy;
 class WebsiteDataStore;
 enum class WebsiteDataType : uint32_t;
 struct BackForwardListItemState;
+struct GPUProcessConnectionParameters;
 struct UserMessage;
 struct WebNavigationDataStore;
 struct WebPageCreationParameters;
@@ -153,7 +154,7 @@ public:
     void setIsInProcessCache(bool);
     bool isInProcessCache() const { return m_isInProcessCache; }
 
-    void enableServiceWorkers(const Optional<UserContentControllerIdentifier>&);
+    void enableServiceWorkers(const UserContentControllerIdentifier&);
     void disableServiceWorkers();
 
     WebsiteDataStore& websiteDataStore() const { ASSERT(m_websiteDataStore); return *m_websiteDataStore; }
@@ -463,7 +464,7 @@ private:
     void getNetworkProcessConnection(Messages::WebProcessProxy::GetNetworkProcessConnectionDelayedReply&&);
 
 #if ENABLE(GPU_PROCESS)
-    void getGPUProcessConnection(Messages::WebProcessProxy::GetGPUProcessConnectionDelayedReply&&);
+    void getGPUProcessConnection(GPUProcessConnectionParameters&&, Messages::WebProcessProxy::GetGPUProcessConnectionDelayedReply&&);
 #endif
 
 #if ENABLE(WEB_AUTHN)

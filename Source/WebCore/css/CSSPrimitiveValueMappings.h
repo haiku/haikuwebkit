@@ -605,11 +605,6 @@ template<> inline CSSPrimitiveValue::CSSPrimitiveValue(ControlPart e)
         m_value.valueID = CSSValueBorderlessAttachment;
         break;
 #endif
-#if ENABLE(SERVICE_CONTROLS)
-    case ImageControlsButtonPart:
-        m_value.valueID = CSSValueImageControlsButton;
-        break;
-#endif
 #if ENABLE(APPLE_PAY)
     case ApplePayButtonPart:
         m_value.valueID = CSSValueApplePayButton;
@@ -4402,6 +4397,11 @@ template<> inline CSSPrimitiveValue::CSSPrimitiveValue(TransformStyle3D e)
     case TransformStyle3D::Preserve3D:
         m_value.valueID = CSSValuePreserve3d;
         break;
+#if ENABLE(CSS_TRANSFORM_STYLE_OPTIMIZED_3D)
+    case TransformStyle3D::Optimized3D:
+        m_value.valueID = CSSValueOptimized3d;
+        break;
+#endif
     }
 }
 
@@ -4414,6 +4414,10 @@ template<> inline CSSPrimitiveValue::operator TransformStyle3D() const
         return TransformStyle3D::Flat;
     case CSSValuePreserve3d:
         return TransformStyle3D::Preserve3D;
+#if ENABLE(CSS_TRANSFORM_STYLE_OPTIMIZED_3D)
+    case CSSValueOptimized3d:
+        return TransformStyle3D::Optimized3D;
+#endif
     default:
         break;
     }
@@ -4562,18 +4566,18 @@ inline bool CSSPrimitiveValue::convertingToLengthRequiresNonNullStyle(int length
 template<int supported> Length CSSPrimitiveValue::convertToLength(const CSSToLengthConversionData& conversionData) const
 {
     if (isFontRelativeLength() && convertingToLengthRequiresNonNullStyle(supported) && !conversionData.style())
-        return Length(Undefined);
+        return Length(LengthType::Undefined);
     if ((supported & FixedIntegerConversion) && isLength())
         return computeLength<Length>(conversionData);
     if ((supported & FixedFloatConversion) && isLength())
-        return Length(computeLength<double>(conversionData), Fixed);
+        return Length(computeLength<double>(conversionData), LengthType::Fixed);
     if ((supported & PercentConversion) && isPercentage())
-        return Length(doubleValue(), Percent);
+        return Length(doubleValue(), LengthType::Percent);
     if ((supported & AutoConversion) && valueID() == CSSValueAuto)
-        return Length(Auto);
+        return Length(LengthType::Auto);
     if ((supported & CalculatedConversion) && isCalculated())
         return Length(cssCalcValue()->createCalculationValue(conversionData));
-    return Length(Undefined);
+    return Length(LengthType::Undefined);
 }
 
 template<> inline CSSPrimitiveValue::CSSPrimitiveValue(BufferedRendering e)
@@ -5409,6 +5413,34 @@ template<> inline CSSPrimitiveValue::operator ScrollSnapAxisAlignType() const
     default:
         ASSERT_NOT_REACHED();
         return ScrollSnapAxisAlignType::None;
+    }
+}
+
+template<> inline CSSPrimitiveValue::CSSPrimitiveValue(ScrollSnapStop snapStop)
+    : CSSValue(PrimitiveClass)
+{
+    setPrimitiveUnitType(CSSUnitType::CSS_VALUE_ID);
+    switch (snapStop) {
+    case ScrollSnapStop::Normal:
+        m_value.valueID = CSSValueNormal;
+        break;
+    case ScrollSnapStop::Always:
+        m_value.valueID = CSSValueAlways;
+        break;
+    }
+}
+
+template<> inline CSSPrimitiveValue::operator ScrollSnapStop() const
+{
+    ASSERT(isValueID());
+    switch (m_value.valueID) {
+    case CSSValueNormal:
+        return ScrollSnapStop::Normal;
+    case CSSValueAlways:
+        return ScrollSnapStop::Always;
+    default:
+        ASSERT_NOT_REACHED();
+        return ScrollSnapStop::Normal;
     }
 }
 

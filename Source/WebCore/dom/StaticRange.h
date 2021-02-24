@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,6 +28,12 @@
 #include "AbstractRange.h"
 #include "SimpleRange.h"
 
+namespace JSC {
+
+class AbstractSlotVisitor;
+
+}
+
 namespace WebCore {
 
 template<typename> class ExceptionOr;
@@ -51,6 +57,8 @@ public:
     Node& endContainer() const final { return SimpleRange::endContainer(); }
     unsigned endOffset() const final { return SimpleRange::endOffset(); }
     bool collapsed() const final { return SimpleRange::collapsed(); }
+
+    void visitNodesConcurrently(JSC::AbstractSlotVisitor&) const;
 
 private:
     StaticRange(SimpleRange&&);

@@ -64,6 +64,9 @@ ResourceType toResourceType(CachedResource::Type type)
     case CachedResource::Type::Ping:
     case CachedResource::Type::Icon:
     case CachedResource::Type::RawResource:
+#if ENABLE(MODEL_ELEMENT)
+    case CachedResource::Type::ModelResource:
+#endif
         return ResourceType::Raw;
 
     case CachedResource::Type::TextTrackResource:
@@ -116,7 +119,7 @@ bool ResourceLoadInfo::isThirdParty() const
     Ref<SecurityOrigin> mainDocumentSecurityOrigin = SecurityOrigin::create(mainDocumentURL);
     Ref<SecurityOrigin> resourceSecurityOrigin = SecurityOrigin::create(resourceURL);
 
-    return !mainDocumentSecurityOrigin->canAccess(resourceSecurityOrigin.get());
+    return !mainDocumentSecurityOrigin->isSameOriginDomain(resourceSecurityOrigin.get());
 }
     
 ResourceFlags ResourceLoadInfo::getResourceFlags() const

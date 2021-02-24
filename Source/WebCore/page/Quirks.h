@@ -97,6 +97,7 @@ public:
     bool needsGMailOverflowScrollQuirk() const;
     bool needsYouTubeOverflowScrollQuirk() const;
     bool needsFullscreenDisplayNoneQuirk() const;
+    bool needsWeChatScrollingQuirk() const;
 
     bool shouldOpenAsAboutBlank(const String&) const;
 
@@ -128,6 +129,7 @@ public:
     bool needsBlackFullscreenBackgroundQuirk() const;
 
     bool requiresUserGestureToPauseInPictureInPicture() const;
+    bool requiresUserGestureToLoadInPictureInPicture() const;
 
     WEBCORE_EXPORT bool blocksReturnToFullscreenFromPictureInPictureQuirk() const;
     bool shouldDisableEndFullscreenEventWhenEnteringPictureInPictureFromFullscreenQuirk() const;
@@ -139,6 +141,10 @@ public:
     WEBCORE_EXPORT static const String& staticRadioPlayerURLString();
     StorageAccessResult requestStorageAccessAndHandleClick(CompletionHandler<void(StorageAccessWasGranted)>&&) const;
     static RegistrableDomain mapToTopDomain(const URL&);
+#endif
+
+#if ENABLE(WEB_AUTHN)
+    WEBCORE_EXPORT bool shouldBypassUserGestureRequirementForWebAuthn() const;
 #endif
 
 private:
@@ -173,6 +179,10 @@ private:
     mutable Optional<bool> m_needsHDRPixelDepthQuirk;
     mutable Optional<bool> m_needsBlackFullscreenBackgroundQuirk;
     mutable Optional<bool> m_requiresUserGestureToPauseInPictureInPicture;
+    mutable Optional<bool> m_requiresUserGestureToLoadInPictureInPicture;
+#if ENABLE(MEDIA_STREAM)
+    mutable Optional<bool> m_shouldEnableLegacyGetUserMediaQuirk;
+#endif
     mutable Optional<bool> m_blocksReturnToFullscreenFromPictureInPictureQuirk;
     mutable Optional<bool> m_shouldDisableEndFullscreenEventWhenEnteringPictureInPictureFromFullscreenQuirk;
 };

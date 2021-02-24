@@ -26,6 +26,7 @@
 #pragma once
 
 #include <initializer_list>
+#include <wtf/EnumTraits.h>
 
 namespace WTF {
 class TextStream;
@@ -519,7 +520,8 @@ enum class ObjectFit : uint8_t {
 enum class AspectRatioType : uint8_t {
     Auto,
     Ratio,
-    AutoAndRatio
+    AutoAndRatio,
+    AutoZero
 };
 
 enum class WordBreak : uint8_t {
@@ -918,7 +920,10 @@ enum class PointerEvents : uint8_t {
 
 enum class TransformStyle3D : uint8_t {
     Flat,
-    Preserve3D
+    Preserve3D,
+#if ENABLE(CSS_TRANSFORM_STYLE_OPTIMIZED_3D)
+    Optimized3D
+#endif
 };
 
 enum class BackfaceVisibility : uint8_t {
@@ -1126,6 +1131,11 @@ enum class ScrollSnapAxisAlignType : uint8_t {
     Center,
     End
 };
+
+enum class ScrollSnapStop : uint8_t {
+    Normal,
+    Always,
+};
 #endif
 
 #if ENABLE(CSS_TRAILING_WORD)
@@ -1283,6 +1293,7 @@ WTF::TextStream& operator<<(WTF::TextStream&, RubyPosition);
 #if ENABLE(CSS_SCROLL_SNAP)
 WTF::TextStream& operator<<(WTF::TextStream&, ScrollSnapAxis);
 WTF::TextStream& operator<<(WTF::TextStream&, ScrollSnapAxisAlignType);
+WTF::TextStream& operator<<(WTF::TextStream&, ScrollSnapStop);
 WTF::TextStream& operator<<(WTF::TextStream&, ScrollSnapStrictness);
 #endif
 WTF::TextStream& operator<<(WTF::TextStream&, SpeakAs);
@@ -1314,3 +1325,15 @@ WTF::TextStream& operator<<(WTF::TextStream&, WordBreak);
 WTF::TextStream& operator<<(WTF::TextStream&, MathStyle);
 
 } // namespace WebCore
+
+#if ENABLE(CSS_SCROLL_SNAP)
+namespace WTF {
+template<> struct EnumTraits<WebCore::ScrollSnapStop> {
+    using values = EnumValues<
+        WebCore::ScrollSnapStop,
+        WebCore::ScrollSnapStop::Normal,
+        WebCore::ScrollSnapStop::Always
+    >;
+};
+}
+#endif

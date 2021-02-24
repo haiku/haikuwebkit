@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,8 +24,6 @@
  */
 
 #import <WebKit/WKFoundation.h>
-
-#import <WebKit/WKMediaPlaybackState.h>
 
 #if TARGET_OS_IPHONE
 #import <UIKit/UIKit.h>
@@ -62,6 +60,13 @@ WK_CLASS_AVAILABLE(macos(10.10), ios(8.0))
 WK_CLASS_AVAILABLE(macos(10.10), ios(8.0))
 @interface WKWebView : NSView
 #endif
+
+typedef NS_ENUM(NSInteger, WKMediaPlaybackState) {
+    WKMediaPlaybackStateNone,
+    WKMediaPlaybackStatePlaying,
+    WKMediaPlaybackStatePaused,
+    WKMediaPlaybackStateSuspended
+} WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
 
 /*! @abstract A copy of the configuration with which the web view was
  initialized. */
@@ -250,7 +255,7 @@ WK_CLASS_AVAILABLE(macos(10.10), ios(8.0))
  evaluateJavaScript: is a great way to set up global state for future JavaScript execution in a given world. (e.g. Importing libraries/utilities that future JavaScript execution will rely on)
  Once your global state is set up, consider using callAsyncJavaScript: for more flexible interaction with the JavaScript programming model.
 */
-- (void)evaluateJavaScript:(NSString *)javaScriptString inFrame:(nullable WKFrameInfo *)frame inContentWorld:(WKContentWorld *)contentWorld completionHandler:(void (^ _Nullable)(_Nullable id, NSError * _Nullable error))completionHandler NS_REFINED_FOR_SWIFT WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+- (void)evaluateJavaScript:(NSString *)javaScriptString inFrame:(nullable WKFrameInfo *)frame inContentWorld:(WKContentWorld *)contentWorld completionHandler:(void (^ _Nullable)(_Nullable id, NSError * _Nullable error))completionHandler NS_REFINED_FOR_SWIFT WK_API_AVAILABLE(macos(11.0), ios(14.0));
 
 /* @abstract Calls the given JavaScript string as an async JavaScript function, passing the given named arguments to that function.
  @param functionBody The JavaScript string to use as the function body.
@@ -322,36 +327,32 @@ WK_CLASS_AVAILABLE(macos(10.10), ios(8.0))
 
  The above function text will create a promise that will fulfull with the value 42 after a one second delay, wait for it to resolve, then return the fulfillment value of 42.
 */
-- (void)callAsyncJavaScript:(NSString *)functionBody arguments:(nullable NSDictionary<NSString *, id> *)arguments inFrame:(nullable WKFrameInfo *)frame inContentWorld:(WKContentWorld *)contentWorld completionHandler:(void (^ _Nullable)(_Nullable id, NSError * _Nullable error))completionHandler NS_REFINED_FOR_SWIFT WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+- (void)callAsyncJavaScript:(NSString *)functionBody arguments:(nullable NSDictionary<NSString *, id> *)arguments inFrame:(nullable WKFrameInfo *)frame inContentWorld:(WKContentWorld *)contentWorld completionHandler:(void (^ _Nullable)(_Nullable id, NSError * _Nullable error))completionHandler NS_REFINED_FOR_SWIFT WK_API_AVAILABLE(macos(11.0), ios(14.0));
 
 /*! @abstract Closes all out-of-window media presentations in a WKWebView.
  @discussion Includes picture-in-picture and fullscreen.
  */
-- (void)closeAllMediaPresentations WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+- (void)closeAllMediaPresentationsWithCompletionHandler:(void (^_Nullable)(void))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
 
 /*! @abstract Pauses media playback in WKWebView.
- @discussion Pauses media playback. Media in the page can be restarted by calling play() on a media element or resume() on an AudioContext.
+ @discussion Pauses media playback. Media in the page can be restarted by calling play() on a media element or resume() on an AudioContext in JavaScript. A user can also use media controls to play media content after it has been paused.
  */
-- (void)pauseAllMediaPlayback:(void (^_Nullable)(void))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+- (void)pauseAllMediaPlaybackWithCompletionHandler:(void (^_Nullable)(void))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
 
-/*! @abstract Suspends media playback in WKWebView.
- @discussion Pauses media playback and blocks all attempts by the page to resume until resumeAllMediaPlayback is called. This should always be called in pairs with resumeAllMediaPlayback.
- */
-- (void)suspendAllMediaPlayback:(void (^_Nullable)(void))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
-
-/*! @abstract Resumes media playback in WKWebView.
- @discussion This should always be called in pairs with suspendAllMediaPlayback.
- */
-- (void)resumeAllMediaPlayback:(void (^ _Nullable)(void))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+/*! @abstract Suspends or resumes all media playback in WKWebView.
+  @param suspended Whether media playback should be suspended or resumed.
+  @discussion If suspended is true, this pauses media playback and blocks all attempts by the page or the user to resume until setAllMediaPlaybackSuspended is called again with suspended set to false. Media playback should always be suspended and resumed in pairs.
+*/
+- (void)setAllMediaPlaybackSuspended:(BOOL)suspended completionHandler:(void (^_Nullable)(void))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
 
 /*! @abstract Get the current media playback state of a WKWebView.
  @param completionHandler A block to invoke with the return value of the function call.
  @discussion If media playback exists, WKMediaPlaybackState will be one of three
  values: WKMediaPlaybackPaused, WKMediaPlaybackSuspended, or WKMediaPlaybackPlaying.
  If no media playback exists in the current WKWebView, WKMediaPlaybackState will equal
- WKNoMediaPlayback.
+ WKMediaPlaybackStateNone.
  */
-- (void)requestMediaPlaybackState:(void (^)(WKMediaPlaybackState))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+- (void)requestMediaPlaybackStateWithCompletionHandler:(void (^)(WKMediaPlaybackState))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
 
 /*! @abstract Get a snapshot for the visible viewport of WKWebView.
  @param snapshotConfiguration An object that specifies how the snapshot is configured.
@@ -374,7 +375,7 @@ The completionHandler is passed the resulting PDF document data or an error.
 The data can be used to create a PDFDocument object.
 If the data is written to a file the resulting file is a valid PDF document.
 */
-- (void)createPDFWithConfiguration:(nullable WKPDFConfiguration *)pdfConfiguration completionHandler:(void (^)(NSData * _Nullable pdfDocumentData, NSError * _Nullable error))completionHandler NS_REFINED_FOR_SWIFT WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+- (void)createPDFWithConfiguration:(nullable WKPDFConfiguration *)pdfConfiguration completionHandler:(void (^)(NSData * _Nullable pdfDocumentData, NSError * _Nullable error))completionHandler NS_REFINED_FOR_SWIFT WK_API_AVAILABLE(macos(11.0), ios(14.0));
 
 /* @abstract Create WebKit web archive data representing the current web content of the WKWebView
 @param completionHandler A block to invoke when the web archive data is ready.
@@ -382,7 +383,7 @@ If the data is written to a file the resulting file is a valid PDF document.
 It can be used to represent web content on a pasteboard, loaded into a WKWebView directly, and saved to a file for later use.
 The uniform type identifier kUTTypeWebArchive can be used get the related pasteboard type and MIME type.
 */
-- (void)createWebArchiveDataWithCompletionHandler:(void (^)(NSData *, NSError *))completionHandler NS_REFINED_FOR_SWIFT WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+- (void)createWebArchiveDataWithCompletionHandler:(void (^)(NSData *, NSError *))completionHandler NS_REFINED_FOR_SWIFT WK_API_AVAILABLE(macos(11.0), ios(14.0));
 
 /*! @abstract A Boolean value indicating whether horizontal swipe gestures
  will trigger back-forward list navigations.
@@ -434,7 +435,7 @@ The uniform type identifier kUTTypeWebArchive can be used get the related pasteb
  Changing this value is equivalent to web content setting the CSS "zoom"
  property on all page content.
 */
-@property (nonatomic) CGFloat pageZoom WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+@property (nonatomic) CGFloat pageZoom WK_API_AVAILABLE(macos(11.0), ios(14.0));
 
 /* @abstract Searches the page contents for the given string.
  @param string The string to search for.
@@ -444,7 +445,7 @@ The uniform type identifier kUTTypeWebArchive can be used get the related pasteb
   A match found by the search is selected and the page is scrolled to reveal the selection.
   The completion handler is called after the search completes.
 */
-- (void)findString:(NSString *)string withConfiguration:(nullable WKFindConfiguration *)configuration completionHandler:(void (^)(WKFindResult *result))completionHandler NS_REFINED_FOR_SWIFT WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+- (void)findString:(NSString *)string withConfiguration:(nullable WKFindConfiguration *)configuration completionHandler:(void (^)(WKFindResult *result))completionHandler NS_REFINED_FOR_SWIFT WK_API_AVAILABLE(macos(11.0), ios(14.0));
 
 /* @abstract Checks whether or not WKWebViews handle the given URL scheme by default.
  @param scheme The URL scheme to check.
@@ -470,13 +471,19 @@ The uniform type identifier kUTTypeWebArchive can be used get the related pasteb
  Setting the value to nil will restore the normal value.
  The default value is nil.
 */
-@property (nonatomic, nullable, copy) NSString *mediaType WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+@property (nonatomic, nullable, copy) NSString *mediaType WK_API_AVAILABLE(macos(11.0), ios(14.0));
+
+/* @abstract The interaction state for the WKWebView
+ @discussion The interaction state (back-forward list, currently loaded page, scroll position, form data...) for the WKWebView, which
+ can be retrieved and set on another WKWebView to restore state.
+*/
+@property (nonatomic, nullable, copy) id interactionState WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
 
 #if !TARGET_OS_IPHONE
 /* @abstract Returns an NSPrintOperation object configured to print the contents of this WKWebView
 @param printInfo The print info object used to configure the resulting print operation.
 */
-- (NSPrintOperation *)printOperationWithPrintInfo:(NSPrintInfo *)printInfo WK_API_AVAILABLE(macos(WK_MAC_TBA));
+- (NSPrintOperation *)printOperationWithPrintInfo:(NSPrintInfo *)printInfo WK_API_AVAILABLE(macos(11.0));
 #endif
 @end
 
@@ -515,7 +522,7 @@ The uniform type identifier kUTTypeWebArchive can be used get the related pasteb
 
 @end
 
-WK_API_AVAILABLE(macos(WK_MAC_TBA))
+WK_API_AVAILABLE(macos(10.15.4))
 @interface WKWebView (WKNSTextFinderClient) <NSTextFinderClient>
 @end
 
@@ -524,6 +531,12 @@ WK_API_AVAILABLE(macos(WK_MAC_TBA))
 @interface WKWebView (WKDeprecated)
 
 @property (nonatomic, readonly, copy) NSArray *certificateChain WK_API_DEPRECATED_WITH_REPLACEMENT("serverTrust", macos(10.11, 10.12), ios(9.0, 10.0));
+
+- (void)pauseAllMediaPlayback:(void (^_Nullable)(void))completionHandler WK_API_DEPRECATED_WITH_REPLACEMENT("pauseAllMediaPlaybackWithCompletionHandler", macos(WK_MAC_TBA, WK_MAC_TBA), ios(WK_IOS_TBA, WK_IOS_TBA));
+- (void)suspendAllMediaPlayback:(void (^_Nullable)(void))completionHandler WK_API_DEPRECATED_WITH_REPLACEMENT("setAllMediaPlaybackSuspended:suspended", macos(WK_MAC_TBA, WK_MAC_TBA), ios(WK_IOS_TBA, WK_IOS_TBA));
+- (void)resumeAllMediaPlayback:(void (^ _Nullable)(void))completionHandler WK_API_DEPRECATED_WITH_REPLACEMENT("setAllMediaPlaybackSuspended:suspended", macos(WK_MAC_TBA, WK_MAC_TBA), ios(WK_IOS_TBA, WK_IOS_TBA));
+- (void)closeAllMediaPresentations:(void (^_Nullable)(void))completionHandler WK_API_DEPRECATED_WITH_REPLACEMENT("closeAllMediaPresentationsWithCompletionHandler", macos(WK_MAC_TBA, WK_MAC_TBA), ios(WK_IOS_TBA, WK_IOS_TBA));
+- (void)requestMediaPlaybackState:(void (^)(WKMediaPlaybackState))completionHandler WK_API_DEPRECATED_WITH_REPLACEMENT("requestMediaPlaybackStateWithCompletionHandler", macos(WK_MAC_TBA, WK_MAC_TBA), ios(WK_IOS_TBA, WK_IOS_TBA));
 
 @end
 

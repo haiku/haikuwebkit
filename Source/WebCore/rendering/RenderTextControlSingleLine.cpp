@@ -34,6 +34,7 @@
 #include "HitTestResult.h"
 #include "LocalizedStrings.h"
 #include "RenderLayer.h"
+#include "RenderLayerScrollableArea.h"
 #include "RenderScrollbar.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
@@ -76,7 +77,7 @@ static void resetOverriddenHeight(RenderBox* box, const RenderObject* ancestor)
     ASSERT(box != ancestor);
     if (!box || box->style().logicalHeight().isAuto())
         return; // Null box or its height was not overridden.
-    box->mutableStyle().setLogicalHeight(Length { Auto });
+    box->mutableStyle().setLogicalHeight(Length { LengthType::Auto });
     for (RenderObject* renderer = box; renderer != ancestor; renderer = renderer->parent()) {
         ASSERT(renderer);
         renderer->setNeedsLayout(MarkOnlyThis);
@@ -129,10 +130,10 @@ void RenderTextControlSingleLine::layout()
         if (desiredLogicalHeight != innerTextLogicalHeight)
             setNeedsLayout(MarkOnlyThis);
 
-        innerTextRenderer->mutableStyle().setLogicalHeight(Length(desiredLogicalHeight, Fixed));
+        innerTextRenderer->mutableStyle().setLogicalHeight(Length(desiredLogicalHeight, LengthType::Fixed));
         innerTextRenderer->setNeedsLayout(MarkOnlyThis);
         if (innerBlockRenderer) {
-            innerBlockRenderer->mutableStyle().setLogicalHeight(Length(desiredLogicalHeight, Fixed));
+            innerBlockRenderer->mutableStyle().setLogicalHeight(Length(desiredLogicalHeight, LengthType::Fixed));
             innerBlockRenderer->setNeedsLayout(MarkOnlyThis);
         }
         innerTextLogicalHeight = desiredLogicalHeight;
@@ -144,16 +145,16 @@ void RenderTextControlSingleLine::layout()
         oldContainerLogicalTop = containerRenderer->logicalTop();
         LayoutUnit containerLogicalHeight = containerRenderer->logicalHeight();
         if (inputElement().hasAutoFillStrongPasswordButton() && innerTextRenderer && containerLogicalHeight != innerTextLogicalHeight) {
-            containerRenderer->mutableStyle().setLogicalHeight(Length { innerTextLogicalHeight, Fixed });
+            containerRenderer->mutableStyle().setLogicalHeight(Length { innerTextLogicalHeight, LengthType::Fixed });
             setNeedsLayout(MarkOnlyThis);
         } else if (containerLogicalHeight > logicalHeightLimit) {
-            containerRenderer->mutableStyle().setLogicalHeight(Length(logicalHeightLimit, Fixed));
+            containerRenderer->mutableStyle().setLogicalHeight(Length(logicalHeightLimit, LengthType::Fixed));
             setNeedsLayout(MarkOnlyThis);
         } else if (containerRenderer->logicalHeight() < contentLogicalHeight()) {
-            containerRenderer->mutableStyle().setLogicalHeight(Length(contentLogicalHeight(), Fixed));
+            containerRenderer->mutableStyle().setLogicalHeight(Length(contentLogicalHeight(), LengthType::Fixed));
             setNeedsLayout(MarkOnlyThis);
         } else
-            containerRenderer->mutableStyle().setLogicalHeight(Length(containerLogicalHeight, Fixed));
+            containerRenderer->mutableStyle().setLogicalHeight(Length(containerLogicalHeight, LengthType::Fixed));
     }
 
     // If we need another layout pass, we have changed one of children's height so we need to relayout them.
@@ -178,7 +179,7 @@ void RenderTextControlSingleLine::layout()
         auto innerTextWidth = LayoutUnit { };
         if (innerTextRenderer)
             innerTextWidth = innerTextRenderer->logicalWidth();
-        placeholderBox->mutableStyle().setWidth(Length(innerTextWidth - placeholderBox->horizontalBorderAndPaddingExtent(), Fixed));
+        placeholderBox->mutableStyle().setWidth(Length(innerTextWidth - placeholderBox->horizontalBorderAndPaddingExtent(), LengthType::Fixed));
         bool neededLayout = placeholderBox->needsLayout();
         bool placeholderBoxHadLayout = placeholderBox->everHadLayout();
         if (innerTextSizeChanged) {
@@ -397,19 +398,20 @@ void RenderTextControlSingleLine::setScrollTop(int newTop, const ScrollPositionC
 
 bool RenderTextControlSingleLine::scroll(ScrollDirection direction, ScrollGranularity granularity, float multiplier, Element** stopElement, RenderBox* startBox, const IntPoint& wheelEventAbsolutePoint)
 {
-    RenderTextControlInnerBlock* renderer = innerTextElement()->renderer();
+    auto* renderer = innerTextElement()->renderer();
     if (!renderer)
         return false;
-    RenderLayer* layer = renderer->layer();
-    if (layer && layer->scroll(direction, granularity, multiplier))
+    auto* scrollableArea = renderer->layer() ? renderer->layer()->scrollableArea() : nullptr;
+    if (scrollableArea && scrollableArea->scroll(direction, granularity, multiplier))
         return true;
     return RenderBlockFlow::scroll(direction, granularity, multiplier, stopElement, startBox, wheelEventAbsolutePoint);
 }
 
 bool RenderTextControlSingleLine::logicalScroll(ScrollLogicalDirection direction, ScrollGranularity granularity, float multiplier, Element** stopElement)
 {
-    RenderLayer* layer = innerTextElement()->renderer()->layer();
-    if (layer && layer->scroll(logicalToPhysical(direction, style().isHorizontalWritingMode(), style().isFlippedBlocksWritingMode()), granularity, multiplier))
+    auto* layer = innerTextElement()->renderer()->layer();
+    auto* scrollableArea = layer ? layer->scrollableArea() : nullptr;
+    if (scrollableArea && scrollableArea->scroll(logicalToPhysical(direction, style().isHorizontalWritingMode(), style().isFlippedBlocksWritingMode()), granularity, multiplier))
         return true;
     return RenderBlockFlow::logicalScroll(direction, granularity, multiplier, stopElement);
 }

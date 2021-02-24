@@ -79,7 +79,6 @@ def opcodeWithTypesMacroizer(filter):
         return [cppType(type) for type in op["parameter"] + op["return"]]
     return opcodeMacroizer(filter, modifier=modifier)
 
-
 def memoryLoadMacroizer():
     def modifier(op):
         return [cppType(op["return"][0])]
@@ -90,6 +89,12 @@ def memoryStoreMacroizer():
     def modifier(op):
         return [cppType(op["parameter"][1])]
     return opcodeMacroizer(lambda op: (op["category"] == "memory" and len(op["return"]) == 0), modifier=modifier)
+
+
+def saturatedTruncMacroizer():
+    def modifier(op):
+        return [cppType(type) for type in op["parameter"] + op["return"]]
+    return opcodeMacroizer(lambda op: (op["category"] == "conversion" and op["value"] == 0xfc), modifier=modifier, opcodeField="extendedOp")
 
 
 def atomicMemoryLoadMacroizer():
@@ -111,7 +116,7 @@ def atomicBinaryRMWMacroizer():
 
 
 defines = ["#define FOR_EACH_WASM_SPECIAL_OP(macro)"]
-defines.extend([op for op in opcodeMacroizer(lambda op: not (isUnary(op) or isBinary(op) or op["category"] == "control" or op["category"] == "memory" or op["category"] == "exttable"or isAtomic(op)))])
+defines.extend([op for op in opcodeMacroizer(lambda op: not (isUnary(op) or isBinary(op) or op["category"] == "control" or op["category"] == "memory" or op["value"] == 0xfc or isAtomic(op)))])
 defines.append("\n\n#define FOR_EACH_WASM_CONTROL_FLOW_OP(macro)")
 defines.extend([op for op in opcodeMacroizer(lambda op: op["category"] == "control")])
 defines.append("\n\n#define FOR_EACH_WASM_SIMPLE_UNARY_OP(macro)")
@@ -126,8 +131,10 @@ defines.append("\n\n#define FOR_EACH_WASM_MEMORY_LOAD_OP(macro)")
 defines.extend([op for op in memoryLoadMacroizer()])
 defines.append("\n\n#define FOR_EACH_WASM_MEMORY_STORE_OP(macro)")
 defines.extend([op for op in memoryStoreMacroizer()])
-defines.append("\n\n#define FOR_EACH_WASM_EXT_TABLE_OP(macro)")
+defines.append("\n\n#define FOR_EACH_WASM_TABLE_OP(macro)")
 defines.extend([op for op in opcodeMacroizer(lambda op: (op["category"] == "exttable"), opcodeField="extendedOp")])
+defines.append("\n\n#define FOR_EACH_WASM_TRUNC_SATURATED_OP(macro)")
+defines.extend([op for op in saturatedTruncMacroizer()])
 defines.append("\n\n#define FOR_EACH_WASM_EXT_ATOMIC_LOAD_OP(macro)")
 defines.extend([op for op in atomicMemoryLoadMacroizer()])
 defines.append("\n\n#define FOR_EACH_WASM_EXT_ATOMIC_STORE_OP(macro)")
@@ -188,6 +195,10 @@ contents = wasm.header + """
 
 #include <cstdint>
 
+#if ENABLE(WEBASSEMBLY_B3JIT)
+#include "B3Type.h"
+#endif
+
 namespace JSC { namespace Wasm {
 
 static constexpr unsigned expectedVersionNumber = """ + wasm.expectedVersionNumber + """;
@@ -214,6 +225,7 @@ inline bool isValidType(Int i)
 }
 #undef CREATE_CASE
 
+#if ENABLE(WEBASSEMBLY_B3JIT)
 #define CREATE_CASE(name, id, b3type, ...) case name: return b3type;
 inline B3::Type toB3Type(Type type)
 {
@@ -224,6 +236,7 @@ inline B3::Type toB3Type(Type type)
     return B3::Void;
 }
 #undef CREATE_CASE
+#endif
 
 #define CREATE_CASE(name, ...) case name: return #name;
 inline const char* makeString(Type type)
@@ -267,7 +280,7 @@ inline Type linearizedToType(int i)
     FOR_EACH_WASM_BINARY_OP(macro) \\
     FOR_EACH_WASM_MEMORY_LOAD_OP(macro) \\
     FOR_EACH_WASM_MEMORY_STORE_OP(macro) \\
-    macro(ExtTable,  0xFC, Oops, 0) \\
+    macro(Ext1,  0xFC, Oops, 0) \\
     macro(ExtAtomic, 0xFE, Oops, 0)
 
 #define CREATE_ENUM_VALUE(name, id, ...) name = id,
@@ -300,8 +313,9 @@ enum class StoreOpType : uint8_t {
     FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_ENUM_VALUE)
 };
 
-enum class ExtTableOpType : uint8_t {
-    FOR_EACH_WASM_EXT_TABLE_OP(CREATE_ENUM_VALUE)
+enum class Ext1OpType : uint8_t {
+    FOR_EACH_WASM_TABLE_OP(CREATE_ENUM_VALUE)
+    FOR_EACH_WASM_TRUNC_SATURATED_OP(CREATE_ENUM_VALUE)
 };
 
 enum class ExtAtomicOpType : uint8_t {

@@ -90,7 +90,7 @@ void UserContentProvider::invalidateInjectedStyleSheetCacheInAllFramesInAllPages
 }
 
 #if ENABLE(CONTENT_EXTENSIONS)
-static bool contentExtensionsEnabled(const DocumentLoader& documentLoader)
+static bool contentRuleListsEnabled(const DocumentLoader& documentLoader)
 {
     if (auto frame = documentLoader.frame()) {
         if (frame->isMainFrame())
@@ -102,30 +102,13 @@ static bool contentExtensionsEnabled(const DocumentLoader& documentLoader)
     return true;
 }
     
-ContentRuleListResults UserContentProvider::processContentRuleListsForLoad(const URL& url, OptionSet<ContentExtensions::ResourceType> resourceType, DocumentLoader& initiatingDocumentLoader)
+ContentRuleListResults UserContentProvider::processContentRuleListsForLoad(Page& page, const URL& url, OptionSet<ContentExtensions::ResourceType> resourceType, DocumentLoader& initiatingDocumentLoader)
 {
-    if (!contentExtensionsEnabled(initiatingDocumentLoader))
+    if (!contentRuleListsEnabled(initiatingDocumentLoader))
         return { };
 
-    return userContentExtensionBackend().processContentRuleListsForLoad(url, resourceType, initiatingDocumentLoader);
+    return userContentExtensionBackend().processContentRuleListsForLoad(page, url, resourceType, initiatingDocumentLoader);
 }
-
-Vector<ContentExtensions::ActionsFromContentRuleList> UserContentProvider::actionsForResourceLoad(const ContentExtensions::ResourceLoadInfo& resourceLoadInfo, DocumentLoader& initiatingDocumentLoader)
-{
-    if (!contentExtensionsEnabled(initiatingDocumentLoader))
-        return { };
-
-    return userContentExtensionBackend().actionsForResourceLoad(resourceLoadInfo);
-}
-
-void UserContentProvider::forEachContentExtension(const WTF::Function<void(const String&, ContentExtensions::ContentExtension&)>& apply, DocumentLoader& initiatingDocumentLoader)
-{
-    if (!contentExtensionsEnabled(initiatingDocumentLoader))
-        return;
-
-    userContentExtensionBackend().forEach(apply);
-}
-
 #endif
 
 } // namespace WebCore

@@ -26,6 +26,7 @@
 #import "config.h"
 #import "WKUserScriptInternal.h"
 
+#import "WKContentWorldInternal.h"
 #import "_WKUserContentWorldInternal.h"
 #import <wtf/cocoa/VectorCocoa.h>
 
@@ -87,7 +88,7 @@
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 - (_WKUserContentWorld *)_userContentWorld
 {
-    return [[[_WKUserContentWorld alloc] _initWithContentWorld:wrapper(_userScript->contentWorld())] autorelease];
+    return adoptNS([[_WKUserContentWorld alloc] _initWithContentWorld:wrapper(_userScript->contentWorld())]).autorelease();
 }
 ALLOW_DEPRECATED_DECLARATIONS_END
 

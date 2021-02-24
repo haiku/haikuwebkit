@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2021 Apple Inc. All rights reserved.
  * Copyright (C) 2008, 2009, 2010, 2011 Google Inc. All rights reserved.
  * Copyright (C) 2011 Igalia S.L.
  * Copyright (C) 2011 Motorola Mobility. All rights reserved.
@@ -70,6 +70,7 @@
 #include "Range.h"
 #include "RenderBlock.h"
 #include "RuntimeEnabledFeatures.h"
+#include "ScriptWrappableInlines.h"
 #include "Settings.h"
 #include "SocketProvider.h"
 #include "StyleProperties.h"
@@ -1198,6 +1199,8 @@ Ref<DocumentFragment> createFragmentFromText(const SimpleRange& context, const S
     bool useClonesOfEnclosingBlock = block
         && !block->hasTagName(bodyTag)
         && !block->hasTagName(htmlTag)
+        // Avoid using table as paragraphs due to its special treatment in Position::upstream/downstream.
+        && !block->hasTagName(tableTag)
         && block != editableRootForPosition(start);
     bool useLineBreak = enclosingTextFormControl(start);
 
@@ -1244,13 +1247,12 @@ String urlToMarkup(const URL& url, const String& title)
     return markup.toString();
 }
 
-ExceptionOr<Ref<DocumentFragment>> createFragmentForInnerOuterHTML(Element& contextElement, const String& markup, ParserContentPolicy parserContentPolicy)
+enum class DocumentFragmentMode { New, ReuseForInnerOuterHTML };
+static ALWAYS_INLINE ExceptionOr<Ref<DocumentFragment>> createFragmentForMarkup(Element& contextElement, const String& markup, DocumentFragmentMode mode, ParserContentPolicy parserContentPolicy)
 {
-    auto* document = &contextElement.document();
-    if (contextElement.hasTagName(templateTag))
-        document = &document->ensureTemplateDocument();
-    auto fragment = DocumentFragment::create(*document);
-
+    auto document = makeRef(contextElement.hasTagName(templateTag) ? contextElement.document().ensureTemplateDocument() : contextElement.document());
+    auto fragment = mode == DocumentFragmentMode::New ? DocumentFragment::create(document.get()) : document->documentFragmentForInnerOuterHTML();
+    ASSERT(!fragment->hasChildNodes());
     if (document->isHTMLDocument()) {
         fragment->parseHTML(markup, &contextElement, parserContentPolicy);
         return fragment;
@@ -1260,6 +1262,11 @@ ExceptionOr<Ref<DocumentFragment>> createFragmentForInnerOuterHTML(Element& cont
     if (!wasValid)
         return Exception { SyntaxError };
     return fragment;
+}
+
+ExceptionOr<Ref<DocumentFragment>> createFragmentForInnerOuterHTML(Element& contextElement, const String& markup, ParserContentPolicy parserContentPolicy)
+{
+    return createFragmentForMarkup(contextElement, markup, DocumentFragmentMode::ReuseForInnerOuterHTML, parserContentPolicy);
 }
 
 RefPtr<DocumentFragment> createFragmentForTransformToFragment(Document& outputDoc, const String& sourceString, const String& sourceMIMEType)
@@ -1328,7 +1335,7 @@ static void removeElementFromFragmentPreservingChildren(DocumentFragment& fragme
 
 ExceptionOr<Ref<DocumentFragment>> createContextualFragment(Element& element, const String& markup, ParserContentPolicy parserContentPolicy)
 {
-    auto result = createFragmentForInnerOuterHTML(element, markup, parserContentPolicy);
+    auto result = createFragmentForMarkup(element, markup, DocumentFragmentMode::New, parserContentPolicy);
     if (result.hasException())
         return result.releaseException();
 
@@ -1344,15 +1351,9 @@ ExceptionOr<Ref<DocumentFragment>> createContextualFragment(Element& element, co
     return fragment;
 }
 
-static inline bool hasOneChild(ContainerNode& node)
-{
-    Node* firstChild = node.firstChild();
-    return firstChild && !firstChild->nextSibling();
-}
-
 static inline bool hasOneTextChild(ContainerNode& node)
 {
-    return hasOneChild(node) && node.firstChild()->isTextNode();
+    return node.hasOneChild() && node.firstChild()->isTextNode();
 }
 
 static inline bool hasMutationEventListeners(const Document& document)
@@ -1393,7 +1394,10 @@ ExceptionOr<void> replaceChildrenWithFragment(ContainerNode& container, Ref<Docu
     }
 
     containerNode->removeChildren();
-    return containerNode->appendChild(fragment);
+    auto result = containerNode->appendChild(fragment);
+    ASSERT(!fragment->hasChildNodes());
+    ASSERT(!fragment->wrapper());
+    return result;
 }
 
 }

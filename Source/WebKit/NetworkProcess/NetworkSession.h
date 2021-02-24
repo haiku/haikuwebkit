@@ -53,6 +53,7 @@ namespace WebKit {
 
 class PrivateClickMeasurementManager;
 class NetworkDataTask;
+class NetworkLoadScheduler;
 class NetworkProcess;
 class NetworkResourceLoader;
 class NetworkSocketChannel;
@@ -122,8 +123,11 @@ public:
     void clearPrivateClickMeasurementForRegistrableDomain(WebCore::RegistrableDomain&&);
     void setPrivateClickMeasurementOverrideTimerForTesting(bool value);
     void markAttributedPrivateClickMeasurementsAsExpiredForTesting(CompletionHandler<void()>&&);
-    void setPrivateClickMeasurementConversionURLForTesting(URL&&);
+    void setPrivateClickMeasurementTokenPublicKeyURLForTesting(URL&&);
+    void setPrivateClickMeasurementTokenSignatureURLForTesting(URL&&);
+    void setPrivateClickMeasurementAttributionReportURLForTesting(URL&&);
     void markPrivateClickMeasurementsAsExpiredForTesting();
+    void setFraudPreventionValuesForTesting(String&& secretToken, String&& unlinkableToken, String&& signature, String&& keyID);
     void firePrivateClickMeasurementTimerImmediately();
 
     void addKeptAliveLoad(Ref<NetworkResourceLoader>&&);
@@ -149,6 +153,9 @@ public:
     void addSoftUpdateLoader(std::unique_ptr<ServiceWorkerSoftUpdateLoader>&& loader) { m_softUpdateLoaders.add(WTFMove(loader)); }
     void removeSoftUpdateLoader(ServiceWorkerSoftUpdateLoader* loader) { m_softUpdateLoaders.remove(loader); }
 #endif
+
+    NetworkLoadScheduler& networkLoadScheduler();
+    PrivateClickMeasurementManager& privateClickMeasurement() { return *m_privateClickMeasurement; }
 
 protected:
     NetworkSession(NetworkProcess&, const NetworkSessionCreationParameters&);
@@ -176,7 +183,7 @@ protected:
     Optional<WebCore::RegistrableDomain> m_thirdPartyCNAMEDomainForTesting;
 #endif
     bool m_isStaleWhileRevalidateEnabled { false };
-    UniqueRef<PrivateClickMeasurementManager> m_privateClickMeasurement;
+    std::unique_ptr<PrivateClickMeasurementManager> m_privateClickMeasurement;
 
     HashSet<Ref<NetworkResourceLoader>> m_keptAliveLoads;
 
@@ -186,6 +193,7 @@ protected:
     bool m_isInvalidated { false };
 #endif
     RefPtr<NetworkCache::Cache> m_cache;
+    std::unique_ptr<NetworkLoadScheduler> m_networkLoadScheduler;
     WebCore::BlobRegistryImpl m_blobRegistry;
     unsigned m_testSpeedMultiplier { 1 };
     bool m_allowsServerPreconnect { true };

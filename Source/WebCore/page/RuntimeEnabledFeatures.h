@@ -163,8 +163,6 @@ public:
     void setWebRTCMDNSICECandidatesEnabled(bool isEnabled) { m_isWebRTCMDNSICECandidatesEnabled = isEnabled; }
     bool webRTCH264SimulcastEnabled() const { return m_isWebRTCH264SimulcastEnabled; }
     void setWebRTCH264SimulcastEnabled(bool isEnabled) { m_isWebRTCH264SimulcastEnabled = isEnabled; }
-    bool webRTCPlatformCodecsInGPUProcessEnabled() const { return m_isWebRTCPlatformCodecsInGPUProcessEnabled; }
-    void setWebRTCPlatformCodecsInGPUProcessEnabled(bool isEnabled) { m_isWebRTCPlatformCodecsInGPUProcessEnabled = isEnabled; }
     bool webRTCPlatformSocketsEnabled() const { return m_isWebRTCPlatformSocketsEnabled; }
     void setWebRTCPlatformSocketsEnabled(bool isEnabled) { m_isWebRTCPlatformSocketsEnabled = isEnabled; }
 #endif
@@ -214,6 +212,8 @@ public:
 
     bool privateClickMeasurementDebugModeEnabled() const { return m_privateClickMeasurementDebugModeEnabled; }
     void setPrivateClickMeasurementDebugModeEnabled(bool isEnabled) { m_privateClickMeasurementDebugModeEnabled = isEnabled; }
+    bool privateClickMeasurementFraudPreventionEnabled() const { return m_privateClickMeasurementFraudPreventionEnabled; }
+    void setPrivateClickMeasurementFraudPreventionEnabled(bool isEnabled) { m_privateClickMeasurementFraudPreventionEnabled = isEnabled; }
 
 #if ENABLE(TOUCH_EVENTS)
     bool mouseEventsSimulationEnabled() const { return m_mouseEventsSimulationEnabled; }
@@ -263,6 +263,11 @@ public:
 #if ENABLE(VORBIS)
     void setVorbisDecoderEnabled(bool isEnabled) { m_vorbisDecoderEnabled = isEnabled; }
     bool vorbisDecoderEnabled() const { return m_vorbisDecoderEnabled; }
+#endif
+
+#if ENABLE(OPUS)
+    void setOpusDecoderEnabled(bool isEnabled) { m_opusDecoderEnabled = isEnabled; }
+    bool opusDecoderEnabled() const { return m_opusDecoderEnabled; }
 #endif
 
 #if ENABLE(WEB_AUTHN)
@@ -329,7 +334,6 @@ private:
     bool m_isPeerConnectionEnabled { true };
     bool m_isWebRTCH264SimulcastEnabled { true };
     bool m_isWebRTCMDNSICECandidatesEnabled { false };
-    bool m_isWebRTCPlatformCodecsInGPUProcessEnabled { false };
     bool m_isWebRTCH265CodecEnabled { false };
     bool m_isWebRTCVP9Profile0CodecEnabled { false };
     bool m_isWebRTCVP9Profile2CodecEnabled { false };
@@ -372,6 +376,7 @@ private:
     bool m_lineHeightUnitsEnabled { false };
 
     bool m_privateClickMeasurementDebugModeEnabled { false };
+    bool m_privateClickMeasurementFraudPreventionEnabled { false };
 
 #if ENABLE(TOUCH_EVENTS)
     bool m_mouseEventsSimulationEnabled { false };
@@ -406,6 +411,10 @@ private:
 
 #if ENABLE(VORBIS)
     bool m_vorbisDecoderEnabled { false };
+#endif
+
+#if ENABLE(OPUS)
+    bool m_opusDecoderEnabled { false };
 #endif
 
 #if ENABLE(WEB_AUTHN)

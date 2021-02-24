@@ -264,6 +264,7 @@ describe('/api/build-requests', function () {
         assert.deepEqual(content['commitSets'][0].revisionItems, [
             {commit: '87832', commitOwner: null, patch: null, requiresBuild: false, rootFile: null},
             {commit: '93116', commitOwner: null, patch: 100, requiresBuild: true, rootFile: 101}]);
+        assert.ok(content['uploadedFiles'][1].deletedAt);
         assert.deepEqual(content['commitSets'][2].revisionItems, [
             {commit: '87832', commitOwner: null, patch: null, requiresBuild: false, rootFile: null},
             {commit: '93116', commitOwner: null, patch: 100, requiresBuild: true, rootFile: null}]);
@@ -289,14 +290,14 @@ describe('/api/build-requests', function () {
 
     it('should fail request with "CannotReuseDeletedRoot" if any root to reuse is deleted while updating commit set items ', async () => {
         await MockData.addMockBuildRequestsWithRoots(TestServer.database());
-        await TestServer.database().query(`CREATE OR REPLACE FUNCTION emunlate_file_purge() RETURNS TRIGGER AS $emunlate_file_purge$
+        await TestServer.database().query(`CREATE OR REPLACE FUNCTION emulate_file_purge() RETURNS TRIGGER AS $emulate_file_purge$
             BEGIN
                 UPDATE uploaded_files SET file_deleted_at = (CURRENT_TIMESTAMP AT TIME ZONE 'UTC') WHERE file_id = NEW.commitset_root_file;
                 RETURN NULL;
             END;
-            $emunlate_file_purge$ LANGUAGE plpgsql;`);
-        await TestServer.database().query(`CREATE TRIGGER emunlate_file_purge AFTER UPDATE OF commitset_root_file ON commit_set_items
-            FOR EACH ROW EXECUTE PROCEDURE emunlate_file_purge();`);
+            $emulate_file_purge$ LANGUAGE plpgsql;`);
+        await TestServer.database().query(`CREATE TRIGGER emulate_file_purge AFTER UPDATE OF commitset_root_file ON commit_set_items
+            FOR EACH ROW EXECUTE PROCEDURE emulate_file_purge();`);
         const content = await TestServer.remoteAPI().getJSONWithStatus('/api/build-requests/build-webkit');
 
         assert.deepEqual(Object.keys(content).sort(), ['buildRequests', 'commitSets', 'commits', 'status', 'uploadedFiles']);
@@ -1041,5 +1042,22 @@ describe('/api/build-requests', function () {
                 assert(false, 'Should not be reached');
             });
         });
+    });
+
+    it('should not update url or status_description if either is not specified while updating a build request with "failedIfNotCompleted"', async () => {
+        const updates = {'700': {status: 'failedIfNotCompleted'}};
+        const url = 'http://build.webkit.org/someBuilder/builds';
+        await MockData.addMockData(TestServer.database(), ['running', 'pending', 'pending', 'pending']);
+        await TestServer.database().query(`UPDATE build_requests SET request_url = '${url}' WHERE request_id = 700`);
+        const response = await TestServer.remoteAPI().postJSONWithStatus('/api/build-requests/build-webkit', {
+            'slaveName': 'sync-slave',
+            'slavePassword': 'password',
+            'buildRequestUpdates': updates
+        });
+        assert.equal(response['status'], 'OK');
+
+        assert.equal(response['buildRequests'].length, 4);
+        assert.deepEqual(response['buildRequests'][0].id, 700);
+        assert.deepEqual(response['buildRequests'][0].url, url);
     });
 });

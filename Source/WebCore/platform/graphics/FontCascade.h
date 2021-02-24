@@ -2,7 +2,7 @@
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2003-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2021 Apple Inc. All rights reserved.
  * Copyright (C) 2008 Holger Hans Peter Freyther
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,12 @@
 #include <wtf/Optional.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/unicode/CharacterNames.h>
+
+// "X11/X.h" defines Complex to 0 and conflicts
+// with Complex value in CodePath enum.
+#ifdef Complex
+#undef Complex
+#endif
 
 namespace WebCore {
 
@@ -106,11 +112,12 @@ public:
     float size() const { return fontDescription().computedSize(); }
 
     bool isCurrent(const FontSelector&) const;
+    void updateFonts(Ref<FontCascadeFonts>&&) const;
     WEBCORE_EXPORT void update(RefPtr<FontSelector>&& = nullptr) const;
 
     enum CustomFontNotReadyAction { DoNotPaintIfFontNotReady, UseFallbackIfFontNotReady };
     WEBCORE_EXPORT FloatSize drawText(GraphicsContext&, const TextRun&, const FloatPoint&, unsigned from = 0, Optional<unsigned> to = WTF::nullopt, CustomFontNotReadyAction = DoNotPaintIfFontNotReady) const;
-    static void drawGlyphs(GraphicsContext&, const Font&, const GlyphBuffer&, unsigned from, unsigned numGlyphs, const FloatPoint&, FontSmoothingMode);
+    static void drawGlyphs(GraphicsContext&, const Font&, const GlyphBufferGlyph*, const GlyphBufferAdvance*, unsigned numGlyphs, const FloatPoint&, FontSmoothingMode);
     void drawEmphasisMarks(GraphicsContext&, const TextRun&, const AtomString& mark, const FloatPoint&, unsigned from = 0, Optional<unsigned> to = WTF::nullopt) const;
 
     DashArray dashesForIntersectionsWithRect(const TextRun&, const FloatPoint& textOrigin, const FloatRect& lineExtents) const;
@@ -322,11 +329,6 @@ private:
     mutable bool m_enableKerning { false }; // Computed from m_fontDescription.
     mutable bool m_requiresShaping { false }; // Computed from m_fontDescription.
 };
-
-void invalidateFontCascadeCache();
-void pruneUnreferencedEntriesFromFontCascadeCache();
-void pruneSystemFallbackFonts();
-void clearWidthCaches();
 
 inline const Font& FontCascade::primaryFont() const
 {

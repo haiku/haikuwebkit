@@ -44,6 +44,10 @@
 #include <wtf/URL.h>
 #include <wtf/text/StringBuilder.h>
 
+#if PLATFORM(COCOA)
+#include "VersionChecks.h"
+#endif
+
 namespace WebCore {
 
 constexpr unsigned maximumURLSize = 0x04000000;
@@ -106,8 +110,26 @@ static bool shouldTreatAsUniqueOrigin(const URL& url)
     if (LegacySchemeRegistry::shouldTreatURLSchemeAsNoAccess(innerURL.protocol().toStringWithoutCopying()))
         return true;
 
-    // This is the common case.
-    return false;
+#if PLATFORM(COCOA)
+    if (!linkedOnOrAfter(SDKVersion::FirstWithNullOriginForNonSpecialSchemedURLs))
+        return false;
+#endif
+
+    // https://url.spec.whatwg.org/#origin with some additions
+    if (url.hasSpecialScheme()
+#if PLATFORM(COCOA)
+        || url.protocolIs("applewebdata")
+#endif
+#if PLATFORM(GTK) || PLATFORM(WPE)
+        || url.protocolIs("resource")
+#endif
+#if USE(QUICK_LOOK)
+        || url.protocolIs("x-apple-ql-id")
+#endif
+        || url.protocolIs("blob"))
+        return false;
+
+    return !LegacySchemeRegistry::schemeIsHandledBySchemeHandler(url.protocol());
 }
 
 static bool isLoopbackIPAddress(StringView host)
@@ -247,7 +269,7 @@ bool SecurityOrigin::isSecure(const URL& url)
     return false;
 }
 
-bool SecurityOrigin::canAccess(const SecurityOrigin& other) const
+bool SecurityOrigin::isSameOriginDomain(const SecurityOrigin& other) const
 {
     if (m_universalAccess)
         return true;
@@ -334,7 +356,7 @@ bool SecurityOrigin::canReceiveDragData(const SecurityOrigin& dragInitiator) con
     if (this == &dragInitiator)
         return true;
 
-    return canAccess(dragInitiator);
+    return isSameOriginDomain(dragInitiator);
 }
 
 // This is a hack to allow keep navigation to http/https feeds working. To remove this

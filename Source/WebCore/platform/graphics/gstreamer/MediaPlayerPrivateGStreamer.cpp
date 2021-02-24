@@ -488,6 +488,7 @@ bool MediaPlayerPrivateGStreamer::doSeek(const MediaTime& position, float rate, 
     if (!rate)
         rate = 1.0;
 
+    GST_DEBUG_OBJECT(pipeline(), "[Seek] Performing actual seek to %" GST_TIME_FORMAT " (endTime: %" GST_TIME_FORMAT ") at rate %f", GST_TIME_ARGS(toGstClockTime(startTime)), GST_TIME_ARGS(toGstClockTime(endTime)), rate);
     return gst_element_seek(m_pipeline.get(), rate, GST_FORMAT_TIME, seekType,
         GST_SEEK_TYPE_SET, toGstClockTime(startTime), GST_SEEK_TYPE_SET, toGstClockTime(endTime));
 }
@@ -842,7 +843,7 @@ Optional<bool> MediaPlayerPrivateGStreamer::wouldTaintOrigin(const SecurityOrigi
 {
     GST_TRACE_OBJECT(pipeline(), "Checking %u origins", m_origins.size());
     for (auto& responseOrigin : m_origins) {
-        if (!origin.canAccess(*responseOrigin)) {
+        if (!origin.isSameOriginDomain(*responseOrigin)) {
             GST_DEBUG_OBJECT(pipeline(), "Found reachable response origin");
             return true;
         }
@@ -1313,6 +1314,7 @@ void MediaPlayerPrivateGStreamer::loadStateChanged()
 void MediaPlayerPrivateGStreamer::timeChanged()
 {
     updateStates();
+    GST_DEBUG_OBJECT(pipeline(), "Emitting timeChanged notification");
     m_player->timeChanged();
 }
 
@@ -2403,10 +2405,9 @@ void MediaPlayerPrivateGStreamer::updateStates()
 
         if (m_currentState == GST_STATE_READY)
             m_readyState = MediaPlayer::ReadyState::HaveNothing;
-        else if (m_currentState == GST_STATE_PAUSED) {
-            m_readyState = MediaPlayer::ReadyState::HaveEnoughData;
+        else if (m_currentState == GST_STATE_PAUSED)
             m_isPaused = true;
-        } else if (m_currentState == GST_STATE_PLAYING)
+        else if (m_currentState == GST_STATE_PLAYING)
             m_isPaused = false;
 
         if (!m_isPaused && m_playbackRate)
@@ -2699,7 +2700,8 @@ void MediaPlayerPrivateGStreamer::createGSTPlayBin(const URL& url, const String&
     // MSE doesn't support playbin3. Mediastream requires playbin3. Regular
     // playback can use playbin3 on-demand with the WEBKIT_GST_USE_PLAYBIN3
     // environment variable.
-    if ((!isMediaSource() && g_getenv("WEBKIT_GST_USE_PLAYBIN3")) || url.protocolIs("mediastream"))
+    const char* usePlaybin3 = g_getenv("WEBKIT_GST_USE_PLAYBIN3");
+    if ((!isMediaSource() && usePlaybin3 && equal(usePlaybin3, "1")) || url.protocolIs("mediastream"))
         playbinName = "playbin3";
 
     if (m_pipeline) {
@@ -3078,6 +3080,15 @@ void MediaPlayerPrivateGStreamer::triggerRepaint(GstSample* sample)
             if (!weakThis)
                 return;
             updateVideoSizeAndOrientationFromCaps(caps.get());
+
+            // Live streams start without pre-rolling, that means they can reach PAUSED while sinks
+            // still haven't received a sample to render. So we need to notify the media element in
+            // such cases only after pre-rolling has completed. Otherwise the media element might
+            // emit a play event too early, before pre-rolling has been completed.
+            if (m_isLiveStream && m_readyState < MediaPlayer::ReadyState::HaveEnoughData) {
+                m_readyState = MediaPlayer::ReadyState::HaveEnoughData;
+                m_player->readyStateChanged();
+            }
         });
     }
 

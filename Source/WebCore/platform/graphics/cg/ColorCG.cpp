@@ -81,7 +81,7 @@ static Optional<SRGBA<uint8_t>> roundAndClampToSRGBALossy(CGColorRef color)
         ASSERT_NOT_REACHED();
     }
 
-    return convertToComponentBytes(SRGBA { r, g, b, a });
+    return convertColor<SRGBA<uint8_t>>(SRGBA<float> { r, g, b, a });
 }
 
 Color::Color(CGColorRef color)
@@ -89,8 +89,8 @@ Color::Color(CGColorRef color)
 {
 }
 
-Color::Color(CGColorRef color, SemanticTag tag)
-    : Color(roundAndClampToSRGBALossy(color), tag)
+Color::Color(CGColorRef color, OptionSet<Flags> flags)
+    : Color(roundAndClampToSRGBALossy(color), flags)
 {
 }
 
@@ -98,17 +98,26 @@ static CGColorRef leakCGColor(const Color& color)
 {
     auto [colorSpace, components] = color.colorSpaceAndComponents();
 
-    auto cgColorSpace = cachedCGColorSpace(colorSpace);
+    auto cgColorSpace = cachedNullableCGColorSpace(colorSpace);
 
     // Some CG ports don't support all the color spaces required and return
-    // sRGBColorSpaceRef() for unsupported color spaces. In those cases, we
-    // need to eagerly and potentially lossily convert the color into sRGB
-    // ourselves before creating the CGColorRef.
-    if (colorSpace != ColorSpace::SRGB && cgColorSpace == sRGBColorSpaceRef()) {
+    // nullptr for unsupported color spaces. In those cases, we eagerly convert
+    // the color into either extended sRGB or normal sRGB, if extended sRGB is
+    // not supported, before creating the CGColorRef.
+    if (!cgColorSpace) {
+#if HAVE(CORE_GRAPHICS_EXTENDED_SRGB_COLOR_SPACE)
+        auto colorConvertedToExtendedSRGBA = callWithColorType(components, colorSpace, [] (const auto& color) {
+            return convertColor<ExtendedSRGBA<float>>(color);
+        });
+        components = asColorComponents(colorConvertedToExtendedSRGBA);
+        cgColorSpace = extendedSRGBColorSpaceRef();
+#else
         auto colorConvertedToSRGBA = callWithColorType(components, colorSpace, [] (const auto& color) {
-            return toSRGBA(color);
+            return convertColor<SRGBA<float>>(color);
         });
         components = asColorComponents(colorConvertedToSRGBA);
+        cgColorSpace = sRGBColorSpaceRef();
+#endif
     }
 
     auto [r, g, b, a] = components;

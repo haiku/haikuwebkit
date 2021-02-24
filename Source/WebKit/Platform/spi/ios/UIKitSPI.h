@@ -54,6 +54,7 @@
 #import <UIKit/UIKeyboard_Private.h>
 #import <UIKit/UILongPressGestureRecognizer_Private.h>
 #import <UIKit/UIMenuController_Private.h>
+#import <UIKit/UIPasteboard_Private.h>
 #import <UIKit/UIPeripheralHost.h>
 #import <UIKit/UIPeripheralHost_Private.h>
 #import <UIKit/UIPickerContentView_Private.h>
@@ -67,6 +68,7 @@
 #import <UIKit/UIScrollView_Private.h>
 #import <UIKit/UIStringDrawing_Private.h>
 #import <UIKit/UITableViewCell_Private.h>
+#import <UIKit/UITableView_Private.h>
 #import <UIKit/UITapGestureRecognizer_Private.h>
 #import <UIKit/UITextChecker_Private.h>
 #import <UIKit/UITextEffectsWindow.h>
@@ -93,6 +95,7 @@
 #import <UIKit/_UIHighlightView.h>
 #import <UIKit/_UINavigationInteractiveTransition.h>
 #import <UIKit/_UINavigationParallaxTransition.h>
+#import <UIKit/_UISheetPresentationController.h>
 
 #if HAVE(LINK_PREVIEW)
 #import <UIKit/UIPreviewAction_Private.h>
@@ -303,6 +306,7 @@ typedef enum {
 - (void)geometryChangeDone:(BOOL)keyboardVisible;
 - (void)prepareForGeometryChange;
 + (BOOL)isInHardwareKeyboardMode;
++ (BOOL)isOnScreen;
 + (void)removeAllDynamicDictionaries;
 @end
 
@@ -460,6 +464,10 @@ typedef NS_ENUM(NSUInteger, UIScrollPhase) {
 @end
 
 #endif // HAVE(UI_HOVER_EVENT_RESPONDABLE)
+
+@interface UITableView ()
+@property (nonatomic, getter=_sectionContentInsetFollowsLayoutMargins, setter=_setSectionContentInsetFollowsLayoutMargins:) BOOL sectionContentInsetFollowsLayoutMargins;
+@end
 
 @interface UITapGestureRecognizer ()
 @property (nonatomic, getter=_allowableSeparation, setter=_setAllowableSeparation:) CGFloat allowableSeparation;
@@ -802,6 +810,7 @@ typedef NS_ENUM(NSInteger, UIWKGestureType) {
 @interface UIWebGeolocationPolicyDecider ()
 + (instancetype)sharedPolicyDecider;
 - (void)decidePolicyForGeolocationRequestFromOrigin:(id)securityOrigin requestingURL:(NSURL *)requestingURL window:(UIWindow *)window listener:(id)listener;
+- (void)decidePolicyForGeolocationRequestFromOrigin:(id)securityOrigin requestingURL:(NSURL *)requestingURL view:(UIView *)view listener:(id)listener;
 @end
 
 typedef enum {
@@ -929,6 +938,17 @@ typedef NS_ENUM(NSInteger, _UIBackdropViewStylePrivate) {
 - (BOOL)interactiveTransition:(_UINavigationInteractiveTransitionBase *)interactiveTransition gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldRecognizeSimultaneouslyWithGestureRecognizer:(UIGestureRecognizer *)otherGestureRecognizer;
 - (BOOL)interactiveTransition:(_UINavigationInteractiveTransitionBase *)interactiveTransition gestureRecognizer:(UIGestureRecognizer *)gestureRecognizer shouldReceiveTouch:(UITouch *)touch;
 - (UIPanGestureRecognizer *)gestureRecognizerForInteractiveTransition:(_UINavigationInteractiveTransitionBase *)interactiveTransition WithTarget:(id)target action:(SEL)action;
+@end
+
+@interface _UISheetDetent : NSObject
+@property (class, nonatomic, readonly) _UISheetDetent *_mediumDetent;
+@property (class, nonatomic, readonly) _UISheetDetent *_largeDetent;
+@end
+
+@interface _UISheetPresentationController : UIPresentationController
+@property (nonatomic, copy, setter=_setDetents:) NSArray<_UISheetDetent *> *_detents;
+@property (nonatomic, setter=_setWantsBottomAttachedInCompactHeight:) BOOL _wantsBottomAttachedInCompactHeight;
+@property (nonatomic, setter=_setWidthFollowsPreferredContentSizeWhenBottomAttached:) BOOL _widthFollowsPreferredContentSizeWhenBottomAttached;
 @end
 
 @class BKSAnimationFenceHandle;
@@ -1138,8 +1158,16 @@ typedef NSInteger UICompositingMode;
 + (UIBlurEffect *)effectWithBlurRadius:(CGFloat)blurRadius;
 @end
 
+typedef NS_ENUM(NSInteger, _UIPopoverPresentationHorizontalAlignment) {
+    _UIPopoverPresentationHorizontalAlignmentCenter,
+    _UIPopoverPresentationHorizontalAlignmentLeading,
+    _UIPopoverPresentationHorizontalAlignmentTrailing,
+};
+
 @interface UIPopoverPresentationController ()
 @property (assign, nonatomic, setter=_setCentersPopoverIfSourceViewNotSet:, getter=_centersPopoverIfSourceViewNotSet) BOOL _centersPopoverIfSourceViewNotSet;
+@property (assign, nonatomic, setter=_setShouldHideArrow:, getter=_shouldHideArrow) BOOL _shouldHideArrow;
+@property (assign, nonatomic, setter=_setPreferredHorizontalAlignment:) _UIPopoverPresentationHorizontalAlignment _preferredHorizontalAlignment;
 @end
 
 @interface UIWKDocumentContext : NSObject
@@ -1241,6 +1269,15 @@ typedef NS_ENUM(NSUInteger, _UIContextMenuLayout) {
 #define UIWKDocumentRequestMarkedTextRects (1 << 5)
 #define UIWKDocumentRequestSpatialAndCurrentSelection (1 << 6)
 
+#if HAVE(PASTEBOARD_DATA_OWNER)
+
+@interface UIResponder (Staging_73852335)
+@property (nonatomic, setter=_setDataOwnerForCopy:) _UIDataOwner _dataOwnerForCopy;
+@property (nonatomic, setter=_setDataOwnerForPaste:) _UIDataOwner _dataOwnerForPaste;
+@end
+
+#endif
+
 @interface UITextInteractionAssistant (IPI)
 @property (nonatomic, readonly) BOOL inGesture;
 @property (nonatomic, readonly) UITextInteraction *interactions;
@@ -1258,7 +1295,14 @@ typedef NS_ENUM(NSUInteger, _UIContextMenuLayout) {
 @end
 #endif // ENABLE(DRAG_SUPPORT)
 
-#if HAVE(LINK_PREVIEW) && USE(UICONTEXTMENU)
+#if USE(UICONTEXTMENU)
+
+@interface UIAction (IPI)
+- (void)_performActionWithSender:(id)sender;
+@end
+
+#if HAVE(LINK_PREVIEW)
+
 @interface UIContextMenuConfiguration (IPI)
 @property (nonatomic, copy) UIContextMenuContentPreviewProvider previewProvider;
 @property (nonatomic, copy) UIContextMenuActionProvider actionProvider;
@@ -1281,7 +1325,9 @@ typedef NS_ENUM(NSUInteger, _UIContextMenuLayout) {
 @property (nonatomic, strong) _UIClickPresentationInteraction *presentationInteraction;
 @end
 
-#endif // HAVE(LINK_PREVIEW) && USE(UICONTEXTMENU)
+#endif // HAVE(LINK_PREVIEW)
+
+#endif // USE(UICONTEXTMENU)
 
 @interface UIPhysicalKeyboardEvent : UIPressesEvent
 @end
@@ -1295,8 +1341,8 @@ typedef NS_ENUM(NSUInteger, _UIContextMenuLayout) {
 @property (nonatomic, readonly) NSInteger _gsModifierFlags;
 @end
 
-@interface UIWebGeolocationPolicyDecider (Staging_25963823)
-- (void)decidePolicyForGeolocationRequestFromOrigin:(id)securityOrigin requestingURL:(NSURL *)requestingURL view:(UIView *)view listener:(id)listener;
+@interface UIWKTextInteractionAssistant (Staging_74209560)
+- (void)translate:(NSString *)text fromRect:(CGRect)presentationRect;
 @end
 
  @interface UIColor (IPI)
@@ -1368,17 +1414,6 @@ typedef NS_ENUM(NSUInteger, _UIContextMenuLayout) {
 @property (nonatomic, setter=_setSuppressSoftwareKeyboard:) BOOL _suppressSoftwareKeyboard;
 @end
 
-@interface _UIEventAttribution : NSObject <NSCopying>
-@property (nonatomic, assign, readonly) uint8_t sourceIdentifier;
-@property (nonatomic, copy, readonly) NSURL *attributeOn;
-@property (nonatomic, /*nullable,*/ copy, readonly) NSURL *reportEndpoint;
-@property (nonatomic, copy, readonly) NSString *sourceDescription;
-@property (nonatomic, copy, readonly) NSString *purchaser;
-- (instancetype)initWithSourceIdentifier:(uint8_t)sourceIdentifier attributeOn:(NSURL *)attributeOn sourceDescription:(NSString *)sourceDescription purchaser:(NSString *)purchaser;
-- (instancetype)init NS_UNAVAILABLE;
-+ (instancetype)new NS_UNAVAILABLE;
-@end
-
 @interface _UINavigationInteractiveTransitionBase ()
 - (void)_stopInteractiveTransition;
 @end
@@ -1399,6 +1434,10 @@ typedef NS_ENUM(NSUInteger, _UIContextMenuLayout) {
 
 @interface UIDevice ()
 @property (nonatomic, setter=_setBacklightLevel:) float _backlightLevel;
+@end
+
+@interface UIColorPickerViewController ()
+@property (nonatomic, copy, setter=_setSuggestedColors:) NSArray<UIColor *> *_suggestedColors;
 @end
 
 WTF_EXTERN_C_BEGIN

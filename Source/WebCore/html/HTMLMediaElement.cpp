@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2007-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1074,6 +1074,9 @@ void HTMLMediaElement::load()
 
     INFO_LOG(LOGIDENTIFIER);
 
+    if (m_videoFullscreenMode == VideoFullscreenModePictureInPicture && document().quirks().requiresUserGestureToLoadInPictureInPicture() && !document().processingUserGestureForMedia())
+        return;
+
     prepareForLoad();
     m_resourceSelectionTaskQueue.enqueueTask([this] {
         prepareToPlay();
@@ -1193,6 +1196,30 @@ void HTMLMediaElement::prepareForLoad()
     // 10 - Note: Playback of any previously playing media resource for this element stops.
 
     configureMediaControls();
+}
+
+void HTMLMediaElement::mediaPlayerReloadAndResumePlaybackIfNeeded()
+{
+    auto previousMediaTime = m_cachedTime;
+    bool wasPaused = paused();
+
+    load();
+
+    if (m_videoFullscreenMode != VideoFullscreenModeNone)
+        enterFullscreen(m_videoFullscreenMode);
+
+    if (previousMediaTime) {
+        m_resourceSelectionTaskQueue.enqueueTask([this, previousMediaTime] {
+            if (m_player)
+                m_player->seekWhenPossible(previousMediaTime);
+        });
+    }
+
+    if (!wasPaused) {
+        m_resourceSelectionTaskQueue.enqueueTask([this] {
+            playInternal();
+        });
+    }
 }
 
 void HTMLMediaElement::selectMediaResource()
@@ -1408,7 +1435,7 @@ void HTMLMediaElement::loadResource(const URL& initialURL, ContentType& contentT
 
 #if ENABLE(CONTENT_EXTENSIONS)
     if (auto documentLoader = makeRefPtr(frame->loader().documentLoader())) {
-        if (page->userContentProvider().processContentRuleListsForLoad(url, ContentExtensions::ResourceType::Media, *documentLoader).summary.blockedLoad) {
+        if (page->userContentProvider().processContentRuleListsForLoad(*page, url, ContentExtensions::ResourceType::Media, *documentLoader).summary.blockedLoad) {
             mediaLoadingFailed(MediaPlayer::NetworkState::FormatError);
             return;
         }
@@ -2871,6 +2898,7 @@ void HTMLMediaElement::seekInternal(const MediaTime& time)
 
 void HTMLMediaElement::seekWithTolerance(const MediaTime& inTime, const MediaTime& negativeTolerance, const MediaTime& positiveTolerance, bool fromDOM)
 {
+    INFO_LOG(LOGIDENTIFIER, "time = ", inTime, ", negativeTolerance = ", negativeTolerance, ", positiveTolerance = ", positiveTolerance);
     // 4.8.10.9 Seeking
     MediaTime time = inTime;
 
@@ -3061,6 +3089,11 @@ HTMLMediaElement::ReadyState HTMLMediaElement::readyState() const
 MediaPlayer::MovieLoadType HTMLMediaElement::movieLoadType() const
 {
     return m_player ? m_player->movieLoadType() : MediaPlayer::MovieLoadType::Unknown;
+}
+
+MediaSessionGroupIdentifier HTMLMediaElement::mediaSessionGroupIdentifier() const
+{
+    return document().page() ? document().page()->mediaSessionGroupIdentifier() : MediaSessionGroupIdentifier { };
 }
 
 bool HTMLMediaElement::hasAudio() const
@@ -3492,7 +3525,7 @@ void HTMLMediaElement::pause()
     if (m_waitingToEnterFullscreen)
         m_waitingToEnterFullscreen = false;
 
-    if (!m_mediaSession->playbackPermitted())
+    if (!m_mediaSession->playbackPermitted(MediaPlaybackOperation::Pause))
         return;
 
     if (processingUserGestureForMedia())
@@ -3500,7 +3533,6 @@ void HTMLMediaElement::pause()
 
     pauseInternal();
 }
-
 
 void HTMLMediaElement::pauseInternal()
 {
@@ -5012,13 +5044,6 @@ void HTMLMediaElement::mediaPlayerEngineUpdated()
     m_droppedVideoFrames = 0;
 #endif
 
-#if ENABLE(WEB_AUDIO)
-    if (m_audioSourceNode) {
-        if (auto* provider = audioSourceProvider())
-            provider->setClient(m_audioSourceNode);
-    }
-#endif
-
     m_havePreparedToPlay = false;
 
     scheduleMediaEngineWasUpdated();
@@ -5038,8 +5063,12 @@ void HTMLMediaElement::mediaPlayerDidInitializeMediaEngine()
 {
     ASSERT(isMainThread());
 #if ENABLE(WEB_AUDIO)
-    if (m_audioSourceNode)
+    if (m_audioSourceNode) {
+        if (auto* provider = audioSourceProvider())
+            provider->setClient(m_audioSourceNode);
+
         m_audioSourceNode->processLock().unlock();
+    }
 #endif
 }
 
@@ -5790,7 +5819,7 @@ bool HTMLMediaElement::addEventListener(const AtomString& eventType, Ref<EventLi
     return true;
 }
 
-bool HTMLMediaElement::removeEventListener(const AtomString& eventType, EventListener& listener, const ListenerOptions& options)
+bool HTMLMediaElement::removeEventListener(const AtomString& eventType, EventListener& listener, const EventListenerOptions& options)
 {
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA) && ENABLE(ENCRYPTED_MEDIA)
     if (eventType == eventNames().webkitneedkeyEvent)
@@ -6877,16 +6906,6 @@ Vector<RefPtr<PlatformTextTrack>> HTMLMediaElement::outOfBandTrackSources()
 
 #endif
 
-void HTMLMediaElement::mediaPlayerEnterFullscreen()
-{
-    enterFullscreen();
-}
-
-void HTMLMediaElement::mediaPlayerExitFullscreen()
-{
-    exitFullscreen();
-}
-
 bool HTMLMediaElement::mediaPlayerIsFullscreen() const
 {
     return isFullscreen();
@@ -6934,7 +6953,8 @@ CachedResourceLoader* HTMLMediaElement::mediaPlayerCachedResourceLoader()
 
 RefPtr<PlatformMediaResourceLoader> HTMLMediaElement::mediaPlayerCreateResourceLoader()
 {
-    auto mediaResourceLoader = adoptRef(*new MediaResourceLoader(document(), *this, crossOrigin()));
+    auto destination = isVideo() ? FetchOptions::Destination::Video : FetchOptions::Destination::Audio;
+    auto mediaResourceLoader = adoptRef(*new MediaResourceLoader(document(), *this, crossOrigin(), destination));
 
     m_lastMediaResourceLoaderForTesting = makeWeakPtr(mediaResourceLoader.get());
 
@@ -7134,7 +7154,7 @@ bool HTMLMediaElement::ensureMediaControlsInjectedScript()
         if (functionValue.isCallable(vm))
             return true;
 
-#ifndef NDEBUG
+#if !defined(NDEBUG)
         // Setting a scriptURL allows the source to be debuggable in the inspector.
         URL scriptURL = URL({ }, "mediaControlsScript"_s);
 #else
@@ -7441,7 +7461,7 @@ void HTMLMediaElement::suspendPlayback()
 {
     ALWAYS_LOG(LOGIDENTIFIER, "paused = ", paused());
     if (!paused())
-        pause();
+        pauseInternal();
 }
 
 void HTMLMediaElement::resumeAutoplaying()
@@ -7492,11 +7512,12 @@ MediaSessionIdentifier HTMLMediaElement::mediaSessionUniqueIdentifier() const
     return m_mediaSession->mediaSessionIdentifier();
 }
 
-void HTMLMediaElement::didReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType command, const PlatformMediaSession::RemoteCommandArgument* argument)
+void HTMLMediaElement::didReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType command, const PlatformMediaSession::RemoteCommandArgument& argument)
 {
     ALWAYS_LOG(LOGIDENTIFIER, command);
 
     UserGestureIndicator remoteControlUserGesture(ProcessingUserGesture, &document());
+    const double defaultSkipAmount = 15;
     switch (command) {
     case PlatformMediaSession::PlayCommand:
         play();
@@ -7518,10 +7539,16 @@ void HTMLMediaElement::didReceiveRemoteControlCommand(PlatformMediaSession::Remo
     case PlatformMediaSession::EndSeekingForwardCommand:
         endScanning();
         break;
+    case PlatformMediaSession::SkipForwardCommand:
+        handleSeekToPlaybackPosition(argument.time ? argument.time.value() : defaultSkipAmount);
+        break;
+    case PlatformMediaSession::SkipBackwardCommand:
+        handleSeekToPlaybackPosition(0 - (argument.time ? argument.time.value() : defaultSkipAmount));
+        break;
     case PlatformMediaSession::SeekToPlaybackPositionCommand:
-        ASSERT(argument);
-        if (argument)
-            handleSeekToPlaybackPosition(argument->asDouble);
+        ASSERT(argument.time);
+        if (argument.time)
+            handleSeekToPlaybackPosition(argument.time.value());
         break;
     default:
         { } // Do nothing
@@ -7550,6 +7577,12 @@ bool HTMLMediaElement::shouldOverrideBackgroundPlaybackRestriction(PlatformMedia
         if (((m_videoFullscreenMode == VideoFullscreenModeStandard) || m_videoFullscreenStandby) && supportsPictureInPicture() && isPlaying())
             return true;
 #endif
+#if ENABLE(MEDIA_STREAM)
+        if (hasMediaStreamSrcObject() && mediaState() & IsPlayingAudio && document().mediaState() & MediaProducer::HasActiveAudioCaptureDevice) {
+            INFO_LOG(LOGIDENTIFIER, "returning true because playing an audio MediaStreamTrack");
+            return true;
+        }
+#endif
     } else if (type == PlatformMediaSession::SuspendedUnderLock) {
         if (isPlayingToExternalTarget()) {
             INFO_LOG(LOGIDENTIFIER, "returning true because isPlayingToExternalTarget() is true");
@@ -7559,6 +7592,12 @@ bool HTMLMediaElement::shouldOverrideBackgroundPlaybackRestriction(PlatformMedia
             INFO_LOG(LOGIDENTIFIER, "returning true because isPlayingToAutomotiveHeadUnit() is true");
             return true;
         }
+#if ENABLE(MEDIA_STREAM)
+        if (hasMediaStreamSrcObject() && mediaState() & IsPlayingAudio && document().mediaState() & MediaProducer::HasActiveAudioCaptureDevice) {
+            INFO_LOG(LOGIDENTIFIER, "returning true because playing an audio MediaStreamTrack");
+            return true;
+        }
+#endif
     }
     return false;
 }

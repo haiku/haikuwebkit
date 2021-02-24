@@ -104,6 +104,7 @@ NSString *WebKitJSCFTLJITEnabledDefaultsKey = @"WebKitJSCFTLJITEnabledDefaultsKe
 
 #if !PLATFORM(IOS_FAMILY) || PLATFORM(MACCATALYST)
 static NSString *WebKitApplicationDidChangeAccessibilityEnhancedUserInterfaceNotification = @"NSApplicationDidChangeAccessibilityEnhancedUserInterfaceNotification";
+static CFStringRef AppleColorPreferencesChangedNotification = CFSTR("AppleColorPreferencesChangedNotification");
 #endif
 
 static NSString * const WebKitSuppressMemoryPressureHandlerDefaultsKey = @"WebKitSuppressMemoryPressureHandler";
@@ -140,7 +141,8 @@ static void registerUserDefaultsIfNeeded()
 void WebProcessPool::updateProcessSuppressionState()
 {
     WebsiteDataStore::forEachWebsiteDataStore([enabled = processSuppressionEnabled()] (WebsiteDataStore& dataStore) {
-        dataStore.networkProcess().setProcessSuppressionEnabled(enabled);
+        if (auto* networkProcess = dataStore.networkProcessIfExists())
+            networkProcess->setProcessSuppressionEnabled(enabled);
     });
 
 #if ENABLE(NETSCAPE_PLUGIN_API)
@@ -225,7 +227,6 @@ static const Vector<ASCIILiteral>& nonBrowserServices()
     ASSERT(isMainThread());
     static const auto services = makeNeverDestroyed(Vector<ASCIILiteral> {
         "com.apple.lsd.open"_s,
-        "com.apple.mobileassetd"_s,
         "com.apple.iconservices"_s,
         "com.apple.PowerManagement.control"_s,
         "com.apple.frontboard.systemappservices"_s
@@ -273,7 +274,6 @@ static const Vector<ASCIILiteral>& diagnosticServices()
         "com.apple.osanalytics.osanalyticshelper"_s
 #else
         "com.apple.analyticsd"_s,
-        "com.apple.powerlog.plxpclogger.xpc"_s
 #endif
     });
     return services;
@@ -470,7 +470,10 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
     parameters.hasStylusDevice = [[WKStylusDeviceObserver sharedInstance] hasStylusDevice];
 #endif
 
-    parameters.maximumIOSurfaceSize = WebCore::IOSurface::maximumSize();
+    // If we're using the GPU process for DOM rendering, we can't query the maximum IOSurface size in the Web Content process.
+    // However, querying this is a launch time regression, so limit this to only the necessary case.
+    if (m_defaultPageGroup->preferences().useGPUProcessForDOMRenderingEnabled())
+        parameters.maximumIOSurfaceSize = WebCore::IOSurface::maximumSize();
 }
 
 void WebProcessPool::platformInitializeNetworkProcess(NetworkProcessCreationParameters& parameters)
@@ -588,6 +591,14 @@ void WebProcessPool::backlightLevelDidChangeCallback(CFNotificationCenterRef cen
 }
 #endif
 
+#if PLATFORM(MAC)
+void WebProcessPool::colorPreferencesDidChangeCallback(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo)
+{
+    auto* pool = reinterpret_cast<WebProcessPool*>(observer);
+    pool->sendToAllProcesses(Messages::WebProcess::ColorPreferencesDidChange());
+}
+#endif
+
 #if ENABLE(REMOTE_INSPECTOR) && PLATFORM(IOS_FAMILY) && !PLATFORM(MACCATALYST)
 void WebProcessPool::remoteWebInspectorEnabledCallback(CFNotificationCenterRef, void *observer, CFStringRef name, const void *, CFDictionaryRef userInfo)
 {
@@ -615,6 +626,11 @@ void WebProcessPool::startObservingPreferenceChanges()
 void WebProcessPool::registerNotificationObservers()
 {
 #if !PLATFORM(IOS_FAMILY)
+    m_powerObserver = makeUnique<WebCore::PowerObserver>([weakThis = makeWeakPtr(this)] {
+        if (weakThis)
+            weakThis->sendToAllProcesses(Messages::WebProcess::SystemWillPowerOn());
+    });
+    m_systemSleepListener = PAL::SystemSleepListener::create(*this);
     // Listen for enhanced accessibility changes and propagate them to the WebProcess.
     m_enhancedAccessibilityObserver = [[NSNotificationCenter defaultCenter] addObserverForName:WebKitApplicationDidChangeAccessibilityEnhancedUserInterfaceNotification object:nil queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *note) {
         setEnhancedAccessibility([[[note userInfo] objectForKey:@"AXEnhancedUserInterface"] boolValue]);
@@ -667,6 +683,8 @@ void WebProcessPool::registerNotificationObservers()
     m_deactivationObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidResignActiveNotification object:NSApp queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
         setApplicationIsActive(false);
     }];
+    
+    CFNotificationCenterAddObserver(CFNotificationCenterGetDistributedCenter(), this, colorPreferencesDidChangeCallback, AppleColorPreferencesChangedNotification, nullptr, CFNotificationSuspensionBehaviorCoalesce);
 #elif !PLATFORM(MACCATALYST)
     CFNotificationCenterAddObserver(CFNotificationCenterGetDarwinNotifyCenter(), this, backlightLevelDidChangeCallback, static_cast<CFStringRef>(UIBacklightLevelChangedNotification), nullptr, CFNotificationSuspensionBehaviorCoalesce);
 #if PLATFORM(IOS)
@@ -710,6 +728,8 @@ void WebProcessPool::registerNotificationObservers()
 void WebProcessPool::unregisterNotificationObservers()
 {
 #if !PLATFORM(IOS_FAMILY)
+    m_powerObserver = nullptr;
+    m_systemSleepListener = nullptr;
     [[NSNotificationCenter defaultCenter] removeObserver:m_enhancedAccessibilityObserver.get()];
     [[NSNotificationCenter defaultCenter] removeObserver:m_automaticTextReplacementNotificationObserver.get()];
     [[NSNotificationCenter defaultCenter] removeObserver:m_automaticSpellingCorrectionNotificationObserver.get()];
@@ -720,6 +740,7 @@ void WebProcessPool::unregisterNotificationObservers()
     [[NSNotificationCenter defaultCenter] removeObserver:m_scrollerStyleNotificationObserver.get()];
 #endif
     [[NSNotificationCenter defaultCenter] removeObserver:m_deactivationObserver.get()];
+    CFNotificationCenterRemoveObserver(CFNotificationCenterGetDistributedCenter(), this, AppleColorPreferencesChangedNotification, nullptr);
 #elif !PLATFORM(MACCATALYST)
     CFNotificationCenterRemoveObserver(CFNotificationCenterGetDarwinNotifyCenter(), this, static_cast<CFStringRef>(UIBacklightLevelChangedNotification) , nullptr);
 #if PLATFORM(IOS)
@@ -918,6 +939,17 @@ void WebProcessPool::registerHighDynamicRangeChangeCallback()
         PAL::softLink_CoreMedia_CMNotificationCenterAddListener(center, object, webProcessPoolHighDynamicRangeDidChangeCallback, notification, object, 0);
     });
 }
+
+void WebProcessPool::systemWillSleep()
+{
+    sendToAllProcesses(Messages::WebProcess::SystemWillSleep());
+}
+
+void WebProcessPool::systemDidWake()
+{
+    sendToAllProcesses(Messages::WebProcess::SystemDidWake());
+}
+
 #endif
 
 } // namespace WebKit

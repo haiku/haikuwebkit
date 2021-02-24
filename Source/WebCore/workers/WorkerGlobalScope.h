@@ -121,9 +121,9 @@ public:
 
     ReferrerPolicy referrerPolicy() const final;
 
-    bool requestAnimationFrameEnabled() const { return m_settingsValues.requestAnimationFrameEnabled; }
-    bool acceleratedCompositingEnabled() const { return m_settingsValues.acceleratedCompositingEnabled; }
-    bool webGLEnabled() const { return m_settingsValues.webGLEnabled; }
+    const Settings::Values& settingsValues() const final { return m_settingsValues; }
+
+    FetchOptions::Credentials credentials() const { return m_credentials; }
 
 protected:
     WorkerGlobalScope(WorkerThreadType, const WorkerParameters&, Ref<SecurityOrigin>&&, WorkerThread&, Ref<SecurityOrigin>&& topOrigin, IDBClient::IDBConnectionProxy*, SocketProvider*);
@@ -142,7 +142,6 @@ private:
 
     URL completeURL(const String&, ForceUTF8 = ForceUTF8::No) const final;
     String userAgent(const URL&) const final;
-    const Settings::Values& settingsValues() const final { return m_settingsValues; }
 
     EventTarget* errorEventTarget() final;
     String resourceRequestIdentifier() const final { return m_identifier; }
@@ -166,8 +165,6 @@ private:
     mutable RefPtr<WorkerLocation> m_location;
     mutable RefPtr<WorkerNavigator> m_navigator;
 
-    std::unique_ptr<WorkerOrWorkletScriptController> m_script;
-
     bool m_isOnline;
     bool m_shouldBypassMainWorldContentSecurityPolicy;
 
@@ -190,6 +187,8 @@ private:
     std::unique_ptr<CSSValuePool> m_cssValuePool;
     ReferrerPolicy m_referrerPolicy;
     Settings::Values m_settingsValues;
+    WorkerType m_workerType;
+    FetchOptions::Credentials m_credentials;
 };
 
 } // namespace WebCore

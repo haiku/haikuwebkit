@@ -26,6 +26,10 @@ function mac_process_webcontent_entitlements()
             plistbuddy Add :com.apple.private.security.message-filter bool YES
             plistbuddy Add :com.apple.avfoundation.allow-system-wide-context bool YES
         fi
+        if (( "${TARGET_MAC_OS_X_VERSION_MAJOR}" >= 120000 ))
+        then
+            plistbuddy Add :com.apple.private.verified-jit bool YES
+        fi
     fi
 
     mac_process_webcontent_or_plugin_entitlements
@@ -47,6 +51,7 @@ function mac_process_gpu_entitlements()
             plistbuddy Add :com.apple.avfoundation.allow-system-wide-context bool YES
         fi
 
+        plistbuddy Add :com.apple.private.memory.ownership_transfer bool YES
         plistbuddy Add :com.apple.rootless.storage.WebKitGPUSandbox bool YES
         plistbuddy Add :com.apple.QuartzCore.webkit-end-points bool YES
     fi
@@ -104,6 +109,14 @@ function mac_process_plugin_entitlements()
     plistbuddy Add :com.apple.security.files.user-selected.read-write      bool YES
     plistbuddy Add :com.apple.security.print                               bool YES
 
+    if [[ "${WK_USE_RESTRICTED_ENTITLEMENTS}" == YES ]]
+    then
+        if (( "${TARGET_MAC_OS_X_VERSION_MAJOR}" >= 120000 ))
+        then
+            plistbuddy Add :com.apple.private.verified-jit bool YES
+        fi
+    fi
+
     mac_process_webcontent_or_plugin_entitlements
 }
 
@@ -147,6 +160,10 @@ function maccatalyst_process_webcontent_entitlements()
         plistbuddy Add :com.apple.private.security.message-filter bool YES
         plistbuddy Add :com.apple.UIKit.view-service-wants-custom-idiom-and-scale bool YES
     fi
+    if (( "${TARGET_MAC_OS_X_VERSION_MAJOR}" >= 120000 ))
+    then
+        plistbuddy Add :com.apple.private.verified-jit bool YES
+    fi
 }
 
 function maccatalyst_process_gpu_entitlements()
@@ -154,6 +171,7 @@ function maccatalyst_process_gpu_entitlements()
     plistbuddy Add :com.apple.security.network.client bool YES
     plistbuddy Add :com.apple.runningboard.assertions.webkit bool YES
     plistbuddy Add :com.apple.QuartzCore.webkit-end-points bool YES
+    plistbuddy Add :com.apple.private.memory.ownership_transfer bool YES
 }
 
 function maccatalyst_process_network_entitlements()
@@ -174,6 +192,10 @@ function maccatalyst_process_plugin_entitlements()
     plistbuddy Add :com.apple.security.cs.disable-library-validation       bool YES
     plistbuddy Add :com.apple.security.files.user-selected.read-write      bool YES
     plistbuddy Add :com.apple.security.print                               bool YES
+    if (( "${TARGET_MAC_OS_X_VERSION_MAJOR}" >= 120000 ))
+    then
+        plistbuddy Add :com.apple.private.verified-jit bool YES
+    fi
 }
 
 
@@ -194,6 +216,7 @@ function ios_family_process_webcontent_entitlements()
     plistbuddy Add :com.apple.private.memorystatus bool YES
     plistbuddy Add :com.apple.private.network.socket-delegate bool YES
     plistbuddy Add :com.apple.private.pac.exception bool YES
+    plistbuddy Add :com.apple.private.verified-jit bool YES
     plistbuddy Add :com.apple.private.security.message-filter bool YES
     plistbuddy Add :com.apple.private.webinspector.allow-remote-inspection bool YES
     plistbuddy Add :com.apple.private.webinspector.proxy-application bool YES
@@ -220,6 +243,7 @@ function ios_family_process_gpu_entitlements()
     plistbuddy Add :com.apple.private.mediaexperience.startrecordinginthebackground.allow bool YES
     plistbuddy Add :com.apple.private.coremedia.pidinheritance.allow bool YES
     plistbuddy Add :com.apple.private.memorystatus bool YES
+    plistbuddy Add :com.apple.private.memory.ownership_transfer bool YES
     plistbuddy Add :com.apple.private.network.socket-delegate bool YES
     plistbuddy Add :com.apple.runningboard.assertions.webkit bool YES
 
@@ -293,6 +317,7 @@ function ios_family_process_network_entitlements()
 
 function ios_family_process_plugin_entitlements()
 {
+    plistbuddy Add :com.apple.private.verified-jit                         bool YES
     plistbuddy Add :com.apple.security.cs.allow-jit                        bool YES
     plistbuddy Add :com.apple.security.cs.allow-unsigned-executable-memory bool YES
     plistbuddy Add :com.apple.security.cs.disable-library-validation       bool YES

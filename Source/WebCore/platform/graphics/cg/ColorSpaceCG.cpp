@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,78 +33,78 @@
 
 namespace WebCore {
 
+template<const CFStringRef& colorSpaceNameGlobalConstant> static CGColorSpaceRef namedColorSpace()
+{
+    static CGColorSpaceRef colorSpace;
+    static std::once_flag onceFlag;
+    std::call_once(onceFlag, [] {
+        colorSpace = CGColorSpaceCreateWithName(colorSpaceNameGlobalConstant);
+        ASSERT(colorSpace);
+    });
+    return colorSpace;
+}
+
 CGColorSpaceRef sRGBColorSpaceRef()
 {
-    static CGColorSpaceRef sRGBColorSpace;
-    static std::once_flag onceFlag;
-    std::call_once(onceFlag, [] {
-#if PLATFORM(WIN)
-        // Out-of-date CG installations will not honor kCGColorSpaceSRGB. This logic avoids
-        // causing a crash under those conditions. Since the default color space in Windows
-        // is sRGB, this all works out nicely.
-        // FIXME: Is this still needed? rdar://problem/15213515 was fixed.
-        sRGBColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-        if (!sRGBColorSpace)
-            sRGBColorSpace = CGColorSpaceCreateDeviceRGB();
-#else
-        sRGBColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceSRGB);
-#endif // PLATFORM(WIN)
-    });
-    return sRGBColorSpace;
+    return namedColorSpace<kCGColorSpaceSRGB>();
 }
 
-CGColorSpaceRef linearRGBColorSpaceRef()
+#if HAVE(CORE_GRAPHICS_ADOBE_RGB_1998_COLOR_SPACE)
+CGColorSpaceRef adobeRGB1998ColorSpaceRef()
 {
-    static CGColorSpaceRef linearRGBColorSpace;
-    static std::once_flag onceFlag;
-    std::call_once(onceFlag, [] {
-#if PLATFORM(WIN)
-        // FIXME: Windows should be able to use linear sRGB, this is tracked by http://webkit.org/b/80000.
-        linearRGBColorSpace = sRGBColorSpaceRef();
-#else
-        linearRGBColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceLinearSRGB);
-#endif
-    });
-    return linearRGBColorSpace;
+    return namedColorSpace<kCGColorSpaceAdobeRGB1998>();
 }
+#endif
 
+#if HAVE(CORE_GRAPHICS_DISPLAY_P3_COLOR_SPACE)
 CGColorSpaceRef displayP3ColorSpaceRef()
 {
-    static CGColorSpaceRef displayP3ColorSpace;
-    static std::once_flag onceFlag;
-    std::call_once(onceFlag, [] {
-#if PLATFORM(COCOA)
-        displayP3ColorSpace = CGColorSpaceCreateWithName(kCGColorSpaceDisplayP3);
-#else
-        displayP3ColorSpace = sRGBColorSpaceRef();
-#endif
-    });
-    return displayP3ColorSpace;
+    return namedColorSpace<kCGColorSpaceDisplayP3>();
 }
+#endif
 
+#if HAVE(CORE_GRAPHICS_EXTENDED_SRGB_COLOR_SPACE)
+CGColorSpaceRef extendedSRGBColorSpaceRef()
+{
+    return namedColorSpace<kCGColorSpaceExtendedSRGB>();
+}
+#endif
+
+#if HAVE(CORE_GRAPHICS_ITUR_2020_COLOR_SPACE)
+CGColorSpaceRef ITUR_2020ColorSpaceRef()
+{
+    return namedColorSpace<kCGColorSpaceITUR_2020>();
+}
+#endif
+
+#if HAVE(CORE_GRAPHICS_LAB_COLOR_SPACE)
 CGColorSpaceRef labColorSpaceRef()
 {
     // FIXME: Add support for conversion to Lab on supported platforms.
-    return sRGBColorSpaceRef();
+    return nullptr;
 }
-
-CGColorSpaceRef extendedSRGBColorSpaceRef()
-{
-    static CGColorSpaceRef extendedSRGBColorSpace;
-    static std::once_flag onceFlag;
-    std::call_once(onceFlag, [] {
-        CGColorSpaceRef colorSpace = nullptr;
-#if PLATFORM(COCOA)
-        colorSpace = CGColorSpaceCreateWithName(kCGColorSpaceExtendedSRGB);
 #endif
-        // If there is no support for extended sRGB, fall back to sRGB.
-        if (!colorSpace)
-            colorSpace = sRGBColorSpaceRef();
 
-        extendedSRGBColorSpace = colorSpace;
-    });
-    return extendedSRGBColorSpace;
+#if HAVE(CORE_GRAPHICS_LINEAR_SRGB_COLOR_SPACE)
+CGColorSpaceRef linearSRGBColorSpaceRef()
+{
+    return namedColorSpace<kCGColorSpaceLinearSRGB>();
 }
+#endif
+
+#if HAVE(CORE_GRAPHICS_ROMMRGB_COLOR_SPACE)
+CGColorSpaceRef ROMMRGBColorSpaceRef()
+{
+    return namedColorSpace<kCGColorSpaceROMMRGB>();
+}
+#endif
+
+#if HAVE(CORE_GRAPHICS_XYZ_COLOR_SPACE)
+CGColorSpaceRef xyzColorSpaceRef()
+{
+    return namedColorSpace<kCGColorSpaceGenericXYZ>();
+}
+#endif
 
 }
 

@@ -197,24 +197,26 @@ void RenderInline::styleDidChange(StyleDifference diff, const RenderStyle* oldSt
 
 #if ENABLE(LAYOUT_FORMATTING_CONTEXT)
     if (diff >= StyleDifference::Repaint) {
-        if (auto* lineLayout = LayoutIntegration::LineLayout::containing(*this))
-            lineLayout->updateStyle(*this);
+        if (auto* lineLayout = LayoutIntegration::LineLayout::containing(*this)) {
+            if (selfNeedsLayout()) {
+                // FIXME: Add support for partial invalidation.
+                if (auto* container = LayoutIntegration::LineLayout::blockContainer(*this))
+                    container->invalidateLineLayoutPath();
+            } else
+                lineLayout->updateStyle(*this);
+        }
     }
 #endif
 }
 
-void RenderInline::updateAlwaysCreateLineBoxes(bool fullLayout)
+bool RenderInline::shouldCreateLineBoxes() const
 {
-    // Once we have been tainted once, just assume it will happen again. This way effects like hover highlighting that change the
-    // background color will only cause a layout on the first rollover.
-    if (alwaysCreateLineBoxes())
-        return;
-
+    // Test if we can get away with culling.
     auto* parentStyle = &parent()->style();
     RenderInline* parentRenderInline = is<RenderInline>(*parent()) ? downcast<RenderInline>(parent()) : nullptr;
     auto hasHardLineBreakChildOnly = firstChild() && firstChild() == lastChild() && firstChild()->isBR();
     bool checkFonts = document().inNoQuirksMode();
-    bool alwaysCreateLineBoxes = (parentRenderInline && parentRenderInline->alwaysCreateLineBoxes())
+    auto needsLineBoxes = (parentRenderInline && parentRenderInline->alwaysCreateLineBoxes())
         || (parentRenderInline && parentStyle->verticalAlign() != VerticalAlign::Baseline)
         || style().verticalAlign() != VerticalAlign::Baseline
         || style().textEmphasisMark() != TextEmphasisMark::None
@@ -222,20 +224,27 @@ void RenderInline::updateAlwaysCreateLineBoxes(bool fullLayout)
         || parentStyle->lineHeight() != style().lineHeight()))
         || hasHardLineBreakChildOnly;
 
-    if (!alwaysCreateLineBoxes && checkFonts && view().usesFirstLineRules()) {
+    if (!needsLineBoxes && checkFonts && view().usesFirstLineRules()) {
         // Have to check the first line style as well.
         parentStyle = &parent()->firstLineStyle();
         auto& childStyle = firstLineStyle();
-        alwaysCreateLineBoxes = !parentStyle->fontCascade().fontMetrics().hasIdenticalAscentDescentAndLineGap(childStyle.fontCascade().fontMetrics())
+        needsLineBoxes = !parentStyle->fontCascade().fontMetrics().hasIdenticalAscentDescentAndLineGap(childStyle.fontCascade().fontMetrics())
             || childStyle.verticalAlign() != VerticalAlign::Baseline
             || parentStyle->lineHeight() != childStyle.lineHeight();
     }
+    return needsLineBoxes;
+}
 
-    if (alwaysCreateLineBoxes) {
-        if (!fullLayout)
-            dirtyLineBoxes(false);
-        setAlwaysCreateLineBoxes();
-    }
+void RenderInline::updateAlwaysCreateLineBoxes(bool fullLayout)
+{
+    // Once we have been tainted once, just assume it will happen again. This way effects like hover highlighting that change the
+    // background color will only cause a layout on the first rollover.
+    if (alwaysCreateLineBoxes() || !shouldCreateLineBoxes())
+        return;
+
+    setAlwaysCreateLineBoxes();
+    if (!fullLayout)
+        dirtyLineBoxes(false);
 }
 
 void RenderInline::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
@@ -358,6 +367,10 @@ private:
 
 void RenderInline::absoluteRects(Vector<IntRect>& rects, const LayoutPoint& accumulatedOffset) const
 {
+#if ENABLE(LAYOUT_FORMATTING_CONTEXT)
+    if (auto* lineLayout = LayoutIntegration::LineLayout::containing(const_cast<RenderInline&>(*this)))
+        lineLayout->flow().ensureLineBoxes();
+#endif
     Vector<LayoutRect> lineboxRects;
     AbsoluteRectsGeneratorContext context(lineboxRects, accumulatedOffset);
     generateLineBoxRects(context);
@@ -398,6 +411,10 @@ private:
 
 void RenderInline::absoluteQuads(Vector<FloatQuad>& quads, bool* wasFixed) const
 {
+#if ENABLE(LAYOUT_FORMATTING_CONTEXT)
+    if (auto* lineLayout = LayoutIntegration::LineLayout::containing(const_cast<RenderInline&>(*this)))
+        lineLayout->flow().ensureLineBoxes();
+#endif
     absoluteQuadsIgnoringContinuation({ }, quads, wasFixed);
     if (continuation())
         collectAbsoluteQuadsForContinuation(quads, wasFixed);
@@ -405,6 +422,10 @@ void RenderInline::absoluteQuads(Vector<FloatQuad>& quads, bool* wasFixed) const
 
 void RenderInline::absoluteQuadsIgnoringContinuation(const FloatRect&, Vector<FloatQuad>& quads, bool*) const
 {
+#if ENABLE(LAYOUT_FORMATTING_CONTEXT)
+    if (auto* lineLayout = LayoutIntegration::LineLayout::containing(const_cast<RenderInline&>(*this)))
+        lineLayout->flow().ensureLineBoxes();
+#endif
     AbsoluteQuadsGeneratorContext context(this, quads);
     generateLineBoxRects(context);
 }
@@ -412,6 +433,10 @@ void RenderInline::absoluteQuadsIgnoringContinuation(const FloatRect&, Vector<Fl
 #if PLATFORM(IOS_FAMILY)
 void RenderInline::absoluteQuadsForSelection(Vector<FloatQuad>& quads) const
 {
+#if ENABLE(LAYOUT_FORMATTING_CONTEXT)
+    if (auto* lineLayout = LayoutIntegration::LineLayout::containing(const_cast<RenderInline&>(*this)))
+        lineLayout->flow().ensureLineBoxes();
+#endif
     AbsoluteQuadsGeneratorContext context(this, quads);
     generateLineBoxRects(context);
 }
@@ -419,6 +444,10 @@ void RenderInline::absoluteQuadsForSelection(Vector<FloatQuad>& quads) const
 
 LayoutUnit RenderInline::offsetLeft() const
 {
+#if ENABLE(LAYOUT_FORMATTING_CONTEXT)
+    if (auto* lineLayout = LayoutIntegration::LineLayout::containing(const_cast<RenderInline&>(*this)))
+        lineLayout->flow().ensureLineBoxes();
+#endif
     LayoutPoint topLeft;
     if (InlineBox* firstBox = firstLineBoxIncludingCulling())
         topLeft = flooredLayoutPoint(firstBox->topLeft());
@@ -427,6 +456,10 @@ LayoutUnit RenderInline::offsetLeft() const
 
 LayoutUnit RenderInline::offsetTop() const
 {
+#if ENABLE(LAYOUT_FORMATTING_CONTEXT)
+    if (auto* lineLayout = LayoutIntegration::LineLayout::containing(const_cast<RenderInline&>(*this)))
+        lineLayout->flow().ensureLineBoxes();
+#endif
     LayoutPoint topLeft;
     if (InlineBox* firstBox = firstLineBoxIncludingCulling())
         topLeft = flooredLayoutPoint(firstBox->topLeft());
@@ -501,6 +534,10 @@ const char* RenderInline::renderName() const
 bool RenderInline::nodeAtPoint(const HitTestRequest& request, HitTestResult& result,
                                 const HitTestLocation& locationInContainer, const LayoutPoint& accumulatedOffset, HitTestAction hitTestAction)
 {
+#if ENABLE(LAYOUT_FORMATTING_CONTEXT)
+    if (auto* lineLayout = LayoutIntegration::LineLayout::containing(const_cast<RenderInline&>(*this)))
+        lineLayout->flow().ensureLineBoxes();
+#endif
     return m_lineBoxes.hitTest(this, request, result, locationInContainer, accumulatedOffset, hitTestAction);
 }
 
@@ -736,6 +773,11 @@ LayoutRect RenderInline::culledInlineVisualOverflowBoundingBox() const
 
 LayoutRect RenderInline::linesVisualOverflowBoundingBox() const
 {
+#if ENABLE(LAYOUT_FORMATTING_CONTEXT)
+    if (auto* layout = LayoutIntegration::LineLayout::containing(*this))
+        return layout->visualOverflowBoundingBoxRectFor(*this);
+#endif
+
     if (!alwaysCreateLineBoxes())
         return culledInlineVisualOverflowBoundingBox();
 
@@ -812,7 +854,19 @@ LayoutRect RenderInline::clippedOverflowRectForRepaint(const RenderLayerModelObj
     // Only first-letter renderers are allowed in here during layout. They mutate the tree triggering repaints.
     ASSERT(!view().frameView().layoutContext().isPaintOffsetCacheEnabled() || style().styleType() == PseudoId::FirstLetter || hasSelfPaintingLayer());
 
-    if (!firstLineBoxIncludingCulling() && !continuation())
+    auto knownEmpty = [&] {
+        if (firstLineBoxIncludingCulling())
+            return false;
+        if (continuation())
+            return false;
+#if ENABLE(LAYOUT_FORMATTING_CONTEXT)
+        if (LayoutIntegration::LineLayout::containing(*this))
+            return false;
+#endif
+        return true;
+    };
+
+    if (knownEmpty())
         return LayoutRect();
 
     LayoutRect repaintRect(linesVisualOverflowBoundingBox());
@@ -1166,6 +1220,10 @@ void RenderInline::imageChanged(WrappedImagePtr, const IntRect*)
 
 void RenderInline::addFocusRingRects(Vector<LayoutRect>& rects, const LayoutPoint& additionalOffset, const RenderLayerModelObject* paintContainer)
 {
+#if ENABLE(LAYOUT_FORMATTING_CONTEXT)
+    if (auto* lineLayout = LayoutIntegration::LineLayout::containing(const_cast<RenderInline&>(*this)))
+        lineLayout->flow().ensureLineBoxes();
+#endif
     AbsoluteRectsGeneratorContext context(rects, additionalOffset);
     generateLineBoxRects(context);
 

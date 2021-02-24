@@ -69,7 +69,7 @@ class TouchEvent;
 
 using NodeOrString = Variant<RefPtr<Node>, String>;
 
-class Node : public CanMakeWeakPtr<Node>, public EventTarget {
+class Node : public EventTarget {
     WTF_MAKE_ISO_ALLOCATED(Node);
 
     friend class Document;
@@ -206,10 +206,6 @@ public:
     bool isCharacterDataNode() const { return hasNodeFlag(NodeFlag::IsCharacterData); }
     virtual bool isFrameOwnerElement() const { return false; }
     virtual bool isPluginElement() const { return false; }
-#if ENABLE(SERVICE_CONTROLS)
-    virtual bool isImageControlsRootElement() const { return false; }
-    virtual bool isImageControlsButtonElement() const { return false; }
-#endif
 
     bool isDocumentNode() const { return hasNodeFlag(NodeFlag::IsDocumentNode); }
     bool isTreeScope() const { return hasNodeFlag(NodeFlag::IsDocumentNode) || hasNodeFlag(NodeFlag::IsShadowRoot); }
@@ -298,6 +294,8 @@ public:
     bool styleResolutionShouldRecompositeLayer() const { return hasStyleFlag(NodeStyleFlag::StyleResolutionShouldRecompositeLayer); }
     bool childNeedsStyleRecalc() const { return hasStyleFlag(NodeStyleFlag::DescendantNeedsStyleResolution); }
     bool isEditingText() const { return hasNodeFlag(NodeFlag::IsEditingText); }
+
+    bool isDocumentFragmentForInnerOuterHTML() const { return hasNodeFlag(NodeFlag::IsDocumentFragmentForInnerOuterHTML); }
 
     void setChildNeedsStyleRecalc() { setStyleFlag(NodeStyleFlag::DescendantNeedsStyleResolution); }
     void clearChildNeedsStyleRecalc();
@@ -447,7 +445,7 @@ public:
     ScriptExecutionContext* scriptExecutionContext() const final; // Implemented in Document.h
 
     WEBCORE_EXPORT bool addEventListener(const AtomString& eventType, Ref<EventListener>&&, const AddEventListenerOptions&) override;
-    bool removeEventListener(const AtomString& eventType, EventListener&, const ListenerOptions&) override;
+    bool removeEventListener(const AtomString& eventType, EventListener&, const EventListenerOptions&) override;
 
     using EventTarget::dispatchEvent;
     void dispatchEvent(Event&) override;
@@ -532,10 +530,10 @@ protected:
         IsInShadowTree = 1 << 11,
         HasEventTargetData = 1 << 12,
         // UnusedFlag = 1 << 13,
-        // UnusedFlag = 1 << 14,
 
         // These bits are used by derived classes, pulled up here so they can
         // be stored in the same memory word as the Node bits above.
+        IsDocumentFragmentForInnerOuterHTML = 1 << 14, // DocumentFragment
         IsEditingText = 1 << 15, // Text
         HasFocusWithin = 1 << 16, // Element
         IsLink = 1 << 17,
@@ -710,6 +708,8 @@ private:
     static void moveShadowTreeToNewDocument(ShadowRoot&, Document& oldDocument, Document& newDocument);
     static void moveTreeToNewScope(Node&, TreeScope& oldScope, TreeScope& newScope);
     void moveNodeToNewDocument(Document& oldDocument, Document& newDocument);
+    
+    virtual void didChangeRenderer(RenderObject*) { };
 
     struct NodeRareDataDeleter {
         void operator()(NodeRareData*) const;

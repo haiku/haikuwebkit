@@ -30,12 +30,11 @@
 
 #include "DisplayListWriterHandle.h"
 #include "GPUConnectionToWebProcess.h"
-#include "ImageDataReference.h"
 #include "PlatformRemoteImageBufferProxy.h"
-#include "RemoteRenderingBackendCreationParameters.h"
 #include "RemoteRenderingBackendMessages.h"
 #include "RemoteRenderingBackendProxyMessages.h"
 #include "SharedMemory.h"
+#include "WebCoreArgumentCoders.h"
 #include "WebProcess.h"
 
 namespace WebKit {
@@ -67,12 +66,7 @@ void RemoteRenderingBackendProxy::connectToGPUProcess()
     auto& connection = WebProcess::singleton().ensureGPUProcessConnection();
     connection.addClient(*this);
     connection.messageReceiverMap().addMessageReceiver(Messages::RemoteRenderingBackendProxy::messageReceiverName(), m_renderingBackendIdentifier.toUInt64(), *this);
-    send(Messages::GPUConnectionToWebProcess::CreateRenderingBackend({
-        m_renderingBackendIdentifier,
-#if PLATFORM(COCOA)
-        m_resumeDisplayListSemaphore.createSendRight(),
-#endif
-    }), 0);
+    send(Messages::GPUConnectionToWebProcess::CreateRenderingBackend(m_renderingBackendIdentifier, m_resumeDisplayListSemaphore), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }
 
 void RemoteRenderingBackendProxy::reestablishGPUProcessConnection()
@@ -124,7 +118,7 @@ bool RemoteRenderingBackendProxy::waitForDidFlush()
     return connection->waitForAndDispatchImmediately<Messages::RemoteRenderingBackendProxy::DidFlush>(m_renderingBackendIdentifier, 1_s, IPC::WaitForOption::InterruptWaitingIfSyncMessageArrives);
 }
 
-RefPtr<ImageBuffer> RemoteRenderingBackendProxy::createImageBuffer(const FloatSize& size, RenderingMode renderingMode, float resolutionScale, ColorSpace colorSpace, PixelFormat pixelFormat)
+RefPtr<ImageBuffer> RemoteRenderingBackendProxy::createImageBuffer(const FloatSize& size, RenderingMode renderingMode, float resolutionScale, DestinationColorSpace colorSpace, PixelFormat pixelFormat)
 {
     RefPtr<ImageBuffer> imageBuffer;
 
@@ -153,9 +147,9 @@ RefPtr<ImageData> RemoteRenderingBackendProxy::getImageData(AlphaPremultiplicati
 {
     sendDeferredWakeupMessageIfNeeded();
 
-    IPC::ImageDataReference imageDataReference;
-    sendSync(Messages::RemoteRenderingBackend::GetImageData(outputFormat, srcRect, renderingResourceIdentifier), Messages::RemoteRenderingBackend::GetImageData::Reply(imageDataReference), m_renderingBackendIdentifier, 1_s);
-    return imageDataReference.buffer();
+    RefPtr<ImageData> imageData;
+    sendSync(Messages::RemoteRenderingBackend::GetImageData(outputFormat, srcRect, renderingResourceIdentifier), Messages::RemoteRenderingBackend::GetImageData::Reply(imageData), m_renderingBackendIdentifier, 1_s);
+    return imageData;
 }
 
 String RemoteRenderingBackendProxy::getDataURLForImageBuffer(const String& mimeType, Optional<double> quality, PreserveResolution preserveResolution, RenderingResourceIdentifier renderingResourceIdentifier)
@@ -183,6 +177,18 @@ Vector<uint8_t> RemoteRenderingBackendProxy::getBGRADataForImageBuffer(Rendering
     Vector<uint8_t> data;
     sendSync(Messages::RemoteRenderingBackend::GetBGRADataForImageBuffer(renderingResourceIdentifier), Messages::RemoteRenderingBackend::GetBGRADataForImageBuffer::Reply(data), m_renderingBackendIdentifier, 1_s);
     return data;
+}
+
+RefPtr<ShareableBitmap> RemoteRenderingBackendProxy::getShareableBitmap(RenderingResourceIdentifier imageBuffer, PreserveResolution preserveResolution)
+{
+    sendDeferredWakeupMessageIfNeeded();
+
+    ShareableBitmap::Handle handle;
+    auto sendResult = sendSync(Messages::RemoteRenderingBackend::GetShareableBitmapForImageBuffer(imageBuffer, preserveResolution), Messages::RemoteRenderingBackend::GetShareableBitmapForImageBuffer::Reply(handle), m_renderingBackendIdentifier, 1_s);
+    if (handle.isNull())
+        return { };
+    ASSERT_UNUSED(sendResult, sendResult);
+    return ShareableBitmap::create(handle);
 }
 
 void RemoteRenderingBackendProxy::cacheNativeImage(const ShareableBitmap::Handle& handle, RenderingResourceIdentifier renderingResourceIdentifier)

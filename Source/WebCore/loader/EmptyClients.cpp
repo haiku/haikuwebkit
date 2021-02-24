@@ -28,6 +28,7 @@
 #include "config.h"
 #include "EmptyClients.h"
 
+#include "AppHighlight.h"
 #include "ApplicationCacheStorage.h"
 #include "BackForwardClient.h"
 #include "CacheStorageProvider.h"
@@ -364,9 +365,12 @@ class EmptyPaymentCoordinatorClient final : public PaymentCoordinatorClient {
     void openPaymentSetup(const String&, const String&, CompletionHandler<void(bool)>&& completionHandler) final { callOnMainThread([completionHandler = WTFMove(completionHandler)]() mutable { completionHandler(false); }); }
     bool showPaymentUI(const URL&, const Vector<URL>&, const ApplePaySessionPaymentRequest&) final { return false; }
     void completeMerchantValidation(const PaymentMerchantSession&) final { }
-    void completeShippingMethodSelection(Optional<ShippingMethodUpdate>&&) final { }
-    void completeShippingContactSelection(Optional<ShippingContactUpdate>&&) final { }
-    void completePaymentMethodSelection(Optional<PaymentMethodUpdate>&&) final { }
+    void completeShippingMethodSelection(Optional<ApplePayShippingMethodUpdate>&&) final { }
+    void completeShippingContactSelection(Optional<ApplePayShippingContactUpdate>&&) final { }
+    void completePaymentMethodSelection(Optional<ApplePayPaymentMethodUpdate>&&) final { }
+#if ENABLE(APPLE_PAY_PAYMENT_METHOD_MODE)
+    void completePaymentMethodModeChange(Optional<ApplePayPaymentMethodModeUpdate>&&) final { }
+#endif // ENABLE(APPLE_PAY_PAYMENT_METHOD_MODE)
     void completePaymentSession(Optional<PaymentAuthorizationResult>&&) final { }
     void cancelPaymentSession() final { }
     void abortPaymentSession() final { }
@@ -502,6 +506,12 @@ std::unique_ptr<DateTimeChooser> EmptyChromeClient::createDateTimeChooser(DateTi
 
 #endif
 
+#if ENABLE(APP_HIGHLIGHTS)
+void EmptyChromeClient::storeAppHighlight(const AppHighlight&) const
+{
+}
+#endif
+
 void EmptyChromeClient::runOpenPanel(Frame&, FileChooser&)
 {
 }
@@ -606,6 +616,7 @@ PageConfiguration pageConfigurationWithEmptyClients(PAL::SessionID sessionID)
         SocketProvider::create(),
         LibWebRTCProvider::create(),
         CacheStorageProvider::create(),
+        adoptRef(*new EmptyUserContentProvider),
         adoptRef(*new EmptyBackForwardClient),
         CookieJar::create(adoptRef(*new EmptyStorageSessionProvider)),
         makeUniqueRef<EmptyProgressTrackerClient>(),
@@ -640,7 +651,6 @@ PageConfiguration pageConfigurationWithEmptyClients(PAL::SessionID sessionID)
     pageConfiguration.databaseProvider = adoptRef(*new EmptyDatabaseProvider);
     pageConfiguration.pluginInfoProvider = adoptRef(*new EmptyPluginInfoProvider);
     pageConfiguration.storageNamespaceProvider = adoptRef(*new EmptyStorageNamespaceProvider);
-    pageConfiguration.userContentProvider = adoptRef(*new EmptyUserContentProvider);
     pageConfiguration.visitedLinkStore = adoptRef(*new EmptyVisitedLinkStore);
     
     return pageConfiguration;

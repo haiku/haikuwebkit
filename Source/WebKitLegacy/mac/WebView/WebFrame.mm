@@ -95,6 +95,7 @@
 #import <WebCore/PrintContext.h>
 #import <WebCore/Range.h>
 #import <WebCore/RenderLayer.h>
+#import <WebCore/RenderLayerScrollableArea.h>
 #import <WebCore/RenderView.h>
 #import <WebCore/RenderWidget.h>
 #import <WebCore/RenderedDocumentMarker.h>
@@ -186,17 +187,8 @@ NSString *NSAccessibilityEnhancedUserInterfaceAttribute = @"AXEnhancedUserInterf
 
 @implementation WebFramePrivate
 
-- (void)dealloc
-{
-    [webFrameView release];
-
-    [super dealloc];
-}
-
 - (void)setWebFrameView:(WebFrameView *)v
 { 
-    [v retain];
-    [webFrameView release];
     webFrameView = v;
 }
 
@@ -305,9 +297,8 @@ WebView *getWebView(WebFrame *webFrame)
 {
     WebView *webView = kit(page);
 
-    WebFrame *frame = [[self alloc] _initWithWebFrameView:frameView webView:webView];
-    auto coreFrame = WebCore::Frame::create(page, ownerElement, makeUniqueRef<WebFrameLoaderClient>(frame));
-    [frame release];
+    RetainPtr<WebFrame> frame = adoptNS([[self alloc] _initWithWebFrameView:frameView webView:webView]);
+    auto coreFrame = WebCore::Frame::create(page, ownerElement, makeUniqueRef<WebFrameLoaderClient>(frame.get()));
     frame->_private->coreFrame = coreFrame.ptr();
 
     coreFrame.get().tree().setName(name);
@@ -327,10 +318,9 @@ WebView *getWebView(WebFrame *webFrame)
 {
     WebView *webView = kit(page);
 
-    WebFrame *frame = [[self alloc] _initWithWebFrameView:frameView webView:webView];
+    RetainPtr<WebFrame> frame = adoptNS([[self alloc] _initWithWebFrameView:frameView webView:webView]);
     frame->_private->coreFrame = &page->mainFrame();
-    static_cast<WebFrameLoaderClient&>(page->mainFrame().loader().client()).setWebFrame(*frame);
-    [frame release];
+    static_cast<WebFrameLoaderClient&>(page->mainFrame().loader().client()).setWebFrame(*frame.get());
 
     page->mainFrame().tree().setName(name);
     page->mainFrame().init();
@@ -355,12 +345,11 @@ static NSURL *createUniqueWebDataURL();
 {
     WebView *webView = kit(page);
     
-    WebFrame *frame = [[self alloc] _initWithWebFrameView:frameView webView:webView];
+    RetainPtr<WebFrame> frame = adoptNS([[self alloc] _initWithWebFrameView:frameView webView:webView]);
     frame->_private->coreFrame = &page->mainFrame();
-    static_cast<WebFrameLoaderClient&>(page->mainFrame().loader().client()).setWebFrame(*frame);
-    [frame release];
+    static_cast<WebFrameLoaderClient&>(page->mainFrame().loader().client()).setWebFrame(*frame.get());
 
-    frame->_private->coreFrame->initWithSimpleHTMLDocument(style, createUniqueWebDataURL());
+    frame.get()->_private->coreFrame->initWithSimpleHTMLDocument(style, createUniqueWebDataURL());
 }
 #endif
 
@@ -741,9 +730,10 @@ static NSURL *createUniqueWebDataURL();
 #else
         auto* layer = startNode->renderer()->enclosingLayer();
         if (layer) {
-            layer->setAdjustForIOSCaretWhenScrolling(true);
+            auto* scrollableArea = layer->ensureLayerScrollableArea();
+            scrollableArea->setAdjustForIOSCaretWhenScrolling(true);
             startNode->renderer()->scrollRectToVisible(WebCore::enclosingIntRect(rangeRect), insideFixed, { WebCore::SelectionRevealMode::Reveal, WebCore::ScrollAlignment::alignToEdgeIfNeeded, WebCore::ScrollAlignment::alignToEdgeIfNeeded, WebCore::ShouldAllowCrossOriginScrolling::Yes });
-            layer->setAdjustForIOSCaretWhenScrolling(false);
+            scrollableArea->setAdjustForIOSCaretWhenScrolling(false);
             _private->coreFrame->selection().setCaretRectNeedsUpdate();
             _private->coreFrame->selection().updateAppearance();
         }
@@ -761,9 +751,10 @@ static NSURL *createUniqueWebDataURL();
     if (startNode && startNode->renderer()) {
         auto* layer = startNode->renderer()->enclosingLayer();
         if (layer) {
-            layer->setAdjustForIOSCaretWhenScrolling(true);
+            auto* scrollableArea = layer->ensureLayerScrollableArea();
+            scrollableArea->setAdjustForIOSCaretWhenScrolling(true);
             startNode->renderer()->scrollRectToVisible(WebCore::enclosingIntRect(rangeRect), insideFixed, { WebCore::SelectionRevealMode::Reveal, WebCore::ScrollAlignment::alignToEdgeIfNeeded, WebCore::ScrollAlignment::alignToEdgeIfNeeded, WebCore::ShouldAllowCrossOriginScrolling::Yes});
-            layer->setAdjustForIOSCaretWhenScrolling(false);
+            scrollableArea->setAdjustForIOSCaretWhenScrolling(false);
 
             auto coreFrame = core(self);
             if (coreFrame) {
@@ -1728,7 +1719,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
     auto& selection = frame->selection().selection();
     auto root = selection.isNone() ? frame->document()->bodyOrFrameset() : selection.rootEditableElement();
 
-    DOMRange *previousDOMRange = nil;
+    RetainPtr<DOMRange> previousDOMRange;
     id previousMetadata = nil;
 
     for (WebCore::Node* node = root; node; node = WebCore::NodeTraversal::next(*node)) {
@@ -1755,13 +1746,11 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
                 // It is possible for a DocumentMarker to be split by editing. Adjacent markers with the
                 // the same metadata are for the same result. So combine their ranges.
                 ASSERT(previousDOMRange == [ranges lastObject]);
-                [previousDOMRange retain];
                 [ranges removeLastObject];
                 DOMNode *startContainer = [domRange startContainer];
                 int startOffset = [domRange startOffset];
                 [previousDOMRange setEnd:startContainer offset:startOffset];
-                [ranges addObject:previousDOMRange];
-                [previousDOMRange release];
+                [ranges addObject:previousDOMRange.get()];
             }
         }
     }
@@ -2344,7 +2333,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
     if (!coreFrame)
         return nil;
     constexpr OptionSet<HitTestRequest::RequestType> hitType { HitTestRequest::ReadOnly, HitTestRequest::Active, HitTestRequest::IgnoreClipping, HitTestRequest::DisallowUserAgentShadowContent, HitTestRequest::AllowChildFrameContent };
-    return [[[WebElementDictionary alloc] initWithHitTestResult:coreFrame->eventHandler().hitTestResultAtPoint(WebCore::IntPoint(point), hitType)] autorelease];
+    return adoptNS([[WebElementDictionary alloc] initWithHitTestResult:coreFrame->eventHandler().hitTestResultAtPoint(WebCore::IntPoint(point), hitType)]).autorelease();
 }
 
 - (NSURL *)_unreachableURL
@@ -2387,7 +2376,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
 
 - (WebFrameView *)frameView
 {
-    return _private->webFrameView;
+    return _private->webFrameView.get();
 }
 
 - (WebView *)webView
@@ -2578,7 +2567,7 @@ static NSURL *createUniqueWebDataURL()
     auto coreFrame = _private->coreFrame;
     if (!coreFrame)
         return nil;
-    return [[kit(coreFrame->tree().parent()) retain] autorelease];
+    return retainPtr(kit(coreFrame->tree().parent())).autorelease();
 }
 
 - (NSArray *)childFrames

@@ -94,7 +94,6 @@ list(APPEND WebCore_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/platform/audio/mac"
     "${WEBCORE_DIR}/platform/cf"
     "${WEBCORE_DIR}/platform/cocoa"
-    "${WEBCORE_DIR}/platform/encryptedmedia/clearkey"
     "${WEBCORE_DIR}/platform/graphics/avfoundation"
     "${WEBCORE_DIR}/platform/graphics/avfoundation/cf"
     "${WEBCORE_DIR}/platform/graphics/avfoundation/objc"
@@ -225,8 +224,6 @@ list(APPEND WebCore_SOURCES
     platform/cocoa/VideoToolboxSoftLink.cpp
     platform/cocoa/WebCoreNSErrorExtras.mm
 
-    platform/encryptedmedia/clearkey/CDMClearKey.cpp
-
     platform/gamepad/mac/HIDGamepad.cpp
     platform/gamepad/mac/HIDGamepadProvider.cpp
 
@@ -340,6 +337,7 @@ list(APPEND WebCore_SOURCES
     platform/graphics/mac/FloatPointMac.mm
     platform/graphics/mac/FloatSizeMac.mm
     platform/graphics/mac/FontCustomPlatformData.cpp
+    platform/graphics/mac/GraphicsChecksMac.cpp
     platform/graphics/mac/IconMac.mm
     platform/graphics/mac/ImageMac.mm
     platform/graphics/mac/IntPointMac.mm
@@ -357,7 +355,7 @@ list(APPEND WebCore_SOURCES
     platform/mac/KeyEventMac.mm
     platform/mac/LocalCurrentGraphicsContextMac.mm
     platform/mac/LoggingMac.mm
-    platform/mac/MediaRemoteSoftLink.cpp
+    platform/mac/MediaRemoteSoftLink.mm
     platform/mac/NSScrollerImpDetails.mm
     platform/mac/PasteboardMac.mm
     platform/mac/PasteboardWriter.mm
@@ -370,6 +368,7 @@ list(APPEND WebCore_SOURCES
     platform/mac/RemoteCommandListenerMac.mm
     platform/mac/SSLKeyGeneratorMac.mm
     platform/mac/ScrollAnimatorMac.mm
+    platform/mac/ScrollController.mm
     platform/mac/ScrollViewMac.mm
     platform/mac/ScrollbarThemeMac.mm
     platform/mac/SerializedPlatformDataCueMac.mm
@@ -436,7 +435,6 @@ list(APPEND WebCore_SOURCES
 )
 
 list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
-    Modules/applepay/PaymentMethodUpdate.h
     Modules/applepay/PaymentSessionError.h
     Modules/applepay/PaymentSummaryItems.h
 
@@ -512,8 +510,6 @@ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/cocoa/PlatformView.h
     platform/cocoa/PlaybackSessionModel.h
     platform/cocoa/PlaybackSessionModelMediaElement.h
-    platform/cocoa/ScrollController.h
-    platform/cocoa/ScrollSnapAnimatorState.h
     platform/cocoa/SearchPopupMenuCocoa.h
     platform/cocoa/SystemBattery.h
     platform/cocoa/SystemVersion.h
@@ -619,6 +615,8 @@ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
 list(APPEND WebCore_IDL_FILES
     Modules/applepay/ApplePayCancelEvent.idl
     Modules/applepay/ApplePayContactField.idl
+    Modules/applepay/ApplePayDetailsUpdateBase.idl
+    Modules/applepay/ApplePayDetailsUpdateData.idl
     Modules/applepay/ApplePayError.idl
     Modules/applepay/ApplePayErrorCode.idl
     Modules/applepay/ApplePayErrorContactField.idl
@@ -627,12 +625,14 @@ list(APPEND WebCore_IDL_FILES
     Modules/applepay/ApplePayInstallmentConfiguration.idl
     Modules/applepay/ApplePayInstallmentRetailChannel.idl
     Modules/applepay/ApplePayLineItem.idl
+    Modules/applepay/ApplePayLineItemData.idl
     Modules/applepay/ApplePayMerchantCapability.idl
     Modules/applepay/ApplePayPayment.idl
     Modules/applepay/ApplePayPaymentAuthorizationResult.idl
     Modules/applepay/ApplePayPaymentAuthorizedEvent.idl
     Modules/applepay/ApplePayPaymentContact.idl
     Modules/applepay/ApplePayPaymentMethod.idl
+    Modules/applepay/ApplePayPaymentMethodModeUpdate.idl
     Modules/applepay/ApplePayPaymentMethodSelectedEvent.idl
     Modules/applepay/ApplePayPaymentMethodType.idl
     Modules/applepay/ApplePayPaymentMethodUpdate.idl
@@ -649,6 +649,7 @@ list(APPEND WebCore_IDL_FILES
     Modules/applepay/ApplePayShippingContactSelectedEvent.idl
     Modules/applepay/ApplePayShippingContactUpdate.idl
     Modules/applepay/ApplePayShippingMethod.idl
+    Modules/applepay/ApplePayShippingMethodData.idl
     Modules/applepay/ApplePayShippingMethodSelectedEvent.idl
     Modules/applepay/ApplePayShippingMethodUpdate.idl
     Modules/applepay/ApplePayValidateMerchantEvent.idl

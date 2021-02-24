@@ -29,8 +29,8 @@
 
 #include "Connection.h"
 #include "GPUProcessWakeupMessageArguments.h"
+#include "IPCSemaphore.h"
 #include "ImageBufferBackendHandle.h"
-#include "ImageDataReference.h"
 #include "MessageReceiver.h"
 #include "MessageSender.h"
 #include "RemoteResourceCache.h"
@@ -41,11 +41,6 @@
 #include <WebCore/DisplayListReplayer.h>
 #include <wtf/WeakPtr.h>
 
-#if PLATFORM(COCOA)
-namespace WTF {
-class MachSemaphore;
-}
-#endif
 
 namespace WebCore {
 namespace DisplayList {
@@ -54,7 +49,7 @@ class Item;
 }
 class FloatSize;
 class NativeImage;
-enum class ColorSpace : uint8_t;
+enum class DestinationColorSpace : uint8_t;
 enum class RenderingMode : bool;
 }
 
@@ -62,15 +57,16 @@ namespace WebKit {
 
 class DisplayListReaderHandle;
 class GPUConnectionToWebProcess;
-struct RemoteRenderingBackendCreationParameters;
 
 class RemoteRenderingBackend
     : private IPC::MessageSender
     , public IPC::Connection::WorkQueueMessageReceiver
     , public WebCore::DisplayList::ItemBufferReadingClient {
 public:
-    static Ref<RemoteRenderingBackend> create(GPUConnectionToWebProcess&, RemoteRenderingBackendCreationParameters&&);
+
+    static Ref<RemoteRenderingBackend> create(GPUConnectionToWebProcess&, RenderingBackendIdentifier, IPC::Semaphore&& resumeDisplayListSemaphore);
     virtual ~RemoteRenderingBackend();
+    void stopListeningForIPC();
 
     RemoteResourceCache& remoteResourceCache() { return m_remoteResourceCache; }
 
@@ -83,10 +79,12 @@ public:
 
     void setNextItemBufferToRead(WebCore::DisplayList::ItemBufferIdentifier, WebCore::RenderingResourceIdentifier destination);
 
-    void disconnect();
+    // Runs Function in RemoteRenderingBackend task queue.
+    void dispatch(Function<void()>&&);
 
 private:
-    RemoteRenderingBackend(GPUConnectionToWebProcess&, RemoteRenderingBackendCreationParameters&&);
+    RemoteRenderingBackend(GPUConnectionToWebProcess&, RenderingBackendIdentifier, IPC::Semaphore&&);
+    void startListeningForIPC();
 
     Optional<WebCore::DisplayList::ItemHandle> WARN_UNUSED_RETURN decodeItem(const uint8_t* data, size_t length, WebCore::DisplayList::ItemType, uint8_t* handleLocation) override;
 
@@ -114,12 +112,13 @@ private:
     void didReceiveSyncMessage(IPC::Connection&, IPC::Decoder&, std::unique_ptr<IPC::Encoder>&) override;
 
     // Messages to be received.
-    void createImageBuffer(const WebCore::FloatSize& logicalSize, WebCore::RenderingMode, float resolutionScale, WebCore::ColorSpace, WebCore::PixelFormat, WebCore::RenderingResourceIdentifier);
+    void createImageBuffer(const WebCore::FloatSize& logicalSize, WebCore::RenderingMode, float resolutionScale, WebCore::DestinationColorSpace, WebCore::PixelFormat, WebCore::RenderingResourceIdentifier);
     void wakeUpAndApplyDisplayList(const GPUProcessWakeupMessageArguments&);
-    void getImageData(WebCore::AlphaPremultiplication outputFormat, WebCore::IntRect srcRect, WebCore::RenderingResourceIdentifier, CompletionHandler<void(IPC::ImageDataReference&&)>&&);
+    void getImageData(WebCore::AlphaPremultiplication outputFormat, WebCore::IntRect srcRect, WebCore::RenderingResourceIdentifier, CompletionHandler<void(RefPtr<WebCore::ImageData>&&)>&&);
     void getDataURLForImageBuffer(const String& mimeType, Optional<double> quality, WebCore::PreserveResolution, WebCore::RenderingResourceIdentifier, CompletionHandler<void(String&&)>&&);
     void getDataForImageBuffer(const String& mimeType, Optional<double> quality, WebCore::RenderingResourceIdentifier, CompletionHandler<void(Vector<uint8_t>&&)>&&);
     void getBGRADataForImageBuffer(WebCore::RenderingResourceIdentifier, CompletionHandler<void(Vector<uint8_t>&&)>&&);
+    void getShareableBitmapForImageBuffer(WebCore::RenderingResourceIdentifier, WebCore::PreserveResolution, CompletionHandler<void(ShareableBitmap::Handle&&)>&&);
     void cacheNativeImage(const ShareableBitmap::Handle&, WebCore::RenderingResourceIdentifier);
     void cacheFont(Ref<WebCore::Font>&&);
     void deleteAllFonts();
@@ -148,9 +147,7 @@ private:
     RenderingBackendIdentifier m_renderingBackendIdentifier;
     HashMap<WebCore::DisplayList::ItemBufferIdentifier, RefPtr<DisplayListReaderHandle>> m_sharedDisplayListHandles;
     Optional<PendingWakeupInformation> m_pendingWakeupInfo;
-#if PLATFORM(COCOA)
-    std::unique_ptr<WTF::MachSemaphore> m_resumeDisplayListSemaphore;
-#endif
+    IPC::Semaphore m_resumeDisplayListSemaphore;
 };
 
 } // namespace WebKit

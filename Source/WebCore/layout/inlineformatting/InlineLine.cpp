@@ -271,7 +271,8 @@ void Line::appendTextContent(const InlineTextItem& inlineTextItem, InlineLayoutU
         m_contentLogicalWidth = std::max(oldContentLogicalWidth, runLogicalLeft + logicalWidth);
     } else {
         m_runs.last().expand(inlineTextItem, logicalWidth);
-        m_contentLogicalWidth += logicalWidth;
+        // Do not let negative letter spacing make the content shorter than it already is.
+        m_contentLogicalWidth += std::max(0.0f, logicalWidth);
     }
     // Set the trailing trimmable content.
     if (inlineTextItem.isWhitespace() && !InlineTextItem::shouldPreserveSpacesAndTabs(inlineTextItem)) {
@@ -322,39 +323,6 @@ void Line::appendLineBreak(const InlineItem& inlineItem)
 void Line::appendWordBreakOpportunity(const InlineItem& inlineItem)
 {
     m_runs.append({ inlineItem, contentLogicalRight(), 0_lu });
-}
-
-bool Line::isRunConsideredEmpty(const Run& run) const
-{
-    if (run.isText())
-        return false;
-
-    if (run.isLineBreak())
-        return true;
-
-    // Note that this does not check whether the inline container has content. It simply checks if the container itself is considered non-empty.
-    if (run.isInlineBoxStart() || run.isInlineBoxEnd()) {
-        if (!run.logicalWidth())
-            return true;
-        // Margin does not make the container non-empty only border or padding.
-        auto& boxGeometry = formattingContext().geometryForBox(run.layoutBox());
-        auto hasBorderOrPadding = run.isInlineBoxStart() ? boxGeometry.borderLeft() || (boxGeometry.paddingLeft() && boxGeometry.paddingLeft().value())
-            : boxGeometry.borderRight() || (boxGeometry.paddingRight() && boxGeometry.paddingRight().value());
-        return !hasBorderOrPadding;
-    }
-
-    if (run.isBox()) {
-        if (run.layoutBox().isReplacedBox())
-            return false;
-        ASSERT(run.layoutBox().isInlineBlockBox() || run.layoutBox().isInlineTableBox());
-        return !run.logicalWidth();
-    }
-
-    if (run.isWordBreakOpportunity())
-        return true;
-
-    ASSERT_NOT_REACHED();
-    return true;
 }
 
 void Line::addTrailingHyphen(InlineLayoutUnit hyphenLogicalWidth)

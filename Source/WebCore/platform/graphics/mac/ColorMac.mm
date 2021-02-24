@@ -92,13 +92,13 @@ static Optional<SRGBA<uint8_t>> makeSimpleColorFromNSColor(NSColor *color)
         NSUInteger pixel[4];
         [offscreenRep getPixel:pixel atX:0 y:0];
 
-        return clampToComponentBytes<SRGBA>(pixel[0], pixel[1], pixel[2], pixel[3]);
+        return makeFromComponentsClamping<SRGBA<uint8_t>>(pixel[0], pixel[1], pixel[2], pixel[3]);
     }
 
     [rgbColor getRed:&redComponent green:&greenComponent blue:&blueComponent alpha:&alpha];
     END_BLOCK_OBJC_EXCEPTIONS
 
-    return convertToComponentBytes(SRGBA { static_cast<float>(redComponent), static_cast<float>(greenComponent), static_cast<float>(blueComponent), static_cast<float>(alpha) });
+    return convertColor<SRGBA<uint8_t>>(SRGBA<float> { static_cast<float>(redComponent), static_cast<float>(greenComponent), static_cast<float>(blueComponent), static_cast<float>(alpha) });
 }
 
 Color colorFromNSColor(NSColor *color)
@@ -108,7 +108,7 @@ Color colorFromNSColor(NSColor *color)
 
 Color semanticColorFromNSColor(NSColor *color)
 {
-    return Color(makeSimpleColorFromNSColor(color), Color::Semantic);
+    return Color(makeSimpleColorFromNSColor(color), Color::Flags::Semantic);
 }
 
 NSColor *nsColor(const Color& color)

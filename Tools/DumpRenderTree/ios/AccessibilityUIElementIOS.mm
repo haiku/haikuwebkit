@@ -87,6 +87,7 @@ typedef void (*AXPostedNotificationCallback)(id element, NSString* notification,
 - (NSString *)accessibilityTextualContext;
 - (BOOL)accessibilityHasPopup;
 - (NSString *)accessibilityPopupValue;
+- (NSString *)_accessibilityPhotoDescription;
 - (BOOL)accessibilityPerformEscape;
 
 // TextMarker related
@@ -903,6 +904,11 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::ariaDropEffects() const
     return WTR::createJSString();
 }
 
+JSRetainPtr<JSStringRef> AccessibilityUIElement::embeddedImageDescription() const
+{
+    return [[m_element _accessibilityPhotoDescription] createJSStringRef];
+}
+
 int AccessibilityUIElement::lineForIndex(int index)
 {
     return -1;
@@ -1050,7 +1056,8 @@ bool AccessibilityUIElement::addNotificationListener(JSObjectRef functionCallbac
     // Other platforms may be different.
     if (m_notificationHandler)
         return false;
-    m_notificationHandler = [[AccessibilityNotificationHandler alloc] init];
+
+    m_notificationHandler = adoptNS([[AccessibilityNotificationHandler alloc] init]);
     [m_notificationHandler setPlatformElement:platformUIElement()];
     [m_notificationHandler setCallback:functionCallback];
     [m_notificationHandler startObserving];
@@ -1064,7 +1071,6 @@ void AccessibilityUIElement::removeNotificationListener()
     ASSERT(m_notificationHandler);
     
     [m_notificationHandler stopObserving];
-    [m_notificationHandler release];
     m_notificationHandler = nil;
 }
 

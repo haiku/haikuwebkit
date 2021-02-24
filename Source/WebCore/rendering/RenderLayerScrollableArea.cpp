@@ -46,6 +46,28 @@
 #include "config.h"
 #include "RenderLayerScrollableArea.h"
 
+#include "DebugPageOverlays.h"
+#include "DeprecatedGlobalSettings.h"
+#include "Editor.h"
+#include "ElementRuleCollector.h"
+#include "EventHandler.h"
+#include "FocusController.h"
+#include "FrameSelection.h"
+#include "HitTestResult.h"
+#include "Logging.h"
+#include "RenderFlexibleBox.h"
+#include "RenderGeometryMap.h"
+#include "RenderLayerBacking.h"
+#include "RenderLayerCompositor.h"
+#include "RenderMarquee.h"
+#include "RenderScrollbar.h"
+#include "RenderScrollbarPart.h"
+#include "RenderView.h"
+#include "ScrollAnimator.h"
+#include "ScrollbarTheme.h"
+#include "ScrollingCoordinator.h"
+#include "ShadowRoot.h"
+
 namespace WebCore {
 
 RenderLayerScrollableArea::RenderLayerScrollableArea(RenderLayer& layer)
@@ -243,12 +265,12 @@ void RenderLayerScrollableArea::scrollToOffset(const ScrollOffset& scrollOffset,
     setCurrentScrollType(options.type);
 
     ScrollOffset snappedOffset = ceiledIntPoint(scrollAnimator().adjustScrollOffsetForSnappingIfNeeded(clampedScrollOffset, options.snapPointSelectionMethod));
+    auto snappedPosition = scrollPositionFromOffset(snappedOffset);
     if (options.animated == AnimatedScroll::Yes)
-        ScrollableArea::scrollToOffsetWithAnimation(snappedOffset);
+        ScrollableArea::scrollToPositionWithAnimation(snappedPosition);
     else {
-        auto snappedPosition = scrollPositionFromOffset(snappedOffset);
         if (!requestScrollPositionUpdate(snappedPosition, options.type, options.clamping))
-            scrollToOffsetWithoutAnimation(snappedOffset, options.clamping);
+            scrollToPositionWithoutAnimation(snappedPosition, options.clamping);
         setScrollBehaviorStatus(ScrollBehaviorStatus::NotInAnimation);
     }
 
@@ -261,7 +283,7 @@ void RenderLayerScrollableArea::scrollTo(const ScrollPosition& position)
     if (!box)
         return;
 
-    LOG_WITH_STREAM(Scrolling, stream << "RenderLayerScrollableArea::scrollTo " << position << " from " << m_scrollPosition << " (is user scroll " << (currentScrollType() == ScrollType::User) << ")");
+    LOG_WITH_STREAM(Scrolling, stream << "RenderLayerScrollableArea  [" << scrollingNodeID() << "] scrollTo " << position << " from " << m_scrollPosition << " (is user scroll " << (currentScrollType() == ScrollType::User) << ")");
 
     ScrollPosition newPosition = position;
     if (!box->isHTMLMarquee()) {
@@ -1096,22 +1118,36 @@ void RenderLayerScrollableArea::updateScrollbarsAfterLayout()
             downcast<RenderFlexibleBox>(parent)->clearCachedMainSizeForChild(*m_layer.renderBox());
     }
 
-    // Set up the range (and page step/line step).
-    if (m_hBar) {
-        int clientWidth = roundToInt(box->clientWidth());
-        int pageStep = Scrollbar::pageStep(clientWidth);
-        m_hBar->setSteps(Scrollbar::pixelsPerLineStep(), pageStep);
-        m_hBar->setProportion(clientWidth, m_scrollWidth);
-    }
-    if (m_vBar) {
-        int clientHeight = roundToInt(box->clientHeight());
-        int pageStep = Scrollbar::pageStep(clientHeight);
-        m_vBar->setSteps(Scrollbar::pixelsPerLineStep(), pageStep);
-        m_vBar->setProportion(clientHeight, m_scrollHeight);
-    }
+    // Set up the range.
+    if (m_hBar)
+        m_hBar->setProportion(roundToInt(box->clientWidth()), m_scrollWidth);
+    if (m_vBar)
+        m_vBar->setProportion(roundToInt(box->clientHeight()), m_scrollHeight);
+
+    updateScrollbarSteps();
 
     updateScrollableAreaSet(hasScrollableHorizontalOverflow() || hasScrollableVerticalOverflow());
 }
+
+void RenderLayerScrollableArea::updateScrollbarSteps()
+{
+    RenderBox* box = m_layer.renderBox();
+    ASSERT(box);
+
+    LayoutRect paddedLayerBounds(0_lu, 0_lu, box->clientWidth(), box->clientHeight());
+    paddedLayerBounds.contract(box->scrollPaddingForViewportRect(paddedLayerBounds));
+
+    // Set up the  page step/line step.
+    if (m_hBar) {
+        int pageStep = Scrollbar::pageStep(roundToInt(paddedLayerBounds.width()));
+        m_hBar->setSteps(Scrollbar::pixelsPerLineStep(), pageStep);
+    }
+    if (m_vBar) {
+        int pageStep = Scrollbar::pageStep(roundToInt(paddedLayerBounds.height()));
+        m_vBar->setSteps(Scrollbar::pixelsPerLineStep(), pageStep);
+    }
+}
+
 
 // This is called from layout code (before updateLayerPositions).
 void RenderLayerScrollableArea::updateScrollInfoAfterLayout()
@@ -1121,7 +1157,7 @@ void RenderLayerScrollableArea::updateScrollInfoAfterLayout()
         return;
 
     m_scrollDimensionsDirty = true;
-    ScrollOffset originalScrollOffset = scrollOffset();
+    ScrollPosition originalScrollPosition = scrollPosition();
 
     computeScrollDimensions();
     m_layer.updateSelfPaintingLayer();
@@ -1152,8 +1188,8 @@ void RenderLayerScrollableArea::updateScrollInfoAfterLayout()
 
     updateScrollbarsAfterLayout();
 
-    if (originalScrollOffset != scrollOffset())
-        scrollToOffsetWithoutAnimation(IntPoint(scrollOffset()));
+    if (originalScrollPosition != scrollPosition())
+        scrollToPositionWithoutAnimation(IntPoint(scrollPosition()));
 
     if (m_layer.isComposited()) {
         m_layer.setNeedsCompositingGeometryUpdate();
@@ -1226,8 +1262,8 @@ void RenderLayerScrollableArea::paintOverflowControls(GraphicsContext& context, 
         if (!paintingRoot)
             paintingRoot = renderer.view().layer();
 
-        if (auto* scrollableLayer = paintingRoot->scrollableArea())
-            scrollableLayer->setContainsDirtyOverlayScrollbars(true);
+        if (auto* scrollableArea = paintingRoot->scrollableArea())
+            scrollableArea->setContainsDirtyOverlayScrollbars(true);
         return;
     }
 
@@ -1725,8 +1761,10 @@ void RenderLayerScrollableArea::scrollByRecursively(const IntSize& delta, Scroll
         IntSize remainingScrollOffset = newScrollOffset - scrollOffset();
         if (!remainingScrollOffset.isZero() && renderer.parent()) {
             // FIXME: This skips scrollable frames.
-            if (auto* scrollableLayer = m_layer.enclosingScrollableLayer(IncludeSelfOrNot::ExcludeSelf, CrossFrameBoundaries::Yes))
-                scrollableLayer->scrollByRecursively(remainingScrollOffset, scrolledArea);
+            if (auto* enclosingScrollableLayer = m_layer.enclosingScrollableLayer(IncludeSelfOrNot::ExcludeSelf, CrossFrameBoundaries::Yes)) {
+                if (auto* scrollableArea = enclosingScrollableLayer->scrollableArea())
+                    scrollableArea->scrollByRecursively(remainingScrollOffset, scrolledArea);
+            }
 
             renderer.frame().eventHandler().updateAutoscrollRenderer();
         }

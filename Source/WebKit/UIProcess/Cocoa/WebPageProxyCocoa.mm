@@ -38,6 +38,7 @@
 #import "SafeBrowsingSPI.h"
 #import "SafeBrowsingWarning.h"
 #import "SharedBufferCopy.h"
+#import "SharedBufferDataReference.h"
 #import "WebPage.h"
 #import "WebPageMessages.h"
 #import "WebPasteboardProxy.h"
@@ -73,6 +74,16 @@
 
 SOFT_LINK_PRIVATE_FRAMEWORK(WebContentAnalysis);
 SOFT_LINK_CLASS(WebContentAnalysis, WebFilterEvaluator);
+#endif
+
+#if USE(APPLE_INTERNAL_SDK)
+#import <WebKitAdditions/WebPageProxyCocoaAdditionsBefore.mm>
+#endif
+
+#if USE(APPLE_INTERNAL_SDK)
+#import <WebKitAdditions/WebPageProxyAdditions.h>
+#else
+#define WEB_PAGE_PROXY_ADDITIONS
 #endif
 
 #define MESSAGE_CHECK(assertion) MESSAGE_CHECK_BASE(assertion, process().connection())
@@ -154,6 +165,8 @@ void WebPageProxy::addPlatformLoadParameters(WebProcessProxy& process, LoadParam
 {
     loadParameters.dataDetectionContext = m_uiClient->dataDetectionContext();
 
+    loadParameters.networkExtensionSandboxExtensionHandles = createNetworkExtensionsSandboxExtensions(process);
+    
 #if PLATFORM(IOS)
     if (!process.hasManagedSessionSandboxAccess() && [getWebFilterEvaluatorClass() isManagedSession]) {
         SandboxExtension::Handle handle;
@@ -210,7 +223,7 @@ void WebPageProxy::startDrag(const DragItem& dragItem, const ShareableBitmap::Ha
 // FIXME: Move these functions to WebPageProxyIOS.mm.
 #if PLATFORM(IOS_FAMILY)
 
-void WebPageProxy::setPromisedDataForImage(const String&, const SharedMemory::IPCHandle&, const String&, const String&, const String&, const String&, const String&, const SharedMemory::IPCHandle&)
+void WebPageProxy::setPromisedDataForImage(const String&, const SharedMemory::IPCHandle&, const String&, const String&, const String&, const String&, const String&, const SharedMemory::IPCHandle&, const String&)
 {
     notImplemented();
 }
@@ -533,12 +546,29 @@ void WebPageProxy::addActivityStateUpdateCompletionHandler(CompletionHandler<voi
 }
 
 #if ENABLE(APP_HIGHLIGHTS)
-void WebPageProxy::createAppHighlightInSelectedRange(CreateNewGroupForHighlight createNewGroup)
+void WebPageProxy::createAppHighlightInSelectedRange(WebCore::CreateNewGroupForHighlight createNewGroup)
 {
     if (!hasRunningProcess())
         return;
 
     send(Messages::WebPage::CreateAppHighlightInSelectedRange(createNewGroup));
+}
+
+void WebPageProxy::restoreAppHighlights(const Vector<Ref<SharedMemory>>& highlights)
+{
+    if (!hasRunningProcess())
+        return;
+
+    Vector<SharedMemory::IPCHandle> memoryHandles;
+
+    for (auto highlight : highlights) {
+        SharedMemory::Handle handle;
+        highlight->createHandle(handle, SharedMemory::Protection::ReadOnly);
+
+        memoryHandles.append(SharedMemory::IPCHandle { WTFMove(handle), highlight->size() });
+    }
+
+    send(Messages::WebPage::RestoreAppHighlights(WTFMove(memoryHandles)));
 }
 #endif
 
@@ -559,7 +589,40 @@ SandboxExtension::HandleArray WebPageProxy::createNetworkExtensionsSandboxExtens
     return SandboxExtension::HandleArray();
 }
 
+#if ENABLE(IMAGE_EXTRACTION) && ENABLE(CONTEXT_MENUS)
+
+void WebPageProxy::handleContextMenuRevealImage()
+{
+    auto& result = m_activeContextMenuContextData.webHitTestResultData();
+    if (!result.imageBitmap)
+        return;
+
+    revealExtractedImageInPreviewPanel(*result.imageBitmap, result.toolTipText);
+}
+
+#endif // ENABLE(IMAGE_EXTRACTION) && ENABLE(CONTEXT_MENUS)
+
+void WebPageProxy::requestActiveNowPlayingSessionInfo(CompletionHandler<void(bool, bool, const String&, double, double, uint64_t)>&& callback)
+{
+    sendWithAsyncReply(Messages::WebPage::RequestActiveNowPlayingSessionInfo(), WTFMove(callback));
+}
+
+void WebPageProxy::setLastNavigationWasAppBound(ResourceRequest& request)
+{
+    WEB_PAGE_PROXY_ADDITIONS
+    m_lastNavigationWasAppBound = request.isAppBound();
+}
+
+void WebPageProxy::lastNavigationWasAppBound(CompletionHandler<void(bool)>&& completionHandler)
+{
+    sendWithAsyncReply(Messages::WebPage::LastNavigationWasAppBound(), WTFMove(completionHandler));
+}
+
 } // namespace WebKit
+
+#if USE(APPLE_INTERNAL_SDK)
+#import <WebKitAdditions/WebPageProxyCocoaAdditionsAfter.mm>
+#endif
 
 #undef MESSAGE_CHECK_COMPLETION
 #undef MESSAGE_CHECK

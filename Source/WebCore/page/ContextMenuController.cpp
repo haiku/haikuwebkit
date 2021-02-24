@@ -135,21 +135,6 @@ void ContextMenuController::showContextMenu(Event& event, ContextMenuProvider& p
     showContextMenu(event);
 }
 
-#if ENABLE(SERVICE_CONTROLS)
-
-static Image* imageFromImageElementNode(Node& node)
-{
-    auto* renderer = node.renderer();
-    if (!is<RenderImage>(renderer))
-        return nullptr;
-    auto* image = downcast<RenderImage>(*renderer).cachedImage();
-    if (!image || image->errorOccurred())
-        return nullptr;
-    return image->imageForRenderer(renderer);
-}
-
-#endif
-
 std::unique_ptr<ContextMenu> ContextMenuController::maybeCreateContextMenu(Event& event)
 {
     if (!is<MouseEvent>(event))
@@ -169,16 +154,6 @@ std::unique_ptr<ContextMenu> ContextMenuController::maybeCreateContextMenu(Event
         return nullptr;
 
     m_context = ContextMenuContext(result);
-
-#if ENABLE(SERVICE_CONTROLS)
-    if (node.isImageControlsButtonElement()) {
-        if (auto* image = imageFromImageElementNode(*result.innerNonSharedNode()))
-            m_context.setControlledImage(image);
-
-        // FIXME: If we couldn't get the image then we shouldn't try to show the image controls menu for it.
-        return nullptr;
-    }
-#endif
 
     return makeUnique<ContextMenu>();
 }
@@ -542,6 +517,10 @@ void ContextMenuController::contextMenuItemSelected(ContextMenuAction action, co
     case ContextMenuItemTagDictationAlternative:
         frame->editor().applyDictationAlternative(title);
         break;
+    case ContextMenuItemTagRevealImage:
+        // This should be handled at the client layer.
+        ASSERT_NOT_REACHED();
+        break;
     default:
         break;
     }
@@ -835,6 +814,9 @@ void ContextMenuController::populate()
     ContextMenuItem SelectAllItem(ActionType, ContextMenuItemTagSelectAll, contextMenuItemTagSelectAll());
     ContextMenuItem InsertEmojiItem(ActionType, ContextMenuItemTagInsertEmoji, contextMenuItemTagInsertEmoji());
 #endif
+#if ENABLE(IMAGE_EXTRACTION)
+    ContextMenuItem RevealImageItem(ActionType, ContextMenuItemTagRevealImage, contextMenuItemTagRevealImage());
+#endif
 
 #if PLATFORM(GTK) || PLATFORM(WIN)
     ContextMenuItem ShareMenuItem;
@@ -881,8 +863,13 @@ void ContextMenuController::populate()
 
             appendItem(OpenImageInNewWindowItem, m_contextMenu.get());
             appendItem(DownloadImageItem, m_contextMenu.get());
-            if (imageURL.isLocalFile() || m_context.hitTestResult().image())
+            if (imageURL.isLocalFile() || m_context.hitTestResult().image()) {
                 appendItem(CopyImageItem, m_contextMenu.get());
+
+#if ENABLE(IMAGE_EXTRACTION)
+                appendItem(RevealImageItem, m_contextMenu.get());
+#endif
+            }
 #if PLATFORM(GTK)
             appendItem(CopyImageUrlItem, m_contextMenu.get());
 #endif
@@ -1475,6 +1462,8 @@ void ContextMenuController::checkOrEnableIfNeeded(ContextMenuItem& item) const
             shouldEnable = m_context.hitTestResult().mediaHasAudio();
             shouldCheck = shouldEnable &&  m_context.hitTestResult().mediaMuted();
             break;
+        case ContextMenuItemTagRevealImage:
+            break;
     }
 
     item.setChecked(shouldCheck);
@@ -1493,17 +1482,6 @@ void ContextMenuController::showContextMenuAt(Frame& frame, const IntPoint& clic
     bool handled = frame.eventHandler().sendContextMenuEvent(mouseEvent);
     if (handled)
         m_client.showContextMenu();
-}
-
-#endif
-
-#if ENABLE(SERVICE_CONTROLS)
-
-void ContextMenuController::showImageControlsMenu(Event& event)
-{
-    clearContextMenu();
-    handleContextMenuEvent(event);
-    m_client.showContextMenu();
 }
 
 #endif

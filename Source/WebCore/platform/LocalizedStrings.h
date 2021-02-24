@@ -298,7 +298,6 @@ namespace WebCore {
 
     String clickToExitFullScreenText();
 
-    String textTrackSubtitlesText();
     String textTrackOffMenuItemText();
     String textTrackAutomaticMenuItemText();
     String textTrackNoLabelText();
@@ -349,6 +348,10 @@ namespace WebCore {
     WEBCORE_EXPORT String makeCredentialTouchIDPromptTitle(const String& bundleName, const String& domain);
     WEBCORE_EXPORT String getAssertionTouchIDPromptTitle(const String& bundleName, const String& domain);
     WEBCORE_EXPORT String genericTouchIDPromptTitle();
+#endif
+
+#if ENABLE(IMAGE_EXTRACTION)
+    WEBCORE_EXPORT String contextMenuItemTagRevealImage();
 #endif
 
 #if USE(GLIB) && defined(GETTEXT_PACKAGE)

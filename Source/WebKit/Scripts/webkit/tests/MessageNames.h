@@ -30,16 +30,22 @@ namespace IPC {
 
 enum class ReceiverName : uint8_t {
     TestWithIfMessage = 1
-    , TestWithLegacyReceiver = 2
-    , TestWithSuperclass = 3
-    , TestWithoutAttributes = 4
-    , IPC = 5
-    , AsyncReply = 6
-    , Invalid = 7
+    , TestWithImageData = 2
+    , TestWithLegacyReceiver = 3
+    , TestWithSemaphore = 4
+    , TestWithStream = 5
+    , TestWithStreamBuffer = 6
+    , TestWithSuperclass = 7
+    , TestWithoutAttributes = 8
+    , IPC = 9
+    , AsyncReply = 10
+    , Invalid = 11
 };
 
 enum class MessageName : uint16_t {
     TestWithIfMessage_LoadURL
+    , TestWithImageData_ReceiveImageData
+    , TestWithImageData_SendImageData
     , TestWithLegacyReceiver_AddEvent
     , TestWithLegacyReceiver_Close
     , TestWithLegacyReceiver_CreatePlugin
@@ -60,6 +66,11 @@ enum class MessageName : uint16_t {
     , TestWithLegacyReceiver_TemplateTest
     , TestWithLegacyReceiver_TestParameterAttributes
     , TestWithLegacyReceiver_TouchEvent
+    , TestWithSemaphore_ReceiveSemaphore
+    , TestWithSemaphore_SendSemaphore
+    , TestWithStreamBuffer_SendStreamBuffer
+    , TestWithStream_SendString
+    , TestWithStream_SendStringSynchronized
     , TestWithSuperclass_LoadURL
     , TestWithSuperclass_TestAsyncMessage
     , TestWithSuperclass_TestAsyncMessageWithConnection
@@ -87,6 +98,8 @@ enum class MessageName : uint16_t {
     , TestWithoutAttributes_TouchEvent
     , InitializeConnection
     , LegacySessionState
+    , ProcessOutOfStreamMessage
+    , SetStreamDestinationID
     , SyncMessageReply
     , TestWithSuperclass_TestAsyncMessageReply
     , TestWithSuperclass_TestAsyncMessageWithConnectionReply

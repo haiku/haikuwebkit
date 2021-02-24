@@ -62,6 +62,7 @@ static UIActionIdentifier const WKElementActionTypeOpenInNewWindowIdentifier = @
 static UIActionIdentifier const WKElementActionTypeDownloadIdentifier = @"WKElementActionTypeDownload";
 UIActionIdentifier const WKElementActionTypeToggleShowLinkPreviewsIdentifier = @"WKElementActionTypeToggleShowLinkPreviews";
 static UIActionIdentifier const WKElementActionTypeImageExtractionIdentifier = @"WKElementActionTypeImageExtraction";
+static UIActionIdentifier const WKElementActionTypeRevealImageIdentifier = @"WKElementActionTypeRevealImage";
 
 static NSString * const webkitShowLinkPreviewsPreferenceKey = @"WebKitShowLinkPreviews";
 static NSString * const webkitShowLinkPreviewsPreferenceChangedNotification = @"WebKitShowLinkPreviewsPreferenceChanged";
@@ -95,8 +96,8 @@ static NSString * const webkitShowLinkPreviewsPreferenceChangedNotification = @"
 
 + (instancetype)elementActionWithTitle:(NSString *)title actionHandler:(WKElementActionHandler)handler
 {
-    return [[[self alloc] _initWithTitle:title actionHandler:^(WKActionSheetAssistant *, _WKActivatedElementInfo *actionInfo) { handler(actionInfo); }
-        type:_WKElementActionTypeCustom assistant:nil] autorelease];
+    return adoptNS([[self alloc] _initWithTitle:title actionHandler:^(WKActionSheetAssistant *, _WKActivatedElementInfo *actionInfo) { handler(actionInfo); }
+        type:_WKElementActionTypeCustom assistant:nil]).autorelease();
 }
 
 #if HAVE(SAFARI_SERVICES_FRAMEWORK)
@@ -117,7 +118,7 @@ static void addToReadingList(NSURL *targetURL, NSString *title)
 + (instancetype)_elementActionWithType:(_WKElementActionType)type title:(NSString *)title actionHandler:(WKElementActionHandler)actionHandler
 {
     WKElementActionHandlerInternal handler = ^(WKActionSheetAssistant *, _WKActivatedElementInfo *actionInfo) { actionHandler(actionInfo); };
-    return [[[self alloc] _initWithTitle:title actionHandler:handler type:type assistant:nil] autorelease];
+    return adoptNS([[self alloc] _initWithTitle:title actionHandler:handler type:type assistant:nil]).autorelease();
 }
 
 + (instancetype)_elementActionWithType:(_WKElementActionType)type customTitle:(NSString *)customTitle assistant:(WKActionSheetAssistant *)assistant
@@ -168,12 +169,20 @@ static void addToReadingList(NSURL *targetURL, NSString *title)
         };
 #endif
         break;
+    case _WKElementActionTypeRevealImage:
+#if ENABLE(IMAGE_EXTRACTION)
+        title = WebCore::contextMenuItemTagRevealImage();
+        handler = ^(WKActionSheetAssistant *assistant, _WKActivatedElementInfo *actionInfo) {
+            [assistant handleElementActionWithType:type element:actionInfo needsInteraction:YES];
+        };
+#endif
+        break;
     default:
         [NSException raise:NSInvalidArgumentException format:@"There is no standard web element action of type %ld.", (long)type];
         return nil;
     }
 
-    return [[[self alloc] _initWithTitle:(customTitle ? customTitle : title) actionHandler:handler type:type assistant:assistant] autorelease];
+    return adoptNS([[self alloc] _initWithTitle:(customTitle ? customTitle : title) actionHandler:handler type:type assistant:assistant]).autorelease();
 }
 
 + (instancetype)_elementActionWithType:(_WKElementActionType)type assistant:(WKActionSheetAssistant *)assistant
@@ -235,7 +244,17 @@ static void addToReadingList(NSURL *targetURL, NSString *title)
     case _WKElementActionToggleShowLinkPreviews:
         return nil; // Intentionally empty.
     case _WKElementActionTypeImageExtraction:
-        return [UIImage systemImageNamed:@"info.circle"];
+#if ENABLE(IMAGE_EXTRACTION)
+        return [_WKElementAction imageForElementActionTypeImageExtraction];
+#else
+        return nil;
+#endif
+    case _WKElementActionTypeRevealImage:
+#if ENABLE(IMAGE_EXTRACTION)
+        return [_WKElementAction imageForElementActionTypeRevealImage];
+#else
+        return nil;
+#endif
     }
 }
 
@@ -268,6 +287,8 @@ static UIActionIdentifier elementActionTypeToUIActionIdentifier(_WKElementAction
         return WKElementActionTypeToggleShowLinkPreviewsIdentifier;
     case _WKElementActionTypeImageExtraction:
         return WKElementActionTypeImageExtractionIdentifier;
+    case _WKElementActionTypeRevealImage:
+        return WKElementActionTypeRevealImageIdentifier;
     }
 }
 
@@ -299,6 +320,8 @@ static _WKElementActionType uiActionIdentifierToElementActionType(UIActionIdenti
         return _WKElementActionToggleShowLinkPreviews;
     if ([identifier isEqualToString:WKElementActionTypeImageExtractionIdentifier])
         return _WKElementActionTypeImageExtraction;
+    if ([identifier isEqualToString:WKElementActionTypeRevealImageIdentifier])
+        return _WKElementActionTypeRevealImage;
     return _WKElementActionTypeCustom;
 }
 
@@ -334,6 +357,10 @@ static _WKElementActionType uiActionIdentifierToElementActionType(UIActionIdenti
     return nil;
 }
 #endif // USE(UICONTEXTMENU)
+
+#if USE(APPLE_INTERNAL_SDK)
+#import <WebKitAdditions/_WKElementActionAdditions.mm>
+#endif
 
 @end
 

@@ -125,7 +125,7 @@ class EmptyChromeClient : public ChromeClient {
 
     void mouseDidMoveOverElement(const HitTestResult&, unsigned, const String&, TextDirection) final { }
 
-    void print(Frame&) final { }
+    void print(Frame&, const StringWithDirection&) final { }
 
     void exceededDatabaseQuota(Frame&, const String&, DatabaseDetails) final { }
 
@@ -143,6 +143,10 @@ class EmptyChromeClient : public ChromeClient {
 
 #if ENABLE(DATE_AND_TIME_INPUT_TYPES)
     std::unique_ptr<DateTimeChooser> createDateTimeChooser(DateTimeChooserClient&) final;
+#endif
+
+#if ENABLE(APP_HIGHLIGHTS)
+    void storeAppHighlight(const AppHighlight&) const final;
 #endif
 
     void runOpenPanel(Frame&, FileChooser&) final;

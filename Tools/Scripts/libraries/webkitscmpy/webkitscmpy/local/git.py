@@ -247,8 +247,8 @@ class Git(Scm):
         if branch_point and parsed_branch_point and branch_point != parsed_branch_point:
             raise ValueError("Provided 'branch_point' does not match branch point of specified branch")
 
-        match = self.GIT_SVN_REVISION.search(log.stdout)
-        revision = int(match.group('revision')) if match else None
+        matches = self.GIT_SVN_REVISION.findall(log.stdout)
+        revision = int(matches[-1].split('@')[0]) if matches else None
 
         commit_time = run(
             [self.executable(), 'show', '-s', '--format=%ct', hash],
@@ -272,8 +272,14 @@ class Git(Scm):
         if not isinstance(argument, six.string_types):
             raise ValueError("Expected 'argument' to be a string, not '{}'".format(type(argument)))
 
+        if argument in self.DEFAULT_BRANCHES:
+            argument = self.default_branch
+
         parsed_commit = Commit.parse(argument, do_assert=False)
         if parsed_commit:
+            if parsed_commit.branch in self.DEFAULT_BRANCHES:
+                parsed_commit.branch = self.default_branch
+
             return self.commit(
                 hash=parsed_commit.hash,
                 revision=parsed_commit.revision,
@@ -327,3 +333,8 @@ class Git(Scm):
                 self.executable(), 'svn', 'fetch', '--log-window-size=5000', '-r', '{}:HEAD'.format(commit.revision),
             ], cwd=self.root_path).returncode
         return code
+
+    def clean(self):
+        return run([
+            self.executable(), 'reset', 'HEAD', '--hard',
+        ], cwd=self.root_path).returncode

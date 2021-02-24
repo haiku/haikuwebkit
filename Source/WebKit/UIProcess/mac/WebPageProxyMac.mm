@@ -49,6 +49,7 @@
 #import "WKSharingServicePickerDelegate.h"
 #import "WebContextMenuProxyMac.h"
 #import "WebPageMessages.h"
+#import "WebPreferencesKeys.h"
 #import "WebProcessProxy.h"
 #import <WebCore/AttributedString.h>
 #import <WebCore/DictionaryLookup.h>
@@ -262,7 +263,7 @@ void WebPageProxy::replaceSelectionWithPasteboardData(const Vector<String>& type
 #if ENABLE(DRAG_SUPPORT)
 
 void WebPageProxy::setPromisedDataForImage(const String& pasteboardName, const SharedMemory::IPCHandle& imageHandle, const String& filename, const String& extension,
-    const String& title, const String& url, const String& visibleURL, const SharedMemory::IPCHandle& archiveHandle)
+    const String& title, const String& url, const String& visibleURL, const SharedMemory::IPCHandle& archiveHandle, const String& originIdentifier)
 {
     MESSAGE_CHECK_URL(url);
     MESSAGE_CHECK_URL(visibleURL);
@@ -281,7 +282,7 @@ void WebPageProxy::setPromisedDataForImage(const String& pasteboardName, const S
             return;
         archiveBuffer = SharedBuffer::create(static_cast<unsigned char*>(sharedMemoryArchive->data()), static_cast<size_t>(archiveHandle.dataSize));
     }
-    pageClient().setPromisedDataForImage(pasteboardName, WTFMove(imageBuffer), ResourceResponseBase::sanitizeSuggestedFilename(filename), extension, title, url, visibleURL, WTFMove(archiveBuffer));
+    pageClient().setPromisedDataForImage(pasteboardName, WTFMove(imageBuffer), ResourceResponseBase::sanitizeSuggestedFilename(filename), extension, title, url, visibleURL, WTFMove(archiveBuffer), originIdentifier);
 }
 
 #endif
@@ -649,6 +650,20 @@ void WebPageProxy::willPerformPasteCommand()
 PlatformView* WebPageProxy::platformView() const
 {
     return [pageClient().platformWindow() contentView];
+}
+
+bool WebPageProxy::useiTunesAVOutputContext() const
+{
+    return m_preferences->store().getBoolValueForKey(WebPreferencesKey::useiTunesAVOutputContextKey());
+}
+
+void WebPageProxy::didUpdateRenderingAfterCommittingLoad()
+{
+    if (m_hasUpdatedRenderingAfterDidCommitLoad)
+        return;
+
+    m_hasUpdatedRenderingAfterDidCommitLoad = true;
+    stopMakingViewBlankDueToLackOfRenderingUpdate();
 }
 
 #if ENABLE(UI_PROCESS_PDF_HUD)

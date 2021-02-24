@@ -60,7 +60,6 @@
 #include "ObjectPropertyConditionSet.h"
 #include "ProtoCallFrameInlines.h"
 #include "RegExpObject.h"
-#include "Repatch.h"
 #include "ShadowChicken.h"
 #include "SuperSampler.h"
 #include "VMInlines.h"
@@ -1302,6 +1301,77 @@ LLINT_SLOW_PATH_DECL(slow_path_put_private_name)
     LLINT_END();    
 }
 
+LLINT_SLOW_PATH_DECL(slow_path_set_private_brand)
+{
+    LLINT_BEGIN();
+
+    auto bytecode = pc->as<OpSetPrivateBrand>();
+    JSValue baseValue = getOperand(callFrame, bytecode.m_base);
+    JSValue brand = getOperand(callFrame, bytecode.m_brand);
+    auto& metadata = bytecode.metadata(codeBlock);
+    ASSERT(baseValue.isObject());
+    ASSERT(brand.isSymbol());
+
+    JSObject* baseObject = asObject(baseValue);
+    Structure* oldStructure = baseObject->structure(vm);
+
+    baseObject->setPrivateBrand(globalObject, brand);
+    LLINT_CHECK_EXCEPTION();
+
+    if (!LLINT_ALWAYS_ACCESS_SLOW && !oldStructure->isDictionary()) {
+        GCSafeConcurrentJSLocker locker(codeBlock->m_lock, vm.heap);
+        Structure* newStructure = baseObject->structure(vm);
+
+        ASSERT(oldStructure == newStructure->previousID());
+        ASSERT(oldStructure->transitionWatchpointSetHasBeenInvalidated());
+
+        // Start out by clearing out the old cache.
+        metadata.m_oldStructureID = 0;
+        metadata.m_newStructureID = 0;
+        metadata.m_brand.clear();
+
+        if (!newStructure->isDictionary()) {
+            metadata.m_oldStructureID = oldStructure->id();
+            metadata.m_newStructureID = newStructure->id();
+            metadata.m_brand.set(vm, codeBlock, brand.asCell());
+        }
+        vm.heap.writeBarrier(codeBlock);
+    }
+
+    LLINT_END();    
+}
+
+LLINT_SLOW_PATH_DECL(slow_path_check_private_brand)
+{
+    LLINT_BEGIN();
+
+    auto bytecode = pc->as<OpCheckPrivateBrand>();
+    auto& metadata = bytecode.metadata(codeBlock);
+    JSValue baseValue = getOperand(callFrame, bytecode.m_base);
+    JSValue brand = getOperand(callFrame, bytecode.m_brand);
+
+    JSObject* baseObject = baseValue.toObject(globalObject);
+    LLINT_CHECK_EXCEPTION();
+
+    ASSERT(brand.isSymbol());
+
+    baseObject->checkPrivateBrand(globalObject, brand);
+    LLINT_CHECK_EXCEPTION();
+
+    // Since a brand can't ever be removed from an object, it's safe to
+    // rely on StructureID even if it's an uncacheable dictionary.
+    Structure* structure = baseObject->structure(vm);
+    if (!LLINT_ALWAYS_ACCESS_SLOW) {
+        GCSafeConcurrentJSLocker locker(codeBlock->m_lock, vm.heap);
+
+        metadata.m_structureID = structure->id();
+        metadata.m_brand.set(vm, codeBlock, brand.asCell());
+        vm.heap.writeBarrier(codeBlock);
+    }
+
+    LLINT_END();    
+}
+
 LLINT_SLOW_PATH_DECL(slow_path_del_by_val)
 {
     LLINT_BEGIN();
@@ -1737,13 +1807,11 @@ inline SlowPathReturnType setUpCall(CallFrame* calleeFrame, CodeSpecializationKi
 
     MacroAssemblerCodePtr<JSEntryPtrTag> codePtr;
     CodeBlock* codeBlock = nullptr;
-    if (executable->isHostFunction()) {
-#if ENABLE(JIT)
-        codePtr = jsToWasmICCodePtr(vm, kind, callee);
-#endif
-        if (!codePtr)
-            codePtr = executable->entrypointFor(kind, MustCheckArity);
-    } else {
+    // FIXME: Support wasm IC.
+    // https://bugs.webkit.org/show_bug.cgi?id=220339
+    if (executable->isHostFunction())
+        codePtr = executable->entrypointFor(kind, MustCheckArity);
+    else {
         FunctionExecutable* functionExecutable = static_cast<FunctionExecutable*>(executable);
 
         if (!isCall(kind) && functionExecutable->constructAbility() == ConstructAbility::CannotConstruct)

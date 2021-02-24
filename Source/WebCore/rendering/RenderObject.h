@@ -222,6 +222,9 @@ public:
     virtual bool isRenderButton() const { return false; }
     virtual bool isRenderIFrame() const { return false; }
     virtual bool isRenderImage() const { return false; }
+#if ENABLE(MODEL_ELEMENT)
+    virtual bool isRenderModel() const { return false; }
+#endif
     virtual bool isRenderFragmentContainer() const { return false; }
     virtual bool isReplica() const { return false; }
 
@@ -1147,7 +1150,9 @@ inline RenderObject::SetLayoutNeededForbiddenScope::SetLayoutNeededForbiddenScop
 
 inline void Node::setRenderer(RenderObject* renderer)
 {
+    auto oldRenderer = this->renderer();
     m_rendererWithStyleFlags.setPointer(renderer);
+    didChangeRenderer(oldRenderer);
 }
 
 WTF::TextStream& operator<<(WTF::TextStream&, const RenderObject&);

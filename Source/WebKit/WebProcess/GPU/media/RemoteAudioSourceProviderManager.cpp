@@ -45,6 +45,11 @@ RemoteAudioSourceProviderManager::RemoteAudioSourceProviderManager()
 
 RemoteAudioSourceProviderManager::~RemoteAudioSourceProviderManager()
 {
+    ASSERT(!m_connection);
+}
+
+void RemoteAudioSourceProviderManager::stopListeningForIPC()
+{
     setConnection(nullptr);
 }
 
@@ -118,6 +123,9 @@ RemoteAudioSourceProviderManager::RemoteAudio::RemoteAudio(Ref<RemoteAudioSource
 void RemoteAudioSourceProviderManager::RemoteAudio::setStorage(const SharedMemory::Handle& handle, const WebCore::CAAudioStreamDescription& description, uint64_t numberOfFrames)
 {
     m_description = description;
+
+    // Take ownership of shared memory and mark it as media-related memory.
+    handle.takeOwnershipOfMemory(MemoryLedger::Media);
 
     m_ringBuffer = makeUnique<CARingBuffer>(makeUniqueRef<ReadOnlySharedRingBufferStorage>(handle), description, numberOfFrames);
     m_buffer = makeUnique<WebAudioBufferList>(description, numberOfFrames);

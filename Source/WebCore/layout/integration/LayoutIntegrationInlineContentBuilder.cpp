@@ -32,6 +32,7 @@
 #include "InlineFormattingContext.h"
 #include "InlineFormattingState.h"
 #include "LayoutBoxGeometry.h"
+#include "LayoutIntegrationBoxTree.h"
 #include "LayoutIntegrationInlineContent.h"
 #include "LayoutIntegrationRun.h"
 #include "LayoutReplacedBox.h"
@@ -42,11 +43,18 @@
 namespace WebCore {
 namespace LayoutIntegration {
 
+#define PROCESS_BIDI_CONTENT 0
+
 struct LineLevelVisualAdjustmentsForRuns {
     bool needsIntegralPosition { false };
     // It's only 'text-overflow: ellipsis' for now.
     bool needsTrailingContentReplacement { false };
 };
+
+inline Layout::InlineLineGeometry::EnclosingTopAndBottom operator+(const Layout::InlineLineGeometry::EnclosingTopAndBottom enclosingTopAndBottom, float offset)
+{
+    return { enclosingTopAndBottom.top + offset, enclosingTopAndBottom.bottom + offset };
+}
 
 inline static float lineOverflowWidth(const RenderBlockFlow& flow, InlineLayoutUnit lineBoxLogicalWidth, InlineLayoutUnit lineContentLogicalWidth)
 {
@@ -60,6 +68,7 @@ inline static float lineOverflowWidth(const RenderBlockFlow& flow, InlineLayoutU
     return std::max(lineBoxLogicalWidth, lineContentLogicalWidth);
 }
 
+#if PROCESS_BIDI_CONTENT
 class Iterator {
 public:
     Iterator() = default;
@@ -145,17 +154,21 @@ BidiRun::BidiRun(unsigned start, unsigned end, BidiContext* context, UCharDirect
     else
         m_level = (direction == U_RIGHT_TO_LEFT) ? m_level + 1 : (direction == U_ARABIC_NUMBER || direction == U_EUROPEAN_NUMBER) ? m_level + 2 : m_level;
 }
+#endif
 
-InlineContentBuilder::InlineContentBuilder(const Layout::LayoutState& layoutState, const RenderBlockFlow& blockFlow)
+InlineContentBuilder::InlineContentBuilder(const Layout::LayoutState& layoutState, const RenderBlockFlow& blockFlow, const BoxTree& boxTree)
     : m_layoutState(layoutState)
     , m_blockFlow(blockFlow)
+    , m_boxTree(boxTree)
 {
 }
 
-void InlineContentBuilder::build(const Layout::InlineFormattingState& inlineFormattingState, InlineContent& inlineContent) const
+void InlineContentBuilder::build(const Layout::InlineFormattingContext& inlineFormattingContext, InlineContent& inlineContent) const
 {
+    auto& inlineFormattingState = inlineFormattingContext.formattingState();
     auto lineLevelVisualAdjustmentsForRuns = computeLineLevelVisualAdjustmentsForRuns(inlineFormattingState);
     createDisplayLineRuns(inlineFormattingState, inlineContent, lineLevelVisualAdjustmentsForRuns);
+    createDisplayNonRootInlineBoxes(inlineFormattingContext, inlineContent);
     createDisplayLines(inlineFormattingState, inlineContent, lineLevelVisualAdjustmentsForRuns);
 }
 
@@ -201,12 +214,14 @@ void InlineContentBuilder::createDisplayLineRuns(const Layout::InlineFormattingS
         return;
     auto& lines = inlineFormattingState.lines();
 
+#if PROCESS_BIDI_CONTENT
     BidiResolver<Iterator, BidiRun> bidiResolver;
     // FIXME: Add support for override.
     bidiResolver.setStatus(BidiStatus(m_layoutState.root().style().direction(), false));
     // FIXME: Grab the nested isolates from the previous line.
     bidiResolver.setPosition(Iterator(&runList, 0), 0);
     bidiResolver.createBidiRunsForLine(Iterator(&runList, runList.size()));
+#endif
 
     Vector<bool> hasAdjustedTrailingLineList(lines.size(), false);
 
@@ -214,12 +229,11 @@ void InlineContentBuilder::createDisplayLineRuns(const Layout::InlineFormattingS
         auto& layoutBox = lineRun.layoutBox();
         auto lineIndex = lineRun.lineIndex();
         auto& lineBoxLogicalRect = lines[lineIndex].lineBoxLogicalRect();
-        // Inline boxes are relative to the line box while final Runs need to be relative to the parent Box
+        // Inline boxes are relative to the line box while final runs need to be relative to the parent box
         // FIXME: Shouldn't we just leave them be relative to the line box?
         auto runRect = FloatRect { lineRun.logicalRect() };
-        // Line runs are margin box based, let's convert them to border box.
         auto& geometry = m_layoutState.geometryForBox(layoutBox);
-        runRect.moveBy({ lineBoxLogicalRect.left() + std::max(geometry.marginStart(), 0_lu), lineBoxLogicalRect.top() + geometry.marginBefore() });
+        runRect.moveBy({ lineBoxLogicalRect.left(), lineBoxLogicalRect.top() });
         runRect.setSize({ geometry.borderBoxWidth(), geometry.borderBoxHeight() });
         if (lineLevelVisualAdjustmentsForRuns[lineIndex].needsIntegralPosition)
             runRect.setY(roundToInt(runRect.y()));
@@ -234,8 +248,6 @@ void InlineContentBuilder::createDisplayLineRuns(const Layout::InlineFormattingS
         auto lineIndex = lineRun.lineIndex();
         auto& lineBoxLogicalRect = lines[lineIndex].lineBoxLogicalRect();
         auto runRect = FloatRect { lineRun.logicalRect() };
-        // Inline boxes are relative to the line box while final Runs need to be relative to the parent Box
-        // FIXME: Shouldn't we just leave them be relative to the line box?
         runRect.moveBy({ lineBoxLogicalRect.left(), lineBoxLogicalRect.top() });
         if (lineLevelVisualAdjustmentsForRuns[lineIndex].needsIntegralPosition)
             runRect.setY(roundToInt(runRect.y()));
@@ -286,25 +298,22 @@ void InlineContentBuilder::createDisplayLineRuns(const Layout::InlineFormattingS
         inlineContent.runs.append(displayRun);
     };
 
-    auto& bidiRuns = bidiResolver.runs();
-    if (bidiRuns.runCount() == 1) {
-        // Fast path for cases when there's no bidi boundary.
-        inlineContent.runs.reserveInitialCapacity(inlineFormattingState.lineRuns().size());
-        for (auto& lineRun : inlineFormattingState.lineRuns()) {
-            if (auto& text = lineRun.text())
-                createDisplayTextRunForRange(lineRun, text->start(), text->end());
-            else
-                createDisplayBoxRun(lineRun);
-        }
-    } else
-        ASSERT_NOT_IMPLEMENTED_YET();
+    inlineContent.runs.reserveInitialCapacity(inlineFormattingState.lineRuns().size());
+    for (auto& lineRun : inlineFormattingState.lineRuns()) {
+        if (auto& text = lineRun.text())
+            createDisplayTextRunForRange(lineRun, text->start(), text->end());
+        else
+            createDisplayBoxRun(lineRun);
+    }
 }
 
 void InlineContentBuilder::createDisplayLines(const Layout::InlineFormattingState& inlineFormattingState, InlineContent& inlineContent, const LineLevelVisualAdjustmentsForRunsList& lineLevelVisualAdjustmentsForRuns) const
 {
     auto& lines = inlineFormattingState.lines();
     auto& runs = inlineContent.runs;
+    auto& nonRootInlineBoxes = inlineContent.nonRootInlineBoxes;
     size_t runIndex = 0;
+    size_t inlineBoxIndex = 0;
     inlineContent.lines.reserveInitialCapacity(lines.size());
     for (size_t lineIndex = 0; lineIndex < lines.size(); ++lineIndex) {
         auto& line = lines[lineIndex];
@@ -314,10 +323,36 @@ void InlineContentBuilder::createDisplayLines(const Layout::InlineFormattingStat
 
         auto firstRunIndex = runIndex;
         auto lineInkOverflowRect = scrollableOverflowRect;
-        while (runIndex < runs.size() && runs[runIndex].lineIndex() == lineIndex)
-            lineInkOverflowRect.unite(runs[runIndex++].inkOverflow());
+        // Collect overflow from runs.
+        for (; runIndex < runs.size() && runs[runIndex].lineIndex() == lineIndex; ++runIndex) {
+            auto& run = runs[runIndex];
+            lineInkOverflowRect.unite(run.inkOverflow());
+
+            auto& layoutBox = run.layoutBox();
+            if (!layoutBox.isReplacedBox())
+                continue;
+
+            // Similar to InlineFlowBox::addReplacedChildOverflow.
+            auto& box = downcast<RenderBox>(m_boxTree.rendererForLayoutBox(layoutBox));
+            if (!box.hasSelfPaintingLayer()) {
+                auto childInkOverflow = box.logicalVisualOverflowRectForPropagation(&box.parent()->style());
+                childInkOverflow.move(run.rect().x(), run.rect().y());
+                lineInkOverflowRect.unite(childInkOverflow);
+            }
+            auto childScrollableOverflow = box.logicalLayoutOverflowRectForPropagation(&box.parent()->style());
+            childScrollableOverflow.move(run.rect().x(), run.rect().y());
+            scrollableOverflowRect.unite(childScrollableOverflow);
+        }
+        // Collect scrollable overflow from inline boxes. All other inline level boxes (e.g atomic inline level boxes) stretch the line.
+        while (inlineBoxIndex < nonRootInlineBoxes.size() && nonRootInlineBoxes[inlineBoxIndex].lineIndex() == lineIndex) {
+            auto& inlineBox = nonRootInlineBoxes[inlineBoxIndex++];
+            if (inlineBox.canContributeToLineOverflow())
+                scrollableOverflowRect.unite(inlineBox.rect());
+        }
+
         auto adjustedLineBoxRect = FloatRect { lineBoxLogicalRect };
-        auto enclosingTopAndBottom = line.enclosingTopAndBottom();
+        // Final enclosing top and bottom values are in the same coordinate space as the line itself.
+        auto enclosingTopAndBottom = line.enclosingTopAndBottom() + lineBoxLogicalRect.top();
         if (lineLevelVisualAdjustmentsForRuns[lineIndex].needsIntegralPosition) {
             adjustedLineBoxRect.setY(roundToInt(adjustedLineBoxRect.y()));
             enclosingTopAndBottom.top = roundToInt(enclosingTopAndBottom.top);
@@ -325,6 +360,27 @@ void InlineContentBuilder::createDisplayLines(const Layout::InlineFormattingStat
         }
         auto runCount = runIndex - firstRunIndex;
         inlineContent.lines.append({ firstRunIndex, runCount, adjustedLineBoxRect, enclosingTopAndBottom.top, enclosingTopAndBottom.bottom, scrollableOverflowRect, lineInkOverflowRect, line.baseline(), line.contentLogicalLeftOffset(), line.contentLogicalWidth() });
+    }
+}
+
+void InlineContentBuilder::createDisplayNonRootInlineBoxes(const Layout::InlineFormattingContext& inlineFormattingContext, InlineContent& inlineContent) const
+{
+    auto& inlineFormattingState = inlineFormattingContext.formattingState();
+    auto inlineQuirks = inlineFormattingContext.quirks();
+    for (size_t lineIndex = 0; lineIndex < inlineFormattingState.lineBoxes().size(); ++lineIndex) {
+        auto& lineBox = inlineFormattingState.lineBoxes()[lineIndex];
+        auto& lineBoxLogicalRect = lineBox.logicalRect();
+
+        for (auto& inlineLevelBox : lineBox.nonRootInlineLevelBoxes()) {
+            if (!inlineLevelBox->isInlineBox())
+                continue;
+            auto& layoutBox = inlineLevelBox->layoutBox();
+            auto& boxGeometry = m_layoutState.geometryForBox(layoutBox);
+            auto inlineBoxRect = lineBox.logicalBorderBoxForInlineBox(layoutBox, boxGeometry);
+            inlineBoxRect.moveBy(lineBoxLogicalRect.topLeft());
+
+            inlineContent.nonRootInlineBoxes.append({ lineIndex, layoutBox, inlineBoxRect, inlineQuirks.inlineLevelBoxAffectsLineBox(*inlineLevelBox, lineBox) });
+        }
     }
 }
 

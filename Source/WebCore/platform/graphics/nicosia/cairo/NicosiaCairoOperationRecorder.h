@@ -62,7 +62,7 @@ private:
     void strokeEllipse(const WebCore::FloatRect&) override;
     void clearRect(const WebCore::FloatRect&) override;
 
-    void drawGlyphs(const WebCore::Font&, const WebCore::GlyphBuffer&, unsigned, unsigned, const WebCore::FloatPoint&, WebCore::FontSmoothingMode) override;
+    void drawGlyphs(const WebCore::Font&, const WebCore::GlyphBufferGlyph*, const WebCore::GlyphBufferAdvance*, unsigned numGlyphs, const WebCore::FloatPoint&, WebCore::FontSmoothingMode) override;
 
     void drawImageBuffer(WebCore::ImageBuffer&, const WebCore::FloatRect& destination, const WebCore::FloatRect& source, const WebCore::ImagePaintingOptions&) override;
     void drawNativeImage(WebCore::NativeImage&, const WebCore::FloatSize&, const WebCore::FloatRect&, const WebCore::FloatRect&, const WebCore::ImagePaintingOptions&) override;
@@ -97,7 +97,7 @@ private:
     void clipPath(const WebCore::Path&, WebCore::WindRule) override;
     WebCore::IntRect clipBounds() override;
     void clipToImageBuffer(WebCore::ImageBuffer&, const WebCore::FloatRect&) override;
-    void clipToDrawingCommands(const WebCore::FloatRect& destination, WebCore::ColorSpace, Function<void(WebCore::GraphicsContext&)>&&) override;
+    void clipToDrawingCommands(const WebCore::FloatRect& destination, WebCore::DestinationColorSpace, Function<void(WebCore::GraphicsContext&)>&&) override;
     void paintFrameForMedia(WebCore::MediaPlayer&, const WebCore::FloatRect& destination) override;
     bool canPaintFrameForMedia(const WebCore::MediaPlayer&) const override { return false; }
 

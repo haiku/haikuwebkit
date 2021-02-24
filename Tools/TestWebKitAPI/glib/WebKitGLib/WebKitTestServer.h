@@ -21,6 +21,7 @@
 
 #include <bitset>
 #include <libsoup/soup.h>
+#include <wtf/URL.h>
 #include <wtf/WorkQueue.h>
 #include <wtf/glib/GRefPtr.h>
 #include <wtf/text/CString.h>
@@ -32,29 +33,30 @@ public:
     enum ServerOptions {
         ServerHTTPS = 0,
         ServerRunInThread = 1,
-        ServerNonLoopback = 2,
     };
-    using ServerOptionsBitSet = std::bitset<3>;
+    using ServerOptionsBitSet = std::bitset<2>;
 
     WebKitTestServer(ServerOptionsBitSet = 0);
-    virtual ~WebKitTestServer();
+    WebKitTestServer(ServerOptions option)
+        : WebKitTestServer(ServerOptionsBitSet().set(option)) { }
 
-    SoupURI* baseURI() const { return m_baseURI; }
+    const URL& baseURL() const { return m_baseURL; }
+    unsigned port() const;
     CString getURIForPath(const char* path) const;
     void run(SoupServerCallback);
 
 #if SOUP_CHECK_VERSION(2, 50, 0)
     void addWebSocketHandler(SoupServerWebsocketCallback, gpointer userData);
     void removeWebSocketHandler();
-    SoupURI* baseWebSocketURI() const { return m_baseWebSocketURI; }
+    const URL& baseWebSocketURL() const { return m_baseWebSocketURL; }
     CString getWebSocketURIForPath(const char* path) const;
 #endif
 
 private:
     GRefPtr<SoupServer> m_soupServer;
-    SoupURI* m_baseURI { nullptr };
+    URL m_baseURL;
 #if SOUP_CHECK_VERSION(2, 50, 0)
-    SoupURI* m_baseWebSocketURI { nullptr };
+    URL m_baseWebSocketURL;
 #endif
     RefPtr<WorkQueue> m_queue;
 };

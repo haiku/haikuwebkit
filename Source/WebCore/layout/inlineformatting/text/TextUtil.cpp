@@ -47,18 +47,20 @@ InlineLayoutUnit TextUtil::width(const InlineTextItem& inlineTextItem, unsigned 
 {
     RELEASE_ASSERT(from >= inlineTextItem.start());
     RELEASE_ASSERT(to <= inlineTextItem.end());
-    if (inlineTextItem.isWhitespace() && !InlineTextItem::shouldPreserveSpacesAndTabs(inlineTextItem))
-        return inlineTextItem.style().fontCascade().spaceWidth();
+    if (inlineTextItem.isWhitespace() && !InlineTextItem::shouldPreserveSpacesAndTabs(inlineTextItem)) {
+        auto spaceWidth = inlineTextItem.style().fontCascade().spaceWidth();
+        return std::isnan(spaceWidth) ? 0.0f : std::isinf(spaceWidth) ? maxInlineLayoutUnit() : spaceWidth;
+    }
     return TextUtil::width(inlineTextItem.inlineTextBox(), from, to, contentLogicalLeft);
 }
 
 InlineLayoutUnit TextUtil::width(const InlineTextBox& inlineTextBox, unsigned from, unsigned to, InlineLayoutUnit contentLogicalLeft)
 {
-    auto& style = inlineTextBox.style();
-    auto& font = style.fontCascade();
-    if (!font.size() || from == to)
+    if (from == to)
         return 0;
 
+    auto& style = inlineTextBox.style();
+    auto& font = style.fontCascade();
     auto text = inlineTextBox.content();
     ASSERT(to <= text.length());
     auto hasKerningOrLigatures = font.enableKerning() || font.requiresShaping();
@@ -66,12 +68,9 @@ InlineLayoutUnit TextUtil::width(const InlineTextBox& inlineTextBox, unsigned fr
     if (measureWithEndSpace)
         ++to;
     float width = 0;
-    if (inlineTextBox.canUseSimplifiedContentMeasuring()) {
-        if (font.isFixedPitch())
-            width = fixedPitchWidth(text, style, from, to, contentLogicalLeft);
-        else
-            width = font.widthForSimpleText(StringView(text).substring(from, to - from));
-    } else {
+    if (inlineTextBox.canUseSimplifiedContentMeasuring())
+        width = font.widthForSimpleText(StringView(text).substring(from, to - from));
+    else {
         auto tabWidth = style.collapseWhiteSpace() ? TabSize(0) : style.tabSize();
         WebCore::TextRun run(StringView(text).substring(from, to - from), contentLogicalLeft);
         if (tabWidth)
@@ -82,26 +81,7 @@ InlineLayoutUnit TextUtil::width(const InlineTextBox& inlineTextBox, unsigned fr
     if (measureWithEndSpace)
         width -= (font.spaceWidth() + font.wordSpacing());
 
-    return width;
-}
-
-InlineLayoutUnit TextUtil::fixedPitchWidth(const StringView& text, const RenderStyle& style, unsigned from, unsigned to, InlineLayoutUnit contentLogicalLeft)
-{
-    RELEASE_ASSERT(to <= text.length());
-    auto& font = style.fontCascade();
-    auto monospaceCharacterWidth = font.spaceWidth();
-    float width = 0;
-    for (auto i = from; i < to; ++i) {
-        auto character = text[i];
-        if (character >= ' ' || character == '\n')
-            width += monospaceCharacterWidth;
-        else if (character == '\t')
-            width += style.collapseWhiteSpace() ? monospaceCharacterWidth : font.tabWidth(style.tabSize(), contentLogicalLeft + width);
-
-        if (i > from && (character == ' ' || character == '\t' || character == '\n'))
-            width += font.wordSpacing();
-    }
-    return width;
+    return std::isnan(width) ? 0.0f : std::isinf(width) ? maxInlineLayoutUnit() : width;
 }
 
 TextUtil::SplitData TextUtil::split(const InlineTextItem& inlineTextItem, InlineLayoutUnit textWidth, InlineLayoutUnit availableWidth, InlineLayoutUnit contentLogicalLeft)
@@ -160,8 +140,16 @@ unsigned TextUtil::findNextBreakablePosition(LazyLineBreakIterator& lineBreakIte
 
 bool TextUtil::shouldPreserveSpacesAndTabs(const Box& layoutBox)
 {
+    // https://www.w3.org/TR/css-text-3/#white-space-property
     auto whitespace = layoutBox.style().whiteSpace();
     return whitespace == WhiteSpace::Pre || whitespace == WhiteSpace::PreWrap || whitespace == WhiteSpace::BreakSpaces;
+}
+
+bool TextUtil::shouldPreserveNewline(const Box& layoutBox)
+{
+    auto whitespace = layoutBox.style().whiteSpace();
+    // https://www.w3.org/TR/css-text-3/#white-space-property
+    return whitespace == WhiteSpace::Pre || whitespace == WhiteSpace::PreWrap || whitespace == WhiteSpace::BreakSpaces || whitespace == WhiteSpace::PreLine; 
 }
 
 }

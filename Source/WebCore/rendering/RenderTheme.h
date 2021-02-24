@@ -94,15 +94,14 @@ public:
 #if ENABLE(FULLSCREEN_API)
     virtual String extraFullScreenStyleSheet() { return String(); }
 #endif
-#if ENABLE(SERVICE_CONTROLS)
-    virtual String imageControlsStyleSheet() const { return String(); }
-#endif
 #if ENABLE(DATALIST_ELEMENT)
     String dataListStyleSheet() const;
 #endif
 #if ENABLE(INPUT_TYPE_COLOR)
     virtual String colorInputStyleSheet(const Settings&) const;
 #endif
+
+    virtual LayoutRect adjustedPaintRect(const RenderBox&, const LayoutRect& paintRect) const { return paintRect; }
 
     // A method to obtain the baseline position for a "leaf" control.  This will only be used if a baseline
     // position cannot be determined by examining child content. Checkboxes and radio buttons are examples of
@@ -231,7 +230,7 @@ public:
     virtual IntSize sliderTickSize() const = 0;
     // Returns the distance of slider tick origin from the slider track center.
     virtual int sliderTickOffsetFromTrackCenter() const = 0;
-    void paintSliderTicks(const RenderObject&, const PaintInfo&, const IntRect&);
+    virtual void paintSliderTicks(const RenderObject&, const PaintInfo&, const FloatRect&);
 #endif
 
     virtual bool shouldHaveSpinButton(const HTMLInputElement&) const;
@@ -247,11 +246,6 @@ public:
 
     enum FileUploadDecorations { SingleFile, MultipleFiles };
     virtual void paintFileUploadIconDecorations(const RenderObject& /*inputRenderer*/, const RenderObject& /*buttonRenderer*/, const PaintInfo&, const IntRect&, Icon*, FileUploadDecorations) { }
-
-#if ENABLE(SERVICE_CONTROLS)
-    virtual IntSize imageControlsButtonSize(const RenderObject&) const { return IntSize(); }
-    virtual IntSize imageControlsButtonPositionOffset() const { return IntSize(); }
-#endif
 
 #if ENABLE(ATTACHMENT_ELEMENT)
     virtual LayoutSize attachmentIntrinsicSize(const RenderAttachment&) const { return LayoutSize(); }
@@ -295,11 +289,11 @@ protected:
 #if !USE(NEW_THEME)
     // Methods for each appearance value.
     virtual void adjustCheckboxStyle(RenderStyle&, const Element*) const;
-    virtual bool paintCheckbox(const RenderObject&, const PaintInfo&, const IntRect&) { return true; }
+    virtual bool paintCheckbox(const RenderObject&, const PaintInfo&, const FloatRect&) { return true; }
     virtual void setCheckboxSize(RenderStyle&) const { }
 
     virtual void adjustRadioStyle(RenderStyle&, const Element*) const;
-    virtual bool paintRadio(const RenderObject&, const PaintInfo&, const IntRect&) { return true; }
+    virtual bool paintRadio(const RenderObject&, const PaintInfo&, const FloatRect&) { return true; }
     virtual void setRadioSize(RenderStyle&) const { }
 
     virtual void adjustButtonStyle(RenderStyle&, const Element*) const;
@@ -405,10 +399,6 @@ protected:
     virtual bool paintMediaTimeRemaining(const RenderObject&, const PaintInfo&, const IntRect&) { return true; }
     virtual bool paintMediaFullScreenVolumeSliderTrack(const RenderObject&, const PaintInfo&, const IntRect&) { return true; }
     virtual bool paintMediaFullScreenVolumeSliderThumb(const RenderObject&, const PaintInfo&, const IntRect&) { return true; }
-
-#if ENABLE(SERVICE_CONTROLS)
-    virtual bool paintImageControlsButton(const RenderObject&, const PaintInfo&, const IntRect&) { return true; }
-#endif
 
 public:
     void updateControlStatesForRenderer(const RenderBox&, ControlStates&) const;

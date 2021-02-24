@@ -403,7 +403,7 @@ class Manager(object):
     def _run_tests(self, tests_to_run, tests_to_skip, repeat_each, iterations, num_workers, retrying, device_type=None):
         test_inputs = self._get_test_inputs(tests_to_run, repeat_each, iterations, device_type=device_type)
 
-        return self._runner.run_tests(self._expectations[device_type], test_inputs, tests_to_skip, num_workers, retrying)
+        return self._runner.run_tests(self._expectations[device_type], test_inputs, tests_to_skip, num_workers, retrying, device_type)
 
     def _clean_up_run(self):
         _log.debug("Flushing stdout")
@@ -422,7 +422,7 @@ class Manager(object):
         _log.debug("Restarting helper")
         self._port.stop_helper()
         self._options.pixel_tests = True
-        return self._port.start_helper()
+        return self._port.start_helper(prefer_integrated_gpu=self._options.prefer_integrated_gpu)
 
     def _look_for_new_crash_logs(self, run_results, start_time):
         """Since crash logs can take a long time to be written out if the system is

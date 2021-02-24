@@ -46,7 +46,8 @@ static bool decrypt(WebKitMediaCommonEncryptionDecrypt*, GstBuffer* iv, GstBuffe
 GST_DEBUG_CATEGORY(webkitMediaThunderDecryptDebugCategory);
 #define GST_CAT_DEFAULT webkitMediaThunderDecryptDebugCategory
 
-static const char* cencEncryptionMediaTypes[] = { "video/mp4", "audio/mp4", "video/x-h264", "audio/mpeg", nullptr };
+static const char* cencEncryptionMediaTypes[] = { "video/mp4", "audio/mp4", "video/x-h264", "audio/mpeg", "video/x-vp9", nullptr };
+static const char** cbcsEncryptionMediaTypes = cencEncryptionMediaTypes;
 static const char* webmEncryptionMediaTypes[] = { "video/webm", "audio/webm", "video/x-vp9", "audio/x-opus", nullptr };
 
 static GstStaticPadTemplate srcTemplate = GST_STATIC_PAD_TEMPLATE("src",
@@ -69,7 +70,9 @@ static GRefPtr<GstCaps> createSinkPadTemplateCaps()
 {
     GRefPtr<GstCaps> caps = adoptGRef(gst_caps_new_empty());
 
-    if (CDMFactoryThunder::singleton().supportedKeySystems().isEmpty()) {
+    auto& supportedKeySystems = CDMFactoryThunder::singleton().supportedKeySystems();
+
+    if (supportedKeySystems.isEmpty()) {
         GST_WARNING("no supported key systems in Thunder, we won't be able to decrypt anything with the its decryptor");
         return caps;
     }
@@ -78,11 +81,16 @@ static GRefPtr<GstCaps> createSinkPadTemplateCaps()
         gst_caps_append_structure(caps.get(), gst_structure_new("application/x-cenc", "original-media-type", G_TYPE_STRING,
             cencEncryptionMediaTypes[i], nullptr));
     }
-    for (const auto& keySystem : CDMFactoryThunder::singleton().supportedKeySystems()) {
+    for (const auto& keySystem : supportedKeySystems) {
         for (int i = 0; cencEncryptionMediaTypes[i]; ++i) {
             gst_caps_append_structure(caps.get(), gst_structure_new("application/x-cenc", "original-media-type", G_TYPE_STRING,
                 cencEncryptionMediaTypes[i], "protection-system", G_TYPE_STRING, GStreamerEMEUtilities::keySystemToUuid(keySystem), nullptr));
         }
+    }
+
+    for (int i = 0; cbcsEncryptionMediaTypes[i]; ++i) {
+        gst_caps_append_structure(caps.get(), gst_structure_new("application/x-cbcs", "original-media-type", G_TYPE_STRING,
+            cbcsEncryptionMediaTypes[i], nullptr));
     }
 
     if (CDMFactoryThunder::singleton().supportsKeySystem(GStreamerEMEUtilities::s_WidevineKeySystem)) {
@@ -100,7 +108,7 @@ static GRefPtr<GstCaps> createSinkPadTemplateCaps()
 
 static void webkit_media_thunder_decrypt_class_init(WebKitMediaThunderDecryptClass* klass)
 {
-    GST_DEBUG_CATEGORY_INIT(webkitMediaThunderDecryptDebugCategory, "webkitthunder", 0, "Thunder decrypt");
+    GST_DEBUG_CATEGORY_INIT(webkitMediaThunderDecryptDebugCategory, "webkitthunderdecrypt", 0, "Thunder decrypt");
 
     GstElementClass* elementClass = GST_ELEMENT_CLASS(klass);
     GRefPtr<GstCaps> gstSinkPadTemplateCaps = createSinkPadTemplateCaps();

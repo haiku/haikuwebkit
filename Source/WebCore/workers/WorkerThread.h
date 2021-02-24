@@ -26,7 +26,10 @@
 #pragma once
 
 #include "ContentSecurityPolicyResponseHeaders.h"
+#include "FetchRequestCredentials.h"
 #include "WorkerOrWorkletThread.h"
+#include "WorkerRunLoop.h"
+#include "WorkerType.h"
 #include <JavaScriptCore/RuntimeFlags.h>
 #include <memory>
 #include <wtf/URL.h>
@@ -63,6 +66,8 @@ public:
     bool shouldBypassMainWorldContentSecurityPolicy;
     MonotonicTime timeOrigin;
     ReferrerPolicy referrerPolicy;
+    WorkerType workerType;
+    FetchRequestCredentials credentials;
     Settings::Values settingsValues;
 
     WorkerParameters isolatedCopy() const;
@@ -104,7 +109,7 @@ private:
 
     // WorkerOrWorkletThread.
     Ref<WTF::Thread> createThread() final;
-    Ref<WorkerOrWorkletGlobalScope> createGlobalScope() final;
+    RefPtr<WorkerOrWorkletGlobalScope> createGlobalScope() final;
     void evaluateScriptIfNecessary(String& exceptionMessage) final;
     bool shouldWaitForWebInspectorOnStartup() const final;
 

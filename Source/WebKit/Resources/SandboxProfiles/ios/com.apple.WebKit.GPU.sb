@@ -287,7 +287,7 @@
     )
 )
 
-(define-once (debugging-support)
+(define-once (internal-debugging-support)
         (allow file-read* file-map-executable
                (subpath "/Developer"))
 
@@ -405,7 +405,6 @@
 
     ; UIKit-required IOKit nodes.
     (allow iokit-open
-        (iokit-user-client-class "AppleJPEGDriverUserClient")
         (iokit-user-client-class "IOSurfaceAcceleratorClient")
         (iokit-user-client-class "IOSurfaceSendRight")
         ;; Requires by UIView -> UITextMagnifierRenderer -> UIWindow
@@ -546,7 +545,9 @@
                   (front-user-home-prefix "/Library/Caches/"))))
 )
 
-(debugging-support)
+(with-filter (system-attribute apple-internal)
+    (internal-debugging-support)
+)
 
 (allow file-read*
     required-etc-files
@@ -686,10 +687,6 @@
 ;; Access the keyboards
 (allow file-read*
     (home-subpath "/Library/Caches/com.apple.keyboards"))
-
-;; Power logging
-(allow mach-lookup
-    (global-name "com.apple.powerlog.plxpclogger.xpc")) ;;  <rdar://problem/36442803>
 
 (mobile-preferences-read
     "com.apple.EmojiPreferences"
@@ -897,6 +894,10 @@
         (global-name "com.apple.iphone.axserver-systemwide" "com.apple.tccd" "com.apple.AGXCompilerService")))
 
 (media-capture-support)
+
+(allow mach-lookup
+  (global-name "com.apple.audio.AudioQueueServer" "com.apple.audio.AudioComponentRegistrar")
+)
 
 ;; These services have been identified as unused during living-on.
 ;; This list overrides some definitions above and in common.sb.

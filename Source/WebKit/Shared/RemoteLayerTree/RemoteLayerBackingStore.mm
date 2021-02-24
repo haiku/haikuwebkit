@@ -183,11 +183,11 @@ void RemoteLayerBackingStore::swapToValidFrontBuffer()
     auto renderingMode = m_acceleratesDrawing ? WebCore::RenderingMode::Accelerated : WebCore::RenderingMode::Unaccelerated;
 
     if (WebProcess::singleton().shouldUseRemoteRenderingFor(WebCore::RenderingPurpose::DOM))
-        m_frontBuffer.imageBuffer = m_layer->context()->ensureRemoteRenderingBackendProxy().createImageBuffer(backingStoreSize(), renderingMode, 1, WebCore::ColorSpace::SRGB, pixelFormat());
+        m_frontBuffer.imageBuffer = m_layer->context()->ensureRemoteRenderingBackendProxy().createImageBuffer(backingStoreSize(), renderingMode, 1, WebCore::DestinationColorSpace::SRGB, pixelFormat());
     else if (renderingMode == WebCore::RenderingMode::Accelerated)
-        m_frontBuffer.imageBuffer = WebCore::ConcreteImageBuffer<AcceleratedImageBufferShareableMappedBackend>::create(backingStoreSize(), 1, WebCore::ColorSpace::SRGB, pixelFormat(), nullptr);
+        m_frontBuffer.imageBuffer = WebCore::ConcreteImageBuffer<AcceleratedImageBufferShareableMappedBackend>::create(backingStoreSize(), 1, WebCore::DestinationColorSpace::SRGB, pixelFormat(), nullptr);
     else
-        m_frontBuffer.imageBuffer = WebCore::ConcreteImageBuffer<UnacceleratedImageBufferShareableBackend>::create(backingStoreSize(), 1, WebCore::ColorSpace::SRGB, pixelFormat(), nullptr);
+        m_frontBuffer.imageBuffer = WebCore::ConcreteImageBuffer<UnacceleratedImageBufferShareableBackend>::create(backingStoreSize(), 1, WebCore::DestinationColorSpace::SRGB, pixelFormat(), nullptr);
 }
 
 bool RemoteLayerBackingStore::display()
@@ -220,6 +220,8 @@ bool RemoteLayerBackingStore::display()
     WebCore::IntRect expandedScaledLayerBounds(WebCore::IntPoint(), expandedScaledSize);
 
     swapToValidFrontBuffer();
+    if (!m_frontBuffer.imageBuffer)
+        return true;
 
     WebCore::GraphicsContext& context = m_frontBuffer.imageBuffer->context();
 

@@ -2327,11 +2327,12 @@ void FrameView::setScrollPosition(const ScrollPosition& scrollPosition, const Sc
         scrollAnimator().setWheelEventTestMonitor(page->wheelEventTestMonitor());
 
     ScrollOffset snappedOffset = ceiledIntPoint(scrollAnimator().adjustScrollOffsetForSnappingIfNeeded(scrollOffsetFromPosition(scrollPosition), options.snapPointSelectionMethod));
+    auto snappedPosition = scrollPositionFromOffset(snappedOffset);
 
     if (options.animated == AnimatedScroll::Yes)
-        scrollToOffsetWithAnimation(snappedOffset, currentScrollType(), options.clamping);
+        scrollToPositionWithAnimation(snappedPosition, currentScrollType(), options.clamping);
     else
-        ScrollView::setScrollPosition(scrollPositionFromOffset(snappedOffset), options);
+        ScrollView::setScrollPosition(snappedPosition, options);
 
     setCurrentScrollType(oldScrollType);
 }
@@ -2597,7 +2598,8 @@ void FrameView::updateLayerPositionsAfterScrolling()
     if (!layoutContext().isLayoutNested() && hasViewportConstrainedObjects()) {
         if (RenderView* renderView = this->renderView()) {
             updateWidgetPositions();
-            renderView->layer()->updateLayerPositionsAfterDocumentScroll();
+            if (auto* scrollableArea = renderView->layer()->scrollableArea())
+                scrollableArea->updateLayerPositionsAfterDocumentScroll();
         }
     }
 }
@@ -2665,10 +2667,8 @@ bool FrameView::isRubberBandInProgress() const
     if (scrollbarsSuppressed())
         return false;
 
-    if (auto scrollingCoordinator = this->scrollingCoordinator()) {
-        if (!scrollingCoordinator->shouldUpdateScrollLayerPositionSynchronously(*this))
-            return scrollingCoordinator->isRubberBandInProgress(scrollingNodeID());
-    }
+    if (auto scrollingCoordinator = this->scrollingCoordinator())
+        return scrollingCoordinator->isRubberBandInProgress(scrollingNodeID());
 
     if (auto scrollAnimator = existingScrollAnimator())
         return scrollAnimator->isRubberBandInProgress();
@@ -3188,7 +3188,7 @@ bool FrameView::safeToPropagateScrollToParent() const
     if (!parentDocument)
         return false;
 
-    return document->securityOrigin().canAccess(parentDocument->securityOrigin());
+    return document->securityOrigin().isSameOriginDomain(parentDocument->securityOrigin());
 }
 
 void FrameView::scrollToAnchor()
@@ -3496,7 +3496,7 @@ void FrameView::performFixedWidthAutoSize()
 
     ASSERT(is<RenderElement>(*firstChild));
     auto& documentRenderer = downcast<RenderElement>(*firstChild);
-    documentRenderer.mutableStyle().setMaxWidth(Length(m_autoSizeConstraint.width(), Fixed));
+    documentRenderer.mutableStyle().setMaxWidth(Length(m_autoSizeConstraint.width(), LengthType::Fixed));
     resize(m_autoSizeConstraint.width(), m_autoSizeConstraint.height());
 
     Ref<FrameView> protectedThis(*this);
@@ -3764,15 +3764,15 @@ void FrameView::scrollTo(const ScrollPosition& newPosition)
     didChangeScrollOffset();
 }
 
-void FrameView::scrollToOffsetWithAnimation(const ScrollOffset& offset, ScrollType scrollType, ScrollClamping)
+void FrameView::scrollToPositionWithAnimation(const ScrollPosition& position, ScrollType scrollType, ScrollClamping)
 {
     auto previousScrollType = currentScrollType();
     setCurrentScrollType(scrollType);
 
     if (currentScrollBehaviorStatus() == ScrollBehaviorStatus::InNonNativeAnimation)
         scrollAnimator().cancelAnimations();
-    if (offset != this->scrollOffset())
-        ScrollableArea::scrollToOffsetWithAnimation(offset);
+    if (position != this->scrollPosition())
+        ScrollableArea::scrollToPositionWithAnimation(position);
 
     setCurrentScrollType(previousScrollType);
 }
@@ -4332,8 +4332,10 @@ void FrameView::paintContents(GraphicsContext& context, const IntRect& dirtyRect
         renderer = renderer->parent();
 
     rootLayer->paint(context, dirtyRect, LayoutSize(), m_paintBehavior, renderer, { }, securityOriginPaintPolicy == SecurityOriginPaintPolicy::AnyOrigin ? RenderLayer::SecurityOriginPaintPolicy::AnyOrigin : RenderLayer::SecurityOriginPaintPolicy::AccessibleOriginOnly, eventRegionContext);
-    if (rootLayer->containsDirtyOverlayScrollbars() && !eventRegionContext)
-        rootLayer->paintOverlayScrollbars(context, dirtyRect, m_paintBehavior, renderer);
+    if (auto* scrollableRootLayer = rootLayer->scrollableArea()) {
+        if (scrollableRootLayer->containsDirtyOverlayScrollbars() && !eventRegionContext)
+            scrollableRootLayer->paintOverlayScrollbars(context, dirtyRect, m_paintBehavior, renderer);
+    }
 
     didPaintContents(context, dirtyRect, paintingState);
 }
@@ -4613,6 +4615,11 @@ void FrameView::checkAndDispatchDidReachVisuallyNonEmptyState()
     m_contentQualifiesAsVisuallyNonEmpty = true;
     if (frame().isMainFrame())
         frame().loader().didReachVisuallyNonEmptyState();
+}
+
+bool FrameView::hasContenfulDescendants() const
+{
+    return m_visuallyNonEmptyCharacterCount || m_visuallyNonEmptyPixelCount;
 }
 
 bool FrameView::isViewForDocumentInFrame() const
@@ -5544,6 +5551,28 @@ float FrameView::pageScaleFactor() const
     return frame().frameScaleFactor();
 }
 
+void FrameView::updateScrollbarSteps()
+{
+    auto* documentElement = frame().document() ? frame().document()->documentElement() : nullptr;
+    auto* renderer = documentElement ? documentElement->renderBox() : nullptr;
+    if (!renderer) {
+        ScrollView::updateScrollbarSteps();
+        return;
+    }
+
+    LayoutRect paddedViewRect(LayoutPoint(), visibleSize());
+    paddedViewRect.contract(renderer->scrollPaddingForViewportRect(paddedViewRect));
+
+    if (horizontalScrollbar()) {
+        int pageStep = Scrollbar::pageStep(paddedViewRect.width());
+        horizontalScrollbar()->setSteps(Scrollbar::pixelsPerLineStep(), pageStep);
+
+    }
+    if (verticalScrollbar()) {
+        int pageStep = Scrollbar::pageStep(paddedViewRect.height());
+        verticalScrollbar()->setSteps(Scrollbar::pixelsPerLineStep(), pageStep);
+    }
+}
 } // namespace WebCore
 
 #undef PAGE_ID

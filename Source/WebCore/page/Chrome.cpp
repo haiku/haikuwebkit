@@ -22,6 +22,7 @@
 #include "config.h"
 #include "Chrome.h"
 
+#include "AppHighlight.h"
 #include "ChromeClient.h"
 #include "ContactInfo.h"
 #include "ContactsRequestData.h"
@@ -65,10 +66,6 @@
 
 #if ENABLE(DATE_AND_TIME_INPUT_TYPES)
 #include "DateTimeChooser.h"
-#endif
-
-#if PLATFORM(MAC) && ENABLE(WEBGL)
-#include "GraphicsContextGLOpenGLManager.h"
 #endif
 
 namespace WebCore {
@@ -410,7 +407,7 @@ bool Chrome::print(Frame& frame)
         return false;
     }
 
-    m_client.print(frame);
+    m_client.print(frame, frame.document()->titleWithDirection());
     return true;
 }
 
@@ -515,6 +512,13 @@ void Chrome::dispatchViewportPropertiesDidChange(const ViewportArguments& argume
     m_client.dispatchViewportPropertiesDidChange(arguments);
 }
 
+#if ENABLE(APP_HIGHLIGHTS)
+void Chrome::storeAppHighlight(const AppHighlight& highlight) const
+{
+    m_client.storeAppHighlight(highlight);
+}
+#endif
+
 void Chrome::setCursor(const Cursor& cursor)
 {
     m_client.setCursor(cursor);
@@ -525,7 +529,7 @@ void Chrome::setCursorHiddenUntilMouseMoves(bool hiddenUntilMouseMoves)
     m_client.setCursorHiddenUntilMouseMoves(hiddenUntilMouseMoves);
 }
 
-RefPtr<ImageBuffer> Chrome::createImageBuffer(const FloatSize& size, RenderingMode renderingMode, RenderingPurpose purpose, float resolutionScale, ColorSpace colorSpace, PixelFormat pixelFormat) const
+RefPtr<ImageBuffer> Chrome::createImageBuffer(const FloatSize& size, RenderingMode renderingMode, RenderingPurpose purpose, float resolutionScale, DestinationColorSpace colorSpace, PixelFormat pixelFormat) const
 {
     return m_client.createImageBuffer(size, renderingMode, purpose, resolutionScale, colorSpace, pixelFormat);
 }
@@ -548,10 +552,6 @@ void Chrome::windowScreenDidChange(PlatformDisplayID displayID, Optional<unsigne
         return;
 
     m_page.windowScreenDidChange(displayID, nominalFrameInterval);
-
-#if PLATFORM(MAC) && ENABLE(WEBGL)
-    GraphicsContextGLOpenGLManager::sharedManager().screenDidChange(displayID, this);
-#endif
 }
 
 bool Chrome::selectItemWritingDirectionIsNatural()

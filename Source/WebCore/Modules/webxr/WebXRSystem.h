@@ -53,7 +53,7 @@ class ScriptExecutionContext;
 class WebXRSession;
 struct XRSessionInit;
 
-class WebXRSystem final : public RefCounted<WebXRSystem>, public EventTargetWithInlineData, public ActiveDOMObject, public CanMakeWeakPtr<WebXRSystem> {
+class WebXRSystem final : public RefCounted<WebXRSystem>, public EventTargetWithInlineData, public ActiveDOMObject {
     WTF_MAKE_ISO_ALLOCATED(WebXRSystem);
 public:
     using IsSessionSupportedPromise = DOMPromiseDeferred<IDLBoolean>;
@@ -104,13 +104,17 @@ private:
     bool isXRPermissionGranted(XRSessionMode, const XRSessionInit&, PlatformXR::Device*, JSC::JSGlobalObject&) const;
 
     // https://immersive-web.github.io/webxr/#default-inline-xr-device
-    class DummyInlineDevice final : public PlatformXR::Device {
+    class DummyInlineDevice final : public PlatformXR::Device, private ContextDestructionObserver {
     public:
-        DummyInlineDevice();
+        explicit DummyInlineDevice(ScriptExecutionContext&);
 
     private:
         void initializeTrackingAndRendering(PlatformXR::SessionMode) final { }
         void shutDownTrackingAndRendering() final { }
+        void initializeReferenceSpace(PlatformXR::ReferenceSpaceType) final { }
+
+        void requestFrame(PlatformXR::Device::RequestFrameCallback&&) final;
+        Vector<Device::ViewData> views(XRSessionMode) const final;
     };
     DummyInlineDevice m_defaultInlineDevice;
 

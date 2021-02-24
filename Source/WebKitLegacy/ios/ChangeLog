@@ -1,3 +1,76 @@
+2021-02-22  Chris Dumez  <cdumez@apple.com>
+
+        Use adoptNS() as soon as we [[ObjcClass alloc] init] to avoid leaks
+        https://bugs.webkit.org/show_bug.cgi?id=222237
+
+        Reviewed by Darin Adler.
+
+        * Misc/WebGeolocationProviderIOS.mm:
+        (+[WebGeolocationProviderIOS sharedGeolocationProvider]):
+
+2021-02-17  Chris Dumez  <cdumez@apple.com>
+
+        Reduce explicit usage of [objC autorelease] in WebKit even further
+        https://bugs.webkit.org/show_bug.cgi?id=222060
+
+        Reviewed by Darin Adler.
+
+        Reduce explicit usage of [objC autorelease] in WebKit further by using RetainPtr.
+
+        * WebCoreSupport/WebSelectionRect.m:
+        (+[WebSelectionRect selectionRect]):
+        * WebCoreSupport/WebVisiblePosition.mm:
+        * WebView/WebPDFViewIOS.mm:
+        (-[WebPDFView _checkPDFTitle]):
+
+2021-02-12  Chris Dumez  <cdumez@apple.com>
+
+        Reduce explicit usage of [objC release] in WebKit
+        https://bugs.webkit.org/show_bug.cgi?id=221780
+        <rdar://problem/74282389>
+
+        Reviewed by Darin Adler.
+
+        Apply review feedback from Darin Adler and Sam Weinig after r272789.
+
+        * WebView/WebPDFViewPlaceholder.mm:
+        (-[WebPDFViewPlaceholder _updateTitleForDocumentIfAvailable]):
+
+2021-02-12  Chris Dumez  <cdumez@apple.com>
+
+        Reduce explicit usage of [objC release] in WebKit
+        https://bugs.webkit.org/show_bug.cgi?id=221780
+
+        Reviewed by Alex Christensen.
+
+        Reduce explicit usage of [objC release] in WebKit by using smart pointers.
+
+        * WebCoreSupport/WebChromeClientIOS.mm:
+        (WebChromeClientIOS::runOpenPanel):
+        * WebView/WebPDFViewIOS.mm:
+        (-[WebPDFView dealloc]):
+        (-[WebPDFView setDataSource:]):
+        (-[WebPDFView _checkPDFTitle]):
+        (-[WebPDFView title]):
+        * WebView/WebPDFViewPlaceholder.mm:
+        (-[WebPDFViewPlaceholder _updateTitleForDocumentIfAvailable]):
+
+2021-01-19  Keith Rollin  <krollin@apple.com>
+
+        Modularize WebKitLegacy.framework
+        https://bugs.webkit.org/show_bug.cgi?id=220026
+        <rdar://57173237>
+
+        Reviewed by Darin Adler.
+
+        Add .modulemap files to WebKitLegacy to help speed up client builds.
+
+        For WebUIKitDelegate.h, ensure that ENABLE_ORIENTATION_EVENTS is
+        defined before checking its value, thereby avoiding a compiler
+        warning-turned-error that an uninitialized symbol is being used.
+
+        * WebView/WebUIKitDelegate.h:
+
 2021-01-14  Geoffrey Garen  <ggaren@apple.com>
 
         Removed most uses of dispatch_async(dispatch_get_main_queue(), ...)

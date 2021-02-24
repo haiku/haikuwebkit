@@ -1073,7 +1073,7 @@ void DOMWindow::print()
     if (page->isControlledByAutomation())
         return;
 
-    if (frame->loader().activeDocumentLoader()->isLoading()) {
+    if (auto loader = frame->loader().activeDocumentLoader(); loader && loader->isLoading()) {
         m_shouldPrintWhenFinishedLoading = true;
         return;
     }
@@ -1112,6 +1112,11 @@ void DOMWindow::alert(const String& message)
         return;
     }
 
+    if (!document()->securityOrigin().isSameOriginDomain(document()->topDocument().securityOrigin())) {
+        printErrorMessage("Use of window.alert is not allowed in different origin-domain iframes.");
+        return;
+    }
+
     frame->document()->updateStyleIfNeeded();
 #if ENABLE(POINTER_LOCK)
     page->pointerLockController().requestPointerUnlock();
@@ -1140,6 +1145,11 @@ bool DOMWindow::confirmForBindings(const String& message)
         return false;
     }
 
+    if (!document()->securityOrigin().isSameOriginDomain(document()->topDocument().securityOrigin())) {
+        printErrorMessage("Use of window.confirm is not allowed in different origin-domain iframes.");
+        return false;
+    }
+
     frame->document()->updateStyleIfNeeded();
 #if ENABLE(POINTER_LOCK)
     page->pointerLockController().requestPointerUnlock();
@@ -1165,6 +1175,11 @@ String DOMWindow::prompt(const String& message, const String& defaultValue)
 
     if (!page->arePromptsAllowed()) {
         printErrorMessage("Use of window.prompt is not allowed while unloading a page.");
+        return String();
+    }
+
+    if (!document()->securityOrigin().isSameOriginDomain(document()->topDocument().securityOrigin())) {
+        printErrorMessage("Use of window.prompt is not allowed in different origin-domain iframes.");
         return String();
     }
 
@@ -1918,7 +1933,7 @@ bool DOMWindow::isSameSecurityOriginAsMainFrame() const
 
     Document* mainFrameDocument = frame->mainFrame().document();
 
-    if (mainFrameDocument && document()->securityOrigin().canAccess(mainFrameDocument->securityOrigin()))
+    if (mainFrameDocument && document()->securityOrigin().isSameOriginDomain(mainFrameDocument->securityOrigin()))
         return true;
 
     return false;
@@ -2145,7 +2160,7 @@ void DOMWindow::resetAllGeolocationPermission()
 #endif
 }
 
-bool DOMWindow::removeEventListener(const AtomString& eventType, EventListener& listener, const ListenerOptions& options)
+bool DOMWindow::removeEventListener(const AtomString& eventType, EventListener& listener, const EventListenerOptions& options)
 {
     if (!EventTarget::removeEventListener(eventType, listener, options.capture))
         return false;
@@ -2326,7 +2341,7 @@ void DOMWindow::finishedLoading()
 {
     if (m_shouldPrintWhenFinishedLoading) {
         m_shouldPrintWhenFinishedLoading = false;
-        if (frame()->loader().activeDocumentLoader()->mainDocumentError().isNull())
+        if (auto loader = frame()->loader().activeDocumentLoader(); !loader || loader->mainDocumentError().isNull())
             print();
     }
 }
@@ -2371,7 +2386,7 @@ String DOMWindow::crossDomainAccessErrorMessage(const DOMWindow& activeWindow, I
     if (activeWindowURL.isNull())
         return String();
 
-    ASSERT(!activeWindow.document()->securityOrigin().canAccess(document()->securityOrigin()));
+    ASSERT(!activeWindow.document()->securityOrigin().isSameOriginDomain(document()->securityOrigin()));
 
     // FIXME: This message, and other console messages, have extra newlines. Should remove them.
     SecurityOrigin& activeOrigin = activeWindow.document()->securityOrigin();
@@ -2432,7 +2447,7 @@ bool DOMWindow::isInsecureScriptAccess(DOMWindow& activeWindow, const String& ur
 
         // FIXME: The name canAccess seems to be a roundabout way to ask "can execute script".
         // Can we name the SecurityOrigin function better to make this more clear?
-        if (activeWindow.document()->securityOrigin().canAccess(document()->securityOrigin()))
+        if (activeWindow.document()->securityOrigin().isSameOriginDomain(document()->securityOrigin()))
             return false;
     }
 
@@ -2529,11 +2544,12 @@ ExceptionOr<RefPtr<WindowProxy>> DOMWindow::open(DOMWindow& activeWindow, DOMWin
         urlString = "about:blank"_s;
 
 #if ENABLE(CONTENT_EXTENSIONS)
-    if (firstFrame->document()
-        && firstFrame->page()
-        && firstFrame->mainFrame().document()
-        && firstFrame->mainFrame().document()->loader()) {
-        auto results = firstFrame->page()->userContentProvider().processContentRuleListsForLoad(firstFrame->document()->completeURL(urlString), ContentExtensions::ResourceType::Popup, *firstFrame->mainFrame().document()->loader());
+    auto* page = firstFrame->page();
+    auto* firstFrameDocument = firstFrame->document();
+    auto* mainFrameDocument = firstFrame->mainFrame().document();
+    auto* mainFrameDocumentLoader = mainFrameDocument ? mainFrameDocument->loader() : nullptr;
+    if (firstFrameDocument && page && mainFrameDocumentLoader) {
+        auto results = page->userContentProvider().processContentRuleListsForLoad(*page, firstFrameDocument->completeURL(urlString), ContentExtensions::ResourceType::Popup, *mainFrameDocumentLoader);
         if (results.summary.blockedLoad)
             return RefPtr<WindowProxy> { nullptr };
     }

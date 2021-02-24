@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,7 +60,6 @@ class PropertyNameArrayData;
 class PropertyTable;
 class StructureChain;
 class StructureShape;
-class SlotVisitor;
 class JSString;
 struct DumpContext;
 struct HashTable;
@@ -123,7 +122,7 @@ private:
     const Structure* m_structure;
 };
 
-class Structure final : public JSCell {
+class Structure : public JSCell {
     static constexpr uint16_t shortInvalidOffset = std::numeric_limits<uint16_t>::max() - 1;
     static constexpr uint16_t useRareDataFlag = std::numeric_limits<uint16_t>::max();
 public:
@@ -146,13 +145,7 @@ public:
 
     JS_EXPORT_PRIVATE static bool isValidPrototype(JSValue);
 
-private:
-    void finishCreation(VM& vm)
-    {
-        Base::finishCreation(vm);
-        ASSERT(m_prototype.get().isEmpty() || isValidPrototype(m_prototype.get()));
-    }
-
+protected:
     void finishCreation(VM& vm, const Structure* previous)
     {
         this->finishCreation(vm);
@@ -163,6 +156,13 @@ private:
                 rareData()->setSharedPolyProtoWatchpoint(previousRareData->copySharedPolyProtoWatchpoint());
             }
         }
+    }
+
+private:
+    void finishCreation(VM& vm)
+    {
+        Base::finishCreation(vm);
+        ASSERT(m_prototype.get().isEmpty() || isValidPrototype(m_prototype.get()));
     }
 
     void finishCreation(VM& vm, CreatingEarlyCellTag)
@@ -206,6 +206,8 @@ public:
     static Structure* preventExtensionsTransition(VM&, Structure*);
     static Structure* nonPropertyTransition(VM&, Structure*, TransitionKind);
     JS_EXPORT_PRIVATE static Structure* nonPropertyTransitionSlow(VM&, Structure*, TransitionKind);
+    static Structure* setBrandTransitionFromExistingStructureConcurrently(Structure*, UniquedStringImpl*);
+    static Structure* setBrandTransition(VM&, Structure*, Symbol* brand, DeferredStructureTransitionWatchpointFire* = nullptr);
 
     JS_EXPORT_PRIVATE bool isSealed(VM&);
     JS_EXPORT_PRIVATE bool isFrozen(VM&);
@@ -307,7 +309,7 @@ public:
     JSValue prototypeForLookup(JSGlobalObject*, JSCell* base) const;
     StructureChain* prototypeChain(VM&, JSGlobalObject*, JSObject* base) const;
     StructureChain* prototypeChain(JSGlobalObject*, JSObject* base) const;
-    static void visitChildren(JSCell*, SlotVisitor&);
+    DECLARE_VISIT_CHILDREN;
     
     // A Structure is cheap to mark during GC if doing so would only add a small and bounded amount
     // to our heap footprint. For example, if the structure refers to a global object that is not
@@ -315,10 +317,10 @@ public:
     // increase in footprint because no other object refers to that global object. This method
     // returns true if all user-controlled (and hence unbounded in size) objects referenced from the
     // Structure are already marked.
-    bool isCheapDuringGC(VM&);
+    template<typename Visitor> bool isCheapDuringGC(Visitor&);
     
     // Returns true if this structure is now marked.
-    bool markIfCheap(SlotVisitor&);
+    template<typename Visitor> bool markIfCheap(Visitor&);
     
     bool hasRareData() const
     {
@@ -715,21 +717,25 @@ public:
     DEFINE_BITFIELD(bool, hasBeenDictionary, HasBeenDictionary, 1, 27);
     DEFINE_BITFIELD(bool, protectPropertyTableWhileTransitioning, ProtectPropertyTableWhileTransitioning, 1, 28);
     DEFINE_BITFIELD(bool, hasUnderscoreProtoPropertyExcludingOriginalProto, HasUnderscoreProtoPropertyExcludingOriginalProto, 1, 29);
+    DEFINE_BITFIELD(bool, isBrandedStructure, IsBrandedStructure, 1, 30);
 
     static_assert(s_bitWidthOfTransitionPropertyAttributes <= sizeof(TransitionPropertyAttributes) * 8);
     static_assert(s_bitWidthOfTransitionKind <= sizeof(TransitionKind) * 8);
+
+protected:
+    Structure(VM&, Structure*, DeferredStructureTransitionWatchpointFire*);
 
 private:
     friend class LLIntOffsetsExtractor;
 
     JS_EXPORT_PRIVATE Structure(VM&, JSGlobalObject*, JSValue prototype, const TypeInfo&, const ClassInfo*, IndexingType, unsigned inlineCapacity);
     Structure(VM&);
-    Structure(VM&, Structure*, DeferredStructureTransitionWatchpointFire*);
 
     static Structure* create(VM&, Structure*, DeferredStructureTransitionWatchpointFire* = nullptr);
     
     static Structure* addPropertyTransitionToExistingStructureImpl(Structure*, UniquedStringImpl* uid, unsigned attributes, PropertyOffset&);
     static Structure* removePropertyTransitionFromExistingStructureImpl(Structure*, PropertyName, unsigned attributes, PropertyOffset&);
+    static Structure* setBrandTransitionFromExistingStructureImpl(Structure*, UniquedStringImpl*);
 
     // This will return the structure that has a usable property table, that property table,
     // and the list of structures that we visited before we got to it. If it returns a

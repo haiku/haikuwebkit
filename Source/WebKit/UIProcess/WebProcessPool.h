@@ -69,8 +69,12 @@ OBJC_CLASS WKWebInspectorPreferenceObserver;
 #endif
 #endif
 
-#if PLATFORM(MAC) && ENABLE(WEBPROCESS_WINDOWSERVER_BLOCKING)
+#if PLATFORM(MAC)
+#import <WebCore/PowerObserverMac.h>
+#import <pal/system/SystemSleepListener.h>
+#if ENABLE(WEBPROCESS_WINDOWSERVER_BLOCKING)
 #include "DisplayLink.h"
+#endif
 #endif
 
 namespace API {
@@ -105,6 +109,7 @@ class WebContextSupplement;
 class WebPageGroup;
 class WebPageProxy;
 class WebProcessCache;
+struct GPUProcessConnectionParameters;
 struct GPUProcessCreationParameters;
 struct NetworkProcessCreationParameters;
 struct WebProcessCreationParameters;
@@ -120,7 +125,14 @@ int webProcessThroughputQOS();
 enum class CallDownloadDidStart : bool;
 enum class ProcessSwapRequestedByClient : bool;
 
-class WebProcessPool final : public API::ObjectImpl<API::Object::Type::ProcessPool>, public CanMakeWeakPtr<WebProcessPool>, private IPC::MessageReceiver {
+class WebProcessPool final
+    : public API::ObjectImpl<API::Object::Type::ProcessPool>
+    , public CanMakeWeakPtr<WebProcessPool>
+    , private IPC::MessageReceiver
+#if PLATFORM(MAC)
+    , private PAL::SystemSleepListener::Client
+#endif
+{
 public:
     static Ref<WebProcessPool> create(API::ProcessPoolConfiguration&);
 
@@ -347,7 +359,7 @@ public:
 #if ENABLE(GPU_PROCESS)
     void gpuProcessCrashed(ProcessID);
 
-    void getGPUProcessConnection(WebProcessProxy&, Messages::WebProcessProxy::GetGPUProcessConnectionDelayedReply&&);
+    void getGPUProcessConnection(WebProcessProxy&, GPUProcessConnectionParameters&&, Messages::WebProcessProxy::GetGPUProcessConnectionDelayedReply&&);
 
     GPUProcessProxy& ensureGPUProcess();
     GPUProcessProxy* gpuProcess() const { return m_gpuProcess.get(); }
@@ -366,7 +378,7 @@ public:
     void removeFromServiceWorkerProcesses(WebProcessProxy&);
     size_t serviceWorkerProxiesCount() const { return serviceWorkerProcesses().computeSize(); }
     void updateServiceWorkerUserAgent(const String& userAgent);
-    const Optional<UserContentControllerIdentifier>& userContentControllerIdentifierForServiceWorkers() const { return m_userContentControllerIDForServiceWorker; }
+    UserContentControllerIdentifier userContentControllerIdentifierForServiceWorkers();
     bool hasServiceWorkerForegroundActivityForTesting() const;
     bool hasServiceWorkerBackgroundActivityForTesting() const;
 #endif
@@ -565,11 +577,21 @@ private:
 #endif
 #endif
 
+#if PLATFORM(MAC)
+    static void colorPreferencesDidChangeCallback(CFNotificationCenterRef, void *observer, CFStringRef name, const void *, CFDictionaryRef userInfo);
+#endif
+    
 #if ENABLE(CFPREFS_DIRECT_MODE)
     void startObservingPreferenceChanges();
 #endif
 
     static void registerHighDynamicRangeChangeCallback();
+
+#if PLATFORM(MAC)
+    // PAL::SystemSleepListener
+    void systemWillSleep() final;
+    void systemDidWake() final;
+#endif
 
     Ref<API::ProcessPoolConfiguration> m_configuration;
 
@@ -585,7 +607,7 @@ private:
     bool m_waitingForWorkerContextProcessConnection { false };
     String m_serviceWorkerUserAgent;
     Optional<WebPreferencesStore> m_serviceWorkerPreferences;
-    Optional<UserContentControllerIdentifier> m_userContentControllerIDForServiceWorker;
+    RefPtr<WebUserContentControllerProxy> m_userContentControllerForServiceWorker;
 #endif
 
 #if ENABLE(GPU_PROCESS)
@@ -767,6 +789,11 @@ private:
 #if ENABLE(RESOURCE_LOAD_STATISTICS)
     HashSet<WebCore::RegistrableDomain> m_domainsWithUserInteraction;
     HashMap<TopFrameDomain, SubResourceDomain> m_domainsWithCrossPageStorageAccessQuirk;
+#endif
+    
+#if PLATFORM(MAC)
+    std::unique_ptr<WebCore::PowerObserver> m_powerObserver;
+    std::unique_ptr<PAL::SystemSleepListener> m_systemSleepListener;
 #endif
 };
 

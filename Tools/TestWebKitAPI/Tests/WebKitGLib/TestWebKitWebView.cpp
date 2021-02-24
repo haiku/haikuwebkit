@@ -21,6 +21,7 @@
 #include "config.h"
 #include "WebKitTestServer.h"
 #include "WebViewTest.h"
+#include <WebCore/SoupVersioning.h>
 #include <glib/gstdio.h>
 #include <wtf/glib/GRefPtr.h>
 
@@ -1069,16 +1070,14 @@ static void testWebViewNotification(NotificationWebViewTest* test, gconstpointer
 
 static void setInitialNotificationPermissionsAllowedCallback(WebKitWebContext* context, NotificationWebViewTest* test)
 {
-    GUniquePtr<char> baseURI(soup_uri_to_string(gServer->baseURI(), FALSE));
-    GList* allowedOrigins = g_list_prepend(nullptr, webkit_security_origin_new_for_uri(baseURI.get()));
+    GList* allowedOrigins = g_list_prepend(nullptr, webkit_security_origin_new_for_uri(gServer->baseURL().string().utf8().data()));
     webkit_web_context_initialize_notification_permissions(test->m_webContext.get(), allowedOrigins, nullptr);
     g_list_free_full(allowedOrigins, reinterpret_cast<GDestroyNotify>(webkit_security_origin_unref));
 }
 
 static void setInitialNotificationPermissionsDisallowedCallback(WebKitWebContext* context, NotificationWebViewTest* test)
 {
-    GUniquePtr<char> baseURI(soup_uri_to_string(gServer->baseURI(), FALSE));
-    GList* disallowedOrigins = g_list_prepend(nullptr, webkit_security_origin_new_for_uri(baseURI.get()));
+    GList* disallowedOrigins = g_list_prepend(nullptr, webkit_security_origin_new_for_uri(gServer->baseURL().string().utf8().data()));
     webkit_web_context_initialize_notification_permissions(test->m_webContext.get(), nullptr, disallowedOrigins);
     g_list_free_full(disallowedOrigins, reinterpret_cast<GDestroyNotify>(webkit_security_origin_unref));
 }
@@ -1229,15 +1228,17 @@ static void testWebViewTitleChange(WebViewTitleTest* test, gconstpointer)
     g_assert_cmpint(test->m_webViewTitles.size(), ==, 0);
 
     test->loadHtml("<head><title>Page Title</title></head>", nullptr);
-    test->waitUntilLoadFinished();
+    test->waitUntilTitleChanged();
     g_assert_cmpint(test->m_webViewTitles.size(), ==, 1);
     g_assert_cmpstr(test->m_webViewTitles[0].data(), ==, "Page Title");
 
     test->loadHtml("<head><title>Another Page Title</title></head>", nullptr);
-    test->waitUntilLoadFinished();
+    test->waitUntilTitleChanged();
+    g_assert_cmpint(test->m_webViewTitles.size(), ==, 2);
+    g_assert_cmpstr(test->m_webViewTitles[1].data(), ==, "");
+    test->waitUntilTitleChanged();
     g_assert_cmpint(test->m_webViewTitles.size(), ==, 3);
     /* Page title should be immediately unset when loading a new page. */
-    g_assert_cmpstr(test->m_webViewTitles[1].data(), ==, "");
     g_assert_cmpstr(test->m_webViewTitles[2].data(), ==, "Another Page Title");
 
     test->loadHtml("<p>This page has no title!</p>", nullptr);
@@ -1246,11 +1247,9 @@ static void testWebViewTitleChange(WebViewTitleTest* test, gconstpointer)
     g_assert_cmpstr(test->m_webViewTitles[3].data(), ==, "");
 
     test->loadHtml("<script>document.title = 'one'; document.title = 'two'; document.title = 'three';</script>", nullptr);
-    test->waitUntilLoadFinished();
-    g_assert_cmpint(test->m_webViewTitles.size(), ==, 7);
-    g_assert_cmpstr(test->m_webViewTitles[4].data(), ==, "one");
-    g_assert_cmpstr(test->m_webViewTitles[5].data(), ==, "two");
-    g_assert_cmpstr(test->m_webViewTitles[6].data(), ==, "three");
+    test->waitUntilTitleChanged();
+    g_assert_cmpint(test->m_webViewTitles.size(), ==, 5);
+    g_assert_cmpstr(test->m_webViewTitles[4].data(), ==, "three");
 }
 
 #if PLATFORM(WPE)
@@ -1483,18 +1482,22 @@ static void testWebViewExternalAudioRendering(AudioRenderingWebViewTest* test, g
 }
 #endif
 
+#if USE(SOUP2)
 static void serverCallback(SoupServer* server, SoupMessage* message, const char* path, GHashTable*, SoupClientContext*, gpointer)
+#else
+static void serverCallback(SoupServer* server, SoupServerMessage* message, const char* path, GHashTable*, gpointer)
+#endif
 {
-    if (message->method != SOUP_METHOD_GET) {
-        soup_message_set_status(message, SOUP_STATUS_NOT_IMPLEMENTED);
+    if (soup_server_message_get_method(message) != SOUP_METHOD_GET) {
+        soup_server_message_set_status(message, SOUP_STATUS_NOT_IMPLEMENTED, nullptr);
         return;
     }
 
     if (g_str_equal(path, "/")) {
-        soup_message_set_status(message, SOUP_STATUS_OK);
-        soup_message_body_complete(message->response_body);
+        soup_server_message_set_status(message, SOUP_STATUS_OK, nullptr);
+        soup_message_body_complete(soup_server_message_get_response_body(message));
     } else
-        soup_message_set_status(message, SOUP_STATUS_NOT_FOUND);
+        soup_server_message_set_status(message, SOUP_STATUS_NOT_FOUND, nullptr);
 }
 
 void beforeAll()

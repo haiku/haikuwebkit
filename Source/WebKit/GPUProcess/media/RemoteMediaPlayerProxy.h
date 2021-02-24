@@ -181,6 +181,10 @@ public:
     void notifyTrackModeChanged();
     void tracksChanged();
 
+    void audioTrackSetEnabled(const TrackPrivateRemoteIdentifier&, bool);
+    void videoTrackSetSelected(const TrackPrivateRemoteIdentifier&, bool);
+    void textTrackSetMode(const TrackPrivateRemoteIdentifier&, WebCore::InbandTextTrackPrivate::Mode);
+
     void performTaskAtMediaTime(const MediaTime&, WallTime, CompletionHandler<void(Optional<MediaTime>)>&&);
     void wouldTaintOrigin(struct WebCore::SecurityOriginData, CompletionHandler<void(Optional<bool>)>&&);
     void setShouldUpdatePlaybackMetrics(bool);
@@ -239,8 +243,6 @@ private:
 
     String mediaPlayerReferrer() const final;
     String mediaPlayerUserAgent() const final;
-    void mediaPlayerEnterFullscreen() final;
-    void mediaPlayerExitFullscreen() final;
     bool mediaPlayerIsFullscreen() const final;
     bool mediaPlayerIsFullscreenPermitted() const final;
     bool mediaPlayerIsVideo() const final;
@@ -312,7 +314,7 @@ private:
     RefPtr<RemoteMediaSourceProxy> m_mediaSourceProxy;
 #endif
 
-    WebCore::LayoutRect m_videoContentBoxRect;
+    WebCore::IntSize m_videoInlineSize;
     float m_videoContentScale { 1.0 };
 
     bool m_bufferedChanged { true };

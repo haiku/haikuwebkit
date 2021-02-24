@@ -903,6 +903,9 @@ void CanvasRenderingContext2DBase::resetTransform()
 void CanvasRenderingContext2DBase::setStrokeColor(const String& color, Optional<float> alpha)
 {
     if (alpha) {
+        if (std::isnan(*alpha))
+            return;
+
         setStrokeStyle(CanvasStyle::createFromStringWithOverrideAlpha(color, alpha.value(), canvasBase()));
         return;
     }
@@ -917,7 +920,10 @@ void CanvasRenderingContext2DBase::setStrokeColor(const String& color, Optional<
 
 void CanvasRenderingContext2DBase::setStrokeColor(float grayLevel, float alpha)
 {
-    auto color = SRGBA { grayLevel, grayLevel, grayLevel, alpha };
+    if (std::isnan(grayLevel) || std::isnan(alpha))
+        return;
+
+    auto color = makeFromComponentsClamping<SRGBA<float>>(grayLevel, grayLevel, grayLevel, alpha);
     if (state().strokeStyle.isEquivalent(color))
         return;
     setStrokeStyle(CanvasStyle(color));
@@ -925,7 +931,10 @@ void CanvasRenderingContext2DBase::setStrokeColor(float grayLevel, float alpha)
 
 void CanvasRenderingContext2DBase::setStrokeColor(float r, float g, float b, float a)
 {
-    auto color = SRGBA { r, g, b, a };
+    if (std::isnan(r) || std::isnan(g) || std::isnan(b)  || std::isnan(a))
+        return;
+
+    auto color = makeFromComponentsClamping<SRGBA<float>>(r, g, b, a);
     if (state().strokeStyle.isEquivalent(color))
         return;
     setStrokeStyle(CanvasStyle(color));
@@ -934,6 +943,9 @@ void CanvasRenderingContext2DBase::setStrokeColor(float r, float g, float b, flo
 void CanvasRenderingContext2DBase::setFillColor(const String& color, Optional<float> alpha)
 {
     if (alpha) {
+        if (std::isnan(*alpha))
+            return;
+
         setFillStyle(CanvasStyle::createFromStringWithOverrideAlpha(color, alpha.value(), canvasBase()));
         return;
     }
@@ -948,7 +960,10 @@ void CanvasRenderingContext2DBase::setFillColor(const String& color, Optional<fl
 
 void CanvasRenderingContext2DBase::setFillColor(float grayLevel, float alpha)
 {
-    auto color = SRGBA { grayLevel, grayLevel, grayLevel, alpha };
+    if (std::isnan(grayLevel) || std::isnan(alpha))
+        return;
+
+    auto color = makeFromComponentsClamping<SRGBA<float>>(grayLevel, grayLevel, grayLevel, alpha);
     if (state().fillStyle.isEquivalent(color))
         return;
     setFillStyle(CanvasStyle(color));
@@ -956,7 +971,10 @@ void CanvasRenderingContext2DBase::setFillColor(float grayLevel, float alpha)
 
 void CanvasRenderingContext2DBase::setFillColor(float r, float g, float b, float a)
 {
-    auto color = SRGBA { r, g, b, a };
+    if (std::isnan(r) || std::isnan(g) || std::isnan(b)  || std::isnan(a))
+        return;
+
+    auto color = makeFromComponentsClamping<SRGBA<float>>(r, g, b, a);
     if (state().fillStyle.isEquivalent(color))
         return;
     setFillStyle(CanvasStyle(color));
@@ -1289,6 +1307,9 @@ void CanvasRenderingContext2DBase::strokeRect(float x, float y, float width, flo
 
 void CanvasRenderingContext2DBase::setShadow(float width, float height, float blur, const String& colorString, Optional<float> alpha)
 {
+    if (alpha && std::isnan(*alpha))
+        return;
+
     Color color = Color::transparentBlack;
     if (!colorString.isNull()) {
         color = parseColorOrCurrentColor(colorString, canvasBase());
@@ -1300,17 +1321,18 @@ void CanvasRenderingContext2DBase::setShadow(float width, float height, float bl
 
 void CanvasRenderingContext2DBase::setShadow(float width, float height, float blur, float grayLevel, float alpha)
 {
-    setShadow(FloatSize(width, height), blur, convertToComponentBytes(SRGBA { grayLevel, grayLevel, grayLevel, alpha }));
+    if (std::isnan(grayLevel) || std::isnan(alpha))
+        return;
+
+    setShadow(FloatSize(width, height), blur, convertColor<SRGBA<uint8_t>>(makeFromComponentsClamping<SRGBA<float>>(grayLevel, grayLevel, grayLevel, alpha)));
 }
 
 void CanvasRenderingContext2DBase::setShadow(float width, float height, float blur, float r, float g, float b, float a)
 {
-    setShadow(FloatSize(width, height), blur, convertToComponentBytes(SRGBA { r, g, b, a }));
-}
+    if (std::isnan(r) || std::isnan(g) || std::isnan(b)  || std::isnan(a))
+        return;
 
-void CanvasRenderingContext2DBase::setShadow(float width, float height, float blur, float c, float m, float y, float k, float a)
-{
-    setShadow(FloatSize(width, height), blur, convertToComponentBytes(toSRGBA(CMYKA { c, m, y, k, a })));
+    setShadow(FloatSize(width, height), blur, convertColor<SRGBA<uint8_t>>(makeFromComponentsClamping<SRGBA<float>>(r, g, b, a)));
 }
 
 void CanvasRenderingContext2DBase::clearShadow()
@@ -1595,7 +1617,7 @@ ExceptionOr<void> CanvasRenderingContext2DBase::drawImage(CanvasBase& sourceCanv
         didDrawEntireCanvas();
     } else if (state().globalComposite == CompositeOperator::Copy) {
         if (&sourceCanvas == &canvasBase()) {
-            if (auto copy = buffer->copyRectToBuffer(srcRect, ColorSpace::SRGB, *c)) {
+            if (auto copy = buffer->copyRectToBuffer(srcRect, DestinationColorSpace::SRGB, *c)) {
                 clearCanvas();
                 c->drawImageBuffer(*copy, dstRect, { { }, srcRect.size() }, { state().globalComposite, state().globalBlend });
             }
@@ -1915,7 +1937,15 @@ ExceptionOr<RefPtr<CanvasPattern>> CanvasRenderingContext2DBase::createPattern(H
     if (cachedImage->image()->isSVGImage())
         originClean = false;
 
-    return RefPtr<CanvasPattern> { CanvasPattern::create(*cachedImage->imageForRenderer(imageElement.renderer()), repeatX, repeatY, originClean) };
+    auto* image = cachedImage->imageForRenderer(imageElement.renderer());
+    if (!image)
+        return Exception { InvalidStateError };
+
+    auto nativeImage = image->nativeImage();
+    if (!nativeImage)
+        return Exception { InvalidStateError };
+
+    return RefPtr<CanvasPattern> { CanvasPattern::create(nativeImage.releaseNonNull(), repeatX, repeatY, originClean) };
 }
 
 ExceptionOr<RefPtr<CanvasPattern>> CanvasRenderingContext2DBase::createPattern(CanvasBase& canvas, bool repeatX, bool repeatY)
@@ -1926,8 +1956,12 @@ ExceptionOr<RefPtr<CanvasPattern>> CanvasRenderingContext2DBase::createPattern(C
 
     if (!copiedImage)
         return Exception { InvalidStateError };
+    
+    auto nativeImage = copiedImage->nativeImage();
+    if (!nativeImage)
+        return Exception { InvalidStateError };
 
-    return RefPtr<CanvasPattern> { CanvasPattern::create(*copiedImage, repeatX, repeatY, canvas.originClean()) };
+    return RefPtr<CanvasPattern> { CanvasPattern::create(nativeImage.releaseNonNull(), repeatX, repeatY, canvas.originClean()) };
 }
     
 #if ENABLE(VIDEO)
@@ -1942,7 +1976,7 @@ ExceptionOr<RefPtr<CanvasPattern>> CanvasRenderingContext2DBase::createPattern(H
 
 #if USE(CG)
     if (auto nativeImage = videoElement.nativeImageForCurrentTime())
-        return RefPtr<CanvasPattern> { CanvasPattern::create(BitmapImage::create(WTFMove(nativeImage)), repeatX, repeatY, originClean) };
+        return RefPtr<CanvasPattern> { CanvasPattern::create(nativeImage.releaseNonNull(), repeatX, repeatY, originClean) };
 #endif
 
     auto renderingMode = !drawingContext() || drawingContext()->isAcceleratedContext() ? RenderingMode::Accelerated : RenderingMode::Unaccelerated;
@@ -1952,7 +1986,7 @@ ExceptionOr<RefPtr<CanvasPattern>> CanvasRenderingContext2DBase::createPattern(H
 
     videoElement.paintCurrentFrameInContext(imageBuffer->context(), FloatRect(FloatPoint(), size(videoElement)));
     
-    return RefPtr<CanvasPattern> { CanvasPattern::create(ImageBuffer::sinkIntoImage(WTFMove(imageBuffer), PreserveResolution::Yes).releaseNonNull(), repeatX, repeatY, originClean) };
+    return RefPtr<CanvasPattern> { CanvasPattern::create(ImageBuffer::sinkIntoNativeImage(WTFMove(imageBuffer)).releaseNonNull(), repeatX, repeatY, originClean) };
 }
 
 #endif
@@ -2550,7 +2584,7 @@ void CanvasRenderingContext2DBase::drawTextUnchecked(const TextRun& textRun, flo
             }
         };
 
-        if (c->clipToDrawingCommands(maskRect, ColorSpace::SRGB, WTFMove(paintMaskImage)) == GraphicsContext::ClipToDrawingCommandsResult::FailedToCreateImageBuffer)
+        if (c->clipToDrawingCommands(maskRect, DestinationColorSpace::SRGB, WTFMove(paintMaskImage)) == GraphicsContext::ClipToDrawingCommandsResult::FailedToCreateImageBuffer)
             return;
 
         drawStyle.applyFillColor(*c);

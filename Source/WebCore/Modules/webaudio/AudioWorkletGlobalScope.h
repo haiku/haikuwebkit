@@ -33,6 +33,10 @@
 #include "MessagePort.h"
 #include "WorkletGlobalScope.h"
 
+namespace JSC {
+class VM;
+}
+
 namespace WebCore {
 
 class AudioWorkletProcessorConstructionData;
@@ -42,13 +46,10 @@ class JSAudioWorkletProcessorConstructor;
 
 struct WorkletParameters;
 
-class AudioWorkletGlobalScope : public WorkletGlobalScope {
+class AudioWorkletGlobalScope final : public WorkletGlobalScope {
     WTF_MAKE_ISO_ALLOCATED(AudioWorkletGlobalScope);
 public:
-    static Ref<AudioWorkletGlobalScope> create(AudioWorkletThread& thread, const WorkletParameters& parameters)
-    {
-        return adoptRef(*new AudioWorkletGlobalScope(thread, parameters));
-    }
+    static RefPtr<AudioWorkletGlobalScope> tryCreate(AudioWorkletThread&, const WorkletParameters&);
     ~AudioWorkletGlobalScope();
 
     ExceptionOr<void> registerProcessor(String&& name, Ref<JSAudioWorkletProcessorConstructor>&&);
@@ -68,8 +69,10 @@ public:
     void handlePreRenderTasks();
     void handlePostRenderTasks(size_t currentFrame);
 
+    FetchOptions::Destination destination() const final { return FetchOptions::Destination::Audioworklet; }
+
 private:
-    AudioWorkletGlobalScope(AudioWorkletThread&, const WorkletParameters&);
+    AudioWorkletGlobalScope(AudioWorkletThread&, Ref<JSC::VM>&&, const WorkletParameters&);
 
     bool isAudioWorkletGlobalScope() const final { return true; }
 

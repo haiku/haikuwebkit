@@ -33,6 +33,7 @@
 #include "TestMain.h"
 #include "WebKitTestServer.h"
 #include "WebViewTest.h"
+#include <WebCore/SoupVersioning.h>
 #include <wtf/glib/GRefPtr.h>
 
 static WebKitTestServer* gServer;
@@ -164,8 +165,7 @@ static void testWebKitSettings(Test*, gconstpointer)
     g_assert_cmpuint(webkit_settings_font_size_to_points(8), ==, 6);
     g_assert_cmpuint(webkit_settings_font_size_to_points(24), ==, 18);
 
-    // Test font size on DPI change. The font size value in pixels should scale
-    // accordingly, while the font size value in points should remain the same.
+    // Test font size on DPI change.
     if (gtkSettings) {
         // At 96 DPI, 20 pixels is 15 points.
         webkit_settings_set_default_font_size(settings, 20);
@@ -176,12 +176,12 @@ static void testWebKitSettings(Test*, gconstpointer)
 
         // Set DPI to 120. The scaling factor is 120 / 96 == 1.25.
         g_object_set(gtkSettings, "gtk-xft-dpi", 120 * 1024, nullptr);
-        g_assert_cmpuint(webkit_settings_get_default_font_size(settings), ==, 25);
-        g_assert_cmpuint(webkit_settings_font_size_to_points(webkit_settings_get_default_font_size(settings)), ==, 15);
-        g_assert_cmpuint(webkit_settings_get_default_monospace_font_size(settings), ==, 20);
-        g_assert_cmpuint(webkit_settings_font_size_to_points(webkit_settings_get_default_monospace_font_size(settings)), ==, 12);
+        g_assert_cmpuint(webkit_settings_get_default_font_size(settings), ==, 20);
+        g_assert_cmpuint(webkit_settings_font_size_to_points(webkit_settings_get_default_font_size(settings) * 1.25), ==, 15);
+        g_assert_cmpuint(webkit_settings_get_default_monospace_font_size(settings), ==, 16);
+        g_assert_cmpuint(webkit_settings_font_size_to_points(webkit_settings_get_default_monospace_font_size(settings) * 1.25), ==, 12);
 
-        // Set DPI back to 96. The scaling factor is 96 / 120 == 0.8.
+        // Set DPI back to 96.
         g_object_set(gtkSettings, "gtk-xft-dpi", 96 * 1024, nullptr);
         g_assert_cmpuint(webkit_settings_get_default_font_size(settings), ==, 20);
         g_assert_cmpuint(webkit_settings_font_size_to_points(webkit_settings_get_default_font_size(settings)), ==, 15);
@@ -453,7 +453,7 @@ static void testWebKitSettingsJavaScriptMarkup(WebViewTest* test, gconstpointer)
         " </body>"
         "</html>";
     test->loadHtml(html, nullptr);
-    test->waitUntilLoadFinished();
+    test->waitUntilTitleChanged();
 
     g_assert_cmpstr(webkit_web_view_get_title(test->m_webView), ==, "No JavaScript allowed");
     auto* jsResult = test->runJavaScriptAndWaitUntilFinished("document.getElementsByTagName('script').length", nullptr);
@@ -463,20 +463,25 @@ static void testWebKitSettingsJavaScriptMarkup(WebViewTest* test, gconstpointer)
     webkit_settings_set_enable_javascript_markup(webkit_web_view_get_settings(test->m_webView), TRUE);
 }
 
+#if USE(SOUP2)
 static void serverCallback(SoupServer* server, SoupMessage* message, const char* path, GHashTable*, SoupClientContext*, gpointer)
+#else
+static void serverCallback(SoupServer* server, SoupServerMessage* message, const char* path, GHashTable*, gpointer)
+#endif
 {
-    if (message->method != SOUP_METHOD_GET) {
-        soup_message_set_status(message, SOUP_STATUS_NOT_IMPLEMENTED);
+    if (soup_server_message_get_method(message) != SOUP_METHOD_GET) {
+        soup_server_message_set_status(message, SOUP_STATUS_NOT_IMPLEMENTED, nullptr);
         return;
     }
 
     if (g_str_equal(path, "/")) {
-        const char* userAgent = soup_message_headers_get_one(message->request_headers, "User-Agent");
-        soup_message_set_status(message, SOUP_STATUS_OK);
-        soup_message_body_append(message->response_body, SOUP_MEMORY_COPY, userAgent, strlen(userAgent));
-        soup_message_body_complete(message->response_body);
+        const char* userAgent = soup_message_headers_get_one(soup_server_message_get_request_headers(message), "User-Agent");
+        auto* responseBody = soup_server_message_get_response_body(message);
+        soup_message_body_append(responseBody, SOUP_MEMORY_COPY, userAgent, strlen(userAgent));
+        soup_message_body_complete(responseBody);
+        soup_server_message_set_status(message, SOUP_STATUS_OK, nullptr);
     } else
-        soup_message_set_status(message, SOUP_STATUS_NOT_FOUND);
+        soup_server_message_set_status(message, SOUP_STATUS_NOT_FOUND, nullptr);
 }
 
 void beforeAll()

@@ -48,7 +48,7 @@
 #import <wtf/cocoa/VectorCocoa.h>
 
 #if !PLATFORM(IOS_FAMILY)
-DumpRenderTreeDraggingInfo *draggingInfo = nil;
+RetainPtr<DumpRenderTreeDraggingInfo> draggingInfo;
 #endif
 
 @implementation UIDelegate
@@ -153,10 +153,10 @@ static NSString *addLeadingSpaceStripTrailingSpaces(NSString *string)
 #if !PLATFORM(IOS_FAMILY)
 - (void)webView:(WebView *)sender dragImage:(NSImage *)anImage at:(NSPoint)viewLocation offset:(NSSize)initialOffset event:(NSEvent *)event pasteboard:(NSPasteboard *)pboard source:(id)sourceObj slideBack:(BOOL)slideFlag forView:(NSView *)view
 {
-     assert(!draggingInfo);
-     draggingInfo = [[DumpRenderTreeDraggingInfo alloc] initWithImage:anImage offset:initialOffset pasteboard:pboard source:sourceObj];
-     [sender draggingUpdated:draggingInfo];
-     [EventSendingController replaySavedEvents];
+    assert(!draggingInfo);
+    draggingInfo = adoptNS([[DumpRenderTreeDraggingInfo alloc] initWithImage:anImage offset:initialOffset pasteboard:pboard source:sourceObj]);
+    [sender draggingUpdated:draggingInfo.get()];
+    [EventSendingController replaySavedEvents];
 }
 #endif
 
@@ -178,13 +178,13 @@ static NSString *addLeadingSpaceStripTrailingSpaces(NSString *string)
     // Make sure that waitUntilDone has been called.
     ASSERT(gTestRunner->waitToDump());
 
-    WebView *webView = createWebViewAndOffscreenWindow();
+    auto webView = createWebViewAndOffscreenWindow();
     [webView setPreferences:[sender preferences]];
 
     if (gTestRunner->newWindowsCopyBackForwardList())
         [webView _loadBackForwardListFromOtherView:sender];
     
-    return [webView autorelease];
+    return webView.autorelease();
 }
 
 - (void)webViewClose:(WebView *)sender
@@ -252,7 +252,7 @@ static NSString *addLeadingSpaceStripTrailingSpaces(NSString *string)
 {
     if (!gTestRunner->isGeolocationPermissionSet()) {
         if (!m_pendingGeolocationPermissionListeners)
-            m_pendingGeolocationPermissionListeners = [[NSMutableSet set] retain];
+            m_pendingGeolocationPermissionListeners = [NSMutableSet set];
         [m_pendingGeolocationPermissionListeners addObject:listener];
         return;
     }
@@ -290,7 +290,6 @@ static NSString *addLeadingSpaceStripTrailingSpaces(NSString *string)
             [listener deny];
     }
     [m_pendingGeolocationPermissionListeners removeAllObjects];
-    [m_pendingGeolocationPermissionListeners release];
     m_pendingGeolocationPermissionListeners = nil;
 }
 
@@ -434,11 +433,8 @@ static NSString *addLeadingSpaceStripTrailingSpaces(NSString *string)
 - (void)dealloc
 {
 #if !PLATFORM(IOS_FAMILY)
-    [draggingInfo release];
     draggingInfo = nil;
 #endif
-    [m_pendingGeolocationPermissionListeners release];
-    m_pendingGeolocationPermissionListeners = nil;
 
     [super dealloc];
 }

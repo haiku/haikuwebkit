@@ -1694,6 +1694,14 @@ AccessibilityObject* AccessibilityObject::headingElementForNode(Node* node)
 
 void AccessibilityObject::ariaTreeRows(AccessibilityChildrenVector& result)
 {
+    // If the element specifies its tree rows through aria-owns, return that first.
+    AccessibilityChildrenVector ariaOwns;
+    ariaOwnsElements(ariaOwns);
+    if (ariaOwns.size()) {
+        result.appendVector(ariaOwns);
+        return;
+    }
+    
     for (const auto& child : children()) {
         // Add tree items as the rows.
         if (child->roleValue() == AccessibilityRole::TreeItem)
@@ -2257,6 +2265,13 @@ String AccessibilityObject::rolePlatformDescription() const
 }
 #endif
 
+String AccessibilityObject::embeddedImageDescription() const
+{
+    if (!is<RenderImage>(renderer()))
+        return { };
+    return downcast<RenderImage>(renderer())->accessibilityDescription();
+}
+
 String AccessibilityObject::ariaLandmarkRoleDescription() const
 {
     switch (roleValue()) {
@@ -2553,18 +2568,25 @@ void AccessibilityObject::setFocused(bool focus)
 
 AccessibilitySortDirection AccessibilityObject::sortDirection() const
 {
-    AccessibilityRole role = roleValue();
-    if (role != AccessibilityRole::RowHeader && role != AccessibilityRole::ColumnHeader)
+    // Only objects that are descendant of column or row headers are allowed to have sort direction.
+    auto* header = Accessibility::findAncestor<AccessibilityObject>(*this, true, [] (const AccessibilityObject& object) {
+        auto role = object.roleValue();
+        return role == AccessibilityRole::ColumnHeader || role == AccessibilityRole::RowHeader;
+    });
+    if (!header)
         return AccessibilitySortDirection::Invalid;
 
-    const AtomString& sortAttribute = getAttribute(aria_sortAttr);
+    auto& sortAttribute = header->getAttribute(aria_sortAttr);
+    if (sortAttribute.isNull())
+        return AccessibilitySortDirection::None;
+
     if (equalLettersIgnoringASCIICase(sortAttribute, "ascending"))
         return AccessibilitySortDirection::Ascending;
     if (equalLettersIgnoringASCIICase(sortAttribute, "descending"))
         return AccessibilitySortDirection::Descending;
     if (equalLettersIgnoringASCIICase(sortAttribute, "other"))
         return AccessibilitySortDirection::Other;
-    
+
     return AccessibilitySortDirection::None;
 }
 
@@ -3197,8 +3219,11 @@ bool AccessibilityObject::accessibilityIsIgnoredByDefault() const
 // http://www.w3.org/TR/wai-aria/terms#def_hidden
 bool AccessibilityObject::isAXHidden() const
 {
+    if (isFocused())
+        return false;
+    
     return Accessibility::findAncestor<AccessibilityObject>(*this, true, [] (const AccessibilityObject& object) {
-        return equalLettersIgnoringASCIICase(object.getAttribute(aria_hiddenAttr), "true");
+        return equalLettersIgnoringASCIICase(object.getAttribute(aria_hiddenAttr), "true") && !object.isFocused();
     }) != nullptr;
 }
 
@@ -3278,17 +3303,16 @@ void AccessibilityObject::elementsFromAttribute(Vector<Element*>& elements, cons
     if (!node || !node->isElementNode())
         return;
 
-    TreeScope& treeScope = node->treeScope();
-
-    const AtomString& idList = getAttribute(attribute);
-    if (idList.isEmpty())
+    auto& idsString = getAttribute(attribute);
+    if (idsString.isEmpty())
         return;
 
-    auto spaceSplitString = SpaceSplitString(idList, false);
+    auto& treeScope = node->treeScope();
+    auto spaceSplitString = SpaceSplitString(idsString, false);
     size_t length = spaceSplitString.size();
     for (size_t i = 0; i < length; ++i) {
-        if (auto* idElement = treeScope.getElementById(spaceSplitString[i]))
-            elements.append(idElement);
+        if (auto* element = treeScope.getElementById(spaceSplitString[i]))
+            elements.append(element);
     }
 }
 
@@ -3567,7 +3591,7 @@ void AccessibilityObject::setIsIgnoredFromParentDataForChild(AXCoreObject* child
     
     AccessibilityIsIgnoredFromParentData result = AccessibilityIsIgnoredFromParentData(this);
     if (!m_isIgnoredFromParentData.isNull()) {
-        result.isAXHidden = m_isIgnoredFromParentData.isAXHidden || equalLettersIgnoringASCIICase(child->getAttribute(aria_hiddenAttr), "true");
+        result.isAXHidden = (m_isIgnoredFromParentData.isAXHidden || equalLettersIgnoringASCIICase(child->getAttribute(aria_hiddenAttr), "true")) && !child->isFocused();
         result.isPresentationalChildOfAriaRole = m_isIgnoredFromParentData.isPresentationalChildOfAriaRole || ariaRoleHasPresentationalChildren();
         result.isDescendantOfBarrenParent = m_isIgnoredFromParentData.isDescendantOfBarrenParent || !canHaveChildren();
     } else {

@@ -34,20 +34,23 @@ namespace WebCore {
 class RenderBlockFlow;
 
 namespace Layout {
+class InlineFormattingContext;
 class InlineFormattingState;
 class LayoutState;
 }
 
 namespace LayoutIntegration {
 
+class BoxTree;
+
 struct InlineContent;
 struct LineLevelVisualAdjustmentsForRuns;
 
 class InlineContentBuilder {
 public:
-    InlineContentBuilder(const Layout::LayoutState&, const RenderBlockFlow&);
+    InlineContentBuilder(const Layout::LayoutState&, const RenderBlockFlow&, const BoxTree&);
 
-    void build(const Layout::InlineFormattingState&, InlineContent&) const;
+    void build(const Layout::InlineFormattingContext&, InlineContent&) const;
 
 private:
     using LineLevelVisualAdjustmentsForRunsList = Vector<LineLevelVisualAdjustmentsForRuns>;
@@ -55,9 +58,11 @@ private:
     LineLevelVisualAdjustmentsForRunsList computeLineLevelVisualAdjustmentsForRuns(const Layout::InlineFormattingState&) const;
     void createDisplayLineRuns(const Layout::InlineFormattingState&, InlineContent&, const LineLevelVisualAdjustmentsForRunsList&) const;
     void createDisplayLines(const Layout::InlineFormattingState&, InlineContent&, const LineLevelVisualAdjustmentsForRunsList&) const;
+    void createDisplayNonRootInlineBoxes(const Layout::InlineFormattingContext&, InlineContent&) const;
 
     const Layout::LayoutState& m_layoutState;
     const RenderBlockFlow& m_blockFlow;
+    const BoxTree& m_boxTree;
 };
 
 }

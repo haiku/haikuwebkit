@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2019 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2021 Apple Inc. All rights reserved.
  * Copyright (C) 2020 Alexey Shvayka <shvaikalesh@gmail.com>.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,6 +27,7 @@
 #include "config.h"
 #include "Structure.h"
 
+#include "BrandedStructure.h"
 #include "BuiltinNames.h"
 #include "DumpContext.h"
 #include "JSCInlines.h"
@@ -424,7 +425,7 @@ PropertyTable* Structure::materializePropertyTable(VM& vm, bool setPropertyTable
 
     for (size_t i = structures.size(); i--;) {
         structure = structures[i];
-        if (!structure->m_transitionPropertyName)
+        if (!structure->m_transitionPropertyName || structure->transitionKind() == TransitionKind::SetBrand)
             continue;
         switch (structure->transitionKind()) {
         case TransitionKind::PropertyAddition: {
@@ -1267,7 +1268,8 @@ void Structure::didTransitionFromThisStructure(DeferredStructureTransitionWatchp
         m_transitionWatchpointSet.fireAll(vm(), StructureFireDetail(this));
 }
 
-void Structure::visitChildren(JSCell* cell, SlotVisitor& visitor)
+template<typename Visitor>
+void Structure::visitChildrenImpl(JSCell* cell, Visitor& visitor)
 {
     Structure* thisObject = jsCast<Structure*>(cell);
     ASSERT_GC_OBJECT_INHERITS(thisObject, info());
@@ -1289,31 +1291,37 @@ void Structure::visitChildren(JSCell* cell, SlotVisitor& visitor)
         // NOTE: This can interleave in pin(), in which case it may see a null property table.
         // That's fine, because then the barrier will fire and we will scan this again.
         visitor.append(thisObject->m_propertyTableUnsafe);
-    } else if (visitor.isAnalyzingHeap())
+    } else if (visitor.vm().isAnalyzingHeap())
         visitor.append(thisObject->m_propertyTableUnsafe);
     else if (thisObject->m_propertyTableUnsafe)
         thisObject->m_propertyTableUnsafe.clear();
 }
 
-bool Structure::isCheapDuringGC(VM& vm)
+DEFINE_VISIT_CHILDREN(Structure);
+
+template<typename Visitor>
+ALWAYS_INLINE bool Structure::isCheapDuringGC(Visitor& visitor)
 {
     // FIXME: We could make this even safer by returning false if this structure's property table
     // has any large property names.
     // https://bugs.webkit.org/show_bug.cgi?id=157334
     
-    return (!m_globalObject || vm.heap.isMarked(m_globalObject.get()))
-        && (hasPolyProto() || !storedPrototypeObject() || vm.heap.isMarked(storedPrototypeObject()));
+    return (!m_globalObject || visitor.isMarked(m_globalObject.get()))
+        && (hasPolyProto() || !storedPrototypeObject() || visitor.isMarked(storedPrototypeObject()));
 }
 
-bool Structure::markIfCheap(SlotVisitor& visitor)
+template<typename Visitor>
+bool Structure::markIfCheap(Visitor& visitor)
 {
-    VM& vm = visitor.vm();
-    if (!isCheapDuringGC(vm))
-        return vm.heap.isMarked(this);
-    
+    if (!isCheapDuringGC(visitor))
+        return visitor.isMarked(this);
+
     visitor.appendUnbarriered(this);
     return true;
 }
+
+template bool Structure::markIfCheap(AbstractSlotVisitor&);
+template bool Structure::markIfCheap(SlotVisitor&);
 
 Ref<StructureShape> Structure::toStructureShape(JSValue value, bool& sawPolyProtoStructure)
 {
@@ -1494,6 +1502,54 @@ auto Structure::findPropertyHashEntry(PropertyName propertyName) const -> Option
         }
     }
     return WTF::nullopt;
+}
+
+Structure* Structure::setBrandTransitionFromExistingStructureImpl(Structure* structure, UniquedStringImpl* brandID)
+{
+    ASSERT(structure->isObject());
+
+    if (structure->hasBeenDictionary())
+        return nullptr;
+
+    if (Structure* existingTransition = structure->m_transitionTable.get(brandID, 0, TransitionKind::SetBrand))
+        return existingTransition;
+
+    return nullptr;
+}
+
+Structure* Structure::setBrandTransitionFromExistingStructureConcurrently(Structure* structure, UniquedStringImpl* brandID)
+{
+    ConcurrentJSLocker locker(structure->m_lock);
+    return setBrandTransitionFromExistingStructureImpl(structure, brandID);
+}
+
+Structure* Structure::setBrandTransition(VM& vm, Structure* structure, Symbol* brand, DeferredStructureTransitionWatchpointFire* deferred)
+{
+    Structure* existingTransition = setBrandTransitionFromExistingStructureImpl(structure, &brand->uid());
+    if (existingTransition) 
+        return existingTransition;
+
+    Structure* transition = BrandedStructure::create(vm, structure, &brand->uid(), deferred);
+    transition->setTransitionKind(TransitionKind::SetBrand);
+
+    transition->m_cachedPrototypeChain.setMayBeNull(vm, transition, structure->m_cachedPrototypeChain.get());
+    transition->m_blob.setIndexingModeIncludingHistory(structure->indexingModeIncludingHistory());
+    transition->m_transitionPropertyName = &brand->uid();
+    transition->setTransitionPropertyAttributes(0);
+    transition->setPropertyTable(vm, structure->takePropertyTableOrCloneIfPinned(vm));
+    transition->setMaxOffset(vm, structure->maxOffset());
+    checkOffset(transition->maxOffset(), transition->inlineCapacity());
+
+    if (structure->isDictionary()) {
+        PropertyTable* table = transition->ensurePropertyTable(vm);
+        transition->pin(holdLock(transition->m_lock), vm, table);
+    } else {
+        auto locker = holdLock(structure->m_lock);
+        structure->m_transitionTable.add(vm, transition);
+    }
+
+    transition->checkOffsetConsistency();
+    return transition;
 }
 
 } // namespace JSC

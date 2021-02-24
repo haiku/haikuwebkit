@@ -39,6 +39,7 @@
 #include "Icon.h"
 #include "ImageBuffer.h"
 #include "InputMode.h"
+#include "MediaControlsContextMenuItem.h"
 #include "MediaProducer.h"
 #include "PointerCharacteristics.h"
 #include "PopupMenu.h"
@@ -101,7 +102,6 @@ class HTMLMediaElement;
 class HTMLVideoElement;
 class HitTestResult;
 class IntRect;
-class MediaSessionMetadata;
 class NavigationAction;
 class Node;
 class Page;
@@ -114,6 +114,7 @@ class Widget;
 class MediaPlayerRequestInstallMissingPluginsCallback;
 #endif
 
+struct AppHighlight;
 struct ContactsRequestData;
 struct ContentRuleListResults;
 struct DateTimeChooserParameters;
@@ -222,10 +223,11 @@ public:
     virtual void unavailablePluginButtonClicked(Element&, RenderEmbeddedObject::PluginUnavailabilityReason) const { }
     virtual void mouseDidMoveOverElement(const HitTestResult&, unsigned modifierFlags, const String& toolTip, TextDirection) = 0;
 
-    virtual void print(Frame&) = 0;
+    virtual void print(Frame&, const StringWithDirection&) = 0;
 
     virtual Color underlayColor() const { return Color(); }
 
+    virtual void themeColorChanged(Color) const { }
     virtual void pageExtendedBackgroundColorDidChange(Color) const { }
 
     virtual void exceededDatabaseQuota(Frame&, const String& databaseName, DatabaseDetails) = 0;
@@ -302,6 +304,10 @@ public:
     virtual std::unique_ptr<DateTimeChooser> createDateTimeChooser(DateTimeChooserClient&) = 0;
 #endif
 
+#if ENABLE(APP_HIGHLIGHTS)
+    virtual void storeAppHighlight(const WebCore::AppHighlight&) const = 0;
+#endif
+
     virtual void runOpenPanel(Frame&, FileChooser&) = 0;
     virtual void showShareSheet(ShareDataWithParsedURL&, WTF::CompletionHandler<void(bool)>&& callback) { callback(false); }
     virtual void showContactPicker(const ContactsRequestData&, WTF::CompletionHandler<void(Optional<Vector<ContactInfo>>&&)>&& callback) { callback(WTF::nullopt); }
@@ -323,7 +329,7 @@ public:
 
     virtual RefPtr<DisplayRefreshMonitor> createDisplayRefreshMonitor(PlatformDisplayID) const { return nullptr; }
 
-    virtual RefPtr<ImageBuffer> createImageBuffer(const FloatSize&, RenderingMode, RenderingPurpose, float, ColorSpace, PixelFormat) const { return nullptr; }
+    virtual RefPtr<ImageBuffer> createImageBuffer(const FloatSize&, RenderingMode, RenderingPurpose, float, DestinationColorSpace, PixelFormat) const { return nullptr; }
 
 #if ENABLE(WEBGL)
     virtual RefPtr<GraphicsContextGL> createGraphicsContextGL(const GraphicsContextGLAttributes&, WebCore::PlatformDisplayID) const { return nullptr; }
@@ -548,6 +554,14 @@ public:
 #if PLATFORM(MAC)
     virtual void changeUniversalAccessZoomFocus(const IntRect&, const IntRect&) { }
 #endif
+
+#if ENABLE(IMAGE_EXTRACTION)
+    virtual void requestImageExtraction(Element&) { }
+#endif
+
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+    virtual void showMediaControlsContextMenu(FloatRect&&, Vector<MediaControlsContextMenuItem>&&, CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler) { completionHandler(MediaControlsContextMenuItem::invalidID); }
+#endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
 
 protected:
     virtual ~ChromeClient() = default;

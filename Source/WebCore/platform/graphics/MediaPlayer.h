@@ -62,6 +62,10 @@
 OBJC_CLASS AVPlayer;
 OBJC_CLASS NSArray;
 
+#if USE(AVFOUNDATION)
+typedef struct __CVBuffer* CVPixelBufferRef;
+#endif
+
 namespace WebCore {
 
 class AudioSourceProvider;
@@ -217,8 +221,6 @@ public:
 
     virtual String mediaPlayerReferrer() const { return String(); }
     virtual String mediaPlayerUserAgent() const { return String(); }
-    virtual void mediaPlayerEnterFullscreen() { }
-    virtual void mediaPlayerExitFullscreen() { }
     virtual bool mediaPlayerIsFullscreen() const { return false; }
     virtual bool mediaPlayerIsFullscreenPermitted() const { return false; }
     virtual bool mediaPlayerIsVideo() const { return false; }
@@ -238,6 +240,8 @@ public:
     virtual void mediaPlayerDidRemoveAudioTrack(AudioTrackPrivate&) { }
     virtual void mediaPlayerDidRemoveTextTrack(InbandTextTrackPrivate&) { }
     virtual void mediaPlayerDidRemoveVideoTrack(VideoTrackPrivate&) { }
+
+    virtual void mediaPlayerReloadAndResumePlaybackIfNeeded() { }
 
     virtual void textTrackRepresentationBoundsChanged(const IntRect&) { }
 
@@ -437,8 +441,11 @@ public:
     // In the GPU-GPU textures copy, the source texture(Video texture) should have valid target, internalFormat and size, etc.
     // The destination texture may need to be resized to to the dimensions of the source texture or re-defined to the required internalFormat.
     // The current restrictions require that format shoud be RGB or RGBA, type should be UNSIGNED_BYTE and level should be 0. It may be lifted in the future.
-
+#if !USE(AVFOUNDATION)
     bool copyVideoTextureToPlatformTexture(GraphicsContextGL*, PlatformGLObject texture, GCGLenum target, GCGLint level, GCGLenum internalFormat, GCGLenum format, GCGLenum type, bool premultiplyAlpha, bool flipY);
+#else
+    CVPixelBufferRef pixelBufferForCurrentTime();
+#endif
 
     RefPtr<NativeImage> nativeImageForCurrentTime();
 

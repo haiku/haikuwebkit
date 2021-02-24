@@ -39,7 +39,9 @@
 #include "NetworkConnectionToWebProcessMessages.h"
 #include "NetworkProcessConnection.h"
 #include "PageBanner.h"
+#include "PluginView.h"
 #include "RemoteRenderingBackendProxy.h"
+#include "SharedBufferCopy.h"
 #include "UserData.h"
 #include "WebColorChooser.h"
 #include "WebCoreArgumentCoders.h"
@@ -59,6 +61,7 @@
 #include "WebProcessPoolMessages.h"
 #include "WebProcessProxyMessages.h"
 #include "WebSearchPopupMenu.h"
+#include <WebCore/AppHighlight.h>
 #include <WebCore/ApplicationCacheStorage.h>
 #include <WebCore/AXObjectCache.h>
 #include <WebCore/ColorChooser.h>
@@ -707,7 +710,9 @@ void WebChromeClient::mouseDidMoveOverElement(const HitTestResult& hitTestResult
     m_page.send(Messages::WebPageProxy::MouseDidMoveOverElement(webHitTestResultData, modifierFlags, UserData(WebProcess::singleton().transformObjectsToHandles(userData.get()).get())));
 }
 
-void WebChromeClient::print(Frame& frame)
+static constexpr unsigned maxTitleLength = 1000; // Closest power of 10 above the W3C recommendation for Title length.
+
+void WebChromeClient::print(Frame& frame, const StringWithDirection& title)
 {
     WebFrame* webFrame = WebFrame::fromCoreFrame(frame);
     ASSERT(webFrame);
@@ -732,7 +737,16 @@ void WebChromeClient::print(Frame& frame)
     }
 #endif
 
-    m_page.sendSyncWithDelayedReply(Messages::WebPageProxy::PrintFrame(webFrame->frameID()), Messages::WebPageProxy::PrintFrame::Reply());
+    WebCore::FloatSize pdfFirstPageSize;
+#if PLATFORM(COCOA)
+    if (auto* pluginView = WebPage::pluginViewForFrame(&frame)) {
+        if (auto* plugin = pluginView->plugin())
+            pdfFirstPageSize = plugin->pdfDocumentSizeForPrinting();
+    }
+#endif
+
+    auto truncatedTitle = truncateFromEnd(title, maxTitleLength);
+    m_page.sendSyncWithDelayedReply(Messages::WebPageProxy::PrintFrame(webFrame->frameID(), truncatedTitle.string, pdfFirstPageSize), Messages::WebPageProxy::PrintFrame::Reply());
 }
 
 void WebChromeClient::exceededDatabaseQuota(Frame& frame, const String& databaseName, DatabaseDetails details)
@@ -908,7 +922,7 @@ RefPtr<DisplayRefreshMonitor> WebChromeClient::createDisplayRefreshMonitor(Platf
 #if ENABLE(GPU_PROCESS)
 
 
-RefPtr<ImageBuffer> WebChromeClient::createImageBuffer(const FloatSize& size, RenderingMode renderingMode, RenderingPurpose purpose, float resolutionScale, ColorSpace colorSpace, PixelFormat pixelFormat) const
+RefPtr<ImageBuffer> WebChromeClient::createImageBuffer(const FloatSize& size, RenderingMode renderingMode, RenderingPurpose purpose, float resolutionScale, DestinationColorSpace colorSpace, PixelFormat pixelFormat) const
 {
     if (!WebProcess::singleton().shouldUseRemoteRenderingFor(purpose))
         return nullptr;
@@ -924,7 +938,7 @@ RefPtr<GraphicsContextGL> WebChromeClient::createGraphicsContextGL(const Graphic
         return nullptr;
     UNUSED_VARIABLE(hostWindowDisplayID);
 #if PLATFORM(COCOA)
-    return RemoteGraphicsContextGLProxy::create(attributes);
+    return RemoteGraphicsContextGLProxy::create(attributes, m_page.ensureRemoteRenderingBackendProxy().renderingBackendIdentifier());
 #else
     return nullptr;
 #endif
@@ -1139,13 +1153,14 @@ Color WebChromeClient::underlayColor() const
     return m_page.underlayColor();
 }
 
-void WebChromeClient::pageExtendedBackgroundColorDidChange(Color backgroundColor) const
+void WebChromeClient::themeColorChanged(Color /* themeColor */) const
 {
-#if PLATFORM(MAC)
-    m_page.send(Messages::WebPageProxy::PageExtendedBackgroundColorDidChange(backgroundColor));
-#else
-    UNUSED_PARAM(backgroundColor);
-#endif
+    m_page.themeColorChanged();
+}
+
+void WebChromeClient::pageExtendedBackgroundColorDidChange(Color /* backgroundColor */) const
+{
+    m_page.pageExtendedBackgroundColorDidChange();
 }
 
 void WebChromeClient::wheelEventHandlersChanged(bool hasHandlers)
@@ -1236,6 +1251,13 @@ bool WebChromeClient::unwrapCryptoKey(const Vector<uint8_t>& wrappedKey, Vector<
     return succeeded;
 }
 
+#endif
+
+#if ENABLE(APP_HIGHLIGHTS)
+void WebChromeClient::storeAppHighlight(const WebCore::AppHighlight& highlight) const
+{
+    m_page.send(Messages::WebPageProxy::StoreAppHighlight(highlight));
+}
 #endif
 
 String WebChromeClient::signedPublicKeyAndChallengeString(unsigned keySizeIndex, const String& challengeString, const URL& url) const
@@ -1420,5 +1442,23 @@ void WebChromeClient::changeUniversalAccessZoomFocus(const WebCore::IntRect& vie
     m_page.send(Messages::WebPageProxy::ChangeUniversalAccessZoomFocus(viewRect, selectionRect));
 }
 #endif
+
+#if ENABLE(IMAGE_EXTRACTION)
+
+void WebChromeClient::requestImageExtraction(Element& element)
+{
+    m_page.requestImageExtraction(element);
+}
+
+#endif
+
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+
+void WebChromeClient::showMediaControlsContextMenu(FloatRect&& targetFrame, Vector<MediaControlsContextMenuItem>&& items, CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler)
+{
+    m_page.showMediaControlsContextMenu(WTFMove(targetFrame), WTFMove(items), WTFMove(completionHandler));
+}
+
+#endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
 
 } // namespace WebKit

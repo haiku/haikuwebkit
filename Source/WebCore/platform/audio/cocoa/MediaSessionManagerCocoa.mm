@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,7 +55,6 @@ std::unique_ptr<PlatformMediaSessionManager> PlatformMediaSessionManager::create
 #endif // !PLATFORM(MAC)
 
 MediaSessionManagerCocoa::MediaSessionManagerCocoa()
-    : m_systemSleepListener(PAL::SystemSleepListener::create(*this))
 {
 }
 
@@ -153,6 +152,11 @@ void MediaSessionManagerCocoa::prepareToSendUserMediaPermissionRequest()
 void MediaSessionManagerCocoa::scheduleSessionStatusUpdate()
 {
     m_taskQueue.enqueueTask([this] () mutable {
+        if (m_remoteCommandListener) {
+            m_remoteCommandListener->setSupportsSeeking(computeSupportsSeeking());
+            m_remoteCommandListener->updateSupportedCommands();
+        }
+
         updateNowPlayingInfo();
 
         forEachSession([] (auto& session) {
@@ -232,8 +236,21 @@ void MediaSessionManagerCocoa::clientCharacteristicsChanged(PlatformMediaSession
 
 void MediaSessionManagerCocoa::sessionCanProduceAudioChanged()
 {
+    ALWAYS_LOG(LOGIDENTIFIER);
     PlatformMediaSessionManager::sessionCanProduceAudioChanged();
     scheduleSessionStatusUpdate();
+}
+
+void MediaSessionManagerCocoa::addSupportedCommand(PlatformMediaSession::RemoteControlCommandType command)
+{
+    if (m_remoteCommandListener)
+        m_remoteCommandListener->addSupportedCommand(command);
+}
+
+void MediaSessionManagerCocoa::removeSupportedCommand(PlatformMediaSession::RemoteControlCommandType command)
+{
+    if (m_remoteCommandListener)
+        m_remoteCommandListener->removeSupportedCommand(command);
 }
 
 void MediaSessionManagerCocoa::clearNowPlayingInfo()
@@ -259,6 +276,12 @@ void MediaSessionManagerCocoa::setNowPlayingInfo(bool setAsNowPlayingApplication
         MRMediaRemoteSetCanBeNowPlayingApplication(true);
 
     auto info = adoptCF(CFDictionaryCreateMutable(kCFAllocatorDefault, 4, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
+
+    if (!nowPlayingInfo.artist.isEmpty())
+        CFDictionarySetValue(info.get(), kMRMediaRemoteNowPlayingInfoArtist, nowPlayingInfo.artist.createCFString().get());
+
+    if (!nowPlayingInfo.album.isEmpty())
+        CFDictionarySetValue(info.get(), kMRMediaRemoteNowPlayingInfoAlbum, nowPlayingInfo.album.createCFString().get());
 
     if (!nowPlayingInfo.title.isEmpty())
         CFDictionarySetValue(info.get(), kMRMediaRemoteNowPlayingInfoTitle, nowPlayingInfo.title.createCFString().get());

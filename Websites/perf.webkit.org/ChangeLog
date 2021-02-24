@@ -1,3 +1,107 @@
+2021-02-18  Dewei Zhu  <dewei_zhu@apple.com>
+
+        Fix a bug that a syncing script may try to reuse a delete root.
+        https://bugs.webkit.org/show_bug.cgi?id=222144
+
+        Reviewed by Ryosuke Niwa.
+
+        UploadedFile.deletedAt is not returned by API which makes UploadedFile instance always claims
+        the file it not deleted.
+        Fix a logical bug in CommitSet.areAllRootsAvailable.
+
+        * public/include/uploaded-file-helpers.php: Include 'deletedAt' filed in the API response.
+        * public/v3/models/commit-set.js:
+        (CommitSet.prototype.areAllRootsAvailable): Fixed an syntax error and a logical bug.
+        * server-tests/api-build-requests-tests.js: Added check on 'deletedAt' to be set on deleted files.
+        * unit-tests/commit-set-tests.js: Added unit tests for CommitSet.areAllRootsAvailable.
+        * unit-tests/resources/mock-v3-models.js: Cleared static map for UploadedFile.
+
+2021-02-16  Dean Johnson  <dean_johnson@apple.com>
+
+        [perf.webkit.org] Do not schedule jobs to Buildbot if the last job failed
+        https://bugs.webkit.org/show_bug.cgi?id=221943
+
+        Reviewed by Dewei Zhu.
+
+        * server-tests/resources/mock-data.js:
+        (MockData.sampleBuildData): Allow options.results to be specified.
+        * server-tests/tools-buildbot-triggerable-tests.js:
+        (async const): Add tests for new functionality. Existing tests still pass.
+        * tools/js/buildbot-syncer.js:
+        (BuildbotBuildEntry.prototype.initialize): Track the 'results' key from a build.
+        (BuildbotBuildEntry.prototype.result): Make the build result available.
+        (BuildbotSyncer): Track the last completed build.
+        (BuildbotSyncer.prototype.lastCompletedBuildSuccessful): Check if the last completed
+        build was successful.
+        (BuildbotSyncer.prototype.pullBuildbot):
+        * tools/js/buildbot-triggerable.js: Do not schedule a job to a builder who failed
+        its last completedd build.
+        (BuildbotTriggerable.prototype._scheduleRequestIfSlaveIsAvailable):
+
+2021-02-11  Dewei Zhu  <dewei_zhu@apple.com>
+
+        'sync-commits.py' should be able to limit reporting scope to a specific branch on a Git repository.
+        https://bugs.webkit.org/show_bug.cgi?id=221799
+
+        Reviewed by Ryosuke Niwa.
+
+        Fetching git commits with 'git log --all ...' may end up fetching commits from branches created for
+        pull requests. Add 'branch' variable to allow us to limit to a certain branch.
+
+        * tools/sync-commits.py: Added 'branch' variable to GitRepository so that we can fetch from a specific branch.
+        If branch is not specified, it will still use '--all' to list commits.
+        (load_repository):
+        (GitRepository.__init__):
+        (GitRepository._fetch_all_hashes):
+
+2021-02-12  Roy Reapor  <rreapor@apple.com>
+
+        perf.webkit.org/tools/js/analysis-results-notifier.js should allow sending of completion emails regardless of test name
+        https://bugs.webkit.org/show_bug.cgi?id=221712
+
+        Reviewed by Dewei Zhu.
+
+        Rule `platforms` and `tests` can be undefined, an empty array, or an array of strings. Undefined will match everything.
+        Empty array will match nothing. Array of strings will match items in the array.
+
+        Rule will not match if either `tests` or `platforms` is an empty array.
+
+        * tools/js/analysis-results-notifier.js:
+        (AnalysisResultsNotifier._validateRules.isUnderfinedOrEmptyArrayOrArrayOfStrings): 
+        - `platforms` and `tests` can now be undefined or an empty array officially
+        (AnalysisResultsNotifier._validateRules): 
+        - switched to `assert.ok()`. `console.assert()` no longer throws since node v10 (https://github.com/facebook/jest/issues/5634)
+        - both rule `platforms` and `tests` must pass `isUnderfinedOrEmptyArrayOrArrayOfStrings()`. previously, rules like `{tests: [1, 3], platforms: ['speedometer']}` passes validation.
+        (AnalysisResultsNotifier._applyUpdate): 
+        - switched to `assert.ok()`. `console.assert()` no longer throws since node v10 (https://github.com/facebook/jest/issues/5634)
+        (AnalysisResultsNotifier._validateRules.isNonemptyArrayOfStrings): Deleted.
+        * unit-tests/analysis-results-notifier-tests.js:
+        - added a bunch of unittests
+        - specify the exact regex match for `assert.throws()` and `assert.doesNotThrow()` argument.
+
+2021-01-20  Dewei Zhu  <dewei_zhu@apple.com>
+
+        BuildbotTriggerable should not update build requests from another triggerable.
+        https://bugs.webkit.org/show_bug.cgi?id=220762
+
+        Reviewed by Ryosuke Niwa.
+
+        BuildbotTriggerable._pullBuildbotOnAllSyncers assumes 'BuildRequest.all()' returns all build requests under current triggerable.
+        However, this assumption got broken when root reuse change was introduced because build requests under same analysis task are
+        fetched. Thus, 'BuildRequest.all()' may contain build requests those are not under current triggerable. And those build requests
+        will be updated to 'failedIfNotCompleted'.
+        Update 'api/build-requests' so that 'url' and 'status_description' fields are not cleared if update does not specify them.
+
+        * public/api/build-requests.php: Added logic to avoid updating 'url' and 'status_description' if they are not specified.
+        * server-tests/api-build-requests-tests.js: Added an unit test.
+        * server-tests/resources/mock-data.js:
+        (MockData.async set addMockBuildRequestsForTwoTriggerablesUnderOneAnalysisTask):
+        * server-tests/tools-buildbot-triggerable-tests.js: Added an unit test.
+        * tools/js/buildbot-triggerable.js:
+        (BuildbotTriggerable.prototype.async syncOnce): Fixed a typo.
+        (BuildbotTriggerable._pullBuildbotOnAllSyncers): Instead of iterating over 'BuildRequest.all()', only set 'failedIfNotCompleted'
+        for build requests those are under current triggerable and satisfy the condition.
+
 2020-12-09  Dewei Zhu  <dewei_zhu@apple.com>
 
         'AnalysisTask._commitSetsInSamePlatformGroup' should not fetch an invalid platform and metric config for a MeasurementSet.

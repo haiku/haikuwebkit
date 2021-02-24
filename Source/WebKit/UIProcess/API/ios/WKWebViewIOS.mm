@@ -59,13 +59,16 @@
 #import <WebCore/VersionChecks.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <pal/spi/ios/GraphicsServicesSPI.h>
+#import <wtf/BlockPtr.h>
 #import <wtf/cocoa/VectorCocoa.h>
 
 #if ENABLE(DATA_DETECTION)
 #import "WKDataDetectorTypesInternal.h"
 #endif
 
-#include "UIKitSoftLink.h"
+#if HAVE(UI_EVENT_ATTRIBUTION)
+#import <UIKit/UIEventAttribution.h>
+#endif
 
 #define FORWARD_ACTION_TO_WKCONTENTVIEW(_action) \
 - (void)_action:(id)sender \
@@ -489,7 +492,7 @@ static WebCore::Color baseScrollViewBackgroundColor(WKWebView *webView)
     if (!webView->_page)
         return { };
 
-    return webView->_page->pageExtendedBackgroundColor();
+    return webView->_page->scrollAreaBackgroundColor();
 }
 
 static WebCore::Color scrollViewBackgroundColor(WKWebView *webView)
@@ -701,7 +704,7 @@ static WebCore::Color scrollViewBackgroundColor(WKWebView *webView)
 {
     RELEASE_LOG_IF_ALLOWED("%p -[WKWebView _didRelaunchProcess]", self);
     _hasScheduledVisibleRectUpdate = NO;
-    _visibleContentRectUpdateScheduledFromScrollViewInStableState = YES;
+    _viewStabilityWhenVisibleContentRectUpdateScheduled = { };
     if (_gestureController)
         _gestureController->connectToProcess();
 }
@@ -1888,12 +1891,12 @@ static WebCore::FloatPoint constrainContentOffset(WebCore::FloatPoint contentOff
 }
 
 // Ideally UIScrollView would expose this for us: <rdar://problem/21394567>.
-- (BOOL)_scrollViewIsRubberBanding
+- (BOOL)_scrollViewIsRubberBanding:(UIScrollView *)scrollView
 {
     float deviceScaleFactor = _page->deviceScaleFactor();
 
-    CGPoint contentOffset = [_scrollView contentOffset];
-    CGPoint boundedOffset = contentOffsetBoundedInValidRange(_scrollView.get(), contentOffset);
+    CGPoint contentOffset = [scrollView contentOffset];
+    CGPoint boundedOffset = contentOffsetBoundedInValidRange(scrollView, contentOffset);
     return !pointsEqualInDevicePixels(contentOffset, boundedOffset, deviceScaleFactor);
 }
 
@@ -1920,23 +1923,30 @@ static WebCore::FloatPoint constrainContentOffset(WebCore::FloatPoint contentOff
     [self _scheduleVisibleContentRectUpdate];
 }
 
-- (BOOL)_scrollViewIsInStableState:(UIScrollView *)scrollView
+- (OptionSet<WebKit::ViewStabilityFlag>)_viewStabilityState:(UIScrollView *)scrollView
 {
-    BOOL isStableState = !([scrollView isDragging] || [scrollView isDecelerating] || [scrollView isZooming] || [scrollView _isAnimatingZoom] || [scrollView _isScrollingToTop]);
+    OptionSet<WebKit::ViewStabilityFlag> stabilityFlags;
 
-    if (isStableState && scrollView == _scrollView.get())
-        isStableState = !_isChangingObscuredInsetsInteractively;
+    if (scrollView.isDragging || scrollView.isZooming || scrollView._isInterruptingDeceleration)
+        stabilityFlags.add(WebKit::ViewStabilityFlag::ScrollViewInteracting);
 
-    if (isStableState && scrollView == _scrollView.get())
-        isStableState = ![self _scrollViewIsRubberBanding];
+    if (scrollView.isDecelerating || scrollView._isAnimatingZoom || scrollView._isScrollingToTop)
+        stabilityFlags.add(WebKit::ViewStabilityFlag::ScrollViewAnimatedScrollOrZoom);
 
-    if (isStableState)
-        isStableState = !scrollView._isInterruptingDeceleration;
+    if (scrollView == _scrollView.get() && _isChangingObscuredInsetsInteractively)
+        stabilityFlags.add(WebKit::ViewStabilityFlag::ChangingObscuredInsetsInteractively);
 
-    if (NSNumber *stableOverride = self._stableStateOverride)
-        isStableState = stableOverride.boolValue;
+    if ([self _scrollViewIsRubberBanding:scrollView])
+        stabilityFlags.add(WebKit::ViewStabilityFlag::ScrollViewRubberBanding);
 
-    return isStableState;
+    if (NSNumber *stableOverride = self._stableStateOverride) {
+        if (stableOverride.boolValue)
+            stabilityFlags = { };
+        else
+            stabilityFlags.add(WebKit::ViewStabilityFlag::UnstableForTesting);
+    }
+
+    return stabilityFlags;
 }
 
 - (void)_addUpdateVisibleContentRectPreCommitHandler
@@ -1960,7 +1970,7 @@ static WebCore::FloatPoint constrainContentOffset(WebCore::FloatPoint contentOff
 
 - (void)_scheduleVisibleContentRectUpdateAfterScrollInView:(UIScrollView *)scrollView
 {
-    _visibleContentRectUpdateScheduledFromScrollViewInStableState = [self _scrollViewIsInStableState:scrollView];
+    _viewStabilityWhenVisibleContentRectUpdateScheduled = [self _viewStabilityState:scrollView];
 
     if (_hasScheduledVisibleRectUpdate) {
         auto timeNow = MonotonicTime::now();
@@ -2054,7 +2064,7 @@ static bool scrollViewCanScroll(UIScrollView *scrollView)
 
 - (void)_updateVisibleContentRects
 {
-    BOOL inStableState = _visibleContentRectUpdateScheduledFromScrollViewInStableState;
+    auto viewStability = _viewStabilityWhenVisibleContentRectUpdateScheduled;
 
     if (![self usesStandardContentView]) {
         [_passwordView setFrame:self.bounds];
@@ -2110,7 +2120,7 @@ static bool scrollViewCanScroll(UIScrollView *scrollView)
     auto contentInsets = [self currentlyVisibleContentInsetsWithScale:scaleFactor obscuredInsets:computedContentInsetUnadjustedForKeyboard];
 
 #if ENABLE(CSS_SCROLL_SNAP) && ENABLE(ASYNC_SCROLLING)
-    if (inStableState) {
+    if (viewStability.isEmpty()) {
         WebKit::RemoteScrollingCoordinatorProxy* coordinator = _page->scrollingCoordinatorProxy();
         if (coordinator && coordinator->hasActiveSnapPoint()) {
             CGPoint currentPoint = [_scrollView contentOffset];
@@ -2134,8 +2144,7 @@ static bool scrollViewCanScroll(UIScrollView *scrollView)
         unobscuredSafeAreaInsets:[self _computedUnobscuredSafeAreaInset]
         inputViewBounds:_inputViewBounds
         scale:scaleFactor minimumScale:[_scrollView minimumZoomScale]
-        inStableState:inStableState
-        isChangingObscuredInsetsInteractively:_isChangingObscuredInsetsInteractively
+        viewStability:viewStability
         enclosedInScrollableAncestorView:scrollViewCanScroll([self _scroller])
         sendEvenIfUnchanged:_alwaysSendNextVisibleContentRectUpdate];
 
@@ -2516,30 +2525,38 @@ static WebCore::UserInterfaceLayoutDirection toUserInterfaceLayoutDirection(UISe
 
 @implementation WKWebView (WKPrivateIOS)
 
-- (void)_setEventAttribution:(_UIEventAttribution *)attribution
+#if !PLATFORM(WATCHOS) && !PLATFORM(APPLETV)
+- (void)_setUIEventAttribution:(UIEventAttribution *)attribution
 {
+#if HAVE(UI_EVENT_ATTRIBUTION)
     if (attribution) {
         WebCore::PrivateClickMeasurement measurement(
             WebCore::PrivateClickMeasurement::SourceID(attribution.sourceIdentifier),
             WebCore::PrivateClickMeasurement::SourceSite(attribution.reportEndpoint),
-            WebCore::PrivateClickMeasurement::AttributeOnSite(attribution.attributeOn),
+            WebCore::PrivateClickMeasurement::AttributeOnSite(attribution.destinationURL),
             attribution.sourceDescription,
             attribution.purchaser
         );
         _page->setPrivateClickMeasurement(WTFMove(measurement));
     } else
         _page->setPrivateClickMeasurement(WTF::nullopt);
+#endif
 }
 
-- (_UIEventAttribution *)_eventAttribution
+- (UIEventAttribution *)_uiEventAttribution
 {
+#if HAVE(UI_EVENT_ATTRIBUTION)
     auto& measurement = _page->privateClickMeasurement();
     if (!measurement || !measurement->sourceID().isValid())
         return nil;
 
     auto attributeOnURL = URL(URL(), makeString("https://", measurement->attributeOnSite().registrableDomain.string()));
-    return [[WebKit::alloc_UIEventAttributionInstance() initWithSourceIdentifier:measurement->sourceID().id attributeOn:attributeOnURL sourceDescription:measurement->sourceDescription() purchaser:measurement->purchaser()] autorelease];
+    return adoptNS([[UIEventAttribution alloc] initWithSourceIdentifier:measurement->sourceID().id destinationURL:attributeOnURL sourceDescription:measurement->sourceDescription() purchaser:measurement->purchaser()]).autorelease();
+#else
+    return nil;
+#endif
 }
+#endif // !PLATFORM(WATCHOS) && !PLATFORM(APPLETV)
 
 - (CGRect)_contentVisibleRect
 {
@@ -3016,11 +3033,8 @@ static WebCore::UserInterfaceLayoutDirection toUserInterfaceLayoutDirection(UISe
 {
     if (_dynamicViewportUpdateMode != WebKit::DynamicViewportUpdateMode::NotResizing) {
         // Defer snapshotting until after the current resize completes.
-        void (^copiedCompletionHandler)(CGImageRef) = [completionHandler copy];
-        RetainPtr<WKWebView> retainedSelf = self;
-        _callbacksDeferredDuringResize.append([retainedSelf, rectInViewCoordinates, imageWidth, copiedCompletionHandler] {
-            [retainedSelf _snapshotRect:rectInViewCoordinates intoImageOfWidth:imageWidth completionHandler:copiedCompletionHandler];
-            [copiedCompletionHandler release];
+        _callbacksDeferredDuringResize.append([retainedSelf = retainPtr(self), rectInViewCoordinates, imageWidth, completionHandler = makeBlockPtr(completionHandler)] {
+            [retainedSelf _snapshotRect:rectInViewCoordinates intoImageOfWidth:imageWidth completionHandler:completionHandler.get()];
         });
         return;
     }
@@ -3072,26 +3086,16 @@ static WebCore::UserInterfaceLayoutDirection toUserInterfaceLayoutDirection(UISe
         return;
     }
 
-    void(^copiedCompletionHandler)(CGImageRef) = [completionHandler copy];
-    _page->takeSnapshot(WebCore::enclosingIntRect(snapshotRectInContentCoordinates), WebCore::expandedIntSize(WebCore::FloatSize(imageSize)), WebKit::SnapshotOptionsExcludeDeviceScaleFactor, [=](const WebKit::ShareableBitmap::Handle& imageHandle, WebKit::CallbackBase::Error) {
-        if (imageHandle.isNull()) {
-            copiedCompletionHandler(nullptr);
-            [copiedCompletionHandler release];
-            return;
-        }
+    _page->takeSnapshot(WebCore::enclosingIntRect(snapshotRectInContentCoordinates), WebCore::expandedIntSize(WebCore::FloatSize(imageSize)), WebKit::SnapshotOptionsExcludeDeviceScaleFactor, [completionHandler = makeBlockPtr(completionHandler)](const WebKit::ShareableBitmap::Handle& imageHandle) {
+        if (imageHandle.isNull())
+            return completionHandler(nil);
 
         auto bitmap = WebKit::ShareableBitmap::create(imageHandle, WebKit::SharedMemory::Protection::ReadOnly);
 
-        if (!bitmap) {
-            copiedCompletionHandler(nullptr);
-            [copiedCompletionHandler release];
-            return;
-        }
+        if (!bitmap)
+            return completionHandler(nil);
 
-        RetainPtr<CGImageRef> cgImage;
-        cgImage = bitmap->makeCGImage();
-        copiedCompletionHandler(cgImage.get());
-        [copiedCompletionHandler release];
+        completionHandler(bitmap->makeCGImage().get());
     });
 }
 
@@ -3155,9 +3159,9 @@ static WTF::Optional<WebCore::ViewportArguments> viewportArgumentsFromDictionary
     ++_activeFocusedStateRetainCount;
 
     // FIXME: Use something like CompletionHandlerCallChecker to ensure that the returned block is called before it's released.
-    return [[[self] {
+    return adoptNS([[self] {
         --_activeFocusedStateRetainCount;
-    } copy] autorelease];
+    } copy]).autorelease();
 }
 
 - (void)_becomeFirstResponderWithSelectionMovingForward:(BOOL)selectingForward completionHandler:(void (^)(BOOL didBecomeFirstResponder))completionHandler

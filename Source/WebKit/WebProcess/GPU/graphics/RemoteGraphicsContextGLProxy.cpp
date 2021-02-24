@@ -33,6 +33,7 @@
 #include "RemoteGraphicsContextGLMessages.h"
 #include "RemoteGraphicsContextGLProxyMessages.h"
 #include "WebProcess.h"
+#include <WebCore/ImageBuffer.h>
 
 #if PLATFORM(COCOA)
 #include <WebCore/GraphicsContextCG.h>
@@ -43,71 +44,88 @@ namespace WebKit {
 
 using namespace WebCore;
 
-RefPtr<RemoteGraphicsContextGLProxy> RemoteGraphicsContextGLProxy::create(const GraphicsContextGLAttributes& attributes)
+RefPtr<RemoteGraphicsContextGLProxy> RemoteGraphicsContextGLProxy::create(const GraphicsContextGLAttributes& attributes, RenderingBackendIdentifier renderingBackend)
 {
-    return adoptRef(new RemoteGraphicsContextGLProxy(attributes));
+    return adoptRef(new RemoteGraphicsContextGLProxy(WebProcess::singleton().ensureGPUProcessConnection(), attributes, renderingBackend));
 }
 
-RemoteGraphicsContextGLProxy::RemoteGraphicsContextGLProxy(const GraphicsContextGLAttributes& attrs)
-    : RemoteGraphicsContextGLProxyBase(attrs)
+static constexpr size_t defaultStreamSize = 1 << 21;
+
+RemoteGraphicsContextGLProxy::RemoteGraphicsContextGLProxy(GPUProcessConnection& gpuProcessConnection, const GraphicsContextGLAttributes& attributes, RenderingBackendIdentifier renderingBackend)
+    : RemoteGraphicsContextGLProxyBase(attributes)
+    , m_gpuProcessConnection(&gpuProcessConnection)
+    , m_streamConnection(gpuProcessConnection.connection(), defaultStreamSize)
 {
-    IPC::MessageReceiverMap& messageReceiverMap = WebProcess::singleton().ensureGPUProcessConnection().messageReceiverMap();
-    messageReceiverMap.addMessageReceiver(Messages::RemoteGraphicsContextGLProxy::messageReceiverName(), m_graphicsContextGLIdentifier.toUInt64(), *this);
-    send(Messages::GPUConnectionToWebProcess::CreateGraphicsContextGL(attrs, m_graphicsContextGLIdentifier), 0);
+    m_gpuProcessConnection->addClient(*this);
+    m_gpuProcessConnection->messageReceiverMap().addMessageReceiver(Messages::RemoteGraphicsContextGLProxy::messageReceiverName(), m_graphicsContextGLIdentifier.toUInt64(), *this);
+    connection().send(Messages::GPUConnectionToWebProcess::CreateGraphicsContextGL(attributes, m_graphicsContextGLIdentifier, renderingBackend, m_streamConnection.streamBuffer()), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }
 
 RemoteGraphicsContextGLProxy::~RemoteGraphicsContextGLProxy()
 {
-    IPC::MessageReceiverMap& messageReceiverMap = WebProcess::singleton().ensureGPUProcessConnection().messageReceiverMap();
-    messageReceiverMap.removeMessageReceiver(*this);
-    send(Messages::GPUConnectionToWebProcess::ReleaseGraphicsContextGL(m_graphicsContextGLIdentifier), 0);
+    disconnectGpuProcessIfNeeded();
 #if PLATFORM(COCOA)
     platformSwapChain().recycleBuffer();
 #endif
 }
 
-IPC::Connection* RemoteGraphicsContextGLProxy::messageSenderConnection() const
-{
-    return &WebProcess::singleton().ensureGPUProcessConnection().connection();
-}
-
-uint64_t RemoteGraphicsContextGLProxy::messageSenderDestinationID() const
-{
-    return m_graphicsContextGLIdentifier.toUInt64();
-}
-
 void RemoteGraphicsContextGLProxy::reshape(int width, int height)
 {
+    if (isContextLost())
+        return;
     m_currentWidth = width;
     m_currentHeight = height;
-    send(Messages::RemoteGraphicsContextGL::Reshape(width, height), m_graphicsContextGLIdentifier);
+    auto sendResult = send(Messages::RemoteGraphicsContextGL::Reshape(width, height));
+    if (!sendResult)
+        markContextLost();
 }
 
 void RemoteGraphicsContextGLProxy::prepareForDisplay()
 {
+    if (isContextLost())
+        return;
 #if PLATFORM(COCOA)
     MachSendRight displayBufferSendRight;
-    sendSync(Messages::RemoteGraphicsContextGL::PrepareForDisplay(), Messages::RemoteGraphicsContextGL::PrepareForDisplay::Reply(displayBufferSendRight), m_graphicsContextGLIdentifier, 10_s);
+    auto sendResult = sendSync(Messages::RemoteGraphicsContextGL::PrepareForDisplay(), Messages::RemoteGraphicsContextGL::PrepareForDisplay::Reply(displayBufferSendRight));
+    if (!sendResult) {
+        markContextLost();
+        return;
+    }
     auto displayBuffer = IOSurface::createFromSendRight(WTFMove(displayBufferSendRight), sRGBColorSpaceRef());
     if (displayBuffer) {
+        // Claim in the WebProcess ownership of the IOSurface constructed by the GPUProcess so that Jetsam knows which processes to kill.
+        displayBuffer->setOwnership(mach_task_self());
+
         auto& sc = platformSwapChain();
         sc.recycleBuffer();
         sc.present({ WTFMove(displayBuffer), nullptr });
     }
 #else
-    sendSync(Messages::RemoteGraphicsContextGL::PrepareForDisplay(), Messages::RemoteGraphicsContextGL::PrepareForDisplay::Reply(), m_graphicsContextGLIdentifier, 10_s);
+    auto sendResult = sendSync(Messages::RemoteGraphicsContextGL::PrepareForDisplay(), Messages::RemoteGraphicsContextGL::PrepareForDisplay::Reply());
+    if (!sendResult) {
+        markContextLost();
+        return;
+    }
 #endif
     markLayerComposited();
 }
 
 void RemoteGraphicsContextGLProxy::ensureExtensionEnabled(const String& extension)
 {
-    send(Messages::RemoteGraphicsContextGL::EnsureExtensionEnabled(extension), m_graphicsContextGLIdentifier);
+    if (isContextLost())
+        return;
+    auto sendResult = send(Messages::RemoteGraphicsContextGL::EnsureExtensionEnabled(extension));
+    if (!sendResult)
+        markContextLost();
 }
 
 void RemoteGraphicsContextGLProxy::notifyMarkContextChanged()
 {
-    send(Messages::RemoteGraphicsContextGL::NotifyMarkContextChanged(), m_graphicsContextGLIdentifier);
+    if (isContextLost())
+        return;
+    auto sendResult = send(Messages::RemoteGraphicsContextGL::NotifyMarkContextChanged());
+    if (!sendResult)
+        markContextLost();
 }
 
 void RemoteGraphicsContextGLProxy::simulateContextChanged()
@@ -116,55 +134,141 @@ void RemoteGraphicsContextGLProxy::simulateContextChanged()
     notImplemented();
 }
 
-void RemoteGraphicsContextGLProxy::paintRenderingResultsToCanvas(ImageBuffer*)
+void RemoteGraphicsContextGLProxy::paintRenderingResultsToCanvas(ImageBuffer& buffer)
 {
-    notImplemented();
-}
+    // FIXME: the buffer is "relatively empty" always, but for consistency, we need to ensure
+    // no pending operations are targeted for the `buffer`.
+    buffer.flushDrawingContext();
 
-void RemoteGraphicsContextGLProxy::paintCompositedResultsToCanvas(ImageBuffer*)
-{
-    notImplemented();
-}
+    // FIXME: We cannot synchronize so that we would know no pending operations are using the `buffer`.
 
-RefPtr<ImageData> RemoteGraphicsContextGLProxy::paintRenderingResultsToImageData()
-{
-    notImplemented();
-    return nullptr;
-}
+    // FIXME: Currently RemoteImageBufferProxy::getImageData et al do not wait for the flushes of the images
+    // inside the display lists. Rather, it assumes that processing its sequence (e.g. the display list) will equal to read flush being
+    // fulfilled. For below, we cannot create a new flush id since we go through different sequence (RemoteGraphicsContextGL sequence)
 
-void RemoteGraphicsContextGLProxy::wasCreated(String&& availableExtensions, String&& requestedExtensions)
-{
-    if (m_didInitialize) {
-        // Initialization timed out before, so lose the context now.
-        wasLost();
+    // FIXME: Maybe implement IPC::Fence or something similar.
+    auto sendResult = sendSync(Messages::RemoteGraphicsContextGL::PaintRenderingResultsToCanvas(buffer.renderingResourceIdentifier()), Messages::RemoteGraphicsContextGL::PaintRenderingResultsToCanvas::Reply());
+    if (!sendResult) {
+        markContextLost();
         return;
     }
-    initialize(availableExtensions, requestedExtensions);
+}
+
+void RemoteGraphicsContextGLProxy::paintCompositedResultsToCanvas(ImageBuffer& buffer)
+{
+    buffer.flushDrawingContext();
+    auto sendResult = sendSync(Messages::RemoteGraphicsContextGL::PaintCompositedResultsToCanvas(buffer.renderingResourceIdentifier()), Messages::RemoteGraphicsContextGL::PaintCompositedResultsToCanvas::Reply());
+    if (!sendResult) {
+        markContextLost();
+        return;
+    }
+}
+
+bool RemoteGraphicsContextGLProxy::copyTextureFromMedia(MediaPlayer& mediaPlayer, PlatformGLObject texture, GCGLenum target, GCGLint level, GCGLenum internalFormat, GCGLenum format, GCGLenum type, bool premultiplyAlpha, bool flipY)
+{
+    bool result = false;
+    auto sendResult = sendSync(Messages::RemoteGraphicsContextGL::CopyTextureFromMedia(mediaPlayer.identifier(), texture, target, level, internalFormat, format, type, premultiplyAlpha, flipY), Messages::RemoteGraphicsContextGL::CopyTextureFromMedia::Reply(result));
+    if (!sendResult) {
+        markContextLost();
+        return false;
+    }
+
+    return result;
+}
+
+void RemoteGraphicsContextGLProxy::synthesizeGLError(GCGLenum error)
+{
+    if (!isContextLost()) {
+        auto sendResult = send(Messages::RemoteGraphicsContextGL::SynthesizeGLError(error));
+        if (!sendResult)
+            wasLost();
+        return;
+    }
+    m_errorWhenContextIsLost = error;
+}
+
+GCGLenum RemoteGraphicsContextGLProxy::getError()
+{
+    if (!isContextLost()) {
+        uint32_t returnValue = 0;
+        auto sendResult = sendSync(Messages::RemoteGraphicsContextGL::GetError(), Messages::RemoteGraphicsContextGL::GetError::Reply(returnValue));
+        if (!sendResult)
+            wasLost();
+        return static_cast<GCGLenum>(returnValue);
+    }
+    return std::exchange(m_errorWhenContextIsLost, NO_ERROR);
+}
+
+void RemoteGraphicsContextGLProxy::wasCreated(bool didSucceed, IPC::Semaphore&& semaphore, String&& availableExtensions, String&& requestedExtensions)
+{
+    if (isContextLost())
+        return;
+    if (!didSucceed) {
+        markContextLost();
+        return;
+    }
+    ASSERT(!m_didInitialize);
+    m_streamConnection.setWakeUpSemaphore(WTFMove(semaphore));
     m_didInitialize = true;
+    initialize(availableExtensions, requestedExtensions);
 }
 
 void RemoteGraphicsContextGLProxy::wasLost()
 {
-    for (auto* client : copyToVector(m_clients))
-        client->forceContextLost();
+    if (isContextLost())
+        return;
+    markContextLost();
 }
 
 void RemoteGraphicsContextGLProxy::wasChanged()
 {
+    if (isContextLost())
+        return;
     for (auto* client : copyToVector(m_clients))
         client->dispatchContextChangedNotification();
 }
 
+void RemoteGraphicsContextGLProxy::markContextLost()
+{
+    disconnectGpuProcessIfNeeded();
+    for (auto* client : copyToVector(m_clients))
+        client->forceContextLost();
+}
+
 void RemoteGraphicsContextGLProxy::waitUntilInitialized()
 {
+    if (isContextLost())
+        return;
     if (m_didInitialize)
         return;
-    Ref<IPC::Connection> connection = WebProcess::singleton().ensureGPUProcessConnection().connection();
-    if (connection->waitForAndDispatchImmediately<Messages::RemoteGraphicsContextGLProxy::WasCreated>(m_graphicsContextGLIdentifier, 10_s, IPC::WaitForOption::InterruptWaitingIfSyncMessageArrives))
+    if (connection().waitForAndDispatchImmediately<Messages::RemoteGraphicsContextGLProxy::WasCreated>(m_graphicsContextGLIdentifier, defaultSendTimeout))
         return;
-    // Timed out, so report initialized with dummy data. We should lose the context.
-    wasCreated("", "");
-    // FIXME: Need to mark the context as lost, but it's not safe to force lost in this call stack.
+    markContextLost();
+}
+
+void RemoteGraphicsContextGLProxy::gpuProcessConnectionDidClose(GPUProcessConnection&)
+{
+    ASSERT(!isContextLost());
+    abandonGpuProcess();
+    markContextLost();
+}
+
+void RemoteGraphicsContextGLProxy::abandonGpuProcess()
+{
+    auto gpuProcessConnection = std::exchange(m_gpuProcessConnection, nullptr);
+    gpuProcessConnection->removeClient(*this);
+    gpuProcessConnection->messageReceiverMap().removeMessageReceiver(Messages::RemoteGraphicsContextGLProxy::messageReceiverName(), m_graphicsContextGLIdentifier.toUInt64());
+    m_gpuProcessConnection = nullptr;
+}
+
+void RemoteGraphicsContextGLProxy::disconnectGpuProcessIfNeeded()
+{
+    if (auto gpuProcessConnection = std::exchange(m_gpuProcessConnection, nullptr)) {
+        gpuProcessConnection->removeClient(*this);
+        gpuProcessConnection->messageReceiverMap().removeMessageReceiver(Messages::RemoteGraphicsContextGLProxy::messageReceiverName(), m_graphicsContextGLIdentifier.toUInt64());
+        gpuProcessConnection->connection().send(Messages::GPUConnectionToWebProcess::ReleaseGraphicsContextGL(m_graphicsContextGLIdentifier), 0, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
+    }
+    ASSERT(isContextLost());
 }
 
 } // namespace WebKit

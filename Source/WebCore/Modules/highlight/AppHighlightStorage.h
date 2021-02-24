@@ -36,18 +36,20 @@ namespace WebCore {
 
 #if ENABLE(APP_HIGHLIGHTS)
 
-class AppHighlightListData;
 class AppHighlightRangeData;
 class Document;
 class SharedBuffer;
+class Highlight;
+
+enum class CreateNewGroupForHighlight : bool;
 
 class AppHighlightStorage : RefCounted<AppHighlightStorage> {
     WTF_MAKE_FAST_ALLOCATED;
 public:
     AppHighlightStorage(Document&);
 
-    AppHighlightListData createAppHighlightListData();
-    Vector<AppHighlightRangeData> restoreAppHighlights(Ref<SharedBuffer>&&);
+    WEBCORE_EXPORT void storeAppHighlight(StaticRange& , CreateNewGroupForHighlight isNewGroup);
+    WEBCORE_EXPORT bool restoreAppHighlight(Ref<SharedBuffer>&&);
 
 private:
     WeakPtr<Document> m_document;

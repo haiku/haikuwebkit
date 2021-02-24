@@ -160,11 +160,8 @@ static void delayBetweenMove(int eventIndex, double elapsed)
 
 + (HIDEventGenerator *)sharedHIDEventGenerator
 {
-    static HIDEventGenerator *eventGenerator = nil;
-    if (!eventGenerator)
-        eventGenerator = [[HIDEventGenerator alloc] init];
-
-    return eventGenerator;
+    static NeverDestroyed<RetainPtr<HIDEventGenerator>> eventGenerator = adoptNS([[HIDEventGenerator alloc] init]);
+    return eventGenerator.get().get();
 }
 
 + (CFIndex)nextEventCallbackID
@@ -1042,9 +1039,9 @@ RetainPtr<IOHIDEventRef> createHIDKeyEvent(NSString *character, uint64_t timesta
     NSArray *endTouches = endEvent[HIDEventTouchesKey];
     
     while (time < endTime) {
-        NSMutableDictionary *newEvent = [endEvent mutableCopy];
+        auto newEvent = adoptNS([endEvent mutableCopy]);
         double timeRatio = (time - startTime) / (endTime - startTime);
-        newEvent[HIDEventTimeOffsetKey] = @(time);
+        newEvent.get()[HIDEventTimeOffsetKey] = @(time);
         
         NSEnumerator *startEnumerator = [startTouches objectEnumerator];
         NSDictionary *startTouch;
@@ -1058,27 +1055,25 @@ RetainPtr<IOHIDEventRef> createHIDKeyEvent(NSString *character, uint64_t timesta
                 endTouch = [endEnumerator nextObject];
             
             if (endTouch) {
-                NSMutableDictionary *newTouch = [endTouch mutableCopy];
+                auto newTouch = adoptNS([endTouch mutableCopy]);
                 
-                if (newTouch[HIDEventXKey] != startTouch[HIDEventXKey])
-                    newTouch[HIDEventXKey] = @(interpolations[interpolationType]([startTouch[HIDEventXKey] doubleValue], [endTouch[HIDEventXKey] doubleValue], timeRatio));
+                if (newTouch.get()[HIDEventXKey] != startTouch[HIDEventXKey])
+                    newTouch.get()[HIDEventXKey] = @(interpolations[interpolationType]([startTouch[HIDEventXKey] doubleValue], [endTouch[HIDEventXKey] doubleValue], timeRatio));
                 
-                if (newTouch[HIDEventYKey] != startTouch[HIDEventYKey])
-                    newTouch[HIDEventYKey] = @(interpolations[interpolationType]([startTouch[HIDEventYKey] doubleValue], [endTouch[HIDEventYKey] doubleValue], timeRatio));
+                if (newTouch.get()[HIDEventYKey] != startTouch[HIDEventYKey])
+                    newTouch.get()[HIDEventYKey] = @(interpolations[interpolationType]([startTouch[HIDEventYKey] doubleValue], [endTouch[HIDEventYKey] doubleValue], timeRatio));
                 
-                if (newTouch[HIDEventPressureKey] != startTouch[HIDEventPressureKey])
-                    newTouch[HIDEventPressureKey] = @(interpolations[interpolationType]([startTouch[HIDEventPressureKey] doubleValue], [endTouch[HIDEventPressureKey] doubleValue], timeRatio));
+                if (newTouch.get()[HIDEventPressureKey] != startTouch[HIDEventPressureKey])
+                    newTouch.get()[HIDEventPressureKey] = @(interpolations[interpolationType]([startTouch[HIDEventPressureKey] doubleValue], [endTouch[HIDEventPressureKey] doubleValue], timeRatio));
                 
-                [newTouches addObject:newTouch];
-                [newTouch release];
+                [newTouches addObject:newTouch.get()];
             } else
                 NSLog(@"Missing End Touch with ID: %ld", (long)startTouchID);
         }
         
-        newEvent[HIDEventTouchesKey] = newTouches;
+        newEvent.get()[HIDEventTouchesKey] = newTouches;
         
-        [interpolatedEvents addObject:newEvent];
-        [newEvent release];
+        [interpolatedEvents addObject:newEvent.get()];
         time += timeStep;
     }
     
@@ -1145,12 +1140,12 @@ RetainPtr<IOHIDEventRef> createHIDKeyEvent(NSString *character, uint64_t timesta
     }
     
     NSDictionary* threadData = @{
-        @"eventInfo": [[eventInfo copy] autorelease],
-        @"completionBlock": [[completionBlock copy] autorelease]
+        @"eventInfo": adoptNS([eventInfo copy]).get(),
+        @"completionBlock": adoptNS([completionBlock copy]).get()
     };
     
-    NSThread *eventDispatchThread = [[[NSThread alloc] initWithTarget:self selector:@selector(eventDispatchThreadEntry:) object:threadData] autorelease];
-    eventDispatchThread.qualityOfService = NSQualityOfServiceUserInteractive;
+    auto eventDispatchThread = adoptNS([[NSThread alloc] initWithTarget:self selector:@selector(eventDispatchThreadEntry:) object:threadData]);
+    [eventDispatchThread setQualityOfService:NSQualityOfServiceUserInteractive];
     [eventDispatchThread start];
 }
 

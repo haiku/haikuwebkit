@@ -222,6 +222,11 @@ class TestLocalSvn(unittest.TestCase):
         with mocks.local.Svn(self.path), OutputCapture():
             self.assertIsNone(local.Svn(self.path).commit(identifier='4@trunk', include_log=False).message)
 
+    def test_alternative_default_branch(self):
+        with mocks.local.Svn(self.path), OutputCapture():
+            self.assertEqual(str(local.Svn(self.path).find('4@main')), '4@trunk')
+            self.assertEqual(str(local.Svn(self.path).find('4@master')), '4@trunk')
+
 
 class TestRemoteSvn(unittest.TestCase):
     remote = 'https://svn.example.org/repository/webkit'
@@ -230,6 +235,7 @@ class TestRemoteSvn(unittest.TestCase):
         self.assertEqual(remote.Svn.is_webserver('https://svn.example.org/repository/webkit'), True)
         self.assertEqual(remote.Svn.is_webserver('http://svn.example.org/repository/webkit'), True)
         self.assertEqual(remote.Svn.is_webserver('https://github.example.org/WebKit/webkit'), False)
+        self.assertEqual(remote.GitHub.is_webserver('https://bitbucket.example.com/projects/WebKit/repos/webkit'), False)
 
     def test_branches(self):
         with mocks.remote.Svn():
@@ -309,3 +315,8 @@ class TestRemoteSvn(unittest.TestCase):
     def test_no_log(self):
         with mocks.remote.Svn():
             self.assertIsNone(remote.Svn(self.remote).commit(identifier='4@trunk', include_log=False).message)
+
+    def test_alternative_default_branch(self):
+        with mocks.remote.Svn():
+            self.assertEqual(str(remote.Svn(self.remote).find('4@main')), '4@trunk')
+            self.assertEqual(str(remote.Svn(self.remote).find('4@master')), '4@trunk')

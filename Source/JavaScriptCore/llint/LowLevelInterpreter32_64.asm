@@ -1579,13 +1579,13 @@ llintOpWithMetadata(op_put_by_id, OpPutById, macro (size, get, dispatch, metadat
     loadp StructureChain::m_vector[t3], t3
     assert(macro (ok) btpnz t3, ok end)
 
-    loadp Structure::m_prototype[t2], t2
+    loadp Structure::m_prototype + PayloadOffset[t2], t2
     btpz t2, .opPutByIdTransitionChainDone
 .opPutByIdTransitionChainLoop:
     loadp [t3], t1
     bineq t1, JSCell::m_structureID[t2], .opPutByIdSlow
     addp 4, t3
-    loadp Structure::m_prototype[t1], t2
+    loadp Structure::m_prototype + PayloadOffset[t1], t2
     btpnz t2, .opPutByIdTransitionChainLoop
 
 .opPutByIdTransitionChainDone:
@@ -2251,7 +2251,7 @@ end)
 
 
 op(llint_throw_from_slow_path_trampoline, macro()
-    loadp Callee[cfr], t1
+    loadp Callee + PayloadOffset[cfr], t1
     convertCalleeToVM(t1)
     copyCalleeSavesToVMEntryFrameCalleeSavesBuffer(t1, t2)
 
@@ -2260,7 +2260,7 @@ op(llint_throw_from_slow_path_trampoline, macro()
     # When throwing from the interpreter (i.e. throwing from LLIntSlowPaths), so
     # the throw target is not necessarily interpreted code, we come to here.
     # This essentially emulates the JIT's throwing protocol.
-    loadp Callee[cfr], t1
+    loadp Callee + PayloadOffset[cfr], t1
     convertCalleeToVM(t1)
     jmp VM::targetMachinePCForThrow[t1]
 end)
@@ -2991,3 +2991,48 @@ end)
 op(fuzzer_return_early_from_loop_hint, macro ()
     notSupported()
 end)
+
+
+llintOpWithMetadata(op_check_private_brand, OpCheckPrivateBrand, macro (size, get, dispatch, metadata, return)
+    metadata(t5, t2)
+    get(m_base, t3)
+    loadConstantOrVariablePayload(size, t3, CellTag, t0, .opCheckPrivateBrandSlow)
+    get(m_brand, t3)
+    loadConstantOrVariablePayload(size, t3, CellTag, t1, .opCheckPrivateBrandSlow)
+
+    loadi OpCheckPrivateBrand::Metadata::m_structureID[t5], t3
+    bineq JSCell::m_structureID[t0], t3, .opCheckPrivateBrandSlow
+
+    loadp OpCheckPrivateBrand::Metadata::m_brand[t5], t3
+    bpneq t3, t1, .opCheckPrivateBrandSlow
+    dispatch()
+
+.opCheckPrivateBrandSlow:
+    callSlowPath(_llint_slow_path_check_private_brand)
+    dispatch()
+end)
+
+
+llintOpWithMetadata(op_set_private_brand, OpSetPrivateBrand, macro (size, get, dispatch, metadata, return)
+    metadata(t5, t2)
+    get(m_base, t3)
+    loadConstantOrVariablePayload(size, t3, CellTag, t0, .opSetPrivateBrandSlow)
+    get(m_brand, t3)
+    loadConstantOrVariablePayload(size, t3, CellTag, t1, .opSetPrivateBrandSlow)
+
+    loadi OpSetPrivateBrand::Metadata::m_oldStructureID[t5], t2
+    bineq t2, JSCell::m_structureID[t0], .opSetPrivateBrandSlow
+
+    loadp OpSetPrivateBrand::Metadata::m_brand[t5], t3
+    bpneq t3, t1, .opSetPrivateBrandSlow
+
+    loadi OpSetPrivateBrand::Metadata::m_newStructureID[t5], t1
+    storei t1, JSCell::m_structureID[t0]
+    writeBarrierOnOperand(size, get, m_base)
+    dispatch()
+
+.opSetPrivateBrandSlow:
+    callSlowPath(_llint_slow_path_set_private_brand)
+    dispatch()
+end)
+

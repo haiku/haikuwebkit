@@ -1475,21 +1475,6 @@ void WebResourceLoadStatisticsStore::insertExpiredStatisticForTesting(const Regi
     });
 }
 
-void WebResourceLoadStatisticsStore::updateTimerLastFired()
-{
-    ASSERT(RunLoop::isMain());
-
-    if (isEphemeral())
-        return;
-
-    postTask([this]() mutable {
-        if (!m_statisticsStore)
-            return;
-
-        m_statisticsStore->updateTimerLastFired();
-    });
-}
-
 void WebResourceLoadStatisticsStore::insertPrivateClickMeasurement(PrivateClickMeasurement&& attribution, PrivateClickMeasurementAttributionType attributionType)
 {
     ASSERT(RunLoop::isMain());
@@ -1637,18 +1622,18 @@ void WebResourceLoadStatisticsStore::privateClickMeasurementToString(CompletionH
     });
 }
 
-void WebResourceLoadStatisticsStore::clearSentAttributions(Vector<WebCore::PrivateClickMeasurement>&& attributionsToClear)
+void WebResourceLoadStatisticsStore::clearSentAttribution(WebCore::PrivateClickMeasurement&& attributionToClear)
 {
     ASSERT(RunLoop::isMain());
 
     if (isEphemeral())
         return;
 
-    postTask([this, attributionsToClear = WTFMove(attributionsToClear)]() mutable {
+    postTask([this, attributionToClear = WTFMove(attributionToClear)]() mutable {
         if (!m_statisticsStore)
             return;
 
-        m_statisticsStore->clearSentAttributions(WTFMove(attributionsToClear));
+        m_statisticsStore->clearSentAttribution(WTFMove(attributionToClear));
     });
 }
 

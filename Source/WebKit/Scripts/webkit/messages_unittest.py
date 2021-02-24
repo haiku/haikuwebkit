@@ -39,7 +39,16 @@ tests_directory = os.path.join(module_directory, 'tests')
 
 reset_results = False
 
-_test_receiver_names = ['TestWithSuperclass', 'TestWithLegacyReceiver', 'TestWithoutAttributes', 'TestWithIfMessage']
+_test_receiver_names = [
+    'TestWithSuperclass',
+    'TestWithLegacyReceiver',
+    'TestWithoutAttributes',
+    'TestWithIfMessage',
+    'TestWithSemaphore',
+    'TestWithImageData',
+    'TestWithStream',
+    'TestWithStreamBuffer'
+]
 
 
 def receiver_header_file_name(receiver_name):

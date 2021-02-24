@@ -132,10 +132,11 @@ public:
     DataRef<StyleGridItemData> gridItem;
 
     LengthBox scrollMargin { 0, 0, 0, 0 };
-    LengthBox scrollPadding { 0, 0, 0, 0 };
+    LengthBox scrollPadding { Length(LengthType::Auto), Length(LengthType::Auto), Length(LengthType::Auto), Length(LengthType::Auto) };
 #if ENABLE(CSS_SCROLL_SNAP)
     ScrollSnapType scrollSnapType;
     ScrollSnapAlign scrollSnapAlign;
+    ScrollSnapStop scrollSnapStop { ScrollSnapStop::Normal };
 #endif
 
     unsigned overscrollBehaviorX : 2; // OverscrollBehavior
@@ -194,7 +195,7 @@ public:
     OptionSet<TouchAction> touchActions;
 
     unsigned pageSizeType : 2; // PageSizeType
-    unsigned transformStyle3D : 1; // TransformStyle3D
+    unsigned transformStyle3D : 2; // TransformStyle3D
     unsigned backfaceVisibility : 1; // BackfaceVisibility
 
     unsigned userDrag : 2; // UserDrag

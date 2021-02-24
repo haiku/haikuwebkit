@@ -49,6 +49,7 @@
 #import "WebFrameProxy.h"
 #import "WebKit2Initialize.h"
 #import "WebPageGroup.h"
+#import "WebPageMessages.h"
 #import "WebPageProxyMessages.h"
 #import "WebProcessPool.h"
 #import "_WKFrameHandleInternal.h"
@@ -143,7 +144,7 @@
     RetainPtr<NSUndoManager> _undoManager;
     RetainPtr<WKQuirkyNSUndoManager> _quirkyUndoManager;
 
-    BOOL _isPrintingToPDF;
+    uint64_t _pdfPrintCallbackID;
     RetainPtr<CGPDFDocumentRef> _printedDocument;
 }
 
@@ -232,7 +233,7 @@ static NSArray *keyCommandsPlaceholderHackForEvernote(id self, SEL _cmd)
     ASSERT(!_visibilityPropagationView);
     // Propagate the view's visibility state to the WebContent process so that it is marked as "Foreground Running" when necessary.
     _visibilityPropagationView = adoptNS([[_UILayerHostView alloc] initWithFrame:CGRectZero pid:processIdentifier contextID:contextID]);
-    RELEASE_LOG(Process, "Created visibility propagation view %p (contextID: %u) for WebContent process with PID %d", _visibilityPropagationView.get(), contextID, processIdentifier);
+    RELEASE_LOG(Process, "Created visibility propagation view %p (contextID=%u) for WebContent process with PID=%d", _visibilityPropagationView.get(), contextID, processIdentifier);
     [self addSubview:_visibilityPropagationView.get()];
 }
 
@@ -251,7 +252,7 @@ static NSArray *keyCommandsPlaceholderHackForEvernote(id self, SEL _cmd)
 
     // Propagate the view's visibility state to the GPU process so that it is marked as "Foreground Running" when necessary.
     _visibilityPropagationViewForGPUProcess = adoptNS([[_UILayerHostView alloc] initWithFrame:CGRectZero pid:processIdentifier contextID:contextID]);
-    RELEASE_LOG(Process, "Created visibility propagation view %p (contextID: %u) for GPU process with PID %d", _visibilityPropagationViewForGPUProcess.get(), contextID, processIdentifier);
+    RELEASE_LOG(Process, "Created visibility propagation view %p (contextID=%u) for GPU process with PID=%d", _visibilityPropagationViewForGPUProcess.get(), contextID, processIdentifier);
     [self addSubview:_visibilityPropagationViewForGPUProcess.get()];
 }
 
@@ -436,8 +437,7 @@ static WebCore::FloatBoxExtent floatBoxExtent(UIEdgeInsets insets)
     unobscuredSafeAreaInsets:(UIEdgeInsets)unobscuredSafeAreaInsets
     inputViewBounds:(CGRect)inputViewBounds
     scale:(CGFloat)zoomScale minimumScale:(CGFloat)minimumScale
-    inStableState:(BOOL)isStableState
-    isChangingObscuredInsetsInteractively:(BOOL)isChangingObscuredInsetsInteractively
+    viewStability:(OptionSet<WebKit::ViewStabilityFlag>)viewStability
     enclosedInScrollableAncestorView:(BOOL)enclosedInScrollableAncestorView
     sendEvenIfUnchanged:(BOOL)sendEvenIfUnchanged
 {
@@ -447,7 +447,8 @@ static WebCore::FloatBoxExtent floatBoxExtent(UIEdgeInsets insets)
 
     MonotonicTime timestamp = MonotonicTime::now();
     WebCore::VelocityData velocityData;
-    if (!isStableState)
+    bool inStableState = viewStability.isEmpty();
+    if (!inStableState)
         velocityData = _historicalKinematicData.velocityForNewData(visibleContentRect.origin, zoomScale, timestamp);
     else {
         _historicalKinematicData.clear();
@@ -467,9 +468,8 @@ static WebCore::FloatBoxExtent floatBoxExtent(UIEdgeInsets insets)
         floatBoxExtent(obscuredInsets),
         floatBoxExtent(unobscuredSafeAreaInsets),
         zoomScale,
-        isStableState,
+        viewStability,
         _sizeChangedSinceLastVisibleContentRectUpdate,
-        isChangingObscuredInsetsInteractively,
         self.webView._allowsViewportShrinkToFit,
         enclosedInScrollableAncestorView,
         velocityData,
@@ -490,7 +490,7 @@ static WebCore::FloatBoxExtent floatBoxExtent(UIEdgeInsets insets)
     
     [self updateFixedClippingView:layoutViewport];
 
-    if (wasStableState && !isStableState)
+    if (wasStableState && !inStableState)
         [self _didExitStableState];
 }
 
@@ -621,7 +621,7 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
     [self _removeVisibilityPropagationView];
 #endif
 
-    _isPrintingToPDF = NO;
+    _pdfPrintCallbackID = 0;
 }
 
 #if ENABLE(GPU_PROCESS)
@@ -792,7 +792,7 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
 
 - (NSUInteger)_wk_pageCountForPrintFormatter:(_WKWebViewPrintFormatter *)printFormatter
 {
-    if (_isPrintingToPDF)
+    if (_pdfPrintCallbackID)
         [self _waitForDrawToPDFCallback];
 
     WebCore::FrameIdentifier frameID;
@@ -825,30 +825,32 @@ static void storeAccessibilityRemoteConnectionInformation(id element, pid_t pid,
     printInfo.availablePaperWidth = CGRectGetWidth(printingRect);
     printInfo.availablePaperHeight = CGRectGetHeight(printingRect);
 
-    _isPrintingToPDF = YES;
     auto retainedSelf = retainPtr(self);
-    return _page->computePagesForPrintingAndDrawToPDF(frameID, printInfo, [retainedSelf](const IPC::DataReference& pdfData, WebKit::CallbackBase::Error error) {
-        retainedSelf->_isPrintingToPDF = NO;
-        if (error != WebKit::CallbackBase::Error::None)
+    auto pair = _page->computePagesForPrintingAndDrawToPDF(frameID, printInfo, [retainedSelf](const IPC::DataReference& pdfData) {
+        retainedSelf->_pdfPrintCallbackID = 0;
+        if (pdfData.isEmpty())
             return;
 
         auto data = adoptCF(CFDataCreate(kCFAllocatorDefault, pdfData.data(), pdfData.size()));
         auto dataProvider = adoptCF(CGDataProviderCreateWithCFData(data.get()));
         retainedSelf->_printedDocument = adoptCF(CGPDFDocumentCreateWithProvider(dataProvider.get()));
     });
+    _pdfPrintCallbackID = pair.second;
+    return pair.first;
 }
 
 - (BOOL)_waitForDrawToPDFCallback
 {
-    if (!_page->process().connection()->waitForAndDispatchImmediately<Messages::WebPageProxy::DrawToPDFCallback>(_page->webPageID(), Seconds::infinity()))
+    ASSERT(_pdfPrintCallbackID);
+    if (!_page->process().connection()->waitForAsyncCallbackAndDispatchImmediately<Messages::WebPage::DrawToPDFiOS>(std::exchange(_pdfPrintCallbackID, 0), Seconds::infinity()))
         return false;
-    ASSERT(!_isPrintingToPDF);
+    ASSERT(!_pdfPrintCallbackID);
     return true;
 }
 
 - (CGPDFDocumentRef)_wk_printedDocument
 {
-    if (_isPrintingToPDF) {
+    if (_pdfPrintCallbackID) {
         if (![self _waitForDrawToPDFCallback])
             return nullptr;
     }

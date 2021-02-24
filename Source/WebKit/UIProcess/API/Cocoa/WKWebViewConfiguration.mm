@@ -158,7 +158,6 @@ static bool defaultShouldDecidePolicyBeforeLoadingQuickLookPreview()
     WKRetainPtr<WKPageGroupRef> _pageGroup;
     BOOL _showsURLsInToolTips;
     BOOL _serviceControlsEnabled;
-    BOOL _imageControlsEnabled;
     BOOL _requiresUserActionForEditingControlsManager;
 #endif
     BOOL _waitsForPaintAfterViewDidMoveToWindow;
@@ -226,7 +225,6 @@ static bool defaultShouldDecidePolicyBeforeLoadingQuickLookPreview()
     _respectsImageOrientation = NO;
     _showsURLsInToolTips = NO;
     _serviceControlsEnabled = NO;
-    _imageControlsEnabled = NO;
     _requiresUserActionForEditingControlsManager = NO;
 #endif
     _waitsForPaintAfterViewDidMoveToWindow = YES;
@@ -419,7 +417,6 @@ static bool defaultShouldDecidePolicyBeforeLoadingQuickLookPreview()
     configuration->_userInterfaceDirectionPolicy = self->_userInterfaceDirectionPolicy;
     configuration->_showsURLsInToolTips = self->_showsURLsInToolTips;
     configuration->_serviceControlsEnabled = self->_serviceControlsEnabled;
-    configuration->_imageControlsEnabled = self->_imageControlsEnabled;
     configuration->_requiresUserActionForEditingControlsManager = self->_requiresUserActionForEditingControlsManager;
     configuration->_pageGroup = self._pageGroup;
 #endif
@@ -478,6 +475,16 @@ static bool defaultShouldDecidePolicyBeforeLoadingQuickLookPreview()
 - (void)setUserContentController:(WKUserContentController *)userContentController
 {
     _userContentController.set(userContentController);
+}
+
+- (BOOL)upgradeKnownHostsToHTTPS
+{
+    return _pageConfiguration->httpsUpgradeEnabled();
+}
+
+- (void)setUpgradeKnownHostsToHTTPS:(BOOL)upgrade
+{
+    _pageConfiguration->setHTTPSUpgradeEnabled(upgrade);
 }
 
 - (WKWebsiteDataStore *)websiteDataStore
@@ -1075,12 +1082,13 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (BOOL)_imageControlsEnabled
 {
-    return _imageControlsEnabled;
+    // Image controls are no longer supported.
+    return NO;
 }
 
 - (void)_setImageControlsEnabled:(BOOL)imageControlsEnabled
 {
-    _imageControlsEnabled = imageControlsEnabled;
+    // Image controls are no longer supported.
 }
 
 - (BOOL)_requiresUserActionForEditingControlsManager

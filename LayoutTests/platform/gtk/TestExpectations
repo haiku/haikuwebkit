@@ -25,8 +25,6 @@ ietestcenter/css3/flexbox/flexbox-layout-001.htm [ Pass ]
 
 imported/w3c/canvas/2d.line.cap.round.html [ Pass ]
 
-imported/w3c/web-platform-tests/cors/preflight-failure.htm [ Pass ]
-
 imported/w3c/web-platform-tests/css/css-color/t422-rgba-onscreen-b.xht [ Pass ]
 imported/w3c/web-platform-tests/css/css-color/t422-rgba-onscreen-multiple-boxes-c.xht [ Pass ]
 imported/w3c/web-platform-tests/css/css-color/t425-hsla-onscreen-multiple-boxes-c.xht [ Pass ]
@@ -56,6 +54,8 @@ css-dark-mode [ Pass ]
 css-dark-mode/older-systems [ Skip ]
 
 imported/w3c/web-platform-tests/css/css-multicol/multicol-width-ch-001.xht [ Pass ]
+
+fast/events/keyboardevent-modifier.html [ Pass ]
 
 # permessage-deflate WebSocket extension
 
@@ -136,8 +136,6 @@ webkit.org/b/215405 accessibility/gtk/caret-browsing-select-focus.html [ Failure
 webkit.org/b/215405 accessibility/gtk/combobox-descendants-orientation-crash.html [ Failure ]
 webkit.org/b/215405 accessibility/gtk/text-for-range-combo-box.html [ Failure ]
 webkit.org/b/215405 inspector/dom/getAccessibilityPropertiesForNode.html [ Failure ]
-# aria-braille* attributes are not implemented:
-accessibility/braille-label-role.html
 
 # CSS
 webkit.org/b/216161 imported/w3c/web-platform-tests/css/css-pseudo/text-selection.html [ Failure Pass ]
@@ -710,10 +708,6 @@ editing/inserting/typing-space-to-trigger-smart-link.html [ Skip ]
 editing/inserting/smart-link-when-caret-is-moved-before-URL.html [ Skip ]
 editing/inserting/smart-quote-with-all-configurations.html [ Skip ]
 
-# ENABLE(CSS_SCROLL_SNAP) is disabled.
-css3/scroll-snap [ Skip ]
-imported/w3c/web-platform-tests/css/css-scroll-snap [ Skip ]
-
 # ENABLE(WEBVTT_REGIONS) is disabled
 webkit.org/b/109570 media/track/regions-webvtt [ Skip ]
 webkit.org/b/109570 media/track/w3c [ Skip ]
@@ -1107,8 +1101,6 @@ webkit.org/b/212223 compositing/tiling/perspective-on-scroller-tile-coverage.htm
 
 webkit.org/b/212233 fast/repaint/iframe-on-subpixel-position.html [ Failure ]
 
-webkit.org/b/213328 http/tests/inspector/network/intercept-request-properties.html [ Failure ]
-
 webkit.org/b/214470 imported/w3c/web-platform-tests/css/css-backgrounds/background-repeat/background-repeat-round-roundup.xht [ ImageOnlyFailure ]
 webkit.org/b/214470 imported/w3c/web-platform-tests/css/css-backgrounds/background-repeat/background-repeat-round.xht [ ImageOnlyFailure ]
 webkit.org/b/214470 imported/w3c/web-platform-tests/css/css-backgrounds/background-repeat/background-repeat-space.xht [ ImageOnlyFailure ]
@@ -1332,6 +1324,7 @@ webkit.org/b/181529 imported/blink/http/tests/webfont/animation-assert.html [ Pa
 webkit.org/b/181767 fast/hidpi/filters-hue-rotate.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/182761 accessibility/gtk/aria-busy-changed-notification.html [ Pass Failure ]
+
 webkit.org/b/182761 accessibility/gtk/aria-current-changed-notification.html [ Pass Failure ]
 webkit.org/b/182761 accessibility/gtk/aria-disabled-changed-notification.html [ Pass Failure ]
 webkit.org/b/182761 accessibility/gtk/aria-expanded-changed-notification.html [ Pass Failure ]
@@ -2356,8 +2349,6 @@ webkit.org/b/168552 fast/text/hyphenate-locale.html [ Failure ]
 
 webkit.org/b/169075 editing/deleting/skip-virama-001.html [ Failure Pass ]
 
-webkit.org/b/170335 canvas/philip/tests/2d.pattern.animated.gif.html [ Failure ]
-
 webkit.org/b/171598 accessibility/gtk/menu-list-unfocused-notifications.html [ Failure ]
 
 webkit.org/b/172270 fast/text/font-interstitial-invisible-width-while-loading.html [ Failure ]
@@ -2433,13 +2424,8 @@ webkit.org/b/183902 fast/dom/frame-loading-via-document-write.html [ Failure ]
 
 webkit.org/b/184776 imported/w3c/web-platform-tests/html/semantics/forms/textfieldselection/selection-not-application.html [ Failure ]
 
-webkit.org/b/185254 http/tests/xmlhttprequest/onloadend-event-after-error.html [ Failure ]
-webkit.org/b/185254 http/tests/xmlhttprequest/response-access-on-error.html [ Failure ]
 webkit.org/b/185254 http/tests/xmlhttprequest/state-after-network-error.html [ Failure ]
 webkit.org/b/185254 http/tests/cache/network-error-during-revalidation.html [ Failure ]
-webkit.org/b/185254 http/tests/xmlhttprequest/XMLHttpRequestException.html [ Failure ]
-webkit.org/b/185254 http/tests/xmlhttprequest/onloadend-event-after-sync-requests.html [ Failure ]
-webkit.org/b/185254 http/tests/xmlhttprequest/connection-error-sync.html [ Failure ]
 
 # Imported css-text test suite from WPT
 webkit.org/b/183258 imported/w3c/web-platform-tests/css/css-text/letter-spacing/letter-spacing-control-chars-001.html [ ImageOnlyFailure ]
@@ -2564,8 +2550,6 @@ webkit.org/b/193638 media/video-webkit-playsinline.html [ Failure ]
 
 webkit.org/b/194384 compositing/clipping/border-radius-async-overflow-clipping-layer.html [ Failure ]
 webkit.org/b/206000 compositing/clipping/border-radius-async-overflow-non-stacking.html [ ImageOnlyFailure ]
-
-webkit.org/b/194609 http/tests/local/blob/send-hybrid-blob-using-open-panel.html [ Failure ]
 
 webkit.org/b/195259 compositing/geometry/fixed-position-composited-page-scale-smaller-than-viewport.html [ ImageOnlyFailure ]
 

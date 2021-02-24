@@ -70,9 +70,7 @@ INTERNAL PROPERTY: details: {
           "value": "99.00"
         },
         "pending": false
-      },
-      "additionalDisplayItems": [],
-      "data": null
+      }
     }
   ]
 }
@@ -96,8 +94,6 @@ INTERNAL PROPERTY: details: {
     },
     "pending": false
   },
-  "displayItems": [],
-  "shippingOptions": [],
   "modifiers": []
 }
 INTERNAL PROPERTY: options: {
@@ -120,8 +116,6 @@ INTERNAL PROPERTY: details: {
     },
     "pending": false
   },
-  "displayItems": [],
-  "shippingOptions": [],
   "modifiers": []
 }
 INTERNAL PROPERTY: options: {
@@ -144,8 +138,6 @@ INTERNAL PROPERTY: details: {
     },
     "pending": false
   },
-  "displayItems": [],
-  "shippingOptions": [],
   "modifiers": []
 }
 INTERNAL PROPERTY: options: {

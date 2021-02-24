@@ -28,6 +28,7 @@
 #import "HTTPServer.h"
 #import "TestWKWebView.h"
 #import "Utilities.h"
+#import <WebKit/WKProcessPoolPrivate.h>
 #import <WebKit/WKWebsiteDataStorePrivate.h>
 #import <wtf/BlockPtr.h>
 #import <wtf/RetainPtr.h>
@@ -35,7 +36,7 @@
 
 TEST(WebKit, NetworkProcessEntitlements)
 {
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:[[[WKWebViewConfiguration alloc] init] autorelease]]);
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:adoptNS([[WKWebViewConfiguration alloc] init]).get()]);
     [webView synchronouslyLoadTestPageNamed:@"simple"];
     WKWebsiteDataStore *store = [webView configuration].websiteDataStore;
     bool hasEntitlement = [store _networkProcessHasEntitlementForTesting:@"com.apple.rootless.storage.WebKitNetworkingSandbox"];
@@ -77,4 +78,13 @@ TEST(WebKit, HTTPReferer)
     checkReferer([NSURL URLWithString:shorterPath], shorterPath.UTF8String);
     checkReferer([NSURL URLWithString:longHost], nullptr);
     checkReferer([NSURL URLWithString:shorterHost], shorterHost.UTF8String);
+}
+
+TEST(WebKit, NetworkProcessLaunchOnlyWhenNecessary)
+{
+    auto webView = adoptNS([WKWebView new]);
+    [webView configuration].websiteDataStore._resourceLoadStatisticsEnabled = YES;
+    [[webView configuration].processPool _registerURLSchemeAsSecure:@"test"];
+    [[webView configuration].processPool _registerURLSchemeAsBypassingContentSecurityPolicy:@"test"];
+    EXPECT_FALSE([[webView configuration].websiteDataStore _networkProcessExists]);
 }

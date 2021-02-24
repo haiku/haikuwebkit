@@ -64,7 +64,7 @@ Modules/geolocation/Geolocation.cpp
 Modules/geolocation/GeolocationController.cpp
 Modules/geolocation/GeolocationCoordinates.cpp
 Modules/geolocation/NavigatorGeolocation.cpp
-Modules/highlight/AppHighlightListData.cpp
+Modules/highlight/AppHighlightRangeData.cpp
 Modules/highlight/AppHighlightStorage.cpp
 Modules/highlight/HighlightRegister.cpp
 Modules/highlight/Highlight.cpp
@@ -179,6 +179,7 @@ Modules/mediastream/RTCRtpTransceiver.cpp
 Modules/mediastream/RTCSessionDescription.cpp
 Modules/mediastream/RTCTrackEvent.cpp
 Modules/mediastream/SFrameUtils.cpp
+Modules/mediastream/STUNMessageParsing.cpp
 Modules/mediastream/UserMediaController.cpp
 Modules/mediastream/UserMediaRequest.cpp
 Modules/mediastream/libwebrtc/LibWebRTCCertificateGenerator.cpp
@@ -507,6 +508,7 @@ bindings/js/JSAudioTrackCustom.cpp
 bindings/js/JSAudioTrackListCustom.cpp
 bindings/js/JSAudioWorkletProcessorCustom.cpp
 bindings/js/JSAuthenticatorResponseCustom.cpp
+bindings/js/JSBaseAudioContextCustom.cpp
 bindings/js/JSBasicCredentialCustom.cpp
 bindings/js/JSBlobCustom.cpp
 bindings/js/JSCSSRuleCustom.cpp
@@ -592,6 +594,7 @@ bindings/js/JSPerformanceObserverCustom.cpp
 bindings/js/JSPluginElementFunctions.cpp
 bindings/js/JSPopStateEventCustom.cpp
 bindings/js/JSPromiseRejectionEventCustom.cpp
+bindings/js/JSRTCRtpSFrameTransformCustom.cpp
 bindings/js/JSReadableStreamSourceCustom.cpp
 bindings/js/JSRemoteDOMWindowBase.cpp
 bindings/js/JSRemoteDOMWindowCustom.cpp
@@ -601,6 +604,7 @@ bindings/js/JSSVGPathSegCustom.cpp
 bindings/js/JSSVGViewSpecCustom.cpp
 bindings/js/JSServiceWorkerClientCustom.cpp
 bindings/js/JSServiceWorkerGlobalScopeCustom.cpp
+bindings/js/JSStaticRangeCustom.cpp
 bindings/js/JSStyleSheetCustom.cpp
 bindings/js/JSTextCustom.cpp
 bindings/js/JSTextTrackCueCustom.cpp
@@ -636,6 +640,7 @@ bindings/js/StructuredClone.cpp
 bindings/js/WebCoreJITOperations.cpp
 bindings/js/WebCoreJSClientData.cpp
 bindings/js/WebCoreTypedArrayController.cpp
+bindings/js/WorkerModuleScriptLoader.cpp
 bindings/js/WindowProxy.cpp
 bindings/js/WritableStream.cpp
 bridge/IdentifierRep.cpp
@@ -973,6 +978,7 @@ dom/OverflowEvent.cpp
 dom/PageTransitionEvent.cpp
 dom/PendingScript.cpp
 dom/PointerEvent.cpp
+dom/PointerEventTypeNames.cpp
 dom/PopStateEvent.cpp
 dom/Position.cpp
 dom/PositionIterator.cpp
@@ -1345,6 +1351,7 @@ html/canvas/WebGLDrawBuffers.cpp
 html/canvas/WebGLExtension.cpp
 html/canvas/WebGLFramebuffer.cpp
 html/canvas/WebGLLoseContext.cpp
+html/canvas/WebGLMultiDraw.cpp
 html/canvas/WebGLObject.cpp
 html/canvas/WebGLProgram.cpp
 html/canvas/WebGLQuery.cpp
@@ -1767,6 +1774,7 @@ page/scrolling/ScrollSnapOffsetsInfo.cpp
 page/scrolling/ScrollLatchingController.cpp
 page/scrolling/ScrollingConstraints.cpp
 page/scrolling/ScrollingCoordinator.cpp
+page/scrolling/ScrollingMomentumCalculator.cpp
 page/scrolling/ScrollingStateFixedNode.cpp
 page/scrolling/ScrollingStateFrameHostingNode.cpp
 page/scrolling/ScrollingStateFrameScrollingNode.cpp
@@ -1835,6 +1843,8 @@ platform/RuntimeApplicationChecks.cpp
 platform/SSLKeyGenerator.cpp
 platform/ScrollAnimationSmooth.cpp
 platform/ScrollAnimator.cpp
+platform/ScrollController.cpp
+platform/ScrollSnapAnimatorState.cpp
 platform/ScrollTypes.cpp
 platform/ScrollView.cpp
 platform/ScrollableArea.cpp
@@ -1903,6 +1913,8 @@ platform/encryptedmedia/CDMFactory.cpp
 platform/encryptedmedia/CDMLogging.cpp
 platform/encryptedmedia/CDMPrivate.cpp
 platform/encryptedmedia/CDMProxy.cpp
+platform/encryptedmedia/CDMUtilities.cpp
+platform/encryptedmedia/clearkey/CDMClearKey.cpp
 platform/gamepad/EmptyGamepadProvider.cpp
 platform/gamepad/GamepadConstants.cpp
 platform/gamepad/GamepadProvider.cpp
@@ -2089,10 +2101,15 @@ platform/mock/MediaEngineConfigurationFactoryMock.cpp
 platform/mock/MockRealtimeAudioSource.cpp
 platform/mock/MockRealtimeMediaSourceCenter.cpp
 platform/mock/MockRealtimeVideoSource.cpp
+platform/mock/PlatformSpeechSynthesizerMock.cpp
 platform/mock/RTCDataChannelHandlerMock.cpp
 platform/mock/RTCNotifiersMock.cpp
 platform/mock/ScrollAnimatorMock.cpp
 platform/mock/ScrollbarThemeMock.cpp
+platform/mock/mediasource/MockBox.cpp
+platform/mock/mediasource/MockMediaPlayerMediaSource.cpp
+platform/mock/mediasource/MockMediaSourcePrivate.cpp
+platform/mock/mediasource/MockSourceBufferPrivate.cpp
 platform/network/AuthenticationChallengeBase.cpp
 platform/network/BlobData.cpp
 platform/network/BlobDataFileReference.cpp
@@ -2116,6 +2133,7 @@ platform/network/NetworkStateNotifier.cpp
 platform/network/NetworkStorageSession.cpp
 platform/network/ParsedContentRange.cpp
 platform/network/ParsedContentType.cpp
+platform/network/ParsedRequestRange.cpp
 platform/network/ProtectionSpaceBase.cpp
 platform/network/ProxyServer.cpp
 platform/network/ResourceErrorBase.cpp
@@ -2154,6 +2172,8 @@ platform/text/TextCodecUserDefined.cpp
 platform/text/TextEncoding.cpp
 platform/text/TextEncodingDetectorICU.cpp
 platform/text/TextEncodingRegistry.cpp
+platform/xr/openxr/OpenXRInstance.cpp @no-unify
+platform/xr/openxr/OpenXRExtensions.cpp @no-unify
 platform/xr/openxr/PlatformXROpenXR.cpp @no-unify
 plugins/DOMMimeType.cpp
 plugins/DOMMimeTypeArray.cpp
@@ -2243,6 +2263,7 @@ rendering/RenderMarquee.cpp
 rendering/RenderMedia.cpp
 rendering/RenderMenuList.cpp
 rendering/RenderMeter.cpp
+rendering/RenderModel.cpp
 rendering/RenderMultiColumnFlow.cpp
 rendering/RenderMultiColumnSet.cpp
 rendering/RenderMultiColumnSpannerPlaceholder.cpp
@@ -2721,6 +2742,7 @@ JSAbortSignal.cpp
 JSAbstractRange.cpp
 JSAbstractWorker.cpp
 JSAddressErrors.cpp
+JSAddEventListenerOptions.cpp
 JSAesCbcCfbParams.cpp
 JSAesCtrParams.cpp
 JSAesGcmParams.cpp
@@ -2960,6 +2982,7 @@ JSErrorCallback.cpp
 JSErrorEvent.cpp
 JSEvent.cpp
 JSEventInit.cpp
+JSEventListenerOptions.cpp
 JSEventModifierInit.cpp
 JSEventSource.cpp
 JSEventTarget.cpp
@@ -3344,6 +3367,7 @@ JSRTCPeerConnectionIceEvent.cpp
 JSRTCPeerConnectionIceErrorEvent.cpp
 JSRTCPeerConnectionState.cpp
 JSRTCPriorityType.cpp
+JSRTCRtcpParameters.cpp
 JSRTCRtpCapabilities.cpp
 JSRTCRtpCodecCapability.cpp
 JSRTCRtpCodecParameters.cpp
@@ -3658,6 +3682,7 @@ JSWebGLDepthTexture.cpp
 JSWebGLDrawBuffers.cpp
 JSWebGLFramebuffer.cpp
 JSWebGLLoseContext.cpp
+JSWebGLMultiDraw.cpp
 JSWebGLProgram.cpp
 JSWebGLQuery.cpp
 JSWebGLRenderbuffer.cpp

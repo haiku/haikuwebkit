@@ -93,6 +93,7 @@ TextStream& operator<<(TextStream& ts, AspectRatioType aspectRatioType)
     case AspectRatioType::Auto: ts << "auto"; break;
     case AspectRatioType::Ratio: ts << "ratio"; break;
     case AspectRatioType::AutoAndRatio: ts << "autoandratio"; break;
+    case AspectRatioType::AutoZero: ts << "autozero"; break;
     }
     return ts;
 }
@@ -1038,6 +1039,15 @@ TextStream& operator<<(TextStream& ts, ScrollSnapStrictness strictness)
     }
     return ts;
 }
+
+TextStream& operator<<(TextStream& ts, ScrollSnapStop stop)
+{
+    switch (stop) {
+    case ScrollSnapStop::Normal: ts << "normal"; break;
+    case ScrollSnapStop::Always: ts << "always"; break;
+    }
+    return ts;
+}
 #endif
 
 TextStream& operator<<(TextStream& ts, SpeakAs speakAs)
@@ -1252,6 +1262,9 @@ TextStream& operator<<(TextStream& ts, TransformStyle3D transformStyle)
     switch (transformStyle) {
     case TransformStyle3D::Flat: ts << "flat"; break;
     case TransformStyle3D::Preserve3D: ts << "preserve-3d"; break;
+#if ENABLE(CSS_TRANSFORM_STYLE_OPTIMIZED_3D)
+    case TransformStyle3D::Optimized3D: ts << "optimized-3d"; break;
+#endif
     }
     return ts;
 }

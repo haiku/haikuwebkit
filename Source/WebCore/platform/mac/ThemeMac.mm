@@ -66,7 +66,6 @@ static BOOL themeWindowHasKeyAppearance;
 {
     return themeWindowHasKeyAppearance;
 }
-
 @end
 
 @implementation WebCoreThemeView
@@ -76,7 +75,7 @@ static BOOL themeWindowHasKeyAppearance;
     // Using defer:YES prevents us from wasting any window server resources for this window, since we're not actually
     // going to draw into it. The other arguments match what you get when calling -[NSWindow init].
     static WebCoreThemeWindow *window = [[WebCoreThemeWindow alloc] initWithContentRect:NSMakeRect(100, 100, 100, 100)
-        styleMask:NSWindowStyleMaskTitled backing:NSBackingStoreBuffered defer:YES];
+        styleMask:NSWindowStyleMaskBorderless backing:NSBackingStoreBuffered defer:YES];
     return window;
 }
 
@@ -156,9 +155,9 @@ static LengthSize sizeFromNSControlSize(NSControlSize nsControlSize, const Lengt
         controlSize = IntSize(controlSize.width() * zoomFactor, controlSize.height() * zoomFactor);
     LengthSize result = zoomedSize;
     if (zoomedSize.width.isIntrinsicOrAuto() && controlSize.width() > 0)
-        result.width = { controlSize.width(), Fixed };
+        result.width = { controlSize.width(), LengthType::Fixed };
     if (zoomedSize.height.isIntrinsicOrAuto() && controlSize.height() > 0)
-        result.height = { controlSize.height(), Fixed };
+        result.height = { controlSize.height(), LengthType::Fixed };
     return result;
 }
 
@@ -493,9 +492,9 @@ static const int* buttonMargins(NSControlSize controlSize)
 
 enum ButtonCellType { NormalButtonCell, DefaultButtonCell };
 
-static NSButtonCell *leakButtonCell(ButtonCellType type)
+static RetainPtr<NSButtonCell> buttonCell(ButtonCellType type)
 {
-    NSButtonCell *cell = [[NSButtonCell alloc] init];
+    auto cell = adoptNS([[NSButtonCell alloc] init]);
     [cell setTitle:nil];
     [cell setButtonType:NSButtonTypeMomentaryPushIn];
     if (type == DefaultButtonCell)
@@ -538,11 +537,11 @@ static NSButtonCell *button(ControlPart part, const ControlStates& controlStates
     ControlStates::States states = controlStates.states();
     NSButtonCell *cell;
     if (states & ControlStates::DefaultState) {
-        static NSButtonCell *defaultCell = leakButtonCell(DefaultButtonCell);
-        cell = defaultCell;
+        static NeverDestroyed<RetainPtr<NSButtonCell>> defaultCell = buttonCell(DefaultButtonCell);
+        cell = defaultCell.get().get();
     } else {
-        static NSButtonCell *normalCell = leakButtonCell(NormalButtonCell);
-        cell = normalCell;
+        static NeverDestroyed<RetainPtr<NSButtonCell>> normalCell = buttonCell(NormalButtonCell);
+        cell = normalCell.get().get();
     }
     setUpButtonCell(cell, part, controlStates, zoomedSize, zoomFactor);
     return cell;
@@ -727,7 +726,7 @@ bool ThemeMac::drawCellOrFocusRingWithViewIntoContext(NSCell *cell, GraphicsCont
 
     if (useImageBuffer) {
         NSRect imageBufferDrawRect = NSRect(FloatRect(buttonFocusRectOutlineWidth, buttonFocusRectOutlineWidth, rect.width(), rect.height()));
-        auto imageBuffer = ImageBuffer::createCompatibleBuffer(rect.size() + 2 * FloatSize(buttonFocusRectOutlineWidth, buttonFocusRectOutlineWidth), deviceScaleFactor, ColorSpace::SRGB, context);
+        auto imageBuffer = ImageBuffer::createCompatibleBuffer(rect.size() + 2 * FloatSize(buttonFocusRectOutlineWidth, buttonFocusRectOutlineWidth), deviceScaleFactor, DestinationColorSpace::SRGB, context);
         if (!imageBuffer)
             return needsRepaint;
         {
@@ -837,11 +836,11 @@ LengthSize ThemeMac::minimumControlSize(ControlPart part, const FontCascade& fon
 #endif
     case DefaultButtonPart:
     case ButtonPart:
-        return { { 0, Fixed }, { static_cast<int>(15 * zoomFactor), Fixed } };
+        return { { 0, LengthType::Fixed }, { static_cast<int>(15 * zoomFactor), LengthType::Fixed } };
     case InnerSpinButtonPart: {
         auto& base = stepperSizes()[NSControlSizeMini];
-        return { { static_cast<int>(base.width() * zoomFactor), Fixed },
-            { static_cast<int>(base.height() * zoomFactor), Fixed } };
+        return { { static_cast<int>(base.width() * zoomFactor), LengthType::Fixed },
+            { static_cast<int>(base.height() * zoomFactor), LengthType::Fixed } };
     }
     default:
         return Theme::minimumControlSize(part, font, zoomedSize, zoomFactor);

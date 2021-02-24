@@ -920,7 +920,7 @@ void MediaPlayerPrivateAVFoundationObjC::createAVAssetForURL(const URL& url, Ret
         && [resourceLoader respondsToSelector:@selector(URLSessionDataDelegateQueue)]) {
         RefPtr<PlatformMediaResourceLoader> mediaResourceLoader = player()->createResourceLoader();
         if (mediaResourceLoader)
-            resourceLoader.URLSession = (NSURLSession *)[[[WebCoreNSURLSession alloc] initWithResourceLoader:*mediaResourceLoader delegate:resourceLoader.URLSessionDataDelegate delegateQueue:resourceLoader.URLSessionDataDelegateQueue] autorelease];
+            resourceLoader.URLSession = (NSURLSession *)adoptNS([[WebCoreNSURLSession alloc] initWithResourceLoader:*mediaResourceLoader delegate:resourceLoader.URLSessionDataDelegate delegateQueue:resourceLoader.URLSessionDataDelegateQueue]).get();
     }
 
     m_haveCheckedPlayability = false;
@@ -1007,12 +1007,11 @@ void MediaPlayerPrivateAVFoundationObjC::createAVPlayer()
 #endif
 
     if (m_muted) {
-        // Clear m_muted so setMuted doesn't return without doing anything.
-        m_muted = false;
         [m_avPlayer.get() setMuted:m_muted];
 
 #if HAVE(AVPLAYER_SUPRESSES_AUDIO_RENDERING)
-        m_avPlayer.get().suppressesAudioRendering = YES;
+        if (player()->isVideoPlayer())
+            m_avPlayer.get().suppressesAudioRendering = YES;
 #endif
     }
 
@@ -1068,6 +1067,13 @@ void MediaPlayerPrivateAVFoundationObjC::createAVPlayerItem()
         [m_avPlayerItem.get() addObserver:m_objcObserver.get() forKeyPath:keyName options:options context:(void *)MediaPlayerAVFoundationObservationContextPlayerItem];
 
     [m_avPlayerItem setAudioTimePitchAlgorithm:audioTimePitchAlgorithmForMediaPlayerPitchCorrectionAlgorithm(player()->pitchCorrectionAlgorithm(), player()->preservesPitch())];
+
+#if HAVE(AVFOUNDATION_INTERSTITIAL_EVENTS)
+ALLOW_NEW_API_WITHOUT_GUARDS_BEGIN
+    if ([m_avPlayerItem respondsToSelector:@selector(setAutomaticallyHandlesInterstitialEvents:)])
+        [m_avPlayerItem setAutomaticallyHandlesInterstitialEvents:NO];
+ALLOW_NEW_API_WITHOUT_GUARDS_END
+#endif
 
     if (m_avPlayer)
         setAVPlayerItem(m_avPlayerItem.get());
@@ -2382,20 +2388,13 @@ void MediaPlayerPrivateAVFoundationObjC::paintWithVideoOutput(GraphicsContext& c
 
 }
 
-bool MediaPlayerPrivateAVFoundationObjC::copyVideoTextureToPlatformTexture(GraphicsContextGL* context, PlatformGLObject outputTexture, GCGLenum outputTarget, GCGLint level, GCGLenum internalFormat, GCGLenum format, GCGLenum type, bool premultiplyAlpha, bool flipY)
+CVPixelBufferRef MediaPlayerPrivateAVFoundationObjC::pixelBufferForCurrentTime()
 {
-    ASSERT(context);
-
     updateLastPixelBuffer();
     if (!m_lastPixelBuffer)
-        return false;
+        return nullptr;
 
-    auto contextCV = context->asCV();
-    if (!contextCV)
-        return false;
-    UNUSED_VARIABLE(premultiplyAlpha);
-    ASSERT_UNUSED(outputTarget, outputTarget == GraphicsContextGL::TEXTURE_2D);
-    return contextCV->copyPixelBufferToTexture(m_lastPixelBuffer.get(), outputTexture, level, internalFormat, format, type, GraphicsContextGL::FlipY(flipY));
+    return m_lastPixelBuffer.get();
 }
 
 RefPtr<NativeImage> MediaPlayerPrivateAVFoundationObjC::nativeImageForCurrentTime()
@@ -2967,9 +2966,13 @@ void MediaPlayerPrivateAVFoundationObjC::playerItemStatusDidChange(int status)
 {
     m_cachedItemStatus = status;
 
+    // Setting the pitch algorithm here causes tests to fail on Mojave; revert this change
+    // for <= Mojave builds.
+#if !(PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED > 101400)
     // FIXME(rdar://72829354): Remove after AVFoundation radar is fixed.
     if (status == AVPlayerItemStatusReadyToPlay)
         [m_avPlayerItem setAudioTimePitchAlgorithm:audioTimePitchAlgorithmForMediaPlayerPitchCorrectionAlgorithm(player()->pitchCorrectionAlgorithm(), player()->preservesPitch())];
+#endif
 
     updateStates();
 }

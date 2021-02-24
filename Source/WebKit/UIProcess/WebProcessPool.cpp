@@ -40,6 +40,7 @@
 #include "DownloadProxy.h"
 #include "DownloadProxyMessages.h"
 #include "GPUProcessConnectionInfo.h"
+#include "GPUProcessConnectionParameters.h"
 #include "GamepadData.h"
 #include "HighPerformanceGraphicsUsageSampler.h"
 #include "LegacyGlobalSettings.h"
@@ -425,7 +426,8 @@ void WebProcessPool::languageChanged()
 {
     sendToAllProcesses(Messages::WebProcess::UserPreferredLanguagesChanged());
 #if USE(SOUP)
-    WebsiteDataStore::defaultDataStore()->networkProcess().send(Messages::NetworkProcess::UserPreferredLanguagesChanged(userPreferredLanguages()), 0);
+    for (auto networkProcess : NetworkProcessProxy::allNetworkProcesses())
+        networkProcess->send(Messages::NetworkProcess::UserPreferredLanguagesChanged(userPreferredLanguages()), 0);
 #endif
 }
 
@@ -494,7 +496,7 @@ GPUProcessProxy& WebProcessPool::ensureGPUProcess()
 
 void WebProcessPool::gpuProcessCrashed(ProcessID identifier)
 {
-    WEBPROCESSPOOL_RELEASE_LOG_ERROR(Process, "gpuProcessCrashed: PID: %d", identifier);
+    WEBPROCESSPOOL_RELEASE_LOG_ERROR(Process, "gpuProcessCrashed: PID=%d", identifier);
     m_gpuProcess = nullptr;
 
     m_client.gpuProcessDidCrash(this, identifier);
@@ -511,12 +513,12 @@ void WebProcessPool::gpuProcessCrashed(ProcessID identifier)
         m_resetGPUProcessCrashCountTimer.startOneShot(resetGPUProcessCrashCountDelay);
 }
 
-void WebProcessPool::getGPUProcessConnection(WebProcessProxy& webProcessProxy, Messages::WebProcessProxy::GetGPUProcessConnection::DelayedReply&& reply)
+void WebProcessPool::getGPUProcessConnection(WebProcessProxy& webProcessProxy, GPUProcessConnectionParameters&& parameters, Messages::WebProcessProxy::GetGPUProcessConnection::DelayedReply&& reply)
 {
-    ensureGPUProcess().getGPUProcessConnection(webProcessProxy, [this, weakThis = makeWeakPtr(*this), webProcessProxy = makeWeakPtr(webProcessProxy), reply = WTFMove(reply)] (auto& connectionInfo) mutable {
+    ensureGPUProcess().getGPUProcessConnection(webProcessProxy, parameters, [this, weakThis = makeWeakPtr(*this), parameters, webProcessProxy = makeWeakPtr(webProcessProxy), reply = WTFMove(reply)] (auto& connectionInfo) mutable {
         if (UNLIKELY(!IPC::Connection::identifierIsValid(connectionInfo.identifier()) && webProcessProxy && weakThis)) {
             WEBPROCESSPOOL_RELEASE_LOG_ERROR(Process, "getGPUProcessConnection: Failed first attempt, retrying");
-            ensureGPUProcess().getGPUProcessConnection(*webProcessProxy, WTFMove(reply));
+            ensureGPUProcess().getGPUProcessConnection(*webProcessProxy, parameters, WTFMove(reply));
             return;
         }
         reply(connectionInfo);
@@ -672,8 +674,8 @@ RefPtr<WebProcessProxy> WebProcessPool::tryTakePrewarmedProcess(WebsiteDataStore
 #endif
 
     ASSERT(m_prewarmedProcess->isPrewarmed());
-    m_prewarmedProcess->markIsNoLongerInPrewarmedPool();
     m_prewarmedProcess->setWebsiteDataStore(websiteDataStore);
+    m_prewarmedProcess->markIsNoLongerInPrewarmedPool();
 
     return std::exchange(m_prewarmedProcess, nullptr);
 }
@@ -1013,6 +1015,14 @@ WebProcessProxy& WebProcessPool::processForRegistrableDomain(WebsiteDataStore& w
     return createNewWebProcess(&websiteDataStore);
 }
 
+UserContentControllerIdentifier WebProcessPool::userContentControllerIdentifierForServiceWorkers()
+{
+    if (!m_userContentControllerForServiceWorker)
+        m_userContentControllerForServiceWorker = WebUserContentControllerProxy::create();
+
+    return m_userContentControllerForServiceWorker->identifier();
+}
+
 Ref<WebPageProxy> WebProcessPool::createWebPage(PageClient& pageClient, Ref<API::PageConfiguration>&& pageConfiguration)
 {
     if (!pageConfiguration->pageGroup())
@@ -1062,7 +1072,7 @@ Ref<WebPageProxy> WebProcessPool::createWebPage(PageClient& pageClient, Ref<API:
             serviceWorkerProcess.updateServiceWorkerPreferencesStore(*m_serviceWorkerPreferences);
     }
     if (userContentController)
-        m_userContentControllerIDForServiceWorker = userContentController->identifier();
+        m_userContentControllerForServiceWorker = userContentController;
 #endif
 
     bool enableProcessSwapOnCrossSiteNavigation = page->preferences().processSwapOnCrossSiteNavigationEnabled();
@@ -1092,15 +1102,19 @@ void WebProcessPool::updateServiceWorkerUserAgent(const String& userAgent)
 
 void WebProcessPool::pageBeginUsingWebsiteDataStore(WebPageProxyIdentifier pageID, WebsiteDataStore& dataStore)
 {
+    RELEASE_ASSERT(RunLoop::isMain());
+    RELEASE_ASSERT(m_sessionToPageIDsMap.isValidKey(dataStore.sessionID()));
     auto result = m_sessionToPageIDsMap.add(dataStore.sessionID(), HashSet<WebPageProxyIdentifier>()).iterator->value.add(pageID);
     ASSERT_UNUSED(result, result.isNewEntry);
 }
 
 void WebProcessPool::pageEndUsingWebsiteDataStore(WebPageProxyIdentifier pageID, WebsiteDataStore& dataStore)
 {
+    RELEASE_ASSERT(RunLoop::isMain());
     auto sessionID = dataStore.sessionID();
+    RELEASE_ASSERT(m_sessionToPageIDsMap.isValidKey(dataStore.sessionID()));
     auto iterator = m_sessionToPageIDsMap.find(sessionID);
-    ASSERT(iterator != m_sessionToPageIDsMap.end());
+    RELEASE_ASSERT(iterator != m_sessionToPageIDsMap.end());
 
     auto takenPageID = iterator->value.take(pageID);
     ASSERT_UNUSED(takenPageID, takenPageID == pageID);
@@ -1115,6 +1129,8 @@ void WebProcessPool::pageEndUsingWebsiteDataStore(WebPageProxyIdentifier pageID,
 
 bool WebProcessPool::hasPagesUsingWebsiteDataStore(WebsiteDataStore& dataStore) const
 {
+    RELEASE_ASSERT(RunLoop::isMain());
+    RELEASE_ASSERT(m_sessionToPageIDsMap.isValidKey(dataStore.sessionID()));
     return m_sessionToPageIDsMap.contains(dataStore.sessionID());
 }
 
@@ -1265,7 +1281,8 @@ void WebProcessPool::registerURLSchemeAsSecure(const String& urlScheme)
     LegacyGlobalSettings::singleton().registerURLSchemeAsSecure(urlScheme);
     sendToAllProcesses(Messages::WebProcess::RegisterURLSchemeAsSecure(urlScheme));
     WebsiteDataStore::forEachWebsiteDataStore([urlScheme] (WebsiteDataStore& dataStore) {
-        dataStore.networkProcess().send(Messages::NetworkProcess::RegisterURLSchemeAsSecure(urlScheme), 0);
+        if (auto* networkProcess = dataStore.networkProcessIfExists())
+            networkProcess->send(Messages::NetworkProcess::RegisterURLSchemeAsSecure(urlScheme), 0);
     });
 }
 
@@ -1274,7 +1291,8 @@ void WebProcessPool::registerURLSchemeAsBypassingContentSecurityPolicy(const Str
     LegacyGlobalSettings::singleton().registerURLSchemeAsBypassingContentSecurityPolicy(urlScheme);
     sendToAllProcesses(Messages::WebProcess::RegisterURLSchemeAsBypassingContentSecurityPolicy(urlScheme));
     WebsiteDataStore::forEachWebsiteDataStore([urlScheme] (WebsiteDataStore& dataStore) {
-        dataStore.networkProcess().send(Messages::NetworkProcess::RegisterURLSchemeAsBypassingContentSecurityPolicy(urlScheme), 0);
+        if (auto* networkProcess = dataStore.networkProcessIfExists())
+            networkProcess->send(Messages::NetworkProcess::RegisterURLSchemeAsBypassingContentSecurityPolicy(urlScheme), 0);
     });
 }
 
@@ -1718,7 +1736,8 @@ WeakHashSet<WebProcessProxy>& WebProcessPool::serviceWorkerProcesses()
 void WebProcessPool::updateProcessAssertions()
 {
     WebsiteDataStore::forEachWebsiteDataStore([] (WebsiteDataStore& dataStore) {
-        dataStore.networkProcess().updateProcessAssertion();
+        if (auto* networkProcess = dataStore.networkProcessIfExists())
+            networkProcess->updateProcessAssertion();
     });
 #if ENABLE(GPU_PROCESS)
     if (auto* gpuProcess = GPUProcessProxy::singletonIfCreated())
@@ -1893,6 +1912,9 @@ void WebProcessPool::addMockMediaDevice(const MockMediaDevice& device)
 #if ENABLE(MEDIA_STREAM)
     MockRealtimeMediaSourceCenter::addDevice(device);
     sendToAllProcesses(Messages::WebProcess::AddMockMediaDevice { device });
+#if ENABLE(GPU_PROCESS)
+    ensureGPUProcess().addMockMediaDevice(device);
+#endif
 #endif
 }
 
@@ -1901,6 +1923,9 @@ void WebProcessPool::clearMockMediaDevices()
 #if ENABLE(MEDIA_STREAM)
     MockRealtimeMediaSourceCenter::setDevices({ });
     sendToAllProcesses(Messages::WebProcess::ClearMockMediaDevices { });
+#if ENABLE(GPU_PROCESS)
+    ensureGPUProcess().clearMockMediaDevices();
+#endif
 #endif
 }
 
@@ -1909,6 +1934,9 @@ void WebProcessPool::removeMockMediaDevice(const String& persistentId)
 #if ENABLE(MEDIA_STREAM)
     MockRealtimeMediaSourceCenter::removeDevice(persistentId);
     sendToAllProcesses(Messages::WebProcess::RemoveMockMediaDevice { persistentId });
+#if ENABLE(GPU_PROCESS)
+    ensureGPUProcess().removeMockMediaDevice(persistentId);
+#endif
 #endif
 }
 
@@ -1917,6 +1945,9 @@ void WebProcessPool::resetMockMediaDevices()
 #if ENABLE(MEDIA_STREAM)
     MockRealtimeMediaSourceCenter::resetDevices();
     sendToAllProcesses(Messages::WebProcess::ResetMockMediaDevices { });
+#if ENABLE(GPU_PROCESS)
+    ensureGPUProcess().resetMockMediaDevices();
+#endif
 #endif
 }
 

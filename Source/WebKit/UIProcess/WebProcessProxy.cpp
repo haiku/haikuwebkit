@@ -396,7 +396,11 @@ bool WebProcessProxy::shouldSendPendingMessage(const PendingMessage& message)
     if (message.encoder->messageName() == IPC::MessageName::WebPage_LoadRequestWaitingForProcessLaunch) {
         auto buffer = message.encoder->buffer();
         auto bufferSize = message.encoder->bufferSize();
-        std::unique_ptr<IPC::Decoder> decoder = makeUnique<IPC::Decoder>(buffer, bufferSize, nullptr, Vector<IPC::Attachment> { });
+        auto decoder = IPC::Decoder::create(buffer, bufferSize, nullptr, { });
+        ASSERT(decoder);
+        if (!decoder)
+            return false;
+
         LoadParameters loadParameters;
         URL resourceDirectoryURL;
         WebPageProxyIdentifier pageID;
@@ -520,8 +524,10 @@ void WebProcessProxy::addExistingWebPage(WebPageProxy& webPage, BeginsUsingDataS
     RELEASE_ASSERT(!m_isInProcessCache);
     ASSERT(!m_websiteDataStore || m_websiteDataStore == &webPage.websiteDataStore());
 
-    if (beginsUsingDataStore == BeginsUsingDataStore::Yes)
+    if (beginsUsingDataStore == BeginsUsingDataStore::Yes) {
+        RELEASE_ASSERT(m_processPool);
         m_processPool->pageBeginUsingWebsiteDataStore(webPage.identifier(), webPage.websiteDataStore());
+    }
 
     m_pageMap.set(webPage.identifier(), &webPage);
     globalPageMap().set(webPage.identifier(), &webPage);
@@ -770,9 +776,9 @@ void WebProcessProxy::getNetworkProcessConnection(Messages::WebProcessProxy::Get
 }
 
 #if ENABLE(GPU_PROCESS)
-void WebProcessProxy::getGPUProcessConnection(Messages::WebProcessProxy::GetGPUProcessConnection::DelayedReply&& reply)
+void WebProcessProxy::getGPUProcessConnection(GPUProcessConnectionParameters&& parameters, Messages::WebProcessProxy::GetGPUProcessConnection::DelayedReply&& reply)
 {
-    m_processPool->getGPUProcessConnection(*this, WTFMove(reply));
+    m_processPool->getGPUProcessConnection(*this, WTFMove(parameters), WTFMove(reply));
 }
 
 void WebProcessProxy::gpuProcessCrashed()
@@ -885,12 +891,15 @@ void WebProcessProxy::processDidTerminateOrFailedToLaunch()
 #endif
 
     for (auto& page : pages)
-        page->processDidTerminate(ProcessTerminationReason::Crash);
+        page->resetStateAfterProcessTermination(ProcessTerminationReason::Crash);
 
     for (auto& provisionalPage : provisionalPages) {
         if (provisionalPage)
             provisionalPage->processDidTerminate();
     }
+
+    for (auto& page : pages)
+        page->dispatchProcessDidTerminate(ProcessTerminationReason::Crash);
 
     m_sleepDisablers.clear();
 }
@@ -1254,12 +1263,15 @@ void WebProcessProxy::requestTermination(ProcessTerminationReason reason)
     shutDown();
 
     for (auto& page : pages)
-        page->processDidTerminate(reason);
+        page->resetStateAfterProcessTermination(reason);
         
     for (auto& provisionalPage : provisionalPages) {
         if (provisionalPage)
             provisionalPage->processDidTerminate();
     }
+
+    for (auto& page : pages)
+        page->dispatchProcessDidTerminate(reason);
 }
 
 bool WebProcessProxy::isReleaseLoggingAllowed() const
@@ -1722,13 +1734,13 @@ void WebProcessProxy::createSpeechRecognitionServer(SpeechRecognitionServerIdent
 
     ASSERT(!m_speechRecognitionServerMap.contains(identifier));
     auto& speechRecognitionServer = m_speechRecognitionServerMap.add(identifier, nullptr).iterator->value;
-    auto permissionChecker = [weakPage = makeWeakPtr(targetPage)](auto& lang, auto& origin, auto&& completionHandler) mutable {
+    auto permissionChecker = [weakPage = makeWeakPtr(targetPage)](auto& request, auto&& completionHandler) mutable {
         if (!weakPage) {
             completionHandler(WebCore::SpeechRecognitionError { SpeechRecognitionErrorType::NotAllowed, "Page no longer exists"_s });
             return;
         }
 
-        weakPage->requestSpeechRecognitionPermission(lang, origin, WTFMove(completionHandler));
+        weakPage->requestSpeechRecognitionPermission(request, WTFMove(completionHandler));
     };
     auto checkIfMockCaptureDevicesEnabled = [weakPage = makeWeakPtr(targetPage)]() {
         return weakPage && weakPage->preferences().mockCaptureDevicesEnabled();
@@ -1790,8 +1802,13 @@ void WebProcessProxy::pageMutedStateChanged(WebCore::PageIdentifier identifier, 
 
 void WebProcessProxy::pageIsBecomingInvisible(WebCore::PageIdentifier identifier)
 {
-    if (auto server = m_speechRecognitionServerMap.get(identifier))
-        server->abortForPageIsBecomingInvisible();
+#if ENABLE(MEDIA_STREAM)
+    if (!RealtimeMediaSourceCenter::shouldInterruptAudioOnPageVisibilityChange())
+        return;
+#endif
+
+    if (auto speechRecognitionServer = m_speechRecognitionServerMap.get(identifier))
+        speechRecognitionServer->mute();
 }
 
 #if PLATFORM(WATCHOS)
@@ -1839,7 +1856,7 @@ void WebProcessProxy::updateServiceWorkerPreferencesStore(const WebPreferencesSt
 
 void WebProcessProxy::updateServiceWorkerProcessAssertion()
 {
-    RELEASE_LOG(ProcessSuspension, "%p - WebProcessProxy::updateServiceWorkerProcessAssertion() PID: %d", this, processIdentifier());
+    RELEASE_LOG(ProcessSuspension, "%p - WebProcessProxy::updateServiceWorkerProcessAssertion() PID=%d", this, processIdentifier());
     ASSERT(m_serviceWorkerInformation);
     if (!m_serviceWorkerInformation)
         return;
@@ -1925,7 +1942,7 @@ static Vector<std::pair<String, WebCompiledContentRuleListData>> contentRuleList
 }
 #endif
 
-void WebProcessProxy::enableServiceWorkers(const Optional<UserContentControllerIdentifier>& userContentControllerIdentifier)
+void WebProcessProxy::enableServiceWorkers(const UserContentControllerIdentifier& userContentControllerIdentifier)
 {
     ASSERT(m_registrableDomain && !m_registrableDomain->isEmpty());
     ASSERT(!m_serviceWorkerInformation);

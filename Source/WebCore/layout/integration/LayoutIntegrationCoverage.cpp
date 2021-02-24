@@ -28,6 +28,7 @@
 
 #include "DocumentMarkerController.h"
 #include "HTMLTextFormControlElement.h"
+#include "HighlightRegister.h"
 #include "InlineIterator.h"
 #include "Logging.h"
 #include "RenderBlockFlow.h"
@@ -236,6 +237,12 @@ static void printReason(AvoidanceReason reason, TextStream& stream)
     case AvoidanceReason::FlowIncludesDocumentMarkers:
         stream << "text includes document markers";
         break;
+    case AvoidanceReason::FlowIncludesHighlights:
+        stream << "text includes highlights";
+        break;
+    case AvoidanceReason::FlowHasJustifiedNonBreakingSpace:
+        stream << "justified text has non-breaking-space character";
+        break;
     case AvoidanceReason::FlowDoesNotEstablishInlineFormattingContext:
         stream << "flow does not establishes inline formatting context";
         break;
@@ -399,6 +406,8 @@ template<> OptionSet<AvoidanceReason> canUseForCharacter(UChar character, bool t
 {
     OptionSet<AvoidanceReason> reasons;
     if (textIsJustified) {
+        if (character == noBreakSpace)
+            SET_REASON_AND_RETURN_IF_NEEDED(FlowHasJustifiedNonBreakingSpace, reasons, includeReasons);
         // Include characters up to Latin Extended-B and some punctuation range when text is justified.
         bool isLatinIncludingExtendedB = character <= 0x01FF;
         bool isPunctuationRange = character >= 0x2010 && character <= 0x2027;
@@ -419,8 +428,10 @@ template<> OptionSet<AvoidanceReason> canUseForCharacter(UChar character, bool t
     return reasons;
 }
 
-template<> OptionSet<AvoidanceReason> canUseForCharacter(LChar, bool, IncludeReasons)
+template<> OptionSet<AvoidanceReason> canUseForCharacter(LChar character, bool textIsJustified, IncludeReasons)
 {
+    if (textIsJustified && character == noBreakSpace)
+        return { AvoidanceReason::FlowHasJustifiedNonBreakingSpace };
     return { };
 }
 
@@ -441,9 +452,6 @@ static OptionSet<AvoidanceReason> canUseForText(const CharacterType* text, unsig
 
     for (unsigned i = 0; i < length; ++i) {
         auto character = text[i];
-        if (FontCascade::treatAsSpace(character))
-            continue;
-
         auto characterReasons = canUseForCharacter(character, textIsJustified, includeReasons);
         if (characterReasons)
             ADD_REASONS_AND_RETURN_IF_NEEDED(characterReasons, reasons, includeReasons);
@@ -649,16 +657,27 @@ static OptionSet<AvoidanceReason> canUseForChild(const RenderObject& child, Incl
         if (renderInline.isRubyInline() || renderInline.isQuote() || renderInline.isSVGInline())
             SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons);
 
+        if (renderInline.requiresLayer())
+            SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons)
+
         auto& style = renderInline.style();
         if (!isSupportedStyle(style))
             SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons)
         if (style.hasBorder())
             SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons);
+        if (style.borderImage().hasImage())
+            SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons);
         if (style.hasBackground())
+            SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons);
+        if (style.hasOutline())
             SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons);
         if (renderInline.marginLeft() < 0 || renderInline.marginRight() < 0 || renderInline.marginTop() < 0 || renderInline.marginBottom() < 0)
             SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons);
         if (renderInline.paddingLeft() < 0 || renderInline.paddingRight() < 0 || renderInline.paddingTop() < 0 || renderInline.paddingBottom() < 0)
+            SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons);
+        if (renderInline.isInFlowPositioned())
+            SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons);
+        if (renderInline.containingBlock()->style().lineBoxContain() != RenderStyle::initialLineBoxContain())
             SET_REASON_AND_RETURN_IF_NEEDED(FlowHasNonSupportedChild, reasons, includeReasons);
         auto fontAndTextReasons = canUseForFontAndText(downcast<RenderInline>(child), includeReasons);
         if (fontAndTextReasons)
@@ -731,6 +750,12 @@ OptionSet<AvoidanceReason> canUseForLineLayoutWithReason(const RenderBlockFlow& 
     // Printing does pagination without a flow thread.
     if (flow.document().paginated())
         SET_REASON_AND_RETURN_IF_NEEDED(FlowIsPaginated, reasons, includeReasons);
+    if (flow.document().highlightRegisterIfExists() && !flow.document().highlightRegisterIfExists()->map().isEmpty())
+        SET_REASON_AND_RETURN_IF_NEEDED(FlowIncludesHighlights, reasons, includeReasons);
+#if ENABLE(APP_HIGHLIGHTS)
+    if (flow.document().appHighlightRegisterIfExists() && !flow.document().appHighlightRegisterIfExists()->map().isEmpty())
+        SET_REASON_AND_RETURN_IF_NEEDED(FlowIncludesHighlights, reasons, includeReasons);
+#endif
     if (flow.firstLineBlock())
         SET_REASON_AND_RETURN_IF_NEEDED(FlowHasPseudoFirstLine, reasons, includeReasons);
     if (flow.isAnonymousBlock() && flow.parent()->style().textOverflow() == TextOverflow::Ellipsis)

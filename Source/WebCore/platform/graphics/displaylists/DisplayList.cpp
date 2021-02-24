@@ -91,10 +91,10 @@ bool DisplayList::shouldDumpForFlags(AsTextFlags flags, ItemHandle item)
         if (!(flags & AsTextFlag::IncludesPlatformOperations)) {
             const auto& stateItem = item.get<SetState>();
             // FIXME: for now, only drop the item if the only state-change flags are platform-specific.
-            if (stateItem.state().m_changeFlags == GraphicsContextState::ShouldSubpixelQuantizeFontsChange)
+            if (stateItem.stateChange().m_changeFlags == GraphicsContextState::ShouldSubpixelQuantizeFontsChange)
                 return false;
 
-            if (stateItem.state().m_changeFlags == GraphicsContextState::ShouldSubpixelQuantizeFontsChange)
+            if (stateItem.stateChange().m_changeFlags == GraphicsContextState::ShouldSubpixelQuantizeFontsChange)
                 return false;
         }
         break;
@@ -115,12 +115,12 @@ String DisplayList::asText(AsTextFlags flags) const
 {
     TextStream stream(TextStream::LineMode::MultipleLine, TextStream::Formatting::SVGStyleRect);
     for (auto [item, extent, itemSizeInBuffer] : *this) {
-        if (!shouldDumpForFlags(flags, item))
+        if (!shouldDumpForFlags(flags, *item))
             continue;
 
         TextStream::GroupScope group(stream);
         stream << item;
-        if (item.isDrawingItem())
+        if (item->isDrawingItem())
             stream << " extent " << extent;
     }
     return stream.release();
@@ -134,7 +134,7 @@ void DisplayList::dump(TextStream& ts) const
     for (auto [item, extent, itemSizeInBuffer] : *this) {
         TextStream::GroupScope group(ts);
         ts << item;
-        if (item.isDrawingItem())
+        if (item->isDrawingItem())
             ts << " extent " << extent;
     }
     ts.startGroup();
@@ -233,10 +233,10 @@ void DisplayList::append(ItemHandle item)
         return append<ClipOutToPath>(item.get<ClipOutToPath>());
     case ItemType::ClipPath:
         return append<ClipPath>(item.get<ClipPath>());
-    case ItemType::ClipToDrawingCommands: {
-        ASSERT_NOT_REACHED();
-        return; // FIXME: Support the ability to clone display lists (this is currently only used for display list tracking).
-    }
+    case ItemType::BeginClipToDrawingCommands:
+        return append<BeginClipToDrawingCommands>(item.get<BeginClipToDrawingCommands>());
+    case ItemType::EndClipToDrawingCommands:
+        return append<EndClipToDrawingCommands>(item.get<EndClipToDrawingCommands>());
     case ItemType::DrawGlyphs:
         return append<DrawGlyphs>(item.get<DrawGlyphs>());
     case ItemType::DrawImageBuffer:
@@ -322,7 +322,7 @@ void DisplayList::append(ItemHandle item)
 
 bool DisplayList::iterator::atEnd() const
 {
-    if (m_displayList.isEmpty())
+    if (m_displayList.isEmpty() || !m_isValid)
         return true;
 
     auto& items = *m_displayList.m_items;
@@ -352,17 +352,15 @@ void DisplayList::iterator::updateCurrentItem()
         auto dataLength = reinterpret_cast<uint64_t*>(m_cursor)[1];
         auto* startOfData = m_cursor + 2 * sizeof(uint64_t);
         auto decodedItemHandle = client->decodeItem(startOfData, dataLength, itemType, m_currentBufferForItem);
-        if (!decodedItemHandle) {
-            // FIXME: Instead of crashing, this needs to fail gracefully and inform the caller.
-            // For the time being, this assertion makes bugs in item buffer encoding logic easier
-            // to catch by avoiding mysterious out-of-bounds reads and incorrectly aligned items
-            // down the line.
-            RELEASE_ASSERT_NOT_REACHED();
-        }
+        if (UNLIKELY(!decodedItemHandle))
+            m_isValid = false;
+
         m_currentBufferForItem[0] = static_cast<uint8_t>(itemType);
         m_currentItemSizeInBuffer = 2 * sizeof(uint64_t) + roundUpToMultipleOf(alignof(uint64_t), dataLength);
     } else {
-        ItemHandle { m_cursor }.copyTo({ m_currentBufferForItem });
+        if (UNLIKELY(!ItemHandle { m_cursor }.safeCopy({ m_currentBufferForItem })))
+            m_isValid = false;
+
         m_currentItemSizeInBuffer = paddedSizeOfTypeAndItem;
     }
 }
@@ -385,7 +383,9 @@ void DisplayList::iterator::advance()
 void DisplayList::iterator::clearCurrentItem()
 {
     if (m_currentBufferForItem) {
-        ItemHandle { m_currentBufferForItem }.destroy();
+        if (LIKELY(m_isValid))
+            ItemHandle { m_currentBufferForItem }.destroy();
+
         if (UNLIKELY(m_currentBufferForItem != m_fixedBufferForCurrentItem))
             fastFree(m_currentBufferForItem);
     }

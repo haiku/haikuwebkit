@@ -197,6 +197,11 @@ WI.settings = {
     enableElementsTabIndependentStylesDetailsSidebarPanel: new WI.Setting("elements-tab-independent-styles-details-panel", true),
     enableLineWrapping: new WI.Setting("enable-line-wrapping", true),
     frontendAppearance: new WI.Setting("frontend-appearance", "system"),
+    gridOverlayShowAreaNames: new WI.Setting("grid-overlay-show-area-names", false),
+    gridOverlayShowExtendedGridLines: new WI.Setting("grid-overlay-show-extended-grid-lines", false),
+    gridOverlayShowLineNames: new WI.Setting("grid-overlay-show-line-names", false),
+    gridOverlayShowLineNumbers: new WI.Setting("grid-overlay-show-line-numbers", false),
+    gridOverlayShowTrackSizes: new WI.Setting("grid-overlay-show-track-sizes", false),
     groupMediaRequestsByDOMNode: new WI.Setting("group-media-requests-by-dom-node", WI.Setting.migrateValue("group-by-dom-node") || false),
     indentUnit: new WI.Setting("indent-unit", 4),
     indentWithTabs: new WI.Setting("indent-with-tabs", false),
@@ -223,6 +228,9 @@ WI.settings = {
     experimentalEnablePreviewFeatures: new WI.Setting("experimental-enable-preview-features", true),
     experimentalEnableStylesJumpToEffective: new WI.Setting("experimental-styles-jump-to-effective", false),
     experimentalEnableStylesJumpToVariableDeclaration: new WI.Setting("experimental-styles-jump-to-variable-declaration", false),
+    experimentalEnableLayoutPanel: new WI.Setting("experimental-enable-layout-panel", false),
+    experimentalEnableGridBadges: new WI.Setting("experimental-enable-grid-badges", false),
+    experimentalCollapseBlackboxedCallFrames: new WI.Setting("experimental-collapse-blackboxed-call-frames", false),
 
     // Protocol
     protocolLogAsText: new WI.Setting("protocol-log-as-text", false),

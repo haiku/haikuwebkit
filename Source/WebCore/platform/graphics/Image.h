@@ -129,6 +129,7 @@ public:
 
     virtual String uti() const { return String(); } // null string if unknown
     virtual String filenameExtension() const { return String(); } // null string if unknown
+    virtual String accessibilityDescription() const { return String(); } // null string if unknown
 
     virtual void destroyDecodedData(bool destroyAll = true) = 0;
 
@@ -208,11 +209,6 @@ private:
     RefPtr<SharedBuffer> m_encodedImageData;
     ImageObserver* m_imageObserver;
     std::unique_ptr<Timer> m_animationStartTimer;
-};
-
-class ImageHandle {
-public:
-    RefPtr<Image> image;
 };
 
 WTF::TextStream& operator<<(WTF::TextStream&, const Image&);

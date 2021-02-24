@@ -452,7 +452,21 @@ void PageClientImpl::doneDeferringTouchStart(bool preventNativeGestures)
     [m_contentView _doneDeferringTouchStart:preventNativeGestures];
 }
 
+void PageClientImpl::doneDeferringTouchEnd(bool preventNativeGestures)
+{
+    [m_contentView _doneDeferringTouchEnd:preventNativeGestures];
+}
+
 #endif // ENABLE(IOS_TOUCH_EVENTS)
+
+#if HAVE(PASTEBOARD_DATA_OWNER)
+
+WebCore::DataOwnerType PageClientImpl::dataOwnerForPasteboard(PasteboardAccessIntent intent) const
+{
+    return [m_contentView _dataOwnerForPasteboard:intent];
+}
+
+#endif
 
 RefPtr<WebPopupMenuProxy> PageClientImpl::createPopupMenuProxy(WebPageProxy&)
 {
@@ -960,6 +974,13 @@ void PageClientImpl::setMouseEventPolicy(WebCore::MouseEventPolicy policy)
     [m_contentView _setMouseEventPolicy:policy];
 #endif
 }
+
+#if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
+void PageClientImpl::showMediaControlsContextMenu(FloatRect&& targetFrame, Vector<MediaControlsContextMenuItem>&& items, CompletionHandler<void(MediaControlsContextMenuItem::ID)>&& completionHandler)
+{
+    [m_contentView _showMediaControlsContextMenu:WTFMove(targetFrame) items:WTFMove(items) completionHandler:WTFMove(completionHandler)];
+}
+#endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)
 
 #if HAVE(UISCROLLVIEW_ASYNCHRONOUS_SCROLL_EVENT_HANDLING)
 void PageClientImpl::handleAsynchronousCancelableScrollEvent(UIScrollView *scrollView, UIScrollEvent *scrollEvent, void (^completion)(BOOL handled))

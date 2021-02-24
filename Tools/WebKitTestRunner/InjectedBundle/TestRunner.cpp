@@ -2025,15 +2025,37 @@ void TestRunner::simulateResourceLoadStatisticsSessionRestart()
     postSynchronousPageMessage("SimulateResourceLoadStatisticsSessionRestart");
 }
 
-void TestRunner::setPrivateClickMeasurementConversionURLForTesting(JSStringRef urlString)
+void TestRunner::setPrivateClickMeasurementTokenPublicKeyURLForTesting(JSStringRef urlString)
 {
-    postSynchronousPageMessage("SetPrivateClickMeasurementConversionURLForTesting",
+    postSynchronousPageMessage("SetPrivateClickMeasurementTokenPublicKeyURLForTesting",
+        adoptWK(WKURLCreateWithUTF8CString(toWTFString(urlString).utf8().data())));
+}
+
+void TestRunner::setPrivateClickMeasurementTokenSignatureURLForTesting(JSStringRef urlString)
+{
+    postSynchronousPageMessage("SetPrivateClickMeasurementTokenSignatureURLForTesting",
+        adoptWK(WKURLCreateWithUTF8CString(toWTFString(urlString).utf8().data())));
+}
+
+void TestRunner::setPrivateClickMeasurementAttributionReportURLForTesting(JSStringRef urlString)
+{
+    postSynchronousPageMessage("SetPrivateClickMeasurementAttributionReportURLForTesting",
         adoptWK(WKURLCreateWithUTF8CString(toWTFString(urlString).utf8().data())));
 }
 
 void TestRunner::markPrivateClickMeasurementsAsExpiredForTesting()
 {
     postSynchronousPageMessage("MarkPrivateClickMeasurementsAsExpiredForTesting");
+}
+
+void TestRunner::setFraudPreventionValuesForTesting(JSStringRef secretToken, JSStringRef unlinkableToken, JSStringRef signature, JSStringRef keyID)
+{
+    postSynchronousMessage("SetFraudPreventionValuesForTesting", createWKDictionary({
+        { "SecretToken", toWK(secretToken) },
+        { "UnlinkableToken", toWK(unlinkableToken) },
+        { "Signature", toWK(signature) },
+        { "KeyID", toWK(keyID) },
+    }));
 }
 
 bool TestRunner::hasAppBoundSession()
@@ -2082,6 +2104,11 @@ void TestRunner::didSetAppBoundDomainsCallback()
 void TestRunner::setIsSpeechRecognitionPermissionGranted(bool granted)
 {
     postSynchronousPageMessage("setIsSpeechRecognitionPermissionGranted", granted);
+}
+
+void TestRunner::setIsMediaKeySystemPermissionGranted(bool granted)
+{
+    postSynchronousPageMessage("setIsMediaKeySystemPermissionGranted", granted);
 }
 
 ALLOW_DEPRECATED_DECLARATIONS_END

@@ -31,6 +31,7 @@
 #include "StyleAdjuster.h"
 
 #include "CSSFontSelector.h"
+#include "DOMTokenList.h"
 #include "DOMWindow.h"
 #include "Element.h"
 #include "EventNames.h"
@@ -79,16 +80,16 @@ static void addIntrinsicMargins(RenderStyle& style)
     // FIXME: Using "hasQuirk" to decide the margin wasn't set is kind of lame.
     if (style.width().isIntrinsicOrAuto()) {
         if (style.marginLeft().hasQuirk())
-            style.setMarginLeft(Length(intrinsicMargin, Fixed));
+            style.setMarginLeft(Length(intrinsicMargin, LengthType::Fixed));
         if (style.marginRight().hasQuirk())
-            style.setMarginRight(Length(intrinsicMargin, Fixed));
+            style.setMarginRight(Length(intrinsicMargin, LengthType::Fixed));
     }
 
     if (style.height().isAuto()) {
         if (style.marginTop().hasQuirk())
-            style.setMarginTop(Length(intrinsicMargin, Fixed));
+            style.setMarginTop(Length(intrinsicMargin, LengthType::Fixed));
         if (style.marginBottom().hasQuirk())
-            style.setMarginBottom(Length(intrinsicMargin, Fixed));
+            style.setMarginBottom(Length(intrinsicMargin, LengthType::Fixed));
     }
 }
 
@@ -392,7 +393,7 @@ void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearance
             }
             // Apparently this is the expected legacy behavior.
             if (isVertical && style.height().isAuto())
-                style.setHeight(Length(200, Fixed));
+                style.setHeight(Length(200, LengthType::Fixed));
         }
     }
 
@@ -573,19 +574,18 @@ void Adjuster::adjustSVGElementStyle(RenderStyle& style, const SVGElement& svgEl
         style.setDisplay(DisplayType::Block);
 }
 
-void Adjuster::adjustAnimatedStyle(RenderStyle& style, const RenderStyle* parentBoxStyle, OptionSet<AnimationImpact> impact)
+void Adjuster::adjustAnimatedStyle(RenderStyle& style, OptionSet<AnimationImpact> impact) const
 {
+    adjust(style, nullptr);
+
     // Set an explicit used z-index in two cases:
     // 1. When the element respects z-index, and the style has an explicit z-index set (for example, the animation
     //    itself may animate z-index).
     // 2. When we want the stacking context side-effets of explicit z-index, via forceStackingContext.
     // It's important to not clobber an existing used z-index, since an earlier animation may have set it, but we
     // may still need to update the used z-index value from the specified value.
-    bool elementRespectsZIndex = style.position() != PositionType::Static || (parentBoxStyle && parentBoxStyle->isDisplayFlexibleOrGridBox());
-
-    if (elementRespectsZIndex && !style.hasAutoSpecifiedZIndex())
-        style.setUsedZIndex(style.specifiedZIndex());
-    else if (impact.contains(AnimationImpact::ForcesStackingContext))
+    
+    if (style.hasAutoUsedZIndex() && impact.contains(AnimationImpact::ForcesStackingContext))
         style.setUsedZIndex(0);
 }
 
@@ -605,6 +605,20 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
         static MainThreadNeverDestroyed<const AtomString> idValue("guide-inner-content", AtomString::ConstructFromLiteral);
         if (style.overflowY() == Overflow::Hidden && m_element->idForStyleResolution() == idValue)
             style.setOverflowY(Overflow::Auto);
+    }
+    if (m_document.quirks().needsWeChatScrollingQuirk()) {
+        static MainThreadNeverDestroyed<const AtomString> class1("tree-select", AtomString::ConstructFromLiteral);
+        static MainThreadNeverDestroyed<const AtomString> class2("v-tree-select", AtomString::ConstructFromLiteral);
+        const auto& flexBasis = style.flexBasis();
+        if (style.minHeight().isAuto()
+            && style.display() == DisplayType::Flex
+            && style.flexGrow() == 1
+            && style.flexShrink() == 1
+            && (flexBasis.isPercent() || flexBasis.isFixed())
+            && flexBasis.value() == 0
+            && const_cast<Element*>(m_element)->classList().contains(class1)
+            && const_cast<Element*>(m_element)->classList().contains(class2))
+            style.setMinHeight(Length(0, LengthType::Fixed));
     }
 #if ENABLE(VIDEO)
     if (m_document.quirks().needsFullscreenDisplayNoneQuirk()) {
@@ -703,7 +717,7 @@ bool Adjuster::adjustForTextAutosizing(RenderStyle& style, const Element& elemen
         style.fontCascade().update(&element.document().fontSelector());
     }
     if (auto newLineHeight = adjustment.newLineHeight)
-        style.setLineHeight({ *newLineHeight, Fixed });
+        style.setLineHeight({ *newLineHeight, LengthType::Fixed });
     if (auto newStatus = adjustment.newStatus)
         style.setAutosizeStatus(*newStatus);
     return adjustment.newFontSize || adjustment.newLineHeight;

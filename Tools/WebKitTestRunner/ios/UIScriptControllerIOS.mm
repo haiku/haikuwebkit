@@ -612,19 +612,24 @@ bool UIScriptControllerIOS::isPresentingModally() const
     return !!webView().window.rootViewController.presentedViewController;
 }
 
-static CGPoint contentOffsetBoundedInValidRange(UIScrollView *scrollView, CGPoint contentOffset)
+static CGPoint contentOffsetBoundedIfNecessary(UIScrollView *scrollView, long x, long y, ScrollToOptions* options)
 {
-    UIEdgeInsets contentInsets = scrollView.contentInset;
-    CGSize contentSize = scrollView.contentSize;
-    CGSize scrollViewSize = scrollView.bounds.size;
+    auto contentOffset = CGPointMake(x, y);
+    bool constrain = !options || !options->unconstrained;
+    if (constrain) {
+        UIEdgeInsets contentInsets = scrollView.contentInset;
+        CGSize contentSize = scrollView.contentSize;
+        CGSize scrollViewSize = scrollView.bounds.size;
 
-    CGFloat maxHorizontalOffset = contentSize.width + contentInsets.right - scrollViewSize.width;
-    contentOffset.x = std::min(maxHorizontalOffset, contentOffset.x);
-    contentOffset.x = std::max(-contentInsets.left, contentOffset.x);
+        CGFloat maxHorizontalOffset = contentSize.width + contentInsets.right - scrollViewSize.width;
+        contentOffset.x = std::min(maxHorizontalOffset, contentOffset.x);
+        contentOffset.x = std::max(-contentInsets.left, contentOffset.x);
 
-    CGFloat maxVerticalOffset = contentSize.height + contentInsets.bottom - scrollViewSize.height;
-    contentOffset.y = std::min(maxVerticalOffset, contentOffset.y);
-    contentOffset.y = std::max(-contentInsets.top, contentOffset.y);
+        CGFloat maxVerticalOffset = contentSize.height + contentInsets.bottom - scrollViewSize.height;
+        contentOffset.y = std::min(maxVerticalOffset, contentOffset.y);
+        contentOffset.y = std::max(-contentInsets.top, contentOffset.y);
+    }
+
     return contentOffset;
 }
 
@@ -648,16 +653,18 @@ void UIScriptControllerIOS::setScrollUpdatesDisabled(bool disabled)
     webView()._scrollingUpdatesDisabledForTesting = disabled;
 }
 
-void UIScriptControllerIOS::scrollToOffset(long x, long y)
+void UIScriptControllerIOS::scrollToOffset(long x, long y, ScrollToOptions* options)
 {
     TestRunnerWKWebView *webView = this->webView();
-    [webView.scrollView setContentOffset:contentOffsetBoundedInValidRange(webView.scrollView, CGPointMake(x, y)) animated:YES];
+    auto offset = contentOffsetBoundedIfNecessary(webView.scrollView, x, y, options);
+    [webView.scrollView setContentOffset:offset animated:YES];
 }
 
-void UIScriptControllerIOS::immediateScrollToOffset(long x, long y)
+void UIScriptControllerIOS::immediateScrollToOffset(long x, long y, ScrollToOptions* options)
 {
     TestRunnerWKWebView *webView = this->webView();
-    [webView.scrollView setContentOffset:contentOffsetBoundedInValidRange(webView.scrollView, CGPointMake(x, y)) animated:NO];
+    auto offset = contentOffsetBoundedIfNecessary(webView.scrollView, x, y, options);
+    [webView.scrollView setContentOffset:offset animated:NO];
 }
 
 static UIScrollView *enclosingScrollViewIncludingSelf(UIView *view)
@@ -1027,29 +1034,37 @@ JSObjectRef UIScriptControllerIOS::rectForMenuAction(JSStringRef jsAction) const
 
 WebCore::FloatRect UIScriptControllerIOS::rectForMenuAction(CFStringRef action) const
 {
-    UIWindow *windowForButton = nil;
-    UIButton *buttonForAction = nil;
-    UIView *calloutBar = UICalloutBar.activeCalloutBar;
-    if (!calloutBar.window)
-        return { };
+    UIView *viewForAction = nil;
+    UIWindow *window = webView().window;
 
-    for (UIButton *button in findAllViewsInHierarchyOfType(calloutBar, UIButton.class)) {
-        NSString *buttonTitle = [button titleForState:UIControlStateNormal];
-        if (!buttonTitle.length)
-            continue;
+    if (UIView *calloutBar = UICalloutBar.activeCalloutBar; calloutBar.window) {
+        for (UIButton *button in findAllViewsInHierarchyOfType(calloutBar, UIButton.class)) {
+            NSString *buttonTitle = [button titleForState:UIControlStateNormal];
+            if (!buttonTitle.length)
+                continue;
 
-        if (![buttonTitle isEqualToString:(__bridge NSString *)action])
-            continue;
+            if (![buttonTitle isEqualToString:(__bridge NSString *)action])
+                continue;
 
-        buttonForAction = button;
-        windowForButton = calloutBar.window;
-        break;
+            viewForAction = button;
+            break;
+        }
     }
 
-    if (!buttonForAction)
+    if (!viewForAction) {
+        for (UILabel *label in findAllViewsInHierarchyOfType(window, UILabel.class)) {
+            if (![label.text isEqualToString:(__bridge NSString *)action])
+                continue;
+
+            viewForAction = label;
+            break;
+        }
+    }
+
+    if (!viewForAction)
         return { };
 
-    CGRect rectInRootViewCoordinates = [buttonForAction convertRect:buttonForAction.bounds toView:platformContentView()];
+    CGRect rectInRootViewCoordinates = [viewForAction convertRect:viewForAction.bounds toView:platformContentView()];
     return WebCore::FloatRect(rectInRootViewCoordinates.origin.x, rectInRootViewCoordinates.origin.y, rectInRootViewCoordinates.size.width, rectInRootViewCoordinates.size.height);
 }
 
@@ -1101,8 +1116,7 @@ void UIScriptControllerIOS::completeBackSwipe(JSValueRef callback)
 
 void UIScriptControllerIOS::activateDataListSuggestion(unsigned index, JSValueRef callback)
 {
-    // FIXME: Not implemented.
-    UNUSED_PARAM(index);
+    [webView() _selectDataListOption:index];
 
     unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
     dispatch_async(dispatch_get_main_queue(), makeBlockPtr([this, strongThis = makeRef(*this), callbackID] {
@@ -1114,6 +1128,13 @@ void UIScriptControllerIOS::activateDataListSuggestion(unsigned index, JSValueRe
 
 bool UIScriptControllerIOS::isShowingDataListSuggestions() const
 {
+#if ENABLE(IOS_FORM_CONTROL_REFRESH)
+    UIViewController *presentedViewController = [UIViewController _viewControllerForFullScreenPresentationFromView:webView()];
+    Class suggestionsViewControllerClass = NSClassFromString(@"WKDataListSuggestionsViewController");
+    if ([presentedViewController isKindOfClass:suggestionsViewControllerClass])
+        return true;
+#endif
+
     Class remoteKeyboardWindowClass = NSClassFromString(@"UIRemoteKeyboardWindow");
     Class suggestionsPickerViewClass = NSClassFromString(@"WKDataListSuggestionsPickerView");
     UIWindow *remoteInputHostingWindow = nil;
@@ -1134,6 +1155,12 @@ bool UIScriptControllerIOS::isShowingDataListSuggestions() const
         *stop = YES;
     });
     return foundDataListSuggestionsPickerView;
+}
+
+void UIScriptControllerIOS::setSelectedColorForColorPicker(double red, double green, double blue)
+{
+    UIColor *color = [UIColor colorWithRed:red green:green blue:blue alpha:1.0f];
+    [webView() setSelectedColorForColorPicker:color];
 }
 
 void UIScriptControllerIOS::setKeyboardInputModeIdentifier(JSStringRef identifier)

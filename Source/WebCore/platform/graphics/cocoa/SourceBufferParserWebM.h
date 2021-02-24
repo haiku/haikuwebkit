@@ -30,10 +30,10 @@
 #include "SourceBufferParser.h"
 #include <CoreAudio/CoreAudioTypes.h>
 #include <CoreMedia/CMTime.h>
-#include <common/vp9_header_parser.h>
 #include <pal/spi/cf/CoreMediaSPI.h>
 #include <webm/callback.h>
 #include <webm/status.h>
+#include <webm/vp9_header_parser.h>
 #include <wtf/Box.h>
 #include <wtf/Function.h>
 #include <wtf/MediaTime.h>
@@ -42,7 +42,6 @@
 #include <wtf/Vector.h>
 #include <wtf/text/AtomString.h>
 #include <wtf/text/WTFString.h>
-#include <wtf/threads/BinarySemaphore.h>
 
 typedef const struct opaqueCMFormatDescription* CMFormatDescriptionRef;
 typedef struct OpaqueCMBlockBuffer *CMBlockBufferRef;
@@ -73,7 +72,7 @@ public:
     const webm::Status& status() const { return m_status; }
 
     Type type() const { return Type::WebM; }
-    void appendData(Segment&&, AppendFlags = AppendFlags::None) final;
+    void appendData(Segment&&, CompletionHandler<void()>&& = [] { }, AppendFlags = AppendFlags::None) final;
     void flushPendingMediaData() final;
     void setShouldProvideMediaDataForTrackID(bool, uint64_t) final;
     bool shouldProvideMediadataForTrackID(uint64_t) final;
@@ -97,6 +96,7 @@ public:
         ReceivedEbmlInsideSegment,
         UnsupportedVideoCodec,
         UnsupportedAudioCodec,
+        ContentEncrypted,
     };
 
     enum class State : uint8_t {
@@ -249,6 +249,7 @@ private:
     webm::Status OnFrame(const webm::FrameMetadata&, webm::Reader*, uint64_t* bytesRemaining) final;
 
     std::unique_ptr<InitializationSegment> m_initializationSegment;
+    Vector<std::pair<uint64_t, Ref<Uint8Array>>> m_keyIds;
     webm::Status m_status;
     std::unique_ptr<webm::WebmParser> m_parser;
     bool m_initializationSegmentEncountered { false };
@@ -265,7 +266,6 @@ private:
     Optional<uint64_t> m_rewindToPosition;
     float m_minimumAudioSampleDuration { 2 };
 
-    Box<BinarySemaphore> m_initializationSegmentIsHandledSemaphore;
     CallOnClientThreadCallback m_callOnClientThreadCallback;
 
     RefPtr<const WTF::Logger> m_logger;

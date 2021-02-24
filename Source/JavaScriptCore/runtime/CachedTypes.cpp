@@ -962,25 +962,6 @@ private:
     CachedVector<T> m_entries;
 };
 
-class CachedConstantIdentifierSetEntry : public VariableLengthObject<ConstantIdentifierSetEntry> {
-public:
-    void encode(Encoder& encoder, const ConstantIdentifierSetEntry& entry)
-    {
-        m_constant = entry.second;
-        m_set.encode(encoder, entry.first);
-    }
-
-    void decode(Decoder& decoder, ConstantIdentifierSetEntry& entry) const
-    {
-        entry.second = m_constant;
-        m_set.decode(decoder, entry.first);
-    }
-
-private:
-    unsigned m_constant;
-    CachedHashSet<CachedRefPtr<CachedUniquedStringImpl>, IdentifierRepHash> m_set;
-};
-
 class CachedCodeBlockRareData : public CachedObject<UnlinkedCodeBlock::RareData> {
 public:
     void encode(Encoder& encoder, const UnlinkedCodeBlock::RareData& rareData)
@@ -994,6 +975,7 @@ public:
         m_bitVectors.encode(encoder, rareData.m_bitVectors);
         m_constantIdentifierSets.encode(encoder, rareData.m_constantIdentifierSets);
         m_needsClassFieldInitializer = rareData.m_needsClassFieldInitializer;
+        m_privateBrandRequirement = rareData.m_privateBrandRequirement;
     }
 
     UnlinkedCodeBlock::RareData* decode(Decoder& decoder) const
@@ -1008,6 +990,7 @@ public:
         m_bitVectors.decode(decoder, rareData->m_bitVectors);
         m_constantIdentifierSets.decode(decoder, rareData->m_constantIdentifierSets);
         rareData->m_needsClassFieldInitializer = m_needsClassFieldInitializer;
+        rareData->m_privateBrandRequirement = m_privateBrandRequirement;
         return rareData;
     }
 
@@ -1019,9 +1002,12 @@ private:
     CachedHashMap<unsigned, UnlinkedCodeBlock::RareData::TypeProfilerExpressionRange> m_typeProfilerInfoMap;
     CachedVector<InstructionStream::Offset> m_opProfileControlFlowBytecodeOffsets;
     CachedVector<CachedBitVector> m_bitVectors;
-    CachedVector<CachedConstantIdentifierSetEntry> m_constantIdentifierSets;
+    CachedVector<CachedHashSet<CachedRefPtr<CachedUniquedStringImpl>, IdentifierRepHash>> m_constantIdentifierSets;
     unsigned m_needsClassFieldInitializer : 1;
+    unsigned m_privateBrandRequirement : 1;
 };
+
+typedef CachedHashMap<CachedRefPtr<CachedUniquedStringImpl, UniquedStringImpl, WTF::PackedPtrTraits<UniquedStringImpl>>, PrivateNameEntry, IdentifierRepHash, HashTraits<RefPtr<UniquedStringImpl>>, PrivateNameEntryHashTraits> CachedPrivateNameEnvironment;
 
 class CachedVariableEnvironmentRareData : public CachedObject<VariableEnvironment::RareData> {
 public:
@@ -1036,7 +1022,7 @@ public:
     }
 
 private:
-    CachedHashMap<CachedRefPtr<CachedUniquedStringImpl, UniquedStringImpl, WTF::PackedPtrTraits<UniquedStringImpl>>, PrivateNameEntry, IdentifierRepHash, HashTraits<RefPtr<UniquedStringImpl>>, PrivateNameEntryHashTraits> m_privateNames;
+    CachedPrivateNameEnvironment m_privateNames;
 };
 
 class CachedVariableEnvironment : public CachedObject<VariableEnvironment> {
@@ -1213,7 +1199,7 @@ public:
     }
 
 private:
-    CachedHashSet<CachedRefPtr<CachedUniquedStringImpl>, IdentifierRepHash> m_privateNames;
+    CachedPrivateNameEnvironment m_privateNames;
 };
 
 class CachedSymbolTable : public CachedObject<SymbolTable> {
@@ -1790,6 +1776,7 @@ public:
     {
         m_classSource.encode(encoder, rareData.m_classSource);
         m_parentScopeTDZVariables.encode(encoder, rareData.m_parentScopeTDZVariables);
+        m_parentPrivateNameEnvironment.encode(encoder, rareData.m_parentPrivateNameEnvironment);
     }
 
     UnlinkedFunctionExecutable::RareData* decode(Decoder& decoder) const
@@ -1797,12 +1784,14 @@ public:
         UnlinkedFunctionExecutable::RareData* rareData = new UnlinkedFunctionExecutable::RareData { };
         m_classSource.decode(decoder, rareData->m_classSource);
         m_parentScopeTDZVariables.decode(decoder, rareData->m_parentScopeTDZVariables);
+        m_parentPrivateNameEnvironment.decode(decoder, rareData->m_parentPrivateNameEnvironment);
         return rareData;
     }
 
 private:
     CachedSourceCodeWithoutProvider m_classSource;
     CachedRefPtr<CachedTDZEnvironmentLink> m_parentScopeTDZVariables;
+    CachedPrivateNameEnvironment m_parentPrivateNameEnvironment;
 };
 
 class CachedFunctionExecutable : public CachedObject<UnlinkedFunctionExecutable> {
@@ -1838,6 +1827,7 @@ public:
     unsigned superBinding() const { return m_superBinding; }
     unsigned derivedContextType() const { return m_derivedContextType; }
     unsigned needsClassFieldInitializer() const { return m_needsClassFieldInitializer; }
+    unsigned privateBrandRequirement() const { return m_privateBrandRequirement; }
 
     Identifier name(Decoder& decoder) const { return m_name.decode(decoder); }
     Identifier ecmaName(Decoder& decoder) const { return m_ecmaName.decode(decoder); }
@@ -1866,7 +1856,8 @@ private:
     unsigned m_parametersStartOffset : 31;
     unsigned m_typeProfilingStartOffset;
     unsigned m_typeProfilingEndOffset;
-    unsigned m_parameterCount;
+    unsigned m_parameterCount:31;
+    unsigned m_privateBrandRequirement : 1;
     SourceParseMode m_sourceParseMode;
     unsigned m_constructorKind : 2;
     unsigned m_functionMode : 2; // FunctionMode
@@ -1923,7 +1914,6 @@ public:
     unsigned isClassContext() const { return m_isClassContext; }
     unsigned constructorKind() const { return m_constructorKind; }
     unsigned derivedContextType() const { return m_derivedContextType; }
-    unsigned needsClassFieldInitializer() const { return m_needsClassFieldInitializer; }
     unsigned evalContextType() const { return m_evalContextType; }
     unsigned hasTailCalls() const { return m_hasTailCalls; }
     unsigned hasCheckpoints() const { return m_hasCheckpoints; }
@@ -1955,7 +1945,6 @@ private:
     unsigned m_isClassContext : 1;
     unsigned m_constructorKind : 2;
     unsigned m_derivedContextType : 2;
-    unsigned m_needsClassFieldInitializer : 1;
     unsigned m_evalContextType : 2;
     unsigned m_hasTailCalls : 1;
     unsigned m_codeType : 2;
@@ -2236,6 +2225,7 @@ ALWAYS_INLINE void CachedFunctionExecutable::encode(Encoder& encoder, const Unli
     m_superBinding = executable.m_superBinding;
     m_derivedContextType = executable.m_derivedContextType;
     m_needsClassFieldInitializer = executable.m_needsClassFieldInitializer;
+    m_privateBrandRequirement = executable.m_privateBrandRequirement;
 
     m_rareData.encode(encoder, executable.m_rareData.get());
 
@@ -2277,6 +2267,7 @@ ALWAYS_INLINE UnlinkedFunctionExecutable::UnlinkedFunctionExecutable(Decoder& de
     , m_typeProfilingStartOffset(cachedExecutable.typeProfilingStartOffset())
     , m_typeProfilingEndOffset(cachedExecutable.typeProfilingEndOffset())
     , m_parameterCount(cachedExecutable.parameterCount())
+    , m_privateBrandRequirement(cachedExecutable.privateBrandRequirement())
     , m_features(cachedExecutable.features())
     , m_sourceParseMode(cachedExecutable.sourceParseMode())
     , m_constructorKind(cachedExecutable.constructorKind())

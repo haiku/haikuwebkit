@@ -82,6 +82,16 @@ ALWAYS_INLINE NodeVector ContainerNode::removeAllChildrenWithScriptAssertion(Chi
 {
     auto children = collectChildNodes(*this);
 
+    if (UNLIKELY(isDocumentFragmentForInnerOuterHTML())) {
+        ScriptDisallowedScope::InMainThread scriptDisallowedScope;
+        RELEASE_ASSERT(!connectedSubframeCount() && !hasRareData() && !wrapper());
+        ASSERT(!weakPtrFactory().isInitialized());
+        while (RefPtr<Node> child = m_firstChild)
+            removeBetween(nullptr, child->nextSibling(), *child);
+        document().incDOMTreeVersion();
+        return children;
+    }
+
     if (source == ChildChange::Source::API) {
         ChildListMutationScope mutation(*this);
         for (auto& child : children) {
@@ -111,8 +121,12 @@ ALWAYS_INLINE NodeVector ContainerNode::removeAllChildrenWithScriptAssertion(Chi
 
     while (RefPtr<Node> child = m_firstChild) {
         removeBetween(nullptr, child->nextSibling(), *child);
-        notifyChildNodeRemoved(*this, *child);
+        auto subtreeObservability = notifyChildNodeRemoved(*this, *child);
+        if (source == ChildChange::Source::API && subtreeObservability == RemovedSubtreeObservability::MaybeObservableByRefPtr)
+            willCreatePossiblyOrphanedTreeByRemoval(child.get());
     }
+
+    ASSERT_WITH_SECURITY_IMPLICATION(!document().selection().selection().isOrphan());
 
     if (deferChildrenChanged == DeferChildrenChanged::No)
         childrenChanged(ContainerNode::ChildChange { ChildChange::Type::AllChildrenRemoved, nullptr, nullptr, source });
@@ -149,6 +163,7 @@ ALWAYS_INLINE bool ContainerNode::removeNodeWithScriptAssertion(Node& childToRem
         return false;
 
     ChildChange change;
+    RemovedSubtreeObservability subtreeObservability;
     {
         WidgetHierarchyUpdatesSuspensionScope suspendWidgetHierarchyUpdates;
         ScriptDisallowedScope::InMainThread scriptDisallowedScope;
@@ -164,7 +179,7 @@ ALWAYS_INLINE bool ContainerNode::removeNodeWithScriptAssertion(Node& childToRem
         RefPtr<Node> previousSibling = childToRemove.previousSibling();
         RefPtr<Node> nextSibling = childToRemove.nextSibling();
         removeBetween(previousSibling.get(), nextSibling.get(), childToRemove);
-        notifyChildNodeRemoved(*this, childToRemove);
+        subtreeObservability = notifyChildNodeRemoved(*this, childToRemove);
 
         change.type = is<Element>(childToRemove) ?
             ChildChange::Type::ElementRemoved :
@@ -175,6 +190,11 @@ ALWAYS_INLINE bool ContainerNode::removeNodeWithScriptAssertion(Node& childToRem
         change.nextSiblingElement = (!nextSibling || is<Element>(*nextSibling)) ? downcast<Element>(nextSibling.get()) : ElementTraversal::nextSibling(*nextSibling);
         change.source = source;
     }
+
+    if (source == ChildChange::Source::API && subtreeObservability == RemovedSubtreeObservability::MaybeObservableByRefPtr)
+        willCreatePossiblyOrphanedTreeByRemoval(&childToRemove);
+
+    ASSERT_WITH_SECURITY_IMPLICATION(!document().selection().selection().isOrphan());
 
     // FIXME: Move childrenChanged into ScriptDisallowedScope block.
     childrenChanged(change);
@@ -224,18 +244,26 @@ static ALWAYS_INLINE void executeNodeInsertionWithScriptAssertion(ContainerNode&
         dispatchChildInsertionEvents(child);
 }
 
-static ExceptionOr<void> collectChildrenAndRemoveFromOldParent(Node& node, NodeVector& nodes)
+ExceptionOr<void> ContainerNode::removeSelfOrChildNodesForInsertion(Node& child, NodeVector& nodesForInsertion)
 {
-    if (!is<DocumentFragment>(node)) {
-        nodes.append(node);
-        auto* oldParent = node.parentNode();
+    if (!is<DocumentFragment>(child)) {
+        nodesForInsertion.append(child);
+        auto oldParent = makeRefPtr(child.parentNode());
         if (!oldParent)
             return { };
-        return oldParent->removeChild(node);
+        return oldParent->removeChild(child);
     }
 
-    nodes = collectChildNodes(node);
-    downcast<DocumentFragment>(node).removeChildren();
+    auto& fragment = downcast<DocumentFragment>(child);
+    if (!fragment.hasChildNodes())
+        return { };
+
+    auto removedChildNodes = fragment.removeAllChildrenWithScriptAssertion(ContainerNode::ChildChange::Source::API);
+    nodesForInsertion.swap(removedChildNodes);
+
+    fragment.rebuildSVGExtensionsElementsIfNecessary();
+    fragment.dispatchSubtreeModifiedEvent();
+
     return { };
 }
 
@@ -393,13 +421,13 @@ ExceptionOr<void> ContainerNode::insertBefore(Node& newChild, Node* refChild)
     Ref<Node> next(*refChild);
 
     NodeVector targets;
-    auto removeResult = collectChildrenAndRemoveFromOldParent(newChild, targets);
+    auto removeResult = removeSelfOrChildNodesForInsertion(newChild, targets);
     if (removeResult.hasException())
         return removeResult.releaseException();
     if (targets.isEmpty())
         return { };
 
-    // We need this extra check because collectChildrenAndRemoveFromOldParent() can fire mutation events.
+    // We need this extra check because removeSelfOrChildNodesForInsertion() can fire mutation events.
     for (auto& child : targets) {
         auto checkAcceptResult = checkAcceptChildGuaranteedNodeTypes(*this, child);
         if (checkAcceptResult.hasException())
@@ -508,12 +536,12 @@ ExceptionOr<void> ContainerNode::replaceChild(Node& newChild, Node& oldChild)
     NodeVector targets;
     {
         ChildListMutationScope mutation(*this);
-        auto collectResult = collectChildrenAndRemoveFromOldParent(newChild, targets);
+        auto collectResult = removeSelfOrChildNodesForInsertion(newChild, targets);
         if (collectResult.hasException())
             return collectResult.releaseException();
     }
 
-    // Do this one more time because collectChildrenAndRemoveFromOldParent() fires a MutationEvent.
+    // Do this one more time because removeSelfOrChildNodesForInsertion() fires a MutationEvent.
     for (auto& child : targets) {
         validityResult = checkPreReplacementValidity(*this, child, oldChild, ShouldValidateChildParent::No);
         if (validityResult.hasException())
@@ -707,14 +735,14 @@ ExceptionOr<void> ContainerNode::appendChildWithoutPreInsertionValidityCheck(Nod
     Ref<ContainerNode> protectedThis(*this);
 
     NodeVector targets;
-    auto removeResult = collectChildrenAndRemoveFromOldParent(newChild, targets);
+    auto removeResult = removeSelfOrChildNodesForInsertion(newChild, targets);
     if (removeResult.hasException())
         return removeResult.releaseException();
 
     if (targets.isEmpty())
         return { };
 
-    // We need this extra check because collectChildrenAndRemoveFromOldParent() can fire mutation events.
+    // We need this extra check because removeSelfOrChildNodesForInsertion() can fire mutation events.
     for (auto& child : targets) {
         auto nodeTypeResult = checkAcceptChildGuaranteedNodeTypes(*this, child);
         if (nodeTypeResult.hasException())
@@ -757,6 +785,15 @@ void ContainerNode::parserAppendChild(Node& newChild)
         newChild.setTreeScopeRecursively(treeScope());
         newChild.updateAncestorConnectedSubframeCountForInsertion();
     });
+}
+
+ExceptionOr<void> ContainerNode::appendChild(ChildChange::Source source, Node& newChild)
+{
+    if (source == ChildChange::Source::Parser) {
+        parserAppendChild(newChild);
+        return { };
+    }
+    return appendChild(newChild);
 }
 
 static bool affectsElements(const ContainerNode::ChildChange& change)
@@ -847,10 +884,6 @@ static void dispatchChildRemovalEvents(Ref<Node>& child)
 
     if (child->isInShadowTree())
         return;
-
-    // FIXME: This doesn't belong in dispatchChildRemovalEvents.
-    // FIXME: Nodes removed from a shadow tree should also be kept alive.
-    willCreatePossiblyOrphanedTreeByRemoval(child.ptr());
 
     Ref<Document> document = child->document();
 

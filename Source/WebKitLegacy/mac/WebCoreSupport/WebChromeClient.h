@@ -122,7 +122,7 @@ private:
 
     void setToolTip(const String&);
 
-    void print(WebCore::Frame&) final;
+    void print(WebCore::Frame&, const WebCore::StringWithDirection&) final;
     void exceededDatabaseQuota(WebCore::Frame&, const String& databaseName, WebCore::DatabaseDetails) final;
     void reachedMaxAppCacheSize(int64_t spaceNeeded) final;
     void reachedApplicationCacheOriginQuota(WebCore::SecurityOrigin&, int64_t totalSpaceNeeded) final;
@@ -149,6 +149,10 @@ private:
 
 #if ENABLE(DATE_AND_TIME_INPUT_TYPES)
     std::unique_ptr<WebCore::DateTimeChooser> createDateTimeChooser(WebCore::DateTimeChooserClient&) final;
+#endif
+
+#if ENABLE(APP_HIGHLIGHTS)
+    void storeAppHighlight(const WebCore::AppHighlight&) const final;
 #endif
 
 #if ENABLE(POINTER_LOCK)

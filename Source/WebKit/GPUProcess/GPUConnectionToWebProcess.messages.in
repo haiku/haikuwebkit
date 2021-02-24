@@ -23,10 +23,10 @@
 #if ENABLE(GPU_PROCESS)
 
 messages -> GPUConnectionToWebProcess WantsDispatchMessage {
-    void CreateRenderingBackend(struct WebKit::RemoteRenderingBackendCreationParameters parameters)
+    void CreateRenderingBackend(WebKit::RenderingBackendIdentifier identifier, IPC::Semaphore resumeDisplayListSemaphore)
     void ReleaseRenderingBackend(WebKit::RenderingBackendIdentifier renderingBackendIdentifier)
 #if ENABLE(WEBGL)
-    void CreateGraphicsContextGL(struct WebCore::GraphicsContextGLAttributes attributes, WebKit::GraphicsContextGLIdentifier graphicsContextGLIdentifier)
+    void CreateGraphicsContextGL(struct WebCore::GraphicsContextGLAttributes attributes, WebKit::GraphicsContextGLIdentifier graphicsContextGLIdentifier, WebKit::RenderingBackendIdentifier renderingBackendIdentifier, IPC::StreamConnectionBuffer stream)
     void ReleaseGraphicsContextGL(WebKit::GraphicsContextGLIdentifier graphicsContextGLIdentifier)
 #endif
     void ClearNowPlayingInfo()
@@ -40,6 +40,10 @@ messages -> GPUConnectionToWebProcess WantsDispatchMessage {
 #if ENABLE(VP9)
     EnableVP9Decoders(bool shouldEnableVP8Decoder, bool shouldEnableVP9Decoder, bool shouldEnableVP9SWDecoder)
 #endif
+    CreateAudioHardwareListener(WebKit::RemoteAudioHardwareListenerIdentifier identifier)
+    ReleaseAudioHardwareListener(WebKit::RemoteAudioHardwareListenerIdentifier identifier)
+    CreateRemoteCommandListener(WebKit::RemoteRemoteCommandListenerIdentifier identifier)
+    ReleaseRemoteCommandListener(WebKit::RemoteRemoteCommandListenerIdentifier identifier)
 }
 
 #endif // ENABLE(GPU_PROCESS)

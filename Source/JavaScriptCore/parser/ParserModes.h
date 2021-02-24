@@ -37,6 +37,8 @@ enum class JSParserScriptMode { Classic, Module };
 
 enum class SuperBinding { Needed, NotNeeded };
 
+enum class PrivateBrandRequirement { None, Needed };
+
 enum class CodeGenerationMode : uint8_t {
     Debugger = 1 << 0,
     TypeProfiler = 1 << 1,
@@ -320,8 +322,9 @@ const CodeFeatures SuperPropertyFeature =          1 << 9;
 const CodeFeatures NewTargetFeature =              1 << 10;
 const CodeFeatures NoEvalCacheFeature =            1 << 11;
 const CodeFeatures NonSimpleParameterListFeature = 1 << 12;
+const CodeFeatures AwaitFeature =                  1 << 13;
 
-const CodeFeatures AllFeatures = EvalFeature | ArgumentsFeature | WithFeature | ThisFeature | StrictModeFeature | ShadowsArgumentsFeature | ArrowFunctionFeature | ArrowFunctionContextFeature | SuperCallFeature | SuperPropertyFeature | NewTargetFeature | NoEvalCacheFeature | NonSimpleParameterListFeature;
+const CodeFeatures AllFeatures = EvalFeature | ArgumentsFeature | WithFeature | ThisFeature | StrictModeFeature | ShadowsArgumentsFeature | ArrowFunctionFeature | ArrowFunctionContextFeature | SuperCallFeature | SuperPropertyFeature | NewTargetFeature | NoEvalCacheFeature | NonSimpleParameterListFeature | AwaitFeature;
 
 typedef uint8_t InnerArrowFunctionCodeFeatures;
     

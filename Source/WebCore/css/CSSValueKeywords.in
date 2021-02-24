@@ -858,9 +858,6 @@ relevancy-level-indicator
 continuous-capacity-level-indicator
 discrete-capacity-level-indicator
 rating-level-indicator
-#if defined(ENABLE_SERVICE_CONTROLS) && ENABLE_SERVICE_CONTROLS
-image-controls-button
-#endif
 #if defined(ENABLE_APPLE_PAY) && ENABLE_APPLE_PAY
 -apple-pay-button
 #endif
@@ -972,6 +969,9 @@ paused
 //
 flat
 preserve-3d
+#if defined(ENABLE_CSS_TRANSFORM_STYLE_OPTIMIZED_3D) && ENABLE_CSS_TRANSFORM_STYLE_OPTIMIZED_3D
+optimized-3d
+#endif
 
 //
 // CSS_PROP__WEBKIT_TRANSITION_TIMING_FUNCTION
@@ -1264,9 +1264,29 @@ rgb
 rgba
 hsl
 hsla
+hwb
 lab
 lch
 //color
+
+// relative color identifiers
+// from
+r
+g
+b
+h
+s
+l
+// h
+w
+// b
+// l
+a
+// b
+// l
+c
+// h
+// alpha
 
 // transform
 matrix
@@ -1403,10 +1423,28 @@ last
 // color-gamut
 p3
 rec2020
+sRGB
 
 // color() function
-sRGB
+a98-rgb
 display-p3
+// lab
+prophoto-rgb
+// rec2020
+// sRGB
+xyz
+
+// color-mix()
+color-mix
+shorter
+longer
+increasing
+decreasing
+specified
+lightness
+chroma
+whiteness
+blackness
 
 // prefers-default-appearance
 prefers

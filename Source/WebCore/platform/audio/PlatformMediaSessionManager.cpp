@@ -43,6 +43,10 @@ bool PlatformMediaSessionManager::m_webMFormatReaderEnabled;
 bool PlatformMediaSessionManager::m_vorbisDecoderEnabled;
 #endif
 
+#if ENABLE(OPUS) && PLATFORM(MAC)
+bool PlatformMediaSessionManager::m_opusDecoderEnabled;
+#endif
+
 static std::unique_ptr<PlatformMediaSessionManager>& sharedPlatformMediaSessionManager()
 {
     static NeverDestroyed<std::unique_ptr<PlatformMediaSessionManager>> platformMediaSessionManager;
@@ -243,9 +247,8 @@ bool PlatformMediaSessionManager::sessionWillBeginPlayback(PlatformMediaSession&
         endInterruption(PlatformMediaSession::NoFlags);
 
     if (restrictions & ConcurrentPlaybackNotPermitted) {
-        forEachMatchingSession([&session, sessionType](auto& oneSession) {
+        forEachMatchingSession([&session](auto& oneSession) {
             return &oneSession != &session
-                && oneSession.mediaType() == sessionType
                 && oneSession.state() == PlatformMediaSession::Playing
                 && !oneSession.canPlayConcurrently(session);
         }, [](auto& oneSession) {
@@ -431,7 +434,7 @@ void PlatformMediaSessionManager::sessionCanProduceAudioChanged()
     updateSessionState();
 }
 
-void PlatformMediaSessionManager::processDidReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType command, const PlatformMediaSession::RemoteCommandArgument* argument)
+void PlatformMediaSessionManager::processDidReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType command, const PlatformMediaSession::RemoteCommandArgument& argument)
 {
     PlatformMediaSession* activeSession = currentSession();
     if (!activeSession || !activeSession->canReceiveRemoteControlCommands())
@@ -467,18 +470,18 @@ void PlatformMediaSessionManager::processSystemDidWake()
     });
 }
 
-void PlatformMediaSessionManager::pauseAllMediaPlaybackForDocument(DocumentIdentifier documentIdentifier)
+void PlatformMediaSessionManager::pauseAllMediaPlaybackForGroup(MediaSessionGroupIdentifier mediaSessionGroupIdentifier)
 {
-    forEachDocumentSession(documentIdentifier, [](auto& session) {
+    forEachSessionInGroup(mediaSessionGroupIdentifier, [](auto& session) {
         session.pauseSession();
     });
 }
 
 
-bool PlatformMediaSessionManager::mediaPlaybackIsPaused(DocumentIdentifier documentIdentifier)
+bool PlatformMediaSessionManager::mediaPlaybackIsPaused(MediaSessionGroupIdentifier mediaSessionGroupIdentifier)
 {
     bool mediaPlaybackIsPaused = false;
-    forEachDocumentSession(documentIdentifier, [&mediaPlaybackIsPaused](auto& session) {
+    forEachSessionInGroup(mediaSessionGroupIdentifier, [&mediaPlaybackIsPaused](auto& session) {
         if (session.state() == PlatformMediaSession::Paused)
             mediaPlaybackIsPaused = true;
     });
@@ -492,30 +495,30 @@ void PlatformMediaSessionManager::stopAllMediaPlaybackForProcess()
     });
 }
 
-void PlatformMediaSessionManager::suspendAllMediaPlaybackForDocument(DocumentIdentifier documentIdentifier)
+void PlatformMediaSessionManager::suspendAllMediaPlaybackForGroup(MediaSessionGroupIdentifier mediaSessionGroupIdentifier)
 {
-    forEachDocumentSession(documentIdentifier, [](auto& session) {
+    forEachSessionInGroup(mediaSessionGroupIdentifier, [](auto& session) {
         session.beginInterruption(PlatformMediaSession::PlaybackSuspended);
     });
 }
 
-void PlatformMediaSessionManager::resumeAllMediaPlaybackForDocument(DocumentIdentifier documentIdentifier)
+void PlatformMediaSessionManager::resumeAllMediaPlaybackForGroup(MediaSessionGroupIdentifier mediaSessionGroupIdentifier)
 {
-    forEachDocumentSession(documentIdentifier, [](auto& session) {
+    forEachSessionInGroup(mediaSessionGroupIdentifier, [](auto& session) {
         session.endInterruption(PlatformMediaSession::MayResumePlaying);
     });
 }
 
-void PlatformMediaSessionManager::suspendAllMediaBufferingForDocument(DocumentIdentifier documentIdentifier)
+void PlatformMediaSessionManager::suspendAllMediaBufferingForGroup(MediaSessionGroupIdentifier mediaSessionGroupIdentifier)
 {
-    forEachDocumentSession(documentIdentifier, [](auto& session) {
+    forEachSessionInGroup(mediaSessionGroupIdentifier, [](auto& session) {
         session.suspendBuffering();
     });
 }
 
-void PlatformMediaSessionManager::resumeAllMediaBufferingForDocument(DocumentIdentifier documentIdentifier)
+void PlatformMediaSessionManager::resumeAllMediaBufferingForGroup(MediaSessionGroupIdentifier mediaSessionGroupIdentifier)
 {
-    forEachDocumentSession(documentIdentifier, [](auto& session) {
+    forEachSessionInGroup(mediaSessionGroupIdentifier, [](auto& session) {
         session.resumeBuffering();
     });
 }
@@ -539,10 +542,13 @@ void PlatformMediaSessionManager::forEachMatchingSession(const Function<bool(con
     }
 }
 
-void PlatformMediaSessionManager::forEachDocumentSession(DocumentIdentifier documentIdentifier, const Function<void(PlatformMediaSession&)>& callback)
+void PlatformMediaSessionManager::forEachSessionInGroup(MediaSessionGroupIdentifier mediaSessionGroupIdentifier, const Function<void(PlatformMediaSession&)>& callback)
 {
-    forEachMatchingSession([documentIdentifier](auto& session) {
-        return session.client().hostingDocumentIdentifier() == documentIdentifier;
+    if (!mediaSessionGroupIdentifier)
+        return;
+
+    forEachMatchingSession([mediaSessionGroupIdentifier](auto& session) {
+        return session.client().mediaSessionGroupIdentifier() == mediaSessionGroupIdentifier;
     }, [&callback](auto& session) {
         callback(session);
     });
@@ -575,7 +581,6 @@ void PlatformMediaSessionManager::addAudioCaptureSource(PlatformMediaSession::Au
 
 void PlatformMediaSessionManager::removeAudioCaptureSource(PlatformMediaSession::AudioCaptureSource& source)
 {
-    ASSERT(m_audioCaptureSources.contains(source));
     m_audioCaptureSources.remove(source);
     scheduleUpdateSessionState();
 }
@@ -649,6 +654,24 @@ void PlatformMediaSessionManager::setVorbisDecoderEnabled(bool enabled)
 {
 #if ENABLE(VORBIS) && PLATFORM(MAC)
     m_vorbisDecoderEnabled = enabled;
+#else
+    UNUSED_PARAM(enabled);
+#endif
+}
+
+bool PlatformMediaSessionManager::opusDecoderEnabled()
+{
+#if ENABLE(OPUS) && PLATFORM(MAC)
+    return m_opusDecoderEnabled;
+#else
+    return false;
+#endif
+}
+
+void PlatformMediaSessionManager::setOpusDecoderEnabled(bool enabled)
+{
+#if ENABLE(OPUS) && PLATFORM(MAC)
+    m_opusDecoderEnabled = enabled;
 #else
     UNUSED_PARAM(enabled);
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2021 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -133,6 +133,18 @@ std::unique_ptr<AccessCase> AccessCase::createDelete(
     return std::unique_ptr<AccessCase>(new AccessCase(vm, owner, Delete, identifier, offset, newStructure, { }, { }));
 }
 
+std::unique_ptr<AccessCase> AccessCase::createCheckPrivateBrand(VM& vm, JSCell* owner, CacheableIdentifier identifier, Structure* structure)
+{
+    return std::unique_ptr<AccessCase>(new AccessCase(vm, owner, CheckPrivateBrand, identifier, invalidOffset, structure, { }, { }));
+}
+
+std::unique_ptr<AccessCase> AccessCase::createSetPrivateBrand(
+    VM& vm, JSCell* owner, CacheableIdentifier identifier, Structure* oldStructure, Structure* newStructure)
+{
+    RELEASE_ASSERT(oldStructure == newStructure->previousID());
+    return std::unique_ptr<AccessCase>(new AccessCase(vm, owner, SetPrivateBrand, identifier, invalidOffset, newStructure, { }, { }));
+}
+
 AccessCase::~AccessCase()
 {
 }
@@ -192,23 +204,27 @@ Vector<WatchpointSet*, 2> AccessCase::commit(VM& vm)
 
     Vector<WatchpointSet*, 2> result;
     Structure* structure = this->structure();
+    auto append = [&] (auto* set) {
+        ASSERT(set->isStillValid());
+        result.append(set);
+    };
 
     if (m_identifier) {
         if ((structure && structure->needImpurePropertyWatchpoint())
             || m_conditionSet.needImpurePropertyWatchpoint()
             || (m_polyProtoAccessChain && m_polyProtoAccessChain->needImpurePropertyWatchpoint(vm)))
-            result.append(vm.ensureWatchpointSetForImpureProperty(m_identifier.uid()));
+            append(vm.ensureWatchpointSetForImpureProperty(m_identifier.uid()));
     }
 
     if (additionalSet())
-        result.append(additionalSet());
+        append(additionalSet());
 
     if (structure
         && structure->hasRareData()
         && structure->rareData()->hasSharedPolyProtoWatchpoint()
         && structure->rareData()->sharedPolyProtoWatchpoint()->isStillValid()) {
         WatchpointSet* set = structure->rareData()->sharedPolyProtoWatchpoint()->inflate();
-        result.append(set);
+        append(set);
     }
 
     m_state = Committed;
@@ -288,6 +304,8 @@ bool AccessCase::requiresIdentifierNameMatch() const
     case DirectArgumentsLength:
     case ScopedArgumentsLength:
     case ModuleNamespaceLoad:
+    case CheckPrivateBrand:
+    case SetPrivateBrand:
         return true;
     case InstanceOfHit:
     case InstanceOfMiss:
@@ -341,6 +359,8 @@ bool AccessCase::requiresInt32PropertyCheck() const
     case InstanceOfHit:
     case InstanceOfMiss:
     case InstanceOfGeneric:
+    case CheckPrivateBrand:
+    case SetPrivateBrand:
         return false;
     case IndexedInt32Load:
     case IndexedDoubleLoad:
@@ -383,6 +403,8 @@ bool AccessCase::needsScratchFPR() const
     case IntrinsicGetter:
     case InHit:
     case InMiss:
+    case CheckPrivateBrand:
+    case SetPrivateBrand:
     case ArrayLength:
     case StringLength:
     case DirectArgumentsLength:
@@ -470,6 +492,8 @@ void AccessCase::forEachDependentCell(VM& vm, const Functor& functor) const
     case GetGetter:
     case InHit:
     case InMiss:
+    case CheckPrivateBrand:
+    case SetPrivateBrand:
     case ArrayLength:
     case StringLength:
     case DirectArgumentsLength:
@@ -519,6 +543,8 @@ bool AccessCase::doesCalls(VM& vm, Vector<JSCell*>* cellsToMarkIfDoesCalls) cons
     case IntrinsicGetter:
     case InHit:
     case InMiss:
+    case CheckPrivateBrand:
+    case SetPrivateBrand:
     case ArrayLength:
     case StringLength:
     case DirectArgumentsLength:
@@ -670,6 +696,8 @@ bool AccessCase::canReplace(const AccessCase& other) const
     case CustomAccessorSetter:
     case InHit:
     case InMiss:
+    case CheckPrivateBrand:
+    case SetPrivateBrand:
         if (other.type() != type())
             return false;
 
@@ -701,7 +729,7 @@ void AccessCase::dump(PrintStream& out) const
         out.print(comma, "prototype access chain = ");
         m_polyProtoAccessChain->dump(structure(), out);
     } else {
-        if (m_type == Transition || m_type == Delete)
+        if (m_type == Transition || m_type == Delete || m_type == SetPrivateBrand)
             out.print(comma, "structure = ", pointerDump(structure()), " -> ", pointerDump(newStructure()));
         else if (m_structure)
             out.print(comma, "structure = ", pointerDump(m_structure.get()));
@@ -729,7 +757,8 @@ bool AccessCase::visitWeak(VM& vm) const
     return isValid;
 }
 
-bool AccessCase::propagateTransitions(SlotVisitor& visitor) const
+template<typename Visitor>
+bool AccessCase::propagateTransitions(Visitor& visitor) const
 {
     bool result = true;
 
@@ -744,7 +773,7 @@ bool AccessCase::propagateTransitions(SlotVisitor& visitor) const
     switch (m_type) {
     case Transition:
     case Delete:
-        if (visitor.vm().heap.isMarked(m_structure->previousID()))
+        if (visitor.isMarked(m_structure->previousID()))
             visitor.appendUnbarriered(m_structure.get());
         else
             result = false;
@@ -756,10 +785,17 @@ bool AccessCase::propagateTransitions(SlotVisitor& visitor) const
     return result;
 }
 
-void AccessCase::visitAggregate(SlotVisitor& visitor) const
+template bool AccessCase::propagateTransitions(AbstractSlotVisitor&) const;
+template bool AccessCase::propagateTransitions(SlotVisitor&) const;
+
+
+template<typename Visitor>
+void AccessCase::visitAggregateImpl(Visitor& visitor) const
 {
     m_identifier.visitAggregate(visitor);
 }
+
+DEFINE_VISIT_AGGREGATE_WITH_MODIFIER(AccessCase, const);
 
 void AccessCase::generateWithGuard(
     AccessGenerationState& state, CCallHelpers::JumpList& fallThrough)
@@ -1330,6 +1366,12 @@ void AccessCase::generateWithGuard(
             state.failAndIgnore.append(jit.jump());
         } else
             state.failAndIgnore.append(failAndIgnore);
+        return;
+    }
+
+    case CheckPrivateBrand: {
+        emitDefaultGuard();
+        state.succeed();
         return;
     }
         
@@ -2034,6 +2076,19 @@ void AccessCase::generateImpl(AccessGenerationState& state)
         return;
     }
 
+    case SetPrivateBrand: {
+        ASSERT(structure()->transitionWatchpointSetHasBeenInvalidated());
+        ASSERT(newStructure()->transitionKind() == TransitionKind::SetBrand);
+
+        uint32_t structureBits = bitwise_cast<uint32_t>(newStructure()->id());
+        jit.store32(
+            CCallHelpers::TrustedImm32(structureBits),
+            CCallHelpers::Address(baseGPR, JSCell::structureIDOffset()));
+
+        state.succeed();
+        return;
+    }
+
     case DeleteNonConfigurable: {
         jit.move(MacroAssembler::TrustedImm32(false), valueRegs.payloadGPR());
         state.succeed();
@@ -2107,6 +2162,7 @@ void AccessCase::generateImpl(AccessGenerationState& state)
     case IndexedTypedArrayFloat32Load:
     case IndexedTypedArrayFloat64Load:
     case IndexedStringLoad:
+    case CheckPrivateBrand:
         // These need to be handled by generateWithGuard(), since the guard is part of the
         // algorithm. We can be sure that nobody will call generate() directly for these since they
         // are not guarded by structure checks.

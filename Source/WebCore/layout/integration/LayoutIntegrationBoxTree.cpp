@@ -83,8 +83,25 @@ void BoxTree::buildTree()
         if (is<RenderBlock>(childRenderer))
             return makeUnique<Layout::ReplacedBox>(Layout::Box::ElementAttributes { Layout::Box::ElementType::GenericElement }, WTFMove(style));
 
-        if (is<RenderInline>(childRenderer))
+        if (is<RenderInline>(childRenderer)) {
+            if (childRenderer.parent()->isAnonymousBlock()) {
+                // This looks like continuation renderer.
+                auto& renderInline = downcast<RenderInline>(childRenderer);
+                auto shouldNotRetainBorderPaddingAndMarginStart = renderInline.isContinuation();
+                auto shouldNotRetainBorderPaddingAndMarginEnd = !renderInline.isContinuation() && renderInline.inlineContinuation();
+                if (shouldNotRetainBorderPaddingAndMarginStart) {
+                    style.setMarginStart(RenderStyle::initialMargin());
+                    style.resetBorderLeft();
+                    style.setPaddingLeft(RenderStyle::initialPadding());
+                }
+                if (shouldNotRetainBorderPaddingAndMarginEnd) {
+                    style.setMarginEnd(RenderStyle::initialMargin());
+                    style.resetBorderRight();
+                    style.setPaddingRight(RenderStyle::initialPadding());
+                }
+            }
             return makeUnique<Layout::ContainerBox>(Layout::Box::ElementAttributes { Layout::Box::ElementType::GenericElement }, WTFMove(style));
+        }
 
         ASSERT_NOT_REACHED();
         return nullptr;
@@ -119,8 +136,10 @@ void BoxTree::updateStyle(const RenderBoxModelObject& renderer)
 {
     auto& layoutBox = layoutBoxForRenderer(renderer);
     auto& style = renderer.style();
-
-    layoutBox.updateStyle(style);
+    if (&layoutBox == &rootLayoutBox())
+        layoutBox.updateStyle(rootBoxStyle(style));
+    else
+        layoutBox.updateStyle(style);
 
     if (is<Layout::ContainerBox>(layoutBox)) {
         for (auto* child = downcast<Layout::ContainerBox>(layoutBox).firstChild(); child; child = child->nextSibling()) {

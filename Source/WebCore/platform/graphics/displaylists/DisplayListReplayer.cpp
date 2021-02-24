@@ -46,6 +46,11 @@ Replayer::Replayer(GraphicsContext& context, const DisplayList& displayList, con
 
 Replayer::~Replayer() = default;
 
+GraphicsContext& Replayer::context() const
+{
+    return m_maskImageBuffer ? m_maskImageBuffer->context() : m_context;
+}
+
 template<class T>
 inline static Optional<RenderingResourceIdentifier> applyImageBufferItem(GraphicsContext& context, const ImageBufferHashMap& imageBuffers, ItemHandle item)
 {
@@ -70,6 +75,29 @@ inline static Optional<RenderingResourceIdentifier> applyNativeImageItem(Graphic
     return resourceIdentifier;
 }
 
+inline static Optional<RenderingResourceIdentifier> applySetStateItem(GraphicsContext& context, const NativeImageHashMap& nativeImages, ItemHandle item)
+{
+    auto& setStateItem = item.get<SetState>();
+
+    NativeImage* strokePatternImage = nullptr;
+    NativeImage* fillPatternImage = nullptr;
+
+    if (auto resourceIdentifier = setStateItem.strokePatternImageIdentifier()) {
+        strokePatternImage = nativeImages.get(resourceIdentifier);
+        if (!strokePatternImage)
+            return resourceIdentifier;
+    }
+
+    if (auto resourceIdentifier = setStateItem.fillPatternImageIdentifier()) {
+        fillPatternImage = nativeImages.get(resourceIdentifier);
+        if (!fillPatternImage)
+            return resourceIdentifier;
+    }
+
+    setStateItem.apply(context, strokePatternImage, fillPatternImage);
+    return WTF::nullopt;
+}
+
 template<class T>
 inline static Optional<RenderingResourceIdentifier> applyFontItem(GraphicsContext& context, const FontRenderingResourceMap& fonts, ItemHandle item)
 {
@@ -84,40 +112,65 @@ inline static Optional<RenderingResourceIdentifier> applyFontItem(GraphicsContex
 
 std::pair<Optional<StopReplayReason>, Optional<RenderingResourceIdentifier>> Replayer::applyItem(ItemHandle item)
 {
-    if (m_delegate && m_delegate->apply(item, m_context))
+    if (m_delegate && m_delegate->apply(item, context()))
         return { WTF::nullopt, WTF::nullopt };
 
     if (item.is<DrawImageBuffer>()) {
-        if (auto missingCachedResourceIdentifier = applyImageBufferItem<DrawImageBuffer>(m_context, m_imageBuffers, item))
+        if (auto missingCachedResourceIdentifier = applyImageBufferItem<DrawImageBuffer>(context(), m_imageBuffers, item))
             return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
         return { WTF::nullopt, WTF::nullopt };
     }
 
     if (item.is<ClipToImageBuffer>()) {
-        if (auto missingCachedResourceIdentifier = applyImageBufferItem<ClipToImageBuffer>(m_context, m_imageBuffers, item))
+        if (auto missingCachedResourceIdentifier = applyImageBufferItem<ClipToImageBuffer>(context(), m_imageBuffers, item))
             return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
         return { WTF::nullopt, WTF::nullopt };
     }
 
     if (item.is<DrawNativeImage>()) {
-        if (auto missingCachedResourceIdentifier = applyNativeImageItem<DrawNativeImage>(m_context, m_nativeImages, item))
+        if (auto missingCachedResourceIdentifier = applyNativeImageItem<DrawNativeImage>(context(), m_nativeImages, item))
             return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
         return { WTF::nullopt, WTF::nullopt };
     }
 
     if (item.is<DrawGlyphs>()) {
-        if (auto missingCachedResourceIdentifier = applyFontItem<DrawGlyphs>(m_context, m_fonts, item))
+        if (auto missingCachedResourceIdentifier = applyFontItem<DrawGlyphs>(context(), m_fonts, item))
             return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
         return { WTF::nullopt, WTF::nullopt };
     }
 
     if (item.is<DrawPattern>()) {
-        if (auto missingCachedResourceIdentifier = applyNativeImageItem<DrawPattern>(m_context, m_nativeImages, item))
+        if (auto missingCachedResourceIdentifier = applyNativeImageItem<DrawPattern>(context(), m_nativeImages, item))
             return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
         return { WTF::nullopt, WTF::nullopt };
     }
 
-    item.apply(m_context);
+    if (item.is<SetState>()) {
+        if (auto missingCachedResourceIdentifier = applySetStateItem(context(), m_nativeImages, item))
+            return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
+        return { WTF::nullopt, WTF::nullopt };
+    }
+
+    if (item.is<BeginClipToDrawingCommands>()) {
+        if (m_maskImageBuffer)
+            return { StopReplayReason::InvalidItem, WTF::nullopt };
+        auto& clipItem = item.get<BeginClipToDrawingCommands>();
+        m_maskImageBuffer = ImageBuffer::createCompatibleBuffer(clipItem.destination().size(), clipItem.colorSpace(), m_context);
+        if (!m_maskImageBuffer)
+            return { StopReplayReason::OutOfMemory, WTF::nullopt };
+        return { WTF::nullopt, WTF::nullopt };
+    }
+
+    if (item.is<EndClipToDrawingCommands>()) {
+        if (!m_maskImageBuffer)
+            return { StopReplayReason::InvalidItem, WTF::nullopt };
+        auto& clipItem = item.get<EndClipToDrawingCommands>();
+        m_context.clipToImageBuffer(*m_maskImageBuffer, clipItem.destination());
+        m_maskImageBuffer = nullptr;
+        return { WTF::nullopt, WTF::nullopt };
+    }
+
+    item.apply(context());
     return { WTF::nullopt, WTF::nullopt };
 }
 
@@ -141,16 +194,21 @@ ReplayResult Replayer::replay(const FloatRect& initialClip, bool trackReplayList
             continue;
         }
 
-        LOG_WITH_STREAM(DisplayLists, stream << "applying " << i++ << " " << item);
-
-        if (item.is<MetaCommandChangeDestinationImageBuffer>()) {
-            result.numberOfBytesRead += itemSizeInBuffer;
-            result.reasonForStopping = StopReplayReason::ChangeDestinationImageBuffer;
-            result.nextDestinationImageBuffer = item.get<MetaCommandChangeDestinationImageBuffer>().identifier();
+        if (!item) {
+            result.reasonForStopping = StopReplayReason::InvalidItem;
             break;
         }
 
-        if (auto [reasonForStopping, missingCachedResourceIdentifier] = applyItem(item); reasonForStopping) {
+        LOG_WITH_STREAM(DisplayLists, stream << "applying " << i++ << " " << item);
+
+        if (item->is<MetaCommandChangeDestinationImageBuffer>()) {
+            result.numberOfBytesRead += itemSizeInBuffer;
+            result.reasonForStopping = StopReplayReason::ChangeDestinationImageBuffer;
+            result.nextDestinationImageBuffer = item->get<MetaCommandChangeDestinationImageBuffer>().identifier();
+            break;
+        }
+
+        if (auto [reasonForStopping, missingCachedResourceIdentifier] = applyItem(*item); reasonForStopping) {
             result.reasonForStopping = *reasonForStopping;
             result.missingCachedResourceIdentifier = WTFMove(missingCachedResourceIdentifier);
             break;
@@ -159,8 +217,8 @@ ReplayResult Replayer::replay(const FloatRect& initialClip, bool trackReplayList
         result.numberOfBytesRead += itemSizeInBuffer;
 
         if (UNLIKELY(trackReplayList)) {
-            replayList->append(item);
-            if (item.isDrawingItem())
+            replayList->append(*item);
+            if (item->isDrawingItem())
                 replayList->addDrawingItemExtent(WTFMove(extent));
         }
     }
