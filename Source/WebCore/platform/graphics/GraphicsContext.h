@@ -56,6 +56,10 @@ namespace WebCore {
 class PlatformContextCairo;
 }
 typedef WebCore::PlatformContextCairo PlatformGraphicsContext;
+#elif PLATFORM(HAIKU)
+class BView;
+typedef BView PlatformGraphicsContext;
+struct pattern;
 #else
 typedef void PlatformGraphicsContext;
 #endif
