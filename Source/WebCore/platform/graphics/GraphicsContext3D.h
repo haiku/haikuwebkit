@@ -76,6 +76,10 @@ typedef void* PlatformGraphicsContext3DSurface;
 typedef void* PlatformGraphicsContext3DConfig;
 #endif // USE(ANGLE)
 
+#if PLATFORM(HAIKU)
+class BView;
+#endif
+
 OBJC_CLASS CALayer;
 OBJC_CLASS WebGLLayer;
 typedef struct __IOSurface* IOSurfaceRef;
@@ -1561,7 +1565,7 @@ private:
     unsigned m_statusCheckCount { 0 };
     bool m_failNextStatusCheck { false };
 
-#if USE(CAIRO)
+#if USE(CAIRO) || PLATFORM(HAIKU)
     Platform3DObject m_vao { 0 };
 #endif
 
