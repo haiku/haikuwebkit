@@ -64,14 +64,17 @@ typedef void* PlatformGraphicsContext3D;
 #endif // __OBJC__
 #endif // USE(OPENGL_ES)
 
-#if PLATFORM(HAIKU)
-class BView;
-#endif
-
-#if !USE(OPENGL_ES)
+#if USE(OPENGL)
 typedef struct _CGLContextObject *CGLContextObj;
 typedef CGLContextObj PlatformGraphicsContext3D;
-#endif
+#endif // USE(OPENGL)
+
+#if USE(ANGLE)
+typedef void* PlatformGraphicsContext3D;
+typedef void* PlatformGraphicsContext3DDisplay;
+typedef void* PlatformGraphicsContext3DSurface;
+typedef void* PlatformGraphicsContext3DConfig;
+#endif // USE(ANGLE)
 
 OBJC_CLASS CALayer;
 OBJC_CLASS WebGLLayer;
@@ -98,8 +101,10 @@ namespace WebCore {
 class Extensions3D;
 #if !PLATFORM(COCOA) && USE(OPENGL_ES)
 class Extensions3DOpenGLES;
-#else
+#elif USE(OPENGL) || (PLATFORM(COCOA) && USE(OPENGL_ES))
 class Extensions3DOpenGL;
+#elif USE(ANGLE)
+class Extensions3DANGLE;
 #endif
 class HostWindow;
 class Image;
@@ -1052,14 +1057,18 @@ public:
     void getIntegerv(GC3Denum pname, GC3Dint* value);
     void getInteger64v(GC3Denum pname, GC3Dint64* value);
     void getProgramiv(Platform3DObject program, GC3Denum pname, GC3Dint* value);
+#if !USE(ANGLE)
     void getNonBuiltInActiveSymbolCount(Platform3DObject program, GC3Denum pname, GC3Dint* value);
+#endif // !USE(ANGLE)
     String getProgramInfoLog(Platform3DObject);
     String getUnmangledInfoLog(Platform3DObject[2], GC3Dsizei, const String&);
     void getRenderbufferParameteriv(GC3Denum target, GC3Denum pname, GC3Dint* value);
     void getShaderiv(Platform3DObject, GC3Denum pname, GC3Dint* value);
     String getShaderInfoLog(Platform3DObject);
     void getShaderPrecisionFormat(GC3Denum shaderType, GC3Denum precisionType, GC3Dint* range, GC3Dint* precision);
+#if !USE(ANGLE)
     String getShaderSource(Platform3DObject);
+#endif // !USE(ANGLE)
     String getString(GC3Denum name);
     void getTexParameterfv(GC3Denum target, GC3Denum pname, GC3Dfloat* value);
     void getTexParameteriv(GC3Denum target, GC3Denum pname, GC3Dint* value);
@@ -1125,8 +1134,10 @@ public:
 
     void useProgram(Platform3DObject);
     void validateProgram(Platform3DObject);
+#if !USE(ANGLE)
     bool checkVaryingsPacking(Platform3DObject vertexShader, Platform3DObject fragmentShader) const;
     bool precisionsMatch(Platform3DObject vertexShader, Platform3DObject fragmentShader) const;
+#endif
 
     void vertexAttrib1f(GC3Duint index, GC3Dfloat x);
     void vertexAttrib1fv(GC3Duint index, const GC3Dfloat* values);
@@ -1183,6 +1194,11 @@ public:
     void allocateIOSurfaceBackingStore(IntSize);
     void updateFramebufferTextureBackingStoreFromLayer();
     void updateCGLContext();
+#endif
+
+#if USE(ANGLE) && PLATFORM(MAC)
+    void allocateIOSurfaceBackingStore(IntSize);
+    void updateFramebufferTextureBackingStoreFromLayer();
 #endif
 #endif // PLATFORM(COCOA)
 
@@ -1360,7 +1376,10 @@ private:
 #if PLATFORM(COCOA)
     RetainPtr<WebGLLayer> m_webGLLayer;
     PlatformGraphicsContext3D m_contextObj { nullptr };
-#endif
+#if USE(ANGLE)
+    PlatformGraphicsContext3DDisplay m_displayObj { nullptr };
+#endif // USE(ANGLE)
+#endif // PLATFORM(COCOA)
 
 #if PLATFORM(WIN) && USE(CA)
     RefPtr<PlatformCALayer> m_webGLLayer;
@@ -1394,6 +1413,7 @@ private:
         }
     };
 
+#if !USE(ANGLE)
     // FIXME: Shaders are never removed from this map, even if they and their program are deleted.
     // This is bad, and it also relies on the fact we never reuse Platform3DObject numbers.
     typedef HashMap<Platform3DObject, ShaderSourceEntry> ShaderSourceMap;
@@ -1432,22 +1452,29 @@ private:
     Optional<String> originalSymbolInShaderSourceMap(Platform3DObject shader, ANGLEShaderSymbolType, const String& name);
 
     std::unique_ptr<ShaderNameHash> nameHashMapForShaders;
+#endif // !USE(ANGLE)
 
 #if !PLATFORM(COCOA) && USE(OPENGL_ES)
     friend class Extensions3DOpenGLES;
-    std::unique_ptr<Extensions3DOpenGLES> m_extensions;
-#else
-    friend class Extensions3DOpenGL;
-    std::unique_ptr<Extensions3DOpenGL> m_extensions;
-#endif
     friend class Extensions3DOpenGLCommon;
+    std::unique_ptr<Extensions3DOpenGLES> m_extensions;
+#elif USE(OPENGL) || (PLATFORM(COCOA) && USE(OPENGL_ES))
+    friend class Extensions3DOpenGL;
+    friend class Extensions3DOpenGLCommon;
+    std::unique_ptr<Extensions3DOpenGL> m_extensions;
+#elif USE(ANGLE)
+    friend class Extensions3DANGLE;
+    std::unique_ptr<Extensions3DANGLE> m_extensions;
+#endif
 
     GraphicsContext3DAttributes m_attrs;
     GraphicsContext3DPowerPreference m_powerPreferenceUsedForCreation { GraphicsContext3DPowerPreference::Default };
     RenderStyle m_renderStyle;
     Vector<Vector<float>> m_vertexArray;
 
+#if !USE(ANGLE)
     ANGLEWebKitBridge m_compiler;
+#endif
 
     GC3Duint m_texture { 0 };
     GC3Duint m_fbo { 0 };
@@ -1462,6 +1489,10 @@ private:
 
     bool m_layerComposited { false };
     GC3Duint m_internalColorFormat { 0 };
+
+#if USE(ANGLE)
+    PlatformGraphicsContext3DSurface m_pbuffer;
+#endif
 
     struct GraphicsContext3DState {
         GC3Duint boundFBO { 0 };
@@ -1530,7 +1561,7 @@ private:
     unsigned m_statusCheckCount { 0 };
     bool m_failNextStatusCheck { false };
 
-#if USE(CAIRO) || PLATFORM(HAIKU)
+#if USE(CAIRO)
     Platform3DObject m_vao { 0 };
 #endif
 
