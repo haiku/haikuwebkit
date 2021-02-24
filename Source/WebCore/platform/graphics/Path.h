@@ -67,6 +67,10 @@ typedef void PlatformPath;
 #if !USE(CAIRO)
 typedef PlatformPath* PlatformPathPtr;
 
+#elif PLATFORM(HAIKU)
+class BShape;
+typedef BShape PlatformPath;
+
 #if USE(CG)
 using PlatformPathStorageType = RetainPtr<CGMutablePathRef>;
 #elif USE(DIRECT2D)
