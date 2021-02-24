@@ -380,6 +380,7 @@ public:
     void setMockGamepadButtonValue(unsigned index, unsigned buttonIndex, double value);
     
     // Resource Load Statistics
+    void setStatisticsEnabled(bool value);
     void installStatisticsDidModifyDataRecordsCallback(JSValueRef callback);
     void installStatisticsDidScanDataRecordsCallback(JSValueRef callback);
     void installStatisticsDidRunTelemetryCallback(JSValueRef callback);
@@ -434,6 +435,10 @@ public:
     void statisticsCallClearThroughWebsiteDataRemovalCallback();
     bool isStatisticsHasLocalStorage(JSStringRef hostName);
     void setStatisticsCacheMaxAgeCap(double seconds);
+    void setStatisticsShouldDowngradeReferrer(bool, JSValueRef callback);
+    void statisticsCallDidSetShouldDowngradeReferrerCallback();
+    void setStatisticsShouldBlockThirdPartyCookies(bool, JSValueRef callback);
+    void statisticsCallDidSetShouldBlockThirdPartyCookiesCallback();
     void statisticsResetToConsistentState(JSValueRef completionHandler);
     void statisticsCallDidResetToConsistentStateCallback();
 
@@ -484,8 +489,8 @@ public:
 
     void sendDisplayConfigurationChangedMessageForTesting();
 
-    // WebAuthN
-    void setWebAuthenticationMockConfiguration(JSValueRef);
+    void setServiceWorkerFetchTimeout(double seconds);
+
     // FIXME(189876)
     void addTestKeyToKeychain(JSStringRef privateKeyBase64, JSStringRef attrLabel, JSStringRef applicationTagBase64);
     void cleanUpKeychain(JSStringRef attrLabel);
@@ -567,6 +572,8 @@ private:
 
     bool m_userStyleSheetEnabled { false };
     bool m_dumpAllHTTPRedirectedResponseHeaders { false };
+    bool m_hasSetDowngradeReferrerCallback { false };
+    bool m_hasSetBlockThirdPartyCookiesCallback { false };
 };
 
 } // namespace WTR

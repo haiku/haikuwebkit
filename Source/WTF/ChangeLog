@@ -1,3 +1,2441 @@
+2019-11-04  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r248552. rdar://problem/56868427
+
+    Replace multiparameter overloads of append() in StringBuilder as a first step toward standardizinging on the flexibleAppend() implementation
+    https://bugs.webkit.org/show_bug.cgi?id=200614
+    
+    Reviewed by Darin Adler.
+    
+    Renames StringBuilder::append(const LChar*, unsigned), StringBuilder::append(const UChar*, unsigned) and 
+    StringBuilder::append(const char*, unsigned) to StringBuilder::appendCharacters(...).
+            
+    Renames StringBuilder::append(const String& string, unsigned offset, unsigned length) to 
+    StringBuilder::appendSubstring(...).
+    
+    Source/JavaScriptCore:
+    
+    * dfg/DFGStrengthReductionPhase.cpp:
+    (JSC::DFG::StrengthReductionPhase::handleNode):
+    * runtime/ConfigFile.cpp:
+    (JSC::ConfigFile::parse):
+    * runtime/LiteralParser.cpp:
+    (JSC::LiteralParser<CharType>::Lexer::lexStringSlow):
+    * tools/FunctionOverrides.cpp:
+    (JSC::parseClause):
+    Update for renames.
+    
+    Source/WebCore:
+    
+    * dom/Range.cpp:
+    (WebCore::Range::toString const):
+    * editing/Editing.cpp:
+    (WebCore::stringWithRebalancedWhitespace):
+    * editing/MarkupAccumulator.cpp:
+    (WebCore::appendCharactersReplacingEntitiesInternal):
+    * editing/TextIterator.cpp:
+    (WebCore::TextIteratorCopyableText::appendToStringBuilder const):
+    * html/HTMLTextFormControlElement.cpp:
+    (WebCore::HTMLTextFormControlElement::valueWithHardLineBreaks const):
+    * html/parser/HTMLTokenizer.cpp:
+    (WebCore::HTMLTokenizer::bufferedCharacters const):
+    * platform/graphics/avfoundation/InbandTextTrackPrivateAVF.cpp:
+    (WebCore::InbandTextTrackPrivateAVF::processNativeSamples):
+    * platform/text/SegmentedString.cpp:
+    (WebCore::SegmentedString::Substring::appendTo const):
+    * platform/text/TextCodecICU.cpp:
+    (WebCore::TextCodecICU::decode):
+    * xml/XSLTProcessorLibxslt.cpp:
+    (WebCore::writeToStringBuilder):
+    Update for renames.
+    
+    Source/WebKit:
+    
+    * Shared/mac/AuxiliaryProcessMac.mm:
+    (WebKit::setAndSerializeSandboxParameters):
+    * UIProcess/WebProcessPool.cpp:
+    (WebKit::WebProcessPool::didReceiveInvalidMessage):
+    Update for renames.
+    
+    Source/WTF:
+    
+    * wtf/HexNumber.h:
+    (WTF::appendUnsignedAsHexFixedSize):
+    Add overload that explicitly takes a StringBuilder to work around rename from append to appendCharacters.
+    
+    * wtf/text/StringBuilder.cpp:
+    (WTF::StringBuilder::appendCharacters):
+    (WTF::StringBuilder::append):
+    * wtf/text/StringBuilder.h:
+    (WTF::StringBuilder::appendCharacters):
+    (WTF::StringBuilder::append):
+    (WTF::StringBuilder::appendSubstring):
+    (WTF::StringBuilder::appendLiteral):
+    (WTF::IntegerToStringConversionTrait<StringBuilder>::flush):
+    Update for renames.
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WTF/StringBuilder.cpp:
+    (TestWebKitAPI::TEST):
+    Update for renames.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248552 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-12  Sam Weinig  <weinig@apple.com>
+
+            Replace multiparameter overloads of append() in StringBuilder as a first step toward standardizinging on the flexibleAppend() implementation
+            https://bugs.webkit.org/show_bug.cgi?id=200614
+
+            Reviewed by Darin Adler.
+
+            Renames StringBuilder::append(const LChar*, unsigned), StringBuilder::append(const UChar*, unsigned) and
+            StringBuilder::append(const char*, unsigned) to StringBuilder::appendCharacters(...).
+
+            Renames StringBuilder::append(const String& string, unsigned offset, unsigned length) to
+            StringBuilder::appendSubstring(...).
+
+            * wtf/HexNumber.h:
+            (WTF::appendUnsignedAsHexFixedSize):
+            Add overload that explicitly takes a StringBuilder to work around rename from append to appendCharacters.
+
+            * wtf/text/StringBuilder.cpp:
+            (WTF::StringBuilder::appendCharacters):
+            (WTF::StringBuilder::append):
+            * wtf/text/StringBuilder.h:
+            (WTF::StringBuilder::appendCharacters):
+            (WTF::StringBuilder::append):
+            (WTF::StringBuilder::appendSubstring):
+            (WTF::StringBuilder::appendLiteral):
+            (WTF::IntegerToStringConversionTrait<StringBuilder>::flush):
+            Update for renames.
+
+2019-10-24  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r250640. rdar://problem/56237433
+
+    REGRESSION (r245672): <select> dropdown with text-rendering: optimizeLegibility freezes Safari
+    https://bugs.webkit.org/show_bug.cgi?id=202198
+    
+    Reviewed by Tim Horton.
+    
+    Source/WebKit:
+    
+    NSFont has a bug where passing "auto" to kCTFontOpticalSizeAttribute
+    causes an exception to be thrown. We don't catch the exception, so we
+    pop up back to the runloop, which confuses the UI process.
+    
+    The solution is twofold: 1) Workaround the bug by passing the font size
+    to kCTFontOpticalSizeAttribute instead, and 2) catch any exceptions that
+    this part of the code might throw.
+    
+    * UIProcess/mac/WebPopupMenuProxyMac.mm:
+    (WebKit::WebPopupMenuProxyMac::showPopupMenu):
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    
+    LayoutTests:
+    
+    * fast/forms/select-font-optical-size-expected.txt: Added.
+    * fast/forms/select-font-optical-size.html: Added.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250640 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-10-02  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            REGRESSION (r245672): <select> dropdown with text-rendering: optimizeLegibility freezes Safari
+            https://bugs.webkit.org/show_bug.cgi?id=202198
+
+            Reviewed by Tim Horton.
+
+            * wtf/Platform.h:
+
+2019-10-03  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248319. rdar://problem/55964805
+
+    Unreviewed, a build fix after r248308
+    
+    Use kSecUseDataProtectionKeychain for iOS 13 and macOS Catalina or newer.
+    
+    Source/WebKit:
+    
+    * UIProcess/WebAuthentication/Cocoa/LocalAuthenticator.mm:
+    (WebKit::LocalAuthenticator::makeCredential):
+    (WebKit::LocalAuthenticator::continueMakeCredentialAfterUserConsented):
+    (WebKit::LocalAuthenticator::continueMakeCredentialAfterAttested):
+    (WebKit::LocalAuthenticator::getAssertion):
+    (WebKit::LocalAuthenticator::continueGetAssertionAfterUserConsented):
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    
+    Tools:
+    
+    * WebKitTestRunner/cocoa/TestControllerCocoa.mm:
+    (WTR::TestController::addTestKeyToKeychain):
+    (WTR::TestController::cleanUpKeychain):
+    (WTR::TestController::keyExistsInKeychain):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248319 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-06  Jiewen Tan  <jiewen_tan@apple.com>
+
+            Unreviewed, a build fix after r248308
+
+            Use kSecUseDataProtectionKeychain for iOS 13 and macOS Catalina or newer.
+
+            * wtf/Platform.h:
+
+2019-10-03  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248308. rdar://problem/55964805
+
+    [WebAuthN] Enable LocalAuthenticator for macOS
+    https://bugs.webkit.org/show_bug.cgi?id=182772
+    <rdar://problem/43347920>
+    
+    Reviewed by Brent Fulgham.
+    
+    Source/WebKit:
+    
+    This patch enables LocalAuthenticator for macOS. The majority
+    of this patch is to tweak macOS keychain to use the modern one.
+    
+    * Configurations/WebKit.xcconfig:
+    * Platform/spi/Cocoa/DeviceIdentitySPI.h:
+    * UIProcess/WebAuthentication/Cocoa/LocalAuthenticator.mm:
+    (WebKit::LocalAuthenticatorInternal::toVector):
+    (WebKit::LocalAuthenticator::makeCredential):
+    (WebKit::LocalAuthenticator::continueMakeCredentialAfterUserConsented):
+    (WebKit::LocalAuthenticator::continueMakeCredentialAfterAttested):
+    (WebKit::LocalAuthenticator::getAssertion):
+    (WebKit::LocalAuthenticator::continueGetAssertionAfterUserConsented):
+    * UIProcess/WebAuthentication/Cocoa/LocalConnection.mm:
+    (WebKit::LocalConnection::getUserConsent const):
+    (WebKit::LocalConnection::getAttestation const):
+    * UIProcess/WebAuthentication/Cocoa/LocalService.mm:
+    (WebKit::LocalService::isAvailable):
+    * UIProcess/WebAuthentication/Mock/MockLocalConnection.mm:
+    (WebKit::MockLocalConnection::getAttestation const):
+    * config.h:
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    Adds HAVE_DEVICE_IDENTITY.
+    * wtf/spi/cocoa/SecuritySPI.h:
+    Adds a SPI for telling macOS keychain to use the modern one.
+    
+    Tools:
+    
+    Add an entitlement file to WebKitTestRunner such that it can access
+    the modern macOS keychain.
+    
+    * WebKitTestRunner/Configurations/WebKitTestRunner.entitlements: Added.
+    * WebKitTestRunner/Configurations/WebKitTestRunner.xcconfig:
+    * WebKitTestRunner/WebKitTestRunner.xcodeproj/project.pbxproj:
+    * WebKitTestRunner/cocoa/TestControllerCocoa.mm:
+    (WTR::TestController::addTestKeyToKeychain):
+    (WTR::TestController::cleanUpKeychain):
+    (WTR::TestController::keyExistsInKeychain):
+    
+    LayoutTests:
+    
+    Enable existing local authenticator tests for macOS. Since OpenSource bots
+    don't have the internal setting to include restricted entitlements, tests
+    will fail on OpenSource bots.
+    
+    * platform/mac-wk2/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248308 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-06  Jiewen Tan  <jiewen_tan@apple.com>
+
+            [WebAuthN] Enable LocalAuthenticator for macOS
+            https://bugs.webkit.org/show_bug.cgi?id=182772
+            <rdar://problem/43347920>
+
+            Reviewed by Brent Fulgham.
+
+            * wtf/Platform.h:
+            Adds HAVE_DEVICE_IDENTITY.
+            * wtf/spi/cocoa/SecuritySPI.h:
+            Adds a SPI for telling macOS keychain to use the modern one.
+
+2019-10-03  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249068. rdar://problem/55927255
+
+    Unreviewed, build fix after r249059
+    
+    Source/WebKit:
+    
+    * UIProcess/WebAuthentication/Cocoa/NfcConnection.mm:
+    (WebKit::NfcConnection::NfcConnection):
+    Remove the HAVE() macro.
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    Make HAVE_NEAR_FIELD available only on iOS 13+ and macOS Catalina+.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249068 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-23  Jiewen Tan  <jiewen_tan@apple.com>
+
+            Unreviewed, build fix after r249059
+
+            * wtf/Platform.h:
+            Make HAVE_NEAR_FIELD available only on iOS 13+ and macOS Catalina+.
+
+2019-10-03  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249059. rdar://problem/55927255
+
+    [WebAuthn] Support NFC authenticators for iOS
+    https://bugs.webkit.org/show_bug.cgi?id=188624
+    <rdar://problem/43354214>
+    
+    Reviewed by Chris Dumez.
+    
+    Source/WebCore:
+    
+    Tests: http/wpt/webauthn/ctap-nfc-failure.https.html
+           http/wpt/webauthn/public-key-credential-create-failure-nfc.https.html
+           http/wpt/webauthn/public-key-credential-create-success-nfc.https.html
+           http/wpt/webauthn/public-key-credential-get-failure-nfc.https.html
+           http/wpt/webauthn/public-key-credential-get-success-nfc.https.html
+    
+    * Modules/webauthn/apdu/ApduResponse.h:
+    Adds a new method to support moving m_data.
+    * Modules/webauthn/fido/FidoConstants.h:
+    Adds constants for NFC applet selection.
+    
+    Source/WebKit:
+    
+    This patch implements support for NFC authenticators including both FIDO2 and U2F ones. It utilizes a private
+    framework called NearField instead of CoreNFC to be able to supply a custom UI later if necessary.
+    
+    The patch follows almost the same flow as previous HID and Local authenticator support.
+    1) Discovery is via NfcService which will invoke NFHardwareManager to start a generic NFC reader session.
+    2) Once a reader session is established, a NfcConnection is created to start the polling and register the WKNFReaderSessionDelegate
+    to wait for 'didDetectTags'.
+    3) When tags are detected, NfcConnection will determine if it meets our requriements: { type, connectability, fido applet availability }.
+    The first tag that meets all requirement will then be returned for WebAuthn operations.
+    4) The first WebAuthn operation is to send authenticatorGetInfo command to determine the supported protocol, and then initialize corresponding
+    authenticators. Noted, the sending/receiving of this command is now abstracted into FidoService which will be shared across HidService and NfcService.
+    5) From then, the actual WebAuthn request, either makeCredential or getAssertion will be sent.
+    
+    For testing, this patch follows the same flow as well.
+    1) MockNfcService overrides NfcService to mock the behavior of NFC Tags discovery.
+    2) The same class also swizzles methods from NFReaderSession to mock tag connection and communication.
+    
+    * Platform/spi/Cocoa/NearFieldSPI.h: Added.
+    * Sources.txt:
+    * SourcesCocoa.txt:
+    * UIProcess/API/C/WKWebsiteDataStoreRef.cpp:
+    (WKWebsiteDataStoreSetWebAuthenticationMockConfiguration):
+    * UIProcess/WebAuthentication/AuthenticatorManager.cpp:
+    (WebKit::AuthenticatorManagerInternal::collectTransports):
+    * UIProcess/WebAuthentication/AuthenticatorTransportService.cpp:
+    (WebKit::AuthenticatorTransportService::create):
+    (WebKit::AuthenticatorTransportService::createMock):
+    * UIProcess/WebAuthentication/Cocoa/HidService.h:
+    * UIProcess/WebAuthentication/Cocoa/HidService.mm:
+    (WebKit::HidService::HidService):
+    (WebKit::HidService::deviceAdded):
+    (WebKit::HidService::continueAddDeviceAfterGetInfo): Deleted.
+    * UIProcess/WebAuthentication/Cocoa/NearFieldSoftLink.h: Copied from Source/WebKit/UIProcess/WebAuthentication/Cocoa/HidService.h.
+    * UIProcess/WebAuthentication/Cocoa/NearFieldSoftLink.mm: Copied from Source/WebKit/UIProcess/WebAuthentication/Cocoa/HidService.h.
+    * UIProcess/WebAuthentication/Cocoa/NfcConnection.h: Copied from Source/WebKit/UIProcess/WebAuthentication/Cocoa/HidService.h.
+    * UIProcess/WebAuthentication/Cocoa/NfcConnection.mm: Added.
+    (WebKit::fido::compareVersion):
+    (WebKit::NfcConnection::NfcConnection):
+    (WebKit::NfcConnection::~NfcConnection):
+    (WebKit::NfcConnection::transact const):
+    (WebKit::NfcConnection::didDetectTags const):
+    * UIProcess/WebAuthentication/Cocoa/NfcService.h: Copied from Source/WebKit/UIProcess/WebAuthentication/Cocoa/HidService.h.
+    * UIProcess/WebAuthentication/Cocoa/NfcService.mm: Added.
+    (WebKit::NfcService::NfcService):
+    (WebKit::NfcService::~NfcService):
+    (WebKit::NfcService::didConnectTag):
+    (WebKit::NfcService::startDiscoveryInternal):
+    (WebKit::NfcService::platformStartDiscovery):
+    * UIProcess/WebAuthentication/Cocoa/WKNFReaderSessionDelegate.h: Copied from Source/WebKit/UIProcess/WebAuthentication/Cocoa/HidService.h.
+    * UIProcess/WebAuthentication/Cocoa/WKNFReaderSessionDelegate.mm: Copied from Source/WebKit/UIProcess/WebAuthentication/Cocoa/HidService.h.
+    (-[WKNFReaderSessionDelegate initWithConnection:]):
+    (-[WKNFReaderSessionDelegate readerSession:didDetectTags:]):
+    * UIProcess/WebAuthentication/Mock/MockHidConnection.cpp:
+    (WebKit::MockHidConnection::send):
+    (WebKit::MockHidConnection::registerDataReceivedCallbackInternal):
+    (WebKit::MockHidConnection::parseRequest):
+    (WebKit::MockHidConnection::feedReports):
+    (WebKit::MockHidConnection::shouldContinueFeedReports):
+    * UIProcess/WebAuthentication/Mock/MockNfcService.h: Copied from Source/WebKit/UIProcess/WebAuthentication/Cocoa/HidService.h.
+    * UIProcess/WebAuthentication/Mock/MockNfcService.mm: Added.
+    (-[WKMockNFTag type]):
+    (-[WKMockNFTag initWithNFTag:]):
+    (-[WKMockNFTag description]):
+    (-[WKMockNFTag isEqualToNFTag:]):
+    (-[WKMockNFTag initWithType:]):
+    (WebKit::MockNfcService::MockNfcService):
+    (WebKit::MockNfcService::transceive):
+    (WebKit::MockNfcService::platformStartDiscovery):
+    (WebKit::MockNfcService::detectTags const):
+    * UIProcess/WebAuthentication/Mock/MockWebAuthenticationConfiguration.h:
+    * UIProcess/WebAuthentication/fido/CtapAuthenticator.cpp:
+    * UIProcess/WebAuthentication/fido/CtapAuthenticator.h:
+    * UIProcess/WebAuthentication/fido/CtapNfcDriver.cpp: Added.
+    (WebKit::CtapNfcDriver::CtapNfcDriver):
+    (WebKit::CtapNfcDriver::transact):
+    (WebKit::CtapNfcDriver::respondAsync const):
+    * UIProcess/WebAuthentication/fido/CtapNfcDriver.h: Copied from Source/WebKit/UIProcess/WebAuthentication/Cocoa/HidService.h.
+    * UIProcess/WebAuthentication/fido/FidoService.cpp: Added.
+    (WebKit::FidoService::FidoService):
+    (WebKit::FidoService::getInfo):
+    (WebKit::FidoService::continueAfterGetInfo):
+    * UIProcess/WebAuthentication/fido/FidoService.h: Copied from Source/WebKit/UIProcess/WebAuthentication/Cocoa/HidService.h.
+    * UIProcess/WebAuthentication/fido/U2fAuthenticator.cpp:
+    * UIProcess/WebAuthentication/fido/U2fAuthenticator.h:
+    * UIProcess/ios/WebPageProxyIOS.mm:
+    * WebKit.xcodeproj/project.pbxproj:
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    Add a feature flag for NearField.
+    
+    Tools:
+    
+    * WebKitTestRunner/InjectedBundle/TestRunner.cpp:
+    (WTR::TestRunner::setWebAuthenticationMockConfiguration):
+    Setup NFC mock testing configuration.
+    
+    LayoutTests:
+    
+    * http/wpt/webauthn/ctap-nfc-failure.https-expected.txt: Added.
+    * http/wpt/webauthn/ctap-nfc-failure.https.html: Added.
+    * http/wpt/webauthn/public-key-credential-create-failure-nfc.https-expected.txt: Added.
+    * http/wpt/webauthn/public-key-credential-create-failure-nfc.https.html: Added.
+    * http/wpt/webauthn/public-key-credential-create-success-hid.https-expected.txt:
+    * http/wpt/webauthn/public-key-credential-create-success-hid.https.html:
+    This patch replaces the "local" keyword with "hid".
+    * http/wpt/webauthn/public-key-credential-create-success-nfc.https-expected.txt: Added.
+    * http/wpt/webauthn/public-key-credential-create-success-nfc.https.html: Added.
+    * http/wpt/webauthn/public-key-credential-get-failure-nfc.https-expected.txt: Added.
+    * http/wpt/webauthn/public-key-credential-get-failure-nfc.https.html: Added.
+    * http/wpt/webauthn/public-key-credential-get-success-nfc.https-expected.txt: Added.
+    * http/wpt/webauthn/public-key-credential-get-success-nfc.https.html: Added.
+    * http/wpt/webauthn/resources/util.js:
+    * platform/ios-simulator-wk2/TestExpectations:
+    Skip NFC tests for simulators.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249059 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-21  Jiewen Tan  <jiewen_tan@apple.com>
+
+            [WebAuthn] Support NFC authenticators for iOS
+            https://bugs.webkit.org/show_bug.cgi?id=188624
+            <rdar://problem/43354214>
+
+            Reviewed by Chris Dumez.
+
+            * wtf/Platform.h:
+            Add a feature flag for NearField.
+
+2019-09-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250345. rdar://problem/55825352
+
+    [iPadOS] [DataActivation] Focus moves away after focusing input fields on www.att.com
+    https://bugs.webkit.org/show_bug.cgi?id=202167
+    <rdar://problem/55185021>
+    
+    Reviewed by Tim Horton.
+    
+    Source/WebCore:
+    
+    Adds a new site-specific quirk. See WebKit ChangeLog for more details.
+    
+    * page/Quirks.cpp:
+    (WebCore::Quirks::shouldUseLegacySelectPopoverDismissalBehaviorInDataActivation const):
+    * page/Quirks.h:
+    * platform/RuntimeApplicationChecks.h:
+    * platform/cocoa/RuntimeApplicationChecksCocoa.mm:
+    (WebCore::IOSApplication::isDataActivation):
+    
+    Source/WebKit:
+    
+    When using the data activation page on www.att.com, one of the sections on the page contains several select
+    elements; in the case where the user agent:
+    
+    1. contains the string "iPad", and
+    2. does not contain the string "Safari"
+    
+    ...www.att.com's data activation page will opt into a mode where it adds blur event listeners to the select
+    elements; in this blur event listener, www.att.com proceeds to programmatically focus a non-editable div element
+    after a 1 second timeout. The reasons for this behavior remain unclear to me, though it's worth noting that the
+    blur event handler name is "screenReaderFocus", which suggests that this is in place to ensure compatibility
+    with screen readers.
+    
+    In iOS 12, dismissing the popover would blur the focused select menu with an animation. Since the animation
+    would take a slightly less than 1 second, www.att.com's logic would have the effect of moving focus to the div
+    element shortly after dismissing the select menu. However, after r243808, we no longer attempt to blur the
+    focused select element when dismissing the popover. This means that the select element is only blurred the next
+    time the user activates another focused element, such as one of the input fields on the page, or a different
+    select element. Consequently, the logic to move focus into a div element now occurs only after a different
+    element has already been focused; this results in focus moving away from newly focused elements after 1 second
+    in the case where a select element has previously focused.
+    
+    To mitigate this, restore iOS 12 behavior behind a site- and app-specific quirk. See comments below for more
+    details.
+    
+    * Shared/FocusedElementInformation.cpp:
+    (WebKit::FocusedElementInformation::encode const):
+    (WebKit::FocusedElementInformation::decode):
+    * Shared/FocusedElementInformation.h:
+    
+    Add a new behavioral quirk flag to FocusedElementInformation to determine whether we should use "legacy" select
+    popover dismissal behavior (i.e. blurring the focused select element when dismissing the select popover, as well
+    as dismissing the popover with animation).
+    
+    * Shared/WebPreferences.yaml:
+    
+    Enable site-specific quirks by default in WKWebView. With regards to this bug, this change allows for
+    site-specific hacks (namely, legacy select popover dismissal) in DataActivation. However, this also fixes
+    various known bugs that are otherwise addressed in Safari only, via site-specific quirks.
+    
+    * UIProcess/API/Cocoa/WKWebView.mm:
+    (-[WKWebView _initializeWithConfiguration:]):
+    
+    For apps linked on or before iOS 13 and macOS 10.15, revert the default of value of NeedsSiteSpecificQuirks to
+    false. This is done here instead of in a default value function in WebPreferencesDefaultValues to prevent the
+    default values of NeedsSiteSpecificQuirks in the web process and UI process from going out of sync, since the
+    web process is not necessarily linked against the same SDK as the application.
+    
+    * UIProcess/Cocoa/VersionChecks.h:
+    
+    Add a new DYLD version check for the first version of iOS and macOS where site-specific quirks are enabled by
+    default.
+    
+    * UIProcess/ios/WKContentViewInteraction.h:
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView endEditingAndUpdateFocusAppearanceWithReason:]):
+    (-[WKContentView _elementDidBlur]):
+    (-[WKContentView _shouldUseLegacySelectPopoverDismissalBehavior]):
+    
+    We only use "legacy" select popover dismissal behavior in the case where the site-specific quirk flag is on, a
+    select popover is used (i.e. the device is an iPad and a select element is focused), and the application bundle
+    is "com.apple.DataActivation".
+    
+    * UIProcess/ios/forms/WKFormSelectPopover.mm:
+    (-[WKSelectTableViewController shouldDismissWithAnimation]):
+    
+    Keyed off of _shouldUseLegacySelectPopoverDismissalBehavior.
+    
+    (-[WKSelectPopover controlEndEditing]):
+    * WebProcess/WebPage/ios/WebPageIOS.mm:
+    (WebKit::WebPage::getFocusedElementInformation):
+    
+    Source/WTF:
+    
+    Declare DYLD_IOS_VERSION_13_2.
+    
+    * wtf/spi/darwin/dyldSPI.h:
+    
+    Tools:
+    
+    Rebaseline an API test.
+    
+    * TestWebKitAPI/Tests/WebKit/WKPreferences.cpp:
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250345 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-25  Wenson Hsieh  <wenson_hsieh@apple.com>
+
+            [iPadOS] [DataActivation] Focus moves away after focusing input fields on www.att.com
+            https://bugs.webkit.org/show_bug.cgi?id=202167
+            <rdar://problem/55185021>
+
+            Reviewed by Tim Horton.
+
+            Declare DYLD_IOS_VERSION_13_2.
+
+            * wtf/spi/darwin/dyldSPI.h:
+
+2019-08-19  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248852. rdar://problem/54454547
+
+    Unreviewed build fix for macOS 10.14 after r248832.
+    
+    * wtf/Platform.h:
+    
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248852 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-19  Per Arne Vollan  <pvollan@apple.com>
+
+            Unreviewed build fix for macOS 10.14 after r248832.
+
+            * wtf/Platform.h:
+
+2019-08-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r248832. rdar://problem/54454547
+
+    [Mac] Use the PID of the WebContent process when issuing local file read sandbox extensions
+    https://bugs.webkit.org/show_bug.cgi?id=200543
+    <rdar://problem/49394015>
+    Source/WebKit:
+    
+    Reviewed by Brent Fulgham.
+    
+    Adopt SPI to issue a process-specific sandbox extension for local file read, passing it the process
+    identifier of the WebContent process.
+    
+    * Shared/Cocoa/SandboxExtensionCocoa.mm:
+    (WebKit::SandboxExtensionImpl::sandboxExtensionForType):
+    (WebKit::SandboxExtension::createHandleForReadByPid):
+    * Shared/SandboxExtension.h:
+    * UIProcess/Cocoa/WebPageProxyCocoa.mm:
+    (WebKit::WebPageProxy::createSandboxExtensionsIfNeeded):
+    * UIProcess/WebPageProxy.cpp:
+    (WebKit::WebPageProxy::maybeInitializeSandboxExtensionHandle):
+    (WebKit::WebPageProxy::loadFile):
+    
+    Source/WTF:
+    
+    Reviewed by Brent Fulgham.
+    
+    Add new SPI.
+    
+    * wtf/Platform.h:
+    * wtf/spi/darwin/SandboxSPI.h:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248832 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-18  Per Arne Vollan  <pvollan@apple.com>
+
+            [Mac] Use the PID of the WebContent process when issuing local file read sandbox extensions
+            https://bugs.webkit.org/show_bug.cgi?id=200543
+            <rdar://problem/49394015>
+
+            Reviewed by Brent Fulgham.
+
+            Add new SPI.
+
+            * wtf/Platform.h:
+            * wtf/spi/darwin/SandboxSPI.h:
+
+2019-08-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r248823. rdar://problem/54454713
+
+    Source/WebKit:
+    Use bundlePath SPI in AccessibilitySupport for WebProcessLoader
+    https://bugs.webkit.org/show_bug.cgi?id=200367
+    
+    Patch by Eric Liang <ericliang@apple.com> on 2019-08-17
+    Reviewed by Darin Adler.
+    
+    * Platform/spi/ios/AccessibilitySupportSPI.h:
+    * WebProcess/cocoa/WebProcessCocoa.mm:
+    (WebKit::accessibilityWebProcessLoaderBundlePath):
+    (WebKit::registerWithAccessibility):
+    
+    Source/WTF:
+    Added HAVE_ACCESSIBILITY_BUNDLES_PATH
+    https://bugs.webkit.org/show_bug.cgi?id=200367
+    
+    Patch by Eric Liang <ericliang@apple.com> on 2019-08-17
+    Reviewed by Darin Adler.
+    
+    * wtf/Platform.h:
+    
+    Tools:
+    Tested that accessibility WebProcessLoader bundle is loaded for the correct path.
+    https://bugs.webkit.org/show_bug.cgi?id=200367
+    
+    Patch by Eric Liang <ericliang@apple.com> on 2019-08-17
+    Reviewed by Darin Adler.
+    
+    Added AccessibilityTestPlugin on the web process to report whether a bundle is loaded and its path, so that it can be tested on WKContentView.
+    
+    * TestWebKitAPI/TestWebKitAPI.xcodeproj/project.pbxproj:
+    * TestWebKitAPI/Tests/WebKitCocoa/AccessibilityTestPlugin.mm: Added.
+    (-[AccessibilityTestPlugin webProcessPlugIn:didCreateBrowserContextController:]):
+    (-[AccessibilityTestPlugin checkAccessibilityWebProcessLoaderBundleIsLoaded:]):
+    * TestWebKitAPI/Tests/WebKitCocoa/AccessibilityTestSupportProtocol.h: Added.
+    * TestWebKitAPI/Tests/ios/AccessibilityTestsIOS.mm:
+    (TestWebKitAPI::TEST):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248823 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-17  Eric Liang  <ericliang@apple.com>
+
+            Added HAVE_ACCESSIBILITY_BUNDLES_PATH
+            https://bugs.webkit.org/show_bug.cgi?id=200367
+
+            Reviewed by Darin Adler.
+
+            * wtf/Platform.h:
+
+2019-08-15  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248731. rdar://problem/54360857
+
+    Unreviewed, rolling out r248440.
+    https://bugs.webkit.org/show_bug.cgi?id=200772
+    
+    Introduced regressions related to loading of local files.
+    (Requested by perarne on #webkit).
+    
+    Reverted changeset:
+    
+    "[Mac] Use the PID of the WebContent process when issuing
+    local file read sandbox extensions"
+    https://bugs.webkit.org/show_bug.cgi?id=200543
+    https://trac.webkit.org/changeset/248440
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248731 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-15  Commit Queue  <commit-queue@webkit.org>
+
+            Unreviewed, rolling out r248440.
+            https://bugs.webkit.org/show_bug.cgi?id=200772
+
+            Introduced regressions related to loading of local files.
+            (Requested by perarne on #webkit).
+
+            Reverted changeset:
+
+            "[Mac] Use the PID of the WebContent process when issuing
+            local file read sandbox extensions"
+            https://bugs.webkit.org/show_bug.cgi?id=200543
+            https://trac.webkit.org/changeset/248440
+
+2019-08-13  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248440. rdar://problem/54237795
+
+    [Mac] Use the PID of the WebContent process when issuing local file read sandbox extensions
+    https://bugs.webkit.org/show_bug.cgi?id=200543
+    Source/WebKit:
+    
+    Reviewed by Brent Fulgham.
+    
+    Adopt SPI to issue a process-specific sandbox extension for local file read, passing it the process
+    identifier of the WebContent process.
+    
+    * Shared/Cocoa/SandboxExtensionCocoa.mm:
+    (WebKit::SandboxExtensionImpl::sandboxExtensionForType):
+    (WebKit::SandboxExtension::createHandleForReadByPid):
+    * Shared/SandboxExtension.h:
+    * UIProcess/WebPageProxy.cpp:
+    (WebKit::WebPageProxy::maybeInitializeSandboxExtensionHandle):
+    
+    Source/WTF:
+    
+    <rdar://problem/49394015>
+    
+    Reviewed by Brent Fulgham.
+    
+    Add new SPI.
+    
+    * wtf/Platform.h:
+    * wtf/spi/darwin/SandboxSPI.h:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248440 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-08  Per Arne Vollan  <pvollan@apple.com>
+
+            [Mac] Use the PID of the WebContent process when issuing local file read sandbox extensions
+            https://bugs.webkit.org/show_bug.cgi?id=200543
+            <rdar://problem/49394015>
+
+            Reviewed by Brent Fulgham.
+
+            Add new SPI.
+
+            * wtf/Platform.h:
+            * wtf/spi/darwin/SandboxSPI.h:
+
+2019-08-06  Alan Coon  <alancoon@apple.com>
+
+        Apply patch. rdar://problem/53992160
+
+    2019-08-06  Per Arne Vollan  <pvollan@apple.com>
+
+            [Win] Fix AppleWin build
+            https://bugs.webkit.org/show_bug.cgi?id=200414
+
+            Reviewed by Brent Fulgham.
+
+            * wtf/CMakeLists.txt:
+            * wtf/PlatformPlayStation.cmake:
+
+2019-07-31  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248071. rdar://problem/53789003
+
+    Use CTFontCreateForCharactersWithLanguageAndOption if available instead of CTFontCreateForCharactersWithLanguage
+    https://bugs.webkit.org/show_bug.cgi?id=200241
+    
+    Source/WebCore:
+    
+    Reviewed by Myles C. Maxfield.
+    
+    We can use CTFontCreateForCharactersWithLanguageAndOption instead of CTFontCreateForCharactersWithLanguage
+    as it allows setting more easily the fallback option.
+    This allows us to never fallback to user installed fonts.
+    In such a case, we no longer need to wrap the fonts to change the fallback option.
+    We also prewarm the fonts with the same SPI and use system fallback as the default value.
+    
+    Covered by existing tests.
+    
+    * platform/graphics/cocoa/FontCacheCoreText.cpp:
+    (WebCore::preparePlatformFont):
+    (WebCore::lookupFallbackFont):
+    (WebCore::FontCache::systemFallbackForCharacters):
+    (WebCore::FontCache::prewarm):
+    (WebCore::fontFamiliesForPrewarming):
+    
+    Source/WebCore/PAL:
+    
+    Reviewed by Myles C. Maxfield.
+    
+    Add new SPI.
+    
+    * pal/spi/cocoa/CoreTextSPI.h:
+    
+    Source/WTF:
+    
+    Reviewed by Myles C. Maxfield.
+    
+    * wtf/Platform.h: Add macro to enable/disable new SPI.
+    
+    LayoutTests:
+    
+    We update the tests to flush font caches as otherwise some debug asserts would be hit.
+    This is due to changing the user installed font runtime flag while browsing which is not a typical situation.
+    
+    Reviewed by Myles C. Maxfield.
+    
+    * fast/text/user-installed-fonts/extended-character-with-user-font.html:
+    * fast/text/user-installed-fonts/extended-character.html:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248071 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-31  Youenn Fablet  <youenn@apple.com>
+
+            Use CTFontCreateForCharactersWithLanguageAndOption if available instead of CTFontCreateForCharactersWithLanguage
+            https://bugs.webkit.org/show_bug.cgi?id=200241
+
+            Reviewed by Myles C. Maxfield.
+
+            * wtf/Platform.h: Add macro to enable/disable new SPI.
+
+2019-07-31  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248018. rdar://problem/53764057
+
+    REGRESSION(r241288): Text on Yahoo Japan mobile looks too bold
+    https://bugs.webkit.org/show_bug.cgi?id=200065
+    <rdar://problem/50912757>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    Before r241288, we were mapping Japanese sans-serif to Hiragino Kaku Gothic ProN, which
+    has a 300 weight and a 600 weight. However, we can't use that font because it's user-installed,
+    so in r241288 we switched to using Hiragino Sans, which has a 300 weight, a 600 weight, and an
+    800 weight. According to the CSS font selection algorithm, sites that request a weight of 700
+    would get the 800 weight instead of the 600 weight, which caused the text to look too heavy.
+    Therefore, the apparent visual change is from a weight change from 600 to 800.
+    
+    In general, this is working as intended. However, text on Yahoo Japan looks too heavy in weight
+    800. Instead, this patch adds a quirk specific to Yahoo Japan that overwrites any font requests
+    to give them a weight of 600 instead of 700. This way, the lighter font will be used.
+    
+    No new tests because quirks cannot be tested.
+    
+    * css/CSSFontSelector.cpp:
+    (WebCore::resolveGenericFamily):
+    (WebCore::CSSFontSelector::fontRangesForFamily):
+    * page/Quirks.cpp:
+    (WebCore::Quirks::shouldLightenJapaneseBoldSansSerif const):
+    * page/Quirks.h:
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248018 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-30  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            REGRESSION(r241288): Text on Yahoo Japan mobile looks too bold
+            https://bugs.webkit.org/show_bug.cgi?id=200065
+            <rdar://problem/50912757>
+
+            Reviewed by Simon Fraser.
+
+            * wtf/Platform.h:
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247673. rdar://problem/53449723
+
+    Speed up HashTable decoding by reserving capacity and avoiding rehashing
+    https://bugs.webkit.org/show_bug.cgi?id=199982
+    
+    Reviewed by Saam Barati.
+    
+    Source/WebKit:
+    
+    Use HashMap::reserveInitialCapacity() in the HashMap IPC decoder for
+    performance. I measured a ~35% improvement when decoding a very large
+    HashMap of Strings (~160k entries) in the context of the
+    StorageManager::GetValues IPC.
+    
+    * Platform/IPC/ArgumentCoders.h:
+    * Shared/API/c/WKDictionary.cpp:
+    (WKDictionaryCreate):
+    
+    Source/WTF:
+    
+    Introduce reserveInitialCapacity() on HashMap to reserve capacity on a
+    HashMap and cut down on rehashing cost when possible.
+    
+    * wtf/HashMap.h:
+    * wtf/HashTable.h:
+    (WTF::HashTable::reserveInitialCapacity):
+    
+    * wtf/persistence/PersistentCoders.h:
+    Use HashMap::reserveInitialCapacity() in the HashMap persistent decoder for
+    performance.
+    
+    Tools:
+    
+    Add API test coverage.
+    
+    * TestWebKitAPI/Tests/WTF/HashMap.cpp:
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247673 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-20  Chris Dumez  <cdumez@apple.com>
+
+            Speed up HashTable decoding by reserving capacity and avoiding rehashing
+            https://bugs.webkit.org/show_bug.cgi?id=199982
+
+            Reviewed by Saam Barati.
+
+            Introduce reserveInitialCapacity() on HashMap to reserve capacity on a
+            HashMap and cut down on rehashing cost when possible.
+
+            * wtf/HashMap.h:
+            * wtf/HashTable.h:
+            (WTF::HashTable::reserveInitialCapacity):
+
+            * wtf/persistence/PersistentCoders.h:
+            Use HashMap::reserveInitialCapacity() in the HashMap persistent decoder for
+            performance.
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247837. rdar://problem/53648220
+
+    Add helper for ignoring deprecated implementation warnings
+    https://bugs.webkit.org/show_bug.cgi?id=200135
+    
+    Reviewed by Wenson Hsieh.
+    
+    Add ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN/END macro which
+    is IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+    
+    Source/WebCore:
+    
+    * accessibility/mac/WebAccessibilityObjectWrapperMac.mm:
+    (-[WebAccessibilityObjectWrapper ALLOW_DEPRECATED_IMPLEMENTATIONS_END]):
+    (-[WebAccessibilityObjectWrapper accessibilityAttributeValue:]):
+    (-[WebAccessibilityObjectWrapper accessibilityIsAttributeSettable:]):
+    (-[WebAccessibilityObjectWrapper accessibilityPerformAction:]):
+    (-[WebAccessibilityObjectWrapper accessibilitySetValue:forAttribute:]):
+    (-[WebAccessibilityObjectWrapper accessibilityActionDescription:]):
+    (-[WebAccessibilityObjectWrapper accessibilityAttributeValue:forParameter:]):
+    (-[WebAccessibilityObjectWrapper IGNORE_WARNINGS_END]): Deleted.
+    * platform/graphics/avfoundation/objc/SourceBufferPrivateAVFObjC.mm:
+    (-[WebAVStreamDataParserListener streamDataParserWillProvideContentKeyRequestInitializationData:forTrackID:]):
+    (-[WebAVStreamDataParserListener streamDataParser:didProvideContentKeyRequestInitializationData:forTrackID:]):
+    * platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm:
+    (-[WebCoreResourceHandleAsOperationQueueDelegate connection:didReceiveAuthenticationChallenge:]):
+    (-[WebCoreResourceHandleAsOperationQueueDelegate connection:canAuthenticateAgainstProtectionSpace:]):
+    
+    Source/WebKit:
+    
+    * UIProcess/API/Cocoa/LegacyBundleForClass.mm:
+    * UIProcess/API/Cocoa/WKBrowsingContextController.mm:
+    (IGNORE_WARNINGS_BEGIN): Deleted.
+    * UIProcess/API/Cocoa/WKBrowsingContextGroup.mm:
+    (IGNORE_WARNINGS_BEGIN): Deleted.
+    * UIProcess/API/Cocoa/WKConnection.mm:
+    (IGNORE_WARNINGS_BEGIN): Deleted.
+    * UIProcess/API/Cocoa/WKPreviewElementInfo.mm:
+    * UIProcess/API/Cocoa/WKProcessGroup.mm:
+    (IGNORE_WARNINGS_BEGIN): Deleted.
+    * UIProcess/API/Cocoa/WKTypeRefWrapper.mm:
+    * UIProcess/API/Cocoa/WKWebView.mm:
+    (-[WKWebView ALLOW_DEPRECATED_IMPLEMENTATIONS_END]):
+    (-[WKWebView draggedImage:endedAt:operation:]):
+    (-[WKWebView accessibilityAttributeValue:]):
+    (-[WKWebView accessibilityAttributeValue:forParameter:]):
+    (-[WKWebView namesOfPromisedFilesDroppedAtDestination:]):
+    (-[WKWebView IGNORE_WARNINGS_END]): Deleted.
+    * UIProcess/API/Cocoa/WKWebViewConfiguration.mm:
+    (-[WKWebViewConfiguration ALLOW_DEPRECATED_IMPLEMENTATIONS_END]):
+    (-[WKWebViewConfiguration _setWebsiteDataStore:]):
+    (-[WKWebViewConfiguration IGNORE_WARNINGS_END]): Deleted.
+    * UIProcess/API/Cocoa/_WKWebsiteDataStore.mm:
+    * UIProcess/API/mac/WKView.mm:
+    (-[WKView ALLOW_DEPRECATED_IMPLEMENTATIONS_END]):
+    (-[WKView draggedImage:endedAt:operation:]):
+    (-[WKView accessibilityAttributeValue:]):
+    (-[WKView accessibilityAttributeValue:forParameter:]):
+    (-[WKView namesOfPromisedFilesDroppedAtDestination:]):
+    (-[WKView IGNORE_WARNINGS_END]): Deleted.
+    * UIProcess/WKImagePreviewViewController.mm:
+    (-[WKImagePreviewViewController ALLOW_DEPRECATED_IMPLEMENTATIONS_END]):
+    (-[WKImagePreviewViewController IGNORE_WARNINGS_END]): Deleted.
+    * UIProcess/ios/forms/WKAirPlayRoutePicker.mm:
+    (-[WKAirPlayRoutePicker popoverControllerDidDismissPopover:]):
+    * UIProcess/ios/forms/WKFileUploadPanel.mm:
+    (-[WKFileUploadPanel popoverControllerDidDismissPopover:]):
+    * UIProcess/ios/forms/WKFormPopover.mm:
+    (-[WKRotatingPopover popoverControllerDidDismissPopover:]):
+    * WebProcess/Plugins/PDF/PDFPlugin.mm:
+    (-[WKPDFPluginAccessibilityObject ALLOW_DEPRECATED_IMPLEMENTATIONS_END]):
+    (-[WKPDFPluginAccessibilityObject accessibilityAttributeValue:]):
+    (-[WKPDFPluginAccessibilityObject accessibilityAttributeValue:forParameter:]):
+    (-[WKPDFPluginAccessibilityObject accessibilityPerformAction:]):
+    (-[WKPDFPluginAccessibilityObject accessibilityIsAttributeSettable:]):
+    (-[WKPDFPluginAccessibilityObject accessibilitySetValue:forAttribute:]):
+    (-[WKPDFPluginAccessibilityObject IGNORE_WARNINGS_END]): Deleted.
+    * WebProcess/WebPage/mac/WKAccessibilityWebPageObjectMac.mm:
+    (-[WKAccessibilityWebPageObject ALLOW_DEPRECATED_IMPLEMENTATIONS_END]):
+    (-[WKAccessibilityWebPageObject accessibilityIsAttributeSettable:]):
+    (-[WKAccessibilityWebPageObject accessibilitySetValue:forAttribute:]):
+    (-[WKAccessibilityWebPageObject accessibilityAttributeValue:]):
+    (-[WKAccessibilityWebPageObject accessibilityAttributeValue:forParameter:]):
+    (-[WKAccessibilityWebPageObject IGNORE_WARNINGS_END]): Deleted.
+    
+    Source/WebKitLegacy/mac:
+    
+    * Misc/WebDownload.mm:
+    (-[WebDownload initWithRequest:delegate:]):
+    * Misc/WebIconDatabase.mm:
+    * Plugins/WebBaseNetscapePluginView.mm:
+    (-[WebBaseNetscapePluginView ALLOW_DEPRECATED_IMPLEMENTATIONS_END]):
+    (-[WebBaseNetscapePluginView IGNORE_WARNINGS_END]): Deleted.
+    * WebView/WebDynamicScrollBarsView.mm:
+    (-[WebDynamicScrollBarsView ALLOW_DEPRECATED_IMPLEMENTATIONS_END]):
+    (-[WebDynamicScrollBarsView IGNORE_WARNINGS_END]): Deleted.
+    * WebView/WebHTMLView.mm:
+    (-[WebHTMLView draggingSourceOperationMaskForLocal:]):
+    (-[WebHTMLView draggedImage:endedAt:operation:]):
+    (-[WebHTMLView namesOfPromisedFilesDroppedAtDestination:]):
+    (-[WebHTMLView accessibilityAttributeValue:]):
+    (-[WebHTMLView ALLOW_DEPRECATED_IMPLEMENTATIONS_END]):
+    (-[WebHTMLView characterIndexForPoint:]):
+    (-[WebHTMLView firstRectForCharacterRange:]):
+    (-[WebHTMLView attributedSubstringFromRange:]):
+    (-[WebHTMLView setMarkedText:selectedRange:]):
+    (-[WebHTMLView doCommandBySelector:]):
+    (-[WebHTMLView insertText:]):
+    (-[WebHTMLView IGNORE_WARNINGS_END]): Deleted.
+    
+    Source/WTF:
+    
+    * wtf/Compiler.h:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247837 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-25  Dean Jackson  <dino@apple.com>
+
+            Add helper for ignoring deprecated implementation warnings
+            https://bugs.webkit.org/show_bug.cgi?id=200135
+
+            Reviewed by Wenson Hsieh.
+
+            Add ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN/END macro which
+            is IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+
+            * wtf/Compiler.h:
+
+2019-07-29  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247714. rdar://problem/53647616
+
+    [bmalloc] Each IsoPage gets 1MB VA because VMHeap::tryAllocateLargeChunk rounds up
+    https://bugs.webkit.org/show_bug.cgi?id=200024
+    
+    Reviewed by Saam Barati.
+    
+    Source/bmalloc:
+    
+    When we allocate IsoHeap's page, we reused VMHeap::tryAllocateLargeChunk. However, this function is originally designed
+    to be used for Large allocation in bmalloc (e.g. allocating Chunk in bmalloc). As a result, this function rounds up the
+    requested size with 1MB (bmalloc::chunkSize). As a result, all IsoHeap's 16KB page gets 1MB VA while it just uses 16KB of
+    the allocated region. This leads to VA exhaustion since IsoHeap now uses 64x VA than we expected!
+    
+    This patch fixes the above VA exhaustion issue by allocating a page by using tryVMAllocate. When allocating a page, we start
+    using a VM tag for IsoHeap. We discussed at e-mail and we decided reusing a VM tag previously assigned to CLoop Stack since
+    this is less profitable. Since this tag is not Malloc-related tag, Leaks tool can scan memory region conservatively without
+    registering allocated region into Zone, which was previously done in VMHeap and that's why we reused VMHeap for IsoHeap.
+    
+    * bmalloc/BVMTags.h:
+    * bmalloc/IsoPage.cpp:
+    (bmalloc::IsoPageBase::allocatePageMemory):
+    * bmalloc/IsoTLS.cpp:
+    (bmalloc::IsoTLS::ensureEntries):
+    * bmalloc/VMAllocate.h:
+    (bmalloc::vmAllocate):
+    
+    Source/JavaScriptCore:
+    
+    Discussed and we decided to use this VM tag for IsoHeap instead of CLoop stack.
+    
+    * interpreter/CLoopStack.cpp:
+    (JSC::CLoopStack::CLoopStack):
+    
+    Source/WebCore:
+    
+    Changed how we interpret VM tags. Add IsoHeap VM tag support, and rename WebAssembly tag
+    to Gigacage tag.
+    
+    * page/ResourceUsageData.h:
+    * page/ResourceUsageOverlay.h:
+    * page/cocoa/ResourceUsageOverlayCocoa.mm:
+    (WebCore::HistoricResourceUsageData::HistoricResourceUsageData):
+    * page/cocoa/ResourceUsageThreadCocoa.mm:
+    (WebCore::displayNameForVMTag):
+    (WebCore::categoryForVMTag):
+    
+    Source/WTF:
+    
+    Start using a VM tag for IsoHeap instead of CLoop Stack.
+    
+    * wtf/OSAllocator.h:
+    * wtf/VMTags.h:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247714 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-22  Yusuke Suzuki  <ysuzuki@apple.com>
+
+            [bmalloc] Each IsoPage gets 1MB VA because VMHeap::tryAllocateLargeChunk rounds up
+            https://bugs.webkit.org/show_bug.cgi?id=200024
+
+            Reviewed by Saam Barati.
+
+            Start using a VM tag for IsoHeap instead of CLoop Stack.
+
+            * wtf/OSAllocator.h:
+            * wtf/VMTags.h:
+
+2019-07-24  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247754. rdar://problem/53483290
+
+    Enable HAVE_APP_LINKS_WITH_ISENABLED for entire iOS family
+    https://bugs.webkit.org/show_bug.cgi?id=200040
+    <rdar://problem/53457670>
+    
+    Reviewed by Tim Horton.
+    
+    This feature was enabled for just iOS, but should be enabled for tvOS
+    and watchOS, too.
+    
+    * wtf/Platform.h:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247754 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-23  Keith Rollin  <krollin@apple.com>
+
+            Enable HAVE_APP_LINKS_WITH_ISENABLED for entire iOS family
+            https://bugs.webkit.org/show_bug.cgi?id=200040
+            <rdar://problem/53457670>
+
+            Reviewed by Tim Horton.
+
+            This feature was enabled for just iOS, but should be enabled for tvOS
+            and watchOS, too.
+
+            * wtf/Platform.h:
+
+2019-07-23  Alan Coon  <alancoon@apple.com>
+
+        Revert r247673. rdar://problem/53449723
+
+2019-07-23  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247673. rdar://problem/53449723
+
+    Speed up HashTable decoding by reserving capacity and avoiding rehashing
+    https://bugs.webkit.org/show_bug.cgi?id=199982
+    
+    Reviewed by Saam Barati.
+    
+    Source/WebKit:
+    
+    Use HashMap::reserveInitialCapacity() in the HashMap IPC decoder for
+    performance. I measured a ~35% improvement when decoding a very large
+    HashMap of Strings (~160k entries) in the context of the
+    StorageManager::GetValues IPC.
+    
+    * Platform/IPC/ArgumentCoders.h:
+    * Shared/API/c/WKDictionary.cpp:
+    (WKDictionaryCreate):
+    
+    Source/WTF:
+    
+    Introduce reserveInitialCapacity() on HashMap to reserve capacity on a
+    HashMap and cut down on rehashing cost when possible.
+    
+    * wtf/HashMap.h:
+    * wtf/HashTable.h:
+    (WTF::HashTable::reserveInitialCapacity):
+    
+    * wtf/persistence/PersistentCoders.h:
+    Use HashMap::reserveInitialCapacity() in the HashMap persistent decoder for
+    performance.
+    
+    Tools:
+    
+    Add API test coverage.
+    
+    * TestWebKitAPI/Tests/WTF/HashMap.cpp:
+    (TestWebKitAPI::TEST):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247673 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-20  Chris Dumez  <cdumez@apple.com>
+
+            Speed up HashTable decoding by reserving capacity and avoiding rehashing
+            https://bugs.webkit.org/show_bug.cgi?id=199982
+
+            Reviewed by Saam Barati.
+
+            Introduce reserveInitialCapacity() on HashMap to reserve capacity on a
+            HashMap and cut down on rehashing cost when possible.
+
+            * wtf/HashMap.h:
+            * wtf/HashTable.h:
+            (WTF::HashTable::reserveInitialCapacity):
+
+            * wtf/persistence/PersistentCoders.h:
+            Use HashMap::reserveInitialCapacity() in the HashMap persistent decoder for
+            performance.
+
+2019-07-18  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247566. rdar://problem/53279081
+
+    Make sure to set kCTFontFallbackOptionAttribute to kCTFontFallbackOptionSystem for system fonts
+    https://bugs.webkit.org/show_bug.cgi?id=199769
+    <rdar://problem/49390297>
+    
+    Reviewed by Myles C. Maxfield.
+    
+    Source/WebCore:
+    
+    When getting a system font, set the appropriate attribute so that it
+    does not fallback to a user initiated font.
+    Add an ASSERT that checks that the font in use is not a user font if
+    policy is to not use user installed fonts.
+    
+    Tests: fast/text/user-installed-fonts/extended-character-with-user-font.html
+           fast/text/user-installed-fonts/extended-character.html
+    
+    * platform/graphics/Font.h:
+    * platform/graphics/FontCascadeFonts.cpp:
+    (WebCore::FontCascadeFonts::glyphDataForSystemFallback):
+    * platform/graphics/cocoa/FontCacheCoreText.cpp:
+    (WebCore::preparePlatformFont):
+    (WebCore::FontDatabase::singletonAllowingUserInstalledFonts):
+    (WebCore::FontDatabase::singletonDisallowingUserInstalledFonts):
+    (WebCore::addAttributesForInstalledFonts):
+    (WebCore::addAttributesForWebFonts):
+    (WebCore::installedFontMandatoryAttributes):
+    * platform/graphics/mac/SimpleFontDataCoreText.cpp:
+    (WebCore::Font::isUserInstalledFont const):
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    
+    Tools:
+    
+    Add a font containing one extended character not found in system fonts.
+    
+    * WebKitTestRunner/WebKitTestRunner.xcodeproj/project.pbxproj:
+    * WebKitTestRunner/fonts/FakeHelvetica-SingleExtendedCharacter.ttf: Added.
+    
+    LayoutTests:
+    
+    Tests require WTR and recent MacOS, hence why they are disabled elsewhere.
+    
+    * TestExpectations:
+    * platform/mac-wk2/TestExpectations:
+    * fast/text/user-installed-fonts/extended-character-expected.html: Added.
+    * fast/text/user-installed-fonts/extended-character-with-user-font-expected-mismatch.html: Added.
+    * fast/text/user-installed-fonts/extended-character-with-user-font.html: Added.
+    * fast/text/user-installed-fonts/extended-character.html: Added.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247566 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-18  Youenn Fablet  <youenn@apple.com>
+
+            Make sure to set kCTFontFallbackOptionAttribute to kCTFontFallbackOptionSystem for system fonts
+            https://bugs.webkit.org/show_bug.cgi?id=199769
+            <rdar://problem/49390297>
+
+            Reviewed by Myles C. Maxfield.
+
+            * wtf/Platform.h:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247482. rdar://problem/53229731
+
+    New York font erroneously gets synthetic bold
+    https://bugs.webkit.org/show_bug.cgi?id=199653
+    
+    Unreviewed MacCatalyst build fix.
+    
+    * wtf/Platform.h:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247482 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-16  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            New York font erroneously gets synthetic bold
+            https://bugs.webkit.org/show_bug.cgi?id=199653
+
+            Unreviewed MacCatalyst build fix.
+
+            * wtf/Platform.h:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247465. rdar://problem/53229731
+
+    New York font erroneously gets synthetic bold
+    https://bugs.webkit.org/show_bug.cgi?id=199653
+    
+    Unreviewed watchOS build fix.
+    
+    Source/WebCore:
+    
+    * page/ProcessWarming.cpp:
+    (WebCore::ProcessWarming::prewarmGlobally):
+    * page/cocoa/MemoryReleaseCocoa.mm:
+    (WebCore::platformReleaseMemory):
+    * platform/graphics/FontCascadeDescription.cpp:
+    * platform/graphics/FontDescription.h:
+    * platform/graphics/cocoa/FontCacheCoreText.cpp:
+    (WebCore::invalidateFontCache):
+    (WebCore::lookupFallbackFont):
+    * platform/graphics/cocoa/FontDescriptionCocoa.cpp:
+    (WebCore::FontCascadeDescription::effectiveFamilyAt const):
+    * platform/graphics/cocoa/FontFamilySpecificationCoreText.cpp:
+    (WebCore::FontFamilySpecificationCoreText::fontRanges const):
+    * platform/graphics/cocoa/SystemFontDatabaseCoreText.cpp:
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247465 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            New York font erroneously gets synthetic bold
+            https://bugs.webkit.org/show_bug.cgi?id=199653
+
+            Unreviewed watchOS build fix.
+
+            * wtf/Platform.h:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247461. rdar://problem/53229637
+
+    Make WKURLSchemeTask thread safe.
+    <rdar://problem/50471863> and https://bugs.webkit.org/show_bug.cgi?id=199764
+    
+    Reviewed by Alex Christensen.
+    
+    Source/WebKit:
+    
+    Punt most of the WKURLSchemeTask operations back to the main thread.
+    Make accessing the NSURLRequest be thread safe with lock protection.
+    
+    * UIProcess/API/Cocoa/WKURLSchemeTask.mm:
+    (getExceptionTypeFromMainRunLoop):
+    (-[WKURLSchemeTaskImpl dealloc]):
+    (-[WKURLSchemeTaskImpl request]):
+    (-[WKURLSchemeTaskImpl _requestOnlyIfCached]):
+    (-[WKURLSchemeTaskImpl didReceiveResponse:]):
+    (-[WKURLSchemeTaskImpl didReceiveData:]):
+    (-[WKURLSchemeTaskImpl didFinish]):
+    (-[WKURLSchemeTaskImpl didFailWithError:]):
+    (-[WKURLSchemeTaskImpl _didPerformRedirection:newRequest:]):
+    
+    * UIProcess/WebURLSchemeTask.cpp:
+    (WebKit::WebURLSchemeTask::WebURLSchemeTask):
+    (WebKit::WebURLSchemeTask::~WebURLSchemeTask):
+    (WebKit::WebURLSchemeTask::didPerformRedirection):
+    (WebKit::WebURLSchemeTask::didReceiveResponse):
+    (WebKit::WebURLSchemeTask::didReceiveData):
+    (WebKit::WebURLSchemeTask::didComplete):
+    (WebKit::WebURLSchemeTask::pageDestroyed):
+    (WebKit::WebURLSchemeTask::stop):
+    (WebKit::WebURLSchemeTask::nsRequest const):
+    
+    * UIProcess/WebURLSchemeTask.h:
+    (WebKit::WebURLSchemeTask::identifier const):
+    (WebKit::WebURLSchemeTask::pageID const):
+    (WebKit::WebURLSchemeTask::process):
+    (WebKit::WebURLSchemeTask::process const): Deleted.
+    (WebKit::WebURLSchemeTask::request const): Deleted.
+    
+    Source/WTF:
+    
+    * wtf/MainThread.cpp:
+    (WTF::callOnMainAndWait):
+    (WTF::callOnMainRunLoopAndWait):
+    (WTF::callOnMainThreadAndWait):
+    * wtf/MainThread.h:
+    
+    Tools:
+    
+    * TestWebKitAPI/Tests/WebKitCocoa/WKURLSchemeHandler-1.mm:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247461 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Brady Eidson  <beidson@apple.com>
+
+            Make WKURLSchemeTask thread safe.
+            <rdar://problem/50471863> and https://bugs.webkit.org/show_bug.cgi?id=199764
+
+            Reviewed by Alex Christensen.
+
+            * wtf/MainThread.cpp:
+            (WTF::callOnMainAndWait):
+            (WTF::callOnMainRunLoopAndWait):
+            (WTF::callOnMainThreadAndWait):
+            * wtf/MainThread.h:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247454. rdar://problem/53229624
+
+    MacCatalyst asserts when command key is raised
+    https://bugs.webkit.org/show_bug.cgi?id=199805
+    <rdar://problem/53120393>
+    
+    Reviewed by Tim Horton.
+    
+    Add USE_UIKIT_KEYBOARD_ADDITIONS for iOS 13+ and macCatalyst.
+    
+    * wtf/FeatureDefines.h:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247454 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Dean Jackson  <dino@apple.com>
+
+            MacCatalyst asserts when command key is raised
+            https://bugs.webkit.org/show_bug.cgi?id=199805
+            <rdar://problem/53120393>
+
+            Reviewed by Tim Horton.
+
+            Add USE_UIKIT_KEYBOARD_ADDITIONS for iOS 13+ and macCatalyst.
+
+            * wtf/FeatureDefines.h:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247377. rdar://problem/53229731
+
+    New York font erroneously gets synthetic bold
+    https://bugs.webkit.org/show_bug.cgi?id=199653
+    <rdar://problem/51692592>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    This patch adds support for -apple-system-ui-serif, -apple-system-ui-monospaced,
+    and -apple-system-ui-rounded, behind an SPI that is off-by-default. We don't want
+    to expose these fonts to the web because we don't a standardization story for them
+    yet, but we do want some apps to be able to use them.
+    
+    WebKit clients who want to use these fonts can set
+    -[WKPreferences _shouldAllowDesignSystemUIFonts] = YES.
+    
+    The patch generalizes our existing system-ui infrastructure to handle these three
+    additional fonts. It also explicitly disables the unsupported dot-prefixed names
+    so they don't leak out into Web content.
+    
+    Tests: fast/text/design-system-ui-10.html
+           fast/text/design-system-ui-11.html
+           fast/text/design-system-ui-12.html
+           fast/text/design-system-ui-13.html
+           fast/text/design-system-ui-14.html
+           fast/text/design-system-ui-15.html
+           fast/text/design-system-ui-16.html
+           fast/text/design-system-ui-2.html
+           fast/text/design-system-ui-3.html
+           fast/text/design-system-ui-4.html
+           fast/text/design-system-ui-5.html
+           fast/text/design-system-ui-6.html
+           fast/text/design-system-ui-7.html
+           fast/text/design-system-ui-8.html
+           fast/text/design-system-ui-9.html
+           fast/text/design-system-ui.html
+    
+    * css/CSSFontFace.cpp:
+    (WebCore::CSSFontFace::shouldAllowDesignSystemUIFonts const):
+    * css/CSSFontFace.h:
+    * css/CSSFontFaceSource.cpp:
+    (WebCore::CSSFontFaceSource::load):
+    * css/StyleResolver.cpp:
+    (WebCore::StyleResolver::initializeFontStyle):
+    * page/Settings.yaml:
+    * platform/graphics/FontDescription.cpp:
+    (WebCore::m_shouldAllowDesignSystemUIFonts):
+    (WebCore::m_shouldAllowUserInstalledFonts): Deleted.
+    * platform/graphics/FontDescription.h:
+    (WebCore::FontDescription::shouldAllowDesignSystemUIFonts const):
+    (WebCore::FontDescription::setShouldAllowDesignSystemUIFonts):
+    (WebCore::FontDescription::operator== const):
+    * platform/graphics/cocoa/FontCacheCoreText.cpp:
+    (WebCore::platformFontLookupWithFamily):
+    (WebCore::fontWithFamily):
+    * platform/graphics/cocoa/FontCacheCoreText.h:
+    * platform/graphics/cocoa/FontDescriptionCocoa.cpp:
+    (WebCore::systemFontUse):
+    (WebCore::systemFontCascadeList):
+    (WebCore::FontCascadeDescription::effectiveFamilyCount const):
+    (WebCore::FontCascadeDescription::effectiveFamilyAt const):
+    (WebCore::isSystemFontString): Deleted.
+    (WebCore::isUIFontTextStyle): Deleted.
+    * platform/graphics/cocoa/FontPlatformDataCocoa.mm:
+    (WebCore::FontPlatformData::ctFont const):
+    * platform/graphics/cocoa/SystemFontDatabaseCoreText.cpp:
+    (WebCore::SystemFontDatabaseCoreText::createSystemUI):
+    (WebCore::SystemFontDatabaseCoreText::createDesignSystemUI):
+    (WebCore::SystemFontDatabaseCoreText::createTextStyle):
+    (WebCore::SystemFontDatabaseCoreText::cascadeList):
+    (WebCore::SystemFontDatabaseCoreText::applyWeightItalicsAndFallbackBehavior):
+    (WebCore::SystemFontDatabaseCoreText::systemFontParameters):
+    * platform/graphics/cocoa/SystemFontDatabaseCoreText.h:
+    * platform/graphics/ios/FontCacheIOS.mm:
+    (WebCore::platformFontWithFamilySpecialCase):
+    * platform/graphics/mac/FontCacheMac.mm:
+    (WebCore::platformFontWithFamilySpecialCase):
+    * style/StyleResolveForDocument.cpp:
+    (WebCore::Style::resolveForDocument):
+    * svg/graphics/SVGImage.cpp:
+    (WebCore::SVGImage::dataChanged):
+    * testing/InternalSettings.cpp:
+    (WebCore::InternalSettings::Backup::Backup):
+    (WebCore::InternalSettings::Backup::restoreTo):
+    (WebCore::InternalSettings::setShouldAllowDesignSystemUIFonts):
+    * testing/InternalSettings.h:
+    * testing/InternalSettings.idl:
+    
+    Source/WebCore/PAL:
+    
+    * pal/spi/cocoa/CoreTextSPI.h:
+    
+    Source/WebKit:
+    
+    Add the SPI to enable the new fonts.
+    
+    * Shared/WebPreferences.yaml:
+    * UIProcess/API/C/WKPreferences.cpp:
+    (WKPreferencesSetShouldAllowDesignSystemUIFonts):
+    (WKPreferencesGetShouldAllowDesignSystemUIFonts):
+    * UIProcess/API/C/WKPreferencesRefPrivate.h:
+    * UIProcess/API/Cocoa/WKPreferences.mm:
+    (-[WKPreferences _shouldAllowDesignSystemUIFonts]):
+    (-[WKPreferences _setShouldAllowDesignSystemUIFonts:]):
+    * UIProcess/API/Cocoa/WKPreferencesPrivate.h:
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    
+    LayoutTests:
+    
+    * TestExpectations:
+    * fast/text/design-system-ui-10-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-10.html: Added.
+    * fast/text/design-system-ui-11-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-11.html: Added.
+    * fast/text/design-system-ui-12-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-12.html: Added.
+    * fast/text/design-system-ui-13-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-13.html: Added.
+    * fast/text/design-system-ui-14-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-14.html: Added.
+    * fast/text/design-system-ui-15-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-15.html: Added.
+    * fast/text/design-system-ui-16-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-16.html: Added.
+    * fast/text/design-system-ui-2-expected.html: Added.
+    * fast/text/design-system-ui-2.html: Added.
+    * fast/text/design-system-ui-3-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-3.html: Added.
+    * fast/text/design-system-ui-4-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-4.html: Added.
+    * fast/text/design-system-ui-5-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-5.html: Added.
+    * fast/text/design-system-ui-6-expected.html: Added.
+    * fast/text/design-system-ui-6.html: Added.
+    * fast/text/design-system-ui-7-expected.html: Added.
+    * fast/text/design-system-ui-7.html: Added.
+    * fast/text/design-system-ui-8-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-8.html: Added.
+    * fast/text/design-system-ui-9-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-9.html: Added.
+    * fast/text/design-system-ui-expected.html: Added.
+    * fast/text/design-system-ui.html: Added.
+    * platform/mac/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247377 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-11  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            New York font erroneously gets synthetic bold
+            https://bugs.webkit.org/show_bug.cgi?id=199653
+            <rdar://problem/51692592>
+
+            Reviewed by Simon Fraser.
+
+            * wtf/Platform.h:
+
+2019-07-15  Alan Coon  <alancoon@apple.com>
+
+        Revert r247377. rdar://problem/53125241
+
+2019-07-14  Chris Dumez  <cdumez@apple.com>
+
+        Add threading assertion to WeakPtrFactory::createWeakPtr()
+        https://bugs.webkit.org/show_bug.cgi?id=199639
+
+        Reviewed by Ryosuke Niwa.
+
+        Add threading assertion to WeakPtrFactory::createWeakPtr() to make sure it
+        is called on the same thread where the WeakPtrFactory wad constructed.
+
+        * wtf/WeakPtr.h:
+        (WTF::WeakPtrFactory::WeakPtrFactory):
+        (WTF::WeakPtrFactory::createWeakPtr const):
+
+2019-07-14  Dean Jackson  <dino@apple.com>
+
+        WebGL not supported on WKWebView on UIKit for Mac
+        https://bugs.webkit.org/show_bug.cgi?id=199785
+        <rdar://problem/52911449>
+
+        Reviewed by Antoine Quint.
+
+        MacCatalyst has Apple Graphics Control, although
+        this area is very messy, see <rdar://53062794>.
+
+        * wtf/Platform.h:
+
+2019-07-11  Myles C. Maxfield  <mmaxfield@apple.com>
+
+        New York font erroneously gets synthetic bold
+        https://bugs.webkit.org/show_bug.cgi?id=199653
+        <rdar://problem/51692592>
+
+        Reviewed by Simon Fraser.
+
+        * wtf/Platform.h:
+
+2019-07-11  Pablo Saavedra  <psaavedra@igalia.com>
+
+        [WPE][GTK] Build failure with ENABLE_ACCESSIBILITY=OFF
+        https://bugs.webkit.org/show_bug.cgi?id=199625
+
+        Added ENABLE(ACCESSIBILITY) and replaced HAVE(ACCESSIBILITY)
+        with ENABLE(ACCESSIBILITY) in the code.
+
+        Additionally, the TestRunner code generator now honors the
+        Conditional IDL format.
+
+        Reviewed by Konstantin Tokarev.
+
+        * wtf/FeatureDefines.h:
+        * wtf/Platform.h:
+
+2019-07-10  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Unreviewed, rolling out r247286.
+
+        Caused TestWTF.WTF.StringOperators to fail on debug bots
+
+        Reverted changeset:
+
+        "Add StringBuilder member function which allows makeString()
+        style variadic argument construction"
+        https://bugs.webkit.org/show_bug.cgi?id=198997
+        https://trac.webkit.org/changeset/247286
+
+2019-07-09  Michael Catanzaro  <mcatanzaro@igalia.com>
+
+        [WPE][GTK] GUniqueOutPtr::release should return a raw pointer
+        https://bugs.webkit.org/show_bug.cgi?id=199579
+
+        Reviewed by Carlos Garcia Campos.
+
+        GUniqueOutPtr::release should release to a raw pointer, rather than a GUniquePtr. If a
+        GUniquePtr is desired, it's trivial to construct one from the raw pointer, but all existing
+        callsites under Source/ would rather have a raw pointer. Currently they have to call
+        release().release() to get the raw pointer, which is annoying.
+
+        * wtf/glib/GUniquePtr.h:
+        (WTF::GUniqueOutPtr::release):
+
+2019-07-09  Sam Weinig  <weinig@apple.com>
+
+        Add StringBuilder member function which allows makeString() style variadic argument construction
+        https://bugs.webkit.org/show_bug.cgi?id=198997
+
+        Reviewed by Darin Adler.
+
+        Adds new StringBuilder::flexibleAppend(...) member function which allows passing one or more 
+        string-adaptable (in the sense that there is StringTypeAdapter specialization for the 
+        type) parameters. This re-ususes the variadic template infrastructure in StringConcatenate.h
+        that is used for makeString(...) allowing for improvements in one to benefit the other.
+
+        The advantage of StringBuilder::flexibleAppend(...) over calling StringBuilder::append(...)
+        multiple times (beyond the code sharing with makeString(...) is that it can avoid unnecessary
+        additional re-allocations when the StringBuilder needs to expand it's capacity. It does this
+        by computing the complete required length for all the passed arguments and then ensuring enough
+        capacity is available. It also reduces the allocation overhead versus the anti-pattern of
+        builder.append(makeString(...)).
+
+        Ideally, this member function should eventually just be called StringBuilder::append(...), but
+        the current overload set for StringBuilder::append(...) makes this complicated due to overloads
+        that take two arguments such as StringBuilder::append(const UChar*, unsigned). Going forward, we
+        should rename or remove those overloads and move to a standard interface. 
+
+        * wtf/posix/FileSystemPOSIX.cpp:
+        (WTF::FileSystemImpl::pathByAppendingComponents):
+        Adopt StringBuilder::flexibleAppend, using to combine the append of '/' and component.
+
+        * wtf/text/StringBuilder.cpp:
+        (WTF::StringBuilder::appendUninitialized):
+        (WTF::StringBuilder::appendUninitializedWithoutOverflowCheck):
+        Extract the part of appendUnitialized that doesn't do the overflow check
+        into it's own member function to allow callers that have already done the
+        overflow check to bypass it.
+
+        (WTF::StringBuilder::appendUninitializedWithoutOverflowCheckForUChar):
+        (WTF::StringBuilder::appendUninitializedWithoutOverflowCheckForLChar):
+        Added to allow template member function flexibleAppendFromAdapters to call
+        appendUninitializedWithoutOverflowCheck without moving it to the header.
+        
+        * wtf/text/StringBuilder.h:
+        (WTF::StringBuilder::flexibleAppendFromAdapters):
+        (WTF::StringBuilder::flexibleAppend):
+        Modeled on tryMakeStringFromAdapters in StringConcatenate.h, these
+        eagerly compute the required length, expand the buffer and then use
+        the existing string type adaptor accumulation functions used by makeString. 
+
+        * wtf/text/StringConcatenate.h:
+        (WTF::stringTypeAdapterAccumulator):
+        (WTF::tryMakeStringFromAdapters):
+        (WTF::makeStringAccumulator): Deleted.
+        Renames makeStringAccumulator to stringTypeAdapterAccumulator now that it is used
+        by more than just makeString.
+
+2019-07-09  Alex Christensen  <achristensen@webkit.org>
+
+        When parsing an IPv4 address, wait until after deciding it is indeed an IPv4 address before reporting syntax violations
+        https://bugs.webkit.org/show_bug.cgi?id=199628
+
+        Reviewed by Brady Eidson.
+
+        Otherwise, we sometimes report syntax violations on things that are not IPv4 addresses and don't have syntax violations.
+        I added a unit test with one such URL that used to cause an assertion.
+
+        * wtf/URLParser.cpp:
+        (WTF::URLParser::parseIPv4Host):
+
+2019-07-09  Alex Christensen  <achristensen@webkit.org>
+
+        Remove invalid assertion in URLParser::domainToASCII
+        https://bugs.webkit.org/show_bug.cgi?id=199624
+
+        Reviewed by Brady Eidson.
+
+        When a non-ASCII domain's punycode encoding is longer than 63 characters,
+        the URL is supposed to fail to parse, according to https://www.unicode.org/reports/tr46/#ToASCII
+        We and all other browsers do this.  When uidna_nameToASCII tries to punycode encode such a domain,
+        it can return a number larger than 63.  In this case, processingDetails.errors is UIDNA_ERROR_LABEL_TOO_LONG
+        and we fail to parse as desired and uidna_nameToASCII did not write out of bounds, so it was just the assertion
+        that was wrong.  I added some unit tests that would have hit the assertion and verify that we fail at the correct length.
+
+        * wtf/URLParser.cpp:
+        (WTF::URLParser::domainToASCII):
+
+2019-07-09  Alex Christensen  <achristensen@webkit.org>
+
+        URLParser should reserialize IPv6 addresses that end with a colon
+        https://bugs.webkit.org/show_bug.cgi?id=199627
+
+        Reviewed by Brady Eidson.
+
+        When an IPv6 address ends in a colon, the colon should be removed which means the
+        serialized output is different than the input, which the URLParser calls a syntax violation.
+        This matches the URL specification, and I added a unit test that used to assert.
+
+        * wtf/URLParser.cpp:
+        (WTF::URLParser::parseIPv6Host):
+
+2019-07-08  Chris Dumez  <cdumez@apple.com>
+
+        Use WeakHashSet for WebUserContentControllerProxy::m_processes
+        https://bugs.webkit.org/show_bug.cgi?id=199591
+        <rdar://problem/52798721>
+
+        Reviewed by Youenn Fablet.
+
+        Update WeakHashSet::add() to return an AddResult type, similarly to our other containers.
+
+        * wtf/WeakHashSet.h:
+        (WTF::WeakHashSet::add):
+
+2019-07-08  Christopher Reid  <chris.reid@sony.com>
+
+        Implement MappedFileData for Windows
+        https://bugs.webkit.org/show_bug.cgi?id=198269
+
+        Reviewed by Darin Adler.
+
+        Original patch by Fujii Hironori.
+
+        Add Windows implementations for MappedFileData constructor and destructor.
+
+        * wtf/FileSystem.cpp:
+        * wtf/FileSystem.h:
+        * wtf/win/FileSystemWin.cpp:
+
+2019-07-08  Chris Dumez  <cdumez@apple.com>
+
+        Add threading assertion to WTF::CompletionHandler
+        https://bugs.webkit.org/show_bug.cgi?id=199516
+
+        Reviewed by Alex Christensen.
+
+        Add threading assertion to WTF::CompletionHandler to try and catch common cases
+        of unsafe usage (completion handler constructed on one thread but called on
+        another).
+
+        * wtf/CompletionHandler.h:
+        (WTF::CompletionHandler<Out):
+
+2019-07-08  Antoine Quint  <graouts@apple.com>
+
+        [Pointer Events] Enable only on the most recent version of the supported iOS family
+        https://bugs.webkit.org/show_bug.cgi?id=199562
+        <rdar://problem/52766511>
+
+        Reviewed by Dean Jackson.
+
+        We really don't need HAVE_UI_WEB_TOUCH_EVENTS_GESTURE_RECOGNIZER_WITH_ACTIVE_TOUCHES_BY_ID since the UIKit SPI
+        that was added in iOS 13 that it's checking for is really required for all parts of the implementation of Pointer
+        Events, including dispatch of the "pointercancel" event and support for the "touch-action" CSS property.
+
+        * wtf/Platform.h:
+
+2019-07-05  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Unreviewed, rolling out r247115.
+
+        Breaks lldbWebKitTester (and by extension, test-webkitpy)
+
+        Reverted changeset:
+
+        "[WHLSL] Standard library is too big to directly include in
+        WebCore"
+        https://bugs.webkit.org/show_bug.cgi?id=198186
+        https://trac.webkit.org/changeset/247115
+
+2019-07-03  Jonathan Bedard  <jbedard@apple.com>
+
+        [Catalina] Enable WebKit build
+        https://bugs.webkit.org/show_bug.cgi?id=199209
+
+        Reviewed by Darin Adler.
+
+        * wtf/spi/cocoa/SecuritySPI.h: Declare SecTrustedApplicationCreateFromPath(...).
+
+2019-07-03  Keith Miller  <keith_miller@apple.com>
+
+        PACCage should first cage leaving PAC bits intact then authenticate
+        https://bugs.webkit.org/show_bug.cgi?id=199372
+
+        Reviewed by Saam Barati.
+
+        * wtf/CagedPtr.h:
+        (WTF::CagedPtr::get const):
+        (WTF::CagedPtr::getMayBeNull const):
+        (WTF::CagedPtr::mergePointers):
+
+2019-07-03  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Unreviewed, rolling out r246616.
+
+        Caused http/tests/inspector/network/har/har-page.html to fail
+        on Catalina.
+
+        Reverted changeset:
+
+        "Web Inspector: Network: replace CFNetwork SPI with new API
+        where able"
+        https://bugs.webkit.org/show_bug.cgi?id=198762
+        https://trac.webkit.org/changeset/246616
+
+2019-07-02  Commit Queue  <commit-queue@webkit.org>
+
+        Unreviewed, rolling out r247041.
+        https://bugs.webkit.org/show_bug.cgi?id=199425
+
+        broke some iOS arm64e tests (Requested by keith_miller on
+        #webkit).
+
+        Reverted changeset:
+
+        "PACCage should first cage leaving PAC bits intact then
+        authenticate"
+        https://bugs.webkit.org/show_bug.cgi?id=199372
+        https://trac.webkit.org/changeset/247041
+
+2019-07-02  Chris Dumez  <cdumez@apple.com>
+
+        ThreadSafeRefCounted<DestructionThread::Main> is not safe to use in the UIProcess
+        https://bugs.webkit.org/show_bug.cgi?id=199420
+        <rdar://problem/52289717>
+
+        Reviewed by Ryosuke Niwa.
+
+        * wtf/MainThread.cpp:
+        (WTF::isMainRunLoop):
+        (WTF::callOnMainRunLoop):
+        * wtf/MainThread.h:
+        Add some function to MainThread.h to be used by ThreadSafeRefCounted to interact with the
+        main RunLoop. This is used to avoid a circular dependency between RunLoop (which is
+        ThreadSafeRefCounted) and ThreadSafeReCounted.
+
+        * wtf/ThreadSafeRefCounted.h:
+        (WTF::ThreadSafeRefCounted::deref const):
+        Add a new DestructionThread::MainRunLoop enum value to be used by classes that need to
+        be destroyed on the main RunLoop rather than the main thread (which may be different
+        when WK1 is invoved)
+
+2019-07-02  Robin Morisset  <rmorisset@apple.com>
+
+        [WHLSL] the initializer in VariableDeclaration should be a std::unique_ptr, not Optional<UniqueRef<..>>
+        https://bugs.webkit.org/show_bug.cgi?id=199389
+
+        Reviewed by Sam Weinig.
+
+        * wtf/UniqueRef.h:
+        (WTF::UniqueRef::moveToUniquePtr): Added.
+
+2019-07-02  Keith Miller  <keith_miller@apple.com>
+
+        PACCage should first cage leaving PAC bits intact then authenticate
+        https://bugs.webkit.org/show_bug.cgi?id=199372
+
+        Reviewed by Saam Barati.
+
+        * wtf/CagedPtr.h:
+        (WTF::CagedPtr::get const):
+        (WTF::CagedPtr::getMayBeNull const):
+        (WTF::CagedPtr::mergePointers):
+
+2019-07-01  Philippe Normand  <pnormand@igalia.com>
+
+        [GStreamer] Cannot play Bert's Bytes radio stream from http://radio.dos.nl/
+        https://bugs.webkit.org/show_bug.cgi?id=198376
+
+        Reviewed by Xabier Rodriguez-Calvar.
+
+        * wtf/glib/GLibUtilities.h:
+        (enumToString): Utility function to get a string representation of of a GLib enum.
+
+2019-06-22  Darin Adler  <darin@apple.com>
+
+        Streamline some string code, focusing on functions that were using substringSharingImpl
+        https://bugs.webkit.org/show_bug.cgi?id=198898
+
+        Reviewed by Daniel Bates.
+
+        * wtf/URLHelpers.cpp:
+        (WTF::URLHelpers::applyHostNameFunctionToURLString): Change code using
+        substringSharingImpl so it could call String::find to call StringView::contains
+        instead. Also rewrote lambdas to be simpler and likely more efficient.
+        Rewrote another case using substringSharingImpl so it could call String::find
+        to call StringView::find instead.
+
+        * wtf/text/StringView.cpp:
+        (WTF::StringView::startsWith const): Added.
+
+        * wtf/text/StringView.h: Tweaked style a bit, and added an overload of
+        StringView::contains that takes a CodeUnitMatchFunction and an overload
+        of startsWith that cakes a UChar.
+
+2019-06-28  Konstantin Tokarev  <annulen@yandex.ru>
+
+        Remove traces of ENABLE_ICONDATABASE remaining after its removal in 219733
+        https://bugs.webkit.org/show_bug.cgi?id=199317
+
+        Reviewed by Michael Catanzaro.
+
+        While IconDatabase and all code using it was removed,
+        ENABLE_ICONDATABASE still exists as build option and C++ macro.
+
+        * wtf/FeatureDefines.h:
+
+2019-06-27  Konstantin Tokarev  <annulen@yandex.ru>
+
+        Avoid using WTF::Function for passing local function pointers and closures in URLHelpers.cpp
+        https://bugs.webkit.org/show_bug.cgi?id=199271
+
+        Reviewed by Yusuke Suzuki.
+
+        WTF::Function allocates memory on heap, which is totally redundant in this
+        case.
+
+        * wtf/URLHelpers.cpp:
+        (WTF::URLHelpers::isSecondLevelDomainNameAllowedByTLDRules):
+
+2019-06-27  Timothy Hatcher  <timothy@apple.com>
+
+        Move WebKitLegacy off of a couple AppKit ivars.
+        https://bugs.webkit.org/show_bug.cgi?id=199279
+        rdar://problem/34983438
+
+        Reviewed by Tim Horton.
+
+        * wtf/Platform.h: Added HAVE_SUBVIEWS_IVAR_SPI.
+
+2019-06-27  Beth Dakin  <bdakin@apple.com>
+
+        Upstream use of MACCATALYST
+        https://bugs.webkit.org/show_bug.cgi?id=199245
+        rdar://problem/51687723
+
+        Reviewed by Tim Horton.
+
+        * Configurations/SDKVariant.xcconfig:
+        * wtf/FeatureDefines.h:
+        * wtf/Platform.h:
+
+2019-06-27  Don Olmstead  <don.olmstead@sony.com>
+
+        [FTW] Build JavaScriptCore
+        https://bugs.webkit.org/show_bug.cgi?id=199254
+
+        Reviewed by Brent Fulgham.
+
+        * wtf/PlatformFTW.cmake: Added.
+
+2019-06-27  Fujii Hironori  <Hironori.Fujii@sony.com>
+
+        [CMake] Bump cmake_minimum_required version to 3.10
+        https://bugs.webkit.org/show_bug.cgi?id=199181
+
+        Reviewed by Don Olmstead.
+
+        * CMakeLists.txt:
+
+2019-06-26  Konstantin Tokarev  <annulen@yandex.ru>
+
+        Remove unneeded #include <wtf/glib/GRefPtr.h>
+        https://bugs.webkit.org/show_bug.cgi?id=199228
+
+        Reviewed by Michael Catanzaro.
+
+        * wtf/MemoryPressureHandler.h:
+
+2019-06-26  Myles C. Maxfield  <mmaxfield@apple.com>
+
+        REGRESSION: ( r246394 ) webgpu/whlsl-buffer-fragment.html and webgpu/whlsl-buffer-vertex.html are failing
+        https://bugs.webkit.org/show_bug.cgi?id=199012
+
+        Reviewed by Saam Barati.
+
+        * wtf/Platform.h:
+
+2019-06-25  Keith Miller  <keith_miller@apple.com>
+
+        CagedPtr doesn't merge PAC bits back into the resulting caged pointer.
+        https://bugs.webkit.org/show_bug.cgi?id=199214
+
+        Reviewed by Yusuke Suzuki.
+
+        The current code means that caging will just strip the any failed
+        authentication bits. Adding this code doesn't appear to be a
+        regression on iPhone Xs.
+
+        * wtf/CagedPtr.h:
+        (WTF::CagedPtr::get const):
+        (WTF::CagedPtr::getMayBeNull const):
+        (WTF::CagedPtr::getUnsafe const):
+        (WTF::CagedPtr::mergePointers):
+
+2019-06-25  Sam Weinig  <weinig@apple.com>
+
+        Experiment with simple structured bindings use
+        https://bugs.webkit.org/show_bug.cgi?id=198905
+
+        Reviewed by Darin Adler.
+
+        * wtf/URLHelpers.cpp:
+        (WTF::URLHelpers::mapHostNames):
+        Simplify code using c++ structured bindings (https://en.cppreference.com/w/cpp/language/structured_binding)
+        to see if all the platforms will work with it.
+
+2019-06-25  Adam Barth  <abarth@webkit.org>
+
+        [fuchsia] Update to newer zx_clock_get syscall
+        https://bugs.webkit.org/show_bug.cgi?id=199191
+
+        Reviewed by Sam Weinig.
+
+        Fuchsia has changed the zx_clock_get syscall to return the clock value
+        via an out parameter rather than via its return value. This change
+        makes zx_clock_get consistent with all the other syscalls.
+
+        This patch updates our use of zx_clock_get to use the new syscall. The
+        old syscall is no longer supported by Fuchsia.
+
+        * wtf/fuchsia/CPUTimeFuchsia.cpp:
+        (WTF::CPUTime::get): Switch to using the out parameter.
+        (WTF::CPUTime::forCurrentThread): Switch to using the out parameter.
+
+2019-06-25  Michael Catanzaro  <mcatanzaro@igalia.com>
+
+        Fully rename WebKitGTK+ -> WebKitGTK everywhere
+        https://bugs.webkit.org/show_bug.cgi?id=199159
+
+        Reviewed by Carlos Garcia Campos.
+
+        * wtf/URLParser.cpp:
+        (WTF::URLParser::internationalDomainNameTranscoder):
+
+2019-06-25  Michael Catanzaro  <mcatanzaro@igalia.com>
+
+        Require GCC 7
+        https://bugs.webkit.org/show_bug.cgi?id=198914
+
+        Reviewed by Darin Adler.
+
+        Remove now-stale GCC version check.
+
+        * wtf/Compiler.h:
+
+2019-06-23  Simon Fraser  <simon.fraser@apple.com>
+
+        Add OverflowScrollProxyNodes to the scrolling tree
+        https://bugs.webkit.org/show_bug.cgi?id=199132
+
+        Reviewed by Antti Koivisto.
+        
+        Setting indent is useful if you want to make a new stream with the indent of an
+        existing stream.
+
+        * wtf/text/TextStream.h:
+        (WTF::TextStream::setIndent):
+
+2019-06-20  Fujii Hironori  <Hironori.Fujii@sony.com>
+
+        Try to use C++14 std::enable_if_t in CheckedArithmetic.h again
+        https://bugs.webkit.org/show_bug.cgi?id=199099
+
+        Reviewed by Ross Kirsling.
+
+        r242235 changed CheckedArithmetic to not use C++14. Let's try
+        C++14 again.
+
+        * wtf/CheckedArithmetic.h: Use C++14 std::make_unsigned_t and std::enable_if_t.
+
+2019-06-18  Darin Adler  <darin@apple.com>
+
+        Tidy up the remaining bits of the AtomicString to AtomString rename
+        https://bugs.webkit.org/show_bug.cgi?id=198990
+
+        Reviewed by Michael Catanzaro.
+
+        * wtf/text/AtomString.cpp: Fix a comment.
+        * wtf/text/AtomString.h: Tweak formatting a bit. Use nullptr instead of 0.
+        Removed "using AtomicString = AtomString".
+        * wtf/text/AtomStringImpl.cpp:
+        (WTF::CStringTranslator::translate): Use setIsAtom instead of setIsAtomic.
+        (WTF::UCharBufferTranslator::translate): Ditto.
+        (WTF::HashAndUTF8CharactersTranslator::translate): Ditto.
+        (WTF::SubstringTranslator::translate): Ditto.
+        (WTF::LCharBufferTranslator::translate): Ditto.
+        (WTF::BufferFromStaticDataTranslator::translate): Ditto.
+        (WTF::AtomStringImpl::addSlowCase): Ditto.
+        (WTF::AtomStringImpl::lookUpSlowCase): Updated assertion message.
+
+        * wtf/text/AtomStringImpl.h: Tweaked the implementation of add.
+        Updated comments to say AtomString.
+
+        * wtf/text/AtomStringTable.cpp:
+        (WTF::AtomStringTable::~AtomStringTable): Use setIsAtom.
+
+        * wtf/text/StringImpl.h: Updated name of StringAtomic and
+        s_hashFlagStringKindIsAtom. Renamed to flagIsAtom and setIsAtom.
+
+        * wtf/text/WTFString.cpp:
+        (WTF::String::isSafeToSendToAnotherThread const): Updated comment.
+
+2019-06-20  Carlos Garcia Campos  <cgarcia@igalia.com>
+
+        [GTK] Remove support for GTK2 plugins
+        https://bugs.webkit.org/show_bug.cgi?id=199065
+
+        Reviewed by Sergio Villar Senin.
+
+        * wtf/Platform.h:
+        * wtf/glib/GTypedefs.h:
+
+2019-06-19  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [bmalloc] IsoHeap's initialization is racy with IsoHeap::isInitialized
+        https://bugs.webkit.org/show_bug.cgi?id=199053
+
+        Reviewed by Saam Barati.
+
+        Add constexpr static functions to generate pseudo random numbers from __LINE__.
+
+        * wtf/WeakRandom.h:
+        (WTF::WeakRandom::nextState):
+        (WTF::WeakRandom::generate):
+        (WTF::WeakRandom::advance):
+
+2019-06-19  Fujii Hironori  <Hironori.Fujii@sony.com>
+
+        Add WTF::crossThreadCopy(T&&) to utilize String::isolatedCopy() &&
+        https://bugs.webkit.org/show_bug.cgi?id=198957
+
+        Reviewed by Alex Christensen.
+
+        &&-qualified String::isolatedCopy() has a optimization path which
+        does just WTFMove if it isSafeToSendToAnotherThread which means
+        the object hasOneRef.
+
+        However, WTF::crossThreadCopy was using only &-qualified
+        isolatedCopy. To use the optimization, added
+        WTF::crossThreadCopy(T&&) overloading.
+
+        * wtf/CrossThreadCopier.h:
+        (WTF::crossThreadCopy): Added a overload of (T&&).
+        * wtf/CrossThreadTask.h:
+        (WTF::createCrossThreadTask): Removed explicit template arguments of crossThreadCopy.
+
+2019-06-19  Devin Rousso  <drousso@apple.com>
+
+        Web Inspector: Network: replace CFNetwork SPI with new API where able
+        https://bugs.webkit.org/show_bug.cgi?id=198762
+
+        Reviewed by Timothy Hatcher.
+
+        * wtf/Platform.h:
+
+2019-06-19  Alex Christensen  <achristensen@webkit.org>
+
+        Add a unit test for client certificate authentication
+        https://bugs.webkit.org/show_bug.cgi?id=197800
+
+        Reviewed by Youenn Fablet.
+
+        * wtf/spi/cocoa/SecuritySPI.h:
+        Move declarations from ArgumentCodersCF.cpp so they can be shared.
+
+2019-06-19  Adrian Perez de Castro  <aperez@igalia.com>
+
+        [WPE][GTK] Fix build with unified sources disabled
+        https://bugs.webkit.org/show_bug.cgi?id=198752
+
+        Reviewed by Michael Catanzaro.
+
+        * wtf/text/StringBuilder.h: Add missing include of StringConcatenateNumbers.h
+
+2019-06-19  Zan Dobersek  <zdobersek@igalia.com>
+
+        USE_ANGLE macro can be evaluated without being defined
+        https://bugs.webkit.org/show_bug.cgi?id=198991
+
+        Reviewed by Carlos Garcia Campos.
+
+        * wtf/Platform.h: On platforms not yet defining USE_ANGLE, the
+        incompatibility check with some other flags leads to the macro being
+        evaluated even when it was not defined, producing compiler warnings.
+        To avoid this, the macro should be defined to 0 before the check in
+        case it was not defined already.
+
+2019-06-18  Dean Jackson  <dino@apple.com>
+
+        UIContextMenuInteraction implementation for WKContentView
+        https://bugs.webkit.org/show_bug.cgi?id=198986
+        <rdar://problem/51875189>
+
+        Reviewed by Andy Estes.
+
+        Add USE_UICONTEXTMENU for iOS 13+.
+
+        * wtf/Platform.h:
+
+2019-06-18  Kenneth Russell  <kbr@chromium.org>
+
+        Add preliminary ANGLE backend to WebCore
+        https://bugs.webkit.org/show_bug.cgi?id=197755
+
+        Reviewed by Dean Jackson.
+
+        Add a USE_ANGLE definition to wtf/Platform.h (currently disabled)
+        which, when enabled, uses ANGLE instead of the OpenGL or OpenGL ES
+        backend.
+
+        * wtf/Platform.h:
+
+2019-06-17  Jiewen Tan  <jiewen_tan@apple.com>
+
+        Move SOAuthorization from WebKitAdditions to WebKit
+        https://bugs.webkit.org/show_bug.cgi?id=198874
+        <rdar://problem/47573431>
+
+        Reviewed by Brent Fulgham.
+
+        * wtf/Platform.h:
+        Adds a feature flag to detect AppSSO framework.
+
+2019-06-17  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Unreviewed, rolling out r246501.
+
+        Breaks Apple internal builds.
+
+        Reverted changeset:
+
+        "Support using ANGLE as the backend for the WebGL
+        implementation"
+        https://bugs.webkit.org/show_bug.cgi?id=197755
+        https://trac.webkit.org/changeset/246501
+
+2019-06-17  Kenneth Russell  <kbr@chromium.org>
+
+        Support using ANGLE as the backend for the WebGL implementation
+        https://bugs.webkit.org/show_bug.cgi?id=197755
+
+        Reviewed by Dean Jackson.
+
+        Add a USE_ANGLE definition to wtf/Platform.h (currently disabled)
+        which, when enabled, uses ANGLE instead of the OpenGL or OpenGL ES
+        backend.
+
+        * wtf/Platform.h:
+
+2019-06-16  Darin Adler  <darin@apple.com>
+
+        Rename AtomicString to AtomString
+        https://bugs.webkit.org/show_bug.cgi?id=195276
+
+        Reviewed by Michael Catanzaro.
+
+        * many files: Let do-webcore-rename do the renaming.
+
+        * wtf/text/AtomString.h: After renaming, added AtomicString as a synonym for
+        now; helps smooth things over with a tiny bit of Apple internal software so
+        we don't have to do this all at once. Can remove it soon.
+
+2019-06-16  Eric Carlson  <eric.carlson@apple.com>
+
+        [MediaStream] Avoid roundoff error when setting AVCapture min/max frame rate
+        https://bugs.webkit.org/show_bug.cgi?id=198875
+        <rdar://problem/51768374>
+
+        Reviewed by Youenn Fablet.
+
+        * wtf/MediaTime.h:
+        (WTF::LogArgument<MediaTime>::toString):
+        (WTF::LogArgument<MediaTimeRange>::toString):
+
+2019-06-12  Antoine Quint  <graouts@apple.com>
+
+        Show the web page URL when sharing an AR model
+        https://bugs.webkit.org/show_bug.cgi?id=198812
+        <rdar://problem/48689498>
+
+        Reviewed by Dean Jackson.
+
+        * wtf/Platform.h:
+
+2019-06-12  Youenn Fablet  <youenn@apple.com>
+
+        Use NSURLSession for WebSocket
+        https://bugs.webkit.org/show_bug.cgi?id=198568
+
+        Reviewed by Geoffrey Garen.
+
+        * wtf/Platform.h:
+        Introduce compile flag for WebSocket NSURLSession
+
+2019-06-12  Commit Queue  <commit-queue@webkit.org>
+
+        Unreviewed, rolling out r246322.
+        https://bugs.webkit.org/show_bug.cgi?id=198796
+
+        "It's a huge page load regression on iOS" (Requested by
+        saamyjoon on #webkit).
+
+        Reverted changeset:
+
+        "Roll out PAC cage"
+        https://bugs.webkit.org/show_bug.cgi?id=198726
+        https://trac.webkit.org/changeset/246322
+
 2019-06-10  Simon Fraser  <simon.fraser@apple.com>
 
         Add logging for UI-side compositing hit-testing

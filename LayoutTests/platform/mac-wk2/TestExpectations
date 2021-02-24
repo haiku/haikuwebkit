@@ -732,7 +732,10 @@ http/tests/resourceLoadStatistics/user-interaction-reported-after-website-data-r
 [ HighSierra+ ] http/tests/storageAccess/grant-with-prompt-preserves-gesture.html [ Pass ]
 [ HighSierra+ ] http/tests/storageAccess/deny-with-prompt-does-not-preserve-gesture.html [ Skip ]
 [ HighSierra+ ] http/tests/storageAccess/deny-without-prompt-preserves-gesture.html [ Pass ]
-[ HighSierra+ ] http/tests/storageAccess/has-storage-access-true-if-feature-off.html [ Pass ]
+[ HighSierra+ ] http/tests/storageAccess/has-storage-access-false-by-default.html [ Pass ]
+[ HighSierra+ ] http/tests/storageAccess/has-storage-access-false-by-default-ephemeral.html [ Pass ]
+[ HighSierra+ ] http/tests/storageAccess/has-storage-access-true-if-third-party-has-cookies-ephemeral.html [ Pass ]
+[ HighSierra+ ] http/tests/storageAccess/has-storage-access-true-if-third-party-has-cookies.html [ Pass ]
 
 # As of https://trac.webkit.org/changeset/227762 the timestampResolution is just 5 seconds which makes this test flaky
 http/tests/resourceLoadStatistics/user-interaction-only-reported-once-within-short-period-of-time.html [ Skip ]
@@ -773,6 +776,10 @@ webkit.org/b/185962 media/video-play-audio-require-user-gesture.html [ Pass Fail
 webkit.org/b/185994 fast/text/user-installed-fonts/shadow-family.html [ Pass ImageOnlyFailure ]
 webkit.org/b/185994 fast/text/user-installed-fonts/shadow-postscript-family.html [ Pass ImageOnlyFailure ]
 
+# Reenabled tests for supported platforms
+[ Mojave+ ] fast/text/user-installed-fonts/extended-character.html [ Pass ]
+[ Mojave+ ] fast/text/user-installed-fonts/extended-character-with-user-font.html [ Pass ]
+
 # <rdar://problem/25010307>
 [ HighSierra+ ] http/tests/ssl/applepay/ApplePayError.html [ Pass ]
 [ HighSierra+ ] http/tests/ssl/applepay/ApplePaySessionV3.html [ Pass ]
@@ -791,13 +798,11 @@ webkit.org/b/185994 fast/text/user-installed-fonts/shadow-postscript-family.html
 [ HighSierra+ ] http/tests/resourceLoadStatistics/clear-in-memory-and-persistent-store.html [ Pass ]
 [ HighSierra+ ] http/tests/resourceLoadStatistics/clear-in-memory-and-persistent-store-one-hour.html [ Pass ]
 [ HighSierra+ ] http/tests/resourceLoadStatistics/grandfathering.html [ Pass ]
-[ HighSierra+ ] http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-redirects.html [ Pass ]
-[ HighSierra+ ] http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-prevalent-subresource-requests.html [ Pass ]
+[ HighSierra+ ] http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-third-party-redirects.html [ Pass ]
+[ HighSierra+ ] http/tests/resourceLoadStatistics/strip-referrer-to-origin-for-third-party-requests.html [ Pass ]
 [ HighSierra+ ] http/tests/resourceLoadStatistics/cap-cache-max-age-for-prevalent-resource.html [ Pass ]
 
 # Skipped in general expectations since they only work on iOS and Mac, WK2.
-http/tests/security/strip-referrer-to-origin-for-third-party-redirects-in-private-mode.html [ Pass ]
-http/tests/security/strip-referrer-to-origin-for-third-party-requests-in-private-mode.html [ Pass ]
 media/deactivate-audio-session.html [ Pass ]
 
 # Link preconnect is disabled on pre-High Sierra because the CFNetwork SPI is missing.
@@ -901,14 +906,21 @@ imported/w3c/web-platform-tests/payment-request/user-accepts-payment-request-alg
 
 webkit.org/b/189598 compositing/backing/backing-store-attachment-fill-forwards-animation.html [ Pass Failure ]
 
-# Skip local authenticator tests for mac now.
-http/wpt/webauthn/public-key-credential-create-failure-local.https.html [ Skip ]
-http/wpt/webauthn/public-key-credential-create-success-local.https.html [ Skip ]
-http/wpt/webauthn/public-key-credential-get-failure-local.https.html [ Skip ]
-http/wpt/webauthn/public-key-credential-get-success-local.https.html [ Skip ]
-# The following tests require PublicKeyCredential objects. We can only produce them via local authenticators now.
-http/wpt/credential-management/credentialscontainer-store-basics.https.html [ Skip ]
-http/wpt/webauthn/idl.https.html [ Skip ]
+# Local authenticator tests require restricted keychain entitlement, which cannot be signed with ad hoc signing.
+# Therefore, tests fail on OpenSource bots. They will be covered by Internal bots.
+http/wpt/webauthn/public-key-credential-create-failure-local.https.html [ Failure ]
+http/wpt/webauthn/public-key-credential-create-success-local.https.html [ Failure ]
+http/wpt/webauthn/public-key-credential-get-failure-local.https.html [ Failure ]
+http/wpt/webauthn/public-key-credential-get-success-local.https.html [ Failure ]
+http/wpt/credential-management/credentialscontainer-store-basics.https.html [ Failure ]
+http/wpt/webauthn/idl.https.html [ Failure ]
+
+# NFC support require Catalina+, therefore skip them for HighSierra and Mojave.
+[ HighSierra Mojave ] http/wpt/webauthn/ctap-nfc-failure.https.html [ Skip ]
+[ HighSierra Mojave ] http/wpt/webauthn/public-key-credential-create-failure-nfc.https.html [ Skip ]
+[ HighSierra Mojave ] http/wpt/webauthn/public-key-credential-create-success-nfc.https.html [ Skip ]
+[ HighSierra Mojave ] http/wpt/webauthn/public-key-credential-get-failure-nfc.https.html [ Skip ]
+[ HighSierra Mojave ] http/wpt/webauthn/public-key-credential-get-success-nfc.https.html [ Skip ]
 
 webkit.org/b/183878 media/modern-media-controls/tracks-panel/tracks-panel-up-click-over-media-does-not-dimiss-media-controls-when-media-is-playing.html [ Pass Timeout ] 
 
@@ -919,12 +931,6 @@ webkit.org/b/194826 http/tests/resourceLoadStatistics/do-not-block-top-level-nav
 webkit.org/b/194916 fast/mediastream/MediaStream-video-element.html [ Pass Failure ]
 
 webkit.org/b/196376 storage/domstorage/localstorage/private-browsing-affects-storage.html [ Pass Failure ]
-
-webkit.org/b/197917 [ Debug ] http/wpt/webauthn/public-key-credential-create-success-hid.https.html [ Skip ]
-webkit.org/b/197917 [ Debug ] http/wpt/webauthn/public-key-credential-get-success-hid.https.html [ Skip ]
-
-webkit.org/b/194780 http/wpt/webauthn/public-key-credential-create-success-hid.https.html [ Pass Failure ]
-webkit.org/b/196377 http/wpt/webauthn/public-key-credential-get-success-hid.https.html [ Pass Failure ]
 
 webkit.org/b/196400 fast/mediastream/MediaStreamTrack-getSettings.html [ Pass Failure ]
 
@@ -961,3 +967,16 @@ webkit.org/b/198661 scrollingcoordinator/mac/nested-sticky.html [ Pass ImageOnly
 webkit.org/b/198663 http/tests/storageAccess/request-and-grant-access-then-navigate-same-site-should-have-access.html [ Pass Timeout ]
 
 webkit.org/b/198757 [ Mojave+ ] compositing/fixed-with-main-thread-scrolling.html [ Pass Timeout ]
+
+webkit.org/b/198774 imported/w3c/web-platform-tests/websockets/bufferedAmount-unchanged-by-sync-xhr.any.worker.html [ Failure ]
+
+webkit.org/b/176030 [ Debug ] http/tests/websocket/tests/hybi/send-object-tostring-check.html [ Pass Failure ]
+
+webkit.org/b/198921 [ Mojave+ ] webgpu/blend-color-triangle-strip.html [ Pass ImageOnlyFailure ]
+
+webkit.org/b/195635 scrollingcoordinator/mac/multiple-fixed.html [ Pass Timeout ]
+
+# <rdar://problem/51524958> REGRESSION: [ Catalina WK2 ] http/wpt/webauthn/public-key-credential-create-success-u2f.https.html is failing
+[ Catalina+ ] http/wpt/webauthn/public-key-credential-create-success-u2f.https.html [ Failure ]
+
+webkit.org/b/199651 [ Mojave Debug ] webgpu/whlsl-builtin-vectors-2.html [ Slow ]

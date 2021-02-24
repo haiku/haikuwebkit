@@ -29,6 +29,7 @@
 #include "APIFrameHandle.h"
 #include "APIPageGroupHandle.h"
 #include "APIPageHandle.h"
+#include "AuthenticatorManager.h"
 #include "DataReference.h"
 #include "DownloadProxyMap.h"
 #include "Logging.h"
@@ -168,6 +169,9 @@ WebProcessProxy::~WebProcessProxy()
     RELEASE_ASSERT(isMainThreadOrCheckDisabled());
     ASSERT(m_pageURLRetainCountMap.isEmpty());
 
+    if (m_processPool)
+        m_processPool->clearWebProcessHasUploads(coreProcessIdentifier());
+
     auto result = allProcesses().remove(coreProcessIdentifier());
     ASSERT_UNUSED(result, result);
 
@@ -217,6 +221,33 @@ void WebProcessProxy::setWebsiteDataStore(WebsiteDataStore& dataStore)
 {
     ASSERT(!m_websiteDataStore);
     m_websiteDataStore = &dataStore;
+    updateRegistrationWithDataStore();
+}
+
+void WebProcessProxy::updateRegistrationWithDataStore()
+{
+    if (!m_websiteDataStore)
+        return;
+    
+    bool shouldBeRegistered = processPool().dummyProcessProxy() != this && (pageCount() || provisionalPageCount());
+    if (shouldBeRegistered)
+        m_websiteDataStore->registerProcess(*this);
+    else
+        m_websiteDataStore->unregisterProcess(*this);
+}
+
+void WebProcessProxy::addProvisionalPageProxy(ProvisionalPageProxy& provisionalPage)
+{
+    ASSERT(!m_provisionalPages.contains(&provisionalPage));
+    m_provisionalPages.add(&provisionalPage);
+    updateRegistrationWithDataStore();
+}
+
+void WebProcessProxy::removeProvisionalPageProxy(ProvisionalPageProxy& provisionalPage)
+{
+    ASSERT(m_provisionalPages.contains(&provisionalPage));
+    m_provisionalPages.remove(&provisionalPage);
+    updateRegistrationWithDataStore();
 }
 
 void WebProcessProxy::getLaunchOptions(ProcessLauncher::LaunchOptions& launchOptions)
@@ -274,12 +305,6 @@ void WebProcessProxy::connectionWillOpen(IPC::Connection& connection)
 #if ENABLE(SEC_ITEM_SHIM)
     SecItemShimProxy::singleton().initializeConnection(connection);
 #endif
-
-    for (auto& page : m_pageMap.values())
-        page->connectionWillOpen(connection);
-
-    for (auto* provisionalPage : m_provisionalPages)
-        provisionalPage->connectionWillOpen(connection);
 }
 
 void WebProcessProxy::processWillShutDown(IPC::Connection& connection)
@@ -289,9 +314,6 @@ void WebProcessProxy::processWillShutDown(IPC::Connection& connection)
 #if PLATFORM(MAC) && ENABLE(WEBPROCESS_WINDOWSERVER_BLOCKING)
     processPool().stopDisplayLinks(connection);
 #endif
-
-    for (auto& page : m_pageMap.values())
-        page->webProcessWillShutDown();
 }
 
 void WebProcessProxy::shutDown()
@@ -383,6 +405,7 @@ void WebProcessProxy::addExistingWebPage(WebPageProxy& webPage, BeginsUsingDataS
     m_pageMap.set(webPage.pageID(), &webPage);
     globalPageMap().set(webPage.pageID(), &webPage);
 
+    updateRegistrationWithDataStore();
     updateBackgroundResponsivenessTimer();
 }
 
@@ -408,6 +431,7 @@ void WebProcessProxy::removeWebPage(WebPageProxy& webPage, EndsUsingDataStore en
         m_processPool->pageEndUsingWebsiteDataStore(webPage.pageID(), webPage.websiteDataStore());
 
     removeVisitedLinkStoreUser(webPage.visitedLinkStore(), webPage.pageID());
+    updateRegistrationWithDataStore();
 
     updateBackgroundResponsivenessTimer();
 
@@ -569,7 +593,7 @@ void WebProcessProxy::updateBackForwardItem(const BackForwardListItemState& item
     if (!item || !isAllowedToUpdateBackForwardItem(*item))
         return;
 
-    item->setPageState(itemState.pageState);
+    item->setPageState(PageState { itemState.pageState });
 }
 
 #if ENABLE(NETSCAPE_PLUGIN_API)
@@ -822,6 +846,12 @@ void WebProcessProxy::didDestroyFrame(uint64_t frameID)
     // back to the UIProcess, then the frameDestroyed message will still be received because it
     // gets sent directly to the WebProcessProxy.
     ASSERT(WebFrameProxyMap::isValidKey(frameID));
+#if ENABLE(WEB_AUTHN)
+    if (auto* frame = webFrame(frameID)) {
+        if (auto* page = frame->page())
+            page->websiteDataStore().authenticatorManager().cancelRequest(page->pageID(), frameID);
+    }
+#endif
     m_frameMap.remove(frameID);
 }
 
@@ -1004,12 +1034,18 @@ void WebProcessProxy::requestTermination(ProcessTerminationReason reason)
     if (webConnection())
         webConnection()->didClose();
 
+    auto provisionalPages = WTF::map(m_provisionalPages, [](auto* provisionalPage) { return makeWeakPtr(provisionalPage); });
     auto pages = copyToVectorOf<RefPtr<WebPageProxy>>(m_pageMap.values());
 
     shutDown();
 
     for (auto& page : pages)
         page->processDidTerminate(reason);
+        
+    for (auto& provisionalPage : provisionalPages) {
+        if (provisionalPage)
+            provisionalPage->processDidTerminate();
+    }
 }
 
 bool WebProcessProxy::isReleaseLoggingAllowed() const
@@ -1511,6 +1547,15 @@ void WebProcessProxy::decrementSuspendedPageCount()
     --m_suspendedPageCount;
     if (!m_suspendedPageCount)
         send(Messages::WebProcess::SetHasSuspendedPageProxy(false), 0);
+}
+
+WebProcessPool* WebProcessProxy::processPoolIfExists() const
+{
+    if (m_isPrewarmed || m_isInProcessCache)
+        RELEASE_LOG_ERROR(Process, "%p - WebProcessProxy::processPoolIfExists: trying to get WebProcessPool from an inactive WebProcessProxy %i", this, processIdentifier());
+    else
+        ASSERT(m_processPool);
+    return m_processPool.get();
 }
 
 WebProcessPool& WebProcessProxy::processPool() const

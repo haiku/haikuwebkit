@@ -69,6 +69,7 @@ private:
     bool isViewFocused() override;
     bool isViewVisible() override;
     bool isViewInWindow() override;
+    void processWillSwap() override;
     void processDidExit() override;
     void didRelaunchProcess() override;
     void pageClosed() override;
@@ -160,7 +161,7 @@ private:
     bool decidePolicyForInstallMissingMediaPluginsPermissionRequest(InstallMissingMediaPluginsPermissionRequest&) override;
 #endif
 
-    WebCore::UserInterfaceLayoutDirection userInterfaceLayoutDirection() override { return WebCore::UserInterfaceLayoutDirection::LTR; }
+    WebCore::UserInterfaceLayoutDirection userInterfaceLayoutDirection() override;
 
     bool effectiveAppearanceIsDark() const override;
 

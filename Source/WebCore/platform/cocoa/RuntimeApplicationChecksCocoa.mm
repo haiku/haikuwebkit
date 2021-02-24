@@ -187,6 +187,12 @@ bool MacApplication::isSolidStateNetworksDownloader()
     return isSolidStateNetworksDownloader;
 }
 
+bool MacApplication::isEpsonSoftwareUpdater()
+{
+    static bool isEpsonSoftwareUpdater = applicationBundleIsEqualTo("com.epson.EPSON_Software_Updater"_s);
+    return isEpsonSoftwareUpdater;
+}
+
 #endif // PLATFORM(MAC)
 
 #if PLATFORM(IOS_FAMILY)
@@ -202,10 +208,28 @@ bool IOSApplication::isMobileMail()
     return isMobileMail;
 }
 
+bool IOSApplication::isMailCompositionService()
+{
+    static bool isMailCompositionService = applicationBundleIsEqualTo("com.apple.MailCompositionService"_s);
+    return isMailCompositionService;
+}
+
 bool IOSApplication::isMobileSafari()
 {
     static bool isMobileSafari = applicationBundleIsEqualTo("com.apple.mobilesafari"_s);
     return isMobileSafari;
+}
+
+bool IOSApplication::isSafariViewService()
+{
+    static bool isSafariViewService = applicationBundleIsEqualTo("com.apple.SafariViewService"_s);
+    return isSafariViewService;
+}
+
+bool IOSApplication::isIMDb()
+{
+    static bool isIMDb = applicationBundleIsEqualTo("com.imdb.imdb"_s);
+    return isIMDb;
 }
 
 bool IOSApplication::isWebBookmarksD()
@@ -292,6 +316,24 @@ bool IOSApplication::isAppleApplication()
 {
     static bool isAppleApplication = applicationBundleStartsWith("com.apple."_s);
     return isAppleApplication;
+}
+
+bool IOSApplication::isEvernote()
+{
+    static bool isEvernote = applicationBundleIsEqualTo("com.evernote.iPhone.Evernote"_s);
+    return isEvernote;
+}
+
+bool IOSApplication::isEventbrite()
+{
+    static bool isEventbrite = applicationBundleIsEqualTo("com.eventbrite.attendee"_s);
+    return isEventbrite;
+}
+
+bool IOSApplication::isDataActivation()
+{
+    static bool isDataActivation = applicationBundleIsEqualTo("com.apple.DataActivation"_s);
+    return isDataActivation;
 }
 
 #endif

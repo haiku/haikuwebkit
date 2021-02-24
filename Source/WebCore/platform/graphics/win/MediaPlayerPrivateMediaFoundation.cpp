@@ -38,37 +38,11 @@
 #include "PlatformContextCairo.h"
 #include <cairo.h>
 #endif
-#include <wtf/SoftLinking.h>
 
 #if USE(MEDIA_FOUNDATION)
 
 #include <wtf/MainThread.h>
 #include <wtf/NeverDestroyed.h>
-
-SOFT_LINK_LIBRARY(Mf);
-SOFT_LINK_OPTIONAL(Mf, MFCreateSourceResolver, HRESULT, STDAPICALLTYPE, (IMFSourceResolver**));
-SOFT_LINK_OPTIONAL(Mf, MFCreateMediaSession, HRESULT, STDAPICALLTYPE, (IMFAttributes*, IMFMediaSession**));
-SOFT_LINK_OPTIONAL(Mf, MFCreateTopology, HRESULT, STDAPICALLTYPE, (IMFTopology**));
-SOFT_LINK_OPTIONAL(Mf, MFCreateTopologyNode, HRESULT, STDAPICALLTYPE, (MF_TOPOLOGY_TYPE, IMFTopologyNode**));
-SOFT_LINK_OPTIONAL(Mf, MFGetService, HRESULT, STDAPICALLTYPE, (IUnknown*, REFGUID, REFIID, LPVOID*));
-SOFT_LINK_OPTIONAL(Mf, MFCreateAudioRendererActivate, HRESULT, STDAPICALLTYPE, (IMFActivate**));
-SOFT_LINK_OPTIONAL(Mf, MFCreateVideoRendererActivate, HRESULT, STDAPICALLTYPE, (HWND, IMFActivate**));
-SOFT_LINK_OPTIONAL(Mf, MFGetSupportedMimeTypes, HRESULT, STDAPICALLTYPE, (PROPVARIANT*));
-
-SOFT_LINK_LIBRARY(Mfplat);
-SOFT_LINK_OPTIONAL(Mfplat, MFStartup, HRESULT, STDAPICALLTYPE, (ULONG, DWORD));
-SOFT_LINK_OPTIONAL(Mfplat, MFShutdown, HRESULT, STDAPICALLTYPE, ());
-SOFT_LINK_OPTIONAL(Mfplat, MFCreateMediaType, HRESULT, STDAPICALLTYPE, (IMFMediaType**));
-SOFT_LINK_OPTIONAL(Mfplat, MFFrameRateToAverageTimePerFrame, HRESULT, STDAPICALLTYPE, (UINT32, UINT32, UINT64*));
-
-SOFT_LINK_LIBRARY(evr);
-SOFT_LINK_OPTIONAL(evr, MFCreateVideoSampleFromSurface, HRESULT, STDAPICALLTYPE, (IUnknown*, IMFSample**));
-
-SOFT_LINK_LIBRARY(Dxva2);
-SOFT_LINK_OPTIONAL(Dxva2, DXVA2CreateDirect3DDeviceManager9, HRESULT, STDAPICALLTYPE, (UINT*, IDirect3DDeviceManager9**));
-
-SOFT_LINK_LIBRARY(D3d9);
-SOFT_LINK_OPTIONAL(D3d9, Direct3DCreate9Ex, HRESULT, STDAPICALLTYPE, (UINT, IDirect3D9Ex**));
 
 // MFSamplePresenterSampleCounter
 // Data type: UINT32
@@ -84,7 +58,8 @@ static const double tenMegahertz = 10000000;
 namespace WebCore {
 
 MediaPlayerPrivateMediaFoundation::MediaPlayerPrivateMediaFoundation(MediaPlayer* player) 
-    : m_player(player)
+    : m_weakThis(makeWeakPtr(this))
+    , m_player(player)
     , m_visible(false)
     , m_loadingProgress(false)
     , m_paused(true)
@@ -127,13 +102,10 @@ static const HashSet<String, ASCIICaseInsensitiveHash>& mimeTypeCache()
 
     cachedTypes.get().add(String("video/mp4"));
 
-    if (!MFGetSupportedMimeTypesPtr())
-        return cachedTypes;
-
     PROPVARIANT propVarMimeTypeArray;
     PropVariantInit(&propVarMimeTypeArray);
 
-    HRESULT hr = MFGetSupportedMimeTypesPtr()(&propVarMimeTypeArray);
+    HRESULT hr = MFGetSupportedMimeTypes(&propVarMimeTypeArray);
 
     if (SUCCEEDED(hr)) {
         CALPWSTR mimeTypeArray = propVarMimeTypeArray.calpwstr;
@@ -247,7 +219,7 @@ void MediaPlayerPrivateMediaFoundation::setRate(float rate)
 {
     COMPtr<IMFRateControl> rateControl;
 
-    HRESULT hr = MFGetServicePtr()(m_mediaSession.get(), MF_RATE_CONTROL_SERVICE, IID_IMFRateControl, (void**)&rateControl);
+    HRESULT hr = MFGetService(m_mediaSession.get(), MF_RATE_CONTROL_SERVICE, IID_IMFRateControl, (void**)&rateControl);
 
     if (!SUCCEEDED(hr))
         return;
@@ -289,11 +261,8 @@ bool MediaPlayerPrivateMediaFoundation::paused() const
 
 bool MediaPlayerPrivateMediaFoundation::setAllChannelVolumes(float volume)
 {
-    if (!MFGetServicePtr())
-        return false;
-
     COMPtr<IMFAudioStreamVolume> audioVolume;
-    if (!SUCCEEDED(MFGetServicePtr()(m_mediaSession.get(), MR_STREAM_VOLUME_SERVICE, __uuidof(IMFAudioStreamVolume), (void **)&audioVolume)))
+    if (!SUCCEEDED(MFGetService(m_mediaSession.get(), MR_STREAM_VOLUME_SERVICE, __uuidof(IMFAudioStreamVolume), (void **)&audioVolume)))
         return false;
 
     UINT32 channelsCount;
@@ -381,13 +350,10 @@ void MediaPlayerPrivateMediaFoundation::paint(GraphicsContext& context, const Fl
 
 bool MediaPlayerPrivateMediaFoundation::createSession()
 {
-    if (!MFStartupPtr() || !MFCreateMediaSessionPtr())
+    if (FAILED(MFStartup(MF_VERSION, MFSTARTUP_FULL)))
         return false;
 
-    if (FAILED(MFStartupPtr()(MF_VERSION, MFSTARTUP_FULL)))
-        return false;
-
-    if (FAILED(MFCreateMediaSessionPtr()(nullptr, &m_mediaSession)))
+    if (FAILED(MFCreateMediaSession(nullptr, &m_mediaSession)))
         return false;
 
     // Get next event.
@@ -422,10 +388,7 @@ bool MediaPlayerPrivateMediaFoundation::endSession()
         m_mediaSession = nullptr;
     }
 
-    if (!MFShutdownPtr())
-        return false;
-
-    HRESULT hr = MFShutdownPtr()();
+    HRESULT hr = MFShutdown();
     ASSERT_UNUSED(hr, SUCCEEDED(hr));
 
     return true;
@@ -433,10 +396,7 @@ bool MediaPlayerPrivateMediaFoundation::endSession()
 
 bool MediaPlayerPrivateMediaFoundation::startCreateMediaSource(const String& url)
 {
-    if (!MFCreateSourceResolverPtr())
-        return false;
-
-    if (FAILED(MFCreateSourceResolverPtr()(&m_sourceResolver)))
+    if (FAILED(MFCreateSourceResolver(&m_sourceResolver)))
         return false;
 
     COMPtr<IUnknown> cancelCookie;
@@ -466,7 +426,7 @@ bool MediaPlayerPrivateMediaFoundation::endCreatedMediaSource(IMFAsyncResult* as
     hr = asyncResult->GetStatus();
     m_loadingProgress = SUCCEEDED(hr);
 
-    callOnMainThread([weakPtr = makeWeakPtr(*this)] {
+    callOnMainThread([weakPtr = m_weakThis] {
         if (!weakPtr)
             return;
         weakPtr->onCreatedMediaSource();
@@ -495,7 +455,7 @@ bool MediaPlayerPrivateMediaFoundation::endGetEvent(IMFAsyncResult* asyncResult)
 
     switch (mediaEventType) {
     case MESessionTopologySet: {
-        callOnMainThread([weakPtr = makeWeakPtr(*this)] {
+        callOnMainThread([weakPtr = m_weakThis] {
             if (!weakPtr)
                 return;
             weakPtr->onTopologySet();
@@ -504,7 +464,7 @@ bool MediaPlayerPrivateMediaFoundation::endGetEvent(IMFAsyncResult* asyncResult)
     }
 
     case MESessionStarted: {
-        callOnMainThread([weakPtr = makeWeakPtr(*this)] {
+        callOnMainThread([weakPtr = m_weakThis] {
             if (!weakPtr)
                 return;
             weakPtr->onSessionStarted();
@@ -513,7 +473,7 @@ bool MediaPlayerPrivateMediaFoundation::endGetEvent(IMFAsyncResult* asyncResult)
     }
 
     case MEBufferingStarted: {
-        callOnMainThread([weakPtr = makeWeakPtr(*this)] {
+        callOnMainThread([weakPtr = m_weakThis] {
             if (!weakPtr)
                 return;
             weakPtr->onBufferingStarted();
@@ -522,7 +482,7 @@ bool MediaPlayerPrivateMediaFoundation::endGetEvent(IMFAsyncResult* asyncResult)
     }
 
     case MEBufferingStopped: {
-        callOnMainThread([weakPtr = makeWeakPtr(*this)] {
+        callOnMainThread([weakPtr = m_weakThis] {
             if (!weakPtr)
                 return;
             weakPtr->onBufferingStopped();
@@ -531,7 +491,7 @@ bool MediaPlayerPrivateMediaFoundation::endGetEvent(IMFAsyncResult* asyncResult)
     }
 
     case MESessionEnded: {
-        callOnMainThread([weakPtr = makeWeakPtr(*this)] {
+        callOnMainThread([weakPtr = m_weakThis] {
             if (!weakPtr)
                 return;
             weakPtr->onSessionEnded();
@@ -564,11 +524,8 @@ bool MediaPlayerPrivateMediaFoundation::endGetEvent(IMFAsyncResult* asyncResult)
 
 bool MediaPlayerPrivateMediaFoundation::createTopologyFromSource()
 {
-    if (!MFCreateTopologyPtr())
-        return false;
-
     // Create a new topology.
-    if (FAILED(MFCreateTopologyPtr()(&m_topology)))
+    if (FAILED(MFCreateTopology(&m_topology)))
         return false;
 
     // Create the presentation descriptor for the media source.
@@ -677,9 +634,6 @@ void MediaPlayerPrivateMediaFoundation::setNaturalSize(const FloatSize& size)
 
 bool MediaPlayerPrivateMediaFoundation::createOutputNode(COMPtr<IMFStreamDescriptor> sourceSD, COMPtr<IMFTopologyNode>& node)
 {
-    if (!MFCreateTopologyNodePtr() || !MFCreateAudioRendererActivatePtr() || !MFCreateVideoRendererActivatePtr())
-        return false;
-
     if (!sourceSD)
         return false;
 
@@ -698,19 +652,19 @@ bool MediaPlayerPrivateMediaFoundation::createOutputNode(COMPtr<IMFStreamDescrip
         return false;
 
     // Create a downstream node.
-    if (FAILED(MFCreateTopologyNodePtr()(MF_TOPOLOGY_OUTPUT_NODE, &node)))
+    if (FAILED(MFCreateTopologyNode(MF_TOPOLOGY_OUTPUT_NODE, &node)))
         return false;
 
     // Create an IMFActivate object for the renderer, based on the media type.
     COMPtr<IMFActivate> rendererActivate;
     if (MFMediaType_Audio == guidMajorType) {
         // Create the audio renderer.
-        if (FAILED(MFCreateAudioRendererActivatePtr()(&rendererActivate)))
+        if (FAILED(MFCreateAudioRendererActivate(&rendererActivate)))
             return false;
         m_hasAudio = true;
     } else if (MFMediaType_Video == guidMajorType) {
         // Create the video renderer.
-        if (FAILED(MFCreateVideoRendererActivatePtr()(nullptr, &rendererActivate)))
+        if (FAILED(MFCreateVideoRendererActivate(nullptr, &rendererActivate)))
             return false;
 
         m_presenter = new CustomVideoPresenter(this);
@@ -730,14 +684,11 @@ bool MediaPlayerPrivateMediaFoundation::createOutputNode(COMPtr<IMFStreamDescrip
 
 bool MediaPlayerPrivateMediaFoundation::createSourceStreamNode(COMPtr<IMFStreamDescriptor> sourceSD, COMPtr<IMFTopologyNode>& node)
 {
-    if (!MFCreateTopologyNodePtr())
-        return false;
-
     if (!m_mediaSource || !m_sourcePD || !sourceSD)
         return false;
 
     // Create the source-stream node.
-    HRESULT hr = MFCreateTopologyNodePtr()(MF_TOPOLOGY_SOURCESTREAM_NODE, &node);
+    HRESULT hr = MFCreateTopologyNode(MF_TOPOLOGY_SOURCESTREAM_NODE, &node);
     if (FAILED(hr))
         return false;
 
@@ -761,13 +712,10 @@ bool MediaPlayerPrivateMediaFoundation::createSourceStreamNode(COMPtr<IMFStreamD
 
 void MediaPlayerPrivateMediaFoundation::updateReadyState()
 {
-    if (!MFGetServicePtr())
-        return;
-
     COMPtr<IPropertyStore> prop;
 
     // Get the property store from the media session.
-    HRESULT hr = MFGetServicePtr()(m_mediaSession.get(), MFNETSOURCE_STATISTICS_SERVICE, IID_PPV_ARGS(&prop));
+    HRESULT hr = MFGetService(m_mediaSession.get(), MFNETSOURCE_STATISTICS_SERVICE, IID_PPV_ARGS(&prop));
 
     if (FAILED(hr))
         return;
@@ -807,10 +755,7 @@ COMPtr<IMFVideoDisplayControl> MediaPlayerPrivateMediaFoundation::videoDisplay()
     if (m_videoDisplay)
         return m_videoDisplay;
 
-    if (!MFGetServicePtr())
-        return nullptr;
-
-    MFGetServicePtr()(m_mediaSession.get(), MR_VIDEO_RENDER_SERVICE, IID_PPV_ARGS(&m_videoDisplay));
+    MFGetService(m_mediaSession.get(), MR_VIDEO_RENDER_SERVICE, IID_PPV_ARGS(&m_videoDisplay));
 
     return m_videoDisplay;
 }
@@ -1644,7 +1589,7 @@ HRESULT MediaPlayerPrivateMediaFoundation::CustomVideoPresenter::processInputNot
     
     // Invalidate the video area
     if (m_mediaPlayer) {
-        callOnMainThread([weakPtr = makeWeakPtr(*m_mediaPlayer)] {
+        callOnMainThread([weakPtr = m_mediaPlayer->m_weakThis] {
             if (weakPtr)
                 weakPtr->invalidateFrameView();
         });
@@ -1778,7 +1723,7 @@ HRESULT MediaPlayerPrivateMediaFoundation::CustomVideoPresenter::isMediaTypeSupp
 HRESULT MediaPlayerPrivateMediaFoundation::CustomVideoPresenter::createOptimalVideoType(IMFMediaType* proposedType, IMFMediaType** optimalType)
 {
     COMPtr<IMFMediaType> optimalVideoType;
-    HRESULT hr = MFCreateMediaTypePtr()(&optimalVideoType);
+    HRESULT hr = MFCreateMediaType(&optimalVideoType);
     if (FAILED(hr))
         return hr;
     hr = optimalVideoType->SetGUID(MF_MT_MAJOR_TYPE, MFMediaType_Video);
@@ -2301,7 +2246,7 @@ enum ScheduleEvent {
 void MediaPlayerPrivateMediaFoundation::VideoScheduler::setFrameRate(const MFRatio& fps)
 {
     UINT64 avgTimePerFrame = 0;
-    MFFrameRateToAverageTimePerFramePtr()(fps.Numerator, fps.Denominator, &avgTimePerFrame);
+    MFFrameRateToAverageTimePerFrame(fps.Numerator, fps.Denominator, &avgTimePerFrame);
 
     m_frameDuration = (MFTIME)avgTimePerFrame;
 }
@@ -2799,7 +2744,7 @@ HRESULT MediaPlayerPrivateMediaFoundation::Direct3DPresenter::presentSample(IMFS
     if (sample) {
         COMPtr<IMFMediaBuffer> buffer;
         hr = sample->GetBufferByIndex(0, &buffer);
-        hr = MFGetServicePtr()(buffer.get(), MR_BUFFER_SERVICE, __uuidof(IDirect3DSurface9), (void**)&surface);
+        hr = MFGetService(buffer.get(), MR_BUFFER_SERVICE, __uuidof(IDirect3DSurface9), (void**)&surface);
     } else if (m_surfaceRepaint) {
         // Use the last surface.
         surface = m_surfaceRepaint;
@@ -2903,11 +2848,11 @@ HRESULT MediaPlayerPrivateMediaFoundation::Direct3DPresenter::initializeD3D()
     ASSERT(!m_direct3D9);
     ASSERT(!m_deviceManager);
 
-    HRESULT hr = Direct3DCreate9ExPtr()(D3D_SDK_VERSION, &m_direct3D9);
+    HRESULT hr = Direct3DCreate9Ex(D3D_SDK_VERSION, &m_direct3D9);
     if (FAILED(hr))
         return hr;
 
-    return DXVA2CreateDirect3DDeviceManager9Ptr()(&m_deviceResetToken, &m_deviceManager);
+    return DXVA2CreateDirect3DDeviceManager9(&m_deviceResetToken, &m_deviceManager);
 }
 
 HRESULT MediaPlayerPrivateMediaFoundation::Direct3DPresenter::createD3DDevice()
@@ -2990,7 +2935,7 @@ HRESULT MediaPlayerPrivateMediaFoundation::Direct3DPresenter::createD3DSample(ID
     if (FAILED(hr))
         return hr;
 
-    return MFCreateVideoSampleFromSurfacePtr()(surface.get(), &videoSample);
+    return MFCreateVideoSampleFromSurface(surface.get(), &videoSample);
 }
 
 HRESULT MediaPlayerPrivateMediaFoundation::Direct3DPresenter::getSwapChainPresentParameters(IMFMediaType* type, D3DPRESENT_PARAMETERS* presentParams)

@@ -60,7 +60,7 @@ void HTTPCookieStore::deleteCookieFromDefaultUIProcessCookieStore(const WebCore:
 void HTTPCookieStore::startObservingChangesToDefaultUIProcessCookieStore(Function<void()>&& function)
 {
     stopObservingChangesToDefaultUIProcessCookieStore();
-    m_defaultUIProcessObserver = WebCore::CookieStorageObserver::create([NSHTTPCookieStorage sharedHTTPCookieStorage]);
+    m_defaultUIProcessObserver = std::make_unique<WebCore::CookieStorageObserver>([NSHTTPCookieStorage sharedHTTPCookieStorage]);
     m_defaultUIProcessObserver->startObserving(WTFMove(function));
 }
 

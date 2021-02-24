@@ -29,9 +29,11 @@
 #if PLATFORM(COCOA)
 
 #import "ArgumentCodersCF.h"
+#import "CoreTextHelpers.h"
 #import <CoreText/CTFont.h>
 #import <CoreText/CTFontDescriptor.h>
 #import <pal/spi/cocoa/NSKeyedArchiverSPI.h>
+#import <wtf/BlockObjCExceptions.h>
 #import <wtf/HashSet.h>
 
 #if USE(APPKIT)
@@ -77,6 +79,34 @@ enum class NSType {
 
 #pragma mark - Helpers
 
+static Class platformColorClass()
+{
+    static Class colorClass;
+    static std::once_flag flag;
+    std::call_once(flag, [] {
+#if USE(APPKIT)
+        colorClass = NSClassFromString(@"NSColor");
+#else
+        colorClass = NSClassFromString(@"UIColor");
+#endif
+    });
+    return colorClass;
+}
+
+static Class platformFontClass()
+{
+    static Class fontClass;
+    static std::once_flag flag;
+    std::call_once(flag, [] {
+#if USE(APPKIT)
+        fontClass = NSClassFromString(@"NSFont");
+#else
+        fontClass = NSClassFromString(@"UIFont");
+#endif
+    });
+    return fontClass;
+}
+
 static NSType typeFromObject(id object)
 {
     ASSERT(object);
@@ -84,7 +114,7 @@ static NSType typeFromObject(id object)
     // Specific classes handled.
     if ([object isKindOfClass:[NSArray class]])
         return NSType::Array;
-    if ([object isKindOfClass:[PlatformColor class]])
+    if ([object isKindOfClass:platformColorClass()])
         return NSType::Color;
     if ([object isKindOfClass:[NSData class]])
         return NSType::Data;
@@ -92,7 +122,7 @@ static NSType typeFromObject(id object)
         return NSType::Date;
     if ([object isKindOfClass:[NSDictionary class]])
         return NSType::Dictionary;
-    if ([object isKindOfClass:[PlatformFont class]])
+    if ([object isKindOfClass:platformFontClass()])
         return NSType::Font;
     if ([object isKindOfClass:[NSNumber class]])
         return NSType::Number;
@@ -300,8 +330,14 @@ static Optional<RetainPtr<id>> decodeFontInternal(Decoder& decoder)
     if (!decode(decoder, fontAttributes))
         return WTF::nullopt;
 
-    PlatformFontDescriptor *fontDescriptor = [PlatformFontDescriptor fontDescriptorWithFontAttributes:fontAttributes.get()];
+    BEGIN_BLOCK_OBJC_EXCEPTIONS;
+
+    PlatformFontDescriptor *fontDescriptor = WebKit::fontDescriptorWithFontAttributes(fontAttributes.get());
     return { [PlatformFont fontWithDescriptor:fontDescriptor size:0] };
+
+    END_BLOCK_OBJC_EXCEPTIONS
+
+    return { };
 }
 
 #pragma mark - NSNumber

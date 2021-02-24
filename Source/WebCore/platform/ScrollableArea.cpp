@@ -47,6 +47,9 @@ namespace WebCore {
 
 struct SameSizeAsScrollableArea {
     virtual ~SameSizeAsScrollableArea();
+#if !ASSERT_DISABLED
+    bool weakPtrFactorWasConstructedOnMainThread;
+#endif
 #if ENABLE(CSS_SCROLL_SNAP)
     void* pointers[3];
     unsigned currentIndices[2];
@@ -572,7 +575,6 @@ void ScrollableArea::serviceScrollAnimations()
         scrollAnimator->serviceScrollAnimations();
 }
 
-#if PLATFORM(IOS_FAMILY)
 bool ScrollableArea::isPinnedInBothDirections(const IntSize& scrollDelta) const
 {
     return isPinnedHorizontallyInDirection(scrollDelta.width()) && isPinnedVerticallyInDirection(scrollDelta.height());
@@ -595,7 +597,6 @@ bool ScrollableArea::isPinnedVerticallyInDirection(int verticalScrollDelta) cons
         return true;
     return false;
 }
-#endif // PLATFORM(IOS_FAMILY)
 
 int ScrollableArea::horizontalScrollbarIntrusion() const
 {
@@ -612,12 +613,9 @@ IntSize ScrollableArea::scrollbarIntrusion() const
     return { horizontalScrollbarIntrusion(), verticalScrollbarIntrusion() };
 }
 
-ScrollPosition ScrollableArea::scrollPosition() const
+ScrollOffset ScrollableArea::scrollOffset() const
 {
-    // FIXME: This relationship seems to be inverted. Scrollbars should be 'view', not 'model', and should get their values from us.
-    int x = horizontalScrollbar() ? horizontalScrollbar()->value() : 0;
-    int y = verticalScrollbar() ? verticalScrollbar()->value() : 0;
-    return IntPoint(x, y);
+    return scrollOffsetFromPosition(scrollPosition());
 }
 
 ScrollPosition ScrollableArea::minimumScrollPosition() const

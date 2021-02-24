@@ -76,6 +76,7 @@
 #include "WebProcessMessages.h"
 #include "WebProcessPoolMessages.h"
 #include "WebProcessProxy.h"
+#include "WebUserContentControllerProxy.h"
 #include "WebsiteDataStore.h"
 #include "WebsiteDataStoreParameters.h"
 #include <JavaScriptCore/JSCInlines.h>
@@ -473,6 +474,18 @@ void WebProcessPool::screenPropertiesStateChanged()
 
 NetworkProcessProxy& WebProcessPool::ensureNetworkProcess(WebsiteDataStore* withWebsiteDataStore)
 {
+    ASSERT(RunLoop::isMain());
+    
+    // FIXME: This is a temporary workaround for apps using WebKit API on non-main threads.
+    // We should remove this once we enforce threading violation check on our APIs.
+    // https://bugs.webkit.org/show_bug.cgi?id=200246.
+    if (!RunLoop::isMain()) {
+        callOnMainRunLoopAndWait([this, protectedThis = makeRef(*this)] {
+            ensureNetworkProcess();
+        });
+        return *m_networkProcess;
+    }
+
     if (m_networkProcess) {
         if (withWebsiteDataStore) {
             m_networkProcess->addSession(makeRef(*withWebsiteDataStore));
@@ -481,7 +494,7 @@ NetworkProcessProxy& WebProcessPool::ensureNetworkProcess(WebsiteDataStore* with
         return *m_networkProcess;
     }
 
-    m_networkProcess = std::make_unique<NetworkProcessProxy>(*this);
+    auto networkProcess = std::make_unique<NetworkProcessProxy>(*this);
 
     NetworkProcessCreationParameters parameters;
 
@@ -553,7 +566,7 @@ NetworkProcessProxy& WebProcessPool::ensureNetworkProcess(WebsiteDataStore* with
         parameters.defaultDataStoreParameters.indexedDatabaseDirectory = API::WebsiteDataStore::defaultDataStore()->websiteDataStore().parameters().indexedDatabaseDirectory;
     
     SandboxExtension::createHandleForReadWriteDirectory(parameters.defaultDataStoreParameters.indexedDatabaseDirectory, parameters.defaultDataStoreParameters.indexedDatabaseDirectoryExtensionHandle);
-    m_networkProcess->createSymLinkForFileUpgrade(parameters.defaultDataStoreParameters.indexedDatabaseDirectory);
+    networkProcess->createSymLinkForFileUpgrade(parameters.defaultDataStoreParameters.indexedDatabaseDirectory);
 #endif
 
 #if ENABLE(SERVICE_WORKER)
@@ -582,9 +595,10 @@ NetworkProcessProxy& WebProcessPool::ensureNetworkProcess(WebsiteDataStore* with
 
     SandboxExtension::createHandleForReadWriteDirectory(parameters.defaultDataStoreParameters.networkSessionParameters.resourceLoadStatisticsDirectory, parameters.defaultDataStoreParameters.networkSessionParameters.resourceLoadStatisticsDirectoryExtensionHandle);
 
-    bool enableResourceLoadStatistics = false;
+    bool enableResourceLoadStatistics = m_shouldEnableITPForDefaultSessions;
     bool shouldIncludeLocalhost = true;
     bool enableResourceLoadStatisticsDebugMode = false;
+    bool enableThirdPartyCookieBlockingOnSitesWithoutUserInteraction = true;
     WebCore::RegistrableDomain manualPrevalentResource { };
     if (withWebsiteDataStore) {
         enableResourceLoadStatistics = withWebsiteDataStore->resourceLoadStatisticsEnabled();
@@ -592,6 +606,7 @@ NetworkProcessProxy& WebProcessPool::ensureNetworkProcess(WebsiteDataStore* with
             auto networkSessionParameters = withWebsiteDataStore->parameters().networkSessionParameters;
             shouldIncludeLocalhost = networkSessionParameters.shouldIncludeLocalhostInResourceLoadStatistics;
             enableResourceLoadStatisticsDebugMode = networkSessionParameters.enableResourceLoadStatisticsDebugMode;
+            enableThirdPartyCookieBlockingOnSitesWithoutUserInteraction = networkSessionParameters.enableThirdPartyCookieBlockingOnSitesWithoutUserInteraction;
             manualPrevalentResource = networkSessionParameters.resourceLoadStatisticsManualPrevalentResource;
         }
 
@@ -603,6 +618,7 @@ NetworkProcessProxy& WebProcessPool::ensureNetworkProcess(WebsiteDataStore* with
             auto networkSessionParameters = m_websiteDataStore->websiteDataStore().parameters().networkSessionParameters;
             shouldIncludeLocalhost = networkSessionParameters.shouldIncludeLocalhostInResourceLoadStatistics;
             enableResourceLoadStatisticsDebugMode = networkSessionParameters.enableResourceLoadStatisticsDebugMode;
+            enableThirdPartyCookieBlockingOnSitesWithoutUserInteraction = networkSessionParameters.enableThirdPartyCookieBlockingOnSitesWithoutUserInteraction;
             manualPrevalentResource = networkSessionParameters.resourceLoadStatisticsManualPrevalentResource;
         }
 
@@ -613,37 +629,39 @@ NetworkProcessProxy& WebProcessPool::ensureNetworkProcess(WebsiteDataStore* with
     parameters.defaultDataStoreParameters.networkSessionParameters.enableResourceLoadStatistics = enableResourceLoadStatistics;
     parameters.defaultDataStoreParameters.networkSessionParameters.shouldIncludeLocalhostInResourceLoadStatistics = shouldIncludeLocalhost;
     parameters.defaultDataStoreParameters.networkSessionParameters.enableResourceLoadStatisticsDebugMode = enableResourceLoadStatisticsDebugMode;
+    parameters.defaultDataStoreParameters.networkSessionParameters.enableThirdPartyCookieBlockingOnSitesWithoutUserInteraction = enableThirdPartyCookieBlockingOnSitesWithoutUserInteraction;
     parameters.defaultDataStoreParameters.networkSessionParameters.resourceLoadStatisticsManualPrevalentResource = manualPrevalentResource;
 
     // Add any platform specific parameters
     platformInitializeNetworkProcess(parameters);
 
     // Initialize the network process.
-    m_networkProcess->send(Messages::NetworkProcess::InitializeNetworkProcess(parameters), 0);
+    networkProcess->send(Messages::NetworkProcess::InitializeNetworkProcess(parameters), 0);
 
     if (WebPreferences::anyPagesAreUsingPrivateBrowsing())
-        m_networkProcess->send(Messages::NetworkProcess::AddWebsiteDataStore(WebsiteDataStoreParameters::legacyPrivateSessionParameters()), 0);
+        networkProcess->send(Messages::NetworkProcess::AddWebsiteDataStore(WebsiteDataStoreParameters::legacyPrivateSessionParameters()), 0);
 
 #if PLATFORM(COCOA)
-    m_networkProcess->send(Messages::NetworkProcess::SetQOS(networkProcessLatencyQOS(), networkProcessThroughputQOS()), 0);
+    networkProcess->send(Messages::NetworkProcess::SetQOS(networkProcessLatencyQOS(), networkProcessThroughputQOS()), 0);
 #endif
 
     if (m_didNetworkProcessCrash) {
         m_didNetworkProcessCrash = false;
-        reinstateNetworkProcessAssertionState(*m_networkProcess);
+        reinstateNetworkProcessAssertionState(*networkProcess);
     }
 
     if (withWebsiteDataStore) {
-        m_networkProcess->addSession(makeRef(*withWebsiteDataStore));
+        networkProcess->addSession(makeRef(*withWebsiteDataStore));
         withWebsiteDataStore->clearPendingCookies();
     }
 
     // Make sure the network process knows about all the sessions that have been registered before it started.
     for (auto& sessionID : m_sessionToPageIDsMap.keys()) {
         if (auto* websiteDataStore = WebsiteDataStore::existingNonDefaultDataStoreForSessionID(sessionID))
-            m_networkProcess->addSession(*websiteDataStore);
+            networkProcess->addSession(*websiteDataStore);
     }
 
+    m_networkProcess = WTFMove(networkProcess);
     return *m_networkProcess;
 }
 
@@ -772,9 +790,9 @@ void WebProcessPool::didReceiveInvalidMessage(const IPC::StringReference& messag
         return;
 
     StringBuilder messageNameStringBuilder;
-    messageNameStringBuilder.append(messageReceiverName.data(), messageReceiverName.size());
+    messageNameStringBuilder.appendCharacters(messageReceiverName.data(), messageReceiverName.size());
     messageNameStringBuilder.append('.');
-    messageNameStringBuilder.append(messageName.data(), messageName.size());
+    messageNameStringBuilder.appendCharacters(messageName.data(), messageName.size());
 
     s_invalidMessageCallback(toAPI(API::String::create(messageNameStringBuilder.toString()).ptr()));
 }
@@ -819,6 +837,14 @@ RefPtr<WebProcessProxy> WebProcessPool::tryTakePrewarmedProcess(WebsiteDataStore
 {
     if (!m_prewarmedProcess)
         return nullptr;
+    
+    // There is sometimes a delay until we get notified that a prewarmed process has been terminated (e.g. after resuming
+    // from suspension) so make sure the process is still running here before deciding to use it.
+    if (m_prewarmedProcess->state() == AuxiliaryProcessProxy::State::Terminated) {
+        RELEASE_LOG_ERROR(Process, "Not using prewarmed process %d because it has been terminated", m_prewarmedProcess->processIdentifier());
+        m_prewarmedProcess = nullptr;
+        return nullptr;
+    }
 
 #if PLATFORM(GTK) || PLATFORM(WPE)
     // In platforms using Bubblewrap for sandboxing, prewarmed process is launched using the WebProcessPool primary WebsiteDataStore,
@@ -989,16 +1015,8 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
 
     parameters.presentingApplicationPID = m_configuration->presentingApplicationPID();
 
-#if PLATFORM(COCOA)
-    parameters.mediaMIMETypes = process.mediaMIMETypes();
-#endif
-
-#if PLATFORM(WPE)
-    parameters.isServiceWorkerProcess = process.isServiceWorkerProcess();
-#endif
-
     // Add any platform specific parameters
-    platformInitializeWebProcess(parameters);
+    platformInitializeWebProcess(process, parameters);
 
     RefPtr<API::Object> injectedBundleInitializationUserData = m_injectedBundleClient->getInjectedBundleInitializationUserData(*this);
     if (!injectedBundleInitializationUserData)
@@ -1236,6 +1254,8 @@ Ref<WebPageProxy> WebProcessPool::createWebPage(PageClient& pageClient, Ref<API:
     } else
         process = &processForRegistrableDomain(pageConfiguration->websiteDataStore()->websiteDataStore(), nullptr, { });
 
+    RefPtr<WebUserContentControllerProxy> userContentController = pageConfiguration->userContentController();
+    
     ASSERT(process);
 
     auto page = process->createWebPage(pageClient, WTFMove(pageConfiguration));
@@ -1248,6 +1268,8 @@ Ref<WebPageProxy> WebProcessPool::createWebPage(PageClient& pageClient, Ref<API:
         for (auto* serviceWorkerProcess : m_serviceWorkerProcesses.values())
             serviceWorkerProcess->updatePreferencesStore(*m_serviceWorkerPreferences);
     }
+    if (userContentController)
+        m_userContentControllerIDForServiceWorker = userContentController->identifier();
 #endif
 
     bool enableProcessSwapOnCrossSiteNavigation = page->preferences().processSwapOnCrossSiteNavigationEnabled();
@@ -1473,6 +1495,16 @@ void WebProcessPool::activePagesOriginsInWebProcessForTesting(ProcessID pid, Com
     completionHandler({ });
 }
 
+void WebProcessPool::setServiceWorkerTimeoutForTesting(Seconds seconds)
+{
+    sendSyncToNetworkingProcess(Messages::NetworkProcess::SetServiceWorkerFetchTimeoutForTesting(seconds), Messages::NetworkProcess::SetServiceWorkerFetchTimeoutForTesting::Reply());
+}
+
+void WebProcessPool::resetServiceWorkerTimeoutForTesting()
+{
+    sendSyncToNetworkingProcess(Messages::NetworkProcess::ResetServiceWorkerFetchTimeoutForTesting(), Messages::NetworkProcess::ResetServiceWorkerFetchTimeoutForTesting::Reply());
+}
+
 void WebProcessPool::setAlwaysUsesComplexTextCodePath(bool alwaysUseComplexText)
 {
     m_alwaysUsesComplexTextCodePath = alwaysUseComplexText;
@@ -1487,6 +1519,7 @@ void WebProcessPool::setShouldUseFontSmoothing(bool useFontSmoothing)
 
 void WebProcessPool::setResourceLoadStatisticsEnabled(bool enabled)
 {
+    m_shouldEnableITPForDefaultSessions = enabled;
     sendToAllProcesses(Messages::WebProcess::SetResourceLoadStatisticsEnabled(enabled));
 #if ENABLE(RESOURCE_LOAD_STATISTICS)
     sendToNetworkingProcess(Messages::NetworkProcess::SetResourceLoadStatisticsEnabled(enabled));
@@ -1751,6 +1784,12 @@ void WebProcessPool::clearCachedCredentials()
         m_networkProcess->send(Messages::NetworkProcess::ClearCachedCredentials(), 0);
 }
 
+void WebProcessPool::clearPermanentCredentialsForProtectionSpace(WebCore::ProtectionSpace&& protectionSpace, CompletionHandler<void()>&& completionHandler)
+{
+    if (m_networkProcess)
+        m_networkProcess->sendWithAsyncReply(Messages::NetworkProcess::ClearPermanentCredentialsForProtectionSpace(protectionSpace), WTFMove(completionHandler));
+}
+
 void WebProcessPool::terminateNetworkProcess()
 {
     if (!m_networkProcess)
@@ -1901,9 +1940,9 @@ void WebProcessPool::handleSynchronousMessage(IPC::Connection& connection, const
     if (!webProcessProxy)
         return completionHandler({ });
 
-    RefPtr<API::Object> returnData;
-    m_injectedBundleClient->didReceiveSynchronousMessageFromInjectedBundle(*this, messageName, webProcessProxy->transformHandlesToObjects(messageBody.object()).get(), returnData);
-    completionHandler(UserData(webProcessProxy->transformObjectsToHandles(returnData.get())));
+    m_injectedBundleClient->didReceiveSynchronousMessageFromInjectedBundle(*this, messageName, webProcessProxy->transformHandlesToObjects(messageBody.object()).get(), [webProcessProxy = makeRef(*webProcessProxy), completionHandler = WTFMove(completionHandler)] (RefPtr<API::Object>&& returnData) mutable {
+        completionHandler(UserData(webProcessProxy->transformObjectsToHandles(returnData.get())));
+    });
 }
 
 void WebProcessPool::didGetStatistics(const StatisticsData& statisticsData, uint64_t requestID)
@@ -2531,8 +2570,12 @@ void WebProcessPool::didCommitCrossSiteLoadWithDataTransfer(PAL::SessionID sessi
 
 void WebProcessPool::setWebProcessHasUploads(ProcessIdentifier processID)
 {
+    ASSERT(processID);
     auto* process = WebProcessProxy::processForIdentifier(processID);
     ASSERT(process);
+
+    if (!process)
+        return;
 
     RELEASE_LOG(ProcessSuspension, "Web process pid %u now has uploads in progress", (unsigned)process->processIdentifier());
 
@@ -2553,8 +2596,10 @@ void WebProcessPool::setWebProcessHasUploads(ProcessIdentifier processID)
 
 void WebProcessPool::clearWebProcessHasUploads(ProcessIdentifier processID)
 {
+    ASSERT(processID);
     auto result = m_processesWithUploads.take(processID);
-    ASSERT_UNUSED(result, result);
+    if (!result)
+        return;
 
     auto* process = WebProcessProxy::processForIdentifier(processID);
     ASSERT_UNUSED(process, process);

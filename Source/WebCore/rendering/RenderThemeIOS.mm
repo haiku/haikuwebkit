@@ -1132,7 +1132,8 @@ Color RenderThemeIOS::platformInactiveSelectionBackgroundColor(OptionSet<StyleCo
 #if ENABLE(FULL_KEYBOARD_ACCESS)
 Color RenderThemeIOS::platformFocusRingColor(OptionSet<StyleColor::Options>) const
 {
-    return colorFromUIColor([PAL::getUIColorClass() keyboardFocusIndicatorColor]);
+    // FIXME: Should be using -keyboardFocusIndicatorColor. For now, work around <rdar://problem/50838886>.
+    return colorFromUIColor([PAL::getUIColorClass() systemBlueColor]);
 }
 #endif
 
@@ -1444,8 +1445,8 @@ Color RenderThemeIOS::systemColor(CSSValueID cssValueID, OptionSet<StyleColor::O
     auto& cache = colorCache(options);
     return cache.systemStyleColors.ensure(cssValueID, [this, cssValueID, options] () -> Color {
         const bool useDarkAppearance = options.contains(StyleColor::Options::UseDarkAppearance);
-        const bool useInactiveAppearance = options.contains(StyleColor::Options::UseInactiveAppearance);
-        LocalCurrentTraitCollection localTraitCollection(useDarkAppearance, useInactiveAppearance);
+        const bool useElevatedUserInterfaceLevel = options.contains(StyleColor::Options::UseElevatedUserInterfaceLevel);
+        LocalCurrentTraitCollection localTraitCollection(useDarkAppearance, useElevatedUserInterfaceLevel);
 
         auto cssColorToSelector = [cssValueID] () -> SEL {
             switch (cssValueID) {
@@ -1528,6 +1529,7 @@ const CGSize attachmentSize = { 160, 119 };
 
 const CGFloat attachmentBorderRadius = 16;
 static Color attachmentBorderColor() { return Color(204, 204, 204); }
+static CGFloat attachmentBorderThickness = 1;
 
 static Color attachmentProgressColor() { return Color(222, 222, 222); }
 const CGFloat attachmentProgressBorderThickness = 3;
@@ -1838,15 +1840,18 @@ static void paintAttachmentProgress(GraphicsContext& context, RenderAttachmentIn
 
 static Path attachmentBorderPath(RenderAttachmentInfo& info)
 {
+    auto insetAttachmentRect = info.attachmentRect;
+    insetAttachmentRect.inflate(-attachmentBorderThickness / 2);
+
     Path borderPath;
-    borderPath.addRoundedRect(info.attachmentRect, FloatSize(attachmentBorderRadius, attachmentBorderRadius));
+    borderPath.addRoundedRect(insetAttachmentRect, FloatSize(attachmentBorderRadius, attachmentBorderRadius));
     return borderPath;
 }
 
 static void paintAttachmentBorder(GraphicsContext& context, Path& borderPath)
 {
     context.setStrokeColor(attachmentBorderColor());
-    context.setStrokeThickness(1);
+    context.setStrokeThickness(attachmentBorderThickness);
     context.strokePath(borderPath);
 }
 

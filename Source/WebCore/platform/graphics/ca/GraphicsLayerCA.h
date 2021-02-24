@@ -55,6 +55,7 @@ public:
     WEBCORE_EXPORT void initialize(Type) override;
 
     WEBCORE_EXPORT void setName(const String&) override;
+    WEBCORE_EXPORT String debugName() const override;
 
     WEBCORE_EXPORT PlatformLayerID primaryLayerID() const override;
 
@@ -163,7 +164,6 @@ public:
         bool ancestorHasTransformAnimation { false };
         bool ancestorStartedOrEndedTransformAnimation { false };
         bool ancestorWithTransformAnimationIntersectsCoverageRect { false };
-        bool ancestorIsViewportConstrained { false };
     };
     bool needsCommit(const CommitState&);
     void recursiveCommitChanges(CommitState&, const TransformState&, float pageScaleFactor = 1, const FloatPoint& positionRelativeToBase = FloatPoint(), bool affectedByPageScale = false);
@@ -215,8 +215,8 @@ private:
     bool isCommittingChanges() const override { return m_isCommittingChanges; }
     bool isUsingDisplayListDrawing(PlatformCALayer*) const override { return m_usesDisplayListDrawing; }
 
-    WEBCORE_EXPORT void setIsViewportConstrained(bool) override;
-    bool isViewportConstrained() const override { return m_isViewportConstrained; }
+    WEBCORE_EXPORT void setAllowsBackingStoreDetaching(bool) override;
+    bool allowsBackingStoreDetaching() const override { return m_allowsBackingStoreDetaching; }
 
     WEBCORE_EXPORT String displayListAsText(DisplayList::AsTextFlags) const override;
 
@@ -321,7 +321,7 @@ private:
     const FloatRect& visibleRect() const { return m_visibleRect; }
     const FloatRect& coverageRect() const { return m_coverageRect; }
 
-    void setVisibleAndCoverageRects(const VisibleAndCoverageRects&, bool isViewportConstrained);
+    void setVisibleAndCoverageRects(const VisibleAndCoverageRects&);
     
     bool recursiveVisibleRectChangeRequiresFlush(const CommitState&, const TransformState&) const;
     
@@ -490,6 +490,7 @@ private:
     bool appendToUncommittedAnimations(const KeyframeValueList&, const TransformOperations*, const Animation*, const String& animationName, const FloatSize& boxSize, int animationIndex, Seconds timeOffset, bool isMatrixAnimation);
     bool appendToUncommittedAnimations(const KeyframeValueList&, const FilterOperation*, const Animation*, const String& animationName, int animationIndex, Seconds timeOffset);
     void appendToUncommittedAnimations(LayerPropertyAnimation&&);
+    void removeFromUncommittedAnimations(const String&);
 
     enum LayerChange : uint64_t {
         NoChange                                = 0,
@@ -625,7 +626,7 @@ private:
 
     bool m_needsFullRepaint : 1;
     bool m_usingBackdropLayerType : 1;
-    bool m_isViewportConstrained : 1;
+    bool m_allowsBackingStoreDetaching : 1;
     bool m_intersectsCoverageRect : 1;
     bool m_hasEverPainted : 1;
     bool m_hasDescendantsWithRunningTransformAnimations : 1;

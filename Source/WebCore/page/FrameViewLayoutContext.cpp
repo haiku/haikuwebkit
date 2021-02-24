@@ -60,7 +60,12 @@ static void layoutUsingFormattingContext(const RenderView& renderView)
         return;
     auto initialContainingBlock = Layout::TreeBuilder::createLayoutTree(renderView);
     auto layoutState = std::make_unique<Layout::LayoutState>(*initialContainingBlock);
-    layoutState->setInQuirksMode(renderView.document().inQuirksMode());
+    auto quirksMode = Layout::LayoutState::QuirksMode::No;
+    if (renderView.document().inLimitedQuirksMode())
+        quirksMode = Layout::LayoutState::QuirksMode::Limited;
+    else if (renderView.document().inQuirksMode())
+        quirksMode = Layout::LayoutState::QuirksMode::Yes;
+    layoutState->setQuirksMode(quirksMode);
     layoutState->updateLayout();
     layoutState->verifyAndOutputMismatchingLayoutTree(renderView);
 } 
@@ -153,7 +158,8 @@ void FrameViewLayoutContext::layout()
     ASSERT(!view().isPainting());
     ASSERT(frame().view() == &view());
     ASSERT(frame().document());
-    ASSERT(frame().document()->pageCacheState() == Document::NotInPageCache);
+    ASSERT(frame().document()->pageCacheState() == Document::NotInPageCache
+        || frame().document()->pageCacheState() == Document::AboutToEnterPageCache);
     if (!canPerformLayout()) {
         LOG(Layout, "  is not allowed, bailing");
         return;

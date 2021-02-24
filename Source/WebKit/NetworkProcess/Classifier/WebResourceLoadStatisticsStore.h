@@ -68,6 +68,11 @@ enum class WebsiteDataToRemove : uint8_t {
     AllButHttpOnlyCookies,
     AllButCookies
 };
+struct RegistrableDomainsToBlockCookiesFor {
+    Vector<WebCore::RegistrableDomain> domainsToBlockCookiesFor;
+    Vector<WebCore::RegistrableDomain> domainsWithUserInteractionAsFirstParty;
+    RegistrableDomainsToBlockCookiesFor isolatedCopy() const { return { domainsToBlockCookiesFor.isolatedCopy(), domainsWithUserInteractionAsFirstParty.isolatedCopy() }; }
+};
 
 class WebResourceLoadStatisticsStore final : public ThreadSafeRefCounted<WebResourceLoadStatisticsStore, WTF::DestructionThread::Main> {
 public:
@@ -93,6 +98,8 @@ public:
     }
 
     ~WebResourceLoadStatisticsStore();
+
+    void didDestroyNetworkSession();
 
     static const OptionSet<WebsiteDataType>& monitoredDataTypes();
 
@@ -126,7 +133,6 @@ public:
     void setPrevalentResource(const RegistrableDomain&, CompletionHandler<void()>&&);
     void setVeryPrevalentResource(const RegistrableDomain&, CompletionHandler<void()>&&);
     void dumpResourceLoadStatistics(CompletionHandler<void(String)>&&);
-    void tryDumpResourceLoadStatistics();
     void isPrevalentResource(const RegistrableDomain&, CompletionHandler<void(bool)>&&);
     void isVeryPrevalentResource(const RegistrableDomain&, CompletionHandler<void(bool)>&&);
     void isRegisteredAsSubresourceUnder(const SubResourceDomain&, const TopFrameDomain&, CompletionHandler<void(bool)>&&);
@@ -167,15 +173,18 @@ public:
     void logTestingEvent(const String&);
     void callGrantStorageAccessHandler(const SubFrameDomain&, const TopFrameDomain&, Optional<FrameID>, WebCore::PageIdentifier, CompletionHandler<void(StorageAccessWasGranted)>&&);
     void removeAllStorageAccess(CompletionHandler<void()>&&);
-    void callUpdatePrevalentDomainsToBlockCookiesForHandler(const Vector<RegistrableDomain>&, CompletionHandler<void()>&&);
+    void callUpdatePrevalentDomainsToBlockCookiesForHandler(const RegistrableDomainsToBlockCookiesFor&, CompletionHandler<void()>&&);
     void callRemoveDomainsHandler(const Vector<RegistrableDomain>&);
     void callHasStorageAccessForFrameHandler(const SubFrameDomain&, const TopFrameDomain&, FrameID, WebCore::PageIdentifier, CompletionHandler<void(bool)>&&);
+
+    void hasCookies(const RegistrableDomain&, CompletionHandler<void(bool)>&&);
 
     void didCreateNetworkProcess();
 
     void notifyResourceLoadStatisticsProcessed();
 
     NetworkSession* networkSession();
+    void invalidateAndCancel();
 
     void sendDiagnosticMessageWithValue(const String& message, const String& description, unsigned value, unsigned sigDigits, WebCore::ShouldSample) const;
     void notifyPageStatisticsTelemetryFinished(unsigned totalPrevalentResources, unsigned totalPrevalentResourcesWithUserInteraction, unsigned top3SubframeUnderTopFrameOrigins) const;
@@ -205,8 +214,6 @@ private:
     bool m_hasScheduledProcessStats { false };
 
     bool m_firstNetworkProcessCreated { false };
-    
-    CompletionHandler<void(String)> m_dumpResourceLoadStatisticsCompletionHandler;
 };
 
 } // namespace WebKit

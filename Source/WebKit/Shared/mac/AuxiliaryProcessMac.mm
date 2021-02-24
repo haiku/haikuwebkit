@@ -25,7 +25,7 @@
 
 #import "config.h"
 
-#if PLATFORM(MAC) || PLATFORM(IOSMAC)
+#if PLATFORM(MAC) || PLATFORM(MACCATALYST)
 #import "AuxiliaryProcess.h"
 
 #import "CodeSigning.h"
@@ -57,7 +57,6 @@
 
 #if USE(APPLE_INTERNAL_SDK)
 #import <ApplicationServices/ApplicationServicesPriv.h>
-#import <WebKitAdditions/AuxiliaryProcessAdditions.h>
 #import <rootless.h>
 #endif
 
@@ -67,7 +66,7 @@
 #define USE_CACHE_COMPILED_SANDBOX 0
 #endif
 
-#if PLATFORM(IOSMAC) && USE(APPLE_INTERNAL_SDK)
+#if PLATFORM(MACCATALYST) && USE(APPLE_INTERNAL_SDK)
 enum LSSessionID {
     kLSDefaultSessionID = -2,
 };
@@ -160,14 +159,11 @@ void AuxiliaryProcess::platformInitialize()
 {
     initializeTimerCoalescingPolicy();
     [[NSFileManager defaultManager] changeCurrentDirectoryPath:[[NSBundle mainBundle] bundlePath]];
-#if HAVE(LOAD_OPTIMIZER)
-AUXILIARYPROCESS_LOADOPTIMIZER_ADDITIONS
-#endif
 }
 
 static OSStatus enableSandboxStyleFileQuarantine()
 {
-#if !PLATFORM(IOSMAC)
+#if !PLATFORM(MACCATALYST)
     qtn_proc_t quarantineProperties = qtn_proc_alloc();
     auto quarantinePropertiesDeleter = makeScopeExit([quarantineProperties]() {
         qtn_proc_free(quarantineProperties);
@@ -238,16 +234,16 @@ static Optional<CString> setAndSerializeSandboxParameters(const SandboxInitializ
             WTFLogAlways("%s: Could not set sandbox parameter: %s\n", getprogname(), strerror(errno));
             CRASH();
         }
-        builder.append(name, strlen(name));
+        builder.append(name);
         builder.append(':');
-        builder.append(value, strlen(value));
+        builder.append(value);
         builder.append(':');
     }
     if (isProfilePath) {
         auto contents = fileContents(profileOrProfilePath);
         if (!contents)
             return WTF::nullopt;
-        builder.append(contents->data(), contents->size());
+        builder.appendCharacters(contents->data(), contents->size());
     } else
         builder.append(profileOrProfilePath);
     return builder.toString().ascii();
@@ -689,7 +685,7 @@ void AuxiliaryProcess::stopNSAppRunLoop()
 }
 #endif
 
-#if !PLATFORM(IOSMAC) && ENABLE(WEBPROCESS_NSRUNLOOP)
+#if !PLATFORM(MACCATALYST) && ENABLE(WEBPROCESS_NSRUNLOOP)
 void AuxiliaryProcess::stopNSRunLoop()
 {
     ASSERT([NSRunLoop mainRunLoop]);

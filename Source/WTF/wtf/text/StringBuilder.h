@@ -27,8 +27,9 @@
 #pragma once
 
 #include <wtf/CheckedArithmetic.h>
-#include <wtf/text/AtomicString.h>
+#include <wtf/text/AtomString.h>
 #include <wtf/text/IntegerToStringConversion.h>
+#include <wtf/text/StringConcatenateNumbers.h>
 #include <wtf/text/StringView.h>
 #include <wtf/text/WTFString.h>
 
@@ -67,14 +68,14 @@ public:
     ALWAYS_INLINE bool hasOverflowed() const { return m_length.hasOverflowed(); }
     ALWAYS_INLINE bool crashesOnOverflow() const { return m_length.shouldCrashOnOverflow(); }
 
-    WTF_EXPORT_PRIVATE void append(const UChar*, unsigned);
-    WTF_EXPORT_PRIVATE void append(const LChar*, unsigned);
+    WTF_EXPORT_PRIVATE void appendCharacters(const UChar*, unsigned);
+    WTF_EXPORT_PRIVATE void appendCharacters(const LChar*, unsigned);
 
-    ALWAYS_INLINE void append(const char* characters, unsigned length) { append(reinterpret_cast<const LChar*>(characters), length); }
+    ALWAYS_INLINE void appendCharacters(const char* characters, unsigned length) { appendCharacters(reinterpret_cast<const LChar*>(characters), length); }
 
-    void append(const AtomicString& atomicString)
+    void append(const AtomString& atomString)
     {
-        append(atomicString.string());
+        append(atomString.string());
     }
 
     void append(const String& string)
@@ -95,9 +96,9 @@ public:
         }
 
         if (string.is8Bit())
-            append(string.characters8(), string.length());
+            appendCharacters(string.characters8(), string.length());
         else
-            append(string.characters16(), string.length());
+            appendCharacters(string.characters16(), string.length());
     }
 
     void append(const StringBuilder& other)
@@ -120,17 +121,17 @@ public:
         }
 
         if (other.is8Bit())
-            append(other.characters8(), other.m_length.unsafeGet());
+            appendCharacters(other.characters8(), other.m_length.unsafeGet());
         else
-            append(other.characters16(), other.m_length.unsafeGet());
+            appendCharacters(other.characters16(), other.m_length.unsafeGet());
     }
 
     void append(StringView stringView)
     {
         if (stringView.is8Bit())
-            append(stringView.characters8(), stringView.length());
+            appendCharacters(stringView.characters8(), stringView.length());
         else
-            append(stringView.characters16(), stringView.length());
+            appendCharacters(stringView.characters16(), stringView.length());
     }
 
 #if USE(CF)
@@ -140,7 +141,7 @@ public:
     void append(NSString *string) { append((__bridge CFStringRef)string); }
 #endif
     
-    void append(const String& string, unsigned offset, unsigned length)
+    void appendSubstring(const String& string, unsigned offset, unsigned length)
     {
         if (!string.length())
             return;
@@ -149,15 +150,15 @@ public:
             return;
 
         if (string.is8Bit())
-            append(string.characters8() + offset, length);
+            appendCharacters(string.characters8() + offset, length);
         else
-            append(string.characters16() + offset, length);
+            appendCharacters(string.characters16() + offset, length);
     }
 
     void append(const char* characters)
     {
         if (characters)
-            append(characters, strlen(characters));
+            appendCharacters(characters, strlen(characters));
     }
 
     void append(UChar c)
@@ -178,7 +179,7 @@ public:
                 return;
             }
         }
-        append(&c, 1);
+        appendCharacters(&c, 1);
     }
 
     void append(LChar c)
@@ -193,7 +194,7 @@ public:
                 m_bufferCharacters16[length] = c;
             m_length++;
         } else
-            append(&c, 1);
+            appendCharacters(&c, 1);
     }
 
     void append(char c)
@@ -214,7 +215,7 @@ public:
     WTF_EXPORT_PRIVATE void appendQuotedJSONString(const String&);
 
     template<unsigned characterCount>
-    ALWAYS_INLINE void appendLiteral(const char (&characters)[characterCount]) { append(characters, characterCount - 1); }
+    ALWAYS_INLINE void appendLiteral(const char (&characters)[characterCount]) { appendCharacters(characters, characterCount - 1); }
 
     WTF_EXPORT_PRIVATE void appendNumber(int);
     WTF_EXPORT_PRIVATE void appendNumber(unsigned);
@@ -252,24 +253,24 @@ public:
         return m_string;
     }
 
-    AtomicString toAtomicString() const
+    AtomString toAtomString() const
     {
         RELEASE_ASSERT(!hasOverflowed());
         if (!m_length)
             return emptyAtom();
 
-        // If the buffer is sufficiently over-allocated, make a new AtomicString from a copy so its buffer is not so large.
+        // If the buffer is sufficiently over-allocated, make a new AtomString from a copy so its buffer is not so large.
         if (canShrink()) {
             if (is8Bit())
-                return AtomicString(characters8(), length());
-            return AtomicString(characters16(), length());            
+                return AtomString(characters8(), length());
+            return AtomString(characters16(), length());            
         }
 
         if (!m_string.isNull())
-            return AtomicString(m_string);
+            return AtomString(m_string);
 
         ASSERT(m_buffer);
-        return AtomicString(m_buffer.get(), 0, m_length.unsafeGet());
+        return AtomString(m_buffer.get(), 0, m_length.unsafeGet());
     }
 
     unsigned length() const
@@ -429,7 +430,7 @@ inline bool operator!=(const String& a, const StringBuilder& b) { return !equal(
 template<> struct IntegerToStringConversionTrait<StringBuilder> {
     using ReturnType = void;
     using AdditionalArgumentType = StringBuilder;
-    static void flush(LChar* characters, unsigned length, StringBuilder* stringBuilder) { stringBuilder->append(characters, length); }
+    static void flush(LChar* characters, unsigned length, StringBuilder* stringBuilder) { stringBuilder->appendCharacters(characters, length); }
 };
 
 } // namespace WTF

@@ -27,6 +27,11 @@
 #include "AuxiliaryProcessProxy.h"
 
 #include "AuxiliaryProcessMessages.h"
+#include "LoadParameters.h"
+#include "Logging.h"
+#include "WebPageMessages.h"
+#include "WebPageProxy.h"
+#include "WebProcessProxy.h"
 #include <wtf/RunLoop.h>
 
 namespace WebKit {
@@ -106,10 +111,35 @@ AuxiliaryProcessProxy::State AuxiliaryProcessProxy::state() const
     if (m_processLauncher && m_processLauncher->isLaunching())
         return AuxiliaryProcessProxy::State::Launching;
 
-    if (!m_connection)
+    // There is sometimes a delay until we get the notification from mach about the connection getting closed.
+    // To help detect terminated process earlier, we also check that the PID is for a valid running process.
+    if (!m_connection || !isRunningProcessPID(processIdentifier()))
         return AuxiliaryProcessProxy::State::Terminated;
 
     return AuxiliaryProcessProxy::State::Running;
+}
+
+bool AuxiliaryProcessProxy::isRunningProcessPID(ProcessID pid)
+{
+    if (!pid)
+        return false;
+
+#if PLATFORM(COCOA)
+    // Use kill() with a signal of 0 to check if there is actually still a process with the given PID.
+    if (!kill(pid, 0))
+        return true;
+
+    if (errno == ESRCH) {
+        // No process can be found corresponding to that specified by pid.
+        return false;
+    }
+
+    RELEASE_LOG_ERROR(Process, "kill() returned unexpected error %d", errno);
+    return true;
+#else
+    UNUSED_PARAM(pid);
+    return true;
+#endif
 }
 
 bool AuxiliaryProcessProxy::sendMessage(std::unique_ptr<IPC::Encoder> encoder, OptionSet<IPC::SendOption> sendOptions)
@@ -175,6 +205,24 @@ void AuxiliaryProcessProxy::didFinishLaunching(ProcessLauncher*, IPC::Connection
     for (size_t i = 0; i < m_pendingMessages.size(); ++i) {
         std::unique_ptr<IPC::Encoder> message = WTFMove(m_pendingMessages[i].first);
         OptionSet<IPC::SendOption> sendOptions = m_pendingMessages[i].second;
+#if HAVE(SANDBOX_ISSUE_MACH_EXTENSION_TO_PROCESS_BY_PID)
+        if (message->messageName() == "LoadRequestWaitingForPID") {
+            auto buffer = message->buffer();
+            auto bufferSize = message->bufferSize();
+            std::unique_ptr<IPC::Decoder> decoder = std::make_unique<IPC::Decoder>(buffer, bufferSize, nullptr, Vector<IPC::Attachment> { });
+            LoadParameters loadParameters;
+            URL resourceDirectoryURL;
+            WebCore::PageIdentifier pageID;
+            if (decoder->decode(loadParameters) && decoder->decode(resourceDirectoryURL) && decoder->decode(pageID)) {
+                if (auto* page = WebProcessProxy::webPage(pageID)) {
+                    page->maybeInitializeSandboxExtensionHandle(static_cast<WebProcessProxy&>(*this), loadParameters.request.url(), resourceDirectoryURL, loadParameters.sandboxExtensionHandle);
+                    send(Messages::WebPage::LoadRequest(loadParameters), decoder->destinationID());
+                }
+            } else
+                ASSERT_NOT_REACHED();
+            continue;
+        }
+#endif
         m_connection->sendMessage(WTFMove(message), sendOptions);
     }
 

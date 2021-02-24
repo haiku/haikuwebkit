@@ -58,17 +58,17 @@ def loadBuilderConfig(c, is_test_mode_enabled=False, master_prefix_path='./'):
     for builder in config['builders']:
         builder['tags'] = getTagsForBuilder(builder)
         factory = globals()[builder['factory']]
-        builder['description'] = builder.pop("shortname")
+        builder['description'] = builder.pop('shortname')
         factorykwargs = {}
-        for key in ["platform", "configuration", "architectures", "triggers", "additionalArguments"]:
+        for key in ['platform', 'configuration', 'architectures', 'triggers', 'additionalArguments']:
             value = builder.pop(key, None)
             if value:
                 factorykwargs[key] = value
 
-        builder["factory"] = factory(**factorykwargs)
+        builder['factory'] = factory(**factorykwargs)
 
         if use_localhost_worker:
-            builder['workernames'].append("local-worker")
+            builder['workernames'].append('local-worker')
 
         c['builders'].append(builder)
 
@@ -150,10 +150,14 @@ def isTriggerUsedByAnyBuilder(config, trigger):
 
 def checkWorkersAndBuildersForConsistency(config, workers, builders):
     def _find_worker_with_name(workers, worker_name):
+        result = None
         for worker in workers:
             if worker['name'] == worker_name:
-                return worker
-        return None
+                if not result:
+                    result = worker
+                else:
+                    raise Exception('Duplicate worker entry found for {}.'.format(worker['name']))
+        return result
 
     for worker in workers:
         checkValidWorker(worker)

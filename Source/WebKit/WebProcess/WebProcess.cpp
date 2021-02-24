@@ -192,6 +192,7 @@ WebProcess::WebProcess()
     , m_nonVisibleProcessCleanupTimer(*this, &WebProcess::nonVisibleProcessCleanupTimerFired)
 #if PLATFORM(IOS_FAMILY)
     , m_webSQLiteDatabaseTracker([this](bool isHoldingLockedFiles) { parentProcessConnection()->send(Messages::WebProcessProxy::SetIsHoldingLockedFiles(isHoldingLockedFiles), 0); })
+    , m_taskStateObserver(ProcessTaskStateObserver::create(*this))
 #endif
 {
     // Initialize our platform strategies.
@@ -231,6 +232,9 @@ WebProcess::WebProcess()
 
 WebProcess::~WebProcess()
 {
+#if PLATFORM(IOS_FAMILY)
+    m_taskStateObserver->invalidate();
+#endif
 }
 
 void WebProcess::initializeProcess(const AuxiliaryProcessInitializationParameters& parameters)
@@ -1253,7 +1257,6 @@ NetworkProcessConnection& WebProcess::ensureNetworkProcessConnection()
             CRASH();
 
         m_networkProcessConnection = NetworkProcessConnection::create(connectionIdentifier);
-        m_networkProcessConnection->connection().send(Messages::NetworkConnectionToWebProcess::SetWebProcessIdentifier(Process::identifier()), 0);
 
         // To recover web storage, network process needs to know active webpages to prepare session storage.
         // FIXME: https://bugs.webkit.org/show_bug.cgi?id=198051.
@@ -1323,6 +1326,7 @@ void WebProcess::networkProcessConnectionClosed(NetworkProcessConnection* connec
 
     m_webLoaderStrategy.networkProcessCrashed();
     WebSocketStream::networkProcessCrashed();
+    m_webSocketChannelManager.networkProcessCrashed();
 
     for (auto& page : m_pageMap.values()) {
         page->stopAllURLSchemeTasks();
@@ -1478,9 +1482,20 @@ void WebProcess::actualPrepareToSuspend(ShouldAcknowledgeWhenReadyToSuspend shou
     SetForScope<bool> suspensionScope(m_isSuspending, true);
     m_processIsSuspended = true;
 
+#if PLATFORM(COCOA)
+    if (m_processType == ProcessType::PrewarmedWebContent) {
+        if (shouldAcknowledgeWhenReadyToSuspend == ShouldAcknowledgeWhenReadyToSuspend::Yes) {
+            RELEASE_LOG(ProcessSuspension, "%p - WebProcess::actualPrepareToSuspend() Sending ProcessReadyToSuspend IPC message", this);
+            parentProcessConnection()->send(Messages::WebProcessProxy::ProcessReadyToSuspend(), 0);
+        }
+        return;
+    }
+#endif
+
 #if ENABLE(VIDEO)
     suspendAllMediaBuffering();
-    PlatformMediaSessionManager::sharedManager().processWillSuspend();
+    if (auto* platformMediaSessionManager = PlatformMediaSessionManager::sharedManagerIfExists())
+        platformMediaSessionManager->processWillSuspend();
 #endif
 
     if (!m_suppressMemoryPressureHandler)
@@ -1533,6 +1548,11 @@ void WebProcess::cancelPrepareToSuspend()
 
     m_processIsSuspended = false;
 
+#if PLATFORM(COCOA)
+    if (m_processType == ProcessType::PrewarmedWebContent)
+        return;
+#endif
+
     unfreezeAllLayerTrees();
 
 #if PLATFORM(IOS_FAMILY)
@@ -1542,7 +1562,8 @@ void WebProcess::cancelPrepareToSuspend()
 #endif
 
 #if ENABLE(VIDEO)
-    PlatformMediaSessionManager::sharedManager().processDidResume();
+    if (auto* platformMediaSessionManager = PlatformMediaSessionManager::sharedManagerIfExists())
+        platformMediaSessionManager->processDidResume();
     resumeAllMediaBuffering();
 #endif
 
@@ -1608,6 +1629,11 @@ void WebProcess::processDidResume()
 
     m_processIsSuspended = false;
 
+#if PLATFORM(COCOA)
+    if (m_processType == ProcessType::PrewarmedWebContent)
+        return;
+#endif
+
     cancelMarkAllLayersVolatile();
     unfreezeAllLayerTrees();
     
@@ -1615,10 +1641,18 @@ void WebProcess::processDidResume()
     m_webSQLiteDatabaseTracker.setIsSuspended(false);
     SQLiteDatabase::setIsDatabaseOpeningForbidden(false);
     accessibilityProcessSuspendedNotification(false);
+    {
+        LockHolder holder(m_unexpectedlyResumedUIAssertionLock);
+        if (m_unexpectedlyResumedUIAssertion) {
+            RELEASE_LOG(ProcessSuspension, "%p - WebProcess::processDidResume() Releasing 'Unexpectedly resumed' assertion", this);
+            m_unexpectedlyResumedUIAssertion = nullptr;
+        }
+    }
 #endif
 
 #if ENABLE(VIDEO)
-    PlatformMediaSessionManager::sharedManager().processDidResume();
+    if (auto* platformMediaSessionManager = PlatformMediaSessionManager::sharedManagerIfExists())
+        platformMediaSessionManager->processDidResume();
     resumeAllMediaBuffering();
 #endif
 }
@@ -1860,13 +1894,13 @@ LibWebRTCNetwork& WebProcess::libWebRTCNetwork()
 }
 
 #if ENABLE(SERVICE_WORKER)
-void WebProcess::establishWorkerContextConnectionToNetworkProcess(uint64_t pageGroupID, PageIdentifier pageID, const WebPreferencesStore& store, PAL::SessionID initialSessionID)
+void WebProcess::establishWorkerContextConnectionToNetworkProcess(uint64_t pageGroupID, PageIdentifier pageID, const WebPreferencesStore& store, PAL::SessionID initialSessionID, ServiceWorkerInitializationData&& initializationData)
 {
     // We are in the Service Worker context process and the call below establishes our connection to the Network Process
     // by calling ensureNetworkProcessConnection. SWContextManager needs to use the same underlying IPC::Connection as the
     // NetworkProcessConnection for synchronization purposes.
     auto& ipcConnection = ensureNetworkProcessConnection().connection();
-    SWContextManager::singleton().setConnection(std::make_unique<WebSWContextManagerConnection>(ipcConnection, pageGroupID, pageID, store));
+    SWContextManager::singleton().setConnection(std::make_unique<WebSWContextManagerConnection>(ipcConnection, pageGroupID, pageID, store, WTFMove(initializationData)));
 }
 
 void WebProcess::registerServiceWorkerClients()

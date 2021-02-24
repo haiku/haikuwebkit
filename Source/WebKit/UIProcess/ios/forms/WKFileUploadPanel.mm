@@ -404,7 +404,7 @@ static NSSet<NSString *> *UTIsForMIMETypes(NSArray *mimeTypes)
     BOOL containsImageMediaType = !mediaTypes.count || arrayContainsUTIThatConformsTo(mediaTypes, kUTTypeImage);
     BOOL containsVideoMediaType = !mediaTypes.count || arrayContainsUTIThatConformsTo(mediaTypes, kUTTypeMovie);
 
-#if PLATFORM(IOSMAC)
+#if PLATFORM(MACCATALYST)
     // FIXME 49961589: Support picking media with UIImagePickerController
     BOOL shouldPresentDocumentMenuViewController = NO;
 #else
@@ -527,9 +527,9 @@ static NSSet<NSString *> *UTIsForMIMETypes(NSArray *mimeTypes)
 
 #pragma mark - UIPopoverControllerDelegate
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)popoverControllerDidDismissPopover:(UIPopoverController *)popoverController
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     [self _cancel];
 }

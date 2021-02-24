@@ -94,6 +94,7 @@ private:
     void textWillBeDeletedInTextField(WebCore::Element* input) final;
     void textDidChangeInTextArea(WebCore::Element*) final;
     void overflowScrollPositionChanged() final { }
+    void subFrameScrollPositionChanged() final { }
 
     void handleKeyboardEvent(WebCore::KeyboardEvent&) final;
     void handleInputMethodKeydown(WebCore::KeyboardEvent&) final;
@@ -118,6 +119,8 @@ private:
     WebCore::DOMPasteAccessResponse requestDOMPasteAccess(const String&) final { return WebCore::DOMPasteAccessResponse::DeniedForGesture; }
 
     WebCore::TextCheckerClient* textChecker() final { return this; }
+
+    bool canShowFontPanel() const final { return false; }
 
     WebView* m_webView;
     WebEditorUndoTarget* m_undoTarget;

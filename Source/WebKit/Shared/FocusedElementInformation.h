@@ -138,6 +138,9 @@ struct FocusedElementInformation {
 #endif
     bool shouldSynthesizeKeyEventsForEditing { false };
     bool isSpellCheckingEnabled { true };
+    bool shouldAvoidResizingWhenInputViewBoundsChange { false };
+    bool shouldAvoidScrollingWhenFocusedContentIsVisible { false };
+    bool shouldUseLegacySelectPopoverDismissalBehaviorInDataActivation { false };
 
     FocusedElementIdentifier focusedElementIdentifier { 0 };
 

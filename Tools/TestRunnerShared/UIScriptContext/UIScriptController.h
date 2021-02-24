@@ -67,6 +67,7 @@ public:
     void doAsyncTask(JSValueRef callback);
     void doAfterPresentationUpdate(JSValueRef callback);
     void doAfterNextStablePresentationUpdate(JSValueRef callback);
+    void ensurePositionInformationIsUpToDateAt(long x, long y, JSValueRef callback);
     void doAfterVisibleContentRectUpdate(JSValueRef callback);
 
     void zoomToScale(double scale, JSValueRef callback);
@@ -82,6 +83,7 @@ public:
     void liftUpAtPoint(long x, long y, long touchCount, JSValueRef callback);
     void singleTapAtPoint(long x, long y, JSValueRef callback);
     void singleTapAtPointWithModifiers(long x, long y, JSValueRef modifierArray, JSValueRef callback);
+    void twoFingerSingleTapAtPoint(long x, long y, JSValueRef callback);
     void doubleTapAtPoint(long x, long y, JSValueRef callback);
     void dragFromPointToPoint(long startX, long startY, long endX, long endY, double durationSeconds, JSValueRef callback);
 
@@ -163,6 +165,7 @@ public:
     JSValueRef didHideKeyboardCallback() const;
 
     bool isShowingKeyboard() const;
+    bool hasInputSession() const;
 
     void setDidHideMenuCallback(JSValueRef);
     JSValueRef didHideMenuCallback() const;

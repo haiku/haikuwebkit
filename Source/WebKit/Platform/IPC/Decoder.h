@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2019 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,6 +39,7 @@ namespace IPC {
 
 class DataReference;
 class ImportanceAssertion;
+enum class ShouldDispatchWhenWaitingForSyncReply;
 
 class Decoder {
     WTF_MAKE_FAST_ALLOCATED;
@@ -54,7 +55,7 @@ public:
     uint64_t destinationID() const { return m_destinationID; }
 
     bool isSyncMessage() const;
-    bool shouldDispatchMessageWhenWaitingForSyncReply() const;
+    ShouldDispatchWhenWaitingForSyncReply shouldDispatchMessageWhenWaitingForSyncReply() const;
     bool shouldUseFullySynchronousModeForTesting() const;
 
 #if PLATFORM(MAC)
@@ -69,8 +70,13 @@ public:
 
     size_t length() const { return m_bufferEnd - m_buffer; }
 
-    bool isInvalid() const { return m_bufferPos > m_bufferEnd; }
-    void markInvalid() { m_bufferPos = m_bufferEnd + 1; }
+    bool isInvalid() const
+    {
+        // (m_bufferPos == m_bufferEnd) is a valid state for decoding if the last parameter
+        // is a variable length byte array and its size == 0.
+        return m_bufferPos < m_buffer || m_bufferPos > m_bufferEnd;
+    }
+    void markInvalid() { m_bufferPos = nullptr; }
 
     bool decodeFixedLengthData(uint8_t*, size_t, unsigned alignment);
 

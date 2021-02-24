@@ -27,6 +27,7 @@
 #include "WebPage.h"
 
 #include "WebKitWebPageAccessibilityObject.h"
+#include "WebPageProxy.h"
 #include "WebPreferencesKeys.h"
 #include "WebPreferencesStore.h"
 #include <WebCore/NotImplemented.h>
@@ -38,7 +39,7 @@ using namespace WebCore;
 
 void WebPage::platformInitialize()
 {
-#if HAVE(ACCESSIBILITY)
+#if ENABLE(ACCESSIBILITY)
     // Create the accessible object (the plug) that will serve as the
     // entry point to the web process, and send a message to the UI
     // process to connect the two worlds through the accessibility

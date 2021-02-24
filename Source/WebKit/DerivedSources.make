@@ -116,6 +116,7 @@ MESSAGE_RECEIVERS = \
     NetworkRTCProvider \
     NetworkRTCSocket \
     NetworkResourceLoader \
+    NetworkSocketChannel \
     NetworkSocketStream \
     PlaybackSessionManager \
     PlaybackSessionManagerProxy \
@@ -146,7 +147,6 @@ MESSAGE_RECEIVERS = \
     ViewUpdateDispatcher \
     VisitedLinkStore \
     VisitedLinkTableController \
-    WebAuthenticatorCoordinator \
     WebAuthenticatorCoordinatorProxy \
     WebAutomationSession \
     WebAutomationSessionProxy \
@@ -182,6 +182,7 @@ MESSAGE_RECEIVERS = \
     WebSWContextManagerConnection \
     WebSWServerConnection \
     WebSWServerToContextConnection \
+    WebSocketChannel \
     WebSocketStream \
     WebUserContentController \
     WebUserContentControllerProxy \

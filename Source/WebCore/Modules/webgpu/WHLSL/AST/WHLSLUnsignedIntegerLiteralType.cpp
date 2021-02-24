@@ -40,9 +40,9 @@ namespace WHLSL {
 
 namespace AST {
 
-UnsignedIntegerLiteralType::UnsignedIntegerLiteralType(Lexer::Token&& origin, unsigned value)
+UnsignedIntegerLiteralType::UnsignedIntegerLiteralType(CodeLocation location, unsigned value)
     : m_value(value)
-    , m_preferredType(makeUniqueRef<TypeReference>(WTFMove(origin), "uint"_str, TypeArguments()))
+    , m_preferredType(makeUniqueRef<TypeReference>(location, "uint"_str, TypeArguments()))
 {
 }
 
@@ -74,6 +74,15 @@ unsigned UnsignedIntegerLiteralType::conversionCost(const UnnamedType& unnamedTy
     if (matches(unnamedType, m_preferredType))
         return 0;
     return 1;
+}
+
+UnsignedIntegerLiteralType UnsignedIntegerLiteralType::clone() const
+{
+    UnsignedIntegerLiteralType result(m_preferredType->codeLocation(), m_value);
+    if (auto* type = maybeResolvedType())
+        result.resolve(type->clone());
+    result.m_preferredType = m_preferredType->cloneTypeReference();
+    return result;
 }
 
 } // namespace AST

@@ -599,9 +599,10 @@ public:
 
     void effectiveAppearanceDidChange();
     bool effectiveAppearanceIsDark();
-    bool effectiveAppearanceIsInactive();
+    bool effectiveUserInterfaceLevelIsElevated();
 
     void takeFocus(WebCore::FocusDirection);
+    void clearPromisedDragImage();
 
 private:
 #if HAVE(TOUCH_BAR)

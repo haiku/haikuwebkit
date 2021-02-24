@@ -35,7 +35,9 @@
 #include "ScrollingStateTree.h"
 #include "ScrollingTreeFrameScrollingNode.h"
 #include "ScrollingTreeNode.h"
+#include "ScrollingTreeOverflowScrollProxyNode.h"
 #include "ScrollingTreeOverflowScrollingNode.h"
+#include "ScrollingTreePositionedNode.h"
 #include "ScrollingTreeScrollingNode.h"
 #include <wtf/SetForScope.h>
 #include <wtf/text/TextStream.h>
@@ -169,7 +171,8 @@ void ScrollingTree::commitTreeState(std::unique_ptr<ScrollingStateTree> scrollin
         unvisitedNodes.add(nodeID);
 
     m_overflowRelatedNodesMap.clear();
-    m_positionedNodesWithRelatedOverflow.clear();
+    m_activeOverflowScrollProxyNodes.clear();
+    m_activePositionedNodes.clear();
 
     // orphanNodes keeps child nodes alive while we rebuild child lists.
     OrphanScrollingNodeMap orphanNodes;
@@ -183,7 +186,7 @@ void ScrollingTree::commitTreeState(std::unique_ptr<ScrollingStateTree> scrollin
         m_nodeMap.remove(nodeID);
     }
 
-    LOG(Scrolling, "committed ScrollingTree\n%s", scrollingTreeAsText(ScrollingStateTreeAsTextBehaviorDebug).utf8().data());
+    LOG_WITH_STREAM(Scrolling, stream << "committed ScrollingTree" << scrollingTreeAsText(ScrollingStateTreeAsTextBehaviorDebug));
 }
 
 void ScrollingTree::updateTreeFromStateNode(const ScrollingStateNode* stateNode, OrphanScrollingNodeMap& orphanNodes, HashSet<ScrollingNodeID>& unvisitedNodes)
@@ -218,7 +221,7 @@ void ScrollingTree::updateTreeFromStateNode(const ScrollingStateNode* stateNode,
         auto parentIt = m_nodeMap.find(parentNodeID);
         ASSERT_WITH_SECURITY_IMPLICATION(parentIt != m_nodeMap.end());
         if (parentIt != m_nodeMap.end()) {
-            auto* parent = parentIt->value;
+            auto* parent = parentIt->value.get();
 
             auto* oldParent = node->parent();
             if (oldParent)
@@ -340,7 +343,7 @@ void ScrollingTree::setMainFrameScrollPosition(FloatPoint position)
     m_treeState.mainFrameScrollPosition = position;
 }
 
-TrackingType ScrollingTree::eventTrackingTypeForPoint(const AtomicString& eventName, IntPoint p)
+TrackingType ScrollingTree::eventTrackingTypeForPoint(const AtomString& eventName, IntPoint p)
 {
     LockHolder lock(m_treeStateMutex);
     return m_treeState.eventTrackingRegions.trackingTypeForPoint(eventName, p);
@@ -487,19 +490,6 @@ String ScrollingTree::scrollingTreeAsText(ScrollingStateTreeAsTextBehavior behav
     }
     return ts.release();
 }
-
-#if ENABLE(POINTER_EVENTS)
-Optional<TouchActionData> ScrollingTree::touchActionDataAtPoint(IntPoint p) const
-{
-    // FIXME: This does not handle the case where there are multiple regions matching this point.
-    for (auto& touchActionData : m_treeState.eventTrackingRegions.touchActionData) {
-        if (touchActionData.region.contains(p))
-            return touchActionData;
-    }
-
-    return { };
-}
-#endif
 
 } // namespace WebCore
 

@@ -97,6 +97,11 @@ ExceptionOr<void> Storage::removeItem(const String& key)
     return { };
 }
 
+bool Storage::prewarm()
+{
+    return m_storageArea->prewarm();
+}
+
 ExceptionOr<void> Storage::clear()
 {
     auto* frame = this->frame();
@@ -117,11 +122,11 @@ bool Storage::isSupportedPropertyName(const String& propertyName) const
     return m_storageArea->contains(propertyName);
 }
 
-Vector<AtomicString> Storage::supportedPropertyNames() const
+Vector<AtomString> Storage::supportedPropertyNames() const
 {
     unsigned length = m_storageArea->length();
 
-    Vector<AtomicString> result;
+    Vector<AtomString> result;
     result.reserveInitialCapacity(length);
 
     for (unsigned i = 0; i < length; ++i)

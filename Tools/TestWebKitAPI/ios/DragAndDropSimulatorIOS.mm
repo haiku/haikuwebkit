@@ -296,6 +296,9 @@ IGNORE_WARNINGS_END
 
 @end
 
+@interface DragAndDropSimulator () <UIDragAnimating>
+@end
+
 @implementation DragAndDropSimulator {
     RetainPtr<TestWKWebView> _webView;
     RetainPtr<MockDragSession> _dragSession;
@@ -310,9 +313,11 @@ IGNORE_WARNINGS_END
 
     RetainPtr<NSMutableDictionary<NSNumber *, NSValue *>>_remainingAdditionalItemRequestLocationsByProgress;
     RetainPtr<NSMutableArray<NSValue *>>_queuedAdditionalItemRequestLocations;
-    RetainPtr<NSMutableArray<UITargetedDragPreview *>> _liftPreviews;
+    RetainPtr<NSMutableArray> _liftPreviews;
+    RetainPtr<NSMutableArray<UITargetedDragPreview *>> _cancellationPreviews;
     RetainPtr<NSMutableArray> _dropPreviews;
     RetainPtr<NSMutableArray> _delayedDropPreviews;
+    RetainPtr<NSMutableArray> _defaultDropPreviewsForExternalItems;
 
     RetainPtr<NSMutableArray<_WKAttachment *>> _insertedAttachments;
     RetainPtr<NSMutableArray<_WKAttachment *>> _removedAttachments;
@@ -330,6 +335,8 @@ IGNORE_WARNINGS_END
     BlockPtr<NSArray *(id <UIDropSession>)> _overridePerformDropBlock;
     BlockPtr<UIDropOperation(UIDropOperation, id)> _overrideDragUpdateBlock;
     BlockPtr<void(BOOL, NSArray *)> _dropCompletionBlock;
+    BlockPtr<void()> _sessionWillBeginBlock;
+    Vector<BlockPtr<void(UIViewAnimatingPosition)>> _dropAnimationCompletionBlocks;
 }
 
 - (instancetype)initWithWebViewFrame:(CGRect)frame
@@ -352,6 +359,7 @@ IGNORE_WARNINGS_END
         _shouldEnsureUIApplication = NO;
         _shouldBecomeFirstResponder = YES;
         _shouldAllowMoveOperation = YES;
+        _dropAnimationTiming = DropAnimationShouldFinishAfterHandlingDrop;
         [_webView setUIDelegate:self];
         [_webView _setInputDelegate:self];
         self.dragDestinationAction = WKDragDestinationActionAny & ~WKDragDestinationActionLoad;
@@ -388,6 +396,7 @@ IGNORE_WARNINGS_END
     _queuedAdditionalItemRequestLocations = adoptNS([[NSMutableArray alloc] init]);
     _liftPreviews = adoptNS([[NSMutableArray alloc] init]);
     _dropPreviews = adoptNS([[NSMutableArray alloc] init]);
+    _cancellationPreviews = adoptNS([[NSMutableArray alloc] init]);
     _delayedDropPreviews = adoptNS([[NSMutableArray alloc] init]);
     _hasStartedInputSession = false;
 }
@@ -477,8 +486,16 @@ IGNORE_WARNINGS_END
         NSInteger dropPreviewIndex = 0;
         __block NSUInteger numberOfPendingPreviews = [_dropSession items].count;
         _isDoneWaitingForDelayedDropPreviews = !numberOfPendingPreviews;
+        BOOL canUseDefaultDropPreviewsForExternalItems = [_defaultDropPreviewsForExternalItems count] == [_dropSession items].count;
         for (UIDragItem *item in [_dropSession items]) {
-            auto defaultPreview = adoptNS([[UITargetedDragPreview alloc] initWithView:_webView.get()]);
+            RetainPtr<UITargetedDragPreview> defaultPreview;
+            if (canUseDefaultDropPreviewsForExternalItems)
+                defaultPreview = [_defaultDropPreviewsForExternalItems objectAtIndex:dropPreviewIndex];
+            else {
+                // Just fall back to an arbitrary non-null drag preview if the test didn't specify one.
+                defaultPreview = adoptNS([[UITargetedDragPreview alloc] initWithView:_webView.get()]);
+            }
+
             id <UIDropInteractionDelegate_Staging_31075005> delegate = (id <UIDropInteractionDelegate_Staging_31075005>)[_webView dropInteractionDelegate];
             UIDropInteraction *interaction = [_webView dropInteraction];
             [_dropPreviews addObject:[delegate dropInteraction:interaction previewForDroppingItem:item withDefault:defaultPreview.get()] ?: NSNull.null];
@@ -494,9 +511,30 @@ IGNORE_WARNINGS_END
         }
         [[_webView dropInteractionDelegate] dropInteraction:[_webView dropInteraction] performDrop:_dropSession.get()];
         _phase = DragAndDropPhasePerformingDrop;
+
+        for (UIDragItem *item in [_dropSession items])
+            [[_webView dropInteractionDelegate] dropInteraction:[_webView dropInteraction] item:item willAnimateDropWithAnimator:self];
+
+        if (_dropAnimationTiming == DropAnimationShouldFinishBeforeHandlingDrop) {
+            [_webView evaluateJavaScript:@"" completionHandler:^(id, NSError *) {
+                // We need to at least ensure one round trip to the web process and back, to ensure that the UI process will have received any image placeholders
+                // that were just inserted as a result of performing the drop. However, this is guaranteed to run before the UI process receives the drop completion
+                // message, since item provider loading is asynchronous.
+                [self _invokeDropAnimationCompletionBlocksAndConcludeDrop];
+            }];
+        }
     } else {
         _isDoneWithCurrentRun = true;
         _phase = DragAndDropPhaseCancelled;
+        [[_dropSession items] enumerateObjectsUsingBlock:^(UIDragItem *item, NSUInteger index, BOOL *) {
+            UITargetedDragPreview *defaultPreview = nil;
+            if ([_liftPreviews count] && [[_liftPreviews objectAtIndex:index] isEqual:NSNull.null])
+                defaultPreview = [_liftPreviews objectAtIndex:index];
+
+            UITargetedDragPreview *preview = [[_webView dragInteractionDelegate] dragInteraction:[_webView dragInteraction] previewForCancellingItem:item withDefault:defaultPreview];
+            if (preview)
+                [_cancellationPreviews addObject:preview];
+        }];
         [[_webView dropInteractionDelegate] dropInteraction:[_webView dropInteraction] concludeDrop:_dropSession.get()];
     }
 
@@ -576,9 +614,8 @@ IGNORE_WARNINGS_END
         for (UIDragItem *item in items) {
             [itemProviders addObject:item.itemProvider];
             UITargetedDragPreview *liftPreview = [[_webView dragInteractionDelegate] dragInteraction:[_webView dragInteraction] previewForLiftingItem:item session:_dragSession.get()];
-            EXPECT_TRUE(!!liftPreview);
-            if (liftPreview)
-                [_liftPreviews addObject:liftPreview];
+            EXPECT_TRUE(liftPreview || ![_webView window]);
+            [_liftPreviews addObject:liftPreview ?: NSNull.null];
         }
 
         _dropSession = adoptNS([[MockDropSession alloc] initWithProviders:itemProviders location:self._currentLocation window:[_webView window] allowMove:self.shouldAllowMoveOperation]);
@@ -627,6 +664,7 @@ IGNORE_WARNINGS_END
 - (void)clearExternalDragInformation
 {
     _externalItemProviders = nil;
+    _defaultDropPreviewsForExternalItems = nil;
 }
 
 - (CGPoint)_currentLocation
@@ -657,14 +695,26 @@ IGNORE_WARNINGS_END
     _externalItemProviders = adoptNS([externalItemProviders copy]);
 }
 
+- (void)setExternalItemProviders:(NSArray<NSItemProvider *> *)itemProviders defaultDropPreviews:(NSArray<UITargetedDragPreview *> *)previews
+{
+    ASSERT(itemProviders.count == previews.count);
+    self.externalItemProviders = itemProviders;
+    _defaultDropPreviewsForExternalItems = adoptNS(previews.copy);
+}
+
 - (DragAndDropPhase)phase
 {
     return _phase;
 }
 
-- (NSArray<UITargetedDragPreview *> *)liftPreviews
+- (NSArray *)liftPreviews
 {
     return _liftPreviews.get();
+}
+
+- (NSArray<UITargetedDragPreview *> *)cancellationPreviews
+{
+    return _cancellationPreviews.get();
 }
 
 - (NSArray<UITargetedDragPreview *> *)dropPreviews
@@ -757,15 +807,55 @@ IGNORE_WARNINGS_END
     return _dropCompletionBlock.get();
 }
 
+- (void)setSessionWillBeginBlock:(dispatch_block_t)block
+{
+    _sessionWillBeginBlock = block;
+}
+
+- (dispatch_block_t)sessionWillBeginBlock
+{
+    return _sessionWillBeginBlock.get();
+}
+
+- (void)addAnimations:(void (^)())animations
+{
+    // This is not implemented by the drag-and-drop simulator yet, since WebKit doesn't make use of
+    // "alongside" animations during drop.
+    ASSERT_NOT_REACHED();
+}
+
+- (void)addCompletion:(void (^)(UIViewAnimatingPosition))completion
+{
+    _dropAnimationCompletionBlocks.append(makeBlockPtr(completion));
+}
+
+- (void)_invokeDropAnimationCompletionBlocksAndConcludeDrop
+{
+    for (auto block : std::exchange(_dropAnimationCompletionBlocks, { }))
+        block(UIViewAnimatingPositionEnd);
+    [[_webView dropInteractionDelegate] dropInteraction:[_webView dropInteraction] concludeDrop:_dropSession.get()];
+}
+
 #pragma mark - WKUIDelegatePrivate
+
+- (void)_webView:(WKWebView *)webView dataInteraction:(UIDragInteraction *)interaction sessionWillBegin:(id <UIDragSession>)session
+{
+    if (_sessionWillBeginBlock)
+        _sessionWillBeginBlock();
+}
 
 - (void)_webView:(WKWebView *)webView dataInteractionOperationWasHandled:(BOOL)handled forSession:(id)session itemProviders:(NSArray<NSItemProvider *> *)itemProviders
 {
     if (self.dropCompletionBlock)
         self.dropCompletionBlock(handled, itemProviders);
 
+    if (_dropAnimationTiming == DropAnimationShouldFinishBeforeHandlingDrop) {
+        _isDoneWithCurrentRun = true;
+        return;
+    }
+
     [_webView _doAfterReceivingEditDragSnapshotForTesting:^{
-        [[_webView dropInteractionDelegate] dropInteraction:[_webView dropInteraction] concludeDrop:_dropSession.get()];
+        [self _invokeDropAnimationCompletionBlocksAndConcludeDrop];
         _isDoneWithCurrentRun = true;
     }];
 }
@@ -783,7 +873,9 @@ IGNORE_WARNINGS_END
     return self.convertItemProvidersBlock ? self.convertItemProvidersBlock(itemProvider, representingObjects, additionalData) : @[ itemProvider ];
 }
 
+IGNORE_WARNINGS_BEGIN("deprecated-implementations")
 - (BOOL)_webView:(WKWebView *)webView showCustomSheetForElement:(_WKActivatedElementInfo *)element
+IGNORE_WARNINGS_END
 {
     if (!self.showCustomActionSheetBlock)
         return NO;

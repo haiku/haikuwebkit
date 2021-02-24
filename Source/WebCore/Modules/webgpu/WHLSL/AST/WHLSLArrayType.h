@@ -41,8 +41,8 @@ namespace AST {
 
 class ArrayType : public UnnamedType {
 public:
-    ArrayType(Lexer::Token&& origin, UniqueRef<UnnamedType>&& elementType, unsigned numElements)
-        : UnnamedType(WTFMove(origin))
+    ArrayType(CodeLocation location, UniqueRef<UnnamedType>&& elementType, unsigned numElements)
+        : UnnamedType(location)
         , m_elementType(WTFMove(elementType))
         , m_numElements(numElements)
     {
@@ -61,12 +61,21 @@ public:
 
     UniqueRef<UnnamedType> clone() const override
     {
-        return makeUniqueRef<ArrayType>(Lexer::Token(origin()), m_elementType->clone(), m_numElements);
+        return makeUniqueRef<ArrayType>(codeLocation(), m_elementType->clone(), m_numElements);
     }
 
     unsigned hash() const override
     {
         return WTF::IntHash<unsigned>::hash(m_numElements) ^ m_elementType->hash();
+    }
+
+    bool operator==(const UnnamedType& other) const override
+    {
+        if (!is<ArrayType>(other))
+            return false;
+
+        return numElements() == downcast<ArrayType>(other).numElements()
+            && type() == downcast<ArrayType>(other).type();
     }
 
 private:

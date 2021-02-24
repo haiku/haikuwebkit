@@ -256,12 +256,10 @@
 #define DEFAULT_DOM_PASTE_ACCESS_REQUESTS_ENABLED false
 #endif
 
-#if PLATFORM(IOS_FAMILY)
-#if PLATFORM(WATCHOS)
-#define DEFAULT_FAST_CLICKS_EVERYWHERE false
+#if PLATFORM(IOS_FAMILY) && !PLATFORM(WATCHOS)
+#define DEFAULT_PREFER_FASTER_CLICK_OVER_DOUBLE_TAP true
 #else
-#define DEFAULT_FAST_CLICKS_EVERYWHERE true
-#endif
+#define DEFAULT_PREFER_FASTER_CLICK_OVER_DOUBLE_TAP false
 #endif
 
 #if ENABLE(APPLE_PAY_REMOTE_UI)
@@ -270,16 +268,11 @@
 #define DEFAULT_APPLE_PAY_ENABLED false
 #endif
 
-#if PLATFORM(MAC)
-#define DEFAULT_WEB_AUTHENTICATION_ENABLED true
-#else
-#define DEFAULT_WEB_AUTHENTICATION_ENABLED false
-#endif
-
 namespace WebKit {
 
 bool defaultPassiveTouchListenersAsDefaultOnDocument();
 bool defaultCustomPasteboardDataEnabled();
+bool defaultCSSOMViewScrollingAPIEnabled();
 
 #if ENABLE(TEXT_AUTOSIZING)
 bool defaultTextAutosizingUsesIdempotentMode();

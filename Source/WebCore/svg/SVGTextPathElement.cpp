@@ -62,12 +62,12 @@ void SVGTextPathElement::clearResourceReferences()
     document().accessSVGExtensions().removeAllTargetReferencesForElement(*this);
 }
 
-void SVGTextPathElement::parseAttribute(const QualifiedName& name, const AtomicString& value)
+void SVGTextPathElement::parseAttribute(const QualifiedName& name, const AtomString& value)
 {
     SVGParsingError parseError = NoError;
 
     if (name == SVGNames::startOffsetAttr)
-        m_startOffset->setBaseValInternal(SVGLengthValue::construct(LengthModeOther, value, parseError));
+        m_startOffset->setBaseValInternal(SVGLengthValue::construct(SVGLengthMode::Other, value, parseError));
     else if (name == SVGNames::methodAttr) {
         SVGTextPathMethodType propertyValue = SVGPropertyTraits<SVGTextPathMethodType>::fromString(value);
         if (propertyValue > 0)

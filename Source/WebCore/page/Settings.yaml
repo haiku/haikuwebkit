@@ -153,10 +153,22 @@ resourceUsageOverlayVisible:
 disableScreenSizeOverride:
   initial: false
 
+googleAntiFlickerOptimizationQuirkEnabled:
+  initial: true
+
 # This is a quirk we are pro-actively applying to old applications. It changes keyboard event dispatching,
 # making keyIdentifier available on keypress events, making charCode available on keydown/keyup events,
 # and getting keypress dispatched in more cases.
 needsKeyboardEventDisambiguationQuirks:
+  initial: false
+
+# This is an iOS-specific quirk. Unlike Mac, keyboard operations are asynchronous and hence a DOM update as
+# a result of text insertion or deletion does not occur within the same event loop iteration as a dispatched
+# DOM keydown event. Some sites, notably Google Sheets, schedule timers on keypress and expect on a DOM update
+# to have occurred on expiration. When enabled, this quirk puts all such scheduled timers in a holding tank
+# until the keyboard performs the insertion or deletion. This gives Google Sheets the illusion that the DOM
+# update happened within the same event loop iteration that the keypress event was dispatched in.
+needsDeferKeyDownAndKeyPressTimersUntilNextEditingCommandQuirk:
   initial: false
 
 treatsAnyTextCSSLinkAsStylesheet:
@@ -586,6 +598,9 @@ visualViewportEnabled:
 visualViewportAPIEnabled:
   initial: false
 
+syntheticEditingCommandsEnabled:
+  initial: true
+
 CSSOMViewScrollingAPIEnabled:
   initial: false
 
@@ -732,6 +747,10 @@ shouldAllowUserInstalledFonts:
   initial: true
   onChange: setNeedsRecalcStyleInAllFrames
 
+shouldAllowDesignSystemUIFonts:
+  initial: false
+  onChange: setNeedsRecalcStyleInAllFrames
+
 resizeObserverEnabled:
   initial: false
   conditional: RESIZE_OBSERVER
@@ -834,8 +853,14 @@ shouldDecidePolicyBeforeLoadingQuickLookPreview:
 shouldDispatchSyntheticMouseEventsWhenModifyingSelection:
   initial: false
 
+shouldDispatchSyntheticMouseOutAfterSyntheticClick:
+  initial: false
+
 allowViewportShrinkToFitContent:
   initial: true
+
+isThirdPartyCookieBlockingOnSitesWithoutUserInteractionEnabled:
+  initial: false
 
 # Deprecated
 

@@ -47,8 +47,6 @@ list(APPEND TestWebCore_SYSTEM_INCLUDE_DIRECTORIES
 list(APPEND TestWebCore_LIBRARIES
     ${GDK3_LIBRARIES}
     ${GTK3_LIBRARIES}
-
-    WebCorePlatformGTK
 )
 ADD_WHOLE_ARCHIVE_TO_LIBRARIES(TestWebCore_LIBRARIES)
 
@@ -90,6 +88,8 @@ target_sources(TestWebKitAPIInjectedBundle PRIVATE
 )
 target_include_directories(TestWebKitAPIInjectedBundle PRIVATE
     "${CMAKE_SOURCE_DIR}/Source"
+)
+target_include_directories(TestWebKitAPIInjectedBundle SYSTEM PRIVATE
     ${GLIB_INCLUDE_DIRS}
     ${GTK3_INCLUDE_DIRS}
 )
@@ -108,6 +108,8 @@ set(TestJSC_PRIVATE_INCLUDE_DIRECTORIES
     ${CMAKE_BINARY_DIR}
     ${TESTWEBKITAPI_DIR}
     ${THIRDPARTY_DIR}/gtest/include
+    ${WTF_FRAMEWORK_HEADERS_DIR}
+    ${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS_DIR}
     ${FORWARDING_HEADERS_DIR}
     ${FORWARDING_HEADERS_DIR}/JavaScriptCore
     ${FORWARDING_HEADERS_DIR}/JavaScriptCore/glib
@@ -117,7 +119,7 @@ set(TestJSC_PRIVATE_INCLUDE_DIRECTORIES
 set(TestJSC_LIBRARIES
     ${GLIB_LIBRARIES}
     ${GLIB_GMODULE_LIBRARIES}
-    WebKit::JavaScriptCore
+    JavaScriptCore
 )
 
 set(TestJSC_DEFINITIONS

@@ -71,8 +71,6 @@
 
 (allow mach-register
     (local-name "com.apple.iphone.axserver")) ; Needed for Application Accessibility
-(allow mach-lookup
-    (global-name "com.apple.iphone.axserver-systemwide")) ; Needed to send accessibility notifications.
 
 ;; <rdar://problem/14555119> Access to high quality speech voices
 ;; Needed for WebSpeech
@@ -288,6 +286,7 @@
     (iokit-property-regex #"(canvas-height|canvas-width)")
     (iokit-property "class-code")
     (iokit-property "color-accuracy-index")
+    (iokit-property "compatible") ;; <rdar://problem/47523516>
     (iokit-property "compatible-device-fallback") ;; <rdar://problem/49497720>
     (iokit-property "device-colors") ;; <rdar://problem/51322072>
     (iokit-property "device-id")
@@ -419,7 +418,6 @@
     (global-name "com.apple.containermanagerd")
     (global-name "com.apple.coremedia.assetcacheinspector")
     (global-name "com.apple.coremedia.audiodeviceclock")
-    (global-name "com.apple.coremedia.audioprocessingtap.xpc")
     (global-name "com.apple.coremedia.endpointremotecontrolsession.xpc")
     (global-name "com.apple.coremedia.sandboxserver")
     (global-name "com.apple.coremedia.videocompositor")
@@ -538,6 +536,7 @@
         (syscall-number SYS_process_policy)
         (syscall-number SYS_issetugid)
         (syscall-number SYS___pthread_kill)
+        (syscall-number SYS___pthread_markcancel)
         (syscall-number SYS___pthread_sigmask)
         (syscall-number SYS___disable_threadsignal)
         (syscall-number SYS___semwait_signal)
@@ -613,6 +612,7 @@
         (syscall-number SYS_fgetattrlist) ;; <rdar://problem/50266257>
         (syscall-number SYS_fsetxattr) ;; <rdar://problem/49795964>
         (syscall-number SYS_abort_with_payload) ;; <rdar://problem/50967271>
+        (syscall-number SYS_kqueue) ;; <rdar://problem/49609201>
         (syscall-number SYS_kqueue_workloop_ctl) ;; <rdar://problem/50999499>
         (syscall-number SYS_psynch_rw_rdlock) ;; <rdar://problem/51134351>
     )

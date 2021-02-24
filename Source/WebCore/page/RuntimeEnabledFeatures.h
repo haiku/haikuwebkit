@@ -33,6 +33,7 @@
 
 #include <wtf/Forward.h>
 #include <wtf/Noncopyable.h>
+#include <wtf/Optional.h>
 
 namespace WebCore {
 
@@ -83,11 +84,6 @@ public:
     
     void setDirectoryUploadEnabled(bool isEnabled) { m_isDirectoryUploadEnabled = isEnabled; }
     bool directoryUploadEnabled() const { return m_isDirectoryUploadEnabled; }
-
-#if ENABLE(DARK_MODE_CSS)
-    void setDarkModeCSSEnabled(bool isEnabled) { m_isDarkModeCSSEnabled = isEnabled; }
-    bool darkModeCSSEnabled() const { return m_isDarkModeCSSEnabled; }
-#endif
 
     void setDataTransferItemsEnabled(bool areEnabled) { m_areDataTransferItemsEnabled = areEnabled; }
     bool dataTransferItemsEnabled() const { return m_areDataTransferItemsEnabled; }
@@ -150,9 +146,6 @@ public:
 
     void setIsITPDatabaseEnabled(bool isEnabled) { m_isITPDatabaseEnabled = isEnabled; }
     bool isITPDatabaseEnabled() const { return m_isITPDatabaseEnabled; }
-    
-    void setIsITPFirstPartyWebsiteDataRemovalEnabled(bool isEnabled) { m_isITPFirstPartyWebsiteDataRemovalEnabled = isEnabled; }
-    bool isITPFirstPartyWebsiteDataRemovalEnabled() const { return m_isITPFirstPartyWebsiteDataRemovalEnabled; }
 
     void setRestrictedHTTPResponseAccess(bool isEnabled) { m_isRestrictedHTTPResponseAccess = isEnabled; }
     bool restrictedHTTPResponseAccess() const { return m_isRestrictedHTTPResponseAccess; }
@@ -183,6 +176,9 @@ public:
 
     void setPointerEventsEnabled(bool isEnabled) { m_pointerEventsEnabled = isEnabled; }
     bool pointerEventsEnabled() const { return m_pointerEventsEnabled; }
+    
+    void setSyntheticEditingCommandsEnabled(bool isEnabled) { m_syntheticEditingCommandsEnabled = isEnabled; }
+    bool syntheticEditingCommandsEnabled() const { return m_syntheticEditingCommandsEnabled; }
 
 #if ENABLE(LAYOUT_FORMATTING_CONTEXT)
     void setLayoutFormattingContextEnabled(bool isEnabled) { m_layoutFormattingContextEnabled = isEnabled; }
@@ -365,6 +361,11 @@ public:
 
     WEBCORE_EXPORT static RuntimeEnabledFeatures& sharedFeatures();
 
+#if HAVE(NSURLSESSION_WEBSOCKET)
+    bool isNSURLSessionWebSocketEnabled() const { return m_isNSURLSessionWebSocketEnabled; }
+    void setIsNSURLSessionWebSocketEnabled(bool isEnabled) { m_isNSURLSessionWebSocketEnabled = isEnabled; }
+#endif
+
 private:
     // Never instantiate.
     RuntimeEnabledFeatures();
@@ -411,6 +412,7 @@ private:
     bool m_webAPIStatisticsEnabled { false };
     bool m_CSSCustomPropertiesAndValuesEnabled { false };
     bool m_pointerEventsEnabled { true };
+    bool m_syntheticEditingCommandsEnabled { true };
     bool m_webSQLEnabled { true };
     bool m_pageAtRuleSupportEnabled { false };
 
@@ -428,10 +430,6 @@ private:
 
 #if ENABLE(ATTACHMENT_ELEMENT)
     bool m_isAttachmentElementEnabled { false };
-#endif
-
-#if ENABLE(DARK_MODE_CSS)
-    bool m_isDarkModeCSSEnabled { true };
 #endif
 
 #if ENABLE(INDEXED_DATABASE_IN_WORKERS)
@@ -543,12 +541,15 @@ private:
 #endif
 
     bool m_isITPDatabaseEnabled { false };
-    bool m_isITPFirstPartyWebsiteDataRemovalEnabled { false };
 
     bool m_referrerPolicyAttributeEnabled { false };
     bool m_interruptAudioOnPageVisibilityChangeEnabled { false };
 
     bool m_linkPreloadResponsiveImagesEnabled { false };
+
+#if HAVE(NSURLSESSION_WEBSOCKET)
+    bool m_isNSURLSessionWebSocketEnabled { false };
+#endif
 
     friend class WTF::NeverDestroyed<RuntimeEnabledFeatures>;
 };

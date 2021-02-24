@@ -29,6 +29,7 @@
 #if ENABLE(WEBGPU)
 
 #include "WHLSLAST.h"
+#include "WHLSLProgram.h"
 
 namespace WebCore {
 
@@ -59,10 +60,8 @@ void Visitor::visit(AST::UnnamedType& unnamedType)
         checkErrorAndVisit(downcast<AST::PointerType>(unnamedType));
     else if (is<AST::ArrayReferenceType>(unnamedType))
         checkErrorAndVisit(downcast<AST::ArrayReferenceType>(unnamedType));
-    else {
-        ASSERT(is<AST::ArrayType>(unnamedType));
+    else
         checkErrorAndVisit(downcast<AST::ArrayType>(unnamedType));
-    }
 }
 
 void Visitor::visit(AST::NamedType& namedType)
@@ -73,10 +72,8 @@ void Visitor::visit(AST::NamedType& namedType)
         checkErrorAndVisit(downcast<AST::StructureDefinition>(namedType));
     else if (is<AST::EnumerationDefinition>(namedType))
         checkErrorAndVisit(downcast<AST::EnumerationDefinition>(namedType));
-    else {
-        ASSERT(is<AST::NativeTypeDeclaration>(namedType));
+    else
         checkErrorAndVisit(downcast<AST::NativeTypeDeclaration>(namedType));
-    }
 }
 
 void Visitor::visit(AST::TypeDefinition& typeDefinition)
@@ -336,10 +333,8 @@ void Visitor::visit(AST::Statement& statement)
         checkErrorAndVisit(downcast<AST::Trap>(statement));
     else if (is<AST::VariableDeclarationsStatement>(statement))
         checkErrorAndVisit(downcast<AST::VariableDeclarationsStatement>(statement));
-    else {
-        ASSERT(is<AST::WhileLoop>(statement));
+    else
         checkErrorAndVisit(downcast<AST::WhileLoop>(statement));
-    }
 }
 
 void Visitor::visit(AST::Break&)
@@ -396,10 +391,8 @@ void Visitor::visit(AST::Expression& expression)
         checkErrorAndVisit(downcast<AST::UnsignedIntegerLiteral>(expression));
     else if (is<AST::EnumerationMemberLiteral>(expression))
         checkErrorAndVisit(downcast<AST::EnumerationMemberLiteral>(expression));
-    else {
-        ASSERT(is<AST::VariableReference>(expression));
+    else
         checkErrorAndVisit(downcast<AST::VariableReference>(expression));
-    }
 }
 
 void Visitor::visit(AST::DotExpression& dotExpression)

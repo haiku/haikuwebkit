@@ -38,7 +38,7 @@
 #include "VideoSinkGStreamer.h"
 #include "WebKitWebSourceGStreamer.h"
 #include <wtf/glib/GUniquePtr.h>
-#include <wtf/text/AtomicString.h>
+#include <wtf/text/AtomString.h>
 #include <wtf/text/CString.h>
 #include <wtf/MathExtras.h>
 #include <wtf/StringPrintStream.h>
@@ -66,24 +66,6 @@
 
 #include <gst/app/gstappsink.h>
 
-#if USE(LIBEPOXY)
-// Include the <epoxy/gl.h> header before <gst/gl/gl.h>.
-#include <epoxy/gl.h>
-
-// Workaround build issue with RPi userland GLESv2 headers and libepoxy <https://webkit.org/b/185639>
-#if !GST_CHECK_VERSION(1, 14, 0)
-#include <gst/gl/gstglconfig.h>
-#if defined(GST_GL_HAVE_WINDOW_DISPMANX) && GST_GL_HAVE_WINDOW_DISPMANX
-#define __gl2_h_
-#undef GST_GL_HAVE_GLSYNC
-#define GST_GL_HAVE_GLSYNC 1
-#endif
-#endif // !GST_CHECK_VERSION(1, 14, 0)
-#endif // USE(LIBEPOXY)
-
-#define GST_USE_UNSTABLE_API
-#include <gst/gl/gl.h>
-#undef GST_USE_UNSTABLE_API
 
 #include "GLContext.h"
 #if USE(GLX)
@@ -155,6 +137,8 @@ class GstVideoFrameHolder : public TextureMapperPlatformLayerBuffer::UnmanagedBu
 public:
     explicit GstVideoFrameHolder(GstSample* sample, TextureMapperGL::Flags flags, bool gstGLEnabled)
     {
+        RELEASE_ASSERT(GST_IS_SAMPLE(sample));
+
         GstVideoInfo videoInfo;
         if (UNLIKELY(!getSampleVideoInfo(sample, videoInfo)))
             return;
@@ -205,7 +189,7 @@ public:
     {
         ASSERT(!m_textureID);
         GstVideoGLTextureUploadMeta* meta;
-        if ((meta = gst_buffer_get_video_gl_texture_upload_meta(m_buffer))) {
+        if (m_buffer && (meta = gst_buffer_get_video_gl_texture_upload_meta(m_buffer))) {
             if (meta->n_textures == 1) { // BRGx & BGRA formats use only one texture.
                 guint ids[4] = { texture.id(), 0, 0, 0 };
 
@@ -214,8 +198,15 @@ public:
             }
         }
 
+        if (!m_isMapped)
+            return;
+
         int stride = GST_VIDEO_FRAME_PLANE_STRIDE(&m_videoFrame, 0);
         const void* srcData = GST_VIDEO_FRAME_PLANE_DATA(&m_videoFrame, 0);
+
+        if (!srcData)
+            return;
+
         texture.updateContents(srcData, WebCore::IntRect(0, 0, m_size.width(), m_size.height()), WebCore::IntPoint(0, 0), stride);
     }
 
@@ -399,7 +390,7 @@ GstContext* MediaPlayerPrivateGStreamerBase::requestGLContext(const char* contex
     if (!g_strcmp0(contextType, "gst.gl.app_context")) {
         GstContext* appContext = gst_context_new("gst.gl.app_context", TRUE);
         GstStructure* structure = gst_context_writable_structure(appContext);
-#if GST_CHECK_VERSION(1, 11, 0)
+#if GST_CHECK_VERSION(1, 12, 0)
         gst_structure_set(structure, "context", GST_TYPE_GL_CONTEXT, gstGLContext(), nullptr);
 #else
         gst_structure_set(structure, "context", GST_GL_TYPE_CONTEXT, gstGLContext(), nullptr);
@@ -573,7 +564,7 @@ void MediaPlayerPrivateGStreamerBase::setVolume(float volume)
         return;
 
     GST_DEBUG_OBJECT(pipeline(), "Setting volume: %f", volume);
-    gst_stream_volume_set_volume(m_volumeElement.get(), GST_STREAM_VOLUME_FORMAT_CUBIC, static_cast<double>(volume));
+    gst_stream_volume_set_volume(m_volumeElement.get(), GST_STREAM_VOLUME_FORMAT_LINEAR, static_cast<double>(volume));
 }
 
 float MediaPlayerPrivateGStreamerBase::volume() const
@@ -581,7 +572,7 @@ float MediaPlayerPrivateGStreamerBase::volume() const
     if (!m_volumeElement)
         return 0;
 
-    return gst_stream_volume_get_volume(m_volumeElement.get(), GST_STREAM_VOLUME_FORMAT_CUBIC);
+    return gst_stream_volume_get_volume(m_volumeElement.get(), GST_STREAM_VOLUME_FORMAT_LINEAR);
 }
 
 
@@ -590,7 +581,7 @@ void MediaPlayerPrivateGStreamerBase::notifyPlayerOfVolumeChange()
     if (!m_player || !m_volumeElement)
         return;
     double volume;
-    volume = gst_stream_volume_get_volume(m_volumeElement.get(), GST_STREAM_VOLUME_FORMAT_CUBIC);
+    volume = gst_stream_volume_get_volume(m_volumeElement.get(), GST_STREAM_VOLUME_FORMAT_LINEAR);
     // get_volume() can return values superior to 1.0 if the user
     // applies software user gain via third party application (GNOME
     // volume control for instance).
@@ -1032,9 +1023,6 @@ MediaPlayer::MovieLoadType MediaPlayerPrivateGStreamerBase::movieLoadType() cons
 #if USE(GSTREAMER_GL)
 GstElement* MediaPlayerPrivateGStreamerBase::createGLAppSink()
 {
-    if (!webkitGstCheckVersion(1, 8, 0))
-        return nullptr;
-
     GstElement* appsink = gst_element_factory_make("appsink", "webkit-gl-video-sink");
     if (!appsink)
         return nullptr;
@@ -1071,9 +1059,6 @@ GstElement* MediaPlayerPrivateGStreamerBase::createGLAppSink()
 
 GstElement* MediaPlayerPrivateGStreamerBase::createVideoSinkGL()
 {
-    if (!webkitGstCheckVersion(1, 8, 0))
-        return nullptr;
-
     gboolean result = TRUE;
     GstElement* videoSink = gst_bin_new(nullptr);
     GstElement* upload = gst_element_factory_make("glupload", nullptr);
@@ -1232,7 +1217,7 @@ void MediaPlayerPrivateGStreamerBase::setStreamVolumeElement(GstStreamVolume* vo
     // https://bugs.webkit.org/show_bug.cgi?id=118974 for more information.
     if (!m_player->platformVolumeConfigurationRequired()) {
         GST_DEBUG_OBJECT(pipeline(), "Setting stream volume to %f", m_player->volume());
-        g_object_set(m_volumeElement.get(), "volume", m_player->volume(), nullptr);
+        gst_stream_volume_set_volume(m_volumeElement.get(), GST_STREAM_VOLUME_FORMAT_LINEAR, static_cast<double>(m_player->volume()));
     } else
         GST_DEBUG_OBJECT(pipeline(), "Not setting stream volume, trusting system one");
 

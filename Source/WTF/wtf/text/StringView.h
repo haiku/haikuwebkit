@@ -59,7 +59,7 @@ public:
     StringView& operator=(const StringView&);
 #endif
 
-    StringView(const AtomicString&);
+    StringView(const AtomString&);
     StringView(const String&);
     StringView(const StringImpl&);
     StringView(const StringImpl*);
@@ -92,11 +92,11 @@ public:
 
     String toString() const;
     String toStringWithoutCopying() const;
-    AtomicString toAtomicString() const;
-    RefPtr<AtomicStringImpl> toExistingAtomicString() const;
+    AtomString toAtomString() const;
+    RefPtr<AtomStringImpl> toExistingAtomString() const;
 
 #if USE(CF)
-    // This function converts null strings to empty strings.
+    // These functions convert null strings to empty strings.
     WTF_EXPORT_PRIVATE RetainPtr<CFStringRef> createCFString() const;
     WTF_EXPORT_PRIVATE RetainPtr<CFStringRef> createCFStringWithoutCopying() const;
 #endif
@@ -117,8 +117,8 @@ public:
     void getCharactersWithUpconvert(UChar*) const;
 
     StringView substring(unsigned start, unsigned length = std::numeric_limits<unsigned>::max()) const;
-    StringView left(unsigned len) const { return substring(0, len); }
-    StringView right(unsigned len) const { return substring(length() - len, len); }
+    StringView left(unsigned length) const { return substring(0, length); }
+    StringView right(unsigned length) const { return substring(this->length() - length, length); }
 
     template<typename MatchedCharacterPredicate>
     StringView stripLeadingAndTrailingMatchedCharacters(const MatchedCharacterPredicate&);
@@ -132,7 +132,7 @@ public:
 
     WTF_EXPORT_PRIVATE size_t find(StringView, unsigned start) const;
 
-    size_t reverseFind(UChar, unsigned index = UINT_MAX) const;
+    size_t reverseFind(UChar, unsigned index = std::numeric_limits<unsigned>::max()) const;
 
     WTF_EXPORT_PRIVATE size_t findIgnoringASCIICase(const StringView&) const;
     WTF_EXPORT_PRIVATE size_t findIgnoringASCIICase(const StringView&, unsigned startOffset) const;
@@ -141,9 +141,11 @@ public:
     WTF_EXPORT_PRIVATE String convertToASCIIUppercase() const;
 
     bool contains(UChar) const;
+    bool contains(CodeUnitMatchFunction) const;
     WTF_EXPORT_PRIVATE bool containsIgnoringASCIICase(const StringView&) const;
     WTF_EXPORT_PRIVATE bool containsIgnoringASCIICase(const StringView&, unsigned startOffset) const;
 
+    WTF_EXPORT_PRIVATE bool startsWith(UChar) const;
     WTF_EXPORT_PRIVATE bool startsWith(const StringView&) const;
     WTF_EXPORT_PRIVATE bool startsWithIgnoringASCIICase(const StringView&) const;
 
@@ -173,6 +175,7 @@ private:
     WTF_EXPORT_PRIVATE bool underlyingStringIsValid() const;
     WTF_EXPORT_PRIVATE void setUnderlyingString(const StringImpl*);
     WTF_EXPORT_PRIVATE void setUnderlyingString(const StringView&);
+    void adoptUnderlyingString(UnderlyingString*);
 #else
     bool underlyingStringIsValid() const { return true; }
     void setUnderlyingString(const StringImpl*) { }
@@ -185,7 +188,6 @@ private:
     bool m_is8Bit { true };
 
 #if CHECK_STRINGVIEW_LIFETIME
-    void adoptUnderlyingString(UnderlyingString*);
     UnderlyingString* m_underlyingString { nullptr };
 #endif
 };
@@ -223,7 +225,7 @@ WTF_EXPORT_PRIVATE String normalizedNFC(const String&);
 
 }
 
-#include <wtf/text/AtomicString.h>
+#include <wtf/text/AtomString.h>
 #include <wtf/text/WTFString.h>
 
 namespace WTF {
@@ -362,8 +364,8 @@ inline StringView::StringView(const String& string)
     initialize(string.characters16(), string.length());
 }
 
-inline StringView::StringView(const AtomicString& atomicString)
-    : StringView(atomicString.string())
+inline StringView::StringView(const AtomString& atomString)
+    : StringView(atomString.string())
 {
 }
 
@@ -468,6 +470,11 @@ inline bool StringView::contains(UChar character) const
     return find(character) != notFound;
 }
 
+inline bool StringView::contains(CodeUnitMatchFunction function) const
+{
+    return find(function) != notFound;
+}
+
 inline void StringView::getCharactersWithUpconvert(LChar* destination) const
 {
     ASSERT(is8Bit());
@@ -504,18 +511,18 @@ inline String StringView::toString() const
     return String(characters16(), m_length);
 }
 
-inline AtomicString StringView::toAtomicString() const
+inline AtomString StringView::toAtomString() const
 {
     if (is8Bit())
-        return AtomicString(characters8(), m_length);
-    return AtomicString(characters16(), m_length);
+        return AtomString(characters8(), m_length);
+    return AtomString(characters16(), m_length);
 }
 
-inline RefPtr<AtomicStringImpl> StringView::toExistingAtomicString() const
+inline RefPtr<AtomStringImpl> StringView::toExistingAtomString() const
 {
     if (is8Bit())
-        return AtomicStringImpl::lookUp(characters8(), m_length);
-    return AtomicStringImpl::lookUp(characters16(), m_length);
+        return AtomStringImpl::lookUp(characters8(), m_length);
+    return AtomStringImpl::lookUp(characters16(), m_length);
 }
 
 inline float StringView::toFloat(bool& isValid) const

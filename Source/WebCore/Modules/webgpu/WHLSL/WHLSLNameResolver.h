@@ -40,17 +40,13 @@ class Program;
 class NameResolver : public Visitor {
 public:
     NameResolver(NameContext&);
+    NameResolver(NameResolver&, NameContext&);
 
-    virtual ~NameResolver() = default;
-
-    void visit(AST::FunctionDefinition&) override;
-
-    void setCurrentFunctionDefinition(AST::FunctionDefinition* functionDefinition)
-    {
-        m_currentFunction = functionDefinition;
-    }
+    virtual ~NameResolver();
 
 private:
+    void visit(AST::FunctionDefinition&) override;
+    void visit(AST::NativeFunctionDeclaration&) override;
     void visit(AST::TypeReference&) override;
     void visit(AST::Block&) override;
     void visit(AST::IfStatement&) override;
@@ -59,19 +55,16 @@ private:
     void visit(AST::ForLoop&) override;
     void visit(AST::VariableDeclaration&) override;
     void visit(AST::VariableReference&) override;
-    void visit(AST::Return&) override;
-    void visit(AST::PropertyAccessExpression&) override;
     void visit(AST::DotExpression&) override;
-    void visit(AST::CallExpression&) override;
     void visit(AST::EnumerationMemberLiteral&) override;
 
     NameContext& m_nameContext;
     HashSet<AST::TypeReference*> m_typeReferences;
-    AST::FunctionDefinition* m_currentFunction { nullptr };
+    NameResolver* m_parentNameResolver { nullptr };
 };
 
 bool resolveNamesInTypes(Program&, NameResolver&);
-bool resolveNamesInFunctions(Program&, NameResolver&);
+bool resolveTypeNamesInFunctions(Program&, NameResolver&);
 
 } // namespace WHLSL
 

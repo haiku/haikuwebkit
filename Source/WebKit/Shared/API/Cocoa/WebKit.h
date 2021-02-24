@@ -23,6 +23,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#import <WebKit/NSAttributedString.h>
 #import <WebKit/WKBackForwardList.h>
 #import <WebKit/WKBackForwardListItem.h>
 #import <WebKit/WKContentRuleList.h>
@@ -57,4 +58,7 @@
 #import <WebKit/WKWebsiteDataRecord.h>
 #import <WebKit/WKWebsiteDataStore.h>
 #import <WebKit/WKWindowFeatures.h>
+
+#if !defined(TARGET_OS_IOSMAC) || !TARGET_OS_IOSMAC
 #import <WebKit/WebKitLegacy.h>
+#endif

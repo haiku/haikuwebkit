@@ -243,10 +243,7 @@ class Port(object):
         if self.get_option('install') and not self._check_port_build():
             return False
         if not self.check_image_diff():
-            if self.get_option('build'):
-                return self._build_image_diff()
-            else:
-                return False
+            return self._build_image_diff()
         return True
 
     def check_api_test_build(self, canonicalized_binaries=None):
@@ -295,7 +292,7 @@ class Port(object):
 
     def check_image_diff(self, override_step=None, logging=True):
         """This routine is used to check whether image_diff binary exists."""
-        image_diff_path = self._path_to_image_diff()
+        image_diff_path = self._path_to_default_image_diff()
         if not self._filesystem.exists(image_diff_path):
             if logging:
                 _log.error("ImageDiff was not found at %s" % image_diff_path)
@@ -1271,7 +1268,7 @@ class Port(object):
         return self._filesystem.exists('/etc/arch-release')
 
     def _is_flatpak(self):
-        return self._filesystem.exists('/usr/manifest.json')
+        return self._filesystem.exists('/.flatpak-info')
 
     def _apache_version(self):
         config = self._executive.run_command([self._path_to_apache(), '-v'])
@@ -1381,11 +1378,21 @@ class Port(object):
         This is likely only used by start/stop_helper()."""
         return None
 
+    def _path_to_default_image_diff(self):
+        """Returns the full path to the default ImageDiff binary, or None if it is not available."""
+        return self._build_path('ImageDiff')
+
+    @memoized
     def _path_to_image_diff(self):
         """Returns the full path to the image_diff binary, or None if it is not available.
 
         This is likely used only by diff_image()"""
-        return self._build_path('ImageDiff')
+        default_image_diff = self._path_to_default_image_diff()
+        if self._filesystem.exists(default_image_diff):
+            return default_image_diff
+        built_image_diff = self._filesystem.join(self._config.build_directory(self.get_option('configuration'), for_host=True), 'ImageDiff')
+        _log.debug('ImageDiff not found at {}, using {} instead'.format(default_image_diff, built_image_diff))
+        return built_image_diff
 
     API_TEST_BINARY_NAMES = ['TestWTF', 'TestWebKitAPI']
 
@@ -1471,7 +1478,7 @@ class Port(object):
         return self._filesystem.exists(self.path_from_webkit_base('WebKitBuild', suffix, "FlatpakTree"))
 
     def _in_flatpak_sandbox(self):
-        return os.path.exists("/usr/manifest.json")
+        return os.path.exists("/.flatpak-info")
 
     def _should_use_jhbuild(self):
         if self._in_flatpak_sandbox():

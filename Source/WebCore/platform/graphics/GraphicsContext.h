@@ -358,6 +358,8 @@ public:
 
     WEBCORE_EXPORT void save();
     WEBCORE_EXPORT void restore();
+    
+    unsigned stackSize() const { return m_stack.size(); }
 
     // These draw methods will do both stroking and filling.
     // FIXME: ...except drawRect(), which fills properly but always strokes
@@ -427,7 +429,7 @@ public:
 
     float drawText(const FontCascade&, const TextRun&, const FloatPoint&, unsigned from = 0, Optional<unsigned> to = WTF::nullopt);
     void drawGlyphs(const Font&, const GlyphBuffer&, unsigned from, unsigned numGlyphs, const FloatPoint&, FontSmoothingMode);
-    void drawEmphasisMarks(const FontCascade&, const TextRun&, const AtomicString& mark, const FloatPoint&, unsigned from = 0, Optional<unsigned> to = WTF::nullopt);
+    void drawEmphasisMarks(const FontCascade&, const TextRun&, const AtomString& mark, const FloatPoint&, unsigned from = 0, Optional<unsigned> to = WTF::nullopt);
     void drawBidiText(const FontCascade&, const TextRun&, const FloatPoint&, FontCascade::CustomFontNotReadyAction = FontCascade::DoNotPaintIfFontNotReady);
 
     void applyState(const GraphicsContextState&);
@@ -700,6 +702,27 @@ private:
     GraphicsContext& m_context;
     bool m_saveAndRestore;
 };
+
+
+class GraphicsContextStateStackChecker {
+public:
+    GraphicsContextStateStackChecker(GraphicsContext& context)
+        : m_context(context)
+        , m_stackSize(context.stackSize())
+    { }
+    
+    ~GraphicsContextStateStackChecker()
+    {
+        if (m_context.stackSize() != m_stackSize)
+            WTFLogAlways("GraphicsContext %p stack changed by %d", this, (int)m_context.stackSize() - (int)m_stackSize);
+    }
+
+private:
+    GraphicsContext& m_context;
+    unsigned m_stackSize;
+};
+
+
 
 class InterpolationQualityMaintainer {
 public:

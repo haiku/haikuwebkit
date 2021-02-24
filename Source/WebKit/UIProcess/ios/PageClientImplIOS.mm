@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2016 Apple Inc. All rights reserved.
+ * Copyright (C) 2012-2019 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -245,9 +245,9 @@ void PageClientImpl::disableDoubleTapGesturesDuringTapIfNecessary(uint64_t reque
     [m_contentView _disableDoubleTapGesturesDuringTapIfNecessary:requestID];
 }
 
-void PageClientImpl::handleSmartMagnificationInformationForPotentialTap(uint64_t requestID, const WebCore::FloatRect& renderRect, bool fitEntireRect, double viewportMinimumScale, double viewportMaximumScale)
+void PageClientImpl::handleSmartMagnificationInformationForPotentialTap(uint64_t requestID, const WebCore::FloatRect& renderRect, bool fitEntireRect, double viewportMinimumScale, double viewportMaximumScale, bool nodeIsRootLevel)
 {
-    [m_contentView _handleSmartMagnificationInformationForPotentialTap:requestID renderRect:renderRect fitEntireRect:fitEntireRect viewportMinimumScale:viewportMinimumScale viewportMaximumScale:viewportMaximumScale];
+    [m_contentView _handleSmartMagnificationInformationForPotentialTap:requestID renderRect:renderRect fitEntireRect:fitEntireRect viewportMinimumScale:viewportMinimumScale viewportMaximumScale:viewportMaximumScale nodeIsRootLevel:nodeIsRootLevel];
 }
 
 double PageClientImpl::minimumZoomScale() const
@@ -481,9 +481,9 @@ bool PageClientImpl::effectiveAppearanceIsDark() const
     return [m_webView _effectiveAppearanceIsDark];
 }
 
-bool PageClientImpl::effectiveAppearanceIsInactive() const
+bool PageClientImpl::effectiveUserInterfaceLevelIsElevated() const
 {
-    return [m_webView _effectiveAppearanceIsInactive];
+    return [m_webView _effectiveUserInterfaceLevelIsElevated];
 }
 
 void PageClientImpl::setRemoteLayerTreeRootNode(RemoteLayerTreeNode* rootNode)
@@ -551,13 +551,21 @@ void PageClientImpl::elementDidFocus(const FocusedElementInformation& nodeInform
         auto nsData = adoptNS([[NSData alloc] initWithBytesNoCopy:const_cast<void*>(static_cast<const void*>(data->bytes())) length:data->size() freeWhenDone:NO]);
         auto unarchiver = secureUnarchiverFromData(nsData.get());
         @try {
-            userObject = [unarchiver decodeObjectOfClass:[NSObject class] forKey:@"userObject"];
+            if (auto* allowedClasses = m_webView.get()->_page->process().processPool().allowedClassesForParameterCoding())
+                userObject = [unarchiver decodeObjectOfClasses:allowedClasses forKey:@"userObject"];
+            else
+                userObject = [unarchiver decodeObjectOfClass:[NSObject class] forKey:@"userObject"];
         } @catch (NSException *exception) {
             LOG_ERROR("Failed to decode user data: %@", exception);
         }
     }
 
     [m_contentView _elementDidFocus:nodeInformation userIsInteracting:userIsInteracting blurPreviousNode:blurPreviousNode activityStateChanges:activityStateChanges userObject:userObject];
+}
+
+void PageClientImpl::updateInputContextAfterBlurringAndRefocusingElement()
+{
+    [m_contentView _updateInputContextAfterBlurringAndRefocusingElement];
 }
 
 bool PageClientImpl::isFocusingElement()
@@ -841,16 +849,6 @@ void PageClientImpl::didChangeDragCaretRect(const IntRect& previousCaretRect, co
     [m_contentView _didChangeDragCaretRect:previousCaretRect currentRect:caretRect];
 }
 #endif
-
-Seconds PageClientImpl::doubleTapForDoubleClickDelay()
-{
-    return Seconds { [m_contentView _doubleTapForDoubleClickDelay] };
-}
-
-float PageClientImpl::doubleTapForDoubleClickRadius()
-{
-    return [m_contentView _doubleTapForDoubleClickRadius];
-}
 
 #if USE(QUICK_LOOK)
 void PageClientImpl::requestPasswordForQuickLookDocument(const String& fileName, WTF::Function<void(const String&)>&& completionHandler)

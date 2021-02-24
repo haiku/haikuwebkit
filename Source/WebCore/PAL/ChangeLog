@@ -1,3 +1,1053 @@
+2019-11-07  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r252175. rdar://problem/56971561
+
+    AX: WKWebView does not shift Accessibility Focus for Catalyst (203798)
+    https://bugs.webkit.org/show_bug.cgi?id=203798
+    
+    Patch by Eric Liang <ericliang@apple.com> on 2019-11-06
+    Reviewed by Chris Fleizach.
+    
+    Source/WebCore:
+    
+    Changed to use the new cocoa directory instead of macOS only
+    
+    * accessibility/mac/AXObjectCacheMac.mm:
+    * accessibility/mac/WebAccessibilityObjectWrapperMac.mm:
+    
+    Source/WebCore/PAL:
+    
+    Changed the path of NSAccessibilitySPI from Mac to Cocoa
+    
+    * PAL.xcodeproj/project.pbxproj:
+    * pal/spi/cocoa/NSAccessibilitySPI.h: Renamed from Source/WebCore/PAL/pal/spi/mac/NSAccessibilitySPI.h.
+    
+    Source/WebKit:
+    
+    Added the code to register/unregister remote UI Process identifier on the host app.
+    This is used so that the host app can appear as the sender for notifications sent from its web processes. Unfortunately this has to be done in WebKit: in accessibility bundles the swizzled code is not called because of bundle loading time.
+    Added AppKit softlink for Mac catalyst.
+    
+    * SourcesCocoa.txt:
+    * UIProcess/Cocoa/WebViewImpl.mm:
+    * UIProcess/ios/AppKitSoftLink.h: Added.
+    * UIProcess/ios/AppKitSoftLink.mm: Added.
+    * UIProcess/ios/ViewGestureControllerIOS.mm:
+    (-[WKSwipeTransitionController gestureRecognizerForInteractiveTransition:WithTarget:action:]):
+    * UIProcess/ios/WKContentView.mm:
+    (-[WKContentView _updateRemoteAccessibilityRegistration:]):
+    (-[WKContentView _accessibilityRegisterUIProcessTokens]):
+    (-[WKContentView _processDidExit]):
+    * WebKit.xcodeproj/project.pbxproj:
+    * WebProcess/WebPage/mac/WKAccessibilityWebPageObjectMac.mm:
+    * WebProcess/WebPage/mac/WebPageMac.mm:
+    * WebProcess/cocoa/WebProcessCocoa.mm:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@252175 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-11-06  Eric Liang  <ericliang@apple.com>
+
+            AX: WKWebView does not shift Accessibility Focus for Catalyst (203798)
+            https://bugs.webkit.org/show_bug.cgi?id=203798
+
+            Reviewed by Chris Fleizach.
+
+            Changed the path of NSAccessibilitySPI from Mac to Cocoa
+
+            * PAL.xcodeproj/project.pbxproj:
+            * pal/spi/cocoa/NSAccessibilitySPI.h: Renamed from Source/WebCore/PAL/pal/spi/mac/NSAccessibilitySPI.h.
+
+2019-10-03  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249108. rdar://problem/55927253
+
+    [WebAuthn] Support HID authenticators on iOS
+    https://bugs.webkit.org/show_bug.cgi?id=201084
+    <rdar://problem/51908390>
+    
+    Reviewed by Youenn Fablet.
+    
+    Source/WebCore/PAL:
+    
+    * pal/spi/cocoa/IOKitSPI.h:
+    Move IOHIDDevice.h and IOHIDManager.h to IOKitSPI.h given they are in iOS.
+    
+    Source/WebKit:
+    
+    This patch makes the macOS HID implementation available in iOS as well.
+    Mostly, it removes the PLATFORM(MAC) compile time flag.
+    
+    * UIProcess/WebAuthentication/AuthenticatorManager.cpp:
+    (WebKit::AuthenticatorManagerInternal::collectTransports):
+    * UIProcess/WebAuthentication/AuthenticatorTransportService.cpp:
+    (WebKit::AuthenticatorTransportService::create):
+    (WebKit::AuthenticatorTransportService::createMock):
+    * UIProcess/WebAuthentication/Cocoa/HidConnection.h:
+    * UIProcess/WebAuthentication/Cocoa/HidConnection.mm:
+    * UIProcess/WebAuthentication/Cocoa/HidService.h:
+    * UIProcess/WebAuthentication/Cocoa/HidService.mm:
+    * UIProcess/WebAuthentication/Cocoa/NfcConnection.mm:
+    (WebKit::NfcConnection::NfcConnection):
+    A tentative solution before there is an official UI.
+    * UIProcess/WebAuthentication/Mock/MockHidConnection.cpp:
+    * UIProcess/WebAuthentication/Mock/MockHidConnection.h:
+    * UIProcess/WebAuthentication/Mock/MockHidService.cpp:
+    * UIProcess/WebAuthentication/Mock/MockHidService.h:
+    * UIProcess/WebAuthentication/fido/CtapHidDriver.cpp:
+    * UIProcess/WebAuthentication/fido/CtapHidDriver.h:
+    
+    LayoutTests:
+    
+    * platform/ios-wk2/TestExpectations:
+    Unskips HID tests for iOS.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249108 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-26  Jiewen Tan  <jiewen_tan@apple.com>
+
+            [WebAuthn] Support HID authenticators on iOS
+            https://bugs.webkit.org/show_bug.cgi?id=201084
+            <rdar://problem/51908390>
+
+            Reviewed by Youenn Fablet.
+
+            * pal/spi/cocoa/IOKitSPI.h:
+            Move IOHIDDevice.h and IOHIDManager.h to IOKitSPI.h given they are in iOS.
+
+2019-09-25  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r249933. rdar://problem/55461414
+
+    REGRESSION: iPad: Safari becomes unresponsive after context menu on 1-800-MY-APPLE phone number, tapping 'Add to Contacts'
+    https://bugs.webkit.org/show_bug.cgi?id=201816
+    <rdar://55105827>
+    
+    Reviewed by Darin Adler.
+    
+    Source/WebCore/PAL:
+    
+    Expose kDataDetectorsSourceRectKey (and sort things while there).
+    
+    * pal/spi/ios/DataDetectorsUISPI.h:
+    
+    Source/WebKit:
+    
+    When generating the DataDetectorsContext for a position, we should
+    also provide the source rectangle for the link in root view coordinates.
+    This allows DataDetectors to show any modal dialogs in the right
+    position.
+    
+    * UIProcess/ios/WKContentViewInteraction.mm: Use either the bounds of the positionInformation
+    or the text bounding rectangle.
+    (-[WKContentView dataDetectionContextForPositionInformation:]):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249933 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-16  Dean Jackson  <dino@apple.com>
+
+            REGRESSION: iPad: Safari becomes unresponsive after context menu on 1-800-MY-APPLE phone number, tapping 'Add to Contacts'
+            https://bugs.webkit.org/show_bug.cgi?id=201816
+            <rdar://55105827>
+
+            Reviewed by Darin Adler.
+
+            Expose kDataDetectorsSourceRectKey (and sort things while there).
+
+            * pal/spi/ios/DataDetectorsUISPI.h:
+
+2019-09-23  Alan Coon  <alancoon@apple.com>
+
+        Apply patch. rdar://problem/55608028
+
+    Tell websites why a session was cancelled https://bugs.webkit.org/show_bug.cgi?id=201912 Source/WebCore:
+    
+    Reviewed by Brady Eidson.
+    
+    Added ApplePayCancelEvent as the interface for ApplePaySession's cancel event. This event
+    object includes a `sessionError` attribute that exposes a Web-safe version of the PassKit
+    domain error we received from PKPaymentAuthorization(View)Controller. Currently, we report
+    all errors with code "unknown", but more codes will be added in future patches.
+    
+    Test: http/tests/ssl/applepay/ApplePayCancelEvent.https.html
+    
+    * DerivedSources-input.xcfilelist:
+    * DerivedSources-output.xcfilelist:
+    * DerivedSources.make:
+    * Modules/applepay/ApplePayCancelEvent.cpp: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    (WebCore::ApplePayCancelEvent::ApplePayCancelEvent):
+    (WebCore::ApplePayCancelEvent::sessionError const):
+    (WebCore::ApplePayCancelEvent::eventInterface const):
+    * Modules/applepay/ApplePayCancelEvent.h: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    (WebCore::ApplePayCancelEvent::create):
+    * Modules/applepay/ApplePayCancelEvent.idl: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    * Modules/applepay/ApplePaySession.cpp:
+    (WebCore::ApplePaySession::didCancelPaymentSession):
+    * Modules/applepay/ApplePaySession.h:
+    * Modules/applepay/ApplePaySessionError.h: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    * Modules/applepay/ApplePaySessionError.idl: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    * Modules/applepay/PaymentCoordinator.cpp:
+    (WebCore::PaymentCoordinator::didCancelPaymentSession):
+    * Modules/applepay/PaymentCoordinator.h:
+    * Modules/applepay/PaymentHeaders.h:
+    * Modules/applepay/PaymentSession.cpp:
+    * Modules/applepay/PaymentSession.h:
+    * Modules/applepay/PaymentSessionError.h: Copied from Source/WebCore/Modules/applepay/PaymentHeaders.h.
+    * Modules/applepay/cocoa/PaymentSessionErrorCocoa.mm: Copied from Source/WebCore/Modules/applepay/PaymentSession.h.
+    (WebCore::additionalError):
+    (WebCore::PaymentSessionError::PaymentSessionError):
+    (WebCore::PaymentSessionError::sessionError const):
+    (WebCore::PaymentSessionError::platformError const):
+    (WebCore::PaymentSessionError::unknownError const):
+    * Modules/applepay/paymentrequest/ApplePayPaymentHandler.cpp:
+    (WebCore::ApplePayPaymentHandler::didCancelPaymentSession):
+    * Modules/applepay/paymentrequest/ApplePayPaymentHandler.h:
+    * Modules/webgpu/WHLSL/WHLSLCheckTextureReferences.cpp:
+    * Modules/webgpu/WHLSL/WHLSLPropertyResolver.cpp:
+    * SourcesCocoa.txt:
+    * WebCore.xcodeproj/project.pbxproj:
+    * dom/EventNames.in:
+    * testing/MockPaymentCoordinator.cpp:
+    (WebCore::MockPaymentCoordinator::cancelPayment):
+    
+    Source/WebCore/PAL:
+    
+    <rdar://problem/55469706>
+    
+    Reviewed by Brady Eidson.
+    
+    Soft-linked PKPassKitErrorDomain and included PassKit headers more judiciously.
+    
+    * pal/cocoa/PassKitSoftLink.h:
+    * pal/cocoa/PassKitSoftLink.mm:
+    * pal/spi/cocoa/PassKitSPI.h:
+    
+    Source/WebKit:
+    
+    <rdar://problem/55469706>
+    
+    Reviewed by Brady Eidson.
+    
+    Remembered the error passed to -[WKPaymentAuthorizationDelegate _willFinishWithError:] and
+    sent it to the WebContent process in Messages::WebPaymentCoordinator::DidCancelPaymentSession.
+    
+    * Platform/cocoa/PaymentAuthorizationPresenter.h:
+    * Platform/cocoa/WKPaymentAuthorizationDelegate.mm:
+    (-[WKPaymentAuthorizationDelegate _didFinish]):
+    (-[WKPaymentAuthorizationDelegate _willFinishWithError:]):
+    * Shared/ApplePay/WebPaymentCoordinatorProxy.cpp:
+    (WebKit::WebPaymentCoordinatorProxy::didCancelPaymentSession):
+    (WebKit::WebPaymentCoordinatorProxy::presenterDidFinish):
+    * Shared/ApplePay/WebPaymentCoordinatorProxy.h:
+    (WebKit::WebPaymentCoordinatorProxy::didCancelPaymentSession):
+    * Shared/ApplePay/ios/WebPaymentCoordinatorProxyIOS.mm:
+    * Shared/Cocoa/WebCoreArgumentCodersCocoa.mm:
+    (IPC::ArgumentCoder<WebCore::PaymentSessionError>::encode):
+    (IPC::ArgumentCoder<WebCore::PaymentSessionError>::decode):
+    * Shared/WebCoreArgumentCoders.h:
+    * WebProcess/ApplePay/WebPaymentCoordinator.cpp:
+    (WebKit::WebPaymentCoordinator::networkProcessConnectionClosed):
+    (WebKit::WebPaymentCoordinator::didCancelPaymentSession):
+    * WebProcess/ApplePay/WebPaymentCoordinator.h:
+    * WebProcess/ApplePay/WebPaymentCoordinator.messages.in:
+    
+    LayoutTests:
+    
+    Reviewed by Brady Eidson.
+    
+    * http/tests/ssl/applepay/ApplePayCancelEvent.https-expected.txt: Added.
+    * http/tests/ssl/applepay/ApplePayCancelEvent.https.html: Added.
+
+    2019-09-18  Andy Estes  <aestes@apple.com>
+
+            [Apple Pay] Tell websites why a session was cancelled
+            https://bugs.webkit.org/show_bug.cgi?id=201912
+            <rdar://problem/55469706>
+
+            Reviewed by Brady Eidson.
+
+            Soft-linked PKPassKitErrorDomain and included PassKit headers more judiciously.
+
+            * pal/cocoa/PassKitSoftLink.h:
+            * pal/cocoa/PassKitSoftLink.mm:
+            * pal/spi/cocoa/PassKitSPI.h:
+
+2019-08-27  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248886. rdar://problem/54365278
+
+    Source/WebCore:
+    [Cocoa] Fix misspelling of -preventsDisplaySleepForVideoPlayback
+    https://bugs.webkit.org/show_bug.cgi?id=200774
+    <rdar://problem/54321071>
+    
+    Reviewed by Eric Carlson.
+    
+    Only declare the API on platforms where that API is undefined, so as
+    to catch this kind of misspelling at compile time.
+    
+    * platform/graphics/avfoundation/objc/MediaPlayerPrivateMediaSourceAVFObjC.mm:
+    (WebCore::MediaPlayerPrivateMediaSourceAVFObjC::ensureLayer):
+    
+    Source/WebCore/PAL:
+    [Cocoa] Adopt -preventDisplaySleepForVideoPlayback
+    https://bugs.webkit.org/show_bug.cgi?id=200774
+    <rdar://problem/54321071>
+    
+    Reviewed by Eric Carlson.
+    
+    * pal/spi/mac/AVFoundationSPI.h:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248886 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-19  Jer Noble  <jer.noble@apple.com>
+
+            [Cocoa] Adopt -preventDisplaySleepForVideoPlayback
+            https://bugs.webkit.org/show_bug.cgi?id=200774
+            <rdar://problem/54321071>
+
+            Reviewed by Eric Carlson.
+
+            * pal/spi/mac/AVFoundationSPI.h:
+
+2019-08-12  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248081. rdar://problem/54223700
+
+    Use CTFontCreateForCharactersWithLanguageAndOption if available instead of CTFontCreateForCharactersWithLanguage
+    https://bugs.webkit.org/show_bug.cgi?id=200241
+    <rdar://problem/53495386>
+    
+    Build fix for older MacOS for which CTFontFallbackOption is not defined.
+    Unreviewed.
+    
+    
+    * pal/spi/cocoa/CoreTextSPI.h:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248081 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-31  Youenn Fablet  <youenn@apple.com>
+
+            Use CTFontCreateForCharactersWithLanguageAndOption if available instead of CTFontCreateForCharactersWithLanguage
+            https://bugs.webkit.org/show_bug.cgi?id=200241
+            <rdar://problem/53495386>
+
+            Build fix for older MacOS for which CTFontFallbackOption is not defined.
+            Unreviewed.
+
+            * pal/spi/cocoa/CoreTextSPI.h:
+
+2019-08-12  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248469. rdar://problem/54130688
+
+    Tapping buttons in Data Detectors lookup previews doesn't work
+    https://bugs.webkit.org/show_bug.cgi?id=200579
+    <rdar://problem/54056519>
+    
+    Reviewed by Megan Gardner.
+    
+    Source/WebCore/PAL:
+    
+    * pal/spi/ios/DataDetectorsUISPI.h:
+    
+    Source/WebKit:
+    
+    * Platform/spi/ios/UIKitSPI.h:
+    * UIProcess/ios/WKContentViewInteraction.mm:
+    (-[WKContentView _contextMenuInteraction:styleForMenuWithConfiguration:]):
+    If a Data Detectors context menu wants the action menu style, provide it.
+    
+    (-[WKContentView contextMenuInteraction:willPerformPreviewActionForMenuWithConfiguration:animator:]):
+    If a Data Detectors context menu provides a view controller to present
+    on context menu commit, present it. We present on top of the same view
+    controller that is currently presenting the context menu, but modally
+    instead of inside the context menu.
+    
+    If a Data Detectors context menu instead provides a URL to launch on
+    context menu commit, call openURL.
+    
+    In both cases, change the commit style to pop, since we're committing
+    instead of dismissing.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248469 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-09  Tim Horton  <timothy_horton@apple.com>
+
+            Tapping buttons in Data Detectors lookup previews doesn't work
+            https://bugs.webkit.org/show_bug.cgi?id=200579
+            <rdar://problem/54056519>
+
+            Reviewed by Megan Gardner.
+
+            * pal/spi/ios/DataDetectorsUISPI.h:
+
+2019-08-12  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248381. rdar://problem/54018115
+
+    Context menu on a universal link produces a blank preview
+    https://bugs.webkit.org/show_bug.cgi?id=200485
+    <rdar://problem/53699620>
+    
+    Reviewed by Tim Horton.
+    
+    Use the umbrella #import.
+    
+    * pal/spi/cocoa/LaunchServicesSPI.h:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248381 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-07  Dean Jackson  <dino@apple.com>
+
+            Context menu on a universal link produces a blank preview
+            https://bugs.webkit.org/show_bug.cgi?id=200485
+            <rdar://problem/53699620>
+
+            Reviewed by Tim Horton.
+
+            Use the umbrella #import.
+
+            * pal/spi/cocoa/LaunchServicesSPI.h:
+
+2019-08-12  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248380. rdar://problem/54018115
+
+    Context menu on a universal link produces a blank preview
+    https://bugs.webkit.org/show_bug.cgi?id=200485
+    <rdar://problem/53699620>
+    
+    Reviewed by Dean Jackson.
+    
+    Source/WebCore/PAL:
+    
+    Define iTunesStoreURL from CoreServices.
+    
+    * pal/spi/cocoa/LaunchServicesSPI.h:
+    
+    Source/WebKit:
+    
+    If the context menu is activated on an iTunesStore URL, pass it
+    on to DataDetectors, who should know how to handle it.
+    
+    Two drive-by fixes:
+    - make it clear that early returns do not produce a value. Instead call the
+      completion handler first, then return.
+    - The new API DataDetectors case doesn't need to worry about hiding link previews
+      as DataDetectors itself will handle that.
+    
+    * UIProcess/ios/WKContentViewInteraction.mm: If the URL is an iTunesStoreURL
+    (as defined by CoreServices), let DataDetectors handle it.
+    (-[WKContentView assignLegacyDataForContextMenuInteraction]):
+    (-[WKContentView continueContextMenuInteraction:]):
+    (-[WKContentView continueContextMenuInteractionWithDataDetectors:]): New method to
+    use DataDetectors if possible.
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248380 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-06  Dean Jackson  <dino@apple.com>
+
+            Context menu on a universal link produces a blank preview
+            https://bugs.webkit.org/show_bug.cgi?id=200485
+            <rdar://problem/53699620>
+
+            Reviewed by Tim Horton.
+
+            Define iTunesStoreURL from CoreServices.
+
+            * pal/spi/cocoa/LaunchServicesSPI.h:
+
+2019-08-06  Alan Coon  <alancoon@apple.com>
+
+        Apply patch. rdar://problem/53992160
+
+    2019-08-06  Per Arne Vollan  <pvollan@apple.com>
+
+            [Win] Fix AppleWin build
+            https://bugs.webkit.org/show_bug.cgi?id=200414
+
+            Reviewed by Brent Fulgham.
+
+            * pal/CMakeLists.txt:
+
+2019-07-31  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248071. rdar://problem/53789003
+
+    Use CTFontCreateForCharactersWithLanguageAndOption if available instead of CTFontCreateForCharactersWithLanguage
+    https://bugs.webkit.org/show_bug.cgi?id=200241
+    
+    Source/WebCore:
+    
+    Reviewed by Myles C. Maxfield.
+    
+    We can use CTFontCreateForCharactersWithLanguageAndOption instead of CTFontCreateForCharactersWithLanguage
+    as it allows setting more easily the fallback option.
+    This allows us to never fallback to user installed fonts.
+    In such a case, we no longer need to wrap the fonts to change the fallback option.
+    We also prewarm the fonts with the same SPI and use system fallback as the default value.
+    
+    Covered by existing tests.
+    
+    * platform/graphics/cocoa/FontCacheCoreText.cpp:
+    (WebCore::preparePlatformFont):
+    (WebCore::lookupFallbackFont):
+    (WebCore::FontCache::systemFallbackForCharacters):
+    (WebCore::FontCache::prewarm):
+    (WebCore::fontFamiliesForPrewarming):
+    
+    Source/WebCore/PAL:
+    
+    Reviewed by Myles C. Maxfield.
+    
+    Add new SPI.
+    
+    * pal/spi/cocoa/CoreTextSPI.h:
+    
+    Source/WTF:
+    
+    Reviewed by Myles C. Maxfield.
+    
+    * wtf/Platform.h: Add macro to enable/disable new SPI.
+    
+    LayoutTests:
+    
+    We update the tests to flush font caches as otherwise some debug asserts would be hit.
+    This is due to changing the user installed font runtime flag while browsing which is not a typical situation.
+    
+    Reviewed by Myles C. Maxfield.
+    
+    * fast/text/user-installed-fonts/extended-character-with-user-font.html:
+    * fast/text/user-installed-fonts/extended-character.html:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248071 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-31  Youenn Fablet  <youenn@apple.com>
+
+            Use CTFontCreateForCharactersWithLanguageAndOption if available instead of CTFontCreateForCharactersWithLanguage
+            https://bugs.webkit.org/show_bug.cgi?id=200241
+
+            Reviewed by Myles C. Maxfield.
+
+            Add new SPI.
+
+            * pal/spi/cocoa/CoreTextSPI.h:
+
+2019-07-24  Alan Coon  <alancoon@apple.com>
+
+        Apply patch. rdar://problem/53483188
+
+    Disable ENABLE_LAYOUT_FORMATTING_CONTEXT https://bugs.webkit.org/show_bug.cgi?id=200038 <rdar://problem/53457282>
+    
+    Reviewed by Zalan Bujtas.
+    
+    This feature is not complete. It is enabled for the trunk, but needs
+    to be disabled in branches for shipping products.
+    
+    Source/JavaScriptCore:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore:
+    
+    No new tests -- this change does not add any new functionality.
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebCore/PAL:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKit:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Source/WebKitLegacy/mac:
+    
+    * Configurations/FeatureDefines.xcconfig:
+    
+    Tools:
+    
+    * TestWebKitAPI/Configurations/FeatureDefines.xcconfig:
+
+    2019-07-23  Keith Rollin  <krollin@apple.com>
+
+            Disable ENABLE_LAYOUT_FORMATTING_CONTEXT
+            https://bugs.webkit.org/show_bug.cgi?id=200038
+            <rdar://problem/53457282>
+
+            Reviewed by Zalan Bujtas.
+
+            This feature is not complete. It is enabled for the trunk, but needs
+            to be disabled in branches for shipping products.
+
+            * Configurations/FeatureDefines.xcconfig:
+
+2019-07-24  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r247674. rdar://problem/53483189
+
+    [iOS] Fast and complex text codepaths disagree about how to lay out bopomofo with tone marks
+    https://bugs.webkit.org/show_bug.cgi?id=199912
+    <rdar://problem/52182454>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    This is because CoreText has special composition rules for CJK languages, which we don't have in our simple
+    text codepath. Rather than implementing the composition rules in WebKit, we can simply disable them in
+    CoreText.
+    
+    Test: fast/text/international/system-language/composition.html
+    
+    * platform/graphics/mac/SimpleFontDataCoreText.cpp:
+    (WebCore::Font::getCFStringAttributes const):
+    
+    Source/WebCore/PAL:
+    
+    * pal/spi/cocoa/CoreTextSPI.h:
+    
+    LayoutTests:
+    
+    * css3/font-feature-font-face-local-expected.html:
+    * css3/font-feature-font-face-local.html:
+    * editing/mac/selection/word-thai-expected.txt:
+    * editing/mac/selection/word-thai.html:
+    * fast/text/international/system-language/composition-expected.txt: Added.
+    * fast/text/international/system-language/composition.html: Added.
+    * platform/ios/fast/text/crash-complex-text-surrogate-expected.txt:
+    * svg/custom/glyph-selection-arabic-forms-expected.txt:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247674 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-21  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            [iOS] Fast and complex text codepaths disagree about how to lay out bopomofo with tone marks
+            https://bugs.webkit.org/show_bug.cgi?id=199912
+            <rdar://problem/52182454>
+
+            Reviewed by Simon Fraser.
+
+            * pal/spi/cocoa/CoreTextSPI.h:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247377. rdar://problem/53229731
+
+    New York font erroneously gets synthetic bold
+    https://bugs.webkit.org/show_bug.cgi?id=199653
+    <rdar://problem/51692592>
+    
+    Reviewed by Simon Fraser.
+    
+    Source/WebCore:
+    
+    This patch adds support for -apple-system-ui-serif, -apple-system-ui-monospaced,
+    and -apple-system-ui-rounded, behind an SPI that is off-by-default. We don't want
+    to expose these fonts to the web because we don't a standardization story for them
+    yet, but we do want some apps to be able to use them.
+    
+    WebKit clients who want to use these fonts can set
+    -[WKPreferences _shouldAllowDesignSystemUIFonts] = YES.
+    
+    The patch generalizes our existing system-ui infrastructure to handle these three
+    additional fonts. It also explicitly disables the unsupported dot-prefixed names
+    so they don't leak out into Web content.
+    
+    Tests: fast/text/design-system-ui-10.html
+           fast/text/design-system-ui-11.html
+           fast/text/design-system-ui-12.html
+           fast/text/design-system-ui-13.html
+           fast/text/design-system-ui-14.html
+           fast/text/design-system-ui-15.html
+           fast/text/design-system-ui-16.html
+           fast/text/design-system-ui-2.html
+           fast/text/design-system-ui-3.html
+           fast/text/design-system-ui-4.html
+           fast/text/design-system-ui-5.html
+           fast/text/design-system-ui-6.html
+           fast/text/design-system-ui-7.html
+           fast/text/design-system-ui-8.html
+           fast/text/design-system-ui-9.html
+           fast/text/design-system-ui.html
+    
+    * css/CSSFontFace.cpp:
+    (WebCore::CSSFontFace::shouldAllowDesignSystemUIFonts const):
+    * css/CSSFontFace.h:
+    * css/CSSFontFaceSource.cpp:
+    (WebCore::CSSFontFaceSource::load):
+    * css/StyleResolver.cpp:
+    (WebCore::StyleResolver::initializeFontStyle):
+    * page/Settings.yaml:
+    * platform/graphics/FontDescription.cpp:
+    (WebCore::m_shouldAllowDesignSystemUIFonts):
+    (WebCore::m_shouldAllowUserInstalledFonts): Deleted.
+    * platform/graphics/FontDescription.h:
+    (WebCore::FontDescription::shouldAllowDesignSystemUIFonts const):
+    (WebCore::FontDescription::setShouldAllowDesignSystemUIFonts):
+    (WebCore::FontDescription::operator== const):
+    * platform/graphics/cocoa/FontCacheCoreText.cpp:
+    (WebCore::platformFontLookupWithFamily):
+    (WebCore::fontWithFamily):
+    * platform/graphics/cocoa/FontCacheCoreText.h:
+    * platform/graphics/cocoa/FontDescriptionCocoa.cpp:
+    (WebCore::systemFontUse):
+    (WebCore::systemFontCascadeList):
+    (WebCore::FontCascadeDescription::effectiveFamilyCount const):
+    (WebCore::FontCascadeDescription::effectiveFamilyAt const):
+    (WebCore::isSystemFontString): Deleted.
+    (WebCore::isUIFontTextStyle): Deleted.
+    * platform/graphics/cocoa/FontPlatformDataCocoa.mm:
+    (WebCore::FontPlatformData::ctFont const):
+    * platform/graphics/cocoa/SystemFontDatabaseCoreText.cpp:
+    (WebCore::SystemFontDatabaseCoreText::createSystemUI):
+    (WebCore::SystemFontDatabaseCoreText::createDesignSystemUI):
+    (WebCore::SystemFontDatabaseCoreText::createTextStyle):
+    (WebCore::SystemFontDatabaseCoreText::cascadeList):
+    (WebCore::SystemFontDatabaseCoreText::applyWeightItalicsAndFallbackBehavior):
+    (WebCore::SystemFontDatabaseCoreText::systemFontParameters):
+    * platform/graphics/cocoa/SystemFontDatabaseCoreText.h:
+    * platform/graphics/ios/FontCacheIOS.mm:
+    (WebCore::platformFontWithFamilySpecialCase):
+    * platform/graphics/mac/FontCacheMac.mm:
+    (WebCore::platformFontWithFamilySpecialCase):
+    * style/StyleResolveForDocument.cpp:
+    (WebCore::Style::resolveForDocument):
+    * svg/graphics/SVGImage.cpp:
+    (WebCore::SVGImage::dataChanged):
+    * testing/InternalSettings.cpp:
+    (WebCore::InternalSettings::Backup::Backup):
+    (WebCore::InternalSettings::Backup::restoreTo):
+    (WebCore::InternalSettings::setShouldAllowDesignSystemUIFonts):
+    * testing/InternalSettings.h:
+    * testing/InternalSettings.idl:
+    
+    Source/WebCore/PAL:
+    
+    * pal/spi/cocoa/CoreTextSPI.h:
+    
+    Source/WebKit:
+    
+    Add the SPI to enable the new fonts.
+    
+    * Shared/WebPreferences.yaml:
+    * UIProcess/API/C/WKPreferences.cpp:
+    (WKPreferencesSetShouldAllowDesignSystemUIFonts):
+    (WKPreferencesGetShouldAllowDesignSystemUIFonts):
+    * UIProcess/API/C/WKPreferencesRefPrivate.h:
+    * UIProcess/API/Cocoa/WKPreferences.mm:
+    (-[WKPreferences _shouldAllowDesignSystemUIFonts]):
+    (-[WKPreferences _setShouldAllowDesignSystemUIFonts:]):
+    * UIProcess/API/Cocoa/WKPreferencesPrivate.h:
+    
+    Source/WTF:
+    
+    * wtf/Platform.h:
+    
+    LayoutTests:
+    
+    * TestExpectations:
+    * fast/text/design-system-ui-10-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-10.html: Added.
+    * fast/text/design-system-ui-11-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-11.html: Added.
+    * fast/text/design-system-ui-12-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-12.html: Added.
+    * fast/text/design-system-ui-13-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-13.html: Added.
+    * fast/text/design-system-ui-14-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-14.html: Added.
+    * fast/text/design-system-ui-15-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-15.html: Added.
+    * fast/text/design-system-ui-16-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-16.html: Added.
+    * fast/text/design-system-ui-2-expected.html: Added.
+    * fast/text/design-system-ui-2.html: Added.
+    * fast/text/design-system-ui-3-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-3.html: Added.
+    * fast/text/design-system-ui-4-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-4.html: Added.
+    * fast/text/design-system-ui-5-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-5.html: Added.
+    * fast/text/design-system-ui-6-expected.html: Added.
+    * fast/text/design-system-ui-6.html: Added.
+    * fast/text/design-system-ui-7-expected.html: Added.
+    * fast/text/design-system-ui-7.html: Added.
+    * fast/text/design-system-ui-8-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-8.html: Added.
+    * fast/text/design-system-ui-9-expected-mismatch.html: Added.
+    * fast/text/design-system-ui-9.html: Added.
+    * fast/text/design-system-ui-expected.html: Added.
+    * fast/text/design-system-ui.html: Added.
+    * platform/mac/TestExpectations:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247377 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-11  Myles C. Maxfield  <mmaxfield@apple.com>
+
+            New York font erroneously gets synthetic bold
+            https://bugs.webkit.org/show_bug.cgi?id=199653
+            <rdar://problem/51692592>
+
+            Reviewed by Simon Fraser.
+
+            * pal/spi/cocoa/CoreTextSPI.h:
+
+2019-07-15  Alan Coon  <alancoon@apple.com>
+
+        Revert r247377. rdar://problem/53125241
+
+2019-07-11  Myles C. Maxfield  <mmaxfield@apple.com>
+
+        New York font erroneously gets synthetic bold
+        https://bugs.webkit.org/show_bug.cgi?id=199653
+        <rdar://problem/51692592>
+
+        Reviewed by Simon Fraser.
+
+        * pal/spi/cocoa/CoreTextSPI.h:
+
+2019-07-11  Jonathan Bedard  <jbedard@apple.com>
+
+        [iOS 13] Enable WebKit build
+        https://bugs.webkit.org/show_bug.cgi?id=199481
+        <rdar://problem/52619048>
+
+        Reviewed by Tim Horton.
+
+        * pal/spi/cocoa/NSProgressSPI.h: We need the NSProgress SPI in public builds because NSProgress API
+        is marked unavailable on iOS, watchOS and tvOS.
+        * pal/spi/ios/CoreUISPI.h: Add CUIStyleEffectConfiguration.appearanceName SPI.
+        * pal/spi/ios/DataDetectorsUISPI.h: Add UIContextMenuConfiguration.contextMenuConfigurationForURL SPI.
+        * pal/spi/ios/SystemPreviewSPI.h: Add ARQuickLookWebKitItem.initWithPreviewItemProvider SPI.
+        * pal/spi/ios/UIKitSPI.h: Add systemBrownColor, UIColor.tableCellDefaultSelectionTintColor should be marked nullable.
+        * pal/spi/mac/AVFoundationSPI.h: Add AVOutputDevice.name SPI.
+
+2019-07-10  Alex Christensen  <achristensen@webkit.org>
+
+        Allow CMake to build WebCore on Mac
+        https://bugs.webkit.org/show_bug.cgi?id=198979
+
+        Reviewed by Don Olmstead.
+
+        * pal/PlatformMac.cmake:
+
+2019-07-08  Antoine Quint  <graouts@apple.com>
+
+        [Pointer Events] Enable only on the most recent version of the supported iOS family
+        https://bugs.webkit.org/show_bug.cgi?id=199562
+        <rdar://problem/52766511>
+
+        Reviewed by Dean Jackson.
+
+        * Configurations/FeatureDefines.xcconfig:
+
+2019-07-05  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Unreviewed, rolling out r247159.
+
+        IndexedDB layout tests are failing the new assert.
+
+        Reverted changeset:
+
+        "ASSERT that a sessionID is valid when encoding it"
+        https://bugs.webkit.org/show_bug.cgi?id=199302
+        https://trac.webkit.org/changeset/247159
+
+2019-07-05  Youenn Fablet  <youenn@apple.com>
+
+        ASSERT that a sessionID is valid when encoding it
+        https://bugs.webkit.org/show_bug.cgi?id=199302
+
+        Reviewed by Darin Adler.
+
+        ASSERT that a sessionID is valid at encoding/decoding time.
+
+        * pal/SessionID.h:
+        (PAL::SessionID::encode const):
+        (PAL::SessionID::decode):
+
+2019-07-03  Jonathan Bedard  <jbedard@apple.com>
+
+        [Catalina] Enable WebKit build
+        https://bugs.webkit.org/show_bug.cgi?id=199209
+
+        Reviewed by Darin Adler.
+
+        * pal/spi/cf/CFNetworkSPI.h: Add new NSURLSessionConfiguration SPI.
+        * pal/spi/mac/AVFoundationSPI.h: resourceConservationLevelWhilePaused should
+        be defined after AVPlayerResourceConservationLevel.
+        * pal/spi/mac/NSViewSPI.h: Add subviewsIvar.
+
+2019-07-03  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Unreviewed, rolling out r246616.
+
+        Caused http/tests/inspector/network/har/har-page.html to fail
+        on Catalina.
+
+        Reverted changeset:
+
+        "Web Inspector: Network: replace CFNetwork SPI with new API
+        where able"
+        https://bugs.webkit.org/show_bug.cgi?id=198762
+        https://trac.webkit.org/changeset/246616
+
+2019-06-28  Brent Fulgham  <bfulgham@apple.com>
+
+        [FTW] Build WebCore
+        https://bugs.webkit.org/show_bug.cgi?id=199199
+
+        Reviewed by Don Olmstead.
+
+        * pal/PlatformFTW.cmake: Added.
+
+2019-06-28  Konstantin Tokarev  <annulen@yandex.ru>
+
+        Remove traces of ENABLE_ICONDATABASE remaining after its removal in 219733
+        https://bugs.webkit.org/show_bug.cgi?id=199317
+
+        Reviewed by Michael Catanzaro.
+
+        While IconDatabase and all code using it was removed,
+        ENABLE_ICONDATABASE still exists as build option and C++ macro.
+
+        * Configurations/FeatureDefines.xcconfig:
+
+2019-06-27  Beth Dakin  <bdakin@apple.com>
+
+        Upstream use of MACCATALYST
+        https://bugs.webkit.org/show_bug.cgi?id=199245
+        rdar://problem/51687723
+
+        Reviewed by Tim Horton.
+
+        * Configurations/Base.xcconfig:
+        * Configurations/FeatureDefines.xcconfig:
+        * Configurations/SDKVariant.xcconfig:
+        * pal/spi/mac/AVFoundationSPI.h:
+
+2019-06-27  Saam Barati  <sbarati@apple.com>
+
+        Make WEBGPU enabled only on Mojave and later.
+
+        Rubber-stamped by Myles C. Maxfield.
+
+        * Configurations/FeatureDefines.xcconfig:
+
+2019-06-25  Alex Christensen  <achristensen@webkit.org>
+
+        Make HTTPCookieAcceptPolicy an enum class
+        https://bugs.webkit.org/show_bug.cgi?id=199081
+
+        Reviewed by Michael Catanzaro
+
+        * pal/spi/cf/CFNetworkSPI.h:
+
+2019-06-19  Devin Rousso  <drousso@apple.com>
+
+        Web Inspector: Network: replace CFNetwork SPI with new API where able
+        https://bugs.webkit.org/show_bug.cgi?id=198762
+
+        Reviewed by Timothy Hatcher.
+
+        * pal/spi/cf/CFNetworkSPI.h:
+
+2019-06-18  Dean Jackson  <dino@apple.com>
+
+        UIContextMenuInteraction implementation for WKContentView
+        https://bugs.webkit.org/show_bug.cgi?id=198986
+        <rdar://problem/51875189>
+
+        Reviewed by Andy Estes.
+
+        Include + soft link DDContextMenuAction.
+
+        * pal/spi/ios/DataDetectorsUISPI.h:
+
+2019-06-18  Jiewen Tan  <jiewen_tan@apple.com>
+
+        Link to the new AppSSO private framework
+        https://bugs.webkit.org/show_bug.cgi?id=198949
+        <rdar://problem/51281897>
+
+        Reviewed by Brent Fulgham.
+
+        * PAL.xcodeproj/project.pbxproj:
+        * pal/cocoa/AppSSOSoftLink.h:
+        * pal/cocoa/AppSSOSoftLink.mm:
+        * pal/spi/cocoa/AppSSOSPI.h: Added.
+
+2019-06-18  Truitt Savell  <tsavell@apple.com>
+
+        Unreviewed, rolling out r246534.
+
+        Caused 45 webgpu/ tests to crash.
+
+        Reverted changeset:
+
+        "Link to the new AppSSO private framework"
+        https://bugs.webkit.org/show_bug.cgi?id=198949
+        https://trac.webkit.org/changeset/246534
+
+2019-06-18  Jiewen Tan  <jiewen_tan@apple.com>
+
+        Link to the new AppSSO private framework
+        https://bugs.webkit.org/show_bug.cgi?id=198949
+        <rdar://problem/51281897>
+
+        Reviewed by Brent Fulgham.
+
+        * PAL.xcodeproj/project.pbxproj:
+        * pal/cocoa/AppSSOSoftLink.h:
+        * pal/cocoa/AppSSOSoftLink.mm:
+        * pal/spi/cocoa/AppSSOSPI.h: Added.
+
+2019-06-17  Jiewen Tan  <jiewen_tan@apple.com>
+
+        Move SOAuthorization from WebKitAdditions to WebKit
+        https://bugs.webkit.org/show_bug.cgi?id=198874
+        <rdar://problem/47573431>
+
+        Reviewed by Brent Fulgham.
+
+        This patch moves AppSSOSoftLink from WebKitAdditions to WebKit, and introduces
+        AuthKitSPI.h.
+
+        * PAL.xcodeproj/project.pbxproj:
+        * pal/cocoa/AppSSOSoftLink.h: Copied from Tools/TestWebKitAPI/Tests/WebKitCocoa/TestLoadOptimizer.mm.
+        * pal/cocoa/AppSSOSoftLink.mm: Copied from Tools/TestWebKitAPI/Tests/WebKitCocoa/TestLoadOptimizer.mm.
+        * pal/spi/cf/CFNetworkSPI.h:
+        * pal/spi/cocoa/AuthKitSPI.h: Copied from Tools/TestWebKitAPI/Tests/WebKitCocoa/TestLoadOptimizer.mm.
+
+2019-06-14  Jiewen Tan  <jiewen_tan@apple.com>
+
+        Disable AppSSO for web processes and plugin processes
+        https://bugs.webkit.org/show_bug.cgi?id=198843
+        <rdar://problem/51642920>
+
+        Reviewed by Sam Weinig.
+
+        * pal/spi/cf/CFNetworkSPI.h:
+        Adds a SPI to disable AppSSO for CFNetwork.
+
+2019-06-12  Antoine Quint  <graouts@apple.com>
+
+        Show the web page URL when sharing an AR model
+        https://bugs.webkit.org/show_bug.cgi?id=198812
+        <rdar://problem/48689498>
+
+        Reviewed by Dean Jackson.
+
+        * pal/spi/ios/SystemPreviewSPI.h:
+
 2019-06-10  Sam Weinig  <weinig@apple.com>
 
         Remove Dashboard support

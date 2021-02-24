@@ -31,7 +31,9 @@
 #include "WHLSLASTDumper.h"
 #include "WHLSLAutoInitializeVariables.h"
 #include "WHLSLCheckDuplicateFunctions.h"
+#include "WHLSLCheckTextureReferences.h"
 #include "WHLSLChecker.h"
+#include "WHLSLComputeDimensions.h"
 #include "WHLSLFunctionStageChecker.h"
 #include "WHLSLHighZombieFinder.h"
 #include "WHLSLLiteralTypeChecker.h"
@@ -44,7 +46,7 @@
 #include "WHLSLRecursionChecker.h"
 #include "WHLSLRecursiveTypeChecker.h"
 #include "WHLSLSemanticMatcher.h"
-#include "WHLSLStandardLibrary.h"
+#include "WHLSLStandardLibraryUtilities.h"
 #include "WHLSLStatementBehaviorChecker.h"
 #include "WHLSLSynthesizeArrayOperatorLength.h"
 #include "WHLSLSynthesizeConstructors.h"
@@ -88,7 +90,7 @@ static bool dumpASTAtEndIfNeeded(Program& program)
     return dumpASTIfNeeded(dumpASTAtEnd, program, "AST at end");
 }
 
-#define RUN_PASS(pass, ...) \
+#define CHECK_PASS(pass, ...) \
     do { \
         dumpASTBetweenEachPassIfNeeded(program, "AST before " # pass); \
         if (!pass(__VA_ARGS__)) { \
@@ -97,47 +99,48 @@ static bool dumpASTAtEndIfNeeded(Program& program)
             return WTF::nullopt; \
         } \
     } while (0)
-    
+
+#define RUN_PASS(pass, ...) \
+    do { \
+        dumpASTBetweenEachPassIfNeeded(program, "AST before " # pass); \
+        pass(__VA_ARGS__); \
+    } while (0)
 
 static Optional<Program> prepareShared(String& whlslSource)
 {
     Program program;
     Parser parser;
-    auto standardLibrary = String::fromUTF8(WHLSLStandardLibrary, sizeof(WHLSLStandardLibrary));
-    auto parseStdLibFailure = parser.parse(program, standardLibrary, Parser::Mode::StandardLibrary);
-    if (!ASSERT_DISABLED && parseStdLibFailure) {
-        dataLogLn("failed to parse the standard library: ", *parseStdLibFailure);
-        RELEASE_ASSERT_NOT_REACHED();
-    }
     if (auto parseFailure = parser.parse(program, whlslSource, Parser::Mode::User)) {
         if (dumpPassFailure)
             dataLogLn("failed to parse the program: ", *parseFailure);
         return WTF::nullopt;
     }
+    includeStandardLibrary(program, parser);
 
     if (!dumpASTBetweenEachPassIfNeeded(program, "AST after parsing"))
         dumpASTAfterParsingIfNeeded(program);
 
     NameResolver nameResolver(program.nameContext());
-    RUN_PASS(resolveNamesInTypes, program, nameResolver);
-    RUN_PASS(checkRecursiveTypes, program);
-    RUN_PASS(synthesizeStructureAccessors, program);
-    RUN_PASS(synthesizeEnumerationFunctions, program);
-    RUN_PASS(synthesizeArrayOperatorLength, program);
-    RUN_PASS(synthesizeConstructors, program);
-    RUN_PASS(resolveNamesInFunctions, program, nameResolver);
-    RUN_PASS(checkDuplicateFunctions, program);
+    CHECK_PASS(resolveNamesInTypes, program, nameResolver);
+    CHECK_PASS(checkRecursiveTypes, program);
+    CHECK_PASS(synthesizeStructureAccessors, program);
+    CHECK_PASS(synthesizeEnumerationFunctions, program);
+    CHECK_PASS(synthesizeArrayOperatorLength, program);
+    CHECK_PASS(resolveTypeNamesInFunctions, program, nameResolver);
+    CHECK_PASS(synthesizeConstructors, program);
+    CHECK_PASS(checkDuplicateFunctions, program);
 
-    RUN_PASS(check, program);
+    CHECK_PASS(check, program);
 
-    checkLiteralTypes(program);
-    autoInitializeVariables(program);
-    resolveProperties(program);
-    findHighZombies(program);
-    RUN_PASS(checkStatementBehavior, program);
-    RUN_PASS(checkRecursion, program);
-    RUN_PASS(checkFunctionStages, program);
-    preserveVariableLifetimes(program);
+    RUN_PASS(checkLiteralTypes, program);
+    CHECK_PASS(checkTextureReferences, program);
+    CHECK_PASS(autoInitializeVariables, program);
+    RUN_PASS(resolveProperties, program);
+    RUN_PASS(findHighZombies, program);
+    CHECK_PASS(checkStatementBehavior, program);
+    CHECK_PASS(checkRecursion, program);
+    CHECK_PASS(checkFunctionStages, program);
+    RUN_PASS(preserveVariableLifetimes, program);
 
     dumpASTAtEndIfNeeded(program);
 
@@ -170,12 +173,16 @@ Optional<ComputePrepareResult> prepare(String& whlslSource, ComputePipelineDescr
     auto matchedSemantics = matchSemantics(*program, computePipelineDescriptor);
     if (!matchedSemantics)
         return WTF::nullopt;
+    auto computeDimensions = WHLSL::computeDimensions(*program, *matchedSemantics->shader);
+    if (!computeDimensions)
+        return WTF::nullopt;
 
     auto generatedCode = Metal::generateMetalCode(*program, WTFMove(*matchedSemantics), computePipelineDescriptor.layout);
 
     ComputePrepareResult result;
     result.metalSource = WTFMove(generatedCode.metalSource);
     result.mangledEntryPointName = WTFMove(generatedCode.mangledEntryPointName);
+    result.computeDimensions = WTFMove(*computeDimensions);
     return result;
 }
 

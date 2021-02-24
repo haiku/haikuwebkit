@@ -149,6 +149,16 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/webdatabase/DatabaseTracker.h
     Modules/webdatabase/OriginLock.h
 
+    Modules/websockets/ThreadableWebSocketChannel.h
+    Modules/websockets/WebSocketChannel.h
+    Modules/websockets/WebSocketChannelClient.h
+    Modules/websockets/WebSocketDeflateFramer.h
+    Modules/websockets/WebSocketDeflater.h
+    Modules/websockets/WebSocketExtensionDispatcher.h
+    Modules/websockets/WebSocketExtensionProcessor.h
+    Modules/websockets/WebSocketFrame.h
+    Modules/websockets/WebSocketHandshake.h
+
     accessibility/AXObjectCache.h
     accessibility/AXTextStateChangeIntent.h
     accessibility/AccessibilityListBox.h
@@ -364,6 +374,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     dom/Document.h
     dom/DocumentEventQueue.h
     dom/DocumentFragment.h
+    dom/DocumentFullscreen.h
     dom/DocumentIdentifier.h
     dom/DocumentMarker.h
     dom/DocumentMarkerController.h
@@ -373,6 +384,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     dom/Element.h
     dom/ElementAncestorIterator.h
     dom/ElementChildIterator.h
+    dom/ElementContext.h
     dom/ElementData.h
     dom/ElementDescendantIterator.h
     dom/ElementIdentifier.h
@@ -505,7 +517,10 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     fileapi/BlobLineEndings.h
     fileapi/BlobPropertyBag.h
     fileapi/File.h
+    fileapi/FileError.h
     fileapi/FileList.h
+    fileapi/FileReaderLoader.h
+    fileapi/FileReaderLoaderClient.h
 
     history/BackForwardClient.h
     history/BackForwardController.h
@@ -1134,6 +1149,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/mediastream/RealtimeMediaSourceFactory.h
     platform/mediastream/RealtimeMediaSourceSettings.h
     platform/mediastream/RealtimeMediaSourceSupportedConstraints.h
+    platform/mediastream/RealtimeVideoCaptureSource.h
     platform/mediastream/RealtimeVideoSource.h
     platform/mediastream/VideoPreset.h
     platform/mediastream/WebAudioSourceProvider.h
@@ -1156,6 +1172,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/network/BlobPart.h
     platform/network/BlobRegistry.h
     platform/network/BlobRegistryImpl.h
+    platform/network/BlobResourceHandle.h
     platform/network/CacheValidation.h
     platform/network/CertificateInfoBase.h
     platform/network/CookieRequestHeaderFieldProxy.h
@@ -1231,6 +1248,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/HitTestResult.h
     rendering/InlineBox.h
     rendering/InlineFlowBox.h
+    rendering/LayerAncestorClippingStack.h
     rendering/LayerFragment.h
     rendering/MarkedText.h
     rendering/OrderIterator.h

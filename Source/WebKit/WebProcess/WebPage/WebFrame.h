@@ -76,7 +76,7 @@ public:
 
     WebPage* page() const;
 
-    static WebFrame* fromCoreFrame(WebCore::Frame&);
+    static WebFrame* fromCoreFrame(const WebCore::Frame&);
     WebCore::Frame* coreFrame() const { return m_coreFrame; }
 
     FrameInfoData info() const;
@@ -170,6 +170,8 @@ public:
     uint64_t firstLayerTreeTransactionIDAfterDidCommitLoad() const { return m_firstLayerTreeTransactionIDAfterDidCommitLoad; }
     void setFirstLayerTreeTransactionIDAfterDidCommitLoad(uint64_t transactionID) { m_firstLayerTreeTransactionIDAfterDidCommitLoad = transactionID; }
 #endif
+
+    WebFrameLoaderClient* frameLoaderClient() const { return m_frameLoaderClient.get(); }
 
 private:
     static Ref<WebFrame> create(std::unique_ptr<WebFrameLoaderClient>);

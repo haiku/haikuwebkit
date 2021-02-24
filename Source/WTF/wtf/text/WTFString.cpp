@@ -1,6 +1,6 @@
 /*
  * (C) 1999 Lars Knoll (knoll@kde.org)
- * Copyright (C) 2004-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2019 Apple Inc. All rights reserved.
  * Copyright (C) 2007-2009 Torch Mobile, Inc.
  *
  * This library is free software; you can redistribute it and/or
@@ -356,13 +356,13 @@ String String::convertToUppercaseWithoutLocale() const
     return m_impl ? m_impl->convertToUppercaseWithoutLocale() : String { };
 }
 
-String String::convertToLowercaseWithLocale(const AtomicString& localeIdentifier) const
+String String::convertToLowercaseWithLocale(const AtomString& localeIdentifier) const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
     return m_impl ? m_impl->convertToLowercaseWithLocale(localeIdentifier) : String { };
 }
 
-String String::convertToUppercaseWithLocale(const AtomicString& localeIdentifier) const
+String String::convertToUppercaseWithLocale(const AtomString& localeIdentifier) const
 {
     // FIXME: Should this function, and the many others like it, be inlined?
     return m_impl ? m_impl->convertToUppercaseWithLocale(localeIdentifier) : String { };
@@ -648,9 +648,9 @@ String String::isolatedCopy() &&
 
 bool String::isSafeToSendToAnotherThread() const
 {
-    // AtomicStrings are not safe to send between threads as ~StringImpl()
-    // will try to remove them from the wrong AtomicStringTable.
-    return isEmpty() || (m_impl->hasOneRef() && !m_impl->isAtomic());
+    // AtomStrings are not safe to send between threads, as ~StringImpl()
+    // will try to remove them from the wrong AtomStringTable.
+    return isEmpty() || (m_impl->hasOneRef() && !m_impl->isAtom());
 }
 
 template<bool allowEmptyEntries>

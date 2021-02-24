@@ -133,6 +133,7 @@ public:
         Inspector,
         KeyValueStorageManager,
         MediaCacheManager,
+        MessageListener,
         Navigation,
         NavigationAction,
         NavigationData,
@@ -175,6 +176,10 @@ public:
 #if ENABLE(MEDIA_SESSION)
         MediaSessionFocusManager,
         MediaSessionMetadata,
+#endif
+
+#if ENABLE(WEB_AUTHN)
+        WebAuthenticationPanel,
 #endif
 
         // Bundle types

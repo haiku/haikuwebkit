@@ -36,6 +36,7 @@
 #include <WebCore/ResourceResponse.h>
 #include <WebCore/SecurityPolicyViolationEvent.h>
 #include <WebCore/Timer.h>
+#include <wtf/WeakPtr.h>
 
 namespace WebCore {
 class BlobDataFileReference;
@@ -58,7 +59,8 @@ class NetworkResourceLoader final
     : public RefCounted<NetworkResourceLoader>
     , public NetworkLoadClient
     , public IPC::MessageSender
-    , public WebCore::ContentSecurityPolicyClient {
+    , public WebCore::ContentSecurityPolicyClient
+    , public CanMakeWeakPtr<NetworkResourceLoader> {
 public:
     static Ref<NetworkResourceLoader> create(NetworkResourceLoadParameters&& parameters, NetworkConnectionToWebProcess& connection, Messages::NetworkConnectionToWebProcess::PerformSynchronousLoad::DelayedReply&& reply = nullptr)
     {
@@ -164,7 +166,7 @@ private:
 #endif
 
     void continueWillSendRedirectedRequest(WebCore::ResourceRequest&&, WebCore::ResourceRequest&& redirectRequest, WebCore::ResourceResponse&&, Optional<WebCore::AdClickAttribution::Conversion>&&);
-    void didFinishWithRedirectResponse(WebCore::ResourceResponse&&);
+    void didFinishWithRedirectResponse(WebCore::ResourceRequest&&, WebCore::ResourceRequest&& redirectRequest, WebCore::ResourceResponse&&);
     WebCore::ResourceResponse sanitizeResponseIfPossible(WebCore::ResourceResponse&&, WebCore::ResourceResponse::SanitizationType);
 
     // ContentSecurityPolicyClient

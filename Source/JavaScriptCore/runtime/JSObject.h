@@ -168,6 +168,7 @@ public:
     static bool getOwnPropertySlot(JSObject*, ExecState*, PropertyName, PropertySlot&);
     JS_EXPORT_PRIVATE static bool getOwnPropertySlotByIndex(JSObject*, ExecState*, unsigned propertyName, PropertySlot&);
     bool getOwnPropertySlotInline(ExecState*, PropertyName, PropertySlot&);
+    static void doPutPropertySecurityCheck(JSObject*, ExecState*, PropertyName, PutPropertySlot&);
 
     // The key difference between this and getOwnPropertySlot is that getOwnPropertySlot
     // currently returns incorrect results for the DOM window (with non-own properties)
@@ -256,9 +257,9 @@ public:
         return structure(vm)->hasIndexingHeader(this);
     }
     
-    bool canGetIndexQuickly(unsigned i)
+    bool canGetIndexQuickly(unsigned i) const
     {
-        Butterfly* butterfly = this->butterfly();
+        const Butterfly* butterfly = this->butterfly();
         switch (indexingType()) {
         case ALL_BLANK_INDEXING_TYPES:
         case ALL_UNDECIDED_INDEXING_TYPES:
@@ -282,9 +283,9 @@ public:
         }
     }
         
-    JSValue getIndexQuickly(unsigned i)
+    JSValue getIndexQuickly(unsigned i) const
     {
-        Butterfly* butterfly = this->butterfly();
+        const Butterfly* butterfly = this->butterfly();
         switch (indexingType()) {
         case ALL_INT32_INDEXING_TYPES:
             return jsNumber(butterfly->contiguous().at(this, i).get().asInt32());
@@ -302,7 +303,7 @@ public:
         
     JSValue tryGetIndexQuickly(unsigned i) const
     {
-        Butterfly* butterfly = const_cast<JSObject*>(this)->butterfly();
+        const Butterfly* butterfly = this->butterfly();
         switch (indexingType()) {
         case ALL_BLANK_INDEXING_TYPES:
         case ALL_UNDECIDED_INDEXING_TYPES:
@@ -744,7 +745,7 @@ public:
     bool isSealed(VM& vm) { return structure(vm)->isSealed(vm); }
     bool isFrozen(VM& vm) { return structure(vm)->isFrozen(vm); }
 
-    bool anyObjectInChainMayInterceptIndexedAccesses(VM&) const;
+    JS_EXPORT_PRIVATE bool anyObjectInChainMayInterceptIndexedAccesses(VM&) const;
     JS_EXPORT_PRIVATE bool prototypeChainMayInterceptStoreTo(VM&, PropertyName);
     bool needsSlowPutIndexing(VM&) const;
 
@@ -1402,6 +1403,10 @@ ALWAYS_INLINE bool JSObject::getOwnPropertySlot(JSObject* object, ExecState* exe
     if (Optional<uint32_t> index = parseIndex(propertyName))
         return getOwnPropertySlotByIndex(object, exec, index.value(), slot);
     return false;
+}
+
+ALWAYS_INLINE void JSObject::doPutPropertySecurityCheck(JSObject*, ExecState*, PropertyName, PutPropertySlot&)
+{
 }
 
 // It may seem crazy to inline a function this large but it makes a big difference

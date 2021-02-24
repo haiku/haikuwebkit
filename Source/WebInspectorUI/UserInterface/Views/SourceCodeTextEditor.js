@@ -165,8 +165,6 @@ WI.SourceCodeTextEditor = class SourceCodeTextEditor extends WI.TextEditor
 
     close()
     {
-        super.close();
-
         if (this._supportsDebugging) {
             WI.Breakpoint.removeEventListener(null, null, this);
             WI.debuggerManager.removeEventListener(null, null, this);
@@ -255,10 +253,13 @@ WI.SourceCodeTextEditor = class SourceCodeTextEditor extends WI.TextEditor
         if (this._sourceCode instanceof WI.SourceMapResource)
             return false;
 
+        let caseSensitive = WI.SearchUtilities.defaultSettings.caseSensitive.value;
+        let isRegex = WI.SearchUtilities.defaultSettings.regularExpression.value;
+
         if (this._sourceCode instanceof WI.Resource)
-            PageAgent.searchInResource(this._sourceCode.parentFrame.id, this._sourceCode.url, query, false, false, searchResultCallback.bind(this));
+            PageAgent.searchInResource(this._sourceCode.parentFrame.id, this._sourceCode.url, query, caseSensitive, isRegex, searchResultCallback.bind(this));
         else if (this._sourceCode instanceof WI.Script)
-            this._sourceCode.target.DebuggerAgent.searchInContent(this._sourceCode.id, query, false, false, searchResultCallback.bind(this));
+            this._sourceCode.target.DebuggerAgent.searchInContent(this._sourceCode.id, query, caseSensitive, isRegex, searchResultCallback.bind(this));
         return true;
     }
 
@@ -1296,8 +1297,7 @@ WI.SourceCodeTextEditor = class SourceCodeTextEditor extends WI.TextEditor
         this._addBreakpointWithEditorLineInfo(breakpoint, lineInfo);
 
         this._ignoreBreakpointAddedBreakpoint = breakpoint;
-        const shouldSpeculativelyResolveBreakpoint = true;
-        WI.debuggerManager.addBreakpoint(breakpoint, shouldSpeculativelyResolveBreakpoint);
+        WI.debuggerManager.addBreakpoint(breakpoint);
         this._ignoreBreakpointAddedBreakpoint = null;
 
         // Return the more accurate location and breakpoint info.
@@ -1437,6 +1437,12 @@ WI.SourceCodeTextEditor = class SourceCodeTextEditor extends WI.TextEditor
         };
 
         script.requestScriptSyntaxTree((syntaxTree) => {
+            // After requesting the tree, we still might get a null tree from a parse error.
+            if (!syntaxTree) {
+                callback(null);
+                return;
+            }
+
             // Convert to the position within the inline script before querying the AST.
             position = toInlineScriptPosition(position);
             let nodes = syntaxTree.containersOfPosition(position);

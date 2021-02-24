@@ -31,6 +31,9 @@
 #if USE(APPLE_INTERNAL_SDK)
 
 #import <DataDetectorsUI/DDAction.h>
+#if HAVE(LINK_PREVIEW) && USE(UICONTEXTMENU)
+#import <DataDetectorsUI/DDContextMenuAction.h>
+#endif
 #import <DataDetectorsUI/DDDetectionController.h>
 
 #else
@@ -45,6 +48,14 @@
 - (NSString *)localizedName;
 @property (readonly) NSString *actionUTI;
 @end
+
+#if HAVE(LINK_PREVIEW) && USE(UICONTEXTMENU)
+@class UIContextMenuConfiguration;
+@interface DDContextMenuAction
++ (UIContextMenuConfiguration *)contextMenuConfigurationWithURL:(NSURL *)URL inView:(UIView *)view context:(NSDictionary *)context menuIdentifier:(NSString *)menuIdentifier;
++ (UIContextMenuConfiguration *)contextMenuConfigurationForURL:(NSURL *)URL identifier:(NSString *)identifier selectedText:(NSString *)selectedText results:(NSArray *) results inView: (UIView *) view context:(NSDictionary *)context menuIdentifier:(NSString *)menuIdentifier;
+@end
+#endif
 
 @protocol DDDetectionControllerInteractionDelegate <NSObject>
 @end
@@ -70,9 +81,14 @@
 @end
 
 SOFT_LINK_PRIVATE_FRAMEWORK(DataDetectorsUI)
+#if HAVE(LINK_PREVIEW) && USE(UICONTEXTMENU)
+SOFT_LINK_CLASS(DataDetectorsUI, DDContextMenuAction);
+SOFT_LINK_CLASS(DataDetectorsUI, DDContextMenuConfiguration);
+#endif
 SOFT_LINK_CLASS(DataDetectorsUI, DDDetectionController)
 SOFT_LINK_CONSTANT(DataDetectorsUI, kDataDetectorsLeadingText, const NSString *)
-SOFT_LINK_CONSTANT(DataDetectorsUI, kDataDetectorsTrailingText, const NSString *)
 SOFT_LINK_CONSTANT(DataDetectorsUI, kDataDetectorsReferenceDateKey, const NSString *)
+SOFT_LINK_CONSTANT(DataDetectorsUI, kDataDetectorsSourceRectKey, const NSString *)
+SOFT_LINK_CONSTANT(DataDetectorsUI, kDataDetectorsTrailingText, const NSString *)
 
 #endif

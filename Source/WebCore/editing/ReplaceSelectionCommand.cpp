@@ -31,6 +31,7 @@
 #include "ApplyStyleCommand.h"
 #include "BeforeTextInsertedEvent.h"
 #include "BreakBlockquoteCommand.h"
+#include "CSSComputedStyleDeclaration.h"
 #include "CSSStyleDeclaration.h"
 #include "DOMWrapperWorld.h"
 #include "DataTransfer.h"
@@ -44,6 +45,7 @@
 #include "FrameSelection.h"
 #include "HTMLBRElement.h"
 #include "HTMLBaseElement.h"
+#include "HTMLBodyElement.h"
 #include "HTMLInputElement.h"
 #include "HTMLLIElement.h"
 #include "HTMLLinkElement.h"
@@ -53,8 +55,10 @@
 #include "HTMLTitleElement.h"
 #include "NodeList.h"
 #include "NodeRenderStyle.h"
+#include "Position.h"
 #include "RenderInline.h"
 #include "RenderText.h"
+#include "ScriptElement.h"
 #include "SimplifyMarkupCommand.h"
 #include "SmartReplace.h"
 #include "StyleProperties.h"
@@ -71,15 +75,13 @@ using namespace HTMLNames;
 
 enum EFragmentType { EmptyFragment, SingleTextNodeFragment, TreeFragment };
 
-static void removeHeadContents(ReplacementFragment&);
-
 // --- ReplacementFragment helper class
 
 class ReplacementFragment {
     WTF_MAKE_FAST_ALLOCATED;
     WTF_MAKE_NONCOPYABLE(ReplacementFragment);
 public:
-    ReplacementFragment(Document&, DocumentFragment*, const VisibleSelection&);
+    ReplacementFragment(DocumentFragment*, const VisibleSelection&);
 
     DocumentFragment* fragment() { return m_fragment.get(); }
 
@@ -95,6 +97,7 @@ public:
     void removeNodePreservingChildren(Node&);
 
 private:
+    void removeContentsWithSideEffects();
     Ref<HTMLElement> insertFragmentForTestRendering(Node* rootEditableNode);
     void removeUnrenderedNodes(Node*);
     void restoreAndRemoveTestRenderingNodesToFragment(StyledElement*);
@@ -102,9 +105,6 @@ private:
     
     void insertNodeBefore(Node&, Node& refNode);
 
-    Document& document() { return *m_document; }
-
-    RefPtr<Document> m_document;
     RefPtr<DocumentFragment> m_fragment;
     bool m_hasInterchangeNewlineAtStart;
     bool m_hasInterchangeNewlineAtEnd;
@@ -152,9 +152,8 @@ static Position positionAvoidingPrecedingNodes(Position position)
     return position;
 }
 
-ReplacementFragment::ReplacementFragment(Document& document, DocumentFragment* fragment, const VisibleSelection& selection)
-    : m_document(&document)
-    , m_fragment(fragment)
+ReplacementFragment::ReplacementFragment(DocumentFragment* fragment, const VisibleSelection& selection)
+    : m_fragment(fragment)
     , m_hasInterchangeNewlineAtStart(false)
     , m_hasInterchangeNewlineAtEnd(false)
 {
@@ -162,12 +161,14 @@ ReplacementFragment::ReplacementFragment(Document& document, DocumentFragment* f
         return;
     if (!m_fragment->firstChild())
         return;
-    
+
+    removeContentsWithSideEffects();
+
     RefPtr<Element> editableRoot = selection.rootEditableElement();
     ASSERT(editableRoot);
     if (!editableRoot)
         return;
-    
+
     auto* shadowHost = editableRoot->shadowHost();
     if (!editableRoot->attributeEventListener(eventNames().webkitBeforeTextInsertedEvent, mainThreadNormalWorld())
         && !(shadowHost && shadowHost->renderer() && shadowHost->renderer()->isTextControl())
@@ -176,7 +177,14 @@ ReplacementFragment::ReplacementFragment(Document& document, DocumentFragment* f
         return;
     }
 
-    RefPtr<StyledElement> holder = insertFragmentForTestRendering(editableRoot.get());
+    auto page = createPageForSanitizingWebContent();
+    Document* stagingDocument = page->mainFrame().document();
+    ASSERT(stagingDocument->body());
+
+    ComputedStyleExtractor computedStyleOfEditableRoot(editableRoot.get());
+    stagingDocument->body()->setAttributeWithoutSynchronization(styleAttr, computedStyleOfEditableRoot.copyProperties()->asText());
+
+    RefPtr<StyledElement> holder = insertFragmentForTestRendering(stagingDocument->body());
     if (!holder) {
         removeInterchangeNodes(m_fragment.get());
         return;
@@ -203,11 +211,42 @@ ReplacementFragment::ReplacementFragment(Document& document, DocumentFragment* f
         if (!m_fragment->firstChild())
             return;
 
-        holder = insertFragmentForTestRendering(editableRoot.get());
+        holder = insertFragmentForTestRendering(stagingDocument->body());
         removeInterchangeNodes(holder.get());
         removeUnrenderedNodes(holder.get());
         restoreAndRemoveTestRenderingNodesToFragment(holder.get());
     }
+}
+
+void ReplacementFragment::removeContentsWithSideEffects()
+{
+    Vector<Ref<Element>> elementsToRemove;
+    Vector<std::pair<Ref<Element>, QualifiedName>> attributesToRemove;
+
+    auto it = descendantsOfType<Element>(*m_fragment).begin();
+    auto end = descendantsOfType<Element>(*m_fragment).end();
+    while (it != end) {
+        auto element = makeRef(*it);
+        if (isScriptElement(element) || (is<HTMLStyleElement>(element) && element->getAttribute(classAttr) != WebKitMSOListQuirksStyle)
+            || is<HTMLBaseElement>(element) || is<HTMLLinkElement>(element) || is<HTMLMetaElement>(element) || is<HTMLTitleElement>(element)) {
+            elementsToRemove.append(WTFMove(element));
+            it.traverseNextSkippingChildren();
+            continue;
+        }
+        if (element->hasAttributes()) {
+            for (auto& attribute : element->attributesIterator()) {
+                if (element->isEventHandlerAttribute(attribute) || element->isJavaScriptURLAttribute(attribute))
+                    attributesToRemove.append({ element.copyRef(), attribute.name() });
+            }
+        }
+        ++it;
+    }
+
+    for (auto& element : elementsToRemove)
+        removeNode(WTFMove(element));
+
+    for (auto& item : attributesToRemove)
+        item.first->removeAttribute(item.second);
 }
 
 bool ReplacementFragment::isEmpty() const
@@ -253,13 +292,14 @@ void ReplacementFragment::insertNodeBefore(Node& node, Node& refNode)
     parent->insertBefore(node, &refNode);
 }
 
-Ref<HTMLElement> ReplacementFragment::insertFragmentForTestRendering(Node* rootEditableElement)
+Ref<HTMLElement> ReplacementFragment::insertFragmentForTestRendering(Node* rootNode)
 {
-    auto holder = createDefaultParagraphElement(document());
+    auto document = makeRef(rootNode->document());
+    auto holder = createDefaultParagraphElement(document.get());
 
     holder->appendChild(*m_fragment);
-    rootEditableElement->appendChild(holder);
-    document().updateLayoutIgnorePendingStylesheets();
+    rootNode->appendChild(holder);
+    document->updateLayoutIgnorePendingStylesheets();
 
     return holder;
 }
@@ -481,6 +521,82 @@ bool ReplaceSelectionCommand::shouldMerge(const VisiblePosition& source, const V
         && !isBlock(sourceNode) && !isBlock(destinationNode);
 }
 
+static bool fragmentNeedsColorTransformed(ReplacementFragment& fragment, const Position& insertionPos)
+{
+    // Dark mode content that is inserted should have the inline styles inverse color
+    // transformed by the color filter to match the color filtered document contents.
+    // This applies to Mail and Notes when pasting from Xcode. <rdar://problem/40529867>
+
+    RefPtr<Element> editableRoot = insertionPos.rootEditableElement();
+    ASSERT(editableRoot);
+    if (!editableRoot)
+        return false;
+
+    auto* editableRootRenderer = editableRoot->renderer();
+    if (!editableRootRenderer || !editableRootRenderer->style().hasAppleColorFilter())
+        return false;
+
+    const auto& colorFilter = editableRootRenderer->style().appleColorFilter();
+    for (const auto& colorFilterOperation : colorFilter.operations()) {
+        if (colorFilterOperation->type() != FilterOperation::APPLE_INVERT_LIGHTNESS)
+            return false;
+    }
+
+    auto propertyLightness = [&](const StyleProperties& inlineStyle, CSSPropertyID propertyID) -> Optional<double> {
+        auto color = inlineStyle.propertyAsColor(propertyID);
+        if (!color || !color.value().isVisible() || color.value().isSemantic())
+            return { };
+
+        double hue, saturation, lightness;
+        color.value().getHSL(hue, saturation, lightness);
+        return lightness;
+    };
+
+    const double lightnessDarkEnoughForText = 0.4;
+    const double lightnessLightEnoughForBackground = 0.6;
+
+    for (RefPtr<Node> node = fragment.firstChild(); node; node = NodeTraversal::next(*node)) {
+        if (!is<StyledElement>(*node))
+            continue;
+
+        auto& element = downcast<StyledElement>(*node);
+        auto* inlineStyle = element.inlineStyle();
+        if (!inlineStyle)
+            continue;
+
+        auto textLightness = propertyLightness(*inlineStyle, CSSPropertyColor);
+        if (textLightness && *textLightness < lightnessDarkEnoughForText)
+            return false;
+
+        auto backgroundLightness = propertyLightness(*inlineStyle, CSSPropertyBackgroundColor);
+        if (backgroundLightness && *backgroundLightness > lightnessLightEnoughForBackground)
+            return false;
+    }
+
+    return true;
+}
+
+void ReplaceSelectionCommand::inverseTransformColor(InsertedNodes& insertedNodes)
+{
+    RefPtr<Node> pastEndNode = insertedNodes.pastLastLeaf();
+    for (RefPtr<Node> node = insertedNodes.firstNodeInserted(); node && node != pastEndNode; node = NodeTraversal::next(*node)) {
+        if (!is<StyledElement>(*node))
+            continue;
+
+        auto& element = downcast<StyledElement>(*node);
+        auto* inlineStyle = element.inlineStyle();
+        if (!inlineStyle)
+            continue;
+
+        auto editingStyle = EditingStyle::create(inlineStyle);
+        auto transformedStyle = editingStyle->inverseTransformColorIfNeeded(element);
+        if (editingStyle.ptr() == transformedStyle.ptr())
+            continue;
+
+        setNodeAttribute(element, styleAttr, transformedStyle->style()->asText());
+    }
+}
+
 // Style rules that match just inserted elements could change their appearance, like
 // a div inserted into a document with div { display:inline; }.
 void ReplaceSelectionCommand::removeRedundantStylesAndKeepStyleSpanInline(InsertedNodes& insertedNodes)
@@ -572,7 +688,7 @@ void ReplaceSelectionCommand::removeRedundantStylesAndKeepStyleSpanInline(Insert
     }
 }
 
-static bool isProhibitedParagraphChild(const AtomicString& name)
+static bool isProhibitedParagraphChild(const AtomString& name)
 {
     // https://dvcs.w3.org/hg/editing/raw-file/57abe6d3cb60/editing.html#prohibited-paragraph-child
     static const auto localNames = makeNeverDestroyed([] {
@@ -626,7 +742,7 @@ static bool isProhibitedParagraphChild(const AtomicString& name)
             &ulTag.get(),
             &xmpTag.get(),
         };
-        HashSet<AtomicString> set;
+        HashSet<AtomString> set;
         for (auto& tag : tags)
             set.add(tag->localName());
         return set;
@@ -725,29 +841,6 @@ VisiblePosition ReplaceSelectionCommand::positionAtEndOfInsertedContent() const
 VisiblePosition ReplaceSelectionCommand::positionAtStartOfInsertedContent() const
 {
     return m_startOfInsertedContent;
-}
-
-static void removeHeadContents(ReplacementFragment& fragment)
-{
-    if (fragment.isEmpty())
-        return;
-
-    Vector<Element*> toRemove;
-
-    auto it = descendantsOfType<Element>(*fragment.fragment()).begin();
-    auto end = descendantsOfType<Element>(*fragment.fragment()).end();
-    while (it != end) {
-        if (is<HTMLBaseElement>(*it) || is<HTMLLinkElement>(*it) || is<HTMLMetaElement>(*it) || is<HTMLTitleElement>(*it)
-            || (is<HTMLStyleElement>(*it) && it->getAttribute(classAttr) != WebKitMSOListQuirksStyle)) {
-            toRemove.append(&*it);
-            it.traverseNextSkippingChildren();
-            continue;
-        }
-        ++it;
-    }
-
-    for (auto& element : toRemove)
-        fragment.removeNode(*element);
 }
 
 // Remove style spans before insertion if they are unnecessary.  It's faster because we'll 
@@ -903,7 +996,7 @@ static bool isInlineNodeWithStyle(const Node* node)
     // We can skip over elements whose class attribute is
     // one of our internal classes.
     const HTMLElement* element = static_cast<const HTMLElement*>(node);
-    const AtomicString& classAttributeValue = element->attributeWithoutSynchronization(classAttr);
+    const AtomString& classAttributeValue = element->attributeWithoutSynchronization(classAttr);
     if (classAttributeValue == AppleTabSpanClass
         || classAttributeValue == AppleConvertedSpace
         || classAttributeValue == ApplePasteAsQuotation)
@@ -920,9 +1013,9 @@ inline Node* nodeToSplitToAvoidPastingIntoInlineNodesWithStyle(const Position& i
 
 bool ReplaceSelectionCommand::willApplyCommand()
 {
-    ensureReplacementFragment();
     m_documentFragmentPlainText = m_documentFragment->textContent();
     m_documentFragmentHTMLMarkup = serializeFragment(*m_documentFragment, SerializedNodes::SubtreeIncludingNode);
+    ensureReplacementFragment();
     return CompositeEditCommand::willApplyCommand();
 }
     
@@ -1083,8 +1176,8 @@ void ReplaceSelectionCommand::doApply()
     insertionPos = positionOutsideTabSpan(insertionPos);
 
     bool hasBlankLinesBetweenParagraphs = hasBlankLineBetweenParagraphs(insertionPos);
-    
     bool handledStyleSpans = handleStyleSpansBeforeInsertion(fragment, insertionPos);
+    bool needsColorTransformed = fragmentNeedsColorTransformed(fragment, insertionPos);
 
     // We're finished if there is nothing to add.
     if (fragment.isEmpty() || !fragment.firstChild())
@@ -1195,10 +1288,13 @@ void ReplaceSelectionCommand::doApply()
             removeNode(*nodeToRemove);
         }
     }
-    
+
     makeInsertedContentRoundTrippableWithHTMLTreeBuilder(insertedNodes);
     if (insertedNodes.isEmpty())
         return;
+
+    if (needsColorTransformed)
+        inverseTransformColor(insertedNodes);
 
     removeRedundantStylesAndKeepStyleSpanInline(insertedNodes);
     if (insertedNodes.isEmpty())
@@ -1614,11 +1710,8 @@ void ReplaceSelectionCommand::updateNodesInserted(Node *node)
 
 ReplacementFragment* ReplaceSelectionCommand::ensureReplacementFragment()
 {
-    if (!m_replacementFragment) {
-        m_replacementFragment = std::make_unique<ReplacementFragment>(document(), m_documentFragment.get(), endingSelection());
-        removeHeadContents(*m_replacementFragment);
-    }
-
+    if (!m_replacementFragment)
+        m_replacementFragment = std::make_unique<ReplacementFragment>(m_documentFragment.get(), endingSelection());
     return m_replacementFragment.get();
 }
 
@@ -1660,6 +1753,14 @@ bool ReplaceSelectionCommand::performTrivialReplace(const ReplacementFragment& f
     setEndingSelection(selectionAfterReplace);
 
     return true;
+}
+
+RefPtr<Range> ReplaceSelectionCommand::insertedContentRange() const
+{
+    if (auto document = makeRefPtr(m_startOfInsertedContent.document()))
+        return Range::create(*document, m_startOfInsertedContent, m_endOfInsertedContent);
+
+    return nullptr;
 }
 
 } // namespace WebCore

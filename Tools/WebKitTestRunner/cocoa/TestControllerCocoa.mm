@@ -51,6 +51,7 @@
 #import <WebKit/_WKUserContentExtensionStore.h>
 #import <WebKit/_WKUserContentExtensionStorePrivate.h>
 #import <wtf/MainThread.h>
+#import <wtf/spi/cocoa/SecuritySPI.h>
 
 namespace WTR {
 
@@ -175,6 +176,8 @@ void TestController::platformCreateWebView(WKPageConfigurationRef, const TestOpt
 
     if (options.editable)
         m_mainWebView->setEditable(true);
+
+    m_mainWebView->platformView().allowsLinkPreview = options.allowsLinkPreview;
 }
 
 PlatformWebView* TestController::platformCreateOtherPage(PlatformWebView* parentView, WKPageConfigurationRef, const TestOptions& options)
@@ -329,8 +332,6 @@ void TestController::injectUserScript(WKStringRef script)
 
 void TestController::addTestKeyToKeychain(const String& privateKeyBase64, const String& attrLabel, const String& applicationTagBase64)
 {
-    // FIXME(182772)
-#if PLATFORM(IOS_FAMILY)
     NSDictionary* options = @{
         (id)kSecAttrKeyType: (id)kSecAttrKeyTypeECSECPrimeRandom,
         (id)kSecAttrKeyClass: (id)kSecAttrKeyClassPrivate,
@@ -348,40 +349,48 @@ void TestController::addTestKeyToKeychain(const String& privateKeyBase64, const 
         (id)kSecValueRef: (id)key.get(),
         (id)kSecClass: (id)kSecClassKey,
         (id)kSecAttrLabel: attrLabel,
-        (id)kSecAttrApplicationTag: adoptNS([[NSData alloc] initWithBase64EncodedString:applicationTagBase64 options:NSDataBase64DecodingIgnoreUnknownCharacters]).get()
+        (id)kSecAttrApplicationTag: adoptNS([[NSData alloc] initWithBase64EncodedString:applicationTagBase64 options:NSDataBase64DecodingIgnoreUnknownCharacters]).get(),
+#if HAVE(DATA_PROTECTION_KEYCHAIN)
+        (id)kSecUseDataProtectionKeychain: @YES
+#else
+        (id)kSecAttrNoLegacy: @YES
+#endif
     };
     OSStatus status = SecItemAdd((__bridge CFDictionaryRef)addQuery, NULL);
     ASSERT_UNUSED(status, !status);
-#endif
 }
 
 void TestController::cleanUpKeychain(const String& attrLabel)
 {
-    // FIXME(182772)
-#if PLATFORM(IOS_FAMILY)
     NSDictionary* deleteQuery = @{
         (id)kSecClass: (id)kSecClassKey,
-        (id)kSecAttrLabel: attrLabel
+        (id)kSecAttrLabel: attrLabel,
+#if HAVE(DATA_PROTECTION_KEYCHAIN)
+        (id)kSecUseDataProtectionKeychain: @YES
+#else
+        (id)kSecAttrNoLegacy: @YES
+#endif
     };
     SecItemDelete((__bridge CFDictionaryRef)deleteQuery);
-#endif
 }
 
 bool TestController::keyExistsInKeychain(const String& attrLabel, const String& applicationTagBase64)
 {
-    // FIXME(182772)
-#if PLATFORM(IOS_FAMILY)
     NSDictionary *query = @{
         (id)kSecClass: (id)kSecClassKey,
         (id)kSecAttrKeyClass: (id)kSecAttrKeyClassPrivate,
         (id)kSecAttrLabel: attrLabel,
         (id)kSecAttrApplicationTag: adoptNS([[NSData alloc] initWithBase64EncodedString:applicationTagBase64 options:NSDataBase64DecodingIgnoreUnknownCharacters]).get(),
+#if HAVE(DATA_PROTECTION_KEYCHAIN)
+        (id)kSecUseDataProtectionKeychain: @YES
+#else
+        (id)kSecAttrNoLegacy: @YES
+#endif
     };
     OSStatus status = SecItemCopyMatching((__bridge CFDictionaryRef)query, NULL);
     if (!status)
         return true;
     ASSERT(status == errSecItemNotFound);
-#endif
     return false;
 }
 

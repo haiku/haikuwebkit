@@ -43,6 +43,9 @@
 #include "FrameLoaderClient.h"
 #include "Page.h"
 #include "ResourceLoadInfo.h"
+#include "ScriptController.h"
+#include "ScriptSourceCode.h"
+#include "Settings.h"
 #include <wtf/URL.h>
 #include "UserContentController.h"
 #include <wtf/NeverDestroyed.h>
@@ -229,8 +232,18 @@ ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(
             String newProtocol = url.protocolIs("http") ? "https"_s : "wss"_s;
             currentDocument->addConsoleMessage(MessageSource::ContentBlocker, MessageLevel::Info, makeString("Content blocker promoted URL from ", url.string(), " to ", newProtocol));
         }
-        if (results.summary.blockedLoad)
+        if (results.summary.blockedLoad) {
             currentDocument->addConsoleMessage(MessageSource::ContentBlocker, MessageLevel::Info, makeString("Content blocker prevented frame displaying ", mainDocumentURL.string(), " from loading a resource from ", url.string()));
+        
+            // Quirk for content-blocker interference with Google's anti-flicker optimization (rdar://problem/45968770).
+            // https://developers.google.com/optimize/
+            if (currentDocument->settings().googleAntiFlickerOptimizationQuirkEnabled()
+                && ((equalLettersIgnoringASCIICase(url.host(), "www.google-analytics.com") && equalLettersIgnoringASCIICase(url.path(), "/analytics.js"))
+                    || (equalLettersIgnoringASCIICase(url.host(), "www.googletagmanager.com") && equalLettersIgnoringASCIICase(url.path(), "/gtm.js")))) {
+                if (auto* frame = currentDocument->frame())
+                    frame->script().evaluate(ScriptSourceCode { "try { window.dataLayer.hide.end(); console.log('Called window.dataLayer.hide.end() in frame ' + document.URL + ' because the content blocker blocked the load of the https://www.google-analytics.com/analytics.js script'); } catch (e) { }"_s });
+            }
+        }
     }
 
     return results;

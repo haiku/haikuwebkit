@@ -600,7 +600,7 @@ sub GenerateNamedGetterLambda
     push(@$outputArray, "    auto getterFunctor = [] (auto& thisObject, auto propertyName) -> ${returnType} {\n");
 
     my @arguments = GenerateCallWithUsingReferences($namedGetterOperation->extendedAttributes->{CallWith}, $outputArray, "WTF::nullopt", "thisObject", "        ");
-    push(@arguments, "propertyNameToAtomicString(propertyName)");
+    push(@arguments, "propertyNameToAtomString(propertyName)");
 
     push(@$outputArray, "        auto result = thisObject.wrapped().${namedGetterFunctionName}(" . join(", ", @arguments) . ");\n");
     
@@ -2189,13 +2189,13 @@ sub GenerateDefaultValue
     my ($typeScope, $context, $type, $defaultValue) = @_;
 
     if ($codeGenerator->IsStringType($type)) {
-        my $useAtomicString = $type->extendedAttributes->{AtomicString};
+        my $useAtomString = $type->extendedAttributes->{AtomString};
         if ($defaultValue eq "null") {
-            return $useAtomicString ? "nullAtom()" : "String()";
+            return $useAtomString ? "nullAtom()" : "String()";
         } elsif ($defaultValue eq "\"\"") {
-            return $useAtomicString ? "emptyAtom()" : "emptyString()";
+            return $useAtomString ? "emptyAtom()" : "emptyString()";
         } else {
-            return $useAtomicString ? "AtomicString(${defaultValue}, AtomicString::ConstructFromLiteral)" : "${defaultValue}_s";
+            return $useAtomString ? "AtomString(${defaultValue}, AtomString::ConstructFromLiteral)" : "${defaultValue}_s";
         }
     }
 
@@ -2332,6 +2332,12 @@ sub GenerateDictionaryImplementationContent
             my $type = $member->type;
             AddToImplIncludesForIDLType($type);
 
+            my $conditional = $member->extendedAttributes->{Conditional};
+            if ($conditional) {
+                my $conditionalString = $codeGenerator->GenerateConditionalStringFromAttributeValue($conditional);
+                $result .= "#if ${conditionalString}\n";
+            }
+
             # 4.1. Let key be the identifier of member.
             my $key = $member->name;
             my $implementedAsKey = $member->extendedAttributes->{ImplementedAs} || $key;
@@ -2368,6 +2374,8 @@ sub GenerateDictionaryImplementationContent
             } else {
                 $result .= "    }\n";
             }
+
+            $result .= "#endif\n" if $conditional;
         }
     }
 
@@ -2398,6 +2406,12 @@ sub GenerateDictionaryImplementationContent
                 my $key = $member->name;
                 my $implementedAsKey = $member->extendedAttributes->{ImplementedAs} || $key;
                 my $valueExpression = "dictionary.${implementedAsKey}";
+
+                my $conditional = $member->extendedAttributes->{Conditional};
+                if ($conditional) {
+                    my $conditionalString = $codeGenerator->GenerateConditionalStringFromAttributeValue($conditional);
+                    $result .= "#if ${conditionalString}\n";
+                }
 
                 # 1. Let key be the identifier of member.
                 # 2. If the dictionary member named key is present in V, then:
@@ -2430,6 +2444,8 @@ sub GenerateDictionaryImplementationContent
                 if ($needsRuntimeCheck) {
                     $result .= "    }\n";
                 }
+
+                $result .= "#endif\n" if $conditional;
             }
         }
 
@@ -2638,6 +2654,11 @@ sub GenerateHeader
         $structureFlags{"JSC::OverridesGetOwnPropertySlot"} = 1;
         push(@headerContent, "    static bool getOwnPropertySlotByIndex(JSC::JSObject*, JSC::ExecState*, unsigned propertyName, JSC::PropertySlot&);\n");
         $structureFlags{"JSC::InterceptsGetOwnPropertySlotByIndexEvenWhenLengthIsNotZero"} = 1;
+    }
+
+    if ($interface->extendedAttributes->{CheckSecurity}) {
+        push(@headerContent, "    static void doPutPropertySecurityCheck(JSC::JSObject*, JSC::ExecState*, JSC::PropertyName, JSC::PutPropertySlot&);\n");
+        $structureFlags{"JSC::HasPutPropertySecurityCheck"} = 1;
     }
     
     if (InstanceOverridesGetOwnPropertyNames($interface)) {
@@ -3772,28 +3793,9 @@ sub GenerateRuntimeEnableConditionalString
 
         AddToImplIncludes("RuntimeEnabledFeatures.h");
 
-        if ($context->extendedAttributes->{EnabledByQuirk}) {
-            AddToImplIncludes("Document.h");
-            AddToImplIncludes("Quirks.h");
-            
-            assert("EnabledByQuirks can only be used by interfaces only exposed to the Window") if $interface->extendedAttributes->{Exposed} && $interface->extendedAttributes->{Exposed} ne "Window";
-    
-            my @quirkFlags = split(/&/, $context->extendedAttributes->{EnabledByQuirk});
-            my @runtimeFlags = split(/&/, $context->extendedAttributes->{EnabledAtRuntime});
-            my @quirks;
-            my @runtimes;
-            foreach my $flag (@quirkFlags) {
-                push(@quirks, "downcast<Document>(jsCast<JSDOMGlobalObject*>(" . $globalObjectPtr . ")->scriptExecutionContext())->quirks()." . ToMethodName($flag) . "Quirk()");
-            }
-            foreach my $flag (@runtimeFlags) {
-                push(@runtimes, "RuntimeEnabledFeatures::sharedFeatures()." . ToMethodName($flag) . "Enabled()");
-            }
-            push(@conjuncts, "(" . join(" && ", @quirks) . " || " . join(" && ", @runtimes) .")");
-        } else {
-            my @flags = split(/&/, $context->extendedAttributes->{EnabledAtRuntime});
-            foreach my $flag (@flags) {
-                push(@conjuncts, "RuntimeEnabledFeatures::sharedFeatures()." . ToMethodName($flag) . "Enabled()");
-            }
+        my @flags = split(/&/, $context->extendedAttributes->{EnabledAtRuntime});
+        foreach my $flag (@flags) {
+            push(@conjuncts, "RuntimeEnabledFeatures::sharedFeatures()." . ToMethodName($flag) . "Enabled()");
         }
     }
 
@@ -5082,8 +5084,7 @@ sub GenerateAttributeSetterBodyDefinition
         my $callTracingCallback = $attribute->extendedAttributes->{CallTracingCallback} || $interface->extendedAttributes->{CallTracingCallback};
         if ($callTracingCallback) {
             my $indent = "    ";
-            my @callTracerArguments = ();
-            push(@callTracerArguments, GenerateCallTracerParameter("nativeValue", $attribute->type, 0, $indent));
+            my @callTracerArguments = ("nativeValue");
             GenerateCallTracer($outputArray, $callTracingCallback, $attribute->name, \@callTracerArguments, $indent);
         }
 
@@ -6281,10 +6282,7 @@ sub GenerateImplementationFunctionCall
 
     my $callTracingCallback = $operation->extendedAttributes->{CallTracingCallback} || $interface->extendedAttributes->{CallTracingCallback};
     if ($callTracingCallback) {
-        my @callTracerArguments = ();
-        foreach my $argument (@{$operation->arguments}) {
-            push(@callTracerArguments, GenerateCallTracerParameter($argument->name, $argument->type, $argument->isOptional && !defined($argument->default), $indent));
-        }
+        my @callTracerArguments = map { $_->name } @{$operation->arguments};
         GenerateCallTracer($outputArray, $callTracingCallback, $operation->name, \@callTracerArguments, $indent);
     }
 
@@ -6468,8 +6466,8 @@ sub IsAnnotatedType
     return 1 if $type->extendedAttributes->{Clamp};
     return 1 if $type->extendedAttributes->{EnforceRange};
     return 1 if $type->extendedAttributes->{TreatNullAs} && $type->extendedAttributes->{TreatNullAs} eq "EmptyString";
-    return 1 if $type->extendedAttributes->{AtomicString};
-    return 1 if $type->extendedAttributes->{RequiresExistingAtomicString};
+    return 1 if $type->extendedAttributes->{AtomString};
+    return 1 if $type->extendedAttributes->{RequiresExistingAtomString};
 }
 
 sub GetAnnotatedIDLType
@@ -6479,8 +6477,8 @@ sub GetAnnotatedIDLType
     return "IDLClampAdaptor" if $type->extendedAttributes->{Clamp};
     return "IDLEnforceRangeAdaptor" if $type->extendedAttributes->{EnforceRange};
     return "IDLTreatNullAsEmptyAdaptor" if $type->extendedAttributes->{TreatNullAs} && $type->extendedAttributes->{TreatNullAs} eq "EmptyString";
-    return "IDLAtomicStringAdaptor" if $type->extendedAttributes->{AtomicString};
-    return "IDLRequiresExistingAtomicStringAdaptor" if $type->extendedAttributes->{RequiresExistingAtomicString};
+    return "IDLAtomStringAdaptor" if $type->extendedAttributes->{AtomString};
+    return "IDLRequiresExistingAtomStringAdaptor" if $type->extendedAttributes->{RequiresExistingAtomString};
 }
 
 sub GetBaseIDLType
@@ -7524,57 +7522,18 @@ sub AddJSBuiltinIncludesIfNeeded()
     }
 }
 
-sub GenerateCallTracerParameter()
-{
-    my ($name, $type, $optional, $indent) = @_;
-
-    my $result = "";
-
-    if ($optional || $type->isNullable) {
-        $result .= $indent . "    if (" . $name . ")\n";
-        $result .= "    ";
-    }
-
-    $result .= $indent . "    ";
-
-    if ($type->isUnion) {
-        $result .= "WTF::visit([&] (auto& value) { callTracerParameters.append(value); }, ";
-    } else {
-        $result .= "callTracerParameters.append(";
-    }
-
-    if ($optional || ($type->isUnion && $type->isNullable)) {
-        $result .= "*";
-    }
-
-    $result .= $name . ");";
-
-    return $result;
-}
-
 sub GenerateCallTracer()
 {
     my ($outputArray, $callTracingCallback, $name, $arguments, $indent) = @_;
 
     AddToImplIncludes("CallTracer.h");
 
-    my $count = scalar(@$arguments);
-
-    push(@$outputArray, $indent . "if (UNLIKELY(impl.callTracingActive()))");
-    if ($count) {
-        push(@$outputArray, " {\n");
-        push(@$outputArray, $indent . "    Vector<" . $codeGenerator->WK_ucfirst($callTracingCallback) . "Variant> callTracerParameters;\n");
-        push(@$outputArray, join("\n", @$arguments));
-    }
-    push(@$outputArray, "\n");
+    push(@$outputArray, $indent . "if (UNLIKELY(impl.callTracingActive()))\n");
     push(@$outputArray, $indent . "    CallTracer::" . $callTracingCallback . "(impl, \"" . $name . "\"_s");
-    if ($count) {
-        push(@$outputArray, ", WTFMove(callTracerParameters)");
+    if (scalar(@$arguments)) {
+        push(@$outputArray, ", { " . join(", ", @$arguments) . " }");
     }
     push(@$outputArray, ");\n");
-    if ($count) {
-        push(@$outputArray, $indent . "}\n")
-    }
 }
 
 sub GenerateCustomElementReactionsStackIfNeeded

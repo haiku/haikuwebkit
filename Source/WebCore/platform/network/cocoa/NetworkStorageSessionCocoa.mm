@@ -102,6 +102,20 @@ Vector<Cookie> NetworkStorageSession::getCookies(const URL& url)
     return nsCookiesToCookieVector([nsCookieStorage() cookiesForURL:(NSURL *)url]);
 }
 
+void NetworkStorageSession::hasCookies(const RegistrableDomain& domain, CompletionHandler<void(bool)>&& completionHandler) const
+{
+    ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
+    
+    for (NSHTTPCookie *nsCookie in nsCookieStorage().cookies) {
+        if (RegistrableDomain::uncheckedCreateFromHost(nsCookie.domain) == domain) {
+            completionHandler(true);
+            return;
+        }
+    }
+
+    completionHandler(false);
+}
+
 void NetworkStorageSession::flushCookieStore()
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
@@ -121,7 +135,7 @@ NSHTTPCookieStorage *NetworkStorageSession::nsCookieStorage() const
 CookieStorageObserver& NetworkStorageSession::cookieStorageObserver() const
 {
     if (!m_cookieStorageObserver)
-        m_cookieStorageObserver = CookieStorageObserver::create(nsCookieStorage());
+        m_cookieStorageObserver = std::make_unique<CookieStorageObserver>(nsCookieStorage());
 
     return *m_cookieStorageObserver;
 }
@@ -487,8 +501,12 @@ void NetworkStorageSession::getHostnamesWithCookies(HashSet<String>& hostnames)
 
     NSArray *cookies = httpCookies(cookieStorage().get());
     
-    for (NSHTTPCookie* cookie in cookies)
-        hostnames.add([cookie domain]);
+    for (NSHTTPCookie* cookie in cookies) {
+        if (NSString *domain = [cookie domain])
+            hostnames.add(domain);
+        else
+            ASSERT_NOT_REACHED();
+    }
     
     END_BLOCK_OBJC_EXCEPTIONS;
 }

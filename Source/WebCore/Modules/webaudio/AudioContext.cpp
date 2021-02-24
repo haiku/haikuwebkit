@@ -99,6 +99,7 @@
 #include <wtf/MainThread.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
+#include <wtf/Scope.h>
 #include <wtf/text/WTFString.h>
 
 const unsigned MaxPeriodicWaveLength = 4096;
@@ -141,6 +142,10 @@ AudioContext::AudioContext(Document& document)
     , m_mediaSession(PlatformMediaSession::create(*this))
     , m_eventQueue(std::make_unique<GenericEventQueue>(*this))
 {
+    // According to spec AudioContext must die only after page navigate.
+    // Lets mark it as ActiveDOMObject with pending activity and unmark it in clear method.
+    makePendingActivity();
+
     constructCommon();
 
     m_destinationNode = DefaultAudioDestinationNode::create(*this);
@@ -172,10 +177,6 @@ AudioContext::AudioContext(Document& document, unsigned numberOfChannels, size_t
 
 void AudioContext::constructCommon()
 {
-    // According to spec AudioContext must die only after page navigate.
-    // Lets mark it as ActiveDOMObject with pending activity and unmark it in clear method.
-    setPendingActivity(*this);
-
     FFTFrame::initialize();
     
     m_listener = AudioListener::create();
@@ -242,6 +243,8 @@ void AudioContext::lazyInitialize()
 
 void AudioContext::clear()
 {
+    Ref<AudioContext> protectedThis(*this);
+
     // We have to release our reference to the destination node before the context will ever be deleted since the destination node holds a reference to the context.
     if (m_destinationNode)
         m_destinationNode = nullptr;
@@ -253,8 +256,7 @@ void AudioContext::clear()
         m_nodesMarkedForDeletion.clear();
     } while (m_nodesToDelete.size());
 
-    // It was set in constructCommon.
-    unsetPendingActivity(*this);
+    clearPendingActivity();
 }
 
 void AudioContext::uninitialize()
@@ -267,7 +269,8 @@ void AudioContext::uninitialize()
         return;
 
     // This stops the audio thread and all audio rendering.
-    m_destinationNode->uninitialize();
+    if (m_destinationNode)
+        m_destinationNode->uninitialize();
 
     // Don't allow the context to initialize a second time after it's already been explicitly uninitialized.
     m_isAudioThreadFinished = true;
@@ -428,7 +431,9 @@ ExceptionOr<Ref<AudioBuffer>> AudioContext::createBuffer(ArrayBuffer& arrayBuffe
 
 void AudioContext::decodeAudioData(Ref<ArrayBuffer>&& audioData, RefPtr<AudioBufferCallback>&& successCallback, RefPtr<AudioBufferCallback>&& errorCallback)
 {
-    m_audioDecoder.decodeAsync(WTFMove(audioData), sampleRate(), WTFMove(successCallback), WTFMove(errorCallback));
+    if (!m_audioDecoder)
+        m_audioDecoder = std::make_unique<AsyncAudioDecoder>();
+    m_audioDecoder->decodeAsync(WTFMove(audioData), sampleRate(), WTFMove(successCallback), WTFMove(errorCallback));
 }
 
 ExceptionOr<Ref<AudioBufferSourceNode>> AudioContext::createBufferSource()
@@ -441,7 +446,7 @@ ExceptionOr<Ref<AudioBufferSourceNode>> AudioContext::createBufferSource()
         return Exception { InvalidStateError };
 
     lazyInitialize();
-    Ref<AudioBufferSourceNode> node = AudioBufferSourceNode::create(*this, m_destinationNode->sampleRate());
+    Ref<AudioBufferSourceNode> node = AudioBufferSourceNode::create(*this, sampleRate());
 
     // Because this is an AudioScheduledSourceNode, the context keeps a reference until it has finished playing.
     // When this happens, AudioScheduledSourceNode::finish() calls AudioContext::notifyNodeFinishedProcessing().
@@ -577,7 +582,7 @@ ExceptionOr<Ref<ScriptProcessorNode>> AudioContext::createScriptProcessor(size_t
     if (numberOfOutputChannels > maxNumberOfChannels())
         return Exception { NotSupportedError };
 
-    auto node = ScriptProcessorNode::create(*this, m_destinationNode->sampleRate(), bufferSize, numberOfInputChannels, numberOfOutputChannels);
+    auto node = ScriptProcessorNode::create(*this, sampleRate(), bufferSize, numberOfInputChannels, numberOfOutputChannels);
 
     refNode(node); // context keeps reference until we stop making javascript rendering callbacks
     return node;
@@ -593,7 +598,7 @@ ExceptionOr<Ref<BiquadFilterNode>> AudioContext::createBiquadFilter()
 
     lazyInitialize();
 
-    return BiquadFilterNode::create(*this, m_destinationNode->sampleRate());
+    return BiquadFilterNode::create(*this, sampleRate());
 }
 
 ExceptionOr<Ref<WaveShaperNode>> AudioContext::createWaveShaper()
@@ -617,7 +622,7 @@ ExceptionOr<Ref<PannerNode>> AudioContext::createPanner()
         return Exception { InvalidStateError };
 
     lazyInitialize();
-    return PannerNode::create(*this, m_destinationNode->sampleRate());
+    return PannerNode::create(*this, sampleRate());
 }
 
 ExceptionOr<Ref<ConvolverNode>> AudioContext::createConvolver()
@@ -629,7 +634,7 @@ ExceptionOr<Ref<ConvolverNode>> AudioContext::createConvolver()
         return Exception { InvalidStateError };
 
     lazyInitialize();
-    return ConvolverNode::create(*this, m_destinationNode->sampleRate());
+    return ConvolverNode::create(*this, sampleRate());
 }
 
 ExceptionOr<Ref<DynamicsCompressorNode>> AudioContext::createDynamicsCompressor()
@@ -641,7 +646,7 @@ ExceptionOr<Ref<DynamicsCompressorNode>> AudioContext::createDynamicsCompressor(
         return Exception { InvalidStateError };
 
     lazyInitialize();
-    return DynamicsCompressorNode::create(*this, m_destinationNode->sampleRate());
+    return DynamicsCompressorNode::create(*this, sampleRate());
 }
 
 ExceptionOr<Ref<AnalyserNode>> AudioContext::createAnalyser()
@@ -653,7 +658,7 @@ ExceptionOr<Ref<AnalyserNode>> AudioContext::createAnalyser()
         return Exception { InvalidStateError };
 
     lazyInitialize();
-    return AnalyserNode::create(*this, m_destinationNode->sampleRate());
+    return AnalyserNode::create(*this, sampleRate());
 }
 
 ExceptionOr<Ref<GainNode>> AudioContext::createGain()
@@ -665,7 +670,7 @@ ExceptionOr<Ref<GainNode>> AudioContext::createGain()
         return Exception { InvalidStateError };
 
     lazyInitialize();
-    return GainNode::create(*this, m_destinationNode->sampleRate());
+    return GainNode::create(*this, sampleRate());
 }
 
 ExceptionOr<Ref<DelayNode>> AudioContext::createDelay(double maxDelayTime)
@@ -677,7 +682,7 @@ ExceptionOr<Ref<DelayNode>> AudioContext::createDelay(double maxDelayTime)
         return Exception { InvalidStateError };
 
     lazyInitialize();
-    return DelayNode::create(*this, m_destinationNode->sampleRate(), maxDelayTime);
+    return DelayNode::create(*this, sampleRate(), maxDelayTime);
 }
 
 ExceptionOr<Ref<ChannelSplitterNode>> AudioContext::createChannelSplitter(size_t numberOfOutputs)
@@ -689,7 +694,7 @@ ExceptionOr<Ref<ChannelSplitterNode>> AudioContext::createChannelSplitter(size_t
         return Exception { InvalidStateError };
 
     lazyInitialize();
-    auto node = ChannelSplitterNode::create(*this, m_destinationNode->sampleRate(), numberOfOutputs);
+    auto node = ChannelSplitterNode::create(*this, sampleRate(), numberOfOutputs);
     if (!node)
         return Exception { IndexSizeError };
     return node.releaseNonNull();
@@ -704,7 +709,7 @@ ExceptionOr<Ref<ChannelMergerNode>> AudioContext::createChannelMerger(size_t num
         return Exception { InvalidStateError };
 
     lazyInitialize();
-    auto node = ChannelMergerNode::create(*this, m_destinationNode->sampleRate(), numberOfInputs);
+    auto node = ChannelMergerNode::create(*this, sampleRate(), numberOfInputs);
     if (!node)
         return Exception { IndexSizeError };
     return node.releaseNonNull();
@@ -720,7 +725,7 @@ ExceptionOr<Ref<OscillatorNode>> AudioContext::createOscillator()
 
     lazyInitialize();
 
-    Ref<OscillatorNode> node = OscillatorNode::create(*this, m_destinationNode->sampleRate());
+    Ref<OscillatorNode> node = OscillatorNode::create(*this, sampleRate());
 
     // Because this is an AudioScheduledSourceNode, the context keeps a reference until it has finished playing.
     // When this happens, AudioScheduledSourceNode::finish() calls AudioContext::notifyNodeFinishedProcessing().
@@ -1140,6 +1145,8 @@ void AudioContext::startRendering()
     if (m_isStopScheduled || !willBeginPlayback())
         return;
 
+    makePendingActivity();
+
     destination()->startRendering();
     setState(State::Running);
 }
@@ -1175,14 +1182,23 @@ void AudioContext::isPlayingAudioDidChange()
     });
 }
 
-void AudioContext::fireCompletionEvent()
+void AudioContext::finishedRendering(bool didRendering)
 {
+    ASSERT(isOfflineContext());
     ASSERT(isMainThread());
     if (!isMainThread())
         return;
 
+    auto clearPendingActivityIfExitEarly = WTF::makeScopeExit([this] {
+        clearPendingActivity();
+    });
+
+
     ALWAYS_LOG(LOGIDENTIFIER);
-    
+
+    if (!didRendering)
+        return;
+
     AudioBuffer* renderedBuffer = m_renderTarget.get();
     setState(State::Closed);
 
@@ -1191,10 +1207,18 @@ void AudioContext::fireCompletionEvent()
         return;
 
     // Avoid firing the event if the document has already gone away.
-    if (!m_isStopScheduled) {
-        // Call the offline rendering completion event listener.
-        m_eventQueue->enqueueEvent(OfflineAudioCompletionEvent::create(renderedBuffer));
-    }
+    if (m_isStopScheduled)
+        return;
+
+    clearPendingActivityIfExitEarly.release();
+    m_eventQueue->enqueueEvent(OfflineAudioCompletionEvent::create(renderedBuffer));
+}
+
+void AudioContext::dispatchEvent(Event& event)
+{
+    EventTarget::dispatchEvent(event);
+    if (event.eventInterface() == OfflineAudioCompletionEventInterfaceType)
+        clearPendingActivity();
 }
 
 void AudioContext::incrementActiveSourceCount()
@@ -1344,6 +1368,23 @@ void AudioContext::addConsoleMessage(MessageSource source, MessageLevel level, c
 {
     if (m_scriptExecutionContext)
         m_scriptExecutionContext->addConsoleMessage(source, level, message);
+}
+
+void AudioContext::clearPendingActivity()
+{
+    if (!m_pendingActivity)
+        return;
+    m_pendingActivity = nullptr;
+    // FIXME: Remove this specific deref() and ref() call in makePendingActivity().
+    deref();
+}
+
+void AudioContext::makePendingActivity()
+{
+    if (m_pendingActivity)
+        return;
+    m_pendingActivity = ActiveDOMObject::makePendingActivity(*this);
+    ref();
 }
 
 #if !RELEASE_LOG_DISABLED

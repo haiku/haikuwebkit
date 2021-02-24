@@ -17,7 +17,6 @@ set(test_main_SOURCES
 )
 
 # TestWTF
-list(REMOVE_ITEM TestWTF_SOURCES Tests/WTF/FileSystem.cpp)
 list(APPEND TestWTF_SOURCES
     ${test_main_SOURCES}
     win/UtilitiesWin.cpp
@@ -78,6 +77,8 @@ else ()
         WebKitQuartzCoreAdditions${DEBUG_SUFFIX}
         libdispatch${DEBUG_SUFFIX}
         libexslt${DEBUG_SUFFIX}
+        libicuin${DEBUG_SUFFIX}
+        libicuuc${DEBUG_SUFFIX}
     )
 endif ()
 
@@ -108,7 +109,7 @@ if (ENABLE_WEBKIT_LEGACY)
     list(APPEND TestWebKitLegacy_DEFINITIONS ${webcore_DEFINITIONS})
 
     list(APPEND TestWebKitLegacy_LIBRARIES
-        WebKit::WTF
+        WTF
     )
 
     list(APPEND TestWebKitLegacy_PRIVATE_INCLUDE_DIRECTORIES

@@ -77,9 +77,9 @@ function drawAndSubmitCommands(device, pipeline, attachment, vertexBuffer, color
     device.getQueue().submit([commandEncoder.finish()]);
 }
 
-async function test() {
-    const device = await getBasicDevice();
-    const canvas = document.querySelector("canvas");
+const canvas = document.querySelector("canvas");
+
+async function test(device) {
     const swapChain = createBasicSwapChain(canvas, device);
     // FIXME: Replace with non-MSL shaders.
     const shaderModule = device.createShaderModule({ code: shaderCode });
@@ -139,10 +139,19 @@ async function test() {
     upperLeftBuffer.destroy();
     middleBuffer.destroy();
     upperRightBuffer.destroy();
-
-    if (window.testRunner)
-        testRunner.notifyDone();
 }
 
-test();
+getBasicDevice().then(function(device) {
+    test(device).then(function() {
+        if (window.testRunner)
+            testRunner.notifyDone();
+    }, function() {
+        if (window.testRunner)
+            testRunner.notifyDone();
+    });
+}, function() {
+    drawGreenSquareInSoftware(canvas);
+    if (window.testRunner)
+        testRunner.notifyDone();
+});
 </script>

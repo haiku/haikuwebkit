@@ -141,6 +141,14 @@ bool checkDuplicateFunctions(const Program& program)
             && is<AST::ReferenceType>(static_cast<const AST::UnnamedType&>(*function.parameters()[1]->type()))
             && matches(*function.parameters()[0]->type(), *function.parameters()[1]->type()))
             return false;
+        else if (function.isCast() && function.parameters().isEmpty()) {
+            auto& unifyNode = function.type().unifyNode();
+            if (is<AST::NamedType>(unifyNode) && is<AST::NativeTypeDeclaration>(downcast<AST::NamedType>(unifyNode))) {
+                auto& nativeTypeDeclaration = downcast<AST::NativeTypeDeclaration>(downcast<AST::NamedType>(unifyNode));
+                if (nativeTypeDeclaration.isOpaqueType())
+                    return false;
+            }
+        }
 
         return true;
     };
@@ -166,7 +174,11 @@ bool checkDuplicateFunctions(const Program& program)
         //
         // Since we do that, we just need to make sure no native function is a duplicate
         // of a user-defined function.
-        ASSERT(passesStaticChecks(nativeFunctionDeclaration.get()));
+
+        // FIXME: Add back this assert once we begin to auto generate these in the compiler
+        // instead of having them in the stdlib
+        // https://bugs.webkit.org/show_bug.cgi?id=198861
+        // ASSERT(passesStaticChecks(nativeFunctionDeclaration.get()));
         if (functions.contains(DuplicateFunctionKey { nativeFunctionDeclaration.get() }))
             return false;
     }

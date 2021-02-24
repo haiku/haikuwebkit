@@ -25,6 +25,7 @@
 
 #import "config.h"
 #import "WebPageProxy.h"
+#import "VersionChecks.h"
 
 #if PLATFORM(IOS_FAMILY)
 
@@ -46,8 +47,10 @@
 #import "RemoteLayerTreeDrawingAreaProxy.h"
 #import "RemoteLayerTreeDrawingAreaProxyMessages.h"
 #import "RemoteLayerTreeTransaction.h"
+#import "RemoteScrollingCoordinatorProxy.h"
 #import "UIKitSPI.h"
 #import "UserData.h"
+#import "VersionChecks.h"
 #import "VideoFullscreenManagerProxy.h"
 #import "ViewUpdateDispatcherMessages.h"
 #import "WKBrowsingContextControllerInternal.h"
@@ -72,6 +75,8 @@
 #import <wtf/text/WTFString.h>
 #endif
 
+#define RELEASE_LOG_IF_ALLOWED(channel, fmt, ...) RELEASE_LOG_IF(isAlwaysOnLoggingAllowed(), channel, "%p - WebPageProxy::" fmt, this, ##__VA_ARGS__)
+
 namespace WebKit {
 using namespace WebCore;
 
@@ -83,13 +88,6 @@ String WebPageProxy::standardUserAgent(const String& applicationNameForUserAgent
 {
     return standardUserAgentWithApplicationName(applicationNameForUserAgent);
 }
-
-#if HAVE(VISIBILITY_PROPAGATION_VIEW)
-void WebPageProxy::didCreateContextForVisibilityPropagation(LayerHostingContextID contextID)
-{
-    pageClient().didCreateContextForVisibilityPropagation(contextID);
-}
-#endif
 
 void WebPageProxy::getIsSpeaking(CompletionHandler<void(bool)>&& completionHandler)
 {
@@ -280,6 +278,19 @@ WebCore::FloatRect WebPageProxy::computeCustomFixedPositionRect(const FloatRect&
     return layoutViewportRect;
 }
 
+FloatRect WebPageProxy::unconstrainedLayoutViewportRect() const
+{
+    return computeCustomFixedPositionRect(unobscuredContentRect(), unobscuredContentRectRespectingInputViewBounds(), customFixedPositionRect(), displayedContentScale(), FrameView::LayoutViewportConstraint::Unconstrained);
+}
+
+void WebPageProxy::adjustLayersForLayoutViewport(const FloatRect& layoutViewport)
+{
+    if (!m_scrollingCoordinatorProxy)
+        return;
+
+    m_scrollingCoordinatorProxy->viewportChangedViaDelegatedScrolling(unobscuredContentRect().location(), layoutViewport, displayedContentScale());
+}
+
 void WebPageProxy::scrollingNodeScrollViewWillStartPanGesture()
 {
     pageClient().scrollingNodeScrollViewWillStartPanGesture();
@@ -307,6 +318,7 @@ void WebPageProxy::dynamicViewportSizeUpdate(const FloatSize& viewLayoutSize, co
 
     hideValidationMessage();
 
+    m_viewportConfigurationViewLayoutSize = viewLayoutSize;
     m_process->send(Messages::WebPage::DynamicViewportSizeUpdate(viewLayoutSize,
         maximumUnobscuredSize, targetExposedContentRect, targetUnobscuredRect,
         targetUnobscuredRectInScrollViewCoordinates, unobscuredSafeAreaInsets,
@@ -637,7 +649,11 @@ void WebPageProxy::saveImageToLibrary(const SharedMemory::Handle& imageHandle, u
 
 void WebPageProxy::applicationDidEnterBackground()
 {
+    m_lastObservedStateWasBackground = true;
+
     bool isSuspendedUnderLock = [UIApp isSuspendedUnderLock];
+    
+    RELEASE_LOG_IF_ALLOWED(ViewState, "applicationDidEnterBackground: isSuspendedUnderLock? %d", isSuspendedUnderLock);
 
 #if !PLATFORM(WATCHOS)
     // We normally delay process suspension when the app is backgrounded until the current page load completes. However,
@@ -664,7 +680,11 @@ bool WebPageProxy::isInHardwareKeyboardMode()
 
 void WebPageProxy::applicationWillEnterForeground()
 {
+    m_lastObservedStateWasBackground = false;
+
     bool isSuspendedUnderLock = [UIApp isSuspendedUnderLock];
+    RELEASE_LOG_IF_ALLOWED(ViewState, "applicationWillEnterForeground: isSuspendedUnderLock? %d", isSuspendedUnderLock);
+
     m_process->send(Messages::WebPage::ApplicationWillEnterForeground(isSuspendedUnderLock), m_pageID);
     m_process->send(Messages::WebPage::HardwareKeyboardAvailabilityChanged(isInHardwareKeyboardMode()), m_pageID);
 }
@@ -845,6 +865,11 @@ void WebPageProxy::didRecognizeLongPress()
     process().send(Messages::WebPage::DidRecognizeLongPress(), m_pageID);
 }
 
+void WebPageProxy::handleDoubleTapForDoubleClickAtPoint(const WebCore::IntPoint& point, OptionSet<WebEvent::Modifier> modifiers, uint64_t layerTreeTransactionIdAtLastTouchStart)
+{
+    process().send(Messages::WebPage::HandleDoubleTapForDoubleClickAtPoint(point, modifiers, layerTreeTransactionIdAtLastTouchStart), m_pageID);
+}
+
 void WebPageProxy::inspectorNodeSearchMovedToPosition(const WebCore::FloatPoint& position)
 {
     process().send(Messages::WebPage::InspectorNodeSearchMovedToPosition(position), m_pageID);
@@ -905,8 +930,14 @@ void WebPageProxy::setIsShowingInputViewForFocusedElement(bool showingInputView)
     process().send(Messages::WebPage::SetIsShowingInputViewForFocusedElement(showingInputView), m_pageID);
 }
 
+void WebPageProxy::updateInputContextAfterBlurringAndRefocusingElement()
+{
+    pageClient().updateInputContextAfterBlurringAndRefocusingElement();
+}
+
 void WebPageProxy::elementDidFocus(const FocusedElementInformation& information, bool userIsInteracting, bool blurPreviousNode, OptionSet<WebCore::ActivityState::Flag> activityStateChanges, const UserData& userData)
 {
+    m_pendingInputModeChange = WTF::nullopt;
     m_waitingForPostLayoutEditorStateUpdateAfterFocusingElement = true;
 
     API::Object* userDataObject = process().transformHandlesToObjects(userData.object()).get();
@@ -921,6 +952,7 @@ void WebPageProxy::elementDidFocus(const FocusedElementInformation& information,
 
 void WebPageProxy::elementDidBlur()
 {
+    m_pendingInputModeChange = WTF::nullopt;
     m_waitingForPostLayoutEditorStateUpdateAfterFocusingElement = false;
     m_deferredElementDidFocusArguments = nullptr;
     pageClient().elementDidBlur();
@@ -928,7 +960,23 @@ void WebPageProxy::elementDidBlur()
 
 void WebPageProxy::focusedElementDidChangeInputMode(WebCore::InputMode mode)
 {
+#if ENABLE(TOUCH_EVENTS)
+    if (m_touchAndPointerEventTracking.isTrackingAnything()) {
+        m_pendingInputModeChange = mode;
+        return;
+    }
+#endif
+
     pageClient().focusedElementDidChangeInputMode(mode);
+}
+
+void WebPageProxy::didReleaseAllTouchPoints()
+{
+    if (!m_pendingInputModeChange)
+        return;
+
+    pageClient().focusedElementDidChangeInputMode(*m_pendingInputModeChange);
+    m_pendingInputModeChange = WTF::nullopt;
 }
 
 void WebPageProxy::autofillLoginCredentials(const String& username, const String& password)
@@ -1002,11 +1050,6 @@ void WebPageProxy::savePDFToTemporaryFolderAndOpenWithNativeApplication(const St
     notImplemented();
 }
 
-void WebPageProxy::savePDFToTemporaryFolderAndOpenWithNativeApplicationRaw(const String&, const String&, const uint8_t*, unsigned long, const String&)
-{
-    notImplemented();
-}
-
 void WebPageProxy::openPDFFromTemporaryFolderWithNativeApplication(const String&)
 {
     notImplemented();
@@ -1044,9 +1087,9 @@ void WebPageProxy::disableDoubleTapGesturesDuringTapIfNecessary(uint64_t request
     pageClient().disableDoubleTapGesturesDuringTapIfNecessary(requestID);
 }
 
-void WebPageProxy::handleSmartMagnificationInformationForPotentialTap(uint64_t requestID, const WebCore::FloatRect& renderRect, bool fitEntireRect, double viewportMinimumScale, double viewportMaximumScale)
+void WebPageProxy::handleSmartMagnificationInformationForPotentialTap(uint64_t requestID, const WebCore::FloatRect& renderRect, bool fitEntireRect, double viewportMinimumScale, double viewportMaximumScale, bool nodeIsRootLevel)
 {
-    pageClient().handleSmartMagnificationInformationForPotentialTap(requestID, renderRect, fitEntireRect, viewportMinimumScale, viewportMaximumScale);
+    pageClient().handleSmartMagnificationInformationForPotentialTap(requestID, renderRect, fitEntireRect, viewportMinimumScale, viewportMaximumScale, nodeIsRootLevel);
 }
 
 uint32_t WebPageProxy::computePagesForPrintingAndDrawToPDF(uint64_t frameID, const PrintInfo& printInfo, DrawToPDFCallback::CallbackFunction&& callback)
@@ -1192,6 +1235,14 @@ void WebPageProxy::requestAdditionalItemsForDragSession(const IntPoint& clientPo
         m_process->send(Messages::WebPage::RequestAdditionalItemsForDragSession(clientPosition, globalPosition, allowedActions), m_pageID);
 }
 
+void WebPageProxy::insertDroppedImagePlaceholders(const Vector<IntSize>& imageSizes, CompletionHandler<void(const Vector<IntRect>&, Optional<WebCore::TextIndicatorData>)>&& completionHandler)
+{
+    if (hasRunningProcess())
+        m_process->connection()->sendWithAsyncReply(Messages::WebPage::InsertDroppedImagePlaceholders(imageSizes), WTFMove(completionHandler), m_pageID);
+    else
+        completionHandler({ }, WTF::nullopt);
+}
+
 void WebPageProxy::willReceiveEditDragSnapshot()
 {
     pageClient().willReceiveEditDragSnapshot();
@@ -1262,7 +1313,7 @@ static bool desktopClassBrowsingSupported()
     static bool supportsDesktopClassBrowsing = false;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-#if PLATFORM(IOSMAC)
+#if PLATFORM(MACCATALYST)
         supportsDesktopClassBrowsing = true;
 #else
         supportsDesktopClassBrowsing = currentUserInterfaceIdiomIsPad();
@@ -1271,14 +1322,14 @@ static bool desktopClassBrowsingSupported()
     return supportsDesktopClassBrowsing;
 }
 
-#if !PLATFORM(IOSMAC)
+#if !PLATFORM(MACCATALYST)
 
 static bool webViewSizeIsNarrow(WebCore::IntSize viewSize)
 {
     return !viewSize.isEmpty() && viewSize.width() <= 375;
 }
 
-#endif // !PLATFORM(IOSMAC)
+#endif // !PLATFORM(MACCATALYST)
 
 static bool desktopClassBrowsingRecommendedForRequest(const WebCore::ResourceRequest& request)
 {
@@ -1293,6 +1344,9 @@ static bool desktopClassBrowsingRecommendedForRequest(const WebCore::ResourceReq
         return false;
 
     if (equalLettersIgnoringASCIICase(host, "live.iqiyi.com") || host.endsWithIgnoringASCIICase(".live.iqiyi.com"))
+        return false;
+
+    if (equalLettersIgnoringASCIICase(host, "jsfiddle.net") || host.endsWithIgnoringASCIICase(".jsfiddle.net"))
         return false;
 
     if (equalLettersIgnoringASCIICase(host, "video.sina.com.cn") || host.endsWithIgnoringASCIICase(".video.sina.com.cn"))
@@ -1310,6 +1364,37 @@ static bool desktopClassBrowsingRecommendedForRequest(const WebCore::ResourceReq
     if (equalLettersIgnoringASCIICase(host, "v.china.com.cn"))
         return false;
 
+    if (equalLettersIgnoringASCIICase(host, "trello.com") || host.endsWithIgnoringASCIICase(".trello.com"))
+        return false;
+
+    if (equalLettersIgnoringASCIICase(host, "ted.com") || host.endsWithIgnoringASCIICase(".ted.com"))
+        return false;
+
+    if (host.containsIgnoringASCIICase("hsbc.")) {
+        if (equalLettersIgnoringASCIICase(host, "hsbc.com.au") || host.endsWithIgnoringASCIICase(".hsbc.com.au"))
+            return false;
+        if (equalLettersIgnoringASCIICase(host, "hsbc.com.eg") || host.endsWithIgnoringASCIICase(".hsbc.com.eg"))
+            return false;
+        if (equalLettersIgnoringASCIICase(host, "hsbc.lk") || host.endsWithIgnoringASCIICase(".hsbc.lk"))
+            return false;
+        if (equalLettersIgnoringASCIICase(host, "hsbc.co.uk") || host.endsWithIgnoringASCIICase(".hsbc.co.uk"))
+            return false;
+        if (equalLettersIgnoringASCIICase(host, "hsbc.com.hk") || host.endsWithIgnoringASCIICase(".hsbc.com.hk"))
+            return false;
+        if (equalLettersIgnoringASCIICase(host, "hsbc.com.mx") || host.endsWithIgnoringASCIICase(".hsbc.com.mx"))
+            return false;
+        if (equalLettersIgnoringASCIICase(host, "hsbc.ca") || host.endsWithIgnoringASCIICase(".hsbc.ca"))
+            return false;
+        if (equalLettersIgnoringASCIICase(host, "hsbc.com.ar") || host.endsWithIgnoringASCIICase(".hsbc.com.ar"))
+            return false;
+        if (equalLettersIgnoringASCIICase(host, "hsbc.com.ph") || host.endsWithIgnoringASCIICase(".hsbc.com.ph"))
+            return false;
+        if (equalLettersIgnoringASCIICase(host, "hsbc.com") || host.endsWithIgnoringASCIICase(".hsbc.com"))
+            return false;
+        if (equalLettersIgnoringASCIICase(host, "hsbc.com.cn") || host.endsWithIgnoringASCIICase(".hsbc.com.cn"))
+            return false;
+    }
+
     return true;
 }
 
@@ -1319,7 +1404,7 @@ static bool desktopClassBrowsingRecommended(const WebCore::ResourceRequest& requ
     if (!desktopClassBrowsingRecommendedForRequest(request))
         return false;
 
-#if !PLATFORM(IOSMAC)
+#if !PLATFORM(MACCATALYST)
     if (webViewSizeIsNarrow(viewSize))
         return false;
 #endif
@@ -1327,7 +1412,7 @@ static bool desktopClassBrowsingRecommended(const WebCore::ResourceRequest& requ
     static bool shouldRecommendDesktopClassBrowsing = false;
     static dispatch_once_t onceToken;
     dispatch_once(&onceToken, ^{
-#if PLATFORM(IOSMAC)
+#if PLATFORM(MACCATALYST)
         UNUSED_PARAM(ignoreSafeguards);
         shouldRecommendDesktopClassBrowsing = true;
 #else
@@ -1371,16 +1456,18 @@ WebContentMode WebPageProxy::effectiveContentModeAfterAdjustingPolicies(API::Web
         break;
     }
 
-    m_allowsFastClicksEverywhere = false;
+    m_preferFasterClickOverDoubleTap = false;
 
-    if (!useDesktopBrowsingMode)
+    if (!useDesktopBrowsingMode) {
+        policies.setAllowContentChangeObserverQuirk(true);
         return WebContentMode::Mobile;
+    }
 
     if (policies.customUserAgent().isEmpty() && customUserAgent().isEmpty()) {
         auto applicationName = policies.applicationNameForDesktopUserAgent();
         if (applicationName.isEmpty())
             applicationName = applicationNameForDesktopUserAgent();
-        policies.setCustomUserAgent(standardUserAgentWithApplicationName(applicationName, UserAgentType::Desktop));
+        policies.setCustomUserAgent(standardUserAgentWithApplicationName(applicationName, emptyString(), UserAgentType::Desktop));
     }
 
     if (policies.customNavigatorPlatform().isEmpty()) {
@@ -1394,12 +1481,14 @@ WebContentMode WebPageProxy::effectiveContentModeAfterAdjustingPolicies(API::Web
         policies.setMediaSourcePolicy(WebsiteMediaSourcePolicy::Enable);
         policies.setSimulatedMouseEventsDispatchPolicy(WebsiteSimulatedMouseEventsDispatchPolicy::Allow);
         policies.setLegacyOverflowScrollingTouchPolicy(WebsiteLegacyOverflowScrollingTouchPolicy::Disable);
-        m_allowsFastClicksEverywhere = true;
+        m_preferFasterClickOverDoubleTap = true;
     }
 
     return WebContentMode::Desktop;
 }
 
 } // namespace WebKit
+
+#undef RELEASE_LOG_IF_ALLOWED
 
 #endif // PLATFORM(IOS_FAMILY)

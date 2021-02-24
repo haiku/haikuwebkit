@@ -30,11 +30,13 @@
 #include "ChromeClient.h"
 #include "DOMTimer.h"
 #include "Document.h"
+#include "FullscreenManager.h"
 #include "HTMLIFrameElement.h"
 #include "HTMLImageElement.h"
 #include "Logging.h"
 #include "NodeRenderStyle.h"
 #include "Page.h"
+#include "Quirks.h"
 #include "RenderDescendantIterator.h"
 #include "Settings.h"
 
@@ -43,12 +45,29 @@ namespace WebCore {
 static const Seconds maximumDelayForTimers { 400_ms };
 static const Seconds maximumDelayForTransitions { 300_ms };
 
-static bool isConsideredHidden(const Element& element)
+#if ENABLE(FULLSCREEN_API)
+static bool isHiddenBehindFullscreenElement(const Node& descendantCandidate)
 {
-    if (!element.renderStyle())
+    // Fullscreen status is propagated on the ancestor document chain all the way to the top document.
+    auto& document = descendantCandidate.document();
+    auto* topMostFullScreenElement = document.topDocument().fullscreenManager().fullscreenElement();
+    if (!topMostFullScreenElement)
+        return false;
+
+    // If the document where the node lives does not have an active fullscreen element, it is a sibling/nephew document -> not a descendant.
+    auto* fullscreenElement = document.fullscreenManager().fullscreenElement();
+    if (!fullscreenElement)
+        return true;
+    return !descendantCandidate.isDescendantOf(*fullscreenElement);
+}
+#endif
+
+bool ContentChangeObserver::isVisuallyHidden(const Node& node)
+{
+    if (!node.renderStyle())
         return true;
 
-    auto& style = *element.renderStyle();
+    auto& style = *node.renderStyle();
     if (style.display() == DisplayType::None)
         return true;
 
@@ -80,7 +99,38 @@ static bool isConsideredHidden(const Element& element)
     if (maxHeight.isFixed() && !maxHeight.value())
         return true;
 
+    // Special case opacity, because a descendant with non-zero opacity should still be considered hidden when one of its ancetors has opacity: 0;
+    // YouTube.com has this setup with the bottom control bar.
+    constexpr static unsigned numberOfAncestorsToCheckForOpacity = 4;
+    unsigned i = 0;
+    for (auto* parent = node.parentNode(); parent && i < numberOfAncestorsToCheckForOpacity; parent = parent->parentNode(), ++i) {
+        if (!parent->renderStyle() || !parent->renderStyle()->opacity())
+            return true;
+    }
+
+#if ENABLE(FULLSCREEN_API)
+    if (isHiddenBehindFullscreenElement(node))
+        return true;
+#endif
     return false;
+}
+
+bool ContentChangeObserver::isConsideredVisible(const Node& node)
+{
+    if (isVisuallyHidden(node))
+        return false;
+
+    auto& style = *node.renderStyle();
+    auto width = style.logicalWidth();
+    // 1px width or height content is not considered visible.
+    if (width.isFixed() && width.value() <= 1)
+        return false;
+
+    auto height = style.logicalHeight();
+    if (height.isFixed() && height.value() <= 1)
+        return false;
+
+    return true;
 }
 
 enum class ElementHadRenderer { No, Yes };
@@ -122,6 +172,12 @@ static void willNotProceedWithClick(Frame& mainFrame)
         if (auto* document = frame->document())
             document->contentChangeObserver().willNotProceedWithClick();
     }
+}
+
+void ContentChangeObserver::didCancelPotentialTap(Frame& mainFrame)
+{
+    LOG(ContentObservation, "didCancelPotentialTap: cancel ongoing content change observing.");
+    WebCore::willNotProceedWithClick(mainFrame);
 }
 
 void ContentChangeObserver::didRecognizeLongPress(Frame& mainFrame)
@@ -167,7 +223,7 @@ void ContentChangeObserver::didAddTransition(const Element& element, const Anima
     auto transitionEnd = Seconds { transition.duration() + std::max<double>(0, transition.isDelaySet() ? transition.delay() : 0) };
     if (transitionEnd > maximumDelayForTransitions)
         return;
-    if (!isConsideredHidden(element))
+    if (!isVisuallyHidden(element))
         return;
     // In case of multiple transitions, the first tranistion wins (and it has to produce a visible content change in order to show up as hover).
     if (m_elementsWithTransition.contains(&element))
@@ -186,11 +242,16 @@ void ContentChangeObserver::didFinishTransition(const Element& element, CSSPrope
         return;
     LOG_WITH_STREAM(ContentObservation, stream << "didFinishTransition: transition finished (" << &element << ").");
 
-    if (isConsideredHidden(element)) {
-        adjustObservedState(Event::EndedTransitionButFinalStyleIsNotDefiniteYet);
-        return;
-    }
-    adjustObservedState(isConsideredClickable(element, ElementHadRenderer::Yes) ? Event::CompletedTransitionWithClickableContent : Event::CompletedTransitionWithoutClickableContent);
+    // isConsideredClickable may trigger style update through Node::computeEditability. Let's adjust the state in the next runloop.
+    callOnMainThread([weakThis = makeWeakPtr(*this), targetElement = makeWeakPtr(element)] {
+        if (!weakThis || !targetElement)
+            return;
+        if (isVisuallyHidden(*targetElement)) {
+            weakThis->adjustObservedState(Event::EndedTransitionButFinalStyleIsNotDefiniteYet);
+            return;
+        }
+        weakThis->adjustObservedState(isConsideredClickable(*targetElement, ElementHadRenderer::Yes) ? Event::CompletedTransitionWithClickableContent : Event::CompletedTransitionWithoutClickableContent);
+    });
 }
 
 void ContentChangeObserver::didRemoveTransition(const Element& element, CSSPropertyID propertyID)
@@ -324,6 +385,7 @@ void ContentChangeObserver::reset()
 
     m_contentObservationTimer.stop();
     m_elementsWithDestroyedVisibleRenderer.clear();
+    resetHiddenTouchTarget();
 }
 
 void ContentChangeObserver::didSuspendActiveDOMObjects()
@@ -348,7 +410,7 @@ void ContentChangeObserver::willDestroyRenderer(const Element& element)
         return;
     LOG_WITH_STREAM(ContentObservation, stream << "willDestroyRenderer element: " << &element);
 
-    if (!isConsideredHidden(element))
+    if (!isVisuallyHidden(element))
         m_elementsWithDestroyedVisibleRenderer.add(&element);
 }
 
@@ -361,7 +423,7 @@ void ContentChangeObserver::contentVisibilityDidChange()
 void ContentChangeObserver::touchEventDidStart(PlatformEvent::Type eventType)
 {
 #if ENABLE(TOUCH_EVENTS)
-    if (!m_document.settings().contentChangeObserverEnabled())
+    if (!m_document.settings().contentChangeObserverEnabled() || m_document.quirks().shouldDisableContentChangeObserverTouchEventAdjustment())
         return;
     if (eventType != PlatformEvent::Type::TouchStart)
         return;
@@ -535,7 +597,7 @@ void ContentChangeObserver::adjustObservedState(Event event)
 
 bool ContentChangeObserver::shouldObserveVisibilityChangeForElement(const Element& element)
 {
-    return isObservingContentChanges() && !hasVisibleChangeState() && !visibleRendererWasDestroyed(element);
+    return isObservingContentChanges() && !hasVisibleChangeState() && !visibleRendererWasDestroyed(element) && !element.document().quirks().shouldIgnoreContentChange(element);
 }
 
 ContentChangeObserver::StyleChangeScope::StyleChangeScope(Document& document, const Element& element)
@@ -544,13 +606,13 @@ ContentChangeObserver::StyleChangeScope::StyleChangeScope(Document& document, co
     , m_hadRenderer(element.renderer())
 {
     if (m_contentChangeObserver.shouldObserveVisibilityChangeForElement(element))
-        m_wasHidden = isConsideredHidden(m_element);
+        m_wasHidden = isVisuallyHidden(m_element);
 }
 
 ContentChangeObserver::StyleChangeScope::~StyleChangeScope()
 {
     auto changedFromHiddenToVisible = [&] {
-        return m_wasHidden && !isConsideredHidden(m_element);
+        return m_wasHidden && isConsideredVisible(m_element);
     };
 
     if (changedFromHiddenToVisible() && isConsideredClickable(m_element, m_hadRenderer ? ElementHadRenderer::Yes : ElementHadRenderer::No))
@@ -579,6 +641,7 @@ ContentChangeObserver::MouseMovedScope::MouseMovedScope(Document& document)
 ContentChangeObserver::MouseMovedScope::~MouseMovedScope()
 {
     m_contentChangeObserver.mouseMovedDidFinish();
+    m_contentChangeObserver.resetHiddenTouchTarget();
 }
 
 ContentChangeObserver::StyleRecalcScope::StyleRecalcScope(Document& document)

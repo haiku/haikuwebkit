@@ -234,6 +234,51 @@ inline ToThisResult isToThisAnIdentity(VM& vm, bool isStrictMode, AbstractValue&
 }
 
 template<typename AbstractStateType>
+bool AbstractInterpreter<AbstractStateType>::handleConstantBinaryBitwiseOp(Node* node)
+{
+    JSValue left = forNode(node->child1()).value();
+    JSValue right = forNode(node->child2()).value();
+    if (left && right && left.isInt32() && right.isInt32()) {
+        int32_t a = left.asInt32();
+        int32_t b = right.asInt32();
+        if (node->isBinaryUseKind(UntypedUse))
+            didFoldClobberWorld();
+        NodeType op = node->op();
+        switch (op) {
+        case ValueBitAnd:
+        case ArithBitAnd:
+            setConstant(node, JSValue(a & b));
+            break;
+        case ValueBitOr:
+        case ArithBitOr:
+            setConstant(node, JSValue(a | b));
+            break;
+        case ValueBitXor:
+        case ArithBitXor:
+            setConstant(node, JSValue(a ^ b));
+            break;
+        case BitRShift:
+            setConstant(node, JSValue(a >> (static_cast<uint32_t>(b) & 0x1f)));
+            break;
+        case ValueBitLShift:
+        case ArithBitLShift:
+            setConstant(node, JSValue(a << (static_cast<uint32_t>(b) & 0x1f)));
+            break;
+        case BitURShift:
+            setConstant(node, JSValue(static_cast<int32_t>(static_cast<uint32_t>(a) >> (static_cast<uint32_t>(b) & 0x1f))));
+            break;
+        default:
+            RELEASE_ASSERT_NOT_REACHED();
+            break;
+        }
+
+        return true;
+    }
+
+    return false;
+}
+
+template<typename AbstractStateType>
 bool AbstractInterpreter<AbstractStateType>::handleConstantDivOp(Node* node)
 {
     JSValue left = forNode(node->child1()).value();
@@ -463,6 +508,10 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
     case ValueBitXor:
     case ValueBitAnd:
     case ValueBitOr:
+    case ValueBitLShift: {
+        if (handleConstantBinaryBitwiseOp(node))
+            break;
+
         if (node->binaryUseKind() == BigIntUse)
             setTypeForNode(node, SpecBigInt);
         else {
@@ -470,12 +519,13 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
             setTypeForNode(node, SpecInt32Only | SpecBigInt);
         }
         break;
+    }
             
     case ArithBitAnd:
     case ArithBitOr:
     case ArithBitXor:
     case BitRShift:
-    case BitLShift:
+    case ArithBitLShift:
     case BitURShift: {
         if (node->child1().useKind() == UntypedUse || node->child2().useKind() == UntypedUse) {
             clobberWorld();
@@ -483,36 +533,8 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
             break;
         }
 
-        JSValue left = forNode(node->child1()).value();
-        JSValue right = forNode(node->child2()).value();
-        if (left && right && left.isInt32() && right.isInt32()) {
-            int32_t a = left.asInt32();
-            int32_t b = right.asInt32();
-            switch (node->op()) {
-            case ArithBitAnd:
-                setConstant(node, JSValue(a & b));
-                break;
-            case ArithBitOr:
-                setConstant(node, JSValue(a | b));
-                break;
-            case ArithBitXor:
-                setConstant(node, JSValue(a ^ b));
-                break;
-            case BitRShift:
-                setConstant(node, JSValue(a >> (static_cast<uint32_t>(b) & 0x1f)));
-                break;
-            case BitLShift:
-                setConstant(node, JSValue(a << (static_cast<uint32_t>(b) & 0x1f)));
-                break;
-            case BitURShift:
-                setConstant(node, JSValue(static_cast<int32_t>(static_cast<uint32_t>(a) >> (static_cast<uint32_t>(b) & 0x1f))));
-                break;
-            default:
-                RELEASE_ASSERT_NOT_REACHED();
-                break;
-            }
+        if (handleConstantBinaryBitwiseOp(node))
             break;
-        }
         
         if (node->op() == ArithBitAnd
             && (isBoolInt32Speculation(forNode(node->child1()).m_type) ||
@@ -2784,10 +2806,9 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         break;
         
     case GetGetter: {
-        JSValue base = forNode(node->child1()).m_value;
-        if (base) {
-            GetterSetter* getterSetter = jsCast<GetterSetter*>(base);
-            if (!getterSetter->isGetterNull()) {
+        if (JSValue base = forNode(node->child1()).m_value) {
+            GetterSetter* getterSetter = jsDynamicCast<GetterSetter*>(m_vm, base);
+            if (getterSetter && !getterSetter->isGetterNull()) {
                 setConstant(node, *m_graph.freeze(getterSetter->getterConcurrently()));
                 break;
             }
@@ -2798,10 +2819,9 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
     }
         
     case GetSetter: {
-        JSValue base = forNode(node->child1()).m_value;
-        if (base) {
-            GetterSetter* getterSetter = jsCast<GetterSetter*>(base);
-            if (!getterSetter->isSetterNull()) {
+        if (JSValue base = forNode(node->child1()).m_value) {
+            GetterSetter* getterSetter = jsDynamicCast<GetterSetter*>(m_vm, base);
+            if (getterSetter && !getterSetter->isSetterNull()) {
                 setConstant(node, *m_graph.freeze(getterSetter->setterConcurrently()));
                 break;
             }
@@ -2822,10 +2842,13 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
         break;
 
     case SkipScope: {
-        JSValue child = forNode(node->child1()).value();
-        if (child) {
-            setConstant(node, *m_graph.freeze(JSValue(jsCast<JSScope*>(child.asCell())->next())));
-            break;
+        if (JSValue child = forNode(node->child1()).value()) {
+            if (JSScope* scope = jsDynamicCast<JSScope*>(m_vm, child)) {
+                if (JSScope* nextScope = scope->next()) {
+                    setConstant(node, *m_graph.freeze(JSValue(nextScope)));
+                    break;
+                }
+            }
         }
         setTypeForNode(node, SpecObjectOther);
         break;
@@ -3584,7 +3607,7 @@ bool AbstractInterpreter<AbstractStateType>::executeEffects(unsigned clobberLimi
             if (constant.isString()) {
                 JSString* string = asString(constant);
                 const StringImpl* impl = string->tryGetValueImpl();
-                if (impl && impl->isAtomic())
+                if (impl && impl->isAtom())
                     m_state.setFoundConstants(true);
             }
         }
@@ -4071,6 +4094,14 @@ template<typename AbstractStateType>
 void AbstractInterpreter<AbstractStateType>::observeTransition(
     unsigned clobberLimit, RegisteredStructure from, RegisteredStructure to)
 {
+    // Stop performing precise structure transition tracking.
+    // Precise structure transition tracking shows quadratic complexity for # of nodes in a basic block.
+    // If it is too large, we conservatively clobber all the structures.
+    if (m_state.block()->size() > Options::maxDFGNodesInBasicBlockForPreciseAnalysis()) {
+        clobberStructures();
+        return;
+    }
+
     AbstractValue::TransitionObserver transitionObserver(from, to);
     forAllValues(clobberLimit, transitionObserver);
     
@@ -4086,6 +4117,14 @@ void AbstractInterpreter<AbstractStateType>::observeTransitions(
     if (vector.isEmpty())
         return;
     
+    // Stop performing precise structure transition tracking.
+    // Precise structure transition tracking shows quadratic complexity for # of nodes in a basic block.
+    // If it is too large, we conservatively clobber all the structures.
+    if (m_state.block()->size() > Options::maxDFGNodesInBasicBlockForPreciseAnalysis()) {
+        clobberStructures();
+        return;
+    }
+
     AbstractValue::TransitionsObserver transitionsObserver(vector);
     forAllValues(clobberLimit, transitionsObserver);
     

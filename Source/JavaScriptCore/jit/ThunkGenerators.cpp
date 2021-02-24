@@ -183,20 +183,17 @@ MacroAssemblerCodeRef<JITStubRoutinePtrTag> virtualThunkFor(VM* vm, CallLinkInfo
     // the DFG knows that the value is definitely a cell, or definitely a function.
     
 #if USE(JSVALUE64)
-    GPRReg tagMaskRegister = GPRInfo::tagMaskRegister;
     if (callLinkInfo.isTailCall()) {
         // Tail calls could have clobbered the GPRInfo::tagMaskRegister because they
         // restore callee saved registers before getthing here. So, let's materialize
         // the TagMask in a temp register and use the temp instead.
-        tagMaskRegister = GPRInfo::regT4;
-        jit.move(CCallHelpers::TrustedImm64(TagMask), tagMaskRegister);
-    }
-    slowCase.append(
-        jit.branchTest64(CCallHelpers::NonZero, GPRInfo::regT0, tagMaskRegister));
+        slowCase.append(jit.branchIfNotCell(GPRInfo::regT0, DoNotHaveTagRegisters));
+    } else
+        slowCase.append(jit.branchIfNotCell(GPRInfo::regT0));
 #else
     slowCase.append(jit.branchIfNotCell(GPRInfo::regT1));
 #endif
-    auto notJSFunction = jit.branchIfNotType(GPRInfo::regT0, JSFunctionType);
+    auto notJSFunction = jit.branchIfNotFunction(GPRInfo::regT0);
     
     // Now we know we have a JSFunction.
 
@@ -1192,10 +1189,23 @@ MacroAssemblerCodeRef<JITThunkPtrTag> boundThisNoArgsFunctionCallGenerator(VM* v
     if (extraStackNeeded)
         jit.add32(CCallHelpers::TrustedImm32(extraStackNeeded), GPRInfo::regT2);
     
-    // At this point regT1 has the actual argument count and regT2 has the amount of stack we will
-    // need.
+    // At this point regT1 has the actual argument count and regT2 has the amount of stack we will need.
+    // Check to see if we have enough stack space.
     
-    jit.subPtr(GPRInfo::regT2, CCallHelpers::stackPointerRegister);
+    jit.negPtr(GPRInfo::regT2);
+    jit.addPtr(CCallHelpers::stackPointerRegister, GPRInfo::regT2);
+    CCallHelpers::Jump haveStackSpace = jit.branchPtr(CCallHelpers::BelowOrEqual, CCallHelpers::AbsoluteAddress(vm->addressOfSoftStackLimit()), GPRInfo::regT2);
+
+    // Throw Stack Overflow exception
+    jit.copyCalleeSavesToEntryFrameCalleeSavesBuffer(vm->topEntryFrame);
+    jit.setupArguments<decltype(throwStackOverflowErrorFromThunk)>(CCallHelpers::TrustedImmPtr(vm), GPRInfo::callFrameRegister);
+    jit.move(CCallHelpers::TrustedImmPtr(tagCFunctionPtr<OperationPtrTag>(throwStackOverflowErrorFromThunk)), GPRInfo::nonArgGPR0);
+    emitPointerValidation(jit, GPRInfo::nonArgGPR0, OperationPtrTag);
+    jit.call(GPRInfo::nonArgGPR0, OperationPtrTag);
+    jit.jumpToExceptionHandler(*vm);
+
+    haveStackSpace.link(&jit);
+    jit.move(GPRInfo::regT2, CCallHelpers::stackPointerRegister);
 
     // Do basic callee frame setup, including 'this'.
     

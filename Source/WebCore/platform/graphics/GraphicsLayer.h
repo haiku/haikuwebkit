@@ -268,6 +268,7 @@ public:
     // Layer name. Only used to identify layers in debug output
     const String& name() const { return m_name; }
     virtual void setName(const String& name) { m_name = name; }
+    virtual String debugName() const;
 
     GraphicsLayer* parent() const { return m_parent; };
     void setParent(GraphicsLayer*); // Internal use only.
@@ -557,9 +558,9 @@ public:
     float pageScaleFactor() const { return client().pageScaleFactor(); }
     float deviceScaleFactor() const { return client().deviceScaleFactor(); }
     
-    // Whether this layer is viewport constrained, implying that it's moved around externally from GraphicsLayer (e.g. by the scrolling tree).
-    virtual void setIsViewportConstrained(bool) { }
-    virtual bool isViewportConstrained() const { return false; }
+    // Whether this layer can throw away backing store to save memory. False for layers that can be revealed by async scrolling.
+    virtual void setAllowsBackingStoreDetaching(bool) { }
+    virtual bool allowsBackingStoreDetaching() const { return true; }
 
     virtual void deviceOrPageScaleFactorChanged() { }
     WEBCORE_EXPORT void noteDeviceOrPageScaleFactorChangedIncludingDescendants();
@@ -594,9 +595,6 @@ public:
 
     virtual bool backingStoreAttached() const { return true; }
     virtual bool backingStoreAttachedForTesting() const { return backingStoreAttached(); }
-
-    void setCanDetachBackingStore(bool b) { m_canDetachBackingStore = b; }
-    bool canDetachBackingStore() const { return m_canDetachBackingStore; }
 
     virtual TiledBacking* tiledBacking() const { return 0; }
 
@@ -741,6 +739,7 @@ protected:
 #endif
 };
 
+WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, const WebCore::GraphicsLayerPaintingPhase);
 WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, const Vector<GraphicsLayer::PlatformLayerID>&);
 WEBCORE_EXPORT WTF::TextStream& operator<<(WTF::TextStream&, const GraphicsLayer::CustomAppearance&);
 

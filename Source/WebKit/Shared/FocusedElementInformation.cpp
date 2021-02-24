@@ -106,6 +106,9 @@ void FocusedElementInformation::encode(IPC::Encoder& encoder) const
 #endif
     encoder << shouldSynthesizeKeyEventsForEditing;
     encoder << isSpellCheckingEnabled;
+    encoder << shouldAvoidResizingWhenInputViewBoundsChange;
+    encoder << shouldAvoidScrollingWhenFocusedContentIsVisible;
+    encoder << shouldUseLegacySelectPopoverDismissalBehaviorInDataActivation;
 }
 
 bool FocusedElementInformation::decode(IPC::Decoder& decoder, FocusedElementInformation& result)
@@ -228,6 +231,15 @@ bool FocusedElementInformation::decode(IPC::Decoder& decoder, FocusedElementInfo
         return false;
 
     if (!decoder.decode(result.isSpellCheckingEnabled))
+        return false;
+
+    if (!decoder.decode(result.shouldAvoidResizingWhenInputViewBoundsChange))
+        return false;
+
+    if (!decoder.decode(result.shouldAvoidScrollingWhenFocusedContentIsVisible))
+        return false;
+
+    if (!decoder.decode(result.shouldUseLegacySelectPopoverDismissalBehaviorInDataActivation))
         return false;
 
     return true;

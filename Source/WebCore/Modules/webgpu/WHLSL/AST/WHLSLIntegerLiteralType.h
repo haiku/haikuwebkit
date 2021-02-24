@@ -41,7 +41,7 @@ class TypeReference;
 
 class IntegerLiteralType : public ResolvableType {
 public:
-    IntegerLiteralType(Lexer::Token&& origin, int value);
+    IntegerLiteralType(CodeLocation, int value);
 
     virtual ~IntegerLiteralType();
 
@@ -59,6 +59,8 @@ public:
 
     bool canResolve(const Type&) const override;
     unsigned conversionCost(const UnnamedType&) const override;
+
+    IntegerLiteralType clone() const;
 
 private:
     int m_value;

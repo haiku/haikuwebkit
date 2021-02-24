@@ -231,6 +231,7 @@
 #import <pal/spi/cocoa/NSURLFileTypeMappingsSPI.h>
 #import <pal/spi/mac/NSResponderSPI.h>
 #import <pal/spi/mac/NSSpellCheckerSPI.h>
+#import <pal/spi/mac/NSViewSPI.h>
 #import <pal/spi/mac/NSWindowSPI.h>
 #import <wtf/Assertions.h>
 #import <wtf/FileSystem.h>
@@ -245,6 +246,7 @@
 #import <wtf/SetForScope.h>
 #import <wtf/SoftLinking.h>
 #import <wtf/StdLibExtras.h>
+#import <wtf/WeakObjCPtr.h>
 #import <wtf/WorkQueue.h>
 #import <wtf/spi/darwin/dyldSPI.h>
 
@@ -1585,7 +1587,7 @@ static void WebKitInitializeGamepadProviderIfNecessary()
 #endif
 
 #if HAVE(OS_DARK_MODE_SUPPORT) && PLATFORM(MAC)
-    _private->page->effectiveAppearanceDidChange(self._effectiveAppearanceIsDark, self._effectiveAppearanceIsInactive);
+    _private->page->effectiveAppearanceDidChange(self._effectiveAppearanceIsDark, self._effectiveUserInterfaceLevelIsElevated);
 #endif
 
     _private->page->settings().setContentDispositionAttachmentSandboxEnabled(true);
@@ -2496,28 +2498,34 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     if (!_private || !_private->page)
         return;
-    [self _setUseDarkAppearance:useDarkAppearance useInactiveAppearance:_private->page->useInactiveAppearance()];
+    [self _setUseDarkAppearance:useDarkAppearance useElevatedUserInterfaceLevel:_private->page->useElevatedUserInterfaceLevel()];
 }
 
-- (BOOL)_useInactiveAppearance
+- (BOOL)_useElevatedUserInterfaceLevel
 {
     if (!_private || !_private->page)
         return NO;
-    return _private->page->useInactiveAppearance();
+    return _private->page->useElevatedUserInterfaceLevel();
 }
 
-- (void)_setUseInactiveAppearance:(BOOL)useInactiveAppearance
+- (void)_setUseElevatedUserInterfaceLevel:(BOOL)useElevatedUserInterfaceLevel
 {
     if (!_private || !_private->page)
         return;
-    [self _setUseDarkAppearance:_private->page->useDarkAppearance() useInactiveAppearance:useInactiveAppearance];
+    [self _setUseDarkAppearance:_private->page->useDarkAppearance() useElevatedUserInterfaceLevel:useElevatedUserInterfaceLevel];
 }
 
 - (void)_setUseDarkAppearance:(BOOL)useDarkAppearance useInactiveAppearance:(BOOL)useInactiveAppearance
 {
+    // FIXME: Remove once UIWebView has moved off this old method.
+    [self _setUseDarkAppearance:useDarkAppearance useElevatedUserInterfaceLevel:!useInactiveAppearance];
+}
+
+- (void)_setUseDarkAppearance:(BOOL)useDarkAppearance useElevatedUserInterfaceLevel:(BOOL)useElevatedUserInterfaceLevel
+{
     if (!_private || !_private->page)
         return;
-    _private->page->effectiveAppearanceDidChange(useDarkAppearance, useInactiveAppearance);
+    _private->page->effectiveAppearanceDidChange(useDarkAppearance, useElevatedUserInterfaceLevel);
 }
 
 + (void)_setIconLoadingEnabled:(BOOL)enabled
@@ -2981,6 +2989,7 @@ static bool needsSelfRetainWhileLoadingQuirk()
     settings.setJavaScriptCanOpenWindowsAutomatically([preferences javaScriptCanOpenWindowsAutomatically] || shouldAllowWindowOpenWithoutUserGesture());
 
     settings.setVisualViewportAPIEnabled([preferences visualViewportAPIEnabled]);
+    settings.setSyntheticEditingCommandsEnabled([preferences syntheticEditingCommandsEnabled]);
     settings.setCSSOMViewScrollingAPIEnabled([preferences CSSOMViewScrollingAPIEnabled]);
     settings.setMediaContentTypesRequiringHardwareSupport([preferences mediaContentTypesRequiringHardwareSupport]);
 
@@ -3321,7 +3330,7 @@ static inline IMP getMethod(id o, SEL s)
     cache->didFirstVisuallyNonEmptyLayoutInFrameFunc = getMethod(delegate, @selector(webView:didFirstVisuallyNonEmptyLayoutInFrame:));
     cache->didLayoutFunc = getMethod(delegate, @selector(webView:didLayout:));
     cache->didHandleOnloadEventsForFrameFunc = getMethod(delegate, @selector(webView:didHandleOnloadEventsForFrame:));
-#if ENABLE(ICONDATABASE)
+#if PLATFORM(MAC)
     cache->didReceiveIconForFrameFunc = getMethod(delegate, @selector(webView:didReceiveIcon:forFrame:));
 #endif
     cache->didReceiveServerRedirectForProvisionalLoadForFrameFunc = getMethod(delegate, @selector(webView:didReceiveServerRedirectForProvisionalLoadForFrame:));
@@ -5185,9 +5194,8 @@ static Vector<String> toStringVector(NSArray* patterns)
     return [appearance isEqualToString:NSAppearanceNameDarkAqua];
 }
 
-- (bool)_effectiveAppearanceIsInactive
+- (bool)_effectiveUserInterfaceLevelIsElevated
 {
-    // FIXME: Use the window isKeyWindow state or view first responder status?
     return false;
 }
 #endif
@@ -5214,7 +5222,7 @@ static Vector<String> toStringVector(NSArray* patterns)
     if (!_private || !_private->page)
         return;
 
-    _private->page->effectiveAppearanceDidChange(self._effectiveAppearanceIsDark, self._effectiveAppearanceIsInactive);
+    _private->page->effectiveAppearanceDidChange(self._effectiveAppearanceIsDark, self._effectiveUserInterfaceLevelIsElevated);
 }
 #endif
 
@@ -5802,19 +5810,15 @@ static bool needsWebViewInitThreadWorkaround()
 
 - (void)encodeWithCoder:(NSCoder *)encoder
 {
-    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     // Set asside the subviews before we archive. We don't want to archive any subviews.
     // The subviews will always be created in _commonInitializationFrameName:groupName:.
-    id originalSubviews = _subviews;
-    _subviews = nil;
-    ALLOW_DEPRECATED_DECLARATIONS_END
+    id originalSubviews = self._subviewsIvar;
+    self._subviewsIvar = nil;
 
     [super encodeWithCoder:encoder];
 
-    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     // Restore the subviews we set aside.
-    _subviews = originalSubviews;
-    ALLOW_DEPRECATED_DECLARATIONS_END
+    self._subviewsIvar = originalSubviews;
 
     BOOL useBackForwardList = _private->page && static_cast<BackForwardList&>(_private->page->backForward().client()).enabled();
     if ([encoder allowsKeyedCoding]) {
@@ -8063,6 +8067,18 @@ static NSAppleEventDescriptor* aeDescFromJSValue(ExecState* exec, JSC::JSValue j
     return _private->page->mediaVolume();
 }
 
+- (void)suspendAllMediaPlayback
+{
+    if (_private->page)
+        _private->page->suspendAllMediaPlayback();
+}
+
+- (void)resumeAllMediaPlayback
+{
+    if (_private->page)
+        _private->page->resumeAllMediaPlayback();
+}
+
 - (void)addVisitedLinks:(NSArray *)visitedLinks
 {
     WebVisitedLinkStore& visitedLinkStore = _private->group->visitedLinkStore();
@@ -9522,6 +9538,8 @@ bool LayerFlushController::flushLayers()
         [self _setTextIndicator:textIndicator withLifetime:TextIndicatorWindowLifetime::Permanent];
     }, [self](FloatRect rectInRootViewCoordinates) {
         return [self _convertRectFromRootView:rectInRootViewCoordinates];
+    }, [weakSelf = WeakObjCPtr<WebView>(self)]() {
+        [weakSelf.get() _clearTextIndicatorWithAnimation:TextIndicatorWindowDismissalAnimation::FadeOut];
     });
 }
 

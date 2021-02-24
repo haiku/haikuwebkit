@@ -29,7 +29,6 @@
 
 #include "IDBError.h"
 #include "IDBTransactionInfo.h"
-#include "UniqueIDBDatabaseConnection.h"
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 #include <wtf/WeakPtr.h>
@@ -102,7 +101,6 @@ private:
 
     Ref<UniqueIDBDatabaseConnection> m_databaseConnection;
     IDBTransactionInfo m_transactionInfo;
-    WeakPtr<IDBServer> m_server;
 
     std::unique_ptr<IDBDatabaseInfo> m_originalDatabaseInfo;
 

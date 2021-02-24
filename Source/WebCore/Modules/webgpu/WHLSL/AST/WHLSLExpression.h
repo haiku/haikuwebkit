@@ -30,7 +30,6 @@
 #include "WHLSLAddressSpace.h"
 #include "WHLSLLexer.h"
 #include "WHLSLUnnamedType.h"
-#include "WHLSLValue.h"
 #include <wtf/Optional.h>
 #include <wtf/UniqueRef.h>
 
@@ -40,11 +39,10 @@ namespace WHLSL {
 
 namespace AST {
 
-class Expression : public Value {
-    using Base = Value;
+class Expression {
 public:
-    Expression(Lexer::Token&& origin)
-        : Base(WTFMove(origin))
+    Expression(CodeLocation codeLocation)
+        : m_codeLocation(codeLocation)
     {
     }
 
@@ -84,6 +82,14 @@ public:
         m_typeAnnotation = WTFMove(typeAnnotation);
     }
 
+    void copyTypeTo(Expression& other) const
+    {
+        if (auto* resolvedType = const_cast<Expression*>(this)->maybeResolvedType())
+            other.setType(resolvedType->clone());
+        if (auto* typeAnnotation = maybeTypeAnnotation())
+            other.setTypeAnnotation(TypeAnnotation(*typeAnnotation));
+    }
+
     virtual bool isAssignmentExpression() const { return false; }
     virtual bool isBooleanLiteral() const { return false; }
     virtual bool isCallExpression() const { return false; }
@@ -106,7 +112,11 @@ public:
     virtual bool isVariableReference() const { return false; }
     virtual bool isEnumerationMemberLiteral() const { return false; }
 
+    CodeLocation codeLocation() const { return m_codeLocation; }
+    void updateCodeLocation(CodeLocation location) { m_codeLocation = location; }
+
 private:
+    CodeLocation m_codeLocation;
     Optional<UniqueRef<UnnamedType>> m_type;
     Optional<TypeAnnotation> m_typeAnnotation;
 };

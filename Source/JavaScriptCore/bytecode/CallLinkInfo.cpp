@@ -62,7 +62,6 @@ CallLinkInfo::CallLinkInfo()
     , m_allowStubs(true)
     , m_clearedByJettison(false)
     , m_callType(None)
-    , m_calleeGPR(255)
 {
 }
 
@@ -191,11 +190,11 @@ ExecutableBase* CallLinkInfo::executable()
     return jsCast<ExecutableBase*>(m_lastSeenCalleeOrExecutable.get());
 }
 
-void CallLinkInfo::setMaxNumArguments(unsigned value)
+void CallLinkInfo::setMaxArgumentCountIncludingThis(unsigned value)
 {
     RELEASE_ASSERT(isDirect());
     RELEASE_ASSERT(value);
-    m_maxNumArguments = value;
+    m_maxArgumentCountIncludingThis = value;
 }
 
 void CallLinkInfo::visitWeak(VM& vm)

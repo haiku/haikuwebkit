@@ -269,6 +269,7 @@ WI.contentLoaded = function()
     // Register for global events.
     document.addEventListener("beforecopy", WI._beforecopy);
     document.addEventListener("copy", WI._copy);
+    document.addEventListener("paste", WI._paste);
 
     document.addEventListener("click", WI._mouseWasClicked);
     document.addEventListener("dragover", WI._handleDragOver);
@@ -290,14 +291,8 @@ WI.contentLoaded = function()
     if (WI.Platform.isNightlyBuild)
         document.body.classList.add("nightly-build");
 
-    if (WI.Platform.name === "mac") {
+    if (WI.Platform.name === "mac")
         document.body.classList.add(WI.Platform.version.name);
-
-        if (WI.Platform.version.release >= 11)
-            document.body.classList.add("latest-mac");
-        else
-            document.body.classList.add("legacy-mac");
-    }
 
     document.body.classList.add(WI.sharedApp.debuggableType);
     document.body.setAttribute("dir", WI.resolvedLayoutDirection());
@@ -2162,7 +2157,7 @@ WI._handleDeviceSettingsToolbarButtonClicked = function(event)
             { name: WI.UIString("Default"), value: "default" },
         ],
         [
-            { name: "Safari 12.2", value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_4) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.2 Safari/605.1.15" },
+            { name: "Safari 13.0", value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0 Safari/605.1.15" },
         ],
         [
             { name: `Safari ${emDash} iOS 12.1.3 ${emDash} iPhone`, value: "Mozilla/5.0 (iPhone; CPU iPhone OS 12_1_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.0 Mobile/15E148 Safari/604.1" },
@@ -2171,13 +2166,6 @@ WI._handleDeviceSettingsToolbarButtonClicked = function(event)
         ],
         [
             { name: `Microsoft Edge`, value: "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.36 Edge/16.16299" },
-        ],
-        [
-            { name: `Internet Explorer 11`, value: "Mozilla/5.0 (Windows NT 6.3; Win64, x64; Trident/7.0; rv:11.0) like Gecko" },
-            { name: `Internet Explorer 10`, value: "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.2; Win64; x64; Trident/6.0)" },
-            { name: `Internet Explorer 9`, value: "Mozilla/5.0 (compatible; MSIE 9.0; Windows NT 6.1; Trident/5.0)" },
-            { name: `Internet Explorer 8`, value: "Mozilla/4.0 (compatible; MSIE 8.0; Windows NT 6.0; Trident/4.0)" },
-            { name: `Internet Explorer 7`, value: "Mozilla/4.0 (compatible; MSIE 7.0; Windows NT 6.0)" },
         ],
         [
             { name: `Google Chrome ${emDash} macOS`, value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/71.0.3578.98 Safari/537.36" },
@@ -2626,6 +2614,37 @@ WI._copy = function(event)
     event.preventDefault();
 };
 
+WI._paste = function(event)
+{
+    if (event.defaultPrevented)
+        return;
+
+    let selection = window.getSelection();
+
+    // If there is no selection, pass the paste event on to the focused element or focused ContentView.
+    if (!selection.isCollapsed || WI.isEventTargetAnEditableField(event))
+        return;
+
+    let focusedPasteHandler = WI.currentFocusElement && WI.currentFocusElement.pasteHandler;
+    if (focusedPasteHandler && focusedPasteHandler.handlePasteEvent) {
+        focusedPasteHandler.handlePasteEvent(event);
+        if (event.defaultPrevented)
+            return;
+    }
+
+    let focusedContentView = WI._focusedContentView();
+    if (focusedContentView && focusedContentView.handlePasteEvent) {
+        focusedContentView.handlePasteEvent(event);
+        return;
+    }
+
+    let tabContentView = WI.tabBrowser.selectedTabContentView;
+    if (tabContentView && tabContentView.handlePasteEvent) {
+        tabContentView.handlePasteEvent(event);
+        return;
+    }
+};
+
 WI._increaseZoom = function(event)
 {
     const epsilon = 0.0001;
@@ -2850,7 +2869,7 @@ WI.linkifyLocation = function(url, sourceCodePosition, options = {})
 {
     var sourceCode = WI.sourceCodeForURL(url);
     if (sourceCode)
-        return WI.linkifySourceCode(sourceCode);
+        return WI.linkifySourceCode(sourceCode, sourceCodePosition, options);
 
     var anchor = document.createElement("a");
     anchor.href = url;
@@ -3224,6 +3243,13 @@ Object.defineProperty(WI, "targets",
 WI.assumingMainTarget = function()
 {
     return WI.mainTarget;
+};
+
+WI.reset = async function()
+{
+    await WI.ObjectStore.reset();
+    WI.Setting.reset();
+    InspectorFrontendHost.reset();
 };
 
 WI.isEngineeringBuild = false;

@@ -148,7 +148,7 @@ bool SVGTextContentElement::isPresentationAttribute(const QualifiedName& name) c
     return SVGGraphicsElement::isPresentationAttribute(name);
 }
 
-void SVGTextContentElement::collectStyleForPresentationAttribute(const QualifiedName& name, const AtomicString& value, MutableStyleProperties& style)
+void SVGTextContentElement::collectStyleForPresentationAttribute(const QualifiedName& name, const AtomString& value, MutableStyleProperties& style)
 {
     if (name.matches(XMLNames::spaceAttr)) {
         if (value == "preserve")
@@ -161,7 +161,7 @@ void SVGTextContentElement::collectStyleForPresentationAttribute(const Qualified
     SVGGraphicsElement::collectStyleForPresentationAttribute(name, value, style);
 }
 
-void SVGTextContentElement::parseAttribute(const QualifiedName& name, const AtomicString& value)
+void SVGTextContentElement::parseAttribute(const QualifiedName& name, const AtomString& value)
 {
     SVGParsingError parseError = NoError;
 
@@ -170,7 +170,7 @@ void SVGTextContentElement::parseAttribute(const QualifiedName& name, const Atom
         if (propertyValue > 0)
             m_lengthAdjust->setBaseValInternal<SVGLengthAdjustType>(propertyValue);
     } else if (name == SVGNames::textLengthAttr)
-        m_textLength->setBaseValInternal(SVGLengthValue::construct(LengthModeOther, value, parseError, ForbidNegativeLengths));
+        m_textLength->setBaseValInternal(SVGLengthValue::construct(SVGLengthMode::Other, value, parseError, SVGLengthNegativeValuesMode::Forbid));
 
     reportAttributeParsingError(parseError, name, value);
 
@@ -197,9 +197,9 @@ void SVGTextContentElement::svgAttributeChanged(const QualifiedName& attrName)
 
 SVGAnimatedLength& SVGTextContentElement::textLengthAnimated()
 {
-    static NeverDestroyed<SVGLengthValue> defaultTextLength(LengthModeOther);
+    static NeverDestroyed<SVGLengthValue> defaultTextLength(SVGLengthMode::Other);
     if (m_textLength->baseVal()->value() == defaultTextLength)
-        m_textLength->baseVal()->value().newValueSpecifiedUnits(LengthTypeNumber, getComputedTextLength());
+        m_textLength->baseVal()->value() = { getComputedTextLength(), SVGLengthType::Number };
     return m_textLength;
 }
 

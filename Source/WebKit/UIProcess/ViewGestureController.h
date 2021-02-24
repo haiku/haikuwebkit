@@ -165,6 +165,7 @@ public:
     bool isSwipeGestureEnabled() { return m_swipeGestureEnabled; }
 
 #if PLATFORM(GTK)
+    void cancelSwipe();
     void draw(cairo_t*, cairo_pattern_t*);
 #endif
 
@@ -387,7 +388,7 @@ private:
 
         State m_state { State::None };
 
-        SwipeDirection m_direction;
+        SwipeDirection m_direction { SwipeDirection::Back };
         RefPtr<WebBackForwardListItem> m_targetItem;
         unsigned m_tickCallbackID { 0 };
 
@@ -409,6 +410,8 @@ private:
     SwipeProgressTracker m_swipeProgressTracker;
 
     RefPtr<cairo_pattern_t> m_currentSwipeSnapshotPattern;
+
+    bool m_isSimulatedSwipe { false };
 #endif
 
     bool m_isConnectedToProcess { false };

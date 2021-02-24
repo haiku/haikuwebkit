@@ -521,7 +521,7 @@ void HTMLMediaElement::finishInitialization()
             m_mediaSession->addBehaviorRestriction(MediaElementSession::RequireUserGestureToShowPlaybackTargetPicker);
 #endif
 
-        if (!document.settings().mediaDataLoadsAutomatically())
+        if (!document.settings().mediaDataLoadsAutomatically() && !document.quirks().needsPreloadAutoQuirk())
             m_mediaSession->addBehaviorRestriction(MediaElementSession::AutoPreloadingNotPermitted);
 
         if (document.settings().mainContentUserGestureOverrideEnabled())
@@ -804,7 +804,7 @@ bool HTMLMediaElement::isMouseFocusable() const
     return false;
 }
 
-void HTMLMediaElement::parseAttribute(const QualifiedName& name, const AtomicString& value)
+void HTMLMediaElement::parseAttribute(const QualifiedName& name, const AtomString& value)
 {
     if (name == srcAttr) {
         // https://html.spec.whatwg.org/multipage/embedded-content.html#location-of-the-media-resource
@@ -1010,7 +1010,7 @@ void HTMLMediaElement::mediaPlayerActiveSourceBuffersChanged(const MediaPlayer*)
     m_hasEverHadVideo |= hasVideo();
 }
 
-void HTMLMediaElement::scheduleEvent(const AtomicString& eventName)
+void HTMLMediaElement::scheduleEvent(const AtomString& eventName)
 {
     auto event = Event::create(eventName, Event::CanBubble::No, Event::IsCancelable::Yes);
 
@@ -1121,7 +1121,7 @@ void HTMLMediaElement::setSrcObject(MediaProvider&& mediaProvider)
     prepareForLoad();
 }
 
-void HTMLMediaElement::setCrossOrigin(const AtomicString& value)
+void HTMLMediaElement::setCrossOrigin(const AtomString& value)
 {
     setAttributeWithoutSynchronization(crossoriginAttr, value);
 }
@@ -5382,22 +5382,8 @@ void HTMLMediaElement::updateVolume()
 #else
     // Avoid recursion when the player reports volume changes.
     if (!processingMediaPlayerCallback()) {
-        Page* page = document().page();
-        double volumeMultiplier = page ? page->mediaVolume() : 1;
-        bool shouldMute = effectiveMuted();
-
-        if (m_mediaController) {
-            volumeMultiplier *= m_mediaController->volume();
-            shouldMute = m_mediaController->muted() || (page && page->isAudioMuted());
-        }
-
-#if ENABLE(MEDIA_SESSION)
-        if (m_shouldDuck)
-            volumeMultiplier *= 0.25;
-#endif
-
-        m_player->setMuted(shouldMute);
-        m_player->setVolume(m_volume * volumeMultiplier);
+        m_player->setMuted(effectiveMuted());
+        m_player->setVolume(effectiveVolume());
     }
 
 #if ENABLE(MEDIA_SESSION)
@@ -5465,10 +5451,11 @@ void HTMLMediaElement::updatePlayState()
         if (playerPaused) {
             m_mediaSession->clientWillBeginPlayback();
 
-            // Set rate, muted before calling play in case they were set before the media engine was setup.
-            // The media engine should just stash the rate and muted values since it isn't already playing.
+            // Set rate, muted and volume before calling play in case they were set before the media engine was set up.
+            // The media engine should just stash the rate, muted and volume values since it isn't already playing.
             m_player->setRate(requestedPlaybackRate());
             m_player->setMuted(effectiveMuted());
+            m_player->setVolume(effectiveVolume());
 
             if (m_firstTimePlaying) {
                 // Log that a media element was played.
@@ -5922,7 +5909,7 @@ void HTMLMediaElement::dispatchEvent(Event& event)
     HTMLElement::dispatchEvent(event);
 }
 
-bool HTMLMediaElement::addEventListener(const AtomicString& eventType, Ref<EventListener>&& listener, const AddEventListenerOptions& options)
+bool HTMLMediaElement::addEventListener(const AtomString& eventType, Ref<EventListener>&& listener, const AddEventListenerOptions& options)
 {
     if (eventType != eventNames().webkitplaybacktargetavailabilitychangedEvent)
         return Node::addEventListener(eventType, WTFMove(listener), options);
@@ -5942,7 +5929,7 @@ bool HTMLMediaElement::addEventListener(const AtomicString& eventType, Ref<Event
     return true;
 }
 
-bool HTMLMediaElement::removeEventListener(const AtomicString& eventType, EventListener& listener, const ListenerOptions& options)
+bool HTMLMediaElement::removeEventListener(const AtomString& eventType, EventListener& listener, const ListenerOptions& options)
 {
     if (eventType != eventNames().webkitplaybacktargetavailabilitychangedEvent)
         return Node::removeEventListener(eventType, listener, options);
@@ -6923,6 +6910,9 @@ HTMLMediaElement::SleepType HTMLMediaElement::shouldDisableSleep() const
         return SleepType::System;
 #endif
 
+    if (PlatformMediaSessionManager::sharedManager().processIsSuspended())
+        return SleepType::None;
+
     bool shouldBeAbleToSleep = !hasVideo() || !hasAudio();
 #if ENABLE(MEDIA_STREAM)
     // Remote media stream video tracks may have their corresponding audio tracks being played outside of the media element. Let's ensure to not IDLE the screen in that case.
@@ -7742,6 +7732,12 @@ bool HTMLMediaElement::processingUserGestureForMedia() const
 {
     return document().processingUserGestureForMedia();
 }
+
+void HTMLMediaElement::processIsSuspendedChanged()
+{
+    updateSleepDisabling();
+}
+
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
 
 void HTMLMediaElement::scheduleUpdateMediaState()
@@ -7870,12 +7866,26 @@ void HTMLMediaElement::pageMutedStateDidChange()
     }
 }
 
-bool HTMLMediaElement::effectiveMuted() const
+double HTMLMediaElement::effectiveVolume() const
 {
-    return muted() || (document().page() && document().page()->isAudioMuted());
+    auto* page = document().page();
+    double volumeMultiplier = page ? page->mediaVolume() : 1;
+    if (m_mediaController)
+        volumeMultiplier *= m_mediaController->volume();
+#if ENABLE(MEDIA_SESSION)
+    if (m_shouldDuck)
+        volumeMultiplier *= 0.25;
+#endif
+
+    return m_volume * volumeMultiplier;
 }
 
-bool HTMLMediaElement::doesHaveAttribute(const AtomicString& attribute, AtomicString* value) const
+bool HTMLMediaElement::effectiveMuted() const
+{
+    return muted() || (m_mediaController && m_mediaController->muted()) || (document().page() && document().page()->isAudioMuted());
+}
+
+bool HTMLMediaElement::doesHaveAttribute(const AtomString& attribute, AtomString* value) const
 {
     QualifiedName attributeName(nullAtom(), attribute, nullAtom());
 

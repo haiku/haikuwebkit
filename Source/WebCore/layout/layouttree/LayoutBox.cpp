@@ -134,6 +134,11 @@ bool Box::hasFloatClear() const
     return m_style.clear() != Clear::None;
 }
 
+bool Box::isFloatAvoider() const
+{
+    return establishesBlockFormattingContext() || isFloatingPositioned();
+}
+
 const Container* Box::containingBlock() const
 {
     // The containing block in which the root element lives is a rectangle called the initial containing block.
@@ -169,16 +174,13 @@ const Container* Box::containingBlock() const
 
 const Container& Box::formattingContextRoot() const
 {
-    for (auto* ancestor = containingBlock(); ancestor; ancestor = ancestor->containingBlock()) {
-        if (ancestor->establishesFormattingContext())
-            return *ancestor;
-    }
-
-    // Initial containing block always establishes a formatting context.
-    if (isInitialContainingBlock())
-        return downcast<Container>(*this);
-
-    RELEASE_ASSERT_NOT_REACHED();
+    // We should never need to ask this question on the ICB.
+    ASSERT(!isInitialContainingBlock());
+    // A box lives in the same formatting context as its containing block unless the containing block establishes a formatting context.
+    auto& containingBlock = *this->containingBlock();
+    if (containingBlock.establishesFormattingContext())
+        return containingBlock;
+    return containingBlock.formattingContextRoot();
 }
 
 const Container& Box::initialContainingBlock() const
@@ -192,10 +194,19 @@ const Container& Box::initialContainingBlock() const
     return *parent;
 }
 
-bool Box::isDescendantOf(const Container& container) const
+bool Box::isDescendantOf(const Container& ancestorCandidate) const
+{
+    for (auto* ancestor = parent(); ancestor; ancestor = ancestor->parent()) {
+        if (ancestor == &ancestorCandidate)
+            return true;
+    }
+    return false;
+}
+
+bool Box::isContainingBlockDescendantOf(const Container& ancestorCandidate) const
 { 
     for (auto* ancestor = containingBlock(); ancestor; ancestor = ancestor->containingBlock()) {
-        if (ancestor == &container)
+        if (ancestor == &ancestorCandidate)
             return true;
     }
     return false;

@@ -67,12 +67,13 @@
 #import <algorithm>
 #import <dispatch/dispatch.h>
 #import <objc/runtime.h>
+#import <pal/spi/cf/CFNetworkSPI.h>
 #import <pal/spi/cf/CFUtilitiesSPI.h>
 #import <pal/spi/cg/CoreGraphicsSPI.h>
 #import <pal/spi/cocoa/LaunchServicesSPI.h>
+#import <pal/spi/cocoa/NSAccessibilitySPI.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <pal/spi/cocoa/pthreadSPI.h>
-#import <pal/spi/mac/NSAccessibilitySPI.h>
 #import <pal/spi/mac/NSApplicationSPI.h>
 #import <stdio.h>
 #import <wtf/FileSystem.h>
@@ -87,6 +88,8 @@
 #endif
 
 #if PLATFORM(IOS_FAMILY)
+#import "AccessibilitySupportSPI.h"
+#import "AssertionServicesSPI.h"
 #import "WKAccessibilityWebPageObjectIOS.h"
 #import <UIKit/UIAccessibility.h>
 #import <pal/spi/ios/GraphicsServicesSPI.h>
@@ -173,12 +176,6 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
 #endif
 
     m_compositingRenderServerPort = WTFMove(parameters.acceleratedCompositingPort);
-
-#if HAVE(VISIBILITY_PROPAGATION_VIEW)
-    m_contextForVisibilityPropagation = LayerHostingContext::createForExternalHostingProcess();
-    RELEASE_LOG(Process, "Created context with ID %d for visibility propagation from UIProcess", m_contextForVisibilityPropagation->contextID());
-    parentProcessConnection()->send(Messages::WebProcessProxy::DidCreateContextForVisibilityPropagation(m_contextForVisibilityPropagation->contextID()), 0);
-#endif
 
     WebCore::registerMemoryReleaseNotifyCallbacks();
     MemoryPressureHandler::ReliefLogger::setLoggingEnabled(parameters.shouldEnableMemoryPressureReliefLogging);
@@ -298,6 +295,7 @@ void WebProcess::updateProcessName()
 #if PLATFORM(IOS_FAMILY)
 void WebProcess::processTaskStateDidChange(ProcessTaskStateObserver::TaskState taskState)
 {
+    // NOTE: This will be called from a background thread.
     RELEASE_LOG(ProcessSuspension, "%p - WebProcess::processTaskStateDidChange() - taskState(%d)", this, taskState);
     if (taskState == ProcessTaskStateObserver::None)
         return;
@@ -313,10 +311,45 @@ void WebProcess::processTaskStateDidChange(ProcessTaskStateObserver::TaskState t
     if (!m_processIsSuspended)
         return;
 
+    LockHolder holder(m_unexpectedlyResumedUIAssertionLock);
+    if (m_unexpectedlyResumedUIAssertion)
+        return;
+
     // We were awakened from suspension unexpectedly. Notify the WebProcessProxy, but take a process assertion on our parent PID
     // to ensure that it too is awakened.
-    auto uiProcessAssertion = std::make_unique<ProcessAssertion>(parentProcessConnection()->remoteProcessID(), "Unexpectedly resumed", AssertionState::Background, AssertionReason::FinishTask);
-    parentProcessConnection()->sendWithAsyncReply(Messages::WebProcessProxy::ProcessWasUnexpectedlyUnsuspended(), [uiProcessAssertion = WTFMove(uiProcessAssertion)] { });
+    RELEASE_LOG(ProcessSuspension, "%p - WebProcess::processTaskStateChanged() Taking 'Unexpectedly resumed' assertion", this);
+    m_unexpectedlyResumedUIAssertion = adoptNS([[BKSProcessAssertion alloc] initWithPID:parentProcessConnection()->remoteProcessID() flags:BKSProcessAssertionPreventTaskSuspend reason:BKSProcessAssertionReasonFinishTask name:@"Unexpectedly resumed" withHandler:nil]);
+
+    auto releaseAssertion = [this] {
+        LockHolder holder(m_unexpectedlyResumedUIAssertionLock);
+        if (!m_unexpectedlyResumedUIAssertion)
+            return;
+
+        RELEASE_LOG(ProcessSuspension, "%p - WebProcess::processTaskStateChanged() Releasing 'Unexpectedly resumed' assertion due to time out", this);
+        [m_unexpectedlyResumedUIAssertion invalidate];
+        m_unexpectedlyResumedUIAssertion = nullptr;
+    };
+
+    m_unexpectedlyResumedUIAssertion.get().invalidationHandler = releaseAssertion;
+    parentProcessConnection()->send(Messages::WebProcessProxy::ProcessWasUnexpectedlyUnsuspended(), 0);
+    dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(5 * NSEC_PER_SEC)), dispatch_get_global_queue(DISPATCH_QUEUE_PRIORITY_DEFAULT, 0), releaseAssertion);
+}
+#endif
+
+#if PLATFORM(IOS_FAMILY)
+static NSString *webProcessLoaderAccessibilityBundlePath()
+{
+    NSString *accessibilityBundlesPath = nil;
+#if HAVE(ACCESSIBILITY_BUNDLES_PATH)
+    accessibilityBundlesPath = (__bridge NSString *)_AXSAccessibilityBundlesPath();
+#else
+    accessibilityBundlesPath = (__bridge NSString *)GSSystemRootDirectory();
+#if PLATFORM(MACCATALYST)
+    accessibilityBundlesPath = [accessibilityBundlesPath stringByAppendingPathComponent:@"System/iOSSupport"];
+#endif
+    accessibilityBundlesPath = [accessibilityBundlesPath stringByAppendingPathComponent:@"System/Library/AccessibilityBundles"];
+#endif // HAVE(ACCESSIBILITY_BUNDLES_PATH)
+    return [accessibilityBundlesPath stringByAppendingPathComponent:@"WebProcessLoader.axbundle"];
 }
 #endif
 
@@ -325,11 +358,12 @@ static void registerWithAccessibility()
 #if USE(APPKIT)
     [NSAccessibilityRemoteUIElement setRemoteUIApp:YES];
 #endif
+
 #if PLATFORM(IOS_FAMILY)
-    NSString *accessibilityBundlePath = [(NSString *)GSSystemRootDirectory() stringByAppendingString:@"/System/Library/AccessibilityBundles/WebProcessLoader.axbundle"];
+    NSString *bundlePath = webProcessLoaderAccessibilityBundlePath();
     NSError *error = nil;
-    if (![[NSBundle bundleWithPath:accessibilityBundlePath] loadAndReturnError:&error])
-        LOG_ERROR("Failed to load accessibility bundle at %@: %@", accessibilityBundlePath, error);
+    if (![[NSBundle bundleWithPath:bundlePath] loadAndReturnError:&error])
+        LOG_ERROR("Failed to load accessibility bundle at %@: %@", bundlePath, error);
 #endif
 }
 
@@ -461,6 +495,10 @@ void WebProcess::platformInitializeProcess(const AuxiliaryProcessInitializationP
 #if USE(OS_STATE)
     registerWithStateDumper();
 #endif
+
+#if HAVE(APP_SSO)
+    [NSURLSession _disableAppSSO];
+#endif
 }
 
 #if USE(APPKIT)
@@ -500,7 +538,7 @@ void WebProcess::initializeSandbox(const AuxiliaryProcessInitializationParameter
 #if ENABLE(MANUAL_SANDBOXING)
     // Need to override the default, because service has a different bundle ID.
     NSBundle *webKit2Bundle = [NSBundle bundleForClass:NSClassFromString(@"WKWebView")];
-#if PLATFORM(IOS_FAMILY) && !PLATFORM(IOSMAC)
+#if PLATFORM(IOS_FAMILY) && !PLATFORM(MACCATALYST)
     sandboxParameters.setOverrideSandboxProfilePath([webKit2Bundle pathForResource:@"com.apple.WebKit.WebContent" ofType:@"sb"]);
 #else
     sandboxParameters.setOverrideSandboxProfilePath([webKit2Bundle pathForResource:@"com.apple.WebProcess" ofType:@"sb"]);

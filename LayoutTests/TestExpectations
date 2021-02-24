@@ -43,7 +43,6 @@ fast/history/ios [ Skip ]
 fast/scrolling/ios [ Skip ]
 fast/text/mac [ Skip ]
 scrollingcoordinator [ Skip ]
-fast/content-observation [ Skip ]
 media/mac [ Skip ]
 media/ios [ Skip ]
 fast/text-autosizing [ Skip ]
@@ -87,10 +86,11 @@ fast/forms/search/search-results-hidden-crash.html [ Skip ]
 # These tests don't have to be platform-specific, but they are only implemented on Mac now.
 fast/images/eps-as-image.html [ Skip ]
 
-# Only applicable on macOS
+# Only applicable on platforms with dark mode support
 css-dark-mode [ Skip ]
 fast/css/apple-system-control-colors.html [ Skip ]
 inspector/css/force-page-appearance.html [ Skip ]
+editing/pasteboard/paste-dark-mode-color-filtered.html [ Skip ]
 
 # Only Mac supports force tests.
 fast/events/cancelled-force-click-link-navigation.html [ Skip ]
@@ -213,6 +213,7 @@ imported/w3c/web-platform-tests/service-workers/service-worker/skip-waiting-usin
 imported/w3c/web-platform-tests/service-workers/service-worker/skip-waiting-without-using-registration.https.html [ Skip ]
 imported/w3c/web-platform-tests/service-workers/service-worker/update-not-allowed.https.html [ Skip ]
 imported/w3c/web-platform-tests/service-workers/service-worker/worker-in-sandboxed-iframe-by-csp-fetch-event.https.html [ Skip ]
+[ Debug ] imported/w3c/web-platform-tests/service-workers/service-worker/ready.https.html [ Skip ]
 
 # Newly imported service worker tests that are flaky.
 imported/w3c/web-platform-tests/service-workers/service-worker/navigation-redirect-to-http.https.html [ Pass Failure ]
@@ -281,7 +282,6 @@ imported/w3c/web-platform-tests/service-workers/service-worker/fetch-request-res
 [ Debug ] imported/w3c/web-platform-tests/service-workers/service-worker/clients-matchall-order.https.html [ Slow ]
 [ Debug ] imported/w3c/web-platform-tests/service-workers/service-worker/getregistrations.https.html [ Slow ]
 [ Debug ] imported/w3c/web-platform-tests/service-workers/service-worker/interfaces-sw.https.html [ Slow ]
-[ Debug ] imported/w3c/web-platform-tests/service-workers/service-worker/ready.https.html [ Slow ]
 [ Debug ] imported/w3c/web-platform-tests/service-workers/service-worker/multiple-update.https.html [ Slow ]
 [ Debug ] imported/w3c/web-platform-tests/service-workers/service-worker/windowclient-navigate.https.html [ Slow ]
 [ Debug ] imported/w3c/web-platform-tests/service-workers/service-worker/activation.https.html [ Slow ]
@@ -563,9 +563,9 @@ webkit.org/b/179608 imported/w3c/web-platform-tests/xhr/access-control-preflight
 webkit.org/b/179608 imported/w3c/web-platform-tests/xhr/access-control-preflight-sync-not-supported.htm [ Failure ]
 webkit.org/b/179608 imported/w3c/web-platform-tests/xhr/send-conditional-cors.htm [ Failure ]
 webkit.org/b/179611 imported/w3c/web-platform-tests/xhr/send-entity-body-document.htm [ Pass Failure ]
-imported/w3c/web-platform-tests/IndexedDB/nested-cloning-large-multiple.html [ Skip ]
-imported/w3c/web-platform-tests/IndexedDB/nested-cloning-large.html [ Skip ]
-imported/w3c/web-platform-tests/IndexedDB/nested-cloning-small.html [ Skip ]
+webkit.org/b/184066 imported/w3c/web-platform-tests/IndexedDB/nested-cloning-large-multiple.html [ Skip ]
+webkit.org/b/184066 imported/w3c/web-platform-tests/IndexedDB/nested-cloning-large.html [ Skip ]
+webkit.org/b/184066 imported/w3c/web-platform-tests/IndexedDB/nested-cloning-small.html [ Skip ]
 imported/w3c/web-platform-tests/css/cssom/interfaces.html [ Pass Timeout ]
 [ Debug ] imported/w3c/web-platform-tests/css/cssom-view/interfaces.html [ Skip ]
 webkit.org/b/182292 imported/w3c/web-platform-tests/css/cssom-view/scrollingElement-quirks-dynamic-001.html [ ImageOnlyFailure ]
@@ -1670,6 +1670,10 @@ webkit.org/b/148884 imported/w3c/web-platform-tests/html/semantics/forms/textfie
 webkit.org/b/190626 imported/w3c/web-platform-tests/html/semantics/forms/the-datalist-element/datalistoptions.html [ Failure ]
 webkit.org/b/190613 imported/blink/fast/forms/datalist/slider-appearance-with-ticks-crash.html [ Skip ]
 
+# Tests require WTR and disabling of user installed fonts. Reenabling them in supported platforms
+fast/text/user-installed-fonts/extended-character.html [ Skip ]
+fast/text/user-installed-fonts/extended-character-with-user-font.html [ Skip ]
+
 # Does timeout
 imported/w3c/web-platform-tests/webaudio/idlharness.https.html [ Skip ]
 # Do assert in OfflineAudioContext
@@ -1770,7 +1774,7 @@ storage/indexeddb/properties-disabled-at-runtime.html [ Failure ]
 [ Debug ] imported/w3c/web-platform-tests/IndexedDB/idbindex-multientry-big.htm [ Failure ]
 
 # Test is crashing
-imported/w3c/web-platform-tests/IndexedDB/keypath-exceptions.htm [ Skip ]
+webkit.org/b/184065 imported/w3c/web-platform-tests/IndexedDB/keypath-exceptions.htm [ Skip ]
 
 # SQLite backend tests that timeout
 storage/indexeddb/modern/transaction-scheduler-1.html [ Skip ]
@@ -2338,7 +2342,6 @@ webkit.org/b/3652 fast/dom/HTMLLinkElement/prefetch-onerror.html [ Skip ]
 webkit.org/b/3652 fast/dom/HTMLLinkElement/prefetch-onload.html [ Skip ]
 webkit.org/b/3652 fast/dom/HTMLLinkElement/prefetch-too-many-clients.html [ Skip ]
 webkit.org/b/3652 fast/dom/HTMLLinkElement/subresource.html [ Skip ]
-webkit.org/b/3652 http/tests/misc/link-rel-prefetch-and-subresource.html [ Skip ]
 webkit.org/b/3652 http/tests/misc/prefetch-purpose.html [ Skip ]
 
 # First-party-only cookie policy only supported on Cocoa platforms.
@@ -2452,6 +2455,7 @@ webkit.org/b/179851 imported/w3c/web-platform-tests/html/browsers/offline/manife
 webkit.org/b/182177 imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/module/errorhandling.html [ Pass Failure ]
 
 webkit.org/b/182311 imported/w3c/web-platform-tests/service-workers/service-worker/navigation-redirect.https.html [ Skip ]
+imported/w3c/web-platform-tests/service-workers/service-worker/svg-target-reftest.https.html [ ImageOnlyFailure ]
 
 webkit.org/b/90980 fast/forms/textarea/textarea-state-restore.html [ Pass Timeout ]
 
@@ -3290,5 +3294,166 @@ webkit.org/b/157743 imported/w3c/web-platform-tests/resize-observer/eventloop.ht
 
 webkit.org/b/198103 imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/offsets-into-the-media-resource/currentTime.html [ Pass Failure ]
 
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/readyState/005.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/url/006.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/bufferedAmount/bufferedAmount-defineProperty-setter.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/constructor/008.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/events/020.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/opening-handshake/003.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/close-invalid.any.worker.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/bufferedAmount-unchanged-by-sync-xhr.any.worker.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-verify-url-set-non-default-port.any.worker.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/bufferedAmount/bufferedAmount-defineProperty-getter.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/readyState/004.html [ DumpJSConsoleLogInStdErr ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/url/005.html [ DumpJSConsoleLogInStdErr ]
+
+# Flaky WebSocket tests.
+imported/w3c/web-platform-tests/websockets/cookies/005.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/constructor/014.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Send-unicode-data.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Send-65K-data.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Send-Unpaired-Surrogates.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/close/close-connecting.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/close/close-basic.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/Close-reason-unpaired-surrogates.any.worker.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/Close-undefined.any.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/bufferedAmount/bufferedAmount-getting.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/readyState/006.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/events/015.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/constructor/011.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/readyState/007.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/constructor/010.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/Close-1000-reason.any.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/binary/001.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/closing-handshake/002.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/constructor/006.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/cookies/001.html [ Pass Failure ]
+imported/w3c/web-platform-tests/websockets/interfaces/CloseEvent/clean-close.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/close-invalid.any.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/url/001.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/close/close-replace.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/constructor/017.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/send/003.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/send/004.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/url/002.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/url/003.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/url/004.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/readyState/001.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/send/001.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/events/001.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/events/002.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/events/006.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/events/003.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/bufferedAmount/bufferedAmount-readonly.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/bufferedAmount/bufferedAmount-initial.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/constants/003.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/events/007.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/events/008.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/events/009.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/events/004.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/constants/002.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/constants/001.html [ Pass Failure ]
+webkit.org/b/199013 imported/w3c/web-platform-tests/websockets/interfaces/WebSocket/constants/004.html [ Pass Failure ]
+
+# Timing out WebSocket tests.
+imported/w3c/web-platform-tests/websockets/Create-blocked-port.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-blocked-port.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/binaryType-wrong-value.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/binaryType-wrong-value.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/bufferedAmount-unchanged-by-sync-xhr.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-Reason-124Bytes.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-3000-verify-code.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-valid-url-protocol-string.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-65K-data.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-1005.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-Reason-Unpaired-surrogates.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-on-worker-shutdown.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-server-initiated-close.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybuffer.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-1000-verify-code.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-2999-reason.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-extensions-empty.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-3000-reason.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybuffer.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-undefined.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-onlyReason.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-float32.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-3000-reason.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-4999-reason.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-valid-url.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-int32.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-uint8-offset.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-float64.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-valid-url-array-protocols.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-undefined.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-uint16-offset-length.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-readyState-Closing.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-1005-verify-code.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-4999-reason.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-1000-reason.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-readyState-Closed.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-uint16-offset-length.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-1005-verify-code.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-1000.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-Reason-124Bytes.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-uint8-offset-length.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-3000-verify-code.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-valid-url-binaryType-blob.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-valid-url-binaryType-blob.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-valid-url-protocol-string.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-2999-reason.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-1000.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-extensions-empty.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-1005.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-65K-data.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-server-initiated-close.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-valid-url-protocol-setCorrectly.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-readyState-Closing.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-onlyReason.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-valid-url-protocol-setCorrectly.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-1000-verify-code.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-65K-arraybuffer.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-1000-reason.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-valid-url-array-protocols.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-Reason-Unpaired-surrogates.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-65K-arraybuffer.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Close-readyState-Closed.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Create-Secure-valid-url.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-uint8-offset-length.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-float32.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-float64.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-int32.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-uint32-offset.any.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-uint32-offset.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-arraybufferview-uint8-offset.any.worker.html [ Skip ]
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-blob.any.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-binary-blob.any.worker.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-data.any.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-data.any.worker.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-null.any.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-null.any.worker.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-paired-surrogates.any.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-paired-surrogates.any.worker.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-unicode-data.any.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-unicode-data.any.worker.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-unpaired-surrogates.any.html
+imported/w3c/web-platform-tests/websockets/Secure-Send-unpaired-surrogates.any.worker.html
+
 # iOS only
 fast/dom/linkify-phone-numbers.html [ ImageOnlyFailure ]
+
+webkit.org/b/199039 editing/deleting/smart-delete-paragraph-003.html [ Skip ]
+
+webkit.org/b/199028 webgpu/whlsl-test-harness-test.html [ Slow ]
+
+imported/w3c/web-platform-tests/css/cssom-view/offsetTopLeft-inline.html [ ImageOnlyFailure ]
+
+# These tests only work on systems with the design system ui fonts installed.
+fast/text/design-system-ui-11.html [ ImageOnlyFailure ]
+fast/text/design-system-ui-12.html [ ImageOnlyFailure ]
+fast/text/design-system-ui-13.html [ ImageOnlyFailure ]
+fast/text/design-system-ui-14.html [ ImageOnlyFailure ]
+fast/text/design-system-ui-15.html [ ImageOnlyFailure ]
+fast/text/design-system-ui-16.html [ ImageOnlyFailure ]
+
+webkit.org/b/202648 [ Debug ] crypto/workers/subtle/aes-indexeddb.html [ Skip ]

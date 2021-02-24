@@ -486,10 +486,10 @@ WI.CPUTimelineView = class CPUTimelineView extends WI.TimelineView
             let time = record.startTime;
             let {usage, mainThreadUsage, workerThreadUsage, webkitThreadUsage, unknownThreadUsage} = record;
 
-            if (discontinuities.length && discontinuities[0].endTime < time) {
+            if (discontinuities.length && discontinuities[0].endTime <= time) {
                 let startDiscontinuity = discontinuities.shift();
                 let endDiscontinuity = startDiscontinuity;
-                while (discontinuities.length && discontinuities[0].endTime < time)
+                while (discontinuities.length && discontinuities[0].endTime <= time)
                     endDiscontinuity = discontinuities.shift();
 
                 if (dataPoints.length) {
@@ -1136,10 +1136,10 @@ WI.CPUTimelineView = class CPUTimelineView extends WI.TimelineView
         this._energyImpactNumberElement.textContent = WI.UIString("Average CPU: %s").format(Number.percentageString(average / 100));
 
         if (visibleDuration < 5)
-            this._energyImpactDurationElement.textContent = WI.UIString("Duration: %s").format(WI.UIString("Short"));
+            this._energyImpactDurationElement.textContent = WI.UIString("Duration: Short");
         else {
-            let durationDisplayString = Math.floor(visibleDuration) + "s";
-            this._energyImpactDurationElement.textContent = WI.UIString("Duration: %s").format(durationDisplayString);
+            let durationDisplayString = Math.floor(visibleDuration);
+            this._energyImpactDurationElement.textContent = WI.UIString("Duration: %ss", "The duration of the Timeline recording in seconds (s).").format(durationDisplayString);
         }
     }
 

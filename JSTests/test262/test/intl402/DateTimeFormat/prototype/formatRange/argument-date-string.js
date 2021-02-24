@@ -1,11 +1,12 @@
-// Copyright (C) 2017-2019 André Bargull, Igalia S.L. All rights reserved.
+// Copyright (C) 2017 André Bargull. All rights reserved.
+// Copyright (C) 2019 Igalia S.L. All rights reserved.
 // This code is governed by the BSD license found in the LICENSE file.
 
 /*---
 esid: sec-partitiondatetimerangepattern
-description: |
+description: >
   The Date constructor is not called to convert the input value.
-info: >
+info: |
   Intl.DateTimeFormat.prototype.formatRange ( startDate , endDate )
 
   5. Let x be ? ToNumber(startDate).

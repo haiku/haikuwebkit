@@ -180,7 +180,15 @@ WebResourceLoadStatisticsStore::WebResourceLoadStatisticsStore(NetworkSession& n
 WebResourceLoadStatisticsStore::~WebResourceLoadStatisticsStore()
 {
     ASSERT(RunLoop::isMain());
+    ASSERT(!m_statisticsStore);
+    ASSERT(!m_persistentStorage);
+}
 
+void WebResourceLoadStatisticsStore::didDestroyNetworkSession()
+{
+    ASSERT(RunLoop::isMain());
+
+    m_networkSession = nullptr;
     flushAndDestroyPersistentStore();
 }
 
@@ -201,9 +209,6 @@ inline void WebResourceLoadStatisticsStore::postTaskReply(WTF::Function<void()>&
 void WebResourceLoadStatisticsStore::flushAndDestroyPersistentStore()
 {
     ASSERT(RunLoop::isMain());
-
-    if (!m_persistentStorage && !m_statisticsStore)
-        return;
 
     // Make sure we destroy the persistent store on the background queue and wait for it to die
     // synchronously since it has a C++ reference to us. Blocking nature of this task allows us
@@ -300,7 +305,11 @@ void WebResourceLoadStatisticsStore::hasStorageAccess(const RegistrableDomain& s
 
 bool WebResourceLoadStatisticsStore::hasStorageAccessForFrame(const RegistrableDomain& resourceDomain, const RegistrableDomain& firstPartyDomain, uint64_t frameID, PageIdentifier pageID)
 {
-    return m_networkSession ? m_networkSession->networkStorageSession().hasStorageAccess(resourceDomain, firstPartyDomain, frameID, pageID) : false;
+    if (m_networkSession) {
+        if (auto* storageSession = m_networkSession->networkStorageSession())
+            return storageSession->hasStorageAccess(resourceDomain, firstPartyDomain, frameID, pageID);
+    }
+    return false;
 }
 
 void WebResourceLoadStatisticsStore::callHasStorageAccessForFrameHandler(const RegistrableDomain& resourceDomain, const RegistrableDomain& firstPartyDomain, uint64_t frameID, PageIdentifier pageID, CompletionHandler<void(bool hasAccess)>&& callback)
@@ -308,8 +317,10 @@ void WebResourceLoadStatisticsStore::callHasStorageAccessForFrameHandler(const R
     ASSERT(RunLoop::isMain());
 
     if (m_networkSession) {
-        callback(m_networkSession->networkStorageSession().hasStorageAccess(resourceDomain, firstPartyDomain, frameID, pageID));
-        return;
+        if (auto* storageSession = m_networkSession->networkStorageSession()) {
+            callback(storageSession->hasStorageAccess(resourceDomain, firstPartyDomain, frameID, pageID));
+            return;
+        }
     }
 
     callback(false);
@@ -329,6 +340,9 @@ void WebResourceLoadStatisticsStore::requestStorageAccess(const RegistrableDomai
             return;
         case StorageAccessStatus::RequiresUserPrompt:
             {
+            if (!m_networkSession)
+                return completionHandler(StorageAccessWasGranted::No, StorageAccessPromptWasShown::No);
+
             CompletionHandler<void(bool)> requestConfirmationCompletionHandler = [this, protectedThis = protectedThis.copyRef(), subFrameDomain, topFrameDomain, frameID, pageID, completionHandler = WTFMove(completionHandler)] (bool userDidGrantAccess) mutable {
                 if (userDidGrantAccess)
                     grantStorageAccess(subFrameDomain, topFrameDomain, frameID, pageID, StorageAccessPromptWasShown::Yes, WTFMove(completionHandler));
@@ -352,13 +366,11 @@ void WebResourceLoadStatisticsStore::requestStorageAccess(const RegistrableDomai
             return;
         }
 
-        if (m_statisticsStore) {
-            m_statisticsStore->requestStorageAccess(WTFMove(subFrameDomain), WTFMove(topFrameDomain), frameID, pageID, [statusHandler = WTFMove(statusHandler)](StorageAccessStatus status) mutable {
-                postTaskReply([statusHandler = WTFMove(statusHandler), status]() mutable {
-                    statusHandler(status);
-                });
+        m_statisticsStore->requestStorageAccess(WTFMove(subFrameDomain), WTFMove(topFrameDomain), frameID, pageID, [statusHandler = WTFMove(statusHandler)](StorageAccessStatus status) mutable {
+            postTaskReply([statusHandler = WTFMove(statusHandler), status]() mutable {
+                statusHandler(status);
             });
-        }
+        });
     });
 }
 
@@ -401,9 +413,11 @@ StorageAccessWasGranted WebResourceLoadStatisticsStore::grantStorageAccess(const
     bool isStorageGranted = false;
 
     if (m_networkSession) {
-        m_networkSession->networkStorageSession().grantStorageAccess(resourceDomain, firstPartyDomain, frameID, pageID);
-        ASSERT(m_networkSession->networkStorageSession().hasStorageAccess(resourceDomain, firstPartyDomain, frameID, pageID));
-        isStorageGranted = true;
+        if (auto* storageSession = m_networkSession->networkStorageSession()) {
+            storageSession->grantStorageAccess(resourceDomain, firstPartyDomain, frameID, pageID);
+            ASSERT(storageSession->hasStorageAccess(resourceDomain, firstPartyDomain, frameID, pageID));
+            isStorageGranted = true;
+        }
     }
 
     return isStorageGranted ? StorageAccessWasGranted::Yes : StorageAccessWasGranted::No;
@@ -414,6 +428,20 @@ void WebResourceLoadStatisticsStore::callGrantStorageAccessHandler(const Registr
     ASSERT(RunLoop::isMain());
 
     completionHandler(grantStorageAccess(subFrameDomain, topFrameDomain, frameID, pageID));
+}
+
+void WebResourceLoadStatisticsStore::hasCookies(const RegistrableDomain& domain, CompletionHandler<void(bool)>&& completionHandler)
+{
+    ASSERT(RunLoop::isMain());
+
+    if (m_networkSession) {
+        if (auto* storageSession = m_networkSession->networkStorageSession()) {
+            storageSession->hasCookies(domain, WTFMove(completionHandler));
+            return;
+        }
+    }
+    
+    completionHandler(false);
 }
 
 void WebResourceLoadStatisticsStore::didCreateNetworkProcess()
@@ -431,8 +459,10 @@ void WebResourceLoadStatisticsStore::removeAllStorageAccess(CompletionHandler<vo
 {
     ASSERT(RunLoop::isMain());
 
-    if (m_networkSession)
-        m_networkSession->networkStorageSession().removeAllStorageAccess();
+    if (m_networkSession) {
+        if (auto* storageSession = m_networkSession->networkStorageSession())
+            storageSession->removeAllStorageAccess();
+    }
 
     completionHandler();
 }
@@ -569,7 +599,7 @@ void WebResourceLoadStatisticsStore::clearUserInteraction(const RegistrableDomai
 
 void WebResourceLoadStatisticsStore::hasHadUserInteraction(const RegistrableDomain& domain, CompletionHandler<void(bool)>&& completionHandler)
 {
-    postTask([this, domain, completionHandler = WTFMove(completionHandler)]() mutable {
+    postTask([this, domain = domain.isolatedCopy(), completionHandler = WTFMove(completionHandler)]() mutable {
         bool hadUserInteraction = m_statisticsStore ? m_statisticsStore->hasHadUserInteraction(domain, OperatingDatesWindow::Long) : false;
         postTaskReply([hadUserInteraction, completionHandler = WTFMove(completionHandler)]() mutable {
             completionHandler(hadUserInteraction);
@@ -615,24 +645,16 @@ void WebResourceLoadStatisticsStore::dumpResourceLoadStatistics(CompletionHandle
     ASSERT(RunLoop::isMain());
 
     postTask([this, completionHandler = WTFMove(completionHandler)]() mutable {
-        ASSERT(!m_dumpResourceLoadStatisticsCompletionHandler);
-        m_dumpResourceLoadStatisticsCompletionHandler = WTFMove(completionHandler);
-        if (m_statisticsStore && m_statisticsStore->dataRecordsBeingRemoved())
+        auto innerCompletionHandler = [completionHandler = WTFMove(completionHandler)](const String& result) mutable {
+            postTaskReply([result = result.isolatedCopy(), completionHandler = WTFMove(completionHandler)]() mutable {
+                completionHandler(result);
+            });
+        };
+        if (!m_statisticsStore) {
+            innerCompletionHandler(emptyString());
             return;
-        tryDumpResourceLoadStatistics();
-    });
-}
-
-void WebResourceLoadStatisticsStore::tryDumpResourceLoadStatistics()
-{
-    ASSERT(!RunLoop::isMain());
-
-    if (!m_dumpResourceLoadStatisticsCompletionHandler)
-        return;
-
-    String result = m_statisticsStore ? m_statisticsStore->dumpResourceLoadStatistics() : emptyString();
-    postTaskReply([result = result.isolatedCopy(), completionHandler = WTFMove(m_dumpResourceLoadStatisticsCompletionHandler)]() mutable {
-        completionHandler(result);
+        }
+        m_statisticsStore->dumpResourceLoadStatistics(WTFMove(innerCompletionHandler));
     });
 }
 
@@ -820,44 +842,6 @@ void WebResourceLoadStatisticsStore::scheduleCookieBlockingUpdate(CompletionHand
     });
 }
 
-void WebResourceLoadStatisticsStore::scheduleCookieBlockingUpdateForDomains(const Vector<RegistrableDomain>& domainsToBlock, CompletionHandler<void()>&& completionHandler)
-{
-    // Helper function used by testing system. Should only be called from the main thread.
-    ASSERT(RunLoop::isMain());
-    postTask([this, domainsToBlock = crossThreadCopy(domainsToBlock), completionHandler = WTFMove(completionHandler)]() mutable {
-        if (!m_statisticsStore) {
-            postTaskReply(WTFMove(completionHandler));
-            return;
-        }
-
-        auto callbackAggregator = CallbackAggregator::create([completionHandler = WTFMove(completionHandler)] () mutable {
-            postTaskReply(WTFMove(completionHandler));
-        });
-
-        if (m_statisticsStore)
-            m_statisticsStore->updateCookieBlockingForDomains(domainsToBlock, [callbackAggregator = callbackAggregator.copyRef()]() { });
-    });
-}
-
-void WebResourceLoadStatisticsStore::scheduleClearBlockingStateForDomains(const Vector<RegistrableDomain>& domains, CompletionHandler<void()>&& completionHandler)
-{
-    // Helper function used by testing system. Should only be called from the main thread.
-    ASSERT(RunLoop::isMain());
-    postTask([this, domains = crossThreadCopy(domains), completionHandler = WTFMove(completionHandler)]() mutable {
-        if (!m_statisticsStore) {
-            postTaskReply(WTFMove(completionHandler));
-            return;
-        }
-
-        auto callbackAggregator = CallbackAggregator::create([completionHandler = WTFMove(completionHandler)] () mutable {
-            postTaskReply(WTFMove(completionHandler));
-        });
-
-        if (m_statisticsStore)
-            m_statisticsStore->clearBlockingStateForDomains(domains, [callbackAggregator = callbackAggregator.copyRef()]() { });
-    });
-}
-
 void WebResourceLoadStatisticsStore::scheduleClearInMemoryAndPersistent(ShouldGrandfatherStatistics shouldGrandfather, CompletionHandler<void()>&& completionHandler)
 {
     ASSERT(RunLoop::isMain());
@@ -936,26 +920,34 @@ void WebResourceLoadStatisticsStore::setCacheMaxAgeCap(Seconds seconds, Completi
     ASSERT(RunLoop::isMain());
     ASSERT(seconds >= 0_s);
     
-    if (m_networkSession)
-        m_networkSession->networkStorageSession().setCacheMaxAgeCapForPrevalentResources(seconds);
+    if (m_networkSession) {
+        if (auto* storageSession = m_networkSession->networkStorageSession())
+            storageSession->setCacheMaxAgeCapForPrevalentResources(seconds);
+    }
 
     completionHandler();
 }
 
-void WebResourceLoadStatisticsStore::callUpdatePrevalentDomainsToBlockCookiesForHandler(const Vector<RegistrableDomain>& domainsToBlock, CompletionHandler<void()>&& completionHandler)
+void WebResourceLoadStatisticsStore::callUpdatePrevalentDomainsToBlockCookiesForHandler(const RegistrableDomainsToBlockCookiesFor& domainsToBlock, CompletionHandler<void()>&& completionHandler)
 {
     ASSERT(RunLoop::isMain());
 
-    if (m_networkSession)
-        m_networkSession->networkStorageSession().setPrevalentDomainsToBlockCookiesFor(domainsToBlock);
+    if (m_networkSession) {
+        if (auto* storageSession = m_networkSession->networkStorageSession()) {
+            storageSession->setPrevalentDomainsToBlockCookiesFor(domainsToBlock.domainsToBlockCookiesFor);
+            storageSession->setDomainsWithUserInteractionAsFirstParty(domainsToBlock.domainsWithUserInteractionAsFirstParty);
+        }
+    }
 
     completionHandler();
 }
 
 void WebResourceLoadStatisticsStore::removePrevalentDomains(const Vector<RegistrableDomain>& domains)
 {
-    if (m_networkSession)
-        m_networkSession->networkStorageSession().removePrevalentDomains(domains);
+    if (m_networkSession) {
+        if (auto* storageSession = m_networkSession->networkStorageSession())
+            storageSession->removePrevalentDomains(domains);
+    }
 }
 
 void WebResourceLoadStatisticsStore::callRemoveDomainsHandler(const Vector<RegistrableDomain>& domains)
@@ -1019,6 +1011,11 @@ void WebResourceLoadStatisticsStore::notifyResourceLoadStatisticsProcessed()
 NetworkSession* WebResourceLoadStatisticsStore::networkSession()
 {
     return m_networkSession.get();
+}
+
+void WebResourceLoadStatisticsStore::invalidateAndCancel()
+{
+    m_networkSession = nullptr;
 }
 
 void WebResourceLoadStatisticsStore::deleteWebsiteDataForRegistrableDomains(OptionSet<WebsiteDataType> dataTypes, HashMap<RegistrableDomain, WebsiteDataToRemove>&& domainsToRemoveWebsiteDataFor, bool shouldNotifyPage, CompletionHandler<void(const HashSet<RegistrableDomain>&)>&& completionHandler)

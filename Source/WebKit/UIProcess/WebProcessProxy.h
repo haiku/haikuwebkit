@@ -35,6 +35,8 @@
 #include "ProcessThrottler.h"
 #include "ProcessThrottlerClient.h"
 #include "ResponsivenessTimer.h"
+#include "ServiceWorkerInitializationData.h"
+#include "UserContentControllerIdentifier.h"
 #include "VisibleWebPageCounter.h"
 #include "WebConnectionToWebProcess.h"
 #include "WebProcessProxyMessages.h"
@@ -73,6 +75,7 @@ class ProvisionalPageProxy;
 class UserMediaCaptureManagerProxy;
 class VisitedLinkStore;
 class WebBackForwardListItem;
+class WebCompiledContentRuleListData;
 class WebFrameProxy;
 class WebPageGroup;
 class WebPageProxy;
@@ -119,6 +122,7 @@ public:
     void incrementSuspendedPageCount();
     void decrementSuspendedPageCount();
 
+    WebProcessPool* processPoolIfExists() const;
     WebProcessPool& processPool() const;
 
     WebCore::RegistrableDomain registrableDomain() const { return m_registrableDomain.valueOr(WebCore::RegistrableDomain { }); }
@@ -138,8 +142,8 @@ public:
     enum class EndsUsingDataStore : bool { No, Yes };
     void removeWebPage(WebPageProxy&, EndsUsingDataStore);
 
-    void addProvisionalPageProxy(ProvisionalPageProxy& provisionalPage) { ASSERT(!m_provisionalPages.contains(&provisionalPage)); m_provisionalPages.add(&provisionalPage); }
-    void removeProvisionalPageProxy(ProvisionalPageProxy& provisionalPage) { ASSERT(m_provisionalPages.contains(&provisionalPage)); m_provisionalPages.remove(&provisionalPage); }
+    void addProvisionalPageProxy(ProvisionalPageProxy&);
+    void removeProvisionalPageProxy(ProvisionalPageProxy&);
     
     typename WebPageProxyMap::ValuesConstIteratorRange pages() const { return m_pageMap.values(); }
     unsigned pageCount() const { return m_pageMap.size(); }
@@ -251,7 +255,7 @@ public:
     void markIsNoLongerInPrewarmedPool();
 
 #if PLATFORM(COCOA)
-    Vector<String> mediaMIMETypes();
+    Vector<String> mediaMIMETypes() const;
     void cacheMediaMIMETypes(const Vector<String>&);
 #endif
 
@@ -301,15 +305,14 @@ public:
     void unblockAccessibilityServerIfNeeded();
 #endif
 
-#if HAVE(VISIBILITY_PROPAGATION_VIEW)
-    LayerHostingContextID contextIDForVisibilityPropagation() { return m_contextIDForVisibilityPropagation; }
-#endif
-
 #if PLATFORM(IOS_FAMILY)
-    void processWasUnexpectedlyUnsuspended(CompletionHandler<void()>&&);
+    void processWasUnexpectedlyUnsuspended();
 #endif
 
     void webPageMediaStateDidChange(WebPageProxy&);
+
+    void ref() final { ThreadSafeRefCounted::ref(); }
+    void deref() final { ThreadSafeRefCounted::deref(); }
 
 protected:
     static WebCore::PageIdentifier generatePageID();
@@ -350,10 +353,6 @@ private:
     void checkRemotePortForActivity(const WebCore::MessagePortIdentifier, uint64_t callbackIdentifier);
     void didDeliverMessagePortMessages(uint64_t messageBatchIdentifier);
     void didCheckProcessLocalPortForActivity(uint64_t callbackIdentifier, bool isLocallyReachable);
-
-#if HAVE(VISIBILITY_PROPAGATION_VIEW)
-    void didCreateContextForVisibilityPropagation(LayerHostingContextID);
-#endif
 
     bool hasProvisionalPageWithID(WebCore::PageIdentifier) const;
     bool isAllowedToUpdateBackForwardItem(WebBackForwardListItem&) const;
@@ -401,6 +400,8 @@ private:
     void didCollectPrewarmInformation(const WebCore::RegistrableDomain&, const WebCore::PrewarmInformation&);
 
     void logDiagnosticMessageForResourceLimitTermination(const String& limitKey);
+    
+    void updateRegistrationWithDataStore();
 
     enum class IsWeak { No, Yes };
     template<typename T> class WeakOrStrongPtr {
@@ -459,10 +460,6 @@ private:
     BackgroundWebProcessToken m_backgroundToken;
     bool m_hasSentMessageToUnblockAccessibilityServer { false };
     std::unique_ptr<WebCore::DeferrableOneShotTimer> m_unexpectedActivityTimer;
-#endif
-
-#if HAVE(VISIBILITY_PROPAGATION_VIEW)
-    LayerHostingContextID m_contextIDForVisibilityPropagation { 0 };
 #endif
 
     HashMap<String, uint64_t> m_pageURLRetainCountMap;

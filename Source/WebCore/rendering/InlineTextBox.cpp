@@ -180,9 +180,7 @@ RenderObject::SelectionState InlineTextBox::selectionState()
     if (m_truncation != cNoTruncation && root().ellipsisBox()) {
         EllipsisBox* ellipsis = root().ellipsisBox();
         if (state != RenderObject::SelectionNone) {
-            unsigned selectionStart;
-            unsigned selectionEnd;
-            std::tie(selectionStart, selectionEnd) = selectionStartEnd();
+            auto [selectionStart, selectionEnd] = selectionStartEnd();
             // The ellipsis should be considered to be selected if the end of
             // the selection is past the beginning of the truncation and the
             // beginning of the selection is before or at the beginning of the
@@ -438,9 +436,7 @@ struct InlineTextBox::StyledMarkedText : MarkedText {
 
 static MarkedText createMarkedTextFromSelectionInBox(const InlineTextBox& box)
 {
-    unsigned selectionStart;
-    unsigned selectionEnd;
-    std::tie(selectionStart, selectionEnd) = box.selectionStartEnd();
+    auto [selectionStart, selectionEnd] = box.selectionStartEnd();
     if (selectionStart < selectionEnd)
         return { selectionStart, selectionEnd, MarkedText::Selection };
     return { };
@@ -1039,7 +1035,7 @@ void InlineTextBox::paintMarkedTextForeground(PaintInfo& paintInfo, const FloatR
 
     float emphasisMarkOffset = 0;
     Optional<bool> markExistsAndIsAbove = emphasisMarkExistsAndIsAbove(lineStyle);
-    const AtomicString& emphasisMark = markExistsAndIsAbove ? lineStyle.textEmphasisMarkString() : nullAtom();
+    const AtomString& emphasisMark = markExistsAndIsAbove ? lineStyle.textEmphasisMarkString() : nullAtom();
     if (!emphasisMark.isEmpty())
         emphasisMarkOffset = *markExistsAndIsAbove ? -font.fontMetrics().ascent() - font.emphasisMarkDescent(emphasisMark) : font.fontMetrics().descent() + font.emphasisMarkAscent(emphasisMark);
 

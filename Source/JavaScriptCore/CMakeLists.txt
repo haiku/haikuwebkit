@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.10)
 include(WebKitCommon)
 set_property(DIRECTORY . PROPERTY FOLDER "JavaScriptCore")
 
@@ -7,6 +7,7 @@ list(APPEND JavaScriptCore_UNIFIED_SOURCE_LIST_FILES
 )
 
 set(JavaScriptCore_INCLUDE_DIRECTORIES
+    "${WTF_FRAMEWORK_HEADERS_DIR}"
     "${JavaScriptCore_FRAMEWORK_HEADERS_DIR}"
 )
 
@@ -53,6 +54,10 @@ if (USE_CAPSTONE)
     list(APPEND JavaScriptCore_PRIVATE_INCLUDE_DIRECTORIES "${THIRDPARTY_DIR}/capstone/Source/include")
 endif ()
 
+set(JavaScriptCore_SYSTEM_INCLUDE_DIRECTORIES
+    "${ICU_INCLUDE_DIRS}"
+)
+
 set(JavaScriptCore_OBJECT_LUT_SOURCES
     runtime/ArrayConstructor.cpp
     runtime/AsyncFromSyncIteratorPrototype.cpp
@@ -88,6 +93,7 @@ set(JavaScriptCore_OBJECT_LUT_SOURCES
     runtime/ReflectObject.cpp
     runtime/RegExpConstructor.cpp
     runtime/RegExpPrototype.cpp
+    runtime/RegExpStringIteratorPrototype.cpp
     runtime/SetPrototype.cpp
     runtime/StringConstructor.cpp
     runtime/StringPrototype.cpp
@@ -115,7 +121,8 @@ set(JavaScriptCore_OBJECT_LUT_SOURCES
 )
 
 set(JavaScriptCore_LIBRARIES
-    WebKit::WTF
+    WTF${DEBUG_SUFFIX}
+    ${ICU_I18N_LIBRARIES}
 )
 
 if (USE_CAPSTONE)
@@ -289,10 +296,10 @@ add_executable(LLIntOffsetsExtractor
     ${JavaScriptCore_DERIVED_SOURCES_DIR}/LLIntDesiredOffsets.h ${JavaScriptCore_DERIVED_SOURCES_DIR}/Bytecodes.h ${JavaScriptCore_DERIVED_SOURCES_DIR}/BytecodeStructs.h
 )
 
-target_link_libraries(LLIntSettingsExtractor WebKit::WTF)
-add_dependencies(LLIntSettingsExtractor JavaScriptCore_CopyHeaders)
-target_link_libraries(LLIntOffsetsExtractor WebKit::WTF)
-add_dependencies(LLIntOffsetsExtractor JavaScriptCore_CopyHeaders)
+target_link_libraries(LLIntSettingsExtractor WTF)
+add_dependencies(LLIntSettingsExtractor JavaScriptCoreFrameworkHeaders)
+target_link_libraries(LLIntOffsetsExtractor WTF)
+add_dependencies(LLIntOffsetsExtractor JavaScriptCoreFrameworkHeaders)
 
 # The build system will execute asm.rb every time LLIntOffsetsExtractor's mtime is newer than
 # LLIntAssembly.h's mtime. The problem we have here is: asm.rb has some built-in optimization
@@ -435,7 +442,9 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     API/OpaqueJSString.h
 
     assembler/ARM64Assembler.h
+    assembler/ARM64Registers.h
     assembler/ARMv7Assembler.h
+    assembler/ARMv7Registers.h
     assembler/AbortReason.h
     assembler/AbstractMacroAssembler.h
     assembler/AssemblerBuffer.h
@@ -445,6 +454,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     assembler/CodeLocation.h
     assembler/LinkBuffer.h
     assembler/MIPSAssembler.h
+    assembler/MIPSRegisters.h
     assembler/MacroAssembler.h
     assembler/MacroAssemblerARM64.h
     assembler/MacroAssemblerARMv7.h
@@ -455,7 +465,10 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     assembler/MacroAssemblerX86Common.h
     assembler/MacroAssemblerX86_64.h
     assembler/Printer.h
+    assembler/RegisterInfo.h
     assembler/X86Assembler.h
+    assembler/X86Registers.h
+    assembler/X86_64Registers.h
 
     bindings/ScriptFunctionCall.h
     bindings/ScriptObject.h
@@ -931,6 +944,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     runtime/RegExpGlobalData.h
     runtime/RegExpKey.h
     runtime/RegExpObject.h
+    runtime/RegExpStringIteratorPrototype.h
     runtime/RuntimeFlags.h
     runtime/RuntimeType.h
     runtime/SamplingProfiler.h
@@ -1204,6 +1218,7 @@ set(JavaScriptCore_BUILTINS_SOURCES
     ${JAVASCRIPTCORE_DIR}/builtins/PromisePrototype.js
     ${JAVASCRIPTCORE_DIR}/builtins/ReflectObject.js
     ${JAVASCRIPTCORE_DIR}/builtins/RegExpPrototype.js
+    ${JAVASCRIPTCORE_DIR}/builtins/RegExpStringIteratorPrototype.js
     ${JAVASCRIPTCORE_DIR}/builtins/SetIteratorPrototype.js
     ${JAVASCRIPTCORE_DIR}/builtins/SetPrototype.js
     ${JAVASCRIPTCORE_DIR}/builtins/StringConstructor.js
@@ -1264,16 +1279,6 @@ if (WTF_CPU_X86_64)
     endif ()
 endif ()
 
-set(JavaScriptCore_INTERFACE_LIBRARIES JavaScriptCore)
-set(JavaScriptCore_INTERFACE_INCLUDE_DIRECTORIES
-    ${JavaScriptCore_FRAMEWORK_HEADERS_DIR}
-    ${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS_DIR}
-)
-set(JavaScriptCore_INTERFACE_DEPENDENCIES
-    JavaScriptCore_CopyHeaders
-    JavaScriptCore_CopyPrivateHeaders
-)
-
 WEBKIT_FRAMEWORK_DECLARE(JavaScriptCore)
 WEBKIT_INCLUDE_CONFIG_FILES_IF_EXISTS()
 
@@ -1283,13 +1288,15 @@ if (COMPILER_IS_GCC_OR_CLANG)
     WEBKIT_ADD_TARGET_CXX_FLAGS(JavaScriptCore -ffp-contract=off)
 endif ()
 
-WEBKIT_COPY_FILES(JavaScriptCore_CopyHeaders
+WEBKIT_MAKE_FORWARDING_HEADERS(JavaScriptCore
+    TARGET_NAME JavaScriptCoreFrameworkHeaders
     DESTINATION ${JavaScriptCore_FRAMEWORK_HEADERS_DIR}/JavaScriptCore
     FILES ${JavaScriptCore_PUBLIC_FRAMEWORK_HEADERS}
     FLATTENED
 )
 
-WEBKIT_COPY_FILES(JavaScriptCore_CopyPrivateHeaders
+WEBKIT_MAKE_FORWARDING_HEADERS(JavaScriptCore
+    TARGET_NAME JavaScriptCorePrivateFrameworkHeaders
     DESTINATION ${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS_DIR}/JavaScriptCore
     FILES ${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS}
     FLATTENED
@@ -1312,7 +1319,6 @@ add_subdirectory(shell)
 WEBKIT_COMPUTE_SOURCES(JavaScriptCore)
 WEBKIT_WRAP_SOURCELIST(${JavaScriptCore_SOURCES})
 WEBKIT_FRAMEWORK(JavaScriptCore)
-WEBKIT_FRAMEWORK_TARGET(JavaScriptCore)
 
 if (NOT "${PORT}" STREQUAL "Mac")
     if (${JavaScriptCore_LIBRARY_TYPE} STREQUAL "SHARED")

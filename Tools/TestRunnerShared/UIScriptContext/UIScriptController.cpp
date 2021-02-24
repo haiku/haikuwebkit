@@ -101,6 +101,10 @@ void UIScriptController::doAfterNextStablePresentationUpdate(JSValueRef)
 {
 }
 
+void UIScriptController::ensurePositionInformationIsUpToDateAt(long x, long y, JSValueRef)
+{
+}
+
 void UIScriptController::doAfterVisibleContentRectUpdate(JSValueRef)
 {
 }
@@ -317,6 +321,10 @@ void UIScriptController::singleTapAtPointWithModifiers(long x, long y, JSValueRe
 {
 }
 
+void UIScriptController::twoFingerSingleTapAtPoint(long x, long y, JSValueRef callback)
+{
+}
+
 void UIScriptController::doubleTapAtPoint(long x, long y, JSValueRef)
 {
 }
@@ -449,6 +457,11 @@ void UIScriptController::applyAutocorrection(JSStringRef, JSStringRef, JSValueRe
 }
 
 bool UIScriptController::isShowingKeyboard() const
+{
+    return false;
+}
+
+bool UIScriptController::hasInputSession() const
 {
     return false;
 }
@@ -671,6 +684,7 @@ void UIScriptController::addViewToWindow(JSValueRef)
 {
 }
 
+#if !PLATFORM(GTK)
 void UIScriptController::beginBackSwipe(JSValueRef callback)
 {
 }
@@ -678,6 +692,7 @@ void UIScriptController::beginBackSwipe(JSValueRef callback)
 void UIScriptController::completeBackSwipe(JSValueRef callback)
 {
 }
+#endif
 
 void UIScriptController::setShareSheetCompletesImmediatelyWithResolution(bool)
 {

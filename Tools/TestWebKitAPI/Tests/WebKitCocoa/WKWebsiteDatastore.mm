@@ -92,7 +92,7 @@ TEST(WKWebsiteDataStore, RemoveAndFetchData)
     
     readyToContinue = false;
     [[WKWebsiteDataStore defaultDataStore] fetchDataRecordsOfTypes:[WKWebsiteDataStore _allWebsiteDataTypesIncludingPrivate] completionHandler:^(NSArray<WKWebsiteDataRecord *> *dataRecords) {
-        ASSERT_EQ(0u, dataRecords.count);
+        EXPECT_EQ(0u, dataRecords.count);
         readyToContinue = true;
     }];
     TestWebKitAPI::Util::run(&readyToContinue);
@@ -111,36 +111,9 @@ TEST(WKWebsiteDataStore, RemoveEphemeralData)
     TestWebKitAPI::Util::run(&done);
 }
 
-static void respondWithChallengeThenOK(int socket)
-{
-    char readBuffer[1000];
-    auto bytesRead = ::read(socket, readBuffer, sizeof(readBuffer));
-    EXPECT_GT(bytesRead, 0);
-    EXPECT_TRUE(static_cast<size_t>(bytesRead) < sizeof(readBuffer));
-    
-    const char* challengeHeader =
-    "HTTP/1.1 401 Unauthorized\r\n"
-    "Date: Sat, 23 Mar 2019 06:29:01 GMT\r\n"
-    "Content-Length: 0\r\n"
-    "WWW-Authenticate: Basic realm=\"testrealm\"\r\n\r\n";
-    auto bytesWritten = ::write(socket, challengeHeader, strlen(challengeHeader));
-    EXPECT_EQ(static_cast<size_t>(bytesWritten), strlen(challengeHeader));
-    
-    bytesRead = ::read(socket, readBuffer, sizeof(readBuffer));
-    EXPECT_GT(bytesRead, 0);
-    EXPECT_TRUE(static_cast<size_t>(bytesRead) < sizeof(readBuffer));
-    
-    const char* responseHeader =
-    "HTTP/1.1 200 OK\r\n"
-    "Content-Length: 13\r\n\r\n"
-    "Hello, World!";
-    bytesWritten = ::write(socket, responseHeader, strlen(responseHeader));
-    EXPECT_EQ(static_cast<size_t>(bytesWritten), strlen(responseHeader));
-}
-    
 TEST(WKWebsiteDataStore, FetchNonPersistentCredentials)
 {
-    TCPServer server(respondWithChallengeThenOK);
+    TCPServer server(TCPServer::respondWithChallengeThenOK);
     
     usePersistentCredentialStorage = false;
     auto configuration = adoptNS([WKWebViewConfiguration new]);
@@ -165,8 +138,8 @@ TEST(WKWebsiteDataStore, FetchNonPersistentCredentials)
 
 TEST(WKWebsiteDataStore, FetchPersistentCredentials)
 {
-    TCPServer server(respondWithChallengeThenOK);
-    
+    TCPServer server(TCPServer::respondWithChallengeThenOK);
+
     usePersistentCredentialStorage = true;
     auto websiteDataStore = [WKWebsiteDataStore defaultDataStore];
     auto navigationDelegate = adoptNS([[NavigationTestDelegate alloc] init]);
@@ -178,83 +151,23 @@ TEST(WKWebsiteDataStore, FetchPersistentCredentials)
     __block bool done = false;
     [websiteDataStore fetchDataRecordsOfTypes:[NSSet setWithObject:_WKWebsiteDataTypeCredentials] completionHandler:^(NSArray<WKWebsiteDataRecord *> *dataRecords) {
         int credentialCount = dataRecords.count;
-        ASSERT_GT(credentialCount, 0);
-        bool foundExpectedRecord = false;
-        for (WKWebsiteDataRecord *record in dataRecords) {
-            auto name = [record displayName];
-            if ([name isEqualToString:@"127.0.0.1"]) {
-                foundExpectedRecord = true;
-                break;
-            }
-        }
-        EXPECT_TRUE(foundExpectedRecord);
+        EXPECT_EQ(credentialCount, 0);
         done = true;
     }];
     TestWebKitAPI::Util::run(&done);
-    
+
+    // Clear persistent credentials created by this test.
+    NSURLProtectionSpace *protectionSpace = [[[NSURLProtectionSpace alloc] initWithHost:@"127.0.0.1" port:server.port() protocol:NSURLProtectionSpaceHTTP realm:@"testrealm" authenticationMethod:NSURLAuthenticationMethodHTTPBasic] autorelease];
     __block bool removedCredential = false;
-    [websiteDataStore fetchDataRecordsOfTypes:[NSSet setWithObject:_WKWebsiteDataTypeCredentials] completionHandler:^(NSArray<WKWebsiteDataRecord *> *dataRecords) {
-        [websiteDataStore removeDataOfTypes:[NSSet setWithObject:_WKWebsiteDataTypeCredentials] forDataRecords:dataRecords completionHandler:^(void) {
-            removedCredential = true;
-        }];
+    [[webView configuration].processPool _clearPermanentCredentialsForProtectionSpace:protectionSpace completionHandler:^{
+        removedCredential = true;
     }];
-    TestWebKitAPI::Util::run(&removedCredential);
-}
-
-TEST(WKWebsiteDataStore, RemovePersistentCredentials)
-{
-    TCPServer server(respondWithChallengeThenOK);
-
-    usePersistentCredentialStorage = true;
-    auto websiteDataStore = [WKWebsiteDataStore defaultDataStore];
-    auto navigationDelegate = adoptNS([[NavigationTestDelegate alloc] init]);
-    auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600)]);
-    [webView setNavigationDelegate:navigationDelegate.get()];
-    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:[NSString stringWithFormat:@"http://127.0.0.1:%d/", server.port()]]]];
-    [navigationDelegate waitForDidFinishNavigation];
-
-    __block bool done = false;
-    __block RetainPtr<WKWebsiteDataRecord> expectedRecord;
-    [websiteDataStore fetchDataRecordsOfTypes:[NSSet setWithObject:_WKWebsiteDataTypeCredentials] completionHandler:^(NSArray<WKWebsiteDataRecord *> *dataRecords) {
-        int credentialCount = dataRecords.count;
-        ASSERT_GT(credentialCount, 0);
-        for (WKWebsiteDataRecord *record in dataRecords) {
-            auto name = [record displayName];
-            if ([name isEqualToString:@"127.0.0.1"]) {
-                expectedRecord = record;
-                break;
-            }
-        }
-        EXPECT_TRUE(expectedRecord);
-        done = true;
-    }];
-    TestWebKitAPI::Util::run(&done);
-
-    done = false;
-    [websiteDataStore removeDataOfTypes:[NSSet setWithObject:_WKWebsiteDataTypeCredentials] forDataRecords:[NSArray arrayWithObject:expectedRecord.get()] completionHandler:^(void) {
-        done = true;
-    }];
-    TestWebKitAPI::Util::run(&done);
-
-    done = false;
-    [websiteDataStore fetchDataRecordsOfTypes:[NSSet setWithObject:_WKWebsiteDataTypeCredentials] completionHandler:^(NSArray<WKWebsiteDataRecord *> *dataRecords) {
-        bool foundLocalHostRecord = false;
-        for (WKWebsiteDataRecord *record in dataRecords) {
-            auto name = [record displayName];
-            if ([name isEqualToString:@"127.0.0.1"]) {
-                foundLocalHostRecord = true;
-                break;
-            }
-        }
-        EXPECT_FALSE(foundLocalHostRecord);
-        done = true;
-    }];
-    TestWebKitAPI::Util::run(&done);
+    Util::run(&removedCredential);
 }
 
 TEST(WKWebsiteDataStore, RemoveNonPersistentCredentials)
 {
-    TCPServer server(respondWithChallengeThenOK);
+    TCPServer server(TCPServer::respondWithChallengeThenOK);
 
     usePersistentCredentialStorage = false;
     auto configuration = adoptNS([WKWebViewConfiguration new]);

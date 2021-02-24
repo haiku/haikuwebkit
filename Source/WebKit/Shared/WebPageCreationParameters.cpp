@@ -78,7 +78,7 @@ void WebPageCreationParameters::encode(IPC::Encoder& encoder) const
     encoder << controlledByAutomation;
     encoder << isProcessSwap;
     encoder << useDarkAppearance;
-    encoder << useInactiveAppearance;
+    encoder << useElevatedUserInterfaceLevel;
 
 #if PLATFORM(MAC)
     encoder << colorSpace;
@@ -98,8 +98,6 @@ void WebPageCreationParameters::encode(IPC::Encoder& encoder) const
     encoder << deviceOrientation;
     encoder << keyboardIsAttached;
     encoder << canShowWhileLocked;
-    encoder << doubleTapForDoubleClickDelay;
-    encoder << doubleTapForDoubleClickRadius;
     encoder << overrideViewportArguments;
 #endif
 #if PLATFORM(COCOA)
@@ -255,7 +253,7 @@ Optional<WebPageCreationParameters> WebPageCreationParameters::decode(IPC::Decod
         return WTF::nullopt;
     if (!decoder.decode(parameters.useDarkAppearance))
         return WTF::nullopt;
-    if (!decoder.decode(parameters.useInactiveAppearance))
+    if (!decoder.decode(parameters.useElevatedUserInterfaceLevel))
         return WTF::nullopt;
 
 #if PLATFORM(MAC)
@@ -291,10 +289,6 @@ Optional<WebPageCreationParameters> WebPageCreationParameters::decode(IPC::Decod
     if (!decoder.decode(parameters.keyboardIsAttached))
         return WTF::nullopt;
     if (!decoder.decode(parameters.canShowWhileLocked))
-        return WTF::nullopt;
-    if (!decoder.decode(parameters.doubleTapForDoubleClickDelay))
-        return WTF::nullopt;
-    if (!decoder.decode(parameters.doubleTapForDoubleClickRadius))
         return WTF::nullopt;
 
     Optional<Optional<WebCore::ViewportArguments>> overrideViewportArguments;

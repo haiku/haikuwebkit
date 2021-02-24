@@ -52,13 +52,14 @@ class TextStream;
 
 namespace WebCore {
 
+class AbsolutePositionConstraints;
 class Document;
 class Frame;
 class FrameView;
 class GraphicsLayer;
-class LayoutConstraints;
 class Page;
 class Region;
+class RenderObject;
 class RenderLayer;
 class ScrollableArea;
 class ViewportConstraints;
@@ -83,6 +84,9 @@ public:
     // Return whether this scrolling coordinator handles scrolling for the given overflow scroll layer.
     WEBCORE_EXPORT virtual bool coordinatesScrollingForOverflowLayer(const RenderLayer&) const;
 
+    // Returns the ScrollingNodeID of the innermost scrolling node that scrolls the renderer.
+    WEBCORE_EXPORT virtual ScrollingNodeID scrollableContainerNodeID(const RenderObject&) const;
+
     // Should be called whenever the given frame view has been laid out.
     virtual void frameViewLayoutUpdated(FrameView&) { }
 
@@ -94,6 +98,9 @@ public:
 
     // Should be called whenever the set of fixed objects changes.
     void frameViewFixedObjectsDidChange(FrameView&);
+
+    // Should be called whenever the FrameView's visual viewport changed.
+    virtual void frameViewVisualViewportChanged(FrameView&) { }
 
     // Called whenever the non-fast scrollable region changes for reasons other than layout.
     virtual void frameViewEventTrackingRegionsChanged(FrameView&) { }
@@ -149,7 +156,7 @@ public:
     virtual void setScrollingNodeScrollableAreaGeometry(ScrollingNodeID, ScrollableArea&) { }
     virtual void setFrameScrollingNodeState(ScrollingNodeID, const FrameView&) { }
     virtual void setViewportConstraintedNodeConstraints(ScrollingNodeID, const ViewportConstraints&) { }
-    virtual void setPositionedNodeGeometry(ScrollingNodeID, const LayoutConstraints&) { }
+    virtual void setPositionedNodeConstraints(ScrollingNodeID, const AbsolutePositionConstraints&) { }
     virtual void setRelatedOverflowScrollingNodes(ScrollingNodeID, Vector<ScrollingNodeID>&&) { }
 
     virtual void reconcileViewportConstrainedLayerPositions(ScrollingNodeID, const LayoutRect&, ScrollingLayerPositionAction) { }

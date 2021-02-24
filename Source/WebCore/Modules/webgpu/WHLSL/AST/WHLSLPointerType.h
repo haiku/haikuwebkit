@@ -41,8 +41,8 @@ namespace AST {
 class PointerType : public ReferenceType {
     using Base = ReferenceType;
 public:
-    PointerType(Lexer::Token&& origin, AddressSpace addressSpace, UniqueRef<UnnamedType> elementType)
-        : Base(WTFMove(origin), addressSpace, WTFMove(elementType))
+    PointerType(CodeLocation location, AddressSpace addressSpace, UniqueRef<UnnamedType> elementType)
+        : Base(location, addressSpace, WTFMove(elementType))
     {
     }
 
@@ -55,12 +55,21 @@ public:
 
     UniqueRef<UnnamedType> clone() const override
     {
-        return makeUniqueRef<PointerType>(Lexer::Token(origin()), addressSpace(), elementType().clone());
+        return makeUniqueRef<PointerType>(codeLocation(), addressSpace(), elementType().clone());
     }
 
     unsigned hash() const override
     {
         return this->Base::hash() ^ StringHasher::computeLiteralHash("pointer");
+    }
+
+    bool operator==(const UnnamedType& other) const override
+    {
+        if (!is<PointerType>(other))
+            return false;
+
+        return addressSpace() == downcast<PointerType>(other).addressSpace()
+            && elementType() == downcast<PointerType>(other).elementType();
     }
 
 private:

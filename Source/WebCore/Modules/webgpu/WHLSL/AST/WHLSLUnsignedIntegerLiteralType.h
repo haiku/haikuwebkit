@@ -41,7 +41,7 @@ class TypeReference;
 
 class UnsignedIntegerLiteralType : public ResolvableType {
 public:
-    UnsignedIntegerLiteralType(Lexer::Token&& origin, unsigned value);
+    UnsignedIntegerLiteralType(CodeLocation, unsigned value);
 
     virtual ~UnsignedIntegerLiteralType();
 
@@ -59,6 +59,8 @@ public:
 
     bool canResolve(const Type&) const override;
     unsigned conversionCost(const UnnamedType&) const override;
+
+    UnsignedIntegerLiteralType clone() const;
 
 private:
     unsigned m_value;

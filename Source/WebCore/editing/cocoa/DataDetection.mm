@@ -196,7 +196,7 @@ bool DataDetection::shouldCancelDefaultAction(Element& element)
     if (softLink_DataDetectorsCore_DDShouldImmediatelyShowActionSheetForURL(downcast<HTMLAnchorElement>(element).href()))
         return true;
     
-    const AtomicString& resultAttribute = element.attributeWithoutSynchronization(x_apple_data_detectors_resultAttr);
+    const AtomString& resultAttribute = element.attributeWithoutSynchronization(x_apple_data_detectors_resultAttr);
     if (resultAttribute.isEmpty())
         return false;
     NSArray *results = element.document().frame()->dataDetectionResults();
@@ -363,7 +363,8 @@ static void buildQuery(DDScanQueryRef scanQuery, Range* contextRange)
     // Build the scan query adding separators.
     // For each fragment the iterator increment is stored as metadata.
     for (TextIterator iterator(contextRange); !iterator.atEnd(); iterator.advance(), iteratorCount++) {
-        size_t currentTextLength = iterator.text().length();
+        StringView currentText = iterator.text();
+        size_t currentTextLength = currentText.length();
         if (!currentTextLength) {
             softLink_DataDetectorsCore_DDScanQueryAddSeparator(scanQuery, DDTextCoalescingTypeHardBreak);
             if (iteratorCount > maxFragmentWithHardBreak)
@@ -371,7 +372,8 @@ static void buildQuery(DDScanQueryRef scanQuery, Range* contextRange)
             continue;
         }
         // Test for white space nodes, we're coalescing them.
-        const UniChar* currentCharPtr = iterator.text().upconvertedCharacters();
+        auto currentTextUpconvertedCharacters = currentText.upconvertedCharacters();
+        const UniChar* currentCharPtr = currentTextUpconvertedCharacters.get();
         
         bool containsOnlyWhiteSpace = true;
         bool hasTab = false;
@@ -410,8 +412,8 @@ static void buildQuery(DDScanQueryRef scanQuery, Range* contextRange)
             continue;
         }
         
-        RetainPtr<CFStringRef> currentText = adoptCF(CFStringCreateWithCharacters(kCFAllocatorDefault, iterator.text().upconvertedCharacters(), iterator.text().length()));
-        softLink_DataDetectorsCore_DDScanQueryAddTextFragment(scanQuery, currentText.get(), CFRangeMake(0, currentTextLength), (void *)iteratorCount, (DDTextFragmentMode)0, DDTextCoalescingTypeNone);
+        auto currentTextCFString = adoptCF(CFStringCreateWithCharacters(kCFAllocatorDefault, currentTextUpconvertedCharacters.get(), currentTextLength));
+        softLink_DataDetectorsCore_DDScanQueryAddTextFragment(scanQuery, currentTextCFString.get(), CFRangeMake(0, currentTextLength), (void *)iteratorCount, (DDTextFragmentMode)0, DDTextCoalescingTypeNone);
         fragmentCount++;
     }
 }
@@ -636,7 +638,7 @@ NSArray *DataDetection::detectContentInRange(RefPtr<Range>& contextRange, DataDe
             anchorElement->appendChild(WTFMove(newTextNode));
 
             // Add a special attribute to mark this URLification as the result of data detectors.
-            anchorElement->setAttributeWithoutSynchronization(x_apple_data_detectorsAttr, AtomicString("true", AtomicString::ConstructFromLiteral));
+            anchorElement->setAttributeWithoutSynchronization(x_apple_data_detectorsAttr, AtomString("true", AtomString::ConstructFromLiteral));
             anchorElement->setAttributeWithoutSynchronization(x_apple_data_detectors_typeAttr, dataDetectorTypeForCategory(softLink_DataDetectorsCore_DDResultGetCategory(coreResult)));
             anchorElement->setAttributeWithoutSynchronization(x_apple_data_detectors_resultAttr, identifier);
 

@@ -109,6 +109,7 @@ class MediaPlayerRequestInstallMissingPluginsCallback;
 struct ContentRuleListResults;
 struct DateTimeChooserParameters;
 struct GraphicsDeviceAdapter;
+struct MockWebAuthenticationConfiguration;
 struct ShareDataWithParsedURL;
 struct ViewportArguments;
 struct WindowFeatures;
@@ -381,6 +382,8 @@ public:
     virtual void assistiveTechnologyMakeFirstResponder() { }
 #endif
 
+    virtual bool testProcessIncomingSyncMessagesWhenWaitingForSyncReply() { return true; }
+
 #if PLATFORM(IOS_FAMILY)
     // FIXME: Come up with a more descriptive name for this function and make it platform independent (if possible).
     virtual bool isStopping() = 0;
@@ -509,6 +512,10 @@ public:
 
     virtual bool userIsInteracting() const { return false; }
     virtual void setUserIsInteracting(bool) { }
+
+#if ENABLE(WEB_AUTHN)
+    virtual void setMockWebAuthenticationConfiguration(const MockWebAuthenticationConfiguration&) { }
+#endif
 
 protected:
     virtual ~ChromeClient() = default;

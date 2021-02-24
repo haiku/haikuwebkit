@@ -43,7 +43,7 @@
 #include <wtf/FastMalloc.h>
 #include <wtf/Optional.h>
 #include <wtf/UUID.h>
-#include <wtf/text/AtomicStringImpl.h>
+#include <wtf/text/AtomStringImpl.h>
 
 namespace JSC {
 
@@ -101,7 +101,7 @@ public:
 
     Allocation malloc(unsigned size)
     {
-        ASSERT(size);
+        RELEASE_ASSERT(size);
         ptrdiff_t offset;
         if (m_currentPage->malloc(size, offset))
             return Allocation { m_currentPage->buffer() + offset, m_baseOffset + offset };
@@ -244,7 +244,7 @@ private:
             ptrdiff_t size = roundUpToMultipleOf(alignof(std::max_align_t), m_offset);
             if (size == m_offset)
                 return;
-            ASSERT(static_cast<size_t>(size) <= m_capacity);
+            RELEASE_ASSERT(static_cast<size_t>(size) <= m_capacity);
             m_offset = size;
         }
 
@@ -323,23 +323,21 @@ WTF::Optional<void*> Decoder::cachedPtrForOffset(ptrdiff_t offset)
 
 const void* Decoder::ptrForOffsetFromBase(ptrdiff_t offset)
 {
-#ifndef NDEBUG
     ASSERT(offset > 0 && static_cast<size_t>(offset) < m_cachedBytecode->size());
-#endif
     return m_cachedBytecode->data() + offset;
 }
 
 CompactVariableMap::Handle Decoder::handleForEnvironment(CompactVariableEnvironment* environment) const
 {
     auto it = m_environmentToHandleMap.find(environment);
-    ASSERT(it != m_environmentToHandleMap.end());
+    RELEASE_ASSERT(it != m_environmentToHandleMap.end());
     return it->value;
 }
 
 void Decoder::setHandleForEnvironment(CompactVariableEnvironment* environment, const CompactVariableMap::Handle& handle)
 {
     auto addResult = m_environmentToHandleMap.add(environment, handle);
-    ASSERT_UNUSED(addResult, addResult.isNewEntry);
+    RELEASE_ASSERT(addResult.isNewEntry);
 }
 
 void Decoder::addLeafExecutable(const UnlinkedFunctionExecutable* executable, ptrdiff_t offset)
@@ -525,8 +523,7 @@ public:
 private:
     const T* get() const
     {
-        if (this->isEmpty())
-            return nullptr;
+        RELEASE_ASSERT(!this->isEmpty());
         return this->template buffer<T>();
     }
 };
@@ -681,7 +678,7 @@ class CachedUniquedStringImplBase : public VariableLengthObject<T> {
 public:
     void encode(Encoder& encoder, const StringImpl& string)
     {
-        m_isAtomic = string.isAtomic();
+        m_isAtomic = string.isAtom();
         m_isSymbol = string.isSymbol();
         RefPtr<StringImpl> impl = const_cast<StringImpl*>(&string);
 
@@ -717,7 +714,7 @@ public:
     {
         auto create = [&](const auto* buffer) -> UniquedStringImpl* {
             if (!m_isSymbol)
-                return AtomicStringImpl::add(buffer, m_length).leakRef();
+                return AtomStringImpl::add(buffer, m_length).leakRef();
 
             Identifier ident = Identifier::fromString(&decoder.vm(), buffer, m_length);
             String str = decoder.vm().propertyNames->lookUpPrivateName(ident);
@@ -729,7 +726,7 @@ public:
         if (!m_length) {
             if (m_isSymbol)
                 return &SymbolImpl::createNullSymbol().leakRef();
-            return AtomicStringImpl::add("").leakRef();
+            return AtomStringImpl::add("").leakRef();
         }
 
         if (m_is8Bit)
@@ -823,14 +820,6 @@ public:
             encode(encoder, WTF::nullopt);
         else
             encode(encoder, { *source });
-    }
-
-    SourceType<T>* decodeAsPtr(Decoder& decoder) const
-    {
-        if (this->isEmpty())
-            return nullptr;
-
-        return this->template buffer<T>()->decode(decoder);
     }
 };
 
@@ -1088,13 +1077,13 @@ public:
     void encode(Encoder& encoder, const ScopedArgumentsTable& scopedArgumentsTable)
     {
         m_length = scopedArgumentsTable.m_length;
-        m_arguments.encode(encoder, scopedArgumentsTable.m_arguments.get(), m_length);
+        m_arguments.encode(encoder, scopedArgumentsTable.m_arguments.get(m_length), m_length);
     }
 
     ScopedArgumentsTable* decode(Decoder& decoder) const
     {
         ScopedArgumentsTable* scopedArgumentsTable = ScopedArgumentsTable::create(decoder.vm(), m_length);
-        m_arguments.decode(decoder, scopedArgumentsTable->m_arguments.get(), m_length);
+        m_arguments.decode(decoder, scopedArgumentsTable->m_arguments.get(m_length), m_length);
         return scopedArgumentsTable;
     }
 

@@ -32,16 +32,6 @@
 #import <WebCore/IntSize.h>
 #import <_WKElementAction.h>
 
-#if HAVE(LINK_PREVIEW)
-#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/WKImagePreviewViewControllerAdditions.mm>)
-#include <WebKitAdditions/WKImagePreviewViewControllerAdditions.mm>
-#else
-static void setAdditionalPreviewActionInfo(UIPreviewAction *, _WKElementAction *)
-{
-}
-#endif
-#endif
-
 @implementation WKImagePreviewViewController {
     RetainPtr<CGImageRef> _image;
     RetainPtr<UIImageView> _imageView;
@@ -103,16 +93,16 @@ static CGSize _scaleSizeWithinSize(CGSize source, CGSize destination)
 }
 
 #if HAVE(LINK_PREVIEW)
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (NSArray<UIPreviewAction *> *)previewActionItems
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     NSMutableArray<UIPreviewAction *> *previewActions = [NSMutableArray array];
     for (_WKElementAction *imageAction in _imageActions.get()) {
         UIPreviewAction *previewAction = [UIPreviewAction actionWithTitle:imageAction.title style:UIPreviewActionStyleDefault handler:^(UIPreviewAction *action, UIViewController *previewViewController) {
             [imageAction runActionWithElementInfo:_activatedElementInfo.get()];
         }];
-        setAdditionalPreviewActionInfo(previewAction, imageAction);
+        previewAction.image = [_WKElementAction imageForElementActionType:imageAction.type];
 
         [previewActions addObject:previewAction];
     }

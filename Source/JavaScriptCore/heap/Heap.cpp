@@ -53,6 +53,7 @@
 #include "JSLock.h"
 #include "JSVirtualMachineInternal.h"
 #include "JSWeakMap.h"
+#include "JSWeakObjectRef.h"
 #include "JSWeakSet.h"
 #include "JSWebAssemblyCodeBlock.h"
 #include "MachineStackMarker.h"
@@ -95,7 +96,7 @@
 #include <wtf/spi/cocoa/objcSPI.h>
 #endif
 
-#if USE(GLIB)
+#ifdef JSC_GLIB_API_ENABLED
 #include "JSCGLibWrapperObject.h"
 #endif
 
@@ -150,7 +151,7 @@ bool isValidSharedInstanceThreadState(VM* vm)
 
 bool isValidThreadState(VM* vm)
 {
-    if (vm->atomicStringTable() != Thread::current().atomicStringTable())
+    if (vm->atomStringTable() != Thread::current().atomStringTable())
         return false;
 
     if (vm->isSharedInstance() && !isValidSharedInstanceThreadState(vm))
@@ -253,8 +254,11 @@ protected:
             m_heap.notifyThreadStopping(locker);
             return PollResult::Stop;
         }
-        if (m_heap.shouldCollectInCollectorThread(locker))
+        if (m_heap.shouldCollectInCollectorThread(locker)) {
+            m_heap.m_collectorThreadIsRunning = true;
             return PollResult::Work;
+        }
+        m_heap.m_collectorThreadIsRunning = false;
         return PollResult::Wait;
     }
     
@@ -267,6 +271,11 @@ protected:
     void threadDidStart() override
     {
         Thread::registerGCThread(GCThreadType::Main);
+    }
+
+    void threadIsStopping(const AbstractLocker&) override
+    {
+        m_heap.m_collectorThreadIsRunning = false;
     }
 
 private:
@@ -338,6 +347,9 @@ Heap::Heap(VM* vm, HeapType heapType)
 
 Heap::~Heap()
 {
+    // Scribble m_worldState to make it clear that the heap has already been destroyed if we crash in checkConn
+    m_worldState.store(0xbadbeeffu);
+
     forEachSlotVisitor(
         [&] (SlotVisitor& visitor) {
             visitor.clearMarkStacks();
@@ -476,7 +488,7 @@ void Heap::lastChanceToFinalize()
 
 void Heap::releaseDelayedReleasedObjects()
 {
-#if USE(FOUNDATION) || USE(GLIB)
+#if USE(FOUNDATION) || defined(JSC_GLIB_API_ENABLED)
     // We need to guard against the case that releasing an object can create more objects due to the
     // release calling into JS. When those JS call(s) exit and all locks are being dropped we end up
     // back here and could try to recursively release objects. We guard that with a recursive entry
@@ -611,6 +623,8 @@ void Heap::finalizeUnconditionalFinalizers()
         finalizeMarkedUnconditionalFinalizers<JSWeakSet>(*vm()->m_weakSetSpace);
     if (vm()->m_weakMapSpace)
         finalizeMarkedUnconditionalFinalizers<JSWeakMap>(*vm()->m_weakMapSpace);
+    if (vm()->m_weakObjectRefSpace)
+        finalizeMarkedUnconditionalFinalizers<JSWeakObjectRef>(*vm()->m_weakObjectRefSpace);
     if (vm()->m_errorInstanceSpace)
         finalizeMarkedUnconditionalFinalizers<ErrorInstance>(*vm()->m_errorInstanceSpace);
 
@@ -2105,14 +2119,14 @@ Heap::Ticket Heap::requestCollection(GCRequest request)
     stopIfNecessary();
     
     ASSERT(vm()->currentThreadIsHoldingAPILock());
-    RELEASE_ASSERT(vm()->atomicStringTable() == Thread::current().atomicStringTable());
+    RELEASE_ASSERT(vm()->atomStringTable() == Thread::current().atomStringTable());
     
     LockHolder locker(*m_threadLock);
     // We may be able to steal the conn. That only works if the collector is definitely not running
     // right now. This is an optimization that prevents the collector thread from ever starting in most
     // cases.
     ASSERT(m_lastServedTicket <= m_lastGrantedTicket);
-    if ((m_lastServedTicket == m_lastGrantedTicket) && (m_currentPhase == CollectorPhase::NotRunning)) {
+    if ((m_lastServedTicket == m_lastGrantedTicket) && !m_collectorThreadIsRunning) {
         if (false)
             dataLog("Taking the conn.\n");
         m_worldState.exchangeOr(mutatorHasConnBit);

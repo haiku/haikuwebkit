@@ -129,6 +129,7 @@ public:
     virtual void textWillBeDeletedInTextField(Element*) = 0;
     virtual void textDidChangeInTextArea(Element*) = 0;
     virtual void overflowScrollPositionChanged() = 0;
+    virtual void subFrameScrollPositionChanged() = 0;
 
 #if PLATFORM(IOS_FAMILY)
     virtual void startDelayingAndCoalescingContentChangeNotifications() = 0;
@@ -184,6 +185,10 @@ public:
     virtual bool supportsGlobalSelection() { return false; }
 
     virtual bool performTwoStepDrop(DocumentFragment&, Range& destination, bool isMove) = 0;
+
+    virtual bool canShowFontPanel() const = 0;
+
+    virtual bool shouldAllowSingleClickToChangeSelection(Node&, const VisibleSelection&) const { return true; }
 };
 
 }

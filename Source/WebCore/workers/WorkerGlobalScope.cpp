@@ -44,6 +44,7 @@
 #include "WorkerInspectorController.h"
 #include "WorkerLoaderProxy.h"
 #include "WorkerLocation.h"
+#include "WorkerMessagingProxy.h"
 #include "WorkerNavigator.h"
 #include "WorkerReportingProxy.h"
 #include "WorkerScriptLoader.h"
@@ -64,7 +65,7 @@ WorkerGlobalScope::WorkerGlobalScope(const URL& url, Ref<SecurityOrigin>&& origi
     , m_thread(thread)
     , m_script(std::make_unique<WorkerScriptController>(this))
     , m_inspectorController(std::make_unique<WorkerInspectorController>(*this))
-    , m_microtaskQueue(std::make_unique<MicrotaskQueue>())
+    , m_microtaskQueue(std::make_unique<MicrotaskQueue>(m_script->vm()))
     , m_isOnline(isOnline)
     , m_shouldBypassMainWorldContentSecurityPolicy(shouldBypassMainWorldContentSecurityPolicy)
     , m_eventQueue(*this)
@@ -385,41 +386,69 @@ WorkerEventQueue& WorkerGlobalScope::eventQueue() const
 
 #if ENABLE(WEB_CRYPTO)
 
+class CryptoBufferContainer : public ThreadSafeRefCounted<CryptoBufferContainer> {
+public:
+    static Ref<CryptoBufferContainer> create() { return adoptRef(*new CryptoBufferContainer); }
+    Vector<uint8_t>& buffer() { return m_buffer; }
+
+private:
+    Vector<uint8_t> m_buffer;
+};
+
+class CryptoBooleanContainer : public ThreadSafeRefCounted<CryptoBooleanContainer> {
+public:
+    static Ref<CryptoBooleanContainer> create() { return adoptRef(*new CryptoBooleanContainer); }
+    bool boolean() const { return m_boolean; }
+    void setBoolean(bool boolean) { m_boolean = boolean; }
+
+private:
+    std::atomic<bool> m_boolean { false };
+};
+
 bool WorkerGlobalScope::wrapCryptoKey(const Vector<uint8_t>& key, Vector<uint8_t>& wrappedKey)
 {
-    bool result = false;
-    bool done = false;
-    m_thread.workerLoaderProxy().postTaskToLoader([&result, &key, &wrappedKey, &done, workerGlobalScope = this](ScriptExecutionContext& context) {
-        result = context.wrapCryptoKey(key, wrappedKey);
-        done = true;
-        workerGlobalScope->postTask([](ScriptExecutionContext& context) {
+    Ref<WorkerGlobalScope> protectedThis(*this);
+    auto resultContainer = CryptoBooleanContainer::create();
+    auto doneContainer = CryptoBooleanContainer::create();
+    auto wrappedKeyContainer = CryptoBufferContainer::create();
+    m_thread.workerLoaderProxy().postTaskToLoader([resultContainer = resultContainer.copyRef(), key, wrappedKeyContainer = wrappedKeyContainer.copyRef(), doneContainer = doneContainer.copyRef(), workerMessagingProxy = makeRef(downcast<WorkerMessagingProxy>(m_thread.workerLoaderProxy()))](ScriptExecutionContext& context) {
+        resultContainer->setBoolean(context.wrapCryptoKey(key, wrappedKeyContainer->buffer()));
+        doneContainer->setBoolean(true);
+        workerMessagingProxy->postTaskForModeToWorkerGlobalScope([](ScriptExecutionContext& context) {
             ASSERT_UNUSED(context, context.isWorkerGlobalScope());
-        });
+        }, WorkerRunLoop::defaultMode());
     });
 
     auto waitResult = MessageQueueMessageReceived;
-    while (!done && waitResult != MessageQueueTerminated)
+    while (!doneContainer->boolean() && waitResult != MessageQueueTerminated)
         waitResult = m_thread.runLoop().runInMode(this, WorkerRunLoop::defaultMode());
 
-    return result;
+    if (doneContainer->boolean())
+        wrappedKey.swap(wrappedKeyContainer->buffer());
+    return resultContainer->boolean();
 }
 
 bool WorkerGlobalScope::unwrapCryptoKey(const Vector<uint8_t>& wrappedKey, Vector<uint8_t>& key)
 {
-    bool result = false, done = false;
-    m_thread.workerLoaderProxy().postTaskToLoader([&result, &wrappedKey, &key, &done, workerGlobalScope = this](ScriptExecutionContext& context) {
-        result = context.unwrapCryptoKey(wrappedKey, key);
-        done = true;
-        workerGlobalScope->postTask([](ScriptExecutionContext& context) {
+    Ref<WorkerGlobalScope> protectedThis(*this);
+    auto resultContainer = CryptoBooleanContainer::create();
+    auto doneContainer = CryptoBooleanContainer::create();
+    auto keyContainer = CryptoBufferContainer::create();
+    m_thread.workerLoaderProxy().postTaskToLoader([resultContainer = resultContainer.copyRef(), wrappedKey, keyContainer = keyContainer.copyRef(), doneContainer = doneContainer.copyRef(), workerMessagingProxy = makeRef(downcast<WorkerMessagingProxy>(m_thread.workerLoaderProxy()))](ScriptExecutionContext& context) {
+        resultContainer->setBoolean(context.unwrapCryptoKey(wrappedKey, keyContainer->buffer()));
+        doneContainer->setBoolean(true);
+        workerMessagingProxy->postTaskForModeToWorkerGlobalScope([](ScriptExecutionContext& context) {
             ASSERT_UNUSED(context, context.isWorkerGlobalScope());
-        });
+        }, WorkerRunLoop::defaultMode());
     });
 
     auto waitResult = MessageQueueMessageReceived;
-    while (!done && waitResult != MessageQueueTerminated)
+    while (!doneContainer->boolean() && waitResult != MessageQueueTerminated)
         waitResult = m_thread.runLoop().runInMode(this, WorkerRunLoop::defaultMode());
 
-    return result;
+    if (doneContainer->boolean())
+        key.swap(keyContainer->buffer());
+    return resultContainer->boolean();
 }
 
 #endif // ENABLE(WEB_CRYPTO)

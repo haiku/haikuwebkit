@@ -115,7 +115,7 @@ void SVGFEImageElement::buildPendingResource()
     invalidate();
 }
 
-void SVGFEImageElement::parseAttribute(const QualifiedName& name, const AtomicString& value)
+void SVGFEImageElement::parseAttribute(const QualifiedName& name, const AtomString& value)
 {
     if (name == SVGNames::preserveAspectRatioAttr) {
         SVGPreserveAspectRatioValue preserveAspectRatio;
@@ -185,6 +185,11 @@ RefPtr<FilterEffect> SVGFEImageElement::build(SVGFilterBuilder*, Filter& filter)
 {
     if (m_cachedImage)
         return FEImage::createWithImage(filter, m_cachedImage->imageForRenderer(renderer()), preserveAspectRatio());
+
+    auto target = SVGURIReference::targetElementFromIRIString(href(), treeScope());
+    if (isDescendantOrShadowDescendantOf(target.element.get()))
+        return nullptr;
+
     return FEImage::createWithIRIReference(filter, treeScope(), href(), preserveAspectRatio());
 }
 

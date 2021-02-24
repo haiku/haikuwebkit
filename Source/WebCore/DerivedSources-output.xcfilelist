@@ -66,6 +66,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSAnimationPlaybackEventInit.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSAnimationPlaybackEventInit.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSAnimationTimeline.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSAnimationTimeline.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePayCancelEvent.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePayCancelEvent.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePayContactField.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePayContactField.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePayError.cpp
@@ -106,6 +108,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePayRequestBase.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePayRequestBase.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePaySession.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePaySession.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePaySessionError.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePaySessionError.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePaySetup.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePaySetup.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSApplePaySetupFeature.cpp
@@ -1019,6 +1023,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMockPaymentCoordinator.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMockPaymentCoordinator.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMockPaymentError.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMockPaymentError.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMockWebAuthenticationConfiguration.cpp
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMockWebAuthenticationConfiguration.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMouseEvent.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMouseEvent.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/JSMouseEventInit.cpp
@@ -2095,6 +2101,7 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/UserAgentScripts.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/UserAgentScriptsData.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/UserAgentStyleSheets.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WHLSLStandardLibrary.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WHLSLStandardLibraryFunctionMap.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WebCoreJSBuiltinInternals.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WebCoreJSBuiltinInternals.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebCore/WebCoreJSBuiltins.cpp

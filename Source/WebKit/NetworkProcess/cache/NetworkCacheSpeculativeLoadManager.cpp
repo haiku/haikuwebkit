@@ -59,8 +59,8 @@ static HashCountedSet<String>& allSpeculativeLoadingDiagnosticMessages()
 static void printSpeculativeLoadingDiagnosticMessageCounts()
 {
     LOG(NetworkCacheSpeculativePreloading, "-- Speculative loading statistics --");
-    for (auto& pair : allSpeculativeLoadingDiagnosticMessages())
-        LOG(NetworkCacheSpeculativePreloading, "%s: %u", pair.key.utf8().data(), pair.value);
+    for (auto& [message, count] : allSpeculativeLoadingDiagnosticMessages())
+        LOG(NetworkCacheSpeculativePreloading, "%s: %u", message.utf8().data(), count);
 }
 #endif
 
@@ -73,10 +73,10 @@ static void logSpeculativeLoadingDiagnosticMessage(NetworkProcess& networkProces
     networkProcess.logDiagnosticMessage(frameID.first, WebCore::DiagnosticLoggingKeys::networkCacheKey(), message, WebCore::ShouldSample::Yes);
 }
 
-static const AtomicString& subresourcesType()
+static const AtomString& subresourcesType()
 {
     ASSERT(RunLoop::isMain());
-    static NeverDestroyed<const AtomicString> resource("SubResources", AtomicString::ConstructFromLiteral);
+    static NeverDestroyed<const AtomString> resource("SubResources", AtomString::ConstructFromLiteral);
     return resource;
 }
 

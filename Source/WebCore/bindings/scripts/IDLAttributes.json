@@ -22,7 +22,7 @@
         "AppleCopyright": {
             "contextsAllowed": ["interface", "attribute", "operation"]
         },
-        "AtomicString": {
+        "AtomString": {
             "contextsAllowed": ["type"]
         },
         "CEReactions": {
@@ -188,10 +188,6 @@
             "values": ["*"]
         },
         "DisabledByQuirk": {
-            "contextsAllowed": ["interface", "dictionary", "enum", "attribute", "operation", "constant"],
-            "values": ["*"]
-        },
-        "EnabledByQuirk": {
             "contextsAllowed": ["interface", "dictionary", "enum", "attribute", "operation", "constant"],
             "values": ["*"]
         },
@@ -411,7 +407,7 @@
         "ReportExternalMemoryCost": {
             "contextsAllowed": ["interface"]
         },
-        "RequiresExistingAtomicString": {
+        "RequiresExistingAtomString": {
             "contextsAllowed": ["type"]
         },
         "RethrowException": {

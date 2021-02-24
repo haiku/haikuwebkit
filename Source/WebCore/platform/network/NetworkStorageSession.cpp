@@ -60,19 +60,33 @@ void NetworkStorageSession::permitProcessToUseCookieAPI(bool value)
 
 bool NetworkStorageSession::shouldBlockThirdPartyCookies(const RegistrableDomain& registrableDomain) const
 {
-    if (registrableDomain.isEmpty())
+    if (!m_isResourceLoadStatisticsEnabled || registrableDomain.isEmpty())
         return false;
 
     return m_registrableDomainsToBlockCookieFor.contains(registrableDomain);
 }
 
+bool NetworkStorageSession::hasHadUserInteractionAsFirstParty(const RegistrableDomain& registrableDomain) const
+{
+    if (registrableDomain.isEmpty())
+        return false;
+
+    return m_registrableDomainsWithUserInteractionAsFirstParty.contains(registrableDomain);
+}
+
 bool NetworkStorageSession::shouldBlockCookies(const ResourceRequest& request, Optional<uint64_t> frameID, Optional<PageIdentifier> pageID) const
 {
+    if (!m_isResourceLoadStatisticsEnabled)
+        return false;
+
     return shouldBlockCookies(request.firstPartyForCookies(), request.url(), frameID, pageID);
 }
     
 bool NetworkStorageSession::shouldBlockCookies(const URL& firstPartyForCookies, const URL& resource, Optional<uint64_t> frameID, Optional<PageIdentifier> pageID) const
 {
+    if (!m_isResourceLoadStatisticsEnabled)
+        return false;
+
     RegistrableDomain firstPartyDomain { firstPartyForCookies };
     if (firstPartyDomain.isEmpty())
         return false;
@@ -86,6 +100,9 @@ bool NetworkStorageSession::shouldBlockCookies(const URL& firstPartyForCookies, 
 
     if (pageID && hasStorageAccess(resourceDomain, firstPartyDomain, frameID, pageID.value()))
         return false;
+
+    if (m_isThirdPartyCookieBlockingOnSitesWithoutUserInteractionEnabled && !hasHadUserInteractionAsFirstParty(firstPartyDomain))
+        return true;
 
     return shouldBlockThirdPartyCookies(resourceDomain);
 }
@@ -107,6 +124,12 @@ void NetworkStorageSession::setPrevalentDomainsToBlockCookiesFor(const Vector<Re
 {
     m_registrableDomainsToBlockCookieFor.clear();
     m_registrableDomainsToBlockCookieFor.add(domains.begin(), domains.end());
+}
+
+void NetworkStorageSession::setDomainsWithUserInteractionAsFirstParty(const Vector<RegistrableDomain>& domains)
+{
+    m_registrableDomainsWithUserInteractionAsFirstParty.clear();
+    m_registrableDomainsWithUserInteractionAsFirstParty.add(domains.begin(), domains.end());
 }
 
 void NetworkStorageSession::removePrevalentDomains(const Vector<RegistrableDomain>& domains)

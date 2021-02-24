@@ -86,6 +86,7 @@
 #include "Range.h"
 #include "RemoveFormatCommand.h"
 #include "RenderBlock.h"
+#include "RenderLayer.h"
 #include "RenderTextControl.h"
 #include "RenderedDocumentMarker.h"
 #include "RenderedPosition.h"
@@ -122,7 +123,7 @@
 
 namespace WebCore {
 
-static bool dispatchBeforeInputEvent(Element& element, const AtomicString& inputType, const String& data = { }, RefPtr<DataTransfer>&& dataTransfer = nullptr, const Vector<RefPtr<StaticRange>>& targetRanges = { }, Event::IsCancelable cancelable = Event::IsCancelable::Yes)
+static bool dispatchBeforeInputEvent(Element& element, const AtomString& inputType, const String& data = { }, RefPtr<DataTransfer>&& dataTransfer = nullptr, const Vector<RefPtr<StaticRange>>& targetRanges = { }, Event::IsCancelable cancelable = Event::IsCancelable::Yes)
 {
     if (!element.document().settings().inputEventsEnabled())
         return true;
@@ -132,7 +133,7 @@ static bool dispatchBeforeInputEvent(Element& element, const AtomicString& input
     return !event->defaultPrevented();
 }
 
-static void dispatchInputEvent(Element& element, const AtomicString& inputType, const String& data = { }, RefPtr<DataTransfer>&& dataTransfer = nullptr, const Vector<RefPtr<StaticRange>>& targetRanges = { })
+static void dispatchInputEvent(Element& element, const AtomString& inputType, const String& data = { }, RefPtr<DataTransfer>&& dataTransfer = nullptr, const Vector<RefPtr<StaticRange>>& targetRanges = { })
 {
     if (element.document().settings().inputEventsEnabled()) {
         // FIXME: We should not be dispatching to the scoped queue here. Normally, input events are dispatched in CompositeEditCommand::apply after the end of the scope,
@@ -353,7 +354,7 @@ enum class ClipboardEventKind {
     BeforePaste,
 };
 
-static AtomicString eventNameForClipboardEvent(ClipboardEventKind kind)
+static AtomString eventNameForClipboardEvent(ClipboardEventKind kind)
 {
     switch (kind) {
     case ClipboardEventKind::Copy:
@@ -674,7 +675,13 @@ void Editor::replaceSelectionWithFragment(DocumentFragment& fragment, SelectRepl
 
     auto command = ReplaceSelectionCommand::create(document(), &fragment, options, editingAction);
     command->apply();
-    revealSelectionAfterEditingOperation();
+
+    m_imageElementsToLoadBeforeRevealingSelection.clear();
+    if (auto insertionRange = command->insertedContentRange())
+        m_imageElementsToLoadBeforeRevealingSelection = visibleImageElementsInRangeWithNonLoadedImages(*insertionRange);
+
+    if (m_imageElementsToLoadBeforeRevealingSelection.isEmpty())
+        revealSelectionAfterEditingOperation();
 
     selection = m_frame.selection().selection();
     if (selection.isInPasswordField())
@@ -1056,7 +1063,7 @@ static void notifyTextFromControls(Element* startRoot, Element* endRoot)
         endingTextControl->didEditInnerTextValue();
 }
 
-static bool dispatchBeforeInputEvents(RefPtr<Element> startRoot, RefPtr<Element> endRoot, const AtomicString& inputTypeName, const String& data = { }, RefPtr<DataTransfer>&& dataTransfer = nullptr, const Vector<RefPtr<StaticRange>>& targetRanges = { }, Event::IsCancelable cancelable = Event::IsCancelable::Yes)
+static bool dispatchBeforeInputEvents(RefPtr<Element> startRoot, RefPtr<Element> endRoot, const AtomString& inputTypeName, const String& data = { }, RefPtr<DataTransfer>&& dataTransfer = nullptr, const Vector<RefPtr<StaticRange>>& targetRanges = { }, Event::IsCancelable cancelable = Event::IsCancelable::Yes)
 {
     bool continueWithDefaultBehavior = true;
     if (startRoot)
@@ -1066,7 +1073,7 @@ static bool dispatchBeforeInputEvents(RefPtr<Element> startRoot, RefPtr<Element>
     return continueWithDefaultBehavior;
 }
 
-static void dispatchInputEvents(RefPtr<Element> startRoot, RefPtr<Element> endRoot, const AtomicString& inputTypeName, const String& data = { }, RefPtr<DataTransfer>&& dataTransfer = nullptr, const Vector<RefPtr<StaticRange>>& targetRanges = { })
+static void dispatchInputEvents(RefPtr<Element> startRoot, RefPtr<Element> endRoot, const AtomString& inputTypeName, const String& data = { }, RefPtr<DataTransfer>&& dataTransfer = nullptr, const Vector<RefPtr<StaticRange>>& targetRanges = { })
 {
     if (startRoot)
         dispatchInputEvent(*startRoot, inputTypeName, data, WTFMove(dataTransfer), targetRanges);
@@ -1463,8 +1470,8 @@ void Editor::pasteAsQuotation()
 void Editor::quoteFragmentForPasting(DocumentFragment& fragment)
 {
     auto blockQuote = HTMLQuoteElement::create(blockquoteTag, document());
-    blockQuote->setAttributeWithoutSynchronization(typeAttr, AtomicString("cite"));
-    blockQuote->setAttributeWithoutSynchronization(classAttr, AtomicString(ApplePasteAsQuotation));
+    blockQuote->setAttributeWithoutSynchronization(typeAttr, AtomString("cite"));
+    blockQuote->setAttributeWithoutSynchronization(classAttr, AtomString(ApplePasteAsQuotation));
 
     auto childNode = fragment.firstChild();
 
@@ -1570,6 +1577,44 @@ void Editor::copyImage(const HitTestResult& result)
 }
 
 #endif
+
+void Editor::revealSelectionIfNeededAfterLoadingImageForElement(HTMLImageElement& element)
+{
+    if (m_imageElementsToLoadBeforeRevealingSelection.isEmpty())
+        return;
+
+    if (!m_imageElementsToLoadBeforeRevealingSelection.remove(&element))
+        return;
+
+    if (!m_imageElementsToLoadBeforeRevealingSelection.isEmpty())
+        return;
+
+    // FIXME: This should be queued as a task for the next rendering update.
+    document().updateLayout();
+    revealSelectionAfterEditingOperation();
+}
+
+void Editor::renderLayerDidScroll(const RenderLayer& layer)
+{
+    if (m_imageElementsToLoadBeforeRevealingSelection.isEmpty())
+        return;
+
+    auto startContainer = makeRefPtr(m_frame.selection().selection().start().containerNode());
+    if (!startContainer)
+        return;
+
+    auto* startContainerRenderer = startContainer->renderer();
+    if (!startContainerRenderer)
+        return;
+
+    // FIXME: Ideally, this would also cancel deferred selection revealing if the selection is inside a subframe and a parent frame is scrolled.
+    for (auto* enclosingLayer = startContainerRenderer->enclosingLayer(); enclosingLayer; enclosingLayer = enclosingLayer->parent()) {
+        if (enclosingLayer == &layer) {
+            m_imageElementsToLoadBeforeRevealingSelection.clear();
+            break;
+        }
+    }
+}
 
 bool Editor::isContinuousSpellCheckingEnabled() const
 {
@@ -3077,6 +3122,7 @@ RefPtr<Range> Editor::compositionRange() const
     unsigned length = m_compositionNode->length();
     unsigned start = std::min(m_compositionStart, length);
     unsigned end = std::min(std::max(start, m_compositionEnd), length);
+    // FIXME: Why is this early return neeed?
     if (start >= end)
         return nullptr;
     return Range::create(m_compositionNode->document(), m_compositionNode.get(), start, m_compositionNode.get(), end);
@@ -3574,6 +3620,7 @@ void Editor::respondToChangedSelection(const VisibleSelection&, OptionSet<FrameS
 #endif
 
     setStartNewKillRingSequence(true);
+    m_imageElementsToLoadBeforeRevealingSelection.clear();
 
     if (m_editorUIUpdateTimer.isActive())
         return;

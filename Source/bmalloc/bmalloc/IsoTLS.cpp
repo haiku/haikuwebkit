@@ -82,27 +82,25 @@ IsoTLS* IsoTLS::ensureEntries(unsigned offset)
     IsoTLSEntry* oldLastEntry = tls ? tls->m_lastEntry : nullptr;
     RELEASE_BASSERT(!oldLastEntry || oldLastEntry->offset() < offset);
     
-    IsoTLSEntry* startEntry = oldLastEntry ? oldLastEntry : layout.head();
+    IsoTLSEntry* startEntry = oldLastEntry ? oldLastEntry->m_next : layout.head();
+    RELEASE_BASSERT(startEntry);
     
     IsoTLSEntry* targetEntry = startEntry;
-    size_t requiredCapacity = 0;
-    if (startEntry) {
-        for (;;) {
-            RELEASE_BASSERT(targetEntry);
-            RELEASE_BASSERT(targetEntry->offset() <= offset);
-            if (targetEntry->offset() == offset)
-                break;
-            targetEntry = targetEntry->m_next;
-        }
+    for (;;) {
         RELEASE_BASSERT(targetEntry);
-        requiredCapacity = targetEntry->extent();
+        RELEASE_BASSERT(targetEntry->offset() <= offset);
+        if (targetEntry->offset() == offset)
+            break;
+        targetEntry = targetEntry->m_next;
     }
+    RELEASE_BASSERT(targetEntry);
+    size_t requiredCapacity = targetEntry->extent();
     
     if (!tls || requiredCapacity > tls->m_capacity) {
         size_t requiredSize = sizeForCapacity(requiredCapacity);
         size_t goodSize = roundUpToMultipleOf(vmPageSize(), requiredSize);
         size_t goodCapacity = capacityForSize(goodSize);
-        void* memory = vmAllocate(goodSize);
+        void* memory = vmAllocate(goodSize, VMTag::IsoHeap);
         IsoTLS* newTLS = new (memory) IsoTLS();
         newTLS->m_capacity = goodCapacity;
         if (tls) {
@@ -116,22 +114,22 @@ IsoTLS* IsoTLS::ensureEntries(unsigned offset)
                     entry->move(src, dst);
                     entry->destruct(src);
                 });
-            vmDeallocate(tls, tls->size());
+            size_t oldSize = tls->size();
+            tls->~IsoTLS();
+            vmDeallocate(tls, oldSize);
         }
         tls = newTLS;
         set(tls);
     }
     
-    if (startEntry) {
-        startEntry->walkUpToInclusive(
-            targetEntry,
-            [&] (IsoTLSEntry* entry) {
-                entry->construct(tls->m_data + entry->offset());
-            });
-        
-        tls->m_lastEntry = targetEntry;
-        tls->m_extent = targetEntry->extent();
-    }
+    startEntry->walkUpToInclusive(
+        targetEntry,
+        [&] (IsoTLSEntry* entry) {
+            entry->construct(tls->m_data + entry->offset());
+        });
+    
+    tls->m_lastEntry = targetEntry;
+    tls->m_extent = targetEntry->extent();
     
     return tls;
 }
@@ -145,6 +143,9 @@ void IsoTLS::destructor(void* arg)
             entry->scavenge(data);
             entry->destruct(data);
         });
+    size_t oldSize = tls->size();
+    tls->~IsoTLS();
+    vmDeallocate(tls, oldSize);
 }
 
 size_t IsoTLS::sizeForCapacity(unsigned capacity)

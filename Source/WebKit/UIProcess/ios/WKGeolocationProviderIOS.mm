@@ -36,6 +36,7 @@
 #import "WKProcessPoolInternal.h"
 #import "WKUIDelegatePrivate.h"
 #import "WKWebView.h"
+#import "WebFrameProxy.h"
 #import "WebGeolocationManagerProxy.h"
 #import "WebProcessPool.h"
 #import "_WKGeolocationCoreLocationProvider.h"
@@ -67,7 +68,7 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 @end
 
 namespace WebKit {
-void decidePolicyForGeolocationRequestFromOrigin(WebCore::SecurityOrigin*, const String& urlString, id<WebAllowDenyPolicyListener>, UIWindow*);
+void decidePolicyForGeolocationRequestFromOrigin(WebCore::SecurityOrigin*, const String& urlString, id<WebAllowDenyPolicyListener>, UIView*);
 };
 
 struct GeolocationRequestData {
@@ -210,7 +211,7 @@ static void setEnableHighAccuracy(WKGeolocationManagerRef geolocationManager, bo
 
         if (requiresUserAuthorization) {
             RetainPtr<WKWebAllowDenyPolicyListener> policyListener = adoptNS([[WKWebAllowDenyPolicyListener alloc] initWithCompletionHandler:WTFMove(request.completionHandler)]);
-            WebKit::decidePolicyForGeolocationRequestFromOrigin(request.origin.get(), request.frame->url(), policyListener.get(), [request.view window]);
+            WebKit::decidePolicyForGeolocationRequestFromOrigin(request.origin.get(), request.frame->url(), policyListener.get(), request.view.get());
         } else
             request.completionHandler(true);
     }

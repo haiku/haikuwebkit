@@ -2197,7 +2197,7 @@ static RefPtr<CSSValue> consumeAttr(CSSParserTokenRange args, CSSParserContext c
         return nullptr;
     
     CSSParserToken token = args.consumeIncludingWhitespace();
-    auto attrName = token.value().toAtomicString();
+    auto attrName = token.value().toAtomString();
     if (context.isHTMLDocument)
         attrName = attrName.convertToASCIILowercase();
 
@@ -4241,8 +4241,6 @@ RefPtr<CSSValue> CSSPropertyParser::parseSingleValue(CSSPropertyID property, CSS
         return consumeTextEmphasisPosition(m_range);
 #if ENABLE(DARK_MODE_CSS)
     case CSSPropertyColorScheme:
-        if (!RuntimeEnabledFeatures::sharedFeatures().darkModeCSSEnabled())
-            return nullptr;
         return consumeColorScheme(m_range);
 #endif
     default:

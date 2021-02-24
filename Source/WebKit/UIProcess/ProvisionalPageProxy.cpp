@@ -68,9 +68,6 @@ ProvisionalPageProxy::ProvisionalPageProxy(WebPageProxy& page, Ref<WebProcessPro
     m_process->addMessageReceiver(Messages::WebPageProxy::messageReceiverName(), m_page.pageID(), *this);
     m_process->addProvisionalPageProxy(*this);
 
-    if (m_process->state() == AuxiliaryProcessProxy::State::Running)
-        m_page.webProcessLifetimeTracker().webPageEnteringWebProcess(m_process);
-
     if (&m_process->websiteDataStore() != &m_page.websiteDataStore())
         m_process->processPool().pageBeginUsingWebsiteDataStore(m_page.pageID(), m_process->websiteDataStore());
 
@@ -95,9 +92,6 @@ ProvisionalPageProxy::~ProvisionalPageProxy()
     if (m_wasCommitted)
         return;
 
-    if (m_process->state() == AuxiliaryProcessProxy::State::Running)
-        m_page.webProcessLifetimeTracker().webPageLeavingWebProcess(m_process);
-
     if (&m_process->websiteDataStore() != &m_page.websiteDataStore())
         m_process->processPool().pageEndUsingWebsiteDataStore(m_page.pageID(), m_process->websiteDataStore());
 
@@ -108,13 +102,6 @@ ProvisionalPageProxy::~ProvisionalPageProxy()
     RunLoop::main().dispatch([process = m_process.copyRef()] {
         process->maybeShutDown();
     });
-}
-
-void ProvisionalPageProxy::connectionWillOpen(IPC::Connection& connection)
-{
-    ASSERT_UNUSED(connection, &connection == m_process->connection());
-
-    m_page.webProcessLifetimeTracker().webPageEnteringWebProcess(m_process);
 }
 
 void ProvisionalPageProxy::processDidTerminate()
@@ -133,6 +120,8 @@ void ProvisionalPageProxy::cancel()
     // If the provisional load started, then indicate that it failed due to cancellation by calling didFailProvisionalLoadForFrame().
     if (m_provisionalLoadURL.isEmpty())
         return;
+        
+    ASSERT(m_process->state() == WebProcessProxy::State::Running);
 
     RELEASE_LOG_IF_ALLOWED(ProcessSwapping, "cancel: Simulating a didFailProvisionalLoadForFrame for pageID = %" PRIu64, m_page.pageID().toUInt64());
     ASSERT(m_mainFrame);

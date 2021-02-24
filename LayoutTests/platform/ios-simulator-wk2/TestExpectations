@@ -70,8 +70,6 @@ webkit.org/b/196376 [ Debug ] storage/domstorage/localstorage/private-browsing-a
 
 webkit.org/b/196403 imported/w3c/web-platform-tests/mediacapture-record/MediaRecorder-stop.html [ Pass Failure ]
 
-webkit.org/b/196495 fast/viewport/ios/viewport-shrink-to-fit-on-new-navigation.html [ Pass Failure ]
-
 webkit.org/b/195341 fast/viewport/ios/constant-width-viewport-after-changing-view-scale.html [ Pass Failure ]
 
 webkit.org/b/196612 scrollingcoordinator/ios/ui-scroll-fixed.html [ Pass ImageOnlyFailure ]
@@ -90,4 +88,11 @@ webkit.org/b/182849 imported/w3c/web-platform-tests/xhr/event-upload-progress-cr
 
 imported/w3c/web-platform-tests/IndexedDB/keypath-special-identifiers.htm [ Slow ]
 
-webkit.org/b/198185 http/tests/resourceLoadStatistics/website-data-removal-for-site-navigated-to-with-link-decoration.html [ Skip ]
+webkit.org/b/172001 scrollingcoordinator/ios/sync-layer-positions-after-scroll.html [ Pass Failure ]
+
+# NearField.framework doesn't present in the simulator, and therefore skip all WebAuthn NFC tests
+http/wpt/webauthn/ctap-nfc-failure.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-create-failure-nfc.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-create-success-nfc.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-get-failure-nfc.https.html [ Skip ]
+http/wpt/webauthn/public-key-credential-get-success-nfc.https.html [ Skip ]

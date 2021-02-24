@@ -35,6 +35,11 @@ PrefetchCache::Entry::Entry(WebCore::ResourceResponse&& response, RefPtr<WebCore
 {
 }
 
+PrefetchCache::Entry::Entry(WebCore::ResourceResponse&& redirectResponse, WebCore::ResourceRequest&& redirectRequest)
+    : response(WTFMove(redirectResponse)), redirectRequest(WTFMove(redirectRequest))
+{
+}
+
 PrefetchCache::PrefetchCache()
     : m_expirationTimer(*this, &PrefetchCache::clearExpiredEntries)
 {
@@ -78,13 +83,22 @@ void PrefetchCache::store(const URL& requestUrl, WebCore::ResourceResponse&& res
         m_expirationTimer.startOneShot(expirationTimeout);
 }
 
+void PrefetchCache::storeRedirect(const URL& requestUrl, WebCore::ResourceResponse&& redirectResponse, WebCore::ResourceRequest&& redirectRequest)
+{
+    if (!m_sessionPrefetches)
+        m_sessionPrefetches = std::make_unique<PrefetchEntriesMap>();
+    redirectRequest.clearPurpose();
+    m_sessionPrefetches->set(requestUrl, std::make_unique<PrefetchCache::Entry>(WTFMove(redirectResponse), WTFMove(redirectRequest)));
+    m_sessionExpirationList.append(std::make_tuple(requestUrl, WallTime::now()));
+    if (!m_expirationTimer.isActive())
+        m_expirationTimer.startOneShot(expirationTimeout);
+}
+
 void PrefetchCache::clearExpiredEntries()
 {
-    URL requestUrl;
-    WallTime timestamp;
     auto timeout = WallTime::now();
     while (!m_sessionExpirationList.isEmpty()) {
-        std::tie(requestUrl, timestamp) = m_sessionExpirationList.first();
+        auto [requestUrl, timestamp] = m_sessionExpirationList.first();
         auto* resources = m_sessionPrefetches.get();
         ASSERT(resources);
         ASSERT(resources->contains(requestUrl));

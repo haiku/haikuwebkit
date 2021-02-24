@@ -75,9 +75,9 @@ function createVertexInputDescriptor() {
     return { vertexBuffers: bufferDescriptors };
 }
 
-async function test() {
-    const device = await getBasicDevice();
-    const canvas = document.querySelector("canvas");
+const canvas = document.querySelector("canvas");
+
+async function test(device) {
     const swapChain = createBasicSwapChain(canvas, device);
     // FIXME: Replace with non-MSL shaders.
     const shaderModule = device.createShaderModule({ code: shaderCode });
@@ -194,10 +194,19 @@ async function test() {
     positionBuffer.destroy();
     textureCoordBuffer.destroy();
     texture.destroy();
-
-    if (window.testRunner)
-        testRunner.notifyDone();
 }
 
-test();
+getBasicDevice().then(function(device) {
+    test(device).then(function() {
+        if (window.testRunner)
+            testRunner.notifyDone();
+    }, function() {
+        if (window.testRunner)
+            testRunner.notifyDone();
+    });
+}, function() {
+    drawGreenAndBlueCheckerboardInSoftware(canvas);
+    if (window.testRunner)
+        testRunner.notifyDone();
+});
 </script>

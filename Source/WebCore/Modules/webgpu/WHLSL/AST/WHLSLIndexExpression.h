@@ -39,8 +39,8 @@ namespace AST {
 
 class IndexExpression : public PropertyAccessExpression {
 public:
-    IndexExpression(Lexer::Token&& origin, UniqueRef<Expression>&& base, UniqueRef<Expression>&& index)
-        : PropertyAccessExpression(WTFMove(origin), WTFMove(base))
+    IndexExpression(CodeLocation location, UniqueRef<Expression>&& base, UniqueRef<Expression>&& index)
+        : PropertyAccessExpression(location, WTFMove(base))
         , m_index(WTFMove(index))
     {
     }
@@ -59,15 +59,16 @@ public:
 
     String setterFunctionName() const override
     {
-        return "operator&[]"_str;
+        return "operator[]="_str;
     }
 
     String anderFunctionName() const override
     {
-        return "operator[]="_str;
+        return "operator&[]"_str;
     }
 
     Expression& indexExpression() { return m_index; }
+    UniqueRef<Expression> takeIndex() { return WTFMove(m_index); }
 
 private:
     UniqueRef<Expression> m_index;

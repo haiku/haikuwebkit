@@ -62,8 +62,11 @@ void ScrollingTreeScrollingNode::commitStateBeforeChildren(const ScrollingStateN
     if (state.hasChangedProperty(ScrollingStateScrollingNode::ReachableContentsSize))
         m_reachableContentsSize = state.reachableContentsSize();
 
-    if (state.hasChangedProperty(ScrollingStateScrollingNode::ScrollPosition))
+    if (state.hasChangedProperty(ScrollingStateScrollingNode::ScrollPosition)) {
         m_lastCommittedScrollPosition = state.scrollPosition();
+        if (m_isFirstCommit && !state.hasChangedProperty(ScrollingStateScrollingNode::RequestedScrollPosition))
+            m_currentScrollPosition = m_lastCommittedScrollPosition;
+    }
 
     if (state.hasChangedProperty(ScrollingStateScrollingNode::ParentRelativeScrollableRect))
         m_parentRelativeScrollableRect = state.parentRelativeScrollableRect();
@@ -111,6 +114,8 @@ void ScrollingTreeScrollingNode::commitStateAfterChildren(const ScrollingStateNo
     const ScrollingStateScrollingNode& scrollingStateNode = downcast<ScrollingStateScrollingNode>(stateNode);
     if (scrollingStateNode.hasChangedProperty(ScrollingStateScrollingNode::RequestedScrollPosition))
         scrollingTree().scrollingTreeNodeRequestsScroll(scrollingNodeID(), scrollingStateNode.requestedScrollPosition(), scrollingStateNode.requestedScrollPositionRepresentsProgrammaticScroll());
+
+    m_isFirstCommit = false;
 }
 
 ScrollingEventResult ScrollingTreeScrollingNode::handleWheelEvent(const PlatformWheelEvent&)
@@ -194,10 +199,10 @@ void ScrollingTreeScrollingNode::applyLayerPositions()
     repositionRelatedLayers();
 }
 
-void ScrollingTreeScrollingNode::wasScrolledByDelegatedScrolling(const FloatPoint& position, Optional<FloatRect> overrideLayoutViewport)
+void ScrollingTreeScrollingNode::wasScrolledByDelegatedScrolling(const FloatPoint& position, Optional<FloatRect> overrideLayoutViewport, ScrollingLayerPositionAction scrollingLayerPositionAction)
 {
     bool scrollPositionChanged = !scrollPositionAndLayoutViewportMatch(position, overrideLayoutViewport);
-    if (!scrollPositionChanged)
+    if (!scrollPositionChanged && scrollingLayerPositionAction != ScrollingLayerPositionAction::Set)
         return;
 
     m_currentScrollPosition = adjustedScrollPosition(position, ScrollPositionClamp::None);
@@ -206,7 +211,7 @@ void ScrollingTreeScrollingNode::wasScrolledByDelegatedScrolling(const FloatPoin
     repositionRelatedLayers();
 
     scrollingTree().notifyRelatedNodesAfterScrollPositionChange(*this);
-    scrollingTree().scrollingTreeNodeDidScroll(*this);
+    scrollingTree().scrollingTreeNodeDidScroll(*this, scrollingLayerPositionAction);
     scrollingTree().didScrollByDelegatedScrolling();
 }
 

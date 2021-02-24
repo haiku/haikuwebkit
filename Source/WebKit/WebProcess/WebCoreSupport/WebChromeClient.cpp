@@ -36,6 +36,8 @@
 #include "InjectedBundleNavigationAction.h"
 #include "InjectedBundleNodeHandle.h"
 #include "NavigationActionData.h"
+#include "NetworkConnectionToWebProcessMessages.h"
+#include "NetworkProcessConnection.h"
 #include "PageBanner.h"
 #include "UserData.h"
 #include "WebColorChooser.h"
@@ -94,6 +96,10 @@
 
 #if PLATFORM(GTK)
 #include "PrinterListGtk.h"
+#endif
+
+#if ENABLE(WEB_AUTHN)
+#include <WebCore/MockWebAuthenticationConfiguration.h>
 #endif
 
 namespace WebKit {
@@ -303,6 +309,15 @@ Page* WebChromeClient::createWindow(Frame& frame, const FrameLoadRequest& reques
     return webProcess.webPage(*newPageID)->corePage();
 }
 
+bool WebChromeClient::testProcessIncomingSyncMessagesWhenWaitingForSyncReply()
+{
+    IPC::UnboundedSynchronousIPCScope unboundedSynchronousIPCScope;
+    bool handled = false;
+    if (!WebProcess::singleton().ensureNetworkProcessConnection().connection().sendSync(Messages::NetworkConnectionToWebProcess::TestProcessIncomingSyncMessagesWhenWaitingForSyncReply(m_page.pageID()), Messages::NetworkConnectionToWebProcess::TestProcessIncomingSyncMessagesWhenWaitingForSyncReply::Reply(handled), 0))
+        return false;
+    return handled;
+}
+
 void WebChromeClient::show()
 {
     m_page.show();
@@ -457,6 +472,7 @@ void WebChromeClient::runJavaScriptAlert(Frame& frame, const String& alertText)
     m_page.injectedBundleUIClient().willRunJavaScriptAlert(&m_page, alertText, webFrame);
 
     HangDetectionDisabler hangDetectionDisabler;
+    IPC::UnboundedSynchronousIPCScope unboundedSynchronousIPCScope;
 
     m_page.sendSyncWithDelayedReply(Messages::WebPageProxy::RunJavaScriptAlert(webFrame->frameID(), SecurityOriginData::fromFrame(&frame), alertText), Messages::WebPageProxy::RunJavaScriptAlert::Reply());
 }
@@ -473,6 +489,7 @@ bool WebChromeClient::runJavaScriptConfirm(Frame& frame, const String& message)
     m_page.injectedBundleUIClient().willRunJavaScriptConfirm(&m_page, message, webFrame);
 
     HangDetectionDisabler hangDetectionDisabler;
+    IPC::UnboundedSynchronousIPCScope unboundedSynchronousIPCScope;
 
     bool result = false;
     if (!m_page.sendSyncWithDelayedReply(Messages::WebPageProxy::RunJavaScriptConfirm(webFrame->frameID(), SecurityOriginData::fromFrame(&frame), message), Messages::WebPageProxy::RunJavaScriptConfirm::Reply(result)))
@@ -493,6 +510,7 @@ bool WebChromeClient::runJavaScriptPrompt(Frame& frame, const String& message, c
     m_page.injectedBundleUIClient().willRunJavaScriptPrompt(&m_page, message, defaultValue, webFrame);
 
     HangDetectionDisabler hangDetectionDisabler;
+    IPC::UnboundedSynchronousIPCScope unboundedSynchronousIPCScope;
 
     if (!m_page.sendSyncWithDelayedReply(Messages::WebPageProxy::RunJavaScriptPrompt(webFrame->frameID(), SecurityOriginData::fromFrame(&frame), message, defaultValue), Messages::WebPageProxy::RunJavaScriptPrompt::Reply(result)))
         return false;
@@ -1347,5 +1365,12 @@ void WebChromeClient::setUserIsInteracting(bool userIsInteracting)
 {
     m_page.setUserIsInteracting(userIsInteracting);
 }
+
+#if ENABLE(WEB_AUTHN)
+void WebChromeClient::setMockWebAuthenticationConfiguration(const MockWebAuthenticationConfiguration& configuration)
+{
+    m_page.send(Messages::WebPageProxy::SetMockWebAuthenticationConfiguration(configuration));
+}
+#endif
 
 } // namespace WebKit

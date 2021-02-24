@@ -67,7 +67,7 @@ class RemoteVideoSample;
 struct CaptureSourceOrError;
 
 class WEBCORE_EXPORT RealtimeMediaSource
-    : public ThreadSafeRefCounted<RealtimeMediaSource>
+    : public ThreadSafeRefCounted<RealtimeMediaSource, WTF::DestructionThread::MainRunLoop>
     , public CanMakeWeakPtr<RealtimeMediaSource>
 #if !RELEASE_LOG_DISABLED
     , private LoggerHelper
@@ -96,6 +96,8 @@ public:
 
     virtual ~RealtimeMediaSource() = default;
 
+    virtual Ref<RealtimeMediaSource> clone() { return *this; }
+
     const String& hashedId() const;
     String deviceIDHashSalt() const;
 
@@ -107,7 +109,7 @@ public:
     bool isProducingData() const { return m_isProducingData; }
     void start();
     void stop();
-    void requestToEnd(Observer& callingObserver);
+    virtual void requestToEnd(Observer& callingObserver);
 
     bool muted() const { return m_muted; }
     void setMuted(bool);
@@ -170,6 +172,7 @@ public:
 
     virtual bool isIsolated() const { return false; }
 
+    virtual bool isMockSource() const { return false; }
     virtual bool isCaptureSource() const { return false; }
     virtual CaptureDevice::DeviceType deviceType() const { return CaptureDevice::DeviceType::Unknown; }
 
@@ -224,14 +227,16 @@ protected:
     void videoSampleAvailable(MediaSample&);
     void audioSamplesAvailable(const MediaTime&, const PlatformAudioData&, const AudioStreamDescription&, size_t);
 
+    void forEachObserver(const WTF::Function<void(Observer&)>&) const;
+
 private:
     virtual void startProducingData() { }
     virtual void stopProducingData() { }
     virtual void settingsDidChange(OptionSet<RealtimeMediaSourceSettings::Flag>) { }
 
-    virtual void hasEnded() { }
+    virtual void stopBeingObserved() { stop(); }
 
-    void forEachObserver(const WTF::Function<void(Observer&)>&) const;
+    virtual void hasEnded() { }
 
 #if !RELEASE_LOG_DISABLED
     RefPtr<const Logger> m_logger;

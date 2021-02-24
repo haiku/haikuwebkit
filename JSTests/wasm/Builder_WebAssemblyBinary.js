@@ -60,6 +60,8 @@ const putGlobalType = (bin, global) => {
 
 const putOp = (bin, op) => {
     put(bin, "uint8", op.value);
+    if (WASM.description.opcode[op.name].extendedOp)
+        put(bin, "uint8", WASM.description.opcode[op.name].extendedOp);
     if (op.arguments.length !== 0)
         throw new Error(`Unimplemented: arguments`); // FIXME https://bugs.webkit.org/show_bug.cgi?id=162706
 
@@ -192,6 +194,8 @@ const emitters = {
         const data = section.data;
         put(bin, "varuint32", data.length);
         for (const {tableIndex, offset, functionIndices} of data) {
+            if (tableIndex != 0)
+                put(bin, "uint8", 2);
             put(bin, "varuint32", tableIndex);
 
             let initExpr;

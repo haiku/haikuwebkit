@@ -161,6 +161,23 @@ enum CompositingPolicy {
 
 [
     ExportMacro=WEBCORE_TESTSUPPORT_EXPORT,
+    JSGenerateToJSObject,
+] dictionary TextIndicatorInfo {
+    DOMRectReadOnly textBoundingRectInRootViewCoordinates;
+    DOMRectList textRectsInBoundingRectCoordinates;
+};
+
+[
+    ExportMacro=WEBCORE_TESTSUPPORT_EXPORT,
+    JSGenerateToJSObject,
+] dictionary TextIndicatorOptions {
+    boolean useBoundingRectAndPaintAllContentForComplexRanges = false;
+    boolean computeEstimatedBackgroundColor = false;
+    boolean respectTextColor = false;
+};
+
+[
+    ExportMacro=WEBCORE_TESTSUPPORT_EXPORT,
     NoInterfaceObject,
 ] interface Internals {
     DOMString address(Node node);
@@ -365,6 +382,8 @@ enum CompositingPolicy {
     [MayThrowException] readonly attribute boolean areSVGAnimationsPaused;
     [MayThrowException] double svgAnimationsInterval(SVGSVGElement element);
 
+    boolean testProcessIncomingSyncMessagesWhenWaitingForSyncReply();
+
     // Flags for layerTreeAsText.
     const unsigned short LAYER_TREE_INCLUDES_VISIBLE_RECTS = 1;
     const unsigned short LAYER_TREE_INCLUDES_TILE_CACHES = 2;
@@ -372,9 +391,10 @@ enum CompositingPolicy {
     const unsigned short LAYER_TREE_INCLUDES_PAINTING_PHASES = 8;
     const unsigned short LAYER_TREE_INCLUDES_CONTENT_LAYERS = 16;
     const unsigned short LAYER_TREE_INCLUDES_ACCELERATES_DRAWING = 32;
-    const unsigned short LAYER_TREE_INCLUDES_BACKING_STORE_ATTACHED = 64;
-    const unsigned short LAYER_TREE_INCLUDES_ROOT_LAYER_PROPERTIES = 128;
-    const unsigned short LAYER_TREE_INCLUDES_EVENT_REGION = 256;
+    const unsigned short LAYER_TREE_INCLUDES_CLIPPING = 64;
+    const unsigned short LAYER_TREE_INCLUDES_BACKING_STORE_ATTACHED = 128;
+    const unsigned short LAYER_TREE_INCLUDES_ROOT_LAYER_PROPERTIES = 256;
+    const unsigned short LAYER_TREE_INCLUDES_EVENT_REGION = 512;
     [MayThrowException] DOMString layerTreeAsText(Document document, optional unsigned short flags = 0);
 
     [MayThrowException] unsigned long long layerIDForElement(Element element);
@@ -408,7 +428,7 @@ enum CompositingPolicy {
     void beginSimulatedMemoryPressure();
     void endSimulatedMemoryPressure();
 
-    unsigned long numberOfIDBTransactions();
+    [Conditional=INDEXED_DATABASE] unsigned long numberOfIDBTransactions();
 
     unsigned long numberOfLiveNodes();
     unsigned long numberOfLiveDocuments();
@@ -531,6 +551,7 @@ enum CompositingPolicy {
 
     [Conditional=VIDEO] boolean elementShouldBufferData(HTMLMediaElement media);
     [Conditional=VIDEO] DOMString elementBufferingPolicy(HTMLMediaElement media);
+    [Conditional=VIDEO] double privatePlayerVolume(HTMLMediaElement media);
 
     [Conditional=LEGACY_ENCRYPTED_MEDIA] void initializeMockCDM();
     [Conditional=ENCRYPTED_MEDIA] MockCDMFactory registerMockCDM();
@@ -564,6 +585,8 @@ enum CompositingPolicy {
     [Conditional=MEDIA_SOURCE] sequence<DOMString> bufferedSamplesForTrackID(SourceBuffer buffer, DOMString trackID);
     [Conditional=MEDIA_SOURCE] sequence<DOMString> enqueuedSamplesForTrackID(SourceBuffer buffer, DOMString trackID);
     [Conditional=MEDIA_SOURCE] void setShouldGenerateTimestamps(SourceBuffer buffer, boolean flag);
+    [Conditional=MEDIA_SOURCE] double minimumUpcomingPresentationTimeForTrackID(SourceBuffer buffer, DOMString trackID);
+    [Conditional=MEDIA_SOURCE] void setMaximumQueueDepthForTrackID(SourceBuffer buffer, DOMString trackID, unsigned long maxQueueDepth);
 
     [Conditional=VIDEO, MayThrowException] void beginMediaSessionInterruption(DOMString interruptionType);
     [Conditional=VIDEO] void endMediaSessionInterruption(DOMString flags);
@@ -672,6 +695,7 @@ enum CompositingPolicy {
     [Conditional=WEB_RTC] void setH264HardwareEncoderAllowed(boolean allowed);
     [Conditional=WEB_RTC] void applyRotationForOutgoingVideoSources(RTCPeerConnection connection);
 
+    [Conditional=MEDIA_STREAM] void setMockAudioTrackChannelNumber(MediaStreamTrack track, unsigned short count);
     [Conditional=MEDIA_STREAM] void setShouldInterruptAudioOnPageVisibilityChange(boolean shouldInterrupt);
     [Conditional=MEDIA_STREAM] void setCameraMediaStreamTrackOrientation(MediaStreamTrack track, short orientation);
     [Conditional=MEDIA_STREAM] void observeMediaStreamTrack(MediaStreamTrack track);
@@ -688,6 +712,10 @@ enum CompositingPolicy {
 
     unsigned long long documentIdentifier(Document document);
     boolean isDocumentAlive(unsigned long long documentIdentifier);
+
+    unsigned long long elementIdentifier(Element element);
+    unsigned long long frameIdentifier(Document document);
+    unsigned long long pageIdentifier(Document document);
 
     boolean isAnyWorkletGlobalScopeAlive();
 
@@ -757,4 +785,8 @@ enum CompositingPolicy {
     void setXHRMaximumIntervalForUserGestureForwarding(XMLHttpRequest xhr, double interval);
 
     void setIsPlayingToAutomotiveHeadUnit(boolean value);
+
+    TextIndicatorInfo textIndicatorForRange(Range range, TextIndicatorOptions options);
+
+    [Conditional=WEB_AUTHN] void setMockWebAuthenticationConfiguration(MockWebAuthenticationConfiguration configuration);
 };

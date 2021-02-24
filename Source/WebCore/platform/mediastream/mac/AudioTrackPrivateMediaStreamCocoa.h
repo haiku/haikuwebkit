@@ -45,6 +45,8 @@ public:
         return adoptRef(*new AudioTrackPrivateMediaStreamCocoa(streamTrack));
     }
 
+    void clear();
+
     void play();
     void pause();
     bool isPlaying() { return m_isPlaying; }
@@ -75,17 +77,22 @@ private:
     const char* logClassName() const final { return "AudioTrackPrivateMediaStreamCocoa"; }
 #endif
 
-
+    // Audio thread members
     AudioComponentInstance m_remoteIOUnit { nullptr };
     std::unique_ptr<CAAudioStreamDescription> m_inputDescription;
     std::unique_ptr<CAAudioStreamDescription> m_outputDescription;
+    bool m_isAudioUnitStarted { false };
+    bool m_hasStartedAutoplay { false };
 
+    // Cross thread members
     RefPtr<AudioSampleDataSource> m_dataSource;
 
+    // Main thread writable members
     float m_volume { 1 };
     bool m_isPlaying { false };
     bool m_autoPlay { false };
     bool m_muted { false };
+    bool m_isCleared { false };
 };
 
 }

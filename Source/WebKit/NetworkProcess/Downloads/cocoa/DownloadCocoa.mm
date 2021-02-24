@@ -108,8 +108,10 @@ void Download::publishProgress(const URL& url, SandboxExtension::Handle&& sandbo
     auto sandboxExtension = SandboxExtension::create(WTFMove(sandboxExtensionHandle));
 
     ASSERT(sandboxExtension);
+    if (!sandboxExtension)
+        return;
 
-    m_progress = adoptNS([[WKDownloadProgress alloc] initWithDownloadTask:m_downloadTask.get() download:this URL:(NSURL *)url sandboxExtension:sandboxExtension]);
+    m_progress = adoptNS([[WKDownloadProgress alloc] initWithDownloadTask:m_downloadTask.get() download:*this URL:(NSURL *)url sandboxExtension:sandboxExtension]);
 #if USE(NSPROGRESS_PUBLISHING_SPI)
     [m_progress _publish];
 #else

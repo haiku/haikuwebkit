@@ -42,12 +42,9 @@ fragment float4 fragment_main(VertexOut v [[stage_in]])
 }
 `;
 
-window.addEventListener("load", test, false);
+const canvas = document.querySelector("canvas");
 
-async function test() {
-    const device = await getBasicDevice();
-    const canvas = document.querySelector("canvas");
-
+async function start(device) {
     const shaderModule = device.createShaderModule({ code: shaderCode });
 
     const colorStates = [{
@@ -95,10 +92,19 @@ async function test() {
     passEncoder.endPass();
 
     device.getQueue().submit([commandEncoder.finish()]);
+}
 
-    requestAnimationFrame(() => { 
+getBasicDevice().then(function(device) {
+    start(device).then(function() {
+        if (window.testRunner)
+            testRunner.notifyDone();
+    }, function() {
         if (window.testRunner)
             testRunner.notifyDone();
     });
-}
+}, function() {
+    drawGreenSquareInSoftware(canvas);
+    if (window.testRunner)
+        testRunner.notifyDone();
+});
 </script>

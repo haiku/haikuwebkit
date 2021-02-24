@@ -579,7 +579,7 @@ String AccessibilityRenderObject::helpText() const
     if (!m_renderer)
         return String();
     
-    const AtomicString& ariaHelp = getAttribute(aria_helpAttr);
+    const AtomString& ariaHelp = getAttribute(aria_helpAttr);
     if (!ariaHelp.isEmpty())
         return ariaHelp;
     
@@ -591,12 +591,12 @@ String AccessibilityRenderObject::helpText() const
     for (RenderObject* ancestor = renderer(); ancestor; ancestor = ancestor->parent()) {
         if (is<HTMLElement>(ancestor->node())) {
             HTMLElement& element = downcast<HTMLElement>(*ancestor->node());
-            const AtomicString& summary = element.getAttribute(summaryAttr);
+            const AtomString& summary = element.getAttribute(summaryAttr);
             if (!summary.isEmpty())
                 return summary;
             
             // The title attribute should be used as help text unless it is already being used as descriptive text.
-            const AtomicString& title = element.getAttribute(titleAttr);
+            const AtomString& title = element.getAttribute(titleAttr);
             if (!title.isEmpty() && description != title)
                 return title;
         }
@@ -749,7 +749,7 @@ String AccessibilityRenderObject::stringValue() const
         int selectedIndex = selectElement.selectedIndex();
         const Vector<HTMLElement*>& listItems = selectElement.listItems();
         if (selectedIndex >= 0 && static_cast<size_t>(selectedIndex) < listItems.size()) {
-            const AtomicString& overriddenDescription = listItems[selectedIndex]->attributeWithoutSynchronization(aria_labelAttr);
+            const AtomString& overriddenDescription = listItems[selectedIndex]->attributeWithoutSynchronization(aria_labelAttr);
             if (!overriddenDescription.isNull())
                 return overriddenDescription;
         }
@@ -1029,21 +1029,25 @@ bool AccessibilityRenderObject::hasTextAlternative() const
     // override the "label" element association.
     return ariaAccessibilityDescription().length();
 }
-    
+
 bool AccessibilityRenderObject::hasPopup() const
 {
-    return !equalLettersIgnoringASCIICase(hasPopupValue(), "false");
+    // Return true if this has the aria-haspopup attribute, or if it has an ancestor of type link with the aria-haspopup attribute.
+    return AccessibilityObject::matchedParent(*this, true, [this] (const AccessibilityObject& object) {
+        return (this == &object) ? !equalLettersIgnoringASCIICase(object.popupValue(), "false")
+            : object.isLink() && !equalLettersIgnoringASCIICase(object.popupValue(), "false");
+    });
 }
 
 bool AccessibilityRenderObject::supportsARIADropping() const 
 {
-    const AtomicString& dropEffect = getAttribute(aria_dropeffectAttr);
+    const AtomString& dropEffect = getAttribute(aria_dropeffectAttr);
     return !dropEffect.isEmpty();
 }
 
 bool AccessibilityRenderObject::supportsARIADragging() const
 {
-    const AtomicString& grabbed = getAttribute(aria_grabbedAttr);
+    const AtomString& grabbed = getAttribute(aria_grabbedAttr);
     return equalLettersIgnoringASCIICase(grabbed, "true") || equalLettersIgnoringASCIICase(grabbed, "false");
 }
 
@@ -1054,7 +1058,7 @@ bool AccessibilityRenderObject::isARIAGrabbed()
 
 Vector<String> AccessibilityRenderObject::determineARIADropEffects()
 {
-    const AtomicString& dropEffects = getAttribute(aria_dropeffectAttr);
+    const AtomString& dropEffects = getAttribute(aria_dropeffectAttr);
     if (dropEffects.isEmpty()) {
         return { };
     }
@@ -1566,7 +1570,7 @@ String AccessibilityRenderObject::selectedText() const
     return doAXStringForRange(documentBasedSelectedTextRange());
 }
 
-const AtomicString& AccessibilityRenderObject::accessKey() const
+const AtomString& AccessibilityRenderObject::accessKey() const
 {
     Node* node = m_renderer->node();
     if (!is<Element>(node))
@@ -1848,7 +1852,7 @@ bool AccessibilityRenderObject::supportsARIAOwns() const
 {
     if (!m_renderer)
         return false;
-    const AtomicString& ariaOwns = getAttribute(aria_ownsAttr);
+    const AtomString& ariaOwns = getAttribute(aria_ownsAttr);
 
     return !ariaOwns.isEmpty();
 }
@@ -1974,7 +1978,9 @@ VisiblePositionRange AccessibilityRenderObject::visiblePositionRangeForLine(unsi
     while (--lineCount) {
         savedVisiblePos = visiblePos;
         visiblePos = nextLinePosition(visiblePos, 0);
-        if (visiblePos.isNull() || visiblePos == savedVisiblePos)
+        if (visiblePos.isNull()
+            || visiblePos == savedVisiblePos
+            || visiblePos.equals(savedVisiblePos))
             return VisiblePositionRange();
     }
     
@@ -2511,7 +2517,7 @@ AccessibilityObject* AccessibilityRenderObject::activeDescendant() const
     if (!m_renderer)
         return nullptr;
     
-    const AtomicString& activeDescendantAttrStr = getAttribute(aria_activedescendantAttr);
+    const AtomString& activeDescendantAttrStr = getAttribute(aria_activedescendantAttr);
     if (activeDescendantAttrStr.isNull() || activeDescendantAttrStr.isEmpty())
         return nullptr;
     Element* element = this->element();
@@ -2809,8 +2815,17 @@ AccessibilityRole AccessibilityRenderObject::determineAccessibilityRole()
     if (m_renderer->isSVGRoot())
         return AccessibilityRole::SVGRoot;
     
-    if (isStyleFormatGroup())
+    if (isStyleFormatGroup()) {
+        if (node->hasTagName(delTag))
+            return AccessibilityRole::Deletion;
+        if (node->hasTagName(insTag))
+            return AccessibilityRole::Insertion;
+        if (node->hasTagName(subTag))
+            return AccessibilityRole::Subscript;
+        if (node->hasTagName(supTag))
+            return AccessibilityRole::Superscript;
         return is<RenderInline>(*m_renderer) ? AccessibilityRole::Inline : AccessibilityRole::TextGroup;
+    }
     
     if (node && node->hasTagName(ddTag))
         return AccessibilityRole::DescriptionListDetail;
@@ -2961,7 +2976,7 @@ AccessibilityRole AccessibilityRenderObject::determineAccessibilityRole()
 
 AccessibilityOrientation AccessibilityRenderObject::orientation() const
 {
-    const AtomicString& ariaOrientation = getAttribute(aria_orientationAttr);
+    const AtomString& ariaOrientation = getAttribute(aria_orientationAttr);
     if (equalLettersIgnoringASCIICase(ariaOrientation, "horizontal"))
         return AccessibilityOrientation::Horizontal;
     if (equalLettersIgnoringASCIICase(ariaOrientation, "vertical"))
@@ -3062,7 +3077,7 @@ bool AccessibilityRenderObject::canSetExpandedAttribute() const
         return true;
     
     // An object can be expanded if it aria-expanded is true or false.
-    const AtomicString& expanded = getAttribute(aria_expandedAttr);
+    const AtomString& expanded = getAttribute(aria_expandedAttr);
     if (equalLettersIgnoringASCIICase(expanded, "true") || equalLettersIgnoringASCIICase(expanded, "false"))
         return true;
     return false;
@@ -3380,7 +3395,7 @@ bool AccessibilityRenderObject::canHaveChildren() const
 
 const String AccessibilityRenderObject::liveRegionStatus() const
 {
-    const AtomicString& liveRegionStatus = getAttribute(aria_liveAttr);
+    const AtomString& liveRegionStatus = getAttribute(aria_liveAttr);
     // These roles have implicit live region status.
     if (liveRegionStatus.isEmpty())
         return defaultLiveRegionStatusForRole(roleValue());
@@ -3390,8 +3405,8 @@ const String AccessibilityRenderObject::liveRegionStatus() const
 
 const String AccessibilityRenderObject::liveRegionRelevant() const
 {
-    static NeverDestroyed<const AtomicString> defaultLiveRegionRelevant("additions text", AtomicString::ConstructFromLiteral);
-    const AtomicString& relevant = getAttribute(aria_relevantAttr);
+    static NeverDestroyed<const AtomString> defaultLiveRegionRelevant("additions text", AtomString::ConstructFromLiteral);
+    const AtomString& relevant = getAttribute(aria_relevantAttr);
 
     // Default aria-relevant = "additions text".
     if (relevant.isEmpty())
@@ -3402,7 +3417,7 @@ const String AccessibilityRenderObject::liveRegionRelevant() const
 
 bool AccessibilityRenderObject::liveRegionAtomic() const
 {
-    const AtomicString& atomic = getAttribute(aria_atomicAttr);
+    const AtomString& atomic = getAttribute(aria_atomicAttr);
     if (equalLettersIgnoringASCIICase(atomic, "true"))
         return true;
     if (equalLettersIgnoringASCIICase(atomic, "false"))
@@ -3600,7 +3615,7 @@ const String& AccessibilityRenderObject::actionVerb() const
 #endif
 }
     
-void AccessibilityRenderObject::setAccessibleName(const AtomicString& name)
+void AccessibilityRenderObject::setAccessibleName(const AtomString& name)
 {
     // Setting the accessible name can store the value in the DOM
     if (!m_renderer)

@@ -73,9 +73,10 @@ public:
     void cancelPointersForGestureRecognizer(UIGestureRecognizer*);
 #endif
 
-private:
+    UIScrollView *findActingScrollParent(UIScrollView *);
     UIScrollView *scrollView() const;
 
+private:
     RetainPtr<CALayer> m_scrollLayer;
     RetainPtr<CALayer> m_scrolledContentsLayer;
     RetainPtr<WKScrollingNodeScrollViewDelegate> m_scrollViewDelegate;

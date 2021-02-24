@@ -28,7 +28,6 @@
 
 #if ENABLE(WEBGPU)
 
-#include "WHLSLCallExpression.h"
 #include "WHLSLDoWhileLoop.h"
 #include "WHLSLDotExpression.h"
 #include "WHLSLEnumerationDefinition.h"
@@ -38,9 +37,8 @@
 #include "WHLSLIfStatement.h"
 #include "WHLSLNameContext.h"
 #include "WHLSLProgram.h"
-#include "WHLSLPropertyAccessExpression.h"
+#include "WHLSLReplaceWith.h"
 #include "WHLSLResolveOverloadImpl.h"
-#include "WHLSLReturn.h"
 #include "WHLSLScopedSetAdder.h"
 #include "WHLSLTypeReference.h"
 #include "WHLSLVariableDeclaration.h"
@@ -56,6 +54,18 @@ NameResolver::NameResolver(NameContext& nameContext)
 {
 }
 
+NameResolver::NameResolver(NameResolver& parentResolver, NameContext& nameContext)
+    : m_nameContext(nameContext)
+    , m_parentNameResolver(&parentResolver)
+{
+}
+
+NameResolver::~NameResolver()
+{
+    if (error() && m_parentNameResolver)
+        m_parentNameResolver->setError();
+}
+
 void NameResolver::visit(AST::TypeReference& typeReference)
 {
     ScopedSetAdder<AST::TypeReference*> adder(m_typeReferences, &typeReference);
@@ -65,6 +75,8 @@ void NameResolver::visit(AST::TypeReference& typeReference)
     }
 
     Visitor::visit(typeReference);
+    if (error())
+        return;
     if (typeReference.maybeResolvedType()) // FIXME: https://bugs.webkit.org/show_bug.cgi?id=198161 Shouldn't we know by now whether the type has been resolved or not?
         return;
 
@@ -86,9 +98,10 @@ void NameResolver::visit(AST::TypeReference& typeReference)
 void NameResolver::visit(AST::FunctionDefinition& functionDefinition)
 {
     NameContext newNameContext(&m_nameContext);
-    NameResolver newNameResolver(newNameContext);
-    newNameResolver.setCurrentFunctionDefinition(m_currentFunction);
+    NameResolver newNameResolver(*this, newNameContext);
     checkErrorAndVisit(functionDefinition.type());
+    if (error())
+        return;
     for (auto& parameter : functionDefinition.parameters())
         newNameResolver.checkErrorAndVisit(parameter);
     newNameResolver.checkErrorAndVisit(functionDefinition.block());
@@ -97,22 +110,27 @@ void NameResolver::visit(AST::FunctionDefinition& functionDefinition)
 void NameResolver::visit(AST::Block& block)
 {
     NameContext nameContext(&m_nameContext);
-    NameResolver newNameResolver(nameContext);
-    newNameResolver.setCurrentFunctionDefinition(m_currentFunction);
+    NameResolver newNameResolver(*this, nameContext);
     newNameResolver.Visitor::visit(block);
 }
 
 void NameResolver::visit(AST::IfStatement& ifStatement)
 {
     checkErrorAndVisit(ifStatement.conditional());
-    NameContext nameContext(&m_nameContext);
-    NameResolver newNameResolver(nameContext);
-    newNameResolver.setCurrentFunctionDefinition(m_currentFunction);
-    newNameResolver.checkErrorAndVisit(ifStatement.body());
+    if (error())
+        return;
+
+    {
+        NameContext nameContext(&m_nameContext);
+        NameResolver newNameResolver(*this, nameContext);
+        newNameResolver.checkErrorAndVisit(ifStatement.body());
+    }
+    if (error())
+        return;
+
     if (ifStatement.elseBody()) {
         NameContext nameContext(&m_nameContext);
-        NameResolver newNameResolver(nameContext);
-        newNameResolver.setCurrentFunctionDefinition(m_currentFunction);
+        NameResolver newNameResolver(*this, nameContext);
         newNameResolver.checkErrorAndVisit(*ifStatement.elseBody());
     }
 }
@@ -120,26 +138,29 @@ void NameResolver::visit(AST::IfStatement& ifStatement)
 void NameResolver::visit(AST::WhileLoop& whileLoop)
 {
     checkErrorAndVisit(whileLoop.conditional());
+    if (error())
+        return;
+
     NameContext nameContext(&m_nameContext);
-    NameResolver newNameResolver(nameContext);
-    newNameResolver.setCurrentFunctionDefinition(m_currentFunction);
+    NameResolver newNameResolver(*this, nameContext);
     newNameResolver.checkErrorAndVisit(whileLoop.body());
 }
 
 void NameResolver::visit(AST::DoWhileLoop& whileLoop)
 {
-    NameContext nameContext(&m_nameContext);
-    NameResolver newNameResolver(nameContext);
-    newNameResolver.setCurrentFunctionDefinition(m_currentFunction);
-    newNameResolver.checkErrorAndVisit(whileLoop.body());
+    {
+        NameContext nameContext(&m_nameContext);
+        NameResolver newNameResolver(*this, nameContext);
+        newNameResolver.checkErrorAndVisit(whileLoop.body());
+    }
+
     checkErrorAndVisit(whileLoop.conditional());
 }
 
 void NameResolver::visit(AST::ForLoop& forLoop)
 {
     NameContext nameContext(&m_nameContext);
-    NameResolver newNameResolver(nameContext);
-    newNameResolver.setCurrentFunctionDefinition(m_currentFunction);
+    NameResolver newNameResolver(*this, nameContext);
     newNameResolver.Visitor::visit(forLoop);
 }
 
@@ -165,24 +186,6 @@ void NameResolver::visit(AST::VariableReference& variableReference)
     }
 }
 
-void NameResolver::visit(AST::Return& returnStatement)
-{
-    ASSERT(m_currentFunction);
-    returnStatement.setFunction(m_currentFunction);
-    Visitor::visit(returnStatement);
-}
-
-void NameResolver::visit(AST::PropertyAccessExpression& propertyAccessExpression)
-{
-    if (auto* getterFunctions = m_nameContext.getFunctions(propertyAccessExpression.getterFunctionName()))
-        propertyAccessExpression.setPossibleGetterOverloads(*getterFunctions);
-    if (auto* setterFunctions = m_nameContext.getFunctions(propertyAccessExpression.setterFunctionName()))
-        propertyAccessExpression.setPossibleSetterOverloads(*setterFunctions);
-    if (auto* anderFunctions = m_nameContext.getFunctions(propertyAccessExpression.anderFunctionName()))
-        propertyAccessExpression.setPossibleAnderOverloads(*anderFunctions);
-    Visitor::visit(propertyAccessExpression);
-}
-
 void NameResolver::visit(AST::DotExpression& dotExpression)
 {
     if (is<AST::VariableReference>(dotExpression.base())) {
@@ -194,8 +197,7 @@ void NameResolver::visit(AST::DotExpression& dotExpression)
                 AST::EnumerationDefinition& enumerationDefinition = downcast<AST::EnumerationDefinition>(type);
                 auto memberName = dotExpression.fieldName();
                 if (auto* member = enumerationDefinition.memberByName(memberName)) {
-                    Lexer::Token origin = dotExpression.origin();
-                    auto enumerationMemberLiteral = AST::EnumerationMemberLiteral::wrap(WTFMove(origin), WTFMove(baseName), WTFMove(memberName), enumerationDefinition, *member);
+                    auto enumerationMemberLiteral = AST::EnumerationMemberLiteral::wrap(dotExpression.codeLocation(), WTFMove(baseName), WTFMove(memberName), enumerationDefinition, *member);
                     AST::replaceWith<AST::EnumerationMemberLiteral>(dotExpression, WTFMove(enumerationMemberLiteral));
                     return;
                 }
@@ -206,29 +208,6 @@ void NameResolver::visit(AST::DotExpression& dotExpression)
     }
 
     Visitor::visit(dotExpression);
-}
-
-void NameResolver::visit(AST::CallExpression& callExpression)
-{
-    if (!callExpression.hasOverloads()) {
-        if (auto* functions = m_nameContext.getFunctions(callExpression.name()))
-            callExpression.setOverloads(*functions);
-        else {
-            if (auto* types = m_nameContext.getTypes(callExpression.name())) {
-                if (types->size() == 1) {
-                    if (auto* functions = m_nameContext.getFunctions("operator cast"_str)) {
-                        callExpression.setCastData((*types)[0].get());
-                        callExpression.setOverloads(*functions);
-                    }
-                }
-            }
-        }
-    }
-    if (!callExpression.hasOverloads()) {
-        setError();
-        return;
-    }
-    Visitor::visit(callExpression);
 }
 
 void NameResolver::visit(AST::EnumerationMemberLiteral& enumerationMemberLiteral)
@@ -249,6 +228,13 @@ void NameResolver::visit(AST::EnumerationMemberLiteral& enumerationMemberLiteral
     }
     
     setError();
+}
+
+void NameResolver::visit(AST::NativeFunctionDeclaration& nativeFunctionDeclaration)
+{
+    NameContext newNameContext(&m_nameContext);
+    NameResolver newNameResolver(newNameContext);
+    newNameResolver.Visitor::visit(nativeFunctionDeclaration);
 }
 
 // FIXME: https://bugs.webkit.org/show_bug.cgi?id=198167 Make sure all the names have been resolved.
@@ -278,15 +264,13 @@ bool resolveNamesInTypes(Program& program, NameResolver& nameResolver)
     return true;
 }
 
-bool resolveNamesInFunctions(Program& program, NameResolver& nameResolver)
+bool resolveTypeNamesInFunctions(Program& program, NameResolver& nameResolver)
 {
     for (auto& functionDefinition : program.functionDefinitions()) {
-        nameResolver.setCurrentFunctionDefinition(&functionDefinition);
         nameResolver.checkErrorAndVisit(functionDefinition);
         if (nameResolver.error())
             return false;
     }
-    nameResolver.setCurrentFunctionDefinition(nullptr);
     for (auto& nativeFunctionDeclaration : program.nativeFunctionDeclarations()) {
         nameResolver.checkErrorAndVisit(nativeFunctionDeclaration);
         if (nameResolver.error())

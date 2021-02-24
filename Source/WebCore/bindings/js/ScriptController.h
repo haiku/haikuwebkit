@@ -27,6 +27,7 @@
 #include <JavaScriptCore/JSBase.h>
 #include <JavaScriptCore/Strong.h>
 #include <wtf/Forward.h>
+#include <wtf/Optional.h>
 #include <wtf/RefPtr.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/TextPosition.h>
@@ -96,7 +97,7 @@ public:
     bool shouldAllowUserAgentScripts(Document&) const;
 
     // Returns true if argument is a JavaScript URL.
-    bool executeIfJavaScriptURL(const URL&, ShouldReplaceDocumentIfJavaScriptURL shouldReplaceDocumentIfJavaScriptURL = ReplaceDocumentIfJavaScriptURL);
+    bool executeIfJavaScriptURL(const URL&, RefPtr<SecurityOrigin> = nullptr, ShouldReplaceDocumentIfJavaScriptURL = ReplaceDocumentIfJavaScriptURL);
 
     // This function must be called from the main thread. It is safe to call it repeatedly.
     // Darwin is an exception to this rule: it is OK to call this function from any thread, even reentrantly.
@@ -133,8 +134,8 @@ public:
 
     void updateDocument();
 
-    void namedItemAdded(HTMLDocument*, const AtomicString&) { }
-    void namedItemRemoved(HTMLDocument*, const AtomicString&) { }
+    void namedItemAdded(HTMLDocument*, const AtomString&) { }
+    void namedItemRemoved(HTMLDocument*, const AtomString&) { }
 
     void clearScriptObjects();
     WEBCORE_EXPORT void cleanupScriptObjectsForPlugin(void*);
@@ -163,6 +164,8 @@ public:
 
     void initScriptForWindowProxy(JSWindowProxy&);
 
+    bool willReplaceWithResultOfExecutingJavascriptURL() const { return m_willReplaceWithResultOfExecutingJavascriptURL; }
+
 private:
     void setupModuleScriptHandlers(LoadableModuleScript&, JSC::JSInternalPromise&, DOMWrapperWorld&);
 
@@ -175,6 +178,7 @@ private:
     const String* m_sourceURL;
 
     bool m_paused;
+    bool m_willReplaceWithResultOfExecutingJavascriptURL { false };
 
     // The root object used for objects bound outside the context of a plugin, such
     // as NPAPI plugins. The plugins using these objects prevent a page from being cached so they

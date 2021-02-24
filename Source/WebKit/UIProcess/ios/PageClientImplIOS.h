@@ -142,13 +142,14 @@ private:
     void didPerformDictionaryLookup(const WebCore::DictionaryPopupInfo&) override;
 
     bool effectiveAppearanceIsDark() const override;
-    bool effectiveAppearanceIsInactive() const override;
+    bool effectiveUserInterfaceLevelIsElevated() const override;
 
     void couldNotRestorePageState() override;
     void restorePageState(Optional<WebCore::FloatPoint>, const WebCore::FloatPoint&, const WebCore::FloatBoxExtent&, double) override;
     void restorePageCenterAndScale(Optional<WebCore::FloatPoint>, double) override;
 
     void elementDidFocus(const FocusedElementInformation&, bool userIsInteracting, bool blurPreviousNode, OptionSet<WebCore::ActivityState::Flag> activityStateChanges, API::Object* userData) override;
+    void updateInputContextAfterBlurringAndRefocusingElement() final;
     void elementDidBlur() override;
     void focusedElementDidChangeInputMode(WebCore::InputMode) override;
     void didReceiveEditorStateUpdateAfterFocus() override;
@@ -163,7 +164,7 @@ private:
     bool showShareSheet(const WebCore::ShareDataWithParsedURL&, WTF::CompletionHandler<void(bool)>&&) override;
     
     void disableDoubleTapGesturesDuringTapIfNecessary(uint64_t requestID) override;
-    void handleSmartMagnificationInformationForPotentialTap(uint64_t requestID, const WebCore::FloatRect& renderRect, bool fitEntireRect, double viewportMinimumScale, double viewportMaximumScale) override;
+    void handleSmartMagnificationInformationForPotentialTap(uint64_t requestID, const WebCore::FloatRect& renderRect, bool fitEntireRect, double viewportMinimumScale, double viewportMaximumScale, bool nodeIsRootLevel) override;
 
     double minimumZoomScale() const override;
     WebCore::FloatRect documentRect() const override;
@@ -242,9 +243,6 @@ private:
 #endif
 
     void handleAutocorrectionContext(const WebAutocorrectionContext&) final;
-
-    Seconds doubleTapForDoubleClickDelay() final;
-    float doubleTapForDoubleClickRadius() final;
 
     void didFinishProcessingAllPendingMouseEvents() final { }
 

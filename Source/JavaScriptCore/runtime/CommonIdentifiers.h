@@ -53,6 +53,7 @@
     macro(SharedArrayBuffer) \
     macro(String) \
     macro(Symbol) \
+    macro(WeakRef) \
     macro(__defineGetter__) \
     macro(__defineSetter__) \
     macro(__lookupGetter__) \
@@ -88,6 +89,7 @@
     macro(counters) \
     macro(day) \
     macro(defineProperty) \
+    macro(deref) \
     macro(description) \
     macro(descriptions) \
     macro(detail) \
@@ -254,6 +256,7 @@
     macro(asyncIterator) \
     macro(iterator) \
     macro(match) \
+    macro(matchAll) \
     macro(replace) \
     macro(search) \
     macro(species) \

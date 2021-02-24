@@ -99,7 +99,7 @@ public:
 protected:
     friend class Document;
 
-    void dispatchFullscreenChangeOrErrorEvent(Deque<RefPtr<Node>>&, const AtomicString& eventName, bool shouldNotifyMediaElement);
+    void dispatchFullscreenChangeOrErrorEvent(Deque<RefPtr<Node>>&, const AtomString& eventName, bool shouldNotifyMediaElement);
     void clearFullscreenElementStack();
     void popFullscreenElementStack();
     void pushFullscreenElementStack(Element&);
@@ -108,6 +108,9 @@ protected:
 private:
     Document& m_document;
 
+    RefPtr<Element> fullscreenOrPendingElement() const { return m_fullscreenElement ? m_fullscreenElement : m_pendingFullscreenElement; }
+
+    RefPtr<Element> m_pendingFullscreenElement;
     RefPtr<Element> m_fullscreenElement;
     Vector<RefPtr<Element>> m_fullscreenElementStack;
     WeakPtr<RenderFullScreen> m_fullscreenRenderer { nullptr };

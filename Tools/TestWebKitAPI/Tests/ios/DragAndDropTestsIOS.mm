@@ -29,6 +29,7 @@
 
 #import "ClassMethodSwizzler.h"
 #import "DragAndDropSimulator.h"
+#import "NSItemProviderAdditions.h"
 #import "PlatformUtilities.h"
 #import "TestWKWebView.h"
 #import "UIKitSPI.h"
@@ -53,10 +54,6 @@ SOFT_LINK_FRAMEWORK(MapKit)
 SOFT_LINK_CLASS(MapKit, MKMapItem)
 SOFT_LINK_CLASS(MapKit, MKPlacemark)
 
-typedef void (^FileLoadCompletionBlock)(NSURL *, BOOL, NSError *);
-typedef void (^DataLoadCompletionBlock)(NSData *, NSError *);
-typedef void (^NSItemProviderDataLoadCompletionBlock)(NSData *, NSError *);
-
 #if !USE(APPLE_INTERNAL_SDK)
 
 @interface NSItemProviderRepresentationOptions : NSObject
@@ -80,19 +77,6 @@ static NSData *testZIPArchive()
     NSURL *zipFileURL = [[NSBundle mainBundle] URLForResource:@"compressed-files" withExtension:@"zip" subdirectory:@"TestWebKitAPI.resources"];
     return [NSData dataWithContentsOfURL:zipFileURL];
 }
-
-@implementation NSItemProvider (DragAndDropTests)
-
-- (void)registerDataRepresentationForTypeIdentifier:(NSString *)typeIdentifier withData:(NSData *)data
-{
-    RetainPtr<NSData> retainedData = data;
-    [self registerDataRepresentationForTypeIdentifier:typeIdentifier visibility:NSItemProviderRepresentationVisibilityAll loadHandler: [retainedData] (DataLoadCompletionBlock block) -> NSProgress * {
-        block(retainedData.get(), nil);
-        return [NSProgress discreteProgressWithTotalUnitCount:100];
-    }];
-}
-
-@end
 
 @implementation TestWKWebView (DragAndDropTests)
 
@@ -997,7 +981,7 @@ TEST(DragAndDropTests, ExternalSourceUTF8PlainTextOnly)
     NSString *textPayload = @"Ceci n'est pas une string";
     auto simulator = adoptNS([[DragAndDropSimulator alloc] initWithWebView:webView.get()]);
     auto simulatedItemProvider = adoptNS([[NSItemProvider alloc] init]);
-    [simulatedItemProvider registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeUTF8PlainText visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(NSItemProviderDataLoadCompletionBlock completionBlock)
+    [simulatedItemProvider registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeUTF8PlainText visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(DataLoadCompletionBlock completionBlock)
     {
         completionBlock([textPayload dataUsingEncoding:NSUTF8StringEncoding], nil);
         return [NSProgress discreteProgressWithTotalUnitCount:100];
@@ -1017,7 +1001,7 @@ TEST(DragAndDropTests, ExternalSourceJPEGOnly)
 
     auto simulator = adoptNS([[DragAndDropSimulator alloc] initWithWebView:webView.get()]);
     auto simulatedItemProvider = adoptNS([[NSItemProvider alloc] init]);
-    [simulatedItemProvider registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeJPEG visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(NSItemProviderDataLoadCompletionBlock completionBlock)
+    [simulatedItemProvider registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeJPEG visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(DataLoadCompletionBlock completionBlock)
     {
         completionBlock(UIImageJPEGRepresentation(testIconImage(), 0.5), nil);
         return [NSProgress discreteProgressWithTotalUnitCount:100];
@@ -1313,7 +1297,7 @@ TEST(DragAndDropTests, InjectedBundleOverridePerformTwoStepDrop)
     [webView stringByEvaluatingJavaScript:@"getSelection().removeAllRanges()"];
 
     auto simulatedItemProvider = adoptNS([[NSItemProvider alloc] init]);
-    [simulatedItemProvider registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeUTF8PlainText visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(NSItemProviderDataLoadCompletionBlock completionBlock)
+    [simulatedItemProvider registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeUTF8PlainText visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(DataLoadCompletionBlock completionBlock)
     {
         completionBlock([@"Hello world" dataUsingEncoding:NSUTF8StringEncoding], nil);
         return [NSProgress discreteProgressWithTotalUnitCount:100];
@@ -1336,7 +1320,7 @@ TEST(DragAndDropTests, InjectedBundleAllowPerformTwoStepDrop)
     [webView stringByEvaluatingJavaScript:@"getSelection().removeAllRanges()"];
 
     auto simulatedItemProvider = adoptNS([[NSItemProvider alloc] init]);
-    [simulatedItemProvider registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeUTF8PlainText visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(NSItemProviderDataLoadCompletionBlock completionBlock)
+    [simulatedItemProvider registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeUTF8PlainText visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(DataLoadCompletionBlock completionBlock)
     {
         completionBlock([@"Hello world" dataUsingEncoding:NSUTF8StringEncoding], nil);
         return [NSProgress discreteProgressWithTotalUnitCount:100];
@@ -1443,6 +1427,30 @@ TEST(DragAndDropTests, CancelledLiftDoesNotCauseSubsequentDragsToFail)
     EXPECT_WK_STREQ("PASS", [webView stringByEvaluatingJavaScript:@"target.textContent"]);
     [webView stringByEvaluatingJavaScript:@"output.textContent"];
     checkStringArraysAreEqual(@[@"dragstart", @"dragend"], [outputText componentsSeparatedByString:@" "]);
+}
+
+TEST(DragAndDropTests, WebProcessTerminationDuringDrag)
+{
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
+    [webView synchronouslyLoadTestPageNamed:@"link-and-target-div"];
+    auto simulator = adoptNS([[DragAndDropSimulator alloc] initWithWebView:webView.get()]);
+    [simulator setSessionWillBeginBlock:^{
+        [webView _killWebContentProcessAndResetState];
+    }];
+    [simulator runFrom:CGPointMake(100, 50) to:CGPointMake(300, 50)];
+}
+
+TEST(DragAndDropTests, WebViewRemovedFromViewHierarchyDuringDrag)
+{
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
+    [webView synchronouslyLoadTestPageNamed:@"link-and-target-div"];
+    auto simulator = adoptNS([[DragAndDropSimulator alloc] initWithWebView:webView.get()]);
+    [simulator setConvertItemProvidersBlock:[webView] (NSItemProvider *item, NSArray *, NSDictionary *) -> NSArray * {
+        [webView removeFromSuperview];
+        return @[ item ];
+    }];
+    [simulator runFrom:CGPointMake(100, 50) to:CGPointMake(300, 50)];
+    EXPECT_EQ([simulator cancellationPreviews].firstObject, nil);
 }
 
 static void testDragAndDropOntoTargetElements(TestWKWebView *webView)
@@ -1557,14 +1565,14 @@ TEST(DragAndDropTests, WebItemProviderPasteboardLoading)
 
     WebItemProviderPasteboard *pasteboard = [WebItemProviderPasteboard sharedInstance];
     auto fastItem = adoptNS([[NSItemProvider alloc] init]);
-    [fastItem registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeUTF8PlainText visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(NSItemProviderDataLoadCompletionBlock completionBlock)
+    [fastItem registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeUTF8PlainText visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(DataLoadCompletionBlock completionBlock)
     {
         completionBlock([fastString dataUsingEncoding:NSUTF8StringEncoding], nil);
         return nil;
     }];
 
     auto slowItem = adoptNS([[NSItemProvider alloc] init]);
-    [slowItem registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeUTF8PlainText visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(NSItemProviderDataLoadCompletionBlock completionBlock)
+    [slowItem registerDataRepresentationForTypeIdentifier:(__bridge NSString *)kUTTypeUTF8PlainText visibility:NSItemProviderRepresentationVisibilityAll loadHandler:^NSProgress *(DataLoadCompletionBlock completionBlock)
     {
         sleep(2_s);
         completionBlock([slowString dataUsingEncoding:NSUTF8StringEncoding], nil);

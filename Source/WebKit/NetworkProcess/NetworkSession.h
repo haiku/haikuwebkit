@@ -53,7 +53,9 @@ class NetworkDataTask;
 class NetworkProcess;
 class NetworkResourceLoader;
 class StorageManager;
+class NetworkSocketChannel;
 class WebResourceLoadStatisticsStore;
+class WebSocketTask;
 struct NetworkSessionCreationParameters;
 
 enum class WebsiteDataType;
@@ -70,7 +72,7 @@ public:
 
     PAL::SessionID sessionID() const { return m_sessionID; }
     NetworkProcess& networkProcess() { return m_networkProcess; }
-    WebCore::NetworkStorageSession& networkStorageSession() const;
+    WebCore::NetworkStorageSession* networkStorageSession() const;
 
     void registerNetworkDataTask(NetworkDataTask& task) { m_dataTaskSet.add(&task); }
     void unregisterNetworkDataTask(NetworkDataTask& task) { m_dataTaskSet.remove(&task); }
@@ -80,11 +82,15 @@ public:
 #if ENABLE(RESOURCE_LOAD_STATISTICS)
     WebResourceLoadStatisticsStore* resourceLoadStatistics() const { return m_resourceLoadStatistics.get(); }
     void setResourceLoadStatisticsEnabled(bool);
+    bool isResourceLoadStatisticsEnabled() const;
     void notifyResourceLoadStatisticsProcessed();
     void deleteWebsiteDataForRegistrableDomains(OptionSet<WebsiteDataType>, HashMap<WebCore::RegistrableDomain, WebsiteDataToRemove>&&, bool shouldNotifyPage, CompletionHandler<void(const HashSet<WebCore::RegistrableDomain>&)>&&);
     void registrableDomainsWithWebsiteData(OptionSet<WebsiteDataType>, bool shouldNotifyPage, CompletionHandler<void(HashSet<WebCore::RegistrableDomain>&&)>&&);
     void logDiagnosticMessageWithValue(const String& message, const String& description, unsigned value, unsigned significantFigures, WebCore::ShouldSample);
     void notifyPageStatisticsTelemetryFinished(unsigned totalPrevalentResources, unsigned totalPrevalentResourcesWithUserInteraction, unsigned top3SubframeUnderTopFrameOrigins);
+    void setShouldDowngradeReferrerForTesting(bool);
+    bool shouldDowngradeReferrer() const;
+    void setShouldBlockThirdPartyCookiesForTesting(bool);
 #endif
     void storeAdClickAttribution(WebCore::AdClickAttribution&&);
     void handleAdClickAttributionConversion(WebCore::AdClickAttribution::Conversion&&, const URL& requestURL, const WebCore::ResourceRequest& redirectRequest);
@@ -101,8 +107,16 @@ public:
     PrefetchCache& prefetchCache() { return m_prefetchCache; }
     void clearPrefetchCache() { m_prefetchCache.clear(); }
 
+    virtual std::unique_ptr<WebSocketTask> createWebSocketTask(NetworkSocketChannel&, const WebCore::ResourceRequest&, const String& protocol);
+    virtual void removeWebSocketTask(WebSocketTask&) { }
+    virtual void addWebSocketTask(WebSocketTask&) { }
+
 protected:
-    NetworkSession(NetworkProcess&, PAL::SessionID, const String& localStorageDirectory, SandboxExtension::Handle&);
+    NetworkSession(NetworkProcess&, PAL::SessionID, String&& localStorageDirectory, SandboxExtension::Handle&);
+
+#if ENABLE(RESOURCE_LOAD_STATISTICS)
+    void destroyResourceLoadStatistics();
+#endif
 
     PAL::SessionID m_sessionID;
     Ref<NetworkProcess> m_networkProcess;
@@ -113,6 +127,7 @@ protected:
     ShouldIncludeLocalhost m_shouldIncludeLocalhostInResourceLoadStatistics { ShouldIncludeLocalhost::Yes };
     EnableResourceLoadStatisticsDebugMode m_enableResourceLoadStatisticsDebugMode { EnableResourceLoadStatisticsDebugMode::No };
     WebCore::RegistrableDomain m_resourceLoadStatisticsManualPrevalentResource;
+    bool m_downgradeReferrer { true };
 #endif
     UniqueRef<AdClickAttributionManager> m_adClickAttribution;
 
@@ -121,6 +136,9 @@ protected:
     PrefetchCache m_prefetchCache;
 
     Ref<StorageManager> m_storageManager;
+#if !ASSERT_DISABLED
+    bool m_isInvalidated { false };
+#endif
 };
 
 } // namespace WebKit

@@ -81,7 +81,6 @@ void ArrayPrototype::finishCreation(VM& vm, JSGlobalObject* globalObject)
 {
     Base::finishCreation(vm);
     ASSERT(inherits(vm, info()));
-    didBecomePrototype();
 
     putDirectWithoutTransition(vm, vm.propertyNames->toString, globalObject->arrayProtoToStringFunction(), static_cast<unsigned>(PropertyAttribute::DontEnum));
     putDirectWithoutTransition(vm, vm.propertyNames->builtinNames().valuesPublicName(), globalObject->arrayProtoValuesFunction(), static_cast<unsigned>(PropertyAttribute::DontEnum));
@@ -132,6 +131,8 @@ void ArrayPrototype::finishCreation(VM& vm, JSGlobalObject* globalObject)
         &vm.propertyNames->builtinNames().fillPublicName(),
         &vm.propertyNames->builtinNames().findPublicName(),
         &vm.propertyNames->builtinNames().findIndexPublicName(),
+        &vm.propertyNames->builtinNames().flatPublicName(),
+        &vm.propertyNames->builtinNames().flatMapPublicName(),
         &vm.propertyNames->builtinNames().includesPublicName(),
         &vm.propertyNames->builtinNames().keysPublicName(),
         &vm.propertyNames->builtinNames().valuesPublicName()
@@ -212,7 +213,7 @@ enum class SpeciesConstructResult {
     CreatedObject
 };
 
-static ALWAYS_INLINE std::pair<SpeciesConstructResult, JSObject*> speciesConstructArray(ExecState* exec, JSObject* thisObject, unsigned length)
+static ALWAYS_INLINE std::pair<SpeciesConstructResult, JSObject*> speciesConstructArray(ExecState* exec, JSObject* thisObject, uint64_t length)
 {
     VM& vm = exec->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -237,14 +238,16 @@ static ALWAYS_INLINE std::pair<SpeciesConstructResult, JSObject*> speciesConstru
         RETURN_IF_EXCEPTION(scope, exceptionResult());
         if (constructor.isConstructor(vm)) {
             JSObject* constructorObject = jsCast<JSObject*>(constructor);
-            if (exec->lexicalGlobalObject() != constructorObject->globalObject(vm))
-                return std::make_pair(SpeciesConstructResult::FastPath, nullptr);;
+            bool isArrayConstructorFromAnotherRealm = exec->lexicalGlobalObject() != constructorObject->globalObject(vm)
+                && constructorObject->inherits<ArrayConstructor>(vm);
+            if (isArrayConstructorFromAnotherRealm)
+                return std::make_pair(SpeciesConstructResult::FastPath, nullptr);
         }
         if (constructor.isObject()) {
             constructor = constructor.get(exec, vm.propertyNames->speciesSymbol);
             RETURN_IF_EXCEPTION(scope, exceptionResult());
             if (constructor.isNull())
-                return std::make_pair(SpeciesConstructResult::FastPath, nullptr);;
+                return std::make_pair(SpeciesConstructResult::FastPath, nullptr);
         }
     } else {
         // If isArray is false, return ? ArrayCreate(length).
@@ -260,6 +263,28 @@ static ALWAYS_INLINE std::pair<SpeciesConstructResult, JSObject*> speciesConstru
     JSObject* newObject = construct(exec, constructor, args, "Species construction did not get a valid constructor");
     RETURN_IF_EXCEPTION(scope, exceptionResult());
     return std::make_pair(SpeciesConstructResult::CreatedObject, newObject);
+}
+
+EncodedJSValue JSC_HOST_CALL arrayProtoFuncSpeciesCreate(ExecState* exec)
+{
+    VM& vm = exec->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+    JSObject* object = asObject(exec->uncheckedArgument(0));
+    uint64_t length = static_cast<uint64_t>(exec->uncheckedArgument(1).asNumber());
+
+    std::pair<SpeciesConstructResult, JSObject*> speciesResult = speciesConstructArray(exec, object, length);
+    EXCEPTION_ASSERT(!!scope.exception() == (speciesResult.first == SpeciesConstructResult::Exception));
+    if (UNLIKELY(speciesResult.first == SpeciesConstructResult::Exception))
+        return { };
+    if (speciesResult.first == SpeciesConstructResult::CreatedObject)
+        return JSValue::encode(speciesResult.second);
+
+    if (length > std::numeric_limits<unsigned>::max()) {
+        throwRangeError(exec, scope, "Array size is not a small enough positive integer."_s);
+        return { };
+    }
+
+    RELEASE_AND_RETURN(scope, JSValue::encode(constructEmptyArray(exec, nullptr, static_cast<unsigned>(length))));
 }
 
 static inline unsigned argumentClampedIndexFromStartOrEnd(ExecState* exec, int argument, unsigned length, unsigned undefinedValue = 0)
@@ -515,6 +540,25 @@ inline JSValue fastJoin(ExecState& state, JSObject* thisObject, StringView separ
             if (separator.is8Bit())
                 RELEASE_AND_RETURN(scope, repeatCharacter(state, separator.characters8()[0], length - 1));
             RELEASE_AND_RETURN(scope, repeatCharacter(state, separator.characters16()[0], length - 1));
+        default:
+            JSString* result = jsEmptyString(&state);
+            if (length <= 1)
+                return result;
+
+            JSString* operand = jsString(&vm, separator.toString());
+            RETURN_IF_EXCEPTION(scope, { });
+            unsigned count = length - 1;
+            for (;;) {
+                if (count & 1) {
+                    result = jsString(&state, result, operand);
+                    RETURN_IF_EXCEPTION(scope, { });
+                }
+                count >>= 1;
+                if (!count)
+                    return result;
+                operand = jsString(&state, operand, operand);
+                RETURN_IF_EXCEPTION(scope, { });
+            }
         }
         }
     }
@@ -686,7 +730,7 @@ static JSValue slowJoin(ExecState& exec, JSObject* thisObject, JSString* separat
     // 9.e Increase k by 1..
     for (uint64_t k = 1; k < length; ++k) {
         // b. Let element be ? Get(O, ! ToString(k)).
-        JSValue element = thisObject->get(&exec, Identifier::fromString(&exec, AtomicString::number(k)));
+        JSValue element = thisObject->get(&exec, Identifier::fromString(&exec, AtomString::number(k)));
         RETURN_IF_EXCEPTION(scope, { });
 
         // c. If element is undefined or null, let next be the empty String; otherwise, let next be ? ToString(element).
@@ -1002,6 +1046,10 @@ EncodedJSValue JSC_HOST_CALL arrayProtoFuncSlice(ExecState* exec)
         result = constructEmptyArray(exec, nullptr, end - begin);
         RETURN_IF_EXCEPTION(scope, { });
     }
+
+    // Document that we need to keep the source array alive until after anything
+    // that can GC (e.g. allocating the result array).
+    thisObj->use();
 
     unsigned n = 0;
     for (unsigned k = begin; k < end; k++, n++) {

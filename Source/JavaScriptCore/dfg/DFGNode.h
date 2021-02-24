@@ -859,14 +859,6 @@ public:
         return jsDynamicCast<T>(vm, asCell());
     }
     
-    template<typename T>
-    T castConstant(VM& vm)
-    {
-        T result = dynamicCastConstant<T>(vm);
-        RELEASE_ASSERT(result);
-        return result;
-    }
-
     bool hasLazyJSValue()
     {
         return op() == LazyJSConstant;
@@ -1694,6 +1686,7 @@ public:
         case ValueBitOr:
         case ValueBitXor:
         case ValueBitNot:
+        case ValueBitLShift:
         case CallObjectConstructor:
         case LoadKeyFromMapBucket:
         case LoadValueFromMapBucket:

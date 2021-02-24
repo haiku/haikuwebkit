@@ -138,7 +138,7 @@ struct WebPageCreationParameters {
     bool isProcessSwap { false };
 
     bool useDarkAppearance { false };
-    bool useInactiveAppearance { false };
+    bool useElevatedUserInterfaceLevel { false };
 
 #if PLATFORM(MAC)
     ColorSpaceData colorSpace;
@@ -158,8 +158,6 @@ struct WebPageCreationParameters {
     int32_t deviceOrientation { 0 };
     bool keyboardIsAttached { false };
     bool canShowWhileLocked { false };
-    Seconds doubleTapForDoubleClickDelay { 350_ms };
-    float doubleTapForDoubleClickRadius { 45 };
     Optional<WebCore::ViewportArguments> overrideViewportArguments;
 #endif
 #if PLATFORM(COCOA)

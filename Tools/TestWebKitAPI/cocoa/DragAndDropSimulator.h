@@ -47,6 +47,11 @@ typedef NS_ENUM(NSInteger, DragAndDropPhase) {
     DragAndDropPhasePerformingDrop = 4
 };
 
+typedef NS_ENUM(NSInteger, DropAnimationTiming) {
+    DropAnimationShouldFinishAfterHandlingDrop,
+    DropAnimationShouldFinishBeforeHandlingDrop
+};
+
 typedef NSDictionary<NSNumber *, NSValue *> *ProgressToCGPointValueMap;
 
 @interface MockDragDropSession : NSObject <UIDragDropSession> {
@@ -91,6 +96,7 @@ typedef NSDictionary<NSNumber *, NSValue *> *ProgressToCGPointValueMap;
 - (instancetype)initWithWebView:(TestWKWebView *)webView;
 - (void)runFrom:(CGPoint)startLocation to:(CGPoint)endLocation additionalItemRequestLocations:(ProgressToCGPointValueMap)additionalItemRequestLocations;
 - (void)ensureInputSession;
+- (void)setExternalItemProviders:(NSArray<NSItemProvider *> *)itemProviders defaultDropPreviews:(NSArray<UITargetedDragPreview *> *)previews;
 
 @property (nonatomic, readonly) DragAndDropPhase phase;
 @property (nonatomic) BOOL allowsFocusToStartInputSession;
@@ -104,6 +110,7 @@ typedef NSDictionary<NSNumber *, NSValue *> *ProgressToCGPointValueMap;
 @property (nonatomic, copy) NSArray *(^convertItemProvidersBlock)(NSItemProvider *, NSArray *, NSDictionary *);
 @property (nonatomic, copy) NSArray *(^overridePerformDropBlock)(id <UIDropSession>);
 @property (nonatomic, copy) void(^dropCompletionBlock)(BOOL, NSArray *);
+@property (nonatomic, copy) dispatch_block_t sessionWillBeginBlock;
 @property (nonatomic, copy) UIDropOperation(^overrideDragUpdateBlock)(UIDropOperation, id <UIDropSession>);
 
 @property (nonatomic, readonly) NSArray *sourceItemProviders;
@@ -111,8 +118,10 @@ typedef NSDictionary<NSNumber *, NSValue *> *ProgressToCGPointValueMap;
 @property (nonatomic, readonly) CGRect finalSelectionStartRect;
 @property (nonatomic, readonly) CGRect lastKnownDragCaretRect;
 @property (nonatomic, readonly) NSArray<UITargetedDragPreview *> *liftPreviews;
+@property (nonatomic, readonly) NSArray<UITargetedDragPreview *> *cancellationPreviews;
 @property (nonatomic, readonly) NSArray *dropPreviews;
 @property (nonatomic, readonly) NSArray *delayedDropPreviews;
+@property (nonatomic) DropAnimationTiming dropAnimationTiming;
 
 #endif // PLATFORM(IOS_FAMILY)
 

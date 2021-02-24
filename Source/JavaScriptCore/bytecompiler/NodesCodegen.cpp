@@ -3979,7 +3979,7 @@ RegisterID* ClassExprNode::emitBytecode(BytecodeGenerator& generator, RegisterID
         generator.emitNode(superclass.get(), m_classHeritage);
     }
 
-    RefPtr<RegisterID> constructor;
+    RefPtr<RegisterID> constructor = generator.tempDestination(dst);
     bool needsHomeObject = false;
 
     if (m_constructorExpression) {
@@ -3987,10 +3987,10 @@ RegisterID* ClassExprNode::emitBytecode(BytecodeGenerator& generator, RegisterID
         FunctionMetadataNode* metadata = static_cast<FuncExprNode*>(m_constructorExpression)->metadata();
         metadata->setEcmaName(ecmaName());
         metadata->setClassSource(m_classSource);
-        constructor = generator.emitNode(dst, m_constructorExpression);
+        constructor = generator.emitNode(constructor.get(), m_constructorExpression);
         needsHomeObject = m_classHeritage || metadata->superBinding() == SuperBinding::Needed;
     } else
-        constructor = generator.emitNewDefaultConstructor(generator.finalDestination(dst), m_classHeritage ? ConstructorKind::Extends : ConstructorKind::Base, m_name, ecmaName(), m_classSource);
+        constructor = generator.emitNewDefaultConstructor(constructor.get(), m_classHeritage ? ConstructorKind::Extends : ConstructorKind::Base, m_name, ecmaName(), m_classSource);
 
     const auto& propertyNames = generator.propertyNames();
     RefPtr<RegisterID> prototype = generator.emitNewObject(generator.newTemporary());
@@ -4047,7 +4047,7 @@ RegisterID* ClassExprNode::emitBytecode(BytecodeGenerator& generator, RegisterID
         generator.popLexicalScope(this);
     }
 
-    return generator.move(dst, constructor.get());
+    return generator.move(generator.finalDestination(dst, constructor.get()), constructor.get());
 }
 
 // ------------------------------ ImportDeclarationNode -----------------------
@@ -4304,6 +4304,9 @@ void ObjectPatternNode::bindValue(BytecodeGenerator& generator, RegisterID* rhs)
         addMethod = generator.emitGetById(generator.newTemporary(), excludedList.get(), generator.propertyNames().builtinNames().addPrivateName());
     }
 
+    BytecodeGenerator::PreservedTDZStack preservedTDZStack;
+    generator.preserveTDZStack(preservedTDZStack);
+
     for (size_t i = 0; i < m_targetPatterns.size(); i++) {
         const auto& target = m_targetPatterns[i];
         if (target.bindingType == BindingType::Element) {
@@ -4366,6 +4369,8 @@ void ObjectPatternNode::bindValue(BytecodeGenerator& generator, RegisterID* rhs)
             target.pattern->bindValue(generator, result.get());
         }
     }
+
+    generator.restoreTDZStack(preservedTDZStack);
 }
 
 void ObjectPatternNode::collectBoundIdentifiers(Vector<Identifier>& identifiers) const

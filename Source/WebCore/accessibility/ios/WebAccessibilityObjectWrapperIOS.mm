@@ -26,7 +26,7 @@
 #import "config.h"
 #import "WebAccessibilityObjectWrapperIOS.h"
 
-#if HAVE(ACCESSIBILITY) && PLATFORM(IOS_FAMILY)
+#if ENABLE(ACCESSIBILITY) && PLATFORM(IOS_FAMILY)
 
 #import "AccessibilityAttachment.h"
 #import "AccessibilityMediaObject.h"
@@ -503,6 +503,14 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
     return m_object->hasPopup();
 }
 
+- (NSString *)accessibilityPopupValue
+{
+    if (![self _prepareAccessibilityCall])
+        return nil;
+
+    return m_object->popupValue();
+}
+
 - (NSString *)accessibilityLanguage
 {
     if (![self _prepareAccessibilityCall])
@@ -584,12 +592,18 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
 
 - (AccessibilityObjectWrapper*)_accessibilityTableAncestor
 {
-    
     if (const AccessibilityObject* parent = AccessibilityObject::matchedParent(*m_object, false, [] (const AccessibilityObject& object) {
-        return object.isTable();
+        return object.roleValue() == AccessibilityRole::Table;
     }))
         return parent->wrapper();
     return nil;
+}
+
+- (BOOL)_accessibilityIsInTableCell
+{
+    return AccessibilityObject::matchedParent(*m_object, false, [] (const AccessibilityObject& object) {
+        return object.roleValue() == AccessibilityRole::Cell;
+    }) != nullptr;
 }
 
 - (AccessibilityObjectWrapper*)_accessibilityFieldsetAncestor
@@ -675,13 +689,12 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
 {
     if (![self _prepareAccessibilityCall])
         return NO;
-    
-    // Only make the video object interactive if it plays inline and has no native controls.
+
     if (m_object->roleValue() != AccessibilityRole::Video || !is<AccessibilityMediaObject>(m_object))
         return NO;
-    
-    AccessibilityMediaObject* mediaObject = downcast<AccessibilityMediaObject>(m_object);
-    return !mediaObject->isAutoplayEnabled() && mediaObject->isPlayingInline() && !downcast<AccessibilityMediaObject>(m_object)->hasControlsAttributeSet();
+
+    // Convey the video object as interactive if auto-play is not enabled.
+    return !downcast<AccessibilityMediaObject>(*m_object).isAutoplayEnabled();
 }
 
 - (NSString *)interactiveVideoDescription
@@ -935,6 +948,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
     case AccessibilityRole::Column:
     case AccessibilityRole::ColumnHeader:
     case AccessibilityRole::Definition:
+    case AccessibilityRole::Deletion:
     case AccessibilityRole::DescriptionList:
     case AccessibilityRole::DescriptionListTerm:
     case AccessibilityRole::DescriptionListDetail:
@@ -960,6 +974,7 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
     case AccessibilityRole::HelpTag:
     case AccessibilityRole::Ignored:
     case AccessibilityRole::Inline:
+    case AccessibilityRole::Insertion:
     case AccessibilityRole::Label:
     case AccessibilityRole::LandmarkBanner:
     case AccessibilityRole::LandmarkComplementary:
@@ -1000,6 +1015,8 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
     case AccessibilityRole::SpinButtonPart:
     case AccessibilityRole::SplitGroup:
     case AccessibilityRole::Splitter:
+    case AccessibilityRole::Subscript:
+    case AccessibilityRole::Superscript:
     case AccessibilityRole::Summary:
     case AccessibilityRole::SystemWide:
     case AccessibilityRole::SVGRoot:
@@ -1781,20 +1798,26 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
 {
     if (![self _prepareAccessibilityCall])
         return nil;
-    
+
     // If this static text inside of a link, it should use its parent's linked element.
     AccessibilityObject* element = m_object;
     if (m_object->roleValue() == AccessibilityRole::StaticText && m_object->parentObjectUnignored()->isLink())
         element = m_object->parentObjectUnignored();
-    
-    AccessibilityObject::AccessibilityChildrenVector children;
-    element->linkedUIElements(children);
-    if (children.size() == 0)
-        return nil;
-    
-    return children[0]->wrapper();
-}
 
+    AccessibilityObject::AccessibilityChildrenVector linkedElements;
+    element->linkedUIElements(linkedElements);
+    if (!linkedElements.size() || !linkedElements[0])
+        return nil;
+
+    // AccessibilityObject::linkedUIElements may return an object that is
+    // exposed in other platforms but not on iOS, i.e., grouping or structure
+    // elements like <div> or <p>. Thus find the next accessible object that is
+    // exposed on iOS.
+    auto linkedElement = firstAccessibleObjectFromNode(linkedElements[0]->node(), [] (const AccessibilityObject& accessible) {
+        return accessible.wrapper().isAccessibilityElement;
+    });
+    return linkedElement ? linkedElement->wrapper() : nullptr;
+}
 
 - (BOOL)isAttachment
 {
@@ -1980,7 +2003,7 @@ static RenderObject* rendererForView(WAKView* view)
     AccessibilitySearchCriteria criteria = accessibilitySearchCriteriaForSearchPredicateParameterizedAttribute(parameters);
     AccessibilityObject::AccessibilityChildrenVector results;
     m_object->findMatchingObjects(&criteria, results);
-    return (NSArray *)convertToNSArray(results);
+    return convertToNSArray(results);
 }
 
 - (void)accessibilityModifySelection:(TextGranularity)granularity increase:(BOOL)increase
@@ -2550,6 +2573,14 @@ static void AXAttributedStringAppendText(NSMutableAttributedString* attrString, 
     return m_object->replaceTextInRange(string, PlainTextRange(range));
 }
 
+- (BOOL)accessibilityInsertText:(NSString *)text
+{
+    if (![self _prepareAccessibilityCall])
+        return NO;
+
+    return m_object->insertText(text);
+}
+
 // A convenience method for getting the accessibility objects of a NSRange. Currently used only by DRT.
 - (NSArray *)elementsForRange:(NSRange)range
 {
@@ -2622,6 +2653,20 @@ static void AXAttributedStringAppendText(NSMutableAttributedString* attrString, 
     VisiblePosition lineStart = m_object->previousLineStartPosition(start);
     
     return [WebAccessibilityTextMarker textMarkerWithVisiblePosition:lineStart cache:m_object->axObjectCache()];
+}
+
+- (NSArray *)misspellingTextMarkerRange:(NSArray *)startTextMarkerRange forward:(BOOL)forward
+{
+    if (![self _prepareAccessibilityCall])
+        return nil;
+
+    RefPtr<Range> startRange = [self rangeForTextMarkers:startTextMarkerRange];
+    if (!startRange)
+        return nil;
+
+    RefPtr<Range> misspellingRange = m_object->getMisspellingRange(startRange,
+        forward ? AccessibilitySearchDirection::Next : AccessibilitySearchDirection::Previous);
+    return [self textMarkersForRange:misspellingRange];
 }
 
 - (WebAccessibilityTextMarker *)nextMarkerForMarker:(WebAccessibilityTextMarker *)marker
@@ -3163,4 +3208,4 @@ static void AXAttributedStringAppendText(NSMutableAttributedString* attrString, 
 
 @end
 
-#endif // HAVE(ACCESSIBILITY) && PLATFORM(IOS_FAMILY)
+#endif // ENABLE(ACCESSIBILITY) && PLATFORM(IOS_FAMILY)

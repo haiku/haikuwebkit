@@ -32,7 +32,7 @@
 
 namespace WebCore {
 
-static AtomicString mouseEventType(PlatformTouchPoint::TouchPhaseType phase)
+static AtomString mouseEventType(PlatformTouchPoint::TouchPhaseType phase)
 {
     switch (phase) {
     case PlatformTouchPoint::TouchPhaseBegan:
@@ -48,9 +48,9 @@ static AtomicString mouseEventType(PlatformTouchPoint::TouchPhaseType phase)
     return nullAtom();
 }
 
-Ref<MouseEvent> MouseEvent::create(const PlatformTouchEvent& event, unsigned index, Ref<WindowProxy>&& view)
+Ref<MouseEvent> MouseEvent::create(const PlatformTouchEvent& event, unsigned index, Ref<WindowProxy>&& view, IsCancelable cancelable)
 {
-    return adoptRef(*new MouseEvent(mouseEventType(event.touchPhaseAtIndex(index)), CanBubble::Yes, IsCancelable::Yes, IsComposed::Yes, event.timestamp().approximateMonotonicTime(), WTFMove(view), 0, event.touchLocationAtIndex(index), event.touchLocationAtIndex(index), { }, event.modifiers(), 0, 0, nullptr, 0, 0, nullptr, IsSimulated::No, IsTrusted::Yes));
+    return adoptRef(*new MouseEvent(mouseEventType(event.touchPhaseAtIndex(index)), CanBubble::Yes, cancelable, IsComposed::Yes, event.timestamp().approximateMonotonicTime(), WTFMove(view), 0, event.touchLocationAtIndex(index), event.touchLocationAtIndex(index), { }, event.modifiers(), 0, 0, nullptr, 0, 0, nullptr, IsSimulated::No, IsTrusted::Yes));
 }
 
 } // namespace WebCore

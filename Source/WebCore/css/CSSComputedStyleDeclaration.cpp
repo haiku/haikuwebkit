@@ -790,12 +790,11 @@ static RefPtr<CSSValue> positionOffsetValue(const RenderStyle& style, CSSPropert
         }
         LayoutUnit containingBlockSize;
         if (box.isStickilyPositioned()) {
-            const RenderBox& enclosingScrollportBox =
-                box.enclosingScrollportBox();
-            if (isVerticalProperty == enclosingScrollportBox.isHorizontalWritingMode())
-                containingBlockSize = enclosingScrollportBox.contentLogicalHeight();
+            auto& enclosingClippingBox = box.enclosingClippingBoxForStickyPosition();
+            if (isVerticalProperty == enclosingClippingBox.isHorizontalWritingMode())
+                containingBlockSize = enclosingClippingBox.contentLogicalHeight();
             else
-                containingBlockSize = enclosingScrollportBox.contentLogicalWidth();
+                containingBlockSize = enclosingClippingBox.contentLogicalWidth();
         } else {
             if (isVerticalProperty == containingBlock->isHorizontalWritingMode()) {
                 containingBlockSize = box.isOutOfFlowPositioned()
@@ -1658,17 +1657,24 @@ ComputedStyleExtractor::ComputedStyleExtractor(Element* element, bool allowVisit
 {
 }
 
-CSSComputedStyleDeclaration::CSSComputedStyleDeclaration(Element& element, bool allowVisitedStyle, const String& pseudoElementName)
+CSSComputedStyleDeclaration::CSSComputedStyleDeclaration(Element& element, bool allowVisitedStyle, StringView pseudoElementName)
     : m_element(element)
     , m_allowVisitedStyle(allowVisitedStyle)
-    , m_refCount(1)
 {
-    unsigned nameWithoutColonsStart = pseudoElementName[0] == ':' ? (pseudoElementName[1] == ':' ? 2 : 1) : 0;
-    m_pseudoElementSpecifier = CSSSelector::pseudoId(CSSSelector::parsePseudoElementType(
-    (pseudoElementName.substringSharingImpl(nameWithoutColonsStart))));
+    StringView name = pseudoElementName;
+    if (name.startsWith(':'))
+        name = name.substring(1);
+    if (name.startsWith(':'))
+        name = name.substring(1);
+    m_pseudoElementSpecifier = CSSSelector::pseudoId(CSSSelector::parsePseudoElementType(name));
 }
 
 CSSComputedStyleDeclaration::~CSSComputedStyleDeclaration() = default;
+
+Ref<CSSComputedStyleDeclaration> CSSComputedStyleDeclaration::create(Element& element, bool allowVisitedStyle, StringView pseudoElementName)
+{
+    return adoptRef(*new CSSComputedStyleDeclaration(element, allowVisitedStyle, pseudoElementName));
+}
 
 void CSSComputedStyleDeclaration::ref()
 {
@@ -1731,7 +1737,7 @@ bool ComputedStyleExtractor::useFixedFontDefaultSize()
     return style->fontDescription().useFixedDefaultSize();
 }
 
-static CSSValueID identifierForFamily(const AtomicString& family)
+static CSSValueID identifierForFamily(const AtomString& family)
 {
     if (family == cursiveFamily)
         return CSSValueCursive;
@@ -1750,7 +1756,7 @@ static CSSValueID identifierForFamily(const AtomicString& family)
     return CSSValueInvalid;
 }
 
-static Ref<CSSPrimitiveValue> valueForFamily(const AtomicString& family)
+static Ref<CSSPrimitiveValue> valueForFamily(const AtomString& family)
 {
     if (CSSValueID familyIdentifier = identifierForFamily(family))
         return CSSValuePool::singleton().createIdentifierValue(familyIdentifier);
@@ -4023,9 +4029,6 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
 
 #if ENABLE(DARK_MODE_CSS)
         case CSSPropertyColorScheme: {
-            if (!RuntimeEnabledFeatures::sharedFeatures().darkModeCSSEnabled())
-                return nullptr;
-
             auto colorScheme = style.colorScheme();
             if (colorScheme.isAuto())
                 return cssValuePool.createIdentifierValue(CSSValueAuto);

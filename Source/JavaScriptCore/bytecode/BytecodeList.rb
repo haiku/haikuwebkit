@@ -226,7 +226,6 @@ op_group :BinaryOp,
         :beloweq,
         :mod,
         :pow,
-        :lshift,
         :rshift,
         :urshift,
     ],
@@ -261,6 +260,7 @@ op_group :ValueProfiledBinaryOp,
         :bitand,
         :bitor,
         :bitxor,
+        :lshift,
     ],
     args: {
         dst: VirtualRegister,
@@ -841,8 +841,8 @@ op :resolve_scope,
              constantScope: WriteBarrierBase[JSScope],
 
              # written from the slow path
-             globalLexicalEnvironment: JSGlobalLexicalEnvironment.*,
-             globalObject: JSGlobalObject.*,
+             globalLexicalEnvironment: WriteBarrierBase[JSGlobalLexicalEnvironment],
+             globalObject: WriteBarrierBase[JSGlobalObject],
         },
     }
 

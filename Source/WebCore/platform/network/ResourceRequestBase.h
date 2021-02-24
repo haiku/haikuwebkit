@@ -29,6 +29,7 @@
 #define ResourceRequestBase_h
 
 #include "FormData.h"
+#include "FrameLoaderTypes.h"
 #include "HTTPHeaderMap.h"
 #include "IntRect.h"
 #include "ResourceLoadPriority.h"
@@ -140,6 +141,8 @@ public:
 
     void clearHTTPAcceptEncoding();
 
+    WEBCORE_EXPORT void clearPurpose();
+
     const Vector<String>& responseContentDispositionEncodingFallbackArray() const { return m_responseContentDispositionEncodingFallbackArray; }
     WEBCORE_EXPORT void setResponseContentDispositionEncodingFallbackArray(const String& encoding1, const String& encoding2 = String(), const String& encoding3 = String());
 
@@ -179,10 +182,9 @@ public:
 
 #if USE(SYSTEM_PREVIEW)
     WEBCORE_EXPORT bool isSystemPreview() const;
-    WEBCORE_EXPORT void setSystemPreview(bool);
 
-    WEBCORE_EXPORT const IntRect& systemPreviewRect() const;
-    WEBCORE_EXPORT void setSystemPreviewRect(const IntRect&);
+    WEBCORE_EXPORT SystemPreviewInfo systemPreviewInfo() const;
+    WEBCORE_EXPORT void setSystemPreviewInfo(const SystemPreviewInfo&);
 #endif
 
 #if !PLATFORM(COCOA)
@@ -246,8 +248,7 @@ protected:
     bool m_hiddenFromInspector { false };
     bool m_isTopSite { false };
 #if USE(SYSTEM_PREVIEW)
-    bool m_isSystemPreview { false };
-    IntRect m_systemPreviewRect;
+    Optional<SystemPreviewInfo> m_systemPreviewInfo;
 #endif
 
 private:

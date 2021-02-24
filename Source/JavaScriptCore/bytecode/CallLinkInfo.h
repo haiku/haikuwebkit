@@ -157,7 +157,7 @@ public:
     bool isLinked() { return m_stub || m_calleeOrCodeBlock; }
     void unlink(VM&);
 
-    void setUpCall(CallType callType, CodeOrigin codeOrigin, unsigned calleeGPR)
+    void setUpCall(CallType callType, CodeOrigin codeOrigin, GPRReg calleeGPR)
     {
         m_callType = callType;
         m_codeOrigin = codeOrigin;
@@ -295,29 +295,24 @@ public:
         return static_cast<CallType>(m_callType);
     }
 
-    uint32_t* addressOfMaxNumArguments()
+    uint32_t* addressOfMaxArgumentCountIncludingThis()
     {
-        return &m_maxNumArguments;
+        return &m_maxArgumentCountIncludingThis;
     }
 
-    uint32_t maxNumArguments()
+    uint32_t maxArgumentCountIncludingThis()
     {
-        return m_maxNumArguments;
+        return m_maxArgumentCountIncludingThis;
     }
     
-    void setMaxNumArguments(unsigned);
+    void setMaxArgumentCountIncludingThis(unsigned);
 
     static ptrdiff_t offsetOfSlowPathCount()
     {
         return OBJECT_OFFSETOF(CallLinkInfo, m_slowPathCount);
     }
 
-    void setCalleeGPR(unsigned calleeGPR)
-    {
-        m_calleeGPR = calleeGPR;
-    }
-
-    unsigned calleeGPR()
+    GPRReg calleeGPR()
     {
         return m_calleeGPR;
     }
@@ -347,7 +342,7 @@ public:
     }
 
 private:
-    uint32_t m_maxNumArguments { 0 }; // For varargs: the profiled maximum number of arguments. For direct: the number of stack slots allocated for arguments.
+    uint32_t m_maxArgumentCountIncludingThis { 0 }; // For varargs: the profiled maximum number of arguments. For direct: the number of stack slots allocated for arguments.
     CodeLocationLabel<JSInternalPtrTag> m_callReturnLocationOrPatchableJump;
     CodeLocationLabel<JSInternalPtrTag> m_hotPathBeginOrSlowPathStart;
     CodeLocationNearCall<JSInternalPtrTag> m_hotPathOther;
@@ -364,7 +359,7 @@ private:
     bool m_allowStubs : 1;
     bool m_clearedByJettison : 1;
     unsigned m_callType : 4; // CallType
-    unsigned m_calleeGPR : 8;
+    GPRReg m_calleeGPR { InvalidGPRReg };
     uint32_t m_slowPathCount { 0 };
 };
 

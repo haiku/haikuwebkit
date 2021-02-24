@@ -49,6 +49,7 @@
 #include <WebCore/SharedBuffer.h>
 #include <WebCore/UserAgent.h>
 #include <WebCore/WindowsKeyboardCodes.h>
+#include <gtk/gtk.h>
 #include <wtf/glib/GUniquePtr.h>
 
 namespace WebKit {
@@ -56,7 +57,7 @@ using namespace WebCore;
 
 void WebPage::platformInitialize()
 {
-#if HAVE(ACCESSIBILITY)
+#if ENABLE(ACCESSIBILITY)
     // Create the accessible object (the plug) that will serve as the
     // entry point to the Web process, and send a message to the UI
     // process to connect the two worlds through the accessibility
@@ -165,7 +166,6 @@ String WebPage::platformUserAgent(const URL& url) const
     return WebCore::standardUserAgentForURL(url);
 }
 
-#if HAVE(GTK_GESTURES)
 void WebPage::getCenterForZoomGesture(const IntPoint& centerInViewCoordinates, CompletionHandler<void(WebCore::IntPoint&&)>&& completionHandler)
 {
     IntPoint result = mainFrameView()->rootViewToContents(centerInViewCoordinates);
@@ -173,7 +173,6 @@ void WebPage::getCenterForZoomGesture(const IntPoint& centerInViewCoordinates, C
     result.scale(1 / scale, 1 / scale);
     completionHandler(WTFMove(result));
 }
-#endif
 
 void WebPage::setInputMethodState(bool enabled)
 {

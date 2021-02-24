@@ -40,6 +40,7 @@
 #include "DeprecatedGlobalSettings.h"
 #include "DocumentLoader.h"
 #include "DocumentMarkerController.h"
+#include "Editor.h"
 #include "EventHandler.h"
 #include "EventNames.h"
 #include "FloatRect.h"
@@ -1676,10 +1677,7 @@ void FrameView::updateLayoutViewport()
             LayoutPoint newOrigin = computeLayoutViewportOrigin(visualViewportRect(), minStableLayoutViewportOrigin(), maxStableLayoutViewportOrigin(), layoutViewport, StickToDocumentBounds);
             setLayoutViewportOverrideRect(LayoutRect(newOrigin, m_layoutViewportOverrideRect.value().size()));
         }
-        if (frame().settings().visualViewportAPIEnabled()) {
-            if (auto* window = frame().window())
-                window->visualViewport().update();
-        }
+        layoutOrVisualViewportChanged();
         return;
     }
 
@@ -1688,10 +1686,7 @@ void FrameView::updateLayoutViewport()
         setBaseLayoutViewportOrigin(newLayoutViewportOrigin);
         LOG_WITH_STREAM(Scrolling, stream << "layoutViewport changed to " << layoutViewportRect());
     }
-    if (frame().settings().visualViewportAPIEnabled()) {
-        if (auto* window = frame().window())
-            window->visualViewport().update();
-    }
+    layoutOrVisualViewportChanged();
 }
 
 LayoutPoint FrameView::minStableLayoutViewportOrigin() const
@@ -1971,12 +1966,18 @@ void FrameView::viewportContentsChanged()
     });
 }
 
-IntRect FrameView::visualViewportRectExpandedByContentInsets() const
+IntRect FrameView::viewRectExpandedByContentInsets() const
 {
-    FloatRect unobscuredContentRect = this->visualViewportRect();
+    FloatRect viewRect;
+    if (delegatesScrolling() && platformWidget())
+        viewRect = unobscuredContentRect();
+    else
+        viewRect = visualViewportRect();
+
     if (auto* page = frame().page())
-        unobscuredContentRect.expand(page->contentInsets());
-    return IntRect(unobscuredContentRect);
+        viewRect.expand(page->contentInsets());
+
+    return IntRect(viewRect);
 }
 
 bool FrameView::fixedElementsLayoutRelativeToFrame() const
@@ -2457,6 +2458,11 @@ void FrameView::scrollPositionChanged(const ScrollPosition& oldPosition, const S
     LOG_WITH_STREAM(Scrolling, stream << "FrameView " << this << " scrollPositionChanged from " << oldPosition << " to " << newPosition << " (scale " << frameScaleFactor() << " )");
     updateLayoutViewport();
     viewportContentsChanged();
+
+    if (auto* renderView = this->renderView()) {
+        if (auto* layer = renderView->layer())
+            frame().editor().renderLayerDidScroll(*layer);
+    }
 }
 
 void FrameView::applyRecursivelyWithVisibleRect(const WTF::Function<void (FrameView& frameView, const IntRect& visibleRect)>& apply)
@@ -2764,16 +2770,22 @@ void FrameView::updateTiledBackingAdaptiveSizing()
     tiledBacking->setScrollability(computeScrollability());
 }
 
-#if PLATFORM(IOS_FAMILY)
-
-void FrameView::didUpdateViewportOverrideRects()
+// FIXME: This shouldn't be called from outside; FrameView should call it when the relevant viewports change.
+void FrameView::layoutOrVisualViewportChanged()
 {
     if (!frame().settings().visualViewportAPIEnabled())
         return;
 
     if (auto* window = frame().window())
         window->visualViewport().update();
+
+    if (auto* page = frame().page()) {
+        if (auto* scrollingCoordinator = page->scrollingCoordinator())
+            scrollingCoordinator->frameViewVisualViewportChanged(*this);
+    }
 }
+
+#if PLATFORM(IOS_FAMILY)
 
 void FrameView::unobscuredContentSizeChanged()
 {
@@ -2921,7 +2933,7 @@ void FrameView::setNeedsLayoutAfterViewConfigurationChange()
 void FrameView::setNeedsCompositingConfigurationUpdate()
 {
     RenderView* renderView = this->renderView();
-    if (renderView->usesCompositing()) {
+    if (renderView && renderView->usesCompositing()) {
         if (auto* rootLayer = renderView->layer())
             rootLayer->setNeedsCompositingConfigurationUpdate();
         renderView->compositor().scheduleCompositingLayerUpdate();
@@ -3468,13 +3480,15 @@ void FrameView::autoSizeIfEnabled()
     Ref<FrameView> protectedThis(*this);
     document->updateStyleIfNeeded();
     document->updateLayoutIgnorePendingStylesheets();
+    // While the final content size could slightly be different after the next resize/layout (see below), we intentionally save and report 
+    // the current value to avoid unstable layout (e.g. content "height: 100%").
+    // See also webkit.org/b/173561
+    m_autoSizeContentSize = contentsSize();
 
-    auto currentContentsSize = this->contentsSize();
-    auto finalWidth = std::max(m_autoSizeConstraint.width(), currentContentsSize.width());
-    auto finalHeight = m_autoSizeFixedMinimumHeight ? std::max(m_autoSizeFixedMinimumHeight, currentContentsSize.height()) : currentContentsSize.height();
+    auto finalWidth = std::max(m_autoSizeConstraint.width(), m_autoSizeContentSize.width());
+    auto finalHeight = m_autoSizeFixedMinimumHeight ? std::max(m_autoSizeFixedMinimumHeight, m_autoSizeContentSize.height()) : m_autoSizeContentSize.height();
     resize(finalWidth, finalHeight);
     document->updateLayoutIgnorePendingStylesheets();
-    m_autoSizeContentSize = contentsSize(); 
     if (auto* page = frame().page())
         page->chrome().client().intrinsicContentsSizeChanged(m_autoSizeContentSize);
     m_didRunAutosize = true;

@@ -36,7 +36,7 @@
 #include <wtf/HashMap.h>
 #include <wtf/RefPtr.h>
 #include <wtf/Vector.h>
-#include <wtf/text/AtomicStringHash.h>
+#include <wtf/text/AtomStringHash.h>
 #include <wtf/text/StringHash.h>
 
 namespace WebCore {
@@ -78,6 +78,7 @@ class StyleRulePage;
 class StyleSheet;
 class StyleSheetList;
 class StyledElement;
+class SVGElement;
 class SVGSVGElement;
 class ViewportStyleResolver;
 struct ResourceLoaderOptions;
@@ -193,8 +194,8 @@ public:
     static bool colorFromPrimitiveValueIsDerivedFromElement(const CSSPrimitiveValue&);
     Color colorFromPrimitiveValue(const CSSPrimitiveValue&, bool forVisitedLink = false) const;
 
-    bool hasSelectorForId(const AtomicString&) const;
-    bool hasSelectorForAttribute(const Element&, const AtomicString&) const;
+    bool hasSelectorForId(const AtomString&) const;
+    bool hasSelectorForAttribute(const Element&, const AtomString&) const;
 
 #if ENABLE(CSS_DEVICE_ADAPTATION)
     ViewportStyleResolver* viewportStyleResolver() { return m_viewportStyleResolver.get(); }
@@ -287,7 +288,7 @@ public:
 
         void applyDeferredProperties(StyleResolver&, ApplyCascadedPropertyState&);
 
-        HashMap<AtomicString, Property>& customProperties() { return m_customProperties; }
+        HashMap<AtomString, Property>& customProperties() { return m_customProperties; }
         bool hasCustomProperty(const String&) const;
         Property customProperty(const String&) const;
         
@@ -301,7 +302,7 @@ public:
         std::bitset<numCSSProperties + 2> m_propertyIsPresent;
 
         Vector<Property, 8> m_deferredProperties;
-        HashMap<AtomicString, Property> m_customProperties;
+        HashMap<AtomString, Property> m_customProperties;
 
         TextDirection m_direction;
         WritingMode m_writingMode;
@@ -312,10 +313,10 @@ public:
 
 private:
     // This function fixes up the default font size if it detects that the current generic font family has changed. -dwh
-    void checkForGenericFamilyChange(RenderStyle*, const RenderStyle* parentStyle);
-    void checkForZoomChange(RenderStyle*, const RenderStyle* parentStyle);
+    void checkForGenericFamilyChange(RenderStyle&, const RenderStyle* parentStyle);
+    void checkForZoomChange(RenderStyle&, const RenderStyle* parentStyle);
 #if ENABLE(TEXT_AUTOSIZING)
-    void checkForTextSizeAdjust(RenderStyle*);
+    void checkForTextSizeAdjust(RenderStyle&);
 #endif
 
     void adjustRenderStyle(RenderStyle&, const RenderStyle& parentStyle, const RenderStyle* parentBoxStyle, const Element*);
@@ -346,7 +347,7 @@ private:
 
     DocumentRuleSets m_ruleSets;
 
-    typedef HashMap<AtomicStringImpl*, RefPtr<StyleRuleKeyframes>> KeyframesRuleMap;
+    typedef HashMap<AtomStringImpl*, RefPtr<StyleRuleKeyframes>> KeyframesRuleMap;
     KeyframesRuleMap m_keyframesRuleMap;
 
 public:
@@ -469,6 +470,8 @@ public:
 
     RefPtr<CSSValue> resolvedVariableValue(CSSPropertyID, const CSSValue&, ApplyCascadedPropertyState&) const;
 
+    bool adjustRenderStyleForTextAutosizing(RenderStyle&, const Element&);
+
 private:
     void cacheBorderAndBackground();
 
@@ -499,8 +502,6 @@ private:
     // Every N additions to the matched declaration cache trigger a sweep where entries holding
     // the last reference to a style declaration are garbage collected.
     void sweepMatchedPropertiesCache();
-
-    void adjustRenderStyleForTextAutosizing(RenderStyle&, const Element&);
 
     typedef HashMap<unsigned, MatchedPropertiesCacheItem> MatchedPropertiesCache;
     MatchedPropertiesCache m_matchedPropertiesCache;
@@ -552,7 +553,7 @@ struct ApplyCascadedPropertyState {
 };
 
 
-inline bool StyleResolver::hasSelectorForAttribute(const Element& element, const AtomicString &attributeName) const
+inline bool StyleResolver::hasSelectorForAttribute(const Element& element, const AtomString &attributeName) const
 {
     ASSERT(!attributeName.isEmpty());
     if (element.isHTMLElement())
@@ -560,7 +561,7 @@ inline bool StyleResolver::hasSelectorForAttribute(const Element& element, const
     return m_ruleSets.features().attributeLocalNamesInRules.contains(attributeName);
 }
 
-inline bool StyleResolver::hasSelectorForId(const AtomicString& idValue) const
+inline bool StyleResolver::hasSelectorForId(const AtomString& idValue) const
 {
     ASSERT(!idValue.isEmpty());
     return m_ruleSets.features().idsInRules.contains(idValue);

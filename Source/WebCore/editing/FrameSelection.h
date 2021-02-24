@@ -269,7 +269,8 @@ public:
     void setTypingStyle(RefPtr<EditingStyle>&& style) { m_typingStyle = WTFMove(style); }
     void clearTypingStyle();
 
-    WEBCORE_EXPORT FloatRect selectionBounds(bool clipToVisibleContent = true) const;
+    enum class ClipToVisibleContent : uint8_t { No, Yes };
+    WEBCORE_EXPORT FloatRect selectionBounds(ClipToVisibleContent = ClipToVisibleContent::Yes) const;
 
     enum class TextRectangleHeight { TextHeight, SelectionHeight };
     WEBCORE_EXPORT void getClippedVisibleTextRectangles(Vector<FloatRect>&, TextRectangleHeight = TextRectangleHeight::SelectionHeight) const;
@@ -312,7 +313,7 @@ private:
     LayoutUnit lineDirectionPointForBlockDirectionNavigation(EPositionType);
 
     AXTextStateChangeIntent textSelectionIntent(EAlteration, SelectionDirection, TextGranularity);
-#if HAVE(ACCESSIBILITY)
+#if ENABLE(ACCESSIBILITY)
     void notifyAccessibilityForSelectionChange(const AXTextStateChangeIntent&);
 #else
     void notifyAccessibilityForSelectionChange(const AXTextStateChangeIntent&) { }
@@ -386,7 +387,7 @@ inline void FrameSelection::clearTypingStyle()
 }
 
 #if !(PLATFORM(COCOA) || USE(ATK))
-#if HAVE(ACCESSIBILITY)
+#if ENABLE(ACCESSIBILITY)
 inline void FrameSelection::notifyAccessibilityForSelectionChange(const AXTextStateChangeIntent&)
 {
 }

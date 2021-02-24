@@ -380,14 +380,15 @@ public:
     WEBCORE_EXPORT void setUseSystemAppearance(bool);
     
     WEBCORE_EXPORT bool useDarkAppearance() const;
-    bool useInactiveAppearance() const { return m_useInactiveAppearance; }
-    WEBCORE_EXPORT void effectiveAppearanceDidChange(bool useDarkAppearance, bool useInactiveAppearance);
+    bool useElevatedUserInterfaceLevel() const { return m_useElevatedUserInterfaceLevel; }
+    WEBCORE_EXPORT void effectiveAppearanceDidChange(bool useDarkAppearance, bool useElevatedUserInterfaceLevel);
     bool defaultUseDarkAppearance() const { return m_useDarkAppearance; }
     void setUseDarkAppearanceOverride(Optional<bool>);
 
 #if ENABLE(TEXT_AUTOSIZING)
     float textAutosizingWidth() const { return m_textAutosizingWidth; }
     void setTextAutosizingWidth(float textAutosizingWidth) { m_textAutosizingWidth = textAutosizingWidth; }
+    WEBCORE_EXPORT void recomputeTextAutoSizingInAllFrames();
 #endif
 
     const FloatBoxExtent& fullscreenInsets() const { return m_fullscreenInsets; }
@@ -653,6 +654,9 @@ public:
     void clearTrigger() { m_testTrigger = nullptr; }
     bool expectsWheelEventTriggers() const { return !!m_testTrigger; }
 
+    void setIsForSanitizingWebContent() { m_isForSanitizingWebContent = true; }
+    bool isForSanitizingWebContent() const { return m_isForSanitizingWebContent; }
+
 #if ENABLE(VIDEO)
     bool allowsMediaDocumentInlinePlayback() const { return m_allowsMediaDocumentInlinePlayback; }
     WEBCORE_EXPORT void setAllowsMediaDocumentInlinePlayback(bool);
@@ -837,7 +841,7 @@ private:
 #endif
     
     bool m_useSystemAppearance { false };
-    bool m_useInactiveAppearance { false };
+    bool m_useElevatedUserInterfaceLevel { false };
     bool m_useDarkAppearance { false };
     Optional<bool> m_useDarkAppearanceOverride;
 
@@ -991,6 +995,8 @@ private:
     bool m_mediaPlaybackIsSuspended { false };
     bool m_mediaBufferingIsSuspended { false };
     bool m_inUpdateRendering { false };
+
+    bool m_isForSanitizingWebContent { false };
 };
 
 inline PageGroup& Page::group()

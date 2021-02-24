@@ -403,7 +403,7 @@ GraphicsLayerCA::GraphicsLayerCA(Type layerType, GraphicsLayerClient& client)
     : GraphicsLayer(layerType, client)
     , m_needsFullRepaint(false)
     , m_usingBackdropLayerType(false)
-    , m_isViewportConstrained(false)
+    , m_allowsBackingStoreDetaching(true)
     , m_intersectsCoverageRect(false)
     , m_hasEverPainted(false)
     , m_hasDescendantsWithRunningTransformAnimations(false)
@@ -480,16 +480,23 @@ void GraphicsLayerCA::willBeDestroyed()
 
 void GraphicsLayerCA::setName(const String& name)
 {
+    if (name == this->name())
+        return;
+
+    GraphicsLayer::setName(name);
+    noteLayerPropertyChanged(NameChanged);
+}
+
+String GraphicsLayerCA::debugName() const
+{
 #if ENABLE(TREE_DEBUGGING)
     String caLayerDescription;
     if (!m_layer->isPlatformCALayerRemote())
         caLayerDescription = makeString("CALayer(0x", hex(reinterpret_cast<uintptr_t>(m_layer->platformLayer()), Lowercase), ") ");
-    GraphicsLayer::setName(makeString(caLayerDescription, "GraphicsLayer(0x", hex(reinterpret_cast<uintptr_t>(this), Lowercase), ", ", primaryLayerID(), ") ", name));
+    return makeString(caLayerDescription, "GraphicsLayer(0x", hex(reinterpret_cast<uintptr_t>(this), Lowercase), ", ", primaryLayerID(), ") ", name());
 #else
-    GraphicsLayer::setName(name);
+    return name();
 #endif
-
-    noteLayerPropertyChanged(NameChanged);
 }
 
 GraphicsLayer::PlatformLayerID GraphicsLayerCA::primaryLayerID() const
@@ -1027,7 +1034,7 @@ void GraphicsLayerCA::addProcessingActionForAnimation(const String& animationNam
 
 bool GraphicsLayerCA::addAnimation(const KeyframeValueList& valueList, const FloatSize& boxSize, const Animation* anim, const String& animationName, double timeOffset)
 {
-    LOG(Animations, "GraphicsLayerCA %p %llu addAnimation %s (can be accelerated %d)", this, primaryLayerID(), animationName.utf8().data(), animationCanBeAccelerated(valueList, anim));
+    LOG_WITH_STREAM(Animations, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " addAnimation " << anim << " " << animationName << " duration " << anim->duration() << " (can be accelerated " << animationCanBeAccelerated(valueList, anim) << ")");
 
     ASSERT(!animationName.isEmpty());
 
@@ -1058,7 +1065,7 @@ bool GraphicsLayerCA::addAnimation(const KeyframeValueList& valueList, const Flo
 
 void GraphicsLayerCA::pauseAnimation(const String& animationName, double timeOffset)
 {
-    LOG(Animations, "GraphicsLayerCA %p pauseAnimation %s (running %d)", this, animationName.utf8().data(), animationIsRunning(animationName));
+    LOG_WITH_STREAM(Animations, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " pauseAnimation " << animationName << " (is running " << animationIsRunning(animationName) << ")");
 
     // Call add since if there is already a Remove in there, we don't want to overwrite it with a Pause.
     addProcessingActionForAnimation(animationName, AnimationProcessingAction { Pause, Seconds { timeOffset } });
@@ -1068,7 +1075,7 @@ void GraphicsLayerCA::pauseAnimation(const String& animationName, double timeOff
 
 void GraphicsLayerCA::seekAnimation(const String& animationName, double timeOffset)
 {
-    LOG(Animations, "GraphicsLayerCA %p seekAnimation %s (running %d)", this, animationName.utf8().data(), animationIsRunning(animationName));
+    LOG_WITH_STREAM(Animations, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " seekAnimation " << animationName << " (is running " << animationIsRunning(animationName) << ")");
 
     // Call add since if there is already a Remove in there, we don't want to overwrite it with a Pause.
     addProcessingActionForAnimation(animationName, AnimationProcessingAction { Seek, Seconds { timeOffset } });
@@ -1078,10 +1085,12 @@ void GraphicsLayerCA::seekAnimation(const String& animationName, double timeOffs
 
 void GraphicsLayerCA::removeAnimation(const String& animationName)
 {
-    LOG(Animations, "GraphicsLayerCA %p removeAnimation %s (running %d)", this, animationName.utf8().data(), animationIsRunning(animationName));
+    LOG_WITH_STREAM(Animations, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " removeAnimation " << animationName << " (is running " << animationIsRunning(animationName) << ")");
 
-    if (!animationIsRunning(animationName))
+    if (!animationIsRunning(animationName)) {
+        removeFromUncommittedAnimations(animationName);
         return;
+    }
 
     addProcessingActionForAnimation(animationName, AnimationProcessingAction(Remove));
     noteLayerPropertyChanged(AnimationChanged | CoverageRectChanged);
@@ -1089,13 +1098,13 @@ void GraphicsLayerCA::removeAnimation(const String& animationName)
 
 void GraphicsLayerCA::platformCALayerAnimationStarted(const String& animationKey, MonotonicTime startTime)
 {
-    LOG(Animations, "GraphicsLayerCA %p platformCALayerAnimationStarted %s at %f", this, animationKey.utf8().data(), startTime.secondsSinceEpoch().seconds());
+    LOG_WITH_STREAM(Animations, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " platformCALayerAnimationStarted " << animationKey);
     client().notifyAnimationStarted(this, animationKey, startTime);
 }
 
 void GraphicsLayerCA::platformCALayerAnimationEnded(const String& animationKey)
 {
-    LOG(Animations, "GraphicsLayerCA %p platformCALayerAnimationEnded %s", this, animationKey.utf8().data());
+    LOG_WITH_STREAM(Animations, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " platformCALayerAnimationEnded " << animationKey);
     client().notifyAnimationEnded(this, animationKey);
 }
 
@@ -1312,8 +1321,7 @@ bool GraphicsLayerCA::recursiveVisibleRectChangeRequiresFlush(const CommitState&
 
     auto bounds = FloatRect(m_boundsOrigin, size());
 
-    bool isViewportConstrained = m_isViewportConstrained || commitState.ancestorIsViewportConstrained;
-    bool intersectsCoverageRect = isViewportConstrained || rects.coverageRect.intersects(bounds);
+    bool intersectsCoverageRect = rects.coverageRect.intersects(bounds);
     if (intersectsCoverageRect != m_intersectsCoverageRect)
         return true;
 
@@ -1323,8 +1331,6 @@ bool GraphicsLayerCA::recursiveVisibleRectChangeRequiresFlush(const CommitState&
                 return true;
         }
     }
-
-    childCommitState.ancestorIsViewportConstrained |= m_isViewportConstrained;
 
     if (m_maskLayer) {
         auto& maskLayerCA = downcast<GraphicsLayerCA>(*m_maskLayer);
@@ -1470,7 +1476,7 @@ bool GraphicsLayerCA::adjustCoverageRect(VisibleAndCoverageRects& rects, const F
     return true;
 }
 
-void GraphicsLayerCA::setVisibleAndCoverageRects(const VisibleAndCoverageRects& rects, bool isViewportConstrained)
+void GraphicsLayerCA::setVisibleAndCoverageRects(const VisibleAndCoverageRects& rects)
 {
     bool visibleRectChanged = rects.visibleRect != m_visibleRect;
     bool coverageRectChanged = rects.coverageRect != m_coverageRect;
@@ -1484,7 +1490,7 @@ void GraphicsLayerCA::setVisibleAndCoverageRects(const VisibleAndCoverageRects& 
     }
 
     // FIXME: we need to take reflections into account when determining whether this layer intersects the coverage rect.
-    bool intersectsCoverageRect = isViewportConstrained || rects.coverageRect.intersects(bounds);
+    bool intersectsCoverageRect = rects.coverageRect.intersects(bounds);
     if (intersectsCoverageRect != m_intersectsCoverageRect) {
         addUncommittedChanges(CoverageRectChanged);
         m_intersectsCoverageRect = intersectsCoverageRect;
@@ -1538,7 +1544,7 @@ void GraphicsLayerCA::recursiveCommitChanges(CommitState& commitState, const Tra
             localState.setLastPlanarSecondaryQuad(&secondaryQuad);
         }
     }
-    setVisibleAndCoverageRects(rects, m_isViewportConstrained || commitState.ancestorIsViewportConstrained);
+    setVisibleAndCoverageRects(rects);
 
     if (commitState.ancestorStartedOrEndedTransformAnimation)
         addUncommittedChanges(CoverageRectChanged);
@@ -1601,10 +1607,8 @@ void GraphicsLayerCA::recursiveCommitChanges(CommitState& commitState, const Tra
         affectedByTransformAnimation = true;
     }
     
-    childCommitState.ancestorIsViewportConstrained |= m_isViewportConstrained;
-
     if (GraphicsLayerCA* maskLayer = downcast<GraphicsLayerCA>(m_maskLayer.get())) {
-        maskLayer->setVisibleAndCoverageRects(rects, m_isViewportConstrained || commitState.ancestorIsViewportConstrained);
+        maskLayer->setVisibleAndCoverageRects(rects);
         maskLayer->commitLayerChangesBeforeSublayers(childCommitState, pageScaleFactor, baseRelativePosition, layerTypeChanged);
     }
 
@@ -1917,20 +1921,21 @@ void GraphicsLayerCA::commitLayerChangesAfterSublayers(CommitState& commitState)
 
 void GraphicsLayerCA::updateNames()
 {
+    auto name = debugName();
     switch (structuralLayerPurpose()) {
     case StructuralLayerForPreserves3D:
-        m_structuralLayer->setName("preserve-3d: " + name());
+        m_structuralLayer->setName("preserve-3d: " + name);
         break;
     case StructuralLayerForReplicaFlattening:
-        m_structuralLayer->setName("replica flattening: " + name());
+        m_structuralLayer->setName("replica flattening: " + name);
         break;
     case StructuralLayerForBackdrop:
-        m_structuralLayer->setName("backdrop hosting: " + name());
+        m_structuralLayer->setName("backdrop hosting: " + name);
         break;
     case NoStructuralLayer:
         break;
     }
-    m_layer->setName(name());
+    m_layer->setName(name);
 }
 
 void GraphicsLayerCA::updateSublayerList(bool maxLayerDepthReached)
@@ -2415,32 +2420,34 @@ void GraphicsLayerCA::updateCoverage(const CommitState& commitState)
         backing->setCoverageRect(m_coverageRect);
     }
 
-    if (canDetachBackingStore()) {
-        bool requiresBacking = m_intersectsCoverageRect
-            || commitState.ancestorWithTransformAnimationIntersectsCoverageRect // FIXME: Compute backing exactly for descendants of animating layers.
-            || (isRunningTransformAnimation() && !animationExtent()); // Create backing if we don't know the animation extent.
+    bool requiresBacking = m_intersectsCoverageRect
+        || !allowsBackingStoreDetaching()
+        || commitState.ancestorWithTransformAnimationIntersectsCoverageRect // FIXME: Compute backing exactly for descendants of animating layers.
+        || (isRunningTransformAnimation() && !animationExtent()); // Create backing if we don't know the animation extent.
 
 #if !LOG_DISABLED
-        if (requiresBacking) {
-            auto reasonForBacking = [&]() -> const char* {
-                if (m_intersectsCoverageRect)
-                    return "intersectsCoverageRect";
-                
-                if (commitState.ancestorWithTransformAnimationIntersectsCoverageRect)
-                    return "ancestor with transform";
-                
-                return "has transform animation with unknown extent";
-            };
-            LOG_WITH_STREAM(Layers, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " setBackingStoreAttached: " << requiresBacking << " (" << reasonForBacking() << ")");
-        } else
-            LOG_WITH_STREAM(Layers, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " setBackingStoreAttached: " << requiresBacking);
+    if (requiresBacking) {
+        auto reasonForBacking = [&]() -> const char* {
+            if (m_intersectsCoverageRect)
+                return "intersectsCoverageRect";
+            
+            if (!allowsBackingStoreDetaching())
+                return "backing detachment disallowed";
+
+            if (commitState.ancestorWithTransformAnimationIntersectsCoverageRect)
+                return "ancestor with transform";
+            
+            return "has transform animation with unknown extent";
+        };
+        LOG_WITH_STREAM(Layers, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " setBackingStoreAttached: " << requiresBacking << " (" << reasonForBacking() << ")");
+    } else
+        LOG_WITH_STREAM(Layers, stream << "GraphicsLayerCA " << this << " id " << primaryLayerID() << " setBackingStoreAttached: " << requiresBacking);
 #endif
 
-        m_layer->setBackingStoreAttached(requiresBacking);
-        if (m_layerClones) {
-            for (auto& layer : m_layerClones->primaryLayerClones.values())
-                layer->setBackingStoreAttached(requiresBacking);
-        }
+    m_layer->setBackingStoreAttached(requiresBacking);
+    if (m_layerClones) {
+        for (auto& layer : m_layerClones->primaryLayerClones.values())
+            layer->setBackingStoreAttached(requiresBacking);
     }
 
     m_sizeAtLastCoverageRectUpdate = m_size;
@@ -2602,7 +2609,7 @@ void GraphicsLayerCA::updateClippingStrategy(PlatformCALayer& clippingLayer, Ref
         shapeMaskLayer->setName("shape mask");
     }
     
-    shapeMaskLayer->setPosition(roundedRect.rect().location() - offsetFromRenderer());
+    shapeMaskLayer->setPosition(roundedRect.rect().location());
     FloatRect shapeBounds({ }, roundedRect.rect().size());
     shapeMaskLayer->setBounds(shapeBounds);
     FloatRoundedRect offsetRoundedRect(shapeBounds, roundedRect.radii());
@@ -3152,6 +3159,16 @@ void GraphicsLayerCA::appendToUncommittedAnimations(LayerPropertyAnimation&& ani
     m_animations->uncomittedAnimations.append(WTFMove(animation));
 }
 
+void GraphicsLayerCA::removeFromUncommittedAnimations(const String& animationName)
+{
+    if (!m_animations)
+        return;
+
+    m_animations->uncomittedAnimations.removeFirstMatching([&animationName] (auto& current) {
+        return current.m_name == animationName;
+    });
+}
+
 bool GraphicsLayerCA::createFilterAnimationsFromKeyframes(const KeyframeValueList& valueList, const Animation* animation, const String& animationName, Seconds timeOffset)
 {
 #if ENABLE(FILTERS_LEVEL_2)
@@ -3639,6 +3656,15 @@ String GraphicsLayerCA::displayListAsText(DisplayList::AsTextFlags flags) const
     return m_displayList->asText(flags);
 }
 
+void GraphicsLayerCA::setAllowsBackingStoreDetaching(bool allowDetaching)
+{
+    if (allowDetaching == m_allowsBackingStoreDetaching)
+        return;
+
+    m_allowsBackingStoreDetaching = allowDetaching;
+    noteLayerPropertyChanged(CoverageRectChanged);
+}
+
 void GraphicsLayerCA::setIsTrackingDisplayListReplay(bool isTracking)
 {
     if (isTracking == m_isTrackingDisplayListReplay)
@@ -3726,10 +3752,9 @@ void GraphicsLayerCA::dumpAdditionalProperties(TextStream& textStream, LayerTree
 
         textStream << indent << "(in window " << tiledBacking()->isInWindow() << ")\n";
     }
-    
+
     if (m_layer->wantsDeepColorBackingStore())
         textStream << indent << "(deep color 1)\n";
-
 
     if (behavior & LayerTreeAsTextIncludeContentLayers) {
         dumpInnerLayer(textStream, "structural layer", m_structuralLayer.get(), behavior);
@@ -3742,8 +3767,8 @@ void GraphicsLayerCA::dumpAdditionalProperties(TextStream& textStream, LayerTree
     }
 
     if (behavior & LayerTreeAsTextDebug) {
-        textStream << indent << "(accelerates drawing " << m_acceleratesDrawing << ")\n";
-        textStream << indent << "(uses display-list drawing " << m_usesDisplayListDrawing << ")\n";
+        if (m_usesDisplayListDrawing)
+            textStream << indent << "(uses display-list drawing " << m_usesDisplayListDrawing << ")\n";
     }
 }
 
@@ -4117,15 +4142,6 @@ void GraphicsLayerCA::updateOpacityOnLayer()
             clone.value->setOpacity(m_opacity);
         }
     }
-}
-
-void GraphicsLayerCA::setIsViewportConstrained(bool isViewportConstrained)
-{
-    if (isViewportConstrained == m_isViewportConstrained)
-        return;
-
-    m_isViewportConstrained = isViewportConstrained;
-    noteLayerPropertyChanged(CoverageRectChanged);
 }
 
 void GraphicsLayerCA::deviceOrPageScaleFactorChanged()

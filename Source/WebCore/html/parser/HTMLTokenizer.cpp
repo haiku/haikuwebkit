@@ -1401,11 +1401,11 @@ String HTMLTokenizer::bufferedCharacters() const
     characters.reserveCapacity(numberOfBufferedCharacters());
     characters.append('<');
     characters.append('/');
-    characters.append(m_temporaryBuffer.data(), m_temporaryBuffer.size());
+    characters.appendCharacters(m_temporaryBuffer.data(), m_temporaryBuffer.size());
     return characters.toString();
 }
 
-void HTMLTokenizer::updateStateFor(const AtomicString& tagName)
+void HTMLTokenizer::updateStateFor(const AtomString& tagName)
 {
     if (tagName == textareaTag || tagName == titleTag)
         m_state = RCDATAState;

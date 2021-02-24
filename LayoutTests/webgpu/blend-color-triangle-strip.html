@@ -45,9 +45,9 @@ fragment float4 fragment_main()
 }
 `;
 
-async function test() {
-    const device = await getBasicDevice();
-    const canvas = document.querySelector("canvas");
+const canvas = document.querySelector("canvas");
+
+async function start(device) {
     const swapChain = createBasicSwapChain(canvas, device);
     // FIXME: Replace with non-MSL shaders.
     const shaderModule = device.createShaderModule({ code: shaderCode });
@@ -75,12 +75,19 @@ async function test() {
     const queue = device.getQueue();
 
     queue.submit([commandEncoder.finish()]);
+}
 
-    requestAnimationFrame(() => { 
+getBasicDevice().then(function(device) {
+    start(device).then(function() {
+        if (window.testRunner)
+            testRunner.notifyDone();
+    }, function() {
         if (window.testRunner)
             testRunner.notifyDone();
     });
-}
-
-test();
+}, function() {
+    drawGreenSquareInSoftware(canvas);
+    if (window.testRunner)
+        testRunner.notifyDone();
+});
 </script>

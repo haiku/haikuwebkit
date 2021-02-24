@@ -113,9 +113,10 @@ enum {
     LayerTreeFlagsIncludePaintingPhases         = 1 << 4,
     LayerTreeFlagsIncludeContentLayers          = 1 << 5,
     LayerTreeFlagsIncludeAcceleratesDrawing     = 1 << 6,
-    LayerTreeFlagsIncludeBackingStoreAttached   = 1 << 7,
-    LayerTreeFlagsIncludeRootLayerProperties    = 1 << 8,
-    LayerTreeFlagsIncludeEventRegion            = 1 << 9,
+    LayerTreeFlagsIncludeClipping               = 1 << 7,
+    LayerTreeFlagsIncludeBackingStoreAttached   = 1 << 8,
+    LayerTreeFlagsIncludeRootLayerProperties    = 1 << 9,
+    LayerTreeFlagsIncludeEventRegion            = 1 << 10,
 };
 typedef unsigned LayerTreeFlags;
 
@@ -220,7 +221,9 @@ public:
     WEBCORE_EXPORT Node* deepestNodeAtLocation(const FloatPoint& viewportLocation);
     WEBCORE_EXPORT Node* nodeRespondingToClickEvents(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, SecurityOrigin* = nullptr);
     WEBCORE_EXPORT Node* nodeRespondingToDoubleClickEvent(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation);
+    WEBCORE_EXPORT Node* nodeRespondingToInteraction(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation);
     WEBCORE_EXPORT Node* nodeRespondingToScrollWheelEvents(const FloatPoint& viewportLocation);
+    WEBCORE_EXPORT Node* approximateNodeAtViewportLocationLegacy(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation);
 
     WEBCORE_EXPORT NSArray *wordsInCurrentParagraph() const;
     WEBCORE_EXPORT CGRect renderRectForPoint(CGPoint, bool* isReplaced, float* fontSize) const;
@@ -288,6 +291,9 @@ public:
     bool isURLAllowed(const URL&) const;
     WEBCORE_EXPORT bool isAlwaysOnLoggingAllowed() const;
 
+    void didPrewarmLocalStorage();
+    bool mayPrewarmLocalStorage() const;
+
 // ========
 
     void selfOnlyRef();
@@ -329,7 +335,10 @@ private:
 #if PLATFORM(IOS_FAMILY)
     void betterApproximateNode(const IntPoint& testPoint, const NodeQualifier&, Node*& best, Node* failedNode, IntPoint& bestPoint, IntRect& bestRect, const IntRect& testRect);
     bool hitTestResultAtViewportLocation(const FloatPoint& viewportLocation, HitTestResult&, IntPoint& center);
-    Node* qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, const NodeQualifier&, bool shouldApproximate);
+    
+    enum class ShouldApproximate : bool { No, Yes };
+    enum class ShouldFindRootEditableElement : bool { No, Yes };
+    Node* qualifyingNodeAtViewportLocation(const FloatPoint& viewportLocation, FloatPoint& adjustedViewportLocation, const NodeQualifier&, ShouldApproximate, ShouldFindRootEditableElement = ShouldFindRootEditableElement::Yes);
 
     void setTimersPausedInternal(bool);
 
@@ -347,6 +356,7 @@ private:
     unsigned m_navigationDisableCount { 0 };
     unsigned m_selfOnlyRefCount { 0 };
     bool m_hasHadUserInteraction { false };
+    unsigned m_localStoragePrewarmingCount { 0 };
 
 protected:
     UniqueRef<EventHandler> m_eventHandler;

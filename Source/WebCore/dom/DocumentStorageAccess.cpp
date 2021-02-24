@@ -128,7 +128,7 @@ void DocumentStorageAccess::requestStorageAccess(Ref<DeferredPromise>&& promise)
         return;
     }
     
-    if (!m_document.frame() || m_document.securityOrigin().isUnique()) {
+    if (!m_document.frame() || m_document.securityOrigin().isUnique() || !isAllowedToRequestFrameSpecificStorageAccess()) {
         promise->reject();
         return;
     }
@@ -189,11 +189,13 @@ void DocumentStorageAccess::requestStorageAccess(Ref<DeferredPromise>&& promise)
             }));
         }
 
-        if (wasGranted == StorageAccessWasGranted::Yes) {
-            document->setHasFrameSpecificStorageAccess(true);
+        if (wasGranted == StorageAccessWasGranted::Yes)
             promise->resolve();
-        } else
+        else {
+            if (promptWasShown == StorageAccessPromptWasShown::Yes)
+                document->setWasExplicitlyDeniedFrameSpecificStorageAccess();
             promise->reject();
+        }
 
         if (shouldPreserveUserGesture) {
             MicrotaskQueue::mainThreadQueue().append(std::make_unique<VoidMicrotask>([documentReference = WTFMove(documentReference)] () {
@@ -218,12 +220,6 @@ bool DocumentStorageAccess::hasFrameSpecificStorageAccess() const
 {
     auto* frame = m_document.frame();
     return frame && frame->loader().client().hasFrameSpecificStorageAccess();
-}
-
-void DocumentStorageAccess::setHasFrameSpecificStorageAccess(bool value)
-{
-    if (auto* frame = m_document.frame())
-        frame->loader().client().setHasFrameSpecificStorageAccess(value);
 }
 
 } // namespace WebCore

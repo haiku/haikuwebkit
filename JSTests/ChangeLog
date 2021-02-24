@@ -1,3 +1,2571 @@
+2019-10-20  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r249538. rdar://problem/56426429
+
+    LazyClassStructure::setConstructor should not store the constructor to the global object
+    https://bugs.webkit.org/show_bug.cgi?id=201484
+    <rdar://problem/50400451>
+    
+    Reviewed by Yusuke Suzuki.
+    
+    JSTests:
+    
+    * stress/web-assembly-constructors-should-not-override-global-object-property.js: Added.
+    
+    Source/JavaScriptCore:
+    
+    LazyClassStructure::setConstructor sets the constructor as a property of the global object.
+    This became a problem when it started being used for WebAssembly constructors, such as Module
+    and Instance, since they are properties of the WebAssembly object, not the global object. That
+    resulted in properties of the global object replaced whenever a lazy WebAssembly constructor
+    was first accessed. e.g.
+    
+    globalThis.Module = x;
+    WebAssembly.Module;
+    globalThis.Module === WebAssembly.Module;
+    
+    * runtime/LazyClassStructure.cpp:
+    (JSC::LazyClassStructure::Initializer::setConstructor):
+    * runtime/LazyClassStructure.h:
+    * runtime/Lookup.h:
+    (JSC::reifyStaticProperty):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249538 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-05  Tadeu Zagallo  <tzagallo@apple.com>
+
+            LazyClassStructure::setConstructor should not store the constructor to the global object
+            https://bugs.webkit.org/show_bug.cgi?id=201484
+            <rdar://problem/50400451>
+
+            Reviewed by Yusuke Suzuki.
+
+            * stress/web-assembly-constructors-should-not-override-global-object-property.js: Added.
+
+2019-10-15  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r250585. rdar://problem/56280995
+
+    ObjectAllocationSinkingPhase shouldn't insert hints for allocations which are no longer valid
+    https://bugs.webkit.org/show_bug.cgi?id=199361
+    <rdar://problem/52454940>
+    
+    Reviewed by Yusuke Suzuki.
+    
+    JSTests:
+    
+    * stress/allocation-sinking-hints-are-valid-ssa-2.js: Added.
+    (main.fn):
+    (main.executor):
+    (main):
+    * stress/allocation-sinking-hints-are-valid-ssa.js: Added.
+    (main.fn):
+    (main.executor):
+    (main):
+    
+    Source/JavaScriptCore:
+    
+    In a prior fix to the object allocation sinking phase, I added code where we
+    made sure to insert PutHints over Phis for fields of an object at control flow
+    merge points. However, that code didn't consider that the base of the PutHint
+    may no longer be a valid heap location. This could cause us to emit invalid
+    SSA code by referring to a node which does not dominate the PutHint location.
+    This patch fixes the bug to only emit the PutHints when valid.
+    
+    This patch also makes it so that DFGValidate actually validates that the graph
+    is in valid SSA form. E.g, any use of a node N must be dominated by N.
+    
+    * dfg/DFGObjectAllocationSinkingPhase.cpp:
+    * dfg/DFGValidate.cpp:
+    
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250585 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-10-01  Saam Barati  <sbarati@apple.com>
+
+            ObjectAllocationSinkingPhase shouldn't insert hints for allocations which are no longer valid
+            https://bugs.webkit.org/show_bug.cgi?id=199361
+            <rdar://problem/52454940>
+
+            Reviewed by Yusuke Suzuki.
+
+            * stress/allocation-sinking-hints-are-valid-ssa-2.js: Added.
+            (main.fn):
+            (main.executor):
+            (main):
+            * stress/allocation-sinking-hints-are-valid-ssa.js: Added.
+            (main.fn):
+            (main.executor):
+            (main):
+
+2019-10-15  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r249959. rdar://problem/56280989
+
+    CheckArray on DirectArguments/ScopedArguments does not filter out slow put array storage
+    https://bugs.webkit.org/show_bug.cgi?id=201853
+    <rdar://problem/53805461>
+    
+    Reviewed by Yusuke Suzuki.
+    
+    JSTests:
+    
+    * stress/direct-arguments-check-array-filter-type.js: Added.
+    (foo):
+    
+    Source/JavaScriptCore:
+    
+    We were claiming CheckArray for ScopedArguments/DirectArguments was filtering
+    out SlowPutArrayStorage. It does no such thing. We just check that the object
+    is either ScopedArguments/DirectArguments.
+    
+    * dfg/DFGArrayMode.h:
+    (JSC::DFG::ArrayMode::arrayModesThatPassFiltering const):
+    (JSC::DFG::ArrayMode::arrayModesWithIndexingShapes const):
+    (JSC::DFG::ArrayMode::arrayModesWithIndexingShape const): Deleted.
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249959 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-17  Saam Barati  <sbarati@apple.com>
+
+            CheckArray on DirectArguments/ScopedArguments does not filter out slow put array storage
+            https://bugs.webkit.org/show_bug.cgi?id=201853
+            <rdar://problem/53805461>
+
+            Reviewed by Yusuke Suzuki.
+
+            * stress/direct-arguments-check-array-filter-type.js: Added.
+            (foo):
+
+2019-09-30  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r250058. rdar://problem/55826329
+
+    Phantom insertion phase may disagree with arguments forwarding about live ranges
+    https://bugs.webkit.org/show_bug.cgi?id=200715
+    <rdar://problem/54301717>
+    
+    Reviewed by Yusuke Suzuki.
+    
+    JSTests:
+    
+    * stress/phantom-insertion-live-range-should-agree-with-arguments-forwarding.js: Added.
+    (main.v23):
+    (main.try.v43):
+    (main.):
+    (main):
+    
+    Source/JavaScriptCore:
+    
+    The issue is that Phantom insertion phase was disagreeing about live ranges
+    from the arguments forwarding phase. The effect is that Phantom insertion
+    would insert a Phantom creating a longer live range than what arguments
+    forwarding was analyzing. Arguments forwarding will look for the last DFG
+    use or the last bytecode use of a variable it wants to eliminate. It then
+    does an interference analysis to ensure that nothing clobbers other variables
+    it needs to recover the sunken allocation during OSR exit.
+            
+    Phantom insertion works by ordering the program into OSR exit epochs. If a value was used
+    in the current epoch, there is no need to insert a phantom for it. We
+    determine where we might need a Phantom by looking at bytecode kills. In this
+    analysis, we have a mapping from bytecode local to DFG node. However, we
+    sometimes forgot to remove the entry when a local is killed. So, if the first
+    kill of a variable is in the same OSR exit epoch, we won't insert a Phantom by design.
+    However, if the variable gets killed again, we might errantly insert a Phantom
+    for the prior variable which should've already been killed. The solution is to
+    clear the entry in our mapping when a variable is killed.
+            
+    The program in question was like this:
+            
+    1: DirectArguments
+    ...
+    2: MovHint(@1, loc1) // arguments forwarding treats this as the final kill for @1
+    ...
+    clobber things needed for recovery
+    ...
+            
+    Arguments elimination would transform the program since between @1 and
+    @2, nothing clobbers values needed for exit and nothing escapes @1. The
+    program becomes:
+            
+    1: PhantomDirectArguments
+    ...
+    2: MovHint(@1, loc1) // arguments forwarding treats this as the final kill for @1
+    ...
+    clobber things needed for recovery of @1
+    ...
+            
+            
+    Phantom insertion would then transform the program into:
+            
+    1: PhantomDirectArguments
+    ...
+    2: MovHint(@1, loc1) // arguments forwarding treats this as the final kill for @1
+    ...
+    clobber things needed for recovery of @1
+    ...
+    3: Phantom(@1)
+    ...
+            
+    This is wrong because Phantom insertion and arguments forwarding must agree on live
+    ranges, otherwise the interference analysis performed by arguments forwarding will
+    not correctly analyze up until where the value might be recovered.
+    
+    * dfg/DFGPhantomInsertionPhase.cpp:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250058 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-18  Saam Barati  <sbarati@apple.com>
+
+            Phantom insertion phase may disagree with arguments forwarding about live ranges
+            https://bugs.webkit.org/show_bug.cgi?id=200715
+            <rdar://problem/54301717>
+
+            Reviewed by Yusuke Suzuki.
+
+            * stress/phantom-insertion-live-range-should-agree-with-arguments-forwarding.js: Added.
+            (main.v23):
+            (main.try.v43):
+            (main.):
+            (main):
+
+2019-09-30  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r249926. rdar://problem/55826870
+
+    [JSC] Perform check again when we found non-BMP characters
+    https://bugs.webkit.org/show_bug.cgi?id=201647
+    
+    Reviewed by Yusuke Suzuki.
+    
+    JSTests:
+    
+    * stress/regexp-unicode-surrogate-pair-increment-should-involve-length-check.js: Added.
+    * stress/regexp-unicode-within-string.js: Updated test to eliminate the bogus print().
+    (testRegExpInbounds):
+    
+    Source/JavaScriptCore:
+    
+    We need to check for end of input for non-BMP characters when matching a character class that contains
+    both BMP and non-BMP characters.  In advanceIndexAfterCharacterClassTermMatch() we were checking for
+    end of input for both BMP and non-BMP characters.  For BMP characters, this check is redundant.
+    After moving the check to after the "is BMP check", we need to decrement index after reaching the failure
+    label to back out the index++ for the first surrogate of the non-BMP character.
+    
+    Added the same kind of check in generateCharacterClassOnce().  In that case, we have pre-checked the
+    first character (surrogate) for a non-BMP codepoint, so we just need to check for end of input before
+    we increment for the second surrogate.
+    
+    While writing tests, I found an off by one error in backtrackCharacterClassGreedy() and changed the
+    loop to check the count at loop top instead of loop bottom.
+    
+    * yarr/YarrJIT.cpp:
+    (JSC::Yarr::YarrGenerator::advanceIndexAfterCharacterClassTermMatch):
+    (JSC::Yarr::YarrGenerator::generateCharacterClassOnce):
+    (JSC::Yarr::YarrGenerator::generateCharacterClassGreedy):
+    (JSC::Yarr::YarrGenerator::backtrackCharacterClassGreedy):
+    (JSC::Yarr::YarrGenerator::backtrackCharacterClassNonGreedy):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249926 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-16  Michael Saboff  <msaboff@apple.com>
+
+            [JSC] Perform check again when we found non-BMP characters
+            https://bugs.webkit.org/show_bug.cgi?id=201647
+
+            Reviewed by Yusuke Suzuki.
+
+            * stress/regexp-unicode-surrogate-pair-increment-should-involve-length-check.js: Added.
+            * stress/regexp-unicode-within-string.js: Updated test to eliminate the bogus print().
+            (testRegExpInbounds):
+
+2019-09-30  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r249777. rdar://problem/55826876
+
+    JSC crashes due to stack overflow while building RegExp
+    https://bugs.webkit.org/show_bug.cgi?id=201649
+    
+    Reviewed by Yusuke Suzuki.
+    
+    JSTests:
+    
+    New regression test.
+    
+    * stress/regexp-bol-optimize-out-of-stack.js: Added.
+    (test):
+    (catch):
+    
+    Source/JavaScriptCore:
+    
+    Check for running out of stack when we are optimizing RegExp containing BOL terms or
+    other deep copying of disjunctions.
+    
+    * yarr/YarrPattern.cpp:
+    (JSC::Yarr::YarrPatternConstructor::copyDisjunction):
+    (JSC::Yarr::YarrPatternConstructor::copyTerm):
+    (JSC::Yarr::YarrPatternConstructor::error):
+    (JSC::Yarr::YarrPattern::compile):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249777 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-10  Michael Saboff  <msaboff@apple.com>
+
+            JSC crashes due to stack overflow while building RegExp
+            https://bugs.webkit.org/show_bug.cgi?id=201649
+
+            Reviewed by Yusuke Suzuki.
+
+            New regression test.
+
+            * stress/regexp-bol-optimize-out-of-stack.js: Added.
+            (test):
+            (catch):
+
+2019-09-30  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r248951. rdar://problem/55826863
+
+    [JSC] incorrent JIT lead to StackOverflow
+    https://bugs.webkit.org/show_bug.cgi?id=197823
+    
+    Reviewed by Tadeu Zagallo.
+    
+    JSTests:
+    
+    New test.
+    
+    * stress/bound-function-stack-overflow.js: Added.
+    (foo):
+    (catch):
+    
+    Source/JavaScriptCore:
+    
+    Added stack overflow check to the bound function thunk generator.  Added a new C++ operation
+    throwStackOverflowErrorFromThunk() to throw the error.
+            
+    * jit/JITOperations.cpp:
+    * jit/JITOperations.h:
+    * jit/ThunkGenerators.cpp:
+    (JSC::boundThisNoArgsFunctionCallGenerator):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248951 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-21  Michael Saboff  <msaboff@apple.com>
+
+            [JSC] incorrent JIT lead to StackOverflow
+            https://bugs.webkit.org/show_bug.cgi?id=197823
+
+            Reviewed by Tadeu Zagallo.
+
+            New test.
+
+            * stress/bound-function-stack-overflow.js: Added.
+            (foo):
+            (catch):
+
+2019-09-30  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r248796. rdar://problem/55826874
+
+    [Re-land] ProxyObject should not be allow to access its target's private properties.
+    https://bugs.webkit.org/show_bug.cgi?id=200739
+    <rdar://problem/53972768>
+    
+    Reviewed by Yusuke Suzuki.
+    
+    JSTests:
+    
+    * stress/proxy-should-not-be-allowed-to-access-private-properties-of-target.js: Copied from JSTests/stress/proxy-should-not-be-allowed-to-access-private-properties-of-target.js.
+    * stress/proxy-with-private-symbols.js:
+    
+    Source/JavaScriptCore:
+    
+    Re-landing this after r200829 which resolves the test262 failure uncovered by this patch.
+    
+    * runtime/ProxyObject.cpp:
+    (JSC::performProxyGet):
+    (JSC::ProxyObject::performInternalMethodGetOwnProperty):
+    (JSC::ProxyObject::performHasProperty):
+    (JSC::ProxyObject::performPut):
+    (JSC::ProxyObject::performDelete):
+    (JSC::ProxyObject::performDefineOwnProperty):
+    
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248796 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-16  Mark Lam  <mark.lam@apple.com>
+
+            [Re-land] ProxyObject should not be allow to access its target's private properties.
+            https://bugs.webkit.org/show_bug.cgi?id=200739
+            <rdar://problem/53972768>
+
+            Reviewed by Yusuke Suzuki.
+
+            * stress/proxy-should-not-be-allowed-to-access-private-properties-of-target.js: Copied from JSTests/stress/proxy-should-not-be-allowed-to-access-private-properties-of-target.js.
+            * stress/proxy-with-private-symbols.js:
+
+2019-09-23  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r250116. rdar://problem/55608003
+
+    [JSC] DFG op_call_varargs should not assume that one-previous-local of freeReg is usable
+    https://bugs.webkit.org/show_bug.cgi?id=202014
+    
+    Reviewed by Saam Barati.
+    
+    JSTests:
+    
+    * stress/call-varargs-inlining-should-not-clobber-previous-to-free-register.js: Added.
+    (__v0):
+    
+    Source/JavaScriptCore:
+    
+    Let's look into the bytecode generated by the test.
+    
+        [   0] enter
+        [   1] get_scope          loc4
+        [   3] mov                loc5, loc4
+        [   6] check_traps
+        [   7] mov                loc6, callee
+        [  10] create_direct_arguments loc7
+        [  12] to_this            this
+        [  15] mov                loc8, loc7
+        [  18] mov                loc9, loc6
+        [  21] mov                loc12, Undefined(const0)
+        [  24] get_by_id          loc11, loc6, 0
+        [  29] jneq_ptr           loc11, ApplyFunction, 18(->47)
+        [  34] mov                loc11, loc6
+        [  37] call_varargs       loc11, loc11, this, loc8, loc13, 0
+        [  45] jmp                17(->62)
+        [  47] mov                loc16, loc6
+        [  50] mov                loc15, this
+        [  53] mov                loc14, loc8
+        [  56] call               loc11, loc11, 3, 22
+        ...
+    
+    call_varargs uses loc13 as firstFreeReg (first usable bottom register in the current stack-frame to spread variadic arguments after this).
+    This is correct. And call_varargs uses |this| as this argument for the call_varargs. This |this| argument is not in a region starting from loc13.
+    And it is not in the previous place to loc13 (|this| is not loc12).
+    
+    On the other hand, DFG::ByteCodeParser's inlining path is always assuming that the previous to firstFreeReg is usable and part of arguments.
+    But this is wrong. loc12 in the above bytecode is used for `[  56] call               loc11, loc11, 3, 22`'s argument later, and this call assumes
+    that loc12 is not clobbered by call_varargs. But DFG and FTL clobbers it.
+    
+    The test is recursively calling the same function, and we inline the same function one-level. And stack-overflow error happens when inlined
+    CallForwardVarargs (from op_call_varargs) is called. FTL recovers the frames, and at this point, outer function's loc12 is recovered to garbage since
+    LoadVarargs clobbers it. And we eventually use it and crash.
+    
+        60:<!0:-> LoadVarargs(Check:Untyped:Kill:@30, MustGen, start = loc13, count = loc15, machineStart = loc7, machineCount = loc9, offset = 0, mandatoryMinimum = 0, limit = 2, R:World, W:Stack(-16),Stack(-14),Stack(-13),Heap, Exits, ClobbersExit, bc#37, ExitValid)
+    
+    This LoadVarargs clobbers loc12, loc13, and loc15 while loc12 is used.
+    
+    In all the tiers, op_call_varargs first allocates enough region to hold varargs including |this|. And we store |this| value to a correct place.
+    DFG should not assume that the previous register to firstFreeReg is used for |this|.
+    
+    This patch fixes DFG::ByteCodeParser's stack region calculation for op_call_varargs inlining. And we rename maxNumArguments to maxArgumentCountIncludingThis to
+    represent that `maxArgumentCountIncludingThis` includes |this| count.
+    
+    * bytecode/CallLinkInfo.cpp:
+    (JSC::CallLinkInfo::setMaxArgumentCountIncludingThis):
+    (JSC::CallLinkInfo::setMaxNumArguments): Deleted.
+    * bytecode/CallLinkInfo.h:
+    (JSC::CallLinkInfo::addressOfMaxArgumentCountIncludingThis):
+    (JSC::CallLinkInfo::maxArgumentCountIncludingThis):
+    (JSC::CallLinkInfo::addressOfMaxNumArguments): Deleted.
+    (JSC::CallLinkInfo::maxNumArguments): Deleted.
+    * bytecode/CallLinkStatus.cpp:
+    (JSC::CallLinkStatus::computeFor):
+    (JSC::CallLinkStatus::dump const):
+    * bytecode/CallLinkStatus.h:
+    (JSC::CallLinkStatus::maxArgumentCountIncludingThis const):
+    (JSC::CallLinkStatus::maxNumArguments const): Deleted.
+    * dfg/DFGByteCodeParser.cpp:
+    (JSC::DFG::ByteCodeParser::handleVarargsInlining):
+    * dfg/DFGSpeculativeJIT32_64.cpp:
+    (JSC::DFG::SpeculativeJIT::emitCall):
+    * dfg/DFGSpeculativeJIT64.cpp:
+    (JSC::DFG::SpeculativeJIT::emitCall):
+    * ftl/FTLLowerDFGToB3.cpp:
+    (JSC::FTL::DFG::LowerDFGToB3::compileDirectCallOrConstruct):
+    * jit/JITCall.cpp:
+    (JSC::JIT::compileSetupFrame):
+    * jit/JITCall32_64.cpp:
+    (JSC::JIT::compileSetupFrame):
+    * jit/JITOperations.cpp:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@250116 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-19  Yusuke Suzuki  <ysuzuki@apple.com>
+
+            [JSC] DFG op_call_varargs should not assume that one-previous-local of freeReg is usable
+            https://bugs.webkit.org/show_bug.cgi?id=202014
+
+            Reviewed by Saam Barati.
+
+            * stress/call-varargs-inlining-should-not-clobber-previous-to-free-register.js: Added.
+            (__v0):
+
+2019-09-17  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r249911. rdar://problem/55461405
+
+    JSObject::putInlineSlow should not ignore "__proto__" for Proxy
+    https://bugs.webkit.org/show_bug.cgi?id=200386
+    <rdar://problem/53854946>
+    
+    Reviewed by Yusuke Suzuki.
+    
+    JSTests:
+    
+    * stress/proxy-__proto__-in-prototype-chain.js: Added.
+    * stress/proxy-property-replace-structure-transition.js: Added.
+    
+    Source/JavaScriptCore:
+    
+    We used to ignore '__proto__' in putInlineSlow when the object in question
+    was Proxy. There is no reason for this, and it goes against the spec. So
+    I've removed that condition. This also has the effect that it fixes an
+    assertion firing inside our inline caching code which dictates that for a
+    property replace that the base value's structure must be equal to the
+    structure when we grabbed the structure prior to the put operation.
+    The old code caused a weird edge case where we broke this invariant.
+    
+    * runtime/JSObject.cpp:
+    (JSC::JSObject::putInlineSlow):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@249911 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-09-16  Saam Barati  <sbarati@apple.com>
+
+            JSObject::putInlineSlow should not ignore "__proto__" for Proxy
+            https://bugs.webkit.org/show_bug.cgi?id=200386
+            <rdar://problem/53854946>
+
+            Reviewed by Yusuke Suzuki.
+
+            * stress/proxy-__proto__-in-prototype-chain.js: Added.
+            * stress/proxy-property-replace-structure-transition.js: Added.
+
+2019-09-03  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r248793. rdar://problem/55001191
+
+    [JSC] Promise.prototype.finally should accept non-promise objects
+    https://bugs.webkit.org/show_bug.cgi?id=200829
+    
+    Reviewed by Mark Lam.
+    
+    JSTests:
+    
+    * stress/promise-finally-should-accept-non-promise-objects.js: Added.
+    (shouldBe):
+    (Thenable):
+    (Thenable.prototype.then):
+    
+    Source/JavaScriptCore:
+    
+    According to the Promise.prototype.finally spec step 2[1], we should check @isObject instead of @isPromise,
+    since Promise.prototype.finally should accept thenable objects that are defined by user libraries (like, bluebird for example).
+    This patch changes this check to the specified one.
+    
+    [1]: https://tc39.es/proposal-promise-finally/
+    
+    * builtins/PromisePrototype.js:
+    (finally):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248793 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-16  Yusuke Suzuki  <ysuzuki@apple.com>
+
+            [JSC] Promise.prototype.finally should accept non-promise objects
+            https://bugs.webkit.org/show_bug.cgi?id=200829
+
+            Reviewed by Mark Lam.
+
+            * stress/promise-finally-should-accept-non-promise-objects.js: Added.
+            (shouldBe):
+            (Thenable):
+            (Thenable.prototype.then):
+
+2019-08-18  Babak Shafiei  <bshafiei@apple.com>
+
+        Cherry-pick r248800. rdar://problem/54454996
+
+    CodeBlock destructor should clear all of its watchpoints.
+    https://bugs.webkit.org/show_bug.cgi?id=200792
+    <rdar://problem/53947800>
+    
+    Reviewed by Yusuke Suzuki.
+    
+    JSTests:
+    
+    * stress/codeblock-should-clear-watchpoints-on-destruction.js: Added.
+    
+    Source/JavaScriptCore:
+    
+    We need to clear the watchpoints explicitly (just like we do in CodeBlock::jettison())
+    because the JITCode may outlive the CodeBlock for a while.  For example, the JITCode
+    is ref'd in Interpreter::execute(JSC::CallFrameClosure&) like so:
+    
+        JSValue result = closure.functionExecutable->generatedJITCodeForCall()->execute(&vm, closure.protoCallFrame);
+    
+    The call to generatedJITCodeForCall() returns a Ref<JITCode> with the underlying
+    JITCode ref'd.  Hence, while the interpreter frame is still on the stack, the
+    executing JITCode instance will have a non-zero refCount, and be kept alive even
+    though its CodeBlock may have already been destructed.
+    
+    Note: the Interpreter execute() methods aren't the only ones who would ref the JITCode:
+    ExecutableBase also holds a RefPtr<JITCode> m_jitCodeForCall and RefPtr<JITCode>
+    m_jitCodeForConstruct.  But a CodeBlock will be uninstalled before it gets destructed.
+    Hence, the uninstallation will deref the JITCode before we get to the CodeBlock
+    destructor.  That said, we should be aware that a JITCode's refCount is not always
+    1 after the JIT installs it into the CodeBlock, and it should not be assumed to be so.
+    
+    For this patch, I also audited all Watchpoint subclasses to ensure that we are
+    clearing all the relevant watchpoints in the CodeBlock destructor.  Here is the
+    list of audited Watchpoints:
+    
+        CodeBlockJettisoningWatchpoint
+        AdaptiveStructureWatchpoint
+        AdaptiveInferredPropertyValueWatchpoint
+            - these are held in the DFG::CommonData, and is tied to JITCode's life cycle.
+            - they need to be cleared eagerly in CodeBlock's destructor.
+    
+        LLIntPrototypeLoadAdaptiveStructureWatchpoint
+            - stored in m_llintGetByIdWatchpointMap in the CodeBlock.
+            - this will be automatically cleared on CodeBlock destruction.
+    
+    The following does not reference CodeBlock:
+    
+        FunctionRareData::AllocationProfileClearingWatchpoint
+            - stored in FunctionRareData and will be cleared automatically on
+              FunctionRareData destruction.
+            - only references the owner FunctionRareData.
+    
+        ObjectToStringAdaptiveStructureWatchpoint
+        ObjectToStringAdaptiveInferredPropertyValueWatchpoint
+            - stored in StructureRareData and will be cleared automatically on
+              StructureRareData destruction.
+    
+        ObjectPropertyChangeAdaptiveWatchpoint
+            - stored in JSGlobalObject, and will be cleared automatically on
+              JSGlobalObject destruction.
+            - only references the owner JSGlobalObject.
+    
+        StructureStubClearingWatchpoint
+            - stored in WatchpointsOnStructureStubInfo and will be cleared automatically
+              on WatchpointsOnStructureStubInfo destruction.
+    
+        PropertyWatchpoint
+        StructureWatchpoint
+            - embedded in AdaptiveInferredPropertyValueWatchpointBase, which is extended
+              as AdaptiveInferredPropertyValueWatchpoint, ObjectPropertyChangeAdaptiveWatchpoint,
+              and ObjectToStringAdaptiveInferredPropertyValueWatchpoint.
+            - life cycle is handled by those 3 subclasses.
+    
+    * bytecode/CodeBlock.cpp:
+    (JSC::CodeBlock::~CodeBlock):
+    
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248800 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-16  Mark Lam  <mark.lam@apple.com>
+
+            CodeBlock destructor should clear all of its watchpoints.
+            https://bugs.webkit.org/show_bug.cgi?id=200792
+            <rdar://problem/53947800>
+
+            Reviewed by Yusuke Suzuki.
+
+            * stress/codeblock-should-clear-watchpoints-on-destruction.js: Added.
+
+2019-08-13  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248271. rdar://problem/54237771
+
+    JSC: assertion failure in SpeculativeJIT::compileGetByValOnIntTypedArray
+    https://bugs.webkit.org/show_bug.cgi?id=199997
+    
+    Reviewed by Saam Barati.
+    
+    JSTests:
+    
+    New test.
+    
+    * stress/typedarray-no-alreadyChecked-assert.js: Added.
+    (checkIntArray):
+    (checkFloatArray):
+    
+    Source/JavaScriptCore:
+    
+    No need to ASSERT(node->arrayMode().alreadyChecked(...)) in SpeculativeJIT::compileGetByValOnIntTypedArray()
+    and compileGetByValOnFloatTypedArray() as the abstract interpreter is conservative and can insert a
+    CheckStructureOrEmpty which will fail the ASSERT as it checks for the SpecType of the array
+    and not for SpecEmpty.  If we added a check for the SpecEmpty in the ASSERT, there are cases where
+    it won't be set.
+    
+    * dfg/DFGSpeculativeJIT.cpp:
+    (JSC::DFG::SpeculativeJIT::compileGetByValOnIntTypedArray):
+    (JSC::DFG::SpeculativeJIT::compileGetByValOnFloatTypedArray):
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248271 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-05  Michael Saboff  <msaboff@apple.com>
+
+            JSC: assertion failure in SpeculativeJIT::compileGetByValOnIntTypedArray
+            https://bugs.webkit.org/show_bug.cgi?id=199997
+
+            Reviewed by Saam Barati.
+
+            New test.
+
+            * stress/typedarray-no-alreadyChecked-assert.js: Added.
+            (checkIntArray):
+            (checkFloatArray):
+
+2019-08-13  Alan Coon  <alancoon@apple.com>
+
+        Cherry-pick r248149. rdar://problem/54237692
+
+    GetterSetter type confusion during DFG compilation
+    https://bugs.webkit.org/show_bug.cgi?id=199903
+    
+    Reviewed by Mark Lam.
+    
+    JSTests:
+    
+    * stress/cse-propagated-constant-may-not-follow-structure-restrictions.js: Added.
+    
+    Source/JavaScriptCore:
+    
+    In AI, we are strongly assuming that GetGetter's child constant value should be GetterSetter if it exists.
+    However, this can be wrong since nobody ensures that. AI assumed so because the control-flow and preceding
+    CheckStructure ensures that. But this preceding check can be eliminated if the node becomes (at runtime) unreachable.
+    
+    Let's consider the following graph.
+    
+        129:<!0:->     PutByOffset(KnownCell:@115, KnownCell:@115, Check:Untyped:@124, MustGen, id5{length}, 0, W:NamedProperties(5), ClobbersExit, bc#154, ExitValid)
+        130:<!0:->     PutStructure(KnownCell:@115, MustGen, %C8:Object -> %C3:Object, ID:7726, R:JSObject_butterfly, W:JSCell_indexingType,JSCell_structureID,JSCell_typeInfoFlags,JSCell_typeInfoType, ClobbersExit, bc#154, ExitInvalid)
+        ...
+        158:<!0:->     GetLocal(Check:Untyped:@197, JS|MustGen|UseAsOther, Final, loc7(R<Final>/FlushedCell), R:Stack(-8), bc#187, ExitValid)  predicting Final
+        210:< 1:->     DoubleRep(Check:NotCell:@158, Double|PureInt, BytecodeDouble, Exits, bc#187, ExitValid)
+        ...
+        162:<!0:->     CheckStructure(Cell:@158, MustGen, [%Ad:Object], R:JSCell_structureID, Exits, bc#192, ExitValid)
+        163:< 1:->     GetGetterSetterByOffset(KnownCell:@158, KnownCell:@158, JS|UseAsOther, OtherCell, id5{length}, 0, R:NamedProperties(5), Exits, bc#192, ExitValid)
+        164:< 1:->     GetGetter(KnownCell:@163, JS|UseAsOther, Function, R:GetterSetter_getter, Exits, bc#192, ExitValid)
+    
+    At @163 and @164, AI proves that @158's AbstractValue is None because @210's edge filters out Cells @158 is a cell. But we do not invalidate graph status as "Invalid" even if edge filters out all possible value.
+    This is because the result of edge can be None in a valid program. For example, we can put a dependency edge between a consuming node and a producing node, where the producing node is just like a check and it
+    does not produce a value actually. So, @163 and @164 are not invalidated. This is totally fine in our compiler pipeline right now.
+    
+    But after that, global CSE phase found that @115 and @158 are same and @129 dominates @158. As a result, we can replace GetGetter child's @163 with @124. Since CheckStructure is already removed (and now, at runtime,
+    @163 and @164 are never executed), we do not have any structure guarantee on @158 and the result of @163. This means that @163's CSE result can be non-GetterSetter value.
+    
+        124:< 2:->     JSConstant(JS|UseAsOther, Final, Weak:Object: 0x1199e82a0 with butterfly 0x0 (Structure %B4:Object), StructureID: 49116, bc#0, ExitValid)
+        ...
+        126:< 2:->     GetGetter(KnownCell:Kill:@124, JS|UseAsOther, Function, R:GetterSetter_getter, Exits, bc#192, ExitValid)
+    
+    AI filters out @124's non-cell values. But @126 can get non-GetterSetter cell at AI phase. But our AI code is like the following.
+    
+        JSValue base = forNode(node->child1()).m_value;
+        if (base) {
+            GetterSetter* getterSetter = jsCast<GetterSetter*>(base);
+            ...
+    
+    Then, jsCast casts the above object with GetterSetter accidentally.
+    
+    In general, DFG AI can get a proven constant value, which could not be shown at runtime. This happens if the processing node is unreachable at runtime while the graph is not invalid yet, because preceding edge
+    filters already filter out all the possible execution. DFG AI already considered about this possibility, and it attempts to fold a node into a constant only when the constant input matches against the expected one.
+    But several DFG nodes are not handling this correctly: GetGetter, GetSetter, and SkipScope.
+    
+    In this patch, we use `jsDynamicCast` to ensure that the constant input matches against the expected (foldable) one, and fold it only when the expectation is met.
+    We also remove DFG::Node::castConstant and its use. We should not rely on the constant folded value based on graph's control-flow.
+    
+    * dfg/DFGAbstractInterpreterInlines.h:
+    (JSC::DFG::AbstractInterpreter<AbstractStateType>::executeEffects):
+    * dfg/DFGNode.h:
+    (JSC::DFG::Node::castConstant): Deleted.
+    * ftl/FTLLowerDFGToB3.cpp:
+    (JSC::FTL::DFG::LowerDFGToB3::compileMaterializeCreateActivation):
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@248149 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-08-01  Yusuke Suzuki  <ysuzuki@apple.com>
+
+            GetterSetter type confusion during DFG compilation
+            https://bugs.webkit.org/show_bug.cgi?id=199903
+
+            Reviewed by Mark Lam.
+
+            * stress/cse-propagated-constant-may-not-follow-structure-restrictions.js: Added.
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247485. rdar://problem/53229615
+
+    Unreviewed, test262 gardening.
+    
+    * test262/expectations.yaml:
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247485 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-16  Keith Miller  <keith_miller@apple.com>
+
+            Unreviewed, test262 gardening.
+
+            * test262/expectations.yaml:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247469. rdar://problem/53229615
+
+    Update test262
+    https://bugs.webkit.org/show_bug.cgi?id=199801
+    
+    Rubber-stamped by Yusuke Suzuki.
+    
+    * test262/expectations.yaml:
+    * test262/latest-changes-summary.txt:
+    * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/Symbol.toStringTag.js: Added.
+    (fg.new.FinalizationGroup):
+    (callback):
+    * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-job-not-active-throws.js: Added.
+    (fg.new.FinalizationGroup):
+    (callback):
+    * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-length.js: Added.
+    (fg.new.FinalizationGroup):
+    (callback):
+    * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-missing-internal-throws.js: Added.
+    (fg.new.FinalizationGroup):
+    (callback):
+    * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-name.js: Added.
+    (fg.new.FinalizationGroup):
+    (callback):
+    * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-not-object-throws.js: Added.
+    (fg.new.FinalizationGroup):
+    (callback):
+    * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-prop-desc.js: Added.
+    (fg.new.FinalizationGroup):
+    (callback):
+    * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/proto.js: Added.
+    (callback):
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/constructor.js: Added.
+    * test262/test/built-ins/FinalizationGroup/gc-has-one-chance-to-call-cleanupCallback.js: Added.
+    (cb):
+    (fg.new.FinalizationGroup):
+    (emptyCells):
+    (async.fn):
+    (fn.then.async):
+    * test262/test/built-ins/FinalizationGroup/instance-extensible.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/length.js: Added.
+    * test262/test/built-ins/FinalizationGroup/name.js: Added.
+    * test262/test/built-ins/FinalizationGroup/newtarget-prototype-is-not-object.js: Added.
+    (newTarget):
+    (fn):
+    * test262/test/built-ins/FinalizationGroup/prop-desc.js: Added.
+    * test262/test/built-ins/FinalizationGroup/proto-from-ctor-realm.js: Added.
+    (fn):
+    * test262/test/built-ins/FinalizationGroup/proto.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype-from-newtarget-abrupt.js: Added.
+    (newTarget):
+    * test262/test/built-ins/FinalizationGroup/prototype-from-newtarget-custom.js: Added.
+    (newTarget):
+    * test262/test/built-ins/FinalizationGroup/prototype-from-newtarget.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/prototype/Symbol.toStringTag.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/callback-iterator-proto.js: Added.
+    (callback):
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/callback-not-callable-throws.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/cleanup-prevented-with-reference.js: Added.
+    (cb):
+    (fg.new.FinalizationGroup):
+    (emptyCells):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/cleanup-prevented-with-unregister.js: Added.
+    (fg.new.FinalizationGroup):
+    (fg.cleanupSome.cb):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/cleanupcallback-iterator-proto.js: Added.
+    (callback):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/custom-this.js: Added.
+    (fn):
+    (cb):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/gc-cleanup-not-prevented-with-wr-deref.js: Added.
+    (cb):
+    (fg.new.FinalizationGroup):
+    (emptyCells):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/iterator-dynamic.js: Added.
+    (fg.new.FinalizationGroup):
+    (callback):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/iterator-holdings-multiple-values.js: Added.
+    (fg.new.FinalizationGroup):
+    (callback):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/length.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/name.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/poisoned-callback-throws.js: Added.
+    (poisoned):
+    (fg.new.FinalizationGroup):
+    (emptyCells):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/poisoned-cleanup-callback-throws.js: Added.
+    (poisoned):
+    (emptyCells):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/prop-desc.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/return-undefined-with-gc.js: Added.
+    (fn):
+    (cb):
+    (emptyCells):
+    (prototype.assert.sameValue.fg.cleanupSome):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/return-undefined.js: Added.
+    (fn):
+    (cb):
+    (poisoned):
+    (assert.sameValue.fg.cleanupSome):
+    (prototype.assert.sameValue.fg.cleanupSome):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/this-does-not-have-internal-cells-throws.js: Added.
+    (cb):
+    * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/this-not-object-throws.js: Added.
+    (cb):
+    * test262/test/built-ins/FinalizationGroup/prototype/constructor.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/prop-desc.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/proto.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/register/custom-this.js: Added.
+    (fn):
+    * test262/test/built-ins/FinalizationGroup/prototype/register/holdings-any-value-type.js: Added.
+    (fn):
+    * test262/test/built-ins/FinalizationGroup/prototype/register/holdings-same-as-target.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/prototype/register/length.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/register/name.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/register/prop-desc.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/register/return-undefined-register-itself.js: Added.
+    (fn):
+    * test262/test/built-ins/FinalizationGroup/prototype/register/return-undefined.js: Added.
+    (fn):
+    * test262/test/built-ins/FinalizationGroup/prototype/register/target-not-object-throws.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/prototype/register/this-does-not-have-internal-target-throws.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/register/this-not-object-throws.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/register/unregisterToken-not-object-or-undefined-throws.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/prototype/register/unregisterToken-same-as-holdings-and-target.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/prototype/register/unregisterToken-same-as-holdings.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/prototype/register/unregisterToken-same-as-target.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/prototype/unregister/custom-this.js: Added.
+    (fn):
+    * test262/test/built-ins/FinalizationGroup/prototype/unregister/length.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/unregister/name.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/unregister/prop-desc.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/unregister/this-does-not-have-internal-cells-throws.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/unregister/this-not-object-throws.js: Added.
+    * test262/test/built-ins/FinalizationGroup/prototype/unregister/unregister.js: Added.
+    (fn):
+    * test262/test/built-ins/FinalizationGroup/prototype/unregister/unregisterToken-not-object-throws.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/returns-new-object-from-constructor.js: Added.
+    (cleanupCallback):
+    (let.key.of.Object.getOwnPropertyNames):
+    (set for):
+    * test262/test/built-ins/FinalizationGroup/target-not-callable-throws.js: Added.
+    * test262/test/built-ins/FinalizationGroup/undefined-newtarget-throws.js: Added.
+    (FinalizationGroup):
+    * test262/test/built-ins/FinalizationGroup/unnaffected-by-poisoned-cleanupCallback.js: Added.
+    (cleanupCallback):
+    (let.key.of.Object.getOwnPropertyNames):
+    (set for):
+    * test262/test/built-ins/Function/StrictFunction_restricted-properties.js:
+    * test262/test/built-ins/Function/prototype/bind/BoundFunction_restricted-properties.js:
+    * test262/test/built-ins/Function/prototype/restricted-property-arguments.js:
+    * test262/test/built-ins/Function/prototype/restricted-property-caller.js:
+    * test262/test/built-ins/Object/prototype/toString/proxy-function-async.js: Added.
+    (asyncProxy.new.Proxy.async):
+    * test262/test/built-ins/Object/prototype/toString/proxy-function.js:
+    (asyncProxy.new.Proxy.async):
+    * test262/test/built-ins/Object/prototype/toString/symbol-tag-non-str-builtin.js: Added.
+    (setIter.set Symbol):
+    (set defaultTag):
+    (gen):
+    (get return):
+    (set new):
+    * test262/test/built-ins/Object/prototype/toString/symbol-tag-non-str-proxy-function.js: Added.
+    (generatorProxy.new.Proxy):
+    (asyncProxy.new.Proxy.async):
+    * test262/test/built-ins/Object/subclass-object-arg.js:
+    * test262/test/built-ins/Promise/all/invoke-resolve-get-error-close.js:
+    * test262/test/built-ins/Promise/all/resolve-element-function-name.js:
+    * test262/test/built-ins/Promise/allSettled/invoke-resolve-get-error-close.js:
+    * test262/test/built-ins/Promise/allSettled/reject-element-function-name.js:
+    * test262/test/built-ins/Promise/allSettled/resolve-element-function-name.js:
+    * test262/test/built-ins/Promise/executor-function-name.js:
+    * test262/test/built-ins/Promise/race/invoke-resolve-get-error-close.js:
+    * test262/test/built-ins/Promise/reject-function-name.js:
+    * test262/test/built-ins/Promise/resolve-function-name.js:
+    * test262/test/built-ins/Set/prototype/values/does-not-have-setdata-internal-slot-weakset.js:
+    * test262/test/built-ins/WeakRef/constructor.js: Added.
+    * test262/test/built-ins/WeakRef/instance-extensible.js: Added.
+    * test262/test/built-ins/WeakRef/length.js: Added.
+    * test262/test/built-ins/WeakRef/name.js: Added.
+    * test262/test/built-ins/WeakRef/newtarget-prototype-is-not-object.js: Added.
+    (newTarget):
+    * test262/test/built-ins/WeakRef/prop-desc.js: Added.
+    * test262/test/built-ins/WeakRef/proto-from-ctor-realm.js: Added.
+    * test262/test/built-ins/WeakRef/proto.js: Added.
+    * test262/test/built-ins/WeakRef/prototype-from-newtarget-abrupt.js: Added.
+    (newTarget):
+    * test262/test/built-ins/WeakRef/prototype-from-newtarget-custom.js: Added.
+    (newTarget):
+    * test262/test/built-ins/WeakRef/prototype-from-newtarget.js: Added.
+    * test262/test/built-ins/WeakRef/prototype/Symbol.toStringTag.js: Added.
+    * test262/test/built-ins/WeakRef/prototype/constructor.js: Added.
+    * test262/test/built-ins/WeakRef/prototype/deref/custom-this.js: Added.
+    * test262/test/built-ins/WeakRef/prototype/deref/gc-cleanup-not-prevented-with-wr-deref.js: Added.
+    (emptyCells):
+    * test262/test/built-ins/WeakRef/prototype/deref/length.js: Added.
+    * test262/test/built-ins/WeakRef/prototype/deref/name.js: Added.
+    * test262/test/built-ins/WeakRef/prototype/deref/prop-desc.js: Added.
+    * test262/test/built-ins/WeakRef/prototype/deref/return-target.js: Added.
+    * test262/test/built-ins/WeakRef/prototype/deref/this-does-not-have-internal-target-throws.js: Added.
+    (fg.new.FinalizationGroup):
+    * test262/test/built-ins/WeakRef/prototype/deref/this-not-object-throws.js: Added.
+    * test262/test/built-ins/WeakRef/prototype/prop-desc.js: Added.
+    * test262/test/built-ins/WeakRef/prototype/proto.js: Added.
+    * test262/test/built-ins/WeakRef/returns-new-object-from-constructor.js: Added.
+    (let.key.of.Object.getOwnPropertyNames):
+    (set for):
+    * test262/test/built-ins/WeakRef/target-not-object-throws.js: Added.
+    * test262/test/built-ins/WeakRef/undefined-newtarget-throws.js: Added.
+    * test262/test/intl402/BigInt/prototype/toLocaleString/builtin.js:
+    * test262/test/intl402/BigInt/prototype/toLocaleString/default-options-object-prototype.js:
+    * test262/test/intl402/BigInt/prototype/toLocaleString/length.js:
+    * test262/test/intl402/BigInt/prototype/toLocaleString/returns-same-results-as-NumberFormat.js:
+    * test262/test/intl402/BigInt/prototype/toLocaleString/taint-Intl-NumberFormat.js:
+    * test262/test/intl402/BigInt/prototype/toLocaleString/this-value-invalid.js:
+    * test262/test/intl402/BigInt/prototype/toLocaleString/throws-same-exceptions-as-NumberFormat.js:
+    * test262/test/intl402/DateTimeFormat/constructor-options-order-quarter.js: Removed.
+    * test262/test/intl402/DateTimeFormat/constructor-options-quarter-invalid.js: Removed.
+    * test262/test/intl402/DateTimeFormat/constructor-options-quarter-valid.js: Removed.
+    * test262/test/intl402/DateTimeFormat/prototype/format/dayPeriod-long-en.js: Added.
+    * test262/test/intl402/DateTimeFormat/prototype/format/dayPeriod-narrow-en.js: Added.
+    * test262/test/intl402/DateTimeFormat/prototype/format/dayPeriod-short-en.js: Added.
+    * test262/test/intl402/DateTimeFormat/prototype/format/fractionalSecondDigits.js: Added.
+    * test262/test/intl402/DateTimeFormat/prototype/formatRange/argument-date-string.js:
+    * test262/test/intl402/DateTimeFormat/prototype/formatRange/argument-near-time-boundaries.js:
+    * test262/test/intl402/DateTimeFormat/prototype/formatRange/argument-to-integer.js:
+    * test262/test/intl402/DateTimeFormat/prototype/formatRange/builtin.js:
+    * test262/test/intl402/DateTimeFormat/prototype/formatRange/prop-desc.js:
+    * test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/argument-date-string.js:
+    * test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/argument-near-time-boundaries.js:
+    * test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/argument-to-integer.js:
+    * test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/builtin.js:
+    * test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/prop-desc.js:
+    * test262/test/intl402/DateTimeFormat/prototype/formatToParts/dayPeriod-long-en.js: Added.
+    (assertParts):
+    (assertPartsNumeric):
+    * test262/test/intl402/DateTimeFormat/prototype/formatToParts/dayPeriod-narrow-en.js: Added.
+    (assertParts):
+    (assertPartsNumeric):
+    * test262/test/intl402/DateTimeFormat/prototype/formatToParts/dayPeriod-short-en.js: Added.
+    (assertParts):
+    (assertPartsNumeric):
+    * test262/test/intl402/DateTimeFormat/prototype/formatToParts/fractionalSecondDigits.js: Added.
+    (assertParts):
+    * test262/test/intl402/DateTimeFormat/prototype/resolvedOptions/order-quarter.js: Removed.
+    * test262/test/intl402/DateTimeFormat/taint-Object-prototype-quarter.js: Removed.
+    * test262/test/intl402/RelativeTimeFormat/prototype/format/en-us-numeric-auto.js:
+    * test262/test/intl402/RelativeTimeFormat/prototype/formatToParts/en-us-numeric-auto.js:
+    * test262/test/language/expressions/arrow-function/ArrowFunction_restricted-properties.js:
+    * test262/test/language/expressions/class/elements/private-field-access-on-inner-arrow-function.js: Added.
+    (C.prototype.method):
+    * test262/test/language/expressions/class/elements/private-field-access-on-inner-function.js: Added.
+    (C.prototype.method.innerFunction):
+    (C.prototype.method):
+    * test262/test/language/expressions/class/elements/private-getter-access-on-inner-arrow-function.js: Added.
+    (C):
+    (C.method):
+    * test262/test/language/expressions/class/elements/private-getter-access-on-inner-function.js: Added.
+    (C):
+    (C.method.innerFunction):
+    (C.method):
+    * test262/test/language/expressions/class/elements/private-getter-is-not-a-own-property.js: Added.
+    (C):
+    (C.checkPrivateGetter):
+    * test262/test/language/expressions/class/elements/private-method-access-on-inner-arrow-function.js: Added.
+    (C):
+    (C.method):
+    * test262/test/language/expressions/class/elements/private-method-access-on-inner-function.js: Added.
+    (C):
+    (C.method.innerFunction):
+    (C.method):
+    * test262/test/language/expressions/class/elements/private-method-is-not-a-own-property.js: Added.
+    (C):
+    (C.checkPrivateMethod):
+    * test262/test/language/expressions/class/elements/private-setter-access-on-inner-arrow-function.js: Added.
+    (C):
+    (C.method):
+    * test262/test/language/expressions/class/elements/private-setter-access-on-inner-function.js: Added.
+    (C):
+    (C.method.innerFunction):
+    (C.method):
+    * test262/test/language/expressions/class/elements/private-setter-is-not-a-own-property.js: Added.
+    (C):
+    (C.checkPrivateSetter):
+    * test262/test/language/expressions/class/elements/prod-private-getter-before-super-return-in-field-initializer.js:
+    * test262/test/language/expressions/class/elements/prod-private-method-before-super-return-in-field-initializer.js:
+    * test262/test/language/expressions/class/elements/prod-private-setter-before-super-return-in-field-initializer.js:
+    * test262/test/language/expressions/class/poisoned-underscore-proto.js: Added.
+    * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-eval-indirect.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression):
+    (let.classStringExpression.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-eval.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression):
+    (let.classStringExpression.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-factory.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (const.C):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression.return.prototype.m):
+    (let.classStringExpression.return.prototype.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression.return.prototype.m):
+    (let.classStringExpression.return.prototype.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-realm.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression):
+    (let.classStringExpression.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-eval-indirect.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression.prototype.m):
+    (let.classStringExpression.prototype.access):
+    (let.classStringExpression):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-eval.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression.prototype.m):
+    (let.classStringExpression.prototype.access):
+    (let.classStringExpression):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-factory.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (const.C):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression.return.C.prototype.m):
+    (let.classStringExpression.return.C.prototype.access):
+    (let.classStringExpression.return.C):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-realm-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression.return.C.prototype.m):
+    (let.classStringExpression.return.C.prototype.access):
+    (let.classStringExpression.return.C):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-realm.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression):
+    (let.classStringExpression.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-eval-indirect.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression):
+    (let.classStringExpression.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-eval.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression):
+    (let.classStringExpression.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-factory.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (const.C):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression.return.prototype.m):
+    (let.classStringExpression.return.prototype.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression.return.prototype.m):
+    (let.classStringExpression.return.prototype.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+    (let.classStringExpression):
+    (let.classStringExpression.access):
+    (let.createAndInstantiateClass):
+    * test262/test/language/expressions/new.target/unary-expr.js: Added.
+    (new):
+    (async):
+    * test262/test/language/expressions/super/call-poisoned-underscore-proto.js: Added.
+    (A):
+    * test262/test/language/expressions/super/prop-poisoned-underscore-proto.js: Added.
+    * test262/test/language/identifiers/vals-cjk-escaped.js: Added.
+    * test262/test/language/identifiers/vals-cjk.js: Added.
+    * test262/test/language/statements/class/elements/private-class-field-on-frozen-objects.js:
+    * test262/test/language/statements/class/elements/private-field-access-on-inner-arrow-function.js: Added.
+    (C.prototype.method):
+    (C):
+    * test262/test/language/statements/class/elements/private-field-access-on-inner-function.js: Added.
+    (C.prototype.method.innerFunction):
+    (C.prototype.method):
+    (C):
+    * test262/test/language/statements/class/elements/private-field-is-not-clobbered-by-computed-property.js: Added.
+    (C.prototype.checkPrivateField):
+    (C):
+    * test262/test/language/statements/class/elements/private-field-visible-to-direct-eval-on-initializer.js: Added.
+    (C):
+    * test262/test/language/statements/class/elements/private-field-visible-to-direct-eval.js: Added.
+    (C.prototype.getWithEval):
+    (C):
+    (D):
+    * test262/test/language/statements/class/elements/private-getter-access-on-inner-arrow-function.js: Added.
+    (C.prototype.get m):
+    (C.prototype.method):
+    (C):
+    * test262/test/language/statements/class/elements/private-getter-access-on-inner-function.js: Added.
+    (C.prototype.get m):
+    (C.prototype.method.innerFunction):
+    (C.prototype.method):
+    (C):
+    * test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js:
+    (let.createAndInstantiateClass):
+    * test262/test/language/statements/class/elements/private-getter-is-not-a-own-property.js: Added.
+    (C.prototype.get m):
+    (C.prototype.checkPrivateGetter):
+    (C):
+    * test262/test/language/statements/class/elements/private-getter-is-not-clobbered-by-computed-property.js: Added.
+    (C.prototype.get m):
+    (C.prototype.checkPrivateGetter):
+    (C):
+    * test262/test/language/statements/class/elements/private-getter-visible-to-direct-eval-on-initializer.js: Added.
+    (C.prototype.get m):
+    (C):
+    * test262/test/language/statements/class/elements/private-getter-visible-to-direct-eval.js: Added.
+    (C.prototype.get m):
+    (C.prototype.getWithEval):
+    (C):
+    (D.prototype.get m):
+    (D):
+    * test262/test/language/statements/class/elements/private-method-access-on-inner-arrow-function.js: Added.
+    (C.prototype.m):
+    (C.prototype.method):
+    (C):
+    * test262/test/language/statements/class/elements/private-method-access-on-inner-function.js: Added.
+    (C.prototype.m):
+    (C.prototype.method.innerFunction):
+    (C.prototype.method):
+    (C):
+    * test262/test/language/statements/class/elements/private-method-is-not-a-own-property.js: Added.
+    (C.prototype.m):
+    (C.prototype.checkPrivateMethod):
+    (C):
+    * test262/test/language/statements/class/elements/private-method-is-not-clobbered-by-computed-property.js: Added.
+    (C.prototype.m):
+    (C.prototype.checkPrivateMethod):
+    (C):
+    * test262/test/language/statements/class/elements/private-method-visible-to-direct-eval-on-initializer.js: Added.
+    (C.prototype.m):
+    (C):
+    * test262/test/language/statements/class/elements/private-method-visible-to-direct-eval.js: Added.
+    (C.prototype.m):
+    (C.prototype.getWithEval):
+    (C):
+    (D.prototype.m):
+    (D):
+    * test262/test/language/statements/class/elements/private-setter-access-on-inner-arrow-function.js: Added.
+    (C.prototype.set m):
+    (C.prototype.method):
+    (C):
+    * test262/test/language/statements/class/elements/private-setter-access-on-inner-function.js: Added.
+    (C.prototype.set m):
+    (C.prototype.method.innerFunction):
+    (C.prototype.method):
+    (C):
+    * test262/test/language/statements/class/elements/private-setter-is-not-a-own-property.js: Added.
+    (C.prototype.set m):
+    (C.prototype.checkPrivateSetter):
+    (C):
+    * test262/test/language/statements/class/elements/private-setter-is-not-clobbered-by-computed-property.js: Added.
+    (C.prototype.set m):
+    (C.prototype.checkPrivateSetter):
+    (C):
+    * test262/test/language/statements/class/elements/private-setter-visible-to-direct-eval-on-initializer.js: Added.
+    (C.prototype.set m):
+    (C):
+    * test262/test/language/statements/class/elements/private-setter-visible-to-direct-eval.js: Added.
+    (C.prototype.set m):
+    (C.prototype.setWithEval):
+    (C):
+    (D.prototype.set m):
+    (D):
+    * test262/test/language/statements/class/elements/prod-private-getter-before-super-return-in-field-initializer.js:
+    * test262/test/language/statements/class/elements/prod-private-method-before-super-return-in-field-initializer.js:
+    * test262/test/language/statements/class/elements/prod-private-setter-before-super-return-in-field-initializer.js:
+    * test262/test/language/statements/class/elements/super-access-inside-a-private-getter.js: Added.
+    (A.prototype.method):
+    (A):
+    (C.prototype.get m):
+    (C.prototype.access):
+    (C):
+    * test262/test/language/statements/class/elements/super-access-inside-a-private-method.js: Added.
+    (A.prototype.method):
+    (A):
+    (C.prototype.m):
+    (C.prototype.access):
+    (C):
+    * test262/test/language/statements/class/elements/super-access-inside-a-private-setter.js: Added.
+    (A.prototype.method):
+    (A):
+    (C.prototype.set m):
+    (C.prototype.access):
+    (C):
+    * test262/test/language/statements/class/poisoned-underscore-proto.js: Added.
+    (A):
+    * test262/test/language/statements/function/13.2-30-s.js:
+    * test262/test262-Revision.txt:
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247469 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-15  Keith Miller  <keith_miller@apple.com>
+
+            Update test262
+            https://bugs.webkit.org/show_bug.cgi?id=199801
+
+            Rubber-stamped by Yusuke Suzuki.
+
+            * test262/expectations.yaml:
+            * test262/latest-changes-summary.txt:
+            * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/Symbol.toStringTag.js: Added.
+            (fg.new.FinalizationGroup):
+            (callback):
+            * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-job-not-active-throws.js: Added.
+            (fg.new.FinalizationGroup):
+            (callback):
+            * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-length.js: Added.
+            (fg.new.FinalizationGroup):
+            (callback):
+            * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-missing-internal-throws.js: Added.
+            (fg.new.FinalizationGroup):
+            (callback):
+            * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-name.js: Added.
+            (fg.new.FinalizationGroup):
+            (callback):
+            * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-not-object-throws.js: Added.
+            (fg.new.FinalizationGroup):
+            (callback):
+            * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/next-prop-desc.js: Added.
+            (fg.new.FinalizationGroup):
+            (callback):
+            * test262/test/built-ins/FinalizationGroup/FinalizationGroupCleanupIteratorPrototype/proto.js: Added.
+            (callback):
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/constructor.js: Added.
+            * test262/test/built-ins/FinalizationGroup/gc-has-one-chance-to-call-cleanupCallback.js: Added.
+            (cb):
+            (fg.new.FinalizationGroup):
+            (emptyCells):
+            (async.fn):
+            (fn.then.async):
+            * test262/test/built-ins/FinalizationGroup/instance-extensible.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/length.js: Added.
+            * test262/test/built-ins/FinalizationGroup/name.js: Added.
+            * test262/test/built-ins/FinalizationGroup/newtarget-prototype-is-not-object.js: Added.
+            (newTarget):
+            (fn):
+            * test262/test/built-ins/FinalizationGroup/prop-desc.js: Added.
+            * test262/test/built-ins/FinalizationGroup/proto-from-ctor-realm.js: Added.
+            (fn):
+            * test262/test/built-ins/FinalizationGroup/proto.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype-from-newtarget-abrupt.js: Added.
+            (newTarget):
+            * test262/test/built-ins/FinalizationGroup/prototype-from-newtarget-custom.js: Added.
+            (newTarget):
+            * test262/test/built-ins/FinalizationGroup/prototype-from-newtarget.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/prototype/Symbol.toStringTag.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/callback-iterator-proto.js: Added.
+            (callback):
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/callback-not-callable-throws.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/cleanup-prevented-with-reference.js: Added.
+            (cb):
+            (fg.new.FinalizationGroup):
+            (emptyCells):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/cleanup-prevented-with-unregister.js: Added.
+            (fg.new.FinalizationGroup):
+            (fg.cleanupSome.cb):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/cleanupcallback-iterator-proto.js: Added.
+            (callback):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/custom-this.js: Added.
+            (fn):
+            (cb):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/gc-cleanup-not-prevented-with-wr-deref.js: Added.
+            (cb):
+            (fg.new.FinalizationGroup):
+            (emptyCells):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/iterator-dynamic.js: Added.
+            (fg.new.FinalizationGroup):
+            (callback):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/iterator-holdings-multiple-values.js: Added.
+            (fg.new.FinalizationGroup):
+            (callback):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/length.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/name.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/poisoned-callback-throws.js: Added.
+            (poisoned):
+            (fg.new.FinalizationGroup):
+            (emptyCells):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/poisoned-cleanup-callback-throws.js: Added.
+            (poisoned):
+            (emptyCells):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/prop-desc.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/return-undefined-with-gc.js: Added.
+            (fn):
+            (cb):
+            (emptyCells):
+            (prototype.assert.sameValue.fg.cleanupSome):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/return-undefined.js: Added.
+            (fn):
+            (cb):
+            (poisoned):
+            (assert.sameValue.fg.cleanupSome):
+            (prototype.assert.sameValue.fg.cleanupSome):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/this-does-not-have-internal-cells-throws.js: Added.
+            (cb):
+            * test262/test/built-ins/FinalizationGroup/prototype/cleanupSome/this-not-object-throws.js: Added.
+            (cb):
+            * test262/test/built-ins/FinalizationGroup/prototype/constructor.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/prop-desc.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/proto.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/register/custom-this.js: Added.
+            (fn):
+            * test262/test/built-ins/FinalizationGroup/prototype/register/holdings-any-value-type.js: Added.
+            (fn):
+            * test262/test/built-ins/FinalizationGroup/prototype/register/holdings-same-as-target.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/prototype/register/length.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/register/name.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/register/prop-desc.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/register/return-undefined-register-itself.js: Added.
+            (fn):
+            * test262/test/built-ins/FinalizationGroup/prototype/register/return-undefined.js: Added.
+            (fn):
+            * test262/test/built-ins/FinalizationGroup/prototype/register/target-not-object-throws.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/prototype/register/this-does-not-have-internal-target-throws.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/register/this-not-object-throws.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/register/unregisterToken-not-object-or-undefined-throws.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/prototype/register/unregisterToken-same-as-holdings-and-target.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/prototype/register/unregisterToken-same-as-holdings.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/prototype/register/unregisterToken-same-as-target.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/prototype/unregister/custom-this.js: Added.
+            (fn):
+            * test262/test/built-ins/FinalizationGroup/prototype/unregister/length.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/unregister/name.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/unregister/prop-desc.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/unregister/this-does-not-have-internal-cells-throws.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/unregister/this-not-object-throws.js: Added.
+            * test262/test/built-ins/FinalizationGroup/prototype/unregister/unregister.js: Added.
+            (fn):
+            * test262/test/built-ins/FinalizationGroup/prototype/unregister/unregisterToken-not-object-throws.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/returns-new-object-from-constructor.js: Added.
+            (cleanupCallback):
+            (let.key.of.Object.getOwnPropertyNames):
+            (set for):
+            * test262/test/built-ins/FinalizationGroup/target-not-callable-throws.js: Added.
+            * test262/test/built-ins/FinalizationGroup/undefined-newtarget-throws.js: Added.
+            (FinalizationGroup):
+            * test262/test/built-ins/FinalizationGroup/unnaffected-by-poisoned-cleanupCallback.js: Added.
+            (cleanupCallback):
+            (let.key.of.Object.getOwnPropertyNames):
+            (set for):
+            * test262/test/built-ins/Function/StrictFunction_restricted-properties.js:
+            * test262/test/built-ins/Function/prototype/bind/BoundFunction_restricted-properties.js:
+            * test262/test/built-ins/Function/prototype/restricted-property-arguments.js:
+            * test262/test/built-ins/Function/prototype/restricted-property-caller.js:
+            * test262/test/built-ins/Object/prototype/toString/proxy-function-async.js: Added.
+            (asyncProxy.new.Proxy.async):
+            * test262/test/built-ins/Object/prototype/toString/proxy-function.js:
+            (asyncProxy.new.Proxy.async):
+            * test262/test/built-ins/Object/prototype/toString/symbol-tag-non-str-builtin.js: Added.
+            (setIter.set Symbol):
+            (set defaultTag):
+            (gen):
+            (get return):
+            (set new):
+            * test262/test/built-ins/Object/prototype/toString/symbol-tag-non-str-proxy-function.js: Added.
+            (generatorProxy.new.Proxy):
+            (asyncProxy.new.Proxy.async):
+            * test262/test/built-ins/Object/subclass-object-arg.js:
+            * test262/test/built-ins/Promise/all/invoke-resolve-get-error-close.js:
+            * test262/test/built-ins/Promise/all/resolve-element-function-name.js:
+            * test262/test/built-ins/Promise/allSettled/invoke-resolve-get-error-close.js:
+            * test262/test/built-ins/Promise/allSettled/reject-element-function-name.js:
+            * test262/test/built-ins/Promise/allSettled/resolve-element-function-name.js:
+            * test262/test/built-ins/Promise/executor-function-name.js:
+            * test262/test/built-ins/Promise/race/invoke-resolve-get-error-close.js:
+            * test262/test/built-ins/Promise/reject-function-name.js:
+            * test262/test/built-ins/Promise/resolve-function-name.js:
+            * test262/test/built-ins/Set/prototype/values/does-not-have-setdata-internal-slot-weakset.js:
+            * test262/test/built-ins/WeakRef/constructor.js: Added.
+            * test262/test/built-ins/WeakRef/instance-extensible.js: Added.
+            * test262/test/built-ins/WeakRef/length.js: Added.
+            * test262/test/built-ins/WeakRef/name.js: Added.
+            * test262/test/built-ins/WeakRef/newtarget-prototype-is-not-object.js: Added.
+            (newTarget):
+            * test262/test/built-ins/WeakRef/prop-desc.js: Added.
+            * test262/test/built-ins/WeakRef/proto-from-ctor-realm.js: Added.
+            * test262/test/built-ins/WeakRef/proto.js: Added.
+            * test262/test/built-ins/WeakRef/prototype-from-newtarget-abrupt.js: Added.
+            (newTarget):
+            * test262/test/built-ins/WeakRef/prototype-from-newtarget-custom.js: Added.
+            (newTarget):
+            * test262/test/built-ins/WeakRef/prototype-from-newtarget.js: Added.
+            * test262/test/built-ins/WeakRef/prototype/Symbol.toStringTag.js: Added.
+            * test262/test/built-ins/WeakRef/prototype/constructor.js: Added.
+            * test262/test/built-ins/WeakRef/prototype/deref/custom-this.js: Added.
+            * test262/test/built-ins/WeakRef/prototype/deref/gc-cleanup-not-prevented-with-wr-deref.js: Added.
+            (emptyCells):
+            * test262/test/built-ins/WeakRef/prototype/deref/length.js: Added.
+            * test262/test/built-ins/WeakRef/prototype/deref/name.js: Added.
+            * test262/test/built-ins/WeakRef/prototype/deref/prop-desc.js: Added.
+            * test262/test/built-ins/WeakRef/prototype/deref/return-target.js: Added.
+            * test262/test/built-ins/WeakRef/prototype/deref/this-does-not-have-internal-target-throws.js: Added.
+            (fg.new.FinalizationGroup):
+            * test262/test/built-ins/WeakRef/prototype/deref/this-not-object-throws.js: Added.
+            * test262/test/built-ins/WeakRef/prototype/prop-desc.js: Added.
+            * test262/test/built-ins/WeakRef/prototype/proto.js: Added.
+            * test262/test/built-ins/WeakRef/returns-new-object-from-constructor.js: Added.
+            (let.key.of.Object.getOwnPropertyNames):
+            (set for):
+            * test262/test/built-ins/WeakRef/target-not-object-throws.js: Added.
+            * test262/test/built-ins/WeakRef/undefined-newtarget-throws.js: Added.
+            * test262/test/intl402/BigInt/prototype/toLocaleString/builtin.js:
+            * test262/test/intl402/BigInt/prototype/toLocaleString/default-options-object-prototype.js:
+            * test262/test/intl402/BigInt/prototype/toLocaleString/length.js:
+            * test262/test/intl402/BigInt/prototype/toLocaleString/returns-same-results-as-NumberFormat.js:
+            * test262/test/intl402/BigInt/prototype/toLocaleString/taint-Intl-NumberFormat.js:
+            * test262/test/intl402/BigInt/prototype/toLocaleString/this-value-invalid.js:
+            * test262/test/intl402/BigInt/prototype/toLocaleString/throws-same-exceptions-as-NumberFormat.js:
+            * test262/test/intl402/DateTimeFormat/constructor-options-order-quarter.js: Removed.
+            * test262/test/intl402/DateTimeFormat/constructor-options-quarter-invalid.js: Removed.
+            * test262/test/intl402/DateTimeFormat/constructor-options-quarter-valid.js: Removed.
+            * test262/test/intl402/DateTimeFormat/prototype/format/dayPeriod-long-en.js: Added.
+            * test262/test/intl402/DateTimeFormat/prototype/format/dayPeriod-narrow-en.js: Added.
+            * test262/test/intl402/DateTimeFormat/prototype/format/dayPeriod-short-en.js: Added.
+            * test262/test/intl402/DateTimeFormat/prototype/format/fractionalSecondDigits.js: Added.
+            * test262/test/intl402/DateTimeFormat/prototype/formatRange/argument-date-string.js:
+            * test262/test/intl402/DateTimeFormat/prototype/formatRange/argument-near-time-boundaries.js:
+            * test262/test/intl402/DateTimeFormat/prototype/formatRange/argument-to-integer.js:
+            * test262/test/intl402/DateTimeFormat/prototype/formatRange/builtin.js:
+            * test262/test/intl402/DateTimeFormat/prototype/formatRange/prop-desc.js:
+            * test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/argument-date-string.js:
+            * test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/argument-near-time-boundaries.js:
+            * test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/argument-to-integer.js:
+            * test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/builtin.js:
+            * test262/test/intl402/DateTimeFormat/prototype/formatRangeToParts/prop-desc.js:
+            * test262/test/intl402/DateTimeFormat/prototype/formatToParts/dayPeriod-long-en.js: Added.
+            (assertParts):
+            (assertPartsNumeric):
+            * test262/test/intl402/DateTimeFormat/prototype/formatToParts/dayPeriod-narrow-en.js: Added.
+            (assertParts):
+            (assertPartsNumeric):
+            * test262/test/intl402/DateTimeFormat/prototype/formatToParts/dayPeriod-short-en.js: Added.
+            (assertParts):
+            (assertPartsNumeric):
+            * test262/test/intl402/DateTimeFormat/prototype/formatToParts/fractionalSecondDigits.js: Added.
+            (assertParts):
+            * test262/test/intl402/DateTimeFormat/prototype/resolvedOptions/order-quarter.js: Removed.
+            * test262/test/intl402/DateTimeFormat/taint-Object-prototype-quarter.js: Removed.
+            * test262/test/intl402/RelativeTimeFormat/prototype/format/en-us-numeric-auto.js:
+            * test262/test/intl402/RelativeTimeFormat/prototype/formatToParts/en-us-numeric-auto.js:
+            * test262/test/language/expressions/arrow-function/ArrowFunction_restricted-properties.js:
+            * test262/test/language/expressions/class/elements/private-field-access-on-inner-arrow-function.js: Added.
+            (C.prototype.method):
+            * test262/test/language/expressions/class/elements/private-field-access-on-inner-function.js: Added.
+            (C.prototype.method.innerFunction):
+            (C.prototype.method):
+            * test262/test/language/expressions/class/elements/private-getter-access-on-inner-arrow-function.js: Added.
+            (C):
+            (C.method):
+            * test262/test/language/expressions/class/elements/private-getter-access-on-inner-function.js: Added.
+            (C):
+            (C.method.innerFunction):
+            (C.method):
+            * test262/test/language/expressions/class/elements/private-getter-is-not-a-own-property.js: Added.
+            (C):
+            (C.checkPrivateGetter):
+            * test262/test/language/expressions/class/elements/private-method-access-on-inner-arrow-function.js: Added.
+            (C):
+            (C.method):
+            * test262/test/language/expressions/class/elements/private-method-access-on-inner-function.js: Added.
+            (C):
+            (C.method.innerFunction):
+            (C.method):
+            * test262/test/language/expressions/class/elements/private-method-is-not-a-own-property.js: Added.
+            (C):
+            (C.checkPrivateMethod):
+            * test262/test/language/expressions/class/elements/private-setter-access-on-inner-arrow-function.js: Added.
+            (C):
+            (C.method):
+            * test262/test/language/expressions/class/elements/private-setter-access-on-inner-function.js: Added.
+            (C):
+            (C.method.innerFunction):
+            (C.method):
+            * test262/test/language/expressions/class/elements/private-setter-is-not-a-own-property.js: Added.
+            (C):
+            (C.checkPrivateSetter):
+            * test262/test/language/expressions/class/elements/prod-private-getter-before-super-return-in-field-initializer.js:
+            * test262/test/language/expressions/class/elements/prod-private-method-before-super-return-in-field-initializer.js:
+            * test262/test/language/expressions/class/elements/prod-private-setter-before-super-return-in-field-initializer.js:
+            * test262/test/language/expressions/class/poisoned-underscore-proto.js: Added.
+            * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-eval-indirect.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression):
+            (let.classStringExpression.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-eval.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression):
+            (let.classStringExpression.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-factory.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (const.C):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression.return.prototype.m):
+            (let.classStringExpression.return.prototype.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression.return.prototype.m):
+            (let.classStringExpression.return.prototype.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-getter-brand-check-multiple-evaluations-of-class-realm.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression):
+            (let.classStringExpression.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-eval-indirect.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression.prototype.m):
+            (let.classStringExpression.prototype.access):
+            (let.classStringExpression):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-eval.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression.prototype.m):
+            (let.classStringExpression.prototype.access):
+            (let.classStringExpression):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-factory.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (const.C):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression.return.C.prototype.m):
+            (let.classStringExpression.return.C.prototype.access):
+            (let.classStringExpression.return.C):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-realm-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression.return.C.prototype.m):
+            (let.classStringExpression.return.C.prototype.access):
+            (let.classStringExpression.return.C):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-method-brand-check-multiple-evaluations-of-class-realm.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression):
+            (let.classStringExpression.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-eval-indirect.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression):
+            (let.classStringExpression.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-eval.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression):
+            (let.classStringExpression.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-factory.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (const.C):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression.return.prototype.m):
+            (let.classStringExpression.return.prototype.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm-function-ctor.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression.return.prototype.m):
+            (let.classStringExpression.return.prototype.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/class/private-setter-brand-check-multiple-evaluations-of-class-realm.js: Copied from JSTests/test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js.
+            (let.classStringExpression):
+            (let.classStringExpression.access):
+            (let.createAndInstantiateClass):
+            * test262/test/language/expressions/new.target/unary-expr.js: Added.
+            (new):
+            (async):
+            * test262/test/language/expressions/super/call-poisoned-underscore-proto.js: Added.
+            (A):
+            * test262/test/language/expressions/super/prop-poisoned-underscore-proto.js: Added.
+            * test262/test/language/identifiers/vals-cjk-escaped.js: Added.
+            * test262/test/language/identifiers/vals-cjk.js: Added.
+            * test262/test/language/statements/class/elements/private-class-field-on-frozen-objects.js:
+            * test262/test/language/statements/class/elements/private-field-access-on-inner-arrow-function.js: Added.
+            (C.prototype.method):
+            (C):
+            * test262/test/language/statements/class/elements/private-field-access-on-inner-function.js: Added.
+            (C.prototype.method.innerFunction):
+            (C.prototype.method):
+            (C):
+            * test262/test/language/statements/class/elements/private-field-is-not-clobbered-by-computed-property.js: Added.
+            (C.prototype.checkPrivateField):
+            (C):
+            * test262/test/language/statements/class/elements/private-field-visible-to-direct-eval-on-initializer.js: Added.
+            (C):
+            * test262/test/language/statements/class/elements/private-field-visible-to-direct-eval.js: Added.
+            (C.prototype.getWithEval):
+            (C):
+            (D):
+            * test262/test/language/statements/class/elements/private-getter-access-on-inner-arrow-function.js: Added.
+            (C.prototype.get m):
+            (C.prototype.method):
+            (C):
+            * test262/test/language/statements/class/elements/private-getter-access-on-inner-function.js: Added.
+            (C.prototype.get m):
+            (C.prototype.method.innerFunction):
+            (C.prototype.method):
+            (C):
+            * test262/test/language/statements/class/elements/private-getter-brand-check-multiple-evaluations-of-class.js:
+            (let.createAndInstantiateClass):
+            * test262/test/language/statements/class/elements/private-getter-is-not-a-own-property.js: Added.
+            (C.prototype.get m):
+            (C.prototype.checkPrivateGetter):
+            (C):
+            * test262/test/language/statements/class/elements/private-getter-is-not-clobbered-by-computed-property.js: Added.
+            (C.prototype.get m):
+            (C.prototype.checkPrivateGetter):
+            (C):
+            * test262/test/language/statements/class/elements/private-getter-visible-to-direct-eval-on-initializer.js: Added.
+            (C.prototype.get m):
+            (C):
+            * test262/test/language/statements/class/elements/private-getter-visible-to-direct-eval.js: Added.
+            (C.prototype.get m):
+            (C.prototype.getWithEval):
+            (C):
+            (D.prototype.get m):
+            (D):
+            * test262/test/language/statements/class/elements/private-method-access-on-inner-arrow-function.js: Added.
+            (C.prototype.m):
+            (C.prototype.method):
+            (C):
+            * test262/test/language/statements/class/elements/private-method-access-on-inner-function.js: Added.
+            (C.prototype.m):
+            (C.prototype.method.innerFunction):
+            (C.prototype.method):
+            (C):
+            * test262/test/language/statements/class/elements/private-method-is-not-a-own-property.js: Added.
+            (C.prototype.m):
+            (C.prototype.checkPrivateMethod):
+            (C):
+            * test262/test/language/statements/class/elements/private-method-is-not-clobbered-by-computed-property.js: Added.
+            (C.prototype.m):
+            (C.prototype.checkPrivateMethod):
+            (C):
+            * test262/test/language/statements/class/elements/private-method-visible-to-direct-eval-on-initializer.js: Added.
+            (C.prototype.m):
+            (C):
+            * test262/test/language/statements/class/elements/private-method-visible-to-direct-eval.js: Added.
+            (C.prototype.m):
+            (C.prototype.getWithEval):
+            (C):
+            (D.prototype.m):
+            (D):
+            * test262/test/language/statements/class/elements/private-setter-access-on-inner-arrow-function.js: Added.
+            (C.prototype.set m):
+            (C.prototype.method):
+            (C):
+            * test262/test/language/statements/class/elements/private-setter-access-on-inner-function.js: Added.
+            (C.prototype.set m):
+            (C.prototype.method.innerFunction):
+            (C.prototype.method):
+            (C):
+            * test262/test/language/statements/class/elements/private-setter-is-not-a-own-property.js: Added.
+            (C.prototype.set m):
+            (C.prototype.checkPrivateSetter):
+            (C):
+            * test262/test/language/statements/class/elements/private-setter-is-not-clobbered-by-computed-property.js: Added.
+            (C.prototype.set m):
+            (C.prototype.checkPrivateSetter):
+            (C):
+            * test262/test/language/statements/class/elements/private-setter-visible-to-direct-eval-on-initializer.js: Added.
+            (C.prototype.set m):
+            (C):
+            * test262/test/language/statements/class/elements/private-setter-visible-to-direct-eval.js: Added.
+            (C.prototype.set m):
+            (C.prototype.setWithEval):
+            (C):
+            (D.prototype.set m):
+            (D):
+            * test262/test/language/statements/class/elements/prod-private-getter-before-super-return-in-field-initializer.js:
+            * test262/test/language/statements/class/elements/prod-private-method-before-super-return-in-field-initializer.js:
+            * test262/test/language/statements/class/elements/prod-private-setter-before-super-return-in-field-initializer.js:
+            * test262/test/language/statements/class/elements/super-access-inside-a-private-getter.js: Added.
+            (A.prototype.method):
+            (A):
+            (C.prototype.get m):
+            (C.prototype.access):
+            (C):
+            * test262/test/language/statements/class/elements/super-access-inside-a-private-method.js: Added.
+            (A.prototype.method):
+            (A):
+            (C.prototype.m):
+            (C.prototype.access):
+            (C):
+            * test262/test/language/statements/class/elements/super-access-inside-a-private-setter.js: Added.
+            (A.prototype.method):
+            (A):
+            (C.prototype.set m):
+            (C.prototype.access):
+            (C):
+            * test262/test/language/statements/class/poisoned-underscore-proto.js: Added.
+            (A):
+            * test262/test/language/statements/function/13.2-30-s.js:
+            * test262/test262-Revision.txt:
+
+2019-07-17  Kocsen Chung  <kocsen_chung@apple.com>
+
+        Cherry-pick r247532. rdar://problem/53228435
+
+    ArgumentsEliminationPhase should insert KillStack nodes before PutStack nodes that it adds.
+    https://bugs.webkit.org/show_bug.cgi?id=199821
+    <rdar://problem/52452328>
+    
+    Reviewed by Filip Pizlo.
+    
+    JSTests:
+    
+    * stress/arguments-elimination-should-insert-KillStacks-before-added-PutStacks.js: Added.
+    
+    Source/JavaScriptCore:
+    
+    Excluding the ArgumentsEliminationPhase, PutStack nodes are converted from SetLocal
+    nodes in the SSAConversionPhase.  SetLocal nodes are always preceded by MovHint nodes,
+    and the SSAConversionPhase always inserts a KillStack node before a MovHint node.
+    Hence, a PutStack node is always preceded by a KillStack node.
+    
+    However, the ArgumentsEliminationPhase can convert LoadVarargs nodes into a series
+    of one or more PutStacks nodes, and it prepends MovHint nodes before the PutStack
+    nodes.  However, it neglects to prepend KillStack nodes as well.  Since the
+    ArgumentsEliminationPhase runs after the SSAConversionPhase, the PutStack nodes
+    added during ArgumentsElimination will not be preceded by KillStack nodes.
+    
+    This patch fixes this by inserting a KillStack in the ArgumentsEliminationPhase
+    before it inserts a MovHint and a PutStack node.
+    
+    Consider this test case which can manifest the above issue as a crash:
+    
+        function inlinee(value) {
+            ...
+            let tmp = value + 1;
+        }
+    
+        function reflect() {
+            return inlinee.apply(undefined, arguments);
+        }
+    
+        function test(arr) {
+            let object = inlinee.apply(undefined, arr);   // Uses a lot of SetArgumentMaybe nodes.
+            reflect();    // Calls with a LoadVararg, which gets converted into a PutStack of a constant.
+        }
+    
+    In this test case, we have a scenario where a SetArgumentMaybe's stack
+    slot is reused as the stack slot for a PutStack later.  Here, the PutStack will
+    put a constant undefined value.  Coincidentally, the SetArgumentMaybe may also
+    initialize that stack slot to a constant undefined value.  Note that by the time
+    the PutStack executes, the SetArgumentMaybe's stack slot is dead.  The liveness of
+    these 2 values are distinct.
+    
+    However, because we were missing a KillStack before the PutStack, OSR availability
+    analysis gets misled into thinking that the PutStack constant value is still in the
+    stack slot because the value left there by the SetArgumentMaybe hasn't been killed
+    off yet.  As a result, OSR exit code will attempt to recover the PutStack's undefined
+    constant by loading from the stack slot instead of materializing it.  Since
+    SetArgumentMaybe may not actually initialize the stack slot, we get a crash in OSR
+    exit when we try to recover the PutStack constant value from the stack slot, and
+    end up using what ever junk value we read from there.
+    
+    Fixing the ArgumentsEliminationPhase to insert KillStack before the PutStack
+    removes this conflation of the PutStack's constant value with the SetArgumentMaybe's
+    constant value in the same stack slot.  And, OSR availability analysis will no
+    longer be misled to load the PutStack's constant value from the stack, but will
+    materialize the constant instead.
+    
+    * dfg/DFGArgumentsEliminationPhase.cpp:
+    
+    
+    
+    git-svn-id: https://svn.webkit.org/repository/webkit/trunk@247532 268f45cc-cd09-0410-ab3c-d52691b4dbfc
+
+    2019-07-16  Mark Lam  <mark.lam@apple.com>
+
+            ArgumentsEliminationPhase should insert KillStack nodes before PutStack nodes that it adds.
+            https://bugs.webkit.org/show_bug.cgi?id=199821
+            <rdar://problem/52452328>
+
+            Reviewed by Filip Pizlo.
+
+            * stress/arguments-elimination-should-insert-KillStacks-before-added-PutStacks.js: Added.
+
+2019-07-12  Justin Michaud  <justin_michaud@apple.com>
+
+        B3 should reduce (integer) Sub(Neg(x), y) to Neg(Add(x, y))
+        https://bugs.webkit.org/show_bug.cgi?id=196371
+
+        Reviewed by Keith Miller.
+
+        * microbenchmarks/mul-immediate-sub.js: Added.
+        (doTest):
+
+2019-07-12  Caio Lima  <ticaiolima@gmail.com>
+
+        [BigInt] Add ValueBitLShift into DFG
+        https://bugs.webkit.org/show_bug.cgi?id=192664
+
+        Reviewed by Saam Barati.
+
+        We are adding tests to cover ValueBitwise operations AI changes.
+
+        * stress/big-int-left-shift-untyped.js: Added.
+        * stress/bit-op-with-object-returning-int32.js:
+        * stress/value-bit-and-ai-rule.js: Added.
+        * stress/value-bit-lshift-ai-rule.js: Added.
+        * stress/value-bit-or-ai-rule.js: Added.
+        * stress/value-bit-xor-ai-rule.js: Added.
+
+2019-07-11  Justin Michaud  <justin_michaud@apple.com>
+
+        Add b3 macro lowering for CheckMul on arm64
+        https://bugs.webkit.org/show_bug.cgi?id=199251
+
+        Reviewed by Robin Morisset.
+
+        * microbenchmarks/check-mul-constant.js: Added.
+        (doTest):
+        * microbenchmarks/check-mul-no-constant.js: Added.
+        (doTest):
+        * microbenchmarks/check-mul-power-of-two.js: Added.
+        (doTest):
+
+2019-07-10  Tadeu Zagallo  <tzagallo@apple.com>
+
+        Optimize join of large empty arrays
+        https://bugs.webkit.org/show_bug.cgi?id=199636
+
+        Reviewed by Mark Lam.
+
+        * microbenchmarks/large-empty-array-join.js: Added.
+        * microbenchmarks/large-empty-array-join-resolve-rope.js: Added.
+
+2019-07-06  Michael Saboff  <msaboff@apple.com>
+
+        switch(String) needs to check for exceptions when resolving the string
+        https://bugs.webkit.org/show_bug.cgi?id=199541
+
+        Reviewed by Mark Lam.
+
+        New tests.
+
+        * stress/switch-string-oom.js: Added.
+        (test):
+        (testLowerTiers):
+        (testFTL):
+
+2019-07-05  Mark Lam  <mark.lam@apple.com>
+
+        ArgumentsEliminationPhase::eliminateCandidatesThatInterfere() should not decrement nodeIndex pass zero.
+        https://bugs.webkit.org/show_bug.cgi?id=199533
+        <rdar://problem/52669111>
+
+        Reviewed by Filip Pizlo.
+
+        * stress/ArgumentsEliminationPhase-eliminateCandidatesThatEscape-should-not-decrement-nodeIndex-pass-zero.js: Added.
+
+2019-07-05  Alexey Shvayka  <shvaikalesh@gmail.com>
+
+        [JSC] Clean up ArraySpeciesCreate
+        https://bugs.webkit.org/show_bug.cgi?id=182434
+
+        Reviewed by Yusuke Suzuki.
+
+        Adjusts error message expectations in stress tests.
+
+        * stress/array-flatmap.js:
+        * stress/array-flatten.js:
+        * stress/array-species-create-should-handle-masquerader.js:
+        * test262/expectations.yaml: Mark 4 test cases as passing.
+
+2019-07-02  Michael Saboff  <msaboff@apple.com>
+
+        Exception from For..of loop assignment eliminates TDZ checks in subsequent code
+        https://bugs.webkit.org/show_bug.cgi?id=199395
+
+        Reviewed by Filip Pizlo.
+
+        New regession test.
+
+        * stress/for-of-tdz-with-try-catch.js: Added.
+        (test):
+        (i.catch):
+
+2019-07-02  Keith Miller  <keith_miller@apple.com>
+
+        Frozen Arrays length assignment should throw in strict mode
+        https://bugs.webkit.org/show_bug.cgi?id=199365
+
+        Reviewed by Yusuke Suzuki.
+
+        * stress/frozen-array-length-should-throw-strict.js: Added.
+        (test):
+
+2019-07-01  Justin Michaud  <justin_michaud@apple.com>
+
+        [Wasm-References] Disable references by default
+        https://bugs.webkit.org/show_bug.cgi?id=199390
+
+        Reviewed by Saam Barati.
+
+        * wasm/references-spec-tests/ref_is_null.js:
+        * wasm/references-spec-tests/ref_null.js:
+        * wasm/references/anyref_globals.js:
+        * wasm/references/anyref_modules.js:
+        * wasm/references/anyref_table.js:
+        * wasm/references/anyref_table_import.js:
+        * wasm/references/element_parsing.js:
+        * wasm/references/func_ref.js:
+        * wasm/references/is_null.js:
+        * wasm/references/multitable.js:
+        * wasm/references/table_misc.js:
+        * wasm/references/validation.js:
+
+2019-07-01  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Unreviewed, rolling out r246946.
+
+        Caused JSC test crashes on arm64
+
+        Reverted changeset:
+
+        "Add b3 macro lowering for CheckMul on arm64"
+        https://bugs.webkit.org/show_bug.cgi?id=199251
+        https://trac.webkit.org/changeset/246946
+
+2019-06-28  Justin Michaud  <justin_michaud@apple.com>
+
+        Add b3 macro lowering for CheckMul on arm64
+        https://bugs.webkit.org/show_bug.cgi?id=199251
+
+        Reviewed by Robin Morisset.
+
+        * microbenchmarks/check-mul-constant.js: Added.
+        (doTest):
+        * microbenchmarks/check-mul-no-constant.js: Added.
+        (doTest):
+        * microbenchmarks/check-mul-power-of-two.js: Added.
+        (doTest):
+
+2019-06-26  Keith Miller  <keith_miller@apple.com>
+
+        speciesConstruct needs to throw if the result is a DataView
+        https://bugs.webkit.org/show_bug.cgi?id=199231
+
+        Reviewed by Mark Lam.
+
+        * stress/typedarray-filter.js:
+        (subclasses.forEach):
+        * stress/typedarray-map.js:
+        (subclasses.forEach):
+        * stress/typedarray-slice.js:
+        (typedArrays.forEach):
+        * stress/typedarray-subarray.js:
+        (subclasses.forEach):
+
+2019-06-24  Commit Queue  <commit-queue@webkit.org>
+
+        Unreviewed, rolling out r246714.
+        https://bugs.webkit.org/show_bug.cgi?id=199179
+
+        revert to do patch in a different way. (Requested by keith_mi_
+        on #webkit).
+
+        Reverted changeset:
+
+        "All prototypes should call didBecomePrototype()"
+        https://bugs.webkit.org/show_bug.cgi?id=196315
+        https://trac.webkit.org/changeset/246714
+
+2019-06-24  Alexey Shvayka  <shvaikalesh@gmail.com>
+
+        Add Array.prototype.{flat,flatMap} to unscopables
+        https://bugs.webkit.org/show_bug.cgi?id=194322
+
+        Reviewed by Keith Miller.
+
+        * stress/unscopables.js: Fix test.
+        * test262/expectations.yaml: Mark 2 test cases as passing.
+
+2019-06-21  Mark Lam  <mark.lam@apple.com>
+
+        ArraySlice needs to keep the source array alive.
+        https://bugs.webkit.org/show_bug.cgi?id=197374
+        <rdar://problem/50304429>
+
+        Reviewed by Michael Saboff and Filip Pizlo.
+
+        * stress/array-slice-must-keep-source-array-alive.js: Added.
+
+2019-06-22  Robin Morisset  <rmorisset@apple.com> and Yusuke Suzuki  <ysuzuki@apple.com>
+
+        All prototypes should call didBecomePrototype()
+        https://bugs.webkit.org/show_bug.cgi?id=196315
+
+        Reviewed by Saam Barati.
+
+        * stress/function-prototype-indexed-accessor.js: Added.
+
+2019-06-22  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [JSC] Strict, Sloppy and Arrow functions should have different classInfo
+        https://bugs.webkit.org/show_bug.cgi?id=197631
+
+        Reviewed by Saam Barati.
+
+        * stress/has-own-property-arguments.js: Added.
+        (shouldBe):
+        (A):
+
+2019-06-22  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [JSC] ClassExpr should not store result in the middle of evaluation
+        https://bugs.webkit.org/show_bug.cgi?id=199106
+
+        Reviewed by Tadeu Zagallo.
+
+        * stress/class-expression-should-store-result-at-last.js: Added.
+        (shouldThrow):
+        (shouldThrow.let.a):
+
+2019-06-20  Justin Michaud  <justin_michaud@apple.com>
+
+        [WASM-References] Add extra tests for Wasm references + fix element parsing and subtyping bugs
+        https://bugs.webkit.org/show_bug.cgi?id=199044
+
+        Reviewed by Saam Barati.
+
+        Add wasm references spec tests as well as a worker test.
+
+        * wasm.yaml:
+        * wasm/Builder_WebAssemblyBinary.js:
+        (const.emitters.Element):
+        * wasm/js-api/element.js:
+        (assert.throws.new.WebAssembly.Module.builder.WebAssembly):
+        * wasm/references-spec-tests/ref_is_null.js: Added.
+        (hostref):
+        (is_hostref):
+        (is_funcref):
+        (eq_ref):
+        (let.handler.get target):
+        (register):
+        (module):
+        (instance):
+        (call):
+        (get instance):
+        (exports):
+        (run):
+        (assert_malformed):
+        (assert_invalid):
+        (assert_unlinkable):
+        (assert_uninstantiable):
+        (assert_trap):
+        (try.f):
+        (catch):
+        (assert_exhaustion):
+        (assert_return):
+        (assert_return_canonical_nan):
+        (assert_return_arithmetic_nan):
+        (assert_return_ref):
+        (assert_return_func):
+        * wasm/references-spec-tests/ref_null.js: Added.
+        (hostref):
+        (is_hostref):
+        (is_funcref):
+        (eq_ref):
+        (let.handler.get target):
+        (register):
+        (module):
+        (instance):
+        (call):
+        (get instance):
+        (exports):
+        (run):
+        (assert_malformed):
+        (assert_invalid):
+        (assert_unlinkable):
+        (assert_uninstantiable):
+        (assert_trap):
+        (try.f):
+        (catch):
+        (assert_exhaustion):
+        (assert_return):
+        (assert_return_canonical_nan):
+        (assert_return_arithmetic_nan):
+        (assert_return_ref):
+        (assert_return_func):
+        * wasm/references/element_parsing.js: Added.
+        (module):
+        * wasm/references/func_ref.js:
+        * wasm/references/multitable.js:
+        * wasm/references/table_misc.js:
+        (TableSize.0.End.End.WebAssembly):
+        * wasm/references/validation.js:
+        (assert.throws):
+
+2019-06-19  Alexey Shvayka  <shvaikalesh@gmail.com>
+
+        Optimize `resolve` method lookup in Promise static methods
+        https://bugs.webkit.org/show_bug.cgi?id=198864
+
+        Reviewed by Yusuke Suzuki.
+
+        * test262/expectations.yaml: Mark 18 test cases as passing.
+
+2019-06-19  Justin Michaud  <justin_michaud@apple.com>
+
+        [WASM-References] Rename anyfunc to funcref
+        https://bugs.webkit.org/show_bug.cgi?id=198983
+
+        Reviewed by Yusuke Suzuki.
+
+        * wasm/function-tests/basic-element.js:
+        * wasm/function-tests/context-switch.js:
+        (import.Builder.from.string_appeared_here.import.as.assert.from.string_appeared_here.makeInstance):
+        (makeInstance):
+        (assert.eq.makeInstance):
+        * wasm/function-tests/exceptions.js:
+        (import.Builder.from.string_appeared_here.import.as.assert.from.string_appeared_here.makeInstance):
+        * wasm/function-tests/grow-memory-2.js:
+        (assert.eq.instance.exports.foo):
+        * wasm/function-tests/nameSection.js:
+        (const.compile):
+        * wasm/function-tests/stack-overflow.js:
+        (import.Builder.from.string_appeared_here.import.as.assert.from.string_appeared_here.makeInstance):
+        (assertOverflows.makeInstance):
+        * wasm/function-tests/table-basic-2.js:
+        (import.Builder.from.string_appeared_here.import.as.assert.from.string_appeared_here.makeInstance):
+        * wasm/function-tests/table-basic.js:
+        (import.Builder.from.string_appeared_here.import.as.assert.from.string_appeared_here.makeInstance):
+        * wasm/function-tests/trap-from-start-async.js:
+        * wasm/function-tests/trap-from-start.js:
+        * wasm/js-api/Module.exports.js:
+        (assert.truthy):
+        * wasm/js-api/Module.imports.js:
+        (assert.truthy):
+        * wasm/js-api/call-indirect.js:
+        (const.oneTable):
+        (const.multiTable):
+        (multiTable.const.makeTable):
+        (multiTable):
+        (multiTable.Polyphic2Import):
+        (multiTable.VirtualImport):
+        * wasm/js-api/element-data.js:
+        * wasm/js-api/element.js:
+        (assert.throws.new.WebAssembly.Module.builder.WebAssembly):
+        (assert.throws):
+        (badInstantiation.makeModule):
+        (badInstantiation.test):
+        (badInstantiation):
+        * wasm/js-api/extension-MemoryMode.js:
+        * wasm/js-api/table.js:
+        (new.WebAssembly.Module):
+        (assert.throws):
+        (assertBadTableImport):
+        (assert.throws.WebAssembly.Table.prototype.grow):
+        (new.WebAssembly.Table):
+        (assertBadTable):
+        (assert.truthy):
+        * wasm/js-api/test_basic_api.js:
+        (const.c.in.constructorProperties.switch):
+        * wasm/js-api/unique-signature.js:
+        (CallIndirectWithDuplicateSignatures):
+        * wasm/js-api/wrapper-function.js:
+        * wasm/modules/table.wat:
+        * wasm/modules/wasm-imports-js-re-exports-wasm-exports/imports.wat:
+        * wasm/modules/wasm-imports-js-re-exports-wasm-exports/sum.wat:
+        * wasm/modules/wasm-imports-wasm-exports/imports.wat:
+        * wasm/modules/wasm-imports-wasm-exports/sum.wat:
+        * wasm/references/anyref_table.js:
+        * wasm/references/anyref_table_import.js:
+        (doSet):
+        (assert.throws):
+        * wasm/references/func_ref.js:
+        (makeFuncrefIdent):
+        (assert.eq.instance.exports.fix):
+        (GetLocal.0.I32Const.0.TableSet.0.End.End.WebAssembly.assert.throws):
+        (GetLocal.0.I32Const.0.TableSet.0.End.End.WebAssembly):
+        (let.importedFun.of):
+        (makeAnyfuncIdent): Deleted.
+        (makeAnyfuncIdent.fun): Deleted.
+        * wasm/references/multitable.js:
+        (assert.eq):
+        (assert.throws):
+        * wasm/references/table_misc.js:
+        (GetLocal.0.TableFill.0.End.End.WebAssembly):
+        * wasm/references/validation.js:
+        (assert.throws.new.WebAssembly.Module.bin):
+        (assert.throws):
+        * wasm/spec-harness/index.js:
+        * wasm/spec-harness/wasm-constants.js:
+        * wasm/spec-harness/wasm-module-builder.js:
+        (WasmModuleBuilder.prototype.toArray):
+        * wasm/spec-harness/wast.js:
+        (elem_type):
+        (string_of_elem_type):
+        (string_of_table_type):
+        * wasm/spec-tests/jsapi.js:
+        * wasm/stress/wasm-table-grow-initialize.js:
+        * wasm/wasm.json:
+
+2019-06-18  Justin Michaud  <justin_michaud@apple.com>
+
+        [WASM-References] Add support for Table.size, grow and fill instructions
+        https://bugs.webkit.org/show_bug.cgi?id=198761
+
+        Reviewed by Yusuke Suzuki.
+
+        * wasm/Builder_WebAssemblyBinary.js:
+        (const.putOp):
+        * wasm/references/table_misc.js: Added.
+        (TableSize.End.End.WebAssembly):
+        (GetLocal.0.GetLocal.1.TableGrow.End.End.WebAssembly):
+        * wasm/wasm.json:
+
+2019-06-18  Justin Michaud  <justin_michaud@apple.com>
+
+        [WASM-References] Add support for multiple tables
+        https://bugs.webkit.org/show_bug.cgi?id=198760
+
+        Reviewed by Saam Barati.
+
+        * wasm/Builder.js:
+        * wasm/js-api/call-indirect.js:
+        (const.oneTable):
+        (const.multiTable):
+        (multiTable):
+        (multiTable.Polyphic2Import):
+        (multiTable.VirtualImport):
+        (const.wasmModuleWhichImportJS): Deleted.
+        (const.makeTable): Deleted.
+        (): Deleted.
+        (Polyphic2Import): Deleted.
+        (VirtualImport): Deleted.
+        * wasm/js-api/table.js:
+        (new.WebAssembly.Module):
+        (assert.throws):
+        (assertBadTableImport):
+        (assert.truthy):
+        (assert.throws.new.WebAssembly.Module.builder.WebAssembly): Deleted.
+        * wasm/references/anyref_table.js:
+        * wasm/references/anyref_table_import.js:
+        (makeImport):
+        (string_appeared_here.fullGC.assert.eq.1.exports.get_tbl.makeImport):
+        (string_appeared_here.fullGC.assert.eq.1.exports.get_tbl):
+        * wasm/references/multitable.js: Added.
+        (assert.throws.1.exports.set_tbl0):
+        (assert.throws):
+        (assert.eq):
+        * wasm/references/validation.js:
+        (assert.throws.new.WebAssembly.Module.bin):
+        (assert.throws):
+        * wasm/spec-tests/imports.wast.js:
+        * wasm/wasm.json:
+
+        * wasm/Builder.js:
+        * wasm/js-api/call-indirect.js:
+        (const.oneTable):
+        (const.multiTable):
+        (multiTable):
+        (multiTable.Polyphic2Import):
+        (multiTable.VirtualImport):
+        (const.wasmModuleWhichImportJS): Deleted.
+        (const.makeTable): Deleted.
+        (): Deleted.
+        (Polyphic2Import): Deleted.
+        (VirtualImport): Deleted.
+        * wasm/js-api/table.js:
+        (new.WebAssembly.Module):
+        (assert.throws):
+        (assertBadTableImport):
+        (assert.truthy):
+        (assert.throws.new.WebAssembly.Module.builder.WebAssembly): Deleted.
+        * wasm/references/anyref_table.js:
+        * wasm/references/anyref_table_import.js:
+        (makeImport):
+        (string_appeared_here.fullGC.assert.eq.1.exports.get_tbl.makeImport):
+        (string_appeared_here.fullGC.assert.eq.1.exports.get_tbl):
+        * wasm/references/func_ref.js:
+        (GetLocal.0.I32Const.0.TableSet.End.End.WebAssembly.fun): Deleted.
+        (GetLocal.0.I32Const.0.TableSet.End.End.WebAssembly.assert.throws): Deleted.
+        (GetLocal.0.I32Const.0.TableSet.End.End.WebAssembly): Deleted.
+        * wasm/references/multitable.js: Added.
+        (assert.throws.1.exports.set_tbl0):
+        (assert.throws):
+        (assert.eq):
+        (string_appeared_here.tableInsanity):
+        (I32Const.0.GetLocal.0.TableSet.1.End.End.WebAssembly.):
+        (I32Const.0.GetLocal.0.TableSet.1.End.End.WebAssembly):
+        * wasm/references/validation.js:
+        (assert.throws.new.WebAssembly.Module.bin):
+        (assert.throws):
+        * wasm/spec-tests/imports.wast.js:
+        * wasm/wasm.json:
+
+2019-06-18  Alexey Shvayka  <shvaikalesh@gmail.com>
+
+        [ESNExt] String.prototype.matchAll
+        https://bugs.webkit.org/show_bug.cgi?id=186694
+
+        Reviewed by Yusuke Suzuki.
+
+        Implement String.prototype.matchAll.
+        (https://tc39.es/ecma262/#sec-string.prototype.matchall)
+
+        * test262/config.yaml:
+
+2019-06-18  Tadeu Zagallo  <tzagallo@apple.com>
+
+        DFG code should not reify the names of builtin functions with private names
+        https://bugs.webkit.org/show_bug.cgi?id=198849
+        <rdar://problem/51733890>
+
+        Reviewed by Filip Pizlo.
+
+        * stress/builtin-private-function-name.js: Added.
+        (then):
+        (PromiseLike):
+
+2019-06-18  Keith Miller  <keith_miller@apple.com>
+
+        MaybeParseAsGeneratorForScope sometimes loses track of its scope ref
+        https://bugs.webkit.org/show_bug.cgi?id=198969
+        <rdar://problem/51620714>
+
+        Reviewed by Tadeu Zagallo.
+
+        * stress/nested-yield-in-arrow-function-should-be-a-syntax-error.js: Added.
+        (catch):
+
+2019-06-17  Justin Michaud  <justin_michaud@apple.com>
+
+        Validate that table element type is funcref if using an element section
+        https://bugs.webkit.org/show_bug.cgi?id=198910
+
+        Reviewed by Yusuke Suzuki.
+
+        * wasm/references/anyref_table.js:
+
+2019-06-17  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [JSC] Introduce DisposableCallSiteIndex to enforce type-safety
+        https://bugs.webkit.org/show_bug.cgi?id=197378
+
+        Reviewed by Saam Barati.
+
+        * stress/disposable-call-site-index-with-call-and-this.js: Added.
+        (foo):
+        (bar):
+        * stress/disposable-call-site-index.js: Added.
+        (foo):
+        (bar):
+
+2019-06-17  Justin Michaud  <justin_michaud@apple.com>
+
+        [WASM-References] Add support for Funcref in parameters and return types
+        https://bugs.webkit.org/show_bug.cgi?id=198157
+
+        Reviewed by Yusuke Suzuki.
+
+        * wasm/Builder.js:
+        (export.default.Builder.prototype._registerSectionBuilders.const.section.in.WASM.description.section.switch.section.case.string_appeared_here.this.section):
+        * wasm/references/anyref_globals.js:
+        * wasm/references/func_ref.js: Added.
+        (fullGC.gc.makeExportedFunction):
+        (makeExportedIdent):
+        (makeAnyfuncIdent):
+        (fun):
+        (assert.eq.instance.exports.fix.fun):
+        (assert.eq.instance.exports.fix):
+        (string_appeared_here.End.End.Function.End.Code.End.WebAssembly.imp.ref):
+        (string_appeared_here.End.End.Function.End.Code.End.WebAssembly):
+        (GetLocal.0.I32Const.0.TableSet.End.End.WebAssembly.fun):
+        (GetLocal.0.I32Const.0.TableSet.End.End.WebAssembly.assert.throws):
+        (GetLocal.0.I32Const.0.TableSet.End.End.WebAssembly):
+        (assert.throws):
+        (assert.throws.doTest):
+        (let.importedFun.of):
+        (makeAnyfuncIdent.fun):
+        * wasm/references/validation.js:
+        (assert.throws):
+        * wasm/wasm.json:
+
+2019-06-17  Ross Kirsling  <ross.kirsling@sony.com>
+
+        Update test262 tests (2019.06.13)
+        https://bugs.webkit.org/show_bug.cgi?id=198821
+
+        Reviewed by Konstantin Tokarev.
+
+        * test262/expectations.yaml:
+        * test262/harness/:
+        * test262/latest-changes-summary.txt:
+        * test262/test/:
+        * test262/test262-Revision.txt:
+
+2019-06-16  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [JSC] Grown region of WasmTable should be initialized with null
+        https://bugs.webkit.org/show_bug.cgi?id=198903
+
+        Reviewed by Saam Barati.
+
+        * wasm/stress/wasm-table-grow-initialize.js: Added.
+        (shouldBe):
+
+2019-06-13  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        Yarr bytecode compilation failure should be gracefully handled
+        https://bugs.webkit.org/show_bug.cgi?id=198700
+
+        Reviewed by Michael Saboff.
+
+        * stress/regexp-bytecode-compilation-fail.js: Added.
+        (shouldThrow):
+
+2019-06-12  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [JSC] Polymorphic call stub's slow path should restore callee saves before performing tail call
+        https://bugs.webkit.org/show_bug.cgi?id=198770
+
+        Reviewed by Saam Barati.
+
+        * stress/poly-call-stub-slow-path-should-restore-callee-saves-when-doing-tail-call.js: Added.
+        (test):
+
 2019-06-11  Alexey Shvayka  <shvaikalesh@gmail.com>
 
         JSC should throw if proxy set returns falsish in strict mode context

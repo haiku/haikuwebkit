@@ -442,8 +442,6 @@ public:
     void setPostLayoutScrollPosition(Optional<ScrollPosition>);
     void applyPostLayoutScrollPositionIfNeeded();
 
-    ScrollOffset scrollOffset() const { return scrollOffsetFromPosition(m_scrollPosition); }
-
     void availableContentSizeChanged(AvailableSizeChangeReason) override;
 
     // "absoluteRect" is in scaled document coordinates.
@@ -536,9 +534,10 @@ public:
         NeedsFullRepaintInBacking           = 1 << 1,
         ContainingClippingLayerChangedSize  = 1 << 2,
         UpdatePagination                    = 1 << 3,
-        SeenTransformedLayer                = 1 << 4,
-        Seen3DTransformedLayer              = 1 << 5,
-        SeenCompositedScrollingLayer        = 1 << 6,
+        SeenFixedLayer                      = 1 << 4,
+        SeenTransformedLayer                = 1 << 5,
+        Seen3DTransformedLayer              = 1 << 6,
+        SeenCompositedScrollingLayer        = 1 << 7,
     };
     static constexpr OptionSet<UpdateLayerPositionsFlag> updateLayerPositionsDefaultFlags() { return { CheckForRepaint }; }
 
@@ -581,6 +580,8 @@ public:
 
     bool hasVisibleBoxDecorationsOrBackground() const;
     bool hasVisibleBoxDecorations() const;
+    
+    bool behavesAsFixed() const { return m_behavesAsFixed; }
 
     struct PaintedContentRequest {
         void makeStatesUndetermined()
@@ -902,7 +903,7 @@ public:
     void simulateFrequentPaint() { SinglePaintFrequencyTracking { m_paintFrequencyTracker }; }
     bool paintingFrequently() const { return m_paintFrequencyTracker.paintingFrequently(); }
 
-    WEBCORE_EXPORT bool isTransparentOrFullyClippedRespectingParentFrames() const;
+    WEBCORE_EXPORT bool isTransparentRespectingParentFrames() const;
 
     void invalidateEventRegion();
 
@@ -1073,8 +1074,6 @@ private:
 
     bool shouldBeSelfPaintingLayer() const;
 
-    int scrollOffset(ScrollbarOrientation) const override;
-    
     // ScrollableArea interface
     void invalidateScrollbarRect(Scrollbar&, const IntRect&) override;
     void invalidateScrollCornerRect(const IntRect&) override;
@@ -1085,7 +1084,6 @@ private:
     IntRect convertFromContainingViewToScrollbar(const Scrollbar&, const IntRect&) const override;
     IntPoint convertFromScrollbarToContainingView(const Scrollbar&, const IntPoint&) const override;
     IntPoint convertFromContainingViewToScrollbar(const Scrollbar&, const IntPoint&) const override;
-    int scrollSize(ScrollbarOrientation) const override;
     void setScrollOffset(const ScrollOffset&) override;
     ScrollingNodeID scrollingNodeID() const override;
 
@@ -1227,6 +1225,7 @@ private:
     bool m_hasVisibleDescendant : 1;
     bool m_registeredScrollableArea : 1;
     bool m_isFixedIntersectingViewport : 1;
+    bool m_behavesAsFixed : 1;
 
     bool m_3DTransformedDescendantStatusDirty : 1;
     bool m_has3DTransformedDescendant : 1;  // Set on a stacking context layer that has 3D descendants anywhere

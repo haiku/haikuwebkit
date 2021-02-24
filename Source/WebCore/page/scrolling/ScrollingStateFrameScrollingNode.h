@@ -61,10 +61,12 @@ public:
         BehaviorForFixedElements,
         TopContentInset,
         FixedElementsLayoutRelativeToFrame,
+        VisualViewportIsSmallerThanLayoutViewport,
         AsyncFrameOrOverflowScrollingEnabled,
         LayoutViewport,
         MinLayoutViewportOrigin,
         MaxLayoutViewportOrigin,
+        OverrideVisualViewportSize,
     };
 
     float frameScaleFactor() const { return m_frameScaleFactor; }
@@ -87,6 +89,9 @@ public:
 
     FloatPoint maxLayoutViewportOrigin() const { return m_maxLayoutViewportOrigin; }
     WEBCORE_EXPORT void setMaxLayoutViewportOrigin(const FloatPoint&);
+
+    Optional<FloatSize> overrideVisualViewportSize() const { return m_overrideVisualViewportSize; };
+    WEBCORE_EXPORT void setOverrideVisualViewportSize(Optional<FloatSize>);
 
     int headerHeight() const { return m_headerHeight; }
     WEBCORE_EXPORT void setHeaderHeight(int);
@@ -122,6 +127,10 @@ public:
     const LayerRepresentation& footerLayer() const { return m_footerLayer; }
     WEBCORE_EXPORT void setFooterLayer(const LayerRepresentation&);
 
+    // True when the visual viewport is smaller than the layout viewport, indicating that panning should be possible.
+    bool visualViewportIsSmallerThanLayoutViewport() const { return m_visualViewportIsSmallerThanLayoutViewport; }
+    WEBCORE_EXPORT void setVisualViewportIsSmallerThanLayoutViewport(bool);
+
     // These are more like Settings, and should probably move to the Scrolling{State}Tree itself.
     bool fixedElementsLayoutRelativeToFrame() const { return m_fixedElementsLayoutRelativeToFrame; }
     WEBCORE_EXPORT void setFixedElementsLayoutRelativeToFrame(bool);
@@ -135,7 +144,7 @@ private:
     ScrollingStateFrameScrollingNode(ScrollingStateTree&, ScrollingNodeType, ScrollingNodeID);
     ScrollingStateFrameScrollingNode(const ScrollingStateFrameScrollingNode&, ScrollingStateTree&);
 
-    void setAllPropertiesChanged() override;
+    void setPropertyChangedBitsAfterReattach() override;
 
     LayerRepresentation m_rootContentsLayer;
     LayerRepresentation m_counterScrollingLayer;
@@ -149,6 +158,7 @@ private:
     FloatRect m_layoutViewport;
     FloatPoint m_minLayoutViewportOrigin;
     FloatPoint m_maxLayoutViewportOrigin;
+    Optional<FloatSize> m_overrideVisualViewportSize;
 
     float m_frameScaleFactor { 1 };
     float m_topContentInset { 0 };
@@ -157,6 +167,7 @@ private:
     SynchronousScrollingReasons m_synchronousScrollingReasons { 0 };
     ScrollBehaviorForFixedElements m_behaviorForFixed { StickToDocumentBounds };
     bool m_fixedElementsLayoutRelativeToFrame { false };
+    bool m_visualViewportIsSmallerThanLayoutViewport { false };
     bool m_asyncFrameOrOverflowScrollingEnabled { false };
 };
 

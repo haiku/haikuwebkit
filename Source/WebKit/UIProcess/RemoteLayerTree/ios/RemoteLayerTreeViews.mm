@@ -52,8 +52,13 @@ static void collectDescendantViewsAtPoint(Vector<UIView *, 16>& viewsAtPoint, UI
             //        It is currently only needed for scroll views.
             if (!view.isUserInteractionEnabled)
                 return false;
+
+            if (CGRectIsEmpty([view frame]))
+                return false;
+
             if (![view pointInside:subviewPoint withEvent:event])
                 return false;
+
             if (![view isKindOfClass:[WKCompositingView class]])
                 return true;
             auto* node = RemoteLayerTreeNode::forCALayer(view.layer);
@@ -79,15 +84,11 @@ static bool isScrolledBy(WKChildScrollView* scrollView, UIView *hitView)
             return true;
 
         auto* node = RemoteLayerTreeNode::forCALayer(view.layer);
-        if (node && scrollLayerID && node->relatedScrollContainerIDs().contains(scrollLayerID)) {
-            switch (node->relatedScrollContainerPositioningBehavior()) {
-            case WebCore::ScrollPositioningBehavior::Moves:
+        if (node && scrollLayerID) {
+            if (node->actingScrollContainerID() == scrollLayerID)
                 return true;
-            case WebCore::ScrollPositioningBehavior::Stationary:
+            if (node->stationaryScrollContainerIDs().contains(scrollLayerID))
                 return false;
-            case WebCore::ScrollPositioningBehavior::None:
-                ASSERT_NOT_REACHED();
-            }
         }
     }
 
@@ -105,6 +106,11 @@ OptionSet<WebCore::TouchAction> touchActionsForPoint(UIView *rootView, const Web
 
     UIView *hitView = nil;
     for (auto *view : WTF::makeReversedRange(viewsAtPoint)) {
+        // We only hit WKChildScrollView directly if its content layer doesn't have an event region.
+        // We don't generate the region if there is nothing interesting in it, meaning the touch-action is auto.
+        if ([view isKindOfClass:[WKChildScrollView class]])
+            return WebCore::TouchAction::Auto;
+
         if ([view isKindOfClass:[WKCompositingView class]]) {
             hitView = view;
             break;
@@ -123,6 +129,27 @@ OptionSet<WebCore::TouchAction> touchActionsForPoint(UIView *rootView, const Web
     return node->eventRegion().touchActionsForPoint(WebCore::IntPoint(hitViewPoint));
 }
 #endif
+
+UIScrollView *findActingScrollParent(UIScrollView *scrollView, const RemoteLayerTreeHost& host)
+{
+    HashSet<WebCore::GraphicsLayer::PlatformLayerID> scrollersToSkip;
+
+    for (UIView *view = [scrollView superview]; view; view = [view superview]) {
+        if ([view isKindOfClass:[WKChildScrollView class]] && !scrollersToSkip.contains(RemoteLayerTreeNode::layerID(view.layer))) {
+            // FIXME: Ideally we would return the scroller we want in all cases but the current UIKit SPI only allows returning a non-ancestor.
+            return nil;
+        }
+        if (auto* node = RemoteLayerTreeNode::forCALayer(view.layer)) {
+            if (auto* actingParent = host.nodeForID(node->actingScrollContainerID())) {
+                if ([actingParent->uiView() isKindOfClass:[UIScrollView class]])
+                    return (UIScrollView *)actingParent->uiView();
+            }
+
+            scrollersToSkip.add(node->stationaryScrollContainerIDs().begin(), node->stationaryScrollContainerIDs().end());
+        }
+    }
+    return nil;
+}
 
 }
 
@@ -210,14 +237,14 @@ OptionSet<WebCore::TouchAction> touchActionsForPoint(UIView *rootView, const Web
     if ((self = [super initWithFrame:frame])) {
         CALayerHost *layer = (CALayerHost *)self.layer;
         layer.contextId = contextID;
-#if PLATFORM(IOSMAC)
+#if PLATFORM(MACCATALYST)
         // When running iOS apps on macOS, kCAContextIgnoresHitTest isn't respected; instead, we avoid
         // hit-testing to the remote context by disabling hit-testing on its host layer. See
         // <rdar://problem/40591107> for more details.
         layer.allowsHitTesting = NO;
 #endif
     }
-    
+
     return self;
 }
 
@@ -230,6 +257,22 @@ OptionSet<WebCore::TouchAction> touchActionsForPoint(UIView *rootView, const Web
 
 #if USE(UIREMOTEVIEW_CONTEXT_HOSTING)
 @implementation WKUIRemoteView
+
+- (instancetype)initWithFrame:(CGRect)frame pid:(pid_t)pid contextID:(uint32_t)contextID
+{
+    self = [super initWithFrame:frame pid:pid contextID:contextID];
+    if (!self)
+        return nil;
+
+#if PLATFORM(MACCATALYST)
+    // When running iOS apps on macOS, kCAContextIgnoresHitTest isn't respected; instead, we avoid
+    // hit-testing to the remote context by disabling hit-testing on its host layer. See
+    // <rdar://problem/40591107> for more details.
+    self.layerHost.allowsHitTesting = NO;
+#endif
+
+    return self;
+}
 
 - (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
 {

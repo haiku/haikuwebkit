@@ -50,6 +50,7 @@
 #include "WorkerGlobalScope.h"
 #include "WorkerInspectorController.h"
 #include <JavaScriptCore/JSCInlines.h>
+#include <initializer_list>
 #include <wtf/MemoryPressureHandler.h>
 #include <wtf/RefPtr.h>
 
@@ -111,9 +112,9 @@ public:
     static void didInsertDOMNode(Document&, Node&);
     static void willRemoveDOMNode(Document&, Node&);
     static void didRemoveDOMNode(Document&, Node&);
-    static void willModifyDOMAttr(Document&, Element&, const AtomicString& oldValue, const AtomicString& newValue);
-    static void didModifyDOMAttr(Document&, Element&, const AtomicString& name, const AtomicString& value);
-    static void didRemoveDOMAttr(Document&, Element&, const AtomicString& name);
+    static void willModifyDOMAttr(Document&, Element&, const AtomString& oldValue, const AtomString& newValue);
+    static void didModifyDOMAttr(Document&, Element&, const AtomString& name, const AtomString& value);
+    static void didRemoveDOMAttr(Document&, Element&, const AtomString& name);
     static void characterDataModified(Document&, CharacterData&);
     static void willInvalidateStyleAttr(Element&);
     static void didInvalidateStyleAttr(Element&);
@@ -149,9 +150,9 @@ public:
 
     static InspectorInstrumentationCookie willCallFunction(ScriptExecutionContext*, const String& scriptName, int scriptLine, int scriptColumn);
     static void didCallFunction(const InspectorInstrumentationCookie&, ScriptExecutionContext*);
-    static void didAddEventListener(EventTarget&, const AtomicString& eventType, EventListener&, bool capture);
-    static void willRemoveEventListener(EventTarget&, const AtomicString& eventType, EventListener&, bool capture);
-    static bool isEventListenerDisabled(EventTarget&, const AtomicString& eventType, EventListener&, bool capture);
+    static void didAddEventListener(EventTarget&, const AtomString& eventType, EventListener&, bool capture);
+    static void willRemoveEventListener(EventTarget&, const AtomString& eventType, EventListener&, bool capture);
+    static bool isEventListenerDisabled(EventTarget&, const AtomString& eventType, EventListener&, bool capture);
     static InspectorInstrumentationCookie willDispatchEvent(Document&, const Event&, bool hasEventListeners);
     static void didDispatchEvent(const InspectorInstrumentationCookie&, bool defaultPrevented);
     static void willHandleEvent(ScriptExecutionContext&, Event&, const RegisteredEventListener&);
@@ -221,13 +222,18 @@ public:
     static void addMessageToConsole(Page&, std::unique_ptr<Inspector::ConsoleMessage>);
     static void addMessageToConsole(WorkerGlobalScope&, std::unique_ptr<Inspector::ConsoleMessage>);
 
-    static void consoleCount(Page&, JSC::ExecState*, Ref<Inspector::ScriptArguments>&&);
-    static void consoleCount(WorkerGlobalScope&, JSC::ExecState*, Ref<Inspector::ScriptArguments>&&);
+    static void consoleCount(Page&, JSC::ExecState*, const String& label);
+    static void consoleCount(WorkerGlobalScope&, JSC::ExecState*, const String& label);
+    static void consoleCountReset(Page&, JSC::ExecState*, const String& label);
+    static void consoleCountReset(WorkerGlobalScope&, JSC::ExecState*, const String& label);
+
     static void takeHeapSnapshot(Frame&, const String& title);
-    static void startConsoleTiming(Frame&, const String& title);
-    static void startConsoleTiming(WorkerGlobalScope&, const String& title);
-    static void stopConsoleTiming(Frame&, const String& title, Ref<Inspector::ScriptCallStack>&&);
-    static void stopConsoleTiming(WorkerGlobalScope&, const String& title, Ref<Inspector::ScriptCallStack>&&);
+    static void startConsoleTiming(Frame&, JSC::ExecState*, const String& label);
+    static void startConsoleTiming(WorkerGlobalScope&, JSC::ExecState*, const String& label);
+    static void logConsoleTiming(Frame&, JSC::ExecState*, const String& label, Ref<Inspector::ScriptArguments>&&);
+    static void logConsoleTiming(WorkerGlobalScope&, JSC::ExecState*, const String& label, Ref<Inspector::ScriptArguments>&&);
+    static void stopConsoleTiming(Frame&, JSC::ExecState*, const String& label);
+    static void stopConsoleTiming(WorkerGlobalScope&, JSC::ExecState*, const String& label);
     static void consoleTimeStamp(Frame&, Ref<Inspector::ScriptArguments>&&);
     static void startProfiling(Page&, JSC::ExecState*, const String& title);
     static void stopProfiling(Page&, JSC::ExecState*, const String& title);
@@ -264,7 +270,7 @@ public:
     static void didChangeCSSCanvasClientNodes(CanvasBase&);
     static void didCreateCanvasRenderingContext(CanvasRenderingContext&);
     static void didChangeCanvasMemory(CanvasRenderingContext&);
-    static void recordCanvasAction(CanvasRenderingContext&, const String&, Vector<RecordCanvasActionVariant>&& = { });
+    static void recordCanvasAction(CanvasRenderingContext&, const String&, std::initializer_list<RecordCanvasActionVariant>&& = { });
     static void didFinishRecordingCanvasFrame(CanvasRenderingContext&, bool forceDispatch = false);
 #if ENABLE(WEBGL)
     static void didEnableExtension(WebGLRenderingContextBase&, const String&);
@@ -305,9 +311,9 @@ private:
     static void didInsertDOMNodeImpl(InstrumentingAgents&, Node&);
     static void willRemoveDOMNodeImpl(InstrumentingAgents&, Node&);
     static void didRemoveDOMNodeImpl(InstrumentingAgents&, Node&);
-    static void willModifyDOMAttrImpl(InstrumentingAgents&, Element&, const AtomicString& oldValue, const AtomicString& newValue);
-    static void didModifyDOMAttrImpl(InstrumentingAgents&, Element&, const AtomicString& name, const AtomicString& value);
-    static void didRemoveDOMAttrImpl(InstrumentingAgents&, Element&, const AtomicString& name);
+    static void willModifyDOMAttrImpl(InstrumentingAgents&, Element&, const AtomString& oldValue, const AtomString& newValue);
+    static void didModifyDOMAttrImpl(InstrumentingAgents&, Element&, const AtomString& name, const AtomString& value);
+    static void didRemoveDOMAttrImpl(InstrumentingAgents&, Element&, const AtomString& name);
     static void characterDataModifiedImpl(InstrumentingAgents&, CharacterData&);
     static void willInvalidateStyleAttrImpl(InstrumentingAgents&, Element&);
     static void didInvalidateStyleAttrImpl(InstrumentingAgents&, Element&);
@@ -343,9 +349,9 @@ private:
 
     static InspectorInstrumentationCookie willCallFunctionImpl(InstrumentingAgents&, const String& scriptName, int scriptLine, int scriptColumn, ScriptExecutionContext*);
     static void didCallFunctionImpl(const InspectorInstrumentationCookie&, ScriptExecutionContext*);
-    static void didAddEventListenerImpl(InstrumentingAgents&, EventTarget&, const AtomicString& eventType, EventListener&, bool capture);
-    static void willRemoveEventListenerImpl(InstrumentingAgents&, EventTarget&, const AtomicString& eventType, EventListener&, bool capture);
-    static bool isEventListenerDisabledImpl(InstrumentingAgents&, EventTarget&, const AtomicString& eventType, EventListener&, bool capture);
+    static void didAddEventListenerImpl(InstrumentingAgents&, EventTarget&, const AtomString& eventType, EventListener&, bool capture);
+    static void willRemoveEventListenerImpl(InstrumentingAgents&, EventTarget&, const AtomString& eventType, EventListener&, bool capture);
+    static bool isEventListenerDisabledImpl(InstrumentingAgents&, EventTarget&, const AtomString& eventType, EventListener&, bool capture);
     static InspectorInstrumentationCookie willDispatchEventImpl(InstrumentingAgents&, Document&, const Event&, bool hasEventListeners);
     static void willHandleEventImpl(InstrumentingAgents&, Event&, const RegisteredEventListener&);
     static void didHandleEventImpl(InstrumentingAgents&);
@@ -400,12 +406,14 @@ private:
 
     static void addMessageToConsoleImpl(InstrumentingAgents&, std::unique_ptr<Inspector::ConsoleMessage>);
 
-    static void consoleCountImpl(InstrumentingAgents&, JSC::ExecState*, Ref<Inspector::ScriptArguments>&&);
+    static void consoleCountImpl(InstrumentingAgents&, JSC::ExecState*, const String& label);
+    static void consoleCountResetImpl(InstrumentingAgents&, JSC::ExecState*, const String& label);
     static void takeHeapSnapshotImpl(InstrumentingAgents&, const String& title);
-    static void startConsoleTimingImpl(InstrumentingAgents&, Frame&, const String& title);
-    static void startConsoleTimingImpl(InstrumentingAgents&, const String& title);
-    static void stopConsoleTimingImpl(InstrumentingAgents&, Frame&, const String& title, Ref<Inspector::ScriptCallStack>&&);
-    static void stopConsoleTimingImpl(InstrumentingAgents&, const String& title, Ref<Inspector::ScriptCallStack>&&);
+    static void startConsoleTimingImpl(InstrumentingAgents&, Frame&, JSC::ExecState*, const String& label);
+    static void startConsoleTimingImpl(InstrumentingAgents&, JSC::ExecState*, const String& label);
+    static void logConsoleTimingImpl(InstrumentingAgents&, JSC::ExecState*, const String& label, Ref<Inspector::ScriptArguments>&&);
+    static void stopConsoleTimingImpl(InstrumentingAgents&, Frame&, JSC::ExecState*, const String& label);
+    static void stopConsoleTimingImpl(InstrumentingAgents&, JSC::ExecState*, const String& label);
     static void consoleTimeStampImpl(InstrumentingAgents&, Frame&, Ref<Inspector::ScriptArguments>&&);
     static void startProfilingImpl(InstrumentingAgents&, JSC::ExecState*, const String& title);
     static void stopProfilingImpl(InstrumentingAgents&, JSC::ExecState*, const String& title);
@@ -445,7 +453,7 @@ private:
     static void didChangeCSSCanvasClientNodesImpl(InstrumentingAgents&, CanvasBase&);
     static void didCreateCanvasRenderingContextImpl(InstrumentingAgents&, CanvasRenderingContext&);
     static void didChangeCanvasMemoryImpl(InstrumentingAgents&, CanvasRenderingContext&);
-    static void recordCanvasActionImpl(InstrumentingAgents&, CanvasRenderingContext&, const String&, Vector<RecordCanvasActionVariant>&& = { });
+    static void recordCanvasActionImpl(InstrumentingAgents&, CanvasRenderingContext&, const String&, std::initializer_list<RecordCanvasActionVariant>&& = { });
     static void didFinishRecordingCanvasFrameImpl(InstrumentingAgents&, CanvasRenderingContext&, bool forceDispatch = false);
 #if ENABLE(WEBGL)
     static void didEnableExtensionImpl(InstrumentingAgents&, WebGLRenderingContextBase&, const String&);
@@ -533,21 +541,21 @@ inline void InspectorInstrumentation::didRemoveDOMNode(Document& document, Node&
         didRemoveDOMNodeImpl(*instrumentingAgents, node);
 }
 
-inline void InspectorInstrumentation::willModifyDOMAttr(Document& document, Element& element, const AtomicString& oldValue, const AtomicString& newValue)
+inline void InspectorInstrumentation::willModifyDOMAttr(Document& document, Element& element, const AtomString& oldValue, const AtomString& newValue)
 {
     FAST_RETURN_IF_NO_FRONTENDS(void());
     if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForDocument(document))
         willModifyDOMAttrImpl(*instrumentingAgents, element, oldValue, newValue);
 }
 
-inline void InspectorInstrumentation::didModifyDOMAttr(Document& document, Element& element, const AtomicString& name, const AtomicString& value)
+inline void InspectorInstrumentation::didModifyDOMAttr(Document& document, Element& element, const AtomString& name, const AtomString& value)
 {
     FAST_RETURN_IF_NO_FRONTENDS(void());
     if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForDocument(document))
         didModifyDOMAttrImpl(*instrumentingAgents, element, name, value);
 }
 
-inline void InspectorInstrumentation::didRemoveDOMAttr(Document& document, Element& element, const AtomicString& name)
+inline void InspectorInstrumentation::didRemoveDOMAttr(Document& document, Element& element, const AtomString& name)
 {
     FAST_RETURN_IF_NO_FRONTENDS(void());
     if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForDocument(document))
@@ -730,21 +738,21 @@ inline void InspectorInstrumentation::didRemoveTimer(ScriptExecutionContext& con
         didRemoveTimerImpl(*instrumentingAgents, timerId, context);
 }
 
-inline void InspectorInstrumentation::didAddEventListener(EventTarget& target, const AtomicString& eventType, EventListener& listener, bool capture)
+inline void InspectorInstrumentation::didAddEventListener(EventTarget& target, const AtomString& eventType, EventListener& listener, bool capture)
 {
     FAST_RETURN_IF_NO_FRONTENDS(void());
     if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForContext(target.scriptExecutionContext()))
         didAddEventListenerImpl(*instrumentingAgents, target, eventType, listener, capture);
 }
 
-inline void InspectorInstrumentation::willRemoveEventListener(EventTarget& target, const AtomicString& eventType, EventListener& listener, bool capture)
+inline void InspectorInstrumentation::willRemoveEventListener(EventTarget& target, const AtomString& eventType, EventListener& listener, bool capture)
 {
     FAST_RETURN_IF_NO_FRONTENDS(void());
     if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForContext(target.scriptExecutionContext()))
         willRemoveEventListenerImpl(*instrumentingAgents, target, eventType, listener, capture);
 }
 
-inline bool InspectorInstrumentation::isEventListenerDisabled(EventTarget& target, const AtomicString& eventType, EventListener& listener, bool capture)
+inline bool InspectorInstrumentation::isEventListenerDisabled(EventTarget& target, const AtomString& eventType, EventListener& listener, bool capture)
 {
     FAST_RETURN_IF_NO_FRONTENDS(false);
     if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForContext(target.scriptExecutionContext()))
@@ -1194,7 +1202,7 @@ inline void InspectorInstrumentation::willDestroyCachedResource(CachedResource& 
 inline void InspectorInstrumentation::didOpenDatabase(Database& database)
 {
     FAST_RETURN_IF_NO_FRONTENDS(void());
-    if (auto* instrumentingAgents = instrumentingAgentsForContext(database.scriptExecutionContext()))
+    if (auto* instrumentingAgents = instrumentingAgentsForContext(database.document()))
         didOpenDatabaseImpl(*instrumentingAgents, database);
 }
 
@@ -1304,7 +1312,7 @@ inline void InspectorInstrumentation::didChangeCanvasMemory(CanvasRenderingConte
         didChangeCanvasMemoryImpl(*instrumentingAgents, context);
 }
 
-inline void InspectorInstrumentation::recordCanvasAction(CanvasRenderingContext& context, const String& name, Vector<RecordCanvasActionVariant>&& parameters)
+inline void InspectorInstrumentation::recordCanvasAction(CanvasRenderingContext& context, const String& name, std::initializer_list<RecordCanvasActionVariant>&& parameters)
 {
     FAST_RETURN_IF_NO_FRONTENDS(void());
     if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForContext(context.canvasBase().scriptExecutionContext()))
@@ -1380,14 +1388,24 @@ inline void InspectorInstrumentation::addMessageToConsole(WorkerGlobalScope& wor
     addMessageToConsoleImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), WTFMove(message));
 }
 
-inline void InspectorInstrumentation::consoleCount(Page& page, JSC::ExecState* state, Ref<Inspector::ScriptArguments>&& arguments)
+inline void InspectorInstrumentation::consoleCount(Page& page, JSC::ExecState* state, const String& label)
 {
-    consoleCountImpl(instrumentingAgentsForPage(page), state, WTFMove(arguments));
+    consoleCountImpl(instrumentingAgentsForPage(page), state, label);
 }
 
-inline void InspectorInstrumentation::consoleCount(WorkerGlobalScope& workerGlobalScope, JSC::ExecState* state, Ref<Inspector::ScriptArguments>&& arguments)
+inline void InspectorInstrumentation::consoleCount(WorkerGlobalScope& workerGlobalScope, JSC::ExecState* state, const String& label)
 {
-    consoleCountImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), state, WTFMove(arguments));
+    consoleCountImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), state, label);
+}
+
+inline void InspectorInstrumentation::consoleCountReset(Page& page, JSC::ExecState* state, const String& label)
+{
+    consoleCountResetImpl(instrumentingAgentsForPage(page), state, label);
+}
+
+inline void InspectorInstrumentation::consoleCountReset(WorkerGlobalScope& workerGlobalScope, JSC::ExecState* state, const String& label)
+{
+    consoleCountResetImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), state, label);
 }
 
 inline void InspectorInstrumentation::takeHeapSnapshot(Frame& frame, const String& title)
@@ -1397,26 +1415,37 @@ inline void InspectorInstrumentation::takeHeapSnapshot(Frame& frame, const Strin
         takeHeapSnapshotImpl(*instrumentingAgents, title);
 }
 
-inline void InspectorInstrumentation::startConsoleTiming(Frame& frame, const String& title)
+inline void InspectorInstrumentation::startConsoleTiming(Frame& frame, JSC::ExecState* exec, const String& label)
 {
-    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(frame))
-        startConsoleTimingImpl(*instrumentingAgents, frame, title);
+    if (auto* instrumentingAgents = instrumentingAgentsForFrame(frame))
+        startConsoleTimingImpl(*instrumentingAgents, frame, exec, label);
 }
 
-inline void InspectorInstrumentation::startConsoleTiming(WorkerGlobalScope& workerGlobalScope, const String& title)
+inline void InspectorInstrumentation::startConsoleTiming(WorkerGlobalScope& workerGlobalScope, JSC::ExecState* exec, const String& label)
 {
-    startConsoleTimingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), title);
+    startConsoleTimingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), exec, label);
 }
 
-inline void InspectorInstrumentation::stopConsoleTiming(Frame& frame, const String& title, Ref<Inspector::ScriptCallStack>&& stack)
+inline void InspectorInstrumentation::logConsoleTiming(Frame& frame, JSC::ExecState* exec, const String& label, Ref<Inspector::ScriptArguments>&& arguments)
 {
-    if (InstrumentingAgents* instrumentingAgents = instrumentingAgentsForFrame(frame))
-        stopConsoleTimingImpl(*instrumentingAgents, frame, title, WTFMove(stack));
+    if (auto* instrumentingAgents = instrumentingAgentsForFrame(frame))
+        logConsoleTimingImpl(*instrumentingAgents, exec, label, WTFMove(arguments));
 }
 
-inline void InspectorInstrumentation::stopConsoleTiming(WorkerGlobalScope& workerGlobalScope, const String& title, Ref<Inspector::ScriptCallStack>&& stack)
+inline void InspectorInstrumentation::logConsoleTiming(WorkerGlobalScope& workerGlobalScope, JSC::ExecState* exec, const String& label, Ref<Inspector::ScriptArguments>&& arguments)
 {
-    stopConsoleTimingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), title, WTFMove(stack));
+    logConsoleTimingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), exec, label, WTFMove(arguments));
+}
+
+inline void InspectorInstrumentation::stopConsoleTiming(Frame& frame, JSC::ExecState* exec, const String& label)
+{
+    if (auto* instrumentingAgents = instrumentingAgentsForFrame(frame))
+        stopConsoleTimingImpl(*instrumentingAgents, frame, exec, label);
+}
+
+inline void InspectorInstrumentation::stopConsoleTiming(WorkerGlobalScope& workerGlobalScope, JSC::ExecState* exec, const String& label)
+{
+    stopConsoleTimingImpl(instrumentingAgentsForWorkerGlobalScope(workerGlobalScope), exec, label);
 }
 
 inline void InspectorInstrumentation::consoleTimeStamp(Frame& frame, Ref<Inspector::ScriptArguments>&& arguments)

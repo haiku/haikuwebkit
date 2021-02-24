@@ -668,6 +668,7 @@ public:
         UseEdgeInclusiveIntersection = 1 << 0,
         ApplyCompositedClips = 1 << 1,
         ApplyCompositedContainerScrolls  = 1 << 2,
+        ApplyContainerClip = 1 << 3,
     };
     struct VisibleRectContext {
         VisibleRectContext(bool hasPositionFixedDescendant = false, bool dirtyRectIsFlipped = false, OptionSet<VisibleRectContextOption> options = { })
@@ -682,6 +683,8 @@ public:
     };
     virtual Optional<LayoutRect> computeVisibleRectInContainer(const LayoutRect&, const RenderLayerModelObject* repaintContainer, VisibleRectContext) const;
     virtual Optional<FloatRect> computeFloatVisibleRectInContainer(const FloatRect&, const RenderLayerModelObject* repaintContainer, VisibleRectContext) const;
+
+    WEBCORE_EXPORT bool hasNonEmptyVisibleRectRespectingParentFrames() const;
 
     virtual unsigned int length() const { return 1; }
 
@@ -801,7 +804,10 @@ protected:
 
     static bool shouldApplyCompositedContainerScrollsForRepaint();
 
-    static VisibleRectContext visibleRectContextForRepaint();
+    static VisibleRectContext visibleRectContextForRepaint()
+    {
+        return VisibleRectContext(false, false, { VisibleRectContextOption::ApplyContainerClip, VisibleRectContextOption::ApplyCompositedContainerScrolls });
+    }
 
 private:
 #ifndef NDEBUG

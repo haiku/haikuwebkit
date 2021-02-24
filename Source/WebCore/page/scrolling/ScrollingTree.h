@@ -30,7 +30,6 @@
 #include "PlatformWheelEvent.h"
 #include "Region.h"
 #include "ScrollingCoordinator.h"
-#include "TouchAction.h"
 #include "WheelEventTestTrigger.h"
 #include <wtf/HashMap.h>
 #include <wtf/Lock.h>
@@ -44,6 +43,8 @@ class ScrollingStateTree;
 class ScrollingStateNode;
 class ScrollingTreeFrameScrollingNode;
 class ScrollingTreeNode;
+class ScrollingTreeOverflowScrollProxyNode;
+class ScrollingTreePositionedNode;
 class ScrollingTreeScrollingNode;
 
 class ScrollingTree : public ThreadSafeRefCounted<ScrollingTree> {
@@ -100,10 +101,7 @@ public:
     virtual void scrollingTreeNodeDidEndScroll() { }
 #endif
 
-    WEBCORE_EXPORT TrackingType eventTrackingTypeForPoint(const AtomicString& eventName, IntPoint);
-#if ENABLE(POINTER_EVENTS)
-    WEBCORE_EXPORT Optional<TouchActionData> touchActionDataAtPoint(IntPoint) const;
-#endif
+    WEBCORE_EXPORT TrackingType eventTrackingTypeForPoint(const AtomString& eventName, IntPoint);
 
 #if PLATFORM(MAC)
     virtual void handleWheelEventPhase(PlatformWheelEventPhase) = 0;
@@ -154,7 +152,8 @@ public:
     using RelatedNodesMap = HashMap<ScrollingNodeID, Vector<ScrollingNodeID>>;
     RelatedNodesMap& overflowRelatedNodes() { return m_overflowRelatedNodesMap; }
 
-    HashSet<ScrollingNodeID>& positionedNodesWithRelatedOverflow() { return m_positionedNodesWithRelatedOverflow; }
+    HashSet<Ref<ScrollingTreeOverflowScrollProxyNode>>& activeOverflowScrollProxyNodes() { return m_activeOverflowScrollProxyNodes; }
+    HashSet<Ref<ScrollingTreePositionedNode>>& activePositionedNodes() { return m_activePositionedNodes; }
 
     WEBCORE_EXPORT String scrollingTreeAsText(ScrollingStateTreeAsTextBehavior = ScrollingStateTreeAsTextBehaviorNormal);
 
@@ -175,11 +174,13 @@ private:
 
     RefPtr<ScrollingTreeFrameScrollingNode> m_rootNode;
 
-    using ScrollingTreeNodeMap = HashMap<ScrollingNodeID, ScrollingTreeNode*>;
+    using ScrollingTreeNodeMap = HashMap<ScrollingNodeID, RefPtr<ScrollingTreeNode>>;
     ScrollingTreeNodeMap m_nodeMap;
 
     RelatedNodesMap m_overflowRelatedNodesMap;
-    HashSet<ScrollingNodeID> m_positionedNodesWithRelatedOverflow;
+
+    HashSet<Ref<ScrollingTreeOverflowScrollProxyNode>> m_activeOverflowScrollProxyNodes;
+    HashSet<Ref<ScrollingTreePositionedNode>> m_activePositionedNodes;
 
     struct TreeState {
         ScrollingNodeID latchedNodeID { 0 };

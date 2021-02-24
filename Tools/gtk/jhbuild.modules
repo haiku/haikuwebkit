@@ -7,8 +7,6 @@
 
   <metamodule id="webkitgtk-testing-dependencies">
     <dependencies>
-      <dep package="brotli"/>
-      <dep package="woff2"/>
       <dep package="cairo"/>
       <dep package="fonts"/>
       <dep package="dicts"/>
@@ -85,17 +83,6 @@
   <repository type="tarball" name="wpewebkit"
       href="https://wpewebkit.org/releases/"/>
 
-  <cmake id="brotli">
-    <branch repo="github.com" module="google/brotli.git" checkoutdir="brotli" tag="v1.0.5"/>
-  </cmake>
-
-  <cmake id="woff2">
-    <branch repo="github.com" module="google/woff2.git" checkoutdir="woff2" tag="v1.0.2"/>
-    <dependencies>
-      <dep package="brotli"/>
-    </dependencies>
-  </cmake>
-
   <autotools id="cairo"
              autogen-sh="configure">
     <if condition-set="linux">
@@ -120,7 +107,7 @@
   <!-- FIXME: Pixman 0.32.6 ARM iwMMXt fast path isn't buildable with GCC 4.9 and
               ARM traditional instruction set. It causes a build failure on Raspbian.
               This workaround can be removed once we raise the minimum GCC version
-              for WebKitGTK+ above 4.9 -->
+              for WebKitGTK above 4.9 -->
   <autotools id="pixman" autogen-sh="configure"
              autogenargs="--enable-gtk=no --disable-arm-iwmmxt">
     <branch module="releases/pixman-0.34.0.tar.gz" version="0.34.0"
@@ -285,15 +272,15 @@
   </autotools>
 
   <meson id="atk" mesonargs="-Dintrospection=false">
-    <branch module="pub/GNOME/sources/atk/2.32/atk-2.32.0.tar.xz" version="2.32.0"
+    <branch module="pub/GNOME/sources/atk/2.33/atk-2.33.3.tar.xz" version="2.33.3"
             repo="ftp.gnome.org"
-            hash="sha256:cb41feda7fe4ef0daa024471438ea0219592baf7c291347e5a858bb64e4091cc"/>
+            hash="sha256:532d1081e87b9f0a8d71733101e791818442fa1896531621d1aecc189e1a4ffe"/>
   </meson>
 
   <meson id="at-spi2-core" mesonargs="-Dintrospection=no">
-    <branch module="pub/GNOME/sources/at-spi2-core/2.32/at-spi2-core-2.32.1.tar.xz" version="2.32.1"
+    <branch module="pub/GNOME/sources/at-spi2-core/2.33/at-spi2-core-2.33.2.tar.xz" version="2.33.2"
             repo="ftp.gnome.org"
-            hash="sha256:3c2aa937ebfaca2c86569bce9b16a34fbe20d69ef0c58846313b1c42f53b0d53">
+            hash="sha256:0e3f44707cccf9ec9098f84abdf91ea654c919eac3c688400f8d261383cc2abe">
     </branch>
     <dependencies>
       <dep package="glib"/>
@@ -301,9 +288,9 @@
   </meson>
 
   <meson id="at-spi2-atk">
-    <branch module="pub/GNOME/sources/at-spi2-atk/2.32/at-spi2-atk-2.32.0.tar.xz" version="2.32.0"
+    <branch module="pub/GNOME/sources/at-spi2-atk/2.33/at-spi2-atk-2.33.2.tar.xz" version="2.33.2"
             repo="ftp.gnome.org"
-            hash="sha256:0b51e6d339fa2bcca3a3e3159ccea574c67b107f1ac8b00047fa60e34ce7a45c">
+            hash="sha256:64d4351b245d717ec6f4f81fd40fe67481ff8e62d3893d465f01e71d9a3db3d3">
     </branch>
     <dependencies>
       <dep package="glib"/>
@@ -465,8 +452,8 @@
   </cmake>
 
   <cmake id="libwpe">
-    <branch repo="wpewebkit" module="libwpe-1.3.0.tar.xz" version="1.3.0"
-            hash="sha256:68986647af2433e74f830a06a497ed536dbc8721b04026ed82611a584be71148"/>
+    <branch repo="wpewebkit" module="libwpe-1.3.1.tar.xz" version="1.3.1"
+            hash="sha256:5d5e23ce48b35278201b3b88e5b1a89bd54b38391721b4e74ce472c3905df8b0"/>
   </cmake>
 
   <cmake id="wpebackend-fdo">
@@ -474,12 +461,8 @@
       <dep package="libwpe"/>
       <dep package="glib"/>
     </dependencies>
-    <branch repo="wpewebkit" module="wpebackend-fdo-1.3.0.tar.xz" version="1.3.0"
-            hash="sha256:fed9ab29f5d53cf465188da80d014f3aa067c77704f8508c6bd17971fded359d">
-      <!-- Remove this when updating to 1.3.1 -->
-      <patch file="wpebackend-fdo-Handle-the-case-of-new-target-created-for-the-same-v.patch" strip="1"/>
-      <patch file="wpebackend-fdo-view-backend-exportable-private-don-t-double-free-ca.patch" strip="1"/>
-    </branch>
+    <branch repo="wpewebkit" module="wpebackend-fdo-1.3.1.tar.xz" version="1.3.1"
+            hash="sha256:b0d136aa9ce9f94b1d06b258ed68c4a7b588b2e692d448d9c6eedb72edf56739"/>
   </cmake>
 
   <!-- Dependencies listed below this point are not thought to affect test results, and are only

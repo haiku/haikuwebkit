@@ -101,6 +101,14 @@ typedef struct OpaqueCFHTTPCookieStorage* CFHTTPCookieStorageRef;
 typedef CFIndex CFURLRequestPriority;
 typedef int CFHTTPCookieStorageAcceptPolicy;
 
+CF_ENUM(CFHTTPCookieStorageAcceptPolicy)
+{
+    CFHTTPCookieStorageAcceptPolicyAlways = 0,
+    CFHTTPCookieStorageAcceptPolicyNever = 1,
+    CFHTTPCookieStorageAcceptPolicyOnlyFromMainDocumentDomain = 2,
+    CFHTTPCookieStorageAcceptPolicyExclusivelyFromMainDocumentDomain = 3,
+};
+
 #ifdef __BLOCKS__
 typedef void (^CFCachedURLResponseCallBackBlock)(CFCachedURLResponseRef);
 #endif
@@ -199,6 +207,12 @@ typedef NS_ENUM(NSInteger, NSURLSessionCompanionProxyPreference) {
 #if PLATFORM(WATCHOS) && __WATCH_OS_VERSION_MAX_ALLOWED >= 60000
 @property NSURLSessionCompanionProxyPreference _companionProxyPreference;
 #endif
+#if HAVE(APP_SSO)
+@property BOOL _preventsAppSSO;
+#endif
+#if HAVE(ALLOWS_SENSITIVE_LOGGING)
+@property BOOL _allowsSensitiveLogging;
+#endif
 @end
 
 @interface NSURLSessionTask ()
@@ -232,11 +246,14 @@ typedef NS_ENUM(NSInteger, NSURLSessionCompanionProxyPreference) {
 @end
 #endif
 
-#if HAVE(CFNETWORK_NSURLSESSION_STRICTRUSTEVALUATE)
 @interface NSURLSession (SPI)
+#if HAVE(CFNETWORK_NSURLSESSION_STRICTRUSTEVALUATE)
 + (void)_strictTrustEvaluate:(NSURLAuthenticationChallenge *)challenge queue:(dispatch_queue_t)queue completionHandler:(void (^)(NSURLAuthenticationChallenge *challenge, OSStatus trustResult))cb;
-@end
 #endif
+#if HAVE(APP_SSO)
++ (void)_disableAppSSO;
+#endif
+@end
 
 extern NSString * const NSURLAuthenticationMethodOAuth;
 

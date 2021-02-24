@@ -640,6 +640,48 @@ TEST(ProcessSwap, KillWebContentProcessAfterServerRedirectPolicyDecision)
     done = false;
 }
 
+TEST(ProcessSwap, KillProvisionalWebContentProcessThenStartNewLoad)
+{
+    auto processPoolConfiguration = psonProcessPoolConfiguration();
+    auto processPool = adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()]);
+
+    auto webViewConfiguration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    [webViewConfiguration setProcessPool:processPool.get()];
+    auto handler = adoptNS([[PSONScheme alloc] init]);
+    [webViewConfiguration setURLSchemeHandler:handler.get() forURLScheme:@"PSON"];
+
+    auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:webViewConfiguration.get()]);
+    auto navigationDelegate = adoptNS([[PSONNavigationDelegate alloc] init]);
+    [webView setNavigationDelegate:navigationDelegate.get()];
+    
+    NSURLRequest *request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"pson://www.webkit.org/main.html"]];
+    [webView loadRequest:request];
+
+    TestWebKitAPI::Util::run(&done);
+    done = false;
+    
+    // When the provisional load starts in the provisional process, kill the WebView's processes.
+    navigationDelegate->didStartProvisionalNavigationHandler = ^{
+        [webView _killWebContentProcessAndResetState];
+        done = true;
+    };
+    
+    // Start a new cross-site load, which should happen in a new provisional process.
+    request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"pson://www.apple.com/main.html"]];
+    [webView loadRequest:request];
+    
+    TestWebKitAPI::Util::run(&done);
+    done = false;
+    
+    navigationDelegate->didStartProvisionalNavigationHandler = nil;
+    
+    request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"pson://www.apple.com/main.html"]];
+    [webView loadRequest:request];
+
+    TestWebKitAPI::Util::run(&done);
+    done = false;
+}
+
 TEST(ProcessSwap, NoSwappingForeTLDPlus2)
 {
     auto processPoolConfiguration = psonProcessPoolConfiguration();
@@ -5350,6 +5392,19 @@ TEST(ProcessSwap, TerminateProcessAfterProcessSwap)
     done = false;
 }
 
+#if PLATFORM(IOS_FAMILY)
+static bool viewHasSwipeGestures(UIView *view)
+{
+    unsigned swipeGestureCount = 0;
+    for (UIGestureRecognizer *recognizer in view.gestureRecognizers) {
+        if ([recognizer isKindOfClass:NSClassFromString(@"UIScreenEdgePanGestureRecognizer")])
+            swipeGestureCount++;
+    }
+
+    return swipeGestureCount == 2;
+}
+#endif
+
 TEST(ProcessSwap, SwapWithGestureController)
 {
     @autoreleasepool {
@@ -5383,6 +5438,10 @@ TEST(ProcessSwap, SwapWithGestureController)
 
         TestWebKitAPI::Util::run(&done);
         done = false;
+
+#if PLATFORM(IOS_FAMILY)
+        EXPECT_TRUE(viewHasSwipeGestures(webView.get()));
+#endif
     }
 }
 
@@ -5431,6 +5490,10 @@ TEST(ProcessSwap, CrashWithGestureController)
         [webView reload];
         TestWebKitAPI::Util::run(&done);
         done = false;
+
+#if PLATFORM(IOS_FAMILY)
+        EXPECT_TRUE(viewHasSwipeGestures(webView.get()));
+#endif
     }
 }
 
@@ -6294,4 +6357,34 @@ TEST(ProcessSwap, SuspendAllMediaPlayback)
     [webView performAfterReceivingMessage:@"not playing" action:^() { notPlaying = true; }];
     [webView synchronouslyLoadTestPageNamed:@"video-with-audio"];
     TestWebKitAPI::Util::run(&notPlaying);
+}
+
+TEST(ProcessSwap, PassSandboxExtension)
+{
+    auto processPoolConfiguration = psonProcessPoolConfiguration();
+    auto processPool = adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()]);
+
+    auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    configuration.get().mediaTypesRequiringUserActionForPlayback = WKAudiovisualMediaTypeNone;
+#if TARGET_OS_IPHONE
+    configuration.get().allowsInlineMediaPlayback = YES;
+#endif
+    [configuration setProcessPool:processPool.get()];
+    auto handler = adoptNS([[PSONScheme alloc] init]);
+    [configuration setURLSchemeHandler:handler.get() forURLScheme:@"PSON"];
+
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+
+    auto navigationDelegate = adoptNS([[PSONNavigationDelegate alloc] init]);
+    [webView setNavigationDelegate:navigationDelegate.get()];
+
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"pson://www.webkit.org/main.html"]]];
+    TestWebKitAPI::Util::run(&done);
+    done = false;
+
+    NSURL *file = [[NSBundle mainBundle] URLForResource:@"autoplay-with-controls" withExtension:@"html" subdirectory:@"TestWebKitAPI.resources"];
+    [webView loadFileURL:file allowingReadAccessToURL:file.URLByDeletingLastPathComponent];
+    [webView waitForMessage:@"loaded"];
+
+    EXPECT_WK_STREQ(webView.get()._resourceDirectoryURL.path, file.URLByDeletingLastPathComponent.path);
 }

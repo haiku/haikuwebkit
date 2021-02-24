@@ -75,6 +75,7 @@ typedef void (*AXPostedNotificationCallback)(id element, NSString* notification,
 
 @interface NSObject (WebKitAccessibilityAdditions)
 - (BOOL)accessibilityReplaceRange:(NSRange)range withText:(NSString *)string;
+- (BOOL)accessibilityInsertText:(NSString *)text;
 - (NSArray *)accessibilityArrayAttributeValues:(NSString *)attribute index:(NSUInteger)index maxCount:(NSUInteger)maxCount;
 - (NSUInteger)accessibilityIndexOfChild:(id)child;
 - (NSUInteger)accessibilityArrayAttributeCount:(NSString *)attribute;
@@ -321,6 +322,16 @@ static NSDictionary *searchTextParameterizedAttributeForCriteria(JSContextRef co
         [parameterizedAttribute setObject:[NSString stringWithJSStringRef:direction] forKey:@"AXSearchTextDirection"];
 
     return parameterizedAttribute;
+}
+
+static NSDictionary *misspellingSearchParameterizedAttributeForCriteria(AccessibilityTextMarkerRange* start, bool forward)
+{
+    NSMutableDictionary *parameters = [NSMutableDictionary dictionary];
+
+    [parameters setObject:(__bridge id)start->platformTextMarkerRange() forKey:@"AXStartTextMarkerRange"];
+    [parameters setObject:[NSNumber numberWithBool:forward] forKey:@"AXSearchTextDirection"];
+
+    return parameters;
 }
 
 void AccessibilityUIElement::getLinkedUIElements(Vector<RefPtr<AccessibilityUIElement> >& elementVector)
@@ -1708,6 +1719,17 @@ bool AccessibilityUIElement::hasPopup() const
     return false;
 }
 
+JSRetainPtr<JSStringRef> AccessibilityUIElement::popupValue() const
+{
+    BEGIN_AX_OBJC_EXCEPTIONS
+    id value = [m_element accessibilityAttributeValue:@"AXPopupValue"];
+    if ([value isKindOfClass:[NSString class]])
+        return [value createJSStringRef];
+    END_AX_OBJC_EXCEPTIONS
+
+    return [@"false" createJSStringRef];
+}
+
 void AccessibilityUIElement::takeFocus()
 {
     BEGIN_AX_OBJC_EXCEPTIONS
@@ -1738,6 +1760,17 @@ RefPtr<AccessibilityTextMarkerRange> AccessibilityUIElement::lineTextMarkerRange
     return AccessibilityTextMarkerRange::create((__bridge CFTypeRef)textMarkerRange);
     END_AX_OBJC_EXCEPTIONS
     
+    return nullptr;
+}
+
+RefPtr<AccessibilityTextMarkerRange> AccessibilityUIElement::misspellingTextMarkerRange(AccessibilityTextMarkerRange* start, bool forward)
+{
+    BEGIN_AX_OBJC_EXCEPTIONS
+    NSDictionary *parameters = misspellingSearchParameterizedAttributeForCriteria(start, forward);
+    id textMarkerRange = [m_element accessibilityAttributeValue:@"AXMisspellingTextMarkerRange" forParameter:parameters];
+    return AccessibilityTextMarkerRange::create((__bridge CFTypeRef)textMarkerRange);
+    END_AX_OBJC_EXCEPTIONS
+
     return nullptr;
 }
 
@@ -1865,7 +1898,15 @@ bool AccessibilityUIElement::replaceTextInRange(JSStringRef string, int location
     END_AX_OBJC_EXCEPTIONS
     return false;
 }
-    
+
+bool AccessibilityUIElement::insertText(JSStringRef text)
+{
+    BEGIN_AX_OBJC_EXCEPTIONS
+    return [m_element accessibilityInsertText:[NSString stringWithJSStringRef:text]];
+    END_AX_OBJC_EXCEPTIONS
+    return false;
+}
+
 RefPtr<AccessibilityTextMarker> AccessibilityUIElement::startTextMarkerForBounds(int x, int y, int width, int height)
 {
     BEGIN_AX_OBJC_EXCEPTIONS

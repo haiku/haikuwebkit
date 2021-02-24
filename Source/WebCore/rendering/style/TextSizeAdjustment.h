@@ -52,10 +52,11 @@ private:
 class AutosizeStatus {
 public:
     enum class Fields : uint8_t {
-        FoundOutOfFlowPosition = 1 << 0,
-        FoundInlineBlock = 1 << 1,
-        FoundFixedHeight = 1 << 2,
-        FoundDisplayNone = 1 << 3
+        AvoidSubtree = 1 << 0,
+        FixedHeight = 1 << 1,
+        FixedWidth = 1 << 2,
+        Floating = 1 << 3,
+        OverflowXHidden = 1 << 4,
         // Adding new values requires giving RenderStyle::InheritedFlags::autosizeStatus additional bits.
     };
 
@@ -63,10 +64,11 @@ public:
     OptionSet<Fields> fields() const { return m_fields; }
 
     bool contains(Fields) const;
-    bool shouldSkipSubtree() const;
 
     static float idempotentTextSize(float specifiedSize, float pageScale);
-    static AutosizeStatus updateStatus(RenderStyle&);
+    static void updateStatus(RenderStyle&);
+
+    static bool probablyContainsASmallFixedNumberOfLines(const RenderStyle&);
 
 private:
     OptionSet<Fields> m_fields;

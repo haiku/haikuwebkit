@@ -30,6 +30,7 @@
 .tree-outline .item.call-frame .status {
     position: absolute;
     float: none;
+    margin-top: 0;
     -webkit-margin-start: 1px;
 
     --call-frame-status-start: 1px;
@@ -51,11 +52,11 @@ body[dir=rtl] .tree-outline .item.call-frame .status {
 .tree-outline .item.call-frame .status > .status-image {
     width: 17px;
     height: 17px;
-    fill: var(--border-color);
+    fill: hsl(0, 0%, 70%);
 }
 
 .tree-outline .item.call-frame.selected .status > .status-image {
-    fill: var(--border-color-dark);
+    fill: hsl(0, 0%, 57%);
 }
 
 .tree-outline:focus .item.call-frame.selected .status > .status-image {

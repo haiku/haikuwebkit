@@ -682,7 +682,7 @@ bool ordinarySetSlow(ExecState* exec, JSObject* object, PropertyName propertyNam
     JSObject* current = object;
     PropertyDescriptor ownDescriptor;
     while (true) {
-        if (current->type() == ProxyObjectType && propertyName != vm.propertyNames->underscoreProto) {
+        if (current->type() == ProxyObjectType) {
             ProxyObject* proxy = jsCast<ProxyObject*>(current);
             PutPropertySlot slot(receiver, shouldThrow);
             RELEASE_AND_RETURN(scope, proxy->ProxyObject::put(proxy, exec, propertyName, value, slot));
@@ -790,8 +790,13 @@ bool JSObject::putInlineSlow(ExecState* exec, PropertyName propertyName, JSValue
 
     JSObject* obj = this;
     for (;;) {
+        Structure* structure = obj->structure(vm);
+        if (UNLIKELY(structure->typeInfo().hasPutPropertySecurityCheck())) {
+            obj->methodTable(vm)->doPutPropertySecurityCheck(obj, exec, propertyName, slot);
+            RETURN_IF_EXCEPTION(scope, false);
+        }
         unsigned attributes;
-        PropertyOffset offset = obj->structure(vm)->get(vm, propertyName, attributes);
+        PropertyOffset offset = structure->get(vm, propertyName, attributes);
         if (isValidOffset(offset)) {
             if (attributes & PropertyAttribute::ReadOnly) {
                 ASSERT(this->prototypeChainMayInterceptStoreTo(vm, propertyName) || obj == this);
@@ -801,7 +806,7 @@ bool JSObject::putInlineSlow(ExecState* exec, PropertyName propertyName, JSValue
             JSValue gs = obj->getDirect(offset);
             if (gs.isGetterSetter()) {
                 // We need to make sure that we decide to cache this property before we potentially execute aribitrary JS.
-                if (!structure(vm)->isDictionary())
+                if (!this->structure(vm)->isDictionary())
                     slot.setCacheableSetter(obj, offset);
 
                 bool result = callSetter(exec, slot.thisValue(), gs, value, slot.isStrictMode() ? StrictMode : NotStrictMode);
@@ -821,8 +826,8 @@ bool JSObject::putInlineSlow(ExecState* exec, PropertyName propertyName, JSValue
             }
             ASSERT(!(attributes & PropertyAttribute::Accessor));
 
-            // If there's an existing property on the object or one of its 
-            // prototypes it should be replaced, so break here.
+            // If there's an existing property on the base object, or on one of its 
+            // prototypes, we should store the property on the *base* object.
             break;
         }
         if (!obj->staticPropertiesReified(vm)) {
@@ -831,7 +836,7 @@ bool JSObject::putInlineSlow(ExecState* exec, PropertyName propertyName, JSValue
                     RELEASE_AND_RETURN(scope, putEntry(exec, entry->table->classForThis, entry->value, obj, this, propertyName, value, slot));
             }
         }
-        if (obj->type() == ProxyObjectType && propertyName != vm.propertyNames->underscoreProto) {
+        if (obj->type() == ProxyObjectType) {
             // FIXME: We shouldn't unconditionally perform [[Set]] here.
             // We need to do more because this is observable behavior.
             // https://bugs.webkit.org/show_bug.cgi?id=155012
@@ -3468,6 +3473,11 @@ bool JSObject::getOwnPropertyDescriptor(ExecState* exec, PropertyName propertyNa
     if (!result)
         return false;
 
+
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=200560
+    // This breaks the assumption that getOwnPropertySlot should return "own" property.
+    // We should fix DebuggerScope, ProxyObject etc. to remove this.
+    //
     // DebuggerScope::getOwnPropertySlot() (and possibly others) may return attributes from the prototype chain
     // but getOwnPropertyDescriptor() should only work for 'own' properties so we exit early if we detect that
     // the property is not an own property.

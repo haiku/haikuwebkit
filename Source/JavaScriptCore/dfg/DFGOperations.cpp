@@ -198,7 +198,7 @@ char* newTypedArrayWithSize(ExecState* exec, Structure* structure, int32_t size,
     }
     
     if (vector)
-        return bitwise_cast<char*>(ViewClass::createWithFastVector(exec, structure, size, vector));
+        return bitwise_cast<char*>(ViewClass::createWithFastVector(exec, structure, size, untagArrayPtr(vector, size)));
 
     RELEASE_AND_RETURN(scope, bitwise_cast<char*>(ViewClass::create(exec, structure, size)));
 }
@@ -478,18 +478,15 @@ EncodedJSValue JIT_OPERATION operationValueBitXor(ExecState* exec, EncodedJSValu
 
 EncodedJSValue JIT_OPERATION operationValueBitLShift(ExecState* exec, EncodedJSValue encodedOp1, EncodedJSValue encodedOp2)
 {
-    VM* vm = &exec->vm();
-    NativeCallFrameTracer tracer(vm, exec);
-    auto scope = DECLARE_THROW_SCOPE(*vm);
+    auto bigIntOp = [] (ExecState* exec, JSBigInt* left, JSBigInt* right) -> JSBigInt* {
+        return JSBigInt::leftShift(exec, left, right);
+    };
 
-    JSValue op1 = JSValue::decode(encodedOp1);
-    JSValue op2 = JSValue::decode(encodedOp2);
+    auto int32Op = [] (int32_t left, int32_t right) -> int32_t {
+        return left << (right & 0x1f);
+    };
 
-    int32_t a = op1.toInt32(exec);
-    RETURN_IF_EXCEPTION(scope, encodedJSValue());
-    scope.release();
-    uint32_t b = op2.toUInt32(exec);
-    return JSValue::encode(jsNumber(a << (b & 0x1f)));
+    return bitwiseBinaryOp(exec, encodedOp1, encodedOp2, bigIntOp, int32Op, "Invalid mix of BigInt and other type in left shift operation."_s);
 }
 
 EncodedJSValue JIT_OPERATION operationValueBitRShift(ExecState* exec, EncodedJSValue encodedOp1, EncodedJSValue encodedOp2)
@@ -712,10 +709,10 @@ EncodedJSValue JIT_OPERATION operationGetByVal(ExecState* exec, EncodedJSValue e
         } else if (property.isString()) {
             Structure& structure = *base->structure(vm);
             if (JSCell::canUseFastGetOwnProperty(structure)) {
-                RefPtr<AtomicStringImpl> existingAtomicString = asString(property)->toExistingAtomicString(exec);
+                RefPtr<AtomStringImpl> existingAtomString = asString(property)->toExistingAtomString(exec);
                 RETURN_IF_EXCEPTION(scope, encodedJSValue());
-                if (existingAtomicString) {
-                    if (JSValue result = base->fastGetOwnProperty(vm, structure, existingAtomicString.get()))
+                if (existingAtomString) {
+                    if (JSValue result = base->fastGetOwnProperty(vm, structure, existingAtomString.get()))
                         return JSValue::encode(result);
                 }
             }
@@ -749,10 +746,10 @@ EncodedJSValue JIT_OPERATION operationGetByValCell(ExecState* exec, JSCell* base
     } else if (property.isString()) {
         Structure& structure = *base->structure(vm);
         if (JSCell::canUseFastGetOwnProperty(structure)) {
-            RefPtr<AtomicStringImpl> existingAtomicString = asString(property)->toExistingAtomicString(exec);
+            RefPtr<AtomStringImpl> existingAtomString = asString(property)->toExistingAtomString(exec);
             RETURN_IF_EXCEPTION(scope, encodedJSValue());
-            if (existingAtomicString) {
-                if (JSValue result = base->fastGetOwnProperty(vm, structure, existingAtomicString.get()))
+            if (existingAtomString) {
+                if (JSValue result = base->fastGetOwnProperty(vm, structure, existingAtomString.get()))
                     return JSValue::encode(result);
             }
         }
@@ -1431,6 +1428,17 @@ JSCell* JIT_OPERATION operationBitAndBigInt(ExecState* exec, JSCell* op1, JSCell
     return JSBigInt::bitwiseAnd(exec, leftOperand, rightOperand);
 }
 
+JSCell* JIT_OPERATION operationBitLShiftBigInt(ExecState* exec, JSCell* op1, JSCell* op2)
+{
+    VM* vm = &exec->vm();
+    NativeCallFrameTracer tracer(vm, exec);
+
+    JSBigInt* leftOperand = jsCast<JSBigInt*>(op1);
+    JSBigInt* rightOperand = jsCast<JSBigInt*>(op2);
+
+    return JSBigInt::leftShift(exec, leftOperand, rightOperand);
+}
+
 JSCell* JIT_OPERATION operationAddBigInt(ExecState* exec, JSCell* op1, JSCell* op2)
 {
     VM* vm = &exec->vm();
@@ -1509,10 +1517,10 @@ EncodedJSValue JIT_OPERATION operationGetByValWithThis(ExecState* exec, EncodedJ
     if (LIKELY(baseValue.isCell() && subscript.isString())) {
         Structure& structure = *baseValue.asCell()->structure(vm);
         if (JSCell::canUseFastGetOwnProperty(structure)) {
-            RefPtr<AtomicStringImpl> existingAtomicString = asString(subscript)->toExistingAtomicString(exec);
+            RefPtr<AtomStringImpl> existingAtomString = asString(subscript)->toExistingAtomString(exec);
             RETURN_IF_EXCEPTION(scope, encodedJSValue());
-            if (existingAtomicString) {
-                if (JSValue result = baseValue.asCell()->fastGetOwnProperty(vm, structure, existingAtomicString.get()))
+            if (existingAtomString) {
+                if (JSValue result = baseValue.asCell()->fastGetOwnProperty(vm, structure, existingAtomString.get()))
                     return JSValue::encode(result);
             }
         }
@@ -2446,7 +2454,6 @@ char* JIT_OPERATION operationFindSwitchImmTargetForDouble(
 {
     VM& vm = exec->vm();
     NativeCallFrameTracer tracer(&vm, exec);
-
     CodeBlock* codeBlock = exec->codeBlock();
     SimpleJumpTable& table = codeBlock->switchJumpTable(tableIndex);
     JSValue value = JSValue::decode(encodedValue);
@@ -2462,16 +2469,26 @@ char* JIT_OPERATION operationSwitchString(ExecState* exec, size_t tableIndex, JS
 {
     VM& vm = exec->vm();
     NativeCallFrameTracer tracer(&vm, exec);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
 
-    return exec->codeBlock()->stringSwitchJumpTable(tableIndex).ctiForValue(string->value(exec).impl()).executableAddress<char*>();
+    StringImpl* strImpl = string->value(exec).impl();
+
+    RETURN_IF_EXCEPTION(throwScope, nullptr);
+
+    return exec->codeBlock()->stringSwitchJumpTable(tableIndex).ctiForValue(strImpl).executableAddress<char*>();
 }
 
 int32_t JIT_OPERATION operationSwitchStringAndGetBranchOffset(ExecState* exec, size_t tableIndex, JSString* string)
 {
     VM& vm = exec->vm();
     NativeCallFrameTracer tracer(&vm, exec);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
 
-    return exec->codeBlock()->stringSwitchJumpTable(tableIndex).offsetForValue(string->value(exec).impl(), std::numeric_limits<int32_t>::min());
+    StringImpl* strImpl = string->value(exec).impl();
+
+    RETURN_IF_EXCEPTION(throwScope, 0);
+
+    return exec->codeBlock()->stringSwitchJumpTable(tableIndex).offsetForValue(strImpl, std::numeric_limits<int32_t>::min());
 }
 
 uintptr_t JIT_OPERATION operationCompareStringImplLess(StringImpl* a, StringImpl* b)

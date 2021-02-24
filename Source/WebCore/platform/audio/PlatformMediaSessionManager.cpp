@@ -166,10 +166,7 @@ void PlatformMediaSessionManager::removeSession(PlatformMediaSession& session)
         m_remoteCommandListener = nullptr;
         m_audioHardwareListener = nullptr;
 #if USE(AUDIO_SESSION)
-        if (m_becameActive && shouldDeactivateAudioSession()) {
-            AudioSession::sharedSession().tryToSetActive(false);
-            m_becameActive = false;
-        }
+        maybeDeactivateAudioSession();
 #endif
     }
 
@@ -206,11 +203,6 @@ bool PlatformMediaSessionManager::sessionWillBeginPlayback(PlatformMediaSession&
     SessionRestrictions restrictions = m_restrictions[sessionType];
     if (session.state() == PlatformMediaSession::Interrupted && restrictions & InterruptedPlaybackNotPermitted) {
         ALWAYS_LOG(LOGIDENTIFIER, session.logIdentifier(), " returning false because session.state() is Interrupted, and InterruptedPlaybackNotPermitted");
-        return false;
-    }
-
-    if (m_processIsSuspended) {
-        ALWAYS_LOG(LOGIDENTIFIER, session.logIdentifier(), " returning false because process is suspended");
         return false;
     }
 
@@ -368,12 +360,14 @@ void PlatformMediaSessionManager::processWillSuspend()
         return;
     m_processIsSuspended = true;
 
+    ALWAYS_LOG(LOGIDENTIFIER);
+
+    forEachSession([&] (auto& session) {
+        session.client().processIsSuspendedChanged();
+    });
+
 #if USE(AUDIO_SESSION)
-    if (m_becameActive && shouldDeactivateAudioSession()) {
-        AudioSession::sharedSession().tryToSetActive(false);
-        ALWAYS_LOG(LOGIDENTIFIER, "tried to set inactive AudioSession");
-        m_becameActive = false;
-    }
+    maybeDeactivateAudioSession();
 #endif
 }
 
@@ -382,6 +376,10 @@ void PlatformMediaSessionManager::processDidResume()
     if (!m_processIsSuspended)
         return;
     m_processIsSuspended = false;
+
+    forEachSession([&] (auto& session) {
+        session.client().processIsSuspendedChanged();
+    });
 
 #if USE(AUDIO_SESSION)
     if (!m_becameActive && activeAudioSessionRequired()) {
@@ -541,6 +539,18 @@ bool PlatformMediaSessionManager::anyOfSessions(const Function<bool(const Platfo
         return predicate(*session);
     });
 }
+
+#if USE(AUDIO_SESSION)
+void PlatformMediaSessionManager::maybeDeactivateAudioSession()
+{
+    if (!m_becameActive || !shouldDeactivateAudioSession())
+        return;
+
+    ALWAYS_LOG(LOGIDENTIFIER, "tried to set inactive AudioSession");
+    AudioSession::sharedSession().tryToSetActive(false);
+    m_becameActive = false;
+}
+#endif
 
 static bool& deactivateAudioSession()
 {

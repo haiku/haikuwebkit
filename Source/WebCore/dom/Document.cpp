@@ -262,6 +262,7 @@
 #if PLATFORM(IOS_FAMILY)
 #include "ContentChangeObserver.h"
 #include "CSSFontSelector.h"
+#include "DOMTimerHoldingTank.h"
 #include "DeviceMotionClientIOS.h"
 #include "DeviceMotionController.h"
 #include "DeviceOrientationClientIOS.h"
@@ -318,6 +319,10 @@
 #endif
 #if ENABLE(WEBGPU)
 #include "GPUCanvasContext.h"
+#endif
+
+#if ENABLE(POINTER_EVENTS)
+#include "PointerCaptureController.h"
 #endif
 
 namespace WebCore {
@@ -893,12 +898,12 @@ static ALWAYS_INLINE Ref<HTMLElement> createUpgradeCandidateElement(Document& do
     return element;
 }
 
-static ALWAYS_INLINE Ref<HTMLElement> createUpgradeCandidateElement(Document& document, const AtomicString& localName)
+static ALWAYS_INLINE Ref<HTMLElement> createUpgradeCandidateElement(Document& document, const AtomString& localName)
 {
     return createUpgradeCandidateElement(document, QualifiedName { nullAtom(), localName, xhtmlNamespaceURI });
 }
 
-static inline bool isValidHTMLElementName(const AtomicString& localName)
+static inline bool isValidHTMLElementName(const AtomString& localName)
 {
     return Document::isValidName(localName);
 }
@@ -929,7 +934,7 @@ static ExceptionOr<Ref<Element>> createHTMLElementWithNameValidation(Document& d
     return Ref<Element> { createUpgradeCandidateElement(document, name) };
 }
 
-ExceptionOr<Ref<Element>> Document::createElementForBindings(const AtomicString& name)
+ExceptionOr<Ref<Element>> Document::createElementForBindings(const AtomString& name)
 {
     if (isHTMLDocument())
         return createHTMLElementWithNameValidation(*this, name.convertToASCIILowercase());
@@ -1174,7 +1179,7 @@ static inline bool isPotentialCustomElementNameCharacter(UChar32 character)
     return std::binary_search(std::begin(ranges), std::end(ranges), character);
 }
 
-CustomElementNameValidationStatus Document::validateCustomElementName(const AtomicString& localName)
+CustomElementNameValidationStatus Document::validateCustomElementName(const AtomString& localName)
 {
     if (!isASCIILower(localName[0]))
         return CustomElementNameValidationStatus::FirstCharacterIsNotLowercaseASCIILetter;
@@ -1195,7 +1200,7 @@ CustomElementNameValidationStatus Document::validateCustomElementName(const Atom
 #if ENABLE(MATHML)
     const auto& annotationXmlLocalName = MathMLNames::annotation_xmlTag->localName();
 #else
-    static NeverDestroyed<const AtomicString> annotationXmlLocalName("annotation-xml", AtomicString::ConstructFromLiteral);
+    static NeverDestroyed<const AtomString> annotationXmlLocalName("annotation-xml", AtomString::ConstructFromLiteral);
 #endif
 
     if (localName == SVGNames::color_profileTag->localName()
@@ -1211,7 +1216,7 @@ CustomElementNameValidationStatus Document::validateCustomElementName(const Atom
     return CustomElementNameValidationStatus::Valid;
 }
 
-ExceptionOr<Ref<Element>> Document::createElementNS(const AtomicString& namespaceURI, const String& qualifiedName)
+ExceptionOr<Ref<Element>> Document::createElementNS(const AtomString& namespaceURI, const String& qualifiedName)
 {
     auto parseResult = parseQualifiedName(namespaceURI, qualifiedName);
     if (parseResult.hasException())
@@ -1340,7 +1345,7 @@ void Document::setVisualUpdatesAllowedByClient(bool visualUpdatesAllowedByClient
 
 String Document::characterSetWithUTF8Fallback() const
 {
-    AtomicString name = encoding();
+    AtomString name = encoding();
     if (!name.isNull())
         return name;
     return UTF8Encoding().domName();
@@ -2474,7 +2479,7 @@ void Document::prepareForDestruction()
 
     m_undoManager->removeAllItems();
 
-#if HAVE(ACCESSIBILITY)
+#if ENABLE(ACCESSIBILITY)
     if (this != &topDocument()) {
         // Let the ax cache know that this subframe goes out of scope.
         if (auto* cache = existingAXObjectCache())
@@ -2486,6 +2491,7 @@ void Document::prepareForDestruction()
         NavigationDisabler navigationDisabler(m_frame);
         disconnectDescendantFrames();
     }
+    RELEASE_ASSERT_WITH_SECURITY_IMPLICATION(!m_frame || !m_frame->tree().childCount());
 
     if (m_domWindow && m_frame)
         m_domWindow->willDetachDocumentFromFrame();
@@ -2698,7 +2704,7 @@ ScriptableDocumentParser* Document::scriptableDocumentParser() const
     return parser() ? parser()->asScriptableDocumentParser() : nullptr;
 }
 
-ExceptionOr<RefPtr<WindowProxy>> Document::openForBindings(DOMWindow& activeWindow, DOMWindow& firstWindow, const String& url, const AtomicString& name, const String& features)
+ExceptionOr<RefPtr<WindowProxy>> Document::openForBindings(DOMWindow& activeWindow, DOMWindow& firstWindow, const String& url, const AtomString& name, const String& features)
 {
     if (!m_domWindow)
         return Exception { InvalidAccessError };
@@ -3221,12 +3227,12 @@ void Document::setBaseURLOverride(const URL& url)
 void Document::processBaseElement()
 {
     // Find the first href attribute in a base element and the first target attribute in a base element.
-    const AtomicString* href = nullptr;
-    const AtomicString* target = nullptr;
+    const AtomString* href = nullptr;
+    const AtomString* target = nullptr;
     auto baseDescendants = descendantsOfType<HTMLBaseElement>(*this);
     for (auto& base : baseDescendants) {
         if (!href) {
-            const AtomicString& value = base.attributeWithoutSynchronization(hrefAttr);
+            const AtomString& value = base.attributeWithoutSynchronization(hrefAttr);
             if (!value.isNull()) {
                 href = &value;
                 if (target)
@@ -3234,7 +3240,7 @@ void Document::processBaseElement()
             }
         }
         if (!target) {
-            const AtomicString& value = base.attributeWithoutSynchronization(targetAttr);
+            const AtomString& value = base.attributeWithoutSynchronization(targetAttr);
             if (!value.isNull()) {
                 target = &value;
                 if (href)
@@ -3732,8 +3738,29 @@ MouseEventWithHitTestResults Document::prepareMouseEvent(const HitTestRequest& r
     HitTestResult result(documentPoint);
     hitTest(request, result);
 
-    if (!request.readOnly())
-        updateHoverActiveState(request, result.targetElement());
+    auto captureElementChanged = CaptureChange::No;
+    if (!request.readOnly()) {
+        auto targetElement = makeRefPtr(result.targetElement());
+#if ENABLE(POINTER_EVENTS)
+        if (auto* page = this->page()) {
+            // Before we dispatch a new mouse event, we must run the Process Pending Capture Element steps as defined
+            // in https://w3c.github.io/pointerevents/#process-pending-pointer-capture.
+            auto& pointerCaptureController = page->pointerCaptureController();
+            auto* previousCaptureElement = pointerCaptureController.pointerCaptureElement(this, event.pointerId());
+            pointerCaptureController.processPendingPointerCapture(event.pointerId());
+            auto* captureElement = pointerCaptureController.pointerCaptureElement(this, event.pointerId());
+            // If the capture element has changed while running the Process Pending Capture Element steps then
+            // we need to indicate that when calling updateHoverActiveState to be sure that the :active and :hover
+            // element chains are updated.
+            if (previousCaptureElement != captureElement)
+                captureElementChanged = CaptureChange::Yes;
+            // If we have a capture element, we must target it instead of what would normally hit-test for this event.
+            if (captureElement)
+                targetElement = captureElement;
+        }
+#endif
+        updateHoverActiveState(request, targetElement.get(), captureElementChanged);
+    }
 
     return MouseEventWithHitTestResults(event, result);
 }
@@ -3957,6 +3984,10 @@ void Document::updateIsPlayingMedia(uint64_t sourceElementID)
     for (auto& audioProducer : m_audioProducers)
         state |= audioProducer.mediaState();
 
+#if ENABLE(MEDIA_STREAM) && PLATFORM(IOS_FAMILY)
+    state |= MediaStreamTrack::captureState();
+#endif
+
 #if ENABLE(MEDIA_SESSION)
     if (HTMLMediaElement* sourceElement = HTMLMediaElement::elementWithID(sourceElementID)) {
         if (sourceElement->isPlaying())
@@ -3998,6 +4029,10 @@ void Document::pageMutedStateDidChange()
 {
     for (auto& audioProducer : m_audioProducers)
         audioProducer.pageMutedStateDidChange();
+
+#if ENABLE(MEDIA_STREAM) && PLATFORM(IOS_FAMILY)
+    MediaStreamTrack::pageMutedStateDidChange(page()->mutedState());
+#endif
 }
 
 static bool isNodeInSubtree(Node& node, Node& container, Document::NodeRemoval nodeRemoval)
@@ -4146,6 +4181,11 @@ bool Document::setFocusedElement(Element* element, FocusDirection direction, Foc
     }
 
     if (newFocusedElement && newFocusedElement->isFocusable()) {
+        if (&newFocusedElement->document() != this) {
+            // Bluring oldFocusedElement may have moved newFocusedElement across documents.
+            focusChangeBlocked = true;
+            goto SetFocusedNodeDone;
+        }
         if (newFocusedElement->isRootEditableElement() && !acceptsEditingFocus(*newFocusedElement)) {
             // delegate blocks focus change
             focusChangeBlocked = true;
@@ -4433,11 +4473,6 @@ void Document::nodeWillBeRemoved(Node& node)
 
     if (is<Text>(node))
         m_markers->removeMarkers(node);
-
-#if PLATFORM(IOS_FAMILY) && ENABLE(POINTER_EVENTS)
-    if (m_touchActionElements && is<Element>(node))
-        m_touchActionElements->remove(&downcast<Element>(node));
-#endif
 }
 
 static Node* fallbackFocusNavigationStartingNodeAfterRemoval(Node& node)
@@ -4546,26 +4581,26 @@ Document& Document::contextDocument() const
     return const_cast<Document&>(*this);
 }
 
-void Document::setAttributeEventListener(const AtomicString& eventType, const QualifiedName& attributeName, const AtomicString& attributeValue, DOMWrapperWorld& isolatedWorld)
+void Document::setAttributeEventListener(const AtomString& eventType, const QualifiedName& attributeName, const AtomString& attributeValue, DOMWrapperWorld& isolatedWorld)
 {
     setAttributeEventListener(eventType, JSLazyEventListener::create(*this, attributeName, attributeValue), isolatedWorld);
 }
 
-void Document::setWindowAttributeEventListener(const AtomicString& eventType, RefPtr<EventListener>&& listener, DOMWrapperWorld& isolatedWorld)
+void Document::setWindowAttributeEventListener(const AtomString& eventType, RefPtr<EventListener>&& listener, DOMWrapperWorld& isolatedWorld)
 {
     if (!m_domWindow)
         return;
     m_domWindow->setAttributeEventListener(eventType, WTFMove(listener), isolatedWorld);
 }
 
-void Document::setWindowAttributeEventListener(const AtomicString& eventType, const QualifiedName& attributeName, const AtomicString& attributeValue, DOMWrapperWorld& isolatedWorld)
+void Document::setWindowAttributeEventListener(const AtomString& eventType, const QualifiedName& attributeName, const AtomString& attributeValue, DOMWrapperWorld& isolatedWorld)
 {
     if (!m_domWindow)
         return;
     setWindowAttributeEventListener(eventType, JSLazyEventListener::create(*m_domWindow, attributeName, attributeValue), isolatedWorld);
 }
 
-EventListener* Document::getWindowAttributeEventListener(const AtomicString& eventType, DOMWrapperWorld& isolatedWorld)
+EventListener* Document::getWindowAttributeEventListener(const AtomString& eventType, DOMWrapperWorld& isolatedWorld)
 {
     if (!m_domWindow)
         return nullptr;
@@ -4704,7 +4739,7 @@ bool Document::hasListenerTypeForEventType(PlatformEvent::Type eventType) const
     }
 }
 
-void Document::addListenerTypeIfNeeded(const AtomicString& eventType)
+void Document::addListenerTypeIfNeeded(const AtomString& eventType)
 {
     if (eventType == eventNames().DOMSubtreeModifiedEvent)
         addListenerType(DOMSUBTREEMODIFIED_LISTENER);
@@ -4963,7 +4998,7 @@ bool Document::isValidName(const String& name)
     return isValidNameNonASCII(characters, length);
 }
 
-ExceptionOr<std::pair<AtomicString, AtomicString>> Document::parseQualifiedName(const String& qualifiedName)
+ExceptionOr<std::pair<AtomString, AtomString>> Document::parseQualifiedName(const String& qualifiedName)
 {
     unsigned length = qualifiedName.length();
 
@@ -4994,15 +5029,15 @@ ExceptionOr<std::pair<AtomicString, AtomicString>> Document::parseQualifiedName(
     }
 
     if (!sawColon)
-        return std::pair<AtomicString, AtomicString> { { }, { qualifiedName } };
+        return std::pair<AtomString, AtomString> { { }, { qualifiedName } };
 
     if (!colonPosition || length - colonPosition <= 1)
         return Exception { InvalidCharacterError };
 
-    return std::pair<AtomicString, AtomicString> { StringView { qualifiedName }.substring(0, colonPosition).toAtomicString(), StringView { qualifiedName }.substring(colonPosition + 1).toAtomicString() };
+    return std::pair<AtomString, AtomString> { StringView { qualifiedName }.substring(0, colonPosition).toAtomString(), StringView { qualifiedName }.substring(colonPosition + 1).toAtomString() };
 }
 
-ExceptionOr<QualifiedName> Document::parseQualifiedName(const AtomicString& namespaceURI, const String& qualifiedName)
+ExceptionOr<QualifiedName> Document::parseQualifiedName(const AtomString& namespaceURI, const String& qualifiedName)
 {
     auto parseResult = parseQualifiedName(qualifiedName);
     if (parseResult.hasException())
@@ -5339,11 +5374,14 @@ bool Document::shouldCreateRenderers()
 
 static Editor::Command command(Document* document, const String& commandName, bool userInterface = false)
 {
-    RefPtr<Frame> frame = document->frame();
-    if (!frame || frame->document() != document)
-        return Editor::Command();
+    auto protectedDocument = makeRef(*document);
 
     document->updateStyleIfNeeded();
+
+    auto frame = makeRefPtr(document->frame());
+
+    if (!frame || frame->document() != document)
+        return Editor::Command();
 
     return frame->editor().command(commandName,
         userInterface ? CommandFromDOMWithUserInterface : CommandFromDOM);
@@ -5522,7 +5560,7 @@ ExceptionOr<Ref<Attr>> Document::createAttribute(const String& name)
     return createAttributeNS({ }, isHTMLDocument() ? name.convertToASCIILowercase() : name, true);
 }
 
-ExceptionOr<Ref<Attr>> Document::createAttributeNS(const AtomicString& namespaceURI, const String& qualifiedName, bool shouldIgnoreNamespaceChecks)
+ExceptionOr<Ref<Attr>> Document::createAttributeNS(const AtomString& namespaceURI, const String& qualifiedName, bool shouldIgnoreNamespaceChecks)
 {
     auto parseResult = parseQualifiedName(namespaceURI, qualifiedName);
     if (parseResult.hasException())
@@ -5614,17 +5652,17 @@ Ref<HTMLCollection> Document::all()
     return ensureRareData().ensureNodeLists().addCachedCollection<HTMLAllCollection>(*this, DocAll);
 }
 
-Ref<HTMLCollection> Document::allFilteredByName(const AtomicString& name)
+Ref<HTMLCollection> Document::allFilteredByName(const AtomString& name)
 {
     return ensureRareData().ensureNodeLists().addCachedCollection<HTMLAllNamedSubCollection>(*this, DocumentAllNamedItems, name);
 }
 
-Ref<HTMLCollection> Document::windowNamedItems(const AtomicString& name)
+Ref<HTMLCollection> Document::windowNamedItems(const AtomString& name)
 {
     return ensureRareData().ensureNodeLists().addCachedCollection<WindowNameCollection>(*this, WindowNamedItems, name);
 }
 
-Ref<HTMLCollection> Document::documentNamedItems(const AtomicString& name)
+Ref<HTMLCollection> Document::documentNamedItems(const AtomString& name)
 {
     return ensureRareData().ensureNodeLists().addCachedCollection<DocumentNameCollection>(*this, DocumentNamedItems, name);
 }
@@ -5642,8 +5680,10 @@ void Document::finishedParsing()
     if (!m_documentTiming.domContentLoadedEventStart)
         m_documentTiming.domContentLoadedEventStart = MonotonicTime::now();
 
-    // FIXME: Schdule a task to fire DOMContentLoaded event instead. See webkit.org/b/82931
-    MicrotaskQueue::mainThreadQueue().performMicrotaskCheckpoint();
+    if (!page() || !page()->isForSanitizingWebContent()) {
+        // FIXME: Schedule a task to fire DOMContentLoaded event instead. See webkit.org/b/82931
+        MicrotaskQueue::mainThreadQueue().performMicrotaskCheckpoint();
+    }
 
     dispatchEvent(Event::create(eventNames().DOMContentLoadedEvent, Event::CanBubble::Yes, Event::IsCancelable::No));
 
@@ -5824,14 +5864,15 @@ void Document::initSecurityContext()
         return;
     }
 
-    Document* openerDocument = openerFrame ? openerFrame->document() : nullptr;
+    contentSecurityPolicy()->copyStateFrom(ownerFrame->document()->contentSecurityPolicy());
+    contentSecurityPolicy()->updateSourceSelf(ownerFrame->document()->securityOrigin());
 
     // Per <http://www.w3.org/TR/upgrade-insecure-requests/>, new browsing contexts must inherit from an
     // ongoing set of upgraded requests. When opening a new browsing context, we need to capture its
     // existing upgrade request. Nested browsing contexts are handled during DocumentWriter::begin.
-    if (openerDocument)
+    if (auto* openerDocument = openerFrame ? openerFrame->document() : nullptr)
         contentSecurityPolicy()->inheritInsecureNavigationRequestsToUpgradeFromOpener(*openerDocument->contentSecurityPolicy());
-    
+
     if (isSandboxed(SandboxOrigin)) {
         // If we're supposed to inherit our security origin from our owner,
         // but we're also sandboxed, the only thing we inherit is the ability
@@ -5848,53 +5889,26 @@ void Document::initSecurityContext()
     setSecurityOriginPolicy(ownerFrame->document()->securityOriginPolicy());
 }
 
-// FIXME: The current criterion is stricter than <https://www.w3.org/TR/CSP3/#security-inherit-csp> (Editor's Draft, 28 February 2019).
-bool Document::shouldInheritContentSecurityPolicy() const
+void Document::initContentSecurityPolicy()
 {
-    ASSERT(m_frame);
-    if (SecurityPolicy::shouldInheritSecurityOriginFromOwner(m_url))
-        return true;
-    if (m_url.protocolIsData() || m_url.protocolIsBlob())
-        return true;
-    if (!isPluginDocument())
-        return false;
-    if (m_frame->tree().parent())
-        return true;
-    Frame* openerFrame = m_frame->loader().opener();
-    if (!openerFrame)
-        return false;
-    return openerFrame->document()->securityOrigin().canAccess(securityOrigin());
-}
-
-void Document::initContentSecurityPolicy(ContentSecurityPolicy* previousPolicy)
-{
-    // 1. Inherit Upgrade Insecure Requests
-    Frame* parentFrame = m_frame->tree().parent();
+    auto* parentFrame = m_frame->tree().parent();
     if (parentFrame)
         contentSecurityPolicy()->copyUpgradeInsecureRequestStateFrom(*parentFrame->document()->contentSecurityPolicy());
 
-    // 2. Inherit Content Security Policy (without copying Upgrade Insecure Requests state).
-    if (!shouldInheritContentSecurityPolicy())
+    // FIXME: Remove this special plugin document logic. We are stricter than the CSP 3 spec. with regards to plugins: we prefer to
+    // inherit the full policy unless the plugin document is opened in a new window. The CSP 3 spec. implies that only plugin documents
+    // delivered with a local scheme (e.g. blob, file, data) should inherit a policy.
+    if (!isPluginDocument())
         return;
-    ContentSecurityPolicy* ownerPolicy = nullptr;
-    if (previousPolicy && (m_url.protocolIsData() || m_url.protocolIsBlob()))
-        ownerPolicy = previousPolicy;
-    if (!ownerPolicy) {
-        Frame* ownerFrame = parentFrame;
-        if (!ownerFrame)
-            ownerFrame = m_frame->loader().opener();
-        if (ownerFrame)
-            ownerPolicy = ownerFrame->document()->contentSecurityPolicy();
-    }
-    if (!ownerPolicy)
+    auto* openerFrame = m_frame->loader().opener();
+    bool shouldInhert = parentFrame || (openerFrame && openerFrame->document()->securityOrigin().canAccess(securityOrigin()));
+    if (!shouldInhert)
         return;
-    // FIXME: We are stricter than the CSP 3 spec. with regards to plugins: we prefer to inherit the full policy unless the plugin
-    // document is opened in a new window. The CSP 3 spec. implies that only plugin documents delivered with a local scheme (e.g. blob,
-    // file, data) should inherit a policy.
-    if (isPluginDocument() && m_frame->loader().opener())
-        contentSecurityPolicy()->createPolicyForPluginDocumentFrom(*ownerPolicy);
+    setContentSecurityPolicy(std::make_unique<ContentSecurityPolicy>(URL { m_url }, *this));
+    if (openerFrame)
+        contentSecurityPolicy()->createPolicyForPluginDocumentFrom(*openerFrame->document()->contentSecurityPolicy());
     else
-        contentSecurityPolicy()->copyStateFrom(ownerPolicy);
+        contentSecurityPolicy()->copyStateFrom(parentFrame->document()->contentSecurityPolicy());
 }
 
 bool Document::isContextThread() const
@@ -5908,10 +5922,12 @@ bool Document::isSecureContext() const
         return true;
     if (!securityOrigin().isPotentiallyTrustworthy())
         return false;
-    for (Frame* frame = m_frame->tree().parent(); frame; frame = frame->tree().parent()) {
+    for (auto* frame = m_frame->tree().parent(); frame; frame = frame->tree().parent()) {
         if (!frame->document()->securityOrigin().isPotentiallyTrustworthy())
             return false;
     }
+    if (topOrigin().isUnique())
+        return false;
     return true;
 }
 
@@ -6090,10 +6106,10 @@ void Document::addMessage(MessageSource source, MessageLevel level, const String
 
 void Document::postTask(Task&& task)
 {
-    callOnMainThread([documentReference = makeWeakPtr(*this), task = WTFMove(task)]() mutable {
+    callOnMainThread([documentID = identifier(), task = WTFMove(task)]() mutable {
         ASSERT(isMainThread());
 
-        Document* document = documentReference.get();
+        auto* document = allDocumentsMap().get(documentID);
         if (!document)
             return;
 
@@ -6737,7 +6753,7 @@ static Element* findNearestCommonComposedAncestor(Element* elementA, Element* el
     return nullptr;
 }
 
-void Document::updateHoverActiveState(const HitTestRequest& request, Element* innerElement)
+void Document::updateHoverActiveState(const HitTestRequest& request, Element* innerElement, CaptureChange captureElementChanged)
 {
     ASSERT(!request.readOnly());
 
@@ -6776,8 +6792,8 @@ void Document::updateHoverActiveState(const HitTestRequest& request, Element* in
 
     // If the mouse is down and if this is a mouse move event, we want to restrict changes in
     // :hover/:active to only apply to elements that are in the :active chain that we froze
-    // at the time the mouse went down.
-    bool mustBeInActiveChain = request.active() && request.move();
+    // at the time the mouse went down, unless the capture element changed.
+    bool mustBeInActiveChain = request.active() && request.move() && captureElementChanged == CaptureChange::No;
 
     RefPtr<Element> oldHoveredElement = WTFMove(m_hoveredElement);
 
@@ -6839,9 +6855,9 @@ bool Document::haveStylesheetsLoaded() const
     return !styleScope().hasPendingSheets() || m_ignorePendingStylesheets;
 }
 
-Locale& Document::getCachedLocale(const AtomicString& locale)
+Locale& Document::getCachedLocale(const AtomString& locale)
 {
-    AtomicString localeKey = locale;
+    AtomString localeKey = locale;
     if (locale.isEmpty() || !settings().langAttributeAwareFormControlUIEnabled())
         localeKey = defaultLanguage();
     LocaleIdentifierToLocaleMap::AddResult result = m_localeCache.add(localeKey, nullptr);
@@ -6930,10 +6946,10 @@ bool Document::useDarkAppearance(const RenderStyle* style) const
     return false;
 }
 
-bool Document::useInactiveAppearance() const
+bool Document::useElevatedUserInterfaceLevel() const
 {
     if (auto* documentPage = page())
-        return documentPage->useInactiveAppearance();
+        return documentPage->useElevatedUserInterfaceLevel();
     return false;
 }
 
@@ -6944,9 +6960,23 @@ OptionSet<StyleColor::Options> Document::styleColorOptions(const RenderStyle* st
         options.add(StyleColor::Options::UseSystemAppearance);
     if (useDarkAppearance(style))
         options.add(StyleColor::Options::UseDarkAppearance);
-    if (useInactiveAppearance())
-        options.add(StyleColor::Options::UseInactiveAppearance);
+    if (useElevatedUserInterfaceLevel())
+        options.add(StyleColor::Options::UseElevatedUserInterfaceLevel);
     return options;
+}
+
+CompositeOperator Document::compositeOperatorForBackgroundColor(const Color& color, const RenderObject& renderer) const
+{
+    if (LIKELY(!settings().punchOutWhiteBackgroundsInDarkMode() || !Color::isWhiteColor(color) || !renderer.useDarkAppearance()))
+        return CompositeSourceOver;
+
+    auto* frameView = view();
+    if (!frameView)
+        return CompositeSourceOver;
+
+    // Mail on macOS uses a transparent view, and on iOS it is an opaque view. We need to
+    // use different composite modes to get the right results in this case.
+    return frameView->isTransparent() ? CompositeDestinationOut : CompositeDestinationIn;
 }
 
 void Document::didAssociateFormControl(Element& element)
@@ -7566,7 +7596,7 @@ void Document::updateResizeObservations(Page& page)
 }
 #endif
 
-const AtomicString& Document::dir() const
+const AtomString& Document::dir() const
 {
     auto* documentElement = this->documentElement();
     if (!is<HTMLHtmlElement>(documentElement))
@@ -7574,7 +7604,7 @@ const AtomicString& Document::dir() const
     return downcast<HTMLHtmlElement>(*documentElement).dir();
 }
 
-void Document::setDir(const AtomicString& value)
+void Document::setDir(const AtomString& value)
 {
     auto* documentElement = this->documentElement();
     if (is<HTMLHtmlElement>(documentElement))
@@ -7668,7 +7698,7 @@ void Document::forEachApplicationStateChangeListener(const Function<void(Applica
         functor(*listener);
 }
 
-const AtomicString& Document::bgColor() const
+const AtomString& Document::bgColor() const
 {
     auto* bodyElement = body();
     if (!bodyElement)
@@ -7682,7 +7712,7 @@ void Document::setBgColor(const String& value)
         bodyElement->setAttributeWithoutSynchronization(bgcolorAttr, value);
 }
 
-const AtomicString& Document::fgColor() const
+const AtomString& Document::fgColor() const
 {
     auto* bodyElement = body();
     if (!bodyElement)
@@ -7696,7 +7726,7 @@ void Document::setFgColor(const String& value)
         bodyElement->setAttributeWithoutSynchronization(textAttr, value);
 }
 
-const AtomicString& Document::alinkColor() const
+const AtomString& Document::alinkColor() const
 {
     auto* bodyElement = body();
     if (!bodyElement)
@@ -7710,7 +7740,7 @@ void Document::setAlinkColor(const String& value)
         bodyElement->setAttributeWithoutSynchronization(alinkAttr, value);
 }
 
-const AtomicString& Document::linkColorForBindings() const
+const AtomString& Document::linkColorForBindings() const
 {
     auto* bodyElement = body();
     if (!bodyElement)
@@ -7724,7 +7754,7 @@ void Document::setLinkColorForBindings(const String& value)
         bodyElement->setAttributeWithoutSynchronization(linkAttr, value);
 }
 
-const AtomicString& Document::vlinkColor() const
+const AtomString& Document::vlinkColor() const
 {
     auto* bodyElement = body();
     if (!bodyElement)
@@ -8146,39 +8176,23 @@ void Document::setPaintWorkletGlobalScopeForName(const String& name, Ref<PaintWo
 }
 #endif
 
-#if PLATFORM(IOS_FAMILY) && ENABLE(POINTER_EVENTS)
-void Document::updateTouchActionElements(Element& element, const RenderStyle& style)
-{
-    bool changed = false;
-
-    if (style.touchActions() != TouchAction::Auto) {
-        if (!m_touchActionElements)
-            m_touchActionElements = std::make_unique<HashSet<RefPtr<Element>>>();
-        changed |= m_touchActionElements->add(&element).isNewEntry;
-    } else if (m_touchActionElements)
-        changed |= m_touchActionElements->remove(&element);
-
-    if (!changed)
-        return;
-
-    Page* page = this->page();
-    if (!page)
-        return;
-
-    if (FrameView* frameView = view()) {
-        if (ScrollingCoordinator* scrollingCoordinator = page->scrollingCoordinator())
-            scrollingCoordinator->frameViewEventTrackingRegionsChanged(*frameView);
-    }
-}
-#endif
-
 #if PLATFORM(IOS_FAMILY)
+
 ContentChangeObserver& Document::contentChangeObserver()
 {
     if (!m_contentChangeObserver)
         m_contentChangeObserver = std::make_unique<ContentChangeObserver>(*this);
     return *m_contentChangeObserver; 
 }
+
+DOMTimerHoldingTank& Document::domTimerHoldingTank()
+{
+    if (m_domTimerHoldingTank)
+        return *m_domTimerHoldingTank;
+    m_domTimerHoldingTank = std::make_unique<DOMTimerHoldingTank>();
+    return *m_domTimerHoldingTank;
+}
+
 #endif
 
 bool Document::hasEvaluatedUserAgentScripts() const
@@ -8229,5 +8243,23 @@ void Document::setApplePayIsActive()
 }
 
 #endif
+
+
+#if USE(SYSTEM_PREVIEW)
+void Document::dispatchSystemPreviewActionEvent(const SystemPreviewInfo& systemPreviewInfo, const String& message)
+{
+    auto* element = searchForElementByIdentifier(systemPreviewInfo.element.elementIdentifier);
+    if (!element)
+        return;
+
+    if (!is<HTMLAnchorElement>(element))
+        return;
+
+    auto event = MessageEvent::create(message, origin());
+    UserGestureIndicator gestureIndicator(ProcessingUserGesture, this);
+    element->dispatchEvent(event);
+}
+#endif
+
 
 } // namespace WebCore

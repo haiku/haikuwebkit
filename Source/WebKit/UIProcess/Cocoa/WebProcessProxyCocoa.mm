@@ -170,7 +170,7 @@ void WebProcessProxy::cacheMediaMIMETypesInternal(const Vector<String>& types)
     send(Messages::WebProcess::SetMediaMIMETypes(types), 0);
 }
 
-Vector<String> WebProcessProxy::mediaMIMETypes()
+Vector<String> WebProcessProxy::mediaMIMETypes() const
 {
     return mediaTypeCache();
 }
@@ -190,12 +190,11 @@ void WebProcessProxy::releaseHighPerformanceGPU()
 #endif
 
 #if PLATFORM(IOS_FAMILY)
-void WebProcessProxy::processWasUnexpectedlyUnsuspended(CompletionHandler<void()>&& completion)
+void WebProcessProxy::processWasUnexpectedlyUnsuspended()
 {
     if (m_throttler.shouldBeRunnable()) {
         // The process becoming unsuspended was not unexpected; it likely was notified of its running state
-        // before receiving a procsessDidResume() message from the UIProcess.
-        completion();
+        // before receiving a processDidResume() message from the UIProcess.
         return;
     }
 
@@ -206,7 +205,6 @@ void WebProcessProxy::processWasUnexpectedlyUnsuspended(CompletionHandler<void()
         RELEASE_LOG(ProcessSuspension, "%p - WebProcessProxy::processWasUnexpectedlyUnsuspended() - lambda, background activity timed out", weakThis.get());
     };
     m_unexpectedActivityTimer = std::make_unique<WebCore::DeferrableOneShotTimer>(WTFMove(backgroundActivityTimeoutHandler), unexpectedActivityDuration);
-    completion();
 }
 #endif
 

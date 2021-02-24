@@ -164,7 +164,7 @@ public:
     NetworkCache::Cache* cache() { return m_cache.get(); }
 
     void setSession(const PAL::SessionID&, Ref<NetworkSession>&&);
-    NetworkSession* networkSession(const PAL::SessionID&) const override;
+    NetworkSession* networkSession(const PAL::SessionID&) const final;
     NetworkSession* networkSessionByConnection(IPC::Connection&) const;
     void destroySession(const PAL::SessionID&);
 
@@ -261,6 +261,8 @@ public:
     void didCommitCrossSiteLoadWithDataTransfer(PAL::SessionID, const RegistrableDomain& fromDomain, const RegistrableDomain& toDomain, OptionSet<WebCore::CrossSiteNavigationDataTransfer::Flag>, WebCore::PageIdentifier);
     void setCrossSiteLoadWithLinkDecorationForTesting(PAL::SessionID, const RegistrableDomain& fromDomain, const RegistrableDomain& toDomain, CompletionHandler<void()>&&);
     void resetCrossSiteLoadsWithLinkDecorationForTesting(PAL::SessionID, CompletionHandler<void()>&&);
+    void setShouldDowngradeReferrerForTesting(bool, CompletionHandler<void()>&&);
+    void setShouldBlockThirdPartyCookiesForTesting(PAL::SessionID, bool, CompletionHandler<void()>&&);
 #endif
 
     using CacheStorageRootPathCallback = CompletionHandler<void(String&&)>;
@@ -343,6 +345,10 @@ public:
     void addKeptAliveLoad(Ref<NetworkResourceLoader>&&);
     void removeKeptAliveLoad(NetworkResourceLoader&);
 
+    void setServiceWorkerFetchTimeoutForTesting(Seconds, CompletionHandler<void()>&&);
+    void resetServiceWorkerFetchTimeoutForTesting(CompletionHandler<void()>&&);
+    Seconds serviceWorkerFetchTimeout() const { return m_serviceWorkerFetchTimeout; }
+
 private:
     void platformInitializeNetworkProcess(const NetworkProcessCreationParameters&);
     std::unique_ptr<WebCore::NetworkStorageSession> platformCreateDefaultStorageSession() const;
@@ -396,6 +402,7 @@ private:
     void deleteWebsiteDataForOrigins(PAL::SessionID, OptionSet<WebsiteDataType>, const Vector<WebCore::SecurityOriginData>& origins, const Vector<String>& cookieHostNames, const Vector<String>& HSTSCacheHostnames, uint64_t callbackID);
 
     void clearCachedCredentials();
+    void clearPermanentCredentialsForProtectionSpace(const WebCore::ProtectionSpace&, CompletionHandler<void()>&&);
 
     void setCacheStorageParameters(PAL::SessionID, String&& cacheStorageDirectory, SandboxExtension::Handle&&);
     void initializeQuotaUsers(WebCore::StorageQuotaManager&, PAL::SessionID, const WebCore::ClientOrigin&);
@@ -439,9 +446,6 @@ private:
 #endif
 
     void platformSyncAllCookies(CompletionHandler<void()>&&);
-
-    void originsWithPersistentCredentials(CompletionHandler<void(Vector<WebCore::SecurityOriginData>)>&&);
-    void removeCredentialsWithOrigins(const Vector<WebCore::SecurityOriginData>& origins, CompletionHandler<void()>&&);
     
     void registerURLSchemeAsSecure(const String&) const;
     void registerURLSchemeAsBypassingContentSecurityPolicy(const String&) const;
@@ -466,7 +470,6 @@ private:
     
     void disableServiceWorkerProcessTerminationDelay();
     
-    WebSWOriginStore& swOriginStoreForSession(PAL::SessionID);
     WebSWOriginStore* existingSWOriginStoreForSession(PAL::SessionID) const;
     bool needsServerToContextConnectionForRegistrableDomain(const WebCore::RegistrableDomain&) const;
 
@@ -541,7 +544,6 @@ private:
     
 #if ENABLE(SERVICE_WORKER)
     HashMap<WebCore::RegistrableDomain, RefPtr<WebSWServerToContextConnection>> m_serverToContextConnections;
-    bool m_waitingForServerToContextProcessConnection { false };
     bool m_shouldDisableServiceWorkerProcessTerminationDelay { false };
     HashMap<PAL::SessionID, String> m_swDatabasePaths;
     HashMap<PAL::SessionID, std::unique_ptr<WebCore::SWServer>> m_swServers;
@@ -572,6 +574,9 @@ private:
     uint32_t m_downloadMonitorSpeedMultiplier { 1 };
 
     HashMap<IPC::Connection::UniqueID, PAL::SessionID> m_sessionByConnection;
+
+    static const Seconds defaultServiceWorkerFetchTimeout;
+    Seconds m_serviceWorkerFetchTimeout { defaultServiceWorkerFetchTimeout };
 };
 
 } // namespace WebKit

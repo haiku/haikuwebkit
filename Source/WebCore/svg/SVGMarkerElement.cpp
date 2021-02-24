@@ -60,7 +60,7 @@ AffineTransform SVGMarkerElement::viewBoxToViewTransform(float viewWidth, float 
     return SVGFitToViewBox::viewBoxToViewTransform(viewBox(), preserveAspectRatio(), viewWidth, viewHeight);
 }
 
-void SVGMarkerElement::parseAttribute(const QualifiedName& name, const AtomicString& value)
+void SVGMarkerElement::parseAttribute(const QualifiedName& name, const AtomString& value)
 {
     if (name == SVGNames::markerUnitsAttr) {
         auto propertyValue = SVGPropertyTraits<SVGMarkerUnitsType>::fromString(value);
@@ -79,13 +79,13 @@ void SVGMarkerElement::parseAttribute(const QualifiedName& name, const AtomicStr
     SVGParsingError parseError = NoError;
 
     if (name == SVGNames::refXAttr)
-        m_refX->setBaseValInternal(SVGLengthValue::construct(LengthModeWidth, value, parseError));
+        m_refX->setBaseValInternal(SVGLengthValue::construct(SVGLengthMode::Width, value, parseError));
     else if (name == SVGNames::refYAttr)
-        m_refY->setBaseValInternal(SVGLengthValue::construct(LengthModeHeight, value, parseError));
+        m_refY->setBaseValInternal(SVGLengthValue::construct(SVGLengthMode::Height, value, parseError));
     else if (name == SVGNames::markerWidthAttr)
-        m_markerWidth->setBaseValInternal(SVGLengthValue::construct(LengthModeWidth, value, parseError));
+        m_markerWidth->setBaseValInternal(SVGLengthValue::construct(SVGLengthMode::Width, value, parseError));
     else if (name == SVGNames::markerHeightAttr)
-        m_markerHeight->setBaseValInternal(SVGLengthValue::construct(LengthModeHeight, value, parseError));
+        m_markerHeight->setBaseValInternal(SVGLengthValue::construct(SVGLengthMode::Height, value, parseError));
 
     reportAttributeParsingError(parseError, name, value);
 

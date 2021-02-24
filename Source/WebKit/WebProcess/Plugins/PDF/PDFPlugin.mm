@@ -161,9 +161,9 @@ static const int defaultScrollMagnitudeThresholdForPageFlip = 20;
 #endif
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (BOOL)accessibilityIsIgnored
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     return NO;
 }
@@ -174,9 +174,9 @@ IGNORE_WARNINGS_END
     return _pdfPlugin->convertFromPDFViewToScreen(rect);
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (id)accessibilityAttributeValue:(NSString *)attribute
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     if ([attribute isEqualToString:NSAccessibilityParentAttribute])
         return _parent;
@@ -218,9 +218,9 @@ IGNORE_WARNINGS_END
     return 0;
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (id)accessibilityAttributeValue:(NSString *)attribute forParameter:(id)parameter
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     if ([attribute isEqualToString:NSAccessibilityBoundsForRangeParameterizedAttribute]) {
         NSRect boundsInPDFViewCoordinates = [[_pdfLayerController accessibilityBoundsForRangeAttributeForParameter:parameter] rectValue];
@@ -243,9 +243,9 @@ IGNORE_WARNINGS_END
     return [_pdfLayerController readingModel];
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (NSArray *)accessibilityAttributeNames
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     static NSArray *attributeNames = 0;
 
@@ -277,9 +277,9 @@ IGNORE_WARNINGS_END
     return attributeNames;
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (NSArray *)accessibilityActionNames
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 101300
     return nil;
@@ -293,31 +293,31 @@ IGNORE_WARNINGS_END
 #endif
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)accessibilityPerformAction:(NSString *)action
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     if ([action isEqualToString:NSAccessibilityShowMenuAction])
         _pdfPlugin->showContextMenuAtPoint(WebCore::IntRect(WebCore::IntPoint(), _pdfPlugin->size()).center());
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (BOOL)accessibilityIsAttributeSettable:(NSString *)attribute
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     return [_pdfLayerController accessibilityIsAttributeSettable:attribute];
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)accessibilitySetValue:(id)value forAttribute:(NSString *)attribute
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     return [_pdfLayerController accessibilitySetValue:value forAttribute:attribute];
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (NSArray *)accessibilityParameterizedAttributeNames
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
 #if __MAC_OS_X_VERSION_MIN_REQUIRED >= 101300
     return nil;
@@ -632,7 +632,7 @@ inline PDFPlugin::PDFPlugin(WebFrame& frame)
     if (supportsForms()) {
         Document* document = webFrame()->coreFrame()->document();
         m_annotationContainer = document->createElement(divTag, false);
-        m_annotationContainer->setAttributeWithoutSynchronization(idAttr, AtomicString("annotationContainer", AtomicString::ConstructFromLiteral));
+        m_annotationContainer->setAttributeWithoutSynchronization(idAttr, AtomString("annotationContainer", AtomString::ConstructFromLiteral));
 
         auto annotationStyleElement = document->createElement(styleTag, false);
         annotationStyleElement->setTextContent(annotationStyle);
@@ -863,12 +863,6 @@ IntRect PDFPlugin::scrollableAreaBoundingBox(bool*) const
     return pluginView()->frameRect();
 }
 
-int PDFPlugin::scrollSize(ScrollbarOrientation orientation) const
-{
-    Scrollbar* scrollbar = ((orientation == HorizontalScrollbar) ? m_horizontalScrollbar : m_verticalScrollbar).get();
-    return scrollbar ? (scrollbar->totalSize() - scrollbar->visibleSize()) : 0;
-}
-
 bool PDFPlugin::isActive() const
 {
     if (Frame* coreFrame = m_frame->coreFrame()) {
@@ -887,18 +881,6 @@ bool PDFPlugin::forceUpdateScrollbarsOnMainThreadForPerformanceTesting() const
     }
 
     return false;
-}
-
-int PDFPlugin::scrollOffset(ScrollbarOrientation orientation) const
-{
-    if (orientation == HorizontalScrollbar)
-        return m_scrollOffset.width();
-
-    if (orientation == VerticalScrollbar)
-        return m_scrollOffset.height();
-
-    ASSERT_NOT_REACHED();
-    return 0;
 }
 
 ScrollPosition PDFPlugin::scrollPosition() const
@@ -2112,9 +2094,7 @@ std::tuple<String, PDFSelection *, NSDictionary *> PDFPlugin::lookupTextAtLocati
         return { selection.string, selection, nil };
     }
 
-    NSString *lookupText;
-    NSDictionary *options;
-    std::tie(lookupText, options) = DictionaryLookup::stringForPDFSelection(selection);
+    auto [lookupText, options] = DictionaryLookup::stringForPDFSelection(selection);
     if (!lookupText.length)
         return { emptyString(), selection, nil };
 

@@ -41,7 +41,7 @@ class TypeReference;
 
 class FloatLiteralType : public ResolvableType {
 public:
-    FloatLiteralType(Lexer::Token&& origin, float value);
+    FloatLiteralType(CodeLocation, float value);
 
     virtual ~FloatLiteralType();
 
@@ -59,6 +59,8 @@ public:
 
     bool canResolve(const Type&) const override;
     unsigned conversionCost(const UnnamedType&) const override;
+
+    FloatLiteralType clone() const;
 
 private:
     float m_value;

@@ -92,7 +92,7 @@ private:
             handleCommutativity();
             break;
             
-        case BitLShift:
+        case ArithBitLShift:
         case BitRShift:
         case BitURShift:
             if (m_node->child1().useKind() != UntypedUse && m_node->child2()->isInt32Constant() && !(m_node->child2()->asInt32() & 0x1f)) {
@@ -854,7 +854,7 @@ private:
 
                 unsigned replLen = replace.length();
                 if (lastIndex < result.start || replLen) {
-                    builder.append(string, lastIndex, result.start - lastIndex);
+                    builder.appendSubstring(string, lastIndex, result.start - lastIndex);
                     if (replLen) {
                         StringBuilder replacement;
                         substituteBackreferences(replacement, replace, string, ovector.data(), regExp);
@@ -899,7 +899,7 @@ private:
                 m_node->convertToIdentityOn(stringNode);
             else {
                 if (lastIndex < string.length())
-                    builder.append(string, lastIndex, string.length() - lastIndex);
+                    builder.appendSubstring(string, lastIndex, string.length() - lastIndex);
                 
                 m_node->convertToLazyJSConstant(m_graph, LazyJSValue::newString(m_graph, builder.toString()));
             }

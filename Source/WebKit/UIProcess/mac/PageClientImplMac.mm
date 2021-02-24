@@ -289,6 +289,7 @@ void PageClientImpl::didCommitLoadForMainFrame(const String& mimeType, bool useC
 {
     m_impl->updateSupportsArbitraryLayoutModes();
     m_impl->dismissContentRelativeChildWindowsWithAnimation(true);
+    m_impl->clearPromisedDragImage();
 }
 
 void PageClientImpl::didFinishLoadingDataForCustomContentProvider(const String& suggestedFilename, const IPC::DataReference& dataReference)
@@ -944,9 +945,9 @@ bool PageClientImpl::effectiveAppearanceIsDark() const
     return m_impl->effectiveAppearanceIsDark();
 }
 
-bool PageClientImpl::effectiveAppearanceIsInactive() const
+bool PageClientImpl::effectiveUserInterfaceLevelIsElevated() const
 {
-    return m_impl->effectiveAppearanceIsInactive();
+    return m_impl->effectiveUserInterfaceLevelIsElevated();
 }
 
 void PageClientImpl::takeFocus(WebCore::FocusDirection direction)

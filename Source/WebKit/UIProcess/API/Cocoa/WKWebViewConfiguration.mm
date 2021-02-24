@@ -553,16 +553,16 @@ static NSString *defaultApplicationNameForUserAgent()
 
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (_WKWebsiteDataStore *)_websiteDataStore
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     return self.websiteDataStore ? adoptNS([[_WKWebsiteDataStore alloc] initWithDataStore:self.websiteDataStore]).autorelease() : nullptr;
 }
 
-IGNORE_WARNINGS_BEGIN("deprecated-implementations")
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)_setWebsiteDataStore:(_WKWebsiteDataStore *)websiteDataStore
-IGNORE_WARNINGS_END
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     self.websiteDataStore = websiteDataStore ? websiteDataStore->_dataStore.get() : nullptr;
 }
@@ -789,6 +789,16 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 - (BOOL)_canShowWhileLocked
 {
     return _pageConfiguration->canShowWhileLocked();
+}
+
+- (void)_setClickInteractionDriverForTesting:(id<_UIClickInteractionDriving>)driver
+{
+    _pageConfiguration->setClickInteractionDriverForTesting((NSObject<_UIClickInteractionDriving> *)driver);
+}
+
+- (id <_UIClickInteractionDriving>)_clickInteractionDriverForTesting
+{
+    return _pageConfiguration->clickInteractionDriverForTesting().get();
 }
 
 #endif // PLATFORM(IOS_FAMILY)

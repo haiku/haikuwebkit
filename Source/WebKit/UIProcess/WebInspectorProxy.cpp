@@ -42,6 +42,7 @@
 #include "WebProcessPool.h"
 #include "WebProcessProxy.h"
 #include <WebCore/CertificateInfo.h>
+#include <WebCore/MockRealtimeMediaSourceCenter.h>
 #include <WebCore/NotImplemented.h>
 #include <WebCore/TextEncoding.h>
 #include <wtf/SetForScope.h>
@@ -180,6 +181,17 @@ void WebInspectorProxy::reopen()
 
     close();
     show();
+}
+
+void WebInspectorProxy::resetState()
+{
+    inspectorPagePreferences().deleteInspectorAttachedHeight();
+    inspectorPagePreferences().deleteInspectorAttachedWidth();
+    inspectorPagePreferences().deleteInspectorAttachmentSide();
+    inspectorPagePreferences().deleteInspectorStartsAttached();
+    inspectorPagePreferences().deleteInspectorWindowFrame();
+
+    platformResetState();
 }
 
 void WebInspectorProxy::reset()
@@ -581,6 +593,18 @@ void WebInspectorProxy::elementSelectionChanged(bool active)
         bringToFront();
 }
 
+void WebInspectorProxy::setMockCaptureDevicesEnabledOverride(Optional<bool> enabled)
+{
+#if ENABLE(MEDIA_STREAM)
+    if (!m_inspectedPage)
+        return;
+
+    m_inspectedPage->setMockCaptureDevicesEnabledOverride(enabled);
+#else
+    UNUSED_PARAM(enabled);
+#endif
+}
+
 void WebInspectorProxy::save(const String& filename, const String& content, bool base64Encoded, bool forceSaveAs)
 {
     platformSave(filename, content, base64Encoded, forceSaveAs);
@@ -622,6 +646,11 @@ void WebInspectorProxy::platformDidCloseForCrash()
 }
 
 void WebInspectorProxy::platformInvalidate()
+{
+    notImplemented();
+}
+
+void WebInspectorProxy::platformResetState()
 {
     notImplemented();
 }

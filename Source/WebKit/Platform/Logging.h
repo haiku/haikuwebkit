@@ -55,6 +55,7 @@ extern "C" {
     M(IconDatabase) \
     M(IndexedDB) \
     M(IPC) \
+    M(ITPDebug) \
     M(KeyHandling) \
     M(Layers) \
     M(Layout) \
@@ -77,11 +78,11 @@ extern "C" {
     M(RemoteLayerTree) \
     M(Resize) \
     M(ResourceLoadStatistics) \
-    M(ResourceLoadStatisticsDebug) \
     M(Scrolling) \
     M(Selection) \
     M(ServiceWorker) \
     M(SessionState) \
+    M(Storage) \
     M(StorageAPI) \
     M(TextInput) \
     M(UIHitTesting) \

@@ -91,6 +91,7 @@
 #include "PointerCaptureController.h"
 #include "PointerLockController.h"
 #include "ProgressTracker.h"
+#include "RenderDescendantIterator.h"
 #include "RenderLayerCompositor.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
@@ -2727,14 +2728,14 @@ void Page::setUseSystemAppearance(bool value)
     }
 }
 
-void Page::effectiveAppearanceDidChange(bool useDarkAppearance, bool useInactiveAppearance)
+void Page::effectiveAppearanceDidChange(bool useDarkAppearance, bool useElevatedUserInterfaceLevel)
 {
 #if HAVE(OS_DARK_MODE_SUPPORT)
-    if (m_useDarkAppearance == useDarkAppearance && m_useInactiveAppearance == useInactiveAppearance)
+    if (m_useDarkAppearance == useDarkAppearance && m_useElevatedUserInterfaceLevel == useElevatedUserInterfaceLevel)
         return;
 
     m_useDarkAppearance = useDarkAppearance;
-    m_useInactiveAppearance = useInactiveAppearance;
+    m_useElevatedUserInterfaceLevel = useElevatedUserInterfaceLevel;
 
     InspectorInstrumentation::defaultAppearanceDidChange(*this, useDarkAppearance);
 
@@ -2742,10 +2743,10 @@ void Page::effectiveAppearanceDidChange(bool useDarkAppearance, bool useInactive
 #else
     UNUSED_PARAM(useDarkAppearance);
 
-    if (m_useInactiveAppearance == useInactiveAppearance)
+    if (m_useElevatedUserInterfaceLevel == useElevatedUserInterfaceLevel)
         return;
 
-    m_useInactiveAppearance = useInactiveAppearance;
+    m_useElevatedUserInterfaceLevel = useElevatedUserInterfaceLevel;
 
     appearanceDidChange();
 #endif
@@ -2949,7 +2950,7 @@ void Page::removeLatchingStateForTarget(Element& targetNode)
 }
 #endif // PLATFORM(MAC)
 
-static void dispatchPrintEvent(Frame& mainFrame, const AtomicString& eventType)
+static void dispatchPrintEvent(Frame& mainFrame, const AtomString& eventType)
 {
     Vector<Ref<Frame>> frames;
     for (auto* frame = &mainFrame; frame; frame = frame->tree().traverseNext())
@@ -3001,7 +3002,33 @@ void Page::configureLoggingChannel(const String& channelName, WTFLogChannelState
 
 void Page::didFinishLoadingImageForElement(HTMLImageElement& element)
 {
+    auto protectedElement = makeRef(element);
+    if (auto frame = makeRefPtr(element.document().frame()))
+        frame->editor().revealSelectionIfNeededAfterLoadingImageForElement(element);
     chrome().client().didFinishLoadingImageForElement(element);
 }
+
+#if ENABLE(TEXT_AUTOSIZING)
+void Page::recomputeTextAutoSizingInAllFrames()
+{
+    ASSERT(settings().textAutosizingEnabled() && settings().textAutosizingUsesIdempotentMode());
+    for (auto* frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+        if (!frame->document())
+            continue;
+        auto& document = *frame->document();
+        if (!document.renderView() || !document.styleScope().resolverIfExists())
+            continue;
+
+        auto& styleResolver = document.styleScope().resolver();
+        for (auto& renderer : descendantsOfType<RenderElement>(*document.renderView())) {
+            if (auto* element = renderer.element()) {
+                auto needsLayout = styleResolver.adjustRenderStyleForTextAutosizing(renderer.mutableStyle(), *element);
+                if (needsLayout)
+                    renderer.setNeedsLayout();
+            }
+        }
+    }
+}
+#endif
 
 } // namespace WebCore

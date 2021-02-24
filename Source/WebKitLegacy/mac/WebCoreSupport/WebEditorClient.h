@@ -137,6 +137,7 @@ private:
     void textWillBeDeletedInTextField(WebCore::Element*) final;
     void textDidChangeInTextArea(WebCore::Element*) final;
     void overflowScrollPositionChanged() final { };
+    void subFrameScrollPositionChanged() final { };
 
 #if PLATFORM(IOS_FAMILY)
     void startDelayingAndCoalescingContentChangeNotifications() final;
@@ -174,6 +175,19 @@ private:
 #endif
 
     void registerUndoOrRedoStep(WebCore::UndoStep&, bool isRedo);
+
+#if PLATFORM(IOS_FAMILY)
+    bool shouldAllowSingleClickToChangeSelection(WebCore::Node& targetNode, const WebCore::VisibleSelection& newSelection) const;
+#endif
+
+    bool canShowFontPanel() const final
+    {
+#if PLATFORM(MAC)
+        return true;
+#else
+        return false;
+#endif
+    }
 
     WebView *m_webView;
     RetainPtr<WebEditorUndoTarget> m_undoTarget;

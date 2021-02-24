@@ -31,6 +31,7 @@
 #import "Logging.h"
 #import "ScrollingStateOverflowScrollingNode.h"
 #import "ScrollingTree.h"
+#import "WebCoreCALayerExtras.h"
 #import <wtf/text/TextStream.h>
 
 namespace WebCore {
@@ -90,8 +91,7 @@ FloatPoint ScrollingTreeOverflowScrollingNodeMac::adjustedScrollPosition(const F
 
 void ScrollingTreeOverflowScrollingNodeMac::repositionScrollingLayers()
 {
-    auto scrollOffset = ScrollableArea::scrollOffsetFromPosition(currentScrollPosition(), toFloatSize(scrollOrigin()));
-    scrolledContentsLayer().position = -scrollOffset;
+    [scrollContainerLayer() _web_setLayerBoundsOrigin:currentScrollOffset()];
 }
 
 void ScrollingTreeOverflowScrollingNodeMac::repositionRelatedLayers()

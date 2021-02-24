@@ -545,6 +545,7 @@ bool CodeBlock::finishCreation(VM& vm, ScriptExecutable* ownerExecutable, Unlink
         LINK(OpBitor, profile)
         LINK(OpBitnot, profile)
         LINK(OpBitxor, profile)
+        LINK(OpLshift, profile)
 
         LINK(OpGetById, profile)
 
@@ -602,7 +603,7 @@ bool CodeBlock::finishCreation(VM& vm, ScriptExecutable* ownerExecutable, Unlink
                 if (op.type == GlobalProperty || op.type == GlobalPropertyWithVarInjectionChecks)
                     metadata.m_globalLexicalBindingEpoch = m_globalObject->globalLexicalBindingEpoch();
             } else
-                metadata.m_globalObject = nullptr;
+                metadata.m_globalObject.clear();
             break;
         }
 
@@ -810,6 +811,26 @@ CodeBlock::~CodeBlock()
 {
     VM& vm = *m_vm;
 
+#if ENABLE(DFG_JIT)
+    // The JITCode (and its corresponding DFG::CommonData) may outlive the CodeBlock by
+    // a short amount of time after the CodeBlock is destructed. For example, the
+    // Interpreter::execute methods will ref JITCode before invoking it. This can
+    // result in the JITCode having a non-zero refCount when its owner CodeBlock is
+    // destructed.
+    //
+    // Hence, we cannot rely on DFG::CommonData destruction to clear these now invalid
+    // watchpoints in a timely manner. We'll ensure they are cleared here eagerly.
+    //
+    // We only need to do this for a DFG/FTL CodeBlock because only these will have a
+    // DFG:CommonData. Hence, the LLInt and Baseline will not have any of these watchpoints.
+    //
+    // Note also that the LLIntPrototypeLoadAdaptiveStructureWatchpoint is also related
+    // to the CodeBlock. However, its lifecycle is tied directly to the CodeBlock, and
+    // will be automatically cleared when the CodeBlock destructs.
+
+    if (JITCode::isOptimizingJIT(jitType()))
+        jitCode()->dfgCommon()->clearWatchpoints();
+#endif
     vm.heap.codeBlockSet().remove(this);
     
     if (UNLIKELY(vm.m_perBytecodeProfiler))
@@ -1725,20 +1746,20 @@ HandlerInfo* CodeBlock::handlerForIndex(unsigned index, RequiredHandler required
     return HandlerInfo::handlerForIndex(m_rareData->m_exceptionHandlers, index, requiredHandler);
 }
 
-CallSiteIndex CodeBlock::newExceptionHandlingCallSiteIndex(CallSiteIndex originalCallSite)
+DisposableCallSiteIndex CodeBlock::newExceptionHandlingCallSiteIndex(CallSiteIndex originalCallSite)
 {
 #if ENABLE(DFG_JIT)
     RELEASE_ASSERT(JITCode::isOptimizingJIT(jitType()));
     RELEASE_ASSERT(canGetCodeOrigin(originalCallSite));
     ASSERT(!!handlerForIndex(originalCallSite.bits()));
     CodeOrigin originalOrigin = codeOrigin(originalCallSite);
-    return m_jitCode->dfgCommon()->addUniqueCallSiteIndex(originalOrigin);
+    return m_jitCode->dfgCommon()->addDisposableCallSiteIndex(originalOrigin);
 #else
     // We never create new on-the-fly exception handling
     // call sites outside the DFG/FTL inline caches.
     UNUSED_PARAM(originalCallSite);
     RELEASE_ASSERT_NOT_REACHED();
-    return CallSiteIndex(0u);
+    return DisposableCallSiteIndex(0u);
 #endif
 }
 
@@ -1808,7 +1829,7 @@ void CodeBlock::ensureCatchLivenessIsComputedForBytecodeOffsetSlow(const OpCatch
     }
 }
 
-void CodeBlock::removeExceptionHandlerForCallSite(CallSiteIndex callSiteIndex)
+void CodeBlock::removeExceptionHandlerForCallSite(DisposableCallSiteIndex callSiteIndex)
 {
     RELEASE_ASSERT(m_rareData);
     Vector<HandlerInfo>& exceptionHandlers = m_rareData->m_exceptionHandlers;

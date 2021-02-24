@@ -171,7 +171,10 @@ void NetworkResourceLoader::start()
     m_wasStarted = true;
 
     if (m_networkLoadChecker) {
-        m_networkLoadChecker->check(ResourceRequest { originalRequest() }, this, [this] (auto&& result) {
+        m_networkLoadChecker->check(ResourceRequest { originalRequest() }, this, [this, weakThis = makeWeakPtr(*this)] (auto&& result) {
+            if (!weakThis)
+                return;
+
             WTF::switchOn(result,
                 [this] (ResourceError& error) {
                     RELEASE_LOG_IF_ALLOWED("start: error checking (pageID = %" PRIu64 ", frameID = %" PRIu64 ", resourceID = %" PRIu64 ", isMainResource = %d, isSynchronous = %d, parentPID = %d, error.domain = %{public}s, error.code = %d)", m_parameters.webPageID.toUInt64(), m_parameters.webFrameID, m_parameters.identifier, this->isMainResource(), this->isSynchronous(), m_parameters.parentPID, error.domain().utf8().data(), error.errorCode());
@@ -213,9 +216,14 @@ void NetworkResourceLoader::retrieveCacheEntry(const ResourceRequest& request)
     RefPtr<NetworkResourceLoader> loader(this);
     if (isMainFrameLoad()) {
         ASSERT(m_parameters.options.mode == FetchOptions::Mode::Navigate);
-        if (auto session = m_connection->networkProcess().networkSession(sessionID())) {
-            if (auto entry = session->prefetchCache().take(request.url()))
-                m_cache->store(request, entry->response, entry->releaseBuffer(), nullptr);
+        if (auto* session = m_connection->networkProcess().networkSession(sessionID())) {
+            if (auto entry = session->prefetchCache().take(request.url())) {
+                if (!entry->redirectRequest.isNull()) {
+                    auto maxAgeCap = validateCacheEntryForMaxAgeCapValidation(request, entry->redirectRequest, entry->response);
+                    m_cache->storeRedirect(request, entry->response, entry->redirectRequest, maxAgeCap);
+                } else
+                    m_cache->store(request, entry->response, entry->releaseBuffer(), nullptr);
+            }
         }
     }
     m_cache->retrieve(request, { m_parameters.webPageID, m_parameters.webFrameID }, [this, loader = WTFMove(loader), request = ResourceRequest { request }](auto entry, auto info) mutable {
@@ -640,7 +648,7 @@ void NetworkResourceLoader::willSendRedirectedRequest(ResourceRequest&& request,
             }
 
             if (m_parameters.options.redirect == FetchOptions::Redirect::Manual) {
-                this->didFinishWithRedirectResponse(WTFMove(result->redirectResponse));
+                this->didFinishWithRedirectResponse(WTFMove(result->request), WTFMove(result->redirectRequest), WTFMove(result->redirectResponse));
                 return;
             }
 
@@ -681,10 +689,13 @@ void NetworkResourceLoader::continueWillSendRedirectedRequest(ResourceRequest&& 
     send(Messages::WebResourceLoader::WillSendRequest(redirectRequest, sanitizeResponseIfPossible(WTFMove(redirectResponse), ResourceResponse::SanitizationType::Redirection)));
 }
 
-void NetworkResourceLoader::didFinishWithRedirectResponse(ResourceResponse&& redirectResponse)
+void NetworkResourceLoader::didFinishWithRedirectResponse(WebCore::ResourceRequest&& request, WebCore::ResourceRequest&& redirectRequest, ResourceResponse&& redirectResponse)
 {
     redirectResponse.setType(ResourceResponse::Type::Opaqueredirect);
-    didReceiveResponse(WTFMove(redirectResponse), [] (auto) { });
+    if (!isCrossOriginPrefetch())
+        didReceiveResponse(WTFMove(redirectResponse), [] (auto) { });
+    else if (auto* session = m_connection->networkProcess().networkSession(sessionID()))
+        session->prefetchCache().storeRedirect(m_networkLoad->currentRequest().url(), WTFMove(redirectResponse), WTFMove(redirectRequest));
 
     WebCore::NetworkLoadMetrics networkLoadMetrics;
     networkLoadMetrics.markComplete();
@@ -815,7 +826,7 @@ void NetworkResourceLoader::tryStoreAsCacheEntry()
         return;
 
     if (isCrossOriginPrefetch()) {
-        if (auto session = m_connection->networkProcess().networkSession(sessionID()))
+        if (auto* session = m_connection->networkProcess().networkSession(sessionID()))
             session->prefetchCache().store(m_networkLoad->currentRequest().url(), WTFMove(m_response), WTFMove(m_bufferedDataForCache));
         return;
     }
@@ -976,7 +987,7 @@ bool NetworkResourceLoader::shouldCaptureExtraNetworkLoadMetrics() const
 #if ENABLE(RESOURCE_LOAD_STATISTICS) && !RELEASE_LOG_DISABLED
 bool NetworkResourceLoader::shouldLogCookieInformation(NetworkConnectionToWebProcess& connection, const PAL::SessionID& sessionID)
 {
-    if (auto session = connection.networkProcess().networkSession(sessionID))
+    if (auto* session = connection.networkProcess().networkSession(sessionID))
         return session->shouldLogCookieInformation();
     return false;
 }

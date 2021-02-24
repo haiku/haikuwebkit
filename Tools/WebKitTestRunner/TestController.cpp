@@ -43,6 +43,7 @@
 #include <WebKit/WKFrameHandleRef.h>
 #include <WebKit/WKFrameInfoRef.h>
 #include <WebKit/WKIconDatabase.h>
+#include <WebKit/WKMessageListener.h>
 #include <WebKit/WKMockDisplay.h>
 #include <WebKit/WKMockMediaDevice.h>
 #include <WebKit/WKNavigationActionRef.h>
@@ -73,6 +74,7 @@
 #include <stdlib.h>
 #include <string>
 #include <wtf/AutodrainedPool.h>
+#include <wtf/CompletionHandler.h>
 #include <wtf/CryptographicallyRandomNumber.h>
 #include <wtf/MainThread.h>
 #include <wtf/ProcessPrivilege.h>
@@ -288,6 +290,11 @@ static void printFrame(WKPageRef page, WKFrameRef frame, const void*)
 static bool shouldAllowDeviceOrientationAndMotionAccess(WKPageRef, WKSecurityOriginRef origin, const void*)
 {
     return TestController::singleton().handleDeviceOrientationAndMotionAccessRequest(origin);
+}
+
+// A placeholder to tell WebKit the client is WebKitTestRunner.
+static void runWebAuthenticationPanel()
+{
 }
 
 WKPageRef TestController::createOtherPage(WKPageRef, WKPageConfigurationRef configuration, WKNavigationActionRef navigationAction, WKWindowFeaturesRef windowFeatures, const void *clientInfo)
@@ -538,11 +545,12 @@ WKRetainPtr<WKPageConfigurationRef> TestController::generatePageConfiguration(co
         platformInitializeContext();
     }
 
-    WKContextInjectedBundleClientV1 injectedBundleClient = {
-        { 1, this },
+    WKContextInjectedBundleClientV2 injectedBundleClient = {
+        { 2, this },
         didReceiveMessageFromInjectedBundle,
-        didReceiveSynchronousMessageFromInjectedBundle,
+        nullptr,
         getInjectedBundleInitializationUserData,
+        didReceiveSynchronousMessageFromInjectedBundleWithListener,
     };
     WKContextSetInjectedBundleClient(m_context.get(), &injectedBundleClient.base);
 
@@ -593,8 +601,8 @@ void TestController::createWebViewWithOptions(const TestOptions& options)
     resetPreferencesToConsistentValues(options);
 
     platformCreateWebView(configuration.get(), options);
-    WKPageUIClientV13 pageUIClient = {
-        { 13, m_mainWebView.get() },
+    WKPageUIClientV14 pageUIClient = {
+        { 14, m_mainWebView.get() },
         0, // createNewPage_deprecatedForUseWithV0
         0, // showPage
         0, // close
@@ -666,7 +674,8 @@ void TestController::createWebViewWithOptions(const TestOptions& options)
         0, // didExceedBackgroundResourceLimitWhileInForeground
         0, // didResignInputElementStrongPasswordAppearance
         0, // requestStorageAccessConfirm
-        shouldAllowDeviceOrientationAndMotionAccess
+        shouldAllowDeviceOrientationAndMotionAccess,
+        runWebAuthenticationPanel
     };
     WKPageSetPageUIClient(m_mainWebView->page(), &pageUIClient.base);
 
@@ -717,10 +726,11 @@ void TestController::createWebViewWithOptions(const TestOptions& options)
     WKContextSetDownloadClient(context(), &downloadClient.base);
     
     // this should just be done on the page?
-    WKPageInjectedBundleClientV0 injectedBundleClient = {
-        { 0, this },
+    WKPageInjectedBundleClientV1 injectedBundleClient = {
+        { 1, this },
         didReceivePageMessageFromInjectedBundle,
-        didReceiveSynchronousPageMessageFromInjectedBundle
+        nullptr,
+        didReceiveSynchronousPageMessageFromInjectedBundleWithListener,
     };
     WKPageSetPageInjectedBundleClient(m_mainWebView->page(), &injectedBundleClient.base);
 
@@ -794,7 +804,6 @@ void TestController::resetPreferencesToConsistentValues(const TestOptions& optio
 #if ENABLE(FULLSCREEN_API)
     WKPreferencesSetFullScreenEnabled(preferences, true);
 #endif
-    WKPreferencesSetPageCacheEnabled(preferences, false);
     WKPreferencesSetAsynchronousPluginInitializationEnabled(preferences, false);
     WKPreferencesSetAsynchronousPluginInitializationEnabledForAllPlugins(preferences, false);
     WKPreferencesSetArtificialPluginInitializationDelayEnabled(preferences, false);
@@ -814,6 +823,7 @@ void TestController::resetPreferencesToConsistentValues(const TestOptions& optio
     WKPreferencesSetAllowCrossOriginSubresourcesToAskForCredentials(preferences, options.allowCrossOriginSubresourcesToAskForCredentials);
     WKPreferencesSetColorFilterEnabled(preferences, options.enableColorFilter);
     WKPreferencesSetPunchOutWhiteBackgroundsInDarkMode(preferences, options.punchOutWhiteBackgroundsInDarkMode);
+    WKPreferencesSetPageCacheEnabled(preferences, options.enablePageCache);
 
     static WKStringRef defaultTextEncoding = WKStringCreateWithUTF8CString("ISO-8859-1");
     WKPreferencesSetDefaultTextEncodingName(preferences, defaultTextEncoding);
@@ -1392,6 +1402,10 @@ static void updateTestOptionsFromTestHeader(TestOptions& testOptions, const std:
             testOptions.contentMode = { value.c_str() };
         else if (key == "enableAppNap")
             testOptions.enableAppNap = parseBooleanTestHeaderValue(value);
+        else if (key == "enablePageCache")
+            testOptions.enablePageCache = parseBooleanTestHeaderValue(value);
+        else if (key == "allowsLinkPreview")
+            testOptions.allowsLinkPreview = parseBooleanTestHeaderValue(value);
         pairStart = pairEnd + 1;
     }
 }
@@ -1729,9 +1743,9 @@ void TestController::didReceiveMessageFromInjectedBundle(WKContextRef context, W
     static_cast<TestController*>(const_cast<void*>(clientInfo))->didReceiveMessageFromInjectedBundle(messageName, messageBody);
 }
 
-void TestController::didReceiveSynchronousMessageFromInjectedBundle(WKContextRef context, WKStringRef messageName, WKTypeRef messageBody, WKTypeRef* returnData, const void* clientInfo)
+void TestController::didReceiveSynchronousMessageFromInjectedBundleWithListener(WKContextRef context, WKStringRef messageName, WKTypeRef messageBody, WKMessageListenerRef listener, const void* clientInfo)
 {
-    *returnData = static_cast<TestController*>(const_cast<void*>(clientInfo))->didReceiveSynchronousMessageFromInjectedBundle(messageName, messageBody).leakRef();
+    static_cast<TestController*>(const_cast<void*>(clientInfo))->didReceiveSynchronousMessageFromInjectedBundle(messageName, messageBody, listener);
 }
 
 WKTypeRef TestController::getInjectedBundleInitializationUserData(WKContextRef, const void* clientInfo)
@@ -1746,9 +1760,9 @@ void TestController::didReceivePageMessageFromInjectedBundle(WKPageRef page, WKS
     static_cast<TestController*>(const_cast<void*>(clientInfo))->didReceiveMessageFromInjectedBundle(messageName, messageBody);
 }
 
-void TestController::didReceiveSynchronousPageMessageFromInjectedBundle(WKPageRef page, WKStringRef messageName, WKTypeRef messageBody, WKTypeRef* returnData, const void* clientInfo)
+void TestController::didReceiveSynchronousPageMessageFromInjectedBundleWithListener(WKPageRef page, WKStringRef messageName, WKTypeRef messageBody, WKMessageListenerRef listener, const void* clientInfo)
 {
-    *returnData = static_cast<TestController*>(const_cast<void*>(clientInfo))->didReceiveSynchronousMessageFromInjectedBundle(messageName, messageBody).leakRef();
+    static_cast<TestController*>(const_cast<void*>(clientInfo))->didReceiveSynchronousMessageFromInjectedBundle(messageName, messageBody, listener);
 }
 
 void TestController::networkProcessDidCrash(WKContextRef context, const void *clientInfo)
@@ -1885,11 +1899,15 @@ void TestController::didReceiveMessageFromInjectedBundle(WKStringRef messageName
     m_currentInvocation->didReceiveMessageFromInjectedBundle(messageName, messageBody);
 }
 
-WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedBundle(WKStringRef messageName, WKTypeRef messageBody)
+void TestController::didReceiveSynchronousMessageFromInjectedBundle(WKStringRef messageName, WKTypeRef messageBody, WKMessageListenerRef listener)
 {
+    auto completionHandler = [listener = retainWK(listener)] (WKTypeRef reply) {
+        WKMessageListenerSendReply(listener.get(), reply);
+    };
+
     if (WKStringIsEqualToUTF8CString(messageName, "EventSender")) {
         if (m_state != RunningTest)
-            return nullptr;
+            return completionHandler(nullptr);
 
         ASSERT(WKGetTypeID(messageBody) == WKDictionaryGetTypeID());
         WKDictionaryRef messageBodyDictionary = static_cast<WKDictionaryRef>(messageBody);
@@ -1900,7 +1918,7 @@ WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedB
         if (WKStringIsEqualToUTF8CString(subMessageName, "KeyDown")) {
             didReceiveKeyDownMessageFromInjectedBundle(messageBodyDictionary, true);
 
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "MouseDown") || WKStringIsEqualToUTF8CString(subMessageName, "MouseUp")) {
@@ -1915,7 +1933,7 @@ WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedB
                 m_eventSenderProxy->mouseDown(button, modifiers);
             else
                 m_eventSenderProxy->mouseUp(button, modifiers);
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "MouseMoveTo")) {
@@ -1927,28 +1945,28 @@ WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedB
 
             // Forward to WebProcess
             m_eventSenderProxy->mouseMoveTo(x, y);
-            return 0;
+            return completionHandler(nullptr);
         }
 
 #if PLATFORM(MAC)
         if (WKStringIsEqualToUTF8CString(subMessageName, "MouseForceClick")) {
             m_eventSenderProxy->mouseForceClick();
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "StartAndCancelMouseForceClick")) {
             m_eventSenderProxy->startAndCancelMouseForceClick();
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "MouseForceDown")) {
             m_eventSenderProxy->mouseForceDown();
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "MouseForceUp")) {
             m_eventSenderProxy->mouseForceUp();
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "MouseForceChanged")) {
@@ -1956,7 +1974,7 @@ WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedB
             double force = WKDoubleGetValue(static_cast<WKDoubleRef>(WKDictionaryGetItemForKey(messageBodyDictionary, forceKey.get())));
 
             m_eventSenderProxy->mouseForceChanged(force);
-            return 0;
+            return completionHandler(nullptr);
         }
 #endif // PLATFORM(MAC)
 
@@ -1972,7 +1990,7 @@ WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedB
 
             // Forward to WebProcess
             m_eventSenderProxy->continuousMouseScrollBy(x, y, paged);
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "LeapForward")) {
@@ -1980,7 +1998,7 @@ WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedB
             unsigned time = static_cast<unsigned>(WKUInt64GetValue(static_cast<WKUInt64Ref>(WKDictionaryGetItemForKey(messageBodyDictionary, timeKey.get()))));
 
             m_eventSenderProxy->leapForward(time);
-            return 0;
+            return completionHandler(nullptr);
         }
 
 #if ENABLE(TOUCH_EVENTS)
@@ -1992,7 +2010,7 @@ WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedB
             int y = static_cast<int>(WKUInt64GetValue(static_cast<WKUInt64Ref>(WKDictionaryGetItemForKey(messageBodyDictionary, yKey.get()))));
 
             m_eventSenderProxy->addTouchPoint(x, y);
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "UpdateTouchPoint")) {
@@ -2006,7 +2024,7 @@ WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedB
             int y = static_cast<int>(WKUInt64GetValue(static_cast<WKUInt64Ref>(WKDictionaryGetItemForKey(messageBodyDictionary, yKey.get()))));
 
             m_eventSenderProxy->updateTouchPoint(index, x, y);
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "SetTouchModifier")) {
@@ -2017,7 +2035,7 @@ WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedB
             bool enable = static_cast<bool>(WKUInt64GetValue(static_cast<WKUInt64Ref>(WKDictionaryGetItemForKey(messageBodyDictionary, enableKey.get()))));
 
             m_eventSenderProxy->setTouchModifier(modifier, enable);
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "SetTouchPointRadius")) {
@@ -2028,51 +2046,73 @@ WKRetainPtr<WKTypeRef> TestController::didReceiveSynchronousMessageFromInjectedB
             int y = static_cast<int>(WKUInt64GetValue(static_cast<WKUInt64Ref>(WKDictionaryGetItemForKey(messageBodyDictionary, yKey.get()))));
 
             m_eventSenderProxy->setTouchPointRadius(x, y);
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "TouchStart")) {
             m_eventSenderProxy->touchStart();
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "TouchMove")) {
             m_eventSenderProxy->touchMove();
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "TouchEnd")) {
             m_eventSenderProxy->touchEnd();
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "TouchCancel")) {
             m_eventSenderProxy->touchCancel();
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "ClearTouchPoints")) {
             m_eventSenderProxy->clearTouchPoints();
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "ReleaseTouchPoint")) {
             WKRetainPtr<WKStringRef> indexKey = adoptWK(WKStringCreateWithUTF8CString("Index"));
             int index = static_cast<int>(WKUInt64GetValue(static_cast<WKUInt64Ref>(WKDictionaryGetItemForKey(messageBodyDictionary, indexKey.get()))));
             m_eventSenderProxy->releaseTouchPoint(index);
-            return 0;
+            return completionHandler(nullptr);
         }
 
         if (WKStringIsEqualToUTF8CString(subMessageName, "CancelTouchPoint")) {
             WKRetainPtr<WKStringRef> indexKey = adoptWK(WKStringCreateWithUTF8CString("Index"));
             int index = static_cast<int>(WKUInt64GetValue(static_cast<WKUInt64Ref>(WKDictionaryGetItemForKey(messageBodyDictionary, indexKey.get()))));
             m_eventSenderProxy->cancelTouchPoint(index);
-            return 0;
+            return completionHandler(nullptr);
         }
 #endif
         ASSERT_NOT_REACHED();
     }
-    return m_currentInvocation->didReceiveSynchronousMessageFromInjectedBundle(messageName, messageBody);
+
+    auto setHTTPCookieAcceptPolicy = [&] (WKHTTPCookieAcceptPolicy policy, CompletionHandler<void(WKTypeRef)>&& completionHandler) {
+        auto context = new CompletionHandler<void(WKTypeRef)>(WTFMove(completionHandler));
+        WKCookieManagerSetHTTPCookieAcceptPolicy(WKContextGetCookieManager(this->context()), policy, context, [] (WKErrorRef error, void* context) {
+            auto completionHandlerPointer = static_cast<CompletionHandler<void(WKTypeRef)>*>(context);
+            (*completionHandlerPointer)(nullptr);
+            delete completionHandlerPointer;
+        });
+    };
+
+    if (WKStringIsEqualToUTF8CString(messageName, "SetAlwaysAcceptCookies")) {
+        WKBooleanRef accept = static_cast<WKBooleanRef>(messageBody);
+        WKHTTPCookieAcceptPolicy policy = WKBooleanGetValue(accept) ? kWKHTTPCookieAcceptPolicyAlways : kWKHTTPCookieAcceptPolicyOnlyFromMainDocumentDomain;
+        return setHTTPCookieAcceptPolicy(policy, WTFMove(completionHandler));
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "SetOnlyAcceptFirstPartyCookies")) {
+        WKBooleanRef accept = static_cast<WKBooleanRef>(messageBody);
+        WKHTTPCookieAcceptPolicy policy = WKBooleanGetValue(accept) ? kWKHTTPCookieAcceptPolicyExclusivelyFromMainDocumentDomain : kWKHTTPCookieAcceptPolicyOnlyFromMainDocumentDomain;
+        return setHTTPCookieAcceptPolicy(policy, WTFMove(completionHandler));
+    }
+
+    completionHandler(m_currentInvocation->didReceiveSynchronousMessageFromInjectedBundle(messageName, messageBody).get());
 }
 
 WKRetainPtr<WKTypeRef> TestController::getInjectedBundleInitializationUserData()
@@ -3170,6 +3210,12 @@ static void resourceStatisticsBooleanResultCallback(bool result, void* userData)
     context->testController.notifyDone();
 }
 
+void TestController::setStatisticsEnabled(bool value)
+{
+    auto* dataStore = WKContextGetWebsiteDataStore(platformContext());
+    WKWebsiteDataStoreSetResourceLoadStatisticsEnabled(dataStore, value);
+}
+
 void TestController::setStatisticsDebugMode(bool value)
 {
     auto* dataStore = WKContextGetWebsiteDataStore(platformContext());
@@ -3479,6 +3525,24 @@ void TestController::setStatisticsCacheMaxAgeCap(double seconds)
     runUntil(context.done, noTimeout);
 }
 
+void TestController::setStatisticsShouldDowngradeReferrer(bool value)
+{
+    auto* dataStore = WKContextGetWebsiteDataStore(platformContext());
+    ResourceStatisticsCallbackContext context(*this);
+    WKWebsiteDataStoreSetResourceLoadStatisticsShouldDowngradeReferrerForTesting(dataStore, value, &context, resourceStatisticsVoidResultCallback);
+    runUntil(context.done, noTimeout);
+    m_currentInvocation->didSetShouldDowngradeReferrer();
+}
+
+void TestController::setStatisticsShouldBlockThirdPartyCookies(bool value)
+{
+    auto* dataStore = WKContextGetWebsiteDataStore(platformContext());
+    ResourceStatisticsCallbackContext context(*this);
+    WKWebsiteDataStoreSetResourceLoadStatisticsShouldBlockThirdPartyCookiesForTesting(dataStore, value, &context, resourceStatisticsVoidResultCallback);
+    runUntil(context.done, noTimeout);
+    m_currentInvocation->didSetShouldBlockThirdPartyCookies();
+}
+
 void TestController::statisticsResetToConsistentState()
 {
     auto* dataStore = WKContextGetWebsiteDataStore(platformContext());
@@ -3550,9 +3614,9 @@ void TestController::sendDisplayConfigurationChangedMessageForTesting()
     WKSendDisplayConfigurationChangedMessageForTesting(platformContext());
 }
 
-void TestController::setWebAuthenticationMockConfiguration(WKDictionaryRef configuration)
+void TestController::setServiceWorkerFetchTimeoutForTesting(double seconds)
 {
-    WKWebsiteDataStoreSetWebAuthenticationMockConfiguration(WKContextGetWebsiteDataStore(platformContext()), configuration);
+    WKContextSetServiceWorkerFetchTimeoutForTesting(platformContext(), seconds);
 }
 
 struct AdClickAttributionStringResultCallbackContext {

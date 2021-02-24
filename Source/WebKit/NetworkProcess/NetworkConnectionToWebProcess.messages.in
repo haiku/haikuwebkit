@@ -24,6 +24,7 @@ messages -> NetworkConnectionToWebProcess LegacyReceiver {
 
     ScheduleResourceLoad(WebKit::NetworkResourceLoadParameters resourceLoadParameters)
     PerformSynchronousLoad(WebKit::NetworkResourceLoadParameters resourceLoadParameters) -> (WebCore::ResourceError error, WebCore::ResourceResponse response, Vector<char> data) Synchronous
+    TestProcessIncomingSyncMessagesWhenWaitingForSyncReply(WebCore::PageIdentifier webPageID) -> (bool handled) Synchronous
     LoadPing(WebKit::NetworkResourceLoadParameters resourceLoadParameters)
     RemoveLoadIdentifier(uint64_t resourceLoadIdentifier)
     PageLoadCompleted(WebCore::PageIdentifier webPageID)
@@ -52,6 +53,7 @@ messages -> NetworkConnectionToWebProcess LegacyReceiver {
     SetCaptureExtraNetworkLoadMetricsEnabled(bool enabled)
 
     CreateSocketStream(URL url, PAL::SessionID sessionID, String cachePartition, uint64_t identifier)
+    CreateSocketChannel(PAL::SessionID sessionID, WebCore::ResourceRequest request, String protocol, uint64_t identifier)
 
     EnsureLegacyPrivateBrowsingSession()
 
@@ -84,8 +86,6 @@ messages -> NetworkConnectionToWebProcess LegacyReceiver {
 #if ENABLE(SERVICE_WORKER)
     EstablishSWServerConnection(PAL::SessionID sessionID) -> (WebCore::SWServerConnectionIdentifier serverConnectionIdentifier) Synchronous
 #endif
-
-    SetWebProcessIdentifier(WebCore::ProcessIdentifier processIdentifier)
 
     WebPageWasAdded(PAL::SessionID sessionID, WebCore::PageIdentifier pageID, WebCore::PageIdentifier oldPageID)
     WebPageWasRemoved(PAL::SessionID sessionID, WebCore::PageIdentifier pageID)

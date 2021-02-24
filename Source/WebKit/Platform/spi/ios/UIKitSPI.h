@@ -87,7 +87,12 @@
 #import <UIKit/_UINavigationParallaxTransition.h>
 
 #if HAVE(LINK_PREVIEW)
+#import <UIKit/UIPreviewAction_Private.h>
 #import <UIKit/UIPreviewItemController.h>
+#if USE(UICONTEXTMENU)
+#import <UIKit/UIContextMenuInteraction_ForSpringBoardOnly.h>
+#import <UIKit/UIContextMenuInteraction_ForWebKitOnly.h>
+#endif
 #endif
 
 #if ENABLE(DRAG_SUPPORT)
@@ -106,6 +111,10 @@
 #import <UIKit/UIPreviewInteraction.h>
 #import <UIKit/UIURLDragPreviewView.h>
 #import <UIKit/_UITextDragCaretView.h>
+#endif
+
+#if __has_include(<UIKit/UITargetedPreview_Private.h>)
+#import <UIKit/UITargetedPreview_Private.h>
 #endif
 
 #else // USE(APPLE_INTERNAL_SDK)
@@ -261,6 +270,7 @@ typedef enum {
 
 @interface UIKeyboardImpl : UIView <UIKeyboardCandidateListDelegate>
 - (BOOL)smartInsertDeleteIsEnabled;
+- (void)updateForChangedSelection;
 @end
 
 @interface UIKeyboardImpl ()
@@ -515,7 +525,7 @@ typedef NS_ENUM (NSInteger, _UIBackdropMaskViewFlags) {
     _UIBackdropMaskViewAll = _UIBackdropMaskViewGrayscaleTint | _UIBackdropMaskViewColorTint | _UIBackdropMaskViewFilters,
 };
 
-#if PLATFORM(IOSMAC)
+#if PLATFORM(MACCATALYST)
 typedef NS_ENUM(NSUInteger, UIFocusRingType) {
     UIFocusRingTypeNone = 1,
 };
@@ -536,7 +546,7 @@ typedef NS_ENUM(NSUInteger, UIFocusRingType) {
 - (void)_removeAllAnimations:(BOOL)includeSubviews;
 - (UIColor *)_inheritedInteractionTintColor;
 - (NSString *)recursiveDescription;
-#if PLATFORM(IOSMAC)
+#if PLATFORM(MACCATALYST)
 @property (nonatomic, getter=_focusRingType, setter=_setFocusRingType:) UIFocusRingType focusRingType;
 #endif
 @end
@@ -999,6 +1009,9 @@ typedef NS_OPTIONS(NSUInteger, UIDragOperation)
 
 @interface UITextEffectsWindow : UIAutoRotatingWindow
 + (UITextEffectsWindow *)sharedTextEffectsWindow;
+#if HAVE(UISCENE)
++ (UITextEffectsWindow *)sharedTextEffectsWindowForWindowScene:(UIWindowScene *)windowScene;
+#endif // HAVE(UISCENE)
 @end
 
 @interface _UIVisualEffectLayerConfig : NSObject
@@ -1066,7 +1079,16 @@ typedef NS_OPTIONS(NSInteger, UIWKDocumentRequestFlags) {
 @property (nonatomic, retain) id <NSCopying> inputElementIdentifier;
 @end
 
+@interface UIPreviewAction ()
+@property (nonatomic, strong) UIImage *image;
+@end
+
 #endif // USE(APPLE_INTERNAL_SDK)
+
+@interface UITextInteractionAssistant (Staging_55645619)
+- (void)didEndScrollingOrZooming;
+- (void)willStartScrollingOrZooming;
+@end
 
 @interface UIGestureRecognizer (Staging_45970040)
 @property (nonatomic, readonly, getter=_modifierFlags) UIKeyModifierFlags modifierFlags;
@@ -1082,6 +1104,10 @@ typedef NS_OPTIONS(NSInteger, UIWKDocumentRequestFlags) {
 @property (nonatomic, readonly) UIKeyboardInputFlags _inputFlags;
 @property (nonatomic, readonly) CFIndex _keyCode;
 @property (nonatomic, readonly) NSInteger _gsModifierFlags;
+@end
+
+@interface UIWebGeolocationPolicyDecider (Staging_25963823)
+- (void)decidePolicyForGeolocationRequestFromOrigin:(id)securityOrigin requestingURL:(NSURL *)requestingURL view:(UIView *)view listener:(id)listener;
 @end
 
 @interface UIColor (IPI)
@@ -1106,6 +1132,9 @@ typedef NS_OPTIONS(NSInteger, UIWKDocumentRequestFlags) {
 - (void)_setContentOffsetWithDecelerationAnimation:(CGPoint)contentOffset;
 - (CGPoint)_adjustedContentOffsetForContentOffset:(CGPoint)contentOffset;
 - (void)_flashScrollIndicatorsPersistingPreviousFlashes:(BOOL)persisting;
+
+@property (nonatomic) BOOL tracksImmediatelyWhileDecelerating;
+@property (nonatomic, getter=_avoidsJumpOnInterruptedBounce, setter=_setAvoidsJumpOnInterruptedBounce:) BOOL _avoidsJumpOnInterruptedBounce;
 @end
 
 @interface UIPeripheralHost (IPI)
@@ -1122,8 +1151,11 @@ typedef NS_OPTIONS(NSInteger, UIWKDocumentRequestFlags) {
 @property (nonatomic, readonly) UIKeyboardInputMode *currentInputModeInPreference;
 @end
 
+@class CALayerHost;
+
 @interface _UILayerHostView : UIView
 - (instancetype)initWithFrame:(CGRect)frame pid:(pid_t)pid contextID:(uint32_t)contextID;
+@property (nonatomic, readonly, retain) CALayerHost *layerHost;
 @end
 
 @interface _UIRemoteView : _UILayerHostView
@@ -1139,6 +1171,12 @@ typedef NS_OPTIONS(NSInteger, UIWKDocumentRequestFlags) {
 - (void)_preserveFocusWithToken:(id <NSCopying, NSSecureCoding>)token destructively:(BOOL)destructively;
 @end
 #endif
+
+#if USE(UICONTEXTMENU)
+@interface UITargetedPreview (Radar54086338)
+@property (nonatomic, strong, setter=_setOverridePositionTrackingView:) UIView *overridePositionTrackingView;
+@end
+#endif // USE(UICONTEXTMENU)
 
 @interface UIResponder ()
 - (UIResponder *)firstResponder;
@@ -1178,6 +1216,38 @@ static inline bool currentUserInterfaceIdiomIsPad()
 @interface UIWebFormAccessory (Staging_49666643)
 - (void)setNextPreviousItemsVisible:(BOOL)visible;
 @end
+
+#if HAVE(LINK_PREVIEW) && USE(UICONTEXTMENU)
+@interface UIContextMenuConfiguration (Radar52295535)
+@property (nonatomic, copy) id <NSCopying> identifier;
+@property (nonatomic, copy) UIContextMenuContentPreviewProvider previewProvider;
+@property (nonatomic, copy) UIContextMenuActionProvider actionProvider;
+@end
+
+@protocol _UIClickInteractionDriverDelegate;
+@protocol _UIClickInteractionDriving <NSObject>
+@property (nonatomic, weak) id <_UIClickInteractionDriverDelegate> delegate;
+@end
+
+@class _UIClickPresentationInteraction;
+@interface UIContextMenuInteraction (Radar52298310)
+@property (nonatomic, strong) _UIClickPresentationInteraction *presentationInteraction;
+@end
+
+@interface _UIClickInteraction : NSObject <UIInteraction>
+@end
+
+@interface _UIClickPresentationInteraction : NSObject <UIInteraction>
+@end
+@interface _UIClickPresentationInteraction (Radar52298310)
+@property (nonatomic, strong) _UIClickInteraction *previewClickInteraction;
+@end
+
+@interface _UIClickInteraction (Radar52298310)
+@property (nonatomic, strong) id<_UIClickInteractionDriving> driver;
+@end
+
+#endif
 
 WTF_EXTERN_C_BEGIN
 

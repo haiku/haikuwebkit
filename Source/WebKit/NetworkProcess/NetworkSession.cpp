@@ -36,6 +36,8 @@
 #include "WebPageProxy.h"
 #include "WebPageProxyMessages.h"
 #include "WebProcessProxy.h"
+#include "WebSocketTask.h"
+#include <WebCore/AdClickAttribution.h>
 #include <WebCore/CookieJar.h>
 #include <WebCore/NetworkStorageSession.h>
 #include <WebCore/ResourceRequest.h>
@@ -73,18 +75,20 @@ Ref<NetworkSession> NetworkSession::create(NetworkProcess& networkProcess, Netwo
 #endif
 }
 
-NetworkStorageSession& NetworkSession::networkStorageSession() const
+NetworkStorageSession* NetworkSession::networkStorageSession() const
 {
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=194926 NetworkSession should own NetworkStorageSession
+    // instead of having separate maps with the same key and different management.
     auto* storageSession = m_networkProcess->storageSession(m_sessionID);
-    RELEASE_ASSERT(storageSession);
-    return *storageSession;
+    ASSERT(storageSession);
+    return storageSession;
 }
 
-NetworkSession::NetworkSession(NetworkProcess& networkProcess, PAL::SessionID sessionID, const String& localStorageDirectory, SandboxExtension::Handle& handle)
+NetworkSession::NetworkSession(NetworkProcess& networkProcess, PAL::SessionID sessionID, String&& localStorageDirectory, SandboxExtension::Handle& handle)
     : m_sessionID(sessionID)
     , m_networkProcess(networkProcess)
     , m_adClickAttribution(makeUniqueRef<AdClickAttributionManager>(sessionID))
-    , m_storageManager(StorageManager::create(localStorageDirectory))
+    , m_storageManager(StorageManager::create(WTFMove(localStorageDirectory)))
 {
     SandboxExtension::consumePermanently(handle);
     m_adClickAttribution->setPingLoadFunction([this, weakThis = makeWeakPtr(this)](NetworkResourceLoadParameters&& loadParameters, CompletionHandler<void(const WebCore::ResourceError&, const WebCore::ResourceResponse&)>&& completionHandler) {
@@ -97,21 +101,46 @@ NetworkSession::NetworkSession(NetworkProcess& networkProcess, PAL::SessionID se
 
 NetworkSession::~NetworkSession()
 {
+#if ENABLE(RESOURCE_LOAD_STATISTICS)
+    destroyResourceLoadStatistics();
+#endif
+
     m_storageManager->resume();
-    m_storageManager->waitUntilWritesFinished();
+    m_storageManager->waitUntilTasksFinished();
 }
+
+#if ENABLE(RESOURCE_LOAD_STATISTICS)
+void NetworkSession::destroyResourceLoadStatistics()
+{
+    if (!m_resourceLoadStatistics)
+        return;
+
+    m_resourceLoadStatistics->didDestroyNetworkSession();
+    m_resourceLoadStatistics = nullptr;
+}
+#endif
 
 void NetworkSession::invalidateAndCancel()
 {
     for (auto* task : m_dataTaskSet)
         task->invalidateAndCancel();
+#if ENABLE(RESOURCE_LOAD_STATISTICS)
+    if (m_resourceLoadStatistics)
+        m_resourceLoadStatistics->invalidateAndCancel();
+#endif
+#if !ASSERT_DISABLED
+    m_isInvalidated = true;
+#endif
 }
 
 #if ENABLE(RESOURCE_LOAD_STATISTICS)
 void NetworkSession::setResourceLoadStatisticsEnabled(bool enable)
 {
+    ASSERT(!m_isInvalidated);
+    if (auto* storageSession = networkStorageSession())
+        storageSession->setResourceLoadStatisticsEnabled(enable);
     if (!enable) {
-        m_resourceLoadStatistics = nullptr;
+        destroyResourceLoadStatistics();
         return;
     }
 
@@ -129,6 +158,11 @@ void NetworkSession::setResourceLoadStatisticsEnabled(bool enable)
     // This should always be forwarded since debug mode may be enabled at runtime.
     if (!m_resourceLoadStatisticsManualPrevalentResource.isEmpty())
         m_resourceLoadStatistics->setPrevalentResourceForDebugMode(m_resourceLoadStatisticsManualPrevalentResource, [] { });
+}
+
+bool NetworkSession::isResourceLoadStatisticsEnabled() const
+{
+    return !!m_resourceLoadStatistics;
 }
 
 void NetworkSession::notifyResourceLoadStatisticsProcessed()
@@ -154,6 +188,16 @@ void NetworkSession::deleteWebsiteDataForRegistrableDomains(OptionSet<WebsiteDat
 void NetworkSession::registrableDomainsWithWebsiteData(OptionSet<WebsiteDataType> dataTypes, bool shouldNotifyPage, CompletionHandler<void(HashSet<RegistrableDomain>&&)>&& completionHandler)
 {
     m_networkProcess->registrableDomainsWithWebsiteData(m_sessionID, dataTypes, shouldNotifyPage, WTFMove(completionHandler));
+}
+
+void NetworkSession::setShouldDowngradeReferrerForTesting(bool enabled)
+{
+    m_downgradeReferrer = enabled;
+}
+
+bool NetworkSession::shouldDowngradeReferrer() const
+{
+    return m_downgradeReferrer;
 }
 #endif // ENABLE(RESOURCE_LOAD_STATISTICS)
 
@@ -209,6 +253,11 @@ void NetworkSession::removeKeptAliveLoad(NetworkResourceLoader& loader)
     ASSERT(m_sessionID == loader.sessionID());
     ASSERT(m_keptAliveLoads.contains(loader));
     m_keptAliveLoads.remove(loader);
+}
+
+std::unique_ptr<WebSocketTask> NetworkSession::createWebSocketTask(NetworkSocketChannel&, const WebCore::ResourceRequest&, const String& protocol)
+{
+    return nullptr;
 }
 
 } // namespace WebKit

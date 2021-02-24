@@ -92,6 +92,8 @@ struct TestOptions {
     bool shouldHandleRunOpenPanel { true };
     bool shouldPresentPopovers { true };
     bool enableAppNap { false };
+    bool enablePageCache { false };
+    bool allowsLinkPreview { true };
 
     double contentInsetTop { 0 };
 
@@ -146,7 +148,9 @@ struct TestOptions {
             || shouldPresentPopovers != options.shouldPresentPopovers
             || contentInsetTop != options.contentInsetTop
             || contentMode != options.contentMode
-            || enableAppNap != options.enableAppNap)
+            || enableAppNap != options.enableAppNap
+            || enablePageCache != options.enablePageCache
+            || allowsLinkPreview != options.allowsLinkPreview)
             return false;
 
         if (!contextOptions.hasSameInitializationOptions(options.contextOptions))

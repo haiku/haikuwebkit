@@ -222,6 +222,8 @@ private:
 
     void contentRuleListNotification(const URL&, const WebCore::ContentRuleListResults&) final;
 
+    bool testProcessIncomingSyncMessagesWhenWaitingForSyncReply() final;
+
 #if PLATFORM(WIN)
     void setLastSetCursorToCurrentCursor() final { }
     void AXStartFrameLoad() final { }
@@ -380,6 +382,10 @@ private:
 
     bool userIsInteracting() const final;
     void setUserIsInteracting(bool) final;
+
+#if ENABLE(WEB_AUTHN)
+    void setMockWebAuthenticationConfiguration(const WebCore::MockWebAuthenticationConfiguration&) final;
+#endif
 
     String m_cachedToolTip;
     mutable RefPtr<WebFrame> m_cachedFrameSetLargestFrame;

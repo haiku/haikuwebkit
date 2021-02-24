@@ -46,7 +46,7 @@
 #include <wtf/ThreadSafeRefCounted.h>
 #include <wtf/Threading.h>
 #include <wtf/Vector.h>
-#include <wtf/text/AtomicStringHash.h>
+#include <wtf/text/AtomStringHash.h>
 
 namespace WebCore {
 
@@ -108,9 +108,9 @@ public:
     Document* hostingDocument() const final;
 
     AudioDestinationNode* destination() { return m_destinationNode.get(); }
-    size_t currentSampleFrame() const { return m_destinationNode->currentSampleFrame(); }
-    double currentTime() const { return m_destinationNode->currentTime(); }
-    float sampleRate() const { return m_destinationNode->sampleRate(); }
+    size_t currentSampleFrame() const { return m_destinationNode ? m_destinationNode->currentSampleFrame() : 0; }
+    double currentTime() const { return m_destinationNode ? m_destinationNode->currentTime() : 0.; }
+    float sampleRate() const { return m_destinationNode ? m_destinationNode->sampleRate() : 0.f; }
     unsigned long activeSourceCount() const { return static_cast<unsigned long>(m_activeSourceCount); }
 
     void incrementActiveSourceCount();
@@ -259,8 +259,8 @@ public:
     using ThreadSafeRefCounted::deref;
 
     void startRendering();
-    void fireCompletionEvent();
-    
+    void finishedRendering(bool didRendering);
+
     static unsigned s_hardwareContextCount;
 
     // Restrictions to change default behaviors.
@@ -297,7 +297,9 @@ protected:
     AudioContext(Document&, unsigned numberOfChannels, size_t numberOfFrames, float sampleRate);
     
     static bool isSampleRateRangeGood(float sampleRate);
-    
+    void clearPendingActivity();
+    void makePendingActivity();
+
 private:
     void constructCommon();
 
@@ -320,6 +322,7 @@ private:
 
     // EventTarget
     ScriptExecutionContext* scriptExecutionContext() const final;
+    void dispatchEvent(Event&) final;
 
     // MediaProducer
     MediaProducer::MediaStateFlags mediaState() const override;
@@ -429,7 +432,7 @@ private:
     Thread* volatile m_audioThread { nullptr };
     Thread* volatile m_graphOwnerThread { nullptr }; // if the lock is held then this is the thread which owns it, otherwise == nullptr.
 
-    AsyncAudioDecoder m_audioDecoder;
+    std::unique_ptr<AsyncAudioDecoder> m_audioDecoder;
 
     // This is considering 32 is large enough for multiple channels audio. 
     // It is somewhat arbitrary and could be increased if necessary.
@@ -441,6 +444,7 @@ private:
     BehaviorRestrictions m_restrictions { NoRestrictions };
 
     State m_state { State::Suspended };
+    RefPtr<PendingActivity<AudioContext>> m_pendingActivity;
 };
 
 // FIXME: Find out why these ==/!= functions are needed and remove them if possible.

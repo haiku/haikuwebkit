@@ -31,7 +31,6 @@
 #include "PlatformKeyboardEvent.h"
 
 #include "GtkUtilities.h"
-#include "GtkVersioning.h"
 #include "NotImplemented.h"
 #include "TextEncoding.h"
 #include "WindowsKeyboardCodes.h"
@@ -1324,21 +1323,26 @@ String PlatformKeyboardEvent::singleCharacterString(unsigned val)
 
 static PlatformEvent::Type eventTypeForGdkKeyEvent(GdkEventKey* event)
 {
-    return event->type == GDK_KEY_RELEASE ? PlatformEvent::KeyUp : PlatformEvent::KeyDown;
+    return gdk_event_get_event_type(reinterpret_cast<GdkEvent*>(event)) == GDK_KEY_RELEASE ? PlatformEvent::KeyUp : PlatformEvent::KeyDown;
 }
 
 static OptionSet<PlatformEvent::Modifier> modifiersForGdkKeyEvent(GdkEventKey* event)
 {
+    GdkModifierType state;
+    gdk_event_get_state(reinterpret_cast<GdkEvent*>(event), &state);
+    guint keyval;
+    gdk_event_get_keyval(reinterpret_cast<GdkEvent*>(event), &keyval);
+
     OptionSet<PlatformEvent::Modifier> modifiers;
-    if (event->state & GDK_SHIFT_MASK || event->keyval == GDK_KEY_3270_BackTab)
+    if (state & GDK_SHIFT_MASK || keyval == GDK_KEY_3270_BackTab)
         modifiers.add(PlatformEvent::Modifier::ShiftKey);
-    if (event->state & GDK_CONTROL_MASK)
+    if (state & GDK_CONTROL_MASK)
         modifiers.add(PlatformEvent::Modifier::ControlKey);
-    if (event->state & GDK_MOD1_MASK)
+    if (state & GDK_MOD1_MASK)
         modifiers.add(PlatformEvent::Modifier::AltKey);
-    if (event->state & GDK_META_MASK)
+    if (state & GDK_META_MASK)
         modifiers.add(PlatformEvent::Modifier::MetaKey);
-    if (event->state & GDK_LOCK_MASK)
+    if (state & GDK_LOCK_MASK)
         modifiers.add(PlatformEvent::Modifier::CapsLockKey);
     return modifiers;
 }
@@ -1346,19 +1350,25 @@ static OptionSet<PlatformEvent::Modifier> modifiersForGdkKeyEvent(GdkEventKey* e
 // Keep this in sync with the other platform event constructors
 PlatformKeyboardEvent::PlatformKeyboardEvent(GdkEventKey* event, const CompositionResults& compositionResults)
     : PlatformEvent(eventTypeForGdkKeyEvent(event), modifiersForGdkKeyEvent(event), wallTimeForEvent(event))
-    , m_text(compositionResults.simpleString.length() ? compositionResults.simpleString : singleCharacterString(event->keyval))
-    , m_unmodifiedText(m_text)
-    , m_key(keyValueForGdkKeyCode(event->keyval))
-    , m_code(keyCodeForHardwareKeyCode(event->hardware_keycode))
-    , m_keyIdentifier(keyIdentifierForGdkKeyCode(event->keyval))
-    , m_windowsVirtualKeyCode(windowsKeyCodeForGdkKeyCode(event->keyval))
     , m_handledByInputMethod(false)
     , m_autoRepeat(false)
-    , m_isKeypad(event->keyval >= GDK_KEY_KP_Space && event->keyval <= GDK_KEY_KP_9)
     , m_isSystemKey(false)
     , m_gdkEventKey(event)
     , m_compositionResults(compositionResults)
 {
+    guint keyval;
+    gdk_event_get_keyval(reinterpret_cast<GdkEvent*>(event), &keyval);
+    guint16 keycode;
+    gdk_event_get_keycode(reinterpret_cast<GdkEvent*>(event), &keycode);
+
+    m_text = compositionResults.simpleString.length() ? compositionResults.simpleString : singleCharacterString(keyval);
+    m_unmodifiedText = m_text;
+    m_key = keyValueForGdkKeyCode(keyval);
+    m_code = keyCodeForHardwareKeyCode(keycode);
+    m_keyIdentifier = keyIdentifierForGdkKeyCode(keyval);
+    m_windowsVirtualKeyCode = windowsKeyCodeForGdkKeyCode(keyval);
+    m_isKeypad = keyval >= GDK_KEY_KP_Space && keyval <= GDK_KEY_KP_9;
+
     // To match the behavior of IE, we return VK_PROCESSKEY for keys that triggered composition results.
     if (compositionResults.compositionUpdated())
         m_windowsVirtualKeyCode = VK_PROCESSKEY;

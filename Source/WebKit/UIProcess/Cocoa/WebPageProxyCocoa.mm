@@ -126,6 +126,9 @@ void WebPageProxy::createSandboxExtensionsIfNeeded(const Vector<String>& files, 
     if (files.size() == 1) {
         BOOL isDirectory;
         if ([[NSFileManager defaultManager] fileExistsAtPath:files[0] isDirectory:&isDirectory] && !isDirectory) {
+#if HAVE(SANDBOX_ISSUE_READ_EXTENSION_TO_PROCESS_BY_PID)
+            if (!SandboxExtension::createHandleForReadByPid("/", processIdentifier(), fileReadHandle))
+#endif
             SandboxExtension::createHandle("/", SandboxExtension::Type::ReadOnly, fileReadHandle);
             willAcquireUniversalFileReadSandboxExtension(m_process);
         }
@@ -258,21 +261,26 @@ void WebPageProxy::paymentCoordinatorRemoveMessageReceiver(WebPaymentCoordinator
 #if ENABLE(SPEECH_SYNTHESIS)
 void WebPageProxy::didStartSpeaking(WebCore::PlatformSpeechSynthesisUtterance&)
 {
+    if (speechSynthesisData().speakingStartedCompletionHandler)
+        speechSynthesisData().speakingStartedCompletionHandler();
 }
 
 void WebPageProxy::didFinishSpeaking(WebCore::PlatformSpeechSynthesisUtterance&)
 {
-    m_speechSynthesisData->speakingFinishedCompletionHandler();
+    if (speechSynthesisData().speakingFinishedCompletionHandler)
+        speechSynthesisData().speakingFinishedCompletionHandler();
 }
 
 void WebPageProxy::didPauseSpeaking(WebCore::PlatformSpeechSynthesisUtterance&)
 {
-    m_speechSynthesisData->speakingPausedCompletionHandler();
+    if (speechSynthesisData().speakingPausedCompletionHandler)
+        speechSynthesisData().speakingPausedCompletionHandler();
 }
 
 void WebPageProxy::didResumeSpeaking(WebCore::PlatformSpeechSynthesisUtterance&)
 {
-    m_speechSynthesisData->speakingResumedCompletionHandler();
+    if (speechSynthesisData().speakingResumedCompletionHandler)
+        speechSynthesisData().speakingResumedCompletionHandler();
 }
 
 void WebPageProxy::speakingErrorOccurred(WebCore::PlatformSpeechSynthesisUtterance&)
@@ -290,5 +298,13 @@ void WebPageProxy::voicesDidChange()
     process().send(Messages::WebPage::VoicesDidChange(), m_pageID);
 }
 #endif // ENABLE(SPEECH_SYNTHESIS)
+
+#if HAVE(VISIBILITY_PROPAGATION_VIEW)
+void WebPageProxy::didCreateContextForVisibilityPropagation(LayerHostingContextID contextID)
+{
+    m_contextIDForVisibilityPropagation = contextID;
+    pageClient().didCreateContextForVisibilityPropagation(contextID);
+}
+#endif
 
 } // namespace WebKit

@@ -45,6 +45,7 @@
 #include "CrossOriginAccessControl.h"
 #include "CustomHeaderFields.h"
 #include "DOMWindow.h"
+#include "DateComponents.h"
 #include "DiagnosticLoggingClient.h"
 #include "DiagnosticLoggingKeys.h"
 #include "Document.h"
@@ -65,6 +66,7 @@
 #include "RenderElement.h"
 #include "ResourceLoadInfo.h"
 #include "ResourceTiming.h"
+#include "RuntimeApplicationChecks.h"
 #include "RuntimeEnabledFeatures.h"
 #include "ScriptController.h"
 #include "SecurityOrigin.h"
@@ -85,6 +87,10 @@
 
 #if ENABLE(VIDEO_TRACK)
 #include "CachedTextTrack.h"
+#endif
+
+#if PLATFORM(IOS_FAMILY)
+#include "Device.h"
 #endif
 
 #undef RELEASE_LOG_IF_ALLOWED

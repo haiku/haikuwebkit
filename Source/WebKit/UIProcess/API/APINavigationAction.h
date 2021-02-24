@@ -33,10 +33,6 @@
 #include <WebCore/ResourceRequest.h>
 #include <wtf/URL.h>
 
-#if USE(APPLE_INTERNAL_SDK)
-#include <WebKitAdditions/APINavigationActionAdditions.h>
-#endif
-
 namespace API {
 
 class NavigationAction final : public ObjectImpl<Object::Type::NavigationAction> {
@@ -63,14 +59,16 @@ public:
     bool shouldOpenAppLinks() const { return m_shouldOpenAppLinks && m_navigationActionData.shouldOpenExternalURLsPolicy == WebCore::ShouldOpenExternalURLsPolicy::ShouldAllow; }
     bool shouldPerformDownload() const { return !m_navigationActionData.downloadAttribute.isNull(); }
     bool isRedirect() const { return m_navigationActionData.isRedirect; }
+    WebCore::ShouldOpenExternalURLsPolicy shouldOpenExternalURLsPolicy() const { return m_navigationActionData.shouldOpenExternalURLsPolicy; }
 
     bool isProcessingUserGesture() const { return m_userInitiatedAction; }
     UserInitiatedAction* userInitiatedAction() const { return m_userInitiatedAction.get(); }
 
     Navigation* mainFrameNavigation() const { return m_mainFrameNavigation.get(); }
 
-#if HAVE(LOAD_OPTIMIZER)
-APINAVIGATIONACTION_LOADOPTIMIZER_ADDITIONS_1
+#if HAVE(APP_SSO)
+    bool shouldPerformSOAuthorization() { return m_shouldPerformSOAuthorization; }
+    void unsetShouldPerformSOAuthorization() { m_shouldPerformSOAuthorization = false; }
 #endif
 
 private:
@@ -100,8 +98,8 @@ private:
     WTF::URL m_originalURL;
 
     bool m_shouldOpenAppLinks;
-#if HAVE(LOAD_OPTIMIZER)
-APINAVIGATIONACTION_LOADOPTIMIZER_ADDITIONS_2
+#if HAVE(APP_SSO)
+    bool m_shouldPerformSOAuthorization { true };
 #endif
 
     RefPtr<UserInitiatedAction> m_userInitiatedAction;

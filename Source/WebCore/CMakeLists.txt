@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 2.8.12)
+cmake_minimum_required(VERSION 3.10)
 
 include(WebKitCommon)
 include(WebCoreMacros.cmake)
@@ -17,6 +17,7 @@ list(APPEND WebCore_UNIFIED_SOURCE_LIST_FILES
 )
 
 set(WebCore_INCLUDE_DIRECTORIES
+    "${JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS_DIR}"
     "${PAL_FRAMEWORK_HEADERS_DIR}"
 )
 
@@ -161,6 +162,7 @@ set(WebCore_PRIVATE_INCLUDE_DIRECTORIES
 )
 
 set(WebCore_SYSTEM_INCLUDE_DIRECTORIES
+    ${ICU_INCLUDE_DIRS}
     ${LIBXML2_INCLUDE_DIR}
     ${LIBXSLT_INCLUDE_DIR}
     ${SQLITE_INCLUDE_DIR}
@@ -1206,6 +1208,7 @@ set(WebCore_PLUG_INS_RESOURCES
 )
 
 set(WebCore_LIBRARIES
+    ${ICU_LIBRARIES}
     ${LIBXML2_LIBRARIES}
     ${LIBXSLT_LIBRARIES}
     ${SQLITE_LIBRARIES}
@@ -1214,7 +1217,7 @@ set(WebCore_LIBRARIES
 )
 
 set(WebCoreTestSupport_LIBRARIES
-    WebKit::JavaScriptCore
+    JavaScriptCore${DEBUG_SUFFIX}
 )
 
 if (ENABLE_LEGACY_ENCRYPTED_MEDIA)
