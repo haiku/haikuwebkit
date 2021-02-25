@@ -1,3 +1,164 @@
+2021-02-24  Peng Liu  <peng.liu6@apple.com>
+
+        [GPUP] Remove duplicated items in LayoutTests/gpu-process/TestExpectations related to media
+        https://bugs.webkit.org/show_bug.cgi?id=222390
+
+        Unreviewed test gardening.
+
+        We have enabled "Media in GPU Process" by default in WKTR, so platform-specific TestExpectations
+        such as platform/wk2/TestExpectations will be used as the baseline for media related tests.
+
+        * gpu-process/TestExpectations:
+
+2021-02-24  Rob Buis  <rbuis@igalia.com>
+
+        [css-grid] Do not allow negative heights
+        https://bugs.webkit.org/show_bug.cgi?id=221439
+
+        Reviewed by Darin Adler.
+
+        Add test for this.
+
+        * fast/css-grid-layout/zero-height-crash-expected.txt: Added.
+        * fast/css-grid-layout/zero-height-crash.html: Added.
+
+2021-02-24  Imanol Fernandez  <ifernandez@igalia.com>
+
+        Set xrCompatible in WebGLRenderingContextBase::getContextAttributes
+        https://bugs.webkit.org/show_bug.cgi?id=222360
+
+        Reviewed by Sam Weinig.
+
+        Update WebXR xrCompatible attribute test expectations.
+
+        * platform/wpe/TestExpectations:
+
+2021-02-24  Jean-Yves Avenard  <jya@apple.com>
+
+        [MSE] Media segment is incorrectly dropped when using negative timestampOffset or when source buffer appendWindow is set.
+        https://bugs.webkit.org/show_bug.cgi?id=222260
+
+        Reviewed by Eric Carlson.
+
+        * media/media-source/media-source-timestampoffset-trim.html:
+
+2021-02-24  Chris Dumez  <cdumez@apple.com>
+
+        Device motion / orientation events not working in third-party iframes despite Feature-Policy allowing it
+        https://bugs.webkit.org/show_bug.cgi?id=221399
+        <rdar://problem/74229227>
+
+        Reviewed by Youenn Fablet.
+
+        Add layout test coverage.
+
+        * TestExpectations:
+        * fast/device-orientation/device-motion-request-permission-denied-expected.txt:
+        * fast/device-orientation/device-motion-request-permission-granted-expected.txt:
+        * fast/device-orientation/device-motion-request-permission-user-gesture-expected.txt:
+        * fast/device-orientation/device-orientation-request-permission-denied-expected.txt:
+        * fast/device-orientation/device-orientation-request-permission-granted-expected.txt:
+        * fast/device-orientation/device-orientation-request-permission-user-gesture-expected.txt:
+        * fast/device-orientation/device-orientation-request-permission-user-gesture.html:
+        * http/tests/device-orientation/device-motion-allowed-in-first-party-only-expected.txt: Added.
+        * http/tests/device-orientation/device-motion-allowed-in-first-party-only.html: Added.
+        * http/tests/device-orientation/device-motion-third-party-iframe-allowed-by-feature-policy-expected.txt: Added.
+        * http/tests/device-orientation/device-motion-third-party-iframe-allowed-by-feature-policy.html: Added.
+        * http/tests/device-orientation/device-motion-third-party-iframe-denied-by-insufficient-feature-policy-expected.txt: Added.
+        * http/tests/device-orientation/device-motion-third-party-iframe-denied-by-insufficient-feature-policy.html: Added.
+        * http/tests/device-orientation/device-motion-third-party-iframe-denied-expected.txt: Added.
+        * http/tests/device-orientation/device-motion-third-party-iframe-denied.html: Added.
+        * http/tests/device-orientation/device-orientation-allowed-in-first-party-only-expected.txt: Added.
+        * http/tests/device-orientation/device-orientation-allowed-in-first-party-only.html: Added.
+        * http/tests/device-orientation/device-orientation-third-party-iframe-allowed-by-feature-policy-expected.txt: Added.
+        * http/tests/device-orientation/device-orientation-third-party-iframe-allowed-by-feature-policy.html: Added.
+        * http/tests/device-orientation/device-orientation-third-party-iframe-denied-by-insufficient-feature-policy-expected.txt: Added.
+        * http/tests/device-orientation/device-orientation-third-party-iframe-denied-by-insufficient-feature-policy.html: Added.
+        * http/tests/device-orientation/device-orientation-third-party-iframe-denied-expected.txt: Added.
+        * http/tests/device-orientation/device-orientation-third-party-iframe-denied.html: Added.
+        * http/tests/device-orientation/resources/request-motion-events.html: Added.
+        * http/tests/device-orientation/resources/request-orientation-events.html: Added.
+        * platform/ios-wk2/TestExpectations:
+
+2021-02-24  Chris Dumez  <cdumez@apple.com>
+
+        Regression(r268700) postMessage changes prototype of basic types
+        https://bugs.webkit.org/show_bug.cgi?id=222228
+        <rdar://problem/74612853>
+
+        Reviewed by Geoffrey Garen.
+
+        Add layout test coverage.
+
+        * fast/dom/Window/postMessage-Object-prototype-expected.txt: Added.
+        * fast/dom/Window/postMessage-Object-prototype.html: Added.
+        * fast/dom/Window/resources/postMessage-Object-prototype-frame.html: Added.
+
+2021-02-24  Jonathan Bedard  <jbedard@apple.com>
+
+        Unreviewed Windows test gardening to speed up EWS.
+
+        * platform/win/TestExpectations:
+
+2021-02-24  Robert Jenner  <jenner@apple.com>
+
+        [ macOS Wk2 ] imported/w3c/web-platform-tests/media-source/mediasource-activesourcebuffers.html is a flakey text failure
+        https://bugs.webkit.org/show_bug.cgi?id=222371
+
+        Unreviewed test gardening.
+
+        * platform/mac-wk2/TestExpectations:
+
+2021-02-24  Sam Weinig  <weinig@apple.com>
+
+        Fix model test differences between platforms
+        https://bugs.webkit.org/show_bug.cgi?id=222323
+        <rdar://problem/74678133>
+
+        Reviewed by Zalan Bujtas.
+
+        * platform/ios/TestExpectations:
+        Unskip the tests that were changed to no longer rely on platform differences.
+
+2021-02-24  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Unreviewed, reverting r273373.
+
+        The test added with this change is frequently failing
+
+        Reverted changeset:
+
+        "Null check ArrayBufferView RefPtr"
+        https://bugs.webkit.org/show_bug.cgi?id=221569
+        https://commits.webkit.org/r273373
+
+2021-02-24  Robert Jenner  <jenner@apple.com>
+
+        [ macOS Wk2 ] inspector/dom/attributeModified.html is flakey timing out
+        https://bugs.webkit.org/show_bug.cgi?id=222365
+
+        Unreviewed test gardenign.
+
+        * platform/mac-wk2/TestExpectations:
+
+2021-02-24  Said Abou-Hallawa  <said@apple.com>
+
+        [GPU Process] In process DisplayList display should have a higher precedence than GPUP display
+        https://bugs.webkit.org/show_bug.cgi?id=222345
+
+        Reviewed by Wenson Hsieh.
+
+        * gpu-process/TestExpectations:
+
+2021-02-24  Said Abou-Hallawa  <said@apple.com>
+
+        [GPU Process] Implement ImageBufferShareableBitmapBackend::bytesPerRow()
+        https://bugs.webkit.org/show_bug.cgi?id=222348
+
+        Reviewed by Simon Fraser.
+
+        * gpu-process/TestExpectations:
+
 2021-02-24  Zalan Bujtas  <zalan@apple.com>
 
         [LegacyLineLayout] Inline level box should not stick out at the bottom of its containing block

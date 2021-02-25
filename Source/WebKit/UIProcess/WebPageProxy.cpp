@@ -7985,6 +7985,10 @@ WebPageCreationParameters WebPageProxy::creationParameters(WebProcessProxy& proc
     parameters.textInteractionEnabled = preferences().textInteractionEnabled();
     parameters.httpsUpgradeEnabled = m_configuration->httpsUpgradeEnabled();
 
+#if PLATFORM(IOS)
+    parameters.allowsDeprecatedSynchronousXMLHttpRequestDuringUnload = allowsDeprecatedSynchronousXMLHttpRequestDuringUnload();
+#endif
+
     return parameters;
 }
 
@@ -10392,6 +10396,18 @@ WebCore::CaptureSourceOrError WebPageProxy::createRealtimeMediaSourceForSpeechRe
 SandboxExtension::HandleArray WebPageProxy::createNetworkExtensionsSandboxExtensions(WebProcessProxy& process)
 {
     return SandboxExtension::HandleArray();
+}
+#endif
+
+#if PLATFORM(COCOA)
+void WebPageProxy::appBoundNavigationData(CompletionHandler<void(const AppBoundNavigationTestingData&)>&& completionHandler)
+{
+    websiteDataStore().networkProcess().sendWithAsyncReply(Messages::NetworkProcess::AppBoundNavigationData(m_websiteDataStore->sessionID()), WTFMove(completionHandler));
+}
+
+void WebPageProxy::clearAppBoundNavigationData(CompletionHandler<void()>&& completionHandler)
+{
+    websiteDataStore().networkProcess().sendWithAsyncReply(Messages::NetworkProcess::ClearAppBoundNavigationData(m_websiteDataStore->sessionID()), WTFMove(completionHandler));
 }
 #endif
 

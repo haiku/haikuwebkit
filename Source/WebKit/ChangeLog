@@ -1,3 +1,298 @@
+2021-02-25  Commit Queue  <commit-queue@webkit.org>
+
+        Unreviewed, reverting r273469.
+        https://bugs.webkit.org/show_bug.cgi?id=222417
+
+        Broke 30+ debug layout tests
+
+        Reverted changeset:
+
+        "Add stubs to enable SafariForWebKitDevelopment to launch"
+        https://bugs.webkit.org/show_bug.cgi?id=222388
+        https://trac.webkit.org/changeset/273469
+
+2021-02-24  Peng Liu  <peng.liu6@apple.com>
+
+        [GPUP] Use a WeakPtr of GPUConnectionToWebProcess instead of a reference in some media related objects
+        https://bugs.webkit.org/show_bug.cgi?id=222293
+
+        Reviewed by Eric Carlson.
+
+        A GPUConnectionToWebProcess object may be destroyed when we close a page, then crash will happen
+        in callbacks accessing the GPUConnectionToWebProcess object. For example, in
+        `RemoteSourceBufferProxy::sourceBufferPrivateBufferedRangesChanged()`. This patch
+        replaces the references to a GPUConnectionToWebProcess with WeakPtr(s) in places where the
+        issue may happen.
+
+        No new tests. Fix some test crashes.
+
+        * GPUProcess/GPUConnectionToWebProcess.cpp:
+        (WebKit::GPUConnectionToWebProcess::isAlwaysOnLoggingAllowed const):
+        (WebKit::GPUConnectionToWebProcess::mediaEngineConfigurationFactoryProxy):
+        * GPUProcess/GPUConnectionToWebProcess.h:
+        * GPUProcess/media/RemoteAudioHardwareListenerProxy.cpp:
+        (WebKit::RemoteAudioHardwareListenerProxy::RemoteAudioHardwareListenerProxy):
+        (WebKit::RemoteAudioHardwareListenerProxy::audioHardwareDidBecomeActive):
+        (WebKit::RemoteAudioHardwareListenerProxy::audioHardwareDidBecomeInactive):
+        (WebKit::RemoteAudioHardwareListenerProxy::audioOutputDeviceChanged):
+        * GPUProcess/media/RemoteAudioHardwareListenerProxy.h:
+        * GPUProcess/media/RemoteAudioTrackProxy.cpp:
+        (WebKit::RemoteAudioTrackProxy::RemoteAudioTrackProxy):
+        (WebKit::RemoteAudioTrackProxy::configurationChanged):
+        * GPUProcess/media/RemoteAudioTrackProxy.h:
+        * GPUProcess/media/RemoteCDMFactoryProxy.cpp:
+        (WebKit::RemoteCDMFactoryProxy::RemoteCDMFactoryProxy):
+        * GPUProcess/media/RemoteCDMFactoryProxy.h:
+        * GPUProcess/media/RemoteCDMInstanceProxy.cpp:
+        (WebKit::RemoteCDMInstanceProxy::unrequestedInitializationDataReceived):
+        * GPUProcess/media/RemoteCDMInstanceSessionProxy.cpp:
+        (WebKit::RemoteCDMInstanceSessionProxy::updateKeyStatuses):
+        (WebKit::RemoteCDMInstanceSessionProxy::sendMessage):
+        (WebKit::RemoteCDMInstanceSessionProxy::sessionIdChanged):
+        * GPUProcess/media/RemoteImageDecoderAVFProxy.cpp:
+        (WebKit::RemoteImageDecoderAVFProxy::RemoteImageDecoderAVFProxy):
+        (WebKit::RemoteImageDecoderAVFProxy::encodedDataStatusChanged):
+        * GPUProcess/media/RemoteImageDecoderAVFProxy.h:
+        * GPUProcess/media/RemoteLegacyCDMFactoryProxy.cpp:
+        (WebKit::RemoteLegacyCDMFactoryProxy::RemoteLegacyCDMFactoryProxy):
+        (WebKit::RemoteLegacyCDMFactoryProxy::~RemoteLegacyCDMFactoryProxy):
+        (WebKit::RemoteLegacyCDMFactoryProxy::addProxy):
+        (WebKit::RemoteLegacyCDMFactoryProxy::removeProxy):
+        (WebKit::RemoteLegacyCDMFactoryProxy::addSession):
+        (WebKit::RemoteLegacyCDMFactoryProxy::removeSession):
+        * GPUProcess/media/RemoteLegacyCDMFactoryProxy.h:
+        * GPUProcess/media/RemoteLegacyCDMProxy.cpp:
+        (WebKit::RemoteLegacyCDMProxy::cdmMediaPlayer const):
+        * GPUProcess/media/RemoteLegacyCDMSessionProxy.cpp:
+        (WebKit::RemoteLegacyCDMSessionProxy::sendMessage):
+        (WebKit::RemoteLegacyCDMSessionProxy::sendError):
+        (WebKit::RemoteLegacyCDMSessionProxy::mediaKeysStorageDirectory const):
+        * GPUProcess/media/RemoteMediaEngineConfigurationFactoryProxy.cpp:
+        (WebKit::RemoteMediaEngineConfigurationFactoryProxy::RemoteMediaEngineConfigurationFactoryProxy):
+        * GPUProcess/media/RemoteMediaEngineConfigurationFactoryProxy.h:
+        * GPUProcess/media/RemoteMediaPlayerManagerProxy.cpp:
+        (WebKit::RemoteMediaPlayerManagerProxy::RemoteMediaPlayerManagerProxy):
+        (WebKit::RemoteMediaPlayerManagerProxy::createMediaPlayer):
+        (WebKit::RemoteMediaPlayerManagerProxy::logger):
+        (WebKit::RemoteMediaPlayerManagerProxy::logger const): Deleted.
+        (WebKit::RemoteMediaPlayerManagerProxy::logChannel const): Deleted.
+        * GPUProcess/media/RemoteMediaPlayerManagerProxy.h:
+        (WebKit::RemoteMediaPlayerManagerProxy::gpuConnectionToWebProcess):
+        (WebKit::RemoteMediaPlayerManagerProxy::gpuConnectionToWebProcess const): Deleted.
+        (): Deleted.
+        * GPUProcess/media/RemoteMediaPlayerProxy.cpp:
+        (WebKit::RemoteMediaPlayerProxy::RemoteMediaPlayerProxy):
+        (WebKit::RemoteMediaPlayerProxy::loadMediaSource):
+        (WebKit::RemoteMediaPlayerProxy::requestResource):
+        (WebKit::RemoteMediaPlayerProxy::mediaPlayerMediaKeysStorageDirectory const):
+        (WebKit::RemoteMediaPlayerProxy::mediaPlayerMediaCacheDirectory const):
+        (WebKit::RemoteMediaPlayerProxy::addRemoteAudioTrackProxy):
+        (WebKit::RemoteMediaPlayerProxy::addRemoteVideoTrackProxy):
+        (WebKit::RemoteMediaPlayerProxy::addRemoteTextTrackProxy):
+        (WebKit::RemoteMediaPlayerProxy::mediaPlayerCachedKeyForKeyId const):
+        (WebKit::RemoteMediaPlayerProxy::setLegacyCDMSession):
+        (WebKit::RemoteMediaPlayerProxy::cdmInstanceAttached):
+        (WebKit::RemoteMediaPlayerProxy::cdmInstanceDetached):
+        (WebKit::RemoteMediaPlayerProxy::attemptToDecryptWithInstance):
+        * GPUProcess/media/RemoteMediaPlayerProxy.h:
+        * GPUProcess/media/RemoteMediaSourceProxy.cpp:
+        (WebKit::RemoteMediaSourceProxy::RemoteMediaSourceProxy):
+        (WebKit::RemoteMediaSourceProxy::~RemoteMediaSourceProxy):
+        (WebKit::RemoteMediaSourceProxy::seekToTime):
+        (WebKit::RemoteMediaSourceProxy::addSourceBuffer):
+        * GPUProcess/media/RemoteMediaSourceProxy.h:
+        * GPUProcess/media/RemoteRemoteCommandListenerProxy.cpp:
+        (WebKit::RemoteRemoteCommandListenerProxy::RemoteRemoteCommandListenerProxy):
+        (WebKit::RemoteRemoteCommandListenerProxy::didReceiveRemoteControlCommand):
+        * GPUProcess/media/RemoteRemoteCommandListenerProxy.h:
+        * GPUProcess/media/RemoteSourceBufferProxy.cpp:
+        (WebKit::RemoteSourceBufferProxy::RemoteSourceBufferProxy):
+        (WebKit::RemoteSourceBufferProxy::~RemoteSourceBufferProxy):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateDidReceiveInitializationSegment):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateStreamEndedWithDecodeError):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateAppendError):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateHighestPresentationTimestampChanged):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateDurationChanged):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateDidParseSample):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateDidDropSample):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateAppendComplete):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateDidReceiveRenderingError):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateReportExtraMemoryCost):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateBufferedDirtyChanged):
+        (WebKit::RemoteSourceBufferProxy::sourceBufferPrivateBufferedRangesChanged):
+        * GPUProcess/media/RemoteSourceBufferProxy.h:
+        * GPUProcess/media/RemoteTextTrackProxy.cpp:
+        (WebKit::RemoteTextTrackProxy::RemoteTextTrackProxy):
+        (WebKit::RemoteTextTrackProxy::configurationChanged):
+        (WebKit::RemoteTextTrackProxy::addDataCue):
+        (WebKit::RemoteTextTrackProxy::updateDataCue):
+        (WebKit::RemoteTextTrackProxy::removeDataCue):
+        (WebKit::RemoteTextTrackProxy::addGenericCue):
+        (WebKit::RemoteTextTrackProxy::updateGenericCue):
+        (WebKit::RemoteTextTrackProxy::removeGenericCue):
+        (WebKit::RemoteTextTrackProxy::parseWebVTTFileHeader):
+        (WebKit::RemoteTextTrackProxy::parseWebVTTCueData):
+        * GPUProcess/media/RemoteTextTrackProxy.h:
+        * GPUProcess/media/RemoteVideoTrackProxy.cpp:
+        (WebKit::RemoteVideoTrackProxy::RemoteVideoTrackProxy):
+        (WebKit::RemoteVideoTrackProxy::configurationChanged):
+        * GPUProcess/media/RemoteVideoTrackProxy.h:
+
+2021-02-24  BJ Burg  <bburg@apple.com>
+
+        [Cocoa] Web Inspector: expose the extension host that is used to load _WKInspectorExtension tabs
+        https://bugs.webkit.org/show_bug.cgi?id=222344
+        <rdar://problem/74678778>
+
+        Reviewed by Devin Rousso.
+
+        Clients need access to the WKWebView that hosts extension content in order to implement message passing
+        and event delivery to the extension panel iframes. (Currently, that WebView is
+        the same underlying WKWebView for the whole interface, but that is open to change.)
+
+        * UIProcess/API/Cocoa/_WKInspectorExtensionHost.h: New property.
+
+        * UIProcess/API/Cocoa/_WKInspectorPrivate.h:
+        * UIProcess/API/Cocoa/_WKInspector.mm:
+        (-[_WKInspector extensionHostWebView]): Added.
+        (-[_WKInspector handle]): Deleted.
+
+        * UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.mm:
+        (-[_WKRemoteWebInspectorViewController extensionHostWebView]): Added.
+        (-[_WKRemoteWebInspectorViewController handle]): Deleted.
+
+        * Shared/API/Cocoa/WKBrowsingContextHandle.mm:
+        (-[WKBrowsingContextHandle description]):
+        Drive-by, add the standard -description for debugging purposes.
+
+2021-02-24  Alex Christensen  <achristensen@webkit.org>
+
+        Add stubs to enable SafariForWebKitDevelopment to launch
+        https://bugs.webkit.org/show_bug.cgi?id=222388
+
+        Reviewed by Myles Maxfield.
+
+        I manually verified that before this change, DYLD won't let it launch or it calls a missing selector,
+        but after this change it launches and loads web pages.
+
+        * UIProcess/API/Cocoa/WKWebView.mm:
+        (-[WKWebView _inspectorDelegate]):
+        (-[WKWebView _setInspectorDelegate:]):
+
+2021-02-24  Kate Cheney  <katherine_cheney@apple.com>
+
+        App-bound request parameter should be passed to main resource requests not the main frame
+        https://bugs.webkit.org/show_bug.cgi?id=222241
+        <rdar://problem/74560966> 
+
+        Reviewed by Chris Dumez.
+
+        Bug fix to set the isAppBound parameter on the resource request if it
+        is not on the main frame. Previously this only checked if the
+        resource was not a main resource before setting the parameter.
+
+        Otherwise mostly changes to add better testing.
+
+        * NetworkProcess/NetworkProcess.cpp:
+        (WebKit::NetworkProcess::appBoundNavigationData):
+        (WebKit::NetworkProcess::clearAppBoundNavigationData):
+        * NetworkProcess/NetworkProcess.h:
+        * NetworkProcess/NetworkProcess.messages.in:
+        * NetworkProcess/NetworkSession.h:
+        (WebKit::NetworkSession::appBoundNavigationTestingData):
+        * NetworkProcess/cocoa/NetworkDataTaskCocoa.mm:
+        (WebKit::NetworkDataTaskCocoa::NetworkDataTaskCocoa):
+        * Scripts/webkit/messages.py:
+        * Shared/NavigatingToAppBoundDomain.h:
+        (WebKit::AppBoundNavigationTestingData::clearAppBoundNavigationDataTesting):
+        (WebKit::AppBoundNavigationTestingData::updateAppBoundNavigationTestingData):
+        (WebKit::AppBoundNavigationTestingData::encode const):
+        (WebKit::AppBoundNavigationTestingData::decode):
+        Struct to return data for tests.
+
+        * UIProcess/API/Cocoa/WKWebViewPrivateForTesting.h:
+        * UIProcess/API/Cocoa/WKWebViewTesting.mm:
+        (-[WKWebView _appBoundNavigationData:]):
+        (-[WKWebView _clearAppBoundNavigationData:]):
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::appBoundNavigationData):
+        (WebKit::WebPageProxy::clearAppBoundNavigationData):
+        * UIProcess/WebPageProxy.h:
+        * WebProcess/Network/WebLoaderStrategy.cpp:
+        (WebKit::WebLoaderStrategy::loadResource):
+        The fix.
+
+2021-02-24  Peng Liu  <peng.liu6@apple.com>
+
+        [GPUP] Refactor RemoteImageDecoderAVF::createFrameImageAtIndex()
+        https://bugs.webkit.org/show_bug.cgi?id=222300
+
+        Reviewed by Jer Noble.
+
+        Use callOnMainThreadAndWait() instead of callOnMainThread() and remove the semaphore.
+
+        No new tests, this has no behavior change.
+
+        * GPUProcess/media/RemoteImageDecoderAVFProxy.messages.in:
+        * WebProcess/GPU/media/RemoteImageDecoderAVF.cpp:
+        (WebKit::RemoteImageDecoderAVF::createFrameImageAtIndex):
+
+2021-02-24  Chris Dumez  <cdumez@apple.com>
+
+        Unreviewed, fix build with the latest iOS SDK.
+
+        * Shared/FocusedElementInformation.h:
+
+2021-02-24  Per Arne Vollan  <pvollan@apple.com>
+
+        [iOS] Get default value in the UI process for whether synchronous XMLHttpRequest are allowed during unload
+        https://bugs.webkit.org/show_bug.cgi?id=222377
+
+        Reviewed by Brent Fulgham.
+
+        Getting this default value in the UI process instead of in every WebContent process should be a small speedup,
+        since getting this default value is a bit costly on iOS.
+
+        * Shared/WebPageCreationParameters.cpp:
+        (WebKit::WebPageCreationParameters::encode const):
+        (WebKit::WebPageCreationParameters::decode):
+        * Shared/WebPageCreationParameters.h:
+        * Shared/ios/WebPreferencesDefaultValuesIOS.h: Added.
+        * Shared/ios/WebPreferencesDefaultValuesIOS.mm:
+        (WebKit::cachedAllowsRequest):
+        (WebKit::allowsDeprecatedSynchronousXMLHttpRequestDuringUnload):
+        (WebKit::setAllowsDeprecatedSynchronousXMLHttpRequestDuringUnload):
+        * UIProcess/WebPageProxy.cpp:
+        (WebKit::WebPageProxy::creationParameters):
+        * WebKit.xcodeproj/project.pbxproj:
+        * WebProcess/WebPage/WebPage.cpp:
+        (WebKit::m_lastNavigationWasAppBound):
+
+2021-02-24  Russell Epstein  <repstein@apple.com>
+
+        Revert r272735. rdar://problem/74674837
+
+2021-02-24  Russell Epstein  <repstein@apple.com>
+
+        Revert r272810. rdar://problem/74674837
+
+2021-02-24  Said Abou-Hallawa  <said@apple.com>
+
+        [GPU Process] Implement ImageBufferShareableBitmapBackend::bytesPerRow()
+        https://bugs.webkit.org/show_bug.cgi?id=222348
+
+        Reviewed by Simon Fraser.
+
+        The default implementation ImageBufferBackend::bytesPerRow() is not correct
+        for ImageBufferShareableBitmapBackend because ShareableBitmap aligns the
+        rows using IOSurfaceAlignProperty(kIOSurfaceBytesPerRow, ...).
+
+        * Shared/ShareableBitmap.h:
+        (WebKit::ShareableBitmap::bytesPerRow const):
+        * WebProcess/GPU/graphics/ImageBufferShareableBitmapBackend.cpp:
+        (WebKit::ImageBufferShareableBitmapBackend::bytesPerRow const):
+        * WebProcess/GPU/graphics/ImageBufferShareableBitmapBackend.h:
+
 2021-02-24  Carlos Garcia Campos  <cgarcia@igalia.com>
 
         REGRESSION(r267763): [GTK][WPE] user preferred languages are sent to the wrong network process

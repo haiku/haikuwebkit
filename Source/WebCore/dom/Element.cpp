@@ -315,11 +315,8 @@ bool Element::isKeyboardFocusable(KeyboardEvent*) const
 {
     if (!(isFocusable() && !shouldBeIgnoredInSequentialFocusNavigation() && tabIndexSetExplicitly().valueOr(0) >= 0))
         return false;
-    if (auto* root = shadowRoot()) {
-        if (root->delegatesFocus())
-            return false;
-    }
-    return true;
+    ASSERT(delegatesFocusToShadowRoot() == (shadowRoot() && shadowRoot()->delegatesFocus()));
+    return !delegatesFocusToShadowRoot();
 }
 
 bool Element::isMouseFocusable() const
@@ -639,7 +636,10 @@ bool Element::isFocusable() const
     if (!isConnected() || !supportsFocus())
         return false;
 
-    if (!renderer()) {
+    bool hasCanvasAsInclusiveAncestor = inclusiveAncestorStates().contains(AncestorState::Canvas);
+    ASSERT(hasCanvasAsInclusiveAncestor == !!ancestorsOfType<HTMLCanvasElement>(*this).first()
+        || (hasCanvasAsInclusiveAncestor && is<HTMLCanvasElement>(*this)));
+    if (!renderer() && hasCanvasAsInclusiveAncestor) {
         // Elements in canvas fallback content are not rendered, but they are allowed to be
         // focusable as long as their canvas is displayed and visible.
         if (auto* canvas = ancestorsOfType<HTMLCanvasElement>(*this).first())
@@ -2154,6 +2154,8 @@ Node::InsertedIntoAncestorResult Element::insertedIntoAncestor(InsertionType ins
 {
     ContainerNode::insertedIntoAncestor(insertionType, parentOfInsertedTree);
 
+    setInclusiveAncestorStates(insertionType.ancestorStates);
+
 #if ENABLE(FULLSCREEN_API)
     if (containsFullScreenElement() && parentElement() && !parentElement()->containsFullScreenElement())
         setContainsFullScreenElementOnAncestorsCrossingFrameBoundaries(true);
@@ -2211,6 +2213,8 @@ Node::InsertedIntoAncestorResult Element::insertedIntoAncestor(InsertionType ins
 
 void Element::removedFromAncestor(RemovalType removalType, ContainerNode& oldParentOfRemovedTree)
 {
+    setInclusiveAncestorStates(removalType.ancestorStates);
+
 #if ENABLE(FULLSCREEN_API)
     if (containsFullScreenElement())
         setContainsFullScreenElementOnAncestorsCrossingFrameBoundaries(false);
@@ -2393,6 +2397,8 @@ ExceptionOr<ShadowRoot&> Element::attachShadow(const ShadowRootInit& init)
     if (init.mode == ShadowRootMode::UserAgent)
         return Exception { TypeError };
     auto shadow = ShadowRoot::create(document(), init.mode, init.delegatesFocus ? ShadowRoot::DelegatesFocus::Yes : ShadowRoot::DelegatesFocus::No);
+    if (init.delegatesFocus)
+        setDelegatesFocusToShadowRoot();
     auto& result = shadow.get();
     addShadowRoot(WTFMove(shadow));
     return result;
@@ -2976,7 +2982,8 @@ static bool isProgramaticallyFocusable(Element& element)
 {
     ScriptDisallowedScope::InMainThread scriptDisallowedScope;
 
-    if (shadowRootWithDelegatesFocus(element))
+    ASSERT(element.delegatesFocusToShadowRoot() == !!shadowRootWithDelegatesFocus(element));
+    if (element.delegatesFocusToShadowRoot())
         return false;
 
     // If the stylesheets have already been loaded we can reliably check isFocusable.
@@ -3023,7 +3030,9 @@ void Element::focus(SelectionRestorationMode restorationMode, FocusDirection dir
     if (&newTarget->document() != document.ptr())
         return;
 
-    if (auto root = shadowRootWithDelegatesFocus(*this)) {
+    ASSERT(delegatesFocusToShadowRoot() == !!shadowRootWithDelegatesFocus(*this));
+    if (delegatesFocusToShadowRoot()) {
+        auto root = shadowRootWithDelegatesFocus(*this);
         auto currentlyFocusedElement = makeRefPtr(document->focusedElement());
         if (root->containsIncludingShadowDOM(currentlyFocusedElement.get())) {
             if (document->page())
@@ -3355,6 +3364,9 @@ const RenderStyle* Element::resolveComputedStyle(ResolveComputedStyleMode mode)
         elementsRequiringComputedStyle.prepend(&ancestor);
     }
 
+    // On iOS request delegates called during styleForElement may result in re-entering WebKit and killing the style resolver.
+    Style::PostResolutionCallbackDisabler disabler(document(), Style::PostResolutionCallbackDisabler::DrainCallbacks::No);
+
     // Resolve and cache styles starting from the most distant ancestor.
     for (auto& element : elementsRequiringComputedStyle) {
         auto style = document().styleForElementIgnoringPendingStylesheets(*element, computedStyle);
@@ -3424,6 +3436,8 @@ const RenderStyle& Element::resolvePseudoElementStyle(PseudoId pseudoElementSpec
     auto* parentStyle = existingComputedStyle();
     ASSERT(parentStyle);
     ASSERT(!parentStyle->getCachedPseudoStyle(pseudoElementSpecifier));
+
+    Style::PostResolutionCallbackDisabler disabler(document(), Style::PostResolutionCallbackDisabler::DrainCallbacks::No);
 
     auto style = document().styleForElementIgnoringPendingStylesheets(*this, parentStyle, pseudoElementSpecifier);
     if (!style) {
