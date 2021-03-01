@@ -1,3 +1,261 @@
+2021-03-01  Alexey Shvayka  <shvaikalesh@gmail.com>
+
+        BytecodeGenerator::fuseCompareAndJump() fails for some language constructs
+        https://bugs.webkit.org/show_bug.cgi?id=221927
+
+        Reviewed by Yusuke Suzuki.
+
+        For BytecodeGenerator::fuseCompareAndJump() to merge two ops into one, condition's `dst`
+        register should not be referenced from elsewhere. This change tracks down and eliminates
+        all such cases, which reduces bytecode size for a few language constructs:
+          -1 per every `case` of a `switch`;
+          -2 per generator function, -2 per every `yield` / `yield*`;
+          -2 per `class extends`;
+          -2 per `finally`, -1 per every `break` / `continue` / `return` inside;
+          -3 per Function.prototype.apply() with `...spread` as a single argument.
+
+        Instead of mixing RefPtr with raw C++ pointers, single-line branches were preferred.
+        To keep them cleaner, this patch introduces emitLoad() override for JSGenerator::ResumeMode
+        enum, and tweaks existing override for CompletionType.
+
+        A few drive-by improvements:
+          * to enable future optimizations, replaces emitBinaryOp() with emitEqualityOp()
+            for OpEq / OpStricteq (adds an assert), and vice-versa for other comparison ops;
+          * removes OperandTypes for comparison ops as it was ignored
+            (let's re-introduce them consistently once supported);
+          * inlines too specific BytecodeGenerator::emitJumpIf();
+          * replaces `eq` with `stricteq` in ApplyFunctionCallDotNode.
+
+        No behavior change, no callee registers count grow.
+
+        * bytecompiler/BytecodeGenerator.cpp:
+        (JSC::BytecodeGenerator::emitYield):
+        (JSC::BytecodeGenerator::emitDelegateYield):
+        (JSC::BytecodeGenerator::emitFinallyCompletion):
+        (JSC::BytecodeGenerator::emitJumpIf): Deleted.
+        * bytecompiler/BytecodeGenerator.h:
+        (JSC::BytecodeGenerator::emitEqualityOp):
+        (JSC::BytecodeGenerator::emitLoad):
+        * bytecompiler/NodesCodegen.cpp:
+        (JSC::ApplyFunctionCallDotNode::emitBytecode):
+        (JSC::ForInNode::emitBytecode):
+        (JSC::CaseBlockNode::emitBytecodeForBlock):
+        (JSC::FunctionNode::emitBytecode):
+        (JSC::ClassExprNode::emitBytecode):
+
+2021-02-28  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [JSC] Add gc and clearKeptObjects to $262
+        https://bugs.webkit.org/show_bug.cgi?id=222527
+
+        Reviewed by Ross Kirsling.
+
+        Add $262.gc and $262.clearKeptObjects functions. They are required for test262 host-gc-required.
+        Since all the tests using "host-gc-required" are currently also marked with cleanupSome, we are currently not running them.
+        But if some more tests are landed in test262 with "host-gc-required", we will run them with these functions.
+
+        * jsc.cpp:
+        (JSC_DEFINE_HOST_FUNCTION):
+
+2021-02-28  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [JSC] Update test262 host environments
+        https://bugs.webkit.org/show_bug.cgi?id=222525
+
+        Reviewed by Ross Kirsling.
+
+        1. $262.global should be `globalThis` of the realm according to test/built-ins/Function/call-bind-this-realm-undef.js
+        2. $262.evalScript should uwrap JSProxy to get GlobalObject.
+
+        This fixes test262 test/built-ins/Function/call-bind-this-realm-undef.js, it was wrongly tested and failing.
+
+        * jsc.cpp:
+        (JSC_DEFINE_HOST_FUNCTION):
+
+2021-02-27  Rob Buis  <rbuis@igalia.com>
+
+        Null check ArrayBufferView RefPtr
+        https://bugs.webkit.org/show_bug.cgi?id=221569
+
+        Reviewed by Ryosuke Niwa.
+
+        Null check ArrayBufferView RefPtr before using it.
+
+        * runtime/JSArrayBufferViewInlines.h:
+        (JSC::JSArrayBufferView::unsharedImpl):
+
+2021-02-26  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [JSC] Avoid creating functions unnecessarily in builtins
+        https://bugs.webkit.org/show_bug.cgi?id=222509
+
+        Reviewed by Ross Kirsling.
+
+        Avoid unnecessary function creation and make them @globalPrivate.
+
+        * builtins/ArrayPrototype.js:
+        (globalPrivate.maxWithPositives):
+        (globalPrivate.minWithMaybeNegativeZeroAndPositive):
+        (copyWithin):
+        (maxWithPositives): Deleted.
+        (minWithMaybeNegativeZeroAndPositive): Deleted.
+        * builtins/DatePrototype.js:
+        (globalPrivate.toDateTimeOptionsAnyAll):
+        (toLocaleString):
+        (globalPrivate.toDateTimeOptionsDateDate):
+        (toLocaleDateString):
+        (globalPrivate.toDateTimeOptionsTimeTime):
+        (toLocaleTimeString):
+        (toLocaleString.toDateTimeOptionsAnyAll): Deleted.
+        (toLocaleDateString.toDateTimeOptionsDateDate): Deleted.
+        (toLocaleTimeString.toDateTimeOptionsTimeTime): Deleted.
+        * builtins/RegExpPrototype.js:
+        (globalPrivate.getSubstitution):
+        (overriddenName.string_appeared_here.replace):
+        (getSubstitution): Deleted.
+
+2021-02-26  Saam Barati  <sbarati@apple.com>
+
+        Remove bad assertion of AI ArrayMode state in various "by val" opcodes
+        https://bugs.webkit.org/show_bug.cgi?id=222494
+        <rdar://73613460>
+
+        Reviewed by Filip Pizlo.
+
+        It's invalid to ever assert that AI must have proved something. We've been
+        slowly removing these faulty asserts from the compiler, and this patch
+        removes some more of them. AI is conservative, and it's not guaranteed
+        that it will prove X, even if X must be true.
+        
+        In this particular test case, we are looking at a race between the concurrent
+        compiler thread and the main thread, and the compilation will be thrown away
+        because of a Structure transition.
+        
+        What happened in this particular program is we had a CheckStructure that was
+        proved to exit in an early run of AI, that is not shown to exit during a later
+        run of AI. Because of that, in the earlier AI run, we have some narrower type
+        info (because fewer predecessory type info). This narrower type info allowed
+        us to elide a CheckArray. The later runs don't have this narrower type info,
+        because the CheckStructure doesn't exit. The safety of all of this is
+        guaranteed by the compilation being thrown away because we fired the transition
+        watchpoint from the earlier Structure seen by AI.
+
+        * dfg/DFGSpeculativeJIT.cpp:
+        (JSC::DFG::SpeculativeJIT::compileGetByValOnString):
+        (JSC::DFG::SpeculativeJIT::compilePutByValForFloatTypedArray):
+        (JSC::DFG::SpeculativeJIT::compileGetByValOnDirectArguments):
+        (JSC::DFG::SpeculativeJIT::compileGetByValOnScopedArguments):
+        (JSC::DFG::SpeculativeJIT::compileGetArrayLength):
+
+2021-02-26  Chris Dumez  <cdumez@apple.com>
+
+        Reduce explicit usage of [objC retain] in WebKit
+        https://bugs.webkit.org/show_bug.cgi?id=222439
+
+        Reviewed by Darin Adler.
+
+        Reduce explicit usage of [objC retain] in WebKit by using RetainPtr<>.
+
+        * API/JSContext.mm:
+        (+[JSContext currentArguments]):
+        (-[JSContext beginCallbackWithData:calleeValue:thisValue:argumentCount:arguments:]):
+        (-[JSContext endCallbackWithData:]):
+        * API/JSContextInternal.h:
+        * API/tests/testapi.mm:
+        (-[TinyDOMNode initWithVirtualMachine:]):
+
+2021-02-26  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [JSC] Avoid function allocations for non-user-provided Promise then callbacks
+        https://bugs.webkit.org/show_bug.cgi?id=222490
+
+        Reviewed by Keith Miller.
+
+        At @performPromiseThen point, callback function objects themselves are not accessible from users
+        if they are not passed from users. So, we can reuse functions if users do not pass functions.
+
+        * builtins/PromiseOperations.js:
+        (globalPrivate.promiseEmptyOnFulfilled):
+        (globalPrivate.promiseEmptyOnRejected):
+        (globalPrivate.performPromiseThen):
+        (onFulfilled): Deleted.
+        (onRejected): Deleted.
+
+2021-02-26  Michael Saboff  <msaboff@apple.com>
+
+        unexpected minimumInputSize in setupDisjunctionOffsets for regexp engine(yarr)
+        https://bugs.webkit.org/show_bug.cgi?id=220357
+
+        Reviewed by Saam Barati.
+
+        Removed an unnecessary ASSERT.
+        This assert checked that the minimum size wasn't UINT_MAX which I believe was
+        intended to make sure the minimum size was changed while computing the  
+        disjunction's size and offsets.  Those calculations involve checked arithmetic,
+        which would catch any overflow.
+
+        The other part of this patch adds a test that checks this condition as well
+        as the case where the pattern is one character longer, 2^32, which triggers
+        the arithmetic overflow.
+
+        * yarr/YarrPattern.cpp:
+        (JSC::Yarr::YarrPatternConstructor::setupDisjunctionOffsets):
+
+2021-02-26  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        Flaky JSC test: stress/atomic-increment-bigint64.js
+        https://bugs.webkit.org/show_bug.cgi?id=221904
+
+        Reviewed by Keith Miller.
+
+        bytecode-cache test assumes that code can be cached once it is executed. But this
+        is not correct for threading tests using JSC shell's agent feature: code is running
+        different VM in the different thread. And we have no guarantee that this thread destroys
+        VM when the main thread is finished. So this is possible that bytecode used in that thread
+        is not committed.
+
+        We use Options::forceDiskCache's RELEASE_ASSERT only if it is in main thread.
+
+        * runtime/CodeCache.h:
+
+2021-02-25  Yusuke Suzuki  <ysuzuki@apple.com>
+
+        [JSC] Fix typo in wasm error message
+        https://bugs.webkit.org/show_bug.cgi?id=222444
+
+        Reviewed by Saam Barati.
+
+        * wasm/WasmStreamingParser.cpp:
+        (JSC::Wasm::StreamingParser::parseModuleHeader):
+
+2021-02-25  Alex Christensen  <achristensen@webkit.org>
+
+        Add stubs to enable SafariForWebKitDevelopment to launch
+        https://bugs.webkit.org/show_bug.cgi?id=222388
+
+        Reviewed by Myles Maxfield.
+
+        * JavaScriptCore.xcodeproj/project.pbxproj:
+        * runtime/SymbolStubsForSafariCompatibility.mm: Added.
+        (WTF::String::String):
+        (WTF::JSONImpl::ObjectBase::getArray const):
+        (WTF::JSONImpl::ObjectBase::getValue const):
+        (WTF::JSONImpl::ObjectBase::getObject const):
+        (Inspector::BackendDispatcher::sendResponse):
+
+2021-02-25  Razvan Caliman  <rcaliman@apple.com>
+
+        Web Inspector: List of grid nodes is incomplete in Layout sidebar panel
+        https://bugs.webkit.org/show_bug.cgi?id=222364
+        <rdar://problem/74700960>
+
+        Reviewed by Devin Rousso.
+
+        Update inspector protocol description for CSS domain to mention default value for
+        `layoutContextTypeChangedMode` ("observed") and clarify behavior of "all" value.
+
+        * inspector/protocol/CSS.json:
+
 2021-02-25  Commit Queue  <commit-queue@webkit.org>
 
         Unreviewed, reverting r273469.

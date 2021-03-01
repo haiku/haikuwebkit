@@ -159,7 +159,7 @@ LayoutUnit InlineFormattingContext::usedContentHeight() const
     // then the height is increased to include those edges. Only floats that participate in this block formatting context are taken
     // into account, e.g., floats inside absolutely positioned descendants or other floats are not.
     auto& lines = formattingState().lines();
-    // Even empty containers generate one line.
+    // Even empty content generates a line.
     ASSERT(!lines.isEmpty());
     auto top = LayoutUnit { lines.first().lineBoxLogicalRect().top() };
     auto bottom = LayoutUnit { lines.last().lineBoxLogicalRect().bottom() + formattingState().clearGapAfterLastLine() };
@@ -398,7 +398,7 @@ void InlineFormattingContext::collectInlineContentIfNeeded()
     auto& formattingState = this->formattingState();
     if (!formattingState.inlineItems().isEmpty())
         return;
-    // Traverse the tree and create inline items out of containers and leaf nodes. This essentially turns the tree inline structure into a flat one.
+    // Traverse the tree and create inline items out of inline boxes and leaf nodes. This essentially turns the tree inline structure into a flat one.
     // <span>text<span></span><img></span> -> [InlineBoxStart][InlineLevelBox][InlineBoxStart][InlineBoxEnd][InlineLevelBox][InlineBoxEnd]
     ASSERT(root().hasInFlowOrFloatingChild());
     LayoutQueue layoutQueue;
@@ -535,8 +535,12 @@ InlineRect InlineFormattingContext::computeGeometryForLineContent(const LineBuil
             }
             if (lineRun.isInlineBoxEnd()) {
                 inlineBoxEndSet.add(&layoutBox);
-                auto inlineBoxLogicalRect = lineBox.logicalBorderBoxForInlineBox(layoutBox, formattingState.boxGeometry(layoutBox));
-                enclosingTopAndBottom.bottom = std::max(enclosingTopAndBottom.bottom, inlineBoxLogicalRect.bottom());
+                if (!inlineBoxStartSet.contains(&layoutBox)) {
+                    // An inline box can span multiple lines. Use the [inline box end] signal to include it in the enclosing geometry
+                    // only when it starts at a previous line.
+                    auto inlineBoxLogicalRect = lineBox.logicalBorderBoxForInlineBox(layoutBox, formattingState.boxGeometry(layoutBox));
+                    enclosingTopAndBottom.bottom = std::max(enclosingTopAndBottom.bottom, inlineBoxLogicalRect.bottom());
+                }
                 continue;
             }
             ASSERT(lineRun.isWordBreakOpportunity());
@@ -581,7 +585,7 @@ InlineRect InlineFormattingContext::computeGeometryForLineContent(const LineBuil
     updateBoxGeometryForInlineBoxes();
 
     auto constructLineGeometry = [&] {
-        formattingState.addLine({ lineBoxLogicalRect, enclosingTopAndBottom, lineBox.alignmentBaseline(), lineBox.horizontalAlignmentOffset().valueOr(InlineLayoutUnit { }), lineContent.contentLogicalWidth });
+        formattingState.addLine({ lineBoxLogicalRect, enclosingTopAndBottom, lineBox.alignmentBaseline(), rootInlineBoxLogicalRect.left(), lineContent.contentLogicalWidth });
     };
     constructLineGeometry();
 

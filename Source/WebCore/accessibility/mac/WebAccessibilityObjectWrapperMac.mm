@@ -1154,29 +1154,29 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
     // All elements should get ShowMenu and ScrollToVisible.
     // But certain earlier VoiceOver versions do not support scroll to visible, and it confuses them to see it in the list.
-    static NSArray *defaultElementActions = [@[NSAccessibilityShowMenuAction, NSAccessibilityScrollToVisibleAction] retain];
+    static NeverDestroyed<RetainPtr<NSArray>> defaultElementActions = @[NSAccessibilityShowMenuAction, NSAccessibilityScrollToVisibleAction];
 
     // Action elements allow Press.
     // The order is important to VoiceOver, which expects the 'default' action to be the first action. In this case the default action should be press.
-    static NSArray *actionElementActions = [@[NSAccessibilityPressAction, NSAccessibilityShowMenuAction, NSAccessibilityScrollToVisibleAction] retain];
+    static NeverDestroyed<RetainPtr<NSArray>> actionElementActions = @[NSAccessibilityPressAction, NSAccessibilityShowMenuAction, NSAccessibilityScrollToVisibleAction];
 
     // Menu elements allow Press and Cancel.
-    static NSArray *menuElementActions = [[actionElementActions arrayByAddingObject:NSAccessibilityCancelAction] retain];
+    static NeverDestroyed<RetainPtr<NSArray>> menuElementActions = [actionElementActions.get() arrayByAddingObject:NSAccessibilityCancelAction];
 
     // Slider elements allow Increment/Decrement.
-    static NSArray *sliderActions = [[defaultElementActions arrayByAddingObjectsFromArray:@[NSAccessibilityIncrementAction, NSAccessibilityDecrementAction]] retain];
+    static NeverDestroyed<RetainPtr<NSArray>> sliderActions = [defaultElementActions.get() arrayByAddingObjectsFromArray:@[NSAccessibilityIncrementAction, NSAccessibilityDecrementAction]];
 
     NSArray *actions;
     if (backingObject->supportsPressAction())
-        actions = actionElementActions;
+        actions = actionElementActions.get().get();
     else if (backingObject->isMenuRelated())
-        actions = menuElementActions;
+        actions = menuElementActions.get().get();
     else if (backingObject->isSlider())
-        actions = sliderActions;
+        actions = sliderActions.get().get();
     else if (backingObject->isAttachment())
         actions = [[self attachmentView] accessibilityActionNames];
     else
-        actions = defaultElementActions;
+        actions = defaultElementActions.get().get();
 
     return actions;
 }
@@ -3452,12 +3452,6 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     });
 }
 
-- (AXTextMarkerRangeRef)textMarkerRangeForNSRange:(const NSRange&)range
-{
-    auto* backingObject = self.updateObjectBackingStore;
-    return backingObject ? backingObject->textMarkerRangeForNSRange(range) : nil;
-}
-
 // FIXME: No reason for this to be a method instead of a function; can get document from range.
 - (NSRange)_convertToNSRange:(const SimpleRange&)range
 {
@@ -3834,6 +3828,8 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         return convertToNSArray(results);
     }
 
+    // TextMarker attributes.
+
     if ([attribute isEqualToString:NSAccessibilityEndTextMarkerForBoundsParameterizedAttribute]) {
         return Accessibility::retrieveAutoreleasedValueFromMainThread<id>([&rect, protectedSelf = retainPtr(self)] () -> RetainPtr<id> {
             auto* backingObject = protectedSelf.get().axBackingObject;
@@ -3867,6 +3863,10 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
             return (id)textMarkerForCharacterOffset(cache, characterOffset);
         });
     }
+
+    // TextMarkerRange attributes.
+    if ([attribute isEqualToString:@"AXTextMarkerRangeForNSRange"])
+        return (id)backingObject->textMarkerRangeForNSRange(range);
 
     if ([attribute isEqualToString:NSAccessibilityLineTextMarkerRangeForTextMarkerParameterizedAttribute])
         return (id)[self lineTextMarkerRangeForTextMarker:textMarker forUnit:TextUnit::Line];

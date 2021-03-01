@@ -861,14 +861,9 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
 #endif
 
 #if ENABLE(VP9)
-    if (parameters.shouldEnableVP9Decoder)
-        WebProcess::singleton().enableVP9Decoder();
-
-    if (parameters.shouldEnableVP8Decoder)
-        WebProcess::singleton().enableVP8SWDecoder();
-
-    if (parameters.shouldEnableVP9SWDecoder)
-        WebProcess::singleton().enableVP9SWDecoder();
+    PlatformMediaSessionManager::setShouldEnableVP9Decoder(parameters.shouldEnableVP9Decoder);
+    PlatformMediaSessionManager::setShouldEnableVP8Decoder(parameters.shouldEnableVP8Decoder);
+    PlatformMediaSessionManager::setShouldEnableVP9SWDecoder(parameters.shouldEnableVP9SWDecoder);
 #endif
 
     m_page->setCanUseCredentialStorage(parameters.canUseCredentialStorage);
@@ -7238,13 +7233,15 @@ void WebPage::requestImageExtraction(WebCore::Element& element)
     if (m_elementsWithExtractedImages.contains(element))
         return;
 
-    auto* renderImage = element.renderer();
-    if (!is<RenderImage>(renderImage))
+    auto* renderer = element.renderer();
+    if (!is<RenderImage>(renderer))
         return;
+
+    auto& renderImage = downcast<RenderImage>(*renderer);
 
     m_elementsWithExtractedImages.add(element);
 
-    auto bitmap = createShareableBitmap(downcast<RenderImage>(*renderImage));
+    auto bitmap = createShareableBitmap(renderImage);
     if (!bitmap)
         return;
 
@@ -7253,7 +7250,9 @@ void WebPage::requestImageExtraction(WebCore::Element& element)
     if (bitmapHandle.isNull())
         return;
 
-    sendWithAsyncReply(Messages::WebPageProxy::RequestImageExtraction(WTFMove(bitmapHandle)), [weakElement = makeWeakPtr(element)] (ImageExtractionResult&& result) {
+    auto imageURL = element.document().completeURL(renderImage.cachedImage()->url().string());
+
+    sendWithAsyncReply(Messages::WebPageProxy::RequestImageExtraction(WTFMove(imageURL), WTFMove(bitmapHandle)), [weakElement = makeWeakPtr(element)] (ImageExtractionResult&& result) {
         if (auto element = weakElement.get(); is<HTMLElement>(element))
             downcast<HTMLElement>(*element).updateWithImageExtractionResult(WTFMove(result));
     });

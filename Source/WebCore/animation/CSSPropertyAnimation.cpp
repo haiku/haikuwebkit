@@ -88,9 +88,9 @@ static inline Color blendFunc(const CSSPropertyBlendingClient*, const Color& fro
     return blend(from, to, progress);
 }
 
-static inline Length blendFunc(const CSSPropertyBlendingClient*, const Length& from, const Length& to, double progress)
+static inline Length blendFunc(const CSSPropertyBlendingClient*, const Length& from, const Length& to, double progress, ValueRange valueRange = ValueRangeAll)
 {
-    return blend(from, to, progress);
+    return blend(from, to, progress, valueRange);
 }
 
 static inline GapLength blendFunc(const CSSPropertyBlendingClient*, const GapLength& from, const GapLength& to, double progress)
@@ -385,10 +385,11 @@ static inline TextDecorationThickness blendFunc(const CSSPropertyBlendingClient*
 
 static inline LengthBox blendFunc(const CSSPropertyBlendingClient* anim, const LengthBox& from, const LengthBox& to, double progress)
 {
-    LengthBox result(blendFunc(anim, from.top(), to.top(), progress),
-                     blendFunc(anim, from.right(), to.right(), progress),
-                     blendFunc(anim, from.bottom(), to.bottom(), progress),
-                     blendFunc(anim, from.left(), to.left(), progress));
+    LengthBox result(blendFunc(anim, from.top(), to.top(), progress, ValueRangeNonNegative),
+                     blendFunc(anim, from.right(), to.right(), progress, ValueRangeNonNegative),
+                     blendFunc(anim, from.bottom(), to.bottom(), progress, ValueRangeNonNegative),
+                     blendFunc(anim, from.left(), to.left(), progress, ValueRangeNonNegative));
+
     return result;
 }
 
@@ -699,31 +700,18 @@ protected:
     void (RenderStyle::*m_setter)(Length&&);
 };
 
-class NonNegativeLengthPropertyWrapper : public PropertyWrapperGetter<const Length&> {
+class NonNegativeLengthPropertyWrapper : public LengthPropertyWrapper {
     WTF_MAKE_FAST_ALLOCATED;
 public:
     NonNegativeLengthPropertyWrapper(CSSPropertyID prop, const Length& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(Length&&))
-        : PropertyWrapperGetter<const Length&>(prop, getter)
-        , m_setter(setter)
+        : LengthPropertyWrapper(prop, getter, setter)
     {
-    }
-
-    bool canInterpolate(const RenderStyle* a, const RenderStyle* b) const override
-    {
-        return !(a->*PropertyWrapperGetter<const Length&>::m_getter)().isAuto() && !(b->*PropertyWrapperGetter<const Length&>::m_getter)().isAuto();
     }
 
     void blend(const CSSPropertyBlendingClient* anim, RenderStyle* dst, const RenderStyle* a, const RenderStyle* b, double progress) const override
     {
-        auto blended = blendFunc(anim, (a->*PropertyWrapperGetter<const Length&>::m_getter)(), (b->*PropertyWrapperGetter<const Length&>::m_getter)(), progress);
-        if (blended.isNegative())
-            (dst->*m_setter)(Length(0, LengthType::Fixed));
-        else
-            (dst->*m_setter)(WTFMove(blended));
+        (dst->*m_setter)(blendFunc(anim, (a->*PropertyWrapperGetter<const Length&>::m_getter)(), (b->*PropertyWrapperGetter<const Length&>::m_getter)(), progress, ValueRangeNonNegative));
     }
-
-protected:
-    void (RenderStyle::*m_setter)(Length&&);
 };
 
 template <typename T>
@@ -743,6 +731,65 @@ public:
 
 protected:
     void (RenderStyle::*m_setter)(T&&);
+};
+
+class LengthBoxPropertyWrapper : public PropertyWrapperGetter<const LengthBox&> {
+    WTF_MAKE_FAST_ALLOCATED;
+public:
+    enum class Flags {
+        IsLengthPercentage  = 1 << 0,
+        UsesFillKeyword     = 1 << 1,
+    };
+    LengthBoxPropertyWrapper(CSSPropertyID prop, const LengthBox& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(LengthBox&&), OptionSet<Flags> flags = { })
+        : PropertyWrapperGetter<const LengthBox&>(prop, getter)
+        , m_setter(setter)
+        , m_flags(flags)
+    {
+    }
+
+    bool canInterpolate(const RenderStyle* a, const RenderStyle* b) const override
+    {
+        if (m_flags.contains(Flags::UsesFillKeyword) && a->borderImage().fill() != b->borderImage().fill())
+            return false;
+
+        auto canInterpolateBetweenLengths = [&](const Length& a, const Length& b) -> bool {
+            if (a.type() == b.type() || a.isZero() || b.isZero())
+                return true;
+
+            // Some property allow for <length-percentage> and <number> values. We must allow animating
+            // between a <length> and a <percentage>, but exclude animating between a <number> and either
+            // a <length> or <percentage>. We can use Length::isRelative() to determine whether we are
+            // dealing with a <number> as opposed to a <length> or <percentage>.
+            if (m_flags.contains(Flags::IsLengthPercentage))
+                return a.isRelative() == b.isRelative();
+
+            return false;
+        };
+
+        auto& aLengthBox = (a->*PropertyWrapperGetter<const LengthBox&>::m_getter)();
+        auto& bLengthBox = (b->*PropertyWrapperGetter<const LengthBox&>::m_getter)();
+        return canInterpolateBetweenLengths(aLengthBox.top(), bLengthBox.top())
+            && canInterpolateBetweenLengths(aLengthBox.right(), bLengthBox.right())
+            && canInterpolateBetweenLengths(aLengthBox.bottom(), bLengthBox.bottom())
+            && canInterpolateBetweenLengths(aLengthBox.left(), bLengthBox.left());
+    }
+
+    void blend(const CSSPropertyBlendingClient* anim, RenderStyle* dst, const RenderStyle* a, const RenderStyle* b, double progress) const override
+    {
+        if (!canInterpolate(a, b)) {
+            progress = progress < 0.5 ? 0 : 1;
+            if (m_flags.contains(Flags::UsesFillKeyword))
+                dst->setBorderImageSliceFill((progress ? b : a)->borderImage().fill());
+        } else if (m_flags.contains(Flags::UsesFillKeyword))
+            dst->setBorderImageSliceFill(a->borderImage().fill());
+        (dst->*m_setter)(blendFunc(anim, (a->*PropertyWrapperGetter<const LengthBox&>::m_getter)(), (b->*PropertyWrapperGetter<const LengthBox&>::m_getter)(), progress));
+    }
+
+protected:
+    void (RenderStyle::*m_setter)(LengthBox&&);
+
+private:
+    OptionSet<Flags> m_flags;
 };
 
 class PropertyWrapperClipPath : public RefCountedPropertyWrapper<ClipPathOperation> {
@@ -1806,9 +1853,9 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
         new StyleImagePropertyWrapper(CSSPropertyWebkitMaskImage, &RenderStyle::maskImage, &RenderStyle::setMaskImage),
 
         new StyleImagePropertyWrapper(CSSPropertyBorderImageSource, &RenderStyle::borderImageSource, &RenderStyle::setBorderImageSource),
-        new LengthVariantPropertyWrapper<LengthBox>(CSSPropertyBorderImageSlice, &RenderStyle::borderImageSlices, &RenderStyle::setBorderImageSlices),
-        new LengthVariantPropertyWrapper<LengthBox>(CSSPropertyBorderImageWidth, &RenderStyle::borderImageWidth, &RenderStyle::setBorderImageWidth),
-        new LengthVariantPropertyWrapper<LengthBox>(CSSPropertyBorderImageOutset, &RenderStyle::borderImageOutset, &RenderStyle::setBorderImageOutset),
+        new LengthBoxPropertyWrapper(CSSPropertyBorderImageSlice, &RenderStyle::borderImageSlices, &RenderStyle::setBorderImageSlices, { LengthBoxPropertyWrapper::Flags::UsesFillKeyword }),
+        new LengthBoxPropertyWrapper(CSSPropertyBorderImageWidth, &RenderStyle::borderImageWidth, &RenderStyle::setBorderImageWidth, { LengthBoxPropertyWrapper::Flags::IsLengthPercentage }),
+        new LengthBoxPropertyWrapper(CSSPropertyBorderImageOutset, &RenderStyle::borderImageOutset, &RenderStyle::setBorderImageOutset),
 
         new StyleImagePropertyWrapper(CSSPropertyWebkitMaskBoxImageSource, &RenderStyle::maskBoxImageSource, &RenderStyle::setMaskBoxImageSource),
         new PropertyWrapper<const NinePieceImage&>(CSSPropertyWebkitMaskBoxImage, &RenderStyle::maskBoxImage, &RenderStyle::setMaskBoxImage),
@@ -1853,7 +1900,7 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
         new PropertyWrapper<Visibility>(CSSPropertyVisibility, &RenderStyle::visibility, &RenderStyle::setVisibility),
         new PropertyWrapper<float>(CSSPropertyZoom, &RenderStyle::zoom, &RenderStyle::setZoomWithoutReturnValue),
 
-        new LengthVariantPropertyWrapper<LengthBox>(CSSPropertyClip, &RenderStyle::clip, &RenderStyle::setClip),
+        new LengthBoxPropertyWrapper(CSSPropertyClip, &RenderStyle::clip, &RenderStyle::setClip),
 
         new PropertyWrapperAcceleratedOpacity(),
         new PropertyWrapperAcceleratedTransform(),

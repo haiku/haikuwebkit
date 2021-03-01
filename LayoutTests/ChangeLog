@@ -1,3 +1,470 @@
+2021-03-01  Chris Gambrell  <cgambrell@apple.com>
+
+        [LayoutTests] Convert http/tests/fetch convert PHP to Python
+        https://bugs.webkit.org/show_bug.cgi?id=222367
+        <rdar://problem/74702641>
+
+        Reviewed by Jonathan Bedard.
+
+        * http/tests/fetch/caching-with-different-options.html:
+        * http/tests/fetch/redirectmode-and-preload-expected.txt:
+        * http/tests/fetch/redirectmode-and-preload.html:
+        * http/tests/fetch/resources/redirect-with-cache.php: Removed.
+        * http/tests/fetch/resources/redirect-with-cache.py: Added.
+
+2021-03-01  Youenn Fablet  <youenn@apple.com>
+
+        [GPUP] Fix WebRTC layout test failures with GPU Process enabled
+        https://bugs.webkit.org/show_bug.cgi?id=222505
+        <rdar://problem/74814573>
+
+        Unreviewed.
+
+        * gpu-process/TestExpectations:
+        Removed no longer valid expectations.
+
+2021-02-27  Sam Weinig  <weinig@apple.com>
+
+       Remove support for 'pixel' and 'pos' CSSOM prefixes
+       https://bugs.webkit.org/show_bug.cgi?id=119712
+
+       Reviewed by Simon Fraser.
+
+       * fast/dom/CSSStyleDeclaration/css-properties-case-sensitive-expected.txt:
+       * fast/dom/CSSStyleDeclaration/css-properties-case-sensitive.html:
+        Update test to reflect removal of pos/pixel prefixes.
+
+2021-02-27  Rob Buis  <rbuis@igalia.com>
+
+        Null check ArrayBufferView RefPtr
+        https://bugs.webkit.org/show_bug.cgi?id=221569
+
+        Reviewed by Ryosuke Niwa.
+
+        Add test to verify oom situation does not result in a crash.
+
+        * crypto/crypto-random-values-oom-expected.txt: Added.
+        * crypto/crypto-random-values-oom.html: Added.
+        * platform/win/TestExpectations:
+
+2021-02-27  Antti Koivisto  <antti@apple.com>
+
+        Render tree updates for Text node content mutations should happen during rendering update
+        https://bugs.webkit.org/show_bug.cgi?id=222406
+
+        Reviewed by Simon Fraser.
+
+        These are progressions.
+
+        * fast/text/splitText-dirty-lines-expected.txt:
+        * imported/blink/fast/css/first-letter-range-insert-expected.txt:
+
+        Here we were actually drawing text that didn't exist in DOM anymore.
+
+2021-02-26  Peng Liu  <peng.liu6@apple.com>
+
+        [GPUP] Refresh test expectations after adding the support to paint GPUP hosted video to 2D canvas and WebGL surfaces
+        https://bugs.webkit.org/show_bug.cgi?id=222500
+
+        Reviewed by Jer Noble.
+
+        r273568 adds the support to paint GPU process hosted video in the WebContent process to
+        2D canvas and WebGL surfaces. This function is used by layout tests no matter
+        "GPU Process: Canvas Rendering" and "GPU Process: WebGL" are enabled or not.
+        A lot of tests depending on it are passing now.
+
+        * gpu-process/TestExpectations:
+        * platform/mac-wk2/TestExpectations:
+        * platform/wk2/TestExpectations:
+
+2021-02-26  Zalan Bujtas  <zalan@apple.com>
+
+        [LFC][Coverage] Do not bail out on text underline position when text-decoration is 'none'
+        https://bugs.webkit.org/show_bug.cgi?id=222481
+
+        Reviewed by Antti Koivisto.
+
+        * fast/text/simple-line-layout-with-text-underline-position-expected.html:
+        * fast/text/simple-line-layout-with-text-underline-position.html:
+
+2021-02-26  Amir Mark Jr  <amir_mark@apple.com>
+
+        [BigSur Wk1] platform/mac-bigsur/media/media-source/media-source-webm-vp8-malformed-header.html is consistently failing
+        https://bugs.webkit.org/show_bug.cgi?id=222493
+
+        Unreviewed test gardening.
+
+        * platform/mac-wk1/TestExpectations:
+
+2021-02-26  Devin Rousso  <drousso@apple.com>
+
+        [Payment Request] log when the request is cancelled while waiting for the `Promise` provided to `show()`/`updateWith()` to settle
+        https://bugs.webkit.org/show_bug.cgi?id=222491
+
+        Reviewed by Andy Estes.
+
+        * http/tests/paymentrequest/payment-request-show-method.https-expected.txt:
+
+2021-02-26  Sam Weinig  <weinig@apple.com>
+
+        Remove non-standard 'css'/'Css' prefixed properties on CSSStyleDeclaration
+        https://bugs.webkit.org/show_bug.cgi?id=218158
+
+        Reviewed by Tim Horton.
+
+        * fast/dom/CSSStyleDeclaration/css-properties-case-sensitive-expected.txt:
+        * fast/dom/CSSStyleDeclaration/css-properties-case-sensitive.html:
+        Update test to reflect removal of css prefixes.
+
+2021-02-26  Peng Liu  <peng.liu6@apple.com>
+
+        Flaky Test: media/modern-media-controls/tracks-support/tracks-support-show-panel-fullscreen.html
+        https://bugs.webkit.org/show_bug.cgi?id=182571
+
+        Reviewed by Jer Noble.
+
+        Fix a flaky test by:
+        1) Enable "MockVideoPresentationMode".
+        2) Wait for a video presentation mode change to complete before moving to the next step in the test.
+        3) Request the video to exit fullscreen before finish the test (to avoid interference with other tests).
+
+        * media/modern-media-controls/tracks-support/mac/tracks-support-show-panel-fullscreen-expected.txt:
+        * media/modern-media-controls/tracks-support/mac/tracks-support-show-panel-fullscreen.html:
+
+2021-02-26  John Wilander  <wilander@apple.com>
+
+        Non-cookie website data not deleted after 7 days of browser use without user interaction
+        https://bugs.webkit.org/show_bug.cgi?id=222248
+        <rdar://problem/74612589>
+
+        Reviewed by Brent Fulgham and informally by Kate Cheney.
+
+        Existing test cases now make use of the new numberOfOperatingDaysPassed
+        parameter to testRunner.setStatisticsExpiredStatistic() to control the exact
+        number of operating days passed since user interaction.
+        A new test case makes sure website data is not deleted below the threshold.
+
+        * http/tests/resourceLoadStatistics/operating-dates-all-but-cookies-not-removed-with-user-interaction-6-days-ago-expected.txt: Added.
+        * http/tests/resourceLoadStatistics/operating-dates-all-but-cookies-not-removed-with-user-interaction-6-days-ago.html: Added.
+            Sets numberOfOperatingDaysPassed to 6.
+        * http/tests/resourceLoadStatistics/operating-dates-all-but-cookies-removed-with-user-interaction-7-days-ago-expected.txt: Renamed from LayoutTests/http/tests/resourceLoadStatistics/operating-dates-all-but-cookies-removed-statistics-with-no-user-interaction-expected.txt.
+        * http/tests/resourceLoadStatistics/operating-dates-all-but-cookies-removed-with-user-interaction-7-days-ago.html: Renamed from LayoutTests/http/tests/resourceLoadStatistics/operating-dates-all-but-cookies-removed-statistics-with-no-user-interaction.html.
+            Sets numberOfOperatingDaysPassed to 7.
+        * http/tests/resourceLoadStatistics/operating-dates-all-website-data-removed.html:
+            Sets numberOfOperatingDaysPassed to 30.
+        * platform/wk2/TestExpectations:
+            Updated existing expectation with new file name.
+
+2021-02-26  Lauro Moura  <lmoura@igalia.com>
+
+        [GLIB] Move some css3 blending baselines to glib and update expectations
+
+        Unreviewed test gardening.
+
+        These tests are passing in GTK and in WPE, so move the baselines to
+        glib.
+
+        The two GTK expectations left are now in GLIB and the PASS flakiness
+        removed as they are consistently ImageOnlyFailing. Also moved the
+        other expectations to the compositing section.
+
+        * platform/glib/TestExpectations:
+        * platform/glib/css3/blending/svg-blend-color-burn-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-color-burn-expected.txt.
+        * platform/glib/css3/blending/svg-blend-color-dodge-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-color-dodge-expected.txt.
+        * platform/glib/css3/blending/svg-blend-darken-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-darken-expected.txt.
+        * platform/glib/css3/blending/svg-blend-difference-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-difference-expected.txt.
+        * platform/glib/css3/blending/svg-blend-exclusion-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-exclusion-expected.txt.
+        * platform/glib/css3/blending/svg-blend-hard-light-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-hard-light-expected.txt.
+        * platform/glib/css3/blending/svg-blend-lighten-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-lighten-expected.txt.
+        * platform/glib/css3/blending/svg-blend-multiply-alpha-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-multiply-alpha-expected.txt.
+        * platform/glib/css3/blending/svg-blend-multiply-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-multiply-expected.txt.
+        * platform/glib/css3/blending/svg-blend-normal-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-normal-expected.txt.
+        * platform/glib/css3/blending/svg-blend-overlay-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-overlay-expected.txt.
+        * platform/glib/css3/blending/svg-blend-plus-darker-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-plus-darker-expected.txt.
+        * platform/glib/css3/blending/svg-blend-plus-lighter-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-plus-lighter-expected.txt.
+        * platform/glib/css3/blending/svg-blend-screen-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-screen-expected.txt.
+        * platform/glib/css3/blending/svg-blend-soft-light-expected.txt: Renamed from LayoutTests/platform/gtk/css3/blending/svg-blend-soft-light-expected.txt.
+        * platform/gtk/TestExpectations:
+        * platform/wpe/TestExpectations:
+
+2021-02-26  Myles C. Maxfield  <mmaxfield@apple.com>
+
+        Emoji sequences with constituents in the UBLOCK_SYMBOLS_AND_PICTOGRAPHS_EXTENDED_A Unicode block don't get combined properly
+        https://bugs.webkit.org/show_bug.cgi?id=222438
+        <rdar://problem/74382039>
+
+        Unreviewed test gardening.
+
+        * platform/mac/TestExpectations:
+
+2021-02-26  Devin Rousso  <drousso@apple.com>
+
+        [Payment Request] log if `updateWith` is not called synchronously
+        https://bugs.webkit.org/show_bug.cgi?id=222436
+
+        Reviewed by Andy Estes.
+
+        * http/tests/paymentrequest/updateWith-log-error-if-not-synchronous.https.html: Added.
+        * http/tests/paymentrequest/updateWith-log-error-if-not-synchronous.https-expected.txt: Added.
+
+        * http/tests/paymentrequest/payment-request-change-shipping-address.https.html:
+        * http/tests/paymentrequest/payment-request-change-shipping-option.https.html:
+        * http/tests/paymentrequest/payment-request-show-method.https.html:
+        * http/tests/ssl/applepay/ApplePayBillingAddress.html:
+        * http/tests/ssl/applepay/ApplePayPaymentMethodChangeEvent.https.html:
+        Add `updateWith({})` calls to avoid the log.
+
+2021-02-26  Robert Jenner  <jenner@apple.com>
+
+        [ macOS ] fast/text/mending-heart.html is a constant text failure
+        https://bugs.webkit.org/show_bug.cgi?id=222479
+
+        Unreviewed test gardening.
+
+        * platform/mac/TestExpectations: Test consantly fails. Already marked in test for iOS, updating test expectation to fail for macOS until the test is fixed.
+
+2021-02-26  Peng Liu  <peng.liu6@apple.com>
+
+        [GPUP] Clean up TestExpectations related to media tests
+        https://bugs.webkit.org/show_bug.cgi?id=222456
+
+        Reviewed by Simon Fraser.
+
+        * gpu-process/TestExpectations:
+        Remove a duplicated expectation (imported/w3c/web-platform-tests/fetch/range/general.window.html).
+        Move webaudio related test expectations to platform/wk2/TestExpectations.
+
+        * platform/ios-wk2/TestExpectations:
+        webkit.org/b/221821 has been fixed in r273504.
+
+        * platform/mac-wk2/TestExpectations:
+        Two media capabilities test failures have been fixed in r273504.
+        Move a test expectation (platform/mac/media/media-source/videoplaybackquality-decompressionsession.html)
+        to platform/mac/TestExpectations.
+        Reorganize expectations for tests in webgl/2.0.0/conformance2/textures/video.
+
+        * platform/mac/TestExpectations:
+        Remove a duplicated test expectation (mediaElementAudioSourceToScriptProcessorTest.html).
+
+        * platform/wk2/TestExpectations:
+        Track all modern-media-controls test failures in one bug.
+        Track all canvas related media test failures in one bug.
+
+2021-02-26  Zalan Bujtas  <zalan@apple.com>
+
+        Remove unnecessary whitespace (css1/text_properties/text_decoration.html)
+        https://bugs.webkit.org/show_bug.cgi?id=222446
+
+        Reviewed by Antti Koivisto.
+
+        Whitespace characters often end up as trailing content and legacy line layout does not trim them properly.
+        They cause unnecessary noise in renderer tree dumps when switching to modern line layout.
+
+        * css1/box_properties/border.html:
+        * css1/text_properties/text_decoration.html:
+        * platform/mac/css1/box_properties/border-expected.txt:
+        * platform/mac/css1/text_properties/text_decoration-expected.txt:
+
+2021-02-25  Lauro Moura  <lmoura@igalia.com>
+
+        [GLIB] Gardening a couple crashes
+
+        Unreviewed test gardening.
+
+        * platform/glib/TestExpectations:
+
+2021-02-25  Myles C. Maxfield  <mmaxfield@apple.com>
+
+        Emoji sequences with constituents in the UBLOCK_SYMBOLS_AND_PICTOGRAPHS_EXTENDED_A Unicode block don't get combined properly
+        https://bugs.webkit.org/show_bug.cgi?id=222438
+        <rdar://problem/74382039>
+
+        Reviewed by Zalan Bujtas.
+
+        * fast/text/mending-heart-expected.txt: Added.
+        * fast/text/mending-heart.html: Added.
+        * platform/ios/TestExpectations:
+        * platform/mac/TestExpectations:
+
+2021-02-25  Saam Barati  <sbarati@apple.com>
+
+        Add some exception checks to the bindings generator
+        https://bugs.webkit.org/show_bug.cgi?id=222434
+        <rdar://69066130>
+
+        Reviewed by Yusuke Suzuki.
+
+        * js/dom/local-storage-exception-checks-expected.txt: Added.
+        * js/dom/local-storage-exception-checks.html: Added.
+
+2021-02-25  Amir Mark Jr  <amir_mark@apple.com>
+
+        [BigSur wk1] svg/canvas/canvas-global-alpha-svg.html is flakey failing
+        https://bugs.webkit.org/show_bug.cgi?id=221559
+
+        Unreviewed test gardening.
+
+        * platform/mac-wk1/TestExpectations:
+
+2021-02-25  Robert Jenner  <jenner@apple.com>
+
+        [ macOS BigSur Wk2 ] http/tests/media/hls/hls-hdr-switch.html is timing out
+        https://bugs.webkit.org/show_bug.cgi?id=222425
+
+        Unreviewed test gardening.
+
+        * platform/mac/TestExpectations: Updating test expectations as Timeout until changes made in r272842 are fully resolved.
+
+2021-02-25  Robert Jenner  <jenner@apple.com>
+
+        REGRESSION (r273461): [ macOS ] imported/w3c/web-platform-tests/media-source/mediasource-duration.html is timing out
+        https://bugs.webkit.org/show_bug.cgi?id=222422
+
+        Unreviewed test gardening.
+
+        * platform/mac/TestExpectations: Updating test expectations to include slow to determine if changes caused a regression or actually made the test better.
+
+2021-02-25  Jer Noble  <jer.noble@apple.com>
+
+        [Cocoa] Appending a partial segment of a WebM audio file results in no additional samples
+        https://bugs.webkit.org/show_bug.cgi?id=222407
+        <rdar://74610383>
+
+        Reviewed by Eric Carlson.
+
+        * platform/mac-bigsur/media/media-source/content/test-48kHz-vorbis-manifest.json: Added.
+        * platform/mac-bigsur/media/media-source/content/test-48kHz-vorbis.webm: Added.
+        * platform/mac-bigsur/media/media-source/media-source-webm-vorbis-partial-expected.txt: Added.
+        * platform/mac-bigsur/media/media-source/media-source-webm-vorbis-partial.html: Added.
+
+2021-02-25  Myles C. Maxfield  <mmaxfield@apple.com>
+
+        REGRESSION(r269957): Empty font names passed to canvas2d cause all text routines to crash
+        https://bugs.webkit.org/show_bug.cgi?id=222402
+        <rdar://problem/72621268>
+
+        Reviewed by Darin Adler and Chris Lord.
+
+        * fast/text/canvas-font-resolution-2-expected.html: Added.
+        * fast/text/canvas-font-resolution-2.html: Added.
+        * fast/text/canvas-font-resolution-expected.txt: Added.
+        * fast/text/canvas-font-resolution.html: Added.
+
+2021-02-25  Amir Mark Jr  <amir_mark@apple.com>
+
+        [BigSur wk1] svg/clip-path/resource-clipper-multiple-repaints.html is flakey failing.
+        https://bugs.webkit.org/show_bug.cgi?id=221506
+
+        Unreviewed test gardening.
+
+        * platform/mac-wk1/TestExpectations:
+
+2021-02-25  Eric Carlson  <eric.carlson@apple.com>
+
+        [GPUP] Some media-capabilities tests fail when media in GPU Process is enabled
+        https://bugs.webkit.org/show_bug.cgi?id=221691
+        <rdar://problem/74439420>
+
+        Reviewed by Jer Noble.
+
+        * platform/wk2/TestExpectations: Un-skip tests that no longer fail.
+
+2021-02-25  Jer Noble  <jer.noble@apple.com>
+
+        [Cocoa] Files from webmfiles.org do not play through MSE
+        https://bugs.webkit.org/show_bug.cgi?id=222403
+        <rdar://74640660>
+
+        Reviewed by Eric Carlson.
+
+        * platform/mac-bigsur/media/media-source/content/test-vp8-malformed-header-manifest.json: Added.
+        * platform/mac-bigsur/media/media-source/content/test-vp8-malformed-header.webm: Added.
+        * platform/mac-bigsur/media/media-source/media-source-webm-vp8-malformed-header-expected.txt: Added.
+        * platform/mac-bigsur/media/media-source/media-source-webm-vp8-malformed-header.html: Added.
+
+2021-02-25  Robert Jenner  <jenner@apple.com>
+
+        [ macOS Wk2 ] media/media-fragments/TC0051.html is flakey crashing
+        https://bugs.webkit.org/show_bug.cgi?id=222277
+
+        Unreviewed test gardening.
+
+        * platform/mac-wk2/TestExpectations: Skipping 3 mediacapture-record tests, and marking 1 as Pass Failure due to tests causing other tests to crash.
+
+2021-02-25  Chris Gambrell  <cgambrell@apple.com>
+
+        [LayoutTests] Convert http/tests/contentdispositionattachmentsandbox convert PHP to Python
+        https://bugs.webkit.org/show_bug.cgi?id=221966
+        <rdar://problem/74393682>
+
+        Reviewed by Jonathan Bedard.
+
+        * http/tests/contentdispositionattachmentsandbox/at-import-stylesheets-disabled-expected.txt:
+        * http/tests/contentdispositionattachmentsandbox/at-import-stylesheets-disabled.html:
+        * http/tests/contentdispositionattachmentsandbox/cross-origin-frames-disabled-expected.txt:
+        * http/tests/contentdispositionattachmentsandbox/cross-origin-frames-disabled.html:
+        * http/tests/contentdispositionattachmentsandbox/external-stylesheets-disabled-expected.txt:
+        * http/tests/contentdispositionattachmentsandbox/external-stylesheets-disabled.html:
+        * http/tests/contentdispositionattachmentsandbox/form-submission-disabled-expected.txt:
+        * http/tests/contentdispositionattachmentsandbox/form-submission-disabled.html:
+        * http/tests/contentdispositionattachmentsandbox/http-equiv-disabled.html:
+        * http/tests/contentdispositionattachmentsandbox/plugins-disabled.html:
+        * http/tests/contentdispositionattachmentsandbox/referer-header-stripped-with-meta-referer-always.html:
+        * http/tests/contentdispositionattachmentsandbox/referer-header-stripped-with-meta-referer-default.html:
+        * http/tests/contentdispositionattachmentsandbox/referer-header-stripped-with-meta-referer-never.html:
+        * http/tests/contentdispositionattachmentsandbox/referer-header-stripped-with-meta-referer-no-referrer-when-downgrade.html:
+        * http/tests/contentdispositionattachmentsandbox/referer-header-stripped-with-meta-referer-no-referrer.html:
+        * http/tests/contentdispositionattachmentsandbox/referer-header-stripped-with-meta-referer-origin.html:
+        * http/tests/contentdispositionattachmentsandbox/referer-header-stripped-with-meta-referer-unsafe-url.html:
+        * http/tests/contentdispositionattachmentsandbox/referer-header-stripped.html:
+        * http/tests/contentdispositionattachmentsandbox/resources/at-import-stylesheets-frame.php: Removed.
+        * http/tests/contentdispositionattachmentsandbox/resources/at-import-stylesheets-frame.py: Added.
+        * http/tests/contentdispositionattachmentsandbox/resources/cross-origin-frames-frame.php: Removed.
+        * http/tests/contentdispositionattachmentsandbox/resources/cross-origin-frames-frame.py: Added.
+        * http/tests/contentdispositionattachmentsandbox/resources/echo-http-referer.php: Removed.
+        * http/tests/contentdispositionattachmentsandbox/resources/echo-http-referer.py: Added.
+        * http/tests/contentdispositionattachmentsandbox/resources/external-stylesheets-frame.php: Removed.
+        * http/tests/contentdispositionattachmentsandbox/resources/external-stylesheets-frame.py: Added.
+        * http/tests/contentdispositionattachmentsandbox/resources/form-submission-frame.php: Removed.
+        * http/tests/contentdispositionattachmentsandbox/resources/form-submission-frame.py: Added.
+        * http/tests/contentdispositionattachmentsandbox/resources/http-equiv-frame.php: Removed.
+        * http/tests/contentdispositionattachmentsandbox/resources/http-equiv-frame.py: Added.
+        * http/tests/contentdispositionattachmentsandbox/resources/plugins-frame.php: Removed.
+        * http/tests/contentdispositionattachmentsandbox/resources/plugins-frame.py: Added.
+        * http/tests/contentdispositionattachmentsandbox/resources/referer-header-stripped-frame.php: Removed.
+        * http/tests/contentdispositionattachmentsandbox/resources/referer-header-stripped-frame.py: Added.
+        * http/tests/contentdispositionattachmentsandbox/resources/scripts-frame.php: Removed.
+        * http/tests/contentdispositionattachmentsandbox/resources/scripts-frame.py: Added.
+        * http/tests/contentdispositionattachmentsandbox/resources/xml-stylesheet-processing-instructions-frame.php: Removed.
+        * http/tests/contentdispositionattachmentsandbox/resources/xml-stylesheet-processing-instructions-frame.py: Added.
+        * http/tests/contentdispositionattachmentsandbox/scripts-disabled-expected.txt:
+        * http/tests/contentdispositionattachmentsandbox/scripts-disabled.html:
+        * http/tests/contentdispositionattachmentsandbox/xml-stylesheet-processing-instructions-disabled-expected.txt:
+        * http/tests/contentdispositionattachmentsandbox/xml-stylesheet-processing-instructions-disabled.html:
+
+2021-02-25  Said Abou-Hallawa  <said@apple.com>
+
+        [GPU Process] Stroke and fill StateChangeFlags should be set exclusively 
+        https://bugs.webkit.org/show_bug.cgi?id=222379
+        <rdar://problem/73610005>
+
+        Reviewed by Simon Fraser.
+
+        * fast/canvas/stroke-text-after-gradient-fill-change-expected.txt: Added.
+        * fast/canvas/stroke-text-after-gradient-fill-change.html: Added.
+
+2021-02-25  Ryan Haddad  <ryanhaddad@apple.com>
+
+        Unreviewed, reverting r273470.
+
+        New test is asserting on WK1 and iOS bots
+
+        Reverted changeset:
+
+        "[css-grid] Do not allow negative heights"
+        https://bugs.webkit.org/show_bug.cgi?id=221439
+        https://commits.webkit.org/r273470
+
 2021-02-24  Peng Liu  <peng.liu6@apple.com>
 
         [GPUP] Remove duplicated items in LayoutTests/gpu-process/TestExpectations related to media
