@@ -49,6 +49,7 @@ BackingStore::~BackingStore()
 {
 }
 
+#if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
 void BackingStore::incorporateUpdate(const UpdateInfo& updateInfo)
 {
     ASSERT(m_size == updateInfo.viewSize);
@@ -65,5 +66,6 @@ void BackingStore::incorporateUpdate(const UpdateInfo& updateInfo)
     
     incorporateUpdate(bitmap.get(), updateInfo);
 }
+#endif
 
 } // namespace WebKit

@@ -29,6 +29,7 @@
 #include "NotImplemented.h"
 #include <WebCore/BitmapImage.h>
 #include <WebCore/GraphicsContext.h>
+#include <WebCore/StillImage.h>
 
 #include <Bitmap.h>
 #include <View.h>

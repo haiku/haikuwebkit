@@ -1,3 +1,5 @@
+include(Headers.cmake)
+
 list(APPEND WebKit_SOURCES
     NetworkProcess/cache/NetworkCacheDataHaiku.cpp
     NetworkProcess/cache/NetworkCacheIOChannelHaiku.cpp
@@ -75,6 +77,7 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/fileapi"
     "${FORWARDING_HEADERS_DIR}/WebCore"
     "${DERIVED_SOURCES_WEBCORE_DIR}"
+    /system/develop/headers/private/netservices
 )
 
 set(WebKit_LOCAL_INCLUDE_DIRECTORIES
@@ -137,11 +140,8 @@ set(WebKit_FORWARDING_HEADERS_DIRECTORIES
    Platform/IPC/unix
    WebProcess/InjectedBundle/API/c
 )
-set(WebKit_FORWARDING_HEADERS_FILES
-    #Platform/classifier/ResourceLoadStatisticsClassifier.h
-    Platform/IPC/unix/UnixMessage.h
-)
 
-#WEBKIT_CREATE_FORWARDING_HEADERS(WebKit FILES ${WebKit_FORWARDING_HEADERS_FILES} DIRECTORIES 
-#${WebKit_FORWARDING_HEADERS_DIRECTORIES})
+list(APPEND WebKit_PUBLIC_FRAMEWORK_HEADERS
+    Shared/API/c/haiku/WKBaseHaiku.h
+)
 

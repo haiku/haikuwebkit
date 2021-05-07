@@ -36,6 +36,10 @@
 #include "ColorSpaceData.h"
 #endif
 
+#if PLATFORM(HAIKU)
+#include <WebCore/PlatformImage.h>
+#endif
+
 #if USE(DIRECT2D)
 interface ID2D1Bitmap;
 interface ID2D1RenderTarget;

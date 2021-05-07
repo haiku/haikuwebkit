@@ -71,5 +71,11 @@ Data concatenate(const Data& a, const Data& b)
     return { };
 }
 
+Data Data::adoptMap(WTF::FileSystemImpl::MappedFileData&&, WTF::FileSystemImpl::PlatformFileHandle)
+{
+    notImplemented();
+    return { };
+}
+
 } // namespace NetworkCache
 } // namespace WebKit
