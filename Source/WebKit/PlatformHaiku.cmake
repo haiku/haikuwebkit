@@ -8,7 +8,6 @@ list(APPEND WebKit_SOURCES
     NetworkProcess/haiku/RemoteNetworkingContextHaiku.cpp
     NetworkProcess/haiku/NetworkSessionHaiku.cpp
 
-    Platform/IPC/haiku/AttachmentHaiku.cpp
     Platform/IPC/haiku/ConnectionHaiku.cpp
 
     Platform/haiku/LoggingHaiku.cpp

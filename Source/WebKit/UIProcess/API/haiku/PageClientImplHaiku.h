@@ -29,7 +29,7 @@
 #include "DefaultUndoController.h"
 
 #include <WebCore/IntPoint.h>
-#include "IntRect.h"
+#include <WebCore/IntRect.h>
 
 namespace WebKit
 {

@@ -81,12 +81,12 @@ namespace IPC{
     	status_t result;
 
     	result = message->FindData("bufferData",B_ANY_TYPE,(const void**)&Buffer,(ssize_t*)&size);
-    	
+
     	if(result == B_OK)
     	{
     		Vector<Attachment> attachments(0);
-    		auto decoder = std::make_unique<Decoder>(Buffer,size,nullptr,WTFMove(attachments));
-    		processIncomingMessage(WTFMove(decoder));
+    		auto decoder = Decoder::create(Buffer,size,nullptr,WTFMove(attachments));
+    		processIncomingMessage(std::move(decoder));
     	}
     	else
     	{
@@ -137,9 +137,9 @@ namespace IPC{
     }
     bool Connection::platformCanSendOutgoingMessages() const
     {
-    	return !m_pendingWriteEncoder;
+    	return true;
     }
-    bool Connection::sendOutgoingMessage(WTF::UniqueRef<IPC::Encoder>&& encoder)
+    bool Connection::sendOutgoingMessage(UniqueRef<Encoder>&& encoder)
     {
     	BMessage processMessage('ipcm');
     	processMessage.AddString("identifier",m_connectedProcess.key.String());
@@ -153,7 +153,7 @@ namespace IPC{
     	return true;
     	else
     	{
-    		m_pendingWriteEncoder = WTFMove(encoder);
+    		m_pendingWriteEncoder = encoder.moveToUniquePtr();
     		return false;
     	}
     }
