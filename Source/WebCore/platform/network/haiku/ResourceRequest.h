@@ -33,8 +33,7 @@
 #include <String.h>
 #include <UrlRequest.h>
 
-class BUrlContext;
-class BUrlRequest;
+using namespace BPrivate::Network;
 
 namespace WebCore {
 
