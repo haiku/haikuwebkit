@@ -26,15 +26,17 @@
 #include "config.h" 
 #include "NetworkDataTaskHaiku.h"
 
+#include "AuthenticationManager.h"
+#include "NetworkResourceLoader.h"
+
 #include <WebCore/AuthenticationChallenge.h>
 #include <WebCore/CookieJar.h>
+#include <WebCore/HTTPParsers.h>
 #include <WebCore/NetworkStorageSession.h>
 #include <WebCore/ResourceError.h>
 #include <WebCore/ResourceResponse.h>
 #include <WebCore/SameSiteInfo.h>
 #include <WebCore/SharedBuffer.h>
-#include <WebCore/HTTPParsers.h>
-#include <wtf/MainThread.h>
 #include <wtf/text/CString.h>
 
 #include <Url.h>
@@ -58,19 +60,16 @@ NetworkDataTaskHaiku::NetworkDataTaskHaiku(NetworkSession& session, NetworkDataT
     , m_postData(NULL)
     , m_responseDataSent(false)
     , m_redirected(false)
-    , m_redirectionTries(gMaxRecursionLimit)
     , m_position(0)
+    , m_redirectionTries(gMaxRecursionLimit)
 {
-    if (m_scheduledFailureType != NoFailure)
-        return;
-
     auto request = requestWithCredentials;
     if (request.url().protocolIsInHTTPFamily()) {
         m_startTime = MonotonicTime::now();
         auto url = request.url();
         if (m_storedCredentialsPolicy == StoredCredentialsPolicy::Use) {
             m_user = url.user();
-            m_password = url.pass();
+            m_password = url.password();
             request.removeCredentials();
         }
     }
@@ -105,7 +104,7 @@ void NetworkDataTaskHaiku::createRequest(ResourceRequest&& request)
         if (method == B_HTTP_POST || method == B_HTTP_PUT) {
             FormData* form = m_currentRequest.httpBody();
             if (form) {
-                m_postData = new BFormDataIO(form);
+                m_postData = new BFormDataIO(form, sessionID());
                 httpRequest->AdoptInputData(m_postData, m_postData->Size());
             }
         }
@@ -178,15 +177,15 @@ void NetworkDataTaskHaiku::ConnectionOpened(BUrlRequest*)
     m_responseDataSent = false;
 }
 
-void NetworkDataTaskHaiku::HeadersReceived(BUrlRequest* caller, const BUrlResult& result)
+void NetworkDataTaskHaiku::HeadersReceived(BUrlRequest* caller)
 {
     if (m_currentRequest.isNull())
         return;
 
-    const BHttpResult* httpResult = dynamic_cast<const BHttpResult*>(&result);
+    const BHttpResult* httpResult = dynamic_cast<const BHttpResult*>(&caller->Result());
 
-    WTF::String contentType = result.ContentType();
-    int contentLength = result.Length();
+    WTF::String contentType = caller->Result().ContentType();
+    int contentLength = caller->Result().Length();
     URL url;
 
     WTF::String encoding = extractCharsetFromMediaType(contentType);
@@ -263,30 +262,29 @@ void NetworkDataTaskHaiku::HeadersReceived(BUrlRequest* caller, const BUrlResult
         m_client->willPerformHTTPRedirection(WTFMove(responseCopy),WTFMove(request),
             [this](const ResourceRequest& newRequest)
             {
-
                 if(newRequest.isNull() || m_state == State::Canceling)
                     return;
 
                 m_startTime = MonotonicTime::now();//network metrics
 
-                if (m_state != State::Suspended) {
+                if( m_state != State::Suspended ){
                     m_state = State::Suspended;
                     resume();
                 }
-            });
+            }
+        );
     } else {
         ResourceResponse responseCopy = response;
-        m_client->didReceiveResponse(WTFMove(responseCopy),[this](WebCore::PolicyAction policyAction){
-            if (m_state == State::Canceling || m_state == State::Completed) {
+        m_client->didReceiveResponse(WTFMove(responseCopy), NegotiatedLegacyTLS::No, [this](WebCore::PolicyAction policyAction){
+            if(m_state == State::Canceling || m_state == State::Completed){
                 return;
             }
         });
     }
 }
-
-void NetworkDataTaskHaiku::DataReceived(BUrlRequest* caller, const char* data, off_t position,
-        ssize_t size)
+void NetworkDataTaskHaiku::BytesWritten(BUrlRequest* caller, size_t size)
 {
+#if 0 // FIXME need to have a BDataIO to handle this
     if (m_currentRequest.isNull())
         return;
 
@@ -312,9 +310,10 @@ void NetworkDataTaskHaiku::DataReceived(BUrlRequest* caller, const char* data, o
     }
 
     m_position += size;
+#endif
 }
 
-void NetworkDataTaskHaiku::UploadProgress(BUrlRequest* caller, ssize_t bytesSent, ssize_t bytesTotal)
+void NetworkDataTaskHaiku::UploadProgress(BUrlRequest* caller, off_t bytesSent, off_t bytesTotal)
 {
 }
 
