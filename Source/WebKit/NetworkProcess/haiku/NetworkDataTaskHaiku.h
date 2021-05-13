@@ -28,6 +28,8 @@
 #include "config.h"
 #include "NetworkDataTask.h"
 
+#include <wtf/MonotonicTime.h>
+
 #include <WebCore/ResourceResponse.h>
 #include <WebCore/ResourceRequest.h>
 #include <WebCore/NetworkLoadMetrics.h>
@@ -36,9 +38,16 @@
 #include <WebCore/HaikuFormDataStream.h>
 #endif
 
-#include <UrlProtocolAsynchronousListener.h>
-#include <Referenceable.h>
 #include <Path.h>
+#include <Referenceable.h>
+#include <UrlProtocolAsynchronousListener.h>
+#include <UrlResult.h>
+
+using namespace BPrivate::Network;
+
+namespace WebCore {
+    class BFormDataIO;
+}
 
 namespace WebKit {
 using namespace WebCore;
@@ -75,10 +84,9 @@ private:
     void runOnMainThread(Function<void()>&&);
 
     void ConnectionOpened(BUrlRequest* caller) override;
-    void HeadersReceived(BUrlRequest* caller, const BUrlResult& result) override;
-    void DataReceived(BUrlRequest* caller, const char* data, off_t position,
-        ssize_t size) override;
-    void UploadProgress(BUrlRequest* caller, ssize_t bytesSent, ssize_t bytesTotal) override;
+    void HeadersReceived(BUrlRequest* caller) override;
+    void BytesWritten(BUrlRequest* caller, size_t size) override;
+    void UploadProgress(BUrlRequest* caller, off_t bytesSent, off_t bytesTotal) override;
     void RequestCompleted(BUrlRequest* caller, bool success) override;
     bool CertificateVerificationFailed(BUrlRequest* caller, BCertificate& certificate, const char* message) override;
     void DebugMessage(BUrlRequest* caller,BUrlProtocolDebugMessage type,const char* text) override;
