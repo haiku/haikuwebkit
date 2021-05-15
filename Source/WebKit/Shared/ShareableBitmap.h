@@ -150,11 +150,7 @@ public:
 
     WebCore::PlatformImagePtr createPlatformImage() { return createCairoSurface(); }
 #elif PLATFORM(HAIKU)
-    // This creates a BitmapImage that directly references the shared bitmap data.
-    // This is only safe to use when we know that the contents of the shareable bitmap won't change.
-    WebCore::PlatformImagePtr createBitmapSurface();
-
-    WebCore::PlatformImagePtr createPlatformImage() { return createBitmapSurface(); }
+    WebCore::PlatformImagePtr createPlatformImage();
 #elif USE(DIRECT2D)
     COMPtr<ID2D1Bitmap> createDirect2DSurface(ID3D11Device1*, ID2D1RenderTarget*);
     IDXGISurface1* dxSurface() { return m_surface.get(); }
