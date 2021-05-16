@@ -101,7 +101,11 @@ CheckedUint32 ShareableBitmapConfiguration::calculateBytesPerPixel(const WebCore
 
 std::optional<WebCore::DestinationColorSpace> ShareableBitmapConfiguration::validateColorSpace(std::optional<WebCore::DestinationColorSpace> space)
 {
-        return space;
+    return space;
+}
+
+void ShareableBitmap::setOwnershipOfMemory(const ProcessIdentity&)
+{
 }
 
 }
