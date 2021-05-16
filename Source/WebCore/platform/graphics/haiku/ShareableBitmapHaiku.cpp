@@ -96,7 +96,11 @@ Checked<unsigned int, RecordOverflow> ShareableBitmapConfiguration::calculateByt
 
 std::optional<WebCore::DestinationColorSpace> ShareableBitmapConfiguration::validateColorSpace(std::optional<WebCore::DestinationColorSpace> space)
 {
-        return space;
+    return space;
+}
+
+void ShareableBitmap::setOwnershipOfMemory(const ProcessIdentity&)
+{
 }
 
 }

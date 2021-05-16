@@ -35,7 +35,6 @@ set(USE_ANGLE_EGL OFF)
 #		string(REGEX REPLACE "-DNDEBUG" "-UNDEBUG" ${flag_var} "${${flag_var}}")
 #	endif(${flag_var} MATCHES "-DNDEBUG")
 #endforeach(flag_var)
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fvisibility-inlines-hidden")
 
 find_package(ICU REQUIRED COMPONENTS data i18n uc)
 FIND_PACKAGE(JPEG REQUIRED)
@@ -134,7 +133,6 @@ if (USE_WOFF2)
 endif ()
 
 if (ENABLE_WEBGL)
-    find_package(OpenGL REQUIRED)
     option(ENABLE_EGL ON)
 
     if (ENABLE_EGL)
@@ -142,16 +140,11 @@ if (ENABLE_WEBGL)
     endif ()
 
     if (EGL_FOUND)
-		SET_AND_EXPOSE_TO_BUILD(USE_EGL TRUE)
+        SET_AND_EXPOSE_TO_BUILD(USE_EGL TRUE)
         option(ENABLE_GLES2 ON)
-
-        if (ENABLE_GLES2)
-            find_package(GLES REQUIRED)
-        endif ()
 
         if (OPENGLES2_FOUND)
             set(USE_OPENGL_ES_2 1)
-            add_definitions(-DUSE_OPENGL_ES_2=1)
         endif ()
     endif ()
 
@@ -164,6 +157,23 @@ SET_AND_EXPOSE_TO_BUILD(USE_INSPECTOR_SOCKET_SERVER ${ENABLE_REMOTE_INSPECTOR})
 
 find_package(OpenSSL REQUIRED)
 SET_AND_EXPOSE_TO_BUILD(USE_OPENSSL ON)
+
+if (ENABLE_GLES2)
+    find_package(OpenGLES2 REQUIRED)
+    SET_AND_EXPOSE_TO_BUILD(USE_OPENGL_ES TRUE)
+    SET_AND_EXPOSE_TO_BUILD(USE_OPENGL FALSE)
+
+    if (OpenGLES2_API_VERSION VERSION_GREATER_EQUAL 3.0)
+        SET_AND_EXPOSE_TO_BUILD(HAVE_OPENGL_ES_3 ON)
+    endif ()
+
+    if (NOT EGL_FOUND)
+        message(FATAL_ERROR "EGL is needed for ENABLE_GLES2.")
+    endif ()
+else ()
+    #find_package(OpenGL REQUIRED)
+    SET_AND_EXPOSE_TO_BUILD(USE_OPENGL FALSE)
+endif ()
 
 if (ENABLE_INSPECTOR)
     set(WEB_INSPECTOR_DIR "${DATA_INSTALL_DIR}/inspector")
@@ -179,9 +189,9 @@ endif()
 
 # Optimize binary size for release builds by removing dead sections
 if (CMAKE_BUILD_TYPE STREQUAL Release AND CMAKE_COMPILER_IS_GNUCC)
-	string(APPEND CMAKE_C_FLAGS   " -ffunction-sections -fdata-sections")
-	string(APPEND CMAKE_CXX_FLAGS " -ffunction-sections -fdata-sections")
-	string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--gc-sections")
+    string(APPEND CMAKE_C_FLAGS   " -ffunction-sections -fdata-sections")
+    string(APPEND CMAKE_CXX_FLAGS " -ffunction-sections -fdata-sections")
+    string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--gc-sections")
 endif ()
 
 # Haiku actually make use of rtti in several places, so we can't really disable
@@ -192,12 +202,12 @@ string(APPEND CMAKE_CXX_FLAGS_RELEASE " -frtti")
 string(TOLOWER ${CMAKE_HOST_SYSTEM_PROCESSOR} LOWERCASE_CMAKE_HOST_SYSTEM_PROCESSOR)
 if (CMAKE_COMPILER_IS_GNUCC AND "${LOWERCASE_CMAKE_HOST_SYSTEM_PROCESSOR}" STREQUAL "x86")
     # i686 is the official requirement for Haiku, but WebKit really wants to use SSE2, so use
-	# a 'newer' architecture here.
-	string(APPEND CMAKE_C_FLAGS   " -march=pentium4")
-	string(APPEND CMAKE_CXX_FLAGS " -march=pentium4")
+    # a 'newer' architecture here.
+    string(APPEND CMAKE_C_FLAGS   " -march=pentium4")
+    string(APPEND CMAKE_CXX_FLAGS " -march=pentium4")
 endif()
 
-SET_AND_EXPOSE_TO_BUILD(USE_TEXTURE_MAPPER OFF)
+SET_AND_EXPOSE_TO_BUILD(USE_TEXTURE_MAPPER ON)
 SET_AND_EXPOSE_TO_BUILD(USE_TEXTURE_MAPPER_GL OFF)
 SET_AND_EXPOSE_TO_BUILD(ENABLE_GRAPHICS_CONTEXT_GL OFF)
 SET_AND_EXPOSE_TO_BUILD(USE_EGL FALSE)
@@ -218,7 +228,7 @@ if (ENABLE_WEBGL)
     endif ()
 endif ()
 
-SET_AND_EXPOSE_TO_BUILD(ENABLE_GRAPHICS_CONTEXT_3D FALSE)
+#SET_AND_EXPOSE_TO_BUILD(ENABLE_GRAPHICS_CONTEXT_3D FALSE)
 
 if (ENABLE_SPELLCHECK)
     find_package(Enchant REQUIRED)
@@ -227,7 +237,7 @@ endif ()
 if (ENABLE_ACCESSIBILITY)
     find_package(ATK REQUIRED)
 else ()
-	SET_AND_EXPOSE_TO_BUILD(HAVE_ACCESSIBILITY FALSE)
+    SET_AND_EXPOSE_TO_BUILD(HAVE_ACCESSIBILITY FALSE)
 endif ()
 
 if (ENABLE_INDEXED_DATABASE)
@@ -252,9 +262,9 @@ endif ()
 find_library(GNU_LIBRARY gnu)
 
 set(CMAKE_C_STANDARD_LIBRARIES
-	"${CMAKE_C_STANDARD_LIBRARIES} ${GNU_LIBRARY}"
+    "${CMAKE_C_STANDARD_LIBRARIES} ${GNU_LIBRARY}"
 )
 set(CMAKE_CXX_STANDARD_LIBRARIES
-	"${CMAKE_CXX_STANDARD_LIBRARIES} ${GNU_LIBRARY}"
+    "${CMAKE_CXX_STANDARD_LIBRARIES} ${GNU_LIBRARY}"
 )
 
