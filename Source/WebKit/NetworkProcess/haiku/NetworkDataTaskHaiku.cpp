@@ -37,7 +37,9 @@
 #include <WebCore/ResourceResponse.h>
 #include <WebCore/SameSiteInfo.h>
 #include <WebCore/SharedBuffer.h>
+
 #include <wtf/text/CString.h>
+#include <wtf/MainThread.h>
 
 #include <Url.h>
 #include <UrlRequest.h>
@@ -227,7 +229,6 @@ void NetworkDataTaskHaiku::HeadersReceived(BUrlRequest* caller)
         }
 
         if (statusCode == 401) {
-
             //TODO
 
             //AuthenticationNeeded((BHttpRequest*)m_request, response);
@@ -303,8 +304,7 @@ void NetworkDataTaskHaiku::BytesWritten(BUrlRequest* caller, size_t size)
 
     if (size > 0) {
         m_responseDataSent = true;
-
-        runOnMainThread([this,data = data, size = size]{
+        runOnMainThread([this, data=data, size=size] {
             m_client->didReceiveData(SharedBuffer::create(data,size));
         });
     }
@@ -323,10 +323,20 @@ void NetworkDataTaskHaiku::RequestCompleted(BUrlRequest* caller, bool success)
 
 bool NetworkDataTaskHaiku::CertificateVerificationFailed(BUrlRequest* caller, BCertificate& certificate, const char* message)
 {
+    //TODO
+    return true;
 }
 
-void NetworkDataTaskHaiku::DebugMessage(BUrlRequest* caller,BUrlProtocolDebugMessage type,const char* text)
+void NetworkDataTaskHaiku::DebugMessage(BUrlRequest* caller, BUrlProtocolDebugMessage type, const char* text)
 {
+}
+
+void NetworkDataTaskHaiku::runOnMainThread(Function<void()>&& task)
+{
+    if(isMainThread())
+        task();
+    else
+        callOnMainThreadAndWait(WTFMove(task));
 }
 
 }
