@@ -46,14 +46,24 @@ list(APPEND WebKit_SOURCES
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/WebCoreSupport/haiku/WebFrameNetworkingContext.cpp
     WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
-    WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
 
     WebProcess/WebPage/haiku/WebInspectorHaiku.cpp
     WebProcess/WebPage/haiku/WebPageHaiku.cpp
+    WebProcess/WebPage/AcceleratedSurface.cpp
 
     WebProcess/haiku/WebProcessHaiku.cpp
     WebProcess/haiku/WebProcessMainHaiku.cpp
 )
+
+if (USE_COORDINATED_GRAPHICS)
+    list(APPEND WebKit_SOURCES
+        WebProcess/WebPage/CoordinatedGraphics/CompositingRunLoop.cpp
+        WebProcess/WebPage/CoordinatedGraphics/CoordinatedSceneState.cpp
+        WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
+        WebProcess/WebPage/CoordinatedGraphics/ThreadedCompositor.cpp
+        WebProcess/WebPage/CoordinatedGraphics/ThreadedDisplayRefreshMonitor.cpp
+    )
+endif ()
 
 list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${DERIVED_SOURCES_HAIKU_API_DIR}"
