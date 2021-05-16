@@ -26,8 +26,8 @@
 #include "config.h"
 #include "ShareableBitmap.h"
 
-#include "BitmapImage.h"
 #include "NotImplemented.h"
+#include <WebCore/BitmapImage.h>
 #include <WebCore/GraphicsContext.h>
 
 #include <Bitmap.h>
@@ -37,13 +37,13 @@ using namespace WebCore;
 
 namespace WebKit {
 
-static inline RefPtr<StillImage> createSurfaceFromData(void* data, const WebCore::IntSize& size)
+static inline NativeImagePtr createSurfaceFromData(void* data, const WebCore::IntSize& size)
 {
-	BitmapRef* bitmap = new BitmapRef(BRect(B_ORIGIN, size), B_RGBA32, false);
+    BitmapRef* bitmap = new BitmapRef(BRect(B_ORIGIN, size), B_RGBA32, false);
 
     bitmap->ImportBits(static_cast<unsigned char*>(data),
-		size.width() * size.height() * 4, 32 * size.height(), 0, B_RGB32);
-    RefPtr<StillImage> image = StillImage::create(adoptRef(bitmap));
+        size.width() * size.height() * 4, 32 * size.height(), 0, B_RGB32);
+    NativeImagePtr image = StillImage::create(adoptRef(bitmap));
     return image;
 }
 
