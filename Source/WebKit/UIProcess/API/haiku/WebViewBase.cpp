@@ -34,7 +34,7 @@ using namespace WebCore;
 
 WebKit::WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     const API::PageConfiguration& pageConfig)
-    : BView(name, B_WILL_DRAW),
+    : BView(name, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE),
     fPageClient(std::make_unique<PageClientImpl>(*this))
 {
     auto config = pageConfig.copy();
@@ -56,6 +56,7 @@ WebKit::WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWi
 
     if (fPage->drawingArea())
     {
+        setSize = true;
         fPage->drawingArea()->setSize(IntSize(rect.right - rect.left,
             rect.top - rect.bottom));
     }
@@ -63,14 +64,32 @@ WebKit::WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWi
 
 void WebViewBase::paint(const IntRect& dirtyRect)
 {
-    if(dirtyRect.isEmpty())
-    {
-        return;
-    }
-    fPage->endPrinting();
 }
 
-void WebViewBase::MouseMoved(BPoint where,uint32 code,const BMessage* dragMessage)
+void WebViewBase::FrameResized(float newWidth, float newHeight)
+{
+    auto drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(page()->drawingArea());
+    if (!drawingArea)
+        return;
+    drawingArea->setSize(IntSize(newWidth, newHeight));
+}
+
+void WebViewBase::Draw(BRect update)
+{
+    auto drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(page()->drawingArea());
+    if (!drawingArea)
+        return;
+
+    if (!setSize) {
+        setSize = true;
+        BRect rect = Frame();
+        drawingArea->setSize(IntSize(rect.right - rect.left, rect.bottom - rect.top));
+    }
+    IntRect updateArea(update);
+    WebCore::Region unpainted;
+    drawingArea->paint(this, updateArea, unpainted);
+}
+
+void WebViewBase::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
 {
 }
-

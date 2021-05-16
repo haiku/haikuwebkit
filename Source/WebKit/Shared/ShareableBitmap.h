@@ -37,7 +37,7 @@
 #include <wtf/ThreadSafeRefCounted.h>
 
 #if PLATFORM(HAIKU)
-#include "StillImageHaiku.h"
+#include <WebCore/PlatformImage.h>
 #endif
 
 namespace WebCore {
@@ -182,7 +182,7 @@ public:
 #elif PLATFORM(HAIKU)
     // This creates a BitmapImage that directly references the shared bitmap data.
     // This is only safe to use when we know that the contents of the shareable bitmap won't change.
-    RefPtr<WebCore::StillImage> createBitmapSurface();
+    WebCore::PlatformImagePtr createBitmapSurface();
 
     WebCore::PlatformImagePtr createPlatformImage(WebCore::BackingStoreCopy = WebCore::CopyBackingStore, WebCore::ShouldInterpolate = WebCore::ShouldInterpolate::No) { return createBitmapSurface(); }
 #endif

@@ -43,6 +43,7 @@ endif()
 list(APPEND WebCore_INCLUDE_DIRECTORIES
   "${THIRDPARTY_DIR}/ANGLE/"
   "${THIRDPARTY_DIR}/ANGLE/include/KHR"
+  "${THIRDPARTY_DIR}/ANGLE/include/GLSLANG"
   "${WEBCORE_DIR}/page/scrolling/coordinatedgraphics"
   "${WEBCORE_DIR}/platform/haiku"
   "${WEBCORE_DIR}/platform/graphics/egl"
@@ -50,6 +51,7 @@ list(APPEND WebCore_INCLUDE_DIRECTORIES
   "${WEBCORE_DIR}/platform/graphics/opentype"
   "${WEBCORE_DIR}/platform/graphics/texmap/coordinated"
   "${WEBCORE_DIR}/platform/mediacapabilities"
+  "${WEBCORE_DIR}/platform/graphics/opengl"
   "${FORWARDING_HEADERS_DIR}/JavaScriptCore"
   "${CMAKE_SOURCE_DIR}/Source"
 )
@@ -143,7 +145,19 @@ list(APPEND WebCore_SOURCES
 
   inspector/LegacyWebSocketInspectorInstrumentation.cpp
 )
-
+if(ENABLE_GRAPHICS_CONTEXT_3D)
+    list(APPEND WebCore_SOURCES
+        platform/graphics/haiku/GraphicsContext3DHaiku.cpp
+        platform/graphics/opengl/Extensions3DOpenGL.cpp
+        platform/graphics/opengl/Extensions3DOpenGLCommon.cpp
+        platform/graphics/GLContext.cpp
+        platform/graphics/OpenGLShims.cpp
+        platform/graphics/PlatformDisplay.cpp
+        platform/graphics/opengl/GraphicsContext3DOpenGLCommon.cpp
+        platform/graphics/opengl/GraphicsContext3DOpenGL.cpp
+        platform/graphics/opengl/TemporaryOpenGLSetting.cpp
+    )
+endif()
 if (ENABLE_WEB_CRYPTO)
     list(APPEND WebCore_SOURCES
         crypto/CryptoAlgorithm.cpp
@@ -181,8 +195,8 @@ endif ()
 
 if (ENABLE_WEB_AUDIO)
     list(APPEND WebCore_SOURCES
-		platform/audio/haiku/AudioDestinationHaiku.cpp
-	)
+        platform/audio/haiku/AudioDestinationHaiku.cpp
+    )
 endif ()
 
 list(APPEND WebCore_USER_AGENT_STYLE_SHEETS

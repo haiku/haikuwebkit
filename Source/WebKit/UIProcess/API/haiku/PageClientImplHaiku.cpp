@@ -63,10 +63,11 @@ namespace WebKit
 
     WebCore::IntSize PageClientImpl::viewSize()
     {
-        notImplemented();
-        /*if (fWebView.drawingArea())
-          return fWebView.drawingArea()->size();
-          */
+        if (fWebView.page()->drawingArea())
+        {
+            return fWebView.page()->drawingArea()->size();
+        }
+
         return IntSize();
     }
 
@@ -221,7 +222,7 @@ namespace WebKit
         notImplemented();
     }
 
-    void PageClientImpl::handleDownloadRequest(DownloadProxy* download)
+    void PageClientImpl::handleDownloadRequest(DownloadProxy& download)
     {
         notImplemented();
     }
@@ -311,7 +312,7 @@ namespace WebKit
         notImplemented();
     }
 
-    BView* PageClientImpl::viewWidget()
+    WebViewBase* PageClientImpl::viewWidget()
     {
         return &fWebView;
     }

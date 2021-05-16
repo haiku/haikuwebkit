@@ -141,6 +141,10 @@ void BWebView::stop()
 
 void BWebView::didCommitNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
 {
+    BView* view = ((BWebView*)clientInfo)->getRenderView();
+    view->LockLooper();
+    view->Invalidate();
+    view->UnlockLooper();
     BLooper* looper = ((BWebView*)clientInfo)->getAppLooper();
     BMessage message(DID_COMMIT_NAVIGATION);
     looper->PostMessage(&message);
