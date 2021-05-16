@@ -36,8 +36,8 @@ using namespace WebCore;
 
 WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     const API::PageConfiguration& pageConfig)
-    : BView(name, B_WILL_DRAW)
-    , fPageClient(std::make_unique<PageClientImpl>(*this))
+    : BView(name, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE),
+    fPageClient(std::make_unique<PageClientImpl>(*this))
 {
     auto config = pageConfig.copy();
     auto preferences = config->preferences();
@@ -60,13 +60,27 @@ const char* WebViewBase::currentURL() const
 
 void WebViewBase::paint(const IntRect& dirtyRect)
 {
-    if(dirtyRect.isEmpty()) {
-        return;
-    }
-    fPage->endPrinting();
 }
 
-void WebViewBase::MouseMoved(BPoint where,uint32 code,const BMessage* dragMessage)
+void WebViewBase::FrameResized(float newWidth, float newHeight)
+{
+    auto drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(page()->drawingArea());
+    if (!drawingArea)
+        return;
+    drawingArea->setSize(IntSize(newWidth, newHeight));
+}
+
+void WebViewBase::Draw(BRect update)
+{
+    auto drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(page()->drawingArea());
+    if (!drawingArea)
+        return;
+
+    IntRect updateArea(update);
+    WebCore::Region unpainted;
+    drawingArea->paint(this, updateArea, unpainted);
+}
+
+void WebViewBase::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
 {
 }
-
