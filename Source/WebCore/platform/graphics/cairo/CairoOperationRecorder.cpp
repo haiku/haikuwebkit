@@ -30,6 +30,7 @@
 #include "config.h"
 #include "CairoOperationRecorder.h"
 
+
 #if USE(CAIRO)
 #include "CairoOperations.h"
 #include "DecomposedGlyphs.h"
