@@ -5,8 +5,6 @@ list(APPEND WebKit_SOURCES
     NetworkProcess/haiku/NetworkProcessMainHaiku.cpp
     NetworkProcess/haiku/RemoteNetworkingContextHaiku.cpp
 
-    Platform/IPC/unix/AttachmentUnix.cpp
-    Platform/IPC/unix/ConnectionUnix.cpp
     Platform/haiku/LoggingHaiku.cpp
     Platform/haiku/ModuleHaiku.cpp
     Platform/unix/SharedMemoryUnix.cpp
@@ -22,7 +20,6 @@ list(APPEND WebKit_SOURCES
     UIProcess/API/haiku/APIWebsiteDataStoreHaiku.cpp
 
     UIProcess/DefaultUndoController.cpp
-    UIProcess/DrawingAreaProxyImpl.cpp
     UIProcess/BackingStore.cpp
 
     UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
@@ -72,7 +69,7 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     ${LIBXML2_INCLUDE_DIR}
     ${LIBXSLT_INCLUDE_DIRS}
     ${SQLITE_INCLUDE_DIRS}
-    ${WTF_DIR}
+    /system/develop/headers/private/netservices/
     ${WTF_DIR}
     "${WEBCORE_DIR}/platform"
     "${WEBCORE_DIR}/platform/text"
