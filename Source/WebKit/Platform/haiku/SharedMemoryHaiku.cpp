@@ -88,25 +88,6 @@ RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
     memory->m_size = size;
     memory->m_data = baseAddress;
     memory->m_areaid = sharedArea;
-    memory->m_bitmap = NULL;
-
-    return memory;
-}
-
-RefPtr<SharedMemory> SharedMemory::bitmapAllocate(WebCore::IntSize bounds)
-{
-    void* baseAddress;
-
-    area_id sharedArea = create_area("WebKit-shared-memory",&baseAddress,B_ANY_ADDRESS,
-        size,B_NO_LOCK,B_READ_AREA | B_WRITE_AREA);
-
-    if(sharedArea<0)
-    return nullptr;
-
-    RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
-    memory->m_size = size;
-    memory->m_data = baseAddress;
-    memory->m_areaid = sharedArea;
 
     return memory;
 }
@@ -116,7 +97,7 @@ RefPtr<SharedMemory> SharedMemory::map(const Handle& handle, Protection protecti
     RefPtr<SharedMemory> memory = adopt(handle.m_areaid, handle.m_size, protection);
     if(!memory)
     return nullptr;
-    
+
     handle.m_areaid = 0;
     return memory;
 }
