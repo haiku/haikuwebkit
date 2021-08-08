@@ -246,6 +246,7 @@ void CoordinatedGraphicsLayer::removeFromParent()
     GraphicsLayer::removeFromParent();
 }
 
+#if ENABLE(SCROLLING_THREAD)
 void CoordinatedGraphicsLayer::setScrollingNodeID(ScrollingNodeID nodeID)
 {
     if (scrollingNodeID() == nodeID)
@@ -254,6 +255,7 @@ void CoordinatedGraphicsLayer::setScrollingNodeID(ScrollingNodeID nodeID)
     GraphicsLayer::setScrollingNodeID(nodeID);
     m_nicosia.delta.scrollingNodeChanged = true;
 }
+#endif
 
 void CoordinatedGraphicsLayer::setPosition(const FloatPoint& p)
 {
@@ -1019,8 +1021,10 @@ void CoordinatedGraphicsLayer::flushCompositingStateForThisLayerOnly()
                     state.imageBacking = m_nicosia.imageBacking;
                 if (localDelta.animatedBackingStoreClientChanged)
                     state.animatedBackingStoreClient = m_nicosia.animatedBackingStoreClient;
+#if ENABLE(SCROLLING_THREAD)
                 if (localDelta.scrollingNodeChanged)
                     state.scrollingNodeID = scrollingNodeID();
+#endif
             });
         m_nicosia.performLayerSync = !!m_nicosia.delta.value;
         m_nicosia.delta = { };
