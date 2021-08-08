@@ -32,7 +32,6 @@
 #include <wtf/NeverDestroyed.h>
 
 namespace WebKit {
-using namespace std;
 
 String executablePathOfWebProcess()
 {

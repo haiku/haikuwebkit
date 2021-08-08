@@ -35,8 +35,6 @@
 #include <Looper.h>
 #include <String.h>
 
-using namespace std;
-
 namespace WebKit {
 
 class AuxiliaryProcessMainBase {

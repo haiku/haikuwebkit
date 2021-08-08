@@ -28,7 +28,6 @@
 #include <Message.h>
 #include <map>
 
-using namespace std;
 namespace WebKit{
 class ProcessInitHaiku: public BHandler
 {
@@ -59,7 +58,7 @@ class ProcessInitHaiku: public BHandler
         BLooper* looperTemp;
         message->FindString("identifier",&idTempStr);
         message->FindPointer("looper",(void**)&looperTemp);
-        string id(idTempStr);
+        std::string id(idTempStr);
         message = Looper()->DetachCurrentMessage();
         if(messengerMapping[id])
         {
@@ -75,13 +74,13 @@ class ProcessInitHaiku: public BHandler
             */
             looperMapping[id] = looperTemp;
         }
-        
     }
+
     void GlobalMessage(BMessage* message)
     {
         const char* idTempStr;
         message->FindString("identifier",&idTempStr);
-        string id(idTempStr);
+        std::string id(idTempStr);
         message = Looper()->DetachCurrentMessage();
         if(looperMapping[id])
         {
@@ -93,14 +92,15 @@ class ProcessInitHaiku: public BHandler
         }
         else
         {
-            /* 
+            /*
             We dont know about the looper yet so put in the mapping of messengers
             */
             messengerMapping[id] = message;
         }
     }
-    map<string,BLooper*> looperMapping;
-    map<string,BMessage*> messengerMapping;
-        
+
+    std::map<std::string,BLooper*> looperMapping;
+    std::map<std::string,BMessage*> messengerMapping;
 };
+
 }
