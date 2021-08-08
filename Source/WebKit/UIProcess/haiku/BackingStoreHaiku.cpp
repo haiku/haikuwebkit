@@ -29,7 +29,7 @@
 #include "WebViewConstants.h"
 
 #include <WebCore/IntRect.h>
-#include <WebCore/GraphicsContext.h>
+#include <WebCore/GraphicsContextHaiku.h>
 #include "UpdateInfo.h"
 
 #include <Bitmap.h>
@@ -52,7 +52,7 @@ void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& 
 
     IntPoint updateRectLocation = updateInfo.updateRectBounds.location();
 
-    GraphicsContext graphicsContext(m_surface);
+    GraphicsContextHaiku graphicsContext(m_surface);
 
     for(auto const& updateRect : updateInfo.updateRects)
     {
@@ -67,7 +67,7 @@ void BackingStore::incorporateUpdate(ShareableBitmap* bitmap, const UpdateInfo& 
 
 void BackingStore::paint(BView* context,const IntRect& rect)
 {
-    context->DrawBitmap(m_bitmap);
+    context->DrawBitmap(&*m_bitmap);
 }
 #endif
 
