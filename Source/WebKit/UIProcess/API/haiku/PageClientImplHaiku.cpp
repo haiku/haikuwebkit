@@ -26,7 +26,9 @@
 
 #include "PageClientImplHaiku.h"
 
+#include "DrawingAreaCoordinatedGraphics.h"
 #include "DrawingAreaProxyCoordinatedGraphics.h"
+#include "DrawingAreaProxy.h"
 #include "WebProcessProxy.h"
 #include "WebViewBase.h"
 
@@ -49,7 +51,7 @@ namespace WebKit
         //fWebView.setViewNeedsDisplay(region);
     }
 
-    void PageClientImpl::requestScroll(const WebCore::FloatPoint&, const WebCore::IntPoint&)
+    void PageClientImpl::requestScroll(const WebCore::FloatPoint&, const WebCore::IntPoint&, WebCore::ScrollIsAnimated)
     {
         notImplemented();
     }
@@ -280,9 +282,12 @@ namespace WebKit
         notImplemented();
     }
 
-    void PageClientImpl::didFinishLoadForMainFrame()
+    void PageClientImpl::didFinishNavigation(API::Navigation*)
     {
-        notImplemented();
+    }
+
+    void PageClientImpl::didFailNavigation(API::Navigation*)
+    {
     }
 
     void PageClientImpl::didSameDocumentNavigationForMainFrame(SameDocumentNavigationType)
@@ -319,5 +324,20 @@ namespace WebKit
     {
         return &fWebView;
     }
+
+#if ENABLE(DATE_AND_TIME_INPUT_TYPES)
+RefPtr<WebDateTimePicker> PageClientImpl::createDateTimePicker(WebPageProxy& page)
+{
+    //return WebDateTimePickerHaiku::create(page);
+    return nullptr;
+}
+#endif
+
+#if ENABLE(FULLSCREEN_API)
+WebFullScreenManagerProxyClient& PageClientImpl::fullScreenManagerProxyClient()
+{
+    //return *this;
+}
+#endif
 
 }
