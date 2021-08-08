@@ -127,7 +127,7 @@ void NetworkDataTaskHaiku::createRequest(ResourceRequest&& request)
             m_baseUrl,
             "The service kit failed to start the request.");
             
-        m_networkLoadMetrics.responseEnd = MonotonicTime::now() - m_startTime;
+        m_networkLoadMetrics.responseEnd = MonotonicTime::now();
         m_networkLoadMetrics.markComplete();
         m_client->didCompleteWithError(error,m_networkLoadMetrics);
     }
@@ -148,12 +148,9 @@ void NetworkDataTaskHaiku::cancel()
 void NetworkDataTaskHaiku::resume()
 {
     if(m_state == State::Completed || m_state == State::Canceling)
-    return;
-    
+        return;
+
     m_state = State::Running;
-    
-    if(m_request)
-    m_request->Resume();
 }
 
 void NetworkDataTaskHaiku::invalidateAndCancel()
@@ -241,7 +238,7 @@ void NetworkDataTaskHaiku::HeadersReceived(BUrlRequest* caller)
             ResourceError error(url.host().utf8().data(), 400, url,
                 "Redirection limit reached");
 
-            m_networkLoadMetrics.responseEnd = MonotonicTime::now() - m_startTime;
+            m_networkLoadMetrics.responseEnd = MonotonicTime::now();
             m_networkLoadMetrics.markComplete();
             m_client->didCompleteWithError(error,m_networkLoadMetrics);
             return;
