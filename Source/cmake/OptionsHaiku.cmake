@@ -33,7 +33,6 @@ set(USE_ANGLE_EGL OFF)
 #		string(REGEX REPLACE "-DNDEBUG" "-UNDEBUG" ${flag_var} "${${flag_var}}")
 #	endif(${flag_var} MATCHES "-DNDEBUG")
 #endforeach(flag_var)
-#set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -fvisibility-inlines-hidden")
 
 find_package(LibGcrypt 1.7.0 REQUIRED)
 FIND_PACKAGE(SQLite3 REQUIRED)
@@ -123,7 +122,6 @@ set(USE_3D_GRAPHICS 0)
 add_definitions(-DUSE_3D_GRAPHICS=0)
 
 if (ENABLE_WEBGL)
-    find_package(OpenGL REQUIRED)
     option(ENABLE_EGL ON)
 
     if (ENABLE_EGL)
@@ -134,19 +132,31 @@ if (ENABLE_WEBGL)
 		SET_AND_EXPOSE_TO_BUILD(USE_EGL TRUE)
         option(ENABLE_GLES2 ON)
 
-        if (ENABLE_GLES2)
-            find_package(GLES REQUIRED)
-        endif ()
-
         if (OPENGLES2_FOUND)
             set(USE_OPENGL_ES_2 1)
-            add_definitions(-DUSE_OPENGL_ES_2=1)
         endif ()
     endif ()
 
      if (EGL_FOUND)
          set(USE_GRAPHICS_SURFACE 1)
      endif ()
+endif ()
+
+if (ENABLE_GLES2)
+	find_package(OpenGLES2 REQUIRED)
+	SET_AND_EXPOSE_TO_BUILD(USE_OPENGL_ES TRUE)
+	SET_AND_EXPOSE_TO_BUILD(USE_OPENGL FALSE)
+
+	if (OpenGLES2_API_VERSION VERSION_GREATER_EQUAL 3.0)
+		SET_AND_EXPOSE_TO_BUILD(HAVE_OPENGL_ES_3 ON)
+	endif ()
+
+	if (NOT EGL_FOUND)
+		message(FATAL_ERROR "EGL is needed for ENABLE_GLES2.")
+	endif ()
+else ()
+    #find_package(OpenGL REQUIRED)
+    SET_AND_EXPOSE_TO_BUILD(USE_OPENGL FALSE)
 endif ()
 
 if (ENABLE_INSPECTOR)
@@ -181,7 +191,7 @@ if (CMAKE_COMPILER_IS_GNUCC AND "${LOWERCASE_CMAKE_HOST_SYSTEM_PROCESSOR}" STREQ
 	string(APPEND CMAKE_CXX_FLAGS " -march=pentium4")
 endif()
 
-SET_AND_EXPOSE_TO_BUILD(USE_TEXTURE_MAPPER OFF)
+SET_AND_EXPOSE_TO_BUILD(USE_TEXTURE_MAPPER ON)
 SET_AND_EXPOSE_TO_BUILD(USE_TEXTURE_MAPPER_GL OFF)
 SET_AND_EXPOSE_TO_BUILD(ENABLE_GRAPHICS_CONTEXT_GL OFF)
 SET_AND_EXPOSE_TO_BUILD(USE_EGL FALSE)
