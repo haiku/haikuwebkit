@@ -24,10 +24,10 @@
  */
 
 #include "config.h"
+#include "WebKitVersion.h"
 #include "WebPageProxy.h"
 
 #include <WebCore/NotImplemented.h>
-#include "WebKitVersion.h"
 
 #include <sys/utsname.h>
 
