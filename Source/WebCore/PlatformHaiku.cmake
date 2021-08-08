@@ -1,6 +1,7 @@
 include(platform/GCrypt.cmake)
 include(platform/Haiku.cmake)
 include(platform/ImageDecoders.cmake)
+include(platform/TextureMapper.cmake)
 
 list(APPEND WebCore_INCLUDE_DIRECTORIES
   "${THIRDPARTY_DIR}/ANGLE/"
