@@ -38,7 +38,7 @@ class HaikuCrashLogGenerator(object):
     def _get_debugger_output(self, coredump_path):
         result = None
         try:
-            with open(coredump_path) as corefile:
+            with open(coredump_path, 'rb') as corefile:
                 result = corefile.read().decode('utf8', 'ignore')
             os.unlink(coredump_path)
         except IOError:
