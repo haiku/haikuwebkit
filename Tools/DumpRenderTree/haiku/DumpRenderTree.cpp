@@ -114,6 +114,17 @@ static String dumpFramesAsText(BWebFrame* frame)
         }
     }
 
+    // To keep things tidy, strip all trailing spaces: they are not a meaningful part of dumpAsText test output.
+    size_t spacePosition = String::MaxLength;
+    while ((spacePosition = result.reverseFind(" \n", spacePosition)) != notFound)
+        result.remove(spacePosition, 1);
+    if (!result.isEmpty()) {
+        spacePosition = result.length();
+        while (spacePosition > 0 && result[spacePosition - 1] == ' ')
+            spacePosition--;
+        result.remove(spacePosition, result.length() - spacePosition);
+    }
+
     return result;
 }
 
