@@ -119,6 +119,8 @@ void WebInspectorUI::updateConnection()
     IPC::Connection::Identifier connectionIdentifier, connClient;
     IPC::Connection::createServerAndClientIdentifiers(connectionIdentifier, connClient);
     IPC::Attachment connectionClientPort(connClient);
+#elif OS(HAIKU)
+    IPC::Attachment connectionClientPort;
 #else
     notImplemented();
     return;
