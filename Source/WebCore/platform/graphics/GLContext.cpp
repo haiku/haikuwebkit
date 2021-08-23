@@ -34,6 +34,10 @@
 #include "OpenGLShims.h"
 #endif
 
+#if USE(HAIKU)
+#include "OpenGLShims.h"
+#endif
+
 namespace WebCore {
 
 class ThreadGlobalGLContext {
