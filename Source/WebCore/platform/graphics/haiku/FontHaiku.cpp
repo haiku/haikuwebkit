@@ -87,12 +87,16 @@ void FontCascade::drawGlyphs(GraphicsContext& graphicsContext, const Font& font,
     BString utf8;
     float offset = point.x();
     for (int i = 0; i < numGlyphs; i++) {
+        Glyph glyph = glyphs[i];
+        if (glyph == 0)
+            glyph = 0xfdd1;
+
         offsets[i].x = offset;
         offsets[i].y = point.y();
         offset += advances[i].width();
 
         char* tmp = buffer;
-        BUnicodeChar::ToUTF8(glyphs[i], &tmp);
+        BUnicodeChar::ToUTF8(glyph, &tmp);
         utf8.Append(buffer, tmp - buffer);
     }
 

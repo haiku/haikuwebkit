@@ -98,6 +98,9 @@ FloatRect Font::platformBoundsForGlyph(Glyph glyph) const
     if (!font)
         return FloatRect();
 
+    if (glyph == 0)
+        glyph = 0xfdd1;
+
     BRect rect;
     char string[5] = { 0 };
     char* ptr = string;
@@ -108,8 +111,11 @@ FloatRect Font::platformBoundsForGlyph(Glyph glyph) const
 
 float Font::platformWidthForGlyph(Glyph glyph) const
 {
-    if (!glyph || !platformData().size())
+    if (!platformData().size())
         return 0;
+
+    if (glyph == 0)
+        glyph = 0xfdd1;
 
     float escapements[1];
     char string[5] = { 0 };
