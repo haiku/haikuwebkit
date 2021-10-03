@@ -24,13 +24,15 @@
  */
 
 #include "config.h"
-#include "DataReference.h"
 #include "WebCoreArgumentCoders.h"
 
-#include <WebCore/NotImplemented.h>
+#include "DaemonDecoder.h"
+#include "DaemonEncoder.h"
+#include "DataReference.h"
 #include <WebCore/CertificateInfo.h>
 #include <WebCore/DictionaryPopupInfo.h>
 #include <WebCore/FontAttributes.h>
+#include <WebCore/NotImplemented.h>
 #include <WebCore/ResourceError.h>
 #include <WebCore/ResourceRequest.h>
 #include <WebCore/ResourceResponse.h>
@@ -50,16 +52,22 @@ bool ArgumentCoder<ResourceRequest>::decodePlatformData(Decoder& decoder, Resour
     return resourceRequest.decodePlatformData(decoder);
 }
 
+template<typename Encoder>
 void ArgumentCoder<CertificateInfo>::encode(Encoder& encoder, const CertificateInfo& certificateInfo)
 {
     //nothing to encode ceriticateinfo is null
 }
+template void ArgumentCoder<WebCore::CertificateInfo>::encode<Encoder>(Encoder&, const WebCore::CertificateInfo&);
+template void ArgumentCoder<WebCore::CertificateInfo>::encode<WebKit::Daemon::Encoder>(WebKit::Daemon::Encoder&, const WebCore::CertificateInfo&);
 
-bool ArgumentCoder<CertificateInfo>::decode(Decoder& decoder, CertificateInfo& certificateInfo)
+template<typename Decoder>
+std::optional<WebCore::CertificateInfo> ArgumentCoder<CertificateInfo>::decode(Decoder& decoder)
 {
     //nothing to decode just return true
-    return true;
+    return {};
 }
+template std::optional<WebCore::CertificateInfo> ArgumentCoder<WebCore::CertificateInfo>::decode<Decoder>(Decoder&);
+template std::optional<WebCore::CertificateInfo> ArgumentCoder<WebCore::CertificateInfo>::decode<WebKit::Daemon::Decoder>(WebKit::Daemon::Decoder&);
 
 void ArgumentCoder<ResourceError>::encodePlatformData(Encoder& encoder, const ResourceError& resourceError)
 {
@@ -119,12 +127,35 @@ std::optional<FontAttributes> ArgumentCoder<FontAttributes>::decodePlatformData(
     return std::nullopt;
 }
 
+void ArgumentCoder<Ref<Font>>::encodePlatformData(Encoder& encoder, const Ref<Font>& font)
+{
+    ASSERT_NOT_REACHED();
+}
+
 bool ArgumentCoder<DictionaryPopupInfo>::decodePlatformData(Decoder&, DictionaryPopupInfo&)
 {
     ASSERT_NOT_REACHED();
     return false;
 }
 
+std::optional<FontPlatformData> ArgumentCoder<Ref<Font>>::decodePlatformData(Decoder&)
+{
+    ASSERT_NOT_REACHED();
+    return std::nullopt;
 }
 
+#if ENABLE(VIDEO)
+void ArgumentCoder<SerializedPlatformDataCueValue>::encodePlatformData(Encoder& encoder, const SerializedPlatformDataCueValue& value)
+{
+    ASSERT_NOT_REACHED();
+}
+
+std::optional<SerializedPlatformDataCueValue>  ArgumentCoder<SerializedPlatformDataCueValue>::decodePlatformData(Decoder& decoder, WebCore::SerializedPlatformDataCueValue::PlatformType platformType)
+{
+    ASSERT_NOT_REACHED();
+    return std::nullopt;
+}
+#endif
+
+}
 

@@ -3,11 +3,6 @@ list(APPEND JavaScriptCore_PUBLIC_FRAMEWORK_HEADERS
     API/JavaScriptCore.h
 )
 
-list(APPEND JavaScriptCore_PRIVATE_INCLUDE_DIRECTORIES
-    "${WTF_DIR}"
-)
-add_definitions(-DSTATICALLY_LINKED_WITH_WTF)
-
 install(FILES API/JavaScript.h
               API/JSBase.h
               API/JSContextRef.h
