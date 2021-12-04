@@ -65,7 +65,7 @@ namespace IPC{
         if(result == B_OK)
             m_isConnected = true;
             
-        m_connectionQueue->dispatch([protectedThis = makeRef(*this)]() mutable {
+        m_connectionQueue->dispatch([protectedThis = Ref(*this)]() mutable {
         protectedThis->sendOutgoingMessages();
         });
     }
@@ -133,7 +133,7 @@ namespace IPC{
     {
         status_t result = m_messenger.SetTo(NULL,m_connectedProcess.connectedProcess);
         m_readHandler = new ReadLoop(this);
-        m_connectionQueue->dispatch([this,protectedThis = makeRef(*this)]{
+        m_connectionQueue->dispatch([this,protectedThis = Ref(*this)]{
             this->runReadEventLoop();
         });
         return true;
