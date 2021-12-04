@@ -106,6 +106,7 @@ list(APPEND WebKit_LIBRARIES
     ${OPENGL_LIBRARIES}
     ${PNG_LIBRARIES}
     ${SQLITE_LIBRARIES}
+    -Wl,--whole-archive WTF -Wl,--no-whole-archive
 )
 
 list(APPEND WebProcess_SOURCES
@@ -122,6 +123,8 @@ list(APPEND WebProcess_LIBRARIES
     ${OPENGL_LIBRARIES}
     ${SQLITE_LIBRARIES}
 )
+
+add_definitions(-DWEBKIT2_COMPILATION)
 
 add_custom_target(forwarding-headerHaiku
     COMMAND ${PERL_EXECUTABLE} ${WEBKIT_DIR}/Scripts/generate-forwarding-headers.pl ${WEBKIT_DIR} ${DERIVED_SOURCES_WEBKIT_DIR}/include haiku
