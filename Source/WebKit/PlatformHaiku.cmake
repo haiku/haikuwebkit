@@ -15,6 +15,7 @@ list(APPEND WebKit_SOURCES
     NetworkProcess/Classifier/WebResourceLoadStatisticsStore.cpp
 
     Platform/IPC/haiku/ConnectionHaiku.cpp
+	Platform/IPC/haiku/IPCSemaphoreHaiku.cpp
 
     Platform/classifier/ResourceLoadStatisticsClassifier.cpp
 
