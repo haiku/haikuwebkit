@@ -37,6 +37,8 @@
 #include <wtf/win/Win32Handle.h>
 #elif USE(UNIX_DOMAIN_SOCKETS)
 #include <wtf/unix/UnixFileDescriptor.h>
+#elif USE(HAIKU)
+#include <OS.h>
 #endif
 
 namespace IPC {
@@ -79,6 +81,10 @@ public:
     explicit Semaphore(UnixFileDescriptor&&);
     UnixFileDescriptor duplicateDescriptor() const;
     explicit operator bool() const { return !!m_fd; }
+#elif USE(HAIKU)
+    explicit Semaphore(sem_id);
+    sem_id getSemaphore() const { return m_semaphore; }
+    explicit operator bool() const { return m_semaphore != 0; }
 #else
     explicit operator bool() const { return true; }
 #endif
@@ -93,6 +99,8 @@ private:
     Win32Handle m_semaphoreHandle;
 #elif USE(UNIX_DOMAIN_SOCKETS)
     UnixFileDescriptor m_fd;
+#elif USE(HAIKU)
+    sem_id m_semaphore { 0 };
 #endif
 };
 
