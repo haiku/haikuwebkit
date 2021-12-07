@@ -15,6 +15,8 @@ list(APPEND WebKit_SOURCES
 
     Platform/IPC/haiku/ConnectionHaiku.cpp
 
+    Platform/IPC/unix/IPCSemaphoreUnix.cpp
+
     Platform/haiku/LoggingHaiku.cpp
     Platform/haiku/ModuleHaiku.cpp
     Platform/haiku/SharedMemoryHaiku.cpp
