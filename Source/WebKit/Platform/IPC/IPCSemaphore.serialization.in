@@ -29,6 +29,9 @@ webkit_platform_header: "IPCSemaphore.h"
 #if OS(WINDOWS)
     Win32Handle win32Handle();
 #endif
+#if OS(HAIKU)
+    sem_id getSemaphore();
+#endif
 #if USE(UNIX_DOMAIN_SOCKETS)
     UnixFileDescriptor duplicateDescriptor();
 #endif
