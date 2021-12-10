@@ -32,6 +32,7 @@
 #include <WebCore/BackForwardController.h>
 #include <WebCore/KeyboardEvent.h>
 #include <WebCore/PlatformKeyboardEvent.h>
+#include <WebCore/UserAgent.h>
 
 #include "WebKeyboardEvent.h"
 
@@ -121,9 +122,41 @@ const char* WebPage::interpretKeyEvent(const KeyboardEvent* event)
 
 String WebPage::platformUserAgent(const URL& url) const
 {
-    notImplemented();
-    return String();
+    if (url.isNull() || !m_page->settings().needsSiteSpecificQuirks())
+        return emptyString();
+
+    return WebCore::standardUserAgentForURL(url);
 }
 
+bool WebPage::hoverSupportedByPrimaryPointingDevice() const
+{
+    return true;
+}
+
+bool WebPage::hoverSupportedByAnyAvailablePointingDevice() const
+{
+    return true;
+}
+
+std::optional<PointerCharacteristics> WebPage::pointerCharacteristicsOfPrimaryPointingDevice() const
+{
+    return PointerCharacteristics::Fine;
+}
+
+OptionSet<PointerCharacteristics> WebPage::pointerCharacteristicsOfAllAvailablePointingDevices() const
+{
+    return PointerCharacteristics::Fine;
+}
+
+bool WebPage::handleEditingKeyboardEvent(WebCore::KeyboardEvent& event)
+{
+    notImplemented();
+    return false;
+}
+
+void WebPage::getPlatformEditorState(Frame& frame, EditorState& result) const
+{
+    notImplemented();
+}
 
 } // namespace WebKit
