@@ -127,7 +127,7 @@
 #define USE_WEB_THREAD 1
 #endif
 
-#if OS(UNIX)
+#if OS(UNIX) || OS(HAIKU)
 #define USE_PTHREADS 1
 #endif
 
