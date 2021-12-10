@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Haiku, inc.
+ * Copyright (C) 2014-2021 Haiku, inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,6 +28,7 @@
 #include "WebPageProxy.h"
 
 #include <WebCore/NotImplemented.h>
+#include <WebCore/UserAgent.h>
 
 #include <sys/utsname.h>
 
@@ -37,27 +38,14 @@ void WebPageProxy::platformInitialize()
 {
 }
 
+String WebPageProxy::userAgentForURL(const URL&)
+{
+    return userAgent();
+}
+
 String WebPageProxy::standardUserAgent(const String& applicationNameForUserAgent)
 {
-    String platform;
-    String version;
-    String osVersion;
-    String standardUserAgentString;
-
-    platform = "Haiku";
-
-    version = String::number(WEBKIT_MAJOR_VERSION) + '.' + String::number(WEBKIT_MINOR_VERSION) + '+';
-    struct utsname name;
-    if (uname(&name) != -1)
-        osVersion = WTF::String(name.sysname) + " " + WTF::String(name.machine);
-    else
-        osVersion = "Unknown";
-
-    /*standardUserAgentString = "Mozilla/5.0 (" + platform + "; " + osVersion + ") AppleWebKit/" + version
-        + " (KHTML, like Gecko) Version/5.0 Safari/" + version;*/
-    //needs to be latest- FIXME    
-    standardUserAgentString = "Mozilla/5.0 (Macintosh; Intel Haiku R1 x86) AppleWebKit/608.1.30 (KHTML, like Gecko) WebPositive/1.2 Version/11.1 Safari/608.1.30";
-    return applicationNameForUserAgent.isEmpty() ? standardUserAgentString : standardUserAgentString + ' ' + applicationNameForUserAgent;
+    return WebCore::standardUserAgent(applicationNameForUserAgent);
 }
 
 void WebPageProxy::saveRecentSearches(const String& name, const Vector<WebCore::RecentSearch>& searchItems)
@@ -68,6 +56,10 @@ void WebPageProxy::saveRecentSearches(const String& name, const Vector<WebCore::
 void WebPageProxy::loadRecentSearches(const String& name, CompletionHandler<void(Vector<WebCore::RecentSearch>&&)>&&)
 {
     notImplemented();
+}
+
+void WebPageProxy::didUpdateEditorState(const EditorState&, const EditorState&)
+{
 }
 
 }

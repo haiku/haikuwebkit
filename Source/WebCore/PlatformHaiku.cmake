@@ -58,6 +58,7 @@ list(APPEND WebCore_SOURCES
   platform/haiku/SharedTimerHaiku.cpp
   platform/haiku/SoundHaiku.cpp
   platform/haiku/TemporaryLinkStubs.cpp
+  platform/haiku/UserAgentHaiku.cpp
   platform/haiku/WidgetHaiku.cpp
 
   platform/posix/SharedBufferPOSIX.cpp
