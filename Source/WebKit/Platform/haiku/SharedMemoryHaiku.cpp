@@ -26,6 +26,7 @@
 #include "config.h"
 #include "SharedMemory.h"
 
+#include "ArgumentCoders.h"
 #include "Decoder.h"
 #include "Encoder.h"
 
@@ -63,6 +64,22 @@ bool SharedMemory::Handle::isNull() const
     return !m_areaid;
 }
 
+void SharedMemory::IPCHandle::encode(IPC::Encoder& encoder) const
+{
+    encoder << handle.m_areaid;
+    encoder << handle.m_size;
+}
+
+bool SharedMemory::IPCHandle::decode(IPC::Decoder& decoder, IPCHandle& ipcHandle)
+{
+    ASSERT_ARG(ipcHandle.handle, ipcHandle.handle.isNull());
+    if (!decoder.decode(ipcHandle.handle.m_areaid))
+        return false;
+    if (!decoder.decode(ipcHandle.handle.m_size))
+        return false;
+    return true;
+}
+
 static uint32 protectionMode(SharedMemory::Protection protection)
 {
     switch(protection)
@@ -71,6 +88,8 @@ static uint32 protectionMode(SharedMemory::Protection protection)
         return B_READ_AREA;
         case SharedMemory::Protection::ReadWrite:
         return B_READ_AREA | B_WRITE_AREA;
+        default:
+        return 0;
     }
 }
 
