@@ -49,4 +49,65 @@ void WebsiteDataStore::platformRemoveRecentSearches(WallTime)
 void WebsiteDataStore::platformSetNetworkParameters(WebsiteDataStoreParameters&)
 {
 }
+
+String WebsiteDataStore::defaultApplicationCacheDirectory()
+{
+    return { };
+}
+
+String WebsiteDataStore::defaultCacheStorageDirectory()
+{
+    return { };
+}
+
+String WebsiteDataStore::defaultGeneralStorageDirectory()
+{
+    return { };
+}
+
+String WebsiteDataStore::defaultNetworkCacheDirectory()
+{
+    return { };
+}
+
+String WebsiteDataStore::defaultIndexedDBDatabaseDirectory()
+{
+    return { };
+}
+
+String WebsiteDataStore::defaultServiceWorkerRegistrationDirectory()
+{
+    return { };
+}
+
+String WebsiteDataStore::defaultLocalStorageDirectory()
+{
+    return { };
+}
+
+String WebsiteDataStore::defaultMediaKeysStorageDirectory()
+{
+    return { };
+}
+
+String WebsiteDataStore::defaultWebSQLDatabaseDirectory()
+{
+    return { };
+}
+
+String WebsiteDataStore::defaultResourceLoadStatisticsDirectory()
+{
+    return { };
+}
+
+String WebsiteDataStore::cacheDirectoryFileSystemRepresentation(const String& directoryName, ShouldCreateDirectory)
+{
+    return { };
+}
+
+String WebsiteDataStore::websiteDataDirectoryFileSystemRepresentation(const String& directoryName)
+{
+    return { };
+}
+
 } // namespace WebKit
