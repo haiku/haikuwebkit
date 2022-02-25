@@ -101,11 +101,27 @@ void GraphicsContextHaiku::drawBitmap(BBitmap* image, const FloatSize& imageSize
 }
 
 // This is only used to draw borders.
+// The line width is already accounted for, the points being not the center of
+// the edges, but opposite corners of the rectangle containing the line.
 void GraphicsContextHaiku::drawLine(const FloatPoint& point1, const FloatPoint& point2)
 {
     if (strokeStyle() == NoStroke || !strokeColor().isVisible())
         return;
-    m_view->StrokeLine(point1, point2, m_strokeStyle);
+
+    BPoint start = point1;
+    BPoint end = point2;
+    // This test breaks for a vertical line as wide as long, but in that
+    // case there's no information to tell vertical and horizontal apart.
+    if (fabs(end.y - start.y - m_view->PenSize()) < 1) {
+        // Horizontal line
+        end.y = start.y = (end.y + start.y) / 2;
+        end.x--;
+    } else {
+        // Vertical line
+        end.x = start.x = (end.x + start.x) / 2;
+        end.y--;
+    }
+    m_view->StrokeLine(start, end, m_strokeStyle);
 }
 
 // This method is only used to draw the little circles used in lists.
