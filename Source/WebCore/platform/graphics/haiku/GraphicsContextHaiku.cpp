@@ -72,11 +72,7 @@ void GraphicsContextHaiku::drawRect(const FloatRect& rect, float borderThickness
         m_view->FillRect(rect, B_SOLID_LOW);
 
     // TODO: Support gradients
-    if (strokeStyle() != NoStroke && borderThickness > 0.0f && strokeColor().isVisible())
-    {
-        m_view->SetPenSize(borderThickness);
-        m_view->StrokeRect(rect, m_strokeStyle);
-    }
+    strokeRect(rect, borderThickness);
 }
 
 void GraphicsContextHaiku::drawNativeImage(NativeImage& image, const FloatSize& imageSize, const FloatRect& destRect, const FloatRect& srcRect, const ImagePaintingOptions& options)
