@@ -392,19 +392,34 @@ void GraphicsContextHaiku::drawFocusRing(const Vector<FloatRect>& rects, float w
     m_view->PopState();
 }
 
-void GraphicsContextHaiku::drawLinesForText(const FloatPoint& point, float, const DashArray& widths, bool printing, bool doubleUnderlines, WebCore::StrokeStyle)
+void GraphicsContextHaiku::drawLinesForText(const FloatPoint& point,
+    float thickness, const DashArray& widths, bool printing,
+    bool doubleUnderlines, WebCore::StrokeStyle style)
 {
-    if (widths.size() <= 0)
+    if (widths.isEmpty() || style == NoStroke)
         return;
 
+    Color lineColor(strokeColor());
+    FloatRect bounds = computeLineBoundsAndAntialiasingModeForText(
+        FloatRect(point, FloatSize(widths.last(), thickness)),
+        printing, lineColor);
+    if (bounds.isEmpty() || !strokeColor().isVisible())
+        return;
+
+    float y = bounds.center().y();
+
+    float oldSize = m_view->PenSize();
+    m_view->SetPenSize(bounds.height());
+
     // TODO would be faster to use BeginLineArray/EndLineArray here
-    // TODO in Cairo, these are not lines, but filled rectangle? Whats the thickness?
     for (size_t i = 0; i < widths.size(); i += 2)
     {
-        drawLine(
-			FloatPoint(point.x() + widths[i], point.y()),
-			FloatPoint(point.x() + widths[i+1], point.y()));
+        m_view->StrokeLine(
+			BPoint(bounds.x() + widths[i], y),
+			BPoint(bounds.x() + widths[i+1], y));
     }
+
+    m_view->SetPenSize(oldSize);
 }
 
 void GraphicsContextHaiku::drawDotsForDocumentMarker(WebCore::FloatRect const&,
