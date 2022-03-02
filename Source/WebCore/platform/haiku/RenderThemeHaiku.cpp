@@ -33,11 +33,13 @@
 #include "InputTypeNames.h"
 #include "NotImplemented.h"
 #include "PaintInfo.h"
+#include "RenderBox.h"
 #include "RenderElement.h"
 #include "UserAgentScripts.h"
 #include "UserAgentStyleSheets.h"
 #include <ControlLook.h>
 #include <View.h>
+#include <private/interface/DefaultColors.h>
 
 #include <wtf/text/StringBuilder.h>
 
@@ -80,7 +82,7 @@ bool RenderThemeHaiku::supportsFocusRing(const RenderStyle& style) const
 
 bool RenderThemeHaiku::paintSliderTrack(const RenderObject& object, const PaintInfo& info, const IntRect& intRect)
 {
-    rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
+    rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     rgb_color background = base;
     	// TODO: From PaintInfo?
     BRect rect = intRect;
@@ -156,7 +158,7 @@ bool RenderThemeHaiku::supportsDataListUI(const AtomString& type) const
 
 bool RenderThemeHaiku::paintSliderThumb(const RenderObject& object, const PaintInfo& info, const IntRect& intRect)
 {
-    rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
+    rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     BRect rect = intRect;
     BView* view = info.context().platformContext();
     unsigned flags = flagsForObject(object);
@@ -201,7 +203,7 @@ bool RenderThemeHaiku::paintCheckbox(const RenderObject& object, const PaintInfo
     if (!be_control_look)
         return true;
 
-    rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
+    rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     BRect rect = floatRect;
     BView* view = info.context().platformContext();
     unsigned flags = flagsForObject(object);
@@ -237,7 +239,7 @@ bool RenderThemeHaiku::paintRadio(const RenderObject& object, const PaintInfo& i
     if (!be_control_look)
         return true;
 
-    rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
+    rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     BRect rect = floatRect;
     BView* view = info.context().platformContext();
     unsigned flags = flagsForObject(object);
@@ -262,7 +264,7 @@ bool RenderThemeHaiku::paintButton(const RenderObject& object, const PaintInfo& 
     if (!be_control_look)
         return true;
 
-    rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
+    rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     rgb_color background = base;
         // TODO: From PaintInfo?
     BRect rect = intRect;
@@ -293,7 +295,7 @@ bool RenderThemeHaiku::paintTextField(const RenderObject& object, const PaintInf
     if (!be_control_look)
         return true;
 
-    rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
+    rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     //rgb_color background = base;
         // TODO: From PaintInfo?
     BRect rect(intRect);
@@ -321,7 +323,7 @@ void RenderThemeHaiku::adjustMenuListStyle(RenderStyle& style, const Element* el
     adjustMenuListButtonStyle(style, element);
 }
 
-void RenderThemeHaiku::adjustMenuListButtonStyle(RenderStyle& style, const Element* element) const
+void RenderThemeHaiku::adjustMenuListButtonStyle(RenderStyle& style, const Element*) const
 {
     style.resetBorder();
     style.resetBorderRadius();
@@ -352,21 +354,19 @@ void RenderThemeHaiku::paintMenuListButtonDecorations(const RenderBox& object, c
     if (!be_control_look)
         return;
 
-    rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
+    rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.firstChild()->useDarkAppearance());
         // TODO get the color from PaintInfo?
     BRect rect = floatRect;
     BView* view = info.context().platformContext();
-    unsigned flags = BControlLook::B_BLEND_FRAME;
-        // TODO unfortunately we don't get access to the RenderObject here so
-        // we can't use flagsForObject(object) & ~BControlLook::B_CLICKED;
-
+    unsigned flags = flagsForObject(*object.firstChild()) & ~BControlLook::B_CLICKED;
+    
     view->PushState();
     be_control_look->DrawMenuFieldFrame(view, rect, rect, base, base, flags);
     be_control_look->DrawMenuFieldBackground(view, rect, rect, base, true, flags);
     view->PopState();
 }
 
-bool RenderThemeHaiku::paintMenuList(const RenderObject& object, const PaintInfo& info, const FloatRect& intRect)
+bool RenderThemeHaiku::paintMenuList(const RenderObject&, const PaintInfo&, const FloatRect&)
 {
     // This is never called: the list is handled natively as a BMenu.
     return true;
@@ -383,7 +383,79 @@ unsigned RenderThemeHaiku::flagsForObject(const RenderObject& object) const
     	flags |= BControlLook::B_CLICKED;
     if (isChecked(object))
     	flags |= BControlLook::B_ACTIVATED;
+    if (isHovered(object))
+        flags |= BControlLook::B_HOVER;
 	return flags;
+}
+
+
+rgb_color RenderThemeHaiku::colorForValue(color_which colorConstant, bool useDarkAppearance) const
+{
+    rgb_color systemColor = ui_color(B_DOCUMENT_BACKGROUND_COLOR);
+    if (useDarkAppearance) {
+        if (systemColor.Brightness() > 127) // system is in light mode, but we need a dark color
+            return BPrivate::GetSystemColor(colorConstant, true);
+    } else {
+        if (systemColor.Brightness() < 127) // system is in dark mode but we need a light color
+            return BPrivate::GetSystemColor(colorConstant, false);
+    }
+    return ui_color(colorConstant);
+}
+
+
+Color RenderThemeHaiku::systemColor(CSSValueID cssValueID, OptionSet<StyleColorOptions> options) const
+{
+    const bool useDarkAppearance = options.contains(StyleColorOptions::UseDarkAppearance);
+
+    switch (cssValueID) {
+    case CSSValueButtonface:
+        return colorForValue(B_CONTROL_BACKGROUND_COLOR, useDarkAppearance);
+
+    // Doesn't exist?
+    //case CSSValueButtonborder:
+    //    return colorForValue(B_CONTROL_BORDER_COLOR, useDarkAppearence);
+
+    case CSSValueActivebuttontext:
+    case CSSValueButtontext:
+        return colorForValue(B_CONTROL_TEXT_COLOR, useDarkAppearance);
+
+    case CSSValueField:
+    case CSSValueCanvas:
+    case CSSValueWindow:
+        return colorForValue(B_DOCUMENT_BACKGROUND_COLOR, useDarkAppearance);
+
+    case CSSValueCanvastext:
+    case CSSValueFieldtext:
+        return colorForValue(B_DOCUMENT_TEXT_COLOR, useDarkAppearance);
+
+    case CSSValueWebkitFocusRingColor:
+    case CSSValueActiveborder:
+    case CSSValueHighlight:
+        return colorForValue(B_CONTROL_HIGHLIGHT_COLOR, useDarkAppearance);
+
+    case CSSValueHighlighttext:
+        return colorForValue(B_CONTROL_TEXT_COLOR, useDarkAppearance);
+
+    case CSSValueWebkitLink:
+    case CSSValueLinktext:
+        return colorForValue(B_LINK_TEXT_COLOR, useDarkAppearance);
+
+    case CSSValueVisitedtext:
+        return colorForValue(B_LINK_VISITED_COLOR, useDarkAppearance);
+
+    // case CSSValueWebkitActivetext:
+    case CSSValueWebkitActivelink:
+        return colorForValue(B_LINK_ACTIVE_COLOR, useDarkAppearance);
+
+    /* is there any haiku colors that make sense to use here?
+    case CSSValueSelecteditem:
+    case CSSValueSelecteditemtext:
+    case CSSValueMark:
+    case CSSValueMarkText:
+    */
+    default:
+        return RenderTheme::systemColor(cssValueID, options);
+    }
 }
 
 } // namespace WebCore

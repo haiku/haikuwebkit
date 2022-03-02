@@ -55,6 +55,7 @@ public:
 
 private:
     bool m_drawOuterFrame;
+    rgb_color colorForScrollbar(color_which base, const bool darkMode) const;
 };
 
 }

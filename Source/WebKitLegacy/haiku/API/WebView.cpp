@@ -94,6 +94,10 @@ BWebView::BWebView(const char* name, BPrivate::Network::BUrlContext* urlContext)
     rgb_color background = ui_color(B_DOCUMENT_BACKGROUND_COLOR);
     if (background.Brightness() < 127)
         fWebPage->page()->effectiveAppearanceDidChange(true, false);
+
+    // doesn't seem to affect the "background" for css, but it does fix the glaring
+    // white screen between page loads (or when no page is open)
+    fWebPage->page()->mainFrame().view()->setBaseBackgroundColor(background);
 }
 
 BWebView::~BWebView()

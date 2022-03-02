@@ -91,8 +91,13 @@ protected:
 
     bool paintSliderThumb(const RenderObject&, const PaintInfo&, const IntRect&) override;
 
+    Color systemColor(CSSValueID, OptionSet<StyleColorOptions>) const override;
+
 private:
 	unsigned flagsForObject(const RenderObject&) const;
+    rgb_color colorForControl(const RenderObject&) const;
+    rgb_color colorForValue(color_which, bool useDarkAppearance) const;
+
 };
 
 } // namespace WebCore

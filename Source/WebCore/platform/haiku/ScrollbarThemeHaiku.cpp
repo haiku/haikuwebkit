@@ -30,9 +30,11 @@
 
 #include "GraphicsContext.h"
 #include "Scrollbar.h"
+#include "ScrollableArea.h"
 #include <ControlLook.h>
 #include <InterfaceDefs.h>
 #include <Shape.h>
+#include <private/interface/DefaultColors.h>
 
 
 static int buttonWidth(int scrollbarWidth, int thickness)
@@ -126,7 +128,7 @@ IntRect ScrollbarThemeHaiku::trackRect(Scrollbar& scrollbar, bool)
     return IntRect(scrollbar.x(), scrollbar.y() + thickness, thickness, scrollbar.height() - 2 * thickness - 1);
 }
 
-void ScrollbarThemeHaiku::paintScrollCorner(ScrollableArea&, GraphicsContext& context, const IntRect& rect)
+void ScrollbarThemeHaiku::paintScrollCorner(ScrollableArea& scrollArea, GraphicsContext& context, const IntRect& rect)
 {
     if (rect.width() == 0 || rect.height() == 0)
         return;
@@ -134,7 +136,9 @@ void ScrollbarThemeHaiku::paintScrollCorner(ScrollableArea&, GraphicsContext& co
     BRect drawRect = BRect(rect);
     BView* view = context.platformContext();
     view->PushState();
-    rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
+    rgb_color base = colorForScrollbar(B_CONTROL_BACKGROUND_COLOR,
+        scrollArea.useDarkAppearanceForScrollbars());
+ 
     if (!m_drawOuterFrame) {
         view->SetHighColor(tint_color(base, B_DARKEN_2_TINT));
         view->StrokeLine(drawRect.LeftBottom(), drawRect.LeftTop());
@@ -153,7 +157,8 @@ void ScrollbarThemeHaiku::paintScrollbarBackground(GraphicsContext& context, Scr
     if (!be_control_look)
         return;
 
-    rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
+    rgb_color base = colorForScrollbar(B_CONTROL_BACKGROUND_COLOR,
+        scrollbar.scrollableArea().useDarkAppearanceForScrollbars());
     BRect rect = trackRect(scrollbar, false);
     BView* view = context.platformContext();
     view->SetHighColor(tint_color(base, B_DARKEN_2_TINT));
@@ -196,7 +201,8 @@ void ScrollbarThemeHaiku::paintButton(GraphicsContext& context, Scrollbar& scrol
     BView* view = context.platformContext();
        bool down = scrollbar.pressedPart() == part;
 
-    rgb_color base = ui_color(B_PANEL_BACKGROUND_COLOR);
+    rgb_color base = colorForScrollbar(B_CONTROL_BACKGROUND_COLOR,
+        scrollbar.scrollableArea().useDarkAppearanceForScrollbars());
     rgb_color dark2 = tint_color(base, B_DARKEN_2_TINT);
 
     enum orientation orientation;
@@ -236,7 +242,8 @@ void ScrollbarThemeHaiku::paintThumb(GraphicsContext& context, Scrollbar& scroll
 
     BRect drawRect = BRect(rect);
     BView* view = context.platformContext();
-    rgb_color base = ui_color(B_SCROLL_BAR_THUMB_COLOR);
+    rgb_color base = colorForScrollbar(B_SCROLL_BAR_THUMB_COLOR,
+        scrollbar.scrollableArea().useDarkAppearanceForScrollbars());
     rgb_color dark2 = tint_color(base, B_DARKEN_2_TINT);
     rgb_color dark3 = tint_color(base, B_DARKEN_3_TINT);
 
@@ -274,6 +281,18 @@ void ScrollbarThemeHaiku::paintThumb(GraphicsContext& context, Scrollbar& scroll
     view->PopState();
 }
 
+rgb_color ScrollbarThemeHaiku::colorForScrollbar(color_which controlColor, bool darkMode) const
+{
+    rgb_color systemColor = ui_color(B_DOCUMENT_BACKGROUND_COLOR);
+    if (darkMode) {
+        if (systemColor.Brightness() > 127) // system is in light mode, but we need dark
+            return BPrivate::GetSystemColor(controlColor, true);
+    } else {
+        if (systemColor.Brightness() < 127) // system is in dark mode but we need light
+            return BPrivate::GetSystemColor(controlColor, false);
+    }
+    return ui_color(controlColor);
+}
 
 } // namespace WebCore
 
