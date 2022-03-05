@@ -351,3 +351,5 @@ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/haiku/ImageBufferDataHaiku.h
     platform/graphics/Image.h
 )
+
+set(CSS_VALUE_PLATFORM_DEFINES "HAVE_OS_DARK_MODE_SUPPORT=1")
