@@ -48,6 +48,13 @@
 #include <Window.h>
 #include <stdio.h>
 
+//#define TRACE_GRAPHICS_HAIKU
+#ifdef TRACE_GRAPHICS_HAIKU
+#	define HGTRACE(x) printf x
+#else
+#	define HGTRACE(x) ;
+#endif
+
 namespace WebCore {
 
 
@@ -74,6 +81,7 @@ GraphicsContextHaiku::~GraphicsContextHaiku()
 // Draws a filled rectangle with a stroked border.
 void GraphicsContextHaiku::drawRect(const FloatRect& rect, float borderThickness)
 {
+    HGTRACE(("drawRect: [%f:%f] [%f:%f]\n", rect.x(), rect.y(), rect.width(), rect.height()));
     if (m_state.fillBrush().pattern())
         notImplemented();
     else if (m_state.fillBrush().gradient()) {
@@ -87,11 +95,15 @@ void GraphicsContextHaiku::drawRect(const FloatRect& rect, float borderThickness
 
 void GraphicsContextHaiku::drawNativeImage(NativeImage& image, const FloatSize& imageSize, const FloatRect& destRect, const FloatRect& srcRect, const ImagePaintingOptions& options)
 {
+    HGTRACE(("drawNativeImage:  src([%f:%f] [%f:%f])\n", srcRect.x(), srcRect.y(), srcRect.width(), srcRect.height()));
+    HGTRACE(("                 dest([%f:%f] [%f:%f])\n", destRect.x(), destRect.y(), destRect.width(), destRect.height()));
     drawBitmap(image.platformImage().get(), imageSize, destRect, srcRect, options);
 }
 
 void GraphicsContextHaiku::drawBitmap(BBitmap* image, const FloatSize& imageSize, const FloatRect& destRect, const FloatRect& srcRect, const ImagePaintingOptions& options)
 {
+    HGTRACE(("drawBitmap:  src([%f:%f] [%f:%f])\n", srcRect.x(), srcRect.y(), srcRect.width(), srcRect.height()));
+    HGTRACE(("            dest([%f:%f] [%f:%f])\n", destRect.x(), destRect.y(), destRect.width(), destRect.height()));
     m_view->PushState();
     setCompositeOperation(options.compositeOperator());
 
@@ -115,6 +127,7 @@ void GraphicsContextHaiku::drawBitmap(BBitmap* image, const FloatSize& imageSize
 // the edges, but opposite corners of the rectangle containing the line.
 void GraphicsContextHaiku::drawLine(const FloatPoint& point1, const FloatPoint& point2)
 {
+    HGTRACE(("drawline: [%f:%f] [%f:%f])\n", point1.x(), point1.y(), point2.x(), point2.y()));
     if (strokeStyle() == NoStroke || !strokeColor().isVisible())
         return;
 
@@ -137,6 +150,7 @@ void GraphicsContextHaiku::drawLine(const FloatPoint& point1, const FloatPoint& 
 // This method is only used to draw the little circles used in lists.
 void GraphicsContextHaiku::drawEllipse(const FloatRect& rect)
 {
+    HGTRACE(("drawEllipse: [%f:%f] [%f:%f]\n", rect.x(), rect.y(), rect.width(), rect.height()));
     if (m_state.fillBrush().pattern() || m_state.fillBrush().gradient() || fillColor().isVisible()) {
 //        TODO: What's this shadow business?
         if (m_state.fillBrush().pattern())
@@ -155,6 +169,7 @@ void GraphicsContextHaiku::drawEllipse(const FloatRect& rect)
 
 void GraphicsContextHaiku::strokeRect(const FloatRect& rect, float width)
 {
+    HGTRACE(("strokeRect: [%f:%f] [%f:%f] width:%f\n", rect.x(), rect.y(), rect.width(), rect.height(), width));
     if (strokeStyle() == NoStroke || width <= 0.0f || !strokeColor().isVisible())
         return;
 
@@ -167,6 +182,7 @@ void GraphicsContextHaiku::strokeRect(const FloatRect& rect, float width)
 
 void GraphicsContextHaiku::strokePath(const Path& path)
 {
+    HGTRACE(("strokePath: (--todo print values)\n"));
     m_view->MovePenTo(B_ORIGIN);
 
     // TODO: stroke the shadow (cf shadowAndStrokeCurrentCairoPath)
@@ -189,6 +205,7 @@ void GraphicsContextHaiku::strokePath(const Path& path)
 
 void GraphicsContextHaiku::fillRect(const FloatRect& rect, const Color& color)
 {
+    HGTRACE(("fillRect(color): [%f:%f] [%f:%f]\n", rect.x(), rect.y(), rect.width(), rect.height()));
     rgb_color previousColor = m_view->HighColor();
 
 #if 0
@@ -207,12 +224,14 @@ void GraphicsContextHaiku::fillRect(const FloatRect& rect, const Color& color)
 
 void GraphicsContextHaiku::fillRect(const FloatRect& rect)
 {
+    HGTRACE(("fillRect: [%f:%f] [%f:%f]\n", rect.x(), rect.y(), rect.width(), rect.height()));
     // TODO fill the shadow
     m_view->FillRect(rect, B_SOLID_LOW);
 }
 
 void GraphicsContextHaiku::fillRoundedRectImpl(const FloatRoundedRect& roundRect, const Color& color)
 {
+    HGTRACE(("fillRoundedRectImpl: (--todo print values)\n"));
     if (!color.isVisible())
         return;
 
@@ -276,6 +295,7 @@ void GraphicsContextHaiku::fillRoundedRectImpl(const FloatRoundedRect& roundRect
 
 void GraphicsContextHaiku::fillPath(const Path& path)
 {
+    HGTRACE(("fillPath: (--todo print values)\n"));
     m_view->SetFillRule(fillRule() == WindRule::NonZero ? B_NONZERO : B_EVEN_ODD);
     m_view->MovePenTo(B_ORIGIN);
 
@@ -300,11 +320,13 @@ void GraphicsContextHaiku::fillPath(const Path& path)
 
 void GraphicsContextHaiku::clip(const FloatRect& rect)
 {
+    HGTRACE(("clip: [%f:%f] [%f:%f]\n", rect.x(), rect.y(), rect.width(), rect.height()));
     m_view->ClipToRect(rect);
 }
 
 void GraphicsContextHaiku::clipPath(const Path& path, WindRule windRule)
 {
+    HGTRACE(("clipPath: (--todo print values)\n"));
     int32 fillRule = m_view->FillRule();
 
     m_view->SetFillRule(windRule == WindRule::EvenOdd ? B_EVEN_ODD : B_NONZERO);
@@ -318,6 +340,7 @@ void GraphicsContextHaiku::drawPattern(NativeImage& image, const FloatRect& dest
     const FloatRect& tileRect, const AffineTransform& transform,
     const FloatPoint& phase, const FloatSize& spacing, const ImagePaintingOptions& options)
 {
+    HGTRACE(("drawPattern: (--todo print values)\n"));
     drawBitmap(image.platformImage().get(), image.size(), destRect, tileRect, transform, phase, spacing, options);
 }
 
@@ -325,6 +348,7 @@ void GraphicsContextHaiku::drawBitmap(BBitmap* image, const WebCore::FloatSize& 
     const FloatRect& tileRect, const AffineTransform&,
     const FloatPoint& phase, const FloatSize& spacing, const ImagePaintingOptions&)
 {
+    HGTRACE(("drawBitmap: (--todo print values)\n"));
     if (!image->IsValid()) // If the image hasn't fully loaded.
         return;
 
@@ -365,6 +389,7 @@ void GraphicsContextHaiku::drawBitmap(BBitmap* image, const WebCore::FloatSize& 
 
 void GraphicsContextHaiku::clipOut(const Path& path)
 {
+    HGTRACE(("clipOut(path): (--todo print values)\n"));
     if (path.isEmpty())
         return;
 
@@ -373,11 +398,13 @@ void GraphicsContextHaiku::clipOut(const Path& path)
 
 void GraphicsContextHaiku::clipOut(const FloatRect& rect)
 {
+    HGTRACE(("clipOut: [%f:%f] [%f:%f]\n", rect.x(), rect.y(), rect.width(), rect.height()));
     m_view->ClipToInverseRect(rect);
 }
 
 void GraphicsContextHaiku::drawFocusRing(const Path& path, float width, float /*offset*/, const Color& color)
 {
+    HGTRACE(("drawFocusRing(path): (--todo print values)\n"));
     if (width <= 0 || !color.isVisible())
         return;
 
@@ -394,6 +421,7 @@ void GraphicsContextHaiku::drawFocusRing(const Path& path, float width, float /*
 
 void GraphicsContextHaiku::drawFocusRing(const Vector<FloatRect>& rects, float width, float /* offset */, const Color& color)
 {
+    HGTRACE(("drawFocusRing(rects): (--todo print values)\n"));
     if (width <= 0 || !color.isVisible())
         return;
 
@@ -422,6 +450,7 @@ void GraphicsContextHaiku::drawLinesForText(const FloatPoint& point,
     float thickness, const DashArray& widths, bool printing,
     bool doubleUnderlines, WebCore::StrokeStyle style)
 {
+    HGTRACE(("drawLinesForText: (--todo print values)\n"));
     if (widths.isEmpty() || style == NoStroke)
         return;
 
@@ -451,12 +480,14 @@ void GraphicsContextHaiku::drawLinesForText(const FloatPoint& point,
 void GraphicsContextHaiku::drawDotsForDocumentMarker(WebCore::FloatRect const&,
 	WebCore::DocumentMarkerLineStyle)
 {
+    HGTRACE(("drawDotsForDocumentMarker: Not Implemented\n"));
 	notImplemented();
 }
 
 /* Used by canvas.clearRect. Must clear the given rectangle with transparent black. */
 void GraphicsContextHaiku::clearRect(const FloatRect& rect)
 {
+    HGTRACE(("clearRect: [%f:%f] [%f:%f]\n", rect.x(), rect.y(), rect.width(), rect.height()));
     m_view->PushState();
     m_view->SetHighColor(0, 0, 0, 0);
     m_view->SetDrawingMode(B_OP_COPY);
@@ -466,6 +497,7 @@ void GraphicsContextHaiku::clearRect(const FloatRect& rect)
 
 void GraphicsContextHaiku::setLineCap(LineCap lineCap)
 {
+    HGTRACE(("setLineCap: (--todo print values)\n"));
     cap_mode mode = B_BUTT_CAP;
     switch (lineCap) {
     case LineCap::Round:
@@ -484,12 +516,14 @@ void GraphicsContextHaiku::setLineCap(LineCap lineCap)
 
 void GraphicsContextHaiku::setLineDash(const DashArray& /*dashes*/, float /*dashOffset*/)
 {
+    HGTRACE(("setLineDash: Not Implemented\n"));
     // TODO this is used to draw dashed strokes in SVG, but we need app_server support
     notImplemented();
 }
 
 void GraphicsContextHaiku::setLineJoin(LineJoin lineJoin)
 {
+    HGTRACE(("setLineJoin: (--todo print values)\n"));
     join_mode mode = B_MITER_JOIN;
     switch (lineJoin) {
     case LineJoin::Round:
@@ -508,11 +542,13 @@ void GraphicsContextHaiku::setLineJoin(LineJoin lineJoin)
 
 void GraphicsContextHaiku::setMiterLimit(float limit)
 {
+    HGTRACE(("setMiterLimit: %f\n", limit));
     m_view->SetLineMode(m_view->LineCapMode(), m_view->LineJoinMode(), limit);
 }
 
 AffineTransform GraphicsContextHaiku::getCTM(IncludeDeviceScale) const
 {
+    HGTRACE(("getCTM: no values used\n"));
     BAffineTransform t = m_view->Transform();
     	// TODO: we actually need to use the combined transform here?
     AffineTransform matrix(t.sx, t.shy, t.shx, t.sy, t.tx, t.ty);
@@ -521,6 +557,7 @@ AffineTransform GraphicsContextHaiku::getCTM(IncludeDeviceScale) const
 
 void GraphicsContextHaiku::translate(float x, float y)
 {
+    HGTRACE(("translate: %f, %f\n", x, y));
     if (x == 0.f && y == 0.f)
         return;
 
@@ -529,6 +566,7 @@ void GraphicsContextHaiku::translate(float x, float y)
 
 void GraphicsContextHaiku::rotate(float radians)
 {
+    HGTRACE(("rotate: %f\n", radians));
     if (radians == 0.f)
         return;
 
@@ -537,11 +575,13 @@ void GraphicsContextHaiku::rotate(float radians)
 
 void GraphicsContextHaiku::scale(const FloatSize& size)
 {
+    HGTRACE(("scale: %f %f\n", size.width(), size.height()));
     m_view->ScaleBy(size.width(), size.height());
 }
 
 void GraphicsContextHaiku::concatCTM(const AffineTransform& transform)
 {
+    HGTRACE(("concatCTM: (--todo print values)\n"));
     BAffineTransform current = m_view->Transform();
     current.Multiply(transform);
     m_view->SetTransform(current);
@@ -549,11 +589,13 @@ void GraphicsContextHaiku::concatCTM(const AffineTransform& transform)
 
 void GraphicsContextHaiku::setCTM(const AffineTransform& transform)
 {
+    HGTRACE(("setCTM: (--todo print values)\n"));
     m_view->SetTransform(transform);
 }
 
 void GraphicsContextHaiku::didUpdateState(GraphicsContextState& state)
 {
+    HGTRACE(("didUpdateState: (--todo print values)\n"));
 #if 0
         StrokeGradientChange                    = 1 << 0,
         StrokePatternChange                     = 1 << 1,
@@ -702,18 +744,21 @@ void GraphicsContextHaiku::set3DTransform(const TransformationMatrix& transform)
 
 void GraphicsContextHaiku::beginTransparencyLayer(float opacity)
 {
+    HGTRACE(("beginTransparencyLayer: %f\n", opacity));
     GraphicsContext::beginTransparencyLayer(opacity);
     m_view->BeginLayer(static_cast<uint8>(opacity * 255.0));
 }
 
 void GraphicsContextHaiku::endTransparencyLayer()
 {
+    HGTRACE(("endTransparencyLayer: no values\n"));
     GraphicsContext::endTransparencyLayer();
     m_view->EndLayer();
 }
 
 IntRect GraphicsContextHaiku::clipBounds() const
 {
+    HGTRACE(("clipBounds: no values\n"));
     // This can be used by drawing code to do some early clipping (for example
     // the SVG code may skip complete parts of the image which are outside
     // the bounds).
@@ -744,12 +789,14 @@ IntRect GraphicsContextHaiku::clipBounds() const
 
 void GraphicsContextHaiku::save()
 {
+    HGTRACE(("save: no values\n"));
     m_view->PushState();
     GraphicsContext::save();
 }
 
 void GraphicsContextHaiku::restore()
 {
+    HGTRACE(("restore: no values\n"));
     GraphicsContext::restore();
     m_view->PopState();
 }
