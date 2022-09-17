@@ -52,9 +52,19 @@ namespace WebCore {
 
 
 GraphicsContextHaiku::GraphicsContextHaiku(BView* view)
-    : m_view(view)
+    : GraphicsContext({
+        GraphicsContextState::Change::StrokeThickness,
+        GraphicsContextState::Change::StrokeBrush,
+        GraphicsContextState::Change::Alpha,
+        GraphicsContextState::Change::StrokeStyle,
+        GraphicsContextState::Change::FillBrush,
+        GraphicsContextState::Change::FillRule,
+        GraphicsContextState::Change::CompositeMode,
+    })
+    , m_view(view)
     , m_strokeStyle(B_SOLID_HIGH)
 {
+    didUpdateState(m_state);
 }
 
 GraphicsContextHaiku::~GraphicsContextHaiku()
