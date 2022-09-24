@@ -161,7 +161,8 @@ Page* ChromeClientHaiku::createWindow(Frame& /*frame*/, const WindowFeatures& fe
 	if (features.height)
 		windowFrame.bottom = windowFrame.top + *features.height - 1;
 
-	WebCore::Page* page = m_webPage->createNewPage(windowFrame, features.dialog, features.resizable);
+	WebCore::Page* page = m_webPage->createNewPage(windowFrame, features.dialog, 
+		features.resizable, true, m_webPage->GetContext());
 	if (!page)
 		return 0;
 

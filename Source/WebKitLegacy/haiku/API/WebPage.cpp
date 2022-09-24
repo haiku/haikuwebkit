@@ -26,7 +26,6 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-
 #include "config.h"
 #include "WebPage.h"
 
@@ -635,10 +634,10 @@ WebCore::Page* BWebPage::page() const
 }
 
 WebCore::Page* BWebPage::createNewPage(BRect frame, bool modalDialog,
-    bool resizable, bool activate)
+    bool resizable, bool activate, BPrivate::Network::BUrlContext* context)
 {
     // Creating the BWebView in the application thread is exactly what we need anyway.
-	BWebView* view = new BWebView("web view");
+	BWebView* view = new BWebView("web view", context);
 	BWebPage* page = view->WebPage();
 
     BMessage message(NEW_PAGE_CREATED);

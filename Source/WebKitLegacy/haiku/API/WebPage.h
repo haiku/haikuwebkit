@@ -163,7 +163,7 @@ private:
 
     WebCore::Page* createNewPage(BRect frame = BRect(),
         bool modalDialog = false, bool resizable = true,
-        bool activate = true);
+        bool activate = true, BPrivate::Network::BUrlContext* context = nullptr);
 
     BPrivate::Network::BUrlContext* GetContext();
     BRect windowFrame();
