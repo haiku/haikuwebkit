@@ -724,17 +724,19 @@ IntRect GraphicsContextHaiku::clipBounds() const
     m_view->GetClippingRegion(&region);
     BRect rect = region.Frame();
 
-    BPoint points[2];
+    BPoint points[4];
     points[0] = rect.LeftTop();
     points[1] = rect.RightBottom();
+    points[2] = rect.LeftBottom();
+    points[3] = rect.RightTop();
 
-    BAffineTransform t = m_view->Transform();
-    t.ApplyInverse(points, 2);
+    BAffineTransform t = m_view->TransformTo(B_VIEW_COORDINATES);
+    t.ApplyInverse(points, 4);
 
-    rect.left   = std::min(points[0].x, points[1].x);
-    rect.right  = std::max(points[0].x, points[1].x);
-    rect.top    = std::min(points[0].y, points[1].y);
-    rect.bottom = std::max(points[0].y, points[1].y);
+    rect.left   = std::min({points[0].x, points[1].x, points[2].x, points[3].x});
+    rect.right  = std::max({points[0].x, points[1].x, points[2].x, points[3].x});
+    rect.top    = std::min({points[0].y, points[1].y, points[2].y, points[3].y});
+    rect.bottom = std::max({points[0].y, points[1].y, points[2].y, points[3].y});
 
     return IntRect(rect);
 }
