@@ -216,7 +216,7 @@ list(APPEND WebCore_LIBRARIES
   ${SQLITE_LIBRARIES}
   ${WEBP_LIBRARIES}
   ${ZLIB_LIBRARIES}
-  be bsd network bnetapi textencoding translation execinfo
+  be bsd network bnetapi textencoding translation execinfo shared
 )
 
 list(APPEND WebCore_SYSTEM_INCLUDE_DIRECTORIES
