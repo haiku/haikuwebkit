@@ -300,7 +300,7 @@ BString BWebFrame::AsMarkup() const
 
 BString BWebFrame::ExternalRepresentation() const
 {
-    return externalRepresentation(fData->frame);
+    return externalRepresentation(fData->frame.get());
 }
 
 bool BWebFrame::FindString(const BString& string, WebCore::FindOptions options)
@@ -402,7 +402,7 @@ JSGlobalContextRef BWebFrame::GlobalContext() const
 
 WebCore::Frame* BWebFrame::Frame() const
 {
-    return fData->frame;
+    return fData->frame.get();
 }
 
 
@@ -418,22 +418,18 @@ BWebFrame* BWebFrame::AddChild(BWebPage* page, BString name,
     if (!frame)
         return nullptr;
 
-    RefPtr<WebCore::Frame> coreFrame = WebCore::Frame::create(fData->page,
+    data->frame = WebCore::Frame::create(fData->page,
         ownerElement, makeUniqueRef<FrameLoaderClientHaiku>(page));
-    // We don't keep the reference to the Frame, see WebFramePrivate.h.
-    data->frame = coreFrame.get();
     FrameLoaderClientHaiku& client = static_cast<FrameLoaderClientHaiku&>(data->frame->loader().client());
     client.setFrame(frame);
-    coreFrame->tree().setName(AtomString::fromUTF8(name.String()));
+    data->frame->tree().setName(AtomString::fromUTF8(name.String()));
 
-    if (ownerElement)
-        ownerElement->document().frame()->tree().appendChild(*coreFrame.get());
     data->frame->init();
     // TODO? evas_object_smart_member_add(frame, ewkFrame);
 
     // The creation of the frame may have run arbitrary JavaScript that removed
     // it from the page already.
-    if (!coreFrame->page()) {
+    if (!data->frame->page()) {
         return nullptr;
     }
     return frame;
