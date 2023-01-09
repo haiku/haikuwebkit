@@ -279,8 +279,6 @@ void FullscreenVideoController::enterFullscreen()
 
 void FullscreenVideoController::exitFullscreen()
 {
-    ASSERT(!IsWindow(m_hudWindow));
-
     // We previously ripped the videoElement's platform layer out
     // of its orginial layer tree to display it in our fullscreen
     // window.  Now, we need to get the layer back in its original

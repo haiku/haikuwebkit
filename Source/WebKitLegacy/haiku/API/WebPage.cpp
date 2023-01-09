@@ -179,7 +179,7 @@ void WebKitInitializeLogChannelsIfNecessary();
 	// NOTE: This needs to be called when the BApplication is ready.
 	// It won't work as static initialization.
 #if !LOG_DISABLED
-    logChannels().initializeLogChannelsIfNecessary("all=all");
+    logChannels().initializeLogChannelsIfNecessary(String::fromUTF8("all=all"));
     WebKitInitializeLogChannelsIfNecessary();
 #endif
     PlatformStrategiesHaiku::initialize();

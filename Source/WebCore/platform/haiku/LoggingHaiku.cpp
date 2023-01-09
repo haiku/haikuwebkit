@@ -34,7 +34,7 @@ namespace WebCore {
 
 String logLevelString()
 {
-    return getenv("WEBKIT_DEBUG");
+    return String::fromUTF8(getenv("WEBKIT_DEBUG"));
 }
 
 } // namespace WebCore
