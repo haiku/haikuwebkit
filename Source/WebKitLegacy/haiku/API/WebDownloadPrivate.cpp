@@ -233,18 +233,20 @@ void WebDownloadPrivate::setProgressListener(const BMessenger& listener)
 
 void WebDownloadPrivate::handleFinished(WebCore::ResourceHandle* handle, uint32 /*status*/)
 {
+#if USE(CURL)
+    BNode node(m_path.Path());
+    node.WriteAttrString("META:url", &m_url);
+#endif
+
     if (m_mimeTypeGuessTries != -1 && m_mimeType.Length() > 0) {
         // In last resort, use the MIME type provided
         // by the response, which pass our validation
 #if USE(CURL)
-        BNode node(m_filename);
         BNodeInfo info(&node);
-        info.SetType(m_mimeType);
-        node.WriteAttrString("META:url", &m_url);
 #else
         BNodeInfo info(&m_file);
-        info.SetType(m_mimeType);
 #endif
+        info.SetType(m_mimeType);
     }
 
     if (m_progressListener.IsValid()) {
