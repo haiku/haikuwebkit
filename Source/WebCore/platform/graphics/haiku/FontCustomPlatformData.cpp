@@ -46,6 +46,12 @@ std::unique_ptr<FontCustomPlatformData> createFontCustomPlatformData(SharedBuffe
 	BFont font;
 
 	status_t result = font.LoadFont(area, buffer.size(), 0);
+
+	if (result != B_OK) { // B_NOT_SUPPORTED returned for r1beta4 fallback path
+		delete_area(area);
+		return std::unique_ptr<FontCustomPlatformData>(nullptr);
+	}
+
 	return std::make_unique<FontCustomPlatformData>(area, font);
 }
 
