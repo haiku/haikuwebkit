@@ -228,7 +228,7 @@ public:
                     str << m_minuteMenu->Superitem()->Label();
                 }
                 m_client->didChooseValue(StringView(String::fromUTF8(str)));
-                // fallthrough
+                [[fallthrough]];
             }
             case 'canc':
                 Hide();
