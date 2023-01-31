@@ -185,7 +185,7 @@ void ScrollbarThemeHaiku::paintScrollbarBackground(GraphicsContext& context, Scr
     uint32 flags = 0;
     if (!scrollbar.enabled())
         flags |= BControlLook::B_DISABLED;
-    be_control_look->DrawScrollBarBackground(view, rect, rect, base, flags, orientation);
+    be_control_look->DrawScrollBarBackground(view, rect, view->Bounds(), base, flags, orientation);
 }
 
 

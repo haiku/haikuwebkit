@@ -92,7 +92,7 @@ bool RenderThemeHaiku::paintSliderTrack(const RenderObject& object, const PaintI
     	flags |= BControlLook::B_ACTIVATED;
     if (isDefault(object))
     	flags |= BControlLook::B_DEFAULT_BUTTON;
-    be_control_look->DrawSliderBar(view, rect, rect, base, background, flags,
+    be_control_look->DrawSliderBar(view, rect, view->Bounds(), base, background, flags,
         object.style().appearance() == SliderHorizontalPart ?
             B_HORIZONTAL : B_VERTICAL);
 
@@ -166,7 +166,7 @@ bool RenderThemeHaiku::paintSliderThumb(const RenderObject& object, const PaintI
     	flags |= BControlLook::B_ACTIVATED;
     if (isDefault(object))
     	flags |= BControlLook::B_DEFAULT_BUTTON;
-    be_control_look->DrawSliderThumb(view, rect, rect, base, flags,
+    be_control_look->DrawSliderThumb(view, rect, view->Bounds(), base, flags,
         object.style().appearance() == SliderHorizontalPart ?
             B_HORIZONTAL : B_VERTICAL);
 
@@ -209,7 +209,7 @@ bool RenderThemeHaiku::paintCheckbox(const RenderObject& object, const PaintInfo
     unsigned flags = flagsForObject(object);
 
     view->PushState();
-    be_control_look->DrawCheckBox(view, rect, rect, base, flags);
+    be_control_look->DrawCheckBox(view, rect, view->Bounds(), base, flags);
     view->PopState();
     return false;
 }
@@ -245,7 +245,7 @@ bool RenderThemeHaiku::paintRadio(const RenderObject& object, const PaintInfo& i
     unsigned flags = flagsForObject(object);
 
     view->PushState();
-    be_control_look->DrawRadioButton(view, rect, rect, base, flags);
+    be_control_look->DrawRadioButton(view, rect, view->Bounds(), base, flags);
     view->PopState();
     return false;
 }
@@ -276,8 +276,8 @@ bool RenderThemeHaiku::paintButton(const RenderObject& object, const PaintInfo& 
         flags |= BControlLook::B_DEFAULT_BUTTON;
 
     view->PushState();
-    be_control_look->DrawButtonFrame(view, rect, rect, base, background, flags);
-    be_control_look->DrawButtonBackground(view, rect, rect, base, flags);
+    be_control_look->DrawButtonFrame(view, rect, view->Bounds(), base, background, flags);
+    be_control_look->DrawButtonBackground(view, rect, view->Bounds(), base, flags);
     view->PopState();
     return false;
 }
@@ -303,7 +303,7 @@ bool RenderThemeHaiku::paintTextField(const RenderObject& object, const PaintInf
     unsigned flags = flagsForObject(object) & ~BControlLook::B_CLICKED;
 
     view->PushState();
-    be_control_look->DrawTextControlBorder(view, rect, rect, base, flags);
+    be_control_look->DrawTextControlBorder(view, rect, view->Bounds(), base, flags);
     view->PopState();
     return false;
 }
@@ -361,8 +361,8 @@ void RenderThemeHaiku::paintMenuListButtonDecorations(const RenderBox& object, c
     unsigned flags = flagsForObject(*object.firstChild()) & ~BControlLook::B_CLICKED;
     
     view->PushState();
-    be_control_look->DrawMenuFieldFrame(view, rect, rect, base, base, flags);
-    be_control_look->DrawMenuFieldBackground(view, rect, rect, base, true, flags);
+    be_control_look->DrawMenuFieldFrame(view, rect, view->Bounds(), base, base, flags);
+    be_control_look->DrawMenuFieldBackground(view, rect, view->Bounds(), base, true, flags);
     view->PopState();
 }
 
