@@ -28,6 +28,7 @@ namespace WebCore {
 
 FontCustomPlatformData::~FontCustomPlatformData()
 {
+	m_font.UnloadFont();
 	delete_area(m_area);
 }
 
