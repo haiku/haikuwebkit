@@ -73,7 +73,6 @@ ChromeClientHaiku::~ChromeClientHaiku()
 
 void ChromeClientHaiku::chromeDestroyed()
 {
-    delete this;
 }
 
 void ChromeClientHaiku::setWindowRect(const FloatRect& rect)
