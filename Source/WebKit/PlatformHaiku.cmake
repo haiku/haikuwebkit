@@ -12,7 +12,11 @@ list(APPEND WebKit_SOURCES
     NetworkProcess/haiku/NetworkSessionHaiku.cpp
     NetworkProcess/haiku/NetworkDataTaskHaiku.cpp
 
+    NetworkProcess/Classifier/WebResourceLoadStatisticsStore.cpp
+
     Platform/IPC/haiku/ConnectionHaiku.cpp
+
+    Platform/classifier/ResourceLoadStatisticsClassifier.cpp
 
     Platform/haiku/ModuleHaiku.cpp
     Platform/haiku/SharedMemoryHaiku.cpp
@@ -69,6 +73,8 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${DERIVED_SOURCES_HAIKU_API_DIR}"
     "${WEBKIT_DIR}/NetworkProcess/unix"
     "${WEBKIT_DIR}/Platform"
+    "${WEBKIT_DIR}/Platform/classifier"
+    "${WEBKIT_DIR}/Platform/generic"
     "${WEBKIT_DIR}/Platform/IPC/unix"
     "${WEBKIT_DIR}/Shared/API/c/haiku"
     "${WEBKIT_DIR}/Shared/CoordinatedGraphics"
