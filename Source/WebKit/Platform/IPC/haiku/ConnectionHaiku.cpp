@@ -31,6 +31,7 @@
 #include <stdlib.h>
 
 #include <WebCore/NotImplemented.h>
+#include <WebCore/ProcessIdentifier.h>
 
 namespace IPC
 {
@@ -45,8 +46,6 @@ namespace IPC
 
             void MessageReceived(BMessage* message)
             {
-				puts("MessageReceived");
-				message->PrintToStream();
                 switch(message->what)
                 {
                     case 'ipcm':
@@ -65,10 +64,8 @@ namespace IPC
 
     void Connection::finalizeConnection(BMessage* message)
     {
-		puts("finalize");
-		message->PrintToStream();
         //unwrap the message
-        status_t result = message->FindMessenger("target", &targetMessenger);
+        status_t result = message->FindMessenger("messenger", &targetMessenger);
         if (result == B_OK)
             m_isConnected = true;
 
@@ -79,7 +76,6 @@ namespace IPC
 
     void Connection::platformInitialize(Identifier identifier)
     {
-		puts("platformInitialize");
         m_connectedProcess = identifier;
     }
 
@@ -89,29 +85,38 @@ namespace IPC
 
     void Connection::prepareIncomingMessage(BMessage* message)
     {
-		puts("prepareIncoming");
-		message->PrintToStream();
         size_t size;
-        const uint8_t* Buffer;
+        const uint8_t* buffer;
         status_t result;
 
-        result = message->FindData("bufferData", B_ANY_TYPE, (const void**)&Buffer, (ssize_t*)&size);
+        result = message->FindData("bufferData", B_ANY_TYPE, (const void**)&buffer, (ssize_t*)&size);
 
         if (result == B_OK)
         {
+            // Make a copy that's properly aligned, because the BMessage data isn't
+            uint8_t* b2 = (uint8_t*)malloc(size);
+            memcpy(b2, buffer, size);
+
             Vector<Attachment> attachments(0);
-            auto decoder = Decoder::create(Buffer, size, nullptr, WTFMove(attachments));
+            auto decoder = Decoder::create(b2, size, nullptr, WTFMove(attachments));
+            ASSERT(decoder);
+            if (!decoder) {
+                puts("OOPS");
+                free(b2);
+                return;
+            }
+
             processIncomingMessage(WTFMove(decoder));
+            free(b2);
         }
         else
         {
-            //return
+            CRASH();
         }
     }
 
     void Connection::runReadEventLoop()
     {
-		puts("runReadEventLoop");
         status_t result;
         BLooper* looper = m_connectionQueue->runLoop().runLoopLooper();
 
@@ -119,41 +124,32 @@ namespace IPC
         looper->AddHandler(m_readHandler);
         looper->SetPreferredHandler(m_readHandler);
         looper->Unlock();
-        /*
-        notify the mainloop about our workqueue
-        */
-        BMessage init('inil');
-        init.AddString("identifier", m_connectedProcess.key.String());
-        init.AddPointer("looper", (const void*)looper);
-        BMessenger hostProcess(NULL, getpid());
-        result = hostProcess.SendMessage(&init);
+
         /*
         notify the other process  about our workqueue
         */
-        BMessenger target(looper->PreferredHandler(), looper, &result);
+        BMessenger target(m_readHandler, looper, &result);
         BMessage inig('inig');
-        inig.AddString("identifier", m_connectedProcess.key.String());
-        inig.AddMessenger("target", target);
-        BMessage reply;
-        m_messenger.SendMessage(&inig);
-        //sent to the other process
-    }
-
-    void Connection::runWriteEventLoop()
-    {
-		puts("runWriteEventLoop");
-        // write the pending encoding but do we need this will messaging fail
-        //probably when the message queue is full
+        inig.AddInt64("processID", getpid());
+        inig.AddMessenger("messenger", target);
+        m_connectedProcess.handle.SendMessage(&inig);
     }
 
     void Connection::platformOpen()
     {
-		puts("platformOpen");
-        status_t result = m_messenger.SetTo(NULL, m_connectedProcess.connectedProcess);
+
         m_readHandler = new ReadLoop(this);
         m_connectionQueue->dispatch([this, protectedThis = Ref(*this)]{
             this->runReadEventLoop();
         });
+
+        if (m_connectedProcess.m_isCreatedFromMessage) {
+            targetMessenger = m_connectedProcess.handle;
+            m_isConnected = true;
+            m_connectionQueue->dispatch([protectedThis = Ref(*this)]() mutable {
+                protectedThis->sendOutgoingMessages();
+            });
+        }
     }
 
     bool Connection::platformCanSendOutgoingMessages() const
@@ -163,16 +159,13 @@ namespace IPC
 
     bool Connection::sendOutgoingMessage(UniqueRef<Encoder>&& encoder)
     {
-		puts("sendOutgoingMessage");
         BMessage processMessage('ipcm');
-        processMessage.AddString("identifier", m_connectedProcess.key.String());
+        processMessage.AddMessenger("identifier", BMessenger(m_readHandler, m_readHandler->Looper()));
         const uint8_t* Buffer = encoder->buffer();
         status_t result = processMessage.AddData("bufferData", B_ANY_TYPE, (void*)Buffer, encoder->bufferSize());
 
         processMessage.AddInt32("sender",getpid());
         result = targetMessenger.SendMessage(&processMessage);
-
-		processMessage.PrintToStream();
 
         if(result == B_OK)
             return true;
