@@ -57,6 +57,10 @@ enum class SandboxPermission {
 };
 #endif
 
+#if PLATFORM(HAIKU)
+class ProcessLauncherHandler;
+#endif
+
 class ProcessLauncher : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<ProcessLauncher> {
 public:
     class Client {
@@ -147,6 +151,10 @@ private:
 
 #if PLATFORM(WIN)
     WTF::Win32Handle m_hProcess;
+#endif
+
+#if PLATFORM(HAIKU)
+    friend class ProcessLauncherHandler;
 #endif
 
     const LaunchOptions m_launchOptions;

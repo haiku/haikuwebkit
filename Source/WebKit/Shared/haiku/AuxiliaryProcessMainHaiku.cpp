@@ -25,23 +25,64 @@
  */
 
 #include "config.h"
-#include "AuxiliaryProcessMainHaiku.h"
+#include "AuxiliaryProcessMain.h"
 
 #include <WebCore/ProcessIdentifier.h>
 #include <stdlib.h>
 
 namespace WebKit {
 
-bool AuxiliaryProcessMainBase::parseCommandLine(int argc, char** argv)
+AuxiliaryProcessMainCommon::AuxiliaryProcessMainCommon()
 {
-    ASSERT(argc >= 3);
-    if (argc < 3)
+#if ENABLE(BREAKPAD)
+    installBreakpadExceptionHandler();
+#endif
+}
+
+bool AuxiliaryProcessMainCommon::parseCommandLine(int argc, char** argv)
+{
+    if (argc < 3) {
         return false;
-    m_parameters.processIdentifier = makeObjectIdentifier<WebCore::ProcessIdentifierType>(atoll(argv[2]));
-    m_parameters.connectionIdentifier.connectedProcess = atoi(argv[3]);
-    m_parameters.connectionIdentifier.key = argv[2];
-    
+    }
+
+    m_parameters.processIdentifier = ObjectIdentifier<WebCore::ProcessIdentifierType>(atoll(argv[1]));
+
+    const char* ptr = argv[2];
+
+    for (size_t i = 0; i < sizeof(BMessenger); i++) {
+        uint8_t tmp2;
+        uint8_t tmp = ptr[0];
+        if (tmp >= '0' && tmp <= '9')
+            tmp -= '0';
+        else if (tmp >= 'a' && tmp <= 'f') {
+            tmp -= 'a';
+            tmp += 10;
+        }
+
+        tmp2 = tmp << 4;
+        ptr++;
+
+        tmp = ptr[0];
+        if (tmp >= '0' && tmp <= '9')
+            tmp -= '0';
+        else if (tmp >= 'a' && tmp <= 'f') {
+            tmp -= 'a';
+            tmp += 10;
+        }
+
+        tmp2 |= tmp;
+        ptr++;
+
+        uint8_t* target = (uint8_t*)(&m_parameters.connectionIdentifier.handle);
+        target[i] = tmp2;
+    }
+
     return true;
+}
+
+void AuxiliaryProcess::platformInitialize(const AuxiliaryProcessInitializationParameters&)
+{
+    notImplemented();
 }
 
 } // namespace WebKit

@@ -40,7 +40,65 @@ using namespace WebCore;
 
 namespace WebKit {
 
-status_t processRef(BString path, entry_ref* pathRef)
+// TODO we could have a single instance of this instead of creating and deleting one everytime.
+// But it would need a way to either locate the ProcessLauncher from the processIdentifier,
+// or to store the ProcessLauncher pointer into the message sent to the other process and back
+// into the reply
+//
+// Another option would be to have the BHandler already created by the connectionIdentifier
+// and then ownership transferred to the corresponding ConnectionHaiku when it is created, instead
+// of creating yet another BHandler there.
+class ProcessLauncherHandler: public BHandler
+{
+    public:
+        ProcessLauncherHandler(ProcessLauncher* launcher)
+            : BHandler("process launcher")
+            , m_launcher(launcher)
+        {
+        }
+
+        void MessageReceived(BMessage* message)
+        {
+            switch(message->what)
+            {
+                case 'inig':
+                    GlobalMessage(message);
+                    break;
+                default:
+                    BHandler::MessageReceived(message);
+                    break;
+            }
+        }
+
+    private:
+
+        void GlobalMessage(BMessage* message)
+        {
+            WTF::ProcessID processID = message->FindInt64("processID");
+            IPC::Connection::Identifier connectionIdentifier;
+            message->FindMessenger("messenger", &connectionIdentifier.handle);
+            connectionIdentifier.m_isCreatedFromMessage = true;
+            m_launcher->didFinishLaunchingProcess(processID, connectionIdentifier);
+
+            // Our job is done!
+            // FIXME or is it? maybe keep this around until the processLauncher is destroyed?
+            delete this;
+        }
+
+        ProcessLauncher* m_launcher;
+};
+
+static BHandler* GetProcessLauncherHandler(ProcessLauncher* launcher)
+{
+    BHandler* handle = nullptr;
+    handle = new ProcessLauncherHandler(launcher);
+    BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
+    looper->AddHandler(handle);
+
+    return handle;
+}
+
+static status_t GetRefForPath(BString path, entry_ref* pathRef)
 {
     BEntry pathEntry(path);
     if(!pathEntry.Exists())
@@ -69,52 +127,39 @@ void ProcessLauncher::launchProcess()
         return;
     }
 
-    BString processIdentifier,connectionIdentifier;
-    IPC::Connection::Identifier processInit;
-    team_id connectionID = getpid();
+    BString processIdentifierString;
+    processIdentifierString.SetToFormat("%" PRIu64, m_launchOptions.processIdentifier.toUInt64());
 
-    connectionIdentifier.SetToFormat("%ld", connectionID);
-    processIdentifier.SetToFormat("%" PRIu64, m_launchOptions.processIdentifier.toUInt64());
-    processInit.key = processIdentifier;
+    BHandler* connectionHandler = GetProcessLauncherHandler(this);
+    BMessenger messenger(connectionHandler);
+    BString connectionIdentifierString;
 
-    unsigned nargs = 2; // by default we have only 2 arguments: process and connection IDs
-
-#if ENABLE(DEVELOPER_MODE)
-    Vector<CString> prefixArgs;
-    if (!m_launchOptions.processCmdPrefix.isNull()) {
-        for (auto& arg : m_launchOptions.processCmdPrefix.split(' '))
-            prefixArgs.append(arg.utf8());
-        nargs += prefixArgs.size();
+    for (size_t i = 0; i < sizeof(BMessenger); i++) {
+        char formatted[3];
+        uint8 byte = ((uint8*)&messenger)[i];
+        sprintf(formatted, "%02x", byte);
+        connectionIdentifierString.Append(formatted);
     }
-#endif
+
+    int argc = 2;
+    const char* argv[] = {
+        processIdentifierString.String(),
+        connectionIdentifierString.String(),
+        nullptr
+    };
 
     entry_ref executableRef;
-    if(processRef(executablePath, &executableRef) != B_OK)
+    if(GetRefForPath(executablePath, &executableRef) != B_OK)
     {
         return;
     }
-    BStackOrHeapArray<const char*, 10> argv(nargs);
-    unsigned i = 0;
-#if ENABLE(DEVELOPER_MODE)
-    // If there's a prefix command, put it before the rest of the args.
-    // FIXME this won't work with lauching using BRoster...
-    for (auto& arg : prefixArgs)
-        argv[i++] = const_cast<char*>(arg.data());
-#endif
-    argv[i++] = processIdentifier.String();
-    argv[i++] = connectionIdentifier.String();
 
-    assert(i <= nargs);
+    team_id child_id;
+    be_roster->Launch(&executableRef, argc, argv, &child_id);
 
-    team_id child_id; // TODO do we need to store this somewhere?
-    status_t result = be_roster->Launch(&executableRef, i, argv, &child_id);
-
-    // We've finished launching the process, message back to the main run loop.
-    processInit.connectedProcess = child_id;
-
-    RunLoop::main().dispatch([protectedThis = Ref(*this), this, processInit] {
-        didFinishLaunchingProcess(m_processIdentifier, processInit);
-    });
+    // When the process is launched, it will reply by sending the 'inig' message with the
+    // connectionIdentifier that we can use to communicate with it. This triggers the call to
+    // didFinishLaunchingProcess which starts establishing the connection
 }
 
 void ProcessLauncher::terminateProcess()

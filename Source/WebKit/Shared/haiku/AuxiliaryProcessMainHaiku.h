@@ -29,7 +29,6 @@
 #include "AuxiliaryProcess.h"
 #include "WebKit2Initialize.h"
 #include <wtf/RunLoop.h>
-#include "ProcessInitHaiku.h"
 
 #include <Application.h>
 #include <Looper.h>
@@ -62,17 +61,13 @@ class ProcessApp : public BApplication
         {
             default:
             BApplication::MessageReceived(message);
-            
         }
     }
+
     void ReadyToRun()
     {
         RunLoop::run();
-        BHandler* handle = new ProcessInitHaiku();
-        BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
-        looper->AddHandler(handle);
-        looper->SetNextHandler(handle);
-    }	
+    }
 };
 
 template<typename AuxiliaryProcessType>
@@ -88,7 +83,7 @@ int AuxiliaryProcessMain(int argc, char** argv)
 
     if (!auxiliaryMain.platformInitialize(argv[1]))
         return EXIT_FAILURE;
-        
+
     InitializeWebKit2();
 
     if (!auxiliaryMain.parseCommandLine(argc, argv))
