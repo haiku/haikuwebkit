@@ -59,10 +59,14 @@
 #include <wtf/glib/GSocketMonitor.h>
 #endif
 
-#if PLATFORM(HAIKU)
+#if OS(HAIKU)
 #include <Handler.h>
 #include <Messenger.h>
 #include <String.h>
+
+#include <wtf/haiku/ConnectionHandle.h>
+
+#include <WebCore/NotImplemented.h>
 #endif
 
 #if ENABLE(IPC_TESTING_API)
@@ -273,6 +277,15 @@ public:
         explicit operator bool() const { return MACH_PORT_VALID(port); }
         mach_port_t port { MACH_PORT_NULL };
         OSObjectPtr<xpc_connection_t> xpcConnection;
+#elif OS(HAIKU)
+        explicit Identifier(Handle&& handle)
+             : handle(handle)
+        {
+        }
+        Handle handle;
+        bool m_isCreatedFromMessage { false };
+
+        operator bool() const { return handle.IsValid(); }
 #endif
     };
 
@@ -280,16 +293,9 @@ public:
     xpc_connection_t xpcConnection() const { return m_xpcConnection.get(); }
     std::optional<audit_token_t> getAuditToken();
     pid_t remoteProcessID() const;
-#elif PLATFORM(HAIKU)
-    struct Identifier
-    {
-        team_id connectedProcess;
-        BString key;
-    };
-    static bool identifierIsValid(Identifier identifier) { return BMessenger(NULL,identifier.connectedProcess).IsValid(); }//FIXME: make this less expensive
+#elif OS(HAIKU)
     void prepareIncomingMessage(BMessage*);
     void finalizeConnection(BMessage*);
-    team_id getConnection() { return m_connectedProcess.connectedProcess; }
 #endif
 
     static Ref<Connection> createServerConnection(Identifier, Thread::QOS = Thread::QOS::Default);
@@ -697,11 +703,8 @@ private:
 #elif PLATFORM(HAIKU)
     Identifier m_connectedProcess;
     BHandler* m_readHandler;
-    BMessenger m_messenger;
     BMessenger targetMessenger;
     void runReadEventLoop();
-    void runWriteEventLoop();
-    Vector<uint8_t> m_readBuffer;
     std::unique_ptr<Encoder> m_pendingWriteEncoder;
 #endif
     friend class StreamClientConnection;

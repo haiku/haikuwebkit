@@ -45,8 +45,7 @@ list(APPEND WebKit_SOURCES
     Shared/haiku/ProcessExecutablePathHaiku.cpp
     Shared/haiku/WebCoreArgumentCodersHaiku.cpp
     Shared/haiku/WebMemorySamplerHaiku.cpp
-	#Shared/haiku/AuxiliaryProcessMainHaiku.cpp
-    Shared/unix/AuxiliaryProcessMain.cpp
+    Shared/haiku/AuxiliaryProcessMainHaiku.cpp
 
     Shared/API/c/curl/WKCertificateInfoCurl.cpp
     Shared/curl/WebCoreArgumentCodersCurl.cpp
