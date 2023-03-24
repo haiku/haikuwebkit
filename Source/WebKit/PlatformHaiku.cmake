@@ -5,12 +5,24 @@ file(MAKE_DIRECTORY ${DERIVED_SOURCES_HAIKU_API_DIR})
 configure_file(UIProcess/API/haiku/WebKitVersion.h.in ${DERIVED_SOURCES_HAIKU_API_DIR}/WebKitVersion.h)
 
 list(APPEND WebKit_SOURCES
-    NetworkProcess/cache/NetworkCacheDataHaiku.cpp
-    NetworkProcess/cache/NetworkCacheIOChannelHaiku.cpp
-    NetworkProcess/haiku/NetworkProcessHaiku.cpp
+    #NetworkProcess/cache/NetworkCacheDataHaiku.cpp
+    #NetworkProcess/cache/NetworkCacheIOChannelHaiku.cpp
+    #NetworkProcess/haiku/NetworkProcessHaiku.cpp
     NetworkProcess/haiku/NetworkProcessMainHaiku.cpp
-    NetworkProcess/haiku/NetworkSessionHaiku.cpp
-    NetworkProcess/haiku/NetworkDataTaskHaiku.cpp
+    #NetworkProcess/haiku/NetworkSessionHaiku.cpp
+    #NetworkProcess/haiku/NetworkDataTaskHaiku.cpp
+    #WebProcess/Cookies/haiku/WebCookieManagerHaiku.cpp
+
+    NetworkProcess/Cookies/curl/WebCookieManagerCurl.cpp
+
+    NetworkProcess/cache/NetworkCacheDataCurl.cpp
+    NetworkProcess/cache/NetworkCacheIOChannelCurl.cpp
+
+    NetworkProcess/curl/NetworkDataTaskCurl.cpp
+    NetworkProcess/curl/NetworkProcessCurl.cpp
+    #NetworkProcess/curl/NetworkProcessMainCurl.cpp
+    NetworkProcess/curl/NetworkSessionCurl.cpp
+    NetworkProcess/curl/WebSocketTaskCurl.cpp
 
     NetworkProcess/Classifier/WebResourceLoadStatisticsStore.cpp
 
@@ -34,7 +46,14 @@ list(APPEND WebKit_SOURCES
     Shared/haiku/ShareableBitmapHaiku.cpp
     Shared/haiku/WebCoreArgumentCodersHaiku.cpp
     Shared/haiku/WebMemorySamplerHaiku.cpp
-    Shared/haiku/AuxiliaryProcessMainHaiku.cpp
+	#Shared/haiku/AuxiliaryProcessMainHaiku.cpp
+    Shared/unix/AuxiliaryProcessMain.cpp
+
+    Shared/API/c/curl/WKCertificateInfoCurl.cpp
+    Shared/curl/WebCoreArgumentCodersCurl.cpp
+
+    UIProcess/API/C/curl/WKProtectionSpaceCurl.cpp
+    UIProcess/API/C/curl/WKWebsiteDataStoreRefCurl.cpp
 
     UIProcess/API/C/haiku/WKView.cpp
 
@@ -43,9 +62,11 @@ list(APPEND WebKit_SOURCES
 
     UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
 
+    UIProcess/WebsiteData/curl/WebsiteDataStoreCurl.cpp
+    UIProcess/WebsiteData/haiku/WebsiteDataStoreHaiku.cpp
+
     UIProcess/Launcher/haiku/ProcessLauncherHaiku.cpp
     UIProcess/LegacySessionStateCodingNone.cpp
-    UIProcess/WebsiteData/haiku/WebsiteDataStoreHaiku.cpp
     UIProcess/haiku/BackingStoreHaiku.cpp
     UIProcess/haiku/TextCheckerHaiku.cpp
     UIProcess/haiku/WebPageProxyHaiku.cpp
@@ -54,10 +75,8 @@ list(APPEND WebKit_SOURCES
     UIProcess/API/haiku/WebView.cpp
     UIProcess/API/haiku/PageClientImplHaiku.cpp
 
-    WebProcess/Cookies/haiku/WebCookieManagerHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
-    WebProcess/WebCoreSupport/haiku/WebFrameNetworkingContext.cpp
     WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
     WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
     WebProcess/WebPage/CoordinatedGraphics/CompositingCoordinator.cpp
@@ -68,10 +87,14 @@ list(APPEND WebKit_SOURCES
 
     WebProcess/haiku/WebProcessHaiku.cpp
     WebProcess/haiku/WebProcessMainHaiku.cpp
+
+	#WebProcess/WebCoreSupport/haiku/WebFrameNetworkingContext.cpp
+    WebProcess/WebCoreSupport/curl/WebFrameNetworkingContext.cpp
 )
 
 list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${DERIVED_SOURCES_HAIKU_API_DIR}"
+    "${WEBKIT_DIR}/NetworkProcess/curl"
     "${WEBKIT_DIR}/NetworkProcess/unix"
     "${WEBKIT_DIR}/Platform"
     "${WEBKIT_DIR}/Platform/classifier"
@@ -83,11 +106,13 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/Shared/unix"
     "${WEBKIT_DIR}/Shared/haiku"
     "${WEBKIT_DIR}/UIProcess/API/C/CoordinatedGraphics"
+    "${WEBKIT_DIR}/UIProcess/API/C/curl"
     "${WEBKIT_DIR}/UIProcess/API/C/haiku"
     "${WEBKIT_DIR}/UIProcess/API/haiku"
     "${WEBKIT_DIR}/UIProcess/haiku"
     "${WEBKIT_DIR}/UIProcess/CoordinatedGraphics"
     "${WEBKIT_DIR}/WebProcess/unix"
+    "${WEBKIT_DIR}/WebProcess/WebCoreSupport/curl"
     "${WEBKIT_DIR}/WebProcess/WebCoreSupport/haiku"
     "${WEBKIT_DIR}/WebProcess/WebPage/CoordinatedGraphics"
     "${WEBKIT_DIR}/NetworkProcess/haiku"

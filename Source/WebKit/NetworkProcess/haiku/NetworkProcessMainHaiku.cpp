@@ -26,34 +26,29 @@
 #include "config.h"
 #include "NetworkProcessMain.h"
 
-#include "AuxiliaryProcessMainHaiku.h"
+#include "AuxiliaryProcessMain.h"
 #include "NetworkProcess.h"
-#include <Application.h>
 
 namespace WebKit {
-class NetworkProcessMainBase: public AuxiliaryProcessMainBase
+
+class NetworkProcessMainBase: public AuxiliaryProcessMainBaseNoSingleton<NetworkProcess>
 {
     public:
-    ProcessApp* app = nullptr;
-    bool platformInitialize(char* sign) override
+    bool platformInitialize() override
     {
-        app = new ProcessApp(sign);
+        RunLoop::current().setAppMIMEType("application/x-vnd-HaikuWebKit-NetworkProcess");
         return true;
     }
-    void runApp()
+
+    void platformFinalize() override
     {
-        app->Run();
-    }	
+        /*process().destroySession(PAL::SessionID::defaultSessionID());*/
+    }
 };
-template<>
-void initializeAuxiliaryProcess<NetworkProcess>(AuxiliaryProcessInitializationParameters&& parameters)
-{
-    static NeverDestroyed<NetworkProcess> networkProcess(WTFMove(parameters));
-}
 
 int NetworkProcessMain(int argc, char** argv)
 {
-    return AuxiliaryProcessMain<NetworkProcess,NetworkProcessMainBase>(argc, argv);
+    return AuxiliaryProcessMain<NetworkProcessMainBase>(argc, argv);
 }
 
 } // namespace WebKit
