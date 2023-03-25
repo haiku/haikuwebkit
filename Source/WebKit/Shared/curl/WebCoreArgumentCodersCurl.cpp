@@ -40,6 +40,7 @@ namespace IPC {
 
 using namespace WebCore;
 
+#if !PLATFORM(HAIKU)
 template<typename Encoder>
 void ArgumentCoder<CertificateInfo>::encode(Encoder& encoder, const CertificateInfo& certificateInfo)
 {
@@ -77,6 +78,7 @@ std::optional<CertificateInfo> ArgumentCoder<CertificateInfo>::decode(Decoder& d
     return CertificateInfo { *verificationError, WTFMove(certificateChain) };
 }
 template std::optional<WebCore::CertificateInfo> ArgumentCoder<WebCore::CertificateInfo>::decode<Decoder>(Decoder&);
+#endif
 
 void ArgumentCoder<ResourceError>::encodePlatformData(Encoder& encoder, const ResourceError& resourceError)
 {
