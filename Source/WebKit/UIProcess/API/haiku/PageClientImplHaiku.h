@@ -25,6 +25,8 @@
 #pragma once
 
 #include "PageClient.h"
+
+#include "WebDateTimePicker.h"
 #include "WebPageProxy.h"
 #include "DefaultUndoController.h"
 
@@ -42,9 +44,9 @@ namespace WebKit
             WebViewBase* viewWidget();
         private:
             //page client def's
-            std::unique_ptr<DrawingAreaProxy> createDrawingAreaProxy(WebProcessProxy&) override;
+            std::unique_ptr<DrawingAreaProxy> createDrawingAreaProxy() override;
             void setViewNeedsDisplay(const WebCore::Region&) override;
-            void requestScroll(const WebCore::FloatPoint& scrollPosition, const WebCore::IntPoint& scrollOrigin) override;
+            void requestScroll(const WebCore::FloatPoint& scrollPosition, const WebCore::IntPoint& scrollOrigin, WebCore::ScrollIsAnimated) override;
             WebCore::FloatPoint viewScrollPosition() override;
             WebCore::IntSize viewSize() override;
             bool isViewWindowActive() override;
@@ -71,6 +73,14 @@ namespace WebKit
             RefPtr<WebPopupMenuProxy> createPopupMenuProxy(WebPageProxy&) override;
             Ref<WebContextMenuProxy> createContextMenuProxy(WebPageProxy&, ContextMenuContextData&&, const UserData&) override;
 
+#if ENABLE(FULLSCREEN_API)
+            WebFullScreenManagerProxyClient& fullScreenManagerProxyClient() override;
+#endif
+
+#if ENABLE(DATE_AND_TIME_INPUT_TYPES)
+            RefPtr<WebKit::WebDateTimePicker> createDateTimePicker(WebPageProxy&) override;
+#endif
+
 #if ENABLE(INPUT_TYPE_COLOR)
             RefPtr<WebColorPicker> createColorPicker(WebPageProxy*, const WebCore::Color& intialColor, 
                     const WebCore::IntRect&,Vector<WebCore::Color>&&) override;
@@ -80,11 +90,9 @@ namespace WebKit
             void exitAcceleratedCompositingMode() override;
             void updateAcceleratedCompositingMode(const LayerTreeContext&) override;
 
-            void handleDownloadRequest(DownloadProxy&) override;
-            void didChangeContentSize(const WebCore::IntSize&) override;
-            void didCommitLoadForMainFrame(const String& mimeType, bool useCustomContentProvider) override;
-
             void didFinishLoadingDataForCustomContentProvider(const String& suggestedFilename, const IPC::DataReference&) override;
+            void didFinishNavigation(API::Navigation*) override;
+            void didFailNavigation(API::Navigation*) override;
             void navigationGestureDidBegin() override;
             void navigationGestureWillEnd(bool, WebBackForwardListItem&) override;
             void navigationGestureDidEnd(bool, WebBackForwardListItem&) override;
@@ -95,7 +103,8 @@ namespace WebKit
             void didFirstVisuallyNonEmptyLayoutForMainFrame() override;
             void didSameDocumentNavigationForMainFrame(SameDocumentNavigationType) override;
 
-            void wheelEventWasNotHandledByWebCore(const NativeWebWheelEvent&) override;
+            void didChangeContentSize(const WebCore::IntSize&) override;
+            void didCommitLoadForMainFrame(const String& mimeType, bool useCustomContentProvider) override;
 
             void didChangeBackgroundColor() override;
             void isPlayingAudioWillChange() override;
@@ -110,7 +119,8 @@ namespace WebKit
 
             WebCore::IntPoint accessibilityScreenToRootView(const WebCore::IntPoint& point) final { return point; }
             WebCore::IntRect rootViewToAccessibilityScreen(const WebCore::IntRect& rect) final { return rect; }
-            void requestDOMPasteAccess(const WebCore::IntRect& elementRect, const String& originIdentifier, CompletionHandler<void(WebCore::DOMPasteAccessResponse)>&&) final {}
+            void requestDOMPasteAccess(WebCore::DOMPasteAccessCategory, const WebCore::IntRect& elementRect, const String& originIdentifier, CompletionHandler<void(WebCore::DOMPasteAccessResponse)>&&) final {}
+            void wheelEventWasNotHandledByWebCore(const NativeWebWheelEvent&) override;
 
         private:
             DefaultUndoController fUndoController;
