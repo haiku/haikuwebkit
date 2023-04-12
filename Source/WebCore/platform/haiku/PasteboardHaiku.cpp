@@ -418,9 +418,14 @@ Vector<String> Pasteboard::typesSafeForBindings(const String&)
 	return typesForLegacyUnsafeBindings();
 }
 
-void Pasteboard::writeCustomData(const WTF::Vector<PasteboardCustomData>&)
+void Pasteboard::writeCustomData(const WTF::Vector<PasteboardCustomData>& data)
 {
-	notImplemented();
+	if (!data.isEmpty()) {
+		const auto& customData = data[0];
+		customData.forEachPlatformString([this] (auto& type, auto& string) {
+			writeString(type, string);
+		});
+	}
 }
 
 void Pasteboard::read(WebCore::PasteboardFileReader&, std::optional<unsigned long>)
