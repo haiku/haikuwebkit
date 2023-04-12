@@ -5946,6 +5946,7 @@ ShrinksStandaloneImagesToFit:
   status: embedder
   defaultValue:
     WebKitLegacy:
+      "PLATFORM(HAIKU)": true
       default: false
     WebKit:
       default: true
