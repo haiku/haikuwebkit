@@ -46,12 +46,21 @@ FontPlatformData::findMatchingFontFamily(const AtomString& familyName, font_fami
         strlcpy(fontFamily, familyNameUTF8.data(), B_FONT_FAMILY_LENGTH);
     else {
         // If no font family is found for the given name, we use a generic font.
-        if (familyName.contains(ASCIILiteral::fromLiteralUnsafe("Sans")))
-            strlcpy(fontFamily, m_FallbackSansSerifFontFamily, B_FONT_FAMILY_LENGTH);
-        else if (familyName.contains(ASCIILiteral::fromLiteralUnsafe("Serif")))
-            strlcpy(fontFamily, m_FallbackSerifFontFamily, B_FONT_FAMILY_LENGTH);
-        else if (familyName.contains(ASCIILiteral::fromLiteralUnsafe("Mono")))
+
+        AtomString lowercaseFamilyName = familyName.convertToASCIILowercase();
+
+        // This is a known foundry with its name in some families, not necessarily monospaced
+        ASCIILiteral monotype = ASCIILiteral::fromLiteralUnsafe("monotype ");
+        if (lowercaseFamilyName.startsWith(monotype))
+            lowercaseFamilyName = AtomString(lowercaseFamilyName.impl(), monotype.length(), lowercaseFamilyName.length() - monotype.length());
+
+        if (lowercaseFamilyName.contains(ASCIILiteral::fromLiteralUnsafe("mono"))
+            || lowercaseFamilyName.contains(ASCIILiteral::fromLiteralUnsafe("consol")))
             strlcpy(fontFamily, m_FallbackFixedFontFamily, B_FONT_FAMILY_LENGTH);
+        else if (lowercaseFamilyName.contains(ASCIILiteral::fromLiteralUnsafe("sans")))
+            strlcpy(fontFamily, m_FallbackSansSerifFontFamily, B_FONT_FAMILY_LENGTH);
+        else if (lowercaseFamilyName.contains(ASCIILiteral::fromLiteralUnsafe("serif")))
+            strlcpy(fontFamily, m_FallbackSerifFontFamily, B_FONT_FAMILY_LENGTH);
         else {
             // This is the fallback font.
             strlcpy(fontFamily, m_FallbackStandardFontFamily, B_FONT_FAMILY_LENGTH);
@@ -72,7 +81,7 @@ static void findMatchingFontStyle(const font_family& fontFamily, bool bold, bool
                 return;
             if ((!oblique && bold) && styleName == "Bold")
                 return;
-            if ((!oblique && !bold) && (styleName == "Roma" || styleName == "Book"
+            if ((!oblique && !bold) && (styleName == "Roman" || styleName == "Book"
                 || styleName == "Condensed" || styleName == "Regular" || styleName == "Medium")) {
                 return;
             }
