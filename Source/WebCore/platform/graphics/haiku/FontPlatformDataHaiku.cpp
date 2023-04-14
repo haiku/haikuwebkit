@@ -119,14 +119,14 @@ FontPlatformData::FontPlatformData(const BFont& font, const FontDescription& fon
 }
 
 FontPlatformData::FontPlatformData(const FontPlatformData& other)
-    : m_isHashTableDeletedValue(other.m_isHashTableDeletedValue)
-    , m_size(other.m_size)
-    , m_syntheticBold(other.m_syntheticBold)
-    , m_syntheticOblique(other.m_syntheticOblique)
-    , m_isColorBitmapFont(other.m_isColorBitmapFont)
+    : m_size(other.m_size)
     , m_orientation(other.m_orientation)
     , m_widthVariant(other.m_widthVariant)
     , m_textRenderingMode(other.m_textRenderingMode)
+    , m_syntheticBold(other.m_syntheticBold)
+    , m_syntheticOblique(other.m_syntheticOblique)
+    , m_isColorBitmapFont(other.m_isColorBitmapFont)
+    , m_isHashTableDeletedValue(other.m_isHashTableDeletedValue)
 {
     if (other.m_font != nullptr) {
         m_font = std::make_unique<BFont>(other.m_font.get());
@@ -228,6 +228,7 @@ FontPlatformData::SetFallBackStandardFont(const BString& font)
 
 RefPtr<SharedBuffer> FontPlatformData::openTypeTable(uint32_t table) const
 {
+	UNUSED_PARAM(table);
 	notImplemented();
 	return nullptr;
 }
