@@ -20,11 +20,11 @@
  */
 
 #include "config.h"
-#include "Logging.h"
+#include <wtf/Logging.h>
 
 #if !LOG_DISABLED || !RELEASE_LOG_DISABLED
 
-#include "LogInitialization.h"
+#include <wtf/LogInitialization.h>
 #include <string.h>
 #include <wtf/text/WTFString.h>
 
