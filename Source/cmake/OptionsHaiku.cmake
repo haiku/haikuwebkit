@@ -18,7 +18,7 @@ add_definitions(-D_GLIBCXX_USE_C99_MATH)
 add_definitions(-D_GNU_SOURCE)
 
 # Uncomment to enable logs even in release mode
-# add_definitions(-DLOG_DISABLED=0 -DERROR_DISABLED=0 -DFATAL_DISABLED=0)
+add_definitions(-DLOG_DISABLED=0 -DERROR_DISABLED=0 -DFATAL_DISABLED=0)
 
 set(ENABLE_WEBKIT ON)
 set(ENABLE_WEBKIT_LEGACY ON)
