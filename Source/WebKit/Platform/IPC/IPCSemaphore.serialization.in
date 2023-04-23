@@ -32,7 +32,7 @@ webkit_platform_header: "IPCSemaphore.h"
 #if OS(HAIKU)
     sem_id getSemaphore();
 #endif
-#if USE(UNIX_DOMAIN_SOCKETS)
+#if USE(UNIX_DOMAIN_SOCKETS) && !OS(HAIKU)
     UnixFileDescriptor duplicateDescriptor();
 #endif
 };

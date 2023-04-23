@@ -48,7 +48,6 @@
 #include "WebPageProxy.h"
 #include "WebView.h"
 #include "WebViewConstants.h"
-#include "ProcessInitHaiku.h"
 
 BWebView::BWebView(BRect frame, BWindow* myWindow)
     : fAppLooper(myWindow->Looper())
@@ -86,14 +85,6 @@ void BWebView::navigationCallbacks()
 
     fObserver = new PageLoadStateObserver(fAppLooper);
     getRenderView()->page()->pageLoadState().addObserver(*fObserver);
-}
-
-void BWebView::initializeOnce()
-{
-    WTF::RunLoop::run();
-    BHandler* handle = new ProcessInitHaiku();
-    BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
-    looper->AddHandler(handle);
 }
 
 void BWebView::loadURIRequest(const char* uri)

@@ -22,12 +22,13 @@ list(APPEND WebKit_SOURCES
 
     NetworkProcess/Classifier/WebResourceLoadStatisticsStore.cpp
 
-    Platform/IPC/haiku/ConnectionHaiku.cpp
-    Platform/IPC/haiku/IPCSemaphoreHaiku.cpp
-
     Platform/classifier/ResourceLoadStatisticsClassifier.cpp
 
     Platform/haiku/ModuleHaiku.cpp
+
+    Platform/IPC/haiku/IPCSemaphoreHaiku.cpp
+    Platform/IPC/unix/ArgumentCodersUnix.cpp
+    Platform/IPC/unix/ConnectionUnix.cpp
 
     Platform/unix/LoggingUnix.cpp
 

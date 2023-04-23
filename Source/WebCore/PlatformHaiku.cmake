@@ -98,7 +98,6 @@ list(APPEND WebCore_SOURCES
   platform/haiku/PopupMenuHaiku.cpp
   platform/haiku/ScrollbarThemeHaiku.cpp
   platform/haiku/SearchPopupMenuHaiku.cpp
-  platform/haiku/SharedMemoryHaiku.cpp
   platform/haiku/SharedTimerHaiku.cpp
   platform/haiku/SoundHaiku.cpp
   platform/haiku/TemporaryLinkStubs.cpp
@@ -155,6 +154,7 @@ list(APPEND WebCore_SOURCES
   rendering/haiku/RenderThemeHaiku.cpp
 
   platform/unix/LoggingUnix.cpp
+  platform/unix/SharedMemoryUnix.cpp
 
   inspector/LegacyWebSocketInspectorInstrumentation.cpp
 )
