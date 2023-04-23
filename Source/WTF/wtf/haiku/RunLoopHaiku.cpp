@@ -27,13 +27,26 @@
 #include "wtf/RunLoop.h"
 
 #include <Application.h>
+#include <errno.h>
 #include <Handler.h>
 #include <MessageRunner.h>
-#include <errno.h>
+#include <OS.h>
 #include <stdio.h>
 
-namespace WTF {
+/*
+The main idea behind this implementation of RunLoop for Haiku is to use a
+BHandler to receive messages. WebKit uses one RunLoop per thread, including
+the main thread, which already has a BApplication on it. So,
 
+* If we're on the main thread, we attach the BHandler to the existing
+  BApplication, or
+* If we're on a new thread, we create a new BLooper ourselves and attach the
+  BHandler to it.
+
+Either way, the RunLoop should then be ready to handle messages sent to it.
+*/
+
+namespace WTF {
 
 class LoopHandler: public BHandler
 {
@@ -60,9 +73,9 @@ class LoopHandler: public BHandler
 
 
 RunLoop::RunLoop()
-	: m_looper(nullptr)
+    : m_looper(nullptr)
+    , m_handler(new LoopHandler)
 {
-    m_handler = new LoopHandler();
 }
 
 RunLoop::~RunLoop()
@@ -73,20 +86,42 @@ RunLoop::~RunLoop()
 
 void RunLoop::run()
 {
-    BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
-    if (!looper) {
-        currentSingleton().m_looper = looper = new BLooper();
-    } else if (looper != be_app) {
-        fprintf(stderr, "Add handler to existing RunLoop looper\n");
+    // Find the looper that we should attach our handler to.
+    BLooper* looper;
+    BLooper* currentLooper = BLooper::LooperForThread(find_thread(NULL));
+    if (currentLooper) {
+        // This thread already has a looper (likely the BApplication looper).
+        // Attach our handler to it.
+        looper = currentLooper;
+    } else {
+        thread_info main_thread;
+        int32 cookie = 0;
+        get_next_thread_info(0, &cookie, &main_thread);
+        if (find_thread(NULL) == main_thread.thread) {
+            if (be_app == NULL)
+                debugger("RunLoop needs a BApplication running on the main thread to attach to");
+
+            // BApplication has not been started yet and we are on the main
+            // thread. This BApplication will almost certainly become this
+            // thread's BLooper in the future.
+            looper = be_app;
+        } else {
+            // No existing BLooper or BApplication is on this thread. Let's
+            // create one and manage its lifecycle.
+            currentSingleton().m_looper = looper = new BLooper();
+        }
     }
+
     looper->LockLooper();
     looper->AddHandler(currentSingleton().m_handler);
     looper->UnlockLooper();
 
+    // There might already be messages available to process, so lets address
+    // those if there are any.
+    currentSingleton().wakeUp();
+
     if (currentSingleton().m_looper) {
-        // Make sure the thread will start calling performWork as soon as it can
-        RunLoop::currentSingleton().wakeUp();
-        // Then start the normal event loop
+        // We need to run the looper we created.
         currentSingleton().m_looper->Loop();
     }
 }
@@ -101,6 +136,8 @@ void RunLoop::stop()
     looper->Unlock();
 
     if (m_looper) {
+        // We created the looper that we attached to. We have to stop that as
+        // well.
         thread_id thread = m_looper->Thread();
         status_t ret;
 
@@ -113,7 +150,11 @@ void RunLoop::stop()
 
 void RunLoop::wakeUp()
 {
-    m_handler->Looper()->PostMessage('loop', m_handler);
+    // We shouldn't wake up the looper if the RunLoop hasn't been started yet
+    // or after it has been shut down. Both of these can be caught simply by
+    // checking if there is a Looper available to message in the first place.
+    if (m_handler->Looper())
+        m_handler->Looper()->PostMessage('loop', m_handler);
 }
 
 RunLoop::TimerBase::TimerBase(WTF::Ref<RunLoop>&& runLoop, WTF::ASCIILiteral)
