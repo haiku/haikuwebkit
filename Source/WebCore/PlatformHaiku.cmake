@@ -97,7 +97,6 @@ list(APPEND WebCore_SOURCES
   platform/haiku/PopupMenuHaiku.cpp
   platform/haiku/ScrollbarThemeHaiku.cpp
   platform/haiku/SearchPopupMenuHaiku.cpp
-  platform/haiku/SharedMemoryHaiku.cpp
   platform/haiku/SharedTimerHaiku.cpp
   platform/haiku/SoundHaiku.cpp
   platform/haiku/TemporaryLinkStubs.cpp
@@ -135,6 +134,7 @@ list(APPEND WebCore_SOURCES
   platform/graphics/haiku/MediaPlayerPrivateHaiku.cpp
   platform/graphics/haiku/NativeImageHaiku.cpp
   platform/graphics/haiku/PathHaiku.cpp
+  platform/graphics/haiku/PlatformDisplayHaiku.cpp
   platform/graphics/haiku/ShareableBitmapHaiku.cpp
   platform/graphics/haiku/SimpleFontDataHaiku.cpp
   platform/graphics/haiku/SystemFontDatabaseHaiku.cpp
@@ -152,6 +152,7 @@ list(APPEND WebCore_SOURCES
   platform/text/haiku/StringHaiku.cpp
 
   platform/unix/LoggingUnix.cpp
+  platform/unix/SharedMemoryUnix.cpp
 
   rendering/haiku/RenderThemeHaiku.cpp
 
@@ -283,6 +284,7 @@ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/DateTimeChooserParameters.h
 
     platform/graphics/haiku/ImageBufferDataHaiku.h
+    platform/graphics/haiku/PlatformDisplayHaiku.h
     platform/graphics/Image.h
 
     inspector/LegacyWebSocketInspectorInstrumentation.h

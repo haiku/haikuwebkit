@@ -34,14 +34,13 @@ namespace WebCore {
 
 class PlatformDisplayHaiku final : public PlatformDisplay {
 public:
-    static std::unique_ptr<PlatformDisplayHaiku> create()
-    {
-        return std::unique_ptr<PlatformDisplayHaiku>(new PlatformDisplayHaiku());
-    }
+    static std::unique_ptr<PlatformDisplayHaiku> create();
 
     virtual ~PlatformDisplayHaiku() = default;
 
 private:
+    explicit PlatformDisplayHaiku(Ref<GLDisplay>&&);
+
     Type type() const override { return PlatformDisplay::Type::Haiku; }
 };
 

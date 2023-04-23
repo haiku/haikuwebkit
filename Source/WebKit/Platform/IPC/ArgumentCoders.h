@@ -52,9 +52,6 @@
 #if USE(UNIX_DOMAIN_SOCKETS)
 #include "ArgumentCodersUnix.h"
 #endif
-#if OS(HAIKU)
-#include "ArgumentCodersHaiku.h"
-#endif
 
 namespace IPC {
 

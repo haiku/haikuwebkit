@@ -50,7 +50,8 @@
 
 // Although it's available on Darwin, SOCK_SEQPACKET seems to work differently
 // than in traditional Unix so fallback to DGRAM on that platform.
-#if defined(SOCK_SEQPACKET) && !OS(DARWIN)
+// Haiku doesn't support SOCK_SEQPACKET.
+#if defined(SOCK_SEQPACKET) && !OS(DARWIN) && !OS(HAIKU)
 #define SOCKET_TYPE SOCK_SEQPACKET
 #else
 #define SOCKET_TYPE SOCK_DGRAM
@@ -112,7 +113,7 @@ void Connection::platformInvalidate()
     if (!m_isConnected)
         return;
 
-#if PLATFORM(PLAYSTATION)
+#if PLATFORM(PLAYSTATION) || USE(HAIKU)
     if (m_socketMonitor) {
         m_socketMonitor->detach();
         m_socketMonitor = nullptr;
@@ -332,7 +333,7 @@ void Connection::platformOpen()
     RefPtr<Connection> protectedThis(this);
     m_isConnected = true;
 
-#if PLATFORM(PLAYSTATION)
+#if PLATFORM(PLAYSTATION) || PLATFORM(HAIKU)
     m_socketMonitor = Thread::create("SocketMonitor"_s, [protectedThis] {
         {
             int fd;
@@ -460,7 +461,7 @@ bool Connection::sendOutputMessage(UnixMessage&& outputMessage)
             continue;
         }
 
-#if OS(LINUX)
+#if OS(LINUX) || OS(HAIKU)
         // Linux can return EPIPE instead of ECONNRESET
         if (errno == EPIPE || errno == ECONNRESET)
 #else
