@@ -34,7 +34,6 @@
 
 namespace WTF {
 
-
 class LoopHandler: public BHandler
 {
     public:
@@ -71,13 +70,32 @@ RunLoop::~RunLoop()
     delete m_handler;
 }
 
+void RunLoop::setAppMIMEType(const char* const mime)
+{
+    m_looper = new BApplication(mime);
+}
+
 void RunLoop::run()
 {
     BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
-    if (!looper) {
-        current().m_looper = looper = new BLooper();
-    } else if (looper != be_app) {
-        fprintf(stderr, "Add handler to existing RunLoop looper\n");
+    bool isMain = false;
+    if (current().m_looper == NULL) {
+        if (be_app == looper) {
+            // Main loop from UIProcess. The BApplication is already created and running in this
+            // case, so there's nothing to do but attach our BHandler to it.
+        } else {
+            if (!looper) {
+                // Creating a new looper thread, in this case we have to create the BLooper
+                current().m_looper = looper = new BLooper();
+            } else {
+                // Multiple runloops created in the same thread, this should not happen...
+                fprintf(stderr, "Add handler to existing RunLoop looper\n");
+            }
+        }
+    } else {
+        // The m_looper was already set by setAppMIMEType, now we just have to start it
+        looper = current().m_looper;
+        isMain = true;
     }
     looper->LockLooper();
     looper->AddHandler(current().m_handler);
@@ -87,7 +105,11 @@ void RunLoop::run()
         // Make sure the thread will start calling performWork as soon as it can
         RunLoop::current().wakeUp();
         // Then start the normal event loop
-        current().m_looper->Loop();
+        if (isMain) {
+            current().m_looper->Run();
+        } else {
+            current().m_looper->Loop();
+        }
     }
 }
 
