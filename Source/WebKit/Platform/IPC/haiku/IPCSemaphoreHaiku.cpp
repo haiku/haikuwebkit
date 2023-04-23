@@ -31,7 +31,7 @@
 namespace IPC {
 
 // Is this not working? Don't want to spend the time to fix it?
-// UNIX's implementation of IPCsemaphores may also work.
+// UNIX's implementation of IPCSemaphores may also work.
 
 Semaphore::Semaphore()
 {
