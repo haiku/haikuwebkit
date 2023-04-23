@@ -26,6 +26,8 @@ posix/CPUTimePOSIX.cpp
 
 list(APPEND WTF_PUBLIC_HEADERS
     haiku/BeDC.h
+
+    unix/UnixFileDescriptor.h
 )
 
 LIST(APPEND WTF_LIBRARIES

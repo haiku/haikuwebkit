@@ -54,7 +54,8 @@
 
 // Although it's available on Darwin, SOCK_SEQPACKET seems to work differently
 // than in traditional Unix so fallback to STREAM on that platform.
-#if defined(SOCK_SEQPACKET) && !OS(DARWIN)
+// Haiku doesn't support SOCK_SEQPACKET.
+#if defined(SOCK_SEQPACKET) && !OS(DARWIN) && !OS(HAIKU)
 #define SOCKET_TYPE SOCK_SEQPACKET
 #else
 #if USE(GLIB)
@@ -143,7 +144,7 @@ void Connection::platformInvalidate()
     m_writeSocketMonitor.stop();
 #endif
 
-#if PLATFORM(PLAYSTATION)
+#if PLATFORM(PLAYSTATION) || PLATFORM(HAIKU)
     if (m_socketMonitor) {
         m_socketMonitor->detach();
         m_socketMonitor = nullptr;
@@ -382,7 +383,7 @@ void Connection::platformOpen()
     });
 #endif
 
-#if PLATFORM(PLAYSTATION)
+#if PLATFORM(PLAYSTATION) || PLATFORM(HAIKU)
     m_socketMonitor = Thread::create("SocketMonitor"_s, [protectedThis] {
         {
             int fd;
@@ -543,7 +544,7 @@ bool Connection::sendOutputMessage(UnixMessage& outputMessage)
 #endif
         }
 
-#if OS(LINUX)
+#if OS(LINUX) || OS(HAIKU)
         // Linux can return EPIPE instead of ECONNRESET
         if (errno == EPIPE || errno == ECONNRESET)
 #else
