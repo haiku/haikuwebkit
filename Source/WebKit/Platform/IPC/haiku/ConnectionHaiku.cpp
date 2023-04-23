@@ -30,6 +30,8 @@
 #include <Looper.h>
 #include <stdlib.h>
 
+#include <WebCore/NotImplemented.h>
+
 namespace IPC
 {
     class ReadLoop: public BHandler
@@ -43,6 +45,8 @@ namespace IPC
 
             void MessageReceived(BMessage* message)
             {
+				puts("MessageReceived");
+				message->PrintToStream();
                 switch(message->what)
                 {
                     case 'ipcm':
@@ -61,6 +65,8 @@ namespace IPC
 
     void Connection::finalizeConnection(BMessage* message)
     {
+		puts("finalize");
+		message->PrintToStream();
         //unwrap the message
         status_t result = message->FindMessenger("target", &targetMessenger);
         if (result == B_OK)
@@ -73,6 +79,7 @@ namespace IPC
 
     void Connection::platformInitialize(Identifier identifier)
     {
+		puts("platformInitialize");
         m_connectedProcess = identifier;
     }
 
@@ -82,6 +89,8 @@ namespace IPC
 
     void Connection::prepareIncomingMessage(BMessage* message)
     {
+		puts("prepareIncoming");
+		message->PrintToStream();
         size_t size;
         const uint8_t* Buffer;
         status_t result;
@@ -102,6 +111,7 @@ namespace IPC
 
     void Connection::runReadEventLoop()
     {
+		puts("runReadEventLoop");
         status_t result;
         BLooper* looper = m_connectionQueue->runLoop().runLoopLooper();
 
@@ -131,12 +141,14 @@ namespace IPC
 
     void Connection::runWriteEventLoop()
     {
+		puts("runWriteEventLoop");
         // write the pending encoding but do we need this will messaging fail
         //probably when the message queue is full
     }
 
     void Connection::platformOpen()
     {
+		puts("platformOpen");
         status_t result = m_messenger.SetTo(NULL, m_connectedProcess.connectedProcess);
         m_readHandler = new ReadLoop(this);
         m_connectionQueue->dispatch([this, protectedThis = Ref(*this)]{
@@ -151,6 +163,7 @@ namespace IPC
 
     bool Connection::sendOutgoingMessage(UniqueRef<Encoder>&& encoder)
     {
+		puts("sendOutgoingMessage");
         BMessage processMessage('ipcm');
         processMessage.AddString("identifier", m_connectedProcess.key.String());
         const uint8_t* Buffer = encoder->buffer();
@@ -158,6 +171,8 @@ namespace IPC
 
         processMessage.AddInt32("sender",getpid());
         result = targetMessenger.SendMessage(&processMessage);
+
+		processMessage.PrintToStream();
 
         if(result == B_OK)
             return true;
@@ -175,9 +190,11 @@ namespace IPC
     void Connection::didReceiveSyncReply(OptionSet<SendSyncOption>)
     {
     }
+
     std::optional<Connection::ConnectionIdentifierPair> Connection::createConnectionIdentifierPair()
     {
-        // FIXME implement this
+         // FIXME implement this
+         notImplemented();
          return std::nullopt;
     }
 }
