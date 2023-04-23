@@ -30,12 +30,18 @@
 #include "WebProcessCreationParameters.h"
 #include <WebCore/LogInitialization.h>
 #include <WebCore/NotImplemented.h>
+#include <WebCore/PlatformDisplayHaiku.h>
 #include <wtf/LogInitialization.h>
 
 namespace WebKit {
 
+using namespace WebCore;
+
 void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& parameters)
 {
+    if (auto display = PlatformDisplayHaiku::create()) {
+        PlatformDisplay::setSharedDisplay(std::move(display));
+    }
     applyProcessCreationParameters(std::move(parameters.auxiliaryProcessParameters));
 }
 

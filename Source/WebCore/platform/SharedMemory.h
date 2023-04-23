@@ -44,10 +44,6 @@
 #include <wtf/MachSendRight.h>
 #endif
 
-#if PLATFORM(HAIKU)
-#include <OS.h>
-#endif
-
 #if PLATFORM(COCOA)
 OBJC_CLASS NSData;
 #endif
@@ -72,10 +68,6 @@ public:
         MachSendRight;
 #elif OS(WINDOWS)
         Win32Handle;
-#elif OS(HAIKU)
-        area_id;
-#else
-        #error Missing platform specific code
 #endif
 
     // Note: this function should not be used to share writable arbitrary malloc memory to
@@ -131,8 +123,6 @@ public:
     WEBCORE_EXPORT static RefPtr<SharedMemory> wrapMap(void*, size_t, int fileDescriptor);
 #elif OS(DARWIN)
     WEBCORE_EXPORT static RefPtr<SharedMemory> wrapMap(std::span<const uint8_t>, Protection);
-#elif PLATFORM(HAIKU)
-    WEBCORE_EXPORT static RefPtr<SharedMemory> wrapMap(area_id, size_t , Protection);
 #endif
 
     WEBCORE_EXPORT ~SharedMemory();
@@ -151,10 +141,6 @@ public:
 #if PLATFORM(COCOA)
     Protection protection() const { return m_protection; }
     WEBCORE_EXPORT RetainPtr<NSData> toNSData() const;
-#endif
-
-#if OS(HAIKU)
-    area_id area() const { return m_areaid; }
 #endif
 
     WEBCORE_EXPORT Ref<WebCore::SharedBuffer> createSharedBuffer(size_t) const;
@@ -177,10 +163,6 @@ private:
     MachSendRight m_sendRight;
 #elif OS(WINDOWS)
     Win32Handle m_handle;
-#elif OS(HAIKU)
-    area_id m_areaid;
-#else
-        #error Missing platform specific code
 #endif
 };
 
