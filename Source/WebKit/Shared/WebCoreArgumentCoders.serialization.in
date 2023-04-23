@@ -2554,9 +2554,6 @@ headers: <wtf/unix/UnixFileDescriptor.h> "ArgumentCodersUnix.h"
 #if OS(DARWIN)
 header: <wtf/MachSendRight.h>
 #endif
-#if USE(HAIKU)
-header: <OS.h>
-#endif
 
 [CustomHeader, RValue] class WebCore::SharedMemoryHandle {
 #if USE(UNIX_DOMAIN_SOCKETS)
@@ -2567,9 +2564,6 @@ header: <OS.h>
 #endif
 #if OS(WINDOWS)
     [Validator='!!m_handle && *m_handle'] Win32Handle m_handle;
-#endif
-#if OS(HAIKU)
-    [Validator='!!m_handle'] area_id m_handle;
 #endif
     uint64_t m_size;
 };

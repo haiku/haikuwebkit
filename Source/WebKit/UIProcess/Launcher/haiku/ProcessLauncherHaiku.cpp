@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2019 Haiku, Inc.
+ * Copyright (C) 2019, 2024 Haiku, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,37 +26,26 @@
 #include "config.h"
 #include "ProcessLauncher.h"
 
+#include "IPCUtilities.h"
 #include "ProcessExecutablePath.h"
 
-#include <Roster.h>
-#include <StackOrHeapArray.h>
-#include <String.h>
-#include <unistd.h>
-
 #include <assert.h>
+#include <Logging.h>
+#include <Roster.h>
+#include <String.h>
+#include <spawn.h>
 #include <unistd.h>
 
 using namespace WebCore;
 
 namespace WebKit {
 
-status_t processRef(BString path, entry_ref* pathRef)
-{
-    BEntry pathEntry(path);
-    if(!pathEntry.Exists())
-        return B_BAD_VALUE;
-
-    status_t result = pathEntry.GetRef(pathRef);
-    if(result != B_OK)
-        return result;
-
-    return B_OK;
-}
-
 void ProcessLauncher::launchProcess()
 {
-    BString executablePath;
+    IPC::SocketPair socketPair = IPC::createPlatformConnection(
+        IPC::PlatformConnectionOptions::SetCloexecOnClient | IPC::PlatformConnectionOptions::SetCloexecOnServer);
 
+    BString executablePath;
     switch (m_launchOptions.processType) {
     case ProcessLauncher::ProcessType::Web:
         executablePath = executablePathOfWebProcess();
@@ -69,51 +58,41 @@ void ProcessLauncher::launchProcess()
         return;
     }
 
-    BString processIdentifier,connectionIdentifier;
-    IPC::Connection::Identifier processInit;
-    team_id connectionID = getpid();
-
-    connectionIdentifier.SetToFormat("%ld", connectionID);
+    BString processIdentifier;
     processIdentifier.SetToFormat("%" PRIu64, m_launchOptions.processIdentifier.toUInt64());
-    processInit.key = processIdentifier;
 
-    unsigned nargs = 2; // by default we have only 2 arguments: process and connection IDs
+    BString clientSocketFd;
+    clientSocketFd.SetToFormat("%d", socketPair.client.value());
 
-#if ENABLE(DEVELOPER_MODE)
-    Vector<CString> prefixArgs;
-    if (!m_launchOptions.processCmdPrefix.isNull()) {
-        for (auto& arg : m_launchOptions.processCmdPrefix.split(' '))
-            prefixArgs.append(arg.utf8());
-        nargs += prefixArgs.size();
-    }
-#endif
+    char* argv[] = {
+        executablePath.LockBuffer(-1),
+        processIdentifier.LockBuffer(-1),
+        clientSocketFd.LockBuffer(-1),
+        nullptr
+    };
 
-    entry_ref executableRef;
-    if(processRef(executablePath, &executableRef) != B_OK)
-    {
-        return;
-    }
-    BStackOrHeapArray<const char*, 10> argv(nargs);
-    unsigned i = 0;
-#if ENABLE(DEVELOPER_MODE)
-    // If there's a prefix command, put it before the rest of the args.
-    // FIXME this won't work with lauching using BRoster...
-    for (auto& arg : prefixArgs)
-        argv[i++] = const_cast<char*>(arg.data());
-#endif
-    argv[i++] = processIdentifier.String();
-    argv[i++] = connectionIdentifier.String();
+    char* envp[] = {
+        nullptr
+    };
 
-    assert(i <= nargs);
+    posix_spawn_file_actions_t file_actions;
+    posix_spawn_file_actions_init(&file_actions);
+    posix_spawn_file_actions_adddup2(&file_actions, socketPair.client.value(), socketPair.client.value());
+        // make client socket available to child process. This is necessary since
+        // CLOEXEC is set on it.
+    posix_spawn_file_actions_destroy(&file_actions);
 
-    team_id child_id; // TODO do we need to store this somewhere?
-    status_t result = be_roster->Launch(&executableRef, i, argv, &child_id);
+    int status = posix_spawn(&m_processID, executablePath, &file_actions, NULL, argv, envp);
 
-    // We've finished launching the process, message back to the main run loop.
-    processInit.connectedProcess = child_id;
+    if (status != 0)
+        LOG(Process, "failed to start process %s, error %s", executablePath.String(), strerror(status));
 
-    RunLoop::main().dispatch([protectedThis = Ref(*this), this, processInit] {
-        didFinishLaunchingProcess(m_processIdentifier, processInit);
+    executablePath.UnlockBuffer();
+    processIdentifier.UnlockBuffer();
+    clientSocketFd.UnlockBuffer();
+
+    RunLoop::mainSingleton().dispatch([protectedThis = Ref { *this }, this, serverIdentifier = WTFMove(socketPair.server)] mutable {
+        protectedThis->didFinishLaunchingProcess(m_processID, IPC::Connection::Identifier { WTFMove(serverIdentifier) });
     });
 }
 
@@ -124,11 +103,11 @@ void ProcessLauncher::terminateProcess()
         return;
     }
 
-    if (!m_processIdentifier)
+    if (!m_processID)
         return;
 
-    kill(m_processIdentifier, SIGKILL);
-    m_processIdentifier = 0;
+    kill(m_processID, SIGKILL);
+    m_processID = 0;
 }
 
 void ProcessLauncher::platformInvalidate()
