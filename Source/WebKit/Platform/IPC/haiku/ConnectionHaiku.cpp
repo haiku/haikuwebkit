@@ -35,14 +35,59 @@
 
 namespace IPC
 {
+    class ConnectionPairHandler: public BHandler
+    {
+        public:
+            ConnectionPairHandler()
+                : BHandler("connection pair")
+            {
+                BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
+                looper->AddHandler(this);
+            }
+
+            void MessageReceived(BMessage* message)
+            {
+                message->PrintToStream();
+                switch(message->what)
+                {
+                    case 'inig':
+                        GlobalMessage(message);
+                        break;
+                    default:
+                        BHandler::MessageReceived(message);
+                        break;
+                }
+            }
+
+        private:
+
+            void GlobalMessage(BMessage* message)
+            {
+                message->PrintToStream();
+                /*
+                WTF::ProcessID processID = message->FindInt64("processID");
+                IPC::Connection::Identifier connectionIdentifier;
+                message->FindMessenger("messenger", &connectionIdentifier.handle);
+                connectionIdentifier.m_isCreatedFromMessage = true;
+                m_launcher->didFinishLaunchingProcess(processID, connectionIdentifier);
+                */
+
+                // Our job is done!
+                // FIXME or is it? maybe keep this around until the processLauncher is destroyed?
+                delete this;
+            }
+    };
+
+
+
     class ReadLoop: public BHandler
     {
         public:
             ReadLoop(IPC::Connection* con)
                 : BHandler("Read Message Loop"),
                 connection(con)
-            {
-            }
+        {
+        }
 
             void MessageReceived(BMessage* message)
             {
@@ -122,7 +167,7 @@ namespace IPC
 
         looper->Lock();
         looper->AddHandler(m_readHandler);
-        looper->SetPreferredHandler(m_readHandler);
+        //looper->SetPreferredHandler(m_readHandler);
         looper->Unlock();
 
         /*
@@ -178,8 +223,13 @@ namespace IPC
 
     std::optional<Connection::ConnectionIdentifierPair> Connection::createConnectionIdentifierPair()
     {
+        puts("xxx");
          // FIXME implement this
          notImplemented();
-         return std::nullopt;
+
+         ConnectionPairHandler* hnd = new ConnectionPairHandler();
+         Identifier identifier;
+         identifier.handle.SetTo(hnd, NULL);
+         return ConnectionIdentifierPair { identifier, identifier.handle };
     }
 }
