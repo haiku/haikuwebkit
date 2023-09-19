@@ -22,6 +22,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once
+
 #include <View.h>
 #include <Window.h>
 #include <Rect.h>
@@ -29,13 +31,18 @@
 #include "config.h"
 
 #include "APIObject.h"
-#include "APIPageConfiguration.h"
-#include "WebPageProxy.h"
-#include "PageClientImplHaiku.h"
 
-using namespace WebKit;
+#include "WebCore/IntRect.h"
+
+namespace API {
+    class PageConfiguration;
+};
+
 namespace WebKit
 {
+    class PageClientImpl;
+    class WebPageProxy;
+
     class WebViewBase: public API::ObjectImpl<API::Object::Type::View>, public BView
     {
         public:
@@ -47,7 +54,7 @@ namespace WebKit
             }
             WebPageProxy* page() const { return fPage.get(); }
             void initializeOnce();
-            const char* currentURL() { return page()->pageLoadState().activeURL().utf8().data(); }
+            const char* currentURL();
 
             //hook methods
             virtual void FrameResized(float, float);
@@ -64,3 +71,5 @@ namespace WebKit
             bool setSize {false};
     };
 }
+
+using namespace WebKit;

@@ -25,9 +25,13 @@
 #include "WebViewBase.h"
 #include "APIPageConfiguration.h"
 #include "DrawingAreaProxyCoordinatedGraphics.h"
+#include "PageClientImplHaiku.h"
+#include "PageLoadState.h"
 #include "WebProcessPool.h"
 #include "WebPageGroup.h"
+
 #include <WebCore/IntRect.h>
+#include <WebCore/Region.h>
 
 using namespace WebKit; 
 using namespace WebCore;
@@ -92,4 +96,9 @@ void WebViewBase::Draw(BRect update)
 
 void WebViewBase::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
 {
+}
+
+const char* WebViewBase::currentURL()
+{
+    return page()->pageLoadState().activeURL().utf8().data();
 }
