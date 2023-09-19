@@ -25,6 +25,7 @@
 #include "APIPageConfiguration.h"
 #include "WKAPICast.h"
 #include "WebViewBase.h"
+#include "WebPageProxy.h"
 
 
 using namespace WebCore;
