@@ -1,7 +1,5 @@
 /*
- * Copyright (C) 2010 Apple Inc. All rights reserved.
- * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
- * Copyright (C) 2011 Igalia S.L.
+ * Copyright (C) 2019, 2024 Haiku, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -25,21 +23,36 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef WKView_h
-#define WKView_h
+#include "config.h"
+#include "NavigationClient.h"
 
-#include <WebKit/WKBase.h>
-#include <Window.h>
+#include "APINavigation.h"
+#include "APIObject.h"
+#include "WebPageProxy.h"
+#include "WebView.h"
+#include "WebViewConstants.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <Looper.h>
+#include <Message.h>
+#include <String.h>
 
-WK_EXPORT WKViewRef WKViewCreate(const char*,BRect,BWindow*,WKPageConfigurationRef pageRef);
-WK_EXPORT WKPageRef WKViewGetPage(WKViewRef view);
-#ifdef __cplusplus
+using namespace WebKit;
+
+void NavigationClient::didCommitNavigation(WebPageProxy& page, API::Navigation* navigation, API::Object* userData)
+{
+    BMessage message(DID_COMMIT_NAVIGATION);
+    m_webView->getAppLooper()->PostMessage(&message);
 }
-#endif
 
-#endif /* WKView_h */
+void NavigationClient::didReceiveServerRedirectForProvisionalNavigation(WebPageProxy& page, API::Navigation* navigation, API::Object* userData)
+{
+    BMessage message(URL_CHANGE);
+    message.AddString("url", BString(m_webView->getCurrentURL()));
+    m_webView->getAppLooper()->PostMessage(&message);
+}
 
+void NavigationClient::didFinishNavigation(WebPageProxy& page, API::Navigation* navigation, API::Object* userData)
+{
+    BMessage message(DID_FINISH_NAVIGATION);
+    m_webView->getAppLooper()->PostMessage(&message);
+}

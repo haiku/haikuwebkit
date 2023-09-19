@@ -31,7 +31,7 @@ list(APPEND WebKit_SOURCES
 
     UIProcess/DefaultUndoController.cpp
     UIProcess/LegacySessionStateCodingNone.cpp
-    UIProcess/API/C/haiku/WKView.cpp
+    UIProcess/API/haiku/NavigationClient.cpp
     UIProcess/API/haiku/PageClientImplHaiku.cpp
     UIProcess/API/haiku/WebView.cpp
     UIProcess/API/haiku/WebViewBase.cpp
@@ -91,7 +91,6 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/Shared"
     "${WEBKIT_DIR}/Shared/API"
     "${WEBKIT_DIR}/Shared/API/c"
-    "${WEBKIT_DIR}/Shared/API/c/haiku"
     "${WEBKIT_DIR}/Shared/CoordinatedGraphics"
     "${WEBKIT_DIR}/Shared/CoordinatedGraphics/threadedcompositor"
     "${WEBKIT_DIR}/Shared/unix"
