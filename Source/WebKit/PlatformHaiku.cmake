@@ -19,6 +19,7 @@ list(APPEND WebKit_SOURCES
     NetworkProcess/cache/NetworkCacheIOChannelCurl.cpp
 
     NetworkProcess/curl/NetworkDataTaskCurl.cpp
+    NetworkProcess/NetworkDataTaskDataURL.cpp
     NetworkProcess/curl/NetworkProcessCurl.cpp
     #NetworkProcess/curl/NetworkProcessMainCurl.cpp
     NetworkProcess/curl/NetworkSessionCurl.cpp
@@ -95,22 +96,29 @@ list(APPEND WebKit_SOURCES
 list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${DERIVED_SOURCES_HAIKU_API_DIR}"
     "${WEBKIT_DIR}/NetworkProcess/curl"
-    "${WEBKIT_DIR}/NetworkProcess/unix"
     "${WEBKIT_DIR}/Platform"
     "${WEBKIT_DIR}/Platform/classifier"
     "${WEBKIT_DIR}/Platform/generic"
+    "${WEBKIT_DIR}/Platform/IPC"
+    "${WEBKIT_DIR}/Platform/IPC/haiku"
     "${WEBKIT_DIR}/Platform/IPC/unix"
+    "${WEBKIT_DIR}/Shared"
+    "${WEBKIT_DIR}/Shared/API"
+    "${WEBKIT_DIR}/Shared/API/c"
     "${WEBKIT_DIR}/Shared/API/c/haiku"
     "${WEBKIT_DIR}/Shared/CoordinatedGraphics"
     "${WEBKIT_DIR}/Shared/CoordinatedGraphics/threadedcompositor"
     "${WEBKIT_DIR}/Shared/unix"
     "${WEBKIT_DIR}/Shared/haiku"
+    "${WEBKIT_DIR}/UIProcess/API/C"
     "${WEBKIT_DIR}/UIProcess/API/C/CoordinatedGraphics"
     "${WEBKIT_DIR}/UIProcess/API/C/curl"
     "${WEBKIT_DIR}/UIProcess/API/C/haiku"
     "${WEBKIT_DIR}/UIProcess/API/haiku"
     "${WEBKIT_DIR}/UIProcess/haiku"
     "${WEBKIT_DIR}/UIProcess/CoordinatedGraphics"
+    "${WEBKIT_DIR}/WebProcess/InjectedBundle"
+    "${WEBKIT_DIR}/WebProcess/InjectedBundle/API/c"
     "${WEBKIT_DIR}/WebProcess/unix"
     "${WEBKIT_DIR}/WebProcess/WebCoreSupport/curl"
     "${WEBKIT_DIR}/WebProcess/WebCoreSupport/haiku"
@@ -119,8 +127,9 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     ${LIBXML2_INCLUDE_DIR}
     ${LIBXSLT_INCLUDE_DIRS}
     ${SQLITE_INCLUDE_DIRS}
-    ${WTF_DIR}
     "${DERIVED_SOURCES_WEBCORE_DIR}"
+    "${DERIVED_SOURCES_WEBKIT_DIR}"
+    "${WebKit_FRAMEWORK_HEADERS_DIR}"
 )
 
 list(APPEND WebKit_LIBRARIES
@@ -134,6 +143,9 @@ list(APPEND WebKit_LIBRARIES
     ${SQLITE_LIBRARIES}
     -Wl,--whole-archive WTF -Wl,--no-whole-archive
 )
+
+set(WebKitCommonIncludeDirectories ${WebKit_PRIVATE_INCLUDE_DIRECTORIES})
+set(WebKitCommonSystemIncludeDirectories ${WebKit_SYSTEM_INCLUDE_DIRECTORIES})
 
 list(APPEND WebProcess_SOURCES
     WebProcess/EntryPoint/unix/WebProcessMain.cpp
@@ -171,7 +183,10 @@ add_definitions(
 set(WebKit_FORWARDING_HEADERS_DIRECTORIES
    Shared/API/c
    Shared/API/c/haiku
+
    UIProcess/API/C
+   UIProcess/API/cpp
+
    Platform/IPC/unix
    WebProcess/InjectedBundle/API/c
 )
