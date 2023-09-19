@@ -30,6 +30,8 @@
 #include <Looper.h>
 #include <stdlib.h>
 
+#include "Encoder.h"
+
 #include <WebCore/NotImplemented.h>
 #include <WebCore/ProcessIdentifier.h>
 
@@ -121,7 +123,7 @@ namespace IPC
 
     void Connection::platformInitialize(Identifier identifier)
     {
-        m_connectedProcess = identifier;
+        m_connectedProcess = std::move(identifier);
     }
 
     void Connection::platformInvalidate()
@@ -230,6 +232,6 @@ namespace IPC
          ConnectionPairHandler* hnd = new ConnectionPairHandler();
          Identifier identifier;
          identifier.handle.SetTo(hnd, NULL);
-         return ConnectionIdentifierPair { identifier, identifier.handle };
+         return ConnectionIdentifierPair { identifier, BMessenger() };
     }
 }

@@ -33,6 +33,8 @@
 #include <wtf/MachSendRight.h>
 #elif OS(WINDOWS)
 #include <wtf/win/Win32Handle.h>
+#elif OS(HAIKU)
+#include <Messenger.h>
 #endif
 
 namespace IPC {
@@ -64,6 +66,12 @@ public:
     { }
     explicit operator bool() const { return MACH_PORT_VALID(m_handle.sendRight()); }
     mach_port_t leakSendRight() WARN_UNUSED_RETURN { return m_handle.leakSendRight(); }
+#elif OS(HAIKU)
+    ConnectionHandle(const BMessenger& messenger)
+        : m_handle(messenger)
+    { }
+    explicit operator bool() const { return m_handle.IsValid(); }
+    BMessenger& handle() { return m_handle; }
 #endif
 
 private:
@@ -75,6 +83,8 @@ private:
     Win32Handle m_handle;
 #elif OS(DARWIN)
     MachSendRight m_handle;
+#elif OS(HAIKU)
+    BMessenger m_handle;
 #endif
 };
 
