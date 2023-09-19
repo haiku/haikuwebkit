@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Haiku, Inc. All rights reserved.
+ * Copyright (C) 2019, 2024 Haiku, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,44 +24,33 @@
  */
 #pragma once
 
-#include "APIObject.h"
-#include "WebCore/IntRect.h"
+#include "APINavigationClient.h"
 
-#include <Rect.h>
-#include <View.h>
-#include <Window.h>
+#include <wtf/IsoMalloc.h>
+
+class BWebView;
 
 namespace API {
-class PageConfiguration;
+class Navigation;
 };
 
 namespace WebKit {
-
-class PageClientImpl;
+class Object;
 class WebPageProxy;
-
-class WebViewBase: public API::ObjectImpl<API::Object::Type::View>, public BView {
-public:
-    static RefPtr<WebViewBase> create(const char* name, BRect rect,
-        BWindow* parentWindow, const API::PageConfiguration& config)
-    {
-        auto fWebView = adoptRef(*new WebViewBase(name, rect, parentWindow, config));
-        return fWebView;
-    }
-    WebPageProxy* page() const { return fPage.get(); }
-    const char* currentURL() const;
-
-    // hook methods
-    virtual void FrameResized(float, float);
-    virtual void Draw(BRect);
-    virtual void MouseMoved(BPoint, uint32, const BMessage*);
-private:
-    WebViewBase(const char*, BRect, BWindow*, const API::PageConfiguration&);
-
-    void paint(const WebCore::IntRect&);
-
-    RefPtr<WebPageProxy> fPage;
-    std::unique_ptr<PageClientImpl> fPageClient;
 };
 
-}
+class NavigationClient : public API::NavigationClient {
+    WTF_MAKE_ISO_ALLOCATED(NavigationClient);
+public:
+    explicit NavigationClient(BWebView* webView)
+        : m_webView(webView)
+    {
+    }
+
+private:
+    void didCommitNavigation(WebKit::WebPageProxy& page, API::Navigation* navigation, API::Object* userData) override;
+    void didReceiveServerRedirectForProvisionalNavigation(WebKit::WebPageProxy& page, API::Navigation* navigation, API::Object* userData) override;
+    void didFinishNavigation(WebKit::WebPageProxy& page, API::Navigation* navigation, API::Object* userData) override;
+
+    BWebView* m_webView;
+};

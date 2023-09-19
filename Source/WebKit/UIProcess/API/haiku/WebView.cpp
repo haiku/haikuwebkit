@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Haiku, Inc. All rights reserved.
+ * Copyright (C) 2019, 2024 Haiku, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,42 +26,42 @@
 #include "config.h"
 #include "WebView.h"
 
+#include "APINavigation.h"
+#include "APIPageConfiguration.h"
+#include "APIProcessPoolConfiguration.h"
+#include "NavigationClient.h"
 #include "PageLoadStateObserver.h"
 #include "WebPageProxy.h"
+#include "WebPreferences.h"
+#include "WebProcessPool.h"
 #include "WebViewBase.h"
-#include "WebViewConstants.h"
-#include "WKAPICast.h"
-#include "WKContext.h"
-#include "WKPage.h"
-#include "WKPageConfigurationRef.h"
-#include "WKPageLoaderClient.h"
-#include "WKPageNavigationClient.h"
-#include "WKPreferencesRef.h"
-#include "WKString.h"
-#include "WKURL.h"
-#include "WKView.h"
-#include "wtf/FastMalloc.h"
-#include "wtf/RunLoop.h"
+#include <wtf/FastMalloc.h>
+#include <wtf/RefPtr.h>
+#include <wtf/RunLoop.h>
+#include <wtf/text/WTFString.h>
 
+#include <Message.h>
 #include <Window.h>
 #include <View.h>
 #include <Looper.h>
+#include <Rect.h>
 
 using namespace WebKit;
 
 BWebView::BWebView(BRect frame, BWindow* myWindow)
     : fAppLooper(myWindow->Looper())
 {
-    auto config = adoptWK(WKPageConfigurationCreate());
-    auto prefs = WKPreferencesCreate();
+    RefPtr<API::PageConfiguration> config = API::PageConfiguration::create();
 
-    WKPreferencesSetDeveloperExtrasEnabled(prefs, true);
-    WKPageConfigurationSetPreferences(config.get(), prefs);
+    RefPtr<WebPreferences> prefs = WebPreferences::create(String(), "WebKit2."_s, "WebKit2."_s);
+    prefs->setDeveloperExtrasEnabled(true);
+    config->setPreferences(WTFMove(prefs));
 
-    fContext = adoptWK(WKContextCreateWithConfiguration(nullptr));
-    WKPageConfigurationSetContext(config.get(), fContext.get());
+    RefPtr<API::ProcessPoolConfiguration> apiConfiguration = API::ProcessPoolConfiguration::create();
+    RefPtr<WebProcessPool> processPool = WebProcessPool::create(*apiConfiguration.get());
+    config->setProcessPool(WTFMove(processPool));
 
-    fViewPort=adoptWK(WKViewCreate("Webkit", frame, myWindow, config.get()));
+    fWebViewBase = WebViewBase::create("Webkit", frame, myWindow, *config.get());
 
     // TODO: Can we run WebKit's main thread on its own thread instead of on
     // BApplication's main thread?
@@ -70,21 +70,10 @@ BWebView::BWebView(BRect frame, BWindow* myWindow)
 
 void BWebView::navigationCallbacks()
 {
-    auto page = WKViewGetPage(fViewPort.get());
-    WKPageNavigationClientV0 navigationClient = {};
+    fWebViewBase->page()->setNavigationClient(makeUniqueRef<NavigationClient>(this));
 
-    navigationClient.base.version = 0;
-    navigationClient.base.clientInfo = this;
-
-    navigationClient.didCommitNavigation = didCommitNavigation;
-    navigationClient.didFinishDocumentLoad = didFinishDocumentLoad;
-    navigationClient.didFailNavigation = didFailNavigation;
-    navigationClient.didFinishNavigation = didFinishNavigation;
-    navigationClient.didReceiveServerRedirectForProvisionalNavigation = didReceiveServerRedirectForProvisionalNavigation;
-    WKPageSetPageNavigationClient(page, &navigationClient.base);
-
-    fObserver = new PageLoadStateObserver(fAppLooper);
-    getRenderView()->page()->pageLoadState().addObserver(*fObserver);
+    fObserver = adoptRef(*new PageLoadStateObserver(this, fAppLooper));
+    fWebViewBase->page()->pageLoadState().addObserver(*fObserver);
 }
 
 void BWebView::loadURIRequest(const char* uri)
@@ -96,35 +85,31 @@ void BWebView::loadURIRequest(const char* uri)
 
 void BWebView::paintContent()
 {
-    getRenderView()->LockLooper();
-    getRenderView()->Invalidate();
-    getRenderView()->UnlockLooper();
+    fWebViewBase->LockLooper();
+    fWebViewBase->Invalidate();
+    fWebViewBase->UnlockLooper();
 }
 
 WebViewBase* BWebView::getRenderView()
 {
-    return toImpl(fViewPort.get());
+    return fWebViewBase.get();
 }
 
 const char* BWebView::getCurrentURL()
 {
-    return getRenderView()->currentURL();
+    return fWebViewBase->currentURL();
 }
 
 void BWebView::loadURI(BMessage* message)
 {
     const char* uri;
     message->FindString("url", &uri);
-    auto page = WKViewGetPage(fViewPort.get());
-    WKRetainPtr<WKURLRef> wuri;
-    wuri = adoptWK(WKURLCreateWithUTF8CString(uri));
-    WKPageLoadURL(page, wuri.get());
+    fWebViewBase->page()->loadRequest(URL { WTF::String::fromUTF8(uri) });
 }
 
 void BWebView::goForward()
 {
-    auto page = WKViewGetPage(fViewPort.get());
-    WKPageGoForward(page);
+    fWebViewBase->page()->goForward();
     BMessage message(URL_CHANGE);
     message.AddString("url", BString(getCurrentURL()));
     fAppLooper->PostMessage(&message);
@@ -132,8 +117,7 @@ void BWebView::goForward()
 
 void BWebView::goBackward()
 {
-    auto page = WKViewGetPage(fViewPort.get());
-    WKPageGoBack(page);
+    fWebViewBase->page()->goBack();
     BMessage message(URL_CHANGE);
     message.AddString("url", BString(getCurrentURL()));
     fAppLooper->PostMessage(&message);
@@ -141,51 +125,15 @@ void BWebView::goBackward()
 
 void BWebView::stop()
 {
-    auto page = WKViewGetPage(fViewPort.get());
-    WKPageClose(page);
+    fWebViewBase->page()->close();
 }
 
-void BWebView::didCommitNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
+double BWebView::progress()
 {
-    BLooper* looper = ((BWebView*)clientInfo)->getAppLooper();
-    BMessage message(DID_COMMIT_NAVIGATION);
-    looper->PostMessage(&message);
-}
-
-void BWebView::didReceiveServerRedirectForProvisionalNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
-{
-    BLooper* looper = ((BWebView*)clientInfo)->getAppLooper();
-    BMessage message(URL_CHANGE);
-    message.AddString("url", BString(((BWebView*)clientInfo)->getCurrentURL()));
-    looper->PostMessage(&message);
-}
-
-void BWebView::didFinishDocumentLoad(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo)
-{
-}
-
-void BWebView::didFinishNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData,const void* clientInfo)
-{
-    BLooper* looper = ((BWebView*)clientInfo)->getAppLooper();
-    BMessage message(DID_FINISH_NAVIGATION);
-    looper->PostMessage(&message);
-}
-
-void BWebView::didFailNavigation(WKPageRef page, WKNavigationRef navigation,WKErrorRef, WKTypeRef userData,const void* clientInfo)
-{
-}
-
-void BWebView::didFinishProgress(WKPageRef page,const void* clientInfo)
-{
-}
-
-double BWebView::didChangeProgress()
-{
-    auto page = WKViewGetPage(fViewPort.get());
-    return WKPageGetEstimatedProgress(page);
+    return fWebViewBase->page()->estimatedProgress();
 }
 
 const char* BWebView::title()
 {
-    return getRenderView()->page()->pageLoadState().title().utf8().data();
+    return fWebViewBase->page()->pageLoadState().title().utf8().data();
 }
