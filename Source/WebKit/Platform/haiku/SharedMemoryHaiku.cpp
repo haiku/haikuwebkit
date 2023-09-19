@@ -38,48 +38,6 @@
 using namespace WebCore;
 namespace WebKit {
 
-void SharedMemory::Handle::clear()
-{
-	if (!m_areaid)
-		return;
-
-	m_areaid = 0;
-}
-
-bool SharedMemory::Handle::isNull() const
-{
-    return !m_areaid;
-}
-
-void SharedMemory::Handle::encode(IPC::Encoder& encoder) const
-{
-    encoder << m_areaid;
-    encoder << m_size;
-}
-
-bool SharedMemory::Handle::decode(IPC::Decoder& decoder, Handle& ipcHandle)
-{
-    ASSERT_ARG(ipcHandle.handle, ipcHandle.isNull());
-    if (!decoder.decode(ipcHandle.m_areaid))
-        return false;
-    if (!decoder.decode(ipcHandle.m_size))
-        return false;
-    return true;
-}
-
-static uint32 protectionMode(SharedMemory::Protection protection)
-{
-	switch (protection)
-	{
-		case SharedMemory::Protection::ReadOnly:
-			return B_READ_AREA;
-		case SharedMemory::Protection::ReadWrite:
-			return B_READ_AREA | B_WRITE_AREA;
-		default:
-			return 0;
-	}
-}
-
 RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
 {
 	void* baseAddress;
@@ -98,34 +56,14 @@ RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
 	return memory;
 }
 
-RefPtr<SharedMemory> SharedMemory::map(const Handle& handle, Protection protection)
+RefPtr<SharedMemory> SharedMemory::map(Handle&& handle, Protection protection)
 {
-	RefPtr<SharedMemory> memory = adopt(handle.m_areaid, handle.m_size, protection);
+	RefPtr<SharedMemory> memory = adoptRef(new SharedMemory());
 	if(!memory)
 		return nullptr;
 
-	handle.m_areaid = 0;
-	return memory;
-}
-
-RefPtr<SharedMemory> SharedMemory::adopt(area_id area, size_t size, Protection protection)
-{
-	if(!area)
-		return nullptr;
-
-	void* baseAddress;
-
-	area_id clonedArea = clone_area("WebKit-Shared-Memory", &baseAddress, B_ANY_ADDRESS,
-		protectionMode(protection),area);
-
-	if (clonedArea < 0)
-		return nullptr;
-
-	RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
-	memory->m_size = size;
-	memory->m_data = baseAddress;
-	memory->m_areaid = clonedArea;
-
+	memory->m_areaid = handle.m_handle;
+	memory->m_size = handle.size();
 	return memory;
 }
 
@@ -143,10 +81,7 @@ std::optional<SharedMemory::Handle> SharedMemory::createHandle(Protection)
 {
     ASSERT(m_areaid);
 
-	SharedMemory::Handle handle;
-	handle.m_areaid = m_areaid;
-	handle.m_size = m_size;
-	return handle;
+	return SharedMemory::Handle(WTFMove(m_areaid), m_size);
 }
 
 } // namespace WebKit

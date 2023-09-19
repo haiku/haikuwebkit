@@ -41,5 +41,8 @@ webkit_platform_header: <wtf/win/Win32Handle.h> "ArgumentCodersWin.h"
 #if OS(WINDOWS)
     [Validator='!!m_handle'] Win32Handle m_handle;
 #endif
+#if OS(HAIKU)
+    area_id m_handle;
+#endif
     size_t m_size;
 };

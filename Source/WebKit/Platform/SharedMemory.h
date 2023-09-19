@@ -74,6 +74,10 @@ public:
         MachSendRight;
 #elif OS(WINDOWS)
         Win32Handle;
+#elif OS(HAIKU)
+        area_id;
+#else
+        #error Missing platform specific code
 #endif
 
     SharedMemoryHandle(SharedMemoryHandle&&) = default;
@@ -139,6 +143,10 @@ public:
     Protection protection() const { return m_protection; }
 #endif
 
+#if OS(HAIKU)
+    area_id area() const { return m_areaid; }
+#endif
+
     Ref<WebCore::SharedBuffer> createSharedBuffer(size_t) const;
 
 private:
@@ -159,7 +167,7 @@ private:
     MachSendRight m_sendRight;
 #elif OS(WINDOWS)
     Win32Handle m_handle;
-#elif PLATFORM(HAIKU)
+#elif OS(HAIKU)
     area_id m_areaid;
 #endif
 };
