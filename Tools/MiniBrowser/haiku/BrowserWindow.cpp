@@ -169,7 +169,7 @@ void BrowserWindow::MessageReceived(BMessage* message)
 			break;
 
 		case DID_CHANGE_PROGRESS:
-			LoadingProgress(fWebView->didChangeProgress());
+			LoadingProgress(fWebView->progress());
 			break;
 
 		case DID_CHANGE_TITLE:
