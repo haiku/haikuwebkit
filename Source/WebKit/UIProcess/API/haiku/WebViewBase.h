@@ -25,6 +25,7 @@
 #pragma once
 
 #include "APIObject.h"
+#include "WebCore/IntRect.h"
 
 #include <Rect.h>
 #include <View.h>
