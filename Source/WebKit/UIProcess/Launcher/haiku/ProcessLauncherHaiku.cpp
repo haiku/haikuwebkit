@@ -75,8 +75,9 @@ class ProcessLauncherHandler: public BHandler
         void GlobalMessage(BMessage* message)
         {
             WTF::ProcessID processID = message->FindInt64("processID");
-            IPC::Connection::Identifier connectionIdentifier;
-            message->FindMessenger("messenger", &connectionIdentifier.handle);
+            BMessenger messenger;
+            message->FindMessenger("messenger", &messenger);
+            IPC::Connection::Identifier connectionIdentifier(std::move(messenger));
             connectionIdentifier.m_isCreatedFromMessage = true;
             m_launcher->didFinishLaunchingProcess(processID, connectionIdentifier);
 
@@ -169,11 +170,11 @@ void ProcessLauncher::terminateProcess()
         return;
     }
 
-    if (!m_processIdentifier)
+    if (!m_processID)
         return;
 
-    kill(m_processIdentifier, SIGKILL);
-    m_processIdentifier = 0;
+    kill(m_processID, SIGKILL);
+    m_processID = 0;
 }
 
 void ProcessLauncher::platformInvalidate()
