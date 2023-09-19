@@ -28,7 +28,9 @@
 #ifndef WKView_h
 #define WKView_h
 
-#include <WebKit/WKBase.h>
+#include <../WKDeclarationSpecifiers.h>
+#include <WKBase.h>
+
 #include <Window.h>
 
 #ifdef __cplusplus
