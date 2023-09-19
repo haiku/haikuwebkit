@@ -27,9 +27,12 @@
 
 #include "APIPageConfiguration.h"
 #include "DrawingAreaProxyCoordinatedGraphics.h"
+#include "PageClientImplHaiku.h"
+#include "PageLoadState.h"
 #include "WebPageGroup.h"
 #include "WebProcessPool.h"
 #include "WebCore/IntRect.h"
+#include "WebCore/Region.h"
 
 using namespace WebKit;
 using namespace WebCore;
@@ -58,10 +61,6 @@ const char* WebViewBase::currentURL() const
     return page()->pageLoadState().activeURL().utf8().data();
 }
 
-void WebViewBase::paint(const IntRect& dirtyRect)
-{
-}
-
 void WebViewBase::FrameResized(float newWidth, float newHeight)
 {
     auto drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(page()->drawingArea());
@@ -79,6 +78,10 @@ void WebViewBase::Draw(BRect update)
     IntRect updateArea(update);
     WebCore::Region unpainted;
     drawingArea->paint(this, updateArea, unpainted);
+}
+
+void WebViewBase::paint(const IntRect& dirtyRect)
+{
 }
 
 void WebViewBase::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
