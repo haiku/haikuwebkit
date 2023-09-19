@@ -72,8 +72,6 @@
 #include <Messenger.h>
 #include <String.h>
 
-#include <wtf/haiku/ConnectionHandle.h>
-
 #include <WebCore/NotImplemented.h>
 #endif
 
@@ -244,10 +242,13 @@ public:
             : handle(WTFMove(inHandle))
         { }
         explicit operator bool() const { return !!handle; }
+#elif OS(HAIKU)
+        Handle(BMessenger&& inHandle)
+            : handle(WTFMove(inHandle))
+        { }
+        explicit operator bool() const { return handle.IsValid(); }
 #elif OS(DARWIN)
     using Handle = MachSendRight;
-#elif OS(HAIKU)
-    using Handle = ConnectionHandle;
 #endif
         void encode(Encoder&);
         static std::optional<Handle> decode(Decoder&);
@@ -259,6 +260,8 @@ public:
         Win32Handle handle;
 #elif OS(DARWIN)
         MachSendRight handle;
+#elif OS(HAIKU)
+        BMessenger handle;
 #endif
     };
 
@@ -305,10 +308,10 @@ public:
         OSObjectPtr<xpc_connection_t> xpcConnection;
 #elif OS(HAIKU)
         explicit Identifier(Handle&& handle)
-             : handle(handle)
+             : handle(handle.handle)
         {
         }
-        Handle handle;
+        BMessenger handle;
         bool m_isCreatedFromMessage { false };
 
         operator bool() const { return handle.IsValid(); }

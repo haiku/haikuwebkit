@@ -1466,6 +1466,10 @@ std::optional<Connection::Handle> Connection::Handle::decode(Decoder& decoder)
     auto handle = decoder.decode<Win32Handle>();
 #elif OS(DARWIN)
     auto handle = decoder.decode<MachSendRight>();
+#elif OS(HAIKU)
+    auto handle = decoder.decode<BMessenger>();
+#else
+    #error "Missing platform-specific code"
 #endif
     return handle;
 }
