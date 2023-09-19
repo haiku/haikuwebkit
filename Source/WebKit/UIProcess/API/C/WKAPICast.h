@@ -431,10 +431,6 @@ inline WKStorageBlockingPolicy toAPI(WebCore::StorageBlockingPolicy policy)
 #include "WKAPICastGtk.h"
 #endif
 
-#if defined(BUILDING_HAIKU__)
-#include "WKAPICastHaiku.h"
-#endif
-
 #if defined(BUILDING_WPE__)
 #include "WKAPICastWPE.h"
 #endif

@@ -32,9 +32,13 @@
 
 namespace WebKit {
 
-class PageLoadStateObserver final: public PageLoadState::Observer {
+class PageLoadStateObserver final: public RefCounted<PageLoadStateObserver>, public PageLoadState::Observer {
+    WTF_MAKE_TZONE_ALLOCATED_INLINE(PageLoadStateObserver);
 public:
     PageLoadStateObserver(BLooper* looper) {}
+
+    void ref() const final { RefCounted::ref(); }
+    void deref() const final { RefCounted::deref(); }
 
     void willChangeIsLoading() override {}
     void didChangeIsLoading() override {}

@@ -39,6 +39,7 @@ class DrawingAreaProxy;
 class WebViewBase;
 
 class PageClientImpl: public PageClient {
+    WTF_MAKE_FAST_ALLOCATED;
 public:
     PageClientImpl(WebViewBase&);
     WebViewBase* viewWidget();
