@@ -24,8 +24,14 @@
  */
 #pragma once
 
-#include "WKView.h"
-#include <WebKit/WKRetainPtr.h>
+#include <wtf/RefPtr.h>
+
+#include <memory>
+#include <Rect.h>
+
+class BLooper;
+class BMessage;
+class BWindow;
 
 namespace WebKit {
 class PageLoadStateObserver;
@@ -46,20 +52,12 @@ public:
     BLooper* getAppLooper() { return fAppLooper; }
 
     void navigationCallbacks();
-    double didChangeProgress();
+    double progress();
     const char* title();
 
 private:
-    WKRetainPtr<WKViewRef> fViewPort;
-    WKRetainPtr<WKContextRef> fContext;
-    static void didCommitNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
-    static void didReceiveServerRedirectForProvisionalNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
-    static void didFinishDocumentLoad(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
-    static void didFinishProgress(WKPageRef, const void*);
-    static void didFinishNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
-    static void didFailNavigation(WKPageRef page, WKNavigationRef navigation, WKErrorRef, WKTypeRef userData, const void* clientInfo);
-
-    WebKit::PageLoadStateObserver* fObserver;
+    RefPtr<WebKit::WebViewBase> fWebViewBase;
+    RefPtr<WebKit::PageLoadStateObserver> fObserver;
     BLooper* fAppLooper;
 };
 
