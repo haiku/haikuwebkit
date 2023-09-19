@@ -22,18 +22,24 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+#pragma once
+
 #include "APIObject.h"
-#include "APIPageConfiguration.h"
-#include "WebPageProxy.h"
-#include "PageClientImplHaiku.h"
+#include "WebCore/IntRect.h"
 
 #include <Rect.h>
 #include <View.h>
 #include <Window.h>
 
-using namespace WebKit;
+namespace API {
+    class PageConfiguration;
+};
+
 namespace WebKit
 {
+    class PageClientImpl;
+    class WebPageProxy;
+
     class WebViewBase: public API::ObjectImpl<API::Object::Type::View>, public BView
     {
         public:
@@ -44,7 +50,7 @@ namespace WebKit
                 return fWebView;
             }
             WebPageProxy* page() const { return fPage.get(); }
-            const char* currentURL() { return page()->pageLoadState().activeURL().utf8().data(); }
+            const char* currentURL() const;
 
             //hook methods
             virtual void FrameResized(float, float);
@@ -59,3 +65,5 @@ namespace WebKit
             std::unique_ptr<PageClientImpl> fPageClient;
     };
 }
+
+using namespace WebKit;
