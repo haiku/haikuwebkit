@@ -98,7 +98,7 @@ namespace IPC
             memcpy(b2, buffer, size);
 
             Vector<Attachment> attachments(0);
-            auto decoder = Decoder::create(b2, size, nullptr, WTFMove(attachments));
+            auto decoder = Decoder::create({b2, size}, WTFMove(attachments));
             ASSERT(decoder);
             if (!decoder) {
                 puts("OOPS");
@@ -174,14 +174,6 @@ namespace IPC
             m_pendingWriteEncoder = encoder.moveToUniquePtr();
             return false;
         }
-    }
-
-    void Connection::willSendSyncMessage(OptionSet<SendSyncOption>)
-    {
-    }
-
-    void Connection::didReceiveSyncReply(OptionSet<SendSyncOption>)
-    {
     }
 
     std::optional<Connection::ConnectionIdentifierPair> Connection::createConnectionIdentifierPair()
