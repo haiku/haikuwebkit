@@ -51,8 +51,6 @@ list(APPEND WebKit_SOURCES
 
     UIProcess/DefaultUndoController.cpp
 
-    UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
-
     UIProcess/WebsiteData/curl/WebsiteDataStoreCurl.cpp
     UIProcess/WebsiteData/haiku/WebsiteDataStoreHaiku.cpp
 
@@ -67,7 +65,6 @@ list(APPEND WebKit_SOURCES
 
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
-    WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
     WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
     WebProcess/WebPage/CoordinatedGraphics/CompositingCoordinator.cpp
 
@@ -81,6 +78,13 @@ list(APPEND WebKit_SOURCES
     #WebProcess/WebCoreSupport/haiku/WebFrameNetworkingContext.cpp
     WebProcess/WebCoreSupport/curl/WebFrameNetworkingContext.cpp
 )
+
+if (USE_TEXTURE_MAPPER)
+    list(APPEND WebKit_SOURCES
+        UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
+        WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
+    )
+endif ()
 
 list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${DERIVED_SOURCES_HAIKU_API_DIR}"
