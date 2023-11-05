@@ -143,7 +143,7 @@ Ref<CurlRequest> NetworkDataTaskCurl::createCurlRequest(ResourceRequest&& reques
     // Creates a CurlRequest in suspended state.
     // Then, NetworkDataTaskCurl::resume() will be called and communication resumes.
     const auto captureMetrics = shouldCaptureExtraNetworkLoadMetrics() ? CurlRequest::CaptureNetworkLoadMetrics::Extended : CurlRequest::CaptureNetworkLoadMetrics::Basic;
-    return CurlRequest::create(request, *this, CurlRequest::ShouldSuspend::Yes, CurlRequest::EnableMultipart::No, captureMetrics);
+    return CurlRequest::create(request, *this, CurlRequest::ShouldSuspend::Yes, captureMetrics);
 }
 
 void NetworkDataTaskCurl::curlDidSendData(CurlRequest&, unsigned long long totalBytesSent, unsigned long long totalBytesExpectedToSend)
