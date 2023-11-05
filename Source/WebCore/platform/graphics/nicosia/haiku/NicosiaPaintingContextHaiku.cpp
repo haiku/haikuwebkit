@@ -30,39 +30,45 @@
 #include "NicosiaPaintingContextHaiku.h"
 
 #if PLATFORM(HAIKU)
-#include "NicosiaBuffer.h"
+#include "CoordinatedTileBuffer.h"
+#include "NotImplemented.h"
 
 namespace Nicosia {
 
-PaintingContextHaiku::ForPainting::ForPainting(Nicosia::Buffer& buffer)
+PaintingContextHaiku::ForPainting::ForPainting(WebCore::CoordinatedTileBuffer& buffer)
 {
+    notImplemented();
 }
 
 PaintingContextHaiku::ForPainting::~ForPainting()
 {
-    
 }
 
 WebCore::GraphicsContext& PaintingContextHaiku::ForPainting::graphicsContext()
 {
+    notImplemented();
 }
 
 void PaintingContextHaiku::ForPainting::replay(const PaintingOperations& paintingOperations)
 {
+    notImplemented();
 }
 
 PaintingContextHaiku::ForRecording::ForRecording(PaintingOperations& paintingOperations)
 {
+    notImplemented();
 }
 
 PaintingContextHaiku::ForRecording::~ForRecording() = default;
 
 WebCore::GraphicsContext& PaintingContextHaiku::ForRecording::graphicsContext()
 {
+    notImplemented();
 }
 
 void PaintingContextHaiku::ForRecording::replay(const PaintingOperations&)
 {
+    notImplemented();
 }
 
 } // namespace Nicosia

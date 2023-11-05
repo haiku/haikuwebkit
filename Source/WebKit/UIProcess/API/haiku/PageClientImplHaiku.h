@@ -44,7 +44,7 @@ public:
     WebViewBase* viewWidget();
 private:
     // page client def's
-    std::unique_ptr<DrawingAreaProxy> createDrawingAreaProxy(WebKit::WebProcessProxy&) override;
+    WTF::Ref<DrawingAreaProxy> createDrawingAreaProxy(WebKit::WebProcessProxy&) override;
     void setViewNeedsDisplay(const WebCore::Region&) override;
     void requestScroll(const WebCore::FloatPoint& scrollPosition, const WebCore::IntPoint& scrollOrigin, WebCore::ScrollIsAnimated) override;
     WebCore::FloatPoint viewScrollPosition() override;
