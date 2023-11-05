@@ -26,8 +26,10 @@
 
 #include "PageClientImplHaiku.h"
 
-#include "DrawingAreaCoordinatedGraphics.h"
+#if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
 #include "DrawingAreaProxyCoordinatedGraphics.h"
+#endif
+
 #include "DrawingAreaProxy.h"
 #include "WebProcessProxy.h"
 #include "WebViewBase.h"
@@ -41,9 +43,13 @@ PageClientImpl::PageClientImpl(WebViewBase& view)
 {
 }
 
-std::unique_ptr<DrawingAreaProxy> PageClientImpl::createDrawingAreaProxy(WebKit::WebProcessProxy&)
+WTF::Ref<DrawingAreaProxy> PageClientImpl::createDrawingAreaProxy(WebKit::WebProcessProxy& processProxy)
 {
-    return std::make_unique<DrawingAreaProxyCoordinatedGraphics>(*fWebView.page());
+#if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
+    return DrawingAreaProxyCoordinatedGraphics::create(*fWebView.page(), processProxy);
+#else
+    RELEASE_ASSERT_NOT_REACHED();
+#endif
 }
 
 void PageClientImpl::setViewNeedsDisplay(const WebCore::Region& region)

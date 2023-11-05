@@ -26,7 +26,7 @@
 #include "WebViewBase.h"
 
 #include "APIPageConfiguration.h"
-#include "DrawingAreaProxyCoordinatedGraphics.h"
+#include "DrawingAreaProxy.h"
 #include "PageClientImplHaiku.h"
 #include "PageLoadState.h"
 #include "WebPageGroup.h"
@@ -34,13 +34,17 @@
 #include "WebCore/IntRect.h"
 #include "WebCore/Region.h"
 
+#if USE(COORDINATED_GRAPHICS) || USE (TEXTURE_MAPPER)
+#include "DrawingAreaProxyCoordinatedGraphics.h"
+#endif
+
 using namespace WebKit;
 using namespace WebCore;
 
 WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     const API::PageConfiguration& pageConfig)
-    : BView(name, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE),
-    fPageClient(std::make_unique<PageClientImpl>(*this))
+    : BView(name, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE)
+    , fPageClient(makeUniqueWithoutRefCountedCheck<PageClientImpl>(*this))
 {
     auto config = pageConfig.copy();
     auto preferences = config->preferences();
@@ -63,14 +67,17 @@ const char* WebViewBase::currentURL() const
 
 void WebViewBase::FrameResized(float newWidth, float newHeight)
 {
+#if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
     auto drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(page()->drawingArea());
     if (!drawingArea)
         return;
     drawingArea->setSize(IntSize(newWidth, newHeight));
+#endif
 }
 
 void WebViewBase::Draw(BRect update)
 {
+#if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
     auto drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(page()->drawingArea());
     if (!drawingArea)
         return;
@@ -78,6 +85,7 @@ void WebViewBase::Draw(BRect update)
     IntRect updateArea(update);
     WebCore::Region unpainted;
     drawingArea->paint(this, updateArea, unpainted);
+#endif
 }
 
 void WebViewBase::paint(const IntRect& dirtyRect)
