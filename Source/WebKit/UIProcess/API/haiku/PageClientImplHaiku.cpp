@@ -26,8 +26,6 @@
 
 #include "PageClientImplHaiku.h"
 
-#include "DrawingAreaCoordinatedGraphics.h"
-#include "DrawingAreaProxyCoordinatedGraphics.h"
 #include "DrawingAreaProxy.h"
 #include "WebProcessProxy.h"
 #include "WebViewBase.h"
@@ -43,7 +41,9 @@ namespace WebKit
 
     std::unique_ptr<DrawingAreaProxy> PageClientImpl::createDrawingAreaProxy()
     {
+#if USE(COORDINATED_GRAPHICS)
         return std::make_unique<DrawingAreaProxyCoordinatedGraphics>(*fWebView.page());
+#endif
     }
 
     void PageClientImpl::setViewNeedsDisplay(const WebCore::Region& region)
