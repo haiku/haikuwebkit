@@ -48,6 +48,7 @@ using PlatformImagePtr = RetainPtr<CGImageRef>;
 #elif USE(CAIRO)
 using PlatformImagePtr = RefPtr<cairo_surface_t>;
 #elif USE(HAIKU)
+
 class BitmapRef: public BBitmap, public RefCounted<BitmapRef>
 {
     public:

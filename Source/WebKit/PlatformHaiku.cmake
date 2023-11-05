@@ -44,8 +44,6 @@ list(APPEND WebKit_SOURCES
 
     UIProcess/DefaultUndoController.cpp
 
-    UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
-
     UIProcess/WebsiteData/curl/WebsiteDataStoreCurl.cpp
     UIProcess/WebsiteData/haiku/WebsiteDataStoreHaiku.cpp
 
@@ -60,7 +58,6 @@ list(APPEND WebKit_SOURCES
 
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
-    WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
 
     WebProcess/WebPage/haiku/WebInspectorHaiku.cpp
     WebProcess/WebPage/haiku/WebPageHaiku.cpp
@@ -80,6 +77,13 @@ if (USE_COORDINATED_GRAPHICS)
         WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostPlayStation.cpp
         WebProcess/WebPage/CoordinatedGraphics/ThreadedCompositorPlayStation.cpp
         WebProcess/WebPage/CoordinatedGraphics/ThreadedDisplayRefreshMonitorPlayStation.cpp
+    )
+endif ()
+
+if (USE_TEXTURE_MAPPER)
+    list(APPEND WebKit_SOURCES
+        UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
+        WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
     )
 endif ()
 
