@@ -233,50 +233,30 @@ void ScrollbarThemeHaiku::paintButton(GraphicsContext& context, Scrollbar& scrol
         base, arrowDirection, flags, B_DARKEN_MAX_TINT);
 }
 
-void ScrollbarThemeHaiku::paintThumb(GraphicsContext& context, Scrollbar& scrollbar, const IntRect& rect)
+void ScrollbarThemeHaiku::paintThumb(GraphicsContext& context, Scrollbar& scrollbar, const IntRect& intRect)
 {
     if (!be_control_look)
         return;
-
-    BRect drawRect = BRect(rect);
     BView* view = context.platformContext();
     rgb_color base = colorForScrollbar(B_SCROLL_BAR_THUMB_COLOR,
         scrollbar.scrollableArea().useDarkAppearanceForScrollbars());
-    rgb_color dark2 = tint_color(base, B_DARKEN_2_TINT);
-    rgb_color dark3 = tint_color(base, B_DARKEN_3_TINT);
-
-    view->PushState();
-
+    
+    BRect rect = intRect;
     enum orientation orientation;
-    if (scrollbar.orientation() == ScrollbarOrientation::Vertical) {
+    if (scrollbar.orientation() == ScrollbarOrientation::Vertical)
         orientation = B_VERTICAL;
-        drawRect.InsetBy(1, -1);
-        if (!m_drawOuterFrame)
-            drawRect.right++;
-        view->SetHighColor(dark2);
-        view->StrokeLine(drawRect.LeftTop(), drawRect.RightTop());
-        view->SetHighColor(dark3);
-        view->StrokeLine(drawRect.LeftBottom(), drawRect.RightBottom());
-        drawRect.InsetBy(0, 1);
-    } else {
+    else
         orientation = B_HORIZONTAL;
-        drawRect.InsetBy(-1, 1);
-        if (!m_drawOuterFrame)
-            drawRect.bottom++;
-        view->SetHighColor(dark2);
-        view->StrokeLine(drawRect.LeftTop(), drawRect.LeftBottom());
-        view->SetHighColor(dark3);
-        view->StrokeLine(drawRect.RightTop(), drawRect.RightBottom());
-        drawRect.InsetBy(1, 0);
-    }
 
 
     uint32 flags = 0;
     if (!scrollbar.enabled())
         flags |= BControlLook::B_DISABLED;
-    be_control_look->DrawButtonBackground(view, drawRect, view->Bounds(), base, flags, BControlLook::B_ALL_BORDERS, orientation);
 
-    view->PopState();
+    // m_hoveredPart is protected and there is no method to get it like for enabled above.
+    // if (scrollbar.m_hoveredPart == ThumbPart)
+    //    flags |= BControlLook::B_HOVER;
+    be_control_look->DrawScrollBarThumb(view, rect, view->Bounds(), base, flags, orientation);
 }
 
 rgb_color ScrollbarThemeHaiku::colorForScrollbar(color_which controlColor, bool darkMode) const
