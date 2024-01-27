@@ -52,6 +52,8 @@ private:
     void paintButton(ControlStates&, GraphicsContext&, const FloatRect&, bool);
     void paintSpinButton(ControlStates&, GraphicsContext&, const FloatRect&, bool);
 
+		rgb_color colorForValue(color_which colorConstant, bool useDarkAppearance) const
+
     static Color focusColor(const Color&);
 
     Color m_accentColor { SRGBA<uint8_t> { 52, 132, 228 } };
