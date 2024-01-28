@@ -33,6 +33,7 @@
 #include "LengthSize.h"
 
 #include <ControlLook.h>
+#include <private/interface/DefaultColors.h>
 
 #include <wtf/NeverDestroyed.h>
 
@@ -104,7 +105,7 @@ void ThemeHaiku::paintFocus(GraphicsContext& graphicsContext, const Vector<Float
 
 void ThemeHaiku::paintArrow(GraphicsContext& graphicsContext, const FloatRect& rect, ArrowDirection direction, bool useDarkAppearance)
 {
-	rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR);
+	rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, useDarkAppearance);
 		
 	BRect r(rect);
 
@@ -199,7 +200,7 @@ void ThemeHaiku::paintCheckbox(ControlStates& states, GraphicsContext& graphicsC
 		flags |= BControlLook::B_HOVER;
 
 	BRect rect(zoomedRect);
-	be_control_look->DrawCheckBox(graphicsContext.platformContext(), rect, graphicsContext.platformContext()->Bounds(), colorForValue(B_CONTROL_BACKGROUND_COLOR), flags);
+	be_control_look->DrawCheckBox(graphicsContext.platformContext(), rect, graphicsContext.platformContext()->Bounds(), colorForValue(B_CONTROL_BACKGROUND_COLOR, false), flags);
 }
 
 void ThemeHaiku::paintRadio(ControlStates& states, GraphicsContext& graphicsContext, const FloatRect& zoomedRect, bool useDarkAppearance, const Color& effectiveAccentColor)
@@ -217,14 +218,15 @@ void ThemeHaiku::paintRadio(ControlStates& states, GraphicsContext& graphicsCont
 		flags |= BControlLook::B_HOVER;
 
 	BRect rect(zoomedRect);
-	be_control_look->DrawRadioButton(graphicsContext.platformContext(), rect, graphicsContext.platformContext()->Bounds(), colorForValue(B_CONTROL_BACKGROUND_COLOR), flags);
+	be_control_look->DrawRadioButton(graphicsContext.platformContext(), rect, graphicsContext.platformContext()->Bounds(), colorForValue(B_CONTROL_BACKGROUND_COLOR, false), flags);
 }
 
 void ThemeHaiku::paintButton(ControlStates& states, GraphicsContext& graphicsContext, const FloatRect& zoomedRect, bool useDarkAppearance)
 {
-	rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR);
+	rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, useDarkAppearance);
 	
 	
+	int32 flags = 0;
 	if (states.states().contains(ControlStates::States::Pressed))
 		flags |= BControlLook::B_ACTIVATED;
 	if (states.states().contains(ControlStates::States::Default))
@@ -235,7 +237,7 @@ void ThemeHaiku::paintButton(ControlStates& states, GraphicsContext& graphicsCon
 		flags |= BControlLook::B_FOCUSED;
 	
 	
-	BRect r(zoomedRect);
+	BRect rect(zoomedRect);
 	be_control_look->DrawButtonFrame(graphicsContext.platformContext(), rect, graphicsContext.platformContext()->Bounds(), base, base, flags);
 	be_control_look->DrawButtonBackground(graphicsContext.platformContext(), rect, graphicsContext.platformContext()->Bounds(), base, flags);
 }
@@ -248,19 +250,19 @@ void ThemeHaiku::paintSpinButton(ControlStates& states, GraphicsContext& graphic
 	
 	BRect rect(zoomedRect);
 
-	bool isEnabled = states.states().contains(ControlStates::States::Enabled)
+	bool isEnabled = states.states().contains(ControlStates::States::Enabled);
 	float frameTint = isEnabled ? B_DARKEN_1_TINT : B_NO_TINT ;
 
 	float fgTint;
 	if (!isEnabled)
 		fgTint = B_DARKEN_1_TINT;
-	else if (fIsMouseDown)
+	else if (states.states().contains(ControlStates::States::Pressed))
 		fgTint = B_DARKEN_MAX_TINT;
 	else
 		fgTint = 1.777f;	// 216 --> 48.2 (48)
 
 	float bgTint;
-	if (isEnabled && (states.states().contains(ControlStates::States::Hovered))
+	if (isEnabled && (states.states().contains(ControlStates::States::Hovered)))
 		bgTint = B_DARKEN_1_TINT;
 	else
 		bgTint = B_NO_TINT;
@@ -286,15 +288,15 @@ void ThemeHaiku::paintSpinButton(ControlStates& states, GraphicsContext& graphic
 	flags |= !isEnabled ? BControlLook::B_DISABLED : 0;
 
 	// draw the button
-	be_control_look->DrawButtonFrame(this, rect, graphicsContext.platformContext()->Bounds(),
+	be_control_look->DrawButtonFrame(graphicsContext.platformContext(), rect, graphicsContext.platformContext()->Bounds(),
 		tint_color(bgColor, frameTint), bgColor, flags, borders);
-	be_control_look->DrawButtonBackground(this, rect, graphicsContext.platformContext()->Bounds(),
+	be_control_look->DrawButtonBackground(graphicsContext.platformContext(), rect, graphicsContext.platformContext()->Bounds(),
 		tint_color(bgColor, bgTint), flags, borders);
 
 	// This is the default case of the original implementation
 	// The original file also contained arrows
 	BFont font;
-	fParent->GetFont(&font);
+	graphicsContext.platformContext()->GetFont(&font);
 	float inset = floorf(font.Size() / 4);
 	rect.InsetBy(inset, inset);
 
@@ -304,20 +306,20 @@ void ThemeHaiku::paintSpinButton(ControlStates& states, GraphicsContext& graphic
 	if (rect.IntegerHeight() % 2 != 0)
 		rect.bottom -= 1;
 
-	SetHighColor(tint_color(bgColor, fgTint));
+	graphicsContext.platformContext()->SetHighColor(tint_color(bgColor, fgTint));
 
 	// draw the +/-
 	float halfHeight = floorf(rect.Height() / 2);
-	StrokeLine(BPoint(rect.left, rect.top + halfHeight),
+	graphicsContext.platformContext()->StrokeLine(BPoint(rect.left, rect.top + halfHeight),
 		BPoint(rect.right, rect.top + halfHeight));
 	if (states.states().contains(ControlStates::States::SpinUp)) {
 		float halfWidth = floorf(rect.Width() / 2);
-		StrokeLine(BPoint(rect.left + halfWidth, rect.top + 1),
+		graphicsContext.platformContext()->StrokeLine(BPoint(rect.left + halfWidth, rect.top + 1),
 			BPoint(rect.left + halfWidth, rect.bottom - 1));
 	}
 }
 
-rgb_color ThemeHaiku::colorForValue(color_which colorConstant, bool useDarkAppearance) const
+rgb_color ThemeHaiku::colorForValue(color_which colorConstant, bool useDarkAppearance)
 {
 		rgb_color systemColor = ui_color(B_DOCUMENT_BACKGROUND_COLOR);
 		if (useDarkAppearance) {
@@ -330,58 +332,4 @@ rgb_color ThemeHaiku::colorForValue(color_which colorConstant, bool useDarkAppea
 		return ui_color(colorConstant);
 }
 
-Color RenderThemeHaiku::systemColor(CSSValueID cssValueID, OptionSet<StyleColorOptions> options) const
-{
-	const bool useDarkAppearance = options.contains(StyleColorOptions::UseDarkAppearance);
-
-	switch (cssValueID) {
-	case CSSValueButtonface:
-		return colorForValue(B_CONTROL_BACKGROUND_COLOR, useDarkAppearance);
-		
-		// Doesn't exist?
-		//case CSSValueButtonborder:
-		//    return colorForValue(B_CONTROL_BORDER_COLOR, useDarkAppearence);
-		
-	case CSSValueActivebuttontext:
-	case CSSValueButtontext:
-		return colorForValue(B_CONTROL_TEXT_COLOR, useDarkAppearance);
-		
-	case CSSValueField:
-	case CSSValueCanvas:
-	case CSSValueWindow:
-		return colorForValue(B_DOCUMENT_BACKGROUND_COLOR, useDarkAppearance);
-		
-	case CSSValueCanvastext:
-	case CSSValueFieldtext:
-		return colorForValue(B_DOCUMENT_TEXT_COLOR, useDarkAppearance);
-		
-	case CSSValueWebkitFocusRingColor:
-	case CSSValueActiveborder:
-	case CSSValueHighlight:
-		return colorForValue(B_CONTROL_HIGHLIGHT_COLOR, useDarkAppearance);
-		
-	case CSSValueHighlighttext:
-		return colorForValue(B_CONTROL_TEXT_COLOR, useDarkAppearance);
-		
-	case CSSValueWebkitLink:
-	case CSSValueLinktext:
-		return colorForValue(B_LINK_TEXT_COLOR, useDarkAppearance);
-		
-	case CSSValueVisitedtext:
-		return colorForValue(B_LINK_VISITED_COLOR, useDarkAppearance);
-		
-		// case CSSValueWebkitActivetext:
-	case CSSValueWebkitActivelink:
-		return colorForValue(B_LINK_ACTIVE_COLOR, useDarkAppearance);
-		
-	/* is there any haiku colors that make sense to use here?
-	 case CSSValueSelecteditem:
-	 case CSSValueSelecteditemtext:
-	 case CSSValueMark:
-	 case CSSValueMarkText:
-	 */
-	default:
-		return RenderTheme::systemColor(cssValueID, options);
-	}
-}
 } // namespace WebCore

@@ -29,6 +29,8 @@
 
 #include "Color.h"
 
+#include <InterfaceDefs.h>
+
 namespace WebCore {
 
 class Path;
@@ -52,7 +54,7 @@ private:
     void paintButton(ControlStates&, GraphicsContext&, const FloatRect&, bool);
     void paintSpinButton(ControlStates&, GraphicsContext&, const FloatRect&, bool);
 
-		rgb_color colorForValue(color_which colorConstant, bool useDarkAppearance) const
+    static rgb_color colorForValue(color_which colorConstant, bool useDarkAppearance);
 
     static Color focusColor(const Color&);
 
