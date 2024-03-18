@@ -57,6 +57,8 @@ list(APPEND WebKit_SOURCES
 
     UIProcess/DefaultUndoController.cpp
 
+    UIProcess/CoordinatedGraphics/DrawingAreaProxyCoordinatedGraphics.cpp
+
     UIProcess/WebsiteData/curl/WebsiteDataStoreCurl.cpp
     UIProcess/WebsiteData/haiku/WebsiteDataStoreHaiku.cpp
 
@@ -71,6 +73,7 @@ list(APPEND WebKit_SOURCES
 
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
+    WebProcess/WebPage/CoordinatedGraphics/DrawingAreaCoordinatedGraphics.cpp
     WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
     WebProcess/WebPage/CoordinatedGraphics/CompositingCoordinator.cpp
 

@@ -25,7 +25,7 @@
 #include "config.h"
 #include "WebViewBase.h"
 #include "APIPageConfiguration.h"
-#include "DrawingAreaProxy.h"
+#include "DrawingAreaProxyCoordinatedGraphics.h"
 #include "PageClientImplHaiku.h"
 #include "PageLoadState.h"
 #include "WebProcessPool.h"
@@ -72,7 +72,7 @@ void WebViewBase::paint(const IntRect& dirtyRect)
 
 void WebViewBase::FrameResized(float newWidth, float newHeight)
 {
-#if USE(COORDINATED_GRAPHICS)
+#if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
     auto drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(page()->drawingArea());
     if (!drawingArea)
         return;
@@ -82,7 +82,7 @@ void WebViewBase::FrameResized(float newWidth, float newHeight)
 
 void WebViewBase::Draw(BRect update)
 {
-#if USE(COORDINATED_GRAPHICS)
+#if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
     auto drawingArea = static_cast<DrawingAreaProxyCoordinatedGraphics*>(page()->drawingArea());
     if (!drawingArea)
         return;
