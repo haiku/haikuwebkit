@@ -91,10 +91,8 @@ private:
     RefPtr<PathStream> m_elementsStream;
 };
 
-#if 0
+} // namespace WebCore
+
 SPECIALIZE_TYPE_TRAITS_BEGIN(WebCore::PathHaiku)
     static bool isType(const WebCore::PathImpl& pathImpl) { return !pathImpl.isPathStream(); }
 SPECIALIZE_TYPE_TRAITS_END()
-#endif
-
-};
