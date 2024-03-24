@@ -53,6 +53,8 @@ typedef struct _cairo cairo_t;
 using PlatformPaintContextPtr = cairo_t*;
 #elif USE(SKIA)
 using PlatformPaintContextPtr = SkCanvas*;
+#elif USE(HAIKU)
+using PlatformPaintContextPtr = BView*;
 #endif
 
 class BackingStore {
