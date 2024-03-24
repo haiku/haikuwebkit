@@ -40,6 +40,9 @@ class SkCanvas;
 IGNORE_CLANG_WARNINGS_BEGIN("cast-align")
 #include <skia/core/SkSurface.h>
 IGNORE_CLANG_WARNINGS_END
+#elif PLATFORM(HAIKU)
+#include <Bitmap.h>
+#include <View.h>
 #endif
 
 namespace WebCore {
@@ -54,6 +57,8 @@ typedef struct _cairo cairo_t;
 using PlatformPaintContextPtr = cairo_t*;
 #elif USE(SKIA)
 using PlatformPaintContextPtr = SkCanvas*;
+#elif USE(HAIKU)
+using PlatformPaintContextPtr = BView*;
 #endif
 
 class BackingStore {
@@ -80,6 +85,9 @@ private:
     PAL::HysteresisActivity m_scrolledHysteresis;
 #elif USE(SKIA)
     sk_sp<SkSurface> m_surface;
+#elif PLATFORM(HAIKU)
+    BBitmap m_bitmap;
+    BView m_view;
 #endif
 };
 
