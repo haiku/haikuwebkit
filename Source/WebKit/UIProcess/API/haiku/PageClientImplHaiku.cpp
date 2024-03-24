@@ -23,16 +23,16 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "config.h"
-
 #include "PageClientImplHaiku.h"
-
-#if USE(COORDINATED_GRAPHICS)
-#include "DrawingAreaProxyCoordinatedGraphics.h"
-#endif
 
 #include "DrawingAreaProxy.h"
 #include "WebProcessProxy.h"
 #include "WebViewBase.h"
+#include "WebCore/Region.h"
+
+#if USE(COORDINATED_GRAPHICS)
+#include "DrawingAreaProxyCoordinatedGraphics.h"
+#endif
 
 namespace WebKit {
 
@@ -56,7 +56,10 @@ WTF::Ref<DrawingAreaProxy> PageClientImpl::createDrawingAreaProxy(WebKit::WebPro
 
 void PageClientImpl::setViewNeedsDisplay(const WebCore::Region& region)
 {
-    //fWebView.setViewNeedsDisplay(region);
+    if (fWebView.LockLooper()) {
+        fWebView.Invalidate(region.bounds());
+        fWebView.UnlockLooper();
+    }
 }
 
 void PageClientImpl::requestScroll(const WebCore::FloatPoint&, const WebCore::IntPoint&, WebCore::ScrollIsAnimated)
