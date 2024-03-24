@@ -63,6 +63,10 @@ BWebView::BWebView(BRect frame, BWindow* myWindow)
     WKPageConfigurationSetContext(config.get(), fContext.get());
 
     fViewPort=adoptWK(WKViewCreate("Webkit", frame, myWindow, config.get()));
+
+    // TODO: Can we run WebKit's main thread on its own thread instead of on
+    // BApplication's main thread?
+    WTF::RunLoop::run();
 }
 
 void BWebView::navigationCallbacks()
