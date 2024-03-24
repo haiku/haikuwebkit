@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Haiku, Inc. All rights reserved.
+ * Copyright (C) 2019, 2024 Haiku, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -33,8 +33,9 @@
 #include "WebProcessPool.h"
 #include "WebCore/IntRect.h"
 #include "WebCore/Region.h"
+#include "wtf/MainThread.h"
 
-#if USE(COORDINATED_GRAPHICS) || USE (TEXTURE_MAPPER)
+#if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
 #include "DrawingAreaProxyCoordinatedGraphics.h"
 #endif
 
@@ -83,8 +84,17 @@ void WebViewBase::Draw(BRect update)
         return;
 
     IntRect updateArea(update);
-    WebCore::Region unpainted;
-    drawingArea->paint(this, updateArea, unpainted);
+
+    callOnMainRunLoop([this, drawingArea, updateArea](){
+        LockLooper();
+        WebCore::Region unpainted;
+
+        // TODO: Is it possible to make this not require being called from the
+        // main thread?
+        drawingArea->paint(this, updateArea, unpainted);
+
+        UnlockLooper();
+    });
 #endif
 }
 
