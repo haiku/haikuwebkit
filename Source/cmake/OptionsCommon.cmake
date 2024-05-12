@@ -161,6 +161,16 @@ if (LD_SUPPORTS_DISABLE_NEW_DTAGS)
     string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--disable-new-dtags")
 endif ()
 
+# https://github.com/haikuports/haikuports/issues/10445
+# LLD on Haiku requires a flag to work.
+# It would be nice to put this in OptionsHaiku.cmake, but this has to run
+# before some tests that are performed by this file.
+if (USE_LD_LLD AND HAIKU)
+	string(APPEND CMAKE_EXE_LINKER_FLAGS " -Wl,-m,elf_x86_64")
+	string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,-m,elf_x86_64")
+	string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,-m,elf_x86_64")
+endif ()
+
 # Prefer thin archives by default if they can be both created by the
 # archiver and read back by the linker.
 if (AR_SUPPORTS_THIN_ARCHIVES AND LD_SUPPORTS_THIN_ARCHIVES)

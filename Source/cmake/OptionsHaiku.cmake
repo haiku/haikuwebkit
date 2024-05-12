@@ -25,6 +25,15 @@ set(ENABLE_WEBKIT_LEGACY ON)
 
 set(USE_ANGLE_EGL OFF)
 
+# LLD complains about multiple definitions in some files, whereas ld doesn't.
+# (These multiple definitions seem to be normal. It seems the Mac and Windows
+# ports have multiple definitions as well)
+if (USE_LD_LLD)
+	string(APPEND CMAKE_EXE_LINKER_FLAGS " -Wl,--allow-multiple-definition")
+	string(APPEND CMAKE_SHARED_LINKER_FLAGS " -Wl,--allow-multiple-definition")
+	string(APPEND CMAKE_MODULE_LINKER_FLAGS " -Wl,--allow-multiple-definition")
+endif ()
+
 # To get assertions in release mode, we replace all -DNDEBUG with -UNDEBUG
 # (they are automatically added by CMake and there is no "release with asserts"
 # build available in WebKit)
