@@ -85,22 +85,30 @@ void FontCascade::drawGlyphs(GraphicsContext& graphicsContext, const Font& font,
     BPoint offsets[numGlyphs];
     char buffer[4];
     BString utf8;
+    int32 realGlyphCount = 0;
     float offset = point.x();
-    for (int i = 0; i < numGlyphs; i++) {
+    for (unsigned i = 0; i < numGlyphs; i++) {
         Glyph glyph = glyphs[i];
-        if (glyph == 0)
+        if (glyph == 0) {
+            if (advances[i].width() == 0.0) {
+                // These are fake glyphs to keep GlyphBuffer vectors in sync with text runs
+                // when a surrogate pair is found (cf. addToGlyphBuffer in WidthIterator.cpp).
+                continue;
+            }
             glyph = 0xfdd1;
+        }
 
-        offsets[i].x = offset;
-        offsets[i].y = point.y();
+        offsets[realGlyphCount].x = offset;
+        offsets[realGlyphCount].y = point.y();
         offset += advances[i].width();
 
         char* tmp = buffer;
         BUnicodeChar::ToUTF8(glyph, &tmp);
         utf8.Append(buffer, tmp - buffer);
+        realGlyphCount++;
     }
 
-    view->DrawString(utf8, offsets, numGlyphs);
+    view->DrawString(utf8, offsets, realGlyphCount);
     view->PopState();
 }
 
@@ -112,6 +120,7 @@ bool FontCascade::canExpandAroundIdeographsInComplexText()
 Path Font::platformPathForGlyph(Glyph glyph) const
 {
 	notImplemented();
+	UNUSED_PARAM(glyph);
 	
 	return Path();
 }
