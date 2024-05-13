@@ -30,6 +30,7 @@
 #include "NetworkProcess.h"
 #include "NetworkSession.h"
 
+#if !USE(HAIKU)
 namespace WebKit {
 
 class NetworkProcessMainCurl final: public AuxiliaryProcessMainBaseNoSingleton<NetworkProcess> {
@@ -51,3 +52,4 @@ int NetworkProcessMain(int argc, char** argv)
 }
 
 } // namespace WebKit
+#endif
