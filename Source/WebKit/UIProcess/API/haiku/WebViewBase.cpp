@@ -25,7 +25,12 @@
 #include "config.h"
 #include "WebViewBase.h"
 #include "APIPageConfiguration.h"
+
+#if USE(COORDINATED_GRAPHICS)
 #include "DrawingAreaProxyCoordinatedGraphics.h"
+#endif
+
+#include "DrawingAreaProxy.h"
 #include "PageClientImplHaiku.h"
 #include "PageLoadState.h"
 #include "WebProcessPool.h"
