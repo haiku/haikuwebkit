@@ -127,7 +127,7 @@ std::optional<BMessenger> ArgumentCoder<BMessenger>::decode(Decoder& decoder)
     uint32_t data[count];
     for (size_t i = 0; i < count; i++) {
         std::optional<uint32_t> value;
-        if (decoder.decode(value))
+        if (value = decoder.decode<uint32_t>())
             data[i] = *value;
     }
     BMessenger* messenger = (BMessenger*)data;

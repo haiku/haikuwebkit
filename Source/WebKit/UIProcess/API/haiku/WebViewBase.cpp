@@ -43,20 +43,11 @@ WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     fPageClient(std::make_unique<PageClientImpl>(*this))
 {
     auto config = pageConfig.copy();
-    auto* preferences = config->preferences();
+    auto preferences = config->preferences();
+    preferences.setAcceleratedCompositingEnabled(false);
 
-    if (!preferences && config->pageGroup())
-    {
-        preferences = &config->pageGroup()->preferences();
-        config->setPreferences(preferences);
-    }
-    if (preferences)
-    {
-        preferences->setAcceleratedCompositingEnabled(false);
-    }
-
-    WebProcessPool* processPool = config->processPool();
-    fPage = processPool->createWebPage(*fPageClient, WTFMove(config));
+    WebProcessPool& processPool = config->processPool();
+    fPage = processPool.createWebPage(*fPageClient, WTFMove(config));
     fPage->initializeWebPage();
 
     if (fPage->drawingArea())

@@ -1,4 +1,5 @@
 include(Headers.cmake)
+include(Platform/Curl.cmake)
 
 file(MAKE_DIRECTORY ${DERIVED_SOURCES_HAIKU_API_DIR})
 
@@ -48,7 +49,6 @@ list(APPEND WebKit_SOURCES
     Shared/haiku/AuxiliaryProcessMainHaiku.cpp
 
     Shared/API/c/curl/WKCertificateInfoCurl.cpp
-    Shared/curl/WebCoreArgumentCodersCurl.cpp
 
     UIProcess/API/C/curl/WKProtectionSpaceCurl.cpp
     UIProcess/API/C/curl/WKWebsiteDataStoreRefCurl.cpp
@@ -72,7 +72,7 @@ list(APPEND WebKit_SOURCES
 
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
-    WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
+	WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp
     WebProcess/WebPage/CoordinatedGraphics/CompositingCoordinator.cpp
 
     WebProcess/WebPage/haiku/WebInspectorHaiku.cpp
