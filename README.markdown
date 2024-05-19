@@ -113,6 +113,11 @@ There are several cmake variables available to configure the build in various wa
 These can be given to build-webkit using the --cmakeargs option, or changed later on
 using "cmake -Dvar=value WebKitBuild/Release".
 
+### Speeding up the build with llvm lld ###
+
+If the llvm17_lld package is installed, WebKit will use lld for linking instead of GNU ld.
+This results in a much faster linking step, sometimes saving several minutes off the build time.
+
 ### Speeding up the build with distcc ###
 
 You can set the compiler while calling the configure script:
