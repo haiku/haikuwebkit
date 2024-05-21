@@ -241,7 +241,7 @@ void ResourceHandle::didReceiveAuthenticationChallenge(const AuthenticationChall
         if (!challenge.previousFailureCount()) {
             Credential credential = d->m_context->storageSession()->credentialStorage().get(partition, challenge.protectionSpace());
             if (!credential.isEmpty() && credential != d->m_initialCredential) {
-                ASSERT(credential.persistence() == CredentialPersistenceNone);
+                ASSERT(credential.persistence() == CredentialPersistence::None);
                 if (challenge.failureResponse().httpStatusCode() == 401) {
                     // Store the credential back, possibly adding it as a default for this directory.
                     d->m_context->storageSession()->credentialStorage().set(partition, credential, challenge.protectionSpace(), challenge.failureResponse().url());
