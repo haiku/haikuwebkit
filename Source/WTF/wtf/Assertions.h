@@ -350,7 +350,7 @@ WTF_EXPORT_PRIVATE bool WTFIsDebuggerAttached(void);
     __builtin_unreachable(); \
 } while (0)
 #elif PLATFORM(HAIKU)
-#define CRASH() (debugger(__PRETTY_FUNCTION__), abort())
+#define CRASH() (::debugger(__PRETTY_FUNCTION__), abort())
 #define CRASH_UNDER_CONSTEXPR_CONTEXT() WTFBreakpointTrapUnderConstexprContext()
 #elif !ENABLE(DEVELOPER_MODE) && !OS(DARWIN)
 #ifdef __cplusplus

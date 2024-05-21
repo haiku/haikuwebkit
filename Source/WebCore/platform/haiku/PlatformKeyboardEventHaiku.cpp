@@ -675,7 +675,7 @@ PlatformKeyboardEvent::PlatformKeyboardEvent(BMessage* message)
 void PlatformKeyboardEvent::disambiguateKeyDownEvent(Type type, bool backwardCompatibilityMode)
 {
     // Can only change type from KeyDown to RawKeyDown or Char, as we lack information for other conversions.
-    ASSERT(m_type == KeyDown);
+    ASSERT(m_type == PlatformEvent::Type::KeyDown);
     m_type = type;
 
     if (backwardCompatibilityMode)
