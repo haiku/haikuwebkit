@@ -152,6 +152,7 @@ void ProcessLauncher::launchProcess()
     entry_ref executableRef;
     if(GetRefForPath(executablePath, &executableRef) != B_OK)
     {
+        ASSERT_NOT_REACHED();
         return;
     }
 

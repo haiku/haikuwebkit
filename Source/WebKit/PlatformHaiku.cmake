@@ -93,6 +93,10 @@ if (USE_TEXTURE_MAPPER)
     )
 endif ()
 
+# TODO: It seems not all of these headers should be public. Currently, if a
+# program such as MiniBrowser links against WebKit, all of these directories
+# will be added to the include path of that program.
+# See also https://github.com/webkit/webkit/commit/8da564110578
 list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${DERIVED_SOURCES_HAIKU_API_DIR}"
     "${WEBKIT_DIR}/NetworkProcess/curl"

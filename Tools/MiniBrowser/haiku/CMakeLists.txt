@@ -21,6 +21,11 @@ SET(MiniBrowser_LIBRARIES
     be bsd network stdc++ translation tracker
 )
 
+SET(MiniBrowser_DEPENDENCIES
+    NetworkProcess
+    WebProcess
+)
+
 set(MiniBrowser_LOCAL_INCLUDE_DIRECTORIES
     ${CMAKE_BINARY_DIR}
     "${WEBCORE_DIR}/css"
@@ -36,3 +41,4 @@ ADD_EXECUTABLE(MiniBrowser ${MiniBrowser_SOURCES})
 TARGET_LINK_LIBRARIES(MiniBrowser ${MiniBrowser_LIBRARIES})
 SET_TARGET_PROPERTIES(MiniBrowser PROPERTIES FOLDER "Tools")
 SET_TARGET_PROPERTIES(MiniBrowser PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}")
+ADD_DEPENDENCIES(MiniBrowser ${MiniBrowser_DEPENDENCIES})
