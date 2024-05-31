@@ -97,7 +97,7 @@ private:
     WebCore::FloatRect visibleContentsRect() const override;
     void detachLayer(WebCore::CoordinatedGraphicsLayer*) override;
     void attachLayer(WebCore::CoordinatedGraphicsLayer*) override;
-#if USE(CAIRO)
+#if USE(CAIRO) || PLATFORM(HAIKU)
     Nicosia::PaintingEngine& paintingEngine() override;
 #elif USE(SKIA)
     WebCore::SkiaAcceleratedBufferPool* skiaAcceleratedBufferPool() const override { return m_skiaAcceleratedBufferPool.get(); }
@@ -132,7 +132,7 @@ private:
 
     HashMap<Nicosia::PlatformLayer::LayerID, WebCore::CoordinatedGraphicsLayer*> m_registeredLayers;
 
-#if USE(CAIRO)
+#if USE(CAIRO) || PLATFORM(HAIKU)
     std::unique_ptr<Nicosia::PaintingEngine> m_paintingEngine;
 #elif USE(SKIA)
     std::unique_ptr<WebCore::SkiaAcceleratedBufferPool> m_skiaAcceleratedBufferPool;

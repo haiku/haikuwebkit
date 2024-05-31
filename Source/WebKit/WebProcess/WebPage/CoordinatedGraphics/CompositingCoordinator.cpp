@@ -47,7 +47,7 @@
 #include <wtf/SetForScope.h>
 #include <wtf/text/StringToIntegerConversion.h>
 
-#if USE(CAIRO)
+#if USE(CAIRO) || PLATFORM(HAIKU)
 #include <WebCore/NicosiaPaintingEngine.h>
 #elif USE(SKIA)
 #include <WebCore/SkiaAcceleratedBufferPool.h>
@@ -83,7 +83,7 @@ static unsigned skiaNumberOfCpuPaintingThreads()
 CompositingCoordinator::CompositingCoordinator(WebPage& page, CompositingCoordinator::Client& client)
     : m_page(page)
     , m_client(client)
-#if USE(CAIRO)
+#if USE(CAIRO) || PLATFORM(HAIKU)
     , m_paintingEngine(Nicosia::PaintingEngine::create())
 #endif
 {
@@ -328,7 +328,7 @@ void CompositingCoordinator::purgeBackingStores()
         registeredLayer->purgeBackingStores();
 }
 
-#if USE(CAIRO)
+#if USE(CAIRO) || PLATFORM(HAIKU)
 Nicosia::PaintingEngine& CompositingCoordinator::paintingEngine()
 {
     return *m_paintingEngine;

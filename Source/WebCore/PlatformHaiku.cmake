@@ -1,6 +1,7 @@
 include(platform/Haiku.cmake)
 include(platform/ImageDecoders.cmake)
 include(platform/OpenSSL.cmake)
+include(platform/TextureMapper.cmake)
 
 add_definitions(-D_DEFAULT_SOURCE)
 
@@ -152,6 +153,18 @@ list(APPEND WebCore_SOURCES
   inspector/LegacyWebSocketInspectorInstrumentation.cpp
 )
 
+if (USE_COORDINATED_GRAPHICS OR USE_TEXTURE_MAPPER OR USE_NICOSIA)
+    # I wouldn't be surprised if not all of these are necessary if only a
+    # subset of the options above are enabled, but, it would be hard to figure
+    # out which ones should be included under each combination.
+    list(APPEND WebCore_SOURCES
+        platform/graphics/PlatformDisplay.cpp
+        platform/graphics/egl/GLContext.cpp
+        platform/graphics/egl/GLContextWrapper.cpp
+        platform/graphics/texmap/coordinated/CoordinatedGraphicsLayerHaiku.cpp
+    )
+endif()
+
 if(ENABLE_GRAPHICS_CONTEXT_3D)
     list(APPEND WebCore_SOURCES
         platform/graphics/haiku/GraphicsContext3DHaiku.cpp
@@ -175,14 +188,6 @@ endif ()
 list(APPEND WebCore_USER_AGENT_STYLE_SHEETS
     ${WebCore_DERIVED_SOURCES_DIR}/ModernMediaControls.css
 )
-
-if (WTF_USE_COORDINATED_GRAPHICS)
-    list(APPEND WebCore_SOURCES
-        platform/graphics/texmap/coordinated/CoordinatedTile.cpp
-    )
-else()
-
-endif()
 
 set(WebCore_USER_AGENT_SCRIPTS
     ${WebCore_DERIVED_SOURCES_DIR}/ModernMediaControls.js
@@ -232,6 +237,7 @@ if (ENABLE_VIDEO)
     )
 endif ()
 
+# TODO: WTF_USE_3D_GRAPHICS seems to have disappeared
 if (WTF_USE_3D_GRAPHICS)
     list(APPEND WebCore_INCLUDE_DIRECTORIES
         "${WEBCORE_DIR}/platform/graphics/opengl"

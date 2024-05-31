@@ -903,6 +903,8 @@ void CoordinatedGraphicsLayer::flushCompositingStateForThisLayerOnly()
         uintptr_t nativeImageID = getSurfaceUniqueID(m_compositedNativeImage->platformImage().get());
 #elif USE(SKIA)
         uintptr_t nativeImageID = m_compositedNativeImage->platformImage()->uniqueID();
+#elif PLATFORM(HAIKU)
+        uintptr_t nativeImageID = m_compositedNativeImage->platformImage()->uniqueID();
 #endif
 
         // Respawn the ImageBacking object if the underlying image changed.

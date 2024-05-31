@@ -31,38 +31,44 @@
 
 #if PLATFORM(HAIKU)
 #include "NicosiaBuffer.h"
+#include "NotImplemented.h"
 
 namespace Nicosia {
 
 PaintingContextHaiku::ForPainting::ForPainting(Nicosia::Buffer& buffer)
 {
+	notImplemented();
 }
 
 PaintingContextHaiku::ForPainting::~ForPainting()
 {
-    
 }
 
 WebCore::GraphicsContext& PaintingContextHaiku::ForPainting::graphicsContext()
 {
+	notImplemented();
 }
 
 void PaintingContextHaiku::ForPainting::replay(const PaintingOperations& paintingOperations)
 {
+	notImplemented();
 }
 
 PaintingContextHaiku::ForRecording::ForRecording(PaintingOperations& paintingOperations)
 {
+	notImplemented();
 }
 
 PaintingContextHaiku::ForRecording::~ForRecording() = default;
 
 WebCore::GraphicsContext& PaintingContextHaiku::ForRecording::graphicsContext()
 {
+	notImplemented();
 }
 
 void PaintingContextHaiku::ForRecording::replay(const PaintingOperations&)
 {
+	notImplemented();
 }
 
 } // namespace Nicosia

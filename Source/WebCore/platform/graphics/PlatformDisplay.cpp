@@ -248,10 +248,8 @@ static HashSet<PlatformDisplay*>& eglDisplays()
 
 PlatformDisplay::~PlatformDisplay()
 {
-#if !PLATFORM(HAIKU)
     if (m_eglDisplay != EGL_NO_DISPLAY && eglDisplays().remove(this))
         terminateEGLDisplay();
-#endif
 
 #if PLATFORM(GTK)
     if (m_sharedDisplay)
@@ -261,7 +259,6 @@ PlatformDisplay::~PlatformDisplay()
         s_sharedDisplayForCompositing = nullptr;
 }
 
-#if !PLATFORM(HAIKU)
 GLContext* PlatformDisplay::sharingGLContext()
 {
     if (!m_sharingGLContext)
@@ -424,7 +421,6 @@ bool PlatformDisplay::destroyEGLImage(EGLImage image) const
         return s_eglDestroyImageKHR(m_eglDisplay, image);
     return false;
 }
-#endif
 
 #if USE(LIBDRM)
 EGLDeviceEXT PlatformDisplay::eglDevice()
