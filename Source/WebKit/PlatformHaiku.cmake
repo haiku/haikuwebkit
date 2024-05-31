@@ -72,7 +72,7 @@ list(APPEND WebKit_SOURCES
 
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
-	WebProcess/WebPage/CoordinatedGraphics/LayerTreeHostTextureMapper.cpp
+	WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
     WebProcess/WebPage/CoordinatedGraphics/CompositingCoordinator.cpp
 
     WebProcess/WebPage/haiku/WebInspectorHaiku.cpp

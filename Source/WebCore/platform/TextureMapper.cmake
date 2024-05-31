@@ -141,6 +141,24 @@ if (USE_NICOSIA)
             platform/graphics/nicosia/cairo/NicosiaCairoOperationRecorder.cpp
             platform/graphics/nicosia/cairo/NicosiaPaintingContextCairo.cpp
         )
+    elseif (HAIKU)
+        # Similar to the USE_CAIRO case above
+        list(APPEND WebCore_PRIVATE_INCLUDE_DIRECTORIES
+            "${WEBCORE_DIR}/platform/graphics/nicosia/haiku"
+        )
+
+        list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
+            platform/graphics/nicosia/NicosiaPaintingEngine.h
+        )
+
+        list(APPEND WebCore_SOURCES
+            platform/graphics/nicosia/NicosiaPaintingContext.cpp
+            platform/graphics/nicosia/NicosiaPaintingEngine.cpp
+            platform/graphics/nicosia/NicosiaPaintingEngineBasic.cpp
+            platform/graphics/nicosia/NicosiaPaintingEngineThreaded.cpp
+
+            platform/graphics/nicosia/haiku/NicosiaPaintingContextHaiku.cpp
+        )
     endif ()
 endif ()
 
