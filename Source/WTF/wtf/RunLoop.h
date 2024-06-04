@@ -54,7 +54,6 @@
 
 #if USE(HAIKU_EVENT_LOOP)
 #include <Handler.h>
-class BHandler;
 class BMessageRunner;
 class BLooper;
 #endif
