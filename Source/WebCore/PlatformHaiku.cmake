@@ -237,67 +237,6 @@ if (ENABLE_VIDEO)
     )
 endif ()
 
-# TODO: WTF_USE_3D_GRAPHICS seems to have disappeared
-if (WTF_USE_3D_GRAPHICS)
-    list(APPEND WebCore_INCLUDE_DIRECTORIES
-        "${WEBCORE_DIR}/platform/graphics/opengl"
-        "${WEBCORE_DIR}/platform/graphics/surfaces"
-        "${WEBCORE_DIR}/platform/graphics/surfaces/glx"
-        "${WEBCORE_DIR}/platform/graphics/texmap"
-    )
-
-    if (WTF_USE_EGL)
-        list(APPEND WebCore_INCLUDE_DIRECTORIES
-            ${EGL_INCLUDE_DIR}
-            "${WEBCORE_DIR}/platform/graphics/surfaces/egl"
-    )
-    endif ()
-
-    list(APPEND WebCore_SOURCES
-        platform/graphics/opengl/Extensions3DOpenGLCommon.cpp
-        platform/graphics/opengl/GLPlatformContext.cpp
-        platform/graphics/opengl/GLPlatformSurface.cpp
-        platform/graphics/opengl/GraphicsContext3DOpenGLCommon.cpp
-        platform/graphics/opengl/TemporaryOpenGLSetting.cpp
-
-        platform/graphics/surfaces/GLTransportSurface.cpp
-        platform/graphics/surfaces/GraphicsSurface.cpp
-    )
-
-    if (WTF_USE_EGL)
-        list(APPEND WebCore_SOURCES
-            platform/graphics/surfaces/egl/EGLConfigSelector.cpp
-            platform/graphics/surfaces/egl/EGLContext.cpp
-            platform/graphics/surfaces/egl/EGLHelper.cpp
-            platform/graphics/surfaces/egl/EGLSurface.cpp
-            platform/graphics/surfaces/egl/EGLXSurface.cpp
-        )
-    else ()
-        list(APPEND WebCore_SOURCES
-            platform/graphics/surfaces/glx/GLXContext.cpp
-            platform/graphics/surfaces/glx/GLXSurface.cpp
-        )
-    endif ()
-
-    if (WTF_USE_OPENGL_ES_2)
-        list(APPEND WebCore_SOURCES
-            platform/graphics/opengl/Extensions3DOpenGLES.cpp
-            platform/graphics/opengl/GraphicsContext3DOpenGLES.cpp
-        )
-    else ()
-        list(APPEND WebCore_SOURCES
-            platform/graphics/opengl/Extensions3DOpenGL.cpp
-            platform/graphics/opengl/GraphicsContext3DOpenGL.cpp
-        )
-    endif ()
-
-    if (WTF_USE_EGL)
-        list(APPEND WebCore_LIBRARIES
-            ${EGL_LIBRARY}
-        )
-    endif ()
-endif ()
-
 if (ENABLE_WEB_AUDIO)
     #list(APPEND WebCore_INCLUDE_DIRECTORIES
     #    "${WEBCORE_DIR}/platform/audio/gstreamer"
