@@ -43,8 +43,7 @@ using PlatformImagePtr = RetainPtr<CGImageRef>;
 #elif USE(CAIRO)
 using PlatformImagePtr = RefPtr<cairo_surface_t>;
 #elif USE(HAIKU)
-static Atomic<uintptr_t> s_uniqueID = 1;
-
+/* Wrapper class to make BBitmap reference counted */
 class BitmapRef: public BBitmap, public RefCounted<BitmapRef>
 {
     public:
@@ -70,16 +69,6 @@ class BitmapRef: public BBitmap, public RefCounted<BitmapRef>
         ~BitmapRef()
         {
         }
-
-        // TODO: Is it possible to just use the BBitmap's address in memory for
-        // a unique identifier? If so, then we don't need this function.
-        uintptr_t uniqueID()
-        {
-            return m_uniqueID;
-        }
-
-    private:
-        uintptr_t m_uniqueID = s_uniqueID.exchangeAdd(1);
 };
 
 using PlatformImagePtr = RefPtr<BitmapRef>;

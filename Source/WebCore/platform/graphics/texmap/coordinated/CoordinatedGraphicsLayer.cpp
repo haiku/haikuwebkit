@@ -48,6 +48,10 @@
 #include "CairoUtilities.h"
 #endif
 
+#if PLATFORM(HAIKU)
+#include "HaikuUtilities.h"
+#endif
+
 #if USE(GLIB_EVENT_LOOP)
 #include <wtf/glib/RunLoopSourcePriority.h>
 #endif
@@ -912,7 +916,7 @@ void CoordinatedGraphicsLayer::flushCompositingStateForThisLayerOnly()
 #elif USE(SKIA)
         uintptr_t nativeImageID = m_compositedNativeImage->platformImage()->uniqueID();
 #elif PLATFORM(HAIKU)
-        uintptr_t nativeImageID = m_compositedNativeImage->platformImage()->uniqueID();
+        uintptr_t nativeImageID = getBitmapUniqueID(m_compositedNativeImage->platformImage().get());
 #endif
 
         // Respawn the ImageBacking object if the underlying image changed.
