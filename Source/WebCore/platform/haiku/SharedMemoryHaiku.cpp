@@ -27,6 +27,11 @@
 #include "SharedMemory.h"
 
 #include <wtf/RefPtr.h>
+#include <wtf/text/Base64.h>
+#include <wtf/text/StringConcatenate.h>
+#include <wtf/text/StringConcatenateNumbers.h>
+#include <wtf/text/WTFString.h>
+#include <wtf/WeakRandomNumber.h>
 
 #include <OS.h>
 #include <Bitmap.h>
@@ -35,48 +40,55 @@ namespace WebCore {
 
 RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
 {
-        void* baseAddress;
+    // Make the area's name include a randomnly generated id so that
+    // identifying whether two areas point to the same memory across processes
+    // is easier. Do not change the format of this string without changing all
+    // of the places that depend on this format. (Hint: check all usages of
+    // get_area_info to see if they use the name)
+    uint64_t id = ((uint64_t) weakRandomNumber<uint32_t>() << 32) | weakRandomNumber<uint32_t>();
+    auto name = makeString("WebKit-", base64Encoded(&id, sizeof(id)));
+    void* baseAddress;
 
-        area_id sharedArea = create_area("WebKit-Shared-Memory", &baseAddress, B_ANY_ADDRESS,
-                size, B_NO_LOCK, B_READ_AREA | B_WRITE_AREA);
+    area_id sharedArea = create_area(name.ascii().data(), &baseAddress,
+        B_ANY_ADDRESS, size, B_NO_LOCK, B_READ_AREA | B_WRITE_AREA);
 
-        if (sharedArea < 0)
-                return nullptr;
+    if (sharedArea < 0)
+        return nullptr;
 
-        RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
-        memory->m_size = size;
-        memory->m_data = baseAddress;
-        memory->m_areaid = sharedArea;
+    RefPtr<SharedMemory> memory = adoptRef(new SharedMemory);
+    memory->m_size = size;
+    memory->m_data = baseAddress;
+    memory->m_areaid = sharedArea;
 
-        return memory;
+    return memory;
 }
 
 RefPtr<SharedMemory> SharedMemory::map(Handle&& handle, Protection protection)
 {
-        RefPtr<SharedMemory> memory = adoptRef(new SharedMemory());
-        if(!memory)
-                return nullptr;
+    RefPtr<SharedMemory> memory = adoptRef(new SharedMemory());
+    if(!memory)
+        return nullptr;
 
-        memory->m_areaid = handle.m_handle;
-        memory->m_size = handle.size();
-        return memory;
+    memory->m_areaid = handle.m_handle;
+    memory->m_size = handle.size();
+    return memory;
 }
 
 SharedMemory::~SharedMemory()
 {
-        if(!m_areaid)
-                return;
+    if(!m_areaid)
+        return;
 
-        //unset
-        delete_area(m_areaid);
-        m_areaid = 0;
+    //unset
+    delete_area(m_areaid);
+    m_areaid = 0;
 }
 
 std::optional<SharedMemory::Handle> SharedMemory::createHandle(Protection)
 {
     ASSERT(m_areaid);
 
-        return SharedMemory::Handle(WTFMove(m_areaid), m_size);
+    return SharedMemory::Handle(WTFMove(m_areaid), m_size);
 }
 
 } // namespace WebKit
