@@ -49,6 +49,10 @@
 #include "CairoUtilities.h"
 #endif
 
+#if PLATFORM(HAIKU)
+#include "HaikuUtilities.h"
+#endif
+
 #if USE(GLIB_EVENT_LOOP)
 #include <wtf/glib/RunLoopSourcePriority.h>
 #endif

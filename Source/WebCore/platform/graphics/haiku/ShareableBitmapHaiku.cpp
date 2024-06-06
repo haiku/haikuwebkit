@@ -71,6 +71,8 @@ void ShareableBitmap::paint(GraphicsContext& context, float scaleFactor, const I
 
 WebCore::PlatformImagePtr ShareableBitmap::createPlatformImage(WebCore::BackingStoreCopy, WebCore::ShouldInterpolate)
 {
+    // NOTE: getBitmapUniqueID depends on bitmaps always being at offset 0 in
+    // their area.
     return WebCore::PlatformImagePtr(new BitmapRef(m_sharedMemory->area(), 0, bounds(), 0, /*m_configuration.platformColorSpace()*/ B_RGBA32, bytesPerRow()));
 }
 

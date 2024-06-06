@@ -166,6 +166,7 @@ if (USE_COORDINATED_GRAPHICS OR USE_TEXTURE_MAPPER OR USE_NICOSIA)
         platform/graphics/egl/GLContext.cpp
         platform/graphics/egl/GLContextWrapper.cpp
         platform/graphics/egl/GLDisplay.cpp
+        platform/graphics/haiku/HaikuUtilities.cpp
         platform/graphics/texmap/coordinated/CoordinatedGraphicsLayerHaiku.cpp
     )
 endif()
