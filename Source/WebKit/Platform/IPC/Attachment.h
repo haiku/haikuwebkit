@@ -50,7 +50,7 @@ struct Attachment { }; // Windows does not need attachments at the moment.
 #elif USE(UNIX_DOMAIN_SOCKETS)
 using Attachment = UnixFileDescriptor;
 #elif USE(HAIKU)
-using Attachment = int;
+struct Attachment { };
 #else
 #error Unsupported platform
 #endif
