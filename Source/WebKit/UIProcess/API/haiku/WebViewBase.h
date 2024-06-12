@@ -63,8 +63,6 @@ namespace WebKit
 
             RefPtr<WebPageProxy> fPage;
             std::unique_ptr<PageClientImpl> fPageClient;
-
-            bool setSize {false};
     };
 }
 

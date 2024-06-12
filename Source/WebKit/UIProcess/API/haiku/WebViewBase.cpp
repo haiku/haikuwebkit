@@ -57,7 +57,6 @@ WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
 
     if (fPage->drawingArea())
     {
-        setSize = true;
         fPage->drawingArea()->setSize(IntSize(rect.right - rect.left,
             rect.top - rect.bottom));
     }
@@ -84,11 +83,6 @@ void WebViewBase::Draw(BRect update)
     if (!drawingArea)
         return;
 
-    if (!setSize) {
-        setSize = true;
-        BRect rect = Frame();
-        drawingArea->setSize(IntSize(rect.right - rect.left, rect.bottom - rect.top));
-    }
     IntRect updateArea(update);
     WebCore::Region unpainted;
     drawingArea->paint(this, updateArea, unpainted);

@@ -73,12 +73,10 @@ namespace WebKit
 
     WebCore::IntSize PageClientImpl::viewSize()
     {
-        if (fWebView.page()->drawingArea())
-        {
-            return fWebView.page()->drawingArea()->size();
-        }
-
-        return IntSize();
+        fWebView.Window()->Lock();
+        BRect rect = fWebView.Frame();
+        fWebView.Window()->Unlock();
+        return IntSize(rect.right - rect.left, rect.bottom - rect.top);
     }
 
     bool PageClientImpl::isViewWindowActive()
