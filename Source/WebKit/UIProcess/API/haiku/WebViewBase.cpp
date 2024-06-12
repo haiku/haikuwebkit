@@ -22,6 +22,7 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "config.h"
 #include "WebViewBase.h"
 #include "APIPageConfiguration.h"
 
@@ -41,7 +42,7 @@
 using namespace WebKit; 
 using namespace WebCore;
 
-WebKit::WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
+WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     const API::PageConfiguration& pageConfig)
     : BView(name, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE),
     fPageClient(std::make_unique<PageClientImpl>(*this))

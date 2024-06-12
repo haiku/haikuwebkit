@@ -24,15 +24,12 @@
  */
 #pragma once
 
-#include <View.h>
-#include <Window.h>
-#include <Rect.h>
-
-#include "config.h"
-
 #include "APIObject.h"
 
-#include "WebCore/IntRect.h"
+#include <Rect.h>
+#include <View.h>
+#include <WebCore/IntRect.h>
+#include <Window.h>
 
 namespace API {
     class PageConfiguration;
@@ -53,7 +50,6 @@ namespace WebKit
                 return fWebView;
             }
             WebPageProxy* page() const { return fPage.get(); }
-            void initializeOnce();
             const char* currentURL();
 
             //hook methods
