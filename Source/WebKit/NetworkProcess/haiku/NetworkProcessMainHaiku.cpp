@@ -33,7 +33,7 @@ namespace WebKit {
 
 class NetworkProcessMainBase: public AuxiliaryProcessMainBaseNoSingleton<NetworkProcess>
 {
-    public:
+public:
     bool platformInitialize() override
     {
         RunLoop::current().setAppMIMEType("application/x-vnd-HaikuWebKit-NetworkProcess");

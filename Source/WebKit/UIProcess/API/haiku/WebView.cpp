@@ -50,7 +50,7 @@
 #include "WebViewConstants.h"
 
 BWebView::BWebView(BRect frame, BWindow* myWindow)
-    : fAppLooper(NULL)
+    : fAppLooper(myWindow->Looper())
 {
     auto config = adoptWK(WKPageConfigurationCreate());
     auto prefs = WKPreferencesCreate();
@@ -62,7 +62,6 @@ BWebView::BWebView(BRect frame, BWindow* myWindow)
     WKPageConfigurationSetContext(config.get(), fContext.get());
 
     fViewPort=adoptWK(WKViewCreate("Webkit", frame, myWindow, config.get()));
-    fAppLooper = myWindow->Looper(); 
 }
 
 void BWebView::navigationCallbacks()

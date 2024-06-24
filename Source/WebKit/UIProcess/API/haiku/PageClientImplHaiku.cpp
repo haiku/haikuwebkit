@@ -27,7 +27,6 @@
 #include "PageClientImplHaiku.h"
 
 #if USE(COORDINATED_GRAPHICS)
-#include "DrawingAreaCoordinatedGraphics.h"
 #include "DrawingAreaProxyCoordinatedGraphics.h"
 #endif
 
