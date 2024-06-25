@@ -27,10 +27,24 @@
 #include "wtf/RunLoop.h"
 
 #include <Application.h>
+#include <errno.h>
 #include <Handler.h>
 #include <MessageRunner.h>
-#include <errno.h>
+#include <OS.h>
 #include <stdio.h>
+
+/*
+The main idea behind this implementation of RunLoop for Haiku is to use a
+BHandler to receive messages. WebKit uses one RunLoop per thread, including
+the main thread, which already has a BApplication on it. So,
+
+* If we're on the main thread, we attach the BHandler to the existing
+  BApplication, or
+* If we're on a new thread, we create a new BLooper ourselves and attach the
+  BHandler to it.
+
+Either way, the RunLoop should then be ready to handle messages sent to it.
+*/
 
 namespace WTF {
 
@@ -62,6 +76,40 @@ RunLoop::RunLoop()
 	: m_looper(nullptr)
 {
     m_handler = new LoopHandler();
+
+    // We want to be able to queue messages before the RunLoop::run has been
+    // called, so we need to attach our handler to a looper now. However, we
+    // don't need to start the looper yet.
+
+    BLooper* looper;
+
+    BLooper* currentLooper = BLooper::LooperForThread(find_thread(NULL));
+    if (currentLooper) {
+        // This thread already has a looper (likely the BApplication looper).
+        // Attach our handler to it.
+        looper = currentLooper;
+    } else {
+        thread_info main_thread;
+        int32 cookie = 0;
+        get_next_thread_info(0, &cookie, &main_thread);
+        if (find_thread(NULL) == main_thread.thread) {
+            if (be_app == NULL)
+                debugger("RunLoop needs a BApplication running on the main thread to attach to");
+
+            // BApplication has not been started yet and we are on the main
+            // thread. This BApplication will almost certainly become this
+            // thread's BLooper in the future.
+            looper = be_app;
+        } else {
+            // No existing BLooper or BApplication is on this thread. Let's
+            // create one and manage its lifecycle.
+            m_looper = looper = new BLooper();
+        }
+    }
+
+    looper->LockLooper();
+    looper->AddHandler(m_handler);
+    looper->UnlockLooper();
 }
 
 RunLoop::~RunLoop()
@@ -72,39 +120,18 @@ RunLoop::~RunLoop()
 
 void RunLoop::run()
 {
-    BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
-    bool isMain = false;
-    if (current().m_looper == NULL) {
-        if (be_app == looper) {
-            // Main loop from UIProcess. The BApplication is already created and running in this
-            // case, so there's nothing to do but attach our BHandler to it.
-        } else {
-            if (!looper) {
-                // Creating a new looper thread, in this case we have to create the BLooper
-                current().m_looper = looper = new BLooper();
-            } else {
-                // Multiple runloops created in the same thread, this should not happen...
-                fprintf(stderr, "Add handler to existing RunLoop looper\n");
-            }
-        }
-    } else {
-        // The m_looper was already set by setAppMIMEType, now we just have to start it
-        looper = current().m_looper;
-        isMain = true;
-    }
-    looper->LockLooper();
-    looper->AddHandler(current().m_handler);
-    looper->UnlockLooper();
-
     if (current().m_looper) {
-        // Make sure the thread will start calling performWork as soon as it can
+        // If we created a BLooper for this thread,
+        // make sure the thread will start calling performWork as soon as it can
         RunLoop::current().wakeUp();
-        // Then start the normal event loop
-        if (isMain) {
-            current().m_looper->Run();
-        } else {
-            current().m_looper->Loop();
-        }
+        // then start the normal event loop
+        current().m_looper->Loop();
+    } else {
+        // The existing BApplication/BLooper should already be running.
+        // FIXME: This means it is possible to process messages before the
+        // RunLoop officially starts. This shouldn't be a major problem,
+        // however, since, afaik, the code always starts the run loop
+        // immediately after it is created.
     }
 }
 
@@ -130,7 +157,11 @@ void RunLoop::stop()
 
 void RunLoop::wakeUp()
 {
-    m_handler->Looper()->PostMessage('loop', m_handler);
+    // WorkQueueBase::platformInvalidate stops the run loop and then dispatches
+    // a task to stop the RunLoop again. Well, we can't wake ourselves up when
+    // we're stopped (and, afaik, nor should we).
+    if (m_handler->Looper())
+        m_handler->Looper()->PostMessage('loop', m_handler);
 }
 
 RunLoop::TimerBase::TimerBase(RunLoop& runLoop)
