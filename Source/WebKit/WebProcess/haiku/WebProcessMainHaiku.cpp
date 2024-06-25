@@ -33,23 +33,30 @@ using namespace WebCore;
 
 namespace WebKit {
 
-class WebProcessMainBase: public AuxiliaryProcessMainBase<WebProcess>
+class WebProcessMainHaiku : public AuxiliaryProcessMainBase<WebProcess>
+{
+};
+
+class WebProcessApp : public BApplication
 {
 public:
-    bool platformInitialize() override
-    {
-        RunLoop::current().setAppMIMEType("application/x-vnd-HaikuWebKit-WebProcess");
-        return true;
-    }
+    WebProcessApp() : BApplication("application/x-vnd-HaikuWebKit-WebProcess") {}
 
-    void platformFinalize() override
+    void ArgvReceived(int argc, char** argv)
     {
+        AuxiliaryProcessMain<WebProcessMainHaiku>(argc, argv);
     }
 };
 
 int WebProcessMain(int argc, char** argv)
 {
-    return AuxiliaryProcessMain<WebProcessMainBase>(argc, argv);
+    // Instead of calling AuxiliaryProcessMain directly as the other ports do,
+    // we need to wrap it in a BApplication. RunLoop currently requires
+    // WebKit's code to be running from a BApplication.
+    WebProcessApp* app = new WebProcessApp();
+    app->Run();
+    delete app;
+    return 0;
 }
 
 } // namespace WebKit

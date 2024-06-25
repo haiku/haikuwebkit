@@ -70,11 +70,6 @@ RunLoop::~RunLoop()
     delete m_handler;
 }
 
-void RunLoop::setAppMIMEType(const char* const mime)
-{
-    m_looper = new BApplication(mime);
-}
-
 void RunLoop::run()
 {
     BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
