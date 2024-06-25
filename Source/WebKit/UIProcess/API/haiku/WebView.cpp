@@ -62,6 +62,8 @@ BWebView::BWebView(BRect frame, BWindow* myWindow)
     WKPageConfigurationSetContext(config.get(), fContext.get());
 
     fViewPort=adoptWK(WKViewCreate("Webkit", frame, myWindow, config.get()));
+
+    WTF::RunLoop::run();
 }
 
 void BWebView::navigationCallbacks()
@@ -81,11 +83,6 @@ void BWebView::navigationCallbacks()
 
     fObserver = new PageLoadStateObserver(fAppLooper);
     getRenderView()->page()->pageLoadState().addObserver(*fObserver);
-}
-
-void BWebView::initializeOnce()
-{
-    WTF::RunLoop::run();
 }
 
 void BWebView::loadHTML()

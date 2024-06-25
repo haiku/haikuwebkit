@@ -36,7 +36,6 @@ class BWebView
 {
     public:
         BWebView(BRect, BWindow*);
-        void initializeOnce();
         void loadHTML();
         void loadURIRequest(const char*); // use this in app to load a url
         void loadURI(BMessage*);

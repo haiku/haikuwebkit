@@ -38,7 +38,6 @@ void BrowserApp::MessageReceived(BMessage *message)
 
 void BrowserApp::ReadyToRun()
 {
-	webView->initializeOnce();
 	webView->navigationCallbacks();
 	fWindow->Construct(webView);
 	fWindow->Show();
