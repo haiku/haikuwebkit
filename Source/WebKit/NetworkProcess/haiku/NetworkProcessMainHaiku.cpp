@@ -31,24 +31,35 @@
 
 namespace WebKit {
 
-class NetworkProcessMainBase: public AuxiliaryProcessMainBaseNoSingleton<NetworkProcess>
+class NetworkProcessMainHaiku: public AuxiliaryProcessMainBaseNoSingleton<NetworkProcess>
 {
 public:
-    bool platformInitialize() override
-    {
-        RunLoop::current().setAppMIMEType("application/x-vnd-HaikuWebKit-NetworkProcess");
-        return true;
-    }
-
     void platformFinalize() override
     {
         /*process().destroySession(PAL::SessionID::defaultSessionID());*/
     }
 };
 
+class NetworProcessApp : public BApplication
+{
+public:
+    NetworProcessApp() : BApplication("application/x-vnd-HaikuWebKit-NetworkProcess") {}
+
+    void ArgvReceived(int argc, char** argv)
+    {
+        AuxiliaryProcessMain<NetworkProcessMainHaiku>(argc, argv);
+    }
+};
+
 int NetworkProcessMain(int argc, char** argv)
 {
-    return AuxiliaryProcessMain<NetworkProcessMainBase>(argc, argv);
+    // Instead of calling AuxiliaryProcessMain directly as the other ports do,
+    // we need to wrap it in a BApplication. RunLoop currently requires
+    // WebKit's code to be running from a BApplication.
+    NetworProcessApp* app = new NetworProcessApp();
+    app->Run();
+    delete app;
+    return 0;
 }
 
 } // namespace WebKit
