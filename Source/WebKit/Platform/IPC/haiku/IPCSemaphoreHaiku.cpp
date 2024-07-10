@@ -74,9 +74,16 @@ bool Semaphore::wait()
 
 bool Semaphore::waitFor(Timeout timeout)
 {
-    Seconds waitTime = timeout.secondsUntilDeadline();
-    auto ret = acquire_sem_etc(m_semaphore, 1, 0, waitTime.nanosecondsAs<uint64_t>());
-    return ret == B_OK;
+    status_t status;
+
+    if (timeout.isInfinity()) {
+        status = acquire_sem(m_semaphore);
+    } else {
+        uint32 microseconds = timeout.secondsUntilDeadline().microsecondsAs<uint32>();
+        status = acquire_sem_etc(m_semaphore, 1, B_RELATIVE_TIMEOUT, microseconds);
+    }
+
+    return status == B_OK;
 }
 
 void Semaphore::destroy()
