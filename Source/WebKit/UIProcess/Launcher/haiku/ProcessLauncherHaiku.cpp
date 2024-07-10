@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2019 Haiku, Inc.
+ * Copyright (C) 2019, 2024 Haiku, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,96 +26,26 @@
 #include "config.h"
 #include "ProcessLauncher.h"
 
+#include "IPCUtilities.h"
 #include "ProcessExecutablePath.h"
 
-#include <Roster.h>
-#include <StackOrHeapArray.h>
-#include <String.h>
-#include <unistd.h>
-
 #include <assert.h>
+#include <Logging.h>
+#include <Roster.h>
+#include <String.h>
+#include <spawn.h>
 #include <unistd.h>
 
 using namespace WebCore;
 
 namespace WebKit {
 
-// TODO we could have a single instance of this instead of creating and deleting one everytime.
-// But it would need a way to either locate the ProcessLauncher from the processIdentifier,
-// or to store the ProcessLauncher pointer into the message sent to the other process and back
-// into the reply
-//
-// Another option would be to have the BHandler already created by the connectionIdentifier
-// and then ownership transferred to the corresponding ConnectionHaiku when it is created, instead
-// of creating yet another BHandler there.
-class ProcessLauncherHandler: public BHandler
-{
-    public:
-        ProcessLauncherHandler(ProcessLauncher* launcher)
-            : BHandler("process launcher")
-            , m_launcher(launcher)
-        {
-        }
-
-        void MessageReceived(BMessage* message)
-        {
-            switch(message->what)
-            {
-                case 'inig':
-                    GlobalMessage(message);
-                    break;
-                default:
-                    BHandler::MessageReceived(message);
-                    break;
-            }
-        }
-
-    private:
-
-        void GlobalMessage(BMessage* message)
-        {
-            WTF::ProcessID processID = message->FindInt64("processID");
-            BMessenger messenger;
-            message->FindMessenger("messenger", &messenger);
-            IPC::Connection::Identifier connectionIdentifier(std::move(messenger));
-            connectionIdentifier.m_isCreatedFromMessage = true;
-            m_launcher->didFinishLaunchingProcess(processID, connectionIdentifier);
-
-            // Our job is done!
-            // FIXME or is it? maybe keep this around until the processLauncher is destroyed?
-            delete this;
-        }
-
-        ProcessLauncher* m_launcher;
-};
-
-static BHandler* GetProcessLauncherHandler(ProcessLauncher* launcher)
-{
-    BHandler* handle = nullptr;
-    handle = new ProcessLauncherHandler(launcher);
-    BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
-    looper->AddHandler(handle);
-
-    return handle;
-}
-
-static status_t GetRefForPath(BString path, entry_ref* pathRef)
-{
-    BEntry pathEntry(path);
-    if(!pathEntry.Exists())
-        return B_BAD_VALUE;
-
-    status_t result = pathEntry.GetRef(pathRef);
-    if(result != B_OK)
-        return result;
-
-    return B_OK;
-}
-
 void ProcessLauncher::launchProcess()
 {
-    BString executablePath;
+    IPC::SocketPair socketPair = IPC::createPlatformConnection(
+        IPC::PlatformConnectionOptions::SetCloexecOnClient | IPC::PlatformConnectionOptions::SetCloexecOnServer);
 
+    BString executablePath;
     switch (m_launchOptions.processType) {
     case ProcessLauncher::ProcessType::Web:
         executablePath = executablePathOfWebProcess();
@@ -128,40 +58,46 @@ void ProcessLauncher::launchProcess()
         return;
     }
 
-    BString processIdentifierString;
-    processIdentifierString.SetToFormat("%" PRIu64, m_launchOptions.processIdentifier.toUInt64());
+    BString processIdentifier;
+    processIdentifier.SetToFormat("%" PRIu64, m_launchOptions.processIdentifier.toUInt64());
 
-    BHandler* connectionHandler = GetProcessLauncherHandler(this);
-    BMessenger messenger(connectionHandler);
-    BString connectionIdentifierString;
+    BString clientSocketFd;
+    clientSocketFd.SetToFormat("%d", socketPair.client);
 
-    for (size_t i = 0; i < sizeof(BMessenger); i++) {
-        char formatted[3];
-        uint8 byte = ((uint8*)&messenger)[i];
-        sprintf(formatted, "%02x", byte);
-        connectionIdentifierString.Append(formatted);
-    }
-
-    int argc = 2;
-    const char* argv[] = {
-        processIdentifierString.String(),
-        connectionIdentifierString.String(),
+    char* argv[] = {
+        executablePath.LockBuffer(-1),
+        processIdentifier.LockBuffer(-1),
+        clientSocketFd.LockBuffer(-1),
         nullptr
     };
 
-    entry_ref executableRef;
-    if(GetRefForPath(executablePath, &executableRef) != B_OK)
-    {
-        ASSERT_NOT_REACHED();
-        return;
-    }
+    char* envp[] = {
+        nullptr
+    };
 
-    team_id child_id;
-    be_roster->Launch(&executableRef, argc, argv, &child_id);
+    posix_spawn_file_actions_t file_actions;
+    posix_spawn_file_actions_init(&file_actions);
+    posix_spawn_file_actions_adddup2(&file_actions, socketPair.client, socketPair.client);
+        // make client socket available to child process. This is necessary since
+        // CLOEXEC is set on it.
+    posix_spawn_file_actions_destroy(&file_actions);
 
-    // When the process is launched, it will reply by sending the 'inig' message with the
-    // connectionIdentifier that we can use to communicate with it. This triggers the call to
-    // didFinishLaunchingProcess which starts establishing the connection
+    int status = posix_spawn(&m_processID, executablePath, &file_actions, NULL, argv, envp);
+
+    if (status != 0)
+        LOG(Process, "failed to start process %s, error %s", executablePath.String(), strerror(status));
+
+    close(socketPair.client);
+
+    executablePath.UnlockBuffer();
+    processIdentifier.UnlockBuffer();
+    clientSocketFd.UnlockBuffer();
+
+    RefPtr<ProcessLauncher> protectedThis(this);
+    IPC::Connection::Identifier serverIdentifier { socketPair.server };
+    RunLoop::main().dispatch([protectedThis, this, serverIdentifier] {
+        didFinishLaunchingProcess(m_processID, serverIdentifier);
+    });
 }
 
 void ProcessLauncher::terminateProcess()

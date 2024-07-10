@@ -112,28 +112,6 @@ bool ArgumentCoder<Credential>::decodePlatformData(Decoder&, Credential&)
 }
 #endif
 
-void ArgumentCoder<BMessenger>::encode(Encoder& encoder, BMessenger&& messenger)
-{
-    constexpr size_t count = sizeof(BMessenger) / sizeof(uint32_t);
-    uint32_t* data = (uint32_t*)&messenger;
-    for (size_t i = 0; i < count; i++) {
-        encoder << data[i];
-    }
-}
-
-std::optional<BMessenger> ArgumentCoder<BMessenger>::decode(Decoder& decoder)
-{
-    constexpr size_t count = sizeof(BMessenger) / sizeof(uint32_t);
-    uint32_t data[count];
-    for (size_t i = 0; i < count; i++) {
-        std::optional<uint32_t> value;
-        if (value = decoder.decode<uint32_t>())
-            data[i] = *value;
-    }
-    BMessenger* messenger = (BMessenger*)data;
-    return *messenger;
-}
-
 void ArgumentCoder<Font>::encodePlatformData(Encoder& encoder, const Font& font)
 {
     ASSERT_NOT_REACHED();
