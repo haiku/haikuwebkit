@@ -36,10 +36,10 @@
 #include <wtf/MachSendRight.h>
 #elif OS(WINDOWS)
 #include <wtf/win/Win32Handle.h>
-#elif USE(UNIX_DOMAIN_SOCKETS)
-#include <wtf/unix/UnixFileDescriptor.h>
 #elif USE(HAIKU)
 #include <OS.h>
+#elif USE(UNIX_DOMAIN_SOCKETS)
+#include <wtf/unix/UnixFileDescriptor.h>
 #endif
 
 namespace IPC {
@@ -77,15 +77,14 @@ public:
 #elif OS(WINDOWS)
     explicit Semaphore(Win32Handle&&);
     Win32Handle win32Handle() const { return Win32Handle { m_semaphoreHandle }; }
-
-#elif USE(UNIX_DOMAIN_SOCKETS)
-    explicit Semaphore(UnixFileDescriptor&&);
-    UnixFileDescriptor duplicateDescriptor() const;
-    explicit operator bool() const { return !!m_fd; }
 #elif USE(HAIKU)
     explicit Semaphore(sem_id);
     sem_id getSemaphore() const { return m_semaphore; }
     explicit operator bool() const { return m_semaphore != 0; }
+#elif USE(UNIX_DOMAIN_SOCKETS)
+    explicit Semaphore(UnixFileDescriptor&&);
+    UnixFileDescriptor duplicateDescriptor() const;
+    explicit operator bool() const { return !!m_fd; }
 #else
     explicit operator bool() const { return true; }
 #endif
@@ -98,10 +97,10 @@ private:
     semaphore_t m_semaphore { SEMAPHORE_NULL };
 #elif OS(WINDOWS)
     Win32Handle m_semaphoreHandle;
-#elif USE(UNIX_DOMAIN_SOCKETS)
-    UnixFileDescriptor m_fd;
 #elif USE(HAIKU)
     sem_id m_semaphore { 0 };
+#elif USE(UNIX_DOMAIN_SOCKETS)
+    UnixFileDescriptor m_fd;
 #endif
 };
 

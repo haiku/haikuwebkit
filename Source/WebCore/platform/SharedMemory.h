@@ -143,7 +143,7 @@ public:
     WEBCORE_EXPORT RetainPtr<NSData> toNSData() const;
 #endif
 
-#if OS(HAIKU)
+#if OS(HAIKU) && !USE(UNIX_DOMAIN_SOCKETS)
     area_id area() const { return m_areaid; }
 #endif
 

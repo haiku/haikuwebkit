@@ -36,6 +36,8 @@
 #include <OS.h>
 #include <Bitmap.h>
 
+#if !USE(UNIX_DOMAIN_SOCKETS)
+
 namespace WebCore {
 
 RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
@@ -93,3 +95,4 @@ std::optional<SharedMemory::Handle> SharedMemory::createHandle(Protection)
 
 } // namespace WebKit
 
+#endif

@@ -31,7 +31,4 @@ webkit_platform_header: "ConnectionHandle.h"
 #if OS(DARWIN)
     MachSendRight m_handle;
 #endif
-#if OS(HAIKU)
-    BMessenger m_handle;
-#endif
 }

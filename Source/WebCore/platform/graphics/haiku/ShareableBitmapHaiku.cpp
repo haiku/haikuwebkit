@@ -71,9 +71,14 @@ void ShareableBitmap::paint(GraphicsContext& context, float scaleFactor, const I
 
 WebCore::PlatformImagePtr ShareableBitmap::createPlatformImage(WebCore::BackingStoreCopy, WebCore::ShouldInterpolate)
 {
+    // FIXME: This doesn't work with UNIX's implementation of shared memory atm.
+    // Or should we use Haiku's implementation of shared memory instead?
     // NOTE: getBitmapUniqueID depends on bitmaps always being at offset 0 in
     // their area.
-    return WebCore::PlatformImagePtr(new BitmapRef(m_sharedMemory->area(), 0, bounds(), 0, /*m_configuration.platformColorSpace()*/ B_RGBA32, bytesPerRow()));
+    // return WebCore::PlatformImagePtr(new BitmapRef(m_sharedMemory->area(), 0, bounds(), 0, /*m_configuration.platformColorSpace()*/ B_RGBA32, bytesPerRow()));
+
+    debugger("ShareableBitmap::createPlatformImage is unimplemented");
+    return nullptr;
 }
 
 RefPtr<Image> ShareableBitmap::createImage()

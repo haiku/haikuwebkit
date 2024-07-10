@@ -31,6 +31,9 @@
 
 namespace IPC {
 
+// Is this not working? Don't want to spend the time to fix it?
+// UNIX's implementation of IPCSemaphores may also work.
+
 Semaphore::Semaphore()
 {
     m_semaphore = create_sem(0, "IPC Semaphore");
@@ -79,7 +82,7 @@ bool Semaphore::waitFor(Timeout timeout)
     if (timeout.isInfinity()) {
         status = acquire_sem(m_semaphore);
     } else {
-        uint32 microseconds = timeout.secondsUntilDeadline().microsecondsAs<uint32>();
+        bigtime_t microseconds = timeout.secondsUntilDeadline().microsecondsAs<bigtime_t>();
         status = acquire_sem_etc(m_semaphore, 1, B_RELATIVE_TIMEOUT, microseconds);
     }
 

@@ -61,14 +61,6 @@
 #include <wtf/glib/GSocketMonitor.h>
 #endif
 
-#if OS(HAIKU)
-#include <Handler.h>
-#include <Messenger.h>
-#include <String.h>
-
-#include <WebCore/NotImplemented.h>
-#endif
-
 #if ENABLE(IPC_TESTING_API)
 #include "MessageObserver.h"
 #endif
@@ -291,15 +283,6 @@ public:
         explicit operator bool() const { return MACH_PORT_VALID(port); }
         mach_port_t port { MACH_PORT_NULL };
         OSObjectPtr<xpc_connection_t> xpcConnection;
-#elif OS(HAIKU)
-        explicit Identifier(Handle&& handle)
-             : handle(handle.handle())
-        {
-        }
-        BMessenger handle;
-        bool m_isCreatedFromMessage { false };
-
-        operator bool() const { return handle.IsValid(); }
 #endif
     };
 
@@ -307,9 +290,6 @@ public:
     xpc_connection_t xpcConnection() const { return m_xpcConnection.get(); }
     std::optional<audit_token_t> getAuditToken();
     pid_t remoteProcessID() const;
-#elif OS(HAIKU)
-    void prepareIncomingMessage(BMessage*);
-    void finalizeConnection(BMessage*);
 #endif
 
     static Ref<Connection> createServerConnection(Identifier, Thread::QOS = Thread::QOS::Default);
@@ -678,7 +658,7 @@ private:
 #else
     int m_socketDescriptor;
 #endif
-#if PLATFORM(PLAYSTATION)
+#if PLATFORM(PLAYSTATION) || PLATFORM(HAIKU)
     RefPtr<WTF::Thread> m_socketMonitor;
 #endif
 #elif OS(DARWIN)
@@ -727,12 +707,6 @@ private:
     std::unique_ptr<Encoder> m_pendingWriteEncoder;
     EventListener m_writeListener;
     HANDLE m_connectionPipe { INVALID_HANDLE_VALUE };
-#elif PLATFORM(HAIKU)
-    Identifier m_connectedProcess;
-    BHandler* m_readHandler;
-    BMessenger targetMessenger;
-    void runReadEventLoop();
-    std::unique_ptr<Encoder> m_pendingWriteEncoder;
 #endif
     friend class StreamClientConnection;
 };
