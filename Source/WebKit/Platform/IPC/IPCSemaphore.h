@@ -83,6 +83,7 @@ public:
     explicit operator bool() const { return !!m_fd; }
 #elif USE(HAIKU)
     explicit Semaphore(sem_id);
+    sem_id getSemaphore() const { return m_semaphore; }
     explicit operator bool() const { return m_semaphore != 0; }
 #else
     explicit operator bool() const { return true; }
