@@ -191,7 +191,7 @@ https://bugs.webkit.org/show_bug.cgi?id=275567
 #define USE_METAL 1
 #endif
 
-#if PLATFORM(GTK) || PLATFORM(WPE)
+#if PLATFORM(GTK) || PLATFORM(WPE) || PLATFORM(HAIKU)
 #define USE_UNIX_DOMAIN_SOCKETS 1
 #endif
 
