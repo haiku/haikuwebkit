@@ -149,6 +149,7 @@ list(APPEND WebCore_SOURCES
   rendering/haiku/RenderThemeHaiku.cpp
 
   platform/unix/LoggingUnix.cpp
+  platform/unix/SharedMemoryUnix.cpp
 
   inspector/LegacyWebSocketInspectorInstrumentation.cpp
 )

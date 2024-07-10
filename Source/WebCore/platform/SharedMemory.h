@@ -134,7 +134,7 @@ public:
     Protection protection() const { return m_protection; }
 #endif
 
-#if OS(HAIKU)
+#if OS(HAIKU) && !USE(UNIX_DOMAIN_SOCKETS)
     area_id area() const { return m_areaid; }
 #endif
 
