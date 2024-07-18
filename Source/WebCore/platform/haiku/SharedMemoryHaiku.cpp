@@ -52,7 +52,7 @@ RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
     void* baseAddress;
 
     area_id sharedArea = create_area(name.ascii().data(), &baseAddress,
-        B_ANY_ADDRESS, size, B_NO_LOCK, B_READ_AREA | B_WRITE_AREA);
+        B_ANY_ADDRESS, size, B_NO_LOCK, B_READ_AREA | B_WRITE_AREA | B_CLONEABLE_AREA);
 
     if (sharedArea < 0)
         return nullptr;
