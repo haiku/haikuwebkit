@@ -50,15 +50,12 @@ std::unique_ptr<GraphicsContext> ShareableBitmap::createGraphicsContext()
 
 void ShareableBitmap::paint(GraphicsContext& context, const IntPoint& dstPoint, const IntRect& srcRect)
 {
-    BBitmap bitmap(BRect(B_ORIGIN, size()), B_RGBA32, true);
-    bitmap.ImportBits(span().data(), size().width() * size().height() * 4, 4 * size().width(), 0, B_RGBA32);
+    PlatformImagePtr bitmap = createPlatformImage(DontCopyBackingStore);
 
     BView* viewSurface = context.platformContext();
 
-    viewSurface->LockLooper();
-    viewSurface->DrawBitmap(&bitmap);
+    viewSurface->DrawBitmap(bitmap.get());
     viewSurface->Sync();
-    viewSurface->UnlockLooper();
 }
 
 void ShareableBitmap::paint(GraphicsContext& context, float scaleFactor, const IntPoint& dstPoint, const IntRect& srcRect)
