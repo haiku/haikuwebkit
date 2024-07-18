@@ -28,44 +28,16 @@
 
 #if PLATFORM(HAIKU)
 
-#include "Logging.h"
-
-#include <Bitmap.h>
-#include <optional>
-#include <OS.h>
-#include <wtf/persistence/PersistentDecoder.h>
-#include <wtf/text/Base64.h>
-#include <wtf/text/WTFString.h>
+#include "NotImplemented.h"
 
 namespace WebCore{
 
 uintptr_t getBitmapUniqueID(BBitmap* bitmap)
 {
     // Gets a unique identifier to a bitmap that is same across processes.
-    // This version gets the id from the id attached to the image's area's name
-    // by SharedMemory::allocate
-
-    area_id area = bitmap->Area();
-
-    area_info info;
-    status_t status = get_area_info(area, &info);
-
-    std::optional<uint64_t> decodedID;
-    if (status == B_OK) {
-        auto base64Data = WTF::String::fromLatin1(&info.name[7]);
-        auto data = WTF::base64Decode(base64Data);
-        WTF::Persistence::Decoder decoder({ data->data(), data->size() });
-        decoder >> decodedID;
-    }
-
-    if (decodedID) {
-        // FIXME: This code is untested. This can be remove once tested.
-        LOG(Compositing, "Found image ID %ld", *decodedID);
-        return *decodedID;
-    } else {
-        LOG(Compositing, "Failed to find image id for BBitmap. Falling back to 0");
-        return 0;
-    }
+    debugger("getBitmapUniqueID needs to be implemented");
+    notImplemented();
+    return 0;
 }
 
 } // namespace WebCore

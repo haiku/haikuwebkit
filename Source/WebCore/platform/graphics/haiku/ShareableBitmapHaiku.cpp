@@ -71,14 +71,37 @@ void ShareableBitmap::paint(GraphicsContext& context, float scaleFactor, const I
 
 WebCore::PlatformImagePtr ShareableBitmap::createPlatformImage(WebCore::BackingStoreCopy, WebCore::ShouldInterpolate)
 {
-    // FIXME: This doesn't work with UNIX's implementation of shared memory atm.
-    // Or should we use Haiku's implementation of shared memory instead?
-    // NOTE: getBitmapUniqueID depends on bitmaps always being at offset 0 in
-    // their area.
-    // return WebCore::PlatformImagePtr(new BitmapRef(m_sharedMemory->area(), 0, bounds(), 0, /*m_configuration.platformColorSpace()*/ B_RGBA32, bytesPerRow()));
+    // Creates a BBitmap (actually BitmapRef) that reads image data from the
+    // address given by data(). This address is in shared memory. The idea is
+    // that multiple processes can point to the same underlying bitmap data.
+    // One can draw, and the other can display.
 
-    debugger("ShareableBitmap::createPlatformImage is unimplemented");
-    return nullptr;
+    status_t status;
+
+    // Get area id of shared memory
+    void* address = data();
+    area_id area = area_for(address);
+    ASSERT(area >= B_OK);
+
+    // Get offset in area to put our BBitmap
+    area_info areaInfo;
+    status = get_area_info(area, &areaInfo);
+    ASSERT(status == B_OK);
+    ptrdiff_t offset = (ptrdiff_t)address - (ptrdiff_t)areaInfo.address;
+
+#if USE(UNIX_DOMAIN_SOCKETS)
+    // We are on UNIX's implementation of shared memory. UNIX's shared memory
+    // doesn't have B_CLONEABLE_AREA by default. We need it enabled so that the
+    // app server can clone it and manipulate the bitmap.
+    status = set_area_protection(area, B_READ_AREA | B_WRITE_AREA | B_CLONEABLE_AREA);
+    ASSERT(status == B_OK);
+#endif
+
+    // Create the BBitmap
+    WebCore::PlatformImagePtr image = adoptRef(new BitmapRef(
+        area, offset, bounds(), B_BITMAP_ACCEPTS_VIEWS, /*m_configuration.platformColorSpace()*/ B_RGBA32, bytesPerRow()));
+
+    return image;
 }
 
 RefPtr<Image> ShareableBitmap::createImage()
