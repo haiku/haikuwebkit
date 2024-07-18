@@ -35,6 +35,7 @@ typedef struct CGImage* CGImageRef;
 #elif USE(HAIKU)
 #include <Bitmap.h>
 #include <wtf/RefCounted.h>
+#include <functional>
 #elif USE(SKIA)
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkImage.h>
@@ -49,32 +50,40 @@ using PlatformImagePtr = RetainPtr<CGImageRef>;
 using PlatformImagePtr = RefPtr<cairo_surface_t>;
 #elif USE(HAIKU)
 
-/* Wrapper class to make BBitmap reference counted */
+/*
+This wrapper class
+* Makes BBitmap reference counted
+* Allows running an action when it is destroyed
+*/
 class BitmapRef: public BBitmap, public RefCounted<BitmapRef>
 {
-    public:
-        BitmapRef(BRect r, uint32 f, color_space c, int32 b)
-            : BBitmap(r, f, c, b)
-        {
-        }
+public:
+    BitmapRef(BRect r, uint32 f, color_space c, int32 b)
+        : BBitmap(r, f, c, b)
+    {
+    }
 
-        BitmapRef(BRect r, color_space c, bool v)
-            : BBitmap(r, c, v)
-        {
-        }
+    BitmapRef(BRect r, color_space c, bool v)
+        : BBitmap(r, c, v)
+    {
+    }
 
-        using BBitmap::BBitmap;
+    using BBitmap::BBitmap;
 
-        BitmapRef(const BBitmap& other)
-            : BBitmap(other)
-        {
-        }
+    BitmapRef(const BBitmap& other)
+        : BBitmap(other)
+    {
+    }
 
-        BitmapRef(const BitmapRef& other) = delete;
+    BitmapRef(const BitmapRef& other) = delete;
 
-        ~BitmapRef()
-        {
-        }
+    ~BitmapRef()
+    {
+        if (onDestroy)
+            onDestroy();
+    }
+
+    std::function<void()> onDestroy;
 };
 
 using PlatformImagePtr = RefPtr<BitmapRef>;
