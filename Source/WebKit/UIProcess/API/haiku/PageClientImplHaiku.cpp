@@ -93,7 +93,7 @@ namespace WebKit
     bool PageClientImpl::isViewVisible()
     {
         //return fWebView.isVisible();
-        return false;
+        return true;
     }
 
     bool PageClientImpl::isViewInWindow()
