@@ -39,13 +39,13 @@ namespace WebCore {
 
 std::unique_ptr<GraphicsContext> ShareableBitmap::createGraphicsContext()
 {
-    PlatformImagePtr image = createPlatformImage();
+    PlatformImagePtr bitmap = createPlatformImage(DontCopyBackingStore);
 
-    BView* surface = new BView(image->Bounds(), "Shareable", 0, 0);
-    image->AddChild(surface);
+    BView* surface = new BView(bitmap->Bounds(), "Shareable", 0, 0);
+    bitmap->AddChild(surface);
     surface->LockLooper();
 
-    return std::make_unique<GraphicsContextHaiku>(surface);
+    return makeUnique<GraphicsContextHaiku>(surface, bitmap);
 }
 
 void ShareableBitmap::paint(GraphicsContext& context, const IntPoint& dstPoint, const IntRect& srcRect)
@@ -100,6 +100,13 @@ WebCore::PlatformImagePtr ShareableBitmap::createPlatformImage(WebCore::BackingS
     // Create the BBitmap
     WebCore::PlatformImagePtr image = adoptRef(new BitmapRef(
         area, offset, bounds(), B_BITMAP_ACCEPTS_VIEWS, /*m_configuration.platformColorSpace()*/ B_RGBA32, bytesPerRow()));
+    ASSERT(image->InitCheck() == B_OK);
+
+    // The bitmap needs to hold a reference to our shared memory.
+    ref();
+    image->onDestroy = [this](){
+        this->deref();
+    };
 
     return image;
 }
