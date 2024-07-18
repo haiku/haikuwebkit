@@ -77,7 +77,7 @@ public:
 
 namespace WebCore {
 
-GraphicsContextHaiku::GraphicsContextHaiku(BView* view)
+GraphicsContextHaiku::GraphicsContextHaiku(BView* view, RefPtr<BitmapRef> bitmap)
     : GraphicsContext(IsDeferred::No, {
         GraphicsContextState::Change::StrokeThickness,
         GraphicsContextState::Change::StrokeBrush,
@@ -87,6 +87,7 @@ GraphicsContextHaiku::GraphicsContextHaiku(BView* view)
         GraphicsContextState::Change::FillRule,
         GraphicsContextState::Change::CompositeMode,
     })
+    , m_bitmap(bitmap)
     , m_view(view)
     , m_strokeStyle(B_SOLID_HIGH)
     , m_painter(nullptr)
