@@ -40,9 +40,22 @@
 
 namespace WebCore {
 
+class BitmapRef;
+
 class GraphicsContextHaiku: public GraphicsContext {
 public:
-    GraphicsContextHaiku(BView* view);
+    // Creates a GraphicsContext from a BView.
+    //
+    // The bitmap parameter is optional. If specified, it will hold a
+    // reference to it to keep it alive as long as GraphicsContextHaiku is
+    // alive. This is useful if you want GraphicsContextHaiku to keep a BView's
+    // parent BitmapRef alive.
+    //
+    // NOTE: It would be nice if holding the BView would be sufficient to keep
+    // the parent bitmap alive. Then we wouldn't need to accept the bitmap
+    // parameter. However, it seems like we would have to write a wrapper class
+    // for BView along with making BitmapRef accept and use the wrapper class.
+    GraphicsContextHaiku(BView* view, RefPtr<BitmapRef> bitmap = nullptr);
     ~GraphicsContextHaiku();
 
     bool hasPlatformContext() const { return m_view != nullptr; }
@@ -92,6 +105,9 @@ public:
 
     void drawBitmap(BBitmap*, const FloatRect& destRect, const FloatRect& srcRect, const ImagePaintingOptions& = { });
     void drawBitmap(BBitmap*, const FloatSize& imageSize, const FloatRect& destRect, const FloatRect& tileRect, const AffineTransform& patternTransform, const FloatPoint& phase, const FloatSize& spacing, const ImagePaintingOptions& = { });
+    RefPtr<BitmapRef> m_bitmap;
+        // Holds a reference to our backing bitmap. This could be a nullptr
+        // and is not meant to be used directly. Use m_view instead.
     BView* m_view;
     pattern m_strokeStyle;
 };
