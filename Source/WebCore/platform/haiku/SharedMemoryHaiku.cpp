@@ -42,16 +42,9 @@ namespace WebCore {
 
 RefPtr<SharedMemory> SharedMemory::allocate(size_t size)
 {
-    // Make the area's name include a randomnly generated id so that
-    // identifying whether two areas point to the same memory across processes
-    // is easier. Do not change the format of this string without changing all
-    // of the places that depend on this format. (Hint: check all usages of
-    // get_area_info to see if they use the name)
-    uint64_t id = ((uint64_t) weakRandomNumber<uint32_t>() << 32) | weakRandomNumber<uint32_t>();
-    auto name = makeString("WebKit-", base64Encoded(&id, sizeof(id)));
     void* baseAddress;
 
-    area_id sharedArea = create_area(name.ascii().data(), &baseAddress,
+    area_id sharedArea = create_area("WebKit shared memory", &baseAddress,
         B_ANY_ADDRESS, size, B_NO_LOCK, B_READ_AREA | B_WRITE_AREA | B_CLONEABLE_AREA);
 
     if (sharedArea < 0)
