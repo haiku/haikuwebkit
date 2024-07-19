@@ -95,7 +95,6 @@ list(APPEND WebCore_SOURCES
   platform/haiku/PopupMenuHaiku.cpp
   platform/haiku/ScrollbarThemeHaiku.cpp
   platform/haiku/SearchPopupMenuHaiku.cpp
-  platform/haiku/SharedMemoryHaiku.cpp
   platform/haiku/SharedTimerHaiku.cpp
   platform/haiku/SoundHaiku.cpp
   platform/haiku/TemporaryLinkStubs.cpp
