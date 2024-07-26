@@ -1,5 +1,9 @@
 /*
+ * Copyright (C) 2011 Apple Inc. All rights reserved.
+ * Copyright (C) 2011 Samsung Electronics
+ * Copyright (C) 2011,2014 Igalia S.L.
  * Copyright (C) 2024 Sony Interactive Entertainment Inc.
+ * Copyright (C) 2024 Haiku, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,34 +33,103 @@
 #if USE(HAIKU)
 
 #include "UpdateInfo.h"
-#include <WebCore/NotImplemented.h>
+
+#include "WebCore/IntRect.h"
+#include "WebCore/ShareableBitmap.h"
+#include <Rect.h>
 
 namespace WebKit {
+using namespace WebCore;
 
-static const Seconds s_scrollHysteresisDuration { 300_ms };
+// BackingStore stores and updates a bitmap of the rendered webpage.
 
 BackingStore::BackingStore(const WebCore::IntSize& size, float deviceScaleFactor)
     : m_size(size)
     , m_deviceScaleFactor(deviceScaleFactor)
-    , m_scrolledHysteresis([this](PAL::HysteresisState state) { if (state == PAL::HysteresisState::Stopped) m_scrollSurface = nullptr; }, s_scrollHysteresisDuration)
+    , m_bitmap(BRect(0, 0, size.width() * deviceScaleFactor, size.height() * deviceScaleFactor), B_RGBA32, true)
+    , m_view(m_bitmap.Bounds(), "BackingStore", 0, 0)
 {
+	m_bitmap.AddChild(&m_view);
 }
 
-BackingStore::~BackingStore() = default;
-
-void BackingStore::paint(PlatformPaintContextPtr cr, const WebCore::IntRect& rect)
+BackingStore::~BackingStore()
 {
-    notImplemented();
+    m_bitmap.RemoveChild(&m_view);
+}
+
+void BackingStore::paint(BView* into, const WebCore::IntRect& rect)
+{
+    // Paint the contents of our bitmap into the BView.
+    into->PushState();
+    into->SetDrawingMode(B_OP_COPY);
+    into->DrawBitmap(&m_bitmap, rect, rect);
+    into->PopState();
+    // TODO: Would SetViewBitmap work instead? We probably would only need
+    // to call it once from the WebView. Is it faster?
 }
 
 void BackingStore::incorporateUpdate(UpdateInfo&& updateInfo)
 {
-    notImplemented();
+    // Take the changes given in updateInfo and incorporate them into our
+    // bitmap. This can involve scrolling our bitmap and copying rectangles
+    // from a bitmap containing updates into our bitmap.
+    // This implementation is adapted from BackingStoreCairo.
+
+    ASSERT(m_size == updateInfo.viewSize);
+    if (!updateInfo.bitmapHandle) {
+        // There are no updates
+        return;
+    }
+
+    auto bitmapData = ShareableBitmap::create(WTFMove(*updateInfo.bitmapHandle));
+    if (!bitmapData)
+        return;
+    auto bitmap = bitmapData->createPlatformImage();
+
+#if ASSERT_ENABLED
+    IntSize updateSize = updateInfo.updateRectBounds.size();
+    updateSize.scale(m_deviceScaleFactor);
+    ASSERT(bitmapData->size() == updateSize);
+#endif
+
+    scroll(updateInfo.scrollRect, updateInfo.scrollOffset);
+
+    IntPoint updateRectLocation = updateInfo.updateRectBounds.location();
+    m_view.LockLooper();
+    for (const auto& updateRect : updateInfo.updateRects) {
+        IntRect srcRect = updateRect;
+        srcRect.move(-updateRectLocation.x(), -updateRectLocation.y());
+        m_view.DrawBitmap(bitmap.get(), srcRect, updateRect);
+    }
+    m_view.UnlockLooper();
 }
 
 void BackingStore::scroll(const WebCore::IntRect& scrollRect, const WebCore::IntSize& scrollOffset)
 {
-    notImplemented();
+    // Shift the content inside of scrollRect by scrollOffset. Any existing
+    // part of the bitmap that ends up outside of the scrollRect will be
+    // clipped. It doesn't matter what is done with newly-exposed regions that
+    // didn't exist before.
+    // This implementation is adapted from BackingStoreCairo.
+
+    if (scrollOffset.isZero())
+        return;
+
+    IntRect targetRect = scrollRect;
+    targetRect.move(scrollOffset);
+    targetRect.intersect(scrollRect);
+
+    if (targetRect.isEmpty()) {
+        // Everything is scrolled off the screen. It doesn't matter what we
+        // do with the space that was left behind. Let's just leave everything
+        // as it was!
+        return;
+    }
+
+    IntRect sourceRect = targetRect;
+    sourceRect.move(-scrollOffset);
+
+    m_view.CopyBits(sourceRect, targetRect);
 }
 
 } // namespace WebKit

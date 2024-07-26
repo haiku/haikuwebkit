@@ -34,6 +34,9 @@
 
 #if USE(CAIRO) || PLATFORM(GTK)
 #include <WebCore/RefPtrCairo.h>
+#elif PLATFORM(HAIKU)
+#include <Bitmap.h>
+#include <View.h>
 #endif
 
 namespace WebCore {
@@ -73,6 +76,9 @@ private:
 #if PLATFORM(GTK)
     RefPtr<cairo_surface_t> m_surface;
     RefPtr<cairo_surface_t> m_scrollSurface;
+#elif PLATFORM(HAIKU)
+    BBitmap m_bitmap;
+    BView m_view;
 #else
     WebCore::PlatformImagePtr m_surface;
     WebCore::PlatformImagePtr m_scrollSurface;
