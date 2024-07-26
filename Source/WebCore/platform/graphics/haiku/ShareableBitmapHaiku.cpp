@@ -98,8 +98,9 @@ WebCore::PlatformImagePtr ShareableBitmap::createPlatformImage(WebCore::BackingS
     WebCore::PlatformImagePtr image = adoptRef(new BitmapRef(
         area, offset, bounds(), allowAttachingViews ? B_BITMAP_ACCEPTS_VIEWS : 0,
         /*m_configuration.platformColorSpace()*/ B_RGBA32, bytesPerRow()));
+    ASSERT(image->InitCheck() == B_OK);
 
-    // The bitmap needs us to keep the shared memory alive.
+    // The bitmap needs to hold a reference to our shared memory.
     ref();
     image->onDestroy = [this](){
         this->deref();
