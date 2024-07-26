@@ -39,7 +39,7 @@ namespace WebCore {
 
 std::unique_ptr<GraphicsContext> ShareableBitmap::createGraphicsContext()
 {
-    PlatformImagePtr bitmap = createPlatformImage(DontCopyBackingStore);
+    PlatformImagePtr bitmap = createPlatformImage(DontCopyBackingStore, WebCore::ShouldInterpolate::No, true);
 
     BView* surface = new BView(bitmap->Bounds(), "Shareable", 0, 0);
     bitmap->AddChild(surface);
@@ -66,7 +66,7 @@ void ShareableBitmap::paint(GraphicsContext& context, float scaleFactor, const I
     notImplemented();
 }
 
-WebCore::PlatformImagePtr ShareableBitmap::createPlatformImage(WebCore::BackingStoreCopy, WebCore::ShouldInterpolate)
+WebCore::PlatformImagePtr ShareableBitmap::createPlatformImage(WebCore::BackingStoreCopy, WebCore::ShouldInterpolate, bool allowAttachingViews)
 {
     // Creates a BBitmap (actually BitmapRef) that reads image data from the
     // address given by data(). This address is in shared memory. The idea is
@@ -96,7 +96,8 @@ WebCore::PlatformImagePtr ShareableBitmap::createPlatformImage(WebCore::BackingS
 
     // Create the BBitmap
     WebCore::PlatformImagePtr image = adoptRef(new BitmapRef(
-        area, offset, bounds(), B_BITMAP_ACCEPTS_VIEWS, /*m_configuration.platformColorSpace()*/ B_RGBA32, bytesPerRow()));
+        area, offset, bounds(), allowAttachingViews ? B_BITMAP_ACCEPTS_VIEWS : 0,
+        /*m_configuration.platformColorSpace()*/ B_RGBA32, bytesPerRow()));
     ASSERT(image->InitCheck() == B_OK);
 
     // The bitmap needs to hold a reference to our shared memory.
