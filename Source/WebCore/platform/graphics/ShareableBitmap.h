@@ -192,7 +192,7 @@ public:
 
     PlatformImagePtr createPlatformImage(BackingStoreCopy = CopyBackingStore, ShouldInterpolate = ShouldInterpolate::No) { return createCairoSurface(); }
 #elif USE(HAIKU)
-    WebCore::PlatformImagePtr createPlatformImage(WebCore::BackingStoreCopy = WebCore::CopyBackingStore, WebCore::ShouldInterpolate = WebCore::ShouldInterpolate::No);
+    WebCore::PlatformImagePtr createPlatformImage(WebCore::BackingStoreCopy = WebCore::CopyBackingStore, WebCore::ShouldInterpolate = WebCore::ShouldInterpolate::No, bool allowAttachingViews = false);
 #elif USE(SKIA)
     WEBCORE_EXPORT PlatformImagePtr createPlatformImage(BackingStoreCopy = CopyBackingStore, ShouldInterpolate = ShouldInterpolate::No);
 #endif
