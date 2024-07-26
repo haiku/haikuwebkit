@@ -54,10 +54,8 @@ void ShareableBitmap::paint(GraphicsContext& context, const IntPoint& dstPoint, 
 
     BView* viewSurface = context.platformContext();
 
-    viewSurface->LockLooper();
     viewSurface->DrawBitmap(bitmap.get());
     viewSurface->Sync();
-    viewSurface->UnlockLooper();
 }
 
 void ShareableBitmap::paint(GraphicsContext& context, float scaleFactor, const IntPoint& dstPoint, const IntRect& srcRect)
