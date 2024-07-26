@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Haiku, Inc. All rights reserved.
+ * Copyright (C) 2019, 2024 Haiku, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,20 +24,20 @@
  */
 #include "config.h"
 #include "WebViewBase.h"
+
 #include "APIPageConfiguration.h"
-
-#if USE(COORDINATED_GRAPHICS)
-#include "DrawingAreaProxyCoordinatedGraphics.h"
-#endif
-
 #include "DrawingAreaProxy.h"
 #include "PageClientImplHaiku.h"
 #include "PageLoadState.h"
 #include "WebProcessPool.h"
 #include "WebPageGroup.h"
+#include "WebCore/IntRect.h"
+#include "WebCore/Region.h"
+#include "wtf/MainThread.h"
 
-#include <WebCore/IntRect.h>
-#include <WebCore/Region.h>
+#if USE(COORDINATED_GRAPHICS)
+#include "DrawingAreaProxyCoordinatedGraphics.h"
+#endif
 
 using namespace WebKit; 
 using namespace WebCore;
@@ -84,8 +84,17 @@ void WebViewBase::Draw(BRect update)
         return;
 
     IntRect updateArea(update);
-    WebCore::Region unpainted;
-    drawingArea->paint(this, updateArea, unpainted);
+
+    callOnMainThread([this, drawingArea, updateArea](){
+        LockLooper();
+        WebCore::Region unpainted;
+
+        // TODO: Is it possible to make this not require being called from the
+        // main thread?
+        drawingArea->paint(this, updateArea, unpainted);
+
+        UnlockLooper();
+    });
 #endif
 }
 
