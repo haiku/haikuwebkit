@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Haiku, Inc
+ * Copyright (C) 2014, 2024 Haiku, Inc
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -160,13 +160,7 @@ void RunLoop::TimerBase::start(Seconds nextFireInterval, bool repeat)
 
 bool RunLoop::TimerBase::isActive() const
 {
-	bool active = false;
-	if (m_runLoop->m_handler->LockLooper()) {
-		active = (m_messageRunner != NULL);
-		m_runLoop->m_handler->UnlockLooper();
-	}
-
-	return active;
+    return m_messageRunner != NULL && m_messageRunner->GetInfo(NULL, NULL) == B_OK;
 }
 
 void RunLoop::TimerBase::stop()
