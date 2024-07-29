@@ -42,10 +42,6 @@
 #include <wtf/MachSendRight.h>
 #endif
 
-#if PLATFORM(HAIKU)
-#include <OS.h>
-#endif
-
 namespace WebCore {
 
 class FragmentedSharedBuffer;
@@ -63,8 +59,6 @@ public:
         MachSendRight;
 #elif OS(WINDOWS)
         Win32Handle;
-#elif OS(HAIKU)
-        area_id;
 #else
         #error Missing platform specific code
 #endif
@@ -108,8 +102,6 @@ public:
     WEBCORE_EXPORT static RefPtr<SharedMemory> wrapMap(void*, size_t, int fileDescriptor);
 #elif OS(DARWIN)
     WEBCORE_EXPORT static RefPtr<SharedMemory> wrapMap(void*, size_t, Protection);
-#elif PLATFORM(HAIKU)
-    WEBCORE_EXPORT static RefPtr<SharedMemory> wrapMap(area_id, size_t , Protection);
 #endif
 
     WEBCORE_EXPORT ~SharedMemory();
@@ -134,10 +126,6 @@ public:
     Protection protection() const { return m_protection; }
 #endif
 
-#if OS(HAIKU) && !USE(UNIX_DOMAIN_SOCKETS)
-    area_id area() const { return m_areaid; }
-#endif
-
     WEBCORE_EXPORT Ref<WebCore::SharedBuffer> createSharedBuffer(size_t) const;
 
 private:
@@ -158,8 +146,6 @@ private:
     MachSendRight m_sendRight;
 #elif OS(WINDOWS)
     Win32Handle m_handle;
-#elif OS(HAIKU)
-    area_id m_areaid;
 #else
         #error Missing platform specific code
 #endif
