@@ -5,70 +5,41 @@ file(MAKE_DIRECTORY ${DERIVED_SOURCES_HAIKU_API_DIR})
 
 configure_file(UIProcess/API/haiku/WebKitVersion.h.in ${DERIVED_SOURCES_HAIKU_API_DIR}/WebKitVersion.h)
 
+
 list(APPEND WebKit_SOURCES
+    NetworkProcess/NetworkDataTaskDataURL.cpp
+    NetworkProcess/Classifier/WebResourceLoadStatisticsStore.cpp
     NetworkProcess/haiku/NetworkProcessMainHaiku.cpp
 
-    NetworkProcess/Cookies/curl/WebCookieManagerCurl.cpp
-
-    NetworkProcess/cache/NetworkCacheDataCurl.cpp
-    NetworkProcess/cache/NetworkCacheIOChannelCurl.cpp
-
-    NetworkProcess/curl/NetworkDataTaskCurl.cpp
-    NetworkProcess/NetworkDataTaskDataURL.cpp
-    NetworkProcess/curl/NetworkProcessCurl.cpp
-    #NetworkProcess/curl/NetworkProcessMainCurl.cpp
-    NetworkProcess/curl/NetworkSessionCurl.cpp
-    NetworkProcess/curl/WebSocketTaskCurl.cpp
-
-    NetworkProcess/Classifier/WebResourceLoadStatisticsStore.cpp
-
     Platform/classifier/ResourceLoadStatisticsClassifier.cpp
-
     Platform/haiku/ModuleHaiku.cpp
-
     Platform/IPC/haiku/IPCSemaphoreHaiku.cpp
     Platform/IPC/unix/ArgumentCodersUnix.cpp
     Platform/IPC/unix/ConnectionUnix.cpp
-
     Platform/unix/LoggingUnix.cpp
 
     Shared/haiku/ProcessExecutablePathHaiku.cpp
     Shared/haiku/WebMemorySamplerHaiku.cpp
     Shared/unix/AuxiliaryProcessMain.cpp
 
-    Shared/API/c/curl/WKCertificateInfoCurl.cpp
-
-    UIProcess/API/C/curl/WKProtectionSpaceCurl.cpp
-    UIProcess/API/C/curl/WKWebsiteDataStoreRefCurl.cpp
-
-    UIProcess/API/C/haiku/WKView.cpp
-
     UIProcess/DefaultUndoController.cpp
-
-    UIProcess/WebsiteData/curl/WebsiteDataStoreCurl.cpp
-    UIProcess/WebsiteData/haiku/WebsiteDataStoreHaiku.cpp
-
-    UIProcess/Launcher/haiku/ProcessLauncherHaiku.cpp
     UIProcess/LegacySessionStateCodingNone.cpp
+    UIProcess/API/C/haiku/WKView.cpp
+    UIProcess/API/haiku/PageClientImplHaiku.cpp
+    UIProcess/API/haiku/WebView.cpp
+    UIProcess/API/haiku/WebViewBase.cpp
     UIProcess/haiku/BackingStoreHaiku.cpp
     UIProcess/haiku/TextCheckerHaiku.cpp
     UIProcess/haiku/WebPageProxyHaiku.cpp
     UIProcess/haiku/WebProcessPoolHaiku.cpp
-    UIProcess/API/haiku/WebViewBase.cpp
-    UIProcess/API/haiku/WebView.cpp
-    UIProcess/API/haiku/PageClientImplHaiku.cpp
-
-    WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
-    WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
-
-    WebProcess/WebPage/haiku/WebInspectorHaiku.cpp
-    WebProcess/WebPage/haiku/WebPageHaiku.cpp
+    UIProcess/Launcher/haiku/ProcessLauncherHaiku.cpp
+    UIProcess/WebsiteData/haiku/WebsiteDataStoreHaiku.cpp
 
     WebProcess/haiku/WebProcessHaiku.cpp
     WebProcess/haiku/WebProcessMainHaiku.cpp
-
-    #WebProcess/WebCoreSupport/haiku/WebFrameNetworkingContext.cpp
-    WebProcess/WebCoreSupport/curl/WebFrameNetworkingContext.cpp
+    WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
+    WebProcess/WebPage/haiku/WebInspectorHaiku.cpp
+    WebProcess/WebPage/haiku/WebPageHaiku.cpp
 )
 
 if (USE_COORDINATED_GRAPHICS)
@@ -89,6 +60,21 @@ if (USE_TEXTURE_MAPPER)
     )
 endif ()
 
+# TODO: It would be nice to use Haiku's networking stack. That way we don't
+# have to depend on curl. It is largely unimplemented currently, however.
+if (NOT USE_CURL)
+    list(APPEND WebKit_SOURCES
+        NetworkProcess/cache/NetworkCacheDataHaiku.cpp
+        NetworkProcess/cache/NetworkCacheIOChannelHaiku.cpp
+        NetworkProcess/haiku/NetworkDataTaskHaiku.cpp
+        NetworkProcess/haiku/NetworkProcessHaiku.cpp
+        NetworkProcess/haiku/NetworkSessionHaiku.cpp
+
+        WebProcess/Cookies/haiku/WebCookieManagerHaiku.cpp
+        WebProcess/WebCoreSupport/haiku/WebFrameNetworkingContext.cpp
+    )
+endif()
+
 # TODO: It seems not all of these headers should be public. Currently, if a
 # program such as MiniBrowser links against WebKit, all of these directories
 # will be added to the include path of that program.
@@ -96,6 +82,7 @@ endif ()
 list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${DERIVED_SOURCES_HAIKU_API_DIR}"
     "${WEBKIT_DIR}/NetworkProcess/curl"
+    "${WEBKIT_DIR}/NetworkProcess/haiku"
     "${WEBKIT_DIR}/Platform"
     "${WEBKIT_DIR}/Platform/classifier"
     "${WEBKIT_DIR}/Platform/generic"
@@ -123,7 +110,6 @@ list(APPEND WebKit_INCLUDE_DIRECTORIES
     "${WEBKIT_DIR}/WebProcess/WebCoreSupport/curl"
     "${WEBKIT_DIR}/WebProcess/WebCoreSupport/haiku"
     "${WEBKIT_DIR}/WebProcess/WebPage/CoordinatedGraphics"
-    "${WEBKIT_DIR}/NetworkProcess/haiku"
     ${LIBXML2_INCLUDE_DIR}
     ${LIBXSLT_INCLUDE_DIRS}
     ${SQLITE_INCLUDE_DIRS}
