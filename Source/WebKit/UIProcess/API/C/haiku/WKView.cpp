@@ -23,19 +23,19 @@
 #include "WKView.h"
 
 #include "APIPageConfiguration.h"
-#include "WKAPICast.h"
 #include "WebViewBase.h"
 #include "WebPageProxy.h"
+#include "WKAPICast.h"
 
 
 using namespace WebCore;
 using namespace WebKit;
 
 
-WKViewRef WKViewCreate(const char* name,BRect rect,BWindow* parentWindow,
+WKViewRef WKViewCreate(const char* name, BRect rect, BWindow* parentWindow,
     WKPageConfigurationRef pageRef)
 {
-    return toAPI(WebViewBase::create(name,rect,parentWindow,*toImpl(pageRef)).leakRef());
+    return toAPI(WebViewBase::create(name, rect, parentWindow, *toImpl(pageRef)).leakRef());
 }
 
 

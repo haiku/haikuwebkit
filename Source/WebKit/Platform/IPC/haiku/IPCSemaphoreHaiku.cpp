@@ -45,7 +45,7 @@ Semaphore::Semaphore(Semaphore&& other)
 }
 
 Semaphore::Semaphore(sem_id sem)
-	: m_semaphore(sem)
+    : m_semaphore(sem)
 {
 }
 

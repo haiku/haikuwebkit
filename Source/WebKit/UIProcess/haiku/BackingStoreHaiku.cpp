@@ -49,7 +49,7 @@ BackingStore::BackingStore(const WebCore::IntSize& size, float deviceScaleFactor
     , m_bitmap(BRect(0, 0, size.width() * deviceScaleFactor, size.height() * deviceScaleFactor), B_RGBA32, true)
     , m_view(m_bitmap.Bounds(), "BackingStore", 0, 0)
 {
-	m_bitmap.AddChild(&m_view);
+    m_bitmap.AddChild(&m_view);
 }
 
 BackingStore::~BackingStore()

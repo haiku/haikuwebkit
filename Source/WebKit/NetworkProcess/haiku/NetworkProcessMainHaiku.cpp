@@ -31,8 +31,7 @@
 
 namespace WebKit {
 
-class NetworkProcessMainHaiku: public AuxiliaryProcessMainBaseNoSingleton<NetworkProcess>
-{
+class NetworkProcessMainHaiku: public AuxiliaryProcessMainBaseNoSingleton<NetworkProcess> {
 public:
     void platformFinalize() override
     {
@@ -40,10 +39,10 @@ public:
     }
 };
 
-class NetworProcessApp : public BApplication
-{
+class NetworProcessApp : public BApplication {
 public:
-    NetworProcessApp() : BApplication("application/x-vnd-HaikuWebKit-NetworkProcess") {}
+    NetworProcessApp()
+        : BApplication("application/x-vnd-HaikuWebKit-NetworkProcess") {}
 
     void ArgvReceived(int argc, char** argv)
     {

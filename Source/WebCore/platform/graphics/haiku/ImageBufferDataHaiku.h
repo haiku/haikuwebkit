@@ -28,15 +28,14 @@
 #ifndef ImageBufferData_h
 #define ImageBufferData_h
 
-#include <Bitmap.h>
-#include <View.h>
-
-#include "Image.h"
-#include "NativeImage.h"
+#include "PlatformImage.h"
 #include <wtf/RefPtr.h>
+
+class BView;
 
 namespace WebCore {
 
+class GraphicsContext;
 class IntSize;
 
 class ImageBufferData {
