@@ -24,16 +24,15 @@
  */
 #pragma once
 
-#include <WebKit/WKRetainPtr.h>
 #include "WKView.h"
-#include "WebViewBase.h"
+#include <WebKit/WKRetainPtr.h>
 
 namespace WebKit {
-    class PageLoadStateObserver;
+class PageLoadStateObserver;
+class WebViewBase;
 }
 
-class BWebView
-{
+class BWebView {
 public:
     BWebView(BRect, BWindow*);
     void loadURIRequest(const char*); // use this in app to load a url
