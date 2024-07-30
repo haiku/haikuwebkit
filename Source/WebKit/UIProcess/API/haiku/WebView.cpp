@@ -23,31 +23,31 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "config.h"
+#include "WebView.h"
+
+#include "PageLoadStateObserver.h"
+#include "WebPageProxy.h"
+#include "WebViewBase.h"
+#include "WebViewConstants.h"
+#include "WKAPICast.h"
+#include "WKContext.h"
+#include "WKPage.h"
+#include "WKPageConfigurationRef.h"
+#include "WKPageLoaderClient.h"
+#include "WKPageNavigationClient.h"
+#include "WKPreferencesRef.h"
+#include "WKString.h"
+#include "WKURL.h"
+#include "WKView.h"
+#include "wtf/FastMalloc.h"
+#include "wtf/RunLoop.h"
+
 #include <Window.h>
 #include <View.h>
 #include <Looper.h>
 
-#include "config.h"
-
-#include "PageLoadStateObserver.h"
-
-#include "WKAPICast.h"
-#include "WKPageConfigurationRef.h"
-#include "WKPage.h"
-#include "WKView.h"
-#include "WKURL.h"
-#include "WKString.h"
-#include "WKContext.h"
-#include "WKPreferencesRef.h"
-#include "WKPageNavigationClient.h"
-#include "WKPageLoaderClient.h"
-
-#include "wtf/FastMalloc.h"
-#include "wtf/RunLoop.h"
-
-#include "WebPageProxy.h"
-#include "WebView.h"
-#include "WebViewConstants.h"
+using namespace WebKit;
 
 BWebView::BWebView(BRect frame, BWindow* myWindow)
     : fAppLooper(myWindow->Looper())
