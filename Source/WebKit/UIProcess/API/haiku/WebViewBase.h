@@ -53,7 +53,9 @@ public:
 
     // hook methods
     virtual void FrameResized(float, float);
-    virtual void Draw (BRect);
+    virtual void Draw(BRect);
+    virtual void MouseDown(BPoint);
+    virtual void MouseUp(BPoint);
     virtual void MouseMoved(BPoint, uint32, const BMessage*);
 private:
     WebViewBase(const char*, BRect, BWindow*, const API::PageConfiguration&);
