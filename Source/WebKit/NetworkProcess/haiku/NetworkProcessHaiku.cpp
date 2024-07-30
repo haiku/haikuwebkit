@@ -30,11 +30,6 @@
 #include <WebCore/NetworkStorageSession.h>
 #include <WebCore/NotImplemented.h>
 
-#include "NetworkConnectionToWebProcess.h"
-#include "NetworkProcessProxyMessages.h"
-#include <OS.h>
-#include <String.h>
-
 namespace WebCore
 {
     class NetworkStorageSession;

@@ -45,7 +45,7 @@ namespace IPC {
 template<typename Encoder>
 void ArgumentCoder<CertificateInfo>::encode(Encoder& encoder, const CertificateInfo& certificateInfo)
 {
-    //nothing to encode ceriticateinfo is null
+    // nothing to encode ceriticateinfo is null
 }
 template void ArgumentCoder<WebCore::CertificateInfo>::encode<Encoder>(Encoder&, const WebCore::CertificateInfo&);
 template void ArgumentCoder<WebCore::CertificateInfo>::encode<WebKit::Daemon::Encoder>(WebKit::Daemon::Encoder&, const WebCore::CertificateInfo&);
@@ -53,7 +53,7 @@ template void ArgumentCoder<WebCore::CertificateInfo>::encode<WebKit::Daemon::En
 template<typename Decoder>
 std::optional<WebCore::CertificateInfo> ArgumentCoder<CertificateInfo>::decode(Decoder& decoder)
 {
-    //nothing to decode just return true
+    // nothing to decode just return true
     return {};
 }
 template std::optional<WebCore::CertificateInfo> ArgumentCoder<WebCore::CertificateInfo>::decode<Decoder>(Decoder&);

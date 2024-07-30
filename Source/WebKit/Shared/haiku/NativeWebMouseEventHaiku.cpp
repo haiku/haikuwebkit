@@ -24,14 +24,18 @@
  */
 
 #include "config.h"
-#include "WebEventFactory.h"
 #include "NativeWebMouseEvent.h"
 
-namespace WebKit
+#include "WebEventFactory.h"
+#include "WebCore/NotImplemented.h"
+
+namespace WebKit {
+
+NativeWebMouseEvent::NativeWebMouseEvent(BMessage* mouseEvent)
+    : WebMouseEvent(WebEventFactory::createWebMouseEvent(mouseEvent))
+    , m_nativeEvent(mouseEvent)
 {
-    NativeWebMouseEvent::NativeWebMouseEvent(BMessage* mouseEvent)
-    :WebMouseEvent(WebEventFactory::createWebMouseEvent(mouseEvent)),
-    m_nativeEvent(mouseEvent)
-    {
-    }
+    notImplemented();
+}
+
 }

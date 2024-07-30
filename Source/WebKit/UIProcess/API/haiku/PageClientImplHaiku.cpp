@@ -46,7 +46,7 @@ PageClientImpl::PageClientImpl(WebViewBase& view)
 std::unique_ptr<DrawingAreaProxy> PageClientImpl::createDrawingAreaProxy(WebKit::WebProcessProxy& processProxy)
 {
 #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
-    return std::make_unique<DrawingAreaProxyCoordinatedGraphics>(*fWebView.page(), processProxy);
+    return WTF::makeUnique<DrawingAreaProxyCoordinatedGraphics>(*fWebView.page(), processProxy);
 #else
     // This will likely cause a crash from a failing assert. At least it's
     // better than crashing because of not returning anything

@@ -33,14 +33,13 @@ using namespace WebCore;
 
 namespace WebKit {
 
-class WebProcessMainHaiku : public AuxiliaryProcessMainBase<WebProcess>
-{
+class WebProcessMainHaiku : public AuxiliaryProcessMainBase<WebProcess> {
 };
 
-class WebProcessApp : public BApplication
-{
+class WebProcessApp : public BApplication {
 public:
-    WebProcessApp() : BApplication("application/x-vnd-HaikuWebKit-WebProcess") {}
+    WebProcessApp()
+       : BApplication("application/x-vnd-HaikuWebKit-WebProcess") {}
 
     void ArgvReceived(int argc, char** argv)
     {

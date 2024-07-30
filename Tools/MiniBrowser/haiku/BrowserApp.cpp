@@ -3,14 +3,13 @@
  * All rights reserved. Distributed under the terms of the MIT license.
  */
 
-
+#include "cmakeconfig.h"
 
 #include <Window.h>
 #include <View.h>
 
 #include "BrowserApp.h"
 #include "BrowserWindow.h"
-
 #include "WebViewConstants.h"
 
 

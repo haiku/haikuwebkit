@@ -31,10 +31,10 @@ private:
 	void SetStatus(const char*);
 	void ChangeUrl(BMessage*);
 	void LoadingProgress(double value);
-	void ChangeTitle(const char* title);	
-	
+	void ChangeTitle(const char* title);
+
 	BWebView* fWebView;
-	
+
 	BMenuBar* m_menuBar;
 	BButton* m_BackButton;
 	BButton* m_ForwardButton;

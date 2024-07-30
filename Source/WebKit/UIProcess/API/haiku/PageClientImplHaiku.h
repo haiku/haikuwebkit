@@ -26,19 +26,19 @@
 
 #include "PageClient.h"
 
+#include "DefaultUndoController.h"
 #include "WebDateTimePicker.h"
 #include "WebPageProxy.h"
-#include "DefaultUndoController.h"
 
 #include <WebCore/IntPoint.h>
 #include <WebCore/IntRect.h>
 
 namespace WebKit {
 
-class WebViewBase;
 class DrawingAreaProxy;
-class PageClientImpl: public PageClient
-{
+class WebViewBase;
+
+class PageClientImpl: public PageClient {
 public:
     PageClientImpl(WebViewBase&);
     WebViewBase* viewWidget();

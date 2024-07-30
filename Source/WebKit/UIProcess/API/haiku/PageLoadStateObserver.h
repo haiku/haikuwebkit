@@ -22,63 +22,64 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "config.h"
+#pragma once
+
 #include "PageLoadState.h"
 #include "WebViewConstants.h"
-
 
 #include <Application.h>
 #include <Message.h>
 
-namespace WebKit{
-class PageLoadStateObserver final: public PageLoadState::Observer
-{
-    public:
-        PageLoadStateObserver(BLooper* looper) {}
+namespace WebKit {
 
-        void willChangeIsLoading() override {}
-        void didChangeIsLoading() override {}
+class PageLoadStateObserver final: public PageLoadState::Observer {
+public:
+    PageLoadStateObserver(BLooper* looper) {}
 
-        void willChangeTitle() override
-        {
-        }
-        void didChangeTitle() override
-        {
-            BMessage message(DID_CHANGE_TITLE);
-            be_app->PostMessage(&message);
-        }
+    void willChangeIsLoading() override {}
+    void didChangeIsLoading() override {}
 
-        void willChangeActiveURL() override {}
-        void didChangeActiveURL() override {}
+    void willChangeTitle() override
+    {
+    }
+    void didChangeTitle() override
+    {
+        BMessage message(DID_CHANGE_TITLE);
+        be_app->PostMessage(&message);
+    }
 
-        void willChangeHasOnlySecureContent() override {}
-        void didChangeHasOnlySecureContent() override {}
+    void willChangeActiveURL() override {}
+    void didChangeActiveURL() override {}
 
-        void willChangeEstimatedProgress() override
-        {
-        }
-        void didChangeEstimatedProgress() override
-        {
-            BMessage message(DID_CHANGE_PROGRESS);
-            be_app->PostMessage(&message);
-        }
+    void willChangeHasOnlySecureContent() override {}
+    void didChangeHasOnlySecureContent() override {}
 
-        void willChangeCanGoBack() override {}
-        void didChangeCanGoBack() override {}
+    void willChangeEstimatedProgress() override
+    {
+    }
+    void didChangeEstimatedProgress() override
+    {
+        BMessage message(DID_CHANGE_PROGRESS);
+        be_app->PostMessage(&message);
+    }
 
-        void willChangeCanGoForward() override {}
-        void didChangeCanGoForward() override {}
+    void willChangeCanGoBack() override {}
+    void didChangeCanGoBack() override {}
 
-        void willChangeNetworkRequestsInProgress() override {}
-        void didChangeNetworkRequestsInProgress() override {}
+    void willChangeCanGoForward() override {}
+    void didChangeCanGoForward() override {}
 
-        void willChangeCertificateInfo() override {}
-        void didChangeCertificateInfo() override {}
+    void willChangeNetworkRequestsInProgress() override {}
+    void didChangeNetworkRequestsInProgress() override {}
 
-        void willChangeWebProcessIsResponsive() override {}
-        void didChangeWebProcessIsResponsive() override {}
+    void willChangeCertificateInfo() override {}
+    void didChangeCertificateInfo() override {}
 
-        void didSwapWebProcesses() override{}
+    void willChangeWebProcessIsResponsive() override {}
+    void didChangeWebProcessIsResponsive() override {}
+
+    void didSwapWebProcesses() override{}
 };
+
 }
 
