@@ -22,46 +22,45 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#include "config.h"
+#pragma once
 
-#include <WebKit/WKRetainPtr.h>
 #include "WKView.h"
-#include "WebViewBase.h"
+#include <WebKit/WKRetainPtr.h>
 
 namespace WebKit {
-    class PageLoadStateObserver;
+class PageLoadStateObserver;
+class WebViewBase;
 }
 
-class BWebView
-{
-    public:
-        BWebView(BRect, BWindow*);
-        void loadHTML();
-        void loadURIRequest(const char*); // use this in app to load a url
-        void loadURI(BMessage*);
-        void goForward();
-        void goBackward();
-        void stop();
-        void paintContent();
-        WebKit::WebViewBase* getRenderView();
-        const char* getCurrentURL();
-        BLooper* getAppLooper() { return fAppLooper; }
+class BWebView {
+public:
+    BWebView(BRect, BWindow*);
+    void loadHTML();
+    void loadURIRequest(const char*); // use this in app to load a url
+    void loadURI(BMessage*);
+    void goForward();
+    void goBackward();
+    void stop();
+    void paintContent();
+    WebKit::WebViewBase* getRenderView();
+    const char* getCurrentURL();
+    BLooper* getAppLooper() { return fAppLooper; }
 
-        void navigationCallbacks();
-        double didChangeProgress();
-        const char* title();
+    void navigationCallbacks();
+    double didChangeProgress();
+    const char* title();
 
-    private:
-        WKRetainPtr<WKViewRef> fViewPort;
-        WKRetainPtr<WKContextRef> fContext;
-        static void didCommitNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
-        static void didReceiveServerRedirectForProvisionalNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
-        static void didFinishDocumentLoad(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
-        static void didFinishProgress(WKPageRef, const void*);
-        static void didFinishNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
-        static void didFailNavigation(WKPageRef page, WKNavigationRef navigation, WKErrorRef, WKTypeRef userData, const void* clientInfo);
+private:
+    WKRetainPtr<WKViewRef> fViewPort;
+    WKRetainPtr<WKContextRef> fContext;
+    static void didCommitNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
+    static void didReceiveServerRedirectForProvisionalNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
+    static void didFinishDocumentLoad(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
+    static void didFinishProgress(WKPageRef, const void*);
+    static void didFinishNavigation(WKPageRef page, WKNavigationRef navigation, WKTypeRef userData, const void* clientInfo);
+    static void didFailNavigation(WKPageRef page, WKNavigationRef navigation, WKErrorRef, WKTypeRef userData, const void* clientInfo);
 
-        WebKit::PageLoadStateObserver* fObserver;
-        BLooper* fAppLooper;
+    WebKit::PageLoadStateObserver* fObserver;
+    BLooper* fAppLooper;
 };
 

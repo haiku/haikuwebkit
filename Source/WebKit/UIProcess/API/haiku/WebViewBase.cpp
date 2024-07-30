@@ -29,8 +29,8 @@
 #include "DrawingAreaProxy.h"
 #include "PageClientImplHaiku.h"
 #include "PageLoadState.h"
-#include "WebProcessPool.h"
 #include "WebPageGroup.h"
+#include "WebProcessPool.h"
 #include "WebCore/IntRect.h"
 #include "WebCore/Region.h"
 #include "wtf/MainThread.h"
@@ -39,13 +39,13 @@
 #include "DrawingAreaProxyCoordinatedGraphics.h"
 #endif
 
-using namespace WebKit; 
+using namespace WebKit;
 using namespace WebCore;
 
 WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     const API::PageConfiguration& pageConfig)
-    : BView(name, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE),
-    fPageClient(std::make_unique<PageClientImpl>(*this))
+    : BView(name, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE)
+    , fPageClient(makeUniqueWithoutRefCountedCheck<PageClientImpl>(*this))
 {
     auto config = pageConfig.copy();
     auto preferences = config->preferences();
@@ -55,8 +55,7 @@ WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     fPage = processPool.createWebPage(*fPageClient, WTFMove(config));
     fPage->initializeWebPage();
 
-    if (fPage->drawingArea())
-    {
+    if (fPage->drawingArea()) {
         fPage->drawingArea()->setSize(IntSize(rect.right - rect.left,
             rect.top - rect.bottom));
     }
@@ -85,7 +84,7 @@ void WebViewBase::Draw(BRect update)
 
     IntRect updateArea(update);
 
-    callOnMainThread([this, drawingArea, updateArea](){
+    callOnMainRunLoop([this, drawingArea, updateArea](){
         LockLooper();
         WebCore::Region unpainted;
 

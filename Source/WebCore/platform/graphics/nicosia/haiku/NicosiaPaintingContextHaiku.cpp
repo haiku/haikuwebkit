@@ -37,7 +37,7 @@ namespace Nicosia {
 
 PaintingContextHaiku::ForPainting::ForPainting(Nicosia::Buffer& buffer)
 {
-	notImplemented();
+    notImplemented();
 }
 
 PaintingContextHaiku::ForPainting::~ForPainting()
@@ -46,29 +46,29 @@ PaintingContextHaiku::ForPainting::~ForPainting()
 
 WebCore::GraphicsContext& PaintingContextHaiku::ForPainting::graphicsContext()
 {
-	notImplemented();
+    notImplemented();
 }
 
 void PaintingContextHaiku::ForPainting::replay(const PaintingOperations& paintingOperations)
 {
-	notImplemented();
+    notImplemented();
 }
 
 PaintingContextHaiku::ForRecording::ForRecording(PaintingOperations& paintingOperations)
 {
-	notImplemented();
+    notImplemented();
 }
 
 PaintingContextHaiku::ForRecording::~ForRecording() = default;
 
 WebCore::GraphicsContext& PaintingContextHaiku::ForRecording::graphicsContext()
 {
-	notImplemented();
+    notImplemented();
 }
 
 void PaintingContextHaiku::ForRecording::replay(const PaintingOperations&)
 {
-	notImplemented();
+    notImplemented();
 }
 
 } // namespace Nicosia

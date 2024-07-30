@@ -32,38 +32,38 @@
 #include <Window.h>
 
 namespace API {
-    class PageConfiguration;
+class PageConfiguration;
 };
 
-namespace WebKit
-{
-    class PageClientImpl;
-    class WebPageProxy;
+namespace WebKit {
 
-    class WebViewBase: public API::ObjectImpl<API::Object::Type::View>, public BView
+class PageClientImpl;
+class WebPageProxy;
+
+class WebViewBase: public API::ObjectImpl<API::Object::Type::View>, public BView {
+public:
+    static RefPtr<WebViewBase> create(const char* name, BRect rect,
+        BWindow* parentWindow, const API::PageConfiguration& config)
     {
-        public:
-            static RefPtr<WebViewBase> create(const char* name, BRect rect,
-                BWindow* parentWindow, const API::PageConfiguration& config)
-            {
-                auto fWebView = adoptRef(*new WebViewBase(name, rect, parentWindow, config));
-                return fWebView;
-            }
-            WebPageProxy* page() const { return fPage.get(); }
-            const char* currentURL();
+        auto fWebView = adoptRef(*new WebViewBase(name, rect, parentWindow, config));
+        return fWebView;
+    }
+    WebPageProxy* page() const { return fPage.get(); }
+    const char* currentURL();
 
-            //hook methods
-            virtual void FrameResized(float, float);
-            virtual void Draw (BRect);
-            virtual void MouseMoved(BPoint, uint32, const BMessage*);
-        private:
-            WebViewBase(const char*, BRect, BWindow*, const API::PageConfiguration&);
+    // hook methods
+    virtual void FrameResized(float, float);
+    virtual void Draw(BRect);
+    virtual void MouseDown(BPoint);
+    virtual void MouseUp(BPoint);
+    virtual void MouseMoved(BPoint, uint32, const BMessage*);
+private:
+    WebViewBase(const char*, BRect, BWindow*, const API::PageConfiguration&);
 
-            void paint(const WebCore::IntRect&);
+    void paint(const WebCore::IntRect&);
 
-            RefPtr<WebPageProxy> fPage;
-            std::unique_ptr<PageClientImpl> fPageClient;
-    };
+    RefPtr<WebPageProxy> fPage;
+    std::unique_ptr<PageClientImpl> fPageClient;
+};
+
 }
-
-using namespace WebKit;

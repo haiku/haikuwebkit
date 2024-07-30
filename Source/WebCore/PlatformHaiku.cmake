@@ -145,10 +145,10 @@ list(APPEND WebCore_SOURCES
 
   platform/text/haiku/StringHaiku.cpp
 
-  rendering/haiku/RenderThemeHaiku.cpp
-
   platform/unix/LoggingUnix.cpp
   platform/unix/SharedMemoryUnix.cpp
+
+  rendering/haiku/RenderThemeHaiku.cpp
 
   inspector/LegacyWebSocketInspectorInstrumentation.cpp
 )
@@ -164,21 +164,23 @@ if (USE_COORDINATED_GRAPHICS OR USE_TEXTURE_MAPPER OR USE_NICOSIA)
         platform/graphics/haiku/HaikuUtilities.cpp
         platform/graphics/texmap/coordinated/CoordinatedGraphicsLayerHaiku.cpp
     )
-endif()
+endif ()
 
-if(ENABLE_GRAPHICS_CONTEXT_3D)
+if (ENABLE_GRAPHICS_CONTEXT_3D)
     list(APPEND WebCore_SOURCES
-        platform/graphics/haiku/GraphicsContext3DHaiku.cpp
-        platform/graphics/opengl/Extensions3DOpenGL.cpp
-        platform/graphics/opengl/Extensions3DOpenGLCommon.cpp
         platform/graphics/GLContext.cpp
         platform/graphics/OpenGLShims.cpp
         platform/graphics/PlatformDisplay.cpp
+
+        platform/graphics/haiku/GraphicsContext3DHaiku.cpp
+
+        platform/graphics/opengl/Extensions3DOpenGL.cpp
+        platform/graphics/opengl/Extensions3DOpenGLCommon.cpp
         platform/graphics/opengl/GraphicsContext3DOpenGLCommon.cpp
         platform/graphics/opengl/GraphicsContext3DOpenGL.cpp
         platform/graphics/opengl/TemporaryOpenGLSetting.cpp
     )
-endif()
+endif ()
 
 if (ENABLE_WEB_AUDIO)
     list(APPEND WebCore_SOURCES
