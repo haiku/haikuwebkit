@@ -30,7 +30,7 @@
 
 #include "NotImplemented.h"
 
-namespace WebCore{
+namespace WebCore {
 
 uintptr_t getBitmapUniqueID(BBitmap* bitmap)
 {

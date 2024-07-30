@@ -85,7 +85,7 @@ public:
 #elif PLATFORM(WIN)
     NativeWebMouseEvent(HWND, UINT message, WPARAM, LPARAM, bool);
 #elif PLATFORM(HAIKU)
-	NativeWebMouseEvent(BMessage*);
+    NativeWebMouseEvent(BMessage*);
 #endif
 
 #if USE(APPKIT)

@@ -65,9 +65,6 @@ namespace WebCore {
 
         void setCredentials(const char* username, const char* password);
         void updateFromDelegatePreservingOldProperties(const ResourceRequest& delegateProvidedRequest) { *this = delegateProvidedRequest; }
-        
-        template<class Encoder> void encode(Encoder&) const;
-        template<class Decoder> static bool decode(Decoder&, ResourceRequest&);
 
     private:
         friend class ResourceRequestBase;
@@ -82,19 +79,6 @@ namespace WebCore {
         BString fUsername;
         BString fPassword;
     };
-
-template<class Encoder>
-void ResourceRequest::encode(Encoder& encoder) const
-{
-	// TODO
-}
-
-template<class Decoder>
-bool ResourceRequest::decode(Decoder& decoder, ResourceRequest& request)
-{
-	// TODO
-	return false;
-}
 
 } // namespace WebCore
 

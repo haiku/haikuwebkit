@@ -33,8 +33,9 @@
 #else
     #define suppressNotImplementedWarning() false
 #endif
+
 #if LOG_DISABLED
-    #define notImplemnted() ((void)0)
+    #define notImplemented() ((void)0)
 #else
 
 namespace WebCore {
