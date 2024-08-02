@@ -33,6 +33,7 @@
 namespace WebKit {
 
 class PageLoadStateObserver final: public PageLoadState::Observer {
+    WTF_MAKE_FAST_ALLOCATED;
 public:
     PageLoadStateObserver(BLooper* looper) {}
 

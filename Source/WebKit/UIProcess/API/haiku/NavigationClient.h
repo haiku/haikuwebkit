@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Haiku, Inc. All rights reserved.
+ * Copyright (C) 2019, 2024 Haiku, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -24,41 +24,31 @@
  */
 #pragma once
 
-#include <wtf/RefPtr.h>
+#include "APINavigationClient.h"
 
-#include <memory>
-#include <Rect.h>
+class BWebView;
 
-class BLooper;
-class BMessage;
-class BWindow;
-
-namespace WebKit {
-class PageLoadStateObserver;
-class WebViewBase;
-}
-
-class BWebView {
-public:
-    BWebView(BRect, BWindow*);
-    void loadHTML();
-    void loadURIRequest(const char*); // use this in app to load a url
-    void loadURI(BMessage*);
-    void goForward();
-    void goBackward();
-    void stop();
-    void paintContent();
-    WebKit::WebViewBase* getRenderView();
-    const char* getCurrentURL();
-    BLooper* getAppLooper() { return fAppLooper; }
-
-    void navigationCallbacks();
-    double progress();
-    const char* title();
-
-private:
-    RefPtr<WebKit::WebViewBase> fWebViewBase;
-    std::unique_ptr<WebKit::PageLoadStateObserver> fObserver;
-    BLooper* fAppLooper;
+namespace API {
+class Navigation;
 };
 
+namespace WebKit {
+class Object;
+class WebPageProxy;
+};
+
+class NavigationClient : public API::NavigationClient {
+    WTF_MAKE_FAST_ALLOCATED;
+public:
+    explicit NavigationClient(BWebView* webView)
+        : m_webView(webView)
+    {
+    }
+
+private:
+    void didCommitNavigation(WebKit::WebPageProxy& page, API::Navigation* navigation, API::Object* userData) override;
+    void didReceiveServerRedirectForProvisionalNavigation(WebKit::WebPageProxy& page, API::Navigation* navigation, API::Object* userData) override;
+    void didFinishNavigation(WebKit::WebPageProxy& page, API::Navigation* navigation, API::Object* userData) override;
+
+    BWebView* m_webView;
+};
