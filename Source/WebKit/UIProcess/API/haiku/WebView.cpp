@@ -72,7 +72,7 @@ void BWebView::navigationCallbacks()
 {
     fWebViewBase->page()->setNavigationClient(makeUniqueRef<NavigationClient>(this));
 
-    fObserver = makeUnique<PageLoadStateObserver>(fAppLooper);
+    fObserver = makeUnique<PageLoadStateObserver>(this, fAppLooper);
     fWebViewBase->page()->pageLoadState().addObserver(*fObserver);
 }
 
