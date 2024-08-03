@@ -35,7 +35,9 @@ namespace WebKit {
 class PageLoadStateObserver final: public RefCounted<PageLoadStateObserver>, public PageLoadState::Observer {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(PageLoadStateObserver);
 public:
-    PageLoadStateObserver(BLooper* looper) {}
+    PageLoadStateObserver(BWebView* webView, BLooper* looper)
+        : webView(webView)
+        {}
 
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
@@ -49,6 +51,7 @@ public:
     void didChangeTitle() override
     {
         BMessage message(DID_CHANGE_TITLE);
+        message.AddString("title", webView->title());
         be_app->PostMessage(&message);
     }
 
@@ -64,6 +67,7 @@ public:
     void didChangeEstimatedProgress() override
     {
         BMessage message(DID_CHANGE_PROGRESS);
+        message.AddDouble("progress", webView->progress());
         be_app->PostMessage(&message);
     }
 
@@ -83,6 +87,9 @@ public:
     void didChangeWebProcessIsResponsive() override {}
 
     void didSwapWebProcesses() override{}
+
+private:
+    BWebView* webView;
 };
 
 }
