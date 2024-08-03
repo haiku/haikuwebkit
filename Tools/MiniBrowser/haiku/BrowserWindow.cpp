@@ -165,15 +165,21 @@ void BrowserWindow::MessageReceived(BMessage* message)
 			break;
 
 		case URL_CHANGE:
-			ChangeUrl(message);
+			const char* url;
+			message->FindString("url",&url);
+			ChangeUrl(url);
 			break;
 
 		case DID_CHANGE_PROGRESS:
-			LoadingProgress(fWebView->progress());
+			double progress;
+			message->FindDouble("progress", &progress);
+			LoadingProgress(progress);
 			break;
 
 		case DID_CHANGE_TITLE:
-			ChangeTitle(fWebView->title());
+			const char* title;
+			message->FindString("title", &title);
+			ChangeTitle(title);
 			break;
 
 		case STOP:
@@ -191,11 +197,9 @@ void BrowserWindow::SetStatus(const char* str)
 	m_statusText->SetText(str);
 }
 
-void BrowserWindow::ChangeUrl(BMessage* message)
+void BrowserWindow::ChangeUrl(const char* url)
 {
-	BString str;
-	message->FindString("url",&str);
-	m_url->SetText(str.String());
+	m_url->SetText(url);
 }
 
 void BrowserWindow::LoadingProgress(double value)
