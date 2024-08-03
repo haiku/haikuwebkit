@@ -29,7 +29,7 @@ public:
 	void Construct(BWebView*);
 private:
 	void SetStatus(const char*);
-	void ChangeUrl(BMessage*);
+	void ChangeUrl(const char*);
 	void LoadingProgress(double value);
 	void ChangeTitle(const char* title);
 
