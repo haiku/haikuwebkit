@@ -33,6 +33,9 @@
 
 #include "WebCore/Region.h"
 
+#include <View.h>
+#include <Window.h>
+
 #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
 #include "DrawingAreaProxyCoordinatedGraphics.h"
 #endif

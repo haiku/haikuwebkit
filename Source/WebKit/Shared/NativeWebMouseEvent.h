@@ -86,7 +86,7 @@ public:
 #elif PLATFORM(WIN)
     NativeWebMouseEvent(HWND, UINT message, WPARAM, LPARAM, bool, float deviceScaleFactor);
 #elif PLATFORM(HAIKU)
-    NativeWebMouseEvent(BMessage*);
+    NativeWebMouseEvent(const BMessage*);
 #endif
 
 #if USE(APPKIT)
@@ -98,7 +98,7 @@ public:
 #elif PLATFORM(WIN)
     const MSG* nativeEvent() const { return &m_nativeEvent; }
 #elif PLATFORM(HAIKU)
-    const BMessage* nativeEvent() const { return m_nativeEvent; }
+    const BMessage* nativeEvent() const { return &m_nativeEvent; }
 #else
     const void* nativeEvent() const { return nullptr; }
 #endif
@@ -115,7 +115,7 @@ private:
 #elif PLATFORM(WIN)
     MSG m_nativeEvent;
 #elif PLATFORM(HAIKU)
-    BMessage* m_nativeEvent;
+    BMessage m_nativeEvent;
 #endif
 };
 
