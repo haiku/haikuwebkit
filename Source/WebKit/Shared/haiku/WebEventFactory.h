@@ -23,8 +23,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef WebEventFactory_h
-#define WebEventFactory_h
+#pragma once
 
 #include "WebMouseEvent.h"
 
@@ -47,5 +46,3 @@ private:
 };
 
 } // namespace WebKit
-
-#endif // WebEventFactory_h
