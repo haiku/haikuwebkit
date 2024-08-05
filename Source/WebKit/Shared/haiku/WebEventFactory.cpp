@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Haiku Inc. All rights reserved.
+ * Copyright (C) 2019, 2024 Haiku Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,96 +26,96 @@
 #include "config.h"
 #include "WebEventFactory.h"
 
+#include "WebEventModifier.h"
+#include "WebMouseEvent.h"
 #include <WebCore/IntPoint.h>
+#include <wtf/WallTime.h>
+
+#include <AppDefs.h>
+#include <InterfaceDefs.h>
+#include <Message.h>
+#include <View.h>
 
 namespace WebKit {
+using namespace WebCore;
 
-enum {
-    BUTTON_PRESS = 'btps',
-    BUTTON_RELEASE = 'btrl',
-    MOUSE_MOVEMENT = 'mmmv',
-}
+int32_t WebEventFactory::currentMouseButtons = 0;
+WebMouseEventButton WebEventFactory::currentMouseButton = WebMouseEventButton::None;
 
-static inline int clickCount(WebEvent::Type type, WebMouseEvent::Button button, const POINT& position, int64_t timeStampSeconds)
+WebMouseEvent WebEventFactory::createWebMouseEvent(const BMessage* message)
 {
-    static int gLastClickCount;
-    static int64_t gLastClickTime;
-    static POINT lastClickPosition;
-    static WebMouseEvent::Button lastClickButton = WebMouseEvent::LeftButton;
-
-    bool cancelPreviousClick = 0;
-
-    if (type == WebEvent::MouseDown) {
-        if (!cancelPreviousClick && (button == lastClickButton))
-            ++gLastClickCount;
-        else {
-            gLastClickCount = 1;
-            lastClickPosition = position;
-        }
-        gLastClickTime = timeStampSeconds;
-        lastClickButton = button;
-    } else if (type == WebEvent::MouseMove) {
-        if (cancelPreviousClick) {
-            gLastClickCount = 0;
-            lastClickPosition.x = 0;
-            lastClickPosition.y = 0;
-            gLastClickTime = 0;
-        }
+    WebEventType type;
+    switch (message->what) {
+    case B_MOUSE_DOWN:
+        type = WebEventType::MouseDown;
+        break;
+    case B_MOUSE_UP:
+        type = WebEventType::MouseUp;
+        break;
+    case B_MOUSE_MOVED:
+        type = WebEventType::MouseMove;
+        break;
+    default:
+        ASSERT_NOT_REACHED();
     }
 
-    return gLastClickCount;
-}
+    int32_t previousMouseButtons = currentMouseButtons;
+    message->FindInt32("buttons", &currentMouseButtons);
 
-static inline WebMouseEvent::Button buttonForEvent(const BMessage* message)
-{
-    int32_t buttonType;
-    unsigned button = 0;
-    message->FindInt32("button",&buttonType);
-    switch (buttonType) {
-        case B_PRIMARY_MOUSE_BUTTON:
-            button = WebMouseEvent::LeftButton;
-            break;
-        case B_SECONDARY_MOUSE_BUTTON:
-            button = WebMouseEvent::RightButton;
-            break;
-        case B_TERTIARY_MOUSE_BUTTON:
-            button = WebMouseEvent::MiddleButton;
-            break;
+    // It doesn't appear that the message we receive indicates which mouse
+    // button was pressed to trigger the event, so we need to calculate it
+    // manually.
+    WebMouseEventButton button = WebMouseEventButton::None;
+    if (type != WebEventType::MouseMove) {
+        int32_t changedButtons = previousMouseButtons ^ currentMouseButtons;
+        if (changedButtons & B_TERTIARY_MOUSE_BUTTON)
+            button = WebMouseEventButton::Middle;
+        if (changedButtons & B_SECONDARY_MOUSE_BUTTON)
+            button = WebMouseEventButton::Right;
+        if (changedButtons & B_PRIMARY_MOUSE_BUTTON)
+            button = WebMouseEventButton::Left;
+
+        // Store the current button for MouseMove events
+        if (type == WebEventType::MouseDown)
+            currentMouseButton = button;
+        else if (type == WebEventType::MouseUp)
+            currentMouseButton = WebMouseEventButton::None;
+    } else {
+        button = currentMouseButton;
     }
 
-    return static_cast<WebMouseEvent::Button>(button);
-}
+    OptionSet<WebEventModifier> modifiers;
+    int32 nativeModifiers;
+    message->FindInt32("modifiers", &nativeModifiers);
+    if (nativeModifiers & B_SHIFT_KEY)
+        modifiers.add(WebEventModifier::ShiftKey);
+    if (nativeModifiers & B_COMMAND_KEY)
+        modifiers.add(WebEventModifier::ControlKey);
+    if (nativeModifiers & B_CONTROL_KEY)
+        modifiers.add(WebEventModifier::AltKey);
+    if (nativeModifiers & B_OPTION_KEY)
+        modifiers.add(WebEventModifier::MetaKey);
+    if (nativeModifiers & B_CAPS_LOCK)
+        modifiers.add(WebEventModifier::CapsLockKey);
 
-static WebMouseEvent createWebMouseEvent(const BMessage* message)
-{
-    WebEvent::Type type = static_cast<WebEvent::Type>(0);
-    int32_t mouseEventType;
-    message->FindInt32("type",&mouseEventType);
-    switch (mouseEventType) {
-        case BUTTON_PRESS:
-            type = WebEvent::MouseDown;
-            break;
-        case BUTTON_RELEASE:
-            type = WebEvent::MouseUp;
-            break;
-        case MOUSE_MOVEMENT:
-            type = WebEvent::MouseMove;
-            break;
-        default:
-            ASSERT_NOT_REACHED();
-    }
+    BPoint globalPosition;
+    message->FindPoint("screen_where", &globalPosition);
 
-    BPoint where;
-    message->FindPoint("where",&where);
+    BPoint viewPosition;
+    message->FindPoint("be:view_where", &viewPosition);
 
-    int64_t when;
-    message->FindInt64("when",&when);
+    int32 clickCount;
+    message->FindInt32("clicks", &clickCount);
 
-    /*return WebMouseEvent(
-    type,buttonForEvent(message),0,IntPoint(where),IntPoint(where),
-    0,0,0,
-    )*/
-    //it says some deltax delta y should it be added from be_deltax?
+    int32 deltaX;
+    int32 deltaY;
+    if (message->FindInt32("be:delta_x", &deltaX) != B_OK)
+        deltaX = 0;
+    if (message->FindInt32("be:delta_y", &deltaY) != B_OK)
+        deltaY = 0;
+
+    return WebMouseEvent( { type, modifiers, WallTime::now() }, currentMouseButton, currentMouseButtons,
+        IntPoint(viewPosition), IntPoint(globalPosition), deltaX, deltaY, 0, clickCount);
 }
 
 }

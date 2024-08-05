@@ -25,15 +25,19 @@
 #pragma once
 
 #include "APIObject.h"
-#include "WebCore/IntRect.h"
 
 #include <Rect.h>
 #include <View.h>
-#include <Window.h>
+
+class BWindow;
 
 namespace API {
 class PageConfiguration;
-};
+}
+
+namespace WebCore {
+class IntRect;
+}
 
 namespace WebKit {
 
@@ -53,12 +57,15 @@ public:
 
     // hook methods
     virtual void FrameResized(float, float);
-    virtual void Draw(BRect);
+    virtual void MouseDown(BPoint);
+    virtual void MouseUp(BPoint);
     virtual void MouseMoved(BPoint, uint32, const BMessage*);
+    virtual void Draw(BRect);
 private:
     WebViewBase(const char*, BRect, BWindow*, const API::PageConfiguration&);
 
     void paint(const WebCore::IntRect&);
+    void handleMouseEvent(BMessage* message);
 
     RefPtr<WebPageProxy> fPage;
     std::unique_ptr<PageClientImpl> fPageClient;
