@@ -22,7 +22,9 @@ list(APPEND WebKit_SOURCES
 
     Platform/unix/LoggingUnix.cpp
 
+    Shared/haiku/NativeWebMouseEventHaiku.cpp
     Shared/haiku/ProcessExecutablePathHaiku.cpp
+    Shared/haiku/WebEventFactory.cpp
     Shared/haiku/WebMemorySamplerHaiku.cpp
     Shared/unix/AuxiliaryProcessMain.cpp
 

@@ -27,6 +27,7 @@
 
 #include "APIPageConfiguration.h"
 #include "DrawingAreaProxy.h"
+#include "NativeWebMouseEvent.h"
 #include "PageClientImplHaiku.h"
 #include "PageLoadState.h"
 #include "WebPageGroup.h"
@@ -34,6 +35,8 @@
 #include "WebCore/IntRect.h"
 #include "WebCore/Region.h"
 #include "wtf/MainThread.h"
+
+#include <Window.h>
 
 #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
 #include "DrawingAreaProxyCoordinatedGraphics.h"
@@ -76,6 +79,21 @@ void WebViewBase::FrameResized(float newWidth, float newHeight)
 #endif
 }
 
+void WebViewBase::MouseDown(BPoint where)
+{
+    handleMouseEvent(Window()->CurrentMessage());
+}
+
+void WebViewBase::MouseUp(BPoint where)
+{
+    handleMouseEvent(Window()->CurrentMessage());
+}
+
+void WebViewBase::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
+{
+    handleMouseEvent(Window()->CurrentMessage());
+}
+
 void WebViewBase::Draw(BRect update)
 {
 #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
@@ -102,6 +120,8 @@ void WebViewBase::paint(const IntRect& dirtyRect)
 {
 }
 
-void WebViewBase::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
-{
+void WebViewBase::handleMouseEvent(BMessage* message) {
+    callOnMainRunLoop([this, message = *message](){
+        fPage->handleMouseEvent(NativeWebMouseEvent(&message));
+    });
 }
