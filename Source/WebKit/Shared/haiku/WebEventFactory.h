@@ -23,22 +23,26 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef WebEventFactory_h
-#define WebEventFactory_h
+#pragma once
 
-#include "WebEvent.h"
+#include "WebMouseEvent.h"
 
 class BMessage;
 
 namespace WebKit {
+class WebMouseEvent;
+class WebWheelEvent;
+class WebKeyboardEvent;
 
 class WebEventFactory {
 public:
     static WebMouseEvent createWebMouseEvent(const BMessage*);
     static WebWheelEvent createWebWheelEvent(const BMessage*);
     static WebKeyboardEvent createWebKeyboardEvent(const BMessage*);
+
+private:
+    static int32_t currentMouseButtons;
+    static WebMouseEventButton currentMouseButton;
 };
 
 } // namespace WebKit
-
-#endif // WebEventFactory_h
