@@ -24,8 +24,10 @@ list(APPEND WebKit_SOURCES
     Shared/CoordinatedGraphics/threadedcompositor/CompositingRunLoop.cpp
     Shared/CoordinatedGraphics/threadedcompositor/ThreadedCompositor.cpp
     Shared/CoordinatedGraphics/threadedcompositor/ThreadedDisplayRefreshMonitor.cpp
+    Shared/haiku/NativeWebMouseEventHaiku.cpp
     Shared/haiku/ProcessExecutablePathHaiku.cpp
     Shared/haiku/WebCoreArgumentCodersHaiku.cpp
+    Shared/haiku/WebEventFactory.cpp
     Shared/haiku/WebMemorySamplerHaiku.cpp
     Shared/unix/AuxiliaryProcessMain.cpp
 

@@ -97,7 +97,7 @@ public:
 #endif
 
 #if PLATFORM(HAIKU)
-        PlatformMouseEvent(const BMessage*);
+    PlatformMouseEvent(const BMessage*);
 #endif
 
 #if PLATFORM(GTK)
