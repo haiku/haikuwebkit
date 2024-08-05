@@ -53,7 +53,7 @@ public:
         return fWebView;
     }
     WebPageProxy* page() const { return fPage.get(); }
-    const char* currentURL();
+    const char* currentURL() const;
 
     // hook methods
     virtual void FrameResized(float, float);

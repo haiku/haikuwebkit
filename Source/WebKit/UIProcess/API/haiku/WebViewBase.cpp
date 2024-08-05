@@ -64,8 +64,9 @@ WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     }
 }
 
-void WebViewBase::paint(const IntRect& dirtyRect)
+const char* WebViewBase::currentURL() const
 {
+    return page()->pageLoadState().activeURL().utf8().data();
 }
 
 void WebViewBase::FrameResized(float newWidth, float newHeight)
@@ -115,9 +116,8 @@ void WebViewBase::Draw(BRect update)
 #endif
 }
 
-const char* WebViewBase::currentURL()
+void WebViewBase::paint(const IntRect& dirtyRect)
 {
-    return page()->pageLoadState().activeURL().utf8().data();
 }
 
 void WebViewBase::handleMouseEvent(BMessage* message) {
