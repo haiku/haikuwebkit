@@ -22,6 +22,7 @@
 #include "FontCustomPlatformData.h"
 
 #include "FontPlatformData.h"
+#include "NotImplemented.h"
 #include "SharedBuffer.h"
 
 #include "wtf/RefPtr.h"
@@ -77,6 +78,7 @@ bool FontCustomPlatformData::supportsFormat(const String& format)
 bool FontCustomPlatformData::supportsTechnology(const FontTechnology&)
 {
     // FIXME: define supported technologies for this platform (webkit.org/b/256310).
+    notImplemented();
     return true;
 }
 }
