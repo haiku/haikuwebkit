@@ -33,7 +33,7 @@ namespace WebCore {
 
 inline constexpr bool FontCascade::canReturnFallbackFontsForComplexText()
 {
-    return true;
+    return false;
 }
 
 inline constexpr bool FontCascade::canExpandAroundIdeographsInComplexText()
