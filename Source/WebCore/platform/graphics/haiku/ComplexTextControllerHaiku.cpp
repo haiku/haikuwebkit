@@ -26,11 +26,18 @@
 #include "ComplexTextController.h"
 
 #include "FontCascade.h"
+#include "NotImplemented.h"
 
 namespace WebCore {
 
 void ComplexTextController::collectComplexTextRunsForCharacters(std::span<const UChar> characters, unsigned stringLocation, const Font* font)
 {
+    // NOTE: if you implement this, you can probably stop FontCascade::codePath
+    // from always returning CodePath::Simple since we should then support the
+    // complex code path as well.
+    notImplemented();
+
+    // Create a run of missing glyphs from the primary font.
     m_complexTextRuns.append(ComplexTextRun::create(m_font.primaryFont(), characters, stringLocation, 0, characters.size(), m_run.ltr()));
 }
 

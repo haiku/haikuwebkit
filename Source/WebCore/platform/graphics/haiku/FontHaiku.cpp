@@ -42,14 +42,6 @@
 
 namespace WebCore {
 
-struct hack {
-    hack() {
-        /* We don't handle the complex text path yet, so just force the simple one */
-        FontCascade::setCodePath(FontCascade::CodePath::Simple);
-    }
-} hack;
-
-
 bool FontCascade::canReturnFallbackFontsForComplexText()
 {
     return false;
