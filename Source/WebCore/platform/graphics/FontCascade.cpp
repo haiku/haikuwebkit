@@ -631,6 +631,11 @@ FontCascade::CodePath FontCascade::codePath()
 
 FontCascade::CodePath FontCascade::codePath(const TextRun& run, std::optional<unsigned> from, std::optional<unsigned> to) const
 {
+#if PLATFORM(HAIKU)
+    // TODO: we only support the simple code path
+    return CodePath::Simple;
+#endif
+
     if (s_codePath != CodePath::Auto)
         return s_codePath;
 
