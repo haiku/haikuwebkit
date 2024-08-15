@@ -55,6 +55,7 @@ BWebView::BWebView(BRect frame, BWindow* myWindow)
 
     RefPtr<WebPreferences> prefs = WebPreferences::create(String(), "WebKit2."_s, "WebKit2."_s);
     prefs->setDeveloperExtrasEnabled(true);
+    prefs->setAcceleratedCompositingEnabled(false);
     config->setPreferences(WTFMove(prefs));
 
     RefPtr<API::ProcessPoolConfiguration> apiConfiguration = API::ProcessPoolConfiguration::create();
