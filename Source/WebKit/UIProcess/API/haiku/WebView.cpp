@@ -109,7 +109,7 @@ void BWebView::loadURI(BMessage* message)
 {
     const char* uri;
     message->FindString("url", &uri);
-    fWebViewBase->page()->loadRequest(URL { uri });
+    fWebViewBase->page()->loadRequest(URL { WTF::String::fromUTF8(uri) });
 }
 
 void BWebView::goForward()
