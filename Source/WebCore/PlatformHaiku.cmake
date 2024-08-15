@@ -199,17 +199,13 @@ set(WebCore_USER_AGENT_SCRIPTS
 set(WebCore_USER_AGENT_SCRIPTS_DEPENDENCIES ${WEBCORE_DIR}/rendering/haiku/RenderThemeHaiku.cpp)
 
 list(APPEND WebCore_LIBRARIES
-  ${ICU_LIBRARIES}
   ${JPEG_LIBRARY}
   ${LIBGCRYPT_LIBRARIES}
   ${LIBTASN1_LIBRARIES}
-  ${LIBXML2_LIBRARIES}
   ${LIBXSLT_LIBRARIES}
   ${PNG_LIBRARY}
   psl unistring idn2
-  ${SQLITE_LIBRARIES}
   ${WEBP_LIBRARIES}
-  ${ZLIB_LIBRARIES}
   be bsd network bnetapi textencoding translation execinfo shared
 )
 

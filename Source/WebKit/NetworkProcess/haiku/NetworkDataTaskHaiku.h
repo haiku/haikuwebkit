@@ -28,15 +28,15 @@
 #include "config.h"
 #include "NetworkDataTask.h"
 
+#if !USE(CURL)
+
 #include <wtf/MonotonicTime.h>
 
 #include <WebCore/ResourceResponse.h>
 #include <WebCore/ResourceRequest.h>
 #include <WebCore/NetworkLoadMetrics.h>
 
-#if !USE(CURL)
 #include <WebCore/HaikuFormDataStream.h>
-#endif
 
 #include <Path.h>
 #include <Referenceable.h>
@@ -107,3 +107,5 @@ private:
     int m_redirectionTries;
 };
 }
+
+#endif

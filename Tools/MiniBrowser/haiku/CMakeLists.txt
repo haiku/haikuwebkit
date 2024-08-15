@@ -1,20 +1,21 @@
-SET(MiniBrowser_SOURCES
+set(MiniBrowser_SOURCES
     ${TOOLS_DIR}/MiniBrowser/haiku/BrowserApp.cpp
     ${TOOLS_DIR}/MiniBrowser/haiku/BrowserWindow.cpp
 )
 
 set(MiniBrowser_PRIVATE_INCLUDE_DIRECTORIES
     ${CMAKE_BINARY_DIR}
-    ${WEBKIT_DIR}/UIProcess/API/
-    ${WEBKIT_DIR}/UIProcess/API/haiku
 )
 
-SET(MiniBrowser_PRIVATE_LIBRARIES
-    WebKit::WebKit
+set(MiniBrowser_FRAMEWORKS
+    WebKit
+)
+
+set(MiniBrowser_PRIVATE_LIBRARIES
     be
 )
 
-SET(MiniBrowser_DEPENDENCIES
+set(MiniBrowser_DEPENDENCIES
     NetworkProcess
     WebProcess
 )
