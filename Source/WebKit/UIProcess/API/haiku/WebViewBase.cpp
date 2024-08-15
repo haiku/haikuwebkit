@@ -51,8 +51,6 @@ WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     , fPageClient(makeUniqueWithoutRefCountedCheck<PageClientImpl>(*this))
 {
     auto config = pageConfig.copy();
-    auto preferences = config->preferences();
-    preferences.setAcceleratedCompositingEnabled(false);
 
     WebProcessPool& processPool = config->processPool();
     fPage = processPool.createWebPage(*fPageClient, WTFMove(config));
