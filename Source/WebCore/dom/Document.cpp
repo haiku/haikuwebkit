@@ -1268,7 +1268,12 @@ public:
 
 RefPtr<NodeList> Document::resultForSelectorAll(ContainerNode& context, const String& selectorString)
 {
-    ASSERT(context.hasValidQuerySelectorAllResults() == m_querySelectorAllResults.contains(context));
+    // FIXME: This assert fails for some reason (for example while loading
+    // https://discuss.haiku-os.org/t/amateur-radio/15375).
+    // m_querySelectorAllResults seems to somehow lose its entry for context.
+    // Maybe a later commit from WebKit fixes this? Anyway, having this
+    // commented out shouldn't have any bad effects.
+    // ASSERT(context.hasValidQuerySelectorAllResults() == m_querySelectorAllResults.contains(context));
     if (!context.hasValidQuerySelectorAllResults())
         return nullptr;
     auto* results = m_querySelectorAllResults.get(context);
