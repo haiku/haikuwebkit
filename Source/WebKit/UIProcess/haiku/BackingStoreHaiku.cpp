@@ -129,7 +129,9 @@ void BackingStore::scroll(const WebCore::IntRect& scrollRect, const WebCore::Int
     IntRect sourceRect = targetRect;
     sourceRect.move(-scrollOffset);
 
+    m_view.LockLooper();
     m_view.CopyBits(sourceRect, targetRect);
+    m_view.UnlockLooper();
 }
 
 } // namespace WebKit
