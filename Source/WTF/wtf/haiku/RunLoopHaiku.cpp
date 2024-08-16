@@ -73,16 +73,21 @@ class LoopHandler: public BHandler
 
 
 RunLoop::RunLoop()
-	: m_looper(nullptr)
+    : m_looper(nullptr)
+    , m_handler(new LoopHandler)
 {
-    m_handler = new LoopHandler();
+}
 
-    // We want to be able to queue messages before the RunLoop::run has been
-    // called, so we need to attach our handler to a looper now. However, we
-    // don't need to start the looper yet.
+RunLoop::~RunLoop()
+{
+    stop();
+    delete m_handler;
+}
 
+void RunLoop::run()
+{
+    // Find the looper that we should attach our handler to.
     BLooper* looper;
-
     BLooper* currentLooper = BLooper::LooperForThread(find_thread(NULL));
     if (currentLooper) {
         // This thread already has a looper (likely the BApplication looper).
@@ -103,35 +108,21 @@ RunLoop::RunLoop()
         } else {
             // No existing BLooper or BApplication is on this thread. Let's
             // create one and manage its lifecycle.
-            m_looper = looper = new BLooper();
+            current().m_looper = looper = new BLooper();
         }
     }
 
     looper->LockLooper();
-    looper->AddHandler(m_handler);
+    looper->AddHandler(current().m_handler);
     looper->UnlockLooper();
-}
 
-RunLoop::~RunLoop()
-{
-    stop();
-    delete m_handler;
-}
+    // There might already be messages available to process, so lets address
+    // those if there are any.
+    current().wakeUp();
 
-void RunLoop::run()
-{
     if (current().m_looper) {
-        // If we created a BLooper for this thread,
-        // make sure the thread will start calling performWork as soon as it can
-        RunLoop::current().wakeUp();
-        // then start the normal event loop
+        // We need to run the looper we created.
         current().m_looper->Loop();
-    } else {
-        // The existing BApplication/BLooper should already be running.
-        // FIXME: This means it is possible to process messages before the
-        // RunLoop officially starts. This shouldn't be a major problem,
-        // however, since, afaik, the code always starts the run loop
-        // immediately after it is created.
     }
 }
 
@@ -145,6 +136,8 @@ void RunLoop::stop()
     looper->Unlock();
 
     if (m_looper) {
+        // We created the looper that we attached to. We have to stop that as
+        // well.
         thread_id thread = m_looper->Thread();
         status_t ret;
 
@@ -157,9 +150,9 @@ void RunLoop::stop()
 
 void RunLoop::wakeUp()
 {
-    // WorkQueueBase::platformInvalidate stops the run loop and then dispatches
-    // a task to stop the RunLoop again. Well, we can't wake ourselves up when
-    // we're stopped (and, afaik, nor should we).
+    // We shouldn't wake up the looper if the RunLoop hasn't been started yet
+    // or after it has been shut down. Both of these can be caught simply by
+    // checking if there is a Looper available to message in the first place.
     if (m_handler->Looper())
         m_handler->Looper()->PostMessage('loop', m_handler);
 }
