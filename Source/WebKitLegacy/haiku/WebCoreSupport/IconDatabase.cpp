@@ -80,7 +80,7 @@ static String urlForLogging(const String& url)
 
     if (url.length() < urlTruncationLength)
         return url;
-    return url.substring(0, urlTruncationLength) + "...";
+    return makeString(url.substring(0, urlTruncationLength), "..."_s);
 }
 #endif
 
