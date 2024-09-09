@@ -76,8 +76,8 @@ WebCore::PlatformImagePtr ShareableBitmap::createPlatformImage(WebCore::BackingS
     status_t status;
 
     // Get area id of shared memory
-    void* address = data();
-    area_id area = area_for(address);
+    const void* address = span().data();
+    area_id area = area_for((void*)address);
     ASSERT(area >= B_OK);
 
     // Get offset in area to put our BBitmap
