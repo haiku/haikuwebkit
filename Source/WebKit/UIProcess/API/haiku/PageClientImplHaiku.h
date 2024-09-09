@@ -73,7 +73,6 @@ private:
     void doneWithKeyEvent(const NativeWebKeyboardEvent&, bool wasEventHandled) override;
     RefPtr<WebPopupMenuProxy> createPopupMenuProxy(WebPageProxy&) override;
     Ref<WebContextMenuProxy> createContextMenuProxy(WebPageProxy&, ContextMenuContextData&&, const UserData&) override;
-    void didClearEditorStateAfterPageTransition() override {}
 
 #if ENABLE(FULLSCREEN_API)
     WebFullScreenManagerProxyClient& fullScreenManagerProxyClient() override;
@@ -121,8 +120,9 @@ private:
 
     WebCore::IntPoint accessibilityScreenToRootView(const WebCore::IntPoint& point) final { return point; }
     WebCore::IntRect rootViewToAccessibilityScreen(const WebCore::IntRect& rect) final { return rect; }
-    void requestDOMPasteAccess(WebCore::DOMPasteAccessCategory, const WebCore::IntRect& elementRect, const String& originIdentifier, CompletionHandler<void(WebCore::DOMPasteAccessResponse)>&&) final {}
     void wheelEventWasNotHandledByWebCore(const NativeWebWheelEvent&) override;
+    void requestDOMPasteAccess(WebCore::DOMPasteAccessCategory, WebCore::DOMPasteRequiresInteraction, const WebCore::IntRect& elementRect, const String& originIdentifier, CompletionHandler<void(WebCore::DOMPasteAccessResponse)>&&) override {};
+
 
 private:
     DefaultUndoController fUndoController;

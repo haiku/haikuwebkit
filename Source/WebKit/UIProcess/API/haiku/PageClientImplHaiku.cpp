@@ -188,6 +188,7 @@ void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool 
 RefPtr<WebPopupMenuProxy> PageClientImpl::createPopupMenuProxy(WebPageProxy& page)
 {
     notImplemented();
+    return nullptr;
     //return WebPopupMenuProxyWin::create(&fWebView, page);
 }
 
