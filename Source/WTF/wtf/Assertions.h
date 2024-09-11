@@ -322,7 +322,13 @@ WTF_EXPORT_PRIVATE bool WTFIsDebuggerAttached(void);
     __builtin_unreachable(); \
 } while (0)
 #elif PLATFORM(HAIKU)
+#ifdef __cplusplus
+// Some WebKit namespaces define their own debugger or abort function. We need
+// to clarify which one to call.
+#define CRASH() (::debugger(__PRETTY_FUNCTION__), std::abort())
+#else
 #define CRASH() (debugger(__PRETTY_FUNCTION__), abort())
+#endif
 #define CRASH_UNDER_CONSTEXPR_CONTEXT() WTFBreakpointTrapUnderConstexprContext()
 #elif !ENABLE(DEVELOPER_MODE) && !OS(DARWIN)
 #ifdef __cplusplus
