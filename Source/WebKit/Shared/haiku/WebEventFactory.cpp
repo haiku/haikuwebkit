@@ -90,9 +90,9 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(const BMessage* message)
     if (nativeModifiers & B_SHIFT_KEY)
         modifiers.add(WebEventModifier::ShiftKey);
     if (nativeModifiers & B_COMMAND_KEY)
-        modifiers.add(WebEventModifier::ControlKey);
-    if (nativeModifiers & B_CONTROL_KEY)
         modifiers.add(WebEventModifier::AltKey);
+    if (nativeModifiers & B_CONTROL_KEY)
+        modifiers.add(WebEventModifier::ControlKey);
     if (nativeModifiers & B_OPTION_KEY)
         modifiers.add(WebEventModifier::MetaKey);
     if (nativeModifiers & B_CAPS_LOCK)
