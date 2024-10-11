@@ -28,7 +28,14 @@ Dependencies can be installed (for a gcc2hybrid version) via:
     libpsl_x86_devel libidn2_x86_devel libunistring_x86_devel lcms_x86_devel ninja_x86 \
     pkgconfig_x86 perl python3.10 ruby_x86 woff2_x86_devel
 
-(for other versions, remove the _x86 part from all package names)
+For the x86_64bit version:
+
+    $ pkgman install cmake curl_devel gcc gperf haiku_devel icu74_devel \
+    libavif_devel libjpeg_turbo_devel libjxl_devel sqlite_devel libpng16_devel \
+    libxml2_devel libxslt_devel libexecinfo_devel libwebp_devel \
+    libpsl_devel libidn2_devel libunistring_devel lcms_devel ninja \
+    pkgconfig perl python3.10 ruby woff2_devel
+
 
 Additionally if you want to run the tests:
 
