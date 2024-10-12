@@ -28,8 +28,11 @@
 
 #include "WebEventModifier.h"
 #include "WebMouseEvent.h"
+#include "WebKeyboardEvent.h"
+#include "WebCore/PlatformKeyboardEvent.h"
 #include <WebCore/IntPoint.h>
 #include <wtf/WallTime.h>
+#include <wtf/haiku/BeDC.h>
 
 #include <AppDefs.h>
 #include <InterfaceDefs.h>
@@ -116,6 +119,58 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(const BMessage* message)
 
     return WebMouseEvent( { type, modifiers, WallTime::now() }, currentMouseButton, currentMouseButtons,
         IntPoint(viewPosition), IntPoint(globalPosition), deltaX, deltaY, 0, clickCount);
+}
+
+WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(const BMessage* message)
+{
+    /*BeDC dc;
+    BMessage* forDC = const_cast<BMessage*>(message);
+    dc.DumpBMessage(forDC);*/
+
+    WebEventType type;
+    auto messageType = message->what;
+    if (messageType == B_KEY_DOWN || messageType == B_UNMAPPED_KEY_DOWN)
+        type = WebEventType::KeyDown;
+    else if (messageType == B_KEY_UP || messageType == B_UNMAPPED_KEY_UP)
+        type = WebEventType::KeyUp;
+    else
+        WTF_UNREACHABLE();
+
+    int32 nativeVirtualKeyCode;
+    int32 nativeModifiers;
+    int32 rawChar;
+    const char* bytes;
+    message->FindInt32("key", &nativeVirtualKeyCode);
+    message->FindInt32("modifiers", &nativeModifiers);
+    message->FindInt32("raw_char", &rawChar);
+    message->FindString("bytes", &bytes);
+
+    OptionSet<WebEventModifier> modifiers;
+    message->FindInt32("modifiers", &nativeModifiers);
+    if (nativeModifiers & B_SHIFT_KEY)
+        modifiers.add(WebEventModifier::ShiftKey);
+    if (nativeModifiers & B_COMMAND_KEY)
+        modifiers.add(WebEventModifier::AltKey);
+    if (nativeModifiers & B_CONTROL_KEY)
+        modifiers.add(WebEventModifier::ControlKey);
+    if (nativeModifiers & B_OPTION_KEY)
+        modifiers.add(WebEventModifier::MetaKey);
+    if (nativeModifiers & B_CAPS_LOCK)
+        modifiers.add(WebEventModifier::CapsLockKey);
+
+    return WebKeyboardEvent(
+        { type, modifiers, WallTime::now() }, //WebEvent
+        String::fromUTF8(bytes), // text
+        String::fromUTF8(bytes), // unmodifiedText
+        PlatformKeyboardEvent::KeyValueForKeyEvent(bytes, nativeVirtualKeyCode), // key
+        PlatformKeyboardEvent::KeyCodeForKeyEvent(nativeVirtualKeyCode), // code
+        PlatformKeyboardEvent::keyIdentifierForHaikuKeyCode(bytes[0], nativeVirtualKeyCode), // Keyidentifier
+        PlatformKeyboardEvent::windowsKeyCodeForKeyEvent(bytes[0], nativeVirtualKeyCode), // windowsVirtualKeyCode
+        nativeVirtualKeyCode, // nativeVirtualKeyCode
+        0,
+        false, // isAutoRepeat, No clue if this info is provided.
+        false, // isKeypad
+        false); //isSystemKey
 }
 
 }

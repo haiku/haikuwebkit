@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Haiku Inc. All rights reserved.
+ * Copyright (C) 2024 Haiku Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -23,27 +23,17 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#pragma once
+#include "config.h"
+#include "NativeWebKeyboardEvent.h"
 
-#include "WebMouseEvent.h"
-#include "WebKeyboardEvent.h"
-
-class BMessage;
+#include "WebEventFactory.h"
 
 namespace WebKit {
-class WebMouseEvent;
-class WebWheelEvent;
-class WebKeyboardEvent;
 
-class WebEventFactory {
-public:
-    static WebMouseEvent createWebMouseEvent(const BMessage*);
-    static WebWheelEvent createWebWheelEvent(const BMessage*);
-    static WebKeyboardEvent createWebKeyboardEvent(const BMessage*);
+NativeWebKeyboardEvent::NativeWebKeyboardEvent(const BMessage* keyboardEvent)
+	: WebKeyboardEvent(WebEventFactory::createWebKeyboardEvent(keyboardEvent))
+	, m_nativeEvent(keyboardEvent)
+{
+}
 
-private:
-    static int32_t currentMouseButtons;
-    static WebMouseEventButton currentMouseButton;
-};
-
-} // namespace WebKit
+}
