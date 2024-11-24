@@ -275,10 +275,18 @@ std::pair<String, PlatformFileHandle> openTemporaryFile(StringView prefix, Strin
     auto buffer = MallocSpan<char>::malloc(length);
     snprintf(buffer.mutableSpan().data(), length, "%s/%s-XXXXXX", directory, prefixUTF8.data());
 
+#if OS(HAIKU)
+    // Currently missing mkostemp
+    handle = mkstemp(buffer.mutableSpan().data());
+#else
     handle = mkostemp(buffer.mutableSpan().data(), O_CLOEXEC);
+#endif
     if (handle < 0)
         goto end;
 
+#if OS(HAIKU)
+    fcntl(handle, F_SETFD, FD_CLOEXEC);
+#endif
     return { String::fromUTF8(buffer.span().data()), handle };
 
 end:
