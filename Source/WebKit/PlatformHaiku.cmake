@@ -19,11 +19,6 @@ list(APPEND WebKit_SOURCES
     Platform/unix/LoggingUnix.cpp
 
     Shared/WebCoreArgumentCoders.cpp
-    Shared/CoordinatedGraphics/CoordinatedGraphicsScene.cpp
-    Shared/CoordinatedGraphics/SimpleViewportController.cpp
-    Shared/CoordinatedGraphics/threadedcompositor/CompositingRunLoop.cpp
-    Shared/CoordinatedGraphics/threadedcompositor/ThreadedCompositor.cpp
-    Shared/CoordinatedGraphics/threadedcompositor/ThreadedDisplayRefreshMonitor.cpp
     Shared/haiku/NativeWebMouseEventHaiku.cpp
     Shared/haiku/ProcessExecutablePathHaiku.cpp
     Shared/haiku/WebCoreArgumentCodersHaiku.cpp
@@ -48,11 +43,20 @@ list(APPEND WebKit_SOURCES
     WebProcess/haiku/WebProcessMainHaiku.cpp
     WebProcess/InjectedBundle/haiku/InjectedBundleHaiku.cpp
     WebProcess/WebPage/AcceleratedSurface.cpp
-    WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
-    WebProcess/WebPage/CoordinatedGraphics/CompositingCoordinator.cpp
     WebProcess/WebPage/haiku/WebInspectorHaiku.cpp
     WebProcess/WebPage/haiku/WebPageHaiku.cpp
 )
+
+if (USE_COORDINATED_GRAPHICS)
+    list(APPEND WebKit_SOURCES
+        WebProcess/WebPage/CoordinatedGraphics/CompositingRunLoop.cpp
+        WebProcess/WebPage/CoordinatedGraphics/CoordinatedGraphicsScene.cpp
+        WebProcess/WebPage/CoordinatedGraphics/LayerTreeHost.cpp
+        WebProcess/WebPage/CoordinatedGraphics/ThreadedCompositor.cpp
+        WebProcess/WebPage/CoordinatedGraphics/ThreadedDisplayRefreshMonitor.cpp
+    )
+endif ()
+
 
 if (USE_TEXTURE_MAPPER)
     list(APPEND WebKit_SOURCES
