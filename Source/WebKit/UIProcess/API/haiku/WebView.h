@@ -57,7 +57,7 @@ public:
 
 private:
     RefPtr<WebKit::WebViewBase> fWebViewBase;
-    std::unique_ptr<WebKit::PageLoadStateObserver> fObserver;
+    RefPtr<WebKit::PageLoadStateObserver> fObserver;
     BLooper* fAppLooper;
 };
 
