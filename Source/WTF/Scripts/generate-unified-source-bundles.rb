@@ -202,6 +202,7 @@ class BundleManager
     def initialize(extension, max)
         @extension = extension
         @fileCount = 0
+        @emptyCount = 0
         @bundleCount = 0
         @currentBundleText = ""
         @maxCount = max
@@ -235,14 +236,17 @@ class BundleManager
     end
 
     def flush
-        @bundleCount += 1
-        bundleFile = bundleFileName
-        $generatedSources << $unifiedSourceOutputPath + bundleFile
-        @extraFiles << bundleFile if @maxCount and @bundleCount > @maxCount
+        if @emptyCount != @fileCount
+            @bundleCount += 1
+            bundleFile = bundleFileName
+            $generatedSources << $unifiedSourceOutputPath + bundleFile
+            @extraFiles << bundleFile if @maxCount and @bundleCount > @maxCount
 
-        writeFile(bundleFile, @currentBundleText)
+            writeFile(bundleFile, @currentBundleText)
+        end
         @currentBundleText = ""
         @fileCount = 0
+        @emptyCount = 0
     end
 
     def flushToMax
@@ -269,8 +273,20 @@ class BundleManager
             log("Flushing because new bundle is full (#{@fileCount} sources)")
             flush
         end
-        @currentBundleText += "#include \"#{sourceFile}\"\n"
-        @fileCount += 1
+        if sourceFile.unifiable
+            @currentBundleText += "#include \"#{sourceFile}\"\n"
+            @fileCount += 1
+        else
+            savedBundleText = @currentBundleText
+            savedFileCount = @fileCount
+            savedEmptyCount = @emptyCount
+            @emptyCount = 0
+            @currentBundleText = "#include \"#{sourceFile}\"\n"
+            flush
+            @currentBundleText = savedBundleText
+            @fileCount = savedFileCount + 1
+            @emptyCount = savedEmptyCount + 1
+        end
     end
 end
 
@@ -302,7 +318,7 @@ def ProcessFileForUnifiedSourceGeneration(sourceFile)
     if !bundle
         log("No bundle for #{path.extname} files, building #{path} standalone")
         $generatedSources << sourceFile
-    elsif !sourceFile.unifiable
+    elsif !(sourceFile.unifiable or sourceFile.derived?)
         log("Not allowed to unify #{path}, building standalone")
         $generatedSources << sourceFile
     else

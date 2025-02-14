@@ -3723,7 +3723,7 @@ JSDOMStringList.cpp
 JSDOMStringMap.cpp
 JSDOMTokenList.cpp
 JSDOMURL.cpp
-JSDOMWindow.cpp
+JSDOMWindow.cpp @no-unify
 JSDataCue.cpp
 JSDataTransfer.cpp
 JSDataTransferItem.cpp

@@ -70,7 +70,7 @@ On a gcc2hybrid (32bit) Haiku:
 
     $ PKG_CONFIG_LIBDIR=/boot/system/develop/lib/x86/pkgconfig \
         CC=gcc-x86 CXX=g++-x86 Tools/Scripts/build-webkit \
-        --cmakeargs="-DCMAKE_AR=/bin/ar-x86 -DCMAKE_RANLIB=/bin/ranlib-x86 -DCMAKE_CXX_FLAGS='-ftrack-macro-expansion=0 --param ggc-min-expand=10' -DENABLE_UNIFIED_BUILDS=0" --haiku \
+        --cmakeargs="-DCMAKE_AR=/bin/ar-x86 -DCMAKE_RANLIB=/bin/ranlib-x86 -DCMAKE_CXX_FLAGS='-ftrack-macro-expansion=0 --param ggc-min-expand=10'" --haiku \
         --no-fatal-warnings
 
 On other versions:
