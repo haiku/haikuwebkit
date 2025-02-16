@@ -27,7 +27,10 @@
 
 #include "DrawingAreaProxy.h"
 #include "WebProcessProxy.h"
+#include "WebColorPicker.h"
+#include "WebDataListSuggestionsDropdown.h"
 #include "WebViewBase.h"
+
 #include "WebCore/Region.h"
 
 #if USE(COORDINATED_GRAPHICS) || USE(TEXTURE_MAPPER)
@@ -167,7 +170,12 @@ IntPoint PageClientImpl::screenToRootView(const IntPoint& point)
 
 IntRect PageClientImpl::rootViewToScreen(const IntRect& rect)
 {
-    return IntRect();
+    return rect;
+}
+
+IntPoint PageClientImpl::rootViewToScreen(const IntPoint& point)
+{
+    return point;
 }
 
 void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool wasEventHandled)
@@ -190,8 +198,13 @@ Ref<WebContextMenuProxy> PageClientImpl::createContextMenuProxy(WebPageProxy& pa
 }
 #endif
 
-RefPtr<WebColorPicker> PageClientImpl::createColorPicker(WebPageProxy*, const WebCore::Color& intialColor,
+RefPtr<WebColorPicker> PageClientImpl::createColorPicker(WebPageProxy&, const WebCore::Color& intialColor,
     const WebCore::IntRect&, WebKit::ColorControlSupportsAlpha, Vector<WebCore::Color>&&)
+{
+    return nullptr;
+}
+
+WTF::RefPtr<WebKit::WebDataListSuggestionsDropdown> PageClientImpl::createDataListSuggestionsDropdown(WebKit::WebPageProxy&)
 {
     return nullptr;
 }
@@ -319,13 +332,11 @@ WebViewBase* PageClientImpl::viewWidget()
     return &fWebView;
 }
 
-#if ENABLE(DATE_AND_TIME_INPUT_TYPES)
 RefPtr<WebDateTimePicker> PageClientImpl::createDateTimePicker(WebPageProxy& page)
 {
     //return WebDateTimePickerHaiku::create(page);
     return nullptr;
 }
-#endif
 
 #if ENABLE(FULLSCREEN_API)
 WebFullScreenManagerProxyClient& PageClientImpl::fullScreenManagerProxyClient()
