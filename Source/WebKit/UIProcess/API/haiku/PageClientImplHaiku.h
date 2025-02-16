@@ -68,6 +68,7 @@ private:
     WebCore::FloatRect convertToUserSpace(const WebCore::FloatRect&) override;
     WebCore::IntPoint screenToRootView(const WebCore::IntPoint&) override;
     WebCore::IntRect rootViewToScreen(const WebCore::IntRect&) override;
+    WebCore::IntPoint rootViewToScreen(const WebCore::IntPoint&) override;
     void doneWithKeyEvent(const NativeWebKeyboardEvent&, bool wasEventHandled) override;
     RefPtr<WebPopupMenuProxy> createPopupMenuProxy(WebPageProxy&) override;
     Ref<WebContextMenuProxy> createContextMenuProxy(WebPageProxy&, FrameInfoData&&, ContextMenuContextData&&, const UserData&) override;
@@ -76,14 +77,13 @@ private:
     WebFullScreenManagerProxyClient& fullScreenManagerProxyClient() override;
 #endif
 
-#if ENABLE(DATE_AND_TIME_INPUT_TYPES)
     RefPtr<WebKit::WebDateTimePicker> createDateTimePicker(WebPageProxy&) override;
-#endif
 
-#if ENABLE(INPUT_TYPE_COLOR)
-    RefPtr<WebColorPicker> createColorPicker(WebPageProxy*, const WebCore::Color& intialColor,
+    RefPtr<WebColorPicker> createColorPicker(WebPageProxy&, const WebCore::Color& intialColor,
         const WebCore::IntRect&, WebKit::ColorControlSupportsAlpha, Vector<WebCore::Color>&&) override;
-#endif
+
+    WTF::RefPtr<WebKit::WebDataListSuggestionsDropdown>
+        createDataListSuggestionsDropdown(WebKit::WebPageProxy&) override;
 
     void enterAcceleratedCompositingMode(const LayerTreeContext&) override;
     void exitAcceleratedCompositingMode() override;
