@@ -47,6 +47,7 @@
 #include <WebCore/PrivateClickMeasurement.h>
 #include <WebCore/RegistrableDomain.h>
 #include <WebCore/ResourceRequest.h>
+#include <WebCore/SpatialBackdropSource.h>
 #include <pal/HysteresisActivity.h>
 #include <wtf/UUID.h>
 
@@ -205,6 +206,7 @@ struct PrivateClickMeasurementAndMetadata {
     String purchaser;
 };
 
+#if ENABLE(SPEECH_SYNTHESIS)
 struct SpeechSynthesisData {
     Ref<WebCore::PlatformSpeechSynthesizer> synthesizer;
     RefPtr<WebCore::PlatformSpeechSynthesisUtterance> utterance;
@@ -212,7 +214,10 @@ struct SpeechSynthesisData {
     CompletionHandler<void()> speakingFinishedCompletionHandler;
     CompletionHandler<void()> speakingPausedCompletionHandler;
     CompletionHandler<void()> speakingResumedCompletionHandler;
+
+    Ref<WebCore::PlatformSpeechSynthesizer> protectedSynthesizer() { return synthesizer; }
 };
+#endif
 
 #if ENABLE(TOUCH_EVENTS)
 
@@ -326,6 +331,9 @@ public:
     WebCore::ScrollPinningBehavior scrollPinningBehavior { WebCore::ScrollPinningBehavior::DoNotPin };
     WebCore::IntSize sizeToContentAutoSizeMaximumSize;
     WebCore::Color themeColor;
+#if ENABLE(WEB_PAGE_SPATIAL_BACKDROP)
+    std::optional<WebCore::SpatialBackdropSource> spatialBackdropSource;
+#endif
     RunLoop::Timer tryCloseTimeoutTimer;
     WebCore::Color underPageBackgroundColorOverride;
     WebCore::Color underlayColor;
@@ -350,7 +358,7 @@ public:
 
 #if PLATFORM(COCOA)
     WeakObjCPtr<WKWebView> cocoaView;
-    TransactionID firstLayerTreeTransactionIdAfterDidCommitLoad;
+    std::optional<TransactionID> firstLayerTreeTransactionIdAfterDidCommitLoad;
 #endif
 
 #if ENABLE(CONTEXT_MENUS)
@@ -415,7 +423,7 @@ public:
     MonotonicTime didCommitLoadForMainFrameTimestamp;
 
 #if ENABLE(UI_SIDE_COMPOSITING)
-    VisibleContentRectUpdateInfo lastVisibleContentRectUpdate;
+    std::optional<VisibleContentRectUpdateInfo> lastVisibleContentRectUpdate;
 #endif
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)
@@ -455,7 +463,9 @@ public:
 
     Ref<WebPageProxy> protectedPage() const;
 
+#if ENABLE(SPEECH_SYNTHESIS)
     SpeechSynthesisData& speechSynthesisData();
+#endif
 
     // WebPopupMenuProxy::Client
     void valueChangedForPopupMenu(WebPopupMenuProxy*, int32_t newSelectedIndex) final;
@@ -526,6 +536,7 @@ public:
 #if ENABLE(WINDOW_PROXY_PROPERTY_ACCESS_NOTIFICATION)
     RefPtr<WebPageProxyFrameLoadStateObserver> protectedFrameLoadStateObserver() { return frameLoadStateObserver.get(); }
 #endif
+    Ref<GeolocationPermissionRequestManagerProxy> protectedGeolocationPermissionRequestManager() { return geolocationPermissionRequestManager; }
 };
 
 } // namespace WebKit

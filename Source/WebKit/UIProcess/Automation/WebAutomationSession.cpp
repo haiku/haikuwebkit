@@ -2069,9 +2069,10 @@ void WebAutomationSession::performMouseInteraction(const Inspector::Protocol::Au
             if (error)
                 callback->sendFailure(error.value().toProtocolString());
             else {
+                auto obscuredContentInsets = page->obscuredContentInsets();
                 callback->sendSuccess(Inspector::Protocol::Automation::Point::create()
-                    .setX(floatX)
-                    .setY(floatY - page->topContentInset())
+                    .setX(floatX - obscuredContentInsets.left())
+                    .setY(floatY - obscuredContentInsets.top())
                     .release());
             }
         };
@@ -2572,10 +2573,12 @@ Ref<Inspector::BackendDispatcher> WebAutomationSession::protectedBackendDispatch
     return m_backendDispatcher;
 }
 
+#if ENABLE(REMOTE_INSPECTOR)
 Ref<WebAutomationSession::Debuggable> WebAutomationSession::protectedDebuggable() const
 {
     return m_debuggable;
 }
+#endif
 
 static String logEntryLevelForMessage(const JSC::MessageType& messageType, const MessageLevel& messageLevel)
 {

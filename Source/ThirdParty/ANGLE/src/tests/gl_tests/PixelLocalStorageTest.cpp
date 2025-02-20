@@ -4315,7 +4315,7 @@ TEST_P(PixelLocalStorageValidationTest, FramebufferTexturePixelLocalStorageANGLE
     glTexStorage2D(GL_TEXTURE_2D, 3, GL_R32UI, 10, 10);
     glFramebufferTexturePixelLocalStorageANGLE(2, tex, -1, 0);
     EXPECT_GL_SINGLE_ERROR(GL_INVALID_VALUE);
-    EXPECT_GL_SINGLE_ERROR_MSG("Level is negative.");
+    EXPECT_GL_SINGLE_ERROR_MSG("Negative level.");
 
     // GL_INVALID_VALUE is generated if <backingtexture> is nonzero and <level> >= the immutable
     // number of mipmap levels in <backingtexture>.
@@ -5273,11 +5273,11 @@ TEST_P(PixelLocalStorageValidationTest, EndAndBarrierANGLE)
 
     glEndPixelLocalStorageANGLE(3, GLenumArray({GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE}));
     EXPECT_GL_SINGLE_ERROR(GL_INVALID_VALUE);
-    EXPECT_GL_SINGLE_ERROR_MSG("<n> != ACTIVE_PIXEL_LOCAL_STORAGE_PLANES_ANGLE");
+    EXPECT_GL_SINGLE_ERROR_MSG("<n> != ACTIVE_PIXEL_LOCAL_STORAGE_PLANES_ANGLE.");
 
     glEndPixelLocalStorageANGLE(1, GLenumArray({GL_DONT_CARE}));
     EXPECT_GL_SINGLE_ERROR(GL_INVALID_VALUE);
-    EXPECT_GL_SINGLE_ERROR_MSG("<n> != ACTIVE_PIXEL_LOCAL_STORAGE_PLANES_ANGLE");
+    EXPECT_GL_SINGLE_ERROR_MSG("<n> != ACTIVE_PIXEL_LOCAL_STORAGE_PLANES_ANGLE.");
 
     glEndPixelLocalStorageANGLE(2, GLenumArray({GL_DONT_CARE, GL_DONT_CARE}));
     ASSERT_GL_NO_ERROR();

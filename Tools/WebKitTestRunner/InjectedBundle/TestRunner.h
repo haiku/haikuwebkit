@@ -66,6 +66,24 @@ public:
 #endif
     }
 
+    bool haveSecureCodingRequest() const
+    {
+#if HAVE(WK_SECURE_CODING_NSURLREQUEST)
+        return true;
+#else
+        return false;
+#endif
+    }
+
+    bool haveSecureCodingDataDetectors() const
+    {
+#if HAVE(WK_SECURE_CODING_DATA_DETECTORS)
+        return true;
+#else
+        return false;
+#endif
+    }
+
     bool keyboardAppearsOverContent() const
     {
 #if PLATFORM(VISION)
@@ -548,13 +566,14 @@ public:
     void updatePresentation(JSContextRef, JSValueRef callback);
     void waitBeforeFinishingFullscreenExit();
     void finishFullscreenExit();
+    void requestExitFullscreenFromUIProcess();
 
     // Reporting API
     void generateTestReport(JSContextRef, JSStringRef message, JSStringRef group);
 
     void getAndClearReportedWindowProxyAccessDomains(JSContextRef, JSValueRef);
 
-    void setTopContentInset(JSContextRef, double, JSValueRef);
+    void setObscuredContentInsets(JSContextRef, double top, double right, double bottom, double left, JSValueRef);
 
     void setPageScaleFactor(JSContextRef, double scaleFactor, long x, long y, JSValueRef callback);
 

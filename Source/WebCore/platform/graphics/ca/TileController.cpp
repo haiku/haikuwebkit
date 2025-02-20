@@ -314,10 +314,10 @@ void TileController::setScrollability(OptionSet<Scrollability> scrollability)
     notePendingTileSizeChange();
 }
 
-void TileController::setTopContentInset(float topContentInset)
+void TileController::setObscuredContentInsets(const FloatBoxExtent& obscuredContentInsets)
 {
-    m_topContentInset = topContentInset;
-    setTiledScrollingIndicatorPosition(FloatPoint(0, m_topContentInset));
+    m_obscuredContentInsets = obscuredContentInsets;
+    setTiledScrollingIndicatorPosition({ obscuredContentInsets.left(), obscuredContentInsets.top() });
 }
 
 void TileController::setTiledScrollingIndicatorPosition(const FloatPoint& position)
@@ -666,7 +666,7 @@ IntSize TileController::computeTileSize()
     } else if (m_scrollability == Scrollability::VerticallyScrollable)
         tileSize.setWidth(std::min(std::max<int>(ceilf(boundsWithoutMargin().width() * tileGrid().scale()), kDefaultTileSize), maxTileSize.width()));
 
-    LOG_WITH_STREAM(Scrolling, stream << "TileController::tileSize newSize=" << tileSize);
+    LOG_WITH_STREAM(Tiling, stream << "TileController::tileSize newSize=" << tileSize);
 
     m_tileSizeLocked = true;
     return tileSize;

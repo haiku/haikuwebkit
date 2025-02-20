@@ -558,8 +558,6 @@ LocalOrTempIndex ControlData::enclosedHeight() const
 
 unsigned ControlData::implicitSlots() const
 {
-    if (Options::useWasmIPInt())
-        return (isTry(*this) || isAnyCatch(*this)) ? 1 : 0;
     return isAnyCatch(*this) ? 1 : 0;
 }
 
@@ -3055,8 +3053,10 @@ ControlData WARN_UNUSED_RETURN BBQJIT::addTopLevel(BlockSignature signature)
 
     MacroAssembler::JumpList overflow;
     JIT_COMMENT(m_jit, "Stack overflow check");
+#if !CPU(ADDRESS64)
     overflow.append(m_jit.branchPtr(CCallHelpers::Above, wasmScratchGPR, GPRInfo::callFrameRegister));
-    overflow.append(m_jit.branchPtr(CCallHelpers::Below, wasmScratchGPR, CCallHelpers::Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfSoftStackLimit())));
+#endif
+    overflow.append(m_jit.branchPtr(CCallHelpers::LessThan, wasmScratchGPR, CCallHelpers::Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfSoftStackLimit())));
     overflow.linkThunk(CodeLocationLabel<JITThunkPtrTag>(Thunks::singleton().stub(throwStackOverflowFromWasmThunkGenerator).code()), &m_jit);
 
     m_jit.move(wasmScratchGPR, MacroAssembler::stackPointerRegister);
@@ -3217,8 +3217,10 @@ MacroAssembler::Label BBQJIT::addLoopOSREntrypoint()
     // The loop_osr slow path should have already checked that we have enough space. We have already destroyed the llint stack, and unwind will see the BBQ catch
         // since we already replaced callee. So, we just assert that this case doesn't happen to avoid reading a corrupted frame from the bbq catch handler.
     MacroAssembler::JumpList overflow;
+#if !CPU(ADDRESS64)
     overflow.append(m_jit.branchPtr(CCallHelpers::Above, MacroAssembler::stackPointerRegister, GPRInfo::callFrameRegister));
-    overflow.append(m_jit.branchPtr(CCallHelpers::Below, MacroAssembler::stackPointerRegister, CCallHelpers::Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfSoftStackLimit())));
+#endif
+    overflow.append(m_jit.branchPtr(CCallHelpers::LessThanOrEqual, MacroAssembler::stackPointerRegister, CCallHelpers::Address(GPRInfo::wasmContextInstancePointer, JSWebAssemblyInstance::offsetOfSoftStackLimit())));
     overflow.linkThunk(CodeLocationLabel<JITThunkPtrTag>(Thunks::singleton().stub(crashDueToBBQStackOverflowGenerator).code()), &m_jit);
 
     // This operation shuffles around values on the stack, until everything is in the right place. Then,
@@ -3301,6 +3303,12 @@ B3::ValueRep BBQJIT::toB3Rep(Location location)
 StackMap BBQJIT::makeStackMap(const ControlData& data, Stack& enclosingStack)
 {
     unsigned numElements = m_locals.size() + data.enclosedHeight() + data.argumentLocations().size();
+    if (Options::useWasmIPInt()) {
+        for (const ControlEntry& entry : m_parser->controlStack()) {
+            if (BBQJIT::ControlData::isTry(entry.controlData))
+                ++numElements;
+        }
+    }
 
     StackMap stackMap(numElements);
     unsigned stackMapIndex = 0;
@@ -3310,7 +3318,10 @@ StackMap BBQJIT::makeStackMap(const ControlData& data, Stack& enclosingStack)
     if (Options::useWasmIPInt()) {
         // Do rethrow slots first because IPInt has them in a shadow stack.
         for (const ControlEntry& entry : m_parser->controlStack()) {
-            for (unsigned i = 0; i < entry.controlData.implicitSlots(); i ++) {
+            unsigned numSlots = entry.controlData.implicitSlots();
+            if (BBQJIT::ControlData::isTry(entry.controlData))
+                ++numSlots;
+            for (unsigned i = 0; i < numSlots; i ++) {
                 Value exception = this->exception(entry.controlData);
                 stackMap[stackMapIndex ++] = OSREntryValue(toB3Rep(locationOf(exception)), B3::Int64); // Exceptions are EncodedJSValues, so they are always Int64
             }

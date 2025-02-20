@@ -159,7 +159,7 @@ public:
     bool canAccessRules() const;
 
     String debugDescription() const final;
-    String cssTextWithReplacementURLs(const UncheckedKeyHashMap<String, String>&, const UncheckedKeyHashMap<RefPtr<CSSStyleSheet>, String>&);
+    String cssText(const CSS::SerializationContext&);
     void getChildStyleSheets(UncheckedKeyHashSet<RefPtr<CSSStyleSheet>>&);
 
     bool isDetached() const;
@@ -170,7 +170,7 @@ private:
     CSSStyleSheet(Ref<StyleSheetContents>&&, Node& ownerNode, const TextPosition& startPosition, bool isInlineStylesheet, const std::optional<bool>&);
     CSSStyleSheet(Ref<StyleSheetContents>&&, Document&, Init&&);
 
-    void forEachStyleScope(const Function<void(Style::Scope&)>&);
+    void forEachStyleScope(NOESCAPE const Function<void(Style::Scope&)>&);
 
     bool isCSSStyleSheet() const final { return true; }
     String type() const final { return cssContentTypeAtom(); }

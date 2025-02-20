@@ -36,11 +36,13 @@
 #include "SharedBuffer.h"
 #include "VideoSinkGStreamer.h"
 #include "WebKitAudioSinkGStreamer.h"
+#include <fnmatch.h>
 #include <gst/audio/audio-info.h>
 #include <gst/gst.h>
 #include <mutex>
 #include <wtf/FileSystem.h>
 #include <wtf/HashMap.h>
+#include <wtf/MallocSpan.h>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/PrintStream.h>
 #include <wtf/RecursiveLockAdapter.h>
@@ -801,7 +803,7 @@ GstMappedAudioBuffer::GstMappedAudioBuffer(GstBuffer* buffer, GstAudioInfo info,
     m_isValid = gst_audio_buffer_map(&m_buffer, &info, buffer, flags);
 }
 
-GstMappedAudioBuffer::GstMappedAudioBuffer(GRefPtr<GstSample> sample, GstMapFlags flags)
+GstMappedAudioBuffer::GstMappedAudioBuffer(const GRefPtr<GstSample>& sample, GstMapFlags flags)
 {
     GstAudioInfo info;
 
@@ -839,6 +841,44 @@ GstAudioInfo* GstMappedAudioBuffer::info()
 
     return &m_buffer.info;
 }
+
+template<typename T> Vector<std::span<T>> GstMappedAudioBuffer::samples(size_t offset) const
+{
+    RELEASE_ASSERT(m_isValid);
+    if (!m_isValid)
+        return Vector<std::span<T>> { };
+
+    auto planeCount = static_cast<uint32_t>(GST_AUDIO_INFO_CHANNELS(&m_buffer.info));
+    auto planeSizeTotal = m_buffer.n_samples * GST_AUDIO_INFO_BPS(&m_buffer.info);
+
+    if (GST_AUDIO_INFO_LAYOUT(&m_buffer.info) == GST_AUDIO_LAYOUT_INTERLEAVED) {
+        auto planeSizeInBytes = (m_buffer.n_samples - offset) * GST_AUDIO_INFO_BPS(&m_buffer.info);
+        Vector<std::span<T>> result;
+        result.reserveInitialCapacity(planeCount);
+        for (uint32_t i = 0; i < planeCount; i++) {
+            auto plane = MallocSpan<T>::malloc(planeSizeInBytes);
+            result.append(plane.leakSpan());
+        }
+
+        auto inputSpan = unsafeMakeSpan(reinterpret_cast<T*>(m_buffer.planes[0]), planeSizeTotal * planeCount);
+        for (uint32_t s = offset; s < m_buffer.n_samples; s++) {
+            for (uint32_t c = 0; c < planeCount; c++)
+                result[c][s] = inputSpan[s * planeCount + c];
+        }
+        return result;
+    }
+
+    RELEASE_ASSERT(GST_AUDIO_INFO_LAYOUT(&m_buffer.info) == GST_AUDIO_LAYOUT_NON_INTERLEAVED);
+    return Vector<std::span<T>> { planeCount, [&](auto index) {
+        auto totalData = unsafeMakeSpan(reinterpret_cast<T*>(m_buffer.planes[index]), planeSizeTotal);
+        return totalData.subspan(offset);
+    } };
+}
+
+template Vector<std::span<uint8_t>> GstMappedAudioBuffer::samples(size_t) const;
+template Vector<std::span<int16_t>> GstMappedAudioBuffer::samples(size_t) const;
+template Vector<std::span<int32_t>> GstMappedAudioBuffer::samples(size_t) const;
+template Vector<std::span<float>> GstMappedAudioBuffer::samples(size_t) const;
 
 static GQuark customMessageHandlerQuark()
 {
@@ -1596,7 +1636,7 @@ void configureAudioDecoderForHarnessing(const GRefPtr<GstElement>& element)
         g_object_set(element.get(), "max-errors", 0, nullptr);
 
     // rawaudioparse-specific:
-    if (gstObjectHasProperty(element.get(), "use-sink-caps"))
+    if (gstElementMatchesFactoryAndHasProperty(element.get(), "rawaudioparse"_s, "use-sink-caps"_s))
         g_object_set(element.get(), "use-sink-caps", TRUE, nullptr);
 }
 
@@ -1609,14 +1649,14 @@ void configureVideoDecoderForHarnessing(const GRefPtr<GstElement>& element)
         g_object_set(element.get(), "max-errors", 0, nullptr);
 
     // avdec-specific:
-    if (gstObjectHasProperty(element.get(), "std-compliance"))
+    if (gstElementMatchesFactoryAndHasProperty(element.get(), "avdec*"_s, "std-compliance"_s))
         gst_util_set_object_arg(G_OBJECT(element.get()), "std-compliance", "strict");
 
-    if (gstObjectHasProperty(element.get(), "output-corrupt"))
+    if (gstElementMatchesFactoryAndHasProperty(element.get(), "avdec*"_s, "output-corrupt"_s))
         g_object_set(element.get(), "output-corrupt", FALSE, nullptr);
 
     // dav1ddec-specific:
-    if (gstObjectHasProperty(element.get(), "n-threads"))
+    if (gstElementMatchesFactoryAndHasProperty(element.get(), "dav1ddec"_s, "n-threads"_s))
         g_object_set(element.get(), "n-threads", 1, nullptr);
 }
 
@@ -1644,7 +1684,7 @@ void configureVideoRTPDepayloader(GstElement* element)
         g_object_set(element, "wait-for-keyframe", TRUE, nullptr);
 }
 
-static bool gstObjectHasProperty(GstObject* gstObject, const char* name)
+bool gstObjectHasProperty(GstObject* gstObject, const char* name)
 {
     return g_object_class_find_property(G_OBJECT_GET_CLASS(gstObject), name);
 }
@@ -1657,6 +1697,19 @@ bool gstObjectHasProperty(GstElement* element, const char* name)
 bool gstObjectHasProperty(GstPad* pad, const char* name)
 {
     return gstObjectHasProperty(GST_OBJECT_CAST(pad), name);
+}
+
+bool gstElementMatchesFactoryAndHasProperty(GstElement* element, ASCIILiteral factoryNamePattern, ASCIILiteral propertyName)
+{
+    auto factory = gst_element_get_factory(element);
+    if (!factory)
+        return gstObjectHasProperty(element, propertyName.characters());
+
+    auto nameView = StringView::fromLatin1(GST_OBJECT_NAME(factory));
+    if (fnmatch(factoryNamePattern.characters(), nameView.toStringWithoutCopying().ascii().data(), 0))
+        return false;
+
+    return gstObjectHasProperty(element, propertyName.characters());
 }
 
 GRefPtr<GstBuffer> wrapSpanData(const std::span<const uint8_t>& span)

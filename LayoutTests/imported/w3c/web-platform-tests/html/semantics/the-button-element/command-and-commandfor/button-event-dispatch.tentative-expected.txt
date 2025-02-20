@@ -1,6 +1,7 @@
 
 
-PASS event dispatches on click
+PASS event dispatches on click with addEventListener
+FAIL event dispatches on click with oncommand property assert_true: event is CommandEvent expected true got false
 PASS setting custom command property to --foo (must include dash) sets event command
 PASS setting custom command attribute to --foo (must include dash) sets event command
 PASS setting custom command property to --foo- (must include dash) sets event command
@@ -35,6 +36,6 @@ PASS event does not dispatch if invoker is disabled
 PASS event does NOT dispatch if button is form associated, with implicit type
 PASS event dispatches if button is form associated, with explicit type=button
 PASS event does NOT dispatch if button is form associated, with explicit type=submit
-PASS event does NOT dispatch if button is form associated, with explicit type=reset
+FAIL event does dispatch if button is form associated, with explicit type=reset assert_true: event was called expected true got false
 PASS event dispatches if invokee is non-HTML Element
 

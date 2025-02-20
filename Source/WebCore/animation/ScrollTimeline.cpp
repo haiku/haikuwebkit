@@ -56,8 +56,10 @@ Ref<ScrollTimeline> ScrollTimeline::create(Document& document, ScrollTimelineOpt
     // 3. Set the axis property of timeline to the corresponding value from options.
     timeline->setAxis(options.axis);
 
-    if (timeline->m_source)
+    if (auto source = timeline->m_source.element()) {
+        source->protectedDocument()->updateLayoutIgnorePendingStylesheets();
         timeline->cacheCurrentTime();
+    }
 
     return timeline;
 }
@@ -70,6 +72,13 @@ Ref<ScrollTimeline> ScrollTimeline::create(const AtomString& name, ScrollAxis ax
 Ref<ScrollTimeline> ScrollTimeline::create(Scroller scroller, ScrollAxis axis)
 {
     return adoptRef(*new ScrollTimeline(scroller, axis));
+}
+
+Ref<ScrollTimeline> ScrollTimeline::createInactiveStyleOriginatedTimeline(const AtomString& name)
+{
+    auto timeline = adoptRef(*new ScrollTimeline(name, ScrollAxis::Block));
+    timeline->m_isInactiveStyleOriginatedTimeline = true;
+    return timeline;
 }
 
 // https://drafts.csswg.org/web-animations-2/#timelines

@@ -30,6 +30,7 @@
 #include "AnimationPlaybackEvent.h"
 #include "AnimationTimeline.h"
 #include "CSSPropertyAnimation.h"
+#include "CSSSerializationContext.h"
 #include "CSSStyleDeclaration.h"
 #include "CSSUnitValue.h"
 #include "CSSUnits.h"
@@ -235,8 +236,6 @@ void WebAnimation::setEffectInternal(RefPtr<AnimationEffect>&& newEffect, bool d
         if (newTarget && previousTarget != newTarget)
             newTarget->animationWasAdded(*this);
     }
-
-    updateRelevance();
 
     InspectorInstrumentation::didSetWebAnimationEffect(*this);
 }
@@ -880,6 +879,10 @@ void WebAnimation::enqueueAnimationEvent(Ref<AnimationEventBase>&& event)
             if (RefPtr source = scrollTimeline->source())
                 return Ref { source->document() }->existingTimeline();
         }
+        if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect)) {
+            if (RefPtr target = keyframeEffect->target())
+                return target->protectedDocument()->existingTimeline();
+        }
         return nullptr;
     };
 
@@ -993,11 +996,6 @@ void WebAnimation::timingDidChange(DidSeek didSeek, SynchronouslyNotify synchron
 {
     m_shouldSkipUpdatingFinishedStateWhenResolving = false;
     updateFinishedState(didSeek, synchronouslyNotify);
-
-    if (auto keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get())) {
-        updateRelevance();
-        keyframeEffect->animationTimingDidChange();
-    }
 
     if (silently == Silently::No && m_timeline)
         m_timeline->animationTimingDidChange(*this);
@@ -1694,15 +1692,16 @@ bool WebAnimation::isReplaceable() const
 
 void WebAnimation::persist()
 {
-    auto previousReplaceState = std::exchange(m_replaceState, ReplaceState::Persisted);
+    setReplaceState(ReplaceState::Persisted);
+}
 
-    if (previousReplaceState == ReplaceState::Removed && m_timeline) {
-        if (auto keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get())) {
-            auto styleable = keyframeEffect->targetStyleable();
-            styleable->animationWasAdded(*this);
-            styleable->ensureKeyframeEffectStack().addEffect(*keyframeEffect);
-        }
-    }
+void WebAnimation::setReplaceState(ReplaceState replaceState)
+{
+    if (m_replaceState == replaceState)
+        return;
+
+    m_replaceState = replaceState;
+    updateRelevance();
 }
 
 ExceptionOr<void> WebAnimation::commitStyles()
@@ -1777,12 +1776,12 @@ ExceptionOr<void> WebAnimation::commitStyles()
         return WTF::switchOn(property,
             [&] (CSSPropertyID propertyId) {
                 if (auto cssValue = computedStyleExtractor.valueForPropertyInStyle(*animatedStyle, propertyId, nullptr, ComputedStyleExtractor::PropertyValueType::Computed))
-                    return inlineStyle->setProperty(propertyId, cssValue->cssText(), { styledElement->document() });
+                    return inlineStyle->setProperty(propertyId, cssValue->cssText(CSS::defaultSerializationContext()), { styledElement->document() });
                 return false;
             },
             [&] (const AtomString& customProperty) {
                 if (auto cssValue = computedStyleExtractor.customPropertyValue(customProperty))
-                    return inlineStyle->setCustomProperty(customProperty, cssValue->cssText(), { styledElement->document() });
+                    return inlineStyle->setCustomProperty(customProperty, cssValue->cssText(CSS::defaultSerializationContext()), { styledElement->document() });
                 return false;
             }
         );
@@ -1804,7 +1803,7 @@ ExceptionOr<void> WebAnimation::commitStyles()
         didMutate = commitProperty(property) || didMutate;
 
     if (didMutate)
-        styledElement->setAttribute(HTMLNames::styleAttr, inlineStyle->asTextAtom());
+        styledElement->setAttribute(HTMLNames::styleAttr, inlineStyle->asTextAtom(CSS::defaultSerializationContext()));
 
     return { };
 }
@@ -1949,9 +1948,8 @@ const TimelineRange& WebAnimation::range()
 void WebAnimation::progressBasedTimelineSourceDidChangeMetrics()
 {
     ASSERT(m_timeline && m_timeline->isProgressBased());
-    RefPtr effect = m_effect;
-    if (effect && !range().isDefault())
-        effect->animationProgressBasedTimelineSourceDidChangeMetrics();
+    if (RefPtr effect = m_effect)
+        effect->animationProgressBasedTimelineSourceDidChangeMetrics(range());
 }
 
 } // namespace WebCore

@@ -111,7 +111,7 @@ RenderBox::LogicalExtentComputedValues RenderSliderContainer::computeLogicalHeig
     auto& input = downcast<HTMLInputElement>(*element()->shadowHost());
     bool isVertical = hasVerticalAppearance(input);
 
-    if (input.renderer()->isRenderSlider() && !isVertical && input.list()) {
+    if (input.renderer()->isRenderSlider() && !isVertical && input.hasDataList()) {
         int offsetFromCenter = theme().sliderTickOffsetFromTrackCenter();
         LayoutUnit trackHeight;
         if (offsetFromCenter < 0)
@@ -581,9 +581,9 @@ std::optional<Style::ResolvedStyle> SliderThumbElement::resolveCustomStyle(const
     return elementStyle;
 }
 
-Ref<Element> SliderThumbElement::cloneElementWithoutAttributesAndChildren(TreeScope& treeScope)
+Ref<Element> SliderThumbElement::cloneElementWithoutAttributesAndChildren(Document& document, CustomElementRegistry*)
 {
-    return create(treeScope.documentScope());
+    return create(document);
 }
 
 // --------------------------------

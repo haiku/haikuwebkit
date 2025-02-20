@@ -28,6 +28,7 @@
 #include "DrawingAreaInfo.h"
 #include "FrameTreeCreationParameters.h"
 #include "LayerTreeContext.h"
+#include "ProvisionalFrameCreationParameters.h"
 #include "SandboxExtension.h"
 #include "SessionState.h"
 #include "UserContentControllerParameters.h"
@@ -153,7 +154,7 @@ struct WebPageCreationParameters {
     double textZoomFactor { 1 };
     double pageZoomFactor { 1 };
 
-    float topContentInset { 0 };
+    WebCore::FloatBoxExtent obscuredContentInsets { };
     
     float mediaVolume { 0 };
     WebCore::MediaProducerMutedStateFlags muted { };
@@ -308,10 +309,6 @@ struct WebPageCreationParameters {
     WebCore::ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking { WebCore::ShouldRelaxThirdPartyCookieBlocking::No };
     
     bool httpsUpgradeEnabled { true };
-
-#if PLATFORM(IOS) || PLATFORM(VISION)
-    bool allowsDeprecatedSynchronousXMLHttpRequestDuringUnload { false };
-#endif
     
 #if ENABLE(APP_HIGHLIGHTS)
     WebCore::HighlightVisibility appHighlightsVisible { WebCore::HighlightVisibility::Hidden };
@@ -326,6 +323,7 @@ struct WebPageCreationParameters {
     WebCore::ContentSecurityPolicyModeForExtension contentSecurityPolicyModeForExtension { WebCore::ContentSecurityPolicyModeForExtension::None };
 
     std::optional<RemotePageParameters> remotePageParameters { };
+    std::optional<ProvisionalFrameCreationParameters> provisionalFrameCreationParameters { };
     WebCore::FrameIdentifier mainFrameIdentifier;
     String openedMainFrameName;
     std::optional<WebCore::FrameIdentifier> mainFrameOpenerIdentifier { };
@@ -353,6 +351,10 @@ struct WebPageCreationParameters {
 
 #if HAVE(AUDIT_TOKEN)
     std::optional<CoreIPCAuditToken> presentingApplicationAuditToken;
+#endif
+
+#if PLATFORM(COCOA)
+    String presentingApplicationBundleIdentifier;
 #endif
 };
 

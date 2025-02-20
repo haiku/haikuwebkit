@@ -66,8 +66,8 @@ public:
     WebBackForwardListItem* forwardItem() const;
     WebBackForwardListItem* itemAtIndex(int) const;
 
-    WebBackForwardListItem* goBackItemSkippingItemsWithoutUserGesture() const;
-    WebBackForwardListItem* goForwardItemSkippingItemsWithoutUserGesture() const;
+    RefPtr<WebBackForwardListItem> goBackItemSkippingItemsWithoutUserGesture() const;
+    RefPtr<WebBackForwardListItem> goForwardItemSkippingItemsWithoutUserGesture() const;
 
     const BackForwardListItemVector& entries() const { return m_entries; }
 
@@ -85,7 +85,7 @@ public:
     void restoreFromState(BackForwardListState);
 
     void setItemsAsRestoredFromSession();
-    void setItemsAsRestoredFromSessionIf(Function<bool(WebBackForwardListItem&)>&&);
+    void setItemsAsRestoredFromSessionIf(NOESCAPE Function<bool(WebBackForwardListItem&)>&&);
 
     void goToProvisionalItem(WebBackForwardListItem&);
     void clearProvisionalItem(WebBackForwardListFrameItem&);

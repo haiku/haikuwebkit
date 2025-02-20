@@ -57,6 +57,7 @@
 #include "FrameSelection.h"
 #include "FrameTree.h"
 #include "FullscreenManager.h"
+#include "HTMLAreaElement.h"
 #include "HTMLDialogElement.h"
 #include "HTMLDocument.h"
 #include "HTMLFrameElement.h"
@@ -1442,6 +1443,8 @@ bool EventHandler::scrollRecursively(ScrollDirection direction, ScrollGranularit
     if (!parent)
         return false;
     RefPtr localParent = dynamicDowncast<LocalFrame>(parent.get());
+    if (!localParent)
+        return false;
     return localParent->checkedEventHandler()->scrollRecursively(direction, granularity, frame->protectedOwnerElement().get());
 }
 
@@ -1636,6 +1639,10 @@ std::optional<Cursor> EventHandler::selectCursor(const HitTestResult& result, bo
     bool horizontalText = !style || style->writingMode().isHorizontal();
     const Cursor& iBeam = horizontalText ? iBeamCursor() : verticalTextCursor();
 
+    // area element has display: none set by default, should use node to get style instead of renderer.
+    if (is<HTMLAreaElement>(node))
+        style = node->computedStyle();
+
 #if ENABLE(CURSOR_VISIBILITY)
     if (style && style->cursorVisibility() == CursorVisibility::AutoHide)
         startAutoHideCursorTimer();
@@ -1719,10 +1726,10 @@ std::optional<Cursor> EventHandler::selectCursor(const HitTestResult& result, bo
             && !m_mouseDownMayStartDrag
 #endif
             && frame->selection().isCaretOrRange()
-            && !m_capturingMouseEventsElement)
+            && !m_capturingMouseEventsElement && renderer && renderer->style().usedUserSelect() != UserSelect::None)
                 return iBeam;
 
-        if ((editable || (renderer && renderer->isRenderText() && node->canStartSelection())) && !inResizer && !result.scrollbar())
+        if ((editable || (renderer && renderer->isRenderText() && node->canStartSelection() && renderer->style().usedUserSelect() != UserSelect::None)) && !inResizer && !result.scrollbar())
             return iBeam;
         return pointerCursor();
     }
@@ -2078,7 +2085,7 @@ bool EventHandler::handleMouseDoubleClickEvent(const PlatformMouseEvent& platfor
     return swallowMouseUpEvent || swallowClickEvent || swallowMouseReleaseEvent;
 }
 
-ScrollableArea* EventHandler::enclosingScrollableArea(Node* node)
+ScrollableArea* EventHandler::enclosingScrollableArea(Node* node) const
 {
     for (auto ancestor = node; ancestor; ancestor = ancestor->parentOrShadowHostNode()) {
         if (is<HTMLIFrameElement>(*ancestor))
@@ -4825,16 +4832,21 @@ bool EventHandler::startKeyboardScrollAnimationOnEnclosingScrollableContainer(Sc
     return false;
 }
 
+ScrollableArea* EventHandler::focusedScrollableArea() const
+{
+    RefPtr<Node> node = m_frame->document()->focusedElement();
+    if (!node)
+        node = m_mousePressNode;
+
+    return enclosingScrollableArea(node.get());
+}
+
 bool EventHandler::shouldUseSmoothKeyboardScrollingForFocusedScrollableArea()
 {
     if (!m_frame->settings().eventHandlerDrivenSmoothKeyboardScrollingEnabled())
         return false;
 
-    RefPtr<Node> node = m_frame->document()->focusedElement();
-    if (!node)
-        node = m_mousePressNode;
-
-    auto scrollableArea = enclosingScrollableArea(node.get());
+    auto scrollableArea = focusedScrollableArea();
     if (!scrollableArea)
         return false;
 

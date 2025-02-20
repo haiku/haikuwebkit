@@ -48,7 +48,7 @@ enum AutofillButtonType {
     [EnabledBySetting=InputTypeColorEnhancementsEnabled, CEReactions=NotNeeded] attribute [AtomString] DOMString colorSpace;
     [CEReactions=NotNeeded, Reflect] attribute DOMString dirName;
     [CEReactions=NotNeeded, Reflect] attribute boolean disabled;
-    readonly attribute HTMLFormElement form;
+    [ImplementedAs=formForBindings] readonly attribute HTMLFormElement form;
     [ImplementedAs=filesForBindings] attribute FileList? files;
     [CEReactions=NotNeeded] attribute [AtomString] USVString formAction;
 
@@ -112,6 +112,7 @@ enum AutofillButtonType {
     // WebKit extension for autofill.
     [EnabledForWorld=allowAutofill] attribute boolean autofillAvailable;
     [EnabledForWorld=allowAutofill] attribute boolean autofilled;
+    [EnabledForWorld=allowAutofill] readonly attribute boolean lastChangeWasUserEdit;
     [EnabledForWorld=allowAutofill] attribute AutofillVisibility autofillVisibility;
     [EnabledForWorld=allowAutofill] attribute AutofillButtonType autofillButtonType;
     [EnabledForWorld=allowAutofill] attribute boolean autofillSpellcheck;

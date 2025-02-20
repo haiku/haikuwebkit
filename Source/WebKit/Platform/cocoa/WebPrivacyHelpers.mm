@@ -44,6 +44,7 @@
 #import <wtf/Scope.h>
 #import <wtf/WeakRandom.h>
 #import <wtf/cocoa/VectorCocoa.h>
+#import <wtf/posix/SocketPOSIX.h>
 #import <wtf/text/MakeString.h>
 #import <pal/cocoa/WebPrivacySoftLink.h>
 
@@ -254,7 +255,7 @@ void StorageAccessPromptQuirkController::updateList(CompletionHandler<void()>&& 
 {
     ASSERT(RunLoop::isMain());
     if (!PAL::isWebPrivacyFrameworkAvailable() || ![PAL::getWPResourcesClass() instancesRespondToSelector:@selector(requestStorageAccessPromptQuirksData:completionHandler:)]) {
-        RunLoop::main().dispatch(WTFMove(completionHandler));
+        RunLoop::protectedMain()->dispatch(WTFMove(completionHandler));
         return;
     }
 
@@ -296,7 +297,7 @@ void StorageAccessUserAgentStringQuirkController::updateList(CompletionHandler<v
 {
     ASSERT(RunLoop::isMain());
     if (!PAL::isWebPrivacyFrameworkAvailable() || ![PAL::getWPResourcesClass() instancesRespondToSelector:@selector(requestStorageAccessUserAgentStringQuirksData:completionHandler:)]) {
-        RunLoop::main().dispatch(WTFMove(completionHandler));
+        RunLoop::protectedMain()->dispatch(WTFMove(completionHandler));
         return;
     }
 
@@ -432,11 +433,11 @@ void ResourceMonitorURLsController::prepare(CompletionHandler<void(WKContentRule
 
 inline static std::optional<WebCore::IPAddress> ipAddress(const struct sockaddr* address)
 {
-    if (address->sa_family == AF_INET)
-        return WebCore::IPAddress { reinterpret_cast<const sockaddr_in*>(address)->sin_addr };
+    if (auto* addressV4 = dynamicCastToIPV4SocketAddress(*address))
+        return WebCore::IPAddress { addressV4->sin_addr };
 
-    if (address->sa_family == AF_INET6)
-        return WebCore::IPAddress { reinterpret_cast<const sockaddr_in6*>(address)->sin6_addr };
+    if (auto* addressV6 = dynamicCastToIPV6SocketAddress(*address))
+        return WebCore::IPAddress { addressV6->sin6_addr };
 
     return std::nullopt;
 }
@@ -728,7 +729,7 @@ bool isKnownTrackerAddressOrDomain(StringView) { return false; }
 #else
 void ScriptTelemetryController::updateList(CompletionHandler<void()>&& completion)
 {
-    RunLoop::main().dispatch(WTFMove(completion));
+    RunLoop::protectedMain()->dispatch(WTFMove(completion));
 }
 
 WPResourceType ScriptTelemetryController::resourceType() const

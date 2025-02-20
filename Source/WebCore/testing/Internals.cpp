@@ -580,7 +580,7 @@ void Internals::resetToConsistentState(Page& page)
     if (mainFrameView) {
         page.setHeaderHeight(0);
         page.setFooterHeight(0);
-        page.setTopContentInset(0);
+        page.setObscuredContentInsets({ });
         mainFrameView->setUseFixedLayout(false);
         mainFrameView->setFixedLayoutSize(IntSize());
         mainFrameView->enableFixedWidthAutoSizeMode(false, { });
@@ -4724,14 +4724,14 @@ void Internals::initializeMockMediaSource()
 
 void Internals::setMaximumSourceBufferSize(SourceBuffer& buffer, uint64_t maximumSize, DOMPromiseDeferred<void>&& promise)
 {
-    buffer.setMaximumSourceBufferSize(maximumSize)->whenSettled(RunLoop::current(), [promise = WTFMove(promise)]() mutable {
+    buffer.setMaximumSourceBufferSize(maximumSize)->whenSettled(RunLoop::protectedCurrent(), [promise = WTFMove(promise)]() mutable {
         promise.resolve();
     });
 }
 
 void Internals::bufferedSamplesForTrackId(SourceBuffer& buffer, const AtomString& trackId, BufferedSamplesPromise&& promise)
 {
-    buffer.bufferedSamplesForTrackId(parseInteger<uint64_t>(trackId).value_or(0))->whenSettled(RunLoop::current(), [promise = WTFMove(promise)](auto&& samples) mutable {
+    buffer.bufferedSamplesForTrackId(parseInteger<uint64_t>(trackId).value_or(0))->whenSettled(RunLoop::protectedCurrent(), [promise = WTFMove(promise)](auto&& samples) mutable {
         if (!samples) {
             promise.reject(Exception { ExceptionCode::OperationError, makeString("Error "_s, samples.error()) });
             return;
@@ -4742,7 +4742,7 @@ void Internals::bufferedSamplesForTrackId(SourceBuffer& buffer, const AtomString
 
 void Internals::enqueuedSamplesForTrackID(SourceBuffer& buffer, const AtomString& trackID, BufferedSamplesPromise&& promise)
 {
-    buffer.enqueuedSamplesForTrackID(parseInteger<uint64_t>(trackID).value_or(0))->whenSettled(RunLoop::current(), [promise = WTFMove(promise)](auto&& samples) mutable {
+    buffer.enqueuedSamplesForTrackID(parseInteger<uint64_t>(trackID).value_or(0))->whenSettled(RunLoop::protectedCurrent(), [promise = WTFMove(promise)](auto&& samples) mutable {
         if (!samples) {
             promise.reject(Exception { ExceptionCode::OperationError, makeString("Error "_s, samples.error()) });
             return;
@@ -5499,8 +5499,7 @@ String Internals::createTemporaryFile(const String& name, const String& contents
     if (!FileSystem::isHandleValid(file))
         return nullString();
 
-    auto contentsUTF8 = contents.utf8();
-    FileSystem::writeToFile(file, contentsUTF8.span());
+    FileSystem::writeToFile(file, byteCast<uint8_t>(contents.utf8().span()));
 
     FileSystem::closeFile(file);
 

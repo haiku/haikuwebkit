@@ -225,6 +225,7 @@ Shared/IPCConnectionTester.cpp
 Shared/IPCStreamTester.cpp
 Shared/IPCTester.cpp
 Shared/IPCTesterReceiver.cpp
+Shared/KeyEventInterpretationContext.cpp
 Shared/PersistencyUtils.cpp
 Shared/PrintInfo.cpp
 Shared/ProcessTerminationReason.cpp
@@ -563,8 +564,6 @@ UIProcess/Automation/WebAutomationSession.cpp @no-unify
 UIProcess/Downloads/DownloadProxy.cpp
 UIProcess/Downloads/DownloadProxyMap.cpp
 
-UIProcess/DigitalCredentials/DigitalCredentialsCoordinatorProxy.cpp
-
 UIProcess/Extensions/WebExtension.cpp
 UIProcess/Extensions/WebExtensionAlarm.cpp
 UIProcess/Extensions/WebExtensionContext.cpp
@@ -747,6 +746,7 @@ WebProcess/GPU/graphics/WebGPU/RemoteXRProjectionLayerProxy.cpp
 WebProcess/GPU/graphics/WebGPU/RemoteXRSubImageProxy.cpp
 WebProcess/GPU/graphics/WebGPU/RemoteXRViewProxy.cpp
 WebProcess/GPU/graphics/WebGPU/WebGPUDowncastConvertToBackingContext.cpp
+WebProcess/GPU/graphics/ImageBufferRemoteDisplayListBackend.cpp
 WebProcess/GPU/graphics/ImageBufferRemotePDFDocumentBackend.cpp
 WebProcess/GPU/graphics/ImageBufferShareableBitmapBackend.cpp
 WebProcess/GPU/graphics/PrepareBackingStoreBuffersData.cpp
@@ -901,7 +901,6 @@ WebProcess/WebStorage/WebStorageNamespaceProvider.cpp
 
 WebProcess/XR/PlatformXRSystemProxy.cpp
 
-DigitalCredentialsCoordinatorProxyMessageReceiver.cpp
 IPCConnectionTesterMessageReceiver.cpp
 IPCStreamTesterMessageReceiver.cpp
 IPCStreamTesterProxyMessageReceiver.cpp

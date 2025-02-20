@@ -33,6 +33,7 @@
 #include "ComposedTreeAncestorIterator.h"
 #include "ContainerNodeAlgorithms.h"
 #include "ContextMenuController.h"
+#include "CustomElementRegistry.h"
 #include "DataTransfer.h"
 #include "DocumentInlines.h"
 #include "DocumentType.h"
@@ -59,6 +60,7 @@
 #include "LocalDOMWindow.h"
 #include "LocalFrameView.h"
 #include "Logging.h"
+#include "MouseEventTypes.h"
 #include "MutationEvent.h"
 #include "NodeName.h"
 #include "NodeRareDataInlines.h"
@@ -813,7 +815,8 @@ ExceptionOr<void> Node::normalize()
 Ref<Node> Node::cloneNode(bool deep)
 {
     ASSERT(!isShadowRoot());
-    return cloneNodeInternal(document(), deep ? CloningOperation::Everything : CloningOperation::OnlySelf);
+    RefPtr registry = CustomElementRegistry::registryForNodeOrTreeScope(*this, treeScope());
+    return cloneNodeInternal(document(), deep ? CloningOperation::Everything : CloningOperation::OnlySelf, registry.get());
 }
 
 ExceptionOr<Ref<Node>> Node::cloneNodeForBindings(bool deep)
@@ -2117,7 +2120,7 @@ static ContainerNode* parentOrShadowHostOrFrameOwner(const Node* node)
 static void showSubTreeAcrossFrame(const Node* node, const Node* markedNode, const String& indent)
 {
     if (node == markedNode)
-        fputs("*", stderr);
+        SAFE_FPRINTF(stderr, "*");
     SAFE_FPRINTF(stderr, "%s\n", indent.utf8());
     node->showNode();
     if (!node->isShadowRoot()) {

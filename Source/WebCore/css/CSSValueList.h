@@ -57,8 +57,8 @@ public:
     bool hasValue(CSSValue&) const;
     bool hasValue(CSSValueID) const;
 
-    void serializeItems(StringBuilder&) const;
-    String serializeItems() const;
+    void serializeItems(StringBuilder&, const CSS::SerializationContext&) const;
+    String serializeItems(const CSS::SerializationContext&) const;
 
     bool itemsEqual(const CSSValueContainingVector&) const;
     bool containsSingleEqualItem(const CSSValue&) const;
@@ -66,9 +66,7 @@ public:
     using CSSValue::separator;
     using CSSValue::separatorCSSText;
 
-    bool customTraverseSubresources(const Function<bool(const CachedResource&)>&) const;
-    void customSetReplacementURLForSubresources(const UncheckedKeyHashMap<String, String>&);
-    void customClearReplacementURLForSubresources();
+    bool customTraverseSubresources(NOESCAPE const Function<bool(const CachedResource&)>&) const;
 
     CSSValueListBuilder copyValues() const;
 
@@ -78,7 +76,7 @@ public:
     RefPtr<const CSSValue> protectedItem(unsigned index) const { return item(index); }
     const CSSValue* itemWithoutBoundsCheck(unsigned index) const { return &(*this)[index]; }
 
-    IterationStatus customVisitChildren(const Function<IterationStatus(CSSValue&)>&) const;
+    IterationStatus customVisitChildren(NOESCAPE const Function<IterationStatus(CSSValue&)>&) const;
 
 protected:
     friend bool CSSValue::addHash(Hasher&) const;
@@ -117,7 +115,7 @@ public:
     static Ref<CSSValueList> createSlashSeparated(Ref<CSSValue>); // FIXME: Upgrade callers to not use a list at all.
     static Ref<CSSValueList> createSlashSeparated(Ref<CSSValue>, Ref<CSSValue>);
 
-    String customCSSText() const;
+    String customCSSText(const CSS::SerializationContext&) const;
     bool equals(const CSSValueList&) const;
 
 private:

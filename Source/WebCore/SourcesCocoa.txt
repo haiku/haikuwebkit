@@ -301,6 +301,7 @@ platform/cocoa/CoreLocationGeolocationProvider.mm
 platform/cocoa/CoreVideoSoftLink.cpp
 platform/cocoa/DragDataCocoa.mm
 platform/cocoa/DragImageCocoa.mm
+platform/cocoa/EffectiveRateChangedListener.mm
 platform/cocoa/FileMonitorCocoa.mm
 platform/cocoa/KeyEventCocoa.mm
 platform/cocoa/LocalizedStringsCocoa.mm
@@ -449,6 +450,7 @@ platform/graphics/cocoa/FontFamilySpecificationCoreText.cpp
 platform/graphics/cocoa/FontFamilySpecificationCoreTextCache.cpp
 platform/graphics/cocoa/FontPlatformDataCocoa.mm
 platform/graphics/cocoa/GraphicsContextCocoa.mm
+platform/graphics/cocoa/H264UtilitiesCocoa.mm
 platform/graphics/cocoa/HEVCUtilitiesCocoa.mm
 platform/graphics/cocoa/IOSurface.mm
 platform/graphics/cocoa/IOSurfaceDrawingBuffer.cpp

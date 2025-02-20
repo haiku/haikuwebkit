@@ -667,11 +667,6 @@ ImageOrientation BitmapImageSource::frameOrientationAtIndex(unsigned index) cons
     return const_cast<BitmapImageSource&>(*this).frameAtIndexCacheIfNeeded(index).orientation();
 }
 
-Headroom BitmapImageSource::frameHeadroomAtIndex(unsigned index) const
-{
-    return const_cast<BitmapImageSource&>(*this).frameAtIndexCacheIfNeeded(index).headroom();
-}
-
 DecodingStatus BitmapImageSource::frameDecodingStatusAtIndex(unsigned index) const
 {
     return const_cast<BitmapImageSource&>(*this).frameAtIndexCacheIfNeeded(index).decodingStatus();
@@ -694,8 +689,7 @@ long long BitmapImageSource::expectedContentLength() const
 
 CString BitmapImageSource::sourceUTF8() const
 {
-    constexpr const char* emptyString = "";
-    return m_bitmapImage ? m_bitmapImage->sourceUTF8() : emptyString;
+    return m_bitmapImage ? m_bitmapImage->sourceUTF8() : ""_s;
 }
 
 void BitmapImageSource::setMinimumDecodingDurationForTesting(Seconds duration)

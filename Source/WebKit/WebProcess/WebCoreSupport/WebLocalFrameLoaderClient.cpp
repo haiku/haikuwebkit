@@ -645,7 +645,7 @@ void WebLocalFrameLoaderClient::dispatchDidCommitLoad(std::optional<HasInsecureC
     m_frame->commitProvisionalFrame();
 
     // Notify the UIProcess.
-    webPage->send(Messages::WebPageProxy::DidCommitLoadForFrame(m_frame->frameID(), m_frame->info(), documentLoader->request(), documentLoader->navigationID(), documentLoader->response().mimeType(), m_frameHasCustomContentProvider, m_localFrame->loader().loadType(), certificateInfo, usedLegacyTLS, wasPrivateRelayed, m_localFrame->document()->isPluginDocument(), *hasInsecureContent, documentLoader->mouseEventPolicy(), UserData(WebProcess::singleton().transformObjectsToHandles(userData.get()).get())));
+    webPage->send(Messages::WebPageProxy::DidCommitLoadForFrame(m_frame->frameID(), m_frame->info(), documentLoader->request(), documentLoader->navigationID(), documentLoader->response().mimeType(), m_frameHasCustomContentProvider, m_localFrame->loader().loadType(), certificateInfo, usedLegacyTLS, wasPrivateRelayed, documentLoader->response().proxyName(), documentLoader->response().source(), m_localFrame->document()->isPluginDocument(), *hasInsecureContent, documentLoader->mouseEventPolicy(), UserData(WebProcess::singleton().transformObjectsToHandles(userData.get()).get())));
     webPage->didCommitLoad(m_frame.ptr());
 }
 
@@ -1244,13 +1244,34 @@ void WebLocalFrameLoaderClient::updateGlobalHistoryRedirectLinks()
     }
 }
 
-bool WebLocalFrameLoaderClient::shouldGoToHistoryItem(HistoryItem& item) const
+bool WebLocalFrameLoaderClient::shouldGoToHistoryItem(HistoryItem& item, IsSameDocumentNavigation isSameDocumentNavigation) const
 {
+    // In WebKit2, the synchronous version of this policy client should only ever be consulted for same document navigations.
+    RELEASE_ASSERT(isSameDocumentNavigation == IsSameDocumentNavigation::Yes);
+
     RefPtr webPage = m_frame->page();
     if (!webPage)
         return false;
-    webPage->send(Messages::WebPageProxy::WillGoToBackForwardListItem(item.itemID(), item.isInBackForwardCache()));
+
+    auto sendSyncResult = webPage->sendSync(Messages::WebPageProxy::ShouldGoToBackForwardListItemSync(item.itemID()));
+    auto [shouldGo] = sendSyncResult.takeReplyOr(true);
+    return shouldGo;
+}
+
+bool WebLocalFrameLoaderClient::supportsAsyncShouldGoToHistoryItem() const
+{
     return true;
+}
+
+void WebLocalFrameLoaderClient::shouldGoToHistoryItemAsync(HistoryItem& item, CompletionHandler<void(bool)>&& completionHandler) const
+{
+    RefPtr webPage = m_frame->page();
+    if (!webPage) {
+        completionHandler(false);
+        return;
+    }
+
+    webPage->sendWithAsyncReply(Messages::WebPageProxy::ShouldGoToBackForwardListItem(item.itemID(), item.isInBackForwardCache()), WTFMove(completionHandler));
 }
 
 void WebLocalFrameLoaderClient::didDisplayInsecureContent()
@@ -2007,12 +2028,14 @@ void WebLocalFrameLoaderClient::didExceedNetworkUsageThreshold()
             return;
         if (wasGranted)
             frame->showResourceMonitoringError();
+        else
+            frame->reportResourceMonitoringWarning();
     };
 
     if (document->shouldSkipResourceMonitorThrottling())
         action(true);
     else
-        webPage->sendWithAsyncReply(Messages::WebPageProxy::ShouldOffloadIFrameForHost(url.host().toStringWithoutCopying()), WTFMove(action));
+        WebProcess::singleton().ensureNetworkProcessConnection().connection().sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::ShouldOffloadIFrameForHost(url.host().toStringWithoutCopying()), WTFMove(action), 0);
 }
 
 #endif

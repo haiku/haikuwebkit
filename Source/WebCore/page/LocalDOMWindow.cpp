@@ -177,7 +177,7 @@ static WeakHashSet<LocalDOMWindow, WeakPtrImplWithEventTargetData>& windowsInter
     return set;
 }
 
-void LocalDOMWindow::forEachWindowInterestedInStorageEvents(const Function<void(LocalDOMWindow&)>& apply)
+void LocalDOMWindow::forEachWindowInterestedInStorageEvents(NOESCAPE const Function<void(LocalDOMWindow&)>& apply)
 {
     for (auto& window : copyToVectorOf<Ref<LocalDOMWindow>>(windowsInterestedInStorageEvents()))
         apply(window);
@@ -620,7 +620,7 @@ CustomElementRegistry& LocalDOMWindow::ensureCustomElementRegistry()
     if (!m_customElementRegistry) {
         m_customElementRegistry = CustomElementRegistry::create(*scriptExecutionContext(), *this);
         for (Ref shadowRoot : document()->inDocumentShadowRoots()) {
-            if (shadowRoot->mode() == ShadowRootMode::UserAgent)
+            if (shadowRoot->mode() == ShadowRootMode::UserAgent || shadowRoot->hasScopedCustomElementRegistry())
                 continue;
             const_cast<ShadowRoot&>(shadowRoot.get()).setCustomElementRegistry(*m_customElementRegistry);
         }
@@ -2394,7 +2394,7 @@ void LocalDOMWindow::dispatchEvent(Event& event, EventTarget* target)
         protectedFrame = frame();
         hasListenersForEvent = hasEventListeners(event.type());
         if (hasListenersForEvent)
-            InspectorInstrumentation::willDispatchEventOnWindow(protectedFrame.get(), event, *this);
+            InspectorInstrumentation::willDispatchEventOnWindow(protectedFrame.get(), event);
     }
 
     // FIXME: We should use EventDispatcher everywhere.
@@ -2460,8 +2460,9 @@ void LocalDOMWindow::finishedLoading()
     }
 }
 
-void LocalDOMWindow::setLocation(LocalDOMWindow& activeWindow, const URL& completedURL, NavigationHistoryBehavior historyHandling, SetLocationLocking locking)
+void LocalDOMWindow::setLocation(LocalDOMWindow& activeWindow, const URL& completedURL, NavigationHistoryBehavior historyHandling, SetLocationLocking locking, CanNavigateState navigationState)
 {
+    ASSERT(navigationState != CanNavigateState::Unchecked);
     if (!isCurrentlyDisplayedInFrame())
         return;
 
@@ -2470,7 +2471,9 @@ void LocalDOMWindow::setLocation(LocalDOMWindow& activeWindow, const URL& comple
         return;
 
     RefPtr frame = this->frame();
-    if (!activeDocument->canNavigate(frame.get(), completedURL))
+    if (UNLIKELY(navigationState != CanNavigateState::Able))
+        navigationState = activeDocument->canNavigate(frame.get(), completedURL);
+    if (navigationState == CanNavigateState::Unable)
         return;
 
     if (isInsecureScriptAccess(activeWindow, completedURL.string()))
@@ -2580,7 +2583,7 @@ bool LocalDOMWindow::isInsecureScriptAccess(LocalDOMWindow& activeWindow, const 
     return true;
 }
 
-ExceptionOr<RefPtr<Frame>> LocalDOMWindow::createWindow(const String& urlString, const AtomString& frameName, const WindowFeatures& initialWindowFeatures, LocalDOMWindow& activeWindow, LocalFrame& firstFrame, LocalFrame& openerFrame, const Function<void(LocalDOMWindow&)>& prepareDialogFunction)
+ExceptionOr<RefPtr<Frame>> LocalDOMWindow::createWindow(const String& urlString, const AtomString& frameName, const WindowFeatures& initialWindowFeatures, LocalDOMWindow& activeWindow, LocalFrame& firstFrame, LocalFrame& openerFrame, NOESCAPE const Function<void(LocalDOMWindow&)>& prepareDialogFunction)
 {
     RefPtr activeFrame = activeWindow.frame();
     if (!activeFrame)
@@ -2716,7 +2719,7 @@ ExceptionOr<RefPtr<WindowProxy>> LocalDOMWindow::open(LocalDOMWindow& activeWind
             targetFrame = frame;
     }
     if (targetFrame) {
-        if (!activeDocument->canNavigate(targetFrame.get()))
+        if (activeDocument->canNavigate(targetFrame.get()) != CanNavigateState::Able)
             return RefPtr<WindowProxy> { nullptr };
 
         URL completedURL = firstFrame->protectedDocument()->completeURL(urlString);
@@ -2744,7 +2747,7 @@ ExceptionOr<RefPtr<WindowProxy>> LocalDOMWindow::open(LocalDOMWindow& activeWind
     return newFrame ? &newFrame->windowProxy() : RefPtr<WindowProxy> { nullptr };
 }
 
-void LocalDOMWindow::showModalDialog(const String& urlString, const String& dialogFeaturesString, LocalDOMWindow& activeWindow, LocalDOMWindow& firstWindow, const Function<void(LocalDOMWindow&)>& prepareDialogFunction)
+void LocalDOMWindow::showModalDialog(const String& urlString, const String& dialogFeaturesString, LocalDOMWindow& activeWindow, LocalDOMWindow& firstWindow, NOESCAPE const Function<void(LocalDOMWindow&)>& prepareDialogFunction)
 {
     if (RefPtr document = this->document())
         document->addConsoleMessage(MessageSource::JS, MessageLevel::Warning, "showModalDialog() is deprecated and will be removed. Please use the <dialog> element instead."_s);

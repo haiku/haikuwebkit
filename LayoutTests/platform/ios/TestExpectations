@@ -26,9 +26,11 @@ system-preview [ Pass ]
 remote-layer-tree [ Pass ]
 swipe [ Pass ]
 http/tests/swipe [ Pass ]
+fast/page-color-sampling [ Pass ]
 
 webkit.org/b/271780 fast/dom/Orientation/no-orientation-change-event-when-unparenting-view.html [ Pass Timeout ] # change back to pass when bug resolved
 fast/events/ios [ Pass ]
+fast/events/ios/single-tap-verify-user-gesture.html [ Skip ]
 fast/events/ios/ipad [ Skip ]
 fast/forms/ios [ Pass ]
 fast/forms/ios/ipad [ Skip ]
@@ -1340,7 +1342,6 @@ css3/color-filters/color-filter-ignore-semantic.html [ Skip ]
 
 # WebCryptoAPI features that enabled only for iOS 11/High Sierra+
 crypto/subtle/rsa-pss-generate-export-key-jwk-sha1.html [ Pass ]
-crypto/subtle/rsa-pss-generate-export-key-jwk-sha224.html [ Pass ]
 crypto/subtle/rsa-pss-generate-export-key-jwk-sha256.html [ Pass ]
 crypto/subtle/rsa-pss-generate-export-key-jwk-sha384.html [ Pass ]
 crypto/subtle/rsa-pss-generate-export-key-jwk-sha512.html [ Pass ]
@@ -1350,7 +1351,6 @@ crypto/subtle/rsa-pss-generate-key.html [ Pass ]
 crypto/subtle/rsa-pss-import-jwk-private-key.html [ Pass ]
 crypto/subtle/rsa-pss-import-jwk-public-key-empty-usages.html [ Pass ]
 crypto/subtle/rsa-pss-import-jwk-public-key-sha1.html [ Pass ]
-crypto/subtle/rsa-pss-import-jwk-public-key-sha224.html [ Pass ]
 crypto/subtle/rsa-pss-import-jwk-public-key-sha256.html [ Pass ]
 crypto/subtle/rsa-pss-import-jwk-public-key-sha384.html [ Pass ]
 crypto/subtle/rsa-pss-import-jwk-public-key-sha512.html [ Pass ]
@@ -2374,6 +2374,7 @@ accessibility/visible-character-range-basic.html [ Pass ]
 accessibility/visible-character-range-height-changes.html [ Pass ]
 accessibility/visible-character-range-vertical-rl.html [ Pass ]
 accessibility/visible-character-range-width-changes.html [ Pass ]
+accessibility/visibility-visible-inside-hidden.html [ Pass ]
 accessibility/ancestor-computation.html [ Pass ]
 
 # Enable "aria-current" tests for iOS.
@@ -2489,8 +2490,6 @@ webkit.org/b/152306 fast/forms/input-user-input-sanitization.html [ Skip ]
 webkit.org/b/153314 http/tests/history/back-to-post.py [ Pass Timeout ]
 
 webkit.org/b/153315 fast/css3-text/css3-text-decoration/text-underline-position/underline-visual-overflow-with-subpixel-position.html [ Failure ]
-
-webkit.org/b/153898 pageoverlay/overlay-small-frame-paints.html [ Pass Failure ]
 
 webkit.org/b/153933 css3/filters/huge-region.html [ Skip ]
 webkit.org/b/153933 css3/filters/huge-region-composited.html [ Skip ]
@@ -3733,8 +3732,6 @@ webkit.org/b/237569 imported/blink/svg/filters/filter-huge-clamping.svg [ Pass I
 
 webkit.org/b/242250 imported/w3c/web-platform-tests/html/browsers/history/the-history-interface/joint_session_history/002.html [ Pass Timeout ]
 
-webkit.org/b/242270 fast/encoding/char-after-fast-path-ascii-decoding.html [ Pass Failure ]
-
 webkit.org/b/242273 fast/events/ios/dragstart-on-image-by-long-pressing.html [ Pass Failure ]
 
 # Requires platform support (see rdar://94324932).
@@ -4502,7 +4499,6 @@ fast/images/pagewide-play-pause-offscreen-animations.html [ Pass ]
 
 # Re-enabling tests fixed by DocumentManager in iOS16+ rdar://102159271
 fast/forms/ios/file-upload-panel-capture.html [ Pass Crash ] # remove crash after this is resolved: webkit.org/b/268568
-fast/forms/ios/file-upload-panel.html [ Pass ]
 fast/forms/ios/show-file-upload-context-menu-above-keyboard.html [ Pass ]
 fast/forms/ios/file-upload-panel-accept.html [ Pass ]
 
@@ -5190,6 +5186,7 @@ editing/selection/click-in-margins-inside-editable-div.html [ Failure ]
 editing/selection/click-in-padding-with-multiple-line-boxes.html [ Failure ]
 editing/selection/double-click-selection-with-dom-mutation.html [ Failure ]
 editing/selection/extend-by-character-006.html [ Failure ]
+editing/selection/extend-by-character-007.html [ Failure ]
 editing/selection/extend-by-sentence-001.html [ Failure ]
 editing/selection/extend-by-word-001.html [ Failure ]
 editing/selection/extend-inside-transforms-backward.html [ Failure ]
@@ -6924,9 +6921,6 @@ http/wpt/opener/same-site-child-access-parent-iframe-via-windowproxy.html [ Pass
 # fast/forms/switch/pointer-tracking-there-and-back-again.html [ Timeout ]
 # fast/forms/switch/pointer-tracking.html [ Timeout ]
 # UNCOMMENT ABOVE AND REMOVE FROM platform/ios-17/TestExpectations WHEN BELOW IS RESOLVED.
-# rdar://130619586 (REGRESSION (278311@main): [ iOS ] 2 fast/forms/switch/pointer-tracking-there-and-back-again*.html tests are constantly failing / timing out.)
-fast/forms/switch/pointer-tracking-there-and-back-again-rtl.html [ ImageOnlyFailure ]
-fast/forms/switch/pointer-tracking-there-and-back-again.html [ ImageOnlyFailure ]
 
 webkit.org/b/267796 [ Release ] imported/w3c/web-platform-tests/requestidlecallback/deadline-max-rAF-dynamic.html [ Pass Failure ]
 
@@ -7653,6 +7647,9 @@ webkit.org/b/284653 http/tests/site-isolation/compositing/iframes/resize-from-ze
 
 webkit.org/b/284761 imported/w3c/web-platform-tests/screen-orientation/orientation-reading.html [ Skip ]
 
+# rdar://143398895
+media/modern-media-controls/scrubber-support/scrubber-support-seek-back.html [ Skip ]
+
 # Following test fails due to lack of `tabbing` to move focus
 imported/w3c/web-platform-tests/html/interaction/focus/focus-01.html [ Skip ]
 imported/w3c/web-platform-tests/html/interaction/focus/focus-02.html [ Skip ]
@@ -7683,3 +7680,20 @@ webkit.org/b/286594 http/wpt/cache-storage/quota-third-party.https.html [ Pass F
 
 webkit.org/b/286318 http/tests/iframe-monitor [ Pass ]
 
+# webkit.org/b/286934 [ Debug ] ipc/create-media-source-with-invalid-constraints-crash.html [ Skip ]
+
+# webkit.org/b/287098 fast/forms/switch/click-animation-twice-fast.html [ Timeout ]
+
+# webkit.org/b/287181 [ iOS ] 2x fast/forms/switch/pointer-tracking-there-and-back-again*.html are constant timeouts
+fast/forms/switch/pointer-tracking-there-and-back-again-rtl.html [ Timeout ]
+fast/forms/switch/pointer-tracking-there-and-back-again.html [ Timeout ]
+
+webkit.org/b/287204 [ Release ] fast/forms/date/date-input-rendering-basic.html [ Pass Failure ]
+
+webkit.org/b/287291 http/tests/site-isolation/selection-focus.html [ ImageOnlyFailure ]
+
+webkit.org/b/287660 fast/forms/ios/file-upload-panel.html [ Pass Crash ]
+
+webkit.org/b/287672 imported/w3c/web-platform-tests/css/css-cascade/all-prop-initial-xml.html [ Failure ]
+
+webkit.org/b/287741 fast/viewport/ios/non-responsive-viewport-after-changing-view-scale.html [ Pass Failure ]

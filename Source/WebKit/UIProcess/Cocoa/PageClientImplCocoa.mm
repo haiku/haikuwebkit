@@ -26,10 +26,13 @@
 #import "config.h"
 #import "PageClientImplCocoa.h"
 
+#import "RemoteLayerTreeTransaction.h"
 #import "WKTextAnimationType.h"
 #import "WKWebViewInternal.h"
 #import "WebFullScreenManagerProxy.h"
+#import "WebPageProxy.h"
 #import <WebCore/AlternativeTextUIController.h>
+#import <WebCore/FixedContainerEdges.h>
 #import <WebCore/TextAnimationTypes.h>
 #import <WebCore/WritingToolsTypes.h>
 #import <WebKit/WKWebViewConfigurationPrivate.h>
@@ -53,7 +56,7 @@ PageClientImplCocoa::PageClientImplCocoa(WKWebView *webView)
 
 PageClientImplCocoa::~PageClientImplCocoa() = default;
 
-void PageClientImplCocoa::topContentInsetDidChange()
+void PageClientImplCocoa::obscuredContentInsetsDidChange()
 {
     [m_webView _recalculateViewportSizesWithMinimumViewportInset:[m_webView minimumViewportInset] maximumViewportInset:[m_webView maximumViewportInset] throwOnInvalidInput:NO];
 }
@@ -87,6 +90,19 @@ void PageClientImplCocoa::sampledPageTopColorDidChange()
 {
     [m_webView didChangeValueForKey:@"_sampledPageTopColor"];
 }
+
+#if ENABLE(WEB_PAGE_SPATIAL_BACKDROP)
+void PageClientImplCocoa::spatialBackdropSourceWillChange()
+{
+    [m_webView willChangeValueForKey:@"_spatialBackdropSource"];
+}
+
+void PageClientImplCocoa::spatialBackdropSourceDidChange()
+{
+    [m_webView _spatialBackdropSourceDidChange];
+    [m_webView didChangeValueForKey:@"_spatialBackdropSource"];
+}
+#endif
 
 void PageClientImplCocoa::isPlayingAudioWillChange()
 {
@@ -327,7 +343,7 @@ void PageClientImplCocoa::updateScreenTimeWebpageControllerURL(WKWebView *webVie
     if (!screenTimeWebpageController)
         return;
 
-    NakedPtr<WebKit::WebPageProxy> pageProxy = [webView _page];
+    RefPtr pageProxy = [webView _page].get();
     if (pageProxy && !pageProxy->preferences().screenTimeEnabled()) {
         [webView _uninstallScreenTimeWebpageController];
         return;
@@ -335,6 +351,25 @@ void PageClientImplCocoa::updateScreenTimeWebpageControllerURL(WKWebView *webVie
 
     [screenTimeWebpageController setURL:[webView _mainFrameURL]];
 }
+
+void PageClientImplCocoa::setURLIsPictureInPictureForScreenTime(bool value)
+{
+    RetainPtr screenTimeWebpageController = [webView() _screenTimeWebpageController];
+    if (!screenTimeWebpageController)
+        return;
+
+    [screenTimeWebpageController setURLIsPictureInPicture:value];
+}
+
+void PageClientImplCocoa::setURLIsPlayingVideoForScreenTime(bool value)
+{
+    RetainPtr screenTimeWebpageController = [webView() _screenTimeWebpageController];
+    if (!screenTimeWebpageController)
+        return;
+
+    [screenTimeWebpageController setURLIsPlayingVideo:value];
+}
+
 #endif
 
 #if ENABLE(GAMEPAD)
@@ -387,5 +422,10 @@ void PageClientImplCocoa::setFullScreenClientForTesting(std::unique_ptr<WebFullS
     m_fullscreenClientForTesting = WTFMove(client);
 }
 #endif
+
+void PageClientImplCocoa::didCommitLayerTree(const RemoteLayerTreeTransaction& transaction)
+{
+    [webView() _updateFixedContainerEdges:transaction.fixedContainerEdges()];
+}
 
 } // namespace WebKit

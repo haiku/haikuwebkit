@@ -116,10 +116,11 @@ private:
     int sliderTickOffsetFromTrackCenter() const override;
 
     void adjustSearchFieldStyle(RenderStyle&, const Element*) const override;
+    bool paintSearchField(const RenderObject&, const PaintInfo&, const FloatRect&) override;
     void paintSearchFieldDecorations(const RenderBox&, const PaintInfo&, const IntRect&) override;
 
     Color checkboxRadioBorderColor(OptionSet<ControlStyle::State>, OptionSet<StyleColorOptions>);
-    Color checkboxRadioBackgroundColor(bool useAlternateDesign, const RenderStyle&, OptionSet<ControlStyle::State>, OptionSet<StyleColorOptions>);
+    Color checkboxRadioBackgroundColor(const RenderStyle&, OptionSet<ControlStyle::State>, OptionSet<StyleColorOptions>);
     RefPtr<Gradient> checkboxRadioBackgroundGradient(const FloatRect&, OptionSet<ControlStyle::State>);
     Color checkboxRadioIndicatorColor(OptionSet<ControlStyle::State>, OptionSet<StyleColorOptions>);
 
@@ -146,7 +147,7 @@ private:
     void adjustSearchFieldResultsButtonStyle(RenderStyle&, const Element*) const final;
     bool paintSearchFieldResultsButton(const RenderBox&, const PaintInfo&, const IntRect&) final;
 
-    bool supportsFocusRing(const RenderStyle&) const final;
+    bool supportsFocusRing(const RenderObject&, const RenderStyle&) const final;
 
     bool supportsBoxShadow(const RenderStyle&) const final;
 

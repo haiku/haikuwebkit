@@ -279,7 +279,7 @@ rtc::scoped_refptr<LibWebRTCStatsCollector> LibWebRTCMediaEndpoint::createStatsC
 
         Ref peerConnectionBackend = protectedThis->m_peerConnectionBackend.get();
         Ref peerConnection = peerConnectionBackend->connection();
-        peerConnection->queueTaskKeepingObjectAlive(peerConnection.get(), TaskSource::Networking, [promise = WTFMove(promise), rtcReport = WTFMove(rtcReport)] {
+        peerConnection->queueTaskKeepingObjectAlive(peerConnection.get(), TaskSource::Networking, [promise = WTFMove(promise), rtcReport] {
             promise->resolve<IDLInterface<RTCStatsReport>>(LibWebRTCStatsCollector::createReport(rtcReport));
         });
     });
@@ -870,6 +870,8 @@ void LibWebRTCMediaEndpoint::OnStatsDelivered(const rtc::scoped_refptr<const web
                 logger().logAlways(LogWebRTCStats, Logger::LogSiteIdentifier("LibWebRTCMediaEndpoint"_s, "OnStatsDelivered"_s, logIdentifier()), statsLogger);
         }
     });
+#else // !RELEASE_LOG_DISABLED
+    UNUSED_PARAM(report);
 #endif
 }
 

@@ -460,8 +460,6 @@ bool TestController::willEnterFullScreen(WKPageRef page)
 {
     if (m_dumpFullScreenCallbacks)
         protectedCurrentInvocation()->outputText("supportsFullScreen() == true\nenterFullScreenForElement()\n"_s);
-
-    WKPageSaveScrollPositionForFullScreen(page);
     return true;
 }
 
@@ -530,7 +528,11 @@ void TestController::beganExitFullScreen(WKPageRef page, WKRect initialFrame, WK
 void TestController::finishFullscreenExit(WKPageRef page)
 {
     WKPageDidExitFullScreen(page);
-    WKPageRestoreScrollPositionAfterFullScreen(page);
+}
+
+void TestController::requestExitFullscreenFromUIProcess(WKPageRef page)
+{
+    WKPageRequestExitFullScreen(page);
 }
 
 PlatformWebView* TestController::createOtherPlatformWebView(PlatformWebView* parentView, WKPageConfigurationRef configuration, WKNavigationActionRef, WKWindowFeaturesRef)
@@ -1282,6 +1284,8 @@ bool TestController::resetStateToConsistentValues(const TestOptions& options, Re
     WKPageSetMockCameraOrientationForTesting(m_mainWebView->page(), 0, nullptr);
     resetMockMediaDevices();
     WKPageSetMediaCaptureReportingDelayForTesting(m_mainWebView->page(), 0);
+
+    WKWebsiteDataStoreResetResourceMonitorThrottler(websiteDataStore(), nullptr, nullptr);
 
     // FIXME: This function should also ensure that there is only one page open.
 
@@ -2294,8 +2298,14 @@ void TestController::didReceiveAsyncMessageFromInjectedBundle(WKStringRef messag
     if (WKStringIsEqualToUTF8CString(messageName, "RemoveAllSessionCredentials"))
         return TestController::singleton().removeAllSessionCredentials(WTFMove(completionHandler));
 
-    if (WKStringIsEqualToUTF8CString(messageName, "SetTopContentInset"))
-        return WKPageSetTopContentInsetForTesting(TestController::singleton().mainWebView()->page(), static_cast<float>(doubleValue(messageBody)), completionHandler.leak(), adoptAndCallCompletionHandler);
+    if (WKStringIsEqualToUTF8CString(messageName, "SetObscuredContentInsets")) {
+        auto insetValues = arrayValue(messageBody);
+        auto top = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 0)));
+        auto right = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 1)));
+        auto bottom = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 2)));
+        auto left = static_cast<float>(doubleValue(WKArrayGetItemAtIndex(insetValues, 3)));
+        return WKPageSetObscuredContentInsetsForTesting(TestController::singleton().mainWebView()->page(), top, right, bottom, left, completionHandler.leak(), adoptAndCallCompletionHandler);
+    }
 
     if (WKStringIsEqualToUTF8CString(messageName, "ClearBackForwardList"))
         return WKPageClearBackForwardListForTesting(TestController::singleton().mainWebView()->page(), completionHandler.leak(), adoptAndCallCompletionHandler);
@@ -3416,7 +3426,7 @@ void TestController::decidePolicyForNavigationAction(WKPageRef page, WKNavigatio
     }
 
     if (m_shouldDecideNavigationPolicyAfterDelay)
-        RunLoop::main().dispatch(WTFMove(decisionFunction));
+        RunLoop::protectedMain()->dispatch(WTFMove(decisionFunction));
     else
         decisionFunction();
 }
@@ -3459,7 +3469,7 @@ void TestController::decidePolicyForNavigationResponse(WKNavigationResponseRef n
     }
 
     if (m_shouldDecideResponsePolicyAfterDelay)
-        RunLoop::main().dispatch(WTFMove(decisionFunction));
+        RunLoop::protectedMain()->dispatch(WTFMove(decisionFunction));
     else
         decisionFunction();
 }

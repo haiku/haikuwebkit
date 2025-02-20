@@ -157,15 +157,13 @@ void RemoteMediaPlayerProxy::getConfiguration(RemoteMediaPlayerConfiguration& co
 #endif
     configuration.shouldIgnoreIntrinsicSize = player->shouldIgnoreIntrinsicSize();
 
-    m_observingTimeChanges = player->setCurrentTimeDidChangeCallback([this, weakThis = WeakPtr { *this }] (auto currentTime) mutable {
-        if (!weakThis)
-            return;
-
-        currentTimeChanged(currentTime);
+    m_observingTimeChanges = player->setCurrentTimeDidChangeCallback([weakThis = WeakPtr { *this }] (auto currentTime) mutable {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->currentTimeChanged(currentTime);
     });
 }
 
-void RemoteMediaPlayerProxy::load(URL&& url, std::optional<SandboxExtension::Handle>&& sandboxExtensionHandle, const ContentType& contentType, const String& keySystem, bool requiresRemotePlayback, CompletionHandler<void(RemoteMediaPlayerConfiguration&&)>&& completionHandler)
+void RemoteMediaPlayerProxy::load(URL&& url, std::optional<SandboxExtension::Handle>&& sandboxExtensionHandle, const MediaPlayer::LoadOptions& options, CompletionHandler<void(RemoteMediaPlayerConfiguration&&)>&& completionHandler)
 {
     RemoteMediaPlayerConfiguration configuration;
     if (sandboxExtensionHandle) {
@@ -176,13 +174,13 @@ void RemoteMediaPlayerProxy::load(URL&& url, std::optional<SandboxExtension::Han
             WTFLogAlways("Unable to create sandbox extension for media url.\n");
     }
 
-    protectedPlayer()->load(url, contentType, keySystem, requiresRemotePlayback);
+    protectedPlayer()->load(url, options);
     getConfiguration(configuration);
     completionHandler(WTFMove(configuration));
 }
 
 #if ENABLE(MEDIA_SOURCE)
-void RemoteMediaPlayerProxy::loadMediaSource(URL&& url, const WebCore::ContentType& contentType, RemoteMediaSourceIdentifier mediaSourceIdentifier, CompletionHandler<void(RemoteMediaPlayerConfiguration&&)>&& completionHandler)
+void RemoteMediaPlayerProxy::loadMediaSource(URL&& url, const MediaPlayer::LoadOptions& options, RemoteMediaSourceIdentifier mediaSourceIdentifier, CompletionHandler<void(RemoteMediaPlayerConfiguration&&)>&& completionHandler)
 {
     RefPtr manager = m_manager.get();
     ASSERT(manager && manager->gpuConnectionToWebProcess());
@@ -204,7 +202,7 @@ void RemoteMediaPlayerProxy::loadMediaSource(URL&& url, const WebCore::ContentTy
     if (auto preferences = sharedPreferencesForWebProcess())
         player->setDecompressionSessionPreferences(preferences->mediaSourcePrefersDecompressionSession, preferences->mediaSourceCanFallbackToDecompressionSession);
 #endif
-    player->load(url, contentType, *protectedMediaSourceProxy());
+    player->load(url, options, *protectedMediaSourceProxy());
 
     if (reattached)
         protectedMediaSourceProxy()->setMediaPlayers(*this, player->protectedPlayerPrivate().get());
@@ -262,6 +260,11 @@ void RemoteMediaPlayerProxy::seekToTarget(const WebCore::SeekTarget& target)
 {
     ALWAYS_LOG(LOGIDENTIFIER, target);
     protectedPlayer()->seekToTarget(target);
+}
+
+void RemoteMediaPlayerProxy::setVolumeLocked(bool volumeLocked)
+{
+    protectedPlayer()->setVolumeLocked(volumeLocked);
 }
 
 void RemoteMediaPlayerProxy::setVolume(double volume)
@@ -947,7 +950,7 @@ WebCore::PlatformVideoTarget RemoteMediaPlayerProxy::mediaPlayerVideoTarget() co
 {
 #if ENABLE(LINEAR_MEDIA_PLAYER)
     if (m_manager)
-        return m_manager->videoTargetForMediaElementIdentifier(m_clientIdentifier);
+        return m_manager->takeVideoTargetForMediaElementIdentifier(m_clientIdentifier, m_id);
 #endif
     return nullptr;
 }
@@ -1157,12 +1160,13 @@ void RemoteMediaPlayerProxy::performTaskAtTime(const MediaTime& taskTime, Perfor
     }
 
     m_performTaskAtTimeCompletionHandler = WTFMove(completionHandler);
-    player->performTaskAtTime([this, weakThis = WeakPtr { *this }]() mutable {
-        if (!weakThis || !m_performTaskAtTimeCompletionHandler)
+    player->performTaskAtTime([weakThis = WeakPtr { *this }]() mutable {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis || !protectedThis->m_performTaskAtTimeCompletionHandler)
             return;
 
-        auto completionHandler = WTFMove(m_performTaskAtTimeCompletionHandler);
-        completionHandler(protectedPlayer()->currentTime());
+        auto completionHandler = std::exchange(protectedThis->m_performTaskAtTimeCompletionHandler, nullptr);
+        completionHandler(protectedThis->protectedPlayer()->currentTime());
     }, taskTime);
 }
 
@@ -1196,15 +1200,16 @@ void RemoteMediaPlayerProxy::updateCachedVideoMetrics()
     if (m_hasPlaybackMetricsUpdatePending)
         return;
     m_hasPlaybackMetricsUpdatePending = true;
-    protectedPlayer()->asyncVideoPlaybackQualityMetrics()->whenSettled(RunLoop::protectedCurrent(), [weakThis = WeakPtr { *this }, this](auto&& result) {
-        if (!weakThis)
+    protectedPlayer()->asyncVideoPlaybackQualityMetrics()->whenSettled(RunLoop::protectedCurrent(), [weakThis = WeakPtr { *this }](auto&& result) {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
             return;
         if (result) {
-            m_cachedState.videoMetrics = *result;
-            protectedConnection()->send(Messages::MediaPlayerPrivateRemote::UpdatePlaybackQualityMetrics(WTFMove(*result)), m_id);
+            protectedThis->m_cachedState.videoMetrics = *result;
+            protectedThis->protectedConnection()->send(Messages::MediaPlayerPrivateRemote::UpdatePlaybackQualityMetrics(WTFMove(*result)), protectedThis->m_id);
         } else
-            m_cachedState.videoMetrics.reset();
-        m_hasPlaybackMetricsUpdatePending = false;
+            protectedThis->m_cachedState.videoMetrics.reset();
+        protectedThis->m_hasPlaybackMetricsUpdatePending = false;
     });
 }
 

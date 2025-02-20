@@ -3625,6 +3625,10 @@ void SpeculativeJIT::compile(Node* node)
         compileArithUnary(node);
         break;
 
+    case PurifyNaN:
+        compilePurifyNaN(node);
+        break;
+
     case ToBoolean: {
         bool invert = false;
         compileToBoolean(node, invert);

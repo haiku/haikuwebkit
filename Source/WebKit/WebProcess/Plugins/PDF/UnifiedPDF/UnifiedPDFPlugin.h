@@ -215,8 +215,6 @@ public:
     double minScaleFactor() const final;
     double maxScaleFactor() const final;
 
-    bool shouldRespectPageScaleAdjustments() const final;
-
     bool shouldSizeToFitContent() const final;
 
 private:
@@ -436,6 +434,8 @@ private:
 
     bool performDictionaryLookupAtLocation(const WebCore::FloatPoint&) override;
 
+    WebCore::FloatRect absoluteBoundingRectForSmartMagnificationAtPoint(WebCore::FloatPoint) const final;
+
     enum class FirstPageOnly : bool { No, Yes };
     PDFPageCoverage pageCoverageForSelection(PDFSelection *, FirstPageOnly = FirstPageOnly::No) const;
 
@@ -499,6 +499,7 @@ private:
     void revealFragmentIfNeeded();
 
     // Only use this if some other function has ensured that the correct page is visible.
+    // `false` can mean a failure or an inconclusive scroll request, though no caller cares about this distinction yet.
     bool scrollToPointInContentsSpace(WebCore::FloatPoint);
 
     OptionSet<WebCore::TiledBackingScrollability> computeScrollability() const;
@@ -701,8 +702,10 @@ T UnifiedPDFPlugin::convertDown(CoordinateSpace sourceSpace, CoordinateSpace des
         if (destinationSpace == CoordinateSpace::ScrolledContents)
             return mappedValue;
 
-        mappedValue.scale(1 / m_scaleFactor);
-        mappedValue.move(-centeringOffset());
+        if (!shouldSizeToFitContent()) {
+            mappedValue.scale(1 / m_scaleFactor);
+            mappedValue.move(-centeringOffset());
+        }
         FALLTHROUGH;
 
     case CoordinateSpace::Contents:
@@ -765,7 +768,8 @@ T UnifiedPDFPlugin::convertUp(CoordinateSpace sourceSpace, CoordinateSpace desti
         if (destinationSpace == CoordinateSpace::ScrolledContents)
             return mappedValue;
 
-        mappedValue.moveBy(-WebCore::FloatPoint { m_scrollOffset });
+        if (!shouldSizeToFitContent())
+            mappedValue.moveBy(-WebCore::FloatPoint { m_scrollOffset });
         FALLTHROUGH;
 
     case CoordinateSpace::Plugin:

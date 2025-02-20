@@ -1036,8 +1036,8 @@ window.UIHelper = class UIHelper {
         for (const rect of rects) {
             minTop = Math.min(minTop, rect.top);
             minLeft = Math.min(minLeft, rect.left);
-            maxTop = Math.max(maxTop, rect.left + rect.width);
-            maxLeft = Math.max(maxLeft, rect.top + rect.height);
+            maxTop = Math.max(maxTop, rect.top + rect.height);
+            maxLeft = Math.max(maxLeft, rect.left + rect.width);
         }
 
         return { left: minLeft, top: minTop, width: maxLeft - minLeft, height: maxTop - minTop };
@@ -1510,13 +1510,6 @@ window.UIHelper = class UIHelper {
                     uiController.uiScriptComplete();
                 });`, resolve);
         });
-    }
-
-    static stylusTapOnElement(element, modifiers=[])
-    {
-        const x = element.offsetLeft + element.offsetWidth / 2;
-        const y = element.offsetTop + element.offsetHeight / 2;
-        return UIHelper.stylusTapAt(x, y, modifiers);
     }
 
     static attachmentInfo(attachmentIdentifier)
@@ -2202,6 +2195,30 @@ window.UIHelper = class UIHelper {
         });
     }
 
+    static fixedContainerEdgeColors()
+    {
+        if (!this.isWebKit2())
+            return { };
+
+        const script = "JSON.stringify(uiController.fixedContainerEdgeColors)";
+        return new Promise(resolve => testRunner.runUIScript(script, colors => {
+            resolve(JSON.parse(colors));
+        }));
+    }
+
+    static async waitForFixedContainerEdgeColors(expectedColors)
+    {
+        while (true) {
+            await this.renderingUpdate();
+            const colors = await this.fixedContainerEdgeColors();
+            for (const edge of ["top", "left", "right", "bottom"]) {
+                if (colors[edge] !== expectedColors[edge])
+                    continue;
+            }
+            break;
+        }
+    }
+
     static addChromeInputField()
     {
         return new Promise(resolve => testRunner.addChromeInputField(resolve));
@@ -2303,6 +2320,16 @@ window.UIHelper = class UIHelper {
         return new Promise(resolve => {
             testRunner.runUIScript("uiController.keyboardUpdateForChangedSelectionCount", resolve);
         });
+    }
+
+    static async typeCharacters(stringToType, waitForEvent = "input", eventTarget = null) {
+        for (let character of [...stringToType]) {
+            await UIHelper.callFunctionAndWaitForEvent(async () => {
+                if (window.testRunner)
+                    await UIHelper.typeCharacter(character);
+                await UIHelper.ensurePresentationUpdate();
+            }, eventTarget || document.activeElement, waitForEvent);
+        }
     }
 }
 

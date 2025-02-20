@@ -44,6 +44,7 @@
 #include "CSSParser.h"
 #include "CSSParserTokenRange.h"
 #include "CSSPropertyParserOptions.h"
+#include "CSSSerializationContext.h"
 #include "CalculationCategory.h"
 #include "CalculationValue.h"
 #include "Logging.h"
@@ -107,6 +108,30 @@ Ref<CSSCalcValue> CSSCalcValue::copySimplified(const CSSToLengthConversionData& 
         .symbolTable = symbolTable,
         .allowZeroValueLengthRemovalFromSum = true,
     };
+
+    if (!canSimplify(m_tree, simplificationOptions))
+        return const_cast<CSSCalcValue&>(*this);
+
+    return create(m_category, m_range, copyAndSimplify(m_tree, simplificationOptions));
+}
+
+Ref<CSSCalcValue> CSSCalcValue::copySimplified(NoConversionDataRequiredToken token) const
+{
+    return copySimplified(token, { });
+}
+
+Ref<CSSCalcValue> CSSCalcValue::copySimplified(NoConversionDataRequiredToken, const CSSCalcSymbolTable& symbolTable) const
+{
+    auto simplificationOptions = CSSCalc::SimplificationOptions {
+        .category = m_category,
+        .range = m_range,
+        .conversionData = std::nullopt,
+        .symbolTable = symbolTable,
+        .allowZeroValueLengthRemovalFromSum = true,
+    };
+
+    if (!canSimplify(m_tree, simplificationOptions))
+        return const_cast<CSSCalcValue&>(*this);
 
     return create(m_category, m_range, copyAndSimplify(m_tree, simplificationOptions));
 }
@@ -172,10 +197,11 @@ void CSSCalcValue::collectComputedStyleDependencies(ComputedStyleDependencies& d
     CSSCalc::collectComputedStyleDependencies(m_tree, dependencies);
 }
 
-String CSSCalcValue::customCSSText() const
+String CSSCalcValue::customCSSText(const CSS::SerializationContext& context) const
 {
     auto options = CSSCalc::SerializationOptions {
         .range = m_range,
+        .serializationContext = context,
     };
     return CSSCalc::serializationForCSS(m_tree, options);
 }
@@ -301,7 +327,7 @@ void CSSCalcValue::dump(TextStream& ts) const
 
     multilineStream.dumpProperty("minimum value", m_range.min);
     multilineStream.dumpProperty("maximum value", m_range.max);
-    multilineStream.dumpProperty("expression", customCSSText());
+    multilineStream.dumpProperty("expression", customCSSText(CSS::defaultSerializationContext()));
 
     ts << multilineStream.release();
     ts << ")\n";

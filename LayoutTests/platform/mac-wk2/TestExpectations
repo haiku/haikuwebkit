@@ -42,6 +42,7 @@ http/tests/pdf [ Pass ]
 [ Sonoma+ ] pdf [ Pass ]
 tiled-drawing [ Pass ]
 ipc/restrictedendpoints/mac [ Pass ]
+fast/page-color-sampling [ Pass ]
 
 fast/events/autoscroll-when-zoomed.html [ Pass ]
 fast/events/autoscroll-main-document.html [ Pass ]
@@ -1602,6 +1603,9 @@ webkit.org/b/263396 css3/color/text.html [ Skip ]
 # WebGPU
 [ Release ] http/tests/webgpu/webgpu/api/validation/encoding/cmds/copyTextureToTexture.html
 
+# skipped due to infinite loop compute shaders normally not terminating on macOS, test must be run locally for now
+fast/webgpu/nocrash/fuzz-286820.html [ Skip ]
+
 # skipped outside of macOS Sequoia due to crash in failed allocation
 [ Ventura Sonoma ] fast/webgpu/nocrash/fuzz-279086.html [ Skip ]
 
@@ -1624,9 +1628,9 @@ webkit.org/b/263396 css3/color/text.html [ Skip ]
 # skipped due to failing when run in stress test mode
 [ Ventura Sonoma ] fast/webgpu/nocrash/RenderBundle_WRITE.html [ Skip ]
 
-[ Release arm64 ] http/tests/webgpu/webgpu/api [ Pass Failure Timeout ]
-[ Release arm64 ] http/tests/webgpu/webgpu/shader [ Pass Failure Timeout ]
-[ Release arm64 ] http/tests/webgpu/webgpu/web_platform [ Pass Failure Timeout ]
+[ Release arm64 Sequoia+ ] http/tests/webgpu/webgpu/api [ Pass Failure Timeout ]
+[ Release arm64 Sequoia+ ] http/tests/webgpu/webgpu/shader [ Pass Failure Timeout ]
+[ Release arm64 Sequoia+ ] http/tests/webgpu/webgpu/web_platform [ Pass Failure Timeout ]
 
 # timeout on Intel Macs due to difference in handling infinite loops
 [ x86_64 ] fast/webgpu/regression/repro_283595-for.html [ Skip ]
@@ -1911,11 +1915,6 @@ webkit.org/b/282726 http/tests/media/fairplay/legacy-fairplay-hls.html [ Failure
 # webkit.org/b/282126 NEW TEST [ Sequoia+ x86_64 ] 5 swipe layout tests are timing due to "Timed out waiting for notifyDone to be called"
 swipe/main-frame-pinning-requirement.html [ Failure Timeout ]
 
-webkit.org/b/283144 [ Sequoia ] http/tests/storageAccess/grant-storage-access-under-opener-at-popup-user-gesture-ephemeral.https.html [ Failure ]
-webkit.org/b/283144 [ Sequoia ] http/tests/storageAccess/grant-storage-access-under-opener-at-popup-user-gesture.https.html [ Failure ]
-webkit.org/b/283144 [ Sequoia ] http/tests/storageAccess/request-and-grant-access-then-navigate-cross-site-should-not-have-access.https.html [ Failure ]
-webkit.org/b/283144 [ Sequoia ] http/tests/storageAccess/request-and-grant-access-then-navigate-same-site-should-have-access.https.html [ Failure ]
-
 # On x86_64 Ventura bots, stream recording doesnt always complete within the 2s.
 [ Ventura x86_64 ] http/wpt/mediarecorder/MediaRecorder-AV-audio-video-dataavailable.html [ Pass Failure ]
 
@@ -1946,8 +1945,6 @@ imported/w3c/web-platform-tests/navigation-api/navigation-methods/disambigaute-t
 [ Ventura+ arm64 ] fast/selectors/selection-window-inactive-stroke-color.html [ Pass ImageOnlyFailure ]
 [ Ventura+ arm64 ] fast/selectors/text-field-selection-stroke-color.html [ Pass ImageOnlyFailure ]
 
-webkit.org/b/286080 fast/webgpu/nocrash/fuzz-284937.html [ Failure Timeout Crash ]
-
 webkit.org/b/286371 [ Sequoia Release x86_64 ] webrtc/captureCanvas-webrtc-software-h264-high.html [ Failure ]
 
 webkit.org/b/286318 http/tests/iframe-monitor [ Pass ]
@@ -1955,3 +1952,30 @@ webkit.org/b/286318 http/tests/iframe-monitor [ Pass ]
 webkit.org/b/286693 [ Sequoia Debug arm64 ] media/video-canvas-createPattern.html [ Pass Failure ]
 
 webkit.org/b/286843 [ Debug ] imported/w3c/web-platform-tests/screen-orientation/orientation-reading.html [ Pass Failure ]
+
+webkit.org/b/287040 [ Sonoma arm64 ] fast/webgpu/ftoi.html [ Skip ]
+
+webkit.org/b/286653 [ Sequoia ] pdf/images/jpeg2000-embed-pdf.html [ Pass Failure ]
+
+webkit.org/b/287122 [ Ventura+ ] imported/w3c/web-platform-tests/html/capability-delegation/delegate-fullscreen-request-subframe-same-origin.https.tentative.html [ Pass Failure ]
+
+# rdar://141631699 ([ macOS wk2 arm64 ] Multiple fast/webgpu/* tests are causing testing instability.)
+[ arm64 ] fast/webgpu/regression/repro_283595-for.html [ Skip ]
+[ arm64 ] fast/webgpu/regression/repro_283595-loop.html [ Skip ]
+[ arm64 ] fast/webgpu/regression/repro_283595-while.html [ Skip ]
+[ arm64 ] fast/webgpu/nocrash/fuzz-284937.html [ Skip ]
+[ arm64 ] fast/webgpu/nocrash/fuzz-287444.html [ Skip ]
+
+webkit.org/b/287679 [ Debug ] imported/w3c/web-platform-tests/css/selectors/invalidation/modal-pseudo-class-in-has.html [ Pass Failure ]
+
+# webkit.org/b/287779 REGRESSION (290430@main): [ MacOS WK2 Debug ] ASSERTION FAILED: 10x inspector/timeline/timeline tests are consistent crashes
+[ Debug ] inspector/timeline/line-column.html [ Skip ]
+[ Debug ] inspector/timeline/recording-start-stop-timestamps.html [ Skip ]
+[ Debug ] inspector/timeline/setInstruments-programmatic-capture.html [ Skip ]
+[ Debug ] inspector/timeline/timeline-event-CancelAnimationFrame.html [ Skip ]
+[ Debug ] inspector/timeline/timeline-event-EventDispatch.html [ Skip ]
+[ Debug ] inspector/timeline/timeline-event-FireAnimationFrame.html [ Skip ]
+[ Debug ] inspector/timeline/timeline-event-RequestAnimationFrame.html [ Skip ]
+[ Debug ] inspector/timeline/timeline-event-performance-mark.html [ Skip ]
+[ Debug ] inspector/timeline/timeline-event-screenshots.html [ Skip ]
+[ Debug ] inspector/timeline/timeline-recording.html [ Skip ]

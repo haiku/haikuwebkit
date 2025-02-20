@@ -386,8 +386,10 @@ void Thread::setThreadTimeConstraints(MonotonicTime period, MonotonicTime nomina
     policy.computation = nominalComputation.toMachAbsoluteTime();
     policy.constraint = constraint.toMachAbsoluteTime();
     policy.preemptible = isPremptable;
-    if (auto error = thread_policy_set(machThread(), THREAD_TIME_CONSTRAINT_POLICY, (thread_policy_t)&policy, THREAD_TIME_CONSTRAINT_POLICY_COUNT))
+    if (auto error = thread_policy_set(machThread(), THREAD_TIME_CONSTRAINT_POLICY, (thread_policy_t)&policy, THREAD_TIME_CONSTRAINT_POLICY_COUNT)) {
+        UNUSED_VARIABLE(error);
         LOG_ERROR("Thread %p failed to set time constraints with error %d", this, error);
+    }
 #else
     ASSERT_NOT_REACHED();
 #endif
@@ -576,7 +578,7 @@ void Thread::initializeTLSKey()
 Thread& Thread::initializeTLS(Ref<Thread>&& thread)
 {
     // We leak the ref to keep the Thread alive while it is held in TLS. destructTLS will deref it later at thread destruction time.
-    auto& threadInTLS = thread.leakRef();
+    SUPPRESS_UNCOUNTED_LOCAL auto& threadInTLS = thread.leakRef();
 #if !HAVE(FAST_TLS)
     ASSERT(s_key != InvalidThreadSpecificKey);
     threadSpecificSet(s_key, &threadInTLS);

@@ -16,15 +16,15 @@ PASS write() with a string with unix line ending preserved
 PASS write() with a string with windows line ending preserved
 PASS write() with an empty array buffer to an empty file
 PASS write() with a valid typed array buffer
-FAIL atomic writes: writable file streams make atomic changes on close promise_test: Unhandled rejection with value: object "InvalidStateError: The object is in an invalid state."
+PASS atomic writes: writable file streams make atomic changes on close
 PASS atomic writes: write() after close() fails
 PASS atomic writes: truncate() after close() fails
 PASS atomic writes: close() after close() fails
 PASS atomic writes: only one close() operation may succeed
 PASS getWriter() can be used
-FAIL WriteParams: truncate missing size param promise_rejects_dom: truncate without size function "function() { throw e }" threw object "TypeError: Required argument is missing" that is not a DOMException SyntaxError: property "code" is equal to undefined, expected 12
-FAIL WriteParams: write missing data param promise_rejects_dom: write without data function "function() { throw e }" threw object "TypeError: Data type is invalid" that is not a DOMException SyntaxError: property "code" is equal to undefined, expected 12
+PASS WriteParams: truncate missing size param
+FAIL WriteParams: write missing data param promise_rejects_dom: write without data function "function() { throw e }" threw object "TypeError: Data is missing" that is not a DOMException SyntaxError: property "code" is equal to undefined, expected 12
 PASS WriteParams: write null data param
-FAIL WriteParams: seek missing position param promise_rejects_dom: seek without position function "function() { throw e }" threw object "TypeError: Required argument is missing" that is not a DOMException SyntaxError: property "code" is equal to undefined, expected 12
-FAIL write() with an invalid blob to an empty file should reject promise_rejects_dom: function "function() { throw e }" threw object "TypeError: Data type is invalid" that is not a DOMException NotFoundError: property "code" is equal to undefined, expected 8
+PASS WriteParams: seek missing position param
+PASS write() with an invalid blob to an empty file should reject
 

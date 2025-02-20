@@ -379,6 +379,7 @@ public:
 #if PLATFORM(COCOA)
     bool hasAttributedText() const;
 #endif
+    String textContentPrefixFromListMarker() const override;
 
     // Methods for determining accessibility text.
     bool isARIAStaticText() const { return ariaRoleAttribute() == AccessibilityRole::StaticText; }
@@ -558,7 +559,7 @@ public:
     bool shouldFocusActiveDescendant() const;
 
     WEBCORE_EXPORT static AccessibilityRole ariaRoleToWebCoreRole(const String&);
-    static AccessibilityRole ariaRoleToWebCoreRole(const String&, const Function<bool(const AccessibilityRole&)>&);
+    static AccessibilityRole ariaRoleToWebCoreRole(const String&, NOESCAPE const Function<bool(const AccessibilityRole&)>&);
     bool hasAttribute(const QualifiedName&) const;
     const AtomString& getAttribute(const QualifiedName&) const;
     String getAttributeTrimmed(const QualifiedName&) const;
@@ -988,7 +989,7 @@ inline bool AccessibilityObject::hasAttributedText() const
 }
 #endif
 
-AccessibilityObject* firstAccessibleObjectFromNode(const Node*, const Function<bool(const AccessibilityObject&)>& isAccessible);
+AccessibilityObject* firstAccessibleObjectFromNode(const Node*, NOESCAPE const Function<bool(const AccessibilityObject&)>& isAccessible);
 
 namespace Accessibility {
 

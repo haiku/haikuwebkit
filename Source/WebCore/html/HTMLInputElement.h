@@ -288,6 +288,7 @@ public:
     bool willRespondToMouseClickEventsWithEditability(Editability) const final;
 
     WEBCORE_EXPORT bool isFocusingWithDataListDropdown() const;
+    bool hasDataList() const;
     RefPtr<HTMLDataListElement> dataList() const;
     void dataListMayHaveChanged();
 
@@ -361,7 +362,7 @@ private:
 
     void defaultEventHandler(Event&) final;
 
-    Ref<Element> cloneElementWithoutAttributesAndChildren(TreeScope&) override;
+    Ref<Element> cloneElementWithoutAttributesAndChildren(Document&, CustomElementRegistry*) override;
 
     enum AutoCompleteSetting : uint8_t { Uninitialized, On, Off };
     static constexpr int defaultSize = 20;

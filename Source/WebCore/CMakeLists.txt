@@ -194,6 +194,7 @@ set(WebCore_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/style/values/images"
     "${WEBCORE_DIR}/style/values/motion"
     "${WEBCORE_DIR}/style/values/primitives"
+    "${WEBCORE_DIR}/style/values/scroll-snap"
     "${WEBCORE_DIR}/style/values/shapes"
     "${WEBCORE_DIR}/style/values/text-decoration"
     "${WEBCORE_DIR}/svg"
@@ -406,6 +407,7 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/identity/DigitalCredentialRequest.idl
     Modules/identity/DigitalCredentialRequestOptions.idl
     Modules/identity/IdentityCredentialProtocol.idl
+    Modules/identity/MobileDocumentRequest.idl
     Modules/identity/OpenID4VPRequest.idl
 
     Modules/indexeddb/IDBCursor.idl
@@ -1138,6 +1140,7 @@ set(WebCore_NON_SVG_IDL_FILES
     dom/Element+PointerLock.idl
     dom/Element.idl
     dom/ElementContentEditable.idl
+    dom/ElementCreationOptions.idl
     dom/ElementInternals.idl
     dom/ErrorEvent.idl
     dom/Event.idl
@@ -1157,6 +1160,7 @@ set(WebCore_NON_SVG_IDL_FILES
     dom/IdleDeadline.idl
     dom/IdleRequestCallback.idl
     dom/IdleRequestOptions.idl
+    dom/ImportNodeOptions.idl
     dom/InnerHTML.idl
     dom/InputEvent.idl
     dom/KeyboardEvent.idl
@@ -1539,6 +1543,12 @@ set(WebCore_NON_SVG_IDL_FILES
     workers/service/ExtendableEventInit.idl
     workers/service/ExtendableMessageEvent.idl
     workers/service/FetchEvent.idl
+    workers/service/InstallEvent.idl
+    workers/service/RouterCondition.idl
+    workers/service/RouterRule.idl
+    workers/service/RouterSourceDict.idl
+    workers/service/RouterSourceEnum.idl
+    workers/service/RunningStatus.idl
     workers/service/NavigationPreloadManager.idl
     workers/service/NavigationPreloadState.idl
     workers/service/ServiceWorker.idl

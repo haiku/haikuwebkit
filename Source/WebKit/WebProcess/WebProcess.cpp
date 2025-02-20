@@ -419,7 +419,7 @@ void WebProcess::initializeConnection(IPC::Connection* connection)
 static void scheduleLogMemoryStatistics(LogMemoryStatisticsReason reason)
 {
     // Log stats in the next turn of the run loop so that it runs after the low memory handler.
-    RunLoop::main().dispatch([reason] {
+    RunLoop::protectedMain()->dispatch([reason] {
         WebCore::logMemoryStatistics(reason);
     });
 }
@@ -536,8 +536,10 @@ void WebProcess::initializeWebProcess(WebProcessCreationParameters&& parameters,
 
     SandboxExtension::consumePermanently(parameters.additionalSandboxExtensionHandles);
 
-    if (!parameters.injectedBundlePath.isEmpty())
-        m_injectedBundle = InjectedBundle::create(parameters, transformHandlesToObjects(parameters.initializationUserData.object()));
+    if (!parameters.injectedBundlePath.isEmpty()) {
+        if (RefPtr injectedBundle = InjectedBundle::create(parameters, transformHandlesToObjects(parameters.initializationUserData.object())))
+            lazyInitialize(m_injectedBundle, injectedBundle.releaseNonNull());
+    }
 
     for (auto& supplement : m_supplements.values())
         supplement->initialize(parameters);
@@ -1258,7 +1260,7 @@ NetworkProcessConnection& WebProcess::ensureNetworkProcessConnection()
 #endif
 
         // This can be called during a WebPage's constructor, so wait until after the constructor returns to touch the WebPage.
-        RunLoop::main().dispatch([this] {
+        RunLoop::protectedMain()->dispatch([this] {
             for (auto& webPage : m_pageMap.values())
                 webPage->synchronizeCORSDisablingPatternsWithNetworkProcess();
         });
@@ -1547,6 +1549,10 @@ void WebProcess::deleteWebsiteData(OptionSet<WebsiteDataType> websiteDataTypes, 
 
         CrossOriginPreflightResultCache::singleton().clear();
     }
+
+    if (websiteDataTypes.contains(WebsiteDataType::ResourceLoadStatistics))
+        clearResourceLoadStatistics();
+
     completionHandler();
 }
 
@@ -2382,7 +2388,6 @@ bool WebProcess::shouldUseRemoteRenderingFor(RenderingPurpose purpose)
         return m_useGPUProcessForCanvasRendering;
     case RenderingPurpose::DOM:
     case RenderingPurpose::LayerBacking:
-    case RenderingPurpose::BitmapOnlyLayerBacking:
     case RenderingPurpose::Snapshot:
     case RenderingPurpose::ShareableSnapshot:
         return m_useGPUProcessForDOMRendering;

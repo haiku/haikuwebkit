@@ -1344,7 +1344,7 @@ bool ValidateGetProgramResourceName(const Context *context,
 
     if (bufSize < 0)
     {
-        ANGLE_VALIDATION_ERROR(GL_INVALID_VALUE, kNegativeBufferSize);
+        ANGLE_VALIDATION_ERROR(GL_INVALID_VALUE, kNegativeBufSize);
         return false;
     }
 
@@ -1977,7 +1977,7 @@ bool ValidateGetProgramPipelineInfoLogBase(const Context *context,
 {
     if (bufSize < 0)
     {
-        ANGLE_VALIDATION_ERROR(GL_INVALID_VALUE, kNegativeBufferSize);
+        ANGLE_VALIDATION_ERROR(GL_INVALID_VALUE, kNegativeBufSize);
         return false;
     }
 
@@ -3048,6 +3048,17 @@ bool ValidateTexBufferBase(const Context *context,
         case GL_RGBA16UI:
         case GL_RGBA32UI:
             break;
+        case GL_R16_EXT:
+        case GL_RG16_EXT:
+        case GL_RGBA16_EXT:
+        {
+            if (!context->getExtensions().textureNorm16EXT)
+            {
+                ANGLE_VALIDATION_ERROR(GL_INVALID_ENUM, kTextureBufferInternalFormat);
+                return false;
+            }
+            break;
+        }
 
         default:
             ANGLE_VALIDATION_ERROR(GL_INVALID_ENUM, kTextureBufferInternalFormat);

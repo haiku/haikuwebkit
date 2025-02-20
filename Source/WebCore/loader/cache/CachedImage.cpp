@@ -319,7 +319,7 @@ FloatSize CachedImage::imageSizeForRenderer(const RenderElement* renderer, SizeT
 
 #if ENABLE(MULTI_REPRESENTATION_HEIC)
     if (CheckedPtr renderImage = dynamicDowncast<RenderImage>(renderer); renderImage && renderImage->isMultiRepresentationHEIC()) {
-        auto metrics = renderImage->style().fontCascade().primaryFont().metricsForMultiRepresentationHEIC();
+        auto metrics = renderImage->style().fontCascade().primaryFont()->metricsForMultiRepresentationHEIC();
         return metrics.size();
     }
 #endif
@@ -361,6 +361,13 @@ void CachedImage::computeIntrinsicDimensions(Length& intrinsicWidth, Length& int
 {
     if (RefPtr image = m_image)
         image->computeIntrinsicDimensions(intrinsicWidth, intrinsicHeight, intrinsicRatio);
+}
+
+Headroom CachedImage::headroom() const
+{
+    if (RefPtr image = m_image)
+        return image->headroom();
+    return Headroom::None;
 }
 
 void CachedImage::notifyObservers(const IntRect* changeRect)

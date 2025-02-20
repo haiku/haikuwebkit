@@ -529,8 +529,9 @@
    },
    {
       "emails" : [
-         "aboxhall@chromium.org"
+         "alice@igalia.com"
       ],
+      "github" : "alice",
       "name" : "Alice Boxhall",
       "nicks" : [
          "aboxhall"
@@ -7443,7 +7444,8 @@
       "name" : "Simon Pena",
       "nicks" : [
          "spenap"
-      ]
+      ],
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -8291,6 +8293,14 @@
       "nicks" : [
          "yael"
       ]
+   },
+   {
+      "emails" : [
+         "y_karimi@apple.com"
+      ],
+      "github" : "karimiy21",
+      "name" : "Yasmin Karimi",
+      "status" : "committer"
    },
    {
       "emails" : [

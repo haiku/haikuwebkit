@@ -175,7 +175,7 @@ void RenderBlockFlow::willBeDestroyed()
     }
 
     if (svgTextLayout())
-        svgTextLayout()->lineBoxes().deleteLineBoxes();
+        svgTextLayout()->deleteLegacyRootBox();
 
     // NOTE: This jumps down to RenderBox, bypassing RenderBlock since it would do duplicate work.
     RenderBox::willBeDestroyed();
@@ -317,7 +317,7 @@ void RenderBlockFlow::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth,
 
     if (!style().autoWrap() && childrenInline()) {
         // A horizontal marquee with inline children has no minimum width.
-        auto* scrollableArea = layer() ? layer()->scrollableArea() : nullptr;
+        CheckedPtr scrollableArea = layer() ? layer()->scrollableArea() : nullptr;
         if (scrollableArea && scrollableArea->marquee() && scrollableArea->marquee()->isHorizontal())
             minLogicalWidth = 0;
     }
@@ -437,20 +437,20 @@ void RenderBlockFlow::setChildrenInline(bool value)
     RenderBlock::setChildrenInline(value);
 }
 
-void RenderBlockFlow::layoutBlock(bool relayoutChildren, LayoutUnit pageLogicalHeight)
+void RenderBlockFlow::layoutBlock(RelayoutChildren relayoutChildren, LayoutUnit pageLogicalHeight)
 {
     ASSERT(needsLayout());
 
-    if (!relayoutChildren && simplifiedLayout())
+    if (relayoutChildren == RelayoutChildren::No && simplifiedLayout())
         return;
 
     LayoutRepainter repainter(*this);
 
     if (recomputeLogicalWidthAndColumnWidth())
-        relayoutChildren = true;
+        relayoutChildren = RelayoutChildren::Yes;
 
-    if (auto* layoutState = view().frameView().layoutContext().layoutState(); layoutState && layoutState->legacyLineClamp())
-        relayoutChildren = relayoutChildren || !isFieldset();
+    if (auto* layoutState = view().frameView().layoutContext().layoutState(); layoutState && layoutState->legacyLineClamp() && !isFieldset())
+        relayoutChildren = RelayoutChildren::Yes;
 
     rebuildFloatingObjectSetFromIntrudingFloats();
 
@@ -560,8 +560,11 @@ void RenderBlockFlow::layoutBlock(bool relayoutChildren, LayoutUnit pageLogicalH
 
         bool heightChanged = (previousHeight != newHeight);
         if (heightChanged || alignContentShift != 0_lu)
-            relayoutChildren = true;
-        layoutPositionedObjects(relayoutChildren || isDocumentElementRenderer());
+            relayoutChildren = RelayoutChildren::Yes;
+        if (isDocumentElementRenderer())
+            layoutPositionedObjects(RelayoutChildren::Yes);
+        else
+            layoutPositionedObjects(relayoutChildren);
     }
 
     updateDescendantTransformsAfterLayout();
@@ -655,9 +658,9 @@ inline LayoutUnit RenderBlockFlow::shiftForAlignContent(LayoutUnit intrinsicLogi
         }
     } else if (svgTextLayout()) {
         if (isHorizontalWritingMode())
-            svgTextLayout()->lineBoxes().shiftLinesBy(0, space);
+            svgTextLayout()->shiftLineBy(0, space);
         else
-            svgTextLayout()->lineBoxes().shiftLinesBy(-space, 0);
+            svgTextLayout()->shiftLineBy(-space, 0);
     } else if (inlineLayout())
         inlineLayout()->shiftLinesBy(space);
     if (m_floatingObjects)
@@ -672,7 +675,7 @@ inline LayoutUnit RenderBlockFlow::shiftForAlignContent(LayoutUnit intrinsicLogi
     return space;
 }
 
-void RenderBlockFlow::layoutInFlowChildren(bool relayoutChildren, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom, LayoutUnit& maxFloatLogicalBottom)
+void RenderBlockFlow::layoutInFlowChildren(RelayoutChildren relayoutChildren, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom, LayoutUnit& maxFloatLogicalBottom)
 {
     if (!firstChild()) {
         // Empty block containers produce empty formatting lines which may affect trim-start/end.
@@ -711,12 +714,12 @@ void RenderBlockFlow::layoutInFlowChildren(bool relayoutChildren, LayoutUnit& re
                 ancestor->setNeedsLayout(MarkOnlyThis);
 
             auto textBoxTrimmer = TextBoxTrimmer { *this, *rootForLastFormattedLine };
-            layoutBlockChildren(false, maxFloatLogicalBottom);
+            layoutBlockChildren(RelayoutChildren::No, maxFloatLogicalBottom);
         }
     }
 }
 
-void RenderBlockFlow::layoutBlockChildren(bool relayoutChildren, LayoutUnit& maxFloatLogicalBottom)
+void RenderBlockFlow::layoutBlockChildren(RelayoutChildren relayoutChildren, LayoutUnit& maxFloatLogicalBottom)
 {
     ASSERT(firstChild());
 
@@ -891,7 +894,7 @@ void RenderBlockFlow::computeAndSetLineLayoutPath()
     setLineLayoutPath(LayoutIntegration::LineLayout::canUseFor(*this) ? InlinePath : SvgTextPath);
 }
 
-void RenderBlockFlow::layoutInlineChildren(bool relayoutChildren, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom)
+void RenderBlockFlow::layoutInlineChildren(RelayoutChildren relayoutChildren, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom)
 {
     computeAndSetLineLayoutPath();
 
@@ -1862,7 +1865,8 @@ static inline bool needsAppleMailPaginationQuirk(const RenderBlockFlow& renderer
     if (!renderer.settings().appleMailPaginationQuirkEnabled())
         return false;
 
-    if (renderer.element() && renderer.element()->idForStyleResolution() == "messageContentContainer"_s)
+    RefPtr element = renderer.element();
+    if (element && element->idForStyleResolution() == "messageContentContainer"_s)
         return true;
 
     return false;
@@ -3126,7 +3130,7 @@ bool RenderBlockFlow::hitTestFloats(const HitTestRequest& request, HitTestResult
 
     LayoutPoint adjustedLocation = accumulatedOffset;
     if (auto* renderView = dynamicDowncast<RenderView>(*this))
-        adjustedLocation += toLayoutSize(renderView->frameView().scrollPosition());
+        adjustedLocation += toLayoutSize(renderView->protectedFrameView()->scrollPosition());
 
     const FloatingObjectSet& floatingObjectSet = m_floatingObjects->set();
     auto begin = floatingObjectSet.begin();
@@ -3260,7 +3264,7 @@ std::optional<LayoutUnit> RenderBlockFlow::inlineBlockBaseline(LineDirectionMode
     auto isInFormControl = [&] {
         if (!element)
             return false;
-        if (auto* shadowHost = element->shadowHost())
+        if (RefPtr shadowHost = element->shadowHost())
             return shadowHost->isFormControlElement();
         return false;
     };
@@ -3636,7 +3640,7 @@ VisiblePosition RenderBlockFlow::positionForPointWithInlineChildren(const Layout
         }
     }
 
-    bool moveCaretToBoundary = frame().editor().behavior().shouldMoveCaretToHorizontalBoundaryWhenPastTopOrBottom();
+    bool moveCaretToBoundary = protectedFrame()->protectedEditor()->behavior().shouldMoveCaretToHorizontalBoundaryWhenPastTopOrBottom();
 
     if (!moveCaretToBoundary && !closestBox && lastLineBoxWithChildren) {
         // y coordinate is below last root line box, pretend we hit it
@@ -3753,7 +3757,7 @@ bool RenderBlockFlow::relayoutForPagination()
             neededRelayout = true;
             multiColumnFlow()->setChildNeedsLayout(MarkOnlyThis);
             setChildNeedsLayout(MarkOnlyThis);
-            layoutBlock(false);
+            layoutBlock(RelayoutChildren::No);
         }
         firstPass = false;
     } while (needsRelayout);
@@ -3853,7 +3857,7 @@ std::pair<float, float> RenderBlockFlow::inlineContentTopAndBottomIncludingInkOv
     auto logicalTop = std::min(firstLineBox->logicalTop(), firstLineBox->contentLogicalTop());
     auto logicalBottom = std::max(lastLineBox->logicalBottom(), lastLineBox->contentLogicalBottom());
 
-    if (!inlineLayout()->hasVisualOverflow())
+    if (!inlineLayout()->hasInkOverflow())
         return { logicalTop, logicalBottom };
 
     for (auto lineBox = firstLineBox; lineBox; lineBox.traverseNext()) {
@@ -3863,7 +3867,7 @@ std::pair<float, float> RenderBlockFlow::inlineContentTopAndBottomIncludingInkOv
     return { logicalTop, logicalBottom };
 }
 
-void RenderBlockFlow::layoutInlineContent(bool relayoutChildren, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom)
+void RenderBlockFlow::layoutInlineContent(RelayoutChildren relayoutChildren, LayoutUnit& repaintLogicalTop, LayoutUnit& repaintLogicalBottom)
 {
     auto& layoutState = *view().frameView().layoutContext().layoutState();
 
@@ -3873,8 +3877,8 @@ void RenderBlockFlow::layoutInlineContent(bool relayoutChildren, LayoutUnit& rep
     for (auto walker = InlineWalker(*this); !walker.atEnd(); walker.advance()) {
         auto& renderer = *walker.current();
         auto* box = dynamicDowncast<RenderBox>(renderer);
-        auto childNeedsLayout = relayoutChildren || (box && box->hasRelativeDimensions());
-        auto childNeedsPreferredWidthComputation = relayoutChildren && box && box->needsPreferredWidthsRecalculation();
+        auto childNeedsLayout = relayoutChildren == RelayoutChildren::Yes || (box && box->hasRelativeDimensions());
+        auto childNeedsPreferredWidthComputation = relayoutChildren == RelayoutChildren::Yes && box && box->needsPreferredWidthsRecalculation();
         if (childNeedsLayout)
             renderer.setNeedsLayout(MarkOnlyThis);
         if (childNeedsPreferredWidthComputation)
@@ -3955,7 +3959,7 @@ void RenderBlockFlow::layoutInlineContent(bool relayoutChildren, LayoutUnit& rep
     auto newBorderBoxBottom = borderBoxBottom();
 
     auto updateRepaintTopAndBottomIfNeeded = [&] {
-        auto isFullLayout = selfNeedsLayout() || relayoutChildren;
+        auto isFullLayout = selfNeedsLayout() || relayoutChildren == RelayoutChildren::Yes;
         if (isFullLayout) {
             if (!selfNeedsLayout()) {
                 // In order to really trigger full repaint, the block container has to have the self layout flag set (see LegacyLineLayout::layoutRunsAndFloats).
@@ -4111,7 +4115,7 @@ static inline bool resizeTextPermitted(const RenderObject& renderer)
     // We disallow resizing for text input fields and textarea to address <rdar://problem/5792987> and <rdar://problem/8021123>
     for (auto* ancestor = renderer.parent(); ancestor; ancestor = ancestor->parent()) {
         // Get the first non-shadow HTMLElement and see if it's an input.
-        if (auto* element = dynamicDowncast<HTMLElement>(ancestor->element()); element && !element->isInShadowTree())
+        if (RefPtr element = dynamicDowncast<HTMLElement>(ancestor->element()); element && !element->isInShadowTree())
             return !is<HTMLInputElement>(*element) && !is<HTMLTextAreaElement>(*element);
     }
     return true;
@@ -4204,7 +4208,7 @@ void RenderBlockFlow::adjustComputedFontSizes(float size, float visibleWidth)
             float candidateNewSize = roundf(std::min(minFontSize, specifiedSize * lineTextMultiplier));
 
             if (candidateNewSize > specifiedSize && candidateNewSize != fontDescription.computedSize() && text.textNode() && oldStyle.textSizeAdjust().isAuto())
-                document().textAutoSizing().addTextNode(*text.textNode(), candidateNewSize);
+                protectedDocument()->textAutoSizing().addTextNode(*text.protectedTextNode(), candidateNewSize);
         }
 
         descendant = RenderObjectTraversal::nextSkippingChildren(text, this);
@@ -4213,7 +4217,7 @@ void RenderBlockFlow::adjustComputedFontSizes(float size, float visibleWidth)
 
 #endif // ENABLE(TEXT_AUTOSIZING)
 
-void RenderBlockFlow::layoutExcludedChildren(bool relayoutChildren)
+void RenderBlockFlow::layoutExcludedChildren(RelayoutChildren relayoutChildren)
 {
     RenderBlock::layoutExcludedChildren(relayoutChildren);
 
@@ -4225,7 +4229,7 @@ void RenderBlockFlow::layoutExcludedChildren(bool relayoutChildren)
 
     setLogicalTopForChild(*fragmentedFlow, borderAndPaddingBefore());
 
-    if (relayoutChildren)
+    if (relayoutChildren == RelayoutChildren::Yes)
         fragmentedFlow->setChildNeedsLayout(MarkOnlyThis);
 
     if (fragmentedFlow->needsLayout()) {
@@ -4249,7 +4253,7 @@ void RenderBlockFlow::layoutExcludedChildren(bool relayoutChildren)
     determineLogicalLeftPositionForChild(*fragmentedFlow);
 }
 
-void RenderBlockFlow::checkForPaginationLogicalHeightChange(bool& relayoutChildren, LayoutUnit& pageLogicalHeight, bool& pageLogicalHeightChanged)
+void RenderBlockFlow::checkForPaginationLogicalHeightChange(RelayoutChildren& relayoutChildren, LayoutUnit& pageLogicalHeight, bool& pageLogicalHeightChanged)
 {
     // If we don't use columns or flow threads, then bail.
     if (!isRenderFragmentedFlow() && !multiColumnFlow())
@@ -4258,11 +4262,11 @@ void RenderBlockFlow::checkForPaginationLogicalHeightChange(bool& relayoutChildr
     // We don't actually update any of the variables. We just subclassed to adjust our column height.
     if (RenderMultiColumnFlow* fragmentedFlow = multiColumnFlow()) {
         LayoutUnit newColumnHeight;
-        if (hasDefiniteLogicalHeight() || view().frameView().pagination().mode != Pagination::Mode::Unpaginated) {
+        if (hasDefiniteLogicalHeight() || view().protectedFrameView()->pagination().mode != Pagination::Mode::Unpaginated) {
             auto computedValues = computeLogicalHeight(0_lu, logicalTop());
             newColumnHeight = std::max<LayoutUnit>(computedValues.m_extent - borderAndPaddingLogicalHeight() - scrollbarLogicalHeight(), 0);
             if (fragmentedFlow->columnHeightAvailable() != newColumnHeight)
-                relayoutChildren = true;
+                relayoutChildren = RelayoutChildren::Yes;
         }
         fragmentedFlow->setColumnHeightAvailable(newColumnHeight);
     } else if (CheckedPtr fragmentedFlow = dynamicDowncast<RenderFragmentedFlow>(*this)) {

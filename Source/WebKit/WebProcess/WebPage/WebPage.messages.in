@@ -40,10 +40,10 @@ messages -> WebPage WantsAsyncDispatchMessage {
     TestProcessIncomingSyncMessagesWhenWaitingForSyncReply() -> (bool handled) Synchronous AllowedWhenWaitingForSyncReplyDuringUnboundedIPC
 
 #if PLATFORM(COCOA)
-    SetTopContentInsetFenced(float contentInset, MachSendRight machSendRight)
+    SetObscuredContentInsetsFenced(WebCore::FloatBoxExtent obscuredContentInsets, MachSendRight machSendRight)
 #endif
 #if !PLATFORM(COCOA)
-    SetTopContentInset(float contentInset)
+    SetObscuredContentInsets(WebCore::FloatBoxExtent obscuredContentInsets)
 #endif
 
     SetUnderlayColor(WebCore::Color color)
@@ -70,7 +70,7 @@ messages -> WebPage WantsAsyncDispatchMessage {
 
     AttemptSyntheticClick(WebCore::IntPoint point, OptionSet<WebKit::WebEventModifier> modifiers, WebKit::TransactionID lastLayerTreeTransactionId)
     PotentialTapAtPosition(WebKit::TapIdentifier requestID, WebCore::FloatPoint point, bool shouldRequestMagnificationInformation)
-    CommitPotentialTap(OptionSet<WebKit::WebEventModifier> modifiers, WebKit::TransactionID lastLayerTreeTransactionId, WebCore::PointerID pointerId, String pointerType)
+    CommitPotentialTap(OptionSet<WebKit::WebEventModifier> modifiers, WebKit::TransactionID lastLayerTreeTransactionId, WebCore::PointerID pointerId)
     CancelPotentialTap()
     TapHighlightAtPosition(WebKit::TapIdentifier requestID, WebCore::FloatPoint point)
     DidRecognizeLongPress()
@@ -186,7 +186,7 @@ messages -> WebPage WantsAsyncDispatchMessage {
     LoadURLInFrame(URL url, String referrer, WebCore::FrameIdentifier frameID)
     LoadDataInFrame(std::span<const uint8_t> data, String MIMEType, String encodingName, URL baseURL, WebCore::FrameIdentifier frameID)
     LoadRequest(struct WebKit::LoadParameters loadParameters)
-    CreateProvisionalFrame(struct WebKit::ProvisionalFrameCreationParameters creationParameters, WebCore::FrameIdentifier frameID)
+    CreateProvisionalFrame(struct WebKit::ProvisionalFrameCreationParameters creationParameters)
     DestroyProvisionalFrame(WebCore::FrameIdentifier frameID);
     LoadDidCommitInAnotherProcess(WebCore::FrameIdentifier frameID, std::optional<WebCore::LayerHostingContextIdentifier> layerHostingContextIdentifier)
     LoadRequestWaitingForProcessLaunch(struct WebKit::LoadParameters loadParameters, URL resourceDirectoryURL, WebKit::WebPageProxyIdentifier pageID, bool checkAssumedReadAccessToResourceURL)
@@ -301,9 +301,6 @@ messages -> WebPage WantsAsyncDispatchMessage {
     DidScalePageInViewCoordinates(double scale, WebCore::IntPoint origin)
     DidScalePageRelativeToScrollPosition(double scale, WebCore::IntPoint origin)
     DidScaleView(double scale)
-#if ENABLE(PDF_PLUGIN)
-    SetPluginScaleFactor(double scale, WebCore::IntPoint origin);
-#endif
 
     SetUseFixedLayout(bool fixed)
     SetFixedLayoutSize(WebCore::IntSize size)
@@ -496,7 +493,7 @@ messages -> WebPage WantsAsyncDispatchMessage {
 
     BindRemoteAccessibilityFrames(int processIdentifier, WebCore::FrameIdentifier frameID, Vector<uint8_t> dataToken) -> (Vector<uint8_t> token, int processIdentifier) Synchronous
     UpdateRemotePageAccessibilityOffset(WebCore::FrameIdentifier frameID, WebCore::IntPoint offset);
-    ResolveAccessibilityHitTestForTesting(WebCore::IntPoint point) -> (String result)
+    ResolveAccessibilityHitTestForTesting(WebCore::FrameIdentifier frameID, WebCore::IntPoint point) -> (String result)
     EnableAccessibility()
 
 #if PLATFORM(COCOA)
@@ -864,6 +861,6 @@ messages -> WebPage WantsAsyncDispatchMessage {
     UpdateOpener(WebCore::FrameIdentifier frameID, WebCore::FrameIdentifier newOpener)
 
 #if HAVE(AUDIT_TOKEN)
-    SetPresentingApplicationAuditToken(struct WebKit::CoreIPCAuditToken auditToken)
+    SetPresentingApplicationAuditTokenAndBundleIdentifier(struct WebKit::CoreIPCAuditToken auditToken, String bundleIdentifier)
 #endif
 }

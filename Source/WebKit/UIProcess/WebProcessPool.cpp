@@ -680,7 +680,7 @@ void WebProcessPool::establishRemoteWorkerContextConnectionToNetworkProcess(Remo
     }
 
     // Prioritize the requesting WebProcess for running the service worker.
-    if (!remoteWorkerProcessProxy && !s_useSeparateServiceWorkerProcess && requestingProcess) {
+    if (!remoteWorkerProcessProxy && !s_useSeparateServiceWorkerProcess && requestingProcess && requestingProcess->state() != WebProcessProxy::State::Terminated) {
         if (requestingProcess->websiteDataStore() == websiteDataStore && requestingProcess->site() == site)
             useProcessForRemoteWorkers(*requestingProcess);
     }
@@ -1659,6 +1659,18 @@ void WebProcessPool::terminateAllWebContentProcesses(ProcessTerminationReason re
         process->requestTermination(reason);
 }
 
+void WebProcessPool::terminateServiceWorkersForSession(PAL::SessionID sessionID)
+{
+    Ref protectedThis { *this };
+    Vector<Ref<WebProcessProxy>> serviceWorkerProcesses;
+    remoteWorkerProcesses().forEach([&](auto& process) {
+        if (process.isRunningServiceWorkers() && process.sessionID() == sessionID)
+            serviceWorkerProcesses.append(process);
+    });
+    for (Ref serviceWorkerProcess : serviceWorkerProcesses)
+        serviceWorkerProcess->disableRemoteWorkers(RemoteWorkerType::ServiceWorker);
+}
+
 void WebProcessPool::terminateServiceWorkers()
 {
     Ref protectedThis { *this };
@@ -2032,7 +2044,7 @@ void WebProcessPool::prepareProcessForNavigation(Ref<WebProcessProxy>&& process,
         // Since the IPC is asynchronous, make sure the destination process and suspended page are still valid.
         if (process->state() == AuxiliaryProcessProxy::State::Terminated && previousAttemptsCount < maximumNumberOfAttempts) {
             // The destination process crashed during the IPC to the network process, use a new process.
-            Ref fallbackProcess = processForSite(dataStore, site, lockdownMode, page->protectedConfiguration());
+            Ref fallbackProcess = processForSite(dataStore, site, lockdownMode, page->configuration());
             prepareProcessForNavigation(WTFMove(fallbackProcess), page, nullptr, reason, site, navigation, lockdownMode, loadedWebArchive, WTFMove(dataStore), WTFMove(completionHandler), previousAttemptsCount + 1);
             return;
         }
@@ -2404,7 +2416,7 @@ bool WebProcessPool::anyProcessPoolNeedsUIBackgroundAssertion()
     });
 }
 
-void WebProcessPool::forEachProcessForSession(PAL::SessionID sessionID, const Function<void(WebProcessProxy&)>& apply)
+void WebProcessPool::forEachProcessForSession(PAL::SessionID sessionID, NOESCAPE const Function<void(WebProcessProxy&)>& apply)
 {
     for (Ref process : m_processes) {
         if (process->isPrewarmed() || process->sessionID() != sessionID)

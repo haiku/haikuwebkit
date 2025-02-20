@@ -27,13 +27,13 @@ onload = async () => {
                 footer { color-scheme: dark; }
             </style>
             <header>
-                <iframe name="frame1" src="./resources/iframe--eligible--.html"></iframe>
+                <iframe name="frame1" src="./resources/--eligible--/iframe.html"></iframe>
             </header>
             <main>
-                <iframe name="frame2" src="./resources/iframe--eligible--.html"></iframe>
+                <iframe name="frame2" src="./resources/--eligible--/iframe.html"></iframe>
             </main>
             <footer>
-                <iframe name="frame3" src="./resources/iframe--eligible--.html"></iframe>
+                <iframe name="frame3" src="./resources/--eligible--/iframe.html"></iframe>
             </footer>
         `;
 
@@ -48,9 +48,9 @@ onload = async () => {
 
         debug("In footer, scheme is dark only.")
         await test('frame3', white, white);
-    }
 
-    finishJSTest();
+        finishJSTest();
+    }
 }
 
 async function test(frameName, lightModeExpected, darkModeExpected) {

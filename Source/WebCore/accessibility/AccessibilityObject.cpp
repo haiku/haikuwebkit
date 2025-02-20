@@ -591,7 +591,7 @@ AccessibilityObject* AccessibilityObject::firstAccessibleObjectFromNode(const No
     });
 }
 
-AccessibilityObject* firstAccessibleObjectFromNode(const Node* node, const Function<bool(const AccessibilityObject&)>& isAccessible)
+AccessibilityObject* firstAccessibleObjectFromNode(const Node* node, NOESCAPE const Function<bool(const AccessibilityObject&)>& isAccessible)
 {
     if (!node)
         return nullptr;
@@ -1803,6 +1803,19 @@ StringView AccessibilityObject::listMarkerTextForNodeAndPosition(Node* node, Pos
     return lineStartListMarkerText(listItem, startPosition, markerText);
 }
 
+String AccessibilityObject::textContentPrefixFromListMarker() const
+{
+    // Get the attributed string for range (0, 1) and then delete the last character,
+    // in order to extract the list marker that was added as a prefix to the text content.
+    std::optional<SimpleRange> firstCharacterRange = rangeForCharacterRange({ 0, 1 });
+    if (firstCharacterRange) {
+        String firstCharacterText = stringForRange(*firstCharacterRange);
+        if (firstCharacterText.length() > 1)
+            return firstCharacterText.left(firstCharacterText.length() - 1);
+    }
+    return { };
+}
+
 String AccessibilityObject::stringForRange(const SimpleRange& range) const
 {
     TextIterator it = textIteratorIgnoringFullSizeKana(range);
@@ -2761,7 +2774,7 @@ AccessibilityRole AccessibilityObject::ariaRoleToWebCoreRole(const String& value
     });
 }
 
-AccessibilityRole AccessibilityObject::ariaRoleToWebCoreRole(const String& value, const Function<bool(const AccessibilityRole&)>& skipRole)
+AccessibilityRole AccessibilityObject::ariaRoleToWebCoreRole(const String& value, NOESCAPE const Function<bool(const AccessibilityRole&)>& skipRole)
 {
     if (value.isNull() || value.isEmpty())
         return AccessibilityRole::Unknown;
@@ -3266,16 +3279,8 @@ String AccessibilityObject::popupValue() const
 
 bool AccessibilityObject::hasDatalist() const
 {
-    auto datalistId = getAttribute(listAttr);
-    if (datalistId.isEmpty())
-        return false;
-
-    auto element = this->element();
-    if (!element)
-        return false;
-
-    auto datalist = element->treeScope().getElementById(datalistId);
-    return is<HTMLDataListElement>(datalist);
+    RefPtr input = dynamicDowncast<HTMLInputElement>(element());
+    return input && input->hasDataList();
 }
 
 bool AccessibilityObject::supportsSetSize() const
@@ -3965,8 +3970,14 @@ AccessibilityObjectInclusion AccessibilityObject::defaultObjectInclusion() const
     bool ignoreARIAHidden = isFocused();
     if (Accessibility::findAncestor<AccessibilityObject>(*this, false, [&] (const auto& object) {
         const auto* style = object.style();
-        if (style && WebCore::isRenderHidden(*style))
+        if (style && style->display() == DisplayType::None) {
+            // We don't want to use AccessibilityObject::isRenderHidden(), as that also checks and returns true
+            // for visibility:hidden, which would be wrong if |this| has a visibility:visible ancestor before
+            // this visibility:hidden ancestor (visibility:visible cancels out visibility:hidden).
+            //
+            // We check the isVisibilityHidden at the top of this method, so that covers us as far as visibility goes.
             return true;
+        }
 
         return (!ignoreARIAHidden && object.isARIAHidden()) || object.ariaRoleHasPresentationalChildren() || !object.canHaveChildren();
     }))
@@ -4062,31 +4073,13 @@ Vector<Ref<Element>> AccessibilityObject::elementsFromAttribute(const QualifiedN
     if (!element)
         return { };
 
-    if (Element::isElementReflectionAttribute(document()->settings(), attribute)) {
-        if (RefPtr reflectedElement = element->getElementAttribute(attribute)) {
-            Vector<Ref<Element>> elements;
-            elements.append(reflectedElement.releaseNonNull());
-            return elements;
-        }
-    } else if (Element::isElementsArrayReflectionAttribute(attribute)) {
-        if (auto reflectedElements = element->getElementsArrayAttribute(attribute)) {
-            return reflectedElements.value();
-        }
-    }
+    if (auto elementsFromAttribute = element->elementsArrayForAttributeInternal(attribute))
+        return elementsFromAttribute.value();
 
-    auto& idsString = getAttribute(attribute);
-    if (idsString.isEmpty()) {
-        if (auto* defaultARIA = element->customElementDefaultARIAIfExists()) {
-            return defaultARIA->elementsForAttribute(*element, attribute);
-        }
-        return { };
-    }
+    if (auto* defaultARIA = element->customElementDefaultARIAIfExists())
+        return defaultARIA->elementsForAttribute(*element, attribute);
 
-    auto& treeScope = element->treeScope();
-    SpaceSplitString ids(idsString, SpaceSplitString::ShouldFoldCase::No);
-    return WTF::compactMap(ids, [&](auto& id) {
-        return treeScope.getElementById(id);
-    });
+    return { };
 }
 
 #if PLATFORM(COCOA)

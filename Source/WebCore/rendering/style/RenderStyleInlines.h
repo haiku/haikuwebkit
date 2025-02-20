@@ -33,6 +33,7 @@
 #include "GridPositionsResolver.h"
 #include "HitTestRequest.h"
 #include "ImageOrientation.h"
+#include "PositionArea.h"
 #include "RenderStyle.h"
 #include "ScrollTypes.h"
 #include "ScrollbarColor.h"
@@ -69,6 +70,8 @@
 #endif
 
 namespace WebCore {
+
+using namespace CSS::Literals;
 
 inline const Style::Color& RenderStyle::accentColor() const { return m_rareInheritedData->accentColor; }
 inline bool RenderStyle::affectsTransform() const { return hasTransform() || offsetPath() || rotate() || scale() || translate(); }
@@ -128,7 +131,6 @@ inline const LengthBox& RenderStyle::borderImageSlices() const { return border()
 inline StyleImage* RenderStyle::borderImageSource() const { return border().image().image(); }
 inline NinePieceImageRule RenderStyle::borderImageVerticalRule() const { return border().image().verticalRule(); }
 inline const LengthBox& RenderStyle::borderImageWidth() const { return border().image().borderSlices(); }
-inline bool RenderStyle::borderIsEquivalentForPainting(const RenderStyle& otherStyle) const { return border().isEquivalentForPainting(otherStyle.border(), color() != otherStyle.color()); }
 inline const BorderValue& RenderStyle::borderLeft() const { return border().left(); }
 inline const Style::Color& RenderStyle::borderLeftColor() const { return border().left().color(); }
 inline bool RenderStyle::borderLeftIsTransparent() const { return border().left().isTransparent(); }
@@ -208,10 +210,12 @@ inline bool RenderStyle::containsSizeOrInlineSize() const { return usedContain()
 inline bool RenderStyle::containsStyle() const { return usedContain().contains(Containment::Style); }
 constexpr OptionSet<Containment> RenderStyle::contentContainment() { return { Containment::Layout, Containment::Paint, Containment::Style }; }
 inline const ContentData* RenderStyle::contentData() const { return m_nonInheritedData->miscData->content.get(); }
-inline bool RenderStyle::contentDataEquivalent(const RenderStyle* otherStyle) const { return m_nonInheritedData->miscData->contentDataEquivalent(*otherStyle->m_nonInheritedData->miscData); }
 inline ContentVisibility RenderStyle::contentVisibility() const { return static_cast<ContentVisibility>(m_nonInheritedData->rareData->contentVisibility); }
 inline CursorList* RenderStyle::cursors() const { return m_rareInheritedData->cursorData.get(); }
 inline StyleAppearance RenderStyle::usedAppearance() const { return static_cast<StyleAppearance>(m_nonInheritedData->miscData->usedAppearance); }
+#if HAVE(CORE_MATERIAL)
+inline AppleVisualEffect RenderStyle::usedAppleVisualEffectForSubtree() const { return static_cast<AppleVisualEffect>(m_rareInheritedData->usedAppleVisualEffectForSubtree); }
+#endif
 inline OptionSet<Containment> RenderStyle::usedContain() const { return m_nonInheritedData->rareData->usedContain(); }
 inline bool RenderStyle::effectiveInert() const { return m_rareInheritedData->effectiveInert; }
 inline PointerEvents RenderStyle::usedPointerEvents() const { return effectiveInert() ? PointerEvents::None : pointerEvents(); }
@@ -470,6 +474,7 @@ inline Length RenderStyle::initialPerspectiveOriginY() { return { 50.0f, LengthT
 constexpr PointerEvents RenderStyle::initialPointerEvents() { return PointerEvents::Auto; }
 constexpr PositionType RenderStyle::initialPosition() { return PositionType::Static; }
 inline std::optional<Style::ScopedName> RenderStyle::initialPositionAnchor() { return { }; }
+inline std::optional<PositionArea> RenderStyle::initialPositionArea() { return { }; }
 inline Vector<PositionTryFallback> RenderStyle::initialPositionTryFallbacks() { return { }; }
 constexpr Style::PositionTryOrder RenderStyle::initialPositionTryOrder() { return Style::PositionTryOrder::Normal; }
 constexpr PrintColorAdjust RenderStyle::initialPrintColorAdjust() { return PrintColorAdjust::Economy; }
@@ -480,8 +485,8 @@ inline GapLength RenderStyle::initialRowGap() { return { }; }
 constexpr RubyPosition RenderStyle::initialRubyPosition() { return RubyPosition::Over; }
 constexpr RubyAlign RenderStyle::initialRubyAlign() { return RubyAlign::SpaceAround; }
 constexpr RubyOverhang RenderStyle::initialRubyOverhang() { return RubyOverhang::Auto; }
-inline Length RenderStyle::initialScrollMargin() { return zeroLength(); }
-inline Length RenderStyle::initialScrollPadding() { return { }; }
+inline Style::ScrollMarginEdge RenderStyle::initialScrollMargin() { return 0_css_px; }
+inline Style::ScrollPaddingEdge RenderStyle::initialScrollPadding() { return CSS::Keyword::Auto { }; }
 inline std::optional<ScrollbarColor> RenderStyle::initialScrollbarColor() { return std::nullopt; }
 constexpr ScrollbarWidth RenderStyle::initialScrollbarWidth() { return ScrollbarWidth::Auto; }
 constexpr StyleSelfAlignmentData RenderStyle::initialSelfAlignment() { return { ItemPosition::Auto, OverflowAlignment::Default }; }
@@ -695,6 +700,7 @@ inline LengthPoint RenderStyle::perspectiveOrigin() const { return m_nonInherite
 inline const Length& RenderStyle::perspectiveOriginX() const { return m_nonInheritedData->rareData->perspectiveOriginX; }
 inline const Length& RenderStyle::perspectiveOriginY() const { return m_nonInheritedData->rareData->perspectiveOriginY; }
 inline const std::optional<Style::ScopedName>& RenderStyle::positionAnchor() const { return m_nonInheritedData->rareData->positionAnchor; }
+inline std::optional<PositionArea> RenderStyle::positionArea() const { return m_nonInheritedData->rareData->positionArea; }
 inline Style::PositionTryOrder RenderStyle::positionTryOrder() const { return static_cast<Style::PositionTryOrder>(m_nonInheritedData->rareData->positionTryOrder); }
 inline bool RenderStyle::preserveNewline() const { return preserveNewline(whiteSpaceCollapse()); }
 inline bool RenderStyle::preserves3D() const { return usedTransformStyle3D() == TransformStyle3D::Preserve3D; }
@@ -854,6 +860,9 @@ inline FilterOperations RenderStyle::initialBackdropFilter() { return { }; }
 
 inline bool RenderStyle::hasExplicitlySetDirection() const { return m_nonInheritedData->miscData->hasExplicitlySetDirection; }
 inline bool RenderStyle::hasExplicitlySetWritingMode() const { return m_nonInheritedData->miscData->hasExplicitlySetWritingMode; }
+
+inline const Style::DynamicRangeLimit& RenderStyle::dynamicRangeLimit() const { return m_rareInheritedData->dynamicRangeLimit; }
+inline Style::DynamicRangeLimit RenderStyle::initialDynamicRangeLimit() { return CSS::Keyword::High { }; }
 
 #if PLATFORM(IOS_FAMILY)
 inline bool RenderStyle::touchCalloutEnabled() const { return m_rareInheritedData->touchCalloutEnabled; }
@@ -1070,6 +1079,56 @@ inline bool RenderStyle::isInterCharacterRubyPosition() const
 {
     auto rubyPosition = this->rubyPosition();
     return rubyPosition == RubyPosition::InterCharacter || rubyPosition == RubyPosition::LegacyInterCharacter;
+}
+
+inline bool RenderStyle::columnSpanEqual(const RenderStyle& other) const
+{
+    if (m_nonInheritedData.ptr() == other.m_nonInheritedData.ptr()
+        || m_nonInheritedData->miscData.ptr() == other.m_nonInheritedData->miscData.ptr()
+        || m_nonInheritedData->miscData->multiCol.ptr() == other.m_nonInheritedData->miscData->multiCol.ptr())
+        return true;
+
+    return m_nonInheritedData->miscData->multiCol->columnSpan == other.m_nonInheritedData->miscData->multiCol->columnSpan;
+}
+
+inline bool RenderStyle::borderIsEquivalentForPainting(const RenderStyle& other) const
+{
+    bool colorDiffers = color() != other.color();
+
+    if (!colorDiffers
+        && (m_nonInheritedData.ptr() == other.m_nonInheritedData.ptr()
+        || m_nonInheritedData->surroundData.ptr() == other.m_nonInheritedData->surroundData.ptr()
+        || m_nonInheritedData->surroundData->border == other.m_nonInheritedData->surroundData->border))
+        return true;
+
+    return border().isEquivalentForPainting(other.border(), colorDiffers);
+}
+
+inline bool RenderStyle::contentDataEquivalent(const RenderStyle& other) const
+{
+    if (m_nonInheritedData.ptr() == other.m_nonInheritedData.ptr()
+        || m_nonInheritedData->miscData.ptr() == other.m_nonInheritedData->miscData.ptr())
+        return true;
+
+    return m_nonInheritedData->miscData->contentDataEquivalent(other.m_nonInheritedData->miscData);
+}
+
+inline bool RenderStyle::containerTypeAndNamesEqual(const RenderStyle& other) const
+{
+    if (m_nonInheritedData.ptr() == other.m_nonInheritedData.ptr()
+        || m_nonInheritedData->rareData.ptr() == other.m_nonInheritedData->rareData.ptr())
+        return true;
+
+    return containerType() == other.containerType() && containerNames() == other.containerNames();
+}
+
+inline bool RenderStyle::scrollPaddingEqual(const RenderStyle& other) const
+{
+    if (m_nonInheritedData.ptr() == other.m_nonInheritedData.ptr()
+        || m_nonInheritedData->rareData.ptr() == other.m_nonInheritedData->rareData.ptr())
+        return true;
+
+    return m_nonInheritedData->rareData->scrollPadding == other.m_nonInheritedData->rareData->scrollPadding;
 }
 
 inline bool generatesBox(const RenderStyle& style)

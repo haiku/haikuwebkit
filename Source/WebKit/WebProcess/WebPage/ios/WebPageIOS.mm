@@ -33,6 +33,7 @@
 #import "EditingRange.h"
 #import "EditorState.h"
 #import "InteractionInformationAtPosition.h"
+#import "KeyEventInterpretationContext.h"
 #import "Logging.h"
 #import "MessageSenderInlines.h"
 #import "NativeWebKeyboardEvent.h"
@@ -138,7 +139,6 @@
 #import <WebCore/PluginViewBase.h>
 #import <WebCore/PointerCaptureController.h>
 #import <WebCore/PointerCharacteristics.h>
-#import <WebCore/PointerEventTypeNames.h>
 #import <WebCore/PrintContext.h>
 #import <WebCore/Quirks.h>
 #import <WebCore/Range.h>
@@ -616,8 +616,23 @@ bool WebPage::handleEditingKeyboardEvent(KeyboardEvent& event)
 
     updateLastNodeBeforeWritingSuggestions(event);
 
+    auto scrollingNodeID = [&] -> std::optional<WebCore::ScrollingNodeID> {
+        RefPtr frame = m_page->checkedFocusController()->focusedOrMainFrame();
+        if (!frame)
+            return std::nullopt;
+
+        auto scrollableArea = frame->eventHandler().focusedScrollableArea();
+        if (!scrollableArea)
+            return std::nullopt;
+
+        return scrollableArea->scrollingNodeID();
+    }();
+
+    auto isCharEvent = platformEvent->type() == PlatformKeyboardEvent::Type::Char;
+    auto context = KeyEventInterpretationContext { isCharEvent, scrollingNodeID };
+
     // FIXME: Interpret the event immediately upon receiving it in UI process, without sending to WebProcess first.
-    auto sendResult = WebProcess::singleton().parentProcessConnection()->sendSync(Messages::WebPageProxy::InterpretKeyEvent(editorState(ShouldPerformLayout::Yes), platformEvent->type() == PlatformKeyboardEvent::Type::Char), m_identifier);
+    auto sendResult = WebProcess::singleton().parentProcessConnection()->sendSync(Messages::WebPageProxy::InterpretKeyEvent(editorState(ShouldPerformLayout::Yes), context), m_identifier);
     auto [eventWasHandled] = sendResult.takeReplyOr(false);
     return eventWasHandled;
 }
@@ -739,16 +754,6 @@ void WebPage::shouldDelayWindowOrderingEvent(const WebKit::WebMouseEvent&, Compl
     completionHandler(false);
 }
 
-void WebPage::computePagesForPrintingPDFDocument(WebCore::FrameIdentifier, const PrintInfo&, Vector<IntRect>&)
-{
-    notImplemented();
-}
-
-void WebPage::drawPagesToPDFFromPDFDocument(CGContextRef, PDFDocument *, const PrintInfo&, uint32_t, uint32_t)
-{
-    notImplemented();
-}
-
 void WebPage::advanceToNextMisspelling(bool)
 {
     notImplemented();
@@ -786,10 +791,10 @@ void WebPage::updateSelectionAppearance()
     didChangeSelection(*frame);
 }
 
-static void dispatchSyntheticMouseMove(LocalFrame& mainFrame, const WebCore::FloatPoint& location, OptionSet<WebEventModifier> modifiers, WebCore::PointerID pointerId = WebCore::mousePointerID, const String& pointerType = WebCore::mousePointerEventType())
+static void dispatchSyntheticMouseMove(LocalFrame& mainFrame, const WebCore::FloatPoint& location, OptionSet<WebEventModifier> modifiers, WebCore::PointerID pointerId = WebCore::mousePointerID)
 {
     IntPoint roundedAdjustedPoint = roundedIntPoint(location);
-    auto mouseEvent = PlatformMouseEvent(roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::None, PlatformEvent::Type::MouseMoved, 0, platform(modifiers), WallTime::now(), WebCore::ForceAtClick, WebCore::SyntheticClickType::OneFingerTap, pointerType, pointerId);
+    auto mouseEvent = PlatformMouseEvent(roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::None, PlatformEvent::Type::MouseMoved, 0, platform(modifiers), WallTime::now(), WebCore::ForceAtClick, WebCore::SyntheticClickType::OneFingerTap, pointerId);
     // FIXME: Pass caps lock state.
     mainFrame.eventHandler().dispatchSyntheticMouseMove(mouseEvent);
 }
@@ -841,13 +846,13 @@ void WebPage::generateSyntheticEditingCommand(SyntheticEditingCommandType comman
     frame->eventHandler().keyEvent(keyEvent);
 }
 
-void WebPage::handleSyntheticClick(Node& nodeRespondingToClick, const WebCore::FloatPoint& location, OptionSet<WebEventModifier> modifiers, WebCore::PointerID pointerId, const String& pointerType)
+void WebPage::handleSyntheticClick(Node& nodeRespondingToClick, const WebCore::FloatPoint& location, OptionSet<WebEventModifier> modifiers, WebCore::PointerID pointerId)
 {
     auto& respondingDocument = nodeRespondingToClick.document();
     m_hasHandledSyntheticClick = true;
 
     if (!respondingDocument.settings().contentChangeObserverEnabled() || respondingDocument.quirks().shouldIgnoreContentObservationForClick(nodeRespondingToClick)) {
-        completeSyntheticClick(nodeRespondingToClick, location, modifiers, WebCore::SyntheticClickType::OneFingerTap, pointerId, pointerType);
+        completeSyntheticClick(nodeRespondingToClick, location, modifiers, WebCore::SyntheticClickType::OneFingerTap, pointerId);
         return;
     }
 
@@ -860,7 +865,7 @@ void WebPage::handleSyntheticClick(Node& nodeRespondingToClick, const WebCore::F
         RefPtr localMainFrame = m_page->localMainFrame();
         if (!localMainFrame)
             return;
-        dispatchSyntheticMouseMove(*localMainFrame, location, modifiers, pointerId, pointerType);
+        dispatchSyntheticMouseMove(*localMainFrame, location, modifiers, pointerId);
         localMainFrame->protectedDocument()->updateStyleIfNeeded();
         if (m_isClosed)
             return;
@@ -896,11 +901,10 @@ void WebPage::handleSyntheticClick(Node& nodeRespondingToClick, const WebCore::F
         m_pendingSyntheticClickLocation = location;
         m_pendingSyntheticClickModifiers = modifiers;
         m_pendingSyntheticClickPointerId = pointerId;
-        m_pendingSyntheticClickPointerType = pointerType;
         return;
     }
     contentChangeObserver.stopContentObservation();
-    callOnMainRunLoop([protectedThis = Ref { *this }, targetNode = Ref<Node>(nodeRespondingToClick), location, modifiers, observedContentChange, pointerId, pointerType] {
+    callOnMainRunLoop([protectedThis = Ref { *this }, targetNode = Ref<Node>(nodeRespondingToClick), location, modifiers, observedContentChange, pointerId] {
         if (protectedThis->m_isClosed || !protectedThis->corePage())
             return;
 
@@ -908,13 +912,13 @@ void WebPage::handleSyntheticClick(Node& nodeRespondingToClick, const WebCore::F
         if (shouldStayAtHoverState) {
             // The move event caused new contents to appear. Don't send synthetic click event, but just ensure that the mouse is on the most recent content.
             if (RefPtr localMainFrame = dynamicDowncast<WebCore::LocalFrame>(protectedThis->corePage()->mainFrame()))
-                dispatchSyntheticMouseMove(*localMainFrame, location, modifiers, pointerId, pointerType);
+                dispatchSyntheticMouseMove(*localMainFrame, location, modifiers, pointerId);
             LOG(ContentObservation, "handleSyntheticClick: Observed meaningful visible change -> hover.");
             protectedThis->didHandleTapAsHover();
             return;
         }
         LOG(ContentObservation, "handleSyntheticClick: calling completeSyntheticClick -> click.");
-        protectedThis->completeSyntheticClick(targetNode, location, modifiers, WebCore::SyntheticClickType::OneFingerTap, pointerId, pointerType);
+        protectedThis->completeSyntheticClick(targetNode, location, modifiers, WebCore::SyntheticClickType::OneFingerTap, pointerId);
     });
 }
 
@@ -929,8 +933,7 @@ void WebPage::didFinishContentChangeObserving(WKContentChange observedContentCha
     LOG_WITH_STREAM(ContentObservation, stream << "didFinishContentChangeObserving: pending target node(" << m_pendingSyntheticClickNode << ")");
     if (!m_pendingSyntheticClickNode)
         return;
-
-    callOnMainRunLoop([protectedThis = Ref { *this }, targetNode = Ref<Node>(*m_pendingSyntheticClickNode), originalDocument = WeakPtr<Document, WeakPtrImplWithEventTargetData> { m_pendingSyntheticClickNode->document() }, observedContentChange, location = m_pendingSyntheticClickLocation, modifiers = m_pendingSyntheticClickModifiers, pointerId = m_pendingSyntheticClickPointerId, pointerType = m_pendingSyntheticClickPointerType] {
+    callOnMainRunLoop([protectedThis = Ref { *this }, targetNode = Ref<Node>(*m_pendingSyntheticClickNode), originalDocument = WeakPtr<Document, WeakPtrImplWithEventTargetData> { m_pendingSyntheticClickNode->document() }, observedContentChange, location = m_pendingSyntheticClickLocation, modifiers = m_pendingSyntheticClickModifiers, pointerId = m_pendingSyntheticClickPointerId] {
         if (protectedThis->m_isClosed || !protectedThis->corePage())
             return;
         if (!originalDocument || &targetNode->document() != originalDocument)
@@ -939,13 +942,13 @@ void WebPage::didFinishContentChangeObserving(WKContentChange observedContentCha
         // Only dispatch the click if the document didn't get changed by any timers started by the move event.
         if (observedContentChange == WKContentNoChange) {
             LOG(ContentObservation, "No change was observed -> click.");
-            protectedThis->completeSyntheticClick(targetNode, location, modifiers, WebCore::SyntheticClickType::OneFingerTap, pointerId, pointerType);
+            protectedThis->completeSyntheticClick(targetNode, location, modifiers, WebCore::SyntheticClickType::OneFingerTap, pointerId);
             return;
         }
         // Ensure that the mouse is on the most recent content.
         LOG(ContentObservation, "Observed meaningful visible change -> hover.");
         if (auto* localMainFrame = dynamicDowncast<WebCore::LocalFrame>(protectedThis->corePage()->mainFrame()))
-            dispatchSyntheticMouseMove(*localMainFrame, location, modifiers, pointerId, pointerType);
+            dispatchSyntheticMouseMove(*localMainFrame, location, modifiers, pointerId);
 
         protectedThis->didHandleTapAsHover();
     });
@@ -953,10 +956,9 @@ void WebPage::didFinishContentChangeObserving(WKContentChange observedContentCha
     m_pendingSyntheticClickLocation = { };
     m_pendingSyntheticClickModifiers = { };
     m_pendingSyntheticClickPointerId = 0;
-    m_pendingSyntheticClickPointerType = WebCore::mousePointerEventType();
 }
 
-void WebPage::completeSyntheticClick(Node& nodeRespondingToClick, const WebCore::FloatPoint& location, OptionSet<WebEventModifier> modifiers, SyntheticClickType syntheticClickType, WebCore::PointerID pointerId, const String& pointerType)
+void WebPage::completeSyntheticClick(Node& nodeRespondingToClick, const WebCore::FloatPoint& location, OptionSet<WebEventModifier> modifiers, SyntheticClickType syntheticClickType, WebCore::PointerID pointerId)
 {
     SetForScope completeSyntheticClickScope { m_completingSyntheticClick, true };
     IntPoint roundedAdjustedPoint = roundedIntPoint(location);
@@ -976,7 +978,7 @@ void WebPage::completeSyntheticClick(Node& nodeRespondingToClick, const WebCore:
     // FIXME: Pass caps lock state.
     auto platformModifiers = platform(modifiers);
 
-    bool handledPress = localMainFrame->eventHandler().handleMousePressEvent(PlatformMouseEvent(roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::MousePressed, 1, platformModifiers, WallTime::now(), WebCore::ForceAtClick, syntheticClickType, pointerType, pointerId)).wasHandled();
+    bool handledPress = localMainFrame->eventHandler().handleMousePressEvent(PlatformMouseEvent(roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::MousePressed, 1, platformModifiers, WallTime::now(), WebCore::ForceAtClick, syntheticClickType, pointerId)).wasHandled();
     if (m_isClosed)
         return;
 
@@ -985,7 +987,7 @@ void WebPage::completeSyntheticClick(Node& nodeRespondingToClick, const WebCore:
     else if (!handledPress)
         clearSelectionAfterTapIfNeeded();
 
-    auto releaseEvent = PlatformMouseEvent { roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::MouseReleased, 1, platformModifiers, WallTime::now(), ForceAtClick, syntheticClickType, pointerType, pointerId };
+    auto releaseEvent = PlatformMouseEvent { roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::MouseReleased, 1, platformModifiers, WallTime::now(), ForceAtClick, syntheticClickType, pointerId };
     bool handledRelease = localMainFrame->eventHandler().handleMouseReleaseEvent(releaseEvent).wasHandled();
     if (m_isClosed)
         return;
@@ -998,7 +1000,7 @@ void WebPage::completeSyntheticClick(Node& nodeRespondingToClick, const WebCore:
         // Dispatch mouseOut to dismiss tooltip content when tapping on the control bar buttons (cc, settings).
         if (document.quirks().needsYouTubeMouseOutQuirk()) {
             if (RefPtr frame = document.frame()) {
-                PlatformMouseEvent event { roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::NoType, 0, platformModifiers, WallTime::now(), 0, WebCore::SyntheticClickType::NoTap, pointerType, pointerId };
+                PlatformMouseEvent event { roundedAdjustedPoint, roundedAdjustedPoint, MouseButton::Left, PlatformEvent::Type::NoType, 0, platformModifiers, WallTime::now(), 0, WebCore::SyntheticClickType::NoTap, pointerId };
                 if (!nodeRespondingToClick.isConnected())
                     frame->eventHandler().dispatchSyntheticMouseMove(event);
                 frame->eventHandler().dispatchSyntheticMouseOut(event);
@@ -1034,7 +1036,7 @@ void WebPage::attemptSyntheticClick(const IntPoint& point, OptionSet<WebEventMod
     auto* frameRespondingToClick = nodeRespondingToClick ? nodeRespondingToClick->document().frame() : nullptr;
     IntPoint adjustedIntPoint = roundedIntPoint(adjustedPoint);
 
-    if (!frameRespondingToClick || lastLayerTreeTransactionId < WebFrame::fromCoreFrame(*frameRespondingToClick)->firstLayerTreeTransactionIDAfterDidCommitLoad())
+    if (!frameRespondingToClick || lastLayerTreeTransactionId.lessThanSameProcess(*WebFrame::fromCoreFrame(*frameRespondingToClick)->firstLayerTreeTransactionIDAfterDidCommitLoad()))
         send(Messages::WebPageProxy::DidNotHandleTapAsClick(adjustedIntPoint));
     else if (m_interactionNode == nodeRespondingToClick)
         completeSyntheticClick(*nodeRespondingToClick, adjustedPoint, modifiers, WebCore::SyntheticClickType::OneFingerTap);
@@ -1051,7 +1053,7 @@ void WebPage::handleDoubleTapForDoubleClickAtPoint(const IntPoint& point, Option
         return;
 
     auto* frameRespondingToDoubleClick = nodeRespondingToDoubleClick->document().frame();
-    if (!frameRespondingToDoubleClick || lastLayerTreeTransactionId < WebFrame::fromCoreFrame(*frameRespondingToDoubleClick)->firstLayerTreeTransactionIDAfterDidCommitLoad())
+    if (!frameRespondingToDoubleClick || lastLayerTreeTransactionId.lessThanSameProcess(*WebFrame::fromCoreFrame(*frameRespondingToDoubleClick)->firstLayerTreeTransactionIDAfterDidCommitLoad()))
         return;
 
     SetForScope userIsInteractingChange { m_userIsInteracting, true };
@@ -1227,7 +1229,10 @@ void WebPage::sendTapHighlightForNodeIfNecessary(WebKit::TapIdentifier requestID
 
     if (RefPtr element = dynamicDowncast<Element>(*node)) {
         ASSERT(m_page);
-        localMainFrame->loader().client().prefetchDNS(element->absoluteLinkURL().host().toString());
+        auto linkURL = element->absoluteLinkURL();
+        if (!linkURL.protocolIsInHTTPFamily())
+            return;
+        localMainFrame->loader().client().prefetchDNS(linkURL.host().toString());
     }
 
     if (RefPtr area = dynamicDowncast<HTMLAreaElement>(*node)) {
@@ -1334,7 +1339,8 @@ void WebPage::potentialTapAtPosition(WebKit::TapIdentifier requestID, const WebC
         viewGestureGeometryCollector->computeZoomInformationForNode(*m_potentialTapNode, origin, absoluteBoundingRect, fitEntireRect, viewportMinimumScale, viewportMaximumScale);
 
         bool nodeIsRootLevel = is<WebCore::Document>(*m_potentialTapNode) || is<WebCore::HTMLBodyElement>(*m_potentialTapNode);
-        send(Messages::WebPageProxy::HandleSmartMagnificationInformationForPotentialTap(requestID, absoluteBoundingRect, fitEntireRect, viewportMinimumScale, viewportMaximumScale, nodeIsRootLevel));
+        bool nodeIsPluginElement = is<WebCore::HTMLPlugInElement>(*m_potentialTapNode);
+        send(Messages::WebPageProxy::HandleSmartMagnificationInformationForPotentialTap(requestID, absoluteBoundingRect, fitEntireRect, viewportMinimumScale, viewportMaximumScale, nodeIsRootLevel, nodeIsPluginElement));
     }
 
     sendTapHighlightForNodeIfNecessary(requestID, m_potentialTapNode.get(), position);
@@ -1344,7 +1350,7 @@ void WebPage::potentialTapAtPosition(WebKit::TapIdentifier requestID, const WebC
 #endif
 }
 
-void WebPage::commitPotentialTap(OptionSet<WebEventModifier> modifiers, TransactionID lastLayerTreeTransactionId, WebCore::PointerID pointerId, const String& pointerType)
+void WebPage::commitPotentialTap(OptionSet<WebEventModifier> modifiers, TransactionID lastLayerTreeTransactionId, WebCore::PointerID pointerId)
 {
     auto invalidTargetForSingleClick = !m_potentialTapNode;
     if (!invalidTargetForSingleClick) {
@@ -1365,13 +1371,13 @@ void WebPage::commitPotentialTap(OptionSet<WebEventModifier> modifiers, Transact
     Node* nodeRespondingToClick = localMainFrame ? localMainFrame->nodeRespondingToClickEvents(m_potentialTapLocation, adjustedPoint, m_potentialTapSecurityOrigin.get()) : nullptr;
     auto* frameRespondingToClick = nodeRespondingToClick ? nodeRespondingToClick->document().frame() : nullptr;
 
-    if (!frameRespondingToClick || lastLayerTreeTransactionId < WebFrame::fromCoreFrame(*frameRespondingToClick)->firstLayerTreeTransactionIDAfterDidCommitLoad()) {
+    if (!frameRespondingToClick || lastLayerTreeTransactionId.lessThanSameProcess(*WebFrame::fromCoreFrame(*frameRespondingToClick)->firstLayerTreeTransactionIDAfterDidCommitLoad())) {
         commitPotentialTapFailed();
         return;
     }
 
     if (m_potentialTapNode == nodeRespondingToClick)
-        handleSyntheticClick(*nodeRespondingToClick, adjustedPoint, modifiers, pointerId, pointerType);
+        handleSyntheticClick(*nodeRespondingToClick, adjustedPoint, modifiers, pointerId);
     else
         commitPotentialTapFailed();
 
@@ -4857,7 +4863,7 @@ static inline void adjustVelocityDataForBoundedScale(VelocityData& velocityData,
 std::optional<float> WebPage::scaleFromUIProcess(const VisibleContentRectUpdateInfo& visibleContentRectUpdateInfo) const
 {
     auto transactionIDForLastScaleFromUIProcess = visibleContentRectUpdateInfo.lastLayerTreeTransactionID();
-    if (m_internals->lastTransactionIDWithScaleChange > transactionIDForLastScaleFromUIProcess)
+    if (m_internals->lastTransactionIDWithScaleChange && m_internals->lastTransactionIDWithScaleChange->greaterThanSameProcess(transactionIDForLastScaleFromUIProcess))
         return std::nullopt;
 
     float scaleFromUIProcess = visibleContentRectUpdateInfo.scale();
@@ -4902,7 +4908,7 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
     LOG_WITH_STREAM(VisibleRects, stream << "\nWebPage " << m_identifier << " updateVisibleContentRects " << visibleContentRectUpdateInfo);
 
     // Skip any VisibleContentRectUpdate that have been queued before DidCommitLoad suppresses the updates in the UIProcess.
-    if (visibleContentRectUpdateInfo.lastLayerTreeTransactionID() < m_mainFrame->firstLayerTreeTransactionIDAfterDidCommitLoad() && !visibleContentRectUpdateInfo.isFirstUpdateForNewViewSize())
+    if (m_mainFrame->firstLayerTreeTransactionIDAfterDidCommitLoad() && visibleContentRectUpdateInfo.lastLayerTreeTransactionID().lessThanSameProcess(*m_mainFrame->firstLayerTreeTransactionIDAfterDidCommitLoad()) && !visibleContentRectUpdateInfo.isFirstUpdateForNewViewSize())
         return;
 
     m_hasReceivedVisibleContentRectsAfterDidCommitLoad = true;
@@ -4953,15 +4959,8 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
         if (!scalesAreEssentiallyEqual(scaleBeforeScalingPage, scaleToUse))
             return false;
 
-        return transactionIdBeforeScalingPage >= visibleContentRectUpdateInfo.lastLayerTreeTransactionID();
+        return transactionIdBeforeScalingPage.greaterThanOrEqualSameProcess( visibleContentRectUpdateInfo.lastLayerTreeTransactionID());
     })();
-
-    bool pluginHandlesScaleFactor = [&]() -> bool {
-#if ENABLE(PDF_PLUGIN)
-        return mainFramePlugIn();
-#endif
-        return false;
-    }();
 
     if (!pageHasBeenScaledSinceLastLayerTreeCommitThatChangedPageScale) {
         bool hasSetPageScale = false;
@@ -4971,7 +4970,17 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
 
             m_dynamicSizeUpdateHistory.clear();
 
-            if (!pluginHandlesScaleFactor)
+            // FIXME: <webkit.org/b/287511> Also call Page::setPageScaleFactor() for main frame plugins that do not handle page scale factor.
+            bool pluginHandlesPageScaleFactor = [this] {
+#if ENABLE(PDF_PLUGIN)
+                return this->mainFramePlugIn();
+#else
+                UNUSED_PARAM(this);
+                return false;
+#endif
+            }();
+
+            if (!pluginHandlesPageScaleFactor)
                 m_page->setPageScaleFactor(scaleFromUIProcess.value(), scrollPosition, m_isInStableState);
 
             hasSetPageScale = true;
@@ -5142,10 +5151,8 @@ void WebPage::updateLayoutViewportHeightExpansionTimerFired()
 void WebPage::willStartUserTriggeredZooming()
 {
 #if ENABLE(PDF_PLUGIN)
-    if (RefPtr pluginView = mainFramePlugIn()) {
+    if (RefPtr pluginView = mainFramePlugIn())
         pluginView->didBeginMagnificationGesture();
-        return;
-    }
 #endif
 
     m_page->diagnosticLoggingClient().logDiagnosticMessage(DiagnosticLoggingKeys::webViewKey(), DiagnosticLoggingKeys::userZoomActionKey(), ShouldSample::No);

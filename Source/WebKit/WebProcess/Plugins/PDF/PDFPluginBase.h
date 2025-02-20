@@ -333,9 +333,9 @@ public:
 
     bool populateEditorStateIfNeeded(EditorState&) const;
 
-    virtual bool shouldRespectPageScaleAdjustments() const { return true; }
-
     virtual bool shouldSizeToFitContent() const { return false; }
+
+    virtual WebCore::FloatRect absoluteBoundingRectForSmartMagnificationAtPoint(WebCore::FloatPoint) const { return { }; }
 
 protected:
     virtual double contentScaleFactor() const = 0;

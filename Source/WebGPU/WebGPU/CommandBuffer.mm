@@ -33,10 +33,11 @@ namespace WebGPU {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(CommandBuffer);
 
-CommandBuffer::CommandBuffer(id<MTLCommandBuffer> commandBuffer, Device& device, id<MTLSharedEvent> sharedEvent, uint64_t sharedEventSignalValue, CommandEncoder& commandEncoder)
+CommandBuffer::CommandBuffer(id<MTLCommandBuffer> commandBuffer, Device& device, id<MTLSharedEvent> sharedEvent, uint64_t sharedEventSignalValue, Vector<Function<bool(CommandBuffer&)>>&& onCommitHandlers, CommandEncoder& commandEncoder)
     : m_commandBuffer(commandBuffer)
     , m_device(device)
     , m_sharedEvent(sharedEvent)
+    , m_preCommitHandlers(WTFMove(onCommitHandlers))
     , m_sharedEventSignalValue(sharedEventSignalValue)
     , m_commandEncoder(&commandEncoder)
 {
@@ -47,8 +48,16 @@ CommandBuffer::CommandBuffer(Device& device)
 {
 }
 
+void CommandBuffer::retainTimestampsForOneUpdateLoop()
+{
+    // Workaround for rdar://143905417
+    if (RefPtr commandEncoder = m_commandEncoder)
+        m_device->protectedQueue()->retainTimestampsForOneUpdate(commandEncoder->timestampBuffers());
+}
+
 CommandBuffer::~CommandBuffer()
 {
+    retainTimestampsForOneUpdateLoop();
     m_device->protectedQueue()->removeMTLCommandBuffer(m_commandBuffer);
     m_commandBuffer = nil;
     m_cachedCommandBuffer = nil;
@@ -66,9 +75,35 @@ void CommandBuffer::makeInvalid(NSString* lastError)
 
     m_lastErrorString = lastError;
     m_device->protectedQueue()->removeMTLCommandBuffer(m_commandBuffer);
+    retainTimestampsForOneUpdateLoop();
     m_commandBuffer = nil;
     m_cachedCommandBuffer = nil;
     m_commandEncoder = nullptr;
+    m_preCommitHandlers.clear();
+    m_postCommitHandlers.clear();
+}
+
+bool CommandBuffer::preCommitHandler()
+{
+    bool result = true;
+    for (auto& function : m_preCommitHandlers)
+        result = function(*this) && result;
+
+    m_preCommitHandlers.clear();
+    return result;
+}
+
+void CommandBuffer::postCommitHandler()
+{
+    for (auto& function : m_postCommitHandlers)
+        function(m_cachedCommandBuffer);
+
+    m_postCommitHandlers.clear();
+}
+
+void CommandBuffer::addPostCommitHandler(Function<void(id<MTLCommandBuffer>)>&& function)
+{
+    m_postCommitHandlers.append(WTFMove(function));
 }
 
 void CommandBuffer::makeInvalidDueToCommit(NSString* lastError)

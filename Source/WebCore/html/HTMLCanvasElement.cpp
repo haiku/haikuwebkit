@@ -646,8 +646,11 @@ void HTMLCanvasElement::paint(GraphicsContext& context, const LayoutRect& r)
         if (!usesContentsAsLayerContents() || document().printing() || m_isSnapshotting) {
             if (m_context->compositingResultsNeedUpdating())
                 m_context->prepareForDisplay();
-            const bool skipTransparentBlackDraw = context.compositeMode() == CompositeMode { CompositeOperator::SourceOver, BlendMode::Normal };
-            if (!skipTransparentBlackDraw || !m_context->isSurfaceBufferTransparentBlack(CanvasRenderingContext::SurfaceBuffer::DisplayBuffer)) {
+            if (m_context->isSurfaceBufferTransparentBlack(CanvasRenderingContext::SurfaceBuffer::DisplayBuffer)) {
+                const bool skipTransparentBlackDraw = context.compositeMode() == CompositeMode { CompositeOperator::SourceOver, BlendMode::Normal };
+                if (!skipTransparentBlackDraw)
+                    context.fillRect(snappedIntRect(r), Color::transparentBlack);
+            } else {
                 RefPtr buffer = m_context->surfaceBufferToImageBuffer(CanvasRenderingContext::SurfaceBuffer::DisplayBuffer);
                 if (buffer)
                     context.drawImageBuffer(*buffer, snappedIntRect(r), { context.compositeOperation() });
@@ -839,11 +842,7 @@ RefPtr<VideoFrame> HTMLCanvasElement::toVideoFrame()
         return nullptr;
 
     // FIXME: Set color space.
-#if PLATFORM(COCOA)
     return VideoFrame::createFromPixelBuffer(pixelBuffer.releaseNonNull());
-#elif USE(GSTREAMER)
-    return VideoFrameGStreamer::createFromPixelBuffer(pixelBuffer.releaseNonNull(), VideoFrameGStreamer::CanvasContentType::Canvas2D);
-#endif
 #else
     return nullptr;
 #endif

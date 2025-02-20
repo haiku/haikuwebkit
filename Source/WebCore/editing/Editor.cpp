@@ -33,6 +33,7 @@
 #include "AttachmentAssociatedElement.h"
 #include "CSSComputedStyleDeclaration.h"
 #include "CSSPropertyNames.h"
+#include "CSSSerializationContext.h"
 #include "CSSValueList.h"
 #include "CSSValuePool.h"
 #include "CachedResourceLoader.h"
@@ -3142,13 +3143,12 @@ void Editor::markAndReplaceFor(const SpellCheckRequest& request, const Vector<Te
     auto textCheckingOptions = request.data().checkingTypes();
     TextCheckingParagraph paragraph(request.checkingRange(), request.automaticReplacementRange(), request.paragraphRange());
 
-    // FIXME: Mark this const once MSVC bug is fixed: <https://developercommunity.visualstudio.com/content/problem/316713/msvc-cant-compile-webkits-optionsetcontainsany.html>.
-    bool shouldPerformReplacement = textCheckingOptions.containsAny({ TextCheckingType::Quote, TextCheckingType::Dash, TextCheckingType::Replacement });
-    bool shouldMarkSpelling = textCheckingOptions.contains(TextCheckingType::Spelling);
-    bool shouldMarkGrammar = textCheckingOptions.contains(TextCheckingType::Grammar);
-    bool shouldMarkLink = textCheckingOptions.contains(TextCheckingType::Link);
-    bool shouldShowCorrectionPanel = textCheckingOptions.contains(TextCheckingType::ShowCorrectionPanel);
-    bool shouldCheckForCorrection = shouldShowCorrectionPanel || textCheckingOptions.contains(TextCheckingType::Correction);
+    const bool shouldPerformReplacement = textCheckingOptions.containsAny({ TextCheckingType::Quote, TextCheckingType::Dash, TextCheckingType::Replacement });
+    const bool shouldMarkSpelling = textCheckingOptions.contains(TextCheckingType::Spelling);
+    const bool shouldMarkGrammar = textCheckingOptions.contains(TextCheckingType::Grammar);
+    const bool shouldMarkLink = textCheckingOptions.contains(TextCheckingType::Link);
+    const bool shouldShowCorrectionPanel = textCheckingOptions.contains(TextCheckingType::ShowCorrectionPanel);
+    const bool shouldCheckForCorrection = shouldShowCorrectionPanel || textCheckingOptions.contains(TextCheckingType::Correction);
 #if !USE(AUTOCORRECTION_PANEL)
     ASSERT(!shouldShowCorrectionPanel);
 #endif
@@ -4805,7 +4805,7 @@ const RenderStyle* Editor::styleForSelectionStart(RefPtr<Node>& nodeToRemove)
 
     auto styleElement = HTMLSpanElement::create(document);
 
-    auto styleText = makeAtomString(typingStyle->style()->asText(), " display: inline"_s);
+    auto styleText = makeAtomString(typingStyle->style()->asText(CSS::defaultSerializationContext()), " display: inline"_s);
     styleElement->setAttribute(HTMLNames::styleAttr, styleText);
 
     styleElement->appendChild(document->createEditingTextNode(String { emptyString() }));
@@ -4835,7 +4835,7 @@ RefPtr<Font> Editor::fontForSelection(bool& hasMultipleFonts)
             if (!style)
                 return nullptr;
             ScriptDisallowedScope::InMainThread scriptDisallowedScope;
-            font = const_cast<Font*>(&style->fontCascade().primaryFont());
+            font = const_cast<Font*>(style->fontCascade().primaryFont().ptr());
         }
 
         if (nodeToRemove)
@@ -4861,10 +4861,10 @@ RefPtr<Font> Editor::fontForSelection(bool& hasMultipleFonts)
         auto renderer = node.renderer();
         if (!renderer)
             continue;
-        auto& primaryFont = renderer->style().fontCascade().primaryFont();
+        Ref primaryFont = renderer->style().fontCascade().primaryFont();
         if (!font)
-            font = const_cast<Font*>(&primaryFont);
-        else if (font != &primaryFont) {
+            font = const_cast<Font*>(primaryFont.ptr());
+        else if (font != primaryFont.ptr()) {
             hasMultipleFonts = true;
             break;
         }

@@ -120,6 +120,7 @@ struct MediaEngineSupportParameters {
     bool isMediaSource { false };
     bool isMediaStream { false };
     bool requiresRemotePlayback { false };
+    bool supportsLimitedMatroska { false };
     Vector<ContentType> contentTypesRequiringHardwareSupport;
     std::optional<Vector<String>> allowedMediaContainerTypes;
     std::optional<Vector<String>> allowedMediaCodecTypes;
@@ -174,6 +175,12 @@ enum class MediaPlayerType {
 };
 
 using TrackID = uint64_t;
+
+struct MediaPlayerLoadOptions {
+    ContentType contentType { };
+    bool requiresRemotePlayback { false };
+    bool supportsLimitedMatroska { false };
+};
 
 class MediaPlayerClient : public CanMakeWeakPtr<MediaPlayerClient> {
 public:
@@ -416,9 +423,10 @@ public:
     IntSize presentationSize() const { return m_presentationSize; }
     void setPresentationSize(const IntSize& size);
 
-    bool load(const URL&, const ContentType&, const String&, bool);
+    using LoadOptions = MediaPlayerLoadOptions;
+    bool load(const URL&, const LoadOptions&);
 #if ENABLE(MEDIA_SOURCE)
-    bool load(const URL&, const ContentType&, MediaSourcePrivateClient&);
+    bool load(const URL&, const LoadOptions&, MediaSourcePrivateClient&);
 #endif
 #if ENABLE(MEDIA_STREAM)
     bool load(MediaStreamPrivate&);
@@ -513,6 +521,8 @@ public:
 
     using DidLoadingProgressCompletionHandler = CompletionHandler<void(bool)>;
     void didLoadingProgress(DidLoadingProgressCompletionHandler&&) const;
+
+    void setVolumeLocked(bool);
 
     double volume() const;
     void setVolume(double);
@@ -683,6 +693,7 @@ public:
     void setShouldDisableSleep(bool);
     bool shouldDisableSleep() const;
 
+    const ContentType& contentType() const { return m_loadOptions.contentType; }
     String contentMIMEType() const;
     String contentTypeCodecs() const;
     bool contentMIMETypeWasInferredFromExtension() const;
@@ -759,8 +770,6 @@ public:
     void setShouldDisableHDR(bool);
     bool shouldDisableHDR() const { return client().mediaPlayerShouldDisableHDR(); }
 
-    bool requiresRemotePlayback() const { return m_requiresRemotePlayback; }
-
     void setResourceOwner(const ProcessIdentity&);
 
     void setVideoTarget(const PlatformVideoTarget&);
@@ -793,6 +802,8 @@ private:
 
     MediaPlayerClient& client() const { return *m_client; }
 
+    RefPtr<MediaPlayerPrivateInterface> protectedPrivate() const;
+
     const MediaPlayerFactory* nextBestMediaEngine(const MediaPlayerFactory*);
     void loadWithNextMediaEngine(const MediaPlayerFactory*);
     const MediaPlayerFactory* nextMediaEngine(const MediaPlayerFactory*);
@@ -804,8 +815,7 @@ private:
     const MediaPlayerFactory* m_currentMediaEngine { nullptr };
     WeakHashSet<const MediaPlayerFactory> m_attemptedEngines;
     URL m_url;
-    ContentType m_contentType;
-    String m_keySystem;
+    LoadOptions m_loadOptions;
     std::optional<MediaPlayerEnums::MediaEngineIdentifier> m_activeEngineIdentifier;
     std::optional<MediaTime> m_pendingSeekRequest;
     IntSize m_presentationSize;
@@ -834,7 +844,6 @@ private:
     bool m_shouldContinueAfterKeyNeeded { false };
 #endif
     bool m_isGatheringVideoFrameMetadata { false };
-    bool m_requiresRemotePlayback { false };
 
 #if HAVE(SPATIAL_TRACKING_LABEL)
     String m_defaultSpatialTrackingLabel;

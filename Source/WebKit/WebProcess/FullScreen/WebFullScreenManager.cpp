@@ -251,17 +251,16 @@ FullScreenMediaDetails WebFullScreenManager::getImageMediaDetails(CheckedPtr<Ren
 }
 #endif // ENABLE(QUICKLOOK_FULLSCREEN)
 
-void WebFullScreenManager::enterFullScreenForElement(WebCore::Element& element, WebCore::HTMLMediaElementEnums::VideoFullscreenMode mode)
+void WebFullScreenManager::enterFullScreenForElement(WebCore::Element& element, WebCore::HTMLMediaElementEnums::VideoFullscreenMode mode, CompletionHandler<void(ExceptionOr<void>)>&& completionHandler)
 {
     ALWAYS_LOG(LOGIDENTIFIER, "<", element.tagName(), " id=\"", element.getIdAttribute(), "\">");
 
     setElement(element);
 
-
     FullScreenMediaDetails mediaDetails;
 #if PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))
     if (m_page->videoPresentationManager().videoElementInPictureInPicture() && m_element->document().quirks().blocksEnteringStandardFullscreenFromPictureInPictureQuirk())
-        return;
+        return completionHandler(Exception { ExceptionCode::NotAllowedError });
 
     if (auto* currentPlaybackControlsElement = m_page->playbackSessionManager().currentPlaybackControlsElement())
         currentPlaybackControlsElement->prepareForVideoFullscreenStandby();
@@ -300,17 +299,19 @@ void WebFullScreenManager::enterFullScreenForElement(WebCore::Element& element, 
 #endif
 
     m_page->prepareToEnterElementFullScreen();
-    if (mode != WebCore::HTMLMediaElementEnums::VideoFullscreenModeInWindow) {
-        m_page->sendWithAsyncReply(Messages::WebFullScreenManagerProxy::EnterFullScreen(m_element->document().quirks().blocksReturnToFullscreenFromPictureInPictureQuirk(), WTFMove(mediaDetails)), [page = m_page] (bool success) {
-            if (success)
-                page->protectedFullscreenManager()->willEnterFullScreen();
-        });
-    }
 
     if (mode == WebCore::HTMLMediaElementEnums::VideoFullscreenModeInWindow) {
-        willEnterFullScreen(mode);
+        willEnterFullScreen(WTFMove(completionHandler), mode);
         didEnterFullScreen();
         m_inWindowFullScreenMode = true;
+    } else {
+        m_page->sendWithAsyncReply(Messages::WebFullScreenManagerProxy::EnterFullScreen(m_element->document().quirks().blocksReturnToFullscreenFromPictureInPictureQuirk(), WTFMove(mediaDetails)), [this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler)] (bool success) mutable {
+            if (success) {
+                m_scrollPosition = m_page->corePage()->mainFrame().virtualView()->scrollPosition();
+                willEnterFullScreen(WTFMove(completionHandler));
+            } else
+                completionHandler(Exception { ExceptionCode::InvalidStateError });
+        });
     }
 #endif
 }
@@ -347,19 +348,20 @@ void WebFullScreenManager::exitFullScreenForElement(WebCore::Element* element)
 #endif
 }
 
-void WebFullScreenManager::willEnterFullScreen(WebCore::HTMLMediaElementEnums::VideoFullscreenMode mode)
+void WebFullScreenManager::willEnterFullScreen(CompletionHandler<void(ExceptionOr<void>)>&& completionHandler, WebCore::HTMLMediaElementEnums::VideoFullscreenMode mode)
 {
     if (!m_element)
-        return;
+        return completionHandler(Exception { ExceptionCode::InvalidStateError });
 
     ALWAYS_LOG(LOGIDENTIFIER, "<", m_element->tagName(), " id=\"", m_element->getIdAttribute(), "\">");
 
     m_page->isInFullscreenChanged(WebPage::IsInFullscreenMode::Yes);
 
-    if (!m_element->document().fullscreenManager().willEnterFullscreen(*m_element, mode)) {
-        close();
-        return;
-    }
+    m_element->document().fullscreenManager().willEnterFullscreen(*m_element, mode, [this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler)] (auto result) mutable {
+        if (result.hasException())
+            close();
+        completionHandler(WTFMove(result));
+    });
 
     if (!m_element) {
         close();
@@ -506,6 +508,12 @@ void WebFullScreenManager::didExitFullScreen()
     }
 
     clearElement();
+
+    if (RefPtr localMainFrame = m_page->corePage()->localMainFrame()) {
+        // Make sure overflow: hidden is unapplied from the root element before restoring.
+        localMainFrame->view()->forceLayout();
+        localMainFrame->view()->setScrollPosition(m_scrollPosition);
+    }
 }
 
 void WebFullScreenManager::setAnimatingFullScreen(bool animating)
@@ -519,17 +527,19 @@ void WebFullScreenManager::requestRestoreFullScreen(CompletionHandler<void(bool)
 {
     ASSERT(!m_element);
     if (m_element)
-        return;
+        return completionHandler(false);
 
     auto element = RefPtr { m_elementToRestore.get() };
     if (!element) {
         ALWAYS_LOG(LOGIDENTIFIER, "no element to restore");
-        return;
+        return completionHandler(false);
     }
 
     ALWAYS_LOG(LOGIDENTIFIER, "<", element->tagName(), " id=\"", element->getIdAttribute(), "\">");
     WebCore::UserGestureIndicator gestureIndicator(WebCore::IsProcessingUserGesture::Yes, &element->document());
-    element->document().fullscreenManager().requestFullscreenForElement(*element, nullptr, WebCore::FullscreenManager::ExemptIFrameAllowFullscreenRequirement, WTFMove(completionHandler));
+    element->document().fullscreenManager().requestFullscreenForElement(*element, WebCore::FullscreenManager::ExemptIFrameAllowFullscreenRequirement, [completionHandler = WTFMove(completionHandler)] (auto result) mutable {
+        completionHandler(!result.hasException());
+    });
 }
 
 void WebFullScreenManager::requestExitFullScreen()
@@ -540,14 +550,9 @@ void WebFullScreenManager::requestExitFullScreen()
         return;
     }
 
-    RefPtr corePage = m_page->protectedCorePage();
-    if (!corePage) {
-        ALWAYS_LOG(LOGIDENTIFIER, "no page, closing");
-        close();
-        return;
-    }
-
-    if (!corePage->topDocumentHasFullscreenElement()) {
+    RefPtr localMainFrame = m_page->localMainFrame();
+    RefPtr topDocument = localMainFrame ? localMainFrame->document() : nullptr;
+    if (!topDocument || !topDocument->fullscreenManager().fullscreenElement()) {
         ALWAYS_LOG(LOGIDENTIFIER, "top document not in fullscreen, closing");
         close();
         return;
@@ -566,20 +571,6 @@ void WebFullScreenManager::close()
     m_page->closeFullScreen();
     invalidate();
     m_closing = false;
-}
-
-void WebFullScreenManager::saveScrollPosition()
-{
-    m_scrollPosition = m_page->corePage()->mainFrame().virtualView()->scrollPosition();
-}
-
-void WebFullScreenManager::restoreScrollPosition()
-{
-    if (RefPtr localMainFrame = m_page->corePage()->localMainFrame()) {
-        // Make sure overflow: hidden is unapplied from the root element before restoring.
-        localMainFrame->view()->forceLayout();
-        localMainFrame->view()->setScrollPosition(m_scrollPosition);
-    }
 }
 
 void WebFullScreenManager::setFullscreenInsets(const WebCore::FloatBoxExtent& insets)

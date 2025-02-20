@@ -149,7 +149,7 @@ std::pair<String, PlatformFileHandle> openTemporaryFile(StringView prefix, Strin
     
     // Append the file name suffix.
     CString suffixUTF8 = suffix.utf8();
-    temporaryFilePath.append(suffixUTF8.unsafeSpanIncludingNullTerminator());
+    temporaryFilePath.append(suffixUTF8.spanIncludingNullTerminator());
 
     platformFileHandle = mkostemps(temporaryFilePath.data(), suffixUTF8.length(), O_CLOEXEC);
     if (platformFileHandle == invalidPlatformFileHandle)
@@ -184,6 +184,15 @@ NSString *createTemporaryDirectory(NSString *directoryPrefix)
         return nil;
 
     return [[NSFileManager defaultManager] stringWithFileSystemRepresentation:path.data() length:length];
+}
+
+std::pair<PlatformFileHandle, CString> createTemporaryFileInDirectory(const String& directory, const String& suffix)
+{
+    auto fsSuffix = fileSystemRepresentation(suffix);
+    auto templatePath = pathByAppendingComponents(directory, { StringView { "XXXXXX"_s }, StringView { suffix } });
+    auto fsTemplatePath = fileSystemRepresentation(templatePath);
+    int fd = mkstemps(fsTemplatePath.mutableSpanIncludingNullTerminator().data(), fsSuffix.length());
+    return { fd, WTFMove(fsTemplatePath) };
 }
 
 #ifdef IOPOL_TYPE_VFS_MATERIALIZE_DATALESS_FILES

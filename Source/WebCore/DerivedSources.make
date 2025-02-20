@@ -382,8 +382,9 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/identity/DigitalCredential.idl \
     $(WebCore)/Modules/identity/DigitalCredentialRequest.idl \
     $(WebCore)/Modules/identity/DigitalCredentialRequestOptions.idl \
-    $(WebCore)/Modules/identity/OpenID4VPRequest.idl \
     $(WebCore)/Modules/identity/IdentityCredentialProtocol.idl \
+    $(WebCore)/Modules/identity/MobileDocumentRequest.idl \
+    $(WebCore)/Modules/identity/OpenID4VPRequest.idl \
     $(WebCore)/Modules/indexeddb/IDBCursor.idl \
     $(WebCore)/Modules/indexeddb/IDBCursorDirection.idl \
     $(WebCore)/Modules/indexeddb/IDBCursorWithValue.idl \
@@ -1142,6 +1143,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/dom/Element+PointerLock.idl \
     $(WebCore)/dom/Element.idl \
     $(WebCore)/dom/ElementContentEditable.idl \
+    $(WebCore)/dom/ElementCreationOptions.idl \
     $(WebCore)/dom/ElementInternals.idl \
     $(WebCore)/dom/ErrorEvent.idl \
     $(WebCore)/dom/Event.idl \
@@ -1162,6 +1164,7 @@ JS_BINDING_IDLS := \
     $(WebCore)/dom/IdleDeadline.idl \
     $(WebCore)/dom/IdleRequestCallback.idl \
     $(WebCore)/dom/IdleRequestOptions.idl \
+    $(WebCore)/dom/ImportNodeOptions.idl \
     $(WebCore)/dom/InnerHTML.idl \
     $(WebCore)/dom/InputEvent.idl \
     $(WebCore)/dom/KeyboardEvent.idl \
@@ -1760,6 +1763,12 @@ JS_BINDING_IDLS := \
     $(WebCore)/workers/service/ExtendableEventInit.idl \
     $(WebCore)/workers/service/ExtendableMessageEvent.idl \
     $(WebCore)/workers/service/FetchEvent.idl \
+    $(WebCore)/workers/service/InstallEvent.idl \
+    $(WebCore)/workers/service/RouterCondition.idl \
+    $(WebCore)/workers/service/RouterRule.idl \
+    $(WebCore)/workers/service/RouterSourceDict.idl \
+    $(WebCore)/workers/service/RouterSourceEnum.idl \
+    $(WebCore)/workers/service/RunningStatus.idl \
     $(WebCore)/workers/service/NavigationPreloadManager.idl \
     $(WebCore)/workers/service/NavigationPreloadState.idl \
     $(WebCore)/workers/service/ServiceWorker.idl \
@@ -1932,9 +1941,18 @@ all : \
 
 # CSS property names and value keywords
 
+POSSIBLE_ADDITIONAL_CSS_VALUE_KEYWORDS = \
+    $(foreach \
+        CSS_VALUE_KEYWORDS, \
+        $(ADDITIONAL_CSS_VALUE_KEYWORDS), \
+        $(firstword $(realpath $(foreach \
+            ADDITIONS_PATH, \
+            $(ADDITIONS_PATHS), \
+            $(ADDITIONS_PATH)/$(CSS_VALUE_KEYWORDS)))))
+
 WEBCORE_CSS_PROPERTY_NAMES := $(WebCore)/css/CSSProperties.json
 WEBCORE_CSS_VALUE_KEYWORDS := $(WebCore)/css/CSSValueKeywords.in
-WEBCORE_CSS_VALUE_KEYWORDS := $(WEBCORE_CSS_VALUE_KEYWORDS) $(WebCore)/css/SVGCSSValueKeywords.in
+WEBCORE_CSS_VALUE_KEYWORDS := $(WEBCORE_CSS_VALUE_KEYWORDS) $(WebCore)/css/SVGCSSValueKeywords.in $(POSSIBLE_ADDITIONAL_CSS_VALUE_KEYWORDS)
 
 CSS_PROPERTY_NAME_FILES = \
     CSSPropertyNames.cpp \
@@ -2031,6 +2049,7 @@ HTTP_HEADER_NAMES_FILES = \
     HTTPHeaderNames.cpp \
     HTTPHeaderNames.gperf \
     HTTPHeaderNames.h \
+    HTTPHeaderNames.serialization.in \
 #
 HTTP_HEADER_NAMES_FILES_PATTERNS = $(call to-pattern, $(HTTP_HEADER_NAMES_FILES))
 

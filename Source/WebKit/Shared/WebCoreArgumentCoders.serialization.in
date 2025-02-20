@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2024 Apple Inc. All rights reserved.
+# Copyright (C) 2022-2025 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -672,6 +672,7 @@ struct WebCore::IDBDatabaseNameAndVersion {
 }
 
 class WebCore::IDBKeyData {
+    bool isPlaceholder()
     std::variant<std::nullptr_t, WebCore::IDBKeyData::Invalid, Vector<WebCore::IDBKeyData>, String, double, WebCore::IDBKeyData::Date, WebCore::ThreadSafeDataBuffer, WebCore::IDBKeyData::Min, WebCore::IDBKeyData::Max> value()
 }
 
@@ -687,6 +688,12 @@ class WebCore::IDBKeyData {
 [Nested] struct WebCore::IDBKeyData::Date {
     double value
 }
+
+class WebCore::IndexKey {
+    std::variant<std::nullptr_t, WebCore::IDBKeyData, Vector<WebCore::IDBKeyData>> data()
+}
+
+using WebCore::IndexIDToIndexKeyMap = HashMap<WebCore::IDBIndexIdentifier, WebCore::IndexKey>;
 
 enum class WebCore::IndexedDB::KeyType : int8_t {
     Max,
@@ -896,6 +903,14 @@ struct WebCore::ShareData {
 };
 
 enum class WebCore::ShareDataOriginator : bool
+
+#if ENABLE(WEB_PAGE_SPATIAL_BACKDROP)
+struct WebCore::SpatialBackdropSource {
+    URL m_sourceURL;
+    URL m_modelURL;
+    std::optional<URL> m_environmentMapURL;
+};
+#endif
 
 using WebCore::TargetedElementIdentifiers = std::pair<WebCore::ElementIdentifier, WebCore::ScriptExecutionContextIdentifier>;
 using WebCore::TargetedElementSelectors = Vector<HashSet<String>>;
@@ -1550,7 +1565,7 @@ struct WebCore::SpeechRecognitionRequestInfo {
     bool interimResults;
     uint64_t maxAlternatives;
     WebCore::ClientOrigin clientOrigin;
-    WebCore::FrameIdentifier frameIdentifier;
+    WebCore::FrameIdentifier mainFrameIdentifier;
 };
 
 [CustomHeader] struct WebCore::SpeechRecognitionAlternativeData {
@@ -1805,7 +1820,6 @@ enum class WebCore::RenderingPurpose : uint8_t {
     Canvas,
     DOM,
     LayerBacking,
-    BitmapOnlyLayerBacking,
     Snapshot,
     ShareableSnapshot,
     ShareableLocalSnapshot,
@@ -1814,10 +1828,10 @@ enum class WebCore::RenderingPurpose : uint8_t {
 
 enum class WebCore::ContentsFormat : uint8_t {
     RGBA8,
-#if HAVE(IOSURFACE_RGB10)
+#if ENABLE(PIXEL_FORMAT_RGB10)
     RGBA10,
 #endif
-#if HAVE(HDR_SUPPORT)
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
     RGBA16F,
 #endif
 };
@@ -1977,6 +1991,13 @@ header: <WebCore/RectEdges.h>
     bool right();
     bool bottom();
     bool left();
+}
+
+[CustomHeader] class WebCore::RectEdges<WebCore::Color> {
+    WebCore::Color top();
+    WebCore::Color right();
+    WebCore::Color bottom();
+    WebCore::Color left();
 }
 
 [AdditionalEncoder=StreamConnectionEncoder] class WebCore::Path {
@@ -2555,11 +2576,13 @@ enum class WebCore::PixelFormat : uint8_t {
     RGBA8,
     BGRX8,
     BGRA8,
-#if HAVE(IOSURFACE_RGB10)
+#if ENABLE(PIXEL_FORMAT_RGB10)
     RGB10,
+#endif
+#if ENABLE(PIXEL_FORMAT_RGB10A8)
     RGB10A8,
 #endif
-#if HAVE(HDR_SUPPORT)
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
     RGBA16F,
 #endif
 };
@@ -2567,11 +2590,13 @@ enum class WebCore::PixelFormat : uint8_t {
 enum class WebCore::ImageBufferPixelFormat : uint8_t {
     BGRX8,
     BGRA8,
-#if HAVE(IOSURFACE_RGB10)
+#if ENABLE(PIXEL_FORMAT_RGB10)
     RGB10,
+#endif
+#if ENABLE(PIXEL_FORMAT_RGB10A8)
     RGB10A8,
 #endif
-#if HAVE(HDR_SUPPORT)
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
     RGBA16F,
 #endif
 };
@@ -3062,17 +3087,14 @@ header: <WebCore/StylePrimitiveNumericTypes.h>
     double value;
 };
 
-using WebCore::Style::PercentageNonnegativeFloat = WebCore::Style::Percentage<WebCore::CSS::Nonnegative, float>;
 [CustomHeader, Nested] struct WebCore::Style::PercentageNonnegativeFloat {
     float value;
 };
 
-using WebCore::Style::PercentageAllFloat = WebCore::Style::Percentage<WebCore::CSS::All, float>;
 [CustomHeader, Nested] struct WebCore::Style::PercentageAllFloat {
     float value;
 };
 
-using WebCore::Style::LengthNonnegative = WebCore::Style::Length<WebCore::CSS::Nonnegative>;
 [CustomHeader, Nested] struct WebCore::Style::LengthNonnegative {
     float value;
 };
@@ -3537,7 +3559,7 @@ enum class WebCore::ResourceLoadPriority : uint8_t {
     Opaqueredirect
 };
 
-[Nested] enum class WebCore::ResourceResponseBaseSource : uint8_t {
+[CustomHeader] enum class WebCore::ResourceResponseSource : uint8_t {
     Unknown,
     Network,
     DiskCache,
@@ -3552,7 +3574,7 @@ enum class WebCore::ResourceLoadPriority : uint8_t {
 
 using WebCore::ResourceResponseBase::Type = WebCore::ResourceResponseBaseType;
 using WebCore::ResourceResponseBase::Tainting = WebCore::ResourceResponseBaseTainting;
-using WebCore::ResourceResponseBase::Source = WebCore::ResourceResponseBaseSource;
+using WebCore::ResourceResponseBase::Source = WebCore::ResourceResponseSource;
 
 class WebCore::ResourceResponseBase {
     std::optional<WebCore::ResourceResponseData> getResponseData()
@@ -4393,7 +4415,7 @@ header: <WebCore/ScrollingStateNode.h>
     HeaderLayer
     FooterLayer
     BehaviorForFixedElements
-    TopContentInset
+    ObscuredContentInsets
     VisualViewportIsSmallerThanLayoutViewport
     AsyncFrameOrOverflowScrollingEnabled
     WheelEventGesturesBecomeNonBlocking
@@ -4639,6 +4661,7 @@ header: <WebCore/MediaPlayer.h>
     bool isMediaSource;
     bool isMediaStream;
     bool requiresRemotePlayback;
+    bool supportsLimitedMatroska;
     Vector<WebCore::ContentType> contentTypesRequiringHardwareSupport;
     std::optional<Vector<String>> allowedMediaContainerTypes;
     std::optional<Vector<String>> allowedMediaCodecTypes;
@@ -4652,6 +4675,13 @@ header: <WebCore/MediaPlayer.h>
     MediaTime time;
     MediaTime negativeThreshold;
     MediaTime positiveThreshold;
+};
+
+header: <WebCore/MediaPlayer.h>
+[CustomHeader] struct WebCore::MediaPlayerLoadOptions {
+    WebCore::ContentType contentType;
+    bool requiresRemotePlayback;
+    bool supportsLimitedMatroska;
 };
 
 #endif
@@ -5222,6 +5252,11 @@ header: <WebCore/ImageTypes.h>
     WebCore::ImageOrientation::Orientation orientation().orientation();
     WebCore::InterpolationQuality interpolationQuality();
     WebCore::Headroom headroom();
+};
+
+[AdditionalEncoder=StreamConnectionEncoder] struct WebCore::FloatSegment {
+    float begin;
+    float end;
 };
 
 struct WebCore::CanvasActivityRecord {
@@ -5840,6 +5875,7 @@ struct WebCore::PlatformVideoTrackConfiguration : WebCore::PlatformTrackConfigur
     double framerate;
     uint64_t bitrate;
     std::optional<WebCore::SpatialVideoMetadata> spatialVideoMetadata;
+    bool isImmersiveVideo;
 };
 
 #endif
@@ -6381,21 +6417,32 @@ struct WebCore::MockWebAuthenticationConfiguration {
     std::optional<WebCore::MockWebAuthenticationConfiguration::CcidConfiguration> ccid;
 };
 
-struct WebCore::OpenID4VPRequest {
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+
+[Nested] struct WebCore::OpenID4VPRequest {
 };
 
-[Nested] struct WebCore::DigitalCredentialRequest {
+[Nested] struct WebCore::MobileDocumentRequest {
+    String deviceRequest;
+    String encryptionInfo;
+};
+
+struct WebCore::DigitalCredentialsRequestData {
+    Vector<std::variant<WebCore::MobileDocumentRequest, WebCore::OpenID4VPRequest>> requests;
+    [Validator='!topOrigin->isNull()'] WebCore::SecurityOriginData topOrigin;
+    [Validator='!documentOrigin->isNull()'] WebCore::SecurityOriginData documentOrigin;
+};
+
+struct WebCore::DigitalCredentialsResponseData {
     WebCore::IdentityCredentialProtocol protocol;
-    WebCore::OpenID4VPRequest data;
+    String responseData;
 };
 
-struct WebCore::DigitalCredentialRequestOptions {
-    Vector<WebCore::DigitalCredentialRequest> requests;
-};
-
-enum class WebCore::IdentityCredentialProtocol : uint8_t {
+[Nested] enum class WebCore::IdentityCredentialProtocol : uint8_t {
     Openid4vp
 };
+
+#endif // HAVE(DIGITAL_CREDENTIALS_UI)
 
 #endif // ENABLE(WEB_AUTHN)
 
@@ -7028,9 +7075,14 @@ struct WebCore::CookieChangeSubscription {
 }
 
 #if ENABLE(MODEL_PROCESS)
+enum class WebCore::ModelContextDisablePortal : bool
+
 [RefCounted] class WebCore::ModelContext {
     WebCore::PlatformLayerIdentifier modelLayerIdentifier()
     WebCore::LayerHostingContextIdentifier modelContentsLayerHostingContextIdentifier()
+    WebCore::LayoutSize modelLayoutSize()
+    WebCore::ModelContextDisablePortal disablePortal()
+    std::optional<WebCore::Color> backgroundColor()
 };
 #endif
 
@@ -7527,6 +7579,9 @@ struct WebCore::DragItem {
     WebCore::IntRect dragPreviewFrameInRootViewCoordinates;
     bool containsSelection;
     WebCore::PromisedAttachmentInfo promisedAttachmentInfo;
+#if ENABLE(MODEL_PROCESS)
+    Markable<WebCore::PlatformLayerIdentifier> modelLayerID;
+#endif
     [NotSerialized] WebCore::PasteboardWriterData data;
 };
 
@@ -7572,6 +7627,7 @@ class WebCore::FilterOperations {
 
 header: <WebCore/WheelEventTestMonitor.h>
 [OptionSet] enum class WebCore::WheelEventTestMonitorDeferReason : uint16_t {
+    None,
     HandlingWheelEvent,
     HandlingWheelEventOnMainThread,
     PostMainThreadWheelEventHandling,
@@ -7947,6 +8003,9 @@ enum class WebCore::AppleVisualEffect : uint8_t {
     BlurMaterial,
     BlurThickMaterial,
     BlurChromeMaterial,
+#if HAVE(MATERIAL_HOSTING)
+    HostedBlurMaterial,
+#endif
     VibrancyLabel,
     VibrancySecondaryLabel,
     VibrancyTertiaryLabel,
@@ -7955,6 +8014,13 @@ enum class WebCore::AppleVisualEffect : uint8_t {
     VibrancySecondaryFill,
     VibrancyTertiaryFill,
     VibrancySeparator,
+};
+
+header: <WebCore/AppleVisualEffect.h>
+[CustomHeader] struct WebCore::AppleVisualEffectData {
+    WebCore::AppleVisualEffect effect;
+    WebCore::AppleVisualEffect contextEffect;
+    std::optional<WebCore::FloatRoundedRect> borderRect;
 };
 
 #endif
@@ -8138,6 +8204,8 @@ header: <WebCore/ShareableResource.h>
     Ref<WebCore::SharedBuffer> displayList();
     Vector<MachSendRight> takeSurfaces();
 }
+
+enum class WebCore::IncludeDynamicContentScalingDisplayList : bool;
 #endif
 
 enum class WebCore::PlatformCursorType : uint8_t {
@@ -8820,7 +8888,7 @@ enum class WebCore::CryptoAlgorithmIdentifier : uint8_t {
     AES_KW,
     HMAC,
     SHA_1,
-    SHA_224,
+    DEPRECATED_SHA_224,
     SHA_256,
     SHA_384,
     SHA_512,
@@ -8887,6 +8955,8 @@ header: <WebCore/MediaSample.h>
     MediaTime duration;
     std::pair<MediaTime, MediaTime> trimInterval;
     RefPtr<WebCore::FragmentedSharedBuffer> data;
+    RefPtr<WebCore::SharedBuffer> hdrMetadata;
+    std::optional<WebCore::HdrMetadataType> hdrMetadataType;
     uint32_t flags;
 };
 
@@ -8913,4 +8983,14 @@ header: <WebCore/DocumentClasses.h>
     Model,
 #endif
     PDF
+};
+
+#if ENABLE(MODEL_PROCESS)
+header: <WebCore/StageModeOperations.h>
+enum class WebCore::StageModeOperation : bool;
+#endif
+
+struct WebCore::FixedContainerEdges {
+    WebCore::RectEdges<WebCore::Color> predominantColors;
+    WebCore::RectEdges<bool> fixedEdges;
 };

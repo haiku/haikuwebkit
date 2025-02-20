@@ -550,7 +550,7 @@ LayoutRect RenderInline::linesVisualOverflowBoundingBox() const
             ASSERT(needsLayout());
             return { };
         }
-        return layout->visualOverflowBoundingBoxRectFor(*this);
+        return layout->inkOverflowBoundingBoxRectFor(*this);
     }
 
     if (!firstLegacyInlineBox() || !lastLegacyInlineBox())
@@ -813,19 +813,9 @@ void RenderInline::updateHitTestResult(HitTestResult& result, const LayoutPoint&
     }
 }
 
-void RenderInline::dirtyLegacyLineBoxes(bool fullLayout)
+void RenderInline::deleteLegacyLineBoxes()
 {
-    if (fullLayout) {
-        m_legacyLineBoxes.deleteLineBoxes();
-        return;
-    }
-
-    m_legacyLineBoxes.dirtyLineBoxes();
-}
-
-void RenderInline::deleteLegacyLines()
-{
-    m_legacyLineBoxes.deleteLineBoxTree();
+    m_legacyLineBoxes.deleteLineBoxes();
 }
 
 std::unique_ptr<LegacyInlineFlowBox> RenderInline::createInlineFlowBox()
@@ -954,13 +944,13 @@ void RenderInline::paintOutline(PaintInfo& paintInfo, const LayoutPoint& paintOf
 
     auto& styleToUse = style();
     // Only paint the focus ring by hand if the theme isn't able to draw it.
-    if (styleToUse.outlineStyleIsAuto() == OutlineIsAuto::On && !theme().supportsFocusRing(styleToUse)) {
+    if (styleToUse.outlineStyleIsAuto() == OutlineIsAuto::On && !theme().supportsFocusRing(*this, styleToUse)) {
         Vector<LayoutRect> focusRingRects;
         addFocusRingRects(focusRingRects, paintOffset, paintInfo.paintContainer);
         paintFocusRing(paintInfo, styleToUse, focusRingRects);
     }
 
-    if (hasOutlineAnnotation() && styleToUse.outlineStyleIsAuto() == OutlineIsAuto::Off && !theme().supportsFocusRing(styleToUse))
+    if (hasOutlineAnnotation() && styleToUse.outlineStyleIsAuto() == OutlineIsAuto::Off && !theme().supportsFocusRing(*this, styleToUse))
         addPDFURLRect(paintInfo, paintOffset);
 
     GraphicsContext& graphicsContext = paintInfo.context();

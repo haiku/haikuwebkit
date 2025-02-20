@@ -153,6 +153,7 @@
 #import <WebCore/DragController.h>
 #import <WebCore/DragData.h>
 #import <WebCore/DragItem.h>
+#import <WebCore/DummyCredentialRequestCoordinatorClient.h>
 #import <WebCore/DummyModelPlayerProvider.h>
 #import <WebCore/DummySpeechRecognitionProvider.h>
 #import <WebCore/DummyStorageProvider.h>
@@ -1541,6 +1542,9 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
 #endif
         makeUniqueRef<WebCryptoClient>(self),
         makeUniqueRef<WebCore::ProcessSyncClient>()
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+        , makeUniqueRef<WebCore::DummyCredentialRequestCoordinatorClient>()
+#endif
     );
 #if !PLATFORM(IOS_FAMILY)
     pageConfiguration.validationMessageClient = makeUnique<WebValidationMessageClient>(self);
@@ -1800,6 +1804,9 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
         makeUniqueRef<WebChromeClientIOS>(self),
         makeUniqueRef<WebCryptoClient>(self),
         makeUniqueRef<WebCore::ProcessSyncClient>()
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+        , makeUniqueRef<WebCore::DummyCredentialRequestCoordinatorClient>()
+#endif
     );
 #if ENABLE(DRAG_SUPPORT)
     pageConfiguration.dragClient = makeUnique<WebDragClient>(self);
@@ -1882,7 +1889,7 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
 {
     WebThreadRun(^{
         [WebView _releaseMemoryNow];
-        RunLoop::main().dispatch([handler = makeBlockPtr(handler)] {
+        RunLoop::protectedMain()->dispatch([handler = makeBlockPtr(handler)] {
             handler();
         });
     });
@@ -3340,10 +3347,10 @@ IGNORE_WARNINGS_END
 #if ENABLE(FULLSCREEN_API)
     if (RefPtr document = core([frame DOMDocument]); document) {
         if (CheckedPtr fullscreenManager = document->fullscreenManagerIfExists()) {
-            if (RefPtr element = fullscreenManager->currentFullscreenElement()) {
+            if (RefPtr element = fullscreenManager->fullscreenElement()) {
                 SEL selector = @selector(webView:closeFullScreenWithListener:);
                 if ([_private->UIDelegate respondsToSelector:selector]) {
-                    auto listener = adoptNS([[WebKitFullScreenListener alloc] initWithElement:element.get()]);
+                    auto listener = adoptNS([[WebKitFullScreenListener alloc] initWithElement:element.get() completionHandler:nullptr]);
                     CallUIDelegate(self, selector, listener.get());
                 } else if (_private->newFullscreenController && [_private->newFullscreenController isFullScreen])
                     [_private->newFullscreenController close];
@@ -4167,10 +4174,10 @@ IGNORE_WARNINGS_END
     return nil;
 }
 
-- (void)_setTopContentInsetForTesting:(float)contentInset
+- (void)_setObscuredTopContentInsetForTesting:(float)top right:(float)right bottom:(float)bottom left:(float)left
 {
     if (_private && _private->page)
-        _private->page->setTopContentInset(contentInset);
+        _private->page->setObscuredContentInsets({ top, right, bottom, left });
 }
 
 - (BOOL)_isSoftwareRenderable
@@ -4996,7 +5003,7 @@ IGNORE_WARNINGS_END
 {
     if (WebThreadIsCurrent()) {
         [invocation retainArguments];
-        RunLoop::main().dispatch([forwarder = retainPtr(_forwarder), invocation = retainPtr(invocation)] {
+        RunLoop::protectedMain()->dispatch([forwarder = retainPtr(_forwarder), invocation = retainPtr(invocation)] {
             [forwarder forwardInvocation:invocation.get()];
         });
     } else
@@ -6408,7 +6415,7 @@ static bool needsWebViewInitThreadWorkaround()
                 if (errorOrNil)
                     return;
 
-                RunLoop::main().dispatch([self, path = RetainPtr<NSString>(fileURL.path), fileNames, fileCount, dragData] {
+                RunLoop::protectedMain()->dispatch([self, path = RetainPtr<NSString>(fileURL.path), fileNames, fileCount, dragData] {
                     fileNames->append(path.get());
                     if (fileNames->size() == fileCount) {
                         dragData->setFileNames(*fileNames);
@@ -7933,7 +7940,7 @@ static NSAppleEventDescriptor* aeDescFromJSValue(JSC::JSGlobalObject* lexicalGlo
             _private->page->setTabKeyCyclesThroughElements(!flag);
 #if PLATFORM(MAC)
         if (flag) {
-            RunLoop::main().dispatch([] {
+            RunLoop::protectedMain()->dispatch([] {
                 [[NSSpellChecker sharedSpellChecker] _preflightChosenSpellServer];
             });
         }
@@ -8951,14 +8958,14 @@ FORWARD(toggleUnderline)
     return true;
 }
 
-- (void)_enterFullScreenForElement:(NakedPtr<WebCore::Element>)element
+- (void)_enterFullScreenForElement:(NakedPtr<WebCore::Element>)element completionHandler:(CompletionHandler<void(WebCore::ExceptionOr<void>)>&&)completionHandler
 {
     if (!_private->newFullscreenController)
         _private->newFullscreenController = adoptNS([[WebFullScreenController alloc] init]);
 
     [_private->newFullscreenController setElement:element.get()];
     [_private->newFullscreenController setWebView:self];
-    [_private->newFullscreenController enterFullScreen:[[self window] screen]];
+    [_private->newFullscreenController enterFullScreen:[[self window] screen] completionHandler:WTFMove(completionHandler)];
 }
 
 - (void)_exitFullScreenForElement:(NakedPtr<WebCore::Element>)element

@@ -1094,10 +1094,20 @@ void WebFrameLoaderClient::updateGlobalHistoryRedirectLinks()
     }
 }
 
-bool WebFrameLoaderClient::shouldGoToHistoryItem(WebCore::HistoryItem& item) const
+bool WebFrameLoaderClient::shouldGoToHistoryItem(WebCore::HistoryItem& item, WebCore::IsSameDocumentNavigation) const
 {
     WebView* view = getWebView(m_webFrame.get());
     return [[view _policyDelegateForwarder] webView:view shouldGoToHistoryItem:kit(&item)];
+}
+
+bool WebFrameLoaderClient::supportsAsyncShouldGoToHistoryItem() const
+{
+    return false;
+}
+
+void WebFrameLoaderClient::shouldGoToHistoryItemAsync(WebCore::HistoryItem&, CompletionHandler<void(bool)>&&) const
+{
+    RELEASE_ASSERT_NOT_REACHED();
 }
 
 void WebFrameLoaderClient::didDisplayInsecureContent()
@@ -2140,7 +2150,7 @@ void WebFrameLoaderClient::finishedLoadingIcon(WebCore::FragmentedSharedBuffer* 
 #if USE(WEB_THREAD)
             WebThreadRun(^{
 #else
-            RunLoop::main().dispatch([self, strongSelf = retainPtr(self), success] {
+            RunLoop::protectedMain()->dispatch([self, strongSelf = retainPtr(self), success] {
 #endif
                 if (success)
                     [self receivedPolicyDecision:WebCore::PolicyAction::Ignore];

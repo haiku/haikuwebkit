@@ -97,6 +97,7 @@
 #include "HTMLTableSectionElement.h"
 #include "HTMLTextFormControlElement.h"
 #include "HitTestSource.h"
+#include "InlineIteratorLogicalOrderTraversal.h"
 #include "InlineRunAndOffset.h"
 #include "LocalFrame.h"
 #include "MathMLElement.h"
@@ -135,11 +136,6 @@
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/AtomString.h>
 #include <wtf/text/MakeString.h>
-
-#if COMPILER(MSVC)
-// See https://msdn.microsoft.com/en-us/library/1wea5zwe.aspx
-#pragma warning(disable: 4701)
-#endif
 
 namespace WebCore {
 
@@ -255,9 +251,9 @@ bool AXObjectCache::shouldServeInitialCachedFrame()
 static const Seconds updateTreeSnapshotTimerInterval { 100_ms };
 #endif
 
-AXObjectCache::AXObjectCache(Document& document)
+AXObjectCache::AXObjectCache(Page& page, Document* document)
     : m_document(document)
-    , m_pageID(document.pageID())
+    , m_pageID(page.identifier())
     , m_notificationPostTimer(*this, &AXObjectCache::notificationPostTimerFired)
     , m_passwordNotificationPostTimer(*this, &AXObjectCache::passwordNotificationPostTimerFired)
     , m_liveRegionChangedPostTimer(*this, &AXObjectCache::liveRegionChangedNotificationPostTimerFired)
@@ -280,18 +276,17 @@ AXObjectCache::AXObjectCache(Document& document)
     ASSERT(isMainThread());
 
 #if ENABLE(AX_THREAD_TEXT_APIS)
-    if (auto* frame = document.frame(); frame && frame->isMainFrame())
-        gAccessibilityThreadTextApisEnabled = DeprecatedGlobalSettings::accessibilityThreadTextApisEnabled();
+    gAccessibilityThreadTextApisEnabled = DeprecatedGlobalSettings::accessibilityThreadTextApisEnabled();
 #endif
 
     // If loading completed before the cache was created, loading progress will have been reset to zero.
     // Consider loading progress to be 100% in this case.
-    m_loadingProgress = document.page() ? document.page()->progress().estimatedProgress() : 1;
+    m_loadingProgress = page.progress().estimatedProgress();
     if (m_loadingProgress <= 0)
         m_loadingProgress = 1;
 
-    if (m_pageID && m_document)
-        m_pageActivityState = m_document->page()->activityState();
+    if (m_pageID)
+        m_pageActivityState = page.activityState();
     AXTreeStore::add(m_id, WeakPtr { this });
 }
 
@@ -1014,21 +1009,6 @@ AccessibilityObject* AXObjectCache::getOrCreate(RenderObject& renderer)
     return object.ptr();
 }
 
-AXCoreObject* AXObjectCache::rootObject()
-{
-    if (!gAccessibilityEnabled)
-        return nullptr;
-
-#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    if (isIsolatedTreeEnabled())
-        return isolatedTreeRootObject();
-#endif
-    if (!m_document)
-        return nullptr;
-
-    return getOrCreate(m_document->protectedView().get());
-}
-
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 RefPtr<AXIsolatedTree> AXObjectCache::getOrCreateIsolatedTree()
 {
@@ -1095,15 +1075,18 @@ void AXObjectCache::setIsolatedTreeRoot(AXCoreObject* root)
 }
 #endif
 
-AccessibilityObject* AXObjectCache::rootObjectForFrame(LocalFrame* frame)
+AXCoreObject* AXObjectCache::rootObjectForFrame(LocalFrame& frame)
 {
     if (!gAccessibilityEnabled)
         return nullptr;
 
-    if (!frame)
-        return nullptr;
-    return getOrCreate(frame->view());
-}    
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+    if (isIsolatedTreeEnabled())
+        return isolatedTreeRootObject();
+#endif
+
+    return getOrCreate(frame.view());
+}
 
 AccessibilityObject* AXObjectCache::create(AccessibilityRole role)
 {
@@ -3306,15 +3289,15 @@ std::optional<SimpleRange> AXObjectCache::rangeForUnorderedCharacterOffsets(cons
     return { { *start, *end } };
 }
 
-TextMarkerData AXObjectCache::textMarkerDataForCharacterOffset(const CharacterOffset& characterOffset)
+TextMarkerData AXObjectCache::textMarkerDataForCharacterOffset(const CharacterOffset& characterOffset, TextMarkerOrigin origin)
 {
     if (characterOffset.isNull())
         return { };
 
     if (RefPtr input = dynamicDowncast<HTMLInputElement>(characterOffset.node.get()); input && input->isSecureField())
-        return { *this, { }, true };
+        return { *this, { }, true, origin };
 
-    return { *this, characterOffset, false };
+    return { *this, characterOffset, false, origin };
 }
 
 CharacterOffset AXObjectCache::startOrEndCharacterOffsetForRange(const SimpleRange& range, bool isStart, bool enterTextControls)
@@ -3589,7 +3572,7 @@ AccessibilityObject* AXObjectCache::objectForTextMarkerData(const TextMarkerData
     return getOrCreate(*node);
 }
 
-std::optional<TextMarkerData> AXObjectCache::textMarkerDataForVisiblePosition(const VisiblePosition& visiblePosition)
+std::optional<TextMarkerData> AXObjectCache::textMarkerDataForVisiblePosition(const VisiblePosition& visiblePosition, TextMarkerOrigin origin)
 {
     if (visiblePosition.isNull())
         return std::nullopt;
@@ -3603,6 +3586,61 @@ std::optional<TextMarkerData> AXObjectCache::textMarkerDataForVisiblePosition(co
     if (auto* input = dynamicDowncast<HTMLInputElement>(node.get()); input && input->isSecureField())
         return std::nullopt;
 
+#if ENABLE(AX_THREAD_TEXT_APIS)
+    if (shouldCreateAXThreadCompatibleMarkers()) {
+        // We need to convert the DOM offset (which is offset into pre-whitespace-collapse text) into an offset into
+        // the rendered, post-whitespace-collapse text.
+        unsigned domOffset = position.deprecatedEditingOffset();
+        CheckedPtr<const RenderText> renderText = dynamicDowncast<RenderText>(node ? node->renderer() : nullptr);
+
+        if (!renderText) {
+            auto boxAndOffset = visiblePosition.inlineBoxAndOffset();
+            if (!boxAndOffset.box)
+                return std::nullopt;
+
+            renderText = dynamicDowncast<RenderText>(boxAndOffset.box->renderer());
+            if (!renderText)
+                return std::nullopt;
+            domOffset = boxAndOffset.offset;
+        }
+
+        auto [textBox, orderCache] = InlineIterator::firstTextBoxInLogicalOrderFor(*renderText);
+        if (!textBox)
+            return std::nullopt;
+
+        unsigned differenceBetweenDomAndRenderedOffsets = textBox->minimumCaretOffset();
+        unsigned previousEndDomOffset = textBox->maximumCaretOffset();
+
+        while (domOffset > textBox->maximumCaretOffset()) {
+            textBox = InlineIterator::nextTextBoxInLogicalOrder(textBox, orderCache);
+            differenceBetweenDomAndRenderedOffsets += textBox->minimumCaretOffset() - previousEndDomOffset;
+            previousEndDomOffset = textBox->maximumCaretOffset();
+        }
+        RELEASE_ASSERT(domOffset >= differenceBetweenDomAndRenderedOffsets);
+        unsigned renderedOffset = domOffset - differenceBetweenDomAndRenderedOffsets;
+
+        CheckedPtr cache = renderText->document().axObjectCache();
+        if (!cache)
+            return std::nullopt;
+
+        RefPtr object = cache->getOrCreate(const_cast<RenderText&>(*renderText));
+        if (!object)
+            return std::nullopt;
+
+        return std::optional(TextMarkerData {
+            cache->treeID(),
+            object->objectID(),
+            renderedOffset,
+            Position::PositionIsOffsetInAnchor,
+            Affinity::Downstream,
+            0,
+            renderedOffset,
+            object->isIgnored(),
+            origin
+        });
+    }
+#endif // ENABLE(AX_THREAD_TEXT_APIS)
+
     // If the visible position has an anchor type referring to a node other than the anchored node, we should
     // set the text marker data with CharacterOffset so that the offset will correspond to the node.
     auto characterOffset = characterOffsetFromVisiblePosition(visiblePosition);
@@ -3613,7 +3651,7 @@ std::optional<TextMarkerData> AXObjectCache::textMarkerDataForVisiblePosition(co
     if (!cache)
         return std::nullopt;
     return { { *cache, visiblePosition,
-        characterOffset.startIndex, characterOffset.offset, false } };
+        characterOffset.startIndex, characterOffset.offset, false, origin } };
 }
 
 CharacterOffset AXObjectCache::nextCharacterOffset(const CharacterOffset& characterOffset, bool ignoreNextNodeStart)
@@ -4908,7 +4946,7 @@ AccessibilityObject* AXObjectCache::rootWebArea()
     return root->webAreaObject();
 }
 
-AXTreeData AXObjectCache::treeData()
+AXTreeData AXObjectCache::treeData(std::optional<OptionSet<AXStreamOptions>> additionalOptions)
 {
     ASSERT(isMainThread());
 
@@ -4918,7 +4956,9 @@ AXTreeData AXObjectCache::treeData()
     stream << "\nAXObjectTree:\n";
     RefPtr document = this->document();
     if (RefPtr root = document ? get(document->view()) : nullptr) {
-        constexpr OptionSet<AXStreamOptions> options = { AXStreamOptions::ObjectID, AXStreamOptions::ParentID, AXStreamOptions::Role, AXStreamOptions::IdentifierAttribute, AXStreamOptions::OuterHTML };
+        OptionSet<AXStreamOptions> options = { AXStreamOptions::ObjectID, AXStreamOptions::ParentID, AXStreamOptions::Role, AXStreamOptions::IdentifierAttribute, AXStreamOptions::OuterHTML };
+        if (additionalOptions)
+            options |= additionalOptions.value();
         streamSubtree(stream, *root, options);
     } else
         stream << "No root!";
@@ -4929,7 +4969,9 @@ AXTreeData AXObjectCache::treeData()
         stream << "\nAXIsolatedTree:\n";
         RefPtr tree = getOrCreateIsolatedTree();
         if (RefPtr root = tree ? tree->rootNode() : nullptr) {
-            constexpr OptionSet<AXStreamOptions> options = { AXStreamOptions::ObjectID, AXStreamOptions::ParentID };
+            OptionSet<AXStreamOptions> options = { AXStreamOptions::ObjectID, AXStreamOptions::ParentID };
+            if (additionalOptions)
+                options |= additionalOptions.value();
             streamSubtree(stream, root.releaseNonNull(), options);
         } else
             stream << "No isolated tree!";
@@ -5275,10 +5317,10 @@ bool AXObjectCache::addRelation(Element& origin, const QualifiedName& attribute)
     if (!m_document)
         return false;
     if (Element::isElementReflectionAttribute(Ref { m_document->settings() }, attribute)) {
-        if (auto reflectedElement = origin.getElementAttribute(attribute))
+        if (auto reflectedElement = origin.elementForAttributeInternal(attribute))
             return addRelation(origin, *reflectedElement, relationType);
     } else if (Element::isElementsArrayReflectionAttribute(attribute)) {
-        if (auto reflectedElements = origin.getElementsArrayAttribute(attribute)) {
+        if (auto reflectedElements = origin.elementsArrayForAttributeInternal(attribute)) {
             for (auto reflectedElement : reflectedElements.value()) {
                 if (addRelation(origin, reflectedElement, relationType))
                     addedRelation = true;

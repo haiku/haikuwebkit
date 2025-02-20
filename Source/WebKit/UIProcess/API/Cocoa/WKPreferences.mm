@@ -1176,16 +1176,6 @@ static WebCore::EditableLinkBehavior toEditableLinkBehavior(_WKEditableLinkBehav
     return _preferences->applePayEnabled();
 }
 
-- (void)_setDNSPrefetchingEnabled:(BOOL)enabled
-{
-    _preferences->setDNSPrefetchingEnabled(enabled);
-}
-
-- (BOOL)_dnsPrefetchingEnabled
-{
-    return _preferences->dnsPrefetchingEnabled();
-}
-
 - (void)_setInlineMediaPlaybackRequiresPlaysInlineAttribute:(BOOL)enabled
 {
     _preferences->setInlineMediaPlaybackRequiresPlaysInlineAttribute(enabled);
@@ -1753,6 +1743,16 @@ static WebCore::EditableLinkBehavior toEditableLinkBehavior(_WKEditableLinkBehav
     return _preferences->requiresPageVisibilityForVideoToBeNowPlaying();
 }
 
+- (BOOL)_siteIsolationEnabled
+{
+    return _preferences->siteIsolationEnabled();
+}
+
+- (void)_setSiteIsolationEnabled:(BOOL)enabled
+{
+    _preferences->setSiteIsolationEnabled(enabled);
+}
+
 @end
 
 @implementation WKPreferences (WKDeprecated)
@@ -1794,6 +1794,15 @@ static WebCore::EditableLinkBehavior toEditableLinkBehavior(_WKEditableLinkBehav
 @end
 
 @implementation WKPreferences (WKPrivateDeprecated)
+
+- (void)_setDNSPrefetchingEnabled:(BOOL)enabled
+{
+}
+
+- (BOOL)_dnsPrefetchingEnabled
+{
+    return NO;
+}
 
 - (BOOL)_shouldAllowDesignSystemUIFonts
 {

@@ -109,9 +109,9 @@ public:
     WEBCORE_EXPORT bool containsMappedFileData() const;
 
 private:
-    void iterate(const Function<void(std::span<const uint8_t>)>& apply) const;
+    void iterate(NOESCAPE const Function<void(std::span<const uint8_t>)>& apply) const;
 #if USE(FOUNDATION)
-    void iterate(CFDataRef, const Function<void(std::span<const uint8_t>)>& apply) const;
+    void iterate(CFDataRef, NOESCAPE const Function<void(std::span<const uint8_t>)>& apply) const;
 #endif
 
     explicit DataSegment(Vector<uint8_t>&& data)
@@ -168,6 +168,8 @@ public:
     WEBCORE_EXPORT static Ref<FragmentedSharedBuffer> create(Vector<uint8_t>&&);
     WEBCORE_EXPORT static Ref<FragmentedSharedBuffer> create(DataSegment::Provider&&);
     WEBCORE_EXPORT static std::optional<Ref<FragmentedSharedBuffer>> fromIPCData(IPCData&&);
+
+    virtual ~FragmentedSharedBuffer() = default;
 
 #if USE(FOUNDATION)
     WEBCORE_EXPORT RetainPtr<NSArray> createNSDataArray() const;
@@ -360,7 +362,7 @@ public:
     void append(Args&&... args)
     {
         ensureBuffer();
-        m_buffer->append(std::forward<Args>(args)...);
+        Ref { *m_buffer }->append(std::forward<Args>(args)...);
     }
 
     explicit operator bool() const { return !isNull(); }
@@ -373,7 +375,7 @@ public:
     void empty() { m_buffer = FragmentedSharedBuffer::create(); }
 
     RefPtr<FragmentedSharedBuffer> get() const { return m_buffer; }
-    Ref<FragmentedSharedBuffer> copy() const { return m_buffer ? m_buffer->copy() : FragmentedSharedBuffer::create(); }
+    Ref<FragmentedSharedBuffer> copy() const { return m_buffer ? Ref { *m_buffer }->copy() : FragmentedSharedBuffer::create(); }
     WEBCORE_EXPORT RefPtr<ArrayBuffer> tryCreateArrayBuffer() const;
 
     WEBCORE_EXPORT Ref<FragmentedSharedBuffer> take();

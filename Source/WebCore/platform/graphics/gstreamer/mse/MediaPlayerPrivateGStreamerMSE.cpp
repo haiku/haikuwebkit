@@ -144,7 +144,7 @@ void MediaPlayerPrivateGStreamerMSE::load(const String&)
         player->networkStateChanged();
 }
 
-void MediaPlayerPrivateGStreamerMSE::load(const URL& url, const ContentType&, MediaSourcePrivateClient& mediaSource)
+void MediaPlayerPrivateGStreamerMSE::load(const URL& url, const LoadOptions&, MediaSourcePrivateClient& mediaSource)
 {
     auto mseBlobURI = makeString("mediasource"_s, url.string().isEmpty() ? "blob://"_s : url.string());
     GST_DEBUG("Loading %s", mseBlobURI.ascii().data());
@@ -274,7 +274,7 @@ bool MediaPlayerPrivateGStreamerMSE::doSeek(const SeekTarget& target, float rate
     // This will also add support for fastSeek once done (see webkit.org/b/260607)
     if (!m_mediaSourcePrivate)
         return false;
-    m_mediaSourcePrivate->waitForTarget(target)->whenSettled(RunLoop::current(), [this, weakThis = ThreadSafeWeakPtr { *this }](auto&& result) {
+    m_mediaSourcePrivate->waitForTarget(target)->whenSettled(RunLoop::protectedCurrent(), [this, weakThis = ThreadSafeWeakPtr { *this }](auto&& result) {
         RefPtr self = weakThis.get();
         if (!self || !result)
             return;
@@ -418,7 +418,7 @@ void MediaPlayerPrivateGStreamerMSE::updateStates()
 {
     bool isWaitingPreroll = isPipelineWaitingPreroll();
     bool shouldUpdatePlaybackState = false;
-    bool shouldBePlaying = (!m_isPaused && !m_isPausedByViewport && readyState() >= MediaPlayer::ReadyState::HaveFutureData && m_playbackRatePausedState != PlaybackRatePausedState::RatePaused)
+    bool shouldBePlaying = (!m_isPaused && !isPausedByViewport() && readyState() >= MediaPlayer::ReadyState::HaveFutureData && m_playbackRatePausedState != PlaybackRatePausedState::RatePaused)
         || m_playbackRatePausedState == PlaybackRatePausedState::ShouldMoveToPlaying;
     GST_DEBUG_OBJECT(pipeline(), "shouldBePlaying = %s, m_isPipelinePlaying = %s, is seeking %s", boolForPrinting(shouldBePlaying),
         boolForPrinting(m_isPipelinePlaying), boolForPrinting(isWaitingPreroll));

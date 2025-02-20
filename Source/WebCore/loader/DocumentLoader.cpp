@@ -850,7 +850,7 @@ bool DocumentLoader::tryLoadingSubstituteData()
 #if USE(COCOA_EVENT_LOOP)
         RunLoop::dispatch(*m_frame->page()->scheduledRunLoopPairs(), WTFMove(loadData));
 #else
-        RunLoop::current().dispatch(WTFMove(loadData));
+        RunLoop::protectedCurrent()->dispatch(WTFMove(loadData));
 #endif
     }
 
@@ -1490,6 +1490,9 @@ void DocumentLoader::applyPoliciesToSettings()
         m_frame->settings().setAppBadgeEnabled(enabled);
 #endif
     }
+
+    if (m_inlineMediaPlaybackPolicy != InlineMediaPlaybackPolicy::Default)
+        m_frame->settings().setInlineMediaPlaybackRequiresPlaysInlineAttribute(m_inlineMediaPlaybackPolicy == InlineMediaPlaybackPolicy::RequiresPlaysInlineAttribute);
 }
 
 ColorSchemePreference DocumentLoader::colorSchemePreference() const
@@ -2442,7 +2445,7 @@ void DocumentLoader::startIconLoading()
     m_linkIcons = LinkIconCollector { *document }.iconsOfTypes({ LinkIconType::Favicon, LinkIconType::TouchIcon, LinkIconType::TouchPrecomposedIcon });
 
     auto findResult = m_linkIcons.findIf([](auto& icon) { return icon.type == LinkIconType::Favicon; });
-    if (findResult == notFound)
+    if (findResult == notFound && document->url().protocolIsInHTTPFamily())
         m_linkIcons.append({ document->completeURL("/favicon.ico"_s), LinkIconType::Favicon, String(), std::nullopt, { } });
 
     if (!m_linkIcons.size())

@@ -26,6 +26,7 @@
 #pragma once
 
 #include "IntPoint.h"
+#include "MouseEventTypes.h"
 #include "PlatformEvent.h"
 #include "PointerEventTypeNames.h"
 #include "PointerID.h"
@@ -38,17 +39,6 @@ class BMessage;
 
 namespace WebCore {
 
-const double ForceAtClick = 1;
-const double ForceAtForceClick = 2;
-
-// These button numbers match the ones used in the DOM API, 0 through 2, except for None and Other which aren't specified.
-// We reserve -2 for the former and -1 to represent pointer events that indicate that the pressed mouse button hasn't
-// changed since the last event, as specified in the DOM API for Pointer Events.
-// https://w3c.github.io/uievents/#dom-mouseevent-button
-// https://w3c.github.io/pointerevents/#the-button-property
-enum class MouseButton : int8_t { None = -2, PointerHasNotChanged, Left, Middle, Right, Other };
-enum class SyntheticClickType : uint8_t { NoTap, OneFingerTap, TwoFingerTap };
-
 class PlatformMouseEvent : public PlatformEvent {
 public:
     PlatformMouseEvent()
@@ -56,7 +46,7 @@ public:
     {
     }
 
-    PlatformMouseEvent(const IntPoint& position, const IntPoint& globalPosition, MouseButton button, PlatformEvent::Type type, int clickCount, OptionSet<PlatformEvent::Modifier> modifiers, WallTime timestamp, double force, SyntheticClickType syntheticClickType, String pointerType = mousePointerEventType(), PointerID pointerId = mousePointerID)
+    PlatformMouseEvent(const IntPoint& position, const IntPoint& globalPosition, MouseButton button, PlatformEvent::Type type, int clickCount, OptionSet<PlatformEvent::Modifier> modifiers, WallTime timestamp, double force, SyntheticClickType syntheticClickType, PointerID pointerId = mousePointerID)
         : PlatformEvent(type, modifiers, timestamp)
         , m_button(button)
         , m_syntheticClickType(syntheticClickType)
@@ -64,7 +54,6 @@ public:
         , m_globalPosition(globalPosition)
         , m_force(force)
         , m_pointerId(pointerId)
-        , m_pointerType(pointerType)
         , m_clickCount(clickCount)
     {
     }

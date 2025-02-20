@@ -63,6 +63,7 @@ public:
     bool isTable() const final { return boolAttributeValue(AXProperty::IsTable); }
     bool isExposable() const final { return boolAttributeValue(AXProperty::IsExposable); }
     bool hasClickHandler() const final { return boolAttributeValue(AXProperty::HasClickHandler); }
+    FloatRect relativeFrame() const final;
 
     bool hasAttachmentTag() const final { return propertyValue<TagName>(AXProperty::TagName) == TagName::attachment; }
     bool hasBodyTag() const final { return propertyValue<TagName>(AXProperty::TagName) == TagName::body; }
@@ -234,7 +235,6 @@ private:
     bool isFileUploadButton() const final { return boolAttributeValue(AXProperty::IsFileUploadButton); }
     FloatPoint screenRelativePosition() const final;
     IntPoint remoteFrameOffset() const final;
-    FloatRect relativeFrame() const final;
     std::optional<IntRect> cachedRelativeFrame() const { return optionalAttributeValue<IntRect>(AXProperty::RelativeFrame); }
 #if PLATFORM(MAC)
     FloatRect primaryScreenRect() const final;
@@ -493,6 +493,7 @@ private:
     bool inheritsPresentationalRole() const final;
     void setAccessibleName(const AtomString&) final;
 
+    String textContentPrefixFromListMarker() const final;
     String titleAttributeValue() const final;
     String title() const final { return stringAttributeValue(AXProperty::Title); }
     String description() const final { return stringAttributeValue(AXProperty::Description); }

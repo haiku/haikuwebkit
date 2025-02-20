@@ -65,7 +65,6 @@
 #include "NodeName.h"
 #include "NodeRenderStyle.h"
 #include "Page.h"
-#include "PlatformMouseEvent.h"
 #include "PseudoClassChangeInvalidation.h"
 #include "RadioInputType.h"
 #include "RenderStyleSetters.h"
@@ -94,6 +93,7 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(HTMLInputElement);
 
+using namespace CSS::Literals;
 using namespace HTMLNames;
 
 class ListAttributeTargetObserver final : public IdTargetObserver {
@@ -127,9 +127,9 @@ Ref<HTMLInputElement> HTMLInputElement::create(const QualifiedName& tagName, Doc
     return adoptRef(*new HTMLInputElement(tagName, document, form, createdByParser ? CreationType::ByParser : CreationType::Normal));
 }
 
-Ref<Element> HTMLInputElement::cloneElementWithoutAttributesAndChildren(TreeScope& treeScope)
+Ref<Element> HTMLInputElement::cloneElementWithoutAttributesAndChildren(Document& document, CustomElementRegistry*)
 {
-    return adoptRef(*new HTMLInputElement(tagQName(), treeScope.documentScope(), nullptr, CreationType::ByCloning));
+    return adoptRef(*new HTMLInputElement(tagQName(), document, nullptr, CreationType::ByCloning));
 }
 
 HTMLImageLoader& HTMLInputElement::ensureImageLoader()
@@ -1888,12 +1888,17 @@ RefPtr<HTMLElement> HTMLInputElement::list() const
     return dataList();
 }
 
+bool HTMLInputElement::hasDataList() const
+{
+    return dataList();
+}
+
 RefPtr<HTMLDataListElement> HTMLInputElement::dataList() const
 {
     if (!m_hasNonEmptyList || !m_inputType->shouldRespectListAttribute())
         return nullptr;
 
-    return dynamicDowncast<HTMLDataListElement>(treeScope().getElementById(attributeWithoutSynchronization(listAttr)));
+    return dynamicDowncast<HTMLDataListElement>(elementForAttributeInternal(listAttr));
 }
 
 void HTMLInputElement::resetListAttributeTargetObserver()
@@ -2330,10 +2335,10 @@ static Ref<StyleGradientImage> autoFillStrongPasswordMaskImage()
         FunctionNotation<CSSValueLinearGradient, Style::LinearGradient> {
             .parameters = {
                 .colorInterpolationMethod = Style::GradientColorInterpolationMethod::legacyMethod(AlphaPremultiplication::Unpremultiplied),
-                .gradientLine = { Style::Angle<> { 90 } },
+                .gradientLine = 90_css_deg,
                 .stops = {
-                    { Style::Color { Color::black },            Style::LengthPercentage<>::Percentage { 50 } },
-                    { Style::Color { Color::transparentBlack }, Style::LengthPercentage<>::Percentage { 100 } }
+                    { Style::Color { Color::black },            50_css_percentage },
+                    { Style::Color { Color::transparentBlack }, 100_css_percentage },
                 }
             }
         }

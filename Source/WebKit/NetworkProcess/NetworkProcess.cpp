@@ -203,11 +203,18 @@ DownloadManager& NetworkProcess::downloadManager()
     return m_downloadManager;
 }
 
+CheckedRef<DownloadManager> NetworkProcess::checkedDownloadManager()
+{
+    return downloadManager();
+}
+
 void NetworkProcess::removeNetworkConnectionToWebProcess(NetworkConnectionToWebProcess& connection)
 {
     ASSERT(m_webProcessConnections.contains(connection.webProcessIdentifier()));
     m_webProcessConnections.remove(connection.webProcessIdentifier());
     m_allowedFirstPartiesForCookies.remove(connection.webProcessIdentifier());
+    if (auto completionHandler = m_webProcessConnectionCloseHandlers.take(connection.webProcessIdentifier()))
+        completionHandler();
 }
 
 bool NetworkProcess::shouldTerminate()
@@ -535,6 +542,10 @@ void NetworkProcess::addWebsiteDataStore(WebsiteDataStoreParameters&& parameters
 
     addStorageSession(sessionID, parameters);
 
+#if ENABLE(DECLARATIVE_WEB_PUSH)
+    parameters.networkSessionParameters.webPushDaemonConnectionConfiguration.declarativeWebPushEnabled = parameters.networkSessionParameters.isDeclarativeWebPushEnabled;
+#endif
+
     auto& session = m_networkSessions.ensure(sessionID, [&]() {
         return NetworkSession::create(*this, parameters.networkSessionParameters);
     }).iterator->value;
@@ -577,7 +588,7 @@ WebCore::NetworkStorageSession* NetworkProcess::storageSession(PAL::SessionID se
     return m_networkStorageSessions.get(sessionID);
 }
 
-void NetworkProcess::forEachNetworkStorageSession(const Function<void(WebCore::NetworkStorageSession&)>& functor)
+void NetworkProcess::forEachNetworkStorageSession(NOESCAPE const Function<void(WebCore::NetworkStorageSession&)>& functor)
 {
     for (auto& storageSession : m_networkStorageSessions.values())
         functor(*storageSession);
@@ -1638,14 +1649,55 @@ void NetworkProcess::fetchWebsiteData(PAL::SessionID sessionID, OptionSet<Websit
     }
 }
 
-void NetworkProcess::deleteWebsiteData(PAL::SessionID sessionID, OptionSet<WebsiteDataType> websiteDataTypes, WallTime modifiedSince, CompletionHandler<void()>&& completionHandler)
+void NetworkProcess::performDeleteWebsiteDataTask(TaskIdentifier taskIdentifier)
+{
+    auto task = m_deleteWebsiteDataTasks.take(taskIdentifier);
+    if (!task.sessionID)
+        return;
+
+    deleteWebsiteDataImpl(*task.sessionID, task.websiteDataTypes, task.modifiedSince, WTFMove(task.completionHandler));
+}
+
+void NetworkProcess::deleteWebsiteData(PAL::SessionID sessionID, OptionSet<WebsiteDataType> websiteDataTypes, WallTime modifiedSince, const HashSet<WebCore::ProcessIdentifier>& activeWebProcesses, CompletionHandler<void()>&& completionHandler)
+{
+    auto taskIdentifier = TaskIdentifier::generate();
+    bool willWait = false;
+    m_deleteWebsiteDataTasks.add(taskIdentifier, DeleteWebsiteDataTask { sessionID, websiteDataTypes, modifiedSince, WTFMove(completionHandler) });
+
+    RELEASE_LOG(Storage, "NetworkProcess::deleteWebsiteData scheduled task (%" PRIu64 ") to delete data modified since %f for session %" PRIu64, taskIdentifier.toUInt64(), modifiedSince.secondsSinceEpoch().value(), sessionID.toUInt64());
+    auto deleteTaskAggregator = WTF::CallbackAggregator::create([weakThis = WeakPtr { *this }, taskIdentifier]() mutable {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->performDeleteWebsiteDataTask(taskIdentifier);
+    });
+    for (auto& [identifier, connection] : m_webProcessConnections) {
+        if (connection->sessionID() != sessionID || activeWebProcesses.contains(identifier))
+            continue;
+
+#if OS(DARWIN)
+        Ref ipcConnection = connection->connection();
+        RELEASE_LOG(Storage, "NetworkProcess::deleteWebsiteData task (%" PRIu64 ") will start after process %" PRIu64 " (pid=%d) exits", taskIdentifier.toUInt64(), identifier.toUInt64(), ipcConnection->remoteProcessID());
+#endif
+        m_webProcessConnectionCloseHandlers.add(identifier, [deleteTaskAggregator] { });
+        willWait = true;
+    }
+
+    if (!willWait)
+        return;
+
+    // Schedule a timer in case web processes do not exit on time.
+    RunLoop::protectedCurrent()->dispatchAfter(3_s, [protectedThis = Ref { *this }, taskIdentifier]() mutable {
+        protectedThis->performDeleteWebsiteDataTask(taskIdentifier);
+    });
+}
+
+void NetworkProcess::deleteWebsiteDataImpl(PAL::SessionID sessionID, OptionSet<WebsiteDataType> websiteDataTypes, WallTime modifiedSince, CompletionHandler<void()>&& completionHandler)
 {
     auto clearTasksHandler = WTF::CallbackAggregator::create([completionHandler = WTFMove(completionHandler)]() mutable {
         completionHandler();
-        RELEASE_LOG(Storage, "NetworkProcess::deleteWebsiteData finished deleting modified data");
+        RELEASE_LOG(Storage, "NetworkProcess::deleteWebsiteDataImpl finishes deleting modified data");
     });
 
-    RELEASE_LOG(Storage, "NetworkProcess::deleteWebsiteData started to delete data modified since %f for session %" PRIu64, modifiedSince.secondsSinceEpoch().value(), sessionID.toUInt64());
+    RELEASE_LOG(Storage, "NetworkProcess::deleteWebsiteDataImpl starts deleting data modified since %f for session %" PRIu64, modifiedSince.secondsSinceEpoch().value(), sessionID.toUInt64());
     auto* session = networkSession(sessionID);
 
 #if PLATFORM(COCOA) || USE(SOUP)
@@ -3166,5 +3218,14 @@ ShouldRelaxThirdPartyCookieBlocking NetworkProcess::shouldRelaxThirdPartyCookieB
 {
     return pageID && m_pagesWithRelaxedThirdPartyCookieBlocking.contains(*pageID) ? ShouldRelaxThirdPartyCookieBlocking::Yes : ShouldRelaxThirdPartyCookieBlocking::No;
 }
+
+#if ENABLE(CONTENT_EXTENSIONS)
+void NetworkProcess::resetResourceMonitorThrottlerForTesting(PAL::SessionID sessionID, CompletionHandler<void()>&& completionHandler)
+{
+    if (CheckedPtr session = networkSession(sessionID))
+        session->resetResourceMonitorThrottlerForTesting();
+    completionHandler();
+}
+#endif
 
 } // namespace WebKit

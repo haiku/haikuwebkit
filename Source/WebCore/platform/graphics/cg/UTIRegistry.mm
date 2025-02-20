@@ -120,9 +120,10 @@ static const MemoryCompactLookupOnlyRobinHoodHashSet<String>& lockdownSupportedI
     static NeverDestroyed lockdownSupportedImageTypes = [] {
         // Keep this list in sync with process-entitlements.sh.
         static constexpr std::array lockdownSupportedImageTypes = {
-            "com.compuserve.gif"_s,
+            "org.webmproject.webp"_s,
             "public.jpeg"_s,
             "public.png"_s,
+            "com.compuserve.gif"_s,
         };
 
         return filterSupportedImageTypes(lockdownSupportedImageTypes);
@@ -194,7 +195,9 @@ String preferredExtensionForImageType(const String& uti)
     if (UNLIKELY(oldExtension != extension)) {
         std::array<uint64_t, 6> values { 0, 0, 0, 0, 0, 0 };
         auto utiInfo = makeString(uti, '~', oldExtension, '~', extension);
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
         strncpy(reinterpret_cast<char*>(values.data()), utiInfo.utf8().data(), sizeof(values));
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
         CRASH_WITH_INFO(values[0], values[1], values[2], values[3], values[4], values[5]);
     }
     return extension;

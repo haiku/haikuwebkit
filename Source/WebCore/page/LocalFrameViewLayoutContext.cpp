@@ -158,8 +158,8 @@ void LocalFrameViewLayoutContext::layout(bool canDeferUpdateLayerPositions)
     if (view().hasOneRef())
         return;
 
-    Style::Scope::QueryContainerUpdateContext queryContainerUpdateContext;
-    while (document() && document()->styleScope().updateQueryContainerState(queryContainerUpdateContext)) {
+    Style::Scope::LayoutDependencyUpdateContext layoutDependencyUpdateContext;
+    while (document() && document()->styleScope().invalidateForLayoutDependencies(layoutDependencyUpdateContext)) {
         document()->updateStyleIfNeeded();
 
         if (!needsLayout())
@@ -347,7 +347,7 @@ void LocalFrameViewLayoutContext::flushUpdateLayerPositions()
     if (!view)
         return;
 
-    auto repaintRectEnvironment = RepaintRectEnvironment { view->page().deviceScaleFactor(), document()->printing() };
+    auto repaintRectEnvironment = RepaintRectEnvironment { view->page().deviceScaleFactor(), document()->printing(), protectedView()->useFixedLayout() };
     bool environmentChanged = repaintRectEnvironment != m_lastRepaintRectEnvironment;
 
     auto updateLayerPositions = *std::exchange(m_pendingUpdateLayerPositions, std::nullopt);
@@ -367,7 +367,7 @@ bool LocalFrameViewLayoutContext::updateCompositingLayersAfterStyleChange()
     if (needsLayout() || isInLayout())
         return false;
 
-    auto repaintRectEnvironment = RepaintRectEnvironment { view->page().deviceScaleFactor(), document()->printing() };
+    auto repaintRectEnvironment = RepaintRectEnvironment { view->page().deviceScaleFactor(), document()->printing(), protectedView()->useFixedLayout() };
     bool environmentChanged = repaintRectEnvironment != m_lastRepaintRectEnvironment;
 
     view->layer()->updateLayerPositionsAfterStyleChange(environmentChanged);

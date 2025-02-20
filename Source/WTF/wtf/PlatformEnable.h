@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2007-2009 Torch Mobile, Inc.
  * Copyright (C) 2010, 2011 Research In Motion Limited. All rights reserved.
  * Copyright (C) 2013 Samsung Electronics. All rights reserved.
@@ -200,6 +200,14 @@
 #define ENABLE_DESTINATION_COLOR_SPACE_DISPLAY_P3 0
 #endif
 
+#if !defined(ENABLE_DESTINATION_COLOR_SPACE_EXTENDED_SRGB)
+#define ENABLE_DESTINATION_COLOR_SPACE_EXTENDED_SRGB 0
+#endif
+
+#if !defined(ENABLE_DESTINATION_COLOR_SPACE_EXTENDED_REC_2020)
+#define ENABLE_DESTINATION_COLOR_SPACE_EXTENDED_REC_2020 0
+#endif
+
 #if !defined(ENABLE_DRAG_SUPPORT)
 #define ENABLE_DRAG_SUPPORT 1
 #endif
@@ -238,6 +246,14 @@
 
 #if !defined(ENABLE_GPU_PROCESS_WEBGL_BY_DEFAULT)
 #define ENABLE_GPU_PROCESS_WEBGL_BY_DEFAULT 0
+#endif
+
+#if !defined(ENABLE_HDR_FOR_IMAGES)
+#define ENABLE_HDR_FOR_IMAGES 0
+#endif
+
+#if !defined(ENABLE_HDR_FOR_WEBGPU)
+#define ENABLE_HDR_FOR_WEBGPU 0
 #endif
 
 #if !defined(ENABLE_IMAGE_ANALYSIS)
@@ -400,6 +416,18 @@
 
 #if !defined(ENABLE_PERIODIC_MEMORY_MONITOR)
 #define ENABLE_PERIODIC_MEMORY_MONITOR 0
+#endif
+
+#if !defined(ENABLE_PIXEL_FORMAT_RGB10)
+#define ENABLE_PIXEL_FORMAT_RGB10 0
+#endif
+
+#if !defined(ENABLE_PIXEL_FORMAT_RGB10A8)
+#define ENABLE_PIXEL_FORMAT_RGB10A8 0
+#endif
+
+#if !defined(ENABLE_PIXEL_FORMAT_RGBA16F)
+#define ENABLE_PIXEL_FORMAT_RGBA16F 0
 #endif
 
 #if !defined(ENABLE_PLATFORM_DRIVEN_TEXT_CHECKING)
@@ -599,7 +627,7 @@
 #endif
 
 /* The JIT is enabled by default on all x86-64 & ARM64 platforms. */
-#if !defined(ENABLE_JIT) && (CPU(X86_64) || (CPU(ARM64) && CPU(ADDRESS64)))
+#if !defined(ENABLE_JIT) && (CPU(X86_64) || (CPU(ARM64) && CPU(ADDRESS64) && !PLATFORM(WATCHOS)))
 #define ENABLE_JIT 1
 #endif
 
@@ -722,13 +750,13 @@
 #define ENABLE_WEBASSEMBLY_BBQJIT 1
 #endif
 
-#if !defined(ENABLE_WEBASSEMBLY) && (ENABLE(B3_JIT) && PLATFORM(COCOA) && CPU(ADDRESS64))
+#if !defined(ENABLE_WEBASSEMBLY) && (ENABLE(B3_JIT) && PLATFORM(COCOA) && CPU(ADDRESS64) && !PLATFORM(WATCHOS))
 #define ENABLE_WEBASSEMBLY 1
 #define ENABLE_WEBASSEMBLY_OMGJIT 1
 #define ENABLE_WEBASSEMBLY_BBQJIT 1
 #endif
 
-#if !defined(ENABLE_WEBASSEMBLY) && CPU(ADDRESS64) && PLATFORM(COCOA) && !ENABLE(C_LOOP)
+#if !defined(ENABLE_WEBASSEMBLY) && CPU(ADDRESS64) && PLATFORM(COCOA) && !ENABLE(C_LOOP) && !PLATFORM(WATCHOS)
 #define ENABLE_WEBASSEMBLY 1
 #endif
 
@@ -885,7 +913,7 @@
 #define ENABLE_JIT_OPERATION_DISASSEMBLY 1
 #endif
 
-#if CPU(ARM64E)
+#if CPU(ARM64E) && ENABLE(JIT)
 #define ENABLE_JIT_SIGN_ASSEMBLER_BUFFER 1
 #endif
 

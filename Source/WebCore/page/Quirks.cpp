@@ -649,18 +649,18 @@ bool Quirks::shouldSilenceResizeObservers() const
 #endif
 }
 
-bool Quirks::shouldSilenceWindowResizeEvents() const
+bool Quirks::shouldSilenceWindowResizeEventsDuringApplicationSnapshotting() const
 {
 #if PLATFORM(IOS) || PLATFORM(VISION)
     if (!needsQuirks())
         return false;
 
-    if (!m_quirksData.shouldSilenceWindowResizeEvents)
+    if (!m_quirksData.shouldSilenceWindowResizeEventsDuringApplicationSnapshotting)
         return false;
 
-    // We silence window resize events during the 'homing out' snapshot sequence when on nytimes.com
-    // to address <rdar://problem/59763843>, and on x.com (twitter) to address <rdar://problem/58804852> &
-    // <rdar://problem/61731801>.
+    // We silence window resize events during the 'homing out' snapshot sequence when on icloud.com/mail
+    // to address <rdar://131836301>, on nytimes.com to address <rdar://problem/59763843>, and on
+    // x.com (twitter) to address <rdar://problem/58804852> & <rdar://problem/61731801>.
     auto* page = m_document->page();
     if (!page || !page->isTakingSnapshotsForApplicationSuspension())
         return false;
@@ -1199,18 +1199,6 @@ bool Quirks::shouldDisableEndFullscreenEventWhenEnteringPictureInPictureFromFull
 #endif
 }
 
-// bbc.com: rdar://108304377
-bool Quirks::shouldDelayFullscreenEventWhenExitingPictureInPictureQuirk() const
-{
-#if ENABLE(VIDEO_PRESENTATION_MODE)
-    // This quirk delay the "webkitstartfullscreen" and "fullscreenchange" event when a video exits picture-in-picture
-    // to fullscreen.
-    return needsQuirks() && m_quirksData.shouldDelayFullscreenEventWhenExitingPictureInPictureQuirk;
-#else
-    return false;
-#endif
-}
-
 // teams.live.com rdar://88678598
 // teams.microsoft.com rdar://90434296
 bool Quirks::shouldAllowNavigationToCustomProtocolWithoutUserGesture(StringView protocol, const SecurityOriginData& requesterOrigin)
@@ -1505,17 +1493,6 @@ bool Quirks::shouldUseEphemeralPartitionedStorageForDOMCookies(const URL& url) c
     return false;
 }
 
-// This quirk has intentionally limited exposure to increase the odds of being able to remove it
-// again within a reasonable timeframe as the impacted apps are being updated. <rdar://122548304>
-bool Quirks::needsGetElementsByNameQuirk() const
-{
-#if PLATFORM(IOS)
-    return needsQuirks() && m_quirksData.needsGetElementsByNameQuirk;
-#else
-    return false;
-#endif
-}
-
 // rdar://127398734
 bool Quirks::needsLaxSameSiteCookieQuirk(const URL& requestURL) const
 {
@@ -1580,11 +1557,7 @@ bool Quirks::shouldHideCoarsePointerCharacteristics() const
 // hulu.com rdar://126096361
 bool Quirks::implicitMuteWhenVolumeSetToZero() const
 {
-#if HAVE(MEDIA_VOLUME_PER_ELEMENT)
     return needsQuirks() && m_quirksData.implicitMuteWhenVolumeSetToZero;
-#else
-    return false;
-#endif
 }
 
 #if ENABLE(TOUCH_EVENTS)
@@ -1815,6 +1788,28 @@ bool Quirks::needsFacebookStoriesCreationFormQuirk(const Element& element, const
 #endif
 }
 
+// hotels.com rdar://126631968
+bool Quirks::needsHotelsAnimationQuirk(Element& element, const RenderStyle& style) const
+{
+    if (!needsQuirks() || !m_quirksData.needsHotelsAnimationQuirk)
+        return false;
+
+    if (!style.hasAnimations())
+        return false;
+
+    auto matches = Ref { element }->matches(".uitk-menu-mounted .uitk-menu-container.uitk-menu-container-autoposition.uitk-menu-container-has-intersection-root-el"_s);
+    return !matches.hasException() && matches.returnValue();
+}
+
+bool Quirks::needsLimitedMatroskaSupport() const
+{
+#if ENABLE(MEDIA_RECORDER) && ENABLE(ALTERNATE_WEBM_PLAYER)
+    return isDomain("zencastr.com"_s);
+#else
+    return false;
+#endif
+}
+
 URL Quirks::topDocumentURL() const
 {
     if (UNLIKELY(!m_topDocumentURLForTesting.isEmpty()))
@@ -1830,7 +1825,7 @@ void Quirks::setTopDocumentURLForTesting(URL&& url)
 }
 
 // FIXME(rdar://141554467): The set of static functions below will be generated from a JSON file in a future patch. For now, we just move the logic
-// for deciding if a particular quirk is needed to domain-specific functionss below:
+// for deciding if a particular quirk is needed to domain-specific functions below:
 #if PLATFORM(IOS) || PLATFORM(VISION)
 static void handle365ScoresQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
 {
@@ -1840,7 +1835,7 @@ static void handle365ScoresQuirks(QuirksData& quirksData, const URL& quirksURL, 
     UNUSED_PARAM(quirksURL);
     UNUSED_PARAM(documentURL);
     // 365scores.com rdar://116491386
-    quirksData.shouldSilenceWindowResizeEvents = true;
+    quirksData.shouldSilenceWindowResizeEventsDuringApplicationSnapshotting = true;
 }
 
 static void handleNYTimesQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -1851,7 +1846,7 @@ static void handleNYTimesQuirks(QuirksData& quirksData, const URL& quirksURL, co
     UNUSED_PARAM(quirksURL);
     UNUSED_PARAM(documentURL);
     // nytimes.com: rdar://problem/5976384
-    quirksData.shouldSilenceWindowResizeEvents = true;
+    quirksData.shouldSilenceWindowResizeEventsDuringApplicationSnapshotting = true;
 }
 #endif
 
@@ -2019,6 +2014,24 @@ static void handleScriptToEvaluateBeforeRunningScriptFromURLQuirk(QuirksData& qu
 }
 #endif
 
+#if PLATFORM(IOS_FAMILY) || PLATFORM(MAC)
+static void handleICloudQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
+{
+    if (quirksDomainString != "icloud.com"_s)
+        return;
+
+    UNUSED_PARAM(documentURL);
+#if PLATFORM(IOS_FAMILY)
+    // icloud.com rdar://131836301
+    quirksData.shouldSilenceWindowResizeEventsDuringApplicationSnapshotting = quirksURL.path().contains("mail"_s) || quirksURL.fragmentIdentifier().contains("mail"_s);
+#endif
+#if PLATFORM(MAC)
+    // icloud.com rdar://26013388
+    quirksData.isNeverRichlyEditableForTouchBarQuirk = quirksURL.path().contains("notes"_s) || quirksURL.fragmentIdentifier().contains("notes"_s);
+#endif
+}
+#endif
+
 #if PLATFORM(MAC)
 static void handleCEACStateGovQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
 {
@@ -2029,16 +2042,6 @@ static void handleCEACStateGovQuirks(QuirksData& quirksData, const URL& quirksUR
         // ceac.state.gov https://bugs.webkit.org/show_bug.cgi?id=193478
         quirksData.needsFormControlToBeMouseFocusableQuirk = true;
     }
-}
-
-static void handleICloudQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
-{
-    if (quirksDomainString != "icloud.com"_s)
-        return;
-
-    UNUSED_PARAM(documentURL);
-    // icloud.com rdar://26013388
-    quirksData.isNeverRichlyEditableForTouchBarQuirk = quirksURL.path().contains("notes"_s) || quirksURL.fragmentIdentifier().contains("notes"_s);
 }
 
 static void handleTrixEditorQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -2209,13 +2212,6 @@ static void handleBBCQuirks(QuirksData& quirksData, const URL& quirksURL, const 
         // bbc.co.uk rdar://126494734
         quirksData.returnNullPictureInPictureElementDuringFullscreenChangeQuirk = true;
     }
-
-#if ENABLE(VIDEO_PRESENTATION_MODE)
-    if (quirksDomainString == "bbc.com"_s) {
-        // bbc.com rdar://108304377
-        quirksData.shouldDelayFullscreenEventWhenExitingPictureInPictureQuirk = true;
-    }
-#endif
 }
 
 static void handleBankOfAmericaQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -2325,6 +2321,12 @@ static void handleHBOMaxQuirks(QuirksData& quirksData, const URL& quirksURL, con
 
     // play.hbomax.com https://bugs.webkit.org/show_bug.cgi?id=244737
     quirksData.shouldEnableFontLoadingAPIQuirk = true;
+}
+
+static void handleHotelsQuirks(QuirksData& quirksData, const URL&, const String& quirksDomainString, const URL&)
+{
+    // hotels.com rdar://126631968
+    quirksData.needsHotelsAnimationQuirk = quirksDomainString == "hotels.com"_s;
 }
 
 static void handleHuluQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -2578,7 +2580,7 @@ static void handleTwitterXQuirks(QuirksData& quirksData, const URL& quirksURL, c
     // (Ref: rdar://121473410)
     quirksData.shouldSilenceMediaQueryListChangeEvents = true;
     // twitter.com: rdar://problem/58804852 and rdar://problem/61731801
-    quirksData.shouldSilenceWindowResizeEvents = true;
+    quirksData.shouldSilenceWindowResizeEventsDuringApplicationSnapshotting = true;
 #endif
 #if ENABLE(VIDEO_PRESENTATION_MODE)
     // twitter.com: rdar://73369869
@@ -2677,13 +2679,6 @@ void Quirks::determineRelevantQuirks()
     m_quirksData.needsResettingTransitionCancelsRunningTransitionQuirk = needsResettingTransitionCancelsRunningTransitionQuirk;
 #endif
 
-#if PLATFORM(IOS)
-    // This quirk has intentionally limited exposure to increase the odds of being able to remove it
-    // again within a reasonable timeframe as the impacted apps are being updated. <rdar://122548304>
-    static const bool needsGetElementsByNameQuirk = !PAL::currentUserInterfaceIdiomIsSmallScreen() && !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::NoGetElementsByNameQuirk);
-    m_quirksData.needsGetElementsByNameQuirk = needsGetElementsByNameQuirk;
-#endif
-
 #if PLATFORM(MAC)
     // Push state file path restrictions break Mimeo Photo Plugin (rdar://112445672).
     m_quirksData.shouldDisablePushStateFilePathRestrictions = WTF::MacApplication::isMimeoPhotoProject();
@@ -2734,8 +2729,9 @@ void Quirks::determineRelevantQuirks()
 #endif
         { "google"_s, &handleGoogleQuirks },
         { "hbomax"_s, &handleHBOMaxQuirks },
+        { "hotels"_s, &handleHotelsQuirks },
         { "hulu"_s, &handleHuluQuirks },
-#if PLATFORM(MAC)
+#if PLATFORM(IOS_FAMILY) || PLATFORM(MAC)
         { "icloud"_s, &handleICloudQuirks },
 #endif
         { "imdb"_s, &handleIMDBQuirks },

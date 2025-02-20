@@ -31,7 +31,6 @@
 
 #include "BackForwardItemIdentifier.h"
 #include "FrameLoader.h"
-#include <wtf/CheckedPtr.h>
 
 namespace WebCore {
 
@@ -45,15 +44,17 @@ enum class ShouldTreatAsContinuingLoad : uint8_t;
 struct NavigationAPIMethodTracker;
 struct StringWithDirection;
 
-class HistoryController final : public CanMakeCheckedPtr<HistoryController> {
+class HistoryController final : public CanMakeWeakPtr<HistoryController>  {
     WTF_MAKE_NONCOPYABLE(HistoryController);
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Loader);
-    WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(HistoryController);
 public:
     enum HistoryUpdateType { UpdateAll, UpdateAllExceptBackForwardList };
 
     explicit HistoryController(LocalFrame&);
     ~HistoryController();
+
+    WEBCORE_EXPORT void ref() const;
+    WEBCORE_EXPORT void deref() const;
 
     WEBCORE_EXPORT void saveScrollPositionAndViewStateToItem(HistoryItem*);
     WEBCORE_EXPORT void restoreScrollPositionAndViewState();
@@ -100,11 +101,14 @@ public:
 
     WEBCORE_EXPORT RefPtr<HistoryItem> createItemTree(LocalFrame& targetFrame, bool clipAtTarget, BackForwardItemIdentifier);
 
+    void clearPolicyItem();
+
 private:
     friend class Page;
     bool shouldStopLoadingForHistoryItem(HistoryItem&) const;
     void goToItem(HistoryItem&, FrameLoadType, ShouldTreatAsContinuingLoad);
     void goToItemForNavigationAPI(HistoryItem&, FrameLoadType, LocalFrame& triggeringFrame, NavigationAPIMethodTracker*);
+    void goToItemShared(HistoryItem&, CompletionHandler<void(bool)>&&);
 
     void initializeItem(HistoryItem&, RefPtr<DocumentLoader>);
     Ref<HistoryItem> createItem(HistoryItemClient&, BackForwardItemIdentifier);
@@ -132,6 +136,7 @@ private:
     RefPtr<HistoryItem> m_currentItem;
     RefPtr<HistoryItem> m_previousItem;
     RefPtr<HistoryItem> m_provisionalItem;
+    RefPtr<HistoryItem> m_policyItem;
 
     bool m_frameLoadComplete;
 

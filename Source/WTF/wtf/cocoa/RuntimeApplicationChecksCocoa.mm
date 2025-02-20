@@ -231,7 +231,6 @@ static SDKAlignedBehaviors computeSDKAlignedBehaviors()
 
     if (linkedBefore(dyld_fall_2024_os_versions, DYLD_IOS_VERSION_18_0, DYLD_MACOSX_VERSION_15_0)) {
         disableBehavior(SDKAlignedBehavior::FullySuspendsBackgroundContentImmediately);
-        disableBehavior(SDKAlignedBehavior::NoGetElementsByNameQuirk);
         disableBehavior(SDKAlignedBehavior::ApplicationStateTrackerDoesNotObserveWindow);
         disableBehavior(SDKAlignedBehavior::ThrowOnKVCInstanceVariableAccess);
         disableBehavior(SDKAlignedBehavior::BlockOptionallyBlockableMixedContent);
@@ -358,22 +357,6 @@ void clearApplicationBundleIdentifierTestingOverride()
 #if !ASSERT_MSG_DISABLED
     applicationBundleIdentifierOverrideWasQueried = false;
 #endif
-}
-
-static String& presentingApplicationBundleIdentifierStorage()
-{
-    static MainThreadNeverDestroyed<String> identifier;
-    return identifier;
-}
-
-void setPresentingApplicationBundleIdentifier(const String& identifier)
-{
-    presentingApplicationBundleIdentifierStorage() = identifier;
-}
-
-const String& presentingApplicationBundleIdentifier()
-{
-    return presentingApplicationBundleIdentifierStorage();
 }
 
 static bool applicationBundleIsEqualTo(const String& bundleIdentifierString)

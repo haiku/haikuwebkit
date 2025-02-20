@@ -246,14 +246,17 @@ private:
 };
 
 class GstMappedAudioBuffer {
+    WTF_MAKE_TZONE_ALLOCATED(GstMappedAudioBuffer);
     WTF_MAKE_NONCOPYABLE(GstMappedAudioBuffer);
 public:
     GstMappedAudioBuffer(GstBuffer*, GstAudioInfo, GstMapFlags);
-    GstMappedAudioBuffer(GRefPtr<GstSample>, GstMapFlags);
+    GstMappedAudioBuffer(const GRefPtr<GstSample>&, GstMapFlags);
     ~GstMappedAudioBuffer();
 
     GstAudioBuffer* get();
     GstAudioInfo* info();
+
+    template<typename T> Vector<std::span<T>> samples(size_t offset) const;
 
     explicit operator bool() const { return m_isValid; }
 
@@ -310,8 +313,11 @@ void configureVideoDecoderForHarnessing(const GRefPtr<GstElement>&);
 void configureMediaStreamVideoDecoder(GstElement*);
 void configureVideoRTPDepayloader(GstElement*);
 
+bool gstObjectHasProperty(GstObject*, const char* name);
 bool gstObjectHasProperty(GstElement*, const char* name);
 bool gstObjectHasProperty(GstPad*, const char* name);
+
+bool gstElementMatchesFactoryAndHasProperty(GstElement*, ASCIILiteral factoryNamePattern, ASCIILiteral propertyName);
 
 GRefPtr<GstBuffer> wrapSpanData(const std::span<const uint8_t>&);
 

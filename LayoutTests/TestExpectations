@@ -338,6 +338,9 @@ media/deactivate-audio-session.html [ Skip ]
 # To be removed after AccessibilityThreadTextApisEnabled is enabled by default.
 accessibility/ax-thread-text-apis [ Skip ]
 
+# Skip isolated-tree specific tests.
+accessibility/isolated-tree [ Skip ]
+
 # ApplePay is only available on iOS (greater than iOS 10) and macOS (greater than macOS 10.12) and only for WebKit2.
 fast/css/appearance-apple-pay-button.html [ Skip ]
 fast/css/appearance-apple-pay-button-div.html [ Skip ]
@@ -486,9 +489,6 @@ imported/w3c/web-platform-tests/webaudio/the-audio-api/the-mediastreamaudiosourc
 
 # This test is timing out due to lack of support for SharedArrayBuffer.
 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-audioworklet-interface/audioworklet-postmessage-sharedarraybuffer.https.html [ Skip ]
-
-# This webaudio test has been timing out since its import from Blink.
-webaudio/MediaStreamAudioSource/mediastreamaudiosourcenode.html [ Skip ]
 
 # Webaudio tests that are flaky.
 imported/w3c/web-platform-tests/webaudio/the-audio-api/the-audioparam-interface/k-rate-stereo-panner.html [ Pass Failure ]
@@ -1619,8 +1619,6 @@ css2.1/20110323/replaced-intrinsic-002.htm [ Failure ]
 
 webkit.org/b/133057 fast/table/border-collapsing/collapsed-borders-adjoining-sections.html [ ImageOnlyFailure ]
 
-webkit.org/b/169075 editing/selection/extend-by-character-007.html [ Failure ]
-
 webkit.org/b/169359 http/tests/cache/disk-cache/disk-cache-remove-several-pending-writes.html [ Pass Failure ]
 
 # CSS Font Loading is not yet enabled on all platforms
@@ -2163,6 +2161,7 @@ imported/w3c/web-platform-tests/svg/painting/parsing/color-interpolation-valid.s
 webkit.org/b/269522 imported/w3c/web-platform-tests/svg/linking/reftests/url-processing-whitespace-001.svg [ ImageOnlyFailure ]
 webkit.org/b/269522 imported/w3c/web-platform-tests/svg/linking/reftests/url-processing-whitespace-002.svg [ ImageOnlyFailure ]
 webkit.org/b/269522 imported/w3c/web-platform-tests/svg/linking/reftests/url-processing-whitespace-003.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/linking/reftests/url-processing-fetch-properties-001.sub.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/linking/reftests/view-viewbox-override.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/render/reftests/render-sync-with-font-size.html [ Skip ]
 imported/w3c/web-platform-tests/svg/render/order/z-index.svg [ ImageOnlyFailure ]
@@ -2840,7 +2839,6 @@ crypto/subtle/ecdsa-import-pkcs8-key-p256-validate-ecprivatekey-parameters-publi
 crypto/subtle/ecdsa-import-pkcs8-key-p384-validate-ecprivatekey-parameters-publickey.html [ Skip ]
 crypto/subtle/ecdh-import-spki-key-ecdh-identifier.html [ Skip ]
 crypto/subtle/rsa-pss-generate-export-key-jwk-sha1.html [ Skip ]
-crypto/subtle/rsa-pss-generate-export-key-jwk-sha224.html [ Skip ]
 crypto/subtle/rsa-pss-generate-export-key-jwk-sha256.html [ Skip ]
 crypto/subtle/rsa-pss-generate-export-key-jwk-sha384.html [ Skip ]
 crypto/subtle/rsa-pss-generate-export-key-jwk-sha512.html [ Skip ]
@@ -2850,7 +2848,6 @@ crypto/subtle/rsa-pss-generate-key.html [ Skip ]
 crypto/subtle/rsa-pss-import-jwk-private-key.html [ Skip ]
 crypto/subtle/rsa-pss-import-jwk-public-key-empty-usages.html [ Skip ]
 crypto/subtle/rsa-pss-import-jwk-public-key-sha1.html [ Skip ]
-crypto/subtle/rsa-pss-import-jwk-public-key-sha224.html [ Skip ]
 crypto/subtle/rsa-pss-import-jwk-public-key-sha256.html [ Skip ]
 crypto/subtle/rsa-pss-import-jwk-public-key-sha384.html [ Skip ]
 crypto/subtle/rsa-pss-import-jwk-public-key-sha512.html [ Skip ]
@@ -2948,6 +2945,7 @@ http/tests/security/contentSecurityPolicy/block-all-mixed-content/insecure-css-i
 imported/w3c/web-platform-tests/css/css-text/text-spacing-trim [ Skip ]
 
 # command/commandfor future: These tests cover additions to the command invokers API which aren't specced yet
+imported/w3c/web-platform-tests/html/semantics/the-button-element/command-and-commandfor/on-dialog-behavior-request-close.tentative.html [ Skip ]
 imported/w3c/web-platform-tests/html/semantics/the-button-element/command-and-commandfor/fullscreen-behavior.tentative.html [ Skip ]
 imported/w3c/web-platform-tests/html/semantics/the-button-element/command-and-commandfor/on-audio-behavior.tentative.html [ Skip ]
 imported/w3c/web-platform-tests/html/semantics/the-button-element/command-and-commandfor/on-audio-invalid-behavior.tentative.html [ Skip ]
@@ -2955,6 +2953,9 @@ imported/w3c/web-platform-tests/html/semantics/the-button-element/command-and-co
 imported/w3c/web-platform-tests/html/semantics/the-button-element/command-and-commandfor/on-details-invalid-behavior.tentative.html [ Skip ]
 imported/w3c/web-platform-tests/html/semantics/the-button-element/command-and-commandfor/on-input-number.tentative.html [ Skip ]
 imported/w3c/web-platform-tests/html/semantics/the-button-element/command-and-commandfor/on-video-behavior.tentative.html [ Skip ]
+
+# interesttarget failures - not specced yet
+imported/w3c/web-platform-tests/html/semantics/the-button-element/interest-target/interesttarget-keyboard-invalidation.tentative.html [ ImageOnlyFailure ]
 
 # text-transform: full-width
 # no full width mapping for characters ( and )
@@ -4972,11 +4973,7 @@ webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/backgr
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/background-size-document-root-vrl-004.html [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/background-size-document-root-vrl-006.html [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/background-size-document-root-vrl-008.html [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/block-flow-direction-slr-054.xht [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/block-flow-direction-slr-055.xht [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/block-flow-direction-slr-056.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/block-flow-direction-slr-058.xht [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/block-flow-direction-slr-066.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/block-flow-direction-srl-057.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/block-flow-direction-vlr-018.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/block-flow-direction-vrl-017.xht [ ImageOnlyFailure ]
@@ -4990,11 +4987,8 @@ webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/float-
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/inline-block-alignment-003.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/inline-block-alignment-005.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/inline-block-alignment-007.xht [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/inline-block-alignment-slr-009.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/inline-table-alignment-003.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/inline-table-alignment-005.xht [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/line-box-direction-slr-053.xht [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/line-box-direction-slr-054.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/line-box-direction-slr-056.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/line-box-direction-srl-055.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/line-box-direction-vlr-016.xht [ ImageOnlyFailure ]
@@ -5009,8 +5003,6 @@ webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/overco
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/overconstrained-rel-pos-rtl-left-right-vrl-008.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/overconstrained-rel-pos-rtl-top-bottom-vlr-007.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/overconstrained-rel-pos-rtl-top-bottom-vrl-006.xht [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/row-progression-slr-023.xht [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/row-progression-slr-029.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/sizing-orthog-htb-in-vlr-001.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/sizing-orthog-htb-in-vlr-004.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/sizing-orthog-htb-in-vrl-001.xht [ ImageOnlyFailure ]
@@ -5031,12 +5023,10 @@ webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/sizing
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/sizing-orthog-vrl-in-htb-008.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/table-cell-001.html [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/table-cell-002.html [ ImageOnlyFailure ]
-webkit.org/b/166941 imported/w3c/web-platform-tests/css/css-writing-modes/table-column-order-slr-007.xht [ ImageOnlyFailure ]
 webkit.org/b/164507 imported/w3c/web-platform-tests/css/css-writing-modes/table-progression-vlr-003.html [ ImageOnlyFailure ]
 webkit.org/b/164507 imported/w3c/web-platform-tests/css/css-writing-modes/table-progression-vlr-004.html [ ImageOnlyFailure ]
 webkit.org/b/164507 imported/w3c/web-platform-tests/css/css-writing-modes/table-progression-vrl-003.html [ ImageOnlyFailure ]
 webkit.org/b/164507 imported/w3c/web-platform-tests/css/css-writing-modes/table-progression-vrl-004.html [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/text-baseline-slr-009.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/text-orientation-mixed-vlr-100.html [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/text-orientation-mixed-vrl-100.html [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/text-orientation-sideways-vlr-100.html [ ImageOnlyFailure ]
@@ -5051,7 +5041,6 @@ webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/vertic
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/vertical-alignment-slr-031.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/vertical-alignment-slr-033.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/vertical-alignment-slr-035.xht [ ImageOnlyFailure ]
-webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/vertical-alignment-slr-041.xht [ ImageOnlyFailure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/cssom-view/scrollIntoView-sideways-lr-writing-mode-and-rtl-direction.html [ Pass Failure ]
 webkit.org/b/209080 imported/w3c/web-platform-tests/css/cssom-view/scrollIntoView-sideways-lr-writing-mode.html [ Pass Failure ]
 
@@ -5152,6 +5141,18 @@ imported/w3c/web-platform-tests/html/canvas/element/manual/drawing-images-to-the
 imported/w3c/web-platform-tests/html/canvas/element/manual/fill-and-stroke-styles/conic-gradient-rotation.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/canvas/element/manual/fill-and-stroke-styles/conic-gradient.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/canvas/element/manual/shadows/canvas_shadows_system_colors.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.filter.no_shadow.drawImage.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.filter.no_shadow.fillRect.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.filter.no_shadow.pattern.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.filter.shadow.drawImage.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.filter.shadow.fillRect.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.filter.shadow.pattern.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.no_filter.no_shadow.drawImage.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.no_filter.no_shadow.fillRect.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.no_filter.no_shadow.pattern.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.no_filter.shadow.drawImage.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.no_filter.shadow.fillRect.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/canvas/element/compositing/2d.composite.grid.no_filter.shadow.pattern.html [ ImageOnlyFailure ]
 
 webkit.org/b/209460 imported/w3c/web-platform-tests/css/css-grid/abspos/descendant-static-position-001.html [ ImageOnlyFailure ]
 webkit.org/b/209460 imported/w3c/web-platform-tests/css/css-grid/abspos/descendant-static-position-002.html [ ImageOnlyFailure ]
@@ -5178,7 +5179,6 @@ webkit.org/b/214291 imported/w3c/web-platform-tests/css/css-writing-modes/direct
 webkit.org/b/214291 imported/w3c/web-platform-tests/css/css-writing-modes/tcy-white-space-processing-001.html [ ImageOnlyFailure ]
 webkit.org/b/214291 imported/w3c/web-platform-tests/css/css-writing-modes/text-orientation-initial.html [ ImageOnlyFailure ]
 webkit.org/b/214291 imported/w3c/web-platform-tests/css/css-writing-modes/wm-propagation-001.html [ ImageOnlyFailure ]
-webkit.org/b/214291 imported/w3c/web-platform-tests/css/css-writing-modes/wm-propagation-body-035.html [ ImageOnlyFailure ]
 webkit.org/b/214291 imported/w3c/web-platform-tests/css/css-writing-modes/wm-propagation-body-036.html [ ImageOnlyFailure ]
 webkit.org/b/214291 imported/w3c/web-platform-tests/css/css-writing-modes/wm-propagation-body-037.html [ ImageOnlyFailure ]
 webkit.org/b/214291 imported/w3c/web-platform-tests/css/css-writing-modes/wm-propagation-body-038.html [ ImageOnlyFailure ]
@@ -5333,7 +5333,6 @@ imported/w3c/web-platform-tests/css/css-lists/content-property/marker-text-match
 
 # -- CSS multicol -- #
 webkit.org/b/214458 imported/w3c/web-platform-tests/css/css-multicol/multicol-fill-balance-003.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-multicol/multicol-fill-balance-021.html [ Failure ]
 webkit.org/b/214458 imported/w3c/web-platform-tests/css/css-multicol/multicol-list-item-002.html [ ImageOnlyFailure ]
 webkit.org/b/214458 imported/w3c/web-platform-tests/css/css-multicol/nested-with-too-tall-line.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-multicol/abspos-after-spanner-static-pos.html [ ImageOnlyFailure ]
@@ -5451,6 +5450,7 @@ imported/w3c/web-platform-tests/css/css-multicol/spanner-in-child-after-parallel
 imported/w3c/web-platform-tests/css/css-multicol/spanner-in-opacity.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-multicol/subpixel-column-rule-width.tentative.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-multicol/table/table-cell-multicol-nested-002.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-multicol/column-pseudo-background-color.html [ ImageOnlyFailure ]
 
 # Crashes
 webkit.org/b/279421 [ Debug ] imported/w3c/web-platform-tests/css/css-multicol/crashtests/inline-float-parallel-flow.html [ Skip ]
@@ -5518,6 +5518,9 @@ webkit.org/b/214462 imported/w3c/web-platform-tests/css/css-scoping/host-context
 webkit.org/b/214462 imported/w3c/web-platform-tests/css/css-scoping/host-context-specificity-002.html [ ImageOnlyFailure ]
 webkit.org/b/214462 imported/w3c/web-platform-tests/css/css-scoping/host-context-specificity-003.html [ ImageOnlyFailure ]
 webkit.org/b/214462 imported/w3c/web-platform-tests/css/css-scoping/slotted-placeholder.html [ ImageOnlyFailure ]
+
+webkit.org/b/287169 imported/w3c/web-platform-tests/css/css-scoping/slotted-details-content.html [ ImageOnlyFailure ]
+webkit.org/b/287169 imported/w3c/web-platform-tests/css/css-scoping/slotted-file-selector-button.html [ ImageOnlyFailure ]
 
 webkit.org/b/214464 imported/w3c/web-platform-tests/css/css-text-decor/text-decoration-thickness-ink-skip-dilation.html [ ImageOnlyFailure ]
 
@@ -6309,17 +6312,7 @@ imported/w3c/web-platform-tests/fetch/sec-metadata/redirect/multiple-redirect-sa
 imported/w3c/web-platform-tests/fetch/sec-metadata/redirect/same-origin-redirect.tentative.https.sub.html [ Skip ]
 imported/w3c/web-platform-tests/fetch/sec-metadata/track.tentative.https.sub.html [ Skip ]
 imported/w3c/web-platform-tests/fetch/sec-metadata/window-open.tentative.https.sub.html [ Skip ]
-imported/w3c/web-platform-tests/fullscreen/api/element-request-fullscreen-svg-rect.html [ Skip ]
-imported/w3c/web-platform-tests/fullscreen/model/move-to-inactive-document.html [ Skip ]
-imported/w3c/web-platform-tests/fullscreen/model/move-to-fullscreen-iframe.html [ Skip ]
-imported/w3c/web-platform-tests/fullscreen/model/move-to-iframe.html [ Skip ]
-imported/w3c/web-platform-tests/fullscreen/model/remove-last.html [ Skip ]
-imported/w3c/web-platform-tests/fullscreen/rendering/fullscreen-root-block-size.html [ Skip ]
-imported/w3c/web-platform-tests/fullscreen/rendering/fullscreen-root-block-scroll.html [ Skip ]
-imported/w3c/web-platform-tests/fullscreen/rendering/fullscreen-pseudo-class.html [ Skip ]
-imported/w3c/web-platform-tests/fullscreen/rendering/ua-style-iframe.html [ Skip ]
 imported/w3c/web-platform-tests/fullscreen/api/element-ready-check-not-allowed-cross-origin.sub.html [ Skip ]
-imported/w3c/web-platform-tests/fullscreen/api/element-request-fullscreen-and-move-to-iframe.html [ Skip ]
 imported/w3c/web-platform-tests/fullscreen/api/element-request-fullscreen-cross-origin.sub.html [ Skip ]
 imported/w3c/web-platform-tests/fullscreen/api/element-request-fullscreen-timing.html [ Skip ]
 imported/w3c/web-platform-tests/geolocation/non-fully-active.https.html [ Skip ]
@@ -6437,6 +6430,10 @@ imported/w3c/web-platform-tests/workers/modules/shared-worker-import-data-url-cr
 imported/w3c/web-platform-tests/workers/modules/shared-worker-import-data-url.window.html [ Skip ]
 imported/w3c/web-platform-tests/workers/modules/shared-worker-options-credentials.html [ Skip ]
 imported/w3c/web-platform-tests/xhr/send-after-setting-document-domain.htm [ Skip ]
+
+# This test needs proper promise handling in fullscreen to avoid the flaky console message:
+imported/w3c/web-platform-tests/html/capability-delegation/delegate-fullscreen-request-subframe-same-origin.https.tentative.html [ Pass Failure ]
+imported/w3c/web-platform-tests/fullscreen/api/element-request-fullscreen-and-move-to-iframe.html [ Pass Failure ]
 
 imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?h264_annexb [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?h264_avc [ DumpJSConsoleLogInStdErr ]
@@ -6954,9 +6951,6 @@ imported/w3c/web-platform-tests/dom/events/scrolling/input-text-scroll-event-whe
 webkit.org/b/283701 imported/w3c/web-platform-tests/scroll-animations/css/deferred-timeline-composited.html [ Skip ]
 webkit.org/b/283702 imported/w3c/web-platform-tests/scroll-animations/scroll-timelines/constructor-no-document.html [ Skip ]
 webkit.org/b/283107 imported/w3c/web-platform-tests/scroll-animations/scroll-timelines/updating-the-finished-state.html [ Skip ]
-
-# webkit.org/b/263871 [scroll-animations] some WPT tests are failures or flaky failures
-imported/w3c/web-platform-tests/scroll-animations/css/animation-timeline-none.html [ Pass Failure ]
 
 webkit.org/b/284299 imported/w3c/web-platform-tests/scroll-animations/view-timelines/animation-events.html [ Pass Failure ]
 
@@ -7492,8 +7486,6 @@ imported/w3c/web-platform-tests/css/css-color/deprecated-sameas-002.html [ Image
 http/tests/site-isolation/touch-events [ Skip ]
 http/tests/site-isolation/iframe-dark-mode-print.html [ ImageOnlyFailure ]
 
-fast/events/ios/single-tap-verify-user-gesture.html [ Skip ]
-
 # CSS syntax
 imported/w3c/web-platform-tests/css/css-scoping/scoped-reference-animation-002.html [ ImageOnlyFailure ]
 
@@ -7555,6 +7547,28 @@ imported/w3c/web-platform-tests/svg/painting/reftests/markers-orient-002.svg [ I
 imported/w3c/web-platform-tests/svg/painting/reftests/paint-context-001.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/painting/reftests/paint-context-002.svg [ ImageOnlyFailure ]
 
+# web-platform-tests/svg/pservers failures
+imported/w3c/web-platform-tests/svg/pservers/scripted/pattern-transform-clear.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-invalid-uri.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/stroke-fallback-invalid-uri.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-none-1.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-currentcolor-1.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/fill-fallback-none-3.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/gradient-color-interpolation.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/gradient-transform-01.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/gradient-transform-02.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/gradient-transform-03.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-basic-001.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-basic-002.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-basic-003.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-basic-004.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-basic-005.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-bicubic-001.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-complex-001.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/pattern-transform-03.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/radialgradient-fully-overlapping.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/pservers/reftests/stop-color-currentcolor-dynamic-001.svg [ ImageOnlyFailure ]
+
 # re-import css/css-align WPT failure
 webkit.org/b/271692 imported/w3c/web-platform-tests/css/css-align/blocks/align-content-block-break-overflow-020.html [ ImageOnlyFailure ]
 
@@ -7575,9 +7589,7 @@ imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-chained-00
 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-chained-fallback.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-composited-scrolling-006.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-fixedpos.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-nested.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-position-try-012.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-to-sticky-001.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-to-sticky-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-to-sticky-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-to-sticky-004.html [ ImageOnlyFailure ]
@@ -7615,7 +7627,6 @@ imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-remo
 
 # timeouts
 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-scroll-js-expose.html [ Skip ]
-imported/w3c/web-platform-tests/css/css-anchor-position/anchor-size-animation.html [ Skip ]
 
 # -- End: Anchor Positioning -- #
 
@@ -7638,10 +7649,10 @@ imported/w3c/web-platform-tests/css/css-viewport/zoom/text-stroke-width.html [ I
 imported/w3c/web-platform-tests/css/css-viewport/zoom/word-spacing.html [ ImageOnlyFailure ]
 
 # has-slotted is not implemeneted - https://bugs.webkit.org/show_bug.cgi?id=280608
-imported/w3c/web-platform-tests/css/css-scoping/has-slotted-001.tentative.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-scoping/has-slotted-003.tentative.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-scoping/has-slotted-flattened-001.tentative.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-scoping/has-slotted-flattened-003.tentative.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-scoping/has-slotted-001.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-scoping/has-slotted-003.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-scoping/has-slotted-flattened-001.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-scoping/has-slotted-flattened-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-scoping/has-slotted-functional-001.tentative.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-scoping/has-slotted-functional-004.tentative.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-scoping/has-slotted-functional-006.tentative.html [ ImageOnlyFailure ]
@@ -7679,6 +7690,8 @@ imported/w3c/web-platform-tests/WebIDL/idlharness.any.worker.html [ Skip ]
 webanimations/scroll-timeline-clamped-current-time-while-rubber-banding-mac.html [ Skip ]
 webanimations/scroll-timeline-clamped-current-time-while-rubber-banding-ios.html [ Skip ]
 
+webkit.org/b/287313 [ Debug ] fast/inline/list-marker-float-crash.html [ Skip ]
+
 # macOS-only test.
 media/webkit-media-controls-not-visible-after-exiting-fullscreen.html [ Skip ]
 
@@ -7694,3 +7707,46 @@ imported/w3c/web-platform-tests/css/selectors/featureless-005.html [ ImageOnlyFa
 
 # Cocoa-only test.
 webkit.org/b/286318 http/tests/iframe-monitor [ Skip ]
+
+# Currently only supported on WK2 Cocoa ports.
+fast/page-color-sampling [ Skip ]
+
+# webkit.org/b/286934 REGRESSION(289634@main): [macOS iOS] ipc/create-media-source-wit h-invalid-constraints-crash .html is a constant crash (failure in EWS)
+ipc/create-media-source-with-invalid-constraints-crash.html [ Skip ]
+ipc/create-image-buffer-crash.html [ Skip ]
+ipc/validate-media-constraint.html [ Skip ]
+ipc/validate-message-check-in-networkconnectiontowebprocess.html [ Skip ]
+
+# webkit.org/b/287275 [ Sequoia EWS] media/video-replaces-poster.html is a flaky crash
+media/video-presentation-mode.html [ Skip ]
+
+# CSS2/floats failures
+imported/w3c/web-platform-tests/css/CSS2/floats/block-in-inline-become-float.html [ ImageOnlyFailure ]
+webkit.org/b/286882 imported/w3c/web-platform-tests/css/CSS2/floats/computed-float-position-absolute.html [ Skip ]
+imported/w3c/web-platform-tests/css/CSS2/floats/float-nowrap-4.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/float-nowrap-7.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/float-nowrap-8.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/float-nowrap-9.html [ Skip ]
+imported/w3c/web-platform-tests/css/CSS2/floats/floats-line-wrap-shifted-001.html [ Skip ]
+imported/w3c/web-platform-tests/css/CSS2/floats/floats-rule3-outside-left-002.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/floats-rule3-outside-right-002.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/floats-rule7-outside-left-001.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/floats-rule7-outside-right-001.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/floats-wrap-bfc-006.xht [ ImageOnlyFailure ]
+webkit.org/b/239976 imported/w3c/web-platform-tests/css/CSS2/floats/floats-wrap-bfc-with-margin-001a.tentative.html [ ImageOnlyFailure ]
+webkit.org/b/239976 imported/w3c/web-platform-tests/css/CSS2/floats/floats-wrap-bfc-with-margin-002.tentative.html [ ImageOnlyFailure ]
+webkit.org/b/239976 imported/w3c/web-platform-tests/css/CSS2/floats/floats-wrap-bfc-with-margin-003.tentative.html [ ImageOnlyFailure ]
+webkit.org/b/239976 imported/w3c/web-platform-tests/css/CSS2/floats/floats-wrap-bfc-with-margin-004.html [ ImageOnlyFailure ]
+webkit.org/b/239976 imported/w3c/web-platform-tests/css/CSS2/floats/floats-wrap-bfc-with-margin-005.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/floats-wrap-bfc-with-margin-006.tentative.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/floats-wrap-bfc-with-margin-007.tentative.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/floats-wrap-bfc-with-margin-008.tentative.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/floats-wrap-bfc-with-margin-009.tentative.html [ ImageOnlyFailure ]
+webkit.org/b/249100 imported/w3c/web-platform-tests/css/CSS2/floats/floats-zero-height-wrap-002.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/new-fc-beside-float-with-margin-rtl.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/overflow-scroll-float-paint-order.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/overhanging-float-paint-order.html [ ImageOnlyFailure ]
+webkit.org/b/286883 imported/w3c/web-platform-tests/css/CSS2/floats/remove-block-between-inline-and-float.html [ ImageOnlyFailure ]
+webkit.org/b/286884 imported/w3c/web-platform-tests/css/CSS2/floats/zero-width-floats-positioning.tentative.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/CSS2/floats/float-nowrap-hyphen-rewind-1.html [ ImageOnlyFailure ]
+[ Debug ] imported/w3c/web-platform-tests/css/CSS2/floats/line-pushed-by-floats-crash.html [ Skip ]

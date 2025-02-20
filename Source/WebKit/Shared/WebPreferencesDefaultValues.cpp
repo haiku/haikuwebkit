@@ -29,6 +29,7 @@
 #include <wtf/text/WTFString.h>
 
 #if PLATFORM(COCOA)
+#include "DefaultWebBrowserChecks.h"
 #include <wtf/NumberOfCores.h>
 #include <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #if PLATFORM(IOS_FAMILY)
@@ -75,11 +76,6 @@ bool defaultShouldPrintBackgrounds()
     return result;
 }
 
-bool defaultAlternateFormControlDesignEnabled()
-{
-    return PAL::currentUserInterfaceIdiomIsVision();
-}
-
 #endif
 
 #if ENABLE(FULLSCREEN_API)
@@ -114,30 +110,6 @@ bool defaultWheelEventGesturesBecomeNonBlocking()
     static bool result = linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::AllowsWheelEventGesturesToBecomeNonBlocking);
     return result;
 }
-
-#endif
-
-#if PLATFORM(MAC) || PLATFORM(IOS_FAMILY)
-
-bool defaultDisallowSyncXHRDuringPageDismissalEnabled()
-{
-#if PLATFORM(MAC) || PLATFORM(MACCATALYST)
-    if (CFPreferencesGetAppBooleanValue(CFSTR("allowDeprecatedSynchronousXMLHttpRequestDuringUnload"), CFSTR("com.apple.WebKit"), nullptr)) {
-        WTFLogAlways("Allowing synchronous XHR during page unload due to managed preference");
-        return false;
-    }
-#elif PLATFORM(IOS_FAMILY) && !PLATFORM(MACCATALYST) && !PLATFORM(WATCHOS)
-    if (allowsDeprecatedSynchronousXMLHttpRequestDuringUnload()) {
-        WTFLogAlways("Allowing synchronous XHR during page unload due to managed preference");
-        return false;
-    }
-#endif
-    return true;
-}
-
-#endif
-
-#if PLATFORM(MAC)
 
 bool defaultAppleMailPaginationQuirkEnabled()
 {
@@ -372,5 +344,16 @@ bool defaultCookieStoreAPIEnabled()
     return false;
 #endif
 }
+
+#if ENABLE(CONTENT_EXTENSIONS)
+bool defaultIFrameResourceMonitoringEnabled()
+{
+#if PLATFORM(COCOA)
+    return isFullWebBrowserOrRunningTest();
+#else
+    return false;
+#endif
+}
+#endif
 
 } // namespace WebKit

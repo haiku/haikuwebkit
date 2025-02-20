@@ -187,8 +187,11 @@ bool GStreamerMediaEndpoint::initializePipeline()
         return false;
     }
 
-    if (gstObjectHasProperty(rtpBin.get(), "add-reference-timestamp-meta"))
-        g_object_set(rtpBin.get(), "add-reference-timestamp-meta", TRUE, nullptr);
+    if (gstObjectHasProperty(rtpBin.get(), "add-reference-timestamp-meta")) {
+        auto disableCaptureTimeTracking = StringView::fromLatin1(g_getenv("WEBKIT_GST_DISABLE_WEBRTC_CAPTURE_TIME_TRACKING"));
+        if (disableCaptureTimeTracking.isEmpty() || disableCaptureTimeTracking == "0"_s)
+            g_object_set(rtpBin.get(), "add-reference-timestamp-meta", TRUE, nullptr);
+    }
 
     g_signal_connect(rtpBin.get(), "new-jitterbuffer", G_CALLBACK(+[](GstElement*, GstElement* element, unsigned, unsigned ssrc, GStreamerMediaEndpoint* endPoint) {
 
@@ -939,6 +942,8 @@ void GStreamerMediaEndpoint::setDescription(const RTCSessionDescription* descrip
         return;
     }
 
+    m_statsCollector->invalidateCache();
+
     auto type = toSessionDescriptionType(sdpType);
     auto typeString = descriptionType == DescriptionType::Local ? "local"_s : "remote"_s;
     GST_DEBUG_OBJECT(m_pipeline.get(), "Creating %s session for SDP %s", typeString.characters(), gst_webrtc_sdp_type_to_string(type));
@@ -1266,6 +1271,7 @@ void GStreamerMediaEndpoint::initiate(bool isInitiator, GstStructure* rawOptions
 
 void GStreamerMediaEndpoint::getStats(const GRefPtr<GstPad>& pad, Ref<DeferredPromise>&& promise)
 {
+    GST_TRACE_OBJECT(m_pipeline.get(), "Getting stats on pad %" GST_PTR_FORMAT, pad.get());
     m_statsCollector->getStats([promise = WTFMove(promise), protectedThis = Ref(*this)](auto&& report) mutable {
         ASSERT(isMainThread());
         if (protectedThis->isStopped() || !report) {
@@ -1771,6 +1777,8 @@ void GStreamerMediaEndpoint::addIceCandidate(GStreamerIceCandidate& candidate, P
         return;
     }
 
+    m_statsCollector->invalidateCache();
+
     // https://gitlab.freedesktop.org/gstreamer/gstreamer/-/merge_requests/3960
     if (webkitGstCheckVersion(1, 24, 0)) {
         auto* data = createAddIceCandidateCallData();
@@ -2024,6 +2032,8 @@ void GStreamerMediaEndpoint::onIceCandidate(guint sdpMLineIndex, gchararray cand
     // webrtcbin notifies an empty ICE candidate when gathering is complete.
     if (candidateString.isEmpty())
         return;
+
+    m_statsCollector->invalidateCache();
 
     callOnMainThread([protectedThis = Ref(*this), this, sdp = WTFMove(candidateString).isolatedCopy(), sdpMLineIndex]() mutable {
         if (isStopped())

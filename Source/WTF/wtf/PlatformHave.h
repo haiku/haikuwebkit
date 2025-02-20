@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2007-2009 Torch Mobile, Inc.
  * Copyright (C) 2010, 2011 Research In Motion Limited. All rights reserved.
  *
@@ -237,7 +237,7 @@
 #define HAVE_HOSTED_CORE_ANIMATION 1
 #endif
 
-#if OS(DARWIN) || OS(FUCHSIA) || ((OS(FREEBSD) || OS(HAIKU) || OS(NETBSD) || OS(OPENBSD) || OS(LINUX) || OS(HURD) || OS(QNX)) && (CPU(X86) || CPU(X86_64) || CPU(ARM) || CPU(ARM64) || CPU(MIPS) || CPU(RISCV64)))
+#if OS(DARWIN) || OS(FUCHSIA) || ((OS(FREEBSD) || OS(HAIKU) || OS(NETBSD) || OS(OPENBSD) || OS(LINUX) || OS(HURD) || OS(QNX)) && (CPU(X86_64) || CPU(ARM) || CPU(ARM64) || CPU(RISCV64)))
 #define HAVE_MACHINE_CONTEXT 1
 #endif
 
@@ -552,7 +552,7 @@
 #define HAVE_DESIGN_SYSTEM_UI_FONTS 1
 #endif
 
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || PLATFORM(GTK) || PLATFORM(WPE)
 #define HAVE_COOKIE_CHANGE_LISTENER_API 1
 #endif
 
@@ -802,6 +802,10 @@
 #if PLATFORM(COCOA) && !PLATFORM(WATCHOS) && !PLATFORM(APPLETV)
 #define HAVE_CONTACTSUI 1
 #define HAVE_CONTACTS 1
+#endif
+
+#if PLATFORM(IOS) || PLATFORM(MAC)
+#define HAVE_DIGITAL_CREDENTIALS_UI 1
 #endif
 
 #if PLATFORM(IOS_FAMILY) && !PLATFORM(WATCHOS) && !PLATFORM(APPLETV)
@@ -1205,10 +1209,6 @@
 
 #if PLATFORM(IOS_SIMULATOR)
 #define HAVE_CG_IMAGE_SOURCE_AVIF_IMAGE_TYPES_BUG 1
-#endif
-
-#if !PLATFORM(IOS_FAMILY) || PLATFORM(VISION)
-#define HAVE_MEDIA_VOLUME_PER_ELEMENT 1
 #endif
 
 #if (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 130000)

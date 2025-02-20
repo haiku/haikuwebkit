@@ -85,6 +85,7 @@
 #include <WebCore/JSRange.h>
 #include <WebCore/LocalFrame.h>
 #include <WebCore/LocalFrameView.h>
+#include <WebCore/MouseEventTypes.h>
 #include <WebCore/OriginAccessPatterns.h>
 #include <WebCore/Page.h>
 #include <WebCore/PluginDocument.h>
@@ -264,6 +265,11 @@ WebCore::RemoteFrame* WebFrame::coreRemoteFrame() const
 WebCore::Frame* WebFrame::coreFrame() const
 {
     return m_coreFrame.get();
+}
+
+RefPtr<WebCore::Frame> WebFrame::protectedCoreFrame() const
+{
+    return coreFrame();
 }
 
 FrameInfoData WebFrame::info() const
@@ -885,7 +891,7 @@ void WebFrame::setAccessibleName(const AtomString& accessibleName)
     if (!document)
         return;
     
-    RefPtr rootObject = document->axObjectCache()->rootObject();
+    RefPtr rootObject = document->axObjectCache()->rootObjectForFrame(*localFrame);
     if (!rootObject)
         return;
 

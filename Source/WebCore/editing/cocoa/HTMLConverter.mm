@@ -31,6 +31,7 @@
 #import "CSSComputedStyleDeclaration.h"
 #import "CSSParser.h"
 #import "CSSPrimitiveValue.h"
+#import "CSSSerializationContext.h"
 #import "CachedImage.h"
 #import "CharacterData.h"
 #import "ColorCocoa.h"
@@ -467,14 +468,14 @@ static bool stringFromCSSValue(CSSValue& value, String& result)
         auto primitiveType = primitiveValue->primitiveType();
         if (primitiveType == CSSUnitType::CSS_STRING || primitiveType == CSSUnitType::CSS_URI
             || primitiveType == CSSUnitType::CSS_IDENT || primitiveType == CSSUnitType::CSS_ATTR) {
-            auto stringValue = value.cssText();
+            auto stringValue = value.cssText(CSS::defaultSerializationContext());
             if (stringValue.length()) {
                 result = stringValue;
                 return true;
             }
         }
     } else if (value.isValueList() || value.isAppleColorFilterPropertyValue() || value.isFilterPropertyValue() || value.isTextShadowPropertyValue() || value.isBoxShadowPropertyValue()) {
-        result = value.cssText();
+        result = value.cssText(CSS::defaultSerializationContext());
         return true;
     }
     return false;
@@ -2536,10 +2537,10 @@ static void updateAttributes(const Node* node, const RenderStyle& style, OptionS
     else
         [attributes removeObjectForKey:NSStrikethroughStyleAttributeName];
 
-    if (auto ctFont = style.fontCascade().primaryFont().getCTFont())
+    if (auto ctFont = style.fontCascade().primaryFont()->getCTFont())
         [attributes setObject:(__bridge PlatformFont *)ctFont forKey:NSFontAttributeName];
     else {
-        auto size = style.fontCascade().primaryFont().platformData().size();
+        auto size = style.fontCascade().primaryFont()->platformData().size();
 #if PLATFORM(IOS_FAMILY)
         PlatformFont *platformFont = [PlatformFontClass systemFontOfSize:size];
 #else

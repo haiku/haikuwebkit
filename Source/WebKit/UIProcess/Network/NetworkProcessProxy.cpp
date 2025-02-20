@@ -432,9 +432,9 @@ void NetworkProcessProxy::fetchWebsiteData(PAL::SessionID sessionID, OptionSet<W
     sendWithAsyncReply(Messages::NetworkProcess::FetchWebsiteData(sessionID, dataTypes, fetchOptions), WTFMove(completionHandler));
 }
 
-void NetworkProcessProxy::deleteWebsiteData(PAL::SessionID sessionID, OptionSet<WebsiteDataType> dataTypes, WallTime modifiedSince, CompletionHandler<void()>&& completionHandler)
+void NetworkProcessProxy::deleteWebsiteData(PAL::SessionID sessionID, OptionSet<WebsiteDataType> dataTypes, WallTime modifiedSince, const HashSet<WebCore::ProcessIdentifier>& identifiers, CompletionHandler<void()>&& completionHandler)
 {
-    sendWithAsyncReply(Messages::NetworkProcess::DeleteWebsiteData(sessionID, dataTypes, modifiedSince), WTFMove(completionHandler));
+    sendWithAsyncReply(Messages::NetworkProcess::DeleteWebsiteData(sessionID, dataTypes, modifiedSince, identifiers), WTFMove(completionHandler));
 }
 
 void NetworkProcessProxy::deleteWebsiteDataForOrigins(PAL::SessionID sessionID, OptionSet<WebsiteDataType> dataTypes, const Vector<WebCore::SecurityOriginData>& origins, const Vector<String>& cookieHostNames, const Vector<String>& HSTSCacheHostNames, const Vector<RegistrableDomain>& registrableDomains, CompletionHandler<void()>&& completionHandler)
@@ -459,7 +459,7 @@ void NetworkProcessProxy::networkProcessDidTerminate(ProcessTerminationReason re
     if (RefPtr downloadProxyMap = m_downloadProxyMap.get())
         downloadProxyMap->invalidate();
 #if ENABLE(LEGACY_CUSTOM_PROTOCOL_MANAGER)
-    m_customProtocolManagerProxy.invalidate();
+    protectedCustomProtocolManagerProxy()->invalidate();
 #endif
 
     m_uploadActivity = std::nullopt;
@@ -1584,7 +1584,7 @@ void NetworkProcessProxy::requestStorageSpace(PAL::SessionID sessionID, const We
                 return;
             }
             auto name = makeString(FileSystem::encodeForFileName(origin.topOrigin.host()), " content"_s);
-            page->requestStorageSpace(page->legacyMainFrameProcess().connection(), page->mainFrame()->frameID(), origin.topOrigin.databaseIdentifier(), name, name, currentQuota, currentSize, currentSize, spaceRequired, [completionHandler = WTFMove(completionHandler)](auto quota) mutable {
+            page->requestStorageSpace(page->mainFrame()->frameID(), origin.topOrigin.databaseIdentifier(), name, name, currentQuota, currentSize, currentSize, spaceRequired, [completionHandler = WTFMove(completionHandler)](auto quota) mutable {
                 completionHandler(quota);
             });
         });
@@ -2019,6 +2019,13 @@ void NetworkProcessProxy::restoreLocalStorage(PAL::SessionID sessionID, HashMap<
 {
     sendWithAsyncReply(Messages::NetworkProcess::RestoreLocalStorage(sessionID, WTFMove(localStorage)), WTFMove(completionHandler));
 }
+
+#if ENABLE(CONTENT_EXTENSIONS)
+void NetworkProcessProxy::resetResourceMonitorThrottlerForTesting(PAL::SessionID sessionID, CompletionHandler<void()>&& completionHandler)
+{
+    sendWithAsyncReply(Messages::NetworkProcess::ResetResourceMonitorThrottlerForTesting(sessionID), WTFMove(completionHandler));
+}
+#endif
 
 } // namespace WebKit
 

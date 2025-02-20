@@ -1265,21 +1265,12 @@ void WKPageDidExitFullScreen(WKPageRef pageRef)
 #endif
 }
 
-void WKPageSaveScrollPositionForFullScreen(WKPageRef pageRef)
+void WKPageRequestExitFullScreen(WKPageRef pageRef)
 {
     CRASH_IF_SUSPENDED;
 #if ENABLE(FULLSCREEN_API)
     if (RefPtr manager = toImpl(pageRef)->fullScreenManager())
-        manager->saveScrollPosition();
-#endif
-}
-
-void WKPageRestoreScrollPositionAfterFullScreen(WKPageRef pageRef)
-{
-    CRASH_IF_SUSPENDED;
-#if ENABLE(FULLSCREEN_API)
-    if (RefPtr manager = toImpl(pageRef)->fullScreenManager())
-        manager->restoreScrollPosition();
+        manager->requestExitFullScreen();
 #endif
 }
 
@@ -2943,6 +2934,13 @@ void WKPageSetAllowsRemoteInspection(WKPageRef pageRef, bool allow)
 #endif
 }
 
+void WKPageShowWebInspectorForTesting(WKPageRef pageRef)
+{
+    RefPtr<WebInspectorUIProxy> inspector = toImpl(pageRef)->inspector();
+    inspector->markAsUnderTest();
+    inspector->show();
+}
+
 void WKPageSetMediaVolume(WKPageRef pageRef, float volume)
 {
     CRASH_IF_SUSPENDED;
@@ -3459,13 +3457,13 @@ void WKPageSetPermissionLevelForTesting(WKPageRef pageRef, WKStringRef origin, b
         pageForTesting->setPermissionLevel(toImpl(origin)->string(), allowed);
 }
 
-void WKPageSetTopContentInsetForTesting(WKPageRef pageRef, float contentInset, void* context, WKPageSetTopContentInsetForTestingFunction callback)
+void WKPageSetObscuredContentInsetsForTesting(WKPageRef pageRef, float top, float right, float bottom, float left, void* context, WKPageSetObscuredContentInsetsForTestingFunction callback)
 {
     RefPtr pageForTesting = toImpl(pageRef)->pageForTesting();
     if (!pageForTesting)
         return callback(context);
 
-    pageForTesting->setTopContentInset(contentInset, [context, callback] {
+    pageForTesting->setObscuredContentInsets(top, right, bottom, left, [context, callback] {
         callback(context);
     });
 }

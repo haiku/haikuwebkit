@@ -27,12 +27,12 @@
 #include "CSSAnimation.h"
 
 #include "AnimationEffect.h"
-#include "AnimationTimelinesController.h"
 #include "CSSAnimationEvent.h"
 #include "DocumentTimeline.h"
 #include "InspectorInstrumentation.h"
 #include "KeyframeEffect.h"
 #include "RenderStyle.h"
+#include "StyleOriginatedTimelinesController.h"
 #include "ViewTimeline.h"
 #include <wtf/TZoneMallocInlines.h>
 
@@ -133,10 +133,14 @@ void CSSAnimation::syncPropertiesWithBackingAnimation()
 
     // Synchronize the play state
     if (!m_overriddenProperties.contains(Property::PlayState)) {
-        if (animation.playState() == AnimationPlayState::Playing && playState() == WebAnimation::PlayState::Paused)
-            play();
-        else if (animation.playState() == AnimationPlayState::Paused && playState() == WebAnimation::PlayState::Running)
-            pause();
+        auto styleOriginatedPlayState = animation.playState();
+        if (m_lastStyleOriginatedPlayState != styleOriginatedPlayState) {
+            if (styleOriginatedPlayState == AnimationPlayState::Playing && playState() == WebAnimation::PlayState::Paused)
+                play();
+            else if (styleOriginatedPlayState == AnimationPlayState::Paused && playState() == WebAnimation::PlayState::Running)
+                pause();
+        }
+        m_lastStyleOriginatedPlayState = styleOriginatedPlayState;
     }
 
     unsuspendEffectInvalidation();
@@ -152,26 +156,31 @@ void CSSAnimation::syncStyleOriginatedTimeline()
     ASSERT(owningElement());
     Ref target = owningElement()->element;
     Ref document = owningElement()->element.document();
-    WTF::switchOn(backingAnimation().timeline(),
+    auto& timeline = backingAnimation().timeline();
+    WTF::switchOn(timeline,
         [&] (Animation::TimelineKeyword keyword) {
             setTimeline(keyword == Animation::TimelineKeyword::None ? nullptr : RefPtr { document->existingTimeline() });
         }, [&] (const AtomString& name) {
-            CheckedRef timelinesController = document->ensureTimelinesController();
-            timelinesController->setTimelineForName(name, target, *this);
+            CheckedRef styleOriginatedTimelinesController = document->ensureStyleOriginatedTimelinesController();
+            styleOriginatedTimelinesController->setTimelineForName(name, *owningElement(), *this);
         }, [&] (const Animation::AnonymousScrollTimeline& anonymousScrollTimeline) {
             auto scrollTimeline = ScrollTimeline::create(anonymousScrollTimeline.scroller, anonymousScrollTimeline.axis);
-            if (auto owningElement = this->owningElement())
-                scrollTimeline->setSource(*owningElement);
-            else
-                scrollTimeline->setSource(nullptr);
+            scrollTimeline->setSource(*owningElement());
             setTimeline(WTFMove(scrollTimeline));
         }, [&] (const Animation::AnonymousViewTimeline& anonymousViewTimeline) {
             auto insets = anonymousViewTimeline.insets;
             auto viewTimeline = ViewTimeline::create(nullAtom(), anonymousViewTimeline.axis, WTFMove(insets));
-            viewTimeline->setSubject(target.ptr());
+            viewTimeline->setSubject(*owningElement());
             setTimeline(WTFMove(viewTimeline));
         }
     );
+
+    // If we're not dealing with a named timeline, we should make sure we have no
+    // pending attachment operation for this timeline name.
+    if (!std::holds_alternative<AtomString>(timeline)) {
+        CheckedRef styleOriginatedTimelinesController = document->ensureStyleOriginatedTimelinesController();
+        styleOriginatedTimelinesController->removePendingOperationsForCSSAnimation(*this);
+    }
 
     unsuspendEffectInvalidation();
 }

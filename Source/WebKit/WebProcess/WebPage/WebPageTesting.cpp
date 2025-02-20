@@ -119,10 +119,10 @@ void WebPageTesting::clearWheelEventTestMonitor()
     page->clearWheelEventTestMonitor();
 }
 
-void WebPageTesting::setTopContentInset(float contentInset, CompletionHandler<void()>&& completionHandler)
+void WebPageTesting::setObscuredContentInsets(float top, float right, float bottom, float left, CompletionHandler<void()>&& completionHandler)
 {
     if (RefPtr page = m_page.get())
-        page->setTopContentInset(contentInset);
+        page->setObscuredContentInsets({ top, right, bottom, left });
     completionHandler();
 }
 

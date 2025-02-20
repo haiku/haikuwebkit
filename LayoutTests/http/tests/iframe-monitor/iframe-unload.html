@@ -12,7 +12,6 @@ window.jsTestIsAsync = true;
 
 onload = async () => {
     if (!await setup()) {
-        finishJSTest();
         return;
     }
 
@@ -21,7 +20,7 @@ onload = async () => {
     const base = 'http://localhost:8080/iframe-monitor/resources';
 
     stage.innerHTML = `
-        <iframe name="frame1" src="http://localhost:8080/iframe-monitor/resources/iframe--eligible--.html"></iframe>
+        <iframe name="frame1" src="http://localhost:8080/iframe-monitor/resources/--eligible--/iframe.html"></iframe>
     `;
 
     await waitUntilUnload('frame1');

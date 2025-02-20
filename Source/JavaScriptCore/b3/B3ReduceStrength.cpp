@@ -651,17 +651,9 @@ private:
 
             // Turn this: Add(value, zero)
             // Into an Identity.
-            //
-            // Addition is subtle with doubles. Zero is not the neutral value, negative zero is:
-            //    0 + 0 = 0
-            //    0 + -0 = 0
-            //    -0 + 0 = 0
-            //    -0 + -0 = -0
-            if (!m_value->isSensitiveToNaN()) {
-                if (m_value->child(1)->isInt(0) || m_value->child(1)->isNegativeZero()) {
-                    replaceWithIdentity(m_value->child(0));
-                    break;
-                }
+            if (m_value->child(1)->isInt(0)) {
+                replaceWithIdentity(m_value->child(0));
+                break;
             }
 
             if (m_value->isInteger()) {
@@ -810,6 +802,24 @@ private:
             }
 
             break;
+
+        case PurifyNaN:
+            // Turn this: PurifyNaN(constant)
+            // Into this: PNaN or constant
+            if (Value* constant = m_value->child(0)->purifyNaNConstant(m_proc)) {
+                replaceWithNewValue(constant);
+                break;
+            }
+
+            switch (m_value->child(0)->opcode()) {
+            case PurifyNaN: {
+                replaceWithIdentity(m_value->child(0));
+                break;
+            }
+            default:
+                break;
+            }
+            break;
             
         case Neg:
             // Turn this: Neg(constant)
@@ -896,17 +906,6 @@ private:
                         m_insertionSet.insert<Const32Value>(
                             m_index, m_value->origin(), shiftAmount));
                     break;
-                }
-            } else if (m_value->child(1)->hasDouble()) {
-                double factor = m_value->child(1)->asDouble();
-
-                // Turn this: Mul(value, 1)
-                // Into this: value
-                if (!m_value->isSensitiveToNaN()) {
-                    if (factor == 1) {
-                        replaceWithIdentity(m_value->child(0));
-                        break;
-                    }
                 }
             }
 
@@ -1704,6 +1703,22 @@ private:
             }
             break;
 
+        case FTrunc:
+            // Turn this: FTrunc(constant)
+            // Into this: trunc<value->type()>(constant)
+            if (Value* constant = m_value->child(0)->fTruncConstant(m_proc)) {
+                replaceWithNewValue(constant);
+                break;
+            }
+
+            // Turn this: FTrunc(roundedValue)
+            // Into this: roundedValue
+            if (m_value->child(0)->isRounded()) {
+                replaceWithIdentity(m_value->child(0));
+                break;
+            }
+            break;
+
         case Floor:
             // Turn this: Floor(constant)
             // Into this: floor<value->type()>(constant)
@@ -2131,14 +2146,10 @@ private:
             break;
 
         case DoubleToFloat:
-            // Turn this: DoubleToFloat(FloatToDouble(value))
-            // Into this: value
-            if (!m_value->isSensitiveToNaN()) {
-                if (m_value->child(0)->opcode() == FloatToDouble) {
-                    replaceWithIdentity(m_value->child(0)->child(0));
-                    break;
-                }
-            }
+            // We do not have the following pattern.
+            //     Turn this: DoubleToFloat(FloatToDouble(value))
+            //     Into this: value
+            // because this breaks NaN bit patterns, which is tested via wasm spec tests.
 
             // Turn this: DoubleToFloat(constant)
             // Into this: ConstFloat(constant)

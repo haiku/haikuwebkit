@@ -962,6 +962,7 @@ private:
         case Abs:
         case BottomTuple:
         case Ceil:
+        case FTrunc:
         case Const32:
         case ConstDouble:
         case ConstFloat:
@@ -982,6 +983,7 @@ private:
         case Load16S:
         case Mod:
         case Oops:
+        case PurifyNaN:
         case SExt8:
         case SExt16:
         case SlotBase:

@@ -323,7 +323,7 @@ void PluginView::manualLoadDidFail()
     protectedPlugin()->streamDidFail();
 }
 
-void PluginView::topContentInsetDidChange()
+void PluginView::obscuredContentInsetsDidChange()
 {
     viewGeometryDidChange();
 }
@@ -360,6 +360,8 @@ double PluginView::pageScaleFactor() const
 
 void PluginView::pluginScaleFactorDidChange()
 {
+    if (!protectedPlugin()->handlesPageScaleFactor())
+        return;
     auto scaleFactor = pageScaleFactor();
     RefPtr webPage = m_webPage.get();
     webPage->send(Messages::WebPageProxy::PluginScaleFactorDidChange(scaleFactor));
@@ -426,7 +428,7 @@ void PluginView::initializePlugin()
         if (RefPtr frameView = frame->view())
             frameView->setNeedsLayoutAfterViewConfigurationChange();
         if (frame->isMainFrame() && plugin->isFullFramePlugin())
-            WebFrame::fromCoreFrame(*frame)->protectedPage()->send(Messages::WebPageProxy::MainFramePluginHandlesPageScaleGestureDidChange(true, plugin->minScaleFactor(), plugin->maxScaleFactor()));
+            WebFrame::fromCoreFrame(*frame)->protectedPage()->send(Messages::WebPageProxy::MainFramePluginHandlesPageScaleGestureDidChange(plugin->handlesPageScaleFactor(), plugin->minScaleFactor(), plugin->maxScaleFactor()));
     }
 }
 
@@ -1128,11 +1130,6 @@ void PluginView::openWithPreview(CompletionHandler<void(const String&, FrameInfo
 
 #if PLATFORM(IOS_FAMILY)
 
-void PluginView::pluginDidInstallPDFDocument(double initialScale)
-{
-    protectedWebPage()->pluginDidInstallPDFDocument(initialScale);
-}
-
 void PluginView::setSelectionRange(FloatPoint pointInRootView, TextGranularity granularity)
 {
     protectedPlugin()->setSelectionRange(pointInRootView, granularity);
@@ -1185,12 +1182,12 @@ bool PluginView::populateEditorStateIfNeeded(EditorState& state) const
     return protectedPlugin()->populateEditorStateIfNeeded(state);
 }
 
-bool PluginView::shouldRespectPageScaleAdjustments() const
+WebCore::FloatRect PluginView::absoluteBoundingRectForSmartMagnificationAtPoint(WebCore::FloatPoint point) const
 {
     if (!m_isInitialized)
-        return false;
+        return { };
 
-    return protectedPlugin()->shouldRespectPageScaleAdjustments();
+    return protectedPlugin()->absoluteBoundingRectForSmartMagnificationAtPoint(point);
 }
 
 void PluginView::updateDocumentForPluginSizingBehavior()
@@ -1200,6 +1197,14 @@ void PluginView::updateDocumentForPluginSizingBehavior()
     // The styles in PluginDocumentParser are constructed to respond to this class.
     if (RefPtr documentElement = protectedPluginElement()->protectedDocument()->protectedDocumentElement())
         documentElement->setAttributeWithoutSynchronization(HTMLNames::classAttr, "plugin-fits-content"_s);
+}
+
+bool PluginView::pluginHandlesPageScaleFactor() const
+{
+    if (!m_isInitialized)
+        return false;
+
+    return protectedPlugin()->handlesPageScaleFactor();
 }
 
 } // namespace WebKit

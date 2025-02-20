@@ -29,6 +29,7 @@
 #include "libANGLE/Buffer.h"
 #include "libANGLE/Compiler.h"
 #include "libANGLE/Display.h"
+#include "libANGLE/ErrorStrings.h"
 #include "libANGLE/Fence.h"
 #include "libANGLE/FramebufferAttachment.h"
 #include "libANGLE/MemoryObject.h"
@@ -3455,9 +3456,24 @@ void Context::initVersionStrings()
     const Version &clientVersion = getClientVersion();
 
     std::ostringstream versionString;
-    versionString << "OpenGL ES ";
-    versionString << clientVersion.major << "." << clientVersion.minor << ".0 (ANGLE "
-                  << angle::GetANGLEVersionString() << ")";
+
+    constexpr char kVersionString[]        = "ANGLE_GL_VERSION";
+    constexpr char kAndroidVersionString[] = "debug.angle.gl_version";
+
+    std::string overrideVersion =
+        angle::GetEnvironmentVarOrAndroidProperty(kVersionString, kAndroidVersionString);
+
+    if (!overrideVersion.empty())
+    {
+        versionString << overrideVersion;
+    }
+    else
+    {
+        versionString << "OpenGL ES ";
+        versionString << clientVersion.major << "." << clientVersion.minor << ".0 (ANGLE "
+                      << angle::GetANGLEVersionString() << ")";
+    }
+
     mVersionString = MakeStaticString(versionString.str());
 
     std::ostringstream shadingLanguageVersionString;
@@ -3997,6 +4013,9 @@ void Context::initCaps()
     Caps *caps = mState.getMutableCaps();
     *caps      = mImplementation->getNativeCaps();
 
+    // Update limitations before evaluating extension support
+    *mState.getMutableLimitations() = mImplementation->getNativeLimitations();
+
     // TODO (http://anglebug.com/42264543): mSupportedExtensions should not be modified here
     mSupportedExtensions = generateSupportedExtensions();
 
@@ -4036,8 +4055,6 @@ void Context::initCaps()
 
     Extensions *extensions = mState.getMutableExtensions();
     *extensions            = mSupportedExtensions;
-
-    *mState.getMutableLimitations() = mImplementation->getNativeLimitations();
 
     // GLES1 emulation: Initialize caps (Table 6.20 / 6.22 in the ES 1.1 spec)
     if (getClientVersion() < Version(2, 0))
@@ -4642,7 +4659,7 @@ ANGLE_INLINE angle::Result Context::prepareForDispatch()
         // since it successfully linked already in order to become part of the PPO in the first
         // place.
         pipeline->resolveLink(this);
-        ANGLE_CHECK(this, pipeline->isLinked(), "Program pipeline link failed",
+        ANGLE_CHECK(this, pipeline->isLinked(), err::kProgramPipelineLinkFailed,
                     GL_INVALID_OPERATION);
     }
 
@@ -5119,7 +5136,8 @@ void Context::copyImageSubData(GLuint srcName,
         // Source target is a Texture
         ASSERT(srcTarget == GL_TEXTURE_2D || srcTarget == GL_TEXTURE_2D_ARRAY ||
                srcTarget == GL_TEXTURE_3D || srcTarget == GL_TEXTURE_CUBE_MAP ||
-               srcTarget == GL_TEXTURE_EXTERNAL_OES);
+               srcTarget == GL_TEXTURE_EXTERNAL_OES || srcTarget == GL_TEXTURE_2D_MULTISAMPLE ||
+               srcTarget == GL_TEXTURE_2D_MULTISAMPLE_ARRAY_OES);
 
         Texture *readTexture = getTexture(PackParam<TextureID>(srcName));
         ANGLE_CONTEXT_TRY(syncTextureForCopy(readTexture));
@@ -5139,7 +5157,8 @@ void Context::copyImageSubData(GLuint srcName,
             // Destination target is a Texture
             ASSERT(dstTarget == GL_TEXTURE_2D || dstTarget == GL_TEXTURE_2D_ARRAY ||
                    dstTarget == GL_TEXTURE_3D || dstTarget == GL_TEXTURE_CUBE_MAP ||
-                   dstTarget == GL_TEXTURE_EXTERNAL_OES);
+                   dstTarget == GL_TEXTURE_EXTERNAL_OES || dstTarget == GL_TEXTURE_2D_MULTISAMPLE ||
+                   dstTarget == GL_TEXTURE_2D_MULTISAMPLE_ARRAY_OES);
 
             Texture *writeTexture = getTexture(PackParam<TextureID>(dstName));
             ANGLE_CONTEXT_TRY(syncTextureForCopy(writeTexture));
@@ -10169,7 +10188,7 @@ void ErrorSet::handleError(GLenum errorCode,
     }
 
     std::stringstream errorStream;
-    errorStream << "Error: " << gl::FmtHex(errorCode) << ", in " << file << ", " << function << ":"
+    errorStream << "Error: " << gl::FmtHex(errorCode) << ", in " << file << ", " << function << ':'
                 << line << ". " << message;
 
     std::string formattedMessage = errorStream.str();

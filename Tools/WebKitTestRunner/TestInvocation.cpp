@@ -712,6 +712,16 @@ void TestInvocation::didReceiveMessageFromInjectedBundle(WKStringRef messageName
         return;
     }
 
+    if (WKStringIsEqualToUTF8CString(messageName, "RequestExitFullscreenFromUIProcess")) {
+        TestController::singleton().requestExitFullscreenFromUIProcess(TestController::singleton().mainWebView()->page());
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "ShowWebInspector")) {
+        WKPageShowWebInspectorForTesting(TestController::singleton().mainWebView()->page());
+        return;
+    }
+
     ASSERT_NOT_REACHED();
 }
 
@@ -1600,7 +1610,7 @@ void TestInvocation::done()
     m_gotFinalMessage = true;
     invalidateWaitToDumpWatchdogTimer();
     invalidateWaitForPostDumpWatchdogTimer();
-    RunLoop::main().dispatch([] {
+    RunLoop::protectedMain()->dispatch([] {
         TestController::singleton().notifyDone();
     });
 }

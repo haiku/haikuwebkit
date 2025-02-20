@@ -148,8 +148,6 @@
 
 // FIXME: We should rationalize these with the values in ViewGestureController.
 // For now, we'll leave them differing as they do in PDFPlugin.
-static constexpr double minimumZoomScale = 0.2;
-static constexpr double maximumZoomScale = 6.0;
 static constexpr double zoomIncrement = 1.18920;
 
 namespace WebKit {
@@ -315,12 +313,8 @@ void UnifiedPDFPlugin::installPDFDocument()
     if (isLocked())
         createPasswordEntryForm();
 
-    if (m_view) {
+    if (m_view)
         m_view->layerHostingStrategyDidChange();
-#if PLATFORM(IOS_FAMILY)
-        m_view->pluginDidInstallPDFDocument(pageScaleFactor());
-#endif
-    }
 
     [[NSNotificationCenter defaultCenter] addObserver:m_pdfMutationObserver.get() selector:@selector(formChanged:) name:mutationObserverNotificationString() object:m_pdfDocument.get()];
 
@@ -1113,7 +1107,8 @@ void UnifiedPDFPlugin::didEndMagnificationGesture()
     m_magnificationOriginInContentCoordinates = { };
     m_magnificationOriginInPluginCoordinates = { };
 
-    deviceOrPageScaleFactorChanged();
+    using enum CheckForMagnificationGesture;
+    deviceOrPageScaleFactorChanged(handlesPageScaleFactor() ? Yes : No);
 }
 
 void UnifiedPDFPlugin::setScaleFactor(double scale, std::optional<WebCore::IntPoint> originInRootViewCoordinates)
@@ -1182,11 +1177,12 @@ void UnifiedPDFPlugin::setPageScaleFactor(double scale, std::optional<WebCore::I
         return;
 
     if (origin) {
-        // Compensate for the subtraction of topContentInset that happens in ViewGestureController::handleMagnificationGestureEvent();
+        // Compensate for the subtraction of content insets that happens in ViewGestureController::handleMagnificationGestureEvent();
         // origin is not in root view coordinates.
-        RefPtr frameView = m_frame->coreLocalFrame()->view();
-        if (frameView)
-            origin->move(0, std::round(frameView->topContentInset()));
+        if (RefPtr frameView = m_frame->coreLocalFrame()->view()) {
+            auto obscuredContentInsets = frameView->obscuredContentInsets();
+            origin->move(std::round(obscuredContentInsets.left()), std::round(obscuredContentInsets.top()));
+        }
     }
 
     if (scale != 1.0)
@@ -2208,6 +2204,17 @@ bool UnifiedPDFPlugin::revealPage(PDFDocumentLayout::PageIndex pageIndex)
 
 bool UnifiedPDFPlugin::scrollToPointInContentsSpace(FloatPoint pointInContentsSpace)
 {
+    if (shouldSizeToFitContent()) {
+        RefPtr webPage = m_frame->page();
+        if (!webPage)
+            return false;
+
+        auto pluginPoint = convertUp(CoordinateSpace::ScrolledContents, CoordinateSpace::Plugin, pointInContentsSpace);
+        auto rootViewPoint = convertFromPluginToRootView(pluginPoint);
+        webPage->scrollToRect({ rootViewPoint, FloatSize { } }, { });
+        return true;
+    }
+
     auto oldScrollType = currentScrollType();
     setCurrentScrollType(ScrollType::Programmatic);
     bool success = scrollToPositionWithoutAnimation(roundedIntPoint(pointInContentsSpace));
@@ -4041,6 +4048,7 @@ void UnifiedPDFPlugin::handleSyntheticClick(PlatformMouseEvent&& event)
     if (RetainPtr annotation = annotationForRootViewPoint(pointInRootView)) {
         if (annotationIsLinkWithDestination(annotation.get()))
             followLinkAnnotation(annotation.get(), { WTFMove(event) });
+        clearSelection();
         return;
     }
 
@@ -4446,14 +4454,19 @@ auto UnifiedPDFPlugin::rootViewToPage(FloatPoint pointInRootView) const -> PageA
     return { m_documentLayout.pageAtIndex(pageIndex), pointInPage };
 }
 
-// FIXME: <https://webkit.org/b/285720> Plugin should respect page scale adjustments unconditionally.
-bool UnifiedPDFPlugin::shouldRespectPageScaleAdjustments() const
+FloatRect UnifiedPDFPlugin::absoluteBoundingRectForSmartMagnificationAtPoint(FloatPoint rootViewPoint) const
 {
-#if PLATFORM(IOS_FAMILY)
-    return false;
-#else
-    return true;
-#endif
+    auto pluginPoint = convertFromRootViewToPlugin(roundedIntPoint(rootViewPoint));
+    auto documentPoint = convertDown(CoordinateSpace::Plugin, CoordinateSpace::PDFDocumentLayout, FloatPoint { pluginPoint });
+    auto pageIndex = m_presentationController->pageIndexForDocumentPoint(documentPoint);
+    if (!pageIndex)
+        return { };
+
+    RetainPtr page = m_documentLayout.pageAtIndex(*pageIndex);
+    auto pagePoint = convertDown(CoordinateSpace::PDFDocumentLayout, CoordinateSpace::PDFPage, documentPoint, pageIndex);
+    FloatRect pageColumnFrame = [page columnFrameAtPoint:pagePoint];
+
+    return pageToRootView(pageColumnFrame, pageIndex);
 }
 
 TextStream& operator<<(TextStream& ts, RepaintRequirement requirement)

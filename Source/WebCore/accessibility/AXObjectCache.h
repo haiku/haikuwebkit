@@ -73,6 +73,7 @@ class Scrollbar;
 class ScrollView;
 class VisiblePosition;
 class Widget;
+enum class AXStreamOptions : uint8_t;
 
 struct CharacterOffset {
     RefPtr<Node> node;
@@ -284,13 +285,11 @@ class AXObjectCache final : public CanMakeWeakPtr<AXObjectCache>, public CanMake
     friend class AXTextMarker;
     friend WTF::TextStream& operator<<(WTF::TextStream&, AXObjectCache&);
 public:
-    explicit AXObjectCache(Document&);
+    explicit AXObjectCache(Page&, Document*);
     ~AXObjectCache();
 
-    // Returns the root object for the entire document.
-    WEBCORE_EXPORT AXCoreObject* rootObject();
     // Returns the root object for a specific frame.
-    WEBCORE_EXPORT AccessibilityObject* rootObjectForFrame(LocalFrame*);
+    WEBCORE_EXPORT AXCoreObject* rootObjectForFrame(LocalFrame&);
 
     // Creation/retrieval of AX objects associated with a DOM or RenderTree object.
     inline AccessibilityObject* getOrCreate(RenderObject* renderer)
@@ -449,6 +448,7 @@ public:
     WEBCORE_EXPORT static bool accessibilityEnhancedUserInterfaceEnabled();
 #if ENABLE(AX_THREAD_TEXT_APIS)
     static bool useAXThreadTextApis() { return gAccessibilityThreadTextApisEnabled && !isMainThread(); }
+    static bool shouldCreateAXThreadCompatibleMarkers() { return gAccessibilityThreadTextApisEnabled && isIsolatedTreeEnabled(); }
 #endif
 
     static bool forceInitialFrameCaching() { return gForceInitialFrameCaching; }
@@ -473,8 +473,8 @@ public:
 #endif
 
     // Text marker utilities.
-    std::optional<TextMarkerData> textMarkerDataForVisiblePosition(const VisiblePosition&);
-    TextMarkerData textMarkerDataForCharacterOffset(const CharacterOffset&);
+    std::optional<TextMarkerData> textMarkerDataForVisiblePosition(const VisiblePosition&, TextMarkerOrigin = TextMarkerOrigin::Unknown);
+    TextMarkerData textMarkerDataForCharacterOffset(const CharacterOffset&, TextMarkerOrigin = TextMarkerOrigin::Unknown);
     TextMarkerData textMarkerDataForNextCharacterOffset(const CharacterOffset&);
     AXTextMarker nextTextMarker(const AXTextMarker&);
     TextMarkerData textMarkerDataForPreviousCharacterOffset(const CharacterOffset&);
@@ -592,7 +592,7 @@ public:
 
     static ASCIILiteral notificationPlatformName(AXNotification);
 
-    AXTreeData treeData();
+    AXTreeData treeData(std::optional<OptionSet<AXStreamOptions>> = std::nullopt);
 
     enum class UpdateRelations : bool { No, Yes };
     // Returns the IDs of the objects that relate to the given object with the specified relationship.

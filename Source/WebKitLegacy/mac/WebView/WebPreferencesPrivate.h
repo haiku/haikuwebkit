@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2005-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -106,7 +106,6 @@ extern NSString *WebPreferencesCacheModelChangedInternalNotification WEBKIT_DEPR
 - (void)_synchronizeWebStoragePolicyWithCookiePolicy;
 #endif
 
-@property (nonatomic, getter=isDNSPrefetchingEnabled) BOOL DNSPrefetchingEnabled;
 @property (nonatomic) BOOL developerExtrasEnabled;
 @property (nonatomic) WebKitJavaScriptRuntimeFlags javaScriptRuntimeFlags;
 @property (nonatomic) BOOL authorAndUserStylesEnabled;
@@ -305,6 +304,7 @@ extern NSString *WebPreferencesCacheModelChangedInternalNotification WEBKIT_DEPR
 @property (nonatomic) BOOL mediaRecorderEnabled;
 @property (nonatomic, setter=_setMediaRecorderEnabled:) BOOL _mediaRecorderEnabled;
 @property (nonatomic) BOOL contactPickerAPIEnabled;
+@property (nonatomic) BOOL digitalCredentialsEnabled;
 @property (nonatomic, setter=_setSpeechRecognitionEnabled:) BOOL _speechRecognitionEnabled;
 @property (nonatomic, setter=_setPitchCorrectionAlgorithm:) WebKitPitchCorrectionAlgorithm _pitchCorrectionAlgorithm;
 @end
@@ -314,6 +314,7 @@ extern NSString *WebPreferencesCacheModelChangedInternalNotification WEBKIT_DEPR
 // The preferences in this category are deprecated and have no effect. They should
 // be removed when it is considered safe to do so.
 
+@property (nonatomic, getter=isDNSPrefetchingEnabled) BOOL DNSPrefetchingEnabled;
 @property (nonatomic) BOOL linkPreloadResponsiveImagesEnabled;
 @property (nonatomic) BOOL constantPropertiesEnabled;
 @property (nonatomic) BOOL maskWebGLStringsEnabled;

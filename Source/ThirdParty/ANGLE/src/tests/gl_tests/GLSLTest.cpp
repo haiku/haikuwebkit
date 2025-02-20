@@ -545,6 +545,8 @@ class GLSLTest_ES31 : public GLSLTest
 };
 
 // Tests the "init output variables" ANGLE shader translator option.
+class GLSLTest_ES3_InitShaderVariables : public GLSLTest
+{};
 class GLSLTest_ES31_InitShaderVariables : public GLSLTest
 {};
 
@@ -20590,6 +20592,45 @@ void main (void)
     glDeleteShader(shader);
 }
 
+// Make sure there is no name look up clash when initializing output variables
+TEST_P(GLSLTest_ES3_InitShaderVariables, NameLookup)
+{
+    constexpr char kFS[] = R"(#version 300 es
+out highp vec4 color;
+void main()
+{
+    highp vec4 color;
+    color.x = 1.0;
+}
+)";
+    ANGLE_GL_PROGRAM(program, essl3_shaders::vs::Simple(), kFS);
+    drawQuad(program, essl3_shaders::PositionAttrib(), 0);
+    EXPECT_PIXEL_COLOR_EQ(0, 0, GLColor::transparentBlack);
+    ASSERT_GL_NO_ERROR();
+}
+
+// Test that lowp and mediump varyings can be correctly matched between VS and FS.
+TEST_P(GLSLTest, LowpMediumpVarying)
+{
+    const char kVS[] = R"(varying lowp float lowpVarying;
+attribute vec4 position;
+void main ()
+{
+  lowpVarying = 1.;
+  gl_Position = position;
+})";
+
+    const char kFS[] = R"(varying mediump float lowpVarying;
+void main ()
+{
+  gl_FragColor = vec4(lowpVarying, 0, 0, 1);
+})";
+
+    ANGLE_GL_PROGRAM(program, kVS, kFS);
+    drawQuad(program, "position", 0);
+    EXPECT_PIXEL_COLOR_EQ(0, 0, GLColor::red);
+}
+
 // Test highp int scalar + vec
 TEST_P(GLSLTest_ES3, IntVecOperatorOverloadingAdd1)
 {
@@ -21408,7 +21449,8 @@ ANGLE_INSTANTIATE_TEST_ES2_AND_ES3_AND(
     ES3_OPENGLES().enable(Feature::ScalarizeVecAndMatConstructorArgs),
     ES3_VULKAN().enable(Feature::AvoidOpSelectWithMismatchingRelaxedPrecision),
     ES3_VULKAN().enable(Feature::ForceInitShaderVariables),
-    ES3_VULKAN().disable(Feature::SupportsSPIRV14));
+    ES3_VULKAN().disable(Feature::SupportsSPIRV14),
+    ES2_VULKAN().enable(Feature::VaryingsRequireMatchingPrecisionInSpirv));
 
 ANGLE_INSTANTIATE_TEST_ES2_AND_ES3(GLSLTestNoValidation);
 
@@ -21434,6 +21476,12 @@ GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GLSLTest_ES31);
 ANGLE_INSTANTIATE_TEST_ES31_AND(GLSLTest_ES31,
                                 ES31_VULKAN().enable(Feature::ForceInitShaderVariables),
                                 ES31_VULKAN().disable(Feature::SupportsSPIRV14));
+
+GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GLSLTest_ES3_InitShaderVariables);
+ANGLE_INSTANTIATE_TEST(
+    GLSLTest_ES3_InitShaderVariables,
+    ES3_VULKAN().enable(Feature::ForceInitShaderVariables),
+    ES3_VULKAN().disable(Feature::SupportsSPIRV14).enable(Feature::ForceInitShaderVariables));
 
 GTEST_ALLOW_UNINSTANTIATED_PARAMETERIZED_TEST(GLSLTest_ES31_InitShaderVariables);
 ANGLE_INSTANTIATE_TEST(

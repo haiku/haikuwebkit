@@ -261,7 +261,7 @@ RefPtr<Page> WebChromeClient::createWindow(LocalFrame& frame, const String& open
 #if ENABLE(FULLSCREEN_API)
     if (RefPtr document = frame.document()) {
         if (CheckedPtr fullscreenManager = document->fullscreenManagerIfExists()) {
-            if (fullscreenManager->currentFullscreenElement())
+            if (fullscreenManager->fullscreenElement())
                 fullscreenManager->cancelFullscreen();
         }
     }
@@ -1043,17 +1043,17 @@ bool WebChromeClient::supportsFullScreenForElement(const Element& element, bool 
 #endif
 }
 
-void WebChromeClient::enterFullScreenForElement(Element& element, HTMLMediaElementEnums::VideoFullscreenMode mode)
+// FIXME: Remove this when rdar://144645925 is resolved.
+void WebChromeClient::enterFullScreenForElement(Element& element, HTMLMediaElementEnums::VideoFullscreenMode, CompletionHandler<void(ExceptionOr<void>)>&& completionHandler)
 {
-    UNUSED_PARAM(mode);
     SEL selector = @selector(webView:enterFullScreenForElement:listener:);
     if ([[m_webView UIDelegate] respondsToSelector:selector]) {
-        auto listener = adoptNS([[WebKitFullScreenListener alloc] initWithElement:&element]);
+        auto listener = adoptNS([[WebKitFullScreenListener alloc] initWithElement:&element completionHandler:WTFMove(completionHandler)]);
         CallUIDelegate(m_webView, selector, kit(&element), listener.get());
     }
 #if !PLATFORM(IOS_FAMILY)
     else
-        [m_webView _enterFullScreenForElement:&element];
+        [m_webView _enterFullScreenForElement:&element completionHandler:WTFMove(completionHandler)];
 #endif
 }
 
@@ -1061,7 +1061,7 @@ void WebChromeClient::exitFullScreenForElement(Element* element)
 {
     SEL selector = @selector(webView:exitFullScreenForElement:listener:);
     if ([[m_webView UIDelegate] respondsToSelector:selector]) {
-        auto listener = adoptNS([[WebKitFullScreenListener alloc] initWithElement:element]);
+        auto listener = adoptNS([[WebKitFullScreenListener alloc] initWithElement:element completionHandler:nullptr]);
         CallUIDelegate(m_webView, selector, kit(element), listener.get());
     }
 #if !PLATFORM(IOS_FAMILY)

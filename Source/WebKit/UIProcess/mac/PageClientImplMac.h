@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -118,9 +118,14 @@ private:
     void clearBrowsingWarning() override;
     void clearBrowsingWarningIfForMainFrameNavigation() override;
     bool hasBrowsingWarning() const override;
-    
+
     bool showShareSheet(const WebCore::ShareDataWithParsedURL&, WTF::CompletionHandler<void(bool)>&&) override;
-        
+
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+    void showDigitalCredentialsPicker(const WebCore::DigitalCredentialsRequestData&, WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&&) override;
+    void dismissDigitalCredentialsPicker(WTF::CompletionHandler<void(bool)>&&) override;
+#endif
+
     WebCore::FloatRect convertToDeviceSpace(const WebCore::FloatRect&) override;
     WebCore::FloatRect convertToUserSpace(const WebCore::FloatRect&) override;
     WebCore::IntPoint screenToRootView(const WebCore::IntPoint&) override;
@@ -198,7 +203,6 @@ private:
 
     void setEditableElementIsFocused(bool) override;
 
-    void didCommitLayerTree(const RemoteLayerTreeTransaction&) override;
     void layerTreeCommitComplete() override;
 
     void scrollingNodeScrollViewDidScroll(WebCore::ScrollingNodeID) override;
@@ -288,7 +292,7 @@ private:
     void didRestoreScrollPosition() override;
     bool windowIsFrontWindowUnderMouse(const NativeWebMouseEvent&) override;
 
-    std::optional<float> computeAutomaticTopContentInset() override;
+    std::optional<float> computeAutomaticTopObscuredInset() override;
 
     void takeFocus(WebCore::FocusDirection) override;
 

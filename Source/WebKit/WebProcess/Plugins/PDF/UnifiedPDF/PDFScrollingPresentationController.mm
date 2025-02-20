@@ -201,7 +201,8 @@ void PDFScrollingPresentationController::updatePageBackgroundLayers()
         auto destinationRect = pageBoundsRect;
         destinationRect.scale(documentLayout.scale());
 
-        auto pageContainerLayer = [&](PDFDocumentLayout::PageIndex pageIndex) {
+        // FIXME: <rdar://144977686> Remove suppression when the false positive in the static analyzer is fixed.
+        SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE auto pageContainerLayer = [&](PDFDocumentLayout::PageIndex pageIndex) {
             if (pageIndex < pageContainerLayers.size())
                 return pageContainerLayers[pageIndex];
 
@@ -380,7 +381,6 @@ void PDFScrollingPresentationController::tiledBackingUsageChanged(const Graphics
 
 void PDFScrollingPresentationController::paintContents(const GraphicsLayer* layer, GraphicsContext& context, const FloatRect& clipRect, OptionSet<GraphicsLayerPaintBehavior>)
 {
-
     if (layer == m_contentsLayer.get()) {
         RefPtr asyncRenderer = asyncRendererIfExists();
         m_plugin->paintPDFContent(layer, context, clipRect, { }, asyncRenderer.get());

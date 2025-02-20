@@ -513,6 +513,7 @@ $(PROJECT_DIR)/Modules/identity/DigitalCredential.idl
 $(PROJECT_DIR)/Modules/identity/DigitalCredentialRequest.idl
 $(PROJECT_DIR)/Modules/identity/DigitalCredentialRequestOptions.idl
 $(PROJECT_DIR)/Modules/identity/IdentityCredentialProtocol.idl
+$(PROJECT_DIR)/Modules/identity/MobileDocumentRequest.idl
 $(PROJECT_DIR)/Modules/identity/OpenID4VPRequest.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBCursor.idl
 $(PROJECT_DIR)/Modules/indexeddb/IDBCursorDirection.idl
@@ -1443,6 +1444,7 @@ $(PROJECT_DIR)/dom/Element+PointerEvents.idl
 $(PROJECT_DIR)/dom/Element+PointerLock.idl
 $(PROJECT_DIR)/dom/Element.idl
 $(PROJECT_DIR)/dom/ElementContentEditable.idl
+$(PROJECT_DIR)/dom/ElementCreationOptions.idl
 $(PROJECT_DIR)/dom/ElementInternals.idl
 $(PROJECT_DIR)/dom/ErrorEvent.idl
 $(PROJECT_DIR)/dom/Event.idl
@@ -1466,6 +1468,7 @@ $(PROJECT_DIR)/dom/HashChangeEvent.idl
 $(PROJECT_DIR)/dom/IdleDeadline.idl
 $(PROJECT_DIR)/dom/IdleRequestCallback.idl
 $(PROJECT_DIR)/dom/IdleRequestOptions.idl
+$(PROJECT_DIR)/dom/ImportNodeOptions.idl
 $(PROJECT_DIR)/dom/InnerHTML.idl
 $(PROJECT_DIR)/dom/InputEvent.idl
 $(PROJECT_DIR)/dom/KeyboardEvent.idl
@@ -1680,7 +1683,6 @@ $(PROJECT_DIR)/html/VideoFrameMetadata.idl
 $(PROJECT_DIR)/html/VideoFrameRequestCallback.idl
 $(PROJECT_DIR)/html/VoidCallback.idl
 $(PROJECT_DIR)/html/WebKitMediaKeyError.idl
-$(PROJECT_DIR)/html/closewatcher/CloseWatcher.idl
 $(PROJECT_DIR)/html/canvas/ANGLEInstancedArrays.idl
 $(PROJECT_DIR)/html/canvas/CanvasCompositing.idl
 $(PROJECT_DIR)/html/canvas/CanvasDirection.idl
@@ -1791,6 +1793,7 @@ $(PROJECT_DIR)/html/canvas/WebGLTransformFeedback.idl
 $(PROJECT_DIR)/html/canvas/WebGLUniformLocation.idl
 $(PROJECT_DIR)/html/canvas/WebGLVertexArrayObject.idl
 $(PROJECT_DIR)/html/canvas/WebGLVertexArrayObjectOES.idl
+$(PROJECT_DIR)/html/closewatcher/CloseWatcher.idl
 $(PROJECT_DIR)/html/parser/HTMLEntityNames.in
 $(PROJECT_DIR)/html/parser/create-html-entity-table
 $(PROJECT_DIR)/html/shadow/attachmentElementShadow.css
@@ -2106,11 +2109,17 @@ $(PROJECT_DIR)/workers/service/ExtendableEvent.idl
 $(PROJECT_DIR)/workers/service/ExtendableEventInit.idl
 $(PROJECT_DIR)/workers/service/ExtendableMessageEvent.idl
 $(PROJECT_DIR)/workers/service/FetchEvent.idl
+$(PROJECT_DIR)/workers/service/InstallEvent.idl
 $(PROJECT_DIR)/workers/service/NavigationPreloadManager.idl
 $(PROJECT_DIR)/workers/service/NavigationPreloadState.idl
 $(PROJECT_DIR)/workers/service/PushEvent.idl
 $(PROJECT_DIR)/workers/service/PushEventInit.idl
 $(PROJECT_DIR)/workers/service/PushMessageData.idl
+$(PROJECT_DIR)/workers/service/RouterCondition.idl
+$(PROJECT_DIR)/workers/service/RouterRule.idl
+$(PROJECT_DIR)/workers/service/RouterSourceDict.idl
+$(PROJECT_DIR)/workers/service/RouterSourceEnum.idl
+$(PROJECT_DIR)/workers/service/RunningStatus.idl
 $(PROJECT_DIR)/workers/service/ServiceWorker.idl
 $(PROJECT_DIR)/workers/service/ServiceWorkerClient.idl
 $(PROJECT_DIR)/workers/service/ServiceWorkerClientType.idl

@@ -30,6 +30,7 @@
 #import <wtf/Lock.h>
 #import <wtf/NakedPtr.h>
 #import <wtf/WeakObjCPtr.h>
+#import <wtf/WeakPtr.h>
 
 namespace WebKit {
 class WebPage;
@@ -40,7 +41,7 @@ class AXCoreObject;
 }
 
 @interface WKAccessibilityWebPageObjectBase : NSObject {
-    NakedPtr<WebKit::WebPage> m_page;
+    WeakPtr<WebKit::WebPage> m_page;
     Markable<WebCore::PageIdentifier> m_pageID;
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     Lock m_cacheLock;
@@ -73,9 +74,9 @@ class AXCoreObject;
 - (void)setHasMainFramePlugin:(bool)hasPlugin;
 - (void)setFrameIdentifier:(const WebCore::FrameIdentifier&)frameID;
 
-- (id)accessibilityRootObjectWrapper;
+- (id)accessibilityRootObjectWrapper:(WebCore::LocalFrame*)frame;
 - (id)accessibilityFocusedUIElement;
 - (WebCore::IntPoint)accessibilityRemoteFrameOffset;
-- (WebCore::LocalFrame *)remoteLocalFrame;
+- (WebCore::LocalFrame *)focusedLocalFrame;
 
 @end

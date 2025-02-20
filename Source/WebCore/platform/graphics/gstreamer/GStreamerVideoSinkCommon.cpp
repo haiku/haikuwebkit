@@ -55,10 +55,8 @@ public:
                     GST_DEBUG_OBJECT(pad, "FLUSH_START received, aborting all pending tasks in the player sinkTaskQueue.");
                     self->m_isFlushing = true;
                     player->sinkTaskQueue().startAborting();
-#if USE(GSTREAMER_GL)
                     GST_DEBUG_OBJECT(pad, "Flushing current buffer in response to %" GST_PTR_FORMAT, info->data);
                     player->flushCurrentBuffer();
-#endif
                 } else
                     GST_DEBUG_OBJECT(pad, "Received FLUSH_START while already flushing, ignoring.");
             } else if (GST_EVENT_TYPE(GST_PAD_PROBE_INFO_EVENT(info)) == GST_EVENT_FLUSH_STOP) {
@@ -157,6 +155,13 @@ void webKitVideoSinkSetMediaPlayerPrivate(GstElement* appSink, MediaPlayerPrivat
     gst_pad_add_probe(pad.get(), static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_PUSH | GST_PAD_PROBE_TYPE_QUERY_DOWNSTREAM
         | GST_PAD_PROBE_TYPE_EVENT_FLUSH | GST_PAD_PROBE_TYPE_EVENT_DOWNSTREAM),
         WebKitVideoSinkProbe::doProbe, new WebKitVideoSinkProbe(player), WebKitVideoSinkProbe::deleteUserData);
+
+    if (!player->requiresVideoSinkCapsNotifications())
+        return;
+
+    g_signal_connect(pad.get(), "notify::caps", G_CALLBACK(+[](GstPad* videoSinkPad, GParamSpec*, MediaPlayerPrivateGStreamer* player) {
+        player->videoSinkCapsChanged(videoSinkPad);
+    }), player);
 }
 
 #undef GST_CAT_DEFAULT

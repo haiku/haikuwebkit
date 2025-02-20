@@ -175,7 +175,7 @@ void testX86LeaAddAdd()
                 return strstr(disassembly, "lea 0x64(%rdi,%rsi,1), %rax")
                     || strstr(disassembly, "lea 0x64(%rsi,%rdi,1), %rax");
             },
-            "Expected to find something like lea 0x64(%rdi,%rsi,1), %rax but didn't!");
+            "Expected to find something like lea 0x64(%rdi,%rsi,1), %rax but didn't!"_s);
     }
 }
 
@@ -1199,7 +1199,7 @@ void testWasmBoundsCheck(unsigned offset)
     GPRReg pinned = GPRInfo::argumentGPR1;
     proc.pinRegister(pinned);
 
-    proc.setWasmBoundsCheckGenerator([=] (CCallHelpers& jit, GPRReg pinnedGPR) {
+    proc.setWasmBoundsCheckGenerator([=](CCallHelpers& jit, WasmBoundsCheckValue*, GPRReg pinnedGPR) {
         CHECK_EQ(pinnedGPR, pinned);
 
         // This should always work because a function this simple should never have callee

@@ -121,7 +121,7 @@ void WebFullScreenManagerProxy::didEnterFullScreen()
     sendToWebProcess(Messages::WebFullScreenManager::DidEnterFullScreen());
 
     if (page->isControlledByAutomation()) {
-        if (RefPtr automationSession = page->protectedConfiguration()->processPool().automationSession())
+        if (RefPtr automationSession = page->configuration().processPool().automationSession())
             automationSession->didEnterFullScreenForPage(*page);
     }
 }
@@ -160,7 +160,7 @@ void WebFullScreenManagerProxy::didExitFullScreen()
         sendToWebProcess(Messages::WebFullScreenManager::DidExitFullScreen());
 
         if (page->isControlledByAutomation()) {
-            if (RefPtr automationSession = page->protectedConfiguration()->processPool().automationSession())
+            if (RefPtr automationSession = page->configuration().processPool().automationSession())
                 automationSession->didExitFullScreenForPage(*page);
         }
     }
@@ -177,27 +177,17 @@ void WebFullScreenManagerProxy::requestRestoreFullScreen(CompletionHandler<void(
     ALWAYS_LOG(LOGIDENTIFIER);
     RefPtr page = m_page.get();
     if (!page)
-        return;
+        return completionHandler(false);
     RefPtr fullScreenProcess = m_fullScreenProcess.get();
     if (!fullScreenProcess)
-        return;
-    fullScreenProcess->sendWithAsyncReply(Messages::WebFullScreenManager::RequestRestoreFullScreen(), WTFMove(completionHandler));
+        return completionHandler(false);
+    fullScreenProcess->sendWithAsyncReply(Messages::WebFullScreenManager::RequestRestoreFullScreen(), WTFMove(completionHandler), page->webPageIDInProcess(*fullScreenProcess));
 }
 
 void WebFullScreenManagerProxy::requestExitFullScreen()
 {
     ALWAYS_LOG(LOGIDENTIFIER);
     sendToWebProcess(Messages::WebFullScreenManager::RequestExitFullScreen());
-}
-
-void WebFullScreenManagerProxy::saveScrollPosition()
-{
-    sendToWebProcess(Messages::WebFullScreenManager::SaveScrollPosition());
-}
-
-void WebFullScreenManagerProxy::restoreScrollPosition()
-{
-    sendToWebProcess(Messages::WebFullScreenManager::RestoreScrollPosition());
 }
 
 void WebFullScreenManagerProxy::setFullscreenInsets(const WebCore::FloatBoxExtent& insets)
@@ -307,7 +297,7 @@ void WebFullScreenManagerProxy::prepareQuickLookImageURL(CompletionHandler<void(
         ASSERT_UNUSED(byteCount, byteCount == buffer->size());
         FileSystem::closeFile(fileHandle);
 
-        RunLoop::main().dispatch([filePath, completionHandler = WTFMove(completionHandler)]() mutable {
+        RunLoop::protectedMain()->dispatch([filePath, completionHandler = WTFMove(completionHandler)]() mutable {
             completionHandler(URL::fileURLWithFileSystemPath(filePath));
         });
     });

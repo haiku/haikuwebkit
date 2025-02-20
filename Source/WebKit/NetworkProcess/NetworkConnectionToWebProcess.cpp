@@ -114,6 +114,10 @@
 #include <WebCore/MockContentFilterSettings.h>
 #endif
 
+#if ENABLE(CONTENT_EXTENSIONS)
+#include <WebCore/ResourceMonitorThrottler.h>
+#endif
+
 #define CONNECTION_RELEASE_LOG(channel, fmt, ...) RELEASE_LOG(channel, "%p - [webProcessIdentifier=%" PRIu64 "] NetworkConnectionToWebProcess::" fmt, this, this->webProcessIdentifier().toUInt64(), ##__VA_ARGS__)
 #define CONNECTION_RELEASE_LOG_ERROR(channel, fmt, ...) RELEASE_LOG_ERROR(channel, "%p - [webProcessIdentifier=%" PRIu64 "] NetworkConnectionToWebProcess::" fmt, this, this->webProcessIdentifier().toUInt64(), ##__VA_ARGS__)
 
@@ -595,7 +599,7 @@ void NetworkConnectionToWebProcess::scheduleResourceLoad(NetworkResourceLoadPara
 
 void NetworkConnectionToWebProcess::performSynchronousLoad(NetworkResourceLoadParameters&& loadParameters, CompletionHandler<void(const ResourceError&, const ResourceResponse, Vector<uint8_t>&&)>&& reply)
 {
-    MESSAGE_CHECK(m_networkProcess->allowsFirstPartyForCookies(m_webProcessIdentifier, loadParameters.request.firstPartyForCookies()) == NetworkProcess::AllowCookieAccess::Allow);
+    MESSAGE_CHECK(protectedNetworkProcess()->allowsFirstPartyForCookies(m_webProcessIdentifier, loadParameters.request.firstPartyForCookies()) == NetworkProcess::AllowCookieAccess::Allow);
     CONNECTION_RELEASE_LOG(Loading, "performSynchronousLoad: (parentPID=%d, pageProxyID=%" PRIu64 ", webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ")", loadParameters.parentPID, loadParameters.webPageProxyID ? loadParameters.webPageProxyID->toUInt64() : 0, loadParameters.webPageID ? loadParameters.webPageID->toUInt64() : 0, loadParameters.webFrameID ? loadParameters.webFrameID->object().toUInt64() : 0, loadParameters.identifier ? loadParameters.identifier->toUInt64() : 0);
 
     auto identifier = loadParameters.identifier;
@@ -774,7 +778,7 @@ void NetworkConnectionToWebProcess::registerURLSchemesAsCORSEnabled(Vector<Strin
 
 static bool shouldTreatAsSameSite(const URL& firstParty, const URL& url)
 {
-#if PLATFORM(COCOA)
+#if PLATFORM(COCOA) || USE(SOUP)
     if (SecurityPolicy::shouldInheritSecurityOriginFromOwner(url))
         return true;
 
@@ -892,7 +896,7 @@ void NetworkConnectionToWebProcess::getRawCookies(const URL& firstParty, const S
 
 void NetworkConnectionToWebProcess::setRawCookie(const URL& firstParty, const URL& url, const WebCore::Cookie& cookie, ShouldPartitionCookie shouldPartitionCookie)
 {
-    auto allowCookieAccess = m_networkProcess->allowsFirstPartyForCookies(m_webProcessIdentifier, firstParty);
+    auto allowCookieAccess = protectedNetworkProcess()->allowsFirstPartyForCookies(m_webProcessIdentifier, firstParty);
     MESSAGE_CHECK(allowCookieAccess != NetworkProcess::AllowCookieAccess::Terminate);
     if (allowCookieAccess != NetworkProcess::AllowCookieAccess::Allow)
         return;
@@ -912,7 +916,7 @@ void NetworkConnectionToWebProcess::setRawCookie(const URL& firstParty, const UR
 
 void NetworkConnectionToWebProcess::deleteCookie(const URL& firstParty, const URL& url, const String& cookieName, CompletionHandler<void()>&& completionHandler)
 {
-    auto allowCookieAccess = m_networkProcess->allowsFirstPartyForCookies(m_webProcessIdentifier, firstParty);
+    auto allowCookieAccess = protectedNetworkProcess()->allowsFirstPartyForCookies(m_webProcessIdentifier, firstParty);
     MESSAGE_CHECK_COMPLETION(allowCookieAccess != NetworkProcess::AllowCookieAccess::Terminate, completionHandler());
     if (allowCookieAccess != NetworkProcess::AllowCookieAccess::Allow)
         return completionHandler();
@@ -1179,6 +1183,10 @@ void NetworkConnectionToWebProcess::writeBlobsToTemporaryFilesForIndexedDB(const
 
         if (auto* session = networkSession())
             session->protectedStorageManager()->registerTemporaryBlobFilePaths(Ref { m_connection }, filePaths);
+
+        // Web process might create Blob with these files during index key generation.
+        for (auto& path : filePaths)
+            allowAccessToFile(path);
 
         completionHandler(WTFMove(filePaths));
     });
@@ -1781,6 +1789,20 @@ void NetworkConnectionToWebProcess::updateSharedPreferencesForWebProcess(SharedP
     if (CheckedPtr session = networkSession())
         session->protectedStorageManager()->updateSharedPreferencesForConnection(protectedConnection(), m_sharedPreferencesForWebProcess);
 }
+
+#if ENABLE(CONTENT_EXTENSIONS)
+void NetworkConnectionToWebProcess::shouldOffloadIFrameForHost(const String& host, CompletionHandler<void(bool)>&& completionHandler)
+{
+    bool wasGranted = false;
+
+    if (CheckedPtr session = networkSession()) {
+        wasGranted = session->protectedResourceMonitorThrottler()->tryAccess(host);
+        CONNECTION_RELEASE_LOG(Loading, "shouldOffloadIFrameForHost: (host=%" PUBLIC_LOG_STRING ", wasGranted=%d)", host.utf8().data(), wasGranted ? 1 : 0);
+    }
+
+    completionHandler(wasGranted);
+}
+#endif
 
 } // namespace WebKit
 
