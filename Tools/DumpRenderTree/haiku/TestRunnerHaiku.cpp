@@ -625,6 +625,6 @@ JSValueRef TestRunner::alwaysResolvePromise(JSContextRef context)
 {
 }
 
-void TestRunner::setTopContentInset(double contentInset)
+void TestRunner::setObscuredContentInsets(double, double, double, double)
 {
 }

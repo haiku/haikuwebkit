@@ -32,13 +32,16 @@
 
 #include "DumpRenderTree.h"
 #include "EditorClientHaiku.h"
+#include "TestRunner.h"
+#include "WebViewConstants.h"
+
+#include "WebCore/CSSSerializationContext.h"
 #include "WebCore/EditorInsertAction.h"
 #include <WebCore/Node.h>
 #include <WebCore/SimpleRange.h>
 #include <WebCore/StyleProperties.h>
-#include "TestRunner.h"
 #include "WebCore/TextAffinity.h"
-#include "WebViewConstants.h"
+
 #include <wtf/text/CString.h>
 #include <wtf/text/WTFString.h>
 
@@ -148,7 +151,7 @@ static void shouldApplyStyle(WebCore::StyleProperties* style, WebCore::SimpleRan
 {
     if (!done && gTestRunner->dumpEditingCallbacks()) {
         printf("EDITING DELEGATE: shouldApplyStyle:%s toElementsInDOMRange:%s\n",
-                style->asText().utf8().data(), dumpRange(range).String());
+                style->asText(WebCore::CSS::defaultSerializationContext()).utf8().data(), dumpRange(range).String());
     }
 }
 

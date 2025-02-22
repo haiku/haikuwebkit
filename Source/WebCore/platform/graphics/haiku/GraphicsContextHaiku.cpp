@@ -463,16 +463,16 @@ void GraphicsContextHaiku::drawFocusRing(const Vector<FloatRect>& rects, float /
 }
 
 void GraphicsContextHaiku::drawLinesForText(const FloatPoint& point,
-    float thickness, const DashArray& widths, bool printing,
+    float thickness, const std::span<const FloatSegment> widths, bool printing,
     bool doubleUnderlines, WebCore::StrokeStyle style)
 {
     HGTRACE(("drawLinesForText: (--todo print values)\n"));
-    if (widths.isEmpty() || style == WebCore::StrokeStyle::NoStroke)
+    if (widths.empty() || style == WebCore::StrokeStyle::NoStroke)
         return;
 
     Color lineColor(strokeColor());
     FloatRect bounds = computeLineBoundsAndAntialiasingModeForText(
-        FloatRect(point, FloatSize(widths.last(), thickness)),
+        FloatRect(point, FloatSize(widths.end()->end, thickness)),
         printing, lineColor);
     if (bounds.isEmpty() || !strokeColor().isVisible())
         return;
@@ -483,11 +483,10 @@ void GraphicsContextHaiku::drawLinesForText(const FloatPoint& point,
     m_view->SetPenSize(bounds.height());
 
     // TODO would be faster to use BeginLineArray/EndLineArray here
-    for (size_t i = 0; i < widths.size(); i += 2)
+    for (const auto& width: widths)
     {
-        m_view->StrokeLine(
-			BPoint(bounds.x() + widths[i], y),
-			BPoint(bounds.x() + widths[i+1], y));
+        m_view->StrokeLine(BPoint(bounds.x() + width.begin, y),
+            BPoint(bounds.x() + width.end, y));
     }
 
     m_view->SetPenSize(oldSize);

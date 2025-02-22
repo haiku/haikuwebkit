@@ -155,7 +155,9 @@ class FrameLoaderClientHaiku : public LocalFrameLoaderClient {
     void updateGlobalHistoryRedirectLinks() override;
     void updateOpener(const WebCore::Frame&) override;
 
-    bool shouldGoToHistoryItem(HistoryItem&) const override;
+    bool shouldGoToHistoryItem(HistoryItem&, WebCore::IsSameDocumentNavigation) const override;
+    bool supportsAsyncShouldGoToHistoryItem() const override { return false; }
+    void shouldGoToHistoryItemAsync(HistoryItem&, WTF::CompletionHandler<void(bool)>&&) const override;
     RefPtr<HistoryItem> createHistoryItemTree(bool clipAtTarget, BackForwardItemIdentifier) const override;
 
     bool canCachePage() const override;
