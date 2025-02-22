@@ -720,6 +720,14 @@ inline void* wasmInstancePointer(const mcontext_t& machineContext)
 {
 #if OS(DARWIN)
     return wasmInstancePointer(machineContext->__ss);
+#elif OS(HAIKU)
+#if CPU(X86)
+#error Unsupported Architecture
+#elif CPU(X86_64)
+    return reinterpret_cast<void*&>((uintptr_t&) machineContext.rbx);
+#else
+#error Unknown Architecture
+#endif
 #elif OS(FREEBSD)
 
 #if CPU(X86_64)
