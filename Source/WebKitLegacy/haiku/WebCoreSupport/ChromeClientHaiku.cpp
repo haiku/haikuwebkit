@@ -163,8 +163,8 @@ RefPtr<Page> ChromeClientHaiku::createWindow(LocalFrame& /*frame*/, const WTF::S
 	if (features.height)
 		windowFrame.bottom = windowFrame.top + *features.height - 1;
 
-	return m_webPage->createNewPage(windowFrame, *features.dialog,
-		*features.resizable, true, m_webPage->GetContext());
+	return m_webPage->createNewPage(windowFrame, features.dialog.value_or(false),
+		features.resizable.value_or(true), true, m_webPage->GetContext());
 }
 
 void ChromeClientHaiku::show()
