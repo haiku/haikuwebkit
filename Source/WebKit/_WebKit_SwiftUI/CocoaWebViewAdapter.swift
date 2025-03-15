@@ -92,6 +92,8 @@ class CocoaWebViewAdapter: PlatformView, PlatformTextSearching {
 
     var findContext: FindContext?
 
+    var scrollPosition: ScrollPositionContext?
+
 #if os(macOS)
     // This is called by the Find menu items in the Menu Bar
     @objc(performFindPanelAction:)
@@ -266,14 +268,7 @@ extension CocoaWebViewAdapter: WebPageWebView.Delegate {
             return
         }
 
-        let transformedNew = onScrollGeometryChange.transform(newScrollGeometry)
-        let transformedOld = onScrollGeometryChange.transform(oldScrollGeometry)
-
-        guard transformedOld != transformedNew else {
-            return
-        }
-
-        onScrollGeometryChange.action(transformedOld, transformedNew)
+        onScrollGeometryChange.apply(from: oldScrollGeometry, to: newScrollGeometry)
     }
 }
 

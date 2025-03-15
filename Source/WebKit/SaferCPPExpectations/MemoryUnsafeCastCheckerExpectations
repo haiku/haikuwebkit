@@ -1,6 +1,5 @@
 AutomationProtocolObjects.h
 Platform/cocoa/CocoaHelpers.mm
-Shared/API/APIArray.h
 Shared/API/APIDictionary.h
 Shared/API/c/WKSharedAPICast.h
 Shared/API/c/cf/WKStringCF.mm
@@ -14,7 +13,6 @@ UIProcess/API/Cocoa/WKNSURLAuthenticationChallenge.mm
 UIProcess/API/Cocoa/WKWebsiteDataStore.mm
 UIProcess/API/Cocoa/_WKDataTask.mm
 UIProcess/API/Cocoa/_WKInspectorConfiguration.mm
-UIProcess/WebAuthentication/Virtual/VirtualService.mm
 UIProcess/mac/WebViewImpl.mm
 WebProcess/GPU/graphics/WebGPU/WebGPUDowncastConvertToBackingContext.cpp
 WebProcess/InjectedBundle/API/c/WKBundlePageOverlay.cpp

@@ -263,6 +263,17 @@ bool defaultGamepadVibrationActuatorEnabled()
 }
 #endif
 
+#if ENABLE(WEB_AUTHN)
+bool defaultDigitalCredentialsEnabled()
+{
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+    return true;
+#else
+    return false;
+#endif
+}
+#endif
+
 bool defaultShouldEnableScreenOrientationAPI()
 {
 #if PLATFORM(MAC)
@@ -366,5 +377,25 @@ bool defaultPreferSpatialAudioExperience()
     return false;
 }
 #endif
+
+#if PLATFORM(COCOA)
+static bool isSafariOrWebApp()
+{
+#if PLATFORM(MAC)
+    return WTF::MacApplication::isSafari();
+#else
+    return WTF::IOSApplication::isMobileSafari() || WTF::IOSApplication::isSafariViewService() || WTF::IOSApplication::isAppleWebApp();
+#endif
+}
+#endif
+
+bool defaultMutationEventsEnabled()
+{
+#if PLATFORM(COCOA)
+    return (WTF::CocoaApplication::isAppleApplication() && !isSafariOrWebApp()) || !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::MutationEventsDisabledByDefault);
+#else
+    return false;
+#endif
+}
 
 } // namespace WebKit

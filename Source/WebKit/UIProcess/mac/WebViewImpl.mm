@@ -3757,6 +3757,11 @@ void WebViewImpl::enableAccessibilityIfNecessary()
     if (WebCore::AXObjectCache::accessibilityEnabled())
         return;
 
+#if ENABLE(INITIALIZE_ACCESSIBILITY_ON_DEMAND)
+    m_page->initializeAccessibility();
+    accessibilityRegisterUIProcessTokens();
+#endif
+
     // After enabling accessibility update the window frame on the web process so that the
     // correct accessibility position is transmitted (when AX is off, that position is not calculated).
     WebCore::AXObjectCache::enableAccessibility();
@@ -5772,6 +5777,10 @@ void WebViewImpl::nativeMouseEventHandlerInternal(NSEvent *event)
 {
     if (m_warningView)
         return;
+#if ENABLE(SCREEN_TIME)
+    if ([[m_view _screenTimeWebpageController] URLIsBlocked])
+        return;
+#endif
 
     nativeMouseEventHandler(event);
 }

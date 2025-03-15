@@ -41,3 +41,9 @@ extension ScrollGeometry {
         self = ScrollGeometry(contentOffset: geometry.contentOffset, contentSize: geometry.contentSize, contentInsets: EdgeInsets(geometry.contentInsets), containerSize: geometry.containerSize)
     }
 }
+
+extension Transaction {
+    var isAnimated: Bool {
+        animation != nil && !disablesAnimations
+    }
+}

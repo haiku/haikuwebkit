@@ -887,12 +887,14 @@ void UnifiedPDFPlugin::paintPDFContent(const WebCore::GraphicsLayer* layer, Grap
             [page drawWithBox:kPDFDisplayBoxCropBox toContext:context.platformContext()];
         }
 
-        if (currentPageHasAnnotation) {
-            auto pageGeometry = m_documentLayout.geometryForPage(page);
-            auto transformForBox = m_documentLayout.toPageTransform(*pageGeometry).inverse().value_or(AffineTransform { });
-            GraphicsContextStateSaver stateSaver(context);
-            context.concatCTM(transformForBox);
-            paintHoveredAnnotationOnPage(pageInfo.pageIndex, context, clipRect);
+        if constexpr (hasFullAnnotationSupport) {
+            if (currentPageHasAnnotation) {
+                auto pageGeometry = m_documentLayout.geometryForPage(page);
+                auto transformForBox = m_documentLayout.toPageTransform(*pageGeometry).inverse().value_or(AffineTransform { });
+                GraphicsContextStateSaver stateSaver(context);
+                context.concatCTM(transformForBox);
+                paintHoveredAnnotationOnPage(pageInfo.pageIndex, context, clipRect);
+            }
         }
     }
 }
@@ -965,8 +967,8 @@ void UnifiedPDFPlugin::paintPDFSelection(const GraphicsLayer* layer, GraphicsCon
 static const WebCore::Color textAnnotationHoverColor()
 {
     static constexpr auto textAnnotationHoverAlpha = 0.12;
-    static NeverDestroyed color = WebCore::Color::createAndPreserveColorSpace([[[WebCore::CocoaColor systemBlueColor] colorWithAlphaComponent:textAnnotationHoverAlpha] CGColor]);
-    return color;
+    static NeverDestroyed color = RenderTheme::singleton().systemColor(CSSValueAppleSystemBlue, { }).colorWithAlpha(textAnnotationHoverAlpha);
+    return color.get();
 }
 
 void UnifiedPDFPlugin::paintHoveredAnnotationOnPage(PDFDocumentLayout::PageIndex indexOfPaintedPage, GraphicsContext& context, const FloatRect& clipRect)
@@ -1226,6 +1228,13 @@ bool UnifiedPDFPlugin::geometryDidChange(const IntSize& pluginSize, const Affine
 {
     bool sizeChanged = pluginSize != m_size;
 
+#if PLATFORM(IOS_FAMILY)
+    if (sizeChanged && m_currentSelection) {
+        if (RefPtr webPage = this->webPage())
+            webPage->scheduleFullEditorStateUpdate();
+    }
+#endif
+
     if (!PDFPluginBase::geometryDidChange(pluginSize, pluginToRootViewTransform))
         return false;
 
@@ -1293,8 +1302,7 @@ void UnifiedPDFPlugin::updateLayout(AdjustScaleAfterLayout shouldAdjustScale, st
     auto autoSizeMode = shouldUpdateAutoSizeScaleOverride.value_or(m_didLayoutWithValidDocument ? m_shouldUpdateAutoSizeScale : ShouldUpdateAutoSizeScale::Yes);
 
     auto computeAnchoringInfo = [&] {
-        auto anchorPoint = shouldSizeToFitContent() ? PDFPresentationController::AnchorPoint::Center : PDFPresentationController::AnchorPoint::TopLeft;
-        return m_presentationController->pdfPositionForCurrentView(anchorPoint, shouldAdjustScale == AdjustScaleAfterLayout::Yes || autoSizeMode == ShouldUpdateAutoSizeScale::Yes);
+        return m_presentationController->pdfPositionForCurrentView(PDFPresentationController::AnchorPoint::TopLeft, shouldAdjustScale == AdjustScaleAfterLayout::Yes || autoSizeMode == ShouldUpdateAutoSizeScale::Yes);
     };
     auto anchoringInfo = computeAnchoringInfo();
 
@@ -1335,45 +1343,10 @@ void UnifiedPDFPlugin::updateLayout(AdjustScaleAfterLayout shouldAdjustScale, st
         });
     }
 
-    auto restorePDFPosition = [this, anchoringInfo = WTFMove(anchoringInfo)] {
-        if (!anchoringInfo)
-            return;
+    if (anchoringInfo && !shouldSizeToFitContent())
+        m_presentationController->restorePDFPosition(*anchoringInfo);
 
-        if (!shouldSizeToFitContent()) {
-            m_presentationController->restorePDFPosition(*anchoringInfo);
-            return;
-        }
-
-        if (m_pendingAnchoringInfo || m_willSetPendingAnchoringInfo)
-            return;
-
-        // FIXME: This works around the fact that, during device rotation, the width of the plugin element
-        // updates before the height is updated. If we attempt to scroll to the anchored position with only
-        // the updated width, we'll end up scrolling to the wrong offset, due to the coordinate space
-        // conversion from page -> plugin coordinates producing incorrect result.
-        m_willSetPendingAnchoringInfo = true;
-        RunLoop::main().dispatch([weakThis = WeakPtr { *this }, anchoringInfo = WTFMove(anchoringInfo)] mutable {
-            RefPtr protectedThis = weakThis.get();
-            if (!protectedThis)
-                return;
-
-            protectedThis->m_pendingAnchoringInfo = WTFMove(anchoringInfo);
-            protectedThis->m_willSetPendingAnchoringInfo = false;
-        });
-    };
-
-    restorePDFPosition();
     sizeToFitContentsIfNeeded();
-}
-
-void UnifiedPDFPlugin::finalizeRenderingUpdate()
-{
-    auto anchoringInfo = std::exchange(m_pendingAnchoringInfo, { });
-    if (!anchoringInfo)
-        return;
-
-    m_view->pluginElement().document().updateLayout();
-    m_presentationController->restorePDFPosition(*anchoringInfo);
 }
 
 FloatSize UnifiedPDFPlugin::centeringOffset() const

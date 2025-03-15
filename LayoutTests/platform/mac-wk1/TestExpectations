@@ -908,6 +908,8 @@ accessibility/mac/dynamic-drag.html [ Skip ]
 
 accessibility/display-contents/role-row-headers.html [ Skip ]
 
+accessibility/mac/text-marker-from-typing-notification.html [ Skip ]
+
 # Missing AccessibilityUIElement::dateTimeValue() implementation.
 accessibility/dynamic-datetime-attribute.html [ Skip ]
 
@@ -925,6 +927,8 @@ accessibility/select-whitespace-collapsed-text.html [ Skip ]
 # Missing AccessibilityUIElement::isIndeterminate() implementation.
 accessibility/indeterminate-progressbar-custom-element.html [ Skip ]
 accessibility/progress-indeterminate-value.html [ Skip ]
+
+accessibility/mac/input-type-change-crash.html [ Skip ]
 
 # Missing AccessibilityUIElement::isInTable() implementation.
 accessibility/table-ancestry.html [ Skip ]
@@ -2333,7 +2337,7 @@ webkit.org/b/218341 [ Debug ] inspector/dom-debugger/attribute-modified-style.ht
 
 webkit.org/b/219498 imported/w3c/web-platform-tests/css/css-scroll-snap/scroll-target-padding-003.html [ Pass ImageOnlyFailure ]
 
-webkit.org/b/244538 [ Debug ] imported/w3c/web-platform-tests/css/css-scroll-snap/scroll-target-margin-003.html [ Pass ImageOnlyFailure ]
+webkit.org/b/244538 imported/w3c/web-platform-tests/css/css-scroll-snap/scroll-target-margin-003.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/245034 imported/w3c/web-platform-tests/css/css-scroll-snap/scroll-target-align-003.html [ Pass ImageOnlyFailure ]
 
@@ -2694,7 +2698,6 @@ webkit.org/b/260280 fullscreen/fullscreen-no-scrollbars-on-ancestor-root.html [ 
 
 # webkit.org/b/260320 Mark expectations for multiple Mac wk1 tests slowing down EWS
 imported/w3c/web-platform-tests/css/css-fonts/font-size-adjust-reload.html [ ImageOnlyFailure Pass ]
-imported/w3c/web-platform-tests/css/selectors/invalidation/nth-child-in-shadow-root.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-backgrounds/background-clip-content-box-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/selectors/invalidation/nth-last-child-in-shadow-root.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-contain/content-visibility/content-visibility-085.html [ ImageOnlyFailure ]
@@ -2785,7 +2788,7 @@ imported/w3c/web-platform-tests/scroll-animations/scroll-timelines/scroll-timeli
 
 fast/css/transform-function-perspective-crash.html [ Failure ]
 
-webkit.org/b/265535 inspector/layers/layers-for-node.html [ Pass Timeout ]
+webkit.org/b/265535 inspector/layers/layers-for-node.html [ Pass Timeout Failure ]
 
 webkit.org/b/265783 fast/ruby/ruby-line-height.html [ Skip ]
 webkit.org/b/265783 accessibility/mac/ruby-hierarchy-roles.html [ Skip ]
@@ -3030,3 +3033,23 @@ webkit.org/b/288757 [ Sonoma ] imported/w3c/web-platform-tests/fullscreen/render
 webkit.org/b/288757 [ Sequoia Release ] imported/w3c/web-platform-tests/fullscreen/rendering/fullscreen-css-invalidation.html [ Pass Failure ]
 
 webkit.org/b/288827 http/wpt/webaudio/audioworklet-addModule-cors.sub.https.html [ Failure ]
+
+webkit.org/b/288831 [ Debug ] fast/css/shadow-box-recursion-depth.html [ Pass Timeout ]
+
+webkit.org/b/288843 [ Release ] compositing/repaint/iframes/compositing-iframe-scroll-repaint.html [ Pass Failure ]
+
+webkit.org/b/288862 fast/repaint/switch-overflow-vertical-rl.html [ Pass Failure ]
+
+webkit.org/b/288865 imported/w3c/web-platform-tests/fullscreen/rendering/fullscreen-root-block-size.html [ Pass Failure ]
+
+webkit.org/b/288872 [ X86_64 ] imported/w3c/web-platform-tests/webvtt/rendering/cues-with-video/processing-model/selectors/cue/color_hsla.html [ ImageOnlyFailure ]
+
+webkit.org/b/288871 imported/w3c/web-platform-tests/workers/WorkerGlobalScope_ErrorEvent_message.htm [ Pass Failure ]
+
+webkit.org/b/288874 [ x86_64 ] fast/canvas/image-buffer-backend-variants.html [ Pass Failure ]
+
+webkit.org/b/288885 fullscreen/element-clear-during-fullscreen-crash.html [ Pass Timeout ]
+
+webkit.org/b/288882 fast/scrolling/page-cache-back-overflow-scroll-restore.html [ Pass Timeout ]
+
+webkit.org/b/288889 media/track/track-in-band.html [ Pass Timeout ]

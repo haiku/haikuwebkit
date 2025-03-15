@@ -90,6 +90,7 @@
 #include "StyleAppleColorFilterProperty.h"
 #include "StyleBoxShadow.h"
 #include "StyleColorScheme.h"
+#include "StyleCornerShapeValue.h"
 #include "StyleDynamicRangeLimit.h"
 #include "StyleEasingFunction.h"
 #include "StyleFilterProperty.h"
@@ -3406,6 +3407,22 @@ static Ref<CSSValue> viewTimelineShorthandValue(const Vector<Ref<ViewTimeline>>&
     return CSSValueList::createCommaSeparated(WTFMove(list));
 }
 
+static Ref<CSSValue> valueForPositionVisibility(OptionSet<PositionVisibility> positionVisibility)
+{
+    CSSValueListBuilder list;
+    if (positionVisibility & PositionVisibility::AnchorsValid)
+        list.append(CSSPrimitiveValue::create(CSSValueAnchorsValid));
+    if (positionVisibility & PositionVisibility::AnchorsVisible)
+        list.append(CSSPrimitiveValue::create(CSSValueAnchorsVisible));
+    if (positionVisibility & PositionVisibility::NoOverflow)
+        list.append(CSSPrimitiveValue::create(CSSValueNoOverflow));
+
+    if (list.isEmpty())
+        return CSSPrimitiveValue::create(CSSValueAlways);
+
+    return CSSValueList::createSpaceSeparated(WTFMove(list));
+}
+
 RefPtr<CSSValue> ComputedStyleExtractor::customPropertyValue(const AtomString& propertyName) const
 {
     Element* styledElement = m_element.get();
@@ -4854,13 +4871,13 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
     case CSSPropertyCornerShape:
         return getCSSPropertyValuesFor4SidesShorthand(cornerShapeShorthand());
     case CSSPropertyCornerTopLeftShape:
-        return createConvertingToCSSValueID(style.cornerTopLeftShape());
+        return Style::toCSSValue(style.cornerTopLeftShape(), style);
     case CSSPropertyCornerTopRightShape:
-        return createConvertingToCSSValueID(style.cornerTopRightShape());
+        return Style::toCSSValue(style.cornerTopRightShape(), style);
     case CSSPropertyCornerBottomRightShape:
-        return createConvertingToCSSValueID(style.cornerBottomRightShape());
+        return Style::toCSSValue(style.cornerBottomRightShape(), style);
     case CSSPropertyCornerBottomLeftShape:
-        return createConvertingToCSSValueID(style.cornerBottomLeftShape());
+        return Style::toCSSValue(style.cornerBottomLeftShape(), style);
     case CSSPropertyInset:
         return getCSSPropertyValuesFor4SidesShorthand(insetShorthand());
     case CSSPropertyInsetBlock:
@@ -5034,6 +5051,8 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
         ASSERT_NOT_REACHED();
         return CSSPrimitiveValue::create(CSSValueNormal);
     }
+    case CSSPropertyPositionVisibility:
+        return valueForPositionVisibility(style.positionVisibility());
     case CSSPropertyTimelineScope:
         return valueForNameScope(style.timelineScope());
 

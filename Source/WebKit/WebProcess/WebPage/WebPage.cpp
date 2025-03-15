@@ -74,6 +74,7 @@
 #include "RemoteScrollingCoordinator.h"
 #include "RemoteWebInspectorUI.h"
 #include "RemoteWebInspectorUIMessages.h"
+#include "RunJavaScriptParameters.h"
 #include "SessionState.h"
 #include "SessionStateConversion.h"
 #include "ShareableBitmapUtilities.h"
@@ -2966,6 +2967,11 @@ void WebPage::setUnderPageBackgroundColorOverride(WebCore::Color&& underPageBack
     protectedCorePage()->setUnderPageBackgroundColorOverride(WTFMove(underPageBackgroundColorOverride));
 }
 
+void WebPage::setShouldSuppressHDR(bool shouldSuppressHDR)
+{
+    protectedCorePage()->setShouldSuppressHDR(shouldSuppressHDR);
+}
+
 #if !PLATFORM(IOS_FAMILY)
 
 void WebPage::setHeaderPageBanner(PageBanner* pageBanner)
@@ -4424,15 +4430,45 @@ void WebPage::runJavaScript(WebFrame* frame, RunJavaScriptParameters&& parameter
     auto resolveFunction = [world = Ref { *world }, frame = Ref { *frame }, coreFrame = Ref { *frame->coreLocalFrame() }, completionHandler = WTFMove(completionHandler)] (ValueOrException result) mutable {
         if (!result)
             return completionHandler(makeUnexpected(result.error()));
-        if (RefPtr serializedResultValue = SerializedScriptValue::create(frame->jsContextForWorld(world.ptr()), toRef(coreFrame->script().globalObject(Ref { world->coreWorld() }), result.value()), nullptr)) {
+
+        JSGlobalContextRef context = frame->jsContextForWorld(world.ptr());
+        JSValueRef jsValue = toRef(coreFrame->script().globalObject(Ref { world->coreWorld() }), result.value());
+#if PLATFORM(COCOA)
+        completionHandler(JavaScriptEvaluationResult::extract(context, jsValue));
+#else
+        if (RefPtr serializedResultValue = SerializedScriptValue::create(context, jsValue, nullptr)) {
             if (auto wireBytes = serializedResultValue->wireBytes(); !wireBytes.isEmpty())
                 return completionHandler(JavaScriptEvaluationResult { wireBytes });
             return completionHandler(makeUnexpected(std::nullopt));
         }
         return completionHandler(makeUnexpected(std::nullopt));
+#endif
     };
+
+    auto mapArguments = [] (auto&& vector) -> std::optional<HashMap<String, Function<JSC::JSValue(JSC::JSGlobalObject&)>>> {
+        if (!vector)
+            return std::nullopt;
+        HashMap<String, Function<JSC::JSValue(JSC::JSGlobalObject&)>> map;
+        for (auto&& [key, result] : WTFMove(*vector)) {
+            map.set(key, [result = WTFMove(result)] (JSC::JSGlobalObject& globalObject) mutable -> JSC::JSValue {
+                return toJS(&globalObject, result.toJS(JSContextGetGlobalContext(toRef(&globalObject))));
+            });
+        }
+        return { WTFMove(map) };
+    };
+
+    WebCore::RunJavaScriptParameters coreParameters {
+        WTFMove(parameters.source),
+        WTFMove(parameters.taintedness),
+        WTFMove(parameters.sourceURL),
+        parameters.runAsAsyncFunction == WebCore::RunAsAsyncFunction::Yes,
+        mapArguments(WTFMove(parameters.arguments)),
+        parameters.forceUserGesture == WebCore::ForceUserGesture::Yes,
+        parameters.removeTransientActivation
+    };
+
     JSLockHolder lock(commonVM());
-    frame->coreLocalFrame()->script().executeAsynchronousUserAgentScriptInWorld(world->protectedCoreWorld(), WTFMove(parameters), WTFMove(resolveFunction));
+    frame->coreLocalFrame()->script().executeAsynchronousUserAgentScriptInWorld(world->protectedCoreWorld(), WTFMove(coreParameters), WTFMove(resolveFunction));
 }
 
 void WebPage::runJavaScriptInFrameInScriptWorld(RunJavaScriptParameters&& parameters, std::optional<WebCore::FrameIdentifier> frameID, const ContentWorldData& worldData, CompletionHandler<void(Expected<JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>>)>&& completionHandler)
@@ -5107,11 +5143,6 @@ void WebPage::finalizeRenderingUpdate(OptionSet<FinalizeRenderingUpdateFlags> fl
 {
 #if !PLATFORM(COCOA)
     WTFBeginSignpost(this, FinalizeRenderingUpdate);
-#endif
-
-#if ENABLE(PDF_PLUGIN)
-    if (RefPtr pluginView = mainFramePlugIn())
-        pluginView->finalizeRenderingUpdate();
 #endif
 
     protectedCorePage()->finalizeRenderingUpdate(flags);
@@ -8322,16 +8353,16 @@ void WebPage::imageOrMediaDocumentSizeChanged(const IntSize& newSize)
     send(Messages::WebPageProxy::ImageOrMediaDocumentSizeChanged(newSize));
 }
 
-void WebPage::addUserScript(String&& source, InjectedBundleScriptWorld& world, WebCore::UserContentInjectedFrames injectedFrames, WebCore::UserScriptInjectionTime injectionTime)
+void WebPage::addUserScript(String&& source, InjectedBundleScriptWorld& world, WebCore::UserContentInjectedFrames injectedFrames, WebCore::UserScriptInjectionTime injectionTime, WebCore::UserContentMatchParentFrame matchParentFrame)
 {
-    WebCore::UserScript userScript { WTFMove(source), URL(aboutBlankURL()), Vector<String>(), Vector<String>(), injectionTime, injectedFrames };
+    WebCore::UserScript userScript { WTFMove(source), URL(aboutBlankURL()), Vector<String>(), Vector<String>(), injectionTime, injectedFrames, matchParentFrame };
 
     Ref { m_userContentController }->addUserScript(world, WTFMove(userScript));
 }
 
 void WebPage::addUserStyleSheet(const String& source, WebCore::UserContentInjectedFrames injectedFrames)
 {
-    WebCore::UserStyleSheet userStyleSheet { source, aboutBlankURL(), Vector<String>(), Vector<String>(), injectedFrames, UserStyleLevel::User };
+    WebCore::UserStyleSheet userStyleSheet { source, aboutBlankURL(), Vector<String>(), Vector<String>(), injectedFrames };
 
     Ref { m_userContentController }->addUserStyleSheet(InjectedBundleScriptWorld::normalWorldSingleton(), WTFMove(userStyleSheet));
 }
@@ -9528,6 +9559,18 @@ void WebPage::setContentOffset(WebCore::ScrollOffset offset, WebCore::ScrollIsAn
     options.animated = animated;
 
     frameView->setScrollOffsetWithOptions(offset, options);
+}
+
+void WebPage::scrollToEdge(WebCore::RectEdges<bool> edges, WebCore::ScrollIsAnimated animated)
+{
+    RefPtr frameView = localMainFrameView();
+    if (!frameView)
+        return;
+
+    auto options = WebCore::ScrollPositionChangeOptions::createProgrammatic();
+    options.animated = animated;
+
+    frameView->scrollToEdgeWithOptions(edges, options);
 }
 
 #if ENABLE(IMAGE_ANALYSIS) && ENABLE(VIDEO)

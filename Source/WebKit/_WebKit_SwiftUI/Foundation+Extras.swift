@@ -24,6 +24,7 @@
 #if ENABLE_SWIFTUI && compiler(>=6.0)
 
 import Foundation
+import SwiftUI
 
 @MainActor
 func onNextMainRunLoop(do body: @escaping @MainActor () -> Void) {
@@ -34,17 +35,14 @@ func onNextMainRunLoop(do body: @escaping @MainActor () -> Void) {
     }
 }
 
-struct AnyEquatable: Equatable {
-    let value: Any
-    private let equals: (Any) -> Bool
-
-    init<E: Equatable>(_ value: E) {
-        self.value = value
-        self.equals = { ($0 as! E) == value }
-    }
-
-    static func == (lhs: AnyEquatable, rhs: AnyEquatable) -> Bool {
-        lhs.equals(rhs.value)
+extension NSDirectionalRectEdge {
+    init(_ edge: Edge) {
+        self = switch edge {
+        case .top: .top
+        case .leading: .leading
+        case .bottom: .bottom
+        case .trailing: .trailing
+        }
     }
 }
 

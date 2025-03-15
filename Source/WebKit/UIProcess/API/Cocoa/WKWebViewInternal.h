@@ -558,7 +558,7 @@ struct PerWebProcessState {
 
 @end
 
-RetainPtr<NSError> nsErrorFromExceptionDetails(const WebCore::ExceptionDetails&);
+RetainPtr<NSError> nsErrorFromExceptionDetails(const std::optional<WebCore::ExceptionDetails>&);
 
 #if ENABLE(FULLSCREEN_API) && PLATFORM(IOS_FAMILY)
 @interface WKWebView (FullScreenAPI_Internal)
@@ -594,5 +594,7 @@ RetainPtr<NSError> nsErrorFromExceptionDetails(const WebCore::ExceptionDetails&)
 #if PLATFORM(IOS_FAMILY)
 @property (nonatomic, setter=_setAllowsMagnification:) BOOL _allowsMagnification;
 #endif
+
+- (void)_scrollToEdge:(_WKRectEdge)edge animated:(BOOL)animated;
 
 @end

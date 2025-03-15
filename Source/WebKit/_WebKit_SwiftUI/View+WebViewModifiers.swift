@@ -51,7 +51,10 @@ extension EnvironmentValues {
     var webViewContentBackground: Visibility = .automatic
 
     @Entry
-    var webViewOnScrollGeometryChange: OnScrollGeometryChangeContext? = nil
+    var webViewOnScrollGeometryChange = OnScrollGeometryChangeContext()
+
+    @Entry
+    var webViewScrollPositionContext = ScrollPositionContext()
 }
 
 extension View {
@@ -125,13 +128,26 @@ extension View {
         for type: T.Type,
         of transform: @escaping (ScrollGeometry) -> T,
         action: @escaping (T, T) -> Void
-    ) -> some View where T : Equatable {
-        let change = OnScrollGeometryChangeContext {
-            AnyEquatable(transform($0))
-        } action: {
-            action($0.value as! T, $1.value as! T)
-        }
+    ) -> some View where T : Hashable {
+        modifier(OnScrollGeometryChangeModifier(transform: transform, action: action))
+    }
 
-        return environment(\.webViewOnScrollGeometryChange, change)
+    @_spi(Private)
+    public func webViewScrollPosition(_ position: Binding<ScrollPosition>) -> some View {
+        environment(\.webViewScrollPositionContext, .init(position: position))
+    }
+}
+
+private struct OnScrollGeometryChangeModifier<T>: ViewModifier where T: Hashable {
+    @Namespace private var namespace
+    @Environment(\.webViewOnScrollGeometryChange) var onScrollGeometryChange
+
+    let transform: (ScrollGeometry) -> T
+    let action: (T, T) -> Void
+
+    func body(content: Content) -> some View {
+        onScrollGeometryChange.register(changeID: namespace, transform: transform, action: action)
+
+        return content.environment(\.webViewOnScrollGeometryChange, onScrollGeometryChange)
     }
 }

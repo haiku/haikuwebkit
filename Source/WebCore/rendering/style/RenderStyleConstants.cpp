@@ -396,18 +396,6 @@ TextStream& operator<<(TextStream& ts, ContentVisibility contentVisibility)
     return ts;
 }
 
-TextStream& operator<<(TextStream& ts, CornerShape shape)
-{
-    switch (shape) {
-    case CornerShape::Round: ts << "round"; break;
-    case CornerShape::Scoop: ts << "scoop"; break;
-    case CornerShape::Bevel: ts << "bevel"; break;
-    case CornerShape::Notch: ts << "notch"; break;
-    case CornerShape::Straight: ts << "straight"; break;
-    }
-    return ts;
-}
-
 TextStream& operator<<(TextStream& ts, CursorType cursor)
 {
     switch (cursor) {
@@ -530,6 +518,26 @@ TextStream& operator<<(TextStream& ts, EventListenerRegionType listenerType)
     case EventListenerRegionType::NonPassiveTouchCancel: ts << "active touch cancel"; break;
     case EventListenerRegionType::TouchMove: ts << "touch move"; break;
     case EventListenerRegionType::NonPassiveTouchMove: ts << "active touch move"; break;
+    case EventListenerRegionType::PointerDown: ts << "pointer down"; break;
+    case EventListenerRegionType::NonPassivePointerDown: ts << "active pointer down"; break;
+    case EventListenerRegionType::PointerEnter: ts << "pointer enter"; break;
+    case EventListenerRegionType::NonPassivePointerEnter: ts << "active pointer down"; break;
+    case EventListenerRegionType::PointerLeave: ts << "pointer leave"; break;
+    case EventListenerRegionType::NonPassivePointerLeave: ts << "active pointer down"; break;
+    case EventListenerRegionType::PointerMove: ts << "pointer move"; break;
+    case EventListenerRegionType::NonPassivePointerMove: ts << "active pointer down"; break;
+    case EventListenerRegionType::PointerOut: ts << "pointer out"; break;
+    case EventListenerRegionType::NonPassivePointerOut: ts << "active pointer down"; break;
+    case EventListenerRegionType::PointerOver: ts << "pointer over"; break;
+    case EventListenerRegionType::NonPassivePointerOver: ts << "active pointer down"; break;
+    case EventListenerRegionType::PointerUp: ts << "pointer up"; break;
+    case EventListenerRegionType::NonPassivePointerUp: ts << "active pointer down"; break;
+    case EventListenerRegionType::MouseDown: ts << "mouse down"; break;
+    case EventListenerRegionType::NonPassiveMouseDown: ts << "active mouse down"; break;
+    case EventListenerRegionType::MouseUp: ts << "mouse up"; break;
+    case EventListenerRegionType::NonPassiveMouseUp: ts << "active mouse up"; break;
+    case EventListenerRegionType::MouseMove: ts << "mouse down"; break;
+    case EventListenerRegionType::NonPassiveMouseMove: ts << "active mouse move"; break;
     }
     return ts;
 }
@@ -1490,6 +1498,16 @@ TextStream& operator<<(TextStream& ts, OverflowContinue overflowContinue)
     case OverflowContinue::Discard:
         ts << "discard";
         break;
+    }
+    return ts;
+}
+
+TextStream& operator<<(TextStream& ts, PositionVisibility positionVisibility)
+{
+    switch (positionVisibility) {
+    case PositionVisibility::AnchorsValid: ts << "anchors-valid"; break;
+    case PositionVisibility::AnchorsVisible: ts << "anchors-visible"; break;
+    case PositionVisibility::NoOverflow: ts << "no-overflow"; break;
     }
     return ts;
 }

@@ -468,7 +468,6 @@ css/CSSToStyleMap.cpp
 css/CSSValueList.cpp
 css/CSSValuePair.cpp
 css/CSSVariableReferenceValue.cpp
-css/CSSViewTransitionRule.h
 css/CSSViewValue.cpp
 css/CSSViewValue.h
 css/ComputedStyleExtractor.cpp
@@ -530,7 +529,7 @@ dom/Attr.cpp
 dom/BoundaryPoint.cpp
 dom/BroadcastChannel.cpp
 dom/ChildListMutationScope.h
-dom/ComposedTreeIterator.cpp
+dom/ComposedTreeIterator.h
 dom/ContainerNode.cpp
 dom/ContainerNodeAlgorithms.cpp
 dom/ContentVisibilityDocumentState.cpp
@@ -545,10 +544,7 @@ dom/DataTransferItemList.cpp
 dom/Document.cpp
 dom/DocumentFontLoader.cpp
 dom/DocumentFragment.cpp
-dom/DocumentFullscreen.cpp
-dom/DocumentFullscreen.h
 dom/DocumentInlines.h
-dom/DocumentOrShadowRootFullscreen.cpp
 dom/DocumentStorageAccess.cpp
 dom/Element.cpp
 dom/ElementData.cpp
@@ -606,8 +602,6 @@ dom/TextDecoderStreamDecoder.h
 dom/Traversal.cpp
 dom/TreeScope.cpp
 dom/TreeWalker.cpp
-dom/ViewTransition.cpp
-dom/ViewTransitionTypeSet.cpp
 dom/VisitedLinkState.cpp
 dom/WindowOrWorkerGlobalScopeTrustedTypes.cpp
 dom/mac/ImageControlsMac.cpp
@@ -1017,7 +1011,6 @@ platform/audio/PlatformMediaSessionManager.cpp
 platform/audio/PushPullFIFO.cpp
 platform/audio/Reverb.cpp
 platform/audio/ReverbConvolver.cpp
-platform/audio/cocoa/AudioDestinationCocoa.cpp
 platform/audio/cocoa/AudioFileReaderCocoa.cpp
 platform/audio/cocoa/AudioSampleDataSource.mm
 platform/cocoa/DragImageCocoa.mm
@@ -1028,7 +1021,6 @@ platform/encryptedmedia/CDMProxy.cpp
 platform/encryptedmedia/CDMProxy.h
 platform/graphics/BitmapImage.cpp
 platform/graphics/BitmapImage.h
-platform/graphics/BitmapImageDescriptor.cpp
 platform/graphics/BitmapImageSource.cpp
 platform/graphics/ComplexTextController.cpp
 platform/graphics/DisplayRefreshMonitorManager.h

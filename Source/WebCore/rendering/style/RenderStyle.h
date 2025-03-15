@@ -146,12 +146,11 @@ enum class Containment : uint8_t;
 enum class ContentDistribution : uint8_t;
 enum class ContentPosition : uint8_t;
 enum class ContentVisibility : uint8_t;
-enum class CornerShape : uint8_t;
 enum class CursorType : uint8_t;
 enum class CursorVisibility : bool;
 enum class DisplayType : uint8_t;
 enum class EmptyCell : bool;
-enum class EventListenerRegionType : uint16_t;
+enum class EventListenerRegionType : uint32_t;
 enum class FieldSizing : bool;
 enum class FillAttachment : uint8_t;
 enum class FillBox : uint8_t;
@@ -197,6 +196,7 @@ enum class PaintOrder : uint8_t;
 enum class PaintType : uint8_t;
 enum class PointerEvents : uint8_t;
 enum class PositionType : uint8_t;
+enum class PositionVisibility : uint8_t;
 enum class PrintColorAdjust : bool;
 enum class PseudoId : uint32_t;
 enum class QuoteType : uint8_t;
@@ -293,6 +293,7 @@ class CustomPropertyRegistry;
 class ViewTransitionName;
 struct Color;
 struct ColorScheme;
+struct CornerShapeValue;
 struct DynamicRangeLimit;
 struct ScopedName;
 struct ScrollMargin;
@@ -549,15 +550,15 @@ public:
 
     inline bool borderIsEquivalentForPainting(const RenderStyle&) const;
 
-    inline CornerShape cornerBottomLeftShape() const;
-    inline CornerShape cornerBottomRightShape() const;
-    inline CornerShape cornerTopLeftShape() const;
-    inline CornerShape cornerTopRightShape() const;
+    inline const Style::CornerShapeValue& cornerBottomLeftShape() const;
+    inline const Style::CornerShapeValue& cornerBottomRightShape() const;
+    inline const Style::CornerShapeValue& cornerTopLeftShape() const;
+    inline const Style::CornerShapeValue& cornerTopRightShape() const;
 
-    void setCornerBottomLeftShape(CornerShape);
-    void setCornerBottomRightShape(CornerShape);
-    void setCornerTopLeftShape(CornerShape);
-    void setCornerTopRightShape(CornerShape);
+    void setCornerBottomLeftShape(Style::CornerShapeValue&&);
+    void setCornerBottomRightShape(Style::CornerShapeValue&&);
+    void setCornerTopLeftShape(Style::CornerShapeValue&&);
+    void setCornerTopRightShape(Style::CornerShapeValue&&);
 
     float outlineSize() const { return std::max<float>(0, outlineWidth() + outlineOffset()); }
     float outlineWidth() const;
@@ -1259,11 +1260,6 @@ public:
     inline void setHasExplicitlySetBorderTopLeftRadius(bool);
     inline void setHasExplicitlySetBorderTopRightRadius(bool);
 
-    RoundedRect getRoundedInnerBorderFor(const LayoutRect& borderRect, RectEdges<bool> closedEdges) const;
-
-    RoundedRect getRoundedInnerBorderFor(const LayoutRect& borderRect, LayoutUnit topWidth, LayoutUnit bottomWidth, LayoutUnit leftWidth, LayoutUnit rightWidth, RectEdges<bool> closedEdges) const;
-    static RoundedRect getRoundedInnerBorderFor(const LayoutRect&, LayoutUnit topWidth, LayoutUnit bottomWidth, LayoutUnit leftWidth, LayoutUnit rightWidth, std::optional<RectCorners<LengthSize>>, RectEdges<bool> closedEdges);
-
     inline void setBorderLeftWidth(float);
     inline void setBorderLeftStyle(BorderStyle);
     inline void setBorderLeftColor(const Style::Color&);
@@ -1949,7 +1945,7 @@ public:
     static constexpr BorderStyle initialBorderStyle();
     static constexpr OutlineIsAuto initialOutlineStyleIsAuto();
     static inline LengthSize initialBorderRadius();
-    static constexpr CornerShape initialCornerShape();
+    static constexpr Style::CornerShapeValue initialCornerShapeValue();
     static constexpr CaptionSide initialCaptionSide();
     static constexpr ColumnAxis initialColumnAxis();
     static constexpr ColumnProgression initialColumnProgression();
@@ -2355,6 +2351,10 @@ public:
     static Vector<PositionTryFallback> initialPositionTryFallbacks();
     const Vector<PositionTryFallback>& positionTryFallbacks() const;
     void setPositionTryFallbacks(const Vector<PositionTryFallback>&);
+
+    static constexpr OptionSet<PositionVisibility> initialPositionVisibility();
+    inline OptionSet<PositionVisibility> positionVisibility() const;
+    inline void setPositionVisibility(OptionSet<PositionVisibility>);
 
 private:
     struct NonInheritedFlags {

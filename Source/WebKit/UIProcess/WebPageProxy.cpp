@@ -2773,6 +2773,12 @@ Color WebPageProxy::underlayColor() const
     return internals().underlayColor;
 }
 
+void WebPageProxy::setShouldSuppressHDR(bool shouldSuppressHDR)
+{
+    if (hasRunningProcess())
+        send(Messages::WebPage::SetShouldSuppressHDR(shouldSuppressHDR));
+}
+
 void WebPageProxy::setUnderlayColor(const Color& color)
 {
     if (internals().underlayColor == color)
@@ -4339,32 +4345,24 @@ void WebPageProxy::updateTouchEventTracking(const WebTouchEvent& touchStartEvent
         auto update = [this, location](TrackingType& trackingType, EventTrackingRegions::EventType eventType) {
             if (trackingType == TrackingType::Synchronous)
                 return;
-            auto trackingTypeForLocation = m_scrollingCoordinatorProxy->eventTrackingTypeForPoint(eventType, location);
-            trackingType = mergeTrackingTypes(trackingType, trackingTypeForLocation);
-        };
-
-        auto& tracking = internals().touchEventTracking;
-        using Type = EventTrackingRegions::EventType;
 #if ENABLE(TOUCH_EVENT_REGIONS)
-        auto updateTouchEvents = [this, location](TrackingType& trackingType, EventListenerRegionType eventType) {
-            if (trackingType == TrackingType::Synchronous)
-                return;
             if (RefPtr drawingAreaProxy = dynamicDowncast<RemoteLayerTreeDrawingAreaProxy>(*m_drawingArea)) {
                 auto trackingTypeForLocation = drawingAreaProxy->eventTrackingTypeForPoint(eventType, WebCore::IntPoint(location));
                 trackingType = mergeTrackingTypes(trackingType, trackingTypeForLocation);
             }
+#else
+            auto trackingTypeForLocation = m_scrollingCoordinatorProxy->eventTrackingTypeForPoint(eventType, location);
+            trackingType = mergeTrackingTypes(trackingType, trackingTypeForLocation);
+#endif
         };
 
-        updateTouchEvents(tracking.touchForceChangedTracking, EventListenerRegionType::TouchCancel);
-        updateTouchEvents(tracking.touchStartTracking, EventListenerRegionType::TouchStart);
-        updateTouchEvents(tracking.touchMoveTracking, EventListenerRegionType::TouchMove);
-        updateTouchEvents(tracking.touchEndTracking, EventListenerRegionType::TouchEnd);
-#else
+        auto& tracking = internals().touchEventTracking;
+        using Type = EventTrackingRegions::EventType;
+
         update(tracking.touchForceChangedTracking, Type::Touchforcechange);
         update(tracking.touchStartTracking, Type::Touchstart);
         update(tracking.touchMoveTracking, Type::Touchmove);
         update(tracking.touchEndTracking, Type::Touchend);
-#endif
         update(tracking.touchStartTracking, Type::Pointerover);
         update(tracking.touchStartTracking, Type::Pointerenter);
         update(tracking.touchStartTracking, Type::Pointerdown);
@@ -8950,6 +8948,7 @@ void WebPageProxy::showContactPicker(IPC::Connection& connection, const Contacts
         pageClient->showContactPicker(requestData, WTFMove(completionHandler));
 }
 
+#if ENABLE(WEB_AUTHN)
 void WebPageProxy::showDigitalCredentialsPicker(IPC::Connection& connection, const WebCore::DigitalCredentialsRequestData& requestData, WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&& completionHandler)
 {
     MESSAGE_CHECK_COMPLETION_BASE(
@@ -8984,6 +8983,7 @@ void WebPageProxy::dismissDigitalCredentialsPicker(IPC::Connection& connection, 
     completionHandler(false);
 #endif
 }
+#endif // ENABLE(WEB_AUTHN)
 
 void WebPageProxy::printFrame(IPC::Connection& connection, FrameIdentifier frameID, const String& title, const FloatSize& pdfFirstPageSize, CompletionHandler<void()>&& completionHandler)
 {
@@ -9123,7 +9123,11 @@ void WebPageProxy::stopMediaCapture(MediaProducerMediaCaptureKind kind, Completi
 #if ENABLE(MEDIA_STREAM)
     if (RefPtr manager = m_userMediaPermissionRequestManager)
         manager->resetAccess();
-    sendWithAsyncReply(Messages::WebPage::StopMediaCapture(kind), WTFMove(completionHandler));
+
+    auto aggregator = CallbackAggregator::create(WTFMove(completionHandler));
+    forEachWebContentProcess([&](auto& webProcess, auto pageID) {
+        webProcess.sendWithAsyncReply(Messages::WebPage::StopMediaCapture(kind), [aggregator] { }, pageID);
+    });
 #endif
 }
 
@@ -15323,6 +15327,11 @@ void WebPageProxy::scrollToRect(const FloatRect& targetRect, const FloatPoint& o
 void WebPageProxy::setContentOffset(WebCore::ScrollOffset offset, WebCore::ScrollIsAnimated animated)
 {
     send(Messages::WebPage::SetContentOffset(offset, animated));
+}
+
+void WebPageProxy::scrollToEdge(WebCore::RectEdges<bool> edges, WebCore::ScrollIsAnimated animated)
+{
+    send(Messages::WebPage::ScrollToEdge(edges, animated));
 }
 
 bool WebPageProxy::shouldEnableLockdownMode() const

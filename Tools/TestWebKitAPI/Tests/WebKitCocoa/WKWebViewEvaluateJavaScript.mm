@@ -82,10 +82,8 @@ TEST(WKWebView, EvaluateJavaScriptErrorCases)
     [webView _test_waitForDidFinishNavigation];
 
     [webView evaluateJavaScript:@"document.body" completionHandler:^(id result, NSError *error) {
-        EXPECT_NULL(result);
-        EXPECT_WK_STREQ(@"WKErrorDomain", [error domain]);
-        EXPECT_EQ(WKErrorJavaScriptResultTypeIsUnsupported, [error code]);
-
+        EXPECT_TRUE([result isKindOfClass:NSDictionary.class]);
+        EXPECT_NULL(error);
         isDone = true;
     }];
 
@@ -898,4 +896,245 @@ TEST(EvaluateJavaScript, WindowPersistency)
     }];
     TestWebKitAPI::Util::run(&done);
     done = false;
+}
+
+TEST(EvaluateJavaScript, ReturnTypes)
+{
+    auto configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    auto webView = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    __block bool didEvaluateJavaScript = false;
+    NSString *jsTopLevelReplacedByDict = @"(function(){return /hello/})()";
+    // Behaves the same as if sending "(function(){ return {} })()" because of JSValue's containerValueToObject filtering
+    [webView evaluateJavaScript:jsTopLevelReplacedByDict completionHandler:^(id value, NSError *error) {
+        NSDictionary *dict = (NSDictionary *)value;
+        EXPECT_TRUE([dict isKindOfClass:[NSDictionary class]]);
+        EXPECT_EQ([dict count], 0u);
+    }];
+    NSString *jsWithTopLevelDict = @"(function(){return { } })()";
+    [webView evaluateJavaScript:jsWithTopLevelDict completionHandler:^(id value, NSError *error) {
+        NSDictionary *dict = (NSDictionary *)value;
+        EXPECT_TRUE([dict isKindOfClass:[NSDictionary class]]);
+        EXPECT_EQ([dict count], 0u);
+    }];
+    NSString *jsWithBlob = @""
+    "(function(){return {"
+    "    blob: new Blob(['Hello']),\n"
+    "}})()";
+    NSDictionary *expectedBlob = @{
+        @"arrayBuffer" : @{ },
+        @"bytes" : @{ },
+        @"size" : @5,
+        @"slice" : @{ },
+        @"stream" : @{ },
+        @"text" : @{ },
+        @"type" : @"",
+    };
+    [webView evaluateJavaScript:jsWithBlob completionHandler:^(id value, NSError *error) {
+        EXPECT_FALSE(error);
+        NSDictionary *dict = (NSDictionary *)value;
+        EXPECT_TRUE([[dict objectForKey:@"blob"] isEqual:expectedBlob]);
+    }];
+
+    NSString *jsWithNestedObjects = @""
+    "(function(){"
+    "    let aBool = true;\n"
+    "    let someObject = {};\n"
+    "    const theKey = 'key';\n"
+    "    someObject[theKey] = null;\n"
+    "return {"
+    "    obj1: someObject,\n"
+    "    obj2: 41,\n"
+    "    obj3: someObject,\n"
+    "    obj4: aBool,\n"
+    "    obj5: aBool,\n"
+    "    [theKey]: false,\n"
+    "    theValueToo: theKey,\n"
+    "}})()";
+    [webView evaluateJavaScript:jsWithNestedObjects completionHandler:^(id value, NSError *error) {
+        EXPECT_FALSE(error);
+        NSDictionary *dict = (NSDictionary *)value;
+        EXPECT_TRUE([dict isKindOfClass:[NSDictionary class]]);
+        id obj1 = [dict objectForKey:@"obj1"];
+        id obj2 = [dict objectForKey:@"obj2"];
+        id obj3 = [dict objectForKey:@"obj3"];
+        id obj4 = [dict objectForKey:@"obj4"];
+        id obj5 = [dict objectForKey:@"obj5"];
+        EXPECT_TRUE(obj1 == obj3);
+        EXPECT_FALSE(obj1 == obj2);
+        EXPECT_TRUE([obj2 isKindOfClass:[NSNumber class]]);
+        EXPECT_TRUE([obj1 isKindOfClass:[NSDictionary class]]);
+        EXPECT_EQ([obj1 objectForKey:@"key"], [NSNull null]);
+        EXPECT_TRUE([obj4 isKindOfClass:[NSNumber class]]);
+        EXPECT_EQ(obj4, @YES);
+        EXPECT_TRUE(obj4 == obj5);
+        // The key string objects can be shared too
+        id theValueToo = [dict objectForKey:@"theValueToo"];
+        NSEnumerator *keyEnumerator = [dict keyEnumerator];
+        id key;
+        while ((key = [keyEnumerator nextObject])) {
+            NSNumber *v = [dict objectForKey:key];
+            if ([v isEqual:@NO])
+                EXPECT_EQ(key, theValueToo);
+        }
+    }];
+    NSString *jsWithRegexType = @""
+    "(function(){return {"
+    "    text:\"Hello\",\n"
+    "    number: 41,\n"
+    "    undef: undefined,\n"
+    "    bool: true,\n"
+    "    null: null,\n"
+    "    array: [ new Date(8.64e15)],\n"
+    "    regex: /hello/,\n"
+    "    blob: new Blob(['Hello']),\n"
+    "buffer: new ArrayBuffer(8),\n"
+    "int32View: new Int32Array(this.buffer),\n"
+    "objMap: new Map([\n"
+    "    ['key1', 'value1'],\n"
+    "    ['key2', 'value2']\n"
+    "]),\n"
+    "aSet: new Set([1, 2, 3]),\n"
+    "zero: 0,\n"
+    "one: 1,\n"
+    "boolFalse: false,\n"
+    "aDouble: 3.14,\n"
+    "file: new File(['content'], 'file.txt', { type: 'text/plain' }),\n"
+    "fileList: new DataTransfer().files,\n"
+    "imageData: new ImageData(2, 2),\n"
+    "emptyString: '',\n"
+    "arrayBuffer: new ArrayBuffer(8),\n"
+    "arrayBufferView: new Uint8Array(this.arrayBuffer),\n"
+    "bigInt: BigInt(9007199254740991),\n"
+    "Error: new Error('An error occurred'),\n"
+    "}})()";
+
+    [webView evaluateJavaScript:jsWithRegexType completionHandler:^(id value, NSError *error) {
+        EXPECT_FALSE(error);
+        NSDictionary *dict = (NSDictionary *)value;
+        EXPECT_TRUE([dict isKindOfClass:[NSDictionary class]]);
+        NSString *text = [dict objectForKey:@"text"];
+        EXPECT_TRUE([text isKindOfClass:[NSString class]]);
+        if ([text isKindOfClass:[NSString class]])
+            EXPECT_TRUE([text isEqual:@"Hello"]);
+        NSNumber* number = [dict objectForKey:@"number"];
+        EXPECT_TRUE([number isKindOfClass:[NSNumber class]]);
+        if ([number isKindOfClass:[NSNumber class]])
+            EXPECT_TRUE([number isEqual:@41]);
+        EXPECT_EQ([dict objectForKey:@"undef"], nil);
+        EXPECT_TRUE([[dict objectForKey:@"bool"] isKindOfClass:[NSNumber class]]);
+        if ([[dict objectForKey:@"bool"] isKindOfClass:[NSNumber class]]) {
+            BOOL b = [[dict objectForKey:@"bool"] boolValue];
+            EXPECT_TRUE(b);
+        }
+
+        EXPECT_TRUE([[dict objectForKey:@"boolFalse"] isKindOfClass:[NSNumber class]]);
+        if ([[dict objectForKey:@"boolFalse"] isKindOfClass:[NSNumber class]]) {
+            BOOL b = [[dict objectForKey:@"boolFalse"] boolValue];
+            EXPECT_FALSE(b);
+        }
+        EXPECT_EQ([dict objectForKey:@"null"], [NSNull null]);
+        NSArray* arr = [dict objectForKey:@"array"];
+        EXPECT_TRUE([arr isKindOfClass:[NSArray class]]);
+        EXPECT_NE(arr, nil);
+        EXPECT_EQ([arr count], 1u);
+        if ([arr count] == 1u)
+            EXPECT_TRUE([arr.firstObject isKindOfClass:[NSDate class]]);
+        NSDictionary* regex = [dict objectForKey:@"regex"];
+        EXPECT_TRUE([regex isKindOfClass:[NSDictionary class]]); // Converted to empty dictionary
+        EXPECT_EQ([regex count], 0u);
+
+        EXPECT_TRUE([[dict objectForKey:@"blob"] isEqual:expectedBlob]);
+        EXPECT_TRUE([[dict objectForKey:@"aDouble"] isKindOfClass:[NSNumber class]]);
+        EXPECT_TRUE([[dict objectForKey:@"zero"] isKindOfClass:[NSNumber class]]);
+
+        NSDictionary *expectedImageData = @{
+            @"colorSpace" : @"srgb",
+            @"height" : @2,
+            @"width" : @2,
+            @"data" : @{
+                @"0" : @0, @"1" : @0, @"2" : @0, @"3" : @0,
+                @"4" : @0, @"5" : @0, @"6" : @0, @"7" : @0,
+                @"8" : @0, @"9" : @0, @"10" : @0, @"11" : @0,
+                @"12" : @0, @"13" : @0, @"14" : @0, @"15" : @0
+            }
+        };
+        EXPECT_TRUE([[dict objectForKey:@"imageData"] isEqual:expectedImageData]);
+
+        RetainPtr<NSMutableDictionary> fileWithLastModifiedRemoved = adoptNS([[dict objectForKey:@"file"] mutableCopy]);
+        [fileWithLastModifiedRemoved removeObjectForKey:@"lastModified"]; // Nondeterministic value.
+        NSDictionary *expectedFileObject = @{
+            @"arrayBuffer" : @{ },
+            @"bytes" : @{ },
+            @"name" : @"file.txt",
+            @"size" : @7,
+            @"slice" : @{ },
+            @"stream" : @{ },
+            @"text" : @{ },
+            @"type" : @"text/plain",
+            @"webkitRelativePath" : @""
+        };
+        EXPECT_TRUE([fileWithLastModifiedRemoved isEqual:expectedFileObject]);
+
+        NSDictionary* arrayBufferView = [dict objectForKey:@"arrayBufferView"];
+        EXPECT_TRUE([arrayBufferView isKindOfClass:[NSDictionary class]]);
+        EXPECT_EQ([arrayBufferView count], 0u);
+
+        EXPECT_EQ([dict objectForKey:@"int32view"], nil);
+
+        NSDictionary* objMap = [dict objectForKey:@"objMap"];
+        EXPECT_TRUE([objMap isKindOfClass:[NSDictionary class]]);
+        EXPECT_EQ([objMap count], 0u);
+
+        NSDictionary* buffer = [dict objectForKey:@"buffer"];
+        EXPECT_TRUE([buffer isKindOfClass:[NSDictionary class]]);
+        EXPECT_EQ([buffer count], 0u);
+        NSDictionary* arrayBuffer = [dict objectForKey:@"arrayBuffer"];
+        EXPECT_TRUE([arrayBuffer isKindOfClass:[NSDictionary class]]);
+        EXPECT_EQ([arrayBuffer count], 0u);
+
+        EXPECT_EQ([dict objectForKey:@"error"], nil);
+
+        EXPECT_TRUE([[dict objectForKey:@"one"] isKindOfClass:[NSNumber class]]);
+        NSDictionary* aSet = [dict objectForKey:@"aSet"];
+        EXPECT_TRUE([aSet isKindOfClass:[NSDictionary class]]);
+        EXPECT_EQ([aSet count], 0u);
+
+        NSDictionary *expectedFileList = @{
+            @"item" : @{ },
+            @"length" : @0,
+        };
+        EXPECT_TRUE([[dict objectForKey:@"fileList"] isEqual:expectedFileList]);
+        NSString *emptyString = [dict objectForKey:@"emptyString"];
+        EXPECT_TRUE([emptyString isKindOfClass:[NSString class]]);
+        if ([emptyString isKindOfClass:[NSString class]])
+            EXPECT_TRUE([emptyString isEqual:@""]);
+    }];
+    [webView evaluateJavaScript:@"(function(){return null)()" completionHandler:^(id value, NSError *error) {
+        EXPECT_FALSE(value); // top level object must be a dictionary
+    }];
+    [webView evaluateJavaScript:@"(function(){return \"hello\")()" completionHandler:^(id value, NSError *error) {
+        EXPECT_FALSE(value); // top level object must be a dictionary
+    }];
+
+    constexpr NSUInteger depth { 100000 };
+    NSString *deeplyNestedArray = [[@"" stringByPaddingToLength:depth withString: @"[" startingAtIndex:0] stringByAppendingString:[@"" stringByPaddingToLength:depth withString: @"[" startingAtIndex:0]];
+    [webView evaluateJavaScript:deeplyNestedArray completionHandler:^(id value, NSError *error) {
+        EXPECT_WK_STREQ(error.domain, WKErrorDomain);
+        EXPECT_EQ(error.code, WKErrorJavaScriptExceptionOccurred);
+    }];
+
+    [webView evaluateJavaScript:@"(function(){ var array = []; array.push(array); return array })()" completionHandler:^(id value, NSError *error) {
+        EXPECT_NULL(error);
+        NSArray *array = (NSArray *)value;
+        EXPECT_TRUE([array isKindOfClass:NSArray.class]);
+        EXPECT_EQ(array.count, 1u);
+        EXPECT_TRUE(array[0] == array);
+    }];
+
+    [webView evaluateJavaScript:@"(function(){return [\"Array\"])()" completionHandler:^(id value, NSError *error) {
+        EXPECT_FALSE(value); // top level object must be a dictionary
+        didEvaluateJavaScript = true;
+    }];
+
+    TestWebKitAPI::Util::run(&didEvaluateJavaScript);
 }

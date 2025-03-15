@@ -53,6 +53,7 @@
 #include "HTMLDetailsElement.h"
 #include "HTMLFieldSetElement.h"
 #include "HTMLFormElement.h"
+#include "HTMLHtmlElement.h"
 #include "HTMLImageElement.h"
 #include "HTMLInputElement.h"
 #include "HTMLLabelElement.h"
@@ -600,7 +601,10 @@ void AccessibilityNodeObject::addChildren()
         addChild(cache->getOrCreate(*child));
 #else
     if (auto* containerNode = dynamicDowncast<ContainerNode>(*node)) {
-        for (Ref child : composedTreeChildren(*containerNode))
+        // Specify an InlineContextCapacity template parameter of 0 to avoid allocating ComposedTreeIterator's
+        // internal vector on the stack. See comment in AccessibilityRenderObject::addChildren() for a full
+        // explanation of this behavior.
+        for (Ref child : composedTreeChildren</* InlineContextCapacity */ 0>(*containerNode))
             addChild(cache->getOrCreate(child.get()));
     }
 #endif // USE(ATSPI)
@@ -1109,7 +1113,7 @@ AccessibilityButtonState AccessibilityNodeObject::checkboxOrRadioValue() const
 }
 
 #if ENABLE(AX_THREAD_TEXT_APIS)
-TextEmissionBehavior AccessibilityNodeObject::emitTextAfterBehavior() const
+TextEmissionBehavior AccessibilityNodeObject::textEmissionBehavior() const
 {
     RefPtr node = this->node();
     if (!node)
@@ -1127,8 +1131,15 @@ TextEmissionBehavior AccessibilityNodeObject::emitTextAfterBehavior() const
         return TextEmissionBehavior::DoubleNewline;
     }
 
-    if (WebCore::shouldEmitNewlinesBeforeAndAfterNode(*node))
+    if (WebCore::shouldEmitNewlinesBeforeAndAfterNode(*node)) {
+        if (is<RenderView>(renderer()) || is<HTMLHtmlElement>(*node)) {
+            // Don't emit newlines for these objects. This is important because sometimes we start traversing
+            // AXTextMarkers from the root, and want to do something for every object that emits a newline,
+            // but there are no known cases where this is correct for these root elements.
+            return TextEmissionBehavior::None;
+        }
         return TextEmissionBehavior::Newline;
+    }
 
     if (CheckedPtr cell = dynamicDowncast<RenderTableCell>(node->renderer()); cell && cell->nextCell()) {
         // https://html.spec.whatwg.org/multipage/dom.html#the-innertext-idl-attribute

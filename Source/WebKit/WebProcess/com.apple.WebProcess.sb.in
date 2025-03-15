@@ -138,7 +138,10 @@
 )
 
 (allow file-read*
-       file-write-data
+    (literal "/dev/null")
+    (literal "/dev/zero"))
+
+(allow file-write-data (with report) (with telemetry)
     (literal "/dev/null")
     (literal "/dev/zero"))
 
@@ -149,11 +152,10 @@
         (literal "/dev/dtracehelper")
         (require-any
             (csr CSR_ALLOW_APPLE_INTERNAL)
-            (csr CSR_ALLOW_UNRESTRICTED_DTRACE)))
-)
+            (csr CSR_ALLOW_UNRESTRICTED_DTRACE))))
 
 ;;; Allow creation of core dumps.
-(allow file-write-create
+(allow file-write-create (with report) (with telemetry)
     (require-all (prefix "/cores/")
         (vnode-type REGULAR-FILE)))
 
@@ -840,7 +842,8 @@
 (define (allow-read-write-directory-and-issue-read-write-extensions path)
     (if path
         (begin
-            (allow file-read* file-write* (subpath path))
+            (allow file-read* (subpath path))
+            (allow file-write* (with report) (with telemetry) (subpath path))
             (allow file-issue-extension (require-all (extension-class "com.apple.app-sandbox.read") (subpath path)))
             (allow file-issue-extension (require-all (extension-class "com.apple.app-sandbox.read-write") (subpath path))))))
 
@@ -943,12 +946,15 @@
 #endif
 
 (read-only-and-issue-extensions (extension "com.apple.app-sandbox.read"))
-(read-write-and-issue-extensions (extension "com.apple.app-sandbox.read-write"))
+(define (read-write-extension-with-telemetry) (with report) (with telemetry) (extension "com.apple.app-sandbox.read-write"))
+(read-write-and-issue-extensions (read-write-extension-with-telemetry))
 
 ;; Allow certain Mach extensions. See <rdar://87850345>.
 (allow mach-lookup
     (require-all
+        (require-not (state-flag "WebProcessDidNotInjectStoreBundle"))
         (extension "com.apple.app-sandbox.mach")
+        (extension "com.apple.webkit.mach-bootstrap")
         (global-name "com.apple.commerce")))
 
 ;; Allow the OpenGL Profiler to attach.
@@ -1690,7 +1696,7 @@
     (message-number 204 207 301 711 800 804))
 
 (define (mach-bootstrap-message-numbers-post-launch)
-    (message-number 207 301 800 804))
+    (message-number 204 207 301 800 804))
 
 (define (allow-mach-bootstrap-with-filter)
     (allow mach-bootstrap

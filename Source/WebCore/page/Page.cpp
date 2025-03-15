@@ -841,8 +841,6 @@ void Page::setMainFrameURLAndOrigin(const URL& url, RefPtr<SecurityOrigin>&& ori
     RELEASE_ASSERT(url == m_topDocumentSyncData->documentURL);
     if (!origin)
         RELEASE_ASSERT(!m_topDocumentSyncData->documentSecurityOrigin);
-    else
-        RELEASE_ASSERT(origin->equal(*m_topDocumentSyncData->documentSecurityOrigin));
 
     processSyncClient().broadcastTopDocumentSyncDataToOtherProcesses(m_topDocumentSyncData.get());
 }
@@ -2974,6 +2972,17 @@ void Page::setMuted(MediaProducerMutedStateFlags mutedState)
             document.screenshareCaptureStateDidChange();
 #endif
         document.pageMutedStateDidChange();
+    });
+}
+
+void Page::setShouldSuppressHDR(bool shouldSuppressHDR)
+{
+    if (m_shouldSuppressHDR == shouldSuppressHDR)
+        return;
+
+    m_shouldSuppressHDR = shouldSuppressHDR;
+    forEachDocument([](auto& document) {
+        document.shouldSuppressHDRDidChange();
     });
 }
 

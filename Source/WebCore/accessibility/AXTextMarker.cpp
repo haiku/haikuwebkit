@@ -533,6 +533,9 @@ int AXTextMarker::lineIndex() const
         startMarker = tree->firstMarker();
     else
         return -1;
+    // Do this conversion early so we only do it once, rather than in every function that requires
+    // |startMarker| to be a text-run marker.
+    startMarker = startMarker.toTextRunMarker();
 
     auto currentLineID = startMarker.lineID();
     auto targetLineID = lineID();
@@ -693,30 +696,42 @@ unsigned AXTextMarker::offsetFromRoot() const
         AXTextMarker rootMarker { root->treeID(), root->objectID(), 0 };
         unsigned offset = 0;
         auto current = rootMarker;
+
+        bool needsNewlineOffset = false;
+        auto applyNewlineOffset = [&] () {
+            if (needsNewlineOffset && offset) {
+                // Only represent a newline if we have started counting
+                // actual, non-whitespace text (i.e. offset is > 0).
+                offset++;
+            }
+            needsNewlineOffset = false;
+        };
+
         while (current.isValid() && !hasSameObjectAndOffset(current)) {
-            RefPtr currentObject = current.isolatedObject();
+            applyNewlineOffset();
             auto previous = current;
             // If an object has text runs, and we are not at the very last position in those runs, use findMarker to navigate within them.
             // Otherwise, we want to explore all objects.
-            if (currentObject->hasTextRuns() && current.runs() && current.offset() < current.runs()->totalLength()) {
+            RefPtr currentObject = current.isolatedObject();
+            const auto* runs = currentObject->textRuns();
+            if (runs && current.offset() < runs->totalLength()) {
                 current = previous.findMarker(AXDirection::Next, CoalesceObjectBreaks::No, IgnoreBRs::No);
                 // While searching, we want to explore all positions (hence, we don't coalesce newlines or skip line breaks above)
                 // But, don't increment if the previous and current have the same visual position.
                 if (!previous.equivalentTextPosition(current))
                     offset++;
             } else {
-                RefPtr nextObject = currentObject ? currentObject->nextInPreOrder() : nullptr;
+                if (currentObject->emitsNewline()) {
+                    // If the next text we come across is on a new line, we need to increment the offset, since the
+                    // previous + current text marker won't share an equivalent visual text position.
+                    needsNewlineOffset = true;
+                }
+                RefPtr nextObject = currentObject->nextInPreOrder();
                 current = nextObject ? AXTextMarker { *nextObject, 0 } : AXTextMarker();
-                bool nextOrPreviousObjectIsLineBreak = currentObject->roleValue() == AccessibilityRole::LineBreak || (nextObject && nextObject->roleValue() == AccessibilityRole::LineBreak);
-
-                // If we come across an object on a new line, we need to increment the offset, since the previous + current
-                // text marker won't share an equivalent visual text position.
-                // However, if we are moving on or off of a line break, don't compare lineIDs. The line break object has
-                // it's own text runs which will already be considered in the offset count.
-                if (!nextOrPreviousObjectIsLineBreak && previous.lineID() && current.lineID() && previous.lineID() != current.lineID())
-                    offset++;
             }
         }
+        applyNewlineOffset();
+
         // If this assert fails, it means we couldn't navigate from root to `this`, which should never happen.
         TEXT_MARKER_ASSERT_DOBULE(hasSameObjectAndOffset(current), (*this), current);
         return offset;
@@ -900,7 +915,7 @@ String AXTextMarkerRange::toString() const
 
     auto emitNewlineOnExit = [&] (AXIsolatedObject& object) {
         // FIXME: This function should not just be emitting newlines, but instead handling every character type in TextEmissionBehavior.
-        auto behavior = object.emitTextAfterBehavior();
+        auto behavior = object.textEmissionBehavior();
         if (behavior != TextEmissionBehavior::Newline && behavior != TextEmissionBehavior::DoubleNewline)
             return;
 
@@ -1257,9 +1272,30 @@ AXTextMarker AXTextMarker::nextParagraphEnd() const
 
 AXTextMarker AXTextMarker::toTextRunMarker(std::optional<AXID> stopAtID) const
 {
-    if (!isValid() || isInTextRun()) {
+    RefPtr object = isolatedObject();
+    if (!object) {
+        // Equivalent to AXTextMarker::isValid, but "inlined" since this function is hot.
+        return *this;
+    }
+
+    const auto* runs = object->textRuns();
+    if (runs && runs->size()) {
+        unsigned totalLength = runs->totalLength();
         // If something has constructed a text-run marker, it should've done so with an in-bounds offset.
-        TEXT_MARKER_ASSERT(!isValid() || isolatedObject()->textRuns()->totalLength() >= offset());
+        bool isInBounds = totalLength >= offset();
+        if (isInBounds)
+            return *this;
+
+        if (object->editableAncestor()) {
+            // When a user types, we send out notifications with text markers whose offsets are relative
+            // to the text at that time. By the time VoiceOver sends that text marker back to us, the text
+            // may have further changed (e.g. when rapidly deleting multiple characters). Gracefully handle
+            // this scenario by setting this text marker back in-bounds.
+            const_cast<AXTextMarker*>(this)->m_data.offset = totalLength;
+            return *this;
+        }
+
+        RELEASE_ASSERT_NOT_REACHED();
         return *this;
     }
 
@@ -1273,8 +1309,7 @@ AXTextMarker AXTextMarker::toTextRunMarker(std::optional<AXID> stopAtID) const
     // AXTextMarker { ID 3: StaticText, Offset 3 }
     // Because we had to walk over ID 2 which had length 3 text.
     size_t precedingOffset = 0;
-    RefPtr start = isolatedObject();
-    RefPtr current = start->hasTextRuns() ? WTFMove(start) : findObjectWithRuns(*start, AXDirection::Next, stopAtID);
+    RefPtr current = runs ? WTFMove(object) : findObjectWithRuns(*object, AXDirection::Next, stopAtID);
     while (current) {
         unsigned totalLength = current->textRuns()->totalLength();
         if (precedingOffset + totalLength >= offset())
@@ -1300,6 +1335,8 @@ AXTextMarkerRange AXTextMarker::lineRange(LineRangeType type, IncludeTrailingLin
 {
     if (!isValid())
         return { };
+    if (!isInTextRun())
+        return toTextRunMarker().lineRange(type, includeTrailingLineBreak);
 
     if (type == LineRangeType::Current) {
         auto startMarker = atLineStart() ? *this : previousLineStart();
@@ -1332,6 +1369,9 @@ AXTextMarkerRange AXTextMarker::wordRange(WordRangeType type) const
 {
     if (!isValid())
         return { };
+    if (!isInTextRun())
+        return toTextRunMarker().wordRange(type);
+
     AXTextMarker startMarker, endMarker;
 
     if (type == WordRangeType::Right) {
@@ -1361,6 +1401,8 @@ AXTextMarkerRange AXTextMarker::sentenceRange(SentenceRangeType type) const
 {
     if (!isValid())
         return { };
+    if (!isInTextRun())
+        return toTextRunMarker().sentenceRange(type);
 
     AXTextMarker startMarker, endMarker;
 
@@ -1380,6 +1422,8 @@ AXTextMarkerRange AXTextMarker::paragraphRange() const
 {
     if (!isValid())
         return { };
+    if (!isInTextRun())
+        return toTextRunMarker().paragraphRange();
 
     // paragraphForCharacterOffset on the main thread doesn't directly call nextParagraphEnd and previousParagraphStart.
     // When actually computing the range from the current position, directly call findParagraph.

@@ -1130,8 +1130,8 @@ public:
     virtual String textContentPrefixFromListMarker() const = 0;
 #if ENABLE(AX_THREAD_TEXT_APIS)
     virtual bool hasTextRuns() = 0;
-    virtual TextEmissionBehavior emitTextAfterBehavior() const = 0;
-    bool emitsNewlineAfter() const;
+    virtual TextEmissionBehavior textEmissionBehavior() const = 0;
+    bool emitsNewline() const;
     virtual AXTextRunLineID listMarkerLineID() const = 0;
     virtual String listMarkerText() const = 0;
 #endif
@@ -1586,9 +1586,9 @@ inline Vector<AXID> AXCoreObject::childrenIDs(bool updateChildrenIfNeeded)
 }
 
 #if ENABLE(AX_THREAD_TEXT_APIS)
-inline bool AXCoreObject::emitsNewlineAfter() const
+inline bool AXCoreObject::emitsNewline() const
 {
-    auto behavior = emitTextAfterBehavior();
+    auto behavior = textEmissionBehavior();
     return behavior == TextEmissionBehavior::Newline || behavior == TextEmissionBehavior::DoubleNewline;
 }
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
@@ -1764,7 +1764,10 @@ void enumerateUnignoredDescendants(T& object, bool includeSelf, const F& lambda)
     if (includeSelf)
         lambda(object);
 
-    for (const auto& child : object.unignoredChildren())
+    // We have a reference to unignored children here, so it's possible that it will change when enumerating the unignored
+    // descendants, so copying here ensures they don't change.
+    auto children = object.unignoredChildren();
+    for (const auto& child : children)
         enumerateUnignoredDescendants(child.get(), true, lambda);
 }
 

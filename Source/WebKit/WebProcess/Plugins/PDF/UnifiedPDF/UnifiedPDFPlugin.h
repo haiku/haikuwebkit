@@ -230,8 +230,6 @@ public:
 
     static WebCore::ViewportConfiguration::Parameters viewportParameters();
 
-    void finalizeRenderingUpdate() final;
-
 private:
     explicit UnifiedPDFPlugin(WebCore::HTMLPlugInElement&);
     bool isUnifiedPDFPlugin() const override { return true; }
@@ -707,9 +705,6 @@ private:
 
     RefPtr<WebCore::ShadowRoot> m_shadowRoot;
 
-    std::optional<VisiblePDFPosition> m_pendingAnchoringInfo;
-    bool m_willSetPendingAnchoringInfo { false };
-
     // FIXME: We should rationalize these with the values in ViewGestureController.
     // For now, we'll leave them differing as they do in PDFPlugin.
 #if PLATFORM(IOS_FAMILY)
@@ -718,6 +713,12 @@ private:
     static constexpr double minimumZoomScale = 0.2;
 #endif
     static constexpr double maximumZoomScale = 6.0;
+
+#if PLATFORM(MAC)
+    static constexpr bool hasFullAnnotationSupport = true;
+#else
+    static constexpr bool hasFullAnnotationSupport = false;
+#endif
 };
 
 WTF::TextStream& operator<<(WTF::TextStream&, RepaintRequirement);

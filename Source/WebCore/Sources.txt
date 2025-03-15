@@ -3147,6 +3147,7 @@ style/TransformOperationsBuilder.cpp
 style/UserAgentStyle.cpp
 style/values/borders/StyleBorderRadius.cpp
 style/values/borders/StyleBoxShadow.cpp
+style/values/borders/StyleCornerShapeValue.cpp
 style/values/color-adjust/StyleColorScheme.cpp
 style/values/color/StyleColor.cpp
 style/values/color/StyleColorLayers.cpp
@@ -3496,6 +3497,7 @@ JSAnimationFrameRatePreset.cpp
 JSAnimationPlaybackEvent.cpp
 JSAnimationPlaybackEventInit.cpp
 JSAnimationTimeline.cpp
+JSAllAcceptedCredentialsOptions.cpp
 JSAttestationConveyancePreference.cpp
 JSAttr.cpp
 JSAudioBuffer.cpp
@@ -3707,6 +3709,7 @@ JSCustomEffectCallback.cpp
 JSCustomElementRegistry.cpp
 JSCustomEvent.cpp
 JSCustomStateSet.cpp
+JSCurrentUserDetailsOptions.cpp
 JSDOMApplicationCache.cpp
 JSDOMAudioSession.cpp
 JSDOMCSSCustomPropertyDescriptor.cpp
@@ -4777,6 +4780,7 @@ JSURLSearchParams.cpp
 JSUserActivation.cpp
 JSUndoItem.cpp
 JSUndoManager.cpp
+JSUnknownCredentialOptions.cpp
 JSUserMessageHandler.cpp
 JSUserMessageHandlersNamespace.cpp
 JSUserVerificationRequirement.cpp

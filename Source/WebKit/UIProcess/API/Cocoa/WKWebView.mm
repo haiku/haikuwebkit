@@ -59,6 +59,7 @@
 #import "RemoteObjectRegistry.h"
 #import "RemoteObjectRegistryMessages.h"
 #import "ResourceLoadDelegate.h"
+#import "RunJavaScriptParameters.h"
 #import "SessionStateCoding.h"
 #import "UIDelegate.h"
 #import "VideoPresentationManagerProxy.h"
@@ -256,34 +257,6 @@ static void *screenTimeWebpageControllerBlockedKVOContext = &screenTimeWebpageCo
 @interface STWebpageController (Staging_138865295)
 @property (nonatomic, copy) NSString *profileIdentifier;
 @end
-#if PLATFORM(MAC)
-@interface WKSTVisualEffectView : NSVisualEffectView
-@end
-
-@implementation WKSTVisualEffectView
-
-- (void)mouseDown:(NSEvent *)event
-{
-}
-
-- (void)rightMouseDown:(NSEvent *)event
-{
-}
-
-- (void)mouseMoved:(NSEvent *)event
-{
-}
-
-- (void)mouseEntered:(NSEvent *)event
-{
-}
-
-- (void)mouseExited:(NSEvent *)event
-{
-}
-
-@end
-#endif
 #endif
 
 #if ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
@@ -299,12 +272,15 @@ SOFT_LINK_OPTIONAL(libAccessibility, _AXSReduceMotionAutoplayAnimatedImagesEnabl
 #define THROW_IF_SUSPENDED if (UNLIKELY(_page && _page->isSuspended())) \
     [NSException raise:NSInternalInconsistencyException format:@"The WKWebView is suspended"]
 
-RetainPtr<NSError> nsErrorFromExceptionDetails(const WebCore::ExceptionDetails& details)
+RetainPtr<NSError> nsErrorFromExceptionDetails(const std::optional<WebCore::ExceptionDetails>& details)
 {
+    if (!details)
+        return createNSError(WKErrorJavaScriptResultTypeIsUnsupported);
+
     auto userInfo = adoptNS([[NSMutableDictionary alloc] init]);
 
     WKErrorCode errorCode;
-    switch (details.type) {
+    switch (details->type) {
     case WebCore::ExceptionDetails::Type::InvalidTargetFrame:
         errorCode = WKErrorJavaScriptInvalidFrameTarget;
         break;
@@ -317,12 +293,12 @@ RetainPtr<NSError> nsErrorFromExceptionDetails(const WebCore::ExceptionDetails& 
     }
 
     [userInfo setObject:localizedDescriptionForErrorCode(errorCode) forKey:NSLocalizedDescriptionKey];
-    [userInfo setObject:details.message forKey:_WKJavaScriptExceptionMessageErrorKey];
-    [userInfo setObject:@(details.lineNumber) forKey:_WKJavaScriptExceptionLineNumberErrorKey];
-    [userInfo setObject:@(details.columnNumber) forKey:_WKJavaScriptExceptionColumnNumberErrorKey];
+    [userInfo setObject:details->message forKey:_WKJavaScriptExceptionMessageErrorKey];
+    [userInfo setObject:@(details->lineNumber) forKey:_WKJavaScriptExceptionLineNumberErrorKey];
+    [userInfo setObject:@(details->columnNumber) forKey:_WKJavaScriptExceptionColumnNumberErrorKey];
 
-    if (!details.sourceURL.isEmpty()) {
-        if (NSURL *url = URL(details.sourceURL))
+    if (!details->sourceURL.isEmpty()) {
+        if (NSURL *url = URL(details->sourceURL))
             [userInfo setObject:url forKey:_WKJavaScriptExceptionSourceURLErrorKey];
     }
 
@@ -387,6 +363,16 @@ static bool shouldRestrictBaseURLSchemes()
 {
     static bool shouldRestrictBaseURLSchemes = linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::RestrictsBaseURLSchemes);
     return shouldRestrictBaseURLSchemes;
+}
+
+static WebCore::RectEdges<bool> toRectEdges(_WKRectEdge edges)
+{
+    return {
+        static_cast<bool>(edges & _WKRectEdgeTop),
+        static_cast<bool>(edges & _WKRectEdgeRight),
+        static_cast<bool>(edges & _WKRectEdgeBottom),
+        static_cast<bool>(edges & _WKRectEdgeLeft),
+    };
 }
 
 #if PLATFORM(MAC)
@@ -523,7 +509,7 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
         if (wasBlockedByScreenTime != _isBlockedByScreenTime) {
             if (!_screenTimeBlurredSnapshot && ![_configuration _showsSystemScreenTimeBlockingView]) {
 #if PLATFORM(MAC)
-                _screenTimeBlurredSnapshot = adoptNS([[WKSTVisualEffectView alloc] init]);
+                _screenTimeBlurredSnapshot = adoptNS([[NSVisualEffectView alloc] init]);
                 [_screenTimeBlurredSnapshot setMaterial:NSVisualEffectMaterialUnderWindowBackground];
                 [_screenTimeBlurredSnapshot setBlendingMode:NSVisualEffectBlendingModeWithinWindow];
 #else
@@ -1391,20 +1377,20 @@ static WKMediaPlaybackState toWKMediaPlaybackState(WebKit::MediaPlaybackState me
     THROW_IF_SUSPENDED;
     auto handler = adoptNS([completionHandler copy]);
 
-    std::optional<WebCore::ArgumentWireBytesMap> argumentsMap;
+    std::optional<Vector<std::pair<String, WebKit::JavaScriptEvaluationResult>>> argumentsMap;
     if (asAsyncFunction)
-        argumentsMap = WebCore::ArgumentWireBytesMap { };
+        argumentsMap = Vector<std::pair<String, WebKit::JavaScriptEvaluationResult>> { };
     NSString *errorMessage = nil;
 
     for (id key in arguments) {
         id value = [arguments objectForKey:key];
-        auto serializedValue = API::SerializedScriptValue::createFromNSObject(value);
+        auto serializedValue = WebKit::JavaScriptEvaluationResult::extract(value);
         if (!serializedValue) {
             errorMessage = @"Function argument values must be one of the following types, or contain only the following types: NSNumber, NSNull, NSDate, NSString, NSArray, and NSDictionary";
             break;
         }
 
-        argumentsMap->set(key, serializedValue->internalRepresentation().wireBytes());
+        argumentsMap->append({ key, WTFMove(*serializedValue) });
     }
 
     if (errorMessage && handler) {
@@ -1427,16 +1413,21 @@ static WKMediaPlaybackState toWKMediaPlaybackState(WebKit::MediaPlaybackState me
         frameID = frame._handle->_frameHandle->frameID();
 
     auto removeTransientActivation = !_dontResetTransientActivationAfterRunJavaScript && WebKit::shouldEvaluateJavaScriptWithoutTransientActivation() ? WebCore::RemoveTransientActivation::Yes : WebCore::RemoveTransientActivation::No;
-    _page->runJavaScriptInFrameInScriptWorld({ javaScriptString, JSC::SourceTaintedOrigin::Untainted, sourceURL, !!asAsyncFunction, WTFMove(argumentsMap), !!forceUserGesture, removeTransientActivation }, frameID, Ref { *world->_contentWorld }, [handler] (auto&& result) {
+    _page->runJavaScriptInFrameInScriptWorld(WebKit::RunJavaScriptParameters {
+        javaScriptString,
+        JSC::SourceTaintedOrigin::Untainted,
+        sourceURL,
+        asAsyncFunction ? WebCore::RunAsAsyncFunction::Yes : WebCore::RunAsAsyncFunction::No,
+        WTFMove(argumentsMap),
+        forceUserGesture ? WebCore::ForceUserGesture::Yes : WebCore::ForceUserGesture::No,
+        removeTransientActivation
+    }, frameID, Ref { *world->_contentWorld }, [handler] (auto&& result) {
         if (!handler)
             return;
 
         auto rawHandler = (void (^)(id, NSError *))handler.get();
-        if (!result) {
-            if (result.error())
-                return rawHandler(nil, nsErrorFromExceptionDetails(*result.error()).get());
-            return rawHandler(nil, createNSError(WKErrorJavaScriptResultTypeIsUnsupported).get());
-        }
+        if (!result)
+            return rawHandler(nil, nsErrorFromExceptionDetails(result.error()).get());
         rawHandler(result->toID().get(), nil);
     });
 }
@@ -5840,6 +5831,11 @@ struct WKWebViewData {
 - (void)_setUseSystemAppearance:(BOOL)useSystemAppearance
 {
     [[_configuration preferences] _setUseSystemAppearance:useSystemAppearance];
+}
+
+- (void)_scrollToEdge:(_WKRectEdge)edge animated:(BOOL)animated
+{
+    self._protectedPage->scrollToEdge(toRectEdges(edge), animated ? WebCore::ScrollIsAnimated::Yes : WebCore::ScrollIsAnimated::No);
 }
 
 @end
