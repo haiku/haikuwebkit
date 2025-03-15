@@ -123,8 +123,8 @@ const int defaultHeight = 150;
 
 HTMLCanvasElement::HTMLCanvasElement(const QualifiedName& tagName, Document& document)
     : HTMLElement(tagName, document, TypeFlag::HasDidMoveToNewDocument)
-    , CanvasBase(IntSize(defaultWidth, defaultHeight), document)
     , ActiveDOMObject(document)
+    , CanvasBase(IntSize(defaultWidth, defaultHeight), document)
 {
     ASSERT(hasTagName(canvasTag));
 }
@@ -365,6 +365,13 @@ CanvasRenderingContext2D* HTMLCanvasElement::createContext2d(const String& type,
     ASSERT(!m_context);
 
     m_context = CanvasRenderingContext2D::create(*this, WTFMove(settings), document().inQuirksMode());
+    if (!m_context)
+        return nullptr;
+
+#if ENABLE(PIXEL_FORMAT_RGBA16F) && HAVE(SUPPORT_HDR_DISPLAY)
+    if (m_context->pixelFormat() == ImageBufferPixelFormat::RGBA16F)
+        document().setHasPaintedHDRContent();
+#endif
 
 #if USE(CA) || USE(SKIA)
     // Need to make sure a RenderLayer and compositing layer get created for the Canvas.

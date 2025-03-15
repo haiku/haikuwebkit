@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2003-2023 Apple Inc. All rights reserved.
+ *  Copyright (C) 2003-2025 Apple Inc. All rights reserved.
  *  Copyright (C) 2007 Eric Seidel <eric@webkit.org>
  *
  *  This library is free software; you can redistribute it and/or
@@ -48,7 +48,6 @@
 #include "Interpreter.h"
 #include "IsoCellSetInlines.h"
 #include "IsoInlinedHeapCellTypeInlines.h"
-#include "IsoSubspacePerVM.h"
 #include "JITStubRoutineSet.h"
 #include "JITWorklistInlines.h"
 #include "JSFinalizationRegistry.h"
@@ -297,7 +296,7 @@ private:
     , name ISO_SUBSPACE_INIT(*this, heapCellType, type)
 
 #define INIT_SERVER_STRUCTURE_ISO_SUBSPACE(name, heapCellType, type) \
-    , name("IsoSubspace" #name, *this, heapCellType, WTF::roundUpToMultipleOf<type::atomSize>(sizeof(type)), type::usePreciseAllocationsOnly, type::numberOfLowerTierPreciseCells, makeUnique<StructureAlignedMemoryAllocator>("Structure"))
+    , name("IsoSubspace" #name, *this, heapCellType, WTF::roundUpToMultipleOf<type::atomSize>(sizeof(type)), type::numberOfLowerTierPreciseCells, makeUnique<StructureAlignedMemoryAllocator>("Structure"))
 
 Heap::Heap(VM& vm, HeapType heapType)
     : m_heapType(heapType)
@@ -456,9 +455,6 @@ Heap::~Heap()
     
     for (WeakBlock* block : m_logicallyEmptyWeakBlocks)
         WeakBlock::destroy(*this, block);
-
-    for (auto* perVMIsoSubspace : perVMIsoSubspaces)
-        perVMIsoSubspace->releaseIsoSubspace(*this);
 }
 
 bool Heap::isPagedOut()
@@ -1105,7 +1101,8 @@ void Heap::deleteAllCodeBlocks(DeleteAllCodeEffort effort)
         // VM. This could leave Wasm in an inconsistent state where it has an IC that
         // points into a CodeBlock that could be dead. The IC will still succeed because
         // it uses a callee check, but then it will call into dead code.
-        HeapIterationScope heapIterationScope(*this);
+
+        // PreciseAllocations are always eagerly swept so we don't have to worry about handling instances pending destruction thus need a HeapIterationScope
         if (m_webAssemblyInstanceSpace) {
             m_webAssemblyInstanceSpace->forEachLiveCell([&] (HeapCell* cell, HeapCell::Kind kind) {
                 ASSERT_UNUSED(kind, kind == HeapCell::JSCell);
@@ -1354,7 +1351,7 @@ auto Heap::runCurrentPhase(GCConductor conn, CurrentThreadState* currentThreadSt
 {
     checkConn(conn);
     m_currentThreadState = currentThreadState;
-    m_currentThread = &Thread::current();
+    m_currentThread = &Thread::currentSingleton();
     
     if (conn == GCConductor::Mutator)
         sanitizeStackForVM(vm());
@@ -1687,9 +1684,9 @@ NEVER_INLINE bool Heap::runEndPhase(GCConductor conn)
     }
         
     {
-        auto* previous = Thread::current().setCurrentAtomStringTable(nullptr);
+        auto* previous = Thread::currentSingleton().setCurrentAtomStringTable(nullptr);
         auto scopeExit = makeScopeExit([&] {
-            Thread::current().setCurrentAtomStringTable(previous);
+            Thread::currentSingleton().setCurrentAtomStringTable(previous);
         });
 
         if (vm().typeProfiler())
@@ -2285,7 +2282,7 @@ Heap::Ticket Heap::requestCollection(GCRequest request)
     stopIfNecessary();
     
     ASSERT(vm().currentThreadIsHoldingAPILock());
-    RELEASE_ASSERT(vm().atomStringTable() == Thread::current().atomStringTable());
+    RELEASE_ASSERT(vm().atomStringTable() == Thread::currentSingleton().atomStringTable());
     
     Locker locker { *m_threadLock };
     // We may be able to steal the conn. That only works if the collector is definitely not running
@@ -2452,15 +2449,16 @@ void Heap::updateAllocationLimits()
 
     // It's up to the user to ensure that extraMemorySize() ends up corresponding to allocation-time
     // extra memory reporting.
-    currentHeapSize += extraMemorySize();
+    auto computedExtraMemorySize = extraMemorySize();
+    currentHeapSize += computedExtraMemorySize;
     if (ASSERT_ENABLED) {
         CheckedSize checkedCurrentHeapSize = m_totalBytesVisited;
-        checkedCurrentHeapSize += extraMemorySize();
+        checkedCurrentHeapSize += computedExtraMemorySize;
         ASSERT(!checkedCurrentHeapSize.hasOverflowed() && checkedCurrentHeapSize == currentHeapSize);
     }
 
-    dataLogLnIf(verbose, "extraMemorySize() = ", extraMemorySize(), ", currentHeapSize = ", currentHeapSize);
-    
+    dataLogLnIf(verbose, "extraMemorySize() = ", computedExtraMemorySize, ", currentHeapSize = ", currentHeapSize);
+
     if (m_collectionScope && m_collectionScope.value() == CollectionScope::Full) {
         // To avoid pathological GC churn in very small and very large heaps, we set
         // the new allocation limit based on the current size of the heap, with a
@@ -2552,14 +2550,19 @@ GCActivityCallback* Heap::fullActivityCallback()
     return m_fullActivityCallback.get();
 }
 
+RefPtr<GCActivityCallback> Heap::protectedFullActivityCallback()
+{
+    return m_fullActivityCallback;
+}
+
 GCActivityCallback* Heap::edenActivityCallback()
 {
     return m_edenActivityCallback.get();
 }
 
-IncrementalSweeper& Heap::sweeper()
+RefPtr<GCActivityCallback> Heap::protectedEdenActivityCallback()
 {
-    return m_sweeper.get();
+    return m_edenActivityCallback;
 }
 
 void Heap::setGarbageCollectionTimerEnabled(bool enable)
@@ -2780,7 +2783,7 @@ void Heap::reportExternalMemoryVisited(size_t size)
 
 void Heap::collectIfNecessaryOrDefer(GCDeferralContext* deferralContext)
 {
-    ASSERT(deferralContext || isDeferred() || !DisallowGC::isInEffectOnCurrentThread());
+    ASSERT(deferralContext || isDeferred() || !AssertNoGC::isInEffectOnCurrentThread());
     if constexpr (validateDFGDoesGC)
         vm().verifyCanGC();
 
@@ -3366,6 +3369,17 @@ void Heap::scheduleOpportunisticFullCollection()
     m_shouldDoOpportunisticFullCollection = true;
 }
 
+#if ENABLE(WEBASSEMBLY)
+PreciseSubspace* Heap::webAssemblyInstanceSpaceSlow()
+{
+    ASSERT(!m_webAssemblyInstanceSpace);
+    auto space = makeUnique<PreciseSubspace>("PreciseSubspace JSWebAssemblyInstance"_s, *this, webAssemblyInstanceHeapCellType, fastMallocAllocator.get());
+    WTF::storeStoreFence();
+    m_webAssemblyInstanceSpace = WTFMove(space);
+    return m_webAssemblyInstanceSpace.get();
+}
+#endif // ENABLE(WEBASSEMBLY)
+
 #define DEFINE_DYNAMIC_ISO_SUBSPACE_MEMBER_SLOW(name, heapCellType, type) \
     IsoSubspace* Heap::name##Slow() \
     { \
@@ -3434,8 +3448,6 @@ Heap::Heap(JSC::Heap& heap)
 
 Heap::~Heap()
 {
-    for (auto* perVMIsoSubspace : perVMIsoSubspaces)
-        perVMIsoSubspace->releaseClientIsoSubspace(vm());
 }
 
 #undef INIT_CLIENT_ISO_SUBSPACE

@@ -32,6 +32,8 @@
 
 namespace WebCore {
 
+class PlatformDynamicRangeLimit;
+
 namespace CSS {
 struct DynamicRangeLimit;
 }
@@ -41,7 +43,7 @@ namespace Style {
 struct DynamicRangeLimit {
     DynamicRangeLimit(CSS::Keyword::Standard);
     DynamicRangeLimit(CSS::Keyword::ConstrainedHigh);
-    DynamicRangeLimit(CSS::Keyword::High);
+    DynamicRangeLimit(CSS::Keyword::NoLimit);
     DynamicRangeLimit(DynamicRangeLimitMixFunction&&);
 
     DynamicRangeLimit(DynamicRangeLimit&&) = default;
@@ -52,13 +54,15 @@ struct DynamicRangeLimit {
 
     template<typename... F> decltype(auto) switchOn(F&&...) const;
 
+    WEBCORE_EXPORT PlatformDynamicRangeLimit toPlatformDynamicRangeLimit() const;
+
     bool operator==(const DynamicRangeLimit&) const = default;
 
 private:
     using Kind = CompactVariant<
        CSS::Keyword::Standard,
        CSS::Keyword::ConstrainedHigh,
-       CSS::Keyword::High,
+       CSS::Keyword::NoLimit,
        UniqueRef<DynamicRangeLimitMixFunction>
     >;
 
@@ -77,7 +81,7 @@ inline DynamicRangeLimit::DynamicRangeLimit(CSS::Keyword::ConstrainedHigh keywor
 {
 }
 
-inline DynamicRangeLimit::DynamicRangeLimit(CSS::Keyword::High keyword)
+inline DynamicRangeLimit::DynamicRangeLimit(CSS::Keyword::NoLimit keyword)
     : value { keyword }
 {
 }

@@ -42,6 +42,7 @@
 #import <variant>
 #import <wtf/BlockPtr.h>
 #import <wtf/CompletionHandler.h>
+#import <wtf/HashMap.h>
 #import <wtf/NakedPtr.h>
 #import <wtf/RefPtr.h>
 #import <wtf/RetainPtr.h>
@@ -132,6 +133,7 @@ class ViewGestureController;
 
 @class WKContentView;
 @class WKPasswordView;
+@class WKScrollGeometry;
 @class WKScrollView;
 @class WKTextExtractionItem;
 @class WKTextExtractionRequest;
@@ -155,6 +157,10 @@ class ViewGestureController;
 
 #if PLATFORM(MAC)
 @class WKTextFinderClient;
+#endif
+
+#if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
+@class WKPDFPageNumberIndicator;
 #endif
 
 @protocol _WKTextManipulationDelegate;
@@ -244,8 +250,8 @@ struct PerWebProcessState {
     RetainPtr<WKWebViewConfiguration> _configuration;
     const RefPtr<WebKit::WebPageProxy> _page;
 
-    std::unique_ptr<WebKit::NavigationState> _navigationState;
-    std::unique_ptr<WebKit::UIDelegate> _uiDelegate;
+    const std::unique_ptr<WebKit::NavigationState> _navigationState;
+    const std::unique_ptr<WebKit::UIDelegate> _uiDelegate;
     std::unique_ptr<WebKit::IconLoadingDelegate> _iconLoadingDelegate;
     std::unique_ptr<WebKit::ResourceLoadDelegate> _resourceLoadDelegate;
 
@@ -426,6 +432,14 @@ struct PerWebProcessState {
 #endif
 
     WebCore::FixedContainerEdges _fixedContainerEdges;
+
+    RetainPtr<WKScrollGeometry> _currentScrollGeometry;
+
+    BOOL _allowsMagnification;
+
+#if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
+    std::pair<Markable<WebKit::PDFPluginIdentifier>, RetainPtr<WKPDFPageNumberIndicator>> _pdfPageNumberIndicator;
+#endif
 }
 
 - (BOOL)_isValid;
@@ -452,6 +466,9 @@ struct PerWebProcessState {
 #if ENABLE(SCREEN_TIME)
 - (void)_installScreenTimeWebpageController;
 - (void)_uninstallScreenTimeWebpageController;
+
+- (void)_updateScreenTimeViewGeometry;
+- (void)_updateScreenTimeShieldVisibilityForWindow;
 #endif
 
 #if ENABLE(WRITING_TOOLS)
@@ -512,12 +529,28 @@ struct PerWebProcessState {
 #endif
 
 - (void)_updateFixedContainerEdges:(const WebCore::FixedContainerEdges&)edges;
+- (void)_updateScrollGeometryWithContentOffset:(CGPoint)contentOffset contentSize:(CGSize)contentSize;
 
 - (WKPageRef)_pageForTesting;
 - (NakedPtr<WebKit::WebPageProxy>)_page;
 - (RefPtr<WebKit::WebPageProxy>)_protectedPage;
 #if ENABLE(SCREEN_TIME)
 - (STWebpageController *)_screenTimeWebpageController;
+#if PLATFORM(MAC)
+- (NSVisualEffectView *)_screenTimeBlurredSnapshot;
+#else
+- (UIVisualEffectView *)_screenTimeBlurredSnapshot;
+#endif
+#endif
+
+#if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
+
+- (void)_createPDFPageNumberIndicator:(WebKit::PDFPluginIdentifier)identifier withFrame:(CGRect)rect pageCount:(size_t)pageCount;
+- (void)_removePDFPageNumberIndicator:(WebKit::PDFPluginIdentifier)identifier;
+- (void)_updatePDFPageNumberIndicator:(WebKit::PDFPluginIdentifier)identifier withFrame:(CGRect)rect;
+- (void)_updatePDFPageNumberIndicator:(WebKit::PDFPluginIdentifier)identifier currentPage:(size_t)pageIndex;
+- (void)_removeAnyPDFPageNumberIndicator;
+
 #endif
 
 @property (nonatomic, setter=_setHasActiveNowPlayingSession:) BOOL _hasActiveNowPlayingSession;
@@ -549,5 +582,16 @@ RetainPtr<NSError> nsErrorFromExceptionDetails(const WebCore::ExceptionDetails&)
 #endif // __cplusplus
 
 @interface WKWebView (NonCpp)
+
+#if PLATFORM(MAC)
+@property (nonatomic, setter=_setAlwaysBounceVertical:) BOOL _alwaysBounceVertical;
+@property (nonatomic, setter=_setAlwaysBounceHorizontal:) BOOL _alwaysBounceHorizontal;
+
+- (void)_setContentOffset:(CGPoint)contentOffset animated:(BOOL)animated;
+#endif
+
+#if PLATFORM(IOS_FAMILY)
+@property (nonatomic, setter=_setAllowsMagnification:) BOOL _allowsMagnification;
+#endif
 
 @end

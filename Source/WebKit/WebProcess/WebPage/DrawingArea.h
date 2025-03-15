@@ -70,6 +70,10 @@ class LayerTreeHost;
 struct WebPageCreationParameters;
 struct WebPreferencesStore;
 
+#if ENABLE(DAMAGE_TRACKING)
+class FrameDamageForTesting;
+#endif
+
 class DrawingArea : public RefCounted<DrawingArea>, public IPC::MessageReceiver, public WebCore::DisplayRefreshMonitorFactory {
     WTF_MAKE_TZONE_ALLOCATED(DrawingArea);
     WTF_MAKE_NONCOPYABLE(DrawingArea);
@@ -177,6 +181,10 @@ public:
     virtual void dispatchPendingCallbacksAfterEnsuringDrawing() = 0;
 #endif
 
+#if ENABLE(DAMAGE_TRACKING)
+    virtual FrameDamageForTesting* frameDamageForTesting() const { return nullptr; }
+#endif
+
     virtual void adoptLayersFromDrawingArea(DrawingArea&) { }
     virtual void adoptDisplayRefreshMonitorsFromDrawingArea(DrawingArea&) { }
 
@@ -199,6 +207,8 @@ protected:
         Ref webPage = m_webPage.get();
         return webPage->send(std::forward<T>(message), m_identifier.toUInt64(), { });
     }
+
+    Ref<WebPage> protectedWebPage() const { return m_webPage.get(); }
 
     const DrawingAreaType m_type;
     DrawingAreaIdentifier m_identifier;

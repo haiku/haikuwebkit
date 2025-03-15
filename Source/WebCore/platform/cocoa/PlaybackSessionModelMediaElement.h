@@ -71,6 +71,7 @@ public:
 
     WEBCORE_EXPORT void handleEvent(WebCore::ScriptExecutionContext&, WebCore::Event&) final;
     void updateForEventName(const AtomString&);
+    WEBCORE_EXPORT void updateAll();
 
     WEBCORE_EXPORT void addClient(PlaybackSessionModelClient&);
     WEBCORE_EXPORT void removeClient(PlaybackSessionModelClient&);
@@ -92,6 +93,7 @@ public:
     WEBCORE_EXPORT void enterInWindowFullscreen() final;
     WEBCORE_EXPORT void exitInWindowFullscreen() final;
     WEBCORE_EXPORT void enterFullscreen() final;
+    WEBCORE_EXPORT void setPlayerIdentifierForVideoElement() final;
     WEBCORE_EXPORT void exitFullscreen() final;
     WEBCORE_EXPORT void toggleMuted() final;
     WEBCORE_EXPORT void setMuted(bool) final;

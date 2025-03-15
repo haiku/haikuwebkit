@@ -73,7 +73,7 @@ public:
     FrameIdentifier frameID() const { return m_frameID; }
     inline Page* page() const; // Defined in Page.h.
     inline RefPtr<Page> protectedPage() const; // Defined in Page.h.
-    WEBCORE_EXPORT std::optional<PageIdentifier> pageID() const;
+    inline std::optional<PageIdentifier> pageID() const; // Defined in Page.h.
     Settings& settings() const { return m_settings.get(); }
     Frame& mainFrame() { return *m_mainFrame; }
     const Frame& mainFrame() const { return *m_mainFrame; }
@@ -107,7 +107,7 @@ public:
     virtual void didFinishLoadInAnotherProcess() = 0;
 
     virtual FrameView* virtualView() const = 0;
-    RefPtr<FrameView> protectedVirtualView() const;
+    WEBCORE_EXPORT RefPtr<FrameView> protectedVirtualView() const;
     virtual void disconnectView() = 0;
     virtual FrameLoaderClient& loaderClient() = 0;
     virtual void documentURLForConsoleLog(CompletionHandler<void(const URL&)>&&) = 0;
@@ -125,6 +125,8 @@ public:
     WEBCORE_EXPORT std::optional<OwnerPermissionsPolicyData> ownerPermissionsPolicy() const;
 
     virtual void updateScrollingMode() = 0;
+
+    void stopForBackForwardCache();
 
 protected:
     Frame(Page&, FrameIdentifier, FrameType, HTMLFrameOwnerElement*, Frame* parent, Frame* opener);

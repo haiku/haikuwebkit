@@ -298,6 +298,11 @@ public:
     DeviceIdHashSaltStorage& ensureDeviceIdHashSaltStorage();
     Ref<DeviceIdHashSaltStorage> ensureProtectedDeviceIdHashSaltStorage();
 
+#if ENABLE(ENCRYPTED_MEDIA)
+    DeviceIdHashSaltStorage& ensureMediaKeysHashSaltStorage();
+    Ref<DeviceIdHashSaltStorage> ensureProtectedMediaKeysHashSaltStorage();
+#endif
+
     WebsiteDataStoreParameters parameters();
     static Vector<WebsiteDataStoreParameters> parametersFromEachWebsiteDataStore();
 
@@ -387,7 +392,14 @@ public:
     static String defaultMediaCacheDirectory(const String& baseCacheDirectory = nullString());
     static String defaultMediaKeysStorageDirectory(const String& baseDataDirectory = nullString());
     static String defaultDeviceIdHashSaltsStorageDirectory(const String& baseDataDirectory = nullString());
+#if ENABLE(ENCRYPTED_MEDIA)
+    static String defaultMediaKeysHashSaltsStorageDirectory(const String& baseDataDirectory = nullString());
+#endif
     static String defaultJavaScriptConfigurationDirectory(const String& baseDataDirectory = nullString());
+
+#if ENABLE(CONTENT_EXTENSIONS)
+    static String defaultResourceMonitorThrottlerDirectory(const String& baseDataDirectory = nullString());
+#endif
 
     static constexpr uint64_t defaultPerOriginQuota() { return 1000 * MB; }
     static constexpr uint64_t defaultStandardVolumeCapacity() {
@@ -463,7 +475,7 @@ public:
     void setServiceWorkerOverridePreferences(WebPreferences* preferences) { m_serviceWorkerOverridePreferences = preferences; }
     WebPreferences* serviceWorkerOverridePreferences() const { return m_serviceWorkerOverridePreferences.get(); }
 
-    Ref<DownloadProxy> createDownloadProxy(Ref<API::DownloadClient>&&, const WebCore::ResourceRequest&, WebPageProxy* originatingPage, const FrameInfoData&);
+    Ref<DownloadProxy> createDownloadProxy(Ref<API::DownloadClient>&&, const WebCore::ResourceRequest&, WebPageProxy* originatingPage, const std::optional<FrameInfoData>&);
     void download(const DownloadProxy&, const String& suggestedFilename);
     void resumeDownload(const DownloadProxy&, const API::Data&, const String& path, CallDownloadDidStart);
 
@@ -520,7 +532,7 @@ private:
     void removeRecentSearches(WallTime, CompletionHandler<void()>&&);
 
     WebsiteDataStore();
-    static WorkQueue& websiteDataStoreIOQueue();
+    static WorkQueue& websiteDataStoreIOQueueSingleton();
 
     Ref<WorkQueue> protectedQueue() const;
 
@@ -574,9 +586,12 @@ private:
     bool m_hasDispatchedResolveDirectories { false };
     std::optional<WebsiteDataStoreConfiguration::Directories> m_resolvedDirectories WTF_GUARDED_BY_LOCK(m_resolveDirectoriesLock);
     FileSystem::Salt m_mediaKeysStorageSalt WTF_GUARDED_BY_LOCK(m_resolveDirectoriesLock);
-    Ref<const WebsiteDataStoreConfiguration> m_configuration;
+    const Ref<const WebsiteDataStoreConfiguration> m_configuration;
     bool m_hasResolvedDirectories { false };
     RefPtr<DeviceIdHashSaltStorage> m_deviceIdHashSaltStorage;
+#if ENABLE(ENCRYPTED_MEDIA)
+    RefPtr<DeviceIdHashSaltStorage> m_mediaKeysHashSaltStorage;
+#endif
 #if PLATFORM(IOS_FAMILY)
     String m_resolvedContainerCachesWebContentDirectory;
     String m_resolvedContainerCachesNetworkingDirectory;
@@ -589,7 +604,7 @@ private:
     TrackingPreventionEnabled m_trackingPreventionEnabled { TrackingPreventionEnabled::Default };
     Function<void(const String&)> m_statisticsTestingCallback;
 
-    Ref<WorkQueue> m_queue;
+    const Ref<WorkQueue> m_queue;
 
 #if PLATFORM(COCOA)
     Vector<uint8_t> m_uiProcessCookieStorageIdentifier;

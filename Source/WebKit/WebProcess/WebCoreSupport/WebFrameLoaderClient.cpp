@@ -108,6 +108,7 @@ std::optional<NavigationActionData> WebFrameLoaderClient::navigationActionData(c
         WTFMove(originatingFrameID),
         WTFMove(parentFrameID),
         document ? std::optional { document->identifier() } : std::nullopt,
+        requestingFrame ? requestingFrame->certificateInfo() : CertificateInfo(),
         getCurrentProcessID(),
         requestingFrame ? requestingFrame->isFocused() : false
     };
@@ -142,6 +143,7 @@ std::optional<NavigationActionData> WebFrameLoaderClient::navigationActionData(c
         navigationAction.openedByDOMWithOpener(),
         hasOpener,
         isPerformingHTTPFallback == IsPerformingHTTPFallback::Yes,
+        navigationAction.isInitialFrameSrcLoad(),
         { },
         requester.securityOrigin->data(),
         requester.topOrigin->data(),

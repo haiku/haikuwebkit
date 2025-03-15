@@ -121,6 +121,7 @@ VideoPresentationInterfaceIOS::VideoPresentationInterfaceIOS(PlaybackSessionInte
     : m_watchdogTimer(RunLoop::main(), this, &VideoPresentationInterfaceIOS::watchdogTimerFired)
     , m_playbackSessionInterface(playbackSessionInterface)
 {
+    m_playbackSessionInterface->setVideoPresentationInterface(this);
 }
 
 VideoPresentationInterfaceIOS::~VideoPresentationInterfaceIOS()
@@ -195,14 +196,15 @@ void VideoPresentationInterfaceIOS::ensurePipPlacardIsShowing()
     if (placardHeight < 100)
         [pipLabel setHidden:YES];
 
-    UIView *parentView = layerHostView().superview;
-    [parentView.superview insertSubview:pipPlacard.get() atIndex:0];
-    [NSLayoutConstraint activateConstraints:@[
-        [parentView.leadingAnchor constraintEqualToAnchor:[pipPlacard leadingAnchor]],
-        [parentView.trailingAnchor constraintEqualToAnchor:[pipPlacard trailingAnchor]],
-        [parentView.topAnchor constraintEqualToAnchor:[pipPlacard topAnchor]],
-        [parentView.bottomAnchor constraintEqualToAnchor:[pipPlacard bottomAnchor]],
-    ]];
+    if (UIView *parentView = layerHostView().superview) {
+        [parentView.superview insertSubview:pipPlacard.get() atIndex:0];
+        [NSLayoutConstraint activateConstraints:@[
+            [parentView.leadingAnchor constraintEqualToAnchor:[pipPlacard leadingAnchor]],
+            [parentView.trailingAnchor constraintEqualToAnchor:[pipPlacard trailingAnchor]],
+            [parentView.topAnchor constraintEqualToAnchor:[pipPlacard topAnchor]],
+            [parentView.bottomAnchor constraintEqualToAnchor:[pipPlacard bottomAnchor]],
+        ]];
+    }
 
     m_pipPlacard = pipPlacard;
 }
@@ -366,6 +368,16 @@ void VideoPresentationInterfaceIOS::videoDimensionsChanged(const FloatSize& vide
 void VideoPresentationInterfaceIOS::externalPlaybackChanged(bool enabled, PlaybackSessionModel::ExternalPlaybackTargetType, const String&)
 {
     [playerLayerView() setHidden:enabled];
+}
+
+void VideoPresentationInterfaceIOS::enterExternalPlayback(CompletionHandler<void(bool, UIViewController *)>&& completionHandler)
+{
+    completionHandler(false, nil);
+}
+
+void VideoPresentationInterfaceIOS::exitExternalPlayback(CompletionHandler<void(bool)>&& completionHandler)
+{
+    completionHandler(false);
 }
 
 void VideoPresentationInterfaceIOS::setInlineRect(const FloatRect& inlineRect, bool visible)
@@ -582,6 +594,11 @@ void VideoPresentationInterfaceIOS::exitFullscreenHandler(BOOL success, NSError*
 void VideoPresentationInterfaceIOS::cleanupFullscreen()
 {
     LOG(Fullscreen, "VideoPresentationInterfaceIOS::cleanupFullscreen(%p)", this);
+
+    if (this->cleanupExternalPlayback()) {
+        return;
+    }
+
     m_shouldIgnoreAVKitCallbackAboutExitFullscreenReason = false;
 
     m_cleanupNeedsReturnVideoContentLayer = true;
@@ -677,8 +694,12 @@ void VideoPresentationInterfaceIOS::willStartPictureInPicture()
     m_enteringPictureInPicture = true;
 
     if (m_standby && !m_currentMode.hasVideo()) {
+        [CATransaction begin];
+        [CATransaction setDisableActions:YES];
         [m_window setHidden:NO];
         playerViewController().view.hidden = NO;
+        transferVideoViewToFullscreen();
+        [CATransaction commit];
     }
 
     if (auto model = videoPresentationModel()) {

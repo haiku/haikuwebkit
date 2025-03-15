@@ -64,7 +64,7 @@ public:
 
     virtual void didReceiveAuthenticationChallenge(Ref<AuthenticationChallengeProxy>&& challenge)
     {
-        challenge->listener().completeChallenge(AuthenticationChallengeDisposition::PerformDefaultHandling);
+        challenge->protectedListener()->completeChallenge(AuthenticationChallengeDisposition::PerformDefaultHandling);
     }
 
     virtual void openWindowFromServiceWorker(const String&, const WebCore::SecurityOriginData&, CompletionHandler<void(WebPageProxy*)>&& completionHandler)
@@ -119,8 +119,9 @@ public:
     {
     }
 
-    virtual void getScreenTimeURLs(std::optional<WTF::UUID>, CompletionHandler<void(HashSet<URL>&&)>&&) const
+    virtual void getScreenTimeURLs(std::optional<WTF::UUID>, CompletionHandler<void(HashSet<URL>&&)>&& completionHandler) const
     {
+        completionHandler({ });
     }
 
     enum class CanSuspend : bool { No, Yes };

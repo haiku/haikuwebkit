@@ -47,6 +47,7 @@ class EventRegion;
 class Path;
 class RenderObject;
 class RenderStyle;
+enum class TrackingType : uint8_t;
 
 class EventRegionContext final : public RegionContext {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(EventRegionContext, WEBCORE_EXPORT);
@@ -84,6 +85,21 @@ private:
 #endif
 };
 
+#if ENABLE(TOUCH_EVENT_REGIONS)
+struct TouchEventListenerRegion {
+    bool operator==(const TouchEventListenerRegion&) const = default;
+
+    bool isEmpty() const { return start.isEmpty() && end.isEmpty() && move.isEmpty() && cancel.isEmpty(); }
+
+    Region start;
+    Region end;
+    Region move;
+    Region cancel;
+};
+
+WEBCORE_EXPORT TextStream& operator<<(TextStream&, const TouchEventListenerRegion&);
+#endif
+
 class EventRegion {
 public:
     WEBCORE_EXPORT EventRegion();
@@ -94,6 +110,10 @@ public:
 #if ENABLE(WHEEL_EVENT_REGIONS)
     , WebCore::Region wheelEventListenerRegion
     , WebCore::Region nonPassiveWheelEventListenerRegion
+#endif
+#if ENABLE(TOUCH_EVENT_REGIONS)
+    , TouchEventListenerRegion touchEventListenerRegion
+    , TouchEventListenerRegion nonPassiveTouchEventListenerRegion
 #endif
 #if ENABLE(EDITABLE_REGION)
     , std::optional<WebCore::Region>
@@ -124,8 +144,10 @@ public:
     const Region* regionForTouchAction(TouchAction) const;
 #endif
 
-#if ENABLE(WHEEL_EVENT_REGIONS)
+    WEBCORE_EXPORT TrackingType eventTrackingTypeForPoint(EventListenerRegionType, const IntPoint&) const;
     WEBCORE_EXPORT OptionSet<EventListenerRegionType> eventListenerRegionTypesForPoint(const IntPoint&) const;
+
+#if ENABLE(WHEEL_EVENT_REGIONS)
     const Region& eventListenerRegionForType(EventListenerRegionType) const;
 #endif
 
@@ -158,6 +180,10 @@ private:
 #if ENABLE(WHEEL_EVENT_REGIONS)
     Region m_wheelEventListenerRegion;
     Region m_nonPassiveWheelEventListenerRegion;
+#endif
+#if ENABLE(TOUCH_EVENT_REGIONS)
+    TouchEventListenerRegion m_touchEventListenerRegion;
+    TouchEventListenerRegion m_nonPassiveTouchEventListenerRegion;
 #endif
 #if ENABLE(EDITABLE_REGION)
     std::optional<Region> m_editableRegion;

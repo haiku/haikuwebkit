@@ -150,23 +150,26 @@ static NSString *toCAFilterType(PlatformCALayer::FilterType type)
 
 #if HAVE(CORE_MATERIAL)
 
-static MTCoreMaterialRecipe materialRecipeForAppleVisualEffect(AppleVisualEffect effect)
+static MTCoreMaterialRecipe materialRecipeForAppleVisualEffect(AppleVisualEffect effect, AppleVisualEffectData::ColorScheme colorScheme)
 {
+    bool isDark = colorScheme == AppleVisualEffectData::ColorScheme::Dark;
+
     switch (effect) {
     case AppleVisualEffect::BlurUltraThinMaterial:
-        return PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentUltraThinLight();
+        return isDark ? PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentUltraThinDark() : PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentUltraThinLight();
     case AppleVisualEffect::BlurThinMaterial:
-        return PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentThinLight();
+        return isDark ? PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentThinDark() : PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentThinLight();
     case AppleVisualEffect::BlurMaterial:
-        return PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentLight();
+        return isDark ? PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentDark() : PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentLight();
     case AppleVisualEffect::BlurThickMaterial:
-        return PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentThickLight();
+        return isDark ? PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentThickDark() : PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentThickLight();
     case AppleVisualEffect::BlurChromeMaterial:
-        return PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformChromeLight();
+        return isDark ? PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformChromeDark() : PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformChromeLight();
     case AppleVisualEffect::None:
         return PAL::get_CoreMaterial_MTCoreMaterialRecipeNone();
 #if HAVE(MATERIAL_HOSTING)
     case AppleVisualEffect::HostedBlurMaterial:
+    case AppleVisualEffect::HostedThinBlurMaterial:
 #endif
     case AppleVisualEffect::VibrancyLabel:
     case AppleVisualEffect::VibrancySecondaryLabel:
@@ -205,6 +208,7 @@ static MTCoreMaterialVisualStyle materialVisualStyleForAppleVisualEffect(AppleVi
     case AppleVisualEffect::BlurChromeMaterial:
 #if HAVE(MATERIAL_HOSTING)
     case AppleVisualEffect::HostedBlurMaterial:
+    case AppleVisualEffect::HostedThinBlurMaterial:
 #endif
         ASSERT_NOT_REACHED();
         return nil;
@@ -232,25 +236,67 @@ static MTCoreMaterialVisualStyleCategory materialVisualStyleCategoryForAppleVisu
     case AppleVisualEffect::BlurChromeMaterial:
 #if HAVE(MATERIAL_HOSTING)
     case AppleVisualEffect::HostedBlurMaterial:
+    case AppleVisualEffect::HostedThinBlurMaterial:
 #endif
         ASSERT_NOT_REACHED();
         return nil;
     }
 }
 
-static void applyVisualStylingToLayer(CALayer *layer, AppleVisualEffect material, AppleVisualEffect visualStyling)
+#if HAVE(MATERIAL_HOSTING)
+
+static WKHostedMaterialEffectType hostedMaterialEffectTypeForAppleVisualEffect(AppleVisualEffect effect)
 {
-    MTCoreMaterialRecipe recipe = materialRecipeForAppleVisualEffect(material);
+    switch (effect) {
+    case AppleVisualEffect::HostedBlurMaterial:
+        return WKHostedMaterialEffectTypeBlur;
+    case AppleVisualEffect::HostedThinBlurMaterial:
+        return WKHostedMaterialEffectTypeThinBlur;
+    case AppleVisualEffect::None:
+    case AppleVisualEffect::BlurUltraThinMaterial:
+    case AppleVisualEffect::BlurThinMaterial:
+    case AppleVisualEffect::BlurMaterial:
+    case AppleVisualEffect::BlurThickMaterial:
+    case AppleVisualEffect::BlurChromeMaterial:
+    case AppleVisualEffect::VibrancyLabel:
+    case AppleVisualEffect::VibrancySecondaryLabel:
+    case AppleVisualEffect::VibrancyTertiaryLabel:
+    case AppleVisualEffect::VibrancyQuaternaryLabel:
+    case AppleVisualEffect::VibrancyFill:
+    case AppleVisualEffect::VibrancySecondaryFill:
+    case AppleVisualEffect::VibrancyTertiaryFill:
+    case AppleVisualEffect::VibrancySeparator:
+        ASSERT_NOT_REACHED();
+        return WKHostedMaterialEffectTypeNone;
+    }
+}
+
+static WKHostedMaterialColorScheme hostedMaterialColorSchemeForAppleVisualEffectData(const AppleVisualEffectData& data)
+{
+    switch (data.colorScheme) {
+    case AppleVisualEffectData::ColorScheme::Light:
+        return WKHostedMaterialColorSchemeLight;
+    case AppleVisualEffectData::ColorScheme::Dark:
+        return WKHostedMaterialColorSchemeDark;
+    }
+}
+
+#endif
+
+static void applyVisualStylingToLayer(CALayer *layer, const AppleVisualEffectData& effectData)
+{
+    MTCoreMaterialRecipe recipe = materialRecipeForAppleVisualEffect(effectData.contextEffect, effectData.colorScheme);
     if ([recipe isEqualToString:PAL::get_CoreMaterial_MTCoreMaterialRecipeNone()]) {
+        bool isDark = effectData.colorScheme == AppleVisualEffectData::ColorScheme::Dark;
 #if PLATFORM(VISION)
-        recipe = PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentUltraThinLight();
+        recipe = isDark ? PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentUltraThinDark() : PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentUltraThinLight();
 #else
-        recipe = PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentThickLight();
+        recipe = isDark ? PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentThickDark() : PAL::get_CoreMaterial_MTCoreMaterialRecipePlatformContentThickLight();
 #endif
     }
 
     // Despite the name, MTVisualStylingCreateDictionaryRepresentation returns an autoreleased object.
-    RetainPtr visualStylingDescription = PAL::softLink_CoreMaterial_MTVisualStylingCreateDictionaryRepresentation(recipe, materialVisualStyleCategoryForAppleVisualEffect(visualStyling), materialVisualStyleForAppleVisualEffect(visualStyling), nil);
+    RetainPtr visualStylingDescription = PAL::softLink_CoreMaterial_MTVisualStylingCreateDictionaryRepresentation(recipe, materialVisualStyleCategoryForAppleVisualEffect(effectData.effect), materialVisualStyleForAppleVisualEffect(effectData.effect), nil);
 
     RetainPtr<NSArray<NSDictionary<NSString *, id> *>> filterDescriptionsArray = [visualStylingDescription objectForKey:@"filters"];
     RetainPtr filterDescription = [filterDescriptionsArray firstObject];
@@ -268,14 +314,14 @@ static void applyVisualStylingToLayer(CALayer *layer, AppleVisualEffect material
 static void updateAppleVisualEffect(CALayer *layer, RemoteLayerTreeNode* layerTreeNode, AppleVisualEffectData effectData)
 {
     if (RetainPtr materialLayer = dynamic_objc_cast<MTMaterialLayer>(layer)) {
-        if (RetainPtr recipe = materialRecipeForAppleVisualEffect(effectData.effect)) {
+        if (RetainPtr recipe = materialRecipeForAppleVisualEffect(effectData.effect, effectData.colorScheme)) {
             [materialLayer setRecipe:recipe.get()];
             return;
         }
     }
 
     if (appleVisualEffectAppliesFilter(effectData.effect)) {
-        applyVisualStylingToLayer(layer, effectData.contextEffect, effectData.effect);
+        applyVisualStylingToLayer(layer, effectData);
         return;
     }
 
@@ -295,11 +341,11 @@ static void updateAppleVisualEffect(CALayer *layer, RemoteLayerTreeNode* layerTr
 #if PLATFORM(IOS_FAMILY)
         if (layerTreeNode) {
             if (RetainPtr materialHostingView = dynamic_objc_cast<WKMaterialHostingView>(layerTreeNode->uiView()))
-                [materialHostingView updateCornerRadius:cornerRadius];
+                [materialHostingView updateMaterialEffectType:hostedMaterialEffectTypeForAppleVisualEffect(effectData.effect) colorScheme:hostedMaterialColorSchemeForAppleVisualEffectData(effectData) cornerRadius:cornerRadius];
         }
 #endif
 
-        [WKMaterialHostingSupport updateHostingLayer:layer cornerRadius:cornerRadius];
+        [WKMaterialHostingSupport updateHostingLayer:layer materialEffectType:hostedMaterialEffectTypeForAppleVisualEffect(effectData.effect) colorScheme:hostedMaterialColorSchemeForAppleVisualEffectData(effectData) cornerRadius:cornerRadius];
     }
 #endif // HAVE(MATERIAL_HOSTING)
 }
@@ -499,7 +545,9 @@ void RemoteLayerTreePropertyApplier::applyPropertiesToLayer(CALayer *layer, Remo
             [layer setContentsFormat:formatString];
 #if ENABLE(PIXEL_FORMAT_RGBA16F)
         if (contentsFormat == ContentsFormat::RGBA16F) {
+            ALLOW_DEPRECATED_DECLARATIONS_BEGIN
             [layer setWantsExtendedDynamicRangeContent:true];
+            ALLOW_DEPRECATED_DECLARATIONS_END
             [layer setToneMapMode:CAToneMapModeIfSupported];
         }
 #endif

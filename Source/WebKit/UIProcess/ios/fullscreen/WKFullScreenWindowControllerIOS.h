@@ -48,11 +48,11 @@
 #if ENABLE(QUICKLOOK_FULLSCREEN)
 - (void)updateImageSource;
 #endif
-- (void)beganEnterFullScreenWithInitialFrame:(CGRect)initialFrame finalFrame:(CGRect)finalFrame;
+- (void)beganEnterFullScreenWithInitialFrame:(CGRect)initialFrame finalFrame:(CGRect)finalFrame completionHandler:(CompletionHandler<void(bool)>&&)completionHandler;
 - (void)requestRestoreFullScreen:(CompletionHandler<void(bool)>&&)completionHandler;
 - (void)requestExitFullScreen;
-- (void)exitFullScreen;
-- (void)beganExitFullScreenWithInitialFrame:(CGRect)initialFrame finalFrame:(CGRect)finalFrame;
+- (void)exitFullScreen:(CompletionHandler<void()>&&)completionHandler;
+- (void)beganExitFullScreenWithInitialFrame:(CGRect)initialFrame finalFrame:(CGRect)finalFrame completionHandler:(CompletionHandler<void()>&&)completionHandler;
 - (void)setSupportedOrientations:(UIInterfaceOrientationMask)orientations;
 - (void)resetSupportedOrientations;
 - (void)close;

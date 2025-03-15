@@ -3910,6 +3910,12 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
         new LengthVariantPropertyWrapper<LengthSize>(CSSPropertyBorderTopRightRadius, &RenderStyle::borderTopRightRadius, &RenderStyle::setBorderTopRightRadius),
         new LengthVariantPropertyWrapper<LengthSize>(CSSPropertyBorderBottomLeftRadius, &RenderStyle::borderBottomLeftRadius, &RenderStyle::setBorderBottomLeftRadius),
         new LengthVariantPropertyWrapper<LengthSize>(CSSPropertyBorderBottomRightRadius, &RenderStyle::borderBottomRightRadius, &RenderStyle::setBorderBottomRightRadius),
+
+        new DiscretePropertyWrapper(CSSPropertyCornerTopLeftShape, &RenderStyle::cornerTopLeftShape, &RenderStyle::setCornerTopLeftShape),
+        new DiscretePropertyWrapper(CSSPropertyCornerTopRightShape, &RenderStyle::cornerTopRightShape, &RenderStyle::setCornerTopRightShape),
+        new DiscretePropertyWrapper(CSSPropertyCornerBottomLeftShape, &RenderStyle::cornerBottomLeftShape, &RenderStyle::setCornerBottomLeftShape),
+        new DiscretePropertyWrapper(CSSPropertyCornerBottomRightShape, &RenderStyle::cornerBottomRightShape, &RenderStyle::setCornerBottomRightShape),
+
         new VisibilityWrapper,
         new NonNormalizedDiscretePropertyWrapper<DisplayType>(CSSPropertyDisplay, &RenderStyle::display, &RenderStyle::setDisplay),
 
@@ -4160,6 +4166,7 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
         new DiscretePropertyWrapper<Style::ViewTransitionName>(CSSPropertyViewTransitionName, &RenderStyle::viewTransitionName, &RenderStyle::setViewTransitionName),
         new DiscretePropertyWrapper<FieldSizing>(CSSPropertyFieldSizing, &RenderStyle::fieldSizing, &RenderStyle::setFieldSizing),
         new DiscretePropertyWrapper<const Vector<Style::ScopedName>&>(CSSPropertyAnchorName, &RenderStyle::anchorNames, &RenderStyle::setAnchorNames),
+        new DiscretePropertyWrapper<const NameScope&>(CSSPropertyAnchorScope, &RenderStyle::anchorScope, &RenderStyle::setAnchorScope),
         new DiscretePropertyWrapper<const std::optional<Style::ScopedName>&>(CSSPropertyPositionAnchor, &RenderStyle::positionAnchor, &RenderStyle::setPositionAnchor),
         new DiscretePropertyWrapper<std::optional<PositionArea>>(CSSPropertyPositionArea, &RenderStyle::positionArea, &RenderStyle::setPositionArea),
         new DiscretePropertyWrapper<Style::PositionTryOrder>(CSSPropertyPositionTryOrder, &RenderStyle::positionTryOrder, &RenderStyle::setPositionTryOrder),
@@ -4197,6 +4204,7 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
         CSSPropertyBorderSpacing,
         CSSPropertyBlockStep,
         CSSPropertyColumns,
+        CSSPropertyCornerShape,
         CSSPropertyFlex,
         CSSPropertyFlexFlow,
         CSSPropertyGap,
@@ -4223,6 +4231,7 @@ CSSPropertyAnimationWrapperMap::CSSPropertyAnimationWrapperMap()
         CSSPropertyPlaceContent,
         CSSPropertyPlaceItems,
         CSSPropertyPlaceSelf,
+        CSSPropertyPositionTry,
         CSSPropertyWebkitTextStroke,
         CSSPropertyColumnRule,
         CSSPropertyWebkitBorderRadius,

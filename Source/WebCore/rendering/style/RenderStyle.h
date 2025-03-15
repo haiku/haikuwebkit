@@ -146,11 +146,12 @@ enum class Containment : uint8_t;
 enum class ContentDistribution : uint8_t;
 enum class ContentPosition : uint8_t;
 enum class ContentVisibility : uint8_t;
+enum class CornerShape : uint8_t;
 enum class CursorType : uint8_t;
 enum class CursorVisibility : bool;
 enum class DisplayType : uint8_t;
 enum class EmptyCell : bool;
-enum class EventListenerRegionType : uint8_t;
+enum class EventListenerRegionType : uint16_t;
 enum class FieldSizing : bool;
 enum class FillAttachment : uint8_t;
 enum class FillBox : uint8_t;
@@ -250,7 +251,6 @@ enum class WhiteSpaceCollapse : uint8_t;
 enum class WordBreak : uint8_t;
 
 struct BlockEllipsis;
-struct BorderDataRadii;
 struct CounterDirectiveMap;
 struct FillRepeatXY;
 struct FontPalette;
@@ -272,7 +272,7 @@ struct ScrollSnapAlign;
 struct ScrollSnapType;
 struct ScrollbarGutter;
 struct ScrollbarColor;
-struct TimelineScope;
+struct NameScope;
 struct ViewTimelineInsets;
 
 struct TabSize;
@@ -283,6 +283,7 @@ struct TransformOperationData;
 
 template<typename> class FontTaggedSettings;
 template<typename> class RectEdges;
+template<typename> class RectCorners;
 
 using FontVariationSettings = FontTaggedSettings<float>;
 using IntOutsets = RectEdges<int>;
@@ -515,7 +516,7 @@ public:
     inline const LengthSize& borderTopRightRadius() const;
     inline const LengthSize& borderBottomLeftRadius() const;
     inline const LengthSize& borderBottomRightRadius() const;
-    inline const BorderDataRadii& borderRadii() const;
+    inline const RectCorners<LengthSize>& borderRadii() const;
     inline bool hasBorderRadius() const;
     inline bool hasExplicitlySetBorderBottomLeftRadius() const;
     inline bool hasExplicitlySetBorderBottomRightRadius() const;
@@ -547,6 +548,16 @@ public:
     float borderEndWidth() const { return borderEndWidth(writingMode()); }
 
     inline bool borderIsEquivalentForPainting(const RenderStyle&) const;
+
+    inline CornerShape cornerBottomLeftShape() const;
+    inline CornerShape cornerBottomRightShape() const;
+    inline CornerShape cornerTopLeftShape() const;
+    inline CornerShape cornerTopRightShape() const;
+
+    void setCornerBottomLeftShape(CornerShape);
+    void setCornerBottomRightShape(CornerShape);
+    void setCornerTopLeftShape(CornerShape);
+    void setCornerTopRightShape(CornerShape);
 
     float outlineSize() const { return std::max<float>(0, outlineWidth() + outlineOffset()); }
     float outlineWidth() const;
@@ -1023,9 +1034,9 @@ public:
     inline void setViewTimelineInsets(const Vector<ViewTimelineInsets>&);
     inline void setViewTimelineNames(const Vector<AtomString>&);
 
-    static inline const TimelineScope initialTimelineScope();
-    inline const TimelineScope& timelineScope() const;
-    inline void setTimelineScope(const TimelineScope&);
+    static inline const NameScope initialTimelineScope();
+    inline const NameScope& timelineScope() const;
+    inline void setTimelineScope(const NameScope&);
 
     inline const AnimationList* animations() const;
     inline const AnimationList* transitions() const;
@@ -1251,7 +1262,7 @@ public:
     RoundedRect getRoundedInnerBorderFor(const LayoutRect& borderRect, RectEdges<bool> closedEdges) const;
 
     RoundedRect getRoundedInnerBorderFor(const LayoutRect& borderRect, LayoutUnit topWidth, LayoutUnit bottomWidth, LayoutUnit leftWidth, LayoutUnit rightWidth, RectEdges<bool> closedEdges) const;
-    static RoundedRect getRoundedInnerBorderFor(const LayoutRect&, LayoutUnit topWidth, LayoutUnit bottomWidth, LayoutUnit leftWidth, LayoutUnit rightWidth, std::optional<BorderDataRadii>, RectEdges<bool> closedEdges);
+    static RoundedRect getRoundedInnerBorderFor(const LayoutRect&, LayoutUnit topWidth, LayoutUnit bottomWidth, LayoutUnit leftWidth, LayoutUnit rightWidth, std::optional<RectCorners<LengthSize>>, RectEdges<bool> closedEdges);
 
     inline void setBorderLeftWidth(float);
     inline void setBorderLeftStyle(BorderStyle);
@@ -1934,6 +1945,7 @@ public:
     static constexpr BorderStyle initialBorderStyle();
     static constexpr OutlineIsAuto initialOutlineStyleIsAuto();
     static inline LengthSize initialBorderRadius();
+    static constexpr CornerShape initialCornerShape();
     static constexpr CaptionSide initialCaptionSide();
     static constexpr ColumnAxis initialColumnAxis();
     static constexpr ColumnProgression initialColumnProgression();
@@ -2319,6 +2331,10 @@ public:
     static Vector<Style::ScopedName> initialAnchorNames();
     inline const Vector<Style::ScopedName>& anchorNames() const;
     inline void setAnchorNames(const Vector<Style::ScopedName>&);
+
+    static inline NameScope initialAnchorScope();
+    inline const NameScope& anchorScope() const;
+    inline void setAnchorScope(const NameScope&);
 
     static inline std::optional<Style::ScopedName> initialPositionAnchor();
     inline const std::optional<Style::ScopedName>& positionAnchor() const;

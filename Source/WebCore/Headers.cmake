@@ -745,7 +745,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     animation/StyleOriginatedTimelinesController.h
     animation/TimelineRange.h
     animation/TimelineRangeOffset.h
-    animation/TimelineScope.h
     animation/ViewTimeline.h
     animation/ViewTimelineOptions.h
     animation/WebAnimationTime.h
@@ -988,7 +987,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/values/CSSValueConcepts.h
     css/values/CSSValueTypes.h
 
-    css/values/backgrounds/CSSBorderRadius.h
+    css/values/borders/CSSBorderRadius.h
 
     css/values/color/CSSColor.h
     css/values/color/CSSColorDescriptors.h
@@ -1118,7 +1117,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     dom/FragmentDirectiveParser.h
     dom/FragmentDirectiveRangeFinder.h
     dom/FragmentDirectiveUtilities.h
-    dom/FullscreenManager.h
     dom/GCReachableRef.h
     dom/GetHTMLOptions.h
     dom/ImageOverlay.h
@@ -1583,7 +1581,9 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     loader/ResourceLoaderTypes.h
     loader/ResourceMonitor.h
     loader/ResourceMonitorChecker.h
+    loader/ResourceMonitorPersistence.h
     loader/ResourceMonitorThrottler.h
+    loader/ResourceMonitorThrottlerHolder.h
     loader/ResourceTimingInformation.h
     loader/ShouldTreatAsContinuingLoad.h
     loader/SubframeLoader.h
@@ -1915,6 +1915,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/PromisedAttachmentInfo.h
     platform/PublicSuffix.h
     platform/PublicSuffixStore.h
+    platform/RectCorners.h
     platform/RectEdges.h
     platform/ReferrerPolicy.h
     platform/RegistrableDomain.h
@@ -2180,6 +2181,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/MediaPlayerIdentifier.h
     platform/graphics/MediaPlayerPrivate.h
     platform/graphics/MediaResourceSniffer.h
+    platform/graphics/MediaSourceConfiguration.h
     platform/graphics/MediaSourcePrivate.h
     platform/graphics/MediaSourcePrivateClient.h
     platform/graphics/MediaUsageInfo.h
@@ -2203,6 +2205,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/PlatformAudioTrackConfiguration.h
     platform/graphics/PlatformColorSpace.h
     platform/graphics/PlatformDisplay.h
+    platform/graphics/PlatformDynamicRangeLimit.h
     platform/graphics/PlatformGraphicsContext.h
     platform/graphics/PlatformImage.h
     platform/graphics/PlatformLayer.h
@@ -2613,6 +2616,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/GridTrackSize.h
     rendering/style/LineClampValue.h
     rendering/style/ListStyleType.h
+    rendering/style/NameScope.h
     rendering/style/NinePieceImage.h
     rendering/style/OffsetRotation.h
     rendering/style/OutlineValue.h
@@ -2687,7 +2691,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/StyleValidity.h
     style/Styleable.h
 
-    style/values/backgrounds/StyleBorderRadius.h
+    style/values/borders/StyleBorderRadius.h
 
     style/values/color/StyleColor.h
     style/values/color/StyleColorOptions.h

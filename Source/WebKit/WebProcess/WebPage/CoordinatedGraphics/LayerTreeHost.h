@@ -102,7 +102,7 @@ public:
 
     void forceRepaint();
     void forceRepaintAsync(CompletionHandler<void()>&&);
-    void sizeDidChange(const WebCore::IntSize&);
+    void sizeDidChange();
 
     void pauseRendering();
     void resumeRendering();
@@ -129,6 +129,10 @@ public:
 
 #if PLATFORM(GTK) || PLATFORM(WPE)
     void ensureDrawing();
+#endif
+
+#if ENABLE(DAMAGE_TRACKING)
+    FrameDamageForTesting* frameDamageForTesting() const { return m_compositor.get(); }
 #endif
 
 #if PLATFORM(WPE) && USE(GBM) && ENABLE(WPE_PLATFORM)

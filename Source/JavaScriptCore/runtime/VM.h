@@ -293,7 +293,7 @@ public:
     // WebCore has a one-to-one mapping of threads to VMs;
     // create() should only be called once
     // on a thread, this is the 'default' VM (it uses the
-    // thread's default string uniquing table from Thread::current()).
+    // thread's default string uniquing table from Thread::currentSingleton()).
     enum class VMType { Default, APIContextGroup };
 
     struct ClientData {
@@ -417,6 +417,8 @@ public:
     };
     JS_EXPORT_PRIVATE void performOpportunisticallyScheduledTasks(MonotonicTime deadline, OptionSet<SchedulerOptions>);
 
+    Structure* immutableButterflyStructure(IndexingType indexingType) { return rawImmutableButterflyStructure(indexingType).get(); }
+
     // Keep super frequently accessed fields top in VM.
     unsigned disallowVMEntryCount { 0 };
 private:
@@ -436,7 +438,7 @@ private:
     VMTraps m_traps;
 
     VMIdentifier m_identifier;
-    RefPtr<JSLock> m_apiLock;
+    const Ref<JSLock> m_apiLock;
     Ref<WTF::RunLoop> m_runLoop;
 
     WeakRandom m_random;
@@ -452,6 +454,8 @@ private:
     {
         m_entryScopeServices.remove(service);
     }
+
+    WriteBarrier<Structure>& rawImmutableButterflyStructure(IndexingType indexingType) { return immutableButterflyStructures[arrayIndexFromIndexingType(indexingType) - NumberOfIndexingShapes]; }
 
 public:
     Heap heap;
@@ -473,6 +477,10 @@ public:
     ALWAYS_INLINE CompleteSubspace& cellSpace() { return heap.cellSpace; }
     ALWAYS_INLINE CompleteSubspace& variableSizedCellSpace() { return heap.variableSizedCellSpace; }
     ALWAYS_INLINE CompleteSubspace& destructibleObjectSpace() { return heap.destructibleObjectSpace; }
+#if ENABLE(WEBASSEMBLY)
+    template<SubspaceAccess mode>
+    ALWAYS_INLINE GCClient::PreciseSubspace* webAssemblyInstanceSpace() { return heap.webAssemblyInstanceSpace<mode>(); }
+#endif
 
 #define DEFINE_ISO_SUBSPACE_ACCESSOR(name, heapCellType, type) \
     ALWAYS_INLINE GCClient::IsoSubspace& name() { return clientHeap.name; }
@@ -561,7 +569,7 @@ public:
     Weak<NativeExecutable> m_fastRemoteFunctionExecutable;
     Weak<NativeExecutable> m_slowRemoteFunctionExecutable;
 
-    Ref<DeferredWorkTimer> deferredWorkTimer;
+    const Ref<DeferredWorkTimer> deferredWorkTimer;
 
     JSCell* currentlyDestructingCallbackObject { nullptr };
     const ClassInfo* currentlyDestructingCallbackObjectClassInfo { nullptr };
@@ -875,7 +883,7 @@ public:
 
     bool currentThreadIsHoldingAPILock() const { return m_apiLock->currentThreadIsHoldingLock(); }
 
-    JSLock& apiLock() { return *m_apiLock; }
+    JSLock& apiLock() { return m_apiLock.get(); }
     CodeCache* codeCache() { return m_codeCache.get(); }
     IntlCache& intlCache() { return *m_intlCache; }
 
@@ -1120,7 +1128,7 @@ private:
     LazyUniqueRef<VM, HeapProfiler> m_heapProfiler;
     LazyUniqueRef<VM, AdaptiveStringSearcherTables> m_stringSearcherTables;
 #if ENABLE(SAMPLING_PROFILER)
-    RefPtr<SamplingProfiler> m_samplingProfiler;
+    const RefPtr<SamplingProfiler> m_samplingProfiler;
 #endif
     std::unique_ptr<FuzzerAgent> m_fuzzerAgent;
     LazyUniqueRef<VM, ShadowChicken> m_shadowChicken;

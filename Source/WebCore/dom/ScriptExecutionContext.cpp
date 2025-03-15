@@ -646,7 +646,7 @@ JSC::JSGlobalObject* ScriptExecutionContext::globalObject() const
 {
     if (auto* document = dynamicDowncast<Document>(*this)) {
         auto frame = document->frame();
-        return frame ? frame->script().globalObject(mainThreadNormalWorld()) : nullptr;
+        return frame ? frame->script().globalObject(mainThreadNormalWorldSingleton()) : nullptr;
     }
 
     if (auto* globalScope = dynamicDowncast<WorkerOrWorkletGlobalScope>(*this)) {
@@ -923,7 +923,7 @@ public:
 private:
     explicit ScriptExecutionContextDispatcher(ScriptExecutionContext& context)
         : m_identifier(context.identifier())
-        , m_threadId(context.isWorkerGlobalScope() ? Thread::current().uid() : 1)
+        , m_threadId(context.isWorkerGlobalScope() ? Thread::currentSingleton().uid() : 1)
     {
     }
 
@@ -936,7 +936,7 @@ private:
         }
         ScriptExecutionContext::postTaskTo(m_identifier, WTFMove(callback));
     }
-    bool isCurrent() const final { return m_threadId == Thread::current().uid(); }
+    bool isCurrent() const final { return m_threadId == Thread::currentSingleton().uid(); }
 
     ScriptExecutionContextIdentifier m_identifier;
     const uint32_t m_threadId { 1 };

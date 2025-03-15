@@ -969,6 +969,7 @@ webkit.org/b/212300 fast/text/font-collection-2.html [ ImageOnlyFailure ]
 
 webkit.org/b/213114 fast/flexbox/line-clamp-with-anchor-content-only.html [ ImageOnlyFailure ]
 
+webkit.org/b/287629 imported/w3c/web-platform-tests/css/css-fonts/lang-attribute-affects-rendering.html [ ImageOnlyFailure ]
 webkit.org/b/189483 imported/w3c/web-platform-tests/css/css-fonts/variations/slnt-variable.html [ ImageOnlyFailure ]
 webkit.org/b/189483 imported/w3c/web-platform-tests/css/css-fonts/variations/slnt-backslant-variable.html [ ImageOnlyFailure ]
 
@@ -1449,6 +1450,9 @@ http/wpt/mediasession/voiceActivityDetection.html [ Skip ]
 webkit.org/b/280069 imported/w3c/web-platform-tests/webvtt/api/VTTRegion/non-visible-cue-with-region.html [ Failure ]
 
 webkit.org/b/260455 http/tests/media/media-source/mediasource-rvfc.html [ Crash Timeout Pass ]
+
+# MSE text tracks not supported
+webkit.org/b/281343 media/media-source/media-managedmse-webvtt-track.html [ Skip ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of GStreamer-related bugs
@@ -2211,9 +2215,6 @@ webkit.org/b/265860 imported/w3c/web-platform-tests/webrtc-stats/supported-stats
 
 webkit.org/b/262989 imported/w3c/web-platform-tests/webrtc-stats/hardware-capability-stats.https.html [ Failure ]
 
-# This ends up calling WKPageTriggerMockMicrophoneConfigurationChange which is specific to GPUProcess.
-fast/mediastream/mediastreamtrack-configurationchange.html [ Skip ]
-
 fast/mediastream/video-rotation2.html [ Failure Pass Timeout ]
 
 # Regressions introduced by https://commits.webkit.org/263750@main
@@ -2243,6 +2244,7 @@ webkit.org/b/256758 fast/mediastream/captureStream/canvas3d.html [ Failure ]
 
 webkit.org/b/194611 http/wpt/webrtc/getUserMedia-processSwapping.html [ Failure ]
 
+# These tests are macOS-specific. In Linux changing the PipeWire capture source on the fly is not supported.
 fast/mediastream/getDisplayMedia-max-constraints4.html [ Skip ]
 fast/mediastream/getDisplayMedia-max-constraints5.html [ Skip ]
 
@@ -2991,10 +2993,6 @@ inspector/page/archive.html [ WontFix ]
 http/wpt/webauthn/ [ Skip ]
 imported/w3c/web-platform-tests/credential-management/ [ Skip ]
 imported/w3c/web-platform-tests/webauthn [ Skip ]
-
-# Digital Crendentials API
-http/wpt/identity/ [ Skip ]
-imported/w3c/web-platform-tests/digital-credentials/ [ Skip ]
 
 # WebGL2
 webkit.org/b/166536 fast/canvas/webgl/webgl-transformed-varying-name-crash.html [ Skip ]
@@ -3977,8 +3975,6 @@ webkit.org/b/266636 fast/multicol/last-set-crash.html [ Skip ]
 
 webkit.org/b/266719 fast/canvas/offscreen-giant.html [ ImageOnlyFailure ]
 
-webkit.org/b/266713 webrtc/processIceTransportStateChange-gc.html [ Skip ]
-
 webkit.org/b/268068 imported/w3c/web-platform-tests/html/cross-origin-opener-policy [ Skip ]
 webkit.org/b/267992 imported/w3c/web-platform-tests/html/anonymous-iframe/initial-empty-document.tentative.https.window.html [ Pass Failure Crash ]
 webkit.org/b/267992 http/wpt/cross-origin-opener-policy/header-parsing-with-report-to.https.html [ Failure Pass Crash ]
@@ -4368,6 +4364,11 @@ imported/w3c/web-platform-tests/mixed-content/gen/top.meta/unset/img-tag.https.h
 imported/w3c/web-platform-tests/upgrade-insecure-requests/gen/iframe-blank-inherit.meta/unset/img-tag.https.html [ Failure Pass ]
 imported/w3c/web-platform-tests/upgrade-insecure-requests/gen/srcdoc-inherit.meta/unset/img-tag.https.html [ Failure Pass ]
 imported/w3c/web-platform-tests/upgrade-insecure-requests/gen/top.meta/unset/img-tag.https.html [ Failure Pass ]
+
+webkit.org/b/288468 platform/glib/damage/scrolling-fullscreen-002.html [ Failure ]
+webkit.org/b/288468 platform/glib/damage/scrolling-fullscreen-003.html [ Failure ]
+
+webkit.org/b/288471 platform/glib/damage/transform-3d-dynamic-addition.html [ Failure ]
 
 # End: Common failures between GTK and WPE.
 

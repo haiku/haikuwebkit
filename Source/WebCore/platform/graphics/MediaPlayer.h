@@ -782,6 +782,11 @@ public:
     void setSpatialTrackingLabel(const String&);
 #endif
 
+#if HAVE(SPATIAL_AUDIO_EXPERIENCE)
+    void setPrefersSpatialAudioExperience(bool);
+    bool prefersSpatialAudioExperience() const { return m_prefersSpatialAudioExperience; }
+#endif
+
     void setInFullscreenOrPictureInPicture(bool);
     bool isInFullscreenOrPictureInPicture() const;
 
@@ -794,6 +799,8 @@ public:
 
 #if PLATFORM(IOS_FAMILY)
     bool canShowWhileLocked() const;
+    void setSceneIdentifier(const String&);
+    const String& sceneIdentifier() const { return m_sceneIdentifier; }
 #endif
 
 private:
@@ -850,6 +857,10 @@ private:
     String m_spatialTrackingLabel;
 #endif
 
+#if HAVE(SPATIAL_AUDIO_EXPERIENCE)
+    bool m_prefersSpatialAudioExperience { false };
+#endif
+
     bool m_isInFullscreenOrPictureInPicture { false };
 
     String m_lastErrorMessage;
@@ -857,6 +868,10 @@ private:
 #if USE(AVFOUNDATION)
     bool m_preferDecompressionSession { false };
     bool m_canFallbackToDecompressionSession { false };
+#endif
+
+#if PLATFORM(IOS_FAMILY)
+    String m_sceneIdentifier;
 #endif
 };
 

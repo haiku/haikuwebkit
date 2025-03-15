@@ -88,6 +88,7 @@
 #include "WebsiteDataFetchOption.h"
 #include <WebCore/AudioSession.h>
 #include <WebCore/DiagnosticLoggingKeys.h>
+#include <WebCore/MediaProducer.h>
 #include <WebCore/PermissionName.h>
 #include <WebCore/PlatformMediaSessionManager.h>
 #include <WebCore/PrewarmInformation.h>
@@ -124,6 +125,10 @@
 
 #if ENABLE(GPU_PROCESS)
 #include "APIPageConfiguration.h"
+#endif
+
+#if ENABLE(MEDIA_STREAM)
+#include "UserMediaProcessManager.h"
 #endif
 
 #if ENABLE(SEC_ITEM_SHIM)
@@ -909,6 +914,10 @@ void WebProcessProxy::removeWebPage(WebPageProxy& webPage, EndsUsingDataStore en
     updateMediaStreamingActivity();
     updateBackgroundResponsivenessTimer();
     protectedWebsiteDataStore()->propagateSettingUpdates();
+
+#if ENABLE(MEDIA_STREAM)
+    UserMediaProcessManager::singleton().revokeSandboxExtensionsIfNeeded(Ref { *this });
+#endif
 
     maybeShutDown();
 }
@@ -1946,9 +1955,13 @@ void WebProcessProxy::updateAudibleMediaAssertions()
         return;
 #endif
 
-    bool hasAudibleWebPage = WTF::anyOf(pages(), [] (auto& page) {
+    bool hasAudibleMainPage = WTF::anyOf(pages(), [] (auto& page) {
         return page->isPlayingAudio();
     });
+    bool hasAudibleRemotePage = WTF::anyOf(remotePages(), [](auto& remotePage) {
+        return remotePage ? remotePage->mediaState().contains(MediaProducerMediaState::IsPlayingAudio) : false;
+    });
+    bool hasAudibleWebPage = hasAudibleMainPage || hasAudibleRemotePage;
 
     if (!!m_audibleMediaActivity == hasAudibleWebPage)
         return;
@@ -1967,9 +1980,13 @@ void WebProcessProxy::updateAudibleMediaAssertions()
 
 void WebProcessProxy::updateMediaStreamingActivity()
 {
-    bool hasMediaStreamingWebPage = WTF::anyOf(pages(), [] (auto& page) {
+    bool hasMediaStreamingMainPage = WTF::anyOf(pages(), [] (auto& page) {
         return page->hasMediaStreaming();
     });
+    bool hasMediaStreamingRemotePage = WTF::anyOf(remotePages(), [] (auto& remotePage) {
+        return remotePage ? remotePage->mediaState().contains(MediaProducerMediaState::HasStreamingActivity) : false;
+    });
+    bool hasMediaStreamingWebPage = hasMediaStreamingMainPage || hasMediaStreamingRemotePage;
 
     if (!!m_mediaStreamingActivity == hasMediaStreamingWebPage)
         return;
@@ -2792,7 +2809,7 @@ void WebProcessProxy::getNotifications(const URL& registrationURL, const String&
         return;
     }
 
-    WebNotificationManagerProxy::protectedSharedServiceWorkerManager()->getNotifications(registrationURL, tag, sessionID(), WTFMove(callback));
+    WebNotificationManagerProxy::serviceWorkerManagerSingleton().getNotifications(registrationURL, tag, sessionID(), WTFMove(callback));
 }
 
 void WebProcessProxy::getWebCryptoMasterKey(CompletionHandler<void(std::optional<Vector<uint8_t>>&&)>&& completionHandler)

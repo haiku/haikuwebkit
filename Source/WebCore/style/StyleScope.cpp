@@ -926,7 +926,9 @@ bool Scope::isForUserAgentShadowTree() const
 
 bool Scope::invalidateForLayoutDependencies(LayoutDependencyUpdateContext& context)
 {
-    return invalidateForContainerDependencies(context) || invalidateForAnchorDependencies(context);
+    return invalidateForContainerDependencies(context)
+        || invalidateForAnchorDependencies(context)
+        || invalidateForPositionTryFallbacks(context);
 }
 
 bool Scope::invalidateForContainerDependencies(LayoutDependencyUpdateContext& context)
@@ -1017,10 +1019,43 @@ bool Scope::invalidateForAnchorDependencies(LayoutDependencyUpdateContext& conte
         }
     }
 
-    for (auto& toInvalidate : anchoredElementsToInvalidate)
-        toInvalidate->invalidateForAnchorRectChange();
+    for (auto& toInvalidate : anchoredElementsToInvalidate) {
+        CheckedPtr renderer = toInvalidate->renderer();
+        if (renderer && AnchorPositionEvaluator::isLayoutTimeAnchorPositioned(renderer->style()))
+            renderer->setNeedsLayout();
+        else
+            toInvalidate->invalidateForAnchorRectChange();
+    }
 
     return !anchoredElementsToInvalidate.isEmpty();
+}
+
+bool Scope::invalidateForPositionTryFallbacks(LayoutDependencyUpdateContext& context)
+{
+    ASSERT(!m_shadowRoot);
+
+    if (!m_document->renderView())
+        return false;
+
+    bool invalidated = false;
+
+    for (auto& box : m_document->renderView()->positionTryBoxes()) {
+        if (!AnchorPositionEvaluator::overflowsContainingBlock(box))
+            continue;
+
+        CheckedPtr element = box.element();
+        if (auto* pseudoElement = dynamicDowncast<PseudoElement>(element.get()))
+            element = pseudoElement->hostElement();
+
+        if (element) {
+            if (!context.invalidatedAnchorPositioned.add(*element).isNewEntry)
+                continue;
+            element->invalidateForAnchorRectChange();
+            invalidated = true;
+        }
+    }
+
+    return invalidated;
 }
 
 const MatchResult* Scope::cachedMatchResult(const Element& element)
@@ -1087,7 +1122,8 @@ void Scope::resetAnchorPositioningStateBeforeStyleResolution()
     // FIXME: Move this transient state to TreeResolver.
     for (auto elementAndState : m_anchorPositionedStates) {
         elementAndState.value->anchorNames.clear();
-        elementAndState.value->stage = AnchorPositionResolutionStage::Initial;
+        elementAndState.value->stage = AnchorPositionResolutionStage::FindAnchors;
+        elementAndState.value->hasAnchorFunctions = false;
     }
 }
 
@@ -1097,7 +1133,7 @@ void Scope::updateAnchorPositioningStateAfterStyleResolution()
 
     m_anchorPositionedStates.removeIf([](auto& elementAndState) {
         // Remove if we have no anchors after initial resolution.
-        return elementAndState.value->stage != AnchorPositionResolutionStage::Initial && elementAndState.value->anchorNames.isEmpty();
+        return elementAndState.value->stage != AnchorPositionResolutionStage::FindAnchors && elementAndState.value->anchorNames.isEmpty();
     });
 }
 

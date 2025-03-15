@@ -164,6 +164,7 @@ bool RenderThemeMac::canPaint(const PaintInfo& paintInfo, const Settings&, Style
     case StyleAppearance::Radio:
     case StyleAppearance::PushButton:
     case StyleAppearance::SearchField:
+    case StyleAppearance::SearchFieldDecoration:
     case StyleAppearance::SearchFieldCancelButton:
     case StyleAppearance::SearchFieldResultsButton:
     case StyleAppearance::SearchFieldResultsDecoration:
@@ -190,6 +191,11 @@ RenderThemeMac::RenderThemeMac()
 
 bool RenderThemeMac::canCreateControlPartForRenderer(const RenderObject& renderer) const
 {
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+    if (renderer.settings().vectorBasedControlsOnMacEnabled())
+        return RenderThemeCocoa::canCreateControlPartForRendererForVectorBasedControls(renderer);
+#endif
+
     auto type = renderer.style().usedAppearance();
     return type == StyleAppearance::Button
         || type == StyleAppearance::Checkbox
@@ -222,6 +228,11 @@ bool RenderThemeMac::canCreateControlPartForRenderer(const RenderObject& rendere
 
 bool RenderThemeMac::canCreateControlPartForBorderOnly(const RenderObject& renderer) const
 {
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+    if (renderer.settings().vectorBasedControlsOnMacEnabled())
+        return RenderThemeCocoa::canCreateControlPartForBorderOnlyForVectorBasedControls(renderer);
+#endif
+
     auto appearance = renderer.style().usedAppearance();
     return appearance == StyleAppearance::Listbox
         || appearance == StyleAppearance::TextArea
@@ -230,6 +241,11 @@ bool RenderThemeMac::canCreateControlPartForBorderOnly(const RenderObject& rende
 
 bool RenderThemeMac::canCreateControlPartForDecorations(const RenderObject& renderer) const
 {
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+    if (renderer.settings().vectorBasedControlsOnMacEnabled())
+        return RenderThemeCocoa::canCreateControlPartForDecorationsForVectorBasedControls(renderer);
+#endif
+
     return renderer.style().usedAppearance() == StyleAppearance::MenulistButton;
 }
 
@@ -576,6 +592,10 @@ Color RenderThemeMac::systemColor(CSSValueID cssValueID, OptionSet<StyleColorOpt
             case CSSValueAppleSystemQuaternaryLabel:
                 return @selector(quaternaryLabelColor);
 #if HAVE(NSCOLOR_FILL_COLOR_HIERARCHY)
+            case CSSValueAppleSystemOpaqueFill:
+                return @selector(systemFillColor);
+            case CSSValueAppleSystemOpaqueSecondaryFill:
+                return @selector(secondarySystemFillColor);
             case CSSValueAppleSystemTertiaryFill:
                 return @selector(tertiarySystemFillColor);
 #endif
@@ -980,7 +1000,7 @@ static std::span<const IntSize, 4> menuListButtonSizes()
 
 void RenderThemeMac::adjustMenuListStyle(RenderStyle& style, const Element* e) const
 {
-    RenderTheme::adjustMenuListStyle(style, e);
+    RenderThemeCocoa::adjustMenuListStyle(style, e);
     NSControlSize controlSize = controlSizeForFont(style);
 
     style.resetBorder();
@@ -1070,14 +1090,15 @@ int RenderThemeMac::minimumMenuListSize(const RenderStyle& style) const
     return sizeForSystemFont(style, menuListSizes()).width();
 }
 
-void RenderThemeMac::adjustSliderTrackStyle(RenderStyle& style, const Element*) const
+void RenderThemeMac::adjustSliderTrackStyle(RenderStyle& style, const Element* element) const
 {
+    RenderThemeCocoa::adjustSliderTrackStyle(style, element);
     style.setBoxShadow(nullptr);
 }
 
 void RenderThemeMac::adjustSliderThumbStyle(RenderStyle& style, const Element* element) const
 {
-    RenderTheme::adjustSliderThumbStyle(style, element);
+    RenderThemeCocoa::adjustSliderThumbStyle(style, element);
     style.setBoxShadow(nullptr);
 }
 
@@ -1097,8 +1118,17 @@ void RenderThemeMac::setSearchFieldSize(RenderStyle& style) const
     setSizeFromFont(style, searchFieldSizes());
 }
 
-void RenderThemeMac::adjustSearchFieldStyle(RenderStyle& style, const Element*) const
+void RenderThemeMac::adjustSearchFieldStyle(RenderStyle& style, const Element* element) const
 {
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+    if (element && element->document().settings().vectorBasedControlsOnMacEnabled()) {
+        RenderThemeCocoa::adjustSearchFieldStyle(style, element);
+        return;
+    }
+#else
+    UNUSED_PARAM(element);
+#endif
+
     // Override border.
     style.resetBorder();
     const short borderWidth = 2 * style.usedZoom();
@@ -1135,8 +1165,17 @@ std::span<const IntSize, 4> RenderThemeMac::cancelButtonSizes() const
     return sizes;
 }
 
-void RenderThemeMac::adjustSearchFieldCancelButtonStyle(RenderStyle& style, const Element*) const
+void RenderThemeMac::adjustSearchFieldCancelButtonStyle(RenderStyle& style, const Element* element) const
 {
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+    if (element && element->document().settings().vectorBasedControlsOnMacEnabled()) {
+        RenderThemeCocoa::adjustSearchFieldCancelButtonStyle(style, element);
+        return;
+    }
+#else
+    UNUSED_PARAM(element);
+#endif
+
     IntSize size = sizeForSystemFont(style, cancelButtonSizes());
     style.setWidth(Length(size.width(), LengthType::Fixed));
     style.setHeight(Length(size.height(), LengthType::Fixed));
@@ -1151,8 +1190,17 @@ std::span<const IntSize, 4> RenderThemeMac::resultsButtonSizes() const
 }
 
 const int emptyResultsOffset = 9;
-void RenderThemeMac::adjustSearchFieldDecorationPartStyle(RenderStyle& style, const Element*) const
+void RenderThemeMac::adjustSearchFieldDecorationPartStyle(RenderStyle& style, const Element* element) const
 {
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+    if (element && element->document().settings().vectorBasedControlsOnMacEnabled()) {
+        RenderThemeCocoa::adjustSearchFieldDecorationPartStyle(style, element);
+        return;
+    }
+#else
+    UNUSED_PARAM(element);
+#endif
+
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
     int widthOffset = 0;
     int heightOffset = 0;
@@ -1165,16 +1213,34 @@ void RenderThemeMac::adjustSearchFieldDecorationPartStyle(RenderStyle& style, co
     style.setBoxShadow(nullptr);
 }
 
-void RenderThemeMac::adjustSearchFieldResultsDecorationPartStyle(RenderStyle& style, const Element*) const
+void RenderThemeMac::adjustSearchFieldResultsDecorationPartStyle(RenderStyle& style, const Element* element) const
 {
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+    if (element && element->document().settings().vectorBasedControlsOnMacEnabled()) {
+        RenderThemeCocoa::adjustSearchFieldResultsDecorationPartStyle(style, element);
+        return;
+    }
+#else
+    UNUSED_PARAM(element);
+#endif
+
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
     style.setWidth(Length(size.width(), LengthType::Fixed));
     style.setHeight(Length(size.height(), LengthType::Fixed));
     style.setBoxShadow(nullptr);
 }
 
-void RenderThemeMac::adjustSearchFieldResultsButtonStyle(RenderStyle& style, const Element*) const
+void RenderThemeMac::adjustSearchFieldResultsButtonStyle(RenderStyle& style, const Element* element) const
 {
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+    if (element && element->document().settings().vectorBasedControlsOnMacEnabled()) {
+        RenderThemeCocoa::adjustSearchFieldResultsButtonStyle(style, element);
+        return;
+    }
+#else
+    UNUSED_PARAM(element);
+#endif
+
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
     style.setWidth(Length(size.width() + resultsArrowWidth, LengthType::Fixed));
     style.setHeight(Length(size.height(), LengthType::Fixed));
@@ -1195,8 +1261,17 @@ int RenderThemeMac::sliderTickOffsetFromTrackCenter() const
 // However, the method currently returns an incorrect value, both with and without a control view associated with the cell.
 constexpr int sliderThumbThickness = 17;
 
-void RenderThemeMac::adjustSliderThumbSize(RenderStyle& style, const Element*) const
+void RenderThemeMac::adjustSliderThumbSize(RenderStyle& style, const Element* element) const
 {
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+    if (element && element->document().settings().vectorBasedControlsOnMacEnabled()) {
+        RenderThemeCocoa::adjustSliderThumbSize(style, element);
+        return;
+    }
+#else
+    UNUSED_PARAM(element);
+#endif
+
     float zoomLevel = style.usedZoom();
     if (style.usedAppearance() == StyleAppearance::SliderThumbHorizontal || style.usedAppearance() == StyleAppearance::SliderThumbVertical) {
         style.setWidth(Length(static_cast<int>(sliderThumbThickness * zoomLevel), LengthType::Fixed));

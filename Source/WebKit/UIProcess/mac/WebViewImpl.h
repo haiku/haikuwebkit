@@ -324,9 +324,13 @@ public:
     void windowDidChangeScreen();
     void windowDidChangeLayerHosting();
     void windowDidChangeOcclusionState();
+    void windowWillClose();
     void screenDidChangeColorSpace();
     bool shouldDelayWindowOrderingForEvent(NSEvent *);
     bool windowResizeMouseLocationIsInVisibleScrollerThumb(CGPoint);
+    void applicationShouldSuppressHDR();
+    void applicationShouldAllowHDR();
+    void updateHDRState();
 
     void accessibilitySettingsDidChange();
 
@@ -360,6 +364,11 @@ public:
     _WKRectEdge pinnedState();
     _WKRectEdge rubberBandingEnabled();
     void setRubberBandingEnabled(_WKRectEdge);
+
+    bool alwaysBounceVertical();
+    void setAlwaysBounceVertical(bool);
+    bool alwaysBounceHorizontal();
+    void setAlwaysBounceHorizontal(bool);
 
     void setOverlayScrollbarStyle(std::optional<WebCore::ScrollbarOverlayStyle> scrollbarStyle);
     std::optional<WebCore::ScrollbarOverlayStyle> overlayScrollbarStyle() const;
@@ -1060,6 +1069,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #if HAVE(INLINE_PREDICTIONS)
     bool m_inlinePredictionsEnabled { false };
 #endif
+    bool m_hdrAllowed { true };
 };
     
 } // namespace WebKit

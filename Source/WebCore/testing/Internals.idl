@@ -471,6 +471,33 @@ enum RenderingMode {
 };
 */
 
+enum ContentsFormat {
+    "RGBA8",
+#if defined(ENABLE_PIXEL_FORMAT_RGB10)
+    "RGBA10",
+#endif
+#if defined(ENABLE_PIXEL_FORMAT_RGBA16F)
+    "RGBA16F",
+#endif
+};
+
+[Conditional=DAMAGE_TRACKING] enum DamagePropagation {
+    "None",
+    "Region",
+    "Unified"
+};
+
+[
+    Conditional=DAMAGE_TRACKING,
+    ExportMacro=WEBCORE_TESTSUPPORT_EXPORT,
+    JSGenerateToJSObject,
+] dictionary FrameDamage {
+    unsigned long sequenceId;
+    boolean isValid = false;
+    DOMRectReadOnly bounds;
+    sequence<DOMRectReadOnly> rects;
+};
+
 [
     ExportMacro=WEBCORE_TESTSUPPORT_EXPORT,
     LegacyNoInterfaceObject,
@@ -725,6 +752,7 @@ enum RenderingMode {
     unsigned long remoteImagesCountForTesting();
     undefined setAsyncDecodingEnabledForTesting(HTMLImageElement element, boolean enabled);
     undefined setForceUpdateImageDataEnabledForTesting(HTMLImageElement element, boolean enabled);
+    undefined setHeadroomForTesting(HTMLImageElement element, float headroom);
 
     [Conditional=WEB_CODECS] boolean hasPendingActivity(WebCodecsVideoDecoder decoder);
 
@@ -740,6 +768,9 @@ enum RenderingMode {
     boolean testProcessIncomingSyncMessagesWhenWaitingForSyncReply();
 
     undefined setResourceCachingDisabledByWebInspector(boolean disabled);
+
+    [Conditional=DAMAGE_TRACKING] DamagePropagation? getCurrentDamagePropagation();
+    [Conditional=DAMAGE_TRACKING] sequence<FrameDamage> getFrameDamageHistory();
 
     // Flags for layerTreeAsText.
     const unsigned short LAYER_TREE_INCLUDES_VISIBLE_RECTS = 1;
@@ -851,6 +882,8 @@ enum RenderingMode {
 
     undefined setFullscreenInsets(FullscreenInsets insets);
     undefined setFullscreenAutoHideDuration(double duration);
+
+    undefined setScreenContentsFormatsForTesting(sequence<ContentsFormat> contentsFormats);
 
     [Conditional=VIDEO] boolean isChangingPresentationMode(HTMLVideoElement element);
     [Conditional=VIDEO_PRESENTATION_MODE] undefined setMockVideoPresentationModeEnabled(boolean enabled);
@@ -1076,6 +1109,8 @@ enum RenderingMode {
     [Conditional=VIDEO] undefined setMediaControlsHidePlaybackRates(HTMLMediaElement element, boolean hidePlaybackRates);
 
     DOMString userVisibleString(DOMURL url);
+
+    float pageMediaVolume();
     undefined setPageMediaVolume(float volume);
 
     undefined setShowAllPlugins(boolean showAll);
@@ -1162,6 +1197,7 @@ enum RenderingMode {
     [Conditional=MEDIA_STREAM] boolean isMockRealtimeMediaSourceCenterEnabled();
     [Conditional=MEDIA_STREAM] boolean shouldAudioTrackPlay(AudioTrack track);
     [Conditional=MEDIA_STREAM] DOMString mediaStreamTrackPersistentId(MediaStreamTrack track);
+    [Conditional=MEDIA_STREAM] unsigned long audioCaptureSourceCount();
 
     [Conditional=WEB_RTC] readonly attribute DOMString rtcNetworkInterfaceName;
 

@@ -2021,6 +2021,8 @@ constexpr CSSValueID toCSSValueID(AppleVisualEffect effect)
 #if HAVE(MATERIAL_HOSTING)
     case AppleVisualEffect::HostedBlurMaterial:
         return CSSValueAppleSystemHostedBlurMaterial;
+    case AppleVisualEffect::HostedThinBlurMaterial:
+        return CSSValueAppleSystemHostedThinBlurMaterial;
 #endif
     case AppleVisualEffect::VibrancyLabel:
         return CSSValueAppleSystemVibrancyLabel;
@@ -2061,6 +2063,8 @@ template<> constexpr AppleVisualEffect fromCSSValueID(CSSValueID valueID)
 #if HAVE(MATERIAL_HOSTING)
     case CSSValueAppleSystemHostedBlurMaterial:
         return AppleVisualEffect::HostedBlurMaterial;
+    case CSSValueAppleSystemHostedThinBlurMaterial:
+        return AppleVisualEffect::HostedThinBlurMaterial;
 #endif
     case CSSValueAppleSystemVibrancyLabel:
         return AppleVisualEffect::VibrancyLabel;
@@ -2185,6 +2189,13 @@ DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 
 #define TYPE ColorRendering
 #define FOR_EACH(CASE) CASE(Auto) CASE(OptimizeSpeed) CASE(OptimizeQuality)
+DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
+#undef TYPE
+#undef FOR_EACH
+
+
+#define TYPE CornerShape
+#define FOR_EACH(CASE) CASE(Round) CASE(Scoop) CASE(Bevel) CASE(Notch) CASE(Straight)
 DEFINE_TO_FROM_CSS_VALUE_ID_FUNCTIONS
 #undef TYPE
 #undef FOR_EACH

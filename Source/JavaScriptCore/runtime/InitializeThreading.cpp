@@ -116,10 +116,10 @@ void initialize()
             IPInt::initialize();
 #endif
         LLInt::initialize();
-        DisallowGC::initialize();
+        AssertNoGC::initialize();
 
         initializeSuperSampler();
-        Thread& thread = Thread::current();
+        auto& thread = Thread::currentSingleton();
         thread.setSavedLastStackTop(thread.stack().origin());
 
         NativeCalleeRegistry::initialize();

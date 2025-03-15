@@ -58,7 +58,7 @@ class ScrollingTreeOverflowScrollProxyNode;
 class ScrollingTreePositionedNode;
 class ScrollingTreeScrollingNode;
 class ScrollingTreeFrameHostingNode;
-enum class EventListenerRegionType : uint8_t;
+enum class EventListenerRegionType : uint16_t;
 
 using FramesPerSecond = unsigned;
 using PlatformDisplayID = uint32_t;
@@ -173,8 +173,8 @@ public:
     void setMainFramePinnedState(RectEdges<bool>);
 
     // Can be called from any thread. Will update what edges allow rubber-banding.
-    WEBCORE_EXPORT void setClientAllowedMainFrameRubberBandableEdges(RectEdges<bool>);
-    bool clientAllowsMainFrameRubberBandingOnSide(BoxSide);
+    WEBCORE_EXPORT void setClientAllowedMainFrameRubberBandableEdges(RectEdges<RubberBandingBehavior>);
+    RubberBandingBehavior clientAllowsMainFrameRubberBandingOnSide(BoxSide);
 
     bool isHandlingProgrammaticScroll() const { return m_isHandlingProgrammaticScroll; }
     void setIsHandlingProgrammaticScroll(bool isHandlingProgrammaticScroll) { m_isHandlingProgrammaticScroll = isHandlingProgrammaticScroll; }
@@ -284,7 +284,7 @@ protected:
 
 private:
     bool updateTreeFromStateNodeRecursive(const ScrollingStateNode*, struct CommitTreeState&) WTF_REQUIRES_LOCK(m_treeLock);
-    virtual void propagateSynchronousScrollingReasons(const UncheckedKeyHashSet<ScrollingNodeID>&) WTF_REQUIRES_LOCK(m_treeLock) { }
+    virtual void propagateSynchronousScrollingReasons(const HashSet<ScrollingNodeID>&) WTF_REQUIRES_LOCK(m_treeLock) { }
 
     void applyLayerPositionsRecursive(ScrollingTreeNode&) WTF_REQUIRES_LOCK(m_treeLock);
     void notifyRelatedNodesRecursive(ScrollingTreeNode&);
@@ -333,7 +333,7 @@ private:
     TreeState m_treeState WTF_GUARDED_BY_LOCK(m_treeStateLock);
 
     struct SwipeState {
-        RectEdges<bool> clientAllowedRubberBandableEdges  { true, true, true, true };
+        RectEdges<RubberBandingBehavior> clientAllowedRubberBandableEdges  { RubberBandingBehavior::Always, RubberBandingBehavior::Always, RubberBandingBehavior::Always, RubberBandingBehavior::Always };
         RectEdges<bool> mainFramePinnedState { true, true, true, true };
         ScrollPinningBehavior scrollPinningBehavior { ScrollPinningBehavior::DoNotPin };
     };

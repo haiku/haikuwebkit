@@ -513,9 +513,9 @@ RefPtr<WebPopupMenuProxy> PageClientImpl::createPopupMenuProxy(WebPageProxy& pag
 
 #if ENABLE(CONTEXT_MENUS)
 
-Ref<WebContextMenuProxy> PageClientImpl::createContextMenuProxy(WebPageProxy& page, ContextMenuContextData&& context, const UserData& userData)
+Ref<WebContextMenuProxy> PageClientImpl::createContextMenuProxy(WebPageProxy& page, FrameInfoData&& frameInfo, ContextMenuContextData&& context, const UserData& userData)
 {
-    return WebContextMenuProxyMac::create(m_view, page, WTFMove(context), userData);
+    return WebContextMenuProxyMac::create(m_view, page, WTFMove(frameInfo), WTFMove(context), userData);
 }
 
 void PageClientImpl::didShowContextMenu()
@@ -824,27 +824,35 @@ bool PageClientImpl::isFullScreen()
     return m_impl->fullScreenWindowController().isFullScreen;
 }
 
-void PageClientImpl::enterFullScreen(CompletionHandler<void(bool)>&& completionHandler)
+void PageClientImpl::enterFullScreen(FloatSize, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (!m_impl->fullScreenWindowController())
         return completionHandler(false);
-    [m_impl->fullScreenWindowController() enterFullScreen:nil completionHandler:WTFMove(completionHandler)];
+    [m_impl->fullScreenWindowController() enterFullScreen:WTFMove(completionHandler)];
 }
 
-void PageClientImpl::exitFullScreen()
+void PageClientImpl::exitFullScreen(CompletionHandler<void()>&& completionHandler)
 {
-    [m_impl->fullScreenWindowController() exitFullScreen];
+    if (!m_impl->fullScreenWindowController())
+        return completionHandler();
+    [m_impl->fullScreenWindowController() exitFullScreen:WTFMove(completionHandler)];
 }
 
-void PageClientImpl::beganEnterFullScreen(const IntRect& initialFrame, const IntRect& finalFrame)
+void PageClientImpl::beganEnterFullScreen(const IntRect& initialFrame, const IntRect& finalFrame, CompletionHandler<void(bool)>&& completionHandler)
 {
-    [m_impl->fullScreenWindowController() beganEnterFullScreenWithInitialFrame:initialFrame finalFrame:finalFrame];
+    if (m_impl->fullScreenWindowController())
+        [m_impl->fullScreenWindowController() beganEnterFullScreenWithInitialFrame:initialFrame finalFrame:finalFrame completionHandler:WTFMove(completionHandler)];
+    else
+        completionHandler(false);
+
     m_impl->updateSupportsArbitraryLayoutModes();
 }
 
-void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntRect& finalFrame)
+void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntRect& finalFrame, CompletionHandler<void()>&& completionHandler)
 {
-    [m_impl->fullScreenWindowController() beganExitFullScreenWithInitialFrame:initialFrame finalFrame:finalFrame];
+    if (!m_impl->fullScreenWindowController())
+        return completionHandler();
+    [m_impl->fullScreenWindowController() beganExitFullScreenWithInitialFrame:initialFrame finalFrame:finalFrame completionHandler:WTFMove(completionHandler)];
     m_impl->updateSupportsArbitraryLayoutModes();
 }
 

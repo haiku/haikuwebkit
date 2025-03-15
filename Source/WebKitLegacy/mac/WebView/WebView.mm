@@ -149,6 +149,7 @@
 #import <WebCore/DictionaryLookup.h>
 #import <WebCore/DisplayRefreshMonitorManager.h>
 #import <WebCore/Document.h>
+#import <WebCore/DocumentFullscreen.h>
 #import <WebCore/DocumentLoader.h>
 #import <WebCore/DragController.h>
 #import <WebCore/DragData.h>
@@ -169,7 +170,6 @@
 #import <WebCore/FrameLoader.h>
 #import <WebCore/FrameSelection.h>
 #import <WebCore/FrameTree.h>
-#import <WebCore/FullscreenManager.h>
 #import <WebCore/GCController.h>
 #import <WebCore/GameControllerGamepadProvider.h>
 #import <WebCore/GeolocationController.h>
@@ -1351,7 +1351,7 @@ static RetainPtr<NSString> createLaBanquePostaleQuirksScript()
     static NeverDestroyed<RetainPtr<NSString>> quirksScript = createLaBanquePostaleQuirksScript();
 
     using namespace WebCore;
-    auto userScript = makeUnique<UserScript>(quirksScript.get().get(), URL(), Vector<String>(), Vector<String>(), UserScriptInjectionTime::DocumentEnd, UserContentInjectedFrames::InjectInAllFrames, WaitForNotificationBeforeInjecting::No);
+    auto userScript = makeUnique<UserScript>(quirksScript.get().get(), URL(), Vector<String>(), Vector<String>(), UserScriptInjectionTime::DocumentEnd, UserContentInjectedFrames::InjectInAllFrames);
     _private->group->userContentController().addUserScript(*core(WebScriptWorld.world), WTFMove(userScript));
 }
 #endif
@@ -1526,7 +1526,7 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
         makeUniqueRef<WebCore::DummySpeechRecognitionProvider>(),
         WebBroadcastChannelRegistry::getOrCreate([[self preferences] privateBrowsingEnabled]),
         makeUniqueRef<WebCore::DummyStorageProvider>(),
-        makeUniqueRef<WebCore::DummyModelPlayerProvider>(),
+        WebCore::DummyModelPlayerProvider::create(),
         WebCore::EmptyBadgeClient::create(),
         LegacyHistoryItemClient::singleton(),
 #if ENABLE(CONTEXT_MENUS)
@@ -1795,7 +1795,7 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
         makeUniqueRef<WebCore::DummySpeechRecognitionProvider>(),
         WebBroadcastChannelRegistry::getOrCreate([[self preferences] privateBrowsingEnabled]),
         makeUniqueRef<WebCore::DummyStorageProvider>(),
-        makeUniqueRef<WebCore::DummyModelPlayerProvider>(),
+        WebCore::DummyModelPlayerProvider::create(),
         WebCore::EmptyBadgeClient::create(),
         LegacyHistoryItemClient::singleton(),
 #if ENABLE(APPLE_PAY)
@@ -3346,11 +3346,11 @@ IGNORE_WARNINGS_END
 
 #if ENABLE(FULLSCREEN_API)
     if (RefPtr document = core([frame DOMDocument]); document) {
-        if (CheckedPtr fullscreenManager = document->fullscreenManagerIfExists()) {
+        if (CheckedPtr fullscreenManager = document->fullscreenIfExists()) {
             if (RefPtr element = fullscreenManager->fullscreenElement()) {
                 SEL selector = @selector(webView:closeFullScreenWithListener:);
                 if ([_private->UIDelegate respondsToSelector:selector]) {
-                    auto listener = adoptNS([[WebKitFullScreenListener alloc] initWithElement:element.get() completionHandler:nullptr]);
+                    auto listener = adoptNS([[WebKitFullScreenListener alloc] initWithElement:element.get() initialCompletionHandler:nullptr finalCompletionHandler:nullptr]);
                     CallUIDelegate(self, selector, listener.get());
                 } else if (_private->newFullscreenController && [_private->newFullscreenController isFullScreen])
                     [_private->newFullscreenController close];
@@ -3537,7 +3537,7 @@ IGNORE_WARNINGS_END
 
 - (void)addCaretChangeListener:(id <WebCaretChangeListener>)listener
 {
-    if (_private->_caretChangeListeners == nil) {
+    if (!_private->_caretChangeListeners) {
         _private->_caretChangeListeners = adoptNS([[NSMutableSet alloc] init]);
     }
 
@@ -3591,7 +3591,7 @@ IGNORE_WARNINGS_END
     if (!dataSource)
         dataSource = [frame dataSource];
     auto unreachableURL = retainPtr([dataSource unreachableURL]);
-    auto url = unreachableURL != nil ? unreachableURL : retainPtr([[dataSource request] URL]);
+    auto url = !!unreachableURL ? unreachableURL : retainPtr([[dataSource request] URL]);
     return url.autorelease();
 }
 #endif // PLATFORM(IOS_FAMILY)
@@ -4298,7 +4298,7 @@ IGNORE_WARNINGS_END
     if (!world)
         return;
 
-    auto userScript = makeUnique<WebCore::UserScript>(source, url, makeVector<String>(includeMatchPatternStrings), makeVector<String>(excludeMatchPatternStrings), injectionTime == WebInjectAtDocumentStart ? WebCore::UserScriptInjectionTime::DocumentStart : WebCore::UserScriptInjectionTime::DocumentEnd, injectedFrames == WebInjectInAllFrames ? WebCore::UserContentInjectedFrames::InjectInAllFrames : WebCore::UserContentInjectedFrames::InjectInTopFrameOnly, WebCore::WaitForNotificationBeforeInjecting::No);
+    auto userScript = makeUnique<WebCore::UserScript>(source, url, makeVector<String>(includeMatchPatternStrings), makeVector<String>(excludeMatchPatternStrings), injectionTime == WebInjectAtDocumentStart ? WebCore::UserScriptInjectionTime::DocumentStart : WebCore::UserScriptInjectionTime::DocumentEnd, injectedFrames == WebInjectInAllFrames ? WebCore::UserContentInjectedFrames::InjectInAllFrames : WebCore::UserContentInjectedFrames::InjectInTopFrameOnly);
     viewGroup->userContentController().addUserScript(*core(world), WTFMove(userScript));
 }
 
@@ -7501,8 +7501,8 @@ static NSAppleEventDescriptor* aeDescFromJSValue(JSC::JSGlobalObject* lexicalGlo
     JSC::JSValue result = coreFrame->script().executeScriptIgnoringException(script, JSC::SourceTaintedOrigin::Untainted, true);
     if (!result) // FIXME: pass errors
         return 0;
-    JSC::JSLockHolder lock(coreFrame->script().globalObject(WebCore::mainThreadNormalWorld()));
-    return aeDescFromJSValue(coreFrame->script().globalObject(WebCore::mainThreadNormalWorld()), result);
+    JSC::JSLockHolder lock(coreFrame->script().globalObject(WebCore::mainThreadNormalWorldSingleton()));
+    return aeDescFromJSValue(coreFrame->script().globalObject(WebCore::mainThreadNormalWorldSingleton()), result);
 }
 #endif
 
@@ -8907,14 +8907,14 @@ FORWARD(toggleUnderline)
     return mediaElement->hasAudio() || mediaElement->hasVideo();
 }
 
-- (void)_setUpPlaybackControlsManagerForMediaElement:(NakedRef<WebCore::HTMLMediaElement>)mediaElement
+- (void)_setUpPlaybackControlsManagerForMediaElement:(std::reference_wrapper<WebCore::HTMLMediaElement>)mediaElement
 {
-    if (_private->playbackSessionModel && _private->playbackSessionModel->mediaElement() == mediaElement.ptr())
+    if (_private->playbackSessionModel && _private->playbackSessionModel->mediaElement() == &mediaElement.get())
         return;
 
     if (!_private->playbackSessionModel)
         _private->playbackSessionModel = WebCore::PlaybackSessionModelMediaElement::create();
-    _private->playbackSessionModel->setMediaElement(mediaElement.ptr());
+    _private->playbackSessionModel->setMediaElement(&mediaElement.get());
 
     if (!_private->playbackSessionInterface)
         _private->playbackSessionInterface = WebCore::PlaybackSessionInterfaceMac::create(*_private->playbackSessionModel);
@@ -8958,21 +8958,21 @@ FORWARD(toggleUnderline)
     return true;
 }
 
-- (void)_enterFullScreenForElement:(NakedPtr<WebCore::Element>)element completionHandler:(CompletionHandler<void(WebCore::ExceptionOr<void>)>&&)completionHandler
+- (void)_enterFullScreenForElement:(NakedPtr<WebCore::Element>)element willEnterFullscreen:(CompletionHandler<void(WebCore::ExceptionOr<void>)>&&)willEnterFullscreen didEnterFullscreen:(CompletionHandler<void(bool)>&&)didEnterFullscreen
 {
     if (!_private->newFullscreenController)
         _private->newFullscreenController = adoptNS([[WebFullScreenController alloc] init]);
 
     [_private->newFullscreenController setElement:element.get()];
     [_private->newFullscreenController setWebView:self];
-    [_private->newFullscreenController enterFullScreen:[[self window] screen] completionHandler:WTFMove(completionHandler)];
+    [_private->newFullscreenController enterFullScreen:[[self window] screen] willEnterFullscreen:WTFMove(willEnterFullscreen) didEnterFullscreen:WTFMove(didEnterFullscreen)];
 }
 
-- (void)_exitFullScreenForElement:(NakedPtr<WebCore::Element>)element
+- (void)_exitFullScreenForElement:(NakedPtr<WebCore::Element>)element completionHandler:(CompletionHandler<void()>&&)completionHandler
 {
     if (!_private->newFullscreenController)
-        return;
-    [_private->newFullscreenController exitFullScreen];
+        return completionHandler();
+    [_private->newFullscreenController exitFullScreen:WTFMove(completionHandler)];
 }
 #endif
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -182,6 +182,9 @@ void SourceBufferPrivateAVFObjC::setTrackChangeCallbacks(const InitializationSeg
             });
         });
     }
+
+    // When a text track mode changes we should continue to parse and add cues to HTMLMediaElement, it will ensure
+    // that only the correct cues are made visible.
 }
 
 bool SourceBufferPrivateAVFObjC::precheckInitializationSegment(const InitializationSegment& segment)
@@ -205,6 +208,9 @@ bool SourceBufferPrivateAVFObjC::precheckInitializationSegment(const Initializat
 
     for (auto& audioTrackInfo : segment.audioTracks)
         m_audioTracks.try_emplace(audioTrackInfo.track->id(), audioTrackInfo.track);
+
+    for (auto& textTrackInfo : segment.textTracks)
+        m_textTracks.try_emplace(textTrackInfo.track->id(), textTrackInfo.track);
 
     setTrackChangeCallbacks(segment, false);
 
@@ -240,9 +246,20 @@ void SourceBufferPrivateAVFObjC::didProvideMediaDataForTrackId(Ref<MediaSampleAV
 
 bool SourceBufferPrivateAVFObjC::isMediaSampleAllowed(const MediaSample& sample) const
 {
-    // FIXME(125161): We don't handle text tracks, and passing this sample up to SourceBuffer
-    // will just confuse its state. Drop this sample until we can handle text tracks properly.
     auto trackID = sample.trackID();
+    if (isTextTrack(trackID)) {
+        auto result = m_textTracks.find(trackID);
+        if (result == m_textTracks.end())
+            return false;
+
+        if (RefPtr textTrack = downcast<InbandTextTrackPrivateAVF>(result->second)) {
+            PlatformSample platformSample = sample.platformSample();
+            textTrack->processVTTSample(platformSample.sample.cmSampleBuffer, sample.presentationTime());
+        }
+
+        return false;
+    }
+
     return isEnabledVideoTrackID(trackID) || audioRendererForTrackID(trackID);
 }
 
@@ -542,6 +559,13 @@ void SourceBufferPrivateAVFObjC::clearTracks()
             player->removeAudioTrack(*track);
     }
     m_audioTracks.clear();
+
+    for (auto& pair : m_textTracks) {
+        RefPtr track = pair.second;
+        if (RefPtr player = this->player())
+            player->removeTextTrack(*track);
+    }
+    m_textTracks.clear();
 }
 
 void SourceBufferPrivateAVFObjC::removedFromMediaSource()
@@ -625,20 +649,22 @@ void SourceBufferPrivateAVFObjC::trackDidChangeEnabled(AudioTrackPrivate& track,
 void SourceBufferPrivateAVFObjC::setCDMSession(LegacyCDMSession* session)
 {
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-    if (session == m_session)
+  RefPtr oldSession = m_session.get();
+    if (session == oldSession)
         return;
 
     ALWAYS_LOG(LOGIDENTIFIER);
 
-    if (RefPtr session = m_session.get()) {
-        session->removeSourceBuffer(this);
+    if (oldSession) {
+        oldSession->removeSourceBuffer(this);
 
         auto parser = this->streamDataParser();
         if (parser && shouldAddContentKeyRecipients())
-            [session->contentKeySession() removeContentKeyRecipient:parser];
+            [oldSession->contentKeySession() removeContentKeyRecipient:parser];
     }
 
-    m_session = toCDMSessionAVContentKeySession(session);
+    // FIXME: This is a false positive. Remove the suppression once rdar://145631564 is fixed.
+    SUPPRESS_UNCOUNTED_ARG m_session = toCDMSessionAVContentKeySession(session);
 
     if (RefPtr session = m_session.get()) {
         session->addSourceBuffer(this);
@@ -725,7 +751,7 @@ void SourceBufferPrivateAVFObjC::attemptToDecrypt()
             if (auto parser = this->streamDataParser())
                 [instanceSession->contentKeySession() addContentKeyRecipient:parser];
         }
-    } else if (!m_session)
+    } else if (!m_session.get())
         return;
 
     if (m_hasSessionSemaphore) {
@@ -943,6 +969,11 @@ ALLOW_NEW_API_WITHOUT_GUARDS_END
         player->setHasAvailableAudioSample(renderer, false);
 }
 
+bool SourceBufferPrivateAVFObjC::isTextTrack(TrackID trackID) const
+{
+    return m_textTracks.contains(trackID);
+}
+
 bool SourceBufferPrivateAVFObjC::trackIsBlocked(TrackID trackID) const
 {
     for (auto& samplePair : m_blockedSamples) {
@@ -980,7 +1011,7 @@ bool SourceBufferPrivateAVFObjC::canEnqueueSample(TrackID trackID, const MediaSa
         return true;
 
     // if sample is encrypted, but we are not attached to a CDM: do not enqueue sample.
-    if (!m_cdmInstance && !m_session)
+    if (!m_cdmInstance && !m_session.get())
         return false;
 
     // DecompressionSessions doesn't support encrypted media.

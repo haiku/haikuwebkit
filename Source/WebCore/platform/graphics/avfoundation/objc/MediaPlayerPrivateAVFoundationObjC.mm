@@ -63,6 +63,7 @@
 #import "ScriptDisallowedScope.h"
 #import "SecurityOrigin.h"
 #import "SerializedPlatformDataCueMac.h"
+#import "SpatialAudioExperienceHelper.h"
 #import "TextTrack.h"
 #import "TextTrackRepresentation.h"
 #import "UTIUtilities.h"
@@ -1401,6 +1402,13 @@ String MediaPlayerPrivateAVFoundationObjC::errorLog() const
     RetainPtr<NSString> logString = adoptNS([[NSString alloc] initWithData:[log extendedLogData] encoding:[log extendedLogDataStringEncoding]]);
 
     return logString.get();
+}
+
+void MediaPlayerPrivateAVFoundationObjC::sceneIdentifierDidChange()
+{
+#if HAVE(SPATIAL_TRACKING_LABEL)
+    updateSpatialTrackingLabel();
+#endif
 }
 #endif
 
@@ -3159,13 +3167,18 @@ void MediaPlayerPrivateAVFoundationObjC::processMediaSelectionOptions()
         if (!newTrack)
             continue;
 
+        InbandTextTrackPrivateAVF::ModeChangedCallback&& modeChangedCallback = [weakThis = ThreadSafeWeakPtr { *this }] {
+            if (RefPtr protectedThis = weakThis.get())
+                protectedThis->configureInbandTracks();
+        };
+
         if ([option outOfBandSource]) {
-            m_textTracks.append(OutOfBandTextTrackPrivateAVF::create(this, option, m_currentTextTrackID++));
+            m_textTracks.append(OutOfBandTextTrackPrivateAVF::create(option, m_currentTextTrackID++, WTFMove(modeChangedCallback)));
             m_textTracks.last()->setHasBeenReported(true); // Ignore out-of-band tracks that we passed to AVFoundation so we do not double-count them
             continue;
         }
 
-        m_textTracks.append(InbandTextTrackPrivateAVFObjC::create(this, legibleGroup, option, m_currentTextTrackID++, InbandTextTrackPrivate::CueFormat::Generic));
+        m_textTracks.append(InbandTextTrackPrivateAVFObjC::create(legibleGroup, option, m_currentTextTrackID++, InbandTextTrackPrivate::CueFormat::Generic, WTFMove(modeChangedCallback)));
     }
 
     processNewAndRemovedTextTracks(removedTextTracks);
@@ -4060,6 +4073,26 @@ void MediaPlayerPrivateAVFoundationObjC::updateSpatialTrackingLabel()
     if (!m_avPlayer)
         return;
 
+    auto player = this->player();
+    if (!player)
+        return;
+
+#if HAVE(SPATIAL_AUDIO_EXPERIENCE)
+    if (player->prefersSpatialAudioExperience()) {
+        RetainPtr experience = createExperienceWithOptions({
+            .hasLayer = !!m_videoLayer,
+            .hasTarget = !!m_videoTarget,
+            .isVisible = isVisible(),
+            .sceneIdentifier = player->sceneIdentifier(),
+#if HAVE(SPATIAL_TRACKING_LABEL)
+            .spatialTrackingLabel = m_spatialTrackingLabel,
+#endif
+        });
+        [m_avPlayer setIntendedSpatialAudioExperience:experience.get()];
+        return;
+    }
+#endif
+
     if (!m_spatialTrackingLabel.isNull()) {
         INFO_LOG(LOGIDENTIFIER, "Explicitly set STSLabel: ", m_spatialTrackingLabel);
         [m_avPlayer _setSTSLabel:m_spatialTrackingLabel];
@@ -4123,6 +4156,7 @@ void MediaPlayerPrivateAVFoundationObjC::isInFullscreenOrPictureInPictureChanged
     else if (RetainPtr videoTarget = std::exchange(m_videoTarget, nullptr)) {
         INFO_LOG(LOGIDENTIFIER, "Clearing videoTarget");
         [m_avPlayer removeVideoTarget:videoTarget.get()];
+        [m_videoLayer setPlayer:m_avPlayer.get()];
     }
 #else
     UNUSED_PARAM(isInFullscreenOrPictureInPicture);

@@ -60,9 +60,7 @@ OBJC_CLASS NSString;
 OBJC_CLASS PDFAnnotation;
 OBJC_CLASS PDFDocument;
 OBJC_CLASS PDFSelection;
-#if PLATFORM(MAC)
 OBJC_CLASS WKAccessibilityPDFDocumentObject;
-#endif
 
 namespace WebCore {
 class Color;
@@ -255,6 +253,7 @@ public:
     virtual void willAttachScrollingNode() { }
     virtual void didAttachScrollingNode() { }
     virtual void didChangeSettings() { }
+    virtual void finalizeRenderingUpdate() { }
 
     // HUD Actions.
 #if ENABLE(PDF_HUD)
@@ -336,6 +335,8 @@ public:
     virtual bool shouldSizeToFitContent() const { return false; }
 
     virtual WebCore::FloatRect absoluteBoundingRectForSmartMagnificationAtPoint(WebCore::FloatPoint) const { return { }; }
+
+    virtual void frameViewLayoutOrVisualViewportChanged(const WebCore::IntRect&) { }
 
 protected:
     virtual double contentScaleFactor() const = 0;
@@ -473,9 +474,8 @@ protected:
     RangeSet<WTF::Range<uint64_t>> m_validRanges WTF_GUARDED_BY_LOCK(m_streamedDataLock);
 
     RetainPtr<PDFDocument> m_pdfDocument;
-#if PLATFORM(MAC)
+
     RetainPtr<WKAccessibilityPDFDocumentObject> m_accessibilityDocumentObject;
-#endif
 
     String m_suggestedFilename;
 

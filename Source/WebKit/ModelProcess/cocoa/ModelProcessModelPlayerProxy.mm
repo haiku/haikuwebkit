@@ -51,7 +51,6 @@
 #import <wtf/BlockPtr.h>
 #import <wtf/MathExtras.h>
 #import <wtf/NakedPtr.h>
-#import <wtf/NakedRef.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/TZoneMallocInlines.h>
 #import <wtf/WeakPtr.h>
@@ -60,19 +59,19 @@
 #import "WebKitSwiftSoftLink.h"
 
 @interface WKModelProcessModelPlayerProxyObjCAdapter : NSObject<WKSRKEntityDelegate>
-- (instancetype)initWithModelProcessModelPlayerProxy:(NakedRef<WebKit::ModelProcessModelPlayerProxy>)modelProcessModelPlayerProxy;
+- (instancetype)initWithModelProcessModelPlayerProxy:(std::reference_wrapper<WebKit::ModelProcessModelPlayerProxy>)modelProcessModelPlayerProxy;
 @end
 
 @implementation WKModelProcessModelPlayerProxyObjCAdapter {
     WeakPtr<WebKit::ModelProcessModelPlayerProxy> _modelProcessModelPlayerProxy;
 }
 
-- (instancetype)initWithModelProcessModelPlayerProxy:(NakedRef<WebKit::ModelProcessModelPlayerProxy>)modelProcessModelPlayerProxy
+- (instancetype)initWithModelProcessModelPlayerProxy:(std::reference_wrapper<WebKit::ModelProcessModelPlayerProxy>)modelProcessModelPlayerProxy
 {
     if (!(self = [super init]))
         return nil;
 
-    _modelProcessModelPlayerProxy = modelProcessModelPlayerProxy.ptr();
+    _modelProcessModelPlayerProxy = modelProcessModelPlayerProxy.get();
     return self;
 }
 
@@ -463,6 +462,9 @@ void ModelProcessModelPlayerProxy::didFinishLoading(WebCore::REModelLoader& load
 
     computeTransform();
     updateTransform();
+
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=287820
+
     updateOpacity();
     startAnimating();
 
@@ -668,6 +670,21 @@ void ModelProcessModelPlayerProxy::setEnvironmentMap(Ref<WebCore::SharedBuffer>&
     m_transientEnvironmentMapData = WTFMove(data);
     if (m_modelRKEntity)
         applyEnvironmentMapDataAndRelease();
+}
+
+void ModelProcessModelPlayerProxy::beginStageModeTransform(const WebCore::TransformationMatrix& transform)
+{
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=287820
+}
+
+void ModelProcessModelPlayerProxy::updateStageModeTransform(const WebCore::TransformationMatrix& transform)
+{
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=287820
+}
+
+void ModelProcessModelPlayerProxy::endStageModeInteraction()
+{
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=287820
 }
 
 void ModelProcessModelPlayerProxy::applyEnvironmentMapDataAndRelease()

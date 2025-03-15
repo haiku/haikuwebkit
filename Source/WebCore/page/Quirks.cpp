@@ -1059,7 +1059,7 @@ Quirks::StorageAccessResult Quirks::triggerOptionalStorageAccessQuirk(Element& e
 
     static NeverDestroyed<String> loginPopupWindowFeatureString = "toolbar=no,location=yes,directories=no,status=no,menubar=no,scrollbars=yes,resizable=yes,copyhistory=no,width=599,height=600,top=420,left=980.5"_s;
 
-    static NeverDestroyed<UserScript> kinjaLoginUserScript { "function triggerLoginForm() { let elements = document.getElementsByClassName('js_header-userbutton'); if (elements && elements[0]) { elements[0].click(); clearInterval(interval); } } let interval = setInterval(triggerLoginForm, 200);"_s, URL(aboutBlankURL()), Vector<String>(), Vector<String>(), UserScriptInjectionTime::DocumentEnd, UserContentInjectedFrames::InjectInTopFrameOnly, WaitForNotificationBeforeInjecting::Yes };
+    static NeverDestroyed<UserScript> kinjaLoginUserScript { "function triggerLoginForm() { let elements = document.getElementsByClassName('js_header-userbutton'); if (elements && elements[0]) { elements[0].click(); clearInterval(interval); } } let interval = setInterval(triggerLoginForm, 200);"_s, URL(aboutBlankURL()), Vector<String>(), Vector<String>(), UserScriptInjectionTime::DocumentEnd, UserContentInjectedFrames::InjectInTopFrameOnly };
 
     if (isAnyClick(eventType)) {
         RefPtr document = m_document.get();
@@ -1097,7 +1097,7 @@ Quirks::StorageAccessResult Quirks::triggerOptionalStorageAccessQuirk(Element& e
             auto* abstractFrame = proxy->frame();
             if (RefPtr frame = dynamicDowncast<LocalFrame>(abstractFrame)) {
                 auto world = ScriptController::createWorld("kinjaComQuirkWorld"_s, ScriptController::WorldType::User);
-                frame->addUserScriptAwaitingNotification(world.get(), kinjaLoginUserScript);
+                frame->injectUserScriptImmediately(world.get(), kinjaLoginUserScript);
                 return Quirks::StorageAccessResult::ShouldCancelEvent;
             }
         }
@@ -1402,29 +1402,6 @@ bool Quirks::needsIPadMiniUserAgent(const URL& url)
 
     if (host == "cctv.com"_s || host.endsWith(".cctv.com"_s))
         return true;
-
-#if USE(HSBC_MOBILE_SITE_FOR_IPAD)
-    if (host.contains("hsbc."_s)) {
-        if (host == "hsbc.com.au"_s || host.endsWith(".hsbc.com.au"_s))
-            return true;
-        if (host == "hsbc.com.eg"_s || host.endsWith(".hsbc.com.eg"_s))
-            return true;
-        if (host == "hsbc.lk"_s || host.endsWith(".hsbc.lk"_s))
-            return true;
-        if (host == "hsbc.co.uk"_s || host.endsWith(".hsbc.co.uk"_s))
-            return true;
-        if (host == "hsbc.com.hk"_s || host.endsWith(".hsbc.com.hk"_s))
-            return true;
-        if (host == "hsbc.com.mx"_s || host.endsWith(".hsbc.com.mx"_s))
-            return true;
-        if (host == "hsbc.com.ph"_s || host.endsWith(".hsbc.com.ph"_s))
-            return true;
-        if (host == "hsbc.com"_s || host.endsWith(".hsbc.com"_s))
-            return true;
-        if (host == "hsbc.com.cn"_s || host.endsWith(".hsbc.com.cn"_s))
-            return true;
-    }
-#endif
 
     // FIXME: Remove this quirk when <rdar://problem/61733101> is complete.
     if (host == "roblox.com"_s || host.endsWith(".roblox.com"_s))
@@ -1808,6 +1785,11 @@ bool Quirks::needsLimitedMatroskaSupport() const
 #else
     return false;
 #endif
+}
+
+bool Quirks::needsNowPlayingFullscreenSwapQuirk() const
+{
+    return needsQuirks() && m_quirksData.needsNowPlayingFullscreenSwapQuirk;
 }
 
 URL Quirks::topDocumentURL() const
@@ -2420,6 +2402,10 @@ static void handleNetflixQuirks(QuirksData& quirksData, const URL& quirksURL, co
     quirksData.isNetflix = true;
     // netflix.com https://bugs.webkit.org/show_bug.cgi?id=173030
     quirksData.needsSeekingSupportDisabledQuirk = true;
+
+#if PLATFORM(VISION)
+    quirksData.needsNowPlayingFullscreenSwapQuirk = true;
+#endif
 }
 
 static void handlePandoraQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)

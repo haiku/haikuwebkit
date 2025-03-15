@@ -94,6 +94,7 @@ public:
     static bool isBorderStyleProperty(CSSPropertyID);
     static bool isBorderWidthProperty(CSSPropertyID);
     static bool isContainIntrinsicSizeProperty(CSSPropertyID);
+    static bool isCornerShapeProperty(CSSPropertyID);
     static bool isInsetProperty(CSSPropertyID);
     static bool isMarginProperty(CSSPropertyID);
     static bool isMaxSizeProperty(CSSPropertyID);
@@ -117,8 +118,8 @@ public:
         return colorProperties.get(propertyId);
     }
 
-    static const WEBCORE_EXPORT WTF::BitSet<numCSSProperties> colorProperties;
-    static const WEBCORE_EXPORT WTF::BitSet<numCSSProperties> physicalProperties;
+    static const WEBCORE_EXPORT WTF::BitSet<cssPropertyIDEnumValueCount> colorProperties;
+    static const WEBCORE_EXPORT WTF::BitSet<cssPropertyIDEnumValueCount> physicalProperties;
 
     bool operator==(const CSSProperty& other) const
     {

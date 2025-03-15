@@ -200,6 +200,7 @@ public:
     static constexpr auto darkGreen = SRGBA<uint8_t> { 0, 128, 0 };
     static constexpr auto orange = SRGBA<uint8_t> { 255, 128, 0 };
     static constexpr auto purple = SRGBA<uint8_t> { 128, 0, 255 };
+    static constexpr auto gold = SRGBA<uint8_t> { 255, 215, 0 };
 
     static bool isBlackColor(const Color&);
     static bool isWhiteColor(const Color&);
@@ -304,10 +305,9 @@ private:
 
 inline void add(Hasher& hasher, const Color& color)
 {
-    if (color.isOutOfLine()) {
-        // FIXME: We should not need SUPPRESS_UNCOUNTED_ARG as unresolvedComponents() is trivial and inline (rdar://144880581).
-        SUPPRESS_UNCOUNTED_ARG add(hasher, color.asOutOfLine().unresolvedComponents(), color.colorSpace(), color.flags());
-    } else
+    if (color.isOutOfLine())
+        add(hasher, color.asOutOfLine().unresolvedComponents(), color.colorSpace(), color.flags());
+    else
         add(hasher, color.asPackedInline().value, color.flags());
 }
 
@@ -334,10 +334,8 @@ inline bool operator==(const Color& a, const Color& b)
 
 inline bool outOfLineComponentsEqual(const Color& a, const Color& b)
 {
-    if (a.isOutOfLine() && b.isOutOfLine()) {
-        // FIXME: We should not need SUPPRESS_UNCOUNTED_ARG as unresolvedComponents() is trivial and inline (rdar://144880581).
-        SUPPRESS_UNCOUNTED_ARG return a.asOutOfLine().unresolvedComponents() == b.asOutOfLine().unresolvedComponents() && a.colorSpace() == b.colorSpace() && a.flags() == b.flags();
-    }
+    if (a.isOutOfLine() && b.isOutOfLine())
+        return a.asOutOfLine().unresolvedComponents() == b.asOutOfLine().unresolvedComponents() && a.colorSpace() == b.colorSpace() && a.flags() == b.flags();
 
     ASSERT(a.isOutOfLine() || b.isOutOfLine());
     return false;
@@ -348,8 +346,7 @@ inline bool outOfLineComponentsEqualIgnoringSemanticColor(const Color& a, const 
     if (a.isOutOfLine() && b.isOutOfLine()) {
         auto aFlags = a.flags() - Color::FlagsIncludingPrivate::Semantic;
         auto bFlags = b.flags() - Color::FlagsIncludingPrivate::Semantic;
-        // FIXME: We should not need SUPPRESS_UNCOUNTED_ARG as unresolvedComponents() is trivial and inline (rdar://144880581).
-        SUPPRESS_UNCOUNTED_ARG return a.asOutOfLine().unresolvedComponents() == b.asOutOfLine().unresolvedComponents() && a.colorSpace() == b.colorSpace() && aFlags == bFlags;
+        return a.asOutOfLine().unresolvedComponents() == b.asOutOfLine().unresolvedComponents() && a.colorSpace() == b.colorSpace() && aFlags == bFlags;
     }
 
     ASSERT(a.isOutOfLine() || b.isOutOfLine());
@@ -443,10 +440,8 @@ inline ColorSpace Color::colorSpace() const
 
 template<typename Functor> decltype(auto) Color::callOnUnderlyingType(Functor&& functor) const
 {
-    if (isOutOfLine()) {
-        // FIXME: We should not need SUPPRESS_UNCOUNTED_ARG as unresolvedComponents() is trivial and inline (rdar://144880581).
-        SUPPRESS_UNCOUNTED_ARG return callWithColorType(asOutOfLine().unresolvedComponents(), colorSpace(), std::forward<Functor>(functor));
-    }
+    if (isOutOfLine())
+        return callWithColorType(asOutOfLine().unresolvedComponents(), colorSpace(), std::forward<Functor>(functor));
     return std::invoke(std::forward<Functor>(functor), asInline());
 }
 

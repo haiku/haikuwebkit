@@ -1173,6 +1173,27 @@ void WKPageSetPageInjectedBundleClient(WKPageRef pageRef, const WKPageInjectedBu
     toImpl(pageRef)->setInjectedBundleClient(wkClient);
 }
 
+class CompletionListener : public API::ObjectImpl<API::Object::Type::CompletionListener> {
+public:
+    static Ref<CompletionListener> create(CompletionHandler<void()>&& completionHandler) { return adoptRef(*new CompletionListener(WTFMove(completionHandler))); }
+    void complete() { m_completionHandler(); }
+
+private:
+    explicit CompletionListener(CompletionHandler<void()>&& completionHandler)
+        : m_completionHandler(WTFMove(completionHandler)) { }
+
+    CompletionHandler<void()> m_completionHandler;
+};
+
+namespace WebKit {
+WK_ADD_API_MAPPING(WKCompletionListenerRef, CompletionListener);
+}
+
+void WKCompletionListenerComplete(WKCompletionListenerRef listener)
+{
+    toImpl(listener)->complete();
+}
+
 void WKPageSetFullScreenClientForTesting(WKPageRef pageRef, const WKPageFullScreenClientBase* client)
 {
     CRASH_IF_SUSPENDED;
@@ -1191,36 +1212,34 @@ void WKPageSetFullScreenClientForTesting(WKPageRef pageRef, const WKPageFullScre
         void closeFullScreenManager() override { }
         bool isFullScreen() override { return false; }
 
-        void enterFullScreen(
-#if PLATFORM(IOS_FAMILY)
-            WebCore::FloatSize,
-#endif
-            CompletionHandler<void(bool)>&& completionHandler) override
+        void enterFullScreen(WebCore::FloatSize, CompletionHandler<void(bool)>&& completionHandler) override
         {
             if (!m_client.willEnterFullScreen)
                 return completionHandler(false);
             completionHandler(m_client.willEnterFullScreen(toAPI(m_page.get()), m_client.base.clientInfo));
         }
 
-        void beganEnterFullScreen(const WebCore::IntRect& initialFrame, const WebCore::IntRect& finalFrame) override
+        void beganEnterFullScreen(const WebCore::IntRect& initialFrame, const WebCore::IntRect& finalFrame, CompletionHandler<void(bool)>&& completionHandler) override
         {
             if (!m_client.beganEnterFullScreen)
-                return;
+                return completionHandler(false);
             m_client.beganEnterFullScreen(toAPI(m_page.get()), toAPI(initialFrame), toAPI(finalFrame), m_client.base.clientInfo);
+            completionHandler(true);
         }
 
-        void exitFullScreen() override
+        void exitFullScreen(CompletionHandler<void()>&& completionHandler) override
         {
             if (!m_client.exitFullScreen)
-                return;
+                return completionHandler();
             m_client.exitFullScreen(toAPI(m_page.get()), m_client.base.clientInfo);
+            completionHandler();
         }
 
-        void beganExitFullScreen(const WebCore::IntRect& initialFrame, const WebCore::IntRect& finalFrame) override
+        void beganExitFullScreen(const WebCore::IntRect& initialFrame, const WebCore::IntRect& finalFrame, CompletionHandler<void()>&& completionHandler) override
         {
             if (!m_client.beganExitFullScreen)
-                return;
-            m_client.beganExitFullScreen(toAPI(m_page.get()), toAPI(initialFrame), toAPI(finalFrame), m_client.base.clientInfo);
+                return completionHandler();
+            m_client.beganExitFullScreen(toAPI(m_page.get()), toAPI(initialFrame), toAPI(finalFrame), toAPI(CompletionListener::create(WTFMove(completionHandler)).ptr()), m_client.base.clientInfo);
         }
 
 #if ENABLE(QUICKLOOK_FULLSCREEN)
@@ -1235,33 +1254,6 @@ void WKPageSetFullScreenClientForTesting(WKPageRef pageRef, const WKPageFullScre
     toImpl(pageRef)->setFullScreenClientForTesting(WTFMove(fullscreenClient));
 #else
     UNUSED_PARAM(client);
-#endif
-}
-
-void WKPageDidEnterFullScreen(WKPageRef pageRef)
-{
-    CRASH_IF_SUSPENDED;
-#if ENABLE(FULLSCREEN_API)
-    if (RefPtr manager = toImpl(pageRef)->fullScreenManager())
-        manager->didEnterFullScreen();
-#endif
-}
-
-void WKPageWillExitFullScreen(WKPageRef pageRef)
-{
-    CRASH_IF_SUSPENDED;
-#if ENABLE(FULLSCREEN_API)
-    if (RefPtr manager = toImpl(pageRef)->fullScreenManager())
-        manager->willExitFullScreen();
-#endif
-}
-
-void WKPageDidExitFullScreen(WKPageRef pageRef)
-{
-    CRASH_IF_SUSPENDED;
-#if ENABLE(FULLSCREEN_API)
-    if (RefPtr manager = toImpl(pageRef)->fullScreenManager())
-        manager->didExitFullScreen();
 #endif
 }
 
@@ -3054,12 +3046,11 @@ void WKPageSetMayStartMediaWhenInWindow(WKPageRef pageRef, bool mayStartMedia)
     toImpl(pageRef)->setMayStartMediaWhenInWindow(mayStartMedia);
 }
 
-
-void WKPageSelectContextMenuItem(WKPageRef pageRef, WKContextMenuItemRef item)
+void WKPageSelectContextMenuItem(WKPageRef pageRef, WKContextMenuItemRef item, WKFrameInfoRef frameInfo)
 {
     CRASH_IF_SUSPENDED;
 #if ENABLE(CONTEXT_MENUS)
-    toImpl(pageRef)->contextMenuItemSelected((toImpl(item)->data()));
+    toImpl(pageRef)->contextMenuItemSelected((toImpl(item)->data()), toImpl(frameInfo)->frameInfoData());
 #else
     UNUSED_PARAM(pageRef);
     UNUSED_PARAM(item);
@@ -3382,11 +3373,15 @@ void WKPageSetMockCaptureDevicesInterrupted(WKPageRef pageRef, bool isCameraInte
 #endif
 }
 
-void WKPageTriggerMockCaptureConfigurationChange(WKPageRef pageRef, bool forMicrophone, bool forDisplay)
+void WKPageTriggerMockCaptureConfigurationChange(WKPageRef pageRef, bool forCamera, bool forMicrophone, bool forDisplay)
 {
     CRASH_IF_SUSPENDED;
 #if ENABLE(MEDIA_STREAM)
-    MockRealtimeMediaSourceCenter::singleton().triggerMockCaptureConfigurationChange(forMicrophone, forDisplay);
+#if USE(GSTREAMER)
+    toImpl(pageRef)->triggerMockCaptureConfigurationChange(forCamera, forMicrophone, forDisplay);
+#else
+    MockRealtimeMediaSourceCenter::singleton().triggerMockCaptureConfigurationChange(forCamera, forMicrophone, forDisplay);
+#endif // USE(GSTREAMER)
 
 #if ENABLE(GPU_PROCESS)
     auto preferences = toImpl(pageRef)->protectedPreferences();
@@ -3394,7 +3389,7 @@ void WKPageTriggerMockCaptureConfigurationChange(WKPageRef pageRef, bool forMicr
         return;
 
     auto& gpuProcess = toImpl(pageRef)->configuration().processPool().ensureGPUProcess();
-    gpuProcess.triggerMockCaptureConfigurationChange(forMicrophone, forDisplay);
+    gpuProcess.triggerMockCaptureConfigurationChange(forCamera, forMicrophone, forDisplay);
 #endif // ENABLE(GPU_PROCESS)
 
 #endif // ENABLE(MEDIA_STREAM)

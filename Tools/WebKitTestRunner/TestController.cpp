@@ -483,8 +483,6 @@ void TestController::beganEnterFullScreen(WKPageRef page, WKRect initialFrame, W
             "}\n"_s
         ));
     }
-
-    WKPageDidEnterFullScreen(page);
 }
 
 void TestController::exitFullScreen(WKPageRef page, const void* clientInfo)
@@ -496,16 +494,14 @@ void TestController::exitFullScreen(WKPageRef page)
 {
     if (m_dumpFullScreenCallbacks)
         protectedCurrentInvocation()->outputText("exitFullScreenForElement()\n"_s);
-
-    WKPageWillExitFullScreen(page);
 }
 
-void TestController::beganExitFullScreen(WKPageRef page, WKRect initialFrame, WKRect finalFrame, const void* clientInfo)
+void TestController::beganExitFullScreen(WKPageRef page, WKRect initialFrame, WKRect finalFrame, WKCompletionListenerRef listener, const void* clientInfo)
 {
-    static_cast<TestController*>(const_cast<void*>(clientInfo))->beganExitFullScreen(page, initialFrame, finalFrame);
+    return static_cast<TestController*>(const_cast<void*>(clientInfo))->beganExitFullScreen(page, initialFrame, finalFrame, listener);
 }
 
-void TestController::beganExitFullScreen(WKPageRef page, WKRect initialFrame, WKRect finalFrame)
+void TestController::beganExitFullScreen(WKPageRef, WKRect initialFrame, WKRect finalFrame, WKCompletionListenerRef listener)
 {
     if (m_dumpFullScreenCallbacks) {
         protectedCurrentInvocation()->outputText(makeString(
@@ -521,13 +517,16 @@ void TestController::beganExitFullScreen(WKPageRef page, WKRect initialFrame, WK
         ));
     }
 
+    m_finishExitFullscreenHandler = [listener = WKRetainPtr { listener }] {
+        WKCompletionListenerComplete(listener.get());
+    };
     if (!m_waitBeforeFinishingFullscreenExit)
-        finishFullscreenExit(page);
+        finishFullscreenExit();
 }
 
-void TestController::finishFullscreenExit(WKPageRef page)
+void TestController::finishFullscreenExit()
 {
-    WKPageDidExitFullScreen(page);
+    m_finishExitFullscreenHandler();
 }
 
 void TestController::requestExitFullscreenFromUIProcess(WKPageRef page)
@@ -792,6 +791,7 @@ void TestController::configureWebsiteDataStoreTemporaryDirectories(WKWebsiteData
         WKWebsiteDataStoreConfigurationSetResourceLoadStatisticsDirectory(configuration, toWK(makeString(temporaryFolder, pathSeparator, "ResourceLoadStatistics"_s, pathSeparator, randomNumber)).get());
         WKWebsiteDataStoreConfigurationSetServiceWorkerRegistrationDirectory(configuration, toWK(makeString(temporaryFolder, pathSeparator, "ServiceWorkers"_s, pathSeparator, randomNumber)).get());
         WKWebsiteDataStoreConfigurationSetGeneralStorageDirectory(configuration, toWK(makeString(temporaryFolder, pathSeparator, "Default"_s, pathSeparator, randomNumber)).get());
+        WKWebsiteDataStoreConfigurationSetResourceMonitorThrottlerDirectory(configuration, toWK(makeString(temporaryFolder, pathSeparator, "ResourceMonitorThrottler"_s, pathSeparator, randomNumber)).get());
 #if PLATFORM(WIN)
         WKWebsiteDataStoreConfigurationSetCookieStorageFile(configuration, toWK(makeString(temporaryFolder, pathSeparator, "cookies"_s, pathSeparator, randomNumber, pathSeparator, "cookiejar.db"_s)).get());
 #endif
@@ -1436,6 +1436,8 @@ bool TestController::resetStateToConsistentValues(const TestOptions& options, Re
     m_dumpPolicyDelegateCallbacks = false;
     m_dumpFullScreenCallbacks = false;
     m_waitBeforeFinishingFullscreenExit = false;
+    if (m_finishExitFullscreenHandler)
+        m_finishExitFullscreenHandler();
 
     return m_doneResetting;
 }
@@ -4313,9 +4315,9 @@ void TestController::setMockCaptureDevicesInterrupted(bool isCameraInterrupted, 
     WKPageSetMockCaptureDevicesInterrupted(m_mainWebView->page(), isCameraInterrupted, isMicrophoneInterrupted);
 }
 
-void TestController::triggerMockCaptureConfigurationChange(bool forMicrophone, bool forDisplay)
+void TestController::triggerMockCaptureConfigurationChange(bool forCamera, bool forMicrophone, bool forDisplay)
 {
-    WKPageTriggerMockCaptureConfigurationChange(m_mainWebView->page(), forMicrophone, forDisplay);
+    WKPageTriggerMockCaptureConfigurationChange(m_mainWebView->page(), forCamera, forMicrophone, forDisplay);
 }
 
 void TestController::setCaptureState(bool cameraState, bool microphoneState, bool displayState)

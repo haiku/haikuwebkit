@@ -1836,6 +1836,10 @@ enum class WebCore::ContentsFormat : uint8_t {
 #endif
 };
 
+class WebCore::PlatformDynamicRangeLimit {
+    float m_value;
+};
+
 enum class WebCore::RotationDirection : bool
 
 #if ENABLE(CONTENT_FILTERING)
@@ -2000,6 +2004,13 @@ header: <WebCore/RectEdges.h>
     WebCore::Color left();
 }
 
+[CustomHeader] class WebCore::RectEdges<WebCore::RubberBandingBehavior> {
+    WebCore::RubberBandingBehavior top();
+    WebCore::RubberBandingBehavior right();
+    WebCore::RubberBandingBehavior bottom();
+    WebCore::RubberBandingBehavior left();
+}
+
 [AdditionalEncoder=StreamConnectionEncoder] class WebCore::Path {
     Vector<WebCore::PathSegment> segments();
 }
@@ -2009,7 +2020,6 @@ header: <WebCore/RectEdges.h>
 [Nested] enum class WebCore::ViewportArguments::Type : uint8_t {
     Implicit,
 #if PLATFORM(IOS_FAMILY)
-    PluginDocument,
     ImageDocument,
 #endif
     ViewportMeta
@@ -2481,10 +2491,25 @@ header: <WebCore/ScreenProperties.h>
 #endif
 };
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+[OptionSet] enum class WebCore::ContentsFormat : uint8_t {
+    RGBA8,
+#if ENABLE(PIXEL_FORMAT_RGB10)
+    RGBA10,
+#endif
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
+    RGBA16F,
+#endif
+};
+#endif
+
 using WebCore::PlatformDisplayID = uint32_t;
 struct WebCore::ScreenProperties {
     WebCore::PlatformDisplayID primaryDisplayID;
     HashMap<WebCore::PlatformDisplayID, WebCore::ScreenData> screenDataMap;
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    OptionSet<WebCore::ContentsFormat> screenContentsFormatsForTesting;
+#endif
 };
 
 class WebCore::PlatformTimeRanges {
@@ -5316,7 +5341,7 @@ struct WebCore::PolicyContainer {
 [Nested] enum class WebCore::SubstituteData::SessionHistoryVisibility : bool
 
 class WebCore::SubstituteData {
-    RefPtr<WebCore::FragmentedSharedBuffer> content();
+    RefPtr<WebCore::FragmentedSharedBuffer> protectedContent();
     URL failingURL();
     WebCore::ResourceResponse response();
     WebCore::SubstituteData::SessionHistoryVisibility shouldRevealToSessionHistory();
@@ -6091,6 +6116,16 @@ struct WebCore::VideoFrameTimeMetadata {
     WebCore::FontSmoothingMode smoothingMode;
 };
 
+#if ENABLE(TOUCH_EVENT_REGIONS)
+header: <WebCore/EventRegion.h>
+[CustomHeader] struct WebCore::TouchEventListenerRegion {
+    WebCore::Region start;
+    WebCore::Region end;
+    WebCore::Region move;
+    WebCore::Region cancel;
+};
+#endif
+
 class WebCore::EventRegion {
     WebCore::Region m_region;
 #if ENABLE(TOUCH_ACTION_REGIONS)
@@ -6099,6 +6134,10 @@ class WebCore::EventRegion {
 #if ENABLE(WHEEL_EVENT_REGIONS)
     WebCore::Region m_wheelEventListenerRegion;
     WebCore::Region m_nonPassiveWheelEventListenerRegion;
+#endif
+#if ENABLE(TOUCH_EVENT_REGIONS)
+    WebCore::TouchEventListenerRegion m_touchEventListenerRegion;
+    WebCore::TouchEventListenerRegion m_nonPassiveTouchEventListenerRegion;
 #endif
 #if ENABLE(EDITABLE_REGION)
     std::optional<WebCore::Region> m_editableRegion;
@@ -6439,7 +6478,8 @@ struct WebCore::DigitalCredentialsResponseData {
 };
 
 [Nested] enum class WebCore::IdentityCredentialProtocol : uint8_t {
-    Openid4vp
+    Openid4vp,
+    OrgIsoMdoc
 };
 
 #endif // HAVE(DIGITAL_CREDENTIALS_UI)
@@ -6482,6 +6522,7 @@ header: <WebCore/MockMediaDevice.h>
     String persistentId;
     String label;
     OptionSet<WebCore::MockMediaDevice::Flag> flags;
+    bool isDefault;
     std::variant<WebCore::MockMicrophoneProperties, WebCore::MockSpeakerProperties, WebCore::MockCameraProperties, WebCore::MockDisplayProperties> properties;
 };
 
@@ -7484,8 +7525,6 @@ header: <WebCore/FontTaggedSettings.h>
 
 enum class WebCore::UserScriptInjectionTime : bool;
 
-enum class WebCore::WaitForNotificationBeforeInjecting : bool;
-
 enum class WebCore::UserContentInjectedFrames : bool;
 
 class WebCore::UserScript {
@@ -7495,7 +7534,6 @@ class WebCore::UserScript {
     Vector<String> blocklist();
     WebCore::UserScriptInjectionTime injectionTime();
     WebCore::UserContentInjectedFrames injectedFrames();
-    WebCore::WaitForNotificationBeforeInjecting waitForNotificationBeforeInjecting();
 }
 
 header: <WebCore/GraphicsContextState.h>
@@ -8005,6 +8043,7 @@ enum class WebCore::AppleVisualEffect : uint8_t {
     BlurChromeMaterial,
 #if HAVE(MATERIAL_HOSTING)
     HostedBlurMaterial,
+    HostedThinBlurMaterial,
 #endif
     VibrancyLabel,
     VibrancySecondaryLabel,
@@ -8017,9 +8056,16 @@ enum class WebCore::AppleVisualEffect : uint8_t {
 };
 
 header: <WebCore/AppleVisualEffect.h>
+[Nested] enum class WebCore::AppleVisualEffectData::ColorScheme : uint8_t {
+    Light,
+    Dark
+};
+
+header: <WebCore/AppleVisualEffect.h>
 [CustomHeader] struct WebCore::AppleVisualEffectData {
     WebCore::AppleVisualEffect effect;
     WebCore::AppleVisualEffect contextEffect;
+    WebCore::AppleVisualEffectData::ColorScheme colorScheme;
     std::optional<WebCore::FloatRoundedRect> borderRect;
 };
 
@@ -8056,6 +8102,11 @@ header: <WebCore/SourceBufferPrivateClient.h>
 };
 
 using WebCore::SourceBufferPrivate::SamplesPromise::Result = Expected<Vector<String>, WebCore::PlatformMediaError>
+
+header: <WebCore/MediaSourceConfiguration.h>
+struct WebCore::MediaSourceConfiguration {
+    bool textTracksEnabled;
+};
 
 #endif
 
@@ -8757,6 +8808,7 @@ enum class WebCore::WillInternallyHandleFailure : bool
 enum class WebCore::ApplyTrackingPrevention : bool
 enum class WebCore::ShouldSample : bool
 enum class WebCore::FromDownloadAttribute : bool
+enum class WebCore::RequiresScriptTelemetry : bool
 
 [Nested] struct WebCore::Allowlist::AllowAllOrigins {
 };

@@ -67,6 +67,7 @@ assembler/SecureARM64EHashPins.cpp
 b3/air/AirAllocateRegistersAndStackAndGenerateCode.cpp
 b3/air/AirAllocateRegistersAndStackByLinearScan.cpp
 b3/air/AirAllocateRegistersByGraphColoring.cpp
+b3/air/AirAllocateRegistersByGreedy.cpp
 b3/air/AirAllocateStackByGraphColoring.cpp
 b3/air/AirArg.cpp
 b3/air/AirBasicBlock.cpp
@@ -562,7 +563,6 @@ heap/IsoCellSet.cpp
 heap/IsoHeapCellType.cpp
 heap/IsoMemoryAllocatorBase.cpp
 heap/IsoSubspace.cpp
-heap/IsoSubspacePerVM.cpp
 heap/JITStubRoutineSet.cpp
 heap/PreciseAllocation.cpp
 heap/LocalAllocator.cpp
@@ -576,6 +576,7 @@ heap/MarkingConstraintSet.cpp
 heap/MarkingConstraintSolver.cpp
 heap/MutatorScheduler.cpp
 heap/MutatorState.cpp
+heap/PreciseSubspace.cpp
 heap/RootMarkReason.cpp
 heap/SimpleMarkingConstraint.cpp
 heap/SlotVisitor.cpp

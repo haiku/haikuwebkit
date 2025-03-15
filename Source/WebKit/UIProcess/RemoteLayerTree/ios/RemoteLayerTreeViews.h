@@ -27,6 +27,9 @@
 
 #import "UIKitSPI.h"
 #import "WKBaseScrollView.h"
+#if HAVE(MATERIAL_HOSTING)
+#import "WKMaterialHostingSupport.h"
+#endif
 #import <wtf/OptionSet.h>
 
 OBJC_CLASS UIScrollView;
@@ -36,7 +39,7 @@ class FloatRect;
 class FloatSize;
 class IntPoint;
 
-enum class EventListenerRegionType : uint8_t;
+enum class EventListenerRegionType : uint16_t;
 enum class TouchAction : uint8_t;
 }
 
@@ -74,7 +77,7 @@ class WebPageProxy;
 @property (nonatomic, readonly) UIView *contentView;
 
 - (void)updateHostingSize:(WebCore::FloatSize)size;
-- (void)updateCornerRadius:(CGFloat)cornerRadius;
+- (void)updateMaterialEffectType:(WKHostedMaterialEffectType)materialEffectType colorScheme:(WKHostedMaterialColorScheme)colorScheme cornerRadius:(CGFloat)cornerRadius;
 
 @end
 #endif

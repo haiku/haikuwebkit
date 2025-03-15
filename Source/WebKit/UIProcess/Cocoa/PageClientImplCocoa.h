@@ -134,12 +134,14 @@ public:
 #endif
 
 #if ENABLE(SCREEN_TIME)
-    void installScreenTimeWebpageController() final;
     void didChangeScreenTimeWebpageControllerURL() final;
     void setURLIsPictureInPictureForScreenTime(bool) final;
     void setURLIsPlayingVideoForScreenTime(bool) final;
     void updateScreenTimeWebpageControllerURL(WKWebView *);
 #endif
+
+    void viewIsBecomingVisible() override;
+    void viewIsBecomingInvisible() override;
 
 #if ENABLE(GAMEPAD)
     void setGamepadsRecentlyAccessed(GamepadsRecentlyAccessed) final;
@@ -160,6 +162,7 @@ private:
 #if ENABLE(FULLSCREEN_API)
     void setFullScreenClientForTesting(std::unique_ptr<WebFullScreenManagerProxyClient>&&) final;
 #endif
+
 protected:
     RetainPtr<WKWebView> webView() const { return m_webView.get(); }
 

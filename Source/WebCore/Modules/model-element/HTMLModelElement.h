@@ -55,6 +55,7 @@ class GraphicsLayer;
 class LayoutSize;
 class Model;
 class ModelPlayer;
+class ModelPlayerProvider;
 class MouseEvent;
 
 template<typename IDLType> class DOMPromiseDeferred;
@@ -87,7 +88,7 @@ public:
     using ReadyPromise = DOMPromiseProxyWithResolveCallback<IDLInterface<HTMLModelElement>>;
     ReadyPromise& ready() { return m_readyPromise.get(); }
 
-    RefPtr<Model> model() const;
+    WEBCORE_EXPORT RefPtr<Model> model() const;
 
     bool usesPlatformLayer() const;
     PlatformLayer* platformLayer() const;
@@ -153,6 +154,10 @@ public:
     void setCurrentTime(double);
     const URL& environmentMap() const;
     void setEnvironmentMap(const URL&);
+    WEBCORE_EXPORT bool supportsStageModeInteraction() const;
+    WEBCORE_EXPORT void beginStageModeTransform(const TransformationMatrix&);
+    WEBCORE_EXPORT void updateStageModeTransform(const TransformationMatrix&);
+    WEBCORE_EXPORT void endStageModeInteraction();
 #endif
 
 #if PLATFORM(COCOA)
@@ -210,6 +215,9 @@ private:
 #endif
     std::optional<PlatformLayerIdentifier> modelContentsLayerID() const final;
 
+    Node::InsertedIntoAncestorResult insertedIntoAncestor(InsertionType , ContainerNode& parentOfInsertedTree) override;
+    void removedFromAncestor(RemovalType, ContainerNode& oldParentOfRemovedTree) override;
+
     void defaultEventHandler(Event&) final;
     void dragDidStart(MouseEvent&);
     void dragDidChange(MouseEvent&);
@@ -241,6 +249,7 @@ private:
     URL m_sourceURL;
     CachedResourceHandle<CachedRawResource> m_resource;
     SharedBufferBuilder m_data;
+    WeakPtr<ModelPlayerProvider> m_modelPlayerProvider;
     RefPtr<Model> m_model;
     UniqueRef<ReadyPromise> m_readyPromise;
     bool m_dataComplete { false };

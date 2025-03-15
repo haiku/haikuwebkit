@@ -130,6 +130,7 @@ public:
     void mediaEngineChanged(WebCore::HTMLMediaElement&);
     PlaybackSessionContextIdentifier contextIdForMediaElement(WebCore::HTMLMediaElement&);
 
+    WebCore::HTMLMediaElement* mediaElementWithContextId(PlaybackSessionContextIdentifier) const;
     WebCore::HTMLMediaElement* currentPlaybackControlsElement() const;
 
 #if !RELEASE_LOG_DISABLED
@@ -190,6 +191,7 @@ private:
     void handleControlledElementIDRequest(PlaybackSessionContextIdentifier);
     void togglePictureInPicture(PlaybackSessionContextIdentifier);
     void enterFullscreen(PlaybackSessionContextIdentifier);
+    void setPlayerIdentifierForVideoElement(PlaybackSessionContextIdentifier);
     void exitFullscreen(PlaybackSessionContextIdentifier);
     void enterInWindow(PlaybackSessionContextIdentifier);
     void exitInWindow(PlaybackSessionContextIdentifier);

@@ -56,12 +56,14 @@ public:
     WebBackForwardListItem* itemForID(WebCore::BackForwardItemIdentifier);
 
     void addItem(Ref<WebBackForwardListItem>&&);
+    void addChildItem(WebCore::FrameIdentifier, Ref<FrameState>&&);
     void goToItem(WebBackForwardListItem&);
     void removeAllItems();
     void clear();
 
     WebBackForwardListItem* currentItem() const;
     RefPtr<WebBackForwardListItem> protectedCurrentItem() const;
+    WebBackForwardListItem* provisionalItem() const;
     WebBackForwardListItem* backItem() const;
     WebBackForwardListItem* forwardItem() const;
     WebBackForwardListItem* itemAtIndex(int) const;
@@ -89,7 +91,7 @@ public:
 
     void goToProvisionalItem(WebBackForwardListItem&);
     void clearProvisionalItem(WebBackForwardListFrameItem&);
-    void commitProvisionalItem(WebBackForwardListFrameItem&);
+    void commitProvisionalItem();
 
     Ref<FrameState> completeFrameStateForNavigation(Ref<FrameState>&&);
 

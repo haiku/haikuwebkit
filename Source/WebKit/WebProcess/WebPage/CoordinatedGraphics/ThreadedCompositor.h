@@ -44,6 +44,10 @@
 #include "ThreadedDisplayRefreshMonitor.h"
 #endif
 
+#if ENABLE(DAMAGE_TRACKING)
+#include "FrameDamageForTesting.h"
+#endif
+
 namespace WebCore {
 class TextureMapper;
 class TransformationMatrix;
@@ -54,7 +58,11 @@ class AcceleratedSurface;
 class CoordinatedSceneState;
 class LayerTreeHost;
 
-class ThreadedCompositor : public ThreadSafeRefCounted<ThreadedCompositor>, public CanMakeThreadSafeCheckedPtr<ThreadedCompositor> {
+class ThreadedCompositor : public ThreadSafeRefCounted<ThreadedCompositor>, public CanMakeThreadSafeCheckedPtr<ThreadedCompositor>
+#if ENABLE(DAMAGE_TRACKING)
+    , public FrameDamageForTesting
+#endif
+{
     WTF_MAKE_TZONE_ALLOCATED(ThreadedCompositor);
     WTF_MAKE_NONCOPYABLE(ThreadedCompositor);
     WTF_OVERRIDE_DELETE_FOR_CHECKED_PTR(ThreadedCompositor);
@@ -79,6 +87,7 @@ public:
     void preferredBufferFormatsDidChange();
 #endif
 
+    void setSize(const WebCore::IntSize&, float);
     uint32_t requestComposition();
     void scheduleUpdate();
     RunLoop* runLoop();
@@ -96,6 +105,8 @@ public:
 
 #if ENABLE(DAMAGE_TRACKING)
     void setDamagePropagation(WebCore::Damage::Propagation);
+    WebCore::FrameDamageHistory* frameDamageHistory() const { return m_frameDamageHistory.get(); }
+    void resetFrameDamageHistory();
 #endif
 
 private:
@@ -117,6 +128,8 @@ private:
     void sceneUpdateFinished();
 #endif
 
+    void updateSceneAttributes(const WebCore::IntSize&, float deviceScaleFactor);
+
     CheckedPtr<LayerTreeHost> m_layerTreeHost;
     std::unique_ptr<AcceleratedSurface> m_surface;
     RefPtr<CoordinatedSceneState> m_sceneState;
@@ -131,7 +144,6 @@ private:
         Lock lock;
         WebCore::IntSize viewportSize;
         float deviceScaleFactor { 1 };
-        uint32_t compositionRequestID { 0 };
 
 #if !HAVE(DISPLAY_LINK)
         bool clientRendersNextFrame { false };
@@ -146,6 +158,7 @@ private:
     std::unique_ptr<WebCore::TextureMapperDamageVisualizer> m_damageVisualizer;
 #endif
 
+    std::atomic<uint32_t> m_compositionRequestID { 0 };
 #if HAVE(DISPLAY_LINK)
     std::atomic<uint32_t> m_compositionResponseID { 0 };
     RunLoop::Timer m_didRenderFrameTimer;
@@ -157,6 +170,9 @@ private:
     } m_display;
 
     Ref<ThreadedDisplayRefreshMonitor> m_displayRefreshMonitor;
+#endif
+#if ENABLE(DAMAGE_TRACKING)
+    std::unique_ptr<WebCore::FrameDamageHistory> m_frameDamageHistory;
 #endif
 };
 

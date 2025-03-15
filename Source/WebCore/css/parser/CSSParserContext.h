@@ -81,7 +81,6 @@ struct CSSParserContext {
 #endif
     bool masonryEnabled : 1 { false };
     bool cssAppearanceBaseEnabled : 1 { false };
-    bool cssNestingEnabled : 1 { false };
     bool cssPaintingAPIEnabled : 1 { false };
     bool cssScopeAtRuleEnabled : 1 { false };
     bool cssShapeFunctionEnabled : 1 { false };
@@ -92,7 +91,7 @@ struct CSSParserContext {
     bool cssWordBreakAutoPhraseEnabled : 1 { false };
     bool popoverAttributeEnabled : 1 { false };
     bool sidewaysWritingModesEnabled : 1 { false };
-    bool cssTextWrapPrettyEnabled : 1 { false };
+    bool cssTextWrapPrettyEnabled : 1 { true };
     bool thumbAndTrackPseudoElementsEnabled : 1 { false };
 #if ENABLE(SERVICE_CONTROLS)
     bool imageControlsEnabled : 1 { false };

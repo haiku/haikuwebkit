@@ -224,7 +224,6 @@ messages -> WebPageProxy {
     ShouldGoToBackForwardListItemSync(WebCore::BackForwardItemIdentifier itemID) -> (bool shouldGoToItem) Synchronous
     BackForwardGoToProvisionalItem(WebCore::BackForwardItemIdentifier itemID) -> (struct WebKit::WebBackForwardListCounts counts) Synchronous
     BackForwardClearProvisionalItem(WebCore::BackForwardItemIdentifier itemID, WebCore::BackForwardFrameItemIdentifier frameItemID) -> (struct WebKit::WebBackForwardListCounts counts) Synchronous
-    BackForwardCommitProvisionalItem(WebCore::BackForwardItemIdentifier itemID, WebCore::BackForwardFrameItemIdentifier frameItemID)
 
     # Undo/Redo messages
     RegisterEditCommandForUndo(uint64_t commandID, String label) AllowedWhenWaitingForSyncReply
@@ -289,8 +288,7 @@ messages -> WebPageProxy {
     HidePopupMenu()
 
 #if ENABLE(CONTEXT_MENUS)
-    ShowContextMenu(WebKit::ContextMenuContextData contextMenuContextData, WebKit::UserData userData)
-    ShowContextMenuFromFrame(WebCore::FrameIdentifier frameID, WebKit::ContextMenuContextData contextMenuContextData, WebKit::UserData userData)
+    ShowContextMenuFromFrame(struct WebKit::FrameInfoData frameInfo, WebKit::ContextMenuContextData contextMenuContextData, WebKit::UserData userData)
 #endif
 
     [EnabledBy=ServiceWorkersEnabled] DidFinishServiceWorkerPageRegistration(bool success)
@@ -312,7 +310,7 @@ messages -> WebPageProxy {
 #endif
 
 #if ENABLE(ENCRYPTED_MEDIA)
-    [EnabledBy=EncryptedMediaAPIEnabled] RequestMediaKeySystemPermissionForFrame(WebCore::MediaKeySystemRequestIdentifier mediaKeySystemID, WebCore::FrameIdentifier frameID, WebCore::SecurityOriginData topLevelDocumentOriginIdentifier, String keySystem)
+    [EnabledBy=EncryptedMediaAPIEnabled] RequestMediaKeySystemPermissionForFrame(WebCore::MediaKeySystemRequestIdentifier mediaKeySystemID, WebCore::FrameIdentifier frameID, struct WebCore::ClientOrigin clientOrigin, String keySystem)
 #endif
 
     # Notification messages
@@ -346,6 +344,10 @@ messages -> WebPageProxy {
     DidHandleAdditionalDragItemsRequest(bool added)
     WillReceiveEditDragSnapshot()
     DidReceiveEditDragSnapshot(std::optional<WebCore::TextIndicatorData> textIndicator)
+#endif
+
+#if ENABLE(MODEL_PROCESS)
+    DidReceiveInteractiveModelElement(std::optional<WebCore::ElementIdentifier> elementID)
 #endif
 
 #if PLATFORM(COCOA)
@@ -506,9 +508,6 @@ messages -> WebPageProxy {
     RequestPointerUnlock()
 #endif
 
-    DidFailToSuspendAfterProcessSwap()
-    DidSuspendAfterProcessSwap()
-
     ImageOrMediaDocumentSizeChanged(WebCore::IntSize newSize)
 
     UseFixedLayoutDidChange(bool useFixedLayout)
@@ -553,18 +552,21 @@ messages -> WebPageProxy {
     [EnabledBy=SpeechSynthesisAPIEnabled] SpeechSynthesisResetState()
 #endif
 
-#if ENABLE(PDF_PLUGIN)
-
-#if PLATFORM(MAC)
+#if ENABLE(PDF_PLUGIN) && PLATFORM(MAC)
     ShowPDFContextMenu(struct WebKit::PDFContextMenu contextMenu, WebKit::PDFPluginIdentifier identifier) -> (std::optional<int32_t> selectedItem)
-#endif
-
 #endif
 
 #if ENABLE(PDF_HUD)
     CreatePDFHUD(WebKit::PDFPluginIdentifier identifier, WebCore::IntRect boundingBox)
     UpdatePDFHUDLocation(WebKit::PDFPluginIdentifier identifier, WebCore::IntRect boundingBox)
     RemovePDFHUD(WebKit::PDFPluginIdentifier identifier)
+#endif
+
+#if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
+    CreatePDFPageNumberIndicator(WebKit::PDFPluginIdentifier identifier, WebCore::IntRect boundingBox, size_t pageCount)
+    UpdatePDFPageNumberIndicatorLocation(WebKit::PDFPluginIdentifier identifier, WebCore::IntRect boundingBox)
+    UpdatePDFPageNumberIndicatorCurrentPage(WebKit::PDFPluginIdentifier identifier, size_t pageIndex)
+    RemovePDFPageNumberIndicator(WebKit::PDFPluginIdentifier identifier)
 #endif
 
     ConfigureLoggingChannel(String channelName, enum:uint8_t WTFLogChannelState state, enum:uint8_t WTFLogLevel level)

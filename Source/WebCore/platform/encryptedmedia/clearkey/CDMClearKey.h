@@ -60,7 +60,7 @@ public:
 
     virtual ~CDMFactoryClearKey();
 
-    std::unique_ptr<CDMPrivate> createCDM(const String&, const CDMPrivateClient&) final;
+    std::unique_ptr<CDMPrivate> createCDM(const String& keySystem, const String& mediaKeysHashSalt, const CDMPrivateClient&) final;
     bool supportsKeySystem(const String&) final;
 
 private:
@@ -116,7 +116,7 @@ public:
     void removeSessionData(const String&, LicenseType, RemoveSessionDataCallback&&) final;
     void storeRecordOfKeyUsage(const String&) final;
 private:
-    CDMInstanceClearKey& parentInstance() const;
+    RefPtr<CDMInstanceClearKey> protectedParentInstance() const;
 
     String m_sessionID;
     KeyStore m_keyStore;

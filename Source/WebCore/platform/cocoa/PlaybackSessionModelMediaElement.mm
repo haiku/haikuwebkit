@@ -145,6 +145,11 @@ void PlaybackSessionModelMediaElement::handleEvent(WebCore::ScriptExecutionConte
     updateForEventName(event.type());
 }
 
+void PlaybackSessionModelMediaElement::updateAll()
+{
+    updateForEventName(eventNameAll());
+}
+
 void PlaybackSessionModelMediaElement::updateForEventName(const WTF::AtomString& eventName)
 {
     if (m_clients.isEmpty())
@@ -416,6 +421,16 @@ void PlaybackSessionModelMediaElement::enterFullscreen()
 
     UserGestureIndicator indicator { IsProcessingUserGesture::Yes, &element->document() };
     element->enterFullscreenIgnoringPermissionsPolicy();
+}
+
+void PlaybackSessionModelMediaElement::setPlayerIdentifierForVideoElement()
+{
+    RefPtr element = dynamicDowncast<HTMLVideoElement>(m_mediaElement);
+    ASSERT(element);
+    if (!element)
+        return;
+
+    element->setPlayerIdentifierForVideoElement();
 }
 
 void PlaybackSessionModelMediaElement::exitFullscreen()

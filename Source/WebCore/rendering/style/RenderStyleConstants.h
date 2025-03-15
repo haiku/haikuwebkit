@@ -242,6 +242,14 @@ enum class BorderPrecedence : uint8_t {
     Cell
 };
 
+enum class CornerShape : uint8_t {
+    Round,
+    Scoop,
+    Bevel,
+    Notch,
+    Straight,
+};
+
 enum class OutlineIsAuto : bool {
     Off,
     On
@@ -1157,10 +1165,18 @@ enum class FontLoadingBehavior : uint8_t {
     Optional
 };
 
-enum class EventListenerRegionType : uint8_t {
-    Wheel           = 1 << 0,
-    NonPassiveWheel = 1 << 1,
-    MouseClick      = 1 << 2,
+enum class EventListenerRegionType : uint16_t {
+    Wheel                 = 1 << 0,
+    NonPassiveWheel       = 1 << 1,
+    MouseClick            = 1 << 2,
+    TouchStart            = 1 << 3,
+    NonPassiveTouchStart  = 1 << 4,
+    TouchEnd              = 1 << 5,
+    NonPassiveTouchEnd    = 1 << 6,
+    TouchCancel           = 1 << 7,
+    NonPassiveTouchCancel = 1 << 8,
+    TouchMove             = 1 << 9,
+    NonPassiveTouchMove   = 1 << 10,
 };
 
 enum class MathStyle : bool {
@@ -1256,6 +1272,7 @@ WTF::TextStream& operator<<(WTF::TextStream&, ColumnSpan);
 WTF::TextStream& operator<<(WTF::TextStream&, ContentDistribution);
 WTF::TextStream& operator<<(WTF::TextStream&, ContentPosition);
 WTF::TextStream& operator<<(WTF::TextStream&, ContentVisibility);
+WTF::TextStream& operator<<(WTF::TextStream&, CornerShape);
 WTF::TextStream& operator<<(WTF::TextStream&, CursorType);
 #if ENABLE(CURSOR_VISIBILITY)
 WTF::TextStream& operator<<(WTF::TextStream&, CursorVisibility);

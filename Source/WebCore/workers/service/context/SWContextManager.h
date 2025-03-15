@@ -92,6 +92,8 @@ public:
 
         virtual void removeNavigationFetch(SWServerConnectionIdentifier, FetchIdentifier) = 0;
 
+        virtual bool isWebSWContextManagerConnection() const { return false; }
+
     protected:
         void setAsClosed() { m_isClosed = true; }
 
@@ -101,6 +103,7 @@ public:
 
     WEBCORE_EXPORT void setConnection(Ref<Connection>&&);
     WEBCORE_EXPORT Connection* connection() const;
+    RefPtr<Connection> protectedConnection() const { return m_connection; }
 
     WEBCORE_EXPORT void registerServiceWorkerThreadForInstall(Ref<ServiceWorkerThreadProxy>&&);
     WEBCORE_EXPORT ServiceWorkerThreadProxy* serviceWorkerThreadProxy(ServiceWorkerIdentifier) const;

@@ -459,18 +459,8 @@ std::pair<String, bool> NetworkStorageSession::cookieRequestHeaderFieldValue(con
     return cookiesForSession(headerFieldProxy.firstParty, headerFieldProxy.sameSiteInfo, headerFieldProxy.url, headerFieldProxy.frameID, headerFieldProxy.pageID, IncludeHTTPOnly, headerFieldProxy.includeSecureCookies, ApplyTrackingPrevention::Yes, ShouldRelaxThirdPartyCookieBlocking::No);
 }
 
-static NSHTTPCookie *parseDOMCookie(String cookieString, NSURL* cookieURL, std::optional<Seconds> cappedLifetime, const String& partition)
+static NSHTTPCookie *adjustScriptWrittenCookie(NSHTTPCookie *initialCookie, std::optional<Seconds> cappedLifetime)
 {
-    // <rdar://problem/5632883> On 10.5, NSHTTPCookieStorage would store an empty cookie,
-    // which would be sent as "Cookie: =".
-    if (cookieString.isEmpty())
-        return nil;
-
-    // <http://bugs.webkit.org/show_bug.cgi?id=6531>, <rdar://4409034>
-    // cookiesWithResponseHeaderFields doesn't parse cookies without a value
-    cookieString = cookieString.contains('=') ? cookieString : makeString(cookieString, '=');
-
-    NSHTTPCookie *initialCookie = [NSHTTPCookie _cookieForSetCookieString:cookieString forURL:cookieURL partition:nsStringNilIfEmpty(partition)];
     if (!initialCookie)
         return nil;
 
@@ -499,7 +489,21 @@ static NSHTTPCookie *parseDOMCookie(String cookieString, NSURL* cookieURL, std::
     return cookie;
 }
 
-void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, std::optional<FrameIdentifier> frameID, std::optional<PageIdentifier> pageID, ApplyTrackingPrevention applyTrackingPrevention, const String& cookieString, ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking) const
+static NSHTTPCookie *parseDOMCookie(String cookieString, NSURL* cookieURL, std::optional<Seconds> cappedLifetime, const String& partition)
+{
+    // <rdar://problem/5632883> On 10.5, NSHTTPCookieStorage would store an empty cookie,
+    // which would be sent as "Cookie: =".
+    if (cookieString.isEmpty())
+        return nil;
+
+    // <http://bugs.webkit.org/show_bug.cgi?id=6531>, <rdar://4409034>
+    // cookiesWithResponseHeaderFields doesn't parse cookies without a value
+    cookieString = cookieString.contains('=') ? cookieString : makeString(cookieString, '=');
+
+    return adjustScriptWrittenCookie([NSHTTPCookie _cookieForSetCookieString:cookieString forURL:cookieURL partition:nsStringNilIfEmpty(partition)], cappedLifetime);
+}
+
+void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, std::optional<FrameIdentifier> frameID, std::optional<PageIdentifier> pageID, ApplyTrackingPrevention applyTrackingPrevention, RequiresScriptTelemetry requiresScriptTelemetry, const String& cookieString, ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking) const
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies) || m_isInMemoryCookieStore);
 
@@ -510,7 +514,7 @@ void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameS
 
     NSURL *cookieURL = url;
 
-    std::optional<Seconds> cookieCap = clientSideCookieCap(RegistrableDomain { firstParty }, pageID);
+    auto cookieCap = clientSideCookieCap(RegistrableDomain { firstParty }, requiresScriptTelemetry, pageID);
 
 #if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
     String partitionKey = isOptInCookiePartitioningEnabled() ? cookiePartitionIdentifier(firstParty) : String { };
@@ -527,7 +531,7 @@ void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameS
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
-bool NetworkStorageSession::setCookieFromDOM(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, std::optional<FrameIdentifier> frameID, std::optional<PageIdentifier> pageID, ApplyTrackingPrevention applyTrackingPrevention, const Cookie& cookie, ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking) const
+bool NetworkStorageSession::setCookieFromDOM(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, std::optional<FrameIdentifier> frameID, std::optional<PageIdentifier> pageID, ApplyTrackingPrevention applyTrackingPrevention, RequiresScriptTelemetry requiresScriptTelemetry, const Cookie& cookie, ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking) const
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies) || m_isInMemoryCookieStore);
 
@@ -536,11 +540,12 @@ bool NetworkStorageSession::setCookieFromDOM(const URL& firstParty, const SameSi
     if (applyTrackingPrevention == ApplyTrackingPrevention::Yes && shouldBlockCookies(firstParty, url, frameID, pageID, shouldRelaxThirdPartyCookieBlocking))
         return false;
 
-    NSHTTPCookie *nshttpCookie = (NSHTTPCookie *)cookie;
+    auto expiryCap = clientSideCookieCap(RegistrableDomain { firstParty }, requiresScriptTelemetry, pageID);
+    RetainPtr nshttpCookie = adjustScriptWrittenCookie((NSHTTPCookie *)cookie, expiryCap);
     if (!nshttpCookie)
         return false;
 
-    setHTTPCookiesForURL(cookieStorage().get(), @[nshttpCookie], (NSURL *)url, firstParty, sameSiteInfo);
+    setHTTPCookiesForURL(cookieStorage().get(), @[ nshttpCookie.get() ], (NSURL *)url, firstParty, sameSiteInfo);
     return true;
 
     END_BLOCK_OBJC_EXCEPTIONS

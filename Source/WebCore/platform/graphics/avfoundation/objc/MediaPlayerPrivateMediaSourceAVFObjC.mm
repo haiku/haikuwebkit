@@ -44,6 +44,7 @@
 #import "PixelBufferConformerCV.h"
 #import "PlatformScreen.h"
 #import "SourceBufferPrivateAVFObjC.h"
+#import "SpatialAudioExperienceHelper.h"
 #import "TextTrackRepresentation.h"
 #import "VideoFrameCV.h"
 #import "VideoLayerManagerObjC.h"
@@ -74,12 +75,6 @@
 @interface AVSampleBufferDisplayLayer (Staging_100128644)
 @property (assign, nonatomic) BOOL preventsAutomaticBackgroundingDuringVideoPlayback;
 @end
-
-#if ENABLE(LINEAR_MEDIA_PLAYER)
-@interface AVSampleBufferVideoRenderer (Staging_127455709)
-- (void)removeAllVideoTargets;
-@end
-#endif
 
 namespace WebCore {
 
@@ -963,8 +958,6 @@ void MediaPlayerPrivateMediaSourceAVFObjC::destroyVideoRenderer()
     CMTime currentTime = PAL::CMTimebaseGetTime([m_synchronizer timebase]);
     [m_synchronizer removeRenderer:renderer.get() atTime:currentTime completionHandler:nil];
 
-    if ([renderer respondsToSelector:@selector(removeAllVideoTargets)])
-        [renderer removeAllVideoTargets];
     m_sampleBufferVideoRenderer = nullptr;
 #endif // ENABLE(LINEAR_MEDIA_PLAYER)
 }
@@ -1333,19 +1326,20 @@ void MediaPlayerPrivateMediaSourceAVFObjC::flushPendingSizeChanges()
 }
 
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA)
-CDMSessionAVContentKeySession* MediaPlayerPrivateMediaSourceAVFObjC::cdmSession() const
+RefPtr<CDMSessionAVContentKeySession> MediaPlayerPrivateMediaSourceAVFObjC::cdmSession() const
 {
     return m_session.get();
 }
 
 void MediaPlayerPrivateMediaSourceAVFObjC::setCDMSession(LegacyCDMSession* session)
 {
-    if (session == m_session)
+    if (session == m_session.get())
         return;
 
     ALWAYS_LOG(LOGIDENTIFIER);
 
-    m_session = toCDMSessionAVContentKeySession(session);
+    // FIXME: This is a false positive. Remove the suppression once rdar://145631564 is fixed.
+    SUPPRESS_UNCOUNTED_ARG m_session = toCDMSessionAVContentKeySession(session);
 
     if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
         mediaSourcePrivate->setCDMSession(session);
@@ -1802,10 +1796,30 @@ void MediaPlayerPrivateMediaSourceAVFObjC::setSpatialTrackingLabel(const String&
 
 void MediaPlayerPrivateMediaSourceAVFObjC::updateSpatialTrackingLabel()
 {
+    auto player = m_player.get();
+    if (!player)
+        return;
+
     if ((!m_sampleBufferDisplayLayer && !m_sampleBufferVideoRenderer) || isUsingRenderlessMediaSampleRenderer())
         return;
     auto *renderer = (m_sampleBufferVideoRenderer ? m_sampleBufferVideoRenderer : m_sampleBufferDisplayLayer)->as<AVSampleBufferVideoRenderer>();
     ASSERT(renderer);
+
+#if HAVE(SPATIAL_AUDIO_EXPERIENCE)
+    if (player->prefersSpatialAudioExperience()) {
+        RetainPtr experience = createExperienceWithOptions({
+            .hasLayer = !!renderer,
+            .hasTarget = !!m_videoTarget,
+            .isVisible = m_visible,
+            .sceneIdentifier = player->sceneIdentifier(),
+#if HAVE(SPATIAL_TRACKING_LABEL)
+            .spatialTrackingLabel = m_spatialTrackingLabel,
+#endif
+        });
+        [m_synchronizer setIntendedSpatialAudioExperience:experience.get()];
+        return;
+    }
+#endif
 
     if (!m_spatialTrackingLabel.isNull()) {
         INFO_LOG(LOGIDENTIFIER, "Explicitly set STSLabel: ", m_spatialTrackingLabel);
@@ -1872,6 +1886,15 @@ void MediaPlayerPrivateMediaSourceAVFObjC::setVideoTarget(const PlatformVideoTar
     m_usingLinearMediaPlayer = !!videoTarget;
     m_videoTarget = videoTarget;
     updateDisplayLayer();
+}
+#endif
+
+#if PLATFORM(IOS_FAMILY)
+void MediaPlayerPrivateMediaSourceAVFObjC::sceneIdentifierDidChange()
+{
+#if HAVE(SPATIAL_TRACKING_LABEL)
+    updateSpatialTrackingLabel();
+#endif
 }
 #endif
 

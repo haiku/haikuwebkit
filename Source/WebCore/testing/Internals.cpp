@@ -58,7 +58,6 @@
 #include "ColorChooser.h"
 #include "ColorSerialization.h"
 #include "ComposedTreeIterator.h"
-#include "ContextMenuController.h"
 #include "CookieJar.h"
 #include "CrossOriginPreflightResultCache.h"
 #include "Cursor.h"
@@ -72,6 +71,7 @@
 #include "DisabledAdaptations.h"
 #include "DisplayList.h"
 #include "Document.h"
+#include "DocumentFullscreen.h"
 #include "DocumentInlines.h"
 #include "DocumentLoader.h"
 #include "DocumentMarkerController.h"
@@ -93,7 +93,6 @@
 #include "FormController.h"
 #include "FragmentDirectiveGenerator.h"
 #include "FrameLoader.h"
-#include "FullscreenManager.h"
 #include "GCObservation.h"
 #include "GridPosition.h"
 #include "HEVCUtilities.h"
@@ -602,9 +601,6 @@ void Internals::resetToConsistentState(Page& page)
     localMainFrame->loader().clearTestingOverrides();
     if (auto* applicationCacheStorage = page.applicationCacheStorage())
         applicationCacheStorage->setDefaultOriginQuota(ApplicationCacheStorage::noQuota());
-#if ENABLE(CONTEXT_MENUS)
-    page.contextMenuController().didDismissContextMenu();
-#endif
 #if ENABLE(VIDEO)
     page.group().ensureCaptionPreferences().setCaptionDisplayMode(CaptionUserPreferences::CaptionDisplayMode::ForcedOnly);
     page.group().ensureCaptionPreferences().setCaptionsStyleSheetOverride(emptyString());
@@ -703,6 +699,10 @@ void Internals::resetToConsistentState(Page& page)
     AudioSession::sharedSession().tryToSetActive(false);
     AudioSession::sharedSession().endInterruptionForTesting();
 #endif
+
+#if ENABLE(DAMAGE_TRACKING)
+    page.chrome().client().resetDamageHistoryForTesting();
+#endif
 }
 
 Internals::Internals(Document& document)
@@ -752,6 +752,10 @@ Internals::Internals(Document& document)
 #endif
 
     Scrollbar::setShouldUseFixedPixelsPerLineStepForTesting(true);
+
+#if ENABLE(DAMAGE_TRACKING)
+    document.page()->chrome().client().resetDamageHistoryForTesting();
+#endif
 }
 
 Document* Internals::contextDocument() const
@@ -1251,6 +1255,12 @@ void Internals::setForceUpdateImageDataEnabledForTesting(HTMLImageElement& eleme
 {
     if (auto* cachedImage = element.cachedImage())
         cachedImage->setForceUpdateImageDataEnabledForTesting(enabled);
+}
+
+void Internals::setHeadroomForTesting(HTMLImageElement& element, float headroom)
+{
+    if (auto* bitmapImage = bitmapImageFromImageElement(element))
+        bitmapImage->setHeadroomForTesting(headroom);
 }
 
 #if ENABLE(WEB_CODECS)
@@ -3927,6 +3937,35 @@ ExceptionOr<void> Internals::setFullscreenAutoHideDuration(double duration)
     return { };
 }
 
+void Internals::setScreenContentsFormatsForTesting(const Vector<Internals::ContentsFormat>& formats)
+{
+    OptionSet<WebCore::ContentsFormat> contentsFormats;
+
+    for (auto format : formats) {
+        switch (format) {
+        case Internals::ContentsFormat::RGBA8:
+            contentsFormats.add(WebCore::ContentsFormat::RGBA8);
+            break;
+#if ENABLE(PIXEL_FORMAT_RGB10)
+        case Internals::ContentsFormat::RGBA10:
+            contentsFormats.add(WebCore::ContentsFormat::RGBA10);
+            break;
+#endif
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
+        case Internals::ContentsFormat::RGBA16F:
+            contentsFormats.add(WebCore::ContentsFormat::RGBA16F);
+            break;
+#endif
+        }
+    }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    WebCore::setScreenContentsFormatsForTesting(contentsFormats);
+#else
+    UNUSED_PARAM(contentsFormats);
+#endif
+}
+
 #if ENABLE(VIDEO)
 bool Internals::isChangingPresentationMode(HTMLVideoElement& element) const
 {
@@ -5660,6 +5699,19 @@ void Internals::setPageMediaVolume(float volume)
     page->setMediaVolume(volume);
 }
 
+float Internals::pageMediaVolume()
+{
+    Document* document = contextDocument();
+    if (!document)
+        return 0;
+
+    Page* page = document->page();
+    if (!page)
+        return 0;
+
+    return page->mediaVolume();
+}
+
 #if !PLATFORM(COCOA)
 
 String Internals::userVisibleString(const DOMURL& url)
@@ -6213,6 +6265,7 @@ void Internals::setMediaStreamTrackMuted(MediaStreamTrack& track, bool muted)
 
 void Internals::removeMediaStreamTrack(MediaStream& stream, MediaStreamTrack& track)
 {
+    stream.allowEventTracksForTesting();
     stream.privateStream().removeTrack(track.privateTrack());
 }
 
@@ -6234,6 +6287,11 @@ void Internals::setMediaStreamSourceInterrupted(MediaStreamTrack& track, bool in
 const String& Internals::mediaStreamTrackPersistentId(const MediaStreamTrack& track)
 {
     return track.source().persistentID();
+}
+
+size_t Internals::audioCaptureSourceCount() const
+{
+    return PlatformMediaSessionManager::singleton().audioCaptureSourceCount();
 }
 
 bool Internals::isMediaStreamSourceInterrupted(MediaStreamTrack& track) const
@@ -7763,6 +7821,56 @@ void Internals::setShouldSkipResourceMonitorThrottling(bool flag)
 {
     if (RefPtr document = contextDocument())
         document->setShouldSkipResourceMonitorThrottling(flag);
+}
+#endif
+
+#if ENABLE(DAMAGE_TRACKING)
+std::optional<Internals::DamagePropagation> Internals::getCurrentDamagePropagation() const
+{
+    RefPtr document = contextDocument();
+    if (!document || !document->page())
+        return std::nullopt;
+
+    auto damagePropagation = ([](const Settings& settings) {
+        if (!settings.propagateDamagingInformation())
+            return Damage::Propagation::None;
+        if (settings.unifyDamagedRegions())
+            return Damage::Propagation::Unified;
+        return Damage::Propagation::Region;
+    })(document->page()->settings());
+
+    return damagePropagation;
+}
+
+ExceptionOr<Vector<Internals::FrameDamage>> Internals::getFrameDamageHistory() const
+{
+    RefPtr document = contextDocument();
+    if (!document || !document->page())
+        return Exception { ExceptionCode::NotSupportedError };
+
+    const auto* damageForTesting = document->page()->chrome().client().damageHistoryForTesting();
+    if (!damageForTesting)
+        return Exception { ExceptionCode::NotSupportedError };
+
+    Vector<Internals::FrameDamage> damageDetails;
+    size_t sequenceId = 0;
+    for (const auto& [isValid, region] : damageForTesting->damageInformation()) {
+        FrameDamage details;
+        details.sequenceId = sequenceId++;
+
+        details.isValid = isValid;
+
+        const auto& regionBounds = region.bounds();
+        details.bounds = DOMRectReadOnly::create(regionBounds.x(), regionBounds.y(), regionBounds.width(), regionBounds.height());
+
+        const auto& regionRects = region.rects();
+        details.rects = regionRects.map([](const IntRect& rect) -> Ref<DOMRectReadOnly> {
+            return DOMRectReadOnly::create(rect.x(), rect.y(), rect.width(), rect.height());
+        });
+        damageDetails.append(WTFMove(details));
+    }
+
+    return damageDetails;
 }
 #endif
 

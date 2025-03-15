@@ -26,6 +26,7 @@
 #import "config.h"
 #import "PageClientImplCocoa.h"
 
+#import "APIUIClient.h"
 #import "RemoteLayerTreeTransaction.h"
 #import "WKTextAnimationType.h"
 #import "WKWebViewInternal.h"
@@ -324,11 +325,6 @@ void PageClientImplCocoa::removeTextAnimationForAnimationID(const WTF::UUID& uui
 #endif
 
 #if ENABLE(SCREEN_TIME)
-void PageClientImplCocoa::installScreenTimeWebpageController()
-{
-    [m_webView _installScreenTimeWebpageController];
-}
-
 void PageClientImplCocoa::didChangeScreenTimeWebpageControllerURL()
 {
     updateScreenTimeWebpageControllerURL(webView().get());
@@ -339,9 +335,10 @@ void PageClientImplCocoa::updateScreenTimeWebpageControllerURL(WKWebView *webVie
     if (!PAL::isScreenTimeFrameworkAvailable())
         return;
 
+    if (![webView _screenTimeWebpageController])
+        [webView _installScreenTimeWebpageController];
+
     RetainPtr screenTimeWebpageController = [webView _screenTimeWebpageController];
-    if (!screenTimeWebpageController)
-        return;
 
     RefPtr pageProxy = [webView _page].get();
     if (pageProxy && !pageProxy->preferences().screenTimeEnabled()) {
@@ -371,6 +368,20 @@ void PageClientImplCocoa::setURLIsPlayingVideoForScreenTime(bool value)
 }
 
 #endif
+
+void PageClientImplCocoa::viewIsBecomingVisible()
+{
+#if ENABLE(SCREEN_TIME)
+    [m_webView _updateScreenTimeShieldVisibilityForWindow];
+#endif
+}
+
+void PageClientImplCocoa::viewIsBecomingInvisible()
+{
+#if ENABLE(SCREEN_TIME)
+    [m_webView _updateScreenTimeShieldVisibilityForWindow];
+#endif
+}
 
 #if ENABLE(GAMEPAD)
 void PageClientImplCocoa::setGamepadsRecentlyAccessed(GamepadsRecentlyAccessed gamepadsRecentlyAccessed)
@@ -426,6 +437,7 @@ void PageClientImplCocoa::setFullScreenClientForTesting(std::unique_ptr<WebFullS
 void PageClientImplCocoa::didCommitLayerTree(const RemoteLayerTreeTransaction& transaction)
 {
     [webView() _updateFixedContainerEdges:transaction.fixedContainerEdges()];
+    [webView() _updateScrollGeometryWithContentOffset:transaction.scrollPosition() contentSize:transaction.contentsSize()];
 }
 
 } // namespace WebKit

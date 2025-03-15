@@ -881,17 +881,17 @@ void HTMLInputElement::attributeChanged(const QualifiedName& name, const AtomStr
         if (document().settings().switchControlEnabled()) {
             auto hasSwitchAttribute = !newValue.isNull();
             m_hasSwitchAttribute = hasSwitchAttribute;
+#if ENABLE(TOUCH_EVENTS)
+            updateTouchEventHandler();
+#endif
             if (attributeModificationReason != AttributeModificationReason::Directly)
-                return; // initializeInputTypeAfterParsingOrCloning and updateUserAgentShadowTree will take care of this.
+                return; // updateUserAgentShadowTree will take care of this.
             if (isSwitch())
                 m_inputType->createShadowSubtreeIfNeeded();
             else if (isCheckbox())
                 m_inputType->removeShadowSubtree();
             if (renderer())
                 invalidateStyleAndRenderersForSubtree();
-#if ENABLE(TOUCH_EVENTS)
-            updateTouchEventHandler();
-#endif
         }
         break;
     case AttributeNames::alphaAttr:
@@ -1885,7 +1885,8 @@ Vector<Color> HTMLInputElement::suggestedColors() const
 
 RefPtr<HTMLElement> HTMLInputElement::list() const
 {
-    return dataList();
+    // FIXME: The downcast should be unnecessary, but the WPT was written before https://github.com/WICG/webcomponents/issues/1072 was resolved. Update once the WPT has been updated.
+    return dynamicDowncast<HTMLDataListElement>(retargetReferenceTargetForBindings(dataList()));
 }
 
 bool HTMLInputElement::hasDataList() const

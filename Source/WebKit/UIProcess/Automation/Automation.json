@@ -887,8 +887,8 @@
         {
             "name": "loadWebExtension",
             "description": "Loads a web extension in the automation session.",
-            "condition": "defined(WK_WEB_EXTENSIONS_IN_WEBDRIVER) && WK_WEB_EXTENSIONS_IN_WEBDRIVER",
             "platform": "macos",
+            "condition": "defined(WTF_PLATFORM_MAC) && WTF_PLATFORM_MAC",
             "parameters": [
                 { "name": "type", "$ref": "WebExtensionResourceOptions", "optional": false, "description": "A hint for the resource format used to load the extension." },
                 { "name": "value", "type": "string", "description": "One of the following: the path to the extension, the path to the extension's archive, or the base 64 encoded data of the extension's archive." }
@@ -901,12 +901,20 @@
         {
             "name": "unloadWebExtension",
             "description": "Unloads a web extension in the automation session.",
-            "condition": "defined(WK_WEB_EXTENSIONS_IN_WEBDRIVER) && WK_WEB_EXTENSIONS_IN_WEBDRIVER",
             "platform": "macos",
+            "condition": "defined(WTF_PLATFORM_MAC) && WTF_PLATFORM_MAC",
             "parameters": [
                 { "name": "identifier", "type": "string", "description": "The identifier of the extension to unload." }
             ],
             "async": true
+        },
+        {
+            "name": "processBidiMessage",
+            "description": "Relay a WebDriver Bidi message from the client to be processed by the automation session.",
+            "condition": "ENABLE(WEBDRIVER_BIDI)",
+            "parameters": [
+                { "name": "message", "type": "string", "description": "A Bidi message sent by the client to WebKit, encoded as a UTF-8 JSON literal." }
+            ]
         }
     ],
     "events": [
@@ -936,6 +944,14 @@
                 { "name": "timestamp", "type": "number", "description": "The timestamp of the log entry." },
                 { "name": "type", "type": "string", "description": "The log entry type." },
                 { "name": "method", "type": "string", "optional": true, "description": "The log entry console method."}
+            ]
+        },
+        {
+            "name": "bidiMessageSent",
+            "description": "Relay a WebDriver Bidi message from the automation session to be processed by the client.",
+            "condition": "ENABLE(WEBDRIVER_BIDI)",
+            "parameters": [
+                { "name": "message", "type": "string", "description": "A Bidi message sent by WebKit to the client, encoded as a UTF-8 JSON literal." }
             ]
         }
     ]

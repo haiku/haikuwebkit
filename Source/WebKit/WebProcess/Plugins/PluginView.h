@@ -163,9 +163,14 @@ public:
 
     WebCore::FloatRect absoluteBoundingRectForSmartMagnificationAtPoint(WebCore::FloatPoint) const;
 
+    void frameViewLayoutOrVisualViewportChanged(const WebCore::IntRect& unobscuredContentRect);
+    void finalizeRenderingUpdate();
+
 private:
     PluginView(WebCore::HTMLPlugInElement&, const URL&, const String& contentType, bool shouldUseManualLoader, WebPage&);
     virtual ~PluginView();
+
+    bool isPluginView() const final { return true; }
 
     void initializePlugin();
 
@@ -259,5 +264,9 @@ private:
 };
 
 } // namespace WebKit
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::PluginView) \
+    static bool isType(const WebCore::Widget& widget) { return widget.isPluginView(); } \
+SPECIALIZE_TYPE_TRAITS_END()
 
 #endif

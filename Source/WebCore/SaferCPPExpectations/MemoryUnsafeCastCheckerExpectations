@@ -107,11 +107,9 @@ page/scrolling/AsyncScrollingCoordinator.cpp
 page/scrolling/mac/ScrollingStateScrollingNodeMac.mm
 platform/ThreadGlobalData.cpp
 platform/ThreadGlobalData.h
-platform/encryptedmedia/clearkey/CDMClearKey.cpp
 platform/graphics/GraphicsLayer.cpp
 platform/graphics/avfoundation/objc/CDMSessionAVContentKeySession.h
 platform/graphics/avfoundation/objc/CDMSessionMediaSourceAVFObjC.h
-platform/graphics/avfoundation/objc/QueuedVideoOutput.mm
 platform/graphics/ca/GraphicsLayerCA.cpp
 platform/graphics/ca/cocoa/PlatformCAAnimationCocoa.mm
 platform/graphics/mac/controls/ControlFactoryMac.mm
@@ -121,7 +119,6 @@ platform/mac/ScrollbarThemeMac.mm
 platform/mac/ScrollbarsControllerMac.mm
 platform/mac/SerializedPlatformDataCueMac.mm
 platform/mac/WebCoreFullScreenWindow.mm
-platform/mediarecorder/cocoa/MediaRecorderPrivateWriterWebM.cpp
 platform/network/BlobResourceHandle.cpp
 rendering/BidiRun.cpp
 rendering/BidiRun.h

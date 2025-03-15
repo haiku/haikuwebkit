@@ -3,8 +3,8 @@
 <head>
 <meta name="author" title="Ryosuke Niwa" href="mailto:rniwa@webkit.org">
 <link rel="help" href="https://github.com/whatwg/html/issues/10854">
-<script src="../../resources/testharness.js"></script>
-<script src="../../resources/testharnessreport.js"></script>
+<script src="/resources/testharness.js"></script>
+<script src="/resources/testharnessreport.js"></script>
 </head>
 <body>
 <script>
@@ -32,6 +32,11 @@ test(() => {
     const shadowRoot = host.attachShadow({mode: 'closed', customElements: registry});
     assert_equals(shadowRoot.customElements, registry);
 }, 'A newly attached connected ShadowRoot should use the scoped registry if explicitly specified in attachShadow');
+
+test(() => {
+    const host = document.body.appendChild(document.createElement('div'));
+    assert_throws_js(TypeError, () => host.attachShadow({mode: 'closed', customElements: null}));
+}, 'attachShadow() should throw for a null customElements value');
 
 </script>
 </body>

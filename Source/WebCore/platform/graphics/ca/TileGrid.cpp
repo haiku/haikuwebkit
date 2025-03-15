@@ -498,7 +498,7 @@ void TileGrid::revalidateTiles(OptionSet<ValidationPolicyFlag> validationPolicy)
     }
 
     // Ensure primary tile coverage tiles.
-    UncheckedKeyHashSet<TileIndex> tilesNeedingDisplay;
+    HashSet<TileIndex> tilesNeedingDisplay;
     m_primaryTileCoverageRect = ensureTilesForRect(coverageRect, tilesNeedingDisplay, CoverageType::PrimaryTiles);
 
     // Ensure secondary tiles (requested via prepopulateRect).
@@ -572,7 +572,7 @@ void TileGrid::cohortRemovalTimerFired()
     m_controller->updateTileCoverageMap();
 }
 
-IntRect TileGrid::ensureTilesForRect(const FloatRect& rect, UncheckedKeyHashSet<TileIndex>& tilesNeedingDisplay, CoverageType newTileType)
+IntRect TileGrid::ensureTilesForRect(const FloatRect& rect, HashSet<TileIndex>& tilesNeedingDisplay, CoverageType newTileType)
 {
     if (!m_controller->isInWindow())
         return IntRect();
@@ -813,6 +813,17 @@ bool TileGrid::platformCALayerNeedsPlatformContext(const PlatformCALayer* layer)
         return layerOwner->platformCALayerNeedsPlatformContext(layer);
     return false;
 }
+
+#if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
+std::optional<DynamicContentScalingDisplayList> TileGrid::platformCALayerDynamicContentScalingDisplayList(const PlatformCALayer* layer) const
+{
+    for (auto& [tileIndex, tileInfo] : m_tiles) {
+        if (tileInfo.layer == layer)
+            return m_controller->dynamicContentScalingDisplayListForTile(*this, tileIndex);
+    }
+    return std::nullopt;
+}
+#endif
 
 bool TileGrid::platformCALayerContentsOpaque() const
 {

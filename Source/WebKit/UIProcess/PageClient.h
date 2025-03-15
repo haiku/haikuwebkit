@@ -119,6 +119,7 @@ class WebMediaSessionManager;
 class SelectionData;
 #endif
 
+enum class ElementIdentifierType;
 enum class MouseEventPolicy : uint8_t;
 enum class RouteSharingPolicy : uint8_t;
 enum class ScrollbarStyle : uint8_t;
@@ -150,6 +151,8 @@ struct PromisedAttachmentInfo;
 #if HAVE(TRANSLATION_UI_SERVICES) && ENABLE(CONTEXT_MENUS)
 struct TranslationContextMenuInfo;
 #endif
+
+using ElementIdentifier = ObjectIdentifier<ElementIdentifierType>;
 
 #if ENABLE(WRITING_TOOLS)
 namespace WritingTools {
@@ -263,6 +266,9 @@ public:
     // Called when the activity state of the page transitions from non-visible to visible.
     virtual void viewIsBecomingVisible() { }
 
+    // Called when the activity state of the page transitions from visible to non-visible.
+    virtual void viewIsBecomingInvisible() { }
+
 #if PLATFORM(COCOA)
     virtual bool canTakeForegroundAssertions() = 0;
 #endif
@@ -305,6 +311,14 @@ public:
     virtual void updatePDFHUDLocation(PDFPluginIdentifier, const WebCore::IntRect&) = 0;
     virtual void removePDFHUD(PDFPluginIdentifier) = 0;
     virtual void removeAllPDFHUDs() = 0;
+#endif
+
+#if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
+    virtual void createPDFPageNumberIndicator(PDFPluginIdentifier, const WebCore::IntRect&, size_t pageCount) = 0;
+    virtual void updatePDFPageNumberIndicatorLocation(PDFPluginIdentifier, const WebCore::IntRect&) = 0;
+    virtual void updatePDFPageNumberIndicatorCurrentPage(PDFPluginIdentifier, size_t pageIndex) = 0;
+    virtual void removePDFPageNumberIndicator(PDFPluginIdentifier) = 0;
+    virtual void removeAnyPDFPageNumberIndicator() = 0;
 #endif
 
     virtual bool handleRunOpenPanel(WebPageProxy*, WebFrameProxy*, const FrameInfoData&, API::OpenPanelParameters*, WebOpenPanelResultListenerProxy*) { return false; }
@@ -440,7 +454,7 @@ public:
 
     virtual RefPtr<WebPopupMenuProxy> createPopupMenuProxy(WebPageProxy&) = 0;
 #if ENABLE(CONTEXT_MENUS)
-    virtual Ref<WebContextMenuProxy> createContextMenuProxy(WebPageProxy&, ContextMenuContextData&&, const UserData&) = 0;
+    virtual Ref<WebContextMenuProxy> createContextMenuProxy(WebPageProxy&, FrameInfoData&&, ContextMenuContextData&&, const UserData&) = 0;
     virtual void didShowContextMenu() { }
     virtual void didDismissContextMenu() { }
 #endif
@@ -707,6 +721,10 @@ public:
     virtual void didReceiveEditDragSnapshot(std::optional<WebCore::TextIndicatorData>) = 0;
 #endif
 
+#if ENABLE(MODEL_PROCESS)
+    virtual void didReceiveInteractiveModelElement(std::optional<WebCore::ElementIdentifier>) = 0;
+#endif
+
     virtual void requestDOMPasteAccess(WebCore::DOMPasteAccessCategory, WebCore::DOMPasteRequiresInteraction, const WebCore::IntRect& elementRect, const String& originIdentifier, CompletionHandler<void(WebCore::DOMPasteAccessResponse)>&&) = 0;
 
 #if ENABLE(ATTACHMENT_ELEMENT)
@@ -807,7 +825,6 @@ public:
     virtual void scheduleVisibleContentRectUpdate() { }
 
 #if ENABLE(SCREEN_TIME)
-    virtual void installScreenTimeWebpageController() { }
     virtual void didChangeScreenTimeWebpageControllerURL() { };
     virtual void setURLIsPictureInPictureForScreenTime(bool) { };
     virtual void setURLIsPlayingVideoForScreenTime(bool) { };

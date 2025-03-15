@@ -69,11 +69,9 @@ accessibility/mac/WebAccessibilityObjectWrapperMac.mm
 animation/BlendingKeyframes.cpp
 animation/KeyframeEffect.cpp
 bindings/js/JSDOMPromiseDeferred.cpp
-bindings/js/SerializedScriptValue.cpp
 contentextensions/ContentExtensionsBackend.cpp
 crypto/SubtleCrypto.cpp
 css/CSSFontFace.cpp
-css/CSSImageSetValue.cpp
 css/CSSPendingSubstitutionValue.cpp
 css/CSSValue.cpp
 css/CSSVariableReferenceValue.cpp
@@ -85,7 +83,6 @@ dom/ContainerNode.cpp
 dom/ContentVisibilityDocumentState.cpp
 dom/CustomElementDefaultARIA.cpp
 dom/Document.cpp
-dom/EventTarget.cpp
 dom/MessagePort.cpp
 dom/Node.cpp
 dom/Subscriber.cpp
@@ -109,17 +106,14 @@ html/canvas/CanvasStyle.cpp
 html/canvas/GPUCanvasContextCocoa.mm
 html/canvas/WebGLRenderingContextBase.cpp
 html/track/LoadableTextTrack.cpp
-html/track/TextTrack.cpp
 html/track/TrackBase.cpp
 html/track/TrackListBase.cpp
 html/track/VTTCue.cpp
 inspector/InspectorOverlay.cpp
 inspector/agents/page/PageDOMDebuggerAgent.cpp
-loader/DocumentLoader.cpp
 loader/FrameLoader.cpp
 loader/NetscapePlugInStreamLoader.cpp
 loader/ResourceLoader.cpp
-loader/SubresourceLoader.cpp
 page/EventSource.cpp
 page/ImageAnalysisQueue.cpp
 page/LocalDOMWindow.cpp
@@ -142,8 +136,6 @@ platform/encryptedmedia/clearkey/CDMClearKey.cpp
 platform/graphics/avfoundation/InbandTextTrackPrivateAVF.cpp
 platform/graphics/avfoundation/objc/CDMInstanceFairPlayStreamingAVFObjC.mm
 platform/graphics/avfoundation/objc/InbandChapterTrackPrivateAVFObjC.mm
-platform/graphics/avfoundation/objc/LocalSampleBufferDisplayLayer.mm
-platform/graphics/avfoundation/objc/MediaSampleAVFObjC.mm
 platform/graphics/cocoa/VideoMediaSampleRenderer.mm
 platform/graphics/filters/FilterOperation.cpp
 platform/mediarecorder/MediaRecorderPrivateEncoder.cpp
@@ -154,7 +146,6 @@ platform/mediastream/cocoa/IncomingAudioMediaStreamTrackRendererUnit.cpp
 platform/mediastream/mac/AVVideoCaptureSource.mm
 platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
 platform/mediastream/mac/ScreenCaptureKitCaptureSource.mm
-platform/network/CacheValidation.cpp
 rendering/BackgroundPainter.cpp
 rendering/BorderPainter.cpp
 rendering/MotionPath.cpp
@@ -165,7 +156,6 @@ rendering/RenderListItem.cpp
 rendering/style/StyleCustomPropertyData.cpp
 rendering/updating/RenderTreePosition.cpp
 rendering/updating/RenderTreeUpdater.cpp
-storage/Storage.cpp
 style/ElementRuleCollector.cpp
 style/StyleBuilderConverter.h
 style/StyleTreeResolver.cpp

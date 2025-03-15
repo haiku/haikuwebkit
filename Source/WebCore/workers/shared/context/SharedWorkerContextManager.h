@@ -55,6 +55,7 @@ public:
         virtual void postErrorToWorkerObject(SharedWorkerIdentifier, const String& errorMessage, int lineNumber, int columnNumber, const String& sourceURL, bool isErrrorEvent) = 0;
         virtual void sharedWorkerTerminated(SharedWorkerIdentifier) = 0;
         bool isClosed() const { return m_isClosed; }
+        virtual bool isWebSharedWorkerContextManagerConnection() const { return false; }
 
     protected:
         void setAsClosed() { m_isClosed = true; }
@@ -71,6 +72,7 @@ public:
 
     WEBCORE_EXPORT void setConnection(RefPtr<Connection>&&);
     WEBCORE_EXPORT Connection* connection() const;
+    RefPtr<Connection> protectedConnection() const { return m_connection; }
 
     WEBCORE_EXPORT void registerSharedWorkerThread(Ref<SharedWorkerThreadProxy>&&);
 

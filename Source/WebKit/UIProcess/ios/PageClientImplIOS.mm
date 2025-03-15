@@ -38,6 +38,7 @@
 #import "KeyEventInterpretationContext.h"
 #import "NativeWebKeyboardEvent.h"
 #import "NavigationState.h"
+#import "PDFPluginIdentifier.h"
 #import "PlatformXRSystem.h"
 #import "RemoteLayerTreeNode.h"
 #import "RunningBoardServicesSPI.h"
@@ -67,6 +68,7 @@
 #import <WebCore/Cursor.h>
 #import <WebCore/DOMPasteAccess.h>
 #import <WebCore/DictionaryLookup.h>
+#import <WebCore/ElementIdentifier.h>
 #import <WebCore/NotImplemented.h>
 #import <WebCore/PlatformScreen.h>
 #import <WebCore/PromisedAttachmentInfo.h>
@@ -167,6 +169,8 @@ bool PageClientImpl::isViewVisible()
 
 void PageClientImpl::viewIsBecomingVisible()
 {
+    PageClientImplCocoa::viewIsBecomingVisible();
+
 #if ENABLE(PAGE_LOAD_OBSERVER)
     if (RetainPtr webView = this->webView())
         [webView _updatePageLoadObserverState];
@@ -241,6 +245,11 @@ void PageClientImpl::didCreateContextInGPUProcessForVisibilityPropagation(LayerH
 void PageClientImpl::didCreateContextInModelProcessForVisibilityPropagation(LayerHostingContextID)
 {
     [m_contentView _modelProcessDidCreateContextForVisibilityPropagation];
+}
+
+void PageClientImpl::didReceiveInteractiveModelElement(std::optional<WebCore::ElementIdentifier> elementID)
+{
+    [m_contentView didReceiveInteractiveModelElement:elementID];
 }
 #endif // ENABLE(MODEL_PROCESS)
 
@@ -825,9 +834,11 @@ void PageClientImpl::updateImageSource()
 }
 #endif
 
-void PageClientImpl::exitFullScreen()
+void PageClientImpl::exitFullScreen(CompletionHandler<void()>&& completionHandler)
 {
-    [[webView() fullScreenWindowController] exitFullScreen];
+    if (![webView() fullScreenWindowController])
+        return completionHandler();
+    [[webView() fullScreenWindowController] exitFullScreen:WTFMove(completionHandler)];
 }
 
 static UIInterfaceOrientationMask toUIInterfaceOrientationMask(WebCore::ScreenOrientationType orientation)
@@ -857,14 +868,18 @@ void PageClientImpl::unlockFullscreenOrientation()
     [[webView() fullScreenWindowController] resetSupportedOrientations];
 }
 
-void PageClientImpl::beganEnterFullScreen(const IntRect& initialFrame, const IntRect& finalFrame)
+void PageClientImpl::beganEnterFullScreen(const IntRect& initialFrame, const IntRect& finalFrame, CompletionHandler<void(bool)>&& completionHandler)
 {
-    [[webView() fullScreenWindowController] beganEnterFullScreenWithInitialFrame:initialFrame finalFrame:finalFrame];
+    if (![webView() fullScreenWindowController])
+        return completionHandler(false);
+    [[webView() fullScreenWindowController] beganEnterFullScreenWithInitialFrame:initialFrame finalFrame:finalFrame completionHandler:WTFMove(completionHandler)];
 }
 
-void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntRect& finalFrame)
+void PageClientImpl::beganExitFullScreen(const IntRect& initialFrame, const IntRect& finalFrame, CompletionHandler<void()>&& completionHandler)
 {
-    [[webView() fullScreenWindowController] beganExitFullScreenWithInitialFrame:initialFrame finalFrame:finalFrame];
+    if (![webView() fullScreenWindowController])
+        return completionHandler();
+    [[webView() fullScreenWindowController] beganExitFullScreenWithInitialFrame:initialFrame finalFrame:finalFrame completionHandler:WTFMove(completionHandler)];
 }
 
 #endif // ENABLE(FULLSCREEN_API)
@@ -1277,6 +1292,35 @@ bool PageClientImpl::canStartNavigationSwipeAtLastInteractionLocation() const
 {
     return [m_contentView _canStartNavigationSwipeAtLastInteractionLocation];
 }
+
+#if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
+
+void PageClientImpl::createPDFPageNumberIndicator(PDFPluginIdentifier identifier, const IntRect& rect, size_t pageCount)
+{
+    [webView() _createPDFPageNumberIndicator:identifier withFrame:rect pageCount:pageCount];
+}
+
+void PageClientImpl::removePDFPageNumberIndicator(PDFPluginIdentifier identifier)
+{
+    [webView() _removePDFPageNumberIndicator:identifier];
+}
+
+void PageClientImpl::updatePDFPageNumberIndicatorLocation(PDFPluginIdentifier identifier, const IntRect& rect)
+{
+    [webView() _updatePDFPageNumberIndicator:identifier withFrame:rect];
+}
+
+void PageClientImpl::updatePDFPageNumberIndicatorCurrentPage(PDFPluginIdentifier identifier, size_t pageIndex)
+{
+    [webView() _updatePDFPageNumberIndicator:identifier currentPage:pageIndex];
+}
+
+void PageClientImpl::removeAnyPDFPageNumberIndicator()
+{
+    [webView() _removeAnyPDFPageNumberIndicator];
+}
+
+#endif
 
 } // namespace WebKit
 

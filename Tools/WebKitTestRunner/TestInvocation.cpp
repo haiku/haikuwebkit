@@ -708,7 +708,7 @@ void TestInvocation::didReceiveMessageFromInjectedBundle(WKStringRef messageName
     }
 
     if (WKStringIsEqualToUTF8CString(messageName, "FinishFullscreenExit")) {
-        TestController::singleton().finishFullscreenExit(TestController::singleton().mainWebView()->page());
+        TestController::singleton().finishFullscreenExit();
         return;
     }
 
@@ -925,9 +925,10 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
 
     if (WKStringIsEqualToUTF8CString(messageName, "TriggerMockCaptureConfigurationChange")) {
         auto messageBodyDictionary = dictionaryValue(messageBody);
+        bool forCamera = booleanValue(messageBodyDictionary, "camera");
         bool forMicrophone = booleanValue(messageBodyDictionary, "microphone");
         bool forDisplay = booleanValue(messageBodyDictionary, "display");
-        TestController::singleton().triggerMockCaptureConfigurationChange(forMicrophone, forDisplay);
+        TestController::singleton().triggerMockCaptureConfigurationChange(forCamera, forMicrophone, forDisplay);
         return nullptr;
     }
 
@@ -1215,6 +1216,11 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
         bool hasIsolatedSession = TestController::singleton().hasStatisticsIsolatedSession(hostName);
         auto result = adoptWK(WKBooleanCreate(hasIsolatedSession));
         return result;
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "ClearStorage")) {
+        TestController::singleton().clearStorage();
+        return nullptr;
     }
 
     if (WKStringIsEqualToUTF8CString(messageName, "ClearDOMCache")) {

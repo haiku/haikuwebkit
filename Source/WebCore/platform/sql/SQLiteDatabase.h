@@ -73,6 +73,7 @@ public:
     WEBCORE_EXPORT bool executeCommand(ASCIILiteral);
     
     WEBCORE_EXPORT bool tableExists(StringView);
+    WEBCORE_EXPORT bool indexExists(StringView);
     WEBCORE_EXPORT String tableSQL(StringView);
     WEBCORE_EXPORT String indexSQL(StringView);
     WEBCORE_EXPORT void clearAllTables();
@@ -131,7 +132,7 @@ public:
     sqlite3* sqlite3Handle() const
     {
 #if !PLATFORM(IOS_FAMILY)
-        ASSERT(m_sharable || m_openingThread == &Thread::current() || !m_db);
+        ASSERT(m_sharable || m_openingThread == &Thread::currentSingleton() || !m_db);
 #endif
         return m_db;
     }

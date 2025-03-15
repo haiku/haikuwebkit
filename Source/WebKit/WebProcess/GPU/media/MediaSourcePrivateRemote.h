@@ -65,7 +65,7 @@ public:
     // MediaSourcePrivate overrides
     RefPtr<WebCore::MediaPlayerPrivateInterface> player() const final;
     constexpr WebCore::MediaPlatformType platformType() const final { return WebCore::MediaPlatformType::Remote; }
-    AddStatus addSourceBuffer(const WebCore::ContentType&, RefPtr<WebCore::SourceBufferPrivate>&) final;
+    AddStatus addSourceBuffer(const WebCore::ContentType&, const WebCore::MediaSourceConfiguration&, RefPtr<WebCore::SourceBufferPrivate>&) final;
     void removeSourceBuffer(WebCore::SourceBufferPrivate&) final { }
     void notifyActiveSourceBuffersChanged() final { };
     void durationChanged(const MediaTime&) final;
@@ -87,7 +87,7 @@ public:
     uint64_t nextSourceBufferLogIdentifier() { return childLogIdentifier(m_logIdentifier, ++m_nextSourceBufferID); }
 #endif
 
-    class MessageReceiver : public IPC::WorkQueueMessageReceiver {
+    class MessageReceiver : public IPC::WorkQueueMessageReceiver<WTF::DestructionThread::Any> {
     public:
         static Ref<MessageReceiver> create(MediaSourcePrivateRemote& parent)
         {

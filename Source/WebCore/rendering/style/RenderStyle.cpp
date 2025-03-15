@@ -1747,6 +1747,15 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
                 changingProperties.m_properties.set(CSSPropertyBorderBottomLeftRadius);
             if (first.border.bottomRightRadius() != second.border.bottomRightRadius())
                 changingProperties.m_properties.set(CSSPropertyBorderBottomRightRadius);
+
+            if (first.border.topLeftCornerShape() != second.border.topLeftCornerShape())
+                changingProperties.m_properties.set(CSSPropertyCornerTopLeftShape);
+            if (first.border.topRightCornerShape() != second.border.topRightCornerShape())
+                changingProperties.m_properties.set(CSSPropertyCornerTopRightShape);
+            if (first.border.bottomLeftCornerShape() != second.border.bottomLeftCornerShape())
+                changingProperties.m_properties.set(CSSPropertyCornerBottomLeftShape);
+            if (first.border.bottomRightCornerShape() != second.border.bottomRightCornerShape())
+                changingProperties.m_properties.set(CSSPropertyCornerBottomRightShape);
         }
 
         // Non animated styles are followings.
@@ -1987,6 +1996,8 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
             changingProperties.m_properties.set(CSSPropertyContentVisibility);
         if (first.anchorNames != second.anchorNames)
             changingProperties.m_properties.set(CSSPropertyAnchorName);
+        if (first.anchorScope != second.anchorScope)
+            changingProperties.m_properties.set(CSSPropertyAnchorScope);
         if (first.positionAnchor != second.positionAnchor)
             changingProperties.m_properties.set(CSSPropertyPositionAnchor);
         if (first.positionArea != second.positionArea)
@@ -2534,10 +2545,10 @@ void RenderStyle::setBoxShadow(std::unique_ptr<ShadowData> shadowData, bool add)
 static RoundedRect::Radii calcRadiiFor(const BorderData::Radii& radii, const LayoutSize& size)
 {
     return {
-        sizeForLengthSize(radii.topLeft, size),
-        sizeForLengthSize(radii.topRight, size),
-        sizeForLengthSize(radii.bottomLeft, size),
-        sizeForLengthSize(radii.bottomRight, size)
+        sizeForLengthSize(radii.topLeft(), size),
+        sizeForLengthSize(radii.topRight(), size),
+        sizeForLengthSize(radii.bottomLeft(), size),
+        sizeForLengthSize(radii.bottomRight(), size)
     };
 }
 

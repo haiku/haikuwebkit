@@ -328,7 +328,6 @@
 		0F5CF9841E9D537700C18692 /* AirLowerStackArgs.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F5CF9831E9D537500C18692 /* AirLowerStackArgs.h */; };
 		0F5CF9891E9ED65200C18692 /* AirStackAllocation.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F5CF9871E9ED64E00C18692 /* AirStackAllocation.h */; };
 		0F5E0FD8207C72730097F0DE /* DFGAbstractInterpreterClobberState.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F5E0FD6207C72710097F0DE /* DFGAbstractInterpreterClobberState.h */; };
-		0F5E0FE72086AD480097F0DE /* IsoSubspacePerVM.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F5E0FE52086AD460097F0DE /* IsoSubspacePerVM.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0F5EF91F16878F7D003E5C25 /* JITThunks.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F5EF91C16878F78003E5C25 /* JITThunks.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0F61832A1C45BF070072450B /* AirCCallingConvention.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F6183211C45BF070072450B /* AirCCallingConvention.h */; };
 		0F61832D1C45BF070072450B /* AirEmitShuffle.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F6183241C45BF070072450B /* AirEmitShuffle.h */; };
@@ -551,8 +550,8 @@
 		0FE050141AA9091100D33B33 /* ArgumentsMode.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE0500C1AA9091100D33B33 /* ArgumentsMode.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0FE050161AA9091100D33B33 /* DirectArgumentsOffset.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE0500E1AA9091100D33B33 /* DirectArgumentsOffset.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0FE050181AA9091100D33B33 /* DirectArguments.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE050101AA9091100D33B33 /* DirectArguments.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		0FE050191AA9091100D33B33 /* GenericArguments.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE050111AA9091100D33B33 /* GenericArguments.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		0FE0501A1AA9091100D33B33 /* GenericArgumentsInlines.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE050121AA9091100D33B33 /* GenericArgumentsInlines.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		0FE050191AA9091100D33B33 /* GenericArgumentsImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE050111AA9091100D33B33 /* GenericArgumentsImpl.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		0FE0501A1AA9091100D33B33 /* GenericArgumentsImplInlines.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE050121AA9091100D33B33 /* GenericArgumentsImplInlines.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0FE0501B1AA9091100D33B33 /* GenericOffset.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE050131AA9091100D33B33 /* GenericOffset.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0FE050261AA9095600D33B33 /* ClonedArguments.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE0501D1AA9095600D33B33 /* ClonedArguments.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		0FE050281AA9095600D33B33 /* ScopedArguments.h in Headers */ = {isa = PBXBuildFile; fileRef = 0FE0501F1AA9095600D33B33 /* ScopedArguments.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -1024,6 +1023,7 @@
 		534E03581E53BF2F00213F64 /* GetterSetterAccessCase.h in Headers */ = {isa = PBXBuildFile; fileRef = 534E03571E53BF2F00213F64 /* GetterSetterAccessCase.h */; };
 		5350356527147E5A00EC1A7E /* SourceID.h in Headers */ = {isa = PBXBuildFile; fileRef = 5350356427147E5900EC1A7E /* SourceID.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		53529A4C1C457B75000B49C6 /* APIUtils.h in Headers */ = {isa = PBXBuildFile; fileRef = 53529A4B1C457B75000B49C6 /* APIUtils.h */; };
+		53532B7F2D63C65A00B79585 /* PreciseSubspace.h in Headers */ = {isa = PBXBuildFile; fileRef = 53532B7C2D63C64100B79585 /* PreciseSubspace.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		53542B232AA8D8AF00205FB3 /* SourceTaintedOrigin.h in Headers */ = {isa = PBXBuildFile; fileRef = 53542B222AA8D89D00205FB3 /* SourceTaintedOrigin.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		535557141D9D9EA5006D583B /* WasmMemory.h in Headers */ = {isa = PBXBuildFile; fileRef = 535557131D9D9EA5006D583B /* WasmMemory.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		535C24611F78928E006EC40E /* create_regex_tables in Headers */ = {isa = PBXBuildFile; fileRef = A718F8211178EB4B002465A7 /* create_regex_tables */; };
@@ -1518,6 +1518,8 @@
 		A3C7EDBA26B0DB38004C34C5 /* TemporalDurationConstructor.h in Headers */ = {isa = PBXBuildFile; fileRef = A3C7EDB426B0DB37004C34C5 /* TemporalDurationConstructor.h */; };
 		A3EE8543262514B000FC9B8D /* IntlWorkaround.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A37619402625127C00CBCBA9 /* IntlWorkaround.cpp */; };
 		A3FF9BC72234749100B1A9AB /* YarrFlags.h in Headers */ = {isa = PBXBuildFile; fileRef = A3FF9BC52234746600B1A9AB /* YarrFlags.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		A40755D92D10CAE000DC55FF /* AirAllocateRegistersByGreedy.h in Headers */ = {isa = PBXBuildFile; fileRef = A40755D72D10CABA00DC55FF /* AirAllocateRegistersByGreedy.h */; };
+		A43531C12D6E40E200B01FE1 /* AirRegisterAllocatorStats.h in Headers */ = {isa = PBXBuildFile; fileRef = A43531C02D6E40E200B01FE1 /* AirRegisterAllocatorStats.h */; };
 		A503FA1A188E0FB000110F14 /* JavaScriptCallFrame.h in Headers */ = {isa = PBXBuildFile; fileRef = A503FA14188E0FAF00110F14 /* JavaScriptCallFrame.h */; };
 		A503FA1E188E0FB000110F14 /* JSJavaScriptCallFramePrototype.h in Headers */ = {isa = PBXBuildFile; fileRef = A503FA18188E0FB000110F14 /* JSJavaScriptCallFramePrototype.h */; };
 		A503FA2A188F105900110F14 /* JSGlobalObjectDebugger.h in Headers */ = {isa = PBXBuildFile; fileRef = A503FA28188F105900110F14 /* JSGlobalObjectDebugger.h */; };
@@ -2997,8 +2999,6 @@
 		0F5D085C1B8CF99D001143B4 /* DFGNodeOrigin.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DFGNodeOrigin.cpp; path = dfg/DFGNodeOrigin.cpp; sourceTree = "<group>"; };
 		0F5E0FD6207C72710097F0DE /* DFGAbstractInterpreterClobberState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = DFGAbstractInterpreterClobberState.h; path = dfg/DFGAbstractInterpreterClobberState.h; sourceTree = "<group>"; };
 		0F5E0FD7207C72710097F0DE /* DFGAbstractInterpreterClobberState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DFGAbstractInterpreterClobberState.cpp; path = dfg/DFGAbstractInterpreterClobberState.cpp; sourceTree = "<group>"; };
-		0F5E0FE52086AD460097F0DE /* IsoSubspacePerVM.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IsoSubspacePerVM.h; sourceTree = "<group>"; };
-		0F5E0FE62086AD470097F0DE /* IsoSubspacePerVM.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = IsoSubspacePerVM.cpp; sourceTree = "<group>"; };
 		0F5EF91B16878F78003E5C25 /* JITThunks.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JITThunks.cpp; sourceTree = "<group>"; };
 		0F5EF91C16878F78003E5C25 /* JITThunks.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JITThunks.h; sourceTree = "<group>"; };
 		0F6183201C45BF070072450B /* AirCCallingConvention.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AirCCallingConvention.cpp; path = b3/air/AirCCallingConvention.cpp; sourceTree = "<group>"; };
@@ -3388,8 +3388,8 @@
 		0FE0500E1AA9091100D33B33 /* DirectArgumentsOffset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectArgumentsOffset.h; sourceTree = "<group>"; };
 		0FE0500F1AA9091100D33B33 /* DirectArguments.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DirectArguments.cpp; sourceTree = "<group>"; };
 		0FE050101AA9091100D33B33 /* DirectArguments.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DirectArguments.h; sourceTree = "<group>"; };
-		0FE050111AA9091100D33B33 /* GenericArguments.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GenericArguments.h; sourceTree = "<group>"; };
-		0FE050121AA9091100D33B33 /* GenericArgumentsInlines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GenericArgumentsInlines.h; sourceTree = "<group>"; };
+		0FE050111AA9091100D33B33 /* GenericArgumentsImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GenericArgumentsImpl.h; sourceTree = "<group>"; };
+		0FE050121AA9091100D33B33 /* GenericArgumentsImplInlines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GenericArgumentsImplInlines.h; sourceTree = "<group>"; };
 		0FE050131AA9091100D33B33 /* GenericOffset.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GenericOffset.h; sourceTree = "<group>"; };
 		0FE0501C1AA9095600D33B33 /* ClonedArguments.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ClonedArguments.cpp; sourceTree = "<group>"; };
 		0FE0501D1AA9095600D33B33 /* ClonedArguments.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ClonedArguments.h; sourceTree = "<group>"; };
@@ -4165,6 +4165,8 @@
 		534E03571E53BF2F00213F64 /* GetterSetterAccessCase.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GetterSetterAccessCase.h; sourceTree = "<group>"; };
 		5350356427147E5900EC1A7E /* SourceID.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SourceID.h; sourceTree = "<group>"; };
 		53529A4B1C457B75000B49C6 /* APIUtils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APIUtils.h; sourceTree = "<group>"; };
+		53532B7C2D63C64100B79585 /* PreciseSubspace.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PreciseSubspace.h; sourceTree = "<group>"; };
+		53532B7D2D63C64100B79585 /* PreciseSubspace.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PreciseSubspace.cpp; sourceTree = "<group>"; };
 		53542B212AA8D89D00205FB3 /* SourceTaintedOrigin.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = SourceTaintedOrigin.cpp; sourceTree = "<group>"; };
 		53542B222AA8D89D00205FB3 /* SourceTaintedOrigin.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SourceTaintedOrigin.h; sourceTree = "<group>"; };
 		535557131D9D9EA5006D583B /* WasmMemory.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WasmMemory.h; sourceTree = "<group>"; };
@@ -4988,6 +4990,9 @@
 		A3C7EDB526B0DB37004C34C5 /* TemporalDurationPrototype.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = TemporalDurationPrototype.cpp; sourceTree = "<group>"; };
 		A3FF9BC52234746600B1A9AB /* YarrFlags.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = YarrFlags.h; path = yarr/YarrFlags.h; sourceTree = "<group>"; };
 		A3FF9BC62234746600B1A9AB /* YarrFlags.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = YarrFlags.cpp; path = yarr/YarrFlags.cpp; sourceTree = "<group>"; };
+		A40755D72D10CABA00DC55FF /* AirAllocateRegistersByGreedy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AirAllocateRegistersByGreedy.h; path = b3/air/AirAllocateRegistersByGreedy.h; sourceTree = "<group>"; };
+		A40755D82D10CABA00DC55FF /* AirAllocateRegistersByGreedy.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = AirAllocateRegistersByGreedy.cpp; path = b3/air/AirAllocateRegistersByGreedy.cpp; sourceTree = "<group>"; };
+		A43531C02D6E40E200B01FE1 /* AirRegisterAllocatorStats.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = AirRegisterAllocatorStats.h; path = b3/air/AirRegisterAllocatorStats.h; sourceTree = "<group>"; };
 		A503FA13188E0FAF00110F14 /* JavaScriptCallFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JavaScriptCallFrame.cpp; sourceTree = "<group>"; };
 		A503FA14188E0FAF00110F14 /* JavaScriptCallFrame.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = JavaScriptCallFrame.h; sourceTree = "<group>"; };
 		A503FA15188E0FB000110F14 /* JSJavaScriptCallFrame.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = JSJavaScriptCallFrame.cpp; sourceTree = "<group>"; };
@@ -6732,6 +6737,8 @@
 				0F2AC5691E8A0BD10001EE3F /* AirAllocateRegistersAndStackByLinearScan.h */,
 				7965C2141E5D799600B7591D /* AirAllocateRegistersByGraphColoring.cpp */,
 				7965C2151E5D799600B7591D /* AirAllocateRegistersByGraphColoring.h */,
+				A40755D82D10CABA00DC55FF /* AirAllocateRegistersByGreedy.cpp */,
+				A40755D72D10CABA00DC55FF /* AirAllocateRegistersByGreedy.h */,
 				0FEC85481BDACDC70080FF74 /* AirAllocateStackByGraphColoring.cpp */,
 				0FEC85491BDACDC70080FF74 /* AirAllocateStackByGraphColoring.h */,
 				0FEC854A1BDACDC70080FF74 /* AirArg.cpp */,
@@ -6806,6 +6813,7 @@
 				0FEC855F1BDACDC70080FF74 /* AirPhaseScope.h */,
 				FE5628CB1E99512400C49E45 /* AirPrintSpecial.cpp */,
 				FE5628CC1E99512400C49E45 /* AirPrintSpecial.h */,
+				A43531C02D6E40E200B01FE1 /* AirRegisterAllocatorStats.h */,
 				0FF4B4BA1E88449500DBBE86 /* AirRegLiveness.cpp */,
 				0FF4B4BB1E88449500DBBE86 /* AirRegLiveness.h */,
 				0F45703A1BE45F0A0062A629 /* AirReportUsedRegisters.cpp */,
@@ -7210,8 +7218,6 @@
 				0FDCE12C1FAFB4DE006F3901 /* IsoSubspace.cpp */,
 				0FDCE12B1FAFB4DE006F3901 /* IsoSubspace.h */,
 				0FD2FD9220B52BDC00F09441 /* IsoSubspaceInlines.h */,
-				0F5E0FE62086AD470097F0DE /* IsoSubspacePerVM.cpp */,
-				0F5E0FE52086AD460097F0DE /* IsoSubspacePerVM.h */,
 				0F766D2915A8CC34008F363E /* JITStubRoutineSet.cpp */,
 				0F766D2A15A8CC34008F363E /* JITStubRoutineSet.h */,
 				0F75A059200D25F00038E2CF /* LocalAllocator.cpp */,
@@ -7245,6 +7251,8 @@
 				0F9DAA081FD1C3C80079C5B2 /* ParallelSourceAdapter.h */,
 				0F070A451D543A89006E7232 /* PreciseAllocation.cpp */,
 				0F070A461D543A89006E7232 /* PreciseAllocation.h */,
+				53532B7D2D63C64100B79585 /* PreciseSubspace.cpp */,
+				53532B7C2D63C64100B79585 /* PreciseSubspace.h */,
 				0FBB73B61DEF3AAC002C009E /* PreventCollectionScope.h */,
 				0FD0E5EF1E46BF230006AB08 /* RegisterState.h */,
 				0F7CF94E1DBEEE860098CC12 /* ReleaseHeapAccessScope.h */,
@@ -8273,8 +8281,8 @@
 				70B791891C024432002481E2 /* GeneratorPrototype.cpp */,
 				70B7918A1C024432002481E2 /* GeneratorPrototype.h */,
 				276B385D2A71D0B600252F4E /* GeneratorPrototypeInlines.h */,
-				0FE050111AA9091100D33B33 /* GenericArguments.h */,
-				0FE050121AA9091100D33B33 /* GenericArgumentsInlines.h */,
+				0FE050111AA9091100D33B33 /* GenericArgumentsImpl.h */,
+				0FE050121AA9091100D33B33 /* GenericArgumentsImplInlines.h */,
 				0FE050131AA9091100D33B33 /* GenericOffset.h */,
 				0F2B66B217B6B5AB00A7AE3F /* GenericTypedArrayView.h */,
 				0F2B66B317B6B5AB00A7AE3F /* GenericTypedArrayViewInlines.h */,
@@ -10338,6 +10346,7 @@
 				524E9D7322092B5200A6BEEE /* AirAllocateRegistersAndStackAndGenerateCode.h in Headers */,
 				0F2AC56B1E8A0BD50001EE3F /* AirAllocateRegistersAndStackByLinearScan.h in Headers */,
 				7965C2171E5D799600B7591D /* AirAllocateRegistersByGraphColoring.h in Headers */,
+				A40755D92D10CAE000DC55FF /* AirAllocateRegistersByGreedy.h in Headers */,
 				0FEC856E1BDACDC70080FF74 /* AirAllocateStackByGraphColoring.h in Headers */,
 				0FEC85701BDACDC70080FF74 /* AirArg.h in Headers */,
 				0F64EAF31C4ECD0600621E9B /* AirArgInlines.h in Headers */,
@@ -10382,6 +10391,7 @@
 				0F2AC56F1E8D7B030001EE3F /* AirPhaseInsertionSet.h in Headers */,
 				0FEC85841BDACDC70080FF74 /* AirPhaseScope.h in Headers */,
 				FE5628CE1E99513200C49E45 /* AirPrintSpecial.h in Headers */,
+				A43531C12D6E40E200B01FE1 /* AirRegisterAllocatorStats.h in Headers */,
 				0FF4B4BD1E88449A00DBBE86 /* AirRegLiveness.h in Headers */,
 				0F45703D1BE45F0A0062A629 /* AirReportUsedRegisters.h in Headers */,
 				0F338DFE1BED51270013C88F /* AirSimplifyCFG.h in Headers */,
@@ -11102,8 +11112,8 @@
 				276B386B2A71D0B600252F4E /* GeneratorFunctionPrototypeInlines.h in Headers */,
 				70B791991C024A29002481E2 /* GeneratorPrototype.h in Headers */,
 				276B386C2A71D0B600252F4E /* GeneratorPrototypeInlines.h in Headers */,
-				0FE050191AA9091100D33B33 /* GenericArguments.h in Headers */,
-				0FE0501A1AA9091100D33B33 /* GenericArgumentsInlines.h in Headers */,
+				0FE050191AA9091100D33B33 /* GenericArgumentsImpl.h in Headers */,
+				0FE0501A1AA9091100D33B33 /* GenericArgumentsImplInlines.h in Headers */,
 				0FE0501B1AA9091100D33B33 /* GenericOffset.h in Headers */,
 				0F2B66E017B6B5AB00A7AE3F /* GenericTypedArrayView.h in Headers */,
 				0F2B66E117B6B5AB00A7AE3F /* GenericTypedArrayViewInlines.h in Headers */,
@@ -11264,7 +11274,6 @@
 				533699B327A3079200C9561D /* IsoMemoryAllocatorBase.h in Headers */,
 				0FDCE12D1FAFB4E5006F3901 /* IsoSubspace.h in Headers */,
 				0FD2FD9520B52BE200F09441 /* IsoSubspaceInlines.h in Headers */,
-				0F5E0FE72086AD480097F0DE /* IsoSubspacePerVM.h in Headers */,
 				8B9F6D561D5912FA001C739F /* IterationKind.h in Headers */,
 				53D41EC923C0081A00AE984B /* IterationModeMetadata.h in Headers */,
 				70113D4C1A8DB093003848C4 /* IteratorOperations.h in Headers */,
@@ -11689,6 +11698,7 @@
 				0F070A4B1D543A98006E7232 /* PreciseAllocation.h in Headers */,
 				0F98206116BFE38300240D02 /* PreciseJumpTargets.h in Headers */,
 				E3A421431D6F58930007C617 /* PreciseJumpTargetsInlines.h in Headers */,
+				53532B7F2D63C65A00B79585 /* PreciseSubspace.h in Headers */,
 				CE20BD07237D3E480046E520 /* PredictionFileCreatingFuzzerAgent.h in Headers */,
 				0FBB73B81DEF3AAE002C009E /* PreventCollectionScope.h in Headers */,
 				FE63DD541EA9B61E00103A69 /* Printer.h in Headers */,
@@ -12661,7 +12671,7 @@
 		};
 		5D5D8ABF0E0D0B0300F9C692 /* Create /usr/local/bin/jsc symlink */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
+			buildActionMask = 8;
 			files = (
 			);
 			inputPaths = (
@@ -12862,7 +12872,7 @@
 		};
 		F4CDF3C927E9147500191928 /* Copy Profiling Data */ = {
 			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 12;
+			buildActionMask = 2147483647;
 			files = (
 			);
 			inputFileListPaths = (

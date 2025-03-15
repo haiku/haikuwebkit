@@ -43,6 +43,7 @@
 #import "MessageSenderInlines.h"
 #import "NativeWebKeyboardEvent.h"
 #import "NavigationState.h"
+#import "PDFPluginIdentifier.h"
 #import "PageClient.h"
 #import "PaymentAuthorizationController.h"
 #import "PrintInfo.h"
@@ -69,6 +70,7 @@
 #import "WebProcessProxy.h"
 #import "WebScreenOrientationManagerProxy.h"
 #import <WebCore/AGXCompilerService.h>
+#import <WebCore/ElementIdentifier.h>
 #import <WebCore/LocalFrameView.h>
 #import <WebCore/NotImplemented.h>
 #import <WebCore/PlatformScreen.h>
@@ -1345,7 +1347,14 @@ void WebPageProxy::didConcludeDrop()
 {
     m_legacyMainFrameProcess->send(Messages::WebPage::DidConcludeDrop(), webPageIDInMainFrameProcess());
 }
+#endif
 
+#if ENABLE(MODEL_PROCESS)
+void WebPageProxy::didReceiveInteractiveModelElement(std::optional<WebCore::ElementIdentifier> elementID)
+{
+    if (RefPtr pageClient = this->pageClient())
+        pageClient->didReceiveInteractiveModelElement(elementID);
+}
 #endif
 
 #if USE(QUICK_LOOK)
@@ -1762,6 +1771,34 @@ FloatSize WebPageProxy::viewLayoutSize() const
     return internals().viewportConfigurationViewLayoutSize;
 }
 
+#if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
+
+void WebPageProxy::createPDFPageNumberIndicator(PDFPluginIdentifier identifier, const IntRect& rect, size_t pageCount)
+{
+    if (RefPtr pageClient = this->pageClient())
+        pageClient->createPDFPageNumberIndicator(identifier, rect, pageCount);
+}
+
+void WebPageProxy::removePDFPageNumberIndicator(PDFPluginIdentifier identifier)
+{
+    if (RefPtr pageClient = this->pageClient())
+        pageClient->removePDFPageNumberIndicator(identifier);
+}
+
+void WebPageProxy::updatePDFPageNumberIndicatorLocation(PDFPluginIdentifier identifier, const IntRect& rect)
+{
+    if (RefPtr pageClient = this->pageClient())
+        pageClient->updatePDFPageNumberIndicatorLocation(identifier, rect);
+}
+
+void WebPageProxy::updatePDFPageNumberIndicatorCurrentPage(PDFPluginIdentifier identifier, size_t pageIndex)
+{
+    if (RefPtr pageClient = this->pageClient())
+        pageClient->updatePDFPageNumberIndicatorCurrentPage(identifier, pageIndex);
+}
+
+#endif
+
 #if ENABLE(DRAG_SUPPORT)
 
 void WebPageProxy::setPromisedDataForImage(IPC::Connection&, const String&, SharedMemory::Handle&&, const String&, const String&, const String&, const String&, const String&, SharedMemory::Handle&&, const String&)
@@ -1786,6 +1823,26 @@ RefPtr<ModelPresentationManagerProxy> WebPageProxy::modelPresentationManagerProx
     return internals().modelPresentationManagerProxy;
 }
 #endif
+
+#if USE(UICONTEXTMENU)
+
+void WebPageProxy::willBeginContextMenuInteraction()
+{
+    if (!hasRunningProcess())
+        return;
+
+    legacyMainFrameProcess().send(Messages::WebPage::WillBeginContextMenuInteraction(), webPageIDInMainFrameProcess());
+}
+
+void WebPageProxy::didEndContextMenuInteraction()
+{
+    if (!hasRunningProcess())
+        return;
+
+    legacyMainFrameProcess().send(Messages::WebPage::DidEndContextMenuInteraction(), webPageIDInMainFrameProcess());
+}
+
+#endif // USE(UICONTEXTMENU)
 
 } // namespace WebKit
 

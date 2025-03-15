@@ -52,7 +52,6 @@
 #import <pal/spi/mac/NSWindowSPI.h>
 #import <pal/system/SleepDisabler.h>
 #import <wtf/BlockObjCExceptions.h>
-#import <wtf/NakedRef.h>
 
 static const NSTimeInterval DefaultWatchdogTimerInterval = 1;
 
@@ -94,7 +93,7 @@ static void makeResponderFirstResponderIfDescendantOfView(NSWindow *window, NSRe
 
 #pragma mark -
 #pragma mark Initialization
-- (id)initWithWindow:(NSWindow *)window webView:(NSView *)webView page:(NakedRef<WebKit::WebPageProxy>)page
+- (id)initWithWindow:(NSWindow *)window webView:(NSView *)webView page:(std::reference_wrapper<WebKit::WebPageProxy>)page
 {
     self = [super initWithWindow:window];
     if (!self)
@@ -124,7 +123,7 @@ static void makeResponderFirstResponderIfDescendantOfView(NSWindow *window, NSRe
     [self windowDidLoad];
     [window displayIfNeeded];
     _webView = webView;
-    _page = page.ptr();
+    _page = page.get();
 
     [self videoControlsManagerDidChange];
 
@@ -138,6 +137,13 @@ static void makeResponderFirstResponderIfDescendantOfView(NSWindow *window, NSRe
     [NSObject cancelPreviousPerformRequestsWithTarget:self];
     
     [[NSNotificationCenter defaultCenter] removeObserver:self];
+
+    if (_enterFullScreenCompletionHandler)
+        _enterFullScreenCompletionHandler(false);
+    if (_beganExitFullScreenCompletionHandler)
+        _beganExitFullScreenCompletionHandler();
+    if (_exitFullScreenCompletionHandler)
+        _exitFullScreenCompletionHandler();
 
     [super dealloc];
 }
@@ -221,14 +227,13 @@ static RetainPtr<CGImageRef> createImageWithCopiedData(CGImageRef sourceImage)
     return adoptCF(CGImageCreate(width, height, bitsPerComponent, bitsPerPixel, bytesPerRow, colorSpace, bitmapInfo, provider.get(), 0, shouldInterpolate, intent));
 }
 
-- (void)enterFullScreen:(NSScreen *)screen completionHandler:(CompletionHandler<void(bool)>&&)completionHandler
+- (void)enterFullScreen:(CompletionHandler<void(bool)>&&)completionHandler
 {
     if ([self isFullScreen])
         return completionHandler(false);
     _fullScreenState = WaitingToEnterFullScreen;
 
-    if (!screen)
-        screen = [NSScreen mainScreen];
+    NSScreen *screen = [NSScreen mainScreen];
 
     NSRect screenFrame = WebCore::safeScreenFrame(screen);
     NSRect webViewFrame = convertRectToScreen([_webView window], [_webView convertRect:[_webView frame] toView:nil]);
@@ -277,13 +282,14 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     _savedScale = _page->pageScaleFactor();
     _page->scalePageRelativeToScrollPosition(1, { });
     [self _manager]->setAnimatingFullScreen(true);
-    [self _manager]->willEnterFullScreen(WTFMove(completionHandler));
+    completionHandler(true);
 }
 
-- (void)beganEnterFullScreenWithInitialFrame:(NSRect)initialFrame finalFrame:(NSRect)finalFrame
+- (void)beganEnterFullScreenWithInitialFrame:(NSRect)initialFrame finalFrame:(NSRect)finalFrame completionHandler:(CompletionHandler<void(bool)>&&)completionHandler
 {
     if (_fullScreenState != WaitingToEnterFullScreen)
-        return;
+        return completionHandler(false);
+    _enterFullScreenCompletionHandler = WTFMove(completionHandler);
     _fullScreenState = EnteringFullScreen;
 
     _initialFrame = initialFrame;
@@ -331,7 +337,8 @@ static const float minVideoWidth = 468; // Keep in sync with `--controls-bar-wid
     if (completed) {
         _fullScreenState = InFullScreen;
 
-        [self _manager]->didEnterFullScreen();
+        if (_enterFullScreenCompletionHandler)
+            _enterFullScreenCompletionHandler(true);
         [self _manager]->setAnimatingFullScreen(false);
         _page->setSuppressVisibilityUpdates(false);
 
@@ -369,7 +376,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         _page->scalePageRelativeToScrollPosition(_savedScale, { });
         _page->setObscuredContentInsets(_savedObscuredContentInsets);
         [self _manager]->setAnimatingFullScreen(false);
-        [self _manager]->didExitFullScreen();
+        [self _manager]->requestExitFullScreen();
 
         // FIXME(53342): remove once pointer events fire when elements move out from under the pointer.
         NSEvent *fakeEvent = [NSEvent mouseEventWithType:NSEventTypeMouseMoved
@@ -387,20 +394,18 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     _page->flushDeferredResizeEvents();
     _page->flushDeferredScrollEvents();
 
-    if (_requestedExitFullScreen) {
-        _requestedExitFullScreen = NO;
-        [self exitFullScreen];
-    }
+    if (_exitFullScreenCompletionHandler)
+        [self exitFullScreen:WTFMove(_exitFullScreenCompletionHandler)];
 }
 
-- (void)exitFullScreen
+- (void)exitFullScreen:(CompletionHandler<void()>&&)completionHandler
 {
     if (_fullScreenState == EnteringFullScreen
         || _fullScreenState == WaitingToEnterFullScreen) {
         // Do not try to exit fullscreen during the enter animation; remember
         // that exit was requested and perform the exit upon enter fullscreen
         // animation complete.
-        _requestedExitFullScreen = YES;
+        _exitFullScreenCompletionHandler = WTFMove(completionHandler);
         return;
     }
 
@@ -410,7 +415,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     }
 
     if (![self isFullScreen])
-        return;
+        return completionHandler();
     _fullScreenState = WaitingToExitFullScreen;
 
     [_webViewPlaceholder setExitWarningVisible:NO];
@@ -427,7 +432,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [_webViewPlaceholder setTarget:nil];
 
     [self _manager]->setAnimatingFullScreen(true);
-    [self _manager]->willExitFullScreen();
+    completionHandler();
 }
 
 - (void)exitFullScreenImmediately
@@ -437,7 +442,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     [self _manager]->requestExitFullScreen();
     [_webViewPlaceholder setExitWarningVisible:NO];
-    [self _manager]->willExitFullScreen();
     _fullScreenState = ExitingFullScreen;
     [self finishedExitFullScreenAnimationAndExitImmediately:YES];
 }
@@ -447,11 +451,12 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [self _manager]->requestExitFullScreen();
 }
 
-- (void)beganExitFullScreenWithInitialFrame:(NSRect)initialFrame finalFrame:(NSRect)finalFrame
+- (void)beganExitFullScreenWithInitialFrame:(NSRect)initialFrame finalFrame:(NSRect)finalFrame completionHandler:(CompletionHandler<void()>&&)completionHandler
 {
     if (_fullScreenState != WaitingToExitFullScreen)
-        return;
+        return completionHandler();
     _fullScreenState = ExitingFullScreen;
+    _beganExitFullScreenCompletionHandler = WTFMove(completionHandler);
 
     if (![[self window] isOnActiveSpace]) {
         // If the full screen window is not in the active space, the NSWindow full screen animation delegate methods
@@ -492,7 +497,6 @@ static RetainPtr<CGImageRef> takeWindowSnapshot(CGSWindowID windowID, bool captu
         [self _manager]->requestExitFullScreen();
         [_webViewPlaceholder setTarget:nil];
         [self _manager]->setAnimatingFullScreen(false);
-        [self _manager]->willExitFullScreen();
     } else if (_fullScreenState != ExitingFullScreen)
         return;
     _fullScreenState = NotInFullScreen;
@@ -540,7 +544,8 @@ static RetainPtr<CGImageRef> takeWindowSnapshot(CGSWindowID windowID, bool captu
 
     // These messages must be sent after the swap or flashing will occur during forceRepaint:
     [self _manager]->setAnimatingFullScreen(false);
-    [self _manager]->didExitFullScreen();
+    if (_beganExitFullScreenCompletionHandler)
+        _beganExitFullScreenCompletionHandler();
     _page->scalePageRelativeToScrollPosition(_savedScale, { });
     _page->setObscuredContentInsets(_savedObscuredContentInsets);
     _page->flushDeferredResizeEvents();
@@ -836,7 +841,7 @@ static CAAnimation *fadeAnimation(CFTimeInterval duration, AnimationDirection di
         // We still believe we're in full screen mode, so we must have been asked to exit full
         // screen by the system full screen button.
         [self _manager]->requestExitFullScreen();
-        [self exitFullScreen];
+        [self exitFullScreen:[] { }];
         _fullScreenState = ExitingFullScreen;
     }
 
@@ -858,7 +863,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)_watchdogTimerFired:(NSTimer *)timer
 {
-    [self exitFullScreen];
+    [self exitFullScreen:[] { }];
 }
 
 @end

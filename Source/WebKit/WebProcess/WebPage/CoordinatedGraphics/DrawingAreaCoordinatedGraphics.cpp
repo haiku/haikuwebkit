@@ -250,6 +250,8 @@ void DrawingAreaCoordinatedGraphics::backgroundColorDidChange()
 void DrawingAreaCoordinatedGraphics::setDeviceScaleFactor(float deviceScaleFactor, CompletionHandler<void()>&& completionHandler)
 {
     Ref { m_webPage.get() }->setDeviceScaleFactor(deviceScaleFactor);
+    if (m_layerTreeHost)
+        m_layerTreeHost->sizeDidChange();
     completionHandler();
 }
 
@@ -358,7 +360,7 @@ void DrawingAreaCoordinatedGraphics::updateGeometry(const IntSize& size, Complet
     webPage->layoutIfNeeded();
 
     if (m_layerTreeHost)
-        m_layerTreeHost->sizeDidChange(webPage->size());
+        m_layerTreeHost->sizeDidChange();
     else {
         m_dirtyRegion = IntRect(IntPoint(), size);
         UpdateInfo updateInfo;
@@ -790,6 +792,13 @@ void DrawingAreaCoordinatedGraphics::preferredBufferFormatsDidChange()
 {
     if (m_layerTreeHost)
         m_layerTreeHost->preferredBufferFormatsDidChange();
+}
+#endif
+
+#if ENABLE(DAMAGE_TRACKING)
+FrameDamageForTesting* DrawingAreaCoordinatedGraphics::frameDamageForTesting() const
+{
+    return m_layerTreeHost ? m_layerTreeHost->frameDamageForTesting() : nullptr;
 }
 #endif
 

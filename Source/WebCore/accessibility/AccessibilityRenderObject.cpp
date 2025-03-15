@@ -2434,7 +2434,7 @@ void AccessibilityRenderObject::addNodeOnlyChildren()
     WeakPtr cache = axObjectCache();
     if (!cache)
         return;
-    // FIXME: This algorithm does not work correctly when ENABLE(INCLUDE_IGNORED_IN_CORE_TREE) due to use of m_children, as this algorithm is written assuming m_children only every contains unignored objects.
+    // FIXME: This algorithm does not work correctly when ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE) due to use of m_children, as this algorithm is written assuming m_children only every contains unignored objects.
     // Iterate through all of the children, including those that may have already been added, and
     // try to insert the nodes in the correct place in the DOM order.
     unsigned insertionIndex = 0;
@@ -2450,8 +2450,12 @@ void AccessibilityRenderObject::addNodeOnlyChildren()
                     childObject = nullptr;
             }
 
-            if (childObject)
-                insertionIndex = m_children.find(Ref { *childObject }) + 1;
+            if (childObject) {
+                insertionIndex = m_children.findIf([&childObject] (const Ref<AXCoreObject>& child) {
+                    return child.ptr() == childObject;
+                });
+                ++insertionIndex;
+            }
             continue;
         }
 
@@ -2574,12 +2578,12 @@ void AccessibilityRenderObject::addChildren()
     // being part of the accessibility tree.
     RefPtr node = dynamicDowncast<ContainerNode>(this->node());
     auto* element = dynamicDowncast<Element>(node.get());
-    CheckedPtr cache = axObjectCache();
+    WeakPtr cache = axObjectCache();
 
     // ::before and ::after pseudos should be the first and last children of the element
     // that generates them (rather than being siblings to the generating element).
     if (RefPtr beforePseudo = element ? element->beforePseudoElement() : nullptr) {
-        if (RefPtr pseudoObject = cache->getOrCreate(*beforePseudo))
+        if (RefPtr pseudoObject = cache ? cache->getOrCreate(*beforePseudo) : nullptr)
             addChildIfNeeded(*pseudoObject);
     }
 
@@ -2600,7 +2604,7 @@ void AccessibilityRenderObject::addChildren()
     }
 
     if (RefPtr afterPseudo = element ? element->afterPseudoElement() : nullptr) {
-        if (RefPtr pseudoObject = cache->getOrCreate(*afterPseudo))
+        if (RefPtr pseudoObject = cache ? cache->getOrCreate(*afterPseudo) : nullptr)
             addChildIfNeeded(*pseudoObject);
     }
 #else

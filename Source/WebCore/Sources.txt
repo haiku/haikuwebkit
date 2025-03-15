@@ -140,6 +140,7 @@ Modules/fetch/WindowOrWorkerGlobalScopeFetch.cpp
 Modules/filesystemaccess/FileSystemDirectoryHandle.cpp
 Modules/filesystemaccess/FileSystemFileHandle.cpp
 Modules/filesystemaccess/FileSystemHandle.cpp
+Modules/filesystemaccess/FileSystemStorageConnection.cpp
 Modules/filesystemaccess/FileSystemSyncAccessHandle.cpp
 Modules/filesystemaccess/FileSystemWritableFileStream.cpp
 Modules/filesystemaccess/FileSystemWritableFileStreamSink.cpp
@@ -544,6 +545,7 @@ Modules/webxr/XRLayerEvent.cpp
 Modules/webxr/XRProjectionLayer.cpp
 Modules/webxr/XRReferenceSpaceEvent.cpp
 Modules/webxr/XRSessionEvent.cpp
+Modules/webxr/XRSubImage.cpp
 Modules/webxr/XRWebGLBinding.cpp
 Modules/webxr/XRWebGLSubImage.cpp
 accessibility/AXCoreObject.cpp
@@ -1038,7 +1040,6 @@ css/parser/CSSPropertyParserConsumer+Box.cpp
 css/parser/CSSPropertyParserConsumer+Color.cpp
 css/parser/CSSPropertyParserConsumer+ColorAdjust.cpp
 css/parser/CSSPropertyParserConsumer+ColorInterpolationMethod.cpp
-css/parser/CSSPropertyParserConsumer+Conditional.cpp
 css/parser/CSSPropertyParserConsumer+Contain.cpp
 css/parser/CSSPropertyParserConsumer+Content.cpp
 css/parser/CSSPropertyParserConsumer+CounterStyles.cpp
@@ -1153,7 +1154,7 @@ css/typedom/transform/CSSTranslate.cpp
 css/values/CSSSerializationContext.cpp
 css/values/CSSValueAggregates.cpp
 css/values/CSSValueTypes.cpp
-css/values/backgrounds/CSSBorderRadius.cpp
+css/values/borders/CSSBorderRadius.cpp
 css/values/color-adjust/CSSColorScheme.cpp
 css/values/color/CSSColor.cpp
 css/values/color/CSSColorLayers.cpp
@@ -1276,7 +1277,6 @@ dom/FragmentDirectiveGenerator.cpp
 dom/FragmentDirectiveRangeFinder.cpp
 dom/FragmentDirectiveParser.cpp
 dom/FragmentDirectiveUtilities.cpp
-dom/FullscreenManager.cpp
 dom/GCReachableRef.cpp
 dom/HashChangeEvent.cpp
 dom/IdTargetObserver.cpp
@@ -2032,7 +2032,9 @@ loader/ResourceLoadStatistics.cpp
 loader/ResourceLoader.cpp
 loader/ResourceMonitor.cpp
 loader/ResourceMonitorChecker.cpp
+loader/ResourceMonitorPersistence.cpp
 loader/ResourceMonitorThrottler.cpp
+loader/ResourceMonitorThrottlerHolder.cpp
 loader/ResourceTiming.cpp
 loader/ResourceTimingInformation.cpp
 loader/ServerTiming.cpp
@@ -2553,6 +2555,7 @@ platform/graphics/PixelBuffer.cpp
 platform/graphics/PixelBufferConversion.cpp
 platform/graphics/PixelBufferFormat.cpp
 platform/graphics/PixelFormat.cpp
+platform/graphics/PlatformDynamicRangeLimit.cpp
 platform/graphics/PlatformTimeRanges.cpp
 platform/graphics/PositionedGlyphs.cpp
 platform/graphics/Region.cpp
@@ -3142,8 +3145,8 @@ style/StyleUpdate.cpp
 style/Styleable.cpp
 style/TransformOperationsBuilder.cpp
 style/UserAgentStyle.cpp
-style/values/backgrounds/StyleBorderRadius.cpp
-style/values/backgrounds/StyleBoxShadow.cpp
+style/values/borders/StyleBorderRadius.cpp
+style/values/borders/StyleBoxShadow.cpp
 style/values/color-adjust/StyleColorScheme.cpp
 style/values/color/StyleColor.cpp
 style/values/color/StyleColorLayers.cpp

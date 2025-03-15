@@ -1106,6 +1106,9 @@ static NSString *roleString(AXCoreObject& backingObject)
 
 static NSString *subroleString(AXCoreObject& backingObject)
 {
+    if (backingObject.isEmptyGroup())
+        return NSAccessibilityEmptyGroupSubrole;
+
     String subrole = backingObject.subrolePlatformString();
     if (!subrole.isEmpty())
         return subrole;
@@ -2052,7 +2055,8 @@ id parameterizedAttributeValueForTesting(const RefPtr<AXCoreObject>& backingObje
     if (!backingObject)
         return nil;
 
-    backingObject->updateChildrenIfNecessary();
+    if (auto* axObject = dynamicDowncast<AccessibilityObject>(backingObject.get()))
+        axObject->updateChildrenIfNecessary();
     auto* axObject = backingObject->accessibilityHitTest(IntPoint(point));
 
     id hit = nil;

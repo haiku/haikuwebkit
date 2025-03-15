@@ -40,11 +40,32 @@ private struct PermissionDecisionView: View {
     }
 }
 
+private struct BinaryValuePicker: View {
+    @Binding var value: Bool
+
+    let description: String
+
+    let falseLabel: String
+    let trueLabel: String
+
+    var body: some View {
+        Picker(selection: $value) {
+            Text(falseLabel).tag(false)
+            Text(trueLabel).tag(true)
+        } label: {
+            Text(description)
+        }
+    }
+}
+
 struct GeneralSettingsView: View {
     @AppStorage(AppStorageKeys.homepage) private var homepage = "https://www.webkit.org"
 
     @AppStorage(AppStorageKeys.orientationAndMotionAuthorization) private var orientationAndMotionAuthorization = WKPermissionDecision.prompt
     @AppStorage(AppStorageKeys.mediaCaptureAuthorization) private var mediaCaptureAuthorization = WKPermissionDecision.prompt
+
+    @AppStorage(AppStorageKeys.scrollBounceBehaviorBasedOnSize) private var scrollBounceBehaviorBasedOnSize = false
+    @AppStorage(AppStorageKeys.backgroundHidden) private var backgroundHidden = false
 
     let currentURL: URL?
 
@@ -72,6 +93,22 @@ struct GeneralSettingsView: View {
                 PermissionDecisionView(
                     permissionDecision: $orientationAndMotionAuthorization,
                     label: "Allow sites to access sensors:"
+                )
+            }
+
+            Section {
+                BinaryValuePicker(
+                    value: $scrollBounceBehaviorBasedOnSize,
+                    description: "Scroll Bounce Behavior",
+                    falseLabel: "Automatic",
+                    trueLabel: "Based on Size"
+                )
+
+                BinaryValuePicker(
+                    value: $backgroundHidden,
+                    description: "Hidden Background Behavior",
+                    falseLabel: "Automatic",
+                    trueLabel: "Always Hide"
                 )
             }
         }

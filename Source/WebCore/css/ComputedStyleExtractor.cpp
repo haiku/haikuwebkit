@@ -1076,6 +1076,13 @@ static Ref<CSSValue> computedRotate(RenderObject* renderer, const RenderStyle& s
         CSSPrimitiveValue::create(rotate->y()), CSSPrimitiveValue::create(rotate->z()), WTFMove(angle));
 }
 
+static Ref<CSSPrimitiveValue> valueForScopedName(const Style::ScopedName& scopedName)
+{
+    if (scopedName.isIdentifier)
+        return CSSPrimitiveValue::createCustomIdent(scopedName.name);
+    return CSSPrimitiveValue::create(scopedName.name);
+}
+
 static Ref<CSSValue> valueForBoxShadow(const ShadowData* shadow, const RenderStyle& style)
 {
     if (!shadow)
@@ -1113,10 +1120,12 @@ static Ref<CSSValue> valueForPositionTryFallbacks(const Vector<PositionTryFallba
 
     CSSValueListBuilder list;
     for (auto& fallback : fallbacks) {
-        CSSValueListBuilder tacticsList;
+        CSSValueListBuilder singleFallbackList;
+        if (fallback.positionTryRuleName)
+            singleFallbackList.append(valueForScopedName(*fallback.positionTryRuleName));
         for (auto& tactic : fallback.tactics)
-            tacticsList.append(createConvertingToCSSValueID(tactic));
-        list.append(CSSValueList::createSpaceSeparated(tacticsList));
+            singleFallbackList.append(createConvertingToCSSValueID(tactic));
+        list.append(CSSValueList::createSpaceSeparated(singleFallbackList));
     }
 
     return CSSValueList::createCommaSeparated(WTFMove(list));
@@ -1623,13 +1632,6 @@ static Ref<CSSPrimitiveValue> valueForAnimationPlayState(AnimationPlayState play
         return CSSPrimitiveValue::create(CSSValuePaused);
     }
     RELEASE_ASSERT_NOT_REACHED();
-}
-
-static Ref<CSSPrimitiveValue> valueForScopedName(const Style::ScopedName& scopedName)
-{
-    if (scopedName.isIdentifier)
-        return CSSPrimitiveValue::createCustomIdent(scopedName.name);
-    return CSSPrimitiveValue::create(scopedName.name);
 }
 
 static Ref<CSSValue> valueForAnimationTimeline(const RenderStyle& style, const Animation::Timeline& timeline)
@@ -3298,17 +3300,30 @@ static Ref<CSSValue> valueForPositionArea(const std::optional<PositionArea>& pos
     return CSSPropertyParserHelpers::valueForPositionArea(blockOrXAxisKeyword, inlineOrYAxisKeyword).releaseNonNull();
 }
 
-static Ref<CSSValue> valueForTimelineScopeNames(const Vector<AtomString>& names)
+static Ref<CSSValue> valueForNameScope(const NameScope& scope)
 {
-    if (names.isEmpty())
+    switch (scope.type) {
+    case NameScope::Type::None:
         return CSSPrimitiveValue::create(CSSValueNone);
 
-    CSSValueListBuilder list;
-    for (auto& name : names) {
-        ASSERT(!name.isNull());
-        list.append(CSSPrimitiveValue::createCustomIdent(name));
+    case NameScope::Type::All:
+        return CSSPrimitiveValue::create(CSSValueAll);
+
+    case NameScope::Type::Ident:
+        if (scope.names.isEmpty())
+            return CSSPrimitiveValue::create(CSSValueNone);
+
+        CSSValueListBuilder list;
+        for (auto& name : scope.names) {
+            ASSERT(!name.isNull());
+            list.append(CSSPrimitiveValue::createCustomIdent(name));
+        }
+
+        return CSSValueList::createCommaSeparated(WTFMove(list));
     }
-    return CSSValueList::createCommaSeparated(WTFMove(list));
+
+    ASSERT_NOT_REACHED();
+    return CSSPrimitiveValue::create(CSSValueNone);
 }
 
 static Ref<CSSValue> scrollTimelineShorthandValue(const Vector<Ref<ScrollTimeline>>& timelines)
@@ -4836,6 +4851,16 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
             return style.hasAutoColumnCount() ? CSSPrimitiveValue::create(CSSValueAuto) : CSSPrimitiveValue::create(style.columnCount());
         return getCSSPropertyValuesForShorthandProperties(columnsShorthand());
     }
+    case CSSPropertyCornerShape:
+        return getCSSPropertyValuesFor4SidesShorthand(cornerShapeShorthand());
+    case CSSPropertyCornerTopLeftShape:
+        return createConvertingToCSSValueID(style.cornerTopLeftShape());
+    case CSSPropertyCornerTopRightShape:
+        return createConvertingToCSSValueID(style.cornerTopRightShape());
+    case CSSPropertyCornerBottomRightShape:
+        return createConvertingToCSSValueID(style.cornerBottomRightShape());
+    case CSSPropertyCornerBottomLeftShape:
+        return createConvertingToCSSValueID(style.cornerBottomLeftShape());
     case CSSPropertyInset:
         return getCSSPropertyValuesFor4SidesShorthand(insetShorthand());
     case CSSPropertyInsetBlock:
@@ -4979,12 +5004,18 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
 
     case CSSPropertyAnchorName:
         return valueForAnchorName(style.anchorNames());
+    case CSSPropertyAnchorScope:
+        return valueForNameScope(style.anchorScope());
     case CSSPropertyPositionAnchor:
         if (!style.positionAnchor())
             return CSSPrimitiveValue::create(CSSValueAuto);
         return valueForScopedName(*style.positionAnchor());
     case CSSPropertyPositionArea:
         return valueForPositionArea(style.positionArea());
+    case CSSPropertyPositionTry:
+        if (style.positionTryOrder() == RenderStyle::initialPositionTryOrder())
+            return valueForPositionTryFallbacks(style.positionTryFallbacks());
+        return getCSSPropertyValuesForShorthandProperties(positionTryShorthand());
     case CSSPropertyPositionTryFallbacks:
         return valueForPositionTryFallbacks(style.positionTryFallbacks());
     case CSSPropertyPositionTryOrder: {
@@ -5004,16 +5035,7 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
         return CSSPrimitiveValue::create(CSSValueNormal);
     }
     case CSSPropertyTimelineScope:
-        switch (style.timelineScope().type) {
-        case TimelineScope::Type::None:
-            return CSSPrimitiveValue::create(CSSValueNone);
-        case TimelineScope::Type::All:
-            return CSSPrimitiveValue::create(CSSValueAll);
-        case TimelineScope::Type::Ident:
-            return valueForTimelineScopeNames(style.timelineScope().scopeNames);
-        }
-        ASSERT_NOT_REACHED();
-        return CSSPrimitiveValue::create(CSSValueNone);
+        return valueForNameScope(style.timelineScope());
 
     // Unimplemented CSS 3 properties (including CSS3 shorthand properties).
     case CSSPropertyAll:
@@ -5036,6 +5058,10 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
     case CSSPropertyBorderInlineStartWidth:
     case CSSPropertyBorderStartEndRadius:
     case CSSPropertyBorderStartStartRadius:
+    case CSSPropertyCornerEndEndShape:
+    case CSSPropertyCornerEndStartShape:
+    case CSSPropertyCornerStartEndShape:
+    case CSSPropertyCornerStartStartShape:
     case CSSPropertyInsetBlockEnd:
     case CSSPropertyInsetBlockStart:
     case CSSPropertyInsetInlineEnd:

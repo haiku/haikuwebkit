@@ -36,6 +36,7 @@
 #include <WebCore/GraphicsLayerClient.h>
 #include <WebCore/Page.h>
 #include <WebCore/Timer.h>
+#include <WebCore/ViewportConfiguration.h>
 #include <wtf/OptionSet.h>
 #include <wtf/TZoneMalloc.h>
 
@@ -50,6 +51,7 @@ class TextStream;
 
 namespace WebCore {
 class FrameView;
+class LocalFrameView;
 class PageOverlay;
 class PlatformWheelEvent;
 class ShadowRoot;
@@ -102,6 +104,11 @@ private:
     bool m_isBeingHovered { false };
 };
 
+struct VisiblePDFPosition {
+    PDFDocumentLayout::PageIndex pageIndex { 0 };
+    WebCore::FloatPoint pagePoint;
+};
+
 enum class AnnotationSearchDirection : bool {
     Forward,
     Backward
@@ -132,6 +139,7 @@ public:
     };
     using PDFElementTypes = OptionSet<PDFElementType>;
 
+    WebCore::LocalFrameView* frameView() const;
     WebCore::FrameView* mainFrameView() const;
 
     CGRect pluginBoundsForAnnotation(RetainPtr<PDFAnnotation>&) const final;
@@ -159,9 +167,12 @@ public:
 
     bool shouldCachePagePreviews() const;
 
-#if PLATFORM(MAC)
     WebCore::FloatRect convertFromPDFPageToScreenForAccessibility(const WebCore::FloatRect&, PDFDocumentLayout::PageIndex) const;
+#if PLATFORM(MAC)
     void accessibilityScrollToPage(PDFDocumentLayout::PageIndex);
+#endif
+#if !PLATFORM(MAC)
+    id accessibilityHitTestInPageForIOS(WebCore::FloatPoint);
 #endif
 
 #if ENABLE(UNIFIED_PDF_DATA_DETECTION)
@@ -216,6 +227,10 @@ public:
     double maxScaleFactor() const final;
 
     bool shouldSizeToFitContent() const final;
+
+    static WebCore::ViewportConfiguration::Parameters viewportParameters();
+
+    void finalizeRenderingUpdate() final;
 
 private:
     explicit UnifiedPDFPlugin(WebCore::HTMLPlugInElement&);
@@ -304,6 +319,7 @@ private:
     void didAttachScrollingNode() final;
 
     bool geometryDidChange(const WebCore::IntSize&, const WebCore::AffineTransform&) override;
+    void visibilityDidChange(bool) override;
 
     RefPtr<WebCore::FragmentedSharedBuffer> liveResourceData() const override;
 
@@ -455,6 +471,7 @@ private:
     void notifyFlushRequired(const WebCore::GraphicsLayer*) override;
     void paintContents(const WebCore::GraphicsLayer*, WebCore::GraphicsContext&, const WebCore::FloatRect&, OptionSet<WebCore::GraphicsLayerPaintBehavior>) override;
     float pageScaleFactor() const override;
+    bool layerNeedsPlatformContext(const WebCore::GraphicsLayer*) const override;
 
     void paintPDFContent(const WebCore::GraphicsLayer*, WebCore::GraphicsContext&, const WebCore::FloatRect& clipRect, const std::optional<PDFLayoutRow>& = { }, AsyncPDFRenderer* = nullptr);
     void paintPDFSelection(const WebCore::GraphicsLayer*, WebCore::GraphicsContext&, const WebCore::FloatRect& clipRect, std::optional<PDFLayoutRow> = { });
@@ -521,6 +538,18 @@ private:
     void zoomOut() final;
     void resetZoom();
 #endif
+
+#if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
+    WebCore::IntRect frameForPageNumberIndicatorInRootViewCoordinates() const;
+    bool pageNumberIndicatorEnabled() const;
+    bool shouldShowPageNumberIndicator() const;
+    void updatePageNumberIndicatorVisibility();
+    void updatePageNumberIndicatorLocation();
+    void updatePageNumberIndicatorCurrentPage(const std::optional<WebCore::IntRect>& unobscuredContentRectInRootView);
+    void updatePageNumberIndicator(const std::optional<WebCore::IntRect>& unobscuredContentRectInRootView = { });
+#endif
+
+    void frameViewLayoutOrVisualViewportChanged(const WebCore::IntRect&) final;
 
     bool supportsPasswordForm() const;
     void installAnnotationContainer();
@@ -610,6 +639,8 @@ private:
     void resetInitialSelection();
 #endif // PLATFORM(IOS_FAMILY)
 
+    bool shouldUseInProcessBackingStore() const;
+
     RefPtr<PDFPresentationController> m_presentationController;
 
     PDFDocumentLayout m_documentLayout;
@@ -676,9 +707,16 @@ private:
 
     RefPtr<WebCore::ShadowRoot> m_shadowRoot;
 
+    std::optional<VisiblePDFPosition> m_pendingAnchoringInfo;
+    bool m_willSetPendingAnchoringInfo { false };
+
     // FIXME: We should rationalize these with the values in ViewGestureController.
     // For now, we'll leave them differing as they do in PDFPlugin.
+#if PLATFORM(IOS_FAMILY)
+    static constexpr double minimumZoomScale = 1;
+#else
     static constexpr double minimumZoomScale = 0.2;
+#endif
     static constexpr double maximumZoomScale = 6.0;
 };
 

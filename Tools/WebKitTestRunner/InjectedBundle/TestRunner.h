@@ -194,6 +194,8 @@ public:
     JSRetainPtr<JSStringRef> pathToLocalResource(JSStringRef);
     void syncLocalStorage();
 
+    void clearStorage();
+
     void clearDOMCache(JSStringRef origin);
     void clearDOMCaches();
     bool hasDOMCache(JSStringRef origin);
@@ -516,7 +518,7 @@ public:
     void setMockCameraOrientation(unsigned, JSStringRef persistentId);
     bool isMockRealtimeMediaSourceCenterEnabled();
     void setMockCaptureDevicesInterrupted(bool isCameraInterrupted, bool isMicrophoneInterrupted);
-    void triggerMockCaptureConfigurationChange(bool forMicrophone, bool forDisplay);
+    void triggerMockCaptureConfigurationChange(bool forCamera, bool forMicrophone, bool forDisplay);
     void setCaptureState(bool cameraState, bool microphoneState, bool displayState);
 
     bool hasAppBoundSession();

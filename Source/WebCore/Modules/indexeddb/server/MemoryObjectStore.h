@@ -64,10 +64,14 @@ public:
 
     void writeTransactionStarted(MemoryBackingStoreTransaction&);
     void writeTransactionFinished(MemoryBackingStoreTransaction&);
+    void transactionAborted(MemoryBackingStoreTransaction&);
     MemoryBackingStoreTransaction* writeTransaction();
 
-    IDBError createIndex(MemoryBackingStoreTransaction&, const IDBIndexInfo&);
+    IDBError addIndex(MemoryBackingStoreTransaction&, const IDBIndexInfo&);
+    void revertAddIndex(MemoryBackingStoreTransaction&, IDBIndexIdentifier);
+    IDBError updateIndexRecordsWithIndexKey(MemoryBackingStoreTransaction&, const IDBIndexInfo&, const IDBKeyData&, const IndexKey&);
     IDBError deleteIndex(MemoryBackingStoreTransaction&, IDBIndexIdentifier);
+    void forEachRecord(Function<void(const IDBKeyData&, const IDBValue&)>&&);
     void deleteAllIndexes(MemoryBackingStoreTransaction&);
     void registerIndex(Ref<MemoryIndex>&&);
 
@@ -81,7 +85,6 @@ public:
     void setKeyGeneratorValue(uint64_t value) { m_keyGeneratorValue = value; }
 
     void clear();
-    void replaceKeyValueStore(std::unique_ptr<KeyValueMap>&&, std::unique_ptr<IDBKeyDataSet>&&);
 
     ThreadSafeDataBuffer valueForKey(const IDBKeyData&) const;
     ThreadSafeDataBuffer valueForKeyRange(const IDBKeyRangeData&) const;
@@ -121,12 +124,13 @@ private:
     IDBObjectStoreInfo m_info;
 
     CheckedPtr<MemoryBackingStoreTransaction> m_writeTransaction;
+    uint64_t m_keyGeneratorValueBeforeTransaction { 1 };
     uint64_t m_keyGeneratorValue { 1 };
 
+    KeyValueMap m_transactionModifiedRecords;
     std::unique_ptr<KeyValueMap> m_keyValueStore;
     std::unique_ptr<IDBKeyDataSet> m_orderedKeys;
 
-    void unregisterIndex(MemoryIndex&);
     HashMap<IDBIndexIdentifier, RefPtr<MemoryIndex>> m_indexesByIdentifier;
     HashMap<String, RefPtr<MemoryIndex>> m_indexesByName;
     HashMap<IDBResourceIdentifier, std::unique_ptr<MemoryObjectStoreCursor>> m_cursors;

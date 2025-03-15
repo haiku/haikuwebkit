@@ -38,6 +38,7 @@
 #include "RemotePageDrawingAreaProxy.h"
 #include "RemotePageFullscreenManagerProxy.h"
 #include "RemotePageVisitedLinkStoreRegistration.h"
+#include "UserMediaProcessManager.h"
 #include "WebFrameProxy.h"
 #include "WebPageMessages.h"
 #include "WebPageProxy.h"
@@ -45,6 +46,7 @@
 #include "WebProcessActivityState.h"
 #include "WebProcessMessages.h"
 #include "WebProcessProxy.h"
+#include <WebCore/MediaProducer.h>
 #include <WebCore/PageIdentifier.h>
 #include <WebCore/RemoteUserInputEventData.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -119,6 +121,8 @@ void RemotePageProxy::processDidTerminate(WebProcessProxy& process, ProcessTermi
 
 RemotePageProxy::~RemotePageProxy()
 {
+    if (m_page)
+        m_page->isNoLongerAssociatedWithRemotePage(*this);
     if (m_drawingArea)
         m_process->send(Messages::WebPage::Close(), m_webPageID);
     m_process->removeRemotePageProxy(*this);
@@ -158,6 +162,11 @@ void RemotePageProxy::didReceiveMessage(IPC::Connection& connection, IPC::Decode
 
     if (decoder.messageName() == Messages::WebPageProxy::HandleMessage::name()) {
         IPC::handleMessage<Messages::WebPageProxy::HandleMessage>(connection, decoder, this, &RemotePageProxy::handleMessage);
+        return;
+    }
+
+    if (decoder.messageName() == Messages::WebPageProxy::IsPlayingMediaDidChange::name()) {
+        IPC::handleMessage<Messages::WebPageProxy::IsPlayingMediaDidChange>(connection, decoder, this, &RemotePageProxy::isPlayingMediaDidChange);
         return;
     }
 
@@ -254,6 +263,27 @@ WebPageProxy* RemotePageProxy::page() const
 WebProcessActivityState& RemotePageProxy::processActivityState()
 {
     return m_processActivityState;
+}
+
+void RemotePageProxy::isPlayingMediaDidChange(WebCore::MediaProducerMediaStateFlags newState)
+{
+#if ENABLE(MEDIA_STREAM)
+    bool didStopAudioCapture = m_mediaState.containsAny(WebCore::MediaProducer::IsCapturingAudioMask) && !newState.containsAny(WebCore::MediaProducer::IsCapturingAudioMask);
+    bool didStopVideoCapture = m_mediaState.containsAny(WebCore::MediaProducer::IsCapturingVideoMask) && !newState.containsAny(WebCore::MediaProducer::IsCapturingVideoMask);
+#endif
+
+    m_mediaState = newState;
+
+    RefPtr page = m_page.get();
+    if (!page || page->isClosed())
+        return;
+
+    page->updatePlayingMediaDidChange(WebPageProxy::CanDelayNotification::Yes);
+
+#if ENABLE(MEDIA_STREAM)
+    if (didStopAudioCapture || didStopVideoCapture)
+        UserMediaProcessManager::singleton().revokeSandboxExtensionsIfNeeded(protectedProcess().get());
+#endif
 }
 
 }

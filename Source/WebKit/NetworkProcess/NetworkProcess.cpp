@@ -1754,6 +1754,11 @@ void NetworkProcess::deleteWebsiteDataImpl(PAL::SessionID sessionID, OptionSet<W
         session->clearAlternativeServices(modifiedSince);
 #endif
 
+#if ENABLE(CONTENT_EXTENSIONS)
+    if (websiteDataTypes.contains(WebsiteDataType::DiskCache) && session)
+        session->clearResourceMonitorThrottlerData([clearTasksHandler] { });
+#endif
+
     if (NetworkStorageManager::canHandleTypes(websiteDataTypes) && session)
         session->protectedStorageManager()->deleteDataModifiedSince(websiteDataTypes, modifiedSince, [clearTasksHandler] { });
 }
@@ -2920,18 +2925,14 @@ void NetworkProcess::connectionToWebProcessClosed(IPC::Connection& connection, P
         session->protectedStorageManager()->stopReceivingMessageFromConnection(connection);
 }
 
-std::optional<WebCore::ProcessIdentifier> NetworkProcess::webProcessIdentifierForConnection(IPC::Connection& connection) const
-{
-    for (auto& [processIdentifier, webConnection] : m_webProcessConnections) {
-        if (&webConnection->connection() == &connection)
-            return processIdentifier;
-    }
-    return std::nullopt;
-}
-
 NetworkConnectionToWebProcess* NetworkProcess::webProcessConnection(ProcessIdentifier identifier) const
 {
     return m_webProcessConnections.get(identifier);
+}
+
+RefPtr<NetworkConnectionToWebProcess> NetworkProcess::protectedWebProcessConnection(WebCore::ProcessIdentifier identifier) const
+{
+    return webProcessConnection(identifier);
 }
 
 NetworkConnectionToWebProcess* NetworkProcess::webProcessConnection(const IPC::Connection& connection) const

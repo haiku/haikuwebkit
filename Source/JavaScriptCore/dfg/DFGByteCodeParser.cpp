@@ -108,8 +108,7 @@ static constexpr bool verbose = true;
 } // namespace DFGByteCodeParserInternal
 
 #define VERBOSE_LOG(...) do { \
-if (DFGByteCodeParserInternal::verbose && Options::verboseDFGBytecodeParsing()) \
-dataLog(__VA_ARGS__); \
+    dataLogIf(DFGByteCodeParserInternal::verbose && Options::verboseDFGBytecodeParsing(), __VA_ARGS__); \
 } while (false)
 
 // === ByteCodeParser ===
@@ -1685,6 +1684,10 @@ std::tuple<unsigned, InlineAttribute> ByteCodeParser::inliningCost(CallVariant c
         return { UINT_MAX, InlineAttribute::None };
     }
 
+    CodeBlock* targetCodeBlock = executable->codeBlockFor(specializationKind);
+    if (!m_graph.m_plan.isFTL())
+        targetCodeBlock = codeBlock;
+
     if (codeBlock->couldBeTainted() != m_codeBlock->couldBeTainted()) {
         VERBOSE_LOG("    Failing because taintedness of callee does not match the caller");
         return { UINT_MAX, InlineAttribute::None };
@@ -1697,14 +1700,14 @@ std::tuple<unsigned, InlineAttribute> ByteCodeParser::inliningCost(CallVariant c
         }
     }
 
-    CapabilityLevel capabilityLevel = inlineFunctionForCapabilityLevel(m_graph.m_plan.jitType(), codeBlock, specializationKind, callee.isClosureCall());
+    CapabilityLevel capabilityLevel = inlineFunctionForCapabilityLevel(m_graph.m_plan.jitType(), targetCodeBlock, specializationKind, callee.isClosureCall());
     VERBOSE_LOG("    Call mode: ", callMode, "\n");
     VERBOSE_LOG("    Is closure call: ", callee.isClosureCall(), "\n");
     VERBOSE_LOG("    Capability level: ", capabilityLevel, "\n");
-    VERBOSE_LOG("    Might inline function: ", mightInlineFunctionFor(m_graph.m_plan.jitType(), codeBlock, specializationKind), "\n");
-    VERBOSE_LOG("    Might compile function: ", mightCompileFunctionFor(codeBlock, specializationKind), "\n");
-    VERBOSE_LOG("    Is supported for inlining: ", isSupportedForInlining(codeBlock), "\n");
-    VERBOSE_LOG("    Is inlining candidate: ", codeBlock->ownerExecutable()->isInliningCandidate(), "\n");
+    VERBOSE_LOG("    Might inline function: ", mightInlineFunctionFor(m_graph.m_plan.jitType(), targetCodeBlock, specializationKind), "\n");
+    VERBOSE_LOG("    Might compile function: ", mightCompileFunctionFor(targetCodeBlock, specializationKind), "\n");
+    VERBOSE_LOG("    Is supported for inlining: ", isSupportedForInlining(targetCodeBlock), "\n");
+    VERBOSE_LOG("    Is inlining candidate: ", targetCodeBlock->ownerExecutable()->isInliningCandidate(), "\n");
     if (!canInline(capabilityLevel)) {
         VERBOSE_LOG("    Failing because the function is not inlineable.\n");
         return { UINT_MAX, InlineAttribute::None };
@@ -1754,7 +1757,7 @@ std::tuple<unsigned, InlineAttribute> ByteCodeParser::inliningCost(CallVariant c
     VERBOSE_LOG("    Inlining should be possible.\n");
     
     // It might be possible to inline.
-    return { codeBlock->bytecodeCost(), codeBlock->ownerExecutable()->inlineAttribute() };
+    return { targetCodeBlock->bytecodeCost(), codeBlock->ownerExecutable()->inlineAttribute() };
 }
 
 template<typename ChecksFunctor>
@@ -2746,6 +2749,7 @@ auto ByteCodeParser::handleIntrinsicCall(Node* callee, Operand resultOperand, Ca
             return CallOptimizationResult::Inlined;
         }
 
+        case ArrayIncludesIntrinsic:
         case ArrayIndexOfIntrinsic: {
             if (argumentCountIncludingThis < 2)
                 return CallOptimizationResult::DidNothing;
@@ -2789,7 +2793,9 @@ auto ByteCodeParser::handleIntrinsicCall(Node* callee, Operand resultOperand, Ca
                         addVarArgChild(get(virtualRegisterForArgumentIncludingThis(2, registerOffset))); // Start index.
                     addVarArgChild(nullptr);
 
-                    Node* node = addToGraph(Node::VarArg, ArrayIndexOf, OpInfo(arrayMode.asWord()), OpInfo());
+                    Node* node = intrinsic == ArrayIncludesIntrinsic
+                        ? addToGraph(Node::VarArg, ArrayIncludes, OpInfo(arrayMode.asWord()), OpInfo())
+                        : addToGraph(Node::VarArg, ArrayIndexOf, OpInfo(arrayMode.asWord()), OpInfo());
                     setResult(node);
                     return CallOptimizationResult::Inlined;
                 }
@@ -10225,24 +10231,28 @@ void ByteCodeParser::parseCodeBlock()
     }
 
     if (UNLIKELY(Options::dumpBytecodeAtDFGTime())) {
-        dataLog("Parsing ", *codeBlock);
-        if (inlineCallFrame()) {
-            dataLog(
-                " for inlining at ", CodeBlockWithJITType(m_codeBlock, JITType::DFGJIT),
-                " ", inlineCallFrame()->directCaller);
-        }
-        dataLogLn();
-        codeBlock->baselineVersion()->dumpBytecode();
+        WTF::dataFile().atomically([&](auto&) {
+            dataLog("Parsing ", *codeBlock);
+            if (inlineCallFrame()) {
+                dataLog(
+                    " for inlining at ", CodeBlockWithJITType(m_codeBlock, JITType::DFGJIT),
+                    " ", inlineCallFrame()->directCaller);
+            }
+            dataLogLn();
+            codeBlock->baselineVersion()->dumpBytecode();
+        });
     }
 
     Vector<JSInstructionStream::Offset, 32> jumpTargets;
     computePreciseJumpTargets(codeBlock, jumpTargets);
     if (UNLIKELY(Options::dumpBytecodeAtDFGTime())) {
-        dataLog("Jump targets: ");
-        CommaPrinter comma;
-        for (unsigned i = 0; i < jumpTargets.size(); ++i)
-            dataLog(comma, jumpTargets[i]);
-        dataLog("\n");
+        WTF::dataFile().atomically([&](auto&) {
+            dataLog("Jump targets: ");
+            CommaPrinter comma;
+            for (unsigned i = 0; i < jumpTargets.size(); ++i)
+                dataLog(comma, jumpTargets[i]);
+            dataLogLn();
+        });
     }
     
     for (unsigned jumpTargetIndex = 0; jumpTargetIndex <= jumpTargets.size(); ++jumpTargetIndex) {

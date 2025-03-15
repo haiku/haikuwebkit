@@ -82,6 +82,7 @@
 #include <WebCore/CookieConsentDecisionResult.h>
 #include <WebCore/DataListSuggestionPicker.h>
 #include <WebCore/DatabaseTracker.h>
+#include <WebCore/DocumentFullscreen.h>
 #include <WebCore/DocumentLoader.h>
 #include <WebCore/DocumentStorageAccess.h>
 #include <WebCore/ElementInlines.h>
@@ -89,7 +90,6 @@
 #include <WebCore/FileChooser.h>
 #include <WebCore/FileIconLoader.h>
 #include <WebCore/FrameLoader.h>
-#include <WebCore/FullscreenManager.h>
 #include <WebCore/HTMLInputElement.h>
 #include <WebCore/HTMLNames.h>
 #include <WebCore/HTMLParserIdioms.h>
@@ -169,6 +169,11 @@
 #if PLATFORM(MAC)
 #include "RemoteScrollbarsController.h"
 #include <WebCore/ScrollbarsControllerMock.h>
+#endif
+
+#if ENABLE(DAMAGE_TRACKING)
+#include "LayerTreeHost.h"
+#include <WebCore/Damage.h>
 #endif
 
 namespace WebKit {
@@ -322,7 +327,7 @@ RefPtr<Page> WebChromeClient::createWindow(LocalFrame& frame, const String& open
 {
 #if ENABLE(FULLSCREEN_API)
     if (RefPtr document = frame.document())
-        document->fullscreenManager().cancelFullscreen();
+        document->fullscreen().fullyExitFullscreen();
 #endif
 
     auto& webProcess = WebProcess::singleton();
@@ -349,6 +354,7 @@ RefPtr<Page> WebChromeClient::createWindow(LocalFrame& frame, const String& open
         false, /* openedByDOMWithOpener */
         navigationAction.newFrameOpenerPolicy() == NewFrameOpenerPolicy::Allow, /* hasOpener */
         frame.loader().isHTTPFallbackInProgress(),
+        navigationAction.isInitialFrameSrcLoad(),
         openedMainFrameName,
         { }, /* requesterOrigin */
         { }, /* requesterTopOrigin */
@@ -1268,6 +1274,11 @@ void WebChromeClient::enterVideoFullscreenForVideoElement(HTMLVideoElement& vide
     protectedPage()->videoPresentationManager().enterVideoFullscreenForVideoElement(videoElement, mode, standby);
 }
 
+void WebChromeClient::setPlayerIdentifierForVideoElement(HTMLVideoElement& videoElement)
+{
+    protectedPage()->videoPresentationManager().setPlayerIdentifierForVideoElement(videoElement);
+}
+
 void WebChromeClient::exitVideoFullscreenForVideoElement(HTMLVideoElement& videoElement, CompletionHandler<void(bool)>&& completionHandler)
 {
     protectedPage()->videoPresentationManager().exitVideoFullscreenForVideoElement(videoElement, WTFMove(completionHandler));
@@ -1333,9 +1344,9 @@ bool WebChromeClient::supportsFullScreenForElement(const Element& element, bool 
     return protectedPage()->fullScreenManager().supportsFullScreenForElement(element, withKeyboard);
 }
 
-void WebChromeClient::enterFullScreenForElement(Element& element, HTMLMediaElementEnums::VideoFullscreenMode mode, CompletionHandler<void(ExceptionOr<void>)>&& completionHandler)
+void WebChromeClient::enterFullScreenForElement(Element& element, HTMLMediaElementEnums::VideoFullscreenMode mode, CompletionHandler<void(ExceptionOr<void>)>&& willEnterFullscreen, CompletionHandler<bool(bool)>&& didEnterFullscreen)
 {
-    protectedPage()->fullScreenManager().enterFullScreenForElement(element, mode, WTFMove(completionHandler));
+    protectedPage()->fullScreenManager().enterFullScreenForElement(element, mode, WTFMove(willEnterFullscreen), WTFMove(didEnterFullscreen));
 #if ENABLE(VIDEO_PRESENTATION_MODE)
     if (RefPtr videoElement = dynamicDowncast<HTMLVideoElement>(element); videoElement && mode == HTMLMediaElementEnums::VideoFullscreenModeInWindow)
         setVideoFullscreenMode(*videoElement, mode);
@@ -1349,7 +1360,7 @@ void WebChromeClient::updateImageSource(Element& element)
 }
 #endif // ENABLE(QUICKLOOK_FULLSCREEN)
 
-void WebChromeClient::exitFullScreenForElement(Element* element)
+void WebChromeClient::exitFullScreenForElement(Element* element, CompletionHandler<void()>&& completionHandler)
 {
 #if ENABLE(VIDEO_PRESENTATION_MODE)
     bool exitingInWindowFullscreen = false;
@@ -1358,7 +1369,7 @@ void WebChromeClient::exitFullScreenForElement(Element* element)
             exitingInWindowFullscreen = videoElement->fullscreenMode() == HTMLMediaElementEnums::VideoFullscreenModeInWindow;
     }
 #endif
-    protectedPage()->fullScreenManager().exitFullScreenForElement(element);
+    protectedPage()->fullScreenManager().exitFullScreenForElement(element, WTFMove(completionHandler));
 #if ENABLE(VIDEO_PRESENTATION_MODE)
     if (exitingInWindowFullscreen)
         clearVideoFullscreenMode(*dynamicDowncast<HTMLVideoElement>(*element), HTMLMediaElementEnums::VideoFullscreenModeInWindow);
@@ -1497,6 +1508,15 @@ bool WebChromeClient::shouldUseTiledBackingForFrameView(const LocalFrameView& fr
     return protectedPage()->drawingArea()->shouldUseTiledBackingForFrameView(frameView);
 }
 
+void WebChromeClient::frameViewLayoutOrVisualViewportChanged(const LocalFrameView& frameView)
+{
+    RefPtr page = protectedPage();
+    if (!page)
+        return;
+
+    page->frameViewLayoutOrVisualViewportChanged(frameView);
+}
+
 #if ENABLE(ACCESSIBILITY_ANIMATION_CONTROL)
 void WebChromeClient::isAnyAnimationAllowedToPlayDidChange(bool anyAnimationCanPlay)
 {
@@ -1544,9 +1564,9 @@ void WebChromeClient::handleClickForDataDetectionResult(const DataDetectorElemen
 
 #if ENABLE(SERVICE_CONTROLS)
 
-void WebChromeClient::handleSelectionServiceClick(FrameSelection& selection, const Vector<String>& telephoneNumbers, const IntPoint& point)
+void WebChromeClient::handleSelectionServiceClick(WebCore::FrameIdentifier frameID, FrameSelection& selection, const Vector<String>& telephoneNumbers, const IntPoint& point)
 {
-    protectedPage()->handleSelectionServiceClick(selection, telephoneNumbers, point);
+    protectedPage()->handleSelectionServiceClick(frameID, selection, telephoneNumbers, point);
 }
 
 bool WebChromeClient::hasRelevantSelectionServices(bool isTextOnly) const
@@ -1554,14 +1574,14 @@ bool WebChromeClient::hasRelevantSelectionServices(bool isTextOnly) const
     return (isTextOnly && WebProcess::singleton().hasSelectionServices()) || WebProcess::singleton().hasRichContentServices();
 }
 
-void WebChromeClient::handleImageServiceClick(const IntPoint& point, Image& image, HTMLImageElement& element)
+void WebChromeClient::handleImageServiceClick(WebCore::FrameIdentifier frameID, const IntPoint& point, Image& image, HTMLImageElement& element)
 {
-    protectedPage()->handleImageServiceClick(point, image, element);
+    protectedPage()->handleImageServiceClick(frameID, point, image, element);
 }
 
-void WebChromeClient::handlePDFServiceClick(const IntPoint& point, HTMLAttachmentElement& element)
+void WebChromeClient::handlePDFServiceClick(WebCore::FrameIdentifier frameID, const IntPoint& point, HTMLAttachmentElement& element)
 {
-    protectedPage()->handlePDFServiceClick(point, element);
+    protectedPage()->handlePDFServiceClick(frameID, point, element);
 }
 
 #endif
@@ -1997,5 +2017,29 @@ void WebChromeClient::didProgrammaticallyClearTextFormControl(const HTMLTextForm
 {
     protectedPage()->didProgrammaticallyClearTextFormControl(element);
 }
+
+#if ENABLE(DAMAGE_TRACKING)
+void WebChromeClient::resetDamageHistoryForTesting()
+{
+    const auto* drawingArea = page().drawingArea();
+    if (!drawingArea)
+        return;
+
+    if (auto* frameDamageForTesting = drawingArea->frameDamageForTesting())
+        frameDamageForTesting->resetFrameDamageHistory();
+}
+
+WebCore::FrameDamageHistory* WebChromeClient::damageHistoryForTesting() const
+{
+    const auto* drawingArea = page().drawingArea();
+    if (!drawingArea)
+        return nullptr;
+
+    if (const auto* frameDamageForTesting = drawingArea->frameDamageForTesting())
+        return frameDamageForTesting->frameDamageHistory();
+
+    return nullptr;
+}
+#endif
 
 } // namespace WebKit

@@ -26,8 +26,8 @@
 #if ENABLE(FULLSCREEN_API) && PLATFORM(MAC)
 
 #import <AppKit/AppKit.h>
+#import <WebCore/BoxExtents.h>
 #import <wtf/CompletionHandler.h>
-#import <wtf/NakedRef.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/WeakObjCPtr.h>
 #import <wtf/WeakPtr.h>
@@ -59,8 +59,10 @@ typedef enum FullScreenState : NSInteger FullScreenState;
     RetainPtr<NSTimer> _watchdogTimer;
     RetainPtr<NSArray> _savedConstraints;
 
-    bool _requestedExitFullScreen;
     FullScreenState _fullScreenState;
+    CompletionHandler<void(bool)> _enterFullScreenCompletionHandler;
+    CompletionHandler<void()> _beganExitFullScreenCompletionHandler;
+    CompletionHandler<void()> _exitFullScreenCompletionHandler;
 
     double _savedScale;
     WebCore::FloatBoxExtent _savedObscuredContentInsets;
@@ -70,19 +72,19 @@ typedef enum FullScreenState : NSInteger FullScreenState;
 @property (readonly) NSRect finalFrame;
 @property (assign) NSArray *savedConstraints;
 
-- (id)initWithWindow:(NSWindow *)window webView:(NSView *)webView page:(NakedRef<WebKit::WebPageProxy>)page;
+- (id)initWithWindow:(NSWindow *)window webView:(NSView *)webView page:(std::reference_wrapper<WebKit::WebPageProxy>)page;
 
 - (WebCoreFullScreenPlaceholderView*)webViewPlaceholder;
 
 - (BOOL)isFullScreen;
 
-- (void)enterFullScreen:(NSScreen *)screen completionHandler:(CompletionHandler<void(bool)>&&)completionHandler;
-- (void)exitFullScreen;
+- (void)enterFullScreen:(CompletionHandler<void(bool)>&&)completionHandler;
+- (void)exitFullScreen:(CompletionHandler<void()>&&)completionHandler;
 - (void)exitFullScreenImmediately;
 - (void)requestExitFullScreen;
 - (void)close;
-- (void)beganEnterFullScreenWithInitialFrame:(NSRect)initialFrame finalFrame:(NSRect)finalFrame;
-- (void)beganExitFullScreenWithInitialFrame:(NSRect)initialFrame finalFrame:(NSRect)finalFrame;
+- (void)beganEnterFullScreenWithInitialFrame:(NSRect)initialFrame finalFrame:(NSRect)finalFrame completionHandler:(CompletionHandler<void(bool)>&&)completionHandler;
+- (void)beganExitFullScreenWithInitialFrame:(NSRect)initialFrame finalFrame:(NSRect)finalFrame completionHandler:(CompletionHandler<void()>&&)completionHandler;
 
 - (void)videoControlsManagerDidChange;
 

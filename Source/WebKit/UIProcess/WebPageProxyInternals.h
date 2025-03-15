@@ -308,7 +308,9 @@ public:
     WebCore::RectEdges<bool> mainFramePinnedState { true, true, true, true };
     WebCore::LayoutPoint maxStableLayoutViewportOrigin;
     WebCore::FloatSize maximumUnobscuredSize;
+    RunLoop::Timer updatePlayingMediaDidChangeTimer;
     WebCore::MediaProducerMediaStateFlags mediaState;
+    WebCore::MediaProducerMediaStateFlags mainFrameMediaState;
     WebCore::LayoutPoint minStableLayoutViewportOrigin;
     WebCore::IntSize minimumSizeForAutoLayout;
     WebCore::FloatSize minimumUnobscuredSize;
@@ -327,6 +329,8 @@ public:
     WebCore::MediaProducerMediaStateFlags reportedMediaCaptureState;
     RunLoop::Timer resetRecentCrashCountTimer;
     WebCore::RectEdges<bool> rubberBandableEdges { true, true, true, true };
+    bool alwaysBounceVertical { true };
+    bool alwaysBounceHorizontal { true };
     WebCore::Color sampledPageTopColor;
     WebCore::ScrollPinningBehavior scrollPinningBehavior { WebCore::ScrollPinningBehavior::DoNotPin };
     WebCore::IntSize sizeToContentAutoSizeMaximumSize;

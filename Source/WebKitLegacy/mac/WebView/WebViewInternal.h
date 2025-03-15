@@ -50,7 +50,6 @@
 #import <functional>
 #import <wtf/Forward.h>
 #import <wtf/NakedPtr.h>
-#import <wtf/NakedRef.h>
 #import <wtf/RetainPtr.h>
 
 #if !TARGET_OS_IPHONE
@@ -318,7 +317,7 @@ WebLayoutMilestones kitLayoutMilestones(OptionSet<WebCore::LayoutMilestone>);
 - (void)_exitVideoFullscreen;
 #if PLATFORM(MAC)
 - (BOOL)_hasActiveVideoForControlsInterface;
-- (void)_setUpPlaybackControlsManagerForMediaElement:(NakedRef<WebCore::HTMLMediaElement>)mediaElement;
+- (void)_setUpPlaybackControlsManagerForMediaElement:(std::reference_wrapper<WebCore::HTMLMediaElement>)mediaElement;
 - (void)_clearPlaybackControlsManager;
 - (void)_playbackControlsMediaEngineChanged;
 #endif
@@ -327,8 +326,8 @@ WebLayoutMilestones kitLayoutMilestones(OptionSet<WebCore::LayoutMilestone>);
 
 #if ENABLE(FULLSCREEN_API) && !PLATFORM(IOS_FAMILY) && defined(__cplusplus)
 - (BOOL)_supportsFullScreenForElement:(NakedPtr<WebCore::Element>)element withKeyboard:(BOOL)withKeyboard;
-- (void)_enterFullScreenForElement:(NakedPtr<WebCore::Element>)element completionHandler:(CompletionHandler<void(WebCore::ExceptionOr<void>)>&&)completionHandler;
-- (void)_exitFullScreenForElement:(NakedPtr<WebCore::Element>)element;
+- (void)_enterFullScreenForElement:(NakedPtr<WebCore::Element>)element willEnterFullscreen:(CompletionHandler<void(WebCore::ExceptionOr<void>)>&&)willEnterFullscreen didEnterFullscreen:(CompletionHandler<void(bool)>&&)didEnterFullscreen;
+- (void)_exitFullScreenForElement:(NakedPtr<WebCore::Element>)element completionHandler:(CompletionHandler<void()>&&)completionHandler;
 #endif
 
 // Conversion functions between WebCore root view coordinates and web view coordinates.

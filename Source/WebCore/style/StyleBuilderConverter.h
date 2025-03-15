@@ -253,7 +253,7 @@ public:
 
     static RefPtr<TimingFunction> convertTimingFunction(BuilderState&, const CSSValue&);
 
-    static TimelineScope convertTimelineScope(BuilderState&, const CSSValue&);
+    static NameScope convertNameScope(BuilderState&, const CSSValue&);
 
     static SingleTimelineRange convertAnimationRangeStart(BuilderState&, const CSSValue&);
     static SingleTimelineRange convertAnimationRangeEnd(BuilderState&, const CSSValue&);
@@ -2696,16 +2696,16 @@ inline RefPtr<TimingFunction> BuilderConverter::convertTimingFunction(BuilderSta
     return Style::createTimingFunction(value, builderState.cssToLengthConversionData());
 }
 
-inline TimelineScope BuilderConverter::convertTimelineScope(BuilderState& builderState, const CSSValue& value)
+inline NameScope BuilderConverter::convertNameScope(BuilderState& builderState, const CSSValue& value)
 {
     if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
         switch (primitiveValue->valueID()) {
         case CSSValueNone:
             return { };
         case CSSValueAll:
-            return { TimelineScope::Type::All, { } };
+            return { NameScope::Type::All, { } };
         default:
-            return { TimelineScope::Type::Ident, { AtomString { primitiveValue->stringValue() } } };
+            return { NameScope::Type::Ident, { AtomString { primitiveValue->stringValue() } } };
         }
     }
 
@@ -2713,21 +2713,26 @@ inline TimelineScope BuilderConverter::convertTimelineScope(BuilderState& builde
     if (!list)
         return { };
 
-    return { TimelineScope::Type::Ident, WTF::map(*list, [&](auto& item) {
+    return { NameScope::Type::Ident, WTF::map(*list, [&](auto& item) {
         return AtomString { item.stringValue() };
     }) };
 }
 
-inline Vector<PositionTryFallback> BuilderConverter::convertPositionTryFallbacks(BuilderState&, const CSSValue& value)
+inline Vector<PositionTryFallback> BuilderConverter::convertPositionTryFallbacks(BuilderState& builderState, const CSSValue& value)
 {
     auto fallbackForValueList = [&](const CSSValueList& valueList) -> std::optional<PositionTryFallback> {
         if (valueList.separator() != CSSValueList::SpaceSeparator)
             return { };
 
-        auto tactics = WTF::map(valueList, [&](auto& item) {
-            return fromCSSValueID<PositionTryFallback::Tactic>(item.valueID());
-        });
-        return PositionTryFallback { .tactics = WTFMove(tactics) };
+        auto fallback = PositionTryFallback { };
+
+        for (auto& item : valueList) {
+            if (item.isCustomIdent())
+                fallback.positionTryRuleName = Style::ScopedName { AtomString { item.customIdent() }, builderState.styleScopeOrdinal() };
+            else
+                fallback.tactics.append(fromCSSValueID<PositionTryFallback::Tactic>(item.valueID()));
+        }
+        return fallback;
     };
 
     if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
@@ -2774,19 +2779,19 @@ inline Style::DynamicRangeLimit BuilderConverter::convertDynamicRangeLimit(Build
             return Style::DynamicRangeLimit { CSS::Keyword::Standard { } };
         case CSSValueConstrainedHigh:
             return Style::DynamicRangeLimit { CSS::Keyword::ConstrainedHigh { } };
-        case CSSValueHigh:
-            return Style::DynamicRangeLimit { CSS::Keyword::High { } };
+        case CSSValueNoLimit:
+            return Style::DynamicRangeLimit { CSS::Keyword::NoLimit { } };
         default:
             break;
         }
 
         builderState.setCurrentPropertyInvalidAtComputedValueTime();
-        return Style::DynamicRangeLimit { CSS::Keyword::High { } };
+        return Style::DynamicRangeLimit { CSS::Keyword::NoLimit { } };
     }
 
     RefPtr dynamicRangeLimit = requiredDowncast<CSSDynamicRangeLimitValue>(builderState, value);
     if (!dynamicRangeLimit)
-        return Style::DynamicRangeLimit { CSS::Keyword::High { } };
+        return Style::DynamicRangeLimit { CSS::Keyword::NoLimit { } };
 
     return toStyle(dynamicRangeLimit->dynamicRangeLimit(), builderState);
 }

@@ -34,7 +34,7 @@
 #include "DOMFormData.h"
 #include "Document.h"
 #include "Editor.h"
-#include "ElementChildIteratorInlines.h"
+#include "ElementInlines.h"
 #include "Event.h"
 #include "EventNames.h"
 #include "FormController.h"
@@ -317,7 +317,7 @@ String HTMLTextAreaElement::sanitizeUserInputValue(const String& proposedValue, 
 RefPtr<TextControlInnerTextElement> HTMLTextAreaElement::innerTextElement() const
 {
     RefPtr root = userAgentShadowRoot();
-    return root ? childrenOfType<TextControlInnerTextElement>(*root).first() : nullptr;
+    return root ? downcast<TextControlInnerTextElement>(root->firstChild()) : nullptr;
 }
 
 RefPtr<TextControlInnerTextElement> HTMLTextAreaElement::innerTextElementCreatingShadowSubtreeIfNeeded()

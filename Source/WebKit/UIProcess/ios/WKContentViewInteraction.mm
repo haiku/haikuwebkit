@@ -59,7 +59,6 @@
 #import "WKContextMenuElementInfoPrivate.h"
 #import "WKDatePickerViewController.h"
 #import "WKDateTimeInputControl.h"
-#import "WKDigitalCredentialsPicker.h"
 #import "WKError.h"
 #import "WKExtendedTextInputTraits.h"
 #import "WKFocusedFormControlView.h"
@@ -120,6 +119,7 @@
 #import <WebCore/CompositionHighlight.h>
 #import <WebCore/DOMPasteAccess.h>
 #import <WebCore/DataDetection.h>
+#import <WebCore/ElementIdentifier.h>
 #import <WebCore/FloatQuad.h>
 #import <WebCore/FloatRect.h>
 #import <WebCore/FontAttributeChanges.h>
@@ -203,8 +203,19 @@
 #import <pal/spi/cocoa/AVKitSPI.h>
 #endif
 
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+#if USE(APPLE_INTERNAL_SDK)  && __has_include(<WebKitAdditions/WKDigitalCredentialsPickerAdditions.h>)
+#import <WebKitAdditions/WKDigitalCredentialsPickerAdditions.h>
+#else
+#import "WKDigitalCredentialsPicker.h"
+#endif
+#endif
+
 #if ENABLE(WRITING_TOOLS)
 #import "WKSTextAnimationManager.h"
+#endif
+
+#if ENABLE(MODEL_PROCESS) || ENABLE(WRITING_TOOLS)
 #import "WebKitSwiftSoftLink.h"
 #endif
 
@@ -1376,6 +1387,14 @@ static WKDragSessionContext *ensureLocalDragSessionContext(id <UIDragSession> se
     [_singleTapGestureRecognizer setSupportingTouchEventsGestureRecognizer:_touchEventGestureRecognizer.get()];
     [self addGestureRecognizer:_singleTapGestureRecognizer.get()];
 
+#if ENABLE(MODEL_PROCESS)
+    _modelInteractionPanGestureRecognizer = adoptNS([[UIPanGestureRecognizer alloc] initWithTarget:self action:@selector(_modelInteractionPanGestureRecognized:)]);
+    [_modelInteractionPanGestureRecognizer setMinimumNumberOfTouches:1];
+    [_modelInteractionPanGestureRecognizer setMaximumNumberOfTouches:1];
+    [_modelInteractionPanGestureRecognizer setDelegate:self];
+    [self addGestureRecognizer:_modelInteractionPanGestureRecognizer.get()];
+#endif
+
     _nonBlockingDoubleTapGestureRecognizer = adoptNS([[UITapGestureRecognizer alloc] initWithTarget:self action:@selector(_nonBlockingDoubleTapRecognized:)]);
     [_nonBlockingDoubleTapGestureRecognizer setNumberOfTapsRequired:2];
     [_nonBlockingDoubleTapGestureRecognizer setDelegate:self];
@@ -1572,6 +1591,11 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [_singleTapGestureRecognizer setSupportingTouchEventsGestureRecognizer:nil];
     [self removeGestureRecognizer:_singleTapGestureRecognizer.get()];
 
+#if ENABLE(MODEL_PROCESS)
+    [_modelInteractionPanGestureRecognizer setDelegate:nil];
+    [self removeGestureRecognizer:_modelInteractionPanGestureRecognizer.get()];
+#endif
+
     [_highlightLongPressGestureRecognizer setDelegate:nil];
     [self removeGestureRecognizer:_highlightLongPressGestureRecognizer.get()];
 
@@ -1695,6 +1719,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [self removeGestureRecognizer:_doubleTapGestureRecognizerForDoubleClick.get()];
     [self removeGestureRecognizer:_twoFingerDoubleTapGestureRecognizer.get()];
     [self removeGestureRecognizer:_twoFingerSingleTapGestureRecognizer.get()];
+#if ENABLE(MODEL_PROCESS)
+    [self removeGestureRecognizer:_modelInteractionPanGestureRecognizer.get()];
+#endif
 #if HAVE(UIKIT_WITH_MOUSE_SUPPORT)
     [self removeInteraction:_mouseInteraction.get()];
 #endif
@@ -1721,6 +1748,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [self addGestureRecognizer:_doubleTapGestureRecognizerForDoubleClick.get()];
     [self addGestureRecognizer:_twoFingerDoubleTapGestureRecognizer.get()];
     [self addGestureRecognizer:_twoFingerSingleTapGestureRecognizer.get()];
+#if ENABLE(MODEL_PROCESS)
+    [self addGestureRecognizer:_modelInteractionPanGestureRecognizer.get()];
+#endif
 #if HAVE(UIKIT_WITH_MOUSE_SUPPORT)
     [self addInteraction:_mouseInteraction.get()];
 #endif
@@ -2301,7 +2331,7 @@ typedef NS_ENUM(NSInteger, EndEditingReason) {
     if (gestureRecognizer == [_webView scrollView].pinchGestureRecognizer)
         return YES;
 
-    // The gesture recognizer is another UIPichGestureRecognizer known to lead to pinch-to-zoom.
+    // The gesture recognizer is another UIPinchGestureRecognizer known to lead to pinch-to-zoom.
     if ([gestureRecognizer isKindOfClass:[UIPinchGestureRecognizer class]]) {
         if (auto uiDelegate = static_cast<id<WKUIDelegatePrivate>>(self.webView.UIDelegate)) {
             if ([uiDelegate respondsToSelector:@selector(_webView:gestureRecognizerCouldPinch:)])
@@ -3054,6 +3084,20 @@ static inline bool isSamePair(UIGestureRecognizer *a, UIGestureRecognizer *b, UI
         || (otherGestureRecognizer == _singleTapGestureRecognizer && gestureRecognizer._wk_isTextInteractionTapGesture))
         return YES;
 
+#if ENABLE(MODEL_PROCESS)
+    if (isSamePair(gestureRecognizer, otherGestureRecognizer, _modelInteractionPanGestureRecognizer.get(), _longPressGestureRecognizer.get()))
+        return YES;
+
+    if (isSamePair(gestureRecognizer, otherGestureRecognizer, _modelInteractionPanGestureRecognizer.get(), _nonBlockingDoubleTapGestureRecognizer.get()))
+        return YES;
+
+    if (isSamePair(gestureRecognizer, otherGestureRecognizer, _modelInteractionPanGestureRecognizer.get(), _singleTapGestureRecognizer.get()))
+        return YES;
+
+    if (isSamePair(gestureRecognizer, otherGestureRecognizer, _modelInteractionPanGestureRecognizer.get(), _previewGestureRecognizer.get()))
+        return YES;
+#endif
+
     if (isSamePair(gestureRecognizer, otherGestureRecognizer, _singleTapGestureRecognizer.get(), _nonBlockingDoubleTapGestureRecognizer.get()))
         return YES;
 
@@ -3368,6 +3412,23 @@ ALLOW_DEPRECATED_DECLARATIONS_END
             return YES;
         }
     }
+
+#if ENABLE(MODEL_PROCESS)
+    if (gestureRecognizer == _modelInteractionPanGestureRecognizer) {
+        WebKit::InteractionInformationRequest request(WebCore::roundedIntPoint(point));
+        if (![self ensurePositionInformationIsUpToDate:request])
+            return NO;
+
+        if (self._hasFocusedElement) {
+            // Prevent the gesture if it is the same node.
+            if (_positionInformation.elementContext && _positionInformation.elementContext->isSameElement(_focusedElementInformation.elementContext))
+                return NO;
+        } else {
+            // Prevent the gesture if there is no action for the node.
+            return _positionInformation.isInteractiveModel;
+        }
+    }
+#endif
 
     if (gestureRecognizer == _keyboardDismissalGestureRecognizer) {
         auto tapIsInEditableRoot = [&] {
@@ -3857,6 +3918,33 @@ static void cancelPotentialTapIfNecessary(WKContentView* contentView)
     RELEASE_LOG(ViewGestures, "Synthetic click completed. (%p, pageProxyID=%llu)", self, _page->identifier().toUInt64());
     [self stopDeferringInputViewUpdates:WebKit::InputViewUpdateDeferralSource::TapGesture];
 }
+
+#if ENABLE(MODEL_PROCESS)
+- (void)_modelInteractionPanGestureRecognized:(UIPanGestureRecognizer *)gestureRecognizer
+{
+    ASSERT(gestureRecognizer == _modelInteractionPanGestureRecognizer);
+
+    _lastInteractionLocation = [gestureRecognizer locationInView:self];
+
+    switch (gestureRecognizer.state) {
+    case UIGestureRecognizerStateBegan: {
+        [self modelInteractionPanGestureDidBeginAtPoint:_lastInteractionLocation];
+        break;
+    }
+    case UIGestureRecognizerStateChanged: {
+        [self modelInteractionPanGestureDidUpdateWithPoint:_lastInteractionLocation];
+        break;
+    }
+    case UIGestureRecognizerStateEnded:
+    case UIGestureRecognizerStateCancelled: {
+        [self modelInteractionPanGestureDidEnd];
+        break;
+    }
+    default:
+        break;
+    }
+}
+#endif
 
 - (void)_singleTapRecognized:(UITapGestureRecognizer *)gestureRecognizer
 {
@@ -6042,8 +6130,14 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
     if (_showDebugTapHighlightsForFastClicking && !enabled)
         _tapHighlightInformation.color = [self _tapHighlightColorForFastClick:YES];
 
-    [_doubleTapGestureRecognizer setEnabled:enabled];
-    [_nonBlockingDoubleTapGestureRecognizer setEnabled:!enabled];
+    _doubleTapGesturesAreDisabledTemporarilyForFastTap = !enabled;
+    [self _updateDoubleTapGestureRecognizerEnablement];
+}
+
+- (void)_updateDoubleTapGestureRecognizerEnablement
+{
+    [_doubleTapGestureRecognizer setEnabled:!_doubleTapGesturesAreDisabledTemporarilyForFastTap && [_webView _allowsMagnification]];
+    [_nonBlockingDoubleTapGestureRecognizer setEnabled:_doubleTapGesturesAreDisabledTemporarilyForFastTap && [_webView _allowsMagnification]];
     [self _resetIsDoubleTapPending];
 }
 
@@ -6337,7 +6431,7 @@ static NSArray<WKTextSelectionRect *> *textSelectionRects(const Vector<WebCore::
     // to achieve the visual effect that the caret is narrow when zoomed in and wide
     // when zoomed out.
     double inverseScale = [self inverseScale];
-    if (bool isHorizontalCaret = caretRect.width() < caretRect.height())
+    if (caretRect.width() < caretRect.height())
         caretRect.setWidth(caretRect.width() * inverseScale);
     else
         caretRect.setHeight(caretRect.height() * inverseScale);
@@ -6350,7 +6444,7 @@ static NSArray<WKTextSelectionRect *> *textSelectionRects(const Vector<WebCore::
     // to achieve the visual effect that the caret is narrow when zoomed in and wide
     // when zoomed out.
     double inverseScale = [self inverseScale];
-    if (bool isHorizontalCaret = caretRect.width() < caretRect.height()) {
+    if (caretRect.width() < caretRect.height()) {
         float originalWidth = caretRect.width();
         caretRect.setWidth(originalWidth * inverseScale);
         caretRect.move(caretRect.width() - originalWidth, 0);
@@ -8862,7 +8956,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
     if (_presentedQuickboardController)
         return YES;
 #endif // HAVE(QUICKBOARD_CONTROLLER)
-    return _presentedFullScreenInputViewController;
+    return !!_presentedFullScreenInputViewController;
 }
 
 - (void)dismissAllInputViewControllers:(BOOL)animated
@@ -11263,6 +11357,49 @@ static Vector<WebCore::IntSize> sizesOfPlaceholderElementsToInsertWhenDroppingIt
 }
 
 #endif // ENABLE(DRAG_SUPPORT)
+
+#pragma mark - Model Interaction Support
+#if ENABLE(MODEL_PROCESS)
+- (void)modelInteractionPanGestureDidBeginAtPoint:(CGPoint)inputPoint
+{
+    if (!_stageModeSession) {
+        _stageModeSession = { { } };
+        _page->requestInteractiveModelElementAtPoint(WebCore::roundedIntPoint(inputPoint));
+    }
+}
+
+- (void)modelInteractionPanGestureDidUpdateWithPoint:(CGPoint)inputPoint
+{
+    if (_stageModeSession && !_stageModeSession->isPreparingForInteraction) {
+        WebCore::TransformationMatrix transform;
+        transform.translate3d(inputPoint.x, inputPoint.y, 0);
+        _stageModeSession->transform = transform;
+        _page->stageModeSessionDidUpdate(_stageModeSession->elementID, _stageModeSession->transform);
+    }
+}
+
+- (void)modelInteractionPanGestureDidEnd
+{
+    if (_stageModeSession && !_stageModeSession->isPreparingForInteraction)
+        _page->stageModeSessionDidEnd(_stageModeSession->elementID);
+
+    [self cleanUpStageModeSessionState];
+}
+
+- (void)didReceiveInteractiveModelElement:(std::optional<WebCore::ElementIdentifier>)elementID
+{
+    if (!_stageModeSession || !_stageModeSession->isPreparingForInteraction)
+        return;
+
+    _stageModeSession->isPreparingForInteraction = !elementID;
+    _stageModeSession->elementID = elementID;
+}
+
+- (void)cleanUpStageModeSessionState
+{
+    _stageModeSession = std::nullopt;
+}
+#endif
 
 - (void)cancelActiveTextInteractionGestures
 {
@@ -14845,6 +14982,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (!_webView)
         return;
 
+    _page->willBeginContextMenuInteraction();
     _isDisplayingContextMenuWithAnimation = YES;
     [animator addCompletion:[weakSelf = WeakObjCPtr<WKContentView>(self)] {
         if (auto strongSelf = weakSelf.get()) {
@@ -14986,6 +15124,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (!_webView)
         return;
 
+    _page->didEndContextMenuInteraction();
     // FIXME: This delegate is being called more than once by UIKit. <rdar://problem/51550291>
     // This conditional avoids the WKUIDelegate being called twice too.
     if (_contextMenuElementInfo) {

@@ -1847,7 +1847,7 @@ void WebFrameLoaderClient::dispatchDidClearWindowObjectInWorld(WebCore::DOMWrapp
         return;
     }
 
-    if (&world != &WebCore::mainThreadNormalWorld())
+    if (&world != &WebCore::mainThreadNormalWorldSingleton())
         return;
 
     auto* frame = core(m_webFrame.get());

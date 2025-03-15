@@ -6046,6 +6046,13 @@
    },
    {
       "emails" : [
+         "mbrodesser@igalia.com"
+      ],
+      "github" : "mbrodesser-Igalia",
+      "name" : "Mirko Brodesser"
+   },
+   {
+      "emails" : [
          "bazzimoe3@gmail.com"
       ],
       "expertise" : "Web Extensions, WebKit API (Mac)",
@@ -6164,7 +6171,8 @@
       "name" : "Nathan Solomon",
       "nicks" : [
          "NathanSolomon733"
-      ]
+      ],
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -6291,7 +6299,7 @@
       "nicks" : [
          "Nitin"
       ],
-      "status" : "committer"
+      "status" : "reviewer"
    },
    {
       "emails" : [
@@ -7456,7 +7464,7 @@
       "nicks" : [
          "sosukesuzuki"
       ],
-      "status" : "committer"
+      "status" : "reviewer"
    },
    {
       "emails" : [
@@ -8430,7 +8438,8 @@
          "yulunwu@chromium.org"
       ],
       "github" : "yulunwu2",
-      "name" : "Yulun Wu"
+      "name" : "Yulun Wu",
+      "status" : "committer"
    },
    {
       "emails" : [

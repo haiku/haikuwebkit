@@ -37,6 +37,7 @@
 #import "Logging.h"
 #import "MessageSenderInlines.h"
 #import "NativeWebKeyboardEvent.h"
+#import "PDFPluginBase.h"
 #import "PluginView.h"
 #import "PrintInfo.h"
 #import "RemoteLayerTreeDrawingArea.h"
@@ -49,6 +50,7 @@
 #import "TapHandlingResult.h"
 #import "TextCheckingControllerProxy.h"
 #import "UIKitSPI.h"
+#import "UnifiedPDFPlugin.h"
 #import "UserData.h"
 #import "ViewGestureGeometryCollector.h"
 #import "VisibleContentRectUpdateInfo.h"
@@ -105,6 +107,7 @@
 #import <WebCore/HTMLImageElement.h>
 #import <WebCore/HTMLInputElement.h>
 #import <WebCore/HTMLLabelElement.h>
+#import <WebCore/HTMLModelElement.h>
 #import <WebCore/HTMLOptGroupElement.h>
 #import <WebCore/HTMLOptionElement.h>
 #import <WebCore/HTMLPlugInElement.h>
@@ -693,6 +696,11 @@ void WebPage::getSelectionContext(CompletionHandler<void(const String&, const St
 
 NSObject *WebPage::accessibilityObjectForMainFramePlugin()
 {
+#if ENABLE(PDF_PLUGIN)
+    if (RefPtr pluginView = mainFramePlugIn())
+        return pluginView->accessibilityObject();
+#endif
+
     return nil;
 }
     
@@ -3864,6 +3872,11 @@ InteractionInformationAtPosition WebPage::positionInformation(const InteractionI
     if (RefPtr input = dynamicDowncast<HTMLInputElement>(nodeRespondingToClickEvents))
         textInteractionPositionInformation(*this, *input, request, info);
 
+#if ENABLE(MODEL_PROCESS)
+    if (RefPtr modelElement = dynamicDowncast<HTMLModelElement>(hitTestNode))
+        info.isInteractiveModel = modelElement->model() && modelElement->supportsStageModeInteraction();
+#endif
+
 #if ENABLE(PDF_PLUGIN)
     if (pluginView) {
         if (auto [url, bounds] = pluginView->linkURLAndBoundsAtPoint(request.point); !url.isEmpty()) {
@@ -4243,6 +4256,15 @@ void WebPage::setViewportConfigurationViewLayoutSize(const FloatSize& size, doub
     if (!m_viewportConfiguration.isKnownToLayOutWiderThanViewport())
         m_viewportConfiguration.setMinimumEffectiveDeviceWidthForShrinkToFit(0);
 
+    bool mainFramePluginOverridesViewScale = [&] {
+#if ENABLE(PDF_PLUGIN)
+        RefPtr pluginView = mainFramePlugIn();
+        return pluginView && !pluginView->pluginHandlesPageScaleFactor();
+#else
+        return false;
+#endif
+    }();
+
     m_baseViewportLayoutSizeScaleFactor = [&] {
         if (!m_page->settings().automaticallyAdjustsViewScaleUsingMinimumEffectiveDeviceWidth())
             return 1.0;
@@ -4253,10 +4275,13 @@ void WebPage::setViewportConfigurationViewLayoutSize(const FloatSize& size, doub
         if (minimumEffectiveDeviceWidth >= size.width())
             return 1.0;
 
+        if (mainFramePluginOverridesViewScale)
+            return 1.0;
+
         return size.width() / minimumEffectiveDeviceWidth;
     }();
 
-    double layoutSizeScaleFactor = layoutSizeScaleFactorFromClient * m_baseViewportLayoutSizeScaleFactor;
+    double layoutSizeScaleFactor = mainFramePluginOverridesViewScale ? 1.0 : layoutSizeScaleFactorFromClient * m_baseViewportLayoutSizeScaleFactor;
 
     auto previousLayoutSizeScaleFactor = m_viewportConfiguration.layoutSizeScaleFactor();
     if (!m_viewportConfiguration.setViewLayoutSize(size, layoutSizeScaleFactor, minimumEffectiveDeviceWidth))
@@ -4554,7 +4579,7 @@ void WebPage::resetViewportDefaultConfiguration(WebFrame* frame, bool hasMobileD
             m_viewportConfiguration.setDefaultConfiguration(ViewportConfiguration::textDocumentParameters());
 #if ENABLE(PDF_PLUGIN)
         else if (m_page->settings().unifiedPDFEnabled() && document->isPluginDocument())
-            m_viewportConfiguration.setDefaultConfiguration(ViewportConfiguration::pluginDocumentParameters());
+            m_viewportConfiguration.setDefaultConfiguration(UnifiedPDFPlugin::viewportParameters());
 #endif
         else
             configureWithParametersForStandardFrame = true;
@@ -4963,6 +4988,18 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
     })();
 
     if (!pageHasBeenScaledSinceLastLayerTreeCommitThatChangedPageScale) {
+        bool shouldSetCorePageScale = [this, protectedThis = Ref { *this }] {
+#if ENABLE(PDF_PLUGIN)
+            RefPtr pluginView = mainFramePlugIn();
+            if (!pluginView)
+                return true;
+            return pluginView->pluginHandlesPageScaleFactor() ? false : m_isInStableState;
+#else
+            UNUSED_PARAM(this);
+            return true;
+#endif
+        }();
+
         bool hasSetPageScale = false;
         if (scaleFromUIProcess) {
             m_scaleWasSetByUIProcess = true;
@@ -4970,24 +5007,14 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
 
             m_dynamicSizeUpdateHistory.clear();
 
-            // FIXME: <webkit.org/b/287511> Also call Page::setPageScaleFactor() for main frame plugins that do not handle page scale factor.
-            bool pluginHandlesPageScaleFactor = [this] {
-#if ENABLE(PDF_PLUGIN)
-                return this->mainFramePlugIn();
-#else
-                UNUSED_PARAM(this);
-                return false;
-#endif
-            }();
-
-            if (!pluginHandlesPageScaleFactor)
+            if (shouldSetCorePageScale)
                 m_page->setPageScaleFactor(scaleFromUIProcess.value(), scrollPosition, m_isInStableState);
 
             hasSetPageScale = true;
             send(Messages::WebPageProxy::PageScaleFactorDidChange(scaleFromUIProcess.value()));
         }
 
-        if (!hasSetPageScale && m_isInStableState)
+        if (!hasSetPageScale && m_isInStableState && shouldSetCorePageScale)
             m_page->setPageScaleFactor(scaleToUse, scrollPosition, true);
     }
 
@@ -5486,6 +5513,10 @@ void WebPage::requestDocumentEditingContext(DocumentEditingContextRequest&& requ
         return completionHandler(pluginView->documentEditingContext(WTFMove(request)));
 #endif
 
+    RefPtr view = frame->view();
+    if (!view)
+        return completionHandler({ });
+
     frame->protectedDocument()->updateLayout(LayoutOptions::IgnorePendingStylesheets);
 
     VisibleSelection selection = frame->selection().selection();
@@ -5494,6 +5525,7 @@ void WebPage::requestDocumentEditingContext(DocumentEditingContextRequest&& requ
     auto selectionRange = VisiblePositionRange { selection.visibleStart(), selection.visibleEnd() };
 
     bool isSpatialRequest = request.options.containsAny({ DocumentEditingContextRequest::Options::Spatial, DocumentEditingContextRequest::Options::SpatialAndCurrentSelection });
+    bool isSpatialRequestWithCurrentSelection = request.options.contains(DocumentEditingContextRequest::Options::SpatialAndCurrentSelection);
     bool wantsRects = request.options.contains(DocumentEditingContextRequest::Options::Rects);
     bool wantsMarkedTextRects = request.options.contains(DocumentEditingContextRequest::Options::MarkedTextRects);
 
@@ -5518,18 +5550,49 @@ void WebPage::requestDocumentEditingContext(DocumentEditingContextRequest&& requ
         // FIXME: We might need to be a bit more careful that we get something useful (test the other corners?).
         rangeOfInterest.start = visiblePositionForPointInRootViewCoordinates(*frame, request.rect.minXMinYCorner());
         rangeOfInterest.end = visiblePositionForPointInRootViewCoordinates(*frame, request.rect.maxXMaxYCorner());
+
+        if (isSpatialRequestWithCurrentSelection && !selection.isNoneOrOrphaned()) {
+            static constexpr auto maximumNumberOfLines = 10;
+            auto intersectsSpatialRect = [&](const VisiblePosition& position) {
+                FloatRect caretInRootView = view->contentsToRootView(position.absoluteCaretBounds());
+                return caretInRootView.intersects(request.rect);
+            };
+
+            auto startPositionNearSelection = [&] {
+                auto start = selectionRange.start;
+                unsigned lineCount = 0;
+                do {
+                    auto previous = previousLinePosition(start, start.lineDirectionPointForBlockDirectionNavigation());
+                    if (previous.isNull() || previous == start)
+                        break;
+                    start = WTFMove(previous);
+                    lineCount++;
+                } while (intersectsSpatialRect(start) && lineCount < maximumNumberOfLines);
+                return start;
+            }();
+
+            auto endPositionNearSelection = [&] {
+                auto end = selectionRange.end;
+                unsigned lineCount = 0;
+                do {
+                    auto next = nextLinePosition(end, end.lineDirectionPointForBlockDirectionNavigation());
+                    if (next.isNull() || next == end)
+                        break;
+                    end = WTFMove(next);
+                    lineCount++;
+                } while (intersectsSpatialRect(end) && lineCount < maximumNumberOfLines);
+                return end;
+            }();
+
+            rangeOfInterest.start = std::clamp(rangeOfInterest.start, startPositionNearSelection, endPositionNearSelection);
+            rangeOfInterest.end = std::clamp(rangeOfInterest.end, startPositionNearSelection, endPositionNearSelection);
+        }
         if (request.options.contains(DocumentEditingContextRequest::Options::SpatialAndCurrentSelection)) {
             if (RefPtr rootEditableElement = selection.rootEditableElement()) {
                 VisiblePosition startOfEditableRoot { firstPositionInOrBeforeNode(rootEditableElement.get()) };
                 VisiblePosition endOfEditableRoot { lastPositionInOrAfterNode(rootEditableElement.get()) };
-                auto clampToEditableRoot = [&](VisiblePosition& position) {
-                    if (position < startOfEditableRoot)
-                        position = startOfEditableRoot;
-                    else if (position > endOfEditableRoot)
-                        position = endOfEditableRoot;
-                };
-                clampToEditableRoot(rangeOfInterest.start);
-                clampToEditableRoot(rangeOfInterest.end);
+                rangeOfInterest.start = std::clamp(rangeOfInterest.start, startOfEditableRoot, endOfEditableRoot);
+                rangeOfInterest.end = std::clamp(rangeOfInterest.end, startOfEditableRoot, endOfEditableRoot);
             }
         }
     } else if (!selection.isNone())
@@ -6087,6 +6150,49 @@ void WebPage::didDispatchClickEvent(const PlatformMouseEvent& event, Node& node)
 }
 
 #endif // ENABLE(IOS_TOUCH_EVENTS)
+
+#if USE(UICONTEXTMENU)
+
+void WebPage::willBeginContextMenuInteraction()
+{
+    m_hasActiveContextMenuInteraction = true;
+}
+
+void WebPage::didEndContextMenuInteraction()
+{
+    m_hasActiveContextMenuInteraction = false;
+}
+
+#endif // USE(UICONTEXTMENU)
+
+#if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
+
+void WebPage::createPDFPageNumberIndicator(PDFPluginBase& plugin, const IntRect& boundingBox, size_t pageCount)
+{
+    auto addResult = m_pdfPlugInsWithPageNumberIndicator.add(plugin.identifier(), plugin);
+    if (addResult.isNewEntry)
+        send(Messages::WebPageProxy::CreatePDFPageNumberIndicator(plugin.identifier(), boundingBox, pageCount));
+}
+
+void WebPage::updatePDFPageNumberIndicatorLocation(PDFPluginBase& plugin, const IntRect& boundingBox)
+{
+    if (m_pdfPlugInsWithPageNumberIndicator.contains(plugin.identifier()))
+        send(Messages::WebPageProxy::UpdatePDFPageNumberIndicatorLocation(plugin.identifier(), boundingBox));
+}
+
+void WebPage::updatePDFPageNumberIndicatorCurrentPage(PDFPluginBase& plugin, size_t pageIndex)
+{
+    if (m_pdfPlugInsWithPageNumberIndicator.contains(plugin.identifier()))
+        send(Messages::WebPageProxy::UpdatePDFPageNumberIndicatorCurrentPage(plugin.identifier(), pageIndex));
+}
+
+void WebPage::removePDFPageNumberIndicator(PDFPluginBase& plugin)
+{
+    if (m_pdfPlugInsWithPageNumberIndicator.remove(plugin.identifier()))
+        send(Messages::WebPageProxy::RemovePDFPageNumberIndicator(plugin.identifier()));
+}
+
+#endif
 
 } // namespace WebKit
 

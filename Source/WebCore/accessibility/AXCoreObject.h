@@ -895,6 +895,9 @@ public:
 
     virtual bool isFieldset() const = 0;
     bool isGroup() const;
+#if PLATFORM(MAC)
+    bool isEmptyGroup();
+#endif
 
     // Native spin buttons.
     bool isSpinButton() const { return roleValue() == AccessibilityRole::SpinButton; }
@@ -1263,9 +1266,15 @@ public:
     };
 #if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     bool onlyAddsUnignoredChildren() const { return isTableColumn() || roleValue() == AccessibilityRole::TableHeaderContainer; }
-    virtual AccessibilityChildrenVector unignoredChildren(bool updateChildrenIfNeeded = true);
+    AccessibilityChildrenVector unignoredChildren(bool updateChildrenIfNeeded = true);
+    AXCoreObject* firstUnignoredChild();
 #else
     const AccessibilityChildrenVector& unignoredChildren(bool updateChildrenIfNeeded = true) { return children(updateChildrenIfNeeded); }
+    AXCoreObject* firstUnignoredChild()
+    {
+        const auto& children = this->children();
+        return children.size() ? children[0].ptr() : nullptr;
+    }
 #endif // ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
 
     // When ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE) is true, this returns IDs of ignored children.
@@ -1273,7 +1282,6 @@ public:
     // is the default, we should rename this function to childrenIDsIncludingIgnored, as that is what all
     // callers will expect at the time this comment was written.
     Vector<AXID> childrenIDs(bool updateChildrenIfNeeded = true);
-    virtual void updateChildrenIfNecessary() = 0;
     AXCoreObject* nextInPreOrder(bool updateChildrenIfNeeded = true, AXCoreObject* stayWithin = nullptr);
     AXCoreObject* nextSiblingIncludingIgnored(bool updateChildrenIfNeeded) const;
     AXCoreObject* nextUnignoredSibling(bool updateChildrenIfNeeded, AXCoreObject* unignoredParent = nullptr) const;

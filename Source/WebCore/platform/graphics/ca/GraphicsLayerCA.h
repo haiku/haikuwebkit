@@ -71,6 +71,7 @@ public:
 
     WEBCORE_EXPORT PlatformLayer* platformLayer() const override;
     PlatformCALayer* platformCALayer() const { return primaryLayer(); }
+    RefPtr<PlatformCALayer> protectedPlatformCALayer() const { return platformCALayer(); }
 
     WEBCORE_EXPORT bool setChildren(Vector<Ref<GraphicsLayer>>&&) override;
     WEBCORE_EXPORT void addChild(Ref<GraphicsLayer>&&) override;
@@ -99,6 +100,9 @@ public:
     WEBCORE_EXPORT void setPreserves3D(bool) override;
     WEBCORE_EXPORT void setMasksToBounds(bool) override;
     WEBCORE_EXPORT void setDrawsContent(bool) override;
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    WEBCORE_EXPORT void setDrawsHDRContent(bool) override;
+#endif
     WEBCORE_EXPORT void setContentsVisible(bool) override;
     WEBCORE_EXPORT void setAcceleratesDrawing(bool) override;
     WEBCORE_EXPORT void setUsesDisplayListDrawing(bool) override;
@@ -272,8 +276,9 @@ private:
 
     bool isCommittingChanges() const override { return m_isCommittingChanges; }
     bool isUsingDisplayListDrawing(PlatformCALayer*) const override { return m_usesDisplayListDrawing; }
-#if ENABLE(HDR_FOR_IMAGES)
-    bool hdrForImagesEnabled() const override { return client().hdrForImagesEnabled(); }
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    bool drawsHDRContent() const override { return m_drawsHDRContent; }
+    void updateDrawsHDRContent();
 #endif
 
     WEBCORE_EXPORT void setAllowsBackingStoreDetaching(bool) override;
@@ -654,6 +659,9 @@ private:
         BackdropRootChanged                     = 1LLU << 45,
 #if HAVE(CORE_MATERIAL)
         AppleVisualEffectChanged                = 1LLU << 46,
+#endif
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        DrawsHDRContentChanged                  = 1LLU << 47,
 #endif
     };
     typedef uint64_t LayerChangeFlags;

@@ -1,7 +1,6 @@
 Modules/cookie-store/CookieStore.cpp
 Modules/mediarecorder/MediaRecorder.cpp
 Modules/websockets/WorkerThreadableWebSocketChannel.cpp
-accessibility/AXObjectCache.cpp
 accessibility/AccessibilityListBox.cpp
 accessibility/AccessibilityObject.cpp
 accessibility/AccessibilityRenderObject.cpp
@@ -41,7 +40,6 @@ page/EventHandler.cpp
 page/FrameSnapshotting.cpp
 page/IntersectionObserver.cpp
 page/LocalFrameView.cpp
-page/LocalFrameViewLayoutContext.cpp
 page/NavigateEvent.cpp
 page/PageColorSampler.cpp
 page/PageConsoleClient.cpp
@@ -68,14 +66,12 @@ platform/mac/ScrollbarsControllerMac.mm
 platform/mac/VideoPresentationInterfaceMac.mm
 rendering/BackgroundPainter.cpp
 rendering/InlineBoxPainter.cpp
-rendering/RenderBlock.cpp
 rendering/RenderBox.cpp
 rendering/RenderBoxModelObject.cpp
 rendering/RenderElement.cpp
 rendering/RenderEmbeddedObject.cpp
 rendering/RenderLayer.cpp
 rendering/RenderLayerBacking.cpp
-rendering/RenderLayerCompositor.cpp
 rendering/RenderLayerModelObject.cpp
 rendering/RenderListBox.cpp
 rendering/RenderMenuList.cpp
@@ -86,7 +82,6 @@ rendering/RenderScrollbar.cpp
 rendering/RenderScrollbarPart.cpp
 rendering/RenderSearchField.cpp
 rendering/RenderTreeAsText.cpp
-rendering/RenderView.cpp
 rendering/RenderWidget.cpp
 rendering/svg/RenderSVGRoot.cpp
 rendering/svg/SVGPaintServerHandling.h
@@ -99,7 +94,6 @@ rendering/updating/RenderTreeBuilder.cpp
 style/StyleAdjuster.cpp
 style/StyleResolveForDocument.cpp
 style/StyleScope.cpp
-svg/properties/SVGPropertyOwnerRegistry.h
 testing/Internals.cpp
 testing/Internals.mm
 workers/DedicatedWorkerGlobalScope.cpp

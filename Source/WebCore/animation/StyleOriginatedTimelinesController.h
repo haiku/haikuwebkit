@@ -26,9 +26,9 @@
 #pragma once
 
 #include "CSSAnimation.h"
+#include "NameScope.h"
 #include "ScrollAxis.h"
 #include "Styleable.h"
-#include "TimelineScope.h"
 #include <wtf/CheckedRef.h>
 #include <wtf/WeakHashSet.h>
 #include <wtf/text/AtomStringHash.h>
@@ -39,12 +39,6 @@ class ScrollTimeline;
 class WebAnimation;
 
 struct ViewTimelineInsets;
-
-struct TimelineMapAttachOperation {
-    WeakStyleable element;
-    AtomString name;
-    Ref<CSSAnimation> animation;
-};
 
 // A style-originated timeline is a timeline that is assigned to a CSS Animation
 // via the `animation-timeline` property. These timelines may be created directly
@@ -71,8 +65,8 @@ public:
     void registerNamedScrollTimeline(const AtomString&, const Styleable&, ScrollAxis);
     void registerNamedViewTimeline(const AtomString&, const Styleable&, ScrollAxis, ViewTimelineInsets&&);
     void unregisterNamedTimeline(const AtomString&, const Styleable&);
-    void setTimelineForName(const AtomString&, const Styleable&, CSSAnimation&);
-    void updateNamedTimelineMapForTimelineScope(const TimelineScope&, const Styleable&);
+    void attachAnimation(CSSAnimation&);
+    void updateNamedTimelineMapForTimelineScope(const NameScope&, const Styleable&);
     void updateTimelineForTimelineScope(const Ref<ScrollTimeline>&, const AtomString&);
     void unregisterNamedTimelinesAssociatedWithElement(const Styleable&);
     void removePendingOperationsForCSSAnimation(const CSSAnimation&);
@@ -86,13 +80,13 @@ private:
     void updateCSSAnimationsAssociatedWithNamedTimeline(const AtomString&);
 
     enum class AllowsDeferral : bool { No, Yes };
-    void setTimelineForName(const AtomString&, const Styleable&, CSSAnimation&, AllowsDeferral);
+    void attachAnimation(CSSAnimation&, AllowsDeferral);
     ScrollTimeline* determineTimelineForElement(const Vector<Ref<ScrollTimeline>>&, const Styleable&, const Vector<WeakStyleable>&);
     ScrollTimeline* determineTreeOrder(const Vector<Ref<ScrollTimeline>>&, const Styleable&, const Vector<WeakStyleable>&);
     ScrollTimeline& inactiveNamedTimeline(const AtomString&);
 
-    Vector<TimelineMapAttachOperation> m_pendingAttachOperations;
-    Vector<std::pair<TimelineScope, WeakStyleable>> m_timelineScopeEntries;
+    Vector<Ref<CSSAnimation>> m_cssAnimationsPendingAttachment;
+    Vector<std::pair<NameScope, WeakStyleable>> m_timelineScopeEntries;
     UncheckedKeyHashMap<AtomString, Vector<Ref<ScrollTimeline>>> m_nameToTimelineMap;
     HashSet<Ref<ScrollTimeline>> m_removedTimelines;
 };

@@ -1673,7 +1673,7 @@ SubstituteData FrameLoader::defaultSubstituteDataForURL(const URL& url)
 
 void FrameLoader::load(FrameLoadRequest&& request)
 {
-    FRAMELOADER_RELEASE_LOG(ResourceLoading, "load (FrameLoadRequest): frame load started");
+    FRAMELOADER_RELEASE_LOG_FORWARDABLE(FRAMELOADER_LOAD_FRAMELOADREQUEST);
 
     m_errorOccurredInLoading = false;
 
@@ -1758,7 +1758,7 @@ void FrameLoader::loadWithNavigationAction(const ResourceRequest& request, Navig
 
 void FrameLoader::load(DocumentLoader& newDocumentLoader, const SecurityOrigin* requesterOrigin)
 {
-    FRAMELOADER_RELEASE_LOG(ResourceLoading, "load (DocumentLoader): frame load started");
+    FRAMELOADER_RELEASE_LOG_FORWARDABLE(FRAMELOADER_LOAD_DOCUMENTLOADER);
 
     m_errorOccurredInLoading = false;
 
@@ -2109,10 +2109,8 @@ void FrameLoader::stopForBackForwardCache()
     if (RefPtr documentLoader = m_documentLoader)
         documentLoader->stopLoading();
 
-    for (RefPtr child = m_frame->tree().firstChild(); child; child = child->tree().nextSibling()) {
-        if (RefPtr localChild = dynamicDowncast<LocalFrame>(child.get()))
-            localChild->protectedLoader()->stopForBackForwardCache();
-    }
+    for (RefPtr child = m_frame->tree().firstChild(); child; child = child->tree().nextSibling())
+        child->stopForBackForwardCache();
 
     // We cancel pending navigations & policy checks *after* cancelling loads because cancelling loads might end up
     // running script, which could schedule new navigations.
@@ -3992,7 +3990,7 @@ void FrameLoader::continueLoadAfterNavigationPolicy(const ResourceRequest& reque
     FrameLoadType type = policyChecker().loadType();
 
     {
-        SetForScope<bool> doNotAbortNavigationAPI { m_doNotAbortNavigationAPI, m_policyDocumentLoader->triggeringAction().isFromNavigationAPI() };
+        SetForScope<bool> doNotAbortNavigationAPI { m_doNotAbortNavigationAPI, m_policyDocumentLoader && m_policyDocumentLoader->triggeringAction().isFromNavigationAPI() };
 
         // A new navigation is in progress, so don't clear the history's provisional item.
         stopAllLoaders(ClearProvisionalItem::No);

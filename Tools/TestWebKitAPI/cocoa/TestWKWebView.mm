@@ -28,6 +28,7 @@
 
 #import "CGImagePixelReader.h"
 #import "ClassMethodSwizzler.h"
+#import "HostWindowManager.h"
 #import "InstanceMethodSwizzler.h"
 #import "PlatformUtilities.h"
 #import "Test.h"
@@ -50,6 +51,7 @@
 #import <wtf/Deque.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/Vector.h>
+#import <wtf/WeakObjCPtr.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 
 #if PLATFORM(MAC)
@@ -883,7 +885,7 @@ static InputSessionChangeCount nextInputSessionChangeCount()
 #endif
 
 @implementation TestWKWebView {
-    RetainPtr<TestWKWebViewHostWindow> _hostWindow;
+    WeakObjCPtr<TestWKWebViewHostWindow> _hostWindow;
     RetainPtr<TestMessageHandler> _testHandler;
     RetainPtr<WKUserScript> _onloadScript;
 #if PLATFORM(IOS_FAMILY)
@@ -928,6 +930,17 @@ static InputSessionChangeCount nextInputSessionChangeCount()
     return self;
 }
 
+#if PLATFORM(IOS_FAMILY)
+static UIWindowScene *windowScene()
+{
+    for (UIScene *scene in UIApplication.sharedApplication.connectedScenes) {
+        if ([scene isKindOfClass:UIWindowScene.class])
+            return (UIWindowScene *)scene;
+    }
+    return nil;
+}
+#endif
+
 - (instancetype)initWithFrame:(CGRect)frame configuration:(WKWebViewConfiguration *)configuration processPoolConfiguration:(_WKProcessPoolConfiguration *)processPoolConfiguration
 {
     [configuration setProcessPool:adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration]).get()];
@@ -936,19 +949,26 @@ static InputSessionChangeCount nextInputSessionChangeCount()
 
 - (void)_setUpTestWindow:(NSRect)frame
 {
+    RetainPtr<TestWKWebViewHostWindow> hostWindow;
 #if PLATFORM(MAC)
-    _hostWindow = adoptNS([[TestWKWebViewHostWindow alloc] initWithWebView:self contentRect:frame styleMask:(NSWindowStyleMaskBorderless | NSWindowStyleMaskMiniaturizable) backing:NSBackingStoreBuffered defer:NO]);
-    [_hostWindow setHasShadow:NO];
-    [_hostWindow setFrameOrigin:frame.origin];
-    [_hostWindow setIsVisible:YES];
-    [_hostWindow contentView].wantsLayer = YES;
-    [[_hostWindow contentView] addSubview:self];
-    [_hostWindow makeKeyAndOrderFront:self];
+    hostWindow = adoptNS([[TestWKWebViewHostWindow alloc] initWithWebView:self contentRect:frame styleMask:(NSWindowStyleMaskBorderless | NSWindowStyleMaskMiniaturizable) backing:NSBackingStoreBuffered defer:NO]);
+    [hostWindow setHasShadow:NO];
+    [hostWindow setFrameOrigin:frame.origin];
+    [hostWindow setIsVisible:YES];
+    [hostWindow setReleasedWhenClosed:NO];
+    [hostWindow contentView].wantsLayer = YES;
+    [[hostWindow contentView] addSubview:self];
+    [hostWindow makeKeyAndOrderFront:self];
 #else
-    _hostWindow = adoptNS([[TestWKWebViewHostWindow alloc] initWithWebView:self frame:frame]);
-    [_hostWindow setHidden:NO];
-    [_hostWindow addSubview:self];
+    hostWindow = adoptNS([[TestWKWebViewHostWindow alloc] initWithWebView:self frame:frame]);
+    if (UIWindowScene *windowScene = ::windowScene())
+        [hostWindow setWindowScene:windowScene];
+    [hostWindow setHidden:NO];
+    [hostWindow addSubview:self];
 #endif
+    _hostWindow = hostWindow.get();
+
+    TestWebKitAPI::HostWindowManager::singleton().closeHostWindowOnTestEnd(hostWindow.get());
 }
 
 - (void)addToTestWindow
@@ -1449,7 +1469,7 @@ static WKContentView *recursiveFindWKContentView(UIView *view)
 
 - (NSWindow *)hostWindow
 {
-    return _hostWindow.get();
+    return _hostWindow.getAutoreleased();
 }
 
 - (void)typeCharacter:(char)character

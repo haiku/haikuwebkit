@@ -61,6 +61,7 @@
 #include "RemoteFrameClient.h"
 #include "RenderAncestorIterator.h"
 #include "RenderBoxInlines.h"
+#include "RenderDescendantIterator.h"
 #include "RenderElementInlines.h"
 #include "RenderEmbeddedObject.h"
 #include "RenderFragmentContainer.h"
@@ -90,7 +91,7 @@
 #include <wtf/text/TextStream.h>
 
 #if ENABLE(FULLSCREEN_API)
-#include "FullscreenManager.h"
+#include "DocumentFullscreen.h"
 #endif
 
 #if PLATFORM(IOS_FAMILY)
@@ -138,7 +139,7 @@ CanvasCompositingStrategy canvasCompositingStrategy(const RenderObject& renderer
 // This acts as a cache of what we know about what is painting into this RenderLayerBacking.
 class PaintedContentsInfo {
 public:
-    enum class ContentsTypeDetermination {
+    enum class ContentsType {
         Unknown,
         SimpleContainer,
         DirectlyCompositedImage,
@@ -149,6 +150,12 @@ public:
     PaintedContentsInfo(RenderLayerBacking& inBacking)
         : m_backing(inBacking)
     {
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        if (m_backing.renderer().document().canDrawHDRContent()) {
+            m_hdrContent = RequestState::Unknown;
+            m_isReplacedElementWithHDR = RequestState::Unknown;
+        }
+#endif
     }
 
     void determinePaintsBoxDecorations();
@@ -158,6 +165,16 @@ public:
         return m_boxDecorations == RequestState::True || m_boxDecorations == RequestState::Undetermined;
     }
 
+
+    bool isPaintsContentSatisfied() const
+    {
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        if (m_hdrContent == RequestState::Unknown)
+            return false;
+#endif
+        return m_content != RequestState::Unknown;
+    }
+
     void determinePaintsContent();
     bool paintsContent()
     {
@@ -165,38 +182,59 @@ public:
         return m_content == RequestState::True || m_content == RequestState::Undetermined;
     }
 
-#if HAVE(HDR_SUPPORT)
+#if HAVE(SUPPORT_HDR_DISPLAY)
     bool paintsHDRContent()
     {
         determinePaintsContent();
-        return m_hdrContent == RequestState::True || m_hdrContent == RequestState::Undetermined;
+        return m_hdrContent == RequestState::True;
     }
 #endif
 
-    ContentsTypeDetermination contentsTypeDetermination();
+    bool isContentsTypeSatisfied() const
+    {
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        if (m_isReplacedElementWithHDR == RequestState::Unknown)
+            return false;
+#endif
+        return m_contentsType != ContentsType::Unknown;
+    }
+
+    void determineContentsType();
     bool isSimpleContainer()
     {
-        return contentsTypeDetermination() == ContentsTypeDetermination::SimpleContainer;
+        determineContentsType();
+        return m_contentsType == ContentsType::SimpleContainer;
     }
 
     bool isDirectlyCompositedImage()
     {
-        return contentsTypeDetermination() == ContentsTypeDetermination::DirectlyCompositedImage;
+        determineContentsType();
+        return m_contentsType == ContentsType::DirectlyCompositedImage;
     }
 
     bool isUnscaledBitmapOnly()
     {
-        return contentsTypeDetermination() == ContentsTypeDetermination::UnscaledBitmapOnly;
+        determineContentsType();
+        return m_contentsType == ContentsType::UnscaledBitmapOnly;
     }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    bool isReplacedElementWithHDR()
+    {
+        determineContentsType();
+        return m_isReplacedElementWithHDR == RequestState::True;
+    }
+#endif
 
     RenderLayerBacking& m_backing;
     RequestState m_boxDecorations { RequestState::Unknown };
     RequestState m_content { RequestState::Unknown };
-#if HAVE(HDR_SUPPORT)
-    RequestState m_hdrContent { RequestState::Unknown };
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    RequestState m_hdrContent { RequestState::DontCare };
+    RequestState m_isReplacedElementWithHDR { RequestState::DontCare };
 #endif
 
-    ContentsTypeDetermination m_contentsType { ContentsTypeDetermination::Unknown };
+    ContentsType m_contentsType { ContentsType::Unknown };
 };
 
 void PaintedContentsInfo::determinePaintsBoxDecorations()
@@ -209,33 +247,36 @@ void PaintedContentsInfo::determinePaintsBoxDecorations()
 
 void PaintedContentsInfo::determinePaintsContent()
 {
-    if (m_content != RequestState::Unknown)
+    if (isPaintsContentSatisfied())
         return;
 
     RenderLayer::PaintedContentRequest contentRequest(m_backing.owningLayer());
 
     m_backing.determinePaintsContent(contentRequest);
     m_content = contentRequest.hasPaintedContent;
-#if HAVE(HDR_SUPPORT)
+#if HAVE(SUPPORT_HDR_DISPLAY)
     m_hdrContent = contentRequest.hasPaintedHDRContent;
 #endif
 }
 
-PaintedContentsInfo::ContentsTypeDetermination PaintedContentsInfo::contentsTypeDetermination()
+void PaintedContentsInfo::determineContentsType()
 {
-    if (m_contentsType != ContentsTypeDetermination::Unknown)
-        return m_contentsType;
+    if (isContentsTypeSatisfied())
+        return;
 
     if (m_backing.isSimpleContainerCompositingLayer(*this))
-        m_contentsType = ContentsTypeDetermination::SimpleContainer;
+        m_contentsType = ContentsType::SimpleContainer;
     else if (m_backing.isDirectlyCompositedImage())
-        m_contentsType = ContentsTypeDetermination::DirectlyCompositedImage;
+        m_contentsType = ContentsType::DirectlyCompositedImage;
     else if (m_backing.isUnscaledBitmapOnly())
-        m_contentsType = ContentsTypeDetermination::UnscaledBitmapOnly;
+        m_contentsType = ContentsType::UnscaledBitmapOnly;
     else
-        m_contentsType = ContentsTypeDetermination::Painted;
+        m_contentsType = ContentsType::Painted;
 
-    return m_contentsType;
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    if (m_isReplacedElementWithHDR == RequestState::Unknown)
+        m_isReplacedElementWithHDR = m_backing.isReplacedElementWithHDR() ? RequestState::True : RequestState::False;
+#endif
 }
 
 
@@ -263,10 +304,10 @@ RenderLayerBacking::RenderLayerBacking(RenderLayer& layer)
             return false;
 
         // Only use background layers on the fullscreen element's backdrop.
-        CheckedPtr fullscreenManager = box->document().fullscreenManagerIfExists();
-        if (!fullscreenManager)
+        CheckedPtr documentFullscreen = box->document().fullscreenIfExists();
+        if (!documentFullscreen)
             return false;
-        auto* fullscreenElement = fullscreenManager->fullscreenElement();
+        auto* fullscreenElement = documentFullscreen->fullscreenElement();
         if (!fullscreenElement || !fullscreenElement->renderer() || fullscreenElement->renderer()->backdropRenderer() != &renderer)
             return false;
 
@@ -913,6 +954,7 @@ void RenderLayerBacking::updateAppleVisualEffect(const RenderStyle& style)
 
     visualEffectData.effect = style.appleVisualEffect();
     visualEffectData.contextEffect = style.usedAppleVisualEffectForSubtree();
+    visualEffectData.colorScheme = renderer().document().useDarkAppearance(&style) ? AppleVisualEffectData::ColorScheme::Dark : AppleVisualEffectData::ColorScheme::Light;
 
 #if HAVE(MATERIAL_HOSTING)
     if (appleVisualEffectIsHostedMaterial(style.appleVisualEffect())) {
@@ -1980,6 +2022,11 @@ void RenderLayerBacking::updateDrawsContent(PaintedContentsInfo& contentsInfo)
 
     if (m_backgroundLayer)
         m_backgroundLayer->setDrawsContent(m_backgroundLayerPaintsFixedRootBackground ? hasPaintedContent : contentsInfo.paintsBoxDecorations());
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    if (contentsInfo.paintsHDRContent() || contentsInfo.isReplacedElementWithHDR())
+        m_graphicsLayer->setDrawsHDRContent(true);
+#endif
 }
 
 #if ENABLE(ASYNC_SCROLLING)
@@ -2009,6 +2056,10 @@ bool RenderLayerBacking::maintainsEventRegion() const
 #endif
 #if ENABLE(INTERACTION_REGIONS_IN_EVENT_REGION)
     if (renderer().page().shouldBuildInteractionRegions())
+        return true;
+#endif
+#if ENABLE(TOUCH_EVENT_REGIONS)
+    if (renderer().document().hasTouchEventHandlers())
         return true;
 #endif
 
@@ -3017,7 +3068,7 @@ void RenderLayerBacking::determinePaintsContent(RenderLayer::PaintedContentReque
     m_owningLayer.updateDescendantDependentFlags();
     bool shouldScanDescendants = m_owningLayer.hasVisibleContent();
 
-#if HAVE(HDR_SUPPORT)
+#if HAVE(SUPPORT_HDR_DISPLAY)
     if (!request.isPaintedHDRContentSatisfied())
         shouldScanDescendants = true;
 #endif
@@ -3047,7 +3098,7 @@ void RenderLayerBacking::determinePaintsContent(RenderLayer::PaintedContentReque
     if (request.hasPaintedContent == RequestState::Unknown)
         request.hasPaintedContent = RequestState::False;
 
-#if HAVE(HDR_SUPPORT)
+#if HAVE(SUPPORT_HDR_DISPLAY)
     if (request.hasPaintedHDRContent == RequestState::Unknown)
         request.hasPaintedHDRContent = RequestState::False;
 #endif
@@ -3152,7 +3203,7 @@ void RenderLayerBacking::determineNonCompositedLayerDescendantsPaintedContent(Re
 {
     bool hasPaintingDescendant = false;
     traverseVisibleNonCompositedDescendantLayers(m_owningLayer, [&hasPaintingDescendant, &request, this](const RenderLayer& layer) {
-        RenderLayer::PaintedContentRequest localRequest;
+        RenderLayer::PaintedContentRequest localRequest(m_owningLayer);
         if (layer.isVisuallyNonEmpty(&localRequest)) {
             bool mayIntersect = intersectsWithAncestor(layer, m_owningLayer, compositedBounds()).value_or(true);
             if (mayIntersect) {
@@ -3160,6 +3211,10 @@ void RenderLayerBacking::determineNonCompositedLayerDescendantsPaintedContent(Re
                 request.setHasPaintedContent();
             }
         }
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        if (localRequest.probablyHasPaintedContent())
+            request.hasPaintedHDRContent = localRequest.hasPaintedHDRContent;
+#endif
         return (hasPaintingDescendant && request.isSatisfied()) ? LayerTraversal::Stop : LayerTraversal::Continue;
     });
 }
@@ -3308,6 +3363,13 @@ bool RenderLayerBacking::isUnscaledBitmapOnly() const
         return true;
     return false;
 }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+bool RenderLayerBacking::isReplacedElementWithHDR() const
+{
+    return m_owningLayer.isReplacedElementWithHDR();
+}
+#endif
 
 void RenderLayerBacking::contentChanged(ContentChangeType changeType)
 {
@@ -3835,6 +3897,16 @@ static RefPtr<Pattern> patternForEventListenerRegionType(EventListenerRegionType
             return { "sync"_s, { 0, 9 }, SRGBA<uint8_t> { 200, 0, 0, 128 } };
         case EventListenerRegionType::MouseClick:
             break;
+        case EventListenerRegionType::TouchStart:
+        case EventListenerRegionType::TouchMove:
+        case EventListenerRegionType::TouchEnd:
+        case EventListenerRegionType::TouchCancel:
+            return { "touch"_s, { }, Color::lightGray.colorWithAlphaByte(128) };
+        case EventListenerRegionType::NonPassiveTouchStart:
+        case EventListenerRegionType::NonPassiveTouchEnd:
+        case EventListenerRegionType::NonPassiveTouchCancel:
+        case EventListenerRegionType::NonPassiveTouchMove:
+            return { "sync touch"_s, { 0, 9 }, SRGBA<uint8_t> { 200, 200, 0, 128 } };
         }
         ASSERT_NOT_REACHED();
         return { ""_s, { }, Color::black };
@@ -4096,13 +4168,6 @@ bool RenderLayerBacking::shouldDumpPropertyForLayer(const GraphicsLayer* layer, 
 
     return true;
 }
-
-#if ENABLE(HDR_FOR_IMAGES)
-bool RenderLayerBacking::hdrForImagesEnabled() const
-{
-    return renderer().settings().hdrForImagesEnabled();
-}
-#endif
 
 bool RenderLayerBacking::shouldAggressivelyRetainTiles(const GraphicsLayer*) const
 {

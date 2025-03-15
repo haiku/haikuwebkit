@@ -62,6 +62,7 @@ public:
         bool ignoreInitialScaleForLayoutWidth { false };
 
         bool shouldHonorMinimumEffectiveDeviceWidthFromClient { true };
+        bool minimumScaleDoesNotAdaptToContent { false };
 
         friend bool operator==(const Parameters&, const Parameters&) = default;
     };
@@ -182,13 +183,13 @@ private:
     constexpr double forceAlwaysUserScalableMaximumScale() const
     {
         const double forceAlwaysUserScalableMaximumScaleIgnoringLayoutScaleFactor = 5;
-        return forceAlwaysUserScalableMaximumScaleIgnoringLayoutScaleFactor * effectiveLayoutSizeScaleFactor();
+        return std::max(m_configuration.maximumScale, forceAlwaysUserScalableMaximumScaleIgnoringLayoutScaleFactor) * effectiveLayoutSizeScaleFactor();
     }
 
     constexpr double forceAlwaysUserScalableMinimumScale() const
     {
         const double forceAlwaysUserScalableMinimumScaleIgnoringLayoutScaleFactor = 1;
-        return forceAlwaysUserScalableMinimumScaleIgnoringLayoutScaleFactor * effectiveLayoutSizeScaleFactor();
+        return std::min(m_configuration.minimumScale, forceAlwaysUserScalableMinimumScaleIgnoringLayoutScaleFactor) * effectiveLayoutSizeScaleFactor();
     }
 
     constexpr double effectiveLayoutSizeScaleFactor() const

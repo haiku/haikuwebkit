@@ -11,7 +11,6 @@ Modules/webdatabase/DatabaseTask.h
 Modules/webdatabase/SQLTransactionBackend.h
 accessibility/AXCoreObject.h
 accessibility/AXSearchManager.h
-bindings/js/IDBBindingUtilities.cpp
 bindings/js/JSEventTargetCustom.h
 bindings/js/JSLazyEventListener.cpp
 css/CSSFontFaceSource.h
@@ -32,7 +31,6 @@ css/StyleSheetContents.h
 css/StyleSheetList.h
 css/parser/SizesCalcParser.h
 dom/CollectionIndexCache.h
-dom/ElementAncestorIterator.h
 dom/Node.cpp
 dom/Node.h
 dom/QualifiedName.h
@@ -72,7 +70,6 @@ platform/graphics/ComplexTextController.h
 platform/graphics/DrawGlyphsRecorder.h
 platform/graphics/GraphicsLayer.h
 platform/graphics/avfoundation/AudioSourceProviderAVFObjC.mm
-platform/graphics/avfoundation/MediaSelectionGroupAVFObjC.h
 platform/graphics/avfoundation/objc/MediaSourcePrivateAVFObjC.h
 platform/graphics/avfoundation/objc/WebCoreAVFResourceLoader.mm
 platform/graphics/ca/TileController.h
@@ -84,6 +81,7 @@ platform/mediastream/AudioMediaStreamTrackRenderer.h
 platform/mediastream/MediaStreamPrivate.h
 platform/mediastream/mac/CoreAudioCaptureSource.h
 platform/mock/ScrollbarsControllerMock.h
+platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.h
 plugins/PluginData.h
 rendering/RenderQuote.cpp
 rendering/RenderVTTCue.h
@@ -91,7 +89,6 @@ rendering/TextBoxPainter.h
 rendering/style/StyleGeneratedImage.cpp
 rendering/svg/SVGTextLayoutAttributesBuilder.h
 rendering/updating/RenderTreeUpdater.h
-style/ChildChangeInvalidation.h
 style/ClassChangeInvalidation.cpp
 style/ElementRuleCollector.cpp
 style/PseudoClassChangeInvalidation.h
@@ -109,10 +106,8 @@ workers/WorkerConsoleClient.h
 workers/WorkerMessagingProxy.h
 workers/WorkerNotificationClient.h
 workers/WorkerOrWorkletGlobalScope.h
-workers/WorkerOrWorkletScriptController.h
 workers/service/NavigationPreloadManager.h
 workers/service/background-fetch/ServiceWorkerRegistrationBackgroundFetchAPI.h
 workers/service/context/ServiceWorkerThreadProxy.h
-workers/shared/context/SharedWorkerThreadProxy.h
 xml/XMLHttpRequestProgressEventThrottle.h
 xml/XMLHttpRequestUpload.h

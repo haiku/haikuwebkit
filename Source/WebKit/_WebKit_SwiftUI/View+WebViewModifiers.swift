@@ -30,6 +30,9 @@ extension EnvironmentValues {
     var webViewAllowsBackForwardNavigationGestures = WebView.BackForwardNavigationGesturesBehavior.automatic
 
     @Entry
+    var webViewMagnificationGestures = WebView.MagnificationGesturesBehavior.automatic
+
+    @Entry
     var webViewAllowsLinkPreview = WebView.LinkPreviewBehavior.automatic
 
     @Entry
@@ -46,6 +49,9 @@ extension EnvironmentValues {
 
     @Entry
     var webViewContentBackground: Visibility = .automatic
+
+    @Entry
+    var webViewOnScrollGeometryChange: OnScrollGeometryChangeContext? = nil
 }
 
 extension View {
@@ -55,6 +61,11 @@ extension View {
     @available(tvOS, unavailable)
     public func webViewBackForwardNavigationGestures(_ value: WebView.BackForwardNavigationGesturesBehavior = .automatic) -> some View {
         environment(\.webViewAllowsBackForwardNavigationGestures, value)
+    }
+
+    @_spi(Private)
+    public func webViewMagnificationGestures(_ value: WebView.MagnificationGesturesBehavior) -> some View {
+        environment(\.webViewMagnificationGestures, value)
     }
 
     /// Determines whether pressing a link displays a preview of the destination for the link.
@@ -108,16 +119,19 @@ extension View {
     public func webViewContentBackground(_ visibility: Visibility) -> some View {
         environment(\.webViewContentBackground, visibility)
     }
-}
 
-struct ContextMenuContext {
-#if os(macOS)
-    let menu: (WebPage.ElementInfo) -> NSMenu
-#endif
-}
+    @_spi(Private)
+    public func webViewOnScrollGeometryChange<T>(
+        for type: T.Type,
+        of transform: @escaping (ScrollGeometry) -> T,
+        action: @escaping (T, T) -> Void
+    ) -> some View where T : Equatable {
+        let change = OnScrollGeometryChangeContext {
+            AnyEquatable(transform($0))
+        } action: {
+            action($0.value as! T, $1.value as! T)
+        }
 
-struct FindContext {
-    var isPresented: Binding<Bool>?
-    var canFind = true
-    var canReplace = true
+        return environment(\.webViewOnScrollGeometryChange, change)
+    }
 }

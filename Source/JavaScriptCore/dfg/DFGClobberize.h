@@ -167,6 +167,7 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
         case ArrayifyToStructure:
         case ArrayPush:
         case ArrayPop:
+        case ArrayIncludes:
         case ArrayIndexOf:
         case HasIndexedProperty:
         case AtomicsAdd:
@@ -684,6 +685,7 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
         write(HeapObjectCount);
         return;
 
+    case ArrayIncludes:
     case ArrayIndexOf: {
         // FIXME: Should support a CSE rule.
         // https://bugs.webkit.org/show_bug.cgi?id=173173
@@ -1740,6 +1742,8 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
         return;
 
     case NewArrayWithConstantSize:
+    case PhantomNewArrayWithConstantSize:
+    case MaterializeNewArrayWithConstantSize:
         read(HeapObjectCount);
         write(HeapObjectCount);
         def(HeapLocation(ArrayLengthLoc, Butterfly_publicLength, node), LazyNode(graph.freeze(jsNumber(node->newArraySize()))));

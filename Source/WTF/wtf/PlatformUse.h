@@ -320,6 +320,14 @@
 #define USE_ISO_MALLOC 1
 #endif
 
+#if !defined(USE_PROTECTED_JIT)
+#if CPU(ADDRESS64) && OS(DARWIN) && (__SIZEOF_POINTER__ == 8)
+#define USE_PROTECTED_JIT 0
+#else
+#define USE_PROTECTED_JIT 0
+#endif
+#endif
+
 #if !PLATFORM(WATCHOS)
 #define USE_GLYPH_DISPLAY_LIST_CACHE 1
 #endif
@@ -437,9 +445,4 @@
     && ((PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 140400) \
     || (PLATFORM(IOS_FAMILY) && !PLATFORM(IOS_FAMILY_SIMULATOR)))
 #define USE_MODERN_AVCONTENTKEYSESSION 1
-#endif
-
-#if PLATFORM(IOS_FAMILY) && __IPHONE_OS_VERSION_MAX_ALLOWED < 180400
-    // We can delete this when rdar://problem/104370451 is fixed.
-#define USE_HSBC_MOBILE_SITE_FOR_IPAD 1
 #endif

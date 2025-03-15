@@ -98,6 +98,7 @@ public:
     WebPage* page() const;
     RefPtr<WebPage> protectedPage() const;
 
+    static WebFrame* webFrame(std::optional<WebCore::FrameIdentifier>);
     static RefPtr<WebFrame> fromCoreFrame(const WebCore::Frame&);
     WebCore::LocalFrame* coreLocalFrame() const;
     RefPtr<WebCore::LocalFrame> protectedCoreLocalFrame() const;
@@ -211,6 +212,8 @@ public:
 #endif
 
     WebLocalFrameLoaderClient* localFrameLoaderClient() const;
+    RefPtr<WebLocalFrameLoaderClient> protectedLocalFrameLoaderClient() const;
+
     WebRemoteFrameClient* remoteFrameClient() const;
     WebFrameLoaderClient* frameLoaderClient() const;
 
@@ -269,3 +272,7 @@ private:
 };
 
 } // namespace WebKit
+
+SPECIALIZE_TYPE_TRAITS_BEGIN(WebKit::WebFrame) \
+    static bool isType(const API::Object& object) { return object.type() == API::Object::Type::BundleFrame; } \
+SPECIALIZE_TYPE_TRAITS_END()

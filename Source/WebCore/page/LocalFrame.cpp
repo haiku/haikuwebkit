@@ -735,14 +735,9 @@ void LocalFrame::injectUserScripts(UserScriptInjectionTime injectionTime)
         return;
 
     RefPtr page = this->page();
-    bool pageWasNotified = page->hasBeenNotifiedToInjectUserScripts();
-    page->protectedUserContentProvider()->forEachUserScript([this, protectedThis = Ref { *this }, injectionTime, pageWasNotified] (DOMWrapperWorld& world, const UserScript& script) {
-        if (script.injectionTime() == injectionTime) {
-            if (script.waitForNotificationBeforeInjecting() == WaitForNotificationBeforeInjecting::Yes && !pageWasNotified)
-                addUserScriptAwaitingNotification(world, script);
-            else
-                injectUserScriptImmediately(world, script);
-        }
+    page->protectedUserContentProvider()->forEachUserScript([this, protectedThis = Ref { *this }, injectionTime] (DOMWrapperWorld& world, const UserScript& script) {
+        if (script.injectionTime() == injectionTime)
+            injectUserScriptImmediately(world, script);
     });
 }
 
@@ -773,17 +768,6 @@ void LocalFrame::injectUserScriptImmediately(DOMWrapperWorld& world, const UserS
     page->setHasInjectedUserScript();
     loader->client().willInjectUserScript(world);
     checkedScript()->evaluateInWorldIgnoringException(ScriptSourceCode(script.source(), JSC::SourceTaintedOrigin::Untainted, URL(script.url())), world);
-}
-
-void LocalFrame::addUserScriptAwaitingNotification(DOMWrapperWorld& world, const UserScript& script)
-{
-    m_userScriptsAwaitingNotification.append({ world, makeUniqueRef<UserScript>(script) });
-}
-
-void LocalFrame::injectUserScriptsAwaitingNotification()
-{
-    for (const auto& [world, script] : std::exchange(m_userScriptsAwaitingNotification, { }))
-        injectUserScriptImmediately(world, script.get());
 }
 
 RenderView* LocalFrame::contentRenderer() const
@@ -1463,9 +1447,9 @@ void LocalFrame::showResourceMonitoringError()
     if (RefPtr page = protectedPage())
         mainFrameURL = page->mainFrameURL();
 
-    FRAME_RELEASE_LOG(ResourceLoading, "Detected excessive network usage in frame at %" SENSITIVE_LOG_STRING " and main frame at %" SENSITIVE_LOG_STRING ": unloading", url.isValid() ? url.string().utf8().data() : "invalid", mainFrameURL.isValid() ? mainFrameURL.string().utf8().data() : "invalid");
+    FRAME_RELEASE_LOG(ResourceMonitoring, "Detected excessive network usage in frame at %" SENSITIVE_LOG_STRING " and main frame at %" SENSITIVE_LOG_STRING ": unloading", url.isValid() ? url.string().utf8().data() : "invalid", mainFrameURL.isValid() ? mainFrameURL.string().utf8().data() : "invalid");
 
-    document->addConsoleMessage(MessageSource::ContentBlocker, MessageLevel::Error, "Frame was unloaded because its network usage exceeded the limit."_s);
+    document->addConsoleMessage(MessageSource::ContentBlocker, MessageLevel::Error, makeString("Frame was unloaded because its network usage exceeded the limit: "_s, ResourceMonitorChecker::singleton().networkUsageThreshold(), " bytes, url="_s, url.string()));
 
     for (RefPtr<Frame> frame = this; frame; frame = frame->tree().traverseNext()) {
         if (RefPtr localFrame = dynamicDowncast<LocalFrame>(frame)) {
@@ -1493,7 +1477,7 @@ void LocalFrame::reportResourceMonitoringWarning()
     if (RefPtr page = protectedPage())
         mainFrameURL = page->mainFrameURL();
 
-    FRAME_RELEASE_LOG(ResourceLoading, "Detected excessive network usage in frame at %" SENSITIVE_LOG_STRING " and main frame at %" SENSITIVE_LOG_STRING ": not unloading due to global limits", url.isValid() ? url.string().utf8().data() : "invalid", mainFrameURL.isValid() ? mainFrameURL.string().utf8().data() : "invalid");
+    FRAME_RELEASE_LOG(ResourceMonitoring, "Detected excessive network usage in frame at %" SENSITIVE_LOG_STRING " and main frame at %" SENSITIVE_LOG_STRING ": not unloading due to global limits", url.isValid() ? url.string().utf8().data() : "invalid", mainFrameURL.isValid() ? mainFrameURL.string().utf8().data() : "invalid");
 
     if (RefPtr document = this->document())
         document->addConsoleMessage(MessageSource::ContentBlocker, MessageLevel::Warning, "Frame's network usage exceeded the limit."_s);

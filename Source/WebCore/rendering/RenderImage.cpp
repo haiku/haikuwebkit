@@ -431,8 +431,15 @@ void RenderImage::notifyFinished(CachedResource& newImage, const NetworkLoadMetr
         contentChanged(ContentChangeType::Image);
     }
 
-    if (RefPtr image = dynamicDowncast<HTMLImageElement>(element()))
+    if (RefPtr image = dynamicDowncast<HTMLImageElement>(element())) {
         page().didFinishLoadingImageForElement(*image);
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        if (!document().hasPaintedHDRContent()) {
+            if (cachedImage() && cachedImage()->isHDR())
+                document().setHasPaintedHDRContent();
+        }
+#endif
+    }
 
     RenderReplaced::notifyFinished(newImage, metrics, loadWillContinueInAnotherProcess);
 }
@@ -459,22 +466,6 @@ bool RenderImage::isShowingAltText() const
 bool RenderImage::shouldDisplayBrokenImageIcon() const
 {
     return imageResource().errorOccurred();
-}
-
-bool RenderImage::hasNonBitmapImage() const
-{
-    if (!imageResource().cachedImage())
-        return false;
-
-    Image* image = cachedImage()->imageForRenderer(this);
-    return image && !is<BitmapImage>(image);
-}
-
-bool RenderImage::hasAnimatedImage() const
-{
-    if (auto* image = cachedImage() ? cachedImage()->image() : nullptr)
-        return image->isAnimated();
-    return false;
 }
 
 #if ENABLE(MULTI_REPRESENTATION_HEIC)

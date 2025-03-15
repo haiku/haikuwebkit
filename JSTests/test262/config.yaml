@@ -3,15 +3,10 @@
 flags:
   SharedArrayBuffer: useSharedArrayBuffer
   Atomics: useSharedArrayBuffer
-  Atomics.pause: useAtomicsPause
   iterator-helpers: useIteratorHelpers
   Temporal: useTemporal
   ShadowRealm: useShadowRealm
-  promise-try: usePromiseTryMethod
-  uint8array-base64: useUint8ArrayBase64Methods
-  RegExp.escape: useRegExpEscape
   Math.sumPrecise: useMathSumPreciseMethod
-  Error.isError: useErrorIsError
   json-parse-with-source: useJSONSourceTextAccess
   iterator-sequencing: useIteratorSequencing
 skip:
@@ -20,7 +15,6 @@ skip:
     - FinalizationRegistry.prototype.cleanupSome
     - decorators
     - explicit-resource-management
-    - regexp-modifiers
     - source-phase-imports
     - import-defer
   paths:
@@ -51,7 +45,7 @@ skip:
     - test/staging/Intl402
     - test/staging/JSON
     - test/staging/Temporal
-    - test/staging/sm
+    - test/staging/sm/Temporal
   files:
     # https://github.com/claudepache/es-legacy-function-reflection
     - test/built-ins/ThrowTypeError/unique-per-realm-function-proto.js
@@ -77,6 +71,10 @@ skip:
     - test/intl402/Locale/constructor-options-region-valid.js
     - test/intl402/Locale/getters-grandfathered.js
     - test/intl402/Locale/likely-subtags-grandfathered.js
+
+    # Skipping temporarily due to a bug with handling case-insensitive \p escapes
+    - test/built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-upper-p.js
+    - test/built-ins/RegExp/regexp-modifiers/add-ignoreCase-affects-slash-lower-p.js
 
     # Depends on Temporal.Duration relativeTo option
     - test/built-ins/Temporal/Duration/compare/basic.js

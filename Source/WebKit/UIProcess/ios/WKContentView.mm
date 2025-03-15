@@ -314,15 +314,17 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [self _installVisibilityPropagationViews];
 #endif
 
-#if HAVE(SPATIAL_TRACKING_LABEL)
-    _spatialTrackingView = adoptNS([[UIView alloc] init]);
-    [_spatialTrackingView layer].separatedState = kCALayerSeparatedStateTracked;
-    _spatialTrackingLabel = makeString("WKContentView Label: "_s, createVersion4UUIDString());
-    [[_spatialTrackingView layer] setValue:(NSString *)_spatialTrackingLabel forKeyPath:@"separatedOptions.STSLabel"];
-    [_spatialTrackingView setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin];
-    [_spatialTrackingView setFrame:CGRectMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds), 0, 0)];
-    [_spatialTrackingView setUserInteractionEnabled:NO];
-    [self addSubview:_spatialTrackingView.get()];
+#if HAVE(SPATIAL_TRACKING_LABEL) && HAVE(SPATIAL_AUDIO_EXPERIENCE)
+    if (!_page->preferences().preferSpatialAudioExperience()) {
+        _spatialTrackingView = adoptNS([[UIView alloc] init]);
+        [_spatialTrackingView layer].separatedState = kCALayerSeparatedStateTracked;
+        _spatialTrackingLabel = makeString("WKContentView Label: "_s, createVersion4UUIDString());
+        [[_spatialTrackingView layer] setValue:(NSString *)_spatialTrackingLabel forKeyPath:@"separatedOptions.STSLabel"];
+        [_spatialTrackingView setAutoresizingMask:UIViewAutoresizingFlexibleLeftMargin | UIViewAutoresizingFlexibleRightMargin | UIViewAutoresizingFlexibleTopMargin | UIViewAutoresizingFlexibleBottomMargin];
+        [_spatialTrackingView setFrame:CGRectMake(CGRectGetMidX(self.bounds), CGRectGetMidY(self.bounds), 0, 0)];
+        [_spatialTrackingView setUserInteractionEnabled:NO];
+        [self addSubview:_spatialTrackingView.get()];
+    }
 #endif
 
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(_applicationWillResignActive:) name:UIApplicationWillResignActiveNotification object:[UIApplication sharedApplication]];
@@ -484,7 +486,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #endif // ENABLE(MODEL_PROCESS)
 #endif // HAVE(VISIBILITY_PROPAGATION_VIEW)
 
-- (instancetype)initWithFrame:(CGRect)frame processPool:(NakedRef<WebKit::WebProcessPool>)processPool configuration:(Ref<API::PageConfiguration>&&)configuration webView:(WKWebView *)webView
+- (instancetype)initWithFrame:(CGRect)frame processPool:(std::reference_wrapper<WebKit::WebProcessPool>)processPool configuration:(Ref<API::PageConfiguration>&&)configuration webView:(WKWebView *)webView
 {
     if (!(self = [super initWithFrame:frame webView:webView]))
         return nil;

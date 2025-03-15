@@ -28,6 +28,7 @@
 #include "CSSToLengthConversionData.h"
 #include "CSSToStyleMap.h"
 #include "CascadeLevel.h"
+#include "PositionTryFallback.h"
 #include "PropertyCascade.h"
 #include "RuleSet.h"
 #include "SelectorChecker.h"
@@ -61,11 +62,17 @@ void maybeUpdateFontForLetterSpacing(BuilderState&, CSSValue&);
 
 enum class ApplyValueType : uint8_t { Value, Initial, Inherit };
 
+struct BuilderPositionTryFallback {
+    RefPtr<const StyleProperties> properties;
+    Vector<PositionTryFallback::Tactic> tactics;
+};
+
 struct BuilderContext {
     Ref<const Document> document;
     const RenderStyle& parentStyle;
     const RenderStyle* rootElementStyle = nullptr;
     RefPtr<const Element> element = nullptr;
+    std::optional<BuilderPositionTryFallback> positionTryFallback { };
 };
 
 class BuilderState {
@@ -130,6 +137,8 @@ public:
 
     Ref<Calculation::RandomKeyMap> randomKeyMap(bool perElement) const;
 
+    const std::optional<BuilderPositionTryFallback>& positionTryFallback() const { return m_context.positionTryFallback; }
+
 private:
     // See the comment in maybeUpdateFontForLetterSpacing() about why this needs to be a friend.
     friend void maybeUpdateFontForLetterSpacing(BuilderState&, CSSValue&);
@@ -157,8 +166,8 @@ private:
     UncheckedKeyHashSet<AtomString> m_appliedCustomProperties;
     UncheckedKeyHashSet<AtomString> m_inProgressCustomProperties;
     UncheckedKeyHashSet<AtomString> m_inCycleCustomProperties;
-    WTF::BitSet<numCSSProperties> m_inProgressProperties;
-    WTF::BitSet<numCSSProperties> m_invalidAtComputedValueTimeProperties;
+    WTF::BitSet<cssPropertyIDEnumValueCount> m_inProgressProperties;
+    WTF::BitSet<cssPropertyIDEnumValueCount> m_invalidAtComputedValueTimeProperties;
 
     const PropertyCascade::Property* m_currentProperty { nullptr };
     SelectorChecker::LinkMatchMask m_linkMatch { };

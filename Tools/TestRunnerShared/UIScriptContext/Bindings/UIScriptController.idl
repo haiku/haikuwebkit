@@ -299,6 +299,9 @@ interface UIScriptController {
 
     undefined setScrollViewKeyboardAvoidanceEnabled(boolean enabled);
 
+    undefined setAlwaysBounceVertical(boolean value);
+    undefined setAlwaysBounceHorizontal(boolean value);
+
     undefined beginInteractiveObscuredInsetsChange();
     undefined endInteractiveObscuredInsetsChange();
     undefined setObscuredInsets(double top, double right, double bottom, double left);
@@ -398,6 +401,8 @@ interface UIScriptController {
     undefined setWebViewEditable(boolean editable);
 
     readonly attribute object fixedContainerEdgeColors;
+
+    undefined cookiesForDomain(DOMString domain, object callback);
 
     // Only affects macOS.
     undefined setWebViewAllowsMagnification(boolean allowsMagnification);

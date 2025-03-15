@@ -40,7 +40,7 @@
 #define Webgpu_feature_status Preview
 #endif
 
-#if defined(ENABLE_WEBGPU_BY_DEFAULT) && ENABLE_WEBGPU_BY_DEFAULT && defined(ENABLE_WEBGPU_HDR_BY_DEFAULT) && ENABLE_WEBGPU_HDR_BY_DEFAULT
+#if defined(ENABLE_WEBGPU_BY_DEFAULT) && ENABLE_WEBGPU_BY_DEFAULT && defined(HAVE_SUPPORT_HDR_DISPLAY) && HAVE_SUPPORT_HDR_DISPLAY
 #define Webgpuhdr_feature_status Stable
 #else
 #define Webgpuhdr_feature_status Preview
@@ -58,7 +58,7 @@
 #define Webgpu_webxr_feature_status Unstable
 #endif
 
-#if defined(ENABLE_UNIFIED_PDF_BY_DEFAULT) && ENABLE_UNIFIED_PDF_BY_DEFAULT
+#if defined(ENABLE_UNIFIED_PDF_BY_DEFAULT) && ENABLE_UNIFIED_PDF_BY_DEFAULT && PLATFORM(MAC)
 #define Unifiedpdf_feature_status Mature
 #elif defined(ENABLE_UNIFIED_PDF_AS_PREVIEW) && ENABLE_UNIFIED_PDF_AS_PREVIEW
 #define Unifiedpdf_feature_status Preview
@@ -166,6 +166,10 @@ bool defaultCookieStoreAPIEnabled();
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 bool defaultContentInsetBackgroundFillEnabled();
+#endif
+
+#if ENABLE(SCREEN_TIME)
+bool defaultScreenTimeEnabled();
 #endif
 
 #if ENABLE(CONTENT_EXTENSIONS)

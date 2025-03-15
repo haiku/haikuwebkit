@@ -357,8 +357,11 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     [defaultNotificationCenter addObserver:self selector:@selector(_windowDidChangeScreen:) name:NSWindowDidChangeScreenNotification object:window];
     [defaultNotificationCenter addObserver:self selector:@selector(_windowDidChangeLayerHosting:) name:_NSWindowDidChangeContentsHostedInLayerSurfaceNotification object:window];
     [defaultNotificationCenter addObserver:self selector:@selector(_windowDidChangeOcclusionState:) name:NSWindowDidChangeOcclusionStateNotification object:window];
+    [defaultNotificationCenter addObserver:self selector:@selector(_windowWillClose:) name:NSWindowWillCloseNotification object:window];
 
     [defaultNotificationCenter addObserver:self selector:@selector(_screenDidChangeColorSpace:) name:NSScreenColorSpaceDidChangeNotification object:nil];
+    [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldSuppressHDR:) name:@"NSApplicationShouldBeginSuppressingHighDynamicRangeContentNotification" object:NSApp];
+    [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldAllowHDR:) name:@"NSApplicationShouldEndSuppressingHighDynamicRangeContentNotification" object:NSApp];
 
     if (_shouldObserveFontPanel) {
         ASSERT(!_isObservingFontPanel);
@@ -403,6 +406,7 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     [defaultNotificationCenter removeObserver:self name:NSWindowDidChangeScreenNotification object:window];
     [defaultNotificationCenter removeObserver:self name:_NSWindowDidChangeContentsHostedInLayerSurfaceNotification object:window];
     [defaultNotificationCenter removeObserver:self name:NSWindowDidChangeOcclusionStateNotification object:window];
+    [defaultNotificationCenter removeObserver:self name:NSWindowWillCloseNotification object:window];
 
     [defaultNotificationCenter removeObserver:self name:NSScreenColorSpaceDidChangeNotification object:nil];
 
@@ -523,10 +527,28 @@ static void* keyValueObservingContext = &keyValueObservingContext;
         _impl->windowDidChangeOcclusionState();
 }
 
+- (void)_windowWillClose:(NSNotification *)notification
+{
+    if (_impl)
+        _impl->windowWillClose();
+}
+
 - (void)_screenDidChangeColorSpace:(NSNotification *)notification
 {
     if (_impl)
         _impl->screenDidChangeColorSpace();
+}
+
+- (void)_applicationShouldSuppressHDR:(NSNotification *)notification
+{
+    if (_impl)
+        _impl->applicationShouldSuppressHDR();
+}
+
+- (void)_applicationShouldAllowHDR:(NSNotification *)notification
+{
+    if (_impl)
+        _impl->applicationShouldAllowHDR();
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
@@ -1229,6 +1251,41 @@ static RetainPtr<_WKWebViewTextInputNotifications> subscribeToTextInputNotificat
 static bool isInRecoveryOS()
 {
     return os_variant_is_basesystem("WebKit");
+}
+
+#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
+static void setEDRStrengthRecursive(CALayer* layer, float strength, bool animate)
+{
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
+    if ([layer wantsExtendedDynamicRangeContent] && [layer respondsToSelector:@selector(setContentsEDRStrength:)]) {
+    ALLOW_DEPRECATED_DECLARATIONS_END
+        if (animate) {
+            CASpringAnimation* animation = [[CASpringAnimation alloc] initWithPerceptualDuration:3.f bounce:0];
+            animation.keyPath = @"contentsEDRStrength";
+            animation.fromValue = @([layer contentsEDRStrength]);
+            animation.toValue = @(strength);
+            [layer addAnimation:animation forKey:@"contentsEDRStrength"];
+            [animation release];
+        }
+        [layer setContentsEDRStrength:strength];
+    }
+    for (CALayer* sublayer in [layer sublayers])
+        setEDRStrengthRecursive(sublayer, strength, animate);
+}
+#endif
+
+static void setEDRStrength(CALayer* layer, float strength, bool animate)
+{
+#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
+    [CATransaction begin];
+    [CATransaction setDisableActions:YES];
+    setEDRStrengthRecursive(layer, strength, animate);
+    [CATransaction commit];
+#else
+    UNUSED_PARAM(layer);
+    UNUSED_PARAM(strength);
+    UNUSED_PARAM(animate);
+#endif
 }
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(WebViewImpl);
@@ -2046,6 +2103,7 @@ void WebViewImpl::windowDidOrderOnScreen()
 
 void WebViewImpl::windowDidBecomeKey(NSWindow *keyWindow)
 {
+    updateHDRState();
     if (keyWindow == [m_view window] || keyWindow == [m_view window].attachedSheet) {
 #if ENABLE(GAMEPAD)
         UIGamepadProvider::singleton().viewBecameActive(m_page.get());
@@ -2057,6 +2115,7 @@ void WebViewImpl::windowDidBecomeKey(NSWindow *keyWindow)
 
 void WebViewImpl::windowDidResignKey(NSWindow *formerKeyWindow)
 {
+    updateHDRState();
     if (formerKeyWindow == [m_view window] || formerKeyWindow == [m_view window].attachedSheet) {
 #if ENABLE(GAMEPAD)
         UIGamepadProvider::singleton().viewBecameInactive(m_page.get());
@@ -2122,9 +2181,31 @@ void WebViewImpl::windowDidChangeOcclusionState()
     m_page->activityStateDidChange(WebCore::ActivityState::IsVisible);
 }
 
+void WebViewImpl::windowWillClose()
+{
+    resetSecureInputState();
+}
+
 void WebViewImpl::screenDidChangeColorSpace()
 {
     m_page->configuration().processPool().screenPropertiesChanged();
+}
+
+void WebViewImpl::updateHDRState()
+{
+    setEDRStrength(m_rootLayer.get(), (m_hdrAllowed && m_page->isViewWindowActive()) ? 1.f : 0.f, true);
+}
+
+void WebViewImpl::applicationShouldSuppressHDR()
+{
+    m_hdrAllowed = false;
+    updateHDRState();
+}
+
+void WebViewImpl::applicationShouldAllowHDR()
+{
+    m_hdrAllowed = true;
+    updateHDRState();
 }
 
 bool WebViewImpl::mightBeginDragWhileInactive()
@@ -2398,7 +2479,7 @@ WebCore::DestinationColorSpace WebViewImpl::colorSpace()
 
         if (!m_colorSpace)
             m_colorSpace = [NSScreen mainScreen].colorSpace;
-    
+
         if (!m_colorSpace)
             m_colorSpace = [NSColorSpace sRGBColorSpace];
     }
@@ -5855,6 +5936,26 @@ _WKRectEdge WebViewImpl::rubberBandingEnabled()
 void WebViewImpl::setRubberBandingEnabled(_WKRectEdge state)
 {
     m_page->setRubberBandableEdges(toRectEdges(state));
+}
+
+bool WebViewImpl::alwaysBounceVertical()
+{
+    return m_page->alwaysBounceVertical();
+}
+
+void WebViewImpl::setAlwaysBounceVertical(bool value)
+{
+    m_page->setAlwaysBounceVertical(value);
+}
+
+bool WebViewImpl::alwaysBounceHorizontal()
+{
+    return m_page->alwaysBounceHorizontal();
+}
+
+void WebViewImpl::setAlwaysBounceHorizontal(bool value)
+{
+    m_page->setAlwaysBounceHorizontal(value);
 }
 
 void WebViewImpl::mouseDown(NSEvent *event)

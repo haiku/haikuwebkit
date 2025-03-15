@@ -356,10 +356,12 @@ String ShorthandSerializer::serialize()
     case CSSPropertyTextEmphasis:
     case CSSPropertyWebkitTextDecoration:
     case CSSPropertyWebkitTextStroke:
+    case CSSPropertyPositionTry:
         return serializeLonghandsOmittingInitialValues();
     case CSSPropertyBorderColor:
     case CSSPropertyBorderStyle:
     case CSSPropertyBorderWidth:
+    case CSSPropertyCornerShape:
     case CSSPropertyInset:
     case CSSPropertyMargin:
     case CSSPropertyPadding:

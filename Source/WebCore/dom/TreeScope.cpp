@@ -42,6 +42,7 @@
 #include "HitTestResult.h"
 #include "IdTargetObserverRegistry.h"
 #include "JSObservableArray.h"
+#include "LegacyRenderSVGResourceContainer.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
@@ -77,7 +78,7 @@ struct SVGResourcesMap {
 
     MemoryCompactRobinHoodHashMap<AtomString, WeakHashSet<SVGElement, WeakPtrImplWithEventTargetData>> pendingResources;
     MemoryCompactRobinHoodHashMap<AtomString, WeakHashSet<SVGElement, WeakPtrImplWithEventTargetData>> pendingResourcesForRemoval;
-    MemoryCompactRobinHoodHashMap<AtomString, LegacyRenderSVGResourceContainer*> legacyResources;
+    MemoryCompactRobinHoodHashMap<AtomString, SingleThreadWeakPtr<LegacyRenderSVGResourceContainer>> legacyResources;
 };
 
 TreeScope::TreeScope(ShadowRoot& shadowRoot, Document& document, RefPtr<CustomElementRegistry>&& registry)
@@ -176,6 +177,12 @@ RefPtr<Element> TreeScope::getElementById(StringView elementId) const
     return nullptr;
 }
 
+RefPtr<Element> TreeScope::elementByIdResolvingReferenceTarget(const AtomString& elementId) const
+{
+    RefPtr elementForId = getElementById(elementId);
+    return elementForId ? elementForId->resolveReferenceTarget() : nullptr;
+}
+
 const Vector<WeakRef<Element, WeakPtrImplWithEventTargetData>>* TreeScope::getAllElementsById(const AtomString& elementId) const
 {
     if (elementId.isEmpty())
@@ -225,7 +232,6 @@ void TreeScope::removeElementByName(const AtomString& name, Element& element)
         return;
     m_elementsByName->remove(name, element);
 }
-
 
 Ref<Node> TreeScope::retargetToScope(Node& node) const
 {
@@ -655,7 +661,10 @@ LegacyRenderSVGResourceContainer* TreeScope::lookupLegacySVGResoureById(const At
     if (id.isEmpty())
         return nullptr;
 
-    return svgResourcesMap().legacyResources.get(id);
+    if (auto resource = svgResourcesMap().legacyResources.get(id))
+        return resource.get();
+
+    return nullptr;
 }
 
 void TreeScope::addPendingSVGResource(const AtomString& id, SVGElement& element)

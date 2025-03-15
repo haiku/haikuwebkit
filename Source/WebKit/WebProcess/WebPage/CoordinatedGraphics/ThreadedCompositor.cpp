@@ -98,6 +98,9 @@ ThreadedCompositor::ThreadedCompositor(LayerTreeHost& layerTreeHost, ThreadedDis
 {
     ASSERT(RunLoop::isMain());
 
+    const auto& webPage = m_layerTreeHost->webPage();
+    updateSceneAttributes(webPage.size(), webPage.deviceScaleFactor());
+
     m_surface->didCreateCompositingRunLoop(m_compositingRunLoop->runLoop());
 
 #if HAVE(DISPLAY_LINK)
@@ -173,6 +176,7 @@ void ThreadedCompositor::invalidate()
     m_layerTreeHost = nullptr;
     m_surface->willDestroyCompositingRunLoop();
     m_compositingRunLoop = nullptr;
+    m_surface = nullptr;
 }
 
 void ThreadedCompositor::suspend()
@@ -216,6 +220,13 @@ void ThreadedCompositor::preferredBufferFormatsDidChange()
     m_surface->preferredBufferFormatsDidChange();
 }
 #endif
+
+void ThreadedCompositor::setSize(const IntSize& size, float deviceScaleFactor)
+{
+    ASSERT(RunLoop::isMain());
+    Locker locker { m_attributes.lock };
+    updateSceneAttributes(size, deviceScaleFactor);
+}
 
 #if ENABLE(DAMAGE_TRACKING)
 void ThreadedCompositor::setDamagePropagation(Damage::Propagation damagePropagation)
@@ -264,6 +275,9 @@ void ThreadedCompositor::paintToCurrentGLContext(const TransformationMatrix& mat
         }
 
         const auto& damageSinceLastSurfaceUse = m_surface->addDamage(!frameDamage.isInvalid() && !frameDamage.isEmpty() ? frameDamage : Damage::invalid());
+        if (m_frameDamageHistory)
+            m_frameDamageHistory->addDamage(std::make_pair(!frameDamage.isInvalid(), frameDamage.region()));
+
         if (!m_damageVisualizer && !damageSinceLastSurfaceUse.isInvalid() && !FloatRect(damageSinceLastSurfaceUse.bounds()).contains(clipRect))
             rectContainingRegionThatActuallyChanged = FloatRoundedRect(damageSinceLastSurfaceUse.bounds());
     }
@@ -313,12 +327,10 @@ void ThreadedCompositor::renderLayerTree()
     // Retrieve the scene attributes in a thread-safe manner.
     IntSize viewportSize;
     float deviceScaleFactor;
-    uint32_t compositionRequestID;
     {
         Locker locker { m_attributes.lock };
         viewportSize = m_attributes.viewportSize;
         deviceScaleFactor = m_attributes.deviceScaleFactor;
-        compositionRequestID = m_attributes.compositionRequestID;
 
 #if !HAVE(DISPLAY_LINK)
         // Client has to be notified upon finishing this scene update.
@@ -353,6 +365,7 @@ void ThreadedCompositor::renderLayerTree()
     paintToCurrentGLContext(viewportTransform, viewportSize);
     WTFEndSignpost(this, PaintToGLContext);
 
+    uint32_t compositionRequestID = m_compositionRequestID.load();
 #if HAVE(DISPLAY_LINK)
     m_compositionResponseID = compositionRequestID;
     if (!m_didRenderFrameTimer.isActive())
@@ -376,15 +389,7 @@ void ThreadedCompositor::renderLayerTree()
 uint32_t ThreadedCompositor::requestComposition()
 {
     ASSERT(RunLoop::isMain());
-    uint32_t compositionRequestID;
-    {
-        Locker locker { m_attributes.lock };
-        auto& webPage = m_layerTreeHost->webPage();
-        m_attributes.viewportSize = webPage.size();
-        m_attributes.deviceScaleFactor = webPage.deviceScaleFactor();
-        m_attributes.viewportSize.scale(m_attributes.deviceScaleFactor);
-        compositionRequestID = ++m_attributes.compositionRequestID;
-    }
+    uint32_t compositionRequestID = ++m_compositionRequestID;
     scheduleUpdate();
     return compositionRequestID;
 }
@@ -462,6 +467,20 @@ void ThreadedCompositor::sceneUpdateFinished()
     m_compositingRunLoop->updateCompleted(stateLocker);
 }
 #endif // !HAVE(DISPLAY_LINK)
+
+#if ENABLE(DAMAGE_TRACKING)
+void ThreadedCompositor::resetFrameDamageHistory()
+{
+    m_frameDamageHistory = WTF::makeUnique<FrameDamageHistory>();
+}
+#endif
+
+void ThreadedCompositor::updateSceneAttributes(const IntSize& size, float deviceScaleFactor)
+{
+    m_attributes.viewportSize = size;
+    m_attributes.deviceScaleFactor = deviceScaleFactor;
+    m_attributes.viewportSize.scale(m_attributes.deviceScaleFactor);
+}
 
 }
 #endif // USE(COORDINATED_GRAPHICS)

@@ -47,6 +47,7 @@
 #import "WKBackForwardListItemInternal.h"
 #import "WKContentViewInteraction.h"
 #import "WKDataDetectorTypesInternal.h"
+#import "WKErrorInternal.h"
 #import "WKPasswordView.h"
 #import "WKProcessPoolPrivate.h"
 #import "WKScrollView.h"
@@ -180,6 +181,10 @@ static WebCore::IntDegrees deviceOrientationForUIInterfaceOrientation(UIInterfac
 
 - (void)layoutSubviews
 {
+#if ENABLE(SCREEN_TIME)
+    [self _updateScreenTimeViewGeometry];
+#endif
+
     [_warningView setFrame:self.bounds];
     [super layoutSubviews];
     [self _frameOrBoundsMayHaveChanged];
@@ -977,7 +982,7 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
 
     [_scrollView setMinimumZoomScale:minimumScaleFactor];
     [_scrollView setMaximumZoomScale:maximumScaleFactor];
-    [_scrollView _setZoomEnabledInternal:allowsUserScaling];
+    [_scrollView _setZoomEnabledInternal:allowsUserScaling && self._allowsMagnification];
     if ([_scrollView showsHorizontalScrollIndicator] && [_scrollView showsVerticalScrollIndicator]) {
         [_scrollView setShowsHorizontalScrollIndicator:(_page->scrollingCoordinatorProxy()->mainFrameScrollbarWidth() != WebCore::ScrollbarWidth::None)];
         [_scrollView setShowsVerticalScrollIndicator:(_page->scrollingCoordinatorProxy()->mainFrameScrollbarWidth() != WebCore::ScrollbarWidth::None)];
@@ -3883,12 +3888,23 @@ static bool isLockdownModeWarningNeeded()
     _overriddenZoomScaleParameters = { minimumZoomScale, maximumZoomScale, allowUserScaling };
     [_scrollView setMinimumZoomScale:minimumZoomScale];
     [_scrollView setMaximumZoomScale:maximumZoomScale];
-    [_scrollView _setZoomEnabledInternal:allowUserScaling];
+    [_scrollView _setZoomEnabledInternal:allowUserScaling && self._allowsMagnification];
 }
 
 - (void)_clearOverrideZoomScaleParameters
 {
     _overriddenZoomScaleParameters = std::nullopt;
+}
+
+- (BOOL)_allowsMagnification
+{
+    return _allowsMagnification;
+}
+
+- (void)_setAllowsMagnification:(BOOL)allowsMagnification
+{
+    _allowsMagnification = allowsMagnification;
+    [_contentView _updateDoubleTapGestureRecognizerEnablement];
 }
 
 #if ENABLE(MODEL_PROCESS)
@@ -4273,7 +4289,7 @@ static bool isLockdownModeWarningNeeded()
     WebCore::FloatRect oldUnobscuredContentRect = _page->unobscuredContentRect();
 
     auto isOldBoundsValid = !CGRectIsEmpty(oldBounds) || !CGRectIsEmpty(_perProcessState.animatedResizeOldBounds);
-    if (![self usesStandardContentView] || !_perProcessState.hasCommittedLoadForMainFrame || !isOldBoundsValid || oldUnobscuredContentRect.isEmpty() || _perProcessState.liveResizeParameters) {
+    if (![self usesStandardContentView] || !_perProcessState.hasCommittedLoadForMainFrame || !isOldBoundsValid || oldUnobscuredContentRect.isEmpty() || _perProcessState.liveResizeParameters || [self _isDisplayingPDF]) {
         if ([_customContentView respondsToSelector:@selector(web_beginAnimatedResizeWithUpdates:)])
             [_customContentView web_beginAnimatedResizeWithUpdates:updateBlock];
         else
@@ -4937,6 +4953,34 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 - (void)_setDefaultSTSLabel:(NSString *)defaultSTSLabel
 {
     _page->setDefaultSpatialTrackingLabel(defaultSTSLabel);
+}
+
+- (void)_enterExternalPlaybackForNowPlayingMediaSessionWithCompletionHandler:(void(^)(UIViewController *, NSError *))completionHandler
+{
+    if (!_page) {
+        completionHandler(nil, [NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]);
+        return;
+    }
+
+    _page->setPlayerIdentifierForVideoElement();
+    _page->enterExternalPlaybackForNowPlayingMediaSession([handler = makeBlockPtr(completionHandler)](bool entered, UIViewController *viewController) {
+        if (entered)
+            handler(viewController, nil);
+        else
+            handler(nil, createNSError(WKErrorUnknown).get());
+    });
+}
+
+- (void)_exitExternalPlaybackWithCompletionHandler:(void (^)(NSError *error))completionHandler
+{
+    if (!_page) {
+        completionHandler([NSError errorWithDomain:WKErrorDomain code:WKErrorUnknown userInfo:nil]);
+        return;
+    }
+
+    _page->exitExternalPlayback([handler = makeBlockPtr(completionHandler)](bool success) {
+        handler(success ? nil : createNSError(WKErrorUnknown).get());
+    });
 }
 @end
 #endif
