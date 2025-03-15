@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2007 Apple Inc. All rights reserved.
+ * Copyright (C) 2007-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2012, 2013 Adobe Systems Incorporated. All rights reserved.
+ * Copyright (C) 2025 Sam Weinig. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -28,32 +30,23 @@
 
 #pragma once
 
-#include "CSSPropertyNames.h"
-#include "CompositeOperation.h"
-#include "IterationCompositeOperation.h"
+#include "AnimationUtilities.h"
 #include "WebAnimationTypes.h"
-#include <wtf/HashSet.h>
 
-namespace WebCore {
+namespace WebCore::Style::Interpolation {
 
-class CSSPropertyBlendingClient;
-class Document;
-class RenderStyle;
-class Settings;
+class Client;
 
-class CSSPropertyAnimation {
-public:
-    static bool isPropertyAnimatable(const AnimatableCSSProperty&);
-    static bool isPropertyAdditiveOrCumulative(const AnimatableCSSProperty&);
-    static bool propertyRequiresBlendingForAccumulativeIteration(const CSSPropertyBlendingClient&, const AnimatableCSSProperty&, const RenderStyle& a, const RenderStyle& b);
-    static bool animationOfPropertyIsAccelerated(const AnimatableCSSProperty&, const Settings&);
-    static bool propertiesEqual(const AnimatableCSSProperty&, const RenderStyle& a, const RenderStyle& b, const Document&);
-    static bool canPropertyBeInterpolated(const AnimatableCSSProperty&, const RenderStyle& a, const RenderStyle& b, const Document&);
-    static CSSPropertyID getPropertyAtIndex(int, std::optional<bool>& isShorthand);
-    static std::optional<CSSPropertyID> getAcceleratedPropertyAtIndex(int, const Settings&);
-    static int getNumProperties();
+struct Context : BlendingContext {
+    const Client& client;
+    AnimatableCSSProperty property;
 
-    static void blendProperty(const CSSPropertyBlendingClient&, const AnimatableCSSProperty&, RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, double progress, CompositeOperation, IterationCompositeOperation = IterationCompositeOperation::Replace, double currentIteration = 0);
+    Context(const AnimatableCSSProperty& property, double progress, bool isDiscrete, CompositeOperation compositeOperation, IterationCompositeOperation iterationCompositeOperation, double currentIteration, const Client& client)
+        : BlendingContext(progress, isDiscrete, compositeOperation, iterationCompositeOperation, currentIteration)
+        , client(client)
+        , property(property)
+    {
+    }
 };
 
-} // namespace WebCore
+} // namespace WebCore::Style::Interpolation

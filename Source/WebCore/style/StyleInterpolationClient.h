@@ -33,14 +33,17 @@ class Document;
 class RenderElement;
 class RenderStyle;
 
-class CSSPropertyBlendingClient {
+namespace Style::Interpolation {
+
+class Client {
 public:
     virtual Document* document() const = 0;
     virtual RenderElement* renderer() const = 0;
     virtual const RenderStyle& currentStyle() const = 0;
     virtual std::optional<unsigned> transformFunctionListPrefix() const = 0;
 
-    virtual ~CSSPropertyBlendingClient() = default;
+    virtual ~Client() = default;
 };
 
+} // namespace Style::Interpolation
 } // namespace WebCore

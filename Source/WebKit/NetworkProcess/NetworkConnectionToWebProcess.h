@@ -268,6 +268,10 @@ public:
 
     bool isAlwaysOnLoggingAllowed() const;
 
+#if HAVE(WEBCONTENTRESTRICTIONS)
+    bool usesWebContentRestrictionsForFilter() const { return m_sharedPreferencesForWebProcess.usesWebContentRestrictionsForFilter; };
+#endif
+
 private:
     NetworkConnectionToWebProcess(NetworkProcess&, WebCore::ProcessIdentifier, PAL::SessionID, NetworkProcessConnectionParameters&&, IPC::Connection::Identifier&&);
 
@@ -362,6 +366,9 @@ private:
 #if PLATFORM(MAC)
     void updateActivePages(const String& name, const Vector<String>& activePagesOrigins, CoreIPCAuditToken&&);
     void getProcessDisplayName(CoreIPCAuditToken&&, CompletionHandler<void(const String&)>&&);
+#if ENABLE(LAUNCHSERVICES_SANDBOX_EXTENSION_BLOCKING)
+    void checkInWebProcess(const CoreIPCAuditToken&);
+#endif
 #endif
 
 #if USE(LIBWEBRTC)

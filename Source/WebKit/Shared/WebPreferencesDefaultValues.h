@@ -72,6 +72,12 @@
 #define Backdropfilter_feature_status Testable
 #endif
 
+#if defined(ENABLE_MODEL_ELEMENT) && ENABLE_MODEL_ELEMENT && PLATFORM(VISION)
+#define Modelelement_feature_status Stable
+#else
+#define Modelelement_feature_status Testable
+#endif
+
 namespace WebKit {
 
 #if PLATFORM(IOS_FAMILY)
@@ -172,8 +178,20 @@ bool defaultContentInsetBackgroundFillEnabled();
 bool defaultScreenTimeEnabled();
 #endif
 
+#if ENABLE(MAC_STYLE_CONTROLS_ON_CATALYST)
+bool defaultMacStyleControlsOnCatalyst();
+#endif
+
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+bool defaultVectorBasedControlsOnMacEnabled();
+#endif
+
 #if ENABLE(CONTENT_EXTENSIONS)
 bool defaultIFrameResourceMonitoringEnabled();
+#endif
+
+#if HAVE(SPATIAL_AUDIO_EXPERIENCE)
+bool defaultPreferSpatialAudioExperience();
 #endif
 
 } // namespace WebKit

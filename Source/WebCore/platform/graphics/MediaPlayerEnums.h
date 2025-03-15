@@ -111,6 +111,13 @@ enum class MediaPlayerNeedsRenderingModeChanged : bool {
     Yes,
 };
 
+enum class MediaPlayerSoundStageSize : uint8_t {
+    Auto,
+    Small,
+    Medium,
+    Large,
+};
+
 class MediaPlayerEnums {
 public:
     using NetworkState = MediaPlayerNetworkState;
@@ -124,6 +131,7 @@ public:
     using WirelessPlaybackTargetType = MediaPlayerWirelessPlaybackTargetType;
     using PitchCorrectionAlgorithm = MediaPlayerPitchCorrectionAlgorithm;
     using NeedsRenderingModeChanged = MediaPlayerNeedsRenderingModeChanged;
+    using SoundStageSize = MediaPlayerSoundStageSize;
 
     enum {
         VideoFullscreenModeNone = 0,

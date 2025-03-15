@@ -217,7 +217,7 @@ void RemoteMediaPlayerProxy::cancelLoad()
     protectedPlayer()->cancelLoad();
 }
 
-void RemoteMediaPlayerProxy::prepareForPlayback(bool privateMode, WebCore::MediaPlayerEnums::Preload preload, bool preservesPitch, WebCore::MediaPlayerEnums::PitchCorrectionAlgorithm pitchCorrectionAlgorithm, bool prepareToPlay, bool prepareForRendering, WebCore::IntSize presentationSize, float videoContentScale, WebCore::DynamicRangeMode preferredDynamicRangeMode)
+void RemoteMediaPlayerProxy::prepareForPlayback(bool privateMode, WebCore::MediaPlayerEnums::Preload preload, bool preservesPitch, WebCore::MediaPlayerEnums::PitchCorrectionAlgorithm pitchCorrectionAlgorithm, bool prepareToPlay, bool prepareForRendering, WebCore::IntSize presentationSize, float videoContentScale, WebCore::DynamicRangeMode preferredDynamicRangeMode, PlatformDynamicRangeLimit platformDynamicRangeLimit)
 {
     RefPtr player = m_player;
     player->setPrivateBrowsingMode(privateMode);
@@ -225,6 +225,7 @@ void RemoteMediaPlayerProxy::prepareForPlayback(bool privateMode, WebCore::Media
     player->setPreservesPitch(preservesPitch);
     player->setPitchCorrectionAlgorithm(pitchCorrectionAlgorithm);
     player->setPreferredDynamicRangeMode(preferredDynamicRangeMode);
+    player->setPlatformDynamicRangeLimit(platformDynamicRangeLimit);
     player->setPresentationSize(presentationSize);
     if (prepareToPlay)
         player->prepareToPlay();
@@ -1224,6 +1225,12 @@ void RemoteMediaPlayerProxy::setPreferredDynamicRangeMode(DynamicRangeMode mode)
         player->setPreferredDynamicRangeMode(mode);
 }
 
+void RemoteMediaPlayerProxy::setPlatformDynamicRangeLimit(PlatformDynamicRangeLimit platformDynamicRangeLimit)
+{
+    if (RefPtr player = m_player)
+        player->setPlatformDynamicRangeLimit(platformDynamicRangeLimit);
+}
+
 void RemoteMediaPlayerProxy::createAudioSourceProvider()
 {
 #if ENABLE(WEB_AUDIO) && PLATFORM(COCOA)
@@ -1350,6 +1357,15 @@ void RemoteMediaPlayerProxy::audioOutputDeviceChanged(String&& deviceId)
     Ref audioSession = connection->audioSessionProxy();
     audioSession->setPreferredSpeakerID(m_configuration.audioOutputDeviceId);
 #endif
+}
+
+void RemoteMediaPlayerProxy::setSoundStageSize(SoundStageSize size)
+{
+    if (m_soundStageSize == size)
+        return;
+    m_soundStageSize = size;
+
+    protectedPlayer()->soundStageSizeDidChange();
 }
 
 } // namespace WebKit

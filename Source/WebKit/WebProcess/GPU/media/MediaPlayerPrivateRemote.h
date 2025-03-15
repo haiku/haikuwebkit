@@ -441,6 +441,7 @@ private:
     void applicationWillResignActive() final;
     void applicationDidBecomeActive() final;
     void setPreferredDynamicRangeMode(WebCore::DynamicRangeMode) final;
+    void setPlatformDynamicRangeLimit(WebCore::PlatformDynamicRangeLimit) final;
 
 #if USE(AVFOUNDATION)
     AVPlayer *objCAVFoundationAVPlayer() const final { return nullptr; }
@@ -482,6 +483,8 @@ private:
 #endif
 
     void audioOutputDeviceChanged() final;
+
+    void soundStageSizeDidChange() final;
 
 #if PLATFORM(COCOA)
     void pushVideoFrameMetadata(WebCore::VideoFrameMetadata&&, RemoteVideoFrameProxy::Properties&&);

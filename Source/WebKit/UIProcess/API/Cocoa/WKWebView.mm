@@ -43,6 +43,7 @@
 #import "GlobalFindInPageState.h"
 #import "IconLoadingDelegate.h"
 #import "ImageAnalysisUtilities.h"
+#import "JavaScriptEvaluationResult.h"
 #import "LegacySessionStateCoding.h"
 #import "Logging.h"
 #import "MediaPlaybackState.h"
@@ -1431,18 +1432,12 @@ static WKMediaPlaybackState toWKMediaPlaybackState(WebKit::MediaPlaybackState me
             return;
 
         auto rawHandler = (void (^)(id, NSError *))handler.get();
-        if (!result.has_value()) {
-            rawHandler(nil, nsErrorFromExceptionDetails(result.error()).get());
-            return;
+        if (!result) {
+            if (result.error())
+                return rawHandler(nil, nsErrorFromExceptionDetails(*result.error()).get());
+            return rawHandler(nil, createNSError(WKErrorJavaScriptResultTypeIsUnsupported).get());
         }
-
-        if (!result.value()) {
-            rawHandler(nil, createNSError(WKErrorJavaScriptResultTypeIsUnsupported).get());
-            return;
-        }
-
-        id body = API::SerializedScriptValue::deserialize(result.value()->internalRepresentation());
-        rawHandler(body, nil);
+        rawHandler(result->toID().get(), nil);
     });
 }
 
@@ -3067,6 +3062,12 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 {
     if (_pdfPageNumberIndicator.first == identifier)
         [_pdfPageNumberIndicator.second setCurrentPageNumber:pageIndex];
+}
+
+- (void)_updatePDFPageNumberIndicatorIfNeeded
+{
+    if (_pdfPageNumberIndicator.first)
+        [_pdfPageNumberIndicator.second updatePosition:self.bounds];
 }
 
 - (void)_removeAnyPDFPageNumberIndicator

@@ -323,6 +323,7 @@ public:
     virtual bool shouldIgnoreIntrinsicSize() { return false; }
 
     virtual void setPreferredDynamicRangeMode(DynamicRangeMode) { }
+    virtual void setPlatformDynamicRangeLimit(PlatformDynamicRangeLimit) { }
 
     virtual void audioOutputDeviceChanged() { }
 
@@ -374,6 +375,8 @@ public:
 #if PLATFORM(IOS_FAMILY)
     virtual void sceneIdentifierDidChange() { }
 #endif
+
+    virtual void soundStageSizeDidChange() { }
 
 protected:
     mutable PlatformTimeRanges m_seekable;
