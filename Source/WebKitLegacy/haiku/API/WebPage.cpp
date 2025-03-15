@@ -304,7 +304,7 @@ BWebPage::BWebPage(BWebView* webView, BPrivate::Network::BUrlContext* context)
         makeUniqueRef<WebCore::DummySpeechRecognitionProvider>(),
         WebBroadcastChannelRegistry::getOrCreate(false),
         makeUniqueRef<WebCore::DummyStorageProvider>(),
-        makeUniqueRef<WebCore::DummyModelPlayerProvider>(),
+        WebCore::DummyModelPlayerProvider::create(),
         EmptyBadgeClient::create(),
         LegacyHistoryItemClient::singleton(),
         makeUniqueRef<ContextMenuClientHaiku>(this),

@@ -118,9 +118,9 @@ Vector<FontSelectionCapabilities> FontCache::getFontSelectionCapabilitiesInFamil
 }
 
 
-std::optional<ASCIILiteral> FontCache::platformAlternateFamilyName(const String& familyName)
+ASCIILiteral FontCache::platformAlternateFamilyName(const String& familyName)
 {
-    return std::nullopt;
+    return { };
 }
 
 void FontCache::platformInvalidate()

@@ -959,7 +959,7 @@ AtomString FrameLoaderClientHaiku::overrideMediaType() const
 
 void FrameLoaderClientHaiku::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld& world)
 {
-    if (&world != &mainThreadNormalWorld())
+    if (&world != &mainThreadNormalWorldSingleton())
         return;
 
     if (m_webFrame) {
@@ -974,7 +974,7 @@ void FrameLoaderClientHaiku::dispatchDidClearWindowObjectInWorld(DOMWrapperWorld
         // callback. This can't be done using the asynchronous BMessage above:
         // by the time the message is processed by the target, the JS test will
         // already have run!
-        JSGlobalContextRef context = toGlobalRef(m_webFrame->Frame()->script().globalObject(mainThreadNormalWorld()));
+        JSGlobalContextRef context = toGlobalRef(m_webFrame->Frame()->script().globalObject(mainThreadNormalWorldSingleton()));
         JSObjectRef windowObject = JSContextGetGlobalObject(context);
         m_webPage->fDumpRenderTree->didClearWindowObjectInWorld(world, context, windowObject);
     }

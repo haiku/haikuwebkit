@@ -555,6 +555,56 @@ void PathHaiku::add(PathRoundedRect roundedRect)
 }
 
 
+void PathHaiku::add(PathContinuousRoundedRect roundedRect)
+{
+    const FloatRect& rect = roundedRect.rect;
+    const FloatSize& corner = { roundedRect.cornerWidth, roundedRect.cornerHeight };
+
+#if 0
+    // FIXME needs support for Composite SourceIn.
+    if (hasShadow())
+        shadowBlur().drawRectShadow(this, rect, FloatRoundedRect::Radii(topLeft, topRight, bottomLeft, bottomRight));
+#endif
+
+    BPoint points[3];
+    const float kRadiusBezierScale = 1.0f - 0.5522847498f; //  1 - (sqrt(2) - 1) * 4 / 3
+
+    m_platformPath.MoveTo(BPoint(rect.maxX() - corner.width(), rect.y()));
+    points[0].x = rect.maxX() - kRadiusBezierScale * corner.width();
+    points[0].y = rect.y();
+    points[1].x = rect.maxX();
+    points[1].y = rect.y() + kRadiusBezierScale * corner.height();
+    points[2].x = rect.maxX();
+    points[2].y = rect.y() + corner.height();
+    m_platformPath.BezierTo(points);
+    m_platformPath.LineTo(BPoint(rect.maxX(), rect.maxY() - corner.height()));
+    points[0].x = rect.maxX();
+    points[0].y = rect.maxY() - kRadiusBezierScale * corner.height();
+    points[1].x = rect.maxX() - kRadiusBezierScale * corner.width();
+    points[1].y = rect.maxY();
+    points[2].x = rect.maxX() - corner.width();
+    points[2].y = rect.maxY();
+    m_platformPath.BezierTo(points);
+    m_platformPath.LineTo(BPoint(rect.x() + corner.width(), rect.maxY()));
+    points[0].x = rect.x() + kRadiusBezierScale * corner.width();
+    points[0].y = rect.maxY();
+    points[1].x = rect.x();
+    points[1].y = rect.maxY() - kRadiusBezierScale * corner.height();
+    points[2].x = rect.x();
+    points[2].y = rect.maxY() - corner.height();
+    m_platformPath.BezierTo(points);
+    m_platformPath.LineTo(BPoint(rect.x(), rect.y() + corner.height()));
+    points[0].x = rect.x();
+    points[0].y = rect.y() + kRadiusBezierScale * corner.height();
+    points[1].x = rect.x() + kRadiusBezierScale * corner.width();
+    points[1].y = rect.y();
+    points[2].x = rect.x() + corner.width();
+    points[2].y = rect.y();
+    m_platformPath.BezierTo(points);
+    m_platformPath.Close(); // Automatically completes the shape with the top border
+}
+
+
 void PathHaiku::add(PathCloseSubpath)
 {
     m_platformPath.Close();
