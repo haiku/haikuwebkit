@@ -42,7 +42,6 @@ public:
     friend NeverDestroyed<RenderThemeHaiku>;
 
 #if ENABLE(VIDEO)
-    String mediaControlsStyleSheet() override;
     Vector<String, 2> mediaControlsScripts() override;
 #endif
 protected:

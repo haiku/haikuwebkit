@@ -144,17 +144,6 @@ bool RenderThemeHaiku::paintSliderThumb(const RenderObject& object, const PaintI
 
 
 #if ENABLE(VIDEO)
-String RenderThemeHaiku::mediaControlsStyleSheet()
-{
-#if ENABLE(MODERN_MEDIA_CONTROLS)
-    if (m_mediaControlsStyleSheet.isEmpty())
-        m_mediaControlsStyleSheet = StringImpl::createWithoutCopying(ModernMediaControlsUserAgentStyleSheet);
-    return m_mediaControlsStyleSheet;
-#else
-    return emptyString();
-#endif
-}
-
 Vector<String, 2> RenderThemeHaiku::mediaControlsScripts()
 {
 #if ENABLE(MODERN_MEDIA_CONTROLS)
