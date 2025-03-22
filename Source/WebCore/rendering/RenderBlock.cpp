@@ -479,21 +479,35 @@ bool RenderBlock::isSelfCollapsingBlock() const
         || style().logicalMinHeight().isPositive())
         return false;
 
-    Length logicalHeightLength = style().logicalHeight();
-    bool hasAutoHeight = logicalHeightLength.isAuto();
-    if (logicalHeightLength.isPercentOrCalculated() && !document().inQuirksMode()) {
-        hasAutoHeight = true;
-        for (RenderBlock* cb = containingBlock(); cb && !is<RenderView>(*cb); cb = cb->containingBlock()) {
-            if (cb->style().logicalHeight().isFixed() || cb->isRenderTableCell())
-                hasAutoHeight = false;
+    auto heightIsZeroOrAuto = [&] {
+        auto logicalHeightLength = style().logicalHeight();
+        if (logicalHeightLength.isAuto())
+            return true;
+
+        if (logicalHeightLength.isFixed())
+            return logicalHeightLength.isZero();
+
+        if (logicalHeightLength.isPercentOrCalculated()) {
+            if (logicalHeightLength.isZero())
+                return true;
+            // While in quirks mode there's always a fixed height ancestor to resolve percent value against (ICB),
+            // in standards mode we can only use the containing block.
+            if (document().inQuirksMode())
+                return false;
+            CheckedPtr containingBlock = this->containingBlock();
+            if (!containingBlock) {
+                ASSERT_NOT_REACHED();
+                return false;
+            }
+            return is<RenderView>(*containingBlock) || !containingBlock->style().logicalHeight().isFixed();
         }
-    }
-
-    // If the height is 0 or auto, then whether or not we are a self-collapsing block depends
-    // on whether we have content that is all self-collapsing or not.
-    if (hasAutoHeight || ((logicalHeightLength.isFixed() || logicalHeightLength.isPercentOrCalculated()) && logicalHeightLength.isZero()))
+        return false;
+    };
+    if (heightIsZeroOrAuto()) {
+        // If the height is 0 or auto, then whether or not we are a self-collapsing block depends
+        // on whether we have content that is all self-collapsing or not.
         return !createsNewFormattingContext() && !childrenPreventSelfCollapsing();
-
+    }
 
     return false;
 }
@@ -705,9 +719,9 @@ void RenderBlock::clearLayoutOverflow()
 
 void RenderBlock::addOverflowFromBlockChildren()
 {
-    for (auto* child = firstChildBox(); child; child = child->nextSiblingBox()) {
-        if (!child->isFloatingOrOutOfFlowPositioned())
-            addOverflowFromChild(*child);
+    for (auto& child : childrenOfType<RenderBox>(*this)) {
+        if (!child.isFloatingOrOutOfFlowPositioned())
+            addOverflowFromChild(child);
     }
 }
 
@@ -827,9 +841,9 @@ void RenderBlock::simplifiedNormalFlowLayout()
 {
     ASSERT(!childrenInline());
 
-    for (auto* box = firstChildBox(); box; box = box->nextSiblingBox()) {
-        if (!box->isOutOfFlowPositioned())
-            box->layoutIfNeeded();
+    for (auto& box : childrenOfType<RenderBox>(*this)) {
+        if (!box.isOutOfFlowPositioned())
+            box.layoutIfNeeded();
     }
 }
 
@@ -1118,8 +1132,8 @@ void RenderBlock::paintContents(PaintInfo& paintInfo, const LayoutPoint& paintOf
 
 void RenderBlock::paintChildren(PaintInfo& paintInfo, const LayoutPoint& paintOffset, PaintInfo& paintInfoForChild, bool usePrintRect)
 {
-    for (auto* child = firstChildBox(); child; child = child->nextSiblingBox()) {
-        if (!paintChild(*child, paintInfo, paintOffset, paintInfoForChild, usePrintRect))
+    for (auto& child : childrenOfType<RenderBox>(*this)) {
+        if (!paintChild(child, paintInfo, paintOffset, paintInfoForChild, usePrintRect))
             return;
     }
 }
@@ -1986,7 +2000,7 @@ LayoutUnit RenderBlock::textIndentOffset() const
 LayoutUnit RenderBlock::logicalLeftOffsetForContent() const
 {
     LayoutUnit logicalLeftOffset = writingMode().isHorizontal() ? borderLeft() + paddingLeft() : borderTop() + paddingTop();
-    if (shouldPlaceVerticalScrollbarOnLeft() && isHorizontalWritingMode())
+    if (isHorizontalWritingMode() && shouldPlaceVerticalScrollbarOnLeft())
         logicalLeftOffset += verticalScrollbarWidth();
     return logicalLeftOffset;
 }
@@ -1994,7 +2008,7 @@ LayoutUnit RenderBlock::logicalLeftOffsetForContent() const
 LayoutUnit RenderBlock::logicalRightOffsetForContent() const
 {
     LayoutUnit logicalRightOffset = writingMode().isHorizontal() ? borderLeft() + paddingLeft() : borderTop() + paddingTop();
-    if (shouldPlaceVerticalScrollbarOnLeft() && isHorizontalWritingMode())
+    if (isHorizontalWritingMode() && shouldPlaceVerticalScrollbarOnLeft())
         logicalRightOffset += verticalScrollbarWidth();
     logicalRightOffset += contentBoxLogicalWidth();
     return logicalRightOffset;
@@ -2308,15 +2322,15 @@ VisiblePosition RenderBlock::positionForPoint(const LayoutPoint& point, HitTestS
             || (!blocksAreFlipped && pointInLogicalContents.y() == logicalTopForChild(*lastCandidateBox)))
             return positionForPointRespectingEditingBoundaries(*this, *lastCandidateBox, pointInContents, source);
 
-        for (auto* childBox = firstChildBox(); childBox; childBox = childBox->nextSiblingBox()) {
-            if (!isChildHitTestCandidate(*childBox, fragment, pointInLogicalContents, source))
+        for (auto& childBox : childrenOfType<RenderBox>(*this)) {
+            if (!isChildHitTestCandidate(childBox, fragment, pointInLogicalContents, source))
                 continue;
-            auto childLogicalBottom = logicalTopForChild(*childBox) + logicalHeightForChild(*childBox);
+            auto childLogicalBottom = logicalTopForChild(childBox) + logicalHeightForChild(childBox);
             if (auto* blockFlow = dynamicDowncast<RenderBlockFlow>(childBox))
                 childLogicalBottom = std::max(childLogicalBottom, blockFlow->lowestFloatLogicalBottom());
             // We hit child if our click is above the bottom of its padding box (like IE6/7 and FF3).
             if (pointInLogicalContents.y() < childLogicalBottom || (blocksAreFlipped && pointInLogicalContents.y() == childLogicalBottom))
-                return positionForPointRespectingEditingBoundaries(*this, *childBox, pointInContents, source);
+                return positionForPointRespectingEditingBoundaries(*this, childBox, pointInContents, source);
         }
     }
 

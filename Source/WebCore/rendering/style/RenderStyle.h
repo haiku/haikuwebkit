@@ -77,7 +77,7 @@ class PathOperation;
 class PositionArea;
 class PseudoIdSet;
 class QuotesData;
-class RenderObject;
+class RenderElement;
 class RenderStyle;
 class RotateTransformOperation;
 class RoundedRect;
@@ -261,11 +261,9 @@ struct Length;
 struct LengthPoint;
 struct LengthSize;
 struct ListStyleType;
-struct MasonryAutoFlow;
 struct NamedGridAreaMap;
 struct NamedGridLinesMap;
 struct OrderedNamedGridLinesMap;
-struct PositionTryFallback;
 struct SingleTimelineRange;
 
 struct ScrollSnapAlign;
@@ -295,6 +293,7 @@ struct Color;
 struct ColorScheme;
 struct CornerShapeValue;
 struct DynamicRangeLimit;
+struct PositionTryFallback;
 struct ScopedName;
 struct ScrollMargin;
 struct ScrollMarginEdge;
@@ -395,6 +394,8 @@ public:
     bool usesViewportUnits() const { return m_nonInheritedFlags.usesViewportUnits; }
     void setUsesContainerUnits() { m_nonInheritedFlags.usesContainerUnits = true; }
     bool usesContainerUnits() const { return m_nonInheritedFlags.usesContainerUnits; }
+    void setUsesAnchorFunctions();
+    bool usesAnchorFunctions() const;
 
     void setColumnStylesFromPaginationMode(PaginationMode);
     
@@ -466,9 +467,9 @@ public:
     inline bool hasInFlowPosition() const;
     inline bool hasViewportConstrainedPosition() const;
     Float floating() const { return static_cast<Float>(m_nonInheritedFlags.floating); }
-    static UsedFloat usedFloat(const RenderObject&); // Returns logical left/right (block-relative).
+    static UsedFloat usedFloat(const RenderElement&); // Returns logical left/right (block-relative).
     Clear clear() const { return static_cast<Clear>(m_nonInheritedFlags.clear); }
-    static UsedClear usedClear(const RenderObject&); // Returns logical left/right (block-relative).
+    static UsedClear usedClear(const RenderElement&); // Returns logical left/right (block-relative).
 
     inline const Length& width() const;
     inline const Length& height() const;
@@ -745,8 +746,6 @@ public:
     InsideLink insideLink() const { return static_cast<InsideLink>(m_inheritedFlags.insideLink); }
     bool isLink() const { return m_nonInheritedFlags.isLink; }
 
-    bool insideDefaultButton() const { return m_inheritedFlags.insideDefaultButton; }
-
     inline unsigned short widows() const;
     inline unsigned short orphans() const;
     inline bool hasAutoWidows() const;
@@ -864,7 +863,6 @@ public:
     inline size_t namedGridAreaRowCount() const;
     inline size_t namedGridAreaColumnCount() const;
     inline GridAutoFlow gridAutoFlow() const;
-    inline MasonryAutoFlow masonryAutoFlow() const;
     inline bool gridSubgridRows() const;
     inline bool gridSubgridColumns() const;
     inline bool gridMasonryRows() const;
@@ -1445,8 +1443,6 @@ public:
     void setInsideLink(InsideLink insideLink) { m_inheritedFlags.insideLink = static_cast<unsigned>(insideLink); }
     void setIsLink(bool v) { m_nonInheritedFlags.isLink = v; }
 
-    void setInsideDefaultButton(bool insideDefaultButton) { m_inheritedFlags.insideDefaultButton = insideDefaultButton; }
-
     PrintColorAdjust printColorAdjust() const { return static_cast<PrintColorAdjust>(m_inheritedFlags.printColorAdjust); }
     void setPrintColorAdjust(PrintColorAdjust value) { m_inheritedFlags.printColorAdjust = static_cast<unsigned>(value); }
 
@@ -1522,8 +1518,6 @@ public:
     inline void setGridItemColumnEnd(const GridPosition&);
     inline void setGridItemRowStart(const GridPosition&);
     inline void setGridItemRowEnd(const GridPosition&);
-
-    inline void setMasonryAutoFlow(MasonryAutoFlow);
 
     inline void setMarqueeIncrement(Length&&);
     inline void setMarqueeSpeed(int);
@@ -2163,7 +2157,6 @@ public:
     static constexpr AutoRepeatType initialGridAutoRepeatType();
 
     static constexpr GridAutoFlow initialGridAutoFlow();
-    static constexpr MasonryAutoFlow initialMasonryAutoFlow();
 
     static inline Vector<GridTrackSize> initialGridAutoColumns();
     static inline Vector<GridTrackSize> initialGridAutoRows();
@@ -2348,13 +2341,16 @@ public:
     inline Style::PositionTryOrder positionTryOrder() const;
     inline void setPositionTryOrder(Style::PositionTryOrder);
 
-    static Vector<PositionTryFallback> initialPositionTryFallbacks();
-    const Vector<PositionTryFallback>& positionTryFallbacks() const;
-    void setPositionTryFallbacks(const Vector<PositionTryFallback>&);
+    static Vector<Style::PositionTryFallback> initialPositionTryFallbacks();
+    const Vector<Style::PositionTryFallback>& positionTryFallbacks() const;
+    void setPositionTryFallbacks(const Vector<Style::PositionTryFallback>&);
 
     static constexpr OptionSet<PositionVisibility> initialPositionVisibility();
     inline OptionSet<PositionVisibility> positionVisibility() const;
     inline void setPositionVisibility(OptionSet<PositionVisibility>);
+
+    inline bool insideDefaultButton() const;
+    inline void setInsideDefaultButton(bool);
 
 private:
     struct NonInheritedFlags {
@@ -2435,16 +2431,15 @@ private:
         unsigned char boxDirection : 1; // BoxDirection
         unsigned char rtlOrdering : 1; // Order
 
-        // Color Stuff = 5 bits
+        // Color Stuff = 4 bits
         unsigned char hasExplicitlySetColor : 1;
         unsigned char printColorAdjust : 1; // PrintColorAdjust
         unsigned char insideLink : 2; // InsideLink
-        unsigned char insideDefaultButton : 1;
 
 #if ENABLE(TEXT_AUTOSIZING)
         unsigned autosizeStatus : 5;
 #endif
-        // Total = 57 bits (fits in 8 bytes)
+        // Total = 56 bits (fits in 8 bytes)
     };
 
     // This constructor is used to implement the replace operation.
@@ -2498,10 +2493,14 @@ private:
 #endif
 };
 
+// Map from computed style values (which take zoom into account) to web-exposed values, which are zoom-independent.
 inline int adjustForAbsoluteZoom(int, const RenderStyle&);
 inline float adjustFloatForAbsoluteZoom(float, const RenderStyle&);
 inline LayoutUnit adjustLayoutUnitForAbsoluteZoom(LayoutUnit, const RenderStyle&);
 inline LayoutSize adjustLayoutSizeForAbsoluteZoom(LayoutSize, const RenderStyle&);
+
+// Map from zoom-independent style values to computed style values (which take zoom into account).
+inline float applyZoom(float, const RenderStyle&);
 
 constexpr BorderStyle collapsedBorderStyle(BorderStyle);
 

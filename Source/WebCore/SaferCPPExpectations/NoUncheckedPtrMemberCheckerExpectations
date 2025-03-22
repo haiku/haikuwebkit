@@ -1,4 +1,6 @@
 Modules/websockets/WorkerThreadableWebSocketChannel.h
+css/CSSFontFaceDescriptors.h
+css/CSSStyleProperties.h
 html/parser/HTMLTreeBuilder.h
 loader/WorkerThreadableLoader.h
 page/scrolling/ScrollAnchoringController.h
@@ -9,4 +11,3 @@ platform/ios/PlaybackSessionInterfaceIOS.h
 rendering/RenderAncestorIterator.h
 svg/properties/SVGPropertyOwnerRegistry.h
 workers/DedicatedWorkerThread.h
-workers/service/context/ServiceWorkerThread.h

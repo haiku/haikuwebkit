@@ -30,6 +30,7 @@
 #include "AXObjectCache.h"
 #include "AXTreeStore.h"
 #include "HTMLInputElement.h"
+#include "Logging.h"
 #include "RenderObject.h"
 #include "TextBoundaries.h"
 #include "TextIterator.h"
@@ -338,7 +339,7 @@ std::optional<CharacterRange> AXTextMarkerRange::characterRange() const
         return std::nullopt;
 
     if (m_start.m_data.characterOffset > m_end.m_data.characterOffset) {
-        ASSERT_NOT_REACHED();
+        TEXT_MARKER_ASSERT_NOT_REACHED("characterRange");
         return std::nullopt;
     }
     return { { m_start.m_data.characterOffset, m_end.m_data.characterOffset - m_start.m_data.characterOffset } };
@@ -504,6 +505,14 @@ AXTextMarker AXTextMarker::convertToDomOffset() const
     return { newData };
 }
 
+void AXTextMarker::clampOffsetToLengthIfNeeded(unsigned length) const
+{
+    if (offset() <= length)
+        return;
+
+    const_cast<AXTextMarker*>(this)->m_data.offset = length;
+}
+
 AXTextRunLineID AXTextMarker::lineID() const
 {
     if (!isValid())
@@ -547,7 +556,7 @@ int AXTextMarker::lineIndex() const
         // Start from a line end, so that subsequent calls to nextLineEnd() yield a new line.
         // Otherwise if we started from the middle of a line, we would count the the first line twice.
         auto nextLineEndMarker = currentMarker.nextLineEnd();
-        TEXT_MARKER_ASSERT_DOBULE(nextLineEndMarker.lineID() == currentMarker.lineID(), nextLineEndMarker, currentMarker);
+        TEXT_MARKER_ASSERT_DOUBLE(nextLineEndMarker.lineID() == currentMarker.lineID(), "lineIndex", nextLineEndMarker, currentMarker);
         currentMarker = WTFMove(nextLineEndMarker);
     }
 
@@ -569,7 +578,7 @@ CharacterRange AXTextMarker::characterRangeForLine(unsigned lineIndex) const
     if (!object || !object->isTextControl())
         return { };
     // This implementation doesn't respect the offset as the only known callsite hardcodes zero. We'll need to make changes to support this if a usecase arrives for it.
-    TEXT_MARKER_ASSERT(!offset());
+    TEXT_MARKER_ASSERT(!offset(), "characterRangeForLine");
 
     auto* stopObject = object->nextSiblingIncludingIgnoredOrParent();
     auto stopAtID = stopObject ? std::optional { stopObject->objectID() } : std::nullopt;
@@ -598,7 +607,7 @@ CharacterRange AXTextMarker::characterRangeForLine(unsigned lineIndex) const
 AXTextMarkerRange AXTextMarker::markerRangeForLineIndex(unsigned lineIndex) const
 {
     // This implementation doesn't respect the offset as the only known callsite hardcodes zero. We'll need to make changes to support this if a usecase arrives for it.
-    TEXT_MARKER_ASSERT(!offset());
+    TEXT_MARKER_ASSERT(!offset(), "markerRangeForLineIndex");
 
     if (!isValid())
         return { };
@@ -657,7 +666,10 @@ bool AXTextMarker::atLineBoundaryForDirection(AXDirection direction) const
         return toTextRunMarker().atLineBoundaryForDirection(direction);
 
     size_t runIndex = runs()->indexForOffset(offset());
-    TEXT_MARKER_ASSERT(runIndex != notFound);
+    TEXT_MARKER_ASSERT(runIndex != notFound, "atLineBoundaryForDirection (1)");
+    if (runIndex == notFound)
+        return false;
+
     RefPtr currentObject = isolatedObject();
     const auto* currentRuns = currentObject->textRuns();
     return atLineBoundaryForDirection(direction, currentRuns, runIndex);
@@ -680,7 +692,10 @@ bool AXTextMarker::atLineBoundaryForDirection(AXDirection direction, const AXTex
     // The current line/containing block ends with the current object and runs. Now, check if we are at
     // the start/end of the line using the marker's position within its line.
     unsigned sumToRunIndex = runIndex ? runs->runLengthSumTo(runIndex - 1) : 0;
-    RELEASE_ASSERT(offset() >= sumToRunIndex);
+    TEXT_MARKER_ASSERT(offset() >= sumToRunIndex, "atLineBoundaryForDirection (2)");
+    if (offset() < sumToRunIndex)
+        return false;
+
     unsigned offsetInLine = offset() - sumToRunIndex;
     return direction == AXDirection::Previous ? !offsetInLine : runs->runLength(runIndex) == offsetInLine;
 }
@@ -733,7 +748,7 @@ unsigned AXTextMarker::offsetFromRoot() const
         applyNewlineOffset();
 
         // If this assert fails, it means we couldn't navigate from root to `this`, which should never happen.
-        TEXT_MARKER_ASSERT_DOBULE(hasSameObjectAndOffset(current), (*this), current);
+        TEXT_MARKER_ASSERT_DOUBLE(hasSameObjectAndOffset(current), "offsetFromRoot", (*this), current);
         return offset;
     }
     return 0;
@@ -826,11 +841,16 @@ static FloatRect viewportRelativeFrameFromRuns(Ref<AXIsolatedObject> object, uns
     }
 
     float estimatedLineHeight = relativeFrame.height() / runs->size();
-    auto runsLocalRect = runs->localRect(start, end, estimatedLineHeight);
-    // The rect we got above is a "local" rect, relative to nothing else. Move it to be
-    // anchored at this object's relative frame.
-    runsLocalRect.move(relativeFrame.x(), relativeFrame.y());
-    return runsLocalRect;
+    if (auto fontRef = object->font()) {
+        auto runsLocalRect = runs->localRect(start, end, estimatedLineHeight, relativeFrame, fontRef.get(), object->fontOrientation());
+        // The rect we got above is a "local" rect, relative to nothing else. Move it to be
+        // anchored at this object's relative frame.
+        runsLocalRect.move(relativeFrame.x(), relativeFrame.y());
+        return runsLocalRect;
+    }
+
+    // This means we had no font information, so fallback to the object's relative frame.
+    return relativeFrame;
 }
 
 static FloatRect viewportRelativeFrameFromRuns(Ref<AXIsolatedObject> object, unsigned offset)
@@ -1011,7 +1031,10 @@ AXTextMarker AXTextMarker::findMarker(AXDirection direction, CoalesceObjectBreak
     // offset() pointed to the last character in the given object's runs, so let's traverse to find the next object with runs.
     object = findObjectWithRuns(*object, direction, stopAtID);
     if (object) {
-        RELEASE_ASSERT(direction == AXDirection::Next ? object->textRuns()->runLength(0) : object->textRuns()->lastRunLength());
+        bool nextRunHasLength = direction == AXDirection::Next ? object->textRuns()->runLength(0) : object->textRuns()->lastRunLength();
+        TEXT_MARKER_ASSERT(nextRunHasLength, "findMarker");
+        if (!nextRunHasLength)
+            return { };
 
         // The startingOffset is used to advance one position farther when we are coalescing object breaks and skipping positions.
         unsigned startingOffset = 0;
@@ -1031,7 +1054,10 @@ AXTextMarker AXTextMarker::findLine(AXDirection direction, AXTextUnitBoundary bo
         return toTextRunMarker(stopAtID).findLine(direction, boundary, includeTrailingLineBreak, stopAtID);
 
     size_t runIndex = runs()->indexForOffset(offset());
-    TEXT_MARKER_ASSERT(runIndex != notFound);
+    TEXT_MARKER_ASSERT(runIndex != notFound, "findLine (1)");
+    if (runIndex == notFound)
+        return { };
+
     RefPtr currentObject = isolatedObject();
     const auto* currentRuns = currentObject->textRuns();
     auto origin = boundary == AXTextUnitBoundary::Start && direction == AXDirection::Previous ? TextMarkerOrigin::PreviousLineStart : TextMarkerOrigin::NextLineEnd;
@@ -1055,7 +1081,10 @@ AXTextMarker AXTextMarker::findLine(AXDirection direction, AXTextUnitBoundary bo
     auto startLineID = currentRuns->lineID(runIndex);
     // We found the start run and associated line, now iterate until we find a line boundary.
     while (currentObject) {
-        RELEASE_ASSERT(currentRuns->size());
+        TEXT_MARKER_ASSERT_SINGLE(currentRuns->size(), "findLine (2)", (*this));
+        if (!currentRuns->size())
+            return { };
+
         unsigned cumulativeOffset = runIndex ? currentRuns->runLengthSumTo(runIndex - 1) : 0;
         // We should search in the right direction for a change in the line index.
         for (size_t i = runIndex; direction == AXDirection::Next ? i < currentRuns->size() : i >= 0; direction == AXDirection::Next ? i++ : i--) {
@@ -1089,7 +1118,10 @@ AXTextMarker AXTextMarker::findParagraph(AXDirection direction, AXTextUnitBounda
         return toTextRunMarker().findParagraph(direction, boundary);
 
     size_t runIndex = runs()->indexForOffset(offset());
-    RELEASE_ASSERT(runIndex != notFound);
+    TEXT_MARKER_ASSERT(runIndex != notFound, "findParagraph");
+    if (runIndex == notFound)
+        return { };
+
     RefPtr currentObject = isolatedObject();
     const auto* currentRuns = currentObject->textRuns();
     auto origin = direction == AXDirection::Previous && boundary == AXTextUnitBoundary::Start ? TextMarkerOrigin::PreviousParagraphStart : TextMarkerOrigin::NextParagraphEnd;
@@ -1100,7 +1132,10 @@ AXTextMarker AXTextMarker::findParagraph(AXDirection direction, AXTextUnitBounda
     unsigned offsetInStartLine = offset() - sumToRunIndex;
 
     while (currentObject) {
-        RELEASE_ASSERT(currentRuns->size());
+        TEXT_MARKER_ASSERT_SINGLE(currentRuns->size(), "findParagraph", (*this));
+        if (!currentRuns->size())
+            return { };
+
         for (size_t i = runIndex; i < currentRuns->size() && i >= 0; direction == AXDirection::Next ? i++ : i--) {
             // If a text run starts or ends with a newline character, that indicates a paragraph boundary. However, if the direction
             // is Next, and our starting offset points to the end of the line (past the newline character), we are past the boundary.
@@ -1151,6 +1186,8 @@ AXTextMarker AXTextMarker::findWordOrSentence(AXDirection direction, bool findWo
     RefPtr currentObject = isolatedObject();
     const auto* currentRuns = currentObject->textRuns();
 
+    clampOffsetToLengthIfNeeded(currentRuns->totalLength());
+
     unsigned offset = this->offset();
     AXTextMarker resultMarker = *this;
 
@@ -1162,6 +1199,7 @@ AXTextMarker AXTextMarker::findWordOrSentence(AXDirection direction, bool findWo
     // Functions to update resultMarker for word and sentence text units.
     auto updateWordResultMarker = [&] () {
         if (direction == AXDirection::Previous && boundary == AXTextUnitBoundary::Start) {
+            TEXT_MARKER_ASSERT_SINGLE(offset <= flattenedRuns.length(), "findWordOrSentence", (*this));
             int previousWordStart = findNextWordFromIndex(flattenedRuns, offset, false);
             if (previousWordStart <= objectBorder)
                 resultMarker = AXTextMarker(*currentObject, previousWordStart, origin);
@@ -1281,21 +1319,12 @@ AXTextMarker AXTextMarker::toTextRunMarker(std::optional<AXID> stopAtID) const
     const auto* runs = object->textRuns();
     if (runs && runs->size()) {
         unsigned totalLength = runs->totalLength();
-        // If something has constructed a text-run marker, it should've done so with an in-bounds offset.
-        bool isInBounds = totalLength >= offset();
-        if (isInBounds)
-            return *this;
-
-        if (object->editableAncestor()) {
-            // When a user types, we send out notifications with text markers whose offsets are relative
-            // to the text at that time. By the time VoiceOver sends that text marker back to us, the text
-            // may have further changed (e.g. when rapidly deleting multiple characters). Gracefully handle
-            // this scenario by setting this text marker back in-bounds.
-            const_cast<AXTextMarker*>(this)->m_data.offset = totalLength;
-            return *this;
-        }
-
-        RELEASE_ASSERT_NOT_REACHED();
+        // When a user types, we send out notifications with text markers whose offsets are relative
+        // to the text at that time. By the time VoiceOver sends that text marker back to us, the text
+        // may have further changed (e.g. when rapidly deleting multiple characters). This can also
+        // happen when VoiceOver is holding on to a stale text marker. Gracefully handle this scenario
+        // by setting this text marker back in-bounds.
+        clampOffsetToLengthIfNeeded(totalLength);
         return *this;
     }
 
@@ -1321,7 +1350,10 @@ AXTextMarker AXTextMarker::toTextRunMarker(std::optional<AXID> stopAtID) const
     if (!current)
         return { };
 
-    TEXT_MARKER_ASSERT(offset() >= precedingOffset);
+    TEXT_MARKER_ASSERT(offset() >= precedingOffset, "toTextRunMarker (2)");
+    if (offset() < precedingOffset)
+        return *this;
+
     return { current->treeID(), current->objectID(), static_cast<unsigned>(offset() - precedingOffset) };
 }
 
@@ -1450,13 +1482,26 @@ std::partial_ordering AXTextMarker::partialOrderByTraversal(const AXTextMarker& 
     if (!isValid() || !other.isValid())
         return std::partial_ordering::unordered;
 
+    // If one of the objects is the root web area with an offset of 0, we know that it is the first possible text marker, so
+    // can fast-path the ordering.
+    RefPtr current = object();
+    if (current && !offset() && current->isRootWebArea())
+        return std::partial_ordering::less;
+
+    if (!other.offset()) {
+        RefPtr otherObject = other.object();
+        if (otherObject && otherObject->isRootWebArea())
+            return std::partial_ordering::greater;
+    }
+
     // If we're here, expect that we've already handled the case where we just need to compare
     // offsets within the same object.
-    RELEASE_ASSERT(objectID() != other.objectID());
+    TEXT_MARKER_ASSERT(objectID() != other.objectID(), "partialOrderByTraversal (1)");
+    if (objectID() == other.objectID())
+        return std::partial_ordering::equivalent;
 
     // Search forwards for ther other marker. If we find it, we are before it in tree order,
     // and thus are std::partial_ordering::less.
-    RefPtr current = object();
     while (current && current->objectID() != other.objectID())
         current = current->nextInPreOrder();
 
@@ -1475,7 +1520,7 @@ std::partial_ordering AXTextMarker::partialOrderByTraversal(const AXTextMarker& 
     // is unable to traverse between two nodes. This can happen when an element's parent or subtree is removed and
     // those updates have not been fully applied.
     // We don't release assert here, since the callers of partialOrder can now handle unordered ordering.
-    ASSERT_NOT_REACHED();
+    TEXT_MARKER_ASSERT_NOT_REACHED("partialOrderByTraversal (2)");
     return std::partial_ordering::unordered;
 }
 

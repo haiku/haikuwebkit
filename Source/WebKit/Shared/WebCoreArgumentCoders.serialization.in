@@ -486,12 +486,7 @@ struct WebCore::CharacterRange {
 }
 
 [AdditionalEncoder=StreamConnectionEncoder] class WebCore::AffineTransform {
-    double a()
-    double b()
-    double c()
-    double d()
-    double e()
-    double f()
+    std::span<const double, 6> span();
 }
 
 [AdditionalEncoder=StreamConnectionEncoder] class WebCore::FloatPoint {
@@ -617,7 +612,7 @@ struct WebCore::IDBIterateCursorData {
 
 class WebCore::IDBResourceIdentifier {
     Markable<WebCore::IDBConnectionIdentifier> m_idbConnectionIdentifier
-    uint64_t m_resourceNumber
+    Markable<WebCore::IDBResourceObjectIdentifier> m_resourceNumber
 }
 
 class WebCore::IDBValue {
@@ -673,7 +668,7 @@ struct WebCore::IDBDatabaseNameAndVersion {
 
 class WebCore::IDBKeyData {
     bool isPlaceholder()
-    std::variant<std::nullptr_t, WebCore::IDBKeyData::Invalid, Vector<WebCore::IDBKeyData>, String, double, WebCore::IDBKeyData::Date, WebCore::ThreadSafeDataBuffer, WebCore::IDBKeyData::Min, WebCore::IDBKeyData::Max> value()
+    [Validator='WebCore::IDBKeyData::isValidValue(*value)'] std::variant<std::nullptr_t, WebCore::IDBKeyData::Invalid, Vector<WebCore::IDBKeyData>, String, double, WebCore::IDBKeyData::Date, WebCore::ThreadSafeDataBuffer, WebCore::IDBKeyData::Min, WebCore::IDBKeyData::Max> value()
 }
 
 [Nested] struct WebCore::IDBKeyData::Invalid {
@@ -3841,7 +3836,7 @@ header: <WebCore/ControlPart.h>
 
 header: <WebCore/ButtonPart.h>
 [RefCounted, AdditionalEncoder=StreamConnectionEncoder, DisableMissingMemberCheck] class WebCore::ButtonPart {
-    WebCore::StyleAppearance type();
+    [Validator='type == WebCore::StyleAppearance::Button || type == WebCore::StyleAppearance::DefaultButton || type == WebCore::StyleAppearance::PushButton || type == WebCore::StyleAppearance::SquareButton'] WebCore::StyleAppearance type();
 }
 
 header: <WebCore/InnerSpinButtonPart.h>
@@ -3862,12 +3857,12 @@ header: <WebCore/SearchFieldPart.h>
 
 header: <WebCore/SliderThumbPart.h>
 [RefCounted, AdditionalEncoder=StreamConnectionEncoder, DisableMissingMemberCheck] class WebCore::SliderThumbPart {
-    WebCore::StyleAppearance type();
+    [Validator='type == WebCore::StyleAppearance::SliderThumbHorizontal || type == WebCore::StyleAppearance::SliderThumbVertical'] WebCore::StyleAppearance type();
 }
 
 header: <WebCore/SearchFieldResultsPart.h>
 [RefCounted, AdditionalEncoder=StreamConnectionEncoder, DisableMissingMemberCheck] class WebCore::SearchFieldResultsPart {
-    WebCore::StyleAppearance type();
+    [Validator='type == WebCore::StyleAppearance::SearchFieldResultsButton || type == WebCore::StyleAppearance::SearchFieldResultsDecoration'] WebCore::StyleAppearance type();
 }
 
 header: <WebCore/SearchFieldCancelButtonPart.h>
@@ -3876,7 +3871,7 @@ header: <WebCore/SearchFieldCancelButtonPart.h>
 
 header: <WebCore/TextAreaPart.h>
 [RefCounted, AdditionalEncoder=StreamConnectionEncoder, DisableMissingMemberCheck] class WebCore::TextAreaPart {
-    WebCore::StyleAppearance type();
+    [Validator='type == WebCore::StyleAppearance::Listbox || type == WebCore::StyleAppearance::TextArea'] WebCore::StyleAppearance type();
 }
 
 header: <WebCore/TextFieldPart.h>
@@ -3885,7 +3880,7 @@ header: <WebCore/TextFieldPart.h>
 
 header: <WebCore/ToggleButtonPart.h>
 [RefCounted, AdditionalEncoder=StreamConnectionEncoder, DisableMissingMemberCheck] class WebCore::ToggleButtonPart {
-    WebCore::StyleAppearance type();
+    [Validator='type == WebCore::StyleAppearance::Checkbox || type == WebCore::StyleAppearance::Radio'] WebCore::StyleAppearance type();
 }
 
 #if ENABLE(SERVICE_CONTROLS)
@@ -3952,7 +3947,7 @@ enum class WebCore::ApplePayButtonStyle : uint8_t {
 };
 
 [RefCounted, AdditionalEncoder=StreamConnectionEncoder] class WebCore::SliderTrackPart {
-    WebCore::StyleAppearance type();
+    [Validator='type == WebCore::StyleAppearance::SliderHorizontal || type == WebCore::StyleAppearance::SliderVertical'] WebCore::StyleAppearance type();
     WebCore::IntSize thumbSize();
     WebCore::IntRect trackBounds();
     Vector<double> tickRatios();
@@ -5536,6 +5531,48 @@ struct WebCore::ServiceWorkerJobData {
     bool isFromServiceWorkerPage;
 
     [Validator='( type == WebCore::ServiceWorkerJobType::Register && registrationOptions->has_value()) || (type != WebCore::ServiceWorkerJobType::Register && !registrationOptions->has_value() )'] std::optional<WebCore::ServiceWorkerRegistrationOptions> registrationOptions;
+};
+
+struct WebCore::RouterSourceDict {
+    String cacheName;
+}
+
+enum class WebCore::RouterSourceEnum : uint8_t {
+    Cache,
+    FetchEvent,
+    Network
+};
+
+enum class WebCore::RunningStatus : bool
+
+header: <WebCore/ServiceWorkerRoute.h>
+[CustomHeader] struct WebCore::ServiceWorkerRoutePattern {
+    String protocol;
+    String username;
+    String password;
+    String hostname;
+    String port;
+    String pathname;
+    String search;
+    String hash;
+}
+
+header: <WebCore/ServiceWorkerRoute.h>
+[CustomHeader] struct WebCore::ServiceWorkerRouteCondition {
+    std::optional<WebCore::ServiceWorkerRoutePattern> urlPattern;
+    String requestMethod;
+    std::optional<WebCore::FetchOptionsMode> requestMode;
+    std::optional<WebCore::FetchOptionsDestination> requestDestination;
+    std::optional<WebCore::RunningStatus> runningStatus;
+
+    Vector<WebCore::ServiceWorkerRouteCondition> orConditions;
+    std::unique_ptr<WebCore::ServiceWorkerRouteCondition> notCondition;
+
+};
+
+struct WebCore::ServiceWorkerRoute {
+    WebCore::ServiceWorkerRouteCondition condition;
+    std::variant<WebCore::RouterSourceDict, WebCore::RouterSourceEnum> source;
 };
 
 struct WebCore::EventInit {
@@ -8665,16 +8702,6 @@ using WebCore::Glyph = unsigned short
 enum class WebCore::ContentExtensionDefaultEnablement : bool
 using WebCore::ContentExtensionEnablement = std::pair<WebCore::ContentExtensionDefaultEnablement, HashSet<String>>;
 
-#if USE(CG)
-using WebCore::DisplayList::Item = std::variant<WebCore::DisplayList::ApplyDeviceScaleFactor, WebCore::DisplayList::BeginTransparencyLayer, WebCore::DisplayList::BeginTransparencyLayerWithCompositeMode, WebCore::DisplayList::ClearRect, WebCore::DisplayList::ClearDropShadow, WebCore::DisplayList::Clip, WebCore::DisplayList::ClipRoundedRect, WebCore::DisplayList::ClipOut, WebCore::DisplayList::ClipOutRoundedRect, WebCore::DisplayList::ClipOutToPath, WebCore::DisplayList::ClipPath, WebCore::DisplayList::ClipToImageBuffer, WebCore::DisplayList::ConcatenateCTM, WebCore::DisplayList::DrawControlPart, WebCore::DisplayList::DrawDotsForDocumentMarker, WebCore::DisplayList::DrawEllipse, WebCore::DisplayList::DrawFilteredImageBuffer, WebCore::DisplayList::DrawFocusRingPath, WebCore::DisplayList::DrawFocusRingRects, WebCore::DisplayList::DrawGlyphs, WebCore::DisplayList::DrawDecomposedGlyphs, WebCore::DisplayList::DrawImageBuffer, WebCore::DisplayList::DrawLine, WebCore::DisplayList::DrawLinesForText, WebCore::DisplayList::DrawNativeImage, WebCore::DisplayList::DrawPath, WebCore::DisplayList::DrawPattern, WebCore::DisplayList::DrawRect, WebCore::DisplayList::DrawSystemImage, WebCore::DisplayList::EndTransparencyLayer, WebCore::DisplayList::FillCompositedRect, WebCore::DisplayList::FillEllipse, WebCore::DisplayList::FillPathSegment, WebCore::DisplayList::FillPath, WebCore::DisplayList::FillRect, WebCore::DisplayList::FillRectWithColor, WebCore::DisplayList::FillRectWithGradient, WebCore::DisplayList::FillRectWithGradientAndSpaceTransform, WebCore::DisplayList::FillRectWithRoundedHole, WebCore::DisplayList::FillRoundedRect, WebCore::DisplayList::ResetClip, WebCore::DisplayList::Restore, WebCore::DisplayList::Rotate, WebCore::DisplayList::Save, WebCore::DisplayList::Scale, WebCore::DisplayList::SetCTM, WebCore::DisplayList::SetInlineFillColor, WebCore::DisplayList::SetInlineStroke, WebCore::DisplayList::SetLineCap, WebCore::DisplayList::SetLineDash, WebCore::DisplayList::SetLineJoin, WebCore::DisplayList::SetMiterLimit, WebCore::DisplayList::SetState, WebCore::DisplayList::StrokeEllipse, WebCore::DisplayList::StrokeLine, WebCore::DisplayList::StrokePathSegment, WebCore::DisplayList::StrokePath, WebCore::DisplayList::StrokeRect, WebCore::DisplayList::Translate, WebCore::DisplayList::FillLine, WebCore::DisplayList::FillArc, WebCore::DisplayList::FillClosedArc, WebCore::DisplayList::FillQuadCurve, WebCore::DisplayList::FillBezierCurve, WebCore::DisplayList::StrokeArc, WebCore::DisplayList::StrokeClosedArc, WebCore::DisplayList::StrokeQuadCurve, WebCore::DisplayList::StrokeBezierCurve, WebCore::DisplayList::ApplyFillPattern, WebCore::DisplayList::ApplyStrokePattern, WebCore::DisplayList::BeginPage, WebCore::DisplayList::EndPage, WebCore::DisplayList::SetURLForRect>;
-#endif
-#if ENABLE(VIDEO) && !USE(CG)
-using WebCore::DisplayList::Item = std::variant<WebCore::DisplayList::ApplyDeviceScaleFactor, WebCore::DisplayList::BeginTransparencyLayer, WebCore::DisplayList::BeginTransparencyLayerWithCompositeMode, WebCore::DisplayList::ClearRect, WebCore::DisplayList::ClearDropShadow, WebCore::DisplayList::Clip, WebCore::DisplayList::ClipRoundedRect, WebCore::DisplayList::ClipOut, WebCore::DisplayList::ClipOutRoundedRect, WebCore::DisplayList::ClipOutToPath, WebCore::DisplayList::ClipPath, WebCore::DisplayList::ClipToImageBuffer, WebCore::DisplayList::ConcatenateCTM, WebCore::DisplayList::DrawControlPart, WebCore::DisplayList::DrawDotsForDocumentMarker, WebCore::DisplayList::DrawEllipse, WebCore::DisplayList::DrawFilteredImageBuffer, WebCore::DisplayList::DrawFocusRingPath, WebCore::DisplayList::DrawFocusRingRects, WebCore::DisplayList::DrawGlyphs, WebCore::DisplayList::DrawDecomposedGlyphs, WebCore::DisplayList::DrawImageBuffer, WebCore::DisplayList::DrawLine, WebCore::DisplayList::DrawLinesForText, WebCore::DisplayList::DrawNativeImage, WebCore::DisplayList::DrawPath, WebCore::DisplayList::DrawPattern, WebCore::DisplayList::DrawRect, WebCore::DisplayList::DrawSystemImage, WebCore::DisplayList::EndTransparencyLayer, WebCore::DisplayList::FillCompositedRect, WebCore::DisplayList::FillEllipse, WebCore::DisplayList::FillPathSegment, WebCore::DisplayList::FillPath, WebCore::DisplayList::FillRect, WebCore::DisplayList::FillRectWithColor, WebCore::DisplayList::FillRectWithGradient, WebCore::DisplayList::FillRectWithGradientAndSpaceTransform, WebCore::DisplayList::FillRectWithRoundedHole, WebCore::DisplayList::FillRoundedRect, WebCore::DisplayList::ResetClip, WebCore::DisplayList::Restore, WebCore::DisplayList::Rotate, WebCore::DisplayList::Save, WebCore::DisplayList::Scale, WebCore::DisplayList::SetCTM, WebCore::DisplayList::SetInlineFillColor, WebCore::DisplayList::SetInlineStroke, WebCore::DisplayList::SetLineCap, WebCore::DisplayList::SetLineDash, WebCore::DisplayList::SetLineJoin, WebCore::DisplayList::SetMiterLimit, WebCore::DisplayList::SetState, WebCore::DisplayList::StrokeEllipse, WebCore::DisplayList::StrokeLine, WebCore::DisplayList::StrokePathSegment, WebCore::DisplayList::StrokePath, WebCore::DisplayList::StrokeRect, WebCore::DisplayList::Translate, WebCore::DisplayList::BeginPage, WebCore::DisplayList::EndPage, WebCore::DisplayList::SetURLForRect>;
-#endif
-#if !ENABLE(VIDEO) && !USE(CG)
-using WebCore::DisplayList::Item = std::variant<WebCore::DisplayList::ApplyDeviceScaleFactor, WebCore::DisplayList::BeginTransparencyLayer, WebCore::DisplayList::BeginTransparencyLayerWithCompositeMode, WebCore::DisplayList::ClearRect, WebCore::DisplayList::ClearDropShadow, WebCore::DisplayList::Clip, WebCore::DisplayList::ClipRoundedRect, WebCore::DisplayList::ClipOut, WebCore::DisplayList::ClipOutRoundedRect, WebCore::DisplayList::ClipOutToPath, WebCore::DisplayList::ClipPath, WebCore::DisplayList::ClipToImageBuffer, WebCore::DisplayList::ConcatenateCTM, WebCore::DisplayList::DrawControlPart, WebCore::DisplayList::DrawDotsForDocumentMarker, WebCore::DisplayList::DrawEllipse, WebCore::DisplayList::DrawFilteredImageBuffer, WebCore::DisplayList::DrawFocusRingPath, WebCore::DisplayList::DrawFocusRingRects, WebCore::DisplayList::DrawGlyphs, WebCore::DisplayList::DrawDecomposedGlyphs, WebCore::DisplayList::DrawImageBuffer, WebCore::DisplayList::DrawLine, WebCore::DisplayList::DrawLinesForText, WebCore::DisplayList::DrawNativeImage, WebCore::DisplayList::DrawPath, WebCore::DisplayList::DrawPattern, WebCore::DisplayList::DrawRect, WebCore::DisplayList::DrawSystemImage, WebCore::DisplayList::EndTransparencyLayer, WebCore::DisplayList::FillCompositedRect, WebCore::DisplayList::FillEllipse, WebCore::DisplayList::FillPathSegment, WebCore::DisplayList::FillPath, WebCore::DisplayList::FillRect, WebCore::DisplayList::FillRectWithColor, WebCore::DisplayList::FillRectWithGradient, WebCore::DisplayList::FillRectWithGradientAndSpaceTransform, WebCore::DisplayList::FillRectWithRoundedHole, WebCore::DisplayList::FillRoundedRect, WebCore::DisplayList::ResetClip, WebCore::DisplayList::Restore, WebCore::DisplayList::Rotate, WebCore::DisplayList::Save, WebCore::DisplayList::Scale, WebCore::DisplayList::SetCTM, WebCore::DisplayList::SetInlineFillColor, WebCore::DisplayList::SetInlineStroke, WebCore::DisplayList::SetLineCap, WebCore::DisplayList::SetLineDash, WebCore::DisplayList::SetLineJoin, WebCore::DisplayList::SetMiterLimit, WebCore::DisplayList::SetState, WebCore::DisplayList::StrokeEllipse, WebCore::DisplayList::StrokeLine, WebCore::DisplayList::StrokePathSegment, WebCore::DisplayList::StrokePath, WebCore::DisplayList::StrokeRect, WebCore::DisplayList::Translate, WebCore::DisplayList::BeginPage, WebCore::DisplayList::EndPage, WebCore::DisplayList::SetURLForRect>;
-#endif
-
 #if ENABLE(WEBGL)
 header: <WebCore/GraphicsContextGL.h>
 #endif
@@ -9069,4 +9096,11 @@ enum class WebCore::StageModeOperation : bool;
 struct WebCore::FixedContainerEdges {
     WebCore::RectEdges<WebCore::Color> predominantColors;
     WebCore::RectEdges<bool> fixedEdges;
+};
+
+header: <WebCore/LocalFrameLoaderClient.h>
+enum class WebCore::ShouldGoToHistoryItem : uint8_t {
+    No,
+    Yes,
+    ItemUnknown
 };

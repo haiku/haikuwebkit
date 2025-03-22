@@ -39,7 +39,7 @@
 #include "AccessibilityTable.h"
 #include "ComposedTreeIterator.h"
 #include "DateComponents.h"
-#include "Editing.h"
+#include "EditingInlines.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "ElementChildIteratorInlines.h"
 #include "Event.h"
@@ -49,6 +49,7 @@
 #include "FrameLoader.h"
 #include "FrameSelection.h"
 #include "HTMLAudioElement.h"
+#include "HTMLButtonElement.h"
 #include "HTMLCanvasElement.h"
 #include "HTMLDetailsElement.h"
 #include "HTMLFieldSetElement.h"
@@ -259,6 +260,11 @@ LayoutRect AccessibilityNodeObject::boundingBoxRect() const
     // Instead, let's return a box at the position of an ancestor that does have a position, make it
     // the width of that ancestor, and about the height of a line of text, so it's clear this object is
     // a descendant of that ancestor.
+    return nonEmptyAncestorBoundingBox();
+}
+
+LayoutRect AccessibilityNodeObject::nonEmptyAncestorBoundingBox() const
+{
     for (RefPtr<AccessibilityObject> ancestor = parentObject(); ancestor; ancestor = ancestor->parentObject()) {
         if (!ancestor->renderer())
             continue;
@@ -271,7 +277,8 @@ LayoutRect AccessibilityNodeObject::boundingBoxRect() const
             LayoutSize(ancestorRect.width(), LayoutUnit(std::min(10.0f, ancestorRect.height().toFloat())))
         };
     }
-    return { };
+    // Fallback to returning a default, non-empty rect at 0, 0.
+    return { 0, 0, 1, 1 };
 }
 
 Document* AccessibilityNodeObject::document() const
@@ -1175,6 +1182,18 @@ RefPtr<Element> AccessibilityNodeObject::popoverTargetElement() const
 {
     WeakPtr formControlElement = dynamicDowncast<HTMLFormControlElement>(node());
     return formControlElement ? formControlElement->popoverTargetElement() : nullptr;
+}
+
+RefPtr<Element> AccessibilityNodeObject::commandForElement() const
+{
+    RefPtr element = dynamicDowncast<HTMLButtonElement>(node());
+    return element ? element->commandForElement() : nullptr;
+}
+
+CommandType AccessibilityNodeObject::commandType() const
+{
+    RefPtr element = dynamicDowncast<HTMLButtonElement>(node());
+    return element ? element->commandType() : CommandType::Invalid;
 }
 
 AccessibilityObject* AccessibilityNodeObject::internalLinkElement() const

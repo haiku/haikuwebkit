@@ -240,6 +240,7 @@
 #import "WKTextFinderClient.h"
 #import "WKViewInternal.h"
 #import <WebCore/ColorMac.h>
+#import <pal/spi/mac/NSViewSPI.h>
 #endif
 
 #import "WebKitSwiftSoftLink.h"
@@ -402,34 +403,35 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
 
 #if ENABLE(SCREEN_TIME)
 
-- (void)_installScreenTimeWebpageController
+- (void)_installScreenTimeWebpageControllerIfNeeded
 {
+    if (_screenTimeWebpageController)
+        return;
+
     if (!PAL::isScreenTimeFrameworkAvailable())
         return;
 
     if (_page && !_page->preferences().screenTimeEnabled())
         return;
 
-    if (!_screenTimeWebpageController) {
-        _screenTimeWebpageController = adoptNS([PAL::allocSTWebpageControllerInstance() init]);
-        [_screenTimeWebpageController addObserver:self forKeyPath:@"URLIsBlocked" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:&screenTimeWebpageControllerBlockedKVOContext];
-        _isBlockedByScreenTime = NO;
+    _screenTimeWebpageController = adoptNS([PAL::allocSTWebpageControllerInstance() init]);
+    [_screenTimeWebpageController addObserver:self forKeyPath:@"URLIsBlocked" options:(NSKeyValueObservingOptionOld | NSKeyValueObservingOptionNew) context:&screenTimeWebpageControllerBlockedKVOContext];
+    _isBlockedByScreenTime = NO;
 
-        if ([_screenTimeWebpageController respondsToSelector:@selector(setProfileIdentifier:)])
-            [_screenTimeWebpageController setProfileIdentifier:[_configuration websiteDataStore].identifier.UUIDString];
+    if ([_screenTimeWebpageController respondsToSelector:@selector(setProfileIdentifier:)])
+        [_screenTimeWebpageController setProfileIdentifier:[_configuration websiteDataStore].identifier.UUIDString];
 
-        [_screenTimeWebpageController setSuppressUsageRecording:![_configuration websiteDataStore].isPersistent];
+    [_screenTimeWebpageController setSuppressUsageRecording:![_configuration websiteDataStore].isPersistent];
 
-        // Observing changes to URLIsBlocked is set up in STWebpageController's loadView function.
-        // Thus, we have to instantiate its view for URLIsBlocked to update properly.
-        RetainPtr screenTimeView = [_screenTimeWebpageController view];
+    // Observing changes to URLIsBlocked is set up in STWebpageController's loadView function.
+    // Thus, we have to instantiate its view for URLIsBlocked to update properly.
+    RetainPtr screenTimeView = [_screenTimeWebpageController view];
 
-        if ([_configuration _showsSystemScreenTimeBlockingView]) {
-            [screenTimeView setFrame:self.bounds];
-            [self addSubview:screenTimeView.get()];
-        }
-        RELEASE_LOG(ScreenTime, "Screen Time controller was installed.");
+    if ([_configuration _showsSystemScreenTimeBlockingView]) {
+        [screenTimeView setFrame:self.bounds];
+        [self addSubview:screenTimeView.get()];
     }
+    RELEASE_LOG(ScreenTime, "Screen Time controller was installed.");
 }
 
 - (void)_uninstallScreenTimeWebpageController
@@ -455,13 +457,21 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
     [[_screenTimeWebpageController view] setFrame:bounds];
 }
 
-- (void)_updateScreenTimeShieldVisibilityForWindow
+- (void)_updateScreenTimeBasedOnWindowVisibility
 {
     BOOL viewIsInWindow = !!self.window;
+    BOOL viewIsVisible = viewIsInWindow;
+#if PLATFORM(MAC)
+    viewIsVisible = viewIsVisible && ((self.window.occlusionState & NSWindowOcclusionStateVisible) == NSWindowOcclusionStateVisible);
+#endif
 
     BOOL showsSystemScreenTimeBlockingView = [_configuration _showsSystemScreenTimeBlockingView];
 
     if (viewIsInWindow) {
+        BOOL previouslyInstalledScreenTimeWebpageController = !!_screenTimeWebpageController;
+        [self _installScreenTimeWebpageControllerIfNeeded];
+        if (!previouslyInstalledScreenTimeWebpageController && _screenTimeWebpageController)
+            [_screenTimeWebpageController setURL:[self _mainFrameURL]];
         if (!showsSystemScreenTimeBlockingView && _screenTimeBlurredSnapshot) {
             [_screenTimeBlurredSnapshot setHidden:NO];
             RELEASE_LOG(ScreenTime, "Screen Time has updated visibility to show blurred view.");
@@ -479,10 +489,6 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
         }
     }
 
-    BOOL viewIsVisible = viewIsInWindow;
-#if PLATFORM(MAC)
-    viewIsVisible &= ((self.window.occlusionState & NSWindowOcclusionStateVisible) == NSWindowOcclusionStateVisible);
-#endif
     [_screenTimeWebpageController setSuppressUsageRecording:(![_configuration websiteDataStore].isPersistent || !viewIsVisible)];
 }
 
@@ -722,9 +728,6 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
     preferences->setSystemLayoutDirection(static_cast<uint32_t>(WebCore::TextDirection::LTR));
     preferences->setAllowSettingAnyXHRHeaderFromFileURLs(shouldAllowSettingAnyXHRHeaderFromFileURLs());
     preferences->setShouldDecidePolicyBeforeLoadingQuickLookPreview(!![_configuration _shouldDecidePolicyBeforeLoadingQuickLookPreview]);
-#if ENABLE(DEVICE_ORIENTATION)
-    preferences->setDeviceOrientationPermissionAPIEnabled(linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::SupportsDeviceOrientationAndMotionPermissionAPI));
-#endif
 #if USE(SYSTEM_PREVIEW)
     preferences->setSystemPreviewEnabled(!![_configuration _systemPreviewEnabled]);
 #endif
@@ -1383,14 +1386,20 @@ static WKMediaPlaybackState toWKMediaPlaybackState(WebKit::MediaPlaybackState me
     NSString *errorMessage = nil;
 
     for (id key in arguments) {
-        id value = [arguments objectForKey:key];
+        NSString *keyString = dynamic_objc_cast<NSString>(key);
+        if (!keyString) {
+            errorMessage = @"Key value must be NSString";
+            break;
+        }
+
+        id value = [arguments objectForKey:keyString];
         auto serializedValue = WebKit::JavaScriptEvaluationResult::extract(value);
         if (!serializedValue) {
             errorMessage = @"Function argument values must be one of the following types, or contain only the following types: NSNumber, NSNull, NSDate, NSString, NSArray, and NSDictionary";
             break;
         }
 
-        argumentsMap->append({ key, WTFMove(*serializedValue) });
+        argumentsMap->append({ keyString, WTFMove(*serializedValue) });
     }
 
     if (errorMessage && handler) {
@@ -1421,7 +1430,7 @@ static WKMediaPlaybackState toWKMediaPlaybackState(WebKit::MediaPlaybackState me
         WTFMove(argumentsMap),
         forceUserGesture ? WebCore::ForceUserGesture::Yes : WebCore::ForceUserGesture::No,
         removeTransientActivation
-    }, frameID, Ref { *world->_contentWorld }, [handler] (auto&& result) {
+    }, frameID, Ref { *world->_contentWorld }, !!handler, [handler] (auto&& result) {
         if (!handler)
             return;
 
@@ -1927,8 +1936,8 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
     WebCore::FloatBoxExtent additionalInsets;
 #endif
 
-#if PLATFORM(MAC) && ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    _impl->updateContentInsetFillViews();
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    [self _updateFixedColorExtensionViews];
 #endif
 
     auto maximumViewportInsetSize = WebCore::FloatSize(maximumViewportInset.left + additionalInsets.left() + maximumViewportInset.right, maximumViewportInset.top + additionalInsets.top() + maximumViewportInset.bottom);
@@ -3021,6 +3030,10 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 
     _fixedContainerEdges = edges;
 
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    [self _updateFixedColorExtensionViews];
+#endif
+
     for (auto selector : changedSelectors)
         [self didChangeValueForKey:NSStringFromSelector(selector)];
 }
@@ -3067,7 +3080,114 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
         [self _removePDFPageNumberIndicator:*pluginIdentifier];
 }
 
+#endif // ENABLE(PDF_PAGE_NUMBER_INDICATOR)
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+
+- (WebCore::FloatBoxExtent)_obscuredInsetsForFixedColorExtension
+{
+#if PLATFORM(MAC)
+    return _impl->obscuredContentInsets();
+#else
+    auto obscuredInsets = [self _obscuredInsets];
+    return WebCore::FloatBoxExtent {
+        static_cast<float>(obscuredInsets.top),
+        static_cast<float>(obscuredInsets.right),
+        static_cast<float>(obscuredInsets.bottom),
+        static_cast<float>(obscuredInsets.left)
+    };
 #endif
+}
+
+- (CocoaView *)_containerForFixedColorExtension
+{
+#if PLATFORM(MAC)
+    return self;
+#else
+    return _scrollView.get();
+#endif
+}
+
+- (void)_updateFixedColorExtensionViews
+{
+    if (!_page || !_page->protectedPreferences()->contentInsetBackgroundFillEnabled())
+        return;
+
+    RetainPtr parentView = [self _containerForFixedColorExtension];
+    auto insets = [self _obscuredInsetsForFixedColorExtension];
+    auto updateExtensionView = [&](WebCore::BoxSide side) {
+        BOOL needsView = insets.at(side) > 0 && _fixedContainerEdges.fixedEdges.at(side);
+        RetainPtr extensionView = _fixedColorExtensionViews.at(side);
+        if (!needsView) {
+            [extensionView setHidden:YES];
+            return;
+        }
+
+        if (!extensionView) {
+            extensionView = adoptNS([CocoaView new]);
+#if PLATFORM(MAC)
+            [extensionView setWantsLayer:YES];
+#endif
+            [extensionView layer].name = [NSString stringWithFormat:@"Fixed color extension fill (%s)", [side] {
+                switch (side) {
+                case WebCore::BoxSide::Top:
+                    return "Top";
+                case WebCore::BoxSide::Right:
+                    return "Right";
+                case WebCore::BoxSide::Bottom:
+                    return "Bottom";
+                case WebCore::BoxSide::Left:
+                    return "Left";
+                default:
+                    ASSERT_NOT_REACHED();
+                    return "";
+                }
+            }()];
+            [parentView addSubview:extensionView.get()];
+            _fixedColorExtensionViews.setAt(side, extensionView);
+        }
+
+        RetainPtr predominantColor = cocoaColorOrNil(_fixedContainerEdges.predominantColors.at(side));
+        [extensionView setBackgroundColor:predominantColor.get() ?: [self underPageBackgroundColor]];
+        [extensionView setHidden:NO];
+    };
+
+    static constexpr std::array allBoxSides {
+        WebCore::BoxSide::Top,
+        WebCore::BoxSide::Left,
+        WebCore::BoxSide::Right,
+        WebCore::BoxSide::Bottom
+    };
+
+    for (auto side : allBoxSides)
+        updateExtensionView(side);
+
+    [self _updateFixedColorExtensionViewFrames];
+}
+
+- (void)_updateFixedColorExtensionViewFrames
+{
+    if (!_page || !_page->protectedPreferences()->contentInsetBackgroundFillEnabled())
+        return;
+
+    RetainPtr parentView = [self _containerForFixedColorExtension];
+    auto insets = [self _obscuredInsetsForFixedColorExtension];
+    WebCore::FloatRect bounds = self.bounds;
+
+    if (RetainPtr view = _fixedColorExtensionViews.top(); view && ![view isHidden])
+        [view setFrame:[parentView convertRect:CGRectMake(insets.left(), 0, bounds.width() - insets.left() - insets.right(), insets.top()) fromView:self]];
+
+    if (RetainPtr view = _fixedColorExtensionViews.left(); view && ![view isHidden])
+        [view setFrame:[parentView convertRect:CGRectMake(0, 0, insets.left(), bounds.height()) fromView:self]];
+
+    if (RetainPtr view = _fixedColorExtensionViews.right(); view && ![view isHidden])
+        [view setFrame:[parentView convertRect:CGRectMake(bounds.width() - insets.right(), 0, insets.right(), bounds.height()) fromView:self]];
+
+    if (RetainPtr view = _fixedColorExtensionViews.bottom(); view && ![view isHidden])
+        [view setFrame:[parentView convertRect:CGRectMake(insets.left(), bounds.height() - insets.bottom(), bounds.width() - insets.left() - insets.right(), insets.bottom()) fromView:self]];
+}
+
+#endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 
 @end
 
@@ -3247,8 +3367,10 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKCONTENTVIEW)
 
 - (void)_frames:(void (^)(_WKFrameTreeNode *))completionHandler
 {
-    _page->getAllFrames([completionHandler = makeBlockPtr(completionHandler), page = Ref { *_page.get() }] (WebKit::FrameTreeNodeData&& data) {
-        completionHandler(wrapper(API::FrameTreeNode::create(WTFMove(data), page.get())).get());
+    _page->getAllFrames([completionHandler = makeBlockPtr(completionHandler), page = Ref { *_page.get() }] (std::optional<WebKit::FrameTreeNodeData>&& data) {
+        if (!data)
+            return completionHandler(nil);
+        completionHandler(wrapper(API::FrameTreeNode::create(WTFMove(*data), page.get())).get());
     });
 }
 
@@ -3992,18 +4114,18 @@ static void convertAndAddHighlight(Vector<Ref<WebCore::SharedMemory>>& buffers, 
     auto sizeConstraint = (maxSize.height || maxSize.width) ? std::optional(WebCore::FloatSize(maxSize)) : std::nullopt;
     WebCore::ResourceRequest resourceRequest(request);
     auto url = resourceRequest.url();
-    _page->loadAndDecodeImage(request, sizeConstraint, maximumBytesFromNetwork, [completionHandler = makeBlockPtr(completionHandler), url](std::variant<WebCore::ResourceError, Ref<WebCore::ShareableBitmap>>&& result) mutable {
-        WTF::switchOn(WTFMove(result), [&] (WebCore::ResourceError&& error) {
-            if (error.isNull())
+    _page->loadAndDecodeImage(request, sizeConstraint, maximumBytesFromNetwork, [completionHandler = makeBlockPtr(completionHandler), url](Expected<Ref<WebCore::ShareableBitmap>, WebCore::ResourceError>&& result) mutable {
+        if (!result) {
+            if (result.error().isNull())
                 return completionHandler(nil, WebCore::internalError(url)); // This can happen if IPC fails.
-            completionHandler(nil, error.nsError());
-        }, [&] (Ref<WebCore::ShareableBitmap>&& bitmap) {
+            return completionHandler(nil, result.error().nsError());
+        }
+        Ref bitmap = result.value();
 #if PLATFORM(MAC)
-            completionHandler(adoptNS([[NSImage alloc] initWithCGImage:bitmap->makeCGImageCopy().get() size:bitmap->size()]).get(), nil);
+        completionHandler(adoptNS([[NSImage alloc] initWithCGImage:bitmap->makeCGImageCopy().get() size:bitmap->size()]).get(), nil);
 #else
-            completionHandler(adoptNS([[UIImage alloc] initWithCGImage:bitmap->makeCGImageCopy().get()]).get(), nil);
+        completionHandler(adoptNS([[UIImage alloc] initWithCGImage:bitmap->makeCGImageCopy().get()]).get(), nil);
 #endif
-        });
     });
 }
 

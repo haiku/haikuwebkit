@@ -940,7 +940,6 @@ static constexpr NSString *kPrefersFullScreenDimmingKey = @"WebKitPrefersFullScr
         _fullScreenState = WebKit::WaitingToEnterFullScreen;
 
         OBJC_ALWAYS_LOG(OBJC_LOGIDENTIFIER, "(QL) presentation updated");
-        completionHandler(true);
 
         manager->prepareQuickLookImageURL([strongSelf = retainPtr(self), self, window = retainPtr([webView window]), completionHandler = WTFMove(completionHandler), logIdentifier = OBJC_LOGIDENTIFIER] (URL&& url) mutable {
             UIWindowScene *scene = [window windowScene];
@@ -1475,6 +1474,12 @@ static constexpr NSString *kPrefersFullScreenDimmingKey = @"WebKitPrefersFullScr
 {
     if (_fullscreenViewController)
         [_fullscreenViewController videoControlsManagerDidChange];
+}
+
+- (void)videosInElementFullscreenChanged
+{
+    if (_fullscreenViewController)
+        [_fullscreenViewController videosInElementFullscreenChanged];
 }
 
 - (void)placeholderWillMoveToSuperview:(UIView *)superview

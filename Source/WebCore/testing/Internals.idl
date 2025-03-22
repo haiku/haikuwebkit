@@ -493,7 +493,6 @@ enum ContentsFormat {
     JSGenerateToJSObject,
 ] dictionary FrameDamage {
     unsigned long sequenceId;
-    boolean isValid = false;
     DOMRectReadOnly bounds;
     sequence<DOMRectReadOnly> rects;
 };
@@ -752,7 +751,7 @@ enum ContentsFormat {
     unsigned long remoteImagesCountForTesting();
     undefined setAsyncDecodingEnabledForTesting(HTMLImageElement element, boolean enabled);
     undefined setForceUpdateImageDataEnabledForTesting(HTMLImageElement element, boolean enabled);
-    undefined setHeadroomForTesting(HTMLImageElement element, float headroom);
+    undefined setHasHDRContentForTesting(HTMLImageElement element);
 
     [Conditional=WEB_CODECS] boolean hasPendingActivity(WebCodecsVideoDecoder decoder);
 
@@ -788,6 +787,8 @@ enum ContentsFormat {
     DOMString layerTreeAsText(Document document, optional unsigned short flags = 0);
 
     unsigned long long layerIDForElement(Element element);
+    unsigned long long horizontalScrollbarLayerID(optional Node? node = null);
+    unsigned long long verticalScrollbarLayerID(optional Node? node = null);
     
     sequence<unsigned long long> scrollingNodeIDForNode(optional Node? node = null);
 
@@ -1171,7 +1172,6 @@ enum ContentsFormat {
     undefined setPageIsInWindow(boolean isInWindow);
     boolean isPageActive();
 
-    [Conditional=WEB_RTC] undefined setH264HardwareEncoderAllowed(boolean allowed);
     [Conditional=WEB_RTC] undefined applyRotationForOutgoingVideoSources(RTCPeerConnection connection);
     [Conditional=WEB_RTC] undefined setWebRTCH265Support(boolean allowed);
     [Conditional=WEB_RTC] undefined setWebRTCVP9Support(boolean supportVP9Profile0, boolean supportVP9Profile2);

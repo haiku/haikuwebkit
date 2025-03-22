@@ -620,7 +620,7 @@ void NetworkProcess::destroySession(PAL::SessionID sessionID, CompletionHandler<
         Ref storageManager = session->storageManager();
         m_closingStorageManagers.add(storageManager.copyRef());
         storageManager->close([this, protectedThis = Ref { *this }, storageManager, completionHandler = std::exchange(completionHandler, { })]() mutable {
-            m_closingStorageManagers.remove(storageManager.ptr());
+            m_closingStorageManagers.remove(storageManager);
             completionHandler();
             stopRunLoopIfNecessary();
         });
@@ -1685,7 +1685,7 @@ void NetworkProcess::deleteWebsiteData(PAL::SessionID sessionID, OptionSet<Websi
         return;
 
     // Schedule a timer in case web processes do not exit on time.
-    RunLoop::protectedCurrent()->dispatchAfter(3_s, [protectedThis = Ref { *this }, taskIdentifier]() mutable {
+    RunLoop::currentSingleton().dispatchAfter(3_s, [protectedThis = Ref { *this }, taskIdentifier]() mutable {
         protectedThis->performDeleteWebsiteDataTask(taskIdentifier);
     });
 }

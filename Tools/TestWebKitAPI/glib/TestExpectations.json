@@ -182,6 +182,9 @@
             },
             "/webkit/WebKitWebView/run-async-js-functions": {
                 "expected": {"gtk": {"status": ["PASS", "TIMEOUT"], "bug": "webkit.org/b/284812"}}
+            },
+            "/webkit/WebKitWebView/save": {
+                "expected": {"wpe": {"status": ["CRASH"], "bug": "webkit.org/b/289436"}}
             }
         }
     },
@@ -505,13 +508,6 @@
             },
            "/webkit/WebKitFrame/javascript-values": {
                 "expected": {"gtk": {"status": ["TIMEOUT", "PASS"], "bug": "webkit.org/b/284812"}}
-            }
-        }
-    },
-    "TestInspector": {
-        "subtests": {
-            "/webkit/WebKitWebInspector/manual-attach-detach": {
-                "expected": {"gtk": { "status": ["FAIL"], "bug": "webkit.org/b/288385"}}
             }
         }
     }

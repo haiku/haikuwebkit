@@ -143,7 +143,6 @@ class TextIterator;
 class TextTrack;
 class TimeRanges;
 class TypeConversions;
-class UnsuspendableActiveDOMObject;
 class VoidCallback;
 class WebAnimation;
 class WebGLRenderingContext;
@@ -271,7 +270,7 @@ public:
     unsigned remoteImagesCountForTesting() const;
     void setAsyncDecodingEnabledForTesting(HTMLImageElement&, bool enabled);
     void setForceUpdateImageDataEnabledForTesting(HTMLImageElement&, bool enabled);
-    void setHeadroomForTesting(HTMLImageElement&, float headroom);
+    void setHasHDRContentForTesting(HTMLImageElement&);
 
 #if ENABLE(WEB_CODECS)
     bool hasPendingActivity(const WebCodecsVideoDecoder&) const;
@@ -551,6 +550,9 @@ public:
 
     ExceptionOr<String> horizontalScrollbarState(Node*) const;
     ExceptionOr<String> verticalScrollbarState(Node*) const;
+
+    ExceptionOr<uint64_t> horizontalScrollbarLayerID(Node*) const;
+    ExceptionOr<uint64_t> verticalScrollbarLayerID(Node*) const;
 
     ExceptionOr<String> scrollbarsControllerTypeForNode(Node*) const;
 
@@ -1004,10 +1006,6 @@ public:
     void setPageIsFocusedAndActive(bool);
     void setPageIsInWindow(bool);
     bool isPageActive() const;
-
-#if ENABLE(WEB_RTC)
-    void setH264HardwareEncoderAllowed(bool allowed);
-#endif
 
 #if ENABLE(MEDIA_STREAM)
     void stopObservingRealtimeMediaSource();
@@ -1572,7 +1570,6 @@ public:
     using DamagePropagation = Damage::Propagation;
     struct FrameDamage {
         unsigned sequenceId { 0 };
-        bool isValid { false };
         RefPtr<DOMRectReadOnly> bounds;
         Vector<Ref<DOMRectReadOnly>> rects;
     };

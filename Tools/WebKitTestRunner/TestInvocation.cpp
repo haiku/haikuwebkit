@@ -134,7 +134,6 @@ WKRetainPtr<WKMutableDictionaryRef> TestInvocation::createTestSettingsDictionary
     setValue(beginTestMessageBody, "UseFlexibleViewport", options().useFlexibleViewport());
     setValue(beginTestMessageBody, "DumpPixels", m_dumpPixels);
     setValue(beginTestMessageBody, "Timeout", static_cast<uint64_t>(m_timeout.milliseconds()));
-    setValue(beginTestMessageBody, "DumpJSConsoleLogInStdErr", m_dumpJSConsoleLogInStdErr);
     setValue(beginTestMessageBody, "additionalSupportedImageTypes", options().additionalSupportedImageTypes().c_str());
     auto allowedHostsValue = adoptWK(WKMutableArrayCreate());
     for (auto& host : TestController::singleton().allowedHosts())
@@ -379,11 +378,6 @@ void TestInvocation::didReceiveMessageFromInjectedBundle(WKStringRef messageName
 
     if (WKStringIsEqualToUTF8CString(messageName, "TextOutput") || WKStringIsEqualToUTF8CString(messageName, "FinalTextOutput")) {
         m_textOutput.append(toWTFString(stringValue(messageBody)));
-        return;
-    }
-
-    if (WKStringIsEqualToUTF8CString(messageName, "DumpToStdErr")) {
-        fprintf(stderr, "%s", toWTFString(stringValue(messageBody)).utf8().data());
         return;
     }
 
@@ -704,6 +698,11 @@ void TestInvocation::didReceiveMessageFromInjectedBundle(WKStringRef messageName
 
     if (WKStringIsEqualToUTF8CString(messageName, "WaitBeforeFinishingFullscreenExit")) {
         TestController::singleton().waitBeforeFinishingFullscreenExit();
+        return;
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "ScrollDuringEnterFullscreen")) {
+        TestController::singleton().scrollDuringEnterFullscreen();
         return;
     }
 
@@ -1455,6 +1454,14 @@ WKRetainPtr<WKTypeRef> TestInvocation::didReceiveSynchronousMessageFromInjectedB
 
     if (WKStringIsEqualToUTF8CString(messageName, "ShouldDumpBackForwardListsForAllWindows"))
         return adoptWK(WKBooleanCreate(m_shouldDumpBackForwardListsForAllWindows));
+
+    if (WKStringIsEqualToUTF8CString(messageName, "DumpChildFrameScrollPositions")) {
+        m_shouldDumpAllFrameScrollPositions = true;
+        return nullptr;
+    }
+
+    if (WKStringIsEqualToUTF8CString(messageName, "ShouldDumpAllFrameScrollPositions"))
+        return adoptWK(WKBooleanCreate(m_shouldDumpAllFrameScrollPositions));
 
     ASSERT_NOT_REACHED();
     return nullptr;

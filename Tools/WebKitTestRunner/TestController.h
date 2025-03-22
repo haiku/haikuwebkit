@@ -199,11 +199,12 @@ public:
     void dumpPolicyDelegateCallbacks() { m_dumpPolicyDelegateCallbacks = true; }
     void dumpFullScreenCallbacks() { m_dumpFullScreenCallbacks = true; }
     void waitBeforeFinishingFullscreenExit() { m_waitBeforeFinishingFullscreenExit = true; }
+    void scrollDuringEnterFullscreen() { m_scrollDuringEnterFullscreen = true; }
     void finishFullscreenExit();
     void requestExitFullscreenFromUIProcess(WKPageRef);
 
-    static bool willEnterFullScreen(WKPageRef, const void*);
-    bool willEnterFullScreen(WKPageRef);
+    static void willEnterFullScreen(WKPageRef, WKCompletionListenerRef, const void*);
+    void willEnterFullScreen(WKPageRef, WKCompletionListenerRef);
     static void beganEnterFullScreen(WKPageRef, WKRect initialFrame, WKRect finalFrame, const void*);
     void beganEnterFullScreen(WKPageRef, WKRect initialFrame, WKRect finalFrame);
     static void exitFullScreen(WKPageRef, const void*);
@@ -393,7 +394,9 @@ public:
     uint64_t serverTrustEvaluationCallbackCallsCount() const { return m_serverTrustEvaluationCallbackCallsCount; }
 
     void setShouldDismissJavaScriptAlertsAsynchronously(bool);
-    void handleJavaScriptAlert(WKPageRunJavaScriptAlertResultListenerRef);
+    void handleJavaScriptAlert(WKStringRef, WKPageRunJavaScriptAlertResultListenerRef);
+    void handleJavaScriptConfirm(WKStringRef, WKPageRunJavaScriptConfirmResultListenerRef);
+    void handleJavaScriptPrompt(WKStringRef, WKStringRef, WKPageRunJavaScriptPromptResultListenerRef);
     void abortModal();
 
     bool isDoingMediaCapture() const;
@@ -813,6 +816,7 @@ private:
     bool m_dumpPolicyDelegateCallbacks { false };
     bool m_dumpFullScreenCallbacks { false };
     bool m_waitBeforeFinishingFullscreenExit { false };
+    bool m_scrollDuringEnterFullscreen { false };
 
 #if PLATFORM(WPE)
     bool m_useWPEPlatformAPI { false };

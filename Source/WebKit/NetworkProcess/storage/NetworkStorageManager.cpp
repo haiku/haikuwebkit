@@ -119,7 +119,7 @@ static bool isEmptyOriginDirectory(const String& directory)
     if (children.isEmpty())
         return true;
 
-    if (children.size() >= 2)
+    if (children.size() > 2)
         return false;
 
     HashSet<String> invalidFileNames {
@@ -139,7 +139,7 @@ static void deleteEmptyOriginDirectory(const String& directory)
         return;
 
     if (isEmptyOriginDirectory(directory))
-        FileSystem::deleteFile(originFilePath(directory));
+        FileSystem::deleteNonEmptyDirectory(directory);
 
     FileSystem::deleteEmptyDirectory(directory);
     FileSystem::deleteEmptyDirectory(FileSystem::parentPath(directory));
@@ -292,10 +292,6 @@ void NetworkStorageManager::startReceivingMessageFromConnection(IPC::Connection&
 {
     ASSERT(RunLoop::isMain());
 
-    connection.addWorkQueueMessageReceiver(Messages::NetworkStorageManager::messageReceiverName(), m_queue.get(), *this);
-    m_connections.add(connection);
-    addAllowedSitesForConnection(connection.uniqueID(), allowedSites);
-
     protectedWorkQueue()->dispatch([this, protectedThis = Ref { *this }, connection = connection.uniqueID(), preferences]() mutable {
         assertIsCurrent(workQueue());
         ASSERT(!m_preferencesForConnections.contains(connection));
@@ -303,6 +299,10 @@ void NetworkStorageManager::startReceivingMessageFromConnection(IPC::Connection&
 
         RunLoop::protectedMain()->dispatch([protectedThis = WTFMove(protectedThis)] { });
     });
+
+    connection.addWorkQueueMessageReceiver(Messages::NetworkStorageManager::messageReceiverName(), m_queue.get(), *this);
+    m_connections.add(connection);
+    addAllowedSitesForConnection(connection.uniqueID(), allowedSites);
 }
 
 void NetworkStorageManager::stopReceivingMessageFromConnection(IPC::Connection& connection)
@@ -447,17 +447,17 @@ void NetworkStorageManager::prepareForEviction()
 {
     assertIsCurrent(workQueue());
 
-    RunLoop::protectedMain()->dispatch([this, weakThis = ThreadSafeWeakPtr { *this }]() mutable {
+    RunLoop::protectedMain()->dispatch([weakThis = ThreadSafeWeakPtr { *this }]() mutable {
         auto protectedThis = weakThis.get();
-        if (!protectedThis || m_closed || !m_process)
+        if (!protectedThis || protectedThis->m_closed || !protectedThis->m_process)
             return;
 
-        protectedProcess()->registrableDomainsWithLastAccessedTime(m_sessionID, [this, weakThis = WTFMove(weakThis)](auto result) mutable {
+        protectedThis->protectedProcess()->registrableDomainsWithLastAccessedTime(protectedThis->m_sessionID, [weakThis = WTFMove(weakThis)](auto result) mutable {
             auto protectedThis = weakThis.get();
-            if (!protectedThis || m_closed)
+            if (!protectedThis || protectedThis->m_closed)
                 return;
 
-            protectedWorkQueue()->dispatch([weakThis = WTFMove(weakThis), result = crossThreadCopy(WTFMove(result))]() mutable {
+            protectedThis->protectedWorkQueue()->dispatch([weakThis = WTFMove(weakThis), result = crossThreadCopy(WTFMove(result))]() mutable {
                 if (auto protectedThis = weakThis.get()) {
                     protectedThis->donePrepareForEviction(WTFMove(result));
                     RunLoop::protectedMain()->dispatch([protectedThis = WTFMove(protectedThis)] { });
@@ -720,16 +720,16 @@ void NetworkStorageManager::didFetchRegistrableDomainsForPersist(HashSet<WebCore
     if (m_closed)
         return;
 
-    protectedWorkQueue()->dispatch([this, weakThis = ThreadSafeWeakPtr { *this }, domains = crossThreadCopy(WTFMove(domains))]() mutable {
-        assertIsCurrent(workQueue());
-
+    protectedWorkQueue()->dispatch([weakThis = ThreadSafeWeakPtr { *this }, domains = crossThreadCopy(WTFMove(domains))]() mutable {
         auto protectedThis = weakThis.get();
         if (!protectedThis)
             return;
 
-        m_domainsExemptFromEviction = WTFMove(domains);
-        for (auto&& [origin, completionHandler] : std::exchange(m_persistCompletionHandlers, { }))
-            completionHandler(persistOrigin(origin));
+        assertIsCurrent(protectedThis->workQueue());
+
+        protectedThis->m_domainsExemptFromEviction = WTFMove(domains);
+        for (auto&& [origin, completionHandler] : std::exchange(protectedThis->m_persistCompletionHandlers, { }))
+            completionHandler(protectedThis->persistOrigin(origin));
     });
 }
 

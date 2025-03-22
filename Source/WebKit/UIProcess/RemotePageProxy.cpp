@@ -51,6 +51,10 @@
 #include <WebCore/RemoteUserInputEventData.h>
 #include <wtf/TZoneMallocInlines.h>
 
+#if ENABLE(FULLSCREEN_API)
+#include "WebFullScreenManagerProxy.h"
+#endif
+
 namespace WebKit {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RemotePageProxy);
@@ -92,7 +96,7 @@ void RemotePageProxy::injectPageIntoNewProcess()
 
     m_drawingArea = RemotePageDrawingAreaProxy::create(*drawingArea, m_process);
 #if ENABLE(FULLSCREEN_API)
-    m_fullscreenManager = RemotePageFullscreenManagerProxy::create(pageID(), page->fullScreenManager(), m_process);
+    m_fullscreenManager = RemotePageFullscreenManagerProxy::create(pageID(), page->protectedFullScreenManager().get(), m_process);
 #endif
     m_visitedLinkStoreRegistration = makeUnique<RemotePageVisitedLinkStoreRegistration>(*page, m_process);
 
@@ -116,7 +120,7 @@ void RemotePageProxy::processDidTerminate(WebProcessProxy& process, ProcessTermi
     if (CheckedPtr drawingArea = page->drawingArea())
         drawingArea->remotePageProcessDidTerminate(process.coreProcessIdentifier());
     if (RefPtr mainFrame = page->mainFrame())
-        mainFrame->remoteProcessDidTerminate(process);
+        mainFrame->remoteProcessDidTerminate(process, WebFrameProxy::ClearFrameTreeSyncData::Yes);
     page->dispatchProcessDidTerminate(process, reason);
 }
 

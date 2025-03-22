@@ -206,6 +206,9 @@ namespace JSC {
             call(function, OperationPtrTag);
         }
 
+        template<size_t minAlign, typename Bytecode>
+        Address computeBaseAddressForMetadata(const Bytecode&, GPRReg);
+
         template <typename Bytecode>
         void loadPtrFromMetadata(const Bytecode&, size_t offset, GPRReg);
 
@@ -477,7 +480,7 @@ namespace JSC {
         void emit_op_new_async_generator_func(const JSInstruction*);
         void emit_op_new_async_generator_func_exp(const JSInstruction*);
         void emit_op_new_object(const JSInstruction*);
-        void emit_op_new_regexp(const JSInstruction*);
+        void emit_op_new_reg_exp(const JSInstruction*);
         void emit_op_create_lexical_environment(const JSInstruction*);
         void emit_op_create_direct_arguments(const JSInstruction*);
         void emit_op_create_scoped_arguments(const JSInstruction*);

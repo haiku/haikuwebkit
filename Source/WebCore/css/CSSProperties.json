@@ -541,7 +541,7 @@
                 "high-priority": true,
                 "parser-function": "consumeDisplay",
                 "parser-grammar-unused": "[ <display-outside> || <display-inside> ] | <display-listitem> | <display-internal> | <display-box> | <display-legacy> | <-webkit-display>",
-                "parser-grammar-unused-reason": "Needs support for '||' groups and '&& groups."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
             },
             "specification": {
                 "category": "css-display",
@@ -620,7 +620,7 @@
                 "high-priority": true,
                 "parser-function": "consumeFontFamily",
                 "parser-grammar-unused": "[ <family-name> | <generic-family> | <-webkit-generic-family> ]#",
-                "parser-grammar-unused-reason": "Needs support for special 'family-name' processing."
+                "parser-grammar-unused-reason": "Needs support for primitive <family-name>."
             },
             "specification": {
                 "category": "css-fonts",
@@ -688,7 +688,7 @@
                 "parser-function": "consumeFontSizeAdjust",
                 "parser-function-allows-number-or-integer-input": true,
                 "parser-grammar-unused": "none | [ [ ex-height | cap-height | ch-width | ic-width | ic-height ]? [ from-font | <number [0,inf]> ] ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups and optionals.",
+                "parser-grammar-unused-reason": "Needs support for default values on optionals.",
                 "parser-grammar-comment": "Current spec grammar is 'none | <number [0,inf]>'"
             },
             "specification": {
@@ -713,7 +713,7 @@
                 "high-priority": true,
                 "parser-function": "consumeFontStyle",
                 "parser-grammar-unused": "normal | italic | [ oblique <angle>? ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for ordered groups with a keyword/literal first term differentiator."
             },
             "specification": {
                 "category": "css-fonts",
@@ -737,10 +737,8 @@
                 "font-property": true,
                 "high-priority": true,
                 "style-builder-converter": "FontWeight",
-                "parser-function": "consumeFontWeight",
-                "parser-function-allows-number-or-integer-input": true,
-                "parser-grammar-unused": "<font-weight-absolute> | bolder | lighter",
-                "parser-grammar-unused-reason": "Needs support for arbitrary ranges on <number>."
+                "parser-grammar": "<font-weight-absolute> | bolder | lighter",
+                "parser-exported": true
             },
             "specification": {
                 "category": "css-fonts-4",
@@ -824,7 +822,7 @@
                 "settings-flag": "cssTextBoxTrimEnabled",
                 "parser-function": "consumeTextBoxEdge",
                 "parser-grammar-unused": "auto | [ [ text | cap | ex | ideographic | ideographic-ink ] [ text | alphabetic | ideographic | ideographic-ink ]? ]",
-                "parser-grammar-unused-reason": "Needs support for 'groups' and 'optional'."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
             },
             "specification": {
                 "category": "css-inline",
@@ -1001,9 +999,7 @@
                 "font-description-name-for-methods": "VariantLigatures",
                 "font-property": true,
                 "high-priority": true,
-                "parser-function": "consumeFontVariantLigatures",
-                "parser-grammar-unused": "normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar": "normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> ]@(no-single-item-opt)"
             },
             "specification": {
                 "category": "css-fonts-4",
@@ -1080,9 +1076,7 @@
                 "font-description-name-for-methods": "VariantNumeric",
                 "font-property": true,
                 "high-priority": true,
-                "parser-function": "consumeFontVariantNumeric",
-                "parser-grammar-unused": "normal | [ <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar": "normal | [ <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero ]@(no-single-item-opt)"
             },
             "specification": {
                 "category": "css-fonts",
@@ -1099,9 +1093,8 @@
                 "font-description-name-for-methods": "VariantAlternates",
                 "font-property": true,
                 "high-priority": true,
-                "parser-function": "consumeFontVariantAlternates",
-                "parser-grammar-unused": "normal | [ stylistic(<feature-value-name>) || historical-forms || styleset(<feature-value-name>#) || character-variant(<feature-value-name>#) || swash(<feature-value-name>) || ornaments(<feature-value-name>) || annotation(<feature-value-name>) ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups and function notation."
+                "parser-grammar": "normal | [ stylistic(<feature-value-name>) || historical-forms || styleset(<feature-value-name>#) || character-variant(<feature-value-name>#) || swash(<feature-value-name>) || ornaments(<feature-value-name>) || annotation(<feature-value-name>) ]@(no-single-item-opt)",
+                "parser-exported": true
             },
             "specification": {
                 "category": "css-fonts-4",
@@ -1120,8 +1113,8 @@
                 "jis04",
                 "simplified",
                 "traditional",
-                "diagonal-fractions",
-                "stacked-fractions",
+                "full-width",
+                "proportional-width",
                 "ruby"
             ],
             "codegen-properties": {
@@ -1131,9 +1124,8 @@
                 "font-description-name-for-methods": "VariantEastAsian",
                 "font-property": true,
                 "high-priority": true,
-                "parser-function": "consumeFontVariantEastAsian",
-                "parser-grammar-unused": "normal | [ <east-asian-variant-values> || <east-asian-width-values> || ruby ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar": "normal | [ <east-asian-variant-values> || <east-asian-width-values> || ruby ]@(no-single-item-opt)",
+                "parser-exported": true
             },
             "specification": {
                 "category": "css-fonts-4",
@@ -1460,9 +1452,8 @@
                 "high-priority": true,
                 "sink-priority": true,
                 "style-builder-converter": "TextAutospace",
-                "parser-function": "consumeTextAutospace",
-                "parser-grammar-unused": "normal | auto | no-autospace | [ [ ideograph-alpha || ideograph-numeric || punctuation ] || [ insert | replace ] ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar": "normal | auto | no-autospace | [ ideograph-alpha || ideograph-numeric ]@(no-single-item-opt)",
+                "parser-grammar-comment": "Current spec grammar is 'normal | auto | no-autospace | [ [ ideograph-alpha || ideograph-numeric || punctuation ] || [ insert | replace ] ]'"
             },
             "status": "in development",
             "specification": {
@@ -1613,9 +1604,8 @@
                 "cascade-alias": "ruby-position",
                 "skip-style-builder": true,
                 "render-style-name-for-methods": "RubyPosition",
-                "parser-function": "consumeWebKitRubyPosition",
-                "parser-grammar-unused": "before | after | inter-character",
-                "parser-grammar-unused-reason": "Needs to support legacy behavior"
+                "parser-grammar": "before | after | inter-character@(aliased-to=legacy-inter-character)",
+                "parser-grammar-comment": "Current spec grammar is '[ alternate || [ over | under ] ] | inter-character'."
             },
             "specification": {
                 "category": "css-ruby",
@@ -1886,15 +1876,19 @@
             "animation-type": "not animatable",
             "initial": "normal",
             "values": [
-                "normal"
+                "normal",
+                "cover",
+                "contain",
+                "entry",
+                "exit",
+                "entry-crossing",
+                "exit-crossing"
             ],
             "codegen-properties": {
                 "animation-property": true,
                 "animation-name-for-methods": "RangeStart",
                 "separator": ",",
-                "parser-function": "consumeAnimationRangeStart",
-                "parser-grammar-unused": "[ normal | <length-percentage> | [ <custom-ident> || <length-percentage>?] ]#",
-                "parser-grammar-unused-reason": "Needs support for '||' groups.",
+                "parser-grammar": "<single-animation-range-start>#",
                 "settings-flag": "scrollDrivenAnimationsEnabled"
             },
             "specification": {
@@ -1906,15 +1900,19 @@
             "animation-type": "not animatable",
             "initial": "normal",
             "values": [
-                "normal"
+                "normal",
+                "cover",
+                "contain",
+                "entry",
+                "exit",
+                "entry-crossing",
+                "exit-crossing"
             ],
             "codegen-properties": {
                 "animation-property": true,
                 "animation-name-for-methods": "RangeEnd",
                 "separator": ",",
-                "parser-function": "consumeAnimationRangeEnd",
-                "parser-grammar-unused": "[ normal | <length-percentage> | [ <custom-ident> || <length-percentage>? ] ]#",
-                "parser-grammar-unused-reason": "Needs support for '||' groups.",
+                "parser-grammar": "<single-animation-range-end>#",
                 "settings-flag": "scrollDrivenAnimationsEnabled"
             },
             "specification": {
@@ -1934,9 +1932,7 @@
                 "animation-name-for-methods": "Timeline",
                 "style-builder-converter": "AnimationTimeline",
                 "settings-flag": "scrollDrivenAnimationsEnabled",
-                "parser-function": "consumeAnimationTimeline",
-                "parser-grammar-unused": "auto | none | <dashed-ident> | <scroll()> | <view()>",
-                "parser-grammar-unused-reason": "Needs support for function notation."
+                "parser-grammar": "<single-animation-timeline>#"
             },
             "specification": {
                 "category": "css-animations",
@@ -2080,9 +2076,7 @@
                 "fill-layer-property": true,
                 "separator": " ",
                 "disables-native-appearance": true,
-                "parser-function": "consumeBackgroundClip",
-                "parser-grammar-unused": "<single-background-clip>#",
-                "parser-grammar-unused-reason": "Needs support for settings-enabled keywords in the grammaer."
+                "parser-grammar": "<single-background-clip>#"
             },
             "specification": {
                 "category": "css-backgrounds",
@@ -2645,9 +2639,7 @@
                     "name": "border-radius",
                     "resolver": "bottom-left"
                 },
-                "parser-function": "consumeBorderRadiusCorner",
-                "parser-grammar-unused": "<length-percentage [0,inf]>{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "<length-percentage [0,inf]>{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-backgrounds",
@@ -2668,9 +2660,7 @@
                     "name": "border-radius",
                     "resolver": "bottom-right"
                 },
-                "parser-function": "consumeBorderRadiusCorner",
-                "parser-grammar-unused": "<length-percentage [0,inf]>{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "<length-percentage [0,inf]>{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-backgrounds",
@@ -2774,9 +2764,7 @@
                     "name": "border-radius",
                     "resolver": "end-end"
                 },
-                "parser-function": "consumeBorderRadiusCorner",
-                "parser-grammar-unused": "<length-percentage [0,inf]>{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "<length-percentage [0,inf]>{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-logical-props",
@@ -2793,9 +2781,7 @@
                     "name": "border-radius",
                     "resolver": "end-start"
                 },
-                "parser-function": "consumeBorderRadiusCorner",
-                "parser-grammar-unused": "<length-percentage [0,inf]>{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "<length-percentage [0,inf]>{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-logical-props",
@@ -2824,10 +2810,8 @@
                 "animation-wrapper": "LengthBoxWrapper",
                 "style-builder-custom": "All",
                 "disables-native-appearance": true,
-                "parser-function": "consumeBorderImageOutset",
-                "parser-function-allows-number-or-integer-input": true,
-                "parser-grammar-unused": "[ <length [0,inf]> | <number [0,inf]> ]{1,4}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "[ <number [0,inf]> | <length [0,inf]> ]{1,4}@(type=CSSQuadValue)",
+                "parser-exported": true
             },
             "specification": {
                 "category": "css-backgrounds",
@@ -2848,9 +2832,8 @@
                 "animation-wrapper-requires-override-parameters": ["CSSPropertyBorderImageRepeat", "&RenderStyle::borderImageHorizontalRule", "&RenderStyle::setBorderImageHorizontalRule", "&RenderStyle::borderImageVerticalRule", "&RenderStyle::setBorderImageVerticalRule"],
                 "style-builder-custom": "All",
                 "disables-native-appearance": true,
-                "parser-function": "consumeBorderImageRepeat",
-                "parser-grammar-unused": "[ stretch | repeat | round | space ]{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-exported": true,
+                "parser-grammar": "[ stretch | repeat | round | space ]{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-backgrounds",
@@ -2872,7 +2855,7 @@
                 "parser-function-allows-number-or-integer-input": true,
                 "parser-function-requires-current-property": true,
                 "parser-grammar-unused": "[ <number [0,inf]> | <percentage [0,inf]> ]{1,4} && fill?",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers, '&&' groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for different parsing based on the current shorthand."
             },
             "specification": {
                 "category": "css-backgrounds",
@@ -2912,7 +2895,7 @@
                 "parser-function-allows-number-or-integer-input": true,
                 "parser-function-requires-current-property": true,
                 "parser-grammar-unused": "[ <length-percentage [0,inf]> | <number [0,inf]> | auto ]{1,4}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar-unused-reason": "Needs support for different parsing based on the current shorthand."
             },
             "specification": {
                 "category": "css-backgrounds",
@@ -3384,9 +3367,7 @@
                     "name": "border-radius",
                     "resolver": "start-end"
                 },
-                "parser-function": "consumeBorderRadiusCorner",
-                "parser-grammar-unused": "<length-percentage [0,inf]>{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "<length-percentage [0,inf]>{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-logical-props",
@@ -3403,9 +3384,7 @@
                     "name": "border-radius",
                     "resolver": "start-start"
                 },
-                "parser-function": "consumeBorderRadiusCorner",
-                "parser-grammar-unused": "<length-percentage [0,inf]>{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "<length-percentage [0,inf]>{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-logical-props",
@@ -3476,9 +3455,7 @@
                     "name": "border-radius",
                     "resolver": "top-left"
                 },
-                "parser-function": "consumeBorderRadiusCorner",
-                "parser-grammar-unused": "<length-percentage [0,inf]>{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "<length-percentage [0,inf]>{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-backgrounds",
@@ -3499,9 +3476,7 @@
                     "name": "border-radius",
                     "resolver": "top-right"
                 },
-                "parser-function": "consumeBorderRadiusCorner",
-                "parser-grammar-unused": "<length-percentage [0,inf]>{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "<length-percentage [0,inf]>{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-backgrounds",
@@ -3616,7 +3591,7 @@
                 "style-builder-custom": "All",
                 "parser-function": "consumeBoxShadow",
                 "parser-grammar-unused": "none | <shadow>#",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups, {A} multipliers and optionals."
+                "parser-grammar-unused-reason": "Needs support for the strong value representation."
             },
             "specification": {
                 "category": "css-backgrounds",
@@ -3811,9 +3786,7 @@
                 "animation-wrapper": "ClipWrapper",
                 "animation-wrapper-requires-override-parameters": [],
                 "style-builder-custom": "All",
-                "parser-function": "consumeClip",
-                "parser-grammar-unused": "<rect()> | auto",
-                "parser-grammar-unused-reason": "Needs support for function notation."
+                "parser-grammar": "<rect()> | auto"
             },
             "specification": {
                 "category": "css-masking",
@@ -3843,7 +3816,7 @@
                 "style-builder-converter": "PathOperation",
                 "parser-function": "consumeClipPath",
                 "parser-grammar-unused": "<clip-source> | [ <basic-shape> || <geometry-box> ] | none",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form and default values in '||' groups."
             },
             "specification": {
                 "category": "css-masking",
@@ -3915,7 +3888,8 @@
                 "separator": ",",
                 "parser-function": "consumeContent",
                 "parser-grammar-unused": "none | normal | [ <image> | open-quote | close-quote | no-open-quote | no-close-quote | attr(<custom-ident>,<declaration-value>?) | counter(<counter-name>, <counter-style>?) | counters(<counter-name>, <string>, <counter-style>?) ]+",
-                "parser-grammar-unused-reason": "consumeContent is quite different than current spec"
+                "parser-grammar-unused-reason": "Needs support for ordered groups with a keyword/literal first term differentiator.",
+                "parser-grammar-comment": "consumeContent is quite different than current spec"
             },
             "specification": {
                 "category": "css-content",
@@ -4105,7 +4079,7 @@
                 "style-builder-custom": "All",
                 "parser-function": "consumeCounterIncrement",
                 "parser-grammar-unused": "[ <counter-name> <integer>? ]+ | none",
-                "parser-grammar-unused-reason": "Needs support ordered groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for default values on optionals."
             },
             "specification": {
                 "category": "css-lists",
@@ -4124,7 +4098,8 @@
                 "style-builder-custom": "All",
                 "parser-function": "consumeCounterReset",
                 "parser-grammar-unused": "[ <counter-name> <integer>? ]+ | none",
-                "parser-grammar-unused-reason": "Needs support for ordered groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for default values on optionals.",
+                "parser-grammar-comment": "Current spec grammar is '[ <counter-name> <integer>? | <reversed-counter-name> <integer>? ]+ | none'"
             },
             "specification": {
                 "category": "css-lists",
@@ -4143,7 +4118,7 @@
                 "style-builder-custom": "All",
                 "parser-function": "consumeCounterSet",
                 "parser-grammar-unused": "[ <counter-name> <integer>? ]+ | none",
-                "parser-grammar-unused-reason": "Needs support for ordered groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for default values on optionals."
             },
             "specification": {
                 "category": "css-lists",
@@ -4212,7 +4187,7 @@
                 "style-builder-custom": "All",
                 "parser-function": "consumeCursor",
                 "parser-grammar-unused": "[ [ <url> [ <x> <y> ]? ]#{0,} [ <<values>> ] ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '#{A,}' multipliers and optionals."
+                "parser-grammar-unused-reason": "Needs support for different parsing based on the current mode."
             },
             "specification": {
                 "category": "css-ui",
@@ -4322,7 +4297,7 @@
                 "style-builder-converter": "DynamicRangeLimit",
                 "parser-function": "consumeDynamicRangeLimit",
                 "parser-grammar-unused": "<<values>> | <dynamic-range-limit-mix()>",
-                "parser-grammar-unused-reason": "Needs support for functional notation."
+                "parser-grammar-unused-reason": "Needs support for the strong value representation and recursive grammars."
            },
            "specification": {
                "category": "css-color",
@@ -4366,9 +4341,8 @@
                 "style-builder-custom": "All",
                 "svg": true,
                 "color-property": true,
-                "parser-function": "consumePaint",
-                "parser-grammar-unused": "none | <color> | [ <url> [ none | <color> ]? ] | context-fill | context-stroke",
-                "parser-grammar-unused-reason": "Needs support for ordered groups and optionals. Also spec grammar does not match the current implementation.",
+                "parser-grammar": "none | <color> | [ <url> [ none | <color> ]? ]",
+                "parser-grammar-comment": "Current spec grammar is 'none | <color> | [ <url> [ none | <color> ]? ] | context-fill | context-stroke'",
                 "comment": "Also specified (with different grammar) in CSS Fill and Stroke Module Level 3"
             },
             "specification": {
@@ -4509,9 +4483,7 @@
             ],
             "codegen-properties": {
                 "style-builder-converter": "HangingPunctuation",
-                "parser-function": "consumeHangingPunctuation",
-                "parser-grammar-unused": "none | [ first || [ force-end | allow-end ] || last ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar": "none | [ first || [ force-end | allow-end ] || last ]@(preserve-order no-single-item-opt)"
             },
             "specification": {
                 "category": "css-text",
@@ -4889,7 +4861,7 @@
                 "settings-flag": "cssLineFitEdgeEnabled",
                 "parser-function": "consumeLineFitEdge",
                 "parser-grammar-unused": "leading | [ [ text | cap | ex | ideographic | ideographic-ink ] [ text | alphabetic | ideographic | ideographic-ink ]? ]",
-                "parser-grammar-unused-reason": "Needs support for 'groups' and 'optional'."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
             },
             "specification": {
                 "category": "css-inline",
@@ -5078,9 +5050,8 @@
             ],
             "codegen-properties": {
                 "style-builder-converter": "ListStyleType",
-                "parser-function": "consumeListStyleType",
-                "parser-grammar-unused": "<<values>> | <string> | <custom-ident>",
-                "parser-grammar-unused-reason": "custom-ident should be consumed depending on settings."
+                "parser-grammar": "<counter-style> | <string> | none",
+                "parser-exported": true
             },
             "specification": {
                 "category": "css-lists",
@@ -5327,7 +5298,7 @@
                 "style-builder-converter": "MarginTrim",
                 "parser-function": "consumeMarginTrim",
                 "parser-grammar-unused": "none | block | inline | [ block-start || inline-start || block-end || inline-end ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
             },
             "specification": {
                 "category": "css-box-4",
@@ -5450,9 +5421,7 @@
                 ],
                 "animation-wrapper": "LengthBoxWrapper",
                 "style-builder-custom": "All",
-                "parser-function": "consumeBorderImageOutset",
-                "parser-grammar-unused": "[ <number [0,inf]> | <length [0,inf]> ]{1,4}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "[ <number [0,inf]> | <length [0,inf]> ]{1,4}@(type=CSSQuadValue)"
 
             },
             "specification": {
@@ -5476,9 +5445,7 @@
                 "animation-wrapper": "NinePieceImageRepeatWrapper",
                 "animation-wrapper-requires-override-parameters": ["CSSPropertyMaskBorderRepeat", "&RenderStyle::maskBorderHorizontalRule", "&RenderStyle::setMaskBorderHorizontalRule", "&RenderStyle::maskBorderVerticalRule", "&RenderStyle::setMaskBorderVerticalRule"],
                 "style-builder-custom": "All",
-                "parser-function": "consumeBorderImageRepeat",
-                "parser-grammar-unused": "[ stretch | repeat | space | round ]{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "[ stretch | repeat | round | space ]{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-masking",
@@ -5501,7 +5468,7 @@
                 "parser-function": "consumeBorderImageSlice",
                 "parser-function-requires-current-property": true,
                 "parser-grammar-unused": "[ <number [0,inf]> | <percentage [0,inf]> ]{1,4} && fill?",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers, '&&' groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for different parsing based on the current shorthand."
             },
             "specification": {
                 "category": "css-masking",
@@ -5544,7 +5511,7 @@
                 "parser-function": "consumeBorderImageWidth",
                 "parser-function-requires-current-property": true,
                 "parser-grammar-unused": "[ <length-percentage [0,inf]> | <number [0,inf]> | auto ]{1,4}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar-unused-reason": "Needs support for different parsing based on the current shorthand."
             },
             "specification": {
                 "category": "css-masking",
@@ -5814,28 +5781,6 @@
                 "category": "css-masking",
                 "url": "https://drafts.fxtf.org/css-masking-1/#propdef-mask-type"
             }
-        },
-        "masonry-auto-flow": {
-            "animation-type": "not animatable (needs triage)",
-            "initial": "pack definite-first",
-            "values": [
-                "pack",
-                "next",
-                "definite-first",
-                "ordered"
-            ],
-            "codegen-properties": {
-                "style-builder-converter": "MasonryAutoFlow",
-                "settings-flag": "masonryEnabled",
-                "parser-function": "consumeMasonryAutoFlow",
-                "parser-grammar-unused": "[ pack | next ] || [ definite-first | ordered ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
-            },
-            "specification": {
-                "category": "css-grid",
-                "url": "https://drafts.csswg.org/css-grid-3/#masonry-auto-flow"
-            },
-            "status": "experimental"
         },
         "math-style": {
             "animation-type": "not animatable",
@@ -6372,7 +6317,7 @@
                 "settings-flag": "cssMotionPathEnabled",
                 "parser-function": "consumeOffsetPath",
                 "parser-grammar-unused": "none | <ray()> | <path()> | <url> | [ <basic-shape> && <coord-box>? ] | <coord-box>",
-                "parser-grammar-unused-reason": "Needs support for '||' groups, '&&' groups, optionals and function notation."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form and the strong value representation."
             },
             "specification": {
                 "category": "css-motion-path",
@@ -6447,7 +6392,7 @@
                 "settings-flag": "cssMotionPathEnabled",
                 "parser-function": "consumeOffsetRotate",
                 "parser-grammar-unused": "[ auto | reverse ] || <angle>",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar-unused-reason": "Needs support for using custom types for '||' groups."
             },
             "specification": {
                 "category": "css-motion-path",
@@ -7099,7 +7044,7 @@
                 "style-builder-converter": "PaintOrder",
                 "parser-function": "consumePaintOrder",
                 "parser-grammar-unused": "normal | [ fill || stroke || markers ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
             },
             "status": "supported",
             "specification": {
@@ -7169,7 +7114,7 @@
                 "style-builder-converter": "Quotes",
                 "parser-function": "consumeQuotes",
                 "parser-grammar-unused": "auto | none | [ <string> <string> ]+",
-                "parser-grammar-unused-reason": "Needs support for ordered groups."
+                "parser-grammar-unused-reason": "Needs support for flattening order group into parent list."
             },
             "specification": {
                 "category": "css-content",
@@ -7388,9 +7333,8 @@
                 "style-builder-custom": "All",
                 "svg": true,
                 "color-property": true,
-                "parser-function": "consumePaint",
-                "parser-grammar-unused": "none | <color> | [ <url> [ none | <color> ]? ] | context-fill | context-stroke",
-                "parser-grammar-unused-reason": "Needs support for ordered groups and optionals. Also spec grammar does not match the current implementation.",
+                "parser-grammar": "none | <color> | [ <url> [ none | <color> ]? ]",
+                "parser-grammar-comment": "Current spec grammar is 'none | <color> | [ <url> [ none | <color> ]? ] | context-fill | context-stroke'",
                 "comment": "Also specified (with different grammar) in CSS Fill and Stroke Module Level 3"
             },
             "specification": {
@@ -7414,9 +7358,9 @@
                 "svg": true,
                 "parser-function": "consumeStrokeDasharray",
                 "parser-function-allows-number-or-integer-input": true,
-                "parser-grammar-unused": "none | [ [ <length-percentage> | <number> ]+ ]#",
+                "parser-grammar-unused": "none | [ [ <length-percentage [0,inf] unitless-zero=forbidden> | <number [0,inf]> ]+ ]#",
                 "parser-grammar-unused-reason": "Needs support for stacked multipliers.",
-                "comment": "Also specified (with different grammar) in CSS Fill and Stroke Module Level 3"
+                "parser-grammar-comment": "Also specified (with different grammar) in CSS Fill and Stroke Module Level 3"
             },
             "specification": {
                 "category": "svg",
@@ -7565,13 +7509,16 @@
                 "spell-out",
                 "digits",
                 "literal-punctuation",
-                "no-punctuation"
+                "no-punctuation",
+                {
+                    "value": "none",
+                    "status": "non-standard"
+                }
             ],
             "codegen-properties": {
                 "style-builder-converter": "SpeakAs",
-                "parser-function": "consumeSpeakAs",
-                "parser-grammar-unused": "normal | [ spell-out || digits || [ literal-punctuation | no-punctuation ] ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar": "none | [ [ normal | spell-out ] || digits || [ literal-punctuation | no-punctuation ] ]@(no-single-item-opt)",
+                "parser-grammar-comment": "Current spec grammar is 'normal | [ spell-out || digits || [ literal-punctuation | no-punctuation ] ]'."
             },
             "specification": {
                 "category": "css-speech",
@@ -7743,9 +7690,7 @@
                 "animation-wrapper": "TextIndentWrapper",
                 "animation-wrapper-requires-override-parameters": [],
                 "style-builder-custom": "All",
-                "parser-function": "consumeTextIndent",
-                "parser-grammar-unused": "[ <length-percentage> ] && hanging? && each-line?",
-                "parser-grammar-unused-reason": "Needs support for '&&' groups and optionals."
+                "parser-grammar": "<length-percentage unitless=allowed> && hanging? && each-line?"
             },
             "specification": {
                 "category": "css-text",
@@ -7806,8 +7751,8 @@
                 "style-builder-custom": "All",
                 "parser-function": "consumeTextShadow",
                 "parser-grammar-unused": "none | [ <color>? && <length>{2,3} ]#",
-                "parser-grammar-unused-reason": "Needs support for '&&' groups, '{A,B} multipliers and optionals.",
-                "comment": "FIXME: Current implementation is a bit closer to box-shadow, where the third (and optional) length representing blur radius is non-negative."
+                "parser-grammar-unused-reason": "Needs support for the strong value representation.",
+                "parser-grammar-comment": "FIXME: Current implementation is a bit closer to box-shadow, where the third (and optional) length representing blur radius is non-negative."
             },
             "specification": {
                 "category": "css-text-decor",
@@ -7827,13 +7772,11 @@
                 "none"
             ],
             "codegen-properties": {
-                "style-builder-converter": "TextTransform",
-                "parser-function": "consumeTextTransform",
-                "parser-grammar-unused": "none | [[capitalize | uppercase | lowercase ] || full-width || full-size-kana]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups.",
                 "aliases": [
                     "-epub-text-transform"
-                ]
+                ],
+                "style-builder-converter": "TextTransform",
+                "parser-grammar": "none | [ [ capitalize | uppercase | lowercase ] || full-width || full-size-kana ]@(no-single-item-opt)"
             },
             "specification": {
                 "category": "css-text",
@@ -8268,7 +8211,7 @@
                 "style-builder-converter": "WillChange",
                 "parser-function": "consumeWillChange",
                 "parser-grammar-unused": "auto | [ scroll-position | contents | <custom-ident excluding=will-change,none,all,auto,scroll-position,contents> ]#",
-                "parser-grammar-unused-reason": "Current implementation stores supported CSS property names passed to <custom-ident> as specially, something the current generator does not support. One possibility would be to introduce a new builtin production <css-property-name> that does this and use that here."
+                "parser-grammar-unused-reason": "Needs support for CSS property names in the value of a property."
             },
             "specification": {
                 "category": "css-will-change",
@@ -8441,9 +8384,7 @@
                 "animation-wrapper": "AspectRatioWrapper",
                 "animation-wrapper-requires-override-parameters": [],
                 "style-builder-custom": "All",
-                "parser-function": "consumeAspectRatio",
-                "parser-grammar-unused": "auto || <ratio>",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar": "auto || <ratio>"
             },
             "specification": {
                 "category": "css-sizing",
@@ -8477,10 +8418,8 @@
                     "name": "contain-intrinsic-size",
                     "resolver": "vertical"
                 },
-                "parser-function": "consumeContainIntrinsicSize",
-                "parser-grammar-unused": "none | <length> | [ auto && <length> ]",
-                "parser-grammar-unused-reason": "Needs support for '&&' groups.",
-                "comment": "Should ensure generator simplifies to 'none | [ <length> && auto? ]"
+                "parser-grammar": "[ auto? [ none | <length [0,inf]> ] ]@(type=CSSValuePair)",
+                "parser-exported": true
             },
             "specification": {
                 "category": "css-sizing",
@@ -8502,11 +8441,9 @@
                     "name": "contain-intrinsic-size",
                     "resolver": "horizontal"
                 },
-                "parser-function": "consumeContainIntrinsicSize",
-                "parser-grammar-unused": "auto? [none | <<length>>]",
-                "parser-grammar-unused-reason": "Needs support for '&&' groups.",
-                "comment": "Should ensure generator simplifies to 'none | [ <length> && auto? ]"
-            },
+                "parser-grammar": "[ auto? [ none | <length [0,inf]> ] ]@(type=CSSValuePair)",
+                "parser-exported": true
+             },
             "specification": {
                 "category": "css-sizing",
                 "url": "https://drafts.csswg.org/css-sizing-4/#intrinsic-size-override"
@@ -8525,10 +8462,7 @@
                     "name": "contain-intrinsic-size",
                     "resolver": "block"
                 },
-                "parser-function": "consumeContainIntrinsicSize",
-                "parser-grammar-unused": "auto? [none | <<length>>]",
-                "parser-grammar-unused-reason": "Needs support for '&&' groups.",
-                "comment": "Should ensure generator simplifies to 'none | [ <length> && auto? ]"
+                "parser-grammar": "[ auto? [ none | <length [0,inf]> ] ]@(type=CSSValuePair)"
             },
             "specification": {
                 "category": "css-sizing",
@@ -8548,10 +8482,7 @@
                     "name": "contain-intrinsic-size",
                     "resolver": "inline"
                 },
-                "parser-function": "consumeContainIntrinsicSize",
-                "parser-grammar-unused": "none | <length> | [ auto && <length> ]",
-                "parser-grammar-unused-reason": "Needs support for '&&' groups.",
-                "comment": "Should ensure generator simplifies to 'none | [ <length> && auto? ]"
+                "parser-grammar": "[ auto? [ none | <length [0,inf]> ] ]@(type=CSSValuePair)"
             },
             "specification": {
                 "category": "css-sizing",
@@ -8564,14 +8495,11 @@
             "codegen-properties": {
                 "style-builder-converter": "Contain",
                 "render-style-initial": "initialContainment",
-                "parser-function": "consumeContain",
-                "parser-grammar-unused": "none | strict | content | [ size || layout || paint ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups.",
-                "comment": "Implementation also supports 'inline-size' and 'style'"
+                "parser-grammar": "none | strict | content | [ [size | inline-size] || layout || style || paint ]@(no-single-item-opt)"
             },
             "specification": {
                 "category": "css-contain",
-                "url": "https://drafts.csswg.org/css-contain-1/"
+                "url": "https://drafts.csswg.org/css-contain-2/#contain-property"
             }
         },
         "container": {
@@ -8868,8 +8796,8 @@
                 "style-builder-converter": "Reflection",
                 "parser-function": "consumeReflect",
                 "parser-grammar-unused": "none | [ [ above | below | left | right ] <length-percentage>? <border-image>? ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups and optionals."
-                
+                "parser-grammar-unused-reason": "Needs support for default values on optionals and property references."
+
             },
             "status": "non-standard"
         },
@@ -8881,7 +8809,7 @@
                 "animation-wrapper": "ShadowWrapper",
                 "parser-function": "consumeWebkitBoxShadow",
                 "parser-grammar-unused": "none | <shadow>#",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups, {A} multipliers and optionals.",
+                "parser-grammar-unused-reason": "Needs support for the strong value representation.",
                 "comment": "Implementation does not actually differ from box-shadow as described in status."
             },
             "status": {
@@ -9167,7 +9095,7 @@
                 "animation-wrapper-requires-additional-parameters": ["&RenderStyle::hasAutoColumnWidth", "&RenderStyle::setHasAutoColumnWidth", "0.0f"],
                 "style-builder-converter": "ComputedLength<float>",
                 "auto-functions": true,
-                "parser-grammar": "auto | <length [0,inf] mode=strict>",
+                "parser-grammar": "auto | <length [0,inf]>",
                 "parser-exported": true
             },
             "specification":  {
@@ -9270,7 +9198,7 @@
                 "style-builder-converter": "FilterOperations",
                 "parser-function": "consumeFilter",
                 "parser-grammar-unused": "none | <filter-value-list>",
-                "parser-grammar-unused-reason": "Needs support for functional syntax groupings."
+                "parser-grammar-unused-reason": "Needs support for the strong value representation."
             },
             "specification":  {
                 "category": "css-filters",
@@ -9290,7 +9218,7 @@
                 "style-builder-converter": "AppleColorFilterOperations",
                 "parser-function": "consumeAppleColorFilter",
                 "parser-grammar-unused": "none | <-apple-color-filter-value-list>",
-                "parser-grammar-unused-reason": "Needs support for functional syntax groupings."
+                "parser-grammar-unused-reason": "Needs support for the strong value representation."
             },
             "status": {
                 "status": "non-standard"
@@ -9324,7 +9252,7 @@
                 "style-builder-converter": "ContentAlignmentData",
                 "parser-function": "consumeAlignContent",
                 "parser-grammar-unused": "normal | <baseline-position> | <content-distribution> | [ <overflow-position>? <content-position> ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups and optionals",
+                "parser-grammar-unused-reason": "Needs support for default values on optionals.",
                 "comment": "Alternate definition in css-flexbox - flex-start | flex-end | center | space-between | space-around | stretch"
             },
             "specification": {
@@ -9359,7 +9287,7 @@
                 "style-builder-converter": "SelfOrDefaultAlignmentData",
                 "parser-function": "consumeAlignItems",
                 "parser-grammar-unused": "normal | stretch | <baseline-position> | [ <overflow-position>? <self-position> ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups and optionals.",
+                "parser-grammar-unused-reason": "Needs support for default values on optionals.",
                 "comment": "Alternate definition in css-flexbox - flex-start | flex-end | center | baseline | stretch"
             },
             "specification": {
@@ -9396,7 +9324,7 @@
                 "style-builder-converter": "SelfOrDefaultAlignmentData",
                 "parser-function": "consumeAlignSelf",
                 "parser-grammar-unused": "auto | normal | stretch | <baseline-position> | [ <overflow-position>? <self-position> ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups and optionals.",
+                "parser-grammar-unused-reason": "Needs support for default values on optionals.",
                 "comment": "Alternate definition in css-flexbox - auto | flex-start | flex-end | center | baseline | stretch"
             },
             "specification": {
@@ -9589,7 +9517,7 @@
                 "style-builder-converter": "ContentAlignmentData",
                 "parser-function": "consumeJustifyContent",
                 "parser-grammar-unused": "normal | <content-distribution> | [ <overflow-position>? [ <content-position> | left | right ] ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups and optionals.",
+                "parser-grammar-unused-reason": "Needs support for default values on optionals.",
                 "comment": "Alternate definition in css-flexbox - flex-start | flex-end | center | space-between | space-around"
             },
             "specification": {
@@ -9605,7 +9533,7 @@
                 "animation-wrapper": "FilterWrapper",
                 "parser-function": "consumeFilter",
                 "parser-grammar-unused": "none | <filter-value-list>",
-                "parser-grammar-unused-reason": "Needs support for functional syntax groupings."
+                "parser-grammar-unused-reason": "Needs support for the strong value representation."
             },
             "status": {
                 "status": "experimental"
@@ -9624,7 +9552,7 @@
                 "style-builder-converter": "FilterOperations",
                 "parser-function": "consumeFilter",
                 "parser-grammar-unused": "none | <filter-value-list>",
-                "parser-grammar-unused-reason": "Needs support for functional syntax groupings.",
+                "parser-grammar-unused-reason": "Needs support for the strong value representation.",
                 "settings-flag": "cssUnprefixedBackdropFilterEnabled"
             },
             "status": {
@@ -9652,7 +9580,7 @@
                 "style-builder-converter": "SelfOrDefaultAlignmentData",
                 "parser-function": "consumeJustifySelf",
                 "parser-grammar-unused": "auto | normal | stretch | <baseline-position> | [ <overflow-position>? [ <self-position> | left | right ] ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for default values on optionals."
             },
             "specification": {
                 "category": "css-align",
@@ -9669,7 +9597,7 @@
                 "style-builder-converter": "SelfOrDefaultAlignmentData",
                 "parser-function": "consumeJustifyItems",
                 "parser-grammar-unused": "[ normal | stretch | <baseline-position> | [ <overflow-position>? [ <self-position> | left | right ] ] | legacy | legacy ] && [ left | right | center ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for default values on optionals."
             },
             "specification": {
                 "category": "css-align",
@@ -9752,7 +9680,7 @@
                 "parser-function": "consumeGridTrackList",
                 "parser-function-requires-additional-parameters": ["GridAuto"],
                 "parser-grammar-unused": "<track-size>+",
-                "parser-grammar-unused-reason": "Needs support for functional syntax groupings."
+                "parser-grammar-unused-reason": "Needs investigation."
             },
             "specification": {
                 "category": "css-grid",
@@ -9769,7 +9697,7 @@
                 "parser-function": "consumeGridTrackList",
                 "parser-function-requires-additional-parameters": ["GridAuto"],
                 "parser-grammar-unused": "<track-size>+",
-                "parser-grammar-unused-reason": "Needs support for functional syntax groupings."
+                "parser-grammar-unused-reason": "Needs investigation."
             },
             "specification": {
                 "category": "css-grid",
@@ -9784,7 +9712,7 @@
                 "style-builder-converter": "GridPosition",
                 "parser-function": "consumeGridLine",
                 "parser-grammar-unused": "<grid-line>",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups, '||' groups and optionals"
+                "parser-grammar-unused-reason": "Needs support for ordered groups with a keyword/literal first term differentiator."
             },
             "specification": {
                 "category": "css-grid",
@@ -9799,7 +9727,7 @@
                 "style-builder-converter": "GridPosition",
                 "parser-function": "consumeGridLine",
                 "parser-grammar-unused": "<grid-line>",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups, '||' groups and optionals"
+                "parser-grammar-unused-reason": "Needs support for ordered groups with a keyword/literal first term differentiator."
             },
             "specification": {
                 "category": "css-grid",
@@ -9828,7 +9756,7 @@
                 "style-builder-conditional-converter": "GridTrackList",
                 "parser-function": "consumeGridTemplatesRowsOrColumns",
                 "parser-grammar-unused": "none | <track-list> | <auto-track-list>",
-                "parser-grammar-unused-reason": "Needs support for optionals and functional syntax groupings."
+                "parser-grammar-unused-reason": "Needs investigation."
             },
             "specification": {
                 "category": "css-grid",
@@ -9844,7 +9772,7 @@
                 "style-builder-conditional-converter": "GridTrackList",
                 "parser-function": "consumeGridTemplatesRowsOrColumns",
                 "parser-grammar-unused": "none | <track-list> | <auto-track-list>",
-                "parser-grammar-unused-reason": "Needs support for optionals and functional syntax groupings."
+                "parser-grammar-unused-reason": "Needs investigation."
             },
             "specification": {
                 "category": "css-grid",
@@ -9859,7 +9787,7 @@
                 "style-builder-converter": "GridPosition",
                 "parser-function": "consumeGridLine",
                 "parser-grammar-unused": "<grid-line>",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups, '||' groups and optionals"
+                "parser-grammar-unused-reason": "Needs support for ordered groups with a keyword/literal first term differentiator."
             },
             "specification": {
                 "category": "css-grid",
@@ -9874,7 +9802,7 @@
                 "style-builder-converter": "GridPosition",
                 "parser-function": "consumeGridLine",
                 "parser-grammar-unused": "<grid-line>",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups, '||' groups and optionals"
+                "parser-grammar-unused-reason": "Needs support for ordered groups with a keyword/literal first term differentiator."
             },
             "specification": {
                 "category": "css-grid",
@@ -9914,7 +9842,7 @@
                 "style-builder-custom": "All",
                 "parser-function": "consumeGridTemplateAreas",
                 "parser-grammar-unused": "none | <string>+",
-                "parser-grammar-unused-reason": "Needs support for parsing nested grammars in <string> values."
+                "parser-grammar-unused-reason": "Needs support for nested grammars in <string> values."
             },
             "specification": {
                 "category": "css-grid",
@@ -9928,7 +9856,7 @@
                 "style-builder-converter": "GridAutoFlow",
                 "parser-function": "consumeGridAutoFlow",
                 "parser-grammar-unused": "[ row | column ] || dense",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
             },
             "specification": {
                 "category": "css-grid",
@@ -10032,10 +9960,8 @@
             ],
             "codegen-properties": {
                 "style-builder-converter": "InitialLetter",
-                "parser-function": "consumeWebkitInitialLetter",
-                "parser-grammar-unused": "normal | <number [0,inf]>{1,2}",
-                "parser-grammar-comment": "Spec does not match our implementation. Spec is 'normal | [ <number [1,inf]> <integer [1,inf]> ] | [ <number [1,inf]> && [ drop | raise ]? ]'",
-                "parser-grammar-unused-reason": "Needs support for ordered groups, '&&' groups and additional range restrictions for number and integer."
+                "parser-grammar": "normal | <number [0,inf]>{1,2}@(type=CSSValuePair default=previous)",
+                "parser-grammar-comment": "Spec does not match our implementation. Spec is 'normal | [ <number [1,inf]> <integer [1,inf]> ] | [ <number [1,inf]> && [ drop | raise ]? ]'"
             },
             "status": {
                 "status": "experimental"
@@ -10063,7 +9989,7 @@
                 "style-builder-converter": "LineBoxContain",
                 "parser-function": "consumeWebkitLineBoxContain",
                 "parser-grammar-unused": "none | [ block || inline || font || glyphs || replaced || inline-box || initial-letter ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar-unused-reason": "Needs support for using custom types for '||' groups."
             },
             "status": {
                 "status": "obsolete",
@@ -10362,7 +10288,7 @@
                 "top-priority-reason": "This is a top priority property to ensure that its value can be checked when resolving colors.",
                 "parser-function": "consumeColorScheme",
                 "parser-grammar-unused": "normal | [ [ light | dark | <custom-ident excluding=light,dark,normal,only> ]+ && only? ]",
-                "parser-grammar-unused-reason": "Needs support for '&&' groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for the strong value representation."
             },
             "specification": {
                 "category": "css-color-adjust",
@@ -10577,9 +10503,8 @@
                 "aliases": [
                     "-webkit-text-decoration-line"
                 ],
-                "parser-function": "consumeTextDecorationLine",
-                "parser-grammar-unused": "none | [ underline || overline || line-through || blink ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar": "none | [ underline || overline || line-through || blink ]@(no-single-item-opt)",
+                "parser-exported": true
             },
             "specification": {
                 "category": "css-text-decor",
@@ -10675,7 +10600,7 @@
                 "style-builder-converter": "TextUnderlinePosition",
                 "parser-function": "consumeTextUnderlinePosition",
                 "parser-grammar-unused": "auto | [ [ under | from-font ] || [ left | right ] ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups.",
+                "parser-grammar-unused-reason": "Needs support for using custom types for '||' groups.",
                 "parser-grammar-comment": "Grammar is 'auto | [ [ under | from-font ] || [ left | right ] ]', but we only support 'auto | under | from-font | left | right'."
             },
             "specification": {
@@ -10721,9 +10646,7 @@
             "inherited": true,
             "codegen-properties": {
                 "skip-style-builder": true,
-                "parser-function": "consumeTextDecorationLine",
-                "parser-grammar-unused": "none | [ underline || overline || line-through || blink ]",
-                "parser-grammar-unused-reason": "Needs support for '||' groups.",
+                "parser-grammar": "none | [ underline || overline || line-through || blink ]@(no-single-item-opt)",
                 "comment": "FIXME: Should this be an alias of text-decoration-line?"
             },
             "status": "non-standard"
@@ -10785,9 +10708,7 @@
                     "-webkit-text-emphasis-position"
                 ],
                 "style-builder-converter": "TextEmphasisPosition",
-                "parser-function": "consumeTextEmphasisPosition",
-                "parser-grammar-unused": "[ over | under ] && [ right | left ]?",
-                "parser-grammar-unused-reason": "Needs support for '&&' groups and optionals."
+                "parser-grammar": "[ [ over | under ] && [ right | left ]? ]@(no-single-item-opt)"
             },
             "specification": {
                 "category": "css-text-decor",
@@ -10806,9 +10727,7 @@
                 "animation-wrapper": "TextEmphasisStyleWrapper",
                 "animation-wrapper-requires-override-parameters": [],
                 "style-builder-custom": "All",
-                "parser-function": "consumeTextEmphasisStyle",
-                "parser-grammar-unused": "none | [ [ filled | open ] || [ dot | circle | double-circle | triangle | sesame ] ] | <string>",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar": "none | [ [ filled | open ] || [ dot | circle | double-circle | triangle | sesame ] ] | <string>"
             },
             "specification": {
                 "category": "css-text-decor",
@@ -10901,9 +10820,8 @@
                 "animation-wrapper-requires-override-parameters": [],
                 "animation-wrapper-acceleration": "always",
                 "style-builder-converter": "Transform",
-                "parser-function": "consumeTransform",
-                "parser-grammar-unused": "none | <transform-list>",
-                "parser-grammar-unused-reason": "Needs support for function notation."
+                "parser-grammar": "none | <transform-list>",
+                "parser-exported": true
             },
             "specification": {
                 "category": "css-transforms",
@@ -11035,7 +10953,7 @@
                 "style-builder-converter": "Translate",
                 "parser-function": "consumeTranslate",
                 "parser-grammar-unused": "none | [ <length-percentage> [ <length-percentage> <length>? ]? ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
             },
             "specification": {
                 "category": "css-transforms",
@@ -11053,8 +10971,8 @@
                 "animation-wrapper-acceleration": "always",
                 "style-builder-converter": "Scale",
                 "parser-function": "consumeScale",
-                "parser-grammar-unused": "none | [ <number> | <percentage> ]{1,3}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar-unused": "none | [ <number-or-percentage-resolved-to-number> ]{1,3}",
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
             },
             "specification": {
                 "category": "css-transforms",
@@ -11077,7 +10995,7 @@
                 "style-builder-converter": "Rotate",
                 "parser-function": "consumeRotate",
                 "parser-grammar-unused": "none | <angle> | [ [ x | y | z | <number>{3} ] && <angle> ]",
-                "parser-grammar-unused-reason": "Needs support for '&&' groups and '{A}' multipliers."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form."
             },
             "specification": {
                 "category": "css-transforms",
@@ -11563,9 +11481,7 @@
             ],
             "codegen-properties": {
                 "style-builder-converter": "ScrollSnapAlign",
-                "parser-function": "consumeScrollSnapAlign",
-                "parser-grammar-unused": "[ none | start | end | center ]{1,2}",
-                "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers."
+                "parser-grammar": "[ none | start | end | center ]{1,2}@(type=CSSValuePair default=previous)"
             },
             "specification": {
                 "category": "css-scroll-snap",
@@ -11589,7 +11505,7 @@
                 "style-builder-converter": "ScrollSnapType",
                 "parser-function": "consumeScrollSnapType",
                 "parser-grammar-unused": "none | [ [ x | y | block | inline | both ] [ mandatory | proximity ]? ]",
-                "parser-grammar-unused-reason": "Needs support for ordered groups and optionals."
+                "parser-grammar-unused-reason": "Needs support for default values on optionals."
             },
             "specification": {
                 "category": "css-scroll-snap",
@@ -11676,7 +11592,7 @@
                 "style-builder-converter": "ScrollbarColor",
                 "parser-function": "consumeScrollbarColor",
                 "parser-grammar-unused": "auto | <color>{2}",
-                "parser-grammar-unused-reason": "Needs support for '{A}' multipliers.",
+                "parser-grammar-unused-reason": "Needs support for non-coalescing CSSValuePair.",
                 "settings-flag": "cssScrollbarColorEnabled"
             },
             "inherited": true,
@@ -11698,7 +11614,7 @@
                 "style-builder-converter": "ScrollbarGutter",
                 "parser-function": "consumeScrollbarGutter",
                 "parser-grammar-unused": "auto | [ stable && both-edges? ]",
-                "parser-grammar-unused-reason": "Needs support for '&&' groups and optionals.",
+                "parser-grammar-unused-reason": "Needs support for using custom types for '&&' groups.",
                 "settings-flag": "cssScrollbarGutterEnabled"
             },
             "specification": {
@@ -11744,7 +11660,7 @@
                 "style-builder-converter": "ShapeValue",
                 "parser-function": "consumeShapeOutside",
                 "parser-grammar-unused": "none | [ <basic-shape> || <shape-box> ] | <image>",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form and the strong value representation."
             },
             "specification": {
                 "category": "css-shapes",
@@ -11846,9 +11762,7 @@
             "codegen-properties": {
                 "style-builder-converter": "ViewTimelineInset",
                 "render-style-name-for-methods": "ViewTimelineInsets",
-                "parser-function": "consumeViewTimelineInset",
-                "parser-grammar-unused": "[ <single-view-timeline-inset>{1,2} ]#",
-                "parser-grammar-unused-reason": "Needs support for {1,2} combined with #.",
+                "parser-grammar": "<single-view-timeline-inset-item>#@(no-single-item-opt)",
                 "settings-flag": "scrollDrivenAnimationsEnabled"
             },
             "specification": {
@@ -11973,7 +11887,7 @@
                 "style-builder-converter": "PositionArea",
                 "parser-function": "consumePositionArea",
                 "parser-grammar-unused": "none | <position-area>",
-                "parser-grammar-unused-reason": "Needs support for '||' groups.",
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form.",
                 "settings-flag": "cssAnchorPositioningEnabled"
             },
             "specification": {
@@ -12023,7 +11937,7 @@
                 "settings-flag": "cssAnchorPositioningEnabled",
                 "parser-function": "consumePositionTryFallbacks",
                 "parser-grammar-unused": "none | [ [<dashed-ident> || <try-tactic>] | <position-area> ]#",
-                "parser-grammar-unused-reason": "Needs support for '||' groups.",
+                "parser-grammar-unused-reason": "Needs support for transforming parsed input to minimal form.",
                 "style-builder-converter": "PositionTryFallbacks"
             },
             "specification": {
@@ -12114,9 +12028,8 @@
             "codegen-properties": {
                 "render-style-name-for-methods": "TouchActions",
                 "style-builder-converter": "TouchAction",
-                "parser-function": "consumeTouchAction",
-                "parser-grammar-unused": "auto | none | [ pan-x || pan-y || pinch-zoom ] | manipulation",
-                "parser-grammar-unused-reason": "Needs support for '||' groups."
+                "parser-grammar": "auto | none | [ pan-x || pan-y || pinch-zoom ]@(no-single-item-opt) | manipulation",
+                "parser-grammar-comment": "Current spec grammar is 'auto | none | [ [ pan-x | pan-left | pan-right ] || [ pan-y | pan-up | pan-down ] ] | manipulation'"
             },
             "specification": {
                 "url": "https://www.w3.org/TR/pointerevents/#the-touch-action-css-property"
@@ -12146,7 +12059,7 @@
                 "settings-flag": "useSystemAppearance",
                 "parser-function": "consumeAppleVisualEffect",
                 "parser-grammar-unused": "<<values>>",
-                "parser-grammar-unused-reason": "Needs support for internal values"
+                "parser-grammar-unused-reason": "Needs support for internal values."
             },
             "status": "non-standard"
         },
@@ -12222,7 +12135,7 @@
                     "settings-flag": "cssCounterStyleAtRulesEnabled",
                     "parser-function": "consumeCounterStyleAdditiveSymbols",
                     "parser-grammar-unused": "[ <integer [0,inf]> && <symbol> ]#",
-                    "parser-grammar-unused-reason": "Needs support for '&&' groups"
+                    "parser-grammar-unused-reason": "Needs support for custom validation of lists."
                 },
                 "specification": {
                     "category": "css-counter-styles",
@@ -12234,7 +12147,7 @@
                     "settings-flag": "cssCounterStyleAtRulesEnabled",
                     "parser-function": "consumeCounterStyleName",
                     "parser-grammar-unused": "<counter-style-name>",
-                    "parser-grammar-unused-reason": "Needs support for applying restrictions to <custom-ident>."
+                    "parser-grammar-unused-reason": "Needs support for excluding a class of names from a <custom-ident>."
                 },
                 "specification": {
                     "category": "css-counter-styles",
@@ -12244,9 +12157,7 @@
             "negative": {
                 "codegen-properties": {
                     "settings-flag": "cssCounterStyleAtRulesEnabled",
-                    "parser-function": "consumeCounterStyleNegative",
-                    "parser-grammar-unused": "<symbol> <symbol>?",
-                    "parser-grammar-unused-reason": "Needs support for ordered groups, optionals and settings conditional term matching."
+                    "parser-grammar": "<symbol> <symbol>?"
                 },
                 "specification": {
                     "category": "css-counter-styles",
@@ -12256,9 +12167,7 @@
             "pad": {
                 "codegen-properties": {
                     "settings-flag": "cssCounterStyleAtRulesEnabled",
-                    "parser-function": "consumeCounterStylePad",
-                    "parser-grammar-unused": "<integer [0,inf]> && <symbol>",
-                    "parser-grammar-unused-reason": "Needs support for '&&' groups and settings conditional term matching."
+                    "parser-grammar": "<integer [0,inf]> && <symbol>"
                 },
                 "specification": {
                     "category": "css-counter-styles",
@@ -12268,9 +12177,7 @@
             "prefix": {
                 "codegen-properties": {
                     "settings-flag": "cssCounterStyleAtRulesEnabled",
-                    "parser-function": "consumeCounterStyleSymbol",
-                    "parser-grammar-unused": "<symbol>",
-                    "parser-grammar-unused-reason": "Needs support for settings conditional term matching."
+                    "parser-grammar": "<symbol>"
                 },
                 "specification": {
                     "category": "css-counter-styles",
@@ -12282,7 +12189,7 @@
                     "settings-flag": "cssCounterStyleAtRulesEnabled",
                     "parser-function": "consumeCounterStyleRange",
                     "parser-grammar-unused": "[ [ <integer> | infinite ]{2} ]# | auto",
-                    "parser-grammar-unused-reason": "Needs support for '{A}' multipliers."
+                    "parser-grammar-unused-reason": "Needs support for non-coalescing CSSValuePair and custom validation of lists."
                 },
                 "specification": {
                     "category": "css-counter-styles",
@@ -12292,9 +12199,7 @@
             "suffix": {
                 "codegen-properties": {
                     "settings-flag": "cssCounterStyleAtRulesEnabled",
-                    "parser-function": "consumeCounterStyleSymbol",
-                    "parser-grammar-unused": "<symbol>",
-                    "parser-grammar-unused-reason": "Needs support for settings conditional term matching."
+                    "parser-grammar": "<symbol>"
                 },
                 "specification": {
                     "category": "css-counter-styles",
@@ -12306,7 +12211,7 @@
                     "settings-flag": "cssCounterStyleAtRulesEnabled",
                     "parser-function": "consumeCounterStyleSystem",
                     "parser-grammar-unused": "cyclic | numeric | alphabetic | symbolic | additive | [ fixed <integer>? ] | [ extends <counter-style-name> ]",
-                    "parser-grammar-unused-reason": "Needs support for ordered groups, optionals and applying restrictions to <custom-ident>."
+                    "parser-grammar-unused-reason": "Needs support for different parsing based on the current mode, ordered groups with a keyword/literal first term differentiator and excluding a class of names from a <custom-ident>."
                 },
                 "specification": {
                     "category": "css-counter-styles",
@@ -12316,9 +12221,7 @@
             "speak-as": {
                 "codegen-properties": {
                     "settings-flag": "cssCounterStyleAtRulesEnabled",
-                    "parser-function": "consumeCounterStyleSpeakAs",
-                    "parser-grammar-unused": "auto | bullets | numbers | words | spell-out | <counter-style-name>",
-                    "parser-grammar-unused-reason": "Needs support for applying restrictions to <custom-ident>."
+                    "parser-grammar": "auto | bullets | numbers | words | spell-out | <counter-style-name>"
                 },
                 "specification": {
                     "category": "css-counter-styles",
@@ -12328,9 +12231,7 @@
             "symbols": {
                 "codegen-properties": {
                     "settings-flag": "cssCounterStyleAtRulesEnabled",
-                    "parser-function": "consumeCounterStyleSymbols",
-                    "parser-grammar-unused": "<symbol>",
-                    "parser-grammar-unused-reason": "Needs support for settings conditional term matching."
+                    "parser-grammar": "<symbol>+@(no-single-item-opt)"
                 },
                 "specification": {
                     "category": "css-counter-styles",
@@ -12343,11 +12244,11 @@
                 "codegen-properties": {
                     "parser-function": "consumeFontFaceFontFamily",
                     "parser-grammar-unused": "<family-name>",
-                    "parser-grammar-unused-reason": "Needs support for special 'family-name' processing."
+                    "parser-grammar-unused-reason": "Needs support for primitive <family-name>."
                 },
                 "specification": {
                     "category": "css-fonts-4",
-                    "url": "https://www.w3.org/TR/css-fonts-4/#font-family-desc"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-face-font-family"
                 }
             },
             "font-display": {
@@ -12364,7 +12265,7 @@
                 },
                 "specification": {
                     "category": "css-fonts-4",
-                    "url": "https://drafts.csswg.org/css-fonts-4/#font-display-desc"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-face-font-display"
                 }
             },
             "font-feature-settings": {
@@ -12377,7 +12278,7 @@
                 },
                 "specification": {
                     "category": "css-fonts-4",
-                    "url": "https://www.w3.org/TR/css-fonts-4/#descdef-font-face-font-feature-settings"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-face-font-feature-settings"
                 }
             },
             "font-width": {
@@ -12401,19 +12302,20 @@
                     {
                         "enable-if": "ENABLE_VARIATION_FONTS",
                         "aliases": ["font-stretch"],
-                        "parser-function": "consumeFontFaceFontWidth",
-                        "parser-grammar-unused": "auto | [ <font-width-absolute> | <percentage [0,inf]> ]{1,2}",
-                        "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers and referencing style properties grammars (actual grammar uses <'font-width'>{1,2})."
+                        "parser-grammar": "<font-width-absolute> | <percentage [0,inf]>{1,2}",
+                        "parser-grammar-comment": "Current spec grammar is 'auto | <'font-width'>{1,2}'",
+                        "parser-exported": true
                     },
                     {
                         "enable-if": "!ENABLE_VARIATION_FONTS",
                         "aliases": ["font-stretch"],
-                        "parser-grammar": "<font-width-absolute>"
+                        "parser-grammar": "<font-width-absolute> | <percentage [0,inf]>",
+                        "parser-exported": true
                     }
                 ],
                 "specification": {
                     "category": "css-fonts-4",
-                    "url": "https://www.w3.org/TR/css-fonts-4/#descdef-font-face-font-stretch"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-face-font-width"
                 }
             },
             "font-style": {
@@ -12432,7 +12334,7 @@
                         "enable-if": "ENABLE_VARIATION_FONTS",
                         "parser-function": "consumeFontFaceFontStyle",
                         "parser-grammar-unused": "auto | normal | italic | [ oblique [ <angle>{1,2} ]? ]",
-                        "parser-grammar-unused-reason": "Needs support for ordered groups, optionals and '{A,B}' multipliers."
+                        "parser-grammar-unused-reason": "Needs support for ordered groups with a keyword/literal first term differentiator."
                     },
                     {
                         "enable-if": "!ENABLE_VARIATION_FONTS",
@@ -12441,134 +12343,7 @@
                 ],
                 "specification": {
                     "category": "css-fonts-4",
-                    "url": "https://www.w3.org/TR/css-fonts-4/#descdef-font-face-font-style"
-                }
-            },
-            "font-variant": {
-                "codegen-properties": {
-                    "longhands": [
-                        "font-variant-ligatures",
-                        "font-variant-caps",
-                        "font-variant-alternates",
-                        "font-variant-numeric",
-                        "font-variant-east-asian",
-                        "font-variant-position"
-                    ]
-                },
-                "specification": {
-                    "category": "css-fonts",
-                    "url": "https://drafts.csswg.org/css-fonts-4/#propdef-font-variant"
-                }
-            },
-            "font-variant-alternates": {
-                "codegen-properties": {
-                    "parser-function": "consumeFontVariantAlternates",
-                    "parser-grammar-unused": "normal | [ stylistic(<feature-value-name>) || historical-forms || styleset(<feature-value-name>#) || character-variant(<feature-value-name>#) || swash(<feature-value-name>) || ornaments(<feature-value-name>) || annotation(<feature-value-name>) ]",
-                    "parser-grammar-unused-reason": "Needs support for '||' groups and function notation."
-                },
-                "specification": {
-                    "category": "css-fonts",
-                    "url": "https://drafts.csswg.org/css-fonts-3/#font-variant-alternates-prop"
-                }
-            },
-            "font-variant-caps": {
-                "values": [
-                    "normal",
-                    "small-caps",
-                    "all-small-caps",
-                    "petite-caps",
-                    "all-petite-caps",
-                    "unicase",
-                    "titling-caps"
-                ],
-                "codegen-properties": {
-                    "parser-grammar": "<<values>>"
-                },
-                "specification": {
-                    "category": "css-fonts",
-                    "url": "https://drafts.csswg.org/css-fonts-3/#font-variant-caps-prop"
-                }
-            },
-            "font-variant-east-asian": {
-                "values": [
-                    "normal",
-                    "jis78",
-                    "jis83",
-                    "jis90",
-                    "jis04",
-                    "simplified",
-                    "traditional",
-                    "diagonal-fractions",
-                    "stacked-fractions",
-                    "ruby"
-                ],
-                "codegen-properties": {
-                    "parser-function": "consumeFontVariantEastAsian",
-                    "parser-grammar-unused": "normal | [ <east-asian-variant-values> || <east-asian-width-values> || ruby ]",
-                    "parser-grammar-unused-reason": "Needs support for '||' groups."
-                },
-                "specification": {
-                    "category": "css-fonts",
-                    "url": "https://drafts.csswg.org/css-fonts-3/#font-variant-east-asian-prop"
-                }
-            },
-            "font-variant-ligatures": {
-                "values": [
-                    "normal",
-                    "none",
-                    "common-ligatures",
-                    "no-common-ligatures",
-                    "discretionary-ligatures",
-                    "no-discretionary-ligatures",
-                    "historical-ligatures",
-                    "no-historical-ligatures",
-                    "contextual",
-                    "no-contextual"
-                ],
-                "codegen-properties": {
-                    "parser-function": "consumeFontVariantLigatures",
-                    "parser-grammar-unused": "normal | none | [ <common-lig-values> || <discretionary-lig-values> || <historical-lig-values> || <contextual-alt-values> ]",
-                    "parser-grammar-unused-reason": "Needs support for '||' groups."
-                },
-                "specification": {
-                    "category": "css-fonts-4",
-                    "url": "https://drafts.csswg.org/css-fonts-4/#font-variant-ligatures-prop"
-                }
-            },
-            "font-variant-numeric": {
-                "values": [
-                    "normal",
-                    "lining-nums",
-                    "oldstyle-nums",
-                    "proportional-nums",
-                    "tabular-nums",
-                    "diagonal-fractions",
-                    "stacked-fractions",
-                    "ordinal",
-                    "slashed-zero"
-                ],
-                "codegen-properties": {
-                    "parser-function": "consumeFontVariantNumeric",
-                    "parser-grammar-unused": "normal | [ <numeric-figure-values> || <numeric-spacing-values> || <numeric-fraction-values> || ordinal || slashed-zero ]",
-                    "parser-grammar-unused-reason": "Needs support for '||' groups."
-                },
-                "specification": {
-                    "category": "css-fonts",
-                    "url": "https://drafts.csswg.org/css-fonts-3/#font-variant-numeric-prop"
-                }
-            },
-            "font-variant-position": {
-                "values": [
-                    "normal",
-                    "sub",
-                    "super"
-                ],
-                "codegen-properties": {
-                    "parser-grammar": "<<values>>"
-                },
-                "specification": {
-                    "category": "css-fonts-4",
-                    "url": "https://drafts.csswg.org/css-fonts-4/#propdef-font-variant-position"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-face-font-style"
                 }
             },
             "font-weight": {
@@ -12584,65 +12359,62 @@
                 "codegen-properties": [
                     {
                         "enable-if": "ENABLE_VARIATION_FONTS",
-                        "parser-function": "consumeFontFaceFontWeight",
-                        "parser-grammar-unused": "auto | <font-weight-absolute>{1,2}",
-                        "parser-grammar-unused-reason": "Needs support for '{A,B}' multipliers and arbitrary ranges on <number>."
+                        "parser-grammar": "normal | bold | <number [1,1000]>{1,2}",
+                        "parser-grammar-comment": "Current spec grammar is 'auto | <font-weight-absolute>{1,2}'",
+                        "parser-exported": true
                     },
                     {
                         "enable-if": "!ENABLE_VARIATION_FONTS",
-                        "parser-function": "consumeFontFaceFontWeight",
-                        "parser-grammar-unused": "<font-weight-absolute>",
-                        "parser-grammar-unused-reason": "Needs support for arbitrary ranges on <number>."
+                        "parser-grammar": "<font-weight-absolute>",
+                        "parser-exported": true
                     }
                 ],
                 "specification": {
                     "category": "css-fonts-4",
-                    "url": "https://www.w3.org/TR/css-fonts-4/#descdef-font-face-font-weight"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-face-font-weight"
                 }
             },
             "src": {
                 "codegen-properties": {
                     "parser-function": "consumeFontFaceSrc",
-                    "parser-grammar-unused": "<font-face-src>",
-                    "parser-grammar-unused-reason": "Needs support for functional notation."
+                    "parser-grammar-unused": "<font-src-list>",
+                    "parser-grammar-unused-reason": "Needs support for primitive <family-name>."
                 },
                 "specification": {
                     "category": "css-fonts-4",
-                    "url": "https://www.w3.org/TR/css-fonts-4/#src-desc"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-face-src"
                 }
             },
             "size-adjust": {
                 "codegen-properties": {
                     "settings-flag": "cssFontFaceSizeAdjustEnabled",
-                    "parser-grammar": "<percentage [0,inf]>"
+                    "parser-grammar": "<percentage [0,inf]>",
+                    "parser-exported": true
                 },
                 "specification": {
                     "category": "css-fonts-5",
-                    "url": "https://www.w3.org/TR/css-fonts-5/#size-adjust-desc"
+                    "url": "https://drafts.csswg.org/css-fonts-5/#descdef-font-face-size-adjust"
                 }
             },
             "unicode-range": {
                 "codegen-properties": {
-                    "parser-function": "consumeFontFaceUnicodeRange",
-                    "parser-grammar-unused": "<urange>#",
-                    "parser-grammar-unused-reason": "Needs support for special <urange> term."
+                    "parser-grammar": "<unicode-range-token>#@(no-single-item-opt)",
+                    "parser-exported": true
                 },
                 "specification": {
                     "category": "css-fonts",
-                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-unicode-range"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-face-unicode-range"
                 }
             }
         },
         "@font-palette-values": {
             "font-family": {
                 "codegen-properties": {
-                    "parser-function": "consumeFontPaletteValuesFontFamily",
-                    "parser-grammar-unused": "<family-name>#",
-                    "parser-grammar-unused-reason": "Needs support for special 'family-name' processing."
+                    "parser-grammar": "<family-name>#@(no-single-item-opt)"
                 },
                 "specification": {
                     "category": "css-fonts-4",
-                    "url": "https://drafts.csswg.org/css-fonts-4/#font-family-2-desc"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-palette-values-font-family"
                 }
             },
             "base-palette": {
@@ -12651,18 +12423,16 @@
                 },
                 "specification": {
                     "category": "css-fonts-4",
-                    "url": "https://www.w3.org/TR/css-fonts-4/#font-family-2-desc"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-palette-values-base-palette"
                 }
             },
             "override-colors": {
                 "codegen-properties": {
-                    "parser-function": "consumeFontPaletteValuesOverrideColors",
-                    "parser-grammar-unused": "[ <integer [0,inf]> <absolute-color> ]#",
-                    "parser-grammar-unused-reason": "Needs support for ordered groups."
+                    "parser-grammar": "[ <integer [0,inf]> <color allowed-types=absolute> ]@(type=CSSValuePair)#@(no-single-item-opt)"
                 },
                 "specification": {
                     "category": "css-fonts-4",
-                    "url": "https://www.w3.org/TR/css-fonts-4/#override-color"
+                    "url": "https://drafts.csswg.org/css-fonts-4/#descdef-font-palette-values-override-colors"
                 }
             }
         },
@@ -12671,7 +12441,7 @@
                 "codegen-properties": {
                     "parser-function": "consumeSize",
                     "parser-grammar-unused": "<length>{1,2} | auto | [ <page-size> || [ portrait | landscape ] ]",
-                    "parser-grammar-unused-reason": "Needs support for '||' groups and the '{A,B}' multiplier."
+                    "parser-grammar-unused-reason": "Needs support for using custom types for '||' groups."
                 },
                 "specification": {
                     "category": "css-page",
@@ -13046,8 +12816,7 @@
             }
         },
         "<-webkit-absolute-size>": {
-            "grammar": "-webkit-xxx-large",
-            "aliased-to": "xxx-large",
+            "grammar": "-webkit-xxx-large@(aliased-to=xxx-large)",
             "status": "non-standard"
         },
         "<relative-size>": {
@@ -13133,7 +12902,7 @@
             }
         },
         "<east-asian-width-values>": {
-            "grammar": "diagonal-fractions | stacked-fractions",
+            "grammar": "full-width | proportional-width",
             "specification": {
                 "category": "css-fonts-4",
                 "url": "https://drafts.csswg.org/css-fonts-4/#east-asian-width-values"
@@ -13319,7 +13088,9 @@
             }
         },
         "<rect()>": {
-            "grammar": "rect( [ <length> | auto ]#{4} )",
+            "grammar-unused": "rect( [ <length> | auto ]#{4} | [ <length> | auto ]{4} )",
+            "grammar-unused-reason": "Needs support for custom types for functional notation.",
+            "grammar-function": "consumeClipRectFunction",
             "specification": {
                 "category": "css-masking",
                 "url": "https://drafts.fxtf.org/css-masking-1/#funcdef-clip-rect"
@@ -13358,7 +13129,7 @@
             }
         },
         "<single-background-clip>": {
-            "grammar": "<box> | text | -webkit-text",
+            "grammar": "<box> | border-area@(settings-flag=cssBackgroundClipBorderAreaEnabled) | text | -webkit-text",
             "exported": true,
             "specification": {
                 "category": "css-backgrounds",
@@ -13767,9 +13538,9 @@
                 "url": "https://www.w3.org/TR/css-grid-1/#typedef-grid-row-start-grid-line"
             }
         },
-        
         "<transform-list>": {
-            "grammar": "<transform-function>+",
+            "grammar": "<transform-function>+@(type=CSSTransformListValue no-single-item-opt)",
+            "exported": true,
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-1/#typedef-transform-list"
@@ -13777,21 +13548,23 @@
         },
         "<transform-function>": {
             "grammar": "<matrix()> | <translate()> | <translateX()> | <translateY()> | <scale()> | <scaleX()> | <scaleY()> | <rotate()> | <skew()> | <skewX()> | <skewY()> | <matrix3d()> | <translate3d()> | <translateZ()> | <scale3d()> | <scaleZ()> | <rotate3d()> | <rotateX()> | <rotateY()> | <rotateZ()> | <perspective()>",
+            "exported": true,
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-1/#typedef-transform-function"
             }
         },
-
         "<matrix()>": {
-            "grammar": "matrix( <number>#{6}  )",
+            "grammar": "matrix( <number>#{6} )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-1/#funcdef-transform-matrix"
             }
         },
         "<translate()>": {
-            "grammar": "translate( <length-percentage>#{1,2} )",
+            "grammar-unused": "translate( <length-percentage>#{1,2} )",
+            "grammar-unused-reason": "Needs support for transforming parsed input to minimal form",
+            "grammar-function": "consumeTranslateFunction",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-1/#funcdef-transform-translate"
@@ -13812,49 +13585,49 @@
             }
         },
         "<scale()>": {
-            "grammar": "scaleX( [ <number> | <percentage> ]#{1,2} )",
+            "grammar": "scale( [ <number-or-percentage-resolved-to-number> ]#{1,2} )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-scale"
             }
         },
         "<scaleX()>": {
-            "grammar": "scaleX( [ <number> | <percentage> ] )",
+            "grammar": "scaleX( [ <number-or-percentage-resolved-to-number> ] )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-scalex"
             }
         },
         "<scaleY()>": {
-            "grammar": "scaleY( [ <number> | <percentage> ] )",
+            "grammar": "scaleY( [ <number-or-percentage-resolved-to-number> ] )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-scaley"
             }
         },
         "<rotate()>": {
-            "grammar": "rotate( [ <angle> | <zero> ] )",
+            "grammar": "rotate( [ <angle unitless-zero=allowed> ] )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-1/#funcdef-transform-rotate"
             }
         },
         "<skew()>": {
-            "grammar": "skew( [ <angle> | <zero> ]#{1,2} )",
+            "grammar": "skew( [ <angle unitless-zero=allowed> ]#{1,2} )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-1/#funcdef-transform-skew"
             }
         },
         "<skewX()>": {
-            "grammar": "skewX( [ <angle> | <zero> ] )",
+            "grammar": "skewX( [ <angle unitless-zero=allowed> ] )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-1/#funcdef-transform-skewx"
             }
         },
         "<skewY()>": {
-            "grammar": "skewY( [ <angle> | <zero> ] )",
+            "grammar": "skewY( [ <angle unitless-zero=allowed> ] )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-1/#funcdef-transform-skewy"
@@ -13868,7 +13641,9 @@
             }
         },
         "<translate3d()>": {
-            "grammar": "translate3d( <length-percentage> , <length-percentage> , <length> )",
+            "grammar-unused": "translate3d( <length-percentage> , <length-percentage> , <length> )",
+            "grammar-unused-reason": "Needs support for ordered groups with a keyword/literal first term differentiator.",
+            "grammar-function": "consumeTranslate3dFunction",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-translate3d"
@@ -13882,59 +13657,97 @@
             }
         },
         "<scale3d()>": {
-            "grammar": "scale3d( [ <number> | <percentage> ]#{3} )",
+            "grammar": "scale3d( [ <number-or-percentage-resolved-to-number> ]#{3} )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-scale3d"
             }
         },
         "<scaleZ()>": {
-            "grammar": "scaleZ( [ <number> | <percentage> ] )",
+            "grammar": "scaleZ( [ <number-or-percentage-resolved-to-number> ] )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-scalez"
             }
         },
         "<rotate3d()>": {
-            "grammar": "rotate3d( <number> , <number> , <number> , [ <angle> | <zero> ] )",
+            "grammar-unused": "rotate3d( <number> , <number> , <number> , [ <angle unitless-zero=allowed> ] )",
+            "grammar-unused-reason": "Needs support for ordered groups with a keyword/literal first term differentiator.",
+            "grammar-function": "consumeRotate3dFunction",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-rotate3d"
             }
         },
         "<rotateX()>": {
-            "grammar": "rotateX( [ <angle> | <zero> ] )",
+            "grammar": "rotateX( [ <angle unitless-zero=allowed> ] )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-rotatex"
             }
         },
         "<rotateY()>": {
-            "grammar": "rotateY( [ <angle> | <zero> ] )",
+            "grammar": "rotateY( [ <angle unitless-zero=allowed> ] )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-rotatey"
             }
         },
         "<rotateZ()>": {
-            "grammar": "rotateZ( [ <angle> | <zero> ] )",
+            "grammar": "rotateZ( [ <angle unitless-zero=allowed> ] )",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-rotatez"
             }
         },
         "<perspective()>": {
-            "grammar": "perspective( <length [0,inf]> | none )",
+            "grammar": "perspective( <length [0,inf]> | <number [0,inf]> | none )",
+            "grammar-comment": "Current spec grammar is 'perspective( <length [0,inf]> | none )'",
             "specification": {
                 "category": "css-transforms",
                 "url": "https://www.w3.org/TR/css-transforms-2/#funcdef-perspective"
             }
         },
         "<symbol>": {
-            "grammar": "<string> | <image> | <custom-ident>",
+            "grammar": "<string> | <image allowed-types=url,generated>@(settings-flag=counterStyleAtRuleImageSymbolsEnabled) | <custom-ident>",
+            "grammar-comment": "There are inherent difficulties in supporting <image> symbols in @counter-styles, so gate them behind a flag for now - https://bugs.webkit.org/show_bug.cgi?id=167645.",
+            "exported": true,
             "specification": {
                 "category": "css-counter-styles",
                 "url": "https://www.w3.org/TR/css-counter-styles-3/#counter-style-symbols"
+            }
+        },
+        "<counter-style-name>": {
+            "grammar-unused": "<custom-ident excluding=none>",
+            "grammar-unused-reason": "Needs support for excluding a class of names from a <custom-ident>.",
+            "grammar-function": "consumeCounterStyleName",
+            "specification": {
+                "category": "css-counter-styles",
+                "url": "https://drafts.csswg.org/css-counter-styles/#typedef-counter-style-name"
+            }
+        },
+        "<counter-style>": {
+            "grammar-unused": "<counter-style-name> | <symbols()>",
+            "grammar-unused-reason": "Needs support for excluding a class of names from a <custom-ident>.",
+            "grammar-comment": "Current implementation does not support '<symbols()>'.",
+            "grammar-function": "consumeCounterStyle",
+            "specification": {
+                "category": "css-counter-styles",
+                "url": "https://drafts.csswg.org/css-counter-styles/#typedef-counter-style"
+            }
+        },
+        "<symbols()>": {
+            "grammar": "symbols( <symbols-type>? [ <string> | <image> ]+ )",
+            "specification": {
+                "category": "css-counter-styles",
+                "url": "https://drafts.csswg.org/css-counter-styles/#funcdef-symbols"
+            }
+        },
+        "<symbols-type>": {
+            "grammar": "cyclic | numeric | alphabetic | symbolic | fixed",
+            "specification": {
+                "category": "css-counter-styles",
+                "url": "https://drafts.csswg.org/css-counter-styles/#typedef-symbols-type"
             }
         },
         "<display-outside>": {
@@ -13983,22 +13796,6 @@
             "grammar": "-webkit-inline-flex | -webkit-box | -webkit-inline-box | -webkit-flex",
             "status": "non-standard"
         },
-        "<axis>": {
-            "grammar": "block | inline | x | y",
-            "exported": true,
-            "specification": {
-                "category": "scroll-animations",
-                "url": "https://drafts.csswg.org/scroll-animations-1/#scroll-notation"
-            }
-        },
-        "<scroller>": {
-            "grammar": "root | nearest | self",
-            "exported": true,
-            "specification": {
-                "category": "scroll-animations",
-                "url": "https://drafts.csswg.org/scroll-animations-1/#scroll-notation"
-            }
-        },
         "<single-scroll-timeline-name>": {
             "grammar": "none | <dashed-ident>",
             "exported": true,
@@ -14015,12 +13812,153 @@
                 "url": "https://drafts.csswg.org/scroll-animations-1/#propdef-view-timeline-inset"
             }
         },
+        "<single-view-timeline-inset-item>": {
+            "grammar-function": "consumeSingleViewTimelineInsetItem",
+            "grammar-unused": "<single-view-timeline-inset>{1,2}",
+            "grammar-unused-reason": "Needs support for non-coalescing CSSValuePair.",
+            "specification": {
+                "category": "scroll-animations",
+                "url": "https://drafts.csswg.org/scroll-animations-1/#propdef-view-timeline-inset"
+            }
+        },
+        "<axis>": {
+            "grammar": "block | inline | x | y",
+            "exported": true,
+            "specification": {
+                "category": "scroll-animations",
+                "url": "https://drafts.csswg.org/scroll-animations-1/#typedef-axis"
+            }
+        },
+        "<scroller>": {
+            "grammar": "root | nearest | self",
+            "exported": true,
+            "specification": {
+                "category": "scroll-animations",
+                "url": "https://drafts.csswg.org/scroll-animations-1/#typedef-scroller"
+            }
+        },
+        "<scroll()>": {
+            "grammar-function": "consumeAnimationTimelineScroll",
+            "grammar-unused": "scroll( [ <scroller> || <axis> ]? )",
+            "grammar-unused-reason": "Needs support for custom types for functional notation.",
+            "specification": {
+                "category": "scroll-animations",
+                "url": "https://drafts.csswg.org/scroll-animations-1/#funcdef-scroll"
+            }
+        },
+        "<view()>": {
+            "grammar-function": "consumeAnimationTimelineView",
+            "grammar-unused": "view( [ <axis> || <single-view-timeline-inset-item> ]? )",
+            "grammar-unused-reason": "Needs support for custom types for functional notation.",
+            "grammar-comment": "Current spec grammar is 'view( [ <axis> || <'view-timeline-inset'> ]? )'",
+            "specification": {
+                "category": "scroll-animations",
+                "url": "https://drafts.csswg.org/scroll-animations-1/#funcdef-view"
+            }
+        },
+        "<timeline-range-name>": {
+            "grammar": "cover | contain | entry | exit | entry-crossing | exit-crossing",
+            "exported": true,
+            "specification": {
+                "category": "scroll-animations",
+                "url": "https://drafts.csswg.org/scroll-animations-1/#typedef-timeline-range-name"
+            }
+        },
+        "<single-animation-range-start>": {
+            "grammar-function": "consumeSingleAnimationRangeStart",
+            "grammar-unused": "[ normal | <length-percentage> | [ <timeline-range-name> <length-percentage>? ] ]",
+            "grammar-unused-reason": "Needs support for default values on optionals.",
+            "specification": {
+                "category": "scroll-animations",
+                "url": "https://drafts.csswg.org/scroll-animations-1/#propdef-animation-range-start"
+            }
+        },
+        "<single-animation-range-end>": {
+            "grammar-function": "consumeSingleAnimationRangeEnd",
+            "grammar-unused": "[ normal | <length-percentage> | [ <timeline-range-name> <length-percentage>? ] ]",
+            "grammar-unused-reason": "Needs support for default values on optionals.",
+            "specification": {
+                "category": "scroll-animations",
+                "url": "https://drafts.csswg.org/scroll-animations-1/#propdef-animation-range-end"
+            }
+        },
+        "<single-animation-timeline>": {
+            "grammar": "auto | none | <dashed-ident> | <scroll()> | <view()>",
+            "specification": {
+                "category": "css-animations",
+                "url": "https://drafts.csswg.org/css-animations-2/#typedef-single-animation-timeline"
+            }
+        },
         "<single-container-name>": {
             "grammar": "<custom-ident excluding=none,and,or,not>",
             "exported": true,
             "specification": {
                 "category": "css-contain",
                 "url": "https://drafts.csswg.org/css-contain-3/#container-name"
+            }
+        },
+        "<counter-name>": {
+            "grammar": "<custom-ident excluding=none>",
+            "specification": {
+                "category": "css-lists",
+                "url": "https://drafts.csswg.org/css-lists/#typedef-counter-name"
+            }
+        },
+        "<reversed-counter-name>": {
+            "grammar": "reversed( <counter-name> )",
+            "specification": {
+                "category": "css-lists",
+                "url": "https://drafts.csswg.org/css-lists/#typedef-reversed-counter-name"
+            }
+        },
+        "<font-src-list>": {
+            "grammar": "<font-src>#",
+            "specification": {
+                "category": "css-fonts-4",
+                "url": "https://drafts.csswg.org/css-fonts-4/#typedef-font-src-list"
+            }
+        },
+        "<font-src>": {
+            "grammar": "[ <url> [ format( <font-format> ) ]? [ tech( <font-tech># ) ]? ] | local( <family-name> )",
+            "specification": {
+                "category": "css-fonts-4",
+                "url": "https://drafts.csswg.org/css-fonts-4/#typedef-font-src"
+            }
+        },
+        "<font-format>": {
+            "grammar": "[ <string> | collection | embedded-opentype | opentype | svg | truetype | woff | woff2 ]",
+            "specification": {
+                "category": "css-fonts-4",
+                "url": "https://drafts.csswg.org/css-fonts-4/#font-format-values"
+            }
+        },
+        "<font-tech>": {
+            "grammar": "[ <font-features-tech> | <color-font-tech> | variations | palettes | incremental ]",
+            "specification": {
+                "category": "css-fonts-4",
+                "url": "https://drafts.csswg.org/css-fonts-4/#font-tech-values"
+            }
+        },
+        "<font-features-tech>": {
+            "grammar": "[ features-opentype | features-aat | features-graphite ]",
+            "specification": {
+                "category": "css-fonts-4",
+                "url": "https://drafts.csswg.org/css-fonts-4/#font-features-tech-values"
+            }
+        },
+        "<color-font-tech>": {
+            "grammar": "[ color-COLRv0 | color-COLRv1 | color-SVG | color-sbix | color-CBDT ]",
+            "specification": {
+                "category": "css-fonts-4",
+                "url": "https://drafts.csswg.org/css-fonts-4/#color-font-tech-values"
+            }
+        },
+        "<feature-value-name>": {
+            "grammar": "<custom-ident>",
+            "grammar-comment": "Current spec grammar is '<ident>'",
+            "specification": {
+                "category": "css-fonts-4",
+                "url": "https://drafts.csswg.org/css-fonts-4/#feature-value-name-value"
             }
         }
     }

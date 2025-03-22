@@ -107,6 +107,8 @@ enum class ClickHandlerFilter : bool {
     IncludeBody,
 };
 
+enum class PreSortedObjectType : bool { LiveRegion, WebArea };
+
 enum class DateComponentsType : uint8_t;
 
 enum class AXIDType { };
@@ -816,6 +818,7 @@ public:
     virtual bool isSecureField() const = 0;
     virtual bool isNativeTextControl() const = 0;
     bool isWebArea() const { return roleValue() == AccessibilityRole::WebArea; }
+    bool isRootWebArea() const;
     bool isCheckbox() const { return roleValue() == AccessibilityRole::Checkbox; }
     bool isRadioButton() const { return roleValue() == AccessibilityRole::RadioButton; }
     bool isListBox() const { return roleValue() == AccessibilityRole::ListBox; }
@@ -1134,6 +1137,7 @@ public:
     bool emitsNewline() const;
     virtual AXTextRunLineID listMarkerLineID() const = 0;
     virtual String listMarkerText() const = 0;
+    virtual FontOrientation fontOrientation() const = 0;
 #endif
 
     // Methods for determining accessibility text.
@@ -1365,6 +1369,11 @@ public:
     // ARIA live-region features.
     static bool liveRegionStatusIsEnabled(const AtomString&);
     bool supportsLiveRegion(bool excludeIfOff = true) const;
+#if PLATFORM(MAC)
+    virtual AccessibilityChildrenVector allSortedLiveRegions() const = 0;
+    virtual AccessibilityChildrenVector allSortedNonRootWebAreas() const = 0;
+    AccessibilityChildrenVector sortedDescendants(size_t limit, PreSortedObjectType) const;
+#endif // PLATFORM(MAC)
     virtual AXCoreObject* liveRegionAncestor(bool excludeIfOff = true) const = 0;
     virtual const String liveRegionStatus() const = 0;
     virtual const String liveRegionRelevant() const = 0;

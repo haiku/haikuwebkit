@@ -1454,6 +1454,7 @@ public:
     void compileNewSymbol(Node*);
     void compileNewMap(Node*);
     void compileNewSet(Node*);
+    void compileNewRegExpUntyped(Node*);
 
     void emitNewTypedArrayWithSizeInRegister(Node*, TypedArrayType, RegisteredStructure, GPRReg sizeGPR);
     void compileNewTypedArrayWithSize(Node*);
@@ -1551,6 +1552,10 @@ public:
     void compileGetArrayLength(Node*);
 #if USE(LARGE_TYPED_ARRAYS)
     void compileGetTypedArrayLengthAsInt52(Node*);
+#endif
+    void compileDataViewGetByteLength(Node*);
+#if USE(LARGE_TYPED_ARRAYS)
+    void compileDataViewGetByteLengthAsInt52(Node*);
 #endif
 
     void compileCheckTypeInfoFlags(Node*);
@@ -1660,7 +1665,7 @@ public:
     void compileNewFunction(Node*);
     void compileSetFunctionName(Node*);
     void compileNewBoundFunction(Node*);
-    void compileNewRegexp(Node*);
+    void compileNewRegExp(Node*);
     void compileForwardVarargs(Node*);
     void compileVarargsLength(Node*);
     void compileLoadVarargs(Node*);
@@ -1688,6 +1693,7 @@ public:
     void compileRegExpTest(Node*);
     void compileRegExpTestInline(Node*);
     void compileStringReplace(Node*);
+    void compileStringReplaceAll(Node*);
     void compileStringReplaceString(Node*);
     void compileIsObject(Node*);
     void compileTypeOfIsObject(Node*);
@@ -1757,6 +1763,7 @@ public:
     void compileNewArrayWithSpecies(Node*);
     void compileNewArrayWithSizeAndStructure(Node*);
     void compileNewTypedArray(Node*);
+    void compileNewTypedArrayBuffer(Node*);
     void compileToThis(Node*);
     void compileOwnPropertyKeysVariant(Node*);
     void compileObjectAssign(Node*);
@@ -1889,7 +1896,7 @@ public:
     void speculateInt32(Edge);
     void speculateInt32(Edge, JSValueRegs);
 #if USE(JSVALUE64)
-    void convertAnyInt(Edge, GPRReg resultGPR);
+    void convertAnyInt(Edge, GPRReg resultGPR, bool canIgnoreNegativeZero);
     void speculateAnyInt(Edge);
     void speculateDoubleRepAnyInt(Edge);
 #endif // USE(JSVALUE64)

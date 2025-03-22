@@ -366,7 +366,7 @@ static CGFloat effectivePointsPerMeter(CALayer *caLayer)
 
 void ModelProcessModelPlayerProxy::computeTransform()
 {
-    if (!m_model || !m_layer || stageModeInteractionInProgress())
+    if (!m_model || !m_layer)
         return;
 
     // FIXME: Use the value of the 'object-fit' property here to compute an appropriate SRT.
@@ -380,7 +380,7 @@ void ModelProcessModelPlayerProxy::computeTransform()
 
 void ModelProcessModelPlayerProxy::updateTransform()
 {
-    if (!m_model || !m_layer || stageModeInteractionInProgress())
+    if (!m_model || !m_layer)
         return;
 
     [m_modelRKEntity setTransform:WKEntityTransform({ m_transformSRT.scale, m_transformSRT.rotation, m_transformSRT.translation })];
@@ -727,13 +727,17 @@ void ModelProcessModelPlayerProxy::applyEnvironmentMapDataAndRelease()
     if (m_transientEnvironmentMapData) {
         if (m_transientEnvironmentMapData->size() > 0) {
             [m_modelRKEntity applyIBLData:m_transientEnvironmentMapData->createNSData().get() withCompletion:^(BOOL succeeded) {
+                if (!succeeded)
+                    [m_modelRKEntity applyDefaultIBL];
                 send(Messages::ModelProcessModelPlayer::DidFinishEnvironmentMapLoading(succeeded));
             }];
         } else {
-            [m_modelRKEntity removeIBL];
+            [m_modelRKEntity applyDefaultIBL];
             send(Messages::ModelProcessModelPlayer::DidFinishEnvironmentMapLoading(true));
         }
         m_transientEnvironmentMapData = nullptr;
+    } else {
+        [m_modelRKEntity applyDefaultIBL];
     }
 }
 

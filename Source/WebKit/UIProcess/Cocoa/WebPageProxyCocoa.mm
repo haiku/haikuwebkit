@@ -165,17 +165,17 @@ void WebPageProxy::didCommitLayerTree(const RemoteLayerTreeTransaction& layerTre
         themeColorChanged(layerTreeTransaction.themeColor());
         pageExtendedBackgroundColorDidChange(layerTreeTransaction.pageExtendedBackgroundColor());
         sampledPageTopColorChanged(layerTreeTransaction.sampledPageTopColor());
-    }
 
-    if (!m_hasUpdatedRenderingAfterDidCommitLoad
-        && (internals().firstLayerTreeTransactionIdAfterDidCommitLoad && layerTreeTransaction.transactionID().greaterThanOrEqualSameProcess(*internals().firstLayerTreeTransactionIdAfterDidCommitLoad))) {
-        m_hasUpdatedRenderingAfterDidCommitLoad = true;
+        if (!m_hasUpdatedRenderingAfterDidCommitLoad
+            && (internals().firstLayerTreeTransactionIdAfterDidCommitLoad && layerTreeTransaction.transactionID().greaterThanOrEqualSameProcess(*internals().firstLayerTreeTransactionIdAfterDidCommitLoad))) {
+            m_hasUpdatedRenderingAfterDidCommitLoad = true;
 #if ENABLE(SCREEN_TIME)
-        if (RefPtr pageClient = this->pageClient())
-            pageClient->didChangeScreenTimeWebpageControllerURL();
+            if (RefPtr pageClient = this->pageClient())
+                pageClient->didChangeScreenTimeWebpageControllerURL();
 #endif
-        stopMakingViewBlankDueToLackOfRenderingUpdateIfNecessary();
-        internals().lastVisibleContentRectUpdate = { };
+            stopMakingViewBlankDueToLackOfRenderingUpdateIfNecessary();
+            internals().lastVisibleContentRectUpdate = { };
+        }
     }
 
     if (RefPtr pageClient = this->pageClient())
@@ -634,36 +634,34 @@ void WebPageProxy::removeMediaUsageManagerSession(WebCore::MediaSessionIdentifie
 #endif
 
 #if PLATFORM(VISION)
-void WebPageProxy::enterExternalPlaybackForNowPlayingMediaSession(CompletionHandler<void(bool, UIViewController *)>&& completionHandler)
+void WebPageProxy::enterExternalPlaybackForNowPlayingMediaSession(CompletionHandler<void(bool, UIViewController *)>&& enterHandler, CompletionHandler<void(bool)>&& exitHandler)
 {
     if (!m_videoPresentationManager) {
-        completionHandler(false, nil);
+        enterHandler(false, nil);
+        exitHandler(false);
         return;
     }
 
     RefPtr videoPresentationInterface = m_videoPresentationManager->controlsManagerInterface();
     if (!videoPresentationInterface) {
-        completionHandler(false, nil);
+        enterHandler(false, nil);
+        exitHandler(false);
         return;
     }
 
-    videoPresentationInterface->enterExternalPlayback(WTFMove(completionHandler));
+    videoPresentationInterface->enterExternalPlayback(WTFMove(enterHandler), WTFMove(exitHandler));
 }
 
-void WebPageProxy::exitExternalPlayback(CompletionHandler<void(bool)>&& completionHandler)
+void WebPageProxy::exitExternalPlayback()
 {
-    if (!m_videoPresentationManager) {
-        completionHandler(false);
+    if (!m_videoPresentationManager)
         return;
-    }
 
     RefPtr videoPresentationInterface = m_videoPresentationManager->controlsManagerInterface();
-    if (!videoPresentationInterface) {
-        completionHandler(false);
+    if (!videoPresentationInterface)
         return;
-    }
 
-    videoPresentationInterface->exitExternalPlayback(WTFMove(completionHandler));
+    videoPresentationInterface->exitExternalPlayback();
 }
 #endif
 
@@ -1576,7 +1574,11 @@ String WebPageProxy::presentingApplicationBundleIdentifier() const
 #if ENABLE(INITIALIZE_ACCESSIBILITY_ON_DEMAND)
 void WebPageProxy::initializeAccessibility()
 {
-    auto handleArray = SandboxExtension::createHandlesForMachLookup({ }, legacyMainFrameProcess().auditToken(), SandboxExtension::MachBootstrapOptions::EnableMachBootstrap);
+    RELEASE_LOG(Process, "WebPageProxy::initializeAccessibility");
+    if (!hasRunningProcess())
+        return;
+
+    auto handleArray = SandboxExtension::createHandlesForMachLookup({ }, protectedLegacyMainFrameProcess()->auditToken(), SandboxExtension::MachBootstrapOptions::EnableMachBootstrap);
     protectedLegacyMainFrameProcess()->send(Messages::WebPage::InitializeAccessibility(WTFMove(handleArray)), webPageIDInMainFrameProcess());
 }
 #endif

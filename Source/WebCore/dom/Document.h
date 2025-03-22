@@ -103,7 +103,7 @@ class CanvasBase;
 class CDATASection;
 class CSSCounterStyleRegistry;
 class CSSFontSelector;
-class CSSStyleDeclaration;
+class CSSStyleProperties;
 class CSSStyleSheet;
 class CachedCSSStyleSheet;
 class CachedFrameBase;
@@ -523,6 +523,7 @@ public:
 
     WEBCORE_EXPORT Ref<Element> createElement(const QualifiedName&, bool createdByParser, CustomElementRegistry* = nullptr);
 
+    RefPtr<CustomElementRegistry> customElementRegistryForBindings();
     static CustomElementNameValidationStatus validateCustomElementName(const AtomString&);
     void setActiveCustomElementRegistry(CustomElementRegistry*);
     CustomElementRegistry* activeCustomElementRegistry() { return m_activeCustomElementRegistry.get(); }
@@ -630,9 +631,9 @@ public:
     virtual bool isFrameSet() const { return false; }
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    void setHasPaintedHDRContent() { m_hasPaintedHDRContent = true; }
-    bool hasPaintedHDRContent() const { return m_hasPaintedHDRContent; }
-    bool canDrawHDRContent() const;
+    void setHasHDRContent() { m_hasHDRContent = true; }
+    bool hasHDRContent() const { return m_hasHDRContent; }
+    bool drawsHDRContent() const;
 #endif
 
     static constexpr ptrdiff_t documentClassesMemoryOffset() { return OBJECT_OFFSETOF(Document, m_documentClasses); }
@@ -706,7 +707,7 @@ public:
 #endif
 
     OptionSet<StyleColorOptions> styleColorOptions(const RenderStyle*) const;
-    CompositeOperator compositeOperatorForBackgroundColor(const Color&, const RenderObject&) const;
+    CompositeOperator compositeOperatorForBackgroundColor(const Color&, const RenderElement&) const;
 
     WEBCORE_EXPORT Ref<Range> createRange();
 
@@ -717,7 +718,7 @@ public:
     WEBCORE_EXPORT Ref<TreeWalker> createTreeWalker(Node& root, unsigned long whatToShow = 0xFFFFFFFF, RefPtr<NodeFilter>&& = nullptr, bool = false);
 
     // Special support for editing
-    WEBCORE_EXPORT Ref<CSSStyleDeclaration> createCSSStyleDeclaration();
+    WEBCORE_EXPORT Ref<CSSStyleProperties> createCSSStyleDeclaration();
     Ref<Text> createEditingTextNode(String&&);
 
     enum class ResolveStyleType : bool { Normal, Rebuild };
@@ -850,7 +851,7 @@ public:
 
     void disableEval(const String& errorMessage) final;
     void disableWebAssembly(const String& errorMessage) final;
-    void setRequiresTrustedTypes(bool required) final;
+    void setTrustedTypesEnforcement(JSC::TrustedTypesEnforcement) final;
 
     bool requiresTrustedTypes() const { return m_requiresTrustedTypes; }
 
@@ -1418,8 +1419,8 @@ public:
     const DocumentFullscreen* fullscreenIfExists() const { return m_fullscreen.get(); }
     WEBCORE_EXPORT DocumentFullscreen& fullscreen();
     WEBCORE_EXPORT const DocumentFullscreen& fullscreen() const;
-    CheckedRef<DocumentFullscreen> checkedFullscreen(); // Defined in DocumentInlines.h.
-    CheckedRef<const DocumentFullscreen> checkedFullscreen() const; // Defined in DocumentInlines.h.
+    WEBCORE_EXPORT Ref<DocumentFullscreen> protectedFullscreen();
+    WEBCORE_EXPORT Ref<const DocumentFullscreen> protectedFullscreen() const;
 #endif
 
 #if ENABLE(POINTER_LOCK)
@@ -1559,8 +1560,7 @@ public:
 
     bool inStyleRecalc() const { return m_inStyleRecalc; }
     bool inRenderTreeUpdate() const { return m_inRenderTreeUpdate; }
-    bool isResolvingContainerQueries() const { return m_isResolvingContainerQueries; }
-    bool isInStyleInterleavedLayout() const { return m_isResolvingContainerQueries || m_isResolvingAnchorPositionedElements; };
+    bool isInStyleInterleavedLayout() const { return m_isInStyleInterleavedLayout; };
     bool isInStyleInterleavedLayoutForSelfOrAncestor() const;
     bool isResolvingTreeStyle() const { return m_isResolvingTreeStyle; }
     void setIsResolvingTreeStyle(bool);
@@ -1619,7 +1619,6 @@ public:
 
     void setVisualUpdatesAllowedByClient(bool);
 
-    std::optional<Vector<uint8_t>> wrapCryptoKey(const Vector<uint8_t>&) final;
     std::optional<Vector<uint8_t>> serializeAndWrapCryptoKey(CryptoKeyData&&) final;
     std::optional<Vector<uint8_t>> unwrapCryptoKey(const Vector<uint8_t>&) final;
 
@@ -2614,8 +2613,7 @@ private:
     bool m_inStyleRecalc { false };
     bool m_inRenderTreeUpdate { false };
     bool m_isResolvingTreeStyle { false };
-    bool m_isResolvingContainerQueries { false };
-    bool m_isResolvingAnchorPositionedElements { false };
+    bool m_isInStyleInterleavedLayout { false };
 
     bool m_gotoAnchorNeededAfterStylesheetsLoad { false };
 
@@ -2669,7 +2667,7 @@ private:
 #endif
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    bool m_hasPaintedHDRContent { false };
+    bool m_hasHDRContent { false };
 #endif
 
     bool m_hasViewTransitionPseudoElementTree { false };

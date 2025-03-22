@@ -110,6 +110,11 @@ Resolver& Scope::resolver()
     return *m_resolver;
 }
 
+Ref<Resolver> Scope::protectedResolver()
+{
+    return resolver();
+}
+
 void Scope::createDocumentResolver()
 {
     ASSERT(!m_resolver);
@@ -996,7 +1001,7 @@ bool Scope::invalidateForAnchorDependencies(LayoutDependencyUpdateContext& conte
     if (m_document->renderView()->anchors().isEmptyIgnoringNullReferences())
         return false;
 
-    auto anchorMap = AnchorPositionEvaluator::makeAnchorPositionedForAnchorMap(m_document);
+    auto anchorMap = AnchorPositionEvaluator::makeAnchorPositionedForAnchorMap(m_anchorPositionedToAnchorMap);
 
     for (auto& anchorRenderer : m_document->renderView()->anchors()) {
         auto rect = anchorRenderer.absoluteBoundingBoxRect();
@@ -1040,7 +1045,7 @@ bool Scope::invalidateForPositionTryFallbacks(LayoutDependencyUpdateContext& con
     bool invalidated = false;
 
     for (auto& box : m_document->renderView()->positionTryBoxes()) {
-        if (!AnchorPositionEvaluator::overflowsContainingBlock(box))
+        if (!AnchorPositionEvaluator::overflowsInsetModifiedContainingBlock(box))
             continue;
 
         CheckedPtr element = box.element();
@@ -1117,23 +1122,12 @@ Element* hostForScopeOrdinal(const Element& element, ScopeOrdinal scopeOrdinal)
     return host;
 }
 
-void Scope::resetAnchorPositioningStateBeforeStyleResolution()
-{
-    // FIXME: Move this transient state to TreeResolver.
-    for (auto elementAndState : m_anchorPositionedStates) {
-        elementAndState.value->anchorNames.clear();
-        elementAndState.value->stage = AnchorPositionResolutionStage::FindAnchors;
-        elementAndState.value->hasAnchorFunctions = false;
-    }
-}
-
 void Scope::updateAnchorPositioningStateAfterStyleResolution()
 {
     AnchorPositionEvaluator::updateSnapshottedScrollOffsets(m_document);
 
-    m_anchorPositionedStates.removeIf([](auto& elementAndState) {
-        // Remove if we have no anchors after initial resolution.
-        return elementAndState.value->stage != AnchorPositionResolutionStage::FindAnchors && elementAndState.value->anchorNames.isEmpty();
+    m_anchorPositionedToAnchorMap.removeIf([](auto& elementAndState) {
+        return elementAndState.value.isEmpty();
     });
 }
 

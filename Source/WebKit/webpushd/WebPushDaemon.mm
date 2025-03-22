@@ -56,7 +56,7 @@
 #import <wtf/URL.h>
 #import <wtf/WorkQueue.h>
 #import <wtf/cocoa/SpanCocoa.h>
-#import <wtf/spi/darwin/XPCSPI.h>
+#import <wtf/darwin/XPCExtras.h>
 #import <wtf/text/MakeString.h>
 
 #if HAVE(MOBILE_KEY_BAG)
@@ -306,7 +306,7 @@ void WebPushDaemon::connectionEventHandler(xpc_object_t request)
         return;
     }
 
-    auto data = xpc_dictionary_get_data_span(request, protocolEncodedMessageKey);
+    auto data = xpcDictionaryGetData(request, protocolEncodedMessageKey);
     if (!data.data()) {
         RELEASE_LOG_ERROR(Push, "WebPushDaemon::connectionEventHandler - No encoded message data in xpc message");
         tryCloseRequestConnection(request);
@@ -700,10 +700,16 @@ void WebPushDaemon::silentPushTimerFired()
         if (it->expirationTime > now)
             break;
 
-        auto origin = WebCore::SecurityOriginData::fromURL(URL { it->scope }).toString();
-        m_pushService->incrementSilentPushCount(it->identifier, origin, [identifier = it->identifier, origin](unsigned newSilentPushCount) {
-            RELEASE_LOG(Push, "showNotification not called in time for %{public}s (origin = %{sensitive}s), silent push count is now %u", identifier.debugDescription().utf8().data(), origin.utf8().data(), newSilentPushCount);
-        });
+        auto origin = WebCore::SecurityOriginData::fromURL(URL { it->scope });
+        auto originString = origin.toString();
+        if (m_inspectedServiceWorkerOrigins.contains(origin))
+            RELEASE_LOG(Push, "showNotification not called in time for %{public}s (origin = %{sensitive}s), but not incrementing silent push count since it is being inspected", it->identifier.debugDescription().utf8().data(), originString.utf8().data());
+        else {
+            m_pushService->incrementSilentPushCount(it->identifier, originString, [identifier = it->identifier, originString](unsigned newSilentPushCount) {
+                RELEASE_LOG(Push, "showNotification not called in time for %{public}s (origin = %{sensitive}s), silent push count is now %u", identifier.debugDescription().utf8().data(), originString.utf8().data(), newSilentPushCount);
+            });
+        }
+
         it = m_potentialSilentPushes.erase(it);
     }
 
@@ -1264,6 +1270,21 @@ void WebPushDaemon::setProtocolVersionForTesting(PushClientConnection& connectio
 {
     s_protocolVersion = version;
     completionHandler();
+}
+
+void WebPushDaemon::setServiceWorkerOriginIsBeingInspected(const WebCore::SecurityOriginData& origin, bool isInspected)
+{
+    auto result = m_inspectedServiceWorkerOrigins.add(origin, 0);
+
+    if (!isInspected) {
+        auto count = --result.iterator->value;
+        if (count <= 0)
+            m_inspectedServiceWorkerOrigins.remove(result.iterator);
+        RELEASE_LOG(Push, "Service worker for origin %{sensitive}s no longer being inspected (inspection count = %d)", origin.toString().utf8().data(), count);
+    } else {
+        auto count = ++result.iterator->value;
+        RELEASE_LOG(Push, "Service worker for origin %{sensitive}s is being inspected (inspection count = %d); suspending silent push enforcement", origin.toString().utf8().data(), count);
+    }
 }
 
 } // namespace WebPushD

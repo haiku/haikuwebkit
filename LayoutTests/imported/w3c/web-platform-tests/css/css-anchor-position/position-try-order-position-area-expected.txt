@@ -26,10 +26,12 @@ PASS most-inline-size --right-sweep, --left-sweep, --bottom-sweep, --top-sweep |
 PASS most-block-size --right-sweep, --left-sweep, --bottom-sweep, --top-sweep | --top-sweep
 PASS most-inline-size
   --right-sweep, --left-sweep, --bottom-sweep, --top-sweep,
-  --right, --left, --bottom, --top
-   | --left-sweep
+  /* --right, --left, --bottom, --top */
+  --bottom
+   | --bottom
 PASS most-block-size
   --right-sweep, --left-sweep, --bottom-sweep, --top-sweep,
-  --right, --left, --bottom, --top
+  /* --right, --left, --bottom, --top */
+  --right
    | --right
 

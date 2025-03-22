@@ -32,6 +32,7 @@
 #include "DocumentLoader.h"
 #include "OriginAccessPatterns.h"
 #include "Page.h"
+#include "Quirks.h"
 #include "Settings.h"
 #include <wtf/NeverDestroyed.h>
 
@@ -60,6 +61,7 @@ static void applyUASheetBehaviorsToContext(CSSParserContext& context)
     context.propertySettings.cssCounterStyleAtRulesEnabled = true;
     context.propertySettings.supportHDRDisplayEnabled = true;
     context.propertySettings.viewTransitionsEnabled = true;
+    context.propertySettings.cssFieldSizingEnabled = true;
 #if HAVE(CORE_MATERIAL)
     context.propertySettings.useSystemAppearance = true;
 #endif
@@ -119,6 +121,7 @@ CSSParserContext::CSSParserContext(const Document& document, const URL& sheetBas
     , cssMediaProgressFunctionEnabled { document.settings().cssMediaProgressFunctionEnabled() }
     , cssContainerProgressFunctionEnabled { document.settings().cssContainerProgressFunctionEnabled() }
     , cssRandomFunctionEnabled { document.settings().cssRandomFunctionEnabled() }
+    , webkitMediaTextTrackDisplayQuirkEnabled { document.quirks().needsWebKitMediaTextTrackDisplayQuirk() }
     , propertySettings { CSSPropertySettings { document.settings() } }
 {
 }

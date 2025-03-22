@@ -25,6 +25,7 @@
 
 #import "config.h"
 #import "WebProcessProxy.h"
+#include <WebCore/ServiceWorkerTypes.h>
 
 #import "AccessibilitySupportSPI.h"
 #import "CodeSigning.h"
@@ -273,22 +274,28 @@ void WebProcessProxy::setupLogStream(uint32_t pid, IPC::StreamServerConnectionHa
 #endif // ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
 
 #if ENABLE(REMOTE_INSPECTOR)
-void WebProcessProxy::createServiceWorkerDebuggable(WebCore::ServiceWorkerIdentifier identifier, URL&& url, CompletionHandler<void(bool)>&& completionHandler)
+void WebProcessProxy::createServiceWorkerDebuggable(WebCore::ServiceWorkerIdentifier identifier, URL&& url, WebCore::ServiceWorkerIsInspectable isInspectable, CompletionHandler<void(bool shouldWaitForAutoInspection)>&& completionHandler)
 {
     MESSAGE_CHECK_URL(url);
     RELEASE_LOG(Inspector, "WebProcessProxy::createServiceWorkerDebuggable");
-    if (!shouldEnableRemoteInspector())
+    if (!shouldEnableRemoteInspector()) {
+        if (completionHandler)
+            completionHandler(false);
         return;
+    }
+
     Ref serviceWorkerDebuggableProxy = ServiceWorkerDebuggableProxy::create(url.string(), identifier, *this);
     m_serviceWorkerDebuggableProxies.add(identifier, serviceWorkerDebuggableProxy);
     serviceWorkerDebuggableProxy->init();
-    serviceWorkerDebuggableProxy->setInspectable(true);
+    serviceWorkerDebuggableProxy->setInspectable(isInspectable == WebCore::ServiceWorkerIsInspectable::Yes);
+
+    if (completionHandler) {
 #if ENABLE(REMOTE_INSPECTOR_SERVICE_WORKER_AUTO_INSPECTION)
-    completionHandler(serviceWorkerDebuggableProxy->wasRequestedToWaitForAutoInspection());
+        completionHandler(serviceWorkerDebuggableProxy->isPausedWaitingForAutomaticInspection());
 #else
-    bool shouldWaitForAutomaticInspection = false;
-    completionHandler(shouldWaitForAutomaticInspection);
+        completionHandler(false);
 #endif
+    }
 }
 
 void WebProcessProxy::deleteServiceWorkerDebuggable(WebCore::ServiceWorkerIdentifier identifier)

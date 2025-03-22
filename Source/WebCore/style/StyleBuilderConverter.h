@@ -171,7 +171,6 @@ public:
     static GridPosition convertGridPosition(BuilderState&, const CSSValue&);
     static GridAutoFlow convertGridAutoFlow(BuilderState&, const CSSValue&);
     static Vector<StyleContentAlignmentData> convertContentAlignmentDataList(BuilderState&, const CSSValue&);
-    static MasonryAutoFlow convertMasonryAutoFlow(BuilderState&, const CSSValue&);
     static std::optional<float> convertPerspective(BuilderState&, const CSSValue&);
     static std::optional<WebCore::Length> convertMarqueeIncrement(BuilderState&, const CSSValue&);
     static FilterOperations convertFilterOperations(BuilderState&, const CSSValue&);
@@ -1166,8 +1165,8 @@ inline IntSize BuilderConverter::convertInitialLetter(BuilderState& builderState
         return { };
 
     return {
-        pair->first.resolveAsNumber<int>(conversionData),
-        pair->second.resolveAsNumber<int>(conversionData)
+        pair->second.resolveAsNumber<int>(conversionData),
+        pair->first.resolveAsNumber<int>(conversionData)
     };
 }
 
@@ -1273,17 +1272,14 @@ inline ScrollSnapType BuilderConverter::convertScrollSnapType(BuilderState& buil
 
 inline ScrollSnapAlign BuilderConverter::convertScrollSnapAlign(BuilderState& builderState, const CSSValue& value)
 {
-    auto list = requiredListDowncast<CSSValueList, CSSPrimitiveValue>(builderState, value);
-    if (!list)
+    auto pair = requiredPairDowncast<CSSPrimitiveValue>(builderState, value);
+    if (!pair)
         return { };
 
-    ScrollSnapAlign alignment;
-    alignment.blockAlign = fromCSSValue<ScrollSnapAxisAlignType>(list->item(0));
-    if (list->size() == 1)
-        alignment.inlineAlign = alignment.blockAlign;
-    else
-        alignment.inlineAlign = fromCSSValue<ScrollSnapAxisAlignType>(list->item(1));
-    return alignment;
+    return {
+        fromCSSValue<ScrollSnapAxisAlignType>(pair->first),
+        fromCSSValue<ScrollSnapAxisAlignType>(pair->second)
+    };
 }
 
 inline ScrollSnapStop BuilderConverter::convertScrollSnapStop(BuilderState&, const CSSValue& value)
@@ -1613,41 +1609,6 @@ inline Vector<StyleContentAlignmentData> BuilderConverter::convertContentAlignme
     return WTF::map(*list, [&](auto& value) {
         return convertContentAlignmentData(builderState, value);
     });
-}
-
-inline MasonryAutoFlow BuilderConverter::convertMasonryAutoFlow(BuilderState& builderState, const CSSValue& value)
-{
-    auto list = requiredListDowncast<CSSValueList, CSSPrimitiveValue>(builderState, value);
-    if (!list)
-        return { };
-
-    if (!(list->size() == 1 || list->size() == 2))
-        return RenderStyle::initialMasonryAutoFlow();
-
-    auto& firstValue = list->item(0);
-    auto* secondValue = list->size() == 2 ? &list->item(1) : nullptr;
-    MasonryAutoFlow masonryAutoFlow;
-    if (secondValue) {
-        ASSERT(firstValue.valueID() == CSSValueID::CSSValuePack || firstValue.valueID() == CSSValueID::CSSValueNext);
-        ASSERT(secondValue->valueID() == CSSValueID::CSSValueOrdered);
-        if (firstValue.valueID() == CSSValueID::CSSValuePack)
-            masonryAutoFlow = { MasonryAutoFlowPlacementAlgorithm::Pack, MasonryAutoFlowPlacementOrder::Ordered };
-        else
-            masonryAutoFlow = { MasonryAutoFlowPlacementAlgorithm::Next, MasonryAutoFlowPlacementOrder::Ordered };
-
-    } else  {
-        if (firstValue.valueID() == CSSValueID::CSSValuePack)
-            masonryAutoFlow = { MasonryAutoFlowPlacementAlgorithm::Pack, MasonryAutoFlowPlacementOrder::DefiniteFirst };
-        else if (firstValue.valueID() == CSSValueID::CSSValueNext)
-            masonryAutoFlow = { MasonryAutoFlowPlacementAlgorithm::Next, MasonryAutoFlowPlacementOrder::DefiniteFirst };
-        else if (firstValue.valueID() == CSSValueID::CSSValueOrdered)
-            masonryAutoFlow = { MasonryAutoFlowPlacementAlgorithm::Pack, MasonryAutoFlowPlacementOrder::Ordered };
-        else {
-            ASSERT_NOT_REACHED();
-            return RenderStyle::initialMasonryAutoFlow();
-        }
-    }
-    return masonryAutoFlow;
 }
 
 inline float zoomWithTextZoomFactor(BuilderState& builderState)
@@ -2756,13 +2717,22 @@ inline NameScope BuilderConverter::convertNameScope(BuilderState& builderState, 
 
 inline Vector<PositionTryFallback> BuilderConverter::convertPositionTryFallbacks(BuilderState& builderState, const CSSValue& value)
 {
-    auto fallbackForValueList = [&](const CSSValueList& valueList) -> std::optional<PositionTryFallback> {
-        if (valueList.separator() != CSSValueList::SpaceSeparator)
+    auto convertFallback = [&](const CSSValue& fallbackValue) -> std::optional<PositionTryFallback> {
+        auto* valueList = dynamicDowncast<CSSValueList>(fallbackValue);
+        if (!valueList) {
+            // Turn the inlined position-area fallback into properties object that can be applied similarly to @position-try declarations.
+            auto property = CSSProperty { CSSPropertyPositionArea, Ref { const_cast<CSSValue&>(fallbackValue) } };
+            return PositionTryFallback {
+                .positionAreaProperties = ImmutableStyleProperties::create(std::span { &property, 1 }, HTMLStandardMode)
+            };
+        }
+
+        if (valueList->separator() != CSSValueList::SpaceSeparator)
             return { };
 
         auto fallback = PositionTryFallback { };
 
-        for (auto& item : valueList) {
+        for (auto& item : *valueList) {
             if (item.isCustomIdent())
                 fallback.positionTryRuleName = Style::ScopedName { AtomString { item.customIdent() }, builderState.styleScopeOrdinal() };
             else
@@ -2771,28 +2741,18 @@ inline Vector<PositionTryFallback> BuilderConverter::convertPositionTryFallbacks
         return fallback;
     };
 
-    if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
-        switch (primitiveValue->valueID()) {
-        case CSSValueNone:
-            return { };
-        default:
-            ASSERT_NOT_REACHED();
-            return { };
-        }
-    }
+    if (value.valueID() == CSSValueNone)
+        return { };
+
+    if (auto fallback = convertFallback(value))
+        return { *fallback };
 
     auto* list = dynamicDowncast<CSSValueList>(value);
     if (!list)
         return { };
 
-    if (auto fallback = fallbackForValueList(*list))
-        return { *fallback };
-
     return WTF::map(*list, [&](auto& item) {
-        auto* itemList = dynamicDowncast<CSSValueList>(item);
-        if (!itemList)
-            return PositionTryFallback { };
-        auto fallback = fallbackForValueList(*itemList);
+        auto fallback = convertFallback(item);
         return fallback ? *fallback : PositionTryFallback { };
     });
 }

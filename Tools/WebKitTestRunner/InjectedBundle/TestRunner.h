@@ -121,7 +121,7 @@ public:
 
     // Other dumping.
     void dumpBackForwardList();
-    void dumpChildFrameScrollPositions() { m_shouldDumpAllFrameScrollPositions = true; }
+    void dumpChildFrameScrollPositions();
     void dumpEditingCallbacks() { m_dumpEditingCallbacks = true; }
     void dumpSelectionRect() { m_dumpSelectionRect = true; }
     void dumpStatusCallbacks() { m_dumpStatusCallbacks = true; }
@@ -184,7 +184,7 @@ public:
     void addUserStyleSheet(JSStringRef source, bool allFrames);
 
     // Text search testing.
-    bool findString(JSContextRef, JSStringRef, JSValueRef optionsArray);
+    void findString(JSContextRef, JSStringRef, JSValueRef optionsArray, JSValueRef callback);
     void findStringMatchesInPage(JSContextRef, JSStringRef, JSValueRef optionsArray);
     void replaceFindMatchesAtIndices(JSContextRef, JSValueRef matchIndices, JSStringRef replacementText, bool selectionOnly);
 
@@ -230,7 +230,7 @@ public:
     WhatToDump whatToDump() const;
     void setWhatToDump(WhatToDump);
 
-    bool shouldDumpAllFrameScrollPositions() const { return m_shouldDumpAllFrameScrollPositions; }
+    bool shouldDumpAllFrameScrollPositions() const;
     bool shouldDumpBackForwardListsForAllWindows() const;
     bool shouldDumpEditingCallbacks() const { return m_dumpEditingCallbacks; }
     bool shouldDumpMainFrameScrollPosition() const { return whatToDump() == WhatToDump::RenderTree; }
@@ -566,6 +566,7 @@ public:
 
     void flushConsoleLogs(JSContextRef, JSValueRef callback);
     void updatePresentation(JSContextRef, JSValueRef callback);
+    void scrollDuringEnterFullscreen();
     void waitBeforeFinishingFullscreenExit();
     void finishFullscreenExit();
     void requestExitFullscreenFromUIProcess();
@@ -613,7 +614,6 @@ private:
     size_t m_userMediaPermissionRequestCount { 0 };
 
     unsigned m_renderTreeDumpOptions { 0 };
-    bool m_shouldDumpAllFrameScrollPositions { false };
     bool m_shouldAllowEditing { true };
 
     bool m_dumpEditingCallbacks { false };

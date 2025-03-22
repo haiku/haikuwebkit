@@ -374,6 +374,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/fetch/FetchLoader.h
     Modules/fetch/FetchLoaderClient.h
     Modules/fetch/FetchRequestCredentials.h
+    Modules/fetch/FetchRequestDestination.h
+    Modules/fetch/FetchRequestMode.h
     Modules/fetch/RequestPriority.h
 
     Modules/filesystemaccess/FileSystemDirectoryHandle.h
@@ -798,7 +800,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     bindings/js/JSDOMExceptionHandling.h
     bindings/js/JSDOMGlobalObject.h
     bindings/js/JSDOMGuardedObject.h
-    bindings/js/JSDOMMicrotask.h
     bindings/js/JSDOMOperation.h
     bindings/js/JSDOMPromiseDeferred.h
     bindings/js/JSDOMPromiseDeferredForward.h
@@ -900,6 +901,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/CSSCounterStyleRule.h
     css/CSSCounterValue.h
     css/CSSCustomPropertyValue.h
+    css/CSSFontFaceDescriptors.h
     css/CSSFontFaceRule.h
     css/CSSFontPaletteValuesRule.h
     css/CSSGridIntegerRepeatValue.h
@@ -919,6 +921,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/CSSSelector.h
     css/CSSSelectorList.h
     css/CSSStyleDeclaration.h
+    css/CSSStyleProperties.h
     css/CSSStyleRule.h
     css/CSSStyleSheet.h
     css/CSSSubgridValue.h
@@ -1041,6 +1044,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     dom/Attr.h
     dom/Attribute.h
     dom/BoundaryPoint.h
+    dom/BoundaryPointInlines.h
     dom/BroadcastChannel.h
     dom/BroadcastChannelIdentifier.h
     dom/BroadcastChannelRegistry.h
@@ -1141,6 +1145,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     dom/NamedNodeMap.h
     dom/NativeNodeFilter.h
     dom/Node.h
+    dom/NodeInlines.h
     dom/NodeConstants.h
     dom/NodeFilter.h
     dom/NodeFilterCondition.h
@@ -1156,6 +1161,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     dom/PopoverData.h
     dom/PortIdentifier.h
     dom/Position.h
+    dom/PositionInlines.h
     dom/ProcessingInstruction.h
     dom/ProgressEvent.h
     dom/PseudoElement.h
@@ -1163,6 +1169,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     dom/RadioButtonGroups.h
     dom/Range.h
     dom/RangeBoundaryPoint.h
+    dom/RangeBoundaryPointInlines.h
     dom/RegisteredEventListener.h
     dom/RenderedDocumentMarker.h
     dom/SandboxFlags.h
@@ -1236,6 +1243,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     editing/EditAction.h
     editing/EditableLinkBehavior.h
     editing/Editing.h
+    editing/EditingInlines.h
     editing/EditingBehavior.h
     editing/EditingBehaviorType.h
     editing/EditingBoundary.h
@@ -1843,7 +1851,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/DragItem.h
     platform/EventTrackingRegions.h
     platform/FileChooser.h
-    platform/FileHandle.h
     platform/FileMonitor.h
     platform/FileStreamClient.h
     platform/FixedContainerEdges.h
@@ -2624,6 +2631,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/OutlineValue.h
     rendering/style/PositionArea.h
     rendering/style/PositionTryFallback.h
+    rendering/style/PositionTryOrder.h
     rendering/style/RenderStyle.h
     rendering/style/RenderStyleConstants.h
     rendering/style/RenderStyleInlines.h
@@ -2813,6 +2821,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     workers/service/ServiceWorkerRegistrationData.h
     workers/service/ServiceWorkerRegistrationKey.h
     workers/service/ServiceWorkerRegistrationOptions.h
+    workers/service/ServiceWorkerRoute.h
     workers/service/ServiceWorkerTypes.h
     workers/service/ServiceWorkerUpdateViaCache.h
 
@@ -2873,6 +2882,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     ${WebCore_DERIVED_SOURCES_DIR}/EventInterfaces.h
     ${WebCore_DERIVED_SOURCES_DIR}/EventNames.h
     ${WebCore_DERIVED_SOURCES_DIR}/EventTargetInterfaces.h
+    ${WebCore_DERIVED_SOURCES_DIR}/FrameTreeSyncData.h
     ${WebCore_DERIVED_SOURCES_DIR}/HTMLElementTypeHelpers.h
     ${WebCore_DERIVED_SOURCES_DIR}/HTMLNames.h
     ${WebCore_DERIVED_SOURCES_DIR}/HTTPHeaderNames.h

@@ -222,7 +222,7 @@ public:
     NameScope anchorScope;
     std::optional<Style::ScopedName> positionAnchor;
     std::optional<PositionArea> positionArea;
-    Vector<PositionTryFallback> positionTryFallbacks;
+    Vector<Style::PositionTryFallback> positionTryFallbacks;
 
     std::optional<Length> blockStepSize;
     unsigned blockStepAlign : 2; // BlockStepAlign
@@ -282,6 +282,8 @@ public:
 #endif
 
     unsigned scrollbarWidth : 2; // ScrollbarWidth
+
+    unsigned usesAnchorFunctions : 1;
 
 private:
     StyleRareNonInheritedData();

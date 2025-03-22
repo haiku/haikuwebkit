@@ -122,7 +122,7 @@ ImageDrawResult BitmapImage::draw(GraphicsContext& context, const FloatRect& des
             orientation = currentFrameOrientation();
 
         auto headroom = options.headroom();
-        if (headroom == Headroom::FromImage && headroomForTesting().value_or(Headroom::None) > Headroom::None)
+        if (headroom == Headroom::FromImage && hasHDRContentForTesting())
             fillWithSolidColor(context, destinationRect, Color::gold, options.compositeOperator());
         else {
             if (headroom == Headroom::FromImage)
@@ -143,7 +143,10 @@ void BitmapImage::drawPattern(GraphicsContext& context, const FloatRect& destina
     if (tileRect.isEmpty())
         return;
 
-    if (context.drawLuminanceMask())
+    auto headroom = options.headroom();
+    if (headroom == Headroom::FromImage && hasHDRContentForTesting())
+        fillWithSolidColor(context, destinationRect, Color::gold, options.compositeOperator());
+    else if (context.drawLuminanceMask())
         drawLuminanceMaskPattern(context, destinationRect, tileRect, transform, phase, spacing, options);
     else
         Image::drawPattern(context, destinationRect, tileRect, transform, phase, spacing, { options, ImageOrientation::Orientation::FromImage });

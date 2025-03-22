@@ -13,15 +13,15 @@ accessibility/AXCoreObject.h
 accessibility/AXSearchManager.h
 bindings/js/JSEventTargetCustom.h
 bindings/js/JSLazyEventListener.cpp
-css/CSSFontFaceSource.h
+css/CSSFontFaceDescriptors.h
 css/CSSFontSelector.h
 css/CSSPrimitiveValueMappings.h
 css/CSSRuleList.h
+css/CSSStyleProperties.h
 css/CSSStyleSheet.cpp
 css/CSSStyleSheet.h
 css/CSSValueList.h
 css/MediaList.h
-css/PropertySetCSSStyleDeclaration.h
 css/SelectorChecker.h
 css/SelectorFilter.h
 css/ShorthandSerializer.cpp
@@ -74,7 +74,6 @@ platform/graphics/avfoundation/objc/WebCoreAVFResourceLoader.mm
 platform/graphics/ca/TileController.h
 platform/graphics/controls/PlatformControl.h
 platform/graphics/cv/GraphicsContextGLCVCocoa.h
-platform/graphics/mac/controls/ControlMac.h
 platform/mediarecorder/MediaRecorderPrivate.h
 platform/mediastream/AudioMediaStreamTrackRenderer.h
 platform/mediastream/MediaStreamPrivate.h
@@ -83,7 +82,6 @@ platform/mock/ScrollbarsControllerMock.h
 platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.h
 plugins/PluginData.h
 rendering/RenderQuote.cpp
-rendering/RenderVTTCue.h
 rendering/TextBoxPainter.h
 rendering/style/StyleGeneratedImage.cpp
 rendering/svg/SVGTextLayoutAttributesBuilder.h
@@ -98,7 +96,6 @@ style/StyleScope.h
 style/StyleScopeRuleSets.h
 style/StyleSharingResolver.cpp
 style/Styleable.h
-svg/properties/SVGAnimatedProperty.h
 svg/properties/SVGPropertyOwnerRegistry.h
 workers/WorkerAnimationController.h
 workers/WorkerConsoleClient.h
@@ -107,6 +104,5 @@ workers/WorkerNotificationClient.h
 workers/WorkerOrWorkletGlobalScope.h
 workers/service/NavigationPreloadManager.h
 workers/service/background-fetch/ServiceWorkerRegistrationBackgroundFetchAPI.h
-workers/service/context/ServiceWorkerThreadProxy.h
 xml/XMLHttpRequestProgressEventThrottle.h
 xml/XMLHttpRequestUpload.h

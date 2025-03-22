@@ -390,7 +390,7 @@ void JIT::privateCompileMainPass()
         DEFINE_OP(op_new_async_generator_func)
         DEFINE_OP(op_new_async_generator_func_exp)
         DEFINE_OP(op_new_object)
-        DEFINE_OP(op_new_regexp)
+        DEFINE_OP(op_new_reg_exp)
         DEFINE_OP(op_not)
         DEFINE_OP(op_nstricteq)
         DEFINE_OP(op_create_lexical_environment)
@@ -1025,6 +1025,10 @@ CompilationResult JIT::finalizeOnMainThread(CodeBlock* codeBlock, BaselineJITPla
 
 CompilationResult JIT::compileSync(VM&, CodeBlock* codeBlock, JITCompilationEffort effort)
 {
+#if USE(PROTECTED_JIT)
+    // Must be constructed before we allocate anything using SequesteredArenaMalloc
+    ArenaLifetime saLifetime;
+#endif
     auto plan = adoptRef(*new BaselineJITPlan(codeBlock));
     plan->compileSync(effort);
     return plan->finalize();

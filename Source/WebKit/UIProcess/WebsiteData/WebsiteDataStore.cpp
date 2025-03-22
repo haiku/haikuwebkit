@@ -92,6 +92,7 @@
 
 #if PLATFORM(COCOA)
 #include "DefaultWebBrowserChecks.h"
+#include "ScreenTimeWebsiteDataSupport.h"
 #include "WebPrivacyHelpers.h"
 #endif
 
@@ -772,17 +773,15 @@ private:
 
 #if ENABLE(SCREEN_TIME)
     if (dataTypes.contains(WebsiteDataType::ScreenTime) && isPersistent()) {
-        m_client->getScreenTimeURLs(configuration().identifier(), [callbackAggregator](HashSet<URL> urls) {
+        ScreenTimeWebsiteDataSupport::getScreenTimeURLs(configuration().identifier(), { [callbackAggregator](HashSet<URL> urls) {
             WebsiteData websiteData;
-            Vector<WebCore::SecurityOriginData> origins;
-            for (auto url : urls)
-                origins.append(SecurityOriginData::fromURL(url));
-
-            websiteData.entries = WTF::map(origins, [](auto& origin) {
-                return WebsiteData::Entry { origin, WebsiteDataType::ScreenTime, 0 };
+            websiteData.entries = WTF::map(urls, [](auto& url) {
+                return WebsiteData::Entry { SecurityOriginData::fromURL(url), WebsiteDataType::ScreenTime, 0 };
             });
             callbackAggregator->addWebsiteData(WTFMove(websiteData));
-        });
+        }, CompletionHandlerCallThread::AnyThread });
+        // FIXME: Remove CompletionHandlerCallThread::AnyThread above once rdar://145889845 is widely available.
+        // Screen Time might not call the completion handler, so allow the completion handler to be called from any thread.
     }
 #endif
 
@@ -959,7 +958,7 @@ void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, WallTime
 
 #if ENABLE(SCREEN_TIME)
     if (dataTypes.contains(WebsiteDataType::ScreenTime) && isPersistent())
-        removeScreenTimeDataWithInterval(modifiedSince);
+        ScreenTimeWebsiteDataSupport::removeScreenTimeDataWithInterval(modifiedSince, configuration());
 #endif
 }
 
@@ -1063,7 +1062,7 @@ void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, const Ve
                     websitesToRemove.add(origin.toURL());
             }
         }
-        removeScreenTimeData(websitesToRemove);
+        ScreenTimeWebsiteDataSupport::removeScreenTimeData(websitesToRemove, configuration());
     }
 #endif
 }

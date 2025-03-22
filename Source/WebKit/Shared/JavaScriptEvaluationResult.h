@@ -100,6 +100,9 @@ private:
     Variant toVariant(id);
     JSObjectID addObjectToMap(id);
 
+    Variant toVariant(JSGlobalContextRef, JSValueRef);
+    JSObjectID addObjectToMap(JSGlobalContextRef, JSValueRef);
+
     // Used for deserializing from IPC to ObjC
     HashMap<JSObjectID, RetainPtr<id>> m_instantiatedNSObjects;
     Vector<std::pair<HashMap<JSObjectID, JSObjectID>, RetainPtr<NSMutableDictionary>>> m_nsDictionaries;
@@ -111,6 +114,7 @@ private:
     Vector<std::pair<Vector<JSObjectID>, Ref<API::Array>>> m_arrays;
 
     // Used for serializing to IPC
+    HashMap<JSValueRef, JSObjectID> m_jsObjectsInMap;
     HashMap<RetainPtr<id>, JSObjectID> m_objectsInMap;
     std::optional<JSObjectID> m_nullObjectID;
 
@@ -121,23 +125,6 @@ private:
     RefPtr<WebCore::SerializedScriptValue> m_valueFromJS;
     std::span<const uint8_t> m_wireBytes;
 #endif
-};
-
-}
-
-namespace IPC {
-
-template<typename> struct AsyncReplyError;
-template<> struct AsyncReplyError<Expected<WebKit::JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>>> {
-    static Expected<WebKit::JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>> create();
-};
-
-template<> struct AsyncReplyError<Expected<Expected<WebKit::JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>>, String>> {
-    static Expected<Expected<WebKit::JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>>, String> create();
-};
-
-template<> struct AsyncReplyError<Expected<WebKit::JavaScriptEvaluationResult, String>> {
-    static Expected<WebKit::JavaScriptEvaluationResult, String> create();
 };
 
 }

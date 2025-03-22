@@ -170,6 +170,10 @@ bool defaultPeerConnectionEnabledAvailable();
 bool defaultBuiltInNotificationsEnabled();
 #endif
 
+#if ENABLE(DEVICE_ORIENTATION)
+bool defaultDeviceOrientationPermissionAPIEnabled();
+#endif
+
 bool defaultRequiresPageVisibilityForVideoToBeNowPlaying();
 
 bool defaultCookieStoreAPIEnabled();
@@ -203,5 +207,7 @@ bool defaultHostedBlurMaterialInMediaControlsEnabled();
 #endif
 
 bool defaultMutationEventsEnabled();
+
+bool defaultTrustedTypesEnabled();
 
 } // namespace WebKit

@@ -520,7 +520,7 @@ void RenderView::repaintViewRectangle(const LayoutRect& repaintRect) const
         // and the Renderer that contains the iframe. This transformation must account for a
         // left scrollbar (if one exists).
         Ref frameView = this->frameView();
-        if (frameView->shouldPlaceVerticalScrollbarOnLeft() && frameView->verticalScrollbar())
+        if (frameView->verticalScrollbar() && frameView->shouldPlaceVerticalScrollbarOnLeft())
             adjustedRect.move(LayoutSize(frameView->protectedVerticalScrollbar()->occupiedWidth(), 0));
 
         ownerBox->repaintRectangle(adjustedRect);
@@ -1122,17 +1122,17 @@ SingleThreadWeakHashSet<RenderCounter> RenderView::takeCountersNeedingUpdate()
     return std::exchange(m_countersNeedingUpdate, { });
 }
 
-SingleThreadWeakPtr<RenderElement> RenderView::viewTransitionRoot() const
+SingleThreadWeakPtr<RenderBlockFlow> RenderView::viewTransitionRoot() const
 {
     return m_viewTransitionRoot;
 }
 
-void RenderView::setViewTransitionRoot(RenderElement& renderer)
+void RenderView::setViewTransitionRoot(RenderBlockFlow& renderer)
 {
     m_viewTransitionRoot = renderer;
 }
 
-void RenderView::addViewTransitionGroup(const AtomString& name, RenderElement& group)
+void RenderView::addViewTransitionGroup(const AtomString& name, RenderBox& group)
 {
     m_viewTransitionGroups.set(name, &group);
 }
@@ -1142,7 +1142,7 @@ void RenderView::removeViewTransitionGroup(const AtomString& name)
     m_viewTransitionGroups.remove(name);
 }
 
-RenderElement* RenderView::viewTransitionGroupForName(const AtomString& name)
+RenderBox* RenderView::viewTransitionGroupForName(const AtomString& name)
 {
     return m_viewTransitionGroups.get(name).get();
 }

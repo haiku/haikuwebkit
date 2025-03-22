@@ -487,7 +487,7 @@ void RemoteLayerTreeEventDispatcher::scheduleDelayedRenderingUpdateDetectionTime
     ASSERT(ScrollingThread::isCurrentThread());
 
     if (!m_delayedRenderingUpdateDetectionTimer)
-        m_delayedRenderingUpdateDetectionTimer = makeUnique<RunLoop::Timer>(RunLoop::protectedCurrent(), [weakThis = ThreadSafeWeakPtr { *this }] {
+        m_delayedRenderingUpdateDetectionTimer = makeUnique<RunLoop::Timer>(RunLoop::currentSingleton(), [weakThis = ThreadSafeWeakPtr { *this }] {
             auto strongThis = weakThis.get();
             if (strongThis)
                 strongThis->delayedRenderingUpdateDetectionTimerFired();
@@ -635,7 +635,8 @@ void RemoteLayerTreeEventDispatcher::updateAnimations()
     auto now = MonotonicTime::now();
 
     auto effectStacks = std::exchange(m_effectStacks, { });
-    for (auto [layerID, effectStack] : effectStacks) {
+    for (auto [layerID, currentEffectStack] : effectStacks) {
+        Ref effectStack = currentEffectStack;
         effectStack->applyEffectsFromScrollingThread(now);
 
         // We can clear the effect stack if it's empty, but the previous
@@ -744,7 +745,7 @@ void RemoteLayerTreeEventDispatcher::stopDisplayDidRefreshCallbacks(PlatformDisp
 #if ENABLE(MOMENTUM_EVENT_DISPATCHER_TEMPORARY_LOGGING)
 void RemoteLayerTreeEventDispatcher::flushMomentumEventLoggingSoon()
 {
-    RunLoop::protectedCurrent()->dispatchAfter(1_s, [protectedThis = Ref { *this }] {
+    RunLoop::currentSingleton().dispatchAfter(1_s, [protectedThis = Ref { *this }] {
         protectedThis->m_momentumEventDispatcher->flushLog();
     });
 }

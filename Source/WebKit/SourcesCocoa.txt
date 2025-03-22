@@ -544,7 +544,6 @@ UIProcess/ios/WKTextInteractionWrapper.mm
 UIProcess/ios/WKTouchActionGestureRecognizer.mm
 UIProcess/ios/WKTouchEventsGestureRecognizer.mm
 UIProcess/ios/WKUSDPreviewView.mm
-UIProcess/ios/WKVelocityTrackingScrollView.mm
 UIProcess/ios/WKVideoView.mm
 UIProcess/ios/WKVisibilityPropagationView.mm
 UIProcess/ios/WKWebEvent.mm
@@ -639,6 +638,7 @@ UIProcess/WebAuthentication/Mock/MockLocalService.mm
 UIProcess/WebAuthentication/Mock/MockNfcService.mm
 UIProcess/WebAuthentication/Mock/MockCcidService.mm
 
+UIProcess/WebsiteData/Cocoa/ScreenTimeWebsiteDataSupport.mm
 UIProcess/WebsiteData/Cocoa/WebsiteDataStoreCocoa.mm
 
 UIProcess/XR/ios/PlatformXRARKit.mm

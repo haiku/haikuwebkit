@@ -61,32 +61,16 @@ void ServiceWorkerInspectorProxy::serviceWorkerTerminated()
     m_channel = nullptr;
 }
 
-void ServiceWorkerInspectorProxy::connectToWorker(FrontendChannel& channel)
+void ServiceWorkerInspectorProxy::connectToWorker(FrontendChannel& channel, bool isAutomaticConnection, bool immediatelyPause)
 {
     m_channel = &channel;
 
     RefPtr serviceWorkerThreadProxy = m_serviceWorkerThreadProxy.get();
     SWContextManager::singleton().setAsInspected(serviceWorkerThreadProxy->identifier(), true);
-    serviceWorkerThreadProxy->thread().runLoop().postDebuggerTask([] (ScriptExecutionContext& context) {
-        downcast<WorkerGlobalScope>(context).inspectorController().connectFrontend();
+    serviceWorkerThreadProxy->thread().runLoop().postDebuggerTask([isAutomaticConnection, immediatelyPause] (ScriptExecutionContext& context) {
+        downcast<WorkerGlobalScope>(context).inspectorController().connectFrontend(isAutomaticConnection, immediatelyPause);
     });
 }
-
-#if ENABLE(REMOTE_INSPECTOR_SERVICE_WORKER_AUTO_INSPECTION)
-
-void ServiceWorkerInspectorProxy::connectToWorker(FrontendChannel& channel, bool isAutomaticConnection, bool immediatelyPause, Function<void()>&& frontendInitializedCallback)
-{
-    m_channel = &channel;
-
-    RefPtr serviceWorkerThreadProxy = m_serviceWorkerThreadProxy.get();
-    SWContextManager::singleton().setAsInspected(serviceWorkerThreadProxy->identifier(), true);
-    serviceWorkerThreadProxy->thread().runLoop().postDebuggerTask(
-        [isAutomaticConnection, immediatelyPause, frontendInitializedCallback = WTFMove(frontendInitializedCallback)](ScriptExecutionContext& context) mutable {
-            downcast<WorkerGlobalScope>(context).inspectorController().connectFrontend(isAutomaticConnection, immediatelyPause, WTFMove(frontendInitializedCallback));
-        });
-}
-
-#endif
 
 void ServiceWorkerInspectorProxy::disconnectFromWorker(FrontendChannel& channel)
 {
@@ -100,7 +84,7 @@ void ServiceWorkerInspectorProxy::disconnectFromWorker(FrontendChannel& channel)
 
         // In case the worker is paused running debugger tasks, ensure we break out of
         // the pause since this will be the last debugger task we send to the worker.
-        downcast<WorkerGlobalScope>(context).thread().stopRunningDebuggerTasks();
+        downcast<WorkerGlobalScope>(context).protectedThread()->stopRunningDebuggerTasks();
     });
 }
 

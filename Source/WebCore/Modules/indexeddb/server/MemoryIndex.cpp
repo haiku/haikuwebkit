@@ -53,9 +53,9 @@ MemoryIndex::MemoryIndex(const IDBIndexInfo& info, MemoryObjectStore& objectStor
 
 MemoryIndex::~MemoryIndex() = default;
 
-WeakPtr<MemoryObjectStore> MemoryIndex::objectStore()
+MemoryObjectStore* MemoryIndex::objectStore()
 {
-    return m_objectStore;
+    return m_objectStore.get();
 }
 
 RefPtr<MemoryObjectStore> MemoryIndex::protectedObjectStore()
@@ -65,12 +65,12 @@ RefPtr<MemoryObjectStore> MemoryIndex::protectedObjectStore()
 
 void MemoryIndex::cursorDidBecomeClean(MemoryIndexCursor& cursor)
 {
-    m_cleanCursors.add(&cursor);
+    m_cleanCursors.add(cursor);
 }
 
 void MemoryIndex::cursorDidBecomeDirty(MemoryIndexCursor& cursor)
 {
-    m_cleanCursors.remove(&cursor);
+    m_cleanCursors.remove(cursor);
 }
 
 void MemoryIndex::objectStoreCleared()
@@ -91,16 +91,20 @@ void MemoryIndex::objectStoreCleared()
 
 void MemoryIndex::notifyCursorsOfValueChange(const IDBKeyData& indexKey, const IDBKeyData& primaryKey)
 {
-    for (auto* cursor : copyToVector(m_cleanCursors))
-        cursor->indexValueChanged(indexKey, primaryKey);
+    for (WeakPtr cursor : copyToVector(m_cleanCursors)) {
+        if (RefPtr protectedCusor = cursor.get())
+            protectedCusor->indexValueChanged(indexKey, primaryKey);
+    }
 }
 
 void MemoryIndex::notifyCursorsOfAllRecordsChanged()
 {
-    for (auto* cursor : copyToVector(m_cleanCursors))
-        cursor->indexRecordsAllChanged();
+    for (WeakPtr cursor : copyToVector(m_cleanCursors)) {
+        if (RefPtr protectedCusor = cursor.get())
+            protectedCusor->indexRecordsAllChanged();
+    }
 
-    ASSERT(m_cleanCursors.isEmpty());
+    ASSERT(!m_cleanCursors.computeSize());
 }
 
 IDBGetResult MemoryIndex::getResultForKeyRange(IndexedDB::IndexRecordType type, const IDBKeyRangeData& range) const
@@ -124,7 +128,8 @@ IDBGetResult MemoryIndex::getResultForKeyRange(IndexedDB::IndexRecordType type, 
     if (!keyValue)
         return { };
 
-    return type == IndexedDB::IndexRecordType::Key ? IDBGetResult(*keyValue) : IDBGetResult(*keyValue, m_objectStore->valueForKeyRange(*keyValue), m_objectStore->info().keyPath());
+    RefPtr objectStore = m_objectStore.get();
+    return type == IndexedDB::IndexRecordType::Key ? IDBGetResult(*keyValue) : IDBGetResult(*keyValue, objectStore->valueForKeyRange(*keyValue), objectStore->info().keyPath());
 }
 
 uint64_t MemoryIndex::countForKeyRange(const IDBKeyRangeData& inRange)
@@ -154,7 +159,8 @@ void MemoryIndex::getAllRecords(const IDBKeyRangeData& keyRangeData, std::option
 {
     LOG(IndexedDB, "MemoryIndex::getAllRecords");
 
-    result = { type, m_objectStore->info().keyPath() };
+    RefPtr objectStore = m_objectStore.get();
+    result = { type, objectStore->info().keyPath() };
 
     if (!m_records)
         return;
@@ -179,7 +185,7 @@ void MemoryIndex::getAllRecords(const IDBKeyRangeData& keyRangeData, std::option
         for (auto& keyValue : allValues) {
             result.addKey(IDBKeyData(keyValue));
             if (type == IndexedDB::GetAllType::Values)
-                result.addValue(m_objectStore->valueForKeyRange(keyValue));
+                result.addValue(objectStore->valueForKeyRange(keyValue));
         }
 
         currentCount += allValues.size();
@@ -260,13 +266,13 @@ void MemoryIndex::removeEntriesWithValueKey(const IDBKeyData& valueKey)
     m_records->removeEntriesWithValueKey(*this, valueKey);
 }
 
-MemoryIndexCursor* MemoryIndex::maybeOpenCursor(const IDBCursorInfo& info)
+MemoryIndexCursor* MemoryIndex::maybeOpenCursor(const IDBCursorInfo& info, MemoryBackingStoreTransaction& transaction)
 {
     auto result = m_cursors.add(info.identifier(), nullptr);
     if (!result.isNewEntry)
         return nullptr;
 
-    result.iterator->value = makeUnique<MemoryIndexCursor>(*this, info);
+    result.iterator->value = MemoryIndexCursor::create(*this, info, transaction);
     return result.iterator->value.get();
 }
 

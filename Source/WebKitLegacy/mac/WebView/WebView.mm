@@ -138,6 +138,7 @@
 #import <WebCore/BackForwardController.h>
 #import <WebCore/BroadcastChannelRegistry.h>
 #import <WebCore/CGWindowUtilities.h>
+#import <WebCore/CSSStyleProperties.h>
 #import <WebCore/CacheStorageProvider.h>
 #import <WebCore/Chrome.h>
 #import <WebCore/ColorMac.h>
@@ -2301,7 +2302,7 @@ static NSMutableSet *knownPluginMIMETypes()
     auto* style = editingStyle->style();
     if (!style)
         return nil;
-    return kit(&style->ensureCSSStyleDeclaration());
+    return kit(&style->ensureCSSStyleProperties());
 }
 
 - (NSUInteger)_renderTreeSize
@@ -3346,8 +3347,8 @@ IGNORE_WARNINGS_END
 
 #if ENABLE(FULLSCREEN_API)
     if (RefPtr document = core([frame DOMDocument]); document) {
-        if (CheckedPtr fullscreenManager = document->fullscreenIfExists()) {
-            if (RefPtr element = fullscreenManager->fullscreenElement()) {
+        if (RefPtr documentFullscreen = document->fullscreenIfExists()) {
+            if (RefPtr element = documentFullscreen->fullscreenElement()) {
                 SEL selector = @selector(webView:closeFullScreenWithListener:);
                 if ([_private->UIDelegate respondsToSelector:selector]) {
                     auto listener = adoptNS([[WebKitFullScreenListener alloc] initWithElement:element.get() initialCompletionHandler:nullptr finalCompletionHandler:nullptr]);
@@ -8269,13 +8270,15 @@ static NSAppleEventDescriptor* aeDescFromJSValue(JSC::JSGlobalObject* lexicalGlo
 
 - (void)applyStyle:(DOMCSSStyleDeclaration *)style
 {
-    // We don't know enough at thls level to pass in a relevant WebUndoAction; we'd have to
+    // We don't know enough at this level to pass in a relevant WebUndoAction; we'd have to
     // change the API to allow this.
     WebFrame *webFrame = [self _selectedOrMainFrame];
     if (auto* coreFrame = core(webFrame)) {
-        // FIXME: We shouldn't have to make a copy here.
-        Ref<WebCore::MutableStyleProperties> properties(core(style)->copyProperties());
-        coreFrame->editor().applyStyle(properties.ptr());
+        if (RefPtr styleProperties = dynamicDowncast<WebCore::CSSStyleProperties>(core(style))) {
+            // FIXME: We shouldn't have to make a copy here.
+            Ref<WebCore::MutableStyleProperties> properties(styleProperties->copyProperties());
+            coreFrame->editor().applyStyle(properties.ptr());
+        }
     }
 }
 
@@ -9223,8 +9226,8 @@ FORWARD(toggleUnderline)
         }
     }
 
-    if ([foundItem isKindOfClass:[NSPopoverTouchBarItem class]])
-        [(NSPopoverTouchBarItem *)foundItem dismissPopover:nil];
+    if (auto* touchBarItem = dynamic_objc_cast<NSPopoverTouchBarItem>(foundItem))
+        [touchBarItem dismissPopover:nil];
 }
 
 - (NSArray<NSString *> *)_textTouchBarCustomizationAllowedIdentifiers

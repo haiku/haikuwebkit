@@ -119,7 +119,6 @@
 #include "SelectionRestorationMode.h"
 #include "Settings.h"
 #include "ShadowRoot.h"
-#include "SpatialNavigation.h"
 #include "StaticPasteboard.h"
 #include "StyleCachedImage.h"
 #include "TextEvent.h"
@@ -3901,7 +3900,7 @@ bool EventHandler::internalKeyEvent(const PlatformKeyboardEvent& initialKeyEvent
 
 #if ENABLE(FULLSCREEN_API)
     RefPtr document = frame->document();
-    if (CheckedPtr documentFullscreen = document->fullscreenIfExists(); documentFullscreen && documentFullscreen->isFullscreen()) {
+    if (RefPtr documentFullscreen = document->fullscreenIfExists(); documentFullscreen && documentFullscreen->isFullscreen()) {
         if (initialKeyEvent.type() == PlatformEvent::Type::KeyDown && initialKeyEvent.windowsVirtualKeyCode() == VK_ESCAPE) {
             documentFullscreen->fullyExitFullscreen();
             return true;
@@ -4838,6 +4837,9 @@ ScrollableArea* EventHandler::focusedScrollableArea() const
     if (!node)
         node = m_mousePressNode;
 
+    if (!node)
+        node = lastTouchedNode();
+
     return enclosingScrollableArea(node.get());
 }
 
@@ -4909,7 +4911,7 @@ void EventHandler::defaultArrowEventHandler(FocusDirection focusDirection, Keybo
 {
     ASSERT(event.type() == eventNames().keydownEvent);
 
-    if (!isSpatialNavigationEnabled(protectedFrame().ptr())) {
+    if (!m_frame->document()->settings().spatialNavigationEnabled()) {
         ScrollLogicalDirection direction;
         switch (focusDirection) {
         case FocusDirection::Down:

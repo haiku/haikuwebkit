@@ -32,6 +32,7 @@
 #import "WKIntelligenceSmartReplyTextEffectCoordinator.h"
 #import "WKIntelligenceTextEffectCoordinator.h"
 #import "WKTextAnimationType.h"
+#import <WebCore/CocoaView.h>
 #import <WebCore/FixedContainerEdges.h>
 #import <WebKit/WKShareSheet.h>
 #import <WebKit/WKWebViewConfiguration.h>
@@ -440,6 +441,10 @@ struct PerWebProcessState {
 #if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
     std::pair<Markable<WebKit::PDFPluginIdentifier>, RetainPtr<WKPDFPageNumberIndicator>> _pdfPageNumberIndicator;
 #endif
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    WebCore::RectEdges<RetainPtr<CocoaView>> _fixedColorExtensionViews;
+#endif
 }
 
 - (BOOL)_isValid;
@@ -464,11 +469,11 @@ struct PerWebProcessState {
 #endif
 
 #if ENABLE(SCREEN_TIME)
-- (void)_installScreenTimeWebpageController;
+- (void)_installScreenTimeWebpageControllerIfNeeded;
 - (void)_uninstallScreenTimeWebpageController;
 
 - (void)_updateScreenTimeViewGeometry;
-- (void)_updateScreenTimeShieldVisibilityForWindow;
+- (void)_updateScreenTimeBasedOnWindowVisibility;
 #endif
 
 #if ENABLE(WRITING_TOOLS)
@@ -516,6 +521,9 @@ struct PerWebProcessState {
 - (void)_dismissDigitalCredentialsPicker:(WTF::CompletionHandler<void(bool)>&&)completionHandler;
 #endif
 
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+- (void)_updateFixedColorExtensionViewFrames;
+#endif
 
 #if ENABLE(GAMEPAD)
 - (void)_setGamepadsRecentlyAccessed:(BOOL)gamepadsRecentlyAccessed;

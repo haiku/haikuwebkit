@@ -59,6 +59,7 @@ set(WTF_PUBLIC_HEADERS
     Condition.h
     ContinuousApproximateTime.h
     ContinuousTime.h
+    CoroutineUtilities.h
     CountingLock.h
     CrossThreadCopier.h
     CrossThreadQueue.h
@@ -88,6 +89,7 @@ set(WTF_PUBLIC_HEADERS
     FastFloat.h
     FastMalloc.h
     FastTLS.h
+    FileHandle.h
     FilePrintStream.h
     FileSystem.h
     FixedBitVector.h
@@ -527,6 +529,7 @@ set(WTF_SOURCES
     FastBitVector.cpp
     FastFloat.cpp
     FastMalloc.cpp
+    FileHandle.cpp
     FilePrintStream.cpp
     FileSystem.cpp
     FunctionDispatcher.cpp
@@ -691,6 +694,7 @@ elseif (APPLE)
 
         darwin/OSLogPrintStream.h
         darwin/WeakLinking.h
+        darwin/XPCExtras.h
 
         spi/cf/CFBundleSPI.h
         spi/cf/CFStringSPI.h

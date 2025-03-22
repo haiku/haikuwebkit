@@ -213,7 +213,7 @@ void WebChromeClient::chromeDestroyed()
 
 Ref<WebPage> WebChromeClient::protectedPage() const
 {
-    return m_page.get();
+    return *m_page;
 }
 
 void WebChromeClient::setWindowRect(const FloatRect& windowFrame)
@@ -494,7 +494,12 @@ void WebChromeClient::addMessageToConsole(MessageSource source, MessageLevel lev
 {
     // Notify the bundle client.
     auto page = protectedPage();
+    // FIXME: Remove this after rdar://143399667 is fixed.
     page->injectedBundleUIClient().willAddMessageToConsole(page.ptr(), source, level, message, lineNumber, columnNumber, sourceID);
+
+    if (!page->shouldSendConsoleLogsToUIProcessForTesting())
+        return;
+    page->send(Messages::WebPageProxy::AddMessageToConsoleForTesting(message.length() > String::MaxLength / 2 ? "Out of memory"_s : message), IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }
 
 void WebChromeClient::addMessageWithArgumentsToConsole(MessageSource source, MessageLevel level, const String& message, std::span<const String> messageArguments, unsigned lineNumber, unsigned columnNumber, const String& sourceID)
@@ -1291,7 +1296,8 @@ void WebChromeClient::setUpPlaybackControlsManager(HTMLMediaElement& mediaElemen
 
 void WebChromeClient::clearPlaybackControlsManager()
 {
-    protectedPage()->playbackSessionManager().clearPlaybackControlsManager();
+    if (RefPtr page = m_page.get())
+        page->playbackSessionManager().clearPlaybackControlsManager();
 }
 
 void WebChromeClient::mediaEngineChanged(WebCore::HTMLMediaElement& mediaElement)

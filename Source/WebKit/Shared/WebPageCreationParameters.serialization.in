@@ -274,6 +274,9 @@ enum class WebCore::UserInterfaceLayoutDirection : bool;
 #if PLATFORM(COCOA)
     String presentingApplicationBundleIdentifier;
 #endif
+
+    bool hasReceivedAXRequestInUIProcess;
+    bool shouldSendConsoleLogsToUIProcessForTesting;
 }
 
 [Nested] struct WebKit::RemotePageParameters {

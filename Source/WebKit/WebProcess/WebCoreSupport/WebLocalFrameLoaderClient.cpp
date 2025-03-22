@@ -567,12 +567,12 @@ void WebLocalFrameLoaderClient::dispatchDidStartProvisionalLoad()
 
 #if ENABLE(FULLSCREEN_API)
     RefPtr document = m_localFrame->document();
-    if (document && document->fullscreen().fullscreenElement()) {
+    if (document && document->protectedFullscreen()->fullscreenElement()) {
         Ref fullScreenManager = webPage->fullScreenManager();
         RefPtr element = fullScreenManager->element();
         fullScreenManager->exitFullScreenForElement(element.get(), [element] {
             if (element)
-                element->protectedDocument()->fullscreen().didExitFullscreen([](auto) { });
+                element->protectedDocument()->protectedFullscreen()->didExitFullscreen([](auto) { });
         });
     }
 #endif
@@ -1265,17 +1265,17 @@ void WebLocalFrameLoaderClient::updateGlobalHistoryRedirectLinks()
     }
 }
 
-bool WebLocalFrameLoaderClient::shouldGoToHistoryItem(HistoryItem& item, IsSameDocumentNavigation isSameDocumentNavigation) const
+WebCore::ShouldGoToHistoryItem WebLocalFrameLoaderClient::shouldGoToHistoryItem(HistoryItem& item, IsSameDocumentNavigation isSameDocumentNavigation) const
 {
     // In WebKit2, the synchronous version of this policy client should only ever be consulted for same document navigations.
     RELEASE_ASSERT(isSameDocumentNavigation == IsSameDocumentNavigation::Yes);
 
     RefPtr webPage = m_frame->page();
     if (!webPage)
-        return false;
+        return ShouldGoToHistoryItem::No;
 
     auto sendSyncResult = webPage->sendSync(Messages::WebPageProxy::ShouldGoToBackForwardListItemSync(item.itemID()));
-    auto [shouldGo] = sendSyncResult.takeReplyOr(true);
+    auto [shouldGo] = sendSyncResult.takeReplyOr(ShouldGoToHistoryItem::No);
     return shouldGo;
 }
 
@@ -1284,11 +1284,11 @@ bool WebLocalFrameLoaderClient::supportsAsyncShouldGoToHistoryItem() const
     return true;
 }
 
-void WebLocalFrameLoaderClient::shouldGoToHistoryItemAsync(HistoryItem& item, CompletionHandler<void(bool)>&& completionHandler) const
+void WebLocalFrameLoaderClient::shouldGoToHistoryItemAsync(HistoryItem& item, CompletionHandler<void(WebCore::ShouldGoToHistoryItem)>&& completionHandler) const
 {
     RefPtr webPage = m_frame->page();
     if (!webPage) {
-        completionHandler(false);
+        completionHandler(ShouldGoToHistoryItem::No);
         return;
     }
 
@@ -2039,6 +2039,8 @@ void WebLocalFrameLoaderClient::didExceedNetworkUsageThreshold()
     auto url = document->url();
     if (url.isEmpty())
         return;
+
+    WebLocalFrameLoaderClient_RELEASE_LOG(ResourceMonitoring, "didExceedNetworkUsageThreshold host=%" SENSITIVE_LOG_STRING, url.host().utf8().data());
 
     auto action = [weakFrame = WeakPtr { m_frame->coreLocalFrame() }](bool wasGranted) {
         RefPtr frame = weakFrame.get();

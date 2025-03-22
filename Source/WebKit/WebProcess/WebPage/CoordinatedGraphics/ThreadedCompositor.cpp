@@ -114,7 +114,7 @@ ThreadedCompositor::ThreadedCompositor(LayerTreeHost& layerTreeHost, ThreadedDis
 
     m_compositingRunLoop->performTaskSync([this, protectedThis = Ref { *this }] {
 #if !HAVE(DISPLAY_LINK)
-        m_display.updateTimer = makeUnique<RunLoop::Timer>(RunLoop::current(), this, &ThreadedCompositor::displayUpdateFired);
+        m_display.updateTimer = makeUnique<RunLoop::Timer>(RunLoop::currentSingleton(), this, &ThreadedCompositor::displayUpdateFired);
 #if USE(GLIB_EVENT_LOOP)
         m_display.updateTimer->setPriority(RunLoopSourcePriority::CompositingThreadUpdateTimer);
         m_display.updateTimer->setName("[WebKit] ThreadedCompositor::DisplayUpdate");
@@ -259,11 +259,11 @@ void ThreadedCompositor::paintToCurrentGLContext(const TransformationMatrix& mat
     m_textureMapper->beginPainting(m_flipY ? TextureMapper::FlipY::Yes : TextureMapper::FlipY::No);
     m_textureMapper->beginClip(TransformationMatrix(), FloatRoundedRect(clipRect));
 
-    std::optional<FloatRoundedRect> rectContainingRegionThatActuallyChanged;
 #if ENABLE(DAMAGE_TRACKING)
+    std::optional<FloatRoundedRect> rectContainingRegionThatActuallyChanged;
     currentRootLayer.prepareForPainting(*m_textureMapper);
-    Damage frameDamage;
     if (m_damagePropagation != Damage::Propagation::None) {
+        Damage frameDamage;
         WTFBeginSignpost(this, CollectDamage);
         currentRootLayer.collectDamage(*m_textureMapper, frameDamage);
         WTFEndSignpost(this, CollectDamage);
@@ -274,29 +274,37 @@ void ThreadedCompositor::paintToCurrentGLContext(const TransformationMatrix& mat
             frameDamage = WTFMove(boundsDamage);
         }
 
-        const auto& damageSinceLastSurfaceUse = m_surface->addDamage(!frameDamage.isInvalid() && !frameDamage.isEmpty() ? frameDamage : Damage::invalid());
         if (m_frameDamageHistory)
-            m_frameDamageHistory->addDamage(std::make_pair(!frameDamage.isInvalid(), frameDamage.region()));
+            m_frameDamageHistory->addDamage(frameDamage);
 
-        if (!m_damageVisualizer && !damageSinceLastSurfaceUse.isInvalid() && !FloatRect(damageSinceLastSurfaceUse.bounds()).contains(clipRect))
-            rectContainingRegionThatActuallyChanged = FloatRoundedRect(damageSinceLastSurfaceUse.bounds());
+        const auto& damageSinceLastSurfaceUse = m_surface->addDamage(WTFMove(frameDamage));
+        if (!m_damageVisualizer) {
+            // We don't use damage when rendering layers if the visualizer is enabled, because we need to make sure the whole
+            // frame is invalidated in the next paint so that previous damage rects are cleared.
+            if (damageSinceLastSurfaceUse && !FloatRect(damageSinceLastSurfaceUse->bounds()).contains(clipRect))
+                rectContainingRegionThatActuallyChanged = FloatRoundedRect(damageSinceLastSurfaceUse->bounds());
+
+            m_textureMapper->setDamage(damageSinceLastSurfaceUse);
+        }
     }
-#endif
 
     if (rectContainingRegionThatActuallyChanged)
         m_textureMapper->beginClip(TransformationMatrix(), *rectContainingRegionThatActuallyChanged);
+#endif
 
     WTFBeginSignpost(this, PaintTextureMapperLayerTree);
     currentRootLayer.paint(*m_textureMapper);
     WTFEndSignpost(this, PaintTextureMapperLayerTree);
 
+#if ENABLE(DAMAGE_TRACKING)
     if (rectContainingRegionThatActuallyChanged)
         m_textureMapper->endClip();
+#endif
 
     m_fpsCounter.updateFPSAndDisplay(*m_textureMapper, clipRect.location(), matrix);
 #if ENABLE(DAMAGE_TRACKING)
     if (m_damageVisualizer)
-        m_damageVisualizer->paintDamage(*m_textureMapper, frameDamage);
+        m_damageVisualizer->paintDamage(*m_textureMapper, m_surface->frameDamage());
 #endif
 
     m_textureMapper->endClip();

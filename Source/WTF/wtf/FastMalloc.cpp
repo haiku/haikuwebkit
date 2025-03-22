@@ -311,7 +311,7 @@ void fastDecommitAlignedMemory(void* ptr, size_t size)
     OSAllocator::decommit(ptr, size);
 }
 
-void fastEnableMiniMode() { }
+void fastEnableMiniMode(bool) { }
 
 void fastDisableScavenger() { }
 
@@ -849,9 +849,9 @@ void fastDecommitAlignedMemory(void* ptr, size_t size)
     bmalloc::api::decommitAlignedPhysical(ptr, size);
 }
 
-void fastEnableMiniMode()
+void fastEnableMiniMode(bool forceMiniMode)
 {
-    bmalloc::api::enableMiniMode();
+    bmalloc::api::enableMiniMode(forceMiniMode);
 }
 
 void fastDisableScavenger()

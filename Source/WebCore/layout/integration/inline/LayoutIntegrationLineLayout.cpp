@@ -115,8 +115,8 @@ static bool shouldInvalidateLineLayoutPathAfterChangeFor(const RenderBlockFlow& 
             }
             return *hasStrongDirectionalityContent;
         }
-        if (is<RenderInline>(renderer)) {
-            auto& style = renderer.style();
+        if (CheckedPtr renderInline = dynamicDowncast<RenderInline>(renderer)) {
+            auto& style = renderInline->style();
             return style.writingMode().isBidiRTL() || (style.rtlOrdering() == Order::Logical && style.unicodeBidi() != UnicodeBidi::Normal);
         }
         return false;
@@ -243,7 +243,8 @@ LineLayout::~LineLayout()
 {
     auto& rootRenderer = flow();
     auto shouldPopulateBreakingPositionCache = [&] {
-        if (rootRenderer.document().renderTreeBeingDestroyed() || isDamaged())
+        auto mayHaveInvalidContent = isDamaged() || !m_inlineContent;
+        if (rootRenderer.document().renderTreeBeingDestroyed() || mayHaveInvalidContent)
             return false;
         return !m_inlineContentCache.inlineItems().isPopulatedFromCache();
     };

@@ -349,10 +349,22 @@ _PATH_RULES_SPECIFIER = [
       "-whitespace/indent"]),
 
     ([
+      # Source/bmalloc/libpas/src/ is first-party code, but largely operates
+      # as an separate codebase, with a few different style rules.
+      os.path.join('Source', 'bmalloc', 'libpas', 'src')],
+     ["-readability/naming/underscores",
+      "-whitespace/declaration",
+      "-whitespace/indent"]),
+
+    ([
       # There is no way to avoid the symbols __jit_debug_register_code
       # and __jit_debug_descriptor when integrating with gdb.
       os.path.join('Source', 'JavaScriptCore', 'jit', 'GDBInterface.cpp')],
      ["-readability/naming"]),
+
+    ([  # Some test cases intentionally use invalid JSON input files.
+        os.path.join('Source', 'JavaScriptCore', 'inspector', 'scripts', 'tests')],
+        ["-json/syntax"]),
 
     ([  # On some systems the trailing CR is causing parser failure.
       os.path.join('Source', 'JavaScriptCore', 'parser', 'Keywords.table')],

@@ -329,12 +329,12 @@ static std::optional<WKFindOptions> findOptionsFromArray(JSContextRef context, J
     return options;
 }
 
-bool TestRunner::findString(JSContextRef context, JSStringRef target, JSValueRef optionsArrayAsValue)
+void TestRunner::findString(JSContextRef context, JSStringRef target, JSValueRef optionsArrayAsValue, JSValueRef callback)
 {
-    if (auto options = findOptionsFromArray(context, optionsArrayAsValue))
-        return WKBundlePageFindString(page(), toWK(target).get(), *options);
-
-    return false;
+    postMessageWithAsyncReply(context, "FindString", createWKDictionary({
+        { "String", toWK(target) },
+        { "FindOptions", adoptWK(WKUInt64Create(findOptionsFromArray(context, optionsArrayAsValue).value_or(WKFindOptions { }))) },
+    }), callback);
 }
 
 void TestRunner::findStringMatchesInPage(JSContextRef context, JSStringRef target, JSValueRef optionsArrayAsValue)
@@ -2106,6 +2106,11 @@ void TestRunner::waitBeforeFinishingFullscreenExit()
     postPageMessage("WaitBeforeFinishingFullscreenExit");
 }
 
+void TestRunner::scrollDuringEnterFullscreen()
+{
+    postPageMessage("ScrollDuringEnterFullscreen");
+}
+
 void TestRunner::finishFullscreenExit()
 {
     postPageMessage("FinishFullscreenExit");
@@ -2159,6 +2164,16 @@ void TestRunner::setObscuredContentInsets(JSContextRef context, double top, doub
 void TestRunner::setResourceMonitorList(JSContextRef context, JSStringRef rulesText, JSValueRef callback)
 {
     postMessageWithAsyncReply(context, "SetResourceMonitorList", toWK(rulesText), callback);
+}
+
+void TestRunner::dumpChildFrameScrollPositions()
+{
+    postSynchronousPageMessage("DumpChildFrameScrollPositions");
+}
+
+bool TestRunner::shouldDumpAllFrameScrollPositions() const
+{
+    return postSynchronousPageMessageReturningBoolean("ShouldDumpAllFrameScrollPositions");
 }
 
 ALLOW_DEPRECATED_DECLARATIONS_END

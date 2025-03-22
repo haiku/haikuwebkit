@@ -176,17 +176,13 @@ static String convertChromeExtensionToTemporaryZipFile(const String& inputFilePa
     // are not found or any file operations fail.
 
     auto inputFileHandle = FileSystem::openFile(inputFilePath, FileSystem::FileOpenMode::Read);
-    if (!FileSystem::isHandleValid(inputFileHandle))
+    if (!inputFileHandle)
         return nullString();
-
-    auto closeFile = makeScopeExit([&] {
-        FileSystem::unlockAndCloseFile(inputFileHandle);
-    });
 
     // Read the magic signature.
     std::array<uint8_t, 4> signature;
-    auto bytesRead = FileSystem::readFromFile(inputFileHandle, signature);
-    if (bytesRead < 0 || static_cast<size_t>(bytesRead) != signature.size())
+    auto bytesRead = inputFileHandle.read(signature);
+    if (bytesRead != signature.size())
         return nullString();
 
     // Verify Chrome extension magic signature.
@@ -196,35 +192,31 @@ static String convertChromeExtensionToTemporaryZipFile(const String& inputFilePa
 
     // Create a temporary ZIP file.
     auto [temporaryFilePath, temporaryFileHandle] = FileSystem::openTemporaryFile("WebKitExtension-"_s, ".zip"_s);
-    if (!FileSystem::isHandleValid(temporaryFileHandle))
+    if (!temporaryFileHandle)
         return nullString();
-
-    auto closeTempFile = makeScopeExit([fileHandle = temporaryFileHandle] {
-        FileSystem::unlockAndCloseFile(fileHandle);
-    });
 
     std::array<uint8_t, 4096> buffer;
     bool signatureFound = false;
 
     while (true) {
-        bytesRead = FileSystem::readFromFile(inputFileHandle, buffer);
+        bytesRead = inputFileHandle.read(buffer);
 
         // Error reading file.
-        if (bytesRead < 0)
+        if (!bytesRead)
             return nullString();
 
         // Done reading file.
-        if (!bytesRead)
+        if (!*bytesRead)
             break;
 
         size_t bufferOffset = 0;
         if (!signatureFound) {
             // Not enough bytes for the signature.
-            if (bytesRead < 4)
+            if (*bytesRead < 4)
                 return nullString();
 
             // Search for the ZIP file magic signature in the buffer.
-            for (ssize_t i = 0; i < bytesRead - 3; ++i) {
+            for (size_t i = 0; i < *bytesRead - 3; ++i) {
                 if (buffer[i] == 'P' && buffer[i + 1] == 'K' && buffer[i + 2] == 0x03 && buffer[i + 3] == 0x04) {
                     signatureFound = true;
                     bufferOffset = i;
@@ -237,9 +229,9 @@ static String convertChromeExtensionToTemporaryZipFile(const String& inputFilePa
                 continue;
         }
 
-        auto bytesToWrite = std::span(buffer).subspan(bufferOffset, bytesRead - bufferOffset);
-        auto bytesWritten = FileSystem::writeToFile(temporaryFileHandle, bytesToWrite);
-        if (bytesWritten != static_cast<int64_t>(bytesToWrite.size()))
+        auto bytesToWrite = std::span(buffer).subspan(bufferOffset, *bytesRead - bufferOffset);
+        auto bytesWritten = temporaryFileHandle.write(bytesToWrite);
+        if (bytesWritten != bytesToWrite.size())
             return nullString();
     }
 
@@ -2372,8 +2364,12 @@ void WebExtension::populateCommandsIfNeeded()
         else if (hasPageAction())
             commandIdentifier = "_execute_page_action"_s;
 
-        if (!commandIdentifier.isEmpty())
-            m_commands.append({ commandIdentifier, displayActionLabel(), emptyString(), { } });
+        if (!commandIdentifier.isEmpty()) {
+            auto description = displayActionLabel();
+            if (description.isEmpty())
+                description = displayShortName();
+            m_commands.append({ commandIdentifier, description, emptyString(), { } });
+        }
     }
 }
 

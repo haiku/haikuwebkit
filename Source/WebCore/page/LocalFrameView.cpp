@@ -341,9 +341,6 @@ void LocalFrameView::prepareForDetach()
     // When the view is no longer associated with a frame, it needs to be removed from the ax object cache
     // right now, otherwise it won't be able to reach the topDocument()'s axObject cache later.
     removeFromAXObjectCache();
-
-    if (RefPtr scrollingCoordinator = this->scrollingCoordinator())
-        scrollingCoordinator->willDestroyScrollableArea(*this);
 }
 
 void LocalFrameView::detachCustomScrollbars()
@@ -1884,27 +1881,41 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges() const
         return { };
 
     auto fixedRect = rectForFixedPositionLayout();
-    auto hasFixedContainer = [&](LayoutUnit x, LayoutUnit y) {
+
+    struct FixedContainerResult {
+        bool foundContainer { false };
+        bool shouldSample { false };
+    };
+
+    auto findFixedContainer = [&](LayoutUnit x, LayoutUnit y) -> FixedContainerResult {
         using enum HitTestRequest::Type;
         HitTestResult result { { x, y } };
         if (!document->hitTest({ HitTestSource::User, { ReadOnly, DisallowUserAgentShadowContent, IgnoreClipping } }, result))
-            return false;
+            return { };
 
         RefPtr hitNode = result.innerNonSharedNode();
         if (!hitNode)
-            return false;
+            return { };
 
         CheckedPtr renderer = hitNode->renderer();
         if (!renderer)
-            return false;
+            return { };
 
+        bool foundBackdropFilter = false;
         for (CheckedPtr layer = renderer->enclosingLayer(); layer; layer = layer->parent()) {
             CheckedRef renderer = layer->renderer();
-            if (renderer->isFixedPositioned() || renderer->isStickilyPositioned())
-                return true;
+            if (renderer->style().hasBackdropFilter())
+                foundBackdropFilter = true;
+
+            if (renderer->isFixedPositioned() || renderer->isStickilyPositioned()) {
+                return {
+                    .foundContainer = true,
+                    .shouldSample = !foundBackdropFilter
+                };
+            }
         }
 
-        return false;
+        return { };
     };
 
     RectEdges<bool> fixedEdges;
@@ -1914,24 +1925,28 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges() const
     static constexpr auto sampleRectMargin = 2;
     fixedRect.contract({ sampleRectMargin });
 
-    if (hasFixedContainer((fixedRect.x() + fixedRect.maxX()) / 2, fixedRect.y())) {
+    if (auto [foundContainer, shouldSample] = findFixedContainer((fixedRect.x() + fixedRect.maxX()) / 2, fixedRect.y()); foundContainer) {
         fixedEdges.setTop(true);
-        sampledColors.setTop(PageColorSampler::predominantColor(*page, { fixedRect.minXMinYCorner(), LayoutPoint { fixedRect.maxX(), fixedRect.y() + sampleRectThickness } }));
+        if (shouldSample)
+            sampledColors.setTop(PageColorSampler::predominantColor(*page, { fixedRect.minXMinYCorner(), LayoutPoint { fixedRect.maxX(), fixedRect.y() + sampleRectThickness } }));
     }
 
-    if (hasFixedContainer(fixedRect.x(), (fixedRect.y() + fixedRect.maxY()) / 2)) {
+    if (auto [foundContainer, shouldSample] = findFixedContainer(fixedRect.x(), (fixedRect.y() + fixedRect.maxY()) / 2); foundContainer) {
         fixedEdges.setLeft(true);
-        sampledColors.setLeft(PageColorSampler::predominantColor(*page, { fixedRect.minXMinYCorner(), LayoutPoint { fixedRect.x() + sampleRectThickness, fixedRect.maxY() } }));
+        if (shouldSample)
+            sampledColors.setLeft(PageColorSampler::predominantColor(*page, { fixedRect.minXMinYCorner(), LayoutPoint { fixedRect.x() + sampleRectThickness, fixedRect.maxY() } }));
     }
 
-    if (hasFixedContainer(fixedRect.maxX(), (fixedRect.y() + fixedRect.maxY()) / 2)) {
+    if (auto [foundContainer, shouldSample] = findFixedContainer(fixedRect.maxX(), (fixedRect.y() + fixedRect.maxY()) / 2); foundContainer) {
         fixedEdges.setRight(true);
-        sampledColors.setRight(PageColorSampler::predominantColor(*page, { LayoutPoint { fixedRect.maxX() - sampleRectThickness, fixedRect.y() }, fixedRect.maxXMaxYCorner() }));
+        if (shouldSample)
+            sampledColors.setRight(PageColorSampler::predominantColor(*page, { LayoutPoint { fixedRect.maxX() - sampleRectThickness, fixedRect.y() }, fixedRect.maxXMaxYCorner() }));
     }
 
-    if (hasFixedContainer((fixedRect.x() + fixedRect.maxX()) / 2, fixedRect.maxY())) {
+    if (auto [foundContainer, shouldSample] = findFixedContainer((fixedRect.x() + fixedRect.maxX()) / 2, fixedRect.maxY()); foundContainer) {
         fixedEdges.setBottom(true);
-        sampledColors.setBottom(PageColorSampler::predominantColor(*page, { LayoutPoint { fixedRect.x(), fixedRect.maxY() - sampleRectThickness }, fixedRect.maxXMaxYCorner() }));
+        if (shouldSample)
+            sampledColors.setBottom(PageColorSampler::predominantColor(*page, { LayoutPoint { fixedRect.x(), fixedRect.maxY() - sampleRectThickness }, fixedRect.maxXMaxYCorner() }));
     }
 
     return { WTFMove(sampledColors), WTFMove(fixedEdges) };
@@ -2142,14 +2157,14 @@ bool LocalFrameView::shouldSetCursor() const
 }
 
 #if ENABLE(DARK_MODE_CSS)
-RenderObject* LocalFrameView::rendererForColorScheme() const
+RenderElement* LocalFrameView::rendererForColorScheme() const
 {
     auto* document = m_frame->document();
     auto* documentElement = document ? document->documentElement() : nullptr;
     auto* documentElementRenderer = documentElement ? documentElement->renderer() : nullptr;
     if (documentElementRenderer && documentElementRenderer->style().hasExplicitlySetColorScheme())
         return documentElementRenderer;
-    return nullptr;
+    return { };
 }
 #endif
 
@@ -4573,7 +4588,7 @@ Color LocalFrameView::documentBackgroundColor() const
 
 #if ENABLE(FULLSCREEN_API)
     Color fullscreenBackgroundColor = [&] () -> Color {
-        CheckedPtr documentFullscreen = backgroundDocument->fullscreenIfExists();
+        RefPtr documentFullscreen = backgroundDocument->fullscreenIfExists();
         if (!documentFullscreen)
             return { };
 
@@ -4581,7 +4596,7 @@ Color LocalFrameView::documentBackgroundColor() const
         if (!fullscreenElement)
             return { };
 
-        auto* fullscreenRenderer = fullscreenElement->renderer();
+        CheckedPtr fullscreenRenderer = fullscreenElement->renderer();
         if (!fullscreenRenderer)
             return { };
 
@@ -4749,7 +4764,15 @@ void LocalFrameView::willPaintContents(GraphicsContext& context, const IntRect&,
     paintingState.paintBehavior = m_paintBehavior;
     
     if (auto* parentView = parentFrameView()) {
-        constexpr OptionSet<PaintBehavior> flagsToCopy { PaintBehavior::FlattenCompositingLayers, PaintBehavior::Snapshotting, PaintBehavior::DefaultAsynchronousImageDecode, PaintBehavior::ForceSynchronousImageDecode, PaintBehavior::ExcludeReplacedContent };
+        static constexpr OptionSet flagsToCopy {
+            PaintBehavior::FlattenCompositingLayers,
+            PaintBehavior::Snapshotting,
+            PaintBehavior::DefaultAsynchronousImageDecode,
+            PaintBehavior::ForceSynchronousImageDecode,
+            PaintBehavior::ExcludeReplacedContentExceptForIFrames,
+            PaintBehavior::ExcludeText,
+            PaintBehavior::FixedAndStickyLayersOnly,
+        };
         m_paintBehavior.add(parentView->paintBehavior() & flagsToCopy);
     }
 
@@ -5422,10 +5445,10 @@ String LocalFrameView::trackedRepaintRectsAsText() const
 
     TextStream ts;
     if (!m_trackedRepaintRects.isEmpty()) {
-        ts << "(repaint rects\n";
+        ts << "(repaint rects\n"_s;
         for (auto& rect : m_trackedRepaintRects)
-            ts << "  (rect " << LayoutUnit(rect.x()) << " " << LayoutUnit(rect.y()) << " " << LayoutUnit(rect.width()) << " " << LayoutUnit(rect.height()) << ")\n";
-        ts << ")\n";
+            ts << "  (rect "_s << LayoutUnit(rect.x()) << ' ' << LayoutUnit(rect.y()) << ' ' << LayoutUnit(rect.width()) << ' ' << LayoutUnit(rect.height()) << ")\n"_s;
+        ts << ")\n"_s;
     }
     return ts.release();
 }
@@ -5550,8 +5573,9 @@ bool LocalFrameView::handleWheelEventForScrolling(const PlatformWheelEvent& whee
 
 #if ENABLE(ASYNC_SCROLLING)
     if (RefPtr scrollingCoordinator = this->scrollingCoordinator()) {
-        if (scrollingCoordinator->coordinatesScrollingForFrameView(*this)) {
-            auto result = scrollingCoordinator->handleWheelEventForScrolling(wheelEvent, *scrollingNodeID(), gestureState);
+        auto scrollingNodeID = this->scrollingNodeID();
+        if (scrollingNodeID && scrollingCoordinator->coordinatesScrollingForFrameView(*this)) {
+            auto result = scrollingCoordinator->handleWheelEventForScrolling(wheelEvent, *scrollingNodeID, gestureState);
             if (!result.needsMainThreadProcessing())
                 return result.wasHandled;
         }

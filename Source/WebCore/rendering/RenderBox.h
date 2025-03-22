@@ -38,6 +38,7 @@ class RenderBoxFragmentInfo;
 class RenderFragmentContainer;
 class RoundedRectRadii;
 struct PaintInfo;
+struct PositionedLayoutConstraints;
 
 enum class AvailableLogicalHeightType : bool { ExcludeMarginBorderPadding, IncludeMarginBorderPadding };
 
@@ -699,7 +700,9 @@ protected:
     void computePreferredLogicalWidths(const Length& minLogicalWidth, const Length& maxLogicalWidth, LayoutUnit borderAndPaddingLogicalWidth);
     
     bool isAspectRatioDegenerate(double aspectRatio) const { return !aspectRatio || isnan(aspectRatio); }
-    
+
+    bool overflowChangesMayAffectLayout() const final;
+
 private:
     bool replacedMinMaxLogicalHeightComputesAsNone(SizeType) const;
 
@@ -718,7 +721,6 @@ private:
     // Returns true if we did a full repaint.
     bool repaintLayerRectsForImage(WrappedImagePtr, const FillLayer& layers, bool drawingBackground);
 
-    struct PositionedLayoutConstraints;
     void computePositionedLogicalHeight(LogicalExtentComputedValues&) const;
     LayoutUnit computePositionedLogicalWidthUsing(SizeType, Length logicalWidth, const PositionedLayoutConstraints&) const;
     LayoutUnit computePositionedLogicalHeightUsing(SizeType, Length logicalHeightLength, LayoutUnit computedHeight, const PositionedLayoutConstraints&) const;

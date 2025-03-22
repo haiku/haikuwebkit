@@ -145,6 +145,8 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
         case EnumeratorInByVal:
         case EnumeratorHasOwnProperty:
         case GetIndexedPropertyStorage:
+        case DataViewGetByteLength:
+        case DataViewGetByteLengthAsInt52:
         case GetArrayLength:
         case GetUndetachedTypeArrayLength:
         case GetTypedArrayLengthAsInt52:
@@ -1613,6 +1615,18 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
         }
     }
 
+    case DataViewGetByteLength:
+    case DataViewGetByteLengthAsInt52: {
+        read(MiscFields);
+        if (node->mayBeResizableOrGrowableSharedArrayBuffer())
+            write(MiscFields);
+        else {
+            auto location = node->op() == DataViewGetByteLength ? DataViewByteLengthLoc : DataViewByteLengthAsInt52Loc;
+            def(HeapLocation(location, MiscFields, node->child1()), LazyNode(node));
+        }
+        return;
+    }
+
     case GetUndetachedTypeArrayLength: {
         ArrayMode mode = node->arrayMode();
         DFG_ASSERT(graph, node, mode.isSomeTypedArrayView());
@@ -1751,6 +1765,7 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
         return;
 
     case NewTypedArray:
+    case NewTypedArrayBuffer:
         switch (node->child1().useKind()) {
         case Int32Use:
         case Int52RepUse:
@@ -1942,11 +1957,21 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
             clobberTop();
         return;
 
+    case NewRegExpUntyped:
+        if (node->child1().useKind() == StringUse && node->child2().useKind() == StringUse) {
+            // SyntaxError may happen.
+            read(World);
+            write(SideState);
+            write(HeapObjectCount);
+        } else
+            clobberTop();
+        return;
+
     case NewObject:
     case NewGenerator:
     case NewAsyncGenerator:
     case NewInternalFieldObject:
-    case NewRegexp:
+    case NewRegExp:
     case NewStringObject:
     case NewMap:
     case NewSet:
@@ -1960,7 +1985,7 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
     case MaterializeNewInternalFieldObject:
     case PhantomCreateActivation:
     case MaterializeCreateActivation:
-    case PhantomNewRegexp:
+    case PhantomNewRegExp:
         read(HeapObjectCount);
         write(HeapObjectCount);
         return;
@@ -2002,6 +2027,7 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
         return;
 
     case StringReplace:
+    case StringReplaceAll:
     case StringReplaceRegExp:
         if (node->child1().useKind() == StringUse
             && node->child2().useKind() == RegExpObjectUse

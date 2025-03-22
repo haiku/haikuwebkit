@@ -564,7 +564,7 @@ bool ViewTransition::updatePropertiesForRenderer(CapturedElement& capturedElemen
         // group styles rule
         if (!capturedElement.groupStyleProperties) {
             capturedElement.groupStyleProperties = properties;
-            Ref { protectedDocument()->styleScope().resolver() }->setViewTransitionStyles(CSSSelector::PseudoElement::ViewTransitionGroup, name, *properties);
+            protectedDocument()->styleScope().protectedResolver()->setViewTransitionStyles(CSSSelector::PseudoElement::ViewTransitionGroup, name, *properties);
             changed = true;
         } else
             changed |= RefPtr { capturedElement.groupStyleProperties }->mergeAndOverrideOnConflict(*properties);
@@ -1020,11 +1020,11 @@ UniqueRef<ViewTransitionParams> ViewTransition::takeViewTransitionParams()
 TextStream& operator<<(TextStream& ts, ViewTransitionPhase phase)
 {
     switch (phase) {
-    case ViewTransitionPhase::PendingCapture: ts << "PendingCapture"; break;
-    case ViewTransitionPhase::CapturingOldState: ts << "CapturingOldState"; break;
-    case ViewTransitionPhase::UpdateCallbackCalled: ts << "UpdateCallbackCalled"; break;
-    case ViewTransitionPhase::Animating: ts << "Animating"; break;
-    case ViewTransitionPhase::Done: ts << "Done"; break;
+    case ViewTransitionPhase::PendingCapture: ts << "PendingCapture"_s; break;
+    case ViewTransitionPhase::CapturingOldState: ts << "CapturingOldState"_s; break;
+    case ViewTransitionPhase::UpdateCallbackCalled: ts << "UpdateCallbackCalled"_s; break;
+    case ViewTransitionPhase::Animating: ts << "Animating"_s; break;
+    case ViewTransitionPhase::Done: ts << "Done"_s; break;
     }
     return ts;
 }

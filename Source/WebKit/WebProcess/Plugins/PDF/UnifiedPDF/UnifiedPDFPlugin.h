@@ -377,7 +377,7 @@ private:
     Vector<PDFContextMenuItem> scaleContextMenuItems() const;
     Vector<PDFContextMenuItem> navigationContextMenuItemsForPageAtIndex(PDFDocumentLayout::PageIndex) const;
     WebCore::ContextMenuAction contextMenuActionFromTag(ContextMenuItemTag) const;
-    ContextMenuItemTag toContextMenuItemTag(int tagValue) const;
+    static ContextMenuItemTag toContextMenuItemTag(int tagValue);
     void performContextMenuAction(ContextMenuItemTag, const WebCore::IntPoint& contextMenuEventRootViewPoint);
 
     ContextMenuItemTag contextMenuItemTagFromDisplayMode(const PDFDocumentLayout::DisplayMode&) const;
@@ -461,6 +461,7 @@ private:
     id accessibilityObject() const override;
 #if PLATFORM(MAC)
     id accessibilityHitTestIntPoint(const WebCore::IntPoint&) const;
+    WebCore::IntPoint convertFromPluginToScreenForAccessibility(const WebCore::IntPoint& pointInPluginCoordinate) const;
 #endif
 
     void paint(WebCore::GraphicsContext&, const WebCore::IntRect&) override;
@@ -541,7 +542,9 @@ private:
     WebCore::IntRect frameForPageNumberIndicatorInRootViewCoordinates() const;
     bool pageNumberIndicatorEnabled() const;
     bool shouldShowPageNumberIndicator() const;
-    void updatePageNumberIndicatorVisibility();
+
+    enum class IndicatorVisible : bool { No, Yes };
+    IndicatorVisible updatePageNumberIndicatorVisibility();
     void updatePageNumberIndicatorLocation();
     void updatePageNumberIndicatorCurrentPage(const std::optional<WebCore::IntRect>& unobscuredContentRectInRootView);
     void updatePageNumberIndicator(const std::optional<WebCore::IntRect>& unobscuredContentRectInRootView = { });

@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if ENABLE(DAMAGE_TRACKING)
+#if PLATFORM(GTK) || PLATFORM(WPE)
 #include "FloatRect.h"
 #include "Region.h"
 #include <wtf/ForbidHeapAllocation.h>
@@ -44,78 +44,129 @@ public:
         Unified,
     };
 
-    Damage() = default;
+    static constexpr int s_tileSize { 256 };
+
+    Damage()
+        : m_tileSize(s_tileSize, s_tileSize)
+    {
+        // FIXME: Add a constructor to pass the size.
+        resize({ 2048, 1024 });
+    }
+
     Damage(Damage&&) = default;
     Damage(const Damage&) = default;
     Damage& operator=(const Damage&) = default;
     Damage& operator=(Damage&&) = default;
 
-    static const Damage& invalid()
-    {
-        static const Damage invalidDamage(true);
-        return invalidDamage;
-    }
+    ALWAYS_INLINE const IntRect& bounds() const { return m_minimumBoundingRectangle; }
 
-    ALWAYS_INLINE const Region& region() const { return m_region; }
-    ALWAYS_INLINE IntRect bounds() const { return m_region.bounds(); }
-    ALWAYS_INLINE Rects rects() const { return m_region.rects(); }
-    ALWAYS_INLINE bool isEmpty() const  { return !m_invalid && m_region.isEmpty(); }
-    ALWAYS_INLINE bool isInvalid() const { return m_invalid; }
+    // May return both empty and overlapping rects.
+    ALWAYS_INLINE const Rects& rects() const { return m_rects; }
+    ALWAYS_INLINE bool isEmpty() const  { return m_rects.isEmpty(); }
 
-    void invalidate()
+    void resize(const IntSize& size)
     {
-        m_invalid = true;
-        m_region = Region();
+        if (m_size == size)
+            return;
+
+        m_size = size;
+        m_gridSize = { std::max(1, m_size.width() / m_tileSize.width()), std::max(1, m_size.height() / m_tileSize.height()) };
+        m_rects.clear();
+        m_shouldUnite = m_gridSize.width() == 1 && m_gridSize.height() == 1;
     }
 
     ALWAYS_INLINE void add(const Region& region)
     {
-        if (isInvalid())
+        if (region.isEmpty())
             return;
-        m_region.unite(region);
-        mergeIfNeeded();
+
+        for (const auto& rect : region.rects())
+            add(rect);
     }
 
-    ALWAYS_INLINE void add(const IntRect& rect)
+    void add(const IntRect& rect)
     {
-        if (isInvalid())
+        if (rect.isEmpty())
             return;
-        m_region.unite(rect);
-        mergeIfNeeded();
+
+        const auto rectsCount = m_rects.size();
+        if (!rectsCount || rect.contains(m_minimumBoundingRectangle)) {
+            m_rects.clear();
+            m_rects.append(rect);
+            m_minimumBoundingRectangle = rect;
+            return;
+        }
+
+        if (rectsCount == 1 && m_minimumBoundingRectangle.contains(rect))
+            return;
+
+        m_minimumBoundingRectangle.unite(rect);
+
+        if (m_shouldUnite) {
+            unite(rect);
+            return;
+        }
+
+        if (rectsCount == m_gridSize.unclampedArea()) {
+            m_shouldUnite = true;
+            uniteExistingRects();
+            unite(rect);
+            return;
+        }
+
+        m_rects.append(rect);
     }
 
     ALWAYS_INLINE void add(const FloatRect& rect)
     {
+        if (rect.isEmpty())
+            return;
+
         add(enclosingIntRect(rect));
     }
 
     ALWAYS_INLINE void add(const Damage& other)
     {
-        m_invalid = other.isInvalid();
-        add(other.m_region);
+        for (const auto& rect : other.rects())
+            add(rect);
     }
 
 private:
-    bool m_invalid { false };
-    Region m_region;
-
-    // From RenderView.cpp::repaintViewRectangle():
-    // Region will get slow if it gets too complex.
-    // Merge all rects so far to bounds if this happens.
-    static constexpr auto maximumGridSize = 16 * 16;
-
-    ALWAYS_INLINE void mergeIfNeeded()
+    void uniteExistingRects()
     {
-        if (UNLIKELY(m_region.gridSize() > maximumGridSize))
-            m_region = Region(m_region.bounds());
+        Rects rectsCopy(m_rects.size());
+        m_rects.swap(rectsCopy);
+
+        for (const auto& rect : rectsCopy)
+            unite(rect);
     }
 
-    explicit Damage(bool invalid)
-        : m_invalid(invalid)
+    ALWAYS_INLINE size_t tileIndexForRect(const IntRect& rect) const
     {
+        if (m_rects.size() == 1)
+            return 0;
+
+        const auto rectCenter = rect.center();
+        const auto rectCell = flooredIntPoint(FloatPoint { static_cast<float>(rectCenter.x()) / m_tileSize.width(), static_cast<float>(rectCenter.y()) / m_tileSize.height() });
+        return std::clamp(rectCell.x(), 0, m_gridSize.width() - 1) + std::clamp(rectCell.y(), 0, m_gridSize.height() - 1) * m_gridSize.width();
     }
 
-    friend struct IPC::ArgumentCoder<Damage, void>;
+    void unite(const IntRect& rect)
+    {
+        // When merging cannot be avoided, we use m_rects to store minimal bounding rectangles
+        // and perform merging while trying to keep minimal bounding rectangles small and
+        // separated from each other.
+        const auto index = tileIndexForRect(rect);
+        ASSERT(index < m_rects.size());
+        m_rects[index].unite(rect);
+    }
+
+    IntSize m_size;
+    bool m_shouldUnite { false };
+    IntSize m_tileSize;
+    IntSize m_gridSize;
+    Rects m_rects;
+    IntRect m_minimumBoundingRectangle;
 
     friend bool operator==(const Damage&, const Damage&) = default;
 };
@@ -123,22 +174,26 @@ private:
 class FrameDamageHistory {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(FrameDamageHistory);
 public:
-    using SimplifiedDamage = std::pair<bool, Region>;
+    const Vector<Region>& damageInformation() const { return m_damageInfo; }
 
-    const Vector<SimplifiedDamage>& damageInformation() const { return m_damageInfo; }
-    void addDamage(const SimplifiedDamage& damage) { m_damageInfo.append(damage); }
+    void addDamage(const Damage& damage)
+    {
+        Region region;
+        for (const auto& rect : damage.rects())
+            region.unite(rect);
+        m_damageInfo.append(WTFMove(region));
+    }
 
 private:
-    Vector<SimplifiedDamage> m_damageInfo;
+    // Use a Region to remove overlaps so that Damage rects are more predictable from the testing perspective.
+    Vector<Region> m_damageInfo;
 };
 
 static inline WTF::TextStream& operator<<(WTF::TextStream& ts, const Damage& damage)
 {
-    if (damage.isInvalid())
-        return ts << "Damage[invalid]";
-    return ts << "Damage" << damage.rects();
+    return ts << "Damage"_s << damage.rects();
 }
 
-};
+} // namespace WebCore
 
-#endif // ENABLE(DAMAGE_TRACKING)
+#endif // PLATFORM(GTK) || PLATFORM(WPE)

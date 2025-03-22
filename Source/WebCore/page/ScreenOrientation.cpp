@@ -119,7 +119,7 @@ void ScreenOrientation::lock(LockType lockType, Ref<DeferredPromise>&& promise)
 
     if (document->settings().fullscreenRequirementForScreenOrientationLockingEnabled()) {
 #if ENABLE(FULLSCREEN_API)
-        if (CheckedPtr documentFullscreen = document->fullscreenIfExists(); !documentFullscreen || !documentFullscreen->isFullscreen()) {
+        if (RefPtr documentFullscreen = document->fullscreenIfExists(); !documentFullscreen || !documentFullscreen->isFullscreen()) {
 #else
         if (true) {
 #endif
@@ -132,14 +132,14 @@ void ScreenOrientation::lock(LockType lockType, Ref<DeferredPromise>&& promise)
         return;
     }
     if (auto previousPromise = manager->takeLockPromise()) {
-        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [previousPromise = WTFMove(previousPromise)]() mutable {
+        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [previousPromise = WTFMove(previousPromise)](auto&) mutable {
             previousPromise->reject(Exception { ExceptionCode::AbortError, "A new lock request was started"_s });
         });
     }
     manager->setLockPromise(*this, WTFMove(promise));
     manager->lock(lockType, [this, protectedThis = makePendingActivity(*this)](std::optional<Exception>&& exception) mutable {
-        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [this, exception = WTFMove(exception)]() mutable {
-            auto* manager = this->manager();
+        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [exception = WTFMove(exception)](auto& orientation) mutable {
+            auto* manager = orientation.manager();
             if (!manager)
                 return;
 
@@ -263,7 +263,7 @@ void ScreenOrientation::stop()
 
     manager->removeObserver(*this);
     if (manager->lockRequester() == this) {
-        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = manager->takeLockPromise()] {
+        queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [promise = manager->takeLockPromise()](auto&) {
             promise->reject(Exception { ExceptionCode::AbortError, "Document is no longer fully active"_s });
         });
     }

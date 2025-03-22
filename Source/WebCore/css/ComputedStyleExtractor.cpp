@@ -38,7 +38,6 @@
 #include "CSSFontFeatureValue.h"
 #include "CSSFontStyleWithAngleValue.h"
 #include "CSSFontValue.h"
-#include "CSSFontVariantAlternatesValue.h"
 #include "CSSFontVariationValue.h"
 #include "CSSFunctionValue.h"
 #include "CSSGridAutoRepeatValue.h"
@@ -50,6 +49,7 @@
 #include "CSSProperty.h"
 #include "CSSPropertyParserConsumer+Anchor.h"
 #include "CSSQuadValue.h"
+#include "CSSRatioValue.h"
 #include "CSSRayValue.h"
 #include "CSSRectValue.h"
 #include "CSSReflectValue.h"
@@ -1114,13 +1114,20 @@ static Ref<CSSValue> valueForTextShadow(const ShadowData* shadow, const RenderSt
     return CSSTextShadowPropertyValue::create(CSS::TextShadowProperty { WTFMove(list) });
 }
 
-static Ref<CSSValue> valueForPositionTryFallbacks(const Vector<PositionTryFallback>& fallbacks)
+static Ref<CSSValue> valueForPositionTryFallbacks(const Vector<Style::PositionTryFallback>& fallbacks)
 {
     if (fallbacks.isEmpty())
         return CSSPrimitiveValue::create(CSSValueNone);
 
     CSSValueListBuilder list;
     for (auto& fallback : fallbacks) {
+        if (fallback.positionAreaProperties) {
+            auto areaValue = fallback.positionAreaProperties->getPropertyCSSValue(CSSPropertyPositionArea);
+            if (areaValue)
+                list.append(*areaValue);
+            continue;
+        }
+
         CSSValueListBuilder singleFallbackList;
         if (fallback.positionTryRuleName)
             singleFallbackList.append(valueForScopedName(*fallback.positionTryRuleName));
@@ -1352,11 +1359,9 @@ static Ref<CSSValueList> valueForScrollSnapType(const ScrollSnapType& type)
         createConvertingToCSSValueID(type.strictness));
 }
 
-static Ref<CSSValueList> valueForScrollSnapAlignment(const ScrollSnapAlign& alignment)
+static Ref<CSSValue> valueForScrollSnapAlignment(const ScrollSnapAlign& alignment)
 {
-    if (alignment.inlineAlign == alignment.blockAlign)
-        return CSSValueList::createSpaceSeparated(createConvertingToCSSValueID(alignment.blockAlign));
-    return CSSValueList::createSpaceSeparated(createConvertingToCSSValueID(alignment.blockAlign),
+    return CSSValuePair::create(createConvertingToCSSValueID(alignment.blockAlign),
         createConvertingToCSSValueID(alignment.inlineAlign));
 }
 
@@ -1470,21 +1475,46 @@ static Ref<CSSValue> fontVariantNumericPropertyValue(FontVariantNumericFigure fi
     return CSSValueList::createSpaceSeparated(WTFMove(valueList));
 }
 
-static FontVariantAlternatesValues historicalFormsValues()
-{
-    FontVariantAlternatesValues values;
-    values.historicalForms = true;
-    return values;
-}
-
-static Ref<CSSValue> fontVariantAlternatesPropertyValue(FontVariantAlternates alternates)
+static Ref<CSSValue> fontVariantAlternatesPropertyValue(const FontVariantAlternates& alternates)
 {
     if (alternates.isNormal())
         return CSSPrimitiveValue::create(CSSValueNormal);
-    if (alternates.values() == historicalFormsValues())
-        return CSSPrimitiveValue::create(CSSValueHistoricalForms);
 
-    return CSSFontVariantAlternatesValue::create(WTFMove(alternates));
+    CSSValueListBuilder valueList;
+
+    if (!alternates.values().stylistic.isNull())
+        valueList.append(CSSFunctionValue::create(CSSValueStylistic, CSSPrimitiveValue::createCustomIdent(alternates.values().stylistic)));
+
+    if (alternates.values().historicalForms)
+        valueList.append(CSSPrimitiveValue::create(CSSValueHistoricalForms));
+
+    if (!alternates.values().styleset.isEmpty()) {
+        CSSValueListBuilder stylesetArguments;
+        for (auto& argument : alternates.values().styleset)
+            stylesetArguments.append(CSSPrimitiveValue::createCustomIdent(argument));
+        valueList.append(CSSFunctionValue::create(CSSValueStyleset, WTFMove(stylesetArguments)));
+    }
+
+    if (!alternates.values().characterVariant.isEmpty()) {
+        CSSValueListBuilder characterVariantArguments;
+        for (auto& argument : alternates.values().characterVariant)
+            characterVariantArguments.append(CSSPrimitiveValue::createCustomIdent(argument));
+        valueList.append(CSSFunctionValue::create(CSSValueCharacterVariant, WTFMove(characterVariantArguments)));
+    }
+
+    if (!alternates.values().swash.isNull())
+        valueList.append(CSSFunctionValue::create(CSSValueSwash, CSSPrimitiveValue::createCustomIdent(alternates.values().swash)));
+
+    if (!alternates.values().ornaments.isNull())
+        valueList.append(CSSFunctionValue::create(CSSValueOrnaments, CSSPrimitiveValue::createCustomIdent(alternates.values().ornaments)));
+
+    if (!alternates.values().annotation.isNull())
+        valueList.append(CSSFunctionValue::create(CSSValueAnnotation, CSSPrimitiveValue::createCustomIdent(alternates.values().annotation)));
+
+    if (valueList.size() == 1)
+        return WTFMove(valueList[0]);
+
+    return CSSValueList::createSpaceSeparated(WTFMove(valueList));
 }
 
 static Ref<CSSValue> fontVariantEastAsianPropertyValue(FontVariantEastAsianVariant variant, FontVariantEastAsianWidth width, FontVariantEastAsianRuby ruby)
@@ -3992,25 +4022,6 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
 
         return CSSValueList::createSpaceSeparated(WTFMove(list));
     }
-    case CSSPropertyMasonryAutoFlow: {
-        CSSValueListBuilder list;
-        // MasonryAutoFlow information is stored in a struct that should always
-        // hold 2 pieces of information. It should contain both Pack/Next inside
-        // the MasonryAutoFlowPlacementAlgorithm enum class and DefiniteFirst/Ordered
-        // inside the MasonryAutoFlowPlacementOrder enum class
-        ASSERT((style.masonryAutoFlow().placementAlgorithm == MasonryAutoFlowPlacementAlgorithm::Pack || style.masonryAutoFlow().placementAlgorithm == MasonryAutoFlowPlacementAlgorithm::Next) && (style.masonryAutoFlow().placementOrder == MasonryAutoFlowPlacementOrder::DefiniteFirst || style.masonryAutoFlow().placementOrder == MasonryAutoFlowPlacementOrder::Ordered));
-
-        if (style.masonryAutoFlow().placementAlgorithm == MasonryAutoFlowPlacementAlgorithm::Next)
-            list.append(CSSPrimitiveValue::create(CSSValueNext));
-        // Since we know that placementAlgorithm is not Next, it must be Packed. If the PlacementOrder
-        // is DefiniteFirst, then the canonical form of the computed style is just Pack (DefiniteFirst is implicit)
-        else if (style.masonryAutoFlow().placementOrder == MasonryAutoFlowPlacementOrder::DefiniteFirst)
-            list.append(CSSPrimitiveValue::create(CSSValuePack));
-
-        if (style.masonryAutoFlow().placementOrder == MasonryAutoFlowPlacementOrder::Ordered)
-            list.append(CSSPrimitiveValue::create(CSSValueOrdered));
-        return CSSValueList::createSpaceSeparated(WTFMove(list));
-    }
 
     // Specs mention that getComputedStyle() should return the used value of the property instead of the computed
     // one for grid-template-{rows|columns} but not for the grid-auto-{rows|columns} as things like
@@ -4523,12 +4534,12 @@ RefPtr<CSSValue> ComputedStyleExtractor::valueForPropertyInStyle(const RenderSty
             return CSSPrimitiveValue::create(CSSValueAuto);
         case AspectRatioType::AutoZero:
         case AspectRatioType::AutoAndRatio:
-        case AspectRatioType::Ratio:
-            auto ratioList = CSSValueList::createSlashSeparated(CSSPrimitiveValue::create(style.aspectRatioWidth()),
-                CSSPrimitiveValue::create(style.aspectRatioHeight()));
+        case AspectRatioType::Ratio: {
+            auto ratio = CSSRatioValue::create(CSS::Ratio { style.aspectRatioWidth(), style.aspectRatioHeight() });
             if (style.aspectRatioType() != AspectRatioType::AutoAndRatio)
-                return ratioList;
-            return CSSValueList::createSpaceSeparated(CSSPrimitiveValue::create(CSSValueAuto), WTFMove(ratioList));
+                return ratio;
+            return CSSValueList::createSpaceSeparated(CSSPrimitiveValue::create(CSSValueAuto), WTFMove(ratio));
+        }
         }
         ASSERT_NOT_REACHED();
         return nullptr;

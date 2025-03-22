@@ -98,7 +98,6 @@ enum class SDKAlignedBehavior {
     SessionCleanupByDefault,
     SharedNetworkProcess,
     SiteSpecificQuirksAreEnabledByDefault,
-    SkipsSerializedScriptValueRoundtripOfJavaScriptEvaluationResults,
     SnapshotAfterScreenUpdates,
     SupportsDeviceOrientationAndMotionPermissionAPI,
     SupportsInitConstructors,
@@ -130,10 +129,12 @@ enum class SDKAlignedBehavior {
     BlockOptionallyBlockableMixedContent,
     UseCFNetworkNetworkLoader,
     BlockCrossOriginRedirectDownloads,
-    BlobFileAccessEnforcement,
+    BlobFileAccessEnforcementAndNetworkProcessRoundTrip,
     DevolvableWidgets,
     SetSelectionRangeCachesSelectionIfNotFocusedOrSelected,
     DispatchFocusEventBeforeNotifyingClient,
+    EnableTrustedTypesByDefault,
+    BlobFileAccessEnforcement,
 
     NumberOfBehaviors
 };

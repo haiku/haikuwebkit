@@ -205,7 +205,7 @@ private:
 
     SingleThreadWeakHashSet<const Font>* m_fallbackFonts { nullptr };
 
-    const FontCascade& m_font;
+    const FontCascade& m_fontCascade;
     const TextRun& m_run;
 
     unsigned m_currentCharacter { 0 };

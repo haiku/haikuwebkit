@@ -109,7 +109,12 @@ ScrollTimeline* StyleOriginatedTimelinesController::determineTreeOrder(const Vec
             if (containsElement(timelineScopeElements, element.get())) {
                 if (matchedTimelines.size() == 1)
                     return matchedTimelines.first().ptr();
-                // Naming conflict due to timeline-scope
+                // Naming conflict due to timeline-scope, see if the element declares a non-deferred timeline.
+                for (auto& matchedTimeline : matchedTimelines) {
+                    if (element == originatingElement(matchedTimeline).element().get())
+                        return matchedTimeline.ptr();
+                }
+                // If we only have deferred timelines, then the timeline is the inactive timeline.
                 return &inactiveNamedTimeline(matchedTimelines.first()->name());
             }
             ASSERT(matchedTimelines.size() <= 2);
@@ -121,7 +126,7 @@ ScrollTimeline* StyleOriginatedTimelinesController::determineTreeOrder(const Vec
         // Has blocking timeline scope element
         if (containsElement(timelineScopeElements, element.get()))
             return nullptr;
-        element = element->parentElement();
+        element = element->parentElementInComposedTree();
     }
 
     ASSERT_NOT_REACHED();
@@ -143,7 +148,7 @@ ScrollTimeline* StyleOriginatedTimelinesController::determineTimelineForElement(
         if (!styleableForTimeline)
             continue;
         Ref protectedElementForTimeline { styleableForTimeline->element };
-        if (&styleableForTimeline->element == &styleable.element || Ref { styleable.element }->isDescendantOrShadowDescendantOf(protectedElementForTimeline.get()))
+        if (&styleableForTimeline->element == &styleable.element || Ref { styleable.element }->isComposedTreeDescendantOf(protectedElementForTimeline.get()))
             matchedTimelines.append(timeline);
     }
     if (matchedTimelines.isEmpty())
@@ -168,7 +173,7 @@ void StyleOriginatedTimelinesController::updateTimelineForTimelineScope(const Re
     for (auto& entry : m_timelineScopeEntries) {
         if (auto entryElement = entry.second.styleable()) {
             Ref protectedEntryElement { entryElement->element };
-            if (Ref { timelineElement->element }->isDescendantOrShadowDescendantOf(protectedEntryElement.get()) && (entry.first.type == NameScope::Type::All ||  entry.first.names.contains(name)))
+            if (Ref { timelineElement->element }->isComposedTreeDescendantOf(protectedEntryElement.get()) && (entry.first.type == NameScope::Type::All ||  entry.first.names.contains(name)))
                 matchedTimelineScopeElements.appendIfNotContains(*entryElement);
         }
     }
@@ -365,7 +370,7 @@ void StyleOriginatedTimelinesController::attachAnimation(CSSAnimation& animation
             for (auto timelineScopeElement : timelineScopeElements) {
                 ASSERT(timelineScopeElement.element());
                 Ref protectedTimelineScopeElement { *timelineScopeElement.element() };
-                if (*target == timelineScopeElement.styleable() || Ref { target->element }->isDescendantOrShadowDescendantOf(protectedTimelineScopeElement.get()))
+                if (*target == timelineScopeElement.styleable() || Ref { target->element }->isComposedTreeDescendantOf(protectedTimelineScopeElement.get()))
                     return true;
             }
             return false;
@@ -385,6 +390,12 @@ void StyleOriginatedTimelinesController::attachAnimation(CSSAnimation& animation
         auto& timelines = it->value;
         RefPtr timeline = determineTimelineForElement(timelines, *target, timelineScopeElements);
         LOG_WITH_STREAM(Animations, stream << "StyleOriginatedTimelinesController::attachAnimation: " << *timelineName << " styleable: " << *target << " attaching to timeline of element: " << originatingElement(*timeline));
+        // A deferred inactive timeline means there was a conflict with multiple timelines existing within
+        // a parent element with a "timeline-scope" property. In that case, we must reconsider timeline attachment
+        // once style resolution completes as further updates may occur that would yield a different timeline
+        // and possibly also mark that animation's target as dirty to update the animated style.
+        if (allowsDeferral == AllowsDeferral::Yes && timeline && timeline->isInactiveStyleOriginatedTimeline())
+            m_cssAnimationsPendingAttachment.append(animation);
         protectedAnimation->setTimeline(WTFMove(timeline));
     }
 
@@ -400,7 +411,7 @@ static void updateTimelinesForTimelineScope(Vector<Ref<ScrollTimeline>> entries,
     for (auto& entry : entries) {
         if (auto entryElement = originatingElementExcludingTimelineScope(entry).styleable()) {
             Ref protectedElement { styleable.element };
-            if (Ref { entryElement->element }->isDescendantOrShadowDescendantOf(protectedElement.get()))
+            if (Ref { entryElement->element }->isComposedTreeDescendantOf(protectedElement.get()))
                 entry->setTimelineScopeElement(protectedElement.get());
         }
     }
