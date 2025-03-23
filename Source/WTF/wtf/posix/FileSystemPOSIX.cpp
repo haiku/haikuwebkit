@@ -53,6 +53,11 @@
 #include <glib.h>
 #endif
 
+#if OS(HAIKU)
+#include "FindDirectory.h"
+#include "Path.h"
+#endif
+
 namespace WTF {
 
 namespace FileSystemImpl {
@@ -108,7 +113,7 @@ std::optional<WallTime> fileCreationTime(const String& path)
         return std::nullopt;
 
     return WallTime::fromRawSeconds(fileInfo.stx_btime.tv_sec);
-#elif OS(DARWIN) || OS(OPENBSD) || OS(NETBSD) || OS(FREEBSD)
+#elif OS(DARWIN) || OS(OPENBSD) || OS(NETBSD) || OS(FREEBSD) || OS(HAIKU)
     struct stat fileInfo;
 
     if (stat(fsRep.data(), &fileInfo) == -1)
@@ -156,6 +161,17 @@ static const char* temporaryFileDirectory()
 {
 #if USE(GLIB)
     return g_get_tmp_dir();
+#elif OS(HAIKU)
+    static char buffer[B_PATH_NAME_LENGTH];
+    if (buffer[0] == 0) {
+        BPath path;
+        if (find_directory(B_SYSTEM_TEMP_DIRECTORY, &path) == B_OK) {
+            strcpy(buffer, path.Path());
+        } else {
+            strcpy(buffer, "/tmp");
+        }
+        return buffer;
+    }
 #else
     if (auto* tmpDir = getenv("TMPDIR"))
         return tmpDir;
@@ -181,7 +197,7 @@ std::pair<String, FileHandle> openTemporaryFile(StringView prefix, StringView su
     auto handle = FileHandle::adopt(mkstemp(buffer.mutableSpan().data()));
     if (!handle)
         return { String(), FileHandle() };
-    fcntl(handle, F_SETFD, FD_CLOEXEC);
+    fcntl(handle.platformHandle(), F_SETFD, FD_CLOEXEC);
 #else
     auto handle = FileHandle::adopt(mkostemp(buffer.mutableSpan().data(), O_CLOEXEC));
     if (!handle)
