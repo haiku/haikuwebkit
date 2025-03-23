@@ -2,25 +2,25 @@ LIST(APPEND WTF_SOURCES
     generic/WorkQueueGeneric.cpp
     generic/MainThreadGeneric.cpp
 
-    unix/MemoryPressureHandlerUnix.cpp
-    unix/UniStdExtrasUnix.cpp
-
-posix/CPUTimePOSIX.cpp
-    posix/FileSystemPOSIX.cpp
-    posix/OSAllocatorPOSIX.cpp
-    posix/ThreadingPOSIX.cpp
-
     haiku/RunLoopHaiku.cpp
     haiku/CurrentProcessMemoryStatus.cpp
     haiku/MemoryFootprintHaiku.cpp
     haiku/FileSystemHaiku.cpp
 
-    unicode/icu/CollatorICU.cpp
-
-    PlatformUserPreferredLanguagesHaiku.cpp
+    posix/CPUTimePOSIX.cpp
+    posix/FileHandlePOSIX.cpp
+    posix/FileSystemPOSIX.cpp
+    posix/OSAllocatorPOSIX.cpp
+    posix/ThreadingPOSIX.cpp
 
     text/unix/TextBreakIteratorInternalICUUnix.cpp
 
+    unicode/icu/CollatorICU.cpp
+
+    unix/MemoryPressureHandlerUnix.cpp
+    unix/UniStdExtrasUnix.cpp
+
+    PlatformUserPreferredLanguagesHaiku.cpp
 )
 
 LIST(APPEND WTF_LIBRARIES
