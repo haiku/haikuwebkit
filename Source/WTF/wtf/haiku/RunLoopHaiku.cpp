@@ -46,7 +46,7 @@ class LoopHandler: public BHandler
         void MessageReceived(BMessage* message) override
         {
             if (message->what == 'loop') {
-                RunLoop::current().performWork();
+                RunLoop::currentSingleton().performWork();
             } else if (message->what == 'tmrf') {
                 RunLoop::TimerBase* timer
                     = (RunLoop::TimerBase*)message->GetPointer("timer");
@@ -75,19 +75,19 @@ void RunLoop::run()
 {
     BLooper* looper = BLooper::LooperForThread(find_thread(NULL));
     if (!looper) {
-        current().m_looper = looper = new BLooper();
+        currentSingleton().m_looper = looper = new BLooper();
     } else if (looper != be_app) {
         fprintf(stderr, "Add handler to existing RunLoop looper\n");
     }
     looper->LockLooper();
-    looper->AddHandler(current().m_handler);
+    looper->AddHandler(currentSingleton().m_handler);
     looper->UnlockLooper();
 
-    if (current().m_looper) {
+    if (currentSingleton().m_looper) {
         // Make sure the thread will start calling performWork as soon as it can
-        RunLoop::current().wakeUp();
+        RunLoop::currentSingleton().wakeUp();
         // Then start the normal event loop
-        current().m_looper->Loop();
+        currentSingleton().m_looper->Loop();
     }
 }
 
@@ -171,9 +171,9 @@ void RunLoop::TimerBase::stop()
 
 RunLoop::CycleResult RunLoop::cycle(RunLoopMode)
 {
-    RunLoop::current().performWork();
+    RunLoop::currentSingleton().performWork();
 
-    if (RunLoop::current().m_handler->Looper()->IsMessageWaiting())
+    if (RunLoop::currentSingleton().m_handler->Looper()->IsMessageWaiting())
         return CycleResult::Continue;
     else
         return CycleResult::Stop;
