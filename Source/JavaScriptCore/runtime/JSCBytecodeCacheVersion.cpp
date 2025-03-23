@@ -66,7 +66,7 @@ uint32_t computeJSCBytecodeCacheVersion()
         }
         cacheVersion.construct(0);
         dataLogLnIf(JSCBytecodeCacheVersionInternal::verbose, "Failed to get UUID for JavaScriptCore framework");
-#elif OS(UNIX) && !PLATFORM(PLAYSTATION) && !OS(HAIKU)
+#elif OS(UNIX) && !PLATFORM(PLAYSTATION)
         auto result = ([&] -> std::optional<uint32_t> {
             Dl_info info { };
             if (!dladdr(jsFunctionAddr, &info))
@@ -102,6 +102,19 @@ uint32_t computeJSCBytecodeCacheVersion()
                             continue;
 
                         // https://refspecs.linuxbase.org/elf/gabi4+/ch5.pheader.html#note_section
+#if OS(HAIKU)
+// A few missing defines in Haiku's elf.h. Added in Haiku R1 beta 6.
+#ifndef NT_GNU_BUILD_ID
+#define NT_GNU_BUILD_ID 3
+#if B_HAIKU_32_BIT
+#define ElfW(x) Elf32_ ## x
+#elif B_HAIKU_64_BIT
+#define ElfW(x) Elf64_ ## x
+#else
+#error Unknown bitness
+#endif
+#endif
+#endif
                         using NoteHeader = ElfW(Nhdr);
 
                         auto* payload = std::bit_cast<uint8_t*>(static_cast<uintptr_t>(info->dlpi_addr + info->dlpi_phdr[i].p_vaddr));

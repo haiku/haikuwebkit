@@ -23,5 +23,5 @@ install(FILES API/JavaScript.h
 )
 
 list(APPEND JavaScriptCore_LIBRARIES
-	network
+	bsd network
 )
