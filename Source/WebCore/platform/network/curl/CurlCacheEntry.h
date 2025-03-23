@@ -75,7 +75,7 @@ private:
     String m_headerFilename;
     String m_contentFilename;
 
-    FileSystem::PlatformFileHandle m_contentFile;
+    FileSystem::FileHandle m_contentFile;
 
     size_t m_entrySize;
     WallTime m_expireDate;

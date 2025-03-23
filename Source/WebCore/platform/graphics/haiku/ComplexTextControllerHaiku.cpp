@@ -31,7 +31,7 @@ namespace WebCore {
 
 void ComplexTextController::collectComplexTextRunsForCharacters(std::span<const UChar> characters, unsigned stringLocation, const Font* font)
 {
-    m_complexTextRuns.append(ComplexTextRun::create(m_font.primaryFont(), characters, stringLocation, 0, characters.size(), m_run.ltr()));
+    m_complexTextRuns.append(ComplexTextRun::create(*font, characters, stringLocation, 0, characters.size(), m_run.ltr()));
 }
 
 }

@@ -141,8 +141,8 @@ void CurlCacheManager::saveIndex()
     auto indexFilePath = makeString(m_cacheDir, "index.dat"_s);
 
     FileSystem::deleteFile(indexFilePath);
-    FileSystem::PlatformFileHandle indexFile = FileSystem::openFile(indexFilePath, FileSystem::FileOpenMode::Truncate);
-    if (!FileSystem::isHandleValid(indexFile)) {
+    FileSystem::FileHandle indexFile = FileSystem::openFile(indexFilePath, FileSystem::FileOpenMode::Truncate);
+    if (!indexFile) {
         LOG(Network, "Cache Error: Could not open %s for write\n", indexFilePath.latin1().data());
         return;
     }
@@ -151,12 +151,10 @@ void CurlCacheManager::saveIndex()
     const auto& end = m_LRUEntryList.end();
     while (it != end) {
         const CString& urlLatin1 = it->latin1();
-        FileSystem::writeToFile(indexFile, std::span<const unsigned char>((unsigned char*)urlLatin1.data(), urlLatin1.length()));
-        FileSystem::writeToFile(indexFile, std::span<const unsigned char>((unsigned char*)"\n", 1));
+        indexFile.write(std::span<const unsigned char>((unsigned char*)urlLatin1.data(), urlLatin1.length()));
+        indexFile.write(std::span<const unsigned char>((unsigned char*)"\n", 1));
         ++it;
     }
-
-    FileSystem::closeFile(indexFile);
 }
 
 void CurlCacheManager::makeRoomForNewEntry()

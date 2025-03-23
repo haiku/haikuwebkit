@@ -199,7 +199,7 @@ private:
     Lock m_downloadMutex;
     bool m_isEnabledDownloadToFile { false };
     String m_downloadFilePath;
-    FileSystem::PlatformFileHandle m_downloadFileHandle { FileSystem::invalidPlatformFileHandle };
+    FileSystem::FileHandle m_downloadFileHandle;
 
     bool m_captureExtraMetrics;
     size_t m_requestHeaderSize { 0 };

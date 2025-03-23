@@ -49,8 +49,7 @@
 namespace WebCore {
 
 CurlCacheEntry::CurlCacheEntry(const String& url, ResourceHandle* job, const String& cacheDir)
-    : m_contentFile(FileSystem::invalidPlatformFileHandle)
-    , m_entrySize(0)
+    : m_entrySize(0)
     , m_expireDate(WallTime::fromRawSeconds(-1))
     , m_headerParsed(false)
     , m_isLoading(false)
@@ -100,7 +99,7 @@ bool CurlCacheEntry::saveCachedData(std::span<const uint8_t> data)
         return false;
 
     // Append
-    FileSystem::writeToFile(m_contentFile, data);
+    m_contentFile.write(data);
 
     return true;
 }
@@ -123,8 +122,8 @@ bool CurlCacheEntry::readCachedData(ResourceHandle* job)
 
 bool CurlCacheEntry::saveResponseHeaders(const ResourceResponse& response)
 {
-    FileSystem::PlatformFileHandle headerFile = FileSystem::openFile(m_headerFilename, FileSystem::FileOpenMode::Truncate);
-    if (!FileSystem::isHandleValid(headerFile)) {
+    FileSystem::FileHandle headerFile = FileSystem::openFile(m_headerFilename, FileSystem::FileOpenMode::Truncate);
+    if (!headerFile) {
         LOG(Network, "Cache Error: Could not open %s for write\n", m_headerFilename.latin1().data());
         return false;
     }
@@ -134,12 +133,11 @@ bool CurlCacheEntry::saveResponseHeaders(const ResourceResponse& response)
     HTTPHeaderMap::const_iterator end = response.httpHeaderFields().end();
     while (it != end) {
         auto headerField = makeString(it->key, ": "_s, it->value, '\n').latin1();
-        FileSystem::writeToFile(headerFile, std::span<const unsigned char>((const unsigned char*)headerField.data(), headerField.length()));
+        headerFile.write(std::span<const unsigned char>((const unsigned char*)headerField.data(), headerField.length()));
         m_cachedResponse.setHTTPHeaderField(it->key, it->value);
         ++it;
     }
 
-    FileSystem::closeFile(headerFile);
     return true;
 }
 
@@ -308,25 +306,24 @@ size_t CurlCacheEntry::entrySize()
 
 bool CurlCacheEntry::openContentFile()
 {
-    if (FileSystem::isHandleValid(m_contentFile))
+    if (m_contentFile)
         return true;
-    
+
     m_contentFile = FileSystem::openFile(m_contentFilename, FileSystem::FileOpenMode::Truncate);
 
-    if (FileSystem::isHandleValid(m_contentFile))
+    if (m_contentFile)
         return true;
-    
+
     LOG(Network, "Cache Error: Could not open %s for write\n", m_contentFilename.latin1().data());
     return false;
 }
 
 bool CurlCacheEntry::closeContentFile()
 {
-    if (!FileSystem::isHandleValid(m_contentFile))
+    if (!m_contentFile)
         return true;
 
-    FileSystem::closeFile(m_contentFile);
-    m_contentFile = FileSystem::invalidPlatformFileHandle;
+    m_contentFile.flush();
 
     return true;
 }

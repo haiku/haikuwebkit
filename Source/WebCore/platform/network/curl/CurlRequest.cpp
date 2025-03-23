@@ -803,27 +803,24 @@ void CurlRequest::writeDataToDownloadFileIfEnabled(std::span<const unsigned char
             return;
 
         if (m_downloadFilePath.isEmpty()) {
-            auto [path, file] = FileSystem::openTemporaryFile("download"_s);
-            m_downloadFileHandle = file;
-            m_downloadFilePath = path;
-        } else if (m_downloadFileHandle == FileSystem::invalidPlatformFileHandle) {
+            auto [m_downloadFilePath, m_downloadFileHandle] = FileSystem::openTemporaryFile("download"_s);
+        } else if (!m_downloadFileHandle) {
             m_downloadFileHandle = FileSystem::openFile(m_downloadFilePath, FileSystem::FileOpenMode::Truncate);
         }
     }
 
-    if (m_downloadFileHandle != FileSystem::invalidPlatformFileHandle)
-        FileSystem::writeToFile(m_downloadFileHandle, buffer);
+    if (m_downloadFileHandle)
+        m_downloadFileHandle.write(buffer);
 }
 
 void CurlRequest::closeDownloadFile()
 {
     Locker locker { m_downloadMutex };
 
-    if (m_downloadFileHandle == FileSystem::invalidPlatformFileHandle)
+    if (!m_downloadFileHandle)
         return;
 
-    FileSystem::closeFile(m_downloadFileHandle);
-    m_downloadFileHandle = FileSystem::invalidPlatformFileHandle;
+    m_downloadFileHandle.flush();
 }
 
 void CurlRequest::cleanupDownloadFile()

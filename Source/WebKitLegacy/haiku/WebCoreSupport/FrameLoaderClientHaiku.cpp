@@ -695,17 +695,17 @@ void FrameLoaderClientHaiku::updateOpener(const WebCore::Frame& newOpener)
 {
 }
 
-bool FrameLoaderClientHaiku::shouldGoToHistoryItem(HistoryItem&, WebCore::IsSameDocumentNavigation) const
+ShouldGoToHistoryItem FrameLoaderClientHaiku::shouldGoToHistoryItem(HistoryItem&, WebCore::IsSameDocumentNavigation) const
 {
     // FIXME this may want to ask the user for confirmation if the request contained a form post or
     // similar, and re-doing the request could have side effects. It may be easier to use the async
     // version to wait for a BAlert without locking everything.
-    return true;
+    return ShouldGoToHistoryItem::Yes;
 }
 
-void FrameLoaderClientHaiku::shouldGoToHistoryItemAsync(WebCore::HistoryItem&, CompletionHandler<void(bool)>&& handler) const
+void FrameLoaderClientHaiku::shouldGoToHistoryItemAsync(WebCore::HistoryItem&, CompletionHandler<void(ShouldGoToHistoryItem)>&& handler) const
 {
-    handler(true);
+    handler(ShouldGoToHistoryItem::Yes);
 }
 
 RefPtr<HistoryItem> FrameLoaderClientHaiku::createHistoryItemTree(bool clipAtTarget,
