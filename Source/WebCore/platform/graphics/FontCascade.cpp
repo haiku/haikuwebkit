@@ -671,9 +671,6 @@ FontCascade::CodePath FontCascade::codePath(const TextRun& run, std::optional<un
 
 FontCascade::CodePath FontCascade::characterRangeCodePath(std::span<const UChar> span)
 {
-#if PLATFORM(HAIKU)
-	return CodePath::Simple;
-#endif
     // FIXME: Should use a UnicodeSet in ports where ICU is used. Note that we 
     // can't simply use UnicodeCharacter Property/class because some characters
     // are not 'combining', but still need to go to the complex path.
