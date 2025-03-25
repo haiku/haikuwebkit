@@ -178,13 +178,8 @@ public:
     bool isFixedPitch() const;
     bool canTakeFixedPitchFastContentMeasuring() const;
     
-#if PLATFORM(HAIKU)
-    bool enableKerning() const { return false; }
-    bool requiresShaping() const { return false; }
-#else
     bool enableKerning() const { return m_enableKerning; }
     bool requiresShaping() const { return m_requiresShaping; }
-#endif
 
     const AtomString& firstFamily() const { return m_fontDescription.firstFamily(); }
     unsigned familyCount() const { return m_fontDescription.familyCount(); }
@@ -350,10 +345,6 @@ private:
 
     bool advancedTextRenderingMode() const
     {
-#if PLATFORM(HAIKU)
-        if (m_fontDescription.textRenderingMode() == TextRenderingMode::AutoTextRendering)
-             return false;
-#endif
         return m_fontDescription.textRenderingMode() != TextRenderingMode::OptimizeSpeed;
     }
 

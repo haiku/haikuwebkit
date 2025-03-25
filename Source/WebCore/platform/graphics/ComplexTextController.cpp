@@ -45,13 +45,6 @@
 #include <CoreText/CoreText.h>
 #endif
 
-static void debugComplexText()
-{
-	char* command = getenv("HAIKUWEBKIT_COMPLEX_TEXT");
-	if (command != nullptr && strcmp(command, "DEBUGGER") == 0)
-		debugger("Complex text path triggered");
-}
-
 namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ComplexTextController);
@@ -133,8 +126,6 @@ ComplexTextController::ComplexTextController(const FontCascade& fontCascade, con
     , m_forTextEmphasis(forTextEmphasis)
     , m_textSpacingState(run.textSpacingState())
 {
-    debugComplexText();
-
     computeExpansionOpportunity();
 
     collectComplexTextRuns();
@@ -148,8 +139,6 @@ ComplexTextController::ComplexTextController(const FontCascade& fontCascade, con
     , m_end(run.length())
     , m_expansion(run.expansion())
 {
-    debugComplexText();
-
     computeExpansionOpportunity();
 
     for (auto& run : runs)
@@ -163,7 +152,6 @@ ComplexTextController::ComplexTextController(const TextRun& run, const FontCasca
     , m_run(run)
     , m_end(run.length())
 {
-    debugComplexText();
 }
 
 std::pair<float, float> ComplexTextController::enclosingGlyphBoundsForTextRun(const FontCascade& fontCascade, const TextRun& textRun)
