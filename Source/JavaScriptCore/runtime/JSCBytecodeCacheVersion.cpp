@@ -106,9 +106,9 @@ uint32_t computeJSCBytecodeCacheVersion()
 // A few missing defines in Haiku's elf.h. Added in Haiku R1 beta 6.
 #ifndef NT_GNU_BUILD_ID
 #define NT_GNU_BUILD_ID 3
-#if B_HAIKU_32_BIT
+#if defined(B_HAIKU_32_BIT)
 #define ElfW(x) Elf32_ ## x
-#elif B_HAIKU_64_BIT
+#elif defined(B_HAIKU_64_BIT)
 #define ElfW(x) Elf64_ ## x
 #else
 #error Unknown bitness

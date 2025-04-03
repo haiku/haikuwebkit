@@ -105,7 +105,6 @@ list(APPEND WebCore_SOURCES
 
   platform/graphics/PlatformDisplay.cpp
   platform/graphics/WOFFFileFormat.cpp
-  platform/graphics/displaylists/DisplayListDrawGlyphsRecorderHaiku.cpp
 
   platform/graphics/haiku/AffineTransformHaiku.cpp
   platform/graphics/haiku/BitmapImageHaiku.cpp

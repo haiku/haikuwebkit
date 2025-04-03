@@ -43,6 +43,7 @@
 #include "WebCore/Frame.h"
 #include "WebCore/FrameLoadRequest.h"
 #include "WebCore/FrameLoader.h"
+#include "WebCore/FrameTreeSyncData.h"
 #include "WebCore/FrameView.h"
 #include "WebCore/HTMLFrameOwnerElement.h"
 #include "WebCore/Page.h"
@@ -431,12 +432,12 @@ BWebFrame* BWebFrame::AddChild(BWebPage* page, BString name,
         data->frame = WebCore::LocalFrame::createSubframe(*fData->page,
             CompletionHandler<UniqueRef<WebCore::LocalFrameLoaderClient>(WebCore::LocalFrame&, WebCore::FrameLoader&)> {
                 [page] (auto&, auto& frameLoader) { return makeUniqueRefWithoutRefCountedCheck<FrameLoaderClientHaiku>(frameLoader, page); } },
-            WebCore::FrameIdentifier::generate(), {}, *ownerElement);
+            WebCore::FrameIdentifier::generate(), {}, *ownerElement, FrameTreeSyncData::create());
     } else {
         data->frame = WebCore::LocalFrame::createMainFrame(*fData->page,
             CompletionHandler<UniqueRef<WebCore::LocalFrameLoaderClient>(WebCore::LocalFrame&, WebCore::FrameLoader&)> {
                 [page] (auto&, auto& frameLoader) { return makeUniqueRefWithoutRefCountedCheck<FrameLoaderClientHaiku>(frameLoader, page); } },
-            WebCore::FrameIdentifier::generate(), {}, nullptr);
+            WebCore::FrameIdentifier::generate(), {}, nullptr, FrameTreeSyncData::create());
     }
     FrameLoaderClientHaiku& client = static_cast<FrameLoaderClientHaiku&>(data->frame->loader().client());
     client.setFrame(frame);

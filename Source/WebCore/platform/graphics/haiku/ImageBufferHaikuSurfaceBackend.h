@@ -51,7 +51,7 @@ public:
     WTF::RefPtr<WebCore::NativeImage> copyNativeImage() override;
     WTF::RefPtr<WebCore::NativeImage> createNativeImageReference() override;
     void getPixelBuffer(const IntRect&, PixelBuffer&) override;
-    void putPixelBuffer(const PixelBuffer&, const IntRect& srcRect, const IntPoint& destPoint, AlphaPremultiplication destFormat) override;
+    void putPixelBuffer(const PixelBufferSourceView&, const IntRect& srcRect, const IntPoint& destPoint, AlphaPremultiplication destFormat) override;
     unsigned bytesPerRow() const override;
     bool canMapBackingStore() const override { return true; }
 
