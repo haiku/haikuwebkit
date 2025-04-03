@@ -431,12 +431,12 @@ BWebFrame* BWebFrame::AddChild(BWebPage* page, BString name,
         data->frame = WebCore::LocalFrame::createSubframe(*fData->page,
             CompletionHandler<UniqueRef<WebCore::LocalFrameLoaderClient>(WebCore::LocalFrame&, WebCore::FrameLoader&)> {
                 [page] (auto&, auto& frameLoader) { return makeUniqueRefWithoutRefCountedCheck<FrameLoaderClientHaiku>(frameLoader, page); } },
-            WebCore::FrameIdentifier::generate(), {}, *ownerElement, WebCore::FrameTreeSyncData::create());
+            WebCore::FrameIdentifier::generate(), {}, *ownerElement);
     } else {
         data->frame = WebCore::LocalFrame::createMainFrame(*fData->page,
             CompletionHandler<UniqueRef<WebCore::LocalFrameLoaderClient>(WebCore::LocalFrame&, WebCore::FrameLoader&)> {
                 [page] (auto&, auto& frameLoader) { return makeUniqueRefWithoutRefCountedCheck<FrameLoaderClientHaiku>(frameLoader, page); } },
-            WebCore::FrameIdentifier::generate(), {}, nullptr, WebCore::FrameTreeSyncData::create());
+            WebCore::FrameIdentifier::generate(), {}, nullptr);
     }
     FrameLoaderClientHaiku& client = static_cast<FrameLoaderClientHaiku&>(data->frame->loader().client());
     client.setFrame(frame);

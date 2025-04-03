@@ -39,6 +39,12 @@
 #include <wtf/MallocSpan.h>
 #include <wtf/MappedFileData.h>
 
+#if OS(HAIKU)
+/* Haiku does not define MAP_FILE because it is the default mode (as specified in POSIX).
+ * Most other system define it to the value 0 anyways */
+#define MAP_FILE 0
+#endif
+
 namespace WTF::FileSystemImpl {
 
 std::optional<uint64_t> FileHandle::read(std::span<uint8_t> data)
