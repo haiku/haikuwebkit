@@ -27,9 +27,12 @@
 
 #include <span>
 #include <wtf/Box.h>
+#include <wtf/FileHandle.h>
 #include <wtf/FileSystem.h>
+#include <wtf/MappedFileData.h>
 #include <wtf/SHA1.h>
 #include <wtf/ThreadSafeRefCounted.h>
+#include <wtf/Vector.h>
 #include <wtf/text/WTFString.h>
 
 #if PLATFORM(COCOA)
@@ -57,6 +60,7 @@ class Data {
 public:
     Data() { }
     Data(std::span<const uint8_t>);
+    Data(Vector<uint8_t>&& data);
 
     ~Data() { }
 
@@ -71,7 +75,6 @@ public:
     Data(GRefPtr<GBytes>&&, FileSystem::FileHandle&& = { });
 #elif USE(CURL)
     Data(std::variant<Vector<uint8_t>, FileSystem::MappedFileData>&&);
-    Data(Vector<uint8_t>&& data) : Data(std::variant<Vector<uint8_t>, FileSystem::MappedFileData> { WTFMove(data) }) { }
 #endif
     bool isNull() const;
     bool isEmpty() const { return !size(); }

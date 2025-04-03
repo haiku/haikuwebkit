@@ -306,6 +306,34 @@ public:
     const Element* defaultAnchor() const;
     const RenderElement* defaultAnchorRenderer() const;
 
+    bool isAnonymousBlock() const;
+    bool isAnonymousForPercentageResolution() const { return isAnonymous() && !isViewTransitionPseudo(); }
+    inline bool isBlockBox() const;
+    inline bool isBlockLevelBox() const;
+    inline bool isBlockContainer() const;
+
+    RenderBoxModelObject* offsetParent() const;
+    // Pushes state onto RenderGeometryMap about how to map coordinates from this renderer to its container, or ancestorToStopAt (whichever is encountered first).
+    // Returns the renderer which was mapped to (container or ancestorToStopAt).
+    virtual const RenderElement* pushMappingToContainer(const RenderLayerModelObject* ancestorToStopAt, RenderGeometryMap&) const;
+
+    bool isFixedPositioned() const { return isOutOfFlowPositioned() && style().position() == PositionType::Fixed; }
+    bool isAbsolutelyPositioned() const { return isOutOfFlowPositioned() && style().position() == PositionType::Absolute; }
+
+    bool isViewTransitionContainer() const { return style().pseudoElementType() == PseudoId::ViewTransition || style().pseudoElementType() == PseudoId::ViewTransitionGroup || style().pseudoElementType() == PseudoId::ViewTransitionImagePair; }
+    bool isViewTransitionPseudo() const { return isRenderViewTransitionCapture() || isViewTransitionContainer(); }
+
+    inline bool hasPotentiallyScrollableOverflow() const;
+
+    inline bool isBeforeContent() const;
+    inline bool isAfterContent() const;
+    inline bool isBeforeOrAfterContent() const;
+    static bool isBeforeContent(const RenderElement*);
+    static bool isAfterContent(const RenderElement*);
+    static bool isBeforeOrAfterContent(const RenderElement*);
+
+    WritingMode writingMode() const { return style().writingMode(); }
+
 protected:
     RenderElement(Type, Element&, RenderStyle&&, OptionSet<TypeFlag>, TypeSpecificFlags);
     RenderElement(Type, Document&, RenderStyle&&, OptionSet<TypeFlag>, TypeSpecificFlags);
@@ -327,6 +355,8 @@ protected:
     void willBeRemovedFromTree() override;
     void willBeDestroyed() override;
     void notifyFinished(CachedResource&, const NetworkLoadMetrics&, LoadWillContinueInAnotherProcess) override;
+
+    void pushOntoGeometryMap(RenderGeometryMap&, const RenderLayerModelObject* repaintContainer, RenderElement* container, bool containerSkipped) const;
 
     void setHasContinuationChainNode(bool b) { m_hasContinuationChainNode = b; }
 

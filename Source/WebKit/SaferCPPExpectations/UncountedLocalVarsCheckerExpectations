@@ -27,7 +27,6 @@ WebProcess/InjectedBundle/API/mac/WKWebProcessPlugInBrowserContextController.mm
 WebProcess/InjectedBundle/DOM/InjectedBundleCSSStyleDeclarationHandle.cpp
 WebProcess/InjectedBundle/DOM/InjectedBundleNodeHandle.cpp
 WebProcess/InjectedBundle/DOM/InjectedBundleRangeHandle.cpp
-WebProcess/InjectedBundle/InjectedBundle.cpp
 WebProcess/InjectedBundle/InjectedBundleDOMWindowExtension.cpp
 WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 WebProcess/InjectedBundle/InjectedBundlePageContextMenuClient.cpp
@@ -45,9 +44,6 @@ WebProcess/Network/webrtc/LibWebRTCNetworkManager.cpp
 WebProcess/Network/webrtc/LibWebRTCProvider.cpp
 WebProcess/Network/webrtc/WebMDNSRegister.cpp
 WebProcess/Notifications/WebNotificationManager.cpp
-WebProcess/Plugins/PDF/PDFPluginBase.mm
-WebProcess/Plugins/PDF/PDFPluginTextAnnotation.mm
-WebProcess/Plugins/PDF/UnifiedPDF/UnifiedPDFPlugin.mm
 WebProcess/Plugins/WebPluginInfoProvider.cpp
 WebProcess/Storage/WebSWClientConnection.cpp
 WebProcess/Storage/WebServiceWorkerProvider.cpp

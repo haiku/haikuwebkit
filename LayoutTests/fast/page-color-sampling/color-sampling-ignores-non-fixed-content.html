@@ -1,4 +1,4 @@
-<!DOCTYPE html> <!-- webkit-test-runner [ FixedContainerEdgeSamplingEnabled=true useFlexibleViewport=true ] -->
+<!DOCTYPE html> <!-- webkit-test-runner [ ContentInsetBackgroundFillEnabled=true useFlexibleViewport=true ] -->
 <html>
 <head>
     <meta charset="utf-8">
@@ -39,6 +39,7 @@
     jsTestIsAsync = true;
 
     addEventListener("load", async () => {
+        await UIHelper.setObscuredInsets(100, 0, 0, 0);
         await UIHelper.ensurePresentationUpdate();
         colorBeforeFading = await UIHelper.fixedContainerEdgeColors();
 
@@ -53,7 +54,7 @@
     </script>
 </head>
 <body>
-<div class="top">
+<div class="top"></div>
 <div class="tall"></div>
 <header></header>
 </body>

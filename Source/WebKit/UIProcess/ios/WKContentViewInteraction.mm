@@ -2208,7 +2208,7 @@ typedef NS_ENUM(NSInteger, EndEditingReason) {
     [self _handleTouchActionsForTouchEvent:nativeWebTouchEvent];
 
     if (_touchEventsCanPreventNativeGestures)
-        _page->handlePreventableTouchEvent(nativeWebTouchEvent);
+        _page->handlePreventableTouchEvent(nullptr, nativeWebTouchEvent);
     else
         _page->handleUnpreventableTouchEvent(nativeWebTouchEvent);
 
@@ -6418,11 +6418,21 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
 {
 }
 
-static NSArray<WKTextSelectionRect *> *textSelectionRects(const Vector<WebCore::SelectionGeometry>& rects, CGFloat scaleFactor)
+- (NSArray<WKTextSelectionRect *> *)_textSelectionRects:(const Vector<WebCore::SelectionGeometry>&)rects
 {
-    return createNSArray(rects, [scaleFactor] (auto& rect) {
-        return adoptNS([[WKTextSelectionRect alloc] initWithSelectionGeometry:rect scaleFactor:scaleFactor]);
+    return createNSArray(rects, [&](auto& rect) {
+        return adoptNS([[WKTextSelectionRect alloc] initWithSelectionGeometry:rect delegate:self]);
     }).autorelease();
+}
+
+- (CGFloat)scaleFactorForSelectionRect:(WKTextSelectionRect *)rect
+{
+    return self._contentZoomScale;
+}
+
+- (WebCore::FloatQuad)selectionRect:(WKTextSelectionRect *)rect convertQuadToSelectionContainer:(const WebCore::FloatQuad&)quad
+{
+    return [self _wk_convertQuad:quad toCoordinateSpace:[self _selectionContainerViewInternal]];
 }
 
 - (WebCore::FloatRect)_scaledCaretRectForSelectionStart:(WebCore::FloatRect)caretRect
@@ -6474,7 +6484,7 @@ static NSArray<WKTextSelectionRect *> *textSelectionRects(const Vector<WebCore::
 
     auto caretStartRect = [self _scaledCaretRectForSelectionStart:_page->editorState().visualData->caretRectAtStart];
     auto caretEndRect = [self _scaledCaretRectForSelectionEnd:_page->editorState().visualData->caretRectAtEnd];
-    auto selectionRects = textSelectionRects(_page->editorState().visualData->selectionGeometries, self._contentZoomScale);
+    auto selectionRects = [self _textSelectionRects:_page->editorState().visualData->selectionGeometries];
     auto selectedTextLength = editorState.postLayoutData->selectedTextLength;
 
     _cachedSelectedTextRange = [WKTextRange textRangeWithState:!hasSelection isRange:isRange isEditable:isContentEditable startRect:caretStartRect endRect:caretEndRect selectionRects:selectionRects selectedTextLength:selectedTextLength];
@@ -6526,7 +6536,7 @@ static NSArray<WKTextSelectionRect *> *textSelectionRects(const Vector<WebCore::
     auto isContentEditable = editorState.isContentEditable;
     auto caretStartRect = [self _scaledCaretRectForSelectionStart:unscaledCaretRectAtStart];
     auto caretEndRect = [self _scaledCaretRectForSelectionEnd:unscaledCaretRectAtEnd];
-    auto selectionRects = textSelectionRects(visualData.markedTextRects, self._contentZoomScale);
+    auto selectionRects = [self _textSelectionRects:visualData.markedTextRects];
     auto selectedTextLength = postLayoutData.markedText.length();
     return [WKTextRange textRangeWithState:!hasComposition isRange:isRange isEditable:isContentEditable startRect:caretStartRect endRect:caretEndRect selectionRects:selectionRects selectedTextLength:selectedTextLength];
 }
@@ -9559,7 +9569,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
     auto webView = _webView.get();
     id <WKUIDelegatePrivate> uiDelegate = static_cast<id <WKUIDelegatePrivate>>([webView UIDelegate]);
     return [uiDelegate respondsToSelector:@selector(_webView:fileUploadPanelContentIsManagedWithInitiatingFrame:)]
-        && [uiDelegate _webView:webView.get() fileUploadPanelContentIsManagedWithInitiatingFrame:wrapper(API::FrameInfo::create(WTFMove(_frameInfoForFileUploadPanel), _page.get())).get()];
+        && [uiDelegate _webView:webView.get() fileUploadPanelContentIsManagedWithInitiatingFrame:_frameInfoForFileUploadPanel ? wrapper(API::FrameInfo::create(*std::exchange(_frameInfoForFileUploadPanel, std::nullopt), _page.get())).get() : nil];
 }
 
 #if HAVE(PHOTOS_UI)

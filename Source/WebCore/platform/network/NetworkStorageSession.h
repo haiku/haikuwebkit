@@ -311,6 +311,10 @@ public:
     WEBCORE_EXPORT void resetManagedDomains();
 #endif
 
+    uint64_t cookiesVersion() const { return m_cookiesVersion; }
+    WEBCORE_EXPORT void setCookiesVersion(uint64_t);
+    WEBCORE_EXPORT void addCookiesVersionChangeCallback(uint64_t version, CompletionHandler<void()>&&);
+
 private:
 #if PLATFORM(COCOA)
     enum IncludeHTTPOnlyOrNot { DoNotIncludeHTTPOnly, IncludeHTTPOnly };
@@ -356,6 +360,10 @@ private:
 #if PLATFORM(COCOA)
     RetainPtr<NSMutableSet> m_subscribedDomainsForCookieChanges;
     bool m_didRegisterCookieListeners { false };
+#elif USE(SOUP)
+    void notifyCookie(SoupCookie*, bool added);
+    void notifyCookieAdded(SoupCookie*);
+    void notifyCookieDeleted(SoupCookie*);
 #endif
     MemoryCompactRobinHoodHashMap<String, WeakHashSet<CookieChangeObserver>> m_cookieChangeObservers;
 #endif // HAVE(COOKIE_CHANGE_LISTENER_API)
@@ -396,6 +404,9 @@ public:
 private:
     mutable std::unique_ptr<CookieStorageObserver> m_cookieStorageObserver;
 #endif
+    uint64_t m_cookiesVersion { 0 };
+    HashMap<uint64_t, Vector<CompletionHandler<void()>>> m_cookiesVersionChangeCallbacks;
+
     static bool m_processMayUseCookieAPI;
 };
 

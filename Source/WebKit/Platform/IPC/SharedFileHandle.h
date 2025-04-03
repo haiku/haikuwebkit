@@ -26,7 +26,7 @@
 #pragma once
 
 #include <fcntl.h>
-#include <wtf/FileSystem.h>
+#include <wtf/FileHandle.h>
 
 namespace IPC {
 

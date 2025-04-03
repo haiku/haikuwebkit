@@ -46,6 +46,8 @@
 #endif
 
 #if PLATFORM(COCOA)
+#include <wtf/WeakObjCPtr.h>
+
 OBJC_CLASS NSURLAuthenticationChallenge;
 OBJC_CLASS NSURLConnection;
 
@@ -106,7 +108,7 @@ public:
 
     // We need to keep a reference to the original challenge to be able to cancel it.
     // It is almost identical to m_currentWebChallenge.nsURLAuthenticationChallenge(), but has a different sender.
-    NSURLAuthenticationChallenge *m_currentMacChallenge { nil };
+    WeakObjCPtr<NSURLAuthenticationChallenge> m_currentMacChallenge;
 #endif
 #if USE(CURL)
     RefPtr<CurlResourceHandleDelegate> m_delegate;

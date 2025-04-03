@@ -1,6 +1,5 @@
 Modules/WebGPU/GPUPresentationContextDescriptor.h
 Modules/encryptedmedia/MediaKeyStatusMap.h
-Modules/fetch/FetchBodyOwner.h
 Modules/mediastream/RTCPeerConnection.h
 Modules/mediastream/libwebrtc/LibWebRTCObservers.h
 Modules/notifications/NotificationResourcesLoader.h
@@ -13,7 +12,6 @@ accessibility/AXCoreObject.h
 accessibility/AXSearchManager.h
 bindings/js/JSEventTargetCustom.h
 bindings/js/JSLazyEventListener.cpp
-css/CSSFontFaceDescriptors.h
 css/CSSFontSelector.h
 css/CSSPrimitiveValueMappings.h
 css/CSSRuleList.h
@@ -61,7 +59,6 @@ page/WheelEventTestMonitor.h
 page/scrolling/ScrollLatchingController.h
 page/scrolling/ScrollingCoordinator.h
 page/scrolling/ScrollingTreeGestureState.h
-page/scrolling/ScrollingTreeScrollingNodeDelegate.h
 page/scrolling/mac/ScrollerMac.h
 platform/PODInterval.h
 platform/encryptedmedia/CDMProxy.h

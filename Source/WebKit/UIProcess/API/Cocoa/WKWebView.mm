@@ -427,7 +427,7 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
     // Thus, we have to instantiate its view for URLIsBlocked to update properly.
     RetainPtr screenTimeView = [_screenTimeWebpageController view];
 
-    if ([_configuration _showsSystemScreenTimeBlockingView]) {
+    if ([_configuration showsSystemScreenTimeBlockingView]) {
         [screenTimeView setFrame:self.bounds];
         [self addSubview:screenTimeView.get()];
     }
@@ -465,7 +465,7 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
     viewIsVisible = viewIsVisible && ((self.window.occlusionState & NSWindowOcclusionStateVisible) == NSWindowOcclusionStateVisible);
 #endif
 
-    BOOL showsSystemScreenTimeBlockingView = [_configuration _showsSystemScreenTimeBlockingView];
+    BOOL showsSystemScreenTimeBlockingView = [_configuration showsSystemScreenTimeBlockingView];
 
     if (viewIsInWindow) {
         BOOL previouslyInstalledScreenTimeWebpageController = !!_screenTimeWebpageController;
@@ -504,16 +504,16 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
 
         if (urlWasBlocked != urlIsBlocked) {
             [self setAllMediaPlaybackSuspended:urlIsBlocked completionHandler:nil];
-            [self willChangeValueForKey:@"_isBlockedByScreenTime"];
+            [self willChangeValueForKey:@"isBlockedByScreenTime"];
             _isBlockedByScreenTime = urlIsBlocked;
-            [self didChangeValueForKey:@"_isBlockedByScreenTime"];
+            [self didChangeValueForKey:@"isBlockedByScreenTime"];
             if (urlIsBlocked)
                 RELEASE_LOG(ScreenTime, "Screen Time is blocking the URL.");
             else
                 RELEASE_LOG(ScreenTime, "Screen Time is not blocking the URL.");
         }
         if (wasBlockedByScreenTime != _isBlockedByScreenTime) {
-            if (!_screenTimeBlurredSnapshot && ![_configuration _showsSystemScreenTimeBlockingView]) {
+            if (!_screenTimeBlurredSnapshot && ![_configuration showsSystemScreenTimeBlockingView]) {
 #if PLATFORM(MAC)
                 _screenTimeBlurredSnapshot = adoptNS([[NSVisualEffectView alloc] init]);
                 [_screenTimeBlurredSnapshot setMaterial:NSVisualEffectMaterialUnderWindowBackground];
@@ -1224,7 +1224,7 @@ static bool validateArgument(id argument)
 - (void)closeAllMediaPresentationsWithCompletionHandler:(void (^)(void))completionHandler
 {
     THROW_IF_SUSPENDED;
-    auto callbackAggregator = CallbackAggregator::create(WTFMove(completionHandler));
+    auto callbackAggregator = CallbackAggregator::create(WTFMove(completionHandler ?: ^{ }));
 
 #if ENABLE(FULLSCREEN_API)
     if (RefPtr videoPresentationManager = _page->videoPresentationManager()) {
@@ -3301,15 +3301,6 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKCONTENTVIEW)
     return _page && _page->hasInspectorFrontend();
 }
 
-- (BOOL)_isBlockedByScreenTime
-{
-#if ENABLE(SCREEN_TIME)
-    return _isBlockedByScreenTime;
-#else
-    return NO;
-#endif
-}
-
 - (_WKInspector *)_inspector
 {
     if (RefPtr inspector = _page->inspector())
@@ -3821,7 +3812,7 @@ static RetainPtr<NSArray> wkTextManipulationErrors(NSArray<_WKTextManipulationIt
     if (!frame)
         [NSException raise:NSInternalInconsistencyException format:@"frame must be non-null"];
 
-    _page->convertPointToMainFrameCoordinates(point, frame->_frameInfo->frameInfoData().frameID.asOptional(), [completionHandler = makeBlockPtr(completionHandler)] (std::optional<WebCore::FloatPoint> result) {
+    _page->convertPointToMainFrameCoordinates(point, frame->_frameInfo->frameInfoData().frameID, [completionHandler = makeBlockPtr(completionHandler)] (std::optional<WebCore::FloatPoint> result) {
         if (result)
             completionHandler(*result, nil);
         else
@@ -3834,7 +3825,7 @@ static RetainPtr<NSArray> wkTextManipulationErrors(NSArray<_WKTextManipulationIt
     if (!frame)
         [NSException raise:NSInternalInconsistencyException format:@"frame must be non-null"];
 
-    _page->convertRectToMainFrameCoordinates(rect, frame->_frameInfo->frameInfoData().frameID.asOptional(), [completionHandler = makeBlockPtr(completionHandler)] (std::optional<WebCore::FloatRect> result) {
+    _page->convertRectToMainFrameCoordinates(rect, frame->_frameInfo->frameInfoData().frameID, [completionHandler = makeBlockPtr(completionHandler)] (std::optional<WebCore::FloatRect> result) {
         if (result)
             completionHandler(*result, nil);
         else

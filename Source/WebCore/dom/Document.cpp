@@ -723,7 +723,6 @@ void Document::populateDocumentSyncDataForNewlyConstructedDocument(ProcessSyncDa
     case ProcessSyncDataType::HasInjectedUserScript:
     case ProcessSyncDataType::IsAutofocusProcessed:
     case ProcessSyncDataType::UserDidInteractWithPage:
-    case ProcessSyncDataType::FrameCanCreatePaymentSession:
         break;
     }
 }
@@ -9125,6 +9124,11 @@ DocumentLoader* Document::loader() const
         return nullptr;
 
     return loader;
+}
+
+RefPtr<DocumentLoader> Document::protectedLoader() const
+{
+    return loader();
 }
 
 bool Document::allowsContentJavaScript() const

@@ -141,7 +141,7 @@ PDFPluginBase::PDFPluginBase(HTMLPlugInElement& element)
 PDFPluginBase::~PDFPluginBase()
 {
 #if ENABLE(PDF_HUD)
-    if (auto* page = m_frame ? m_frame->page() : nullptr)
+    if (RefPtr page = m_frame ? m_frame->page() : nullptr)
         page->removePDFHUD(*this);
 #endif
 
@@ -1227,7 +1227,7 @@ bool PDFPluginBase::supportsForms() const
 
 bool PDFPluginBase::showContextMenuAtPoint(const IntPoint& point)
 {
-    auto* frameView = m_frame ? m_frame->coreLocalFrame()->view() : nullptr;
+    RefPtr frameView = m_frame ? m_frame->coreLocalFrame()->view() : nullptr;
     if (!frameView)
         return false;
     IntPoint contentsPoint = frameView->contentsToRootView(point);

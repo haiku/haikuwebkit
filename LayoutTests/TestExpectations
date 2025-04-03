@@ -112,6 +112,7 @@ inspector/page/setScreenSizeOverride.html [ Skip ]
 interaction-region [ Skip ]
 overlay-region [ Skip ]
 pdf [ Skip ]
+ipc/mac [ Skip ]
 ipc/restrictedendpoints/mac [ Skip ]
 
 # Requires async overflow scrolling
@@ -1687,6 +1688,11 @@ imported/w3c/web-platform-tests/css/css-flexbox/flexbox-min-width-auto-005.html 
 imported/w3c/web-platform-tests/css/css-flexbox/flexbox-min-width-auto-006.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-flexbox/intrinsic-size/col-wrap-020.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-flexbox/min-size-auto-overflow-clip.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-flexbox/aspect-ratio-intrinsic-size-009.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-flexbox/baseline-outside-flex-item.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-flexbox/flexbox-flex-wrap-flexing-002.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-flexbox/flexbox-flex-wrap-flexing-003.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-flexbox/multiline-shrink-to-fit.html [ ImageOnlyFailure ]
 
 # grid layout tests
 webkit.org/b/149890 fast/css-grid-layout/grid-shorthands-style-format.html [ Failure ]
@@ -1735,7 +1741,6 @@ imported/w3c/web-platform-tests/css/css-grid/abspos/orthogonal-positioned-grid-d
 webkit.org/b/216146 imported/w3c/web-platform-tests/css/css-grid/alignment/grid-baseline-align-001.html [ ImageOnlyFailure ]
 webkit.org/b/216146 imported/w3c/web-platform-tests/css/css-grid/alignment/grid-baseline-justify-001.html [ ImageOnlyFailure ]
 webkit.org/b/216145 imported/w3c/web-platform-tests/css/css-grid/alignment/grid-item-aspect-ratio-stretch-3.html [ ImageOnlyFailure ]
-webkit.org/b/216145 imported/w3c/web-platform-tests/css/css-grid/alignment/grid-item-aspect-ratio-stretch-4.html [ ImageOnlyFailure ]
 webkit.org/b/216145 imported/w3c/web-platform-tests/css/css-grid/alignment/grid-item-no-aspect-ratio-stretch-4.html [ ImageOnlyFailure ]
 webkit.org/b/216145 imported/w3c/web-platform-tests/css/css-grid/alignment/grid-item-no-aspect-ratio-stretch-5.html [ ImageOnlyFailure ]
 webkit.org/b/216145 imported/w3c/web-platform-tests/css/css-grid/alignment/grid-item-no-aspect-ratio-stretch-6.html [ ImageOnlyFailure ]
@@ -1767,6 +1772,8 @@ webkit.org/b/279411 imported/w3c/web-platform-tests/css/css-grid/subgrid/subgrid
 webkit.org/b/279412 imported/w3c/web-platform-tests/css/css-grid/subgrid/subgrid-baseline-010.html [ Skip ]
 imported/w3c/web-platform-tests/css/css-grid/subgrid/standalone-axis-size-005.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/subgrid/subgrid-button.html [ ImageOnlyFailure ]
+
+imported/w3c/web-platform-tests/css/css-grid/computed-grid-column.html [ Timeout ]
 
 # masonry
 imported/w3c/web-platform-tests/css/css-grid/masonry/tentative/alignment/masonry-align-content-001.html [ ImageOnlyFailure ]
@@ -5826,11 +5833,7 @@ imported/w3c/web-platform-tests/html/canvas/offscreen/text/canvas.2d.fontStretch
 imported/w3c/web-platform-tests/html/canvas/offscreen/text/canvas.2d.fontStretch.ultra-expanded.html [ ImageOnlyFailure ]
 
 imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?av1 [ Failure ]
-imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?h265_annexb [ Failure ]
-imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?h265_hevc [ Failure ]
 imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.worker.html?av1 [ Failure ]
-imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.worker.html?h265_annexb [ Failure ]
-imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.worker.html?h265_hevc [ Failure ]
 imported/w3c/web-platform-tests/webcodecs/temporal-svc-encoding.https.any.html?av1 [ Failure ]
 imported/w3c/web-platform-tests/webcodecs/temporal-svc-encoding.https.any.worker.html?av1 [ Failure ]
 imported/w3c/web-platform-tests/webcodecs/videoFrame-canvasImageSource.html [ Failure ]
@@ -6486,16 +6489,9 @@ imported/w3c/web-platform-tests/fullscreen/api/element-request-fullscreen-and-mo
 imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?h264_annexb [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.html?h264_avc [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/webcodecs/videoFrame-createImageBitmap.any.html [ DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webcodecs/videoFrame-canvasImageSource.html [ DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webcodecs/videoFrame-construction.any.html [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/webcodecs/videoFrame-createImageBitmap.https.any.html [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/webcodecs/video-encoder.https.any.worker.html [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/webcodecs/video-encoder.https.any.html [ DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?av1 [ DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?vp8 [ DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?vp9_p0 [ DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?h264_avc [ DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?h264_annexb [ DumpJSConsoleLogInStdErr ]
 
 webkit.org/b/258192 imported/w3c/web-platform-tests/webcodecs/full-cycle-test.https.any.worker.html?h264_avc [ Pass Failure ]
 
@@ -7647,6 +7643,7 @@ webkit.org/b/289743 imported/w3c/web-platform-tests/css/css-anchor-position/posi
 imported/w3c/web-platform-tests/css/css-anchor-position/position-area-scroll-adjust.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/position-anchor-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/position-try-switch-to-fixed-anchor.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-add-no-overflow.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-anchors-visible.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-anchors-visible-after-scroll-out.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-anchors-valid.tentative.html [ ImageOnlyFailure ]
@@ -7659,8 +7656,10 @@ imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-anch
 imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-anchors-visible-position-fixed.tentative.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-anchors-visible-stacked-child.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-anchors-visible-stacked-child.tentative.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-no-overflow.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-no-overflow-scroll.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-no-overflow-stacked-child.html [ ImageOnlyFailure ]
+ imported/w3c/web-platform-tests/css/css-anchor-position/position-visibility-remove-no-overflow.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/popover-anchor-backdrop-transition.html [ Pass Failure ]
 
 # timeouts

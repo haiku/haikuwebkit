@@ -27,13 +27,9 @@ UIProcess/Cocoa/WebPageProxyCocoa.mm
 UIProcess/RemoteLayerTree/RemoteLayerTreeHost.mm
 UIProcess/RemoteLayerTree/mac/RemoteLayerTreeEventDispatcher.cpp
 UIProcess/WebProcessPool.h
-UIProcess/mac/WebViewImpl.h
 WebProcess/Extensions/Bindings/JSWebExtensionWrapper.h
-WebProcess/InjectedBundle/InjectedBundle.h
-WebProcess/InjectedBundle/InjectedBundlePageEditorClient.cpp
 WebProcess/Inspector/WebInspectorClient.cpp
 WebProcess/Plugins/PDF/UnifiedPDF/PDFDataDetectorOverlayController.mm
-WebProcess/Plugins/PDF/UnifiedPDF/PDFPresentationController.mm
 WebProcess/Plugins/PDF/UnifiedPDF/UnifiedPDFPlugin.mm
 WebProcess/WebAuthentication/WebAuthenticatorCoordinator.cpp
 WebProcess/WebCoreSupport/WebChromeClient.cpp

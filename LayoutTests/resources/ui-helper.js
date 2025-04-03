@@ -1100,6 +1100,13 @@ window.UIHelper = class UIHelper {
         return { x: rect.left + (rect.width / 2), y: rect.top + (rect.height / 2) };
     }
 
+    static rectContainsOtherRect(rect, otherRect) {
+        return rect.left <= otherRect.left
+            && rect.top <= otherRect.top
+            && (rect.left + rect.width) >= (otherRect.left + otherRect.width)
+            && (rect.top + rect.height) >= (otherRect.top + otherRect.height);
+    }
+
     static computeLineBounds(element, firstRunIndex, lastRunIndex = undefined) {
         const range = document.createRange();
         range.selectNodeContents(element);
@@ -1846,14 +1853,15 @@ window.UIHelper = class UIHelper {
         });
     }
 
-    static setObscuredInsets(top, right, bottom, left)
+    static async setObscuredInsets(top, right, bottom, left)
     {
-        if (!this.isWebKit2() || !this.isIOSFamily())
-            return Promise.resolve();
-
-        return new Promise(resolve => {
-            testRunner.runUIScript(`uiController.setObscuredInsets(${top}, ${right}, ${bottom}, ${left})`, resolve);
-        });
+        if (this.isWebKit2() && this.isIOSFamily()) {
+            const scriptToRun = `uiController.setObscuredInsets(${top}, ${right}, ${bottom}, ${left})`;
+            await new Promise(resolve => testRunner.runUIScript(scriptToRun, resolve));
+            await this.ensureVisibleContentRectUpdate();
+        } else
+            testRunner.setObscuredContentInsets(top, right, bottom, left);
+        await this.ensurePresentationUpdate();
     }
 
     static rotateDevice(orientationName, animatedResize = false)

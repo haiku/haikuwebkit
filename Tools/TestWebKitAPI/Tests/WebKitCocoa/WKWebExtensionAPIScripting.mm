@@ -1012,6 +1012,26 @@ TEST(WKWebExtensionAPIScripting, UpdateContentScripts)
     [manager run];
 }
 
+TEST(WKWebExtensionAPIScripting, UpdateContentScriptsWithMinimalParametersShouldNotCrash)
+{
+    auto *backgroundScript = Util::constructScript(@[
+        @"await browser.scripting.registerContentScripts([{ id: '1', matches: ['*://localhost/*'], js: ['script.js'] }])",
+        @"await browser.scripting.updateContentScripts([{ id: '1', allFrames: true }])",
+
+        @"const results = await browser.scripting.getRegisteredContentScripts()",
+        @"browser.test.assertDeepEq(results, [{ id: '1', matches: ['*://localhost/*'], js: ['script.js'], allFrames: true, persistAcrossSessions: true }])",
+
+        @"browser.test.notifyPass()",
+    ]);
+
+    auto *resources = @{
+        @"background.js": backgroundScript,
+        @"script.js": @"document.body.style.backgroundColor = 'red'",
+    };
+
+    Util::loadAndRunExtension(scriptingManifest, resources);
+}
+
 TEST(WKWebExtensionAPIScripting, GetContentScripts)
 {
     TestWebKitAPI::HTTPServer server({
@@ -1650,6 +1670,43 @@ TEST(WKWebExtensionAPIScripting, RemoveAllUserStyleSheetsDoesNotRemoveWebExtensi
     [manager runUntilTestMessage:@"Remove StyleSheets and Load Tab"];
 
     [manager.get().defaultTab.webView.configuration.userContentController _removeAllUserStyleSheets];
+    [manager.get().defaultTab.webView loadRequest:urlRequest];
+
+    [manager run];
+}
+
+TEST(WKWebExtensionAPIScripting, InjectScriptWithTrustedTypesCSP)
+{
+    TestWebKitAPI::HTTPServer server({
+        { "/"_s, { { { "Content-Type"_s, "text/html"_s }, { "Content-Security-Policy"_s, "require-trusted-types-for 'script'"_s } }, ""_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::Http);
+
+    auto *manifest = @{
+        @"manifest_version": @3,
+
+        @"name": @"Scripting Test",
+        @"description": @"Scripting Test",
+        @"version": @"1.0",
+
+        @"content_scripts": @[ @{
+            @"matches": @[ @"*://localhost/*" ],
+            @"js": @[ @"content.js" ]
+        } ]
+    };
+
+    auto *contentScript = Util::constructScript(@[
+        @"try {",
+        @"  document.body.innerHTML = '<p>Injected</p>'",
+        @"  browser.test.notifyPass()",
+        @"} catch (error) {",
+        @"  browser.test.notifyFail('CSP blocked innerHTML: ' + error.message)",
+        @"}",
+    ]);
+
+    auto manager = Util::loadExtension(manifest, @{ @"content.js": contentScript });
+
+    auto *urlRequest = server.requestWithLocalhost();
+    [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:urlRequest.URL];
     [manager.get().defaultTab.webView loadRequest:urlRequest];
 
     [manager run];

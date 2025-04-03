@@ -42,6 +42,7 @@ http/tests/swipe [ Pass ]
 http/tests/pdf [ Pass ]
 [ Sonoma+ ] pdf [ Pass ]
 tiled-drawing [ Pass ]
+ipc/mac [ Pass ]
 ipc/restrictedendpoints/mac [ Pass ]
 fast/page-color-sampling [ Pass ]
 
@@ -1445,8 +1446,6 @@ webkit.org/b/256189 [ Debug ] ipc/wait-for-video-output-will-change.html [ Pass 
 
 webkit.org/b/256217 [ Debug ] imported/w3c/web-platform-tests/background-fetch/port-blocking.https.window.html [ Pass Crash ]
 
-webkit.org/b/238749 imported/w3c/web-platform-tests/html/semantics/interactive-elements/the-dialog-element/focus-after-close.html [ Pass Failure ]
-
 # webkit.org/b/258328 Umbrella Bug: Batch mark expectations slowing down EWS (258328)
 [ Debug ] imported/w3c/web-platform-tests/webcodecs/videoFrame-construction.crossOriginSource.sub.html [ Pass Failure ]
 imported/w3c/web-platform-tests/css/css-sizing/aspect-ratio/replaced-element-035.html [ Pass ImageOnlyFailure ]
@@ -1959,8 +1958,6 @@ webkit.org/b/287877 pdf/pdf-plugin-printing.html [ Pass Timeout ]
 
 webkit.org/b/287967 media/modern-media-controls/overflow-support/playback-speed.html [ Pass Timeout ]
 
-webkit.org/b/287974 [ Sonoma Release arm64 ] imported/w3c/web-platform-tests/css/css-view-transitions/massive-element-below-viewport-offscreen-old.html [ Pass Failure ]
-
 webkit.org/b/287987 media/media-source/media-source-minimumupcomingpresentationtime.html [ Pass Failure ]
 
 webkit.org/b/288005 imported/w3c/web-platform-tests/css/selectors/invalidation/nth-last-child-in-shadow-root.html [ Pass ImageOnlyFailure ]
@@ -1970,8 +1967,6 @@ webkit.org/b/288015 [ Sonoma+ Release ] media/media-source/media-managedmse-vide
 webkit.org/b/288011 [ Sonoma+ Release ] tiled-drawing/top-left-content-insets.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/280019 [ Sonoma+ Release ] fast/canvas/offscreen-giant.html [ Pass ImageOnlyFailure ]
-
-webkit.org/b/288026 [ Sonoma+ Release ] imported/w3c/web-platform-tests/css/css-images/tiled-radial-gradients.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/288006 http/tests/dom/noreferrer-window-not-targetable.html [ Failure ]
 
@@ -2032,9 +2027,6 @@ webkit.org/b/289090 [ Debug arm64 ] imported/w3c/web-platform-tests/dom/nodes/re
 
 webkit.org/b/289092 http/wpt/background-fetch/background-fetch-abort.window.html [ Pass Failure ]
 
-# webkit.org/b/289620 ipc/large-vector-allocate-failure-crash.html should be a macOS only test
-[ Debug ] ipc/large-vector-allocate-failure-crash.html [ Skip ]
-
 webkit.org/b/289094 [ Sequoia Debug ] imported/w3c/web-platform-tests/webcodecs/audio-data.crossOriginIsolated.https.any.html [ Pass Timeout ]
 
 webkit.org/b/289121 imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-mandatory-getStats.https.html [ Pass Failure ]
@@ -2078,11 +2070,12 @@ webkit.org/b/289556 [ Sequoia Release x86_64 ] fast/events/page-visibility-trans
 
 webkit.org/b/289975 fast/css/mac/focus-ring-color-should-not-expose-accent-color.html [ Failure ]
 
-webkit.org/b/290012 [ Debug ] html5lib/generated/run-entities01-data.html [ Skip ]
-
-webkit.org/b/290020 [ Sonoma+ Release ] fast/webgpu/nocrash/fuzz-275228.html [ Skip ]
-
 imported/w3c/web-platform-tests/css/css-position/backdrop-inherit-rendered.html [ Pass ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-position/block-axis-constraint-changes-for-out-of-flow-box.html [ Pass ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-position/sticky/position-sticky-escape-scroller-001.html [ Pass ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-position/sticky/position-sticky-scrolled-remove-sibling-002.html [ Pass ImageOnlyFailure ]
+
+# webkit.org/b/290012 REGRESSION(291808@main): [macOS Debug]: ASSERTION FAILED: !index in CSSFontSelector::fallbackFontAt
+[ Debug ] fonts/font-fallback-prefers-pictographs.html [ Skip ]
+
+webkit.org/b/290235 [ Sonoma+ Debug ] http/tests/site-isolation/unload-grandchild-fetch.html [ Skip ]

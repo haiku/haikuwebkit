@@ -39,6 +39,18 @@
 namespace WebKit {
 namespace NetworkCache {
 
+#if !USE(GLIB) && USE(CURL)
+Data::Data(Vector<uint8_t>&& data)
+    : Data(std::variant<Vector<uint8_t>, FileSystem::MappedFileData> { WTFMove(data) })
+{
+}
+#elif !PLATFORM(COCOA)
+Data::Data(Vector<uint8_t>&& data)
+    : Data(data.span())
+{
+}
+#endif
+
 Data Data::mapToFile(const String& path) const
 {
     FileSystem::FileHandle handle;
@@ -69,12 +81,11 @@ Data adoptAndMapFile(FileSystem::FileHandle&& handle, size_t offset, size_t size
     if (!size)
         return Data::empty();
 
-    bool success;
-    FileSystem::MappedFileData mappedFile(handle, FileSystem::FileOpenMode::Read, FileSystem::MappedFileMode::Private, success);
-    if (!success)
+    auto mappedFile = handle.map(FileSystem::MappedFileMode::Private);
+    if (!mappedFile)
         return { };
 
-    return Data::adoptMap(WTFMove(mappedFile), WTFMove(handle));
+    return Data::adoptMap(WTFMove(*mappedFile), WTFMove(handle));
 }
 
 SHA1::Digest computeSHA1(const Data& data, const Salt& salt)

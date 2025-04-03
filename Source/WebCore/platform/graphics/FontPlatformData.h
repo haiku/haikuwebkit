@@ -551,12 +551,12 @@ public:
         : m_context(context)
         , m_textMatrix(CGContextGetTextMatrix(context))
     {
-        CGContextSetTextMatrix(m_context, newMatrix);
+        CGContextSetTextMatrix(m_context.get(), newMatrix);
     }
 
     ~ScopedTextMatrix()
     {
-        CGContextSetTextMatrix(m_context, m_textMatrix);
+        CGContextSetTextMatrix(m_context.get(), m_textMatrix);
     }
 
     CGAffineTransform savedMatrix() const
@@ -565,7 +565,7 @@ public:
     }
 
 private:
-    CGContextRef m_context;
+    RetainPtr<CGContextRef> m_context;
     CGAffineTransform m_textMatrix;
 };
 

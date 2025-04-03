@@ -103,7 +103,7 @@ private:
 };
 #endif
 
-Frame::Frame(Page& page, FrameIdentifier frameID, FrameType frameType, HTMLFrameOwnerElement* ownerElement, Frame* parent, Frame* opener, Ref<FrameTreeSyncData>&& frameTreeSyncData)
+Frame::Frame(Page& page, FrameIdentifier frameID, FrameType frameType, HTMLFrameOwnerElement* ownerElement, Frame* parent, Frame* opener)
     : m_page(page)
     , m_frameID(frameID)
     , m_treeNode(*this, parent)
@@ -114,7 +114,6 @@ Frame::Frame(Page& page, FrameIdentifier frameID, FrameType frameType, HTMLFrame
     , m_frameType(frameType)
     , m_navigationScheduler(makeUniqueRefWithoutRefCountedCheck<NavigationScheduler>(*this))
     , m_opener(opener)
-    , m_frameTreeSyncData(WTFMove(frameTreeSyncData))
 {
     if (parent)
         parent->tree().appendChild(*this);
@@ -169,7 +168,6 @@ void Frame::disconnectOwnerElement()
 
 void Frame::takeWindowProxyAndOpenerFrom(Frame& frame)
 {
-    ASSERT(is<LocalDOMWindow>(window()) != is<LocalDOMWindow>(frame.window()));
     ASSERT(m_windowProxy->frame() == this);
     m_windowProxy->detachFromFrame();
     m_windowProxy = frame.windowProxy();
@@ -178,9 +176,13 @@ void Frame::takeWindowProxyAndOpenerFrom(Frame& frame)
 
     ASSERT(!m_opener);
     m_opener = frame.m_opener;
+    if (m_opener)
+        m_opener->m_openedFrames.add(*this);
+
     for (auto& opened : frame.m_openedFrames) {
         ASSERT(opened.m_opener.get() == &frame);
         opened.m_opener = *this;
+        m_openedFrames.add(opened);
     }
 }
 
@@ -307,18 +309,6 @@ void Frame::stopForBackForwardCache()
         for (RefPtr child = tree().firstChild(); child; child = child->tree().nextSibling())
             child->stopForBackForwardCache();
     }
-}
-
-void Frame::updateFrameTreeSyncData(Ref<FrameTreeSyncData>&& data)
-{
-    m_frameTreeSyncData = WTFMove(data);
-}
-
-bool Frame::frameCanCreatePaymentSession() const
-{
-    // Prefer the LocalFrame code path when site isolation is disabled.
-    ASSERT(m_settings->siteIsolationEnabled());
-    return m_frameTreeSyncData->frameCanCreatePaymentSession;
 }
 
 } // namespace WebCore

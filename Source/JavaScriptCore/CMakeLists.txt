@@ -1270,6 +1270,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
 
     tools/Integrity.h
     tools/IntegrityInlines.h
+    tools/SourceProfiler.h
     tools/VMInspector.h
     tools/VMInspectorInlines.h
 
@@ -1301,6 +1302,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     wasm/WasmName.h
     wasm/WasmNameSection.h
     wasm/WasmOSREntryData.h
+    wasm/WasmOpcodeOrigin.h
     wasm/WasmSIMDOpcodes.h
     wasm/WasmSections.h
     wasm/WasmTypeDefinition.h

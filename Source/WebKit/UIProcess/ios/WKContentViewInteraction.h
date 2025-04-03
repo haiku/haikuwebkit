@@ -50,6 +50,7 @@
 #import "WKSTextAnimationManager.h"
 #import "WKSTextAnimationSourceDelegate.h"
 #import "WKTextAnimationType.h"
+#import "WKTextSelectionRect.h"
 #import <WebKit/WKActionSheetAssistant.h>
 #import <WebKit/WKAirPlayRoutePicker.h>
 #import <WebKit/WKContactPicker.h>
@@ -411,7 +412,7 @@ struct ImageAnalysisContextMenuActionData {
 #endif
     RetainPtr<WKFormInputSession> _formInputSession;
     RetainPtr<WKFileUploadPanel> _fileUploadPanel;
-    WebKit::FrameInfoData _frameInfoForFileUploadPanel;
+    std::optional<WebKit::FrameInfoData> _frameInfoForFileUploadPanel;
 #if HAVE(SHARE_SHEET_UI)
     RetainPtr<WKShareSheet> _shareSheet;
 #endif
@@ -671,7 +672,7 @@ struct ImageAnalysisContextMenuActionData {
 
 @end
 
-@interface WKContentView (WKInteraction) <UIGestureRecognizerDelegate, UITextInput, WKFormAccessoryViewDelegate, WKActionSheetAssistantDelegate, WKFileUploadPanelDelegate, WKKeyboardScrollViewAnimatorDelegate, WKDeferringGestureRecognizerDelegate
+@interface WKContentView (WKInteraction) <UIGestureRecognizerDelegate, UITextInput, WKFormAccessoryViewDelegate, WKActionSheetAssistantDelegate, WKFileUploadPanelDelegate, WKKeyboardScrollViewAnimatorDelegate, WKDeferringGestureRecognizerDelegate, WKTextSelectionRectDelegate
 #if HAVE(CONTACTSUI)
     , WKContactPickerDelegate
 #endif

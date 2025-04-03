@@ -30,6 +30,7 @@
 #include "AXObjectCache.h"
 #include "BackForwardCache.h"
 #include "BackForwardController.h"
+#include "BorderValue.h"
 #include "CachedImage.h"
 #include "CachedResourceLoader.h"
 #include "Chrome.h"
@@ -77,6 +78,7 @@
 #include "LocalFrameLoaderClient.h"
 #include "Logging.h"
 #include "MemoryCache.h"
+#include "NodeRenderStyle.h"
 #include "NullGraphicsContext.h"
 #include "OverflowEvent.h"
 #include "Page.h"
@@ -1867,8 +1869,11 @@ LayoutPoint LocalFrameView::scrollPositionForFixedPosition(const LayoutRect& vis
     return LayoutPoint(position.x() * dragFactorX / frameScaleFactor, position.y() * dragFactorY / frameScaleFactor);
 }
 
-FixedContainerEdges LocalFrameView::fixedContainerEdges() const
+FixedContainerEdges LocalFrameView::fixedContainerEdges(BoxSideSet sides) const
 {
+    if (sides.isEmpty())
+        return { };
+
     RefPtr page = m_frame->page();
     if (!page)
         return { };
@@ -1880,16 +1885,40 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges() const
     if (!document)
         return { };
 
-    auto fixedRect = rectForFixedPositionLayout();
+    static constexpr auto sampleRectThickness = 2;
+    static constexpr auto sampleRectMargin = 2;
+    static constexpr auto thinBorderWidth = 5;
 
     struct FixedContainerResult {
-        bool foundContainer { false };
+        RefPtr<Element> container;
         bool shouldSample { false };
     };
 
-    auto findFixedContainer = [&](LayoutUnit x, LayoutUnit y) -> FixedContainerResult {
+    auto fixedRect = rectForFixedPositionLayout();
+    fixedRect.contract({ sampleRectMargin });
+
+    auto hitTestLocationForSide = [&](BoxSideFlag side) -> LayoutPoint {
+        switch (side) {
+        case BoxSideFlag::Top:
+            return { (fixedRect.x() + fixedRect.maxX()) / 2, fixedRect.y() };
+        case BoxSideFlag::Left:
+            return { fixedRect.x(), (fixedRect.y() + fixedRect.maxY()) / 2 };
+        case BoxSideFlag::Right:
+            return { fixedRect.maxX(), (fixedRect.y() + fixedRect.maxY()) / 2 };
+        case BoxSideFlag::Bottom:
+            return { (fixedRect.x() + fixedRect.maxX()) / 2, fixedRect.maxY() };
+        default:
+            ASSERT_NOT_REACHED();
+            return { };
+        }
+    };
+
+    auto findFixedContainer = [&](BoxSideFlag side) -> FixedContainerResult {
+        if (!sides.contains(side))
+            return { };
+
         using enum HitTestRequest::Type;
-        HitTestResult result { { x, y } };
+        HitTestResult result { hitTestLocationForSide(side) };
         if (!document->hitTest({ HitTestSource::User, { ReadOnly, DisallowUserAgentShadowContent, IgnoreClipping } }, result))
             return { };
 
@@ -1909,7 +1938,7 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges() const
 
             if (renderer->isFixedPositioned() || renderer->isStickilyPositioned()) {
                 return {
-                    .foundContainer = true,
+                    .container = { renderer->element() },
                     .shouldSample = !foundBackdropFilter
                 };
             }
@@ -1921,32 +1950,63 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges() const
     RectEdges<bool> fixedEdges;
     RectEdges<Color> sampledColors;
 
-    static constexpr auto sampleRectThickness = 2;
-    static constexpr auto sampleRectMargin = 2;
-    fixedRect.contract({ sampleRectMargin });
+    auto sampleRectOffsetToAccountForBorderWidth = [](const BorderValue& border) -> LayoutUnit {
+        if (!border.isVisible())
+            return 0;
 
-    if (auto [foundContainer, shouldSample] = findFixedContainer((fixedRect.x() + fixedRect.maxX()) / 2, fixedRect.y()); foundContainer) {
+        auto borderWidth = border.width();
+        if (borderWidth > thinBorderWidth)
+            return 0;
+
+        return LayoutUnit::fromFloatRound(borderWidth);
+    };
+
+    if (auto [container, shouldSample] = findFixedContainer(BoxSideFlag::Top); container) {
         fixedEdges.setTop(true);
-        if (shouldSample)
-            sampledColors.setTop(PageColorSampler::predominantColor(*page, { fixedRect.minXMinYCorner(), LayoutPoint { fixedRect.maxX(), fixedRect.y() + sampleRectThickness } }));
+        if (shouldSample) {
+            LayoutRect samplingRect { fixedRect.minXMinYCorner(), LayoutPoint { fixedRect.maxX(), fixedRect.y() + sampleRectThickness } };
+            if (CheckedPtr style = container->renderStyle()) {
+                if (auto offset = sampleRectOffsetToAccountForBorderWidth(style->borderTop()))
+                    samplingRect.move(0, offset);
+            }
+            sampledColors.setTop(PageColorSampler::predominantColor(*page, WTFMove(samplingRect)));
+        }
     }
 
-    if (auto [foundContainer, shouldSample] = findFixedContainer(fixedRect.x(), (fixedRect.y() + fixedRect.maxY()) / 2); foundContainer) {
+    if (auto [container, shouldSample] = findFixedContainer(BoxSideFlag::Left); container) {
         fixedEdges.setLeft(true);
-        if (shouldSample)
-            sampledColors.setLeft(PageColorSampler::predominantColor(*page, { fixedRect.minXMinYCorner(), LayoutPoint { fixedRect.x() + sampleRectThickness, fixedRect.maxY() } }));
+        if (shouldSample) {
+            LayoutRect samplingRect { fixedRect.minXMinYCorner(), LayoutPoint { fixedRect.x() + sampleRectThickness, fixedRect.maxY() } };
+            if (CheckedPtr style = container->renderStyle()) {
+                if (auto offset = sampleRectOffsetToAccountForBorderWidth(style->borderLeft()))
+                    samplingRect.move(offset, 0);
+            }
+            sampledColors.setLeft(PageColorSampler::predominantColor(*page, WTFMove(samplingRect)));
+        }
     }
 
-    if (auto [foundContainer, shouldSample] = findFixedContainer(fixedRect.maxX(), (fixedRect.y() + fixedRect.maxY()) / 2); foundContainer) {
+    if (auto [container, shouldSample] = findFixedContainer(BoxSideFlag::Right); container) {
         fixedEdges.setRight(true);
-        if (shouldSample)
-            sampledColors.setRight(PageColorSampler::predominantColor(*page, { LayoutPoint { fixedRect.maxX() - sampleRectThickness, fixedRect.y() }, fixedRect.maxXMaxYCorner() }));
+        if (shouldSample) {
+            LayoutRect samplingRect { LayoutPoint { fixedRect.maxX() - sampleRectThickness, fixedRect.y() }, fixedRect.maxXMaxYCorner() };
+            if (CheckedPtr style = container->renderStyle()) {
+                if (auto offset = sampleRectOffsetToAccountForBorderWidth(style->borderRight()))
+                    samplingRect.move(-offset, 0);
+            }
+            sampledColors.setRight(PageColorSampler::predominantColor(*page, WTFMove(samplingRect)));
+        }
     }
 
-    if (auto [foundContainer, shouldSample] = findFixedContainer((fixedRect.x() + fixedRect.maxX()) / 2, fixedRect.maxY()); foundContainer) {
+    if (auto [container, shouldSample] = findFixedContainer(BoxSideFlag::Bottom); container) {
         fixedEdges.setBottom(true);
-        if (shouldSample)
-            sampledColors.setBottom(PageColorSampler::predominantColor(*page, { LayoutPoint { fixedRect.x(), fixedRect.maxY() - sampleRectThickness }, fixedRect.maxXMaxYCorner() }));
+        if (shouldSample) {
+            LayoutRect samplingRect { LayoutPoint { fixedRect.x(), fixedRect.maxY() - sampleRectThickness }, fixedRect.maxXMaxYCorner() };
+            if (CheckedPtr style = container->renderStyle()) {
+                if (auto offset = sampleRectOffsetToAccountForBorderWidth(style->borderBottom()))
+                    samplingRect.move(0, -offset);
+            }
+            sampledColors.setBottom(PageColorSampler::predominantColor(*page, WTFMove(samplingRect)));
+        }
     }
 
     return { WTFMove(sampledColors), WTFMove(fixedEdges) };
@@ -2678,17 +2738,22 @@ bool LocalFrameView::scrollRectToVisible(const LayoutRect& absoluteRect, const R
 
     // FIXME: It would be nice to use RenderLayer::enclosingScrollableLayer here, but that seems to skip overflow:hidden layers.
     auto adjustedRect = absoluteRect;
+    ScrollRectToVisibleOptions adjustedOptions = options;
+
     for (; layer; layer = layer->enclosingContainingBlockLayer(CrossFrameBoundaries::No)) {
-        if (layer->shouldTryToScrollForScrollIntoView())
-            adjustedRect = layer->ensureLayerScrollableArea()->scrollRectToVisible(adjustedRect, options);
+        if (layer->shouldTryToScrollForScrollIntoView()) {
+            adjustedRect = layer->ensureLayerScrollableArea()->scrollRectToVisible(adjustedRect, adjustedOptions);
+            if (adjustedOptions.visibilityCheckRect)
+                adjustedOptions.visibilityCheckRect->setLocation(adjustedRect.location());
+        }
     }
 
     auto& frameView = renderer.view().frameView();
     RefPtr ownerElement = frameView.m_frame->document() ? frameView.m_frame->document()->ownerElement() : nullptr;
     if (ownerElement && ownerElement->renderer())
-        frameView.scrollRectToVisibleInChildView(adjustedRect, insideFixed, options, ownerElement.get());
+        frameView.scrollRectToVisibleInChildView(adjustedRect, insideFixed, adjustedOptions, ownerElement.get());
     else
-        frameView.scrollRectToVisibleInTopLevelView(adjustedRect, insideFixed, options);
+        frameView.scrollRectToVisibleInTopLevelView(adjustedRect, insideFixed, adjustedOptions);
     return true;
 }
 
@@ -4815,19 +4880,24 @@ void LocalFrameView::didPaintContents(GraphicsContext& context, const IntRect& d
 void LocalFrameView::paintContents(GraphicsContext& context, const IntRect& dirtyRect, SecurityOriginPaintPolicy securityOriginPaintPolicy, RegionContext* regionContext)
 {
 #ifndef NDEBUG
-    bool fillWithWarningColor;
-    if (m_frame->document()->printing())
-        fillWithWarningColor = false; // Printing, don't fill with red (can't remember why).
-    else if (m_frame->ownerElement())
-        fillWithWarningColor = false; // Subframe, don't fill with red.
-    else if (isTransparent())
-        fillWithWarningColor = false; // Transparent, don't fill with red.
-    else if (m_paintBehavior & PaintBehavior::SelectionOnly)
-        fillWithWarningColor = false; // Selections are transparent, don't fill with red.
-    else if (m_nodeToDraw)
-        fillWithWarningColor = false; // Element images are transparent, don't fill with red.
-    else
-        fillWithWarningColor = true;
+    bool fillWithWarningColor = [&] {
+        if (m_frame->document()->printing())
+            return false; // Printing, don't fill with warning color (can't remember why).
+
+        if (m_frame->ownerElement())
+            return false; // Subframe, don't fill with warning color.
+
+        if (isTransparent())
+            return false; // Transparent, don't fill with warning color.
+
+        if (m_paintBehavior.containsAny({ PaintBehavior::SelectionOnly, PaintBehavior::FixedAndStickyLayersOnly }))
+            return false; // Don't fill with warning color for selection and fixed-position snapshots.
+
+        if (m_nodeToDraw)
+            return false; // Element images are transparent, don't fill with warning color.
+
+        return true;
+    }();
 
     if (fillWithWarningColor) {
         IntRect debugRect = frameRect();

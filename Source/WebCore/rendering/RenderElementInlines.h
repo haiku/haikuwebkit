@@ -47,6 +47,42 @@ inline bool RenderElement::hasAppleVisualEffect() const { return style().hasAppl
 inline bool RenderElement::hasAppleVisualEffectRequiringBackdropFilter() const { return style().hasAppleVisualEffectRequiringBackdropFilter(); }
 #endif
 
+inline bool RenderElement::isBlockLevelBox() const { return style().isDisplayBlockLevel(); }
+inline bool RenderElement::isAnonymousBlock() const
+{
+    // This function must be kept in sync with anonymous block creation conditions in RenderBlock::createAnonymousBlock().
+    // FIXME: That seems difficult. Can we come up with a simpler way to make behavior correct?
+    // FIXME: Does this relatively long function benefit from being inlined?
+    return isAnonymous()
+        && (style().display() == DisplayType::Block || style().display() == DisplayType::Box)
+        && style().pseudoElementType() == PseudoId::None
+        && isRenderBlock()
+#if ENABLE(MATHML)
+        && !isRenderMathMLBlock()
+#endif
+        && !isRenderListMarker()
+        && !isRenderFragmentedFlow()
+        && !isRenderMultiColumnSet()
+        && !isRenderView();
+}
+
+inline bool RenderElement::isBlockContainer() const
+{
+    auto display = style().display();
+    return (display == DisplayType::Block
+        || display == DisplayType::InlineBlock
+        || display == DisplayType::FlowRoot
+        || display == DisplayType::ListItem
+        || display == DisplayType::TableCell
+        || display == DisplayType::TableCaption) && !isRenderReplaced();
+}
+
+inline bool RenderElement::isBlockBox() const
+{
+    // A block-level box that is also a block container.
+    return isBlockLevelBox() && isBlockContainer();
+}
+
 inline bool RenderElement::canContainAbsolutelyPositionedObjects() const
 {
     return isRenderView()
@@ -87,6 +123,38 @@ inline bool RenderElement::createsGroupForStyle(const RenderStyle& style)
         || style.hasAppleVisualEffect()
 #endif
         || style.hasBlendMode();
+}
+
+inline bool RenderElement::hasPotentiallyScrollableOverflow() const
+{
+    // We only need to test one overflow dimension since 'visible' and 'clip' always get accompanied
+    // with 'clip' or 'visible' in the other dimension (see Style::Adjuster::adjust).
+    return hasNonVisibleOverflow() && style().overflowX() != Overflow::Clip && style().overflowX() != Overflow::Visible;
+}
+
+inline bool RenderElement::isBeforeContent() const
+{
+    // Text nodes don't have their own styles, so ignore the style on a text node.
+    // if (isRenderText())
+    //     return false;
+    if (style().pseudoElementType() != PseudoId::Before)
+        return false;
+    return true;
+}
+
+inline bool RenderElement::isAfterContent() const
+{
+    // Text nodes don't have their own styles, so ignore the style on a text node.
+    // if (isRenderText())
+    //     return false;
+    if (style().pseudoElementType() != PseudoId::After)
+        return false;
+    return true;
+}
+
+inline bool RenderElement::isBeforeOrAfterContent() const
+{
+    return isBeforeContent() || isAfterContent();
 }
 
 inline bool RenderElement::shouldApplyAnyContainment() const
