@@ -26,6 +26,7 @@
 #include "config.h"
 #include "RenderLayerModelObject.h"
 
+#include "BlendingKeyframes.h"
 #include "InspectorInstrumentation.h"
 #include "MotionPath.h"
 #include "ReferencedSVGResources.h"
@@ -241,18 +242,18 @@ bool RenderLayerModelObject::startAnimation(double timeOffset, const Animation& 
     return layer()->backing()->startAnimation(timeOffset, animation, keyframes);
 }
 
-void RenderLayerModelObject::animationPaused(double timeOffset, const String& name)
+void RenderLayerModelObject::animationPaused(double timeOffset, const BlendingKeyframes& keyframes)
 {
     if (!layer() || !layer()->backing())
         return;
-    layer()->backing()->animationPaused(timeOffset, name);
+    layer()->backing()->animationPaused(timeOffset, keyframes.acceleratedAnimationName());
 }
 
-void RenderLayerModelObject::animationFinished(const String& name)
+void RenderLayerModelObject::animationFinished(const BlendingKeyframes& keyframes)
 {
     if (!layer() || !layer()->backing())
         return;
-    layer()->backing()->animationFinished(name);
+    layer()->backing()->animationFinished(keyframes.acceleratedAnimationName());
 }
 
 void RenderLayerModelObject::transformRelatedPropertyDidChange()
@@ -582,6 +583,15 @@ RenderSVGResourcePaintServer* RenderLayerModelObject::svgStrokePaintServerResour
         document().addPendingSVGResource(AtomString(svgStyle.strokePaintUri()), downcast<SVGElement>(*element));
 
     return nullptr;
+}
+
+LegacyRenderSVGResourceClipper* RenderLayerModelObject::legacySVGClipperResourceFromStyle() const
+{
+    RefPtr referenceClipPathOperation = dynamicDowncast<ReferencePathOperation>(style().clipPath());
+    if (!referenceClipPathOperation)
+        return nullptr;
+
+    return ReferencedSVGResources::referencedClipperRenderer(treeScopeForSVGReferences(), *referenceClipPathOperation);
 }
 
 bool RenderLayerModelObject::pointInSVGClippingArea(const FloatPoint& point) const

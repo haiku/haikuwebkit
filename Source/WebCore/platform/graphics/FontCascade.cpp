@@ -251,7 +251,7 @@ std::unique_ptr<DisplayList::DisplayList> FontCascade::displayListForTextRun(Gra
     std::unique_ptr<DisplayList::DisplayList> displayList = makeUnique<DisplayList::DisplayList>();
     DisplayList::RecorderImpl recordingContext(*displayList, context.state().clone(GraphicsContextState::Purpose::Initial), { },
         context.getCTM(GraphicsContext::DefinitelyIncludeDeviceScale), context.colorSpace(),
-        DisplayList::Recorder::DrawGlyphsMode::DeconstructUsingDrawDecomposedGlyphsCommands);
+        DisplayList::Recorder::DrawGlyphsMode::DeconstructAndRetain);
 
     FloatPoint startPoint = toFloatPoint(WebCore::size(glyphBuffer.initialAdvance()));
     drawGlyphBuffer(recordingContext, glyphBuffer, startPoint, customFontNotReadyAction);
@@ -1626,6 +1626,16 @@ float FontCascade::widthForComplexText(const TextRun& run, SingleThreadWeakHashS
         glyphOverflow->right = std::max<double>(0, controller.maxGlyphBoundingBoxX() - controller.totalAdvance().width());
     }
     return controller.totalAdvance().width();
+}
+
+float FontCascade::widthForCharacterInRun(const TextRun& run, unsigned characterPosition) const
+{
+    auto shortenedRun = run.subRun(characterPosition, 1);
+    auto codePathToUse = codePath(run);
+    if (codePathToUse == CodePath::Complex)
+        return widthForComplexText(shortenedRun);
+
+    return widthForSimpleText(shortenedRun);
 }
 
 void FontCascade::adjustSelectionRectForSimpleText(const TextRun& run, LayoutRect& selectionRect, unsigned from, unsigned to) const

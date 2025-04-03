@@ -29,6 +29,7 @@
 
 #if ENABLE(WEBASSEMBLY)
 
+#include "HeapVerifier.h"
 #include "JSWebAssemblyArray.h"
 #include "JSWebAssemblyStruct.h"
 #include <wtf/CheckedArithmetic.h>
@@ -37,7 +38,7 @@
 
 namespace JSC { namespace Wasm {
 
-constexpr uintptr_t NullWasmCallee = 0;
+constexpr EncodedJSValue NullWasmCallee = CalleeBits::encodeNullCallee();
 
 Segment::Ptr Segment::create(std::optional<I32InitExpr> offset, uint32_t sizeInBytes, Kind kind)
 {
@@ -76,6 +77,12 @@ void validateWasmValue(uint64_t wasmValue, Type expectedType)
             ASSERT(expectedType.isNullable());
             return;
         }
+
+        if (isExternref(expectedType)) {
+            if (value.isCell())
+                HeapVerifier::validateCell(value.asCell());
+        }
+
 
         if (!isExternref(expectedType) && !isI31ref(expectedType))
             ASSERT(value.isCell());

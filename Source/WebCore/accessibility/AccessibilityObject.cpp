@@ -507,17 +507,6 @@ AXTextMarkerRange AccessibilityObject::textInputMarkedTextMarkerRange() const
     return { editor.compositionRange() };
 }
 
-unsigned AccessibilityObject::blockquoteLevel() const
-{
-    unsigned level = 0;
-    for (Node* elementNode = node(); elementNode; elementNode = elementNode->parentNode()) {
-        if (elementNode->hasTagName(blockquoteTag))
-            ++level;
-    }
-    
-    return level;
-}
-
 AccessibilityObject* AccessibilityObject::displayContentsParent() const
 {
     auto* parentNode = node() ? node()->parentNode() : nullptr;
@@ -1446,21 +1435,18 @@ RenderView* AccessibilityObject::topRenderer() const
 
 String AccessibilityObject::language() const
 {
-    const AtomString& lang = getAttribute(langAttr);
+    const auto& lang = getAttribute(langAttr);
     if (!lang.isEmpty())
         return lang;
 
-    AccessibilityObject* parent = parentObject();
-    
-    // as a last resort, fall back to the content language specified in the meta tag
-    if (!parent) {
-        Document* doc = document();
-        if (doc)
-            return doc->contentLanguage();
-        return nullAtom();
+    if (isScrollView() && !parentObject()) {
+        // If this is the root, use the content language specified in the meta tag.
+        if (auto* document = this->document())
+            return document->contentLanguage();
     }
-    
-    return parent->language();
+
+    // This object has no language of its own.
+    return nullAtom();
 }
 
 VisiblePosition AccessibilityObject::visiblePositionForPoint(const IntPoint& point) const
@@ -1780,7 +1766,7 @@ Vector<RetainPtr<id>> AccessibilityObject::modelElementChildren()
 static RenderListItem* renderListItemContainer(Node* node)
 {
     for (; node; node = node->parentNode()) {
-        if (auto* listItem = dynamicDowncast<RenderListItem>(node->renderBoxModelObject()))
+        if (auto* listItem = dynamicDowncast<RenderListItem>(node->renderer()))
             return listItem;
     }
     return nullptr;
@@ -1818,41 +1804,20 @@ StringView AccessibilityObject::listMarkerTextForNodeAndPosition(Node* node, Pos
 
 String AccessibilityObject::textContentPrefixFromListMarker() const
 {
+    // The code below creates a VisiblePosition, which is very expensive. Only do this if there's
+    // any chance we're actually associated with a list marker.
+    if (!renderListItemContainer(node()))
+        return { };
+
     // Get the attributed string for range (0, 1) and then delete the last character,
     // in order to extract the list marker that was added as a prefix to the text content.
     std::optional<SimpleRange> firstCharacterRange = rangeForCharacterRange({ 0, 1 });
     if (firstCharacterRange) {
-        String firstCharacterText = stringForRange(*firstCharacterRange);
+        String firstCharacterText = AXTextMarkerRange { firstCharacterRange }.toString();
         if (firstCharacterText.length() > 1)
             return firstCharacterText.left(firstCharacterText.length() - 1);
     }
     return { };
-}
-
-String AccessibilityObject::stringForRange(const SimpleRange& range) const
-{
-    TextIterator it = textIteratorIgnoringFullSizeKana(range);
-    if (it.atEnd())
-        return String();
-
-    StringBuilder builder;
-    for (; !it.atEnd(); it.advance()) {
-        // non-zero length means textual node, zero length means replaced node (AKA "attachments" in AX)
-        if (it.text().length()) {
-            // If this is in a list item, we need to add the text for the list marker
-            // because a RenderListMarker does not have a Node equivalent and thus does not appear
-            // when iterating text.
-            // Don't add list marker text for new line character.
-            if (it.text().length() != 1 || !isASCIIWhitespace(it.text()[0]))
-                builder.append(listMarkerTextForNodeAndPosition(it.node(), makeDeprecatedLegacyPosition(it.range().start)));
-            it.appendTextToStringBuilder(builder);
-        } else {
-            if (replacedNodeNeedsCharacter(*it.node()))
-                builder.append(objectReplacementCharacter);
-        }
-    }
-
-    return builder.toString();
 }
 
 String AccessibilityObject::stringForVisiblePositionRange(const VisiblePositionRange& visiblePositionRange)
@@ -1926,11 +1891,10 @@ std::optional<VisiblePosition> AccessibilityObject::previousLineStartPositionInt
     return startPosition;
 }
 
-OptionSet<SpeakAs> AccessibilityObject::speakAsProperty() const
+bool AccessibilityObject::hasRowGroupTag() const
 {
-    if (auto* style = this->style())
-        return style->speakAs();
-    return { };
+    const auto& tag = tagName();
+    return tag == theadTag || tag == tbodyTag || tag == tfootTag;
 }
 
 InsideLink AccessibilityObject::insideLink() const
@@ -2031,7 +1995,7 @@ bool AccessibilityObject::supportsAutoComplete() const
     return (isComboBox() || isARIATextControl()) && hasAttribute(aria_autocompleteAttr);
 }
 
-String AccessibilityObject::autoCompleteValue() const
+String AccessibilityObject::explicitAutoCompleteValue() const
 {
     const AtomString& autoComplete = getAttribute(aria_autocompleteAttr);
     if (equalLettersIgnoringASCIICase(autoComplete, "inline"_s)
@@ -2039,7 +2003,7 @@ String AccessibilityObject::autoCompleteValue() const
         || equalLettersIgnoringASCIICase(autoComplete, "both"_s))
         return autoComplete;
 
-    return "none"_s;
+    return { };
 }
 
 bool AccessibilityObject::contentEditableAttributeIsEnabled(Element& element)
@@ -2276,23 +2240,6 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityObject::disclosedRows()
     return result;
 }
 
-const String AccessibilityObject::defaultLiveRegionStatusForRole(AccessibilityRole role)
-{
-    switch (role) {
-    case AccessibilityRole::ApplicationAlertDialog:
-    case AccessibilityRole::ApplicationAlert:
-        return "assertive"_s;
-    case AccessibilityRole::ApplicationLog:
-    case AccessibilityRole::ApplicationStatus:
-        return "polite"_s;
-    case AccessibilityRole::ApplicationTimer:
-    case AccessibilityRole::ApplicationMarquee:
-        return "off"_s;
-    default:
-        return nullAtom();
-    }
-}
-
 String AccessibilityObject::localizedActionVerb() const
 {
 #if !PLATFORM(IOS_FAMILY)
@@ -2371,13 +2318,13 @@ bool AccessibilityObject::ariaIsMultiline() const
     return equalLettersIgnoringASCIICase(getAttribute(aria_multilineAttr), "true"_s);
 }
 
-String AccessibilityObject::invalidStatus() const
+String AccessibilityObject::explicitInvalidStatus() const
 {
-    String grammarValue = "grammar"_s;
-    String falseValue = "false"_s;
-    String spellingValue = "spelling"_s;
-    String trueValue = "true"_s;
-    String undefinedValue = "undefined"_s;
+    static NeverDestroyed<String> grammarValue = "grammar"_s;
+    static NeverDestroyed<String> falseValue = "false"_s;
+    static NeverDestroyed<String> spellingValue = "spelling"_s;
+    static NeverDestroyed<String> trueValue = "true"_s;
+    static NeverDestroyed<String> undefinedValue = "undefined"_s;
 
     // aria-invalid can return false (default), grammar, spelling, or true.
     auto ariaInvalid = getAttributeTrimmed(aria_invalidAttr);
@@ -2389,7 +2336,7 @@ String AccessibilityObject::invalidStatus() const
             if (validatedFormListedElement->willValidate() && !validatedFormListedElement->isValidFormControlElement())
                 return trueValue;
         }
-        return falseValue;
+        return { };
     }
     
     // If "false", "undefined" [sic, string value], empty, or missing, return "false".
@@ -2582,18 +2529,6 @@ bool AccessibilityObject::insertText(const String& text)
     auto& editor = renderer()->frame().editor();
     return editor.insertText(text, nullptr);
 }
-
-// Lacking concrete evidence of orientation, horizontal means width > height. vertical is height > width;
-AccessibilityOrientation AccessibilityObject::orientation() const
-{
-    LayoutRect bounds = elementRect();
-    if (bounds.size().width() > bounds.size().height())
-        return AccessibilityOrientation::Horizontal;
-    if (bounds.size().height() > bounds.size().width())
-        return AccessibilityOrientation::Vertical;
-
-    return AccessibilityOrientation::Undefined;
-}    
 
 using ARIARoleMap = UncheckedKeyHashMap<String, AccessibilityRole, ASCIICaseInsensitiveHash>;
 using ARIAReverseRoleMap = UncheckedKeyHashMap<AccessibilityRole, String, DefaultHash<int>, WTF::UnsignedWithZeroKeyHashTraits<int>>;
@@ -2849,28 +2784,13 @@ void AccessibilityObject::updateRole()
     }
 }
 
-bool AccessibilityObject::hasHighlighting() const
-{
-    for (Node* node = this->node(); node; node = node->parentNode()) {
-        if (node->hasTagName(markTag))
-            return true;
-    }
-    
-    return false;
-}
-
 SRGBA<uint8_t> AccessibilityObject::colorValue() const
 {
     return Color::black;
 }
 
 #if !PLATFORM(MAC)
-String AccessibilityObject::rolePlatformString() const
-{
-    return Accessibility::roleToPlatformString(roleValue());
-}
-
-String AccessibilityObject::rolePlatformDescription() const
+String AccessibilityObject::rolePlatformDescription()
 {
     // FIXME: implement in other platforms.
     return String();
@@ -2903,7 +2823,7 @@ bool AccessibilityObject::supportsARIARoleDescription() const
     }
 }
 
-String AccessibilityObject::roleDescription() const
+String AccessibilityObject::roleDescription()
 {
     // aria-roledescription takes precedence over any other rule.
     if (supportsARIARoleDescription()) {
@@ -3074,7 +2994,7 @@ std::optional<String> AccessibilityObject::textContent() const
     else
         range = simpleRange();
     if (range)
-        return stringForRange(*range);
+        return AXTextMarkerRange { range }.toString();
     return std::nullopt;
 }
 
@@ -3254,29 +3174,19 @@ AccessibilitySortDirection AccessibilityObject::sortDirection() const
     return AccessibilitySortDirection::None;
 }
 
-bool AccessibilityObject::supportsRangeValue() const
-{
-    return isProgressIndicator()
-        || isSlider()
-        || isScrollbar()
-        || isSpinButton()
-        || (isSplitter() && canSetFocusAttribute())
-        || hasAttachmentTag();
-}
-
 bool AccessibilityObject::supportsHasPopup() const
 {
     return hasAttribute(aria_haspopupAttr) || isComboBox();
 }
 
-String AccessibilityObject::popupValue() const
+String AccessibilityObject::explicitPopupValue() const
 {
     auto& hasPopup = getAttribute(aria_haspopupAttr);
     if (hasPopup.isEmpty()) {
-        // In ARIA 1.1, the implicit value for combobox became "listbox."
-        if (isComboBox() || hasDatalist())
+        // In ARIA 1.1, the implicit value for datalists became "listbox."
+        if (hasDatalist())
             return "listbox"_s;
-        return "false"_s;
+        return { };
     }
 
     for (auto& value : { "menu"_s, "listbox"_s, "tree"_s, "grid"_s, "dialog"_s }) {
@@ -3288,11 +3198,7 @@ String AccessibilityObject::popupValue() const
     // aria-haspopup specification states that true must be treated as menu.
     if (equalLettersIgnoringASCIICase(hasPopup, "true"_s))
         return "menu"_s;
-
-    // The spec states that "User agents must treat any value of aria-haspopup that is not
-    // included in the list of allowed values, including an empty string, as if the value
-    // false had been provided."
-    return "false"_s;
+    return { };
 }
 
 bool AccessibilityObject::hasDatalist() const
@@ -4144,7 +4050,7 @@ AccessibilityObject* AccessibilityObject::radioGroupAncestor() const
     });
 }
 
-AtomString AccessibilityObject::tagName() const
+const AtomString& AccessibilityObject::tagName() const
 {
     auto* element = this->element();
     return element ? element->localName() : nullAtom();
@@ -4309,20 +4215,5 @@ AccessibilityObject* AccessibilityObject::containingWebArea() const
     RefPtr root = cache ? dynamicDowncast<AccessibilityScrollView>(cache->getOrCreate(frameView.get())) : nullptr;
     return root ? root->webAreaObject() : nullptr;
 }
-
-namespace Accessibility {
-
-#if !PLATFORM(MAC) && !USE(ATSPI)
-// FIXME: implement in other platforms.
-PlatformRoleMap createPlatformRoleMap() { return PlatformRoleMap(); }
-#endif
-
-String roleToPlatformString(AccessibilityRole role)
-{
-    static NeverDestroyed<PlatformRoleMap> roleMap = createPlatformRoleMap();
-    return roleMap->get(enumToUnderlyingType(role));
-}
-
-} // namespace Accessibility
 
 } // namespace WebCore

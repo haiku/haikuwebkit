@@ -51,10 +51,10 @@ bool isValid(const Item& item)
 }
 
 template<class T>
-inline static std::optional<RenderingResourceIdentifier> applyFilteredImageBufferItem(GraphicsContext& context, const ResourceHeap& resourceHeap, const T& item, OptionSet<ReplayOption> options)
+inline static std::optional<RenderingResourceIdentifier> applyFilteredImageBufferItem(GraphicsContext& context, const ResourceHeap& resourceHeap, const T& item)
 {
     auto resourceIdentifier = item.sourceImageIdentifier();
-    RefPtr sourceImage = resourceIdentifier ? resourceHeap.getImageBuffer(*resourceIdentifier, options) : nullptr;
+    RefPtr sourceImage = resourceIdentifier ? resourceHeap.getImageBuffer(*resourceIdentifier) : nullptr;
     if (UNLIKELY(!sourceImage && resourceIdentifier))
         return resourceIdentifier;
 
@@ -64,10 +64,10 @@ inline static std::optional<RenderingResourceIdentifier> applyFilteredImageBuffe
 }
 
 template<class T>
-inline static std::optional<RenderingResourceIdentifier> applyImageBufferItem(GraphicsContext& context, const ResourceHeap& resourceHeap, const T& item, OptionSet<ReplayOption> options)
+inline static std::optional<RenderingResourceIdentifier> applyImageBufferItem(GraphicsContext& context, const ResourceHeap& resourceHeap, const T& item)
 {
     auto resourceIdentifier = item.imageBufferIdentifier();
-    if (RefPtr imageBuffer = resourceHeap.getImageBuffer(resourceIdentifier, options)) {
+    if (RefPtr imageBuffer = resourceHeap.getImageBuffer(resourceIdentifier)) {
         item.apply(context, *imageBuffer);
         return std::nullopt;
     }
@@ -75,10 +75,10 @@ inline static std::optional<RenderingResourceIdentifier> applyImageBufferItem(Gr
 }
 
 template<class T>
-inline static std::optional<RenderingResourceIdentifier> applyNativeImageItem(GraphicsContext& context, const ResourceHeap& resourceHeap, const T& item, OptionSet<ReplayOption> options)
+inline static std::optional<RenderingResourceIdentifier> applyNativeImageItem(GraphicsContext& context, const ResourceHeap& resourceHeap, const T& item)
 {
     auto resourceIdentifier = item.imageIdentifier();
-    if (RefPtr image = resourceHeap.getNativeImage(resourceIdentifier, options)) {
+    if (RefPtr image = resourceHeap.getNativeImage(resourceIdentifier)) {
         item.apply(context, *image);
         return std::nullopt;
     }
@@ -86,24 +86,24 @@ inline static std::optional<RenderingResourceIdentifier> applyNativeImageItem(Gr
 }
 
 template<class T>
-inline static std::optional<RenderingResourceIdentifier> applySourceImageItem(GraphicsContext& context, const ResourceHeap& resourceHeap, const T& item, OptionSet<ReplayOption> options)
+inline static std::optional<RenderingResourceIdentifier> applySourceImageItem(GraphicsContext& context, const ResourceHeap& resourceHeap, const T& item)
 {
     auto resourceIdentifier = item.imageIdentifier();
-    if (auto sourceImage = resourceHeap.getSourceImage(resourceIdentifier, options)) {
+    if (auto sourceImage = resourceHeap.getSourceImage(resourceIdentifier)) {
         item.apply(context, *sourceImage);
         return std::nullopt;
     }
     return resourceIdentifier;
 }
 
-inline static std::optional<RenderingResourceIdentifier> applySetStateItem(GraphicsContext& context, const ResourceHeap& resourceHeap, const SetState& item, OptionSet<ReplayOption> options)
+inline static std::optional<RenderingResourceIdentifier> applySetStateItem(GraphicsContext& context, const ResourceHeap& resourceHeap, const SetState& item)
 {
     auto fixPatternTileImage = [&](Pattern* pattern) -> std::optional<RenderingResourceIdentifier> {
         if (!pattern)
             return std::nullopt;
 
         auto imageIdentifier = pattern->tileImage().imageIdentifier();
-        auto sourceImage = resourceHeap.getSourceImage(imageIdentifier, options);
+        auto sourceImage = resourceHeap.getSourceImage(imageIdentifier);
         if (!sourceImage)
             return imageIdentifier;
 
@@ -121,71 +121,43 @@ inline static std::optional<RenderingResourceIdentifier> applySetStateItem(Graph
     return std::nullopt;
 }
 
-inline static std::optional<RenderingResourceIdentifier> applyDrawGlyphs(GraphicsContext& context, const ResourceHeap& resourceHeap, const DrawGlyphs& item)
-{
-    auto resourceIdentifier = item.fontIdentifier();
-    if (auto* font = resourceHeap.getFont(resourceIdentifier)) {
-        item.apply(context, *font);
-        return std::nullopt;
-    }
-    return resourceIdentifier;
-}
-
-inline static std::optional<RenderingResourceIdentifier> applyDrawDecomposedGlyphs(GraphicsContext& context, const ResourceHeap& resourceHeap, const DrawDecomposedGlyphs& item)
-{
-    auto fontIdentifier = item.fontIdentifier();
-    auto* font = resourceHeap.getFont(fontIdentifier);
-    if (!font)
-        return fontIdentifier;
-
-    auto drawGlyphsIdentifier = item.decomposedGlyphsIdentifier();
-    RefPtr decomposedGlyphs = resourceHeap.getDecomposedGlyphs(drawGlyphsIdentifier);
-    if (!decomposedGlyphs)
-        return drawGlyphsIdentifier;
-
-    item.apply(context, *font, *decomposedGlyphs);
-    return std::nullopt;
-}
-
-ApplyItemResult applyItem(GraphicsContext& context, const ResourceHeap& resourceHeap, ControlFactory& controlFactory, const Item& item, OptionSet<ReplayOption> options)
+ApplyItemResult applyItem(GraphicsContext& context, const ResourceHeap& resourceHeap, ControlFactory& controlFactory, const Item& item)
 {
     if (!isValid(item))
         return { StopReplayReason::InvalidItemOrExtent, std::nullopt };
 
     return WTF::switchOn(item,
         [&](const ClipToImageBuffer& item) -> ApplyItemResult {
-            if (auto missingCachedResourceIdentifier = applyImageBufferItem(context, resourceHeap, item, options))
+            if (auto missingCachedResourceIdentifier = applyImageBufferItem(context, resourceHeap, item))
                 return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
             return { };
         }, [&](const DrawControlPart& item) -> ApplyItemResult {
             item.apply(context, controlFactory);
             return { };
         }, [&](const DrawGlyphs& item) -> ApplyItemResult {
-            if (auto missingCachedResourceIdentifier = applyDrawGlyphs(context, resourceHeap, item))
-                return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
+            item.apply(context);
             return { };
         }, [&](const DrawDecomposedGlyphs& item) -> ApplyItemResult {
-            if (auto missingCachedResourceIdentifier = applyDrawDecomposedGlyphs(context, resourceHeap, item))
-                return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
+            item.apply(context);
             return { };
         }, [&](const DrawFilteredImageBuffer& item) -> ApplyItemResult {
-            if (auto missingCachedResourceIdentifier = applyFilteredImageBufferItem(context, resourceHeap, item, options))
+            if (auto missingCachedResourceIdentifier = applyFilteredImageBufferItem(context, resourceHeap, item))
                 return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
             return { };
         }, [&](const DrawImageBuffer& item) -> ApplyItemResult {
-            if (auto missingCachedResourceIdentifier = applyImageBufferItem(context, resourceHeap, item, options))
+            if (auto missingCachedResourceIdentifier = applyImageBufferItem(context, resourceHeap, item))
                 return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
             return { };
         }, [&](const DrawNativeImage& item) -> ApplyItemResult {
-            if (auto missingCachedResourceIdentifier = applyNativeImageItem<DrawNativeImage>(context, resourceHeap, item, options))
+            if (auto missingCachedResourceIdentifier = applyNativeImageItem<DrawNativeImage>(context, resourceHeap, item))
                 return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
             return { };
         }, [&](const DrawPattern& item) -> ApplyItemResult {
-            if (auto missingCachedResourceIdentifier = applySourceImageItem<DrawPattern>(context, resourceHeap, item, options))
+            if (auto missingCachedResourceIdentifier = applySourceImageItem<DrawPattern>(context, resourceHeap, item))
                 return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
             return { };
         }, [&](const SetState& item) -> ApplyItemResult {
-            if (auto missingCachedResourceIdentifier = applySetStateItem(context, resourceHeap, item, options))
+            if (auto missingCachedResourceIdentifier = applySetStateItem(context, resourceHeap, item))
                 return { StopReplayReason::MissingCachedResource, WTFMove(missingCachedResourceIdentifier) };
             return { };
         }, [&](const auto& item) -> ApplyItemResult {

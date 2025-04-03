@@ -112,7 +112,7 @@ ServiceWorkerFetchTask::ServiceWorkerFetchTask(WebSWServerConnection& swServerCo
     bool shouldDoNavigationPreload = session && isNavigationRequest(loader.parameters().options.destination) && m_currentRequest.httpMethod() == "GET"_s;
 
     if (shouldDoNavigationPreload && (!isWorkerReady || registration.navigationPreloadState().enabled)) {
-        NetworkLoadParameters parameters = loader.parameters();
+        NetworkLoadParameters parameters = loader.parameters().networkLoadParameters();
         parameters.request = m_currentRequest;
         m_preloader = makeUnique<ServiceWorkerNavigationPreloader>(*session, WTFMove(parameters), registration.navigationPreloadState(), loader.shouldCaptureExtraNetworkLoadMetrics());
         session->addNavigationPreloaderTask(*this);
@@ -541,7 +541,7 @@ void ServiceWorkerFetchTask::loadBodyFromPreloader()
         return;
     }
 
-    m_preloader->waitForBody([weakThis = WeakPtr { *this }](auto&& chunk, uint64_t length) {
+    m_preloader->waitForBody([weakThis = WeakPtr { *this }](RefPtr<const WebCore::FragmentedSharedBuffer>&& chunk, uint64_t length) {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
@@ -554,7 +554,7 @@ void ServiceWorkerFetchTask::loadBodyFromPreloader()
             protectedThis->didFinish(protectedThis->m_preloader->networkLoadMetrics());
             return;
         }
-        protectedThis->didReceiveDataFromPreloader(const_cast<WebCore::FragmentedSharedBuffer&>(*chunk), length);
+        protectedThis->didReceiveDataFromPreloader(chunk.releaseNonNull(), length);
     });
 }
 

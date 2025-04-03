@@ -148,10 +148,6 @@ NetworkResourceLoader::NetworkResourceLoader(NetworkResourceLoadParameters&& par
     if (auto* session = connection.protectedNetworkProcess()->networkSession(sessionID()))
         m_cache = session->cache();
 
-    // FIXME: This is necessary because of the existence of EmptyFrameLoaderClient in WebCore.
-    //        Once bug 116233 is resolved, this ASSERT can just be "m_webPageID && m_webFrameID"
-    ASSERT((m_parameters.webPageID && m_parameters.webFrameID) || m_parameters.clientCredentialPolicy == ClientCredentialPolicy::CannotAskClientForCredentials);
-
     if (synchronousReply || m_parameters.shouldRestrictHTTPResponseAccess || m_parameters.options.keepAlive) {
         NetworkLoadChecker::LoadType requestLoadType = isMainFrameLoad() ? NetworkLoadChecker::LoadType::MainFrame : NetworkLoadChecker::LoadType::Other;
         m_networkLoadChecker = NetworkLoadChecker::create(Ref { connection.networkProcess() }.get(), this,  connection.protectedSchemeRegistry().ptr(), FetchOptions { m_parameters.options },
@@ -405,7 +401,7 @@ void NetworkResourceLoader::startNetworkLoad(ResourceRequest&& request, FirstLoa
             m_bufferedDataForCache.empty();
     }
 
-    NetworkLoadParameters parameters = m_parameters;
+    NetworkLoadParameters parameters = m_parameters.networkLoadParameters();
     parameters.networkActivityTracker = m_networkActivityTracker;
     if (parameters.storedCredentialsPolicy == WebCore::StoredCredentialsPolicy::Use && m_networkLoadChecker)
         parameters.storedCredentialsPolicy = m_networkLoadChecker->storedCredentialsPolicy();
@@ -1799,11 +1795,19 @@ void NetworkResourceLoader::consumeSandboxExtensions()
 {
     ASSERT(!m_didConsumeSandboxExtensions);
 
-    for (auto& extension : m_parameters.requestBodySandboxExtensions)
-        extension->consume();
+    for (auto& handle : std::exchange(m_parameters.requestBodySandboxExtensions, { })) {
+        if (auto extension = SandboxExtension::create(WTFMove(handle))) {
+            extension->consume();
+            m_extensionsToRevoke.append(extension.releaseNonNull());
+        }
+    }
 
-    if (auto& extension = m_parameters.resourceSandboxExtension)
-        extension->consume();
+    if (auto handle = std::exchange(m_parameters.resourceSandboxExtension, { })) {
+        if (auto extension = SandboxExtension::create(WTFMove(*handle))) {
+            extension->consume();
+            m_extensionsToRevoke.append(extension.releaseNonNull());
+        }
+    }
 
     for (auto& fileReference : m_fileReferences)
         fileReference->prepareForFileAccess();
@@ -1814,10 +1818,9 @@ void NetworkResourceLoader::consumeSandboxExtensions()
 void NetworkResourceLoader::invalidateSandboxExtensions()
 {
     if (m_didConsumeSandboxExtensions) {
-        for (auto& extension : m_parameters.requestBodySandboxExtensions)
+        for (auto extension : std::exchange(m_extensionsToRevoke, { }))
             extension->revoke();
-        if (auto& extension = m_parameters.resourceSandboxExtension)
-            extension->revoke();
+
         for (auto& fileReference : m_fileReferences)
             fileReference->revokeFileAccess();
 

@@ -32,6 +32,7 @@
 #include "LocalFrame.h"
 #include "RemoteFrame.h"
 #include "RemoteFrameView.h"
+#include "RenderBox.h"
 #include "RenderBoxInlines.h"
 #include "RenderElementInlines.h"
 #include "RenderEmbeddedObject.h"
@@ -105,8 +106,9 @@ RenderWidget::RenderWidget(Type type, HTMLFrameOwnerElement& element, RenderStyl
 void RenderWidget::willBeDestroyed()
 {
     if (CheckedPtr cache = document().existingAXObjectCache()) {
-        cache->childrenChanged(this->parent());
-        cache->remove(this);
+        if (auto* parent = this->parent())
+            cache->childrenChanged(*parent);
+        cache->remove(*this);
     }
 
     if (renderTreeBeingDestroyed() && document().backForwardCacheState() == Document::NotInBackForwardCache && m_widget)
@@ -212,7 +214,7 @@ void RenderWidget::setWidget(RefPtr<Widget>&& widget)
     }
 
     if (CheckedPtr cache = document().existingAXObjectCache())
-        cache->childrenChanged(this);
+        cache->childrenChanged(*this);
 }
 
 void RenderWidget::layout()

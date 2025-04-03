@@ -37,7 +37,7 @@ namespace WebCore {
 void AXIsolatedObject::initializePlatformProperties(const Ref<const AccessibilityObject>& object)
 {
     setProperty(AXProperty::HasApplePDFAnnotationAttribute, object->hasApplePDFAnnotationAttribute());
-    setProperty(AXProperty::SpeechHint, object->speechHintAttributeValue().isolatedCopy());
+    setProperty(AXProperty::SpeakAs, object->speakAs());
 #if ENABLE(AX_THREAD_TEXT_APIS)
     if (object->isStaticText()) {
         auto style = object->stylesForAttributedString();
@@ -336,18 +336,18 @@ RetainPtr<NSAttributedString> AXIsolatedObject::attributedStringForTextMarkerRan
     if (!nsRange)
         return nil;
 
-    // If the range spans the beginning of the node, account for the length of the text marker prefix, if any.
+    // If the range spans the beginning of the node, account for the length of the list marker prefix, if any.
     if (!nsRange->location)
         nsRange->length += textContentPrefixFromListMarker().length();
 
     if (!attributedStringContainsRange(attributedText.get(), *nsRange))
         return nil;
 
-    NSMutableAttributedString *result = [[NSMutableAttributedString alloc] initWithAttributedString:[attributedText attributedSubstringFromRange:*nsRange]];
-    if (!result.length)
+    RetainPtr result = adoptNS([[NSMutableAttributedString alloc] initWithAttributedString:[attributedText attributedSubstringFromRange:*nsRange]]);
+    if (!result.get().length)
         return result;
 
-    auto resultRange = NSMakeRange(0, result.length);
+    auto resultRange = NSMakeRange(0, result.get().length);
     // The AttributedString is cached with spelling info. If the caller does not request spelling info, we have to remove it before returning.
     if (spellCheck == SpellCheck::No) {
         [result removeAttribute:NSAccessibilityDidSpellCheckAttribute range:resultRange];
@@ -358,7 +358,7 @@ RetainPtr<NSAttributedString> AXIsolatedObject::attributedStringForTextMarkerRan
         ASSERT(_AXGetClientForCurrentRequestUntrusted() == kAXClientTypeWebKitTesting);
         // We're going to spellcheck, so remove AXDidSpellCheck: NO.
         [result removeAttribute:NSAccessibilityDidSpellCheckAttribute range:resultRange];
-        performFunctionOnMainThreadAndWait([result = retainPtr(result), &resultRange] (AccessibilityObject* axObject) {
+        performFunctionOnMainThreadAndWait([result = RetainPtr { result }, &resultRange] (AccessibilityObject* axObject) {
             if (auto* node = axObject->node())
                 attributedStringSetSpelling(result.get(), *node, String { [result string] }, resultRange);
         });

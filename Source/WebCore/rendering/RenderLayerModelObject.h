@@ -29,6 +29,7 @@
 namespace WebCore {
 
 class BlendingKeyframes;
+class LegacyRenderSVGResourceClipper;
 class RenderLayer;
 class RenderSVGResourceClipper;
 class RenderSVGResourceFilter;
@@ -69,8 +70,8 @@ public:
     std::optional<LayoutRect> cachedLayerClippedOverflowRect() const;
 
     bool startAnimation(double timeOffset, const Animation&, const BlendingKeyframes&) override;
-    void animationPaused(double timeOffset, const String& name) override;
-    void animationFinished(const String& name) override;
+    void animationPaused(double timeOffset, const BlendingKeyframes&) override;
+    void animationFinished(const BlendingKeyframes&) override;
     void transformRelatedPropertyDidChange() override;
 
     void suspendAnimations(MonotonicTime = MonotonicTime()) override;
@@ -106,6 +107,8 @@ public:
     RenderSVGResourceMarker* svgMarkerStartResourceFromStyle() const;
     RenderSVGResourceMarker* svgMarkerMidResourceFromStyle() const;
     RenderSVGResourceMarker* svgMarkerEndResourceFromStyle() const;
+
+    LegacyRenderSVGResourceClipper* legacySVGClipperResourceFromStyle() const;
 
     bool pointInSVGClippingArea(const FloatPoint&) const;
 

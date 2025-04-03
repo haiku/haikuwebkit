@@ -1,5 +1,5 @@
 <!doctype HTML>
-<html lang="en-US">
+<html lang="en-US" class="reftest-wait">
   <meta charset="utf-8">
   <title>HTML5 Canvas Test: The lang attribute inherits from a disconnected canvas element</title>
   <link rel="match" href="canvas.2d.lang-ref.html"/>
@@ -7,6 +7,7 @@
   <link rel="help"
     href="https://html.spec.whatwg.org/multipage/canvas.html#text-styles"/>
   <meta name="assert" content="Verify that a disconnected canvas uses the canvas lang."/>
+  <script src="/common/reftest-wait.js"></script>
   <style>
     #canvas-tr {
       position: absolute;
@@ -39,13 +40,14 @@
       let test_font = new FontFace(
         // Lato-Medium is a font with language specific ligatures.
         "Lato-Medium",
-        "url(/css/css-fonts/support/fonts/Lato-Medium.ttf)"
+        "url(/fonts/Lato-Medium.ttf)"
       );
 
       test_font.load().then((font) => {
         document.fonts.add(font);
         drawText('tr');
         drawText('en');
+        takeScreenshot();
       });
     </script>
   </body>

@@ -47,6 +47,7 @@
 
 #if USE(SKIA)
 #include "SkiaPaintingEngine.h"
+#include "SkiaRecordingResult.h"
 #endif
 
 namespace WebCore {
@@ -548,28 +549,28 @@ void CoordinatedPlatformLayer::setContentsTilePhase(const FloatSize& contentsTil
     notifyCompositionRequired();
 }
 
-void CoordinatedPlatformLayer::setDirtyRegion(Vector<IntRect, 1>&& dirtyRegion)
+void CoordinatedPlatformLayer::setDirtyRegion(Damage&& damage)
 {
     ASSERT(m_lock.isHeld());
-    if (m_dirtyRegion == dirtyRegion)
-        return;
-
-    m_dirtyRegion = WTFMove(dirtyRegion);
-    notifyCompositionRequired();
-}
+    // FIXME: add a way to remove the empty rects from Damage class.
+    auto dirtyRegion = WTF::compactMap(damage.rects(), [](const auto& value) -> std::optional<IntRect> {
+        if (value.isEmpty())
+            return std::nullopt;
+        return value;
+    });
+    if (m_dirtyRegion != dirtyRegion) {
+        m_dirtyRegion = WTFMove(dirtyRegion);
+        notifyCompositionRequired();
+    }
 
 #if ENABLE(DAMAGE_TRACKING)
-void CoordinatedPlatformLayer::setDamage(Damage&& damage)
-{
-    ASSERT(m_lock.isHeld());
-
     if (!m_damage)
         m_damage = WTFMove(damage);
     else
         m_damage->add(damage);
     m_pendingChanges.add(Change::Damage);
-}
 #endif
+}
 
 void CoordinatedPlatformLayer::setFilters(const FilterOperations& filters)
 {
@@ -818,9 +819,28 @@ Ref<CoordinatedTileBuffer> CoordinatedPlatformLayer::paint(const IntRect& dirtyR
     m_client->paintingEngine().paint(*m_owner, buffer.get(), dirtyRect, enclosingIntRect(scaledDirtyRect), IntRect { { }, dirtyRect.size() }, m_contentsScale);
     return buffer;
 #elif USE(SKIA)
-    return m_client->paintingEngine().paintLayer(*m_owner, dirtyRect, m_contentsOpaque, m_contentsScale);
+    auto& paintingEngine = m_client->paintingEngine();
+    ASSERT(!paintingEngine.useThreadedRendering());
+    return m_client->paintingEngine().paint(*m_owner, dirtyRect, m_contentsOpaque, m_contentsScale);
 #endif
 }
+
+#if USE(SKIA)
+Ref<SkiaRecordingResult> CoordinatedPlatformLayer::record(const IntRect& recordRect)
+{
+    auto& paintingEngine = m_client->paintingEngine();
+    ASSERT(paintingEngine.useThreadedRendering());
+    return m_client->paintingEngine().record(*m_owner, recordRect, m_contentsOpaque, m_contentsScale);
+}
+
+Ref<CoordinatedTileBuffer> CoordinatedPlatformLayer::replay(const RefPtr<SkiaRecordingResult>& recording, const IntRect& dirtyRect)
+{
+    ASSERT(recording);
+    auto& paintingEngine = m_client->paintingEngine();
+    ASSERT(paintingEngine.useThreadedRendering());
+    return m_client->paintingEngine().replay(recording, dirtyRect);
+}
+#endif
 
 void CoordinatedPlatformLayer::waitUntilPaintingComplete()
 {
@@ -914,8 +934,7 @@ void CoordinatedPlatformLayer::flushCompositingState(TextureMapper& textureMappe
 #if ENABLE(DAMAGE_TRACKING)
     if (m_pendingChanges.contains(Change::Damage)) {
         ASSERT(m_damage.has_value());
-        layer.setDamage(WTFMove(*m_damage));
-        m_damage = std::nullopt;
+        layer.setDamage(*std::exchange(m_damage, std::nullopt));
     }
 #endif
 

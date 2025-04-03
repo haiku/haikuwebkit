@@ -41,6 +41,7 @@ cocoa/TestNavigationDelegate.mm
 cocoa/TestProtocol.mm
 cocoa/TestResourceLoadDelegate.mm
 cocoa/TestUIDelegate.mm
+cocoa/TestScriptMessageHandler.mm
 cocoa/TestWebExtensionsDelegate.mm
 cocoa/TestWKWebView.mm
 cocoa/TestWKWebViewConfiguration.mm
@@ -140,6 +141,7 @@ Tests/WebKitCocoa/Geolocation.mm
 Tests/WebKitCocoa/GetDisplayMedia.mm
 Tests/WebKitCocoa/GetDisplayMediaWindowAndScreen.mm
 Tests/WebKitCocoa/GetResourceData.mm
+Tests/WebKitCocoa/HistoryDelegate.mm
 Tests/WebKitCocoa/HSTS.mm
 Tests/WebKitCocoa/IDBCheckpointWAL.mm
 Tests/WebKitCocoa/IDBDeleteRecovery.mm

@@ -200,14 +200,16 @@ void RecorderImpl::recordDrawFilteredImageBuffer(ImageBuffer* sourceImage, const
     append(DrawFilteredImageBuffer(WTFMove(identifier), sourceImageRect, filter));
 }
 
-void RecorderImpl::recordDrawGlyphs(const Font& font, std::span<const GlyphBufferGlyph> glyphs, std::span<const GlyphBufferAdvance> advances, const FloatPoint& localAnchor, FontSmoothingMode mode)
+void RecorderImpl::drawGlyphsImmediate(const Font& font, std::span<const GlyphBufferGlyph> glyphs, std::span<const GlyphBufferAdvance> advances, const FloatPoint& localAnchor, FontSmoothingMode smoothingMode)
 {
-    append(DrawGlyphs(font, glyphs, advances, localAnchor, mode));
+    appendStateChangeItemIfNecessary();
+    append(DrawGlyphs(Ref { font }, Vector(glyphs), Vector(advances), localAnchor, smoothingMode));
 }
 
-void RecorderImpl::recordDrawDecomposedGlyphs(const Font& font, const DecomposedGlyphs& decomposedGlyphs)
+void RecorderImpl::drawDecomposedGlyphs(const Font& font, const DecomposedGlyphs& decomposedGlyphs)
 {
-    append(DrawDecomposedGlyphs(font.renderingResourceIdentifier(), decomposedGlyphs.renderingResourceIdentifier()));
+    appendStateChangeItemIfNecessary();
+    append(DrawDecomposedGlyphs(Ref { font }, Ref { decomposedGlyphs }));
 }
 
 void RecorderImpl::recordDrawImageBuffer(ImageBuffer& imageBuffer, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions options)
@@ -502,26 +504,12 @@ void RecorderImpl::setURLForRect(const URL& link, const FloatRect& destRect)
 
 bool RecorderImpl::recordResourceUse(NativeImage& nativeImage)
 {
-#if USE(SKIA)
-    if (m_displayList.replayOptions().contains(ReplayOption::FlushAcceleratedImagesAndWaitForCompletion)) {
-        if (nativeImage.backend().finishAcceleratedRenderingAndCreateFence())
-            m_usedAcceleratedRendering = true;
-    }
-#endif
-
     m_displayList.cacheNativeImage(nativeImage);
     return true;
 }
 
 bool RecorderImpl::recordResourceUse(ImageBuffer& imageBuffer)
 {
-#if USE(SKIA)
-    if (m_displayList.replayOptions().contains(ReplayOption::FlushAcceleratedImagesAndWaitForCompletion)) {
-        if (imageBuffer.finishAcceleratedRenderingAndCreateFence())
-            m_usedAcceleratedRendering = true;
-    }
-#endif
-
     m_displayList.cacheImageBuffer(imageBuffer);
     return true;
 }
@@ -534,18 +522,6 @@ bool RecorderImpl::recordResourceUse(const SourceImage& image)
     if (auto nativeImage = image.nativeImageIfExists())
         return recordResourceUse(*nativeImage);
 
-    return true;
-}
-
-bool RecorderImpl::recordResourceUse(Font& font)
-{
-    m_displayList.cacheFont(font);
-    return true;
-}
-
-bool RecorderImpl::recordResourceUse(DecomposedGlyphs& decomposedGlyphs)
-{
-    m_displayList.cacheDecomposedGlyphs(decomposedGlyphs);
     return true;
 }
 

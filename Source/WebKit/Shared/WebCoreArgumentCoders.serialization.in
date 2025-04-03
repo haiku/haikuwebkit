@@ -2707,11 +2707,6 @@ class WebCore::DatabaseDetails {
     std::optional<WallTime> modificationTime();
 };
 
-[RefCounted, AdditionalEncoder=StreamConnectionEncoder] class WebCore::DecomposedGlyphs {
-    WebCore::PositionedGlyphs positionedGlyphs();
-    WebCore::RenderingResourceIdentifier renderingResourceIdentifier();
-}
-
 header: <WebCore/TextIndicator.h>
 [CustomHeader] struct WebCore::TextIndicatorData {
     WebCore::FloatRect selectionRectInRootViewCoordinates;
@@ -5881,6 +5876,12 @@ header: <WebCore/MockMediaDevice.h>
     Invalid
 };
 
+header: <WebCore/RealtimeMediaSourceCenter.h>
+[Nested] struct WebCore::RealtimeMediaSourceCenter::ValidDevices {
+    Vector<WebCore::CaptureDevice> audioDevices;
+    Vector<WebCore::CaptureDevice> videoDevices;
+};
+
 #endif // ENABLE(MEDIA_STREAM)
 
 enum class WebCore::PlatformVideoColorPrimaries : uint8_t {
@@ -6172,13 +6173,6 @@ struct WebCore::VideoFrameTimeMetadata {
     std::optional<Seconds> captureTime;
     std::optional<Seconds> receiveTime;
     std::optional<unsigned> rtpTimestamp;
-};
-
-[AdditionalEncoder=StreamConnectionEncoder] struct WebCore::PositionedGlyphs {
-    Vector<WebCore::GlyphBufferGlyph> glyphs;
-    [Validator='glyphs->size() == advances->size()'] Vector<WebCore::GlyphBufferAdvance> advances;
-    WebCore::FloatPoint localAnchor;
-    WebCore::FontSmoothingMode smoothingMode;
 };
 
 class WebCore::EventRegion {
@@ -7855,7 +7849,14 @@ enum class WebCore::RepaintRectCalculation : bool;
     WebCore::PixelBufferFormat format();
     WebCore::IntSize size();
     std::span<const uint8_t> span();
-}
+};
+
+header: <WebCore/PixelBuffer.h>
+[AdditionalEncoder=StreamConnectionEncoder, CreateUsing=create, CustomHeader] class WebCore::PixelBufferSourceView {
+    WebCore::PixelBufferFormat format();
+    WebCore::IntSize size();
+    std::span<const uint8_t> bytes();
+};
 
 #if ENABLE(WEB_AUTHN)
 header: <WebCore/MediationRequirement.h>

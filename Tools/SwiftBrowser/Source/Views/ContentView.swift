@@ -231,7 +231,6 @@ struct ContentView: View {
 
             WebView(viewModel.page)
                 .webViewBackForwardNavigationGestures(.enabled)
-                .webViewMagnificationGestures(.enabled)
                 .webViewLinkPreviews(.enabled)
                 .webViewTextSelection(.enabled)
                 .webViewElementFullscreenBehavior(.enabled)
@@ -278,6 +277,7 @@ struct ContentView: View {
                 }
                 .scrollBounceBehavior(scrollBounceBehaviorBasedOnSize == true ? .basedOnSize : .automatic)
                 .webViewContentBackground(backgroundHidden == true ? .hidden : .automatic)
+#if os(macOS)
                 .webViewContextMenu { element in
                     if let url = element.linkURL {
                         Button("Open Link in New Window") {
@@ -309,6 +309,7 @@ struct ContentView: View {
                         }
                     }
                 }
+#endif
                 .toolbar {
                     ToolbarItemGroup(placement: Self.navigationToolbarItemPlacement) {
                         ToolbarBackForwardMenuView(

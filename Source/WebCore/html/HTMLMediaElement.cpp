@@ -1899,7 +1899,9 @@ void HTMLMediaElement::loadResource(const URL& initialURL, const ContentType& in
 
         if (m_mediaSource) {
             ALWAYS_LOG(logSiteIdentifier, "loading MSE blob");
+#if !RELEASE_LOG_DISABLED
             m_mediaSource->setLogIdentifier(m_logIdentifier);
+#endif
             if (url.protocolIs(mediaSourceBlobProtocol) && m_mediaSource->detachable()) {
                 document().addConsoleMessage(MessageSource::MediaSource, MessageLevel::Error, makeString("Unable to attach detachable MediaSource via blob URL, use srcObject attribute"_s));
                 return mediaLoadingFailed(MediaPlayer::NetworkState::FormatError);
@@ -7972,12 +7974,18 @@ void HTMLMediaElement::createMediaPlayer() WTF_IGNORES_THREAD_SAFETY_ANALYSIS
     RefPtr page = document().page();
     player->setPageIsVisible(!m_elementIsHidden);
     player->setVisibleInViewport(isVisibleInViewport());
+    player->setInFullscreenOrPictureInPicture(isFullscreen());
+
 #if USE(AVFOUNDATION) && ENABLE(MEDIA_SOURCE)
     player->setDecompressionSessionPreferences(document().settings().mediaSourcePrefersDecompressionSession(), document().settings().mediaSourceCanFallbackToDecompressionSession());
 #endif
     schedulePlaybackControlsManagerUpdate();
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA) && ENABLE(ENCRYPTED_MEDIA)
     updateShouldContinueAfterNeedKey();
+#endif
+
+#if HAVE(SPATIAL_AUDIO_EXPERIENCE)
+    player->setPrefersSpatialAudioExperience(document().settings().preferSpatialAudioExperience());
 #endif
 
 #if HAVE(SPATIAL_TRACKING_LABEL)

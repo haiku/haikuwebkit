@@ -3377,7 +3377,7 @@ sub GenerateHeader
             my $conditionalString = $codeGenerator->GenerateConditionalString($operation);
             push(@headerContent, "#if ${conditionalString}\n") if $conditionalString;
 
-            my $functionImplementationName = $operation->extendedAttributes->{ImplementedAs} || $codeGenerator->WK_lcfirst($operation->name);
+            my $functionImplementationName = $codeGenerator->OperationName($operation);
 
             my @functionArguments = ();
             push(@functionArguments, "JSC::JSGlobalObject&");
@@ -6065,7 +6065,7 @@ sub GenerateOperationDefinition
     AddToImplIncludes("JSDOMOperationReturningPromise.h", $conditional) if $hasPromiseReturnType || $operation->extendedAttributes->{ReturnsPromisePair};
 
     my $functionName = GetFunctionName($interface, $className, $operation);
-    my $functionImplementationName = $operation->extendedAttributes->{ImplementedAs} || $codeGenerator->WK_lcfirst($operation->name);
+    my $functionImplementationName = $codeGenerator->OperationName($operation);
     my $functionBodyName = ($isOverloaded ? $functionName . $operation->{overloadIndex} : $functionName) . "Body";
 
     GenerateOperationBodyDefinition($outputArray, $interface, $className, $operation, $functionName, $functionImplementationName, $functionBodyName, $isOverloaded);
@@ -6776,8 +6776,7 @@ sub GenerateCallbackHeaderContent
 
             my $nativeReturnType = "CallbackResult<typename " . GetIDLType($interfaceOrCallback, $operation->type) . "::CallbackReturnType>";
             
-            # FIXME: Change the default name (used for callback functions) to something other than handleEvent. It makes little sense.
-            my $functionName = $operation->extendedAttributes->{ImplementedAs} || $operation->name || "handleEvent";
+            my $functionName = $operation->extendedAttributes->{ImplementedAs} || $operation->name || "invoke";
             push(@$contentRef, "    ${nativeReturnType} ${functionName}(" . join(", ", @arguments) . ") override;\n");
 
             # Unless the callback function returns a promise, also generate a version that rethrows any exception it might encounter.
@@ -6823,8 +6822,7 @@ sub GenerateCallbackImplementationOperationBody
 
     my $nativeReturnType = "CallbackResult<typename " . GetIDLType($interfaceOrCallback, $operation->type) . "::CallbackReturnType>";
 
-    # FIXME: Change the default name (used for callback functions) to something other than handleEvent. It makes little sense.
-    my $functionName = $operation->name || "handleEvent";
+    my $functionName = $operation->name || "invoke";
 
     my $functionImplementationName = $operation->extendedAttributes->{ImplementedAs} || $functionName;
     $functionImplementationName .= "RethrowingException" if $isForRethrowingHandler;

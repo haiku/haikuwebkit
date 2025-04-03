@@ -31,7 +31,7 @@ namespace WebCore {
 class GStreamerAudioCapturer final : public GStreamerCapturer {
 public:
     GStreamerAudioCapturer(GStreamerCaptureDevice&&);
-    GStreamerAudioCapturer();
+    GStreamerAudioCapturer(const PipeWireCaptureDevice&);
     ~GStreamerAudioCapturer() = default;
 
     GstElement* createConverter() final;

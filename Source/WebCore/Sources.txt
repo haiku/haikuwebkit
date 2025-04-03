@@ -919,10 +919,12 @@ css/CSSNamedImageValue.cpp
 css/CSSNamespaceRule.cpp
 css/CSSNestedDeclarations.cpp
 css/CSSOffsetRotateValue.cpp
+css/CSSPageDescriptors.cpp
 css/CSSPageRule.cpp
 css/CSSPaintImageValue.cpp
 css/CSSPathValue.cpp
 css/CSSPendingSubstitutionValue.cpp
+css/CSSPositionTryDescriptors.cpp
 css/CSSPositionTryRule.cpp
 css/CSSPrimitiveValue.cpp
 css/CSSProperty.cpp
@@ -986,6 +988,7 @@ css/MediaQueryListEvent.cpp
 css/MediaQueryMatcher.cpp
 css/MediaQueryParserContext.cpp
 css/MutableStyleProperties.cpp
+css/PropertySetCSSDescriptors.cpp
 css/SVGCSSComputedStyleDeclaration.cpp
 css/SelectorChecker.cpp
 css/SelectorFilter.cpp
@@ -1026,8 +1029,6 @@ css/parser/CSSParserTokenRange.cpp
 css/parser/CSSPropertyParser.cpp
 css/parser/CSSPropertyParserConsumer+Align.cpp
 css/parser/CSSPropertyParserConsumer+Anchor.cpp
-css/parser/CSSPropertyParserConsumer+Angle.cpp
-css/parser/CSSPropertyParserConsumer+AnglePercentage.cpp
 css/parser/CSSPropertyParserConsumer+Animations.cpp
 css/parser/CSSPropertyParserConsumer+AppleVisualEffect.cpp
 css/parser/CSSPropertyParserConsumer+Attr.cpp
@@ -1047,19 +1048,14 @@ css/parser/CSSPropertyParserConsumer+Ident.cpp
 css/parser/CSSPropertyParserConsumer+Image.cpp
 css/parser/CSSPropertyParserConsumer+Inline.cpp
 css/parser/CSSPropertyParserConsumer+Inset.cpp
-css/parser/CSSPropertyParserConsumer+Integer.cpp
-css/parser/CSSPropertyParserConsumer+Length.cpp
-css/parser/CSSPropertyParserConsumer+LengthPercentage.cpp
 css/parser/CSSPropertyParserConsumer+Lists.cpp
 css/parser/CSSPropertyParserConsumer+Masking.cpp
 css/parser/CSSPropertyParserConsumer+Motion.cpp
-css/parser/CSSPropertyParserConsumer+Number.cpp
 css/parser/CSSPropertyParserConsumer+Percentage.cpp
 css/parser/CSSPropertyParserConsumer+Position.cpp
 css/parser/CSSPropertyParserConsumer+PositionTry.cpp
 css/parser/CSSPropertyParserConsumer+Primitives.cpp
 css/parser/CSSPropertyParserConsumer+Ratio.cpp
-css/parser/CSSPropertyParserConsumer+Resolution.cpp
 css/parser/CSSPropertyParserConsumer+SVG.cpp
 css/parser/CSSPropertyParserConsumer+ScrollSnap.cpp
 css/parser/CSSPropertyParserConsumer+Scrollbars.cpp
@@ -1068,7 +1064,6 @@ css/parser/CSSPropertyParserConsumer+String.cpp
 css/parser/CSSPropertyParserConsumer+Symbol.cpp
 css/parser/CSSPropertyParserConsumer+Syntax.cpp
 css/parser/CSSPropertyParserConsumer+TextDecoration.cpp
-css/parser/CSSPropertyParserConsumer+Time.cpp
 css/parser/CSSPropertyParserConsumer+Timeline.cpp
 css/parser/CSSPropertyParserConsumer+Transform.cpp
 css/parser/CSSPropertyParserConsumer+Transitions.cpp
@@ -2546,7 +2541,6 @@ platform/graphics/PixelBufferFormat.cpp
 platform/graphics/PixelFormat.cpp
 platform/graphics/PlatformDynamicRangeLimit.cpp
 platform/graphics/PlatformTimeRanges.cpp
-platform/graphics/PositionedGlyphs.cpp
 platform/graphics/Region.cpp
 platform/graphics/RenderingMode.cpp
 platform/graphics/RotationDirection.cpp
@@ -3453,6 +3447,7 @@ DocumentSyncData.cpp
 EventFactory.cpp
 EventNames.cpp
 EventTargetFactory.cpp
+FrameTreeSyncData.cpp
 HTMLElementFactory.cpp
 HTMLEntityTable.cpp
 JSHTMLElementWrapperFactory.cpp
@@ -3588,9 +3583,11 @@ JSCSSLayerStatementRule.cpp
 JSCSSMediaRule.cpp
 JSCSSNamespaceRule.cpp
 JSCSSNestedDeclarations.cpp
+JSCSSPageDescriptors.cpp
 JSCSSPageRule.cpp
 JSCSSPaintCallback.cpp
 JSCSSPaintSize.cpp
+JSCSSPositionTryDescriptors.cpp
 JSCSSPositionTryRule.cpp
 JSCSSPropertyRule.cpp
 JSCSSRule.cpp

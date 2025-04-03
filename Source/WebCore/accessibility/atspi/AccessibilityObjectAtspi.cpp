@@ -698,7 +698,7 @@ CString AccessibilityObjectAtspi::description() const
 
 String AccessibilityObjectAtspi::locale() const
 {
-    return m_coreObject ? m_coreObject->language() : String();
+    return m_coreObject ? m_coreObject->languageIncludingAncestors() : String();
 }
 
 static bool shouldIncludeOrientationState(const AXCoreObject& coreObject)
@@ -880,13 +880,11 @@ UncheckedKeyHashMap<String, String> AccessibilityObjectAtspi::attributes() const
     if (columnCount)
         map.add("colcount"_s, String::number(columnCount));
 
-    int rowIndex = m_coreObject->axRowIndex();
-    if (rowIndex != -1)
-        map.add("rowindex"_s, String::number(rowIndex));
+    if (std::optional rowIndex = m_coreObject->axRowIndex())
+        map.add("rowindex"_s, String::number(*rowIndex));
 
-    int columnIndex = m_coreObject->axColumnIndex();
-    if (columnIndex != -1)
-        map.add("colindex"_s, String::number(columnIndex));
+    if (std::optional columnIndex = m_coreObject->axColumnIndex())
+        map.add("colindex"_s, String::number(*columnIndex));
 
     if (auto* cell = dynamicDowncast<AccessibilityTableCell>(m_coreObject.get())) {
         int rowSpan = cell->axRowSpan();

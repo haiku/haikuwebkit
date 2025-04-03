@@ -25,6 +25,8 @@
 
 #pragma once
 
+DECLARE_SYSTEM_HEADER
+
 #if USE(APPLE_INTERNAL_SDK)
 
 #include <Security/SecAccessControlPriv.h>
@@ -83,7 +85,7 @@ OSStatus SecCodeCopySigningInformation(SecStaticCodeRef, SecCSFlags, CFDictionar
 #endif
 
 #if PLATFORM(MAC)
-OSStatus SecTrustedApplicationCreateFromPath(const char* path, SecTrustedApplicationRef*);
+OSStatus SecTrustedApplicationCreateFromPath(const char* path, SecTrustedApplicationRef * CF_RETURNS_RETAINED);
 #endif
 
 SecSignatureHashAlgorithm SecCertificateGetSignatureHashAlgorithm(SecCertificateRef);

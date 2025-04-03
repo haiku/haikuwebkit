@@ -50,12 +50,7 @@ struct WebViewRepresentable {
 
         webView.allowsBackForwardNavigationGestures = environment.webViewAllowsBackForwardNavigationGestures.value != .disabled
         webView.allowsLinkPreview = environment.webViewAllowsLinkPreview.value != .disabled
-
-#if os(macOS)
-        webView.allowsMagnification = environment.webViewMagnificationGestures.value == .enabled // automatic -> false
-#else
-        webView.allowsMagnification = environment.webViewMagnificationGestures.value != .disabled // automatic -> true
-#endif
+        webView.allowsMagnification = environment.webViewMagnificationGestures.value != .disabled
 
         let isOpaque = environment.webViewContentBackground != .hidden
 
@@ -93,7 +88,13 @@ struct WebViewRepresentable {
         context.coordinator.update(platformView, configuration: self, context: context)
 
 #if os(macOS) && !targetEnvironment(macCatalyst)
-        owner.page.setMenuBuilder(environment.webViewContextMenuContext?.menu)
+        if let menu = environment.webViewContextMenuContext?.menu {
+            owner.page.setMenuBuilder {
+                menu(.init(linkURL: $0.linkURL))
+            }
+        } else {
+            owner.page.setMenuBuilder(nil)
+        }
 #endif
     }
 

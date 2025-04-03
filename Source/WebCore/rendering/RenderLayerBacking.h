@@ -65,7 +65,7 @@ public:
     ~RenderLayerBacking();
 
     // Do cleanup while layer->backing() is still valid.
-    void willBeDestroyed();
+    void willBeDestroyed(OptionSet<UpdateBackingSharingFlags>);
 
     RenderLayer& owningLayer() const { return m_owningLayer; }
 
@@ -75,8 +75,8 @@ public:
 
     bool hasBackingSharingLayers() const { return !m_backingSharingLayers.isEmptyIgnoringNullReferences(); }
 
-    void removeBackingSharingLayer(RenderLayer&);
-    void clearBackingSharingLayers();
+    void removeBackingSharingLayer(RenderLayer&, OptionSet<UpdateBackingSharingFlags>);
+    void clearBackingSharingLayers(OptionSet<UpdateBackingSharingFlags>);
 
     void updateConfigurationAfterStyleChange();
 
@@ -241,6 +241,8 @@ public:
 
     float pageScaleFactor() const override;
     float zoomedOutPageScaleFactor() const override;
+
+    FloatSize enclosingFrameViewVisibleSize() const override;
 
     void didChangePlatformLayerForLayer(const GraphicsLayer*) override;
     bool getCurrentTransform(const GraphicsLayer*, TransformationMatrix&) const override;
@@ -424,6 +426,8 @@ private:
     LayoutRect computePrimaryGraphicsLayerRect(const RenderLayer* compositedAncestor, const LayoutRect& parentGraphicsLayerRect) const;
 
     bool shouldSetContentsDisplayDelegate() const;
+
+    void setNeedsFixedContainerEdgesUpdateIfNeeded();
 
     RenderLayer& m_owningLayer;
     

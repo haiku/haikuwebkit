@@ -25,10 +25,42 @@
 
 #pragma once
 
-#if PLATFORM(GTK) || PLATFORM(WPE)
+#if USE(COORDINATED_GRAPHICS)
 #include "FloatRect.h"
 #include "Region.h"
 #include <wtf/ForbidHeapAllocation.h>
+
+// A helper class to store damage rectangles in a few approximated ways
+// to trade-off the CPU cost of the data structure and the resolution
+// it brings (i.e. how good approximation reflects the reality).
+
+// The simplest way to store the damage is to maintain a minimum
+// bounding rectangle (bounding box) of all incoming damage rectangles.
+// This way the amount of memory used is minimal (just a single rect)
+// and the add() operations are cheap as it's always about unite().
+// While this method works well in many scenarios, it fails to model
+// the small rectangles that are very far apart.
+
+// The more sophisticated method to store the damage is to store a
+// limited vector of rectangles. Unless the limit of rectangles is hit
+// each rectangle is stored as-is.
+// Once the new rectangle cannot be added without extending the vector
+// past the limit, the unification mechanism starts.
+// Unification mechanism - once enabled - uses an artificial grid
+// to map incoming rects into cells that can store up to 1 rectangle
+// each. If more than one rect gets mapped to the same cell, such
+// rectangles are unified using a minimum bounding rectangle.
+// This way the amount of memory used is limited as the vector of
+// rectangles cannot grow past the limit. At the same time, the
+// CPU utilization is also limited as the rect addition cost
+// is O(1) excluding the vector addition complexity.
+// And since the vector size is limited, the cost of adding to vector
+// cannot get out of hand either.
+// This method is more expensive than simple "bonding box", however,
+// it yields surprisingly good approximation results.
+// Moreover, the approximation resolution can be controlled by tweaking
+// the artificial grid size - the more rows/cols the better the
+// resolution at the expense of higher memory/CPU utilization.
 
 namespace WebCore {
 
@@ -44,13 +76,27 @@ public:
         Unified,
     };
 
-    static constexpr int s_tileSize { 256 };
+    enum class Mode : uint8_t {
+        Rectangles, // Tracks dirty regions as rectangles, only unifying when maximum is reached.
+        BoundingBox, // Dirty region is always the minimum bounding box of all added rectangles.
+        Full, // All area is always dirty.
+    };
 
-    Damage()
-        : m_tileSize(s_tileSize, s_tileSize)
+    explicit Damage(const IntRect& rect, Mode mode = Mode::Rectangles)
+        : m_mode(mode)
+        , m_rect(rect)
     {
-        // FIXME: Add a constructor to pass the size.
-        resize(IntSize { 2048, 1024 });
+        initialize();
+    }
+
+    explicit Damage(const IntSize& size, Mode mode = Mode::Rectangles)
+        : Damage({ { }, size }, mode)
+    {
+    }
+
+    explicit Damage(const FloatSize& size, Mode mode = Mode::Rectangles)
+        : Damage(ceiledIntSize(LayoutSize(size)), mode)
+    {
     }
 
     Damage(Damage&&) = default;
@@ -63,121 +109,134 @@ public:
     // May return both empty and overlapping rects.
     ALWAYS_INLINE const Rects& rects() const { return m_rects; }
     ALWAYS_INLINE bool isEmpty() const  { return m_rects.isEmpty(); }
+    ALWAYS_INLINE Mode mode() const { return m_mode; }
 
-    void resize(const IntSize& size)
+    // Removes empty and overlapping rects. May clip to grid.
+    Rects rectsForPainting() const
     {
-        if (m_size == size)
-            return;
+        if (m_rects.size() <= 1 || m_mode != Mode::Rectangles)
+            return m_rects;
 
-        m_size = size;
-        m_gridSize = ceiledIntSize({ static_cast<float>(m_size.width()) / m_tileSize.width(), static_cast<float>(m_size.height()) / m_tileSize.height() }).expandedTo({ 1, 1 });
-        m_rects.clear();
-        m_minimumBoundingRectangle = { };
-        m_shouldUnite = m_gridSize.width() == 1 && m_gridSize.height() == 1;
-    }
-
-    void resize(const FloatSize& size)
-    {
-        resize(ceiledIntSize(LayoutSize(size)));
-    }
-
-    enum class Mode : uint8_t {
-        Rectangles, // Tracks dirty regions as rectangles, only unifying when maximum is reached.
-        BoundingBox, // Dirty region is always the minimum bounding box of all added rectangles.
-        Full, // All area is always dirty.
-    };
-
-    void setMode(Mode mode)
-    {
-        if (m_mode == mode)
-            return;
-
-        switch (mode) {
-        case Mode::Rectangles:
-            break;
-        case Mode::BoundingBox:
-            m_rects.clear();
-            if (!m_minimumBoundingRectangle.isEmpty())
-                m_rects.append(m_minimumBoundingRectangle);
-            break;
-        case Mode::Full:
-            m_minimumBoundingRectangle = { { }, m_size };
-            m_rects.clear();
-            m_rects.append(m_minimumBoundingRectangle);
-            break;
+        Rects rects;
+        for (int row = 0; row < m_gridCells.height(); ++row) {
+            for (int col = 0; col < m_gridCells.width(); ++col) {
+                const IntRect cellRect = { m_rect.x() + col * s_cellSize, m_rect.y() + row * s_cellSize, s_cellSize, s_cellSize };
+                IntRect minimumBoundingRectangleContaingOverlaps;
+                for (const auto& rect : m_rects) {
+                    if (!rect.isEmpty())
+                        minimumBoundingRectangleContaingOverlaps.unite(intersection(cellRect, rect));
+                }
+                if (!minimumBoundingRectangleContaingOverlaps.isEmpty())
+                    rects.append(minimumBoundingRectangleContaingOverlaps);
+            }
         }
-
-        m_mode = mode;
+        return rects;
     }
 
-    ALWAYS_INLINE void add(const Region& region)
+    void makeFull(const IntRect& rect)
     {
-        if (region.isEmpty() || !shouldAdd())
+        if (m_mode == Mode::Full && m_rect == rect)
             return;
 
-        for (const auto& rect : region.rects())
-            add(rect);
+        m_rect = rect;
+        m_mode = Mode::Full;
+        m_rects.clear();
+        initialize();
     }
 
-    void add(const IntRect& rect)
+    void makeFull(const IntSize& size)
+    {
+        makeFull({ { }, size });
+    }
+
+    void makeFull(const FloatSize& size)
+    {
+        makeFull(ceiledIntSize(LayoutSize(size)));
+    }
+
+    void makeFull()
+    {
+        makeFull(m_rect);
+    }
+
+    bool add(const IntRect& rect)
     {
         if (rect.isEmpty() || !shouldAdd())
-            return;
+            return false;
 
         const auto rectsCount = m_rects.size();
         if (!rectsCount || rect.contains(m_minimumBoundingRectangle)) {
             m_rects.clear();
             m_rects.append(rect);
             m_minimumBoundingRectangle = rect;
-            return;
+            return true;
         }
 
         if (rectsCount == 1 && m_minimumBoundingRectangle.contains(rect))
-            return;
+            return false;
 
         m_minimumBoundingRectangle.unite(rect);
         if (m_mode == Mode::BoundingBox) {
             ASSERT(rectsCount == 1);
             m_rects[0] = m_minimumBoundingRectangle;
-            return;
+            return true;
         }
 
         if (m_shouldUnite) {
             unite(rect);
-            return;
+            return true;
         }
 
-        if (rectsCount == m_gridSize.unclampedArea()) {
+        if (rectsCount == m_gridCells.unclampedArea()) {
             m_shouldUnite = true;
             uniteExistingRects();
             unite(rect);
-            return;
+            return true;
         }
 
         m_rects.append(rect);
+        return true;
     }
 
-    ALWAYS_INLINE void add(const FloatRect& rect)
+    ALWAYS_INLINE bool add(const FloatRect& rect)
     {
         if (rect.isEmpty() || !shouldAdd())
-            return;
+            return false;
 
-        add(enclosingIntRect(rect));
+        return add(enclosingIntRect(rect));
     }
 
-    ALWAYS_INLINE void add(const Damage& other)
+    ALWAYS_INLINE bool add(const Damage& other)
     {
         if (other.isEmpty() || !shouldAdd())
-            return;
+            return false;
 
+        bool returnValue = false;
         for (const auto& rect : other.rects())
-            add(rect);
+            returnValue |= add(rect);
+        return returnValue;
     }
 
 private:
+    void initialize()
+    {
+        switch (m_mode) {
+        case Mode::Rectangles:
+            m_gridCells = IntSize(std::ceil(static_cast<float>(m_rect.width()) / s_cellSize), std::ceil(static_cast<float>(m_rect.height()) / s_cellSize)).expandedTo({ 1, 1 });
+            m_shouldUnite = m_gridCells.width() == 1 && m_gridCells.height() == 1;
+            break;
+        case Mode::BoundingBox:
+            break;
+        case Mode::Full:
+            m_minimumBoundingRectangle = m_rect;
+            m_rects.append(m_minimumBoundingRectangle);
+            break;
+        }
+    }
+
     ALWAYS_INLINE bool shouldAdd() const
     {
-        return !m_size.isEmpty() && m_mode != Mode::Full;
+        return !m_rect.isEmpty() && m_mode != Mode::Full;
     }
 
     void uniteExistingRects()
@@ -189,14 +248,14 @@ private:
             unite(rect);
     }
 
-    ALWAYS_INLINE size_t tileIndexForRect(const IntRect& rect) const
+    ALWAYS_INLINE size_t cellIndexForRect(const IntRect& rect) const
     {
         if (m_rects.size() == 1)
             return 0;
 
-        const auto rectCenter = rect.center();
-        const auto rectCell = flooredIntPoint(FloatPoint { static_cast<float>(rectCenter.x()) / m_tileSize.width(), static_cast<float>(rectCenter.y()) / m_tileSize.height() });
-        return std::clamp(rectCell.x(), 0, m_gridSize.width() - 1) + std::clamp(rectCell.y(), 0, m_gridSize.height() - 1) * m_gridSize.width();
+        const auto rectCenter = IntPoint(rect.center() - m_rect.location());
+        const auto rectCell = flooredIntPoint(FloatPoint { static_cast<float>(rectCenter.x()) / s_cellSize, static_cast<float>(rectCenter.y()) / s_cellSize });
+        return std::clamp(rectCell.x(), 0, m_gridCells.width() - 1) + std::clamp(rectCell.y(), 0, m_gridCells.height() - 1) * m_gridCells.width();
     }
 
     void unite(const IntRect& rect)
@@ -204,16 +263,17 @@ private:
         // When merging cannot be avoided, we use m_rects to store minimal bounding rectangles
         // and perform merging while trying to keep minimal bounding rectangles small and
         // separated from each other.
-        const auto index = tileIndexForRect(rect);
+        const auto index = cellIndexForRect(rect);
         ASSERT(index < m_rects.size());
         m_rects[index].unite(rect);
     }
 
+    static constexpr int s_cellSize { 256 };
+
     Mode m_mode { Mode::Rectangles };
-    IntSize m_size;
+    IntRect m_rect;
     bool m_shouldUnite { false };
-    IntSize m_tileSize;
-    IntSize m_gridSize;
+    IntSize m_gridCells;
     Rects m_rects;
     IntRect m_minimumBoundingRectangle;
 
@@ -245,4 +305,4 @@ static inline WTF::TextStream& operator<<(WTF::TextStream& ts, const Damage& dam
 
 } // namespace WebCore
 
-#endif // PLATFORM(GTK) || PLATFORM(WPE)
+#endif // USE(COORDINATED_GRAPHICS)

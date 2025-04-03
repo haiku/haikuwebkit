@@ -51,6 +51,7 @@ class TextureMapperLayer;
 
 #if USE(SKIA)
 class SkiaPaintingEngine;
+class SkiaRecordingResult;
 #endif
 #if USE(CAIRO)
 namespace Cairo {
@@ -152,10 +153,7 @@ public:
     void setContentsColor(const Color&);
     void setContentsTileSize(const FloatSize&);
     void setContentsTilePhase(const FloatSize&);
-    void setDirtyRegion(Vector<IntRect, 1>&&);
-#if ENABLE(DAMAGE_TRACKING)
-    void setDamage(Damage&&);
-#endif
+    void setDirtyRegion(Damage&&);
 
     void setFilters(const FilterOperations&);
     void setMask(CoordinatedPlatformLayer*);
@@ -185,6 +183,10 @@ public:
     RunLoop* compositingRunLoop() const;
 
     Ref<CoordinatedTileBuffer> paint(const IntRect&);
+#if USE(SKIA)
+    Ref<SkiaRecordingResult> record(const IntRect&);
+    Ref<CoordinatedTileBuffer> replay(const RefPtr<SkiaRecordingResult>&, const IntRect&);
+#endif
     void waitUntilPaintingComplete();
 
 private:

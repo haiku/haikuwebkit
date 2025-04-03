@@ -106,6 +106,9 @@ RemoteMediaPlayerProxy::RemoteMediaPlayerProxy(RemoteMediaPlayerManagerProxy& ma
     RefPtr player = m_player;
     player->setResourceOwner(resourceOwner);
     player->setPresentationSize(m_configuration.presentationSize);
+#if HAVE(SPATIAL_AUDIO_EXPERIENCE)
+    player->setPrefersSpatialAudioExperience(m_configuration.prefersSpatialAudioExperience);
+#endif
 }
 
 RemoteMediaPlayerProxy::~RemoteMediaPlayerProxy()
@@ -217,7 +220,7 @@ void RemoteMediaPlayerProxy::cancelLoad()
     protectedPlayer()->cancelLoad();
 }
 
-void RemoteMediaPlayerProxy::prepareForPlayback(bool privateMode, WebCore::MediaPlayerEnums::Preload preload, bool preservesPitch, WebCore::MediaPlayerEnums::PitchCorrectionAlgorithm pitchCorrectionAlgorithm, bool prepareToPlay, bool prepareForRendering, WebCore::IntSize presentationSize, float videoContentScale, WebCore::DynamicRangeMode preferredDynamicRangeMode, PlatformDynamicRangeLimit platformDynamicRangeLimit)
+void RemoteMediaPlayerProxy::prepareForPlayback(bool privateMode, WebCore::MediaPlayerEnums::Preload preload, bool preservesPitch, WebCore::MediaPlayerEnums::PitchCorrectionAlgorithm pitchCorrectionAlgorithm, bool prepareToPlay, bool prepareForRendering, WebCore::IntSize presentationSize, float videoContentScale, bool isFullscreen, WebCore::DynamicRangeMode preferredDynamicRangeMode, PlatformDynamicRangeLimit platformDynamicRangeLimit)
 {
     RefPtr player = m_player;
     player->setPrivateBrowsingMode(privateMode);
@@ -227,6 +230,7 @@ void RemoteMediaPlayerProxy::prepareForPlayback(bool privateMode, WebCore::Media
     player->setPreferredDynamicRangeMode(preferredDynamicRangeMode);
     player->setPlatformDynamicRangeLimit(platformDynamicRangeLimit);
     player->setPresentationSize(presentationSize);
+    player->setInFullscreenOrPictureInPicture(isFullscreen);
     if (prepareToPlay)
         player->prepareToPlay();
     if (prepareForRendering)

@@ -106,12 +106,6 @@ static NSString * const kAXLoadCompleteNotification = @"AXLoadComplete";
 - (NSCursor *)_cursorRectCursor;
 @end
 
-#if HAVE(OUT_OF_PROCESS_LAYER_HOSTING)
-@interface NSWindow (WebNSWindowLayerHostingDetails)
-- (BOOL)_hostsLayersInWindowServer;
-@end
-#endif
-
 namespace WebKit {
 
 using namespace WebCore;
@@ -237,15 +231,6 @@ bool PageClientImpl::isViewInWindow()
 bool PageClientImpl::isVisuallyIdle()
 {
     return WindowServerConnection::singleton().applicationWindowModificationsHaveStopped() || !isViewVisible();
-}
-
-LayerHostingMode PageClientImpl::viewLayerHostingMode()
-{
-#if HAVE(OUT_OF_PROCESS_LAYER_HOSTING)
-    if ([activeWindow() _hostsLayersInWindowServer])
-        return LayerHostingMode::OutOfProcess;
-#endif
-    return LayerHostingMode::InProcess;
 }
 
 void PageClientImpl::viewWillMoveToAnotherWindow()
@@ -580,6 +565,11 @@ void PageClientImpl::setTextIndicator(Ref<TextIndicator> textIndicator, WebCore:
     m_impl->setTextIndicator(textIndicator.get(), lifetime);
 }
 
+void PageClientImpl::updateTextIndicator(Ref<TextIndicator> textIndicator)
+{
+    m_impl->updateTextIndicator(textIndicator.get());
+}
+
 void PageClientImpl::clearTextIndicator(WebCore::TextIndicatorDismissalAnimation dismissalAnimation)
 {
     m_impl->clearTextIndicatorWithAnimation(dismissalAnimation);
@@ -784,6 +774,7 @@ void PageClientImpl::setEditableElementIsFocused(bool editableElementIsFocused)
 
 void PageClientImpl::layerTreeCommitComplete()
 {
+    m_impl->layerTreeCommitComplete();
 }
 
 void PageClientImpl::scrollingNodeScrollViewDidScroll(WebCore::ScrollingNodeID)

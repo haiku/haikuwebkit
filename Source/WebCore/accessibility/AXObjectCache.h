@@ -292,7 +292,9 @@ public:
 
     // Returns the root object for a specific frame.
     WEBCORE_EXPORT AXCoreObject* rootObjectForFrame(LocalFrame&);
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     WEBCORE_EXPORT void buildAccessibilityTreeIfNeeded();
+#endif
 
     // Creation/retrieval of AX objects associated with a DOM or RenderTree object.
     inline AccessibilityObject* getOrCreate(RenderObject* renderer)
@@ -344,9 +346,9 @@ public:
     }
     AccessibilityObject* get(Node&) const;
 
-    void remove(RenderObject*);
+    void remove(RenderObject&);
     void remove(Node&);
-    void remove(Widget*);
+    void remove(Widget&);
     void remove(std::optional<AXID>);
 
 #if !PLATFORM(COCOA) && !USE(ATSPI)
@@ -362,8 +364,16 @@ public:
     void setPageActivityState(OptionSet<ActivityState> state) { m_pageActivityState = state; }
     OptionSet<ActivityState> pageActivityState() const { return m_pageActivityState; }
 
-    void childrenChanged(Node*, Element* newChild = nullptr);
-    void childrenChanged(RenderObject*, RenderObject* newChild = nullptr);
+    inline void childrenChanged(Node& node)
+    {
+        if (!node.renderer()) {
+            // We only need to handle DOM changes for things that don't have renderers.
+            // If something does have a renderer, we would already get children-changed notifications
+            // from the render tree.
+            childrenChanged(get(node));
+        }
+    }
+    void childrenChanged(RenderObject&, RenderObject* newChild = nullptr);
     void childrenChanged(AccessibilityObject*);
     void onDragElementChanged(Element* oldElement, Element* newElement);
     void onEventListenerAdded(Node&, const AtomString& eventType);
@@ -385,6 +395,7 @@ public:
     void checkedStateChanged(Element&);
     void autofillTypeChanged(HTMLInputElement&);
     void handleRoleChanged(AccessibilityObject&, AccessibilityRole previousRole);
+    void handleReferenceTargetChanged();
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     void columnIndexChanged(AccessibilityObject&);
@@ -706,7 +717,7 @@ private:
 
     // Returns the object or nearest render-tree ancestor object that is already created (i.e.
     // retrievable by |get|, not |getOrCreate|).
-    AccessibilityObject* getIncludingAncestors(RenderObject*) const;
+    AccessibilityObject* getIncludingAncestors(RenderObject&) const;
 
     // The AX focus is more finegrained than the notion of focused Node. This method handles those cases where the focused AX object is a descendant or a sub-part of the focused Node.
     AccessibilityObject* focusedObjectForNode(Node*);

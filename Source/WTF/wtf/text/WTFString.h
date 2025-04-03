@@ -253,7 +253,7 @@ public:
     // Given Cocoa idioms, this is a more useful default. Clients that need to preserve the
     // null string can check isNull explicitly.
     operator NSString *() const;
-    WTF_EXPORT_PRIVATE RetainPtr<NSString> protectedNSString() const;
+    WTF_EXPORT_PRIVATE RetainPtr<NSString> createNSString() const;
 #endif
 
 #if PLATFORM(HAIKU)

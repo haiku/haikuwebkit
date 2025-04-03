@@ -150,7 +150,7 @@ void AccessibilityObject::setLastPresentedTextPrediction(Node& previousCompositi
 
     if (state == CompositionState::Ended && !lastPresentedTextPrediction().text.isEmpty()) {
         auto* nodeText = dynamicDowncast<Text>(previousCompositionNode);
-        String previousCompositionNodeText = nodeText ? nodeText->wholeText() : String();
+        String previousCompositionNodeText = nodeText ? nodeText->data() : String();
         size_t wordStart = 0;
 
         // Find the location of the complete word being predicted by iterating backwards through the text to find whitespace.
@@ -231,7 +231,7 @@ static void attributeStringSetLanguage(NSMutableAttributedString *attrString, Re
         return;
 
     RefPtr object = renderer->document().axObjectCache()->getOrCreate(*renderer);
-    NSString *language = object->language();
+    NSString *language = object->languageIncludingAncestors();
     if (language.length)
         [attrString addAttribute:AccessibilityTokenLanguage value:language range:range];
     else

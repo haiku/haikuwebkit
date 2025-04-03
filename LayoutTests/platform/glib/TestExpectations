@@ -788,6 +788,7 @@ accessibility/display-contents/tree-and-treeitems.html [ Skip ]
 webkit.org/b/212805 accessibility/svg-text.html [ Failure ]
 
 accessibility/combobox/mac [ Skip ]
+accessibility/shadow-dom/reference-target/mac [ Skip ]
 
 accessibility/textarea-line-for-index.html [ Skip ]
 
@@ -1461,9 +1462,6 @@ webkit.org/b/260455 http/tests/media/media-source/mediasource-rvfc.html [ Crash 
 
 # MSE text tracks not supported
 webkit.org/b/281343 media/media-source/media-managedmse-webvtt-track.html [ Skip ]
-
-# Asserts when handling video flush events
-webkit.org/b/288936 [ Debug ] imported/w3c/web-platform-tests/webvtt/rendering/cues-with-video/processing-model/ [ Skip ]
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of GStreamer-related bugs
@@ -2381,7 +2379,6 @@ webrtc/video-vp8-videorange.html [ Skip ]
 imported/w3c/web-platform-tests/webrtc/ [ Skip ]
 imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-canTrickleIceCandidates.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCPeerConnection-addIceCandidate-timing.https.html [ Pass ]
-imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-codecs.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-encodings.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-headerExtensions.html [ Pass ]
 imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-rtcp.html [ Pass ]
@@ -2408,6 +2405,15 @@ imported/w3c/web-platform-tests/webrtc/protocol/rtp-payloadtypes.html [ Failure 
 imported/w3c/web-platform-tests/webrtc/protocol/vp8-fmtp.html [ Failure ]
 imported/w3c/web-platform-tests/webrtc/protocol/h264-profile-levels.https.html [ Failure ]
 imported/w3c/web-platform-tests/webrtc/protocol/handover-datachannel.html [ Failure ]
+
+imported/w3c/web-platform-tests/webrtc/protocol/additional-codecs.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/protocol/codecs-subsequent-offer.https.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/protocol/pt-no-bundle.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/protocol/sdes-dont-dont-dont.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/protocol/transceiver-mline-recycling.html [ Failure ]
+
+# Crashing
+imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-codecs.html [ Skip ]
 
 webkit.org/b/286481 imported/w3c/web-platform-tests/webrtc/protocol/rtp-demuxing.html [ Crash ]
 
@@ -2441,10 +2447,10 @@ imported/w3c/web-platform-tests/webrtc/protocol/rtp-extension-support.html [ Fai
 webrtc/video-getParameters.html [ Failure ]
 
 # Legacy Offer options are enabled by default in WPE and GTK ports.
-imported/w3c/web-platform-tests/webrtc/legacy/RTCPeerConnection-createOffer-offerToReceive.html [ Pass ]
+imported/w3c/web-platform-tests/webrtc/legacy/RTCPeerConnection-createOffer-offerToReceive.optional.html [ Failure ]
 
 # Fails because the transceiver state.currentDirection is expected to be null but isn't.
-imported/w3c/web-platform-tests/webrtc/legacy/RTCRtpTransceiver-with-OfferToReceive-options.https.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/legacy/RTCRtpTransceiver-with-OfferToReceive-options.optional.https.html [ Failure ]
 
 # Missing support for ICE restarts
 webkit.org/b/235885 webrtc/peerconnection-page-cache-long.html [ Skip ]

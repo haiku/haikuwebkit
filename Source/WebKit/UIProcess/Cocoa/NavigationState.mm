@@ -481,8 +481,8 @@ static void interceptMarketplaceKitNavigation(Ref<API::NavigationAction>&& actio
         return;
     }
 
-    RetainPtr<NSURL> requesterTopOriginURL = static_cast<NSURL *>(action->data().requesterTopOrigin.toURL());
-    RetainPtr<NSURL> url = static_cast<NSURL *>(action->request().url());
+    RetainPtr requesterTopOriginURL = action->data().requesterTopOrigin.toURL().createNSURL();
+    RetainPtr url = action->request().url().createNSURL();
 
     if (!requesterTopOriginURL || !url) {
         RELEASE_LOG_ERROR(Loading, "NavigationState: can't handle MarketplaceKit navigation with requesterTopOriginURL: %d url: %d", static_cast<bool>(requesterTopOriginURL), static_cast<bool>(url));
@@ -602,7 +602,7 @@ void NavigationState::NavigationClient::decidePolicyForNavigationAction(WebPageP
             }
 
             auto nsURLRequest = wrapper(API::URLRequest::create(navigationAction->request()));
-            if ([NSURLConnection canHandleRequest:nsURLRequest.get()]
+            if ((nsURLRequest.get().URL && [NSURLConnection canHandleRequest:nsURLRequest.get()])
                 || webPage->urlSchemeHandlerForScheme(nsURLRequest.get().URL.scheme)
                 || [nsURLRequest.get().URL.scheme isEqualToString:@"blob"]) {
                 if (navigationAction->shouldPerformDownload())

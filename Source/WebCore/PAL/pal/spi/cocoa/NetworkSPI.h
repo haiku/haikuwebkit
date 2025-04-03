@@ -23,6 +23,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
+DECLARE_SYSTEM_HEADER
+
 #import <Network/Network.h>
 
 #if USE(APPLE_INTERNAL_SDK)
@@ -53,7 +57,6 @@ void nw_parameters_allow_sharing_port_with_listener(nw_parameters_t, nw_listener
 void nw_connection_reset_traffic_class(nw_connection_t, uint32_t traffic_class);
 void nw_parameters_set_traffic_class(nw_parameters_t, uint32_t traffic_class);
 
-OS_OBJECT_RETURNS_RETAINED nw_interface_t nw_interface_create_with_name(const char *interface_name);
 OS_OBJECT_RETURNS_RETAINED nw_interface_t nw_path_copy_interface(nw_path_t);
 
 bool nw_settings_get_unified_http_enabled(void);

@@ -1691,6 +1691,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
 
     _selectionInteractionType = SelectionInteractionType::None;
+    _lastSelectionChildScrollViewContentOffset = std::nullopt;
+    _waitingForEditorStateAfterScrollingSelectionContainer = NO;
 
     _cachedHasCustomTintColor = std::nullopt;
     _cachedSelectedTextRange = nil;
@@ -2737,6 +2739,15 @@ static inline WebCore::FloatSize tapHighlightBorderRadius(WebCore::FloatSize bor
 
 - (void)_scrollingNodeScrollingDidEnd:(std::optional<WebCore::ScrollingNodeID>)scrollingNodeID
 {
+    if (auto& state = _page->editorState(); state.hasVisualData() && scrollingNodeID && scrollingNodeID == state.visualData->enclosingScrollingNodeID) {
+        _page->scheduleFullEditorStateUpdate();
+        _waitingForEditorStateAfterScrollingSelectionContainer = YES;
+        _page->callAfterNextPresentationUpdate([weakSelf = WeakObjCPtr<WKContentView>(self)] {
+            if (auto strongSelf = weakSelf.get())
+                strongSelf->_waitingForEditorStateAfterScrollingSelectionContainer = NO;
+        });
+    }
+
     // If scrolling ends before we've received a selection update,
     // we postpone showing the selection until the update is received.
     if (!_selectionNeedsUpdate) {
@@ -8756,6 +8767,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (!scroller)
         return;
 
+    if ([_webView _isInStableState:scroller.get()])
+        return;
+
     auto possiblyStaleScrollOffset = state.visualData->enclosingScrollOffset;
     auto scrollDelta = possiblyStaleScrollOffset - WebCore::roundedIntPoint([scroller contentOffset]);
 
@@ -9337,8 +9351,15 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
             _markedText = editorState.hasComposition ? postLayoutData.markedText : String { };
             if (![_markedText length])
                 _isDeferringKeyEventsToInputMethod = NO;
-            [_textInteractionWrapper prepareToMoveSelectionContainer:self._selectionContainerViewInternal];
+            RetainPtr containerView = [self _selectionContainerViewInternal];
+            [_textInteractionWrapper prepareToMoveSelectionContainer:containerView.get()];
             [_textInteractionWrapper selectionChanged];
+            _lastSelectionChildScrollViewContentOffset = [containerView] -> std::optional<WebCore::IntPoint> {
+                RetainPtr scrollView = [containerView _wk_parentScrollView];
+                if (is_objc<WKChildScrollView>(scrollView.get()))
+                    return WebCore::roundedIntPoint([scrollView contentOffset]);
+                return { };
+            }();
         }
 
         _selectionNeedsUpdate = NO;
@@ -9346,7 +9367,8 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
             [_textInteractionWrapper didEndScrollingOverflow];
             _shouldRestoreSelection = NO;
         }
-    }
+    } else
+        [self _updateSelectionViewsInChildScrollViewIfNeeded];
 
     if (postLayoutData.isStableStateUpdate && _needsDeferredEndScrollingSelectionUpdate && _page->inStableState()) {
         auto firstResponder = self.firstResponder;
@@ -9357,6 +9379,27 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
 
         _needsDeferredEndScrollingSelectionUpdate = NO;
     }
+}
+
+- (void)_updateSelectionViewsInChildScrollViewIfNeeded
+{
+    if (_waitingForEditorStateAfterScrollingSelectionContainer)
+        return;
+
+    RetainPtr selectionContainer = [self _selectionContainerViewInternal];
+    RetainPtr scroller = [selectionContainer _wk_parentScrollView];
+    if (![_webView _isInStableState:scroller.get()])
+        return;
+
+    if (!is_objc<WKChildScrollView>(scroller.get()))
+        return;
+
+    auto contentOffset = WebCore::roundedIntPoint([scroller contentOffset]);
+    if (_lastSelectionChildScrollViewContentOffset == contentOffset)
+        return;
+
+    _lastSelectionChildScrollViewContentOffset = contentOffset;
+    [_textInteractionWrapper setNeedsSelectionUpdate];
 }
 
 - (BOOL)shouldAllowHidingSelectionCommands
@@ -9977,7 +10020,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         context.get()[PAL::get_DataDetectorsUI_kDataDetectorsTrailingText()] = positionInformation.textAfter;
 
     auto canShowPreview = ^{
-        if (!static_cast<NSURL *>(positionInformation.url).iTunesStoreURL)
+        if (!positionInformation.url.createNSURL().get().iTunesStoreURL)
             return YES;
         if (!_page->websiteDataStore().isPersistent())
             return NO;
@@ -12415,7 +12458,7 @@ static RetainPtr<NSItemProvider> createItemProvider(const WebKit::WebPageProxy& 
 
     CGRect frame = _textIndicator->textBoundingRectInRootViewCoordinates();
     _textIndicatorLayer = adoptNS([[WebTextIndicatorLayer alloc] initWithFrame:frame
-        textIndicator:textIndicator margin:CGSizeZero offset:CGPointZero]);
+        textIndicator:textIndicator.ptr() margin:CGSizeZero offset:CGPointZero]);
     
     [[self layer] addSublayer:_textIndicatorLayer.get()];
 
@@ -12425,6 +12468,18 @@ static RetainPtr<NSItemProvider> createItemProvider(const WebKit::WebPageProxy& 
     [self performSelector:@selector(startFadeOut) withObject:self afterDelay:WebCore::timeBeforeFadeStarts.value()];
 }
 
+- (void)updateTextIndicator:(Ref<WebCore::TextIndicator>)textIndicator
+{
+    if (_textIndicator != textIndicator.ptr())
+        return;
+
+    CGRect frame = _textIndicator->textBoundingRectInRootViewCoordinates();
+    _textIndicatorLayer = adoptNS([[WebTextIndicatorLayer alloc] initWithFrame:frame
+        textIndicator:textIndicator.ptr() margin:CGSizeZero offset:CGPointZero]);
+
+    [[self layer] addSublayer:_textIndicatorLayer.get()];
+}
+
 - (void)clearTextIndicator:(WebCore::TextIndicatorDismissalAnimation)animation
 {
     RefPtr<WebCore::TextIndicator> textIndicator = WTFMove(_textIndicator);
@@ -12432,7 +12487,7 @@ static RetainPtr<NSItemProvider> createItemProvider(const WebKit::WebPageProxy& 
     if ([_textIndicatorLayer isFadingOut])
         return;
 
-    if (textIndicator && [_textIndicatorLayer indicatorWantsManualAnimation:*textIndicator] && [_textIndicatorLayer hasCompletedAnimation] && animation == WebCore::TextIndicatorDismissalAnimation::FadeOut) {
+    if (textIndicator && textIndicator->wantsManualAnimation() && [_textIndicatorLayer hasCompletedAnimation] && animation == WebCore::TextIndicatorDismissalAnimation::FadeOut) {
         [self startFadeOut];
         return;
     }

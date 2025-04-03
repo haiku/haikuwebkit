@@ -669,6 +669,9 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::DocumentLinks:
             propertyMap.set(AXProperty::DocumentLinks, axIDs(axObject.documentLinks()));
             break;
+        case AXProperty::ExplicitOrientation:
+            propertyMap.set(AXProperty::ExplicitOrientation, axObject.explicitOrientation());
+            break;
         case AXProperty::ExtendedDescription:
             propertyMap.set(AXProperty::ExtendedDescription, axObject.extendedDescription().isolatedCopy());
             break;
@@ -721,9 +724,6 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::MinValueForRange:
             propertyMap.set(AXProperty::MinValueForRange, axObject.minValueForRange());
             break;
-        case AXProperty::Orientation:
-            propertyMap.set(AXProperty::Orientation, static_cast<int>(axObject.orientation()));
-            break;
         case AXProperty::NameAttribute:
             propertyMap.set(AXProperty::NameAttribute, axObject.nameAttribute().isolatedCopy());
             break;
@@ -766,8 +766,8 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::SortDirection:
             propertyMap.set(AXProperty::SortDirection, static_cast<int>(axObject.sortDirection()));
             break;
-        case AXProperty::SpeechHint:
-            propertyMap.set(AXProperty::SpeechHint, axObject.speechHintAttributeValue().isolatedCopy());
+        case AXProperty::SpeakAs:
+            propertyMap.set(AXProperty::SpeakAs, axObject.speakAs());
             break;
         case AXProperty::KeyShortcuts:
             propertyMap.set(AXProperty::SupportsKeyShortcuts, axObject.supportsKeyShortcuts());

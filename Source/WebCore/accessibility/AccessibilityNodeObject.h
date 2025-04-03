@@ -46,7 +46,7 @@ public:
 
     void init() override;
 
-    bool canvasHasFallbackContent() const final;
+    bool hasElementDescendant() const final;
 
     bool isBusy() const final;
     bool isDetached() const override { return !m_node; }
@@ -90,7 +90,8 @@ public:
     float minValueForRange() const override;
     float stepValueForRange() const override;
 
-    AccessibilityOrientation orientation() const override;
+    std::optional<AccessibilityOrientation> orientationFromARIA() const;
+    std::optional<AccessibilityOrientation> explicitOrientation() const override { return orientationFromARIA(); }
 
     AccessibilityButtonState checkboxOrRadioValue() const final;
 
@@ -182,8 +183,8 @@ protected:
 
     bool elementAttributeValue(const QualifiedName&) const;
 
-    const String liveRegionStatus() const final;
-    const String liveRegionRelevant() const final;
+    const String explicitLiveRegionStatus() const final { return getAttribute(HTMLNames::aria_liveAttr); }
+    const String explicitLiveRegionRelevant() const final { return getAttribute(HTMLNames::aria_relevantAttr); }
     bool liveRegionAtomic() const final;
 
     String accessKey() const final;

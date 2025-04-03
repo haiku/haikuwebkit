@@ -25,11 +25,8 @@
 
 #pragma once
 
-#include "DecomposedGlyphs.h"
 #include "DisplayListItem.h"
 #include "Filter.h"
-#include "Font.h"
-#include "FontCustomPlatformData.h"
 #include "Gradient.h"
 #include "ImageBuffer.h"
 #include "NativeImage.h"
@@ -54,12 +51,6 @@ public:
         m_nativeImages.add(identifier, WTFMove(image));
     }
 
-    void add(Ref<DecomposedGlyphs>&& decomposedGlyphs)
-    {
-        auto identifier = decomposedGlyphs->renderingResourceIdentifier();
-        m_decomposedGlyphs.add(identifier, WTFMove(decomposedGlyphs));
-    }
-
     void add(Ref<Gradient>&& gradient)
     {
         auto identifier = gradient->renderingResourceIdentifier();
@@ -72,54 +63,25 @@ public:
         m_filters.add(identifier, WTFMove(filter));
     }
 
-    void add(Ref<Font>&& font)
+    RefPtr<ImageBuffer> getImageBuffer(RenderingResourceIdentifier identifier) const
     {
-        auto identifier = font->renderingResourceIdentifier();
-        m_fonts.add(identifier, WTFMove(font));
+        return m_imageBuffers.get(identifier);
     }
 
-    RefPtr<ImageBuffer> getImageBuffer(RenderingResourceIdentifier identifier, OptionSet<ReplayOption> options = { }) const
+    RefPtr<NativeImage> getNativeImage(RenderingResourceIdentifier identifier) const
     {
-        RefPtr imageBuffer = m_imageBuffers.get(identifier);
-
-#if USE(SKIA)
-        if (imageBuffer && options.contains(ReplayOption::FlushAcceleratedImagesAndWaitForCompletion))
-            imageBuffer->waitForAcceleratedRenderingFenceCompletion();
-#else
-        UNUSED_PARAM(options);
-#endif
-
-        return imageBuffer;
+        return m_nativeImages.get(identifier);
     }
 
-    RefPtr<NativeImage> getNativeImage(RenderingResourceIdentifier identifier, OptionSet<ReplayOption> options = { }) const
+    std::optional<SourceImage> getSourceImage(RenderingResourceIdentifier identifier) const
     {
-        RefPtr nativeImage = m_nativeImages.get(identifier);
-
-#if USE(SKIA)
-        if (nativeImage && options.contains(ReplayOption::FlushAcceleratedImagesAndWaitForCompletion))
-            nativeImage->backend().waitForAcceleratedRenderingFenceCompletion();
-#else
-        UNUSED_PARAM(options);
-#endif
-
-        return nativeImage;
-    }
-
-    std::optional<SourceImage> getSourceImage(RenderingResourceIdentifier identifier, OptionSet<ReplayOption> options = { }) const
-    {
-        if (RefPtr nativeImage = getNativeImage(identifier, options))
+        if (RefPtr nativeImage = getNativeImage(identifier))
             return { { *nativeImage } };
 
-        if (RefPtr imageBuffer = getImageBuffer(identifier, options))
+        if (RefPtr imageBuffer = getImageBuffer(identifier))
             return { { *imageBuffer } };
 
         return std::nullopt;
-    }
-
-    RefPtr<DecomposedGlyphs> getDecomposedGlyphs(RenderingResourceIdentifier identifier) const
-    {
-        return m_decomposedGlyphs.get(identifier);
     }
 
     RefPtr<Gradient> getGradient(RenderingResourceIdentifier identifier) const
@@ -132,28 +94,19 @@ public:
         return m_filters.get(identifier);
     }
 
-    Font* getFont(RenderingResourceIdentifier identifier) const
-    {
-        return m_fonts.get(identifier);
-    }
-
     void clearAllResources()
     {
         m_imageBuffers.clear();
         m_nativeImages.clear();
         m_gradients.clear();
-        m_decomposedGlyphs.clear();
         m_filters.clear();
-        m_fonts.clear();
     }
 
 private:
     UncheckedKeyHashMap<RenderingResourceIdentifier, Ref<WebCore::ImageBuffer>> m_imageBuffers;
     UncheckedKeyHashMap<RenderingResourceIdentifier, Ref<WebCore::NativeImage>> m_nativeImages;
     UncheckedKeyHashMap<RenderingResourceIdentifier, Ref<WebCore::Gradient>> m_gradients;
-    UncheckedKeyHashMap<RenderingResourceIdentifier, Ref<WebCore::DecomposedGlyphs>> m_decomposedGlyphs;
     UncheckedKeyHashMap<RenderingResourceIdentifier, Ref<WebCore::Filter>> m_filters;
-    UncheckedKeyHashMap<RenderingResourceIdentifier, Ref<WebCore::Font>> m_fonts;
 };
 
 } // namespace DisplayList

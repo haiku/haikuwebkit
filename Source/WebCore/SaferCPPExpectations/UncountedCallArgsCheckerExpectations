@@ -271,7 +271,6 @@ accessibility/mac/AccessibilityObjectMac.mm
 accessibility/mac/WebAccessibilityObjectWrapperBase.mm
 accessibility/mac/WebAccessibilityObjectWrapperMac.mm
 animation/AcceleratedEffectStackUpdater.cpp
-animation/AnimationEffect.cpp
 animation/AnimationEffectTiming.cpp
 animation/AnimationTimeline.cpp
 animation/AnimationTimelinesController.cpp
@@ -383,7 +382,6 @@ bindings/js/JSXMLHttpRequestCustom.cpp
 bindings/js/ScheduledAction.cpp
 bindings/js/ScriptBufferSourceProvider.h
 bindings/js/ScriptCachedFrameData.cpp
-bindings/js/ScriptController.cpp
 bindings/js/ScriptModuleLoader.cpp
 bindings/js/ScriptSourceCode.h
 bindings/js/WebAssemblyScriptBufferSourceProvider.h
@@ -412,7 +410,6 @@ css/CSSCounterValue.h
 css/CSSCrossfadeValue.cpp
 css/CSSCursorImageValue.cpp
 css/CSSFontFace.cpp
-css/CSSFontFaceDescriptors.cpp
 css/CSSFontFaceRule.cpp
 css/CSSFontFaceSet.cpp
 css/CSSFontFeatureValue.cpp
@@ -656,7 +653,6 @@ html/BaseClickableWithKeyInputType.cpp
 html/BaseTextInputType.cpp
 html/CachedHTMLCollection.h
 html/CachedHTMLCollectionInlines.h
-html/CanvasBase.cpp
 html/CheckboxInputType.cpp
 html/CollectionTraversalInlines.h
 html/CustomPaintCanvas.cpp
@@ -685,7 +681,6 @@ html/HTMLFormElement.cpp
 html/HTMLFrameElementBase.cpp
 html/HTMLIFrameElement.cpp
 html/HTMLImageElement.cpp
-html/HTMLImageLoader.cpp
 html/HTMLInputElement.cpp
 html/HTMLLinkElement.cpp
 html/HTMLMapElement.cpp
@@ -836,17 +831,13 @@ inspector/agents/worker/WorkerRuntimeAgent.cpp
 layout/integration/inline/LayoutIntegrationInlineContentBuilder.cpp
 layout/integration/inline/LayoutIntegrationLineLayout.cpp
 loader/ApplicationManifestLoader.cpp
-loader/CookieJar.cpp
 loader/CrossOriginAccessControl.cpp
 loader/CrossOriginOpenerPolicy.cpp
 loader/CrossOriginPreflightChecker.cpp
-loader/DocumentLoader.cpp
 loader/DocumentThreadableLoader.cpp
 loader/DocumentWriter.cpp
 loader/FormSubmission.cpp
 loader/FrameLoadRequest.cpp
-loader/FrameLoader.cpp
-loader/ImageLoader.cpp
 loader/LinkLoader.cpp
 loader/MediaResourceLoader.cpp
 loader/MixedContentChecker.cpp
@@ -855,7 +846,6 @@ loader/PingLoader.cpp
 loader/PolicyChecker.cpp
 loader/ResourceLoadNotifier.cpp
 loader/ResourceLoader.cpp
-loader/SubframeLoader.cpp
 loader/WorkerThreadableLoader.cpp
 loader/appcache/ApplicationCache.cpp
 loader/appcache/ApplicationCacheGroup.cpp
@@ -868,7 +858,6 @@ loader/archive/cf/LegacyWebArchive.cpp
 loader/cache/CachedCSSStyleSheet.cpp
 loader/cache/CachedImage.cpp
 loader/cache/CachedImage.h
-loader/cache/CachedResourceLoader.cpp
 loader/cache/CachedResourceRequest.cpp
 loader/cache/CachedResourceRequestInitiatorTypes.h
 loader/cache/CachedSVGDocumentReference.cpp
@@ -918,7 +907,6 @@ page/PageOverlayController.cpp
 page/PageSerializer.cpp
 page/PartitionedSecurityOrigin.h
 page/Performance.cpp
-page/PerformanceLogging.cpp
 page/PerformanceMark.cpp
 page/PerformanceMeasure.cpp
 page/PerformanceMonitor.cpp
@@ -1095,7 +1083,6 @@ platform/mock/RTCNotifiersMock.cpp
 platform/mock/TimerEventBasedMock.h
 platform/mock/mediasource/MockMediaSourcePrivate.cpp
 platform/network/SynchronousLoaderClient.cpp
-platform/network/cocoa/RangeResponseGenerator.mm
 platform/network/mac/ResourceHandleMac.mm
 platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.mm
 platform/text/BidiContext.cpp

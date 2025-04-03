@@ -40,9 +40,6 @@ public:
     WEBCORE_EXPORT virtual ~RecorderImpl();
 
     bool isEmpty() const { return m_displayList.isEmpty(); }
-#if USE(SKIA)
-    bool usedAcceleratedRendering() const { return m_usedAcceleratedRendering; }
-#endif
 
     void save(GraphicsContextState::Purpose) final;
     void restore(GraphicsContextState::Purpose) final;
@@ -81,6 +78,8 @@ public:
     void fillRect(const FloatRect&, const Color&, CompositeOperator, BlendMode) final;
     void fillRoundedRect(const FloatRoundedRect&, const Color&, BlendMode) final;
     void fillRectWithRoundedHole(const FloatRect&, const FloatRoundedRect&, const Color&) final;
+    void drawGlyphsImmediate(const Font&, std::span<const GlyphBufferGlyph>, std::span<const GlyphBufferAdvance>, const FloatPoint& localAnchor, FontSmoothingMode) final;
+    void drawDecomposedGlyphs(const Font&, const DecomposedGlyphs&) final;
 #if ENABLE(VIDEO)
     void drawVideoFrame(VideoFrame&, const FloatRect& destination, ImageOrientation, bool shouldDiscardAlpha) final;
 #endif
@@ -106,8 +105,6 @@ private:
     void recordClearDropShadow() final;
     void recordClipToImageBuffer(ImageBuffer&, const FloatRect& destinationRect) final;
     void recordDrawFilteredImageBuffer(ImageBuffer*, const FloatRect& sourceImageRect, Filter&) final;
-    void recordDrawGlyphs(const Font&, std::span<const GlyphBufferGlyph>, std::span<const GlyphBufferAdvance>, const FloatPoint& localAnchor, FontSmoothingMode) final;
-    void recordDrawDecomposedGlyphs(const Font&, const DecomposedGlyphs&) final;
     void recordDrawImageBuffer(ImageBuffer&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) final;
     void recordDrawNativeImage(RenderingResourceIdentifier imageIdentifier, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) final;
     void recordDrawSystemImage(SystemImage&, const FloatRect&) final;
@@ -135,8 +132,6 @@ private:
     bool recordResourceUse(NativeImage&) final;
     bool recordResourceUse(ImageBuffer&) final;
     bool recordResourceUse(const SourceImage&) final;
-    bool recordResourceUse(Font&) final;
-    bool recordResourceUse(DecomposedGlyphs&) final;
     bool recordResourceUse(Gradient&) final;
     bool recordResourceUse(Filter&) final;
 
@@ -146,9 +141,6 @@ private:
     }
 
     DisplayList& m_displayList;
-#if USE(SKIA)
-    bool m_usedAcceleratedRendering : 1 { false };
-#endif
 };
 
 }

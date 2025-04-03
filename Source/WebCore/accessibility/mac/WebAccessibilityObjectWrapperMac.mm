@@ -1511,11 +1511,17 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         if ([attributeName isEqualToString:NSAccessibilityRowHeaderUIElementsAttribute])
             return makeNSArray(backingObject->rowHeaders());
 
-        if ([attributeName isEqualToString:NSAccessibilityARIAColumnIndexAttribute])
-            return @(backingObject->axColumnIndex());
+        if ([attributeName isEqualToString:NSAccessibilityARIAColumnIndexAttribute]) {
+            if (std::optional columnIndex = backingObject->axColumnIndex())
+                return @(*columnIndex);
+            return @(-1);
+        }
 
-        if ([attributeName isEqualToString:NSAccessibilityARIARowIndexAttribute])
-            return @(backingObject->axRowIndex());
+        if ([attributeName isEqualToString:NSAccessibilityARIARowIndexAttribute]) {
+            if (std::optional rowIndex = backingObject->axRowIndex())
+                return @(*rowIndex);
+            return @(-1);
+        }
     }
 
     if (backingObject->isTree()) {
@@ -1591,9 +1597,6 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     }
     if ([attributeName isEqualToString:NSAccessibilityDisclosingAttribute])
         return [NSNumber numberWithBool:backingObject->isExpanded()];
-
-    if (backingObject->isList() && [attributeName isEqualToString:NSAccessibilityOrientationAttribute])
-        return NSAccessibilityVerticalOrientationValue;
 
     if ([attributeName isEqualToString:NSAccessibilitySelectedTextMarkerRangeAttribute])
         return (id)[self selectedTextMarkerRange];
@@ -1686,7 +1689,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     }
 
     if ([attributeName isEqualToString:NSAccessibilityLanguageAttribute])
-        return backingObject->language();
+        return backingObject->languageIncludingAncestors();
 
     if ([attributeName isEqualToString:NSAccessibilityExpandedAttribute])
         return [NSNumber numberWithBool:backingObject->isExpanded()];
@@ -2658,27 +2661,6 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 }
 
 #if ENABLE(TREE_DEBUGGING)
-- (NSString *)debugDescriptionForTextMarker:(AXTextMarkerRef)textMarker
-{
-    return visiblePositionForTextMarker(self.axBackingObject->axObjectCache(), textMarker).debugDescription();
-}
-
-- (NSString *)debugDescriptionForTextMarkerRange:(AXTextMarkerRangeRef)textMarkerRange
-{
-    RefPtr<AXCoreObject> backingObject = self.axBackingObject;
-    if (!backingObject)
-        return @"<null>";
-
-    auto visiblePositionRange = visiblePositionRangeForTextMarkerRange(backingObject->axObjectCache(), textMarkerRange);
-    if (visiblePositionRange.isNull())
-        return @"<null>";
-
-    char description[2048];
-    formatForDebugger(visiblePositionRange, description, sizeof(description));
-
-    return [NSString stringWithUTF8String:description];
-}
-
 - (void)showNodeForTextMarker:(AXTextMarkerRef)textMarker
 {
     auto visiblePosition = visiblePositionForTextMarker(self.axBackingObject->axObjectCache(), textMarker);
@@ -2696,13 +2678,6 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     if (!node)
         return;
     node->showTreeForThis();
-}
-
-static void formatForDebugger(const VisiblePositionRange& range, char* buffer, unsigned length)
-{
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-    strlcpy(buffer, makeString("from "_s, range.start.debugDescription(), " to "_s, range.end.debugDescription()).utf8().data(), length);
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 }
 #endif
 
@@ -3223,23 +3198,8 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         });
     }
 
-    if ([attribute isEqualToString:NSAccessibilityStringForTextMarkerRangeAttribute]) {
-#if ENABLE(AX_THREAD_TEXT_APIS)
-        if (AXObjectCache::useAXThreadTextApis()) {
-            AXTextMarkerRange range = { textMarkerRange };
-            return range.toString();
-        }
-#endif
-        return Accessibility::retrieveValueFromMainThread<String>([textMarkerRange = retainPtr(textMarkerRange), protectedSelf = retainPtr(self)] () -> String {
-            auto* backingObject = protectedSelf.get().axBackingObject;
-            if (!backingObject)
-                return String();
-
-            AXTextMarkerRange markerRange { textMarkerRange.get() };
-            auto range = markerRange.simpleRange();
-            return range ? backingObject->stringForRange(*range) : String();
-        });
-    }
+    if ([attribute isEqualToString:NSAccessibilityStringForTextMarkerRangeAttribute])
+        return AXTextMarkerRange { textMarkerRange }.toString();
 
     if ([attribute isEqualToString:NSAccessibilityTextMarkerForPositionAttribute]) {
         if (!pointSet)
@@ -3327,9 +3287,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
             auto start = cache->characterOffsetForIndex(range.location, backingObject);
             auto end = cache->characterOffsetForIndex(range.location + range.length, backingObject);
             auto range = cache->rangeForUnorderedCharacterOffsets(start, end);
-            if (!range)
-                return { };
-            return backingObject->stringForRange(*range);
+            return AXTextMarkerRange { range }.toString();
         });
     }
 
@@ -3493,24 +3451,6 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         return @(length);
     }
 
-#if ENABLE(TREE_DEBUGGING)
-    if ([attribute isEqualToString:AXTextMarkerDebugDescriptionAttribute])
-        return [self debugDescriptionForTextMarker:textMarker];
-
-    if ([attribute isEqualToString:AXTextMarkerRangeDebugDescriptionAttribute])
-        return [self debugDescriptionForTextMarkerRange:textMarkerRange];
-
-    if ([attribute isEqualToString:AXTextMarkerNodeDebugDescriptionAttribute]) {
-        [self showNodeForTextMarker:textMarker];
-        return nil;
-    }
-
-    if ([attribute isEqualToString:AXTextMarkerNodeTreeDebugDescriptionAttribute]) {
-        [self showNodeTreeForTextMarker:textMarker];
-        return nil;
-    }
-#endif
-
     if (backingObject->isTable() && backingObject->isExposable()) {
         if ([attribute isEqualToString:NSAccessibilityCellForColumnAndRowParameterizedAttribute]) {
             if (array == nil || [array count] != 2)
@@ -3575,6 +3515,24 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         auto* parent = backingObject->parentObject();
         return parent ? [NSValue valueWithRect:parent->convertFrameToSpace(FloatRect(rect), AccessibilityConversionSpace::Page)] : nil;
     }
+
+    if ([attribute isEqualToString:NSAccessibilityTextMarkerDebugDescriptionAttribute])
+        return AXTextMarker { textMarker }.debugDescription();
+
+    if ([attribute isEqualToString:NSAccessibilityTextMarkerRangeDebugDescriptionAttribute])
+        return AXTextMarkerRange { textMarkerRange }.debugDescription();
+
+#if ENABLE(TREE_DEBUGGING)
+    if ([attribute isEqualToString:AXTextMarkerNodeDebugDescriptionAttribute]) {
+        [self showNodeForTextMarker:textMarker];
+        return nil;
+    }
+
+    if ([attribute isEqualToString:AXTextMarkerNodeTreeDebugDescriptionAttribute]) {
+        [self showNodeTreeForTextMarker:textMarker];
+        return nil;
+    }
+#endif // ENABLE(TREE_DEBUGGING)
 
     if (AXObjectCache::clientIsInTestMode()) {
         if (id value = parameterizedAttributeValueForTesting(backingObject, attribute, parameter))

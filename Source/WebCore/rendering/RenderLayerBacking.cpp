@@ -349,12 +349,12 @@ RenderLayerBacking::~RenderLayerBacking()
     destroyGraphicsLayers();
 }
 
-void RenderLayerBacking::willBeDestroyed()
+void RenderLayerBacking::willBeDestroyed(OptionSet<UpdateBackingSharingFlags> flags)
 {
     ASSERT(m_owningLayer.backing() == this);
     compositor().removeFromScrollCoordinatedLayers(m_owningLayer);
 
-    clearBackingSharingLayers();
+    clearBackingSharingLayers(flags);
 }
 
 void RenderLayerBacking::willDestroyLayer(const GraphicsLayer* layer)
@@ -363,59 +363,44 @@ void RenderLayerBacking::willDestroyLayer(const GraphicsLayer* layer)
         compositor().layerTiledBackingUsageChanged(layer, false);
 }
 
-static void clearBackingSharingLayerProviders(SingleThreadWeakListHashSet<RenderLayer>& sharingLayers, const RenderLayer& providerLayer)
+static void clearBackingSharingLayerProviders(SingleThreadWeakListHashSet<RenderLayer>& sharingLayers, const RenderLayer& providerLayer, OptionSet<UpdateBackingSharingFlags> flags)
 {
     for (auto& layer : sharingLayers) {
         if (layer.backingProviderLayer() == &providerLayer)
-            layer.setBackingProviderLayer(nullptr);
+            layer.setBackingProviderLayer(nullptr, flags);
     }
 }
 
 void RenderLayerBacking::setBackingSharingLayers(SingleThreadWeakListHashSet<RenderLayer>&& sharingLayers)
 {
     bool sharingLayersChanged = m_backingSharingLayers.computeSize() != sharingLayers.computeSize();
+    clearBackingSharingLayerProviders(m_backingSharingLayers, m_owningLayer, { UpdateBackingSharingFlags::DuringCompositingUpdate });
 
-    clearBackingSharingLayerProviders(m_backingSharingLayers, m_owningLayer);
-
-    // For layers that used to share and no longer do, and are not composited, recompute repaint rects.
     for (auto& oldSharingLayer : m_backingSharingLayers) {
-        // Layers that go from shared to composited have their repaint rects recomputed in RenderLayerCompositor::updateBacking().
-        if (!sharingLayers.contains(oldSharingLayer)) {
+        if (!sharingLayers.contains(oldSharingLayer))
             sharingLayersChanged = true;
-            if (!oldSharingLayer.isComposited())
-                oldSharingLayer.compositingStatusChanged(LayoutUpToDate::Yes);
-        }
     }
 
     if (sharingLayersChanged) {
         if (!sharingLayers.isEmptyIgnoringNullReferences())
             setRequiresOwnBackingStore(true);
-        setContentsNeedDisplay(); // This could be optimized to only repaint rects for changed layers.
     }
 
     auto oldSharingLayers = std::exchange(m_backingSharingLayers, WTFMove(sharingLayers));
 
     for (auto& layer : m_backingSharingLayers)
-        layer.setBackingProviderLayer(&m_owningLayer);
-
-    if (sharingLayersChanged) {
-        // For layers that are newly sharing, recompute repaint rects.
-        for (auto& currentSharingLayer : m_backingSharingLayers) {
-            if (!oldSharingLayers.contains(currentSharingLayer))
-                currentSharingLayer.compositingStatusChanged(LayoutUpToDate::Yes);
-        }
-    }
+        layer.setBackingProviderLayer(&m_owningLayer, { UpdateBackingSharingFlags::DuringCompositingUpdate });
 }
 
-void RenderLayerBacking::removeBackingSharingLayer(RenderLayer& layer)
+void RenderLayerBacking::removeBackingSharingLayer(RenderLayer& layer, OptionSet<UpdateBackingSharingFlags> flags)
 {
-    layer.setBackingProviderLayer(nullptr);
+    layer.setBackingProviderLayer(nullptr, flags);
     m_backingSharingLayers.remove(layer);
 }
 
-void RenderLayerBacking::clearBackingSharingLayers()
+void RenderLayerBacking::clearBackingSharingLayers(OptionSet<UpdateBackingSharingFlags> flags)
 {
-    clearBackingSharingLayerProviders(m_backingSharingLayers, m_owningLayer);
+    clearBackingSharingLayerProviders(m_backingSharingLayers, m_owningLayer, flags);
     m_backingSharingLayers.clear();
 }
 
@@ -1569,6 +1554,8 @@ void RenderLayerBacking::updateGeometry(const RenderLayer* compositedAncestor)
         m_viewportAnchorLayer->setPosition(primaryLayerPosition);
         primaryLayerPosition = { };
     }
+
+    setNeedsFixedContainerEdgesUpdateIfNeeded();
 
     if (m_contentsContainmentLayer) {
         m_contentsContainmentLayer->setPreserves3D(preserves3D);
@@ -3636,6 +3623,8 @@ void RenderLayerBacking::setContentsNeedDisplay(GraphicsLayer::ShouldClipToLayer
 
     if (m_scrolledContentsLayer && m_scrolledContentsLayer->drawsContent())
         m_scrolledContentsLayer->setNeedsDisplay();
+
+    setNeedsFixedContainerEdgesUpdateIfNeeded();
 }
 
 // r is in the coordinate space of the layer's render object
@@ -3687,6 +3676,8 @@ void RenderLayerBacking::setContentsNeedDisplayInRect(const LayoutRect& r, Graph
         layerDirtyRect.move(-m_scrolledContentsLayer->offsetFromRenderer() + toLayoutSize(scrollOffset) - m_subpixelOffsetFromRenderer);
         m_scrolledContentsLayer->setNeedsDisplayInRect(layerDirtyRect, shouldClip);
     }
+
+    setNeedsFixedContainerEdgesUpdateIfNeeded();
 }
 
 void RenderLayerBacking::paintIntoLayer(const GraphicsLayer* graphicsLayer, GraphicsContext& context,
@@ -4104,6 +4095,11 @@ float RenderLayerBacking::zoomedOutPageScaleFactor() const
     return compositor().zoomedOutPageScaleFactor();
 }
 
+FloatSize RenderLayerBacking::enclosingFrameViewVisibleSize() const
+{
+    return compositor().enclosingFrameViewVisibleSize();
+}
+
 float RenderLayerBacking::deviceScaleFactor() const
 {
     return compositor().deviceScaleFactor();
@@ -4290,25 +4286,25 @@ bool RenderLayerBacking::startAnimation(double timeOffset, const Animation& anim
     if (!renderer().isSVGLayerAwareRenderer())
         referenceBoxRect = snappedIntRect(LayoutRect(referenceBoxRect));
 
-    if (hasRotate && m_graphicsLayer->addAnimation(rotateVector, referenceBoxRect.size(), &animation, keyframes.animationName(), timeOffset))
+    if (hasRotate && m_graphicsLayer->addAnimation(rotateVector, referenceBoxRect.size(), &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasScale && m_graphicsLayer->addAnimation(scaleVector, referenceBoxRect.size(), &animation, keyframes.animationName(), timeOffset))
+    if (hasScale && m_graphicsLayer->addAnimation(scaleVector, referenceBoxRect.size(), &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasTranslate && m_graphicsLayer->addAnimation(translateVector, referenceBoxRect.size(), &animation, keyframes.animationName(), timeOffset))
+    if (hasTranslate && m_graphicsLayer->addAnimation(translateVector, referenceBoxRect.size(), &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasTransform && m_graphicsLayer->addAnimation(transformVector, referenceBoxRect.size(), &animation, keyframes.animationName(), timeOffset))
+    if (hasTransform && m_graphicsLayer->addAnimation(transformVector, referenceBoxRect.size(), &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasOpacity && m_graphicsLayer->addAnimation(opacityVector, IntSize { }, &animation, keyframes.animationName(), timeOffset))
+    if (hasOpacity && m_graphicsLayer->addAnimation(opacityVector, IntSize { }, &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasFilter && m_graphicsLayer->addAnimation(filterVector, IntSize { }, &animation, keyframes.animationName(), timeOffset))
+    if (hasFilter && m_graphicsLayer->addAnimation(filterVector, IntSize { }, &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
-    if (hasBackdropFilter && m_graphicsLayer->addAnimation(backdropFilterVector, IntSize { }, &animation, keyframes.animationName(), timeOffset))
+    if (hasBackdropFilter && m_graphicsLayer->addAnimation(backdropFilterVector, IntSize { }, &animation, keyframes.acceleratedAnimationName(), timeOffset))
         didAnimate = true;
 
     if (didAnimate) {
@@ -4637,6 +4633,14 @@ void RenderLayerBacking::dumpProperties(const GraphicsLayer* layer, TextStream& 
         ts << remoteFrame->client().layerTreeAsText(ts.indent() + 1, options);
         ts << indent << ")\n"_s;
     }
+}
+
+void RenderLayerBacking::setNeedsFixedContainerEdgesUpdateIfNeeded()
+{
+    if (!m_owningLayer.isViewportConstrained())
+        return;
+
+    renderer().page().chrome().client().setNeedsFixedContainerEdgesUpdate();
 }
 
 } // namespace WebCore

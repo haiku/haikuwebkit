@@ -225,16 +225,28 @@ String AXTextMarker::debugDescription() const
 {
     auto separator = ", "_s;
     RefPtr object = this->object();
-    return makeString(
-        "treeID "_s, treeID() ? treeID()->loggingString() : ""_s
-        , separator, "objectID "_s, objectID() ? objectID()->loggingString() : ""_s
-        , separator, "role "_s, object ? accessibilityRoleToString(object->roleValue()) : "no object"_str
+
+    String ids;
+#if PLATFORM(MAC)
+    // Since treeID and objectID change from run to run and this is used in a Mac LayoutTest, don't include them in the debugDescription when running tests.
+    if (!AXObjectCache::clientIsInTestMode()) {
+#endif
+        ids = makeString(
+            "treeID "_s, treeID() ? treeID()->loggingString() : "null"_s
+            , separator, "objectID "_s, objectID() ? objectID()->loggingString() : "null"_s
+            , separator);
+#if PLATFORM(MAC)
+    }
+#endif
+
+    return makeString(ids
+        , "role "_s, object ? accessibilityRoleToString(object->roleValue()) : "no object"_s
         , isIgnored() ? makeString(separator, "ignored"_s) : ""_s
         , separator, "anchor "_s, m_data.anchorType
         , separator, "affinity "_s, m_data.affinity
         , separator, "offset "_s, m_data.offset
-        , separator, "characterStart "_s, m_data.characterStart
-        , separator, "characterOffset "_s, m_data.characterOffset
+        , separator, "charStart "_s, m_data.characterStart
+        , separator, "charOffset "_s, m_data.characterOffset
         , separator, "origin "_s, originToString(m_data.origin)
     );
 }
@@ -448,7 +460,9 @@ std::optional<AXTextMarkerRange> AXTextMarkerRange::intersectionWith(const AXTex
 
 String AXTextMarkerRange::debugDescription() const
 {
-    return makeString("start: {"_s, m_start.debugDescription(), "}\nend:   {"_s, m_end.debugDescription(), '}');
+    return makeString("text: '"_s, toString(), "'"_s,
+        ", start: {"_s, m_start.debugDescription(), '}',
+        ", end: {"_s, m_end.debugDescription(), '}');
 }
 
 std::partial_ordering partialOrder(const AXTextMarker& marker1, const AXTextMarker& marker2)
@@ -484,6 +498,112 @@ bool AXTextMarkerRange::isConfinedTo(std::optional<AXID> objectID) const
     return m_start.objectID() == objectID
         && m_end.objectID() == objectID
         && LIKELY(m_start.treeID() == m_end.treeID());
+}
+
+#if ENABLE(AX_THREAD_TEXT_APIS)
+String listMarkerTextOnSameLine(const AXTextMarker& marker)
+{
+    RefPtr textMarkerObject = marker.object();
+    if (!textMarkerObject)
+        return { };
+
+    RefPtr listItemAncestor = Accessibility::findAncestor(*textMarkerObject, /* includeSelf */ true, [] (const auto& selfOrAncestor) {
+        return selfOrAncestor.isListItem();
+    });
+
+    if (listItemAncestor) {
+        if (RefPtr listMarker = findUnignoredDescendant(*listItemAncestor, /* includeSelf */ false, [] (const auto& descendant) {
+            return descendant.roleValue() == AccessibilityRole::ListMarker;
+        })) {
+            auto lineID = listMarker->listMarkerLineID();
+            if (lineID && lineID == marker.lineID())
+                return listMarker->listMarkerText();
+        }
+    }
+    return { };
+}
+#endif // ENABLE(AX_THREAD_TEXT_APIS)
+
+String AXTextMarkerRange::toString() const
+{
+#if ENABLE(AX_THREAD_TEXT_APIS)
+    if (!isMainThread() && AXObjectCache::useAXThreadTextApis()) {
+        // Traverses from m_start to m_end, collecting all text along the way.
+        auto start = m_start.toTextRunMarker();
+        if (!start.isValid())
+            return emptyString();
+        auto end = m_end.toTextRunMarker();
+        if (!end.isValid())
+            return emptyString();
+
+        StringBuilder result;
+        result.append(listMarkerTextOnSameLine(start));
+
+        if (start.isolatedObject() == end.isolatedObject()) {
+            size_t minOffset = std::min(start.offset(), end.offset());
+            size_t maxOffset = std::max(start.offset(), end.offset());
+            result.append(start.runs()->substring(minOffset, maxOffset - minOffset));
+            return result.toString();
+        }
+
+        auto emitNewlineOnExit = [&] (AXIsolatedObject& object) {
+            // FIXME: This function should not just be emitting newlines, but instead handling every character type in TextEmissionBehavior.
+            auto behavior = object.textEmissionBehavior();
+            if (behavior != TextEmissionBehavior::Newline && behavior != TextEmissionBehavior::DoubleNewline)
+                return;
+
+            // Like TextIterator, don't emit a newline if the most recently emitted character was already a newline.
+            if (result.length() && result[result.length() - 1] != '\n') {
+                result.append('\n');
+                if (behavior == TextEmissionBehavior::DoubleNewline)
+                    result.append('\n');
+            }
+        };
+
+        result.append(start.runs()->substring(start.offset()));
+
+        // FIXME: If we've been given reversed markers, i.e. the end marker actually comes before the start marker,
+        // we may want to detect this and try searching AXDirection::Previous?
+        RefPtr current = findObjectWithRuns(*start.isolatedObject(), AXDirection::Next, std::nullopt, emitNewlineOnExit);
+        while (current && current->objectID() != end.objectID()) {
+            const auto* runs = current->textRuns();
+            for (unsigned i = 0; i < runs->size(); i++)
+                result.append(runs->at(i).text);
+            current = findObjectWithRuns(*current, AXDirection::Next, std::nullopt, emitNewlineOnExit);
+        }
+        result.append(end.runs()->substring(0, end.offset()));
+        return result.toString();
+    }
+#endif // ENABLE(AX_THREAD_TEXT_APIS)
+
+    return Accessibility::retrieveValueFromMainThread<String>([this] () -> String {
+        auto range = simpleRange();
+        if (!range)
+            return { };
+
+        TextIterator it = TextIterator(*range, { TextIteratorBehavior::IgnoresFullSizeKana });
+        if (it.atEnd())
+            return { };
+
+        StringBuilder builder;
+        for (; !it.atEnd(); it.advance()) {
+            // non-zero length means textual node, zero length means replaced node (AKA "attachments" in AX)
+            if (it.text().length()) {
+                // If this is in a list item, we need to add the text for the list marker
+                // because a RenderListMarker does not have a Node equivalent and thus does not appear
+                // when iterating text.
+                // Don't add list marker text for new line character.
+                if (it.text().length() != 1 || !isASCIIWhitespace(it.text()[0]))
+                    builder.append(AccessibilityObject::listMarkerTextForNodeAndPosition(it.node(), makeDeprecatedLegacyPosition(it.range().start)));
+                it.appendTextToStringBuilder(builder);
+            } else {
+                if (AccessibilityObject::replacedNodeNeedsCharacter(*it.node()))
+                    builder.append(objectReplacementCharacter);
+            }
+        }
+
+        return builder.toString().isolatedCopy();
+    });
 }
 
 #if ENABLE(AX_THREAD_TEXT_APIS)
@@ -840,17 +960,11 @@ static FloatRect viewportRelativeFrameFromRuns(Ref<AXIsolatedObject> object, uns
         return relativeFrame;
     }
 
-    float estimatedLineHeight = relativeFrame.height() / runs->size();
-    if (auto fontRef = object->font()) {
-        auto runsLocalRect = runs->localRect(start, end, estimatedLineHeight, relativeFrame, fontRef.get(), object->fontOrientation());
-        // The rect we got above is a "local" rect, relative to nothing else. Move it to be
-        // anchored at this object's relative frame.
-        runsLocalRect.move(relativeFrame.x(), relativeFrame.y());
-        return runsLocalRect;
-    }
-
-    // This means we had no font information, so fallback to the object's relative frame.
-    return relativeFrame;
+    auto runsLocalRect = runs->localRect(start, end, object->fontOrientation());
+    // The rect we got above is a "local" rect, relative to nothing else. Move it to be
+    // anchored at this object's relative frame.
+    runsLocalRect.move(relativeFrame.x(), relativeFrame.y());
+    return runsLocalRect;
 }
 
 static FloatRect viewportRelativeFrameFromRuns(Ref<AXIsolatedObject> object, unsigned offset)
@@ -898,68 +1012,6 @@ AXTextMarkerRange AXTextMarkerRange::convertToDomOffsetRange() const
         m_start.convertToDomOffset(),
         m_end.convertToDomOffset()
     };
-}
-
-String AXTextMarkerRange::toString() const
-{
-    RELEASE_ASSERT(!isMainThread());
-
-    auto start = m_start.toTextRunMarker();
-    if (!start.isValid())
-        return emptyString();
-    auto end = m_end.toTextRunMarker();
-    if (!end.isValid())
-        return emptyString();
-
-    StringBuilder result;
-    RefPtr startObject = start.isolatedObject();
-    RefPtr listItemAncestor = Accessibility::findAncestor(*startObject, /* includeSelf */ true, [] (const auto& object) {
-        return object.isListItem();
-    });
-    if (listItemAncestor) {
-        if (RefPtr listMarker = findUnignoredDescendant(*listItemAncestor, /* includeSelf */ false, [] (const auto& object) {
-            return object.roleValue() == AccessibilityRole::ListMarker;
-        })) {
-            auto lineID = listMarker->listMarkerLineID();
-            if (lineID && lineID == start.lineID())
-                result.append(listMarker->listMarkerText());
-        }
-    }
-
-    if (startObject.get() == end.isolatedObject()) {
-        size_t minOffset = std::min(start.offset(), end.offset());
-        size_t maxOffset = std::max(start.offset(), end.offset());
-        result.append(start.runs()->substring(minOffset, maxOffset - minOffset));
-        return result.toString();
-    }
-
-    auto emitNewlineOnExit = [&] (AXIsolatedObject& object) {
-        // FIXME: This function should not just be emitting newlines, but instead handling every character type in TextEmissionBehavior.
-        auto behavior = object.textEmissionBehavior();
-        if (behavior != TextEmissionBehavior::Newline && behavior != TextEmissionBehavior::DoubleNewline)
-            return;
-
-        // Like TextIterator, don't emit a newline if the most recently emitted character was already a newline.
-        if (result.length() && result[result.length() - 1] != '\n') {
-            result.append('\n');
-            if (behavior == TextEmissionBehavior::DoubleNewline)
-                result.append('\n');
-        }
-    };
-
-    result.append(start.runs()->substring(start.offset()));
-
-    // FIXME: If we've been given reversed markers, i.e. the end marker actually comes before the start marker,
-    // we may want to detect this and try searching AXDirection::Previous?
-    RefPtr current = findObjectWithRuns(*start.isolatedObject(), AXDirection::Next, std::nullopt, emitNewlineOnExit);
-    while (current && current->objectID() != end.objectID()) {
-        const auto* runs = current->textRuns();
-        for (unsigned i = 0; i < runs->size(); i++)
-            result.append(runs->at(i).text);
-        current = findObjectWithRuns(*current, AXDirection::Next, std::nullopt, emitNewlineOnExit);
-    }
-    result.append(end.runs()->substring(0, end.offset()));
-    return result.toString();
 }
 
 const AXTextRuns* AXTextMarker::runs() const

@@ -23,6 +23,10 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#pragma once
+
+DECLARE_SYSTEM_HEADER
+
 #import <UIKit/UIKit.h>
 
 #if USE(APPLE_INTERNAL_SDK)
@@ -1205,10 +1209,6 @@ typedef NS_ENUM(NSUInteger, _UIScrollDeviceCategory) {
 @protocol UITextInputInternal <UITextInputPrivate>
 @optional
 @property (nonatomic, readonly) CGRect _selectionClipRect;
-@end
-
-@interface UIDragItem (Staging_117702233)
-- (void)_setNeedsDropPreviewUpdate;
 @end
 
 @interface UIDevice ()

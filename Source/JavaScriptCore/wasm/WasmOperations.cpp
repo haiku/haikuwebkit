@@ -348,24 +348,31 @@ JSC_DEFINE_JIT_OPERATION(operationWasmToJSExitMarshalArguments, bool, (void* sp,
         case TypeKind::Exn:
         case TypeKind::I32: {
             if (wasmParam.isStackArgument()) {
-                uint64_t raw = *access.operator()<uint64_t>(cfr, wasmParam.offsetFromSP() + sizeof(CallerFrameAndPC));
+                uint64_t raw = *access.operator()<UCPURegister>(cfr, wasmParam.offsetFromSP() + sizeof(CallerFrameAndPC));
 #if USE(JSVALUE64)
                 if (argType.isI32())
                     *access.operator()<uint64_t>(calleeFrame, dst) = static_cast<uint32_t>(raw) | JSValue::NumberTag;
 #else
-                if (false);
+                if (argType.isI32()) {
+                    *access.operator()<uint32_t>(calleeFrame, dst + PayloadOffset) = static_cast<uint32_t>(raw);
+                    *access.operator()<uint32_t>(calleeFrame, dst + TagOffset) = JSValue::Int32Tag;
+                }
 #endif
                 else
                     *access.operator()<uint64_t>(calleeFrame, dst) = raw;
             } else {
-                auto raw = *access.operator()<uint64_t>(argumentRegisters, GPRInfo::toArgumentIndex(wasmParam.jsr().payloadGPR()) * sizeof(UCPURegister));
+                auto raw = *access.operator()<UCPURegister>(argumentRegisters, GPRInfo::toArgumentIndex(wasmParam.jsr().payloadGPR()) * sizeof(UCPURegister));
 #if USE(JSVALUE64)
                 if (argType.isI32())
                     *access.operator()<uint64_t>(calleeFrame, dst) = static_cast<uint32_t>(raw) | JSValue::NumberTag;
                 else
                     *access.operator()<uint64_t>(calleeFrame, dst) = raw;
 #else
-                *access.operator()<uint32_t>(calleeFrame, dst) = raw;
+                if (argType.isI32()) {
+                    *access.operator()<uint32_t>(calleeFrame, dst + PayloadOffset) = static_cast<uint32_t>(raw);
+                    *access.operator()<uint32_t>(calleeFrame, dst + TagOffset) = JSValue::Int32Tag;
+                } else
+                    *access.operator()<uint32_t>(calleeFrame, dst) = raw;
 #endif
             }
             break;
@@ -418,10 +425,7 @@ JSC_DEFINE_JIT_OPERATION(operationWasmToJSExitMarshalArguments, bool, (void* sp,
     *access.operator()<uint64_t>(calleeFrame, CallFrameSlot::thisArgument * static_cast<int>(sizeof(Register))) = JSValue::encode(jsUndefined());
 
     // materializeImportJSCell and store
-    *access.operator()<uintptr_t>(calleeFrame, CallFrameSlot::callee * static_cast<int>(sizeof(Register))) = std::bit_cast<uintptr_t>(importableFunction->importFunction);
-#if USE(JSVALUE32_64)
-    *access.operator()<uintptr_t>(calleeFrame, CallFrameSlot::callee * sizeof(Register) + TagOffset) = JSValue::CellTag;
-#endif
+    *access.operator()<uint64_t>(calleeFrame, CallFrameSlot::callee * sizeof(Register)) = JSValue::encode(importableFunction->importFunction.get());
     *access.operator()<uint32_t>(calleeFrame, CallFrameSlot::argumentCountIncludingThis * static_cast<int>(sizeof(Register)) + PayloadOffset) = argCount + 1; // including this = +1
 
     // set up codeblock
@@ -455,7 +459,6 @@ JSC_DEFINE_JIT_OPERATION(operationWasmToJSExitMarshalReturnValues, void, (void* 
     auto scope = DECLARE_THROW_SCOPE(instance->vm());
 
     constexpr int codeBlockOffset = -0x18;
-
     auto* importableFunction = *access.operator()<WasmOrJSImportableFunctionCallLinkInfo*>(cfr, codeBlockOffset);
     auto typeIndex = importableFunction->typeIndex;
     const TypeDefinition& typeDefinition = TypeInformation::get(typeIndex).expand();
@@ -1601,7 +1604,10 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmStructNewEmpty, EncodedJSValue, (
     VM& vm = instance->vm();
     NativeCallFrameTracer tracer(vm, callFrame);
     WebAssemblyGCStructure* structure = instance->gcObjectStructure(typeIndex).get();
-    return JSValue::encode(JSWebAssemblyStruct::create(vm, structure));
+    auto* result = JSWebAssemblyStruct::tryCreate(vm, structure);
+    if (UNLIKELY(!result))
+        return JSValue::encode(jsNull());
+    return JSValue::encode(result);
 }
 
 JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmStructGet, EncodedJSValue, (EncodedJSValue encodedStructReference, uint32_t fieldIndex))
@@ -1814,15 +1820,10 @@ JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationWasmArrayNewEmpty, EncodedJSValue, (J
 
     ASSERT(typeIndex < instance->module().moduleInformation().typeCount());
     WebAssemblyGCStructure* structure = instance->gcObjectStructure(typeIndex).get();
-    Wasm::FieldType fieldType = structure->typeDefinition().as<ArrayType>()->elementType();
-
-    size_t elementSize = fieldType.type.elementSize();
-    if (UNLIKELY(productOverflows<uint32_t>(elementSize, size) || elementSize * size > maxArraySizeInBytes))
-        return JSValue::encode(jsNull());
-
     auto* array = JSWebAssemblyArray::tryCreate(vm, structure, size);
     if (UNLIKELY(!array))
         return JSValue::encode(jsNull());
+
     // Create a default-initialized array with the right element type and length
     return JSValue::encode(array);
 }

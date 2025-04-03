@@ -587,6 +587,9 @@ struct ImageAnalysisContextMenuActionData {
     std::optional<BOOL> _cachedRequiresLegacyTextInputTraits;
     NSInteger _dropAnimationCount;
 
+    BOOL _waitingForEditorStateAfterScrollingSelectionContainer;
+    std::optional<WebCore::IntPoint> _lastSelectionChildScrollViewContentOffset;
+
     BOOL _hasSetUpInteractions;
     std::optional<BOOL> _cachedHasCustomTintColor;
     NSUInteger _ignoreSelectionCommandFadeCount;
@@ -905,6 +908,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(DECLARE_WKCONTENTVIEW_ACTION_FOR_WEB_VIEW)
 - (void)_didCommitLoadForMainFrame;
 
 - (void)setUpTextIndicator:(Ref<WebCore::TextIndicator>)textIndicator;
+- (void)updateTextIndicator:(Ref<WebCore::TextIndicator>)textIndicator;
 - (void)setTextIndicatorAnimationProgress:(float)NSAnimationProgress;
 - (void)clearTextIndicator:(WebCore::TextIndicatorDismissalAnimation)animation;
 

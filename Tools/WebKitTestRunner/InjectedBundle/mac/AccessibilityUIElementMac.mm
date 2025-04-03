@@ -2326,6 +2326,8 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::rectsForTextMarkerRange(Accessi
 RefPtr<AccessibilityTextMarkerRange> AccessibilityUIElement::textMarkerRangeForMarkers(AccessibilityTextMarker* startMarker, AccessibilityTextMarker* endMarker)
 {
     BEGIN_AX_OBJC_EXCEPTIONS
+    if (!startMarker->platformTextMarker() || !endMarker->platformTextMarker())
+        return nullptr;
     NSArray *textMarkers = @[startMarker->platformTextMarker(), endMarker->platformTextMarker()];
     auto textMarkerRange = attributeValueForParameter(@"AXTextMarkerRangeForTextMarkers", textMarkers);
     return AccessibilityTextMarkerRange::create(textMarkerRange.get());
@@ -2337,6 +2339,8 @@ RefPtr<AccessibilityTextMarkerRange> AccessibilityUIElement::textMarkerRangeForM
 RefPtr<AccessibilityTextMarkerRange> AccessibilityUIElement::textMarkerRangeForUnorderedMarkers(AccessibilityTextMarker* startMarker, AccessibilityTextMarker* endMarker)
 {
     BEGIN_AX_OBJC_EXCEPTIONS
+    if (!startMarker->platformTextMarker() || !endMarker->platformTextMarker())
+        return nullptr;
     NSArray *textMarkers = @[startMarker->platformTextMarker(), endMarker->platformTextMarker()];
     auto textMarkerRange = attributeValueForParameter(@"AXTextMarkerRangeForUnorderedTextMarkers", textMarkers);
     return AccessibilityTextMarkerRange::create(textMarkerRange.get());
@@ -2813,6 +2817,32 @@ RefPtr<AccessibilityTextMarker> AccessibilityUIElement::nextSentenceEndTextMarke
     BEGIN_AX_OBJC_EXCEPTIONS
     auto nextParagraphEndMarker = attributeValueForParameter(@"AXNextSentenceEndTextMarkerForTextMarker", textMarker->platformTextMarker());
     return AccessibilityTextMarker::create(nextParagraphEndMarker.get());
+    END_AX_OBJC_EXCEPTIONS
+
+    return nullptr;
+}
+
+JSRetainPtr<JSStringRef> AccessibilityUIElement::textMarkerDebugDescription(AccessibilityTextMarker* marker)
+{
+    if (!marker)
+        return nullptr;
+
+    BEGIN_AX_OBJC_EXCEPTIONS
+    RetainPtr description = attributeValueForParameter(@"AXTextMarkerDebugDescription", marker->platformTextMarker());
+    return [description createJSStringRef];
+    END_AX_OBJC_EXCEPTIONS
+
+    return nullptr;
+}
+
+JSRetainPtr<JSStringRef> AccessibilityUIElement::textMarkerRangeDebugDescription(AccessibilityTextMarkerRange* range)
+{
+    if (!range)
+        return nullptr;
+
+    BEGIN_AX_OBJC_EXCEPTIONS
+    RetainPtr description = attributeValueForParameter(@"AXTextMarkerRangeDebugDescription", range->platformTextMarkerRange());
+    return [description createJSStringRef];
     END_AX_OBJC_EXCEPTIONS
 
     return nullptr;

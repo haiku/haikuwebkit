@@ -899,7 +899,7 @@ static WebCore::Color scrollViewBackgroundColor(WKWebView *webView, AllowPageBac
 #if ENABLE(PAGE_LOAD_OBSERVER)
     URL url { _page->currentURL() };
     if (url.isValid() && url.protocolIsInHTTPFamily()) {
-        _pendingPageLoadObserverHost = static_cast<NSString *>(url.hostAndPort());
+        _pendingPageLoadObserverHost = url.hostAndPort().createNSString();
         [self _updatePageLoadObserverState];
     }
 #endif
@@ -2736,6 +2736,11 @@ static WebCore::FloatPoint constrainContentOffset(WebCore::FloatPoint contentOff
 {
     _alwaysSendNextVisibleContentRectUpdate = YES;
     [self _scheduleVisibleContentRectUpdate];
+}
+
+- (BOOL)_isInStableState:(UIScrollView *)scrollView
+{
+    return [self _viewStabilityState:scrollView].isEmpty();
 }
 
 - (OptionSet<WebKit::ViewStabilityFlag>)_viewStabilityState:(UIScrollView *)scrollView

@@ -3473,6 +3473,20 @@ HiddenPageDOMTimerThrottlingEnabled:
     WebCore:
       default: false
 
+HiddenUntilFoundEnabled:
+   type: bool
+   status: testable
+   category: html
+   humanReadableName: "hidden=until-found"
+   humanReadableDescription: "Enable support for hidden=until-found"
+   defaultValue:
+     WebKitLegacy:
+       default: false
+     WebKit:
+       default: false
+     WebCore:
+       default: false
+
 HostedBlurMaterialInMediaControlsEnabled:
   type: bool
   status: internal
@@ -7436,7 +7450,7 @@ StorageBlockingPolicy:
 
 SupportHDRDisplayEnabled:
   type: bool
-  status: stable
+  status: Supporthdrdisplay_feature_status
   category: media
   webcoreOnChange: setNeedsRelayoutAllFrames
   humanReadableName: "Support HDR Display"
@@ -7445,10 +7459,10 @@ SupportHDRDisplayEnabled:
     WebKitLegacy:
       default: false
     WebKit:
-      "PLATFORM(COCOA)": true
+      "ENABLE(SUPPORT_HDR_DISPLAY_BY_DEFAULT)": true
       default: false
     WebCore:
-      "PLATFORM(COCOA)": true
+      "ENABLE(SUPPORT_HDR_DISPLAY_BY_DEFAULT)": true
       default: false
 
 SuppressesIncrementalRendering:

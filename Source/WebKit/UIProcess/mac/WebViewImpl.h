@@ -274,6 +274,8 @@ public:
     void updateLayer();
     static bool wantsUpdateLayer() { return true; }
 
+    void layerTreeCommitComplete();
+
     void drawRect(CGRect);
     bool canChangeFrameLayout(WebFrameProxy&);
     NSPrintOperation *printOperationWithPrintInfo(NSPrintInfo *, WebFrameProxy&);
@@ -321,7 +323,6 @@ public:
     void windowWillBeginSheet();
     void windowDidChangeBackingProperties(CGFloat oldBackingScaleFactor);
     void windowDidChangeScreen();
-    void windowDidChangeLayerHosting();
     void windowDidChangeOcclusionState();
     void windowWillClose();
     void screenDidChangeColorSpace();
@@ -474,6 +475,7 @@ public:
     void preferencesDidChange();
 
     void setTextIndicator(WebCore::TextIndicator&, WebCore::TextIndicatorLifetime = WebCore::TextIndicatorLifetime::Permanent);
+    void updateTextIndicator(WebCore::TextIndicator&);
     void clearTextIndicatorWithAnimation(WebCore::TextIndicatorDismissalAnimation);
     void setTextIndicatorAnimationProgress(float);
     void dismissContentRelativeChildWindowsFromViewOnly();
@@ -816,6 +818,10 @@ private:
 
     void suppressContentRelativeChildViews();
     void restoreContentRelativeChildViews();
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    void updateContentInsetFillBackdropLayerParentIfNeeded();
+#endif
 
     bool m_clientWantsMediaPlaybackControlsView { false };
     bool m_canCreateTouchBars { false };

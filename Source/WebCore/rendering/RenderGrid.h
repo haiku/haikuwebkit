@@ -88,9 +88,9 @@ public:
     std::optional<LayoutUnit> explicitIntrinsicInnerLogicalSize(GridTrackSizingDirection) const;
     void updateGridAreaLogicalSize(RenderBox&, std::optional<LayoutUnit> width, std::optional<LayoutUnit> height) const;
     bool isBaselineAlignmentForGridItem(const RenderBox&) const;
-    bool isBaselineAlignmentForGridItem(const RenderBox& gridItem, GridAxis, AllowedBaseLine = AllowedBaseLine::BothLines) const;
+    bool isBaselineAlignmentForGridItem(const RenderBox& gridItem, GridTrackSizingDirection alignmentContext, AllowedBaseLine = AllowedBaseLine::BothLines) const;
 
-    StyleSelfAlignmentData selfAlignmentForGridItem(GridAxis, const RenderBox&, const RenderStyle* = nullptr) const;
+    StyleSelfAlignmentData selfAlignmentForGridItem(GridTrackSizingDirection alignmentContext, const RenderBox&, const RenderStyle* = nullptr) const;
 
     StyleContentAlignmentData contentAlignment(GridTrackSizingDirection) const;
 
@@ -139,7 +139,6 @@ public:
     LayoutUnit gridGap(GridTrackSizingDirection, std::optional<LayoutUnit> availableSize) const;
 
     LayoutUnit masonryContentSize() const;
-    Vector<LayoutRect> gridItemsLayoutRects();
 
     void updateIntrinsicLogicalHeightsForRowSizingFirstPassCacheAvailability();
     std::optional<GridItemSizeCache>& intrinsicLogicalHeightsForRowSizingFirstPass() const;
@@ -163,8 +162,8 @@ private:
     ASCIILiteral renderName() const override;
     void computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const override;
 
-    bool selfAlignmentChangedToStretch(GridAxis, const RenderStyle& oldStyle, const RenderStyle& newStyle, const RenderBox&) const;
-    bool selfAlignmentChangedFromStretch(GridAxis, const RenderStyle& oldStyle, const RenderStyle& newStyle, const RenderBox&) const;
+    bool selfAlignmentChangedToStretch(GridTrackSizingDirection alignmentContext, const RenderStyle& oldStyle, const RenderStyle& newStyle, const RenderBox&) const;
+    bool selfAlignmentChangedFromStretch(GridTrackSizingDirection alignmentContext, const RenderStyle& oldStyle, const RenderStyle& newStyle, const RenderBox&) const;
 
     SubgridDidChange subgridDidChange(const RenderStyle& oldStyle) const;
     bool explicitGridDidResize(const RenderStyle&) const;
