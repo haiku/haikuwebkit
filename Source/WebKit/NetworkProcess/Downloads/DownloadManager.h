@@ -46,7 +46,6 @@ class SessionID;
 
 namespace WebCore {
 class BlobDataFileReference;
-class ResourceHandle;
 class ResourceRequest;
 class ResourceResponse;
 

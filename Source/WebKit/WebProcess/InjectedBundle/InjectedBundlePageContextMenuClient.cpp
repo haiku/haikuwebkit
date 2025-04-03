@@ -31,7 +31,7 @@
 
 #include "APIArray.h"
 #include "InjectedBundleHitTestResult.h"
-#include "Platform/Logging.h"
+#include "Logging.h"
 #include "WebContextMenuItem.h"
 #include "WKAPICast.h"
 #include "WKBundleAPICast.h"
