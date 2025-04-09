@@ -172,8 +172,8 @@ static const char* temporaryFileDirectory()
         } else {
             strcpy(buffer, "/tmp");
         }
-        return buffer;
     }
+    return buffer;
 #else
     if (auto* tmpDir = getenv("TMPDIR"))
         return tmpDir;
