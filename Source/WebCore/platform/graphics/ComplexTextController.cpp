@@ -46,7 +46,8 @@
 
 static void debugComplexText()
 {
-	if (strcmp(getenv("HAIKUWEBKIT_COMPLEX_TEXT"), "DEBUGGER") == 0)
+	char* command = getenv("HAIKUWEBKIT_COMPLEX_TEXT");
+	if (command != nullptr && strcmp(command, "DEBUGGER") == 0)
 		debugger("Complex text path triggered");
 }
 
