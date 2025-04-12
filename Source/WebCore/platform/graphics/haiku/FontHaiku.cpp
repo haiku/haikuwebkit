@@ -50,11 +50,6 @@ struct hack {
 } hack;
 
 
-bool FontCascade::canReturnFallbackFontsForComplexText()
-{
-    return false;
-}
-
 void FontCascade::drawGlyphs(GraphicsContext& graphicsContext, const Font& font,
     std::span<const GlyphBufferGlyph> glyphs, std::span<const GlyphBufferAdvance> advances,
     const FloatPoint& point, WebCore::FontSmoothingMode smoothing)
@@ -110,11 +105,6 @@ void FontCascade::drawGlyphs(GraphicsContext& graphicsContext, const Font& font,
 
     view->DrawString(utf8, offsets, realGlyphCount);
     view->PopState();
-}
-
-bool FontCascade::canExpandAroundIdeographsInComplexText()
-{
-    return false;
 }
 
 Path Font::platformPathForGlyph(Glyph glyph) const

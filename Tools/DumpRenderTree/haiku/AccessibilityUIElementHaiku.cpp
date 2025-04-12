@@ -708,16 +708,6 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::popupValue() const
 {
 }
 
-bool AccessibilityUIElement::hasDocumentRoleAncestor() const
-{
-    return false;
-}
-
-bool AccessibilityUIElement::hasWebApplicationAncestor() const
-{
-    return false;
-}
-
 bool AccessibilityUIElement::isInDescriptionListDetail() const
 {
     return false;

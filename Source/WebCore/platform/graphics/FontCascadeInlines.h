@@ -45,5 +45,9 @@
 
 #include "FontCascadeWinInlines.h"
 
+#elif USE(HAIKU)
+
+#include "FontCascadeHaikuInlines.h"
+
 #endif
 
