@@ -34,6 +34,7 @@ editing/undo-manager [ Skip ]
 tiled-drawing [ Skip ]
 fast/attachment/cocoa [ Skip ]
 fast/attachment/mac [ Skip ]
+fast/css/cocoa [ Skip ]
 fast/css/ios [ Skip ]
 fast/css/mac [ Skip ]
 fast/css/watchos [ Skip ]
@@ -312,7 +313,6 @@ fast/attachment/attachment-truncated-action.html [ Skip ]
 fast/attachment/attachment-wrapping-action.html [ Skip ]
 fast/attachment/attachment-borderless.html [ Skip ]
 fast/attachment/attachment-dynamic-type.html [ Skip ]
-fast/attachment/attachment-thumbnail-preserves-aspect-ratio.html [ Skip ]
 editing/selection/character-granularity-selected-range-after-dismissing-selection.html [ Skip ]
 editing/selection/character-granularity-select-text-with-click-handler.html [ Skip ]
 editing/selection/caret-after-tap-in-editable-selection.html [ Skip ]
@@ -1696,7 +1696,6 @@ imported/w3c/web-platform-tests/css/css-flexbox/flexbox-min-width-auto-006.html 
 imported/w3c/web-platform-tests/css/css-flexbox/intrinsic-size/col-wrap-020.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-flexbox/min-size-auto-overflow-clip.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-flexbox/aspect-ratio-intrinsic-size-009.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-flexbox/baseline-outside-flex-item.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-flexbox/flexbox-flex-wrap-flexing-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-flexbox/flexbox-flex-wrap-flexing-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-flexbox/multiline-shrink-to-fit.html [ ImageOnlyFailure ]
@@ -2175,6 +2174,9 @@ imported/w3c/web-platform-tests/svg/animations/conditional-processing-01.html [ 
 imported/w3c/web-platform-tests/svg/animations/stop-animation-01.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/animations/switch-animation-01.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/animations/switch-animation-02.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/embedded/image-crossorigin.sub.html [ Skip ]
+imported/w3c/web-platform-tests/svg/embedded/image-embedding-svg-with-near-integral-width.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/embedded/image-fractional-width-vertical-fidelity.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/import/color-prop-04-t-manual.svg [ Skip ]
 imported/w3c/web-platform-tests/svg/import/struct-dom-01-b-manual.svg [ Skip ]
 imported/w3c/web-platform-tests/svg/import/struct-use-01-t-manual.svg [ Skip ]
@@ -3539,7 +3541,7 @@ imported/w3c/web-platform-tests/css/css-pseudo/target-text-009.html [ ImageOnlyF
 imported/w3c/web-platform-tests/css/css-pseudo/target-text-dynamic-004.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-pseudo/selection-background-painting-order.html [ ImageOnlyFailure ]
 
-webkit.org/b/177799 accessibility/table-detection.html [ Pass Failure ]
+webkit.org/b/177799,webkit.org/b/290781 accessibility/table-detection.html [ Pass Failure Timeout ]
 
 webkit.org/b/179069 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/sandbox_032.htm [ Pass Failure ]
 
@@ -4180,12 +4182,12 @@ webkit.org/b/203320 imported/w3c/web-platform-tests/css/css-values/percentage-re
 webkit.org/b/203322 imported/w3c/web-platform-tests/css/css-values/attr-color-invalid-cast.html [ ImageOnlyFailure ]
 webkit.org/b/203323 imported/w3c/web-platform-tests/css/css-values/attr-color-valid.html [ ImageOnlyFailure ]
 webkit.org/b/203324 imported/w3c/web-platform-tests/css/css-values/attr-in-max.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-values/attr-in-slotted.html [ ImageOnlyFailure ]
 webkit.org/b/203326 imported/w3c/web-platform-tests/css/css-values/attr-length-invalid-cast.html [ ImageOnlyFailure ]
 webkit.org/b/203327 imported/w3c/web-platform-tests/css/css-values/attr-length-valid-zero-nofallback.html [ ImageOnlyFailure ]
 webkit.org/b/203328 imported/w3c/web-platform-tests/css/css-values/attr-length-valid-zero.html [ ImageOnlyFailure ]
 webkit.org/b/203329 imported/w3c/web-platform-tests/css/css-values/attr-length-valid.html [ ImageOnlyFailure ]
-webkit.org/b/203330 imported/w3c/web-platform-tests/css/css-values/attr-px-invalid-cast.html [ ImageOnlyFailure ]
-webkit.org/b/203331 imported/w3c/web-platform-tests/css/css-values/attr-px-valid.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-values/attr-notype-fallback.html [ ImageOnlyFailure ]
 webkit.org/b/259025 imported/w3c/web-platform-tests/css/css-values/ic-unit-015.html [ ImageOnlyFailure ]
 webkit.org/b/214466 imported/w3c/web-platform-tests/css/css-values/ex-unit-004.html [ ImageOnlyFailure ]
 webkit.org/b/242467 imported/w3c/web-platform-tests/css/css-values/calc-text-indent-intrinsic-1.html [ ImageOnlyFailure ]
@@ -4208,6 +4210,8 @@ webkit.org/b/277995 imported/w3c/web-platform-tests/css/css-values/calc-size/cal
 webkit.org/b/277995 imported/w3c/web-platform-tests/css/css-values/calc-size/calc-size-min-max-sizes-006.html [ ImageOnlyFailure ]
 webkit.org/b/277995 imported/w3c/web-platform-tests/css/css-values/viewport-units-scrollbars-auto-vhw-001.html [ ImageOnlyFailure ]
 webkit.org/b/277995 imported/w3c/web-platform-tests/css/css-values/viewport-units-scrollbars-scroll-vhw-001.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-values/vh-update-and-transition-in-subframe.html [ Skip ]
+imported/w3c/web-platform-tests/css/css-values/attr-universal-selector.html [ Pass Failure ]
 
 # wpt css-sizing failures
 webkit.org/b/203509 imported/w3c/web-platform-tests/css/css-sizing/auto-scrollbar-inside-stf-abspos.html [ ImageOnlyFailure ]
@@ -5702,6 +5706,7 @@ imported/w3c/web-platform-tests/css/css-contain/contain-style-counters-004.html 
 imported/w3c/web-platform-tests/css/css-contain/contain-style-counters-005.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-contain/content-visibility/content-visibility-vs-scrollIntoView-001.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-contain/content-visibility/content-visibility-vs-scrollIntoView-002.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-contain/content-visibility/content-visibility-hidden-scrollTop-left-width-height.html [ Failure ]
 
 # Style containment
 imported/w3c/web-platform-tests/css/css-contain/counter-scoping-001.html [ ImageOnlyFailure ]
@@ -6910,6 +6915,16 @@ imported/w3c/web-platform-tests/html/canvas/offscreen/fill-and-stroke-styles/2d.
 imported/w3c/web-platform-tests/html/canvas/offscreen/fill-and-stroke-styles/2d.pattern.transform.infinity.html [ Skip ]
 imported/w3c/web-platform-tests/html/canvas/offscreen/fill-and-stroke-styles/2d.pattern.transform.invalid.html [ Skip ]
 
+webkit.org/b/290526 imported/w3c/web-platform-tests/html/canvas/element/text/2d.text.fontVariantCaps1.html [ Pass ImageOnlyFailure ]
+webkit.org/b/290526 imported/w3c/web-platform-tests/html/canvas/element/text/2d.text.fontVariantCaps3.html [ Pass ImageOnlyFailure ]
+webkit.org/b/290526 imported/w3c/web-platform-tests/html/canvas/element/text/2d.text.writingmode.html [ Pass ImageOnlyFailure ]
+webkit.org/b/290526 imported/w3c/web-platform-tests/html/canvas/element/text/2d.text.measure.fillTextCluster-align.tentative.html [ ImageOnlyFailure ]
+webkit.org/b/290526 imported/w3c/web-platform-tests/html/canvas/element/text/2d.text.measure.fillTextCluster-baseline.tentative.html [ ImageOnlyFailure ]
+webkit.org/b/290526 imported/w3c/web-platform-tests/html/canvas/element/text/2d.text.measure.fillTextCluster-drawing-styles-change.tentative.html [ ImageOnlyFailure ]
+webkit.org/b/290526 imported/w3c/web-platform-tests/html/canvas/element/text/2d.text.measure.strokeTextCluster-align.tentative.html [ ImageOnlyFailure ]
+webkit.org/b/290526 imported/w3c/web-platform-tests/html/canvas/element/text/2d.text.measure.strokeTextCluster-baseline.tentative.html [ ImageOnlyFailure ]
+webkit.org/b/290526 imported/w3c/web-platform-tests/html/canvas/element/text/2d.text.measure.strokeTextCluster-drawing-styles-change.tentative.html [ ImageOnlyFailure ]
+
 # We only support import-attributes and do not support import-assertions.
 imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/import-assertions
 
@@ -7720,6 +7735,7 @@ imported/w3c/web-platform-tests/css/css-scoping/host-has-internal-003.tentative.
 
 # WebRTC Encoded Transform - Test Expectation - Crashes on 'mac-wk2' debug and gtk-wk2 / wpe-wk2
 webkit.org/b/275663 imported/w3c/web-platform-tests/webrtc-encoded-transform/script-transform-generateKeyFrame-simulcast.https.html [ Skip ]
+imported/w3c/web-platform-tests/webrtc-encoded-transform/RTCRtpScriptTransform-encoded-transform.https.html [ Pass Failure ]
 
 # https://bugs.webkit.org/show_bug.cgi?id=276663
 inspector/css/getMatchedStylesForNodeNestingStyleGrouping.html [ Failure ]

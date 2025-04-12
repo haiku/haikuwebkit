@@ -458,22 +458,23 @@ bool RenderElement::repaintBeforeStyleChange(StyleDifference diff, const RenderS
                 return RequiredRepaint::RendererOnly;
         }
 
+        // Note that RenderObject::setNeedsLayout issues setLayerNeedsFullRepaint on renderers with layers.
         if (is<RenderBox>(*this)) {
-            if (diff == StyleDifference::Layout && oldStyle.position() != newStyle.position() && oldStyle.position() == PositionType::Static)
+            if (oldStyle.position() != newStyle.position() && oldStyle.position() == PositionType::Static) {
+                ASSERT(diff == StyleDifference::Layout);
                 return RequiredRepaint::RendererOnly;
+            }
+
+            auto willBecomeHiddenSkippedContent =  newStyle.usedContentVisibility() == ContentVisibility::Hidden && oldStyle.usedContentVisibility() != ContentVisibility::Hidden && oldStyle.usedVisibility() == Visibility::Visible;
+            if (willBecomeHiddenSkippedContent) {
+                ASSERT(diff == StyleDifference::Layout);
+                return RequiredRepaint::RendererOnly;
+            }
         }
 
         if (diff > StyleDifference::RepaintLayer && oldStyle.usedVisibility() != newStyle.usedVisibility()) {
             if (CheckedPtr enclosingLayer = this->enclosingLayer()) {
                 bool rendererWillBeHidden = newStyle.usedVisibility() != Visibility::Visible;
-                if (rendererWillBeHidden && enclosingLayer->hasVisibleContent() && (this == &enclosingLayer->renderer() || enclosingLayer->renderer().style().usedVisibility() != Visibility::Visible))
-                    return RequiredRepaint::RendererOnly;
-            }
-        }
-
-        if (diff > StyleDifference::RepaintLayer && oldStyle.usedContentVisibility() != newStyle.usedContentVisibility() && isOutOfFlowPositioned()) {
-            if (CheckedPtr enclosingLayer = this->enclosingLayer()) {
-                bool rendererWillBeHidden = isSkippedContent();
                 if (rendererWillBeHidden && enclosingLayer->hasVisibleContent() && (this == &enclosingLayer->renderer() || enclosingLayer->renderer().style().usedVisibility() != Visibility::Visible))
                     return RequiredRepaint::RendererOnly;
             }
@@ -900,19 +901,14 @@ void RenderElement::styleWillChange(StyleDifference diff, const RenderStyle& new
         }
 
         // Keep layer hierarchy visibility bits up to date if visibility or skipped content state changes.
-        bool wasVisible = m_style.usedVisibility() == Visibility::Visible && !m_style.isSkippedRootOrSkippedContent();
-        bool willBeVisible = newStyle.usedVisibility() == Visibility::Visible && !newStyle.isSkippedRootOrSkippedContent();
-        if (wasVisible != willBeVisible) {
-            if (CheckedPtr layer = enclosingLayer()) {
-                if (willBeVisible) {
-                    auto* renderBox = dynamicDowncast<RenderBox>(*this);
-                    if (m_style.isSkippedRootOrSkippedContent() && renderBox && isSkippedContentRoot(*renderBox))
-                        layer->dirtyVisibleContentStatus();
-                    else
-                        layer->setHasVisibleContent();
-                } else if (layer->hasVisibleContent() && (this == &layer->renderer() || layer->renderer().style().usedVisibility() != Visibility::Visible))
-                    layer->dirtyVisibleContentStatus();
-            }
+        if (m_style.usedVisibility() != newStyle.usedVisibility()) {
+            if (CheckedPtr layer = enclosingLayer())
+                layer->dirtyVisibleContentStatus();
+        }
+
+        if (m_style.usedContentVisibility() != newStyle.usedContentVisibility()) {
+            if (CheckedPtr layer = enclosingLayer())
+                layer->dirtyVisibleContentStatus();
         }
 
         auto needsInvalidateEventRegion = [&] {

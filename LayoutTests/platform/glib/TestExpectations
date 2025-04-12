@@ -724,11 +724,6 @@ accessibility/mixed-contenteditable-double-br-visible-character-range-hang.html 
 accessibility/aria-braillelabel.html [ Skip ]
 accessibility/aria-brailleroledescription.html [ Skip ]
 
-# Need to implement AccessibilityUIElement::hasDocumentRoleAncestor(), AccessibilityUIElement::hasWebApplicationAncestor(),
-# AccessibilityUIElement::isInDescriptionListDetail(), AccessibilityUIElement::isInDescriptionListTerm(), and
-# AccessibilityUIElement::isInCell().
-accessibility/ancestor-computation.html [ Skip ]
-
 # Need to implement AccessibilityUIElement::domIdentifier() for this test to pass after webkit.org/b/234198.
 accessibility/focusable-div.html [ Skip ]
 
@@ -2110,6 +2105,7 @@ webkit.org/b/221021 webanimations/combining-transform-animations-with-different-
 webkit.org/b/221021 webanimations/combining-transform-animations-with-different-acceleration-capabilities-3.html [ Skip ]
 webkit.org/b/221021 webanimations/combining-transform-animations-with-different-acceleration-capabilities-4.html [ Skip ]
 webkit.org/b/221021 webanimations/combining-transform-animations-with-different-acceleration-capabilities-5.html [ Skip ]
+webkit.org/b/221021 webanimations/combining-transform-animations-with-different-acceleration-capabilities-8.html [ Skip ]
 webkit.org/b/221021 webanimations/combining-transform-animations-with-different-acceleration-capabilities.html [ Skip ]
 
 webkit.org/b/263870 imported/w3c/web-platform-tests/scroll-animations/css/animation-range-ignored.html [ Skip ]
@@ -2239,6 +2235,7 @@ webrtc/video-rotation-no-cvo.html [ Failure Timeout ]
 webrtc/video-rotation-black.html [ Crash Failure Pass Timeout ]
 
 fast/mediastream/video-rotation-clone.html [ Skip ]
+fast/mediastream/image-capture-grabFrame.html [ Failure ]
 
 # No AudioSession category handling in WPE/GTK ports.
 fast/mediastream/microphone-interruption-and-audio-session.html [ Skip ]
@@ -2282,6 +2279,8 @@ webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc-encoded-transform/scr
 webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc-encoded-transform/RTCRtpScriptTransform-bad-chunk.https.html [ Skip ]
 webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc-encoded-transform/script-transform-generateKeyFrame.https.html [ Skip ]
 webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc-encoded-transform/script-transform-sendKeyFrameRequest.https.html [ Skip ]
+imported/w3c/web-platform-tests/webrtc-encoded-transform/RTCRtpScriptTransform-encoded-transform.https.html [ Skip ]
+imported/w3c/web-platform-tests/webrtc-encoded-transform/RTCRtpScriptTransform-sender-worker-single-frame.https.html  [ Skip ]
 imported/w3c/web-platform-tests/webrtc-encoded-transform/sframe-transform.html [ Skip ]
 imported/w3c/web-platform-tests/webrtc-encoded-transform/sframe-transform-in-worker.https.html [ Skip ]
 imported/w3c/web-platform-tests/webrtc-encoded-transform/sframe-keys.https.html [ Skip ]
@@ -2411,9 +2410,7 @@ imported/w3c/web-platform-tests/webrtc/protocol/codecs-subsequent-offer.https.ht
 imported/w3c/web-platform-tests/webrtc/protocol/pt-no-bundle.html [ Failure ]
 imported/w3c/web-platform-tests/webrtc/protocol/sdes-dont-dont-dont.html [ Failure ]
 imported/w3c/web-platform-tests/webrtc/protocol/transceiver-mline-recycling.html [ Failure ]
-
-# Crashing
-imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-codecs.html [ Skip ]
+imported/w3c/web-platform-tests/webrtc/RTCRtpParameters-codecs.html [ Failure ]
 
 webkit.org/b/286481 imported/w3c/web-platform-tests/webrtc/protocol/rtp-demuxing.html [ Crash ]
 
@@ -2629,9 +2626,6 @@ webkit.org/b/214456 imported/w3c/web-platform-tests/css/css-images/tiled-conic-g
 webkit.org/b/214472 imported/w3c/web-platform-tests/css/css-images/normalization-conic-degenerate.html [ Pass ]
 webkit.org/b/214472 imported/w3c/web-platform-tests/css/css-images/normalization-conic.html [ Pass ]
 webkit.org/b/214472 imported/w3c/web-platform-tests/css/css-images/normalization-conic-2.html [ Pass ]
-
-# Reftest-wait timeouts
-webkit.org/b/186045 imported/w3c/web-platform-tests/css/css-values/vh_not_refreshing_on_chrome.html [ Timeout ]
 
 webkit.org/b/203448 imported/w3c/web-platform-tests/css/css-position/position-absolute-dynamic-static-position-table-cell.html [ Pass ]
 
@@ -3509,6 +3503,8 @@ webkit.org/b/201981 http/wpt/resource-timing/rt-resources-per-worker.html [ Fail
 
 # ch units should be ignored in these tests.
 webkit.org/b/206001 imported/w3c/web-platform-tests/css/css-values/ch-unit-017.html [ ImageOnlyFailure ]
+
+imported/w3c/web-platform-tests/css/css-values/attr-security.html [ Failure ]
 
 webkit.org/b/206002 imported/w3c/web-platform-tests/css/css-highlight-api/highlight-text.html [ ImageOnlyFailure ]
 webkit.org/b/206002 imported/w3c/web-platform-tests/css/css-highlight-api/highlight-text-replace.html [ ImageOnlyFailure ]

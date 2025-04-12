@@ -114,6 +114,7 @@ if (USE_GBM)
 endif ()
 
 list(APPEND WebKit_SERIALIZATION_IN_FILES
+    Shared/glib/AvailableInputDevices.serialization.in
     Shared/glib/InputMethodState.serialization.in
     Shared/glib/RendererBufferTransportMode.serialization.in
     Shared/glib/SystemSettings.serialization.in
@@ -437,6 +438,10 @@ list(APPEND WebKit_LIBRARIES
     ${GLIB_GMODULE_LIBRARIES}
     ${LIBSOUP_LIBRARIES}
 )
+
+if (ANDROID)
+    list(APPEND WebKit_PRIVATE_LIBRARIES intl)
+endif ()
 
 if (USE_ATK)
     list(APPEND WebKit_SYSTEM_INCLUDE_DIRECTORIES

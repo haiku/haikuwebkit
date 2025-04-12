@@ -1241,6 +1241,22 @@ bool RenderBox::applyCachedClipAndScrollPosition(RepaintRects& rects, const Rend
     if (effectiveOverflowY() == Overflow::Visible)
         clipRect.expandToInfiniteY();
 
+    if (context.scrollMargin && (isScrollContainerX() || isScrollContainerY())) {
+        auto borderWidths = this->borderWidths();
+        clipRect.contract(borderWidths);
+
+        auto scrollMargin = context.scrollMargin.value();
+
+        auto scrollMarginEdges = LayoutBoxExtent {
+            valueForLength(scrollMargin.top(), clipRect.height()),
+            valueForLength(scrollMargin.right(), clipRect.width()),
+            valueForLength(scrollMargin.bottom(), clipRect.height()),
+            valueForLength(scrollMargin.left(), clipRect.width())
+        };
+
+        clipRect.expand(scrollMarginEdges);
+    }
+
     bool intersects;
     if (context.options.contains(VisibleRectContextOption::UseEdgeInclusiveIntersection))
         intersects = rects.edgeInclusiveIntersect(clipRect);
@@ -1842,10 +1858,9 @@ static bool isCandidateForOpaquenessTest(const RenderBox& childBox)
 
 bool RenderBox::foregroundIsKnownToBeOpaqueInRect(const LayoutRect& localRect, unsigned maxDepthToTest) const
 {
-    if (!maxDepthToTest)
-        return false;
+    ASSERT(!isSkippedContentRoot(*this));
 
-    if (isSkippedContentRoot(*this))
+    if (!maxDepthToTest)
         return false;
 
     for (auto& childBox : childrenOfType<RenderBox>(*this)) {

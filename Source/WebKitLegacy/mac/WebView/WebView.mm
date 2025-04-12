@@ -1522,7 +1522,7 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
             } },
             WebCore::SandboxFlags { } // Set by updateSandboxFlags after instantiation.
         },
-        WebCore::FrameIdentifier::generate(),
+        WebCore::generateFrameIdentifier(),
         nullptr, // Opener may be set by setOpenerForWebKitLegacy after instantiation.
         makeUniqueRef<WebCore::DummySpeechRecognitionProvider>(),
         WebBroadcastChannelRegistry::getOrCreate([[self preferences] privateBrowsingEnabled]),
@@ -1791,7 +1791,7 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
             } },
             WebCore::SandboxFlags { } // Set by updateSandboxFlags after instantiation.
         },
-        WebCore::FrameIdentifier::generate(),
+        WebCore::generateFrameIdentifier(),
         nullptr, // Opener may be set by setOpenerForWebKitLegacy after instantiation.
         makeUniqueRef<WebCore::DummySpeechRecognitionProvider>(),
         WebBroadcastChannelRegistry::getOrCreate([[self preferences] privateBrowsingEnabled]),
@@ -1939,7 +1939,7 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
         _private->textIndicatorData = adoptNS([[WebUITextIndicatorData alloc] initWithImage:image textIndicatorData:indicatorData.value() scale:_private->page->deviceScaleFactor()]);
     else
         _private->textIndicatorData = adoptNS([[WebUITextIndicatorData alloc] initWithImage:image scale:_private->page->deviceScaleFactor()]);
-    _private->draggedLinkURL = dragItem.url.isEmpty() ? nil : (NSURL *)dragItem.url;
+    _private->draggedLinkURL = dragItem.url.isEmpty() ? RetainPtr<NSURL>() : dragItem.url.createNSURL();
     _private->draggedLinkTitle = dragItem.title.isEmpty() ? nil : (NSString *)dragItem.title;
     _private->dragPreviewFrameInRootViewCoordinates = dragItem.dragPreviewFrameInRootViewCoordinates;
     _private->dragSourceAction = kit(dragItem.sourceAction);
@@ -6719,7 +6719,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return nil;
 
     // We arbitrarily choose the first icon in the list if there is more than one.
-    return (NSURL *)linkIcons[0].url;
+    return linkIcons[0].url.createNSURL().autorelease();
 }
 #endif
 

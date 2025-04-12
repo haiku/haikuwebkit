@@ -37,7 +37,7 @@
     if (WebCoreObjCScheduleDeallocateOnMainRunLoop(WKContentRuleList.class, self))
         return;
 
-    _contentRuleList->~ContentRuleList();
+    Ref { *_contentRuleList }->~ContentRuleList();
 
     [super dealloc];
 }
@@ -52,7 +52,7 @@
 - (NSString *)identifier
 {
 #if ENABLE(CONTENT_EXTENSIONS)
-    return _contentRuleList->name();
+    return Ref { *_contentRuleList }->name();
 #else
     return nil;
 #endif
@@ -78,7 +78,7 @@
     if (!error)
         return nil;
 
-    auto userInfo = @{ NSHelpAnchorErrorKey: [NSString stringWithFormat:@"Rule list parsing failed: %s", error.message().c_str()] };
+    auto userInfo = @{ NSHelpAnchorErrorKey: adoptNS([[NSString alloc] initWithFormat:@"Rule list parsing failed: %s", error.message().c_str()]).get() };
     return [NSError errorWithDomain:WKErrorDomain code:WKErrorContentRuleListStoreCompileFailed userInfo:userInfo];
 #else
     return nil;

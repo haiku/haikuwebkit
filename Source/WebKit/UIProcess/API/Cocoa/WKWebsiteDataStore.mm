@@ -154,7 +154,7 @@ private:
         URL mainFrameURL { topOrigin.toString() };
         URL frameURL { frameOrigin.toString() };
 
-        [m_delegate.getAutoreleased() requestStorageSpace:mainFrameURL frameOrigin:frameURL quota:quota currentSize:currentSize spaceRequired:spaceRequired decisionHandler:decisionHandler.get()];
+        [m_delegate.getAutoreleased() requestStorageSpace:mainFrameURL.createNSURL().get() frameOrigin:frameURL.createNSURL().get() quota:quota currentSize:currentSize spaceRequired:spaceRequired decisionHandler:decisionHandler.get()];
     }
 
     void didReceiveAuthenticationChallenge(Ref<WebKit::AuthenticationChallengeProxy>&& challenge) final
@@ -192,9 +192,9 @@ private:
             callback(newWebView._page.get());
         });
 
-        auto nsURL = (NSURL *)URL { url };
+        RetainPtr nsURL = URL { url }.createNSURL();
         auto apiOrigin = API::SecurityOrigin::create(serviceWorkerOrigin);
-        [m_delegate.getAutoreleased() websiteDataStore:m_dataStore.getAutoreleased() openWindow:nsURL fromServiceWorkerOrigin:wrapper(apiOrigin.get()) completionHandler:completionHandler.get()];
+        [m_delegate.getAutoreleased() websiteDataStore:m_dataStore.getAutoreleased() openWindow:nsURL.get() fromServiceWorkerOrigin:wrapper(apiOrigin.get()) completionHandler:completionHandler.get()];
     }
 
     void reportServiceWorkerConsoleMessage(const URL&, const WebCore::SecurityOriginData&, MessageSource, MessageLevel, const String& message, unsigned long)
@@ -278,7 +278,7 @@ private:
         if (!m_hasNavigateToNotificationActionURLSelector || !m_delegate || !m_dataStore)
             return;
 
-        [m_delegate.getAutoreleased() websiteDataStore:m_dataStore.getAutoreleased() navigateToNotificationActionURL:(NSURL *)url];
+        [m_delegate.getAutoreleased() websiteDataStore:m_dataStore.getAutoreleased() navigateToNotificationActionURL:url.createNSURL().get()];
     }
 
 
@@ -300,7 +300,7 @@ private:
         URL mainFrameURL { topOrigin.toString() };
         URL frameURL { frameOrigin.toString() };
 
-        [m_delegate.getAutoreleased() requestBackgroundFetchPermission:mainFrameURL frameOrigin:frameURL decisionHandler:decisionHandler.get()];
+        [m_delegate.getAutoreleased() requestBackgroundFetchPermission:mainFrameURL.createNSURL().get() frameOrigin:frameURL.createNSURL().get() decisionHandler:decisionHandler.get()];
     }
 
     void notifyBackgroundFetchChange(const String& backgroundFetchIdentifier, WebKit::BackgroundFetchChange backgroundFetchChange) final
@@ -348,7 +348,7 @@ private:
         if (!m_hasDidAllowPrivateTokenUsageByThirdPartyForTestingSelector)
             return;
 
-        [m_delegate.getAutoreleased() websiteDataStore:m_dataStore.getAutoreleased() didAllowPrivateTokenUsageByThirdPartyForTesting:wasAllowed forResourceURL:resourceURL];
+        [m_delegate.getAutoreleased() websiteDataStore:m_dataStore.getAutoreleased() didAllowPrivateTokenUsageByThirdPartyForTesting:wasAllowed forResourceURL:resourceURL.createNSURL().get()];
     }
 
     void didExceedMemoryFootprintThreshold(size_t footprint, const String& domain, unsigned pageCount, Seconds processLifetime, bool inForeground, WebCore::WasPrivateRelayed wasPrivateRelayed, CanSuspend canSuspend)
@@ -738,7 +738,7 @@ static Vector<WebKit::WebsiteDataRecord> toWebsiteDataRecords(NSArray *dataRecor
     auto urls = _websiteDataStore->persistedSiteURLs();
     RetainPtr result = adoptNS([[NSMutableArray alloc] initWithCapacity:urls.size()]);
     for (auto& url : urls)
-        [result addObject:url];
+        [result addObject:url.createNSURL().get()];
 
     return result.autorelease();
 }

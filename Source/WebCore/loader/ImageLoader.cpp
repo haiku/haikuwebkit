@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
- * Copyright (C) 2004-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -447,16 +447,15 @@ void ImageLoader::notifyFinished(CachedResource& resource, const NetworkLoadMetr
         LOG_WITH_STREAM(LazyLoading, stream << "ImageLoader " << this << " notifyFinished() for element " << element() << " setting lazy load state to " << m_lazyImageLoadState);
     }
 
-    m_imageComplete = true;
-    if (!hasPendingBeforeLoadEvent())
-        updateRenderer();
-
-    if (!m_hasPendingLoadEvent)
+    if (!m_hasPendingLoadEvent) {
+        setImageCompleteAndMaybeUpdateRenderer();
         return;
+    }
 
     if (m_image->resourceError().isAccessControl()) {
-        URL imageURL = m_image->url();
+        setImageCompleteAndMaybeUpdateRenderer();
 
+        auto imageURL = m_image->url();
         clearImageWithoutConsideringPendingLoadEvent();
 
         m_hasPendingErrorEvent = true;
@@ -477,6 +476,8 @@ void ImageLoader::notifyFinished(CachedResource& resource, const NetworkLoadMetr
     }
 
     if (m_image->wasCanceled()) {
+        setImageCompleteAndMaybeUpdateRenderer();
+
         if (hasPendingDecodePromises())
             rejectDecodePromises("Loading was canceled."_s);
         m_hasPendingLoadEvent = false;
@@ -486,18 +487,27 @@ void ImageLoader::notifyFinished(CachedResource& resource, const NetworkLoadMetr
         return;
     }
 
-    if (hasPendingDecodePromises())
-        decode();
-    loadEventSender().dispatchEventSoon(*this, eventNames().loadEvent);
+    m_image->protectedImage()->subresourcesAreFinished(protectedDocument().ptr(), [this, protectedThis = Ref { *this }]() mutable {
+        // It is technically possible state changed underneath us.
+        if (!m_hasPendingLoadEvent)
+            return;
+
+        setImageCompleteAndMaybeUpdateRenderer();
+
+        if (hasPendingDecodePromises())
+            decode();
+        loadEventSender().dispatchEventSoon(*this, eventNames().loadEvent);
+
 #if ENABLE(QUICKLOOK_FULLSCREEN)
-    if (RefPtr page = element().document().protectedPage())
-        page->chrome().client().updateImageSource(protectedElement().get());
+        if (RefPtr page = element().document().protectedPage())
+            page->chrome().client().updateImageSource(protectedElement().get());
 #endif
 
 #if ENABLE(SPATIAL_IMAGE_CONTROLS)
-    if (RefPtr imageElement = dynamicDowncast<HTMLImageElement>(element()))
-        SpatialImageControls::updateSpatialImageControls(*imageElement);
+        if (RefPtr imageElement = dynamicDowncast<HTMLImageElement>(element()))
+            SpatialImageControls::updateSpatialImageControls(*imageElement);
 #endif
+    });
 }
 
 RenderImageResource* ImageLoader::renderImageResource()
@@ -540,6 +550,13 @@ void ImageLoader::updateRenderer()
         imageResource->setCachedImage(CachedResourceHandle { m_image });
 }
 
+void ImageLoader::setImageCompleteAndMaybeUpdateRenderer()
+{
+    m_imageComplete = true;
+    if (!hasPendingBeforeLoadEvent())
+        updateRenderer();
+}
+
 void ImageLoader::updatedHasPendingEvent()
 {
     // If an Element that does image loading is removed from the DOM the load/error event for the image is still observable.
@@ -547,12 +564,7 @@ void ImageLoader::updatedHasPendingEvent()
     // destroyed by DOM manipulation or garbage collection.
     // If such an Element wishes for the load to stop when removed from the DOM it needs to stop the ImageLoader explicitly.
     bool wasProtected = m_elementIsProtected;
-
-    // Because of lazy image loading, an image's load may be deferred indefinitely. To avoid leaking the element, we only
-    // protect it once the load has actually started.
-    bool imageWillBeLoadedLater = m_image && !m_image->isLoading() && m_image->stillNeedsLoad();
-
-    m_elementIsProtected = (m_hasPendingLoadEvent && !imageWillBeLoadedLater) || m_hasPendingErrorEvent;
+    m_elementIsProtected = hasPendingActivity();
     if (wasProtected == m_elementIsProtected)
         return;
 

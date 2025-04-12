@@ -253,7 +253,7 @@ enum class ScrollGranularity : uint8_t;
 enum ScrollLogicalDirection : uint8_t;
 enum class ScrollPinningBehavior : uint8_t;
 enum class ScrollbarMode : uint8_t;
-enum ScrollbarOverlayStyle : uint8_t;
+enum class ScrollbarOverlayStyle : uint8_t;
 enum class ShouldTreatAsContinuingLoad : uint8_t;
 enum class StorageAccessScope : bool;
 enum class SyntheticClickResult : uint8_t;
@@ -563,7 +563,7 @@ public:
     void centerSelectionInVisibleArea();
 
 #if ENABLE(PDF_HUD)
-    void createPDFHUD(PDFPluginBase&, const WebCore::IntRect&);
+    void createPDFHUD(PDFPluginBase&, WebCore::FrameIdentifier, const WebCore::IntRect&);
     void updatePDFHUDLocation(PDFPluginBase&, const WebCore::IntRect&);
     void removePDFHUD(PDFPluginBase&);
 #endif
@@ -751,7 +751,6 @@ public:
 
     void createRemoteSubframe(WebCore::FrameIdentifier parentID, WebCore::FrameIdentifier newChildID, const String& newChildFrameName, Ref<WebCore::FrameTreeSyncData>&&);
 
-    void getFrameInfo(WebCore::FrameIdentifier, CompletionHandler<void(std::optional<FrameInfoData>&&)>&&);
     Awaitable<std::optional<FrameTreeNodeData>> getFrameTree();
     void didFinishLoadInAnotherProcess(WebCore::FrameIdentifier);
     void frameWasRemovedInAnotherProcess(WebCore::FrameIdentifier);
@@ -1124,7 +1123,6 @@ public:
     void unfreezeLayerTree(LayerTreeFreezeReason);
 
     void updateFrameScrollingMode(WebCore::FrameIdentifier, WebCore::ScrollbarMode);
-    void updateFrameSize(WebCore::FrameIdentifier, WebCore::IntSize);
 
     void markLayersVolatile(CompletionHandler<void(bool)>&& completionHandler = { });
     void cancelMarkLayersVolatile();
@@ -1444,7 +1442,7 @@ public:
     bool alwaysShowsVerticalScroller() const { return m_alwaysShowsVerticalScroller; };
 
     void scrollToRect(const WebCore::FloatRect& targetRect, const WebCore::FloatPoint& origin);
-    void setContentOffset(WebCore::ScrollOffset, WebCore::ScrollIsAnimated);
+    void setContentOffset(std::optional<int> x, std::optional<int> y, WebCore::ScrollIsAnimated);
     void scrollToEdge(WebCore::RectEdges<bool>, WebCore::ScrollIsAnimated);
 
     void setMinimumSizeForAutoLayout(const WebCore::IntSize&);
@@ -1481,7 +1479,7 @@ public:
     void setScrollPinningBehavior(WebCore::ScrollPinningBehavior);
 
     std::optional<WebCore::ScrollbarOverlayStyle> scrollbarOverlayStyle() { return m_scrollbarOverlayStyle; }
-    void setScrollbarOverlayStyle(std::optional<uint32_t /* WebCore::ScrollbarOverlayStyle */> scrollbarStyle);
+    void setScrollbarOverlayStyle(std::optional<WebCore::ScrollbarOverlayStyle> scrollbarStyle);
 
     Ref<WebCore::DocumentLoader> createDocumentLoader(WebCore::LocalFrame&, const WebCore::ResourceRequest&, const WebCore::SubstituteData&);
     void updateCachedDocumentLoader(WebCore::DocumentLoader&, WebCore::LocalFrame&);
@@ -1624,7 +1622,6 @@ public:
 #if ENABLE(ATTACHMENT_ELEMENT)
     void insertAttachment(const String& identifier, std::optional<uint64_t>&& fileSize, const String& fileName, const String& contentType, CompletionHandler<void()>&&);
     void updateAttachmentAttributes(const String& identifier, std::optional<uint64_t>&& fileSize, const String& contentType, const String& fileName, const IPC::SharedBufferReference& associatedElementData, CompletionHandler<void()>&&);
-    void updateAttachmentThumbnail(const String& identifier, std::optional<WebCore::ShareableBitmap::Handle>&& qlThumbnailHandle);
     void updateAttachmentIcon(const String& identifier, std::optional<WebCore::ShareableBitmap::Handle>&& icon, const WebCore::FloatSize&);
     void requestAttachmentIcon(const String& identifier, const WebCore::FloatSize&);
 #endif

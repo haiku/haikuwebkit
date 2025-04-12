@@ -382,7 +382,7 @@ void PageClientImpl::registerEditCommand(Ref<WebEditCommandProxy>&& command, Und
     NSUndoManager *undoManager = [contentView() undoManagerForWebView];
     [undoManager registerUndoWithTarget:m_undoTarget.get() selector:((undoOrRedo == UndoOrRedo::Undo) ? @selector(undoEditing:) : @selector(redoEditing:)) object:commandObjC.get()];
     if (!actionName.isEmpty())
-        [undoManager setActionName:(NSString *)actionName];
+        [undoManager setActionName:actionName.createNSString().get()];
 }
 
 void PageClientImpl::clearAllEditCommands()
@@ -542,7 +542,7 @@ void PageClientImpl::doneDeferringTouchEnd(bool preventNativeGestures)
 
 void PageClientImpl::requestTextRecognition(const URL& imageURL, ShareableBitmap::Handle&& imageData, const String& sourceLanguageIdentifier, const String& targetLanguageIdentifier, CompletionHandler<void(TextRecognitionResult&&)>&& completion)
 {
-    [contentView() requestTextRecognition:imageURL imageData:WTFMove(imageData) sourceLanguageIdentifier:sourceLanguageIdentifier targetLanguageIdentifier:targetLanguageIdentifier completionHandler:WTFMove(completion)];
+    [contentView() requestTextRecognition:imageURL.createNSURL().get() imageData:WTFMove(imageData) sourceLanguageIdentifier:sourceLanguageIdentifier targetLanguageIdentifier:targetLanguageIdentifier completionHandler:WTFMove(completion)];
 }
 
 #endif // ENABLE(IMAGE_ANALYSIS)

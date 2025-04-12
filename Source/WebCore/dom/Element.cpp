@@ -231,6 +231,7 @@ static Attr* findAttrNodeInList(Vector<RefPtr<Attr>>& attrNodeList, const Qualif
     return nullptr;
 }
 
+// Insertion steps from https://html.spec.whatwg.org/multipage/interaction.html#the-autofocus-attribute
 static bool shouldAutofocus(const Element& element)
 {
     Ref document = element.document();
@@ -250,12 +251,33 @@ static bool shouldAutofocus(const Element& element)
         return false;
     }
 
-    if (!document->frame()->isMainFrame() && !document->topOrigin().isSameOriginDomain(document->securityOrigin())) {
-        document->addConsoleMessage(MessageSource::Security, MessageLevel::Error, "Blocked autofocusing on a form control in a cross-origin subframe."_s);
-        return false;
-    }
+    // Make sure all navigable ancestors are of the same origin.
+    bool allAncestorsAreSameOrigin = [&] {
+        RefPtr<Frame> currentFrame = document->frame();
+        RefPtr<Document> currentDocument = document.ptr();
+        while (currentFrame) {
+            if (!currentDocument || !document->topOrigin().isSameOriginDomain(currentDocument->securityOrigin()))
+                return false;
 
-    return true;
+            RefPtr parentFrame = currentFrame->tree().parent();
+            if (!parentFrame)
+                return currentFrame->isMainFrame();
+
+            // If the parent frame is not local then it is definitely a different origin.
+            RefPtr localParent = dynamicDowncast<LocalFrame>(parentFrame.get());
+            if (!localParent)
+                return false;
+
+            currentFrame = WTFMove(parentFrame);
+            currentDocument = localParent->document();
+        }
+        return true;
+    }();
+
+    if (!allAncestorsAreSameOrigin)
+        document->addConsoleMessage(MessageSource::Security, MessageLevel::Error, "Blocked autofocusing on a form control in a cross-origin subframe."_s);
+
+    return allAncestorsAreSameOrigin;
 }
 
 static UncheckedKeyHashMap<WeakRef<Element, WeakPtrImplWithEventTargetData>, ElementIdentifier>& elementIdentifiersMap()
@@ -1437,7 +1459,7 @@ int Element::offsetTop()
 
 int Element::offsetWidth()
 {
-    protectedDocument()->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Width);
+    protectedDocument()->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Width, { LayoutOptions::TreatContentVisibilityHiddenAsVisible, LayoutOptions::TreatContentVisibilityAutoAsVisible });
     if (CheckedPtr renderer = renderBoxModelObject()) {
         auto offsetWidth = LayoutUnit { roundToInt(renderer->offsetWidth()) };
         return convertToNonSubpixelValue(adjustLayoutUnitForAbsoluteZoom(offsetWidth, *renderer).toDouble());
@@ -1447,7 +1469,7 @@ int Element::offsetWidth()
 
 int Element::offsetHeight()
 {
-    protectedDocument()->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Height);
+    protectedDocument()->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Height, { LayoutOptions::TreatContentVisibilityHiddenAsVisible, LayoutOptions::TreatContentVisibilityAutoAsVisible });
     if (CheckedPtr renderer = renderBoxModelObject()) {
         auto offsetHeight = LayoutUnit { roundToInt(renderer->offsetHeight()) };
         return convertToNonSubpixelValue(adjustLayoutUnitForAbsoluteZoom(offsetHeight, *renderer).toDouble());
@@ -1500,7 +1522,7 @@ int Element::clientTop()
 int Element::clientWidth()
 {
     Ref document = this->document();
-    document->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Width);
+    document->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Width, { LayoutOptions::TreatContentVisibilityHiddenAsVisible, LayoutOptions::TreatContentVisibilityAutoAsVisible });
 
     if (!document->hasLivingRenderTree())
         return 0;
@@ -1535,7 +1557,7 @@ int Element::clientWidth()
 int Element::clientHeight()
 {
     Ref document = this->document();
-    document->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Height);
+    document->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Height, { LayoutOptions::TreatContentVisibilityHiddenAsVisible, LayoutOptions::TreatContentVisibilityAutoAsVisible });
     if (!document->hasLivingRenderTree())
         return 0;
 
@@ -1659,7 +1681,7 @@ void Element::setScrollTop(int newTop)
 int Element::scrollWidth()
 {
     Ref document = this->document();
-    document->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Width);
+    document->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Width, { LayoutOptions::TreatContentVisibilityHiddenAsVisible, LayoutOptions::TreatContentVisibilityAutoAsVisible });
 
     if (document->scrollingElement() == this) {
         // FIXME (webkit.org/b/182289): updateLayoutIfDimensionsOutOfDate seems to ignore zoom level change.
@@ -1677,7 +1699,7 @@ int Element::scrollWidth()
 int Element::scrollHeight()
 {
     Ref document = this->document();
-    document->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Height);
+    document->updateLayoutIfDimensionsOutOfDate(*this, DimensionsCheck::Height, { LayoutOptions::TreatContentVisibilityHiddenAsVisible, LayoutOptions::TreatContentVisibilityAutoAsVisible });
 
     if (document->scrollingElement() == this) {
         // FIXME (webkit.org/b/182289): updateLayoutIfDimensionsOutOfDate seems to ignore zoom level change.
@@ -2223,6 +2245,9 @@ void Element::notifyAttributeChanged(const QualifiedName& name, const AtomString
 
         if (CheckedPtr cache = document().existingAXObjectCache())
             cache->deferAttributeChangeIfNeeded(*this, name, oldValue, newValue);
+
+        if (isConnected() && oldValue == nullAtom())
+            document().attributeAddedToElement(name);
     }
 }
 
@@ -3000,10 +3025,13 @@ Node::InsertedIntoAncestorResult Element::insertedIntoAncestor(InsertionType ins
         if (UNLIKELY(isDefinedCustomElement()))
             CustomElementReactionQueue::enqueueConnectedCallbackIfNeeded(*this);
         if (shouldAutofocus(*this)) {
-            if (RefPtr mainFrameDocument = document().mainFrameDocument())
-                mainFrameDocument->appendAutofocusCandidate(*this);
-            else
-                LOG_ONCE(SiteIsolation, "Unable to properly perform Element::insertedIntoAncestor() without access to the main frame document ");
+            if (RefPtr topDocument = document().sameOriginTopLevelTraversable())
+                topDocument->appendAutofocusCandidate(*this);
+        }
+
+        if (hasAttributesWithoutUpdate()) {
+            for (auto& attribute : attributes())
+                document().attributeAddedToElement(attribute.name());
         }
     }
 
@@ -3096,6 +3124,8 @@ void Element::removedFromAncestor(RemovalType removalType, ContainerNode& oldPar
             oldDocument->observeForContainIntrinsicSize(*this);
             oldDocument->resetObservationSizeForContainIntrinsicSize(*this);
         }
+
+        oldDocument->elementDisconnectedFromDocument(*this);
 
         setSavedLayerScrollPosition({ });
 

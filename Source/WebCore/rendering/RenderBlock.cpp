@@ -1106,8 +1106,7 @@ void RenderBlock::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
 
 void RenderBlock::paintContents(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
 {
-    if (isSkippedContentRoot(*this))
-        return;
+    ASSERT(!isSkippedContentRoot(*this));
 
     if (childrenInline())
         paintInlineChildren(paintInfo, paintOffset);
@@ -1132,6 +1131,8 @@ void RenderBlock::paintContents(PaintInfo& paintInfo, const LayoutPoint& paintOf
 
 void RenderBlock::paintChildren(PaintInfo& paintInfo, const LayoutPoint& paintOffset, PaintInfo& paintInfoForChild, bool usePrintRect)
 {
+    ASSERT(!isSkippedContentRoot(*this));
+
     for (auto& child : childrenOfType<RenderBox>(*this)) {
         if (!paintChild(child, paintInfo, paintOffset, paintInfoForChild, usePrintRect))
             return;
@@ -1140,6 +1141,8 @@ void RenderBlock::paintChildren(PaintInfo& paintInfo, const LayoutPoint& paintOf
 
 bool RenderBlock::paintChild(RenderBox& child, PaintInfo& paintInfo, const LayoutPoint& paintOffset, PaintInfo& paintInfoForChild, bool usePrintRect, PaintBlockType paintType)
 {
+    ASSERT(!isSkippedContentRoot(*this));
+
     if (child.isExcludedAndPlacedInBorder())
         return true;
 
@@ -1244,6 +1247,7 @@ void RenderBlock::paintDebugBoxShadowIfApplicable(GraphicsContext& context, cons
 void RenderBlock::paintObject(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
 {
     PaintPhase paintPhase = paintInfo.phase;
+    auto shouldPaintContent = !isSkippedContentRoot(*this);
 
     // 1. paint background, borders etc
     if ((paintPhase == PaintPhase::BlockBackground || paintPhase == PaintPhase::ChildBlockBackground) && style().usedVisibility() == Visibility::Visible) {
@@ -1253,7 +1257,7 @@ void RenderBlock::paintObject(PaintInfo& paintInfo, const LayoutPoint& paintOffs
     }
     
     // Paint legends just above the border before we scroll or clip.
-    if (paintPhase == PaintPhase::BlockBackground || paintPhase == PaintPhase::ChildBlockBackground || paintPhase == PaintPhase::Selection)
+    if (shouldPaintContent && (paintPhase == PaintPhase::BlockBackground || paintPhase == PaintPhase::ChildBlockBackground || paintPhase == PaintPhase::Selection))
         paintExcludedChildrenInBorder(paintInfo, paintOffset);
     
     if (paintPhase == PaintPhase::Mask && style().usedVisibility() == Visibility::Visible) {
@@ -1336,18 +1340,20 @@ void RenderBlock::paintObject(PaintInfo& paintInfo, const LayoutPoint& paintOffs
         return;
     
     // 2. paint contents
-    if (paintPhase != PaintPhase::SelfOutline)
-        paintContents(paintInfo, scrolledOffset);
+    if (shouldPaintContent) {
+        if (paintPhase != PaintPhase::SelfOutline)
+            paintContents(paintInfo, scrolledOffset);
 
-    // 3. paint selection
-    // FIXME: Make this work with multi column layouts.  For now don't fill gaps.
-    bool isPrinting = document().printing();
-    if (!isPrinting)
-        paintSelection(paintInfo, scrolledOffset); // Fill in gaps in selection on lines and between blocks.
+        // 3. paint selection
+        // FIXME: Make this work with multi column layouts. For now don't fill gaps.
+        bool isPrinting = document().printing();
+        if (!isPrinting)
+            paintSelection(paintInfo, scrolledOffset); // Fill in gaps in selection on lines and between blocks.
 
-    // 4. paint floats.
-    if (paintPhase == PaintPhase::Float || paintPhase == PaintPhase::Selection || paintPhase == PaintPhase::TextClip || paintPhase == PaintPhase::EventRegion || paintPhase == PaintPhase::Accessibility)
-        paintFloats(paintInfo, scrolledOffset, paintPhase == PaintPhase::Selection || paintPhase == PaintPhase::TextClip || paintPhase == PaintPhase::EventRegion || paintPhase == PaintPhase::Accessibility);
+        // 4. paint floats.
+        if (paintPhase == PaintPhase::Float || paintPhase == PaintPhase::Selection || paintPhase == PaintPhase::TextClip || paintPhase == PaintPhase::EventRegion || paintPhase == PaintPhase::Accessibility)
+            paintFloats(paintInfo, scrolledOffset, paintPhase == PaintPhase::Selection || paintPhase == PaintPhase::TextClip || paintPhase == PaintPhase::EventRegion || paintPhase == PaintPhase::Accessibility);
+    }
 
     // 5. paint outline.
     if ((paintPhase == PaintPhase::Outline || paintPhase == PaintPhase::SelfOutline) && hasOutline() && style().usedVisibility() == Visibility::Visible) {
@@ -1387,7 +1393,8 @@ void RenderBlock::paintObject(PaintInfo& paintInfo, const LayoutPoint& paintOffs
     // 7. paint caret.
     // If the caret's node's render object's containing block is this block, and the paint action is PaintPhase::Foreground,
     // then paint the caret.
-    paintCarets(paintInfo, paintOffset);
+    if (shouldPaintContent)
+        paintCarets(paintInfo, paintOffset);
 }
 
 static ContinuationOutlineTableMap* continuationOutlineTable()
@@ -2131,6 +2138,8 @@ Node* RenderBlock::nodeForHitTest() const
 
 bool RenderBlock::hitTestChildren(const HitTestRequest& request, HitTestResult& result, const HitTestLocation& locationInContainer, const LayoutPoint& adjustedLocation, HitTestAction hitTestAction)
 {
+    ASSERT(!isSkippedContentRoot(*this));
+
     // Hit test descendants first.
     const LayoutSize localOffset = toLayoutSize(adjustedLocation);
     const LayoutSize scrolledOffset(localOffset - toLayoutSize(scrollPosition()));
@@ -2164,14 +2173,17 @@ bool RenderBlock::nodeAtPoint(const HitTestRequest& request, HitTestResult& resu
     if (!hitTestClipPath(locationInContainer, accumulatedOffset))
         return false;
 
-    // If we have clipping, then we can't have any spillout.
-    bool useClip = (hasControlClip() || hasNonVisibleOverflow());
-    bool checkChildren = !useClip || (hasControlClip() ? locationInContainer.intersects(controlClipRect(adjustedLocation)) : locationInContainer.intersects(overflowClipRect(adjustedLocation, OverlayScrollbarSizeRelevancy::IncludeOverlayScrollbarSize)));
-    if (checkChildren && hitTestChildren(request, result, locationInContainer, adjustedLocation, hitTestAction))
-        return true;
+    auto shouldHittestContent = !isSkippedContentRoot(*this);
+    if (shouldHittestContent) {
+        // If we have clipping, then we can't have any spillout.
+        bool useClip = (hasControlClip() || hasNonVisibleOverflow());
+        bool checkChildren = !useClip || (hasControlClip() ? locationInContainer.intersects(controlClipRect(adjustedLocation)) : locationInContainer.intersects(overflowClipRect(adjustedLocation, OverlayScrollbarSizeRelevancy::IncludeOverlayScrollbarSize)));
+        if (checkChildren && hitTestChildren(request, result, locationInContainer, adjustedLocation, hitTestAction))
+            return true;
 
-    if (!checkChildren && hitTestExcludedChildrenInBorder(request, result, locationInContainer, adjustedLocation, hitTestAction))
-        return true;
+        if (!checkChildren && hitTestExcludedChildrenInBorder(request, result, locationInContainer, adjustedLocation, hitTestAction))
+            return true;
+    }
 
     if (!hitTestBorderRadius(locationInContainer, accumulatedOffset))
         return false;
@@ -3451,18 +3463,21 @@ void RenderBlock::layoutExcludedChildren(RelayoutChildren relayoutChildren)
 
 RenderBox* RenderBlock::findFieldsetLegend(FieldsetFindLegendOption option) const
 {
+    if (isSkippedContentRoot(*this))
+        return { };
+
     for (auto& legend : childrenOfType<RenderBox>(*this)) {
         if (option == FieldsetIgnoreFloatingOrOutOfFlow && legend.isFloatingOrOutOfFlowPositioned())
             continue;
         if (legend.isLegend())
             return const_cast<RenderBox*>(&legend);
     }
-    return nullptr;
+    return { };
 }
 
 void RenderBlock::adjustBorderBoxRectForPainting(LayoutRect& paintRect)
 {
-    if (!isFieldset() || isSkippedContentRoot(*this) || !intrinsicBorderForFieldset())
+    if (!isFieldset() || !intrinsicBorderForFieldset())
         return;
     
     auto* legend = findFieldsetLegend();
@@ -3485,7 +3500,7 @@ void RenderBlock::adjustBorderBoxRectForPainting(LayoutRect& paintRect)
 LayoutRect RenderBlock::paintRectToClipOutFromBorder(const LayoutRect& paintRect)
 {
     LayoutRect clipRect;
-    if (!isFieldset() || isSkippedContentRoot(*this))
+    if (!isFieldset())
         return clipRect;
     auto* legend = findFieldsetLegend();
     if (!legend)
@@ -3641,7 +3656,7 @@ LayoutUnit RenderBlock::adjustIntrinsicLogicalHeightForBoxSizing(LayoutUnit heig
 
 void RenderBlock::paintExcludedChildrenInBorder(PaintInfo& paintInfo, const LayoutPoint& paintOffset)
 {
-    if (!isFieldset() || isSkippedContentRoot(*this))
+    if (!isFieldset())
         return;
     
     RenderBox* box = findFieldsetLegend();

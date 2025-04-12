@@ -211,6 +211,7 @@
 #include "ObjectPropertyChangeAdaptiveWatchpoint.h"
 #include "ObjectPropertyConditionSet.h"
 #include "ObjectPrototypeInlines.h"
+#include "ProfilerSupport.h"
 #include "ProxyConstructorInlines.h"
 #include "ProxyObjectInlines.h"
 #include "ProxyRevokeInlines.h"
@@ -537,8 +538,6 @@ JSC_DEFINE_HOST_FUNCTION(tracePointStop, (JSGlobalObject* globalObject, CallFram
 
 std::atomic<unsigned> activeJSGlobalObjectSignpostIntervalCount { 0 };
 
-#if HAVE(OS_SIGNPOST)
-
 static String asSignpostString(JSGlobalObject* globalObject, JSValue v)
 {
     if (v.isUndefined())
@@ -576,7 +575,10 @@ void JSGlobalObject::startSignpost(String&& message)
     auto* identifier = std::bit_cast<void*>(static_cast<uintptr_t>(m_signposts.ensure(message, [] {
         return JSCJSGlobalObjectSignpostIdentifier::generate();
     }).iterator->value.toUInt64()));
-    WTFBeginSignpostAlways(identifier, JSCJSGlobalObject, "%" PUBLIC_LOG_STRING, message.ascii().data());
+    UNUSED_VARIABLE(identifier);
+    auto string = message.ascii();
+    WTFBeginSignpostAlways(identifier, JSCJSGlobalObject, "%" PUBLIC_LOG_STRING, string.data());
+    ProfilerSupport::markStart(identifier, ProfilerSupport::Category::JSGlobalObjectSignpost, WTFMove(string));
 }
 
 void JSGlobalObject::stopSignpost(String&& message)
@@ -584,23 +586,12 @@ void JSGlobalObject::stopSignpost(String&& message)
     void* identifier = std::bit_cast<void*>(this);
     if (auto stored = m_signposts.takeOptional(message))
         identifier = std::bit_cast<void*>(static_cast<uintptr_t>(stored->toUInt64()));
-    WTFEndSignpostAlways(identifier, JSCJSGlobalObject, "%" PUBLIC_LOG_STRING, message.ascii().data());
+    UNUSED_VARIABLE(identifier);
+    auto string = message.ascii();
+    WTFEndSignpostAlways(identifier, JSCJSGlobalObject, "%" PUBLIC_LOG_STRING, string.data());
+    ProfilerSupport::markEnd(identifier, ProfilerSupport::Category::JSGlobalObjectSignpost, WTFMove(string));
     --activeJSGlobalObjectSignpostIntervalCount;
 }
-
-#else
-
-JSC_DEFINE_HOST_FUNCTION(signpostStart, (JSGlobalObject*, CallFrame*))
-{
-    return JSValue::encode(jsUndefined());
-}
-
-JSC_DEFINE_HOST_FUNCTION(signpostStop, (JSGlobalObject*, CallFrame*))
-{
-    return JSValue::encode(jsUndefined());
-}
-
-#endif // HAVE(OS_SIGNPOST)
 
 JSC_DEFINE_HOST_FUNCTION(enableSuperSampler, (JSGlobalObject*, CallFrame*))
 {

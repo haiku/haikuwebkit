@@ -191,6 +191,7 @@ set(WTF_PUBLIC_HEADERS
     NeverDestroyed.h
     NoLock.h
     NoTailCalls.h
+    NoVirtualDestructorBase.h
     Noncopyable.h
     Nonmovable.h
     NotFound.h
@@ -320,6 +321,7 @@ set(WTF_PUBLIC_HEADERS
     StringExtras.h
     StringHashDumpContext.h
     StringPrintStream.h
+    StructDump.h
     SuspendableWorkQueue.h
     SynchronizedFixedQueue.h
     SystemFree.h

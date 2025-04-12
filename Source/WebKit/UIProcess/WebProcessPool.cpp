@@ -77,6 +77,7 @@
 #include "WebGeolocationManagerProxy.h"
 #include "WebInspectorUtilities.h"
 #include "WebKit2Initialize.h"
+#include "WebKitServiceNames.h"
 #include "WebMemorySampler.h"
 #include "WebNotificationManagerProxy.h"
 #include "WebPageGroup.h"
@@ -283,7 +284,7 @@ WebProcessPool::WebProcessPool(API::ProcessPoolConfiguration& configuration)
     if (needsGlobalStaticInitialization == NeedsGlobalStaticInitialization::Yes) {
         WTF::setProcessPrivileges(allPrivileges());
         WebCore::NetworkStorageSession::permitProcessToUseCookieAPI(true);
-        Process::setIdentifier(WebCore::ProcessIdentifier::generate());
+        Process::setIdentifier(WebCore::Process::generateIdentifier());
     }
 
     for (auto& scheme : m_configuration->alwaysRevalidatedURLSchemes())
@@ -876,7 +877,7 @@ WebProcessDataStoreParameters WebProcessPool::webProcessDataStoreParameters(WebP
             javaScriptConfigurationDirectoryExtensionHandle = WTFMove(*handle);
     }
 
-#if ENABLE(ARKIT_INLINE_PREVIEW)
+#if ENABLE(ARKIT_INLINE_PREVIEW) && !PLATFORM(IOS_FAMILY)
     auto modelElementCacheDirectory = resolvedDirectories.modelElementCacheDirectory;
     SandboxExtension::Handle modelElementCacheDirectoryExtensionHandle;
     if (!modelElementCacheDirectory.isEmpty()) {
@@ -886,15 +887,12 @@ WebProcessDataStoreParameters WebProcessPool::webProcessDataStoreParameters(WebP
 #endif
 
 #if PLATFORM(IOS_FAMILY)
-    std::optional<SandboxExtension::Handle> cookieStorageDirectoryExtensionHandle;
-    if (auto directory = websiteDataStore.resolvedCookieStorageDirectory(); !directory.isEmpty())
-        cookieStorageDirectoryExtensionHandle = SandboxExtension::createHandleWithoutResolvingPath(directory, SandboxExtension::Type::ReadWrite);
-    std::optional<SandboxExtension::Handle> containerCachesDirectoryExtensionHandle;
-    if (auto directory = websiteDataStore.resolvedContainerCachesWebContentDirectory(); !directory.isEmpty())
-        containerCachesDirectoryExtensionHandle = SandboxExtension::createHandleWithoutResolvingPath(directory, SandboxExtension::Type::ReadWrite);
     std::optional<SandboxExtension::Handle> containerTemporaryDirectoryExtensionHandle;
-    if (auto directory = websiteDataStore.resolvedContainerTemporaryDirectory(); !directory.isEmpty())
-        containerTemporaryDirectoryExtensionHandle = SandboxExtension::createHandleWithoutResolvingPath(directory, SandboxExtension::Type::ReadWrite);
+    if (auto directory = websiteDataStore.resolvedContainerTemporaryDirectory(); !directory.isEmpty()) {
+        if (m_cachedWebContentTempDirectory.isEmpty())
+            m_cachedWebContentTempDirectory = resolveAndCreateReadWriteDirectoryForSandboxExtension(FileSystem::pathByAppendingComponent(directory, webContentServiceName));
+        containerTemporaryDirectoryExtensionHandle = SandboxExtension::createHandleWithoutResolvingPath(m_cachedWebContentTempDirectory, SandboxExtension::Type::ReadWrite);
+    }
 #endif
 
     return WebProcessDataStoreParameters {
@@ -911,13 +909,11 @@ WebProcessDataStoreParameters WebProcessPool::webProcessDataStoreParameters(WebP
         websiteDataStore.thirdPartyCookieBlockingMode(),
         m_domainsWithUserInteraction,
         m_domainsWithCrossPageStorageAccessQuirk,
-#if ENABLE(ARKIT_INLINE_PREVIEW)
+#if ENABLE(ARKIT_INLINE_PREVIEW) && !PLATFORM(IOS_FAMILY)
         WTFMove(modelElementCacheDirectory),
         WTFMove(modelElementCacheDirectoryExtensionHandle),
 #endif
 #if PLATFORM(IOS_FAMILY)
-        WTFMove(cookieStorageDirectoryExtensionHandle),
-        WTFMove(containerCachesDirectoryExtensionHandle),
         WTFMove(containerTemporaryDirectoryExtensionHandle),
 #endif
         websiteDataStore.trackingPreventionEnabled()
@@ -2340,11 +2336,6 @@ void WebProcessPool::clearAudibleActivity()
 
 void WebProcessPool::updateAudibleMediaAssertions()
 {
-#if ENABLE(EXTENSION_CAPABILITIES)
-    if (PlatformMediaSessionManager::mediaCapabilityGrantsEnabled())
-        return;
-#endif
-
     if (!m_webProcessWithAudibleMediaCounter.value()) {
         WEBPROCESSPOOL_RELEASE_LOG(ProcessSuspension, "updateAudibleMediaAssertions: Starting timer to clear audible activity in %g seconds because we are no longer playing audio", audibleActivityClearDelay.seconds());
         // We clear the audible activity on a timer for 2 reasons:
@@ -2708,12 +2699,18 @@ void WebProcessPool::updateWebProcessSuspensionDelayWithPacing(WeakHashSet<WebPr
 
 constexpr static Seconds resourceMonitorRuleListCheckInterval = 24_h;
 
-WebCompiledContentRuleList* WebProcessPool::cachedResourceMonitorRuleList()
+WebCompiledContentRuleList* WebProcessPool::cachedResourceMonitorRuleList(bool forTesting)
 {
-    if (!m_resourceMonitorRuleListCache)
-        loadOrUpdateResourceMonitorRuleList();
+    if (m_resourceMonitorRuleListCache)
+        return m_resourceMonitorRuleListCache.get();
 
-    return m_resourceMonitorRuleListCache.get();
+    if (forTesting) {
+        setResourceMonitorURLsForTesting(platformResourceMonitorRuleListSourceForTesting(), [] { });
+        return nullptr;
+    }
+
+    loadOrUpdateResourceMonitorRuleList();
+    return nullptr;
 }
 
 void WebProcessPool::loadOrUpdateResourceMonitorRuleList()
@@ -2789,6 +2786,13 @@ void WebProcessPool::platformCompileResourceMonitorRuleList(const String& rulesT
     notImplemented();
     completionHandler(nullptr);
 }
+
+String WebProcessPool::platformResourceMonitorRuleListSourceForTesting()
+{
+    notImplemented();
+    return "[]"_s;
+}
+
 #endif
 
 #endif

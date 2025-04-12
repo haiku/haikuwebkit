@@ -251,7 +251,7 @@ public:
     void viewWillStartLiveResize();
     void viewDidEndLiveResize();
 
-    void createPDFHUD(PDFPluginIdentifier, const WebCore::IntRect&);
+    void createPDFHUD(PDFPluginIdentifier, WebCore::FrameIdentifier, const WebCore::IntRect&);
     void updatePDFHUDLocation(PDFPluginIdentifier, const WebCore::IntRect&);
     void removePDFHUD(PDFPluginIdentifier);
     void removeAllPDFHUDs();
@@ -328,15 +328,7 @@ public:
     void screenDidChangeColorSpace();
     bool shouldDelayWindowOrderingForEvent(NSEvent *);
     bool windowResizeMouseLocationIsInVisibleScrollerThumb(CGPoint);
-    void applicationShouldSuppressHDR();
-    void applicationShouldAllowHDR();
-
-    enum class HDRConstrainingReasonAction : bool { Remove, Add };
-    enum class HDRConstrainingReason : uint8_t {
-        WindowIsNotActive = 1 << 0,
-        ShouldSuppressHDR = 1 << 1,
-    };
-    void updateHDRState(HDRConstrainingReasonAction, HDRConstrainingReason);
+    void applicationShouldSuppressHDR(bool);
 
     void accessibilitySettingsDidChange();
 
@@ -588,6 +580,7 @@ public:
     _WKWarningView *warningView() { return m_warningView.get(); }
 
     ViewGestureController* gestureController() { return m_gestureController.get(); }
+    RefPtr<ViewGestureController> protectedGestureController() const;
     ViewGestureController& ensureGestureController();
     Ref<ViewGestureController> ensureProtectedGestureController();
     void setAllowsBackForwardNavigationGestures(bool);
@@ -599,7 +592,9 @@ public:
     void setMagnification(double);
     double magnification() const;
     void setCustomSwipeViews(NSArray *);
-    void setCustomSwipeViewsTopContentInset(float);
+    WebCore::FloatRect windowRelativeBoundsForCustomSwipeViews() const;
+    WebCore::FloatBoxExtent customSwipeViewsObscuredContentInsets() const;
+    void setCustomSwipeViewsObscuredContentInsets(WebCore::FloatBoxExtent&&);
     bool tryToSwipeWithEvent(NSEvent *, bool ignoringPinnedState);
     void setDidMoveSwipeSnapshotCallback(BlockPtr<void (CGRect)>&&);
 
@@ -1089,7 +1084,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #if HAVE(INLINE_PREDICTIONS)
     bool m_inlinePredictionsEnabled { false };
 #endif
-    OptionSet<HDRConstrainingReason> m_hdrConstrainingReason { HDRConstrainingReason::WindowIsNotActive };
 };
 
 } // namespace WebKit

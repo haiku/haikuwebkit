@@ -145,6 +145,7 @@
 #include "RenderWidget.h"
 #include "RenderingUpdateScheduler.h"
 #include "ResizeObserver.h"
+#include "ResourceLoadObserver.h"
 #include "ResourceUsageOverlay.h"
 #include "SVGDocumentExtensions.h"
 #include "SVGImage.h"
@@ -5481,6 +5482,9 @@ void Page::setLastAuthentication(LoginStatus::AuthenticationType authType)
     if (loginStatus.hasException())
         return;
     m_lastAuthentication = loginStatus.releaseReturnValue().moveToUniquePtr();
+
+    if (RefPtr document = localMainFrame() ? localMainFrame()->document() : nullptr)
+        ResourceLoadObserver::shared().logUserInteractionWithReducedTimeResolution(*document);
 }
 
 #if ENABLE(FULLSCREEN_API)
@@ -5636,6 +5640,11 @@ const std::optional<audit_token_t>& Page::presentingApplicationAuditToken() cons
 void Page::setPresentingApplicationAuditToken(std::optional<audit_token_t> presentingApplicationAuditToken)
 {
     m_presentingApplicationAuditToken = WTFMove(presentingApplicationAuditToken);
+
+#if ENABLE(EXTENSION_CAPABILITIES)
+    if (settings().mediaCapabilityGrantsEnabled())
+        return;
+#endif
 
     if (RefPtr mediaSessionManager = PlatformMediaSessionManager::singletonIfExists())
         mediaSessionManager->updatePresentingApplicationPIDIfNecessary(presentingApplicationPID());

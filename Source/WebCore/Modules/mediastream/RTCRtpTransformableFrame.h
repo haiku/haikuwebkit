@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc.
+ * Copyright (C) 2020-2025 Apple Inc.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,15 +27,21 @@
 #if ENABLE(WEB_RTC)
 
 #include <span>
-#include <wtf/RefCounted.h>
+#include <wtf/ThreadSafeRefCounted.h>
 #include <wtf/Vector.h>
+#include <wtf/text/WTFString.h>
 
 namespace WebCore {
 
 struct RTCEncodedAudioFrameMetadata {
     uint32_t synchronizationSource;
+    uint8_t payloadType;
     Vector<uint32_t> contributingSources;
+    std::optional<uint16_t> sequenceNumber;
+    uint32_t rtpTimestamp;
+    String mimeType;
 };
+
 
 struct RTCEncodedVideoFrameMetadata {
     std::optional<int64_t> frameId;
@@ -45,9 +51,14 @@ struct RTCEncodedVideoFrameMetadata {
     std::optional<int32_t> spatialIndex;
     std::optional<int32_t> temporalIndex;
     uint32_t synchronizationSource;
+    uint8_t payloadType;
+    Vector<uint32_t> contributingSources;
+    std::optional<int64_t> timestamp;
+    uint32_t rtpTimestamp;
+    String mimeType;
 };
 
-class RTCRtpTransformableFrame : public RefCounted<RTCRtpTransformableFrame> {
+class RTCRtpTransformableFrame : public ThreadSafeRefCounted<RTCRtpTransformableFrame> {
 public:
     virtual ~RTCRtpTransformableFrame() = default;
 
@@ -59,6 +70,8 @@ public:
     virtual RTCEncodedVideoFrameMetadata videoMetadata() const = 0;
 
     virtual bool isKeyFrame() const = 0;
+
+    virtual Ref<RTCRtpTransformableFrame> clone() = 0;
 };
 
 } // namespace WebCore

@@ -275,6 +275,7 @@ bool doesGC(Graph& graph, Node* node)
     case PutByOffset:
     case WeakMapGet:
     case NumberIsNaN:
+    case NumberIsFinite:
         return false;
 
 #if ASSERT_ENABLED
@@ -483,10 +484,8 @@ bool doesGC(Graph& graph, Node* node)
 
     case ToIntegerOrInfinity:
     case ToLength:
-        return node->child1().useKind() == UntypedUse;
-
     case GlobalIsNaN:
-        return node->child1().useKind() != DoubleRepUse;
+        return node->child1().useKind() == UntypedUse;
 
     case CallNumberConstructor:
         switch (node->child1().useKind()) {
@@ -570,6 +569,9 @@ bool doesGC(Graph& graph, Node* node)
         if (node->arrayMode().type() == Array::String)
             return true;
         return false;
+
+    case MultiGetByVal:
+        return true;
 
     case ResolveRope:
         return true;

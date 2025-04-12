@@ -526,6 +526,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/mediastream/RTCIceProtocol.h
     Modules/mediastream/RTCIceTcpCandidateType.h
     Modules/mediastream/RTCNetworkManager.h
+    Modules/mediastream/RTCRtpTransformableFrame.h
     Modules/mediastream/STUNMessageParsing.h
     Modules/mediastream/UserMediaClient.h
     Modules/mediastream/UserMediaController.h
@@ -632,6 +633,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/webauthn/AuthenticationExtensionsClientInputsJSON.h
     Modules/webauthn/AuthenticationExtensionsClientOutputs.h
     Modules/webauthn/AuthenticationExtensionsClientOutputsJSON.h
+    Modules/webauthn/AuthenticatorAssertionResponse.h
     Modules/webauthn/AuthenticatorCoordinator.h
     Modules/webauthn/AuthenticatorCoordinatorClient.h
     Modules/webauthn/AuthenticatorResponseData.h
@@ -968,6 +970,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/parser/CSSParserMode.h
     css/parser/CSSParserToken.h
     css/parser/CSSParserTokenRange.h
+    css/parser/CSSPropertyParserConsumer+Color.h
     css/parser/CSSSelectorParser.h
     css/parser/CSSSelectorParserContext.h
     css/parser/CSSTokenizer.h
@@ -1019,6 +1022,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/values/primitives/CSSPrimitiveNumericTypes.h
     css/values/primitives/CSSPrimitiveNumericUnits.h
     css/values/primitives/CSSSymbol.h
+    css/values/primitives/CSSURL.h
     css/values/primitives/CSSUnevaluatedCalc.h
 
     css/values/shapes/CSSBasicShape.h
@@ -2096,6 +2100,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/FontCascadeCache.h
     platform/graphics/FontCascadeDescription.h
     platform/graphics/FontCascadeFonts.h
+    platform/graphics/FontCascadeInlines.h
     platform/graphics/FontCreationContext.h
     platform/graphics/FontCustomPlatformData.h
     platform/graphics/FontDescription.h
@@ -2723,6 +2728,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/primitives/StylePrimitiveNumericConcepts.h
     style/values/primitives/StylePrimitiveNumericOrKeyword.h
     style/values/primitives/StylePrimitiveNumericTypes.h
+    style/values/primitives/StyleURL.h
     style/values/primitives/StyleUnevaluatedCalculation.h
 
     style/values/scroll-snap/StyleScrollMargin.h

@@ -160,10 +160,6 @@ bool defaultShouldEnableScreenOrientationAPI();
 bool defaultPopoverAttributeEnabled();
 bool defaultUseGPUProcessForDOMRenderingEnabled();
 
-#if HAVE(SC_CONTENT_SHARING_PICKER)
-bool defaultUseSCContentSharingPicker();
-#endif
-
 #if USE(LIBWEBRTC)
 bool defaultPeerConnectionEnabledAvailable();
 #endif
@@ -180,9 +176,7 @@ bool defaultRequiresPageVisibilityForVideoToBeNowPlaying();
 
 bool defaultCookieStoreAPIEnabled();
 
-#if PLATFORM(COCOA)
 bool defaultContentInsetBackgroundFillEnabled();
-#endif
 
 #if ENABLE(SCREEN_TIME)
 bool defaultScreenTimeEnabled();

@@ -28,6 +28,7 @@
 
 #include "CSSMarkup.h"
 #include "CSSParser.h"
+#include "CSSParserFastPaths.h"
 #include "CSSPropertyNames.h"
 #include "CSSRatioValue.h"
 #include "CSSValueKeywords.h"
@@ -834,7 +835,7 @@ std::optional<SRGBA<uint8_t>> HTMLElement::parseLegacyColorValue(StringView stri
     if (equalLettersIgnoringASCIICase(string, "transparent"_s))
         return std::nullopt;
 
-    if (auto namedColor = CSSParser::parseNamedColor(string))
+    if (auto namedColor = CSSParserFastPaths::parseNamedColor(string))
         return namedColor;
 
     if (string.length() == 4 && string[0] == '#' && isASCIIHexDigit(string[1]) && isASCIIHexDigit(string[2]) && isASCIIHexDigit(string[3]))
@@ -1112,13 +1113,11 @@ static void runPopoverFocusingSteps(HTMLElement& popover)
 
     control->runFocusingStepsForAutofocus();
 
-    if (!controlDocument->isSameOriginAsTopDocument())
+    RefPtr topDocument = controlDocument->sameOriginTopLevelTraversable();
+    if (!topDocument)
         return;
 
-    if (RefPtr mainFrameDocument = controlDocument->mainFrameDocument())
-        mainFrameDocument->clearAutofocusCandidates();
-    else
-        LOG_ONCE(SiteIsolation, "Unable to fully perform runPopoverFocusingSteps() without access to the main frame document ");
+    topDocument->clearAutofocusCandidates();
     page->setAutofocusProcessed();
 }
 

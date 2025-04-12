@@ -53,6 +53,7 @@
 #include "LocalFrameView.h"
 #include "Logging.h"
 #include "MediaList.h"
+#include "MutableCSSSelector.h"
 #include "NodeRenderStyle.h"
 #include "PageRuleCollector.h"
 #include "RenderScrollbar.h"
@@ -339,9 +340,6 @@ ResolvedStyle Resolver::styleForElement(Element& element, const ResolutionContex
     Adjuster adjuster(document(), *state.parentStyle(), context.parentBoxStyle, &element);
     adjuster.adjust(style, state.userAgentAppearanceStyle());
 
-    if (style.usesViewportUnits())
-        document().setHasStyleWithViewportUnits();
-
     return { state.takeStyle(), WTFMove(elementStyleRelations), collector.releaseMatchResult() };
 }
 
@@ -357,9 +355,6 @@ ResolvedStyle Resolver::styleForElementWithCachedMatchResult(Element& element, c
 
     Adjuster adjuster(document(), *state.parentStyle(), context.parentBoxStyle, &element);
     adjuster.adjust(style, state.userAgentAppearanceStyle());
-
-    if (style.usesViewportUnits())
-        document().setHasStyleWithViewportUnits();
 
     return { state.takeStyle(), { }, makeUnique<MatchResult>(matchResult) };
 }
@@ -581,9 +576,6 @@ std::optional<ResolvedStyle> Resolver::styleForPseudoElement(Element& element, c
 
     Adjuster::adjustVisibilityForPseudoElement(*state.style(), element);
 
-    if (state.style()->usesViewportUnits())
-        document().setHasStyleWithViewportUnits();
-
     return ResolvedStyle { state.takeStyle(), nullptr, collector.releaseMatchResult() };
 }
 
@@ -703,11 +695,13 @@ void Resolver::applyMatchedProperties(State& state, const MatchResult& matchResu
         // element context. This is fast and saves memory by reusing the style data structures.
         style.copyNonInheritedFrom(*cacheEntry->renderStyle);
 
-        bool hasExplicitlyInherited = cacheEntry->renderStyle->hasExplicitlyInheritedProperties();
-        bool inheritedStyleEqual = parentStyle.inheritedEqual(*cacheEntry->parentRenderStyle);
+        bool inheritedEqual = parentStyle.inheritedEqual(*cacheEntry->parentRenderStyle);
 
-        if (inheritedStyleEqual) {
-            InsideLink linkStatus = state.style()->insideLink();
+        bool hasExplicitlyInherited = cacheEntry->renderStyle->hasExplicitlyInheritedProperties();
+        bool explicitlyInheritedEqual = !hasExplicitlyInherited || parentStyle.nonInheritedEqual(*cacheEntry->parentRenderStyle);
+
+        if (inheritedEqual) {
+            InsideLink linkStatus = style.insideLink();
             // If the cache item parent style has identical inherited properties to the current parent style then the
             // resulting style will be identical too. We copy the inherited properties over from the cache and are done.
             style.inheritFrom(*cacheEntry->renderStyle);
@@ -715,7 +709,7 @@ void Resolver::applyMatchedProperties(State& state, const MatchResult& matchResu
             // Link status is treated like an inherited property. We need to explicitly restore it.
             style.setInsideLink(linkStatus);
 
-            if (!hasExplicitlyInherited && matchResult.nonCacheablePropertyIds.isEmpty()) {
+            if (explicitlyInheritedEqual && matchResult.nonCacheablePropertyIds.isEmpty()) {
                 if (cacheEntry->userAgentAppearanceStyle && elementTypeHasAppearanceFromUAStyle(element))
                     state.setUserAgentAppearanceStyle(RenderStyle::clonePtr(*cacheEntry->userAgentAppearanceStyle));
 
@@ -725,14 +719,9 @@ void Resolver::applyMatchedProperties(State& state, const MatchResult& matchResu
 
         includedProperties = { };
 
-        if (!inheritedStyleEqual) {
+        if (!inheritedEqual)
             includedProperties.add(PropertyCascade::PropertyType::Inherited);
-            // FIXME: See toStyleColorWithResolvedCurrentColor().
-            bool mayContainResolvedCurrentcolor = style.disallowsFastPathInheritance() && hasExplicitlyInherited;
-            if (mayContainResolvedCurrentcolor && parentStyle.color() != cacheEntry->parentRenderStyle->color())
-                includedProperties.add(PropertyCascade::PropertyType::NonInherited);
-        }
-        if (hasExplicitlyInherited)
+        if (!explicitlyInheritedEqual)
             includedProperties.add(PropertyCascade::PropertyType::ExplicitlyInherited);
         if (!matchResult.nonCacheablePropertyIds.isEmpty())
             includedProperties.add(PropertyCascade::PropertyType::NonCacheable);
@@ -749,7 +738,7 @@ void Resolver::applyMatchedProperties(State& state, const MatchResult& matchResu
         state.setUserAgentAppearanceStyle(WTFMove(userAgentStyle));
     }
 
-    Builder builder(*state.style(), builderContext(state), matchResult, CascadeLevel::Author, includedProperties);
+    Builder builder(style, builderContext(state), matchResult, CascadeLevel::Author, includedProperties);
 
     // Top priority properties may affect resolution of high priority ones.
     builder.applyTopPriorityProperties();
@@ -768,6 +757,8 @@ void Resolver::applyMatchedProperties(State& state, const MatchResult& matchResu
 
     for (auto& contentAttribute : builder.state().registeredContentAttributes())
         ruleSets().mutableFeatures().registerContentAttribute(contentAttribute);
+    if (style.usesViewportUnits())
+        document().setHasStyleWithViewportUnits();
 
     if (cacheEntry || !cacheHash)
         return;

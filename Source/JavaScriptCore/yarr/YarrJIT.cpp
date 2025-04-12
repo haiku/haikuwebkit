@@ -2050,12 +2050,20 @@ class YarrGenerator final : public YarrJITInfo {
 
             unsigned currPosition = currTerm->inputPosition;
 
+            constexpr unsigned maxGroupingDistance = 16;
+
             if (currPosition > lastPosition) {
+                // If the next term is too far away, we'll handle it by itself
+                if (currPosition > lastPosition + maxGroupingDistance)
+                    break;
                 if (currPosition > lastPosition + 1)
                     opList.insertFill(lastPosition - firstPosition + 1, nullptr, currPosition - lastPosition - 1);
                 opList.append(currOp);
                 lastPosition = currPosition;
             } else if (currPosition < firstPosition) {
+                // If the next term is too far away, we'll handle it by itself
+                if (currPosition < firstPosition - maxGroupingDistance)
+                    break;
                 opList.insertFill(0, nullptr, firstPosition - currPosition);
                 opList.first() = currOp;
                 firstPosition = currPosition;
@@ -3119,8 +3127,7 @@ class YarrGenerator final : public YarrJITInfo {
                             static_assert(sizeof(BoyerMooreBitmap::Map::WordType) == sizeof(uint64_t));
                             static_assert(1 << 6 == 64);
                             static_assert(1 << (6 + 1) == BoyerMooreBitmap::Map::size());
-                            m_jit.move(m_regs.regT0, m_regs.regT2);
-                            m_jit.urshift32(MacroAssembler::TrustedImm32(6), m_regs.regT2);
+                            m_jit.urshift32(m_regs.regT0, MacroAssembler::TrustedImm32(6), m_regs.regT2);
                             m_jit.and32(MacroAssembler::TrustedImm32(1), m_regs.regT2);
                             m_jit.load64(MacroAssembler::BaseIndex(m_regs.regT1, m_regs.regT2, MacroAssembler::TimesEight), m_regs.regT2);
                             matched.append(m_jit.branchTestBit64(MacroAssembler::NonZero, m_regs.regT2, m_regs.regT0)); // We can ignore upper bits since modulo-64 is performed.

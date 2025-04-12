@@ -142,8 +142,10 @@ bool hasCapacityToUseLargeGigacage();
     v(OptionString, wasmOMGFunctionsToDump, nullptr, Normal, "file with newline separated list of function indices to dump IR/disassembly for, if no such file exists, the function index itself"_s) \
     v(Bool, dumpBBQDisassembly, false, Normal, "dumps disassembly of BBQ wasm code upon compilation"_s) \
     v(Bool, dumpOMGDisassembly, false, Normal, "dumps disassembly of OMG wasm code upon compilation"_s) \
-    v(Bool, logJITCodeForPerf, false, Configurable, nullptr) \
+    v(Bool, useJITDump, false, Normal, "generates JITDump side-data") \
+    v(Bool, useTextMarkers, false, Normal, "generates text markers side-data") \
     v(OptionString, jitDumpDirectory, nullptr, Normal, "Directory to place JITDump"_s) \
+    v(OptionString, textMarkersDirectory, nullptr, Normal, "Directory to place MarkerTxt") \
     v(OptionRange, bytecodeRangeToJITCompile, nullptr, Normal, "bytecode size range to allow compilation on, e.g. 1:100"_s) \
     v(OptionRange, bytecodeRangeToDFGCompile, nullptr, Normal, "bytecode size range to allow DFG compilation on, e.g. 1:100"_s) \
     v(OptionRange, bytecodeRangeToFTLCompile, nullptr, Normal, "bytecode size range to allow FTL compilation on, e.g. 1:100"_s) \
@@ -371,6 +373,7 @@ bool hasCapacityToUseLargeGigacage();
     v(Double, minHeapUtilization, 0.8, Normal, nullptr) \
     v(Double, minMarkedBlockUtilization, 0.9, Normal, nullptr) \
     v(Unsigned, slowPathAllocsBetweenGCs, 0, Normal, "force a GC on every Nth slow path alloc, where N is specified by this option"_s) \
+    /* WARNING: this option is important for compatibility be *VERY* careful when lowering it. See: rdar://145585141 and https://bugs.webkit.org/show_bug.cgi?id=289330 */ \
     v(Unsigned, maxRegExpStackSize, 128 * MB, Normal, nullptr) \
     \
     v(Double, percentCPUPerMBForFullTimer, 0.0003125, Normal, nullptr) \

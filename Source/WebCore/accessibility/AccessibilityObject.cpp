@@ -57,6 +57,7 @@
 #include "FrameLoader.h"
 #include "FrameSelection.h"
 #include "GeometryUtilities.h"
+#include "HTMLAreaElement.h"
 #include "HTMLBodyElement.h"
 #include "HTMLDataListElement.h"
 #include "HTMLDetailsElement.h"
@@ -184,12 +185,6 @@ OptionSet<AXAncestorFlag> AccessibilityObject::computeAncestorFlags() const
 {
     OptionSet<AXAncestorFlag> computedFlags;
 
-    if (hasAncestorFlag(AXAncestorFlag::HasDocumentRoleAncestor) || matchesAncestorFlag(AXAncestorFlag::HasDocumentRoleAncestor))
-        computedFlags.set(AXAncestorFlag::HasDocumentRoleAncestor, 1);
-
-    if (hasAncestorFlag(AXAncestorFlag::HasWebApplicationAncestor) || matchesAncestorFlag(AXAncestorFlag::HasWebApplicationAncestor))
-        computedFlags.set(AXAncestorFlag::HasWebApplicationAncestor, 1);
-
     if (hasAncestorFlag(AXAncestorFlag::IsInDescriptionListDetail) || matchesAncestorFlag(AXAncestorFlag::IsInDescriptionListDetail))
         computedFlags.set(AXAncestorFlag::IsInDescriptionListDetail, 1);
 
@@ -228,10 +223,6 @@ bool AccessibilityObject::matchesAncestorFlag(AXAncestorFlag flag) const
 {
     auto role = roleValue();
     switch (flag) {
-    case AXAncestorFlag::HasDocumentRoleAncestor:
-        return role == AccessibilityRole::Document || role == AccessibilityRole::GraphicsDocument;
-    case AXAncestorFlag::HasWebApplicationAncestor:
-        return role == AccessibilityRole::WebApplication;
     case AXAncestorFlag::IsInDescriptionListDetail:
         return role == AccessibilityRole::DescriptionListDetail;
     case AXAncestorFlag::IsInDescriptionListTerm:
@@ -254,22 +245,6 @@ bool AccessibilityObject::hasAncestorMatchingFlag(AXAncestorFlag flag) const
 
         return object.matchesAncestorFlag(flag);
     }) != nullptr;
-}
-
-bool AccessibilityObject::hasDocumentRoleAncestor() const
-{
-    if (ancestorFlagsAreInitialized())
-        return m_ancestorFlags.contains(AXAncestorFlag::HasDocumentRoleAncestor);
-
-    return hasAncestorMatchingFlag(AXAncestorFlag::HasDocumentRoleAncestor);
-}
-
-bool AccessibilityObject::hasWebApplicationAncestor() const
-{
-    if (ancestorFlagsAreInitialized())
-        return m_ancestorFlags.contains(AXAncestorFlag::HasWebApplicationAncestor);
-
-    return hasAncestorMatchingFlag(AXAncestorFlag::HasWebApplicationAncestor);
 }
 
 bool AccessibilityObject::isInDescriptionListDetail() const
@@ -635,6 +610,18 @@ void AccessibilityObject::insertChild(AccessibilityObject& child, unsigned index
         }
     }
 
+    if (UNLIKELY(is<HTMLAreaElement>(child.node()))) {
+        // Despite the DOM parent for <area> elements being <map>, we expose <area> elements as children
+        // of the <img> using the <map>. This provides a better experience for AT users, e.g. a screenreader
+        // would hear "image map" or "group" plus the image description, then the links, which provides the
+        // added context for what the links represent.
+        //
+        // Due to the difference in DOM vs. expected AX hierarchy, make sure area elements are only inserted
+        // by their associated image as children.
+        if (child.parentObject() != this)
+            return;
+    }
+
     // If the parent is asking for this child's children, then either it's the first time (and clearing is a no-op),
     // or its visibility has changed. In the latter case, this child may have a stale child cached.
     // This can prevent aria-hidden changes from working correctly. Hence, whenever a parent is getting children, ensure data is not stale.
@@ -644,15 +631,6 @@ void AccessibilityObject::insertChild(AccessibilityObject& child, unsigned index
         // Pass m_subtreeDirty flag down to the child so that children cache gets reset properly.
         if (m_subtreeDirty)
             child.setNeedsToUpdateSubtree();
-    } else {
-        // For some reason the grand children might be detached so that we need to regenerate the
-        // children list of this child.
-        for (const auto& grandChild : child.unignoredChildren(/* updateChildrenIfNeeded */ false)) {
-            if (grandChild->isDetachedFromParent()) {
-                child.clearChildren();
-                break;
-            }
-        }
     }
 
 #if USE(ATSPI)

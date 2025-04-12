@@ -214,9 +214,7 @@ static std::optional<std::variant<double, TimelineRangeOffset>> doubleOrTimeline
         return { doubleValue };
 
     CSSParserContext parserContext(document);
-    CSSTokenizer tokenizer(offsetString);
-    auto tokenRange = tokenizer.tokenRange();
-    auto offsets = CSSPropertyParserHelpers::consumeKeyframeKeyList(tokenRange, parserContext);
+    auto offsets = CSSPropertyParserHelpers::parseKeyframeKeyList(offsetString, parserContext);
     if (offsets.size() != 1)
         return { };
 
@@ -2147,6 +2145,13 @@ void KeyframeEffect::animationDidFinish()
     if (threadedAnimationResolutionEnabled())
         updateAcceleratedAnimationIfNecessary();
 #endif
+}
+
+void KeyframeEffect::animationPlaybackRateDidChange()
+{
+    AnimationEffect::animationPlaybackRateDidChange();
+
+    updateAcceleratedAnimationIfNecessary();
 }
 
 void KeyframeEffect::transformRelatedPropertyDidChange()

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2019-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -291,19 +291,9 @@ void GPUProcess::updateGPUProcessPreferences(GPUProcessPreferences&& preferences
         PlatformMediaSessionManager::setAlternateWebMPlayerEnabled(*m_preferences.alternateWebMPlayerEnabled);
 #endif
 
-#if HAVE(SC_CONTENT_SHARING_PICKER)
-    if (updatePreference(m_preferences.useSCContentSharingPicker, preferences.useSCContentSharingPicker))
-        PlatformMediaSessionManager::setUseSCContentSharingPicker(*m_preferences.useSCContentSharingPicker);
-#endif
-
-#if ENABLE(EXTENSION_CAPABILITIES)
-    if (updatePreference(m_preferences.mediaCapabilityGrantsEnabled, preferences.mediaCapabilityGrantsEnabled))
-        PlatformMediaSessionManager::setMediaCapabilityGrantsEnabled(*m_preferences.mediaCapabilityGrantsEnabled);
-#endif
-
 #if ENABLE(VP9)
     if (updatePreference(m_preferences.vp9DecoderEnabled, preferences.vp9DecoderEnabled)) {
-        PlatformMediaSessionManager::setShouldEnableVP9Decoder(*m_preferences.vp9DecoderEnabled);
+        VP9TestingOverrides::singleton().setShouldEnableVP9Decoder(*m_preferences.vp9DecoderEnabled);
 #if PLATFORM(COCOA)
         if (!m_haveEnabledVP9Decoder && *m_preferences.vp9DecoderEnabled) {
             m_haveEnabledVP9Decoder = true;
@@ -311,9 +301,10 @@ void GPUProcess::updateGPUProcessPreferences(GPUProcessPreferences&& preferences
         }
 #endif
     }
-    if (preferences.swVPDecodersAlwaysEnabled != std::exchange(m_preferences.swVPDecodersAlwaysEnabled, preferences.swVPDecodersAlwaysEnabled))
-        PlatformMediaSessionManager::setSWVPDecodersAlwaysEnabled(m_preferences.swVPDecodersAlwaysEnabled);
 #if PLATFORM(COCOA)
+    if (preferences.swVPDecodersAlwaysEnabled != std::exchange(m_preferences.swVPDecodersAlwaysEnabled, preferences.swVPDecodersAlwaysEnabled))
+        VP9TestingOverrides::singleton().setSWVPDecodersAlwaysEnabled(m_preferences.swVPDecodersAlwaysEnabled);
+
     if (!m_haveEnabledSWVP9Decoder && WebCore::shouldEnableSWVP9Decoder()) {
         WebCore::registerWebKitVP9Decoder();
         m_haveEnabledSWVP9Decoder = true;
@@ -383,15 +374,6 @@ void GPUProcess::didDrawRemoteToPDF(PageIdentifier pageID, RefPtr<SharedBuffer>&
 void GPUProcess::setMockCaptureDevicesEnabled(bool isEnabled)
 {
     WebCore::MockRealtimeMediaSourceCenter::setMockRealtimeMediaSourceCenterEnabled(isEnabled);
-}
-
-void GPUProcess::setUseSCContentSharingPicker(bool use)
-{
-#if HAVE(SC_CONTENT_SHARING_PICKER)
-    WebCore::PlatformMediaSessionManager::setUseSCContentSharingPicker(use);
-#else
-    UNUSED_PARAM(use);
-#endif
 }
 
 void GPUProcess::setOrientationForMediaCapture(WebCore::IntDegrees orientation)

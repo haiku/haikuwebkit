@@ -101,7 +101,7 @@ void WebExtensionContext::runtimeOpenOptionsPage(CompletionHandler<void(Expected
     configuration.shouldAddToSelection = YES;
     configuration.window = frontmostWindow ? frontmostWindow->delegate() : nil;
     configuration.index = frontmostWindow ? frontmostWindow->tabs().size() : 0;
-    configuration.url = optionsPageURL();
+    configuration.url = optionsPageURL().createNSURL().get();
 
     [delegate webExtensionController:extensionController->wrapper() openNewTabUsingConfiguration:configuration forExtensionContext:wrapper() completionHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler)](id<WKWebExtensionTab> newTab, NSError *error) mutable {
         if (error) {
@@ -324,7 +324,7 @@ void WebExtensionContext::sendNativeMessage(const String& applicationID, id mess
         return;
     }
 
-    auto *applicationIdentifier = !applicationID.isNull() ? (NSString *)applicationID : nil;
+    auto *applicationIdentifier = !applicationID.isNull() ? applicationID.createNSString().get() : nil;
 
     [delegate webExtensionController:extensionController->wrapper() sendMessage:message toApplicationWithIdentifier:applicationIdentifier forExtensionContext:wrapper() replyHandler:makeBlockPtr([completionHandler = WTFMove(completionHandler)](id replyMessage, NSError *error) mutable {
         if (error) {

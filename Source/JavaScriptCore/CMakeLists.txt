@@ -354,7 +354,6 @@ set(JavaScriptCore_BUILTINS_SOURCES
     ${JAVASCRIPTCORE_DIR}/builtins/MapIteratorPrototype.js
     ${JAVASCRIPTCORE_DIR}/builtins/MapPrototype.js
     ${JAVASCRIPTCORE_DIR}/builtins/ModuleLoader.js
-    ${JAVASCRIPTCORE_DIR}/builtins/NumberConstructor.js
     ${JAVASCRIPTCORE_DIR}/builtins/ObjectConstructor.js
     ${JAVASCRIPTCORE_DIR}/builtins/PromiseConstructor.js
     ${JAVASCRIPTCORE_DIR}/builtins/PromiseOperations.js
@@ -749,7 +748,6 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     heap/IsoHeapCellType.h
     heap/IsoInlinedHeapCellType.h
     heap/IsoInlinedHeapCellTypeInlines.h
-    heap/IsoMemoryAllocatorBase.h
     heap/IsoSubspace.h
     heap/IsoSubspaceInlines.h
     heap/LocalAllocator.h
@@ -1315,6 +1313,7 @@ set(JavaScriptCore_PRIVATE_FRAMEWORK_HEADERS
     wasm/js/JSWebAssembly.h
     wasm/js/JSWebAssemblyMemory.h
     wasm/js/JSWebAssemblyModule.h
+    wasm/js/WebAssemblyGCStructure.h
     wasm/js/WebAssemblyModuleRecord.h
 
 

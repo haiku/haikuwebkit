@@ -84,6 +84,7 @@
 
 #if USE(AVFOUNDATION)
 #include "MediaPlayerPrivateAVFoundationObjC.h"
+#include "MediaSessionManagerCocoa.h"
 #endif
 
 #if ENABLE(MEDIA_SOURCE) && USE(AVFOUNDATION)
@@ -315,12 +316,12 @@ static void buildMediaEnginesVector() WTF_REQUIRES_LOCK(mediaEngineVectorLock)
         }
 #endif
 
-#if PLATFORM(COCOA)
         if (registerRemoteEngine)
             registerRemoteEngine(addMediaEngine, MediaPlayerEnums::MediaEngineIdentifier::AVFoundation);
-        else
+        else {
+            MediaSessionManagerCocoa::ensureCodecsRegistered();
             MediaPlayerPrivateAVFoundationObjC::registerMediaEngine(addMediaEngine);
-#endif
+        }
 
 #if ENABLE(MEDIA_SOURCE)
         if (registerRemoteEngine)

@@ -362,6 +362,7 @@
 #include <WebCore/LegacyWebArchive.h>
 #include <WebCore/SVGImage.h>
 #include <WebCore/TextPlaceholderElement.h>
+#include <WebCore/VP9UtilitiesCocoa.h>
 #include <pal/spi/cg/ImageIOSPI.h>
 #include <wtf/MachSendRight.h>
 #include <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
@@ -1124,8 +1125,8 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
     send(Messages::WebPageProxy::DidCreateContextInWebProcessForVisibilityPropagation(m_contextForVisibilityPropagation->cachedContextID()));
 #endif // HAVE(VISIBILITY_PROPAGATION_VIEW) && !HAVE(NON_HOSTING_VISIBILITY_PROPAGATION_VIEW)
 
-#if ENABLE(VP9)
-    PlatformMediaSessionManager::setShouldEnableVP9Decoder(parameters.shouldEnableVP9Decoder);
+#if ENABLE(VP9) && PLATFORM(COCOA)
+    VP9TestingOverrides::singleton().setShouldEnableVP9Decoder(parameters.shouldEnableVP9Decoder);
 #endif
 
     page->setCanUseCredentialStorage(parameters.canUseCredentialStorage);
@@ -1189,15 +1190,6 @@ void WebPage::createRemoteSubframe(WebCore::FrameIdentifier parentID, WebCore::F
         return;
     }
     WebFrame::createRemoteSubframe(*this, *parentFrame, newChildID, newChildFrameName, std::nullopt, WTFMove(frameTreeSyncData));
-}
-
-void WebPage::getFrameInfo(WebCore::FrameIdentifier frameID, CompletionHandler<void(std::optional<FrameInfoData>&&)>&& completionHandler)
-{
-    RefPtr frame = WebProcess::singleton().webFrame(frameID);
-    if (!frame)
-        return completionHandler(std::nullopt);
-
-    completionHandler(frame->info());
 }
 
 Awaitable<std::optional<FrameTreeNodeData>> WebPage::getFrameTree()
@@ -3380,41 +3372,6 @@ void WebPage::updateFrameScrollingMode(FrameIdentifier frameID, ScrollbarMode sc
     frame->setScrollingMode(scrollingMode);
 }
 
-void WebPage::updateFrameSize(WebCore::FrameIdentifier frameID, WebCore::IntSize newSize)
-{
-    if (!m_page)
-        return;
-
-    ASSERT(m_page->settings().siteIsolationEnabled());
-    RefPtr webFrame = WebProcess::singleton().webFrame(frameID);
-    if (!webFrame)
-        return;
-
-    RefPtr frame = webFrame->coreLocalFrame();
-    if (!frame)
-        return;
-
-    RefPtr frameView = frame->view();
-    if (!frameView)
-        return;
-
-    if (frameView->size() == newSize)
-        return;
-
-    frameView->resize(newSize);
-#if PLATFORM(IOS_FAMILY)
-    // FIXME: This ensures cross-site iframe render correctly;
-    // it should be removed after rdar://122429810 is fixed.
-    frameView->setExposedContentRect(frameView->frameRect());
-    frameView->setUnobscuredContentSize(frameView->size());
-#endif
-
-    if (RefPtr drawingArea = m_drawingArea) {
-        drawingArea->setNeedsDisplay();
-        drawingArea->triggerRenderingUpdate();
-    }
-}
-
 void WebPage::tryMarkLayersVolatile(CompletionHandler<void(bool)>&& completionHandler)
 {
     RefPtr drawingArea = m_drawingArea;
@@ -4477,7 +4434,7 @@ void WebPage::runJavaScript(WebFrame* frame, RunJavaScriptParameters&& parameter
 
 void WebPage::runJavaScriptInFrameInScriptWorld(RunJavaScriptParameters&& parameters, std::optional<WebCore::FrameIdentifier> frameID, const ContentWorldData& worldData, bool wantsResult, CompletionHandler<void(Expected<JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>>)>&& completionHandler)
 {
-    WEBPAGE_RELEASE_LOG(Process, "runJavaScriptInFrameInScriptWorld: frameID=%" PRIu64, frameID ? frameID->object().toUInt64() : 0);
+    WEBPAGE_RELEASE_LOG(Process, "runJavaScriptInFrameInScriptWorld: frameID=%" PRIu64, frameID ? frameID->toUInt64() : 0);
     RefPtr webFrame = frameID ? WebProcess::singleton().webFrame(*frameID) : &mainWebFrame();
 
     if (RefPtr newWorld = m_userContentController->addContentWorld(worldData)) {
@@ -4873,12 +4830,8 @@ void WebPage::updatePreferences(const WebPreferencesStore& store)
     PlatformMediaSessionManager::setAlternateWebMPlayerEnabled(settings.alternateWebMPlayerEnabled());
 #endif
 
-#if HAVE(SC_CONTENT_SHARING_PICKER)
-    PlatformMediaSessionManager::setUseSCContentSharingPicker(settings.useSCContentSharingPicker());
-#endif
-
-#if ENABLE(VP9)
-    PlatformMediaSessionManager::setSWVPDecodersAlwaysEnabled(store.getBoolValueForKey(WebPreferencesKey::sWVPDecodersAlwaysEnabledKey()));
+#if ENABLE(VP9) && PLATFORM(COCOA)
+    VP9TestingOverrides::singleton().setSWVPDecodersAlwaysEnabled(store.getBoolValueForKey(WebPreferencesKey::sWVPDecodersAlwaysEnabledKey()));
 #endif
 
     // FIXME: This should be automated by adding a new field in WebPreferences*.yaml
@@ -4945,13 +4898,9 @@ static void detectDataInFrame(const Ref<Frame>& frame, OptionSet<WebCore::DataDe
     }
 
     DataDetection::detectContentInFrame(localFrame.get(), dataDetectorTypes, dataDetectionReferenceDate, [localFrame, mainFrameResult = WTFMove(mainFrameResult), dataDetectionReferenceDate, completionHandler = WTFMove(completionHandler), dataDetectorTypes](NSArray *results) mutable {
-        auto retainedResults = retainPtr(results);
-
-        RefPtr protectedLocalFrame { localFrame };
-
-        protectedLocalFrame->dataDetectionResults().setDocumentLevelResults(retainedResults.get());
-        if (protectedLocalFrame->isMainFrame())
-            mainFrameResult->results = retainedResults;
+        localFrame->dataDetectionResults().setDocumentLevelResults(results);
+        if (localFrame->isMainFrame())
+            mainFrameResult->results = results;
 
         RefPtr next = localFrame->tree().traverseNext();
         if (!next) {
@@ -8249,13 +8198,10 @@ void WebPage::setScrollPinningBehavior(WebCore::ScrollPinningBehavior pinning)
         localMainFrame->protectedView()->setScrollPinningBehavior(m_internals->scrollPinningBehavior);
 }
 
-void WebPage::setScrollbarOverlayStyle(std::optional<uint32_t> scrollbarStyle)
+void WebPage::setScrollbarOverlayStyle(std::optional<WebCore::ScrollbarOverlayStyle> scrollbarStyle)
 {
-    if (scrollbarStyle)
-        m_scrollbarOverlayStyle = static_cast<ScrollbarOverlayStyle>(scrollbarStyle.value());
-    else
-        m_scrollbarOverlayStyle = std::optional<ScrollbarOverlayStyle>();
-    
+    m_scrollbarOverlayStyle = scrollbarStyle;
+
     if (RefPtr localMainFrame = this->localMainFrame())
         localMainFrame->protectedView()->recalculateScrollbarOverlayStyle();
 }
@@ -8796,22 +8742,6 @@ void WebPage::updateAttachmentAttributes(const String& identifier, std::optional
         attachment->updateAssociatedElementWithData(contentType, associatedElementData.isNull() ? WebCore::SharedBuffer::create() : associatedElementData.unsafeBuffer().releaseNonNull());
     }
     callback();
-}
-
-void WebPage::updateAttachmentThumbnail(const String& identifier, std::optional<ShareableBitmap::Handle>&& qlThumbnailHandle)
-{
-    if (RefPtr attachment = attachmentElementWithIdentifier(identifier)) {
-        if (RefPtr thumbnail = qlThumbnailHandle ? ShareableBitmap::create(WTFMove(*qlThumbnailHandle)) : nullptr) {
-            if (attachment->isWideLayout()) {
-                if (auto imageBuffer = ImageBuffer::create(thumbnail->size(), RenderingMode::Unaccelerated, RenderingPurpose::Unspecified, 1.0, DestinationColorSpace::SRGB(), ImageBufferPixelFormat::BGRA8)) {
-                    thumbnail->paint(imageBuffer->context(), IntPoint::zero(), IntRect(IntPoint::zero(), thumbnail->size()));
-                    auto data = imageBuffer->toData("image/png"_s);
-                    attachment->updateThumbnailForWideLayout(WTFMove(data));
-                }
-            } else
-                attachment->updateThumbnailForNarrowLayout(thumbnail->createImage());
-        }
-    }
 }
 
 void WebPage::updateAttachmentIcon(const String& identifier, std::optional<ShareableBitmap::Handle>&& iconHandle, const WebCore::FloatSize& size)
@@ -9562,7 +9492,7 @@ void WebPage::scrollToRect(const WebCore::FloatRect& targetRect, const WebCore::
     frameView->setScrollPosition(IntPoint(targetRect.minXMinYCorner()));
 }
 
-void WebPage::setContentOffset(WebCore::ScrollOffset offset, WebCore::ScrollIsAnimated animated)
+void WebPage::setContentOffset(std::optional<int> x, std::optional<int> y, WebCore::ScrollIsAnimated animated)
 {
     RefPtr frameView = localMainFrameView();
     if (!frameView)
@@ -9571,7 +9501,7 @@ void WebPage::setContentOffset(WebCore::ScrollOffset offset, WebCore::ScrollIsAn
     auto options = WebCore::ScrollPositionChangeOptions::createProgrammatic();
     options.animated = animated;
 
-    frameView->setScrollOffsetWithOptions(offset, options);
+    frameView->setScrollOffsetWithOptions(x, y, options);
 }
 
 void WebPage::scrollToEdge(WebCore::RectEdges<bool> edges, WebCore::ScrollIsAnimated animated)

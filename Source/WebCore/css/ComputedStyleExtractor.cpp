@@ -58,6 +58,7 @@
 #include "CSSSerializationContext.h"
 #include "CSSTextShadowPropertyValue.h"
 #include "CSSTransformListValue.h"
+#include "CSSURLValue.h"
 #include "CSSValueList.h"
 #include "CSSValuePair.h"
 #include "CSSValuePool.h"
@@ -366,25 +367,23 @@ static Ref<CSSValue> valueForNinePieceImageRepeat(const NinePieceImage& image)
 
 static RefPtr<CSSValue> valueForNinePieceImage(CSSPropertyID propertyID, const NinePieceImage& image, const RenderStyle& style)
 {
-    if (!image.hasImage())
+    RefPtr imageSource = image.image();
+    if (!imageSource)
         return CSSPrimitiveValue::create(CSSValueNone);
 
-    RefPtr<CSSValue> imageValue;
-    if (image.image())
-        imageValue = image.image()->computedStyleValue(style);
-
     // -webkit-border-image has a legacy behavior that makes fixed border slices also set the border widths.
-    const LengthBox& slices = image.borderSlices();
-    bool overridesBorderWidths = propertyID == CSSPropertyWebkitBorderImage && (slices.top().isFixed() || slices.right().isFixed() || slices.bottom().isFixed() || slices.left().isFixed());
+    auto& borderSlices = image.borderSlices();
+    bool overridesBorderWidths = propertyID == CSSPropertyWebkitBorderImage && (borderSlices.top().isFixed() || borderSlices.right().isFixed() || borderSlices.bottom().isFixed() || borderSlices.left().isFixed());
     if (overridesBorderWidths != image.overridesBorderWidths())
         return nullptr;
 
-    auto imageSlices = valueForNinePieceImageSlice(image);
-    auto borderSlices = valueForNinePieceImageQuad(slices, style);
-    auto outset = valueForNinePieceImageQuad(image.outset(), style);
-    auto repeat = valueForNinePieceImageRepeat(image);
-
-    return createBorderImageValue(WTFMove(imageValue), WTFMove(imageSlices), WTFMove(borderSlices), WTFMove(outset), WTFMove(repeat));
+    return createBorderImageValue({
+        .source = imageSource->computedStyleValue(style),
+        .slice = valueForNinePieceImageSlice(image),
+        .width = valueForNinePieceImageQuad(borderSlices, style),
+        .outset = valueForNinePieceImageQuad(image.outset(), style),
+        .repeat = valueForNinePieceImageRepeat(image),
+    });
 }
 
 static Ref<CSSValue> fontSizeAdjustFromStyle(const RenderStyle& style)
@@ -2087,7 +2086,7 @@ static Ref<CSSValue> valueForPathOperation(const RenderStyle& style, const PathO
 
     switch (operation->type()) {
     case PathOperation::Type::Reference:
-        return CSSPrimitiveValue::createURI(uncheckedDowncast<ReferencePathOperation>(*operation).url());
+        return CSSURLValue::create(Style::toCSS(uncheckedDowncast<ReferencePathOperation>(*operation).url(), style));
 
     case PathOperation::Type::Shape: {
         auto& shapeOperation = uncheckedDowncast<ShapePathOperation>(*operation);

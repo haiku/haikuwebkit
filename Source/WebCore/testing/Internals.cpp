@@ -43,7 +43,7 @@
 #include "CSSMediaRule.h"
 #include "CSSParser.h"
 #include "CSSPropertyParser.h"
-#include "CSSPropertyParserConsumer+Color.h"
+#include "CSSPropertyParserConsumer+ColorInlines.h"
 #include "CSSStyleRule.h"
 #include "CSSSupportsRule.h"
 #include "CacheStorageConnection.h"
@@ -3486,11 +3486,11 @@ ExceptionOr<String> Internals::scrollbarOverlayStyle(Node* node) const
 
     auto* scrollableArea = areaOrException.releaseReturnValue();
     switch (scrollableArea->scrollbarOverlayStyle()) {
-    case ScrollbarOverlayStyleDefault:
+    case ScrollbarOverlayStyle::Default:
         return "default"_str;
-    case ScrollbarOverlayStyleDark:
+    case ScrollbarOverlayStyle::Dark:
         return "dark"_str;
-    case ScrollbarOverlayStyleLight:
+    case ScrollbarOverlayStyle::Light:
         return "light"_str;
     }
 
@@ -7342,32 +7342,12 @@ void Internals::setContentSizeCategory(Internals::ContentSizeCategory category)
 #endif
 }
 
-#if ENABLE(ATTACHMENT_ELEMENT)
-
-ExceptionOr<Internals::AttachmentThumbnailInfo> Internals::attachmentThumbnailInfo(const HTMLAttachmentElement& element)
-{
-#if HAVE(QUICKLOOK_THUMBNAILING)
-    AttachmentThumbnailInfo info;
-    if (auto image = element.thumbnail()) {
-        auto size = image->size();
-        info.width = size.width();
-        info.height = size.height();
-    }
-    return info;
-#else
-    UNUSED_PARAM(element);
-    return Exception { ExceptionCode::InvalidAccessError };
-#endif
-}
-
-#if ENABLE(SERVICE_CONTROLS)
+#if ENABLE(ATTACHMENT_ELEMENT) && ENABLE(SERVICE_CONTROLS)
 bool Internals::hasImageControls(const HTMLImageElement& element) const
 {
     return ImageControlsMac::hasImageControls(element);
 }
-#endif
-
-#endif // ENABLE(ATTACHMENT_ELEMENT)
+#endif // ENABLE(ATTACHMENT_ELEMENT) && ENABLE(SERVICE_CONTROLS)
 
 #if ENABLE(MEDIA_SESSION)
 ExceptionOr<double> Internals::currentMediaSessionPosition(const MediaSession& session)
@@ -7621,8 +7601,7 @@ void Internals::acceptTypedArrays(Int32Array&)
 
 Internals::SelectorFilterHashCounts Internals::selectorFilterHashCounts(const String& selector)
 {
-    auto parser = CSSParser { { *contextDocument() } };
-    auto selectorList = parser.parseSelectorList(selector);
+    auto selectorList = CSSParser::parseSelectorList(selector, CSSParserContext(*contextDocument()));
     if (!selectorList)
         return { };
     

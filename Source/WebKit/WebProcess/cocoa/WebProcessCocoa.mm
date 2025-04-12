@@ -219,7 +219,7 @@ void WebProcess::bindAccessibilityFrameWithData(WebCore::FrameIdentifier frameID
     if (!m_accessibilityRemoteFrameTokenCache)
         m_accessibilityRemoteFrameTokenCache = adoptNS([[NSMutableDictionary alloc] init]);
 
-    auto frameInt = frameID.object().toUInt64();
+    auto frameInt = frameID.toUInt64();
     [m_accessibilityRemoteFrameTokenCache setObject:toNSData(data).get() forKey:@(frameInt)];
 }
 
@@ -606,16 +606,11 @@ void WebProcess::platformSetWebsiteDataStoreParameters(WebProcessDataStoreParame
 #endif
     SandboxExtension::consumePermanently(parameters.mediaKeyStorageDirectoryExtensionHandle);
     SandboxExtension::consumePermanently(parameters.javaScriptConfigurationDirectoryExtensionHandle);
-#if ENABLE(ARKIT_INLINE_PREVIEW)
+#if ENABLE(ARKIT_INLINE_PREVIEW) && !PLATFORM(IOS_FAMILY)
     SandboxExtension::consumePermanently(parameters.modelElementCacheDirectoryExtensionHandle);
 #endif
 #endif
 #if PLATFORM(IOS_FAMILY)
-    // FIXME: Does the web process still need access to the cookie storage directory? Probably not.
-    if (auto& handle = parameters.cookieStorageDirectoryExtensionHandle)
-        SandboxExtension::consumePermanently(*handle);
-    if (auto& handle = parameters.containerCachesDirectoryExtensionHandle)
-        SandboxExtension::consumePermanently(*handle);
     if (auto& handle = parameters.containerTemporaryDirectoryExtensionHandle)
         SandboxExtension::consumePermanently(*handle);
 #endif
@@ -657,19 +652,19 @@ void WebProcess::updateProcessName(IsInProcessInitialization isInProcessInitiali
     RetainPtr<NSString> applicationName;
     switch (m_processType) {
     case ProcessType::Inspector:
-        applicationName = [NSString stringWithFormat:WEB_UI_NSSTRING(@"%@ Web Inspector", "Visible name of Web Inspector's web process. The argument is the application name."), (NSString *)m_uiProcessName];
+        applicationName = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"%@ Web Inspector", "Visible name of Web Inspector's web process. The argument is the application name."), m_uiProcessName.createNSString().get()]).get();
         break;
     case ProcessType::ServiceWorker:
-        applicationName = [NSString stringWithFormat:WEB_UI_NSSTRING(@"%@ Service Worker (%@)", "Visible name of Service Worker process. The argument is the application name."), (NSString *)m_uiProcessName, (NSString *)m_registrableDomain.string()];
+        applicationName = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"%@ Service Worker (%@)", "Visible name of Service Worker process. The argument is the application name."), m_uiProcessName.createNSString().get(), m_registrableDomain.string().createNSString().get()]).get();
         break;
     case ProcessType::PrewarmedWebContent:
-        applicationName = [NSString stringWithFormat:WEB_UI_NSSTRING(@"%@ Web Content (Prewarmed)", "Visible name of the web process. The argument is the application name."), (NSString *)m_uiProcessName];
+        applicationName = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"%@ Web Content (Prewarmed)", "Visible name of the web process. The argument is the application name."), m_uiProcessName.createNSString().get()]).get();
         break;
     case ProcessType::CachedWebContent:
-        applicationName = [NSString stringWithFormat:WEB_UI_NSSTRING(@"%@ Web Content (Cached)", "Visible name of the web process. The argument is the application name."), (NSString *)m_uiProcessName];
+        applicationName = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"%@ Web Content (Cached)", "Visible name of the web process. The argument is the application name."), m_uiProcessName.createNSString().get()]).get();
         break;
     case ProcessType::WebContent:
-        applicationName = [NSString stringWithFormat:WEB_UI_NSSTRING(@"%@ Web Content", "Visible name of the web process. The argument is the application name."), (NSString *)m_uiProcessName];
+        applicationName = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"%@ Web Content", "Visible name of the web process. The argument is the application name."), m_uiProcessName.createNSString().get()]).get();
         break;
     }
 

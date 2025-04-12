@@ -124,15 +124,15 @@ RetainPtr<NSString> applicationVisibleNameFromOrigin(const WebCore::SecurityOrig
     return visibleDomain(origin.host());
 }
 
-NSString *applicationVisibleName()
+RetainPtr<NSString> applicationVisibleName()
 {
-    NSBundle *appBundle = [NSBundle mainBundle];
-    NSString *displayName = appBundle.infoDictionary[(__bridge NSString *)_kCFBundleDisplayNameKey];
-    NSString *readableName = appBundle.infoDictionary[(__bridge NSString *)kCFBundleNameKey];
-    return displayName ?: readableName;
+    RetainPtr appBundle = [NSBundle mainBundle];
+    if (RetainPtr<NSString> displayName = appBundle.get().infoDictionary[bridge_cast(_kCFBundleDisplayNameKey)])
+        return displayName;
+    return appBundle.get().infoDictionary[bridge_cast(kCFBundleNameKey)];
 }
 
-static NSString *alertMessageText(MediaPermissionReason reason, const WebCore::SecurityOriginData& origin)
+static RetainPtr<NSString> alertMessageText(MediaPermissionReason reason, const WebCore::SecurityOriginData& origin)
 {
     RetainPtr visibleOrigin = applicationVisibleNameFromOrigin(origin);
     if (!visibleOrigin)
@@ -140,19 +140,19 @@ static NSString *alertMessageText(MediaPermissionReason reason, const WebCore::S
 
     switch (reason) {
     case MediaPermissionReason::Camera:
-        return [NSString stringWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to use your camera?", @"Message for user camera access prompt"), visibleOrigin.get()];
+        return adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to use your camera?", @"Message for user camera access prompt"), visibleOrigin.get()]);
     case MediaPermissionReason::CameraAndMicrophone:
-        return [NSString stringWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to use your camera and microphone?", @"Message for user media prompt"), visibleOrigin.get()];
+        return adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to use your camera and microphone?", @"Message for user media prompt"), visibleOrigin.get()]);
     case MediaPermissionReason::Microphone:
-        return [NSString stringWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to use your microphone?", @"Message for user microphone access prompt"), visibleOrigin.get()];
+        return adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to use your microphone?", @"Message for user microphone access prompt"), visibleOrigin.get()]);
     case MediaPermissionReason::ScreenCapture:
-        return [NSString stringWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to observe your screen?", @"Message for screen sharing prompt"), visibleOrigin.get()];
+        return adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to observe your screen?", @"Message for screen sharing prompt"), visibleOrigin.get()]);
     case MediaPermissionReason::DeviceOrientation:
-        return [NSString stringWithFormat:WEB_UI_NSSTRING(@"“%@” Would Like to Access Motion and Orientation", @"Message for requesting access to the device motion and orientation"), visibleOrigin.get()];
+        return adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"“%@” Would Like to Access Motion and Orientation", @"Message for requesting access to the device motion and orientation"), visibleOrigin.get()]);
     case MediaPermissionReason::Geolocation:
-        return [NSString stringWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to use your current location?", @"Message for geolocation prompt"), visibleOrigin.get()];
+        return adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to use your current location?", @"Message for geolocation prompt"), visibleOrigin.get()]);
     case MediaPermissionReason::SpeechRecognition:
-        return [NSString stringWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to capture your audio and use it for speech recognition?", @"Message for spechrecognition prompt"), visibleDomain(origin.host()).get()];
+        return adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Allow “%@” to capture your audio and use it for speech recognition?", @"Message for spechrecognition prompt"), visibleDomain(origin.host()).get()]);
     }
 }
 
@@ -209,34 +209,34 @@ void alertForPermission(WebPageProxy& page, MediaPermissionReason reason, const 
         return;
     }
     
-    auto *alertTitle = alertMessageText(reason, origin);
+    RetainPtr alertTitle = alertMessageText(reason, origin);
     if (!alertTitle) {
         completionHandler(false);
         return;
     }
 
-    auto *allowButtonString = allowButtonText(reason);
-    auto *doNotAllowButtonString = doNotAllowButtonText(reason);
+    RetainPtr allowButtonString = allowButtonText(reason);
+    RetainPtr doNotAllowButtonString = doNotAllowButtonText(reason);
     auto completionBlock = makeBlockPtr(WTFMove(completionHandler));
 
 #if PLATFORM(MAC)
     auto alert = adoptNS([NSAlert new]);
-    [alert setMessageText:alertTitle];
-    NSButton *button = [alert addButtonWithTitle:allowButtonString];
-    button.keyEquivalent = @"";
-    button = [alert addButtonWithTitle:doNotAllowButtonString];
-    button.keyEquivalent = @"\E";
+    [alert setMessageText:alertTitle.get()];
+    RetainPtr button = [alert addButtonWithTitle:allowButtonString.get()];
+    button.get().keyEquivalent = @"";
+    button = [alert addButtonWithTitle:doNotAllowButtonString.get()];
+    button.get().keyEquivalent = @"\E";
     [alert beginSheetModalForWindow:[webView window] completionHandler:[completionBlock](NSModalResponse returnCode) {
         auto shouldAllow = returnCode == NSAlertFirstButtonReturn;
         completionBlock(shouldAllow);
     }];
 #else
-    auto alert = WebKit::createUIAlertController(alertTitle, nil);
-    UIAlertAction* allowAction = [UIAlertAction actionWithTitle:allowButtonString style:UIAlertActionStyleDefault handler:[completionBlock](UIAlertAction *action) {
+    auto alert = WebKit::createUIAlertController(alertTitle.get(), nil);
+    UIAlertAction* allowAction = [UIAlertAction actionWithTitle:allowButtonString.get() style:UIAlertActionStyleDefault handler:[completionBlock](UIAlertAction *action) {
         completionBlock(true);
     }];
 
-    UIAlertAction* doNotAllowAction = [UIAlertAction actionWithTitle:doNotAllowButtonString style:UIAlertActionStyleCancel handler:[completionBlock](UIAlertAction *action) {
+    UIAlertAction* doNotAllowAction = [UIAlertAction actionWithTitle:doNotAllowButtonString.get() style:UIAlertActionStyleCancel handler:[completionBlock](UIAlertAction *action) {
         completionBlock(false);
     }];
 
@@ -254,13 +254,13 @@ void requestAVCaptureAccessForType(MediaPermissionType type, CompletionHandler<v
     ASSERT(isMainRunLoop());
 
 #if HAVE(AVCAPTUREDEVICE)
-    AVMediaType mediaType = type == MediaPermissionType::Audio ? AVMediaTypeAudio : AVMediaTypeVideo;
+    RetainPtr mediaType = type == MediaPermissionType::Audio ? AVMediaTypeAudio : AVMediaTypeVideo;
     auto decisionHandler = makeBlockPtr([completionHandler = WTFMove(completionHandler)](BOOL authorized) mutable {
         callOnMainRunLoop([completionHandler = WTFMove(completionHandler), authorized]() mutable {
             completionHandler(authorized);
         });
     });
-    [PAL::getAVCaptureDeviceClass() requestAccessForMediaType:mediaType completionHandler:decisionHandler.get()];
+    [PAL::getAVCaptureDeviceClass() requestAccessForMediaType:mediaType.get() completionHandler:decisionHandler.get()];
 #else
     UNUSED_PARAM(type);
     completionHandler(false);
@@ -270,8 +270,8 @@ void requestAVCaptureAccessForType(MediaPermissionType type, CompletionHandler<v
 MediaPermissionResult checkAVCaptureAccessForType(MediaPermissionType type)
 {
 #if HAVE(AVCAPTUREDEVICE)
-    AVMediaType mediaType = type == MediaPermissionType::Audio ? AVMediaTypeAudio : AVMediaTypeVideo;
-    auto authorizationStatus = [PAL::getAVCaptureDeviceClass() authorizationStatusForMediaType:mediaType];
+    RetainPtr mediaType = type == MediaPermissionType::Audio ? AVMediaTypeAudio : AVMediaTypeVideo;
+    auto authorizationStatus = [PAL::getAVCaptureDeviceClass() authorizationStatusForMediaType:mediaType.get()];
     if (authorizationStatus == AVAuthorizationStatusDenied || authorizationStatus == AVAuthorizationStatusRestricted)
         return MediaPermissionResult::Denied;
     if (authorizationStatus == AVAuthorizationStatusNotDetermined)

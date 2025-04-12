@@ -94,7 +94,6 @@ enum class AXProperty : uint16_t {
     AccessKey,
     AccessibilityText,
     ActionVerb,
-    AncestorFlags,
     BackgroundColor,
     BrailleLabel,
     BrailleRoleDescription,
@@ -310,12 +309,12 @@ using AXPropertyValueVariant = std::variant<std::nullptr_t, Markable<AXID>, Stri
     , AXTextRunLineID
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 >;
-using AXPropertyMap = UncheckedKeyHashMap<AXProperty, AXPropertyValueVariant, IntHash<AXProperty>, WTF::StrongEnumHashTraits<AXProperty>>;
-WTF::TextStream& operator<<(WTF::TextStream&, const AXPropertyMap&);
+using AXPropertyVector = Vector<std::pair<AXProperty, AXPropertyValueVariant>>;
+WTF::TextStream& operator<<(WTF::TextStream&, const AXPropertyVector&);
 
 struct AXPropertyChange {
     AXID axID; // ID of the object whose properties changed.
-    AXPropertyMap properties; // Changed properties.
+    AXPropertyVector properties; // Changed properties.
 };
 
 struct NodeUpdateOptions {
@@ -398,7 +397,7 @@ public:
     void updatePropertiesForSelfAndDescendants(AccessibilityObject&, const AXPropertySet&);
     void updateFrame(AXID, IntRect&&);
     void updateRootScreenRelativePosition();
-    void overrideNodeProperties(AXID, AXPropertyMap&&);
+    void overrideNodeProperties(AXID, AXPropertyVector&&);
 
     double loadingProgress();
     void updateLoadingProgress(double);
@@ -529,7 +528,7 @@ private:
 
     std::optional<NodeChange> nodeChangeForObject(Ref<AccessibilityObject>, AttachWrapper = AttachWrapper::OnMainThread);
     void collectNodeChangesForSubtree(AccessibilityObject&);
-    bool isCollectingNodeChanges() const { return m_collectingNodeChangesAtTreeLevel > 0; }
+    bool isCollectingNodeChanges() const { return m_isCollectingNodeChanges; }
     void queueChange(const NodeChange&) WTF_REQUIRES_LOCK(m_changeLogLock);
     void queueRemovals(Vector<AXID>&&);
     void queueRemovalsLocked(Vector<AXID>&&) WTF_REQUIRES_LOCK(m_changeLogLock);
@@ -540,7 +539,6 @@ private:
     void objectChangedIgnoredState(const AccessibilityObject&);
 
     const ProcessID m_processID { legacyPresentingApplicationPID() };
-    unsigned m_maxTreeDepth { 0 };
     WeakPtr<AXObjectCache> m_axObjectCache;
     OptionSet<ActivityState> m_pageActivityState;
     RefPtr<AXGeometryManager> m_geometryManager;
@@ -582,8 +580,8 @@ private:
     // Only accessed on the main thread.
     // Objects whose parent has changed, and said change needs to be synced to the secondary thread.
     HashSet<AXID> m_needsParentUpdate;
-    // 1-based tree level, 0 = not collecting. Only accessed on the main thread.
-    unsigned m_collectingNodeChangesAtTreeLevel { 0 };
+    // Only accessed on the main thread.
+    bool m_isCollectingNodeChanges { false };
 
     // Only accessed on AX thread.
     UncheckedKeyHashMap<AXID, Ref<AXIsolatedObject>> m_readerThreadNodeMap;

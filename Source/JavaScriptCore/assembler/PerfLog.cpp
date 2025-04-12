@@ -30,6 +30,7 @@
 #if ENABLE(ASSEMBLER)
 
 #include "Options.h"
+#include "ProfilerSupport.h"
 #include <array>
 #include <fcntl.h>
 #include <mutex>
@@ -153,11 +154,6 @@ PerfLog& PerfLog::singleton()
     return logger.get();
 }
 
-static inline uint64_t generateTimestamp()
-{
-    return MonotonicTime::now().secondsSinceEpoch().nanosecondsAs<uint64_t>();
-}
-
 static inline uint32_t getCurrentThreadID()
 {
 #if OS(LINUX)
@@ -168,13 +164,14 @@ static inline uint32_t getCurrentThreadID()
     uint64_t thread = 0;
     pthread_threadid_np(NULL, &thread);
     return static_cast<uint32_t>(thread);
+#elif OS(WINDOWS)
+    return static_cast<uint32_t>(GetCurrentThreadId());
 #else
     return 0;
 #endif
 }
 
 PerfLog::PerfLog()
-    : m_queue(WorkQueue::create("JSC PerfLog"_s))
 {
     {
         StringPrintStream filename;
@@ -198,7 +195,7 @@ PerfLog::PerfLog()
     }
 
     JITDump::FileHeader header;
-    header.timestamp = generateTimestamp();
+    header.timestamp = ProfilerSupport::generateTimestamp();
     header.pid = getCurrentProcessID();
 
     Locker locker { m_lock };
@@ -208,8 +205,8 @@ PerfLog::PerfLog()
 
 void PerfLog::write(const AbstractLocker&, const void* data, size_t size)
 {
-    size_t result = fwrite(data, 1, size, m_file);
-    RELEASE_ASSERT(result == size);
+    size_t result = fwrite(data, size, 1, m_file);
+    RELEASE_ASSERT(result == 1);
 }
 
 void PerfLog::flush(const AbstractLocker&)
@@ -219,9 +216,9 @@ void PerfLog::flush(const AbstractLocker&)
 
 void PerfLog::log(CString&& name, MacroAssemblerCodeRef<LinkBufferPtrTag> code)
 {
-    auto timestamp = generateTimestamp();
+    auto timestamp = ProfilerSupport::generateTimestamp();
     auto tid = getCurrentThreadID();
-    singleton().m_queue->dispatch([name = WTFMove(name), code, tid, timestamp] {
+    ProfilerSupport::singleton().queue().dispatch([name = WTFMove(name), code, tid, timestamp] {
         PerfLog& logger = singleton();
         size_t size = code.size();
         auto* executableAddress = code.code().untaggedPtr<const uint8_t*>();

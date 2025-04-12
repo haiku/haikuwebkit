@@ -57,6 +57,7 @@ NetworkStorageSession::~NetworkStorageSession()
 #if HAVE(COOKIE_CHANGE_LISTENER_API)
     unregisterCookieChangeListenersIfNecessary();
 #endif
+    clearCookiesVersionChangeCallbacks();
 }
 
 void NetworkStorageSession::setCookie(const Cookie& cookie)
@@ -82,7 +83,7 @@ void NetworkStorageSession::setCookies(const Vector<Cookie>& cookies, const URL&
     });
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    [nsCookieStorage() setCookies:nsCookies.get() forURL:(NSURL *)url mainDocumentURL:(NSURL *)mainDocumentURL];
+    [nsCookieStorage() setCookies:nsCookies.get() forURL:url.createNSURL().get() mainDocumentURL:mainDocumentURL.createNSURL().get()];
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
@@ -124,7 +125,7 @@ Vector<Cookie> NetworkStorageSession::getAllCookies()
 Vector<Cookie> NetworkStorageSession::getCookies(const URL& url)
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanAccessRawCookies));
-    return nsCookiesToCookieVector([nsCookieStorage() cookiesForURL:(NSURL *)url]);
+    return nsCookiesToCookieVector([nsCookieStorage() cookiesForURL:url.createNSURL().get()]);
 }
 
 void NetworkStorageSession::hasCookies(const RegistrableDomain& domain, CompletionHandler<void(bool)>&& completionHandler) const
@@ -375,7 +376,7 @@ RetainPtr<NSArray> NetworkStorageSession::cookiesForURL(const URL& firstParty, c
     auto thirdPartyCookieBlockingDecision = thirdPartyCookieBlockingDecisionForRequest(firstParty, url, frameID, pageID, shouldRelaxThirdPartyCookieBlocking);
     if (applyTrackingPrevention == ApplyTrackingPrevention::Yes && thirdPartyCookieBlockingDecision == ThirdPartyCookieBlockingDecision::All)
         return nil;
-    return httpCookiesForURL(cookieStorage().get(), firstParty, sameSiteInfo, url, thirdPartyCookieBlockingDecision);
+    return httpCookiesForURL(cookieStorage().get(), firstParty.createNSURL().get(), sameSiteInfo, url.createNSURL().get(), thirdPartyCookieBlockingDecision);
 }
 
 std::pair<String, bool> NetworkStorageSession::cookiesForSession(const URL& firstParty, const SameSiteInfo& sameSiteInfo, const URL& url, std::optional<FrameIdentifier> frameID, std::optional<PageIdentifier> pageID, IncludeHTTPOnlyOrNot includeHTTPOnly, IncludeSecureCookies includeSecureCookies, ApplyTrackingPrevention applyTrackingPrevention, ShouldRelaxThirdPartyCookieBlocking shouldRelaxThirdPartyCookieBlocking) const
@@ -525,7 +526,7 @@ void NetworkStorageSession::setCookiesFromDOM(const URL& firstParty, const SameS
     if (!cookie)
         return;
 
-    setHTTPCookiesForURL(cookieStorage().get(), @[cookie.get()], cookieURL.get(), firstParty, sameSiteInfo);
+    setHTTPCookiesForURL(cookieStorage().get(), @[cookie.get()], cookieURL.get(), firstParty.createNSURL().get(), sameSiteInfo);
 
     END_BLOCK_OBJC_EXCEPTIONS
 }
@@ -544,7 +545,7 @@ bool NetworkStorageSession::setCookieFromDOM(const URL& firstParty, const SameSi
     if (!nshttpCookie)
         return false;
 
-    setHTTPCookiesForURL(cookieStorage().get(), @[ nshttpCookie.get() ], (NSURL *)url, firstParty, sameSiteInfo);
+    setHTTPCookiesForURL(cookieStorage().get(), @[ nshttpCookie.get() ], url.createNSURL().get(), firstParty.createNSURL().get(), sameSiteInfo);
     return true;
 
     END_BLOCK_OBJC_EXCEPTIONS
@@ -594,7 +595,7 @@ void NetworkStorageSession::deleteCookie(const URL& firstParty, const URL& url, 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
 
     RetainPtr<CFHTTPCookieStorageRef> cookieStorage = this->cookieStorage();
-    RetainPtr<NSArray> cookies = httpCookiesForURL(cookieStorage.get(), firstParty, std::nullopt, url, ThirdPartyCookieBlockingDecision::None);
+    RetainPtr<NSArray> cookies = httpCookiesForURL(cookieStorage.get(), firstParty.createNSURL().get(), std::nullopt, url.createNSURL().get(), ThirdPartyCookieBlockingDecision::None);
 
     RetainPtr cookieNameString = cookieName.createNSString();
 

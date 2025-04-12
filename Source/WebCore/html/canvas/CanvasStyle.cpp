@@ -30,8 +30,10 @@
 #include "CanvasStyle.h"
 
 #include "CSSParser.h"
+#include "CSSParserContext.h"
+#include "CSSParserMode.h"
 #include "CSSPropertyNames.h"
-#include "CSSPropertyParserConsumer+Color.h"
+#include "CSSPropertyParserConsumer+ColorInlines.h"
 #include "CanvasGradient.h"
 #include "CanvasPattern.h"
 #include "ColorConversion.h"

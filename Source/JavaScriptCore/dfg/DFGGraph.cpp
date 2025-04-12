@@ -233,6 +233,8 @@ void Graph::dump(PrintStream& out, const char* prefixStr, Node* node, DumpContex
         out.print(comma, "numberOfBoundArguments = "_s, node->numberOfBoundArguments());
     if (node->hasArrayMode())
         out.print(comma, node->arrayMode());
+    if (node->hasArrayModes())
+        out.print(comma, ArrayModesDump(node->arrayModes()));
     if (node->hasArithUnaryType())
         out.print(comma, "Type:"_s, node->arithUnaryType());
     if (node->hasArithMode())
@@ -460,8 +462,12 @@ void Graph::dumpBlockHeader(PrintStream& out, const char* prefixStr, BasicBlock*
     Prefix myPrefix(prefixStr);
     Prefix& prefix = prefixStr ? myPrefix : m_prefix;
 
-    out.print(prefix, "Block ", *block, " (", inContext(block->at(0)->origin.semantic, context), "):",
-        block->isReachable ? "" : " (skipped)", block->isOSRTarget ? " (OSR target)" : "", block->isCatchEntrypoint ? " (Catch Entrypoint)" : "", "\n");
+    out.print(prefix, "Block ", *block);
+#if ASSERT_ENABLED
+    if (block->cloneSource)
+        out.print("<-", block->cloneSource);
+#endif
+    out.print(" (", inContext(block->at(0)->origin.semantic, context), "):", block->isReachable ? "" : " (skipped)", block->isOSRTarget ? " (OSR target)" : "", block->isCatchEntrypoint ? " (Catch Entrypoint)" : "", "\n");
     if (block->executionCount == block->executionCount)
         out.print(prefix, "  Execution count: ", block->executionCount, "\n");
     out.print(prefix, "  Predecessors:");

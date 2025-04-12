@@ -955,6 +955,7 @@ css/CSSTextShadowPropertyValue.cpp
 css/CSSToLengthConversionData.cpp
 css/CSSToStyleMap.cpp
 css/CSSTransformListValue.cpp
+css/CSSURLValue.cpp
 css/CSSUnicodeRangeValue.cpp
 css/CSSUnits.cpp
 css/CSSValue.cpp
@@ -1021,7 +1022,6 @@ css/parser/CSSCustomPropertySyntax.cpp
 css/parser/CSSParser.cpp
 css/parser/CSSParserContext.cpp
 css/parser/CSSParserFastPaths.cpp
-css/parser/CSSParserIdioms.cpp
 css/parser/CSSParserImpl.cpp
 css/parser/CSSParserObserverWrapper.cpp
 css/parser/CSSParserToken.cpp
@@ -1047,7 +1047,6 @@ css/parser/CSSPropertyParserConsumer+Grid.cpp
 css/parser/CSSPropertyParserConsumer+Ident.cpp
 css/parser/CSSPropertyParserConsumer+Image.cpp
 css/parser/CSSPropertyParserConsumer+Inline.cpp
-css/parser/CSSPropertyParserConsumer+Inset.cpp
 css/parser/CSSPropertyParserConsumer+Lists.cpp
 css/parser/CSSPropertyParserConsumer+Masking.cpp
 css/parser/CSSPropertyParserConsumer+Motion.cpp
@@ -1155,7 +1154,6 @@ css/values/color/CSSKeywordColor.cpp
 css/values/color/CSSLightDarkColor.cpp
 css/values/color/CSSPlatformColorResolutionState.cpp
 css/values/color/CSSResolvedColor.cpp
-css/values/filter-effects/CSSFilterReference.cpp
 css/values/images/CSSGradient.cpp
 css/values/motion/CSSRayFunction.cpp
 css/values/primitives/CSSPosition.cpp
@@ -1165,6 +1163,7 @@ css/values/primitives/CSSPrimitiveNumericTypes+Serialization.cpp
 css/values/primitives/CSSPrimitiveNumericTypes+SymbolReplacement.cpp
 css/values/primitives/CSSPrimitiveNumericUnits.cpp
 css/values/primitives/CSSSymbol.cpp
+css/values/primitives/CSSURL.cpp
 css/values/primitives/CSSUnevaluatedCalc.cpp
 css/values/shapes/CSSCircleFunction.cpp
 css/values/shapes/CSSEllipseFunction.cpp
@@ -2110,6 +2109,7 @@ page/EventHandler.cpp
 page/EventSource.cpp
 page/FocusController.cpp
 page/Frame.cpp
+page/FrameIdentifier.cpp
 page/FrameView.cpp
 page/FrameDestructionObserver.cpp
 page/FrameSnapshotting.cpp
@@ -2933,6 +2933,7 @@ rendering/shapes/ShapeOutsideInfo.cpp
 rendering/style/BorderData.cpp
 rendering/style/BorderValue.cpp
 rendering/style/ContentData.cpp
+rendering/style/DropShadowFilterOperationWithStyleColor.cpp
 rendering/style/FillLayer.cpp
 rendering/style/GapLength.cpp
 rendering/style/GridPosition.cpp
@@ -2945,6 +2946,7 @@ rendering/style/QuotesData.cpp
 rendering/style/PositionArea.cpp
 rendering/style/PositionTryFallback.cpp
 rendering/style/PositionTryOrder.cpp
+rendering/style/ReferenceFilterOperation.cpp
 rendering/style/RenderStyle.cpp
 rendering/style/RenderStyleConstants.cpp
 rendering/style/SVGRenderStyle.cpp
@@ -3103,6 +3105,7 @@ style/IdChangeInvalidation.cpp
 style/InlineTextBoxStyle.cpp
 style/InspectorCSSOMWrappers.cpp
 style/MatchedDeclarationsCache.cpp
+style/MatchResultCache.cpp
 style/PageRuleCollector.cpp
 style/PropertyAllowlist.cpp
 style/PropertyCascade.cpp
@@ -3160,6 +3163,7 @@ style/values/filter-effects/StyleBrightnessFunction.cpp
 style/values/filter-effects/StyleContrastFunction.cpp
 style/values/filter-effects/StyleDropShadowFunction.cpp
 style/values/filter-effects/StyleFilterProperty.cpp
+style/values/filter-effects/StyleFilterReference.cpp
 style/values/filter-effects/StyleGrayscaleFunction.cpp
 style/values/filter-effects/StyleHueRotateFunction.cpp
 style/values/filter-effects/StyleInvertFunction.cpp
@@ -3170,6 +3174,7 @@ style/values/images/StyleGradient.cpp
 style/values/primitives/StyleLengthResolution.cpp
 style/values/primitives/StylePosition.cpp
 style/values/primitives/StylePrimitiveNumericTypes+Conversions.cpp
+style/values/primitives/StyleURL.cpp
 style/values/primitives/StyleUnevaluatedCalculation.cpp
 style/values/scroll-snap/StyleScrollMargin.cpp
 style/values/scroll-snap/StyleScrollPadding.cpp

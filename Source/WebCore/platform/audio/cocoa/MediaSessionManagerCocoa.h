@@ -66,8 +66,6 @@ public:
     static WEBCORE_EXPORT void clearNowPlayingInfo();
     static WEBCORE_EXPORT void setNowPlayingInfo(bool setAsNowPlayingApplication, bool shouldUpdateNowPlayingSuppression, const NowPlayingInfo&);
 
-    static WEBCORE_EXPORT void updateMediaUsage(PlatformMediaSession&);
-
     static void ensureCodecsRegistered();
 
     static WEBCORE_EXPORT void setShouldUseModernAVContentKeySession(bool);
@@ -90,7 +88,7 @@ protected:
     void clientCharacteristicsChanged(PlatformMediaSession&, bool) final;
     void sessionCanProduceAudioChanged() final;
 
-    virtual void providePresentingApplicationPIDIfNecessary(ProcessID) { }
+    virtual void providePresentingApplicationPIDIfNecessary(const std::optional<ProcessID>&) { }
 
     WeakPtr<PlatformMediaSession> nowPlayingEligibleSession();
 

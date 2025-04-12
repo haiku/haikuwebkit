@@ -324,6 +324,8 @@ RenderLayer::RenderLayer(RenderLayerModelObject& renderer)
     , m_inResizeMode(false)
     , m_hasSelfPaintingLayerDescendant(false)
     , m_hasSelfPaintingLayerDescendantDirty(false)
+    , m_hasViewportConstrainedDescendant(false)
+    , m_hasViewportConstrainedDescendantStatusDirty(false)
     , m_usedTransparency(false)
     , m_paintingInsideReflection(false)
     , m_visibleContentStatusDirty(true)
@@ -445,6 +447,9 @@ void RenderLayer::addChild(RenderLayer& child, RenderLayer* beforeChild)
     if (child.isSelfPaintingLayer() || child.hasSelfPaintingLayerDescendant())
         setAncestorChainHasSelfPaintingLayerDescendant();
 
+    if (child.isViewportConstrained() || child.m_hasViewportConstrainedDescendant)
+        setAncestorChainHasViewportConstrainedDescendant();
+
     if (compositor().hasContentCompositingLayers())
         setDescendantsNeedCompositingRequirementsTraversal();
 
@@ -491,6 +496,9 @@ void RenderLayer::removeChild(RenderLayer& oldChild)
 
     if (oldChild.isSelfPaintingLayer() || oldChild.hasSelfPaintingLayerDescendant())
         dirtyAncestorChainHasSelfPaintingLayerDescendantStatus();
+
+    if (oldChild.isViewportConstrained() || oldChild.m_hasViewportConstrainedDescendant)
+        dirtyAncestorChainHasViewportConstrainedDescendantStatus();
 
     if (compositor().hasContentCompositingLayers())
         setDescendantsNeedCompositingRequirementsTraversal();
@@ -1218,6 +1226,7 @@ void RenderLayer::recursiveUpdateLayerPositions(OptionSet<UpdateLayerPositionsFl
     else {
         LAYER_POSITIONS_ASSERT(!m_visibleDescendantStatusDirty);
         LAYER_POSITIONS_ASSERT(!m_hasSelfPaintingLayerDescendantDirty);
+        LAYER_POSITIONS_ASSERT(!m_hasViewportConstrainedDescendantStatusDirty);
         LAYER_POSITIONS_ASSERT(!hasNotIsolatedBlendingDescendantsStatusDirty());
         LAYER_POSITIONS_ASSERT(!m_visibleContentStatusDirty);
     }
@@ -1409,6 +1418,27 @@ void RenderLayer::dirtyAncestorChainHasSelfPaintingLayerDescendantStatus()
     }
 }
 
+void RenderLayer::setAncestorChainHasViewportConstrainedDescendant()
+{
+    for (CheckedPtr layer = this; layer; layer = layer->parent()) {
+        if (!layer->m_hasViewportConstrainedDescendantStatusDirty && layer->m_hasViewportConstrainedDescendant)
+            break;
+
+        layer->m_hasViewportConstrainedDescendant = true;
+        layer->m_hasViewportConstrainedDescendantStatusDirty = false;
+    }
+}
+
+void RenderLayer::dirtyAncestorChainHasViewportConstrainedDescendantStatus()
+{
+    for (CheckedPtr layer = this; layer; layer = layer->parent()) {
+        if (layer->m_hasViewportConstrainedDescendantStatusDirty)
+            break;
+
+        layer->m_hasViewportConstrainedDescendantStatusDirty = true;
+    }
+}
+
 std::optional<LayoutRect> RenderLayer::cachedClippedOverflowRect() const
 {
     if (!m_repaintRectsValid)
@@ -1442,6 +1472,7 @@ void RenderLayer::computeRepaintRectsIncludingDescendants()
 
 void RenderLayer::compositingStatusChanged(LayoutUpToDate layoutUpToDate)
 {
+    updateDescendantDependentFlags();
     if (parent() || isRenderViewLayer())
         computeRepaintRectsIncludingDescendants();
     if (layoutUpToDate == LayoutUpToDate::No)
@@ -1895,11 +1926,12 @@ void RenderLayer::updateAncestorDependentState()
 
 void RenderLayer::updateDescendantDependentFlags()
 {
-    if (m_visibleDescendantStatusDirty || m_hasSelfPaintingLayerDescendantDirty || hasNotIsolatedBlendingDescendantsStatusDirty() || m_hasAlwaysIncludedInZOrderListsDescendantsStatusDirty) {
+    if (m_visibleDescendantStatusDirty || m_hasSelfPaintingLayerDescendantDirty || hasNotIsolatedBlendingDescendantsStatusDirty() || m_hasAlwaysIncludedInZOrderListsDescendantsStatusDirty || m_hasViewportConstrainedDescendantStatusDirty) {
         bool hasVisibleDescendant = false;
         bool hasSelfPaintingLayerDescendant = false;
         bool hasNotIsolatedBlendingDescendants = false;
         bool hasAlwaysIncludedInZOrderListsDescendants = false;
+        bool hasViewportConstrainedDescendant = false;
 
         if (m_hasNotIsolatedBlendingDescendantsStatusDirty) {
             m_hasNotIsolatedBlendingDescendantsStatusDirty = false;
@@ -1913,6 +1945,7 @@ void RenderLayer::updateDescendantDependentFlags()
             hasSelfPaintingLayerDescendant |= child->isSelfPaintingLayer() || child->hasSelfPaintingLayerDescendant();
             hasNotIsolatedBlendingDescendants |= child->hasBlendMode() || (child->hasNotIsolatedBlendingDescendants() && !child->isolatesBlending());
             hasAlwaysIncludedInZOrderListsDescendants |= child->alwaysIncludedInZOrderLists() || child->m_hasAlwaysIncludedInZOrderListsDescendants;
+            hasViewportConstrainedDescendant |= child->m_hasViewportConstrainedDescendant || child->isViewportConstrained();
         }
 
         m_hasVisibleDescendant = hasVisibleDescendant;
@@ -1921,6 +1954,8 @@ void RenderLayer::updateDescendantDependentFlags()
         m_hasSelfPaintingLayerDescendantDirty = false;
         m_hasAlwaysIncludedInZOrderListsDescendants = hasAlwaysIncludedInZOrderListsDescendants;
         m_hasAlwaysIncludedInZOrderListsDescendantsStatusDirty = false;
+        m_hasViewportConstrainedDescendant = hasViewportConstrainedDescendant;
+        m_hasViewportConstrainedDescendantStatusDirty = false;
 
         m_hasNotIsolatedBlendingDescendants = hasNotIsolatedBlendingDescendants;
     }
@@ -3604,11 +3639,10 @@ void RenderLayer::paintLayerContents(GraphicsContext& context, const LayerPainti
         if (hasFixedAncestor())
             return false;
 
-        CheckedRef renderer = this->renderer();
-        if (renderer->isFixedPositioned() || renderer->isStickilyPositioned())
+        if (isViewportConstrained())
             return false;
 
-        if (!renderer->document().isTopDocument())
+        if (!m_renderer.frame().isMainFrame())
             return false;
 
         return true;
@@ -4610,6 +4644,9 @@ RenderLayer::HitLayer RenderLayer::hitTestLayer(RenderLayer* rootLayer, RenderLa
         if (is<RenderSVGHiddenContainer>(renderer()))
             return { };
     }
+
+    if (request.viewportConstrainedLayersOnly() && !m_hasViewportConstrainedDescendant && !isViewportConstrained() && !hasFixedAncestor())
+        return { };
 
     // The natural thing would be to keep HitTestingTransformState on the stack, but it's big, so we heap-allocate.
 
@@ -6100,6 +6137,9 @@ void RenderLayer::styleChanged(StyleDifference diff, const RenderStyle* oldStyle
     updateTransform();
     updateFilterPaintingStrategy();
 
+    if (oldStyle && oldStyle->hasViewportConstrainedPosition() != isViewportConstrained())
+        dirtyAncestorChainHasViewportConstrainedDescendantStatus();
+
 #if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
     if (diff == StyleDifference::RecompositeLayer || diff >= StyleDifference::LayoutPositionedMovementOnly)
         renderer().document().invalidateRenderingDependentRegions();
@@ -6235,7 +6275,21 @@ void RenderLayer::updateFiltersAfterStyleChange(StyleDifference diff, const Rend
     else if (m_filters)
         m_filters->removeReferenceFilterClients();
 
-    if (diff >= StyleDifference::RepaintLayer && oldStyle && oldStyle->filter() != renderer().style().filter())
+    auto filterChanged = [&] {
+        if (!m_filters)
+            return false;
+        if (diff < StyleDifference::RepaintLayer)
+            return false;
+        if (!oldStyle)
+            return false;
+        if (oldStyle->filter() != renderer().style().filter())
+            return true;
+        auto currentColorChanged = oldStyle->color() != renderer().style().color();
+        if (currentColorChanged && oldStyle->filter().requiresRepaintForCurrentColorChange())
+            return true;
+        return false;
+    };
+    if (filterChanged())
         clearLayerFilters();
 }
 

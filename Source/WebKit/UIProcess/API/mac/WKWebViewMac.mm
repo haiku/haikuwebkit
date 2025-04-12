@@ -55,11 +55,11 @@ _WKOverlayScrollbarStyle toAPIScrollbarStyle(std::optional<WebCore::ScrollbarOve
         return _WKOverlayScrollbarStyleAutomatic;
     
     switch (coreScrollbarStyle.value()) {
-    case WebCore::ScrollbarOverlayStyleDark:
+    case WebCore::ScrollbarOverlayStyle::Dark:
         return _WKOverlayScrollbarStyleDark;
-    case WebCore::ScrollbarOverlayStyleLight:
+    case WebCore::ScrollbarOverlayStyle::Light:
         return _WKOverlayScrollbarStyleLight;
-    case WebCore::ScrollbarOverlayStyleDefault:
+    case WebCore::ScrollbarOverlayStyle::Default:
         return _WKOverlayScrollbarStyleDefault;
     }
     ASSERT_NOT_REACHED();
@@ -70,15 +70,25 @@ std::optional<WebCore::ScrollbarOverlayStyle> toCoreScrollbarStyle(_WKOverlayScr
 {
     switch (scrollbarStyle) {
     case _WKOverlayScrollbarStyleDark:
-        return WebCore::ScrollbarOverlayStyleDark;
+        return WebCore::ScrollbarOverlayStyle::Dark;
     case _WKOverlayScrollbarStyleLight:
-        return WebCore::ScrollbarOverlayStyleLight;
+        return WebCore::ScrollbarOverlayStyle::Light;
     case _WKOverlayScrollbarStyleDefault:
-        return WebCore::ScrollbarOverlayStyleDefault;
+        return WebCore::ScrollbarOverlayStyle::Default;
     case _WKOverlayScrollbarStyleAutomatic:
         break;
     }
     return std::nullopt;
+}
+
+static WebCore::FloatBoxExtent coreBoxExtentsFromEdgeInsets(NSEdgeInsets insets)
+{
+    return {
+        static_cast<float>(insets.top),
+        static_cast<float>(insets.right),
+        static_cast<float>(insets.bottom),
+        static_cast<float>(insets.left)
+    };
 }
 
 @interface WKWebView (WKImplementationMac) <NSTextInputClient
@@ -1360,9 +1370,17 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     _impl->insertText(string, replacementRange);
 }
 
-- (void)_setContentOffset:(CGPoint)contentOffset animated:(BOOL)animated
+- (void)_setContentOffsetX:(NSNumber *)x y:(NSNumber *)y animated:(BOOL)animated
 {
-    _page->setContentOffset(WebCore::IntPoint { contentOffset }, animated ? WebCore::ScrollIsAnimated::Yes : WebCore::ScrollIsAnimated::No);
+    std::optional<int> optionalX = std::nullopt;
+    if (x)
+        optionalX = static_cast<int>([x doubleValue]);
+
+    std::optional<int> optionalY = std::nullopt;
+    if (y)
+        optionalY = static_cast<int>([y doubleValue]);
+
+    _page->setContentOffset(optionalX, optionalY, animated ? WebCore::ScrollIsAnimated::Yes : WebCore::ScrollIsAnimated::No);
 }
 
 #pragma mark - QLPreviewPanelController
@@ -1533,12 +1551,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return;
     }
 
-    _impl->setObscuredContentInsets({
-        static_cast<float>(insets.top),
-        static_cast<float>(insets.right),
-        static_cast<float>(insets.bottom),
-        static_cast<float>(insets.left)
-    });
+    _impl->setObscuredContentInsets(coreBoxExtentsFromEdgeInsets(insets));
 
     if (immediate)
         _impl->flushPendingObscuredContentInsetChanges();
@@ -1801,7 +1814,14 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)_setCustomSwipeViewsTopContentInset:(float)topContentInset
 {
-    _impl->setCustomSwipeViewsTopContentInset(topContentInset);
+    auto insets = _impl->customSwipeViewsObscuredContentInsets();
+    insets.setTop(topContentInset);
+    _impl->setCustomSwipeViewsObscuredContentInsets(WTFMove(insets));
+}
+
+- (void)_setCustomSwipeViewsObscuredContentInsets:(NSEdgeInsets)insets
+{
+    _impl->setCustomSwipeViewsObscuredContentInsets(coreBoxExtentsFromEdgeInsets(insets));
 }
 
 - (void)_setDidMoveSwipeSnapshotCallback:(void(^)(CGRect))callback

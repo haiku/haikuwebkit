@@ -55,6 +55,7 @@
 #include "CSSRayValue.h"
 #include "CSSReflectValue.h"
 #include "CSSSubgridValue.h"
+#include "CSSURLValue.h"
 #include "CSSValuePair.h"
 #include "CalculationValue.h"
 #include "FontPalette.h"
@@ -91,6 +92,7 @@
 #include "StyleScrollPadding.h"
 #include "StyleScrollSnapPoints.h"
 #include "StyleTextEdge.h"
+#include "StyleURL.h"
 #include "TabSize.h"
 #include "TextSpacing.h"
 #include "TimelineRange.h"
@@ -201,7 +203,7 @@ public:
     static Vector<SVGLengthValue> convertStrokeDashArray(BuilderState&, const CSSValue&);
     static PaintOrder convertPaintOrder(BuilderState&, const CSSValue&);
     static float convertOpacity(BuilderState&, const CSSValue&);
-    static String convertSVGURIReference(BuilderState&, const CSSValue&);
+    static Style::URL convertSVGURIReference(BuilderState&, const CSSValue&);
     static StyleSelfAlignmentData convertSelfOrDefaultAlignmentData(BuilderState&, const CSSValue&);
     static StyleContentAlignmentData convertContentAlignmentData(BuilderState&, const CSSValue&);
     static GlyphOrientation convertGlyphOrientation(BuilderState&, const CSSValue&);
@@ -872,20 +874,25 @@ inline RefPtr<StylePathData> BuilderConverter::convertDPath(BuilderState& builde
 inline RefPtr<PathOperation> BuilderConverter::convertPathOperation(BuilderState& builderState, const CSSValue& value)
 {
     if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
-        if (primitiveValue->isURI()) {
-            auto cssURLValue = primitiveValue->stringValue();
-            auto fragment = SVGURIReference::fragmentIdentifierFromIRIString(cssURLValue, builderState.document());
-            // FIXME: It doesn't work with external SVG references (see https://bugs.webkit.org/show_bug.cgi?id=126133)
-            const TreeScope* treeScope = nullptr;
-            if (builderState.element())
-                treeScope = &builderState.element()->treeScopeForSVGReferences();
-            else
-                treeScope = &builderState.document();
-            auto target = SVGURIReference::targetElementFromIRIString(cssURLValue, *treeScope);
-            return ReferencePathOperation::create(cssURLValue, fragment, dynamicDowncast<SVGElement>(target.element.get()));
-        }
-        ASSERT(primitiveValue->valueID() == CSSValueNone);
+        ASSERT_UNUSED(primitiveValue, primitiveValue->valueID() == CSSValueNone);
         return nullptr;
+    }
+
+    if (RefPtr url = dynamicDowncast<CSSURLValue>(value)) {
+        auto styleURL = Style::toStyle(url->url(), builderState);
+
+        // FIXME: ReferencePathOperation are not hooked up to support remote URLs yet, so only works with document local references. To see an example of how this should work, see ReferenceFilterOperation which supports both document local and remote URLs.
+
+        auto fragment = SVGURIReference::fragmentIdentifierFromIRIString(styleURL, builderState.document());
+
+        const TreeScope* treeScope = nullptr;
+        if (builderState.element())
+            treeScope = &builderState.element()->treeScopeForSVGReferences();
+        else
+            treeScope = &builderState.document();
+        auto target = SVGURIReference::targetElementFromIRIString(styleURL, *treeScope);
+
+        return ReferencePathOperation::create(WTFMove(styleURL), fragment, dynamicDowncast<SVGElement>(target.element.get()));
     }
 
     if (RefPtr ray = dynamicDowncast<CSSRayValue>(value))
@@ -1891,20 +1898,64 @@ inline float BuilderConverter::convertOpacity(BuilderState& builderState, const 
     return std::max(0.0f, std::min(1.0f, opacity));
 }
 
-inline String BuilderConverter::convertSVGURIReference(BuilderState& builderState, const CSSValue& value)
+inline Style::URL BuilderConverter::convertSVGURIReference(BuilderState& builderState, const CSSValue& value)
 {
+    if (auto url = dynamicDowncast<CSSURLValue>(value))
+        return Style::toStyle(url->url(), builderState);
+
     auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
     if (!primitiveValue)
-        return { };
+        return Style::URL::none();
 
-    if (primitiveValue->isURI())
-        return primitiveValue->stringValue();
-    return emptyString();
+    ASSERT(primitiveValue->valueID() == CSSValueNone);
+    return Style::URL::none();
 }
 
-inline StyleSelfAlignmentData BuilderConverter::convertSelfOrDefaultAlignmentData(BuilderState&, const CSSValue& value)
+// Get the "opposite" ItemPosition to the provided ItemPosition.
+// e.g: start -> end, end -> start, self-start -> self-end.
+// Position that doesn't have an opposite value is returned as-is.
+inline ItemPosition oppositeItemPosition(ItemPosition position)
+{
+    switch (position) {
+    case ItemPosition::Legacy:
+    case ItemPosition::Auto:
+    case ItemPosition::Normal:
+    case ItemPosition::Stretch:
+    case ItemPosition::Baseline:
+    case ItemPosition::LastBaseline:
+    case ItemPosition::Center:
+    case ItemPosition::AnchorCenter:
+        return position;
+
+    case ItemPosition::Start:
+        return ItemPosition::End;
+    case ItemPosition::End:
+        return ItemPosition::Start;
+
+    case ItemPosition::SelfStart:
+        return ItemPosition::SelfEnd;
+    case ItemPosition::SelfEnd:
+        return ItemPosition::SelfStart;
+
+    case ItemPosition::FlexStart:
+        return ItemPosition::FlexEnd;
+    case ItemPosition::FlexEnd:
+        return ItemPosition::FlexStart;
+
+    case ItemPosition::Left:
+        return ItemPosition::Right;
+    case ItemPosition::Right:
+        return ItemPosition::Left;
+    }
+
+    ASSERT_NOT_REACHED();
+    return position;
+}
+
+inline StyleSelfAlignmentData BuilderConverter::convertSelfOrDefaultAlignmentData(BuilderState& builderState, const CSSValue& value)
 {
     auto alignmentData = RenderStyle::initialSelfAlignment();
+
     if (value.isPair()) {
         if (value.first().valueID() == CSSValueLegacy) {
             alignmentData.setPositionType(ItemPositionType::Legacy);
@@ -1919,6 +1970,46 @@ inline StyleSelfAlignmentData BuilderConverter::convertSelfOrDefaultAlignmentDat
         }
     } else
         alignmentData.setPosition(fromCSSValue<ItemPosition>(value));
+
+    // Flip the position according to position-try fallback, if specified.
+    if (auto positionTryFallback = builderState.positionTryFallback()) {
+        for (auto tactic : positionTryFallback->tactics) {
+            switch (tactic) {
+            case PositionTryFallback::Tactic::FlipBlock:
+                if (builderState.cssPropertyID() == CSSPropertyAlignSelf)
+                    alignmentData.setPosition(oppositeItemPosition(alignmentData.position()));
+                break;
+
+            case PositionTryFallback::Tactic::FlipInline:
+                if (builderState.cssPropertyID() == CSSPropertyJustifySelf)
+                    alignmentData.setPosition(oppositeItemPosition(alignmentData.position()));
+                break;
+
+            case PositionTryFallback::Tactic::FlipStart:
+                // justify-self additionally takes left/right, align-self doesn't. When
+                // applying flip-start, justify-self gets swapped with align-self. So if
+                // we're resolving justify-self (which later gets swapped with align-self),
+                // and the position is 'left' or 'right', resolve it to self-start/self-end.
+                if (builderState.cssPropertyID() == CSSPropertyJustifySelf) {
+                    auto writingMode = builderState.style().writingMode();
+
+                    switch (alignmentData.position()) {
+                    case ItemPosition::Left:
+                        alignmentData.setPosition(writingMode.bidiDirection() == TextDirection::LTR ? ItemPosition::SelfStart : ItemPosition::SelfEnd);
+                        break;
+                    case ItemPosition::Right:
+                        alignmentData.setPosition(writingMode.bidiDirection() == TextDirection::LTR ? ItemPosition::SelfEnd : ItemPosition::SelfStart);
+                        break;
+                    default:
+                        break;
+                    }
+                }
+
+                break;
+            }
+        }
+    }
+
     return alignmentData;
 }
 
@@ -2613,32 +2704,49 @@ static std::pair<CSSValueID, CSSValueID> positionAreaExpandKeyword(CSSValueID di
     return { dim, dim };
 }
 
-// Get the opposite axis of a given axis. Used to resolve the axis of an axis ambiguous
-// keyword, as its axis is the opposite of the other keyword in the pair.
-static PositionAreaAxis positionAreaOppositeAxis(PositionAreaAxis axis)
+
+// Flip a PositionArea across a logical axis (block or inline), given the current writing mode.
+inline PositionArea flipPositionAreaByLogicalAxis(LogicalBoxAxis flipAxis, PositionArea area, WritingMode writingMode)
 {
-    switch (axis) {
-    case PositionAreaAxis::Horizontal:
-        return PositionAreaAxis::Vertical;
-    case PositionAreaAxis::Vertical:
-        return PositionAreaAxis::Horizontal;
+    auto blockOrXSpan = area.blockOrXAxis();
+    auto inlineOrYSpan = area.inlineOrYAxis();
 
-    case PositionAreaAxis::X:
-        return PositionAreaAxis::Y;
-    case PositionAreaAxis::Y:
-        return PositionAreaAxis::X;
-
-    case PositionAreaAxis::Block:
-        return PositionAreaAxis::Inline;
-    case PositionAreaAxis::Inline:
-        return PositionAreaAxis::Block;
+    // blockOrXSpan is on the flip axis, so flip its track and keep inlineOrYSpan intact.
+    if (mapPositionAreaAxisToLogicalAxis(blockOrXSpan.axis(), writingMode) == flipAxis) {
+        return {
+            { blockOrXSpan.axis(), flipPositionAreaTrack(blockOrXSpan.track()), blockOrXSpan.self() },
+            inlineOrYSpan
+        };
     }
 
-    ASSERT_NOT_REACHED();
-    return PositionAreaAxis::Horizontal;
+    // The two spans are orthogonal in axis, so if blockOrXSpan isn't on the flip axis,
+    // inlineOrYSpan must be. In this case, flip the track of inlineOrYSpan, and
+    // keep blockOrXSpan intact.
+    return {
+        blockOrXSpan,
+        { inlineOrYSpan.axis(), flipPositionAreaTrack(inlineOrYSpan.track()), inlineOrYSpan.self() }
+    };
 }
 
-inline std::optional<PositionArea> BuilderConverter::convertPositionArea(BuilderState&, const CSSValue& value)
+// Flip a PositionArea as specified by flip-start tactic.
+// Intuitively, this mirrors the PositionArea across a diagonal line drawn from the
+// block-start/inline-start corner to the block-end/inline-end corner. This is done
+// by flipping the axes of the spans in the PositionArea, while keeping their track
+// and self properties intact. Because this turns a block/X span into an inline/Y
+// span and vice versa, this function also swaps the order of the spans, so
+// that the block/X span goes before the inline/Y span.
+inline PositionArea mirrorPositionAreaAcrossDiagonal(PositionArea area)
+{
+    auto blockOrXSpan = area.blockOrXAxis();
+    auto inlineOrYSpan = area.inlineOrYAxis();
+
+    return {
+        { oppositePositionAreaAxis(inlineOrYSpan.axis()), inlineOrYSpan.track(), inlineOrYSpan.self() },
+        { oppositePositionAreaAxis(blockOrXSpan.axis()), blockOrXSpan.track(), blockOrXSpan.self() }
+    };
+}
+
+inline std::optional<PositionArea> BuilderConverter::convertPositionArea(BuilderState& builderState, const CSSValue& value)
 {
     std::pair<CSSValueID, CSSValueID> dimPair;
 
@@ -2672,14 +2780,33 @@ inline std::optional<PositionArea> BuilderConverter::convertPositionArea(Builder
         dim1Axis = PositionAreaAxis::Block;
         dim2Axis = PositionAreaAxis::Inline;
     } else if (!dim1Axis)
-        dim1Axis = positionAreaOppositeAxis(*dim2Axis);
+        dim1Axis = oppositePositionAreaAxis(*dim2Axis);
     else if (!dim2Axis)
-        dim2Axis = positionAreaOppositeAxis(*dim1Axis);
+        dim2Axis = oppositePositionAreaAxis(*dim1Axis);
 
-    return PositionArea {
+    PositionArea area {
         { *dim1Axis, positionAreaKeywordToTrack(dimPair.first), positionAreaKeywordToSelf(dimPair.first) },
         { *dim2Axis, positionAreaKeywordToTrack(dimPair.second), positionAreaKeywordToSelf(dimPair.second) }
     };
+
+    // Flip according to position-try-fallbacks, if specified.
+    if (const auto& positionTryFallback = builderState.positionTryFallback()) {
+        for (auto tactic : positionTryFallback->tactics) {
+            switch (tactic) {
+            case PositionTryFallback::Tactic::FlipBlock:
+                area = flipPositionAreaByLogicalAxis(LogicalBoxAxis::Block, area, builderState.style().writingMode());
+                break;
+            case PositionTryFallback::Tactic::FlipInline:
+                area = flipPositionAreaByLogicalAxis(LogicalBoxAxis::Inline, area, builderState.style().writingMode());
+                break;
+            case PositionTryFallback::Tactic::FlipStart:
+                area = mirrorPositionAreaAcrossDiagonal(area);
+                break;
+            }
+        }
+    }
+
+    return area;
 }
 
 inline OptionSet<PositionVisibility> BuilderConverter::convertPositionVisibility(BuilderState& builderState, const CSSValue& value)
@@ -2785,8 +2912,15 @@ inline Vector<PositionTryFallback> BuilderConverter::convertPositionTryFallbacks
         for (auto& item : *valueList) {
             if (item.isCustomIdent())
                 fallback.positionTryRuleName = Style::ScopedName { AtomString { item.customIdent() }, builderState.styleScopeOrdinal() };
-            else
-                fallback.tactics.append(fromCSSValueID<PositionTryFallback::Tactic>(item.valueID()));
+            else {
+                auto tacticValue = fromCSSValueID<PositionTryFallback::Tactic>(item.valueID());
+                if (fallback.tactics.contains(tacticValue)) {
+                    ASSERT_NOT_REACHED();
+                    return { };
+                }
+
+                fallback.tactics.append(tacticValue);
+            }
         }
         return fallback;
     };

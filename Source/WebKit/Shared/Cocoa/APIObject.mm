@@ -28,7 +28,6 @@
 
 #import "WKBackForwardListInternal.h"
 #import "WKBackForwardListItemInternal.h"
-#import "WKBrowsingContextControllerInternal.h"
 #import "WKContentRuleListInternal.h"
 #import "WKContentRuleListStoreInternal.h"
 #import "WKContentWorldInternal.h"
@@ -152,7 +151,7 @@ API::Object& Object::fromWKObjectExtraSpace(id <WKObject> obj)
 
 void* Object::newObject(size_t size, Type type)
 {
-    id <WKObject> wrapper;
+    SUPPRESS_UNRETAINED_LOCAL id<WKObject> wrapper;
 
     // Wrappers that inherit from WKObject store the API::Object in their extra bytes, so they are
     // allocated using NSAllocatedObject. The other wrapper classes contain inline storage for the
@@ -550,7 +549,7 @@ RetainPtr<NSObject<NSSecureCoding>> Object::toNSObject()
         auto result = adoptNS([[NSMutableDictionary alloc] initWithCapacity:dictionary.size()]);
         for (auto& pair : dictionary.map()) {
             if (auto nsObject = pair.value ? Ref { *pair.value }->toNSObject() : RetainPtr<NSObject<NSSecureCoding>>())
-                [result setObject:nsObject.get() forKey:(NSString *)pair.key];
+                [result setObject:nsObject.get() forKey:pair.key.createNSString().get()];
         }
         return result;
     }

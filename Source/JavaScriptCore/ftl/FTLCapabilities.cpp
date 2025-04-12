@@ -309,6 +309,7 @@ inline CapabilityLevel canCompile(Node* node)
     case NumberIsInteger:
     case GlobalIsNaN:
     case NumberIsNaN:
+    case NumberIsFinite:
     case IsObject:
     case IsCallable:
     case IsConstructor:
@@ -452,6 +453,7 @@ inline CapabilityLevel canCompile(Node* node)
     case GetByValMegamorphic:
     case GetByValWithThis:
     case GetByValWithThisMegamorphic:
+    case MultiGetByVal:
     case PutByVal:
     case PutByValAlias:
     case PutByValMegamorphic:

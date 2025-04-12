@@ -3,7 +3,7 @@
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2001 Dirk Mueller (mueller@kde.org)
  *           (C) 2006 Alexey Proskuryakov (ap@webkit.org)
- * Copyright (C) 2004-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2008, 2009 Torch Mobile Inc. All rights reserved. (http://www.torchmobile.com/)
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies)
  * Copyright (C) 2011 Google Inc. All rights reserved.
@@ -1033,6 +1033,8 @@ public:
     WEBCORE_EXPORT void dispatchWindowEvent(Event&, EventTarget* = nullptr);
     void dispatchWindowLoadEvent();
 
+    void whenWindowLoadEventOrDestroyed(CompletionHandler<void()>&&);
+
     WEBCORE_EXPORT ExceptionOr<Ref<Event>> createEvent(const String& eventType);
 
     // keep track of what types of event listeners are registered, so we don't
@@ -1053,8 +1055,7 @@ public:
         ForceUp = 1 << 11,
         FocusIn = 1 << 12,
         FocusOut = 1 << 13,
-        CSSTransition = 1 << 14,
-        CSSAnimation = 1 << 15,
+        CSSAnimation = 1 << 14,
     };
 
     bool hasListenerType(ListenerType listenerType) const { return m_listenerTypes.contains(listenerType); }
@@ -1243,7 +1244,7 @@ public:
     RefPtr<Document> protectedMainFrameDocument() const { return mainFrameDocument(); }
     bool isTopDocument() const { return mainFrameDocument() == this; }
 
-    WEBCORE_EXPORT RefPtr<Document> localTopDocument() const;
+    RefPtr<Document> sameOriginTopLevelTraversable() const;
 
     ScriptRunner* scriptRunnerIfExists() { return m_scriptRunner.get(); }
     inline ScriptRunner& scriptRunner();
@@ -1990,6 +1991,13 @@ public:
 
     Ref<Calculation::RandomKeyMap> randomKeyMap() const;
 
+    // Cache of the first (in tree order) Element with 'attribute'.
+    Element* cachedFirstElementWithAttribute(const QualifiedName& attribute) const;
+    void setCachedFirstElementWithAttribute(const QualifiedName& attribute, Element&);
+    void attributeAddedToElement(const QualifiedName& attribute);
+    void elementDisconnectedFromDocument(const Element&);
+
+
 protected:
     enum class ConstructionFlag : uint8_t {
         Synthesized = 1 << 0,
@@ -2111,6 +2119,7 @@ private:
     void didAssociateFormControlsTimerFired();
 
     void wheelEventHandlersChanged(Node* = nullptr);
+    void wheelOrTouchEventHandlersChanged(Node* = nullptr);
 
     HttpEquivPolicy httpEquivPolicy() const;
     AXObjectCache* existingAXObjectCacheSlow() const;
@@ -2346,7 +2355,11 @@ private:
 
     RefPtr<ViewTransition> m_activeViewTransition;
 
+    std::optional<std::pair<QualifiedName, WeakPtr<Element, WeakPtrImplWithEventTargetData>>> m_cachedFirstElementWithAttribute;
+
     Timer m_loadEventDelayTimer;
+
+    CompletionHandler<void()> m_whenWindowLoadEventOrDestroyed;
 
     WeakHashMap<Node, std::unique_ptr<QuerySelectorAllResults>, WeakPtrImplWithEventTargetData> m_querySelectorAllResults;
 

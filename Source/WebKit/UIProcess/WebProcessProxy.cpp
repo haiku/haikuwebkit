@@ -63,6 +63,7 @@
 #include "WebBackForwardListItem.h"
 #include "WebCompiledContentRuleList.h"
 #include "WebFrameProxy.h"
+#include "WebFrameProxyMessages.h"
 #include "WebInspectorUtilities.h"
 #include "WebLockRegistryProxy.h"
 #include "WebNavigationDataStore.h"
@@ -207,9 +208,11 @@ RefPtr<WebProcessProxy> WebProcessProxy::processForIdentifier(ProcessIdentifier 
     return allProcessMap().get(identifier);
 }
 
-RefPtr<WebProcessProxy> WebProcessProxy::processForConnection(const IPC::Connection& connection)
+Ref<WebProcessProxy> WebProcessProxy::fromConnection(const IPC::Connection& connection)
 {
-    return dynamicDowncast<WebProcessProxy>(AuxiliaryProcessProxy::fromConnection(connection));
+    RefPtr process = dynamicDowncast<WebProcessProxy>(AuxiliaryProcessProxy::fromConnection(connection));
+    RELEASE_ASSERT(process);
+    return *process;
 }
 
 auto WebProcessProxy::globalPageMap() -> WebPageProxyMap&
@@ -1230,6 +1233,13 @@ bool WebProcessProxy::dispatchMessage(IPC::Connection& connection, IPC::Decoder&
         return true;
     if (protectedProcessPool()->dispatchMessage(connection, decoder))
         return true;
+    if (decoder.messageReceiverName() == Messages::WebFrameProxy::messageReceiverName()) {
+        if (RefPtr frame = FrameIdentifier::isValidIdentifier(decoder.destinationID()) ? WebFrameProxy::webFrame(FrameIdentifier(decoder.destinationID())) : nullptr)
+            frame->didReceiveMessage(connection, decoder);
+        else
+            WebFrameProxy::sendCancelReply(connection, decoder);
+        return true;
+    }
 
     // FIXME: Add unhandled message logging.
     // WebProcessProxy will receive messages to instances that were removed from
@@ -1951,15 +1961,20 @@ String WebProcessProxy::environmentIdentifier() const
 
 void WebProcessProxy::updateAudibleMediaAssertions()
 {
-#if ENABLE(EXTENSION_CAPABILITIES)
-    if (PlatformMediaSessionManager::mediaCapabilityGrantsEnabled())
-        return;
-#endif
-
     bool hasAudibleMainPage = WTF::anyOf(pages(), [] (auto& page) {
+#if ENABLE(EXTENSION_CAPABILITIES)
+        if (page->preferences().mediaCapabilityGrantsEnabled())
+            return false;
+#endif
         return page->isPlayingAudio();
     });
     bool hasAudibleRemotePage = WTF::anyOf(remotePages(), [](auto& remotePage) {
+#if ENABLE(EXTENSION_CAPABILITIES)
+        if (RefPtr page = remotePage ? remotePage->protectedPage() : nullptr) {
+            if (page->preferences().mediaCapabilityGrantsEnabled())
+                return false;
+        }
+#endif
         return remotePage ? remotePage->mediaState().contains(MediaProducerMediaState::IsPlayingAudio) : false;
     });
     bool hasAudibleWebPage = hasAudibleMainPage || hasAudibleRemotePage;
@@ -2875,14 +2890,6 @@ void WebProcessProxy::setAppBadge(std::optional<WebPageProxyIdentifier> pageIden
         page->uiClient().updateAppBadge(*page, origin, badge);
 }
 
-void WebProcessProxy::setClientBadge(WebPageProxyIdentifier pageIdentifier, const SecurityOriginData& origin, std::optional<uint64_t> badge)
-{
-    // This page might have gone away since the WebContent process sent this message,
-    // and that's just fine.
-    if (RefPtr page = m_pageMap.get(pageIdentifier))
-        page->uiClient().updateClientBadge(*page, origin, badge);
-}
-
 const WeakHashSet<WebProcessProxy>* WebProcessProxy::serviceWorkerClientProcesses() const
 {
     if (m_serviceWorkerInformation)
@@ -3105,12 +3112,12 @@ const WebCore::ProcessIdentity& WebProcessProxy::processIdentity()
 #endif
 
 #if ENABLE(CONTENT_EXTENSIONS)
-void WebProcessProxy::requestResourceMonitorRuleLists()
+void WebProcessProxy::requestResourceMonitorRuleLists(bool forTesting)
 {
     if (RefPtr processPool = m_processPool.get()) {
         m_resourceMonitorRuleListRequestedBySomePage = true;
 
-        if (RefPtr ruleList = processPool->cachedResourceMonitorRuleList())
+        if (RefPtr ruleList = processPool->cachedResourceMonitorRuleList(forTesting))
             setResourceMonitorRuleListsIfRequired(WTFMove(ruleList));
     }
 }

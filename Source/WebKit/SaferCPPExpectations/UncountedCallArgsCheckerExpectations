@@ -6,12 +6,7 @@ Platform/IPC/ArgumentCoders.h
 Platform/IPC/Connection.cpp
 Platform/IPC/Connection.h
 Platform/IPC/StreamClientConnection.cpp
-Shared/Cocoa/WKObject.mm
-Shared/JavaScriptEvaluationResult.mm
-Shared/RemoteLayerTree/RemoteLayerBackingStore.mm
-UIProcess/API/APIDataTask.cpp
 UIProcess/API/C/WKAuthenticationChallenge.cpp
-UIProcess/API/C/WKAuthenticationDecisionListener.cpp
 UIProcess/API/C/WKBackForwardListRef.cpp
 UIProcess/API/C/WKContext.cpp
 UIProcess/API/C/WKContextConfigurationRef.cpp
@@ -48,8 +43,6 @@ UIProcess/API/C/WKWebsiteDataStoreConfigurationRef.cpp
 UIProcess/API/C/WKWebsiteDataStoreRef.cpp
 UIProcess/API/C/WKWebsitePolicies.cpp
 UIProcess/API/C/mac/WKPagePrivateMac.mm
-UIProcess/API/Cocoa/WKContentRuleList.mm
-UIProcess/API/Cocoa/WKContentRuleListStore.mm
 UIProcess/API/Cocoa/WKContentWorld.mm
 UIProcess/API/Cocoa/WKDownload.mm
 UIProcess/API/Cocoa/WKFrameInfo.mm
@@ -57,7 +50,6 @@ UIProcess/API/Cocoa/WKHTTPCookieStore.mm
 UIProcess/API/Cocoa/WKNavigationAction.mm
 UIProcess/API/Cocoa/WKOpenPanelParameters.mm
 UIProcess/API/Cocoa/WKPreferences.mm
-UIProcess/API/Cocoa/WKProcessGroup.mm
 UIProcess/API/Cocoa/WKProcessPool.mm
 UIProcess/API/Cocoa/WKURLSchemeTask.mm
 UIProcess/API/Cocoa/WKUserContentController.mm
@@ -94,10 +86,6 @@ UIProcess/API/Cocoa/_WKUserStyleSheet.mm
 UIProcess/API/Cocoa/_WKWebAuthenticationAssertionResponse.mm
 UIProcess/API/Cocoa/_WKWebAuthenticationPanel.mm
 UIProcess/API/Cocoa/_WKWebsiteDataStoreConfiguration.mm
-UIProcess/Downloads/DownloadProxy.cpp
-UIProcess/RemotePageDrawingAreaProxy.cpp
-UIProcess/WebsiteData/WebsiteDataStore.cpp
-UIProcess/mac/WebContextMenuProxyMac.mm
 WebDriverBidiBackendDispatchers.cpp
 WebDriverBidiFrontendDispatchers.cpp
 WebProcess/ApplePay/WebPaymentCoordinator.cpp
@@ -224,7 +212,6 @@ WebProcess/WebPage/ViewGestureGeometryCollector.cpp
 WebProcess/WebPage/VisitedLinkTableController.cpp
 WebProcess/WebPage/WebContextMenu.cpp
 WebProcess/WebPage/WebDisplayRefreshMonitor.cpp
-WebProcess/WebPage/WebFrame.cpp
 WebProcess/WebPage/WebOpenPanelResultListener.cpp
 WebProcess/WebPage/WebPageOverlay.cpp
 WebProcess/WebPage/mac/PageBannerMac.mm

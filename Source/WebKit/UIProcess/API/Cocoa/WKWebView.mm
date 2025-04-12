@@ -55,7 +55,6 @@
 #import "PlatformWritingToolsUtilities.h"
 #import "ProcessTerminationReason.h"
 #import "ProvisionalPageProxy.h"
-#import "QuickLookThumbnailLoader.h"
 #import "RemoteLayerTreeScrollingPerformanceData.h"
 #import "RemoteObjectRegistry.h"
 #import "RemoteObjectRegistryMessages.h"
@@ -300,8 +299,8 @@ RetainPtr<NSError> nsErrorFromExceptionDetails(const std::optional<WebCore::Exce
     [userInfo setObject:@(details->columnNumber) forKey:_WKJavaScriptExceptionColumnNumberErrorKey];
 
     if (!details->sourceURL.isEmpty()) {
-        if (NSURL *url = URL(details->sourceURL))
-            [userInfo setObject:url forKey:_WKJavaScriptExceptionSourceURLErrorKey];
+        if (RetainPtr url = URL(details->sourceURL).createNSURL())
+            [userInfo setObject:url.get() forKey:_WKJavaScriptExceptionSourceURLErrorKey];
     }
 
     return adoptNS([[NSError alloc] initWithDomain:WKErrorDomain code:errorCode userInfo:userInfo.get()]);
@@ -1075,7 +1074,7 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
 
 - (NSURL *)_resourceDirectoryURL
 {
-    return _page->currentResourceDirectoryURL();
+    return _page->currentResourceDirectoryURL().createNSURL().autorelease();
 }
 
 - (BOOL)isLoading
@@ -2154,7 +2153,7 @@ static NSDictionary *dictionaryRepresentationForEditorState(const WebKit::Editor
         @"italic": postLayoutData.typingAttributes.contains(WebKit::TypingAttribute::Italics) ? @YES : @NO,
         @"underline": postLayoutData.typingAttributes.contains(WebKit::TypingAttribute::Underline) ? @YES : @NO,
         @"text-alignment": @(nsTextAlignment(static_cast<WebKit::TextAlignment>(postLayoutData.textAlignment))),
-        @"text-color": (NSString *)serializationForCSS(postLayoutData.textColor)
+        @"text-color": serializationForCSS(postLayoutData.textColor).createNSString().get()
     };
 }
 
@@ -2905,68 +2904,45 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 
 - (_WKRectEdge)_fixedContainerEdges
 {
+    // FIXME: Remove once it's no longer required to maintain binary compatibility with internal clients.
     _WKRectEdge edges = _WKRectEdgeNone;
-    if (_fixedContainerEdges.fixedEdges.bottom())
+    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Bottom))
         edges |= _WKRectEdgeBottom;
-    if (_fixedContainerEdges.fixedEdges.left())
+    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Left))
         edges |= _WKRectEdgeLeft;
-    if (_fixedContainerEdges.fixedEdges.right())
+    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Right))
         edges |= _WKRectEdgeRight;
-    if (_fixedContainerEdges.fixedEdges.top())
+    if (_fixedContainerEdges.hasFixedEdge(WebCore::BoxSide::Top))
         edges |= _WKRectEdgeTop;
     return edges;
 }
 
-- (WebCore::CocoaColor *)_sampledBottomFixedPositionContentColor:(const WebCore::FixedContainerEdges&)edges
+static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::FixedContainerEdges& edges, WebCore::BoxSide side)
 {
-    if (!edges.fixedEdges.bottom())
+    if (!edges.hasFixedEdge(side))
         return nil;
 
-    return cocoaColorOrNil(edges.predominantColors.bottom()).autorelease();
-}
-
-- (WebCore::CocoaColor *)_sampledLeftFixedPositionContentColor:(const WebCore::FixedContainerEdges&)edges
-{
-    if (!edges.fixedEdges.left())
-        return nil;
-
-    return cocoaColorOrNil(edges.predominantColors.left()).autorelease();
-}
-
-- (WebCore::CocoaColor *)_sampledTopFixedPositionContentColor:(const WebCore::FixedContainerEdges&)edges
-{
-    if (!edges.fixedEdges.top())
-        return nil;
-
-    return cocoaColorOrNil(edges.predominantColors.top()).autorelease();
-}
-
-- (WebCore::CocoaColor *)_sampledRightFixedPositionContentColor:(const WebCore::FixedContainerEdges&)edges
-{
-    if (!edges.fixedEdges.right())
-        return nil;
-
-    return cocoaColorOrNil(edges.predominantColors.right()).autorelease();
+    return cocoaColorOrNil(edges.predominantColor(side)).autorelease();
 }
 
 - (WebCore::CocoaColor *)_sampledBottomFixedPositionContentColor
 {
-    return [self _sampledBottomFixedPositionContentColor:_fixedContainerEdges];
+    return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Bottom);
 }
 
 - (WebCore::CocoaColor *)_sampledLeftFixedPositionContentColor
 {
-    return [self _sampledLeftFixedPositionContentColor:_fixedContainerEdges];
+    return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Left);
 }
 
 - (WebCore::CocoaColor *)_sampledTopFixedPositionContentColor
 {
-    return [self _sampledTopFixedPositionContentColor:_fixedContainerEdges];
+    return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Top);
 }
 
 - (WebCore::CocoaColor *)_sampledRightFixedPositionContentColor
 {
-    return [self _sampledRightFixedPositionContentColor:_fixedContainerEdges];
+    return sampledFixedPositionContentColor(_fixedContainerEdges, WebCore::BoxSide::Right);
 }
 
 - (void)_updateScrollGeometryWithContentOffset:(CGPoint)contentOffset contentSize:(CGSize)contentSize
@@ -2998,40 +2974,12 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
     if (_fixedContainerEdges == edges)
         return;
 
-    Vector<SEL, 5> changedSelectors;
+    RetainPtr oldTopColor = [self _sampledTopFixedPositionContentColor];
+    RetainPtr newTopColor = sampledFixedPositionContentColor(edges, WebCore::BoxSide::Top);
+    bool isTopColorChanging = oldTopColor != newTopColor || ![oldTopColor isEqual:newTopColor.get()];
 
-    using FixedEdgeColors = WebCore::RectEdges<RetainPtr<WebCore::CocoaColor>>;
-    FixedEdgeColors oldColors {
-        [self _sampledTopFixedPositionContentColor],
-        [self _sampledRightFixedPositionContentColor],
-        [self _sampledBottomFixedPositionContentColor],
-        [self _sampledLeftFixedPositionContentColor]
-    };
-
-    FixedEdgeColors newColors {
-        [self _sampledTopFixedPositionContentColor:edges],
-        [self _sampledRightFixedPositionContentColor:edges],
-        [self _sampledBottomFixedPositionContentColor:edges],
-        [self _sampledLeftFixedPositionContentColor:edges]
-    };
-
-    if (oldColors.bottom() != newColors.bottom() || ![oldColors.bottom() isEqual:newColors.bottom().get()])
-        changedSelectors.append(@selector(_sampledBottomFixedPositionContentColor));
-
-    if (oldColors.left() != newColors.left() || ![oldColors.left() isEqual:newColors.left().get()])
-        changedSelectors.append(@selector(_sampledLeftFixedPositionContentColor));
-
-    if (oldColors.right() != newColors.right() || ![oldColors.right() isEqual:newColors.right().get()])
-        changedSelectors.append(@selector(_sampledRightFixedPositionContentColor));
-
-    if (oldColors.top() != newColors.top() || ![oldColors.top() isEqual:newColors.top().get()])
-        changedSelectors.append(@selector(_sampledTopFixedPositionContentColor));
-
-    if (_fixedContainerEdges.fixedEdges != edges.fixedEdges)
-        changedSelectors.append(@selector(_fixedContainerEdges));
-
-    for (auto selector : changedSelectors)
-        [self willChangeValueForKey:NSStringFromSelector(selector)];
+    if (isTopColorChanging)
+        [self willChangeValueForKey:NSStringFromSelector(@selector(_sampledTopFixedPositionContentColor))];
 
     _fixedContainerEdges = edges;
 
@@ -3039,8 +2987,8 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
     [self _updateFixedColorExtensionViews];
 #endif
 
-    for (auto selector : changedSelectors)
-        [self didChangeValueForKey:NSStringFromSelector(selector)];
+    if (isTopColorChanging)
+        [self didChangeValueForKey:NSStringFromSelector(@selector(_sampledTopFixedPositionContentColor))];
 }
 
 #if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
@@ -3121,7 +3069,7 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
     RetainPtr parentView = [self _containerForFixedColorExtension];
     auto insets = [self _obscuredInsetsForFixedColorExtension];
     auto updateExtensionView = [&](WebCore::BoxSide side) {
-        BOOL needsView = insets.at(side) > 0 && _fixedContainerEdges.fixedEdges.at(side);
+        BOOL needsView = insets.at(side) > 0 && _fixedContainerEdges.hasFixedEdge(side);
         RetainPtr extensionView = _fixedColorExtensionViews.at(side);
         if (!needsView) {
             [extensionView setHidden:YES];
@@ -3133,7 +3081,7 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 #if PLATFORM(MAC)
             [extensionView setWantsLayer:YES];
 #endif
-            [extensionView layer].name = [NSString stringWithFormat:@"Fixed color extension fill (%s)", [side] {
+            [extensionView layer].name = adoptNS([[NSString alloc] initWithFormat:@"Fixed color extension fill (%s)", [side] {
                 switch (side) {
                 case WebCore::BoxSide::Top:
                     return "Top";
@@ -3147,12 +3095,12 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
                     ASSERT_NOT_REACHED();
                     return "";
                 }
-            }()];
+            }()]).get();
             [parentView addSubview:extensionView.get()];
             _fixedColorExtensionViews.setAt(side, extensionView);
         }
 
-        RetainPtr predominantColor = cocoaColorOrNil(_fixedContainerEdges.predominantColors.at(side));
+        RetainPtr predominantColor = cocoaColorOrNil(_fixedContainerEdges.predominantColor(side));
         [extensionView setBackgroundColor:predominantColor.get() ?: [self underPageBackgroundColor]];
         [extensionView setHidden:NO];
     };
@@ -3384,9 +3332,14 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKCONTENTVIEW)
 {
     auto frameID = handle->_frameHandle->frameID();
     if (!frameID)
-        completionHandler(nil);
-    _page->getFrameInfo(*frameID, [completionHandler = makeBlockPtr(completionHandler)] (auto* frameInfo) {
-        completionHandler(wrapper(frameInfo));
+        return completionHandler(nil);
+    RefPtr frame = WebKit::WebFrameProxy::webFrame(*frameID);
+    if (!frame)
+        return completionHandler(nil);
+    frame->getFrameInfo([completionHandler = makeBlockPtr(completionHandler), page = RefPtr { _page.get() }] (auto&& data) mutable {
+        if (!data)
+            return completionHandler(nil);
+        completionHandler(wrapper(API::FrameInfo::create(WTFMove(*data), WTFMove(page))).get());
     });
 }
 
@@ -3439,11 +3392,11 @@ static RetainPtr<NSDictionary<NSString *, id>> createUserInfo(const std::optiona
 
     auto result = adoptNS([[NSMutableDictionary alloc] initWithCapacity:3]);
     if (!info->documentURL.isNull())
-        [result setObject:(NSURL *)info->documentURL forKey:_WKTextManipulationTokenUserInfoDocumentURLKey];
+        [result setObject:info->documentURL.createNSURL().get() forKey:_WKTextManipulationTokenUserInfoDocumentURLKey];
     if (!info->tagName.isNull())
-        [result setObject:(NSString *)info->tagName forKey:_WKTextManipulationTokenUserInfoTagNameKey];
+        [result setObject:info->tagName.createNSString().get() forKey:_WKTextManipulationTokenUserInfoTagNameKey];
     if (!info->roleAttribute.isNull())
-        [result setObject:(NSString *)info->roleAttribute forKey:_WKTextManipulationTokenUserInfoRoleAttributeKey];
+        [result setObject:info->roleAttribute.createNSString().get() forKey:_WKTextManipulationTokenUserInfoRoleAttributeKey];
     [result setObject:@(info->isVisible) forKey:_WKTextManipulationTokenUserInfoVisibilityKey];
 
     return result;
@@ -3497,7 +3450,7 @@ static RetainPtr<NSDictionary<NSString *, id>> createUserInfo(const std::optiona
                 [wkToken setUserInfo:createUserInfo(token.info).get()];
                 return wkToken;
             });
-            auto identifier = makeString(item.frameID ? item.frameID->processIdentifier().toUInt64() : 0, '-', item.frameID ? item.frameID->object().toUInt64() : 0, '-', item.identifier ? item.identifier->toUInt64() : 0);
+            auto identifier = makeString(item.frameID ? item.frameID->toUInt64() : 0, '-', item.identifier ? item.identifier->toUInt64() : 0);
             return adoptNS([[_WKTextManipulationItem alloc] initWithIdentifier:identifier tokens:tokens.get() isSubframe:item.isSubframe isCrossSiteSubframe:item.isCrossSiteSubframe]);
         };
 
@@ -3521,18 +3474,14 @@ static std::optional<ItemIdentifiers> coreTextManipulationItemIdentifierFromStri
 {
     String identifierString { identifier };
     unsigned index = 0;
-    std::optional<uint64_t> processID;
     std::optional<uint64_t> frameID;
     std::optional<uint64_t> itemID;
     for (auto token : StringView(identifierString).split('-')) {
         switch (index) {
         case 0:
-            processID = parseInteger<uint64_t>(token);
-            break;
-        case 1:
             frameID = parseInteger<uint64_t>(token);
             break;
-        case 2:
+        case 1:
             itemID = parseInteger<uint64_t>(token);
             break;
         default:
@@ -3540,17 +3489,16 @@ static std::optional<ItemIdentifiers> coreTextManipulationItemIdentifierFromStri
         }
         ++index;
     }
-    if (!processID || !*processID || !frameID || !*frameID || !itemID || !*itemID)
+    if (!frameID || !*frameID || !itemID || !*itemID)
         return std::nullopt;
 
-    if (!ObjectIdentifier<WebCore::ProcessIdentifierType>::isValidIdentifier(*processID))
+    if (!WebCore::FrameIdentifier::isValidIdentifier(*frameID))
         return std::nullopt;
 
     if (!ObjectIdentifier<WebCore::TextManipulationItemIdentifierType>::isValidIdentifier(*itemID))
         return std::nullopt;
 
-    return ItemIdentifiers { WebCore::ProcessQualified(ObjectIdentifier<WebCore::FrameIdentifierType>(*frameID),
-        ObjectIdentifier<WebCore::ProcessIdentifierType>(*processID)),
+    return ItemIdentifiers { WebCore::FrameIdentifier(*frameID),
         ObjectIdentifier<WebCore::TextManipulationItemIdentifierType>(*itemID) };
 }
 
@@ -4063,7 +4011,7 @@ static void convertAndAddHighlight(Vector<Ref<WebCore::SharedMemory>>& buffers, 
 - (NSURL *)_mainFrameURL
 {
     if (RefPtr frame = _page->mainFrame())
-        return frame->url();
+        return frame->url().createNSURL().autorelease();
     return nil;
 }
 
@@ -4517,9 +4465,6 @@ static void convertAndAddHighlight(Vector<Ref<WebCore::SharedMemory>>& buffers, 
         if (capturedHandler)
             capturedHandler(true);
     });
-#if HAVE(QUICKLOOK_THUMBNAILING)
-    _page->requestThumbnail(attachment, identifier);
-#endif
     return wrapper(attachment);
 #else
     return nil;
@@ -4609,7 +4554,7 @@ static void convertAndAddHighlight(Vector<Ref<WebCore::SharedMemory>>& buffers, 
                 return completionHandler(NO, nil);
             }
         }, [&] (URL url) {
-            completionHandler(NO, url);
+            completionHandler(NO, url.createNSURL().get());
         });
     };
 #if PLATFORM(MAC)

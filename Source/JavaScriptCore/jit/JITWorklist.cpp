@@ -88,26 +88,28 @@ CompilationResult JITWorklist::enqueue(Ref<JITPlan> plan)
         // Must be constructed before we allocate anything using SequesteredArenaMalloc
         ArenaLifetime saLifetime;
 #endif
+        plan->beginSignpost();
         plan->compileInThread(nullptr);
+        if (plan->stage() != JITPlanStage::Canceled)
+            plan->endSignpost();
         return plan->finalize();
     }
+    ASSERT(plan->stage() == JITPlanStage::Preparing);
+    plan->beginSignpost();
 
     Locker locker { *m_lock };
     if (Options::verboseCompilationQueue()) {
         dump(locker, WTF::dataFile());
         dataLog(": Enqueueing plan to optimize ", plan->key(), "\n");
     }
+    unsigned tier = static_cast<unsigned>(plan->tier());
     ASSERT(m_plans.find(plan->key()) == m_plans.end());
     m_plans.add(plan->key(), plan.copyRef());
-    m_queues[static_cast<unsigned>(plan->tier())].append(WTFMove(plan));
+    m_queues[tier].append(WTFMove(plan));
 
-    // Notify when some of thread is waiting.
-    for (auto& thread : m_threads) {
-        if (thread->state() == JITWorklistThread::State::NotCompiling) {
-            m_planEnqueued->notifyOne(locker);
-            break;
-        }
-    }
+    if (m_numberOfActiveThreads < Options::numberOfWorklistThreads()
+        && m_ongoingCompilationsPerTier[tier] < m_maximumNumberOfConcurrentCompilationsPerTier[tier])
+        m_planEnqueued->notifyOne(locker);
 
     return CompilationDeferred;
 }
@@ -170,6 +172,7 @@ auto JITWorklist::completeAllReadyPlansForVM(VM& vm, JITCompilationKey requested
         dataLogLnIf(Options::verboseCompilationQueue(), *this, ": Completing ", plan->key());
         RELEASE_ASSERT(plan->stage() == JITPlanStage::Ready);
         plan->finalize();
+        plan->endSignpost();
     }
     return resultingState;
 }
@@ -241,6 +244,10 @@ void JITWorklist::cancelAllPlansForVM(VM& vm)
 
     Vector<RefPtr<JITPlan>, 8> myReadyPlans;
     removeAllReadyPlansForVM(vm, myReadyPlans, { });
+    for (auto& plan : myReadyPlans) {
+        ASSERT(plan->stage() == JITPlanStage::Ready);
+        plan->endSignpost(JITPlan::SignpostDetail::Canceled);
+    }
 }
 
 void JITWorklist::removeDeadPlans(VM& vm)

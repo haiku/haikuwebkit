@@ -38,6 +38,7 @@
 #include "CSSKeyframesRule.h"
 #include "CSSParser.h"
 #include "CSSParserEnum.h"
+#include "CSSParserFastPaths.h"
 #include "CSSParserIdioms.h"
 #include "CSSParserObserver.h"
 #include "CSSParserObserverWrapper.h"
@@ -103,8 +104,18 @@ CSSParserImpl::CSSParserImpl(const CSSParserContext& context, const String& stri
 
 CSSParser::ParseResult CSSParserImpl::parseValue(MutableStyleProperties& declaration, CSSPropertyID propertyID, const String& string, IsImportant important, const CSSParserContext& context)
 {
-    CSSParserImpl parser(context, string);
     auto ruleType = context.enclosingRuleType.value_or(StyleRuleType::Style);
+
+    auto state = CSS::PropertyParserState {
+        .context = context,
+        .currentRule = ruleType,
+        .currentProperty = propertyID,
+        .important = important,
+    };
+    if (RefPtr value = CSSParserFastPaths::maybeParseValue(propertyID, string, state))
+        return declaration.addParsedProperty(CSSProperty(propertyID, value.releaseNonNull(), important)) ? CSSParser::ParseResult::Changed : CSSParser::ParseResult::Unchanged;
+
+    CSSParserImpl parser(context, string);
     parser.consumeDeclarationValue(parser.tokenizer()->tokenRange(), propertyID, important, ruleType);
     if (parser.topContext().m_parsedProperties.isEmpty())
         return CSSParser::ParseResult::Error;
@@ -274,13 +285,6 @@ CSSSelectorList CSSParserImpl::parsePageSelector(CSSParserTokenRange range, Styl
 
     selector->setForPage();
     return CSSSelectorList { MutableCSSSelectorList::from(WTFMove(selector)) };
-}
-
-Vector<std::pair<CSSValueID, double>> CSSParserImpl::parseKeyframeKeyList(const String& keyList, const CSSParserContext& context)
-{
-    auto tokenizer = CSSTokenizer(keyList);
-    auto tokenRange = tokenizer.tokenRange();
-    return CSSPropertyParserHelpers::consumeKeyframeKeyList(tokenRange, context);
 }
 
 bool CSSParserImpl::supportsDeclaration(CSSParserTokenRange& range)
@@ -804,9 +808,10 @@ RefPtr<StyleRuleFontFeatureValuesBlock> CSSParserImpl::consumeFontFeatureValuesR
             return { };
         range.consumeWhitespace();
 
+        auto state = CSS::PropertyParserState { .context = m_context };
         Vector<unsigned> values;
         while (!range.atEnd()) {
-            auto value = CSSPropertyParserHelpers::CSSPrimitiveValueResolver<CSS::Integer<CSS::Nonnegative>>::consumeAndResolve(range, m_context, { .parserMode = m_context.mode });
+            auto value = CSSPropertyParserHelpers::CSSPrimitiveValueResolver<CSS::Integer<CSS::Nonnegative>>::consumeAndResolve(range, state);
             if (!value)
                 return { };
             ASSERT(value->isInteger());
@@ -849,6 +854,7 @@ RefPtr<StyleRuleFontFeatureValuesBlock> CSSParserImpl::consumeFontFeatureValuesR
     }
     return StyleRuleFontFeatureValuesBlock::create(type, tags);
 }
+
 RefPtr<StyleRuleFontFeatureValues> CSSParserImpl::consumeFontFeatureValuesRule(CSSParserTokenRange prelude, CSSParserTokenRange block)
 {
     // @font-feature-values <family-name># { <declaration-list> }
@@ -1312,7 +1318,8 @@ RefPtr<StyleRuleProperty> CSSParserImpl::consumePropertyRule(CSSParserTokenRange
 
 RefPtr<StyleRuleKeyframe> CSSParserImpl::consumeKeyframeStyleRule(CSSParserTokenRange prelude, CSSParserTokenRange block)
 {
-    auto keyList = CSSPropertyParserHelpers::consumeKeyframeKeyList(prelude, m_context);
+    auto state = CSS::PropertyParserState { .context = m_context };
+    auto keyList = CSSPropertyParserHelpers::consumeKeyframeKeyList(prelude, state);
     if (keyList.isEmpty())
         return nullptr;
 
@@ -1616,7 +1623,7 @@ void CSSParserImpl::consumeCustomPropertyValue(CSSParserTokenRange range, const 
 
 void CSSParserImpl::consumeDeclarationValue(CSSParserTokenRange range, CSSPropertyID propertyID, IsImportant important, StyleRuleType ruleType)
 {
-    CSSPropertyParser::parseValue(propertyID, important == IsImportant::Yes, range, m_context, topContext().m_parsedProperties, ruleType);
+    CSSPropertyParser::parseValue(propertyID, important, range, m_context, topContext().m_parsedProperties, ruleType);
 }
 
 } // namespace WebCore

@@ -73,6 +73,7 @@
 #include "HTMLMediaElement.h"
 #include "HTMLNames.h"
 #include "HTMLScriptElement.h"
+#include "HTMLSlotElement.h"
 #include "HTMLStyleElement.h"
 #include "HTMLTemplateElement.h"
 #include "HTMLVideoElement.h"
@@ -646,6 +647,51 @@ Inspector::Protocol::ErrorStringOr<void> InspectorDOMAgent::requestChildNodes(In
     pushChildNodesToFrontend(nodeId, sanitizedDepth);
 
     return { };
+}
+
+Inspector::CommandResult<std::optional<Inspector::Protocol::DOM::NodeId>> InspectorDOMAgent::requestAssignedSlot(Inspector::Protocol::DOM::NodeId nodeId)
+{
+    Inspector::Protocol::ErrorString errorString;
+
+    RefPtr node = assertNode(errorString, nodeId);
+    if (!node)
+        return makeUnexpected(errorString);
+
+    RefPtr slotElement = node->assignedSlot();
+    if (!slotElement)
+        return { };
+
+    auto slotElementId = pushNodePathToFrontend(errorString, slotElement.get());
+    if (!slotElementId)
+        return makeUnexpected(errorString);
+
+    return { slotElementId };
+}
+
+Inspector::CommandResult<Ref<JSON::ArrayOf<Inspector::Protocol::DOM::NodeId>>> InspectorDOMAgent::requestAssignedNodes(Inspector::Protocol::DOM::NodeId nodeId)
+{
+    Inspector::Protocol::ErrorString errorString;
+
+    RefPtr node = assertNode(errorString, nodeId);
+    if (!node)
+        return makeUnexpected(errorString);
+
+    RefPtr slotElement = dynamicDowncast<HTMLSlotElement>(node);
+    if (!slotElement)
+        return makeUnexpected("Node for given nodeId is not a slot element"_s);
+
+    auto assignedNodeIds = JSON::ArrayOf<Inspector::Protocol::DOM::NodeId>::create();
+    if (const auto* weakAssignedNodes = slotElement->assignedNodes()) {
+        for (const auto& weakAssignedNode : *weakAssignedNodes) {
+            if (RefPtr assignedNode = weakAssignedNode.get()) {
+                auto assignedNodeId = pushNodePathToFrontend(errorString, assignedNode.get());
+                if (!assignedNodeId)
+                    return makeUnexpected(errorString);
+                assignedNodeIds->addItem(assignedNodeId);
+            }
+        }
+    }
+    return assignedNodeIds;
 }
 
 Inspector::Protocol::ErrorStringOr<std::optional<Inspector::Protocol::DOM::NodeId>> InspectorDOMAgent::querySelector(Inspector::Protocol::DOM::NodeId nodeId, const String& selector)
@@ -1476,8 +1522,7 @@ Inspector::Protocol::ErrorStringOr<void> InspectorDOMAgent::highlightSelector(co
     if (!document)
         return makeUnexpected("Missing document of frame for given frameId"_s);
 
-    CSSParser parser(*document);
-    auto selectorList = parser.parseSelectorList(selectorString);
+    auto selectorList = CSSParser::parseSelectorList(selectorString, CSSParserContext(*document));
     if (!selectorList)
         return { };
 

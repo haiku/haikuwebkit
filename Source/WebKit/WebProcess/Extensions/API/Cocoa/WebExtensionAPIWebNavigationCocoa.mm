@@ -59,7 +59,7 @@ static NSDictionary *toWebAPI(WebExtensionFrameParameters frameInfo)
 
     result[errorOccurredKey] = @(frameInfo.errorOccurred);
     result[parentFrameIdKey] = @(toWebAPI(frameInfo.parentFrameIdentifier));
-    result[urlKey] = frameInfo.url && !frameInfo.url.value().isNull() ? (NSString *)frameInfo.url.value().string() : emptyURLValue;
+    result[urlKey] = frameInfo.url && !frameInfo.url.value().isNull() ? frameInfo.url.value().string().createNSString().get() : emptyURLValue;
 
     if (frameInfo.frameIdentifier)
         result[frameIdKey] = @(toWebAPI(frameInfo.frameIdentifier.value()));
@@ -215,27 +215,27 @@ void WebExtensionContextProxy::dispatchWebNavigationEvent(WebExtensionEventListe
         switch (type) {
         case WebExtensionEventListenerType::WebNavigationOnBeforeNavigate:
             // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/webNavigation/onBeforeNavigate
-            webNavigationObject.onBeforeNavigate().invokeListenersWithArgument(navigationDetails, frameURL);
+            webNavigationObject.onBeforeNavigate().invokeListenersWithArgument(navigationDetails, frameURL.createNSURL().get());
             break;
 
         case WebExtensionEventListenerType::WebNavigationOnCommitted:
             // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/webNavigation/onCommitted
-            webNavigationObject.onCommitted().invokeListenersWithArgument(navigationDetails, frameURL);
+            webNavigationObject.onCommitted().invokeListenersWithArgument(navigationDetails, frameURL.createNSURL().get());
             break;
 
         case WebExtensionEventListenerType::WebNavigationOnDOMContentLoaded:
             // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/webNavigation/onDOMContentLoaded
-            webNavigationObject.onDOMContentLoaded().invokeListenersWithArgument(navigationDetails, frameURL);
+            webNavigationObject.onDOMContentLoaded().invokeListenersWithArgument(navigationDetails, frameURL.createNSURL().get());
             break;
 
         case WebExtensionEventListenerType::WebNavigationOnCompleted:
             // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/webNavigation/onCompleted
-            webNavigationObject.onCompleted().invokeListenersWithArgument(navigationDetails, frameURL);
+            webNavigationObject.onCompleted().invokeListenersWithArgument(navigationDetails, frameURL.createNSURL().get());
             break;
 
         case WebExtensionEventListenerType::WebNavigationOnErrorOccurred:
             // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/webNavigation/onErrorOccurred
-            webNavigationObject.onErrorOccurred().invokeListenersWithArgument(navigationDetails, frameURL);
+            webNavigationObject.onErrorOccurred().invokeListenersWithArgument(navigationDetails, frameURL.createNSURL().get());
             break;
 
         default:

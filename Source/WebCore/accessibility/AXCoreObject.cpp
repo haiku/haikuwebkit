@@ -39,7 +39,7 @@ namespace WebCore {
 bool AXCoreObject::isLink() const
 {
     auto role = roleValue();
-    return role == AccessibilityRole::Link || role == AccessibilityRole::WebCoreLink || role == AccessibilityRole::ImageMapLink;
+    return role == AccessibilityRole::Link || role == AccessibilityRole::WebCoreLink;
 }
 
 bool AXCoreObject::isList() const
@@ -108,7 +108,6 @@ bool AXCoreObject::isImplicitlyInteractive() const
     case AccessibilityRole::ComboBox:
     case AccessibilityRole::DateTime:
     case AccessibilityRole::Details:
-    case AccessibilityRole::ImageMapLink:
     case AccessibilityRole::LandmarkSearch:
     case AccessibilityRole::Link:
     case AccessibilityRole::ListBox:
@@ -459,8 +458,10 @@ AXCoreObject::AXValue AXCoreObject::value()
     if (supportsRangeValue())
         return valueForRange();
 
-    if (roleValue() == AccessibilityRole::SliderThumb)
-        return parentObject()->valueForRange();
+    if (roleValue() == AccessibilityRole::SliderThumb) {
+        RefPtr parent = parentObject();
+        return parent ? parent->valueForRange() : 0.0f;
+    }
 
     if (isHeading())
         return headingLevel();

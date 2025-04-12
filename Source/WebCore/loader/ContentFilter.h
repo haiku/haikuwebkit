@@ -62,9 +62,9 @@ public:
 
     WEBCORE_EXPORT bool continueAfterWillSendRequest(ResourceRequest&, const ResourceResponse&);
     WEBCORE_EXPORT bool continueAfterResponseReceived(const ResourceResponse&);
-    WEBCORE_EXPORT bool continueAfterDataReceived(const SharedBuffer&, size_t encodedDataLength);
+    enum class FromDocumentLoader : bool { No, Yes };
+    WEBCORE_EXPORT bool continueAfterDataReceived(const SharedBuffer&, FromDocumentLoader = FromDocumentLoader::No);
     WEBCORE_EXPORT bool continueAfterNotifyFinished(const URL& resourceURL);
-    bool continueAfterDataReceived(const SharedBuffer&);
     bool continueAfterNotifyFinished(CachedResource&);
 
     static bool continueAfterSubstituteDataRequest(const DocumentLoader& activeLoader, const SubstituteData&);
@@ -83,7 +83,6 @@ public:
 #endif
 
 #if HAVE(WEBCONTENTRESTRICTIONS)
-    WEBCORE_EXPORT void setUsesWebContentRestrictions(bool);
     static bool isWebContentRestrictionsUnblockURL(const URL&);
 #endif
 
@@ -91,7 +90,7 @@ private:
     using State = PlatformContentFilter::State;
 
     struct Type {
-        Function<UniqueRef<PlatformContentFilter>()> create;
+        Function<UniqueRef<PlatformContentFilter>(const PlatformContentFilter::FilterParameters&)> create;
     };
     template <typename T> static Type type();
     WEBCORE_EXPORT static Vector<Type>& types();
@@ -102,7 +101,7 @@ private:
 
     template <typename Function> void forEachContentFilterUntilBlocked(Function&&);
     void didDecide(State);
-    void deliverResourceData(const SharedBuffer&, size_t encodedDataLength = 0);
+    void deliverResourceData(const SharedBuffer&);
     void deliverStoredResourceData();
 
     Ref<ContentFilterClient> protectedClient() const;
@@ -114,7 +113,6 @@ private:
     URL m_mainResourceURL;
     struct ResourceDataItem {
         RefPtr<const SharedBuffer> buffer;
-        size_t encodedDataLength;
     };
     Vector<ResourceDataItem> m_buffers;
     CachedResourceHandle<CachedRawResource> m_mainResource;

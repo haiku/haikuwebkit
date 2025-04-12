@@ -793,7 +793,7 @@ static inline RetainPtr<ASCWebAuthenticationExtensionsClientInputs> toASCExtensi
 static inline void setGlobalFrameIDForContext(RetainPtr<ASCCredentialRequestContext> requestContext, std::optional<WebCore::GlobalFrameIdentifier> globalFrameID)
 {
     if (globalFrameID && [requestContext respondsToSelector:@selector(setGlobalFrameID:)]) {
-        auto asGlobalFrameID = adoptNS([allocASGlobalFrameIdentifierInstance() initWithPageID:[NSNumber numberWithUnsignedLong:globalFrameID->pageID.toUInt64()] frameID:[NSNumber numberWithUnsignedLong:globalFrameID->frameID.object().toUInt64()]]);
+        auto asGlobalFrameID = adoptNS([allocASGlobalFrameIdentifierInstance() initWithPageID:[NSNumber numberWithUnsignedLong:globalFrameID->pageID.toUInt64()] frameID:[NSNumber numberWithUnsignedLong:globalFrameID->frameID.toUInt64()]]);
         requestContext.get().globalFrameID = asGlobalFrameID.get();
     }
 }
@@ -1025,7 +1025,7 @@ static inline void continueAfterRequest(RetainPtr<id <ASCCredentialProtocol>> cr
 {
     AuthenticatorResponseData response = { };
     ExceptionData exceptionData = { };
-    NSString *rawAttachment = nil;
+    RetainPtr<NSString> rawAttachment;
 
     if ([credential isKindOfClass:getASCPlatformPublicKeyCredentialRegistrationClass()]) {
         response.isAuthenticatorAttestationResponse = true;
@@ -1077,7 +1077,7 @@ static inline void continueAfterRequest(RetainPtr<id <ASCCredentialProtocol>> cr
             response.extensionOutputs = toExtensionOutputs(assertionCredential.extensionOutputsCBOR);
     } else {
         ExceptionCode exceptionCode;
-        NSString *errorMessage = nil;
+        RetainPtr<NSString> errorMessage;
         if ([error.get().domain isEqualToString:WKErrorDomain]) {
             exceptionCode = toExceptionCode(error.get().code);
             errorMessage = error.get().userInfo[NSLocalizedDescriptionKey];
@@ -1093,7 +1093,7 @@ static inline void continueAfterRequest(RetainPtr<id <ASCCredentialProtocol>> cr
             }
         }
 
-        exceptionData = { exceptionCode, errorMessage };
+        exceptionData = { exceptionCode, errorMessage.get() };
     }
     
     AuthenticatorAttachment attachment;
@@ -1155,7 +1155,7 @@ void WebAuthenticatorCoordinatorProxy::performRequestLegacy(RetainPtr<ASCCredent
         handler({ }, (AuthenticatorAttachment)0, ExceptionData { ExceptionCode::NotAllowedError, "Operation failed."_s });
     }
 
-    if (auto* pageClient = webPageProxy->pageClient())
+    if (RefPtr pageClient = webPageProxy->pageClient())
         requestContext.get().windowSceneIdentifier = pageClient->sceneID();
 
     [m_proxy performAuthorizationRequestsForContext:requestContext.get() withCompletionHandler:makeBlockPtr([weakThis = WeakPtr { *this }, handler = WTFMove(handler)](id<ASCCredentialProtocol> credential, NSError *error) mutable {

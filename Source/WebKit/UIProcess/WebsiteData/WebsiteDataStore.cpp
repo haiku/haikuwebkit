@@ -43,8 +43,10 @@
 #include "StorageAccessStatus.h"
 #include "UnifiedOriginStorageLevel.h"
 #include "WebBackForwardCache.h"
+#include "WebCookieManagerMessages.h"
 #include "WebFrameProxy.h"
 #include "WebKit2Initialize.h"
+#include "WebKitServiceNames.h"
 #include "WebNotificationManagerProxy.h"
 #include "WebPageProxy.h"
 #include "WebProcessCache.h"
@@ -2104,9 +2106,10 @@ WebsiteDataStoreParameters WebsiteDataStore::parameters()
     createHandleFromResolvedPathIfPossible(hstsStorageDirectory, hstsStorageDirectoryExtensionHandle);
 
 #if ENABLE(CONTENT_EXTENSIONS)
-    auto resourceMonitorThrottlerDirectory = directories.resourceMonitorThrottlerDirectory;
+    auto resourceMonitorThrottlerDirectory = isPersistent() ? directories.resourceMonitorThrottlerDirectory : WebCore::SQLiteDatabase::inMemoryPath();
     SandboxExtension::Handle resourceMonitorThrottlerDirectoryExtensionHandle;
-    createHandleFromResolvedPathIfPossible(resourceMonitorThrottlerDirectory, resourceMonitorThrottlerDirectoryExtensionHandle);
+    if (isPersistent())
+        createHandleFromResolvedPathIfPossible(resourceMonitorThrottlerDirectory, resourceMonitorThrottlerDirectoryExtensionHandle);
 #endif
 
     bool shouldIncludeLocalhostInResourceLoadStatistics = false;
@@ -2177,6 +2180,7 @@ WebsiteDataStoreParameters WebsiteDataStore::parameters()
 #if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
     networkSessionParameters.isOptInCookiePartitioningEnabled = isOptInCookiePartitioningEnabled();
 #endif
+    networkSessionParameters.cookiesVersion = cookiesVersion();
     networkSessionParameters.unifiedOriginStorageLevel = m_configuration->unifiedOriginStorageLevel();
     networkSessionParameters.perOriginStorageQuota = perOriginStorageQuota();
     networkSessionParameters.originQuotaRatio = originQuotaRatio();
@@ -2231,7 +2235,7 @@ WebsiteDataStoreParameters WebsiteDataStore::parameters()
         createHandleFromResolvedPathIfPossible(parentBundleDirectory(), parentBundleDirectoryExtensionHandle, SandboxExtension::Type::ReadOnly);
         parameters.parentBundleDirectoryExtensionHandle = WTFMove(parentBundleDirectoryExtensionHandle);
 
-        if (auto handleAndFilePath = SandboxExtension::createHandleForTemporaryFile(emptyString(), SandboxExtension::Type::ReadWrite))
+        if (auto handleAndFilePath = SandboxExtension::createHandleForTemporaryFile(networkingServiceName, SandboxExtension::Type::ReadWrite))
             parameters.tempDirectoryExtensionHandle = WTFMove(handleAndFilePath->first);
     }
 #endif
@@ -2249,17 +2253,15 @@ void WebsiteDataStore::addSecKeyProxyStore(Ref<SecKeyProxyStore>&& store)
 #if ENABLE(WEB_AUTHN)
 void WebsiteDataStore::setMockWebAuthenticationConfiguration(WebCore::MockWebAuthenticationConfiguration&& configuration)
 {
-    if (!m_authenticatorManager->isMock()) {
+    if (RefPtr manager = dynamicDowncast<MockAuthenticatorManager>(m_authenticatorManager))
+        manager->setTestConfiguration(WTFMove(configuration));
+    else
         m_authenticatorManager = MockAuthenticatorManager::create(WTFMove(configuration));
-        return;
-    }
-    Ref manager = downcast<MockAuthenticatorManager>(m_authenticatorManager);
-    manager->setTestConfiguration(WTFMove(configuration));
 }
 
 VirtualAuthenticatorManager& WebsiteDataStore::virtualAuthenticatorManager()
 {
-    if (!m_authenticatorManager->isVirtual())
+    if (!is<VirtualAuthenticatorManager>(m_authenticatorManager.get()))
         m_authenticatorManager = VirtualAuthenticatorManager::create();
     return downcast<VirtualAuthenticatorManager>(m_authenticatorManager.get());
 }
@@ -2907,4 +2909,10 @@ void WebsiteDataStore::resetResourceMonitorThrottlerForTesting(CompletionHandler
     protectedNetworkProcess()->resetResourceMonitorThrottlerForTesting(m_sessionID, WTFMove(completionHandler));
 }
 #endif
+
+void WebsiteDataStore::setCookies(Vector<WebCore::Cookie>&& cookies, CompletionHandler<void()>&& completionHandler)
+{
+    protectedNetworkProcess()->sendWithAsyncReply(Messages::WebCookieManager::SetCookie(m_sessionID, WTFMove(cookies), ++m_cookiesVersion), WTFMove(completionHandler));
+}
+
 } // namespace WebKit

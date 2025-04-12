@@ -3945,6 +3945,22 @@ TEST(SiteIsolation, ReuseConfiguration)
     [navigationDelegate2 waitForDidFinishNavigation];
 }
 
+TEST(SiteIsolation, ReuseConfigurationLoadHTMLString)
+{
+    auto configuration = adoptNS([WKWebViewConfiguration new]);
+    enableSiteIsolation(configuration.get());
+    [configuration setWebsiteDataStore:[WKWebsiteDataStore nonPersistentDataStore]];
+    auto webView1 = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView1 loadHTMLString:@"hi!" baseURL:[NSURL URLWithString:@"https://webkit.org/"]];
+    [webView1 _test_waitForDidFinishNavigation];
+
+    auto webView2 = adoptNS([[WKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration.get()]);
+    [webView2 loadHTMLString:@"hi!" baseURL:[NSURL URLWithString:@"https://webkit.org/"]];
+    [webView2 _test_waitForDidFinishNavigation];
+
+    EXPECT_EQ([webView1 _webProcessIdentifier], [webView2 _webProcessIdentifier]);
+}
+
 static void callMethodOnFirstVideoElementInFrame(WKWebView *webView, NSString *methodName, WKFrameInfo *frame)
 {
     __block RetainPtr<NSError> error;
@@ -4234,9 +4250,19 @@ TEST(SiteIsolation, FrameServerTrust)
         { "/iframe"_s, { "<script>alert('iframe loaded')</script>"_s } }
     }, HTTPServer::Protocol::HttpsProxy);
 
+    __block bool receivedAlert { false };
+    auto uiDelegate = adoptNS([TestUIDelegate new]);
+    uiDelegate.get().runJavaScriptAlertPanelWithMessage = ^(WKWebView *, NSString *message, WKFrameInfo *frameInfo, void (^completionHandler)(void)) {
+        EXPECT_WK_STREQ(message, "iframe loaded");
+        EXPECT_NULL(frameInfo._serverTrust);
+        completionHandler();
+        receivedAlert = true;
+    };
+
     auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(secureServer);
+    webView.get().UIDelegate = uiDelegate.get();
     [webView loadRequest:plaintextServer.request()];
-    EXPECT_WK_STREQ([webView _test_waitForAlert], "iframe loaded");
+    Util::run(&receivedAlert);
     EXPECT_NULL([webView mainFrame].info._serverTrust);
     verifyCertificateAndPublicKey([webView firstChildFrame]._serverTrust);
 }

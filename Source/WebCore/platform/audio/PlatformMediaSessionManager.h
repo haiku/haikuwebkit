@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -67,20 +67,6 @@ public:
 
     WEBCORE_EXPORT static void setAlternateWebMPlayerEnabled(bool);
     WEBCORE_EXPORT static bool alternateWebMPlayerEnabled();
-    WEBCORE_EXPORT static void setUseSCContentSharingPicker(bool);
-    WEBCORE_EXPORT static bool useSCContentSharingPicker();
-
-#if ENABLE(VP9)
-    WEBCORE_EXPORT static void setShouldEnableVP9Decoder(bool);
-    WEBCORE_EXPORT static bool shouldEnableVP9Decoder();
-    WEBCORE_EXPORT static void setSWVPDecodersAlwaysEnabled(bool);
-    WEBCORE_EXPORT static bool swVPDecodersAlwaysEnabled();
-#endif
-
-#if ENABLE(EXTENSION_CAPABILITIES)
-    WEBCORE_EXPORT static bool mediaCapabilityGrantsEnabled();
-    WEBCORE_EXPORT static void setMediaCapabilityGrantsEnabled(bool);
-#endif
 
     virtual ~PlatformMediaSessionManager();
 
@@ -276,10 +262,6 @@ private:
 #if ENABLE(VP9)
     static bool m_vp9DecoderEnabled;
     static bool m_swVPDecodersAlwaysEnabled;
-#endif
-
-#if ENABLE(EXTENSION_CAPABILITIES)
-    static bool s_mediaCapabilityGrantsEnabled;
 #endif
 
 #if !RELEASE_LOG_DISABLED

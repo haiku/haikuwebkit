@@ -61,6 +61,7 @@ fast/css/appearance-apple-pay-button-border-radius-longhands.html [ Pass ]
 fast/css/appearance-apple-pay-button-border-width.html [ Pass ]
 fast/css/appearance-apple-pay-button-default-corners.html [ Pass ]
 fast/css/appearance-apple-pay-button-style-dynamic-update.html [ Pass ]
+fast/css/cocoa [ Pass ]
 fast/css/webkit-named-image/apple-pay-logo-black [ Pass ]
 fast/css/webkit-named-image/apple-pay-logo-white [ Pass ]
 fast/css/getComputedStyle/computed-style-apple-pay-button.html [ Pass ]
@@ -676,7 +677,6 @@ fast/events/monotonic-event-time.html [ Skip ]
 fast/events/mosuedrag-on-canvas-should-not-start-selection.html [ Skip ]
 fast/events/mouse-click-events.html [ Skip ]
 fast/events/mouse-cursor-change.html [ Skip ]
-fast/events/mouse-cursor-change-02.html [ Skip ]
 fast/events/mouse-cursor-image-set.html [ Skip ]
 fast/events/mouse-cursor-multiframecur.html [ Skip ]
 fast/events/mouse-cursor-no-mousemove.html [ Skip ]
@@ -2390,7 +2390,6 @@ accessibility/visible-character-range-height-changes.html [ Pass ]
 accessibility/visible-character-range-vertical-rl.html [ Pass ]
 accessibility/visible-character-range-width-changes.html [ Pass ]
 accessibility/visibility-visible-inside-hidden.html [ Pass ]
-accessibility/ancestor-computation.html [ Pass ]
 
 # Enable "aria-current" tests for iOS.
 webkit.org/b/149297 accessibility/aria-current.html [ Pass ]
@@ -2648,7 +2647,6 @@ fast/attachment/attachment-truncated-action.html [ Pass ]
 # fast/attachment/attachment-wrapping-action.html [ Pass ] # TODO: ImageOnlyFailure expectation set below. Uncomment this line when that issue is resolved.
 fast/attachment/attachment-borderless.html [ Pass ]
 fast/attachment/attachment-dynamic-type.html [ Pass ]
-webkit.org/b/243126 fast/attachment/attachment-thumbnail-preserves-aspect-ratio.html [ Skip ]
 fast/images/pdf-as-image-dest-rect-change.html [ Pass ]
 
 fast/events/page-visibility-iframe-move-test.html [ Skip ]
@@ -6417,8 +6415,6 @@ webkit.org/b/231299 [ Debug ] imported/w3c/web-platform-tests/selection/collapse
 
 webkit.org/b/216292 [ Release ] imported/w3c/web-platform-tests/css/css-flexbox/quirks-auto-block-size-with-percentage-item.html [ Pass Failure ]
 
-webkit.org/b/186045 imported/w3c/web-platform-tests/css/css-values/vh_not_refreshing_on_chrome.html [ Skip ]
-
 webkit.org/b/196403 imported/w3c/web-platform-tests/mediacapture-record/MediaRecorder-stop.html [ Pass Failure Slow ]
 
 webkit.org/b/217641 [ Debug ] imported/w3c/web-platform-tests/xhr/event-timeout.any.worker.html [ Pass Failure ]
@@ -7674,8 +7670,6 @@ imported/w3c/web-platform-tests/navigation-api/navigation-activation/activation-
 imported/w3c/web-platform-tests/navigation-api/navigation-methods/disambigaute-forward.html [ Failure ]
 imported/w3c/web-platform-tests/navigation-api/navigation-methods/disambigaute-traverseTo-forward-multiple.html [ Failure ]
 
-webkit.org/b/286500 [ Release ] fast/forms/date/date-pseudo-elements.html [ Pass Failure ]
-
 webkit.org/b/286507 compositing/geometry/fixed-position-composited-page-scale-smaller-than-viewport.html [ Pass Failure ]
 
 webkit.org/b/286515 fast/forms/datalist/datalist-show-hide.html [ Timeout ]
@@ -7685,8 +7679,6 @@ webkit.org/b/286594 http/wpt/cache-storage/quota-third-party.https.html [ Pass F
 webkit.org/b/286318 http/tests/iframe-monitor [ Pass ]
 
 # webkit.org/b/286934 [ Debug ] ipc/create-media-source-with-invalid-constraints-crash.html [ Skip ]
-
-webkit.org/b/287204 [ Release ] fast/forms/date/date-input-rendering-basic.html [ Pass Failure ]
 
 webkit.org/b/287291 http/tests/site-isolation/selection-focus.html [ ImageOnlyFailure ]
 
@@ -7794,4 +7786,54 @@ webkit.org/b/290666 imported/w3c/web-platform-tests/screen-orientation/fullscree
 
 webkit.org/b/290670 imported/w3c/web-platform-tests/css/css-viewport/zoom/relative-units.html [ Failure ]
 
-webkit.org/b/290546 [ Debug ] imported/w3c/web-platform-tests/workers/abrupt-completion.html [ Pass Crash ]
+webkit.org/b/290767 [ x86_64 ] imported/w3c/web-platform-tests/webaudio/the-audio-api/the-audioworklet-interface/audioworklet-denormals.https.window.html [ Failure ]
+
+webkit.org/b/290790 editing/selection/ios/show-selection-in-transformed-container.html [ Failure ]
+
+webkit.org/b/290794 fast/viewport/ios/content-visibility-layout-viewport-during-unstable-scroll.html [ Failure ]
+
+webkit.org/b/290796 fast/events/ios/keyboard-scrolling-distance.html [ Failure ]
+
+webkit.org/b/290804 [ Debug ] editing/caret/caret-position-vertical-rl.html [ Failure ]
+
+webkit.org/b/290804 [ Release ] editing/caret/caret-position-vertical-rl.html [ Pass Failure ]
+
+webkit.org/b/290811 [ Debug ] imported/w3c/web-platform-tests/fetch/api/crashtests/huge-fetch.any.worker.html [ Pass Crash ]
+
+webkit.org/b/290824 fast/events/autoscroll-with-software-keyboard.html [ Pass Failure ]
+
+webkit.org/b/290855 imported/w3c/web-platform-tests/css/css-anchor-position/position-try-switch-from-fixed-anchor.html [ Pass Failure ]
+
+webkit.org/b/290856 imported/w3c/web-platform-tests/css/css-view-transitions/navigation/navigation-auto-excludes-reload.html [ Pass Timeout ]
+webkit.org/b/290856 imported/w3c/web-platform-tests/css/css-viewport/zoom/background-image.html [ Pass Timeout ]
+
+webkit.org/b/290871 imported/w3c/web-platform-tests/navigation-api/scroll-behavior/after-transition-reject.html [ Pass Failure ]
+
+webkit.org/b/290876 imported/w3c/web-platform-tests/trusted-types/DedicatedWorker-constructor-from-SharedWorker.html [ Pass Failure ]
+
+webkit.org/b/290888 fast/loader/redirect-to-invalid-url-using-meta-refresh-calls-policy-delegate.html [ Pass Failure ]
+
+webkit.org/b/290942 [ Debug ] fast/viewport/ios/width-is-device-width-overflowing-body-overflow-hidden.html [ Pass Crash ]
+
+webkit.org/b/290958 [ Debug ] imported/w3c/web-platform-tests/navigation-api/scroll-behavior/manual-scroll-after-resolve.html [ Pass Failure ]
+
+webkit.org/b/290967 [ Debug ] imported/w3c/IndexedDB-private-browsing/idbcursor_iterating.html [ Pass Crash ]
+
+# hidden=until-found
+imported/w3c/web-platform-tests/html/editing/the-hidden-attribute/hidden-until-found-002.html [ Failure ]
+
+webkit.org/b/291001 imported/w3c/web-platform-tests/scroll-animations/css/animation-fill-outside-range-test.html [ Pass Failure ]
+
+webkit.org/b/290281 imported/w3c/web-platform-tests/svg/struct/scripted/svg-checkIntersection-001.svg [ Pass Timeout ]
+
+webkit.org/b/291035 webaudio/decode-audio-data-too-short.html [ Pass Failure ]
+
+# webkit.org/b/287204 REGRESSION(292441@main): [ iOS ] 2x fast/forms/date/date-*.html are constant failures.
+fast/forms/date/date-input-rendering-basic.html [ Failure ]
+fast/forms/date/date-pseudo-elements.html [ Failure ]
+
+webkit.org/b/291099 imported/w3c/web-platform-tests/css/css-view-transitions/update-callback-called-once.html [ Pass Failure ]
+
+webkit.org/b/291108 [ Release ] imported/w3c/web-platform-tests/html/webappapis/dynamic-markup-insertion/document-write/049.html [ Pass Timeout ]
+
+webkit.org/b/291115 imported/w3c/web-platform-tests/websockets/back-forward-cache-with-closed-websocket-connection-ccns.tentative.window.html [ Pass Failure ]

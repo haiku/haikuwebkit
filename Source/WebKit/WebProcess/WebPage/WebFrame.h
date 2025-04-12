@@ -28,6 +28,8 @@
 #include "APIObject.h"
 #include "DownloadID.h"
 #include "IdentifierTypes.h"
+#include "MessageReceiver.h"
+#include "MessageSender.h"
 #include "PolicyDecision.h"
 #include "TransactionID.h"
 #include "WKBase.h"
@@ -78,17 +80,23 @@ class WebImage;
 class WebMouseEvent;
 class WebPage;
 class WebRemoteFrameClient;
+
 struct FrameInfoData;
 struct FrameTreeNodeData;
 struct ProvisionalFrameCreationParameters;
 struct WebsitePoliciesData;
 
-class WebFrame : public API::ObjectImpl<API::Object::Type::BundleFrame>, public CanMakeWeakPtr<WebFrame> {
+enum class WithCertificateInfo : bool { No, Yes };
+
+class WebFrame : public API::ObjectImpl<API::Object::Type::BundleFrame>, public IPC::MessageReceiver, public IPC::MessageSender {
 public:
     static Ref<WebFrame> create(WebPage& page, WebCore::FrameIdentifier frameID) { return adoptRef(*new WebFrame(page, frameID)); }
     static Ref<WebFrame> createSubframe(WebPage&, WebFrame& parent, const AtomString& frameName, WebCore::HTMLFrameOwnerElement&);
     static Ref<WebFrame> createRemoteSubframe(WebPage&, WebFrame& parent, WebCore::FrameIdentifier, const String& frameName, std::optional<WebCore::FrameIdentifier> openerFrameID, Ref<WebCore::FrameTreeSyncData>&&);
     ~WebFrame();
+
+    void ref() const final { API::ObjectImpl<API::Object::Type::BundleFrame>::ref(); }
+    void deref() const final { API::ObjectImpl<API::Object::Type::BundleFrame>::deref(); }
 
     void initWithCoreMainFrame(WebPage&, WebCore::Frame&);
 
@@ -113,7 +121,8 @@ public:
     void loadDidCommitInAnotherProcess(std::optional<WebCore::LayerHostingContextIdentifier>);
     WebCore::LocalFrame* provisionalFrame() { return m_provisionalFrame.get(); }
 
-    FrameInfoData info() const;
+    Awaitable<std::optional<FrameInfoData>> getFrameInfo();
+    FrameInfoData info(WithCertificateInfo = WithCertificateInfo::No) const;
     FrameTreeNodeData frameTreeData() const;
 
     WebCore::FrameIdentifier frameID() const { return m_frameID; }
@@ -199,7 +208,8 @@ public:
 
     void setTextDirection(const String&);
     void updateRemoteFrameSize(WebCore::IntSize);
-    
+    void updateFrameSize(WebCore::IntSize);
+
 #if PLATFORM(COCOA)
     typedef bool (*FrameFilterFunction)(WKBundleFrameRef, WKBundleFrameRef subframe, void* context);
     RetainPtr<CFDataRef> webArchiveData(FrameFilterFunction, void* context, const Vector<WebCore::MarkupExclusionRule>& exclusionRules = { }, const String& mainResourceFileName = { });
@@ -241,8 +251,14 @@ public:
     void markAsRemovedInAnotherProcess() { m_wasRemovedInAnotherProcess = true; }
     bool wasRemovedInAnotherProcess() const { return m_wasRemovedInAnotherProcess; }
 
+    void didReceiveMessage(IPC::Connection&, IPC::Decoder&);
+    static void sendCancelReply(IPC::Connection&, IPC::Decoder&);
+
 private:
     WebFrame(WebPage&, WebCore::FrameIdentifier);
+
+    IPC::Connection* messageSenderConnection() const final;
+    uint64_t messageSenderDestinationID() const final;
 
     void setLayerHostingContextIdentifier(WebCore::LayerHostingContextIdentifier identifier) { m_layerHostingContextIdentifier = identifier; }
 

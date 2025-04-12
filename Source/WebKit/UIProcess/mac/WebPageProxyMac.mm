@@ -46,7 +46,6 @@
 #import "RemoteLayerTreeHost.h"
 #import "RemoteLayerTreeNode.h"
 #import "TextChecker.h"
-#import "WKBrowsingContextControllerInternal.h"
 #import "WKQuickLookPreviewController.h"
 #import "WKSharingServicePickerDelegate.h"
 #import "WebContextMenuProxyMac.h"
@@ -77,8 +76,7 @@
 
 #define MESSAGE_CHECK(assertion, connection) MESSAGE_CHECK_BASE(assertion, connection)
 #define MESSAGE_CHECK_COMPLETION(assertion, connection, completion) MESSAGE_CHECK_COMPLETION_BASE(assertion, connection, completion)
-#define MESSAGE_CHECK_URL(url) MESSAGE_CHECK_BASE(checkURLReceivedFromCurrentOrPreviousWebProcess(m_legacyMainFrameProcess, url), m_legacyMainFrameProcess->connection())
-#define MESSAGE_CHECK_WITH_RETURN_VALUE(assertion, returnValue) MESSAGE_CHECK_WITH_RETURN_VALUE_BASE(assertion, process().connection(), returnValue)
+#define MESSAGE_CHECK_URL(url) MESSAGE_CHECK_BASE(checkURLReceivedFromCurrentOrPreviousWebProcess(process, url), connection)
 
 @interface NSApplication ()
 - (BOOL)isSpeaking;
@@ -171,11 +169,11 @@ void WebPageProxy::stopSpeaking()
 
 void WebPageProxy::searchTheWeb(const String& string)
 {
-    NSPasteboard *pasteboard = [NSPasteboard pasteboardWithUniqueName];
+    RetainPtr pasteboard = [NSPasteboard pasteboardWithUniqueName];
     [pasteboard declareTypes:@[legacyStringPasteboardType()] owner:nil];
     [pasteboard setString:string forType:legacyStringPasteboardType()];
     
-    NSPerformService(@"Search With %WebSearchProvider@", pasteboard);
+    NSPerformService(@"Search With %WebSearchProvider@", pasteboard.get());
 }
 
 void WebPageProxy::windowAndViewFramesChanged(const FloatRect& viewFrameInWindowCoordinates, const FloatPoint& accessibilityViewCoordinates)
@@ -261,6 +259,7 @@ bool WebPageProxy::readSelectionFromPasteboard(const String& pasteboardName)
 void WebPageProxy::setPromisedDataForImage(IPC::Connection& connection, const String& pasteboardName, SharedMemory::Handle&& imageHandle, const String& filename, const String& extension,
     const String& title, const String& url, const String& visibleURL, SharedMemory::Handle&& archiveHandle, const String& originIdentifier)
 {
+    Ref process = WebProcessProxy::fromConnection(connection);
     MESSAGE_CHECK_URL(url);
     MESSAGE_CHECK_URL(visibleURL);
     MESSAGE_CHECK(extension == FileSystem::lastComponentOfPathIgnoringTrailingSlash(extension), connection);
@@ -486,22 +485,22 @@ CALayer *WebPageProxy::footerBannerLayer() const
 
 int WebPageProxy::headerBannerHeight() const
 {
-    if (auto *headerBannerLayer = this->headerBannerLayer())
-        return headerBannerLayer.frame.size.height;
+    if (RetainPtr headerBannerLayer = this->headerBannerLayer())
+        return headerBannerLayer.get().frame.size.height;
     return 0;
 }
 
 int WebPageProxy::footerBannerHeight() const
 {
-    if (auto *footerBannerLayer = this->footerBannerLayer())
-        return footerBannerLayer.frame.size.height;
+    if (RetainPtr footerBannerLayer = this->footerBannerLayer())
+        return footerBannerLayer.get().frame.size.height;
     return 0;
 }
 
 static NSString *temporaryPDFDirectoryPath()
 {
     static NeverDestroyed path = [] {
-        auto temporaryDirectoryTemplate = [NSTemporaryDirectory() stringByAppendingPathComponent:@"WebKitPDFs-XXXXXX"];
+        RetainPtr temporaryDirectoryTemplate = [NSTemporaryDirectory() stringByAppendingPathComponent:@"WebKitPDFs-XXXXXX"];
         CString templateRepresentation = [temporaryDirectoryTemplate fileSystemRepresentation];
         if (mkdtemp(templateRepresentation.mutableSpanIncludingNullTerminator().data()))
             return adoptNS((NSString *)[[[NSFileManager defaultManager] stringWithFileSystemRepresentation:templateRepresentation.data() length:templateRepresentation.length()] copy]);
@@ -510,9 +509,9 @@ static NSString *temporaryPDFDirectoryPath()
     return path.get().get();
 }
 
-static NSString *pathToPDFOnDisk(const String& suggestedFilename)
+static RetainPtr<NSString> pathToPDFOnDisk(const String& suggestedFilename)
 {
-    NSString *pdfDirectoryPath = temporaryPDFDirectoryPath();
+    RetainPtr pdfDirectoryPath = temporaryPDFDirectoryPath();
     if (!pdfDirectoryPath) {
         WTFLogAlways("Cannot create temporary PDF download directory.");
         return nil;
@@ -520,11 +519,11 @@ static NSString *pathToPDFOnDisk(const String& suggestedFilename)
 
     // The NSFileManager expects a path string, while NSWorkspace uses file URLs, and will decode any percent encoding
     // in its passed URLs before loading from disk. Create the files using decoded file paths so they match up.
-    NSString *path = [[pdfDirectoryPath stringByAppendingPathComponent:suggestedFilename.createNSString().get()] stringByRemovingPercentEncoding];
+    RetainPtr path = [[pdfDirectoryPath stringByAppendingPathComponent:suggestedFilename.createNSString().get()] stringByRemovingPercentEncoding];
 
-    NSFileManager *fileManager = [NSFileManager defaultManager];
-    if ([fileManager fileExistsAtPath:path]) {
-        auto [fileHandle, pathTemplateRepresentation] = FileSystem::createTemporaryFileInDirectory(pdfDirectoryPath, makeString('-', suggestedFilename));
+    RetainPtr fileManager = [NSFileManager defaultManager];
+    if ([fileManager fileExistsAtPath:path.get()]) {
+        auto [fileHandle, pathTemplateRepresentation] = FileSystem::createTemporaryFileInDirectory(pdfDirectoryPath.get(), makeString('-', suggestedFilename));
         if (!fileHandle) {
             WTFLogAlways("Cannot create PDF file in the temporary directory (%s).", suggestedFilename.utf8().data());
             return nil;
@@ -549,7 +548,7 @@ void WebPageProxy::savePDFToTemporaryFolderAndOpenWithNativeApplication(const St
         WTFLogAlways("Cannot save file without .pdf extension to the temporary directory.");
         return;
     }
-    auto nsPath = retainPtr(pathToPDFOnDisk(sanitizedFilename));
+    RetainPtr nsPath = pathToPDFOnDisk(sanitizedFilename);
 
     if (!nsPath)
         return;
@@ -569,12 +568,12 @@ void WebPageProxy::savePDFToTemporaryFolderAndOpenWithNativeApplication(const St
     m_uiClient->confirmPDFOpening(*this, pdfFileURL, WTFMove(frameInfo), [pdfFileURL] (bool allowed) {
         if (!allowed)
             return;
-        [[NSWorkspace sharedWorkspace] openURL:pdfFileURL];
+        [[NSWorkspace sharedWorkspace] openURL:pdfFileURL.createNSURL().get()];
     });
 }
 
 #if ENABLE(PDF_PLUGIN)
-void WebPageProxy::showPDFContextMenu(const WebKit::PDFContextMenu& contextMenu, PDFPluginIdentifier identifier, CompletionHandler<void(std::optional<int32_t>&&)>&& completionHandler)
+void WebPageProxy::showPDFContextMenu(const WebKit::PDFContextMenu& contextMenu, PDFPluginIdentifier identifier, WebCore::FrameIdentifier frameID, CompletionHandler<void(std::optional<int32_t>&&)>&& completionHandler)
 {
     if (!contextMenu.items.size())
         return completionHandler(std::nullopt);
@@ -609,17 +608,17 @@ void WebPageProxy::showPDFContextMenu(const WebKit::PDFContextMenu& contextMenu,
         [nsItem setTag:item.tag];
         [nsMenu insertItem:nsItem.get() atIndex:i];
     }
-    NSWindow *window = pageClient->platformWindow();
+    RetainPtr window = pageClient->platformWindow();
     auto location = [window convertRectFromScreen: { contextMenu.point, NSZeroSize }].origin;
     auto event = createSyntheticEventForContextMenu(location);
 
-    auto view = window.contentView;
-    [NSMenu popUpContextMenu:nsMenu.get() withEvent:event.get() forView:view];
+    RetainPtr<NSView> view = window.get().contentView;
+    [NSMenu popUpContextMenu:nsMenu.get() withEvent:event.get() forView:view.get()];
 
-    if (auto selectedMenuItem = [menuTarget selectedMenuItem]) {
-        NSInteger tag = selectedMenuItem.tag;
+    if (RetainPtr selectedMenuItem = [menuTarget selectedMenuItem]) {
+        NSInteger tag = selectedMenuItem.get().tag;
         if (contextMenu.openInPreviewTag && *contextMenu.openInPreviewTag == tag)
-            pdfOpenWithPreview(identifier);
+            pdfOpenWithPreview(identifier, frameID);
         return completionHandler(tag);
     }
     completionHandler(std::nullopt);
@@ -747,10 +746,10 @@ RetainPtr<NSView> WebPageProxy::Internals::platformView() const
 
 #if ENABLE(PDF_PLUGIN)
 
-void WebPageProxy::createPDFHUD(PDFPluginIdentifier identifier, const WebCore::IntRect& rect)
+void WebPageProxy::createPDFHUD(PDFPluginIdentifier identifier, WebCore::FrameIdentifier frameID, const WebCore::IntRect& rect)
 {
     if (RefPtr pageClient = this->pageClient())
-        pageClient->createPDFHUD(identifier, rect);
+        pageClient->createPDFHUD(identifier, frameID, rect);
 }
 
 void WebPageProxy::removePDFHUD(PDFPluginIdentifier identifier)
@@ -765,30 +764,30 @@ void WebPageProxy::updatePDFHUDLocation(PDFPluginIdentifier identifier, const We
         pageClient->updatePDFHUDLocation(identifier, rect);
 }
 
-void WebPageProxy::pdfZoomIn(PDFPluginIdentifier identifier)
+void WebPageProxy::pdfZoomIn(PDFPluginIdentifier identifier, WebCore::FrameIdentifier frameID)
 {
-    protectedLegacyMainFrameProcess()->send(Messages::WebPage::ZoomPDFIn(identifier), webPageIDInMainFrameProcess());
+    sendToProcessContainingFrame(frameID, Messages::WebPage::ZoomPDFIn(identifier));
 }
 
-void WebPageProxy::pdfZoomOut(PDFPluginIdentifier identifier)
+void WebPageProxy::pdfZoomOut(PDFPluginIdentifier identifier, WebCore::FrameIdentifier frameID)
 {
-    protectedLegacyMainFrameProcess()->send(Messages::WebPage::ZoomPDFOut(identifier), webPageIDInMainFrameProcess());
+    sendToProcessContainingFrame(frameID, Messages::WebPage::ZoomPDFOut(identifier));
 }
 
-void WebPageProxy::pdfSaveToPDF(PDFPluginIdentifier identifier)
+void WebPageProxy::pdfSaveToPDF(PDFPluginIdentifier identifier, WebCore::FrameIdentifier frameID)
 {
-    protectedLegacyMainFrameProcess()->sendWithAsyncReply(Messages::WebPage::SavePDF(identifier), [this, protectedThis = Ref { *this }] (String&& suggestedFilename, URL&& originatingURL, std::span<const uint8_t> dataReference) {
+    sendWithAsyncReplyToProcessContainingFrame(frameID, Messages::WebPage::SavePDF(identifier), Messages::WebPage::SavePDF::Reply { [this, protectedThis = Ref { *this }] (String&& suggestedFilename, URL&& originatingURL, std::span<const uint8_t> dataReference) {
         savePDFToFileInDownloadsFolder(WTFMove(suggestedFilename), WTFMove(originatingURL), dataReference);
-    }, webPageIDInMainFrameProcess());
+    } });
 }
 
-void WebPageProxy::pdfOpenWithPreview(PDFPluginIdentifier identifier)
+void WebPageProxy::pdfOpenWithPreview(PDFPluginIdentifier identifier, WebCore::FrameIdentifier frameID)
 {
-    protectedLegacyMainFrameProcess()->sendWithAsyncReply(Messages::WebPage::OpenPDFWithPreview(identifier), [this, protectedThis = Ref { *this }](String&& suggestedFilename, std::optional<FrameInfoData>&& frameInfo, std::span<const uint8_t> data) {
+    sendWithAsyncReplyToProcessContainingFrame(frameID, Messages::WebPage::OpenPDFWithPreview(identifier), Messages::WebPage::OpenPDFWithPreview::Reply { [this, protectedThis = Ref { *this }](String&& suggestedFilename, std::optional<FrameInfoData>&& frameInfo, std::span<const uint8_t> data) {
         if (!frameInfo)
             return;
         savePDFToTemporaryFolderAndOpenWithNativeApplication(WTFMove(suggestedFilename), WTFMove(*frameInfo), data);
-    }, webPageIDInMainFrameProcess());
+    } });
 }
 
 #endif // #if ENABLE(PDF_PLUGIN)
@@ -878,7 +877,7 @@ void WebPageProxy::showImageInQuickLookPreviewPanel(ShareableBitmap& imageBitmap
     if (!CGImageDestinationFinalize(destination.get()))
         return;
 
-    m_quickLookPreviewController = adoptNS([[WKQuickLookPreviewController alloc] initWithPage:*this imageData:(__bridge NSData *)imageData.get() title:tooltip imageURL:imageURL activity:activity]);
+    m_quickLookPreviewController = adoptNS([[WKQuickLookPreviewController alloc] initWithPage:*this imageData:(__bridge NSData *)imageData.get() title:tooltip imageURL:imageURL.createNSURL().get() activity:activity]);
 
     // When presenting the shared QLPreviewPanel, QuickLook will search the responder chain for a suitable panel controller.
     // Make sure that we (by default) start the search at the web view, which knows how to vend the Visual Search preview
@@ -886,10 +885,10 @@ void WebPageProxy::showImageInQuickLookPreviewPanel(ShareableBitmap& imageBitmap
     if (RefPtr pageClient = this->pageClient())
         pageClient->makeFirstResponder();
 
-    auto previewPanel = [PAL::getQLPreviewPanelClass() sharedPreviewPanel];
+    RetainPtr previewPanel = [PAL::getQLPreviewPanelClass() sharedPreviewPanel];
     [previewPanel makeKeyAndOrderFront:nil];
 
-    if (![m_quickLookPreviewController isControlling:previewPanel]) {
+    if (![m_quickLookPreviewController isControlling:previewPanel.get()]) {
         // The WebKit client may have overridden QLPreviewPanelController methods on the view without calling into the superclass.
         // In this case, hand over control to the client and clear out our state eagerly, since we don't expect any further delegate
         // calls once the preview panel is dismissed.
@@ -915,10 +914,10 @@ void WebPageProxy::handleContextMenuCopySubject(const String& preferredMIMEType)
     if (!data)
         return;
 
-    auto pasteboard = NSPasteboard.generalPasteboard;
-    auto pasteboardType = (__bridge NSString *)type.get();
-    [pasteboard declareTypes:@[pasteboardType] owner:nil];
-    [pasteboard setData:data.get() forType:pasteboardType];
+    RetainPtr<NSPasteboard> pasteboard = NSPasteboard.generalPasteboard;
+    RetainPtr pasteboardType = bridge_cast(type.get());
+    [pasteboard declareTypes:@[pasteboardType.get()] owner:nil];
+    [pasteboard setData:data.get() forType:pasteboardType.get()];
 }
 
 #endif // ENABLE(IMAGE_ANALYSIS_ENHANCEMENTS)
@@ -978,7 +977,6 @@ WebCore::FloatRect WebPageProxy::selectionBoundingRectInRootViewCoordinates() co
 
 #endif // PLATFORM(MAC)
 
-#undef MESSAGE_CHECK_WITH_RETURN_VALUE
 #undef MESSAGE_CHECK_URL
 #undef MESSAGE_CHECK_COMPLETION
 #undef MESSAGE_CHECK

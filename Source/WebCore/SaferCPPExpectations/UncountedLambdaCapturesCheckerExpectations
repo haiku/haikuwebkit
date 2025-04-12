@@ -90,7 +90,6 @@ loader/NetscapePlugInStreamLoader.cpp
 page/EventSource.cpp
 page/ImageAnalysisQueue.cpp
 page/LocalDOMWindow.cpp
-page/Navigation.cpp
 page/Quirks.cpp
 page/ScreenOrientation.cpp
 page/ShareDataReader.cpp
@@ -116,7 +115,6 @@ platform/mediastream/RealtimeMediaSourceCenter.cpp
 platform/mediastream/RealtimeVideoCaptureSource.cpp
 platform/mediastream/cocoa/IncomingAudioMediaStreamTrackRendererUnit.cpp
 platform/mediastream/mac/RealtimeIncomingVideoSourceCocoa.mm
-platform/mediastream/mac/ScreenCaptureKitCaptureSource.mm
 rendering/BackgroundPainter.cpp
 rendering/BorderPainter.cpp
 rendering/MotionPath.cpp

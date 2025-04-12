@@ -39,6 +39,7 @@
 #include "OverrideLanguages.h"
 #include "ProcessTerminationReason.h"
 #include "ProvisionalPageProxy.h"
+#include "WebKitServiceNames.h"
 #include "WebPageGroup.h"
 #include "WebPageMessages.h"
 #include "WebPageProxy.h"
@@ -190,7 +191,8 @@ GPUProcessProxy::GPUProcessProxy()
     }
 
     if (!containerTemporaryDirectory.isEmpty()) {
-        if (auto handle = SandboxExtension::createHandleWithoutResolvingPath(containerTemporaryDirectory, SandboxExtension::Type::ReadWrite))
+        auto tempDirectory = resolveAndCreateReadWriteDirectoryForSandboxExtension(FileSystem::pathByAppendingComponent(containerTemporaryDirectory, gpuServiceName));
+        if (auto handle = SandboxExtension::createHandleWithoutResolvingPath(tempDirectory, SandboxExtension::Type::ReadWrite))
             parameters.containerTemporaryDirectoryExtensionHandle = WTFMove(*handle);
     }
 #endif
@@ -237,18 +239,6 @@ void GPUProcessProxy::setUseMockCaptureDevices(bool value)
         return;
     m_useMockCaptureDevices = value;
     send(Messages::GPUProcess::SetMockCaptureDevicesEnabled { m_useMockCaptureDevices }, 0);
-}
-
-void GPUProcessProxy::setUseSCContentSharingPicker(bool use)
-{
-#if HAVE(SC_CONTENT_SHARING_PICKER)
-    if (use == m_useSCContentSharingPicker)
-        return;
-    m_useSCContentSharingPicker = use;
-    send(Messages::GPUProcess::SetUseSCContentSharingPicker { m_useSCContentSharingPicker }, 0);
-#else
-    UNUSED_PARAM(use);
-#endif
 }
 
 void GPUProcessProxy::enableMicrophoneMuteStatusAPI()

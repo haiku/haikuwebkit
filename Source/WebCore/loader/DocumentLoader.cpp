@@ -135,7 +135,7 @@
 #endif
 
 #define PAGE_ID (m_frame && m_frame->pageID() ? m_frame->pageID()->toUInt64() : 0)
-#define FRAME_ID (m_frame ? m_frame->frameID().object().toUInt64() : 0)
+#define FRAME_ID (m_frame ? m_frame->frameID().toUInt64() : 0)
 #define IS_MAIN_FRAME (m_frame ? m_frame->isMainFrame() : false)
 #define DOCUMENTLOADER_RELEASE_LOG(fmt, ...) RELEASE_LOG(Network, "%p - [pageID=%" PRIu64 ", frameID=%" PRIu64 ", isMainFrame=%d] DocumentLoader::" fmt, this, PAGE_ID, FRAME_ID, IS_MAIN_FRAME, ##__VA_ARGS__)
 #define DOCUMENTLOADER_RELEASE_LOG_FORWARDABLE(fmt, ...) RELEASE_LOG_FORWARDABLE(Network, fmt, PAGE_ID, FRAME_ID, IS_MAIN_FRAME, ##__VA_ARGS__)
@@ -1412,7 +1412,7 @@ void DocumentLoader::dataReceived(CachedResource& resource, const SharedBuffer& 
 void DocumentLoader::dataReceived(const SharedBuffer& buffer)
 {
 #if ENABLE(CONTENT_FILTERING)
-    if (m_contentFilter && !m_contentFilter->continueAfterDataReceived(buffer))
+    if (m_contentFilter && !m_contentFilter->continueAfterDataReceived(buffer, ContentFilter::FromDocumentLoader::Yes))
         return;
 #endif
 
@@ -2183,10 +2183,6 @@ void DocumentLoader::startLoadingMainResource()
     contentFilterInDocumentLoader() = frame && frame->view() && frame->protectedView()->platformWidget();
     if (contentFilterInDocumentLoader())
         m_contentFilter = !m_substituteData.isValid() ? ContentFilter::create(*this) : nullptr;
-#if HAVE(WEBCONTENTRESTRICTIONS)
-    if (m_contentFilter)
-        m_contentFilter->setUsesWebContentRestrictions(DeprecatedGlobalSettings::usesWebContentRestrictionsForFilter());
-#endif
 #endif
 
     auto url = m_request.url();
@@ -2624,7 +2620,7 @@ void DocumentLoader::enqueueSecurityPolicyViolationEvent(SecurityPolicyViolation
 }
 
 #if ENABLE(CONTENT_FILTERING)
-void DocumentLoader::dataReceivedThroughContentFilter(const SharedBuffer& buffer, size_t)
+void DocumentLoader::dataReceivedThroughContentFilter(const SharedBuffer& buffer)
 {
     dataReceived(buffer);
 }
@@ -2643,6 +2639,13 @@ void DocumentLoader::handleProvisionalLoadFailureFromContentFilter(const URL& bl
 {
     protectedFrameLoader()->load(FrameLoadRequest(*frame(), blockedPageURL, substituteData));
 }
+
+#if HAVE(WEBCONTENTRESTRICTIONS)
+bool DocumentLoader::usesWebContentRestrictions()
+{
+    return DeprecatedGlobalSettings::usesWebContentRestrictionsForFilter();
+}
+#endif
 #endif // ENABLE(CONTENT_FILTERING)
 
 #if ENABLE(CONTENT_FILTERING)

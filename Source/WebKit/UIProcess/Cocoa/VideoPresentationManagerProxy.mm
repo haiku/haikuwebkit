@@ -451,6 +451,22 @@ void VideoPresentationModelContext::fullscreenMayReturnToInline()
         manager->fullscreenMayReturnToInline(m_contextId);
 }
 
+#if ENABLE(LINEAR_MEDIA_PLAYER)
+void VideoPresentationModelContext::didEnterExternalPlayback()
+{
+    ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER);
+    if (RefPtr manager = m_manager.get())
+        manager->didEnterExternalPlayback(m_contextId);
+}
+
+void VideoPresentationModelContext::didExitExternalPlayback()
+{
+    ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER);
+    if (RefPtr manager = m_manager.get())
+        manager->didExitExternalPlayback(m_contextId);
+}
+#endif
+
 void VideoPresentationModelContext::requestRouteSharingPolicyAndContextUID(CompletionHandler<void(WebCore::RouteSharingPolicy, String)>&& completionHandler)
 {
     ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER);
@@ -575,13 +591,13 @@ void VideoPresentationManagerProxy::invalidateInterface(WebCore::PlatformVideoPr
 {
     interface.setVideoPresentationModel(nullptr);
 
-    if (auto *layerHostView = interface.layerHostView()) {
+    if (RetainPtr layerHostView = interface.layerHostView()) {
         [layerHostView removeFromSuperview];
         interface.setLayerHostView(nullptr);
     }
 
-    if (auto *playerLayer = interface.playerLayer()) {
-        playerLayer.presentationModel = nil;
+    if (RetainPtr playerLayer = interface.playerLayer()) {
+        playerLayer.get().presentationModel = nil;
         interface.setPlayerLayer(nullptr);
     }
 
@@ -882,13 +898,13 @@ RetainPtr<WKLayerHostView> VideoPresentationManagerProxy::createLayerHostViewWit
         auto hostingView = adoptNS([[BELayerHierarchyHostingView alloc] init]);
         view->_hostingView = hostingView;
         [view addSubview:hostingView.get()];
-        auto layer = [hostingView layer];
+        RetainPtr layer = [hostingView layer];
 #else
-        auto layer = [view layer];
+        RetainPtr layer = [view layer];
 #endif
-        layer.masksToBounds = NO;
-        layer.name = @"WKLayerHostView layer";
-        layer.frame = CGRectMake(0, 0, initialSize.width(), initialSize.height());
+        layer.get().masksToBounds = NO;
+        layer.get().name = @"WKLayerHostView layer";
+        layer.get().frame = CGRectMake(0, 0, initialSize.width(), initialSize.height());
     }
 
 #if USE(EXTENSIONKIT)
@@ -967,12 +983,9 @@ void VideoPresentationManagerProxy::willRemoveLayerForID(PlaybackSessionContextI
     removeClientForContext(contextId);
 }
 
-std::optional<SharedPreferencesForWebProcess> VideoPresentationManagerProxy::sharedPreferencesForWebProcess() const
+std::optional<SharedPreferencesForWebProcess> VideoPresentationManagerProxy::sharedPreferencesForWebProcess(IPC::Connection& connection) const
 {
-    if (!m_page)
-        return std::nullopt;
-
-    return m_page->legacyMainFrameProcess().sharedPreferencesForWebProcess();
+    return WebProcessProxy::fromConnection(connection)->sharedPreferencesForWebProcess();
 }
 
 void VideoPresentationManagerProxy::swapFullscreenModes(PlaybackSessionContextIdentifier firstContextId, PlaybackSessionContextIdentifier secondContextId)
@@ -1452,9 +1465,9 @@ void VideoPresentationManagerProxy::didCleanupFullscreen(PlaybackSessionContextI
 
     [interface->layerHostView() removeFromSuperview];
     interface->removeCaptionsLayer();
-    if (auto playerLayer = interface->playerLayer()) {
+    if (RetainPtr playerLayer = interface->playerLayer()) {
         // Return the video layer to the player layer
-        auto videoView = interface->layerHostView();
+        RetainPtr videoView = interface->layerHostView();
         [playerLayer addSublayer:[videoView layer]];
         [playerLayer layoutSublayers];
     } else {
@@ -1529,6 +1542,20 @@ void VideoPresentationManagerProxy::fullscreenMayReturnToInline(PlaybackSessionC
     if (RefPtr page = m_page.get())
         page->protectedLegacyMainFrameProcess()->send(Messages::VideoPresentationManager::FullscreenMayReturnToInline(contextId, page->isViewVisible()), page->webPageIDInMainFrameProcess());
 }
+
+#if ENABLE(LINEAR_MEDIA_PLAYER)
+void VideoPresentationManagerProxy::didEnterExternalPlayback(PlaybackSessionContextIdentifier contextId)
+{
+    if (RefPtr page = m_page.get())
+        page->protectedLegacyMainFrameProcess()->send(Messages::VideoPresentationManager::DidEnterExternalPlayback(contextId), page->webPageIDInMainFrameProcess());
+}
+
+void VideoPresentationManagerProxy::didExitExternalPlayback(PlaybackSessionContextIdentifier contextId)
+{
+    if (RefPtr page = m_page.get())
+        page->protectedLegacyMainFrameProcess()->send(Messages::VideoPresentationManager::DidExitExternalPlayback(contextId), page->webPageIDInMainFrameProcess());
+}
+#endif
 
 #endif
 

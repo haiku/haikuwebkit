@@ -46,6 +46,9 @@
 #if HAVE(PIP_SKIP_PREROLL)
 #import <WebCore/VideoPresentationInterfaceMac.h>
 #endif
+#if ENABLE(LINEAR_MEDIA_PLAYER)
+#import <WebCore/VideoPresentationInterfaceIOS.h>
+#endif
 #import <wtf/LoggerHelper.h>
 #import <wtf/TZoneMallocInlines.h>
 
@@ -1061,6 +1064,16 @@ void PlaybackSessionManagerProxy::setVideoReceiverEndpoint(PlaybackSessionContex
 
     VideoReceiverEndpointMessage endpointMessage(WTFMove(processIdentifier), contextId, WTFMove(playerIdentifier), endpoint, endpointIdentifier);
     xpc_connection_send_message(xpcConnection.get(), endpointMessage.encode().get());
+
+    RefPtr videoPresentationManager = page->videoPresentationManager();
+    if (!videoPresentationManager)
+        return;
+
+    RefPtr controlsManagerInterface = videoPresentationManager->controlsManagerInterface();
+    if (!controlsManagerInterface)
+        return;
+
+    controlsManagerInterface->didSetVideoReceiverEndpoint();
 #else
     UNUSED_PARAM(contextId);
     UNUSED_PARAM(endpoint);
@@ -1172,12 +1185,9 @@ void PlaybackSessionManagerProxy::updateVideoControlsManager(PlaybackSessionCont
         page->videoControlsManagerDidChange();
 }
 
-std::optional<SharedPreferencesForWebProcess> PlaybackSessionManagerProxy::sharedPreferencesForWebProcess() const
+std::optional<SharedPreferencesForWebProcess> PlaybackSessionManagerProxy::sharedPreferencesForWebProcess(IPC::Connection& connection) const
 {
-    if (!m_page)
-        return std::nullopt;
-
-    return m_page->legacyMainFrameProcess().sharedPreferencesForWebProcess();
+    return WebProcessProxy::fromConnection(connection)->sharedPreferencesForWebProcess();
 }
 
 #if !RELEASE_LOG_DISABLED

@@ -93,8 +93,8 @@ NSDictionary *WebPushMessage::toDictionary() const
 
     return @{
         WebKitPushDataKey : nsData ? nsData.get() : [NSNull null],
-        WebKitPushRegistrationURLKey : (NSURL *)registrationURL,
-        WebKitPushPartitionKey : (NSString *)pushPartitionString,
+        WebKitPushRegistrationURLKey : registrationURL.createNSURL().get(),
+        WebKitPushPartitionKey : pushPartitionString.createNSString().get(),
         WebKitNotificationPayloadKey : nsPayload ? nsPayload.get() : [NSNull null]
     };
 }

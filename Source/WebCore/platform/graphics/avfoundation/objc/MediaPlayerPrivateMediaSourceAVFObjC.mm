@@ -179,12 +179,6 @@ MediaPlayerPrivateMediaSourceAVFObjC::~MediaPlayerPrivateMediaSourceAVFObjC()
 
 class MediaPlayerFactoryMediaSourceAVFObjC final : public MediaPlayerFactory {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(MediaPlayerFactoryMediaSourceAVFObjC);
-public:
-    MediaPlayerFactoryMediaSourceAVFObjC()
-    {
-        MediaSessionManagerCocoa::ensureCodecsRegistered();
-    }
-
 private:
     MediaPlayerEnums::MediaEngineIdentifier identifier() const final { return MediaPlayerEnums::MediaEngineIdentifier::AVFoundationMSE; };
 
@@ -1895,6 +1889,8 @@ void MediaPlayerPrivateMediaSourceAVFObjC::setVideoTarget(const PlatformVideoTar
 
     // Transition to docking goes: Layer -> StagedVideoRenderer -> Renderer
     // Transition from docking goes: Renderer -> StagedLayer -> Layer
+    // Transition to external playback goes: Layer -> StagedVideoRenderer -> Renderer
+    // Transition from external playback goes: Renderer -> StagedLayer -> Layer
     auto oldAcceleratedVideoMode = m_acceleratedVideoMode;
     switch (oldAcceleratedVideoMode) {
     case AcceleratedVideoMode::Layer:

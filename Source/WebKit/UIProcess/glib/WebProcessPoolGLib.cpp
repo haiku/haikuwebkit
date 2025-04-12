@@ -63,6 +63,7 @@
 #if PLATFORM(GTK)
 #include "AcceleratedBackingStoreDMABuf.h"
 #include "Display.h"
+#include <gtk/gtk.h>
 #endif
 
 #if PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
@@ -76,6 +77,66 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 #endif
 
 namespace WebKit {
+
+#if PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
+static OptionSet<AvailableInputDevices> toAvailableInputDevices(WPEAvailableInputDevices inputDevices)
+{
+    OptionSet<AvailableInputDevices> availableInputDevices;
+    if (inputDevices & WPE_AVAILABLE_INPUT_DEVICE_MOUSE)
+        availableInputDevices.add(AvailableInputDevices::Mouse);
+    if (inputDevices & WPE_AVAILABLE_INPUT_DEVICE_KEYBOARD)
+        availableInputDevices.add(AvailableInputDevices::Keyboard);
+    if (inputDevices & WPE_AVAILABLE_INPUT_DEVICE_TOUCHSCREEN)
+        availableInputDevices.add(AvailableInputDevices::Touchscreen);
+
+    return availableInputDevices;
+}
+#endif
+
+#if PLATFORM(GTK)
+static OptionSet<AvailableInputDevices> toAvailableInputDevices(GdkSeatCapabilities capabilities)
+{
+    OptionSet<AvailableInputDevices> availableInputDevices;
+    if (capabilities & GDK_SEAT_CAPABILITY_POINTER)
+        availableInputDevices.add(AvailableInputDevices::Mouse);
+    if (capabilities & GDK_SEAT_CAPABILITY_KEYBOARD)
+        availableInputDevices.add(AvailableInputDevices::Keyboard);
+    if (capabilities & GDK_SEAT_CAPABILITY_TOUCH)
+        availableInputDevices.add(AvailableInputDevices::Touchscreen);
+    return availableInputDevices;
+}
+#endif
+
+#if PLATFORM(GTK) || PLATFORM(WPE)
+static OptionSet<AvailableInputDevices> availableInputDevices()
+{
+#if ENABLE(WPE_PLATFORM)
+    bool usingWPEPlatformAPI = !!g_type_class_peek(WPE_TYPE_DISPLAY);
+    if (usingWPEPlatformAPI) {
+        const auto inputDevices = wpe_display_get_available_input_devices(wpe_display_get_primary());
+        return toAvailableInputDevices(inputDevices);
+    }
+#endif
+#if PLATFORM(GTK)
+    if (auto* display = gdk_display_get_default()) {
+        if (auto* seat = gdk_display_get_default_seat(display))
+            return toAvailableInputDevices(gdk_seat_get_capabilities(seat));
+    }
+#endif
+#if ENABLE(TOUCH_EVENTS)
+    return AvailableInputDevices::Touchscreen;
+#else
+    return AvailableInputDevices::Mouse;
+#endif
+}
+#endif // PLATFORM(GTK) || PLATFORM(WPE)
+
+#if PLATFORM(GTK)
+static void seatDevicesChangedCallback(GdkSeat* seat, GdkDevice*, WebProcessPool* pool)
+{
+    pool->sendToAllProcesses(Messages::WebProcess::SetAvailableInputDevices(toAvailableInputDevices(gdk_seat_get_capabilities(seat))));
+}
+#endif
 
 void WebProcessPool::platformInitialize(NeedsGlobalStaticInitialization)
 {
@@ -101,6 +162,26 @@ void WebProcessPool::platformInitialize(NeedsGlobalStaticInitialization)
 #if OS(LINUX)
     if (!MemoryPressureMonitor::disabled())
         installMemoryPressureHandler();
+#endif
+
+#if ENABLE(WPE_PLATFORM)
+    bool usingWPEPlatformAPI = !!g_type_class_peek(WPE_TYPE_DISPLAY);
+    if (usingWPEPlatformAPI) {
+        auto* display = wpe_display_get_primary();
+        g_signal_connect(display, "notify::available-input-devices", G_CALLBACK(+[](WPEDisplay* display, GParamSpec*, WebProcessPool* pool) {
+            auto availableInputDevices = toAvailableInputDevices(wpe_display_get_available_input_devices(display));
+            pool->sendToAllProcesses(Messages::WebProcess::SetAvailableInputDevices(availableInputDevices));
+        }), this);
+    }
+#endif
+
+#if PLATFORM(GTK)
+    if (auto* display = gdk_display_get_default()) {
+        if (auto* seat = gdk_display_get_default_seat(display)) {
+            g_signal_connect(seat, "device-added", G_CALLBACK(seatDevicesChangedCallback), this);
+            g_signal_connect(seat, "device-removed", G_CALLBACK(seatDevicesChangedCallback), this);
+        }
+    }
 #endif
 }
 
@@ -135,6 +216,7 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
     }
 #endif
 
+    parameters.availableInputDevices = availableInputDevices();
     parameters.memoryCacheDisabled = m_memoryCacheDisabled || LegacyGlobalSettings::singleton().cacheModel() == CacheModel::DocumentViewer;
 
 #if OS(LINUX)
@@ -185,6 +267,19 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
 
 void WebProcessPool::platformInvalidateContext()
 {
+#if ENABLE(WPE_PLATFORM)
+    bool usingWPEPlatformAPI = !!g_type_class_peek(WPE_TYPE_DISPLAY);
+    if (usingWPEPlatformAPI) {
+        auto* display = wpe_display_get_primary();
+        g_signal_handlers_disconnect_by_data(display, this);
+    }
+#endif
+#if PLATFORM(GTK)
+    if (auto* display = gdk_display_get_default()) {
+        if (auto* seat = gdk_display_get_default_seat(display))
+            g_signal_handlers_disconnect_by_data(seat, this);
+    }
+#endif
 }
 
 void WebProcessPool::platformResolvePathsForSandboxExtensions()

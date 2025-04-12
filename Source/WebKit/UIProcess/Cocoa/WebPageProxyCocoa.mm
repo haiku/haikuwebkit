@@ -45,7 +45,6 @@
 #import "PageClient.h"
 #import "PlatformXRSystem.h"
 #import "PlaybackSessionManagerProxy.h"
-#import "QuickLookThumbnailLoader.h"
 #import "RemoteLayerTreeTransaction.h"
 #import "SafeBrowsingSPI.h"
 #import "SharedBufferReference.h"
@@ -243,7 +242,7 @@ void WebPageProxy::beginSafeBrowsingCheck(const URL& url, bool forMainFrameNavig
     SSBLookupContext *context = [SSBLookupContext sharedLookupContext];
     if (!context)
         return listener.didReceiveSafeBrowsingResults({ });
-    [context lookUpURL:url completionHandler:makeBlockPtr([listener = Ref { listener }, forMainFrameNavigation, url = url] (SSBLookupResult *result, NSError *error) mutable {
+    [context lookUpURL:url.createNSURL().get() completionHandler:makeBlockPtr([listener = Ref { listener }, forMainFrameNavigation, url = url] (SSBLookupResult *result, NSError *error) mutable {
         RunLoop::protectedMain()->dispatch([listener = WTFMove(listener), result = retainPtr(result), error = retainPtr(error), forMainFrameNavigation, url = WTFMove(url)] {
             if (error) {
                 listener->didReceiveSafeBrowsingResults({ });
@@ -737,35 +736,6 @@ void WebPageProxy::fullscreenVideoTextRecognitionTimerFired()
 }
 #endif // ENABLE(VIDEO_PRESENTATION_MODE)
 
-#if HAVE(QUICKLOOK_THUMBNAILING)
-
-void WebPageProxy::requestThumbnail(WKQLThumbnailLoadOperation *operation)
-{
-    [operation setCompletionBlock:^{
-        RunLoop::protectedMain()->dispatch([this, operation = retainPtr(operation)] {
-            auto identifier = [operation identifier];
-            auto convertedImage = convertPlatformImageToBitmap([operation thumbnail], iconSize);
-            if (!convertedImage)
-                return;
-            this->updateAttachmentThumbnail(identifier, convertedImage);
-        });
-    }];
-
-    [[WKQLThumbnailQueueManager sharedInstance].queue addOperation:operation];
-}
-
-void WebPageProxy::requestThumbnail(const API::Attachment& attachment, const String& identifier)
-{
-    requestThumbnail(adoptNS([[WKQLThumbnailLoadOperation alloc] initWithAttachment:attachment identifier:identifier]).get());
-}
-
-void WebPageProxy::requestThumbnailWithPath(const String& filePath, const String& identifier)
-{
-    requestThumbnail(adoptNS([[WKQLThumbnailLoadOperation alloc] initWithURL:filePath identifier:identifier]).get());
-}
-
-#endif // HAVE(QUICKLOOK_THUMBNAILING)
-
 #if ENABLE(ATTACHMENT_ELEMENT) && PLATFORM(MAC)
 
 bool WebPageProxy::updateIconForDirectory(NSFileWrapper *fileWrapper, const String& identifier)
@@ -926,7 +896,7 @@ void WebPageProxy::startApplePayAMSUISession(URL&& originatingURL, ApplePayAMSUI
     }
 
     RetainPtr amsRequest = adoptNS([allocAMSEngagementRequestInstance() initWithRequestDictionary:dynamic_objc_cast<NSDictionary>([NSJSONSerialization JSONObjectWithData:[WTFMove(request.engagementRequest) dataUsingEncoding:NSUTF8StringEncoding] options:0 error:nil])]);
-    [amsRequest setOriginatingURL:WTFMove(originatingURL)];
+    [amsRequest setOriginatingURL:originatingURL.createNSURL().get()];
 
     auto amsBag = retainPtr([getAMSUIEngagementTaskClass() createBagForSubProfile]);
 
@@ -1030,7 +1000,7 @@ NSDictionary *WebPageProxy::contentsOfUserInterfaceItem(NSString *userInterfaceI
 #if ENABLE(CONTEXT_MENUS)
     RefPtr activeContextMenu = m_activeContextMenu;
     if (activeContextMenu && [userInterfaceItem isEqualToString:@"mediaControlsContextMenu"])
-        return @{ userInterfaceItem: activeContextMenu->platformData() };
+        return @{ userInterfaceItem: activeContextMenu->platformData().get() };
 #endif // ENABLE(CONTEXT_MENUS)
 
     return nil;

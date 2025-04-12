@@ -193,7 +193,6 @@ public:
 
 #if PLATFORM(IOS_FAMILY)
     String resolvedCookieStorageDirectory();
-    String resolvedContainerCachesWebContentDirectory();
     String resolvedContainerTemporaryDirectory();
     static String defaultResolvedContainerTemporaryDirectory();
     static String cacheDirectoryInContainerOrHomeDirectory(const String& subpath);
@@ -516,6 +515,8 @@ public:
 #endif
 
     bool isRemovingData() const { return!!m_removeDataTaskCounter.value(); }
+    uint64_t cookiesVersion() const { return m_cookiesVersion; }
+    void setCookies(Vector<WebCore::Cookie>&&, CompletionHandler<void()>&&);
 
 private:
     enum class ForceReinitialization : bool { No, Yes };
@@ -666,6 +667,7 @@ private:
     HashSet<URL> m_persistedSiteURLs;
 
     RemoveDataTaskCounter m_removeDataTaskCounter;
+    uint64_t m_cookiesVersion { 0 };
 };
 
 }

@@ -477,6 +477,12 @@ void TypeChecker::visit(AST::Structure& structure)
                 return;
             }
 
+            if (!std::holds_alternative<Types::Array>(*memberType)) {
+                typeError(InferBottom::No, member.span(), "a struct that contains a runtime array cannot be nested inside another struct"_s);
+                introduceType(structure.name(), m_types.bottomType());
+                return;
+            }
+
             if (i != structure.members().size() - 1) {
                 typeError(InferBottom::No, member.span(), "runtime arrays may only appear as the last member of a struct"_s);
                 introduceType(structure.name(), m_types.bottomType());
@@ -905,8 +911,6 @@ void TypeChecker::visit(AST::IfStatement& statement)
 void TypeChecker::visit(AST::PhonyAssignmentStatement& statement)
 {
     infer(statement.rhs(), Evaluation::Runtime);
-    // There is nothing to unify with since result of the right-hand side is
-    // discarded.
 }
 
 void TypeChecker::visit(AST::ReturnStatement& statement)
@@ -1346,6 +1350,8 @@ void TypeChecker::visit(AST::CallExpression& call)
 
             if (m_discardResult == DiscardResult::Yes && functionType.mustUse)
                 typeError(InferBottom::No, call.span(), "ignoring return value of function '"_s, targetName, "' annotated with @must_use"_s);
+            else if (m_discardResult == DiscardResult::No && isPrimitive(functionType.result, Types::Primitive::Void))
+                typeError(InferBottom::No, call.span(), "function '"_s, targetName, "' does not return a value"_s);
 
             for (unsigned i = 0; i < numberOfArguments; ++i) {
                 auto& argument = call.arguments()[i];
@@ -2112,10 +2118,13 @@ Behaviors TypeChecker::analyze(AST::Statement& statement)
         return Behavior::Return;
     case AST::NodeKind::ContinueStatement: {
         bool hasLoopTarget = false;
+        bool hasSwitchTarget = false;
         for (int i = m_breakTargetStack.size() - 1; i >= 0; --i) {
             auto& target = m_breakTargetStack[i];
-            if (std::holds_alternative<AST::SwitchStatement*>(target))
+            if (std::holds_alternative<AST::SwitchStatement*>(target)) {
+                hasSwitchTarget = true;
                 continue;
+            }
 
             hasLoopTarget = true;
 
@@ -2125,7 +2134,7 @@ Behaviors TypeChecker::analyze(AST::Statement& statement)
             }
 
             if (auto** loop = std::get_if<AST::LoopStatement*>(&target)) {
-                if ((*loop)->continuing().has_value()) {
+                if (hasSwitchTarget && (*loop)->continuing().has_value()) {
                     (*loop)->setContainsSwitch();
                     auto& continueStatement = downcast<AST::ContinueStatement>(statement);
                     continueStatement.setIsFromSwitchToContinuing();

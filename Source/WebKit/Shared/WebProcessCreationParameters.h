@@ -59,6 +59,7 @@
 #endif
 
 #if PLATFORM(GTK) || PLATFORM(WPE)
+#include "AvailableInputDevices.h"
 #include "RendererBufferTransportMode.h"
 #include <WebCore/SystemSettings.h>
 #include <wtf/MemoryPressureHandler.h>
@@ -232,6 +233,9 @@ struct WebProcessCreationParameters {
 #if PLATFORM(GTK) || PLATFORM(WPE)
     OptionSet<RendererBufferTransportMode> rendererBufferTransportMode;
     WebCore::SystemSettings::State systemSettings;
+    std::optional<MemoryPressureHandler::Configuration> memoryPressureHandlerConfiguration;
+    bool disableFontHintingForTesting { false };
+    OptionSet<AvailableInputDevices> availableInputDevices;
 #endif
 
 #if PLATFORM(GTK)
@@ -250,11 +254,6 @@ struct WebProcessCreationParameters {
     AccessibilityPreferences accessibilityPreferences;
 #if PLATFORM(IOS_FAMILY)
     bool applicationAccessibilityEnabled { false };
-#endif
-
-#if PLATFORM(GTK) || PLATFORM(WPE)
-    std::optional<MemoryPressureHandler::Configuration> memoryPressureHandlerConfiguration;
-    bool disableFontHintingForTesting { false };
 #endif
 
 #if USE(GLIB)

@@ -171,6 +171,7 @@ messages -> WebProcess : AuxiliaryProcess WantsAsyncDispatchMessage {
 
 #if PLATFORM(GTK) || PLATFORM(WPE)
     SendMessageToWebProcessExtension(struct WebKit::UserMessage userMessage)
+    SetAvailableInputDevices(OptionSet<WebKit::AvailableInputDevices> availableInputDevices)
 #endif
 
     SeedResourceLoadStatisticsForTesting(WebCore::RegistrableDomain firstPartyDomain, WebCore::RegistrableDomain thirdPartyDomain, bool shouldScheduleNotification) -> ()

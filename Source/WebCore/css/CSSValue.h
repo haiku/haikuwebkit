@@ -21,6 +21,7 @@
 #pragma once
 
 #include <wtf/IterationStatus.h>
+#include <wtf/NoVirtualDestructorBase.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TypeCasts.h>
@@ -52,7 +53,7 @@ struct SerializationContext;
 }
 
 DECLARE_COMPACT_ALLOCATOR_WITH_HEAP_IDENTIFIER(CSSValue);
-class CSSValue {
+class CSSValue : public NoVirtualDestructorBase {
     WTF_MAKE_NONCOPYABLE(CSSValue);
     WTF_MAKE_FAST_COMPACT_ALLOCATED_WITH_HEAP_IDENTIFIER(CSSValue);
 public:
@@ -120,6 +121,7 @@ public:
     bool isSubgridValue() const { return m_classType == ClassType::Subgrid; }
     bool isTextShadowPropertyValue() const { return m_classType == ClassType::TextShadowProperty; }
     bool isTransformListValue() const { return m_classType == ClassType::TransformList; }
+    bool isURL() const { return m_classType == ClassType::URL; }
     bool isUnicodeRangeValue() const { return m_classType == ClassType::UnicodeRange; }
     bool isValueList() const { return m_classType == ClassType::ValueList; }
     bool isVariableReferenceValue() const { return m_classType == ClassType::VariableReference; }
@@ -244,6 +246,7 @@ protected:
         Reflect,
         Scroll,
         TextShadowProperty,
+        URL,
         UnicodeRange,
         ValuePair,
         VariableReference,

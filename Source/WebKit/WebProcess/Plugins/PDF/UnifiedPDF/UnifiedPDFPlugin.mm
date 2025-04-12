@@ -145,7 +145,7 @@
     RefPtr plugin = _plugin.get();
     plugin->didMutatePDFDocument();
 
-    NSString *fieldName = (NSString *)[[notification userInfo] objectForKey:@"PDFFormFieldName"];
+    NSString *fieldName = checked_objc_cast<NSString>([[notification userInfo] objectForKey:@"PDFFormFieldName"]);
     plugin->repaintAnnotationsForFormField(fieldName);
 }
 @end
@@ -2126,7 +2126,7 @@ PlatformWheelEvent UnifiedPDFPlugin::wheelEventCopyWithVelocity(const PlatformWh
 bool UnifiedPDFPlugin::handleContextMenuEvent(const WebMouseEvent& event)
 {
 #if ENABLE(CONTEXT_MENUS)
-    RefPtr webPage = m_frame->page();
+    RefPtr webPage = m_frame ? m_frame->page() : nullptr;
     if (!webPage)
         return false;
 
@@ -2134,7 +2134,7 @@ bool UnifiedPDFPlugin::handleContextMenuEvent(const WebMouseEvent& event)
     if (!contextMenu)
         return false;
 
-    webPage->sendWithAsyncReply(Messages::WebPageProxy::ShowPDFContextMenu { *contextMenu, identifier() }, [eventPosition = event.position(), weakThis = WeakPtr { *this }](std::optional<int32_t>&& selectedItemTag) {
+    webPage->sendWithAsyncReply(Messages::WebPageProxy::ShowPDFContextMenu { *contextMenu, identifier(), m_frame->frameID() }, [eventPosition = event.position(), weakThis = WeakPtr { *this }](std::optional<int32_t>&& selectedItemTag) {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
@@ -3451,7 +3451,7 @@ RefPtr<WebCore::TextIndicator> UnifiedPDFPlugin::textIndicatorForTextMatch(const
     if (!selection)
         return { };
 
-    return textIndicatorForSelection(selection.get(), { WebCore::TextIndicatorOption::IncludeMarginIfRangeMatchesSelection }, transition);
+    return textIndicatorForSelection(selection.get(), WebCore::TextIndicatorOption::IncludeMarginIfRangeMatchesSelection, transition);
 }
 
 RefPtr<TextIndicator> UnifiedPDFPlugin::textIndicatorForCurrentSelection(OptionSet<WebCore::TextIndicatorOption> options, WebCore::TextIndicatorPresentationTransition transition)
@@ -3460,41 +3460,40 @@ RefPtr<TextIndicator> UnifiedPDFPlugin::textIndicatorForCurrentSelection(OptionS
     return textIndicatorForSelection(selection.get(), options, transition);
 }
 
-RefPtr<TextIndicator> UnifiedPDFPlugin::textIndicatorForSelection(PDFSelection *selection, OptionSet<WebCore::TextIndicatorOption> options, WebCore::TextIndicatorPresentationTransition transition)
+std::optional<TextIndicatorData> UnifiedPDFPlugin::textIndicatorDataForPageRect(FloatRect pageRect, PDFDocumentLayout::PageIndex pageIndex, const std::optional<Color>& highlightColor)
 {
-    auto selectionPageCoverage = pageCoverageForSelection(selection, FirstPageOnly::Yes);
-    if (selectionPageCoverage.isEmpty())
-        return nullptr;
-
-    auto rectInContentsCoordinates = convertUp(CoordinateSpace::PDFPage, CoordinateSpace::Contents, selectionPageCoverage[0].pageBounds, selectionPageCoverage[0].pageIndex);
-    auto rectInPluginCoordinates = convertUp(CoordinateSpace::Contents, CoordinateSpace::Plugin, rectInContentsCoordinates);
-    auto rectInRootViewCoordinates = convertFromPluginToRootView(enclosingIntRect(rectInPluginCoordinates));
-
+    auto mainFrameScaleForTextIndicator = [this] {
+        if (handlesPageScaleFactor())
+            return 1.0;
+        if (!m_frame || !m_frame->page())
+            return 1.0;
+        return m_frame->protectedPage()->pageScaleFactor();
+    }();
     float deviceScaleFactor = this->deviceScaleFactor();
 
-    auto buffer = ImageBuffer::create(rectInRootViewCoordinates.size(), RenderingMode::Unaccelerated, RenderingPurpose::ShareableSnapshot, deviceScaleFactor, DestinationColorSpace::SRGB(), ImageBufferPixelFormat::BGRA8);
+    auto rectInContentsCoordinates = convertUp(CoordinateSpace::PDFPage, CoordinateSpace::Contents, pageRect, pageIndex);
+    auto rectInPluginCoordinates = convertUp(CoordinateSpace::Contents, CoordinateSpace::Plugin, rectInContentsCoordinates);
+    auto rectInRootViewCoordinates = convertFromPluginToRootView(encloseRectToDevicePixels(rectInPluginCoordinates, deviceScaleFactor));
+    auto bufferSize = rectInRootViewCoordinates.size().scaled(mainFrameScaleForTextIndicator);
+
+    auto buffer { ImageBuffer::create(bufferSize, RenderingMode::Unaccelerated, RenderingPurpose::ShareableSnapshot, deviceScaleFactor, DestinationColorSpace::SRGB(), ImageBufferPixelFormat::BGRA8) };
     if (!buffer)
-        return nullptr;
+        return { };
 
     auto& context = buffer->context();
 
     {
         GraphicsContextStateSaver saver(context);
 
-        context.scale(m_scaleFactor);
+        context.scale(nonNormalizedScaleFactor() * mainFrameScaleForTextIndicator);
         context.translate(-rectInContentsCoordinates.location());
 
-        auto layoutRow = m_documentLayout.rowForPageIndex(selectionPageCoverage[0].pageIndex);
+        auto layoutRow { m_documentLayout.rowForPageIndex(pageIndex) };
         paintPDFContent(nullptr, context, rectInContentsCoordinates, layoutRow);
     }
 
-    // FIXME: Figure out how to share this with WebTextIndicatorLayer.
-#if PLATFORM(MAC)
-    Color highlightColor = *roundAndClampToSRGBALossy([NSColor findHighlightColor].CGColor);
-#else
-    Color highlightColor = SRGBA<float>(.99, .89, 0.22, 1.0);
-#endif
-    context.fillRect({ { 0, 0 }, rectInRootViewCoordinates.size() }, highlightColor, CompositeOperator::SourceOver, BlendMode::Multiply);
+    if (highlightColor)
+        context.fillRect({ { 0, 0 }, bufferSize }, *highlightColor, CompositeOperator::SourceOver, BlendMode::Multiply);
 
     TextIndicatorData data;
     data.contentImage = BitmapImage::create(ImageBuffer::sinkIntoNativeImage(WTFMove(buffer)));
@@ -3503,11 +3502,57 @@ RefPtr<TextIndicator> UnifiedPDFPlugin::textIndicatorForSelection(PDFSelection *
     data.contentImageWithoutSelectionRectInRootViewCoordinates = rectInRootViewCoordinates;
     data.selectionRectInRootViewCoordinates = rectInRootViewCoordinates;
     data.textBoundingRectInRootViewCoordinates = rectInRootViewCoordinates;
-    data.textRectsInBoundingRectCoordinates = { FloatRect { 0, 0, static_cast<float>(rectInRootViewCoordinates.width()), static_cast<float>(rectInRootViewCoordinates.height()) } };
-    data.presentationTransition = transition;
-    data.options = options;
+    data.textRectsInBoundingRectCoordinates = { { { 0, 0, }, rectInRootViewCoordinates.size() } };
 
-    return TextIndicator::create(data);
+    return data;
+}
+
+Color UnifiedPDFPlugin::selectionTextIndicatorHighlightColor()
+{
+#if PLATFORM(MAC)
+    static NeverDestroyed color = roundAndClampToSRGBALossy([NSColor findHighlightColor].CGColor);
+#else
+    static NeverDestroyed color = SRGBA<float> { .99, .89, .22, 1.0 };
+#endif
+    return color.get();
+}
+
+RefPtr<TextIndicator> UnifiedPDFPlugin::textIndicatorForSelection(PDFSelection *selection, OptionSet<TextIndicatorOption> options, TextIndicatorPresentationTransition transition)
+{
+    auto selectionPageCoverage { pageCoverageForSelection(selection, FirstPageOnly::Yes) };
+    if (selectionPageCoverage.isEmpty())
+        return nullptr;
+
+    LOG_WITH_STREAM(PDF, stream << "UnifiedPDFPlugin: creating text indicator for selection with page coverage " << selectionPageCoverage);
+
+    auto data { textIndicatorDataForPageRect(selectionPageCoverage[0].pageBounds, selectionPageCoverage[0].pageIndex, selectionTextIndicatorHighlightColor()) };
+    if (!data)
+        return nullptr;
+
+    data->presentationTransition = transition;
+    data->options = options;
+    return TextIndicator::create(*data);
+}
+
+RefPtr<TextIndicator> UnifiedPDFPlugin::textIndicatorForAnnotation(PDFAnnotation *annotation)
+{
+    if (!annotation)
+        return nullptr;
+
+    auto maybePageIndex { m_documentLayout.indexForPage(annotation.page) };
+    if (!maybePageIndex)
+        return nullptr;
+
+    auto pageIndex { *maybePageIndex };
+    FloatRect pageBounds { annotation.bounds };
+
+    LOG_WITH_STREAM(PDF, stream << "UnifiedPDFPlugin: creating text indicator for annotation at page index " << pageIndex << " with bounds " << pageBounds);
+
+    auto data { textIndicatorDataForPageRect(pageBounds, pageIndex) };
+    if (!data)
+        return nullptr;
+
+    return TextIndicator::create(*data);
 }
 
 WebCore::DictionaryPopupInfo UnifiedPDFPlugin::dictionaryPopupInfoForSelection(PDFSelection *selection, WebCore::TextIndicatorPresentationTransition presentationTransition)
@@ -4202,16 +4247,28 @@ void UnifiedPDFPlugin::setDisplayModeAndUpdateLayout(PDFDocumentLayout::DisplayM
 
 #if PLATFORM(IOS_FAMILY)
 
-std::pair<URL, FloatRect> UnifiedPDFPlugin::linkURLAndBoundsAtPoint(FloatPoint pointInRootView) const
+std::pair<URL, FloatRect> UnifiedPDFPlugin::linkURLAndBoundsForAnnotation(PDFAnnotation *annotation) const
 {
-    RetainPtr annotation = annotationForRootViewPoint(roundedIntPoint(pointInRootView));
     if (!annotation)
         return { };
 
-    if (!annotationIsLinkWithDestination(annotation.get()))
+    if (!annotationIsLinkWithDestination(annotation))
         return { };
 
     return { [annotation URL], pageToRootView([annotation bounds], [annotation page]) };
+}
+
+std::pair<URL, FloatRect> UnifiedPDFPlugin::linkURLAndBoundsAtPoint(FloatPoint pointInRootView) const
+{
+    RetainPtr annotation = annotationForRootViewPoint(roundedIntPoint(pointInRootView));
+    return linkURLAndBoundsForAnnotation(annotation.get());
+}
+
+std::tuple<URL, FloatRect, RefPtr<TextIndicator>> UnifiedPDFPlugin::linkDataAtPoint(FloatPoint pointInRootView)
+{
+    RetainPtr annotation = annotationForRootViewPoint(roundedIntPoint(pointInRootView));
+    auto [linkURL, bounds] = linkURLAndBoundsForAnnotation(annotation.get());
+    return { linkURL, bounds, textIndicatorForAnnotation(annotation.get()) };
 }
 
 std::optional<FloatRect> UnifiedPDFPlugin::highlightRectForTapAtPoint(FloatPoint pointInRootView) const

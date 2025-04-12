@@ -4596,14 +4596,15 @@
    },
    {
       "emails" : [
-         "jhoffman23@apple.com"
+         "jhoffman23@apple.com",
+         "josh_hoffman@apple.com"
       ],
       "github" : "hoffmanjoshua",
       "name" : "Joshua Hoffman",
       "nicks" : [
          "hoffmanjoshua"
       ],
-      "status" : "committer"
+      "status" : "reviewer"
    },
    {
       "emails" : [
@@ -8045,6 +8046,18 @@
          "ich@liebefonts.com"
       ],
       "name" : "Ulrike Rausch"
+   },
+   {
+      "emails" : [
+         "u_uckun@apple.com",
+         "utku.uckun@gmail.com"
+      ],
+      "expertise" : "Accessibility",
+      "github" : "utkuuckun",
+      "name" : "Utku Uckun",
+      "nicks" : [
+         "utkuuckun"
+      ]
    },
    {
       "emails" : [

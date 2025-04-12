@@ -94,10 +94,10 @@
 #include <WebCore/ContentFilterUnblockHandler.h>
 #endif
 
-#define LOADER_RELEASE_LOG_WITH_THIS(thisPtr, fmt, ...) RELEASE_LOG(Network, "%p - [pageProxyID=%" PRIu64 ", webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ", isMainResource=%d, destination=%u, isSynchronous=%d] NetworkResourceLoader::" fmt, WTF::getPtr(thisPtr), thisPtr->webPageProxyID().toUInt64(), thisPtr->pageID().toUInt64(), thisPtr->frameID().object().toUInt64(), thisPtr->coreIdentifier().toUInt64(), thisPtr->isMainResource(), static_cast<unsigned>(thisPtr->m_parameters.options.destination), thisPtr->isSynchronous(), ##__VA_ARGS__)
-#define LOADER_RELEASE_LOG(fmt, ...) RELEASE_LOG(Network, "%p - [pageProxyID=%" PRIu64 ", webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ", isMainResource=%d, destination=%u, isSynchronous=%d] NetworkResourceLoader::" fmt, this, webPageProxyID().toUInt64(), pageID().toUInt64(), frameID().object().toUInt64(), coreIdentifier().toUInt64(), isMainResource(), static_cast<unsigned>(m_parameters.options.destination), isSynchronous(), ##__VA_ARGS__)
-#define LOADER_RELEASE_LOG_ERROR(fmt, ...) RELEASE_LOG_ERROR(Network, "%p - [pageProxyID=%" PRIu64 ", webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ", isMainResource=%d, destination=%u, isSynchronous=%d] NetworkResourceLoader::" fmt, this, webPageProxyID().toUInt64(), pageID().toUInt64(), frameID().object().toUInt64(), coreIdentifier().toUInt64(), isMainResource(), static_cast<unsigned>(m_parameters.options.destination), isSynchronous(), ##__VA_ARGS__)
-#define LOADER_RELEASE_LOG_FAULT(fmt, ...) RELEASE_LOG_FAULT(Network, "%p - [pageProxyID=%" PRIu64 ", webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ", isMainResource=%d, destination=%u, isSynchronous=%d] NetworkResourceLoader::" fmt, this, webPageProxyID().toUInt64(), pageID().toUInt64(), frameID().object().toUInt64(), coreIdentifier().toUInt64(), isMainResource(), static_cast<unsigned>(m_parameters.options.destination), isSynchronous(), ##__VA_ARGS__)
+#define LOADER_RELEASE_LOG_WITH_THIS(thisPtr, fmt, ...) RELEASE_LOG(Network, "%p - [pageProxyID=%" PRIu64 ", webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ", isMainResource=%d, destination=%u, isSynchronous=%d] NetworkResourceLoader::" fmt, WTF::getPtr(thisPtr), thisPtr->webPageProxyID().toUInt64(), thisPtr->pageID().toUInt64(), thisPtr->frameID().toUInt64(), thisPtr->coreIdentifier().toUInt64(), thisPtr->isMainResource(), static_cast<unsigned>(thisPtr->m_parameters.options.destination), thisPtr->isSynchronous(), ##__VA_ARGS__)
+#define LOADER_RELEASE_LOG(fmt, ...) RELEASE_LOG(Network, "%p - [pageProxyID=%" PRIu64 ", webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ", isMainResource=%d, destination=%u, isSynchronous=%d] NetworkResourceLoader::" fmt, this, webPageProxyID().toUInt64(), pageID().toUInt64(), frameID().toUInt64(), coreIdentifier().toUInt64(), isMainResource(), static_cast<unsigned>(m_parameters.options.destination), isSynchronous(), ##__VA_ARGS__)
+#define LOADER_RELEASE_LOG_ERROR(fmt, ...) RELEASE_LOG_ERROR(Network, "%p - [pageProxyID=%" PRIu64 ", webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ", isMainResource=%d, destination=%u, isSynchronous=%d] NetworkResourceLoader::" fmt, this, webPageProxyID().toUInt64(), pageID().toUInt64(), frameID().toUInt64(), coreIdentifier().toUInt64(), isMainResource(), static_cast<unsigned>(m_parameters.options.destination), isSynchronous(), ##__VA_ARGS__)
+#define LOADER_RELEASE_LOG_FAULT(fmt, ...) RELEASE_LOG_FAULT(Network, "%p - [pageProxyID=%" PRIu64 ", webPageID=%" PRIu64 ", frameID=%" PRIu64 ", resourceID=%" PRIu64 ", isMainResource=%d, destination=%u, isSynchronous=%d] NetworkResourceLoader::" fmt, this, webPageProxyID().toUInt64(), pageID().toUInt64(), frameID().toUInt64(), coreIdentifier().toUInt64(), isMainResource(), static_cast<unsigned>(m_parameters.options.destination), isSynchronous(), ##__VA_ARGS__)
 
 namespace WebKit {
 using namespace WebCore;
@@ -290,9 +290,6 @@ bool NetworkResourceLoader::startContentFiltering(ResourceRequest& request)
 #if HAVE(AUDIT_TOKEN)
     m_contentFilter->setHostProcessAuditToken(protectedConnectionToWebProcess()->protectedNetworkProcess()->sourceApplicationAuditToken());
 #endif
-#if HAVE(WEBCONTENTRESTRICTIONS)
-    m_contentFilter->setUsesWebContentRestrictions(protectedConnectionToWebProcess()->usesWebContentRestrictionsForFilter());
-#endif
     m_contentFilter->startFilteringMainResource(request.url());
     if (!m_contentFilter->continueAfterWillSendRequest(request, ResourceResponse())) {
         m_contentFilter->stopFilteringMainResource();
@@ -300,6 +297,7 @@ bool NetworkResourceLoader::startContentFiltering(ResourceRequest& request)
     }
     return true;
 }
+
 #endif
 
 void NetworkResourceLoader::retrieveCacheEntry(const ResourceRequest& request)
@@ -1088,10 +1086,10 @@ void NetworkResourceLoader::sendDidReceiveResponsePotentiallyInNewBrowsingContex
     });
 }
 
-void NetworkResourceLoader::didReceiveBuffer(const WebCore::FragmentedSharedBuffer& buffer, uint64_t reportedEncodedDataLength)
+void NetworkResourceLoader::didReceiveBuffer(const WebCore::FragmentedSharedBuffer& buffer)
 {
     if (!m_numBytesReceived)
-        LOADER_RELEASE_LOG("didReceiveData: Started receiving data (reportedEncodedDataLength=%" PRIu64 ")", reportedEncodedDataLength);
+        LOADER_RELEASE_LOG("didReceiveData: Started receiving data");
     m_numBytesReceived += buffer.size();
 
     ASSERT(!m_cacheEntryForValidation);
@@ -1109,11 +1107,10 @@ void NetworkResourceLoader::didReceiveBuffer(const WebCore::FragmentedSharedBuff
 
     if (m_bufferedData) {
         m_bufferedData.append(buffer);
-        m_bufferedDataEncodedDataLength += reportedEncodedDataLength;
         startBufferingTimerIfNeeded();
         return;
     }
-    sendBuffer(buffer, reportedEncodedDataLength);
+    sendBuffer(buffer);
 }
 
 void NetworkResourceLoader::didFinishLoading(const NetworkLoadMetrics& networkLoadMetrics)
@@ -1142,8 +1139,7 @@ void NetworkResourceLoader::didFinishLoading(const NetworkLoadMetrics& networkLo
         sendReplyToSynchronousRequest(*m_synchronousLoadData, m_bufferedData.get().get(), networkLoadMetrics);
     else {
         if (!m_bufferedData.isEmpty()) {
-            // FIXME: Pass a real value or remove the encoded data size feature.
-            sendBuffer(*m_bufferedData.get(), -1);
+            sendBuffer(*m_bufferedData.get());
         }
 #if ENABLE(CONTENT_FILTERING)
         if (m_contentFilter) {
@@ -1572,26 +1568,25 @@ void NetworkResourceLoader::bufferingTimerFired()
 
 #if ENABLE(CONTENT_FILTERING)
     auto sharedBuffer = m_bufferedData.takeAsContiguous();
-    bool shouldFilter = m_contentFilter && !m_contentFilter->continueAfterDataReceived(sharedBuffer, m_bufferedDataEncodedDataLength);
+    bool shouldFilter = m_contentFilter && !m_contentFilter->continueAfterDataReceived(sharedBuffer);
     if (!shouldFilter)
-        sendDidReceiveDataMessage(sharedBuffer, m_bufferedDataEncodedDataLength);
+        sendDidReceiveDataMessage(sharedBuffer);
 #else
-    sendDidReceiveDataMessage(m_bufferedData.takeAsContiguous(), m_bufferedDataEncodedDataLength);
+    sendDidReceiveDataMessage(m_bufferedData.takeAsContiguous());
 #endif
     m_bufferedData.empty();
-    m_bufferedDataEncodedDataLength = 0;
 }
 
-void NetworkResourceLoader::sendBuffer(const FragmentedSharedBuffer& buffer, size_t encodedDataLength)
+void NetworkResourceLoader::sendBuffer(const FragmentedSharedBuffer& buffer)
 {
     ASSERT(!isSynchronous());
 
 #if ENABLE(CONTENT_FILTERING)
-    if (m_contentFilter && !m_contentFilter->continueAfterDataReceived(buffer.makeContiguous(), encodedDataLength))
+    if (m_contentFilter && !m_contentFilter->continueAfterDataReceived(buffer.makeContiguous()))
         return;
 #endif
 
-    sendDidReceiveDataMessage(buffer, encodedDataLength);
+    sendDidReceiveDataMessage(buffer);
 }
 
 void NetworkResourceLoader::tryStoreAsCacheEntry()
@@ -1718,7 +1713,7 @@ void NetworkResourceLoader::sendResultForCacheEntry(std::unique_ptr<NetworkCache
 #if ENABLE(SHAREABLE_RESOURCE)
     if (auto handle = entry->shareableResourceHandle()) {
 #if ENABLE(CONTENT_FILTERING)
-        if (m_contentFilter && !m_contentFilter->continueAfterDataReceived(entry->protectedBuffer()->makeContiguous(), entry->buffer()->size())) {
+        if (m_contentFilter && !m_contentFilter->continueAfterDataReceived(entry->protectedBuffer()->makeContiguous())) {
             m_contentFilter->continueAfterNotifyFinished(m_parameters.request.url());
             m_contentFilter->stopFilteringMainResource();
             dispatchDidFinishResourceLoad();
@@ -1736,7 +1731,7 @@ void NetworkResourceLoader::sendResultForCacheEntry(std::unique_ptr<NetworkCache
 #endif
 
     RefPtr buffer = entry->protectedBuffer();
-    sendBuffer(*buffer, buffer->size());
+    sendBuffer(*buffer);
 #if ENABLE(CONTENT_FILTERING)
     if (m_contentFilter) {
         m_contentFilter->continueAfterNotifyFinished(m_parameters.request.url());
@@ -2122,11 +2117,11 @@ void NetworkResourceLoader::sendReportToEndpoints(const URL& baseURL, const Vect
 }
 
 #if ENABLE(CONTENT_FILTERING)
-bool NetworkResourceLoader::continueAfterServiceWorkerReceivedData(const WebCore::SharedBuffer& buffer, uint64_t encodedDataLength)
+bool NetworkResourceLoader::continueAfterServiceWorkerReceivedData(const WebCore::SharedBuffer& buffer)
 {
     if (!m_contentFilter)
         return true;
-    return m_contentFilter->continueAfterDataReceived(buffer, encodedDataLength);
+    return m_contentFilter->continueAfterDataReceived(buffer);
 }
 
 bool NetworkResourceLoader::continueAfterServiceWorkerReceivedResponse(const ResourceResponse& response)
@@ -2144,9 +2139,9 @@ void NetworkResourceLoader::serviceWorkerDidFinish()
     m_contentFilter->stopFilteringMainResource();
 }
 
-void NetworkResourceLoader::dataReceivedThroughContentFilter(const SharedBuffer& buffer, size_t encodedDataLength)
+void NetworkResourceLoader::dataReceivedThroughContentFilter(const SharedBuffer& buffer)
 {
-    sendDidReceiveDataMessage(buffer, encodedDataLength);
+    sendDidReceiveDataMessage(buffer);
 }
 
 WebCore::ResourceError NetworkResourceLoader::contentFilterDidBlock(WebCore::ContentFilterUnblockHandler unblockHandler, String&& unblockRequestDeniedScript)
@@ -2186,6 +2181,13 @@ void NetworkResourceLoader::handleProvisionalLoadFailureFromContentFilter(const 
     protectedConnectionToWebProcess()->protectedNetworkProcess()->addAllowedFirstPartyForCookies(m_connection->webProcessIdentifier(), RegistrableDomain { WebCore::ContentFilter::blockedPageURL() }, LoadedWebArchive::No, [] { });
     send(Messages::WebResourceLoader::ContentFilterDidBlockLoad(m_unblockHandler, m_unblockRequestDeniedScript, m_contentFilter->blockedError(), blockedPageURL, substituteData));
 }
+
+#if HAVE(WEBCONTENTRESTRICTIONS)
+bool NetworkResourceLoader::usesWebContentRestrictions()
+{
+    return protectedConnectionToWebProcess()->usesWebContentRestrictionsForFilter();
+}
+#endif
 #endif // ENABLE(CONTENT_FILTERING)
 
 void NetworkResourceLoader::useRedirectionForCurrentNavigation(WebCore::ResourceResponse&& response)
@@ -2198,7 +2200,7 @@ void NetworkResourceLoader::useRedirectionForCurrentNavigation(WebCore::Resource
     m_redirectionForCurrentNavigation = makeUnique<WebCore::ResourceResponse>(WTFMove(response));
 }
 
-void NetworkResourceLoader::sendDidReceiveDataMessage(const FragmentedSharedBuffer& buffer, size_t encodedDataLength)
+void NetworkResourceLoader::sendDidReceiveDataMessage(const FragmentedSharedBuffer& buffer)
 {
     RefPtr networkLoad = m_networkLoad;
     auto bytesTransferredOverNetwork = networkLoad ? networkLoad->bytesTransferredOverNetwork() : 0;
@@ -2207,7 +2209,7 @@ void NetworkResourceLoader::sendDidReceiveDataMessage(const FragmentedSharedBuff
     updateBytesTransferredOverNetwork(bytesTransferredOverNetwork);
 #endif
 
-    send(Messages::WebResourceLoader::DidReceiveData(IPC::SharedBufferReference(buffer), encodedDataLength, bytesTransferredOverNetwork));
+    send(Messages::WebResourceLoader::DidReceiveData(IPC::SharedBufferReference(buffer), bytesTransferredOverNetwork));
 }
 
 #if ENABLE(CONTENT_EXTENSIONS)

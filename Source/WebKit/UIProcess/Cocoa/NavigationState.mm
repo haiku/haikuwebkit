@@ -513,12 +513,12 @@ static void tryInterceptNavigation(Ref<API::NavigationAction>&& navigationAction
     if (navigationAction->shouldOpenAppLinks()) {
         auto url = navigationAction->request().url();
 
-        NSURL *referrerURL = nil;
+        RetainPtr<NSURL> referrerURL;
         auto request = navigationAction->request();
         request.setExistingHTTPReferrerToOriginString();
         auto referrerString = request.httpReferrer();
         if (!referrerString.isEmpty())
-            referrerURL = (NSURL *)URL { referrerString };
+            referrerURL = URL { referrerString }.createNSURL();
 
         auto* localCompletionHandler = new WTF::Function<void (bool)>([navigationAction = WTFMove(navigationAction), weakPage = WeakPtr { page }, completionHandler = WTFMove(completionHandler)] (bool success) mutable {
             ASSERT(RunLoop::isMain());
@@ -534,9 +534,9 @@ static void tryInterceptNavigation(Ref<API::NavigationAction>&& navigationAction
         });
 
         RetainPtr<_LSOpenConfiguration> configuration = adoptNS([[_LSOpenConfiguration alloc] init]);
-        configuration.get().referrerURL = referrerURL;
+        configuration.get().referrerURL = referrerURL.get();
 
-        [LSAppLink openWithURL:url configuration:configuration.get() completionHandler:[localCompletionHandler](BOOL success, NSError *) {
+        [LSAppLink openWithURL:url.createNSURL().get() configuration:configuration.get() completionHandler:[localCompletionHandler](BOOL success, NSError *) {
             RunLoop::protectedMain()->dispatch([localCompletionHandler, success] {
                 (*localCompletionHandler)(success);
                 delete localCompletionHandler;
@@ -556,13 +556,13 @@ static bool isUnsupportedWebExtensionNavigation(API::NavigationAction& navigatio
     if (subframeNavigation)
         return false;
 
-    auto *requiredBaseURL = page.cocoaView().get()._requiredWebExtensionBaseURL;
+    RetainPtr<NSURL> requiredBaseURL = page.cocoaView().get()._requiredWebExtensionBaseURL;
     if (!requiredBaseURL || navigationAction.shouldPerformDownload())
         return false;
 
     if (RefPtr extensionController = page.webExtensionController()) {
         auto extensionContext = extensionController->extensionContext(navigationAction.originalURL());
-        if (!extensionContext || !extensionContext->isURLForThisExtension(requiredBaseURL))
+        if (!extensionContext || !extensionContext->isURLForThisExtension(requiredBaseURL.get()))
             return true;
     }
 
@@ -761,11 +761,11 @@ void NavigationState::NavigationClient::contentRuleListNotification(WebPageProxy
     }
 
     if (notifications && m_navigationState->m_navigationDelegateMethods.webViewURLContentRuleListIdentifiersNotifications)
-        [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:protectedNavigationState()->webView().get() URL:url contentRuleListIdentifiers:identifiers.get() notifications:notifications.get()];
+        [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:protectedNavigationState()->webView().get() URL:url.createNSURL().get() contentRuleListIdentifiers:identifiers.get() notifications:notifications.get()];
 
     if (m_navigationState->m_navigationDelegateMethods.webViewContentRuleListWithIdentifierPerformedActionForURL) {
         for (auto&& pair : WTFMove(results.results))
-            [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:protectedNavigationState()->webView().get() contentRuleListWithIdentifier:pair.first performedAction:wrapper(API::ContentRuleListAction::create(WTFMove(pair.second)).get()) forURL:url];
+            [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:protectedNavigationState()->webView().get() contentRuleListWithIdentifier:pair.first performedAction:wrapper(API::ContentRuleListAction::create(WTFMove(pair.second)).get()) forURL:url.createNSURL().get()];
     }
 }
 #endif
@@ -774,10 +774,10 @@ void NavigationState::NavigationClient::decidePolicyForNavigationResponse(WebPag
 {
     RefPtr navigationState = m_navigationState.get();
     if (!navigationState || !navigationState->m_navigationDelegateMethods.webViewDecidePolicyForNavigationResponseDecisionHandler) {
-        NSURL *url = navigationResponse->response().nsURLResponse().URL;
+        RetainPtr<NSURL> url = navigationResponse->response().nsURLResponse().URL;
         if ([url isFileURL]) {
             BOOL isDirectory = NO;
-            BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:url.path isDirectory:&isDirectory];
+            BOOL exists = [[NSFileManager defaultManager] fileExistsAtPath:url.get().path isDirectory:&isDirectory];
 
             if (exists && !isDirectory && navigationResponse->canShowMIMEType())
                 listener->use();
@@ -882,7 +882,7 @@ void NavigationState::NavigationClient::willPerformClientRedirect(WebPageProxy& 
 
     URL url { urlString };
 
-    [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:navigationState->webView().get() willPerformClientRedirectToURL:url delay:delay];
+    [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:navigationState->webView().get() willPerformClientRedirectToURL:url.createNSURL().get() delay:delay];
 }
 
 void NavigationState::NavigationClient::didPerformClientRedirect(WebPageProxy& page, const WTF::String& sourceURLString, const WTF::String& destinationURLString)
@@ -901,7 +901,7 @@ void NavigationState::NavigationClient::didPerformClientRedirect(WebPageProxy& p
     URL sourceURL { sourceURLString };
     URL destinationURL { destinationURLString };
 
-    [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:navigationState->webView().get() didPerformClientRedirectFromURL:sourceURL toURL:destinationURL];
+    [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:navigationState->webView().get() didPerformClientRedirectFromURL:sourceURL.createNSURL().get() toURL:destinationURL.createNSURL().get()];
 }
 
 void NavigationState::NavigationClient::didCancelClientRedirect(WebPageProxy& page)
@@ -927,8 +927,8 @@ static RetainPtr<NSError> createErrorWithRecoveryAttempter(WKWebView *webView, c
 
     auto userInfo = adoptNS([[NSMutableDictionary alloc] initWithObjectsAndKeys:recoveryAttempter.get(), _WKRecoveryAttempterErrorKey, nil]);
 
-    if (NSDictionary *originalUserInfo = originalError.userInfo)
-        [userInfo addEntriesFromDictionary:originalUserInfo];
+    if (RetainPtr<NSDictionary> originalUserInfo = originalError.userInfo)
+        [userInfo addEntriesFromDictionary:originalUserInfo.get()];
 
     return adoptNS([[NSError alloc] initWithDomain:originalError.domain code:originalError.code userInfo:userInfo.get()]);
 }
@@ -1058,7 +1058,7 @@ void NavigationState::NavigationClient::didBlockLoadToKnownTracker(WebPageProxy&
         return;
 
     if (navigationState->m_navigationDelegateMethods.webViewDidFailLoadDueToNetworkConnectionIntegrityWithURL)
-        [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:navigationState->webView().get() didFailLoadDueToNetworkConnectionIntegrityWithURL:url];
+        [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:navigationState->webView().get() didFailLoadDueToNetworkConnectionIntegrityWithURL:url.createNSURL().get()];
 }
 
 void NavigationState::NavigationClient::didApplyLinkDecorationFiltering(WebPageProxy& page, const URL& originalURL, const URL& adjustedURL)
@@ -1072,7 +1072,7 @@ void NavigationState::NavigationClient::didApplyLinkDecorationFiltering(WebPageP
         return;
 
     if (navigationState->m_navigationDelegateMethods.webViewDidChangeLookalikeCharactersFromURLToURL)
-        [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:navigationState->webView().get() didChangeLookalikeCharactersFromURL:originalURL toURL:adjustedURL];
+        [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:navigationState->webView().get() didChangeLookalikeCharactersFromURL:originalURL.createNSURL().get() toURL:adjustedURL.createNSURL().get()];
 }
 
 void NavigationState::NavigationClient::didPromptForStorageAccess(WebPageProxy&, const String& topFrameDomain, const String& subFrameDomain, bool hasQuirk)
@@ -1233,7 +1233,7 @@ void NavigationState::NavigationClient::didNegotiateModernTLS(const URL& url)
     if (!navigationDelegate)
         return;
 
-    [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:navigationState->webView().get() didNegotiateModernTLSForURL:url];
+    [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webView:navigationState->webView().get() didNegotiateModernTLSForURL:url.createNSURL().get()];
 }
 
 static _WKProcessTerminationReason wkProcessTerminationReason(ProcessTerminationReason reason)
@@ -1341,8 +1341,8 @@ void NavigationState::NavigationClient::legacyWebCryptoMasterKey(WebPageProxy&, 
         return completionHandler(std::nullopt);
 
     if (navigationState->m_navigationDelegateMethods.webCryptoMasterKeyForWebView) {
-        if (NSData *data = [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webCryptoMasterKeyForWebView:navigationState->webView().get()])
-            return completionHandler(makeVector(data));
+        if (RetainPtr data = [static_cast<id<WKNavigationDelegatePrivate>>(navigationDelegate) _webCryptoMasterKeyForWebView:navigationState->webView().get()])
+            return completionHandler(makeVector(data.get()));
         return completionHandler(std::nullopt);
     }
     if (navigationState->m_navigationDelegateMethods.webCryptoMasterKeyForWebViewCompletionHandler) {

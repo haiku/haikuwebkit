@@ -609,13 +609,13 @@ TextStream& operator<<(TextStream& stream, AXNotification notification)
 }
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-WTF::TextStream& operator<<(WTF::TextStream& stream, const AXPropertyMap& map)
+WTF::TextStream& operator<<(WTF::TextStream& stream, const AXPropertyVector& properties)
 {
     stream << "{"_s;
-    for (auto iterator = map.begin(); iterator != map.end(); ++iterator) {
-        if (iterator != map.begin())
+    for (size_t i = 0; i < properties.size(); i++) {
+        if (i)
             stream << ", ";
-        stream << iterator->key;
+        stream << properties[i].first;
     }
     stream << "}"_s;
     return stream;
@@ -649,9 +649,6 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
         break;
     case AXProperty::ActionVerb:
         stream << "ActionVerb";
-        break;
-    case AXProperty::AncestorFlags:
-        stream << "AncestorFlags";
         break;
     case AXProperty::BackgroundColor:
         stream << "BackgroundColor";

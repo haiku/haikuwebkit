@@ -266,6 +266,18 @@ void InspectorInstrumentation::willPopShadowRootImpl(InstrumentingAgents& instru
         domAgent->willPopShadowRoot(host, root);
 }
 
+void InspectorInstrumentation::didChangeAssignedSlotImpl(InstrumentingAgents& instrumentingAgents, Node& slotable)
+{
+    if (auto* cssAgent = instrumentingAgents.enabledCSSAgent())
+        cssAgent->didChangeAssignedSlot(slotable);
+}
+
+void InspectorInstrumentation::didChangeAssignedNodesImpl(InstrumentingAgents& instrumentingAgents, Element& slotElement)
+{
+    if (auto* cssAgent = instrumentingAgents.enabledCSSAgent())
+        cssAgent->didChangeAssignedNodes(slotElement);
+}
+
 void InspectorInstrumentation::didChangeCustomElementStateImpl(InstrumentingAgents& instrumentingAgents, Element& element)
 {
     if (auto* domAgent = instrumentingAgents.persistentDOMAgent())

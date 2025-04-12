@@ -58,7 +58,6 @@
 #import "UserData.h"
 #import "VideoPresentationManagerProxy.h"
 #import "ViewUpdateDispatcherMessages.h"
-#import "WKBrowsingContextControllerInternal.h"
 #import "WebAuthenticatorCoordinatorProxy.h"
 #import "WebAutocorrectionContext.h"
 #import "WebAutocorrectionData.h"
@@ -91,8 +90,6 @@
 #import "APINavigationClient.h"
 #import <wtf/text/WTFString.h>
 #endif
-
-#define MESSAGE_CHECK(assertion) MESSAGE_CHECK_BASE(assertion, legacyMainFrameProcess().connection())
 
 #define WEBPAGEPROXY_RELEASE_LOG(channel, fmt, ...) RELEASE_LOG(channel, "%p - [pageProxyID=%llu, webPageID=%llu, PID=%i] WebPageProxy::" fmt, this, identifier().toUInt64(), webPageIDInMainFrameProcess().toUInt64(), m_legacyMainFrameProcess->processID(), ##__VA_ARGS__)
 
@@ -595,9 +592,9 @@ void WebPageProxy::performActionOnElements(uint32_t action, Vector<WebCore::Elem
     m_legacyMainFrameProcess->send(Messages::WebPage::PerformActionOnElements(action, elements), webPageIDInMainFrameProcess());
 }
 
-void WebPageProxy::saveImageToLibrary(SharedMemory::Handle&& imageHandle, const String& authorizationToken)
+void WebPageProxy::saveImageToLibrary(IPC::Connection& connection, SharedMemory::Handle&& imageHandle, const String& authorizationToken)
 {
-    MESSAGE_CHECK(isValidPerformActionOnElementAuthorizationToken(authorizationToken));
+    MESSAGE_CHECK_BASE(isValidPerformActionOnElementAuthorizationToken(authorizationToken), connection);
 
     auto sharedMemoryBuffer = SharedMemory::map(WTFMove(imageHandle), SharedMemory::Protection::ReadOnly);
     if (!sharedMemoryBuffer)
@@ -648,7 +645,7 @@ void WebPageProxy::applicationWillEnterForeground()
 
     m_legacyMainFrameProcess->send(Messages::WebPage::ApplicationWillEnterForeground(isSuspendedUnderLock), webPageIDInMainFrameProcess());
 
-    hardwareKeyboardAvailabilityChanged(m_legacyMainFrameProcess->processPool().cachedHardwareKeyboardState());
+    hardwareKeyboardAvailabilityChanged(m_configuration->processPool().cachedHardwareKeyboardState());
 }
 
 void WebPageProxy::applicationWillResignActive()
@@ -923,16 +920,16 @@ void WebPageProxy::couldNotRestorePageState()
         pageClient->couldNotRestorePageState();
 }
 
-void WebPageProxy::restorePageState(std::optional<WebCore::FloatPoint> scrollPosition, const WebCore::FloatPoint& scrollOrigin, const WebCore::FloatBoxExtent& obscuredInsetsOnSave, double scale)
+void WebPageProxy::restorePageState(IPC::Connection& connection, std::optional<WebCore::FloatPoint> scrollPosition, const WebCore::FloatPoint& scrollOrigin, const WebCore::FloatBoxExtent& obscuredInsetsOnSave, double scale)
 {
-    MESSAGE_CHECK(scale > 0);
+    MESSAGE_CHECK_BASE(scale > 0, connection);
     if (RefPtr pageClient = this->pageClient())
         pageClient->restorePageState(scrollPosition, scrollOrigin, obscuredInsetsOnSave, scale);
 }
 
-void WebPageProxy::restorePageCenterAndScale(std::optional<WebCore::FloatPoint> center, double scale)
+void WebPageProxy::restorePageCenterAndScale(IPC::Connection& connection, std::optional<WebCore::FloatPoint> center, double scale)
 {
-    MESSAGE_CHECK(scale > 0);
+    MESSAGE_CHECK_BASE(scale > 0, connection);
     if (RefPtr pageClient = this->pageClient())
         pageClient->restorePageCenterAndScale(center, scale);
 }
@@ -960,7 +957,7 @@ void WebPageProxy::didProgrammaticallyClearFocusedElement(WebCore::ElementContex
         client->didProgrammaticallyClearFocusedElement(WTFMove(context));
 }
 
-void WebPageProxy::elementDidFocus(const FocusedElementInformation& information, bool userIsInteracting, bool blurPreviousNode, OptionSet<WebCore::ActivityState> activityStateChanges, const UserData& userData)
+void WebPageProxy::elementDidFocus(IPC::Connection& connection, const FocusedElementInformation& information, bool userIsInteracting, bool blurPreviousNode, OptionSet<WebCore::ActivityState> activityStateChanges, const UserData& userData)
 {
     m_pendingInputModeChange = std::nullopt;
 
@@ -968,8 +965,8 @@ void WebPageProxy::elementDidFocus(const FocusedElementInformation& information,
     if (!pageClient)
         return;
 
-    API::Object* userDataObject = legacyMainFrameProcess().transformHandlesToObjects(userData.object()).get();
-    pageClient->elementDidFocus(information, userIsInteracting, blurPreviousNode, activityStateChanges, userDataObject);
+    RefPtr userDataObject = WebProcessProxy::fromConnection(connection)->transformHandlesToObjects(userData.object()).get();
+    pageClient->elementDidFocus(information, userIsInteracting, blurPreviousNode, activityStateChanges, userDataObject.get());
 }
 
 void WebPageProxy::elementDidBlur()
@@ -1555,7 +1552,13 @@ WebContentMode WebPageProxy::effectiveContentModeAfterAdjustingPolicies(API::Web
         auto applicationName = policies.applicationNameForDesktopUserAgent();
         if (applicationName.isEmpty())
             applicationName = applicationNameForDesktopUserAgent();
-        policies.setCustomUserAgent(standardUserAgentWithApplicationName(applicationName, emptyString(), UserAgentType::Desktop));
+        // FIXME: This is done here for adding a UA override to tiktok.
+        // needsCustomUserAgentOverride() is currently very generic on purpose.
+        // In the future we want to pass more parameters for targeting specific domains.
+        if (Quirks::needsCustomUserAgentOverride(request.url()))
+            policies.setCustomUserAgent(makeStringByReplacingAll(standardUserAgentWithApplicationName(m_applicationNameForUserAgent), "like Gecko"_s, "like Gecko, like Chrome/136."_s));
+        else
+            policies.setCustomUserAgent(standardUserAgentWithApplicationName(applicationName, emptyString(), UserAgentType::Desktop));
     }
 
     if (policies.customNavigatorPlatform().isEmpty()) {
@@ -1847,6 +1850,5 @@ void WebPageProxy::didEndContextMenuInteraction()
 } // namespace WebKit
 
 #undef WEBPAGEPROXY_RELEASE_LOG
-#undef MESSAGE_CHECK
 
 #endif // PLATFORM(IOS_FAMILY)

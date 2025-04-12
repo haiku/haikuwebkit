@@ -58,7 +58,6 @@
 #import "UIGamepadProvider.h"
 #import "UndoOrRedo.h"
 #import "ViewGestureController.h"
-#import "WKBrowsingContextControllerInternal.h"
 #import "WKEditCommand.h"
 #import "WKErrorInternal.h"
 #import "WKFullScreenWindowController.h"
@@ -359,8 +358,8 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     [defaultNotificationCenter addObserver:self selector:@selector(_windowWillClose:) name:NSWindowWillCloseNotification object:window];
 
     [defaultNotificationCenter addObserver:self selector:@selector(_screenDidChangeColorSpace:) name:NSScreenColorSpaceDidChangeNotification object:nil];
-    [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldSuppressHDR:) name:@"NSApplicationShouldBeginSuppressingHighDynamicRangeContentNotification" object:NSApp];
-    [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldAllowHDR:) name:@"NSApplicationShouldEndSuppressingHighDynamicRangeContentNotification" object:NSApp];
+    [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldBeginSuppressingHDR:) name:@"NSApplicationShouldBeginSuppressingHighDynamicRangeContentNotification" object:NSApp];
+    [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldEndSuppressingHDR:) name:@"NSApplicationShouldEndSuppressingHighDynamicRangeContentNotification" object:NSApp];
 
     if (_shouldObserveFontPanel) {
         ASSERT(!_isObservingFontPanel);
@@ -532,16 +531,16 @@ static void* keyValueObservingContext = &keyValueObservingContext;
         _impl->screenDidChangeColorSpace();
 }
 
-- (void)_applicationShouldSuppressHDR:(NSNotification *)notification
+- (void)_applicationShouldBeginSuppressingHDR:(NSNotification *)notification
 {
     if (_impl)
-        _impl->applicationShouldSuppressHDR();
+        _impl->applicationShouldSuppressHDR(true);
 }
 
-- (void)_applicationShouldAllowHDR:(NSNotification *)notification
+- (void)_applicationShouldEndSuppressingHDR:(NSNotification *)notification
 {
     if (_impl)
-        _impl->applicationShouldAllowHDR();
+        _impl->applicationShouldSuppressHDR(false);
 }
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
@@ -1687,10 +1686,10 @@ void WebViewImpl::viewDidEndLiveResize()
     [m_layoutStrategy didEndLiveResize];
 }
 
-void WebViewImpl::createPDFHUD(PDFPluginIdentifier identifier, const WebCore::IntRect& rect)
+void WebViewImpl::createPDFHUD(PDFPluginIdentifier identifier, WebCore::FrameIdentifier frameID, const WebCore::IntRect& rect)
 {
     removePDFHUD(identifier);
-    auto hud = adoptNS([[WKPDFHUDView alloc] initWithFrame:rect pluginIdentifier:identifier page:m_page.get()]);
+    auto hud = adoptNS([[WKPDFHUDView alloc] initWithFrame:rect pluginIdentifier:identifier frameIdentifier:frameID page:m_page.get()]);
     [m_view addSubview:hud.get()];
     _pdfHUDViews.add(identifier, WTFMove(hud));
 }
@@ -2095,7 +2094,6 @@ void WebViewImpl::windowDidBecomeKey(NSWindow *keyWindow)
 #endif
         updateSecureInputState();
         m_page->activityStateDidChange(WebCore::ActivityState::WindowIsActive);
-        updateHDRState(HDRConstrainingReasonAction::Remove, HDRConstrainingReason::WindowIsNotActive);
     }
 }
 
@@ -2107,7 +2105,6 @@ void WebViewImpl::windowDidResignKey(NSWindow *formerKeyWindow)
 #endif
         updateSecureInputState();
         m_page->activityStateDidChange(WebCore::ActivityState::WindowIsActive);
-        updateHDRState(HDRConstrainingReasonAction::Add, HDRConstrainingReason::WindowIsNotActive);
     }
 }
 
@@ -2172,30 +2169,10 @@ void WebViewImpl::screenDidChangeColorSpace()
     m_page->configuration().protectedProcessPool()->screenPropertiesChanged();
 }
 
-void WebViewImpl::updateHDRState(HDRConstrainingReasonAction action, HDRConstrainingReason reason)
+void WebViewImpl::applicationShouldSuppressHDR(bool suppress)
 {
-    auto didHaveReasonToConstrain = !m_hdrConstrainingReason.isEmpty();
-
-    if (action == HDRConstrainingReasonAction::Add)
-        m_hdrConstrainingReason.add(reason);
-    else
-        m_hdrConstrainingReason.remove(reason);
-
-    auto haveReasonToConstrain = !m_hdrConstrainingReason.isEmpty();
-    if (haveReasonToConstrain != didHaveReasonToConstrain) {
-        m_page->setShouldSuppressHDR(haveReasonToConstrain);
-        setDynamicRangeLimit(m_rootLayer.get(), haveReasonToConstrain ? PlatformDynamicRangeLimit::defaultWhenSuppressingHDR() : PlatformDynamicRangeLimit::noLimit(), true);
-    }
-}
-
-void WebViewImpl::applicationShouldSuppressHDR()
-{
-    updateHDRState(HDRConstrainingReasonAction::Add, HDRConstrainingReason::ShouldSuppressHDR);
-}
-
-void WebViewImpl::applicationShouldAllowHDR()
-{
-    updateHDRState(HDRConstrainingReasonAction::Remove, HDRConstrainingReason::ShouldSuppressHDR);
+    m_page->setShouldSuppressHDR(suppress);
+    setDynamicRangeLimit(m_rootLayer.get(), suppress ? PlatformDynamicRangeLimit::defaultWhenSuppressingHDR() : PlatformDynamicRangeLimit::noLimit(), true);
 }
 
 bool WebViewImpl::mightBeginDragWhileInactive()
@@ -4530,36 +4507,36 @@ static BOOL fileExists(NSString *path)
     return !lstat([path fileSystemRepresentation], &statBuffer);
 }
 
-static NSString *pathWithUniqueFilenameForPath(NSString *path)
+static RetainPtr<NSString> pathWithUniqueFilenameForPath(NSString *path)
 {
     // "Fix" the filename of the path.
-    NSString *filename = filenameByFixingIllegalCharacters([path lastPathComponent]);
-    path = [[path stringByDeletingLastPathComponent] stringByAppendingPathComponent:filename];
+    RetainPtr filename = filenameByFixingIllegalCharacters([path lastPathComponent]);
+    RetainPtr updatedPath = [[path stringByDeletingLastPathComponent] stringByAppendingPathComponent:filename.get()];
 
-    if (fileExists(path)) {
+    if (fileExists(updatedPath.get())) {
         // Don't overwrite existing file by appending "-n", "-n.ext" or "-n.ext.ext" to the filename.
-        NSString *extensions = nil;
-        NSString *pathWithoutExtensions;
-        NSString *lastPathComponent = [path lastPathComponent];
+        RetainPtr<NSString> extensions;
+        RetainPtr<NSString> pathWithoutExtensions;
+        RetainPtr<NSString> lastPathComponent = [updatedPath lastPathComponent];
         NSRange periodRange = [lastPathComponent rangeOfString:@"."];
 
         if (periodRange.location == NSNotFound) {
-            pathWithoutExtensions = path;
+            pathWithoutExtensions = updatedPath;
         } else {
             extensions = [lastPathComponent substringFromIndex:periodRange.location + 1];
             lastPathComponent = [lastPathComponent substringToIndex:periodRange.location];
-            pathWithoutExtensions = [[path stringByDeletingLastPathComponent] stringByAppendingPathComponent:lastPathComponent];
+            pathWithoutExtensions = [[updatedPath stringByDeletingLastPathComponent] stringByAppendingPathComponent:lastPathComponent.get()];
         }
 
         for (unsigned i = 1; ; i++) {
-            NSString *pathWithAppendedNumber = [NSString stringWithFormat:@"%@-%d", pathWithoutExtensions, i];
-            path = [extensions length] ? [pathWithAppendedNumber stringByAppendingPathExtension:extensions] : pathWithAppendedNumber;
-            if (!fileExists(path))
+            RetainPtr pathWithAppendedNumber = adoptNS([[NSString alloc] initWithFormat:@"%@-%d", pathWithoutExtensions.get(), i]);
+            updatedPath = [extensions length] ? [pathWithAppendedNumber stringByAppendingPathExtension:extensions.get()] : pathWithAppendedNumber;
+            if (!fileExists(updatedPath.get()))
                 break;
         }
     }
 
-    return path;
+    return updatedPath;
 }
 
 NSArray *WebViewImpl::namesOfPromisedFilesDroppedAtDestination(NSURL *dropDestination)
@@ -4581,13 +4558,13 @@ NSArray *WebViewImpl::namesOfPromisedFilesDroppedAtDestination(NSURL *dropDestin
     }
 
     // FIXME: Report an error if we fail to create a file.
-    NSString *path = [[dropDestination path] stringByAppendingPathComponent:[wrapper preferredFilename]];
-    path = pathWithUniqueFilenameForPath(path);
-    if (![wrapper writeToURL:[NSURL fileURLWithPath:path isDirectory:NO] options:NSFileWrapperWritingWithNameUpdating originalContentsURL:nil error:nullptr])
+    RetainPtr<NSString> path = [[dropDestination path] stringByAppendingPathComponent:[wrapper preferredFilename]];
+    path = pathWithUniqueFilenameForPath(path.get());
+    if (![wrapper writeToURL:[NSURL fileURLWithPath:path.get() isDirectory:NO] options:NSFileWrapperWritingWithNameUpdating originalContentsURL:nil error:nullptr])
         LOG_ERROR("Failed to create image file via -[NSFileWrapper writeToURL:options:originalContentsURL:error:]");
 
     if (!m_promisedURL.isEmpty())
-        FileSystem::setMetadataURL(String(path), m_promisedURL);
+        FileSystem::setMetadataURL(String(path.get()), m_promisedURL);
 
     return @[[path lastPathComponent]];
 }
@@ -4879,9 +4856,30 @@ void WebViewImpl::setCustomSwipeViews(NSArray *customSwipeViews)
     ensureProtectedGestureController()->setCustomSwipeViews(views);
 }
 
-void WebViewImpl::setCustomSwipeViewsTopContentInset(float topContentInset)
+FloatRect WebViewImpl::windowRelativeBoundsForCustomSwipeViews() const
 {
-    ensureProtectedGestureController()->setCustomSwipeViewsTopContentInset(topContentInset);
+    if (!m_gestureController)
+        return { };
+
+    return protectedGestureController()->windowRelativeBoundsForCustomSwipeViews();
+}
+
+FloatBoxExtent WebViewImpl::customSwipeViewsObscuredContentInsets() const
+{
+    if (!m_gestureController)
+        return { };
+
+    return m_gestureController->customSwipeViewsObscuredContentInsets();
+}
+
+RefPtr<ViewGestureController> WebViewImpl::protectedGestureController() const
+{
+    return m_gestureController;
+}
+
+void WebViewImpl::setCustomSwipeViewsObscuredContentInsets(FloatBoxExtent&& insets)
+{
+    ensureProtectedGestureController()->setCustomSwipeViewsObscuredContentInsets(WTFMove(insets));
 }
 
 bool WebViewImpl::tryToSwipeWithEvent(NSEvent *event, bool ignoringPinnedState)
@@ -6753,8 +6751,8 @@ int32_t WebViewImpl::processImageAnalyzerRequest(CocoaImageAnalyzerRequest *requ
 static RetainPtr<CocoaImageAnalyzerRequest> createImageAnalyzerRequest(CGImageRef image, const URL& imageURL, const URL& pageURL, VKAnalysisTypes types)
 {
     auto request = createImageAnalyzerRequest(image, types);
-    [request setImageURL:imageURL];
-    [request setPageURL:pageURL];
+    [request setImageURL:imageURL.createNSURL().get()];
+    [request setPageURL:pageURL.createNSURL().get()];
     return request;
 }
 
@@ -6775,7 +6773,7 @@ void WebViewImpl::requestTextRecognition(const URL& imageURL, ShareableBitmap::H
 
 #if ENABLE(IMAGE_ANALYSIS_ENHANCEMENTS)
     if (!targetLanguageIdentifier.isEmpty())
-        return requestVisualTranslation(ensureImageAnalyzer(), imageURL, sourceLanguageIdentifier, targetLanguageIdentifier, cgImage.get(), WTFMove(completion));
+        return requestVisualTranslation(ensureImageAnalyzer(), imageURL.createNSURL().get(), sourceLanguageIdentifier, targetLanguageIdentifier, cgImage.get(), WTFMove(completion));
 #else
     UNUSED_PARAM(sourceLanguageIdentifier);
     UNUSED_PARAM(targetLanguageIdentifier);

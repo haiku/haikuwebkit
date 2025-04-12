@@ -175,6 +175,7 @@ void VideoPresentationInterfaceLMK::enterExternalPlayback(CompletionHandler<void
             playbackSessionModel->setSpatialTrackingLabel(m_spatialTrackingLabel);
             playbackSessionModel->setSoundStageSize(WebCore::AudioSessionSoundStageSize::Large);
         }
+
         handler(success, m_playerViewController.get());
     }).get()];
 }
@@ -201,6 +202,9 @@ void VideoPresentationInterfaceLMK::exitExternalPlayback()
         }
         invalidatePlayerViewController();
 
+        if (RefPtr model = this->videoPresentationModel())
+            model->didExitExternalPlayback();
+
         if (handler)
             handler(success);
     }).get()];
@@ -215,6 +219,17 @@ bool VideoPresentationInterfaceLMK::cleanupExternalPlayback()
 
     exitExternalPlayback();
     return true;
+}
+
+void VideoPresentationInterfaceLMK::didSetVideoReceiverEndpoint()
+{
+    if (linearMediaPlayer().presentationState != WKSLinearMediaPresentationStateExternal)
+        return;
+
+    ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER);
+
+    if (RefPtr model = this->videoPresentationModel())
+        model->didEnterExternalPlayback();
 }
 
 UIViewController *VideoPresentationInterfaceLMK::playerViewController() const
@@ -245,10 +260,10 @@ CALayer *VideoPresentationInterfaceLMK::captionsLayer()
     m_spatialTrackingLabel = makeString(createVersion4UUIDString());
 #if HAVE(SPATIAL_AUDIO_EXPERIENCE)
     if (prefersSpatialAudioExperience())
-        [m_spatialTrackingLayer setValue:(NSString *)m_spatialTrackingLabel forKeyPath:@"separatedOptions.AudioTether"];
+        [m_spatialTrackingLayer setValue:m_spatialTrackingLabel.createNSString().get() forKeyPath:@"separatedOptions.AudioTether"];
     else
 #endif
-        [m_spatialTrackingLayer setValue:(NSString *)m_spatialTrackingLabel forKeyPath:@"separatedOptions.STSLabel"];
+        [m_spatialTrackingLayer setValue:m_spatialTrackingLabel.createNSString().get() forKeyPath:@"separatedOptions.STSLabel"];
     [m_captionsLayer addSublayer:m_spatialTrackingLayer.get()];
 
     return m_captionsLayer.get();

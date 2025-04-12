@@ -13,6 +13,7 @@ editing/undo-manager [ Pass ]
 editing/pasteboard/dom-paste [ Pass ]
 fast/attachment/cocoa [ Pass ]
 fast/attachment/mac [ Pass ]
+fast/css/cocoa [ Pass ]
 fast/css/mac [ Pass ]
 fast/element-targeting [ Pass ]
 fast/events/cursors [ Pass ]
@@ -977,7 +978,6 @@ webkit.org/b/206708 fast/animation/request-animation-frame-iframe.html [ Pass Fa
 [ Release ] imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/track/track-element/track-cues-cuechange.html [ Pass Failure ]
 
 #rdar://92833592 ([ Ventura ] 4x imported/w3c/web-platform-tests/webrtc-encoded-transform/ are flaky text failures)
-imported/w3c/web-platform-tests/webrtc-encoded-transform/script-metadata-transform.https.html [ Pass Failure ]
 imported/w3c/web-platform-tests/webrtc-encoded-transform/script-transform.https.html [ Pass Failure ]
 imported/w3c/web-platform-tests/webrtc-encoded-transform/script-write-twice-transform.https.html [ Pass Failure ]
 
@@ -1298,8 +1298,6 @@ webkit.org/b/229166 webrtc/utf8-sdp.html [ Pass Failure ]
 imported/w3c/web-platform-tests/xhr/xhr-timeout-longtask.any.html [ Pass Failure ]
 
 webkit.org/b/229561 http/tests/navigation/page-cache-video.html [ Pass Failure ]
-
-webkit.org/b/239099 [ Debug ] accessibility/ancestor-computation.html [ Pass Timeout ]
 
 webkit.org/b/231088 [ Release ] http/tests/loading/preload-slow-loading.py [ Pass Failure ]
 
@@ -2116,3 +2114,18 @@ imported/w3c/web-platform-tests/css/css-position/sticky/position-sticky-scrolled
 webkit.org/b/290346 [ arm64 ] gamepad/gamepad-event-handlers.html [ Pass Timeout ]
 
 webkit.org/b/290564 [ Sequoia Debug ] imported/w3c/web-platform-tests/css/css-viewport/computedStyle-zoom.html [ Pass Timeout ]
+
+webkit.org/b/290856 [ Sequoia Debug ] imported/w3c/web-platform-tests/css/css-view-transitions/navigation/navigation-auto-excludes-reload.html [ Pass Timeout ]
+webkit.org/b/290856 [ Sequoia Debug ] imported/w3c/web-platform-tests/css/css-viewport/zoom/background-image.html [ Pass Timeout ]
+
+webkit.org/b/290869 [ Debug ] ipc/send-gpu-GetShareableBitmap-RemoteRenderingBackend.html [ Pass Timeout ]
+
+webkit.org/b/290281 [ Sequoia Debug arm64 ] imported/w3c/web-platform-tests/svg/struct/scripted/svg-checkIntersection-001.svg [ Pass Timeout ]
+
+webkit.org/b/291035 webaudio/decode-audio-data-too-short.html [ Pass Failure ]
+
+webkit.org/b/291108 [ Sequoia Debug ] imported/w3c/web-platform-tests/html/webappapis/dynamic-markup-insertion/document-write/049.html [ Pass Timeout ]
+
+webkit.org/b/291115 [ Sequoia Debug ] imported/w3c/web-platform-tests/websockets/back-forward-cache-with-closed-websocket-connection-ccns.tentative.window.html [ Pass Failure ]
+
+webkit.org/b/291119 [ Debug ] imported/w3c/web-platform-tests/html/semantics/embedded-content/media-elements/loading-the-media-resource/resource-selection-invoke-pause-networkState.html [ Pass Failure ]

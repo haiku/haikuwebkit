@@ -545,14 +545,30 @@ bool isInSVGImage(const Element* element)
     return page->chrome().client().isSVGImageChromeClient();
 }
 
-RefPtr<SVGImage> SVGImage::tryCreateFromData(std::span<const uint8_t> data)
+void SVGImage::subresourcesAreFinished(Document* embedderDocument, CompletionHandler<void()>&& completionHandler)
+{
+    ASSERT(rootElement());
+    if (embedderDocument)
+        embedderDocument->incrementLoadEventDelayCount();
+    internalPage()->localTopDocument()->whenWindowLoadEventOrDestroyed([embedderDocument = WeakPtr { embedderDocument }, completionHandler = WTFMove(completionHandler)]() mutable {
+        if (RefPtr document = embedderDocument.get())
+            document->decrementLoadEventDelayCount();
+        completionHandler();
+    });
+}
+
+void SVGImage::tryCreateFromData(std::span<const uint8_t> data, CompletionHandler<void(RefPtr<SVGImage>&&)>&& completionHandler)
 {
     Ref svgImage = SVGImage::create(nullptr);
     Ref buffer = FragmentedSharedBuffer::create(data);
     svgImage->setData(buffer.ptr(), true);
-    if (!svgImage->rootElement())
-        return nullptr;
-    return svgImage;
+    if (!svgImage->rootElement()) {
+        completionHandler(nullptr);
+        return;
+    }
+    svgImage->subresourcesAreFinished(nullptr, [svgImage, completionHandler = WTFMove(completionHandler)]() mutable {
+        completionHandler(WTFMove(svgImage));
+    });
 }
 
 bool SVGImage::isDataDecodable(const Settings& settings, std::span<const uint8_t> data)

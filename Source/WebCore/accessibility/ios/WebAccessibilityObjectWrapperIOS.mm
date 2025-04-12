@@ -310,7 +310,6 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
     case AccessibilityRole::ColorWell:
     case AccessibilityRole::ComboBox:
     case AccessibilityRole::Heading:
-    case AccessibilityRole::ImageMapLink:
     case AccessibilityRole::Image:
     case AccessibilityRole::Link:
     case AccessibilityRole::ListBox:
@@ -515,22 +514,6 @@ static AccessibilityObjectWrapper* AccessibilityUnignoredAncestor(AccessibilityO
         return nil;
 
     return self.axBackingObject->popupValue();
-}
-
-- (BOOL)accessibilityHasDocumentRoleAncestor
-{
-    if (![self _prepareAccessibilityCall])
-        return NO;
-
-    return self.axBackingObject->hasDocumentRoleAncestor();
-}
-
-- (BOOL)accessibilityHasWebApplicationAncestor
-{
-    if (![self _prepareAccessibilityCall])
-        return NO;
-
-    return self.axBackingObject->hasWebApplicationAncestor();
 }
 
 - (BOOL)accessibilityIsInDescriptionListDefinition
@@ -916,7 +899,6 @@ static AccessibilityObjectWrapper *ancestorWithRole(const AXCoreObject& descenda
     case AccessibilityRole::RadioButton:
     case AccessibilityRole::Slider:
     case AccessibilityRole::Image:
-    case AccessibilityRole::ImageMapLink:
     case AccessibilityRole::ProgressIndicator:
     case AccessibilityRole::Meter:
     case AccessibilityRole::MenuItem:
@@ -1654,7 +1636,7 @@ static void appendStringToResult(NSMutableString *result, NSString *string)
     URL url = self.axBackingObject->url();
     if (url.isNull())
         return nil;
-    return (NSURL*)url;
+    return url.createNSURL().autorelease();
 }
 
 - (CGPoint)_accessibilityConvertPointToViewSpace:(CGPoint)point

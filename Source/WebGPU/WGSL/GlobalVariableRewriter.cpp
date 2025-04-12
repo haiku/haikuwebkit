@@ -593,7 +593,10 @@ Packing RewriteGlobalVariables::getPacking(AST::UnaryExpression& expression)
         // of the operand (since we can't pack/unpack pointers) and return the
         // packing of the resulting type from dereferencing
         pack(Packing::Either, expression.expression());
-        return expression.inferredType()->packing();
+        auto* pointer = std::get_if<Types::Pointer>(expression.expression().inferredType());
+        if (pointer->addressSpace == AddressSpace::Storage || pointer->addressSpace == AddressSpace::Uniform)
+            return expression.inferredType()->packing();
+        return Packing::Unpacked;
     }
     return pack(Packing::Unpacked, expression.expression());
 }
@@ -989,7 +992,7 @@ std::optional<Error> RewriteGlobalVariables::visitEntryPoint(const CallGraph::En
     m_reads.clear();
     m_structTypes.clear();
     m_globalsUsingDynamicOffset.clear();
-
+    m_generateLayoutGroupMapping.clear();
 
     auto result = m_entryPointInformations.add(entryPoint.originalName, Reflection::EntryPointInformation { });
     RELEASE_ASSERT(result.isNewEntry);

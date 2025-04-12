@@ -31,13 +31,16 @@ namespace WebCore {
 
 class CSSParserTokenRange;
 class CSSValue;
-struct CSSParserContext;
+
+namespace CSS {
+struct PropertyParserState;
+}
 
 namespace CSSPropertyParserHelpers {
 
 // MARK: <'text-shadow'> consuming
 // https://drafts.csswg.org/css-text-decor-3/#propdef-text-shadow
-RefPtr<CSSValue> consumeTextShadow(CSSParserTokenRange&, const CSSParserContext&);
+RefPtr<CSSValue> consumeTextShadow(CSSParserTokenRange&, CSS::PropertyParserState&);
 
 } // namespace CSSPropertyParserHelpers
 } // namespace WebCore

@@ -312,6 +312,7 @@ platform/cocoa/MediaUtilities.cpp
 platform/cocoa/NetworkExtensionContentFilter.mm
 platform/cocoa/NSURLUtilities.mm
 platform/cocoa/ParentalControlsContentFilter.mm
+platform/cocoa/ParentalControlsURLFilter.mm
 platform/cocoa/PasteboardCocoa.mm
 platform/cocoa/PasteboardCustomDataCocoa.mm
 platform/cocoa/PhotosFormatSoftLink.mm
@@ -445,7 +446,6 @@ platform/graphics/cocoa/ColorCocoa.mm
 platform/graphics/cocoa/FloatRectCocoa.mm
 platform/graphics/cocoa/FontCacheCocoa.mm
 platform/graphics/cocoa/FontCacheCoreText.cpp
-platform/graphics/cocoa/FontCascadeCocoa.cpp
 platform/graphics/cocoa/FontCocoa.cpp
 platform/graphics/cocoa/FontDatabase.cpp
 platform/graphics/cocoa/FontDescriptionCocoa.cpp

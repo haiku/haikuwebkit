@@ -45,7 +45,6 @@
 #import "SandboxExtension.h"
 #import "SandboxUtilities.h"
 #import "TextChecker.h"
-#import "WKBrowsingContextControllerInternal.h"
 #import "WKContentRuleListInternal.h"
 #import "WKContentRuleListStore.h"
 #import "WebBackForwardCache.h"
@@ -149,6 +148,9 @@
 #import <pal/cocoa/MediaToolboxSoftLink.h>
 #import <pal/spi/cocoa/AccessibilitySupportSoftLink.h>
 
+#if __has_include(<WebKitAdditions/WebProcessPoolAdditions.h>)
+#import <WebKitAdditions/WebProcessPoolAdditions.h>
+#endif
 
 NSString *WebServiceWorkerRegistrationDirectoryDefaultsKey = @"WebServiceWorkerRegistrationDirectory";
 NSString *WebKitLocalCacheDefaultsKey = @"WebKitLocalCache";
@@ -1417,6 +1419,15 @@ void WebProcessPool::platformCompileResourceMonitorRuleList(const String& rulesT
         completionHandler(createCompiledContentRuleList(list));
     }).get()];
 }
+
+String WebProcessPool::platformResourceMonitorRuleListSourceForTesting()
+{
+#if HAVE(RESOURCE_MONITOR_RULE_LIST_SOURCE_FOR_TESTING)
+    return resourceMonitorRuleListSourceForTestingCocoa();
+#else
+    return emptyString();
+#endif
+}
 #endif
 
 static void addUserInstalledFontURLs(NSString *path, Vector<URL>& fontURLs)
@@ -1469,7 +1480,7 @@ static URL fontURLFromName(ASCIILiteral fontName)
 static RetainPtr<CTFontDescriptorRef> fontDescription(ASCIILiteral fontName)
 {
     RetainPtr nsFontName = fontName.createNSString();
-    RetainPtr attributes = @{ (NSString *)kCTFontFamilyNameAttribute: nsFontName.get(), (NSString *)kCTFontRegistrationScopeAttribute: @(kCTFontPriorityComputer) };
+    RetainPtr attributes = @{ bridge_cast(kCTFontFamilyNameAttribute): nsFontName.get(), bridge_cast(kCTFontRegistrationScopeAttribute): @(kCTFontPriorityComputer) };
     return adoptCF(CTFontDescriptorCreateWithAttributes((__bridge CFDictionaryRef)attributes.get()));
 }
 

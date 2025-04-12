@@ -1085,12 +1085,12 @@ void AsyncScrollingCoordinator::setViewportConstraintedNodeConstraints(Scrolling
     switch (constraints.constraintType()) {
     case ViewportConstraints::FixedPositionConstraint: {
         if (RefPtr fixedNode = dynamicDowncast<ScrollingStateFixedNode>(node))
-            fixedNode->updateConstraints((const FixedPositionViewportConstraints&)constraints);
+            fixedNode->updateConstraints(downcast<FixedPositionViewportConstraints>(constraints));
         break;
     }
     case ViewportConstraints::StickyPositionConstraint: {
         if (RefPtr stickyNode = dynamicDowncast<ScrollingStateStickyNode>(node))
-            stickyNode->updateConstraints((const StickyPositionViewportConstraints&)constraints);
+            stickyNode->updateConstraints(downcast<StickyPositionViewportConstraints>(constraints));
         break;
     }
     }
@@ -1220,7 +1220,7 @@ String AsyncScrollingCoordinator::scrollingStateTreeAsText(OptionSet<ScrollingSt
             if (m_eventTrackingRegionsDirty)
                 tree->rootStateNode()->setEventTrackingRegions(absoluteEventTrackingRegions());
             if (m_scrollingStateTrees.size() > 1)
-                stateTree.append(makeString("Tree-for-root-frameID: "_s, key.toString()));
+                stateTree.append(makeString("Tree-for-root-frameID: "_s, key.toUInt64()));
             stateTree.append(tree->scrollingStateTreeAsText(behavior));
         }
     });

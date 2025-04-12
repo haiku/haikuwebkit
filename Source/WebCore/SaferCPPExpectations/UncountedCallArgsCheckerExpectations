@@ -93,8 +93,6 @@ Modules/indexeddb/client/IDBConnectionProxy.cpp
 Modules/indexeddb/client/IDBConnectionToServer.cpp
 Modules/indexeddb/client/TransactionOperation.h
 Modules/mediacontrols/MediaControlsHost.cpp
-Modules/mediarecorder/MediaRecorder.cpp
-Modules/mediarecorder/MediaRecorder.h
 Modules/mediasession/MediaMetadata.cpp
 Modules/mediasession/MediaSession.cpp
 Modules/mediasession/MediaSessionCoordinator.cpp
@@ -106,9 +104,6 @@ Modules/mediasource/MediaSourceInterfaceMainThread.cpp
 Modules/mediasource/MediaSourceInterfaceWorker.cpp
 Modules/mediasource/SampleMap.cpp
 Modules/mediasource/SourceBuffer.cpp
-Modules/mediastream/CanvasCaptureMediaStreamTrack.cpp
-Modules/mediastream/MediaStream.cpp
-Modules/mediastream/MediaStream.h
 Modules/mediastream/MediaStreamTrack.cpp
 Modules/mediastream/MediaStreamTrackProcessor.cpp
 Modules/mediastream/PeerConnectionBackend.cpp
@@ -236,14 +231,12 @@ Modules/websockets/WebSocketChannelInspector.cpp
 Modules/websockets/WorkerThreadableWebSocketChannel.cpp
 Modules/webtransport/WebTransport.cpp
 StyleBuilderGenerated.cpp
-accessibility/AXCoreObject.cpp
 accessibility/AXImage.cpp
 accessibility/AXLogger.cpp
 accessibility/AXObjectCache.cpp
 accessibility/AXObjectCache.h
 accessibility/AXSearchManager.cpp
 accessibility/AXTextMarker.cpp
-accessibility/AccessibilityImageMapLink.cpp
 accessibility/AccessibilityList.cpp
 accessibility/AccessibilityListBox.cpp
 accessibility/AccessibilityListBoxOption.cpp
@@ -442,7 +435,6 @@ css/CSSReflectValue.h
 css/CSSRuleList.h
 css/CSSScrollValue.cpp
 css/CSSScrollValue.h
-css/CSSSegmentedFontFace.cpp
 css/CSSSelector.cpp
 css/CSSStyleProperties.cpp
 css/CSSStyleRule.cpp
@@ -893,7 +885,6 @@ page/LocalDOMWindow.cpp
 page/LocalFrame.cpp
 page/LocalFrameView.cpp
 page/Location.cpp
-page/Navigation.cpp
 page/NavigationDestination.cpp
 page/NavigationDestination.h
 page/NavigationHistoryEntry.cpp
@@ -1055,7 +1046,6 @@ platform/mac/ScrollbarsControllerMac.mm
 platform/mediarecorder/MediaRecorderPrivate.h
 platform/mediarecorder/MediaRecorderPrivateAVFImpl.cpp
 platform/mediarecorder/MediaRecorderPrivateMock.cpp
-platform/mediastream/MediaStreamPrivate.cpp
 platform/mediastream/MediaStreamTrackDataHolder.cpp
 platform/mediastream/MediaStreamTrackPrivate.cpp
 platform/mediastream/RealtimeMediaSourceCenter.cpp
@@ -1063,16 +1053,12 @@ platform/mediastream/RealtimeOutgoingAudioSource.cpp
 platform/mediastream/RealtimeOutgoingVideoSource.cpp
 platform/mediastream/cocoa/AudioMediaStreamTrackRendererCocoa.cpp
 platform/mediastream/cocoa/AudioMediaStreamTrackRendererUnit.cpp
-platform/mediastream/cocoa/DisplayCaptureSourceCocoa.cpp
-platform/mediastream/cocoa/DisplayCaptureSourceCocoa.h
 platform/mediastream/cocoa/IncomingAudioMediaStreamTrackRendererUnit.cpp
 platform/mediastream/libwebrtc/LibWebRTCAudioModule.cpp
 platform/mediastream/mac/AVCaptureDeviceManager.mm
 platform/mediastream/mac/MediaStreamTrackAudioSourceProviderCocoa.cpp
 platform/mediastream/mac/MockAudioSharedUnit.mm
 platform/mediastream/mac/RealtimeOutgoingAudioSourceCocoa.cpp
-platform/mediastream/mac/ScreenCaptureKitCaptureSource.mm
-platform/mediastream/mac/ScreenCaptureKitSharingSessionManager.mm
 platform/mediastream/mac/WebAudioSourceProviderCocoa.mm
 platform/mock/GeolocationClientMock.cpp
 platform/mock/MockAudioDestinationCocoa.cpp

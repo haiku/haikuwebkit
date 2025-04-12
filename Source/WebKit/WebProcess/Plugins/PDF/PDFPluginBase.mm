@@ -107,7 +107,6 @@ PluginInfo PDFPluginBase::pluginInfo()
     info.desc = pdfDocumentTypeDescription();
     info.file = "internal-pdf-viewer"_s;
     info.isApplicationPlugin = true;
-    info.clientLoadPolicy = PluginLoadClientPolicy::Undefined;
     info.bundleIdentifier = "com.apple.webkit.builtinpdfplugin"_s;
 
     MimeClassInfo pdfMimeClassInfo;
@@ -614,8 +613,8 @@ void PDFPluginBase::addArchiveResource()
     // FIXME: It's a hack to force add a resource to DocumentLoader. PDF documents should just be fetched as CachedResources.
 
     // Add just enough data for context menu handling and web archives to work.
-    NSDictionary* headers = @{ @"Content-Disposition": (NSString *)m_suggestedFilename, @"Content-Type" : @"application/pdf" };
-    auto response = adoptNS([[NSHTTPURLResponse alloc] initWithURL:m_view->mainResourceURL() statusCode:200 HTTPVersion:(NSString*)kCFHTTPVersion1_1 headerFields:headers]);
+    NSDictionary* headers = @{ @"Content-Disposition": m_suggestedFilename.createNSString().get(), @"Content-Type" : @"application/pdf" };
+    RetainPtr response = adoptNS([[NSHTTPURLResponse alloc] initWithURL:m_view->mainResourceURL().createNSURL().get() statusCode:200 HTTPVersion:(NSString*)kCFHTTPVersion1_1 headerFields:headers]);
     ResourceResponse synthesizedResponse(response.get());
 
     RetainPtr data = originalData();
@@ -673,13 +672,17 @@ bool PDFPluginBase::shouldShowHUD() const
 
 void PDFPluginBase::updateHUDVisibility()
 {
-    if (!m_frame)
+    RefPtr frame = m_frame.get();
+    if (!frame)
+        return;
+    RefPtr page = frame->page();
+    if (!page)
         return;
 
     if (shouldShowHUD())
-        m_frame->page()->createPDFHUD(*this, frameForHUDInRootViewCoordinates());
+        page->createPDFHUD(*this, frame->frameID(), frameForHUDInRootViewCoordinates());
     else
-        m_frame->page()->removePDFHUD(*this);
+        page->removePDFHUD(*this);
 }
 #endif
 
@@ -1133,7 +1136,7 @@ void PDFPluginBase::writeItemsToGeneralPasteboard(Vector<PasteboardItem>&& paste
                 .url = sanitizedURL,
                 .title = sanitizedURL.string(),
 #if PLATFORM(MAC)
-                .userVisibleForm = userVisibleString(sanitizedURL),
+                .userVisibleForm = WTF::userVisibleString(sanitizedURL.createNSURL().get()),
 #endif
             };
         }

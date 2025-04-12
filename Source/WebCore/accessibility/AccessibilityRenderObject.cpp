@@ -48,6 +48,7 @@
 #include "FrameLoader.h"
 #include "FrameSelection.h"
 #include "HTMLAreaElement.h"
+#include "HTMLAttachmentElement.h"
 #include "HTMLBRElement.h"
 #include "HTMLDetailsElement.h"
 #include "HTMLFormElement.h"
@@ -1415,7 +1416,8 @@ AXTextRuns AccessibilityRenderObject::textRuns()
         return { renderLineBreak->containingBlock(), { AXTextRun(box ? box->lineIndex() : 0, makeString('\n').isolatedCopy(), { lengthOneDomOffsets }, { 0 }, 0) } };
     }
 
-    if (is<HTMLImageElement>(node()) || is<HTMLMediaElement>(node())) {
+    RefPtr node = this->node();
+    if (is<HTMLMediaElement>(node) || is<HTMLAttachmentElement>(node) || isImage()) {
         auto* containingBlock = renderer ? renderer->containingBlock() : nullptr;
         FloatRect rect = frameRect();
         uint16_t width = static_cast<uint16_t>(rect.width());
@@ -1487,7 +1489,6 @@ AXTextRuns AccessibilityRenderObject::textRuns()
     auto textBox = InlineIterator::lineLeftmostTextBoxFor(*renderText);
     size_t currentLineIndex = textBox ? textBox->lineIndex() : 0;
     for (; textBox; textBox.traverseNextTextBox()) {
-        textRunDomOffsets.append({ domOffset(textBox->minimumCaretOffset()), domOffset(textBox->maximumCaretOffset()) });
         size_t newLineIndex = textBox->lineIndex();
         if (newLineIndex != currentLineIndex) {
             // FIXME: Currently, this is only ever called to ship text runs off to the accessibility thread. But maybe we should we make the isolatedCopy()s in this function optional based on a parameter?
@@ -1498,12 +1499,31 @@ AXTextRuns AccessibilityRenderObject::textRuns()
         }
         currentLineIndex = newLineIndex;
 
+        // Within each iteration of this loop, we are looking at the *next* text box to compare to the current.
+        // So, we need to set the textRunDomOffsets after the line index comparison, in order to assign the right DOM offsets per text box.
+        textRunDomOffsets.append({ domOffset(textBox->minimumCaretOffset()), domOffset(textBox->maximumCaretOffset()) });
         appendToLineString(textBox);
     }
 
     if (!lineString.isEmpty())
         runs.append({ currentLineIndex, lineString.toString().isolatedCopy(), WTFMove(textRunDomOffsets), std::exchange(characterWidths, { }), lineHeight });
-    return { renderText->containingBlock(), WTFMove(runs) };
+
+    bool containsOnlyASCII = true;
+    for (size_t i = 0; i < runs.size(); i++) {
+        if (containsOnlyASCII && !runs[i].text.containsOnlyASCII())
+            containsOnlyASCII = false;
+
+        // If a space was trimmed in this text run (i.e., there's a gap between the end of the current run's DOM offset and the start of the next), add it back.
+        if (i != runs.size() - 1 && runs[i + 1].domOffsets().size()) {
+            uint16_t currentDOMEnd = runs[i].domOffsets().last()[1];
+            uint16_t nextDOMStart = runs[i + 1].domOffsets().first()[0];
+            if (currentDOMEnd != nextDOMStart) {
+                runs[i].text = makeString(runs[i].text, ' ');
+                runs[i].characterAdvances.append(0);
+            }
+        }
+    }
+    return { renderText->containingBlock(), WTFMove(runs), containsOnlyASCII };
 }
 
 AXTextRunLineID AccessibilityRenderObject::listMarkerLineID() const
@@ -1691,14 +1711,6 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityRenderObject::documentLin
                         if (is<AccessibilityImageMapLink>(child) && !result.contains(child))
                             result.append(child);
                     }
-                } else {
-                    // We couldn't retrieve the already existing image-map links from the parent image, so create a new one.
-                    ASSERT_NOT_REACHED("Unexpectedly missing image-map link parent AX object.");
-                    auto& areaObject = downcast<AccessibilityImageMapLink>(*cache->create(AccessibilityRole::ImageMapLink));
-                    areaObject.setHTMLAreaElement(uncheckedDowncast<HTMLAreaElement>(current));
-                    areaObject.setHTMLMapElement(parentMap);
-                    areaObject.setParent(associatedAXImage(*parentMap));
-                    result.append(areaObject);
                 }
             }
         }
@@ -2296,18 +2308,14 @@ void AccessibilityRenderObject::addImageMapChildren()
     if (!map)
         return;
 
+    WeakPtr cache = axObjectCache();
+    if (!cache)
+        return;
     for (auto& area : descendantsOfType<HTMLAreaElement>(*map)) {
         // add an <area> element for this child if it has a link
         if (!area.isLink())
             continue;
-        auto& areaObject = uncheckedDowncast<AccessibilityImageMapLink>(*axObjectCache()->create(AccessibilityRole::ImageMapLink));
-        areaObject.setHTMLAreaElement(&area);
-        areaObject.setHTMLMapElement(map.get());
-        areaObject.setParent(this);
-        if (!areaObject.isIgnored())
-            addChild(areaObject);
-        else
-            axObjectCache()->remove(areaObject.objectID());
+        addChild(cache->getOrCreate(area));
     }
 }
 

@@ -270,6 +270,7 @@ public:
 
     WEBCORE_EXPORT void scrollToEdgeWithOptions(WebCore::RectEdges<bool>, const ScrollPositionChangeOptions&);
     WEBCORE_EXPORT void setScrollOffsetWithOptions(const ScrollOffset&, const ScrollPositionChangeOptions&);
+    WEBCORE_EXPORT void setScrollOffsetWithOptions(std::optional<int> x, std::optional<int> y, const ScrollPositionChangeOptions&);
     WEBCORE_EXPORT void setScrollPosition(const ScrollPosition&, const ScrollPositionChangeOptions& = ScrollPositionChangeOptions::createProgrammatic()) final;
     void restoreScrollbar();
     void scheduleScrollToFocusedElement(SelectionRevealMode);
@@ -318,6 +319,8 @@ public:
     // These are in document coordinates, unaffected by page scale (but affected by zooming).
     WEBCORE_EXPORT LayoutRect layoutViewportRect() const;
     WEBCORE_EXPORT LayoutRect visualViewportRect() const;
+
+    LayoutRect layoutViewportRectIncludingObscuredInsets() const;
     
     static LayoutRect visibleDocumentRect(const FloatRect& visibleContentRect, float headerHeight, float footerHeight, const FloatSize& totalContentsSize, float pageScaleFactor);
 
@@ -640,7 +643,7 @@ public:
 
     void addPaintPendingMilestones(OptionSet<LayoutMilestone>);
     void firePaintRelatedMilestonesIfNeeded();
-    void fireLayoutRelatedMilestonesIfNeeded();
+    WEBCORE_EXPORT void fireLayoutRelatedMilestonesIfNeeded();
     OptionSet<LayoutMilestone> milestonesPendingPaint() const { return m_milestonesPendingPaint; }
 
     bool visualUpdatesAllowedByClient() const { return m_visualUpdatesAllowedByClient; }

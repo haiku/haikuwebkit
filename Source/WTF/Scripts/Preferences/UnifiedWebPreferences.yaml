@@ -1995,20 +1995,6 @@ ClearSiteDataHTTPHeaderEnabled:
     WebCore:
       default: false
 
-ClientBadgeEnabled:
-  type: bool
-  status: unstable
-  category: dom
-  humanReadableName: "Client Badge"
-  humanReadableDescription: "Enable Client Badge"
-  defaultValue:
-    WebKitLegacy:
-      default: false
-    WebKit:
-      default: false
-    WebCore:
-      default: false
-
 CloseWatcherEnabled:
   type: bool
   status: testable
@@ -2149,7 +2135,6 @@ ContentInsetBackgroundFillEnabled:
   status: internal
   humanReadableName: "Content Inset Background Fill"
   humanReadableDescription: "Fill content insets with background colors"
-  condition: PLATFORM(COCOA)
   defaultValue:
     WebKit:
       default: WebKit::defaultContentInsetBackgroundFillEnabled()
@@ -2927,6 +2912,19 @@ ExperimentalSandboxEnabled:
     WebKit:
       default: false
 
+ExposeCaptureDevicesAfterCaptureEnabled:
+  type: bool
+  status: internal
+  category: media
+  humanReadableName: "Expose all capture devices when one is used"
+  humanReadableDescription: "Expose all capture devices when one is used"
+  condition: ENABLE(MEDIA_STREAM)
+  defaultValue:
+    WebKit:
+      default: true
+    WebCore:
+      default: false
+
 ExposeSpeakersEnabled:
   type: bool
   status: internal
@@ -3086,17 +3084,17 @@ FileSystemWritableStreamEnabled:
 
 FilterLinkDecorationByDefaultEnabled:
   type: bool
-  status: stable
+  status: testable
   category: networking
   humanReadableName: "Filter Link Decoration"
   humanReadableDescription: "Enable Filtering Link Decoration"
   defaultValue:
     WebKitLegacy:
-      default: true
+      default: false
     WebKit:
-      default: true
+      default: false
     WebCore:
-      default: true
+      default: false
 
 FixedFontFamily:
   type: String
@@ -3546,6 +3544,22 @@ IFrameResourceMonitoringEnabled:
     WebCore:
       default: false
 
+IFrameResourceMonitoringTestingSettingsEnabled:
+  type: bool
+  status: internal
+  category: networking
+  condition: ENABLE(CONTENT_EXTENSIONS)
+  defaultsOverridable: true
+  humanReadableName: "Frame Resource Monitoring Settings For Testing"
+  humanReadableDescription: "Use Resource Monitoring Settings for testing"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+
 IPAddressAndLocalhostMixedContentUpgradeTestingEnabled:
   type: bool
   status: testable
@@ -3901,6 +3915,19 @@ InspectorAttachmentSide:
   defaultValue:
     WebKit:
       default: 0
+
+InspectorMaximumResourcesContentSize:
+  type: uint32_t
+  status: embedder
+  defaultValue:
+    WebKitLegacy:
+      default: 200
+    WebKit:
+      "PLATFORM(WPE)": 50
+      default: 200
+    WebCore:
+      "PLATFORM(WPE)": 50
+      default: 200
 
 InspectorStartsAttached:
   type: bool
@@ -4808,6 +4835,7 @@ MediaCapabilityGrantsEnabled:
     WebCore:
       "PLATFORM(IOS_FAMILY_SIMULATOR)": false
       default: true
+  sharedPreferenceForWebProcess: true
 
 MediaCaptionFormatTypesAllowedInLockdownMode:
   type: String
@@ -5139,10 +5167,10 @@ MediaSourcePrefersDecompressionSession:
     WebKitLegacy:
       default: false
     WebKit:
-      "PLATFORM(VISION)": false
+      "PLATFORM(IOS)": false
       default: true
     WebCore:
-      "PLATFORM(VISION)": false
+      "PLATFORM(IOS)": false
       default: true
   sharedPreferenceForWebProcess: true
 
@@ -5907,9 +5935,9 @@ PictureInPicturePlaybackStateEnabled:
   condition: HAVE(PIP_SKIP_PREROLL)
   defaultValue:
     WebKitLegacy:
-      default: false
+      default: true
     WebKit:
-      default: false
+      default: true
     WebCore:
       default: false
   disableInLockdownMode: true
@@ -8115,18 +8143,6 @@ UsePreHTML5ParserQuirks:
     WebCore:
       default: false
 
-UseSCContentSharingPicker:
-  type: bool
-  status: internal
-  humanReadableName: "Use SCContentSharingPicker"
-  humanReadableDescription: "Use SCContentSharingPicker when available"
-  condition: HAVE(SC_CONTENT_SHARING_PICKER)
-  defaultValue:
-    WebKit:
-      default: WebKit::defaultUseSCContentSharingPicker()
-    WebCore:
-      default: false
-
 UseSceneKitForModel:
   type: bool
   status: unstable
@@ -9386,6 +9402,20 @@ WirelessPlaybackTargetAPIEnabled:
     WebCore:
       "PLATFORM(VISION)" : false
       default: true
+
+WorkerAsynchronousURLErrorHandlingEnabled:
+  type: bool
+  status: preview
+  category: dom
+  humanReadableName: "Worker asynchronous URL error handling"
+  humanReadableDescription: "Worker asynchronous URL error handling"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
 
 WriteRichTextDataWhenCopyingOrDragging:
   type: bool

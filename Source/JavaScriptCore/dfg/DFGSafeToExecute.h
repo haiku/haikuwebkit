@@ -340,11 +340,12 @@ bool safeToExecute(AbstractStateType& state, Graph& graph, Node* node, bool igno
     case DataViewGetFloat:
     case ResolveRope:
     case NumberIsNaN:
+    case NumberIsFinite:
     case StringIndexOf:
         return true;
 
     case GlobalIsNaN:
-        return node->child1().useKind() == DoubleRepUse;
+        return false;
 
     case GetButterfly:
         return state.forNode(node->child1()).isType(SpecObject);
@@ -410,6 +411,9 @@ bool safeToExecute(AbstractStateType& state, Graph& graph, Node* node, bool igno
     case StringCharCodeAt:
     case StringCodePointAt:
         return node->arrayMode().alreadyChecked(graph, node, state.forNode(graph.child(node, 0)));
+
+    case MultiGetByVal:
+        return false;
 
     case ArrayPush:
         return node->arrayMode().alreadyChecked(graph, node, state.forNode(graph.varArgChild(node, 1)));

@@ -46,6 +46,7 @@
 #include <pal/SessionID.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/Forward.h>
+#include <wtf/Function.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
 #include <wtf/MemoryPressureHandler.h>
@@ -615,7 +616,7 @@ public:
 #endif
 
 #if ENABLE(CONTENT_EXTENSIONS)
-    WebCompiledContentRuleList* cachedResourceMonitorRuleList();
+    WebCompiledContentRuleList* cachedResourceMonitorRuleList(bool forTesting);
     void setResourceMonitorURLsForTesting(const String& rulesText, CompletionHandler<void()>&&);
 #endif
 
@@ -749,6 +750,7 @@ private:
 
     void platformLoadResourceMonitorRuleList(CompletionHandler<void(RefPtr<WebCompiledContentRuleList>)>&&);
     void platformCompileResourceMonitorRuleList(const String& rulesText, CompletionHandler<void(RefPtr<WebCompiledContentRuleList>)>&&);
+    String platformResourceMonitorRuleListSourceForTesting();
 #endif
 
     Ref<API::ProcessPoolConfiguration> m_configuration;
@@ -964,6 +966,7 @@ private:
 #if PLATFORM(IOS_FAMILY)
     bool m_processesShouldSuspend { false };
     HardwareKeyboardState m_hardwareKeyboardState;
+    String m_cachedWebContentTempDirectory;
 #endif
 
 #if ENABLE(ADVANCED_PRIVACY_PROTECTIONS)

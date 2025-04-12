@@ -99,10 +99,7 @@ ExceptionOr<ViewTimeline::SpecifiedViewTimelineInsets> ViewTimeline::validateSpe
     if (auto* insetString = std::get_if<String>(&inset)) {
         if (insetString->isEmpty())
             return Exception { ExceptionCode::TypeError };
-        CSSTokenizer tokenizer(*insetString);
-        auto tokenRange = tokenizer.tokenRange();
-        tokenRange.consumeWhitespace();
-        auto consumedInset = CSSPropertyParserHelpers::consumeSingleViewTimelineInsetItem(tokenRange, Ref { document }->cssParserContext());
+        auto consumedInset = CSSPropertyParserHelpers::parseSingleViewTimelineInsetItem(*insetString, Ref { document }->cssParserContext());
         if (!consumedInset)
             return Exception { ExceptionCode::TypeError };
 
@@ -310,21 +307,18 @@ void ViewTimeline::cacheCurrentTime()
             return { };
 
         auto scrollDirection = resolvedScrollDirection();
-        if (!scrollDirection)
-            return { };
-
-        float scrollOffset = scrollDirection->isVertical ? sourceScrollableArea->scrollOffset().y() : sourceScrollableArea->scrollOffset().x();
-        float scrollContainerSize = scrollDirection->isVertical ? sourceScrollableArea->visibleHeight() : sourceScrollableArea->visibleWidth();
+        float scrollOffset = scrollDirection.isVertical ? sourceScrollableArea->scrollOffset().y() : sourceScrollableArea->scrollOffset().x();
+        float scrollContainerSize = scrollDirection.isVertical ? sourceScrollableArea->visibleHeight() : sourceScrollableArea->visibleWidth();
 
         // https://drafts.csswg.org/scroll-animations-1/#view-timelines-ranges
         // Transforms and sticky position offsets are ignored, but relative and absolute positioning are accounted for.
         OptionSet<MapCoordinatesMode> options { IgnoreStickyOffsets };
         auto subjectOffsetFromSource = subjectRenderer->localToContainerPoint(pointForLocalToContainer(*sourceScrollableArea), sourceRenderer.get(), options);
-        float subjectOffset = scrollDirection->isVertical ? subjectOffsetFromSource.y() : subjectOffsetFromSource.x();
+        float subjectOffset = scrollDirection.isVertical ? subjectOffsetFromSource.y() : subjectOffsetFromSource.x();
 
         // Ensure borders are subtracted.
         auto scrollerPaddingBoxOrigin = sourceRenderer->paddingBoxRect().location();
-        subjectOffset -= scrollDirection->isVertical ? scrollerPaddingBoxOrigin.y() : scrollerPaddingBoxOrigin.x();
+        subjectOffset -= scrollDirection.isVertical ? scrollerPaddingBoxOrigin.y() : scrollerPaddingBoxOrigin.x();
 
         auto subjectBounds = [&] -> FloatSize {
             if (CheckedPtr subjectRenderBox = dynamicDowncast<RenderBox>(subjectRenderer.get()))
@@ -338,7 +332,7 @@ void ViewTimeline::cacheCurrentTime()
             return { };
         }();
 
-        auto subjectSize = scrollDirection->isVertical ? subjectBounds.height() : subjectBounds.width();
+        auto subjectSize = scrollDirection.isVertical ? subjectBounds.height() : subjectBounds.width();
 
         if (m_specifiedInsets) {
             RefPtr subjectElement { &subject->element };
@@ -354,8 +348,8 @@ void ViewTimeline::cacheCurrentTime()
         auto scrollPadding = [&](PaddingEdge edge) {
             auto& style = sourceRenderer->style();
             if (edge == PaddingEdge::Start)
-                return scrollDirection->isVertical ? style.scrollPaddingTop() : style.scrollPaddingLeft();
-            return scrollDirection->isVertical ? style.scrollPaddingBottom() : style.scrollPaddingRight();
+                return scrollDirection.isVertical ? style.scrollPaddingTop() : style.scrollPaddingLeft();
+            return scrollDirection.isVertical ? style.scrollPaddingBottom() : style.scrollPaddingRight();
         };
 
         bool hasInsetsStart = m_insets.start.has_value();
@@ -398,7 +392,7 @@ void ViewTimeline::cacheCurrentTime()
             FloatRect constrainingRect = stickyContainer->constrainingRectForStickyPosition();
             StickyPositionViewportConstraints constraints;
             stickyContainer->computeStickyPositionConstraints(constraints, constrainingRect);
-            stickyData = StickinessAdjustmentData::computeStickinessAdjustmentData(constraints, *scrollDirection, scrollContainerSize, subjectSize, subjectOffset);
+            stickyData = StickinessAdjustmentData::computeStickinessAdjustmentData(constraints, scrollDirection, scrollContainerSize, subjectSize, subjectOffset);
         }
 
         return {

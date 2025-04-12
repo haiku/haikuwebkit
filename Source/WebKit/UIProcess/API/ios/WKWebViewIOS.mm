@@ -350,15 +350,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     return [_contentView isBackground];
 }
 
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-- (WKBrowsingContextController *)browsingContextController
-{
-    if (linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::BrowsingContextControllerSPIAccessRemoved))
-        return nil;
-    return [_contentView browsingContextController];
-}
-ALLOW_DEPRECATED_DECLARATIONS_END
-
 - (BOOL)becomeFirstResponder
 {
 #if PLATFORM(VISION)
@@ -3752,7 +3743,7 @@ static bool isLockdownModeWarningNeeded()
             if (!appDisplayName)
                 appDisplayName = [[NSBundle mainBundle] objectForInfoDictionaryKey:(__bridge NSString *)kCFBundleNameKey];
 
-            auto alert = WebKit::createUIAlertController([NSString stringWithFormat:WEB_UI_NSSTRING(@"Lockdown Mode is Turned On For “%@“", "Lockdown Mode alert title"), appDisplayName], message.get());
+            auto alert = WebKit::createUIAlertController(adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"Lockdown Mode is Turned On For “%@“", "Lockdown Mode alert title"), appDisplayName]).get(), message.get());
 
             [alert addAction:[UIAlertAction actionWithTitle:WEB_UI_NSSTRING(@"OK", "Lockdown Mode alert OK button") style:UIAlertActionStyleDefault handler:nil]];
 
@@ -3991,7 +3982,7 @@ static bool isLockdownModeWarningNeeded()
         return nil;
 
     URL destinationURL { makeString("https://"_s, attribution->destinationDomain) };
-    return adoptNS([[UIEventAttribution alloc] initWithSourceIdentifier:attribution->sourceID destinationURL:destinationURL sourceDescription:attribution->sourceDescription purchaser:attribution->purchaser]).autorelease();
+    return adoptNS([[UIEventAttribution alloc] initWithSourceIdentifier:attribution->sourceID destinationURL:destinationURL.createNSURL().get() sourceDescription:attribution->sourceDescription purchaser:attribution->purchaser]).autorelease();
 #else
     return nil;
 #endif

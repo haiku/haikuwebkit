@@ -25,43 +25,12 @@
 
 #pragma once
 
-#include "WebProcessPool.h"
-
 #if ENABLE(REMOTE_INSPECTOR)
 #include "APIAutomationClient.h"
-#include "APIAutomationSessionClient.h"
-#include "APIUIClient.h"
-#include "WebView.h"
+#include "WebProcessPool.h"
 #include <JavaScriptCore/RemoteInspectorServer.h>
-#endif
 
 namespace WebKit {
-
-#if ENABLE(REMOTE_INSPECTOR)
-
-class AutomationSessionClient final : public API::AutomationSessionClient {
-public:
-    explicit AutomationSessionClient(const String&, const Inspector::RemoteInspector::Client::SessionCapabilities&);
-
-    String sessionIdentifier() const override { return m_sessionIdentifier; }
-
-    void requestNewPageWithOptions(WebKit::WebAutomationSession&, API::AutomationSessionBrowsingContextOptions, CompletionHandler<void(WebKit::WebPageProxy*)>&&) override;
-    void didDisconnectFromRemote(WebKit::WebAutomationSession&) override;
-
-    void retainWebView(Ref<WebView>&&);
-    void releaseWebView(WebPageProxy*);
-
-private:
-    String m_sessionIdentifier;
-    Inspector::RemoteInspector::Client::SessionCapabilities m_capabilities { };
-
-    static void close(WKPageRef, const void*);
-
-    static void didReceiveAuthenticationChallenge(WKPageRef, WKAuthenticationChallengeRef, const void*);
-    void didReceiveAuthenticationChallenge(WKPageRef, WKAuthenticationChallengeRef);
-
-    HashSet<Ref<WebView>> m_webViews;
-};
 
 class AutomationClient final : public API::AutomationClient, Inspector::RemoteInspector::Client {
 public:
@@ -88,6 +57,6 @@ private:
     WeakPtr<WebProcessPool> m_processPool;
 };
 
-#endif
-
 } // namespace WebKit
+
+#endif // ENABLE(REMOTE_INSPECTOR)
