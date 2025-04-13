@@ -27,10 +27,7 @@
 #define JavaScriptCore_h
 
 #include <JavaScriptCore/JavaScript.h>
-
-#if !OS(HAIKU)
 #include <JavaScriptCore/JSStringRefCF.h>
-#endif
 
 #include <JavaScriptCore/JSContext.h>
 #include <JavaScriptCore/JSValue.h>
