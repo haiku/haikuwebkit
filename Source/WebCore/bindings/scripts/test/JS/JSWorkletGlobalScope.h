@@ -22,7 +22,6 @@
 
 #include "JSDOMWrapper.h"
 #include "JSEventTarget.h"
-#include "WorkletGlobalScope.h"
 
 namespace WebCore {
 

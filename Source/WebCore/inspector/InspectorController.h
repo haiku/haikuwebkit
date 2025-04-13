@@ -47,8 +47,6 @@ class FrontendRouter;
 class InspectorAgent;
 }
 
-#include "InspectorOverlay.h"
-
 namespace WebCore {
 
 class DOMWrapperWorld;

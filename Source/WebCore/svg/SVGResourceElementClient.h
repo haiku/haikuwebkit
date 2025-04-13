@@ -27,8 +27,6 @@
 
 #include <wtf/WeakPtr.h>
 
-#include "RenderElement.h"
-
 namespace WebCore {
 class RenderElement;
 class SVGResourceElementClient;
