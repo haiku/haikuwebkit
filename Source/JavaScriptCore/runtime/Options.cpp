@@ -32,7 +32,6 @@
 #include "MacroAssembler.h"
 #include "MinimumReservedZoneSize.h"
 #include <algorithm>
-#include <cmath>
 #include <limits>
 #include <mutex>
 #include <stdlib.h>

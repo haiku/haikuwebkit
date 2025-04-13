@@ -66,10 +66,6 @@
 #include <glib.h>
 #endif
 
-#if PLATFORM(HAIKU)
-#include <OS.h>
-#endif
-
 namespace WTF {
 
 #if OS(WINDOWS)

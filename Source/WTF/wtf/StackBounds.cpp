@@ -25,10 +25,6 @@
 
 #include <pthread.h>
 
-#elif OS(HAIKU)
-
-#include <OS.h>
-
 #elif OS(WINDOWS)
 
 #include <windows.h>

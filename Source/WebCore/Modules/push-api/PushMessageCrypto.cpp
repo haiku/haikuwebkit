@@ -28,7 +28,6 @@
 
 #include "PushCrypto.h"
 #include <array>
-#include <wtf/text/ASCIILiteral.h>
 #include <wtf/ByteOrder.h>
 #include <wtf/CryptographicallyRandomNumber.h>
 #include <wtf/StdLibExtras.h>
