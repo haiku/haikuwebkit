@@ -597,7 +597,7 @@ void FrameLoaderClientHaiku::dispatchDecidePolicyForNewWindowAction(
 void FrameLoaderClientHaiku::dispatchDecidePolicyForNavigationAction(
 	const NavigationAction& action, const ResourceRequest& request,
 	const WebCore::ResourceResponse& response, FormState* formState,
-	const String&, std::optional<NavigationIdentifier> identifier, std::optional<HitTestResult>&& hit, bool, IsPerformingHTTPFallback, SandboxFlags, PolicyDecisionMode, FramePolicyFunction&& function)
+	const String&, std::optional<NavigationIdentifier> identifier, std::optional<HitTestResult>&& hit, bool, IsPerformingHTTPFallback, SandboxFlags, MayNeedBeforeUnloadPrompt, PolicyDecisionMode, FramePolicyFunction&& function)
 {
     // Potentially we want to open a new window, when the user clicked with the
     // tertiary mouse button. That's why we can reuse the other method.
