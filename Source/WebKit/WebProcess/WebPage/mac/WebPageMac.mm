@@ -132,10 +132,8 @@ void WebPage::platformInitializeAccessibility(ShouldInitializeNSAccessibility sh
     // Get the pid for the starting process.
     pid_t pid = legacyPresentingApplicationPID();
     createMockAccessibilityElement(pid);
-    if (shouldInitializeNSAccessibility == ShouldInitializeNSAccessibility::Yes) {
-        if (protectedCorePage()->localMainFrame())
-            accessibilityTransferRemoteToken(accessibilityRemoteTokenData());
-    }
+    if (protectedCorePage()->localMainFrame())
+        accessibilityTransferRemoteToken(accessibilityRemoteTokenData());
 
     // Close Mach connection to Launch Services.
 #if HAVE(LS_SERVER_CONNECTION_STATUS_RELEASE_NOTIFICATIONS_MASK)
@@ -528,10 +526,10 @@ void WebPage::setAXIsolatedTreeRoot(WebCore::AXCoreObject* root)
 
 bool WebPage::platformCanHandleRequest(const WebCore::ResourceRequest& request)
 {
-    NSURLRequest *nsRequest = request.nsURLRequest(HTTPBodyUpdatePolicy::DoNotUpdateHTTPBody);
-    if (!nsRequest.URL)
+    RetainPtr nsRequest = request.nsURLRequest(HTTPBodyUpdatePolicy::DoNotUpdateHTTPBody);
+    if (!nsRequest.get().URL)
         return false;
-    if ([NSURLConnection canHandleRequest:nsRequest])
+    if ([NSURLConnection canHandleRequest:nsRequest.get()])
         return true;
 
     // FIXME: Return true if this scheme is any one WebKit2 knows how to handle.
@@ -810,8 +808,8 @@ void WebPage::performImmediateActionHitTestAtLocation(WebCore::FrameIdentifier f
             continue;
 
         pageOverlayDidOverrideDataDetectors = true;
-        if (auto* detectedContext = actionContext->context.get())
-            immediateActionResult.platformData.detectedDataActionContext = { { detectedContext } };
+        if (RetainPtr detectedContext = actionContext->context.get())
+            immediateActionResult.platformData.detectedDataActionContext = { { detectedContext.get() } };
         immediateActionResult.platformData.detectedDataBoundingBox = view->contentsToWindow(enclosingIntRect(unitedBoundingBoxes(RenderObject::absoluteTextQuads(actionContext->range))));
         immediateActionResult.platformData.detectedDataTextIndicator = TextIndicator::createWithRange(actionContext->range, indicatorOptions(actionContext->range), TextIndicatorPresentationTransition::FadeIn);
         immediateActionResult.platformData.detectedDataOriginatingPageOverlay = overlay->pageOverlayID();
@@ -1083,9 +1081,6 @@ void WebPage::initializeAccessibility(Vector<SandboxExtension::Handle>&& handles
     });
 
     [NSApplication _accessibilityInitialize];
-
-    if (protectedCorePage()->localMainFrame())
-        accessibilityTransferRemoteToken(accessibilityRemoteTokenData());
 
     for (auto& extension : extensions)
         extension->revoke();

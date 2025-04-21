@@ -40,7 +40,9 @@
 #include "DownloadProxy.h"
 #include "DownloadProxyMap.h"
 #include "DownloadProxyMessages.h"
+#include "FormDataReference.h"
 #include "FrameInfoData.h"
+#include "ITPThirdPartyData.h"
 #include "LegacyGlobalSettings.h"
 #include "LoadedWebArchive.h"
 #include "Logging.h"
@@ -68,6 +70,7 @@
 #include "WebProcessPool.h"
 #include "WebProcessProxy.h"
 #include "WebProcessProxyMessages.h"
+#include "WebPushMessage.h"
 #include "WebResourceLoadStatisticsStore.h"
 #include "WebUserContentControllerProxy.h"
 #include "WebsiteData.h"
@@ -2015,7 +2018,7 @@ void NetworkProcessProxy::setEmulatedConditions(PAL::SessionID sessionID, std::o
 
 #endif // ENABLE(INSPECTOR_NETWORK_THROTTLING)
 
-void NetworkProcessProxy::fetchLocalStorage(PAL::SessionID sessionID, CompletionHandler<void(HashMap<WebCore::ClientOrigin, HashMap<String, String>>&&)>&& completionHandler)
+void NetworkProcessProxy::fetchLocalStorage(PAL::SessionID sessionID, CompletionHandler<void(std::optional<HashMap<WebCore::ClientOrigin, HashMap<String, String>>>&&)>&& completionHandler)
 {
     sendWithAsyncReply(Messages::NetworkProcess::FetchLocalStorage(sessionID), WTFMove(completionHandler));
 }

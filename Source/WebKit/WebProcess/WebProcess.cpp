@@ -89,6 +89,7 @@
 #include "WebSharedWorkerContextManagerConnection.h"
 #include "WebSharedWorkerContextManagerConnectionMessages.h"
 #include "WebSharedWorkerProvider.h"
+#include "WebTransportSession.h"
 #include "WebsiteData.h"
 #include "WebsiteDataStoreParameters.h"
 #include "WebsiteDataType.h"
@@ -1405,6 +1406,11 @@ WebFileSystemStorageConnection& WebProcess::fileSystemStorageConnection()
         m_fileSystemStorageConnection = WebFileSystemStorageConnection::create(Ref { ensureNetworkProcessConnection().connection() });
 
     return *m_fileSystemStorageConnection;
+}
+
+Ref<WebFileSystemStorageConnection> WebProcess::protectedFileSystemStorageConnection()
+{
+    return fileSystemStorageConnection();
 }
 
 WebLoaderStrategy& WebProcess::webLoaderStrategy()

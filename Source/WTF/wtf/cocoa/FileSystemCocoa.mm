@@ -77,7 +77,7 @@ String createTemporaryZipArchive(const String& path)
     String temporaryFile;
 
     RetainPtr coordinator = adoptNS([[NSFileCoordinator alloc] initWithFilePresenter:nil]);
-    [coordinator coordinateReadingItemAtURL:[NSURL fileURLWithPath:path] options:NSFileCoordinatorReadingWithoutChanges error:nullptr byAccessor:[&](NSURL *newURL) mutable {
+    [coordinator coordinateReadingItemAtURL:[NSURL fileURLWithPath:path.createNSString().get()] options:NSFileCoordinatorReadingWithoutChanges error:nullptr byAccessor:[&](NSURL *newURL) mutable {
         CString archivePath([NSTemporaryDirectory() stringByAppendingPathComponent:@"WebKitGeneratedFileXXXXXX"].fileSystemRepresentation);
         int fd = mkostemp(archivePath.mutableSpanIncludingNullTerminator().data(), O_CLOEXEC);
         if (fd == -1)
@@ -107,7 +107,7 @@ String extractTemporaryZipArchive(const String& path)
         return nullString();
 
     RetainPtr coordinator = adoptNS([[NSFileCoordinator alloc] initWithFilePresenter:nil]);
-    [coordinator coordinateReadingItemAtURL:[NSURL fileURLWithPath:path] options:NSFileCoordinatorReadingWithoutChanges error:nullptr byAccessor:[&](NSURL *newURL) mutable {
+    [coordinator coordinateReadingItemAtURL:[NSURL fileURLWithPath:path.createNSString().get()] options:NSFileCoordinatorReadingWithoutChanges error:nullptr byAccessor:[&](NSURL *newURL) mutable {
         auto *options = @{
             bridge_id_cast(kBOMCopierOptionExtractPKZipKey): @YES,
             bridge_id_cast(kBOMCopierOptionSequesterResourcesKey): @YES,
@@ -120,9 +120,10 @@ String extractTemporaryZipArchive(const String& path)
         BOMCopierFree(copier);
     }];
 
-    auto *contentsOfTemporaryDirectory = [NSFileManager.defaultManager contentsOfDirectoryAtPath:temporaryDirectory error:nil];
+    RetainPtr nsTemporaryDirectory = temporaryDirectory.createNSString();
+    auto *contentsOfTemporaryDirectory = [NSFileManager.defaultManager contentsOfDirectoryAtPath:nsTemporaryDirectory.get() error:nil];
     if (contentsOfTemporaryDirectory.count == 1) {
-        auto *subdirectoryPath = [temporaryDirectory stringByAppendingPathComponent:contentsOfTemporaryDirectory.firstObject];
+        auto *subdirectoryPath = [nsTemporaryDirectory stringByAppendingPathComponent:contentsOfTemporaryDirectory.firstObject];
         BOOL isDirectory;
         if ([NSFileManager.defaultManager fileExistsAtPath:subdirectoryPath isDirectory:&isDirectory] && isDirectory)
             temporaryDirectory = subdirectoryPath;
@@ -241,7 +242,7 @@ std::optional<bool> allowsMaterializingDatalessFiles(PolicyScope scope)
 bool isSafeToUseMemoryMapForPath(const String& path)
 {
     NSError *error = nil;
-    NSDictionary<NSFileAttributeKey, id> *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&error];
+    NSDictionary<NSFileAttributeKey, id> *attributes = [[NSFileManager defaultManager] attributesOfItemAtPath:path.createNSString().get() error:&error];
     if (error) {
         LOG_ERROR("Unable to get path protection class");
         return false;
@@ -259,7 +260,7 @@ bool makeSafeToUseMemoryMapForPath(const String& path)
         return true;
     
     NSError *error = nil;
-    BOOL success = [[NSFileManager defaultManager] setAttributes:@{ NSFileProtectionKey: NSFileProtectionCompleteUnlessOpen } ofItemAtPath:path error:&error];
+    BOOL success = [[NSFileManager defaultManager] setAttributes:@{ NSFileProtectionKey: NSFileProtectionCompleteUnlessOpen } ofItemAtPath:path.createNSString().get() error:&error];
     if (error || !success) {
         WTFLogAlways("makeSafeToUseMemoryMapForPath(%s) failed with error %@", path.utf8().data(), error);
         return false;
@@ -274,7 +275,7 @@ bool setExcludedFromBackup(const String& path, bool excluded)
         return false;
 
     NSError *error;
-    if (![[NSURL fileURLWithPath:(NSString *)path isDirectory:YES] setResourceValue:[NSNumber numberWithBool:excluded] forKey:NSURLIsExcludedFromBackupKey error:&error]) {
+    if (![[NSURL fileURLWithPath:path.createNSString().get() isDirectory:YES] setResourceValue:[NSNumber numberWithBool:excluded] forKey:NSURLIsExcludedFromBackupKey error:&error]) {
         LOG_ERROR("Cannot exclude path '%s' from backup with error '%@'", path.utf8().data(), error.localizedDescription);
         return false;
     }

@@ -1164,6 +1164,7 @@ css/values/primitives/CSSPrimitiveNumericTypes+SymbolReplacement.cpp
 css/values/primitives/CSSPrimitiveNumericUnits.cpp
 css/values/primitives/CSSSymbol.cpp
 css/values/primitives/CSSURL.cpp
+css/values/primitives/CSSURLModifiers.cpp
 css/values/primitives/CSSUnevaluatedCalc.cpp
 css/values/shapes/CSSCircleFunction.cpp
 css/values/shapes/CSSEllipseFunction.cpp
@@ -2277,6 +2278,7 @@ platform/FileStream.cpp
 platform/FrameRateMonitor.cpp
 platform/KeyboardScroll.cpp
 platform/KeyboardScrollingAnimator.cpp
+platform/LLVMProfiling.cpp
 platform/LayoutUnit.cpp
 platform/LegacySchemeRegistry.cpp
 platform/Length.cpp
@@ -3128,7 +3130,6 @@ style/StyleResolveForFont.cpp
 style/StyleResolver.cpp
 style/StyleScope.cpp
 style/StyleScopeRuleSets.cpp
-style/StyleSharingResolver.cpp
 style/StyleSheetContentsCache.cpp
 style/StyleTreeResolver.cpp
 style/StyleUpdate.cpp

@@ -35,6 +35,7 @@
 #include "BeforeUnloadEvent.h"
 #include "CDATASection.h"
 #include "CSSAnimation.h"
+#include "CSSCalcRandomCachingKeyMap.h"
 #include "CSSFontSelector.h"
 #include "CSSKeywordColor.h"
 #include "CSSParser.h"
@@ -48,7 +49,6 @@
 #include "CachedFontLoadRequest.h"
 #include "CachedFrame.h"
 #include "CachedResourceLoader.h"
-#include "CalculationRandomKeyMap.h"
 #include "CanvasRenderingContext2D.h"
 #include "CaretPosition.h"
 #include "CaretPositionFromPointOptions.h"
@@ -725,6 +725,7 @@ void Document::populateDocumentSyncDataForNewlyConstructedDocument(ProcessSyncDa
     case ProcessSyncDataType::IsAutofocusProcessed:
     case ProcessSyncDataType::UserDidInteractWithPage:
     case ProcessSyncDataType::FrameCanCreatePaymentSession:
+    case ProcessSyncDataType::FrameDocumentSecurityOrigin:
         break;
     }
 }
@@ -2936,6 +2937,21 @@ auto Document::updateLayoutIgnorePendingStylesheets(OptionSet<LayoutOptions> lay
     return updateLayout(layoutOptions, context);
 }
 
+
+static RenderElement* rootForSkippedLayout(RenderElement& rootCandidate)
+{
+    auto skippedSubtreeRoot = [&] (auto& skippedRootOrSkippedContent) -> RenderElement* {
+        if (auto* renderBox = dynamicDowncast<RenderBox>(skippedRootOrSkippedContent); renderBox && isSkippedContentRoot(*renderBox))
+            return renderBox;
+        for (auto* ancestor = skippedRootOrSkippedContent.containingBlock(); ancestor; ancestor = ancestor->containingBlock()) {
+            if (isSkippedContentRoot(*ancestor))
+                return ancestor;
+        }
+        return &skippedRootOrSkippedContent.view();
+    };
+    return skippedSubtreeRoot(rootCandidate);
+}
+
 auto Document::updateLayout(OptionSet<LayoutOptions> layoutOptions, const Element* context) -> UpdateLayoutResult
 {
     bool oldIgnore = m_ignorePendingStylesheets;
@@ -2982,47 +2998,37 @@ auto Document::updateLayout(OptionSet<LayoutOptions> layoutOptions, const Elemen
                 if (!layoutOptions.containsAny({ LayoutOptions::TreatContentVisibilityHiddenAsVisible, LayoutOptions::TreatContentVisibilityAutoAsVisible }))
                     return false;
 
-                if (context && !context->renderer())
+                if (context && (!context->renderer() || !context->renderer()->style().isSkippedRootOrSkippedContent()))
                     return false;
 
-                auto shouldForceLayoutOnRenderer = [&](auto& renderer) {
+                auto* rootForLayout = rootForSkippedLayout(context ? *context->renderer() : *renderView());
+                if (!rootForLayout) {
+                    ASSERT_NOT_REACHED();
+                    return false;
+                }
+
+                auto markRendererDirtyIfNeeded = [&](auto& renderer) {
                     auto everhadLayoutAndWasSkippedDuringLast = renderer.wasSkippedDuringLastLayoutDueToContentVisibility();
-                    if (!everhadLayoutAndWasSkippedDuringLast) {
-                        // Never had layout.
-                        return true;
-                    }
-                    if (*everhadLayoutAndWasSkippedDuringLast) {
-                        // Was skipped at the last layout.
-                        return true;
-                    }
+                    // Never had layout or was skipped at the last one (or marked dirty since the last layout, but not self needs layout which is required to "refresh" stale content).
+                    if (!everhadLayoutAndWasSkippedDuringLast || *everhadLayoutAndWasSkippedDuringLast || (renderer.needsLayout() && !renderer.selfNeedsLayout()))
+                        renderer.setNeedsLayout();
                     return renderer.needsLayout();
                 };
 
-                if (context) {
-                    if (!context->renderer()->style().isSkippedRootOrSkippedContent())
-                        return false;
-
-                    auto& skippedRootRenderer = *context->renderer();
-                    if (!shouldForceLayoutOnRenderer(skippedRootRenderer))
-                        return false;
-                    skippedRootRenderer.setNeedsLayout();
-                } else {
-                    ASSERT(!layoutOptions.contains(LayoutOptions::TreatContentVisibilityHiddenAsVisible));
-
-                    auto isSkippedContentStale = false;
-                    for (auto& descendant : descendantsOfType<RenderBlock>(*renderView())) {
-                        if (descendant.style().usedContentVisibility() != ContentVisibility::Auto) {
-                            // FIXME: While 'c-v: auto' is used 'hidden' inside 'c-v: hidden' we could entirly skip hidden subtrees.
-                            continue;
-                        }
-                        if (shouldForceLayoutOnRenderer(descendant)) {
-                            descendant.setNeedsLayout();
-                            isSkippedContentStale = true;
-                        }
+                auto isSkippedContentStale = markRendererDirtyIfNeeded(*rootForLayout);
+                if (layoutOptions.contains(LayoutOptions::TreatContentVisibilityHiddenAsVisible)) {
+                    for (auto& descendant : descendantsOfType<RenderObject>(*rootForLayout))
+                        isSkippedContentStale |= markRendererDirtyIfNeeded(descendant);
+                } else if (layoutOptions.contains(LayoutOptions::TreatContentVisibilityAutoAsVisible)) {
+                    for (auto& descendant : descendantsOfType<RenderObject>(*rootForLayout)) {
+                        // FIXME: While 'c-v: auto' is used 'hidden' inside 'c-v: hidden' we could entirly skip hidden subtrees here.
+                        if (descendant.style().usedContentVisibility() == ContentVisibility::Auto)
+                            isSkippedContentStale |= markRendererDirtyIfNeeded(descendant);
                     }
-                    if (!isSkippedContentStale)
-                        return false;
                 }
+
+                if (!isSkippedContentStale)
+                    return false;
 
                 auto overrideTypes = [&] {
                     auto types = OptionSet<ContentVisibilityOverrideScope::OverrideType> { };
@@ -3170,51 +3176,63 @@ bool Document::updateLayoutIfDimensionsOutOfDate(Element& element, OptionSet<Dim
         // Check our containing block chain. If anything in the chain needs a layout, then require a full layout.
         for (CheckedPtr currentRenderer = renderer; currentRenderer && !currentRenderer->isRenderView(); currentRenderer = currentRenderer->container()) {
 
-            // Require the entire container chain to be boxes.
-            CheckedPtr currentRendererBox = dynamicDowncast<RenderBox>(*currentRenderer);
-            if (!currentRendererBox) {
+            if (currentRenderer->style().containerType() != ContainerType::Normal) {
                 requireFullLayout = true;
                 break;
             }
 
-            previousBox = std::exchange(currentBox, WTFMove(currentRendererBox));
-
-            if (currentBox->style().containerType() != ContainerType::Normal) {
+            if (dimensionsCheck.containsAny({ DimensionsCheck::Left, DimensionsCheck::Top }) && currentRenderer->needsPositionedMovementLayout()) {
                 requireFullLayout = true;
                 break;
             }
 
-            if (dimensionsCheck.containsAny({ DimensionsCheck::Left, DimensionsCheck::Top }) && (currentBox->needsPositionedMovementLayout() || currentBox->normalChildNeedsLayout())) {
+            // If a renderer needs layout for itself then require a full layout.
+            if (currentRenderer->selfNeedsLayout()) {
                 requireFullLayout = true;
                 break;
             }
 
-            // If a box needs layout for itself or if a box has changed children and sizes its width to
-            // its content, then require a full layout.
-            if (currentBox->selfNeedsLayout() ||
-                (checkingLogicalWidth && currentRenderer->needsLayout() && currentBox->sizesLogicalWidthToFitContent(RenderBox::SizeType::MainOrPreferredSize))) {
-                requireFullLayout = true;
-                break;
-            }
+            // Require the entire container chain to be boxes or SVG.
+            if (!currentRenderer->isSVGRenderer()) {
+                CheckedPtr currentRendererBox = dynamicDowncast<RenderBox>(*currentRenderer);
+                if (!currentRendererBox) {
+                    requireFullLayout = true;
+                    break;
+                }
 
-            // If a block contains floats and the child's height isn't specified, then
-            // give up also, since our height could end up being influenced by the floats.
-            if (checkingLogicalHeight && !hasSpecifiedLogicalHeight) {
-                if (CheckedPtr currentBlockFlow = dynamicDowncast<RenderBlockFlow>(*currentBox)) {
-                    if (currentBlockFlow->containsFloats() && previousBox && !previousBox->isFloatingOrOutOfFlowPositioned()) {
-                        requireFullLayout = true;
-                        break;
+                previousBox = std::exchange(currentBox, WTFMove(currentRendererBox));
+
+                if (dimensionsCheck.containsAny({ DimensionsCheck::Left, DimensionsCheck::Top }) && currentRenderer->normalChildNeedsLayout()) {
+                    requireFullLayout = true;
+                    break;
+                }
+
+                // If a box has changed children and sizes its width to
+                // its content, then require a full layout.
+                if (checkingLogicalWidth && currentBox->needsLayout() && currentBox->sizesLogicalWidthToFitContent(RenderBox::SizeType::MainOrPreferredSize)) {
+                    requireFullLayout = true;
+                    break;
+                }
+
+                // If a block contains floats and the child's height isn't specified, then
+                // give up also, since our height could end up being influenced by the floats.
+                if (checkingLogicalHeight && !hasSpecifiedLogicalHeight) {
+                    if (CheckedPtr currentBlockFlow = dynamicDowncast<RenderBlockFlow>(*currentBox)) {
+                        if (currentBlockFlow->containsFloats() && previousBox && !previousBox->isFloatingOrOutOfFlowPositioned()) {
+                            requireFullLayout = true;
+                            break;
+                        }
                     }
                 }
-            }
 
-            if (!currentBox->isRenderBlockFlow() || currentBox->enclosingFragmentedFlow() || currentBox->isWritingModeRoot()) {
-                // FIXME: For now require only block flows all the way back to the root. This limits the optimization
-                // for now, and we'll expand it in future patches to apply to more and more scenarios.
-                // Disallow columns from having the optimization.
-                // Give up if the writing mode changes at all in the containing block chain.
-                requireFullLayout = true;
-                break;
+                if (!currentBox->isRenderBlockFlow() || currentBox->enclosingFragmentedFlow() || currentBox->isWritingModeRoot()) {
+                    // FIXME: For now require only block flows all the way back to the root. This limits the optimization
+                    // for now, and we'll expand it in future patches to apply to more and more scenarios.
+                    // Disallow columns from having the optimization.
+                    // Give up if the writing mode changes at all in the containing block chain.
+                    requireFullLayout = true;
+                    break;
+                }
             }
 
             if (currentRenderer == frameView->layoutContext().subtreeLayoutRoot())
@@ -10538,8 +10556,7 @@ void Document::removeTopLayerElement(Element& element)
     auto didRemove = m_topLayerElements.remove(element);
     RELEASE_ASSERT(didRemove);
     if (auto* candidatePopover = dynamicDowncast<HTMLElement>(element); candidatePopover && candidatePopover->isPopoverShowing() && candidatePopover->popoverState() == PopoverState::Auto) {
-        auto didRemove = m_autoPopoverList.remove(*candidatePopover);
-        RELEASE_ASSERT(didRemove);
+        m_autoPopoverList.remove(*candidatePopover);
 #if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
         if (!needsPointerEventHandlingForPopover())
             invalidateRenderingDependentRegions();
@@ -11590,11 +11607,11 @@ ResourceMonitor* Document::parentResourceMonitorIfExists()
 
 #endif
 
-Ref<Calculation::RandomKeyMap> Document::randomKeyMap() const
+double Document::lookupCSSRandomBaseValue(const CSSCalc::RandomCachingKey& key) const
 {
-    if (!m_randomKeyMap)
-        m_randomKeyMap = Calculation::RandomKeyMap::create();
-    return *m_randomKeyMap;
+    if (!m_randomCachingKeyMap)
+        m_randomCachingKeyMap = CSSCalc::RandomCachingKeyMap::create();
+    return m_randomCachingKeyMap->lookupCSSRandomBaseValue(key);
 }
 
 } // namespace WebCore

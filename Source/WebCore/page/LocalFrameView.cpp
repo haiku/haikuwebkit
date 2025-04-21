@@ -1924,7 +1924,7 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges(BoxSideSet sides) const
     TraceScope tracingScope { FixedContainerEdgeSamplingStart, FixedContainerEdgeSamplingEnd };
 
     static constexpr auto sampleRectThickness = 2;
-    static constexpr auto sampleRectMargin = 2;
+    static constexpr auto sampleRectMargin = 4;
     static constexpr auto thinBorderWidth = 10;
 
     struct FixedContainerResult {
@@ -1933,23 +1933,53 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges(BoxSideSet sides) const
         Color backgroundColor;
     };
 
-    auto fixedRect = rectForFixedPositionLayout();
+    auto unclampedFixedRect = rectForFixedPositionLayout();
+    auto fixedRect = unclampedFixedRect;
+    if (CheckedPtr view = renderView())
+        fixedRect.intersect(view->unscaledDocumentRect());
     fixedRect.contract({ sampleRectMargin });
+    unclampedFixedRect.contract({ sampleRectMargin });
 
-    auto hitTestLocationForSide = [&](BoxSide side) -> LayoutPoint {
+    auto midpointOnSide = [&](BoxSide side, const LayoutRect& rect) -> LayoutPoint {
         switch (side) {
         case BoxSide::Top:
-            return { (fixedRect.x() + fixedRect.maxX()) / 2, fixedRect.y() };
+            return { (rect.x() + rect.maxX()) / 2, rect.y() };
         case BoxSide::Left:
-            return { fixedRect.x(), (fixedRect.y() + fixedRect.maxY()) / 2 };
+            return { rect.x(), (rect.y() + rect.maxY()) / 2 };
         case BoxSide::Right:
-            return { fixedRect.maxX(), (fixedRect.y() + fixedRect.maxY()) / 2 };
+            return { rect.maxX(), (fixedRect.y() + rect.maxY()) / 2 };
         case BoxSide::Bottom:
-            return { (fixedRect.x() + fixedRect.maxX()) / 2, fixedRect.maxY() };
+            return { (rect.x() + rect.maxX()) / 2, rect.maxY() };
         default:
             ASSERT_NOT_REACHED();
             return { };
         }
+    };
+
+    auto hitTestLocationForSide = [&](BoxSide side) -> HitTestLocation {
+        auto target = midpointOnSide(side, fixedRect);
+        auto unclampedTarget = midpointOnSide(side, unclampedFixedRect);
+        LayoutRect hitTestRect {
+            LayoutPoint { std::min(target.x(), unclampedTarget.x()), std::min(target.y(), unclampedTarget.y()) },
+            LayoutPoint { std::max(target.x(), unclampedTarget.x()), std::max(target.y(), unclampedTarget.y()) },
+        };
+
+        if (hitTestRect.size().maxDimension() <= sampleRectMargin)
+            return { target };
+
+        LayoutUnit hitTestRectThickness = 1;
+        switch (side) {
+        case BoxSide::Top:
+        case BoxSide::Bottom:
+            hitTestRect.inflateX(hitTestRectThickness / 2);
+            break;
+        case BoxSide::Left:
+        case BoxSide::Right:
+            hitTestRect.inflateY(hitTestRectThickness / 2);
+            break;
+        }
+
+        return { hitTestRect };
     };
 
     auto primaryBackgroundColorForRenderer = [](const RenderElement& renderer) -> Color {
@@ -1990,18 +2020,31 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges(BoxSideSet sides) const
 
     auto findFixedContainer = [&](BoxSide side) -> FixedContainerResult {
         using enum HitTestRequest::Type;
-        static constexpr OptionSet hitTestOptions {
+        static constexpr OptionSet commonHitTestOptions {
             ReadOnly,
             DisallowUserAgentShadowContent,
             IgnoreClipping,
-            ViewportConstrainedLayersOnly,
+            IgnoreCSSPointerEventsProperty,
+            ForFixedContainerSampling,
         };
 
         HitTestResult result { hitTestLocationForSide(side) };
-        if (!document->hitTest({ HitTestSource::User, hitTestOptions }, result))
-            return { };
+        auto hitTestOptions = commonHitTestOptions;
+        if (result.isRectBasedTest())
+            hitTestOptions.add(CollectMultipleElements);
 
-        RefPtr hitNode = result.innerNonSharedNode();
+        document->hitTest({ HitTestSource::User, hitTestOptions }, result);
+
+        RefPtr hitNode = [&] -> RefPtr<Node> {
+            if (!result.isRectBasedTest())
+                return result.innerNonSharedNode();
+
+            if (auto& resultsList = result.listBasedTestResult(); !resultsList.isEmpty())
+                return resultsList.first().ptr();
+
+            return { };
+        }();
+
         if (!hitNode)
             return { };
 

@@ -49,6 +49,7 @@
 #import <wtf/JSONValues.h>
 #import <wtf/LoggerHelper.h>
 #import <wtf/TZoneMallocInlines.h>
+#import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
 #import <wtf/text/Base64.h>
 #import <wtf/text/StringHash.h>
@@ -364,7 +365,7 @@ bool CDMInstanceFairPlayStreamingAVFObjC::supportsPersistentKeys()
 
 bool CDMInstanceFairPlayStreamingAVFObjC::supportsMediaCapability(const CDMMediaCapability& capability)
 {
-    if (![PAL::getAVURLAssetClass() isPlayableExtendedMIMEType:capability.contentType])
+    if (![PAL::getAVURLAssetClass() isPlayableExtendedMIMEType:capability.contentType.createNSString().get()])
         return false;
 
     // FairPlay only supports 'cbcs' encryption:
@@ -379,22 +380,22 @@ void CDMInstanceFairPlayStreamingAVFObjC::initializeWithConfiguration(const CDMK
     // FIXME: verify that FairPlayStreaming does not (and cannot) expose a distinctive identifier to the client
     auto initialize = [&] () {
         if (configuration.distinctiveIdentifier == CDMRequirement::Required)
-            return Failed;
+            return CDMInstanceSuccessValue::Failed;
 
         if (configuration.persistentState != CDMRequirement::Required && (configuration.sessionTypes.contains(CDMSessionType::PersistentUsageRecord) || configuration.sessionTypes.contains(CDMSessionType::PersistentLicense)))
-            return Failed;
+            return CDMInstanceSuccessValue::Failed;
 
         if (configuration.persistentState == CDMRequirement::Required && !m_storageURL)
-            return Failed;
+            return CDMInstanceSuccessValue::Failed;
 
         if (configuration.sessionTypes.contains(CDMSessionType::PersistentLicense) && !supportsPersistentKeys())
-            return Failed;
+            return CDMInstanceSuccessValue::Failed;
 
         if (!PAL::canLoad_AVFoundation_AVContentKeySystemFairPlayStreaming())
-            return Failed;
+            return CDMInstanceSuccessValue::Failed;
 
         m_persistentStateAllowed = persistentState == AllowPersistentState::Yes;
-        return Succeeded;
+        return CDMInstanceSuccessValue::Succeeded;
     };
     callback(initialize());
 }
@@ -403,7 +404,7 @@ void CDMInstanceFairPlayStreamingAVFObjC::setServerCertificate(Ref<SharedBuffer>
 {
     INFO_LOG(LOGIDENTIFIER);
     m_serverCertificate = WTFMove(serverCertificate);
-    callback(Succeeded);
+    callback(CDMInstanceSuccessValue::Succeeded);
 }
 
 void CDMInstanceFairPlayStreamingAVFObjC::setStorageDirectory(const String& storageDirectory)
@@ -433,7 +434,7 @@ void CDMInstanceFairPlayStreamingAVFObjC::setStorageDirectory(const String& stor
             return;
     }
 
-    m_storageURL = adoptNS([[NSURL alloc] initFileURLWithPath:storagePath isDirectory:NO]);
+    m_storageURL = adoptNS([[NSURL alloc] initFileURLWithPath:storagePath.createNSString().get() isDirectory:NO]);
 }
 
 RefPtr<CDMInstanceSession> CDMInstanceFairPlayStreamingAVFObjC::createSession()
@@ -802,7 +803,7 @@ ALLOW_NEW_API_WITHOUT_GUARDS_END
 #if HAVE(FAIRPLAYSTREAMING_CENC_INITDATA)
     else if (initDataType == InitDataRegistry::cencName()) {
         auto psshString = base64EncodeToString(initData->makeContiguous()->span());
-        initializationData = [NSJSONSerialization dataWithJSONObject:@{ @"pssh": (NSString*)psshString } options:NSJSONWritingPrettyPrinted error:nil];
+        initializationData = [NSJSONSerialization dataWithJSONObject:@{ @"pssh": psshString.createNSString().get() } options:NSJSONWritingPrettyPrinted error:nil];
     }
 #endif
 #if HAVE(FAIRPLAYSTREAMING_MTPS_INITDATA)
@@ -1029,11 +1030,11 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::loadSession(LicenseType license
         for (NSData* expiredSessionData in [PAL::getAVContentKeySessionClass() pendingExpiredSessionReportsWithAppIdentifier:appIdentifier.get() storageDirectoryAtURL:storageURL]) {
             static const NSString *PlaybackSessionIdKey = @"PlaybackSessionID";
             NSDictionary *expiredSession = [NSPropertyListSerialization propertyListWithData:expiredSessionData options:kCFPropertyListImmutable format:nullptr error:nullptr];
-            NSString *playbackSessionIdValue = (NSString *)[expiredSession objectForKey:PlaybackSessionIdKey];
-            if (![playbackSessionIdValue isKindOfClass:[NSString class]])
+            RetainPtr playbackSessionIdValue = dynamic_objc_cast<NSString>([expiredSession objectForKey:PlaybackSessionIdKey]);
+            if (!playbackSessionIdValue)
                 continue;
 
-            if (sessionId == String(playbackSessionIdValue)) {
+            if (sessionId == String(playbackSessionIdValue.get())) {
                 // FIXME(rdar://problem/35934922): use key values stored in expired session report once available
                 changedKeys.append((KeyStatusVector::ValueType){ SharedBuffer::create(), KeyStatus::Released });
                 m_expiredSessions.append(expiredSessionData);
@@ -1095,11 +1096,11 @@ void CDMInstanceSessionFairPlayStreamingAVFObjC::removeSessionData(const String&
         for (NSData* expiredSessionData in [PAL::getAVContentKeySessionClass() pendingExpiredSessionReportsWithAppIdentifier:appIdentifier.get() storageDirectoryAtURL:storageURL]) {
             NSDictionary *expiredSession = [NSPropertyListSerialization propertyListWithData:expiredSessionData options:kCFPropertyListImmutable format:nullptr error:nullptr];
             static const NSString *PlaybackSessionIdKey = @"PlaybackSessionID";
-            NSString *playbackSessionIdValue = (NSString *)[expiredSession objectForKey:PlaybackSessionIdKey];
-            if (![playbackSessionIdValue isKindOfClass:[NSString class]])
+            RetainPtr playbackSessionIdValue = dynamic_objc_cast<NSString>([expiredSession objectForKey:PlaybackSessionIdKey]);
+            if (!playbackSessionIdValue)
                 continue;
 
-            if (sessionId == String(playbackSessionIdValue)) {
+            if (sessionId == String(playbackSessionIdValue.get())) {
                 // FIXME(rdar://problem/35934922): use key values stored in expired session report once available
                 changedKeys.append((KeyStatusVector::ValueType){ SharedBuffer::create(), KeyStatus::Released });
                 m_expiredSessions.append(expiredSessionData);

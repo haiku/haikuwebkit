@@ -518,6 +518,7 @@ WEBDRIVER_BIDI_PROTOCOL_INPUT_FILES = \
     $(WebKit2)/UIProcess/Automation/protocol/BidiBrowser.json \
     $(WebKit2)/UIProcess/Automation/protocol/BidiBrowsingContext.json \
     $(WebKit2)/UIProcess/Automation/protocol/BidiLog.json \
+    $(WebKit2)/UIProcess/Automation/protocol/BidiScript.json \
 #
 
 WEBDRIVER_BIDI_PROTOCOL_OUTPUT_FILES = \
@@ -675,7 +676,6 @@ SERIALIZATION_DESCRIPTION_FILES = \
 	Shared/ContextMenuContextData.serialization.in \
 	Shared/CoordinateSystem.serialization.in \
 	Shared/DebuggableInfoData.serialization.in \
-	Shared/DisplayListArgumentCoders.serialization.in \
 	Shared/DocumentEditingContext.serialization.in \
 	Shared/DragControllerAction.serialization.in \
 	Shared/DrawingAreaInfo.serialization.in \

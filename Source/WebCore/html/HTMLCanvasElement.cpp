@@ -31,7 +31,6 @@
 #include "BitmapImage.h"
 #include "Blob.h"
 #include "BlobCallback.h"
-#include "CSSParserContext.h"
 #include "CanvasGradient.h"
 #include "CanvasPattern.h"
 #include "CanvasRenderingContext2D.h"
@@ -887,6 +886,12 @@ void HTMLCanvasElement::createImageBuffer() const
     if (m_context && m_context->is2d()) {
         // Recalculate compositing requirements if acceleration state changed.
         const_cast<HTMLCanvasElement*>(this)->invalidateStyleAndLayerComposition();
+#if USE(SKIA)
+        if (CheckedPtr renderer = renderBox()) {
+            if (usesContentsAsLayerContents())
+                renderer->contentChanged(ContentChangeType::Canvas);
+        }
+#endif
     }
 #endif
 }
@@ -1019,11 +1024,9 @@ void HTMLCanvasElement::dispatchEvent(Event& event)
     Node::dispatchEvent(event);
 }
 
-const CSSParserContext& HTMLCanvasElement::cssParserContext() const
+std::unique_ptr<CSSParserContext> HTMLCanvasElement::createCSSParserContext() const
 {
-    if (!m_cssParserContext)
-        m_cssParserContext = WTF::makeUnique<CSSParserContext>(document());
-    return *m_cssParserContext;
+    return makeUnique<CSSParserContext>(document());
 }
 
 WebCoreOpaqueRoot root(HTMLCanvasElement* canvas)

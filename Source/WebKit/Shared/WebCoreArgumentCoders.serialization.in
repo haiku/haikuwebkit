@@ -2524,6 +2524,9 @@ struct WebCore::ScreenProperties {
 #if HAVE(SUPPORT_HDR_DISPLAY)
     OptionSet<WebCore::ContentsFormat> screenContentsFormatsForTesting;
 #endif
+#if ENABLE(TOUCH_EVENTS) && PLATFORM(GTK)
+    bool screenHasTouchDevice;
+#endif
 };
 
 class WebCore::PlatformTimeRanges {
@@ -2769,6 +2772,8 @@ struct WebCore::EventTrackingRegions {
 
 enum class WebCore::HasInsecureContent : bool
 
+enum class WebCore::MayNeedBeforeUnloadPrompt : bool
+
 struct WebCore::TextManipulationItem {
     Markable<WebCore::FrameIdentifier> frameID;
     bool isSubframe;
@@ -3010,23 +3015,13 @@ class WebCore::TransformOperations {
     WebCore::ColorInterpolationMethod colorInterpolationMethod();
     WebCore::GradientSpreadMethod spreadMethod();
     WebCore::GradientColorStops stops();
-    std::optional<WebCore::RenderingResourceIdentifier> renderingResourceIdentifierIfExists();
 }
 
-[Nested, AdditionalEncoder=StreamConnectionEncoder] struct WebCore::Pattern::Parameters {
+header: <WebCore/Pattern.h>
+[AdditionalEncoder=StreamConnectionEncoder, CustomHeader] struct WebCore::PatternParameters {
     bool repeatX;
     bool repeatY;
     WebCore::AffineTransform patternSpaceTransform;
-}
-
-[RefCounted, AdditionalEncoder=StreamConnectionEncoder] class WebCore::Pattern {
-    WebCore::SourceImage tileImage();
-    WebCore::Pattern::Parameters parameters();
-}
-
-[AdditionalEncoder=StreamConnectionEncoder] class WebCore::SourceBrush {
-    WebCore::Color color();
-    std::variant<std::monostate, WebCore::SourceBrushLogicalGradient, Ref<WebCore::Pattern>> patternGradient();
 }
 
 header: <WebCore/ThreadSafeDataBuffer.h>
@@ -3786,6 +3781,9 @@ enum class WebCore::StyleAppearance : uint8_t {
     TextArea,
     TextField,
     ColorWell,
+    ColorWellSwatch,
+    ColorWellSwatchOverlay,
+    ColorWellSwatchWrapper,
 #if ENABLE(SERVICE_CONTROLS)
     ImageControlsButton,
 #endif
@@ -4517,9 +4515,6 @@ enum class WebCore::CDMSessionType : uint8_t {
     PersistentUsageRecord,
     PersistentLicense
 };
-using WebCore::CDMInstanceSession::LicenseType = WebCore::CDMSessionType;
-using WebCore::CDMInstanceSession::Message = std::pair<WebCore::CDMMessageType, Ref<WebCore::SharedBuffer>>
-using WebCore::CDMInstanceSession::KeyStatusVector = Vector<std::pair<Ref<WebCore::SharedBuffer>, WebCore::CDMKeyStatus>>;
 
 struct WebCore::CDMRestrictions {
     bool distinctiveIdentifierDenied;
@@ -5059,7 +5054,7 @@ enum class WebCore::AudioSessionSoundStageSize : uint8_t {
     Large,
 };
 
-[Nested] enum class WebCore::AudioSession::MayResume : bool;
+enum class WebCore::AudioSessionMayResume : bool;
 
 enum class WebCore::AudioSessionRoutingArbitrationError : uint8_t {
     None,
@@ -5104,7 +5099,7 @@ enum class WebCore::CDMInstanceSessionLoadFailure : uint8_t {
 };
 
 header: <WebCore/CDMInstance.h>
-[Nested] enum class WebCore::CDMInstance::HDCPStatus : uint8_t {
+[Nested] enum class WebCore::CDMInstanceHDCPStatus : uint8_t {
     Unknown,
     Valid,
     OutputRestricted,
@@ -5209,7 +5204,6 @@ header: <WebCore/PlatformMediaSession.h>
     std::optional<double> time;
     std::optional<bool> fastSeek;
 }
-using WebCore::PlatformMediaSession::RemoteCommandArgument = WebCore::PlatformMediaSessionRemoteCommandArgument;
 
 class WebCore::SocketStreamError {
     int m_errorCode;
@@ -6943,7 +6937,7 @@ using WebCore::WritingTools::ContextID = WTF::UUID;
 
 header: <WebCore/WritingToolsTypes.h>
 [CustomHeader] struct WebCore::WritingTools::Context {
-    WebCore::WritingTools::ContextID identifier;
+    Markable<WebCore::WritingTools::ContextID> identifier;
     WebCore::AttributedString attributedText;
     WebCore::CharacterRange range;
 };
@@ -7336,7 +7330,6 @@ header: <WebCore/InspectorFrontendClient.h>
     Light,
     Dark,
 };
-using WebCore::InspectorFrontendClient::Appearance = WebCore::InspectorFrontendClientAppearance;
 
 [Nested] enum class WebCore::InspectorFrontendClient::SaveMode : uint8_t {
     SingleFile,
@@ -7350,7 +7343,6 @@ header: <WebCore/InspectorFrontendClient.h>
     String content;
     bool base64Encoded;
 };
-using WebCore::InspectorFrontendClient::SaveData = WebCore::InspectorFrontendClientSaveData;
 
 #if ENABLE(VIDEO)
 header: <WebCore/PlatformTextTrack.h>
@@ -7583,62 +7575,7 @@ class WebCore::UserScript {
     WebCore::UserContentMatchParentFrame matchParentFrame();
 }
 
-header: <WebCore/GraphicsContextState.h>
-[Nested, OptionSet] enum class WebCore::GraphicsContextState::Change : uint32_t {
-    FillBrush,
-    FillRule,
-    StrokeBrush,
-    StrokeThickness,
-    StrokeStyle,
-    CompositeMode,
-    DropShadow,
-    Style,
-    Alpha,
-    TextDrawingMode,
-    ImageInterpolationQuality,
-    ShouldAntialias,
-    ShouldSmoothFonts,
-    ShouldSubpixelQuantizeFonts,
-    ShadowsIgnoreTransforms,
-    DrawLuminanceMask,
-    UseDarkAppearance,
-};
-
-header: <WebCore/GraphicsContextState.h>
-[Nested] enum class WebCore::GraphicsContextState::Purpose : uint8_t {
-    Initial,
-    SaveRestore,
-    TransparencyLayer,
-};
-
-[LegacyPopulateFromEmptyConstructor, AdditionalEncoder=StreamConnectionEncoder] class WebCore::GraphicsContextState {
-    WebCore::SourceBrush m_fillBrush;
-    WebCore::SourceBrush m_strokeBrush;
-    OptionSet<WebCore::GraphicsContextState::Change> m_changeFlags;
-    float m_strokeThickness;
-    WebCore::WindRule m_fillRule;
-    WebCore::StrokeStyle m_strokeStyle;
-    WebCore::CompositeMode m_compositeMode;
-    std::optional<WebCore::GraphicsDropShadow> m_dropShadow;
-    std::optional<WebCore::GraphicsStyle> m_style;
-    float m_alpha;
-    WebCore::InterpolationQuality m_imageInterpolationQuality;
-    OptionSet<WebCore::TextDrawingMode> m_textDrawingMode;
-    bool m_shouldAntialias;
-    bool m_shouldSmoothFonts;
-    bool m_shouldSubpixelQuantizeFonts;
-    bool m_shadowsIgnoreTransforms;
-    bool m_drawLuminanceMask;
-    bool m_useDarkAppearance;
-    WebCore::GraphicsContextState::Purpose m_purpose;
-};
-
 enum class WebCore::WindRule : bool
-
-[AdditionalEncoder=StreamConnectionEncoder] struct WebCore::SourceBrushLogicalGradient {
-    std::variant<Ref<WebCore::Gradient>, WebCore::RenderingResourceIdentifier> serializableGradient();
-    WebCore::AffineTransform spaceTransform;
-};
 
 enum class WebCore::ContentSecurityPolicyHeaderType : bool;
 
@@ -8721,7 +8658,6 @@ using WebCore::DOMCacheEngine::RemoveCacheIdentifierOrError = Expected<bool, Web
 using WebCore::SVGFilterExpression = Vector<WebCore::SVGFilterExpressionTerm>;
 using WebCore::SandboxFlags = OptionSet<WebCore::SandboxFlag>;
 #if ENABLE(VIDEO)
-using WebCore::MediaPlayerEnums::VideoFullscreenMode = uint32_t
 using WebCore::MediaPlayer::VideoFullscreenMode = uint32_t
 using WebCore::TrackID = uint64_t
 #endif
@@ -8729,7 +8665,7 @@ using WebCore::EpochTimeStamp = uint64_t
 using WebCore::SharedMemory::Handle = WebCore::SharedMemoryHandle
 using WebCore::ServiceWorkerOrClientIdentifier = std::variant<WebCore::ScriptExecutionContextIdentifier, WebCore::ServiceWorkerIdentifier>
 
-[Nested] enum class WebCore::GraphicsContext::RequiresClipToRect : bool
+enum class WebCore::RequiresClipToRect : bool
 
 enum class WebCore::HighlightVisibility : bool
 
@@ -8829,10 +8765,10 @@ enum class WebCore::WillContinueLoading : bool
 
 #if ENABLE(GPU_PROCESS) && ENABLE(ENCRYPTED_MEDIA)
 header: <WebCore/CDMPrivate.h>
-[Nested] enum class WebCore::CDMPrivate::LocalStorageAccess : bool
-[Nested] enum class WebCore::CDMInstance::AllowPersistentState : bool
-[Nested] enum class WebCore::CDMInstance::SuccessValue : bool
-[Nested] enum class WebCore::CDMInstance::AllowDistinctiveIdentifiers : bool
+enum class WebCore::CDMPrivateLocalStorageAccess : bool
+enum class WebCore::CDMInstanceAllowPersistentState : bool
+enum class WebCore::CDMInstanceSuccessValue : bool
+enum class WebCore::CDMInstanceAllowDistinctiveIdentifiers : bool
 #endif
 
 #if ENABLE(GPU_PROCESS) && ENABLE(LEGACY_ENCRYPTED_MEDIA)
@@ -8840,8 +8776,6 @@ using WebCore::LegacyCDMSessionClient::MediaKeyErrorCode = unsigned short
 #endif
 
 #if ENABLE(GPU_PROCESS) && ENABLE(VIDEO)
-# FIXME: This should be an OptionSet<LoadOption>
-using WebCore::PlatformMediaResourceLoader::LoadOptions = unsigned
 enum class WebCore::ShouldContinuePolicyCheck : bool
 #endif
 

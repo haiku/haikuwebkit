@@ -228,9 +228,7 @@ private:
     void didUpdateFormatDescriptionForTrackId(Ref<TrackInfo>&&, TrackID);
 
     void flush();
-#if PLATFORM(IOS_FAMILY)
     void flushIfNeeded();
-#endif
     void flushTrack(TrackID);
     void flushVideo();
     void flushAudio(AVSampleBufferAudioRenderer*);
@@ -289,6 +287,8 @@ private:
 
 #if PLATFORM(IOS_FAMILY)
     void sceneIdentifierDidChange() final;
+    void applicationWillResignActive() final;
+    void applicationDidBecomeActive() final;
 #endif
 
     void isInFullscreenOrPictureInPictureChanged(bool) final;
@@ -304,6 +304,7 @@ private:
         StagedLayer
     };
     AcceleratedVideoMode acceleratedVideoMode() const;
+    void setLayerRequiresFlush();
 
     const Logger& logger() const final { return m_logger.get(); }
     Ref<const Logger> protectedLogger() const { return logger(); }
@@ -374,6 +375,7 @@ private:
     uint32_t m_pendingAppends { 0 };
 #if PLATFORM(IOS_FAMILY)
     bool m_displayLayerWasInterrupted { false };
+    bool m_applicationIsActive { true };
 #endif
     bool m_hasAudio { false };
     bool m_hasVideo { false };

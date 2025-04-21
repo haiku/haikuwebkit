@@ -812,7 +812,7 @@ void MediaPlayerPrivateWebM::setReadyState(MediaPlayer::ReadyState state)
 
     ALWAYS_LOG(LOGIDENTIFIER, state);
     m_readyState = state;
-    
+
     if (auto player = m_player.get())
         player->readyStateChanged();
 }
@@ -1168,7 +1168,7 @@ void MediaPlayerPrivateWebM::trackDidChangeSelected(VideoTrackPrivate& track, bo
         updateDisplayLayer();
         return;
     }
-    
+
     if (isEnabledVideoTrackID(trackId)) {
         m_enabledVideoTrackID.reset();
         m_readyForMoreSamplesMap.erase(trackId);
@@ -1343,13 +1343,15 @@ void MediaPlayerPrivateWebM::flush()
     }
 }
 
-#if PLATFORM(IOS_FAMILY)
 void MediaPlayerPrivateWebM::flushIfNeeded()
 {
+#if PLATFORM(IOS_FAMILY)
     if (!m_displayLayerWasInterrupted)
         return;
 
     m_displayLayerWasInterrupted = false;
+#endif
+
     if (m_videoTracks.size())
         flushVideo();
 
@@ -1362,7 +1364,6 @@ void MediaPlayerPrivateWebM::flushIfNeeded()
     if (m_enabledVideoTrackID)
         reenqueSamples(*m_enabledVideoTrackID);
 }
-#endif
 
 void MediaPlayerPrivateWebM::flushTrack(TrackID trackId)
 {
@@ -1452,7 +1453,7 @@ void MediaPlayerPrivateWebM::addAudioRenderer(TrackID trackId)
         if (deviceId.isEmpty())
             renderer.get().audioOutputDeviceUniqueID = nil;
         else
-            renderer.get().audioOutputDeviceUniqueID = deviceId;
+            renderer.get().audioOutputDeviceUniqueID = deviceId.createNSString().get();
     }
 #endif
 
@@ -1900,6 +1901,7 @@ void MediaPlayerPrivateWebM::invalidateVideoRenderer(VideoMediaSampleRenderer& v
 {
     videoRenderer.flush();
     videoRenderer.stopRequestingMediaData();
+    videoRenderer.notifyWhenVideoRendererRequiresFlushToResumeDecoding({ });
     if (auto renderer = videoRenderer.renderer())
         m_listener->stopObservingVideoRenderer(renderer);
 }
@@ -1945,6 +1947,10 @@ void MediaPlayerPrivateWebM::setVideoRenderer(WebSampleBufferVideoRendering *ren
         protectedThis->setHasAvailableVideoFrame(true);
         if (protectedThis->m_isGatheringVideoFrameMetadata)
             protectedThis->checkNewVideoFrameMetadata(presentationTime, displayTime);
+    });
+    videoRenderer->notifyWhenVideoRendererRequiresFlushToResumeDecoding([weakThis = ThreadSafeWeakPtr { *this }] {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->setLayerRequiresFlush();
     });
     configureVideoRenderer(*videoRenderer);
 }
@@ -2021,6 +2027,19 @@ void MediaPlayerPrivateWebM::sceneIdentifierDidChange()
     updateSpatialTrackingLabel();
 #endif
 }
+
+void MediaPlayerPrivateWebM::applicationWillResignActive()
+{
+    ALWAYS_LOG(LOGIDENTIFIER);
+    m_applicationIsActive = false;
+}
+
+void MediaPlayerPrivateWebM::applicationDidBecomeActive()
+{
+    ALWAYS_LOG(LOGIDENTIFIER);
+    m_applicationIsActive = true;
+    flushIfNeeded();
+}
 #endif
 
 void MediaPlayerPrivateWebM::isInFullscreenOrPictureInPictureChanged(bool isInFullscreenOrPictureInPicture)
@@ -2032,6 +2051,18 @@ void MediaPlayerPrivateWebM::isInFullscreenOrPictureInPictureChanged(bool isInFu
     updateDisplayLayer();
 #else
     UNUSED_PARAM(isInFullscreenOrPictureInPicture);
+#endif
+}
+
+void MediaPlayerPrivateWebM::setLayerRequiresFlush()
+{
+    ALWAYS_LOG(LOGIDENTIFIER);
+#if PLATFORM(IOS_FAMILY)
+    m_displayLayerWasInterrupted = true;
+    if (m_applicationIsActive)
+        flushIfNeeded();
+#else
+    flushIfNeeded();
 #endif
 }
 

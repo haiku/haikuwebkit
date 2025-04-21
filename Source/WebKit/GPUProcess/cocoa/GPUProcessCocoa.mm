@@ -69,7 +69,7 @@ RetainPtr<NSDictionary> GPUProcess::additionalStateForDiagnosticReport() const
 
             auto stateInfo = adoptNS([[NSMutableDictionary alloc] initWithCapacity:backendMap.size()]);
             // FIXME: Log some additional diagnostic state on RemoteRenderingBackend.
-            [webProcessConnectionInfo setObject:stateInfo.get() forKey:webProcessIdentifier.loggingString()];
+            [webProcessConnectionInfo setObject:stateInfo.get() forKey:webProcessIdentifier.loggingString().createNSString().get()];
         }
 
         if ([webProcessConnectionInfo count])
@@ -139,7 +139,7 @@ void GPUProcess::platformInitializeGPUProcess(GPUProcessCreationParameters& para
     }
 
 #if USE(SANDBOX_EXTENSIONS_FOR_CACHE_AND_TEMP_DIRECTORY_ACCESS) && USE(EXTENSIONKIT)
-    MTLSetShaderCachePath(parameters.containerCachesDirectory);
+    MTLSetShaderCachePath(parameters.containerCachesDirectory.createNSString().get());
 #endif
 }
 
@@ -168,6 +168,35 @@ void GPUProcess::requestSharedSimulationConnection(CoreIPCAuditToken&& modelProc
         completionHandler(IPC::SharedFileHandle::create(FileSystem::FileHandle::adopt([sharedSimulationConnection fileDescriptor])));
     });
 }
+
+#if HAVE(TASK_IDENTITY_TOKEN)
+void GPUProcess::createMemoryAttributionIDForTask(WebCore::ProcessIdentity processIdentity, CompletionHandler<void(const std::optional<String>&)>&& completionHandler)
+{
+    Ref<WKSharedSimulationConnectionHelper> sharedSimulationConnectionHelper = adoptRef(*new WKSharedSimulationConnectionHelper);
+    sharedSimulationConnectionHelper->createMemoryAttributionIDForTask(processIdentity.taskIdToken(), [sharedSimulationConnectionHelper, completionHandler = WTFMove(completionHandler)] (RetainPtr<NSString> attributionTaskID, RetainPtr<id> appService) mutable {
+        if (!attributionTaskID) {
+            RELEASE_LOG_ERROR(ModelElement, "GPUProcess: Memory attribution ID request failed");
+            completionHandler(std::nullopt);
+            return;
+        }
+
+        RELEASE_LOG(ModelElement, "GPUProcess: Memory attribution ID request succeeded");
+        completionHandler(String(attributionTaskID.get()));
+    });
+}
+
+void GPUProcess::unregisterMemoryAttributionID(const String& attributionID, CompletionHandler<void()>&& completionHandler)
+{
+    Ref<WKSharedSimulationConnectionHelper> sharedSimulationConnectionHelper = adoptRef(*new WKSharedSimulationConnectionHelper);
+    sharedSimulationConnectionHelper->unregisterMemoryAttributionID(attributionID, [sharedSimulationConnectionHelper, completionHandler = WTFMove(completionHandler)] (RetainPtr<id> appService) mutable {
+        if (appService)
+            RELEASE_LOG(ModelElement, "GPUProcess: Memory attribution ID unregistration succeeded");
+        else
+            RELEASE_LOG(ModelElement, "GPUProcess: Memory attribution ID unregistration failed");
+        completionHandler();
+    });
+}
+#endif
 #endif
 
 } // namespace WebKit

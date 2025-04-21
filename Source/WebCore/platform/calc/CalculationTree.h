@@ -25,10 +25,8 @@
 #pragma once
 
 #include "CalculationOperator.h"
-#include "CalculationRandomKeyMap.h"
 #include <optional>
 #include <tuple>
-#include <variant>
 #include <wtf/Ref.h>
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>
@@ -513,15 +511,13 @@ struct Random {
     WTF_MAKE_STRUCT_TZONE_ALLOCATED(Random);
     static constexpr auto op = Operator::Random;
 
-    struct CachingOptions {
-        AtomString identifier;
-        bool perElement { false };
-        Ref<RandomKeyMap> keyMap;
+    struct Fixed {
+        double baseValue;
 
-        bool operator==(const CachingOptions&) const = default;
+        bool operator==(const Fixed&) const = default;
     };
 
-    CachingOptions cachingOptions;
+    Fixed fixed;
     Child min;
     Child max;
     std::optional<Child> step;
@@ -818,7 +814,7 @@ template<size_t I> const auto& get(const Progress& root)
 template<size_t I> const auto& get(const Random& root)
 {
     if constexpr (!I)
-        return root.cachingOptions;
+        return root.fixed;
     else if constexpr (I == 1)
         return root.min;
     else if constexpr (I == 2)

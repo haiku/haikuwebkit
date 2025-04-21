@@ -434,12 +434,16 @@
         (extension "com.apple.fileprovider.read-write")))
 
 #if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
-#if !ENABLE(REMOVE_XPC_AND_MACH_SANDBOX_EXTENSIONS_IN_WEBCONTENT)
+#if ENABLE(REMOVE_XPC_AND_MACH_SANDBOX_EXTENSIONS_IN_WEBCONTENT)
+(deny mach-lookup (with no-report) (global-name
+    "com.apple.logd"
+    "com.apple.logd.events"))
+#else
 (with-filter (require-not (lockdown-mode))
     (allow mach-lookup (global-name
         "com.apple.logd"
         "com.apple.logd.events")))
-#endif
+#endif // ENABLE(REMOVE_XPC_AND_MACH_SANDBOX_EXTENSIONS_IN_WEBCONTENT)
 #else
 (allow mach-lookup (global-name
     "com.apple.logd"
@@ -903,31 +907,6 @@
     (require-all
         (require-not (extension "com.apple.webkit.extension.mach"))
         (global-name "com.apple.audio.AudioComponentRegistrar")))
-
-#if HAVE(AGX_COMPILER_SERVICE)
-(allow iokit-open-user-client
-    (require-all
-        (extension "com.apple.webkit.extension.iokit")
-        (iokit-user-client-class
-            "AGXCommandQueue"
-            "AGXDevice"
-            "AGXSharedUserClient"
-            "IOAccelContext"
-            "IOAccelDevice"
-            "IOAccelSharedUserClient"
-            "IOAccelSubmitter2"
-            "IOAccelContext2"
-            "IOAccelDevice2"
-            "IOAccelSharedUserClient2"
-        )
-    )
-)
-
-(allow mach-lookup
-    (require-all
-        (extension "com.apple.webkit.extension.mach")
-        (xpc-service-name-prefix "com.apple.AGXCompilerService")))
-#endif // HAVE(AGX_COMPILER_SERVICE)
 
 ;; These services have been identified as unused during living-on.
 ;; This list overrides some definitions above and in common.sb.

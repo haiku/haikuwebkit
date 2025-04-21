@@ -38,7 +38,6 @@
 #include "WasmFunctionIPIntMetadataGenerator.h"
 #include "WasmFunctionParser.h"
 #include "WasmGeneratorTraits.h"
-#include <variant>
 #include <wtf/Assertions.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/RefPtr.h>
@@ -2714,9 +2713,9 @@ void IPIntGenerator::addCallCommonData(const FunctionSignature&, const CallInfor
 
     IPInt::CallReturnMetadata commonReturn {
         .stackFrameSize = static_cast<uint32_t>(callConvention.headerAndArgumentStackSizeInBytes),
+        .firstStackArgumentSPOffset = 0,
         .resultBytecode = { }
     };
-    m_cachedCallBytecode.append(toSpan(commonReturn));
 
     constexpr static int NUM_MINT_RET_GPRS = 8;
     constexpr static int NUM_MINT_RET_FPRS = 8;
@@ -2724,12 +2723,9 @@ void IPIntGenerator::addCallCommonData(const FunctionSignature&, const CallInfor
     ASSERT_UNUSED(NUM_MINT_RET_FPRS, wasmCallingConvention().fprArgs.size() <= NUM_MINT_RET_FPRS);
 
     bool hasSeenStackArgument = false;
-    uint32_t firstStackArgumentSPOffset = 0;
 
-    size_t indexForSPOffset = m_cachedCallBytecode.size();
-    m_cachedCallBytecode.append(toSpan(firstStackArgumentSPOffset));
-
-    m_cachedCallBytecode.appendUsingFunctor(callConvention.results.size(),
+    Vector<uint8_t, 16> returnBytecode;
+    returnBytecode.appendUsingFunctor(callConvention.results.size(),
         [&](unsigned index) -> uint8_t {
             auto loc = callConvention.results[index].location;
             if (loc.isGPR()) {
@@ -2751,7 +2747,7 @@ void IPIntGenerator::addCallCommonData(const FunctionSignature&, const CallInfor
                     hasSeenStackArgument = true;
                     // If our first argument starts further down the frame, we need to push a bunch of empty values
                     // If our first stack argument is in an "odd" slot, we need to skip one slot.
-                    firstStackArgumentSPOffset = loc.offsetFromSP();
+                    commonReturn.firstStackArgumentSPOffset = loc.offsetFromSP();
                 }
                 return static_cast<uint8_t>(IPInt::CallResultBytecode::ResultStack);
             }
@@ -2759,9 +2755,10 @@ void IPIntGenerator::addCallCommonData(const FunctionSignature&, const CallInfor
             RELEASE_ASSERT_NOT_REACHED();
             return 0;
         });
-    m_cachedCallBytecode.append(static_cast<uint8_t>(IPInt::CallResultBytecode::End));
-    for (uint8_t v : toSpan(firstStackArgumentSPOffset))
-        m_cachedCallBytecode[indexForSPOffset++] = v;
+    returnBytecode.append(static_cast<uint8_t>(IPInt::CallResultBytecode::End));
+
+    m_cachedCallBytecode.append(toSpan(commonReturn));
+    m_cachedCallBytecode.append(returnBytecode.span());
 
     size_t size = m_metadata->m_metadata.size();
     m_metadata->addBlankSpace(m_cachedCallBytecode.size());

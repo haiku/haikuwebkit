@@ -30,7 +30,6 @@
 #include "IntersectionObserverCallback.h"
 #include "LengthBox.h"
 #include "ReducedResolutionSeconds.h"
-#include <variant>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/WeakPtr.h>
 #include <wtf/text/WTFString.h>
@@ -135,7 +134,8 @@ private:
         bool observationChanged { false };
     };
 
-    IntersectionObservationState computeIntersectionState(const IntersectionObserverRegistration&, LocalFrameView&, Element& target, bool applyRootMargin) const;
+    enum class ApplyRootMargin : bool { No, Yes };
+    IntersectionObservationState computeIntersectionState(const IntersectionObserverRegistration&, LocalFrameView&, Element& target, ApplyRootMargin) const;
 
     WeakPtr<Document, WeakPtrImplWithEventTargetData> m_implicitRootDocument;
     WeakPtr<ContainerNode, WeakPtrImplWithEventTargetData> m_root;

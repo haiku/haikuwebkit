@@ -77,7 +77,6 @@
 #include "WebGeolocationManagerProxy.h"
 #include "WebInspectorUtilities.h"
 #include "WebKit2Initialize.h"
-#include "WebKitServiceNames.h"
 #include "WebMemorySampler.h"
 #include "WebNotificationManagerProxy.h"
 #include "WebPageGroup.h"
@@ -888,11 +887,8 @@ WebProcessDataStoreParameters WebProcessPool::webProcessDataStoreParameters(WebP
 
 #if PLATFORM(IOS_FAMILY)
     std::optional<SandboxExtension::Handle> containerTemporaryDirectoryExtensionHandle;
-    if (auto directory = websiteDataStore.resolvedContainerTemporaryDirectory(); !directory.isEmpty()) {
-        if (m_cachedWebContentTempDirectory.isEmpty())
-            m_cachedWebContentTempDirectory = resolveAndCreateReadWriteDirectoryForSandboxExtension(FileSystem::pathByAppendingComponent(directory, webContentServiceName));
-        containerTemporaryDirectoryExtensionHandle = SandboxExtension::createHandleWithoutResolvingPath(m_cachedWebContentTempDirectory, SandboxExtension::Type::ReadWrite);
-    }
+    if (auto directory = websiteDataStore.resolvedContainerTemporaryDirectory(); !directory.isEmpty())
+        containerTemporaryDirectoryExtensionHandle = SandboxExtension::createHandleWithoutResolvingPath(directory, SandboxExtension::Type::ReadWrite);
 #endif
 
     return WebProcessDataStoreParameters {
@@ -1148,6 +1144,10 @@ void WebProcessPool::disconnectProcess(WebProcessProxy& process)
     // FIXME (Multi-WebProcess): <rdar://problem/12239765> Some of the invalidation calls of the other supplements are still necessary in multi-process mode, but they should only affect data structures pertaining to the process being disconnected.
     // Clearing everything causes assertion failures, so it's less trouble to skip that for now.
     Ref protectedProcess { process };
+
+#if ENABLE(MODEL_PROCESS) && HAVE(TASK_IDENTITY_TOKEN)
+    process.unregisterMemoryAttributionIDIfNeeded();
+#endif
 
     protectedBackForwardCache()->removeEntriesForProcess(process);
 

@@ -1416,8 +1416,7 @@ AXTextRuns AccessibilityRenderObject::textRuns()
         return { renderLineBreak->containingBlock(), { AXTextRun(box ? box->lineIndex() : 0, makeString('\n').isolatedCopy(), { lengthOneDomOffsets }, { 0 }, 0) } };
     }
 
-    RefPtr node = this->node();
-    if (is<HTMLMediaElement>(node) || is<HTMLAttachmentElement>(node) || isImage()) {
+    if (isReplacedElement()) {
         auto* containingBlock = renderer ? renderer->containingBlock() : nullptr;
         FloatRect rect = frameRect();
         uint16_t width = static_cast<uint16_t>(rect.width());
@@ -1444,6 +1443,12 @@ AXTextRuns AccessibilityRenderObject::textRuns()
         auto text = textBox->originalText();
         if (text.isEmpty())
             return;
+
+        if (textBox->style().textTransform().contains(TextTransform::FullSizeKana)) {
+            // We don't want to serve transformed kana text to AT since it is a visual affordance.
+            // Using the original text from the renderer provides the untransformed string.
+            text = textBox->renderer().originalText().substring(textBox->start(), textBox->length());
+        }
 
         bool collapseTabs = textBox->style().collapseWhiteSpace();
         bool collapseNewlines = !textBox->style().preserveNewline();

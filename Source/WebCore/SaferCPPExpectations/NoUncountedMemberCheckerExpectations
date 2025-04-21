@@ -25,7 +25,6 @@ css/StyleProperties.h
 css/StyleRuleImport.h
 css/StyleSheetContents.h
 css/StyleSheetList.h
-css/parser/SizesCalcParser.h
 dom/CollectionIndexCache.h
 dom/Node.cpp
 dom/Node.h
@@ -58,6 +57,7 @@ page/scrolling/ScrollingCoordinator.h
 page/scrolling/ScrollingTreeGestureState.h
 page/scrolling/mac/ScrollerMac.h
 platform/PODInterval.h
+platform/cocoa/WebAVPlayerLayer.h
 platform/encryptedmedia/CDMProxy.h
 platform/graphics/ComplexTextController.h
 platform/graphics/GraphicsLayer.h
@@ -67,11 +67,11 @@ platform/graphics/avfoundation/objc/WebCoreAVFResourceLoader.mm
 platform/graphics/ca/TileController.h
 platform/graphics/controls/PlatformControl.h
 platform/graphics/coretext/DrawGlyphsRecorder.h
-platform/graphics/cv/GraphicsContextGLCVCocoa.h
 platform/mediarecorder/MediaRecorderPrivate.h
 platform/mediastream/AudioMediaStreamTrackRenderer.h
 platform/mediastream/mac/CoreAudioCaptureSource.h
 platform/mock/ScrollbarsControllerMock.h
+platform/network/cocoa/WebCoreNSURLSession.mm
 platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.h
 plugins/PluginData.h
 rendering/RenderQuote.cpp
@@ -87,7 +87,6 @@ style/StyleRelations.h
 style/StyleResolver.cpp
 style/StyleScope.h
 style/StyleScopeRuleSets.h
-style/StyleSharingResolver.cpp
 style/Styleable.h
 svg/properties/SVGPropertyOwnerRegistry.h
 workers/WorkerAnimationController.h
@@ -95,7 +94,6 @@ workers/WorkerConsoleClient.h
 workers/WorkerMessagingProxy.h
 workers/WorkerNotificationClient.h
 workers/WorkerOrWorkletGlobalScope.h
-workers/service/NavigationPreloadManager.h
 workers/service/background-fetch/ServiceWorkerRegistrationBackgroundFetchAPI.h
 xml/XMLHttpRequestProgressEventThrottle.h
 xml/XMLHttpRequestUpload.h

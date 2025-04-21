@@ -2973,6 +2973,7 @@ list(APPEND WebCore_PRIVATE_FRAMEWORK_HEADERS
     page/LayoutMilestones.serialization.in
     page/MediaProducer.serialization.in
 
+    platform/LLVMProfiling.h
     platform/PlatformEvent.serialization.in
     platform/PlatformScreen.serialization.in
     platform/PlatformWheelEvent.serialization.in

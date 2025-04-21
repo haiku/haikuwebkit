@@ -67,10 +67,6 @@ WEAK_IMPORT_OBJC_CLASS(WTContext);
 WEAK_IMPORT_OBJC_CLASS(WTSession);
 WEAK_IMPORT_OBJC_CLASS(WTTextSuggestion);
 
-#if PLATFORM(VISION)
-asm(".linker_option \"-framework\", \"WritingTools\"");
-#endif
-
 #if PLATFORM(MAC)
 
 @interface WKWebView (Staging_136152077)
@@ -128,21 +124,6 @@ asm(".linker_option \"-framework\", \"WritingTools\"");
 }
 
 @end
-
-// FIXME: (rdar://130540028) Remove uses of the old WritingToolsAllowedInputOptions API in favor of the new WritingToolsResultOptions API, and remove staging.
-#if PLATFORM(IOS_FAMILY)
-@protocol UITextInput_Staging130540028 <UITextInput>
-
-- (PlatformWritingToolsResultOptions)allowedWritingToolsResultOptions;
-
-@end
-#else
-@protocol NSTextInputTraits_Staging130540028 <NSTextInputTraits>
-
-- (PlatformWritingToolsResultOptions)allowedWritingToolsResultOptions;
-
-@end
-#endif
 
 @interface WKWebViewConfiguration (Staging_135210076)
 
@@ -228,9 +209,9 @@ using PlatformTextPlaceholder = NSTextPlaceholder;
 - (PlatformWritingToolsResultOptions)allowedWritingToolsResultOptionsForTesting
 {
 #if PLATFORM(IOS_FAMILY)
-    return [(id<UITextInput_Staging130540028>)[self textInputContentView] allowedWritingToolsResultOptions];
+    return [[self textInputContentView] allowedWritingToolsResultOptions];
 #else
-    return [(id<NSTextInputTraits_Staging130540028>)self allowedWritingToolsResultOptions];
+    return [(id<NSTextInputTraits>)self allowedWritingToolsResultOptions];
 #endif
 }
 
@@ -247,7 +228,7 @@ using PlatformTextPlaceholder = NSTextPlaceholder;
 {
     auto string = String { [self contentsAsString] };
     auto updatedString = makeStringByReplacingAll(string, noBreakSpace, space);
-    return (NSString *)updatedString;
+    return updatedString.createNSString().autorelease();
 }
 
 - (NSUInteger)transparentContentMarkerCount:(NSString *)evaluateNodeExpression

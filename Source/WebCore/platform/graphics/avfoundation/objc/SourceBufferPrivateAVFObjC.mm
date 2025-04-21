@@ -951,6 +951,33 @@ void SourceBufferPrivateAVFObjC::flushVideo()
     }
 }
 
+void SourceBufferPrivateAVFObjC::setLayerRequiresFlush()
+{
+    ALWAYS_LOG(LOGIDENTIFIER);
+    m_layerRequiresFlush = true;
+#if PLATFORM(IOS_FAMILY)
+    if (m_applicationIsActive)
+        flushIfNeeded();
+#else
+    flushIfNeeded();
+#endif
+}
+
+#if PLATFORM(IOS_FAMILY)
+void SourceBufferPrivateAVFObjC::applicationWillResignActive()
+{
+    ALWAYS_LOG(LOGIDENTIFIER);
+    m_applicationIsActive = false;
+}
+
+void SourceBufferPrivateAVFObjC::applicationDidBecomeActive()
+{
+    ALWAYS_LOG(LOGIDENTIFIER);
+    m_applicationIsActive = true;
+    flushIfNeeded();
+}
+#endif
+
 ALLOW_NEW_API_WITHOUT_GUARDS_BEGIN
 RetainPtr<AVSampleBufferAudioRenderer> SourceBufferPrivateAVFObjC::audioRendererForTrackID(TrackID trackID) const
 ALLOW_NEW_API_WITHOUT_GUARDS_END
@@ -1318,6 +1345,10 @@ void SourceBufferPrivateAVFObjC::configureVideoRenderer(VideoMediaSampleRenderer
         if (RefPtr protectedThis = weakThis.get(); protectedThis && protectedThis->m_enabledVideoTrackID)
             protectedThis->didBecomeReadyForMoreSamples(*protectedThis->m_enabledVideoTrackID);
     });
+    videoRenderer.notifyWhenVideoRendererRequiresFlushToResumeDecoding([weakThis = ThreadSafeWeakPtr { *this }] {
+        if (RefPtr protectedThis = weakThis.get())
+            protectedThis->setLayerRequiresFlush();
+    });
     m_listener->beginObservingVideoRenderer(videoRenderer.renderer());
 }
 
@@ -1325,6 +1356,7 @@ void SourceBufferPrivateAVFObjC::invalidateVideoRenderer(VideoMediaSampleRendere
 {
     videoRenderer.flush();
     videoRenderer.stopRequestingMediaData();
+    videoRenderer.notifyWhenVideoRendererRequiresFlushToResumeDecoding({ });
     m_listener->stopObservingVideoRenderer(videoRenderer.renderer());
 
 #if ENABLE(ENCRYPTED_MEDIA) && HAVE(AVCONTENTKEYSESSION)

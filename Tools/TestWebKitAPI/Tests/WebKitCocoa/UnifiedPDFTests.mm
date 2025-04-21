@@ -50,6 +50,7 @@
 #import <WebKit/WKNavigationDelegatePrivate.h>
 #import <WebKit/WKPreferencesPrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
+#import <WebKit/WKWebViewPrivateForTesting.h>
 #import <WebKit/WKWebpagePreferencesPrivate.h>
 #import <WebKit/_WKFeature.h>
 #import <wtf/RetainPtr.h>
@@ -110,7 +111,7 @@ public:
 
     void synchronouslyLoadPDFDocument(String documentName)
     {
-        RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:documentName withExtension:@"pdf"]];
+        RetainPtr request = adoptNS([[NSURLRequest alloc] initWithURL:[NSBundle.test_resourcesBundle URLForResource:documentName.createNSString().get() withExtension:@"pdf"]]);
         [webView synchronouslyLoadRequest:request.get()];
         [[webView window] makeFirstResponder:webView.get()];
         [[webView window] makeKeyAndOrderFront:nil];
@@ -257,6 +258,56 @@ UNIFIED_PDF_TEST(SnapshotsPaintPageContent)
     }];
 
     Util::run(&done);
+}
+
+static bool traverseLayerTree(CALayer *layer, bool(^block)(CALayer *))
+{
+    if (block(layer))
+        return true;
+    for (CALayer *child in layer.sublayers) {
+        if (traverseLayerTree(child, block))
+            return true;
+    }
+
+    return false;
+}
+
+static CALayer *renderViewTileGridLayer(WKWebView *webView)
+{
+    __block CALayer *renderViewLayer = nil;
+    __block CALayer *tileGridLayer = nil;
+
+    traverseLayerTree([webView layer], ^(CALayer *layer) {
+        if ([layer.name containsString:@"RenderView"]) {
+            renderViewLayer = layer;
+            return true;
+        }
+        return false;
+    });
+
+    traverseLayerTree(renderViewLayer, ^(CALayer *layer) {
+        if ([layer.name containsString:@"TileGrid container"]) {
+            tileGridLayer = layer;
+            return true;
+        }
+        return false;
+    });
+
+    return tileGridLayer;
+}
+
+UNIFIED_PDF_TEST(MainFrameTileGridHasNoCoverage)
+{
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 600, 600) configuration:configurationForWebViewTestingUnifiedPDF().get() addToWindow:YES]);
+
+    RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"test" withExtension:@"pdf"]];
+    [webView loadRequest:request.get()];
+    [webView _test_waitForDidFinishNavigation];
+    [webView waitForNextPresentationUpdate];
+
+    CALayer *tileGridLayer = renderViewTileGridLayer(webView.get());
+    EXPECT_NOT_NULL(tileGridLayer);
+    EXPECT_EQ(tileGridLayer.sublayers.count, 0UL);
 }
 
 #if PLATFORM(IOS) || PLATFORM(VISION)
@@ -561,7 +612,7 @@ UNIFIED_PDF_TEST(DISABLED_RespectsPageFragment)
     auto path = makeString('/', fileName, ".pdf"_s);
     auto pathWithFragment = makeString(path, "#page=2"_s);
 
-    RetainPtr pdfURL = [NSBundle.test_resourcesBundle URLForResource:String { fileName } withExtension:@"pdf"];
+    RetainPtr pdfURL = [NSBundle.test_resourcesBundle URLForResource:fileName.createNSString().get() withExtension:@"pdf"];
     HTTPResponse response { [NSData dataWithContentsOfURL:pdfURL.get()] };
     HTTPServer server { { { path, response }, { pathWithFragment, response } } };
 

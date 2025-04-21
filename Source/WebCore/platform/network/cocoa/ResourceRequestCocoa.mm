@@ -38,6 +38,7 @@
 #import <wtf/FileSystem.h>
 #import <wtf/RuntimeApplicationChecks.h>
 #import <wtf/cocoa/SpanCocoa.h>
+#import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
 #import <wtf/text/CString.h>
 
@@ -206,7 +207,7 @@ void ResourceRequest::doUpdateResourceRequest()
     }
 
     if (m_nsRequest) {
-        RetainPtr<NSString> cachePartition = [NSURLProtocol propertyForKey:(NSString *)_kCFURLCachePartitionKey inRequest:m_nsRequest.get()];
+        RetainPtr<NSString> cachePartition = [NSURLProtocol propertyForKey:bridge_cast(_kCFURLCachePartitionKey) inRequest:m_nsRequest.get()];
         if (cachePartition)
             m_cachePartition = cachePartition.get();
     }
@@ -301,7 +302,7 @@ void ResourceRequest::doUpdatePlatformRequest()
 
     [nsRequest setMainDocumentURL:firstPartyForCookies().createNSURL().get()];
     if (!httpMethod().isEmpty())
-        [nsRequest setHTTPMethod:httpMethod()];
+        [nsRequest setHTTPMethod:httpMethod().createNSString().get()];
     [nsRequest setHTTPShouldHandleCookies:allowCookies()];
 
     [nsRequest _setProperty:siteForCookies(m_requestData.m_sameSiteDisposition, [nsRequest URL]) forKey:@"_kCFHTTPCookiePolicyPropertySiteForCookies"];
@@ -311,8 +312,8 @@ void ResourceRequest::doUpdatePlatformRequest()
     for (NSString *oldHeaderName in [nsRequest allHTTPHeaderFields])
         [nsRequest setValue:nil forHTTPHeaderField:oldHeaderName];
     for (const auto& header : httpHeaderFields()) {
-        auto encodedValue = httpHeaderValueUsingSuitableEncoding(header);
-        [nsRequest setValue:(__bridge NSString *)encodedValue.get() forHTTPHeaderField:header.key];
+        RetainPtr encodedValue = httpHeaderValueUsingSuitableEncoding(header);
+        [nsRequest setValue:bridge_cast(encodedValue.get()) forHTTPHeaderField:header.key.createNSString().get()];
     }
 
     [nsRequest setContentDispositionEncodingFallbackArray:createNSArray(m_requestData.m_responseContentDispositionEncodingFallbackArray, [] (auto& name) -> NSNumber * {
@@ -325,7 +326,7 @@ void ResourceRequest::doUpdatePlatformRequest()
     String partition = cachePartition();
     if (!partition.isNull() && !partition.isEmpty()) {
         RetainPtr partitionValue = adoptNS([[NSString alloc] initWithUTF8String:partition.utf8().data()]);
-        [NSURLProtocol setProperty:partitionValue.get() forKey:(NSString *)_kCFURLCachePartitionKey inRequest:nsRequest.get()];
+        [NSURLProtocol setProperty:partitionValue.get() forKey:bridge_cast(_kCFURLCachePartitionKey) inRequest:nsRequest.get()];
     }
 
 #if PLATFORM(MAC)

@@ -52,7 +52,7 @@
 - (NSString *)identifier
 {
 #if ENABLE(CONTENT_EXTENSIONS)
-    return Ref { *_contentRuleList }->name();
+    return Ref { *_contentRuleList }->name().createNSString().autorelease();
 #else
     return nil;
 #endif
@@ -78,8 +78,8 @@
     if (!error)
         return nil;
 
-    auto userInfo = @{ NSHelpAnchorErrorKey: adoptNS([[NSString alloc] initWithFormat:@"Rule list parsing failed: %s", error.message().c_str()]).get() };
-    return [NSError errorWithDomain:WKErrorDomain code:WKErrorContentRuleListStoreCompileFailed userInfo:userInfo];
+    RetainPtr userInfo = @{ NSHelpAnchorErrorKey: adoptNS([[NSString alloc] initWithFormat:@"Rule list parsing failed: %s", error.message().c_str()]).get() };
+    return [NSError errorWithDomain:WKErrorDomain code:WKErrorContentRuleListStoreCompileFailed userInfo:userInfo.get()];
 #else
     return nil;
 #endif

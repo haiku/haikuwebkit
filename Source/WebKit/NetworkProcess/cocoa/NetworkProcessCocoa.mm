@@ -154,7 +154,7 @@ void NetworkProcess::deleteHSTSCacheForHostNames(PAL::SessionID sessionID, const
 {
     if (auto* networkSession = downcast<NetworkSessionCocoa>(this->networkSession(sessionID))) {
         for (auto& hostName : hostNames)
-            [networkSession->hstsStorage() resetHSTSForHost:hostName];
+            [networkSession->hstsStorage() resetHSTSForHost:hostName.createNSString().get()];
     }
 }
 
@@ -242,7 +242,7 @@ void NetworkProcess::clearProxyConfigData(PAL::SessionID sessionID)
     session->clearProxyConfigData();
 }
 
-void NetworkProcess::setProxyConfigData(PAL::SessionID sessionID, Vector<std::pair<Vector<uint8_t>, WTF::UUID>>&& proxyConfigurations)
+void NetworkProcess::setProxyConfigData(PAL::SessionID sessionID, Vector<std::pair<Vector<uint8_t>, std::optional<WTF::UUID>>>&& proxyConfigurations)
 {
     auto* session = networkSession(sessionID);
     if (!session)

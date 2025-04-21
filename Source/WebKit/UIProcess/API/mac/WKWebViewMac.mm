@@ -201,8 +201,6 @@ static WebCore::FloatBoxExtent coreBoxExtentsFromEdgeInsets(NSEdgeInsets insets)
         _impl->setUserInterfaceLayoutDirection(userInterfaceLayoutDirection);
 }
 
-#if USE(NSVIEW_SEMANTICCONTEXT)
-
 - (void)_setSemanticContext:(NSViewSemanticContext)semanticContext
 {
     auto wasUsingFormSemanticContext = _impl ? _impl->useFormSemanticContext() : false;
@@ -215,8 +213,6 @@ static WebCore::FloatBoxExtent coreBoxExtentsFromEdgeInsets(NSEdgeInsets insets)
     if (wasUsingFormSemanticContext != _impl->useFormSemanticContext())
         _impl->semanticContextDidChange();
 }
-
-#endif
 
 ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (void)renewGState
@@ -868,7 +864,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 {
     if (!_impl)
         return [super hitTest:point];
-    return _impl->hitTest(NSPointToCGPoint(point));
+    return _impl->hitTest(NSPointToCGPoint(point)).autorelease();
 }
 
 - (NSInteger)conversationIdentifier
@@ -1254,8 +1250,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (id)_web_immediateActionAnimationControllerForHitTestResultInternal:(API::HitTestResult*)hitTestResult withType:(uint32_t)type userData:(API::Object*)userData
 {
-    id<NSSecureCoding> data = userData ? static_cast<id<NSSecureCoding>>(userData->wrapper()) : nil;
-    return [self _immediateActionAnimationControllerForHitTestResult:wrapper(*hitTestResult) withType:(_WKImmediateActionType)type userData:data];
+    RetainPtr data = userData ? static_cast<id<NSSecureCoding>>(userData->wrapper()) : nil;
+    return [self _immediateActionAnimationControllerForHitTestResult:wrapper(*hitTestResult) withType:(_WKImmediateActionType)type userData:data.get()];
 }
 
 - (void)_web_prepareForImmediateActionAnimation
@@ -1675,7 +1671,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (NSView *)_inspectorAttachmentView
 {
-    return _impl->inspectorAttachmentView();
+    return _impl->inspectorAttachmentView().autorelease();
 }
 
 - (void)_setInspectorAttachmentView:(NSView *)newView
@@ -1852,7 +1848,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 - (NSPrintOperation *)_printOperationWithPrintInfo:(NSPrintInfo *)printInfo forFrame:(_WKFrameHandle *)frameHandle
 {
     if (RefPtr webFrameProxy = WebKit::WebFrameProxy::webFrame(frameHandle->_frameHandle->frameID()))
-        return _impl->printOperationWithPrintInfo(printInfo, *webFrameProxy);
+        return _impl->printOperationWithPrintInfo(printInfo, *webFrameProxy).autorelease();
     return nil;
 }
 

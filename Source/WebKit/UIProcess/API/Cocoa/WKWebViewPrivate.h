@@ -429,6 +429,8 @@ for this property.
 - (void)_convertPoint:(CGPoint)point fromFrame:(WKFrameInfo *)frame toMainFrameCoordinates:(void (^)(CGPoint, NSError *error))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 - (void)_convertRect:(CGRect)rect fromFrame:(WKFrameInfo *)frame toMainFrameCoordinates:(void (^)(CGRect, NSError *error))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 
++ (NSString *)_userVisibleStringForURL:(NSURL *)url WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+
 - (void)_takePDFSnapshotWithConfiguration:(WKSnapshotConfiguration *)snapshotConfiguration completionHandler:(void (^)(NSData *pdfSnapshotData, NSError *error))completionHandler WK_API_AVAILABLE(macos(10.15.4), ios(13.4));
 - (void)_getPDFFirstPageSizeInFrame:(_WKFrameHandle *)frame completionHandler:(void(^)(CGSize))completionHandler WK_API_AVAILABLE(macos(12.0), ios(15.0));
 
@@ -449,6 +451,8 @@ for this property.
 - (void)_restoreAndScrollToAppHighlight:(NSData *)highlight WK_API_AVAILABLE(macos(12.0), ios(15.0));
 - (void)_addAppHighlight WK_API_AVAILABLE(macos(12.0), ios(15.0));
 - (void)_addAppHighlightInNewGroup:(BOOL)newGroup originatedInApp:(BOOL)originatedInApp WK_API_AVAILABLE(macos(12.0), ios(15.0));
+
+- (void)_textFragmentDirectiveFromSelectionWithCompletionHandler:(void(^)(NSURL *))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
 
 #if TARGET_OS_IPHONE && !TARGET_OS_WATCH
 - (void)_targetedPreviewForElementWithID:(NSString *)elementID completionHandler:(WK_SWIFT_UI_ACTOR void (^)(UITargetedPreview *))completionHandler WK_API_AVAILABLE(ios(18.2), visionos(2.2));

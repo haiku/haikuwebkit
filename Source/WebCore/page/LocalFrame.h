@@ -315,7 +315,6 @@ public:
     void didAccessWindowProxyPropertyViaOpener(WindowProxyProperty);
 #endif
 
-    WEBCORE_EXPORT RefPtr<DocumentLoader> loaderForWebsitePolicies() const;
     void storageAccessExceptionReceivedForDomain(const RegistrableDomain&);
     bool requestSkipUserActivationCheckForStorageAccess(const RegistrableDomain&);
 
@@ -353,6 +352,7 @@ private:
     bool preventsParentFromBeingComplete() const final;
     void changeLocation(FrameLoadRequest&&) final;
     void didFinishLoadInAnotherProcess() final;
+    RefPtr<SecurityOrigin> frameDocumentSecurityOrigin() const final;
 
     FrameView* virtualView() const final;
     void disconnectView() final;

@@ -497,7 +497,7 @@ std::pair<RefPtr<CSSValue>, CSSCustomPropertySyntax::Type> CSSPropertyParser::co
         case CSSCustomPropertySyntax::Type::Image:
             return consumeImage(range, state, { AllowedImageType::URLFunction, AllowedImageType::GeneratedImage });
         case CSSCustomPropertySyntax::Type::URL:
-            return consumeURL(range, state);
+            return consumeURL(range, state, { });
         case CSSCustomPropertySyntax::Type::String:
             return consumeString(range);
         case CSSCustomPropertySyntax::Type::TransformFunction:
@@ -1525,10 +1525,10 @@ static bool isNumber(const CSSValue& value, double number, CSSUnitType type)
 
 static bool isNumber(const RectBase& quad, double number, CSSUnitType type)
 {
-    return isNumber(quad.top(), number, type)
-        && isNumber(quad.right(), number, type)
-        && isNumber(quad.bottom(), number, type)
-        && isNumber(quad.left(), number, type);
+    return isNumber(quad.protectedTop(), number, type)
+        && isNumber(quad.protectedRight(), number, type)
+        && isNumber(quad.protectedBottom(), number, type)
+        && isNumber(quad.protectedLeft(), number, type);
 }
 
 static bool isValueID(const RectBase& quad, CSSValueID valueID)
@@ -3268,7 +3268,7 @@ bool CSSPropertyParser::consumeAnimationRangeShorthand(CSS::PropertyParserState&
                 end = rangeEndValueForStartValue(*startPrimitiveValue);
             else {
                 RefPtr startPair = downcast<CSSValuePair>(start);
-                end = rangeEndValueForStartValue(startPair->first());
+                end = rangeEndValueForStartValue(startPair->protectedFirst());
             }
         } else {
             end = consumeSingleAnimationRangeEnd(m_range, state);

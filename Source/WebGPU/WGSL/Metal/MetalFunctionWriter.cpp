@@ -71,8 +71,13 @@ namespace Metal {
     template <typename T>\n \
     auto __wgsl##__capitalizedName(T value)\n \
     {\n \
-        volatile auto result = __name(value);\n \
-        return result;\n \
+        if constexpr(__wgslMetalAppleGPUFamily < 9) { \n\
+            volatile auto result = __name(value);\n \
+            return result;\n \
+        } else { \n\
+            auto result = __name(value);\n \
+            return result;\n \
+        }\n \
     }\n)
 
 #define DEFINE_VOLATILE_HELPER(__name, __capitalizedName) \
@@ -700,6 +705,7 @@ void FunctionDefinitionWriter::visit(AST::Function& functionDefinition)
     m_currentFunction = &functionDefinition;
     m_body.append(")\n"_s);
     checkErrorAndVisit(functionDefinition.body());
+
     m_body.append("\n\n"_s);
 
     m_currentFunction = nullptr;
@@ -2540,7 +2546,7 @@ void FunctionDefinitionWriter::visit(AST::DiscardStatement&)
 #if CPU(X86_64)
     m_body.append("__asm volatile(\"\"); discard_fragment()"_s);
 #else
-    m_body.append("discard_fragment()"_s);
+    m_body.append("{ volatile bool __wgslDiscardFragmentWorkaround = true; if (__wgslDiscardFragmentWorkaround) discard_fragment(); }"_s);
 #endif
 }
 
@@ -2563,7 +2569,7 @@ void FunctionDefinitionWriter::visit(AST::PhonyAssignmentStatement& statement)
     m_body.append(')');
 }
 
-static std::optional<std::pair<String, String>> fragDepthIdentifierForFunction(AST::Function* function)
+static std::optional<std::pair<String, String>> returnIdentifierForFunction(WGSL::Builtin builtIn, AST::Function* function)
 {
     if (!function || function->stage() != ShaderStage::Fragment)
         return std::nullopt;
@@ -2576,11 +2582,11 @@ static std::optional<std::pair<String, String>> fragDepthIdentifierForFunction(A
                 return std::nullopt;
 
             for (auto& member : returnStruct->structure.members()) {
-                if (member.builtin() == WGSL::Builtin::FragDepth)
+                if (member.builtin() == builtIn)
                     return std::make_pair(returnStruct->structure.name(), member.name());
                 for (auto& attribute : member.attributes()) {
                     auto* builtinAttribute = dynamicDowncast<AST::BuiltinAttribute>(attribute);
-                    if (builtinAttribute && builtinAttribute->builtin() == WGSL::Builtin::FragDepth)
+                    if (builtinAttribute && builtinAttribute->builtin() == builtIn)
                         return std::make_pair(returnStruct->structure.name(), member.name());
                 }
             }
@@ -2592,9 +2598,12 @@ static std::optional<std::pair<String, String>> fragDepthIdentifierForFunction(A
 
 void FunctionDefinitionWriter::visit(AST::ReturnStatement& statement)
 {
-    auto fragDepthIdentifier = fragDepthIdentifierForFunction(m_currentFunction);
+    auto fragDepthIdentifier = returnIdentifierForFunction(WGSL::Builtin::FragDepth, m_currentFunction);
+    auto sampleMaskIdentifier = returnIdentifierForFunction(WGSL::Builtin::SampleMask, m_currentFunction);
     if (fragDepthIdentifier)
         m_body.append(fragDepthIdentifier->first, " __wgslFragmentReturnResult = "_s);
+    else if (sampleMaskIdentifier)
+        m_body.append(sampleMaskIdentifier->first, " __wgslFragmentReturnResult = "_s);
     else
         m_body.append("return"_s);
     if (statement.maybeExpression()) {
@@ -2602,10 +2611,12 @@ void FunctionDefinitionWriter::visit(AST::ReturnStatement& statement)
         visit(*statement.maybeExpression());
     }
 
-    if (fragDepthIdentifier) {
+    if (fragDepthIdentifier)
         m_body.append(";\n__wgslFragmentReturnResult."_s, fragDepthIdentifier->second, " = clamp(__wgslFragmentReturnResult."_s, fragDepthIdentifier->second, ", as_type<float>(__DynamicOffsets[0]), as_type<float>(__DynamicOffsets[1]));\n"_s);
+    if (sampleMaskIdentifier)
+        m_body.append(";\n__wgslFragmentReturnResult."_s, sampleMaskIdentifier->second, " = (__wgslFragmentReturnResult."_s, sampleMaskIdentifier->second, " & __DynamicOffsets[2]);\n"_s);
+    if (fragDepthIdentifier || sampleMaskIdentifier)
         m_body.append("return __wgslFragmentReturnResult"_s);
-    }
 }
 
 void FunctionDefinitionWriter::visit(AST::ForStatement& statement)

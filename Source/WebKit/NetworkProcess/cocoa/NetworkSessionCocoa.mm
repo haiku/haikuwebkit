@@ -1434,12 +1434,12 @@ NetworkSessionCocoa::NetworkSessionCocoa(NetworkProcess& networkProcess, const N
 
     if (!!parameters.hstsStorageDirectory && !m_sessionID.isEphemeral()) {
         SandboxExtension::consumePermanently(parameters.hstsStorageDirectoryExtensionHandle);
-        configuration.get()._hstsStorage = adoptNS([[_NSHSTSStorage alloc] initPersistentStoreWithURL:[NSURL fileURLWithPath:parameters.hstsStorageDirectory isDirectory:YES]]).get();
+        configuration.get()._hstsStorage = adoptNS([[_NSHSTSStorage alloc] initPersistentStoreWithURL:adoptNS([[NSURL alloc] initFileURLWithPath:parameters.hstsStorageDirectory.createNSString().get() isDirectory:YES]).get()]).get();
     }
 
 #if HAVE(CFNETWORK_SEPARATE_CREDENTIAL_STORAGE)
     if (parameters.dataStoreIdentifier && !m_sessionID.isEphemeral())
-        configuration.get().URLCredentialStorage = adoptNS([[NSURLCredentialStorage alloc] _initWithIdentifier:parameters.dataStoreIdentifier->toString() private:NO]).get();
+        configuration.get().URLCredentialStorage = adoptNS([[NSURLCredentialStorage alloc] _initWithIdentifier:parameters.dataStoreIdentifier->toString().createNSString().get() private:NO]).get();
 #endif
 
 #if HAVE(NETWORK_LOADER)
@@ -1469,17 +1469,17 @@ NetworkSessionCocoa::NetworkSessionCocoa(NetworkProcess& networkProcess, const N
         configuration.get()._sourceApplicationAuditTokenData = (__bridge NSData *)data.get();
 
     if (!m_sourceApplicationBundleIdentifier.isEmpty()) {
-        configuration.get()._sourceApplicationBundleIdentifier = m_sourceApplicationBundleIdentifier;
+        configuration.get()._sourceApplicationBundleIdentifier = m_sourceApplicationBundleIdentifier.createNSString().get();
         configuration.get()._sourceApplicationAuditTokenData = nil;
     }
 
     if (!m_sourceApplicationSecondaryIdentifier.isEmpty())
-        configuration.get()._sourceApplicationSecondaryIdentifier = m_sourceApplicationSecondaryIdentifier;
+        configuration.get()._sourceApplicationSecondaryIdentifier = m_sourceApplicationSecondaryIdentifier.createNSString().get();
 
 #if HAVE(ALTERNATIVE_SERVICE)
     if (!parameters.alternativeServiceDirectory.isEmpty()) {
         SandboxExtension::consumePermanently(parameters.alternativeServiceDirectoryExtensionHandle);
-        configuration.get()._alternativeServicesStorage = adoptNS([[_NSHTTPAlternativeServicesStorage alloc] initPersistentStoreWithURL:[[NSURL fileURLWithPath:parameters.alternativeServiceDirectory isDirectory:YES] URLByAppendingPathComponent:@"AlternativeService.sqlite" isDirectory:NO]]).get();
+        configuration.get()._alternativeServicesStorage = adoptNS([[_NSHTTPAlternativeServicesStorage alloc] initPersistentStoreWithURL:[adoptNS([[NSURL alloc] initFileURLWithPath:parameters.alternativeServiceDirectory.createNSString().get() isDirectory:YES]) URLByAppendingPathComponent:@"AlternativeService.sqlite" isDirectory:NO]]).get();
         if ([configuration.get()._alternativeServicesStorage respondsToSelector:@selector(setCanSuspendLocked:)])
             [configuration.get()._alternativeServicesStorage setCanSuspendLocked:YES];
     }
@@ -1491,7 +1491,7 @@ NetworkSessionCocoa::NetworkSessionCocoa(NetworkProcess& networkProcess, const N
 
 #if PLATFORM(IOS_FAMILY)
     if (!m_dataConnectionServiceType.isEmpty())
-        configuration.get()._CTDataConnectionServiceType = m_dataConnectionServiceType;
+        configuration.get()._CTDataConnectionServiceType = m_dataConnectionServiceType.createNSString().get();
 #endif
 
 #if ENABLE(LEGACY_CUSTOM_PROTOCOL_MANAGER)
@@ -1563,7 +1563,7 @@ void NetworkSessionCocoa::notifyAdAttributionKitOfSessionTermination()
     if (m_donatedEphemeralImpressionSessionID) {
         // FIXME: Remove this respondsToSelector check in 2026 or so.
         if ([ASDInstallWebAttributionService.sharedInstance respondsToSelector:@selector(removeInstallWebAttributionParamsFromPrivateBrowsingSessionID:completionHandler:)])
-            [ASDInstallWebAttributionService.sharedInstance removeInstallWebAttributionParamsFromPrivateBrowsingSessionID:*m_donatedEphemeralImpressionSessionID completionHandler:^(NSError *) { }];
+            [ASDInstallWebAttributionService.sharedInstance removeInstallWebAttributionParamsFromPrivateBrowsingSessionID:m_donatedEphemeralImpressionSessionID->createNSUUID().get() completionHandler:^(NSError *) { }];
     }
 #endif
 }
@@ -2008,7 +2008,7 @@ void NetworkSessionCocoa::addWebPageNetworkParameters(WebPageProxyIdentifier pag
     ASSERT(addResult2.isNewEntry);
     RetainPtr<NSURLSessionConfiguration> configuration = adoptNS([m_defaultSessionSet->sessionWithCredentialStorage.session.get().configuration copy]);
 #if USE(APPLE_INTERNAL_SDK)
-    configuration.get()._attributedBundleIdentifier = parameters.attributedBundleIdentifier();
+    configuration.get()._attributedBundleIdentifier = parameters.attributedBundleIdentifier().createNSString().get();
 #endif
     initializeNSURLSessionsInSet(addResult2.iterator->value.get(), configuration.get());
     addResult1.iterator->value = addResult2.iterator->value.get();
@@ -2246,9 +2246,9 @@ void NetworkSessionCocoa::donateToSKAdNetwork(WebCore::PrivateClickMeasurement&&
 #if HAVE(SKADNETWORK_v4)
     auto config = adoptNS([ASDInstallWebAttributionParamsConfig new]);
     config.get().appAdamId = @(*pcm.adamID());
-    config.get().adNetworkRegistrableDomain = pcm.destinationSite().registrableDomain.string();
-    config.get().impressionId = pcm.ephemeralSourceNonce()->nonce;
-    config.get().sourceWebRegistrableDomain = pcm.sourceSite().registrableDomain.string();
+    config.get().adNetworkRegistrableDomain = pcm.destinationSite().registrableDomain.string().createNSString().get();
+    config.get().impressionId = pcm.ephemeralSourceNonce()->nonce.createNSString().get();
+    config.get().sourceWebRegistrableDomain = pcm.sourceSite().registrableDomain.string().createNSString().get();
     config.get().version = @"4.0";
     config.get().attributionContext = AttributionTypeDefault;
 #if HAVE(AD_ATTRIBUTION_KIT_PRIVATE_BROWSING)
@@ -2257,7 +2257,7 @@ void NetworkSessionCocoa::donateToSKAdNetwork(WebCore::PrivateClickMeasurement&&
 
         // FIXME: Remove this respondsToSelector check in 2026 or so.
         if ([config respondsToSelector:@selector(privateBrowsingSessionId)])
-            config.get().privateBrowsingSessionId = *m_donatedEphemeralImpressionSessionID;
+            config.get().privateBrowsingSessionId = m_donatedEphemeralImpressionSessionID->createNSUUID().get();
     }
 #endif // HAVE(AD_ATTRIBUTION_KIT_PRIVATE_BROWSING)
 #if HAVE(ASD_INSTALL_WEB_ATTRIBUTION_SERVICE)
@@ -2285,7 +2285,7 @@ void NetworkSessionCocoa::deleteAlternativeServicesForHostNames(const Vector<Str
 #if HAVE(ALTERNATIVE_SERVICE)
     RetainPtr<_NSHTTPAlternativeServicesStorage> storage = m_defaultSessionSet->sessionWithCredentialStorage.session.get().configuration._alternativeServicesStorage;
     for (auto& host : hosts)
-        [storage removeHTTPAlternativeServiceEntriesWithRegistrableDomain:host];
+        [storage removeHTTPAlternativeServiceEntriesWithRegistrableDomain:host.createNSString().get()];
 #else
     UNUSED_PARAM(hosts);
 #endif
@@ -2348,7 +2348,7 @@ void NetworkSessionCocoa::clearProxyConfigData()
         clearProxies(context);
 }
 
-void NetworkSessionCocoa::setProxyConfigData(const Vector<std::pair<Vector<uint8_t>, WTF::UUID>>& proxyConfigurations)
+void NetworkSessionCocoa::setProxyConfigData(const Vector<std::pair<Vector<uint8_t>, std::optional<WTF::UUID>>>& proxyConfigurations)
 {
     auto* clearProxies = nw_context_clear_proxiesPtr();
     auto* addProxy = nw_context_add_proxyPtr();
@@ -2364,7 +2364,10 @@ void NetworkSessionCocoa::setProxyConfigData(const Vector<std::pair<Vector<uint8
     bool recreateSessions = false;
     for (auto& config : proxyConfigurations) {
         uuid_t identifier;
-        memcpySpan(asMutableByteSpan(identifier), config.second.span().first(sizeof(uuid_t)));
+        if (config.second)
+            memcpySpan(asMutableByteSpan(identifier), config.second->span().first(sizeof(uuid_t)));
+        else
+            zeroBytes(identifier);
 
         auto nwProxyConfig = adoptNS(createProxyConfig(config.first.data(), config.first.size(), identifier));
 

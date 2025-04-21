@@ -1,5 +1,5 @@
 /*
- *  Copyright (C) 2005-2023 Apple Inc. All rights reserved.
+ *  Copyright (C) 2005-2025 Apple Inc. All rights reserved.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Library General Public
@@ -75,7 +75,7 @@ namespace WTF {
 template<typename T> class RetainPtr;
 
 template<typename T> constexpr bool IsNSType = std::is_convertible_v<T, id>;
-template<typename T> using RetainPtrType = std::conditional_t<IsNSType<T>, std::remove_pointer_t<T>, T>;
+template<typename T> using RetainPtrType = std::conditional_t<IsNSType<T> && !std::is_same_v<T, id>, std::remove_pointer_t<T>, T>;
 
 template<typename T> constexpr RetainPtr<RetainPtrType<T>> adoptCF(T CF_RELEASES_ARGUMENT) WARN_UNUSED_RETURN;
 
@@ -301,11 +301,6 @@ template<typename T, typename U> constexpr bool operator==(const RetainPtr<T>& a
 template<typename T, typename U> constexpr bool operator==(const RetainPtr<T>& a, U* b)
 {
     return a.get() == b; 
-}
-
-template<typename T, typename U> constexpr bool operator==(T* a, const RetainPtr<U>& b)
-{
-    return a == b.get(); 
 }
 
 template<typename T> constexpr RetainPtr<RetainPtrType<T>> adoptCF(T CF_RELEASES_ARGUMENT ptr)

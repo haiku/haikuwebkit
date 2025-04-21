@@ -54,6 +54,7 @@ address, article, aside, div, footer, header, hgroup, main, nav, search, section
 marquee {
     display: inline-block;
     text-align: initial;
+    overflow: hidden !important;
 }
 
 blockquote {
@@ -1023,7 +1024,12 @@ input[type="color"] {
 #endif
 }
 
+input[type="color"]::-internal-color-swatch-overlay {
+    appearance: auto;
+}
+
 input[type="color"]::-webkit-color-swatch-wrapper {
+    appearance: auto;
     display: flex;
 #if defined(WTF_PLATFORM_IOS_FAMILY) && WTF_PLATFORM_IOS_FAMILY
     border-radius: inherit;
@@ -1038,6 +1044,7 @@ input[type="color"]::-webkit-color-swatch-wrapper {
 }
 
 input[type="color"]::-webkit-color-swatch {
+    appearance: auto;
     background-color: #000000;
 #if defined(WTF_PLATFORM_IOS_FAMILY) && WTF_PLATFORM_IOS_FAMILY
     border-radius: inherit;
@@ -1233,7 +1240,8 @@ pre, xmp, plaintext, listing {
     display: block;
     font-family: monospace;
     white-space: pre;
-    margin: 1__qem 0;
+    margin-block: 1__qem;
+    margin-inline: 0;
 }
 
 mark {

@@ -599,10 +599,6 @@ void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearance
             style.setUserModify(UserModify::ReadOnly);
 
         if (is<HTMLMarqueeElement>(*element)) {
-            // For now, <marquee> requires an overflow clip to work properly.
-            style.setOverflowX(Overflow::Hidden);
-            style.setOverflowY(Overflow::Hidden);
-
             bool isVertical = style.marqueeDirection() == MarqueeDirection::Up || style.marqueeDirection() == MarqueeDirection::Down;
             // Make horizontal marquees not wrap.
             if (!isVertical) {
@@ -703,10 +699,6 @@ void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearance
     if (style.hasAppearance())
         adjustThemeStyle(style, userAgentAppearanceStyle);
 
-    // If we have first-letter pseudo style, do not share this style.
-    if (style.hasPseudoStyle(PseudoId::FirstLetter))
-        style.setUnique();
-
     // This should be kept in sync with requiresRenderingConsolidationForViewTransition
     if (style.preserves3D()) {
         bool forceToFlat = style.overflowX() != Overflow::Visible
@@ -747,7 +739,7 @@ void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearance
 
     style.setUsedTouchActions(computeUsedTouchActions(style, m_parentStyle.usedTouchActions()));
 
-    // Counterparts in Element::addToTopLayer/removeFromTopLayer & SharingResolver::canShareStyleWithElement need to match!
+    // Counterpart in Element::addToTopLayer/removeFromTopLayer!
     auto hasInertAttribute = [] (const Element* element) -> bool {
         return is<HTMLElement>(element) && element->hasAttributeWithoutSynchronization(HTMLNames::inertAttr);
     };

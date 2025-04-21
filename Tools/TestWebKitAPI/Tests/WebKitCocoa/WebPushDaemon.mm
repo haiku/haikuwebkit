@@ -456,7 +456,7 @@ void WebPushXPCConnectionMessageSender::sendWithoutUsingIPCConnection(M&& messag
 {
     TestEncoder encoder;
     encoder.encodeHeader<M>();
-    encoder << message.arguments();
+    message.encode(encoder);
     auto dictionary = messageDictionaryFromEncoder(WTFMove(encoder));
     xpc_connection_send_message(m_connection.get(), dictionary.get());
 }
@@ -466,7 +466,7 @@ void WebPushXPCConnectionMessageSender::sendWithAsyncReplyWithoutUsingIPCConnect
 {
     TestEncoder encoder;
     encoder.encodeHeader<M>();
-    encoder << message.arguments();
+    message.encode(encoder);
     auto dictionary = messageDictionaryFromEncoder(WTFMove(encoder));
     xpc_connection_send_message_with_reply(m_connection.get(), dictionary.get(), dispatch_get_main_queue(), makeBlockPtr([this, completionHandler = WTFMove(completionHandler)] (xpc_object_t reply) mutable {
         if (xpc_get_type(reply) == XPC_TYPE_ERROR) {
@@ -921,10 +921,10 @@ public:
 
         RetainPtr<_WKWebsiteDataStoreConfiguration> dataStoreConfiguration;
         if (dataStoreIdentifier)
-            dataStoreConfiguration = adoptNS([[_WKWebsiteDataStoreConfiguration alloc] initWithIdentifier:*dataStoreIdentifier]);
+            dataStoreConfiguration = adoptNS([[_WKWebsiteDataStoreConfiguration alloc] initWithIdentifier:dataStoreIdentifier->createNSUUID().get()]);
         else
             dataStoreConfiguration = adoptNS([_WKWebsiteDataStoreConfiguration new]);
-        [dataStoreConfiguration setWebPushPartitionString:pushPartition];
+        [dataStoreConfiguration setWebPushPartitionString:pushPartition.createNSString().get()];
         [dataStoreConfiguration setProxyConfiguration:@{
             (NSString *)kCFStreamPropertyHTTPSProxyHost: @"127.0.0.1",
             (NSString *)kCFStreamPropertyHTTPSProxyPort: @(m_server->port())
@@ -1010,7 +1010,7 @@ public:
     {
         NSError *error = nil;
         auto script = makeString("return await subscribe('"_s, key, "')"_s);
-        id obj = [m_webView objectByCallingAsyncFunction:script withArguments:@{ } error:&error];
+        id obj = [m_webView objectByCallingAsyncFunction:script.createNSString().get() withArguments:@{ } error:&error];
         return error ?: obj;
     }
 
@@ -1201,7 +1201,7 @@ public:
         };
         auto topic = WebCore::makePushTopic(subscriptionSetIdentifier, scope);
         id obj = @{
-            @"topic": (NSString *)topic,
+            @"topic": topic.createNSString().get(),
             @"userInfo": apsUserInfo
         };
 
@@ -1676,10 +1676,11 @@ TEST_F(WebPushDTest, UnsubscribesOnClearingWebsiteDataForOrigin)
         }];
         TestWebKitAPI::Util::run(&fetchedRecords);
 
+        RetainPtr vOrigin = v->origin().createNSString();
         WKWebsiteDataRecord *filteredRecord = nil;
         for (WKWebsiteDataRecord *record in records.get()) {
             for (NSString *originString in record._originsStrings) {
-                if ([originString isEqualToString:v->origin()]) {
+                if ([originString isEqualToString:vOrigin.get()]) {
                     filteredRecord = record;
                     break;
                 }
@@ -2100,7 +2101,7 @@ TEST_F(WebPushDInjectedPushTest, HandleInjectedAES128GCMPush)
 
     runTest(@"When I grow up, I want to be a watermelon", @{
         @"content_encoding": @"aes128gcm",
-        @"payload": (NSString *)payloadBase64
+        @"payload": payloadBase64.createNSString().get()
     });
 }
 
@@ -3022,7 +3023,7 @@ public:
         while (webViews().first()->mostRecentMessage().isEmpty())
             TestWebKitAPI::Util::runFor(0.05_s);
 
-        EXPECT_TRUE([(NSString *)webViews().first()->mostRecentMessage() isEqualToString:message]);
+        EXPECT_TRUE([webViews().first()->mostRecentMessage().createNSString() isEqualToString:message]);
     }
 
     void checkLastNotificationTitle(NSString *title)

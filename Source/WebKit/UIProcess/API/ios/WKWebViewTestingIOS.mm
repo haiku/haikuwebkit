@@ -310,7 +310,7 @@ static void dumpUIView(TextStream& ts, UIView *view)
         dumpUIView(ts, self);
     }
 
-    return ts.release();
+    return ts.release().createNSString().autorelease();
 }
 
 - (NSString *)_scrollbarState:(unsigned long long)rawScrollingNodeID processID:(unsigned long long)processID isVertical:(bool)isVertical
@@ -325,9 +325,9 @@ static void dumpUIView(TextStream& ts, UIView *view)
             TextStream::GroupScope scope(ts);
             ts << ([_scrollView showsHorizontalScrollIndicator] ? ""_s : "none"_s);
         }
-        return ts.release();
+        return ts.release().createNSString().autorelease();
     }
-    return _page->scrollbarStateForScrollingNodeID(scrollingNodeID, isVertical);
+    return _page->scrollbarStateForScrollingNodeID(scrollingNodeID, isVertical).createNSString().autorelease();
 }
 
 - (NSNumber *)_stableStateOverride
@@ -410,12 +410,6 @@ static void dumpUIView(TextStream& ts, UIView *view)
     if (handler)
         handlerWrapper = [handler = makeBlockPtr(handler)] { return handler(); };
     _page->setDeviceOrientationUserPermissionHandlerForTesting(WTFMove(handlerWrapper));
-}
-
-- (void)_setDeviceHasAGXCompilerServiceForTesting
-{
-    if (_page)
-        _page->setDeviceHasAGXCompilerServiceForTesting();
 }
 
 - (void)_resetObscuredInsetsForTesting

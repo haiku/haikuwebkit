@@ -91,10 +91,11 @@ typedef pas_allocation_result
     pas_local_allocator* allocator, pas_allocation_mode allocation_mode);
 typedef bool
 (*pas_segregated_page_config_specialized_local_allocator_start_allocating_in_primordial_partial_view)(
-    pas_local_allocator* allocator, pas_segregated_partial_view* partial,
+    pas_local_allocator* allocator, pas_allocation_mode allocation_mode, pas_segregated_partial_view* partial,
     pas_segregated_size_directory* size_directory);
 typedef bool (*pas_segregated_page_config_specialized_local_allocator_refill)(
     pas_local_allocator* allocator,
+    pas_allocation_mode allocation_mode,
     pas_allocator_counts* counts);
 typedef void (*pas_segregated_page_config_specialized_local_allocator_return_memory_to_page)(
     pas_local_allocator* allocator,
@@ -137,6 +138,10 @@ struct pas_segregated_page_config {
     /* Sharing granule size expressed as a shift. The sweet spot is PAS_BITVECTOR_WORD_SHIFT if
        you want perf. */
     uint8_t sharing_shift;
+
+    /* Padding to insert between partial views in the page, in bytes.
+     * Aligned to PAS_PARTIAL_VIEW_PADDING_ALIGN bytes. */
+    uint8_t partial_view_padding;
     
     /* Number of bits needed for alloc bits. This ends up impacting the size of the page header,
        so this value needs to be set in a way that is compatible with page_size, payload_size,
@@ -202,10 +207,12 @@ PAS_API extern bool pas_medium_segregated_page_config_variant_is_enabled_overrid
         pas_local_allocator* allocator, pas_allocation_mode allocation_mode); \
     PAS_API bool lower_case_page_config_name ## _specialized_local_allocator_start_allocating_in_primordial_partial_view( \
         pas_local_allocator* allocator, \
+        pas_allocation_mode allocation_mode, \
         pas_segregated_partial_view* partial, \
         pas_segregated_size_directory* size_directory); \
     PAS_API bool lower_case_page_config_name ## _specialized_local_allocator_refill( \
         pas_local_allocator* allocator, \
+        pas_allocation_mode allocation_mode, \
         pas_allocator_counts* counts); \
     PAS_API void \
     lower_case_page_config_name ## _specialized_local_allocator_return_memory_to_page( \

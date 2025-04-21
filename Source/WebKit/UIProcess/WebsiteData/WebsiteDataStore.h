@@ -484,7 +484,7 @@ public:
 
 #if HAVE(NW_PROXY_CONFIG)
     void clearProxyConfigData();
-    void setProxyConfigData(Vector<std::pair<Vector<uint8_t>, WTF::UUID>>&&);
+    void setProxyConfigData(Vector<std::pair<Vector<uint8_t>, std::optional<WTF::UUID>>>&&);
 #endif
     void setCompletionHandlerForRemovalFromNetworkProcess(CompletionHandler<void(String&&)>&&);
 
@@ -503,7 +503,7 @@ public:
 
     void getAppBadgeForTesting(CompletionHandler<void(std::optional<uint64_t>)>&&);
 
-    void fetchLocalStorage(CompletionHandler<void(HashMap<WebCore::ClientOrigin, HashMap<String, String>>&&)>&&);
+    void fetchLocalStorage(CompletionHandler<void(std::optional<HashMap<WebCore::ClientOrigin, HashMap<String, String>>>&&)>&&);
     void restoreLocalStorage(HashMap<WebCore::ClientOrigin, HashMap<String, String>>&&, CompletionHandler<void(bool)>&&);
 
 #if ENABLE(WEB_PUSH_NOTIFICATIONS)
@@ -661,7 +661,7 @@ private:
     HashMap<WebCore::RegistrableDomain, RestrictedOpenerType> m_restrictedOpenerTypesForTesting;
 
 #if HAVE(NW_PROXY_CONFIG)
-    std::optional<Vector<std::pair<Vector<uint8_t>, WTF::UUID>>> m_proxyConfigData;
+    std::optional<Vector<std::pair<Vector<uint8_t>, std::optional<WTF::UUID>>>> m_proxyConfigData;
 #endif
     bool m_storageSiteValidationEnabled { false };
     HashSet<URL> m_persistedSiteURLs;

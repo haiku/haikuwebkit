@@ -143,7 +143,6 @@
 		071BC59023CE1EAA00680D7C /* RemoteMediaPlayerProxyMessages.h in Headers */ = {isa = PBXBuildFile; fileRef = 071BC58D23CE1EAA00680D7C /* RemoteMediaPlayerProxyMessages.h */; };
 		07275C612D00CD24002315A5 /* CrossImportOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07275C602D00CD24002315A5 /* CrossImportOverlay.swift */; };
 		07275C632D00D32D002315A5 /* WebPage+SwiftUI.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07275C622D00D32D002315A5 /* WebPage+SwiftUI.swift */; };
-		07275C672D00E3CA002315A5 /* SwiftUI.swiftoverlay in Resources */ = {isa = PBXBuildFile; fileRef = 07275C662D00E3CA002315A5 /* SwiftUI.swiftoverlay */; };
 		07275C682D00E3D6002315A5 /* SwiftUI.swiftoverlay in Install SwiftUI Cross Import Overlay */ = {isa = PBXBuildFile; fileRef = 07275C662D00E3CA002315A5 /* SwiftUI.swiftoverlay */; };
 		07275C6C2D00F051002315A5 /* WebKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 8DC2EF5B0486A6940098B216 /* WebKit.framework */; };
 		07275C8F2D011396002315A5 /* Empty.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07275C8E2D011396002315A5 /* Empty.swift */; };
@@ -1748,6 +1747,7 @@
 		9197940823DBC4CB00257892 /* WebPageInspectorAgentBase.h in Headers */ = {isa = PBXBuildFile; fileRef = 9197940723DBC4CA00257892 /* WebPageInspectorAgentBase.h */; };
 		9197940A23DBC4E000257892 /* APIInspectorClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 9197940923DBC4E000257892 /* APIInspectorClient.h */; };
 		9197940C23DBC50300257892 /* _WKInspectorDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 9197940B23DBC50300257892 /* _WKInspectorDelegate.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		92DE81032D9EEE0200490289 /* LLVMProfiling.h in Headers */ = {isa = PBXBuildFile; fileRef = F4063DDE2D71481E00F3FE6E /* LLVMProfiling.h */; };
 		93085DBF26E192F9000EC6A7 /* WebStorageProvider.h in Headers */ = {isa = PBXBuildFile; fileRef = 93085DBA26E152C2000EC6A7 /* WebStorageProvider.h */; };
 		93085DC026E19313000EC6A7 /* WebStorageConnection.h in Headers */ = {isa = PBXBuildFile; fileRef = 93085DBB26E172F9000EC6A7 /* WebStorageConnection.h */; };
 		93085DCA26E29775000EC6A7 /* OriginStorageManager.h in Headers */ = {isa = PBXBuildFile; fileRef = 93085DC626E1C6CF000EC6A7 /* OriginStorageManager.h */; };
@@ -2391,7 +2391,6 @@
 		E3CAAA442413279900CED2E2 /* AccessibilitySupportSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = E3CAAA432413278A00CED2E2 /* AccessibilitySupportSPI.h */; };
 		E3D0A9412D62B1C90094538A /* ServiceWorkerDebuggableFrontendChannel.h in Headers */ = {isa = PBXBuildFile; fileRef = E3D0A93F2D62B1C90094538A /* ServiceWorkerDebuggableFrontendChannel.h */; };
 		E3D0A9422D62B1C90094538A /* ServiceWorkerDebuggableFrontendChannel.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3D0A9402D62B1C90094538A /* ServiceWorkerDebuggableFrontendChannel.cpp */; };
-		E3DCC9AB2DA08079008712FE /* WebKitServiceNames.h in Headers */ = {isa = PBXBuildFile; fileRef = E3DCC9AA2DA07FA0008712FE /* WebKitServiceNames.h */; };
 		E3E6297E2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = E3E6297C2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.h */; };
 		E3E6297F2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E3E6297D2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.cpp */; };
 		E3E84BDA2AE0AAE50091B3C2 /* XPCEndpoint.h in Copy Testing Headers */ = {isa = PBXBuildFile; fileRef = C14D306724B794E700480387 /* XPCEndpoint.h */; };
@@ -2555,6 +2554,46 @@
 		FA39AE682B23972B008F93CD /* CoreIPCAuditToken.h in Headers */ = {isa = PBXBuildFile; fileRef = FA39AE662B23972A008F93CD /* CoreIPCAuditToken.h */; };
 		FA4066E02D44733200A2E622 /* WKPageFullScreenClient.h in Headers */ = {isa = PBXBuildFile; fileRef = FA4066DF2D4472CE00A2E622 /* WKPageFullScreenClient.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		FA4FE2662B75EB290016E671 /* CoreIPCNull.mm in Sources */ = {isa = PBXBuildFile; fileRef = FA4FE2642B75EAFF0016E671 /* CoreIPCNull.mm */; };
+		FA580B132DA64085005E4965 /* UnifiedSource152.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B0A2DA64085005E4965 /* UnifiedSource152.cpp */; };
+		FA580B142DA64085005E4965 /* UnifiedSource155.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B0D2DA64085005E4965 /* UnifiedSource155.cpp */; };
+		FA580B152DA64085005E4965 /* UnifiedSource160.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B122DA64085005E4965 /* UnifiedSource160.cpp */; };
+		FA580B162DA64085005E4965 /* UnifiedSource153.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B0B2DA64085005E4965 /* UnifiedSource153.cpp */; };
+		FA580B172DA64085005E4965 /* UnifiedSource145.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B032DA64085005E4965 /* UnifiedSource145.cpp */; };
+		FA580B182DA64085005E4965 /* UnifiedSource154.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B0C2DA64085005E4965 /* UnifiedSource154.cpp */; };
+		FA580B192DA64085005E4965 /* UnifiedSource158.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B102DA64085005E4965 /* UnifiedSource158.cpp */; };
+		FA580B1A2DA64085005E4965 /* UnifiedSource144.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B022DA64085005E4965 /* UnifiedSource144.cpp */; };
+		FA580B1B2DA64085005E4965 /* UnifiedSource142.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B002DA64085005E4965 /* UnifiedSource142.cpp */; };
+		FA580B1C2DA64085005E4965 /* UnifiedSource148.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B062DA64085005E4965 /* UnifiedSource148.cpp */; };
+		FA580B1D2DA64085005E4965 /* UnifiedSource156.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B0E2DA64085005E4965 /* UnifiedSource156.cpp */; };
+		FA580B1E2DA64085005E4965 /* UnifiedSource157.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B0F2DA64085005E4965 /* UnifiedSource157.cpp */; };
+		FA580B1F2DA64085005E4965 /* UnifiedSource159.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B112DA64085005E4965 /* UnifiedSource159.cpp */; };
+		FA580B202DA64085005E4965 /* UnifiedSource151.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B092DA64085005E4965 /* UnifiedSource151.cpp */; };
+		FA580B212DA64085005E4965 /* UnifiedSource149.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B072DA64085005E4965 /* UnifiedSource149.cpp */; };
+		FA580B222DA64085005E4965 /* UnifiedSource143.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B012DA64085005E4965 /* UnifiedSource143.cpp */; };
+		FA580B232DA64085005E4965 /* UnifiedSource150.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B082DA64085005E4965 /* UnifiedSource150.cpp */; };
+		FA580B242DA64085005E4965 /* UnifiedSource141.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580AFF2DA64085005E4965 /* UnifiedSource141.cpp */; };
+		FA580B252DA64085005E4965 /* UnifiedSource146.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B042DA64085005E4965 /* UnifiedSource146.cpp */; };
+		FA580B262DA64085005E4965 /* UnifiedSource147.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B052DA64085005E4965 /* UnifiedSource147.cpp */; };
+		FA580B3B2DA64B5F005E4965 /* UnifiedSource180.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B3A2DA64B5F005E4965 /* UnifiedSource180.cpp */; };
+		FA580B3C2DA64B5F005E4965 /* UnifiedSource168.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B2E2DA64B5F005E4965 /* UnifiedSource168.cpp */; };
+		FA580B3D2DA64B5F005E4965 /* UnifiedSource172.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B322DA64B5F005E4965 /* UnifiedSource172.cpp */; };
+		FA580B3E2DA64B5F005E4965 /* UnifiedSource174.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B342DA64B5F005E4965 /* UnifiedSource174.cpp */; };
+		FA580B3F2DA64B5F005E4965 /* UnifiedSource165.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B2B2DA64B5F005E4965 /* UnifiedSource165.cpp */; };
+		FA580B402DA64B5F005E4965 /* UnifiedSource176.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B362DA64B5F005E4965 /* UnifiedSource176.cpp */; };
+		FA580B412DA64B5F005E4965 /* UnifiedSource167.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B2D2DA64B5F005E4965 /* UnifiedSource167.cpp */; };
+		FA580B422DA64B5F005E4965 /* UnifiedSource166.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B2C2DA64B5F005E4965 /* UnifiedSource166.cpp */; };
+		FA580B432DA64B5F005E4965 /* UnifiedSource171.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B312DA64B5F005E4965 /* UnifiedSource171.cpp */; };
+		FA580B442DA64B5F005E4965 /* UnifiedSource178.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B382DA64B5F005E4965 /* UnifiedSource178.cpp */; };
+		FA580B452DA64B5F005E4965 /* UnifiedSource161.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B272DA64B5F005E4965 /* UnifiedSource161.cpp */; };
+		FA580B462DA64B5F005E4965 /* UnifiedSource169.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B2F2DA64B5F005E4965 /* UnifiedSource169.cpp */; };
+		FA580B472DA64B5F005E4965 /* UnifiedSource170.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B302DA64B5F005E4965 /* UnifiedSource170.cpp */; };
+		FA580B482DA64B5F005E4965 /* UnifiedSource162.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B282DA64B5F005E4965 /* UnifiedSource162.cpp */; };
+		FA580B492DA64B5F005E4965 /* UnifiedSource164.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B2A2DA64B5F005E4965 /* UnifiedSource164.cpp */; };
+		FA580B4A2DA64B5F005E4965 /* UnifiedSource173.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B332DA64B5F005E4965 /* UnifiedSource173.cpp */; };
+		FA580B4B2DA64B5F005E4965 /* UnifiedSource175.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B352DA64B5F005E4965 /* UnifiedSource175.cpp */; };
+		FA580B4C2DA64B5F005E4965 /* UnifiedSource177.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B372DA64B5F005E4965 /* UnifiedSource177.cpp */; };
+		FA580B4D2DA64B5F005E4965 /* UnifiedSource179.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B392DA64B5F005E4965 /* UnifiedSource179.cpp */; };
+		FA580B4E2DA64B5F005E4965 /* UnifiedSource163.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FA580B292DA64B5F005E4965 /* UnifiedSource163.cpp */; };
 		FAA4E3012A1575A5003F5E50 /* WebFrameLoaderClient.h in Headers */ = {isa = PBXBuildFile; fileRef = FAA4E2FF2A1575A4003F5E50 /* WebFrameLoaderClient.h */; };
 		FAB955FB2B75E43D0060829C /* CoreIPCNull.h in Headers */ = {isa = PBXBuildFile; fileRef = FAB955F92B75E43D0060829C /* CoreIPCNull.h */; };
 		FABBBC842D35B59A00820017 /* UnifiedSource140.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FABBBC832D35B59A00820017 /* UnifiedSource140.cpp */; };
@@ -6854,7 +6893,6 @@
 		86D1968229A516270083B077 /* PlatformPopupMenuData.serialization.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = PlatformPopupMenuData.serialization.in; sourceTree = "<group>"; };
 		86D1968429A51D070083B077 /* WebsiteDataType.serialization.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = WebsiteDataType.serialization.in; sourceTree = "<group>"; };
 		86D196BF29A7890F0083B077 /* GPUProcessConnectionParameters.serialization.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = GPUProcessConnectionParameters.serialization.in; sourceTree = "<group>"; };
-		86D196CE29A8D0D60083B077 /* DisplayListArgumentCoders.serialization.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = DisplayListArgumentCoders.serialization.in; sourceTree = "<group>"; };
 		86D1970729AE4E8A0083B077 /* NetworkProcessConnectionParameters.serialization.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = NetworkProcessConnectionParameters.serialization.in; sourceTree = "<group>"; };
 		86D1970829AE4E930083B077 /* NetworkProcessConnectionParameters.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NetworkProcessConnectionParameters.h; sourceTree = "<group>"; };
 		86DA60C628EAE9C00044FE4D /* FocusedElementInformation.serialization.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = FocusedElementInformation.serialization.in; sourceTree = "<group>"; };
@@ -7090,6 +7128,11 @@
 		996B2B9C25E257EE00719379 /* InspectorExtensionDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = InspectorExtensionDelegate.h; sourceTree = "<group>"; };
 		996B2B9E25E2582C00719379 /* APIInspectorExtensionClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = APIInspectorExtensionClient.h; sourceTree = "<group>"; };
 		996B2BA025E2591100719379 /* _WKInspectorExtensionDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = _WKInspectorExtensionDelegate.h; sourceTree = "<group>"; };
+		996D00402D7AA0CD0049C7D8 /* BidiBrowser.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = BidiBrowser.json; sourceTree = "<group>"; };
+		996D00412D7AA0CD0049C7D8 /* BidiBrowsingContext.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = BidiBrowsingContext.json; sourceTree = "<group>"; };
+		996D00422D7AA0CD0049C7D8 /* BidiLog.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = BidiLog.json; sourceTree = "<group>"; };
+		996D00432D7AA0CD0049C7D8 /* BidiScript.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = BidiScript.json; sourceTree = "<group>"; };
+		996D00452D7AA0FD0049C7D8 /* CombinedWebDriverBidiDomains.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = CombinedWebDriverBidiDomains.json; sourceTree = "<group>"; };
 		99788AC91F421DCA00C08000 /* _WKAutomationSessionConfiguration.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = _WKAutomationSessionConfiguration.h; sourceTree = "<group>"; };
 		99788ACA1F421DCA00C08000 /* _WKAutomationSessionConfiguration.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = _WKAutomationSessionConfiguration.mm; sourceTree = "<group>"; };
 		9979659A25310A4800B31AE3 /* WebInspectorUIExtensionControllerMessages.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebInspectorUIExtensionControllerMessages.h; sourceTree = "<group>"; };
@@ -8150,7 +8193,6 @@
 		E3D0A93F2D62B1C90094538A /* ServiceWorkerDebuggableFrontendChannel.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ServiceWorkerDebuggableFrontendChannel.h; sourceTree = "<group>"; };
 		E3D0A9402D62B1C90094538A /* ServiceWorkerDebuggableFrontendChannel.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ServiceWorkerDebuggableFrontendChannel.cpp; sourceTree = "<group>"; };
 		E3DC5B1A2C9AE09700D73BB3 /* LogStreamIdentifier.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LogStreamIdentifier.h; sourceTree = "<group>"; };
-		E3DCC9AA2DA07FA0008712FE /* WebKitServiceNames.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebKitServiceNames.h; sourceTree = "<group>"; };
 		E3E6297C2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ServiceWorkerDebuggableProxy.h; sourceTree = "<group>"; };
 		E3E6297D2D5FA8F200DAE50C /* ServiceWorkerDebuggableProxy.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ServiceWorkerDebuggableProxy.cpp; sourceTree = "<group>"; };
 		E3E84BED2AE1AA5A0091B3C2 /* ExtensionKitSPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ExtensionKitSPI.h; sourceTree = "<group>"; };
@@ -8262,6 +8304,7 @@
 		F036978715F4BF0500C3A80E /* WebColorPicker.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WebColorPicker.cpp; sourceTree = "<group>"; };
 		F404455A2D5CFB56000E587E /* AppKitSoftLink.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppKitSoftLink.h; sourceTree = "<group>"; };
 		F404455B2D5CFB56000E587E /* AppKitSoftLink.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AppKitSoftLink.mm; sourceTree = "<group>"; };
+		F4063DDE2D71481E00F3FE6E /* LLVMProfiling.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = LLVMProfiling.h; sourceTree = "<group>"; };
 		F409BA171E6E64B3009DA28E /* WKDragDestinationAction.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKDragDestinationAction.h; sourceTree = "<group>"; };
 		F40C3B6F2AB40167007A3567 /* WKDatePickerPopoverController.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WKDatePickerPopoverController.h; path = ios/forms/WKDatePickerPopoverController.h; sourceTree = "<group>"; };
 		F40C3B702AB40167007A3567 /* WKDatePickerPopoverController.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = WKDatePickerPopoverController.mm; path = ios/forms/WKDatePickerPopoverController.mm; sourceTree = "<group>"; };
@@ -8451,6 +8494,46 @@
 		FA4368C62B811BA3001B993D /* CoreIPCNSURLCredential.serialization.in */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = CoreIPCNSURLCredential.serialization.in; sourceTree = "<group>"; };
 		FA4899BD2C5C56E800B04660 /* APISerializedScriptValue.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = APISerializedScriptValue.cpp; sourceTree = "<group>"; };
 		FA4FE2642B75EAFF0016E671 /* CoreIPCNull.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = CoreIPCNull.mm; sourceTree = "<group>"; };
+		FA580AFF2DA64085005E4965 /* UnifiedSource141.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource141.cpp; sourceTree = "<group>"; };
+		FA580B002DA64085005E4965 /* UnifiedSource142.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource142.cpp; sourceTree = "<group>"; };
+		FA580B012DA64085005E4965 /* UnifiedSource143.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource143.cpp; sourceTree = "<group>"; };
+		FA580B022DA64085005E4965 /* UnifiedSource144.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource144.cpp; sourceTree = "<group>"; };
+		FA580B032DA64085005E4965 /* UnifiedSource145.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource145.cpp; sourceTree = "<group>"; };
+		FA580B042DA64085005E4965 /* UnifiedSource146.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource146.cpp; sourceTree = "<group>"; };
+		FA580B052DA64085005E4965 /* UnifiedSource147.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource147.cpp; sourceTree = "<group>"; };
+		FA580B062DA64085005E4965 /* UnifiedSource148.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource148.cpp; sourceTree = "<group>"; };
+		FA580B072DA64085005E4965 /* UnifiedSource149.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource149.cpp; sourceTree = "<group>"; };
+		FA580B082DA64085005E4965 /* UnifiedSource150.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource150.cpp; sourceTree = "<group>"; };
+		FA580B092DA64085005E4965 /* UnifiedSource151.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource151.cpp; sourceTree = "<group>"; };
+		FA580B0A2DA64085005E4965 /* UnifiedSource152.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource152.cpp; sourceTree = "<group>"; };
+		FA580B0B2DA64085005E4965 /* UnifiedSource153.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource153.cpp; sourceTree = "<group>"; };
+		FA580B0C2DA64085005E4965 /* UnifiedSource154.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource154.cpp; sourceTree = "<group>"; };
+		FA580B0D2DA64085005E4965 /* UnifiedSource155.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource155.cpp; sourceTree = "<group>"; };
+		FA580B0E2DA64085005E4965 /* UnifiedSource156.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource156.cpp; sourceTree = "<group>"; };
+		FA580B0F2DA64085005E4965 /* UnifiedSource157.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource157.cpp; sourceTree = "<group>"; };
+		FA580B102DA64085005E4965 /* UnifiedSource158.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource158.cpp; sourceTree = "<group>"; };
+		FA580B112DA64085005E4965 /* UnifiedSource159.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource159.cpp; sourceTree = "<group>"; };
+		FA580B122DA64085005E4965 /* UnifiedSource160.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = UnifiedSource160.cpp; sourceTree = "<group>"; };
+		FA580B272DA64B5F005E4965 /* UnifiedSource161.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource161.cpp; path = "UnifiedSource161.cpp"; sourceTree = "<group>"; };
+		FA580B282DA64B5F005E4965 /* UnifiedSource162.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource162.cpp; path = "UnifiedSource162.cpp"; sourceTree = "<group>"; };
+		FA580B292DA64B5F005E4965 /* UnifiedSource163.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource163.cpp; path = "UnifiedSource163.cpp"; sourceTree = "<group>"; };
+		FA580B2A2DA64B5F005E4965 /* UnifiedSource164.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource164.cpp; path = "UnifiedSource164.cpp"; sourceTree = "<group>"; };
+		FA580B2B2DA64B5F005E4965 /* UnifiedSource165.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource165.cpp; path = "UnifiedSource165.cpp"; sourceTree = "<group>"; };
+		FA580B2C2DA64B5F005E4965 /* UnifiedSource166.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource166.cpp; path = "UnifiedSource166.cpp"; sourceTree = "<group>"; };
+		FA580B2D2DA64B5F005E4965 /* UnifiedSource167.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource167.cpp; path = "UnifiedSource167.cpp"; sourceTree = "<group>"; };
+		FA580B2E2DA64B5F005E4965 /* UnifiedSource168.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource168.cpp; path = "UnifiedSource168.cpp"; sourceTree = "<group>"; };
+		FA580B2F2DA64B5F005E4965 /* UnifiedSource169.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource169.cpp; path = "UnifiedSource169.cpp"; sourceTree = "<group>"; };
+		FA580B302DA64B5F005E4965 /* UnifiedSource170.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource170.cpp; path = "UnifiedSource170.cpp"; sourceTree = "<group>"; };
+		FA580B312DA64B5F005E4965 /* UnifiedSource171.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource171.cpp; path = "UnifiedSource171.cpp"; sourceTree = "<group>"; };
+		FA580B322DA64B5F005E4965 /* UnifiedSource172.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource172.cpp; path = "UnifiedSource172.cpp"; sourceTree = "<group>"; };
+		FA580B332DA64B5F005E4965 /* UnifiedSource173.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource173.cpp; path = "UnifiedSource173.cpp"; sourceTree = "<group>"; };
+		FA580B342DA64B5F005E4965 /* UnifiedSource174.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource174.cpp; path = "UnifiedSource174.cpp"; sourceTree = "<group>"; };
+		FA580B352DA64B5F005E4965 /* UnifiedSource175.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource175.cpp; path = "UnifiedSource175.cpp"; sourceTree = "<group>"; };
+		FA580B362DA64B5F005E4965 /* UnifiedSource176.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource176.cpp; path = "UnifiedSource176.cpp"; sourceTree = "<group>"; };
+		FA580B372DA64B5F005E4965 /* UnifiedSource177.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource177.cpp; path = "UnifiedSource177.cpp"; sourceTree = "<group>"; };
+		FA580B382DA64B5F005E4965 /* UnifiedSource178.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource178.cpp; path = "UnifiedSource178.cpp"; sourceTree = "<group>"; };
+		FA580B392DA64B5F005E4965 /* UnifiedSource179.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource179.cpp; path = "UnifiedSource179.cpp"; sourceTree = "<group>"; };
+		FA580B3A2DA64B5F005E4965 /* UnifiedSource180.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = UnifiedSource180.cpp; path = "UnifiedSource180.cpp"; sourceTree = "<group>"; };
 		FA6342192D9D98D300A6BECE /* WebFrame.messages.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = WebFrame.messages.in; sourceTree = "<group>"; };
 		FA63421A2D9D990400A6BECE /* WebFrameProxy.messages.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = WebFrameProxy.messages.in; sourceTree = "<group>"; };
 		FA651BAE2AA3E5FB00747576 /* WebTransportSendStreamSink.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WebTransportSendStreamSink.h; path = Network/WebTransportSendStreamSink.h; sourceTree = "<group>"; };
@@ -9386,7 +9469,6 @@
 				99036AE823A970870000B06A /* DebuggableInfoData.cpp */,
 				99036AE723A970870000B06A /* DebuggableInfoData.h */,
 				0F189CAB24749F2F00E58D81 /* DisplayLinkObserverID.h */,
-				86D196CE29A8D0D60083B077 /* DisplayListArgumentCoders.serialization.in */,
 				2D7FD190223C730F007887F1 /* DocumentEditingContext.h */,
 				2D7FD191223C7310007887F1 /* DocumentEditingContext.mm */,
 				F488B9142AD09C9C00792C16 /* DocumentEditingContext.serialization.in */,
@@ -9445,6 +9527,7 @@
 				074A6FC82D5F20190027F958 /* KeyEventInterpretationContext.serialization.in */,
 				1A92DC1012F8BA460017AF65 /* LayerTreeContext.h */,
 				F476894628D2B5CD00073641 /* LayerTreeContext.serialization.in */,
+				F4063DDE2D71481E00F3FE6E /* LLVMProfiling.h */,
 				5C37A5BE2970DB6000D222A0 /* LoadedWebArchive.h */,
 				2D10875F1D2C573E00B85F82 /* LoadParameters.h */,
 				46B9E2372B04228A008346A5 /* LoadParameters.serialization.in */,
@@ -9608,7 +9691,6 @@
 				0F4000FF2527D6F700E91DA7 /* WebKeyboardEvent.h */,
 				BC9BA5021697C45300E44616 /* WebKit2Initialize.cpp */,
 				BC9BA5031697C45300E44616 /* WebKit2Initialize.h */,
-				E3DCC9AA2DA07FA0008712FE /* WebKitServiceNames.h */,
 				905620E812BC248B000799B6 /* WebMemorySampler.cpp */,
 				905620E912BC248B000799B6 /* WebMemorySampler.h */,
 				C0337DAF127A28D0008FF4F4 /* WebMouseEvent.cpp */,
@@ -11261,6 +11343,46 @@
 				FABBBC812D35B59A00820017 /* UnifiedSource138.cpp */,
 				FABBBC822D35B59A00820017 /* UnifiedSource139.cpp */,
 				FABBBC832D35B59A00820017 /* UnifiedSource140.cpp */,
+				FA580AFF2DA64085005E4965 /* UnifiedSource141.cpp */,
+				FA580B002DA64085005E4965 /* UnifiedSource142.cpp */,
+				FA580B012DA64085005E4965 /* UnifiedSource143.cpp */,
+				FA580B022DA64085005E4965 /* UnifiedSource144.cpp */,
+				FA580B032DA64085005E4965 /* UnifiedSource145.cpp */,
+				FA580B042DA64085005E4965 /* UnifiedSource146.cpp */,
+				FA580B052DA64085005E4965 /* UnifiedSource147.cpp */,
+				FA580B062DA64085005E4965 /* UnifiedSource148.cpp */,
+				FA580B072DA64085005E4965 /* UnifiedSource149.cpp */,
+				FA580B082DA64085005E4965 /* UnifiedSource150.cpp */,
+				FA580B092DA64085005E4965 /* UnifiedSource151.cpp */,
+				FA580B0A2DA64085005E4965 /* UnifiedSource152.cpp */,
+				FA580B0B2DA64085005E4965 /* UnifiedSource153.cpp */,
+				FA580B0C2DA64085005E4965 /* UnifiedSource154.cpp */,
+				FA580B0D2DA64085005E4965 /* UnifiedSource155.cpp */,
+				FA580B0E2DA64085005E4965 /* UnifiedSource156.cpp */,
+				FA580B0F2DA64085005E4965 /* UnifiedSource157.cpp */,
+				FA580B102DA64085005E4965 /* UnifiedSource158.cpp */,
+				FA580B112DA64085005E4965 /* UnifiedSource159.cpp */,
+				FA580B122DA64085005E4965 /* UnifiedSource160.cpp */,
+				FA580B272DA64B5F005E4965 /* UnifiedSource161.cpp */,
+				FA580B282DA64B5F005E4965 /* UnifiedSource162.cpp */,
+				FA580B292DA64B5F005E4965 /* UnifiedSource163.cpp */,
+				FA580B2A2DA64B5F005E4965 /* UnifiedSource164.cpp */,
+				FA580B2B2DA64B5F005E4965 /* UnifiedSource165.cpp */,
+				FA580B2C2DA64B5F005E4965 /* UnifiedSource166.cpp */,
+				FA580B2D2DA64B5F005E4965 /* UnifiedSource167.cpp */,
+				FA580B2E2DA64B5F005E4965 /* UnifiedSource168.cpp */,
+				FA580B2F2DA64B5F005E4965 /* UnifiedSource169.cpp */,
+				FA580B302DA64B5F005E4965 /* UnifiedSource170.cpp */,
+				FA580B312DA64B5F005E4965 /* UnifiedSource171.cpp */,
+				FA580B322DA64B5F005E4965 /* UnifiedSource172.cpp */,
+				FA580B332DA64B5F005E4965 /* UnifiedSource173.cpp */,
+				FA580B342DA64B5F005E4965 /* UnifiedSource174.cpp */,
+				FA580B352DA64B5F005E4965 /* UnifiedSource175.cpp */,
+				FA580B362DA64B5F005E4965 /* UnifiedSource176.cpp */,
+				FA580B372DA64B5F005E4965 /* UnifiedSource177.cpp */,
+				FA580B382DA64B5F005E4965 /* UnifiedSource178.cpp */,
+				FA580B392DA64B5F005E4965 /* UnifiedSource179.cpp */,
+				FA580B3A2DA64B5F005E4965 /* UnifiedSource180.cpp */,
 			);
 			path = "unified-sources";
 			sourceTree = "<group>";
@@ -13890,6 +14012,7 @@
 				99C3AE251DAD946700AF5C16 /* cocoa */,
 				9946EF821E7B023D00541E79 /* ios */,
 				99C3AE221DAD8E1400AF5C16 /* mac */,
+				996D00442D7AA0CD0049C7D8 /* protocol */,
 				9955A6E91C7980BB00EB6A93 /* Automation.json */,
 				995226D5207D184600F78420 /* SimulatedInputDispatcher.cpp */,
 				995226D4207D184500F78420 /* SimulatedInputDispatcher.h */,
@@ -13901,6 +14024,17 @@
 				99A5144E2D5AB7D500937177 /* WebDriverBidiProcessor.h */,
 			);
 			path = Automation;
+			sourceTree = "<group>";
+		};
+		996D00442D7AA0CD0049C7D8 /* protocol */ = {
+			isa = PBXGroup;
+			children = (
+				996D00402D7AA0CD0049C7D8 /* BidiBrowser.json */,
+				996D00412D7AA0CD0049C7D8 /* BidiBrowsingContext.json */,
+				996D00422D7AA0CD0049C7D8 /* BidiLog.json */,
+				996D00432D7AA0CD0049C7D8 /* BidiScript.json */,
+			);
+			path = protocol;
 			sourceTree = "<group>";
 		};
 		99C3AE221DAD8E1400AF5C16 /* mac */ = {
@@ -15538,6 +15672,7 @@
 				EB7D252A27B31B3F009CB586 /* com.apple.WebKit.webpushd.mac.sb */,
 				51DAAEBF2AA198DE00DB2AA4 /* com.apple.WebKit.webpushd.relocatable.mac.sb */,
 				E1967E37150AB5E200C73169 /* com.apple.WebProcess.sb */,
+				996D00452D7AA0FD0049C7D8 /* CombinedWebDriverBidiDomains.json */,
 				1AB7D6171288B9D900CFD08C /* DownloadProxyMessageReceiver.cpp */,
 				1AB7D6181288B9D900CFD08C /* DownloadProxyMessages.h */,
 				1A64229712DD029200CAAE2C /* DrawingAreaMessageReceiver.cpp */,
@@ -16992,6 +17127,7 @@
 				413075B21DE85F580039EC69 /* LibWebRTCSocketFactory.h in Headers */,
 				A1098E6A2BB6420D00449EE0 /* LinearMediaKitExtras.h in Headers */,
 				A1C9FBFF2BB78C4A00CC6B40 /* LinearMediaKitSPI.h in Headers */,
+				92DE81032D9EEE0200490289 /* LLVMProfiling.h in Headers */,
 				2D1087611D2C573E00B85F82 /* LoadParameters.h in Headers */,
 				578DC2982155A0020074E815 /* LocalAuthenticationSoftLink.h in Headers */,
 				574217922400E286002B303D /* LocalAuthenticationSPI.h in Headers */,
@@ -17577,7 +17713,6 @@
 				BCB63478116BF10600603215 /* WebKit2_C.h in Headers */,
 				BC9BA5051697C45300E44616 /* WebKit2Initialize.h in Headers */,
 				0744DA552CE05FE400AACC81 /* WebKitInternal.h in Headers */,
-				E3DCC9AB2DA08079008712FE /* WebKitServiceNames.h in Headers */,
 				DD4BDE9C2CA73B60001A3339 /* WebKitSwiftOverlayMacros.h in Headers */,
 				BC032D7F10F4378D0058C15A /* WebLocalFrameLoaderClient.h in Headers */,
 				465FA7262757D93D0072362B /* WebLockRegistryProxy.h in Headers */,
@@ -18257,6 +18392,7 @@
 				07275C4C2D00C934002315A5 /* Frameworks */,
 				07275C4D2D00C934002315A5 /* Resources */,
 				07275CBE2D014A44002315A5 /* Create Symlink to Cryptex Path */,
+				DD725ED62D9129C200E72544 /* Audit SPI use */,
 			);
 			buildRules = (
 			);
@@ -18537,6 +18673,7 @@
 				5DF408C6131DD49700130071 /* Check For Framework Include Consistency */,
 				A55DEAA61670402E003DB841 /* Check For Inappropriate Macros in External Headers */,
 				1A2180161B5454620046AEC4 /* Add Symlink in /System/Library/PrivateFrameworks */,
+				DD725EBD2D8938A500E72544 /* Audit SPI use */,
 				5379C7AC21E5288500E4A8F6 /* Check .xcfilelists */,
 				933170072234674500B32554 /* Create symlinks to XPC services and dylibs */,
 				0FB94836239F31B700926A8F /* Copy Testing Headers */,
@@ -18619,6 +18756,7 @@
 				CD95493226159004008372D9 /* Sources */,
 				CD95493326159004008372D9 /* Frameworks */,
 				6577FFBA2769C64A0011AEC8 /* Create Symlink to Cryptex Path */,
+				DD725ED52D9129A600E72544 /* Audit SPI use */,
 			);
 			buildRules = (
 			);
@@ -18727,7 +18865,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				07275C672D00E3CA002315A5 /* SwiftUI.swiftoverlay in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -19640,6 +19777,69 @@
 			shellPath = /bin/sh;
 			shellScript = "xcrun clang -E -P -w -target ${ARCHS%% *}-${LLVM_TARGET_TRIPLE_VENDOR}-${LLVM_TARGET_TRIPLE_OS_VERSION}${LLVM_TARGET_TRIPLE_SUFFIX} - < \"${SCRIPT_INPUT_FILE_0}\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
 		};
+		DD725EBD2D8938A500E72544 /* Audit SPI use */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			dependencyFile = "$(DERIVED_FILES_DIR)/audit-spi.d";
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(WTF_BUILD_SCRIPTS_DIR)/audit-spi-if-needed.sh",
+			);
+			name = "Audit SPI use";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/audit-spi.timestamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ -f \"${SCRIPT_INPUT_FILE_0}\" ]\nthen \"${SCRIPT_INPUT_FILE_0}\" \"${BUILT_PRODUCTS_DIR}/JavaScriptCore.framework/JavaScriptCore\" \"${BUILT_PRODUCTS_DIR}/libwebrtc.dylib\" \"${BUILT_PRODUCTS_DIR}/WebCore.framework/WebCore\" \"${BUILT_PRODUCTS_DIR}/WebGPU.framework/WebGPU\" \"${BUILT_PRODUCTS_DIR}/libWebKitSwift.dylib\"\nfi && touch \"${DERIVED_FILES_DIR}/audit-spi.d\"\n";
+		};
+		DD725ED52D9129A600E72544 /* Audit SPI use */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			dependencyFile = "$(DERIVED_FILES_DIR)/audit-spi.d";
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(WTF_BUILD_SCRIPTS_DIR)/audit-spi-if-needed.sh",
+			);
+			name = "Audit SPI use";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/audit-spi.timestamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ -f \"${SCRIPT_INPUT_FILE_0}\" ]\nthen \"${SCRIPT_INPUT_FILE_0}\" \"${BUILT_PRODUCTS_DIR}/JavaScriptCore.framework/JavaScriptCore\" \"${BUILT_PRODUCTS_DIR}/WebCore.framework/WebCore\" \"${BUILT_PRODUCTS_DIR}/WebGPU.framework/WebGPU\" \"${BUILT_PRODUCTS_DIR}/libWebKitSwift.dylib\"\nfi && touch \"${DERIVED_FILES_DIR}/audit-spi.d\"\n";
+		};
+		DD725ED62D9129C200E72544 /* Audit SPI use */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			dependencyFile = "$(DERIVED_FILES_DIR)/audit-spi.d";
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(WTF_BUILD_SCRIPTS_DIR)/audit-spi-if-needed.sh",
+			);
+			name = "Audit SPI use";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(DERIVED_FILE_DIR)/audit-spi.timestamp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "if [ -f \"${SCRIPT_INPUT_FILE_0}\" ]\nthen \"${SCRIPT_INPUT_FILE_0}\" \"${BUILT_PRODUCTS_DIR}/JavaScriptCore.framework/JavaScriptCore\" \"${BUILT_PRODUCTS_DIR}/WebCore.framework/WebCore\" \"${BUILT_PRODUCTS_DIR}/WebGPU.framework/WebGPU\" \"${BUILT_PRODUCTS_DIR}/WebKit.framework/WebKit\" \nfi && touch \"${DERIVED_FILES_DIR}/audit-spi.d\"\n";
+		};
 		DDC907B5298B2DE800ECA4D6 /* Migrate WebCore and WebKitLegacy Headers */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -20401,6 +20601,46 @@
 				FABBBC852D35B59A00820017 /* UnifiedSource138.cpp in Sources */,
 				FABBBC862D35B59A00820017 /* UnifiedSource139.cpp in Sources */,
 				FABBBC842D35B59A00820017 /* UnifiedSource140.cpp in Sources */,
+				FA580B242DA64085005E4965 /* UnifiedSource141.cpp in Sources */,
+				FA580B1B2DA64085005E4965 /* UnifiedSource142.cpp in Sources */,
+				FA580B222DA64085005E4965 /* UnifiedSource143.cpp in Sources */,
+				FA580B1A2DA64085005E4965 /* UnifiedSource144.cpp in Sources */,
+				FA580B172DA64085005E4965 /* UnifiedSource145.cpp in Sources */,
+				FA580B252DA64085005E4965 /* UnifiedSource146.cpp in Sources */,
+				FA580B262DA64085005E4965 /* UnifiedSource147.cpp in Sources */,
+				FA580B1C2DA64085005E4965 /* UnifiedSource148.cpp in Sources */,
+				FA580B212DA64085005E4965 /* UnifiedSource149.cpp in Sources */,
+				FA580B232DA64085005E4965 /* UnifiedSource150.cpp in Sources */,
+				FA580B202DA64085005E4965 /* UnifiedSource151.cpp in Sources */,
+				FA580B132DA64085005E4965 /* UnifiedSource152.cpp in Sources */,
+				FA580B162DA64085005E4965 /* UnifiedSource153.cpp in Sources */,
+				FA580B182DA64085005E4965 /* UnifiedSource154.cpp in Sources */,
+				FA580B142DA64085005E4965 /* UnifiedSource155.cpp in Sources */,
+				FA580B1D2DA64085005E4965 /* UnifiedSource156.cpp in Sources */,
+				FA580B1E2DA64085005E4965 /* UnifiedSource157.cpp in Sources */,
+				FA580B192DA64085005E4965 /* UnifiedSource158.cpp in Sources */,
+				FA580B1F2DA64085005E4965 /* UnifiedSource159.cpp in Sources */,
+				FA580B152DA64085005E4965 /* UnifiedSource160.cpp in Sources */,
+				FA580B452DA64B5F005E4965 /* UnifiedSource161.cpp in Sources */,
+				FA580B482DA64B5F005E4965 /* UnifiedSource162.cpp in Sources */,
+				FA580B4E2DA64B5F005E4965 /* UnifiedSource163.cpp in Sources */,
+				FA580B492DA64B5F005E4965 /* UnifiedSource164.cpp in Sources */,
+				FA580B3F2DA64B5F005E4965 /* UnifiedSource165.cpp in Sources */,
+				FA580B422DA64B5F005E4965 /* UnifiedSource166.cpp in Sources */,
+				FA580B412DA64B5F005E4965 /* UnifiedSource167.cpp in Sources */,
+				FA580B3C2DA64B5F005E4965 /* UnifiedSource168.cpp in Sources */,
+				FA580B462DA64B5F005E4965 /* UnifiedSource169.cpp in Sources */,
+				FA580B472DA64B5F005E4965 /* UnifiedSource170.cpp in Sources */,
+				FA580B432DA64B5F005E4965 /* UnifiedSource171.cpp in Sources */,
+				FA580B3D2DA64B5F005E4965 /* UnifiedSource172.cpp in Sources */,
+				FA580B4A2DA64B5F005E4965 /* UnifiedSource173.cpp in Sources */,
+				FA580B3E2DA64B5F005E4965 /* UnifiedSource174.cpp in Sources */,
+				FA580B4B2DA64B5F005E4965 /* UnifiedSource175.cpp in Sources */,
+				FA580B402DA64B5F005E4965 /* UnifiedSource176.cpp in Sources */,
+				FA580B4C2DA64B5F005E4965 /* UnifiedSource177.cpp in Sources */,
+				FA580B442DA64B5F005E4965 /* UnifiedSource178.cpp in Sources */,
+				FA580B4D2DA64B5F005E4965 /* UnifiedSource179.cpp in Sources */,
+				FA580B3B2DA64B5F005E4965 /* UnifiedSource180.cpp in Sources */,
 				078B04442CF1149200B453A6 /* URLSchemeHandler.swift in Sources */,
 				52CDC5C62731DA0D00A3E3EB /* VirtualAuthenticatorManager.cpp in Sources */,
 				52F4B46A27E1197700FFD129 /* VirtualAuthenticatorUtils.mm in Sources */,

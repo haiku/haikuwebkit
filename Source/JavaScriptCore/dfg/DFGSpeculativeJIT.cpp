@@ -15994,8 +15994,11 @@ void SpeculativeJIT::compileHasIndexedProperty(Node* node, S_JITOperation_GCZ sl
     addSlowPathGeneratorLambda([=, this, savePlans = WTFMove(savePlans), slowCases = WTFMove(slowCases)]() {
         slowCases.link(this);
 
-        if (preserveIndexReg)
+        if (preserveIndexReg) {
             pushToSave(indexGPR);
+            if (!isARM64())
+                pushToSave(indexGPR);
+        }
         silentSpill(savePlans);
 
         setupArguments<S_JITOperation_GCZ>(LinkableConstant::globalObject(*this, node), baseGPR, indexGPR);
@@ -16008,8 +16011,11 @@ void SpeculativeJIT::compileHasIndexedProperty(Node* node, S_JITOperation_GCZ sl
         setupResults(resultGPR);
 
         silentFill(savePlans);
-        if (preserveIndexReg)
+        if (preserveIndexReg) {
+            if (!isARM64())
+                popToRestore(indexGPR);
             popToRestore(indexGPR);
+        }
 
         if (exceptionReg)
             exceptionCheck(*exceptionReg);
@@ -16739,6 +16745,36 @@ void SpeculativeJIT::compileNumberIsNaN(Node* node)
             isInt32 = branchIfInt32(argumentRegs);
         }
         callOperation(operationNumberIsNaN, scratch1GPR, argumentRegs);
+        if (mayBeInt32)
+            isInt32.link(this);
+        unblessedBooleanResult(scratch1GPR, node);
+        break;
+    }
+    default:
+        DFG_CRASH(m_graph, node, "Bad use kind");
+        break;
+    }
+}
+
+void SpeculativeJIT::compileGlobalIsFinite(Node* node)
+{
+    switch (node->child1().useKind()) {
+    case UntypedUse: {
+        JSValueOperand argument(this, node->child1());
+        GPRTemporary scratch1(this);
+
+        bool mayBeInt32 = m_interpreter.forNode(node->child1()).m_type & SpecInt32Only;
+
+        JSValueRegs argumentRegs = argument.jsValueRegs();
+        GPRReg scratch1GPR = scratch1.gpr();
+
+        flushRegisters();
+        Jump isInt32;
+        if (mayBeInt32) {
+            move(TrustedImm32(1), scratch1GPR);
+            isInt32 = branchIfInt32(argumentRegs);
+        }
+        callOperation(operationIsFinite, scratch1GPR, LinkableConstant::globalObject(*this, node), argumentRegs);
         if (mayBeInt32)
             isInt32.link(this);
         unblessedBooleanResult(scratch1GPR, node);

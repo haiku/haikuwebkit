@@ -140,7 +140,7 @@ private:
     uint32_t maxVertexBufferIndex() const;
     uint32_t maxBindGroupIndex() const;
     void recordCommand(WTF::Function<bool(void)>&&);
-    void storeVertexBufferCountsForValidation(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t baseVertex, uint32_t firstInstance, MTLIndexType, NSUInteger indexBufferOffsetInBytes);
+    bool storeVertexBufferCountsForValidation(uint32_t indexCount, uint32_t instanceCount, uint32_t firstIndex, int32_t baseVertex, uint32_t firstInstance, MTLIndexType, NSUInteger indexBufferOffsetInBytes);
     std::pair<uint32_t, uint32_t> computeMininumVertexInstanceCount(bool& needsValidationLayerWorkaround) const;
     void resetIndexBuffer();
 
@@ -183,7 +183,7 @@ private:
     Vector<BufferAndOffset> m_fragmentBuffers;
     using BindGroupDynamicOffsetsContainer = HashMap<uint32_t, Vector<uint32_t>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>;
     std::optional<BindGroupDynamicOffsetsContainer> m_bindGroupDynamicOffsets;
-    HashMap<uint32_t, RefPtr<const BindGroup>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> m_bindGroups;
+    UncheckedKeyHashMap<uint32_t, RefPtr<const BindGroup>, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>> m_bindGroups;
     HashSet<RefPtr<const BindGroup>> m_allBindGroups;
     RenderBundle::MinVertexCountsContainer m_minVertexCountForDrawCommand;
     NSMutableArray<RenderBundleICBWithResources*> *m_icbArray;

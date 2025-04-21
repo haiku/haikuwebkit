@@ -351,6 +351,11 @@ WebFramePolicyListenerProxy& WebFrameProxy::setUpPolicyListenerProxy(CompletionH
     return *m_activeListener;
 }
 
+void WebFrameProxy::dispatchBeforeUnloadEventForCrossProcessNavigation(CompletionHandler<void(bool)>&& completionHandler)
+{
+    sendWithAsyncReply(Messages::WebFrame::DispatchBeforeUnloadEventForCrossProcessNavigation(), WTFMove(completionHandler));
+}
+
 void WebFrameProxy::getWebArchive(CompletionHandler<void(API::Data*)>&& callback)
 {
     if (RefPtr page = m_page.get())
@@ -591,7 +596,7 @@ Ref<FrameTreeSyncData> WebFrameProxy::calculateFrameTreeSyncData() const
     bool isSecureForPaymentSession = false;
 #endif
 
-    return FrameTreeSyncData::create(isSecureForPaymentSession);
+    return FrameTreeSyncData::create(isSecureForPaymentSession, WebCore::SecurityOrigin::create(url()));
 }
 
 void WebFrameProxy::broadcastFrameTreeSyncData(Ref<FrameTreeSyncData>&& data)

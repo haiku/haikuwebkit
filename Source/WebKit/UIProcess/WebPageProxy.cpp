@@ -85,6 +85,7 @@
 #include "FrameProcess.h"
 #include "FrameTreeCreationParameters.h"
 #include "FrameTreeNodeData.h"
+#include "GamepadData.h"
 #include "GoToBackForwardItemParameters.h"
 #include "ImageOptions.h"
 #include "JavaScriptEvaluationResult.h"
@@ -119,6 +120,7 @@
 #include "ProvisionalPageProxy.h"
 #include "RemotePageProxy.h"
 #include "RestrictedOpenerType.h"
+#include "SharedBufferReference.h"
 #include "SpeechRecognitionPermissionManager.h"
 #include "SpeechRecognitionRemoteRealtimeMediaSource.h"
 #include "SpeechRecognitionRemoteRealtimeMediaSourceManager.h"
@@ -189,6 +191,7 @@
 #include "WebProtectionSpace.h"
 #include "WebResourceLoadStatisticsStore.h"
 #include "WebScreenOrientationManagerProxy.h"
+#include "WebSpeechSynthesisVoice.h"
 #include "WebURLSchemeHandler.h"
 #include "WebUserContentControllerProxy.h"
 #include "WebViewDidMoveToWindowObserver.h"
@@ -771,6 +774,15 @@ WebPageProxy::Internals::Internals(WebPageProxy& page)
 WebPageProxy::Internals::~Internals() = default;
 #endif
 
+#if PLATFORM(MAC)
+// FIXME: Remove this once the cause of rdar://148942809 is found and fixed.
+static std::optional<API::PageConfiguration::OpenerInfo>& openerInfoOfPageBeingOpened()
+{
+    static NeverDestroyed<std::optional<API::PageConfiguration::OpenerInfo>> info;
+    return info.get();
+}
+#endif
+
 WebPageProxy::WebPageProxy(PageClient& pageClient, WebProcessProxy& process, Ref<API::PageConfiguration>&& configuration)
     : m_internals(makeUniqueRefWithoutRefCountedCheck<Internals>(*this))
     , m_identifier(Identifier::generate())
@@ -835,6 +847,11 @@ WebPageProxy::WebPageProxy(PageClient& pageClient, WebProcessProxy& process, Ref
     , m_pageForTesting(WebPageProxyTesting::create(*this))
 {
     WEBPAGEPROXY_RELEASE_LOG(Loading, "constructor:");
+
+#if PLATFORM(MAC)
+    if (openerInfoOfPageBeingOpened() && openerInfoOfPageBeingOpened() != m_configuration->openerInfo())
+        RELEASE_LOG_FAULT(Process, "Created WebPageProxy with wrong configuration");
+#endif
 
     if (!configuration->drawsBackground())
         internals().backgroundColor = Color(Color::transparentBlack);
@@ -4911,10 +4928,33 @@ void WebPageProxy::receivedNavigationActionPolicyDecision(WebProcessProxy& proce
             if (suspendedPage && suspendedPage->pageIsClosedOrClosing())
                 suspendedPage = nullptr;
 
-            auto isPerformingHTTPFallback = navigationAction->data().isPerformingHTTPFallback ? IsPerformingHTTPFallback::Yes : IsPerformingHTTPFallback::No;
-            continueNavigationInNewProcess(navigation, frame.get(), WTFMove(suspendedPage), WTFMove(processNavigatingTo), processSwapRequestedByClient, ShouldTreatAsContinuingLoad::YesAfterNavigationPolicyDecision, std::nullopt, loadedWebArchive, isPerformingHTTPFallback, replacedDataStoreForWebArchiveLoad.get());
+            receivedPolicyDecision(policyAction, navigation.ptr(), nullptr, navigationAction.copyRef(), WillContinueLoadInNewProcess::Yes, std::nullopt, WTFMove(message), WTFMove(completionHandler));
 
-            receivedPolicyDecision(policyAction, navigation.ptr(), nullptr, WTFMove(navigationAction), WillContinueLoadInNewProcess::Yes, std::nullopt, WTFMove(message), WTFMove(completionHandler));
+            bool mayNeedBeforeUnloadPrompt = navigationAction->mayNeedBeforeUnloadPrompt();
+            CompletionHandler<void(bool)> continueLoad = [
+                this,
+                protectedThis = Ref { *this },
+                navigation = WTFMove(navigation),
+                navigationAction = WTFMove(navigationAction),
+                processSwapRequestedByClient,
+                preventProcessShutdownScope = processNavigatingTo->shutdownPreventingScope(),
+                processNavigatingTo = WTFMove(processNavigatingTo),
+                frame = Ref { frame },
+                suspendedPage = WTFMove(suspendedPage),
+                loadedWebArchive,
+                replacedDataStoreForWebArchiveLoad
+            ](bool shouldContinueLoad) mutable {
+                if (!shouldContinueLoad)
+                    return;
+                auto isPerformingHTTPFallback = navigationAction->data().isPerformingHTTPFallback ? IsPerformingHTTPFallback::Yes : IsPerformingHTTPFallback::No;
+                continueNavigationInNewProcess(navigation, frame.get(), WTFMove(suspendedPage), WTFMove(processNavigatingTo), processSwapRequestedByClient, ShouldTreatAsContinuingLoad::YesAfterNavigationPolicyDecision, std::nullopt, loadedWebArchive, isPerformingHTTPFallback, replacedDataStoreForWebArchiveLoad.get());
+            };
+
+            if (mayNeedBeforeUnloadPrompt)
+                frame->dispatchBeforeUnloadEventForCrossProcessNavigation(WTFMove(continueLoad));
+            else
+                continueLoad(true);
+
             return;
         }
 
@@ -8400,6 +8440,11 @@ void WebPageProxy::createNewPage(IPC::Connection& connection, WindowFeatures&& w
         openedBlobURL,
         wantsNoOpener = windowFeatures.wantsNoOpener()
     ] (RefPtr<WebPageProxy> newPage) mutable {
+
+#if PLATFORM(MAC)
+        openerInfoOfPageBeingOpened() = std::nullopt;
+#endif
+
         m_isCallingCreateNewPage = false;
         if (!newPage) {
             reply(std::nullopt, std::nullopt);
@@ -8425,6 +8470,9 @@ void WebPageProxy::createNewPage(IPC::Connection& connection, WindowFeatures&& w
 
         newPage->m_shouldSuppressAppLinksInNextNavigationPolicyDecision = mainFrameURL.host() == request.url().host();
 
+        if (privateClickMeasurement)
+            newPage->internals().privateClickMeasurement = { { WTFMove(*privateClickMeasurement), { }, { } } };
+
         if (navigationDataForNewProcess && !openedBlobURL) {
             reply(std::nullopt, std::nullopt);
             newPage->loadRequest(WTFMove(request), shouldOpenExternalURLsPolicy, IsPerformingHTTPFallback::No, WTFMove(navigationDataForNewProcess));
@@ -8434,8 +8482,6 @@ void WebPageProxy::createNewPage(IPC::Connection& connection, WindowFeatures&& w
         ASSERT(newPage->m_mainFrame);
         reply(newPage->webPageIDInMainFrameProcess(), newPage->creationParameters(protectedLegacyMainFrameProcess(), *newPage->drawingArea(), newPage->m_mainFrame->frameID(), std::nullopt));
 
-        if (privateClickMeasurement)
-            newPage->internals().privateClickMeasurement = { { WTFMove(*privateClickMeasurement), { }, { } } };
 #if HAVE(APP_SSO)
         newPage->m_shouldSuppressSOAuthorizationInNextNavigationPolicyDecision = true;
 #endif
@@ -8473,6 +8519,11 @@ void WebPageProxy::createNewPage(IPC::Connection& connection, WindowFeatures&& w
         configuration->setBrowsingContextGroup(BrowsingContextGroup::create());
         configuration->setOpenedSite(WebCore::Site(request.url()));
     }
+
+#if PLATFORM(MAC)
+    if (WTF::MacApplication::isSafari())
+        openerInfoOfPageBeingOpened() = configuration->openerInfo();
+#endif
 
     trySOAuthorization(configuration.copyRef(), WTFMove(navigationAction), *this, WTFMove(completionHandler), [this, protectedThis = Ref { *this }, configuration] (Ref<API::NavigationAction>&& navigationAction, CompletionHandler<void(RefPtr<WebPageProxy>&&)>&& completionHandler) mutable {
         m_isCallingCreateNewPage = true;
@@ -14766,7 +14817,7 @@ void WebPageProxy::speechSynthesisResume(CompletionHandler<void()>&& completionH
 
 #endif // ENABLE(SPEECH_SYNTHESIS)
 
-#if !PLATFORM(IOS_FAMILY)
+#if !PLATFORM(COCOA)
 
 WebContentMode WebPageProxy::effectiveContentModeAfterAdjustingPolicies(API::WebsitePolicies&, const WebCore::ResourceRequest&)
 {
@@ -16211,12 +16262,12 @@ FloatPoint WebPageProxy::mainFrameScrollPosition() const
 
 #endif // PLATFORM(COCOA) && ENABLE(ASYNC_SCROLLING)
 
-void WebPageProxy::fetchSessionStorage(CompletionHandler<void(HashMap<WebCore::ClientOrigin, HashMap<String, String>>&&)>&& completionHandler)
+void WebPageProxy::fetchSessionStorage(CompletionHandler<void(std::optional<HashMap<WebCore::ClientOrigin, HashMap<String, String>>>&&)>&& completionHandler)
 {
     if (RefPtr networkProcess = websiteDataStore().networkProcessIfExists())
         networkProcess->sendWithAsyncReply(Messages::NetworkProcess::FetchSessionStorage(sessionID(), identifier()), WTFMove(completionHandler));
     else
-        completionHandler({ });
+        completionHandler(HashMap<WebCore::ClientOrigin, HashMap<String, String>> { });
 }
 
 void WebPageProxy::restoreSessionStorage(HashMap<WebCore::ClientOrigin, HashMap<String, String>>&& sessionStorage, CompletionHandler<void(bool)>&& completionHandler)

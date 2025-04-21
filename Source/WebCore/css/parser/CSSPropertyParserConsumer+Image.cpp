@@ -1185,7 +1185,7 @@ RefPtr<CSSValue> consumeImage(CSSParserTokenRange& range, CSS::PropertyParserSta
         if (!imageURL)
             return nullptr;
         range.consumeIncludingWhitespace();
-        return CSSImageValue::create(WTFMove(*imageURL), state.context.isContentOpaque ? LoadedFromOpaqueSource::Yes : LoadedFromOpaqueSource::No);
+        return CSSImageValue::create(WTFMove(*imageURL));
     }
 
     if (range.peek().type() == FunctionToken) {
@@ -1259,8 +1259,8 @@ RefPtr<CSSValue> consumeImage(CSSParserTokenRange& range, CSS::PropertyParserSta
     }
 
     if (allowedImageTypes.contains(AllowedImageType::URLFunction)) {
-        if (auto imageURL = consumeURLRaw(range, state))
-            return CSSImageValue::create(WTFMove(*imageURL), state.context.isContentOpaque ? LoadedFromOpaqueSource::Yes : LoadedFromOpaqueSource::No);
+        if (auto imageURL = consumeURLRaw(range, state, { AllowedURLModifiers::CrossOrigin, AllowedURLModifiers::ReferrerPolicy }))
+            return CSSImageValue::create(WTFMove(*imageURL));
     }
 
     return nullptr;

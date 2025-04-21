@@ -63,6 +63,7 @@ css-dark-mode [ Skip ]
 media/audioSession [ Skip ]
 
 http/wpt/mediasession [ Skip ]
+imported/w3c/web-platform-tests/mediasession/media-session-artwork-fetch.https.html [ Skip ]
 
 # Media Stream API testing is not supported for WK1 yet.
 fast/mediastream
@@ -1131,6 +1132,11 @@ imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/not-rendered-image-loading-lazy.html [ Skip ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/picture-loading-lazy.html [ Skip ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/remove-element-and-scroll.html [ Skip ]
+imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/image-loading-lazy-in-scroller.html [ Skip ]
+imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/image-loading-lazy-in-scroller-nested.html [ Skip ]
+imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/image-loading-lazy-in-scroller-nested-3.html [ Skip ]
+imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/image-loading-lazy-in-scroller-nested-4.html [ Skip ]
+imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/image-loading-lazy-in-scroller-nested-5.html [ Skip ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/iframe-loading-lazy-base-url-2.html [ Skip ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/iframe-loading-lazy-base-url.html [ Skip ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/iframe-loading-lazy-load-event.html [ Skip ]
@@ -1174,6 +1180,7 @@ media/media-vp8-webm-with-poster.html [ Skip ]
 media/media-vp8-webm-with-preload.html [ Skip ]
 media/media-vp9-dar-webm.html [ Skip ]
 media/media-vp9-sar-webm.html [ Skip ]
+media/media-vp9-yuv422p10.html [ Skip ]
 media/video-src-webm-blob.html [ Failure ]
 media/track/audio-track-configuration-webm.html [ Skip ]
 media/track/media-audio-track.html [ Failure ]
@@ -1231,7 +1238,11 @@ accessibility/mac/text-operation/text-operation-smart-replace.html [ Skip ]
 accessibility/mac/text-operation/text-operation-uppercase.html [ Skip ]
 
 # Skipping because AXTextMarkerRangeIsValid is not supported on WK1.
+accessibility/mac/attributed-string-with-image.html [ Skip ]
+accessibility/mac/br-element-properties.html [ Skip ]
+accessibility/mac/br-element-text-selection.html [ Skip ]
 accessibility/mac/dynamic-selection.html [ Skip ]
+accessibility/mac/replaced-element-text-selection.html [ Skip ]
 
 #//////////////////////////////////////////////////////////////////////////////////////////
 # End features not supported in WebKit1
@@ -3052,8 +3063,6 @@ webkit.org/b/288757 [ Sequoia Release ] imported/w3c/web-platform-tests/fullscre
 
 webkit.org/b/288827 http/wpt/webaudio/audioworklet-addModule-cors.sub.https.html [ Failure ]
 
-webkit.org/b/288831 [ Debug ] fast/css/shadow-box-recursion-depth.html [ Pass Timeout ]
-
 webkit.org/b/288843 [ Release ] compositing/repaint/iframes/compositing-iframe-scroll-repaint.html [ Pass Failure ]
 
 webkit.org/b/288862 fast/repaint/switch-overflow-vertical-rl.html [ Pass Failure ]
@@ -3082,3 +3091,8 @@ imported/w3c/web-platform-tests/css/css-position/sticky/position-sticky-escape-s
 
 [ Sonoma ] fast/encoding/idn-security.html [ Failure ]
 [ Sequoia ] fast/encoding/idn-security.html [ Pass Failure ]
+
+webkit.org/b/291207 fullscreen/full-screen-document-background-color.html [ Pass Failure ]
+
+webkit.org/b/291577 fast/hidpi/filters-reference.html [ ImageOnlyFailure ]
+

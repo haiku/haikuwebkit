@@ -59,6 +59,8 @@ class SystemImage;
 class TextRun;
 class VideoFrame;
 
+enum class RequiresClipToRect : bool { No, Yes };
+
 namespace DisplayList {
 class DrawNativeImage;
 }
@@ -165,9 +167,6 @@ public:
     bool drawLuminanceMask() const { return m_state.drawLuminanceMask(); }
     void setDrawLuminanceMask(bool drawLuminanceMask) { m_state.setDrawLuminanceMask(drawLuminanceMask); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::DrawLuminanceMask)); }
 
-    bool useDarkAppearance() const { return m_state.useDarkAppearance(); }
-    void setUseDarkAppearance(bool useDarkAppearance) { m_state.setUseDarkAppearance(useDarkAppearance); didUpdateSingleState(m_state, GraphicsContextState::toIndex(GraphicsContextState::Change::UseDarkAppearance)); }
-
     virtual const GraphicsContextState& state() const { return m_state; }
     void mergeLastChanges(const GraphicsContextState&, const std::optional<GraphicsContextState>& lastDrawingState = std::nullopt);
     void mergeAllChanges(const GraphicsContextState&);
@@ -220,7 +219,7 @@ public:
     virtual void fillEllipse(const FloatRect& ellipse) { fillEllipseAsPath(ellipse); }
     virtual void strokeEllipse(const FloatRect& ellipse) { strokeEllipseAsPath(ellipse); }
 
-    enum class RequiresClipToRect : bool { No, Yes };
+    using RequiresClipToRect = WebCore::RequiresClipToRect;
     virtual void fillRect(const FloatRect&, RequiresClipToRect = RequiresClipToRect::Yes) = 0;
     virtual void fillRect(const FloatRect&, const Color&) = 0;
     virtual void fillRect(const FloatRect&, Gradient&, const AffineTransform&, RequiresClipToRect = RequiresClipToRect::Yes) = 0;

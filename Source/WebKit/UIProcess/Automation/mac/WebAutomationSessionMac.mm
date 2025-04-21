@@ -30,6 +30,7 @@
 
 #import "Logging.h"
 #import "WebAutomationSessionMacros.h"
+#import "WebEventConversion.h"
 #import "WebEventFactory.h"
 #import "WebInspectorUIProxy.h"
 #import "WebPageProxy.h"
@@ -39,6 +40,7 @@
 #import <Foundation/Foundation.h>
 #import <WebCore/IntPoint.h>
 #import <WebCore/IntSize.h>
+#import <WebCore/PlatformEventFactoryMac.h>
 #import <WebCore/PlatformMouseEvent.h>
 #import <objc/runtime.h>
 #import <pal/spi/mac/NSEventSPI.h>
@@ -78,7 +80,7 @@ static const void *synthesizedAutomationEventAssociatedObjectKey = &synthesizedA
 
 void WebAutomationSession::sendSynthesizedEventsToPage(WebPageProxy& page, NSArray *eventsToSend)
 {
-    NSWindow *window = page.platformWindow();
+    RetainPtr window = page.platformWindow();
     auto webView = page.cocoaView();
 
     // +[NSEvent pressedMouseButtons] does not account for the NSEvent objects created through eventSender JS in tests.
@@ -99,7 +101,7 @@ void WebAutomationSession::sendSynthesizedEventsToPage(WebPageProxy& page, NSArr
     });
 
     for (NSEvent *event in eventsToSend) {
-        LOG(Automation, "Sending event[%p] to window[%p]: %@", event, window, event);
+        LOG(Automation, "Sending event[%p] to window[%p]: %@", event, window.get(), event);
 
         // Take focus back in case the Inspector became focused while the prior command or
         // NSEvent was delivered to the window.
@@ -123,13 +125,13 @@ void WebAutomationSession::sendSynthesizedEventsToPage(WebPageProxy& page, NSArr
 
 void WebAutomationSession::markEventAsSynthesizedForAutomation(NSEvent *event)
 {
-    objc_setAssociatedObject(event, &synthesizedAutomationEventAssociatedObjectKey, m_sessionIdentifier, OBJC_ASSOCIATION_RETAIN_NONATOMIC);
+    objc_setAssociatedObject(event, &synthesizedAutomationEventAssociatedObjectKey, m_sessionIdentifier.createNSString().get(), OBJC_ASSOCIATION_RETAIN_NONATOMIC);
 }
 
 bool WebAutomationSession::wasEventSynthesizedForAutomation(NSEvent *event)
 {
-    NSString *senderSessionIdentifier = objc_getAssociatedObject(event, &synthesizedAutomationEventAssociatedObjectKey);
-    if ([senderSessionIdentifier isEqualToString:m_sessionIdentifier])
+    RetainPtr<NSString> senderSessionIdentifier = objc_getAssociatedObject(event, &synthesizedAutomationEventAssociatedObjectKey);
+    if ([senderSessionIdentifier isEqualToString:m_sessionIdentifier.createNSString().get()])
         return true;
 
     switch (event.type) {
@@ -188,21 +190,10 @@ void WebAutomationSession::platformSimulateMouseInteraction(WebPageProxy& page, 
 
     auto locationInWindow = viewportLocationToWindowLocation(locationInViewport, page);
 
-    NSEventModifierFlags modifiers = 0;
-    if (keyModifiers.contains(WebEventModifier::MetaKey))
-        modifiers |= NSEventModifierFlagCommand;
-    if (keyModifiers.contains(WebEventModifier::AltKey))
-        modifiers |= NSEventModifierFlagOption;
-    if (keyModifiers.contains(WebEventModifier::ControlKey))
-        modifiers |= NSEventModifierFlagControl;
-    if (keyModifiers.contains(WebEventModifier::ShiftKey))
-        modifiers |= NSEventModifierFlagShift;
-    if (keyModifiers.contains(WebEventModifier::CapsLockKey))
-        modifiers |= NSEventModifierFlagCapsLock;
-
+    NSEventModifierFlags modifiers = WebEventFactory::toNSEventModifierFlags(keyModifiers);
     NSTimeInterval timestamp = [NSDate timeIntervalSinceReferenceDate];
-    NSWindow *window = page.platformWindow();
-    NSInteger windowNumber = window.windowNumber;
+    RetainPtr window = page.platformWindow();
+    NSInteger windowNumber = window.get().windowNumber;
 
     NSEventType downEventType = (NSEventType)0;
     NSEventType dragEventType = (NSEventType)0;
@@ -235,12 +226,12 @@ void WebAutomationSession::platformSimulateMouseInteraction(WebPageProxy& page, 
     switch (interaction) {
     case MouseInteraction::Move: {
         ASSERT(dragEventType);
-        NSEvent *event = [NSEvent mouseEventWithType:dragEventType location:locationInWindow modifierFlags:modifiers timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:eventNumber clickCount:0 pressure:0.0f];
-        CGEventRef cgEvent = event.CGEvent;
-        CGEventSetIntegerValueField(cgEvent, kCGMouseEventDeltaX, locationInWindow.x() - m_lastClickPosition.x());
-        CGEventSetIntegerValueField(cgEvent, kCGMouseEventDeltaY, -1 * (locationInWindow.y() - m_lastClickPosition.y()));
-        event = [NSEvent eventWithCGEvent:cgEvent];
-        [eventsToBeSent addObject:event];
+        RetainPtr event = [NSEvent mouseEventWithType:dragEventType location:locationInWindow modifierFlags:modifiers timestamp:timestamp windowNumber:windowNumber context:nil eventNumber:eventNumber clickCount:0 pressure:0.0f];
+        RetainPtr<CGEventRef> cgEvent = event.get().CGEvent;
+        CGEventSetIntegerValueField(cgEvent.get(), kCGMouseEventDeltaX, locationInWindow.x() - m_lastClickPosition.x());
+        CGEventSetIntegerValueField(cgEvent.get(), kCGMouseEventDeltaY, -1 * (locationInWindow.y() - m_lastClickPosition.y()));
+        event = [NSEvent eventWithCGEvent:cgEvent.get()];
+        [eventsToBeSent addObject:event.get()];
         break;
     }
     case MouseInteraction::Down:
@@ -285,7 +276,7 @@ void WebAutomationSession::platformSimulateMouseInteraction(WebPageProxy& page, 
 
 OptionSet<WebEventModifier> WebAutomationSession::platformWebModifiersFromRaw(WebPageProxy&, unsigned modifiers)
 {
-    return WebEventFactory::webEventModifiersForNSEventModifierFlags(modifiers);
+    return kit(WebCore::modifiersForModifierFlags(modifiers));
 }
 
 #endif // ENABLE(WEBDRIVER_MOUSE_INTERACTIONS)
@@ -709,8 +700,8 @@ void WebAutomationSession::platformSimulateKeyboardInteraction(WebPageProxy& pag
         },
         [&] (CharKey charKey) {
             keyCode = keyCodeForCharKey(charKey);
-            characters = charKey;
-            unmodifiedCharacters = charKey;
+            characters = charKey.createNSString();
+            unmodifiedCharacters = characters;
         }
     );
 
@@ -726,9 +717,9 @@ void WebAutomationSession::platformSimulateKeyboardInteraction(WebPageProxy& pag
 
     // FIXME: this timestamp is not even close to matching native events. Find out how to get closer.
     NSTimeInterval timestamp = [NSDate timeIntervalSinceReferenceDate];
-    NSWindow *window = page.platformWindow();
-    NSInteger windowNumber = window.windowNumber;
-    NSPoint eventPosition = NSMakePoint(0, window.frame.size.height);
+    RetainPtr window = page.platformWindow();
+    NSInteger windowNumber = window.get().windowNumber;
+    NSPoint eventPosition = NSMakePoint(0, window.get().frame.size.height);
 
     static constexpr auto characterTransformingModifiers = NSEventModifierFlagShift | NSEventModifierFlagOption;
     if (characters && (m_currentModifiers & characterTransformingModifiers)) {
@@ -822,14 +813,14 @@ void WebAutomationSession::platformSimulateKeySequence(WebPageProxy& page, const
     // This command is more similar to the 'insertText:' editing command, except
     // that this emits keyup/keydown/keypress events for roughly each character.
     // This API should move more towards that direction in the future.
-    NSString *text = keySequence;
+    RetainPtr text = keySequence.createNSString();
 
     NSTimeInterval timestamp = [NSDate timeIntervalSinceReferenceDate];
-    NSWindow *window = page.platformWindow();
-    NSInteger windowNumber = window.windowNumber;
-    NSPoint eventPosition = NSMakePoint(0, window.frame.size.height);
+    RetainPtr window = page.platformWindow();
+    NSInteger windowNumber = window.get().windowNumber;
+    NSPoint eventPosition = NSMakePoint(0, window.get().frame.size.height);
 
-    [text enumerateSubstringsInRange:NSMakeRange(0, text.length) options:NSStringEnumerationByComposedCharacterSequences usingBlock:^(NSString *substring, NSRange substringRange, NSRange enclosingRange, BOOL *stop) {
+    [text enumerateSubstringsInRange:NSMakeRange(0, text.get().length) options:NSStringEnumerationByComposedCharacterSequences usingBlock:^(NSString *substring, NSRange substringRange, NSRange enclosingRange, BOOL *stop) {
     
         // For ASCII characters that are produced using Shift on a US-108 key keyboard layout,
         // WebDriver expects these to be delivered as [shift-down, key-down, key-up, shift-up]
@@ -860,7 +851,7 @@ void WebAutomationSession::platformSimulateWheelInteraction(WebPageProxy& page, 
     auto cgScrollEvent = adoptCF(CGEventCreateScrollWheelEvent(nullptr, kCGScrollEventUnitPixel, scrollWheelCount, -delta.height(), -delta.width()));
 
     auto locationInWindow = viewportLocationToWindowLocation(locationInViewport, page);
-    NSWindow *window = page.platformWindow();
+    RetainPtr window = page.platformWindow();
 
     // Set the CGEvent location in flipped coords relative to the first screen, which compensates for the behavior of
     // +[NSEvent eventWithCGEvent:] when the event has no associated window. See <rdar://problem/17180591>.
@@ -868,7 +859,7 @@ void WebAutomationSession::platformSimulateWheelInteraction(WebPageProxy& page, 
     locationOnScreen = CGPointMake(locationOnScreen.x, NSScreen.screens.firstObject.frame.size.height - locationOnScreen.y);
     CGEventSetLocation(cgScrollEvent.get(), locationOnScreen);
 
-    NSEvent *scrollEvent = [[NSEvent eventWithCGEvent:cgScrollEvent.get()] _eventRelativeToWindow:window];
+    NSEvent *scrollEvent = [[NSEvent eventWithCGEvent:cgScrollEvent.get()] _eventRelativeToWindow:window.get()];
 
     sendSynthesizedEventsToPage(page, @[scrollEvent]);
 }

@@ -120,10 +120,10 @@ static std::optional<WebCore::ApplicationManifest::Shortcut> makeVectorElement(c
 
     if (icon) {
         _src = icon->src.createNSURL();
-        _sizes = createNSArray(icon->sizes, [] (auto& size) -> NSString * {
-            return size;
+        _sizes = createNSArray(icon->sizes, [] (auto& size) {
+            return size.createNSString();
         });
-        _type = adoptNS([icon->type copy]);
+        _type = icon->type.createNSString();
         _purposes = fromPurposes(icon->purposes);
     }
 
@@ -212,7 +212,7 @@ static std::optional<WebCore::ApplicationManifest::Shortcut> makeVectorElement(c
         return nil;
 
     if (shortcut) {
-        _name = adoptNS([shortcut->name copy]);
+        _name = shortcut->name.createNSString();
         _url = shortcut->url.createNSURL();
         _icons = createNSArray(shortcut->icons, [] (auto& icon) {
             return adoptNS([[_WKApplicationManifestIcon alloc] initWithCoreIcon:&icon]);
@@ -359,14 +359,14 @@ static std::optional<WebCore::ApplicationManifest::Shortcut> makeVectorElement(c
     return *_applicationManifest;
 }
 
-static NSString *nullableNSString(const WTF::String& string)
+static RetainPtr<NSString> nullableNSString(const WTF::String& string)
 {
-    return string.isNull() ? nil : (NSString *)string;
+    return !string.isNull() ? string.createNSString() : nil;
 }
 
 - (NSString *)rawJSON
 {
-    return nullableNSString(_applicationManifest->applicationManifest().rawJSON);
+    return nullableNSString(_applicationManifest->applicationManifest().rawJSON).autorelease();
 }
 
 - (_WKApplicationManifestDirection)direction
@@ -387,17 +387,17 @@ static NSString *nullableNSString(const WTF::String& string)
 
 - (NSString *)name
 {
-    return nullableNSString(_applicationManifest->applicationManifest().name);
+    return nullableNSString(_applicationManifest->applicationManifest().name).autorelease();
 }
 
 - (NSString *)shortName
 {
-    return nullableNSString(_applicationManifest->applicationManifest().shortName);
+    return nullableNSString(_applicationManifest->applicationManifest().shortName).autorelease();
 }
 
 - (NSString *)applicationDescription
 {
-    return nullableNSString(_applicationManifest->applicationManifest().description);
+    return nullableNSString(_applicationManifest->applicationManifest().description).autorelease();
 }
 
 - (NSURL *)scope
@@ -476,8 +476,8 @@ static NSString *nullableNSString(const WTF::String& string)
 
 - (NSArray<NSString *> *)categories
 {
-    return createNSArray(_applicationManifest->applicationManifest().categories, [] (auto& category) -> NSString * {
-        return category;
+    return createNSArray(_applicationManifest->applicationManifest().categories, [] (auto& category) {
+        return category.createNSString();
     }).autorelease();
 }
 

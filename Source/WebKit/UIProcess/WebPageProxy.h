@@ -300,6 +300,7 @@ struct PlatformLayerIdentifierType;
 struct PlaybackTargetClientContextIdentifierType;
 struct PromisedAttachmentInfo;
 struct RecentSearch;
+struct ResourceLoaderIdentifierType;
 struct RemoteUserInputEventData;
 struct ScrollingNodeIDType;
 struct SerializedAttachmentData;
@@ -371,7 +372,7 @@ using PlatformDisplayID = uint32_t;
 using PlatformLayerIdentifier = ProcessQualified<ObjectIdentifier<PlatformLayerIdentifierType>>;
 using PlaybackTargetClientContextIdentifier = ProcessQualified<ObjectIdentifier<PlaybackTargetClientContextIdentifierType>>;
 using PointerID = uint32_t;
-using ResourceLoaderIdentifier = AtomicObjectIdentifier<ResourceLoader>;
+using ResourceLoaderIdentifier = AtomicObjectIdentifier<ResourceLoaderIdentifierType>;
 using SandboxFlags = OptionSet<SandboxFlag>;
 using ScrollingNodeID = ProcessQualified<ObjectIdentifier<ScrollingNodeIDType>>;
 using ScrollPosition = IntPoint;
@@ -416,7 +417,7 @@ class Site;
 class TransformationMatrix;
 struct TextAnimationData;
 enum class ImageDecodingError : uint8_t;
-enum class ElementIdentifierType;
+struct ElementIdentifierType;
 enum class ExceptionCode : uint8_t;
 
 using ElementIdentifier = ObjectIdentifier<ElementIdentifierType>;
@@ -575,6 +576,7 @@ struct WebPageProxyIdentifierType;
 struct WebPopupItem;
 struct WebPreferencesStore;
 struct WebSpeechSynthesisVoice;
+struct WebURLSchemeHandlerIdentifierType;
 struct WebsitePoliciesData;
 #if PLATFORM(WPE) && USE(GBM)
 struct DMABufRendererBufferFormat;
@@ -634,7 +636,7 @@ using TextCheckerRequestID = ObjectIdentifier<TextCheckerRequestType>;
 using TransactionIdentifier = MonotonicObjectIdentifier<TransactionIDType>;
 using TransactionID = WebCore::ProcessQualified<TransactionIdentifier>;
 using WebPageProxyIdentifier = ObjectIdentifier<WebPageProxyIdentifierType>;
-using WebURLSchemeHandlerIdentifier = ObjectIdentifier<WebURLSchemeHandler>;
+using WebURLSchemeHandlerIdentifier = ObjectIdentifier<WebURLSchemeHandlerIdentifierType>;
 using WebUndoStepID = uint64_t;
 
 class WebPageProxy final : public API::ObjectImpl<API::Object::Type::Page>, public IPC::MessageReceiver {
@@ -1277,7 +1279,7 @@ public:
     NSWindow *platformWindow();
     void rootViewToWindow(const WebCore::IntRect& viewRect, WebCore::IntRect& windowRect);
 
-    NSView *inspectorAttachmentView();
+    RetainPtr<NSView> inspectorAttachmentView();
     _WKRemoteObjectRegistry *remoteObjectRegistry();
 
     CGRect boundsOfLayerInLayerBackedWindowCoordinates(CALayer *) const;
@@ -2019,7 +2021,6 @@ public:
 
     const Function<bool()>& deviceOrientationUserPermissionHandlerForTesting() const { return m_deviceOrientationUserPermissionHandlerForTesting; };
     void setDeviceOrientationUserPermissionHandlerForTesting(Function<bool()>&& handler) { m_deviceOrientationUserPermissionHandlerForTesting = WTFMove(handler); }
-    void setDeviceHasAGXCompilerServiceForTesting() const;
 
     void statusBarWasTapped();
 #endif
@@ -2358,6 +2359,8 @@ public:
 
     void copyLinkWithHighlight();
 
+    void createTextFragmentDirectiveFromSelection(CompletionHandler<void(URL&&)>&&);
+
 #if ENABLE(APP_HIGHLIGHTS)
     void createAppHighlightInSelectedRange(WebCore::CreateNewGroupForHighlight, WebCore::HighlightRequestOriginatedInApp);
     void restoreAppHighlightsAndScrollToIndex(const Vector<Ref<WebCore::SharedMemory>>& highlights, const std::optional<unsigned> index);
@@ -2694,7 +2697,7 @@ public:
     WebCore::FloatPoint mainFrameScrollPosition() const;
 #endif
 
-    void fetchSessionStorage(CompletionHandler<void(HashMap<WebCore::ClientOrigin, HashMap<String, String>>&&)>&&);
+    void fetchSessionStorage(CompletionHandler<void(std::optional<HashMap<WebCore::ClientOrigin, HashMap<String, String>>>&&)>&&);
     void restoreSessionStorage(HashMap<WebCore::ClientOrigin, HashMap<String, String>>&&, CompletionHandler<void(bool)>&&);
 
 #if HAVE(AUDIT_TOKEN)

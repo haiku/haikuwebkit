@@ -220,7 +220,7 @@ void AVVideoCaptureSource::setUseAVCaptureDeviceRotationCoordinatorAPI(bool valu
 
 CaptureSourceOrError AVVideoCaptureSource::create(const CaptureDevice& device, MediaDeviceHashSalts&& hashSalts, const MediaConstraints* constraints, std::optional<PageIdentifier> pageIdentifier)
 {
-    auto *avDevice = [PAL::getAVCaptureDeviceClass() deviceWithUniqueID:device.persistentId()];
+    auto *avDevice = [PAL::getAVCaptureDeviceClass() deviceWithUniqueID:device.persistentId().createNSString().get()];
     if (!avDevice)
         return CaptureSourceOrError({ "No AVVideoCaptureSource device"_s , MediaAccessDenialReason::PermissionDenied });
 
@@ -1068,7 +1068,7 @@ bool AVVideoCaptureSource::setupSession()
     WARNING_LOG_IF(loggerPtr() && mediaEnvironment.isEmpty(), "Media environment is empty");
     // FIXME (119325252): Remove staging code for -[AVCaptureSession initWithMediaEnvironment:]
     if (!mediaEnvironment.isEmpty() && [PAL::getAVCaptureSessionClass() instancesRespondToSelector:@selector(initWithMediaEnvironment:)])
-        m_session = adoptNS([PAL::allocAVCaptureSessionInstance() initWithMediaEnvironment:mediaEnvironment]);
+        m_session = adoptNS([PAL::allocAVCaptureSessionInstance() initWithMediaEnvironment:mediaEnvironment.createNSString().get()]);
 #endif
 
 #if ENABLE(APP_PRIVACY_REPORT)

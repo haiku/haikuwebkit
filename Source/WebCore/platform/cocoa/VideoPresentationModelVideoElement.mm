@@ -205,6 +205,8 @@ void VideoPresentationModelVideoElement::documentFullscreenChanged()
     if (std::exchange(m_isChildOfElementFullscreen, isChildOfElementFullscreen) == isChildOfElementFullscreen)
         return;
 
+    videoElement->documentFullscreenChanged(isChildOfElementFullscreen);
+
     for (auto& client : copyToVector(m_clients))
         client->isChildOfElementFullscreenChanged(m_isChildOfElementFullscreen);
 }
@@ -217,7 +219,7 @@ void VideoPresentationModelVideoElement::videoInteractedWith()
     if (!videoElement)
         return;
 
-    CheckedPtr mediaSession = videoElement->mediaSessionIfExists();
+    RefPtr mediaSession = videoElement->mediaSessionIfExists();
     if (!mediaSession || (!mediaSession->mostRecentUserInteractionTime() && mediaSession->hasBehaviorRestriction(MediaElementSession::RequireUserGestureForAudioRateChange)))
         return;
 

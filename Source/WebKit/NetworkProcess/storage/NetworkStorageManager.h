@@ -113,7 +113,7 @@ public:
     void resetStoragePersistedState(CompletionHandler<void()>&&);
     void clearStorageForWebPage(WebPageProxyIdentifier);
     void cloneSessionStorageForWebPage(WebPageProxyIdentifier, WebPageProxyIdentifier);
-    void fetchSessionStorageForWebPage(WebPageProxyIdentifier, CompletionHandler<void(HashMap<WebCore::ClientOrigin, HashMap<String, String>>&&)>&&);
+    void fetchSessionStorageForWebPage(WebPageProxyIdentifier, CompletionHandler<void(std::optional<HashMap<WebCore::ClientOrigin, HashMap<String, String>>>&&)>&&);
     void restoreSessionStorageForWebPage(WebPageProxyIdentifier, HashMap<WebCore::ClientOrigin, HashMap<String, String>>&&, CompletionHandler<void(bool)>&&);
     void didIncreaseQuota(WebCore::ClientOrigin&&, QuotaIncreaseRequestIdentifier, std::optional<uint64_t> newQuota);
     enum class ShouldComputeSize : bool { No, Yes };
@@ -128,7 +128,7 @@ public:
     void resume();
     void handleLowMemoryWarning();
     void syncLocalStorage(CompletionHandler<void()>&&);
-    void fetchLocalStorage(CompletionHandler<void(HashMap<WebCore::ClientOrigin, HashMap<String, String>>&&)>&&);
+    void fetchLocalStorage(CompletionHandler<void(std::optional<HashMap<WebCore::ClientOrigin, HashMap<String, String>>>&&)>&&);
     void restoreLocalStorage(HashMap<WebCore::ClientOrigin, HashMap<String, String>>&&, CompletionHandler<void(bool)>&&);
     void registerTemporaryBlobFilePaths(IPC::Connection&, const Vector<String>&);
     void requestSpace(const WebCore::ClientOrigin&, uint64_t size, CompletionHandler<void(bool)>&&);
@@ -219,13 +219,13 @@ private:
     void abortTransaction(const WebCore::IDBResourceIdentifier&);
     void commitTransaction(const WebCore::IDBResourceIdentifier&, uint64_t handledRequestResultsCount);
     void didFinishHandlingVersionChangeTransaction(WebCore::IDBDatabaseConnectionIdentifier, const WebCore::IDBResourceIdentifier&);
-    void createObjectStore(const WebCore::IDBRequestData&, const WebCore::IDBObjectStoreInfo&);
-    void deleteObjectStore(const WebCore::IDBRequestData&, const String& objectStoreName);
-    void renameObjectStore(const WebCore::IDBRequestData&, WebCore::IDBObjectStoreIdentifier, const String& newName);
+    void createObjectStore(IPC::Connection&, const WebCore::IDBRequestData&, const WebCore::IDBObjectStoreInfo&);
+    void deleteObjectStore(IPC::Connection&, const WebCore::IDBRequestData&, const String& objectStoreName);
+    void renameObjectStore(IPC::Connection&, const WebCore::IDBRequestData&, WebCore::IDBObjectStoreIdentifier, const String& newName);
     void clearObjectStore(const WebCore::IDBRequestData&, WebCore::IDBObjectStoreIdentifier);
     void createIndex(IPC::Connection&, const WebCore::IDBRequestData&, const WebCore::IDBIndexInfo&);
-    void deleteIndex(const WebCore::IDBRequestData&, WebCore::IDBObjectStoreIdentifier, const String& indexName);
-    void renameIndex(const WebCore::IDBRequestData&, WebCore::IDBObjectStoreIdentifier, WebCore::IDBIndexIdentifier, const String& newName);
+    void deleteIndex(IPC::Connection&, const WebCore::IDBRequestData&, WebCore::IDBObjectStoreIdentifier, const String& indexName);
+    void renameIndex(IPC::Connection&, const WebCore::IDBRequestData&, WebCore::IDBObjectStoreIdentifier, WebCore::IDBIndexIdentifier, const String& newName);
     void putOrAdd(IPC::Connection&, const WebCore::IDBRequestData&, const WebCore::IDBKeyData&, const WebCore::IDBValue&, const WebCore::IndexIDToIndexKeyMap&, WebCore::IndexedDB::ObjectStoreOverwriteMode);
     void getRecord(const WebCore::IDBRequestData&, const WebCore::IDBGetRecordData&);
     void getAllRecords(const WebCore::IDBRequestData&, const WebCore::IDBGetAllRecordsData&);

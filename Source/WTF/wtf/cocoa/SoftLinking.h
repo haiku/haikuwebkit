@@ -214,21 +214,22 @@ static void* lib##Library() \
     @class className; \
     static Class init##className(); \
     static Class (*get##className##Class)() = init##className; \
-    SUPPRESS_UNRETAINED_LOCAL static Class class##className; \
+    struct Class##className##Wrapper { SUPPRESS_UNCOUNTED_MEMBER Class classObject; }; \
+    static Class##className##Wrapper class##className; \
     \
     static Class className##Function() \
     { \
-        return class##className; \
+        return class##className.classObject; \
     } \
     \
     static Class init##className() \
     { \
         framework##Library(); \
         _STORE_IN_GETCLASS_SECTION static char const auditedClassName[] = #className; \
-        class##className = objc_getClass(auditedClassName); \
-        RELEASE_ASSERT(class##className); \
+        class##className.classObject = objc_getClass(auditedClassName); \
+        RELEASE_ASSERT(class##className.classObject); \
         get##className##Class = className##Function; \
-        return class##className; \
+        return class##className.classObject; \
     } \
     _Pragma("clang diagnostic push") \
     _Pragma("clang diagnostic ignored \"-Wunused-function\"") \
@@ -242,20 +243,21 @@ static void* lib##Library() \
     @class className; \
     static Class init##className(); \
     static Class (*get##className##Class)() = init##className; \
-    SUPPRESS_UNRETAINED_LOCAL static Class class##className; \
+    struct class##className##Wrapper { SUPPRESS_UNCOUNTED_MEMBER Class classObject; }; \
+    static class##className##Wrapper class##className; \
     \
     static Class className##Function() \
     { \
-        return class##className; \
+        return class##className.classObject; \
     } \
     \
     static Class init##className() \
     { \
         framework##Library(); \
         _STORE_IN_GETCLASS_SECTION static char const auditedClassName[] = #className; \
-        class##className = objc_getClass(auditedClassName); \
+        class##className.classObject = objc_getClass(auditedClassName); \
         get##className##Class = className##Function; \
-        return class##className; \
+        return class##className.classObject; \
     } \
     _Pragma("clang diagnostic push") \
     _Pragma("clang diagnostic ignored \"-Wunused-function\"") \
@@ -308,11 +310,12 @@ static void* lib##Library() \
 #define SOFT_LINK_CONSTANT(framework, name, type) \
     static type init##name(); \
     static type (*get##name)() = init##name; \
-    static type constant##name; \
+    struct Constant##name##Wrapper { SUPPRESS_UNRETAINED_LOCAL type constant; }; \
+    static Constant##name##Wrapper constant##name; \
     \
     static type name##Function() \
     { \
-        return constant##name; \
+        return constant##name.constant; \
     } \
     \
     static type init##name() \
@@ -320,19 +323,20 @@ static void* lib##Library() \
         _STORE_IN_DLSYM_SECTION static char const auditedName[] = #name; \
         void* constant = dlsym(framework##Library(), auditedName); \
         RELEASE_ASSERT_WITH_MESSAGE(constant, "%s", dlerror()); \
-        constant##name = *static_cast<type const *>(constant); \
+        constant##name.constant = *static_cast<type const *>(constant); \
         get##name = name##Function; \
-        return constant##name; \
+        return constant##name.constant; \
     }
 
 #define SOFT_LINK_CONSTANT_MAY_FAIL(framework, name, type) \
     static bool init##name(); \
     static type (*get##name)() = 0; \
-    static type constant##name; \
+    struct Constant##name##Wrapper { SUPPRESS_UNRETAINED_LOCAL type constant; }; \
+    static Constant##name##Wrapper constant##name; \
     \
     static type name##Function() \
     { \
-        return constant##name; \
+        return constant##name.constant; \
     } \
     \
     static bool canLoad##name() \
@@ -348,7 +352,7 @@ static void* lib##Library() \
         void* constant = dlsym(framework##Library(), auditedName); \
         if (!constant) \
             return false; \
-        constant##name = *static_cast<type const *>(constant); \
+        constant##name.constant = *static_cast<type const *>(constant); \
         get##name = name##Function; \
         return true; \
     }

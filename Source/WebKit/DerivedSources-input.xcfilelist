@@ -276,7 +276,6 @@ $(PROJECT_DIR)/Shared/ContextMenuContextData.serialization.in
 $(PROJECT_DIR)/Shared/CoordinateSystem.serialization.in
 $(PROJECT_DIR)/Shared/Databases/IndexedDB/WebIDBResult.serialization.in
 $(PROJECT_DIR)/Shared/DebuggableInfoData.serialization.in
-$(PROJECT_DIR)/Shared/DisplayListArgumentCoders.serialization.in
 $(PROJECT_DIR)/Shared/DocumentEditingContext.serialization.in
 $(PROJECT_DIR)/Shared/DragControllerAction.serialization.in
 $(PROJECT_DIR)/Shared/DrawingAreaInfo.serialization.in
@@ -506,6 +505,7 @@ $(PROJECT_DIR)/UIProcess/Automation/WebAutomationSession.messages.in
 $(PROJECT_DIR)/UIProcess/Automation/protocol/BidiBrowser.json
 $(PROJECT_DIR)/UIProcess/Automation/protocol/BidiBrowsingContext.json
 $(PROJECT_DIR)/UIProcess/Automation/protocol/BidiLog.json
+$(PROJECT_DIR)/UIProcess/Automation/protocol/BidiScript.json
 $(PROJECT_DIR)/UIProcess/Cocoa/PlaybackSessionManagerProxy.messages.in
 $(PROJECT_DIR)/UIProcess/Cocoa/UserMediaCaptureManagerProxy.messages.in
 $(PROJECT_DIR)/UIProcess/Cocoa/VideoPresentationManagerProxy.messages.in

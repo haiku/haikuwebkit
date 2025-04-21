@@ -105,7 +105,9 @@ NSString *decodeHostName(NSString *string)
     std::optional<String> host = URLHelpers::mapHostName(string, nullptr);
     if (!host)
         return nil;
-    return !*host ? string : (NSString *)*host;
+    if (!*host)
+        return string;
+    return host->createNSString().autorelease();
 }
 
 NSString *encodeHostName(NSString *string)
@@ -113,7 +115,9 @@ NSString *encodeHostName(NSString *string)
     std::optional<String> host = URLHelpers::mapHostName(string, decodePercentEscapes);
     if (!host)
         return nil;
-    return !*host ? string : (NSString *)*host;
+    if (!*host)
+        return string;
+    return host->createNSString().autorelease();
 }
 
 static RetainPtr<NSString> stringByTrimmingWhitespace(NSString *string)
@@ -214,7 +218,7 @@ NSURL *URLWithUserTypedString(NSString *string, NSURL *)
 
     // FIXME: https://bugs.webkit.org/show_bug.cgi?id=186057
     // We should be able to use url.createCFURL instead of using directly CFURL parsing routines.
-    RetainPtr data = dataWithUserTypedString(mappedString);
+    RetainPtr data = dataWithUserTypedString(mappedString.createNSString().get());
     if (!data)
         return [NSURL URLWithString:@""];
 
@@ -318,7 +322,7 @@ NSData *originalURLData(NSURL *URL)
 
 NSString *userVisibleString(NSURL *URL)
 {
-    return URLHelpers::userVisibleURL(span(originalURLData(URL)));
+    return URLHelpers::userVisibleURL(span(originalURLData(URL))).createNSString().autorelease();
 }
 
 BOOL isUserVisibleURL(NSString *string)

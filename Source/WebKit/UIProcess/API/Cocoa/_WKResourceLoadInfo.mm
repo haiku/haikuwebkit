@@ -106,7 +106,7 @@ static _WKResourceLoadInfoResourceType toWKResourceLoadInfoResourceType(WebKit::
 - (NSUUID *)documentID
 {
     if (auto documentID = _info->documentID())
-        return documentID.value();
+        return documentID.value().createNSUUID().autorelease();
     return nil;
 }
 
@@ -117,7 +117,7 @@ static _WKResourceLoadInfoResourceType toWKResourceLoadInfoResourceType(WebKit::
 
 - (NSString *)originalHTTPMethod
 {
-    return _info->originalHTTPMethod();
+    return _info->originalHTTPMethod().createNSString().autorelease();
 }
 
 - (NSDate *)eventTimestamp

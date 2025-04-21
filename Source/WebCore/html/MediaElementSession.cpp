@@ -175,7 +175,7 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(MediaElementSessionObserver);
 #endif
 
 MediaElementSession::MediaElementSession(HTMLMediaElement& element)
-    : PlatformMediaSession(PlatformMediaSessionManager::singleton(), element)
+    : PlatformMediaSession(element)
     , m_element(element)
     , m_restrictions(NoRestrictions)
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
@@ -337,8 +337,8 @@ void MediaElementSession::clientDataBufferingTimerFired()
     if (state() != PlatformMediaSession::State::Playing || !m_element.elementIsHidden())
         return;
 
-    PlatformMediaSessionManager::SessionRestrictions restrictions = PlatformMediaSessionManager::singleton().restrictions(mediaType());
-    if ((restrictions & PlatformMediaSessionManager::BackgroundTabPlaybackRestricted) == PlatformMediaSessionManager::BackgroundTabPlaybackRestricted)
+    auto restrictions = PlatformMediaSessionManager::singleton().restrictions(mediaType());
+    if ((restrictions & MediaSessionRestriction::BackgroundTabPlaybackRestricted) == MediaSessionRestriction::BackgroundTabPlaybackRestricted)
         pauseSession();
 }
 

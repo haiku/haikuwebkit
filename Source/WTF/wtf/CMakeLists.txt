@@ -144,6 +144,7 @@ set(WTF_PUBLIC_HEADERS
     JSValueMalloc.h
     KeyValuePair.h
     LEBDecoder.h
+    LLVMProfilingUtils.h
     Language.h
     LazyRef.h
     LazyUniqueRef.h
@@ -367,6 +368,7 @@ set(WTF_PUBLIC_HEADERS
     VMTags.h
     ValidatedReinterpretCast.h
     ValueCheck.h
+    Variant.h
     VariantExtras.h
     VariantList.h
     VariantListOperations.h

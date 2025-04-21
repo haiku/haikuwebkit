@@ -1535,8 +1535,10 @@ to-zero
 media-progress
 container-progress
 random
-per-element
-// by
+element-shared
+// fixed
+sibling-count
+sibling-index
 infinity
 -infinity id=NegativeInfinity
 NaN
@@ -1898,3 +1900,21 @@ no-overflow
 
 // view-transition-name
 match-element
+
+// <url>
+// url
+
+// <url-modifier>
+crossorigin
+anonymous
+use-credentials
+integrity
+referrerpolicy
+no-referrer
+no-referrer-when-downgrade
+same-origin
+// origin
+strict-origin
+origin-when-cross-origin
+strict-origin-when-cross-origin
+unsafe-url

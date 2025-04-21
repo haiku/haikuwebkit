@@ -571,7 +571,7 @@ static RefPtr<CSSFontFaceSrcResourceValue> consumeFontFaceSrcURI(CSSParserTokenR
 
     // https://drafts.csswg.org/css-fonts-4/#typedef-font-src
 
-    auto location = consumeURLRaw(range, state);
+    auto location = consumeURLRaw(range, state, { });
     if (!location)
         return nullptr;
 
@@ -590,7 +590,7 @@ static RefPtr<CSSFontFaceSrcResourceValue> consumeFontFaceSrcURI(CSSParserTokenR
     if (!range.atEnd())
         return nullptr;
 
-    return CSSFontFaceSrcResourceValue::create(WTFMove(*location), WTFMove(format), WTFMove(technologies), state.context.isContentOpaque ? LoadedFromOpaqueSource::Yes : LoadedFromOpaqueSource::No);
+    return CSSFontFaceSrcResourceValue::create(WTFMove(*location), WTFMove(format), WTFMove(technologies));
 }
 
 static RefPtr<CSSValue> consumeFontFaceSrcLocal(CSSParserTokenRange& range, CSS::PropertyParserState&)

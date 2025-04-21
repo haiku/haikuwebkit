@@ -109,15 +109,15 @@
 
 - (NSSet<NSView *> *)_pdfHUDs
 {
-    return _impl->pdfHUDs();
+    return _impl->pdfHUDs().autorelease();
 }
 
 - (NSMenu *)_activeMenu
 {
-    if (NSMenu *contextMenu = _page->activeContextMenu())
-        return contextMenu;
-    if (NSMenu *domPasteMenu = _impl->domPasteMenu())
-        return domPasteMenu;
+    if (RetainPtr contextMenu = _page->activeContextMenu())
+        return contextMenu.autorelease();
+    if (RetainPtr domPasteMenu = _impl->domPasteMenu())
+        return domPasteMenu.autorelease();
     return nil;
 }
 

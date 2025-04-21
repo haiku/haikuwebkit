@@ -237,6 +237,8 @@ class PlatformInfo(object):
             return 'mac'
         if sys_platform == 'ios' or sys_platform == 'watchos':
             return 'ios'
+        if sys_platform.startswith('haiku'):
+            return 'haiku'
         if sys_platform.startswith('linux'):
             return 'linux'
         if sys_platform.startswith('haiku'):

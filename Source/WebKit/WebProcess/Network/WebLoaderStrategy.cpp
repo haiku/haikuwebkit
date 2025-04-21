@@ -548,7 +548,7 @@ void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceL
         && webFrame->frameLoaderClient()) {
         auto isPerformingHTTPFallback = frame && frame->loader().isHTTPFallbackInProgress() ? IsPerformingHTTPFallback::Yes : IsPerformingHTTPFallback::No;
         // FIXME: Gather more parameters here like we have in WebFrameLoaderClient::dispatchDecidePolicyForNavigationAction.
-        loadParameters.mainResourceNavigationDataForAnyFrame = webFrame->frameLoaderClient()->navigationActionData(resourceLoader.documentLoader()->triggeringAction(), request, { }, { }, { }, { }, { }, isPerformingHTTPFallback, { });
+        loadParameters.mainResourceNavigationDataForAnyFrame = webFrame->frameLoaderClient()->navigationActionData(resourceLoader.documentLoader()->triggeringAction(), request, { }, { }, { }, { }, { }, isPerformingHTTPFallback, { }, MayNeedBeforeUnloadPrompt::No);
     }
     if (loadParameters.mainResourceNavigationDataForAnyFrame) {
         if (auto documentLoader = resourceLoader.documentLoader()) {
@@ -569,9 +569,13 @@ void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceL
 
     if (resourceLoader.options().mode == FetchOptions::Mode::Navigate) {
         Vector<Ref<SecurityOrigin>> frameAncestorOrigins;
-        for (auto* frame = resourceLoader.frame()->tree().parent(); frame; frame = frame->tree().parent()) {
-            auto* localFrame = dynamicDowncast<LocalFrame>(frame);
-            frameAncestorOrigins.append(localFrame ? localFrame->document()->securityOrigin() : SecurityOrigin::opaqueOrigin());
+        for (RefPtr frame = resourceLoader.frame()->tree().parent(); frame; frame = frame->tree().parent()) {
+            RefPtr<WebCore::SecurityOrigin> frameOrigin = frame->frameDocumentSecurityOrigin();
+            if (!frameOrigin) {
+                WEBLOADERSTRATEGY_RELEASE_LOG_ERROR("scheduleLoad: Unable to get document origin of frame (frameID=%" PRIu64 ")", frame->frameID().toUInt64());
+                frameOrigin = &SecurityOrigin::opaqueOrigin();
+            }
+            frameAncestorOrigins.append(*frameOrigin);
         }
         loadParameters.frameAncestorOrigins = WTFMove(frameAncestorOrigins);
     }

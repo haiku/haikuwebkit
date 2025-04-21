@@ -50,6 +50,9 @@ cocoa/UserMediaCaptureUIDelegate.mm
 ios/IOSMouseEventTestHarness.mm
 
 Tests/mac/CustomSwipeViewTests.mm
+
+Tests/WTF/cocoa/URLExtras.mm
+
 Tests/WebKitCocoa/AVFoundationPreference.mm
 Tests/WebKitCocoa/AdaptiveImageGlyph.mm
 Tests/WebKitCocoa/AdditionalReadAccessAllowedURLs.mm
@@ -303,6 +306,7 @@ Tests/WebKitCocoa/WKAttachmentTests.mm
 Tests/WebKitCocoa/WKContentExtensionStore.mm
 Tests/WebKitCocoa/WKContentViewEditingActions.mm
 Tests/WebKitCocoa/WKContentViewTargetForAction.mm
+Tests/WebKitCocoa/WKFragmentDirectiveGeneration.mm
 Tests/WebKitCocoa/WKHTTPCookieStore.mm
 Tests/WebKitCocoa/WKInspectorDelegate.mm
 Tests/WebKitCocoa/WKInspectorExtension.mm

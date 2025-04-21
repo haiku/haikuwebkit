@@ -3665,6 +3665,30 @@ std::optional<TextMarkerData> AXObjectCache::textMarkerDataForVisiblePosition(co
         // We need to convert the DOM offset (which is offset into pre-whitespace-collapse text) into an offset into
         // the rendered, post-whitespace-collapse text.
         unsigned domOffset = position.deprecatedEditingOffset();
+
+        auto createFromRendererAndOffset = [&origin] (RenderObject& renderer, unsigned offset) -> std::optional<TextMarkerData> {
+            CheckedPtr cache = renderer.document().axObjectCache();
+            RefPtr object = cache ? cache->getOrCreate(renderer) : nullptr;
+            if (!object)
+                return std::nullopt;
+
+            return std::optional(TextMarkerData {
+                cache->treeID(),
+                object->objectID(),
+                offset,
+                Position::PositionIsOffsetInAnchor,
+                Affinity::Downstream,
+                0,
+                offset,
+                object->isIgnored(),
+                origin
+            });
+
+        };
+
+        if (isRendererReplacedElement(node->renderer()) || is<RenderLineBreak>(node->renderer()))
+            return createFromRendererAndOffset(*node->renderer(), domOffset);
+
         CheckedPtr<const RenderText> renderText = dynamicDowncast<RenderText>(node ? node->renderer() : nullptr);
 
         if (!renderText) {
@@ -3684,34 +3708,22 @@ std::optional<TextMarkerData> AXObjectCache::textMarkerDataForVisiblePosition(co
 
         unsigned differenceBetweenDomAndRenderedOffsets = textBox->minimumCaretOffset();
         unsigned previousEndDomOffset = textBox->maximumCaretOffset();
+        size_t previousLineIndex = textBox->lineIndex();
 
         while (domOffset > textBox->maximumCaretOffset()) {
             textBox = InlineIterator::nextTextBoxInLogicalOrder(textBox, orderCache);
-            differenceBetweenDomAndRenderedOffsets += textBox->minimumCaretOffset() - previousEndDomOffset;
+            size_t newLineIndex = textBox->lineIndex();
+            unsigned differenceToPrevious = textBox->minimumCaretOffset() - previousEndDomOffset;
+            // Just like when building AXTextRuns, we need to consider trimmed spaces between lines. So, if we find
+            // a gap between runs, subtract one from that gap to account for a trimmed space.
+            unsigned trimmedCharacterAdjustment = newLineIndex != previousLineIndex && differenceToPrevious ? 1 : 0;
+            differenceBetweenDomAndRenderedOffsets += differenceToPrevious - trimmedCharacterAdjustment;
             previousEndDomOffset = textBox->maximumCaretOffset();
+            previousLineIndex = newLineIndex;
         }
         RELEASE_ASSERT(domOffset >= differenceBetweenDomAndRenderedOffsets);
         unsigned renderedOffset = domOffset - differenceBetweenDomAndRenderedOffsets;
-
-        CheckedPtr cache = renderText->document().axObjectCache();
-        if (!cache)
-            return std::nullopt;
-
-        RefPtr object = cache->getOrCreate(const_cast<RenderText&>(*renderText));
-        if (!object)
-            return std::nullopt;
-
-        return std::optional(TextMarkerData {
-            cache->treeID(),
-            object->objectID(),
-            renderedOffset,
-            Position::PositionIsOffsetInAnchor,
-            Affinity::Downstream,
-            0,
-            renderedOffset,
-            object->isIgnored(),
-            origin
-        });
+        return createFromRendererAndOffset(const_cast<RenderText&>(*renderText), renderedOffset);
     }
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 

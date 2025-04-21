@@ -71,12 +71,14 @@ public:
     WebKit::WebsitePopUpPolicy popUpPolicy() const { return m_data.popUpPolicy; }
     void setPopUpPolicy(WebKit::WebsitePopUpPolicy policy) { m_data.popUpPolicy = policy; }
 
+    RefPtr<WebKit::WebsiteDataStore> protectedWebsiteDataStore() const;
     WebKit::WebsiteDataStore* websiteDataStore() const { return m_websiteDataStore.get(); }
     void setWebsiteDataStore(RefPtr<WebKit::WebsiteDataStore>&&);
     
     WebKit::WebUserContentControllerProxy* userContentController() const { return m_userContentController.get(); }
     void setUserContentController(RefPtr<WebKit::WebUserContentControllerProxy>&&);
 
+    void setCustomUserAgent(WTF::String&& customUserAgent) { m_data.customUserAgent = WTFMove(customUserAgent); }
     void setCustomUserAgent(const WTF::String& customUserAgent) { m_data.customUserAgent = customUserAgent; }
     const WTF::String& customUserAgent() const { return m_data.customUserAgent; }
 

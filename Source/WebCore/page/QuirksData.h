@@ -67,6 +67,7 @@ struct WEBCORE_EXPORT QuirksData {
     bool shouldDisableDataURLPaddingValidation { false };
     bool shouldDisableElementFullscreen { false };
     bool shouldDisableFetchMetadata { false };
+    bool shouldBlockFetchWithNewlineAndLessThan { false };
     bool shouldDisableLazyIframeLoadingQuirk { false };
     bool shouldDisablePushStateFilePathRestrictions { false };
     bool shouldDisableWritingSuggestionsByDefaultQuirk { false };
@@ -129,6 +130,7 @@ struct WEBCORE_EXPORT QuirksData {
 #if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
     bool needsZeroMaxTouchPointsQuirk { false };
     bool shouldHideCoarsePointerCharacteristicsQuirk { false };
+    bool shouldSupportHoverMediaQueriesQuirk { false };
 #endif
 
 #if ENABLE(FLIP_SCREEN_DIMENSIONS_QUIRKS)

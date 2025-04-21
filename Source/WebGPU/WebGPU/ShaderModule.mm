@@ -73,10 +73,30 @@ static std::optional<ShaderModuleParameters> findShaderModuleParameters(const WG
     return { { *wgsl, hints } };
 }
 
+static NSString* appleGPUFamilyToString(id<MTLDevice> device)
+{
+#if ENABLE(WEBGPU_BY_DEFAULT)
+    if ([device supportsFamily:MTLGPUFamilyApple9])
+        return @"9";
+    if ([device supportsFamily:MTLGPUFamilyApple8])
+        return @"8";
+#endif
+    if ([device supportsFamily:MTLGPUFamilyApple7])
+        return @"7";
+    if ([device supportsFamily:MTLGPUFamilyApple6])
+        return @"6";
+    if ([device supportsFamily:MTLGPUFamilyApple5])
+        return @"5";
+    if ([device supportsFamily:MTLGPUFamilyApple4])
+        return @"4";
+    return @"0xFF";
+}
+
 id<MTLLibrary> ShaderModule::createLibrary(id<MTLDevice> device, const String& msl, String&& label, NSError** error)
 {
     static bool requireSafeMath = false;
     auto options = [MTLCompileOptions new];
+    options.preprocessorMacros = @{ @"__wgslMetalAppleGPUFamily" : appleGPUFamilyToString(device) };
 #if ENABLE(WEBGPU_BY_DEFAULT)
     static auto mathMode = MTLMathModeRelaxed;
     static auto mathFunctions = MTLMathFloatingPointFunctionsFast;
@@ -94,16 +114,14 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
     // FIXME(PERFORMANCE): Run the asynchronous version of this
-    id<MTLLibrary> library = [device newLibraryWithSource:msl options:options error:error];
+    id<MTLLibrary> library = [device newLibraryWithSource:msl.createNSString().get() options:options error:error];
     if (error && *error) {
-        *error = [NSError errorWithDomain:@"WebGPU" code:1 userInfo:@{ NSLocalizedDescriptionKey: [NSString stringWithFormat:@"Failed to compile the shader source, generated metal:\n%@", (NSString*)msl] }];
-#ifndef NDEBUG
         // FIXME: https://bugs.webkit.org/show_bug.cgi?id=250442
         WTFLogAlways("MSL compilation error: %@", [*error localizedDescription]);
-#endif
+        *error = [NSError errorWithDomain:@"WebGPU" code:1 userInfo:@{ NSLocalizedDescriptionKey: adoptNS([[NSString alloc] initWithFormat:@"Failed to compile the shader source, generated metal:\n%@ - error %@", msl.createNSString().get(), [*error localizedDescription]]).get() }];
         return nil;
     }
-    library.label = label;
+    library.label = label.createNSString().get();
     return library;
 }
 
@@ -784,7 +802,7 @@ void ShaderModule::getCompilationInfo(CompletionHandler<void(WGPUCompilationInfo
 void ShaderModule::setLabel(String&& label)
 {
     if (m_library)
-        m_library.label = label;
+        m_library.label = label.createNSString().get();
 }
 
 static auto wgslBindingType(WGPUBufferBindingType bindingType)

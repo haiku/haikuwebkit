@@ -637,14 +637,14 @@ void WebPage::getPlatformEditorStateCommon(const LocalFrame& frame, EditorState&
     auto& postLayoutData = *result.postLayoutData;
 
     if (result.isContentEditable) {
-        if (auto editingStyle = EditingStyle::styleAtSelectionStart(selection)) {
-            if (editingStyle->hasStyle(CSSPropertyFontWeight, "bold"_s))
+        if (auto editingStyle = EditingStyle::styleAtSelectionStart(selection, false, EditingStyle::PropertiesToInclude::PostLayoutProperties)) {
+            if (editingStyle->fontWeightIsBold())
                 postLayoutData.typingAttributes.add(TypingAttribute::Bold);
 
-            if (editingStyle->hasStyle(CSSPropertyFontStyle, "italic"_s) || editingStyle->hasStyle(CSSPropertyFontStyle, "oblique"_s))
+            if (editingStyle->fontStyleIsItalic())
                 postLayoutData.typingAttributes.add(TypingAttribute::Italics);
 
-            if (editingStyle->hasStyle(CSSPropertyWebkitTextDecorationsInEffect, "underline"_s))
+            if (editingStyle->webkitTextDecorationsInEffectIsUnderline())
                 postLayoutData.typingAttributes.add(TypingAttribute::Underline);
 
             if (RefPtr styleProperties = editingStyle->style()) {
@@ -1197,9 +1197,9 @@ void WebPage::createTextIndicatorForElementWithID(const String& elementID, Compl
     completionHandler(textIndicator->data());
 }
 
-void WebPage::createIconDataFromImageData(Ref<WebCore::SharedBuffer>&& buffer, const Vector<unsigned>& lengths, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&& completionHandler)
+void WebPage::createBitmapsFromImageData(Ref<WebCore::SharedBuffer>&& buffer, const Vector<unsigned>& lengths, CompletionHandler<void(Vector<Ref<WebCore::ShareableBitmap>>&&)>&& completionHandler)
 {
-    WebCore::createIconDataFromImageData(buffer->span(), lengths.span(), WTFMove(completionHandler));
+    WebCore::createBitmapsFromImageData(buffer->span(), lengths.span(), WTFMove(completionHandler));
 }
 
 void WebPage::decodeImageData(Ref<WebCore::SharedBuffer>&& buffer, std::optional<WebCore::FloatSize> preferredSize, CompletionHandler<void(RefPtr<WebCore::ShareableBitmap>&&)>&& completionHandler)

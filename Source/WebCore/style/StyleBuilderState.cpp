@@ -31,6 +31,7 @@
 #include "StyleBuilderState.h"
 
 #include "CSSAppleColorFilterPropertyValue.h"
+#include "CSSCalcRandomCachingKey.h"
 #include "CSSCanvasValue.h"
 #include "CSSColorValue.h"
 #include "CSSCrossfadeValue.h"
@@ -44,10 +45,10 @@
 #include "CSSImageValue.h"
 #include "CSSNamedImageValue.h"
 #include "CSSPaintImageValue.h"
-#include "CalculationRandomKeyMap.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "ElementInlines.h"
+#include "ElementTraversal.h"
 #include "FontCache.h"
 #include "HTMLElement.h"
 #include "RenderStyleSetters.h"
@@ -318,18 +319,44 @@ void BuilderState::setUsesContainerUnits()
     m_style.setUsesContainerUnits();
 }
 
-Ref<Calculation::RandomKeyMap> BuilderState::randomKeyMap(bool perElement) const
+double BuilderState::lookupCSSRandomBaseValue(const CSSCalc::RandomCachingKey& key, std::optional<CSS::Keyword::ElementShared> elementShared) const
 {
-    if (perElement) {
+    if (!elementShared) {
         ASSERT(element());
 
         std::optional<Style::PseudoElementIdentifier> pseudoElementIdentifier;
         if (style().pseudoElementType() != PseudoId::None)
             pseudoElementIdentifier = Style::PseudoElementIdentifier { style().pseudoElementType(), style().pseudoElementNameArgument() };
 
-        return element()->randomKeyMap(pseudoElementIdentifier);
+        return element()->lookupCSSRandomBaseValue(pseudoElementIdentifier, key);
     }
-    return document().randomKeyMap();
+    return document().lookupCSSRandomBaseValue(key);
+}
+
+unsigned BuilderState::siblingCount() const
+{
+    // https://drafts.csswg.org/css-values-5/#funcdef-sibling-count
+
+    ASSERT(element());
+
+    unsigned count = 1;
+    for (const auto* sibling = ElementTraversal::previousSibling(*element()); sibling; sibling = ElementTraversal::previousSibling(*sibling))
+        ++count;
+    for (const auto* sibling = ElementTraversal::nextSibling(*element()); sibling; sibling = ElementTraversal::nextSibling(*sibling))
+        ++count;
+    return count;
+}
+
+unsigned BuilderState::siblingIndex() const
+{
+    // https://drafts.csswg.org/css-values-5/#funcdef-sibling-index
+
+    ASSERT(element());
+
+    unsigned count = 1;
+    for (const auto* sibling = ElementTraversal::previousSibling(*element()); sibling; sibling = ElementTraversal::previousSibling(*sibling))
+        ++count;
+    return count;
 }
 
 } // namespace Style

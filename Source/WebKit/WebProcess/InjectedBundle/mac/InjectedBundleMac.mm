@@ -118,7 +118,7 @@ bool InjectedBundle::initialize(const WebProcessCreationParameters& parameters, 
         }
     }
 
-    m_platformBundle = adoptNS([[NSBundle alloc] initWithPath:m_path]);
+    m_platformBundle = adoptNS([[NSBundle alloc] initWithPath:m_path.createNSString().get()]);
     if (!m_platformBundle) {
         WTFLogAlways("InjectedBundle::load failed - Could not create the bundle.\n");
         return false;
@@ -188,7 +188,7 @@ bool InjectedBundle::initialize(const WebProcessCreationParameters& parameters, 
         return false;
     }
 
-    WKWebProcessPlugInController* plugInController = WebKit::wrapper(*this);
+    RetainPtr plugInController = WebKit::wrapper(*this);
     [plugInController _setPrincipalClassInstance:instance.get()];
 
     if ([instance respondsToSelector:@selector(additionalClassesForParameterCoder)])
@@ -198,7 +198,7 @@ bool InjectedBundle::initialize(const WebProcessCreationParameters& parameters, 
         return false;
 
     if ([instance respondsToSelector:@selector(webProcessPlugIn:initializeWithObject:)])
-        [instance webProcessPlugIn:plugInController initializeWithObject:nil];
+        [instance webProcessPlugIn:plugInController.get() initializeWithObject:nil];
 
     return true;
 }
@@ -227,13 +227,13 @@ void InjectedBundle::extendClassesForParameterCoder(API::Array& classes)
         }
     
         CString className = classNameString->string().utf8();
-        Class objectClass = objc_lookUpClass(className.data());
+        RetainPtr objectClass = objc_lookUpClass(className.data());
         if (!objectClass) {
             WTFLogAlways("InjectedBundle::extendClassesForParameterCoder - Class %s is not a valid Objective C class.\n", className.data());
             break;
         }
 
-        [mutableSet.get() addObject:objectClass];
+        [mutableSet.get() addObject:objectClass.get()];
     }
 
     m_classesForCoder = mutableSet;
@@ -261,7 +261,7 @@ void InjectedBundle::setBundleParameter(const String& key, std::span<const uint8
     if (!m_bundleParameters && parameter)
         m_bundleParameters = adoptNS([[WKWebProcessBundleParameters alloc] initWithDictionary:@{ }]);
 
-    [m_bundleParameters setParameter:parameter forKey:key];
+    [m_bundleParameters setParameter:parameter forKey:key.createNSString().get()];
 }
 
 void InjectedBundle::setBundleParameters(std::span<const uint8_t> value)

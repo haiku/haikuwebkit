@@ -90,7 +90,6 @@
 #include "XMLNSNames.h"
 #include "XMLNames.h"
 #include <JavaScriptCore/HeapInlines.h>
-#include <variant>
 #include <wtf/HexNumber.h>
 #include <wtf/RefCountedLeakCounter.h>
 #include <wtf/SHA1.h>
@@ -1858,7 +1857,7 @@ static inline unsigned short compareDetachedElementsPosition(Node& firstNode, No
     SHA1::Digest firstHash = hashPointer(&firstNode);
     SHA1::Digest secondHash = hashPointer(&secondNode);
 
-    unsigned short direction = compareSpans(std::span { firstHash }, std::span { secondHash }) > 0 ? Node::DOCUMENT_POSITION_PRECEDING : Node::DOCUMENT_POSITION_FOLLOWING;
+    unsigned short direction = is_gt(compareSpans(std::span { firstHash }, std::span { secondHash })) ? Node::DOCUMENT_POSITION_PRECEDING : Node::DOCUMENT_POSITION_FOLLOWING;
 
     return Node::DOCUMENT_POSITION_DISCONNECTED | Node::DOCUMENT_POSITION_IMPLEMENTATION_SPECIFIC | direction;
 }
@@ -2211,7 +2210,7 @@ enum EventTargetInterfaceType Node::eventTargetInterface() const
 }
 
 template <typename MoveNodeFunction, typename MoveShadowRootFunction>
-static unsigned traverseSubtreeToUpdateTreeScope(Node& root, MoveNodeFunction moveNode, MoveShadowRootFunction moveShadowRoot)
+static unsigned traverseSubtreeToUpdateTreeScope(Node& root, NOESCAPE const MoveNodeFunction& moveNode, NOESCAPE const MoveShadowRootFunction& moveShadowRoot)
 {
     unsigned count = 0;
     for (Node* node = &root; node; node = NodeTraversal::next(*node, &root)) {

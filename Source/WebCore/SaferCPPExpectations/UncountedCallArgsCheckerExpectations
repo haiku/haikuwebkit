@@ -17,7 +17,6 @@ Modules/WebGPU/GPUExternalTexture.cpp
 Modules/WebGPU/GPUPipelineLayout.cpp
 Modules/WebGPU/GPUPresentationContext.cpp
 Modules/WebGPU/GPUQuerySet.cpp
-Modules/WebGPU/GPUQueue.cpp
 Modules/WebGPU/GPURenderBundle.cpp
 Modules/WebGPU/GPURenderBundleEncoder.cpp
 Modules/WebGPU/GPURenderPassEncoder.cpp
@@ -26,7 +25,6 @@ Modules/WebGPU/GPUSampler.cpp
 Modules/WebGPU/GPUShaderModule.cpp
 Modules/WebGPU/GPUTexture.cpp
 Modules/WebGPU/GPUTextureView.cpp
-Modules/WebGPU/Implementation/WebGPUDeviceImpl.cpp
 Modules/WebGPU/Implementation/WebGPUImpl.cpp
 Modules/airplay/WebMediaSessionManager.cpp
 Modules/applepay-ams-ui/ApplePayAMSUIPaymentHandler.cpp
@@ -61,8 +59,6 @@ Modules/fetch/FetchBodyConsumer.cpp
 Modules/fetch/FetchBodySource.cpp
 Modules/fetch/FetchLoader.cpp
 Modules/fetch/FetchRequest.cpp
-Modules/fetch/FetchResponse.cpp
-Modules/fetch/FormDataConsumer.cpp
 Modules/filesystemaccess/FileSystemDirectoryHandle.cpp
 Modules/filesystemaccess/FileSystemFileHandle.cpp
 Modules/filesystemaccess/FileSystemHandle.cpp
@@ -404,7 +400,6 @@ css/CSSCrossfadeValue.cpp
 css/CSSCursorImageValue.cpp
 css/CSSFontFace.cpp
 css/CSSFontFaceRule.cpp
-css/CSSFontFaceSet.cpp
 css/CSSFontFeatureValue.cpp
 css/CSSFontSelector.cpp
 css/CSSFontStyleRangeValue.cpp
@@ -472,9 +467,6 @@ css/StyleRuleImport.cpp
 css/StyleRuleImport.h
 css/StyleSheetContents.cpp
 css/StyleSheetList.cpp
-css/parser/CSSPropertyParser.cpp
-css/parser/CSSPropertyParserConsumer+Grid.cpp
-css/parser/SizesCalcParser.cpp
 css/query/GenericMediaQuerySerialization.cpp
 css/typedom/CSSOMVariableReferenceValue.cpp
 css/typedom/CSSStyleImageValue.cpp
@@ -631,9 +623,6 @@ editing/cocoa/WebContentReaderCocoa.mm
 editing/mac/EditorMac.mm
 editing/mac/FrameSelectionMac.mm
 editing/markup.cpp
-fileapi/Blob.cpp
-fileapi/FileReader.cpp
-fileapi/FileReaderLoader.cpp
 history/BackForwardCache.cpp
 history/CachedFrame.cpp
 history/CachedPage.cpp
@@ -746,7 +735,6 @@ html/canvas/WebGLRenderingContext.cpp
 html/canvas/WebGLRenderingContextBase.cpp
 html/canvas/WebGLSync.cpp
 html/canvas/WebGLTransformFeedback.cpp
-html/canvas/WebGLUtilities.cpp
 html/canvas/WebGLVertexArrayObject.cpp
 html/canvas/WebGLVertexArrayObjectBase.cpp
 html/canvas/WebGLVertexArrayObjectOES.cpp
@@ -826,6 +814,7 @@ loader/ApplicationManifestLoader.cpp
 loader/CrossOriginAccessControl.cpp
 loader/CrossOriginOpenerPolicy.cpp
 loader/CrossOriginPreflightChecker.cpp
+loader/DocumentLoader.cpp
 loader/DocumentThreadableLoader.cpp
 loader/DocumentWriter.cpp
 loader/FormSubmission.cpp
@@ -852,7 +841,6 @@ loader/cache/CachedImage.cpp
 loader/cache/CachedImage.h
 loader/cache/CachedResourceRequest.cpp
 loader/cache/CachedResourceRequestInitiatorTypes.h
-loader/cache/CachedSVGDocumentReference.cpp
 loader/cache/CachedSVGFont.cpp
 loader/cache/MemoryCache.cpp
 loader/cocoa/BundleResourceLoader.mm
@@ -887,7 +875,6 @@ page/LocalFrameView.cpp
 page/Location.cpp
 page/NavigationDestination.cpp
 page/NavigationDestination.h
-page/NavigationHistoryEntry.cpp
 page/NavigationTransition.cpp
 page/Navigator.cpp
 page/NavigatorLoginStatus.cpp
@@ -960,6 +947,7 @@ platform/ShareableResource.cpp
 platform/animation/AcceleratedEffectValues.cpp
 platform/animation/Animation.cpp
 platform/animation/AnimationList.cpp
+platform/audio/PlatformMediaSessionManager.cpp
 platform/audio/cocoa/AudioFileReaderCocoa.cpp
 platform/cocoa/DragImageCocoa.mm
 platform/cocoa/PlaybackSessionModelMediaElement.mm
@@ -1031,7 +1019,6 @@ platform/graphics/controls/SwitchTrackPart.h
 platform/graphics/controls/TextAreaPart.h
 platform/graphics/controls/TextFieldPart.h
 platform/graphics/controls/ToggleButtonPart.h
-platform/graphics/cv/GraphicsContextGLCVCocoa.mm
 platform/graphics/displaylists/DisplayListItem.cpp
 platform/graphics/filters/FEDisplacementMap.cpp
 platform/graphics/filters/software/FELightingSoftwareApplier.cpp
@@ -1254,7 +1241,6 @@ style/StyleResolveForFont.cpp
 style/StyleResolver.cpp
 style/StyleScope.cpp
 style/StyleScopeRuleSets.cpp
-style/StyleSharingResolver.cpp
 style/StyleSheetContentsCache.cpp
 style/StyleTreeResolver.cpp
 style/StyleUpdate.cpp
@@ -1385,7 +1371,6 @@ workers/WorkerOrWorkletThread.cpp
 workers/WorkerRunLoop.cpp
 workers/WorkerScriptLoader.cpp
 workers/service/FetchEvent.cpp
-workers/service/NavigationPreloadManager.cpp
 workers/service/ServiceWorker.cpp
 workers/service/ServiceWorkerClientData.cpp
 workers/service/ServiceWorkerContainer.cpp

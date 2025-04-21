@@ -183,6 +183,10 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     // Implicit means that this selector is not author/UA written.
     bool isImplicit() const { return m_isImplicit; }
 
+#if !ASSERT_WITH_SECURITY_IMPLICATION_DISABLED
+    bool destructorHasBeenCalled() const { return m_destructorHasBeenCalled; }
+#endif
+
 private:
     friend class MutableCSSSelector;
 
@@ -267,7 +271,6 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     } m_data;
 };
 
-inline bool operator==(const AtomString& a, const PossiblyQuotedIdentifier& b) { return a == b.identifier; }
 inline bool operator==(const PossiblyQuotedIdentifier& a, const AtomString& b) { return a.identifier == b; }
 
 inline const QualifiedName& CSSSelector::attribute() const

@@ -40,7 +40,7 @@ class NavigationAction;
 class ResourceRequest;
 class ResourceResponse;
 
-enum class PolicyDecisionMode;
+enum class PolicyDecisionMode : bool;
 enum class SandboxFlag : uint16_t;
 
 enum class IsPerformingHTTPFallback : bool { No, Yes };
@@ -50,7 +50,8 @@ using SandboxFlags = OptionSet<SandboxFlag>;
 
 class FrameLoaderClient {
 public:
-    virtual void dispatchDecidePolicyForNavigationAction(const NavigationAction&, const ResourceRequest&, const ResourceResponse& redirectResponse, FormState*, const String& clientRedirectSourceForHistory, std::optional<NavigationIdentifier>, std::optional<HitTestResult>&&, bool hasOpener, IsPerformingHTTPFallback, SandboxFlags, PolicyDecisionMode, FramePolicyFunction&&) = 0;
+    virtual void dispatchDecidePolicyForNavigationAction(const NavigationAction&, const ResourceRequest&, const ResourceResponse& redirectResponse, FormState*, const String& clientRedirectSourceForHistory, std::optional<NavigationIdentifier>,
+        std::optional<HitTestResult>&&, bool hasOpener, IsPerformingHTTPFallback, SandboxFlags, MayNeedBeforeUnloadPrompt, PolicyDecisionMode, FramePolicyFunction&&, const CertificateInfo&) = 0;
     virtual bool dispatchDidReceiveInvalidCertificate(DocumentLoader*, const CertificateInfo&, const char*) { return false; }
     virtual void updateSandboxFlags(SandboxFlags) = 0;
     virtual void updateOpener(const Frame&) = 0;

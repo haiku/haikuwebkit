@@ -433,16 +433,17 @@ void WebExtensionContext::tabsCaptureVisibleTab(WebPageProxyIdentifier webPagePr
             }
 
 #if USE(APPKIT)
-            auto cgImage = [image CGImageForProposedRect:nil context:nil hints:nil];
+            RetainPtr<CGImage> cgImage = [image CGImageForProposedRect:nil context:nil hints:nil];
 #else
-            auto cgImage = image.CGImage;
+            RetainPtr<CGImage> cgImage = image.CGImage;
 #endif
             if (!cgImage) {
                 completionHandler({ });
                 return;
             }
 
-            completionHandler(URL { WebCore::dataURL(cgImage, toMIMEType(imageFormat), imageQuality) });
+            // FIXME: This is a static analysis false positive.
+            SUPPRESS_UNRETAINED_ARG completionHandler(URL { WebCore::dataURL(cgImage.get(), toMIMEType(imageFormat), imageQuality) });
         });
     });
 }
@@ -600,10 +601,10 @@ void WebExtensionContext::tabsExecuteScript(WebPageProxyIdentifier webPageProxyI
         if (parameters.code)
             scriptData = SourcePair { parameters.code.value(), URL { } };
         else {
-            NSString *filePath = parameters.files.value().first();
-            scriptData = sourcePairForResource(filePath, *this);
+            RetainPtr filePath = parameters.files.value().first().createNSString();
+            scriptData = sourcePairForResource(filePath.get(), *this);
             if (!scriptData) {
-                completionHandler(toWebExtensionError(apiName, nullString(), @"Invalid resource: %@", filePath));
+                completionHandler(toWebExtensionError(apiName, nullString(), @"Invalid resource: %@", filePath.get()));
                 return;
             }
         }

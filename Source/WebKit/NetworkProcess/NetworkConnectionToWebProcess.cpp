@@ -82,6 +82,7 @@
 #include <WebCore/DocumentStorageAccess.h>
 #include <WebCore/HTTPCookieAcceptPolicy.h>
 #include <WebCore/LogInitialization.h>
+#include <WebCore/LoginStatus.h>
 #include <WebCore/NetworkStorageSession.h>
 #include <WebCore/ResourceError.h>
 #include <WebCore/ResourceLoadObserver.h>
@@ -264,8 +265,8 @@ bool NetworkConnectionToWebProcess::dispatchMessage(IPC::Connection& connection,
     }
 
     if (decoder.messageReceiverName() == Messages::NetworkResourceLoader::messageReceiverName()) {
-        MESSAGE_CHECK_WITH_RETURN_VALUE(AtomicObjectIdentifier<WebCore::ResourceLoader>::isValidIdentifier(decoder.destinationID()), false);
-        if (RefPtr loader = m_networkResourceLoaders.get(AtomicObjectIdentifier<WebCore::ResourceLoader>(decoder.destinationID())))
+        MESSAGE_CHECK_WITH_RETURN_VALUE(AtomicObjectIdentifier<WebCore::ResourceLoaderIdentifierType>::isValidIdentifier(decoder.destinationID()), false);
+        if (RefPtr loader = m_networkResourceLoaders.get(AtomicObjectIdentifier<WebCore::ResourceLoaderIdentifierType>(decoder.destinationID())))
             loader->didReceiveMessage(connection, decoder);
         return true;
     }
@@ -1599,22 +1600,22 @@ void NetworkConnectionToWebProcess::messagePortClosed(const MessagePortIdentifie
     networkProcess().messagePortChannelRegistry().didCloseMessagePort(port);
 }
 
-uint64_t NetworkConnectionToWebProcess::nextMessageBatchIdentifier(CompletionHandler<void()>&& deliveryCallback)
+MessageBatchIdentifier NetworkConnectionToWebProcess::nextMessageBatchIdentifier(CompletionHandler<void()>&& deliveryCallback)
 {
-    static uint64_t currentMessageBatchIdentifier;
-    ASSERT(!m_messageBatchDeliveryCompletionHandlers.contains(currentMessageBatchIdentifier + 1));
-    m_messageBatchDeliveryCompletionHandlers.add(++currentMessageBatchIdentifier, WTFMove(deliveryCallback));
-    return currentMessageBatchIdentifier;
+    auto identifier = MessageBatchIdentifier::generate();
+    ASSERT(!m_messageBatchDeliveryCompletionHandlers.contains(identifier));
+    m_messageBatchDeliveryCompletionHandlers.add(identifier, WTFMove(deliveryCallback));
+    return identifier;
 }
 
-void NetworkConnectionToWebProcess::takeAllMessagesForPort(const MessagePortIdentifier& port, CompletionHandler<void(Vector<MessageWithMessagePorts>&&, uint64_t)>&& callback)
+void NetworkConnectionToWebProcess::takeAllMessagesForPort(const MessagePortIdentifier& port, CompletionHandler<void(Vector<MessageWithMessagePorts>&&, std::optional<MessageBatchIdentifier>)>&& callback)
 {
     networkProcess().messagePortChannelRegistry().takeAllMessagesForPort(port, [this, protectedThis = Ref { *this }, callback = WTFMove(callback)](Vector<MessageWithMessagePorts>&& messages, CompletionHandler<void()>&& deliveryCallback) mutable {
         callback(WTFMove(messages), nextMessageBatchIdentifier(WTFMove(deliveryCallback)));
     });
 }
 
-void NetworkConnectionToWebProcess::didDeliverMessagePortMessages(uint64_t messageBatchIdentifier)
+void NetworkConnectionToWebProcess::didDeliverMessagePortMessages(MessageBatchIdentifier messageBatchIdentifier)
 {
     // Null check only necessary for rare condition where network process crashes during message port connection establishment.
     if (auto callback = m_messageBatchDeliveryCompletionHandlers.take(messageBatchIdentifier))
@@ -1750,7 +1751,7 @@ void NetworkConnectionToWebProcess::navigatorGetPushPermissionState(URL&& scopeU
 
 void NetworkConnectionToWebProcess::initializeWebTransportSession(URL&& url, WebPageProxyIdentifier&& pageID, WebCore::ClientOrigin&& clientOrigin, CompletionHandler<void(std::optional<WebTransportSessionIdentifier>)>&& completionHandler)
 {
-    if (!url.isValid())
+    if (!url.isValid() || !portAllowed(url) || isIPAddressDisallowed(url))
         return completionHandler(std::nullopt);
 
     NetworkTransportSession::initialize(*this, WTFMove(url), WTFMove(pageID), WTFMove(clientOrigin), [weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)] (RefPtr<NetworkTransportSession>&& session) mutable {

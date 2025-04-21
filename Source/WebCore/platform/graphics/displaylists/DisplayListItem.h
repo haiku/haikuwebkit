@@ -26,7 +26,6 @@
 #pragma once
 
 #include "RenderingResourceIdentifier.h"
-#include <variant>
 #include <wtf/OptionSet.h>
 
 namespace WTF {
@@ -46,7 +45,6 @@ class ApplyDeviceScaleFactor;
 class BeginTransparencyLayer;
 class BeginTransparencyLayerWithCompositeMode;
 class ClearRect;
-class ClearDropShadow;
 class Clip;
 class ClipRoundedRect;
 class ClipOut;
@@ -74,7 +72,6 @@ class DrawSystemImage;
 class EndTransparencyLayer;
 class FillCompositedRect;
 class FillEllipse;
-class FillPathSegment;
 class FillPath;
 class FillRect;
 class FillRectWithColor;
@@ -96,22 +93,9 @@ class SetLineJoin;
 class SetMiterLimit;
 class SetState;
 class StrokeEllipse;
-class StrokeLine;
-class StrokePathSegment;
 class StrokePath;
 class StrokeRect;
 class Translate;
-#if ENABLE(INLINE_PATH_DATA)
-class FillLine;
-class FillArc;
-class FillClosedArc;
-class FillQuadCurve;
-class FillBezierCurve;
-class StrokeArc;
-class StrokeClosedArc;
-class StrokeQuadCurve;
-class StrokeBezierCurve;
-#endif
 #if USE(CG)
 class ApplyFillPattern;
 class ApplyStrokePattern;
@@ -125,7 +109,6 @@ using Item = std::variant
     , BeginTransparencyLayer
     , BeginTransparencyLayerWithCompositeMode
     , ClearRect
-    , ClearDropShadow
     , Clip
     , ClipRoundedRect
     , ClipOut
@@ -153,7 +136,6 @@ using Item = std::variant
     , EndTransparencyLayer
     , FillCompositedRect
     , FillEllipse
-    , FillPathSegment
     , FillPath
     , FillRect
     , FillRectWithColor
@@ -175,22 +157,9 @@ using Item = std::variant
     , SetMiterLimit
     , SetState
     , StrokeEllipse
-    , StrokeLine
-    , StrokePathSegment
     , StrokePath
     , StrokeRect
     , Translate
-#if ENABLE(INLINE_PATH_DATA)
-    , FillLine
-    , FillArc
-    , FillClosedArc
-    , FillQuadCurve
-    , FillBezierCurve
-    , StrokeArc
-    , StrokeClosedArc
-    , StrokeQuadCurve
-    , StrokeBezierCurve
-#endif
 #if USE(CG)
     , ApplyFillPattern
     , ApplyStrokePattern

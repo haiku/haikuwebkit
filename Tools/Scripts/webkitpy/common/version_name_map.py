@@ -80,7 +80,10 @@ class VersionNameMap(object):
                 'Vista': Version(6),
                 'XP': Version(5, 1),
             },
-            'haiku' : { '' : Version(1.4) },
+            'haiku': {
+                '': Version(1)
+            },
+
             # This entry avoids hitting the assert in mapping_for_platform() on Linux,
             # but otherwise shouldn't contain any useful key-value pairs.
             'linux': {},

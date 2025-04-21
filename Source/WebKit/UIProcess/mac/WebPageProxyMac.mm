@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,6 +29,7 @@
 #if PLATFORM(MAC)
 
 #import "APIUIClient.h"
+#import "APIWebsitePolicies.h"
 #import "CocoaImage.h"
 #import "Connection.h"
 #import "FrameInfoData.h"
@@ -60,6 +61,7 @@
 #import <WebCore/DragItem.h>
 #import <WebCore/GraphicsLayer.h>
 #import <WebCore/LegacyNSPasteboardTypes.h>
+#import <WebCore/Quirks.h>
 #import <WebCore/SharedBuffer.h>
 #import <WebCore/TextAlternativeWithRange.h>
 #import <WebCore/UniversalAccessZoom.h>
@@ -158,7 +160,7 @@ void WebPageProxy::getIsSpeaking(CompletionHandler<void(bool)>&& completionHandl
 void WebPageProxy::speak(const String& string)
 {
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
-    [NSApp speakString:string];
+    [NSApp speakString:string.createNSString().get()];
 }
 
 void WebPageProxy::stopSpeaking()
@@ -171,7 +173,7 @@ void WebPageProxy::searchTheWeb(const String& string)
 {
     RetainPtr pasteboard = [NSPasteboard pasteboardWithUniqueName];
     [pasteboard declareTypes:@[legacyStringPasteboardType()] owner:nil];
-    [pasteboard setString:string forType:legacyStringPasteboardType()];
+    [pasteboard setString:string.createNSString().get() forType:legacyStringPasteboardType()];
     
     NSPerformService(@"Search With %WebSearchProvider@", pasteboard.get());
 }
@@ -594,7 +596,7 @@ void WebPageProxy::showPDFContextMenu(const WebKit::PDFContextMenu& contextMenu,
         }
         
         RetainPtr nsItem = adoptNS([[NSMenuItem alloc] init]);
-        [nsItem setTitle:item.title];
+        [nsItem setTitle:item.title.createNSString().get()];
         [nsItem setEnabled:item.enabled == ContextMenuItemEnablement::Enabled];
         [nsItem setState:item.state];
 #if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
@@ -688,7 +690,7 @@ void WebPageProxy::showValidationMessage(const IntRect& anchorClientRect, const 
     RefPtr { m_validationBubble }->showRelativeTo(anchorClientRect);
 }
 
-NSView *WebPageProxy::inspectorAttachmentView()
+RetainPtr<NSView> WebPageProxy::inspectorAttachmentView()
 {
     RefPtr pageClient = this->pageClient();
     return pageClient ? pageClient->inspectorAttachmentView() : nullptr;
@@ -877,7 +879,7 @@ void WebPageProxy::showImageInQuickLookPreviewPanel(ShareableBitmap& imageBitmap
     if (!CGImageDestinationFinalize(destination.get()))
         return;
 
-    m_quickLookPreviewController = adoptNS([[WKQuickLookPreviewController alloc] initWithPage:*this imageData:(__bridge NSData *)imageData.get() title:tooltip imageURL:imageURL.createNSURL().get() activity:activity]);
+    m_quickLookPreviewController = adoptNS([[WKQuickLookPreviewController alloc] initWithPage:*this imageData:(__bridge NSData *)imageData.get() title:tooltip.createNSString().get() imageURL:imageURL.createNSURL().get() activity:activity]);
 
     // When presenting the shared QLPreviewPanel, QuickLook will search the responder chain for a suitable panel controller.
     // Make sure that we (by default) start the search at the web view, which knows how to vend the Visual Search preview
@@ -971,6 +973,22 @@ WebCore::FloatRect WebPageProxy::selectionBoundingRectInRootViewCoordinates() co
     auto bounds = WebCore::FloatRect { editorState().postLayoutData->selectionBoundingRect };
     bounds.move(internals().scrollPositionDuringLastEditorStateUpdate - mainFrameScrollPosition());
     return bounds;
+}
+
+WebContentMode WebPageProxy::effectiveContentModeAfterAdjustingPolicies(API::WebsitePolicies& policies, const WebCore::ResourceRequest& request)
+{
+    Ref preferences = m_preferences;
+    if (preferences->needsSiteSpecificQuirks()) {
+        if (policies.customUserAgent().isEmpty() && customUserAgent().isEmpty()) {
+            // FIXME (263619): This is done here for adding a UA override to tiktok. Should be in a common location.
+            // needsCustomUserAgentOverride() is currently very generic on purpose.
+            // In the future we want to pass more parameters for targeting specific domains.
+            if (auto customUserAgentForQuirk = Quirks::needsCustomUserAgentOverride(request.url(), m_applicationNameForUserAgent))
+                policies.setCustomUserAgent(WTFMove(*customUserAgentForQuirk));
+        }
+    }
+
+    return WebContentMode::Recommended;
 }
 
 } // namespace WebKit

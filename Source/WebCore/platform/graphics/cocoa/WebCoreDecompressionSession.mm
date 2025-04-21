@@ -80,16 +80,26 @@ void WebCoreDecompressionSession::assignResourceOwner(CVImageBufferRef imageBuff
         IOSurface::setOwnershipIdentity(surface, m_resourceOwner);
 }
 
-RetainPtr<VTDecompressionSessionRef> WebCoreDecompressionSession::ensureDecompressionSessionForSample(CMSampleBufferRef sample)
+Expected<RetainPtr<VTDecompressionSessionRef>, OSStatus> WebCoreDecompressionSession::ensureDecompressionSessionForSample(CMSampleBufferRef cmSample)
 {
     Locker lock { m_lock };
-    if (isInvalidated() || m_videoDecoder)
-        return nullptr;
 
-    CMVideoFormatDescriptionRef videoFormatDescription = PAL::CMSampleBufferGetFormatDescription(sample);
+    if (isInvalidated())
+        return makeUnexpected(kVTInvalidSessionErr);
+
+    if (m_videoDecoder)
+        return RetainPtr<VTDecompressionSessionRef> { };
+
+    CMVideoFormatDescriptionRef videoFormatDescription = PAL::CMSampleBufferGetFormatDescription(cmSample);
     if (m_decompressionSession && !VTDecompressionSessionCanAcceptFormatDescription(m_decompressionSession.get(), videoFormatDescription)) {
-        VTDecompressionSessionWaitForAsynchronousFrames(m_decompressionSession.get());
+        auto status = VTDecompressionSessionWaitForAsynchronousFrames(m_decompressionSession.get());
+        Ref sample = MediaSampleAVFObjC::create(cmSample, 0);
         m_decompressionSession = nullptr;
+        if (!(sample->flags() & MediaSample::IsSync)) {
+            RELEASE_LOG_INFO(Media, "VTDecompressionSession can't accept format description change on non-keyframe status:%d", int(status));
+            return makeUnexpected(status == kVTInvalidSessionErr ? status : kVTVideoDecoderBadDataErr);
+        }
+        RELEASE_LOG_INFO(Media, "VTDecompressionSession can't accept format description change on keyframe, creating new VTDecompressionSession status:%d", int(status));
     }
 
     if (!m_decompressionSession) {
@@ -141,7 +151,11 @@ Ref<WebCoreDecompressionSession::DecodingPromise> WebCoreDecompressionSession::d
     if (!displaying)
         flags |= kVTDecodeFrame_DoNotOutputFrame;
 
-    RetainPtr decompressionSession = ensureDecompressionSessionForSample(sample);
+    auto result = ensureDecompressionSessionForSample(sample);
+    if (!result)
+        return DecodingPromise::createAndReject(result.error());
+    RetainPtr decompressionSession = WTFMove(*result);
+
     if (!decompressionSession && !m_videoDecoderCreationFailed) {
         RefPtr<MediaPromise> initPromise;
 
@@ -257,10 +271,11 @@ Ref<WebCoreDecompressionSession::DecodingPromise> WebCoreDecompressionSession::d
 
 RetainPtr<CVPixelBufferRef> WebCoreDecompressionSession::decodeSampleSync(CMSampleBufferRef sample)
 {
-    RetainPtr decompressionSession = ensureDecompressionSessionForSample(sample);
-    if (!decompressionSession)
+    auto result = ensureDecompressionSessionForSample(sample);
+    if (!result || !*result)
         return nullptr;
 
+    RetainPtr decompressionSession = WTFMove(*result);
     RetainPtr<CVPixelBufferRef> pixelBuffer;
     VTDecodeInfoFlags flags { 0 };
     WTF::Semaphore syncDecompressionOutputSemaphore { 0 };
@@ -275,16 +290,22 @@ RetainPtr<CVPixelBufferRef> WebCoreDecompressionSession::decodeSampleSync(CMSamp
     return pixelBuffer;
 }
 
+bool WebCoreDecompressionSession::isNonRecoverableError(OSStatus status) const
+{
+    return status != noErr && status != kVTVideoDecoderReferenceMissingErr;
+}
+
 void WebCoreDecompressionSession::handleDecompressionOutput(bool displaying, OSStatus status, VTDecodeInfoFlags, CVImageBufferRef rawImageBuffer, CMTime presentationTimeStamp, CMTime presentationDuration)
 {
     assertIsCurrent(m_decompressionQueue.get());
 
-    if (status != noErr) {
+    if (isNonRecoverableError(status)) {
+        RELEASE_LOG_ERROR(Media, "Video sample decompression failed with error:%d", int(status));
         m_lastDecodingError = status;
         return;
     }
 
-    if (!displaying)
+    if (!displaying || !rawImageBuffer)
         return;
 
     CMVideoFormatDescriptionRef rawImageBufferDescription = nullptr;

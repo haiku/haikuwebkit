@@ -958,6 +958,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/StyleSheetContents.h
     css/StyleSheetList.h
 
+    css/calc/CSSCalcRandomCachingKey.h
+    css/calc/CSSCalcRandomCachingKeyMap.h
     css/calc/CSSCalcSymbolTable.h
     css/calc/CSSCalcSymbolsAllowed.h
     css/calc/CSSCalcTree.h
@@ -1023,6 +1025,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/values/primitives/CSSPrimitiveNumericUnits.h
     css/values/primitives/CSSSymbol.h
     css/values/primitives/CSSURL.h
+    css/values/primitives/CSSURLModifiers.h
     css/values/primitives/CSSUnevaluatedCalc.h
 
     css/values/shapes/CSSBasicShape.h
@@ -1564,6 +1567,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     loader/LinkLoader.h
     loader/LinkLoaderClient.h
     loader/LoadSchedulingMode.h
+    loader/LoadedFromOpaqueSource.h
     loader/LoaderMalloc.h
     loader/LoaderStrategy.h
     loader/LocalFrameLoaderClient.h
@@ -2009,10 +2013,12 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/audio/AudioSourceProviderClient.h
     platform/audio/AudioStreamDescription.h
     platform/audio/AudioUtilities.h
+    platform/audio/MediaSessionManagerInterface.h
     platform/audio/NowPlayingInfo.h
     platform/audio/NowPlayingMetadataObserver.h
     platform/audio/PlatformAudioData.h
     platform/audio/PlatformMediaSession.h
+    platform/audio/PlatformMediaSessionInterface.h
     platform/audio/PlatformMediaSessionManager.h
     platform/audio/PlatformRawAudioData.h
     platform/audio/PushPullFIFO.h
@@ -2020,8 +2026,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     platform/calc/CalculationCategory.h
     platform/calc/CalculationOperator.h
-    platform/calc/CalculationRandomKey.h
-    platform/calc/CalculationRandomKeyMap.h
     platform/calc/CalculationRange.h
     platform/calc/CalculationTree.h
     platform/calc/CalculationValue.h

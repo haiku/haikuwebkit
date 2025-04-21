@@ -1288,6 +1288,11 @@ bool Quirks::shouldDisableFetchMetadata() const
     return needsQuirks() && m_quirksData.shouldDisableFetchMetadata;
 }
 
+bool Quirks::shouldBlockFetchWithNewlineAndLessThan() const
+{
+    return needsQuirks() && m_quirksData.shouldBlockFetchWithNewlineAndLessThan;
+}
+
 // Push state file path restrictions break Mimeo Photo Plugin (rdar://112445672).
 bool Quirks::shouldDisablePushStateFilePathRestrictions() const
 {
@@ -1447,11 +1452,18 @@ bool Quirks::needsIPhoneUserAgent(const URL& url)
     return false;
 }
 
-bool Quirks::needsCustomUserAgentOverride(const URL& url)
+std::optional<String> Quirks::needsCustomUserAgentOverride(const URL& url, const String& applicationNameForUserAgent)
 {
-    if (url.host() == "tiktok.com"_s)
-        return true;
-    return false;
+#if PLATFORM(COCOA)
+    auto hostDomain = RegistrableDomain(url);
+    // FIXME(rdar://148759791): Remove this once TikTok removes the outdated error message.
+    if (hostDomain.string() == "tiktok.com"_s)
+        return makeStringByReplacingAll(standardUserAgentWithApplicationName(applicationNameForUserAgent), "like Gecko"_s, "like Gecko, like Chrome/136."_s);
+#else
+    UNUSED_PARAM(url);
+    UNUSED_PARAM(applicationNameForUserAgent);
+#endif
+    return { };
 }
 
 bool Quirks::needsDesktopUserAgent(const URL& url)
@@ -1818,6 +1830,16 @@ bool Quirks::needsWebKitMediaTextTrackDisplayQuirk() const
     return needsQuirks() && m_quirksData.needsWebKitMediaTextTrackDisplayQuirk;
 }
 
+// rdar://138806698
+bool Quirks::shouldSupportHoverMediaQueries() const
+{
+#if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
+    return needsQuirks() && m_quirksData.shouldSupportHoverMediaQueriesQuirk;
+#else
+    return false;
+#endif
+}
+
 URL Quirks::topDocumentURL() const
 {
     if (UNLIKELY(!m_topDocumentURLForTesting.isEmpty()))
@@ -2108,6 +2130,8 @@ static void handleMaxQuirks(QuirksData& quirksData, const URL& quirksURL, const 
     UNUSED_PARAM(documentURL);
     // max.com: rdar://138424489
     quirksData.needsZeroMaxTouchPointsQuirk = true;
+    // max.com: rdar://138806698
+    quirksData.shouldSupportHoverMediaQueriesQuirk = true;
 }
 #endif
 
@@ -2543,6 +2567,15 @@ static void handleVictoriasSecretQuirks(QuirksData& quirksData, const URL& quirk
     quirksData.shouldDisableFetchMetadata = true;
 }
 
+static void handleTympanusQuirks(QuirksData& quirksData, const URL&, const String& quirksDomainString, const URL&)
+{
+    if (quirksDomainString != "tympanus.net"_s)
+        return;
+
+    // https://tympanus.net/Tutorials/WebGPUFluid/ does not load (rdar://143839620).
+    quirksData.shouldBlockFetchWithNewlineAndLessThan = true;
+}
+
 static void handleVimeoQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
 {
     if (quirksDomainString != "vimeo.com"_s)
@@ -2820,6 +2853,7 @@ void Quirks::determineRelevantQuirks()
 #if PLATFORM(MAC)
         { "trix-editor"_s, &handleTrixEditorQuirks },
 #endif
+        { "tympanus"_s, &handleTympanusQuirks },
         { "victoriassecret"_s, &handleVictoriasSecretQuirks },
         { "vimeo"_s, &handleVimeoQuirks },
 #if PLATFORM(IOS_FAMILY)

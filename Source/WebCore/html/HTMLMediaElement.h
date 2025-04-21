@@ -529,6 +529,10 @@ public:
     WEBCORE_EXPORT void exitFullscreen();
     WEBCORE_EXPORT void prepareForVideoFullscreenStandby();
 
+#if ENABLE(FULLSCREEN_API)
+    void documentFullscreenChanged(bool isChildOfElementFullscreen);
+#endif
+
     bool hasClosedCaptions() const override;
     bool closedCaptionsVisible() const override;
     void setClosedCaptionsVisible(bool) override;
@@ -608,7 +612,7 @@ public:
 
     double playbackStartedTime() const { return m_playbackStartedTime; }
 
-    bool isTemporarilyAllowingInlinePlaybackAfterFullscreen() const {return m_temporarilyAllowingInlinePlaybackAfterFullscreen; }
+    bool isTemporarilyAllowingInlinePlaybackAfterFullscreen() const { return m_temporarilyAllowingInlinePlaybackAfterFullscreen; }
 
     void isVisibleInViewportChanged();
     void updateRateChangeRestrictions();
@@ -626,7 +630,7 @@ public:
 
 #if !RELEASE_LOG_DISABLED
     const Logger& logger() const final { return *m_logger.get(); }
-    Ref<Logger> protectedLogger() const;
+    using PlatformMediaSessionClient::protectedLogger;
     uint64_t logIdentifier() const final { return m_logIdentifier; }
     ASCIILiteral logClassName() const final { return "HTMLMediaElement"_s; }
     WTFLogChannel& logChannel() const final;
@@ -1050,7 +1054,7 @@ private:
     bool shouldOverridePauseDuringRouteChange() const final;
     bool isNowPlayingEligible() const final;
     std::optional<NowPlayingInfo> nowPlayingInfo() const final;
-    WeakPtr<PlatformMediaSession> selectBestMediaSession(const Vector<WeakPtr<PlatformMediaSession>>&, PlatformMediaSession::PlaybackControlsPurpose) final;
+    WeakPtr<PlatformMediaSessionInterface> selectBestMediaSession(const Vector<WeakPtr<PlatformMediaSessionInterface>>&, PlatformMediaSession::PlaybackControlsPurpose) final;
 
     void visibilityAdjustmentStateDidChange() final;
     void pageMutedStateDidChange() override;
@@ -1079,7 +1083,7 @@ private:
     bool ensureMediaControls();
 
     using JSSetupFunction = Function<bool(JSDOMGlobalObject&, JSC::JSGlobalObject&, ScriptController&, DOMWrapperWorld&)>;
-    bool setupAndCallJS(const JSSetupFunction&);
+    bool setupAndCallJS(NOESCAPE const JSSetupFunction&);
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
     void prepareForDocumentSuspension() final;
@@ -1137,6 +1141,7 @@ private:
 
     bool shouldDisableHDR() const;
     WEBCORE_EXPORT PlatformDynamicRangeLimit computePlayerDynamicRangeLimit() const;
+    void updatePlayerDynamicRangeLimit() const;
 
     bool shouldLogWatchtimeEvent() const;
     bool isWatchtimeTimerActive() const;
@@ -1224,6 +1229,9 @@ private:
 
     VideoFullscreenMode m_videoFullscreenMode { VideoFullscreenModeNone };
     bool m_videoFullscreenStandby { false };
+#if ENABLE(FULLSCREEN_API)
+    bool m_isChildOfElementFullscreen { false };
+#endif
     bool m_preparedForInline;
     Function<void()> m_preparedForInlineCompletionHandler;
 
@@ -1383,7 +1391,7 @@ private:
     bool m_playbackBlockedWaitingForKey { false };
 #endif
 
-    std::unique_ptr<MediaElementSession> m_mediaSession;
+    RefPtr<MediaElementSession> m_mediaSession;
     size_t m_reportedExtraMemoryCost { 0 };
 
     friend class MediaControlsHost;

@@ -155,6 +155,9 @@ bool RenderThemeMac::canPaint(const PaintInfo& paintInfo, const Settings& settin
     case StyleAppearance::Button:
     case StyleAppearance::Checkbox:
     case StyleAppearance::ColorWell:
+    case StyleAppearance::ColorWellSwatch:
+    case StyleAppearance::ColorWellSwatchOverlay:
+    case StyleAppearance::ColorWellSwatchWrapper:
     case StyleAppearance::DefaultButton:
 #if ENABLE(SERVICE_CONTROLS)
     case StyleAppearance::ImageControlsButton:
@@ -975,6 +978,7 @@ void RenderThemeMac::createColorWellSwatchSubtree(HTMLElement& swatch)
     Ref document = swatch.document();
     Ref div = HTMLDivElement::create(document);
     swatch.appendChild(ContainerNode::ChildChange::Source::Parser, div);
+    div->setUserAgentPart(UserAgentParts::internalColorSwatchOverlay());
     div->setInlineStyleProperty(CSSPropertyHeight, "100%"_s);
     div->setInlineStyleProperty(CSSPropertyWidth, "100%"_s);
     div->setInlineStyleProperty(CSSPropertyClipPath, "polygon(0 0, 100% 0, 0 100%)"_s);
@@ -1315,7 +1319,7 @@ String RenderThemeMac::fileListNameForWidth(const FileList* fileList, const Font
     if (fileList->isEmpty())
         strToTruncate = fileListDefaultLabel(multipleFilesAllowed);
     else if (fileList->length() == 1)
-        strToTruncate = [[NSFileManager defaultManager] displayNameAtPath:(fileList->item(0)->path())];
+        strToTruncate = [[NSFileManager defaultManager] displayNameAtPath:fileList->item(0)->path().createNSString().get()];
     else
         return StringTruncator::rightTruncate(multipleFileUploadText(fileList->length()), width, font);
 
@@ -1380,8 +1384,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         LOG_ATTACHMENT("-> No icon for filename! Will fallback to title...");
     }
 
-    NSString *cocoaTitle = title;
-    if (auto fileExtension = cocoaTitle.pathExtension; fileExtension.length) {
+    RetainPtr nsTitle = title.createNSString();
+    if (auto fileExtension = nsTitle.get().pathExtension; fileExtension.length) {
         if (auto icon = Icon::createIconForFileExtension(fileExtension)) {
             LOG_ATTACHMENT("-> Got icon for title file extension '%s'", String(fileExtension).utf8().data());
             return icon;

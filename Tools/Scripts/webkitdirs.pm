@@ -579,7 +579,7 @@ sub determineArchitecture
     }
 
     $architecture = 'x86_64' if $architecture =~ /amd64/i;
-    $architecture = 'x86' if ($architecture =~ /BePC/ && isHaiku());
+    $architecture = 'x86' if $architecture =~ /BePC/i && isHaiku();
     $architecture = 'arm64' if $architecture =~ /aarch64/i;
 }
 
@@ -851,6 +851,7 @@ sub argumentsForConfiguration()
     push(@args, '--jsc-only') if isJSCOnly();
     push(@args, '--win') if isWin();
     push(@args, '--playstation') if isPlayStation();
+    push(@args, '--haiku') if isHaiku();
     return @args;
 }
 
@@ -2275,7 +2276,7 @@ sub launcherPath()
 
 sub launcherName()
 {
-    if (isGtk() || isWPE()) {
+    if (isGtk() || isWPE() || isHaiku()) {
         return "MiniBrowser";
     } elsif (isAppleMacWebKit()) {
         return "Safari";

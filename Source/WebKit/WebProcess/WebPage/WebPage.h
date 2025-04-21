@@ -433,7 +433,6 @@ class WebUserContentController;
 class WebWheelEvent;
 
 enum class ContentAsStringIncludesChildFrames : bool;
-enum class ContentWorldIdentifierType;
 enum class DragControllerAction : uint8_t;
 enum class DrawingAreaType : uint8_t;
 enum class FindOptions : uint16_t;
@@ -441,7 +440,6 @@ enum class FindDecorationStyle : uint8_t;
 enum class NavigatingToAppBoundDomain : bool;
 enum class MediaPlaybackState : uint8_t;
 enum class SnapshotOption : uint16_t;
-enum class StorageNamespaceIdentifierType;
 enum class SyntheticEditingCommandType : uint8_t;
 enum class TextInteractionSource : uint8_t;
 enum class TextRecognitionUpdateResult : uint8_t;
@@ -450,6 +448,7 @@ enum class WebEventModifier : uint8_t;
 enum class WebEventType : uint8_t;
 
 struct ContentWorldData;
+struct ContentWorldIdentifierType;
 struct CoreIPCAuditToken;
 #if (PLATFORM(GTK) || PLATFORM(WPE)) && USE(GBM)
 struct DMABufRendererBufferFormat;
@@ -479,6 +478,7 @@ struct PlatformFontInfo;
 struct PrintInfo;
 struct ProvisionalFrameCreationParameters;
 struct RunJavaScriptParameters;
+struct StorageNamespaceIdentifierType;
 struct TapIdentifierType;
 struct TextAnimationData;
 struct TextCheckerRequestType;
@@ -497,6 +497,7 @@ struct WebHitTestResultData;
 struct WebPageCreationParameters;
 struct WebPageProxyIdentifierType;
 struct WebPreferencesStore;
+struct WebURLSchemeHandlerIdentifierType;
 struct WebsitePoliciesData;
 
 template<typename T> class MonotonicObjectIdentifier;
@@ -515,7 +516,7 @@ using UserContentControllerIdentifier = ObjectIdentifier<UserContentControllerId
 using VisitedLinkTableIdentifier = ObjectIdentifier<VisitedLinkTableIdentifierType>;
 using WKEventModifiers = uint32_t;
 using WebPageProxyIdentifier = ObjectIdentifier<WebPageProxyIdentifierType>;
-using WebURLSchemeHandlerIdentifier = ObjectIdentifier<WebURLSchemeHandler>;
+using WebURLSchemeHandlerIdentifier = ObjectIdentifier<WebURLSchemeHandlerIdentifierType>;
 using WebUndoStepID = uint64_t;
 
 enum class DisallowLayoutViewportHeightExpansionReason : uint8_t {
@@ -1592,7 +1593,7 @@ public:
     void loadAndDecodeImage(WebCore::ResourceRequest&&, std::optional<WebCore::FloatSize> sizeConstraint, size_t, CompletionHandler<void(Expected<Ref<WebCore::ShareableBitmap>, WebCore::ResourceError>&&)>&&);
 #if PLATFORM(COCOA)
     void getInformationFromImageData(const Vector<uint8_t>&, CompletionHandler<void(Expected<std::pair<String, Vector<WebCore::IntSize>>, WebCore::ImageDecodingError>&&)>&&);
-    void createIconDataFromImageData(Ref<WebCore::SharedBuffer>&&, const Vector<unsigned>&, CompletionHandler<void(RefPtr<WebCore::SharedBuffer>&&)>&&);
+    void createBitmapsFromImageData(Ref<WebCore::SharedBuffer>&&, const Vector<unsigned>&, CompletionHandler<void(Vector<Ref<WebCore::ShareableBitmap>>&&)>&&);
     void decodeImageData(Ref<WebCore::SharedBuffer>&&, std::optional<WebCore::FloatSize>, CompletionHandler<void(RefPtr<WebCore::ShareableBitmap>&&)>&&);
 #endif
 
@@ -1786,6 +1787,8 @@ public:
 #if ENABLE(MODEL_PROCESS)
     void modelProcessConnectionDidBecomeAvailable(ModelProcessConnection&);
 #endif
+
+    void createTextFragmentDirectiveFromSelection(CompletionHandler<void(URL&&)>&&);
 
 #if ENABLE(APP_HIGHLIGHTS)
     WebCore::CreateNewGroupForHighlight highlightIsNewGroup() const;

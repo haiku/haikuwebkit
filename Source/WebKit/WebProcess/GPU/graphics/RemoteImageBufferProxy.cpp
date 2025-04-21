@@ -53,6 +53,11 @@
 namespace WebKit {
 using namespace WebCore;
 
+// putPixelBuffer calls are marked as batched if they are smaller than this. Speeds up multiple small pixel buffer sends
+// while minimizing the risk of large memory areas being kept unused in IPC buffers.
+// See also CanvasRenderingContext2DBase putImageDataCacheAreaLimit.
+constexpr uint64_t putPixelBufferBatchedAreaLimit = 60 * 60;
+
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteImageBufferProxy);
 WTF_MAKE_TZONE_ALLOCATED_IMPL(RemoteSerializedImageBufferProxy);
 
@@ -126,15 +131,6 @@ void RemoteImageBufferProxy::didBecomeUnresponsive() const
 
 void RemoteImageBufferProxy::backingStoreWillChange()
 {
-    if (m_needsFlush)
-        return;
-    m_needsFlush = true;
-
-    // Prepare for the backing store change the first time this notification comes after flush has
-    // completed.
-
-    // If we already need a flush, this cannot be the first notification for change,
-    // handled by the m_needsFlush case above.
     prepareForBackingStoreChange();
 }
 
@@ -178,7 +174,7 @@ void RemoteImageBufferProxy::didCreateBackend(std::optional<ImageBufferBackendHa
     }
 
     if (!backend) {
-        m_context.disconnect();
+        m_context.abandon();
         if (RefPtr renderingBackend = m_renderingBackend.get()) {
             m_renderingBackend = nullptr;
             renderingBackend->releaseImageBuffer(*this);
@@ -301,7 +297,8 @@ RefPtr<PixelBuffer> RemoteImageBufferProxy::getPixelBuffer(const PixelBufferForm
 
 void RemoteImageBufferProxy::disconnect()
 {
-    m_needsFlush = false;
+    m_context.consumeHasDrawn();
+    m_context.disconnect();
     if (m_backend)
         prepareForBackingStoreChange();
     m_backend = nullptr;
@@ -338,6 +335,11 @@ void RemoteImageBufferProxy::putPixelBuffer(const PixelBufferSourceView& pixelBu
     ASSERT(resolutionScale() == 1);
     backingStoreWillChange();
     send(Messages::RemoteImageBuffer::PutPixelBuffer(pixelBuffer, srcRect.location(), srcRect.size(), destPoint, destFormat));
+    // Small putPixelBuffers are batched, large ones are not.
+    if (pixelBuffer.size().unclampedArea() > putPixelBufferBatchedAreaLimit) {
+        if (RefPtr connection = this->connection())
+            connection->flushBatch();
+    }
 }
 
 void RemoteImageBufferProxy::convertToLuminanceMask()
@@ -354,10 +356,9 @@ void RemoteImageBufferProxy::flushDrawingContext()
 {
     if (UNLIKELY(!m_renderingBackend))
         return;
-    if (m_needsFlush) {
+    if (m_context.consumeHasDrawn()) {
         TraceScope tracingScope(FlushRemoteImageBufferStart, FlushRemoteImageBufferEnd);
         sendSync(Messages::RemoteImageBuffer::FlushContextSync());
-        m_needsFlush = false;
         return;
     }
 }
@@ -367,7 +368,7 @@ bool RemoteImageBufferProxy::flushDrawingContextAsync()
     if (UNLIKELY(!m_renderingBackend))
         return false;
 
-    if (!m_needsFlush)
+    if (!m_context.consumeHasDrawn())
         return false;
 
     send(Messages::RemoteImageBuffer::FlushContext());
@@ -387,7 +388,7 @@ std::unique_ptr<SerializedImageBuffer> RemoteImageBufferProxy::sinkIntoSerialize
     ASSERT(hasOneRef());
 
     flushDrawingContext();
-    m_context.disconnect();
+    m_context.abandon();
 
     RefPtr renderingBackend = m_renderingBackend.get();
     if (!renderingBackend)

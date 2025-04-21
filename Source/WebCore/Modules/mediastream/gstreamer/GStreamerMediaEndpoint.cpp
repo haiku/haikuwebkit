@@ -193,6 +193,12 @@ bool GStreamerMediaEndpoint::initializePipeline()
             g_object_set(rtpBin.get(), "add-reference-timestamp-meta", TRUE, nullptr);
     }
 
+    // Prevent drift between RTP timestamps and NTP time as reported by RTCP packets.
+    gst_util_set_object_arg(G_OBJECT(rtpBin.get()), "ntp-time-source", "clock-time");
+
+    // Use the time at which the audio/video frames were captured, without latency induced by encoders.
+    g_object_set(rtpBin.get(), "rtcp-sync-send-time", TRUE, nullptr);
+
     g_signal_connect(rtpBin.get(), "new-jitterbuffer", G_CALLBACK(+[](GstElement*, GstElement* element, unsigned, unsigned ssrc, GStreamerMediaEndpoint* endPoint) {
 
         // Workaround for https://gitlab.freedesktop.org/gstreamer/gst-plugins-good/-/issues/914
@@ -899,7 +905,7 @@ void GStreamerMediaEndpoint::doSetRemoteDescription(const RTCSessionDescription&
         if (error && error->code == GST_WEBRTC_ERROR_INVALID_STATE)
             m_peerConnectionBackend.setRemoteDescriptionFailed(Exception { ExceptionCode::InvalidStateError, "Failed to set remote answer sdp"_s });
         else
-            m_peerConnectionBackend.setRemoteDescriptionFailed(Exception { ExceptionCode::OperationError, "Unable to apply session remote description"_s });
+            m_peerConnectionBackend.setRemoteDescriptionFailed(Exception { ExceptionCode::InvalidAccessError, "Unable to apply session remote description"_s });
     });
 #if !RELEASE_LOG_DISABLED
     startLoggingStats();
@@ -1135,11 +1141,14 @@ std::optional<bool> GStreamerMediaEndpoint::isIceGatheringComplete(const String&
 ExceptionOr<std::unique_ptr<GStreamerRtpSenderBackend>> GStreamerMediaEndpoint::addTrack(MediaStreamTrack& track, const FixedVector<String>& mediaStreamIds)
 {
     GStreamerRtpSenderBackend::Source source;
-    auto mediaStreamId = mediaStreamIds.isEmpty() ? emptyString() : mediaStreamIds[0];
+    auto mediaStreamId = mediaStreamIds.isEmpty() ? "-"_s : mediaStreamIds[0];
 
     String kind;
     RTCRtpTransceiverInit init;
     init.direction = RTCRtpTransceiverDirection::Sendrecv;
+
+    for (const auto& id : mediaStreamIds)
+        init.streams.append(mediaStreamFromRTCStream(id));
 
     GST_DEBUG_OBJECT(m_pipeline.get(), "Adding source for track %s", track.id().utf8().data());
     if (track.privateTrack().isAudio()) {
@@ -1542,6 +1551,13 @@ ExceptionOr<GStreamerMediaEndpoint::Backends> GStreamerMediaEndpoint::createTran
 
     String mediaStreamId;
     String trackId;
+    if (init.streams.isEmpty()) {
+        switchOn(source, [&](Ref<RealtimeOutgoingAudioSourceGStreamer>& source) {
+            source->setMediaStreamID("-"_s);
+        }, [&](Ref<RealtimeOutgoingVideoSourceGStreamer>& source) {
+            source->setMediaStreamID("-"_s);
+        }, [](std::nullptr_t&) { });
+    }
     switchOn(source, [&](Ref<RealtimeOutgoingAudioSourceGStreamer>& source) {
         mediaStreamId = source->mediaStreamID();
         if (auto track = source->track())
@@ -1553,13 +1569,17 @@ ExceptionOr<GStreamerMediaEndpoint::Backends> GStreamerMediaEndpoint::createTran
     }, [](std::nullptr_t&) { });
 
     int payloadType = pickAvailablePayloadType();
-    auto msid = !mediaStreamId.isEmpty() && !trackId.isEmpty() ? makeString(mediaStreamId, ' ', trackId) : emptyString();
-    auto caps = capsFromRtpCapabilities({ .codecs = codecs, .headerExtensions = rtpExtensions }, [&payloadType, &msid](GstStructure* structure) {
+    auto msid = makeString(mediaStreamId, ' ', trackId);
+    bool msidSet = false;
+    auto caps = capsFromRtpCapabilities({ .codecs = codecs, .headerExtensions = rtpExtensions }, [&payloadType, &msid, &msidSet](GstStructure* structure) {
         if (!gst_structure_has_field(structure, "payload"))
             gst_structure_set(structure, "payload", G_TYPE_INT, payloadType++, nullptr);
+        if (msidSet)
+            return;
         if (msid.isEmpty())
             return;
         gst_structure_set(structure, "a-msid", G_TYPE_STRING, msid.utf8().data(), nullptr);
+        msidSet = true;
     });
 
 #ifndef GST_DISABLE_GST_DEBUG

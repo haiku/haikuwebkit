@@ -59,19 +59,19 @@ void ResourceResponse::initNSURLResponse() const
             expectedContentLength = static_cast<NSInteger>(m_expectedContentLength);
 
         RetainPtr encodingNSString = nsStringNilIfEmpty(m_textEncodingName);
-        m_nsResponse = adoptNS([[NSURLResponse alloc] initWithURL:m_url.createNSURL().get() MIMEType:m_mimeType expectedContentLength:expectedContentLength textEncodingName:encodingNSString.get()]);
+        m_nsResponse = adoptNS([[NSURLResponse alloc] initWithURL:m_url.createNSURL().get() MIMEType:m_mimeType.createNSString().get() expectedContentLength:expectedContentLength textEncodingName:encodingNSString.get()]);
         return;
     }
 
     // FIXME: We lose the status text and the HTTP version here.
     RetainPtr headerDictionary = adoptNS([[NSMutableDictionary alloc] init]);
     for (auto& header : m_httpHeaderFields)
-        [headerDictionary setObject:(NSString *)header.value forKey:(NSString *)header.key];
+        [headerDictionary setObject:header.value.createNSString().get() forKey:header.key.createNSString().get()];
 
     m_nsResponse = adoptNS([[NSHTTPURLResponse alloc] initWithURL:m_url.createNSURL().get() statusCode:m_httpStatusCode HTTPVersion:(NSString*)kCFHTTPVersion1_1 headerFields:headerDictionary.get()]);
 
     // Mime type sniffing doesn't work with a synthesized response.
-    [m_nsResponse _setMIMEType:(NSString *)m_mimeType];
+    [m_nsResponse _setMIMEType:m_mimeType.createNSString().get()];
 }
 
 void ResourceResponse::disableLazyInitialization()

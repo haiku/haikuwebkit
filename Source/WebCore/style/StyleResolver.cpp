@@ -329,10 +329,6 @@ ResolvedStyle Resolver::styleForElement(Element& element, const ResolutionContex
     if (collector.matchedPseudoElementIds())
         style.setHasPseudoStyles(collector.matchedPseudoElementIds());
 
-    // This is required for style sharing.
-    if (collector.didMatchUncommonAttributeSelector())
-        style.setUnique();
-
     auto elementStyleRelations = commitRelationsToRenderStyle(style, element, collector.styleRelations());
 
     applyMatchedProperties(state, collector.matchResult());
@@ -356,7 +352,7 @@ ResolvedStyle Resolver::styleForElementWithCachedMatchResult(Element& element, c
     Adjuster adjuster(document(), *state.parentStyle(), context.parentBoxStyle, &element);
     adjuster.adjust(style, state.userAgentAppearanceStyle());
 
-    return { state.takeStyle(), { }, makeUnique<MatchResult>(matchResult) };
+    return { state.takeStyle(), { }, &matchResult };
 }
 
 std::unique_ptr<RenderStyle> Resolver::styleForKeyframe(Element& element, const RenderStyle& elementStyle, const ResolutionContext& context, const StyleRuleKeyframe& keyframe, BlendingKeyframe& blendingKeyframe)

@@ -7141,7 +7141,7 @@ class FindModifiedSaferCPPExpectations(shell.ShellCommandNewStyle, AddToLogMixin
     name = 'find-modified-safer-cpp-expectations'
     RE_FILE = r'^(\+|-)(?P<file>[^/+/-].+(?:\.cpp|\.mm|\.h))$'
     RE_EXPECTATIONS = r'^(\+\+\+).+(Source/(?P<project>.+)/SaferCPPExpectations/(?P<checker>.+)Expectations)$'
-    command = ['git', 'diff', 'head~1', '--', '*Expectations']
+    command = ['git', 'diff', 'HEAD~1', '--', '*Expectations']
 
     def __init__(self, **kwargs):
         super().__init__(logEnviron=False, **kwargs)
@@ -7519,7 +7519,10 @@ class FindUnexpectedStaticAnalyzerResultsWithoutChange(FindUnexpectedStaticAnaly
                 yield self._addToLog('stdio', f'   Invalid test format. Ignoring {test_name}...\n')
                 continue
             yield self._addToLog('stdio', f'Filtering results for {test_name}:\n')
-            if test_name in first_run_passes and test_name not in self.unexpected_failures_filtered['passes'][project][checker]:
+            if self.unexpected_results_filtered['passes'][project].get(checker) is None:
+                # Account for new checkers
+                self.unexpected_results_filtered['passes'][project][checker] = []
+            if test_name in first_run_passes and test_name not in self.unexpected_results_filtered['passes'][project][checker]:
                 self.unexpected_results_filtered['passes'][project][checker].append(file)
                 yield self._addToLog('stdio', f'   Added {test_name} to unexpected passes.\n')
             try:
