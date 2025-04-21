@@ -64,7 +64,7 @@ RenderThemeHaiku::~RenderThemeHaiku()
 {
 }
 
-bool RenderThemeHaiku::paintSliderTrack(const RenderObject& object, const PaintInfo& info, const IntRect& intRect)
+bool RenderThemeHaiku::paintSliderTrack(const RenderObject& object, const PaintInfo& info, const FloatRect& intRect)
 {
     rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     rgb_color background = base;
@@ -125,7 +125,7 @@ int RenderThemeHaiku::sliderTickOffsetFromTrackCenter() const
 
 #endif
 
-bool RenderThemeHaiku::paintSliderThumb(const RenderObject& object, const PaintInfo& info, const IntRect& intRect)
+bool RenderThemeHaiku::paintSliderThumb(const RenderObject& object, const PaintInfo& info, const FloatRect& intRect)
 {
     rgb_color base = colorForValue(B_CONTROL_BACKGROUND_COLOR, object.useDarkAppearance());
     BRect rect = intRect;
@@ -264,7 +264,7 @@ bool RenderThemeHaiku::paintRadio(const RenderObject& object, const PaintInfo& i
     return true;
 }
 
-bool RenderThemeHaiku::paintButton(const RenderObject& object, const PaintInfo& info, const IntRect& zoomedRect)
+bool RenderThemeHaiku::paintButton(const RenderObject& object, const PaintInfo& info, const FloatRect& zoomedRect)
 {
     if (!be_control_look)
         return false;

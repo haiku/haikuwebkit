@@ -58,7 +58,7 @@ protected:
     void paintMenuListButtonDecorations(const RenderBox&, const PaintInfo&, const FloatRect&) override;
 
     void adjustSliderTrackStyle(RenderStyle&, const Element*) const override;
-    bool paintSliderTrack(const RenderObject&, const PaintInfo&, const IntRect&) override;
+    bool paintSliderTrack(const RenderObject&, const PaintInfo&, const FloatRect&) override;
 
     void adjustSliderThumbStyle(RenderStyle&, const Element*) const override;
 
@@ -72,13 +72,13 @@ protected:
     int sliderTickOffsetFromTrackCenter() const override;
 #endif
 
-    bool paintSliderThumb(const RenderObject&, const PaintInfo&, const IntRect&) override;
+    bool paintSliderThumb(const RenderObject&, const PaintInfo&, const FloatRect&) override;
 
     Color systemColor(CSSValueID, OptionSet<StyleColorOptions>) const override;
 
     bool paintCheckbox(const RenderObject&, const PaintInfo&, const FloatRect&) override;
     bool paintRadio(const RenderObject&, const PaintInfo&, const FloatRect&) override;
-    bool paintButton(const RenderObject&, const PaintInfo&, const IntRect&) override;
+    bool paintButton(const RenderObject&, const PaintInfo&, const FloatRect&) override;
 
 private:
     uint32 flagsForObject(const RenderObject&) const;
