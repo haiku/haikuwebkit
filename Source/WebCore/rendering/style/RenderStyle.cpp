@@ -220,6 +220,7 @@ RenderStyle::RenderStyle(CreateDefaultStyleTag)
     m_nonInheritedFlags.textDecorationLine = initialTextDecorationLine().toRaw();
     m_nonInheritedFlags.usesViewportUnits = false;
     m_nonInheritedFlags.usesContainerUnits = false;
+    m_nonInheritedFlags.useTreeCountingFunctions = false;
     m_nonInheritedFlags.hasExplicitlyInheritedProperties = false;
     m_nonInheritedFlags.disallowsFastPathInheritance = false;
     m_nonInheritedFlags.hasContentNone = false;
@@ -374,6 +375,7 @@ void RenderStyle::fastPathInheritFrom(const RenderStyle& inheritParent)
 
     // FIXME: Use this mechanism for other properties too, like variables.
     m_inheritedFlags.visibility = inheritParent.m_inheritedFlags.visibility;
+    m_inheritedFlags.hasExplicitlySetColor = inheritParent.m_inheritedFlags.hasExplicitlySetColor;
 
     if (m_inheritedData.ptr() != inheritParent.m_inheritedData.ptr()) {
         if (m_inheritedData->nonFastPathInheritedEqual(*inheritParent.m_inheritedData)) {
@@ -398,6 +400,7 @@ inline void RenderStyle::NonInheritedFlags::copyNonInheritedFrom(const NonInheri
     textDecorationLine = other.textDecorationLine;
     usesViewportUnits = other.usesViewportUnits;
     usesContainerUnits = other.usesContainerUnits;
+    useTreeCountingFunctions = other.useTreeCountingFunctions;
     hasExplicitlyInheritedProperties = other.hasExplicitlyInheritedProperties;
     disallowsFastPathInheritance = other.disallowsFastPathInheritance;
     hasContentNone = other.hasContentNone;
@@ -490,6 +493,8 @@ bool RenderStyle::fastPathInheritedEqual(const RenderStyle& other) const
 {
     if (m_inheritedFlags.visibility != other.m_inheritedFlags.visibility)
         return false;
+    if (m_inheritedFlags.hasExplicitlySetColor != other.m_inheritedFlags.hasExplicitlySetColor)
+        return false;
     if (m_inheritedData.ptr() == other.m_inheritedData.ptr())
         return true;
     return m_inheritedData->fastPathInheritedEqual(*other.m_inheritedData);
@@ -498,7 +503,8 @@ bool RenderStyle::fastPathInheritedEqual(const RenderStyle& other) const
 bool RenderStyle::nonFastPathInheritedEqual(const RenderStyle& other) const
 {
     auto withoutFastPathFlags = [](auto flags) {
-        flags.visibility = 0;
+        flags.visibility = { };
+        flags.hasExplicitlySetColor = { };
         return flags;
     };
     if (withoutFastPathFlags(m_inheritedFlags) != withoutFastPathFlags(other.m_inheritedFlags))
@@ -1602,6 +1608,7 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
         // unicodeBidi
         // usesViewportUnits
         // usesContainerUnits
+        // useTreeCountingFunctions
         // hasExplicitlyInheritedProperties
         // disallowsFastPathInheritance
         // hasContentNone
@@ -4041,6 +4048,7 @@ void RenderStyle::NonInheritedFlags::dumpDifferences(TextStream& ts, const NonIn
 
     LOG_IF_DIFFERENT(usesViewportUnits);
     LOG_IF_DIFFERENT(usesContainerUnits);
+    LOG_IF_DIFFERENT(useTreeCountingFunctions);
     LOG_IF_DIFFERENT(hasContentNone);
 
     LOG_IF_DIFFERENT_WITH_CAST(TextDecorationLine, textDecorationLine);

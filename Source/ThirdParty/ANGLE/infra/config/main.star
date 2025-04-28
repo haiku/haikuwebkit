@@ -202,7 +202,7 @@ def angle_builder(name, cpu):
     is_debug = "-dbg" in name
     is_exp = "-exp" in name
     is_perf = name.endswith("-perf")
-    is_s22 = "s22" in name
+    is_s24 = "s24" in name
     is_trace = name.endswith("-trace")
     is_uwp = "winuwp" in name
     is_msvc = is_uwp or "-msvc" in name
@@ -260,18 +260,27 @@ def angle_builder(name, cpu):
         short_name = "dbg"
     elif is_exp:
         short_name = "exp"
-        if is_s22:
-            # This is a little clunky, but we'd like this to be cleanly "s22" rather than "s22-exp"
-            short_name = "s22"
+        if is_s24:
+            # This is a little clunky, but we'd like this to be cleanly "s24" rather than "s24-exp"
+            short_name = "s24"
     else:
         short_name = "rel"
 
     properties = {
         "builder_group": "angle",
+        # TODO: crbug.com/401959048 - Remove reclient props after migration.
         "$build/reclient": {
             "instance": "rbe-chromium-untrusted",
             "metrics_project": "chromium-reclient-metrics",
             "scandeps_server": True,
+        },
+        "$build/siso": {
+            "project": "rbe-chromium-untrusted",
+            "configs": ["builder"],
+            "enable_cloud_monitoring": True,
+            "enable_cloud_profiler": True,
+            "enable_cloud_trace": True,
+            "metrics_project": "chromium-reclient-metrics",
         },
         "platform": config_os.console_name,
         "toolchain": toolchain,
@@ -280,10 +289,19 @@ def angle_builder(name, cpu):
 
     ci_properties = {
         "builder_group": "angle",
+        # TODO: crbug.com/401959048 - Remove reclient props after migration.
         "$build/reclient": {
             "instance": "rbe-chromium-trusted",
             "metrics_project": "chromium-reclient-metrics",
             "scandeps_server": True,
+        },
+        "$build/siso": {
+            "project": "rbe-chromium-trusted",
+            "configs": ["builder"],
+            "enable_cloud_monitoring": True,
+            "enable_cloud_profiler": True,
+            "enable_cloud_trace": True,
+            "metrics_project": "chromium-reclient-metrics",
         },
         "platform": config_os.console_name,
         "toolchain": toolchain,
@@ -324,7 +342,7 @@ def angle_builder(name, cpu):
 
     active_experimental_builders = [
         "android-arm64-exp-test",
-        "android-arm64-exp-s22-test",
+        "android-arm64-exp-s24-test",
         "linux-exp-test",
         "mac-exp-test",
         "win-exp-test",
@@ -367,7 +385,8 @@ def angle_builder(name, cpu):
         )
 
         # Don't add experimental bots to CQ.
-        if not is_exp:
+        # Also exclude mac-arm64-test for now anglebug.com/42266214
+        if not is_exp and not name == "mac-arm64-test":
             luci.cq_tryjob_verifier(
                 cq_group = "main",
                 builder = "angle:try/" + name,
@@ -509,7 +528,7 @@ luci.gitiles_poller(
 angle_builder("android-arm-compile", cpu = "arm")
 angle_builder("android-arm-dbg-compile", cpu = "arm")
 angle_builder("android-arm64-dbg-compile", cpu = "arm64")
-angle_builder("android-arm64-exp-s22-test", cpu = "arm64")
+angle_builder("android-arm64-exp-s24-test", cpu = "arm64")
 angle_builder("android-arm64-exp-test", cpu = "arm64")
 angle_builder("android-arm64-test", cpu = "arm64")
 angle_builder("linux-asan-test", cpu = "x64")
@@ -520,6 +539,7 @@ angle_builder("linux-tsan-test", cpu = "x64")
 angle_builder("linux-dbg-compile", cpu = "x64")
 angle_builder("linux-test", cpu = "x64")
 angle_builder("mac-dbg-compile", cpu = "x64")
+angle_builder("mac-arm64-test", cpu = "arm64")
 angle_builder("mac-exp-test", cpu = "x64")
 angle_builder("mac-test", cpu = "x64")
 angle_builder("win-asan-test", cpu = "x64")

@@ -466,12 +466,12 @@ ExceptionOr<void> WebAnimation::setBindingsCurrentTime(const std::optional<WebAn
     return setCurrentTime(currentTime);
 }
 
-std::optional<WebAnimationTime> WebAnimation::currentTime(std::optional<WebAnimationTime> startTime) const
+std::optional<WebAnimationTime> WebAnimation::currentTime() const
 {
-    return currentTime(RespectHoldTime::Yes, startTime);
+    return currentTime(RespectHoldTime::Yes);
 }
 
-std::optional<WebAnimationTime> WebAnimation::currentTime(RespectHoldTime respectHoldTime, std::optional<WebAnimationTime> startTime) const
+std::optional<WebAnimationTime> WebAnimation::currentTime(RespectHoldTime respectHoldTime) const
 {
     // 3.4.4. The current time of an animation
     // https://drafts.csswg.org/web-animations-1/#the-current-time-of-an-animation
@@ -491,7 +491,7 @@ std::optional<WebAnimationTime> WebAnimation::currentTime(RespectHoldTime respec
         return std::nullopt;
 
     // Otherwise, current time = (timeline time - start time) * playback rate
-    return (*m_timeline->currentTime() - startTime.value_or(*m_startTime)) * m_playbackRate;
+    return (*m_timeline->currentTime() - *m_startTime) * m_playbackRate;
 }
 
 ExceptionOr<void> WebAnimation::silentlySetCurrentTime(std::optional<WebAnimationTime> seekTime)
@@ -1259,7 +1259,9 @@ void WebAnimation::runPendingPlayTask()
     ASSERT(m_startTime || m_holdTime);
 
     // 2. Let ready time be the time value of the timeline associated with animation at the moment when animation became ready.
-    auto readyTime = m_timeline->currentTime();
+    auto readyTime = m_pendingStartTime;
+    if (!readyTime)
+        readyTime = m_timeline->currentTime();
 
     // 3. Perform the steps corresponding to the first matching condition below, if any:
     if (m_holdTime) {
@@ -1426,7 +1428,10 @@ void WebAnimation::runPendingPauseTask()
 
     // 1. Let ready time be the time value of the timeline associated with animation at the moment when the user agent
     //    completed processing necessary to suspend playback of animation's target effect.
-    auto readyTime = m_timeline->currentTime();
+    auto readyTime = m_pendingStartTime;
+    if (!readyTime)
+        readyTime = m_timeline->currentTime();
+
     auto animationStartTime = m_startTime;
 
     // 2. If animation's start time is resolved and its hold time is not resolved, let animation's hold time be the result of
@@ -1522,10 +1527,18 @@ void WebAnimation::tick()
     if (m_timeline && m_timeline->isProgressBased())
         autoAlignStartTime();
 
+    maybeMarkAsReady();
+
     m_hasScheduledEventsDuringTick = false;
     updateFinishedState(DidSeek::No, SynchronouslyNotify::Yes);
     m_shouldSkipUpdatingFinishedStateWhenResolving = true;
 
+    if (!isEffectInvalidationSuspended() && m_effect)
+        m_effect->animationDidTick();
+}
+
+void WebAnimation::maybeMarkAsReady()
+{
     // https://drafts.csswg.org/web-animations-2/#ready
     // An animation is ready at the first moment where all of the following conditions are true:
     //     - the user agent has completed any setup required to begin the playback of each inclusive
@@ -1533,26 +1546,37 @@ void WebAnimation::tick()
     //       any keyframe effect or executing any custom effects associated with an animation effect.
     //     - the animation is associated with a timeline that is not inactive.
     //     - the animation’s hold time or start time is resolved.
-    auto isReady = m_timeline && m_timeline->currentTime() && (m_holdTime || m_startTime);
-    if (isReady && (!m_effect || !m_effect->preventsAnimationReadiness())) {
-        if (hasPendingPauseTask())
-            runPendingPauseTask();
-        if (hasPendingPlayTask())
-            runPendingPlayTask();
-    }
+    if (!pending())
+        return;
 
-    if (!isEffectInvalidationSuspended() && m_effect)
-        m_effect->animationDidTick();
+    auto isReady = m_timeline && m_timeline->currentTime() && (m_holdTime || m_startTime);
+    if (!isReady)
+        return;
+
+    // Monotonic animations also require a pending start time.
+    if (!m_pendingStartTime && m_timeline->isMonotonic())
+        return;
+
+    // The effect can also prevent readines.
+    if (m_effect && m_effect->preventsAnimationReadiness())
+        return;
+
+    if (hasPendingPauseTask())
+        runPendingPauseTask();
+    if (hasPendingPlayTask())
+        runPendingPlayTask();
+
+    m_pendingStartTime = std::nullopt;
 }
 
-OptionSet<AnimationImpact> WebAnimation::resolve(RenderStyle& targetStyle, const Style::ResolutionContext& resolutionContext, std::optional<Seconds> startTime)
+OptionSet<AnimationImpact> WebAnimation::resolve(RenderStyle& targetStyle, const Style::ResolutionContext& resolutionContext)
 {
     if (!m_shouldSkipUpdatingFinishedStateWhenResolving)
         updateFinishedState(DidSeek::No, SynchronouslyNotify::No);
     m_shouldSkipUpdatingFinishedStateWhenResolving = false;
 
     if (auto keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get()))
-        return keyframeEffect->apply(targetStyle, resolutionContext, startTime);
+        return keyframeEffect->apply(targetStyle, resolutionContext);
     return { };
 }
 

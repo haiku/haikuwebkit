@@ -27,7 +27,7 @@
 
 #include "compiler/translator/Compiler.h"
 
-#if ANGLE_SH_VERSION != 371
+#if ANGLE_SH_VERSION != 375
 #error Check if there are added options and update this check.
 #endif
 
@@ -89,7 +89,6 @@
     MACRO(ignorePrecisionQualifiers, 50, spirvVk, none) \
     MACRO(addVulkanDepthCorrection, 51, spirvVk, none) \
     MACRO(forceShaderPrecisionHighpToMediump, 52, spirvVk, none) \
-    MACRO(useSpecializationConstant, 53, spirvVk, none) \
     MACRO(addVulkanXfbEmulationSupportCode, 54, spirvVk, none) \
     MACRO(addVulkanXfbExtensionSupportCode, 55, spirvVk, none) \
     MACRO(initFragmentOutputVariables, 56, glsl, none) \
@@ -108,7 +107,9 @@
     MACRO(rejectWebglShadersWithUndefinedBehavior, 69, any, none) \
     MACRO(emulateR32fImageAtomicExchange, 70, spirvVk, none) \
     MACRO(simplifyLoopConditions, 71, none, msl) \
-    MACRO(separateCompoundStructDeclarations, 72, none, msl || wgsl)
+    MACRO(separateCompoundStructDeclarations, 72, none, msl || wgsl) \
+    MACRO(preserveDenorms, 73, none, spirvVk) \
+    MACRO(removeInactiveVariables, 74, any, spirvVk || msl)
 
 void filterOptions(ShShaderOutput output, ShCompileOptions& options);
 ShShaderOutput resolveShaderOutput(ShShaderOutput output);

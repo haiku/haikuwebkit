@@ -839,6 +839,8 @@ void WebInspectorUIProxy::platformAttach()
     RetainPtr inspectedView = protectedInspectedPage()->inspectorAttachmentView();
     WKWebView *inspectorView = [m_inspectorViewController webView];
 
+    [m_inspectorViewController setIsAttached:YES];
+
     if (m_inspectorWindow) {
         [m_inspectorWindow setDelegate:nil];
         [m_inspectorWindow close];
@@ -875,6 +877,8 @@ void WebInspectorUIProxy::platformDetach()
     RetainPtr inspectedView = inspectedPage ? inspectedPage->inspectorAttachmentView() : nil;
     WKWebView *inspectorView = [m_inspectorViewController webView];
 
+    [m_inspectorViewController setIsAttached:NO];
+
     [inspectorView removeFromSuperview];
     [inspectorView setAutoresizingMask:NSViewWidthSizable | NSViewHeightSizable];
 
@@ -896,7 +900,8 @@ void WebInspectorUIProxy::platformSetAttachedWindowHeight(unsigned height)
     if (!m_isAttached)
         return;
 
-    inspectedViewFrameDidChange(height);
+    NSEdgeInsets webViewInsets = [m_inspectorViewController webView].safeAreaInsets;
+    inspectedViewFrameDidChange(height + webViewInsets.top + webViewInsets.bottom);
 }
 
 void WebInspectorUIProxy::platformSetAttachedWindowWidth(unsigned width)
@@ -904,7 +909,8 @@ void WebInspectorUIProxy::platformSetAttachedWindowWidth(unsigned width)
     if (!m_isAttached)
         return;
 
-    inspectedViewFrameDidChange(width);
+    NSEdgeInsets webViewInsets = [m_inspectorViewController webView].safeAreaInsets;
+    inspectedViewFrameDidChange(width + webViewInsets.left + webViewInsets.right);
 }
 
 void WebInspectorUIProxy::platformSetSheetRect(const FloatRect& rect)

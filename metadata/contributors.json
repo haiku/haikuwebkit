@@ -240,6 +240,18 @@
    },
    {
       "emails" : [
+         "adrien.destugues@opensource.viveris.fr",
+         "pulkomandy@pulkomandy.tk"
+      ],
+      "expertise" : "The Haiku Port",
+      "github" : "pulkomandy",
+      "name" : "Adrien Destugues",
+      "nicks" : [
+         "PulkoMandy"
+      ]
+   },
+   {
+      "emails" : [
          "enne@google.com",
          "enne@chromium.org"
       ],
@@ -387,7 +399,8 @@
          "titan.vl@gmail.com"
       ],
       "github" : "amarchenko",
-      "name" : "Aleksei Marchenko"
+      "name" : "Aleksei Marchenko",
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -2066,7 +2079,7 @@
       "expertise" : "JavaScriptCore",
       "github" : "danlliu",
       "name" : "Daniel Liu",
-      "status" : "committer"
+      "status" : "reviewer"
    },
    {
       "emails" : [
@@ -5125,7 +5138,8 @@
       "name" : "Kristian Monsen",
       "nicks" : [
          "kmonsen"
-      ]
+      ],
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -6676,7 +6690,8 @@
          "phipsonleecy@gmail.com"
       ],
       "github" : "Phipson",
-      "name" : "Phipson Lee"
+      "name" : "Phipson Lee",
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -6992,7 +7007,8 @@
       "name" : "Roberto Rodriguez",
       "nicks" : [
          "robertor"
-      ]
+      ],
+      "status" : "committer"
    },
    {
       "emails" : [

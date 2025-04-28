@@ -2869,7 +2869,7 @@ void Element::updateEffectiveTextDirectionIfNeeded()
     if (!(parent && parent->usesEffectiveTextDirection()))
         return;
 
-    if (hasAttributeWithoutSynchronization(HTMLNames::dirAttr) || shadowRoot() || firstChild()) {
+    if (hasAttributeWithoutSynchronization(HTMLNames::dirAttr) || shadowRoot()) {
         updateEffectiveTextDirection();
         return;
     }
@@ -4591,8 +4591,8 @@ const RenderStyle* Element::resolveComputedStyle(ResolveComputedStyleMode mode)
         computedStyle = style.get();
         ElementRareData& rareData = element->ensureElementRareData();
         if (auto* existing = rareData.computedStyle()) {
-            auto change = Style::determineChange(*existing, *style);
-            if (change > Style::Change::NonInherited) {
+            auto changes = Style::determineChanges(*existing, *style);
+            if (changes - Style::Change::NonInherited) {
                 for (Ref child : composedTreeChildren(*element)) {
                     if (RefPtr childElement = dynamicDowncast<Element>(WTFMove(child)))
                         childElement->setStateFlag(StateFlag::IsComputedStyleInvalidFlag);
@@ -5600,12 +5600,12 @@ void Element::clearHoverAndActiveStatusBeforeDetachingRenderer()
     document->userActionElements().clearActiveAndHovered(*this);
 }
 
-void Element::willRecalcStyle(Style::Change)
+void Element::willRecalcStyle(OptionSet<Style::Change>)
 {
     ASSERT(hasCustomStyleResolveCallbacks());
 }
 
-void Element::didRecalcStyle(Style::Change)
+void Element::didRecalcStyle(OptionSet<Style::Change>)
 {
     ASSERT(hasCustomStyleResolveCallbacks());
 }

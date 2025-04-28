@@ -2028,6 +2028,7 @@ private:
     void scheduleEditorStateUpdateAfterAnimationIfNeeded(const WebCore::Element&);
     void computeEnclosingLayerID(EditorState&, const WebCore::VisibleSelection&) const;
     bool mainFramePlugInDefersScalingToViewport() const;
+    bool mainFramePlugInRejectsZeroViewLayoutSizeUpdates() const;
 
     void addTextInteractionSources(OptionSet<TextInteractionSource>);
     void removeTextInteractionSources(OptionSet<TextInteractionSource>);
@@ -2097,7 +2098,7 @@ private:
 
     void startTextManipulationForFrame(WebCore::Frame&);
 
-    void loadDataImpl(std::optional<WebCore::NavigationIdentifier>, WebCore::ShouldTreatAsContinuingLoad, std::optional<WebsitePoliciesData>&&, Ref<WebCore::FragmentedSharedBuffer>&&, WebCore::ResourceRequest&&, WebCore::ResourceResponse&&, const URL& failingURL, const UserData&, std::optional<NavigatingToAppBoundDomain>, WebCore::SubstituteData::SessionHistoryVisibility, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldNotAllow);
+    void loadDataImpl(std::optional<WebCore::NavigationIdentifier>, WebCore::ShouldTreatAsContinuingLoad, std::optional<WebsitePoliciesData>&&, Ref<WebCore::FragmentedSharedBuffer>&&, WebCore::ResourceRequest&&, WebCore::ResourceResponse&&, URL&& failingURL, const UserData&, std::optional<NavigatingToAppBoundDomain>, WebCore::SubstituteData::SessionHistoryVisibility, WebCore::ShouldOpenExternalURLsPolicy = WebCore::ShouldOpenExternalURLsPolicy::ShouldNotAllow);
 
     // Actions
     void tryClose(CompletionHandler<void(bool)>&&);

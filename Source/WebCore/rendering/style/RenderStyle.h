@@ -394,6 +394,8 @@ public:
     bool usesViewportUnits() const { return m_nonInheritedFlags.usesViewportUnits; }
     void setUsesContainerUnits() { m_nonInheritedFlags.usesContainerUnits = true; }
     bool usesContainerUnits() const { return m_nonInheritedFlags.usesContainerUnits; }
+    void setUsesTreeCountingFunctions() { m_nonInheritedFlags.useTreeCountingFunctions = true; }
+    bool useTreeCountingFunctions() const { return m_nonInheritedFlags.useTreeCountingFunctions; }
     void setUsesAnchorFunctions();
     bool usesAnchorFunctions() const;
 
@@ -806,6 +808,8 @@ public:
     inline ContainIntrinsicSizeType containIntrinsicLogicalHeightType() const;
     inline bool containIntrinsicWidthHasAuto() const;
     inline bool containIntrinsicHeightHasAuto() const;
+    inline bool containIntrinsicWidthHasLength() const;
+    inline bool containIntrinsicHeightHasLength() const;
     inline bool containIntrinsicLogicalWidthHasAuto() const;
     inline bool containIntrinsicLogicalHeightHasAuto() const;
     inline void containIntrinsicWidthAddAuto();
@@ -2374,6 +2378,7 @@ private:
 
         unsigned usesViewportUnits : 1;
         unsigned usesContainerUnits : 1;
+        unsigned useTreeCountingFunctions : 1;
         unsigned hasContentNone : 1;
         unsigned textDecorationLine : TextDecorationLineBits; // Text decorations defined *only* by this element.
         unsigned hasExplicitlyInheritedProperties : 1; // Explicitly inherits a non-inherited property.

@@ -1111,8 +1111,10 @@ void WebPage::requestDragStart(const IntPoint& clientPosition, const IntPoint& g
     RefPtr localMainFrame = m_page->localMainFrame();
     if (!localMainFrame)
         return;
-    bool didStart = localMainFrame->eventHandler().tryToBeginDragAtPoint(clientPosition, globalPosition);
-    send(Messages::WebPageProxy::DidHandleDragStartRequest(didStart));
+
+    auto didHandleDrag = localMainFrame->eventHandler().tryToBeginDragAtPoint(clientPosition, globalPosition);
+    if (didHandleDrag != WebCore::DragStartRequestResult::Delayed)
+        send(Messages::WebPageProxy::DidHandleDragStartRequest(didHandleDrag == WebCore::DragStartRequestResult::Started));
 }
 
 void WebPage::requestAdditionalItemsForDragSession(const IntPoint& clientPosition, const IntPoint& globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask)
@@ -1129,8 +1131,10 @@ void WebPage::requestAdditionalItemsForDragSession(const IntPoint& clientPositio
 
     localMainFrame->eventHandler().dragSourceEndedAt(event, { }, MayExtendDragSession::Yes);
 
-    bool didHandleDrag = localMainFrame->eventHandler().tryToBeginDragAtPoint(clientPosition, globalPosition);
-    send(Messages::WebPageProxy::DidHandleAdditionalDragItemsRequest(didHandleDrag));
+    auto didHandleDrag = localMainFrame->eventHandler().tryToBeginDragAtPoint(clientPosition, globalPosition);
+
+    if (didHandleDrag != WebCore::DragStartRequestResult::Delayed)
+        send(Messages::WebPageProxy::DidHandleAdditionalDragItemsRequest(didHandleDrag == WebCore::DragStartRequestResult::Started));
 }
 
 void WebPage::insertDroppedImagePlaceholders(const Vector<IntSize>& imageSizes, CompletionHandler<void(const Vector<IntRect>&, std::optional<WebCore::TextIndicatorData>)>&& reply)
@@ -4068,7 +4072,8 @@ std::optional<FocusedElementInformation> WebPage::focusedElementInformation()
 
     FocusedElementInformation information;
 
-    information.frameID = focusedOrMainFrame->frameID();
+    if (RefPtr webFrame = WebProcess::singleton().webFrame(focusedOrMainFrame->frameID()))
+        information.frame = webFrame->info();
 
     information.lastInteractionLocation = m_lastInteractionLocation;
     if (auto elementContext = contextForElement(*focusedElement))
@@ -4286,6 +4291,9 @@ void WebPage::setViewportConfigurationViewLayoutSize(const FloatSize& size, doub
 
     if (!m_viewportConfiguration.isKnownToLayOutWiderThanViewport())
         m_viewportConfiguration.setMinimumEffectiveDeviceWidthForShrinkToFit(0);
+
+    if (size.isZero() && mainFramePlugInRejectsZeroViewLayoutSizeUpdates())
+        return;
 
     bool mainFramePluginOverridesViewScale = mainFramePlugInDefersScalingToViewport();
 
@@ -4760,6 +4768,15 @@ bool WebPage::shouldIgnoreMetaViewport() const
 }
 
 bool WebPage::mainFramePlugInDefersScalingToViewport() const
+{
+#if ENABLE(PDF_PLUGIN)
+    if (RefPtr plugin = mainFramePlugIn(); plugin && !plugin->pluginHandlesPageScaleFactor())
+        return true;
+#endif
+    return false;
+}
+
+bool WebPage::mainFramePlugInRejectsZeroViewLayoutSizeUpdates() const
 {
 #if ENABLE(PDF_PLUGIN)
     if (RefPtr plugin = mainFramePlugIn(); plugin && !plugin->pluginHandlesPageScaleFactor())

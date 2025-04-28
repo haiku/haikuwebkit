@@ -322,7 +322,7 @@ bool HistoryController::shouldStopLoadingForHistoryItem(HistoryItem& targetItem)
 
 // Main funnel for navigating to a previous location (back/forward, non-search snap-back)
 // This includes recursion to handle loading into framesets properly
-void HistoryController::goToItem(HistoryItem& targetItem, FrameLoadType frameLoadType, ShouldTreatAsContinuingLoad shouldTreatAsContinuingLoad)
+void HistoryController::goToItem(HistoryItem& targetItem, FrameLoadType frameLoadType, ShouldTreatAsContinuingLoad shouldTreatAsContinuingLoad, ProcessSwapDisposition processSwapDisposition)
 {
     RELEASE_LOG(History, "%p - HistoryController::goToItem: item %p, type=%d", this, &targetItem, static_cast<int>(frameLoadType));
 
@@ -368,7 +368,7 @@ void HistoryController::goToItem(HistoryItem& targetItem, FrameLoadType frameLoa
         protectedThis->recursiveGoToItem(targetItem, currentItem.get(), frameLoadType, shouldTreatAsContinuingLoad);
     };
 
-    goToItemShared(targetItem, WTFMove(finishGoToItem));
+    goToItemShared(targetItem, WTFMove(finishGoToItem), processSwapDisposition);
 }
 
 struct HistoryController::FrameToNavigate {
@@ -438,7 +438,7 @@ void HistoryController::goToItemForNavigationAPI(HistoryItem& targetItem, FrameL
     goToItemShared(targetItem, WTFMove(finishGoToItem));
 }
 
-void HistoryController::goToItemShared(HistoryItem& targetItem, CompletionHandler<void(ShouldGoToHistoryItem)>&& completionHandler)
+void HistoryController::goToItemShared(HistoryItem& targetItem, CompletionHandler<void(ShouldGoToHistoryItem)>&& completionHandler, ProcessSwapDisposition processSwapDisposition)
 {
     m_policyItem = &targetItem;
 
@@ -448,9 +448,11 @@ void HistoryController::goToItemShared(HistoryItem& targetItem, CompletionHandle
     bool sameDocumentNavigation = current && targetItem.shouldDoSameDocumentNavigationTo(*current);
 
     Ref frame = m_frame.get();
-    if (sameDocumentNavigation || !frame->protectedLoader()->protectedClient()->supportsAsyncShouldGoToHistoryItem()) {
+    // FIXME <rdar://148849772>: Remove processSwapDisposition check once we have a better solution for passing context to newly spawned processes regarding COOP headers,
+    // and go back to asynchronous path.
+    if (sameDocumentNavigation || !frame->protectedLoader()->protectedClient()->supportsAsyncShouldGoToHistoryItem() || processSwapDisposition == ProcessSwapDisposition::COOP) {
         auto isSameDocumentNavigation = sameDocumentNavigation ? IsSameDocumentNavigation::Yes : IsSameDocumentNavigation::No;
-        auto result = frame->protectedLoader()->protectedClient()->shouldGoToHistoryItem(targetItem, isSameDocumentNavigation);
+        auto result = frame->protectedLoader()->protectedClient()->shouldGoToHistoryItem(targetItem, isSameDocumentNavigation, processSwapDisposition);
         completionHandler(result);
         return;
     }

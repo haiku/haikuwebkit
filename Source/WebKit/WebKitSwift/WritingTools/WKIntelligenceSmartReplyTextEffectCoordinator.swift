@@ -21,17 +21,26 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 
-#if HAVE_WRITING_TOOLS_FRAMEWORK
+#if ENABLE_WRITING_TOOLS
 
 import Foundation
 import WebKit
 import WebKitSwift
 @_spi(Private) import WebKit
+
+#if USE_APPLE_INTERNAL_SDK
 @_spiOnly import WritingTools
+#else
+@_spiOnly import WritingTools_SPI
+#endif
 
 #if os(macOS)
+#if USE_APPLE_INTERNAL_SDK
 @_weakLinked internal import WritingToolsUI_Private._WTTextEffectView
-#endif
+#else
+@_weakLinked internal import WritingToolsUI_Private_SPI
+#endif // USE_APPLE_INTERNAL_SDK
+#endif // os(macOS)
 
 // MARK: Implementation
 
@@ -285,4 +294,4 @@ fileprivate func async(_ block: @escaping (@escaping () -> Void) -> Void) -> (()
     }
 }
 
-#endif
+#endif // ENABLE_WRITING_TOOLS

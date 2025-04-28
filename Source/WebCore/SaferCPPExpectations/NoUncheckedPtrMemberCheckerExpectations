@@ -1,11 +1,13 @@
 Modules/encryptedmedia/legacy/WebKitMediaKeySession.h
+Modules/permissions/NavigatorPermissions.h
+Modules/permissions/WorkerNavigatorPermissions.h
+Modules/screen-wake-lock/NavigatorScreenWakeLock.h
 Modules/websockets/WorkerThreadableWebSocketChannel.h
 accessibility/AXObjectCache.h
 bindings/js/JSLazyEventListener.cpp
 css/CSSToLengthConversionData.h
 css/SelectorChecker.h
 css/SelectorFilter.h
-css/StyleSheetList.h
 css/calc/CSSCalcTree+CalculationValue.cpp
 css/query/MediaQueryEvaluator.h
 dom/CollectionIndexCache.h
@@ -15,7 +17,6 @@ editing/TextCheckingHelper.h
 editing/VisiblePosition.h
 html/HTMLLinkElement.h
 html/parser/HTMLTreeBuilder.h
-html/track/WebVTTParser.h
 inspector/DOMPatchSupport.cpp
 inspector/InspectorController.h
 inspector/InspectorStyleSheet.cpp
@@ -42,6 +43,7 @@ layout/layouttree/LayoutIterator.h
 loader/DocumentThreadableLoader.h
 loader/WorkerThreadableLoader.h
 page/FrameSnapshotting.cpp
+page/NavigatorLoginStatus.h
 page/UndoManager.h
 page/csp/ContentSecurityPolicyDirectiveList.h
 page/csp/ContentSecurityPolicySource.h
@@ -127,5 +129,6 @@ style/Styleable.h
 style/values/color/StyleColorResolutionState.h
 svg/properties/SVGPropertyOwnerRegistry.h
 workers/DedicatedWorkerThread.h
+workers/service/ServiceWorkerContainer.h
 xml/XMLHttpRequestProgressEventThrottle.h
 xml/XMLHttpRequestUpload.h

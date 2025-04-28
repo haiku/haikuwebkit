@@ -2,6 +2,15 @@ NetworkProcess/NetworkConnectionToWebProcess.cpp
 NetworkProcess/NetworkProcess.cpp
 NetworkProcess/ServiceWorker/WebSWServerConnection.cpp
 NetworkProcess/ServiceWorker/WebSWServerToContextConnection.cpp
+NetworkProcess/SharedWorker/WebSharedWorkerServer.cpp
+NetworkProcess/storage/NetworkStorageManager.cpp
+UIProcess/API/Cocoa/_WKInspectorConfiguration.mm
+UIProcess/Cocoa/VideoPresentationManagerProxy.mm
+UIProcess/Notifications/WebNotificationManagerProxy.cpp
+UIProcess/UserContent/WebUserContentControllerProxy.cpp
+UIProcess/ViewGestureController.cpp
+UIProcess/WebPageProxy.cpp
+UIProcess/mac/WebViewImpl.mm
 WebProcess/Automation/WebAutomationSessionProxy.cpp
 WebProcess/EncryptedMedia/MediaKeySystemPermissionRequestManager.cpp
 WebProcess/Extensions/Bindings/JSWebExtensionWrapper.cpp
@@ -13,9 +22,6 @@ WebProcess/InjectedBundle/API/c/WKBundle.cpp
 WebProcess/InjectedBundle/API/c/WKBundleFrame.cpp
 WebProcess/InjectedBundle/API/c/WKBundlePage.cpp
 WebProcess/InjectedBundle/API/mac/WKWebProcessPlugInBrowserContextController.mm
-WebProcess/InjectedBundle/DOM/InjectedBundleCSSStyleDeclarationHandle.cpp
-WebProcess/InjectedBundle/DOM/InjectedBundleNodeHandle.cpp
-WebProcess/InjectedBundle/DOM/InjectedBundleRangeHandle.cpp
 WebProcess/InjectedBundle/InjectedBundleDOMWindowExtension.cpp
 WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp
 WebProcess/InjectedBundle/InjectedBundlePageContextMenuClient.cpp
@@ -34,7 +40,6 @@ WebProcess/Network/webrtc/WebMDNSRegister.cpp
 WebProcess/Notifications/WebNotificationManager.cpp
 WebProcess/Storage/WebSWClientConnection.cpp
 WebProcess/Storage/WebServiceWorkerProvider.cpp
-WebProcess/UserContent/WebUserContentController.cpp
 WebProcess/WebCoreSupport/SessionStateConversion.cpp
 WebProcess/WebCoreSupport/ShareableBitmapUtilities.cpp
 WebProcess/WebCoreSupport/WebChromeClient.cpp

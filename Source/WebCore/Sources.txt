@@ -926,6 +926,7 @@ css/CSSPathValue.cpp
 css/CSSPendingSubstitutionValue.cpp
 css/CSSPositionTryDescriptors.cpp
 css/CSSPositionTryRule.cpp
+css/CSSPositionValue.cpp
 css/CSSPrimitiveValue.cpp
 css/CSSProperty.cpp
 css/CSSPropertyRule.cpp
@@ -2390,6 +2391,7 @@ platform/audio/IIRFilter.cpp
 platform/audio/MultiChannelResampler.cpp
 platform/audio/Panner.cpp
 platform/audio/PlatformMediaSession.cpp
+platform/audio/PlatformMediaSessionInterface.cpp
 platform/audio/PlatformMediaSessionManager.cpp
 platform/audio/PlatformRawAudioData.cpp
 platform/audio/PushPullFIFO.cpp
@@ -2577,12 +2579,10 @@ platform/graphics/cpu/arm/filters/FEBlendNeonApplier.cpp
 platform/graphics/cpu/arm/filters/FECompositeNeonArithmeticApplier.cpp
 platform/graphics/cpu/arm/filters/FELightingNeonParallelApplier.cpp
 platform/graphics/displaylists/DisplayList.cpp
-platform/graphics/displaylists/DisplayListDrawingContext.cpp
 platform/graphics/displaylists/DisplayListItem.cpp
 platform/graphics/displaylists/DisplayListItems.cpp
 platform/graphics/displaylists/DisplayListRecorder.cpp
 platform/graphics/displaylists/DisplayListRecorderImpl.cpp
-platform/graphics/displaylists/DisplayListReplayer.cpp
 platform/graphics/filters/DistantLightSource.cpp
 platform/graphics/filters/FEBlend.cpp
 platform/graphics/filters/FEColorMatrix.cpp
@@ -4019,6 +4019,7 @@ JSGeolocationCoordinates.cpp
 JSGeolocationPosition.cpp
 JSGeolocationPositionError.cpp
 JSGetAnimationsOptions.cpp
+JSGetComposedRangesOptions.cpp
 JSGetHTMLOptions.cpp
 JSHTMLAllCollection.cpp
 JSHTMLAnchorElement.cpp

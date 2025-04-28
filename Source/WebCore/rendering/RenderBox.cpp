@@ -3559,9 +3559,10 @@ LayoutUnit RenderBox::computeReplacedLogicalWidthUsing(SizeType widthType, Lengt
     case LengthType::Percent:
     case LengthType::Calculated: {
         LayoutUnit containerWidth;
-        if (isOutOfFlowPositioned())
-            containerWidth = containingBlockLogicalWidthForPositioned(downcast<RenderBoxModelObject>(*container()));
-        else if (isHorizontalWritingMode() == containingBlock()->isHorizontalWritingMode())
+        if (isOutOfFlowPositioned()) {
+            PositionedLayoutConstraints constraints(*this, LogicalBoxAxis::Inline);
+            containerWidth = constraints.containingSize();
+        } else if (isHorizontalWritingMode() == containingBlock()->isHorizontalWritingMode())
             containerWidth = containingBlockLogicalWidthForContent();
         else
             containerWidth = perpendicularContainingBlockLogicalHeight();
@@ -3742,9 +3743,10 @@ LayoutUnit RenderBox::computeReplacedLogicalHeightUsing(SizeType heightType, Len
         }
         
         LayoutUnit availableHeight;
-        if (isOutOfFlowPositioned())
-            availableHeight = containingBlockLogicalHeightForPositioned(downcast<RenderBoxModelObject>(*container));
-        else if (stretchedHeight)
+        if (isOutOfFlowPositioned()) {
+            PositionedLayoutConstraints constraints(*this, LogicalBoxAxis::Block);
+            availableHeight = constraints.containingSize();
+        } else if (stretchedHeight)
             availableHeight = stretchedHeight.value();
         else if (auto gridAreaLogicalHeight = isGridItem() ? this->gridAreaContentLogicalHeight() : std::nullopt; gridAreaLogicalHeight && *gridAreaLogicalHeight)
             availableHeight = gridAreaLogicalHeight->value();
@@ -3807,9 +3809,8 @@ LayoutUnit RenderBox::availableLogicalHeightUsing(const Length& h, AvailableLogi
     }
 
     if (h.isPercentOrCalculated() && isOutOfFlowPositioned() && !isRenderFragmentedFlow()) {
-        // FIXME: This is wrong if the containingBlock has a perpendicular writing mode.
-        LayoutUnit availableHeight = containingBlockLogicalHeightForPositioned(*containingBlock());
-        return adjustContentBoxLogicalHeightForBoxSizing(valueForLength(h, availableHeight));
+        PositionedLayoutConstraints constraints(*this, LogicalBoxAxis::Block);
+        return adjustContentBoxLogicalHeightForBoxSizing(valueForLength(h, constraints.containingSize()));
     }
 
     if (std::optional<LayoutUnit> heightIncludingScrollbar = computeContentAndScrollbarLogicalHeightUsing(SizeType::MainOrPreferredSize, h, std::nullopt))
@@ -3883,11 +3884,6 @@ LayoutUnit RenderBox::containingBlockLogicalWidthForPositioned(const RenderBoxMo
     if (checkForPerpendicularWritingMode && containingBlock.isHorizontalWritingMode() != isHorizontalWritingMode())
         return containingBlockLogicalHeightForPositioned(containingBlock, false);
 
-    if (is<RenderGrid>(containingBlock)) {
-        if (auto containingBlockContentLogicalWidth = gridAreaContentLogicalWidth(); containingBlockContentLogicalWidth && *containingBlockContentLogicalWidth)
-            return containingBlockContentLogicalWidth->value();
-    }
-
     if (CheckedPtr inlineBox = containingBlock.inlineContinuation()) {
         auto relativelyPositionedInlineBoxAncestor = [&] {
             // Since we stop splitting inlines over 200 nested boxes (see RenderTreeBuilder::Inline::splitInlines), we may not be able to find the real containing block here.
@@ -3939,11 +3935,6 @@ LayoutUnit RenderBox::containingBlockLogicalHeightForPositioned(const RenderBoxM
 
     if (checkForPerpendicularWritingMode && containingBlock.isHorizontalWritingMode() != isHorizontalWritingMode())
         return containingBlockLogicalWidthForPositioned(containingBlock, false);
-
-    if (is<RenderGrid>(containingBlock)) {
-        if (auto containingBlockContentLogicalHeight = gridAreaContentLogicalHeight(); containingBlockContentLogicalHeight && *containingBlockContentLogicalHeight)
-            return containingBlockContentLogicalHeight->value();
-    }
 
     if (auto* box = dynamicDowncast<RenderBox>(containingBlock)) {
         bool isFixedPosition = isFixedPositioned();
@@ -5015,39 +5006,49 @@ bool RenderBox::shouldIgnoreLogicalMinMaxHeightSizes() const
 std::optional<LayoutUnit> RenderBox::explicitIntrinsicInnerWidth() const
 {
     ASSERT(isHorizontalWritingMode() ? shouldApplySizeOrInlineSizeContainment() : shouldApplySizeContainment());
-    if (style().containIntrinsicWidthType() == ContainIntrinsicSizeType::None)
-        return std::nullopt;
 
-    if (element() && style().containIntrinsicWidthHasAuto() && isSkippedContentRoot(*this)) {
+    if (style().containIntrinsicWidthType() == ContainIntrinsicSizeType::None)
+        return { };
+
+    if (style().containIntrinsicWidthHasAuto() && isSkippedContentRoot(*this)) {
+        // If auto is specified and the element has a last remembered size and is currently skipping its contents,
+        // its explicit intrinsic inner size in the corresponding axis is the last remembered size in that axis.
+        // https://drafts.csswg.org/css-sizing-4/#intrinsic-size-override
         if (auto width = isHorizontalWritingMode() ? element()->lastRememberedLogicalWidth() : element()->lastRememberedLogicalHeight())
             return width;
     }
 
-    if (style().containIntrinsicWidthType() == ContainIntrinsicSizeType::AutoAndNone)
-        return std::nullopt;
+    if (style().containIntrinsicWidthHasLength()) {
+        ASSERT(style().containIntrinsicWidth().has_value());
+        return LayoutUnit { style().containIntrinsicWidth()->value() };
+    }
 
-    auto width = style().containIntrinsicWidth();
-    ASSERT(width.has_value());
-    return std::optional<LayoutUnit> { width->value() };
+    ASSERT(style().containIntrinsicWidthType() == ContainIntrinsicSizeType::AutoAndNone);
+    return { };
 }
 
 std::optional<LayoutUnit> RenderBox::explicitIntrinsicInnerHeight() const
 {
     ASSERT(isHorizontalWritingMode() ? shouldApplySizeContainment() : shouldApplySizeOrInlineSizeContainment());
-    if (style().containIntrinsicHeightType() == ContainIntrinsicSizeType::None)
-        return std::nullopt;
 
-    if (element() && style().containIntrinsicHeightHasAuto() && isSkippedContentRoot(*this)) {
+    if (style().containIntrinsicHeightType() == ContainIntrinsicSizeType::None)
+        return { };
+
+    if (style().containIntrinsicHeightHasAuto() && isSkippedContentRoot(*this)) {
+        // If auto is specified and the element has a last remembered size and is currently skipping its contents,
+        // its explicit intrinsic inner size in the corresponding axis is the last remembered size in that axis.
+        // https://drafts.csswg.org/css-sizing-4/#intrinsic-size-override
         if (auto height = isHorizontalWritingMode() ? element()->lastRememberedLogicalHeight() : element()->lastRememberedLogicalWidth())
             return height;
     }
 
-    if (style().containIntrinsicHeightType() == ContainIntrinsicSizeType::AutoAndNone)
-        return std::nullopt;
+    if (style().containIntrinsicHeightHasLength()) {
+        ASSERT(style().containIntrinsicHeight().has_value());
+        return LayoutUnit { style().containIntrinsicHeight()->value() };
+    }
 
-    auto height = style().containIntrinsicHeight();
-    ASSERT(height.has_value());
-    return std::optional<LayoutUnit> { height->value() };
+    ASSERT(style().containIntrinsicHeightType() == ContainIntrinsicSizeType::AutoAndNone);
+    return { };
 }
 
 // hasAutoZIndex only returns true if the element is positioned or a flex-item since

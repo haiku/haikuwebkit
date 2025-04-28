@@ -102,7 +102,7 @@ std::optional<NavigationActionData> WebFrameLoaderClient::navigationActionData(c
     FrameInfoData originatingFrameInfoData {
         navigationAction.initiatedByMainFrame() == InitiatedByMainFrame::Yes,
         FrameType::Local,
-        ResourceRequest { requester.url },
+        ResourceRequest { URL { requester.url } },
         requester.securityOrigin->data(),
         { },
         WTFMove(originatingFrameID),
@@ -144,6 +144,7 @@ std::optional<NavigationActionData> WebFrameLoaderClient::navigationActionData(c
         hasOpener,
         isPerformingHTTPFallback == IsPerformingHTTPFallback::Yes,
         navigationAction.isInitialFrameSrcLoad(),
+        navigationAction.isContentExtensionRedirect(),
         { },
         requester.securityOrigin->data(),
         requester.topOrigin->data(),

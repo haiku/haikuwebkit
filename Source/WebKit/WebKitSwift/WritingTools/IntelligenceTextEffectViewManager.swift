@@ -21,7 +21,7 @@
 // ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 // THE POSSIBILITY OF SUCH DAMAGE.
 
-#if HAVE_WRITING_TOOLS_FRAMEWORK
+#if ENABLE_WRITING_TOOLS
 
 import Foundation
 import WebKit
@@ -35,13 +35,13 @@ protocol IntelligenceTextEffectViewManagerDelegate  {
 
 @MainActor
 class IntelligenceTextEffectViewManager<Source> where Source: IntelligenceTextEffectViewManagerDelegate, Source: PlatformIntelligenceTextEffectViewSource, Source.Chunk == IntelligenceTextEffectChunk {
-    init(source: Source? = nil, contentView: PlatformView) {
+    init(source: Source? = nil, contentView: CocoaView) {
         self.source = source
         self.contentView = contentView
     }
 
     private weak var source: Source?
-    private let contentView: PlatformView
+    private let contentView: CocoaView
 
     private var effectView: PlatformIntelligenceTextEffectView<Source>? = nil
 
@@ -206,4 +206,4 @@ class IntelligenceTextEffectViewManager<Source> where Source: IntelligenceTextEf
     }
 }
 
-#endif
+#endif // ENABLE_WRITING_TOOLS

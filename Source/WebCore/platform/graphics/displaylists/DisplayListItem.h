@@ -39,8 +39,6 @@ class GraphicsContext;
 
 namespace DisplayList {
 
-class ResourceHeap;
-
 class ApplyDeviceScaleFactor;
 class BeginTransparencyLayer;
 class BeginTransparencyLayerWithCompositeMode;
@@ -61,12 +59,14 @@ class DrawFocusRingPath;
 class DrawFocusRingRects;
 class DrawGlyphs;
 class DrawDecomposedGlyphs;
+class DrawDisplayList;
 class DrawImageBuffer;
 class DrawLine;
 class DrawLinesForText;
 class DrawNativeImage;
 class DrawPath;
-class DrawPattern;
+class DrawPatternNativeImage;
+class DrawPatternImageBuffer;
 class DrawRect;
 class DrawSystemImage;
 class EndTransparencyLayer;
@@ -125,12 +125,14 @@ using Item = Variant
     , DrawFocusRingRects
     , DrawGlyphs
     , DrawDecomposedGlyphs
+    , DrawDisplayList
     , DrawImageBuffer
     , DrawLine
     , DrawLinesForText
     , DrawNativeImage
     , DrawPath
-    , DrawPattern
+    , DrawPatternNativeImage
+    , DrawPatternImageBuffer
     , DrawRect
     , DrawSystemImage
     , EndTransparencyLayer
@@ -169,33 +171,18 @@ using Item = Variant
     , SetURLForRect
 >;
 
-enum class StopReplayReason : uint8_t {
-    ReplayedAllItems,
-    MissingCachedResource,
-    InvalidItemOrExtent,
-    OutOfMemory
-};
-
-struct ApplyItemResult {
-    std::optional<StopReplayReason> stopReason;
-    std::optional<RenderingResourceIdentifier> resourceIdentifier;
-};
-
 enum class AsTextFlag : uint8_t {
     IncludePlatformOperations      = 1 << 0,
     IncludeResourceIdentifiers     = 1 << 1,
 };
 
-bool isValid(const Item&);
-
-ApplyItemResult applyItem(GraphicsContext&, const ResourceHeap&, ControlFactory&, const Item&);
+void applyItem(GraphicsContext&, ControlFactory&, const Item&);
 
 bool shouldDumpItem(const Item&, OptionSet<AsTextFlag>);
 
 WEBCORE_EXPORT void dumpItem(TextStream&, const Item&, OptionSet<AsTextFlag>);
 
 WEBCORE_EXPORT TextStream& operator<<(TextStream&, const Item&);
-WEBCORE_EXPORT TextStream& operator<<(TextStream&, StopReplayReason);
 
 } // namespace DisplayList
 } // namespace WebCore

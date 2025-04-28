@@ -38,6 +38,7 @@
 #include "WebAutomationSessionMacros.h"
 #include "WebAutomationSessionMessages.h"
 #include "WebAutomationSessionProxyMessages.h"
+#include "WebDriverBidiFrontendDispatchers.h"
 #include "WebFrameProxy.h"
 #include "WebFullScreenManagerProxy.h"
 #include "WebInspectorUIProxy.h"
@@ -708,16 +709,44 @@ void WebAutomationSession::hideWindowForPage(WebPageProxy& page, WTF::Completion
     m_client->requestHideWindowOfPage(*this, page, WTFMove(completionHandler));
 }
 
-void WebAutomationSession::willShowJavaScriptDialog(WebPageProxy& page)
+#if ENABLE(WEBDRIVER_BIDI)
+static Inspector::Protocol::BidiBrowsingContext::UserPromptType toProtocolUserPromptType(API::AutomationSessionClient::JavaScriptDialogType dialogType)
+{
+    switch (dialogType) {
+    case API::AutomationSessionClient::JavaScriptDialogType::Alert:
+        return Inspector::Protocol::BidiBrowsingContext::UserPromptType::Alert;
+    case API::AutomationSessionClient::JavaScriptDialogType::Confirm:
+        return Inspector::Protocol::BidiBrowsingContext::UserPromptType::Confirm;
+    case API::AutomationSessionClient::JavaScriptDialogType::Prompt:
+        return Inspector::Protocol::BidiBrowsingContext::UserPromptType::Prompt;
+    case API::AutomationSessionClient::JavaScriptDialogType::BeforeUnloadConfirm:
+        return Inspector::Protocol::BidiBrowsingContext::UserPromptType::Beforeunload;
+    }
+
+    RELEASE_ASSERT_NOT_REACHED();
+    return Inspector::Protocol::BidiBrowsingContext::UserPromptType::Alert;
+}
+#endif
+
+void WebAutomationSession::willShowJavaScriptDialog(WebPageProxy& page, const String& message, std::optional<String>&& defaultText)
 {
     // Wait until the next run loop iteration to give time for the client to show the dialog,
     // then check if the dialog is still present. If the page is loading, the dialog will block
     // the load in case of normal strategy, so we want to dispatch all pending navigation callbacks.
     // If the dialog was shown during a script execution, we want to finish the evaluateJavaScriptFunction
     // operation with an unexpected alert open error.
-    RunLoop::protectedMain()->dispatch([this, protectedThis = Ref { *this }, page = Ref { page }] {
+    RunLoop::protectedMain()->dispatch([this, protectedThis = Ref { *this }, page = Ref { page }, message, defaultText] {
         if (!page->hasRunningProcess() || !m_client || !m_client->isShowingJavaScriptDialogOnPage(*this, page))
             return;
+
+#if ENABLE(WEBDRIVER_BIDI)
+        std::optional<API::AutomationSessionClient::JavaScriptDialogType> apiDialogType = m_client->typeOfCurrentJavaScriptDialogOnPage(*this, page);
+        auto userPromptType = toProtocolUserPromptType(apiDialogType.value_or(API::AutomationSessionClient::JavaScriptDialogType::Prompt));
+
+        // FIXME: propagate the 'userPromptHandler' from session capabilities.
+        auto userPromptHandlerType = Inspector::Protocol::BidiSession::UserPromptHandlerType::Accept;
+        m_bidiProcessor->browsingContextDomainNotifier().userPromptOpened(handleForWebPageProxy(page), userPromptType, userPromptHandlerType, message, m_client->defaultTextOfCurrentJavaScriptDialogOnPage(*this, page).value_or(defaultText.value_or(emptyString())));
+#endif
 
         if (page->protectedPageLoadState()->isLoading()) {
             m_loadTimer.stop();
@@ -1241,6 +1270,12 @@ CommandResult<void> WebAutomationSession::dismissCurrentJavaScriptDialog(const I
     bool isShowingJavaScriptDialog = m_client->isShowingJavaScriptDialogOnPage(*this, *page);
     SYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!isShowingJavaScriptDialog, NoJavaScriptDialog);
 
+#if ENABLE(WEBDRIVER_BIDI)
+    auto apiDialogType = m_client->typeOfCurrentJavaScriptDialogOnPage(*this, *page);
+    SYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!apiDialogType, InternalError);
+
+    m_bidiProcessor->browsingContextDomainNotifier().userPromptClosed(handleForWebPageProxy(*page), toProtocolUserPromptType(apiDialogType.value()), false, m_client->userInputOfCurrentJavaScriptDialogOnPage(*this, *page).value_or(emptyString()));
+#endif
     m_client->dismissCurrentJavaScriptDialogOnPage(*this, *page);
 
     return { };
@@ -1256,6 +1291,13 @@ CommandResult<void> WebAutomationSession::acceptCurrentJavaScriptDialog(const In
 
     bool isShowingJavaScriptDialog = m_client->isShowingJavaScriptDialogOnPage(*this, *page);
     SYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!isShowingJavaScriptDialog, NoJavaScriptDialog);
+
+#if ENABLE(WEBDRIVER_BIDI)
+    auto apiDialogType = m_client->typeOfCurrentJavaScriptDialogOnPage(*this, *page);
+    SYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!apiDialogType, InternalError);
+
+    m_bidiProcessor->browsingContextDomainNotifier().userPromptClosed(handleForWebPageProxy(*page), toProtocolUserPromptType(apiDialogType.value()), true, m_client->userInputOfCurrentJavaScriptDialogOnPage(*this, *page).value_or(emptyString()));
+#endif
 
     m_client->acceptCurrentJavaScriptDialogOnPage(*this, *page);
 
@@ -1273,7 +1315,7 @@ CommandResult<String> WebAutomationSession::messageOfCurrentJavaScriptDialog(con
     bool isShowingJavaScriptDialog = m_client->isShowingJavaScriptDialogOnPage(*this, *page);
     SYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!isShowingJavaScriptDialog, NoJavaScriptDialog);
 
-    return m_client->messageOfCurrentJavaScriptDialogOnPage(*this, *page);
+    return m_client->messageOfCurrentJavaScriptDialogOnPage(*this, *page).value_or(emptyString());
 }
 
 CommandResult<void> WebAutomationSession::setUserInputForCurrentJavaScriptPrompt(const Inspector::Protocol::Automation::BrowsingContextHandle& browsingContextHandle, const String& promptValue)
@@ -2510,7 +2552,7 @@ void WebAutomationSession::logEntryAdded(const JSC::MessageSource& messageSource
     // https://bugs.webkit.org/show_bug.cgi?id=282981
     m_domainNotifier->logEntryAdded(level, sourceString, messageText, milliseconds, type, method);
 #if ENABLE(WEBDRIVER_BIDI)
-    m_bidiProcessor->logEntryAdded(level, sourceString, messageText, milliseconds, type, method);
+    m_bidiProcessor->logDomainNotifier().entryAdded(level, sourceString, messageText, milliseconds, type, method);
 #endif
 }
 

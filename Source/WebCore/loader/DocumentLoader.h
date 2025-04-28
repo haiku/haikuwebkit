@@ -267,6 +267,9 @@ public:
     // FIXME: This method seems to violate the encapsulation of this class.
     void setResponse(const ResourceResponse& response) { m_response = response; }
 
+    bool isContentExtensionRedirect() const { return m_isContentExtensionRedirect; }
+    void setIsContentExtensionRedirect(bool isContentExtensionRedirect) { m_isContentExtensionRedirect = isContentExtensionRedirect; }
+
     bool isClientRedirect() const { return m_isClientRedirect; }
     void setIsClientRedirect(bool isClientRedirect) { m_isClientRedirect = isClientRedirect; }
     void dispatchOnloadEvents();
@@ -360,6 +363,7 @@ public:
     const ContentExtensionEnablement& contentExtensionEnablement() const { return m_contentExtensionEnablement; }
     void setContentExtensionEnablement(ContentExtensionEnablement&& enablement) { m_contentExtensionEnablement = WTFMove(enablement); }
 
+    bool hasActiveContentRuleListActions() const { return !m_activeContentRuleListActionPatterns.isEmpty(); }
     bool allowsActiveContentRuleListActionsForURL(const String& contentRuleListIdentifier, const URL&) const;
     WEBCORE_EXPORT void setActiveContentRuleListActionPatterns(const HashMap<String, Vector<String>>&);
 
@@ -541,6 +545,8 @@ public:
 
     bool navigationCanTriggerCrossDocumentViewTransition(Document& oldDocument, bool fromBackForwardCache);
     WEBCORE_EXPORT void whenDocumentIsCreated(Function<void(Document*)>&&);
+
+    WEBCORE_EXPORT void setNewResultingClientId(ScriptExecutionContextIdentifier);
 
 protected:
     WEBCORE_EXPORT DocumentLoader(const ResourceRequest&, const SubstituteData&);
@@ -787,6 +793,7 @@ private:
     bool m_committed { false };
     bool m_isStopping { false };
     bool m_gotFirstByte { false };
+    bool m_isContentExtensionRedirect { false };
     bool m_isClientRedirect { false };
     bool m_isLoadingMultipartContent { false };
     bool m_isContinuingLoadAfterProvisionalLoadStarted { false };

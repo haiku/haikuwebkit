@@ -32,9 +32,7 @@ Compiler::Compiler(rx::GLImplFactory *implFactory, const State &state, egl::Disp
       mOutputType(mImplementation->getTranslatorOutputType()),
       mResources()
 {
-    // TODO(http://anglebug.com/42262462): Update for GL version specific validation
-    ASSERT(state.getClientMajorVersion() == 1 || state.getClientMajorVersion() == 2 ||
-           state.getClientMajorVersion() == 3 || state.getClientMajorVersion() == 4);
+    ASSERT(state.getClientVersion() >= ES_1_0 && state.getClientVersion() <= ES_3_2);
 
     {
         std::lock_guard<angle::SimpleMutex> lock(display->getDisplayGlobalMutex());
@@ -169,8 +167,6 @@ Compiler::Compiler(rx::GLImplFactory *implFactory, const State &state, egl::Disp
 
     // ANGLE_shader_pixel_local_storage.
     mResources.MaxPixelLocalStoragePlanes = caps.maxPixelLocalStoragePlanes;
-    mResources.MaxColorAttachmentsWithActivePixelLocalStorage =
-        caps.maxColorAttachmentsWithActivePixelLocalStorage;
     mResources.MaxCombinedDrawBuffersAndPixelLocalStoragePlanes =
         caps.maxCombinedDrawBuffersAndPixelLocalStoragePlanes;
 
@@ -226,7 +222,7 @@ Compiler::Compiler(rx::GLImplFactory *implFactory, const State &state, egl::Disp
     mResources.MinPointSize = caps.minAliasedPointSize;
     mResources.MaxPointSize = caps.maxAliasedPointSize;
 
-    if (state.getClientMajorVersion() == 2 && !extensions.drawBuffersEXT)
+    if (state.getClientVersion() == ES_2_0 && !extensions.drawBuffersEXT)
     {
         mResources.MaxDrawBuffers = 1;
     }
@@ -338,8 +334,8 @@ void Compiler::putInstance(ShCompilerInstance &&instance)
 
 ShShaderSpec Compiler::SelectShaderSpec(const State &state)
 {
-    const GLint majorVersion = state.getClientMajorVersion();
-    const GLint minorVersion = state.getClientMinorVersion();
+    const GLint majorVersion = state.getClientVersion().getMajor();
+    const GLint minorVersion = state.getClientVersion().getMinor();
     bool isWebGL             = state.isWebGL();
 
     if (majorVersion >= 3)

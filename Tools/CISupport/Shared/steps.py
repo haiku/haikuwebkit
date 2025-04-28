@@ -43,7 +43,7 @@ CURRENT_HOSTNAME = socket.gethostname().strip()
 GITHUB_URL = 'https://github.com/'
 SCAN_BUILD_OUTPUT_DIR = 'scan-build-output'
 LLVM_DIR = 'llvm-project'
-LLVM_REVISION = '6add6dc08b6ec36f7374d7e2574922fc9847806b'
+LLVM_REVISION = '41f92b62da5e3abf38f961362d3ba3f2fb54b96f'
 
 
 class ShellMixin(object):
@@ -311,3 +311,13 @@ class PrintClangVersionAfterUpdate(PrintClangVersion, ShellMixin):
         if self.results != SUCCESS:
             self.build.buildFinished(['Failed to set up analyzer, retrying build'], RETRY)
         return super().getResultSummary()
+
+
+class PruneCoreSymbolicationdCacheIfTooLarge(shell.ShellCommandNewStyle):
+    name = "prune-coresymbolicationd-cache-if-too-large"
+    description = ["pruning coresymbolicationd cache to < 10GB"]
+    descriptionDone = ["pruned coresymbolicationd cache"]
+    flunkOnFailure = False
+    haltOnFailure = False
+    command = ["sudo", "python3", "Tools/Scripts/delete-if-too-large",
+               "/System/Library/Caches/com.apple.coresymbolicationd"]

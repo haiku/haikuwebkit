@@ -1299,7 +1299,7 @@
 		E5AA42F2259128AE00410A3D /* UserInterfaceIdiomUpdate.mm in Sources */ = {isa = PBXBuildFile; fileRef = E5AA42F1259128AE00410A3D /* UserInterfaceIdiomUpdate.mm */; };
 		E5AA8D1D25151CC60051CC45 /* DateInputTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = E5AA8D1C25151CC60051CC45 /* DateInputTests.mm */; };
 		E720BDD72D08B42A0093E680 /* web-extension-with-parent-directory.zip in Copy Resources */ = {isa = PBXBuildFile; fileRef = E720BDD62D08B42A0093E680 /* web-extension-with-parent-directory.zip */; };
-		EB1F62972D19E07E000B3A04 /* ResourceMonitor.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB1F62962D19E07E000B3A04 /* ResourceMonitor.cpp */; };
+		EB1F62972D19E07E000B3A04 /* ResourceMonitor.mm in Sources */ = {isa = PBXBuildFile; fileRef = EB1F62962D19E07E000B3A04 /* ResourceMonitor.mm */; };
 		EB7067FC2CCC0E9900A94073 /* MixedContentChecker.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB6836D32CC967E00073A8E5 /* MixedContentChecker.cpp */; };
 		EB9AD8C727646E7400D893A4 /* PushDatabase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EB9AD8C627646E7300D893A4 /* PushDatabase.cpp */; };
 		EBA75C49275ED7C700D6D31C /* PushMessageCrypto.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EBA75C48275ED7BE00D6D31C /* PushMessageCrypto.cpp */; };
@@ -1309,7 +1309,6 @@
 		F4010B8324DA267F00A876E2 /* PoseAsClass.mm in Sources */ = {isa = PBXBuildFile; fileRef = F4010B8124DA267F00A876E2 /* PoseAsClass.mm */; };
 		F402F56C23ECC2FB00865549 /* UIWKInteractionViewProtocol.mm in Sources */ = {isa = PBXBuildFile; fileRef = F402F56B23ECC2FB00865549 /* UIWKInteractionViewProtocol.mm */; };
 		F4034FA1275D5402003A81F8 /* CookieConsent.mm in Sources */ = {isa = PBXBuildFile; fileRef = F4034FA0275D5402003A81F8 /* CookieConsent.mm */; };
-		F4094CC725545BD5003D73E3 /* DisplayListTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F4094CC625545BD5003D73E3 /* DisplayListTests.cpp */; };
 		F418BE151F71B7DC001970E6 /* RoundedRectTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F418BE141F71B7DC001970E6 /* RoundedRectTests.cpp */; };
 		F425831624F07CA5006B985D /* WKWebViewCoders.mm in Sources */ = {isa = PBXBuildFile; fileRef = F425831524F07CA5006B985D /* WKWebViewCoders.mm */; };
 		F42A9E702CC2FE84002280C0 /* subframes.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = F42A9E6F2CC2FE84002280C0 /* subframes.html */; };
@@ -1326,7 +1325,6 @@
 		F45033F5206BEC95009351CE /* TextAutosizingBoost.mm in Sources */ = {isa = PBXBuildFile; fileRef = F45033F4206BEC95009351CE /* TextAutosizingBoost.mm */; };
 		F4517B672054C49500C26721 /* TestWKWebViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = F4517B662054C49500C26721 /* TestWKWebViewController.mm */; };
 		F456AB1C213EDBA300CB2CEF /* FontManagerTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = F456AB1B213EDBA300CB2CEF /* FontManagerTests.mm */; };
-		F457275E25578D06007ACA34 /* DisplayListTestsCG.cpp in Sources */ = {isa = PBXBuildFile; fileRef = F457275D25578D06007ACA34 /* DisplayListTestsCG.cpp */; };
 		F45B63FE1F19D410009D38B9 /* ActionSheetTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = F45B63FC1F19D410009D38B9 /* ActionSheetTests.mm */; };
 		F45D3891215A7B4B002A2979 /* TestInspectorBar.mm in Sources */ = {isa = PBXBuildFile; fileRef = F45D3890215A7B4B002A2979 /* TestInspectorBar.mm */; };
 		F45E15732112CE2900307E82 /* KeyboardInputTestsIOS.mm in Sources */ = {isa = PBXBuildFile; fileRef = F45E15722112CE2900307E82 /* KeyboardInputTestsIOS.mm */; };
@@ -2803,7 +2801,6 @@
 		51E780361919AFF8001829A2 /* simple2.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = simple2.html; sourceTree = "<group>"; };
 		51E780371919AFF8001829A2 /* simple3.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = simple3.html; sourceTree = "<group>"; };
 		51E93016156B13E1004C99DF /* WKPageGetScaleFactorNotZero.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WKPageGetScaleFactorNotZero.cpp; sourceTree = "<group>"; };
-		51EB125324C66BCB000CB030 /* TestWebKitAPI-macOS-internal.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = "TestWebKitAPI-macOS-internal.entitlements"; sourceTree = "<group>"; };
 		51EB125424C66FE8000CB030 /* VirtualGamepad.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VirtualGamepad.h; sourceTree = "<group>"; };
 		51EB125624C66FE8000CB030 /* VirtualGamepad.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = VirtualGamepad.mm; sourceTree = "<group>"; };
 		51EB125824C68589000CB030 /* HIDGamepads.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = HIDGamepads.mm; sourceTree = "<group>"; };
@@ -2865,7 +2862,6 @@
 		573255A222139B8F00396AE8 /* load-web-archive-1.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "load-web-archive-1.html"; sourceTree = "<group>"; };
 		573255A322139B9000396AE8 /* load-web-archive-2.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "load-web-archive-2.html"; sourceTree = "<group>"; };
 		573255A422139B9000396AE8 /* helloworld.webarchive */ = {isa = PBXFileReference; lastKnownFileType = file.bplist; path = helloworld.webarchive; sourceTree = "<group>"; };
-		5735F0251F3A4EA6000EE801 /* TestWebKitAPI-iOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "TestWebKitAPI-iOS.entitlements"; sourceTree = "<group>"; };
 		574217872400ABFD002B303D /* web-authentication-make-credential-la-error.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "web-authentication-make-credential-la-error.html"; sourceTree = "<group>"; };
 		574217892400AED0002B303D /* web-authentication-make-credential-la-duplicate-credential.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "web-authentication-make-credential-la-duplicate-credential.html"; sourceTree = "<group>"; };
 		5742178D2400D26C002B303D /* web-authentication-make-credential-la.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "web-authentication-make-credential-la.html"; sourceTree = "<group>"; };
@@ -3110,7 +3106,6 @@
 		7A99D9931AD4A29D00373141 /* MenuTypesForMouseEvents.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MenuTypesForMouseEvents.mm; sourceTree = "<group>"; };
 		7AA021BA1AB09EA70052953F /* DateMath.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DateMath.cpp; sourceTree = "<group>"; };
 		7AA6A1511AAC0B31002B2ED3 /* WorkQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WorkQueue.cpp; sourceTree = "<group>"; };
-		7AB0173923FB2BF0002F8366 /* TestWebKitAPI-macOS.entitlements */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.entitlements; path = "TestWebKitAPI-macOS.entitlements"; sourceTree = "<group>"; };
 		7AC7B56B20D9768E002C09A0 /* CustomBundleParameter_Bundle.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CustomBundleParameter_Bundle.mm; sourceTree = "<group>"; };
 		7AC7B56C20D9768F002C09A0 /* CustomBundleParameter.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CustomBundleParameter.mm; sourceTree = "<group>"; };
 		7AC7B56F20D9BA5B002C09A0 /* CustomBundleObject.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CustomBundleObject.mm; sourceTree = "<group>"; };
@@ -3379,6 +3374,9 @@
 		A14FC5891B89927100D107EB /* ContentFilteringPlugIn.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ContentFilteringPlugIn.mm; sourceTree = "<group>"; };
 		A14FC58D1B8AE36500D107EB /* TestProtocol.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TestProtocol.h; path = cocoa/TestProtocol.h; sourceTree = "<group>"; };
 		A14FC58E1B8AE36500D107EB /* TestProtocol.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = TestProtocol.mm; path = cocoa/TestProtocol.mm; sourceTree = "<group>"; };
+		A1508C502DAEF19200C3E213 /* check-xcfilelists.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "check-xcfilelists.sh"; sourceTree = "<group>"; };
+		A1508C512DAEF19200C3E213 /* generate-unified-sources.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "generate-unified-sources.sh"; sourceTree = "<group>"; };
+		A1508C532DAEF1A500C3E213 /* process-entitlements.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "process-entitlements.sh"; sourceTree = "<group>"; };
 		A15502281E05020B00A24C57 /* DuplicateCompletionHandlerCalls.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = DuplicateCompletionHandlerCalls.mm; sourceTree = "<group>"; };
 		A155022B1E050BC500A24C57 /* duplicate-completion-handler-calls.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "duplicate-completion-handler-calls.html"; sourceTree = "<group>"; };
 		A16F66B91C40EA2000BD4D24 /* ContentFiltering.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = ContentFiltering.html; sourceTree = "<group>"; };
@@ -3779,7 +3777,7 @@
 		E5F67D662B637F9200CC30DE /* AdaptiveImageGlyph.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = AdaptiveImageGlyph.mm; sourceTree = "<group>"; };
 		E720BDD62D08B42A0093E680 /* web-extension-with-parent-directory.zip */ = {isa = PBXFileReference; lastKnownFileType = archive.zip; path = "web-extension-with-parent-directory.zip"; sourceTree = "<group>"; };
 		EB0E04122B7C228D00EFFB94 /* ProcessInfo.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ProcessInfo.mm; sourceTree = "<group>"; };
-		EB1F62962D19E07E000B3A04 /* ResourceMonitor.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = ResourceMonitor.cpp; sourceTree = "<group>"; };
+		EB1F62962D19E07E000B3A04 /* ResourceMonitor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = ResourceMonitor.mm; sourceTree = "<group>"; };
 		EB230D3D245E722E00C66AD1 /* IDBCheckpointWAL.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = IDBCheckpointWAL.html; sourceTree = "<group>"; };
 		EB230D3E245E726300C66AD1 /* IDBCheckpointWAL.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = IDBCheckpointWAL.mm; sourceTree = "<group>"; };
 		EB4D320727C045430081A8E4 /* TestNotificationProvider.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TestNotificationProvider.cpp; sourceTree = "<group>"; };
@@ -3803,7 +3801,6 @@
 		F40398892B2D0AC700A7AA85 /* text-with-web-font.webarchive */ = {isa = PBXFileReference; lastKnownFileType = file.bplist; path = "text-with-web-font.webarchive"; sourceTree = "<group>"; };
 		F405F8A42BD1D1B90020E6AB /* element-targeting-7.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "element-targeting-7.html"; sourceTree = "<group>"; };
 		F407FE381F1D0DE60017CF25 /* enormous.svg */ = {isa = PBXFileReference; lastKnownFileType = text; path = enormous.svg; sourceTree = "<group>"; };
-		F4094CC625545BD5003D73E3 /* DisplayListTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = DisplayListTests.cpp; sourceTree = "<group>"; };
 		F40B8D5D2810855900346417 /* fade-in-image.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "fade-in-image.html"; sourceTree = "<group>"; };
 		F4106C6821ACBF84004B89A1 /* WKWebViewFirstResponderTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebViewFirstResponderTests.mm; sourceTree = "<group>"; };
 		F41289A12BCC97DA00D6E0E7 /* element-targeting-6.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "element-targeting-6.html"; sourceTree = "<group>"; };
@@ -3870,7 +3867,6 @@
 		F4538EF01E846B4100B5C953 /* large-red-square.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "large-red-square.png"; sourceTree = "<group>"; };
 		F455DB8C2BAE37C100732E1B /* nested-frames.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "nested-frames.html"; sourceTree = "<group>"; };
 		F456AB1B213EDBA300CB2CEF /* FontManagerTests.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = FontManagerTests.mm; sourceTree = "<group>"; };
-		F457275D25578D06007ACA34 /* DisplayListTestsCG.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; name = DisplayListTestsCG.cpp; path = cg/DisplayListTestsCG.cpp; sourceTree = "<group>"; };
 		F457A9B3202D535300F7E9D5 /* DataTransfer.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = DataTransfer.html; sourceTree = "<group>"; };
 		F457A9B6202D5CDC00F7E9D5 /* PasteMixedContent.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = PasteMixedContent.mm; sourceTree = "<group>"; };
 		F45B63FA1F197F33009D38B9 /* image-map.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "image-map.html"; sourceTree = "<group>"; };
@@ -4174,6 +4170,7 @@
 				5C9D921D22D7DBF7008E9266 /* Sources.txt */,
 				5C9D922622D7DD7B008E9266 /* Derived Sources */,
 				5C9D921E22D7DBF8008E9266 /* SourcesCocoa.txt */,
+				A1508C522DAEF19200C3E213 /* Scripts */,
 				08FB7795FE84155DC02AAC07 /* Source */,
 				BCB9EB66112366D800A137E0 /* Tests */,
 				BC90957D12554CEA00083756 /* Configurations */,
@@ -4847,7 +4844,6 @@
 				260BA57A1B1D2EE2004FA07C /* DFAHelpers.h */,
 				26F6E1EF1ADC749B00DE696B /* DFAMinimizer.cpp */,
 				7BC8628729B8B33500217CB5 /* DisplayListRecorderTests.cpp */,
-				F4094CC625545BD5003D73E3 /* DisplayListTests.cpp */,
 				93915A1624DB66C70019FF43 /* DocumentOrder.cpp */,
 				579651E6216BFD53006EBFE5 /* FidoHidMessageTest.cpp */,
 				572B40352176A029000AD43E /* FidoTestData.h */,
@@ -4893,7 +4889,6 @@
 				7B0594782CB44CF600B571AC /* RegionTests.cpp */,
 				6B4E861B2220A5520022F389 /* RegistrableDomain.cpp */,
 				D84FAD9829FAC1D0008D338F /* RenderStyleChange.cpp */,
-				EB1F62962D19E07E000B3A04 /* ResourceMonitor.cpp */,
 				F418BE141F71B7DC001970E6 /* RoundedRectTests.cpp */,
 				4181C62C255A891100AEB0FF /* RTCRtpSFrameTransformerTests.cpp */,
 				CDCFA7A91E45122F00C2433D /* SampleMap.cpp */,
@@ -5196,6 +5191,16 @@
 			);
 			name = WebProcessPlugIn;
 			path = cocoa/WebProcessPlugIn;
+			sourceTree = "<group>";
+		};
+		A1508C522DAEF19200C3E213 /* Scripts */ = {
+			isa = PBXGroup;
+			children = (
+				A1508C502DAEF19200C3E213 /* check-xcfilelists.sh */,
+				A1508C512DAEF19200C3E213 /* generate-unified-sources.sh */,
+				A1508C532DAEF1A500C3E213 /* process-entitlements.sh */,
+			);
+			path = Scripts;
 			sourceTree = "<group>";
 		};
 		A16F66B81C40E9E100BD4D24 /* Resources */ = {
@@ -5653,9 +5658,6 @@
 				BC90957F12554CF900083756 /* DebugRelease.xcconfig */,
 				BC575AE2126E88B1006F0F12 /* InjectedBundle.xcconfig */,
 				7B9FC58628A2682E007570E7 /* TestIPC.xcconfig */,
-				5735F0251F3A4EA6000EE801 /* TestWebKitAPI-iOS.entitlements */,
-				51EB125324C66BCB000CB030 /* TestWebKitAPI-macOS-internal.entitlements */,
-				7AB0173923FB2BF0002F8366 /* TestWebKitAPI-macOS.entitlements */,
 				A17C58232C9AA491009DD0B5 /* TestWebKitAPI.xcconfig */,
 				A17C58222C9AA2B0009DD0B5 /* TestWebKitAPIApp.xcconfig */,
 				BC90958012554CF900083756 /* TestWebKitAPIBase.xcconfig */,
@@ -6341,6 +6343,7 @@
 				41EBA9F128ABA06500953013 /* ImageRotationSessionVT.cpp */,
 				7BB62AB629BB4BAA00228CD6 /* IOSurfaceTests.mm */,
 				57F1C91025DDD51900E8F6EA /* PrivateClickMeasurementCocoa.mm */,
+				EB1F62962D19E07E000B3A04 /* ResourceMonitor.mm */,
 				1AF86FBF2CD5526B00AD337C /* ScrollbarWidthCrash.mm */,
 				5769C50A1D9B0001000847FB /* SerializedCryptoKeyWrap.mm */,
 				A17991861E1C994E00A505ED /* SharedBuffer.mm */,
@@ -6437,7 +6440,6 @@
 			isa = PBXGroup;
 			children = (
 				2DD87144265F23B4005F997C /* BifurcatedGraphicsContextTestsCG.cpp */,
-				F457275D25578D06007ACA34 /* DisplayListTestsCG.cpp */,
 				2D09CEFF26A68296009C43C0 /* GraphicsContextCGTests.mm */,
 			);
 			name = cg;
@@ -6541,6 +6543,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = 1DEB927408733DD40010E9CD /* Build configuration list for PBXNativeTarget "TestWebKitAPI" */;
 			buildPhases = (
+				A1508C552DAF1F8000C3E213 /* Process Entitlements */,
 				8DD76F990486AA7600D96B5E /* Sources */,
 				8DD76F9B0486AA7600D96B5E /* Frameworks */,
 			);
@@ -6594,6 +6597,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = A17C58212C9AA132009DD0B5 /* Build configuration list for PBXNativeTarget "TestWebKitAPIApp" */;
 			buildPhases = (
+				A1CD8B582DBA0F4600463203 /* Process Entitlements */,
 				A17C57FE2C9AA12F009DD0B5 /* Sources */,
 				A17C57FF2C9AA12F009DD0B5 /* Frameworks */,
 				A1B8D7622D67CD6E0045C305 /* Copy Resources */,
@@ -6857,6 +6861,48 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "Scripts/generate-unified-sources.sh\n";
+		};
+		A1508C552DAF1F8000C3E213 /* Process Entitlements */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Scripts/process-entitlements.sh",
+			);
+			name = "Process Entitlements";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(WK_PROCESSED_XCENT_FILE)",
+				"$(WK_PROCESSED_SIMULATOR_XCENT_FILE)",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "Scripts/process-entitlements.sh\n";
+		};
+		A1CD8B582DBA0F4600463203 /* Process Entitlements */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+				"$(SRCROOT)/Scripts/process-entitlements.sh",
+			);
+			name = "Process Entitlements";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+				"$(WK_PROCESSED_XCENT_FILE)",
+				"$(WK_PROCESSED_SIMULATOR_XCENT_FILE)",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "Scripts/process-entitlements.sh\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 
@@ -7152,8 +7198,6 @@
 				F4D5D69525AF8BE400205280 /* DisableAutomaticSpellingCorrection.mm in Sources */,
 				FEC2A85424CE975F00ADBC35 /* DisallowVMEntry.cpp in Sources */,
 				7BC8628F29B8B33500217CB5 /* DisplayListRecorderTests.cpp in Sources */,
-				F4094CC725545BD5003D73E3 /* DisplayListTests.cpp in Sources */,
-				F457275E25578D06007ACA34 /* DisplayListTestsCG.cpp in Sources */,
 				93915A1724DB66C70019FF43 /* DocumentOrder.cpp in Sources */,
 				7CCE7EEB1A411AE600447C4C /* DocumentStartUserScriptAlertCrash.cpp in Sources */,
 				7CCE7EBB1A411A7E00447C4C /* DOMHTMLTableCellCellAbove.mm in Sources */,
@@ -7357,7 +7401,7 @@
 				D84FAD9A29FAC1D0008D338F /* RenderStyleChange.cpp in Sources */,
 				7CCE7F0E1A411AE600447C4C /* ResizeReversePaginatedWebView.cpp in Sources */,
 				7CCE7F0F1A411AE600447C4C /* ResizeWindowAfterCrash.cpp in Sources */,
-				EB1F62972D19E07E000B3A04 /* ResourceMonitor.cpp in Sources */,
+				EB1F62972D19E07E000B3A04 /* ResourceMonitor.mm in Sources */,
 				512C4C9E20EAA40D004945EA /* ResponsivenessTimerCrash.mm in Sources */,
 				83B6DE6F1EE75221001E792F /* RestoreSessionState.cpp in Sources */,
 				7CCE7F111A411AE600447C4C /* RestoreSessionStateContainingFormData.cpp in Sources */,

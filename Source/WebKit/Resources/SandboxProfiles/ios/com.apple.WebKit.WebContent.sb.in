@@ -40,11 +40,6 @@
 (deny file-read-metadata
     (literal "/private/var/db/MobileIdentityData/Version.plist"))
 
-;;;
-;;; The following rules were originally contained in 'common.sb'. We are duplicating them here so we can
-;;; remove unneeded sandbox extensions.
-;;;
-
 (define-once (framebuffer-access)
     (deny iokit-open-user-client (with telemetry-backtrace)
         (iokit-user-client-class "IOMobileFramebufferUserClient"))
@@ -522,18 +517,9 @@
 (allow process-info-dirtycontrol (target self))
 (allow process-info-rusage (target self))
 
-;;;
-;;; End common.sb content
-;;;
-
 (deny mach-lookup (xpc-service-name-prefix ""))
 (deny iokit-get-properties)
 (deny lsopen)
-
-;;;
-;;; The following rules were originally contained in 'UIKit-apps.sb'. We are duplicating them here so we can
-;;; remove unneeded sandbox extensions.
-;;;
 
 ;; Any app can play audio & movies.
 (play-media)
@@ -617,10 +603,6 @@
 
 ;; <rdar://problem/34986314>
 (mobile-preferences-read "com.apple.indigo")
-
-;;;
-;;; End UIKit-apps.sb content
-;;;
 
 (mobile-preferences-read "com.apple.AdLib.plist")
 

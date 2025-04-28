@@ -424,7 +424,6 @@ imported/w3c/web-platform-tests/referrer-policy/generic/unsupported-csp-referrer
 
 # These tests times out. We should fix that.
 imported/w3c/web-platform-tests/selection/collapse-30.html [ Skip ]
-imported/w3c/web-platform-tests/selection/dir-manual.html [ Skip ]
 imported/w3c/web-platform-tests/editing/crashtests/inserthorizontalrule-in-textarea-in-editor-and-undo-on-error-events.html [ Skip ]
 imported/w3c/web-platform-tests/editing/crashtests/designMode-caret-change.html [ Skip ]
 imported/w3c/web-platform-tests/editing/crashtests/insertparagraph-in-listitem-in-svg-followed-by-collapsible-spaces.html [ Skip ]
@@ -433,6 +432,11 @@ imported/w3c/web-platform-tests/selection/caret/move-around-contenteditable-fals
 
 # This crash test is a timeout.
 imported/w3c/web-platform-tests/selection/crashtests/selectall-and-find-svg-text-on-selectstart.html [ Timeout ]
+
+imported/w3c/web-platform-tests/selection/shadow-dom/cross-shadow-boundary-1.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/selection/shadow-dom/cross-shadow-boundary-select-document.html [ ImageOnlyFailure ]
+
+imported/w3c/web-platform-tests/selection/fire-selectionchange-event-on-pressing-backspace.html [ Pass Failure ]
 
 # This test hits a debug assertion in WebKit
 webkit.org/b/266465 imported/w3c/web-platform-tests/editing/run/delete.html?6001-7000 [ Skip ]
@@ -1725,20 +1729,14 @@ imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-align-
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-align-self-vertWM-004.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-img-002.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-img-last-baseline-001.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-img-last-baseline-002.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-last-baseline-001.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-last-baseline-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-rtl-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-rtl-004.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-rtl-last-baseline-001.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-rtl-last-baseline-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-rtl-last-baseline-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-rtl-last-baseline-004.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-vertWM-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-vertWM-004.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-vertWM-last-baseline-001.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-vertWM-last-baseline-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-vertWM-last-baseline-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/grid-abspos-staticpos-justify-self-vertWM-last-baseline-004.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-grid/abspos/orthogonal-positioned-grid-descendants-010.html [ Pass Failure ]
@@ -2203,6 +2201,8 @@ imported/w3c/web-platform-tests/svg/linking/reftests/view-viewbox-override.html 
 imported/w3c/web-platform-tests/svg/render/reftests/render-sync-with-font-size.html [ Skip ]
 imported/w3c/web-platform-tests/svg/render/order/z-index.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/render/reftests/blending-001.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/layout/svg-foreign-relayout-001.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/layout/svg-foreign-relayout-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/shapes/ellipse-02.svg [ Skip ]
 imported/w3c/web-platform-tests/svg/shapes/ellipse-03.svg [ Skip ]
 imported/w3c/web-platform-tests/svg/shapes/ellipse-05.svg [ Skip ]
@@ -2254,6 +2254,7 @@ imported/w3c/web-platform-tests/svg/extensibility/foreignObject/isolation-with-h
 imported/w3c/web-platform-tests/svg/extensibility/foreignObject/isolation-with-svg.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/painting/reftests/display-none-mask.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/coordinate-systems/viewBox-baseVal-change-invalid.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/coordinate-systems/viewBox-synthesized-in-img-001.tentative.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/shapes/rect-03.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/shapes/rect-04.svg [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/svg/shapes/reftests/pathlength-002.svg [ ImageOnlyFailure ]
@@ -3567,6 +3568,8 @@ imported/w3c/web-platform-tests/css/css-pseudo/selection-background-painting-ord
 
 webkit.org/b/177799,webkit.org/b/290781 accessibility/table-detection.html [ Pass Failure Timeout ]
 
+webkit.org/b/291984 [ Debug ] accessibility/roles-computedRoleString.html [ Timeout ]
+
 webkit.org/b/179069 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/sandbox_032.htm [ Pass Failure ]
 
 http/tests/privateClickMeasurement [ Skip ]
@@ -4587,18 +4590,14 @@ imported/w3c/web-platform-tests/css/css-fonts/font-weight-lighter-001.xht [ Imag
 imported/w3c/web-platform-tests/css/css-fonts/font-weight-normal-001.xht [ ImageOnlyFailure ]
 
 # webkit.org/b/203763 2019 WebGL test gardening: These tests pass in Safari and the conformance suite, but timeout in TestRunner and MiniBrowser.
-webgl/1.0.3/conformance/uniforms/gl-uniform-arrays.html [ Skip ]
 webgl/2.0.0/conformance2/rendering/blitframebuffer-filter-outofbounds.html [ Skip ]
 
 # webkit.org/b/203908 Tests generate inconsistent results or time out
 webgl/1.0.3/conformance/textures/texture-npot-video.html [ Skip ]
-webgl/1.0.3/conformance/canvas/rapid-resizing.html [ Skip ]
 
 # WebGL 2 Conformance Suite rules for regular bots post ANGLE backend adoption.
 # DEQP is skipped on the main fleet of bots because of the long run time.
 webgl/2.0.0/deqp [ Skip ]
-
-webkit.org/b/214893 [ Debug ] webgl/2.0.0/conformance/uniforms/gl-uniform-arrays.html [ Slow ]
 
 # webkit.org/b/208211 Additional inconsitencies between Intel bots and AMD machine
 webgl/2.0.0/conformance2/rendering/clipping-wide-points.html [ Pass Failure ]
@@ -4696,12 +4695,12 @@ webkit.org/b/241027 webgl/2.0.0/conformance2/textures/image_bitmap_from_image_bi
 webgl/1.0.x [ Skip ]
 
 # Explicitly enable tests which we have fixed and do not have corresponding 1.0.3 test functionality.
-webgl/1.0.x/conformance/canvas/to-data-url-test.html [ Pass ]
 webgl/1.0.x/conformance/context/constants-and-properties.html [ Pass ]
 webgl/1.0.x/conformance/textures/misc/exif-orientation.html [ Pass ]
 
 webgl/1.0.x/conformance/attribs [ Pass ]
 webgl/1.0.x/conformance/buffers [ Pass ]
+webgl/1.0.x/conformance/canvas [ Pass ]
 webgl/1.0.x/conformance/context [ Pass ]
 webgl/1.0.x/conformance/extensions [ Pass ]
 webgl/1.0.x/conformance/glsl [ Pass ]
@@ -4716,6 +4715,8 @@ webgl/1.0.x/conformance/renderbuffers [ Pass ]
 webgl/1.0.x/conformance/rendering [ Pass ]
 webgl/1.0.x/conformance/state [ Pass ]
 webgl/1.0.x/conformance/textures/canvas/ [ Pass ]
+webgl/1.0.x/conformance/typedarrays [ Pass ]
+webgl/1.0.x/conformance/uniforms [ Pass Slow ]
 
 # Debug builds on slower machines run close to the time out especially with GPUP enabled
 webkit.org/b/238691 [ Debug ] webgl/1.0.3/conformance/state/gl-object-get-calls.html [ Slow ]
@@ -4726,7 +4727,6 @@ webgl/2.0.y [ Skip ]
 webkit.org/b/254730 [ Debug ] webgl/2.0.y/conformance/extensions/webgl-compressed-texture-astc.html [ Slow ]
 
 # Explicitly enable tests which we have fixed and do not have corresponding 2.0.0 test functionality.
-webgl/2.0.y/conformance/canvas/to-data-url-test.html [ Pass ]
 webgl/2.0.y/conformance/textures/misc/exif-orientation.html [ Pass ]
 webgl/2.0.y/conformance/extensions/webgl-multi-draw.html [ Pass Slow ]
 webgl/2.0.y/conformance2/extensions/ext-texture-filter-anisotropic.html [ Pass ]
@@ -4736,6 +4736,7 @@ webgl/2.0.y/conformance2/state/gl-object-get-calls.html [ Pass Slow ]
 webgl/2.0.y/conformance2/vertex_arrays/vertex-array-object.html [ Pass ]
 webgl/2.0.y/conformance2/transform_feedback/transform_feedback.html [ Pass ]
 webgl/2.0.y/conformance2/transform_feedback/simultaneous_binding.html [ Pass ]
+webgl/2.0.y/conformance2/textures/misc/tex-unpack-params-with-flip-y-and-premultiply-alpha.html [ Pass ]
 webgl/1.0.x/conformance/extensions/oes-vertex-array-object.html [ Pass ]
 
 webgl/2.0.y/conformance2/offscreencanvas [ Pass ]
@@ -4743,6 +4744,7 @@ webgl/2.0.y/conformance2/offscreencanvas [ Pass ]
 # Explicitly turn on conformance test until all of webgl/2.0.y is enabled
 webgl/2.0.y/conformance/attribs [ Pass ]
 webgl/2.0.y/conformance/buffers [ Pass ]
+webgl/2.0.y/conformance/canvas [ Pass ]
 webgl/2.0.y/conformance/context [ Pass ]
 webgl/2.0.y/conformance/extensions [ Pass ]
 webgl/2.0.y/conformance/glsl [ Pass ]
@@ -4756,6 +4758,9 @@ webgl/2.0.y/conformance/reading [ Pass ]
 webgl/2.0.y/conformance/renderbuffers [ Pass ]
 webgl/2.0.y/conformance/rendering [ Pass ]
 webgl/2.0.y/conformance/textures/canvas/ [ Pass ]
+webgl/2.0.y/conformance/typedarrays [ Pass ]
+webgl/2.0.y/conformance/uniforms [ Pass Slow ]
+webgl/2.0.y/conformance2/canvas [ Pass ]
 webgl/2.0.y/conformance2/context [ Pass ]
 webgl/2.0.y/conformance2/extensions/ext-conservative-depth.html [ Pass ]
 webgl/2.0.y/conformance2/extensions/ext-render-snorm.html [ Pass ]
@@ -4775,12 +4780,18 @@ webgl/2.0.y/conformance2/rendering/rasterizer-discard-and-implicit-clear.html [ 
 webgl/2.0.y/conformance2/state [ Pass ]
 webgl/2.0.y/conformance2/textures/canvas/ [ Pass ]
 webgl/2.0.y/conformance2/textures/webgl_canvas [ Pass ]
+webgl/2.0.y/conformance2/uniforms [ Pass ]
 webgl/2.0.y/conformance2/wasm [ Pass ]
+
 
 webkit.org/b/282031 webgl/1.0.x/conformance/context/context-lost-restored.html [ Failure ]
 webkit.org/b/282031 webgl/1.0.x/conformance/context/context-lost.html [ Failure ]
 webkit.org/b/282031 webgl/1.0.x/conformance/offscreencanvas/context-lost-restored.html [ Failure ]
 webkit.org/b/282031 webgl/1.0.x/conformance/offscreencanvas/context-lost.html [ Failure ]
+webkit.org/b/282031 webgl/1.0.x/conformance/offscreencanvas/context-lost-restored-worker.html [ Failure ]
+webkit.org/b/282031 webgl/1.0.x/conformance/offscreencanvas/context-lost-worker.html [ Failure ]
+webkit.org/b/282031 webgl/2.0.y/conformance/offscreencanvas/context-lost-restored-worker.html [ Failure ]
+webkit.org/b/282031 webgl/2.0.y/conformance/offscreencanvas/context-lost-worker.html [ Failure ]
 webkit.org/b/282031 webgl/2.0.y/conformance/context/context-lost.html [ Failure ]
 webkit.org/b/282031 webgl/2.0.y/conformance/offscreencanvas/context-lost-restored.html [ Failure ]
 webkit.org/b/282031 webgl/2.0.y/conformance/offscreencanvas/context-lost.html [ Failure ]
@@ -4790,6 +4801,7 @@ webkit.org/b/282031 webgl/2.0.y/conformance/offscreencanvas/context-lost.html [ 
 fast/canvas/webgl/invalid-passed-params.html [ Skip ]
 webgl/1.0.3/conformance/attribs [ Skip ]
 webgl/1.0.3/conformance/buffers [ Skip ]
+webgl/1.0.3/conformance/canvas [ Skip ]
 webgl/1.0.3/conformance/context [ Skip ]
 webgl/1.0.3/conformance/extensions [ Skip ]
 webgl/1.0.3/conformance/glsl [ Skip ]
@@ -4802,8 +4814,11 @@ webgl/1.0.3/conformance/reading [ Skip ]
 webgl/1.0.3/conformance/renderbuffers [ Skip ]
 webgl/1.0.3/conformance/rendering [ Skip ]
 webgl/1.0.3/conformance/state [ Skip ]
+webgl/1.0.3/conformance/typedarrays [ Skip ]
+webgl/1.0.3/conformance/uniforms [ Skip ]
 webgl/2.0.0/conformance/attribs [ Skip ]
 webgl/2.0.0/conformance/buffers [ Skip ]
+webgl/2.0.0/conformance/canvas [ Skip ]
 webgl/2.0.0/conformance/context [ Skip ]
 webgl/2.0.0/conformance/extensions [ Skip ]
 webgl/2.0.0/conformance/glsl [ Skip ]
@@ -4816,6 +4831,8 @@ webgl/2.0.0/conformance/reading [ Skip ]
 webgl/2.0.0/conformance/renderbuffers [ Skip ]
 webgl/2.0.0/conformance/rendering [ Skip ]
 webgl/2.0.0/conformance/textures/canvas/ [ Skip ]
+webgl/2.0.0/conformance/typedarrays [ Skip ]
+webgl/2.0.0/conformance/uniforms [ Skip ]
 webgl/2.0.0/conformance2/context [ Skip ]
 webgl/2.0.0/conformance2/context/constants-and-properties-2.html [ Skip ]
 webgl/2.0.0/conformance2/state [ Skip ]
@@ -7053,8 +7070,6 @@ webkit.org/b/283701 imported/w3c/web-platform-tests/scroll-animations/css/deferr
 webkit.org/b/283702 imported/w3c/web-platform-tests/scroll-animations/scroll-timelines/constructor-no-document.html [ Skip ]
 webkit.org/b/283107 imported/w3c/web-platform-tests/scroll-animations/scroll-timelines/updating-the-finished-state.html [ Skip ]
 
-webkit.org/b/284299 imported/w3c/web-platform-tests/scroll-animations/view-timelines/animation-events.html [ Pass Failure ]
-
 # webkit.org/b/263872 [scroll-animations] some WPT tests are ImageOnlyFailure
 imported/w3c/web-platform-tests/scroll-animations/scroll-timelines/layout-changes-on-percentage-based-timeline.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/scroll-animations/view-timelines/range-boundary.html [ ImageOnlyFailure ]
@@ -7908,3 +7923,9 @@ webkit.org/b/290133 [ Debug ] svg/dom/SVGGeometry-isPointInFill-with-null-path.h
 fast/forms/color/input-color-swatch-overlay-appearance.html [ Skip ]
 
 webkit.org/b/288831 [ Debug ] fast/css/shadow-box-recursion-depth.html [ Pass Timeout ]
+
+webkit.org/b/291974 imported/w3c/web-platform-tests/scroll-animations/css/animation-range-visual-test.html [ Skip ]
+
+imported/w3c/web-platform-tests/css/cssom/adoptedstylesheets-adopt-link.tentative.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/cssom/adoptedstylesheets-adopt-style-subresource.tentative.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/cssom/adoptedstylesheets-adopt-style.tentative.html [ ImageOnlyFailure ]

@@ -35,7 +35,6 @@
 #include "LayoutRepainter.h"
 #include "RenderChildIterator.h"
 #include "RenderElementInlines.h"
-#include "RenderFlexibleBox.h"
 #include "RenderLayer.h"
 #include "RenderLayoutState.h"
 #include "RenderTreeBuilder.h"
@@ -155,13 +154,12 @@ void RenderGrid::styleDidChange(StyleDifference diff, const RenderStyle* oldStyl
         for (auto& gridItem : childrenOfType<RenderBox>(*this)) {
             if (gridItem.isOutOfFlowPositioned())
                 continue;
-            if (selfAlignmentChangedToStretch(GridTrackSizingDirection::ForColumns, *oldStyle, newStyle, gridItem) || selfAlignmentChangedToStretch(GridTrackSizingDirection::ForRows, *oldStyle, newStyle, gridItem))
-                gridItem.setNeedsLayout();
 
-            if (selfAlignmentChangedFromStretch(GridTrackSizingDirection::ForColumns, *oldStyle, newStyle, gridItem) || selfAlignmentChangedFromStretch(GridTrackSizingDirection::ForRows, *oldStyle, newStyle, gridItem)) {
+            if (selfAlignmentChangedToStretch(GridTrackSizingDirection::ForColumns, *oldStyle, newStyle, gridItem)
+                || selfAlignmentChangedFromStretch(GridTrackSizingDirection::ForColumns, *oldStyle, newStyle, gridItem)
+                || selfAlignmentChangedToStretch(GridTrackSizingDirection::ForRows, *oldStyle, newStyle, gridItem)
+                || selfAlignmentChangedFromStretch(GridTrackSizingDirection::ForRows, *oldStyle, newStyle, gridItem)) {
                 gridItem.setNeedsLayout();
-                if (auto* renderFleixbleBox = dynamicDowncast<RenderFlexibleBox>(gridItem))
-                    renderFleixbleBox->setNoLongerStretching();
             }
         }
     }
@@ -1613,9 +1611,6 @@ void RenderGrid::layoutPositionedObject(RenderBox& gridItem, RelayoutChildren re
     gridItem.setChildNeedsLayout(MarkOnlyThis);
 
     RenderBlock::layoutPositionedObject(gridItem, relayoutChildren, fixedPositionObjectsOnly);
-
-    setLogicalOffsetForGridItem(gridItem, GridTrackSizingDirection::ForColumns);
-    setLogicalOffsetForGridItem(gridItem, GridTrackSizingDirection::ForRows);
 }
 
 LayoutUnit RenderGrid::gridAreaBreadthForGridItemIncludingAlignmentOffsets(const RenderBox& gridItem, GridTrackSizingDirection direction) const
@@ -2338,20 +2333,34 @@ LayoutUnit RenderGrid::logicalOffsetForOutOfFlowGridItem(const RenderBox& gridIt
     return trackBreadth - offset - gridItemBreadth;
 }
 
-std::pair<LayoutUnit, LayoutUnit> RenderGrid::gridAreaPositionForOutOfFlowGridItem(const RenderBox& gridItem, GridTrackSizingDirection direction) const
+LayoutRange RenderGrid::gridAreaRowRangeForOutOfFlow(const RenderBox& gridItem) const
 {
     ASSERT(gridItem.isOutOfFlowPositioned());
-    ASSERT(GridLayoutFunctions::overridingContainingBlockContentSizeForGridItem(gridItem, direction));
-    auto trackBreadth = GridLayoutFunctions::overridingContainingBlockContentSizeForGridItem(gridItem, direction)->value();
-    bool isRowAxis = direction == GridTrackSizingDirection::ForColumns;
-    auto& outOfFlowItemLine = isRowAxis ? m_outOfFlowItemColumn : m_outOfFlowItemRow;
-    auto start = isRowAxis ? borderStart() : borderBefore();
-    if (auto line = outOfFlowItemLine.get(&gridItem)) {
-        auto& positions = isRowAxis ? m_columnPositions : m_rowPositions;
-        start = positions[line.value()];
-    }
-    start += logicalOffsetForOutOfFlowGridItem(gridItem, direction, trackBreadth);
-    return { start, start + trackBreadth };
+    auto areaSize = GridLayoutFunctions::overridingContainingBlockContentSizeForGridItem(gridItem, GridTrackSizingDirection::ForRows);
+    LayoutRange range(borderBefore(), areaSize->value());
+    if (auto line = m_outOfFlowItemRow.get(&gridItem))
+        range.moveTo(m_rowPositions[line.value()]);
+    return range;
+}
+
+LayoutRange RenderGrid::gridAreaColumnRangeForOutOfFlow(const RenderBox& gridItem) const
+{
+    ASSERT(gridItem.isOutOfFlowPositioned());
+    auto areaSize = GridLayoutFunctions::overridingContainingBlockContentSizeForGridItem(gridItem, GridTrackSizingDirection::ForColumns);
+    ASSERT(areaSize);
+    LayoutRange range(borderStart(), areaSize->value());
+    if (auto line = m_outOfFlowItemColumn.get(&gridItem))
+        range.moveTo(m_columnPositions[line.value()]);
+    return range;
+}
+
+std::pair<LayoutUnit, LayoutUnit> RenderGrid::gridAreaPositionForOutOfFlowGridItem(const RenderBox& gridItem, GridTrackSizingDirection direction) const
+{
+    LayoutRange range = direction == GridTrackSizingDirection::ForColumns
+        ? gridAreaColumnRangeForOutOfFlow(gridItem)
+        : gridAreaRowRangeForOutOfFlow(gridItem);
+    range.moveBy(logicalOffsetForOutOfFlowGridItem(gridItem, direction, range.size()));
+    return { range.min(), range.max() };
 }
 
 std::pair<LayoutUnit, LayoutUnit> RenderGrid::gridAreaPositionForInFlowGridItem(const RenderBox& gridItem, GridTrackSizingDirection direction) const

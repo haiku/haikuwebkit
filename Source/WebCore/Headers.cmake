@@ -526,6 +526,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/mediastream/RTCIceProtocol.h
     Modules/mediastream/RTCIceTcpCandidateType.h
     Modules/mediastream/RTCNetworkManager.h
+    Modules/mediastream/RTCRtpScriptTransformer.h
+    Modules/mediastream/RTCRtpTransformBackend.h
     Modules/mediastream/RTCRtpTransformableFrame.h
     Modules/mediastream/STUNMessageParsing.h
     Modules/mediastream/UserMediaClient.h
@@ -2303,13 +2305,10 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/controls/ToggleButtonPart.h
 
     platform/graphics/displaylists/DisplayList.h
-    platform/graphics/displaylists/DisplayListDrawingContext.h
     platform/graphics/displaylists/DisplayListItem.h
     platform/graphics/displaylists/DisplayListItems.h
     platform/graphics/displaylists/DisplayListRecorder.h
     platform/graphics/displaylists/DisplayListRecorderImpl.h
-    platform/graphics/displaylists/DisplayListReplayer.h
-    platform/graphics/displaylists/DisplayListResourceHeap.h
 
     platform/graphics/cv/ImageTransferSessionVT.h
 

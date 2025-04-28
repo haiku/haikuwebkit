@@ -53,6 +53,7 @@
 #include "Logging.h"
 #include "Navigation.h"
 #include "PlatformStrategies.h"
+#include "ResourceLoadInfo.h"
 #include "ThreadableBlobRegistry.h"
 #include "URLKeepingBlobAlive.h"
 #include <wtf/CompletionHandler.h>
@@ -120,6 +121,7 @@ void PolicyChecker::checkNavigationPolicy(ResourceRequest&& request, const Resou
     Ref frame = m_frame.get();
     if (action.isEmpty()) {
         action = NavigationAction { frame->protectedDocument().releaseNonNull(), request, InitiatedByMainFrame::Unknown, loader->isRequestFromClientOrUserInput(), NavigationType::Other, loader->shouldOpenExternalURLsPolicyToPropagate() };
+        action.setIsContentExtensionRedirect(loader->isContentExtensionRedirect());
         loader->setTriggeringAction(NavigationAction { action });
     }
 
@@ -295,6 +297,16 @@ void PolicyChecker::checkNavigationPolicy(ResourceRequest&& request, const Resou
     bool hasOpener = !!frame->opener();
     auto sandboxFlags = frame->effectiveSandboxFlags();
     auto isPerformingHTTPFallback = frameLoader->isHTTPFallbackInProgress() ? IsPerformingHTTPFallback::Yes : IsPerformingHTTPFallback::No;
+
+#if ENABLE(CONTENT_EXTENSIONS)
+    if (frame->loader().documentLoader() && frame->loader().documentLoader()->hasActiveContentRuleListActions()) {
+        if (RefPtr page = frame->page()) {
+            auto resourceType = frame->isMainFrame() ? ContentExtensions::ResourceType::TopDocument : ContentExtensions::ResourceType::ChildDocument;
+            auto results = page->protectedUserContentProvider()->processContentRuleListsForLoad(*page, request.url(), resourceType, *frame->loader().documentLoader());
+            ContentExtensions::applyResultsToRequest(WTFMove(results), page.get(), request);
+        }
+    }
+#endif
 
     if (isInitialEmptyDocumentLoad) {
         // We ignore the response from the client for initial empty document loads and proceed with the load synchronously.

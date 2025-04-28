@@ -62,7 +62,6 @@ editing/Editor.h
 editing/TextIterator.cpp
 editing/VisibleUnits.cpp
 html/HTMLMediaElement.cpp
-html/MediaElementSession.h
 html/canvas/PlaceholderRenderingContext.cpp
 html/parser/HTMLConstructionSite.cpp
 html/parser/HTMLDocumentParser.cpp
@@ -91,7 +90,6 @@ layout/formattingContexts/inline/text/TextUtil.cpp
 layout/integration/LayoutIntegrationUtils.h
 layout/integration/inline/LayoutIntegrationLineLayout.h
 layout/layouttree/LayoutElementBox.h
-loader/DocumentThreadableLoader.h
 loader/cache/CachedImageClient.h
 loader/cache/CachedResourceHandle.h
 page/DOMWindow.cpp

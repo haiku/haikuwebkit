@@ -100,7 +100,7 @@ ComplexTextController::ComplexTextRun::ComplexTextRun(CTRunRef ctRun, const Font
         if (auto baseAdvancesSpan = CTRunGetAdvancesSpan(ctRun); baseAdvancesSpan.data())
             m_baseAdvances = baseAdvancesSpan;
         else {
-            Vector<CGSize> baseAdvancesVector;
+            Vector<CGSize, 64> baseAdvancesVector;
             baseAdvancesVector.grow(m_glyphCount);
             CTRunGetAdvances(ctRun, CFRangeMake(0, 0), baseAdvancesVector.data());
             m_baseAdvances = BaseAdvancesVector(m_glyphCount, [&](size_t i) {
@@ -274,7 +274,7 @@ void ComplexTextController::collectComplexTextRunsForCharacters(std::span<const 
                         continue;
                     }
                     FontPlatformData runFontPlatformData(runCTFont, CTFontGetSize(runCTFont));
-                    runFont = FontCache::forCurrentThread().fontForPlatformData(runFontPlatformData).ptr();
+                    runFont = FontCache::forCurrentThread()->fontForPlatformData(runFontPlatformData).ptr();
                 }
                 if (m_fallbackFonts && runFont != m_fontCascade.primaryFont().ptr())
                     m_fallbackFonts->add(*runFont);

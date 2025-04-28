@@ -970,7 +970,7 @@ void Page::setOpenedByDOM()
     m_openedByDOM = true;
 }
 
-void Page::goToItem(LocalFrame& frame, HistoryItem& item, FrameLoadType type, ShouldTreatAsContinuingLoad shouldTreatAsContinuingLoad)
+void Page::goToItem(LocalFrame& frame, HistoryItem& item, FrameLoadType type, ShouldTreatAsContinuingLoad shouldTreatAsContinuingLoad, ProcessSwapDisposition processSwapDisposition)
 {
     // stopAllLoaders may end up running onload handlers, which could cause further history traversals that may lead to the passed in HistoryItem
     // being deref()-ed. Make sure we can still use it with HistoryController::goToItem later.
@@ -978,7 +978,7 @@ void Page::goToItem(LocalFrame& frame, HistoryItem& item, FrameLoadType type, Sh
 
     if (frame.loader().protectedHistory()->shouldStopLoadingForHistoryItem(item))
         frame.protectedLoader()->stopAllLoadersAndCheckCompleteness();
-    frame.loader().protectedHistory()->goToItem(item, type, shouldTreatAsContinuingLoad);
+    frame.loader().protectedHistory()->goToItem(item, type, shouldTreatAsContinuingLoad, processSwapDisposition);
 }
 
 void Page::goToItemForNavigationAPI(LocalFrame& frame, HistoryItem& item, FrameLoadType type, LocalFrame& triggeringFrame, NavigationAPIMethodTracker* tracker)
@@ -2183,6 +2183,11 @@ void Page::updateRendering()
     // FIXME: This suppression shouldn't be needed.
     SUPPRESS_UNCOUNTED_LAMBDA_CAPTURE runProcessingStep(RenderingUpdateStep::ResizeObservations, [&] (Document& document) {
         document.updateResizeObservations(*this);
+    });
+
+    // https://drafts.csswg.org/scroll-animations-1/#event-loop
+    forEachDocument([] (Document& document) {
+        document.updateStaleScrollTimelines();
     });
 
     runProcessingStep(RenderingUpdateStep::FocusFixup, [&] (Document& document) {
@@ -4341,7 +4346,7 @@ RenderingUpdateScheduler* Page::existingRenderingUpdateScheduler()
 
 void Page::forEachDocumentFromMainFrame(const Frame& mainFrame, NOESCAPE const Function<void(Document&)>& functor)
 {
-    Vector<Ref<Document>> documents;
+    Vector<Ref<Document>, 8> documents;
     for (RefPtr frame = &mainFrame; frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)
@@ -4349,6 +4354,7 @@ void Page::forEachDocumentFromMainFrame(const Frame& mainFrame, NOESCAPE const F
         if (RefPtr document = localFrame->document())
             documents.append(document.releaseNonNull());
     }
+
     for (auto& document : documents)
         functor(document);
 }
@@ -4375,7 +4381,7 @@ bool Page::findMatchingLocalDocument(NOESCAPE const Function<bool(Document&)>& f
 
 void Page::forEachRenderableDocument(NOESCAPE const Function<void(Document&)>& functor) const
 {
-    Vector<Ref<Document>> documents;
+    Vector<Ref<Document>, 8> documents;
     for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)

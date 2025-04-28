@@ -1125,10 +1125,29 @@ static LayoutRect flippedRectForWritingMode(const RenderBlockFlow& root, const F
     return flippedRect;
 }
 
+bool LineLayout::isContentConsideredStale() const
+{
+    auto* rootRenderer = m_rootLayoutBox->rendererForIntegration();
+    if (!rootRenderer)
+        return true;
+    if (rootRenderer->needsLayout())
+        return true;
+    if (rootRenderer->style().isSkippedRootOrSkippedContent())
+        return true;
+    if (m_lineDamage && m_lineDamage->hasDetachedContent())
+        return true;
+    return false;
+}
+
 void LineLayout::paint(PaintInfo& paintInfo, const LayoutPoint& paintOffset, const RenderInline* layerRenderer)
 {
     if (!m_inlineContent)
         return;
+
+    if (isContentConsideredStale()) {
+        ASSERT_NOT_REACHED_WITH_SECURITY_IMPLICATION();
+        return;
+    }
 
     auto shouldPaintForPhase = [&] {
         switch (paintInfo.phase) {
@@ -1159,6 +1178,11 @@ bool LineLayout::hitTest(const HitTestRequest& request, HitTestResult& result, c
 
     if (!m_inlineContent)
         return false;
+
+    if (isContentConsideredStale()) {
+        ASSERT_NOT_REACHED_WITH_SECURITY_IMPLICATION();
+        return false;
+    }
 
     auto hitTestBoundingBox = locationInContainer.boundingBox();
     hitTestBoundingBox.moveBy(-accumulatedOffset);
@@ -1241,6 +1265,9 @@ void LineLayout::shiftLinesBy(LayoutUnit blockShift)
 
 bool LineLayout::insertedIntoTree(const RenderElement& parent, RenderObject& child)
 {
+    if (flow().style().isSkippedRootOrSkippedContent())
+        return false;
+
     if (!m_inlineContent) {
         // This should only be called on partial layout.
         ASSERT_NOT_REACHED();
@@ -1264,6 +1291,9 @@ bool LineLayout::insertedIntoTree(const RenderElement& parent, RenderObject& chi
 
 bool LineLayout::removedFromTree(const RenderElement& parent, RenderObject& child)
 {
+    if (flow().style().isSkippedRootOrSkippedContent())
+        return false;
+
     if (!child.everHadLayout()) {
         ensureLineDamage().addDetachedBox(BoxTreeUpdater { flow() }.remove(parent, child));
         return false;
@@ -1286,6 +1316,9 @@ bool LineLayout::removedFromTree(const RenderElement& parent, RenderObject& chil
 
 bool LineLayout::updateTextContent(const RenderText& textRenderer, size_t offset, int delta)
 {
+    if (flow().style().isSkippedRootOrSkippedContent())
+        return false;
+
     if (!m_inlineContent) {
         // This is supposed to be only called on partial layout, but
         // RenderText::setText may be (force) called after min/max size computation and before layout.

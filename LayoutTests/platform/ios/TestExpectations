@@ -2306,6 +2306,7 @@ accessibility/basic-focusability.html [ Pass ]
 accessibility/button-inside-label-ax-text.html [ Pass ]
 accessibility/changing-aria-hidden-with-display-none-parent.html [ Pass ]
 accessibility/checkbox-mixed-value.html [ Pass ]
+accessibility/clip-path-bounding-box.html [ Pass ]
 accessibility/dialog-slotted-content.html [ Pass ]
 accessibility/dirty-style-and-relations-crash.html [ Pass ]
 accessibility/display-contents/dynamically-added-children.html [ Pass ]
@@ -2351,6 +2352,7 @@ accessibility/nested-custom-element-accname.html [ Pass ]
 accessibility/node-only-inert-object.html [ Pass ]
 accessibility/node-only-object-element-rect.html [ Pass ]
 accessibility/checkbox-radio-element-rect.html [ Pass ]
+accessibility/opacity-0-bounding-box.html [ Pass ]
 accessibility/out-of-bounds-rowspan.html [ Pass ]
 accessibility/out-of-bounds-rowspan-display-none.html [ Pass ]
 accessibility/out-of-bounds-rowspan-aria-hidden.html [ Pass ]
@@ -3647,8 +3649,6 @@ webkit.org/b/209080 imported/w3c/web-platform-tests/css/css-writing-modes/sizing
 imported/w3c/web-platform-tests/css/mediaqueries/viewport-script-dynamic.html [ Pass ]
 imported/w3c/web-platform-tests/html/rendering/bindings/the-select-element-0/option-label.html [ Pass ]
 webkit.org/b/214465 imported/w3c/web-platform-tests/css/mediaqueries/mq-gamut-002.html [ Pass ]
-
-webkit.org/b/237694 [ Debug ] webgl/1.0.3/conformance/uniforms/uniform-samplers-test.html [ Timeout Pass ]
 
 # image-set failing only on iOS
 webkit.org/b/253095 imported/w3c/web-platform-tests/css/css-images/image-set/image-set-type-rendering-2.html [ ImageOnlyFailure ]
@@ -5753,8 +5753,6 @@ webkit.org/b/181392 imported/w3c/web-platform-tests/service-workers/service-work
 
 webkit.org/b/181821 fast/visual-viewport/ios/caret-after-focus-in-fixed.html [ Pass Failure Timeout ]
 
-webkit.org/b/231514 webgl/1.0.3/conformance/uniforms/uniform-default-values.html [ Slow ]
-
 webkit.org/b/183860 http/wpt/service-workers/third-party-registration.html [ Pass Timeout ]
 
 webkit.org/b/184245 http/tests/workers/service/service-worker-cache-api.https.html [ Pass Failure Timeout ]
@@ -7446,9 +7444,6 @@ imported/w3c/web-platform-tests/mathml/relations/css-styling/mozilla-393760-1.xm
 
 webkit.org/b/277195 imported/w3c/web-platform-tests/html/semantics/interactive-elements/the-dialog-element/inert-label-focus.html [ Failure ]
 
-# webkit.org/b/277308 (webgl/1.0.3/conformance/uniforms/out-of-bounds-uniform-array-access.html needs to be marked as slow.)
-webgl/1.0.3/conformance/uniforms/out-of-bounds-uniform-array-access.html [ Slow ]
-
 # webkit.org/b/277710 [ iOS ] [ Release ] editing/execCommand/insert-ordered-list-and-delete.html is a flaky text failure
 editing/execCommand/insert-ordered-list-and-delete.html [ Pass Failure ]
 
@@ -7809,8 +7804,6 @@ webkit.org/b/290942 [ Debug ] fast/viewport/ios/width-is-device-width-overflowin
 
 webkit.org/b/290958 [ Debug ] imported/w3c/web-platform-tests/navigation-api/scroll-behavior/manual-scroll-after-resolve.html [ Pass Failure ]
 
-webkit.org/b/290967 [ Debug ] imported/w3c/IndexedDB-private-browsing/idbcursor_iterating.html [ Pass Crash ]
-
 # hidden=until-found
 imported/w3c/web-platform-tests/html/editing/the-hidden-attribute/hidden-until-found-002.html [ Failure ]
 
@@ -7850,3 +7843,20 @@ webkit.org/b/291456 fast/forms/state-restore-per-form.html [ Pass Timeout ]
 webkit.org/b/291459 imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-018.html [ Pass Failure ]
 
 webkit.org/b/291767 media/video-aspect-ratio.html [ Pass Failure ]
+
+# webkit.org/b/268568 [iOS] Assertion failure causing fast/forms/ios/file-upload-panel-capture.html to consistently crash. (268568) -[DOCWeakProxy forwardingTargetForSelector:]
+fast/forms/ios/file-upload-panel-accept.html [ Pass Crash ]
+fast/forms/ios/file-upload-panel-capture.html [ Pass Crash ]
+fast/forms/ios/file-upload-panel-dismiss-when-view-removed-from-window.html [ Pass Crash ]
+
+# webkit.org/b/292111 REGRESSION ( 294024@main): [ MacOS iOS WK2 Debug ] ASSERTION FAILED: bytecodeCanIgnoreNegativeZero(node->arithNodeFlags())
+[ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?av1 [ Skip ]
+[ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?h264_annexb [ Skip ]
+[ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?h264_avc [ Skip ]
+[ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?vp8 [ Skip ]
+[ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.html?vp9_p0 [ Skip ]
+[ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.worker.html?av1 [ Skip ]
+[ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.worker.html?h264_annexb [ Skip ]
+[ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.worker.html?h264_avc [ Skip ]
+[ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.worker.html?vp8 [ Skip ]
+[ Debug ] imported/w3c/web-platform-tests/webcodecs/video-encoder-rescaling.https.any.worker.html?vp9_p0 [ Skip ]

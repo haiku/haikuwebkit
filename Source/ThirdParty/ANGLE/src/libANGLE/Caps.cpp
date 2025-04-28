@@ -77,8 +77,7 @@ TextureCaps GenerateMinimumTextureCaps(GLenum sizedInternalFormat,
     caps.sampleCounts.insert(0);
     if (internalFormatInfo.isRequiredRenderbufferFormat(clientVersion))
     {
-        if ((clientVersion.major >= 3 && clientVersion.minor >= 1) ||
-            (clientVersion.major >= 3 && !internalFormatInfo.isInt()))
+        if (clientVersion >= ES_3_1 || (clientVersion == ES_3_0 && !internalFormatInfo.isInt()))
         {
             caps.sampleCounts.insert(4);
         }
@@ -305,6 +304,7 @@ static bool DetermineRGB8TextureSupport(const TextureCapsMap &textureCaps)
 static bool DetermineBGRA8TextureSupport(const TextureCapsMap &textureCaps)
 {
     constexpr GLenum requiredFormats[] = {
+        GL_BGRA_EXT,
         GL_BGRA8_EXT,
     };
 

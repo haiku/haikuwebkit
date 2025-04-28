@@ -36,10 +36,17 @@ class RecorderImpl : public Recorder {
     WTF_MAKE_TZONE_ALLOCATED(RecorderImpl);
     WTF_MAKE_NONCOPYABLE(RecorderImpl);
 public:
-    WEBCORE_EXPORT RecorderImpl(DisplayList&, const GraphicsContextState&, const FloatRect& initialClip, const AffineTransform&, const DestinationColorSpace& = DestinationColorSpace::SRGB(), DrawGlyphsMode = DrawGlyphsMode::Normal);
+    WEBCORE_EXPORT RecorderImpl(const GraphicsContextState&, const FloatRect& initialClip, const AffineTransform&, const DestinationColorSpace& = DestinationColorSpace::SRGB(), DrawGlyphsMode = DrawGlyphsMode::Normal);
+    RecorderImpl(FloatSize initialClipSize)
+        : RecorderImpl({ }, { { }, initialClipSize }, { }, DestinationColorSpace::SRGB(), DrawGlyphsMode::Normal)
+    {
+    }
     WEBCORE_EXPORT virtual ~RecorderImpl();
 
-    bool isEmpty() const { return m_displayList.isEmpty(); }
+    WEBCORE_EXPORT Ref<const DisplayList> takeDisplayList();
+    // This function is deprecated and sign that caller is doing something incorrect. This will be
+    // removed once all clients are fixed.
+    WEBCORE_EXPORT Ref<const DisplayList> copyDisplayList();
 
     void save(GraphicsContextState::Purpose) final;
     void restore(GraphicsContextState::Purpose) final;
@@ -59,9 +66,14 @@ public:
     void clipOut(const Path&) final;
     void clipOutRoundedRect(const FloatRoundedRect&) final;
     void clipPath(const Path&, WindRule) final;
+    void clipToImageBuffer(ImageBuffer&, const FloatRect&) final;
     void beginTransparencyLayer(float) final;
     void beginTransparencyLayer(CompositeOperator, BlendMode) final;
     void endTransparencyLayer() final;
+    void drawFilteredImageBuffer(ImageBuffer*, const FloatRect&, Filter&, FilterResults&) final;
+    void drawImageBuffer(ImageBuffer&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) final;
+    void drawNativeImageInternal(NativeImage&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) final;
+    void drawSystemImage(SystemImage&, const FloatRect&) final;
     void drawRect(const FloatRect&, float) final;
     void drawLine(const FloatPoint& point1, const FloatPoint& point2) final;
     void drawLinesForText(const FloatPoint&, float thickness, std::span<const FloatSegment>, bool isPrinting, bool doubleLines, StrokeStyle) final;
@@ -70,6 +82,8 @@ public:
     void drawPath(const Path&) final;
     void drawFocusRing(const Path&, float outlineWidth, const Color&) final;
     void drawFocusRing(const Vector<FloatRect>&, float outlineOffset, float outlineWidth, const Color&) final;
+    void drawPattern(NativeImage&, const FloatRect& destRect, const FloatRect& tileRect, const AffineTransform&, const FloatPoint& phase, const FloatSize& spacing, ImagePaintingOptions) final;
+    void drawPattern(ImageBuffer&, const FloatRect& destRect, const FloatRect& tileRect, const AffineTransform&, const FloatPoint& phase, const FloatSize& spacing, ImagePaintingOptions) final;
     void fillEllipse(const FloatRect&) final;
     void fillPath(const Path&) final;
     void fillRect(const FloatRect&, RequiresClipToRect) final;
@@ -79,8 +93,10 @@ public:
     void fillRect(const FloatRect&, const Color&, CompositeOperator, BlendMode) final;
     void fillRoundedRect(const FloatRoundedRect&, const Color&, BlendMode) final;
     void fillRectWithRoundedHole(const FloatRect&, const FloatRoundedRect&, const Color&) final;
+    void drawGlyphs(const Font&, std::span<const GlyphBufferGlyph>, std::span<const GlyphBufferAdvance>, const FloatPoint& localAnchor, FontSmoothingMode) final;
     void drawGlyphsImmediate(const Font&, std::span<const GlyphBufferGlyph>, std::span<const GlyphBufferAdvance>, const FloatPoint& localAnchor, FontSmoothingMode) final;
     void drawDecomposedGlyphs(const Font&, const DecomposedGlyphs&) final;
+    void drawDisplayList(const DisplayList&, ControlFactory&) final;
 #if ENABLE(VIDEO)
     void drawVideoFrame(VideoFrame&, const FloatRect& destination, ImageOrientation, bool shouldDiscardAlpha) final;
 #endif
@@ -101,25 +117,9 @@ public:
     void setURLForRect(const URL&, const FloatRect&) final;
 
 private:
-    void recordClipToImageBuffer(ImageBuffer&, const FloatRect& destinationRect) final;
-    void recordDrawFilteredImageBuffer(ImageBuffer*, const FloatRect& sourceImageRect, Filter&) final;
-    void recordDrawImageBuffer(ImageBuffer&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) final;
-    void recordDrawNativeImage(RenderingResourceIdentifier imageIdentifier, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions) final;
-    void recordDrawSystemImage(SystemImage&, const FloatRect&) final;
-    void recordDrawPattern(RenderingResourceIdentifier, const FloatRect& destRect, const FloatRect& tileRect, const AffineTransform&, const FloatPoint& phase, const FloatSize& spacing, ImagePaintingOptions = { }) final;
-
-    bool recordResourceUse(NativeImage&) final;
-    bool recordResourceUse(ImageBuffer&) final;
-    bool recordResourceUse(const SourceImage&) final;
-
     void appendStateChangeItemIfNecessary() final;
 
-    void append(Item&& item)
-    {
-        m_displayList.append(WTFMove(item));
-    }
-
-    DisplayList& m_displayList;
+    Vector<Item> m_items;
 };
 
 }

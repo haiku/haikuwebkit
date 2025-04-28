@@ -154,6 +154,7 @@ bool hasCapacityToUseLargeGigacage();
     v(OptionString, ftlAllowlist, nullptr, Normal, "file with newline separated list of function signatures to allow FTL compilation on or, if no such file exists, the function signature to allow"_s) \
     v(OptionString, bbqAllowlist, nullptr, Normal, "file with newline separated list of function indices to allow BBQ compilation on or, if no such file exists, the function index to allow"_s) \
     v(OptionString, omgAllowlist, nullptr, Normal, "file with newline separated list of function indices to allow OMG compilation on or, if no such file exists, the function index to allow"_s) \
+    v(OptionString, loopUnrollingAllowlist, nullptr, Normal, "file with newline separated list of function signatures to allow loop unrolling on or, if no such file exists, the function signature to allow"_s) \
     v(Bool, dumpSourceAtDFGTime, false, Normal, "dumps source code of JS function being DFG compiled"_s) \
     v(Bool, dumpBytecodeAtDFGTime, false, Normal, "dumps bytecode of JS function being DFG compiled"_s) \
     v(Bool, dumpGraphAfterParsing, false, Normal, nullptr) \
@@ -168,6 +169,7 @@ bool hasCapacityToUseLargeGigacage();
     v(Bool, verboseFTLCompilation, false, Normal, nullptr) \
     v(Bool, logCompilationChanges, false, Normal, nullptr) \
     v(Bool, printEachOSRExit, false, Normal, nullptr) \
+    v(Bool, printEachDFGFTLInlineCall, false, Normal, nullptr) \
     v(Bool, useJITAsserts, ASSERT_ENABLED, Normal, nullptr) \
     v(Bool, validateDoesGC, ASSERT_ENABLED, Normal, nullptr) \
     v(Bool, validateGraph, false, Normal, nullptr) \
@@ -242,6 +244,7 @@ bool hasCapacityToUseLargeGigacage();
     \
     v(Bool, useFTLJIT, true, Normal, "allows the FTL JIT to be used if true"_s) \
     v(Bool, validateFTLOSRExitLiveness, false, Normal, nullptr) \
+    v(Bool, poisonDeadOSRExitVariables, false, Normal, "Put 0xbad0beef into dead OSR exit values rather than jsUndefined"_s) \
     v(Unsigned, defaultB3OptLevel, 2, Normal, nullptr) \
     v(Bool, b3AlwaysFailsBeforeCompile, false, Normal, nullptr) \
     v(Bool, b3AlwaysFailsBeforeLink, false, Normal, nullptr) \
@@ -272,10 +275,16 @@ bool hasCapacityToUseLargeGigacage();
     v(Unsigned, maxDFGNodesInBasicBlockForPreciseAnalysis, 20000, Normal, "Disable precise but costly analysis and give conservative results if the number of DFG nodes in a block exceeds this threshold"_s) \
     \
     v(Bool, useConcurrentJIT, true, Normal, "allows the DFG / FTL compilation in threads other than the executing JS thread"_s) \
-    v(Unsigned, numberOfWorklistThreads, computeNumberOfWorkerThreads(3, 2), Normal, nullptr) \
+    v(Unsigned, minNumberOfWorklistThreads, computeNumberOfWorkerThreads(3, 2), Normal, nullptr) \
+    v(Unsigned, maxNumberOfWorklistThreads, computeNumberOfWorkerThreads(3, 2), Normal, nullptr) \
+    v(Unsigned, numberOfBaselineCompilerThreads, computeNumberOfWorkerThreads(3, 2), Normal, nullptr) \
     v(Unsigned, numberOfDFGCompilerThreads, computeNumberOfWorkerThreads(3, 2) - 1, Normal, nullptr) \
     v(Unsigned, numberOfFTLCompilerThreads, computeNumberOfWorkerThreads(MAXIMUM_NUMBER_OF_FTL_COMPILER_THREADS, 2) - 1, Normal, nullptr) \
     v(Unsigned, numberOfWasmCompilerThreads, computeNumberOfWorkerThreads(INT32_MAX, 2) - 1, Normal, nullptr) \
+    v(Unsigned, worklistLoadFactor, 1, Normal, nullptr) \
+    v(Unsigned, worklistBaselineLoadWeight, 1, Normal, nullptr) \
+    v(Unsigned, worklistDFGLoadWeight, 1, Normal, nullptr) \
+    v(Unsigned, worklistFTLLoadWeight, 1, Normal, nullptr) \
     v(Int32, priorityDeltaOfDFGCompilerThreads, computePriorityDeltaOfWorkerThreads(-1, 0), Normal, nullptr) \
     v(Int32, priorityDeltaOfFTLCompilerThreads, computePriorityDeltaOfWorkerThreads(-2, 0), Normal, nullptr) \
     v(Int32, priorityDeltaOfWasmCompilerThreads, computePriorityDeltaOfWorkerThreads(-1, 0), Normal, nullptr) \

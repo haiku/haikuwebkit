@@ -17,7 +17,6 @@ accessibility/AXSearchManager.h
 bindings/js/JSEventTargetCustom.h
 bindings/js/JSLazyEventListener.cpp
 css/CSSFontSelector.h
-css/CSSPrimitiveValueMappings.h
 css/CSSRuleList.h
 css/CSSStyleProperties.h
 css/CSSValueList.h
@@ -28,7 +27,6 @@ css/ShorthandSerializer.cpp
 css/StyleProperties.h
 css/StyleRuleImport.h
 css/StyleSheetContents.h
-css/StyleSheetList.h
 dom/CollectionIndexCache.h
 dom/Node.cpp
 dom/Node.h
@@ -36,10 +34,8 @@ dom/QualifiedName.h
 dom/TreeScope.h
 editing/cocoa/HTMLConverter.mm
 html/FormListedElement.cpp
-html/MediaElementSession.h
 html/parser/HTMLTreeBuilder.h
 html/track/TrackBase.h
-html/track/WebVTTParser.h
 inspector/DOMPatchSupport.cpp
 inspector/InspectorFrontendHost.cpp
 inspector/InspectorFrontendHost.h
@@ -60,7 +56,6 @@ page/WheelEventTestMonitor.h
 page/scrolling/ScrollLatchingController.h
 page/scrolling/ScrollingCoordinator.h
 page/scrolling/ScrollingTreeGestureState.h
-page/scrolling/mac/ScrollerMac.h
 platform/PODInterval.h
 platform/cocoa/WebAVPlayerLayer.h
 platform/encryptedmedia/CDMProxy.h

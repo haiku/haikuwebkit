@@ -360,11 +360,12 @@ public:
     TrackDisplayUpdateScope(HTMLMediaElement& element)
         : m_element(element)
     {
-        m_element->beginIgnoringTrackDisplayUpdateRequests();
+        element.beginIgnoringTrackDisplayUpdateRequests();
     }
     ~TrackDisplayUpdateScope()
     {
-        m_element->endIgnoringTrackDisplayUpdateRequests();
+        if (RefPtr element = m_element.ptr())
+            element->endIgnoringTrackDisplayUpdateRequests();
     }
 
 private:
@@ -407,18 +408,20 @@ struct MediaElementSessionInfo {
 
 static MediaElementSessionInfo mediaElementSessionInfoForSession(const MediaElementSession& session, MediaElementSession::PlaybackControlsPurpose purpose)
 {
-    Ref element = session.element();
-    return {
-        &session,
-        purpose,
-        session.mostRecentUserInteractionTime(),
-        session.canShowControlsManager(purpose),
-        element->isFullscreen() || element->isVisibleInViewport(),
-        session.isLargeEnoughForMainContent(MediaSessionMainContentPurpose::MediaControls),
-        session.isLongEnoughForMainContent(),
-        element->isPlaying() && element->hasAudio() && !element->muted(),
-        element->hasEverNotifiedAboutPlaying()
-    };
+    if (RefPtr element = session.protectedElement()) {
+        return {
+            &session,
+            purpose,
+            session.mostRecentUserInteractionTime(),
+            session.canShowControlsManager(purpose),
+            element->isFullscreen() || element->isVisibleInViewport(),
+            session.isLargeEnoughForMainContent(MediaSessionMainContentPurpose::MediaControls),
+            session.isLongEnoughForMainContent(),
+            element->isPlaying() && element->hasAudio() && !element->muted(),
+            element->hasEverNotifiedAboutPlaying()
+        };
+    }
+    return { };
 }
 
 static bool preferMediaControlsForCandidateSessionOverOtherCandidateSession(const MediaElementSessionInfo& session, const MediaElementSessionInfo& otherSession)
@@ -780,7 +783,10 @@ HTMLMediaElement::~HTMLMediaElement()
         m_player = nullptr;
     }
 
-    m_mediaSession = nullptr;
+    if (m_mediaSession) {
+        m_mediaSession->invalidateClient();
+        m_mediaSession = nullptr;
+    }
     schedulePlaybackControlsManagerUpdate();
 }
 
@@ -793,10 +799,19 @@ RefPtr<HTMLMediaElement> HTMLMediaElement::bestMediaElementForRemoteControls(Med
 {
     auto selectedSession = PlatformMediaSessionManager::singleton().bestEligibleSessionForRemoteControls([&document] (auto& session) {
         auto* mediaElementSession = dynamicDowncast<MediaElementSession>(session);
-        return mediaElementSession && (!document || &mediaElementSession->element().document() == document);
+        if (!mediaElementSession)
+            return false;
+
+        RefPtr element = mediaElementSession->protectedElement();
+        if (!element)
+            return false;
+
+        return !document || &element->document() == document;
     }, purpose);
 
-    return selectedSession ? RefPtr { &downcast<MediaElementSession>(selectedSession.get())->element() } : nullptr;
+    if (auto* mediaElementSession = dynamicDowncast<MediaElementSession>(selectedSession.get()))
+        return mediaElementSession->protectedElement();
+    return nullptr;
 }
 
 bool HTMLMediaElement::isNowPlayingEligible() const
@@ -1206,7 +1221,7 @@ void HTMLMediaElement::didDetachRenderers()
     });
 }
 
-void HTMLMediaElement::didRecalcStyle(Style::Change)
+void HTMLMediaElement::didRecalcStyle(OptionSet<Style::Change>)
 {
     updateRenderer();
 }
@@ -1817,7 +1832,7 @@ void HTMLMediaElement::loadResource(const URL& initialURL, const ContentType& in
 
     // If the URL should be loaded from the application cache, pass the URL of the cached file to the media engine.
     RefPtr<ApplicationCacheResource> resource;
-    if (!url.isEmpty() && frame->loader().documentLoader()->applicationCacheHost().shouldLoadResourceFromApplicationCache(ResourceRequest(url), resource)) {
+    if (!url.isEmpty() && frame->loader().documentLoader()->applicationCacheHost().shouldLoadResourceFromApplicationCache(ResourceRequest(URL { url }), resource)) {
         // Resources that are not present in the manifest will always fail to load (at least, after the
         // cache has been primed the first time), making the testing of offline applications simpler.
         if (!resource || resource->path().isEmpty()) {
@@ -1973,7 +1988,7 @@ bool HTMLMediaElement::needsContentTypeToPlay() const
 
 Ref<HTMLMediaElement::SnifferPromise> HTMLMediaElement::sniffForContentType(const URL& url)
 {
-    ResourceRequest request(url);
+    ResourceRequest request(URL { url });
     request.setAllowCookies(true);
     // https://mimesniff.spec.whatwg.org/#reading-the-resource-header defines a maximum size of 1445 bytes fetch.
     m_sniffer = MediaResourceSniffer::create(mediaPlayerCreateResourceLoader(), WTFMove(request), 1445);
@@ -7999,6 +8014,10 @@ void HTMLMediaElement::createMediaPlayer() WTF_IGNORES_THREAD_SAFETY_ANALYSIS
 
 #if HAVE(SPATIAL_TRACKING_LABEL)
     updateSpatialTrackingLabel();
+#endif
+
+#if PLATFORM(IOS_FAMILY)
+    sceneIdentifierDidChange();
 #endif
 
 #if ENABLE(WEB_AUDIO)

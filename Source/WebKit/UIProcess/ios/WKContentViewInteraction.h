@@ -226,13 +226,13 @@ typedef std::pair<WebKit::InteractionInformationRequest, InteractionInformationC
     M(pasteAndMatchStyle) \
     M(makeTextWritingDirectionNatural) \
     M(makeTextWritingDirectionLeftToRight) \
-    M(makeTextWritingDirectionRightToLeft)
+    M(makeTextWritingDirectionRightToLeft) \
+    M(alignCenter) \
+    M(alignJustified) \
+    M(alignLeft) \
+    M(alignRight)
 
 #define FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(M) \
-    M(_alignCenter) \
-    M(_alignJustified) \
-    M(_alignLeft) \
-    M(_alignRight) \
     M(_indent) \
     M(_outdent) \
     M(_toggleStrikeThrough) \
@@ -996,6 +996,10 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(DECLARE_WKCONTENTVIEW_ACTION_FOR_WEB_VIEW)
 
 @property (nonatomic, readonly) BOOL shouldUseAsyncInteractions;
 @property (nonatomic, readonly) NSArray<UIView *> *allViewsIntersectingSelectionRange;
+
+#if HAVE(UI_CONVERSATION_CONTEXT)
+@property (strong, nonatomic, setter=_setConversationContext:) UIConversationContext *_conversationContext;
+#endif
 
 #if ENABLE(MODEL_PROCESS)
 - (void)_willInvalidateDraggedModelWithContainerView:(UIView *)containerView;

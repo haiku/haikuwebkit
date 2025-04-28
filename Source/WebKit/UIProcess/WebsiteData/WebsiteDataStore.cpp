@@ -47,6 +47,7 @@
 #include "WebCookieManagerMessages.h"
 #include "WebFrameProxy.h"
 #include "WebKit2Initialize.h"
+#include "WebKitServiceNames.h"
 #include "WebNotificationManagerProxy.h"
 #include "WebPageProxy.h"
 #include "WebProcessCache.h"
@@ -2108,9 +2109,9 @@ WebsiteDataStoreParameters WebsiteDataStore::parameters()
     createHandleFromResolvedPathIfPossible(hstsStorageDirectory, hstsStorageDirectoryExtensionHandle);
 
 #if ENABLE(CONTENT_EXTENSIONS)
-    auto resourceMonitorThrottlerDirectory = isPersistent() ? directories.resourceMonitorThrottlerDirectory : WebCore::SQLiteDatabase::inMemoryPath();
+    auto resourceMonitorThrottlerDirectory = isPersistent() ? directories.resourceMonitorThrottlerDirectory : emptyString();
     SandboxExtension::Handle resourceMonitorThrottlerDirectoryExtensionHandle;
-    if (isPersistent())
+    if (!resourceMonitorThrottlerDirectory.isEmpty())
         createHandleFromResolvedPathIfPossible(resourceMonitorThrottlerDirectory, resourceMonitorThrottlerDirectoryExtensionHandle);
 #endif
 
@@ -2209,6 +2210,10 @@ WebsiteDataStoreParameters WebsiteDataStore::parameters()
 #if HAVE(NW_PROXY_CONFIG)
     networkSessionParameters.proxyConfigData = m_proxyConfigData;
 #endif
+#if ENABLE(CONTENT_EXTENSIONS)
+    networkSessionParameters.resourceMonitorThrottlerDirectory = WTFMove(resourceMonitorThrottlerDirectory);
+    networkSessionParameters.resourceMonitorThrottlerDirectoryExtensionHandle = WTFMove(resourceMonitorThrottlerDirectoryExtensionHandle);
+#endif
     networkSessionParameters.isLegacyTLSAllowed = m_configuration->legacyTLSEnabled();
 
     parameters.networkSessionParameters = WTFMove(networkSessionParameters);
@@ -2216,11 +2221,6 @@ WebsiteDataStoreParameters WebsiteDataStore::parameters()
     platformSetNetworkParameters(parameters);
 #if PLATFORM(COCOA)
     parameters.networkSessionParameters.useNetworkLoader = useNetworkLoader();
-#endif
-
-#if ENABLE(CONTENT_EXTENSIONS)
-    networkSessionParameters.resourceMonitorThrottlerDirectory = WTFMove(resourceMonitorThrottlerDirectory);
-    networkSessionParameters.resourceMonitorThrottlerDirectoryExtensionHandle = WTFMove(resourceMonitorThrottlerDirectoryExtensionHandle);
 #endif
 
 #if PLATFORM(IOS_FAMILY)
@@ -2237,8 +2237,10 @@ WebsiteDataStoreParameters WebsiteDataStore::parameters()
         createHandleFromResolvedPathIfPossible(parentBundleDirectory(), parentBundleDirectoryExtensionHandle, SandboxExtension::Type::ReadOnly);
         parameters.parentBundleDirectoryExtensionHandle = WTFMove(parentBundleDirectoryExtensionHandle);
 
-        if (auto handleAndFilePath = SandboxExtension::createHandleForTemporaryFile(emptyString(), SandboxExtension::Type::ReadWrite))
+        if (auto handleAndFilePath = SandboxExtension::createHandleForTemporaryFile(networkingServiceName, SandboxExtension::Type::ReadWrite))
             parameters.tempDirectoryExtensionHandle = WTFMove(handleAndFilePath->first);
+        if (auto handleAndFilePath = SandboxExtension::createHandleForTemporaryFile(emptyString(), SandboxExtension::Type::ReadOnly))
+            parameters.tempDirectoryRootExtensionHandle = WTFMove(handleAndFilePath->first);
     }
 #endif
     

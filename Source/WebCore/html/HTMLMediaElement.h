@@ -724,6 +724,12 @@ public:
 
     void audioSessionCategoryChanged(AudioSessionCategory, AudioSessionMode, RouteSharingPolicy);
 
+    // CheckedPtr interface
+    uint32_t checkedPtrCount() const { return CanMakeCheckedPtr<Node>::checkedPtrCount(); }
+    uint32_t checkedPtrCountWithoutThreadCheck() const { return CanMakeCheckedPtr<Node>::checkedPtrCountWithoutThreadCheck(); }
+    void incrementCheckedPtrCount() const { CanMakeCheckedPtr<Node>::incrementCheckedPtrCount(); }
+    void decrementCheckedPtrCount() const { CanMakeCheckedPtr<Node>::decrementCheckedPtrCount(); }
+
 protected:
     HTMLMediaElement(const QualifiedName&, Document&, bool createdByParser);
     virtual ~HTMLMediaElement();
@@ -806,7 +812,7 @@ private:
     InsertedIntoAncestorResult insertedIntoAncestor(InsertionType, ContainerNode&) override;
     void didFinishInsertingNode() override;
     void removedFromAncestor(RemovalType, ContainerNode&) override;
-    void didRecalcStyle(Style::Change) override;
+    void didRecalcStyle(OptionSet<Style::Change>) override;
     bool canStartSelection() const override { return false; } 
     bool isInteractiveContent() const override;
 

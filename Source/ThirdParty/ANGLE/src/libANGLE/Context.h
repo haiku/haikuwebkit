@@ -670,8 +670,6 @@ class Context final : public egl::LabeledObject, angle::NonCopyable, public angl
 
     const State &getState() const { return mState; }
     const PrivateState &getPrivateState() const { return mState.privateState(); }
-    GLint getClientMajorVersion() const { return mState.getClientMajorVersion(); }
-    GLint getClientMinorVersion() const { return mState.getClientMinorVersion(); }
     const Version &getClientVersion() const { return mState.getClientVersion(); }
     const Caps &getCaps() const { return mState.getCaps(); }
     const TextureCapsMap &getTextureCaps() const { return mState.getTextureCaps(); }
@@ -686,6 +684,10 @@ class Context final : public egl::LabeledObject, angle::NonCopyable, public angl
     bool skipValidation() const { return mErrors.skipValidation(); }
     void markContextLost(GraphicsResetStatus status) { mErrors.markContextLost(status); }
     bool isContextLost() const { return mErrors.isContextLost(); }
+
+    // Some commands may need to generate a context lost error but still return a value.
+    // The validation layer does not generate the context lost error in such cases.
+    void contextLostErrorOnBlockingCall(angle::EntryPoint entryPoint) const;
 
     ErrorSet *getMutableErrorSetForValidation() const { return &mErrors; }
 
@@ -799,6 +801,7 @@ class Context final : public egl::LabeledObject, angle::NonCopyable, public angl
     egl::Error acquireExternalContext(egl::Surface *drawAndReadSurface);
     egl::Error releaseExternalContext();
 
+    bool noopDrawProgram() const;
     bool noopDraw(PrimitiveMode mode, GLsizei count) const;
     bool noopDrawInstanced(PrimitiveMode mode, GLsizei count, GLsizei instanceCount) const;
     bool noopMultiDraw(GLsizei drawcount) const;
@@ -843,6 +846,9 @@ class Context final : public egl::LabeledObject, angle::NonCopyable, public angl
 
     size_t getMemoryUsage() const;
 
+    // Only used by vulkan backend.
+    void onSwapChainImageChanged() const { mDefaultFramebuffer->onSwapChainImageChanged(); }
+
   private:
     void initializeDefaultResources();
     void releaseSharedObjects();
@@ -854,7 +860,6 @@ class Context final : public egl::LabeledObject, angle::NonCopyable, public angl
                             const state::ExtendedDirtyBits extendedBitMask,
                             const state::DirtyObjects &objectMask,
                             Command command);
-    angle::Result syncAllDirtyBits(Command command);
     angle::Result syncDirtyBits(const state::DirtyBits bitMask,
                                 const state::ExtendedDirtyBits extendedBitMask,
                                 Command command);

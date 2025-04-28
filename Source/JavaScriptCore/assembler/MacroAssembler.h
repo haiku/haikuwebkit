@@ -166,6 +166,7 @@ public:
     using MacroAssemblerBase::move32ToFloat;
     using MacroAssemblerBase::moveDouble;
     using MacroAssemblerBase::move64ToDouble;
+    using MacroAssemblerBase::moveVector;
     using MacroAssemblerBase::add32;
     using MacroAssemblerBase::mul32;
     using MacroAssemblerBase::and32;
@@ -601,6 +602,12 @@ public:
         storeDouble(scratch, dest);
     }
 
+    void moveVector(Address src, Address dest, FPRegisterID scratch)
+    {
+        loadVector(src, scratch);
+        storeVector(scratch, dest);
+    }
+
     // Ptr methods
     // On 32-bit platforms (i.e. x86), these methods directly map onto their 32-bit equivalents.
 #if !CPU(ADDRESS64)
@@ -637,6 +644,11 @@ public:
     void addPtr(TrustedImm32 imm, RegisterID src, RegisterID dest)
     {
         add32(imm, src, dest);
+    }
+
+    void addPtr(TrustedImmPtr imm, RegisterID src, RegisterID dest)
+    {
+        add32(TrustedImm32(imm), src, dest);
     }
 
     void addPtr(TrustedImm32 imm, AbsoluteAddress address)
@@ -1000,6 +1012,11 @@ public:
     void addPtr(TrustedImm32 imm, RegisterID src, RegisterID dest)
     {
         add64(imm, src, dest);
+    }
+
+    void addPtr(TrustedImmPtr imm, RegisterID src, RegisterID dest)
+    {
+        add64(TrustedImm64(imm), src, dest);
     }
 
     void addPtr(TrustedImm32 imm, Address address)

@@ -56,6 +56,7 @@ info: |
       a. Let _timeZoneIdentifierRecord_ be GetAvailableNamedTimeZoneIdentifier(_timeZone_).
       b. If _timeZoneIdentifierRecord_ is ~empty~, throw a RangeError exception.
       c. Set _timeZone_ to _timeZoneIdentifierRecord_.[[PrimaryIdentifier]].
+features: [canonical-tz]
 ---*/
 
 const timeZones = [
@@ -63,40 +64,40 @@ const timeZones = [
   ["Europe/Prague", "Europe/Prague"],
 
   // `backward` identifies "Europe/Bratislava" as a Link name targeting "Europe/Prague":
-  //   Link Europe/Prague  Europe/Bratislava
+  //   Link	Europe/Prague		Europe/Bratislava
   // Europe/Bratislava's country code "SK" has only one time zone in `zone.tab`.
   ["Europe/Bratislava", "Europe/Bratislava"],
 
   // `backward` identifies "Australia/Canberra" as a Link targeting "Australia/Sydney":
-  //   Link Australia/Sydney  Australia/Canberra
+  //   Link	Australia/Sydney	Australia/Canberra
   // Both share the country code "AU".
   ["Australia/Canberra", "Australia/Sydney"],
 
   // `backward` identifies "Atlantic/Jan_Mayen" as a Link name targeting "Europe/Berlin":
-  //   Link Europe/Berlin  Atlantic/Jan_Mayen
+  //   Link	Europe/Berlin		Atlantic/Jan_Mayen
   // Atlantic/Jan_Mayen's country code "SJ" has only one time zone in `zone.tab`.
   ["Atlantic/Jan_Mayen", "Arctic/Longyearbyen"],
 
   // `backward` identifies "Pacific/Truk" as a Link name targeting "Pacific/Port_Moresby":
-  //   Link Pacific/Port_Moresby  Pacific/Truk  #= Pacific/Chuuk
+  //   Link	Pacific/Port_Moresby	Pacific/Truk	#= Pacific/Chuuk
   // Pacific/Chuuk's country code "FM" has multiple time zones in `zone.tab`.
   // `backzone` identifies "Pacific/Truk" as a Link name targeting "Pacific/Chuuk":
   //   Link Pacific/Chuuk Pacific/Truk
   ["Pacific/Truk", "Pacific/Chuuk"],
 
   // `backward` identifies "Etc/UCT" as a Link name targeting "Etc/UTC":
-  //   Link Etc/UTC    Etc/UCT
+  //   Link	Etc/UTC			Etc/UCT
   ["Etc/UCT", "UTC"],
 
   // `backward` identifies "Etc/GMT0" as a Link name targeting "Etc/GMT":
-  //   Link Etc/GMT    Etc/GMT0
+  //   Link	Etc/GMT			Etc/GMT0
   ["Etc/GMT0", "UTC"]
 ];
 
-for (const [timeZone, expected] of timeZones) {
+for (const [timeZone, linkTarget] of timeZones) {
   assert.sameValue(
     new Intl.DateTimeFormat([], { timeZone }).resolvedOptions().timeZone,
-    expected,
-    "Time zone name " + timeZone + " should be canonicalized to " + expected
+    timeZone,
+    "Time zone name " + timeZone + " should be preserved and not canonicalized to " + linkTarget
   );
 }

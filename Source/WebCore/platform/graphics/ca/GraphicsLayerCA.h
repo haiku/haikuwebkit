@@ -738,9 +738,9 @@ private:
     Vector<LayerPropertyAnimation> m_baseValueTransformAnimations;
     Vector<LayerPropertyAnimation> m_animationGroups;
 
-    Vector<FloatRect> m_dirtyRects;
+    Vector<FloatRect, 4> m_dirtyRects;
 
-    std::unique_ptr<DisplayList::DisplayList> m_displayList;
+    RefPtr<const DisplayList::DisplayList> m_displayList;
 
     float m_contentsScaleLimitingFactor { 1 };
     float m_rootRelativeScaleFactor { 1.0f };

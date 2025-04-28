@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2012-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -666,7 +666,9 @@ void NetworkResourceLoader::transferToNewWebProcess(NetworkConnectionToWebProces
     m_parameters.webPageID = parameters.webPageID;
     m_parameters.webFrameID = parameters.webFrameID;
     m_parameters.options.clientIdentifier = parameters.options.clientIdentifier;
-    m_parameters.options.resultingClientIdentifier = parameters.options.resultingClientIdentifier;
+
+    if (parameters.options.resultingClientIdentifier && m_parameters.options.resultingClientIdentifier)
+        send(Messages::WebResourceLoader::UpdateResultingClientIdentifier { *parameters.options.resultingClientIdentifier, *m_parameters.options.resultingClientIdentifier });
 
     ASSERT(m_responseCompletionHandler || m_cacheEntryWaitingForContinueDidReceiveResponse || m_serviceWorkerFetchTask);
     if (m_serviceWorkerRegistration) {
@@ -2171,7 +2173,7 @@ WebCore::ResourceError NetworkResourceLoader::contentFilterDidBlock(WebCore::Con
             if (m_wasStarted || unblocked)
                 request = m_parameters.request;
             else
-                request = ResourceRequest(aboutBlankURL());
+                request = ResourceRequest(URL { aboutBlankURL() });
             auto error = WebKit::blockedByContentFilterError(request);
             m_contentFilter->setBlockedError(error);
             m_contentFilter->handleProvisionalLoadFailure(error);
