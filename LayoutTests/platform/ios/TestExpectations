@@ -2915,6 +2915,7 @@ fast/mediastream/getDisplayMedia-max-constraints3.html [ Skip ]
 fast/mediastream/getDisplayMedia-max-constraints5.html [ Skip ]
 webkit.org/b/263466 fast/mediastream/getDisplayMedia-max-constraints4.html [ Failure ]
 webrtc/getDisplayMedia-pc.html [ Skip ]
+webrtc/getDisplayMedia-odd-size.html [ Skip ]
 
 fast/mediastream/getDisplayMedia-size.html [ Skip ]
 
@@ -7847,3 +7848,5 @@ webkit.org/b/291451 imported/w3c/web-platform-tests/navigation-api/navigation-me
 webkit.org/b/291456 fast/forms/state-restore-per-form.html [ Pass Timeout ]
 
 webkit.org/b/291459 imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-018.html [ Pass Failure ]
+
+webkit.org/b/291767 media/video-aspect-ratio.html [ Pass Failure ]

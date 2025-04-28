@@ -205,7 +205,7 @@ RenderBlockFlow* RenderBlockFlow::previousSiblingWithOverhangingFloats(bool& par
 
 void RenderBlockFlow::rebuildFloatingObjectSetFromIntrudingFloats()
 {
-    if (isSkippedContentRoot(*this))
+    if (layoutContext().isSkippedContentRootForLayout(*this))
         return;
 
     UncheckedKeyHashSet<CheckedPtr<RenderBox>> oldIntrudingFloatSet;

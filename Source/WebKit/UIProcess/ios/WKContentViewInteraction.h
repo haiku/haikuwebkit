@@ -513,6 +513,8 @@ struct ImageAnalysisContextMenuActionData {
     CGPoint _lastInteractionLocation;
     std::optional<WebKit::TransactionID> _layerTreeTransactionIdAtLastInteractionStart;
 
+    __weak UIView *_cachedSelectionContainerView;
+    __weak UIView *_lastSiblingBeforeSelectionHighlight;
     WebKit::WKSelectionDrawingInfo _lastSelectionDrawingInfo;
     RetainPtr<WKTextRange> _cachedSelectedTextRange;
 
@@ -993,6 +995,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(DECLARE_WKCONTENTVIEW_ACTION_FOR_WEB_VIEW)
 - (void)_updateDoubleTapGestureRecognizerEnablement;
 
 @property (nonatomic, readonly) BOOL shouldUseAsyncInteractions;
+@property (nonatomic, readonly) NSArray<UIView *> *allViewsIntersectingSelectionRange;
 
 #if ENABLE(MODEL_PROCESS)
 - (void)_willInvalidateDraggedModelWithContainerView:(UIView *)containerView;

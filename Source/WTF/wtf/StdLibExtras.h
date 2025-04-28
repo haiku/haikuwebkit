@@ -568,24 +568,24 @@ template<size_t Minimum, size_t Maximum, class F> ALWAYS_INLINE decltype(auto) v
 #undef WTF_INDEX_VISIT_CASE
 }
 
-// `asVariant` is used to allow subclasses of std::variant to work with `switchOn`.
+// `asVariant` is used to allow subclasses of Variant to work with `switchOn`.
 
-template<class... Ts> ALWAYS_INLINE constexpr std::variant<Ts...>& asVariant(std::variant<Ts...>& v)
+template<class... Ts> ALWAYS_INLINE constexpr Variant<Ts...>& asVariant(Variant<Ts...>& v)
 {
     return v;
 }
 
-template<class... Ts> ALWAYS_INLINE constexpr const std::variant<Ts...>& asVariant(const std::variant<Ts...>& v)
+template<class... Ts> ALWAYS_INLINE constexpr const Variant<Ts...>& asVariant(const Variant<Ts...>& v)
 {
     return v;
 }
 
-template<class... Ts> ALWAYS_INLINE constexpr std::variant<Ts...>&& asVariant(std::variant<Ts...>&& v)
+template<class... Ts> ALWAYS_INLINE constexpr Variant<Ts...>&& asVariant(Variant<Ts...>&& v)
 {
     return std::move(v);
 }
 
-template<class... Ts> ALWAYS_INLINE constexpr const std::variant<Ts...>&& asVariant(const std::variant<Ts...>&& v)
+template<class... Ts> ALWAYS_INLINE constexpr const Variant<Ts...>&& asVariant(const Variant<Ts...>&& v)
 {
     return std::move(v);
 }
@@ -597,13 +597,13 @@ template<typename T> concept HasSwitchOn = requires(T t) {
 #ifdef _LIBCPP_VERSION
 
 // Single-variant switch-based visit function adapted from https://www.reddit.com/r/cpp/comments/kst2pu/comment/giilcxv/.
-// Works around bad code generation for std::visit with one std::variant by some standard library / compilers that
+// Works around bad code generation for WTF::visit with one Variant by some standard library / compilers that
 // lead to excessive binary size growth. Currently only needed by libc++. See https://webkit.org/b/279498.
 
 
 template<size_t Minimum = 0, class F, class V> ALWAYS_INLINE decltype(auto) visitOneVariant(NOESCAPE F&& f, V&& v)
 {
-    constexpr auto Maximum = std::variant_size_v<std::remove_cvref_t<V>>;
+    constexpr auto Maximum = VariantSizeV<std::remove_cvref_t<V>>;
 
 #define WTF_INDEX_VISIT_CASE(Min, Max, N) f(std::get<Min + N>(std::forward<V>(v)))
 #define WTF_INDEX_VISIT_NEXT(Min, Max)    visitOneVariant<Min>(std::forward<F>(f), std::forward<V>(v))
@@ -621,9 +621,9 @@ template<class V, class... F> requires (!HasSwitchOn<V>) ALWAYS_INLINE auto swit
 
 #else
 
-template<class V, class... F> requires (!HasSwitchOn<V>) ALWAYS_INLINE auto switchOn(V&& v, F&&... f) -> decltype(std::visit(makeVisitor(std::forward<F>(f)...), asVariant(std::forward<V>(v))))
+template<class V, class... F> requires (!HasSwitchOn<V>) ALWAYS_INLINE auto switchOn(V&& v, F&&... f) -> decltype(WTF::visit(makeVisitor(std::forward<F>(f)...), asVariant(std::forward<V>(v))))
 {
-    return std::visit(makeVisitor(std::forward<F>(f)...), asVariant(std::forward<V>(v)));
+    return WTF::visit(makeVisitor(std::forward<F>(f)...), asVariant(std::forward<V>(v)));
 }
 
 #endif
@@ -640,24 +640,24 @@ namespace detail {
 template<size_t, class, class> struct alternative_index_helper;
 
 template<size_t index, class Type, class T>
-struct alternative_index_helper<index, Type, std::variant<T>> {
+struct alternative_index_helper<index, Type, Variant<T>> {
     static constexpr size_t count = std::is_same_v<Type, T>;
     static constexpr size_t value = index;
 };
 
 template<size_t index, class Type, class T, class... Types>
-struct alternative_index_helper<index, Type, std::variant<T, Types...>> {
-    static constexpr size_t count = std::is_same_v<Type, T> + alternative_index_helper<index + 1, Type, std::variant<Types...>>::count;
-    static constexpr size_t value = std::is_same_v<Type, T> ? index : alternative_index_helper<index + 1, Type, std::variant<Types...>>::value;
+struct alternative_index_helper<index, Type, Variant<T, Types...>> {
+    static constexpr size_t count = std::is_same_v<Type, T> + alternative_index_helper<index + 1, Type, Variant<Types...>>::count;
+    static constexpr size_t value = std::is_same_v<Type, T> ? index : alternative_index_helper<index + 1, Type, Variant<Types...>>::value;
 };
 
 } // namespace detail
 
 template<class T, class Variant> struct variant_alternative_index;
 
-template<class T, class... Types> struct variant_alternative_index<T, std::variant<Types...>>
-    : std::integral_constant<size_t, detail::alternative_index_helper<0, T, std::variant<Types...>>::value> {
-    static_assert(detail::alternative_index_helper<0, T, std::remove_cv_t<std::variant<Types...>>>::count == 1);
+template<class T, class... Types> struct variant_alternative_index<T, Variant<Types...>>
+    : std::integral_constant<size_t, detail::alternative_index_helper<0, T, Variant<Types...>>::value> {
+    static_assert(detail::alternative_index_helper<0, T, std::remove_cv_t<Variant<Types...>>>::count == 1);
 };
 
 template<class T, class Variant> constexpr std::size_t alternativeIndexV = variant_alternative_index<T, Variant>::value;
@@ -676,13 +676,13 @@ template<typename V> struct HoldsAlternative {
     }
 };
 
-// Specialization for `std::variant`.
-template<typename... Ts> struct HoldsAlternative<std::variant<Ts...>> {
-    template<typename T> static constexpr bool holdsAlternative(const std::variant<Ts...>& v)
+// Specialization for `Variant`.
+template<typename... Ts> struct HoldsAlternative<Variant<Ts...>> {
+    template<typename T> static constexpr bool holdsAlternative(const Variant<Ts...>& v)
     {
         return std::holds_alternative<T>(v);
     }
-    template<size_t I> static constexpr bool holdsAlternative(const std::variant<Ts...>& v)
+    template<size_t I> static constexpr bool holdsAlternative(const Variant<Ts...>& v)
     {
         return std::holds_alternative<I>(v);
     }
@@ -742,12 +742,12 @@ template<size_t I, typename V> bool holdsAlternative(const V& v)
         return std::get_if<T>(&self->name);                                          \
     }
 
-// MARK: - Utility types for working with std::variants in generic contexts
+// MARK: - Utility types for working with Variants in generic contexts
 
-// Wraps a type list using a std::variant.
-template<typename... Ts> using VariantWrapper = typename std::variant<Ts...>;
+// Wraps a type list using a Variant.
+template<typename... Ts> using VariantWrapper = Variant<Ts...>;
 
-// Is conditionally either a single type, if the type list only has a single element, or a std::variant of the type list's contents.
+// Is conditionally either a single type, if the type list only has a single element, or a Variant of the type list's contents.
 template<typename TypeList> using VariantOrSingle = std::conditional_t<
     brigand::size<TypeList>::value == 1,
     brigand::front<TypeList>,
@@ -781,12 +781,12 @@ template<typename TypeList> using VariantOrSingle = std::conditional_t<
 //   };
 
 template<typename T> struct IsStdInPlaceTypeImpl : std::false_type {};
-template<typename T> struct IsStdInPlaceTypeImpl<std::in_place_type_t<T>> : std::true_type {};
+template<typename T> struct IsStdInPlaceTypeImpl<WTF::InPlaceTypeT<T>> : std::true_type { };
 template<typename T> using IsStdInPlaceType = IsStdInPlaceTypeImpl<std::remove_cvref_t<T>>;
 template<typename T> constexpr bool IsStdInPlaceTypeV = IsStdInPlaceType<T>::value;
 
 template<typename T> struct IsStdInPlaceIndexImpl : std::false_type { };
-template<size_t I>   struct IsStdInPlaceIndexImpl<std::in_place_index_t<I>> : std::true_type { };
+template<size_t I>   struct IsStdInPlaceIndexImpl<WTF::InPlaceIndexT<I>> : std::true_type { };
 template<typename T> using IsStdInPlaceIndex = IsStdInPlaceIndexImpl<std::remove_cvref_t<T>>;
 template<typename T> constexpr bool IsStdInPlaceIndexV = IsStdInPlaceIndex<T>::value;
 

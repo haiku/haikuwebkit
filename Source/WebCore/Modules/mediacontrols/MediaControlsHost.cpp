@@ -176,7 +176,7 @@ String MediaControlsHost::displayNameForTrack(const std::optional<TextOrAudioTra
     if (!page)
         return emptyString();
 
-    return std::visit([page] (auto& track) {
+    return WTF::visit([page] (auto& track) {
         return page->group().ensureCaptionPreferences().displayNameForTrack(track.get());
     }, track.value());
 }
@@ -555,7 +555,7 @@ bool MediaControlsHost::showMediaControlsContextMenu(HTMLElement& target, String
 
     enum class ShowMediaStatsTag { IncludeShowMediaStats };
 
-    using MenuData = std::variant<
+    using MenuData = Variant<
 #if ENABLE(VIDEO_PRESENTATION_MODE)
         PictureInPictureTag,
 #endif // ENABLE(VIDEO_PRESENTATION_MODE)

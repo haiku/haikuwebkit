@@ -124,6 +124,9 @@ void AutoTableLayout::recalcColumn(unsigned effCol)
                         break;
                     }
                 } else if (!effCol || section->primaryCellAt(i, effCol - 1) != cell) {
+                    // If a cell originates in this spanning column ensure we have a min/max width of at least 1px for it.
+                    columnLayout.minLogicalWidth = std::max(columnLayout.minLogicalWidth, cell->maxPreferredLogicalWidth() ? 1.f : 0.f);
+
                     // This spanning cell originates in this column. Insert the cell into spanning cells list.
                     insertSpanCell(cell);
                 }
@@ -247,6 +250,13 @@ void AutoTableLayout::computeIntrinsicLogicalWidths(LayoutUnit& minWidth, Layout
         m_scaledWidthFromPercentColumns = std::min(LayoutUnit(tableMaxWidth), LayoutUnit(std::max(maxPercent, maxNonPercent)));
         if (m_scaledWidthFromPercentColumns > maxWidth && shouldScaleColumnsForParent(*m_table))
             maxWidth = m_scaledWidthFromPercentColumns;
+    }
+
+    if (intrinsics == TableIntrinsics::ForKeyword && m_layoutStruct.isEmpty()) {
+        ASSERT(!minWidth);
+        ASSERT(!maxWidth);
+        minWidth = m_table->bordersPaddingAndSpacingInRowDirection();
+        maxWidth = minWidth;
     }
 
     maxWidth = std::max(maxWidth, LayoutUnit(spanMaxLogicalWidth));
@@ -662,84 +672,14 @@ void AutoTableLayout::layout()
 
     // If we have overallocated, reduce every cell according to the difference between desired width and minwidth
     // this seems to produce to the pixel exact results with IE. Wonder if some of this also holds for width distributing.
-    if (available < 0) {
-        // Need to reduce cells with the following prioritization:
-        // (1) Auto
-        // (2) Fixed
-        // (3) Percent
-        // This is basically the reverse of how we grew the cells.
-        if (available < 0) {
-            float logicalWidthBeyondMin = 0;
-            for (unsigned i = nEffCols; i; ) {
-                --i;
-                Length& logicalWidth = m_layoutStruct[i].effectiveLogicalWidth;
-                if (logicalWidth.isAuto())
-                    logicalWidthBeyondMin += m_layoutStruct[i].computedLogicalWidth - m_layoutStruct[i].effectiveMinLogicalWidth;
-            }
-            
-            for (unsigned i = nEffCols; i && logicalWidthBeyondMin > 0; ) {
-                --i;
-                Length& logicalWidth = m_layoutStruct[i].effectiveLogicalWidth;
-                if (logicalWidth.isAuto()) {
-                    float minMaxDiff = m_layoutStruct[i].computedLogicalWidth - m_layoutStruct[i].effectiveMinLogicalWidth;
-                    float reduce = available * minMaxDiff / logicalWidthBeyondMin;
-                    m_layoutStruct[i].computedLogicalWidth += reduce;
-                    available -= reduce;
-                    logicalWidthBeyondMin -= minMaxDiff;
-                    if (available >= 0)
-                        break;
-                }
-            }
-        }
-
-        if (available < 0) {
-            float logicalWidthBeyondMin = 0;
-            for (unsigned i = nEffCols; i; ) {
-                --i;
-                Length& logicalWidth = m_layoutStruct[i].effectiveLogicalWidth;
-                if (logicalWidth.isFixed())
-                    logicalWidthBeyondMin += m_layoutStruct[i].computedLogicalWidth - m_layoutStruct[i].effectiveMinLogicalWidth;
-            }
-            
-            for (unsigned i = nEffCols; i && logicalWidthBeyondMin > 0; ) {
-                --i;
-                Length& logicalWidth = m_layoutStruct[i].effectiveLogicalWidth;
-                if (logicalWidth.isFixed()) {
-                    float minMaxDiff = m_layoutStruct[i].computedLogicalWidth - m_layoutStruct[i].effectiveMinLogicalWidth;
-                    float reduce = available * minMaxDiff / logicalWidthBeyondMin;
-                    m_layoutStruct[i].computedLogicalWidth += reduce;
-                    available -= reduce;
-                    logicalWidthBeyondMin -= minMaxDiff;
-                    if (available >= 0)
-                        break;
-                }
-            }
-        }
-
-        if (available < 0) {
-            float logicalWidthBeyondMin = 0;
-            for (unsigned i = nEffCols; i; ) {
-                --i;
-                Length& logicalWidth = m_layoutStruct[i].effectiveLogicalWidth;
-                if (logicalWidth.isPercentOrCalculated())
-                    logicalWidthBeyondMin += m_layoutStruct[i].computedLogicalWidth - m_layoutStruct[i].effectiveMinLogicalWidth;
-            }
-            
-            for (unsigned i = nEffCols; i && logicalWidthBeyondMin > 0; ) {
-                --i;
-                Length& logicalWidth = m_layoutStruct[i].effectiveLogicalWidth;
-                if (logicalWidth.isPercentOrCalculated()) {
-                    float minMaxDiff = m_layoutStruct[i].computedLogicalWidth - m_layoutStruct[i].effectiveMinLogicalWidth;
-                    float reduce = available * minMaxDiff / logicalWidthBeyondMin;
-                    m_layoutStruct[i].computedLogicalWidth += reduce;
-                    available -= reduce;
-                    logicalWidthBeyondMin -= minMaxDiff;
-                    if (available >= 0)
-                        break;
-                }
-            }
-        }
-    }
+    // Need to reduce cells with the following prioritization:
+    // This is basically the reverse of how we grew the cells.
+    if (available < 0)
+        available = shrinkCellWidth(LengthType::Auto, available);
+    if (available < 0)
+        available = shrinkCellWidth(LengthType::Fixed, available);
+    if (available < 0)
+        available = shrinkCellWidth(LengthType::Percent, available);
 
     LayoutUnit pos;
     for (size_t i = 0; i < nEffCols; ++i) {
@@ -747,6 +687,34 @@ void AutoTableLayout::layout()
         pos += LayoutUnit::fromFloatCeil(m_layoutStruct[i].computedLogicalWidth) + m_table->hBorderSpacing();
     }
     m_table->setColumnPosition(m_table->columnPositions().size() - 1, pos);
+}
+
+float AutoTableLayout::shrinkCellWidth(const LengthType& lengthType, float available)
+{
+    unsigned nEffCols = m_table->numEffCols();
+    float logicalWidthBeyondMin = 0;
+    for (unsigned i = nEffCols; i; ) {
+        --i;
+        auto& logicalWidth = m_layoutStruct[i].effectiveLogicalWidth;
+        if (logicalWidth.type() == lengthType)
+            logicalWidthBeyondMin += m_layoutStruct[i].computedLogicalWidth - m_layoutStruct[i].effectiveMinLogicalWidth;
+    }
+
+    for (unsigned i = nEffCols; i && logicalWidthBeyondMin > 0; ) {
+        --i;
+        auto& logicalWidth = m_layoutStruct[i].effectiveLogicalWidth;
+        if (logicalWidth.type() == lengthType) {
+            float minMaxDiff = m_layoutStruct[i].computedLogicalWidth - m_layoutStruct[i].effectiveMinLogicalWidth;
+            float reduce = available * minMaxDiff / logicalWidthBeyondMin;
+            m_layoutStruct[i].computedLogicalWidth += reduce;
+            available -= reduce;
+            logicalWidthBeyondMin -= minMaxDiff;
+            if (available >= 0)
+                break;
+        }
+    }
+
+    return available;
 }
 
 }

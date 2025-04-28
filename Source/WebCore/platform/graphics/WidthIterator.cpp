@@ -110,7 +110,7 @@ inline auto WidthIterator::applyFontTransforms(GlyphBuffer& glyphBuffer, unsigne
         });
         if (iterator == charactersTreatedAsSpace.end() || iterator->stringOffset != characterIndex)
             continue;
-        const auto& originalAdvances = *iterator;
+        auto& originalAdvances = *iterator;
         setWidth(glyphBuffer.advanceAt(i), originalAdvances.advance);
     }
     charactersTreatedAsSpace.clear();
@@ -378,7 +378,7 @@ inline void WidthIterator::advanceInternal(TextIterator& textIterator, GlyphBuff
 {
     // The core logic here needs to match FontCascade::widthForTextUsingSimplifiedMeasuring()
     FloatRect bounds;
-    auto fontDescription = m_fontCascade->fontDescription();
+    auto& fontDescription = m_fontCascade->fontDescription();
     Ref primaryFont = m_fontCascade->primaryFont();
     AdvanceInternalState advanceInternalState(glyphBuffer, primaryFont, textIterator.currentIndex());
     SmallCapsState smallCapsState(fontDescription);
@@ -506,7 +506,7 @@ auto WidthIterator::calculateAdditionalWidth(GlyphBuffer& glyphBuffer, GlyphBuff
     auto character = m_run.get()[currentCharacterIndex];
 
     if (character == tabCharacter && m_run->allowTabs()) {
-        auto& font = glyphBuffer.fontAt(trailingGlyphIndex);
+        Ref font = glyphBuffer.fontAt(trailingGlyphIndex);
         // Synthetic bold will be handled in applyCSSVisibilityRules() later.
         auto newWidth = m_fontCascade->tabWidth(font, m_run->tabSize(), position, Font::SyntheticBoldInclusion::Exclude);
         auto currentWidth = width(glyphBuffer.advanceAt(trailingGlyphIndex));
@@ -632,7 +632,7 @@ void WidthIterator::applyExtraSpacingAfterShaping(GlyphBuffer& glyphBuffer, unsi
 
     auto previousCharacterClass = m_run->textSpacingState().lastCharacterClassFromPreviousRun;
     float position = m_run->xPos() + startingRunWidth;
-    const auto& textAutospace = m_fontCascade->textAutospace();
+    auto textAutospace = m_fontCascade->textAutospace();
     for (auto i = characterStartIndex; i < characterDestinationIndex; ++i) {
         auto& glyphIndexRange = characterIndexToGlyphIndexRange[i];
         if (!glyphIndexRange)

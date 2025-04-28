@@ -459,13 +459,8 @@ TiledBacking* RenderLayerBacking::tiledBacking() const
     return m_graphicsLayer->tiledBacking();
 }
 
-static TiledBacking::TileCoverage computePageTiledBackingCoverage(const RenderLayer& layer, bool isMainFrameRenderViewLayer)
+static TiledBacking::TileCoverage computePageTiledBackingCoverage(const RenderLayer& layer)
 {
-    // Plugin documents don't use the main tiles, as they have their own composited contents.
-    // Avoid the cost of the main tiles.
-    if (isMainFrameRenderViewLayer && layer.renderer().document().isPluginDocument())
-        return TiledBacking::NoCoverage;
-
     // If the page is non-visible, don't incur the cost of keeping extra tiles for scrolling.
     if (!layer.page().isVisible())
         return TiledBacking::CoverageForVisibleArea;
@@ -510,7 +505,7 @@ static TiledBacking::TileCoverage computeOverflowTiledBackingCoverage(const Rend
 void RenderLayerBacking::adjustTiledBackingCoverage()
 {
     if (m_isFrameLayerWithTiledBacking) {
-        auto tileCoverage = computePageTiledBackingCoverage(m_owningLayer, m_isMainFrameRenderViewLayer);
+        auto tileCoverage = computePageTiledBackingCoverage(m_owningLayer);
         if (auto* tiledBacking = this->tiledBacking())
             tiledBacking->setTileCoverage(tileCoverage);
     }
@@ -1598,6 +1593,8 @@ void RenderLayerBacking::updateGeometry(const RenderLayer* compositedAncestor)
 
     m_graphicsLayer->setPosition(primaryLayerPosition);
     m_graphicsLayer->setSize(primaryGraphicsLayerRect.size());
+    if (hasTiledBackingFlatteningLayer())
+        m_childContainmentLayer->setSize(primaryGraphicsLayerRect.size());
 
     // Compute renderer offset from primary graphics layer. Note that primaryGraphicsLayerRect is in parentGraphicsLayer's coordinate system which is not necessarily
     // the same as the ancestor graphics layer.

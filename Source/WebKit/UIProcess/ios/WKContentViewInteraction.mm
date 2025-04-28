@@ -131,6 +131,7 @@
 #import <WebCore/Pasteboard.h>
 #import <WebCore/Path.h>
 #import <WebCore/PathUtilities.h>
+#import <WebCore/PlatformLayerIdentifier.h>
 #import <WebCore/PlatformTextAlternatives.h>
 #import <WebCore/PromisedAttachmentInfo.h>
 #import <WebCore/ScrollTypes.h>
@@ -1692,10 +1693,12 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     _selectionInteractionType = SelectionInteractionType::None;
     _lastSelectionChildScrollViewContentOffset = std::nullopt;
+    _lastSiblingBeforeSelectionHighlight = nil;
     _waitingForEditorStateAfterScrollingSelectionContainer = NO;
 
     _cachedHasCustomTintColor = std::nullopt;
     _cachedSelectedTextRange = nil;
+    _cachedSelectionContainerView = nil;
 }
 
 - (void)cleanUpInteractionPreviewContainers
@@ -8870,7 +8873,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     auto context = adoptNS([[PUICTextInputContext alloc] init]);
     [self _updateTextInputTraits:context.get()];
-    [context setInitialText:_focusedElementInformation.value];
+    [context setInitialText:_focusedElementInformation.value.createNSString().get()];
 #if HAVE(QUICKBOARD_CONTROLLER)
     [context setAcceptsEmoji:YES];
     [context setShouldPresentModernTextInputUI:YES];
@@ -9105,9 +9108,9 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
     case WebKit::InputType::Color:
         return nil;
     case WebKit::InputType::Search:
-        return WebCore::formControlSearchButtonTitle();
+        return WebCore::formControlSearchButtonTitle().createNSString().autorelease();
     default:
-        return WebCore::formControlGoButtonTitle();
+        return WebCore::formControlGoButtonTitle().createNSString().autorelease();
     }
 }
 
@@ -9162,7 +9165,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
         return @"";
     }
 
-    return options[index].text;
+    return options[index].text.createNSString().autorelease();
 }
 
 - (void)selectMenu:(WKSelectMenuListViewController *)selectMenu didCheckItemAtIndex:(NSUInteger)index checked:(BOOL)checked
@@ -9266,6 +9269,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
 
     [self _updateSelectionAssistantSuppressionState];
 
+    _cachedSelectionContainerView = nil;
     _cachedSelectedTextRange = nil;
     _selectionNeedsUpdate = YES;
     // If we are changing the selection with a gesture there is no need
@@ -9361,6 +9365,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
                     return WebCore::roundedIntPoint([scrollView contentOffset]);
                 return { };
             }();
+            _lastSiblingBeforeSelectionHighlight = [self _siblingBeforeSelectionHighlight];
         }
 
         _selectionNeedsUpdate = NO;
@@ -9368,8 +9373,11 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
             [_textInteractionWrapper didEndScrollingOverflow];
             _shouldRestoreSelection = NO;
         }
-    } else
+    } else {
+        if (_lastSiblingBeforeSelectionHighlight != [self _siblingBeforeSelectionHighlight])
+            [_textInteractionWrapper prepareToMoveSelectionContainer:self._selectionContainerViewInternal];
         [self _updateSelectionViewsInChildScrollViewIfNeeded];
+    }
 
     if (postLayoutData.isStableStateUpdate && _needsDeferredEndScrollingSelectionUpdate && _page->inStableState()) {
         auto firstResponder = self.firstResponder;
@@ -9380,6 +9388,11 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
 
         _needsDeferredEndScrollingSelectionUpdate = NO;
     }
+}
+
+- (UIView *)_siblingBeforeSelectionHighlight
+{
+    return [[_textInteractionWrapper selectionHighlightView] _wk_previousSibling];
 }
 
 - (void)_updateSelectionViewsInChildScrollViewIfNeeded
@@ -11918,7 +11931,7 @@ static WebKit::DocumentEditingContextRequest toWebRequest(id request)
 
 - (NSString *)initialValueForViewController:(PUICQuickboardViewController *)controller
 {
-    return _focusedElementInformation.value;
+    return _focusedElementInformation.value.createNSString().autorelease();
 }
 
 - (BOOL)shouldDisplayInputContextViewForListViewController:(PUICQuickboardViewController *)controller
@@ -13979,7 +13992,7 @@ inline static NSString *extendSelectionCommand(UITextLayoutDirection direction)
     [self reloadInputViews];
 }
 
-- (PlatformWritingToolsResultOptions)allowedWritingToolsResultOptions
+- (CocoaWritingToolsResultOptions)allowedWritingToolsResultOptions
 {
     return [_webView allowedWritingToolsResultOptions];
 }
@@ -14105,26 +14118,60 @@ static inline WKTextAnimationType toWKTextAnimationType(WebCore::TextAnimationTy
 
 - (UIView *)_selectionContainerViewInternal
 {
-    if (!self.selectionHonorsOverflowScrolling)
-        return self;
+    if (_cachedSelectionContainerView)
+        return _cachedSelectionContainerView;
 
-    if (!_page->editorState().hasVisualData())
-        return self;
+    _cachedSelectionContainerView = [&] -> UIView * {
+        if (!self.selectionHonorsOverflowScrolling)
+            return self;
 
+        if (!_page->editorState().hasVisualData())
+            return self;
+
+        RetainPtr enclosingView = [self _viewForLayerID:_page->editorState().visualData->enclosingLayerID];
+        if (!enclosingView)
+            return self;
+
+        for (UIView *selectedView in self.allViewsIntersectingSelectionRange) {
+            if (enclosingView != selectedView && ![enclosingView _wk_isAncestorOf:selectedView])
+                return self;
+        }
+        return enclosingView.get();
+    }();
+
+    ASSERT(_cachedSelectionContainerView);
+    return _cachedSelectionContainerView;
+}
+
+- (UIView *)_viewForLayerID:(std::optional<WebCore::PlatformLayerIdentifier>)layerID
+{
     WeakPtr drawingArea = downcast<WebKit::RemoteLayerTreeDrawingAreaProxy>(_page->drawingArea());
     if (!drawingArea)
-        return self;
+        return nil;
 
-    WeakPtr layerTreeNode = drawingArea->remoteLayerTreeHost().nodeForID(_page->editorState().visualData->enclosingLayerID);
+    WeakPtr layerTreeNode = drawingArea->remoteLayerTreeHost().nodeForID(layerID);
     if (!layerTreeNode)
-        return self;
+        return nil;
 
-    return layerTreeNode->uiView() ?: self;
+    return layerTreeNode->uiView();
+}
+
+- (NSArray<UIView *> *)allViewsIntersectingSelectionRange
+{
+    if (!self.selectionHonorsOverflowScrolling)
+        return @[ ];
+
+    if (!_page->editorState().hasVisualData())
+        return @[ ];
+
+    return createNSArray(_page->editorState().visualData->intersectingLayerIDs, [&](auto& layerID) {
+        return [self _viewForLayerID:layerID];
+    }).autorelease();
 }
 
 - (BOOL)_shouldHideSelectionDuringOverflowScroll:(UIScrollView *)scrollView
 {
-    if (!self.selectionHonorsOverflowScrolling)
+    if (self._selectionContainerViewInternal == self)
         return YES;
 
     auto& state = _page->editorState();
@@ -14132,7 +14179,7 @@ static inline WKTextAnimationType toWKTextAnimationType(WebCore::TextAnimationTy
         return NO;
 
     auto enclosingScrollingNodeID = state.visualData->enclosingScrollingNodeID;
-    RetainPtr enclosingScroller = [self _scrollViewForScrollingNodeID:enclosingScrollingNodeID];
+    RetainPtr enclosingScroller = [self _scrollViewForScrollingNodeID:enclosingScrollingNodeID] ?: self._scroller;
     if (!enclosingScroller || ![enclosingScroller _wk_isAncestorOf:scrollView])
         return NO;
 
@@ -14140,7 +14187,7 @@ static inline WKTextAnimationType toWKTextAnimationType(WebCore::TextAnimationTy
         if (endpointScrollingNodeID == enclosingScrollingNodeID)
             return false;
 
-        RetainPtr endpointScroller = [self _scrollViewForScrollingNodeID:endpointScrollingNodeID];
+        RetainPtr endpointScroller = [self _scrollViewForScrollingNodeID:endpointScrollingNodeID] ?: self._scroller;
         return endpointScroller == scrollView || [scrollView _wk_isAncestorOf:endpointScroller.get()];
     };
 
@@ -15724,7 +15771,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         }
     );
 
-    [range setFrameIdentifier:webRange.frameIdentifier];
+    [range setFrameIdentifier:webRange.frameIdentifier.createNSString().get()];
     [range setOrder:webRange.order];
     return range.autorelease();
 }

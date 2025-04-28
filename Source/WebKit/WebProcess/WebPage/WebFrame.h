@@ -235,8 +235,6 @@ public:
     std::optional<NavigatingToAppBoundDomain> isTopFrameNavigatingToAppBoundDomain() const;
 #endif
 
-    void dispatchBeforeUnloadEventForCrossProcessNavigation(CompletionHandler<void(bool)>&&);
-
     Markable<WebCore::LayerHostingContextIdentifier> layerHostingContextIdentifier() { return m_layerHostingContextIdentifier; }
 
     OptionSet<WebCore::AdvancedPrivacyProtections> advancedPrivacyProtections() const;
@@ -255,6 +253,8 @@ public:
 
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&);
     static void sendCancelReply(IPC::Connection&, IPC::Decoder&);
+
+    void setAppBadge(const WebCore::SecurityOriginData&, std::optional<uint64_t> badge);
 
 private:
     WebFrame(WebPage&, WebCore::FrameIdentifier);

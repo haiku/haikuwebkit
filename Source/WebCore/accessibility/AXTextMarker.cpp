@@ -38,6 +38,7 @@
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/TZoneMallocInlines.h>
+#include <wtf/Scope.h>
 
 namespace WebCore {
 
@@ -226,28 +227,25 @@ String AXTextMarker::debugDescription() const
     auto separator = ", "_s;
     RefPtr object = this->object();
 
-    String ids;
-#if PLATFORM(MAC)
-    // Since treeID and objectID change from run to run and this is used in a Mac LayoutTest, don't include them in the debugDescription when running tests.
-    if (!AXObjectCache::clientIsInTestMode()) {
-#endif
-        ids = makeString(
-            "treeID "_s, treeID() ? treeID()->loggingString() : "null"_s
-            , separator, "objectID "_s, objectID() ? objectID()->loggingString() : "null"_s
-            , separator);
-#if PLATFORM(MAC)
-    }
-#endif
+    // Most text markers have the default affinity of downstream — avoid noisy output by only logging anything if
+    // the value is the non-default one: upstream.
+    String affinity = m_data.affinity == Affinity::Downstream ? ""_s : makeString(separator, "upstream"_s);
+    String origin = m_data.origin == TextMarkerOrigin::Unknown ? ""_s : makeString(separator, originToString(m_data.origin));
+    // If there is no object, we'll log it once here, then emptyString() for role which also requires an object.
+    String id = object ? makeString("ID "_s, object->objectID().loggingString()) : String("no object"_s);
 
-    return makeString(ids
-        , "role "_s, object ? accessibilityRoleToString(object->roleValue()) : "no object"_s
+    return makeString("{"_s
+        , id
+        , object ? makeString(separator, "role "_s, accessibilityRoleToString(object->roleValue())) : ""_s
         , isIgnored() ? makeString(separator, "ignored"_s) : ""_s
-        , separator, "anchor "_s, m_data.anchorType
-        , separator, "affinity "_s, m_data.affinity
+        // Anchor type and other fields below are not used for text markers processed off the main-thread.
+        , isMainThread() ? makeString(separator, "anchor "_s, m_data.anchorType) : ""_s
+        , affinity
         , separator, "offset "_s, m_data.offset
-        , separator, "charStart "_s, m_data.characterStart
-        , separator, "charOffset "_s, m_data.characterOffset
-        , separator, "origin "_s, originToString(m_data.origin)
+        , isMainThread() ? makeString(separator, "charStart "_s, m_data.characterStart) : ""_s
+        , isMainThread() ? makeString(separator, "charOffset "_s, m_data.characterOffset) : ""_s
+        , origin
+        , "}"_s
     );
 }
 
@@ -507,6 +505,12 @@ String listMarkerTextOnSameLine(const AXTextMarker& marker)
     if (!textMarkerObject)
         return { };
 
+    if (marker.offset()) {
+        // Don't return list marker text if this AXTextMarker isn't directly adjacent to the list marker.
+        // We determine this by the offset — any non-zero offset text marker is not adjacent to the list marker.
+        return { };
+    }
+
     RefPtr listItemAncestor = Accessibility::findAncestor(*textMarkerObject, /* includeSelf */ true, [] (const auto& selfOrAncestor) {
         return selfOrAncestor.isListItem();
     });
@@ -641,7 +645,7 @@ AXTextRunLineID AXTextMarker::lineID() const
         return toTextRunMarker().lineID();
 
     const auto* runs = this->runs();
-    size_t runIndex = runs->indexForOffset(offset());
+    size_t runIndex = runs->indexForOffset(offset(), affinity());
     return runIndex != notFound ? runs->lineID(runIndex) : AXTextRunLineID();
 }
 
@@ -756,11 +760,6 @@ int AXTextMarker::lineNumberForIndex(unsigned index) const
         return -1;
     }
 
-    // To match the behavior of the VisiblePosition implementation of this functionality, we need to
-    // check an extra position ahead (as tested by ax-thread-text-apis/textarea-line-for-index.html),
-    // so increment index.
-    ++index;
-
     unsigned lineIndex = 0;
     auto currentMarker = *this;
     while (index) {
@@ -785,7 +784,7 @@ bool AXTextMarker::atLineBoundaryForDirection(AXDirection direction) const
     if (!isInTextRun())
         return toTextRunMarker().atLineBoundaryForDirection(direction);
 
-    size_t runIndex = runs()->indexForOffset(offset());
+    size_t runIndex = runs()->indexForOffset(offset(), affinity());
     TEXT_MARKER_ASSERT(runIndex != notFound, "atLineBoundaryForDirection (1)");
     if (runIndex == notFound)
         return false;
@@ -890,7 +889,7 @@ AXTextMarker AXTextMarker::nextMarkerFromOffset(unsigned offset) const
 
     auto marker = *this;
     while (offset) {
-        if (auto newMarker = marker.findMarker(AXDirection::Next))
+        if (auto newMarker = marker.findMarker(AXDirection::Next, CoalesceObjectBreaks::No))
             marker = WTFMove(newMarker);
         else
             break;
@@ -1110,7 +1109,7 @@ AXTextMarker AXTextMarker::findLine(AXDirection direction, AXTextUnitBoundary bo
     if (!isInTextRun())
         return toTextRunMarker(stopAtID).findLine(direction, boundary, includeTrailingLineBreak, stopAtID);
 
-    size_t runIndex = runs()->indexForOffset(offset());
+    size_t runIndex = runs()->indexForOffset(offset(), affinity());
     TEXT_MARKER_ASSERT(runIndex != notFound, "findLine (1)");
     if (runIndex == notFound)
         return { };
@@ -1123,8 +1122,35 @@ AXTextMarker AXTextMarker::findLine(AXDirection direction, AXTextUnitBoundary bo
     // we need the end position of the next line instead. Determine this by checking the next or previous marker.
     if (atLineBoundaryForDirection(direction, currentRuns, runIndex)) {
         auto adjacentMarker = findMarker(direction, CoalesceObjectBreaks::No, IgnoreBRs::Yes, stopAtID);
-        bool findOnNextLine = (direction == AXDirection::Previous && boundary == AXTextUnitBoundary::Start)
-            || (direction == AXDirection::Next && boundary == AXTextUnitBoundary::End);
+        bool findingNextLineEnd = direction == AXDirection::Next && boundary == AXTextUnitBoundary::End;
+        bool findOnNextLine = findingNextLineEnd || (direction == AXDirection::Previous && boundary == AXTextUnitBoundary::Start);
+
+        if (findingNextLineEnd && currentRuns == adjacentMarker.runs()) {
+            // Imagine wanting to find the next-line-end in this markup (taken from
+            // editable-single-letter-soft-linebreak-lines.html), where | represents the current position:
+            //   A| (offset 1, upstream)
+            //   B
+            //   C
+            // `findMarker` currently doesn't set any affinity, leaving it as the default value of downstream.
+            // Thus, adjacentMarker will be (offset 2, downstream), which actually skips the line "B" is on:
+            //   A
+            //   B
+            //  |C
+            // We need to detect this to avoid skipping a line.
+            size_t adjacentRunIndex = currentRuns->indexForOffset(adjacentMarker.offset(), adjacentMarker.affinity());
+            if (adjacentRunIndex != notFound && adjacentRunIndex > runIndex && adjacentRunIndex - runIndex > 1) {
+                // The scenario we're trying to detect should only have resulted in one run / line being skipped.
+                // Our affinity flip won't result in the correct behavior if we've somehow jumped >2 lines.
+                ASSERT(adjacentRunIndex - runIndex == 2);
+                // This scenario really should only happen with single "entity" runs (where an entity could be an ASCII
+                // character, or a multi-byte emoji that occupies multiple indices but is one atomic entity).
+                ASSERT(!currentRuns->containsOnlyASCII || (currentRuns->runLength(runIndex) == 1 && currentRuns->runLength(adjacentRunIndex) == 1));
+                // The next line end is simply the adjacent marker with an upstream affinity (with an ASSERT to verify this).
+                ASSERT(currentRuns->indexForOffset(adjacentMarker.offset(), Affinity::Upstream) == runIndex + 1);
+                adjacentMarker.setAffinity(Affinity::Upstream);
+                return adjacentMarker;
+            }
+        }
 
         if (findOnNextLine)
             return adjacentMarker.findLine(direction, boundary, includeTrailingLineBreak, stopAtID);
@@ -1146,8 +1172,18 @@ AXTextMarker AXTextMarker::findLine(AXDirection direction, AXTextUnitBoundary bo
         // We should search in the right direction for a change in the line index.
         for (size_t i = runIndex; direction == AXDirection::Next ? i < currentRuns->size() : i >= 0; direction == AXDirection::Next ? i++ : i--) {
             cumulativeOffset += currentRuns->runLength(i);
-            if (currentRuns->lineID(i) != startLineID)
+            if (currentRuns->lineID(i) != startLineID) {
+                if (boundary == AXTextUnitBoundary::End) {
+                    // We are returning a line-end position, which is upstream in the case of soft linebreaks, e.g.:
+                    // foo|
+                    // bar
+                    // rather than:
+                    // foo
+                    // |bar
+                    linePosition.setAffinity(Affinity::Upstream);
+                }
                 return linePosition;
+            }
             linePosition = AXTextMarker(*currentObject, computeOffset(cumulativeOffset, currentRuns->runLength(i)), origin);
 
             if (direction == AXDirection::Previous && !i) {
@@ -1174,7 +1210,7 @@ AXTextMarker AXTextMarker::findParagraph(AXDirection direction, AXTextUnitBounda
     if (!isInTextRun())
         return toTextRunMarker().findParagraph(direction, boundary);
 
-    size_t runIndex = runs()->indexForOffset(offset());
+    size_t runIndex = runs()->indexForOffset(offset(), affinity());
     TEXT_MARKER_ASSERT(runIndex != notFound, "findParagraph");
     if (runIndex == notFound)
         return { };

@@ -351,7 +351,7 @@ ExceptionOr<unsigned> CSSStyleSheet::insertRule(const String& ruleString, unsign
 
     if (index > length())
         return Exception { ExceptionCode::IndexSizeError };
-    RefPtr rule = CSSParser::parseRule(ruleString, m_contents.get().parserContext(), m_contents.ptr());
+    RefPtr rule = CSSParser::parseRule(ruleString, m_contents.get().parserContext(), m_contents.ptr(), CSSParser::AllowedRules::ImportRules);
 
     if (!rule)
         return Exception { ExceptionCode::SyntaxError };
@@ -621,8 +621,10 @@ CSSStyleSheet::RuleMutationScope::RuleMutationScope(CSSRule* rule)
 
 CSSStyleSheet::RuleMutationScope::~RuleMutationScope()
 {
-    if (m_styleSheet)
+    if (m_styleSheet) {
         m_styleSheet->didMutateRules(m_mutationType, m_contentsClonedForMutation, m_insertedKeyframesRule.get(), m_modifiedKeyframesRuleName);
+        m_styleSheet->contents().clearHasNestingRulesCache();
+    }
 }
 
 }

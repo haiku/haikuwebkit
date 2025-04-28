@@ -746,7 +746,7 @@ void LocalFrame::injectUserScripts(UserScriptInjectionTime injectionTime)
         return;
 
     RefPtr page = this->page();
-    page->protectedUserContentProvider()->forEachUserScript([this, protectedThis = Ref { *this }, injectionTime] (DOMWrapperWorld& world, const UserScript& script) {
+    page->protectedUserContentProvider()->forEachUserScript([this, injectionTime](DOMWrapperWorld& world, const UserScript& script) {
         if (script.injectionTime() == injectionTime)
             injectUserScriptImmediately(world, script);
     });
@@ -1289,6 +1289,14 @@ void LocalFrame::documentURLOrOriginDidChange()
     RefPtr document = this->protectedDocument();
     if (page && document)
         page->setMainFrameURLAndOrigin(document->url(), document->protectedSecurityOrigin());
+}
+
+void LocalFrame::dispatchLoadEventToParent()
+{
+    if (is<RemoteFrame>(tree().parent()))
+        protectedLoader()->client().dispatchLoadEventToOwnerElementInAnotherProcess();
+    else if (RefPtr owner = ownerElement())
+        owner->dispatchEvent(Event::create(eventNames().loadEvent, Event::CanBubble::No, Event::IsCancelable::No));
 }
 
 #if ENABLE(DATA_DETECTION)

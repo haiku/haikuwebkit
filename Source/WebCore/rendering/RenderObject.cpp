@@ -36,6 +36,7 @@
 #include "FrameSelection.h"
 #include "GeometryUtilities.h"
 #include "GraphicsContext.h"
+#include "GraphicsLayer.h"
 #include "HTMLBRElement.h"
 #include "HTMLNames.h"
 #include "HitTestResult.h"
@@ -516,22 +517,13 @@ RenderBox* RenderObject::enclosingScrollableContainer() const
     return document().documentElement() ? document().documentElement()->renderBox() : nullptr;
 }
 
-static CheckedPtr<RenderElement> nearestBaselineContextAncestor(const RenderElement& renderer)
-{
-    for (CheckedPtr container = renderer.containingBlock(); container; container = container->containingBlock()) {
-        if (container->childrenInline() || container->isFlexibleBoxIncludingDeprecated() || container->isRenderGrid() || container->isRenderTableRow())
-            return container;
-    }
-    return nullptr;
-}
-
 enum class RelayoutBoundary {
     No,
     OverflowOnly,
     Yes,
 };
 
-static inline RelayoutBoundary isLayoutBoundary(const RenderElement& renderer, std::optional<CheckedPtr<RenderElement>>& cachedBaselineContextAncestor)
+static inline RelayoutBoundary isLayoutBoundary(const RenderElement& renderer)
 {
     // FIXME: In future it may be possible to broaden these conditions in order to improve performance.
     if (renderer.isRenderView())
@@ -563,11 +555,6 @@ static inline RelayoutBoundary isLayoutBoundary(const RenderElement& renderer, s
 
     // Tables size to their contents, even with a fixed height.
     if (renderer.isRenderTable())
-        return RelayoutBoundary::No;
-
-    if (!cachedBaselineContextAncestor.has_value())
-        cachedBaselineContextAncestor = nearestBaselineContextAncestor(renderer);
-    if (cachedBaselineContextAncestor.value())
         return RelayoutBoundary::No;
 
     if (CheckedPtr block = dynamicDowncast<RenderBlock>(renderer)) {
@@ -617,7 +604,6 @@ RenderElement* RenderObject::markContainingBlocksForLayout(RenderElement* layout
         return downcast<RenderElement>(this);
 
     CheckedPtr ancestor = container();
-    std::optional<CheckedPtr<RenderElement>> nearestBaselineContextAncestor;
 
     bool simplifiedNormalFlowLayout = needsSimplifiedNormalFlowLayout() && !selfNeedsLayout() && !normalChildNeedsLayout();
     bool hasOutOfFlowPosition = isOutOfFlowPositioned();
@@ -633,9 +619,6 @@ RenderElement* RenderObject::markContainingBlocksForLayout(RenderElement* layout
             // Internal render tree shuffle.
             return { };
         }
-
-        if (nearestBaselineContextAncestor == ancestor)
-            nearestBaselineContextAncestor = std::nullopt;
 
         if (simplifiedNormalFlowLayout && ancestor->overflowChangesMayAffectLayout())
             simplifiedNormalFlowLayout = false;
@@ -667,10 +650,10 @@ RenderElement* RenderObject::markContainingBlocksForLayout(RenderElement* layout
             if (ancestor == layoutRoot)
                 return layoutRoot;
 
-            if (isLayoutBoundary(*ancestor, nearestBaselineContextAncestor) > RelayoutBoundary::No)
+            if (isLayoutBoundary(*ancestor) > RelayoutBoundary::No)
                 simplifiedNormalFlowLayout = true;
         } else {
-            auto boundary = isLayoutBoundary(*ancestor, nearestBaselineContextAncestor);
+            auto boundary = isLayoutBoundary(*ancestor);
             if (boundary == RelayoutBoundary::Yes)
                 return ancestor.get();
             if (boundary == RelayoutBoundary::OverflowOnly)
@@ -2638,8 +2621,30 @@ static bool shouldRenderPreviousSelectionOnSeparateLine(RenderObject* previousRe
     return hasAncestorWithSelectionOnSeparateLine(previousRenderer, stayWithin);
 }
 
-auto RenderObject::collectSelectionGeometriesInternal(const SimpleRange& range) -> SelectionGeometries
+static std::optional<PlatformLayerIdentifier> primaryLayerID(const RenderObject& renderer)
 {
+    CheckedPtr layerRenderer = dynamicDowncast<RenderLayerModelObject>(renderer);
+    if (!layerRenderer)
+        return { };
+
+    CheckedPtr layer = layerRenderer->layer();
+    if (!layer)
+        return { };
+
+    auto* layerBacking = layer->backing();
+    if (!layerBacking)
+        return { };
+
+    RefPtr graphicsLayer = layerBacking->graphicsLayer();
+    if (!graphicsLayer)
+        return { };
+
+    return graphicsLayer->primaryLayerID();
+}
+
+auto RenderObject::collectSelectionGeometriesInternal(const SimpleRange& range) -> SelectionGeometriesInternal
+{
+    Vector<PlatformLayerIdentifier> intersectingLayerIDs;
     Vector<SelectionGeometry> geometries;
     Vector<SelectionGeometry> newGeometries;
     bool hasFlippedWritingMode = range.start.container->renderer() && range.start.container->renderer()->writingMode().isBlockFlipped();
@@ -2652,6 +2657,9 @@ auto RenderObject::collectSelectionGeometriesInternal(const SimpleRange& range) 
         CheckedPtr renderer = node->renderer();
         if (!renderer)
             continue;
+
+        if (auto layerID = primaryLayerID(*renderer))
+            intersectingLayerIDs.append(WTFMove(*layerID));
 
         if (!separateFromPreviousLine)
             separateFromPreviousLine = shouldRenderSelectionOnSeparateLine(renderer.get()) || shouldRenderPreviousSelectionOnSeparateLine(previousRenderer.get(), renderer->previousSibling());
@@ -2821,7 +2829,7 @@ auto RenderObject::collectSelectionGeometriesInternal(const SimpleRange& range) 
             selectionGeometry.setLogicalWidth(selectionGeometry.maxX() - selectionGeometry.logicalLeft());
     }
 
-    return { WTFMove(geometries), maxLineNumber, hasRightToLeftText && hasLeftToRightText };
+    return { WTFMove(geometries), maxLineNumber, hasRightToLeftText && hasLeftToRightText, WTFMove(intersectingLayerIDs) };
 }
 
 static bool coalesceSelectionGeometryWithAdjacentQuadsIfPossible(SelectionGeometry& current, const SelectionGeometry& next)
@@ -2872,9 +2880,9 @@ static bool canCoalesceGeometries(const SimpleRange& range, const SelectionGeome
     return false;
 }
 
-Vector<SelectionGeometry> RenderObject::collectSelectionGeometries(const SimpleRange& range)
+auto RenderObject::collectSelectionGeometries(const SimpleRange& range) -> SelectionGeometries
 {
-    auto [geometries, maxLineNumber, hasBidirectionalText] = RenderObject::collectSelectionGeometriesInternal(range);
+    auto [geometries, maxLineNumber, hasBidirectionalText, intersectingLayerIDs] = RenderObject::collectSelectionGeometriesInternal(range);
     auto numberOfGeometries = geometries.size();
 
     // Union all the rectangles on interior lines (i.e. not first or last).
@@ -2945,7 +2953,7 @@ Vector<SelectionGeometry> RenderObject::collectSelectionGeometries(const SimpleR
         adjustTextDirectionForCoalescedGeometries(directions, range, coalescedGeometries);
     }
 
-    return coalescedGeometries;
+    return { WTFMove(coalescedGeometries), WTFMove(intersectingLayerIDs) };
 }
 
 #endif

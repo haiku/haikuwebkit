@@ -1332,10 +1332,12 @@ void FrameLoader::loadInSameDocument(URL url, RefPtr<SerializedScriptValue> stat
         m_client->dispatchDidChangeLocationWithinPage();
     }
 
-    if (RefPtr parentFrame = dynamicDowncast<LocalFrame>(m_frame->tree().parent()); parentFrame
+    RefPtr parentFrame = m_frame->tree().parent();
+    RefPtr localParentFrame = dynamicDowncast<LocalFrame>(parentFrame.get());
+    if (parentFrame
         && (document->processingLoadEvent() || document->loadEventFinished())
-        && !document->protectedSecurityOrigin()->isSameOriginAs(parentFrame->protectedDocument()->protectedSecurityOrigin()))
-        m_frame->protectedOwnerElement()->dispatchEvent(Event::create(eventNames().loadEvent, Event::CanBubble::No, Event::IsCancelable::No));
+        && (!localParentFrame || !document->protectedSecurityOrigin()->isSameOriginAs(localParentFrame->protectedDocument()->protectedSecurityOrigin())))
+        protectedFrame()->dispatchLoadEventToParent();
 
     // LocalFrameLoaderClient::didFinishLoad() tells the internal load delegate the load finished with no error
     m_client->didFinishLoad();
@@ -1633,7 +1635,7 @@ void FrameLoader::loadURL(FrameLoadRequest&& frameLoadRequest, const String& ref
         policyChecker().stopCheck();
         policyChecker().setLoadType(newLoadType);
         RELEASE_ASSERT(!isBackForwardLoadType(newLoadType) || history().provisionalItem());
-        policyChecker().checkNavigationPolicy(WTFMove(request), ResourceResponse { } /* redirectResponse */, oldDocumentLoader.get(), WTFMove(formState), mayNeedBeforeUnloadPrompt(), [this, protectedThis = Ref { *this }, requesterOrigin = Ref { frameLoadRequest.requesterSecurityOrigin() }, historyHandling] (const ResourceRequest& request, WeakPtr<FormState>&&, NavigationPolicyDecision navigationPolicyDecision) {
+        policyChecker().checkNavigationPolicy(WTFMove(request), ResourceResponse { } /* redirectResponse */, oldDocumentLoader.get(), WTFMove(formState), [this, protectedThis = Ref { *this }, requesterOrigin = Ref { frameLoadRequest.requesterSecurityOrigin() }, historyHandling] (const ResourceRequest& request, WeakPtr<FormState>&&, NavigationPolicyDecision navigationPolicyDecision) {
             continueFragmentScrollAfterNavigationPolicy(request, requesterOrigin.ptr(), navigationPolicyDecision == NavigationPolicyDecision::ContinueLoad, historyHandling);
         }, PolicyDecisionMode::Synchronous);
         return;
@@ -1872,7 +1874,7 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
         RefPtr<SecurityOrigin> requesterOrigin;
         if (auto& requester = loader->triggeringAction().requester())
             requesterOrigin = requester->securityOrigin.copyRef();
-        policyChecker().checkNavigationPolicy(ResourceRequest(loader->request()), ResourceResponse { }  /* redirectResponse */, oldDocumentLoader.get(), WTFMove(formState), mayNeedBeforeUnloadPrompt(), [this, protectedThis = Ref { *this }, requesterOrigin = WTFMove(requesterOrigin)] (const ResourceRequest& request, WeakPtr<FormState>&&, NavigationPolicyDecision navigationPolicyDecision) {
+        policyChecker().checkNavigationPolicy(ResourceRequest(loader->request()), ResourceResponse { }  /* redirectResponse */, oldDocumentLoader.get(), WTFMove(formState), [this, protectedThis = Ref { *this }, requesterOrigin = WTFMove(requesterOrigin)] (const ResourceRequest& request, WeakPtr<FormState>&&, NavigationPolicyDecision navigationPolicyDecision) {
             continueFragmentScrollAfterNavigationPolicy(request, requesterOrigin.get(), navigationPolicyDecision == NavigationPolicyDecision::ContinueLoad, NavigationHistoryBehavior::Auto);
         }, PolicyDecisionMode::Synchronous);
         return;
@@ -1898,7 +1900,7 @@ void FrameLoader::loadWithDocumentLoader(DocumentLoader* loader, FrameLoadType t
 
     auto policyDecisionMode = loader->triggeringAction().isFromNavigationAPI() ? PolicyDecisionMode::Synchronous : PolicyDecisionMode::Asynchronous;
     RELEASE_ASSERT(!isBackForwardLoadType(policyChecker().loadType()) || history().provisionalItem());
-    policyChecker().checkNavigationPolicy(ResourceRequest(loader->request()), ResourceResponse { } /* redirectResponse */, loader, WTFMove(formState), mayNeedBeforeUnloadPrompt(), [this, protectedThis = Ref { *this }, allowNavigationToInvalidURL, completionHandler = completionHandlerCaller.release()] (const ResourceRequest& request, WeakPtr<FormState>&& weakFormState, NavigationPolicyDecision navigationPolicyDecision) mutable {
+    policyChecker().checkNavigationPolicy(ResourceRequest(loader->request()), ResourceResponse { } /* redirectResponse */, loader, WTFMove(formState), [this, protectedThis = Ref { *this }, allowNavigationToInvalidURL, completionHandler = completionHandlerCaller.release()] (const ResourceRequest& request, WeakPtr<FormState>&& weakFormState, NavigationPolicyDecision navigationPolicyDecision) mutable {
         continueLoadAfterNavigationPolicy(request, RefPtr { weakFormState.get() }.get(), navigationPolicyDecision, allowNavigationToInvalidURL);
         completionHandler();
     }, policyDecisionMode);
@@ -3853,60 +3855,21 @@ void FrameLoader::dispatchUnloadEvents(UnloadEventPolicy unloadEventPolicy)
         m_frame->protectedDocument()->removeAllEventListeners();
 }
 
-static bool documentAllowsBeforeUnloadPrompt(Document& document)
+static bool shouldAskForNavigationConfirmation(Document& document, const BeforeUnloadEvent& event)
 {
     // Confirmation dialog should not be displayed when the allow-modals flag is not set.
     if (document.isSandboxed(SandboxFlag::Modals))
         return false;
 
     RefPtr page = document.protectedPage();
-    return page ? page->userDidInteractWithPage() : false;
-}
+    bool userDidInteractWithPage = page ? page->userDidInteractWithPage() : false;
 
-static bool shouldAskForNavigationConfirmation(Document& document, const BeforeUnloadEvent& event)
-{
     // Web pages can request we ask for confirmation before navigating by:
     // - Cancelling the BeforeUnloadEvent (modern way)
     // - Setting the returnValue attribute on the BeforeUnloadEvent to a non-empty string.
     // - Returning a non-empty string from the event handler, which is then set as returnValue
     //   attribute on the BeforeUnloadEvent.
-    return documentAllowsBeforeUnloadPrompt(document) && (event.defaultPrevented() || !event.returnValue().isEmpty());
-}
-
-MayNeedBeforeUnloadPrompt FrameLoader::mayNeedBeforeUnloadPrompt()
-{
-    Ref frame = m_frame.get();
-    RefPtr page = frame->page();
-
-    if (!page)
-        return MayNeedBeforeUnloadPrompt::No;
-
-    if (!page->chrome().canRunBeforeUnloadConfirmPanel())
-        return MayNeedBeforeUnloadPrompt::No;
-
-    auto frameMayNeedBeforeUnloadEvent = [&](LocalFrame& frame) {
-        RefPtr document = frame.document();
-        if (!document)
-            return false;
-
-        RefPtr domWindow = document->domWindow();
-        if (!domWindow || !document->bodyOrFrameset())
-            return false;
-
-        return domWindow->hasEventListeners(eventNames().beforeunloadEvent) && documentAllowsBeforeUnloadPrompt(*document);
-    };
-
-    if (frameMayNeedBeforeUnloadEvent(frame))
-        return MayNeedBeforeUnloadPrompt::Yes;
-
-    for (RefPtr currentFrame = frame->tree().firstChild(); currentFrame; currentFrame = currentFrame->tree().traverseNext(frame.ptr())) {
-        // We don't allow beforeunload prompt from a cross-origin frame.
-        RefPtr localFrame = dynamicDowncast<LocalFrame>(*currentFrame);
-        if (localFrame && frameMayNeedBeforeUnloadEvent(*localFrame))
-            return MayNeedBeforeUnloadPrompt::Yes;
-    }
-
-    return MayNeedBeforeUnloadPrompt::No;
+    return userDidInteractWithPage && (event.defaultPrevented() || !event.returnValue().isEmpty());
 }
 
 bool FrameLoader::dispatchBeforeUnloadEvent(Chrome& chrome, FrameLoader* frameLoaderBeingNavigated)

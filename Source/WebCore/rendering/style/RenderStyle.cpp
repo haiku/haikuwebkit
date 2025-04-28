@@ -24,7 +24,6 @@
 #include "RenderStyle.h"
 
 #include "CSSCustomPropertyValue.h"
-#include "CSSParser.h"
 #include "CSSPropertyNames.h"
 #include "CSSPropertyParser.h"
 #include "ColorBlending.h"
@@ -2745,6 +2744,17 @@ const FontMetrics& RenderStyle::metricsOfPrimaryFont() const
 const FontCascadeDescription& RenderStyle::fontDescription() const
 {
     return m_inheritedData->fontData->fontCascade.fontDescription();
+}
+
+FontCascadeDescription& RenderStyle::mutableFontDescriptionWithoutUpdate()
+{
+    auto& cascade = m_inheritedData.access().fontData.access().fontCascade;
+    return cascade.mutableFontDescription();
+}
+
+FontCascade& RenderStyle::mutableFontCascadeWithoutUpdate()
+{
+    return m_inheritedData.access().fontData.access().fontCascade;
 }
 
 float RenderStyle::specifiedFontSize() const

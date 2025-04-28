@@ -465,7 +465,7 @@ static void updateMenuItemImage(NSMenuItem *menuItem, const WebContextMenuItemDa
         break;
     }
 
-    [menuItem _setActionImage:[NSImage imageWithSystemSymbolName:symbolNameForAction(webMenuItem.action(), useAlternateImage) accessibilityDescription:nil]];
+    addImageToMenuItem(menuItem, webMenuItem.action(), useAlternateImage);
 }
 #endif
 
@@ -518,19 +518,8 @@ RetainPtr<NSMenuItem> WebContextMenuProxyMac::createShareMenuItem(ShareMenuItemT
     if (!shareMenuItem)
         return nil;
 
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
-    RetainPtr<NSImage> actionImage;
-    bool shouldSetMenuItemImage = page()->protectedPreferences()->contextMenuImagesForInternalClientsEnabled() && [shareMenuItem respondsToSelector:@selector(_setActionImage:)];
-    if (shouldSetMenuItemImage)
-        actionImage = [shareMenuItem _actionImage];
-#endif
-
     if (usePlaceholder) {
         shareMenuItem = adoptNS([[NSMenuItem alloc] initWithTitle:[shareMenuItem title] action:@selector(performShare:) keyEquivalent:@""]);
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
-        if (shouldSetMenuItemImage)
-            [shareMenuItem _setActionImage:actionImage.get()];
-#endif
         [shareMenuItem setTarget:[WKMenuTarget sharedMenuTarget]];
     } else
         [shareMenuItem setRepresentedObject:sharingServicePicker.get()];

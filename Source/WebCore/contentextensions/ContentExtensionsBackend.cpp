@@ -235,6 +235,7 @@ ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(
     URL mainDocumentURL;
     URL frameURL;
     bool mainFrameContext = false;
+    RequestMethod requestMethod = readRequestMethod(initiatingDocumentLoader.request().httpMethod()).value_or(RequestMethod::None);
 
     if (auto* frame = initiatingDocumentLoader.frame()) {
         mainFrameContext = frame->isMainFrame();
@@ -252,7 +253,7 @@ ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(
     else
         frameURL = url;
 
-    ResourceLoadInfo resourceLoadInfo { url, mainDocumentURL, frameURL, resourceType, mainFrameContext };
+    ResourceLoadInfo resourceLoadInfo { url, mainDocumentURL, frameURL, resourceType, mainFrameContext, requestMethod };
     auto actions = actionsForResourceLoad(resourceLoadInfo, ruleListFilter);
 
     ContentRuleListResults results;
@@ -263,7 +264,7 @@ ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(
         const String& contentRuleListIdentifier = actionsFromContentRuleList.contentRuleListIdentifier;
         ContentRuleListResults::Result result;
         for (const auto& action : actionsFromContentRuleList.actions) {
-            std::visit(WTF::makeVisitor([&](const BlockLoadAction&) {
+            WTF::visit(WTF::makeVisitor([&](const BlockLoadAction&) {
                 results.summary.blockedLoad = true;
                 result.blockedLoad = true;
             }, [&](const BlockCookiesAction&) {
@@ -338,16 +339,17 @@ ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForLoad(
     return results;
 }
 
-ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForPingLoad(const URL& url, const URL& mainDocumentURL, const URL& frameURL)
+ContentRuleListResults ContentExtensionsBackend::processContentRuleListsForPingLoad(const URL& url, const URL& mainDocumentURL, const URL& frameURL, const String& httpMethod)
 {
-    ResourceLoadInfo resourceLoadInfo { url, mainDocumentURL, frameURL, ResourceType::Ping };
+    RequestMethod requestMethod = readRequestMethod(httpMethod).value_or(RequestMethod::None);
+    ResourceLoadInfo resourceLoadInfo { url, mainDocumentURL, frameURL, ResourceType::Ping, false, requestMethod };
     auto actions = actionsForResourceLoad(resourceLoadInfo);
 
     ContentRuleListResults results;
     makeSecureIfNecessary(results, url);
     for (const auto& actionsFromContentRuleList : actions) {
         for (const auto& action : actionsFromContentRuleList.actions) {
-            std::visit(WTF::makeVisitor([&](const BlockLoadAction&) {
+            WTF::visit(WTF::makeVisitor([&](const BlockLoadAction&) {
                 results.summary.blockedLoad = true;
             }, [&](const BlockCookiesAction&) {
                 results.summary.blockedCookies = true;
@@ -378,7 +380,7 @@ bool ContentExtensionsBackend::processContentRuleListsForResourceMonitoring(cons
     bool matched = false;
     for (const auto& actionsFromContentRuleList : actions) {
         for (const auto& action : actionsFromContentRuleList.actions) {
-            std::visit(WTF::makeVisitor([&](const BlockLoadAction&) {
+            WTF::visit(WTF::makeVisitor([&](const BlockLoadAction&) {
                 matched = true;
             }, [&](const BlockCookiesAction&) {
             }, [&](const CSSDisplayNoneSelectorAction&) {

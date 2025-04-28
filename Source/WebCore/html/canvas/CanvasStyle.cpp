@@ -29,7 +29,6 @@
 #include "config.h"
 #include "CanvasStyle.h"
 
-#include "CSSParser.h"
 #include "CSSParserContext.h"
 #include "CSSParserMode.h"
 #include "CSSPropertyNames.h"
@@ -72,7 +71,7 @@ Color CanvasStyleColorResolutionDelegate::currentColor() const
         return Color::black;
 
     auto colorString = m_canvasElement->inlineStyle()->getPropertyValue(CSSPropertyColor);
-    auto color = CSSPropertyParserHelpers::parseColorRaw(WTFMove(colorString), m_canvasElement->cssParserContext(), [] {
+    auto color = CSSPropertyParserHelpers::parseColorRaw(WTFMove(colorString), m_canvasElement->cssParserContext(), m_canvasElement->document(), [] {
         return LazySlowPathColorParsingParameters { { }, { }, std::nullopt };
     });
     if (!color.isValid())
@@ -119,7 +118,7 @@ static LazySlowPathColorParsingParameters colorParsingParameters(CanvasBase& can
 
 Color parseColor(const String& colorString, CanvasBase& canvasBase)
 {
-    return CSSPropertyParserHelpers::parseColorRaw(colorString, canvasBase.cssParserContext(), [&] {
+    return CSSPropertyParserHelpers::parseColorRaw(colorString, canvasBase.cssParserContext(), *canvasBase.scriptExecutionContext(), [&] {
         return colorParsingParameters(canvasBase);
     });
 }
@@ -129,90 +128,9 @@ Color parseColor(const String& colorString, ScriptExecutionContext& scriptExecut
     // FIXME: Add constructor for CSSParserContext that takes a ScriptExecutionContext to allow preferences to be
     //        checked correctly.
 
-    return CSSPropertyParserHelpers::parseColorRaw(colorString, CSSParserContext(HTMLStandardMode), [&] {
+    return CSSPropertyParserHelpers::parseColorRaw(colorString, CSSParserContext(HTMLStandardMode), scriptExecutionContext, [&] {
         return elementlessColorParsingParameters(&scriptExecutionContext);
     });
-}
-
-CanvasStyle::CanvasStyle(Color color)
-    : m_style(color)
-{
-}
-
-CanvasStyle::CanvasStyle(const SRGBA<float>& colorComponents)
-    : m_style(convertColor<SRGBA<uint8_t>>(colorComponents))
-{
-}
-
-CanvasStyle::CanvasStyle(CanvasGradient& gradient)
-    : m_style(gradient)
-{
-}
-
-CanvasStyle::CanvasStyle(CanvasPattern& pattern)
-    : m_style(pattern)
-{
-}
-
-std::optional<CanvasStyle> CanvasStyle::createFromString(const String& colorString, CanvasBase& canvasBase)
-{
-    auto color = parseColor(colorString, canvasBase);
-    if (!color.isValid())
-        return { };
-
-    return { color };
-}
-
-std::optional<CanvasStyle> CanvasStyle::createFromStringWithOverrideAlpha(const String& colorString, float alpha, CanvasBase& canvasBase)
-{
-    auto color = parseColor(colorString, canvasBase);
-    if (!color.isValid())
-        return { };
-
-    return { color.colorWithAlpha(alpha) };
-}
-
-bool CanvasStyle::isEquivalentColor(const CanvasStyle& other) const
-{
-    if (std::holds_alternative<Color>(m_style) && std::holds_alternative<Color>(other.m_style))
-        return std::get<Color>(m_style) == std::get<Color>(other.m_style);
-
-    return false;
-}
-
-bool CanvasStyle::isEquivalent(const SRGBA<float>& components) const
-{
-    return std::holds_alternative<Color>(m_style) && std::get<Color>(m_style) == convertColor<SRGBA<uint8_t>>(components);
-}
-
-void CanvasStyle::applyStrokeColor(GraphicsContext& context) const
-{
-    WTF::switchOn(m_style,
-        [&context](const Color& color) {
-            context.setStrokeColor(color);
-        },
-        [&context](const Ref<CanvasGradient>& gradient) {
-            context.setStrokeGradient(gradient->gradient());
-        },
-        [&context](const Ref<CanvasPattern>& pattern) {
-            context.setStrokePattern(pattern->pattern());
-        }
-    );
-}
-
-void CanvasStyle::applyFillColor(GraphicsContext& context) const
-{
-    WTF::switchOn(m_style,
-        [&context](const Color& color) {
-            context.setFillColor(color);
-        },
-        [&context](const Ref<CanvasGradient>& gradient) {
-            context.setFillGradient(gradient->gradient());
-        },
-        [&context](const Ref<CanvasPattern>& pattern) {
-            context.setFillPattern(pattern->pattern());
-        }
-    );
 }
 
 }

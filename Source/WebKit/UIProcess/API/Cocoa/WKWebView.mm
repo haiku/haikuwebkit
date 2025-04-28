@@ -76,6 +76,9 @@
 #import "WKFindResultInternal.h"
 #import "WKFrameInfoInternal.h"
 #import "WKHistoryDelegatePrivate.h"
+#import "WKIntelligenceReplacementTextEffectCoordinator.h"
+#import "WKIntelligenceSmartReplyTextEffectCoordinator.h"
+#import "WKIntelligenceTextEffectCoordinator.h"
 #import "WKLayoutMode.h"
 #import "WKNSData.h"
 #import "WKNSURLExtras.h"
@@ -476,18 +479,18 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
             [_screenTimeWebpageController setURL:[self _mainFrameURL]];
         if (!showsSystemScreenTimeBlockingView && _screenTimeBlurredSnapshot) {
             [_screenTimeBlurredSnapshot setHidden:NO];
-            RELEASE_LOG(ScreenTime, "Screen Time has updated visibility to show blurred view.");
+            RELEASE_LOG(ScreenTime, "Screen Time has updated to use the blurred view for any blocked URL.");
         } else if (showsSystemScreenTimeBlockingView) {
             [[_screenTimeWebpageController view] setHidden:NO];
-            RELEASE_LOG(ScreenTime, "Screen Time has updated visibility to show system shield.");
+            RELEASE_LOG(ScreenTime, "Screen Time has updated to use the system shield for any blocked URL.");
         }
     } else {
         if (_screenTimeBlurredSnapshot) {
             [_screenTimeBlurredSnapshot setHidden:YES];
-            RELEASE_LOG(ScreenTime, "Screen Time has updated visibility to hide blurred view.");
+            RELEASE_LOG(ScreenTime, "Screen Time has updated to hide the blurred view for all URLs.");
         } else if (showsSystemScreenTimeBlockingView) {
             [[_screenTimeWebpageController view] setHidden:YES];
-            RELEASE_LOG(ScreenTime, "Screen Time has updated visibility to hide system shield.");
+            RELEASE_LOG(ScreenTime, "Screen Time has updated to hide the system shield for all URLs.");
         }
     }
 
@@ -537,12 +540,36 @@ static uint32_t convertSystemLayoutDirection(NSUserInterfaceLayoutDirection dire
     [super observeValueForKeyPath:keyPath ofObject:object change:change context:context];
 }
 
+#if PLATFORM(IOS_FAMILY)
+
+static id browsingContextControllerMethodStub(id, SEL)
+{
+    return nil;
+}
+
+static void addBrowsingContextControllerMethodStubIfNeeded()
+{
+    static dispatch_once_t onceToken;
+    dispatch_once(&onceToken, ^{
+        if (linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::BrowsingContextControllerMethodStubRemoved))
+            return;
+
+        class_addMethod(WKWebView.class, NSSelectorFromString(@"browsingContextController"), reinterpret_cast<IMP>(browsingContextControllerMethodStub), "@@:");
+    });
+}
+
+#endif // PLATFORM(IOS_FAMILY)
+
 - (void)_initializeWithConfiguration:(WKWebViewConfiguration *)configuration
 {
     if (!configuration)
         [NSException raise:NSInvalidArgumentException format:@"Configuration cannot be nil"];
 
     _configuration = adoptNS([configuration copy]);
+
+#if PLATFORM(IOS_FAMILY)
+    addBrowsingContextControllerMethodStubIfNeeded();
+#endif
 
     ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     if (WKWebView *relatedWebView = [_configuration _relatedWebView]) {
@@ -1834,7 +1861,7 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
 
 #pragma mark - macOS/iOS internal
 
-- (void)_showWarningView:(const WebKit::BrowsingWarning&)warning completionHandler:(CompletionHandler<void(std::variant<WebKit::ContinueUnsafeLoad, URL>&&)>&&)completionHandler
+- (void)_showWarningView:(const WebKit::BrowsingWarning&)warning completionHandler:(CompletionHandler<void(Variant<WebKit::ContinueUnsafeLoad, URL>&&)>&&)completionHandler
 {
     _warningView = adoptNS([[_WKWarningView alloc] initWithFrame:self.bounds browsingWarning:warning completionHandler:[weakSelf = WeakObjCPtr<WKWebView>(self), completionHandler = WTFMove(completionHandler)] (auto&& result) mutable {
         completionHandler(std::forward<decltype(result)>(result));
@@ -1859,7 +1886,7 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
     [self addSubview:_warningView.get()];
 }
 
-- (void)_showBrowsingWarning:(const WebKit::BrowsingWarning&)warning completionHandler:(CompletionHandler<void(std::variant<WebKit::ContinueUnsafeLoad, URL>&&)>&&)completionHandler
+- (void)_showBrowsingWarning:(const WebKit::BrowsingWarning&)warning completionHandler:(CompletionHandler<void(Variant<WebKit::ContinueUnsafeLoad, URL>&&)>&&)completionHandler
 {
     [self _showWarningView:warning completionHandler:WTFMove(completionHandler)];
 }
@@ -2335,18 +2362,18 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 
 #pragma mark - WTWritingToolsDelegate conformance
 
-- (PlatformWritingToolsResultOptions)allowedWritingToolsResultOptions
+- (CocoaWritingToolsResultOptions)allowedWritingToolsResultOptions
 {
     auto& editorState = _page->editorState();
     if (editorState.isContentEditable && !editorState.isContentRichlyEditable)
-        return PlatformWritingToolsResultPlainText;
+        return CocoaWritingToolsResultPlainText;
 
-    return PlatformWritingToolsResultPlainText | PlatformWritingToolsResultRichText | PlatformWritingToolsResultList | PlatformWritingToolsResultTable;
+    return CocoaWritingToolsResultPlainText | CocoaWritingToolsResultRichText | CocoaWritingToolsResultList | CocoaWritingToolsResultTable;
 }
 
-- (PlatformWritingToolsBehavior)writingToolsBehavior
+- (CocoaWritingToolsBehavior)writingToolsBehavior
 {
-    return WebKit::convertToPlatformWritingToolsBehavior(_page->writingToolsBehavior());
+    return WebKit::convertToCocoaWritingToolsBehavior(_page->writingToolsBehavior());
 }
 
 - (void)willBeginWritingToolsSession:(WTSession *)session requestContexts:(void (^)(NSArray<WTContext *> *))completion
@@ -2612,9 +2639,7 @@ static _WKSelectionAttributes selectionAttributes(const WebKit::EditorState& edi
 - (void)intelligenceTextEffectCoordinator:(id<WKIntelligenceTextEffectCoordinating>)coordinator rectsForProofreadingSuggestionsInRange:(NSRange)range completion:(void (^)(NSArray<NSValue *> *))completion
 {
     _page->proofreadingSessionSuggestionTextRectsInRootViewCoordinates(range, [completion = makeBlockPtr(completion)](auto&& rects) {
-        RetainPtr nsArray = createNSArray(rects, [](auto& rect) {
-            return [NSValue valueWithRect:rect];
-        });
+        RetainPtr nsArray = createNSArray(rects);
 
         completion(nsArray.get());
     });
@@ -4689,7 +4714,7 @@ static void convertAndAddHighlight(Vector<Ref<WebCore::SharedMemory>>& buffers, 
 {
     THROW_IF_SUSPENDED;
     auto safeBrowsingWarning = WebKit::BrowsingWarning::create(url, title, warning, details, WebKit::BrowsingWarning::SafeBrowsingWarningData { });
-    auto wrapper = [completionHandler = makeBlockPtr(completionHandler)] (std::variant<WebKit::ContinueUnsafeLoad, URL>&& variant) {
+    auto wrapper = [completionHandler = makeBlockPtr(completionHandler)] (Variant<WebKit::ContinueUnsafeLoad, URL>&& variant) {
         switchOn(variant, [&] (WebKit::ContinueUnsafeLoad continueUnsafeLoad) {
             switch (continueUnsafeLoad) {
             case WebKit::ContinueUnsafeLoad::Yes:

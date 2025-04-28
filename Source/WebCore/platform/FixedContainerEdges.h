@@ -35,14 +35,14 @@ enum class PredominantColorType : uint8_t {
     Multiple,
 };
 
-using FixedContainerEdge = std::variant<WebCore::PredominantColorType, WebCore::Color>;
+using FixedContainerEdge = Variant<WebCore::PredominantColorType, WebCore::Color>;
 
 struct FixedContainerEdges {
     RectEdges<FixedContainerEdge> colors { PredominantColorType::None, PredominantColorType::None, PredominantColorType::None, PredominantColorType::None };
 
     bool hasFixedEdge(BoxSide side) const
     {
-        return std::visit(WTF::makeVisitor([&](PredominantColorType type) {
+        return WTF::visit(WTF::makeVisitor([&](PredominantColorType type) {
             return type != PredominantColorType::None;
         }, [&](const Color&) {
             return true;
@@ -51,7 +51,7 @@ struct FixedContainerEdges {
 
     Color predominantColor(BoxSide side) const
     {
-        return std::visit(WTF::makeVisitor([&](PredominantColorType) -> Color {
+        return WTF::visit(WTF::makeVisitor([&](PredominantColorType) -> Color {
             return { };
         }, [&](const Color& color) {
             return color;

@@ -107,9 +107,10 @@ static std::optional<Color> parseColorValue(StringView string, HTMLInputElement&
     if (context.colorSpace().isNull())
         return parseSimpleColorValue(string);
 
-    auto parserContext = context.protectedDocument()->cssParserContext();
+    auto document = context.protectedDocument();
+    auto parserContext = document->cssParserContext();
     parserContext.mode = HTMLStandardMode;
-    auto color = CSSPropertyParserHelpers::parseColorRaw(string.toString(), parserContext, [] {
+    auto color = CSSPropertyParserHelpers::parseColorRaw(string.toString(), parserContext, document, [] {
         return colorParsingParameters();
     });
 
@@ -178,13 +179,13 @@ bool ColorInputType::supportsRequired() const
     return false;
 }
 
-String ColorInputType::fallbackValue() const
+ValueOrReference<String> ColorInputType::fallbackValue() const
 {
     ASSERT(element());
     return serializeColorValue(Color::black, *protectedElement());
 }
 
-String ColorInputType::sanitizeValue(const String& proposedValue) const
+ValueOrReference<String> ColorInputType::sanitizeValue(const String& proposedValue LIFETIME_BOUND) const
 {
     ASSERT(element());
     Ref input = *element();
@@ -200,7 +201,7 @@ Color ColorInputType::valueAsColor() const
 {
     ASSERT(element());
     Ref input = *element();
-    auto color = parseColorValue(input->value(), input);
+    auto color = parseColorValue(input->value().get(), input);
     ASSERT(!!color);
     // FIXME: This is a speculative fix for rdar://144872437.
     if (!color)

@@ -952,7 +952,7 @@ void SpeculativeJIT::emitCall(Node* node)
     };
     
     if (!isDirect) {
-        std::visit([&](auto* callLinkInfo) {
+        WTF::visit([&](auto* callLinkInfo) {
             callLinkInfo->setUpCall(callType);
         }, callLinkInfo);
     }
@@ -2713,7 +2713,7 @@ void SpeculativeJIT::compileGetByVal(Node* node, const ScopedLambda<std::tuple<J
         if (!m_state.forNode(m_graph.varArgChild(node, 0)).isType(SpecCell))
             slowCases.append(branchIfNotCell(BaselineJITRegisters::GetByVal::baseJSR));
 
-        std::visit([&](auto* stubInfo) {
+        WTF::visit([&](auto* stubInfo) {
             if (m_state.forNode(m_graph.varArgChild(node, 1)).isType(SpecString))
                 stubInfo->propertyIsString = true;
             else if (m_state.forNode(m_graph.varArgChild(node, 1)).isType(SpecInt32Only))
@@ -4258,31 +4258,23 @@ void SpeculativeJIT::compile(Node* node)
             
         case Array::ArrayStorage: {
             load32(Address(storageGPR, ArrayStorage::lengthOffset()), storageLengthGPR);
-        
-            Jump undefinedCase =
-                branchTest32(Zero, storageLengthGPR);
-        
-            sub32(TrustedImm32(1), storageLengthGPR);
-        
+
             JumpList slowCases;
+            slowCases.append(branchTest32(Zero, storageLengthGPR));
+
+            sub32(TrustedImm32(1), storageLengthGPR);
+
             slowCases.append(branch32(AboveOrEqual, storageLengthGPR, Address(storageGPR, ArrayStorage::vectorLengthOffset())));
-        
+
             load64(BaseIndex(storageGPR, storageLengthGPR, TimesEight, ArrayStorage::vectorOffset()), valueGPR);
             slowCases.append(branchIfEmpty(valueGPR));
-        
+
             store32(storageLengthGPR, Address(storageGPR, ArrayStorage::lengthOffset()));
-        
+
             store64(TrustedImm64((int64_t)0), BaseIndex(storageGPR, storageLengthGPR, TimesEight,  ArrayStorage::vectorOffset()));
             sub32(TrustedImm32(1), Address(storageGPR, OBJECT_OFFSETOF(ArrayStorage, m_numValuesInVector)));
-        
-            addSlowPathGenerator(
-                slowPathMove(
-                    undefinedCase, this,
-                    TrustedImm64(JSValue::encode(jsUndefined())), valueGPR));
-        
-            addSlowPathGenerator(
-                slowPathCall(
-                    slowCases, this, operationArrayPop, valueGPR, LinkableConstant::globalObject(*this, node), baseGPR));
+
+            addSlowPathGenerator(slowPathCall(slowCases, this, operationArrayPop, valueGPR, LinkableConstant::globalObject(*this, node), baseGPR));
 
             jsValueResult(valueGPR, node);
             break;
@@ -5873,7 +5865,7 @@ void SpeculativeJIT::compile(Node* node)
                 BaselineJITRegisters::InByVal::baseJSR, BaselineJITRegisters::InByVal::propertyJSR, resultRegs, BaselineJITRegisters::InByVal::profileGPR, BaselineJITRegisters::InByVal::stubInfoGPR);
             JumpList slowCases;
 
-            std::visit([&](auto* stubInfo) {
+            WTF::visit([&](auto* stubInfo) {
                 stubInfo->propertyIsInt32 = true;
             }, stubInfo);
 
@@ -6934,7 +6926,7 @@ void SpeculativeJIT::compileGetByValWithThis(Node* node)
     if (!m_state.forNode(node->child1()).isType(SpecCell))
         slowCases.append(branchIfNotCell(BaselineJITRegisters::GetByValWithThis::baseJSR));
 
-    std::visit([&](auto* stubInfo) {
+    WTF::visit([&](auto* stubInfo) {
         if (m_state.forNode(node->child3()).isType(SpecString))
             stubInfo->propertyIsString = true;
         else if (m_state.forNode(node->child3()).isType(SpecInt32Only))
@@ -7253,7 +7245,7 @@ void SpeculativeJIT::compileHasPrivate(Node* node, AccessType type)
         BaselineJITRegisters::InByVal::baseJSR, BaselineJITRegisters::InByVal::propertyJSR, resultRegs, BaselineJITRegisters::InByVal::profileGPR, BaselineJITRegisters::InByVal::stubInfoGPR);
     JumpList slowCases;
 
-    std::visit([&](auto* stubInfo) {
+    WTF::visit([&](auto* stubInfo) {
         stubInfo->propertyIsSymbol = true;
     }, stubInfo);
 
@@ -7372,7 +7364,7 @@ void SpeculativeJIT::compilePutByVal(Node* node)
             BaselineJITRegisters::PutByVal::baseJSR, BaselineJITRegisters::PutByVal::propertyJSR, BaselineJITRegisters::PutByVal::valueJSR, BaselineJITRegisters::PutByVal::profileGPR, BaselineJITRegisters::PutByVal::stubInfoGPR);
         JumpList slowCases;
 
-        std::visit([&](auto* stubInfo) {
+        WTF::visit([&](auto* stubInfo) {
             if (m_state.forNode(child2).isType(SpecString))
                 stubInfo->propertyIsString = true;
             else if (m_state.forNode(child2).isType(SpecInt32Only))
@@ -7533,7 +7525,7 @@ void SpeculativeJIT::compileGetPrivateNameByVal(Node* node, JSValueRegs baseRegs
     if (!m_state.forNode(m_graph.child(node, 0)).isType(SpecCell))
         slowCases.append(branchIfNotCell(BaselineJITRegisters::GetByVal::baseJSR));
 
-    std::visit([&](auto* stubInfo) {
+    WTF::visit([&](auto* stubInfo) {
         stubInfo->propertyIsSymbol = true;
     }, stubInfo);
 
@@ -7648,7 +7640,7 @@ void SpeculativeJIT::compilePutPrivateName(Node* node)
         BaselineJITRegisters::PutByVal::baseJSR, BaselineJITRegisters::PutByVal::propertyJSR, BaselineJITRegisters::PutByVal::valueJSR, BaselineJITRegisters::PutByVal::profileGPR, BaselineJITRegisters::PutByVal::stubInfoGPR);
     JumpList slowCases;
 
-    std::visit([&](auto* stubInfo) {
+    WTF::visit([&](auto* stubInfo) {
         stubInfo->propertyIsSymbol = true;
     }, stubInfo);
 
@@ -7698,7 +7690,7 @@ void SpeculativeJIT::compileCheckPrivateBrand(Node* node)
     if (needsTypeCheck(node->child1(), SpecCell))
         slowCases.append(branchIfNotCell(BaselineJITRegisters::PrivateBrand::baseJSR));
 
-    std::visit([&](auto* stubInfo) {
+    WTF::visit([&](auto* stubInfo) {
         stubInfo->propertyIsSymbol = true;
     }, stubInfo);
 
@@ -7746,7 +7738,7 @@ void SpeculativeJIT::compileSetPrivateBrand(Node* node)
         BaselineJITRegisters::PrivateBrand::baseJSR, BaselineJITRegisters::PrivateBrand::propertyJSR, BaselineJITRegisters::PrivateBrand::stubInfoGPR);
     JumpList slowCases;
 
-    std::visit([&](auto* stubInfo) {
+    WTF::visit([&](auto* stubInfo) {
         stubInfo->propertyIsSymbol = true;
     }, stubInfo);
 
@@ -8261,7 +8253,7 @@ void SpeculativeJIT::compileEnumeratorPutByVal(Node* node)
                 BaselineJITRegisters::PutByVal::baseJSR, BaselineJITRegisters::PutByVal::propertyJSR, BaselineJITRegisters::PutByVal::valueJSR, BaselineJITRegisters::PutByVal::profileGPR, BaselineJITRegisters::PutByVal::stubInfoGPR);
             JumpList slowCases;
 
-            std::visit([&](auto* stubInfo) {
+            WTF::visit([&](auto* stubInfo) {
                 if (m_state.forNode(m_graph.varArgChild(node, 1)).isType(SpecString))
                     stubInfo->propertyIsString = true;
                 else if (m_state.forNode(m_graph.varArgChild(node, 1)).isType(SpecInt32Only))

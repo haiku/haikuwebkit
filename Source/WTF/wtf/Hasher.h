@@ -194,10 +194,10 @@ template<typename T> void add(Hasher& hasher, const std::optional<T>& optional)
         add(hasher, optional.value());
 }
 
-template<typename... Types> void add(Hasher& hasher, const std::variant<Types...>& variant)
+template<typename... Types> void add(Hasher& hasher, const Variant<Types...>& variant)
 {
     add(hasher, variant.index());
-    std::visit([&hasher] (auto& value) {
+    WTF::visit([&hasher] (auto& value) {
         add(hasher, value);
     }, variant);
 }

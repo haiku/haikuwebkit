@@ -70,7 +70,7 @@ struct OutOfLineColorDataForIPC {
 struct ColorDataForIPC {
     bool isSemantic;
     bool usesFunctionSerialization;
-    std::variant<PackedColor::RGBA, OutOfLineColorDataForIPC> data;
+    Variant<PackedColor::RGBA, OutOfLineColorDataForIPC> data;
 };
 
 // Able to represent:

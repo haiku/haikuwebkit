@@ -6349,6 +6349,7 @@ RequireUAGetDisplayMediaPrompt:
 RequiresPageVisibilityForVideoToBeNowPlaying:
   type: bool
   status: embedder
+  condition: ENABLE(REQUIRES_PAGE_VISIBILITY_FOR_NOW_PLAYING)
   defaultValue:
     WebKitLegacy:
       default: false

@@ -41,9 +41,9 @@
 #include "Blob.h"
 #include "CSSKeyframesRule.h"
 #include "CSSMediaRule.h"
-#include "CSSParser.h"
 #include "CSSPropertyParser.h"
 #include "CSSPropertyParserConsumer+ColorInlines.h"
+#include "CSSSelectorParser.h"
 #include "CSSStyleRule.h"
 #include "CSSSupportsRule.h"
 #include "CacheStorageConnection.h"
@@ -2300,7 +2300,7 @@ ExceptionOr<void> Internals::setUnderPageBackgroundColorOverride(const String& c
     if (!document || !document->page())
         return Exception { ExceptionCode::InvalidAccessError };
 
-    auto color = CSSPropertyParserHelpers::parseColorRaw(colorValue, document->cssParserContext(), [] {
+    auto color = CSSPropertyParserHelpers::parseColorRaw(colorValue, document->cssParserContext(), *document, [] {
         return LazySlowPathColorParsingParameters { { }, { }, std::nullopt };
     });
     if (!color.isValid())
@@ -5031,8 +5031,10 @@ void Internals::setMediaElementRestrictions(HTMLMediaElement& element, StringVie
             restrictions |= MediaElementSession::RequireUserGestureForVideoDueToAggressiveThermalMitigation;
         if (equalLettersIgnoringASCIICase(restrictionString, "requirepagevisibilitytoplayaudio"_s))
             restrictions |= MediaElementSession::RequirePageVisibilityToPlayAudio;
+#if ENABLE(REQUIRES_PAGE_VISIBILITY_FOR_NOW_PLAYING)
         if (equalLettersIgnoringASCIICase(restrictionString, "requirepagevisibilityforvideotobenowplaying"_s))
             restrictions |= MediaElementSession::RequirePageVisibilityForVideoToBeNowPlaying;
+#endif
     }
     element.mediaSession().addBehaviorRestriction(restrictions);
 }
@@ -5172,15 +5174,13 @@ void Internals::setAudioContextRestrictions(AudioContext& context, StringView re
     auto restrictions = context.behaviorRestrictions();
     context.removeBehaviorRestriction(restrictions);
 
-    restrictions = AudioContext::NoRestrictions;
+    restrictions = { };
 
     for (StringView restrictionString : restrictionsString.split(',')) {
-        if (equalLettersIgnoringASCIICase(restrictionString, "norestrictions"_s))
-            restrictions |= AudioContext::NoRestrictions;
         if (equalLettersIgnoringASCIICase(restrictionString, "requireusergestureforaudiostart"_s))
-            restrictions |= AudioContext::RequireUserGestureForAudioStartRestriction;
+            restrictions.add(AudioContext::BehaviorRestrictionFlags::RequireUserGestureForAudioStartRestriction);
         if (equalLettersIgnoringASCIICase(restrictionString, "requirepageconsentforaudiostart"_s))
-            restrictions |= AudioContext::RequirePageConsentForAudioStartRestriction;
+            restrictions.add(AudioContext::BehaviorRestrictionFlags::RequirePageConsentForAudioStartRestriction);
     }
     context.addBehaviorRestriction(restrictions);
 }
@@ -7601,7 +7601,7 @@ void Internals::acceptTypedArrays(Int32Array&)
 
 Internals::SelectorFilterHashCounts Internals::selectorFilterHashCounts(const String& selector)
 {
-    auto selectorList = CSSParser::parseSelectorList(selector, CSSParserContext(*contextDocument()));
+    auto selectorList = CSSSelectorParser::parseSelectorList(selector, CSSParserContext(*contextDocument()));
     if (!selectorList)
         return { };
     

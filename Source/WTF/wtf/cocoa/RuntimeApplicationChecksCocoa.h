@@ -40,6 +40,7 @@ enum class SDKAlignedBehavior {
     AuthorizationHeaderOnSameOriginRedirects,
     BlanksViewOnJSPrompt,
     BlocksConnectionsToAddressWithOnlyZeros,
+    BrowsingContextControllerMethodStubRemoved,
     ContextMenuTriggersLinkActivationNavigationType,
     ConvertsInvalidURLsToBlank,
     ConvertsInvalidURLsToNull,
