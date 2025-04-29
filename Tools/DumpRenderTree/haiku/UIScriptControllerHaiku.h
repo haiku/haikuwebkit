@@ -36,8 +36,6 @@ public:
     {
     }
 
-    void notImplemented() const { fprintf(stderr, "UIScriptControllerHaiku is not implemented\n"); }
-
     void doAsyncTask(JSValueRef) override;
     // Preferences
 

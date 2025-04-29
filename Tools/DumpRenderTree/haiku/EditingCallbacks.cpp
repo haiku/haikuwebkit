@@ -31,10 +31,10 @@
 #include "EditingCallbacks.h"
 
 #include "DumpRenderTree.h"
-#include "EditorClientHaiku.h"
 #include "TestRunner.h"
 #include "WebViewConstants.h"
 
+#include <WebCore/ContainerNode.h>
 #include "WebCore/CSSSerializationContext.h"
 #include "WebCore/EditorInsertAction.h"
 #include <WebCore/Node.h>
@@ -45,13 +45,15 @@
 #include <wtf/text/CString.h>
 #include <wtf/text/WTFString.h>
 
+#include <String.h>
+
 static std::string dumpPath(WebCore::Node* node)
 {
     ASSERT(node);
 
     std::string result(node->nodeName().utf8().data());
 
-    WebCore::Node* parent = node->parentNode();
+    WebCore::ContainerNode* parent = node->parentNode();
     if (parent) {
         result += " > " + dumpPath(parent);
     }

@@ -51,7 +51,8 @@ ContextMenuClientHaiku::ContextMenuClientHaiku(BWebPage* webPage)
 
 void ContextMenuClientHaiku::downloadURL(const URL& url)
 {
-    ResourceRequest request(url);
+    URL urlCopy(url);
+    ResourceRequest request(std::move(urlCopy));
     m_webPage->requestDownload(request);
 }
 

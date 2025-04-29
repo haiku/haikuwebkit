@@ -61,7 +61,7 @@ public:
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }
 
-    WEBCORE_EXPORT void init(CurlDownloadListener&, const URL&);
+    WEBCORE_EXPORT void init(CurlDownloadListener&, URL&&);
     WEBCORE_EXPORT void init(CurlDownloadListener&, ResourceHandle*, const ResourceRequest&, const ResourceResponse&);
 
     void setListener(CurlDownloadListener* listener) { m_listener = listener; }

@@ -455,10 +455,11 @@ void ResourceHandle::willSendRequest()
 
     String location = delegate()->response().httpHeaderField(HTTPHeaderName::Location);
     URL newURL = URL(delegate()->response().url(), location);
+    URL moveURL(newURL);
     bool crossOrigin = !protocolHostAndPortAreEqual(d->m_firstRequest.url(), newURL);
 
     ResourceRequest newRequest = d->m_firstRequest;
-    newRequest.setURL(newURL);
+    newRequest.setURL(std::move(moveURL));
 
     if (shouldRedirectAsGET(newRequest, crossOrigin)) {
         newRequest.setHTTPMethod("GET"_s);
@@ -550,7 +551,8 @@ void ResourceHandle::handleDataURL()
     ResourceResponse response;
     response.setMimeType(extractMIMETypeFromMediaType(mediaType));
     response.setTextEncodingName(charset.toString());
-    response.setURL(d->m_firstRequest.url());
+    URL moveURL(d->m_firstRequest.url());
+    response.setURL(std::move(moveURL));
 
     if (base64) {
         data = PAL::decodeURLEscapeSequences(data);

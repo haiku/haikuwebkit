@@ -695,7 +695,8 @@ void FrameLoaderClientHaiku::updateOpener(const WebCore::Frame& newOpener)
 {
 }
 
-ShouldGoToHistoryItem FrameLoaderClientHaiku::shouldGoToHistoryItem(HistoryItem&, WebCore::IsSameDocumentNavigation) const
+ShouldGoToHistoryItem FrameLoaderClientHaiku::shouldGoToHistoryItem(HistoryItem&,
+    WebCore::IsSameDocumentNavigation, ProcessSwapDisposition) const
 {
     // FIXME this may want to ask the user for confirmation if the request contained a form post or
     // similar, and re-doing the request could have side effects. It may be easier to use the async

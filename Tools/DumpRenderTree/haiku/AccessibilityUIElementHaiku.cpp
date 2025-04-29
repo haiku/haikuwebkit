@@ -334,6 +334,16 @@ JSRetainPtr<JSStringRef> AccessibilityUIElement::helpText() const
     return nullptr;
 }
 
+double AccessibilityUIElement::pageX()
+{
+    return 0.0f;
+}
+
+double AccessibilityUIElement::pageY()
+{
+    return 0.0f;
+}
+
 double AccessibilityUIElement::x()
 {
     return 0.0f;

@@ -44,10 +44,10 @@ CurlDownload::~CurlDownload()
         m_curlRequest->invalidateClient();
 }
 
-void CurlDownload::init(CurlDownloadListener& listener, const URL& url)
+void CurlDownload::init(CurlDownloadListener& listener, URL&& url)
 {
     m_listener = &listener;
-    m_request.setURL(url);
+    m_request.setURL(std::move(url));
 }
 
 void CurlDownload::init(CurlDownloadListener& listener, ResourceHandle*, const ResourceRequest& request, const ResourceResponse&)
@@ -182,7 +182,7 @@ void CurlDownload::willSendRequest()
     bool crossOrigin = !protocolHostAndPortAreEqual(m_request.url(), newURL);
 
     ResourceRequest newRequest = m_request;
-    newRequest.setURL(newURL);
+    newRequest.setURL(std::move(newURL));
 
     if (shouldRedirectAsGET(newRequest, crossOrigin)) {
         newRequest.setHTTPMethod("GET"_s);

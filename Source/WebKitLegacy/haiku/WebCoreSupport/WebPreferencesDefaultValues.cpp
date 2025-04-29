@@ -39,5 +39,10 @@ bool defaultSearchInputIncrementalAttributeAndSearchEventEnabled()
     return true;
 }
 
+bool defaultMutationEventsEnabled()
+{
+    return true;
+}
+
 };
 

@@ -27,12 +27,6 @@
 
 #include <wtf/Forward.h>
 
-#if PLATFORM(IOS_FAMILY)
-#define EXPERIMENTAL_FULLSCREEN_API_HIDDEN false
-#else
-#define EXPERIMENTAL_FULLSCREEN_API_HIDDEN true
-#endif
-
 namespace WebKit {
 
 bool defaultAttachmentElementEnabled();
@@ -43,5 +37,6 @@ bool defaultAllowRunningOfInsecureContent();
 bool defaultShouldConvertInvalidURLsToBlank();
 bool defaultPopoverAttributeEnabled();
 bool defaultSearchInputIncrementalAttributeAndSearchEventEnabled();
+bool defaultMutationEventsEnabled();
 
 } // namespace WebKit
