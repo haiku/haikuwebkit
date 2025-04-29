@@ -734,6 +734,7 @@ static constexpr bool unreachableForValue = false;
 #define RELEASE_LOG_ERROR(channel, ...) BEDC_SEND(channel, DC_YELLOW, __FILE__, _STRINGIFY(__LINE__), __func__, __VA_ARGS__)
 #define RELEASE_LOG_FAULT(channel, ...) BEDC_SEND(channel, DC_RED, __FILE__, _STRINGIFY(__LINE__), __func__, __VA_ARGS__)
 #define RELEASE_LOG_INFO(channel, ...) BEDC_SEND(channel, DC_GREEN, __FILE__, _STRINGIFY(__LINE__), __func__, __VA_ARGS__)
+#define RELEASE_LOG_DEBUG(channel, ...) BEDC_SEND(channel, DC_BLUE, __FILE__, _STRINGIFY(__LINE__), __func__, __VA_ARGS__)
 
 #define RELEASE_LOG_WITH_LEVEL(channel, logLevel, ...) do { \
     if (LOG_CHANNEL(channel).level >= (logLevel)) \
