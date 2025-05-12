@@ -2,10 +2,11 @@ LIST(APPEND WTF_SOURCES
     generic/WorkQueueGeneric.cpp
     generic/MainThreadGeneric.cpp
 
-    haiku/RunLoopHaiku.cpp
     haiku/CurrentProcessMemoryStatus.cpp
-    haiku/MemoryFootprintHaiku.cpp
     haiku/FileSystemHaiku.cpp
+    haiku/LanguageHaiku.cpp
+    haiku/MemoryFootprintHaiku.cpp
+    haiku/RunLoopHaiku.cpp
 
     posix/CPUTimePOSIX.cpp
     posix/FileHandlePOSIX.cpp
@@ -20,8 +21,6 @@ LIST(APPEND WTF_SOURCES
 
     unix/MemoryPressureHandlerUnix.cpp
     unix/UniStdExtrasUnix.cpp
-
-    PlatformUserPreferredLanguagesHaiku.cpp
 )
 
 LIST(APPEND WTF_LIBRARIES
