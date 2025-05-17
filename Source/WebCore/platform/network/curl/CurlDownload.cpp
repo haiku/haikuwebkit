@@ -31,6 +31,9 @@
 #if USE(CURL)
 
 #include "HTTPParsers.h"
+#include "NetworkingContext.h"
+#include "NetworkStorageSession.h"
+#include "ResourceHandle.h"
 #include "ResourceRequest.h"
 #include "ResourceResponse.h"
 #include "SharedBuffer.h"
@@ -50,10 +53,11 @@ void CurlDownload::init(CurlDownloadListener& listener, URL&& url)
     m_request.setURL(std::move(url));
 }
 
-void CurlDownload::init(CurlDownloadListener& listener, ResourceHandle*, const ResourceRequest& request, const ResourceResponse&)
+void CurlDownload::init(CurlDownloadListener& listener, ResourceHandle* handle, const ResourceRequest& request, const ResourceResponse&)
 {
     m_listener = &listener;
     m_request = request.isolatedCopy();
+    m_resourceHandle = handle;
 }
 
 void CurlDownload::start(const String& destination)
@@ -79,6 +83,13 @@ bool CurlDownload::cancel()
 Ref<CurlRequest> CurlDownload::createCurlRequest(ResourceRequest& request)
 {
     // FIXME: Use a correct sessionID.
+    if (m_resourceHandle != nullptr && !request.httpHeaderFields().contains(HTTPHeaderName::Cookie)) {
+        auto includeSecureCookies = request.url().protocolIs("https"_s) ? IncludeSecureCookies::Yes : IncludeSecureCookies::No;
+        String cookieHeaderField = m_resourceHandle->context()->storageSession()->cookieRequestHeaderFieldValue(request.firstPartyForCookies(), SameSiteInfo::create(request), request.url(), std::nullopt, std::nullopt, includeSecureCookies, ApplyTrackingPrevention::Yes, ShouldRelaxThirdPartyCookieBlocking::No).first;
+        if (!cookieHeaderField.isEmpty())
+            request.addHTTPHeaderField(HTTPHeaderName::Cookie, cookieHeaderField);
+    }
+
     auto curlRequest = CurlRequest::create(request, *this);
     return curlRequest;
 }
