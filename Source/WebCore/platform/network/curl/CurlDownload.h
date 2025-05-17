@@ -90,6 +90,7 @@ private:
 
     ResourceRequest m_request;
     ResourceResponse m_response;
+    ResourceHandle* m_resourceHandle { nullptr };
     bool m_deletesFileUponFailure { false };
     String m_destination;
     unsigned m_redirectCount { 0 };
