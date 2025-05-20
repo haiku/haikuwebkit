@@ -686,14 +686,10 @@ void DumpRenderTreeApp::MessageReceived(BMessage* message)
     case ADD_CONSOLE_MESSAGE:
     {
         // Follow the format used by other DRTs here. Note this doesn't
-        // include the fille URL, making it possible to have consistent
+        // include the file URL, making it possible to have consistent
         // results even if the tests are moved around.
-        int32 lineNumber = message->FindInt32("line");
         BString text = message->FindString("string");
-        printf("CONSOLE MESSAGE: ");
-        if (lineNumber)
-            printf("line %" B_PRIu32 ": ", lineNumber);
-        printf("%s\n", text.String());
+        printf("CONSOLE MESSAGE: %s\n", text.String());
         fflush(stdout);
         return;
     }
