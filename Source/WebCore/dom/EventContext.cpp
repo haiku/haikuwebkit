@@ -30,6 +30,7 @@
 
 #include "Document.h"
 #include "EventNames.h"
+#include "EventTargetInlines.h"
 #include "FocusEvent.h"
 #include "HTMLFieldSetElement.h"
 #include "HTMLFormElement.h"
@@ -78,7 +79,7 @@ void EventContext::handleLocalEvents(Event& event, EventInvokePhase phase) const
         return;
     }
 
-    if (UNLIKELY(m_contextNodeIsFormElement)) {
+    if (m_contextNodeIsFormElement) [[unlikely]] {
         ASSERT(is<HTMLFormElement>(*m_node));
         auto& eventNames = WebCore::eventNames();
         if ((event.type() == eventNames.submitEvent || event.type() == eventNames.resetEvent)

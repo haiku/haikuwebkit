@@ -27,6 +27,7 @@
 #include "TextExtraction.h"
 
 #include "ComposedTreeIterator.h"
+#include "ContainerNodeInlines.h"
 #include "ElementInlines.h"
 #include "ExceptionCode.h"
 #include "ExceptionOr.h"
@@ -47,11 +48,13 @@
 #include "RenderLayer.h"
 #include "RenderLayerModelObject.h"
 #include "RenderLayerScrollableArea.h"
+#include "RenderObjectInlines.h"
 #include "RenderView.h"
 #include "SimpleRange.h"
 #include "Text.h"
 #include "TextIterator.h"
 #include "WritingMode.h"
+#include <ranges>
 #include <unicode/uchar.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/StringBuilder.h>
@@ -221,7 +224,7 @@ static inline void merge(Item& destinationItem, Item&& sourceItem)
 static inline FloatRect rootViewBounds(Node& node)
 {
     auto view = node.document().protectedView();
-    if (UNLIKELY(!view))
+    if (!view) [[unlikely]]
         return { };
 
     CheckedPtr renderer = node.renderer();
@@ -609,9 +612,10 @@ RenderedText extractRenderedText(Element& element)
         return true;
     }();
 
-    std::sort(allTokensAndOffsets.begin(), allTokensAndOffsets.end(), [&](auto& a, auto& b) {
-        return ascendingOrder ? a.offset < b.offset : a.offset > b.offset;
-    });
+    if (ascendingOrder)
+        std::ranges::sort(allTokensAndOffsets, std::ranges::less { }, &TokenAndBlockOffset::offset);
+    else
+        std::ranges::sort(allTokensAndOffsets, std::ranges::greater { }, &TokenAndBlockOffset::offset);
 
     bool hasLargeReplacedDescendant = false;
     StringBuilder textWithReplacedContent;

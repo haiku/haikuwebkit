@@ -142,8 +142,6 @@ bindings/js/WorkerModuleScriptLoader.cpp
 bridge/objc/WebScriptObject.mm
 bridge/runtime_method.cpp
 contentextensions/ContentExtensionsBackend.cpp
-css/CSSComputedStyleDeclaration.cpp
-css/CSSCustomPropertyValue.cpp
 css/CSSFontFace.cpp
 css/CSSImageValue.cpp
 css/CSSStyleProperties.cpp
@@ -162,7 +160,6 @@ css/StyleAttributeMutationScope.h
 css/calc/CSSCalcTree+ContainerProgressEvaluator.cpp
 css/parser/SizesAttributeParser.cpp
 css/query/MediaQueryFeatures.cpp
-css/typedom/CSSStyleValueFactory.cpp
 css/typedom/ComputedStylePropertyMapReadOnly.cpp
 css/typedom/InlineStylePropertyMap.cpp
 dom/Attr.cpp
@@ -492,7 +489,6 @@ layout/integration/inline/InlineIteratorLineBoxInlines.h
 layout/integration/inline/InlineIteratorLineBoxLegacyPath.h
 layout/integration/inline/InlineIteratorLogicalOrderTraversal.cpp
 layout/integration/inline/InlineIteratorSVGTextBox.cpp
-layout/integration/inline/InlineIteratorTextBox.cpp
 layout/integration/inline/LayoutIntegrationInlineContentBuilder.cpp
 layout/integration/inline/LayoutIntegrationInlineContentPainter.cpp
 layout/integration/inline/LayoutIntegrationLineLayout.cpp
@@ -604,6 +600,7 @@ page/scrolling/ScrollingStateNode.cpp
 page/scrolling/ScrollingStateOverflowScrollProxyNode.cpp
 page/scrolling/ScrollingStateStickyNode.cpp
 page/text-extraction/TextExtraction.cpp
+page/writing-tools/WritingToolsController.mm
 platform/DragImage.cpp
 platform/KeyboardScrollingAnimator.cpp
 platform/OrientationNotifier.h
@@ -694,7 +691,6 @@ rendering/RenderBoxModelObject.cpp
 rendering/RenderBoxModelObjectInlines.h
 rendering/RenderButton.cpp
 rendering/RenderCombineText.cpp
-rendering/RenderCombineText.h
 rendering/RenderCounter.cpp
 rendering/RenderDeprecatedFlexibleBox.cpp
 rendering/RenderDescendantIterator.h
@@ -741,7 +737,6 @@ rendering/RenderMultiColumnFlow.cpp
 rendering/RenderMultiColumnSet.cpp
 rendering/RenderMultiColumnSpannerPlaceholder.cpp
 rendering/RenderObject.cpp
-rendering/RenderObject.h
 rendering/RenderProgress.cpp
 rendering/RenderQuote.cpp
 rendering/RenderReplaced.cpp
@@ -756,13 +751,11 @@ rendering/RenderTable.cpp
 rendering/RenderTable.h
 rendering/RenderTableCaption.cpp
 rendering/RenderTableCell.cpp
-rendering/RenderTableCell.h
 rendering/RenderTableCellInlines.h
 rendering/RenderTableCol.cpp
 rendering/RenderTableRow.cpp
 rendering/RenderTableRowInlines.h
 rendering/RenderTableSection.cpp
-rendering/RenderTableSection.h
 rendering/RenderTableSectionInlines.h
 rendering/RenderText.cpp
 rendering/RenderText.h
@@ -797,10 +790,8 @@ rendering/line/WordTrailingSpace.h
 rendering/mac/RenderThemeMac.mm
 rendering/mathml/MathOperator.cpp
 rendering/mathml/RenderMathMLBlock.cpp
-rendering/mathml/RenderMathMLBlockInlines.h
 rendering/mathml/RenderMathMLFenced.cpp
 rendering/mathml/RenderMathMLFencedOperator.cpp
-rendering/mathml/RenderMathMLFencedOperator.h
 rendering/mathml/RenderMathMLFraction.cpp
 rendering/mathml/RenderMathMLMenclose.cpp
 rendering/mathml/RenderMathMLMenclose.h

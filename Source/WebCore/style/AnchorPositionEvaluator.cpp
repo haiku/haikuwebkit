@@ -28,6 +28,7 @@
 #include "CSSPropertyNames.h"
 #include "CSSValue.h"
 #include "CSSValueKeywords.h"
+#include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "Element.h"
@@ -40,6 +41,7 @@
 #include "RenderFragmentedFlow.h"
 #include "RenderInline.h"
 #include "RenderLayer.h"
+#include "RenderObjectInlines.h"
 #include "RenderStyle.h"
 #include "RenderStyleInlines.h"
 #include "RenderStyleSetters.h"
@@ -48,6 +50,7 @@
 #include "StyleBuilderState.h"
 #include "StyleScope.h"
 #include "WritingMode.h"
+#include <ranges>
 
 namespace WebCore::Style {
 
@@ -860,7 +863,7 @@ static AnchorsForAnchorName collectAnchorsForAnchorName(const Document& document
 
     // Sort them in tree order.
     for (auto& anchors : anchorsForAnchorName.values()) {
-        std::sort(anchors.begin(), anchors.end(), [](auto& a, auto& b) {
+        std::ranges::sort(anchors, [](auto& a, auto& b) {
             // FIXME: Figure out anonymous pseudo-elements.
             if (!a->element() || !b->element())
                 return !!b->element();

@@ -48,7 +48,7 @@ namespace WebCore {
 
 template<typename T, typename U> inline bool compareEqual(const T& a, const U& b) { return a == b; }
 
-inline void RenderStyle::addToTextDecorationsInEffect(OptionSet<TextDecorationLine> value) { m_inheritedFlags.textDecorationLines |= static_cast<unsigned>(value.toRaw()); }
+inline void RenderStyle::addToTextDecorationLineInEffect(OptionSet<TextDecorationLine> value) { m_inheritedFlags.textDecorationLineInEffect |= static_cast<unsigned>(value.toRaw()); }
 inline void RenderStyle::clearAnimations() { m_nonInheritedData.access().miscData.access().animations = nullptr; }
 inline void RenderStyle::clearBackgroundLayers() { m_nonInheritedData.access().backgroundData.access().background = FillLayer::create(FillLayerType::Background); }
 inline void RenderStyle::clearMaskLayers() { m_nonInheritedData.access().miscData.access().mask = FillLayer::create(FillLayerType::Mask); }
@@ -186,6 +186,10 @@ inline void RenderStyle::setHasExplicitlySetBorderBottomLeftRadius(bool value) {
 inline void RenderStyle::setHasExplicitlySetBorderBottomRightRadius(bool value) { SET_NESTED(m_nonInheritedData, surroundData, hasExplicitlySetBorderBottomRightRadius, value); }
 inline void RenderStyle::setHasExplicitlySetBorderTopLeftRadius(bool value) { SET_NESTED(m_nonInheritedData, surroundData, hasExplicitlySetBorderTopLeftRadius, value); }
 inline void RenderStyle::setHasExplicitlySetBorderTopRightRadius(bool value) { SET_NESTED(m_nonInheritedData, surroundData, hasExplicitlySetBorderTopRightRadius, value); }
+inline void RenderStyle::setHasExplicitlySetPaddingBottom(bool value) { SET_NESTED(m_nonInheritedData, surroundData, hasExplicitlySetPaddingBottom, value); }
+inline void RenderStyle::setHasExplicitlySetPaddingLeft(bool value) { SET_NESTED(m_nonInheritedData, surroundData, hasExplicitlySetPaddingLeft, value); }
+inline void RenderStyle::setHasExplicitlySetPaddingRight(bool value) { SET_NESTED(m_nonInheritedData, surroundData, hasExplicitlySetPaddingRight, value); }
+inline void RenderStyle::setHasExplicitlySetPaddingTop(bool value) { SET_NESTED(m_nonInheritedData, surroundData, hasExplicitlySetPaddingTop, value); }
 inline void RenderStyle::setHasExplicitlySetStrokeColor(bool value) { SET(m_rareInheritedData, hasSetStrokeColor, static_cast<unsigned>(value)); }
 inline void RenderStyle::setHasExplicitlySetStrokeWidth(bool value) { SET(m_rareInheritedData, hasSetStrokeWidth, static_cast<unsigned>(value)); }
 inline void RenderStyle::setHasPseudoStyles(PseudoIdSet set) { m_nonInheritedFlags.setHasPseudoStyles(set); }
@@ -307,7 +311,7 @@ inline void RenderStyle::setTextDecorationLine(OptionSet<TextDecorationLine> val
 inline void RenderStyle::setTextDecorationSkipInk(TextDecorationSkipInk skipInk) { SET(m_rareInheritedData, textDecorationSkipInk, static_cast<unsigned>(skipInk)); }
 inline void RenderStyle::setTextDecorationStyle(TextDecorationStyle value) { SET_NESTED(m_nonInheritedData, rareData, textDecorationStyle, static_cast<unsigned>(value)); }
 inline void RenderStyle::setTextDecorationThickness(TextDecorationThickness textDecorationThickness) { SET_NESTED(m_nonInheritedData, rareData, textDecorationThickness, textDecorationThickness); }
-inline void RenderStyle::setTextDecorationsInEffect(OptionSet<TextDecorationLine> value) { m_inheritedFlags.textDecorationLines = value.toRaw(); }
+inline void RenderStyle::setTextDecorationLineInEffect(OptionSet<TextDecorationLine> value) { m_inheritedFlags.textDecorationLineInEffect = value.toRaw(); }
 inline void RenderStyle::setTextEmphasisColor(const Style::Color& c) { SET(m_rareInheritedData, textEmphasisColor, c); }
 inline void RenderStyle::setTextEmphasisCustomMark(const AtomString& mark) { SET(m_rareInheritedData, textEmphasisCustomMark, mark); }
 inline void RenderStyle::setTextEmphasisFill(TextEmphasisFill fill) { SET(m_rareInheritedData, textEmphasisFill, static_cast<unsigned>(fill)); }

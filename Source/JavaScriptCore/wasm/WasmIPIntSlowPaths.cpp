@@ -110,6 +110,8 @@ static inline Wasm::JITCallee* jitCompileAndSetHeuristics(Wasm::IPIntCallee* cal
 
     MemoryMode memoryMode = instance->memory()->mode();
     Wasm::CalleeGroup& calleeGroup = *instance->calleeGroup();
+    ASSERT(instance->memoryMode() == memoryMode);
+    ASSERT(memoryMode == calleeGroup.mode());
     auto getReplacement = [&] () -> Wasm::JITCallee* {
         Locker locker { calleeGroup.m_lock };
         if (osrFor == OSRFor::Call)
@@ -145,7 +147,7 @@ static inline Wasm::JITCallee* jitCompileAndSetHeuristics(Wasm::IPIntCallee* cal
         if (Wasm::BBQPlan::ensureGlobalBBQAllowlist().containsWasmFunction(functionIndex)) {
             auto plan = Wasm::BBQPlan::create(instance->vm(), const_cast<Wasm::ModuleInformation&>(instance->module().moduleInformation()), functionIndex, callee->hasExceptionHandlers(), Ref(*instance->calleeGroup()), Wasm::Plan::dontFinalize());
             Wasm::ensureWorklist().enqueue(plan.get());
-            if (UNLIKELY(!Options::useConcurrentJIT() || !Options::useWasmIPInt()))
+            if (!Options::useConcurrentJIT() || !Options::useWasmIPInt()) [[unlikely]]
                 plan->waitForCompletion();
             else
                 tierUpCounter.optimizeAfterWarmUp();
@@ -224,7 +226,7 @@ WASM_IPINT_EXTERN_CPP_DECL(simd_go_straight_to_bbq, CallFrame* cfr)
     dataLogLnIf(Options::verboseOSR(), *callee, ": Entered simd_go_straight_to_bbq_osr with tierUpCounter = ", callee->tierUpCounter());
 
     auto result = jitCompileSIMDFunction(callee, instance);
-    if (LIKELY(result.has_value()))
+    if (result.has_value()) [[likely]]
         WASM_RETURN_TWO(result.value()->entrypoint().taggedPtr(), nullptr);
 
     switch (result.error()) {
@@ -679,7 +681,7 @@ WASM_IPINT_EXTERN_CPP_DECL(array_new_default, Wasm::TypeIndex type, uint32_t siz
         defaultValue = JSValue::encode(jsNull());
     } else if (elementType.unpacked().isV128()) {
         JSValue result = Wasm::arrayNew(instance, type, size, vectorAllZeros());
-        if (UNLIKELY(result.isNull()))
+        if (result.isNull()) [[unlikely]]
             IPINT_THROW(Wasm::ExceptionType::BadArrayNew);
         IPINT_RETURN(JSValue::encode(result));
     }
@@ -698,7 +700,7 @@ WASM_IPINT_EXTERN_CPP_DECL(array_new_fixed, Wasm::TypeIndex type, uint32_t size,
         arguments[i] = sp[i].i64;
 
     JSValue result = Wasm::arrayNewFixed(instance, type, size, arguments.data());
-    if (UNLIKELY(result.isNull()))
+    if (result.isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::BadArrayNew);
 
     IPINT_RETURN(JSValue::encode(result));
@@ -707,7 +709,7 @@ WASM_IPINT_EXTERN_CPP_DECL(array_new_fixed, Wasm::TypeIndex type, uint32_t size,
 WASM_IPINT_EXTERN_CPP_DECL(array_new_data, IPInt::ArrayNewDataMetadata* metadata, uint32_t offset, uint32_t size)
 {
     EncodedJSValue result = Wasm::arrayNewData(instance, static_cast<uint32_t>(metadata->typeIndex), metadata->dataSegmentIndex, size, offset);
-    if (UNLIKELY(JSValue::decode(result).isNull()))
+    if (JSValue::decode(result).isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::BadArrayNewInitData);
 
     IPINT_RETURN(result);
@@ -716,7 +718,7 @@ WASM_IPINT_EXTERN_CPP_DECL(array_new_data, IPInt::ArrayNewDataMetadata* metadata
 WASM_IPINT_EXTERN_CPP_DECL(array_new_elem, IPInt::ArrayNewElemMetadata* metadata, uint32_t offset, uint32_t size)
 {
     EncodedJSValue result = Wasm::arrayNewElem(instance, static_cast<uint32_t>(metadata->typeIndex), metadata->elemSegmentIndex, size, offset);
-    if (UNLIKELY(JSValue::decode(result).isNull()))
+    if (JSValue::decode(result).isNull()) [[unlikely]]
         IPINT_THROW(Wasm::ExceptionType::BadArrayNewInitElem);
 
     IPINT_RETURN(result);
@@ -891,31 +893,35 @@ WASM_IPINT_EXTERN_CPP_DECL(ref_cast, int32_t heapType, bool allowNull, EncodedJS
 
 /**
  * Given a function index, determine the pointer to its executable code.
- * Return a pair of the wasm instance pointer and the code pointer.
+ * Return a pair of the wasm instance pointer received as the first argument and the code pointer.
+ * Additionally, store the following into the 'calleeAndWasmInstanceReturn':
+ *
+ *  - calleeAndWasmInstanceReturn[0] - the callee to use, goes into the 'callee' slot of the CallFrame.
+ *  - calleeAndWasmInstanceReturn[1] - the wasm instance to use, goes into the 'codeBlock' slot of the CallFrame.
  */
-static inline UGPRPair resolveWasmCall(JSWebAssemblyInstance* instance, Wasm::FunctionSpaceIndex functionIndex, Register* callee)
+static inline UGPRPair resolveWasmCall(JSWebAssemblyInstance* instance, Wasm::FunctionSpaceIndex functionIndex, Register* calleeAndWasmInstanceReturn)
 {
     uint32_t importFunctionCount = instance->module().moduleInformation().importFunctionCount();
 
+    Register& calleeReturn = calleeAndWasmInstanceReturn[0];
+    Register& wasmInstanceReturn = calleeAndWasmInstanceReturn[1];
     CodePtr<WasmEntryPtrTag> codePtr;
-    EncodedJSValue boxedCallee = CalleeBits::encodeNullCallee();
-    Register& functionInfoSlot = callee[1];
 
     if (functionIndex < importFunctionCount) {
         auto* functionInfo = instance->importFunctionInfo(functionIndex);
         codePtr = functionInfo->importFunctionStub;
-        *callee = *std::bit_cast<uintptr_t*>(functionInfo->boxedWasmCalleeLoadLocation);
+        calleeReturn = *std::bit_cast<uintptr_t*>(functionInfo->boxedWasmCalleeLoadLocation);
         if (!functionInfo->targetInstance)
-            functionInfoSlot = reinterpret_cast<uintptr_t>(functionInfo);
+            // The imported function is a JS function
+            wasmInstanceReturn = reinterpret_cast<uintptr_t>(functionInfo);
         else
-            functionInfoSlot = functionInfo->targetInstance.get();
+            wasmInstanceReturn = functionInfo->targetInstance.get();
     } else {
         // Target is a wasm function within the same instance
         codePtr = *instance->calleeGroup()->entrypointLoadLocationFromFunctionIndexSpace(functionIndex);
-        boxedCallee = CalleeBits::encodeNativeCallee(
+        calleeReturn = CalleeBits::encodeNativeCallee(
             instance->calleeGroup()->wasmCalleeFromFunctionIndexSpace(functionIndex));
-        *callee = boxedCallee;
-        functionInfoSlot = instance;
+        wasmInstanceReturn = instance;
     }
 
     RELEASE_ASSERT(WTF::isTaggedWith<WasmEntryPtrTag>(codePtr));
@@ -948,13 +954,11 @@ WASM_IPINT_EXTERN_CPP_DECL(prepare_call_indirect, CallFrame* callFrame, Wasm::Fu
         IPINT_THROW(Wasm::ExceptionType::BadSignature);
 
     Register* calleeReturn = std::bit_cast<Register*>(functionIndex);
-    EncodedJSValue boxedCallee = CalleeBits::encodeNullCallee();
     if (function.m_function.boxedWasmCalleeLoadLocation)
-        boxedCallee = CalleeBits::encodeBoxedNativeCallee(reinterpret_cast<void*>(*function.m_function.boxedWasmCalleeLoadLocation));
+        *calleeReturn = function.m_function.boxedWasmCalleeLoadLocation->encodedBits();
     else
-        boxedCallee = CalleeBits::encodeNativeCallee(
+        *calleeReturn = CalleeBits::encodeNativeCallee(
             function.m_instance->calleeGroup()->wasmCalleeFromFunctionIndexSpace(*functionIndex));
-    *calleeReturn = boxedCallee;
 
     Register& functionInfoSlot = calleeReturn[1];
     if (!function.m_function.targetInstance)
@@ -986,9 +990,9 @@ WASM_IPINT_EXTERN_CPP_DECL(prepare_call_ref, CallFrame* callFrame, Wasm::TypeInd
 
     ASSERT(function.boxedWasmCalleeLoadLocation);
     if (function.boxedWasmCalleeLoadLocation)
-        sp->ref = CalleeBits::encodeBoxedNativeCallee(reinterpret_cast<void*>(*function.boxedWasmCalleeLoadLocation));
+        sp->ref = function.boxedWasmCalleeLoadLocation->encodedBits();
     else
-        sp->ref = CalleeBits::encodeNullCallee();
+        sp->ref = CalleeBits::nullCallee().encodedBits();
 
     Register& functionInfoSlot = std::bit_cast<Register*>(sp)[1];
     if (!function.targetInstance)

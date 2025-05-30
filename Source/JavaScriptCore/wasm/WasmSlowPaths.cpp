@@ -159,7 +159,7 @@ static inline Wasm::JITCallee* jitCompileAndSetHeuristics(Wasm::LLIntCallee* cal
             auto plan = Wasm::BBQPlan::create(instance->vm(), const_cast<Wasm::ModuleInformation&>(instance->module().moduleInformation()), functionIndex, callee->hasExceptionHandlers(), Ref(*instance->calleeGroup()), Wasm::Plan::dontFinalize());
             Wasm::ensureWorklist().enqueue(plan.get());
             dataLogLnIf(Options::verboseOSR(), "\tStarted BBQ compilation.");
-            if (UNLIKELY(!Options::useConcurrentJIT() || !Options::useWasmLLInt()))
+            if (!Options::useConcurrentJIT() || !Options::useWasmLLInt()) [[unlikely]]
                 plan->waitForCompletion();
             else
                 tierUpCounter.optimizeAfterWarmUp();
@@ -286,7 +286,7 @@ WASM_SLOW_PATH_DECL(loop_osr)
     ASSERT(bbqCallee->stackCheckSize());
     uintptr_t stackExtent = stackPointer - bbqCallee->stackCheckSize();
     uintptr_t stackLimit = reinterpret_cast<uintptr_t>(instance->softStackLimit());
-    if (UNLIKELY(stackExtent >= stackPointer || stackExtent <= stackLimit)) {
+    if (stackExtent >= stackPointer || stackExtent <= stackLimit) [[unlikely]] {
         dataLogLnIf(Options::verboseOSR(), "\tSkipping BBQ loop tier up due to stack check; ", RawHex(stackPointer), " -> ", RawHex(stackExtent), " is past soft limit ", RawHex(stackLimit));
         WASM_RETURN_TWO(nullptr, nullptr);
     }
@@ -338,7 +338,7 @@ WASM_SLOW_PATH_DECL(simd_go_straight_to_bbq_osr)
     dataLogLnIf(Options::verboseOSR(), *callee, ": Entered simd_go_straight_to_bbq_osr with tierUpCounter = ", callee->tierUpCounter());
 
     auto result = jitCompileSIMDFunction(callee, instance);
-    if (LIKELY(result.has_value()))
+    if (result.has_value()) [[likely]]
         WASM_RETURN_TWO(result.value()->entrypoint().taggedPtr(), nullptr);
 
     switch (result.error()) {
@@ -427,7 +427,7 @@ WASM_SLOW_PATH_DECL(array_new)
             value = JSValue::encode(jsNull());
         else if (elementType.unpacked().isV128()) {
             JSValue result = Wasm::arrayNew(instance, instruction.m_typeIndex, size, vectorAllZeros());
-            if (UNLIKELY(result.isNull()))
+            if (result.isNull()) [[unlikely]]
                 WASM_THROW(Wasm::ExceptionType::BadArrayNew);
             WASM_RETURN(JSValue::encode(result));
         }
@@ -438,14 +438,14 @@ WASM_SLOW_PATH_DECL(array_new)
         // so m_value being constant would be a bug.
         ASSERT(!instruction.m_value.isConstant());
         JSValue result = Wasm::arrayNewFixed(instance, instruction.m_typeIndex, size, reinterpret_cast<uint64_t*>(&callFrame->r(instruction.m_value)));
-        if (UNLIKELY(result.isNull()))
+        if (result.isNull()) [[unlikely]]
             WASM_THROW(Wasm::ExceptionType::BadArrayNew);
         WASM_RETURN(JSValue::encode(result));
     }
     }
     ASSERT(!elementType.unpacked().isV128());
     JSValue result = Wasm::arrayNew(instance, instruction.m_typeIndex, size, value);
-    if (UNLIKELY(result.isNull()))
+    if (result.isNull()) [[unlikely]]
         WASM_THROW(Wasm::ExceptionType::BadArrayNew);
     WASM_RETURN(JSValue::encode(result));
 }
@@ -635,7 +635,6 @@ static inline UGPRPair resolveWasmCall(Register* partiallyConstructedCalleeFrame
     uint32_t importFunctionCount = instance->module().moduleInformation().importFunctionCount();
 
     CodePtr<WasmEntryPtrTag> codePtr;
-    EncodedJSValue boxedCallee = CalleeBits::encodeNullCallee();
 
     Register& calleeStackSlot = partiallyConstructedCalleeFrame[static_cast<int>(CallFrameSlot::callee)];
     Register& functionInfoSlot = partiallyConstructedCalleeFrame[static_cast<int>(CallFrameSlot::codeBlock)];
@@ -648,7 +647,7 @@ static inline UGPRPair resolveWasmCall(Register* partiallyConstructedCalleeFrame
         // In the jit case, they already have everything they need to set the callee and target instance.
         // For the non-jit case, we set those here.
 
-        calleeStackSlot = *functionInfo->boxedWasmCalleeLoadLocation;
+        calleeStackSlot = functionInfo->boxedWasmCalleeLoadLocation->encodedBits();
         // For the non-jit wasm_to_js case specifically, we also pass along this functionInfo*, since
         // this new callee will have no way to access it.
         if (!functionInfo->targetInstance)
@@ -658,9 +657,8 @@ static inline UGPRPair resolveWasmCall(Register* partiallyConstructedCalleeFrame
     } else {
         // Target is a wasm function within the same instance
         codePtr = *instance->calleeGroup()->entrypointLoadLocationFromFunctionIndexSpace(functionIndex);
-        boxedCallee = CalleeBits::encodeNativeCallee(
+        calleeStackSlot = CalleeBits::encodeNativeCallee(
             instance->calleeGroup()->wasmCalleeFromFunctionIndexSpace(functionIndex));
-        calleeStackSlot = boxedCallee;
     }
 
     WASM_CALL_RETURN(instance, codePtr);
@@ -698,9 +696,9 @@ static inline UGPRPair resolveWasmCallIndirect(Register* partiallyConstructedCal
     ASSERT(calleeStackSlot.unboxedInt64() == 0xBEEF);
 
     if (function.m_function.boxedWasmCalleeLoadLocation)
-        calleeStackSlot = CalleeBits::encodeBoxedNativeCallee(reinterpret_cast<void*>(*function.m_function.boxedWasmCalleeLoadLocation));
+        calleeStackSlot = function.m_function.boxedWasmCalleeLoadLocation->encodedBits();
     else
-        calleeStackSlot = CalleeBits::encodeNullCallee();
+        calleeStackSlot = CalleeBits::nullCallee().encodedBits();
 
     if (!function.m_function.targetInstance)
         functionInfoSlot = reinterpret_cast<uintptr_t>(function.m_callLinkInfo);
@@ -744,9 +742,9 @@ static inline UGPRPair resolveWasmCallRef(Register* partiallyConstructedCalleeFr
     ASSERT(calleeStackSlot.unboxedInt64() == 0xBEEF);
 
     if (function.boxedWasmCalleeLoadLocation)
-        calleeStackSlot = CalleeBits::encodeBoxedNativeCallee(reinterpret_cast<void*>(*function.boxedWasmCalleeLoadLocation));
+        calleeStackSlot = function.boxedWasmCalleeLoadLocation->encodedBits();
     else
-        calleeStackSlot = CalleeBits::encodeNullCallee();
+        calleeStackSlot = CalleeBits::nullCallee().encodedBits();
     if (!function.targetInstance)
         functionInfoSlot = reinterpret_cast<uintptr_t>(wasmFunction->callLinkInfo());
     else

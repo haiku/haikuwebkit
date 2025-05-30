@@ -30,6 +30,7 @@
 #include "AccessibilityImageMapLink.h"
 
 #include "AXObjectCache.h"
+#include "ContainerNodeInlines.h"
 #include "ElementAncestorIteratorInlines.h"
 #include "HTMLImageElement.h"
 
@@ -67,7 +68,14 @@ AccessibilityRole AccessibilityImageMapLink::determineAccessibilityRole()
 
     return !url().isEmpty() ? AccessibilityRole::WebCoreLink : AccessibilityRole::Generic;
 }
-    
+
+bool AccessibilityImageMapLink::computeIsIgnored() const
+{
+    if (!node())
+        return true;
+    return defaultObjectInclusion() == AccessibilityObjectInclusion::IgnoreObject ? true : false;
+}
+
 Element* AccessibilityImageMapLink::actionElement() const
 {
     return anchorElement();
@@ -89,7 +97,7 @@ void AccessibilityImageMapLink::accessibilityText(Vector<AccessibilityText>& tex
 {
     String description = this->description();
     if (!description.isEmpty())
-        textOrder.append(AccessibilityText(description, AccessibilityTextSource::Alternative));
+        textOrder.append(AccessibilityText(WTFMove(description), AccessibilityTextSource::Alternative));
 
     const AtomString& titleText = getAttribute(titleAttr);
     if (!titleText.isEmpty())

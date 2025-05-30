@@ -31,6 +31,7 @@
 #include "Element.h"
 #include "ElementInlines.h"
 #include "EventRegion.h"
+#include "EventTargetInlines.h"
 #include "FloatQuad.h"
 #include "FrameSelection.h"
 #include "GraphicsContext.h"
@@ -66,6 +67,7 @@
 #include "RenderLayoutState.h"
 #include "RenderListMarker.h"
 #include "RenderMenuList.h"
+#include "RenderObjectInlines.h"
 #include "RenderTableCell.h"
 #include "RenderTextControl.h"
 #include "RenderTextFragment.h"
@@ -1343,13 +1345,15 @@ void RenderBlock::paintObject(PaintInfo& paintInfo, const LayoutPoint& paintOffs
     if (shouldPaintContent) {
         if (paintPhase != PaintPhase::SelfOutline)
             paintContents(paintInfo, scrolledOffset);
+    }
 
-        // 3. paint selection
-        // FIXME: Make this work with multi column layouts. For now don't fill gaps.
-        bool isPrinting = document().printing();
-        if (!isPrinting)
-            paintSelection(paintInfo, scrolledOffset); // Fill in gaps in selection on lines and between blocks.
+    // 3. paint selection
+    if (!document().printing()) {
+        // Fill in gaps in selection on lines, between blocks and "empty space" when content is skipped.
+        paintSelection(paintInfo, scrolledOffset);
+    }
 
+    if (shouldPaintContent) {
         // 4. paint floats.
         if (paintPhase == PaintPhase::Float || paintPhase == PaintPhase::Selection || paintPhase == PaintPhase::TextClip || paintPhase == PaintPhase::EventRegion || paintPhase == PaintPhase::Accessibility)
             paintFloats(paintInfo, scrolledOffset, paintPhase == PaintPhase::Selection || paintPhase == PaintPhase::TextClip || paintPhase == PaintPhase::EventRegion || paintPhase == PaintPhase::Accessibility);
@@ -1537,8 +1541,7 @@ bool RenderBlock::isSelectionRoot() const
         || isRenderTableCell() || isNonReplacedAtomicInline()
         || isTransformed() || hasReflection() || hasMask() || isWritingModeRoot()
         || isRenderFragmentedFlow() || style().columnSpan() == ColumnSpan::All
-        || isFlexItemIncludingDeprecated() || isGridItem()
-        || is<RenderFlexibleBox>(*this) || is<RenderDeprecatedFlexibleBox>(*this) || is<RenderGrid>(*this))
+        || isFlexItemIncludingDeprecated() || isGridItem())
         return true;
     
     if (view().selection().start()) {
@@ -1555,7 +1558,7 @@ GapRects RenderBlock::selectionGapRectsForRepaint(const RenderLayerModelObject* 
     ASSERT(!needsLayout());
 
     if (!shouldPaintSelectionGaps())
-        return GapRects();
+        return { };
 
     FloatPoint containerPoint = localToContainerPoint(FloatPoint(), repaintContainer, UseTransforms);
     LayoutPoint offsetFromRepaintContainer(containerPoint - toFloatSize(scrollPosition()));
@@ -1645,15 +1648,20 @@ GapRects RenderBlock::selectionGaps(RenderBlock& rootBlock, const LayoutPoint& r
             for (RenderBlock* cb = containingBlock(); cb && !is<RenderView>(*cb); cb = cb->containingBlock())
                 clipOutPositionedObjects(paintInfo, LayoutPoint(cb->x(), cb->y()), cb->positionedObjects()); // FIXME: Not right for flipped writing modes.
         }
-        clipOutFloatingObjects(rootBlock, paintInfo, rootBlockPhysicalPosition, offsetFromRootBlock);
+        clipOutFloatingBoxes(rootBlock, paintInfo, rootBlockPhysicalPosition, offsetFromRootBlock);
     }
 
-    // FIXME: overflow: auto/scroll fragments need more math here, since painting in the border box is different from painting in the padding box (one is scrolled, the other is
-    // fixed).
-    GapRects result;
-    if (!is<RenderBlockFlow>(*this) && !is<RenderFlexibleBox>(*this) && !is<RenderDeprecatedFlexibleBox>(*this) && !is<RenderGrid>(*this)) {
+    // FIXME: overflow: auto/scroll fragments need more math here, since painting in the border box is different from painting in the padding box (one is scrolled, the other is fixed).
+    if (!is<RenderBlockFlow>(*this)) {
         // FIXME: Make multi-column selection gap filling work someday.
-        return result;
+        return { };
+    }
+
+    if (isFlexItem() || isGridItem() || isDeprecatedFlexItem()) {
+        // FIXME: Adding a selection gap to these blocks would produce correct (visual) result only if we could also paint selection gaps between them,
+        // as we do for blocks in a BFC. Returning an empty gap rect here means we only paint the selection over the content,
+        // as opposed to expand it all the way to the end of the container.
+        return { };
     }
 
     if (isTransformed() || style().columnSpan() == ColumnSpan::All || isRenderFragmentedFlow()) {
@@ -1661,9 +1669,10 @@ GapRects RenderBlock::selectionGaps(RenderBlock& rootBlock, const LayoutPoint& r
         lastLogicalTop = blockDirectionOffset(rootBlock, offsetFromRootBlock) + logicalHeight();
         lastLogicalLeft = logicalLeftSelectionOffset(rootBlock, logicalHeight(), cache);
         lastLogicalRight = logicalRightSelectionOffset(rootBlock, logicalHeight(), cache);
-        return result;
+        return { };
     }
 
+    GapRects result;
     if (childrenInline())
         result = inlineSelectionGaps(rootBlock, rootBlockPhysicalPosition, offsetFromRootBlock, lastLogicalTop, lastLogicalLeft, lastLogicalRight, cache, paintInfo);
     else
@@ -1687,17 +1696,21 @@ GapRects RenderBlock::inlineSelectionGaps(RenderBlock&, const LayoutPoint&, cons
 GapRects RenderBlock::blockSelectionGaps(RenderBlock& rootBlock, const LayoutPoint& rootBlockPhysicalPosition, const LayoutSize& offsetFromRootBlock,
     LayoutUnit& lastLogicalTop, LayoutUnit& lastLogicalLeft, LayoutUnit& lastLogicalRight, const LogicalSelectionOffsetCaches& cache, const PaintInfo* paintInfo)
 {
-    GapRects result;
+    ASSERT(!isSkippedContent());
+
+    if (isSkippedContentRoot(*this))
+        return { };
 
     // Jump right to the first block child that contains some selected objects.
     RenderBox* curr;
     for (curr = firstChildBox(); curr && curr->selectionState() == HighlightState::None; curr = curr->nextSiblingBox()) { }
     
     if (!curr)
-        return result;
+        return { };
 
     LogicalSelectionOffsetCaches childCache(*this, cache);
 
+    GapRects result;
     for (bool sawSelectionEnd = false; curr && !sawSelectionEnd; curr = curr->nextSiblingBox()) {
         HighlightState childState = curr->selectionState();
         if (childState == HighlightState::Both || childState == HighlightState::End)

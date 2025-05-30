@@ -46,9 +46,8 @@ namespace WebCore {
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ScrollingTreeStickyNode);
 
 ScrollingTreeStickyNode::ScrollingTreeStickyNode(ScrollingTree& scrollingTree, ScrollingNodeID nodeID)
-    : ScrollingTreeNode(scrollingTree, ScrollingNodeType::Sticky, nodeID)
+    : ScrollingTreeViewportConstrainedNode(scrollingTree, ScrollingNodeType::Sticky, nodeID)
 {
-    scrollingTree.fixedOrStickyNodeAdded(*this);
 }
 
 ScrollingTreeStickyNode::~ScrollingTreeStickyNode() = default;
@@ -74,7 +73,17 @@ void ScrollingTreeStickyNode::dumpProperties(TextStream& ts, OptionSet<Scrolling
         ts.dumpProperty("layer top left"_s, layerTopLeft());
 }
 
-FloatPoint ScrollingTreeStickyNode::computeLayerPosition() const
+FloatPoint ScrollingTreeStickyNode::computeClippingLayerPosition() const
+{
+    if (!hasViewportClippingLayer()) {
+        ASSERT_NOT_REACHED();
+        return { };
+    }
+
+    return computeLayerPosition();
+}
+
+FloatPoint ScrollingTreeStickyNode::computeAnchorLayerPosition() const
 {
     FloatSize offsetFromStickyAncestors;
     auto computeLayerPositionForScrollingNode = [&](ScrollingTreeNode& scrollingNode) {
@@ -86,7 +95,7 @@ FloatPoint ScrollingTreeStickyNode::computeLayerPosition() const
             constrainingRect.move(overflowScrollingNode->scrollDeltaSinceLastCommit());
         }
         constrainingRect.move(-offsetFromStickyAncestors);
-        return m_constraints.layerPositionForConstrainingRect(constrainingRect);
+        return m_constraints.anchorLayerPositionForConstrainingRect(constrainingRect);
     };
 
     for (RefPtr ancestor = parent(); ancestor; ancestor = ancestor->parent()) {
@@ -115,7 +124,7 @@ FloatPoint ScrollingTreeStickyNode::computeLayerPosition() const
 
 FloatSize ScrollingTreeStickyNode::scrollDeltaSinceLastCommit() const
 {
-    auto layerPosition = computeLayerPosition();
+    auto layerPosition = hasViewportClippingLayer() ? computeClippingLayerPosition() : computeAnchorLayerPosition();
     return layerPosition - m_constraints.layerPositionAtLastLayout();
 }
 

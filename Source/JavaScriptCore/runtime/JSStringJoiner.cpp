@@ -108,7 +108,7 @@ static inline String joinStrings(const JSStringJoiner::Entries& strings, std::sp
 
     std::span<OutputCharacterType> data;
     String result = StringImpl::tryCreateUninitialized(joinedLength, data);
-    if (UNLIKELY(result.isNull()))
+    if (result.isNull()) [[unlikely]]
         return result;
 
     unsigned size = strings.size();
@@ -171,11 +171,12 @@ static inline String joinStrings(JSGlobalObject* globalObject, const WriteBarrie
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    ASSERT(joinedLength);
+    if (!joinedLength)
+        return emptyString();
 
     std::span<OutputCharacterType> data;
     String result = StringImpl::tryCreateUninitialized(joinedLength, data);
-    if (UNLIKELY(result.isNull())) {
+    if (result.isNull()) [[unlikely]] {
         throwOutOfMemoryError(globalObject, scope);
         return { };
     }
@@ -237,7 +238,7 @@ JSValue JSStringJoiner::joinImpl(JSGlobalObject* globalObject)
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    if (UNLIKELY(m_hasOverflowed)) {
+    if (m_hasOverflowed) [[unlikely]] {
         throwOutOfMemoryError(globalObject, scope);
         return { };
     }
@@ -259,7 +260,7 @@ JSValue JSStringJoiner::joinImpl(JSGlobalObject* globalObject)
             result = joinStrings<UChar>(m_strings, m_separator.span16(), length);
     }
 
-    if (UNLIKELY(result.isNull())) {
+    if (result.isNull()) [[unlikely]] {
         throwOutOfMemoryError(globalObject, scope);
         return { };
     }
@@ -278,7 +279,7 @@ JSValue JSOnlyStringsJoiner::joinImpl(JSGlobalObject* globalObject, const WriteB
     CheckedInt32 separatorLength = m_separator.length();
     CheckedInt32 totalSeparatorsLength = separatorLength * (CheckedInt32(length) - 1);
     CheckedInt32 totalLength = totalSeparatorsLength + m_accumulatedStringsLength;
-    if (UNLIKELY(totalLength.hasOverflowed())) {
+    if (totalLength.hasOverflowed()) [[unlikely]] {
         throwOutOfMemoryError(globalObject, scope);
         return { };
     }

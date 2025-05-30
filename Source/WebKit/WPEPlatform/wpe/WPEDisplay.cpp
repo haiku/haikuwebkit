@@ -59,6 +59,7 @@ struct _WPEDisplayPrivate {
     HashMap<String, bool> extensionsMap;
     GRefPtr<WPEBufferDMABufFormats> preferredDMABufFormats;
     GRefPtr<WPEKeymap> keymap;
+    GRefPtr<WPEClipboard> clipboard;
     GRefPtr<WPESettings> settings;
     WPEAvailableInputDevices availableInputDevices;
 };
@@ -364,28 +365,53 @@ gpointer wpe_display_get_egl_display(WPEDisplay* display, GError** error)
 /**
  * wpe_display_get_keymap:
  * @display: a #WPEDisplay
- * @error: return location for error or %NULL to ignore
  *
  * Get the #WPEKeymap of @display
  *
  * As a fallback, a #WPEKeymapXKB for the pc105 "US" layout is returned if the actual display
  * implementation does not provide a keymap itself.
  *
- * Returns: (transfer none): a #WPEKeymap or %NULL in case of error
+ * Returns: (transfer none): a #WPEKeymap
  */
-WPEKeymap* wpe_display_get_keymap(WPEDisplay* display, GError** error)
+WPEKeymap* wpe_display_get_keymap(WPEDisplay* display)
 {
     g_return_val_if_fail(WPE_IS_DISPLAY(display), nullptr);
 
-    auto* wpeDisplayClass = WPE_DISPLAY_GET_CLASS(display);
-    if (!wpeDisplayClass->get_keymap) {
-        auto* priv = display->priv;
+    auto* priv = display->priv;
+    if (!priv->keymap) {
+        auto* wpeDisplayClass = WPE_DISPLAY_GET_CLASS(display);
+        if (wpeDisplayClass->get_keymap)
+            priv->keymap = wpeDisplayClass->get_keymap(display);
+
         if (!priv->keymap)
             priv->keymap = adoptGRef(wpe_keymap_xkb_new());
-        return priv->keymap.get();
     }
+    return priv->keymap.get();
+}
 
-    return wpeDisplayClass->get_keymap(display, error);
+/**
+ * wpe_display_get_clipboard:
+ * @display: a #WPEDisplay
+ *
+ * Get the #WPEClipboard of @display. If the platform doesn't
+ * support clipboard, a local #WPEClipboard is created.
+ *
+ * Returns: (transfer none): a #WPEClipboard
+ */
+WPEClipboard* wpe_display_get_clipboard(WPEDisplay* display)
+{
+    g_return_val_if_fail(WPE_IS_DISPLAY(display), nullptr);
+
+    auto* priv = display->priv;
+    if (!priv->clipboard) {
+        auto* wpeDisplayClass = WPE_DISPLAY_GET_CLASS(display);
+        if (wpeDisplayClass->get_clipboard)
+            priv->clipboard = wpeDisplayClass->get_clipboard(display);
+
+        if (!priv->clipboard)
+            priv->clipboard = adoptGRef(wpe_clipboard_new(display));
+    }
+    return priv->clipboard.get();
 }
 
 /**

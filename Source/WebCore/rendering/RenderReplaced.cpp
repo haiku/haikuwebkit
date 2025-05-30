@@ -47,10 +47,12 @@
 #include "RenderElementInlines.h"
 #include "RenderFlexibleBox.h"
 #include "RenderFragmentedFlow.h"
+#include "RenderHTMLCanvas.h"
 #include "RenderHighlight.h"
 #include "RenderImage.h"
 #include "RenderLayer.h"
 #include "RenderLayoutState.h"
+#include "RenderObjectInlines.h"
 #include "RenderStyleInlines.h"
 #include "RenderStyleSetters.h"
 #include "RenderTheme.h"
@@ -114,6 +116,19 @@ void RenderReplaced::styleDidChange(StyleDifference diff, const RenderStyle* old
         intrinsicSizeChanged();
 }
 
+static void issueFullRepaintOnSizeChangeIfNeeded(RenderReplaced& renderer)
+{
+    auto shouldRepaintOnSizeChange = [&] {
+        if (is<RenderHTMLCanvas>(renderer))
+            return true;
+        if (auto* renderImage = dynamicDowncast<RenderImage>(renderer); renderImage && !is<RenderMedia>(*renderImage) && !renderImage->isShowingMissingOrImageError())
+            return true;
+        return false;
+    };
+    if (shouldRepaintOnSizeChange())
+        renderer.repaint();
+}
+
 void RenderReplaced::layout()
 {
     StackStats::LayoutCheckPoint layoutCheckPoint;
@@ -132,12 +147,13 @@ void RenderReplaced::layout()
     addVisualEffectOverflow();
     updateLayerTransform();
     invalidateBackgroundObscurationStatus();
-
     repainter.repaintAfterLayout();
     clearNeedsLayout();
 
-    if (replacedContentRect() != oldContentRect)
+    if (replacedContentRect() != oldContentRect) {
         setPreferredLogicalWidthsDirty(true);
+        issueFullRepaintOnSizeChangeIfNeeded(*this);
+    }
 }
 
 void RenderReplaced::intrinsicSizeChanged()
@@ -514,7 +530,7 @@ LayoutRect RenderReplaced::replacedContentRect(const LayoutSize& intrinsicSize) 
         finalRect.setSize(finalRect.size().fitToAspectRatio(intrinsicSize, objectFit == ObjectFit::Cover ? AspectRatioFitGrow : AspectRatioFitShrink));
         if (objectFit != ObjectFit::ScaleDown || finalRect.width() <= intrinsicSize.width())
             break;
-        FALLTHROUGH;
+        [[fallthrough]];
     case ObjectFit::None:
         finalRect.setSize(intrinsicSize);
         break;

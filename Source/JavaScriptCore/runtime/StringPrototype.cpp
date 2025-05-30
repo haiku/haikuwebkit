@@ -270,7 +270,7 @@ NEVER_INLINE void substituteBackreferencesSlow(StringBuilder& result, StringView
 inline void substituteBackreferencesInline(StringBuilder& result, const String& replacement, StringView source, const int* ovector, RegExp* reg)
 {
     size_t i = replacement.find('$');
-    if (UNLIKELY(i != notFound))
+    if (i != notFound) [[unlikely]]
         return substituteBackreferencesSlow(result, replacement, source, ovector, reg, i);
 
     result.append(replacement);
@@ -397,7 +397,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncCharAt, (JSGlobalObject* globalObject, C
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
     auto* thisString = thisValue.toString(globalObject);
     RETURN_IF_EXCEPTION(scope, { });
@@ -423,7 +423,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncCharCodeAt, (JSGlobalObject* globalObjec
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
     auto* thisString = thisValue.toString(globalObject);
     RETURN_IF_EXCEPTION(scope, { });
@@ -460,7 +460,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncCodePointAt, (JSGlobalObject* globalObje
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     String string = thisValue.toWTFString(globalObject);
@@ -490,7 +490,7 @@ static EncodedJSValue stringIndexOfImpl(JSGlobalObject* globalObject, CallFrame*
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     JSValue a0 = callFrame->argument(0);
@@ -550,7 +550,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncLastIndexOf, (JSGlobalObject* globalObje
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     JSValue a0 = callFrame->argument(0);
@@ -595,7 +595,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncSlice, (JSGlobalObject* globalObject, Ca
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
     JSString* string = thisValue.toString(globalObject);
     RETURN_IF_EXCEPTION(scope, encodedJSValue());
@@ -689,7 +689,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncSplitFast, (JSGlobalObject* globalObject
         RELEASE_AND_RETURN(scope, JSValue::encode(constructArray(globalObject, static_cast<ArrayAllocationProfile*>(nullptr), result)));
     }
 
-    if (LIKELY(limit == 0xFFFFFFFFu && !globalObject->isHavingABadTime())) {
+    if (limit == 0xFFFFFFFFu && !globalObject->isHavingABadTime()) [[likely]] {
         if (auto* immutableButterfly = vm.stringSplitCache.get(input, separator)) {
             Structure* arrayStructure = globalObject->originalArrayStructureForIndexingType(CopyOnWriteArrayWithContiguous);
             return JSValue::encode(JSArray::createWithButterfly(vm, nullptr, arrayStructure, immutableButterfly->toButterfly()));
@@ -705,12 +705,12 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncSplitFast, (JSGlobalObject* globalObject
             return constructEmptyArray(globalObject, nullptr);
 
         unsigned resultSize = result.size();
-        if (LIKELY(limit == 0xFFFFFFFFu && !globalObject->isHavingABadTime() && resultSize < MIN_SPARSE_ARRAY_INDEX)) {
+        if (limit == 0xFFFFFFFFu && !globalObject->isHavingABadTime() && resultSize < MIN_SPARSE_ARRAY_INDEX) [[likely]] {
             bool makeAtomStringsArray = resultSize < atomStringsArrayLimit;
             Structure* immutableButterflyStructure = makeAtomStringsArray ? vm.immutableButterflyOnlyAtomStringsStructure.get() : vm.immutableButterflyStructure(CopyOnWriteArrayWithContiguous);
 
             auto* newButterfly = JSImmutableButterfly::tryCreate(vm, immutableButterflyStructure, resultSize);
-            if (UNLIKELY(!newButterfly)) {
+            if (!newButterfly) [[unlikely]] {
                 throwOutOfMemoryError(globalObject, scope);
                 return { };
             }
@@ -774,12 +774,12 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncSplitFast, (JSGlobalObject* globalObject
         // Zero limt/input length handled in steps 9/11 respectively, above.
         ASSERT(resultSize);
 
-        if (LIKELY(limit == 0xFFFFFFFFu && !globalObject->isHavingABadTime() && resultSize < MIN_SPARSE_ARRAY_INDEX)) {
+        if (limit == 0xFFFFFFFFu && !globalObject->isHavingABadTime() && resultSize < MIN_SPARSE_ARRAY_INDEX) [[likely]] {
             bool makeAtomStringsArray = resultSize < atomStringsArrayLimit;
             Structure* immutableButterflyStructure = makeAtomStringsArray ? vm.immutableButterflyOnlyAtomStringsStructure.get() : vm.immutableButterflyStructure(CopyOnWriteArrayWithContiguous);
 
             auto* newButterfly = JSImmutableButterfly::tryCreate(vm, immutableButterflyStructure, resultSize);
-            if (UNLIKELY(!newButterfly)) {
+            if (!newButterfly) [[unlikely]] {
                 throwOutOfMemoryError(globalObject, scope);
                 return { };
             }
@@ -861,7 +861,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncSubstr, (JSGlobalObject* globalObject, C
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
     unsigned len;
     JSString* jsString = nullptr;
@@ -905,7 +905,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncSubstring, (JSGlobalObject* globalObject
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     JSString* jsString = thisValue.toString(globalObject);
@@ -914,7 +914,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncSubstring, (JSGlobalObject* globalObject
     JSValue a0 = callFrame->argument(0);
     JSValue a1 = callFrame->argument(1);
 
-    if (LIKELY(a0.isInt32() && (a1.isUndefined() || a1.isInt32())))
+    if (a0.isInt32() && (a1.isUndefined() || a1.isInt32())) [[likely]]
         RELEASE_AND_RETURN(scope, JSValue::encode(stringSubstring(globalObject, jsString, a0.asInt32(), a1.isUndefined() ? std::nullopt : std::optional<int32_t>(a1.asInt32()))));
 
     int len = jsString->length();
@@ -953,7 +953,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncToLowerCase, (JSGlobalObject* globalObje
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     JSString* sVal = thisValue.toString(globalObject);
@@ -963,7 +963,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncToLowerCase, (JSGlobalObject* globalObje
         auto view = sVal->view(globalObject);
         auto scanQuickly = [&](auto span) ALWAYS_INLINE_LAMBDA {
             for (auto character : span) {
-                if (UNLIKELY(!isASCII(character) || isASCIIUpper(character)))
+                if (!isASCII(character) || isASCIIUpper(character)) [[unlikely]]
                     return false;
             }
             return true;
@@ -989,7 +989,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncToUpperCase, (JSGlobalObject* globalObje
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     JSString* sVal = thisValue.toString(globalObject);
@@ -999,7 +999,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncToUpperCase, (JSGlobalObject* globalObje
         auto view = sVal->view(globalObject);
         auto scanQuickly = [&](auto span) ALWAYS_INLINE_LAMBDA {
             for (auto character : span) {
-                if (UNLIKELY(!isASCII(character) || isASCIILower(character)))
+                if (!isASCII(character) || isASCIILower(character)) [[unlikely]]
                     return false;
             }
             return true;
@@ -1029,7 +1029,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncLocaleCompare, (JSGlobalObject* globalOb
 
     // 1. Let O be RequireObjectCoercible(this value).
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope, "String.prototype.localeCompare requires that |this| not be null or undefined"_s);
 
     // 2. Let S be ToString(O).
@@ -1068,7 +1068,7 @@ static EncodedJSValue toLocaleCase(JSGlobalObject* globalObject, CallFrame* call
 
     // 1. Let O be RequireObjectCoercible(this value).
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     // 2. Let S be ToString(O).
@@ -1170,7 +1170,7 @@ static inline JSValue trimString(JSGlobalObject* globalObject, JSValue thisValue
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwTypeError(globalObject, scope);
     String str = thisValue.toWTFString(globalObject);
     RETURN_IF_EXCEPTION(scope, { });
@@ -1226,7 +1226,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncStartsWith, (JSGlobalObject* globalObjec
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     String stringToSearchIn = thisValue.toWTFString(globalObject);
@@ -1260,7 +1260,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncEndsWith, (JSGlobalObject* globalObject,
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     String stringToSearchIn = thisValue.toWTFString(globalObject);
@@ -1311,7 +1311,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncIncludes, (JSGlobalObject* globalObject,
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     String stringToSearchIn = thisValue.toWTFString(globalObject);
@@ -1357,7 +1357,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncIterator, (JSGlobalObject* globalObject,
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
     JSString* string = thisValue.toString(globalObject);
     RETURN_IF_EXCEPTION(scope, encodedJSValue());
@@ -1436,7 +1436,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncNormalize, (JSGlobalObject* globalObject
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
     JSString* string = thisValue.toString(globalObject);
     RETURN_IF_EXCEPTION(scope, { });
@@ -1494,7 +1494,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncIsWellFormed, (JSGlobalObject* globalObj
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     // Latin-1 characters do not have surrogates.
@@ -1515,7 +1515,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncToWellFormed, (JSGlobalObject* globalObj
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
 
     // Latin-1 characters do not have surrogates.
@@ -1586,7 +1586,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncAt, (JSGlobalObject* globalObject, CallF
     auto scope = DECLARE_THROW_SCOPE(vm);
 
     JSValue thisValue = callFrame->thisValue();
-    if (UNLIKELY(!checkObjectCoercible(thisValue)))
+    if (!checkObjectCoercible(thisValue)) [[unlikely]]
         return throwVMTypeError(globalObject, scope);
     auto* thisString = thisValue.toString(globalObject);
     RETURN_IF_EXCEPTION(scope, { });
@@ -1595,7 +1595,7 @@ JSC_DEFINE_HOST_FUNCTION(stringProtoFuncAt, (JSGlobalObject* globalObject, CallF
     RETURN_IF_EXCEPTION(scope, { });
     uint32_t length = view->length();
     JSValue argument0 = callFrame->argument(0);
-    if (LIKELY(argument0.isInt32())) {
+    if (argument0.isInt32()) [[likely]] {
         int32_t i = argument0.asInt32();
         int64_t k = i < 0 ? static_cast<int64_t>(length) + i : i;
         if (k < length && k >= 0)

@@ -24,6 +24,7 @@
 #include "HitTestResult.h"
 
 #include "CachedImage.h"
+#include "ContainerNodeInlines.h"
 #include "DocumentMarkerController.h"
 #include "Editor.h"
 #include "ElementInlines.h"
@@ -39,6 +40,7 @@
 #include "HTMLVideoElement.h"
 #include "ImageOverlay.h"
 #include "LocalFrame.h"
+#include "NodeInlines.h"
 #include "Page.h"
 #include "PseudoElement.h"
 #include "Range.h"

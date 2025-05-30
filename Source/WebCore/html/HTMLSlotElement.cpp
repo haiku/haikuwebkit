@@ -29,6 +29,7 @@
 #include "AXObjectCache.h"
 #include "ElementInlines.h"
 #include "Event.h"
+#include "EventTargetInlines.h"
 #include "EventNames.h"
 #include "HTMLNames.h"
 #include "InspectorInstrumentation.h"
@@ -135,7 +136,7 @@ static void flattenAssignedNodes(Vector<Ref<Node>>& nodes, const HTMLSlotElement
         return;
     }
     for (auto& weakNode : *assignedNodes) {
-        if (UNLIKELY(!weakNode)) {
+        if (!weakNode) [[unlikely]] {
             ASSERT_NOT_REACHED();
             continue;
         }

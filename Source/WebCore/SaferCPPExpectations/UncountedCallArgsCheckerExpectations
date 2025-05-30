@@ -399,7 +399,6 @@ contentextensions/ContentExtensionStyleSheet.cpp
 contentextensions/ContentExtensionsBackend.cpp
 crypto/SubtleCrypto.cpp
 crypto/parameters/CryptoAlgorithmRsaKeyGenParams.h
-css/CSSComputedStyleDeclaration.cpp
 css/CSSCounterStyle.cpp
 css/CSSCounterStyleDescriptors.cpp
 css/CSSCounterStyleRegistry.cpp
@@ -545,7 +544,6 @@ dom/MutationObserverRegistration.cpp
 dom/MutationRecord.cpp
 dom/NamedNodeMap.cpp
 dom/Node.cpp
-dom/Node.h
 dom/NodeIterator.cpp
 dom/NodeList.h
 dom/NodeRareData.h
@@ -944,6 +942,7 @@ page/scrolling/ThreadedScrollingCoordinator.cpp
 page/scrolling/mac/ScrollingCoordinatorMac.mm
 page/scrolling/mac/ScrollingTreeScrollingNodeDelegateMac.mm
 page/text-extraction/TextExtraction.cpp
+page/writing-tools/WritingToolsController.mm
 platform/Cursor.h
 platform/DragImage.cpp
 platform/Length.cpp
@@ -1004,7 +1003,6 @@ platform/graphics/ca/cocoa/PlatformCAAnimationCocoa.mm
 platform/graphics/ca/cocoa/PlatformCALayerCocoa.mm
 platform/graphics/cg/GraphicsContextGLCG.cpp
 platform/graphics/cg/PDFDocumentImage.cpp
-platform/graphics/cocoa/FontCacheCoreText.cpp
 platform/graphics/cocoa/ImageAdapterCocoa.mm
 platform/graphics/cocoa/MediaPlayerCocoa.mm
 platform/graphics/cocoa/SourceBufferParser.cpp
@@ -1115,7 +1113,6 @@ rendering/RenderMeter.cpp
 rendering/RenderMultiColumnFlow.cpp
 rendering/RenderMultiColumnSet.cpp
 rendering/RenderObject.cpp
-rendering/RenderObject.h
 rendering/RenderProgress.cpp
 rendering/RenderQuote.cpp
 rendering/RenderReplaced.cpp
@@ -1124,12 +1121,9 @@ rendering/RenderScrollbarPart.cpp
 rendering/RenderSearchField.cpp
 rendering/RenderSlider.cpp
 rendering/RenderTable.cpp
-rendering/RenderTable.h
 rendering/RenderTableCell.cpp
-rendering/RenderTableCell.h
 rendering/RenderTableRow.cpp
 rendering/RenderTableSection.cpp
-rendering/RenderTableSection.h
 rendering/RenderText.cpp
 rendering/RenderTextControl.cpp
 rendering/RenderTextControlMultiLine.cpp

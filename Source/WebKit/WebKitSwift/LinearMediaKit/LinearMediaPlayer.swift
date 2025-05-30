@@ -139,6 +139,7 @@ enum LinearMediaPlayerErrors: Error {
     var isImmersiveVideo: Bool {
         get { swiftOnlyData.isImmersiveVideo }
         set {
+            Logger.linearMediaPlayer.log("\(#function) \(newValue)")
             swiftOnlyData.isImmersiveVideo = newValue
             // FIXME: Should limit ContentTypePublisher to only publish changes to contentType if we have already created a default entity
             // rather than having to use a isImmersive attribute.
@@ -210,8 +211,9 @@ enum LinearMediaPlayerErrors: Error {
         case .enteringFullscreen, .exitingFullscreen, .fullscreen, .external:
             completionHandler(false, LinearMediaPlayerErrors.invalidStateError)
         case .inline:
-            swiftOnlyData.presentationState = .external
+            contentType = .planar
             swiftOnlyData.fullscreenBehaviorsSubject.send([ .hostContentInline ])
+            swiftOnlyData.presentationState = .external
             contentOverlay = .init(frame: .zero)
             completionHandler(true, nil)
         @unknown default:
@@ -230,6 +232,7 @@ enum LinearMediaPlayerErrors: Error {
             swiftOnlyData.presentationState = .inline
             swiftOnlyData.fullscreenBehaviorsSubject.send(FullscreenBehaviors.default)
             contentOverlay = nil
+            contentType = .none
             completionHandler(true, nil)
         @unknown default:
             fatalError()

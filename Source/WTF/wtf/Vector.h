@@ -23,6 +23,7 @@
 #include <initializer_list>
 #include <limits>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <string.h>
 #include <type_traits>
@@ -54,6 +55,8 @@ namespace WTF {
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(Vector);
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(VectorBuffer);
+
+enum class NulloptBehavior : bool { Ignore, Abort };
 
 template <bool needsDestruction, typename T>
 struct VectorDestructor;
@@ -345,7 +348,7 @@ public:
             newBuffer = static_cast<T*>(Malloc::malloc(sizeToAllocate));
         else {
             newBuffer = static_cast<T*>(Malloc::tryMalloc(sizeToAllocate));
-            if (UNLIKELY(!newBuffer))
+            if (!newBuffer) [[unlikely]]
                 return false;
         }
         m_capacity = sizeToAllocate / sizeof(T);
@@ -734,23 +737,32 @@ public:
     }
 
     template<std::invocable<size_t> Functor>
+    requires (!std::is_same_v<std::invoke_result_t<Functor, size_t>, std::optional<T>>)
     Vector(size_t size, NOESCAPE const Functor& valueGenerator)
     {
         reserveInitialCapacity(size);
 
         asanSetInitialBufferSizeTo(size);
 
-        if constexpr (std::is_same_v<std::invoke_result_t<Functor, size_t>, std::optional<T>>) {
-            for (size_t i = 0; i < size; ++i) {
-                if (auto item = valueGenerator(i))
-                    unsafeAppendWithoutCapacityCheck(WTFMove(*item));
-                else
-                    return;
-            }
-        } else {
-            for (size_t i = 0; i < size; ++i)
-                unsafeAppendWithoutCapacityCheck(valueGenerator(i));
+        for (size_t i = 0; i < size; ++i)
+            unsafeAppendWithoutCapacityCheck(valueGenerator(i));
+    }
+
+    template<std::invocable<size_t> Functor>
+    requires (std::is_same_v<std::invoke_result_t<Functor, size_t>, std::optional<T>>)
+    Vector(size_t size, NOESCAPE const Functor& valueGenerator, NulloptBehavior nulloptBehavior = NulloptBehavior::Ignore)
+    {
+        reserveInitialCapacity(size);
+
+        asanSetInitialBufferSizeTo(size);
+
+        for (size_t i = 0; i < size; ++i) {
+            if (auto item = valueGenerator(i))
+                unsafeAppendWithoutCapacityCheck(WTFMove(*item));
+            else if (nulloptBehavior == NulloptBehavior::Abort)
+                break;
         }
+        shrinkToFit();
     }
 
     template<typename U, size_t Extent>
@@ -834,13 +846,13 @@ public:
 
     T& at(size_t i) LIFETIME_BOUND
     {
-        if (UNLIKELY(i >= size()))
+        if (i >= size()) [[unlikely]]
             OverflowHandler::overflowed();
         return Base::buffer()[i];
     }
     const T& at(size_t i) const LIFETIME_BOUND
     {
-        if (UNLIKELY(i >= size()))
+        if (i >= size()) [[unlikely]]
             OverflowHandler::overflowed();
         return Base::buffer()[i];
     }
@@ -935,7 +947,7 @@ public:
 
     void removeLast()
     {
-        if (UNLIKELY(isEmpty()))
+        if (isEmpty()) [[unlikely]]
             OverflowHandler::overflowed();
         shrink(size() - 1); 
     }
@@ -1115,8 +1127,15 @@ Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>& Vector<T, inlin
 
 template<typename T, size_t inlineCapacity, typename OverflowHandler, size_t minCapacity, typename Malloc>
 inline Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::Vector(Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>&& other)
-    : Base(WTFMove(other))
 {
+    // Make it possible to copy inline buffer.
+    asanSetBufferSizeToFullCapacity();
+    other.asanSetBufferSizeToFullCapacity();
+
+    Base::adopt(std::forward<decltype(other)>(other));
+
+    asanSetInitialBufferSizeTo(m_size);
+    other.asanSetInitialBufferSizeTo(other.m_size);
 }
 
 template<typename T, size_t inlineCapacity, typename OverflowHandler, size_t minCapacity, typename Malloc>
@@ -1129,9 +1148,10 @@ inline Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>& Vector<T
     asanSetBufferSizeToFullCapacity();
     other.asanSetBufferSizeToFullCapacity();
 
-    Base::adopt(WTFMove(other));
+    Base::adopt(std::forward<decltype(other)>(other));
 
     asanSetInitialBufferSizeTo(m_size);
+    other.asanSetInitialBufferSizeTo(other.m_size);
 
     return *this;
 }
@@ -1250,7 +1270,7 @@ NEVER_INLINE T* Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>:
     if (ptr < begin() || ptr >= end()) {
         bool success = expandCapacity<action>(newMinCapacity);
         if constexpr (action == FailureAction::Report) {
-            if (UNLIKELY(!success))
+            if (!success) [[unlikely]]
                 return nullptr;
         }
         UNUSED_PARAM(success);
@@ -1259,7 +1279,7 @@ NEVER_INLINE T* Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>:
     size_t index = ptr - begin();
     bool success = expandCapacity<action>(newMinCapacity);
     if constexpr (action == FailureAction::Report) {
-        if (UNLIKELY(!success))
+        if (!success) [[unlikely]]
             return nullptr;
     }
     UNUSED_PARAM(success);
@@ -1273,7 +1293,7 @@ inline U* Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::expan
     static_assert(action == FailureAction::Crash || action == FailureAction::Report);
     bool success = expandCapacity<action>(newMinCapacity);
     if constexpr (action == FailureAction::Report) {
-        if (UNLIKELY(!success))
+        if (!success) [[unlikely]]
             return nullptr;
     }
     UNUSED_PARAM(success);
@@ -1320,7 +1340,7 @@ bool Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::growImpl(s
     if (size > capacity()) {
         bool success = expandCapacity<failureAction>(size);
         if constexpr (failureAction == FailureAction::Report) {
-            if (UNLIKELY(!success))
+            if (!success) [[unlikely]]
                 return false;
         }
     }
@@ -1391,7 +1411,7 @@ bool Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::reserveCap
 
     bool success = Base::template allocateBuffer<action>(newCapacity);
     if constexpr (action == FailureAction::Report) {
-        if (UNLIKELY(!success)) {
+        if (!success) [[unlikely]] {
             asanSetInitialBufferSizeTo(size());
             return false;
         }
@@ -1480,7 +1500,7 @@ ALWAYS_INLINE bool Vector<T, inlineCapacity, OverflowHandler, minCapacity, Mallo
     if (newSize > capacity()) {
         dataPtr = expandCapacity<action>(newSize, dataPtr);
         if constexpr (action == FailureAction::Report) {
-            if (UNLIKELY(!dataPtr))
+            if (!dataPtr) [[unlikely]]
                 return false;
         }
         ASSERT(begin());
@@ -1553,7 +1573,7 @@ bool Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::appendSlow
     auto ptr = const_cast<std::remove_cvref_t<U>*>(std::addressof(value));
     ptr = expandCapacity<action>(size() + 1, ptr);
     if constexpr (action == FailureAction::Report) {
-        if (UNLIKELY(!ptr))
+        if (!ptr) [[unlikely]]
             return false;
     }
     ASSERT(begin());
@@ -1573,7 +1593,7 @@ bool Vector<T, inlineCapacity, OverflowHandler, minCapacity, Malloc>::constructA
 
     bool success = expandCapacity<action>(size() + 1);
     if constexpr (action == FailureAction::Report) {
-        if (UNLIKELY(!success))
+        if (!success) [[unlikely]]
             return false;
     }
     UNUSED_PARAM(success);
@@ -2107,8 +2127,8 @@ inline Vector<typename CopyOrMoveToVectorResult<Collection>::Type> moveToVector(
 
 template<typename T, size_t inlineCapacity = 0> static bool insertInUniquedSortedVector(Vector<T, inlineCapacity>& vector, const T& value)
 {
-    auto it = std::lower_bound(vector.begin(), vector.end(), value);
-    if (UNLIKELY(it != vector.end() && *it == value))
+    auto it = std::ranges::lower_bound(vector, value);
+    if (it != vector.end() && *it == value) [[unlikely]]
         return false;
     vector.insert(it - vector.begin(), value);
     return true;
@@ -2119,6 +2139,7 @@ template<typename T, size_t Extent> Vector(std::span<const T, Extent>) -> Vector
 
 } // namespace WTF
 
+using WTF::NulloptBehavior;
 using WTF::UnsafeVectorOverflow;
 using WTF::Vector;
 using WTF::copyToVector;

@@ -644,10 +644,10 @@ private:
             break;
         case Three:
             std::bit_cast<Value**>(std::bit_cast<char*>(this) + offset)[2] = valueToClone.childrenArray()[2];
-            FALLTHROUGH;
+            [[fallthrough]];
         case Two:
             std::bit_cast<Value**>(std::bit_cast<char*>(this) + offset)[1] = valueToClone.childrenArray()[1];
-            FALLTHROUGH;
+            [[fallthrough]];
         case One:
             std::bit_cast<Value**>(std::bit_cast<char*>(this) + offset)[0] = valueToClone.childrenArray()[0];
             break;
@@ -666,11 +666,11 @@ private:
         case Jump:
         case Oops:
         case EntrySwitch:
-            if (UNLIKELY(numArgs))
+            if (numArgs) [[unlikely]]
                 badKind(kind, numArgs);
             return Zero;
         case Return:
-            if (UNLIKELY(numArgs > 1))
+            if (numArgs > 1) [[unlikely]]
                 badKind(kind, numArgs);
             return numArgs ? One : Zero;
         case Identity:
@@ -722,7 +722,7 @@ private:
         case VectorExtaddPairwise:
         case VectorDupElement:
         case VectorRelaxedTruncSat:
-            if (UNLIKELY(numArgs != 1))
+            if (numArgs != 1) [[unlikely]]
                 badKind(kind, numArgs);
             return One;
         case Add:
@@ -790,7 +790,7 @@ private:
         case VectorShiftByVector:
         case VectorRelaxedSwizzle:
         case Stitch:
-            if (UNLIKELY(numArgs != 2))
+            if (numArgs != 2) [[unlikely]]
                 badKind(kind, numArgs);
             return Two;
         case Select:
@@ -798,7 +798,7 @@ private:
         case VectorRelaxedMAdd:
         case VectorRelaxedNMAdd:
         case VectorRelaxedLaneSelect:
-            if (UNLIKELY(numArgs != 3))
+            if (numArgs != 3) [[unlikely]]
                 badKind(kind, numArgs);
             return Three;
         default:

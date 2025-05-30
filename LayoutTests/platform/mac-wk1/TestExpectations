@@ -965,6 +965,9 @@ accessibility/mac/intersection-with-selection-range.html [ Skip ]
 # Skipping because AccessibilityUIElement::columns() is not supported on WK1.
 accessibility/dynamic-table-row-column-indices.html [ Skip ]
 
+# Skipping because AccessibilityUIElement::boundsForRangeWithPagePosition() is not supported on WK1.
+accessibility/mac/bounds-for-range-centered.html [ Skip ]
+
 # DOM paste access requests are not implemented in WebKit1.
 editing/async-clipboard/clipboard-change-data-while-reading.html [ Skip ]
 editing/async-clipboard/clipboard-do-not-read-text-from-platform-if-text-changes.html [ Skip ]
@@ -1224,6 +1227,8 @@ imported/w3c/web-platform-tests/cookie-store [ Skip ]
 imported/w3c/web-platform-tests/cookies/partitioned-cookies/partitioned-cookies.tentative.https.html [ Skip ]
 http/tests/cookies/cookie-store-get-secure.https.html [ Skip ]
 http/tests/cookies/cookie-store-set-secure.https.html [ Skip ]
+cookies/cookie-store-register-eventlistener-from-file-protocol.html [ Skip ]
+cookies/cookie-store-start-listening-for-change-with-null-url-crash.html [ Skip ]
 
 # View Transitions API is disabled in WK1.
 imported/w3c/web-platform-tests/css/css-view-transitions [ Skip ]
@@ -3040,8 +3045,6 @@ webkit.org/b/255555 imported/w3c/web-platform-tests/xhr/request-content-length.a
 
 webkit.org/b/287713 printing/background-clip-text.html [ Skip ]
 
-webkit.org/b/287833 [ Release arm64 ] imported/w3c/web-platform-tests/css/css-masking/clip-path/animations/clip-path-animation-font-size-mixed-change.html [ Pass ImageOnlyFailure ]
-
 webkit.org/b/287902 imported/w3c/web-platform-tests/css/css-grid/alignment/self-baseline/grid-self-baseline-changes-grid-area-size-012.html [ Pass ImageOnlyFailure ]
 
 webkit.org/b/287914 imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/moving-between-documents/after-prepare-createHTMLDocument-parse-error-external-classic.html [ Pass Failure ]
@@ -3103,3 +3106,10 @@ webkit.org/b/291207 fullscreen/full-screen-document-background-color.html [ Pass
 
 webkit.org/b/132766 fast/hidpi/filters-reference.html [ ImageOnlyFailure ]
 
+# webkit.org/b/292214 REGRESSION(293890@main): [macOS wk1] Two tests are constant failures in imported/w3c/web-platform-tests/svg/painting with image diff (flaky in EWS)
+imported/w3c/web-platform-tests/svg/painting/marker-005.svg [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/svg/painting/marker-006.svg [ ImageOnlyFailure ]
+
+webkit.org/b/292218 [ Sonoma Release ] media/media-source/media-source-video-renders.html [ Pass ImageOnlyFailure Timeout ]
+
+webkit.org/b/292395 [ Debug ] fast/picture/viewport-resize.html [ Pass Crash ]

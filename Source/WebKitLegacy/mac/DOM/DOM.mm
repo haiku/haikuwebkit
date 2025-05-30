@@ -37,7 +37,9 @@
 #import "DOMPrivate.h"
 #import "DOMRangeInternal.h"
 #import <JavaScriptCore/APICast.h>
+#import <WebCore/BoundaryPointInlines.h>
 #import <WebCore/CachedImage.h>
+#import <WebCore/ContainerNodeInlines.h>
 #import <WebCore/DragImage.h>
 #import <WebCore/FocusController.h>
 #import <WebCore/FontCascade.h>
@@ -54,6 +56,7 @@
 #import <WebCore/Page.h>
 #import <WebCore/Range.h>
 #import <WebCore/RenderImage.h>
+#import <WebCore/RenderObjectInlines.h>
 #import <WebCore/RenderStyleInlines.h>
 #import <WebCore/RenderView.h>
 #import <WebCore/ScriptController.h>

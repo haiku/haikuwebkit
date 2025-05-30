@@ -963,6 +963,7 @@ void RTCPeerConnection::updateNegotiationNeededFlag(std::optional<uint32_t> even
         if (!connection.protectedBackend()->isNegotiationNeeded(*eventId))
             return;
 
+        connection.m_negotiationNeededEventId = std::nullopt;
         connection.dispatchEvent(Event::create(eventNames().negotiationneededEvent, Event::CanBubble::No, Event::IsCancelable::No));
     });
 }
@@ -1004,7 +1005,7 @@ static inline ExceptionOr<PeerConnectionBackend::CertificateInformation> certifi
     auto scope = DECLARE_CATCH_SCOPE(vm);
 
     auto parametersConversionResult = convertDictionary<RTCPeerConnection::CertificateParameters>(lexicalGlobalObject, value.get());
-    if (UNLIKELY(parametersConversionResult.hasException(scope))) {
+    if (parametersConversionResult.hasException(scope)) [[unlikely]] {
         scope.clearException();
         return Exception { ExceptionCode::TypeError, "Unable to read certificate parameters"_s };
     }

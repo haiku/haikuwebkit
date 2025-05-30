@@ -48,6 +48,7 @@
 #import "LocalFrameView.h"
 #import "Logging.h"
 #import "MouseEventWithHitTestResults.h"
+#import "NodeInlines.h"
 #import "Page.h"
 #import "Pasteboard.h"
 #import "PlatformEventFactoryMac.h"
@@ -58,7 +59,7 @@
 #import "RenderLayerScrollableArea.h"
 #import "RenderListBox.h"
 #import "RenderView.h"
-#import "RenderWidget.h"
+#import "RenderWidgetInlines.h"
 #import "ScreenProperties.h"
 #import "ScrollAnimator.h"
 #import "ScrollLatchingController.h"
@@ -403,7 +404,7 @@ bool EventHandler::passSubframeEventToSubframe(MouseEventWithHitTestResults& eve
         if (subframe.page()->dragController().didInitiateDrag())
             return false;
 #endif
-        FALLTHROUGH;
+        [[fallthrough]];
     case NSEventTypeMouseMoved:
         // Since we're passing in currentNSEvent() here, we can call
         // handleMouseMoveEvent() directly, since the save/restore of

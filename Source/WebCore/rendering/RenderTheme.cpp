@@ -287,7 +287,7 @@ void RenderTheme::adjustStyle(RenderStyle& style, const Element* element, const 
     if (!isAppearanceAllowedForAllElements(appearance)
         && !userAgentAppearanceStyle
         && autoAppearance == StyleAppearance::None
-        && !style.borderAndBackgroundEqual(RenderStyle::defaultStyle()))
+        && !style.borderAndBackgroundEqual(RenderStyle::defaultStyleSingleton()))
         style.setUsedAppearance(StyleAppearance::None);
 
     if (!style.hasUsedAppearance())
@@ -862,7 +862,7 @@ bool RenderTheme::paint(const RenderBox& box, const PaintInfo& paintInfo, const 
     
     auto appearance = box.style().usedAppearance();
 
-    if (UNLIKELY(!canPaint(paintInfo, box.settings(), appearance)))
+    if (!canPaint(paintInfo, box.settings(), appearance)) [[unlikely]]
         return false;
 
     float deviceScaleFactor = box.document().deviceScaleFactor();

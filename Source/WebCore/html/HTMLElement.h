@@ -22,15 +22,8 @@
 
 #pragma once
 
-#include "ColorTypes.h"
-#include "Document.h"
 #include "HTMLNames.h"
-#include "InputMode.h"
 #include "StyledElement.h"
-
-#if ENABLE(AUTOCAPITALIZE)
-#include "Autocapitalize.h"
-#endif
 
 namespace WebCore {
 
@@ -41,10 +34,16 @@ class HTMLButtonElement;
 class HTMLFormElement;
 class VisibleSelection;
 
+struct SRGBADescriptor;
+template<typename, typename> struct BoundedGammaEncoded;
+template<typename T> using SRGBA = BoundedGammaEncoded<T, SRGBADescriptor>;
+
 struct SimpleRange;
 struct TextRecognitionResult;
 
+enum class AutocapitalizeType : uint8_t;
 enum class EnterKeyHint : uint8_t;
+enum class InputMode : uint8_t;
 enum class PageIsEditable : bool;
 enum class ToggleState : bool;
 
@@ -161,7 +160,7 @@ public:
     ExceptionOr<bool> togglePopover(std::optional<Variant<WebCore::HTMLElement::TogglePopoverOptions, bool>>);
 
     const AtomString& popover() const;
-    void setPopover(const AtomString& value) { setAttributeWithoutSynchronization(HTMLNames::popoverAttr, value); };
+    void setPopover(const AtomString& value);
     void popoverAttributeChanged(const AtomString& value);
 
     bool isValidCommandType(const CommandType) override;

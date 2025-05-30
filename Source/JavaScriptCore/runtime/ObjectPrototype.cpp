@@ -94,7 +94,7 @@ JSC_DEFINE_HOST_FUNCTION(objectProtoFuncValueOf, (JSGlobalObject* globalObject, 
 {
     JSValue thisValue = callFrame->thisValue().toThis(globalObject, ECMAMode::strict());
     JSObject* valueObj = thisValue.toObject(globalObject);
-    if (UNLIKELY(!valueObj))
+    if (!valueObj) [[unlikely]]
         return encodedJSValue();
     Integrity::auditStructureID(valueObj->structureID());
     return JSValue::encode(valueObj);
@@ -156,7 +156,7 @@ JSC_DEFINE_HOST_FUNCTION(objectProtoFuncIsPrototypeOf, (JSGlobalObject* globalOb
     JSValue thisValue = callFrame->thisValue().toThis(globalObject, ECMAMode::strict());
     JSObject* thisObj = thisValue.toObject(globalObject);
     EXCEPTION_ASSERT(!!scope.exception() == !thisObj);
-    if (UNLIKELY(!thisObj))
+    if (!thisObj) [[unlikely]]
         return encodedJSValue();
 
     JSValue v = asObject(callFrame->argument(0))->getPrototype(vm, globalObject);

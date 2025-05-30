@@ -119,7 +119,7 @@ static_assert(!((enumToUnderlyingType(PseudoId::AfterLastInternalPseudoId) - 1) 
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(PseudoStyleCache);
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(RenderStyle);
 
-RenderStyle& RenderStyle::defaultStyle()
+RenderStyle& RenderStyle::defaultStyleSingleton()
 {
     static NeverDestroyed<RenderStyle> style { CreateDefaultStyle };
     return style;
@@ -127,12 +127,12 @@ RenderStyle& RenderStyle::defaultStyle()
 
 RenderStyle RenderStyle::create()
 {
-    return clone(defaultStyle());
+    return clone(defaultStyleSingleton());
 }
 
 std::unique_ptr<RenderStyle> RenderStyle::createPtr()
 {
-    return clonePtr(defaultStyle());
+    return clonePtr(defaultStyleSingleton());
 }
 
 std::unique_ptr<RenderStyle> RenderStyle::createPtrWithRegisteredInitialValues(const Style::CustomPropertyRegistry& registry)
@@ -191,7 +191,7 @@ RenderStyle::RenderStyle(CreateDefaultStyleTag)
     m_inheritedFlags.visibility = static_cast<unsigned>(initialVisibility());
     m_inheritedFlags.textAlign = static_cast<unsigned>(initialTextAlign());
     m_inheritedFlags.textTransform = initialTextTransform().toRaw();
-    m_inheritedFlags.textDecorationLines = initialTextDecorationLine().toRaw();
+    m_inheritedFlags.textDecorationLineInEffect = initialTextDecorationLine().toRaw();
     m_inheritedFlags.cursor = static_cast<unsigned>(initialCursor());
 #if ENABLE(CURSOR_VISIBILITY)
     m_inheritedFlags.cursorVisibility = static_cast<unsigned>(initialCursorVisibility());
@@ -717,7 +717,7 @@ inline bool RenderStyle::changeAffectsVisualOverflow(const RenderStyle& other) c
     };
 
     auto textDecorationsDiffer = [&]() {
-        if (m_inheritedFlags.textDecorationLines != other.m_inheritedFlags.textDecorationLines)
+        if (m_inheritedFlags.textDecorationLineInEffect != other.m_inheritedFlags.textDecorationLineInEffect)
             return true;
 
         if (m_nonInheritedData.ptr() != other.m_nonInheritedData.ptr() && m_nonInheritedData->rareData.ptr() != other.m_nonInheritedData->rareData.ptr()) {
@@ -1265,6 +1265,9 @@ static bool rareDataChangeRequiresRepaint(const StyleRareNonInheritedData& first
         // Don't return true; keep looking for another change.
     }
 
+    if (first.textDecorationStyle != second.textDecorationStyle || first.textDecorationColor != second.textDecorationColor || first.textDecorationThickness != second.textDecorationThickness)
+        return true;
+
     return false;
 }
 
@@ -1294,7 +1297,7 @@ inline static bool changedCustomPaintWatchedProperty(const RenderStyle& a, const
     auto& propertiesA = aData.customPaintWatchedProperties;
     auto& propertiesB = bData.customPaintWatchedProperties;
 
-    if (UNLIKELY(!propertiesA.isEmpty() || !propertiesB.isEmpty())) {
+    if (!propertiesA.isEmpty() || !propertiesB.isEmpty()) [[unlikely]] {
         // FIXME: We should not need to use ComputedStyleExtractor here.
         ComputedStyleExtractor extractor((Element*) nullptr);
 
@@ -1384,16 +1387,11 @@ bool RenderStyle::changeRequiresRepaintIfText(const RenderStyle& other, OptionSe
     if (m_inheritedData->color != other.m_inheritedData->color)
         return true;
 
-    if (m_inheritedFlags.textDecorationLines != other.m_inheritedFlags.textDecorationLines
+    // Note that we may reach this function with mutated text-decoration values (e.g. thickness), when visual overflow recompute is not required.
+    // see RenderStyle::changeAffectsVisualOverflow
+    if (m_inheritedFlags.textDecorationLineInEffect != other.m_inheritedFlags.textDecorationLineInEffect
         || m_nonInheritedFlags.textDecorationLine != other.m_nonInheritedFlags.textDecorationLine)
         return true;
-
-    if (m_nonInheritedData->rareData.ptr() != other.m_nonInheritedData->rareData.ptr()) {
-        if (m_nonInheritedData->rareData->textDecorationStyle != other.m_nonInheritedData->rareData->textDecorationStyle
-            || m_nonInheritedData->rareData->textDecorationColor != other.m_nonInheritedData->rareData->textDecorationColor
-            || m_nonInheritedData->rareData->textDecorationThickness != other.m_nonInheritedData->rareData->textDecorationThickness)
-            return true;
-    }
 
     if (m_rareInheritedData.ptr() != other.m_rareInheritedData.ptr()) {
         if (m_rareInheritedData->textDecorationSkipInk != other.m_rareInheritedData->textDecorationSkipInk
@@ -1549,7 +1547,7 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
             changingProperties.m_properties.set(CSSPropertyTextAlign);
         if (first.textTransform != second.textTransform)
             changingProperties.m_properties.set(CSSPropertyTextTransform);
-        if (first.textDecorationLines != second.textDecorationLines)
+        if (first.textDecorationLineInEffect != second.textDecorationLineInEffect)
             changingProperties.m_properties.set(CSSPropertyTextDecorationLine);
         if (first.cursor != second.cursor)
             changingProperties.m_properties.set(CSSPropertyCursor);
@@ -2736,11 +2734,6 @@ AnimationList& RenderStyle::ensureTransitions()
     if (!transitions)
         transitions = AnimationList::create();
     return *transitions;
-}
-
-const FontCascade& RenderStyle::fontCascade() const
-{
-    return m_inheritedData->fontData->fontCascade;
 }
 
 const FontMetrics& RenderStyle::metricsOfPrimaryFont() const
@@ -4078,7 +4071,7 @@ void RenderStyle::InheritedFlags::dumpDifferences(TextStream& ts, const Inherite
     LOG_IF_DIFFERENT_WITH_CAST(TextWrapStyle, textWrapStyle);
 
     LOG_RAW_OPTIONSET_IF_DIFFERENT(TextTransform, textTransform);
-    LOG_RAW_OPTIONSET_IF_DIFFERENT(TextDecorationLine, textDecorationLines);
+    LOG_RAW_OPTIONSET_IF_DIFFERENT(TextDecorationLine, textDecorationLineInEffect);
 
     LOG_IF_DIFFERENT_WITH_CAST(PointerEvents, pointerEvents);
     LOG_IF_DIFFERENT_WITH_CAST(Visibility, visibility);

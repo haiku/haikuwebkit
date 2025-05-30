@@ -37,6 +37,7 @@
 #include "WebPage.h"
 #include <WebCore/AddEventListenerOptions.h>
 #include <WebCore/Color.h>
+#include <WebCore/ContainerNodeInlines.h>
 #include <WebCore/DocumentFullscreen.h>
 #include <WebCore/EventNames.h>
 #include <WebCore/HTMLVideoElement.h>
@@ -47,6 +48,7 @@
 #include <WebCore/Quirks.h>
 #include <WebCore/RenderImage.h>
 #include <WebCore/RenderLayerBacking.h>
+#include <WebCore/RenderObjectInlines.h>
 #include <WebCore/RenderView.h>
 #include <WebCore/Settings.h>
 #include <WebCore/TypedElementDescendantIteratorInlines.h>
@@ -68,12 +70,6 @@ static WebCore::IntRect screenRectOfContents(WebCore::Element* element)
     ASSERT(element);
     if (!element)
         return { };
-
-    if (element->renderer() && element->renderer()->hasLayer() && element->renderer()->enclosingLayer()->isComposited()) {
-        WebCore::FloatQuad contentsBox = static_cast<WebCore::FloatRect>(element->renderer()->enclosingLayer()->backing()->compositedBounds());
-        contentsBox = element->renderer()->localToAbsoluteQuad(contentsBox);
-        return element->renderer()->view().frameView().contentsToScreen(contentsBox.enclosingBoundingBox());
-    }
 
     return element->screenRect();
 }

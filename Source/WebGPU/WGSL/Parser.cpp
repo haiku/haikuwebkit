@@ -850,7 +850,7 @@ Result<AST::Structure::Ref> Parser<Lexer>::parseStructure(AST::Attribute::List&&
 
         // https://www.w3.org/TR/WGSL/#limits
         static constexpr unsigned maximumNumberOfStructMembers = 1023;
-        if (UNLIKELY(members.size() > maximumNumberOfStructMembers))
+        if (members.size() > maximumNumberOfStructMembers) [[unlikely]]
             FAIL(makeString("struct cannot have more than "_s, String::number(maximumNumberOfStructMembers), " members"_s));
 
         if (current().type == TokenType::Comma)
@@ -886,15 +886,15 @@ Result<AST::Expression::Ref> Parser<Lexer>::parseTypeName()
     START_PARSE();
 
     auto scope = SetForScope(m_compositeTypeDepth, m_compositeTypeDepth + 1);
-    //
+
     // https://www.w3.org/TR/WGSL/#limits
     static constexpr unsigned maximumCompositeTypeNestingDepth = 15;
-    if (UNLIKELY(m_compositeTypeDepth > maximumCompositeTypeNestingDepth))
+    if (m_compositeTypeDepth > maximumCompositeTypeNestingDepth) [[unlikely]]
         FAIL(makeString("composite type may not be nested more than "_s, String::number(maximumCompositeTypeNestingDepth), " levels"_s));
 
     if (current().type == TokenType::Identifier) {
         PARSE(name, Identifier);
-        // FIXME: remove the special case for array
+        // FIXME: <rdar://150365759> remove the special case for array
         if (name == "array"_s)
             return parseArrayType();
         return parseTypeNameAfterIdentifier(WTFMove(name), _startOfElementPosition);
@@ -1107,7 +1107,7 @@ Result<AST::Function::Ref> Parser<Lexer>::parseFunction(AST::Attribute::List&& a
 
         // https://www.w3.org/TR/WGSL/#limits
         static constexpr unsigned maximumNumberOfFunctionParameters = 255;
-        if (UNLIKELY(parameters.size() > maximumNumberOfFunctionParameters))
+        if (parameters.size() > maximumNumberOfFunctionParameters) [[unlikely]]
             FAIL(makeString("function cannot have more than "_s, String::number(maximumNumberOfFunctionParameters), " parameters"_s));
 
         if (current().type == TokenType::Comma)
@@ -1157,7 +1157,7 @@ Result<AST::Statement::Ref> Parser<Lexer>::parseStatement()
         return { compoundStmt };
     }
     case TokenType::KeywordIf: {
-        // FIXME: Handle attributes attached to statement.
+        // FIXME: <rdar://150364837> Handle attributes attached to statement.
         return parseIfStatement();
     }
     case TokenType::KeywordReturn: {
@@ -1197,19 +1197,19 @@ Result<AST::Statement::Ref> Parser<Lexer>::parseStatement()
         return { variableUpdatingStatement };
     }
     case TokenType::KeywordFor: {
-        // FIXME: Handle attributes attached to statement.
+        // FIXME: <rdar://150364837> Handle attributes attached to statement.
         return parseForStatement();
     }
     case TokenType::KeywordLoop: {
-        // FIXME: Handle attributes attached to statement.
+        // FIXME: <rdar://150364837> Handle attributes attached to statement.
         return parseLoopStatement();
     }
     case TokenType::KeywordSwitch: {
-        // FIXME: Handle attributes attached to statement.
+        // FIXME: <rdar://150364837> Handle attributes attached to statement.
         return parseSwitchStatement();
     }
     case TokenType::KeywordWhile: {
-        // FIXME: Handle attributes attached to statement.
+        // FIXME: <rdar://150364837> Handle attributes attached to statement.
         return parseWhileStatement();
     }
     case TokenType::KeywordBreak: {
@@ -1326,7 +1326,7 @@ Result<AST::Statement::Ref> Parser<Lexer>::parseForStatement()
             break;
         }
         case TokenType::Identifier: {
-            // FIXME: this should be should also include function calls
+            // FIXME: <rdar://150364959> this should be should also include function calls
             PARSE(variableUpdatingStatement, VariableUpdatingStatement);
             maybeInitializer = &variableUpdatingStatement.get();
             break;
@@ -1344,7 +1344,7 @@ Result<AST::Statement::Ref> Parser<Lexer>::parseForStatement()
     CONSUME_TYPE(Semicolon);
 
     if (current().type != TokenType::ParenRight) {
-        // FIXME: this should be should also include function calls
+        // FIXME: <rdar://150364959> this should be should also include function calls
         if (current().type != TokenType::Identifier)
             FAIL("Invalid for-loop update clause"_s);
 
@@ -1469,7 +1469,7 @@ Result<AST::Statement::Ref> Parser<Lexer>::parseSwitchStatement()
 
         // https://www.w3.org/TR/WGSL/#limits
         static constexpr unsigned maximumNumberOfCaseSelectors = 1023;
-        if (UNLIKELY(selectorCount > maximumNumberOfCaseSelectors))
+        if (selectorCount > maximumNumberOfCaseSelectors) [[unlikely]]
             FAIL(makeString("switch statement cannot have more than "_s, String::number(maximumNumberOfCaseSelectors), " case selector values"_s));
     }
     CONSUME_TYPE(BraceRight);
@@ -1721,7 +1721,6 @@ Result<AST::Expression::Ref> Parser<Lexer>::parsePostfixExpression(AST::Expressi
             consume();
             PARSE(arrayIndex, Expression);
             CONSUME_TYPE(BracketRight);
-            // FIXME: Replace with NODE_REF(...)
             SourceSpan span(startPosition, m_currentPosition);
             expr = m_builder.construct<AST::IndexAccessExpression>(span, WTFMove(expr), WTFMove(arrayIndex));
             break;
@@ -1730,7 +1729,6 @@ Result<AST::Expression::Ref> Parser<Lexer>::parsePostfixExpression(AST::Expressi
         case TokenType::Period: {
             consume();
             PARSE(fieldName, Identifier);
-            // FIXME: Replace with NODE_REF(...)
             SourceSpan span(startPosition, m_currentPosition);
             expr = m_builder.construct<AST::FieldAccessExpression>(span, WTFMove(expr), WTFMove(fieldName));
             break;
@@ -1764,7 +1762,7 @@ Result<AST::Expression::Ref> Parser<Lexer>::parsePrimaryExpression()
     }
     case TokenType::Identifier: {
         PARSE(ident, Identifier);
-        // FIXME: remove the special case for array
+        // FIXME: <rdar://150365759> remove the special case for array
         if (ident == "array"_s) {
             PARSE(arrayType, ArrayType);
             PARSE(arguments, ArgumentExpressionList);

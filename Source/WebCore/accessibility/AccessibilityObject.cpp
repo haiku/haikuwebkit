@@ -41,6 +41,7 @@
 #include "AccessibilityTable.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
+#include "ContainerNodeInlines.h"
 #include "CustomElementDefaultARIA.h"
 #include "DOMTokenList.h"
 #include "DocumentInlines.h"
@@ -86,6 +87,7 @@
 #include "RenderListItem.h"
 #include "RenderListMarker.h"
 #include "RenderMenuList.h"
+#include "RenderObjectInlines.h"
 #include "RenderText.h"
 #include "RenderTextControl.h"
 #include "RenderTheme.h"
@@ -344,6 +346,21 @@ bool AccessibilityObject::accessibleNameDerivesFromContent() const
     }
     
     return true;
+}
+
+// https://github.com/w3c/aria/pull/1860
+// If accname cannot be derived from content or author, accname can be derived on permitted roles
+// from the first descendant element node with a heading role.
+bool AccessibilityObject::accessibleNameDerivesFromHeading() const
+{
+    switch (roleValue()) {
+    case AccessibilityRole::ApplicationAlertDialog:
+    case AccessibilityRole::ApplicationDialog:
+    case AccessibilityRole::DocumentArticle:
+        return true;
+    default:
+        return false;
+    }
 }
 
 String AccessibilityObject::computedLabel()
@@ -610,7 +627,7 @@ void AccessibilityObject::insertChild(AccessibilityObject& child, unsigned index
         }
     }
 
-    if (UNLIKELY(is<HTMLAreaElement>(child.node()))) {
+    if (is<HTMLAreaElement>(child.node())) [[unlikely]] {
         // Despite the DOM parent for <area> elements being <map>, we expose <area> elements as children
         // of the <img> using the <map>. This provides a better experience for AT users, e.g. a screenreader
         // would hear "image map" or "group" plus the image description, then the links, which provides the
@@ -977,8 +994,8 @@ std::optional<SimpleRange> AccessibilityObject::findTextRange(const Vector<Strin
     if (found) {
         // If the search started within a text control, ensure that the result is inside that element.
         if (element() && element()->isTextField()) {
-            if (!found->startContainer().isDescendantOrShadowDescendantOf(element())
-                || !found->endContainer().isDescendantOrShadowDescendantOf(element()))
+            if (!found->startContainer().isShadowIncludingDescendantOf(element())
+                || !found->endContainer().isShadowIncludingDescendantOf(element()))
                 return std::nullopt;
         }
     }
@@ -1898,7 +1915,7 @@ bool AccessibilityObject::dependsOnTextUnderElement() const
         // Native popup buttons should not use their descendant's text as a title. That value is retrieved through stringValue().
         if (hasTagName(selectTag))
             break;
-        FALLTHROUGH;
+        [[fallthrough]];
     case AccessibilityRole::Summary:
     case AccessibilityRole::Button:
     case AccessibilityRole::ToggleButton:
@@ -2001,7 +2018,7 @@ int AccessibilityObject::lineForPosition(const VisiblePosition& visiblePos) cons
 
     // If the position is not in the same editable region as this AX object, return -1.
     Node* containerNode = visiblePos.deepEquivalent().containerNode();
-    if (!containerNode->containsIncludingShadowDOM(node()) && !node()->containsIncludingShadowDOM(containerNode))
+    if (!containerNode->isShadowIncludingInclusiveAncestorOf(node()) && !node()->isShadowIncludingInclusiveAncestorOf(containerNode))
         return -1;
 
     int lineCount = -1;

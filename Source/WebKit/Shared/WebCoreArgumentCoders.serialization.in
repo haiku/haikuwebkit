@@ -4458,6 +4458,7 @@ header: <WebCore/ScrollingStateNode.h>
     RelatedOverflowScrollingNodes
     LayoutConstraintData
     ViewportConstraints
+    ViewportAnchorLayer
     OverflowScrollingNode
     KeyboardScrollData
     OverlayScrollbarsEnabled
@@ -4632,6 +4633,12 @@ header: <WebCore/TextManipulationController.h>
     WebCore::TextManipulationControllerManipulationFailure::Type type;
 };
 
+header: <WebCore/TextManipulationControllerManipulationFailure.h>
+[CustomHeader] struct WebCore::TextManipulationControllerManipulationResult {
+    Vector<WebCore::TextManipulationControllerManipulationFailure> failures;
+    Vector<uint64_t> succeededIndexes;
+};
+
 struct WebCore::BackgroundFetchInformation {
     WebCore::ServiceWorkerRegistrationIdentifier registrationIdentifier;
     String identifier;
@@ -4675,6 +4682,7 @@ struct WebCore::ImageResource {
     String label;
 };
 
+header: <WebCore/SharedStringHash.h>
 using WebCore::SharedStringHash = uint32_t
 
 struct WebCore::FourCC {
@@ -7276,6 +7284,8 @@ header: <WebCore/ScrollingConstraints.h>
     WebCore::FloatRect containingBlockRect();
     WebCore::FloatRect stickyBoxRect();
     WebCore::FloatSize stickyOffsetAtLastLayout();
+    WebCore::FloatSize anchorLayerOffsetAtLastLayout();
+    WebCore::FloatRect viewportRectAtLastLayout();
     WebCore::FloatPoint layerPositionAtLastLayout();
 };
 

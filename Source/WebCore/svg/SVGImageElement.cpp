@@ -25,9 +25,11 @@
 #include "SVGImageElement.h"
 
 #include "CSSPropertyNames.h"
+#include "ContainerNodeInlines.h"
 #include "HTMLParserIdioms.h"
 #include "LegacyRenderSVGImage.h"
 #include "LegacyRenderSVGResource.h"
+#include "NodeInlines.h"
 #include "NodeName.h"
 #include "RenderImageResource.h"
 #include "RenderSVGImage.h"

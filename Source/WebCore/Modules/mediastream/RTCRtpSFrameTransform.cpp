@@ -30,6 +30,7 @@
 
 #include "ContextDestructionObserverInlines.h"
 #include "CryptoKeyRaw.h"
+#include "EventTargetInlines.h"
 #include "JSDOMConvertBufferSource.h"
 #include "JSDOMPromiseDeferred.h"
 #include "JSRTCEncodedAudioFrame.h"
@@ -233,7 +234,7 @@ ExceptionOr<void> RTCRtpSFrameTransform::createStreams()
         auto scope = DECLARE_THROW_SCOPE(globalObject.vm());
 
         auto frameConversionResult = convert<IDLUnion<IDLArrayBuffer, IDLArrayBufferView, IDLInterface<RTCEncodedAudioFrame>, IDLInterface<RTCEncodedVideoFrame>>>(globalObject, value);
-        if (UNLIKELY(frameConversionResult.hasException(scope)))
+        if (frameConversionResult.hasException(scope)) [[unlikely]]
             return Exception { ExceptionCode::ExistingExceptionError };
         auto frame = frameConversionResult.releaseReturnValue();
 

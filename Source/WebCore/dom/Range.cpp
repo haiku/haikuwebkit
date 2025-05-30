@@ -25,7 +25,9 @@
 #include "config.h"
 #include "Range.h"
 
+#include "BoundaryPointInlines.h"
 #include "Comment.h"
+#include "ContainerNodeInlines.h"
 #include "CustomElementReactionQueue.h"
 #include "DOMRect.h"
 #include "DOMRectList.h"
@@ -967,7 +969,7 @@ void Range::nodeWillBeRemoved(Node& node)
 
 bool Range::parentlessNodeMovedToNewDocumentAffectsRange(Node& node)
 {
-    return node.containsIncludingShadowDOM(&m_start.container());
+    return node.isShadowIncludingInclusiveAncestorOf(&m_start.container());
 }
 
 void Range::updateRangeForParentlessNodeMovedToNewDocument(Node& node)

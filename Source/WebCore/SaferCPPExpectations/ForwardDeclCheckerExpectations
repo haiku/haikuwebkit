@@ -44,7 +44,6 @@ bindings/js/WindowProxy.h
 bridge/objc/objc_runtime.h
 crypto/cocoa/CryptoAlgorithmEd25519Cocoa.cpp
 crypto/cocoa/CryptoKeyOKPCocoa.cpp
-css/CSSCustomPropertyValue.cpp
 css/CSSFontSelector.h
 css/CSSImageValue.cpp
 css/CSSStyleProperties.h
@@ -106,7 +105,6 @@ platform/PODRedBlackTree.h
 platform/PlatformStrategies.h
 platform/Scrollbar.h
 platform/ThreadGlobalData.h
-platform/ThreadTimers.h
 platform/cocoa/TelephoneNumberDetectorCocoa.cpp
 platform/graphics/ImageBufferContextSwitcher.h
 platform/graphics/StringTruncator.cpp
@@ -123,10 +121,8 @@ platform/network/cocoa/CredentialCocoa.h
 platform/network/cocoa/ProtectionSpaceCocoa.h
 rendering/AccessibilityRegionContext.h
 rendering/BreakLines.h
-rendering/ImageQualityController.h
 rendering/RenderLayerBacking.cpp
 rendering/RenderLayerCompositor.cpp
-rendering/RenderLineBoxList.h
 rendering/RenderTableCellInlines.h
 rendering/RenderText.cpp
 rendering/RenderTextLineBoxes.h

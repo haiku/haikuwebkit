@@ -114,6 +114,7 @@
 #include "RenderLayerScrollableArea.h"
 #include "RenderMarquee.h"
 #include "RenderMultiColumnFlow.h"
+#include "RenderObjectInlines.h"
 #include "RenderReplica.h"
 #include "RenderSVGForeignObject.h"
 #include "RenderSVGHiddenContainer.h"
@@ -489,7 +490,7 @@ void RenderLayer::removeChild(RenderLayer& oldChild)
     oldChild.setPreviousSibling(nullptr);
     oldChild.setNextSibling(nullptr);
     oldChild.m_parent = nullptr;
-    
+
     oldChild.updateDescendantDependentFlags();
     if (oldChild.m_hasVisibleContent || oldChild.m_hasVisibleDescendant)
         dirtyAncestorChainVisibleDescendantStatus();
@@ -567,6 +568,8 @@ void RenderLayer::removeOnlyThisLayer()
         removeChild(*current);
         m_parent->addChild(*current, nextSib);
         current->setRepaintStatus(RepaintStatus::NeedsFullRepaint);
+        if (isComposited())
+            current->computeRepaintRectsIncludingDescendants();
         current = next;
     }
 
@@ -645,7 +648,7 @@ bool RenderLayer::setIsNormalFlowOnly(bool isNormalFlowOnly)
 {
     if (isNormalFlowOnly == m_isNormalFlowOnly)
         return false;
-    
+
     m_isNormalFlowOnly = isNormalFlowOnly;
 
     if (auto* p = parent())
@@ -790,11 +793,11 @@ void RenderLayer::rebuildZOrderLists()
 {
     ASSERT(layerListMutationAllowed());
     ASSERT(isDirtyStackingContext());
-    
+
     OptionSet<Compositing> childDirtyFlags;
     rebuildZOrderLists(m_posZOrderList, m_negZOrderList, childDirtyFlags);
     m_zOrderListsDirty = false;
-    
+
     bool hasNegativeZOrderList = m_negZOrderList && m_negZOrderList->size();
     // Having negative z-order lists affect whether a compositing layer needs a foreground layer.
     // Ideally we'd only trigger this when having z-order children changes, but we blow away the old z-order
@@ -843,14 +846,15 @@ void RenderLayer::rebuildZOrderLists(std::unique_ptr<Vector<RenderLayer*>>& posZ
         if (topLayerLayers.size()) {
             if (!posZOrderList)
                 posZOrderList = makeUnique<Vector<RenderLayer*>>();
-
-            CheckedPtr<RenderLayer> viewTransitionLayer;
-            if (posZOrderList->size() && posZOrderList->last()->renderer().style().pseudoElementType() == PseudoId::ViewTransition)
-                viewTransitionLayer = posZOrderList->takeLast();
-
             posZOrderList->appendVector(topLayerLayers);
-            if (viewTransitionLayer)
-                posZOrderList->append(viewTransitionLayer.get());
+        }
+    }
+
+    if (isRenderViewLayer() && renderer().document().hasViewTransitionPseudoElementTree()) {
+        if (WeakPtr viewTransitionRoot = renderer().view().viewTransitionRoot(); viewTransitionRoot && viewTransitionRoot->hasLayer()) {
+            if (!posZOrderList)
+                posZOrderList = makeUnique<Vector<RenderLayer*>>();
+            posZOrderList->append(viewTransitionRoot->layer());
         }
     }
 }
@@ -892,7 +896,7 @@ void RenderLayer::setWasOmittedFromZOrderTree()
 void RenderLayer::collectLayers(std::unique_ptr<Vector<RenderLayer*>>& positiveZOrderList, std::unique_ptr<Vector<RenderLayer*>>& negativeZOrderList, OptionSet<Compositing>& accumulatedDirtyFlags)
 {
     ASSERT(!descendantDependentFlagsAreDirty());
-    if (establishesTopLayer())
+    if (establishesTopLayer() || renderer().isViewTransitionRoot())
         return;
 
     bool isStacking = isStackingContext();
@@ -1020,7 +1024,7 @@ bool RenderLayer::paintsWithFilters() const
     return !m_backing->canCompositeFilters();
 }
 
-bool RenderLayer::requiresFullLayerImageForFilters() const 
+bool RenderLayer::requiresFullLayerImageForFilters() const
 {
     if (!paintsWithFilters())
         return false;
@@ -1159,8 +1163,21 @@ bool RenderLayer::ancestorLayerPositionStateChanged(OptionSet<UpdateLayerPositio
 
 #define LAYER_POSITIONS_ASSERT_ENABLED ASSERT_ENABLED || ENABLE(CONJECTURE_ASSERT)
 #if ASSERT_ENABLED
+#if ENABLE(TREE_DEBUGGING)
+#define LAYER_POSITIONS_ASSERT(assertion, ...) do { \
+    if (!(assertion)) [[unlikely]] \
+        showLayerPositionTree(root(), this); \
+    ASSERT(assertion, __VA_ARGS__); \
+} while (0)
+#define LAYER_POSITIONS_ASSERT_IMPLIES(condition, assertion) do { \
+    if (condition && !(assertion)) [[unlikely]] \
+        showLayerPositionTree(root(), this); \
+    ASSERT_IMPLIES(condition, assertion); \
+} while (0)
+#else
 #define LAYER_POSITIONS_ASSERT(assertion, ...) ASSERT(assertion, __VA_ARGS__)
 #define LAYER_POSITIONS_ASSERT_IMPLIES(condition, assertion) ASSERT_IMPLIES(condition, assertion)
+#endif // ENABLE(TREE_DEBUGGING)
 #elif ENABLE(CONJECTURE_ASSERT)
 #define LAYER_POSITIONS_ASSERT(assertion, ...) CONJECTURE_ASSERT(assertion, __VAR_ARGS__)
 #define LAYER_POSITIONS_ASSERT_IMPLIES(condition, assertion) CONJECTURE_ASSERT_IMPLIES(condition, assertion)
@@ -1261,17 +1278,14 @@ void RenderLayer::recursiveUpdateLayerPositions(OptionSet<UpdateLayerPositionsFl
     }
 
     auto repaintIfNecessary = [&](bool checkForRepaint) {
-        if (isVisibilityHiddenOrOpacityZero() || !isSelfPaintingLayer()) {
-            LAYER_POSITIONS_ASSERT_IMPLIES(mode == Verify, !repaintRects());
-            clearRepaintRects();
-            return;
-        }
-
         if (mode == Verify) {
             WeakPtr repaintContainer = renderer().containerForRepaint().renderer.get();
-            LAYER_POSITIONS_ASSERT(repaintRects());
-            LAYER_POSITIONS_ASSERT(m_repaintContainer == repaintContainer);
-            LAYER_POSITIONS_ASSERT(*repaintRects() == renderer().rectsForRepaintingAfterLayout(repaintContainer.get(), RepaintOutlineBounds::Yes));
+            LAYER_POSITIONS_ASSERT(repaintRects() || (isVisibilityHiddenOrOpacityZero() || !isSelfPaintingLayer()));
+            if (isVisibilityHiddenOrOpacityZero())
+                LAYER_POSITIONS_ASSERT(!m_repaintContainer);
+            else
+                LAYER_POSITIONS_ASSERT(m_repaintContainer == repaintContainer);
+            LAYER_POSITIONS_ASSERT_IMPLIES(repaintRects(), *repaintRects() == renderer().rectsForRepaintingAfterLayout(repaintContainer.get(), RepaintOutlineBounds::Yes));
             return;
         }
 
@@ -1463,7 +1477,10 @@ void RenderLayer::computeRepaintRects(const RenderLayerModelObject* repaintConta
     else
         setRepaintRects(renderer().rectsForRepaintingAfterLayout(repaintContainer, RepaintOutlineBounds::Yes));
 
-    m_repaintContainer = repaintContainer;
+    if (isVisibilityHiddenOrOpacityZero())
+        m_repaintContainer = nullptr;
+    else
+        m_repaintContainer = repaintContainer;
 }
 
 void RenderLayer::computeRepaintRectsIncludingDescendants()
@@ -3200,7 +3217,7 @@ void RenderLayer::clipToRect(GraphicsContext& context, GraphicsContextStateSaver
                 break;
         
             if (layer->renderer().hasNonVisibleOverflow() && layer->renderer().style().hasBorderRadius() && ancestorLayerIsInContainingBlockChain(*layer)) {
-                LayoutRect adjustedClipRect = LayoutRect(toLayoutPoint(layer->offsetFromAncestor(paintingInfo.rootLayer, AdjustForColumns)), layer->size());
+                auto adjustedClipRect = LayoutRect { LayoutPoint { layer->offsetFromAncestor(paintingInfo.rootLayer, AdjustForColumns) }, layer->rendererBorderBoxRect().size() };
                 adjustedClipRect.move(paintingInfo.subpixelOffset);
                 auto borderShape = BorderShape::shapeForBorderRect(layer->renderer().style(), adjustedClipRect);
                 if (borderShape.innerShapeContains(paintingInfo.paintDirtyRect))
@@ -6847,8 +6864,13 @@ static void outputLayerPositionTreeLegend(TextStream& stream)
     stream.nextLine();
 }
 
-void outputLayerPositionTreeRecursive(TextStream& stream, const WebCore::RenderLayer& layer, unsigned depth)
+void outputLayerPositionTreeRecursive(TextStream& stream, const WebCore::RenderLayer& layer, unsigned depth, const WebCore::RenderLayer* mark)
 {
+    if (&layer == mark)
+        stream << "*"_s;
+    else
+        stream << " "_s;
+
     stream << (layer.m_layerPositionDirtyBits.contains(WebCore::RenderLayer::LayerPositionUpdates::NeedsPositionUpdate) ? "U"_s : "-"_s);
     stream << (layer.m_layerPositionDirtyBits.contains(WebCore::RenderLayer::LayerPositionUpdates::DescendantNeedsPositionUpdate) ? "D"_s : "-"_s);
     stream << (layer.m_layerPositionDirtyBits.contains(WebCore::RenderLayer::LayerPositionUpdates::AllChildrenNeedPositionUpdate) ? "C"_s : "-"_s);
@@ -6903,15 +6925,15 @@ void outputLayerPositionTreeRecursive(TextStream& stream, const WebCore::RenderL
     stream.nextLine();
 
     for (WebCore::RenderLayer* child = layer.firstChild(); child; child = child->nextSibling())
-        outputLayerPositionTreeRecursive(stream, *child, depth + 1);
+        outputLayerPositionTreeRecursive(stream, *child, depth + 1, mark);
 }
 
-void showLayerPositionTree(const WebCore::RenderLayer* layer)
+void showLayerPositionTree(const WebCore::RenderLayer* root, const WebCore::RenderLayer* mark)
 {
     TextStream stream;
     outputLayerPositionTreeLegend(stream);
-    if (layer)
-        outputLayerPositionTreeRecursive(stream, *layer, 0);
+    if (root)
+        outputLayerPositionTreeRecursive(stream, *root, 0, mark);
 
     WTFLogAlways("%s", stream.release().utf8().data());
 }

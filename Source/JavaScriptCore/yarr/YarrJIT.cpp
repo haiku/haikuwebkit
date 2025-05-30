@@ -4473,7 +4473,7 @@ class YarrGenerator final : public YarrJITInfo {
         YarrOpCode alternativeNextOpCode = YarrOpCode::SimpleNestedAlternativeNext;
         YarrOpCode alternativeEndOpCode = YarrOpCode::SimpleNestedAlternativeEnd;
 
-        if (UNLIKELY(!isSafeToRecurse())) {
+        if (!isSafeToRecurse()) [[unlikely]] {
             m_failureReason = JITFailureReason::ParenthesisNestedTooDeep;
             return;
         }
@@ -4572,7 +4572,7 @@ class YarrGenerator final : public YarrJITInfo {
                 Checked<unsigned, RecordOverflow> checkedOffsetResult(checkedOffset);
                 checkedOffsetResult += lastOp.m_checkAdjust;
 
-                if (UNLIKELY(checkedOffsetResult.hasOverflowed())) {
+                if (checkedOffsetResult.hasOverflowed()) [[unlikely]] {
                     m_failureReason = JITFailureReason::OffsetTooLarge;
                     return;
                 }
@@ -4622,7 +4622,7 @@ class YarrGenerator final : public YarrJITInfo {
     // once, and will never backtrack back into the assertion.
     void opCompileParentheticalAssertion(Checked<unsigned> checkedOffset, PatternTerm* term)
     {
-        if (UNLIKELY(!isSafeToRecurse())) {
+        if (!isSafeToRecurse()) [[unlikely]] {
             m_failureReason = JITFailureReason::ParenthesisNestedTooDeep;
             return;
         }
@@ -4723,7 +4723,7 @@ class YarrGenerator final : public YarrJITInfo {
     // to return the failing result.
     void opCompileBody(PatternDisjunction* disjunction)
     {
-        if (UNLIKELY(!isSafeToRecurse())) {
+        if (!isSafeToRecurse()) [[unlikely]] {
             m_failureReason = JITFailureReason::ParenthesisNestedTooDeep;
             return;
         }
@@ -5257,7 +5257,7 @@ public:
             return;
         }
 
-        if (UNLIKELY(Options::dumpDisassembly() || Options::dumpRegExpDisassembly()))
+        if (Options::dumpDisassembly() || Options::dumpRegExpDisassembly()) [[unlikely]]
             m_disassembler = makeUnique<YarrDisassembler>(this);
 
         if (m_disassembler)
@@ -5426,7 +5426,7 @@ public:
         RELEASE_ASSERT(!m_containsNestedSubpatterns);
 #endif
 
-        if (UNLIKELY(Options::dumpDisassembly() || Options::dumpRegExpDisassembly()))
+        if (Options::dumpDisassembly() || Options::dumpRegExpDisassembly()) [[unlikely]]
             m_disassembler = makeUnique<YarrDisassembler>(this);
 
         if (m_disassembler)
@@ -5964,7 +5964,7 @@ void jitCompile(YarrPattern& pattern, StringView patternString, CharSize charSiz
     YarrGenerator<YarrJITDefaultRegisters>(masm, vm, &codeBlock, jitRegisters, pattern, patternString, charSize, mode, sampleString).compile(codeBlock);
 
     if (auto failureReason = codeBlock.failureReason()) {
-        if (UNLIKELY(Options::dumpCompiledRegExpPatterns())) {
+        if (Options::dumpCompiledRegExpPatterns()) [[unlikely]] {
             pattern.dumpPatternString(WTF::dataFile(), patternString);
             dataLog(" : ");
             dumpCompileFailure(*failureReason);

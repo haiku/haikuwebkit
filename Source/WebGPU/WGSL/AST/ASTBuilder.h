@@ -68,11 +68,11 @@ public:
         constexpr size_t size = sizeof(T);
         constexpr size_t alignedSize = alignSize(size);
         static_assert(alignedSize <= arenaSize);
-        if (UNLIKELY(m_arena.size() < alignedSize))
+        if (m_arena.size() < alignedSize) [[unlikely]]
             allocateArena();
 
 #if ASAN_ENABLED
-        RELEASE_ASSERT(__asan_address_is_poisoned(m_arena.data()));
+        RELEASE_ASSERT(!canPoison() || __asan_address_is_poisoned(m_arena.data()));
         __asan_unpoison_memory_region(m_arena.data(), size);
 #endif
 
@@ -100,6 +100,10 @@ private:
     {
         return (size + sizeof(WTF::AllocAlignmentInteger) - 1) & ~(sizeof(WTF::AllocAlignmentInteger) - 1);
     }
+
+#if ASAN_ENABLED
+    static bool canPoison();
+#endif
 
     void allocateArena();
 

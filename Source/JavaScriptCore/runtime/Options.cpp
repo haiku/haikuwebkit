@@ -592,11 +592,11 @@ static void overrideDefaults()
     Options::numberOfBaselineCompilerThreads() = std::min<unsigned>(3, kernTCSMAwareNumberOfProcessorCores());
     Options::numberOfDFGCompilerThreads() = std::min<unsigned>(3, kernTCSMAwareNumberOfProcessorCores());
     Options::numberOfFTLCompilerThreads() = std::min<unsigned>(3, kernTCSMAwareNumberOfProcessorCores());
-    Options::worklistLoadFactor() = 4;
-    Options::worklistBaselineLoadWeight() = 1;
-    Options::worklistDFGLoadWeight() = 2;
+    Options::worklistLoadFactor() = 20;
+    Options::worklistBaselineLoadWeight() = 2;
+    Options::worklistDFGLoadWeight() = 5;
     // Set the FTL load weight equal to the load-factor so that a new thread is started for each FTL plan
-    Options::worklistFTLLoadWeight() = 4;
+    Options::worklistFTLLoadWeight() = 20;
 #endif
 
 #if OS(LINUX) && CPU(ARM)
@@ -631,6 +631,12 @@ static void overrideDefaults()
     // This is a heuristic because ASAN builds are memory hogs in terms of stack frame usage.
     // So, we need a much larger ReservedZoneSize to allow stack overflow handlers to execute.
     Options::reservedZoneSize() = 3 * Options::reservedZoneSize();
+#endif
+
+#if PLATFORM(IOS_FAMILY)
+    // This is used to mitigate performance regression rdar://150522186.
+    if (Options::usePartialLoopUnrolling())
+        Options::maxPartialLoopUnrollingBodyNodeSize() = 50;
 #endif
 }
 
@@ -721,7 +727,7 @@ static void disableAllSignalHandlerBasedOptions()
 
 void Options::executeDumpOptions()
 {
-    if (LIKELY(!Options::dumpOptions()))
+    if (!Options::dumpOptions()) [[likely]]
         return;
 
     DumpLevel level = static_cast<DumpLevel>(Options::dumpOptions());
@@ -991,6 +997,12 @@ void Options::notifyOptionsChanged()
     if (!Options::useWasmFaultSignalHandler())
         Options::useWasmFastMemory() = false;
 
+    if (Options::dumpOptimizationTracing()) {
+        Options::printEachDFGFTLInlineCall() = true;
+        Options::printEachUnrolledLoop() = true;
+        // FIXME: Should support for OSR exit as well.
+    }
+
 #if CPU(ADDRESS32) || PLATFORM(PLAYSTATION)
     Options::useWasmFastMemory() = false;
 #endif
@@ -1111,7 +1123,7 @@ void Options::finalize()
     // The following should only be done at the end after all options
     // have been initialized.
     assertOptionsAreCoherent();
-    if (UNLIKELY(Options::dumpOptions()))
+    if (Options::dumpOptions()) [[unlikely]]
         executeDumpOptions();
 
 #if USE(LIBPAS)

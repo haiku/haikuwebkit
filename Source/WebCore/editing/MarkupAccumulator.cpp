@@ -172,10 +172,12 @@ static inline void appendCharactersReplacingEntitiesInternal(StringBuilder& resu
     for (size_t i = 0; i < length; ++i) {
         CharacterType character = text[i];
         uint8_t substitution = character < std::size(entityMap) ? entityMap[character] : static_cast<uint8_t>(EntitySubstitutionIndex::Null);
-        if (UNLIKELY(substitution != EntitySubstitutionIndex::Null) && entityMask.contains(*entitySubstitutionList[substitution].mask)) {
-            result.appendSubstring(source, offset + positionAfterLastEntity, i - positionAfterLastEntity);
-            result.append(entitySubstitutionList[substitution].characters);
-            positionAfterLastEntity = i + 1;
+        if (substitution != EntitySubstitutionIndex::Null) [[unlikely]] {
+            if (entityMask.contains(*entitySubstitutionList[substitution].mask)) {
+                result.appendSubstring(source, offset + positionAfterLastEntity, i - positionAfterLastEntity);
+                result.append(entitySubstitutionList[substitution].characters);
+                positionAfterLastEntity = i + 1;
+            }
         }
     }
     result.appendSubstring(source, offset + positionAfterLastEntity, length - positionAfterLastEntity);
@@ -443,10 +445,10 @@ StringBuilder MarkupAccumulator::takeMarkup()
     return std::exchange(m_markup, { });
 }
 
-void MarkupAccumulator::appendAttributeValue(StringBuilder& result, const String& attribute, bool isSerializingHTML)
+void MarkupAccumulator::appendAttributeValue(StringBuilder& result, const String& attribute)
 {
     appendCharactersReplacingEntities(result, attribute, 0, attribute.length(),
-        isSerializingHTML ? EntityMaskInHTMLAttributeValue : EntityMaskInAttributeValue);
+        inXMLFragmentSerialization() ? EntityMaskInAttributeValue : EntityMaskInHTMLAttributeValue);
 }
 
 void MarkupAccumulator::appendCustomAttributes(StringBuilder&, const Element&, Namespaces*)
@@ -510,7 +512,7 @@ void MarkupAccumulator::appendNamespace(StringBuilder& result, const AtomString&
         return;
 
     result.append(' ', xmlnsAtom(), prefix.isEmpty() ? ""_s : ":"_s, prefix, "=\""_s);
-    appendAttributeValue(result, namespaceURI, false);
+    appendAttributeValue(result, namespaceURI);
     result.append('"');
 }
 
@@ -532,7 +534,7 @@ OptionSet<EntityMask> MarkupAccumulator::entityMaskForText(const Text& text) con
         case HTML::noscript:
             if (!isScriptEnabled(*element))
                 break;
-            FALLTHROUGH;
+            [[fallthrough]];
         case HTML::iframe:
         case HTML::noembed:
         case HTML::noframes:
@@ -803,10 +805,10 @@ bool MarkupAccumulator::appendAttribute(StringBuilder& result, const Element& el
         // FIXME: This does not fully match other browsers. Firefox percent-escapes
         // non-ASCII characters for innerHTML.
         auto [resolvedURL, isCreatedByURLReplacement] = resolveURLIfNeeded(element, attribute.value());
-        appendAttributeValue(result, resolvedURL, isSerializingHTML);
+        appendAttributeValue(result, resolvedURL);
         isURLAttributeValueReplaced = isCreatedByURLReplacement == IsCreatedByURLReplacement::Yes;
     } else
-        appendAttributeValue(result, attribute.value(), isSerializingHTML);
+        appendAttributeValue(result, attribute.value());
     result.append('"');
 
     return isURLAttributeValueReplaced;
@@ -847,8 +849,7 @@ void MarkupAccumulator::appendNonElementNode(StringBuilder& result, const Node& 
         result.append("<![CDATA["_s, uncheckedDowncast<CDATASection>(node).data(), "]]>"_s);
         break;
     case Node::ATTRIBUTE_NODE:
-        // Only XMLSerializer can pass an Attr. So, |documentIsHTML| flag is false.
-        appendAttributeValue(result, uncheckedDowncast<Attr>(node).value(), false);
+        appendAttributeValue(result, uncheckedDowncast<Attr>(node).value());
         break;
     }
 }

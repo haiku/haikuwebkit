@@ -87,6 +87,7 @@
 #include "Text.h"
 #include "TextControlInnerElements.h"
 #include "TextIterator.h"
+#include "TypedElementDescendantIteratorInlines.h"
 #include "UserGestureIndicator.h"
 #include "VisibleUnits.h"
 #include <wtf/Scope.h>
@@ -679,13 +680,15 @@ bool AccessibilityNodeObject::computeIsIgnored() const
     // it's been initialized.
     ASSERT(m_initialized);
 #endif
-    if (!node())
+    RefPtr node = this->node();
+    if (!node)
         return true;
 
     // Handle non-rendered text that is exposed through aria-hidden=false.
-    if (node() && node()->isTextNode() && !renderer()) {
+    if (node->isTextNode() && !renderer()) {
+        RefPtr parent = node->parentNode();
         // Fallback content in iframe nodes should be ignored.
-        if (node()->parentNode() && node()->parentNode()->hasTagName(iframeTag) && node()->parentNode()->renderer())
+        if (parent && parent->hasTagName(iframeTag) && parent->renderer())
             return true;
 
         // Whitespace only text elements should be ignored when they have no renderer.
@@ -700,7 +703,14 @@ bool AccessibilityNodeObject::computeIsIgnored() const
         return true;
 
     auto role = roleValue();
-    return role == AccessibilityRole::Ignored || role == AccessibilityRole::Unknown;
+    if (role == AccessibilityRole::Ignored || role == AccessibilityRole::Unknown)
+        return true;
+
+    if (isRenderHidden() && !ancestorsOfType<HTMLCanvasElement>(*node).first()) {
+        // Only allow display:none / hidden-visibility node-only objects for canvas subtrees.
+        return true;
+    }
+    return false;
 }
 
 bool AccessibilityNodeObject::hasElementDescendant() const
@@ -1769,15 +1779,21 @@ void AccessibilityNodeObject::alternativeText(Vector<AccessibilityText>& textOrd
     if (isWebArea()) {
         String webAreaText = alternativeTextForWebArea();
         if (!webAreaText.isEmpty())
-            textOrder.append(AccessibilityText(webAreaText, AccessibilityTextSource::Alternative));
+            textOrder.append(AccessibilityText(WTFMove(webAreaText), AccessibilityTextSource::Alternative));
         return;
     }
 
     ariaLabeledByText(textOrder);
 
-    auto ariaLabel = getAttributeTrimmed(aria_labelAttr);
-    if (!ariaLabel.isEmpty())
-        textOrder.append(AccessibilityText(ariaLabel, AccessibilityTextSource::Alternative));
+    bool hasValidAriaLabel = false;
+    {
+        // Scoped since we potentially move |ariaLabel| here. The scope prevents accidental use-after-move later.
+        auto ariaLabel = getAttributeTrimmed(aria_labelAttr);
+        if (!ariaLabel.isEmpty()) {
+            hasValidAriaLabel = true;
+            textOrder.append(AccessibilityText(WTFMove(ariaLabel), AccessibilityTextSource::Alternative));
+        }
+    }
 
     if (usesAltTagForTextComputation()) {
         if (auto* renderImage = dynamicDowncast<RenderImage>(renderer())) {
@@ -1785,7 +1801,7 @@ void AccessibilityNodeObject::alternativeText(Vector<AccessibilityText>& textOrd
 
             // RenderImage will return title as a fallback from altText, but we don't want title here because we consider that in helpText.
             if (!renderAltText.isEmpty() && renderAltText != getAttribute(titleAttr)) {
-                textOrder.append(AccessibilityText(renderAltText, AccessibilityTextSource::Alternative));
+                textOrder.append(AccessibilityText(WTFMove(renderAltText), AccessibilityTextSource::Alternative));
                 return;
             }
         }
@@ -1816,8 +1832,25 @@ void AccessibilityNodeObject::alternativeText(Vector<AccessibilityText>& textOrd
     }
 
     // Tree items missing a label are labeled by all child elements.
-    if (isTreeItem() && ariaLabel.isEmpty() && ariaLabeledByAttribute().isEmpty())
+    if (isTreeItem() && !hasValidAriaLabel && ariaLabeledByAttribute().isEmpty())
         textOrder.append(AccessibilityText(accessibleNameForNode(*node), AccessibilityTextSource::Alternative));
+
+    if (accessibleNameDerivesFromHeading()) {
+        CheckedPtr cache = axObjectCache();
+        // Where an element supports nameFrom: heading and no nameFrom: content/author is supplied, its accname may be
+        // derived from the first descendant node that is a heading (depth-first search, preorder traversal).
+        if (auto* containerNode = dynamicDowncast<ContainerNode>(node); containerNode && cache) {
+            for (auto& element : descendantsOfType<Element>(*containerNode)) {
+                if (auto* descendantObject = cache->getOrCreate(element); descendantObject && descendantObject->isHeading()) {
+                    TextUnderElementMode mode;
+                    mode.includeFocusableContent = true;
+                    String nameFromHeading = descendantObject->textUnderElement(mode);
+                    if (!nameFromHeading.isEmpty())
+                        textOrder.append(AccessibilityText(nameFromHeading, AccessibilityTextSource::Heading));
+                }
+            }
+        }
+    }
 
 #if ENABLE(MATHML)
     if (node->isMathMLElement())
@@ -1849,14 +1882,14 @@ void AccessibilityNodeObject::visibleText(Vector<AccessibilityText>& textOrder) 
 
         String text = textUnderElement(mode);
         if (!text.isEmpty())
-            textOrder.append(AccessibilityText(text, AccessibilityTextSource::Children));
+            textOrder.append(AccessibilityText(WTFMove(text), AccessibilityTextSource::Children));
     }
 }
 
 void AccessibilityNodeObject::helpText(Vector<AccessibilityText>& textOrder) const
 {
     const AtomString& ariaHelp = getAttribute(aria_helpAttr);
-    if (UNLIKELY(!ariaHelp.isEmpty()))
+    if (!ariaHelp.isEmpty()) [[unlikely]]
         textOrder.append(AccessibilityText(ariaHelp, AccessibilityTextSource::Help));
 
 #if !PLATFORM(COCOA)
@@ -1902,14 +1935,14 @@ void AccessibilityNodeObject::accessibilityText(Vector<AccessibilityText>& textO
 
     String placeholder = placeholderValue();
     if (!placeholder.isEmpty())
-        textOrder.append(AccessibilityText(placeholder, AccessibilityTextSource::Placeholder));
+        textOrder.append(AccessibilityText(WTFMove(placeholder), AccessibilityTextSource::Placeholder));
 }
 
 void AccessibilityNodeObject::ariaLabeledByText(Vector<AccessibilityText>& textOrder) const
 {
     String ariaLabeledBy = ariaLabeledByAttribute();
     if (!ariaLabeledBy.isEmpty())
-        textOrder.append(AccessibilityText(ariaLabeledBy, AccessibilityTextSource::Alternative));
+        textOrder.append(AccessibilityText(WTFMove(ariaLabeledBy), AccessibilityTextSource::Alternative));
 }
 
 String AccessibilityNodeObject::alternativeTextForWebArea() const
@@ -2015,7 +2048,7 @@ String AccessibilityNodeObject::helpText() const
         return { };
 
     const auto& ariaHelp = getAttribute(aria_helpAttr);
-    if (UNLIKELY(!ariaHelp.isEmpty()))
+    if (!ariaHelp.isEmpty()) [[unlikely]]
         return ariaHelp;
 
     String describedBy = ariaDescribedByAttribute();
@@ -2629,7 +2662,10 @@ bool AccessibilityNodeObject::hasAttributesRequiredForInclusion() const
         return true;
 #endif
 
-    if (element->attributeWithoutSynchronization(altAttr).length() || UNLIKELY(element->attributeWithoutSynchronization(aria_helpAttr).length()))
+    if (element->attributeWithoutSynchronization(altAttr).length())
+        return true;
+
+    if (element->attributeWithoutSynchronization(aria_helpAttr).length()) [[unlikely]]
         return true;
 
     return false;

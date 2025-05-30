@@ -29,6 +29,7 @@
 
 #include "BoundaryPoint.h"
 #include "CSSComputedStyleDeclaration.h"
+#include "ContainerNodeInlines.h"
 #include "EditingInlines.h"
 #include "ElementInlines.h"
 #include "HTMLBRElement.h"
@@ -51,6 +52,7 @@
 #include "RenderInline.h"
 #include "RenderIterator.h"
 #include "RenderLineBreak.h"
+#include "RenderObjectInlines.h"
 #include "RenderText.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGTextElement.h"

@@ -540,21 +540,21 @@ public:
 
     JSCell* orderedHashTableDeletedValue()
     {
-        if (LIKELY(m_orderedHashTableDeletedValue))
+        if (m_orderedHashTableDeletedValue) [[likely]]
             return m_orderedHashTableDeletedValue.get();
         return orderedHashTableDeletedValueSlow();
     }
 
     JSCell* orderedHashTableSentinel()
     {
-        if (LIKELY(m_orderedHashTableSentinel))
+        if (m_orderedHashTableSentinel) [[likely]]
             return m_orderedHashTableSentinel.get();
         return orderedHashTableSentinelSlow();
     }
 
     JSPropertyNameEnumerator* emptyPropertyNameEnumerator()
     {
-        if (LIKELY(m_emptyPropertyNameEnumerator))
+        if (m_emptyPropertyNameEnumerator) [[likely]]
             return m_emptyPropertyNameEnumerator.get();
         return emptyPropertyNameEnumeratorSlow();
     }
@@ -1164,7 +1164,7 @@ namespace WTF {
 template<> struct DefaultRefDerefTraits<JSC::VM> {
     static ALWAYS_INLINE JSC::VM* refIfNotNull(JSC::VM* ptr)
     {
-        if (LIKELY(ptr))
+        if (ptr) [[likely]]
             ptr->refSuppressingSaferCPPChecking();
         return ptr;
     }
@@ -1177,7 +1177,7 @@ template<> struct DefaultRefDerefTraits<JSC::VM> {
 
     static ALWAYS_INLINE void derefIfNotNull(JSC::VM* ptr)
     {
-        if (LIKELY(ptr))
+        if (ptr) [[likely]]
             ptr->derefSuppressingSaferCPPChecking();
     }
 };

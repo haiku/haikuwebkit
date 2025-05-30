@@ -216,6 +216,7 @@ struct CharacterRange;
 struct NavigationAPIMethodTracker;
 struct ProcessSyncData;
 struct SimpleRange;
+struct TextIndicatorData;
 struct TextRecognitionResult;
 struct WindowFeatures;
 
@@ -1269,7 +1270,7 @@ public:
 
     bool hasActiveNowPlayingSession() const { return m_hasActiveNowPlayingSession; }
     void hasActiveNowPlayingSessionChanged();
-    void activeNowPlayingSessionUpdateTimerFired();
+    void updateActiveNowPlayingSessionNow();
 
 #if PLATFORM(IOS_FAMILY)
     bool canShowWhileLocked() const { return m_canShowWhileLocked; }

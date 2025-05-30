@@ -281,7 +281,7 @@ public:
     ALWAYS_INLINE bool putByIndexInline(JSGlobalObject* globalObject, uint64_t propertyName, JSValue value, bool shouldThrow)
     {
         VM& vm = getVM(globalObject);
-        if (LIKELY(propertyName <= MAX_ARRAY_INDEX))
+        if (propertyName <= MAX_ARRAY_INDEX) [[likely]]
             return putByIndexInline(globalObject, static_cast<uint32_t>(propertyName), value, shouldThrow);
 
         ASSERT(propertyName <= maxSafeInteger());
@@ -330,7 +330,7 @@ public:
 
     ALWAYS_INLINE bool putDirectIndex(JSGlobalObject* globalObject, uint64_t propertyName, JSValue value, unsigned attributes, PutDirectIndexMode mode)
     {
-        if (LIKELY(propertyName <= MAX_ARRAY_INDEX))
+        if (propertyName <= MAX_ARRAY_INDEX) [[likely]]
             return putDirectIndex(globalObject, static_cast<uint32_t>(propertyName), value, attributes, mode);
         return putDirect(getVM(globalObject), Identifier::from(getVM(globalObject), propertyName), value, attributes);
     }
@@ -381,7 +381,7 @@ public:
     bool canGetIndexQuickly(uint64_t i) const
     {
         ASSERT(i <= maxSafeInteger());
-        if (LIKELY(i <= MAX_ARRAY_INDEX))
+        if (i <= MAX_ARRAY_INDEX) [[likely]]
             return canGetIndexQuickly(static_cast<uint32_t>(i));
         return false;
     }
@@ -450,7 +450,7 @@ public:
     JSValue tryGetIndexQuickly(uint64_t i) const
     {
         ASSERT(i <= maxSafeInteger());
-        if (LIKELY(i <= MAX_ARRAY_INDEX))
+        if (i <= MAX_ARRAY_INDEX) [[likely]]
             return tryGetIndexQuickly(static_cast<uint32_t>(i));
         return JSValue();
     }
@@ -493,7 +493,7 @@ public:
                 convertInt32ToDoubleOrContiguousWhilePerformingSetIndex(vm, i, v);
                 return true;
             }
-            FALLTHROUGH;
+            [[fallthrough]];
         }
         case ALL_WRITABLE_CONTIGUOUS_INDEXING_TYPES: {
             if (i >= butterfly->vectorLength())
@@ -550,7 +550,7 @@ public:
                 convertInt32ToDoubleOrContiguousWhilePerformingSetIndex(vm, i, v);
                 return;
             }
-            FALLTHROUGH;
+            [[fallthrough]];
         }
         case ALL_CONTIGUOUS_INDEXING_TYPES: {
             ASSERT(i < butterfly->vectorLength());
@@ -610,7 +610,7 @@ public:
                 convertInt32ToDoubleOrContiguousWhilePerformingSetIndex(vm, i, v);
                 break;
             }
-            FALLTHROUGH;
+            [[fallthrough]];
         }
         case ALL_CONTIGUOUS_INDEXING_TYPES: {
             ASSERT(i < butterfly->publicLength());
@@ -664,7 +664,7 @@ public:
             ASSERT(i < butterfly->publicLength());
             ASSERT(i < butterfly->vectorLength());
             RELEASE_ASSERT(v.isInt32());
-            FALLTHROUGH;
+            [[fallthrough]];
         }
         case ALL_CONTIGUOUS_INDEXING_TYPES: {
             ASSERT(i < butterfly->publicLength());
@@ -985,9 +985,9 @@ public:
     // contiguous, array storage).
     ContiguousJSValues tryMakeWritableInt32(VM& vm)
     {
-        if (LIKELY(hasInt32(indexingType()) && !isCopyOnWrite(indexingMode())))
+        if (hasInt32(indexingType()) && !isCopyOnWrite(indexingMode())) [[likely]]
             return m_butterfly->contiguousInt32();
-            
+
         return tryMakeWritableInt32Slow(vm);
     }
         
@@ -997,9 +997,9 @@ public:
     // or array storage).
     ContiguousDoubles tryMakeWritableDouble(VM& vm)
     {
-        if (LIKELY(hasDouble(indexingType()) && !isCopyOnWrite(indexingMode())))
+        if (hasDouble(indexingType()) && !isCopyOnWrite(indexingMode())) [[likely]]
             return m_butterfly->contiguousDouble();
-            
+
         return tryMakeWritableDoubleSlow(vm);
     }
         
@@ -1007,9 +1007,9 @@ public:
     // indexing should be sparse or because we're having a bad time.
     ContiguousJSValues tryMakeWritableContiguous(VM& vm)
     {
-        if (LIKELY(hasContiguous(indexingType()) && !isCopyOnWrite(indexingMode())))
+        if (hasContiguous(indexingType()) && !isCopyOnWrite(indexingMode())) [[likely]]
             return m_butterfly->contiguous();
-            
+
         return tryMakeWritableContiguousSlow(vm);
     }
 
@@ -1019,7 +1019,7 @@ public:
     // already.
     ArrayStorage* ensureArrayStorage(VM& vm)
     {
-        if (LIKELY(hasAnyArrayStorage(indexingType())))
+        if (hasAnyArrayStorage(indexingType())) [[likely]]
             return m_butterfly->arrayStorage();
 
         return ensureArrayStorageSlow(vm);
@@ -1460,7 +1460,7 @@ inline JSValue JSObject::getPrototypeDirect() const
 
 inline JSValue JSObject::getPrototype(VM&, JSGlobalObject* globalObject)
 {
-    if (LIKELY(!structure()->typeInfo().overridesGetPrototype()))
+    if (!structure()->typeInfo().overridesGetPrototype()) [[likely]]
         return getPrototypeDirect();
     return methodTable()->getPrototype(this, globalObject);
 }
@@ -1578,7 +1578,7 @@ ALWAYS_INLINE bool JSObject::getPropertySlot(JSGlobalObject* globalObject, Prope
     VM& vm = getVM(globalObject);
     JSObject* object = this;
     while (true) {
-        if (UNLIKELY(TypeInfo::overridesGetOwnPropertySlot(object->inlineTypeFlags()))) {
+        if (TypeInfo::overridesGetOwnPropertySlot(object->inlineTypeFlags())) [[unlikely]] {
             // If propertyName is an index then we may have missed it (as this loop is using
             // getOwnNonIndexPropertySlot), so we cannot safely call the overridden getOwnPropertySlot
             // (lest we return a property from a prototype that is shadowed). Check now for an index,
@@ -1592,8 +1592,10 @@ ALWAYS_INLINE bool JSObject::getPropertySlot(JSGlobalObject* globalObject, Prope
         ASSERT(object->type() != ProxyObjectType);
         Structure* structure = object->structureID().decode();
 #if USE(JSVALUE64)
-        if (checkNullStructure && UNLIKELY(!structure))
-            CRASH_WITH_INFO(object->type(), object->structureID().bits());
+        if (checkNullStructure) {
+            if (!structure) [[unlikely]]
+                CRASH_WITH_INFO(object->type(), object->structureID().bits());
+        }
 #endif
         if (object->getOwnNonIndexPropertySlot(vm, structure, propertyName, slot))
             return true;
@@ -1683,7 +1685,7 @@ constexpr inline intptr_t offsetInButterfly(PropertyOffset offset)
 
 inline size_t JSObject::butterflyPreCapacity()
 {
-    if (UNLIKELY(hasIndexingHeader()))
+    if (hasIndexingHeader()) [[unlikely]]
         return butterfly()->indexingHeader()->preCapacity(structure());
     return 0;
 }
@@ -1696,7 +1698,7 @@ inline size_t JSObject::butterflyTotalSize()
     size_t indexingPayloadSizeInBytes;
     bool hasIndexingHeader = this->hasIndexingHeader();
 
-    if (UNLIKELY(hasIndexingHeader)) {
+    if (hasIndexingHeader) [[unlikely]] {
         preCapacity = butterfly->indexingHeader()->preCapacity(structure);
         indexingPayloadSizeInBytes = butterfly->indexingHeader()->indexingPayloadSizeInBytes(structure);
     } else {

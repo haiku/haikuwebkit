@@ -104,7 +104,7 @@ UIProcess/API/Cocoa/_WKWebPushSubscriptionData.h
 UIProcess/API/Cocoa/_WKWebsiteDataStoreConfiguration.h
 UIProcess/API/mac/WKViewInternal.h
 UIProcess/Cocoa/GroupActivities/WKGroupSession.h
-UIProcess/Cocoa/WKTextExtractionItem.h
+UIProcess/Cocoa/TextExtraction/WKTextExtractionItem.h
 UIProcess/Inspector/mac/WKInspectorViewController.h
 UIProcess/Inspector/mac/WebInspectorUIProxyMac.mm
 UIProcess/WebAuthentication/Cocoa/AuthenticationServicesForwardDeclarations.h
@@ -112,6 +112,7 @@ UIProcess/WebAuthentication/Mock/MockNfcService.mm
 UIProcess/mac/WKFullScreenWindowController.h
 UIProcess/mac/WKImmediateActionController.h
 UIProcess/mac/WKPrintingView.h
+UIProcess/mac/WKTextAnimationManager.mm
 UIProcess/mac/WKTextFinderClient.mm
 UIProcess/mac/WebDataListSuggestionsDropdownMac.mm
 UIProcess/mac/WebPageProxyMac.mm

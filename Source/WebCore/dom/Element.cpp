@@ -39,6 +39,7 @@
 #include "ComposedTreeIterator.h"
 #include "ComputedStylePropertyMapReadOnly.h"
 #include "ContainerNodeAlgorithms.h"
+#include "ContainerNodeInlines.h"
 #include "ContentVisibilityDocumentState.h"
 #include "CustomElementReactionQueue.h"
 #include "CustomElementRegistry.h"
@@ -122,12 +123,13 @@
 #include "RenderLayerCompositor.h"
 #include "RenderLayerScrollableArea.h"
 #include "RenderListBox.h"
+#include "RenderObjectInlines.h"
 #include "RenderSVGModelObject.h"
 #include "RenderStyleSetters.h"
 #include "RenderTheme.h"
 #include "RenderTreeUpdater.h"
 #include "RenderView.h"
-#include "RenderWidget.h"
+#include "RenderWidgetInlines.h"
 #include "ResolvedStyle.h"
 #include "SVGDocumentExtensions.h"
 #include "SVGElementTypeHelpers.h"
@@ -301,7 +303,7 @@ Element::~Element()
     ASSERT(!beforePseudoElement());
     ASSERT(!afterPseudoElement());
 
-    if (UNLIKELY(hasElementStateFlag(ElementStateFlag::HasElementIdentifier)))
+    if (hasStateFlag(StateFlag::HasElementIdentifier)) [[unlikely]]
         elementIdentifiersMap().remove(*this);
     else
         ASSERT(!elementIdentifiersMap().contains(*this));
@@ -763,7 +765,7 @@ ALWAYS_INLINE void Element::synchronizeAttribute(const QualifiedName& name) cons
 {
     if (!elementData())
         return;
-    if (UNLIKELY(name == styleAttr && elementData()->styleAttributeIsDirty())) {
+    if (name == styleAttr && elementData()->styleAttributeIsDirty()) [[unlikely]] {
         ASSERT_WITH_SECURITY_IMPLICATION(isStyledElement());
         static_cast<const StyledElement*>(this)->synchronizeStyleAttributeInternal();
         return;
@@ -1481,7 +1483,7 @@ RefPtr<Element> Element::offsetParentForBindings()
     RefPtr element = offsetParent();
     if (!element || !element->isInShadowTree())
         return element;
-    while (element && !isDescendantOrShadowDescendantOf(&element->rootNode()))
+    while (element && !isShadowIncludingDescendantOf(&element->rootNode()))
         element = element->offsetParent();
     return element;
 }
@@ -2236,7 +2238,7 @@ void Element::notifyAttributeChanged(const QualifiedName& name, const AtomString
 
     document().incDOMTreeVersion();
 
-    if (UNLIKELY(isDefinedCustomElement()))
+    if (isDefinedCustomElement()) [[unlikely]]
         CustomElementReactionQueue::enqueueAttributeChangedCallbackIfNeeded(*this, name, oldValue, newValue);
 
     if (oldValue != newValue) {
@@ -2363,7 +2365,7 @@ static RefPtr<Element> getElementByIdIncludingDisconnected(const Element& startE
     if (id.isEmpty())
         return nullptr;
 
-    if (LIKELY(startElement.isInTreeScope()))
+    if (startElement.isInTreeScope()) [[likely]]
         return startElement.treeScope().getElementById(id);
 
     // https://html.spec.whatwg.org/#attr-associated-element
@@ -2391,7 +2393,7 @@ RefPtr<Element> Element::elementForAttributeInternal(const QualifiedName& attrib
             ASSERT(it->value.size() == 1);
             hasExplicitlySetElement = true;
             RefPtr explicitlySetElement = it->value[0].get();
-            if (explicitlySetElement && isDescendantOrShadowDescendantOf(explicitlySetElement->rootNode()))
+            if (explicitlySetElement && isShadowIncludingDescendantOf(explicitlySetElement->rootNode()))
                 element = explicitlySetElement;
         }
     }
@@ -2443,7 +2445,7 @@ std::optional<Vector<Ref<Element>>> Element::elementsArrayForAttributeInternal(c
             hasExplicitlySetElements = true;
             elements = compactMap(it->value, [&](auto& weakElement) -> std::optional<Ref<Element>> {
                 RefPtr element = weakElement.get();
-                if (element && isDescendantOrShadowDescendantOf(element->rootNode()))
+                if (element && isShadowIncludingDescendantOf(element->rootNode()))
                     return element.releaseNonNull();
                 return std::nullopt;
             });
@@ -2692,7 +2694,7 @@ void Element::invalidateForQueryContainerSizeChange()
 {
     // FIXME: Ideally we would just recompute things that are actually affected by containers queries within the subtree.
     Node::invalidateStyle(Style::Validity::SubtreeInvalid);
-    setElementStateFlag(ElementStateFlag::NeedsUpdateQueryContainerDependentStyle);
+    setStateFlag(StateFlag::NeedsUpdateQueryContainerDependentStyle);
 }
 
 void Element::invalidateForAnchorRectChange()
@@ -2714,12 +2716,12 @@ void Element::invalidateForResumingAnchorPositionedElementResolution()
 
 bool Element::needsUpdateQueryContainerDependentStyle() const
 {
-    return hasElementStateFlag(ElementStateFlag::NeedsUpdateQueryContainerDependentStyle);
+    return hasStateFlag(StateFlag::NeedsUpdateQueryContainerDependentStyle);
 }
 
 void Element::clearNeedsUpdateQueryContainerDependentStyle()
 {
-    clearElementStateFlag(ElementStateFlag::NeedsUpdateQueryContainerDependentStyle);
+    clearStateFlag(StateFlag::NeedsUpdateQueryContainerDependentStyle);
 }
 
 void Element::invalidateEventListenerRegions()
@@ -2822,7 +2824,7 @@ void Element::didMoveToNewDocument(Document& oldDocument, Document& newDocument)
             notifyAttributeChanged(classAttr, nullAtom(), getAttribute(classAttr));
     }
 
-    if (UNLIKELY(isDefinedCustomElement()))
+    if (isDefinedCustomElement()) [[unlikely]]
         CustomElementReactionQueue::enqueueAdoptedCallbackIfNeeded(*this, oldDocument, newDocument);
 
     if (auto* observerData = intersectionObserverDataIfExists()) {
@@ -2860,7 +2862,7 @@ void Element::updateEffectiveTextDirection()
 
 void Element::updateEffectiveTextDirectionIfNeeded()
 {
-    if (UNLIKELY(selfOrPrecedingNodesAffectDirAuto())) {
+    if (selfOrPrecedingNodesAffectDirAuto()) [[unlikely]] {
         updateEffectiveTextDirection();
         return;
     }
@@ -3010,7 +3012,7 @@ Node::InsertedIntoAncestorResult Element::insertedIntoAncestor(InsertionType ins
 
     if (usesNullCustomElementRegistry() && !parentOfInsertedTree.usesNullCustomElementRegistry()) {
         clearUsesNullCustomElementRegistry();
-        if (UNLIKELY(parentOfInsertedTree.usesScopedCustomElementRegistryMap())) {
+        if (parentOfInsertedTree.usesScopedCustomElementRegistryMap()) [[unlikely]] {
             RefPtr registry = CustomElementRegistry::registryForElement(downcast<Element>(parentOfInsertedTree));
             ASSERT(registry);
             CustomElementRegistry::addToScopedCustomElementRegistryMap(*this, *registry);
@@ -3018,11 +3020,11 @@ Node::InsertedIntoAncestorResult Element::insertedIntoAncestor(InsertionType ins
     }
 
     if (insertionType.connectedToDocument) {
-        if (UNLIKELY(isCustomElementUpgradeCandidate())) {
+        if (isCustomElementUpgradeCandidate()) [[unlikely]] {
             ASSERT(isConnected());
             CustomElementReactionQueue::tryToUpgradeElement(*this);
         }
-        if (UNLIKELY(isDefinedCustomElement()))
+        if (isDefinedCustomElement()) [[unlikely]]
             CustomElementReactionQueue::enqueueConnectedCallbackIfNeeded(*this);
         if (shouldAutofocus(*this)) {
             if (RefPtr topDocument = document().sameOriginTopLevelTraversable())
@@ -3108,7 +3110,7 @@ void Element::removedFromAncestor(RemovalType removalType, ContainerNode& oldPar
         }
         if (oldParentOfRemovedTree.isInShadowTree()) {
             if (RefPtr registry = oldTreeScope.customElementRegistry()) {
-                if (UNLIKELY(registry->isScoped() && !usesScopedCustomElementRegistryMap()))
+                if (registry->isScoped() && !usesScopedCustomElementRegistryMap()) [[unlikely]]
                     CustomElementRegistry::addToScopedCustomElementRegistryMap(*this, *registry);
             }
         }
@@ -3133,17 +3135,17 @@ void Element::removedFromAncestor(RemovalType removalType, ContainerNode& oldPar
         clearAfterPseudoElement();
 
 #if ENABLE(FULLSCREEN_API)
-        if (UNLIKELY(hasFullscreenFlag()))
+        if (hasFullscreenFlag()) [[unlikely]]
             oldDocument->fullscreen().exitRemovedFullscreenElement(*this);
 #endif
 
-        if (UNLIKELY(isInTopLayer()))
+        if (isInTopLayer()) [[unlikely]]
             removeFromTopLayer();
 
         if (oldDocument->cssTarget() == this)
             oldDocument->setCSSTarget(nullptr);
 
-        if (UNLIKELY(isDefinedCustomElement()))
+        if (isDefinedCustomElement()) [[unlikely]]
             CustomElementReactionQueue::enqueueDisconnectedCallbackIfNeeded(*this);
     }
 
@@ -3162,9 +3164,11 @@ void Element::removedFromAncestor(RemovalType removalType, ContainerNode& oldPar
 
     document().userActionElements().clearAllForElement(*this);
 
-    if (UNLIKELY(usesEffectiveTextDirection()) && !hasValidTextDirectionState()) {
-        if (auto* parent = parentOrShadowHostElement(); !(parent && parent->usesEffectiveTextDirection()))
-            setUsesEffectiveTextDirection(false);
+    if (usesEffectiveTextDirection()) [[unlikely]] {
+        if (!hasValidTextDirectionState()) {
+            if (auto* parent = parentOrShadowHostElement(); !(parent && parent->usesEffectiveTextDirection()))
+                setUsesEffectiveTextDirection(false);
+        }
     }
 }
 
@@ -3557,7 +3561,7 @@ void Element::childrenChanged(const ChildChange& change)
         }
     }
 
-    if (UNLIKELY(document().isDirAttributeDirty())) {
+    if (document().isDirAttributeDirty()) [[unlikely]] {
         if (selfOrPrecedingNodesAffectDirAuto())
             updateEffectiveTextDirection();
     }
@@ -3871,9 +3875,11 @@ bool Element::removeAttribute(const AtomString& qualifiedName)
     AtomString caseAdjustedQualifiedName = shouldIgnoreAttributeCase(*this) ? qualifiedName.convertToASCIILowercase() : qualifiedName;
     unsigned index = elementData()->findAttributeIndexByName(caseAdjustedQualifiedName, false);
     if (index == ElementData::attributeNotFound) {
-        if (UNLIKELY(caseAdjustedQualifiedName == styleAttr) && elementData()->styleAttributeIsDirty()) {
-            if (auto* styledElement = dynamicDowncast<StyledElement>(*this))
-                styledElement->removeAllInlineStyleProperties();
+        if (caseAdjustedQualifiedName == styleAttr) [[unlikely]] {
+            if (elementData()->styleAttributeIsDirty()) {
+                if (auto* styledElement = dynamicDowncast<StyledElement>(*this))
+                    styledElement->removeAllInlineStyleProperties();
+            }
         }
         return false;
     }
@@ -4046,7 +4052,7 @@ void Element::focus(const FocusOptions& options)
 
     if (RefPtr root = shadowRootWithDelegatesFocus(*this)) {
         RefPtr currentlyFocusedElement = document->focusedElement();
-        if (root->containsIncludingShadowDOM(currentlyFocusedElement.get())) {
+        if (root->isShadowIncludingInclusiveAncestorOf(currentlyFocusedElement.get())) {
             if (RefPtr page = document->page())
                 page->chrome().client().elementDidRefocus(*currentlyFocusedElement, options);
             return;
@@ -4300,7 +4306,7 @@ ExceptionOr<void> Element::setOuterHTML(Variant<RefPtr<TrustedHTML>, String>&& h
     // The specification allows setting outerHTML on an Element whose parent is a DocumentFragment and Gecko supports this.
     // https://w3c.github.io/DOM-Parsing/#dom-element-outerhtml
     RefPtr parent = parentElement();
-    if (UNLIKELY(!parent)) {
+    if (!parent) [[unlikely]] {
         if (!parentNode())
             return { };
         return Exception { ExceptionCode::NoModificationAllowedError, "Cannot set outerHTML on element because its parent is not an Element"_s };
@@ -4965,9 +4971,9 @@ void Element::setFullscreenFlag(bool flag)
 {
     Style::PseudoClassChangeInvalidation styleInvalidation(*this, { { CSSSelector::PseudoClass::Fullscreen, flag }, { CSSSelector::PseudoClass::Modal, flag } });
     if (flag)
-        setElementStateFlag(ElementStateFlag::IsFullscreen);
+        setStateFlag(StateFlag::IsFullscreen);
     else
-        clearElementStateFlag(ElementStateFlag::IsFullscreen);
+        clearStateFlag(StateFlag::IsFullscreen);
 }
 
 #endif
@@ -5859,7 +5865,7 @@ ExceptionOr<void> Element::insertAdjacentHTML(const String& where, const String&
     if (fragment.hasException())
         return fragment.releaseException();
 
-    if (UNLIKELY(addedNodes)) {
+    if (addedNodes) [[unlikely]] {
         // Must be called before insertAdjacent, as otherwise the children of fragment will be moved
         // to their new parent and will be harder to keep track of.
         collectChildNodes(fragment.returnValue(), *addedNodes);
@@ -5990,7 +5996,7 @@ Vector<RefPtr<WebAnimation>> Element::getAnimations(std::optional<GetAnimationsO
 ElementIdentifier Element::identifier() const
 {
     return elementIdentifiersMap().ensure(const_cast<Element&>(*this), [&] {
-        setElementStateFlag(ElementStateFlag::HasElementIdentifier);
+        setStateFlag(StateFlag::HasElementIdentifier);
         return ElementIdentifier::generate();
     }).iterator->value;
 }

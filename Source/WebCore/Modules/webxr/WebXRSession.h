@@ -30,6 +30,7 @@
 
 #include "ActiveDOMObject.h"
 #include "EventTarget.h"
+#include "EventTargetInterfaces.h"
 #include "JSDOMPromiseDeferredForward.h"
 #include "WebXRFrame.h"
 #include "WebXRInputSourceArray.h"
@@ -39,6 +40,7 @@
 #include "XRReferenceSpaceType.h"
 #include "XRSessionMode.h"
 #include "XRVisibilityState.h"
+#include <numbers>
 #include <wtf/MonotonicTime.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
@@ -166,7 +168,7 @@ private:
     std::optional<PlatformXR::RequestData> m_requestData;
 
     double m_minimumInlineFOV { 0.0 };
-    double m_maximumInlineFOV { piFloat };
+    double m_maximumInlineFOV { std::numbers::pi };
 
     // In meters.
     double m_minimumNearClipPlane { 0.1 };

@@ -61,6 +61,7 @@
 #include <WebCore/UniqueIDBDatabaseConnection.h>
 #include <WebCore/UniqueIDBDatabaseTransaction.h>
 #include <pal/crypto/CryptoDigest.h>
+#include <ranges>
 #include <wtf/SuspendableWorkQueue.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/Base64.h>
@@ -479,13 +480,13 @@ WallTime NetworkStorageManager::lastModificationTimeForOrigin(const WebCore::Cli
         auto idbStoragePath = IDBStorageManager::idbStorageOriginDirectory(m_customIDBStoragePath, origin);
         auto idbStorageModificationTime = valueOrDefault(FileSystem::fileModificationTime(idbStoragePath));
         lastModificationTime = std::max(idbStorageModificationTime, lastModificationTime);
-        FALLTHROUGH;
+        [[fallthrough]];
     }
     case UnifiedOriginStorageLevel::Basic: {
         auto cacheStoragePath = CacheStorageManager::cacheStorageOriginDirectory(m_customCacheStoragePath, origin);
         auto cacheStorageModificationTime = valueOrDefault(FileSystem::fileModificationTime(cacheStoragePath));
         lastModificationTime = std::max(cacheStorageModificationTime, lastModificationTime);
-        FALLTHROUGH;
+        [[fallthrough]];
     }
     case UnifiedOriginStorageLevel::Standard: {
         auto originFile = originFilePath(manager.path());
@@ -544,7 +545,7 @@ void NetworkStorageManager::performEviction(HashMap<WebCore::SecurityOriginData,
     for (auto&& [origin, record] : originRecords)
         sortedOriginRecords.append({ WTFMove(origin), WTFMove(record) });
 
-    std::sort(sortedOriginRecords.begin(), sortedOriginRecords.end(), [&](const auto& a, const auto& b) {
+    std::ranges::sort(sortedOriginRecords, [](auto& a, auto& b) {
         return a.second.lastAccessTime > b.second.lastAccessTime;
     });
 
@@ -2044,7 +2045,7 @@ void NetworkStorageManager::cacheStorageClearMemoryRepresentation(const WebCore:
     callback();
 }
 
-void NetworkStorageManager::cacheStorageRepresentation(CompletionHandler<void(String&&)>&& callback)
+void NetworkStorageManager::cacheStorageRepresentation(CompletionHandler<void(const String&)>&& callback)
 {
     Vector<String> originStrings;
     auto targetTypes = OptionSet<WebsiteDataType> { WebsiteDataType::DOMCache };
@@ -2065,9 +2066,7 @@ void NetworkStorageManager::cacheStorageRepresentation(CompletionHandler<void(St
         removeOriginStorageManagerIfPossible(origin);
     }
 
-    std::sort(originStrings.begin(), originStrings.end(), [](auto& a, auto& b) {
-        return codePointCompareLessThan(a, b);
-    });
+    std::ranges::sort(originStrings, codePointCompareLessThan);
     StringBuilder builder;
     builder.append("{ \"path\": \""_s, m_customCacheStoragePath, "\", \"origins\": ["_s);
     ASCIILiteral divider = ""_s;

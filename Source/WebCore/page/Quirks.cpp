@@ -28,6 +28,7 @@
 
 #include "AccessibilityObject.h"
 #include "Attr.h"
+#include "ContainerNodeInlines.h"
 #include "DOMTokenList.h"
 #include "DeprecatedGlobalSettings.h"
 #include "Document.h"
@@ -38,6 +39,7 @@
 #include "ElementInlines.h"
 #include "ElementTargetingTypes.h"
 #include "EventNames.h"
+#include "EventTargetInlines.h"
 #include "FrameLoader.h"
 #include "HTMLArticleElement.h"
 #include "HTMLBodyElement.h"
@@ -181,6 +183,9 @@ bool Quirks::needsAutoplayPlayPauseEvents() const
 {
     if (!needsQuirks())
         return false;
+
+    if (m_quirksData.shouldDispatchPlayPauseEventsOnResume)
+        return true;
 
     Ref document = *m_document;
     if (allowedAutoplayQuirks(document).contains(AutoplayQuirk::SynthesizedPauseEvents))
@@ -1548,11 +1553,13 @@ String Quirks::scriptToEvaluateBeforeRunningScriptFromURL(const URL& scriptURL)
         return { };
 
     // player.anyclip.com rdar://138789765
-    if (UNLIKELY(m_quirksData.isThesaurus && scriptURL.lastPathComponent().endsWith("lre.js"_s)) && scriptURL.host() == "player.anyclip.com"_s)
-        return "(function() { let userAgent = navigator.userAgent; Object.defineProperty(navigator, 'userAgent', { get: () => { return userAgent + ' Chrome/130.0.0.0 Android/15.0'; }, configurable: true }); })();"_s;
+    if (m_quirksData.isThesaurus && scriptURL.lastPathComponent().endsWith("lre.js"_s)) [[unlikely]] {
+        if (scriptURL.host() == "player.anyclip.com"_s)
+            return "(function() { let userAgent = navigator.userAgent; Object.defineProperty(navigator, 'userAgent', { get: () => { return userAgent + ' Chrome/130.0.0.0 Android/15.0'; }, configurable: true }); })();"_s;
+    }
 
 #if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
-    if (UNLIKELY(m_quirksData.isWebEx && scriptURL.lastPathComponent().startsWith("pushdownload."_s)))
+    if (m_quirksData.isWebEx && scriptURL.lastPathComponent().startsWith("pushdownload."_s)) [[unlikely]]
         return "Object.defineProperty(window, 'Touch', { get: () => undefined });"_s;
 #endif
 #else
@@ -1771,14 +1778,14 @@ bool Quirks::needsFacebookStoriesCreationFormQuirk(const Element& element, const
 
     Ref document = element.document();
     RefPtr loader = document->loader();
-    if (UNLIKELY(!loader))
+    if (!loader) [[unlikely]]
         return false;
 
     if (loader->metaViewportPolicy() != MetaViewportPolicy::Ignore)
         return false;
 
     RefPtr view = document->view();
-    if (UNLIKELY(!view))
+    if (!view) [[unlikely]]
         return false;
 
     float width = view->sizeForCSSDefaultViewportUnits().width();
@@ -1850,7 +1857,7 @@ bool Quirks::shouldSupportHoverMediaQueries() const
 
 URL Quirks::topDocumentURL() const
 {
-    if (UNLIKELY(!m_topDocumentURLForTesting.isEmpty()))
+    if (!m_topDocumentURLForTesting.isEmpty()) [[unlikely]]
         return m_topDocumentURLForTesting;
 
     return m_document->topURL();
@@ -2513,6 +2520,9 @@ static void handlePremierLeagueQuirks(QuirksData& quirksData, const URL& quirksU
     UNUSED_PARAM(documentURL);
     // premierleague.com: rdar://123721211
     quirksData.shouldIgnorePlaysInlineRequirementQuirk = true;
+
+    // premierleague.com: rdar://68938833
+    quirksData.shouldDispatchPlayPauseEventsOnResume = true;
 }
 
 static void handleSFUSDQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)

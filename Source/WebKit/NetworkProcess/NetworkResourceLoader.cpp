@@ -2187,7 +2187,7 @@ void NetworkResourceLoader::cancelMainResourceLoadForContentFilter(const WebCore
     RELEASE_ASSERT(m_contentFilter);
 }
 
-void NetworkResourceLoader::handleProvisionalLoadFailureFromContentFilter(const URL& blockedPageURL, WebCore::SubstituteData& substituteData)
+void NetworkResourceLoader::handleProvisionalLoadFailureFromContentFilter(const URL& blockedPageURL, WebCore::SubstituteData&& substituteData)
 {
     protectedConnectionToWebProcess()->protectedNetworkProcess()->addAllowedFirstPartyForCookies(m_connection->webProcessIdentifier(), RegistrableDomain { WebCore::ContentFilter::blockedPageURL() }, LoadedWebArchive::No, [] { });
     send(Messages::WebResourceLoader::ContentFilterDidBlockLoad(m_unblockHandler, m_unblockRequestDeniedScript, m_contentFilter->blockedError(), blockedPageURL, substituteData));
@@ -2197,6 +2197,16 @@ void NetworkResourceLoader::handleProvisionalLoadFailureFromContentFilter(const 
 bool NetworkResourceLoader::usesWebContentRestrictions()
 {
     return protectedConnectionToWebProcess()->usesWebContentRestrictionsForFilter();
+}
+#endif
+
+#if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
+String NetworkResourceLoader::webContentRestrictionsConfigurationPath() const
+{
+    if (CheckedPtr session = protectedConnectionToWebProcess()->protectedNetworkProcess()->networkSession(sessionID()))
+        return session->webContentRestrictionsConfigurationFile();
+
+    return emptyString();
 }
 #endif
 #endif // ENABLE(CONTENT_FILTERING)

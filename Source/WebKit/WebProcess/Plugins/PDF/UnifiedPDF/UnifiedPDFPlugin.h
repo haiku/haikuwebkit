@@ -55,6 +55,7 @@ class LocalFrameView;
 class PageOverlay;
 class PlatformWheelEvent;
 class ShadowRoot;
+class AXCoreObject;
 
 enum class DelegatedScrollingMode : uint8_t;
 
@@ -171,9 +172,10 @@ public:
 #if PLATFORM(MAC)
     void accessibilityScrollToPage(PDFDocumentLayout::PageIndex);
 #endif
-#if !PLATFORM(MAC)
+#if PLATFORM(IOS_FAMILY)
+    WebCore::AXCoreObject* accessibilityCoreObject();
     id accessibilityHitTestInPageForIOS(WebCore::FloatPoint);
-#endif
+#endif // PLATFORM(IOS_FAMILY)
 
 #if ENABLE(UNIFIED_PDF_DATA_DETECTION)
     void installDataDetectorOverlay(WebCore::PageOverlay&);
@@ -746,7 +748,7 @@ T UnifiedPDFPlugin::convertDown(CoordinateSpace sourceSpace, CoordinateSpace des
             return mappedValue;
 
         mappedValue.moveBy(WebCore::FloatPoint { m_scrollOffset });
-        FALLTHROUGH;
+        [[fallthrough]];
 
     case CoordinateSpace::ScrolledContents:
         if (destinationSpace == CoordinateSpace::ScrolledContents)
@@ -756,14 +758,14 @@ T UnifiedPDFPlugin::convertDown(CoordinateSpace sourceSpace, CoordinateSpace des
             mappedValue.scale(1 / m_scaleFactor);
             mappedValue.move(-centeringOffset());
         }
-        FALLTHROUGH;
+        [[fallthrough]];
 
     case CoordinateSpace::Contents:
         if (destinationSpace == CoordinateSpace::Contents)
             return mappedValue;
 
         mappedValue.scale(1 / m_documentLayout.scale());
-        FALLTHROUGH;
+        [[fallthrough]];
 
     case CoordinateSpace::PDFDocumentLayout:
         if (destinationSpace == CoordinateSpace::PDFDocumentLayout)
@@ -772,7 +774,7 @@ T UnifiedPDFPlugin::convertDown(CoordinateSpace sourceSpace, CoordinateSpace des
         ASSERT(pageIndex);
         ASSERT(*pageIndex < m_documentLayout.pageCount());
         mappedValue = m_documentLayout.documentToPDFPage(mappedValue, *pageIndex);
-        FALLTHROUGH;
+        [[fallthrough]];
 
     case CoordinateSpace::PDFPage:
         if (destinationSpace == CoordinateSpace::PDFPage)
@@ -797,14 +799,14 @@ T UnifiedPDFPlugin::convertUp(CoordinateSpace sourceSpace, CoordinateSpace desti
         ASSERT(pageIndex);
         ASSERT(*pageIndex < m_documentLayout.pageCount());
         mappedValue = m_documentLayout.pdfPageToDocument(mappedValue, *pageIndex);
-        FALLTHROUGH;
+        [[fallthrough]];
 
     case CoordinateSpace::PDFDocumentLayout:
         if (destinationSpace == CoordinateSpace::PDFDocumentLayout)
             return mappedValue;
 
         mappedValue.scale(m_documentLayout.scale());
-        FALLTHROUGH;
+        [[fallthrough]];
 
     case CoordinateSpace::Contents:
         if (destinationSpace == CoordinateSpace::Contents)
@@ -812,7 +814,7 @@ T UnifiedPDFPlugin::convertUp(CoordinateSpace sourceSpace, CoordinateSpace desti
 
         mappedValue.move(centeringOffset());
         mappedValue.scale(m_scaleFactor);
-        FALLTHROUGH;
+        [[fallthrough]];
 
     case CoordinateSpace::ScrolledContents:
         if (destinationSpace == CoordinateSpace::ScrolledContents)
@@ -820,7 +822,7 @@ T UnifiedPDFPlugin::convertUp(CoordinateSpace sourceSpace, CoordinateSpace desti
 
         if (!shouldSizeToFitContent())
             mappedValue.moveBy(-WebCore::FloatPoint { m_scrollOffset });
-        FALLTHROUGH;
+        [[fallthrough]];
 
     case CoordinateSpace::Plugin:
         if (destinationSpace == CoordinateSpace::Plugin)

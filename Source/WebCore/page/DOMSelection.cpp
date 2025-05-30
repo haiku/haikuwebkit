@@ -31,11 +31,13 @@
 #include "DOMSelection.h"
 
 #include "CommonAtomStrings.h"
+#include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "Editing.h"
 #include "FrameSelection.h"
 #include "LocalFrame.h"
+#include "NodeInlines.h"
 #include "Quirks.h"
 #include "Range.h"
 #include "Settings.h"
@@ -299,7 +301,7 @@ ExceptionOr<void> DOMSelection::setBaseAndExtent(Node* baseNode, unsigned baseOf
             return result.releaseException();
         Ref document = *frame->document();
         if (frame->settings().selectionAPIForShadowDOMEnabled()) {
-            if (!document->containsIncludingShadowDOM(baseNode) || !document->containsIncludingShadowDOM(extentNode))
+            if (!document->isShadowIncludingInclusiveAncestorOf(baseNode) || !document->isShadowIncludingInclusiveAncestorOf(extentNode))
                 return { };
         } else {
             if (!document->contains(*baseNode) || !document->contains(*extentNode))

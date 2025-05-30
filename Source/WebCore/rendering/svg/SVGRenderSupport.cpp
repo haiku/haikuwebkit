@@ -42,9 +42,11 @@
 #include "ReferencedSVGResources.h"
 #include "RenderChildIterator.h"
 #include "RenderElement.h"
+#include "RenderElementInlines.h"
 #include "RenderGeometryMap.h"
 #include "RenderIterator.h"
 #include "RenderLayer.h"
+#include "RenderObjectInlines.h"
 #include "RenderSVGResourceClipper.h"
 #include "RenderSVGRoot.h"
 #include "RenderSVGShapeInlines.h"
@@ -57,6 +59,7 @@
 #include "SVGResourcesCache.h"
 #include "TransformOperationData.h"
 #include "TransformState.h"
+#include <numbers>
 
 namespace WebCore {
 
@@ -385,7 +388,7 @@ inline FloatRect clipPathReferenceBox(const RenderElement& renderer, CSSBoxType 
                 referenceBox.setSize(*viewportSize);
             break;
         }
-        FALLTHROUGH;
+        [[fallthrough]];
     case CSSBoxType::ContentBox:
     case CSSBoxType::FillBox:
     case CSSBoxType::PaddingBox:
@@ -568,12 +571,12 @@ FloatRect SVGRenderSupport::calculateApproximateStrokeBoundingBox(const RenderEl
             auto& style = renderer.style();
             if (renderer.shapeType() == Renderer::ShapeType::Path && style.joinStyle() == LineJoin::Miter) {
                 const float miter = style.strokeMiterLimit();
-                if (miter < sqrtOfTwoDouble && style.capStyle() == LineCap::Square)
-                    delta *= sqrtOfTwoDouble;
+                if (miter < std::numbers::sqrt2 && style.capStyle() == LineCap::Square)
+                    delta *= std::numbers::sqrt2;
                 else
                     delta *= std::max(miter, 1.0f);
             } else if (style.capStyle() == LineCap::Square)
-                delta *= sqrtOfTwoDouble;
+                delta *= std::numbers::sqrt2;
             break;
         }
         }

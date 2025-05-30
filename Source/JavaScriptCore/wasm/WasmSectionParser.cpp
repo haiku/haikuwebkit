@@ -174,14 +174,14 @@ auto SectionParser::parseImport() -> PartialResult
             bool isImport = true;
             kindIndex = m_info->tables.size();
             PartialResult result = parseTableHelper(isImport);
-            if (UNLIKELY(!result))
+            if (!result) [[unlikely]]
                 return makeUnexpected(WTFMove(result.error()));
             break;
         }
         case ExternalKind::Memory: {
             bool isImport = true;
             PartialResult result = parseMemoryHelper(isImport);
-            if (UNLIKELY(!result))
+            if (!result) [[unlikely]]
                 return makeUnexpected(WTFMove(result.error()));
             break;
         }
@@ -301,7 +301,7 @@ auto SectionParser::parseTableHelper(bool isImport) -> PartialResult
     std::optional<uint32_t> maximum;
     bool isShared = false;
     PartialResult limits = parseResizableLimits(initial, maximum, isShared, LimitsType::Table);
-    if (UNLIKELY(!limits))
+    if (!limits) [[unlikely]]
         return makeUnexpected(WTFMove(limits.error()));
     WASM_PARSER_FAIL_IF(initial > maxTableEntries, "Table's initial page count of "_s, initial, " is too big, maximum "_s, maxTableEntries);
 
@@ -341,7 +341,7 @@ auto SectionParser::parseTable() -> PartialResult
     for (unsigned i = 0; i < count; ++i) {
         bool isImport = false;
         PartialResult result = parseTableHelper(isImport);
-        if (UNLIKELY(!result))
+        if (!result) [[unlikely]]
             return makeUnexpected(WTFMove(result.error()));
     }
 
@@ -359,7 +359,7 @@ auto SectionParser::parseMemoryHelper(bool isImport) -> PartialResult
         uint32_t initial;
         std::optional<uint32_t> maximum;
         PartialResult limits = parseResizableLimits(initial, maximum, isShared, LimitsType::Memory);
-        if (UNLIKELY(!limits))
+        if (!limits) [[unlikely]]
             return makeUnexpected(WTFMove(limits.error()));
         ASSERT(!maximum || *maximum >= initial);
         WASM_PARSER_FAIL_IF(!PageCount::isValid(initial), "Memory's initial page count of "_s, initial, " is invalid"_s);

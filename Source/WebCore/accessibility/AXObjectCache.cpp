@@ -66,6 +66,7 @@
 #include "AccessibilityTree.h"
 #include "AccessibilityTreeItem.h"
 #include "CaretRectComputation.h"
+#include "ContainerNodeInlines.h"
 #include "CustomElementDefaultARIA.h"
 #include "DeprecatedGlobalSettings.h"
 #include "Document.h"
@@ -255,7 +256,9 @@ AXObjectCache::AXObjectCache(Page& page, Document* document)
     : m_document(document)
     , m_pageID(page.identifier())
     , m_notificationPostTimer(*this, &AXObjectCache::notificationPostTimerFired)
-    , m_passwordNotificationPostTimer(*this, &AXObjectCache::passwordNotificationPostTimerFired)
+#if PLATFORM(COCOA)
+    , m_passwordNotificationTimer(*this, &AXObjectCache::passwordNotificationTimerFired)
+#endif
     , m_liveRegionChangedPostTimer(*this, &AXObjectCache::liveRegionChangedNotificationPostTimerFired)
     , m_currentModalElement(nullptr)
     , m_performCacheUpdateTimer(*this, &AXObjectCache::performCacheUpdateTimerFired)
@@ -405,7 +408,7 @@ void AXObjectCache::updateCurrentModalNode()
             if (!isNodeVisible(element.get()) || !modalElementHasAccessibleContent(*element))
                 continue;
 
-            bool focusIsInsideElement = focusedElement && (focusedElement == element.get() || focusedElement->isDescendantOf(*element));
+            bool focusIsInsideElement = focusedElement && focusedElement->isInclusiveDescendantOf(*element);
 
             // If the modal we found previously is a descendant of this one, prefer the descendant and skip this one.
             if (modalElementToReturn && foundModalWithFocusInside && modalElementToReturn->isDescendantOf(*element))
@@ -1022,7 +1025,7 @@ RefPtr<AXIsolatedTree> AXObjectCache::getOrCreateIsolatedTree()
     // especially for large documents, for real clients we build a temporary "empty" isolated tree consisting only of the ScrollView and the WebArea objects.
     // Then we schedule building the entire isolated tree on a Timer.
     // For test clients, LayoutTests or XCTests, build the whole isolated tree.
-    if (LIKELY(!clientIsInTestMode())) {
+    if (!clientIsInTestMode()) [[likely]] {
         tree = AXIsolatedTree::createEmpty(*this);
         if (!m_buildIsolatedTreeTimer.isActive())
             m_buildIsolatedTreeTimer.startOneShot(0_s);
@@ -1269,6 +1272,29 @@ void AXObjectCache::onRendererCreated(Element& element)
         m_deferredReplacedObjects.add(*axID);
         if (!m_performCacheUpdateTimer.isActive())
             m_performCacheUpdateTimer.startOneShot(0_s);
+    }
+}
+
+void AXObjectCache::onRendererCreated(Text& textNode)
+{
+    if (!textNode.renderer()) {
+        ASSERT_NOT_REACHED();
+        return;
+    }
+
+    // If we created an AccessibilityNodeObject for this Text, remove it since there should
+    // be a new AccessibilityRenderObject created using the renderer.
+    if (auto axID = m_nodeObjectMapping.get(textNode)) {
+        if (RefPtr nodeObject = get(textNode)) {
+            if (auto* parent = nodeObject->parentObject()) {
+                remove(textNode);
+                childrenChanged(parent);
+                return;
+            }
+            // We don't need to add nodeObject to m_deferredReplacedObjects, as that currently
+            // only serves to repair relationships for replaced objects, which text nodes cannot
+            // possibly be part of (because they are not elements).
+        }
     }
 }
 
@@ -1665,20 +1691,6 @@ void AXObjectCache::notificationPostTimerFired()
         postPlatformNotification(note.first, note.second);
 }
 
-void AXObjectCache::passwordNotificationPostTimerFired()
-{
-#if PLATFORM(COCOA)
-    m_passwordNotificationPostTimer.stop();
-
-    // In tests, posting notifications has a tendency to immediately queue up other notifications, which can lead to unexpected behavior
-    // when the notification list is cleared at the end. Instead copy this list at the start.
-    auto notifications = std::exchange(m_passwordNotificationsToPost, { });
-
-    for (auto& notification : notifications)
-        postTextStateChangePlatformNotification(notification.ptr(), AXTextEditTypeInsert, " "_s, VisiblePosition());
-#endif
-}
-
 void AXObjectCache::postNotification(RenderObject* renderer, AXNotification notification, PostTarget postTarget)
 {
     if (!renderer)
@@ -1992,6 +2004,11 @@ void AXObjectCache::onSlottedContentChange(const HTMLSlotElement& slot)
     childrenChanged(get(const_cast<HTMLSlotElement&>(slot)));
 }
 
+static bool isContentVisibilityHidden(const RenderStyle& style)
+{
+    return style.usedContentVisibility() == ContentVisibility::Hidden;
+}
+
 void AXObjectCache::onStyleChange(Element& element, OptionSet<Style::Change> change, const RenderStyle* oldStyle, const RenderStyle* newStyle)
 {
     if (!change || !oldStyle || !newStyle)
@@ -2001,9 +2018,14 @@ void AXObjectCache::onStyleChange(Element& element, OptionSet<Style::Change> cha
     if (!object)
         return;
 
-    if (!element.renderer() && isVisibilityHidden(*oldStyle) != isVisibilityHidden(*newStyle)) {
-        // We only need to do this when the given element doesn't have a renderer, as if it did, we would get a normal
-        // children-changed event through the render tree.
+    if (element.renderer()) {
+        // Unlike changes to `visibility`, changes to `content-visibility` do not provide accessibility
+        // children changed notifications via the render tree, so check for that here.
+        if (isContentVisibilityHidden(*oldStyle) != isContentVisibilityHidden(*newStyle))
+            childrenChanged(object.get());
+    } else if (isVisibilityHidden(*oldStyle) != isVisibilityHidden(*newStyle)) {
+        // We only need to do this when the given element doesn't have a renderer, as if it did, we would
+        // get a children-changed event through the render tree.
         childrenChanged(object.get());
     }
 
@@ -2022,10 +2044,10 @@ void AXObjectCache::onStyleChange(RenderText& renderText, StyleDifference differ
     if (!oldStyle)
         return;
 
-    bool speakAsChanged = UNLIKELY(oldStyle->speakAs() != newStyle.speakAs());
+    bool speakAsChanged = oldStyle->speakAs() != newStyle.speakAs();
 #if !ENABLE(AX_THREAD_TEXT_APIS)
     // In !ENABLE(AX_THREAD_TEXT_APIS), we don't have anything to do if speak-as hasn't changed.
-    if (!speakAsChanged)
+    if (!speakAsChanged) [[likely]]
         return;
 #endif // !ENABLE(AX_THREAD_TEXT_APIS)
 
@@ -2033,8 +2055,10 @@ void AXObjectCache::onStyleChange(RenderText& renderText, StyleDifference differ
     // When speak-as changes, style difference will be StyleDifference::Equal (so "equal"
     // is not exactly accurate). So if the styles are "equal" and speak-as hasn't changed,
     // we have nothing to do.
-    if (diffIsEqual && !speakAsChanged)
-        return;
+    if (diffIsEqual) {
+        if (!speakAsChanged) [[likely]]
+            return;
+    }
 
     RefPtr tree = AXIsolatedTree::treeForPageID(m_pageID);
     if (!tree)
@@ -2044,7 +2068,7 @@ void AXObjectCache::onStyleChange(RenderText& renderText, StyleDifference differ
     if (!object)
         return;
 
-    if (speakAsChanged)
+    if (speakAsChanged) [[unlikely]]
         postNotification(*object, AXNotification::SpeakAsChanged);
 
     // The following style changes will not have a StyleDifference::Equal, so we can
@@ -2068,8 +2092,8 @@ void AXObjectCache::onStyleChange(RenderText& renderText, StyleDifference differ
     if (!!oldStyle->textShadow() != !!newStyle.textShadow())
         tree->queueNodeUpdate(object->objectID(), { AXProperty::HasTextShadow });
 
-    auto oldDecor = oldStyle->textDecorationsInEffect();
-    auto newDecor = newStyle.textDecorationsInEffect();
+    auto oldDecor = oldStyle->textDecorationLineInEffect();
+    auto newDecor = newStyle.textDecorationLineInEffect();
     if ((oldDecor & TextDecorationLine::Underline) != (newDecor & TextDecorationLine::Underline))
         tree->queueNodeUpdate(object->objectID(), { AXProperty::HasUnderline });
 
@@ -2171,7 +2195,7 @@ void AXObjectCache::showIntent(const AXTextStateChangeIntent &intent)
     case AXTextStateChangeTypeUnknown:
         break;
     case AXTextStateChangeTypeEdit:
-        switch (intent.change) {
+        switch (intent.editType) {
         case AXTextEditTypeUnknown:
             dataLog("Unknown");
             break;
@@ -2192,6 +2216,9 @@ void AXObjectCache::showIntent(const AXTextStateChangeIntent &intent)
             break;
         case AXTextEditTypePaste:
             dataLog("Paste");
+            break;
+        case AXTextEditTypeReplace:
+            dataLog("Replace");
             break;
         case AXTextEditTypeAttributesChange:
             dataLog("AttributesChange");
@@ -2338,10 +2365,6 @@ void AXObjectCache::postTextStateChangeNotification(AccessibilityObject* object,
 
 #if PLATFORM(COCOA) || USE(ATSPI)
     if (object) {
-#if PLATFORM(COCOA)
-        if (isSecureFieldOrContainedBySecureField(*object))
-            return;
-#endif
         if (auto observableObject = object->observableObject())
             object = observableObject;
     }
@@ -2351,18 +2374,19 @@ void AXObjectCache::postTextStateChangeNotification(AccessibilityObject* object,
 
     if (object) {
         const AXTextStateChangeIntent& newIntent = (intent.type == AXTextStateChangeTypeUnknown || (m_isSynchronizingSelection && m_textSelectionIntent.type != AXTextStateChangeTypeUnknown)) ? m_textSelectionIntent : intent;
-        postTextStateChangePlatformNotification(object, newIntent, selection);
+
+#if PLATFORM(COCOA)
+        if (enqueuePasswordNotification(*object, { newIntent, { }, { }, selection }))
+            return;
+#endif
+
+        postTextSelectionChangePlatformNotification(object, newIntent, selection);
+    }
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-        m_lastDebouncedTextRangeObject = object->objectID();
-        if (!m_selectedTextRangeTimer.isActive())
-            m_selectedTextRangeTimer.restart();
+    onSelectedTextChanged(selection, object);
 #endif
-    }
-#if PLATFORM(MAC)
-    onSelectedTextChanged(selection);
-#endif
-#else
+#else // PLATFORM(COCOA) || USE(ATSPI)
     UNUSED_PARAM(object);
     UNUSED_PARAM(intent);
     UNUSED_PARAM(selection);
@@ -2382,11 +2406,8 @@ void AXObjectCache::postTextStateChangeNotification(Node* node, AXTextEditType t
 
     AccessibilityObject* object = getOrCreate(node);
 #if PLATFORM(COCOA) || USE(ATSPI)
-    if (object) {
-        if (enqueuePasswordValueChangeNotification(*object))
-            return;
+    if (object)
         object = object->observableObject();
-    }
 
     if (!object)
         object = rootWebArea();
@@ -2394,12 +2415,17 @@ void AXObjectCache::postTextStateChangeNotification(Node* node, AXTextEditType t
     if (!object)
         return;
 
+#if PLATFORM(COCOA)
+    if (enqueuePasswordNotification(*object, { { type }, { }, text, { position, position } }))
+        return;
+#endif
+
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     updateIsolatedTree(*object, AXNotification::ValueChanged);
 #endif
 
     postTextStateChangePlatformNotification(object, type, text, position);
-#else
+#else // PLATFORM(COCOA) || USE(ATSPI)
     nodeTextChangePlatformNotification(object, textChangeForEditType(type), position.deepEquivalent().deprecatedEditingOffset(), text);
 #endif
 }
@@ -2417,14 +2443,18 @@ void AXObjectCache::postTextReplacementNotification(Node* node, AXTextEditType d
 
     AccessibilityObject* object = getOrCreate(*node);
 #if PLATFORM(COCOA) || USE(ATSPI)
-    if (object) {
-        if (enqueuePasswordValueChangeNotification(*object))
-            return;
+    if (object)
         object = object->observableObject();
-    }
+    if (!object)
+        return;
+
+#if PLATFORM(COCOA)
+    if (enqueuePasswordNotification(*object, { { AXTextEditTypeReplace }, deletedText, insertedText, { position, position } }))
+        return;
+#endif
 
     postTextReplacementPlatformNotification(object, deletionType, deletedText, insertionType, insertedText, position);
-#else
+#else // PLATFORM(COCOA) || USE(ATSPI)
     nodeTextChangePlatformNotification(object, textChangeForEditType(deletionType), position.deepEquivalent().deprecatedEditingOffset(), deletedText);
     nodeTextChangePlatformNotification(object, textChangeForEditType(insertionType), position.deepEquivalent().deprecatedEditingOffset(), insertedText);
 #endif
@@ -2436,42 +2466,150 @@ void AXObjectCache::postTextReplacementNotificationForTextControl(HTMLTextFormCo
 
     AccessibilityObject* object = getOrCreate(textControl);
 #if PLATFORM(COCOA) || USE(ATSPI)
-    if (object) {
-        if (enqueuePasswordValueChangeNotification(*object))
-            return;
+    if (object)
         object = object->observableObject();
-    }
+    if (!object)
+        return;
+
+#if PLATFORM(COCOA)
+    if (enqueuePasswordNotification(*object, { { AXTextEditTypeReplace }, deletedText, insertedText, { } }))
+        return;
+#endif
 
     postTextReplacementPlatformNotificationForTextControl(object, deletedText, insertedText);
-#else
+#else // PLATFORM(COCOA) || USE(ATSPI)
     nodeTextChangePlatformNotification(object, textChangeForEditType(AXTextEditTypeDelete), 0, deletedText);
     nodeTextChangePlatformNotification(object, textChangeForEditType(AXTextEditTypeInsert), 0, insertedText);
 #endif
 }
 
-bool AXObjectCache::enqueuePasswordValueChangeNotification(AccessibilityObject& object)
-{
 #if PLATFORM(COCOA)
+
+static AXTextChangeContext secureContext(AccessibilityObject& object, AXTextChangeContext& context)
+{
+    ASSERT(isSecureFieldOrContainedBySecureField(object));
+
+    // FIXME: Add a better way to retrieve the maskingCharacter for secure fields.
+    String value = object.secureFieldValue();
+    auto maskingCharacter = value.length() ? value[0] : bullet;
+
+    const auto& secureString = [&maskingCharacter] (String& text) {
+        if (text.isEmpty())
+            return;
+
+        std::span<UChar> characters;
+        text = String::createUninitialized(text.length(), characters);
+        for (unsigned i = 0; i < text.length(); ++i)
+            characters[i] = maskingCharacter;
+    };
+
+    secureString(context.deletedText);
+    secureString(context.insertedText);
+    return context;
+}
+
+bool AXObjectCache::enqueuePasswordNotification(AccessibilityObject& object, AXTextChangeContext&& context)
+{
     if (!isSecureFieldOrContainedBySecureField(object))
         return false;
 
-    AccessibilityObject* observableObject = object.observableObject();
+    auto* observableObject = object.observableObject();
     if (!observableObject) {
         ASSERT_NOT_REACHED();
-        // return true even though the enqueue didn't happen because this is a password field and caller shouldn't post a notification
+        // Return true even though the enqueue didn't happen because this is a password field and caller shouldn't post a notification unless it is queued.
         return true;
     }
 
-    m_passwordNotificationsToPost.add(*observableObject);
-    if (!m_passwordNotificationPostTimer.isActive())
-        m_passwordNotificationPostTimer.startOneShot(accessibilityPasswordValueChangeNotificationInterval);
+    m_passwordNotifications.append({ *observableObject, secureContext(*observableObject, context) });
+    if (!m_passwordNotificationTimer.isActive())
+        m_passwordNotificationTimer.startOneShot(accessibilityPasswordValueChangeNotificationInterval);
 
     return true;
-#else
-    UNUSED_PARAM(object);
-    return false;
-#endif
 }
+
+void AXObjectCache::passwordNotificationTimerFired()
+{
+    m_passwordNotificationTimer.stop();
+
+    // In tests, posting notifications has a tendency to immediately queue up other notifications, which can lead to unexpected behavior
+    // when the notification list is cleared at the end. Instead copy this list at the start.
+    auto passwordNotifications = std::exchange(m_passwordNotifications, { });
+
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+    Vector<std::pair<Ref<AccessibilityObject>, AXNotification>> notifications;
+    for (const auto& note : passwordNotifications) {
+        switch (note.second.intent.type) {
+        case AXTextStateChangeTypeEdit:
+            notifications.append({ note.first, AXNotification::ValueChanged });
+            break;
+        case AXTextStateChangeTypeSelectionMove:
+        case AXTextStateChangeTypeSelectionExtend:
+        case AXTextStateChangeTypeSelectionBoundary:
+            notifications.append({ note.first, AXNotification::SelectedTextChanged });
+            break;
+        case AXTextStateChangeTypeUnknown:
+            break;
+        };
+    }
+    updateIsolatedTree(notifications);
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+
+    for (const auto& note : passwordNotifications) {
+        auto& context = note.second;
+        switch (context.intent.type) {
+        case AXTextStateChangeTypeEdit:
+            if (context.intent.editType == AXTextEditTypeReplace) {
+                postTextReplacementPlatformNotification(note.first.ptr(),
+                    AXTextEditTypeDelete, context.deletedText, AXTextEditTypeInsert, context.insertedText, context.selection.start());
+            } else {
+                postTextStateChangePlatformNotification(note.first.ptr(),
+                    context.intent.editType, context.insertedText, context.selection.start());
+            }
+            break;
+        case AXTextStateChangeTypeSelectionMove:
+        case AXTextStateChangeTypeSelectionExtend:
+        case AXTextStateChangeTypeSelectionBoundary:
+            postTextSelectionChangePlatformNotification(note.first.ptr(),
+                context.intent, context.selection);
+            break;
+        case AXTextStateChangeTypeUnknown:
+            break;
+        };
+    }
+}
+
+#endif // PLATFORM(COCOA)
+
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+void AXObjectCache::onSelectedTextChanged(const VisiblePositionRange& selection, AccessibilityObject* object)
+{
+    if (object) {
+        m_lastDebouncedTextRangeObject = object->objectID();
+        if (!m_selectedTextRangeTimer.isActive())
+            m_selectedTextRangeTimer.restart();
+    }
+
+    if (RefPtr tree = AXIsolatedTree::treeForPageID(m_pageID)) {
+        if (selection.isNull())
+            tree->setSelectedTextMarkerRange({ });
+        else {
+            auto startPosition = selection.start.deepEquivalent();
+            auto endPosition = selection.end.deepEquivalent();
+
+            if (startPosition.isNull() || endPosition.isNull())
+                tree->setSelectedTextMarkerRange({ });
+            else {
+                if (auto* startObject = get(startPosition.anchorNode()))
+                    createIsolatedObjectIfNeeded(*startObject);
+                if (auto* endObject = get(endPosition.anchorNode()))
+                    createIsolatedObjectIfNeeded(*endObject);
+
+                tree->setSelectedTextMarkerRange({ selection });
+            }
+        }
+    }
+}
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 
 void AXObjectCache::frameLoadingEventNotification(LocalFrame* frame, AXLoadingEvent loadingEvent)
 {
@@ -4572,7 +4710,7 @@ void AXObjectCache::performDeferredCacheUpdate(ForceLayout forceLayout)
             continue;
         shouldRecomputeModal = true;
 
-        if (UNLIKELY(!m_modalNodesInitialized))
+        if (!m_modalNodesInitialized) [[unlikely]]
             findModalNodes();
 
         if (isModalElement(element)) {
@@ -4882,7 +5020,7 @@ void AXObjectCache::updateIsolatedTree(const Vector<std::pair<Ref<AccessibilityO
         case AXNotification::LanguageChanged:
         case AXNotification::RowCountChanged:
             updateNode(notification.first);
-            FALLTHROUGH;
+            [[fallthrough]];
         case AXNotification::RowCollapsed:
         case AXNotification::RowExpanded:
             updateChildren(notification.first);
@@ -5021,7 +5159,7 @@ bool isNodeFocused(Node& node)
 
 bool isVisibilityHidden(const RenderStyle& style)
 {
-    return style.usedVisibility() != Visibility::Visible || style.usedContentVisibility() == ContentVisibility::Hidden;
+    return style.usedVisibility() != Visibility::Visible || isContentVisibilityHidden(style);
 }
 
 // DOM component of hidden definition.
@@ -5484,12 +5622,16 @@ void AXObjectCache::updateRelations(Element& origin, const QualifiedName& attrib
     }
 
     // `commandfor` is only valid for button elements.
-    if (UNLIKELY(attribute == commandforAttr) && !is<HTMLButtonElement>(origin))
-        return;
+    if (attribute == commandforAttr) [[unlikely]] {
+        if (!is<HTMLButtonElement>(origin))
+            return;
+    }
 
     // `popovertarget` is only valid for input and button elements.
-    if (UNLIKELY(attribute == popovertargetAttr) && !is<HTMLInputElement>(origin) && !is<HTMLButtonElement>(origin))
-        return;
+    if (attribute == popovertargetAttr) [[unlikely]] {
+        if (!is<HTMLInputElement>(origin) && !is<HTMLButtonElement>(origin))
+            return;
+    }
 
     bool changedRelation = removeRelation(origin, relation);
     changedRelation |= addRelation(origin, attribute);
@@ -5583,13 +5725,14 @@ AXTextChange AXObjectCache::textChangeForEditType(AXTextEditType type)
     case AXTextEditTypeTyping:
     case AXTextEditTypePaste:
         return AXTextChange::Inserted;
+    case AXTextEditTypeReplace:
+        return AXTextChange::Replaced;
     case AXTextEditTypeAttributesChange:
         return AXTextChange::AttributesChanged;
     case AXTextEditTypeUnknown:
-        break;
+        ASSERT_NOT_REACHED();
+        return AXTextChange::Inserted;
     }
-    ASSERT_NOT_REACHED();
-    return AXTextChange::Inserted;
 }
 #endif
 

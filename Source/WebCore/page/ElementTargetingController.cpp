@@ -31,6 +31,7 @@
 #include "BitmapImage.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
+#include "ContainerNodeInlines.h"
 #include "DOMTokenList.h"
 #include "Document.h"
 #include "DocumentLoader.h"
@@ -53,6 +54,7 @@
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
 #include "NamedNodeMap.h"
+#include "NodeInlines.h"
 #include "NodeList.h"
 #include "NodeRenderStyle.h"
 #include "Page.h"
@@ -69,6 +71,7 @@
 #include "TextIterator.h"
 #include "TypedElementDescendantIteratorInlines.h"
 #include "VisibilityAdjustment.h"
+#include <ranges>
 #include <wtf/HashMap.h>
 #include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -541,9 +544,7 @@ static Vector<Vector<String>> selectorsForTarget(Element& element, ElementSelect
             selectors.append(WTFMove(selector));
     }
 
-    std::sort(selectors.begin(), selectors.end(), [](auto& first, auto& second) {
-        return first.length() < second.length();
-    });
+    std::ranges::sort(selectors, { }, &String::length);
 
     if (!selectors.isEmpty())
         cache.add(element, selectors.first());
@@ -1310,7 +1311,7 @@ Vector<TargetedElementInfo> ElementTargetingController::extractTargets(Vector<Re
                 candidateOrHost = pseudo->hostElement();
             else
                 candidateOrHost = &candidate;
-            return candidateOrHost && target.containsIncludingShadowDOM(candidateOrHost.get());
+            return candidateOrHost && target.isShadowIncludingInclusiveAncestorOf(candidateOrHost.get());
         };
 
         candidates.removeAllMatching([&](auto& candidate) {
@@ -1362,7 +1363,7 @@ Vector<TargetedElementInfo> ElementTargetingController::extractTargets(Vector<Re
                 continue;
 
             bool elementIsAlreadyTargeted = targets.containsIf([&element](auto& target) {
-                return target->containsIncludingShadowDOM(element.get());
+                return target->isShadowIncludingInclusiveAncestorOf(element.get());
             });
 
             if (elementIsAlreadyTargeted)
@@ -1960,9 +1961,7 @@ uint64_t ElementTargetingController::numberOfVisibilityAdjustmentRects()
     }
 
     // Sort by area in descending order so that we don't double-count fully overlapped elements.
-    std::sort(clientRects.begin(), clientRects.end(), [](auto first, auto second) {
-        return first.area() > second.area();
-    });
+    std::ranges::sort(clientRects, std::ranges::greater { }, &FloatRect::area);
 
     Region adjustedRegion;
     uint64_t numberOfRects = 0;

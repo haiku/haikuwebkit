@@ -475,6 +475,9 @@ TextStream& operator<<(TextStream& stream, AccessibilityTextSource source)
     case AccessibilityTextSource::Action:
         stream << "Action";
         break;
+    case AccessibilityTextSource::Heading:
+        stream << "Heading";
+        break;
     }
     return stream;
 }
@@ -890,9 +893,6 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
         break;
     case AXProperty::IsKeyboardFocusable:
         stream << "IsKeyboardFocusable";
-        break;
-    case AXProperty::IsListBox:
-        stream << "IsListBox";
         break;
     case AXProperty::IsMathElement:
         stream << "IsMathElement";

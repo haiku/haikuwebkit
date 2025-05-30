@@ -28,6 +28,7 @@
 
 #import "AXObjectCache.h"
 #import "ColorCocoa.h"
+#import "RenderObjectInlines.h"
 #import "WebAccessibilityObjectWrapperBase.h"
 
 #if PLATFORM(IOS_FAMILY)
@@ -286,7 +287,7 @@ RetainPtr<NSMutableAttributedString> AXCoreObject::createAttributedString(String
 
 NSArray *renderWidgetChildren(const AXCoreObject& object)
 {
-    if (LIKELY(!object.isWidget()))
+    if (!object.isWidget()) [[likely]]
         return nil;
 
     id child = Accessibility::retrieveAutoreleasedValueFromMainThread<id>([object = Ref { object }] () -> RetainPtr<id> {
@@ -324,7 +325,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     } else if (role == AccessibilityRole::Canvas && firstUnignoredChild() && !containsOnlyStaticText()) {
         // If this is a canvas with fallback content (one or more non-text thing), re-map to group.
         role = AccessibilityRole::Group;
-    }
+    } else if (isInvalidListBox())
+        role = AccessibilityRole::Group;
 
     return Accessibility::roleToPlatformString(role);
 }
@@ -332,11 +334,11 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 bool AXCoreObject::isEmptyGroup()
 {
 #if ENABLE(MODEL_ELEMENT)
-    if (UNLIKELY(isModel()))
+    if (isModel()) [[unlikely]]
         return false;
 #endif
 
-    if (UNLIKELY(isRemoteFrame()))
+    if (isRemoteFrame()) [[unlikely]]
         return false;
 
     return [rolePlatformString().createNSString() isEqual:NSAccessibilityGroupRole]

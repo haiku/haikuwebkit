@@ -101,6 +101,7 @@
 #include "TransformOperationsBuilder.h"
 #include "ViewTimeline.h"
 #include "WillChangeData.h"
+#include <ranges>
 #include <wtf/text/MakeString.h>
 
 namespace WebCore {
@@ -324,7 +325,7 @@ template<class ValueType>
 inline const ValueType* BuilderConverter::requiredDowncast(BuilderState& builderState, const CSSValue& value)
 {
     auto* typedValue = dynamicDowncast<ValueType>(value);
-    if (UNLIKELY(!typedValue)) {
+    if (!typedValue) [[unlikely]] {
         builderState.setCurrentPropertyInvalidAtComputedValueTime();
         return nullptr;
     }
@@ -335,13 +336,13 @@ template<class ValueType>
 inline std::optional<std::pair<const ValueType&, const ValueType&>> BuilderConverter::requiredPairDowncast(BuilderState& builderState, const CSSValue& value)
 {
     auto* pairValue = requiredDowncast<CSSValuePair>(builderState, value);
-    if (UNLIKELY(!pairValue))
+    if (!pairValue) [[unlikely]]
         return { };
     auto* firstValue = requiredDowncast<ValueType>(builderState, pairValue->first());
-    if (UNLIKELY(!firstValue))
+    if (!firstValue) [[unlikely]]
         return { };
     auto* secondValue = requiredDowncast<ValueType>(builderState, pairValue->second());
-    if (UNLIKELY(!secondValue))
+    if (!secondValue) [[unlikely]]
         return { };
     return { { *firstValue, *secondValue } };
 }
@@ -350,14 +351,14 @@ template<class ListType, class ValueType, unsigned minimumSize>
 inline auto BuilderConverter::requiredListDowncast(BuilderState& builderState, const CSSValue& value) -> std::optional<TypedList<ListType, ValueType>>
 {
     auto* listValue = requiredDowncast<ListType>(builderState, value);
-    if (UNLIKELY(!listValue))
+    if (!listValue) [[unlikely]]
         return { };
-    if (UNLIKELY(listValue->size() < minimumSize)) {
+    if (listValue->size() < minimumSize) [[unlikely]] {
         builderState.setCurrentPropertyInvalidAtComputedValueTime();
         return { };
     }
     for (auto& value : *listValue) {
-        if (UNLIKELY(!requiredDowncast<ValueType>(builderState, value)))
+        if (!requiredDowncast<ValueType>(builderState, value)) [[unlikely]]
             return { };
     }
     return TypedList<ListType, ValueType> { *listValue };
@@ -367,7 +368,7 @@ template<CSSValueID functionName, class ValueType, unsigned minimumSize>
 inline auto BuilderConverter::requiredFunctionDowncast(BuilderState& builderState, const CSSValue& value) -> std::optional<TypedList<CSSFunctionValue, ValueType>>
 {
     auto function = requiredListDowncast<CSSFunctionValue, ValueType, minimumSize>(builderState, value);
-    if (UNLIKELY(!function))
+    if (!function) [[unlikely]]
         return { };
     if (function->list->name() != functionName) {
         builderState.setCurrentPropertyInvalidAtComputedValueTime();
@@ -1525,12 +1526,12 @@ inline NamedGridLinesMap BuilderConverter::createImplicitNamedGridLinesFromGridA
         {
             auto& startVector = namedGridLines.map.add(makeString(area.key, "-start"_s), Vector<unsigned>()).iterator->value;
             startVector.append(areaSpan.startLine());
-            std::sort(startVector.begin(), startVector.end());
+            std::ranges::sort(startVector);
         }
         {
             auto& endVector = namedGridLines.map.add(makeString(area.key, "-end"_s), Vector<unsigned>()).iterator->value;
             endVector.append(areaSpan.endLine());
-            std::sort(endVector.begin(), endVector.end());
+            std::ranges::sort(endVector);
         }
     }
     // FIXME: For acceptable performance, should sort once at the end, not as we add each item, or at least insert in sorted order instead of using std::sort each time.

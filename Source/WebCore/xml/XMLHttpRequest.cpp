@@ -31,6 +31,7 @@
 #include "DOMFormData.h"
 #include "Event.h"
 #include "EventNames.h"
+#include "EventTargetInlines.h"
 #include "File.h"
 #include "HTMLDocument.h"
 #include "HTMLIFrameElement.h"
@@ -825,7 +826,7 @@ String XMLHttpRequest::getAllResponseHeaders() const
             return std::make_pair(header.key, header.value);
         });
 
-        std::sort(headers.begin(), headers.end(), [] (const std::pair<String, String>& x, const std::pair<String, String>& y) {
+        std::ranges::sort(headers, [](auto& x, auto& y) {
             unsigned xLength = x.first.length();
             unsigned yLength = y.first.length();
             unsigned commonLength = std::min(xLength, yLength);
@@ -1030,7 +1031,7 @@ Ref<TextResourceDecoder> XMLHttpRequest::createDecoder() const
             decoder->useLenientXMLDecoding();
             return decoder;
         }
-        FALLTHROUGH;
+        [[fallthrough]];
     case ResponseType::Text:
     case ResponseType::Json: {
         auto decoder = TextResourceDecoder::create("text/plain"_s, "UTF-8"_s);

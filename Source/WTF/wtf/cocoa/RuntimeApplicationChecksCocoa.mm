@@ -238,6 +238,7 @@ static SDKAlignedBehaviors computeSDKAlignedBehaviors()
         disableBehavior(SDKAlignedBehavior::UseCFNetworkNetworkLoader);
         disableBehavior(SDKAlignedBehavior::BlocksConnectionsToAddressWithOnlyZeros);
         disableBehavior(SDKAlignedBehavior::BlockCrossOriginRedirectDownloads);
+        disableBehavior(SDKAlignedBehavior::SupportGameControllerEventInteractionAPI);
     }
 
     disableAdditionalSDKAlignedBehaviors(behaviors);
@@ -425,6 +426,12 @@ bool MacApplication::isHRBlock()
 {
     static bool isHRBlock = applicationBundleIsEqualTo("com.hrblock.tax.2010"_s);
     return isHRBlock;
+}
+
+bool MacApplication::isTurboTax()
+{
+    static bool isTurboTax = applicationBundleIdentifier().startsWith("com.intuit.turbotax."_s);
+    return isTurboTax;
 }
 
 bool MacApplication::isEpsonSoftwareUpdater()

@@ -161,6 +161,7 @@
 #import <pal/spi/ios/GraphicsServicesSPI.h>
 #import <pal/spi/ios/ManagedConfigurationSPI.h>
 #import <pal/system/ios/UserInterfaceIdiom.h>
+#import <ranges>
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/BlockPtr.h>
 #import <wtf/CallbackAggregator.h>
@@ -682,7 +683,7 @@ inline static RetainPtr<NSString> textRelativeToSelectionStart(WKRelativeTextRan
             break;
         }
     }
-    return string.toString().createNSString();
+    return string.createNSString();
 }
 
 @implementation WKRelativeTextPosition
@@ -1152,7 +1153,7 @@ static WKDragSessionContext *ensureLocalDragSessionContext(id <UIDragSession> se
 @end
 
 #define RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED() do { \
-    if (UNLIKELY(self.shouldUseAsyncInteractions)) { \
+    if (self.shouldUseAsyncInteractions) [[unlikely]] { \
         RELEASE_LOG_ERROR(TextInteraction, "Received unexpected call to %s", __PRETTY_FUNCTION__); \
         RELEASE_ASSERT_NOT_REACHED(); \
     } \
@@ -3427,7 +3428,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         switch (ignoreTapGestureReason(_singleTapGestureRecognizer.get())) {
         case WebKit::IgnoreTapGestureReason::ToggleEditMenu:
             _page->clearSelectionAfterTappingSelectionHighlightIfNeeded(point);
-            FALLTHROUGH;
+            [[fallthrough]];
         case WebKit::IgnoreTapGestureReason::DeferToScrollView:
             return NO;
         case WebKit::IgnoreTapGestureReason::None:
@@ -6618,7 +6619,7 @@ static Vector<WebCore::CompositionUnderline> extractUnderlines(NSAttributedStrin
         });
     }];
 
-    std::sort(underlines.begin(), underlines.end(), [](auto& a, auto& b) {
+    std::ranges::sort(underlines, [](auto& a, auto& b) {
         if (a.startOffset < b.startOffset)
             return true;
         if (a.startOffset > b.startOffset)
@@ -6657,7 +6658,7 @@ static Vector<WebCore::CompositionHighlight> compositionHighlights(NSAttributedS
         highlights.append({ static_cast<unsigned>(range.location), static_cast<unsigned>(NSMaxRange(range)), backgroundHighlightColor, foregroundHighlightColor });
     }];
 
-    std::sort(highlights.begin(), highlights.end(), [](auto& a, auto& b) {
+    std::ranges::sort(highlights, [](auto& a, auto& b) {
         if (a.startOffset < b.startOffset)
             return true;
         if (a.startOffset > b.startOffset)
@@ -9764,9 +9765,7 @@ static String fallbackLabelTextForUnlabeledInputFieldInZoomedFormControls(WebCor
     bool isPasswordField = false;
 
     auto elementTypeIsAnyOf = [elementType](std::initializer_list<WebKit::InputType>&& elementTypes) {
-        return std::ranges::any_of(WTFMove(elementTypes), [elementType](auto&& type) {
-            return elementType == type;
-        });
+        return std::ranges::find(elementTypes, elementType) != elementTypes.end();
     };
 
     // If unspecified, try to infer the input mode from the input type
@@ -13882,6 +13881,16 @@ inline static NSString *extendSelectionCommand(UITextLayoutDirection direction)
     return CGRectNull;
 }
 
+- (UIView *)selectionContainerViewBelowText
+{
+    return self._selectionContainerViewInternal;
+}
+
+- (UIView *)selectionContainerViewAboveText
+{
+    return self._selectionContainerViewInternal;
+}
+
 - (void)transposeCharactersAroundSelection
 {
     [self _executeEditCommand:@"transpose"];
@@ -14120,13 +14129,15 @@ static inline WKTextAnimationType toWKTextAnimationType(WebCore::TextAnimationTy
 
 - (UIView *)_selectionContainerViewAboveText
 {
-    // FIXME (280624): Once -selectionContainerView (or an equivalent) is available as API, we
-    // should adopt that and make this invoke RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED().
+    // FIXME: Consider adding RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED()
+    // once the changes in rdar://150645383 are in all relevant builds.
     return self._selectionContainerViewInternal;
 }
 
 - (UIView *)selectionContainerView
 {
+    // FIXME: Consider adding RELEASE_ASSERT_ASYNC_TEXT_INTERACTIONS_DISABLED()
+    // once the changes in rdar://150645383 are in all relevant builds.
     return self._selectionContainerViewInternal;
 }
 

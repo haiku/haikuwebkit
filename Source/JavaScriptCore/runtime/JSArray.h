@@ -226,14 +226,14 @@ inline JSArray* JSArray::tryCreate(VM& vm, Structure* structure, unsigned initia
 
     Butterfly* butterfly;
     IndexingType indexingType = structure->indexingType();
-    if (LIKELY(!hasAnyArrayStorage(indexingType))) {
+    if (!hasAnyArrayStorage(indexingType)) [[likely]] {
         ASSERT(
             hasUndecided(indexingType)
             || hasInt32(indexingType)
             || hasDouble(indexingType)
             || hasContiguous(indexingType));
 
-        if (UNLIKELY(vectorLengthHint > MAX_STORAGE_VECTOR_LENGTH))
+        if (vectorLengthHint > MAX_STORAGE_VECTOR_LENGTH) [[unlikely]]
             return nullptr;
 
         unsigned vectorLength = Butterfly::optimalContiguousVectorLength(structure, vectorLengthHint);
@@ -301,7 +301,7 @@ bool moveArrayElements(JSGlobalObject* globalObject, VM& vm, JSArray* target, un
 {
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    if (LIKELY(!hasAnyArrayStorage(source->indexingType()) && !source->holesMustForwardToPrototype())) {
+    if (!hasAnyArrayStorage(source->indexingType()) && !source->holesMustForwardToPrototype()) [[likely]] {
         for (unsigned i = 0; i < sourceLength; ++i) {
             JSValue value = source->tryGetIndexQuickly(i);
             if constexpr (fillMode == ArrayFillMode::Empty) {

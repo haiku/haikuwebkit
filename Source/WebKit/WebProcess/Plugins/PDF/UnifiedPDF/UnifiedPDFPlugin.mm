@@ -61,6 +61,7 @@
 #include <CoreGraphics/CoreGraphics.h>
 #include <PDFKit/PDFKit.h>
 #include <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
+#include <WebCore/AXCoreObject.h>
 #include <WebCore/AffineTransform.h>
 #include <WebCore/AutoscrollController.h>
 #include <WebCore/BitmapImage.h>
@@ -68,6 +69,7 @@
 #include <WebCore/ChromeClient.h>
 #include <WebCore/ColorBlending.h>
 #include <WebCore/ColorCocoa.h>
+#include <WebCore/ContainerNodeInlines.h>
 #include <WebCore/DataDetectorElementInfo.h>
 #include <WebCore/DictionaryLookup.h>
 #include <WebCore/DictionaryPopupInfo.h>
@@ -3727,7 +3729,7 @@ id UnifiedPDFPlugin::accessibilityObject() const
     return m_accessibilityDocumentObject.get();
 }
 
-#if !PLATFORM(MAC)
+#if PLATFORM(IOS_FAMILY)
 id UnifiedPDFPlugin::accessibilityHitTestInPageForIOS(WebCore::FloatPoint point)
 {
     RefPtr corePage = this->page();
@@ -3739,7 +3741,14 @@ id UnifiedPDFPlugin::accessibilityHitTestInPageForIOS(WebCore::FloatPoint point)
         return [page accessibilityHitTest:point withPlugin:m_accessibilityDocumentObject.get()];
     return nil;
 }
-#endif // !PLATFORM(MAC)
+
+WebCore::AXCoreObject* UnifiedPDFPlugin::accessibilityCoreObject()
+{
+    if (CheckedPtr cache = axObjectCache())
+        return cache->getOrCreate(m_element.get());
+    return nullptr;
+}
+#endif // PLATFORM(IOS_FAMILY)
 
 #if ENABLE(PDF_HUD)
 
@@ -4439,6 +4448,9 @@ PDFSelection *UnifiedPDFPlugin::selectionBetweenPoints(FloatPoint fromPoint, PDF
 
 PDFSelection *UnifiedPDFPlugin::selectionAtPoint(FloatPoint pointInPage, PDFPage *page, TextGranularity granularity) const
 {
+    if (granularity == TextGranularity::DocumentGranularity)
+        return [pdfDocument() selectionForEntireDocument];
+
     return [pdfDocument() selectionFromPage:page atPoint:pointInPage toPage:page atPoint:pointInPage withGranularity:[&] {
         switch (granularity) {
         case TextGranularity::CharacterGranularity:

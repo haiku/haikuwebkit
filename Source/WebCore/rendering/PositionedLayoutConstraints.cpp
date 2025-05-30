@@ -26,6 +26,7 @@
 #include "config.h"
 #include "PositionedLayoutConstraints.h"
 
+#include "ContainerNodeInlines.h"
 #include "InlineIteratorBoxInlines.h"
 #include "InlineIteratorInlineBox.h"
 #include "PositionArea.h"
@@ -159,11 +160,18 @@ void PositionedLayoutConstraints::captureGridArea(const RenderBox& renderer)
         return;
 
     if (LogicalBoxAxis::Inline == m_containingAxis) {
-        m_containingRange = gridContainer->gridAreaColumnRangeForOutOfFlow(renderer);
-        m_marginPercentageBasis = m_containingRange.size();
+        auto range = gridContainer->gridAreaColumnRangeForOutOfFlow(renderer);
+        if (!range)
+            return;
+        m_containingRange = *range;
+        m_marginPercentageBasis = range->size();
     } else {
-        m_containingRange = gridContainer->gridAreaRowRangeForOutOfFlow(renderer);
-        m_marginPercentageBasis = gridContainer->gridAreaColumnRangeForOutOfFlow(renderer).size();
+        auto range = gridContainer->gridAreaRowRangeForOutOfFlow(renderer);
+        if (range)
+            m_containingRange = *range;
+        auto columnRange = gridContainer->gridAreaColumnRangeForOutOfFlow(renderer);
+        if (columnRange)
+            m_marginPercentageBasis = columnRange->size();
     }
 
     if (!startIsBefore()) {

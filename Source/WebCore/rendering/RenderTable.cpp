@@ -218,7 +218,7 @@ void RenderTable::willInsertTableSection(RenderTableSection& child, RenderObject
             m_foot = child;
             break;
         }
-        FALLTHROUGH;
+        [[fallthrough]];
     case DisplayType::TableRowGroup:
         resetSectionPointerIfNotBefore(m_firstBody, beforeChild);
         if (!m_firstBody)
@@ -464,6 +464,14 @@ LayoutUnit RenderTable::sumCaptionsLogicalHeight() const
     for (auto& caption : m_captions)
         height += caption->logicalHeight() + caption->marginBefore() + caption->marginAfter();
     return height;
+}
+
+void RenderTable::setNeedsSectionRecalc()
+{
+    if (renderTreeBeingDestroyed())
+        return;
+    m_needsSectionRecalc = true;
+    setNeedsLayout();
 }
 
 void RenderTable::layout()

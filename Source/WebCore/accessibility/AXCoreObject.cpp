@@ -32,6 +32,7 @@
 #include "LocalFrameView.h"
 #include "RenderObject.h"
 #include "TextDecorationPainter.h"
+#include <wtf/Deque.h>
 #include <wtf/text/MakeString.h>
 
 namespace WebCore {
@@ -207,6 +208,37 @@ bool AXCoreObject::isTextControl() const
     default:
         return false;
     }
+}
+
+bool AXCoreObject::isValidListBox() const
+{
+    if (roleValue() != AccessibilityRole::ListBox)
+        return false;
+
+    Deque<Ref<AXCoreObject>, /* inlineCapacity */ 100> queue;
+    for (Ref child : const_cast<AXCoreObject*>(this)->childrenIncludingIgnored())
+        queue.append(WTFMove(child));
+
+    unsigned iterations = 0;
+    while (!queue.isEmpty()) {
+        Ref current = queue.takeFirst();
+
+        // Technically, per ARIA, the only valid children of listboxes are options, or groups containing options.
+        // But be permissive and call this listbox valid if it has at least one option.
+        if (current->isListBoxOption())
+            return true;
+        // Don't iterate forever in case someone added role="listbox" to some high-level element.
+        // If we haven't found an option after checking 200 objects, this probably isn't valid anyways.
+        if (iterations >= 250)
+            return false;
+        ++iterations;
+
+        if (current->isGroup() || current->isIgnored()) {
+            for (Ref child : current->childrenIncludingIgnored())
+                queue.append(WTFMove(child));
+        }
+    }
+    return false;
 }
 
 AXCoreObject::AccessibilityChildrenVector AXCoreObject::tabChildren()
@@ -1148,6 +1180,7 @@ static bool isVisibleText(AccessibilityTextSource textSource)
     case AccessibilityTextSource::Visible:
     case AccessibilityTextSource::Children:
     case AccessibilityTextSource::LabelByElement:
+    case AccessibilityTextSource::Heading:
         return true;
     case AccessibilityTextSource::Alternative:
     case AccessibilityTextSource::Summary:
@@ -1176,6 +1209,7 @@ static bool isDescriptiveText(AccessibilityTextSource textSource)
     case AccessibilityTextSource::Title:
     case AccessibilityTextSource::Subtitle:
     case AccessibilityTextSource::Action:
+    case AccessibilityTextSource::Heading:
         return false;
     }
 }
@@ -1199,7 +1233,7 @@ String AXCoreObject::descriptionAttributeValue() const
 
     StringBuilder returnText;
     for (const auto& text : textOrder) {
-        if (text.textSource == AccessibilityTextSource::Alternative) {
+        if (text.textSource == AccessibilityTextSource::Alternative || text.textSource == AccessibilityTextSource::Heading) {
             returnText.append(text.text);
             break;
         }
@@ -1246,7 +1280,7 @@ String AXCoreObject::titleAttributeValue() const
 
     for (const auto& text : textOrder) {
         // If we have alternative text, then we should not expose a title.
-        if (text.textSource == AccessibilityTextSource::Alternative)
+        if (text.textSource == AccessibilityTextSource::Alternative || text.textSource == AccessibilityTextSource::Heading)
             break;
 
         // Once we encounter visible text, or the text from our children that should be used foremost.
@@ -1364,7 +1398,7 @@ AXCoreObject* AXCoreObject::parentObjectUnignored() const
 LineDecorationStyle::LineDecorationStyle(RenderObject& renderer)
 {
     const auto& style = renderer.style();
-    auto decor = style.textDecorationsInEffect();
+    auto decor = style.textDecorationLineInEffect();
     if (decor & TextDecorationLine::Underline || decor & TextDecorationLine::LineThrough) {
         auto decorationStyles = TextDecorationPainter::stylesForRenderer(renderer, decor);
         if (decor & TextDecorationLine::Underline) {

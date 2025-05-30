@@ -104,7 +104,7 @@ ALWAYS_INLINE bool JSObject::canPerformFastPutInlineExcludingProto()
 
 ALWAYS_INLINE bool JSObject::canPerformFastPutInline(VM& vm, PropertyName propertyName)
 {
-    if (UNLIKELY(propertyName == vm.propertyNames->underscoreProto))
+    if (propertyName == vm.propertyNames->underscoreProto) [[unlikely]]
         return false;
     return canPerformFastPutInlineExcludingProto();
 }
@@ -137,14 +137,14 @@ ALWAYS_INLINE bool JSObject::getPropertySlot(JSGlobalObject* globalObject, unsig
         RETURN_IF_EXCEPTION(scope, false);
         if (hasSlot)
             return true;
-        if (UNLIKELY(slot.isVMInquiry() && slot.isTaintedByOpaqueObject()))
+        if (slot.isVMInquiry() && slot.isTaintedByOpaqueObject()) [[unlikely]]
             return false;
         if (object->type() == ProxyObjectType && slot.internalMethodType() == PropertySlot::InternalMethodType::HasProperty)
             return false;
         if (isTypedArrayType(object->type()) && propertyName >= jsCast<JSArrayBufferView*>(object)->length())
             return false;
         JSValue prototype;
-        if (LIKELY(!structure->typeInfo().overridesGetPrototype() || slot.internalMethodType() == PropertySlot::InternalMethodType::VMInquiry))
+        if (!structure->typeInfo().overridesGetPrototype() || slot.internalMethodType() == PropertySlot::InternalMethodType::VMInquiry) [[likely]]
             prototype = object->getPrototypeDirect();
         else {
             prototype = object->getPrototype(vm, globalObject);
@@ -158,7 +158,7 @@ ALWAYS_INLINE bool JSObject::getPropertySlot(JSGlobalObject* globalObject, unsig
 
 ALWAYS_INLINE bool JSObject::getPropertySlot(JSGlobalObject* globalObject, uint64_t propertyName, PropertySlot& slot)
 {
-    if (LIKELY(propertyName <= MAX_ARRAY_INDEX))
+    if (propertyName <= MAX_ARRAY_INDEX) [[likely]]
         return getPropertySlot(globalObject, static_cast<uint32_t>(propertyName), slot);
     return getPropertySlot(globalObject, Identifier::from(globalObject->vm(), propertyName), slot);
 }
@@ -173,7 +173,7 @@ ALWAYS_INLINE bool JSObject::getNonIndexPropertySlot(JSGlobalObject* globalObjec
     JSObject* object = this;
     while (true) {
         Structure* structure = object->structureID().decode();
-        if (LIKELY(!TypeInfo::overridesGetOwnPropertySlot(object->inlineTypeFlags()))) {
+        if (!TypeInfo::overridesGetOwnPropertySlot(object->inlineTypeFlags())) [[likely]] {
             if (object->getOwnNonIndexPropertySlot(vm, structure, propertyName, slot))
                 return true;
         } else {
@@ -181,7 +181,7 @@ ALWAYS_INLINE bool JSObject::getNonIndexPropertySlot(JSGlobalObject* globalObjec
             RETURN_IF_EXCEPTION(scope, false);
             if (hasSlot)
                 return true;
-            if (UNLIKELY(slot.isVMInquiry() && slot.isTaintedByOpaqueObject()))
+            if (slot.isVMInquiry() && slot.isTaintedByOpaqueObject()) [[unlikely]]
                 return false;
             if (object->type() == ProxyObjectType && slot.internalMethodType() == PropertySlot::InternalMethodType::HasProperty)
                 return false;
@@ -189,7 +189,7 @@ ALWAYS_INLINE bool JSObject::getNonIndexPropertySlot(JSGlobalObject* globalObjec
                 return false;
         }
         JSValue prototype;
-        if (LIKELY(!structure->typeInfo().overridesGetPrototype() || slot.internalMethodType() == PropertySlot::InternalMethodType::VMInquiry))
+        if (!structure->typeInfo().overridesGetPrototype() || slot.internalMethodType() == PropertySlot::InternalMethodType::VMInquiry) [[likely]]
             prototype = object->getPrototypeDirect();
         else {
             prototype = object->getPrototype(vm, globalObject);
@@ -203,7 +203,7 @@ ALWAYS_INLINE bool JSObject::getNonIndexPropertySlot(JSGlobalObject* globalObjec
 
 inline bool JSObject::getOwnPropertySlotInline(JSGlobalObject* globalObject, PropertyName propertyName, PropertySlot& slot)
 {
-    if (UNLIKELY(TypeInfo::overridesGetOwnPropertySlot(inlineTypeFlags())))
+    if (TypeInfo::overridesGetOwnPropertySlot(inlineTypeFlags())) [[unlikely]]
         return methodTable()->getOwnPropertySlot(this, globalObject, propertyName, slot);
     return JSObject::getOwnPropertySlot(this, globalObject, propertyName, slot);
 }
@@ -220,7 +220,7 @@ template<typename PropertyNameType> inline JSValue JSObject::getIfPropertyExists
         return { };
 
     scope.release();
-    if (UNLIKELY(slot.isTaintedByOpaqueObject()))
+    if (slot.isTaintedByOpaqueObject()) [[unlikely]]
         return get(globalObject, propertyName);
 
     return slot.getValue(globalObject, propertyName);
@@ -234,19 +234,19 @@ inline bool JSObject::noSideEffectMayHaveNonIndexProperty(VM& vm, PropertyName p
     ASSERT(propertyName != vm.propertyNames->length);
     for (auto* object = this; object; object = object->getPrototypeDirect().getObject()) {
         auto inlineTypeFlags = object->inlineTypeFlags();
-        if (UNLIKELY(TypeInfo::overridesGetOwnPropertySlot(inlineTypeFlags) && object->classInfo() != ArrayPrototype::info()))
+        if (TypeInfo::overridesGetOwnPropertySlot(inlineTypeFlags) && object->classInfo() != ArrayPrototype::info()) [[unlikely]]
             return true;
         auto& structure = *object->structureID().decode();
         unsigned attributes;
-        if (UNLIKELY(isValidOffset(structure.get(vm, propertyName, attributes))))
+        if (isValidOffset(structure.get(vm, propertyName, attributes))) [[unlikely]]
             return true;
         if (hasNonReifiedStaticProperties()) {
             for (auto* ancestorClass = object->classInfo(); ancestorClass; ancestorClass = ancestorClass->parentClass) {
-                if (auto* table = ancestorClass->staticPropHashTable; UNLIKELY(table && table->entry(propertyName)))
+                if (auto* table = ancestorClass->staticPropHashTable; table && table->entry(propertyName)) [[unlikely]]
                     return true;
             }
         }
-        if (UNLIKELY(structure.typeInfo().overridesGetPrototype()))
+        if (structure.typeInfo().overridesGetPrototype()) [[unlikely]]
             return true;
     }
     return false;
@@ -291,7 +291,7 @@ ALWAYS_INLINE PropertyOffset JSObject::prepareToPutDirectWithoutTransition(VM& v
             ASSERT(!getDirect(offset) || !JSValue::encode(getDirect(offset)));
             result = offset;
         });
-    if (UNLIKELY(mayBePrototype()))
+    if (mayBePrototype()) [[unlikely]]
         vm.invalidateStructureChainIntegrity(VM::StructureChainIntegrityEvent::Add);
     return result;
 }
@@ -308,16 +308,16 @@ ALWAYS_INLINE bool JSObject::putInlineForJSObject(JSCell* cell, JSGlobalObject* 
     // Try indexed put first. This is required for correctness, since loads on property names that appear like
     // valid indices will never look in the named property storage.
     if (std::optional<uint32_t> index = parseIndex(propertyName)) {
-        if (UNLIKELY(isThisValueAltered(slot, thisObject)))
+        if (isThisValueAltered(slot, thisObject)) [[unlikely]]
             return ordinarySetSlow(globalObject, thisObject, propertyName, value, slot.thisValue(), slot.isStrictMode());
         return thisObject->methodTable()->putByIndex(thisObject, globalObject, index.value(), value, slot.isStrictMode());
     }
 
     if (!thisObject->canPerformFastPutInline(vm, propertyName))
         return thisObject->putInlineSlow(globalObject, propertyName, value, slot);
-    if (UNLIKELY(isThisValueAltered(slot, thisObject)))
+    if (isThisValueAltered(slot, thisObject)) [[unlikely]]
         return definePropertyOnReceiver(globalObject, propertyName, value, slot);
-    if (UNLIKELY(thisObject->hasNonReifiedStaticProperties()))
+    if (thisObject->hasNonReifiedStaticProperties()) [[unlikely]]
         return thisObject->putInlineFastReplacingStaticPropertyIfNeeded(globalObject, propertyName, value, slot);
     return thisObject->putInlineFast(globalObject, propertyName, value, slot);
 }
@@ -345,7 +345,7 @@ ALWAYS_INLINE bool JSObject::createDataProperty(JSGlobalObject* globalObject, Pr
 ALWAYS_INLINE bool JSObject::hasOwnProperty(JSGlobalObject* globalObject, PropertyName propertyName, PropertySlot& slot) const
 {
     ASSERT(slot.internalMethodType() == PropertySlot::InternalMethodType::GetOwnProperty);
-    if (LIKELY(const_cast<JSObject*>(this)->methodTable()->getOwnPropertySlot == JSObject::getOwnPropertySlot))
+    if (const_cast<JSObject*>(this)->methodTable()->getOwnPropertySlot == JSObject::getOwnPropertySlot) [[likely]]
         return JSObject::getOwnPropertySlot(const_cast<JSObject*>(this), globalObject, propertyName, slot);
     return const_cast<JSObject*>(this)->methodTable()->getOwnPropertySlot(const_cast<JSObject*>(this), globalObject, propertyName, slot);
 }
@@ -376,7 +376,7 @@ ALWAYS_INLINE ASCIILiteral JSObject::putDirectInternal(VM& vm, PropertyName prop
     if (structure->isDictionary()) {
         ASSERT(!isCopyOnWrite(indexingMode()));
         if constexpr (mode == PutModePut) {
-            if (UNLIKELY(!isStructureExtensible()))
+            if (!isStructureExtensible()) [[unlikely]]
                 return putDirectToDictionaryWithoutExtensibility(vm, propertyName, value, slot);
         }
 
@@ -399,7 +399,7 @@ ALWAYS_INLINE ASCIILiteral JSObject::putDirectInternal(VM& vm, PropertyName prop
 
         if (!isAdded) {
             if constexpr (mode == PutModePut) {
-                if (UNLIKELY(attributes & PropertyAttribute::ReadOnlyOrAccessorOrCustomAccessor))
+                if (attributes & PropertyAttribute::ReadOnlyOrAccessorOrCustomAccessor) [[unlikely]]
                     return ReadonlyPropertyChangeError;
             }
 
@@ -411,7 +411,7 @@ ALWAYS_INLINE ASCIILiteral JSObject::putDirectInternal(VM& vm, PropertyName prop
             if ((mode == PutModeDefineOwnProperty) && (newAttributes != attributes || (newAttributes & PropertyAttribute::AccessorOrCustomAccessorOrValue))) {
                 DeferredStructureTransitionWatchpointFire deferred(vm, structure);
                 setStructure(vm, Structure::attributeChangeTransition(vm, structure, propertyName, newAttributes, &deferred));
-                if (UNLIKELY(mayBePrototype()))
+                if (mayBePrototype()) [[unlikely]]
                     vm.invalidateStructureChainIntegrity(VM::StructureChainIntegrityEvent::Change);
             } else {
                 ASSERT(!(attributes & PropertyAttribute::AccessorOrCustomAccessorOrValue));
@@ -425,7 +425,7 @@ ALWAYS_INLINE ASCIILiteral JSObject::putDirectInternal(VM& vm, PropertyName prop
         slot.setNewProperty(this, offset);
         if (attributes & PropertyAttribute::ReadOnly)
             this->structure()->setContainsReadOnlyProperties();
-        if (UNLIKELY(mayBePrototype()))
+        if (mayBePrototype()) [[unlikely]]
             vm.invalidateStructureChainIntegrity(VM::StructureChainIntegrityEvent::Add);
         return { };
     }
@@ -450,7 +450,7 @@ ALWAYS_INLINE ASCIILiteral JSObject::putDirectInternal(VM& vm, PropertyName prop
             putDirectOffset(vm, offset, value);
             setStructure(vm, newStructure);
             slot.setNewProperty(this, offset);
-            if (UNLIKELY(mayBePrototype()))
+            if (mayBePrototype()) [[unlikely]]
                 vm.invalidateStructureChainIntegrity(VM::StructureChainIntegrityEvent::Add);
             return { };
         }
@@ -472,7 +472,7 @@ ALWAYS_INLINE ASCIILiteral JSObject::putDirectInternal(VM& vm, PropertyName prop
             // This allows adaptive watchpoints to observe if the new structure is the one we want.
             DeferredStructureTransitionWatchpointFire deferredWatchpointFire(vm, structure);
             setStructure(vm, Structure::attributeChangeTransition(vm, structure, propertyName, newAttributes, &deferredWatchpointFire));
-            if (UNLIKELY(mayBePrototype()))
+            if (mayBePrototype()) [[unlikely]]
                 vm.invalidateStructureChainIntegrity(VM::StructureChainIntegrityEvent::Change);
         } else {
             ASSERT(!(currentAttributes & PropertyAttribute::AccessorOrCustomAccessorOrValue));
@@ -483,7 +483,7 @@ ALWAYS_INLINE ASCIILiteral JSObject::putDirectInternal(VM& vm, PropertyName prop
     }
 
     if constexpr (mode == PutModePut) {
-        if (UNLIKELY(!isStructureExtensible()))
+        if (!isStructureExtensible()) [[unlikely]]
             return NonExtensibleObjectPropertyDefineError;
     }
     
@@ -510,7 +510,7 @@ ALWAYS_INLINE ASCIILiteral JSObject::putDirectInternal(VM& vm, PropertyName prop
     slot.setNewProperty(this, offset);
     if (newAttributes & PropertyAttribute::ReadOnly)
         newStructure->setContainsReadOnlyProperties();
-    if (UNLIKELY(mayBePrototype()))
+    if (mayBePrototype()) [[unlikely]]
         vm.invalidateStructureChainIntegrity(VM::StructureChainIntegrityEvent::Add);
     return { };
 }
@@ -523,12 +523,12 @@ inline bool JSObject::mayBePrototype() const
 inline void JSObject::didBecomePrototype(VM& vm)
 {
     Structure* oldStructure = structure();
-    if (UNLIKELY(!oldStructure->mayBePrototype())) {
+    if (!oldStructure->mayBePrototype()) [[unlikely]] {
         DeferredStructureTransitionWatchpointFire deferred(vm, oldStructure);
         setStructure(vm, Structure::becomePrototypeTransition(vm, oldStructure, &deferred));
     }
 
-    if (UNLIKELY(type() == GlobalProxyType))
+    if (type() == GlobalProxyType) [[unlikely]]
         jsCast<JSGlobalProxy*>(this)->target()->didBecomePrototype(vm);
 }
 
@@ -707,7 +707,7 @@ inline bool JSObject::deleteProperty(JSGlobalObject* globalObject, uint32_t prop
 
 inline bool JSObject::deleteProperty(JSGlobalObject* globalObject, uint64_t propertyName)
 {
-    if (LIKELY(propertyName <= MAX_ARRAY_INDEX))
+    if (propertyName <= MAX_ARRAY_INDEX) [[likely]]
         return deleteProperty(globalObject, static_cast<uint32_t>(propertyName));
     ASSERT(propertyName <= maxSafeInteger());
     return deleteProperty(globalObject, Identifier::from(globalObject->vm(), propertyName));
@@ -715,7 +715,7 @@ inline bool JSObject::deleteProperty(JSGlobalObject* globalObject, uint64_t prop
 
 inline JSValue JSObject::get(JSGlobalObject* globalObject, uint64_t propertyName) const
 {
-    if (LIKELY(propertyName <= MAX_ARRAY_INDEX))
+    if (propertyName <= MAX_ARRAY_INDEX) [[likely]]
         return get(globalObject, static_cast<uint32_t>(propertyName));
     ASSERT(propertyName <= maxSafeInteger());
     return get(globalObject, Identifier::from(globalObject->vm(), propertyName));

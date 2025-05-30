@@ -29,6 +29,7 @@
 #include "AXObjectCache.h"
 #include "ComposedTreeAncestorIterator.h"
 #include "ComposedTreeIterator.h"
+#include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "Element.h"
 #include "FrameSelection.h"
@@ -38,6 +39,7 @@
 #include "LegacyRenderSVGResource.h"
 #include "LocalFrameView.h"
 #include "LocalFrameViewLayoutContext.h"
+#include "NodeInlines.h"
 #include "NodeRenderStyle.h"
 #include "PseudoElement.h"
 #include "RenderBoxInlines.h"
@@ -49,6 +51,7 @@
 #include "RenderListItem.h"
 #include "RenderMultiColumnFlow.h"
 #include "RenderMultiColumnSet.h"
+#include "RenderObjectInlines.h"
 #include "RenderStyleConstants.h"
 #include "RenderStyleInlines.h"
 #include "RenderTreeUpdaterGeneratedContent.h"
@@ -536,7 +539,7 @@ void RenderTreeUpdater::createRenderer(Element& element, RenderStyle&& style)
     m_builder.attach(insertionPosition.parent(), WTFMove(newRenderer), insertionPosition.nextSibling());
 
     auto* textManipulationController = m_document->textManipulationControllerIfExists();
-    if (UNLIKELY(textManipulationController))
+    if (textManipulationController) [[unlikely]]
         textManipulationController->didAddOrCreateRendererForNode(element);
 
     if (auto* cache = m_document->axObjectCache())
@@ -613,8 +616,11 @@ void RenderTreeUpdater::createTextRenderer(Text& textNode, const Style::TextUpda
     m_builder.attach(renderTreePosition.parent(), WTFMove(textRenderer), renderTreePosition.nextSibling());
 
     auto* textManipulationController = m_document->textManipulationControllerIfExists();
-    if (UNLIKELY(textManipulationController))
+    if (textManipulationController) [[unlikely]]
         textManipulationController->didAddOrCreateRendererForNode(textNode);
+
+    if (CheckedPtr cache = m_document->axObjectCache())
+        cache->onRendererCreated(textNode);
 }
 
 void RenderTreeUpdater::updateTextRenderer(Text& text, const Style::TextUpdate* textUpdate, const ContainerNode* root)

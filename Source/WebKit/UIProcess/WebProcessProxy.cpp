@@ -104,6 +104,7 @@
 #include <WebCore/WrappedCryptoKey.h>
 #include <optional>
 #include <pal/system/Sound.h>
+#include <ranges>
 #include <stdio.h>
 #include <wtf/Algorithms.h>
 #include <wtf/NeverDestroyed.h>
@@ -180,13 +181,17 @@ bool WebProcessProxy::hasReachedProcessCountLimit()
 
 static bool isMainThreadOrCheckDisabled()
 {
+    if (RunLoop::isMain()) [[likely]]
+        return true;
+
 #if PLATFORM(IOS_FAMILY)
-    return LIKELY(RunLoop::isMain()) || !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::MainThreadReleaseAssertionInWebPageProxy);
+    if (!linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::MainThreadReleaseAssertionInWebPageProxy))
+        return true;
 #elif PLATFORM(MAC)
-    return LIKELY(RunLoop::isMain()) || !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::MainThreadReleaseAssertionInWebPageProxy);
-#else
-    return RunLoop::isMain();
+    if (!linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::MainThreadReleaseAssertionInWebPageProxy))
+        return true;
 #endif
+    return false;
 }
 
 WebProcessProxy::WebProcessProxyMap& WebProcessProxy::allProcessMap()
@@ -1059,12 +1064,10 @@ bool WebProcessProxy::hasAssumedReadAccessToURL(const URL& url) const
     };
 
     auto& platformPaths = platformPathsWithAssumedReadAccess();
-    auto platformPathsEnd = platformPaths.end();
-    if (std::find_if(platformPaths.begin(), platformPathsEnd, startsWithURLPath) != platformPathsEnd)
+    if (std::ranges::find_if(platformPaths, startsWithURLPath) != platformPaths.end())
         return true;
 
-    auto localPathsEnd = m_localPathsWithAssumedReadAccess.end();
-    if (std::find_if(m_localPathsWithAssumedReadAccess.begin(), localPathsEnd, startsWithURLPath) != localPathsEnd)
+    if (std::ranges::find_if(m_localPathsWithAssumedReadAccess, startsWithURLPath) != m_localPathsWithAssumedReadAccess.end())
         return true;
 
     return false;
@@ -1910,7 +1913,7 @@ void WebProcessProxy::didChangeThrottleState(ProcessThrottleState type)
         updateRuntimeStatistics();
     });
 
-    if (UNLIKELY(!m_areThrottleStateChangesEnabled))
+    if (!m_areThrottleStateChangesEnabled) [[unlikely]]
         return;
     WEBPROCESSPROXY_RELEASE_LOG(ProcessSuspension, "didChangeThrottleState: type=%u", (unsigned)type);
 

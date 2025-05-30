@@ -67,6 +67,7 @@
 #include "RenderVideo.h"
 #include "RenderView.h"
 #include "RenderViewTransitionCapture.h"
+#include "RenderWidgetInlines.h"
 #include "RotateTransformOperation.h"
 #include "SVGGraphicsElement.h"
 #include "ScaleTransformOperation.h"
@@ -906,8 +907,12 @@ void RenderLayerCompositor::didChangePlatformLayerForLayer(RenderLayer& layer, c
     if (auto* clippingStack = layer.backing()->ancestorClippingStack())
         clippingStack->updateScrollingNodeLayers(*scrollingCoordinator);
 
-    if (auto nodeID = backing->scrollingNodeIDForRole(ScrollCoordinationRole::ViewportConstrained))
-        scrollingCoordinator->setNodeLayers(*nodeID, { backing->viewportAnchorLayer() });
+    if (auto nodeID = backing->scrollingNodeIDForRole(ScrollCoordinationRole::ViewportConstrained)) {
+        scrollingCoordinator->setNodeLayers(*nodeID, {
+            .layer = backing->viewportClippingOrAnchorLayer(),
+            .viewportAnchorLayer = backing->viewportAnchorLayer()
+        });
+    }
 
     if (auto nodeID = backing->scrollingNodeIDForRole(ScrollCoordinationRole::FrameHosting))
         scrollingCoordinator->setNodeLayers(*nodeID, { backing->graphicsLayer() });
@@ -1675,11 +1680,12 @@ void RenderLayerCompositor::collectViewTransitionNewContentLayers(RenderLayer& l
     if (!newStyleable)
         return;
 
-    auto* capturedRenderer = newStyleable->renderer();
+    CheckedPtr capturedRenderer = newStyleable->renderer();
     if (!capturedRenderer || !capturedRenderer->hasLayer())
         return;
 
     if (capturedRenderer->isDocumentElementRenderer()) {
+        ASSERT(capturedRenderer->protectedDocument()->activeViewTransitionCapturedDocumentElement());
         capturedRenderer = &capturedRenderer->view();
         ASSERT(capturedRenderer->hasLayer());
     }
@@ -2837,7 +2843,7 @@ void RenderLayerCompositor::updateScrollLayerClipping()
     if (layerForClipping == m_clipLayer) {
         EventRegion eventRegion;
         auto eventRegionContext = eventRegion.makeContext();
-        eventRegionContext.unite(FloatRoundedRect(FloatRect({ }, layerSize)), m_renderView, RenderStyle::defaultStyle());
+        eventRegionContext.unite(FloatRoundedRect(FloatRect({ }, layerSize)), m_renderView, RenderStyle::defaultStyleSingleton());
 #if ENABLE(INTERACTION_REGIONS_IN_EVENT_REGION)
         eventRegionContext.copyInteractionRegionsToEventRegion(m_renderView.settings().interactionRegionMinimumCornerRadius());
 #endif
@@ -4180,22 +4186,46 @@ bool RenderLayerCompositor::isAsyncScrollableStickyLayer(const RenderLayer& laye
 #endif
 }
 
-bool RenderLayerCompositor::isViewportConstrainedFixedOrStickyLayer(const RenderLayer& layer) const
+ViewportConstrainedSublayers RenderLayerCompositor::viewportConstrainedSublayers(const RenderLayer& layer, const RenderLayer* compositingAncestor) const
 {
-    if (layer.renderer().isStickilyPositioned())
-        return isAsyncScrollableStickyLayer(layer);
+    using enum ViewportConstrainedSublayers;
+
+    auto sublayersForViewportConstrainedLayer = [&] {
+        if (!m_renderView.settings().contentInsetBackgroundFillEnabled())
+            return Anchor;
+
+        if (!isMainFrameCompositor())
+            return Anchor;
+
+        if (compositingAncestor != m_renderView.layer())
+            return Anchor;
+
+        return ClippingAndAnchor;
+    };
+
+    if (layer.renderer().isStickilyPositioned()) {
+        const RenderLayer* overflowLayer = nullptr;
+        if (!isAsyncScrollableStickyLayer(layer, &overflowLayer))
+            return None;
+
+        if (overflowLayer)
+            return Anchor;
+
+        return sublayersForViewportConstrainedLayer();
+    }
 
     if (!(layer.renderer().isFixedPositioned() && layer.behavesAsFixed()))
-        return false;
+        return None;
 
     for (auto* ancestor = layer.parent(); ancestor; ancestor = ancestor->parent()) {
         if (ancestor->hasCompositedScrollableOverflow())
-            return true;
+            return sublayersForViewportConstrainedLayer();
+
         if (ancestor->isStackingContext() && ancestor->isComposited() && ancestor->renderer().isFixedPositioned())
-            return false;
+            return None;
     }
 
-    return true;
+    return sublayersForViewportConstrainedLayer();
 }
 
 bool RenderLayerCompositor::fixedLayerIntersectsViewport(const RenderLayer& layer) const
@@ -5277,16 +5307,16 @@ FixedPositionViewportConstraints RenderLayerCompositor::computeFixedViewportCons
 {
     ASSERT(layer.isComposited());
 
-    RefPtr anchorLayer = layer.backing()->viewportAnchorLayer();
-    if (!anchorLayer) {
+    RefPtr scrollingNodeLayer = layer.backing()->viewportClippingOrAnchorLayer();
+    if (!scrollingNodeLayer) {
         ASSERT_NOT_REACHED();
         return { };
     }
 
     FixedPositionViewportConstraints constraints;
-    constraints.setLayerPositionAtLastLayout(anchorLayer->position());
+    constraints.setLayerPositionAtLastLayout(scrollingNodeLayer->position());
     constraints.setViewportRectAtLastLayout(m_renderView.protectedFrameView()->rectForFixedPositionLayout());
-    constraints.setAlignmentOffset(anchorLayer->pixelAlignmentOffset());
+    constraints.setAlignmentOffset(scrollingNodeLayer->pixelAlignmentOffset());
 
     const RenderStyle& style = layer.renderer().style();
     if (!style.left().isAuto())
@@ -5318,6 +5348,12 @@ StickyPositionViewportConstraints RenderLayerCompositor::computeStickyViewportCo
 
     auto& renderer = downcast<RenderBoxModelObject>(layer.renderer());
 
+    RefPtr scrollingNodeLayer = layer.backing()->viewportClippingOrAnchorLayer();
+    if (!scrollingNodeLayer) {
+        ASSERT_NOT_REACHED();
+        return { };
+    }
+
     RefPtr anchorLayer = layer.backing()->viewportAnchorLayer();
     if (!anchorLayer) {
         ASSERT_NOT_REACHED();
@@ -5327,9 +5363,12 @@ StickyPositionViewportConstraints RenderLayerCompositor::computeStickyViewportCo
     StickyPositionViewportConstraints constraints;
     renderer.computeStickyPositionConstraints(constraints, renderer.constrainingRectForStickyPosition());
 
-    constraints.setLayerPositionAtLastLayout(anchorLayer->position());
+    constraints.setViewportRectAtLastLayout(m_renderView.protectedFrameView()->rectForFixedPositionLayout());
+    constraints.setLayerPositionAtLastLayout(scrollingNodeLayer->position());
+    if (scrollingNodeLayer != anchorLayer)
+        constraints.setAnchorLayerOffsetAtLastLayout(toFloatSize(anchorLayer->position()));
     constraints.setStickyOffsetAtLastLayout(renderer.stickyPositionOffset());
-    constraints.setAlignmentOffset(anchorLayer->pixelAlignmentOffset());
+    constraints.setAlignmentOffset(scrollingNodeLayer->pixelAlignmentOffset());
 
     return constraints;
 }
@@ -5485,7 +5524,7 @@ void RenderLayerCompositor::detachScrollCoordinatedLayer(RenderLayer& layer, Opt
 OptionSet<ScrollCoordinationRole> RenderLayerCompositor::coordinatedScrollingRolesForLayer(const RenderLayer& layer, const RenderLayer* compositingAncestor) const
 {
     OptionSet<ScrollCoordinationRole> coordinationRoles;
-    if (isViewportConstrainedFixedOrStickyLayer(layer))
+    if (viewportConstrainedSublayers(layer, compositingAncestor) != ViewportConstrainedSublayers::None)
         coordinationRoles.add(ScrollCoordinationRole::ViewportConstrained);
 
     if (useCoordinatedScrollingForLayer(layer))
@@ -5600,8 +5639,10 @@ std::optional<ScrollingNodeID> RenderLayerCompositor::updateScrollingNodeForView
     LOG_WITH_STREAM(Compositing, stream << "Registering ViewportConstrained " << nodeType << " node " << newNodeID << " (layer " << layer.backing()->graphicsLayer()->primaryLayerID() << ") as child of " << treeState.parentNodeID);
 
     if (changes & ScrollingNodeChangeFlags::Layer) {
-        ASSERT(layer.backing()->viewportAnchorLayer());
-        scrollingCoordinator->setNodeLayers(*newNodeID, { layer.backing()->viewportAnchorLayer() });
+        scrollingCoordinator->setNodeLayers(*newNodeID, {
+            .layer = layer.backing()->viewportClippingOrAnchorLayer(),
+            .viewportAnchorLayer = layer.backing()->viewportAnchorLayer(),
+        });
     }
 
     if (changes & ScrollingNodeChangeFlags::LayerGeometry) {

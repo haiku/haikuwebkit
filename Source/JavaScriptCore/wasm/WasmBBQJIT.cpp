@@ -707,7 +707,7 @@ BBQJIT::BBQJIT(CCallHelpers& jit, const TypeDefinition& signature, BBQCallee& ca
     if ((Options::verboseBBQJITAllocation()))
         dataLogLn("BBQ\tUsing GPR set: ", m_gprSet, "\n   \tFPR set: ", m_fprSet);
 
-    if (UNLIKELY(shouldDumpDisassemblyFor(CompilationMode::BBQMode))) {
+    if (shouldDumpDisassemblyFor(CompilationMode::BBQMode)) [[unlikely]] {
         m_disassembler = makeUnique<BBQDisassembler>();
         m_disassembler->setStartOfCode(m_jit.label());
     }
@@ -796,7 +796,7 @@ Value BBQJIT::addConstant(Type type, uint64_t value)
         return Value::none();
     }
 
-    if (UNLIKELY(Options::disableBBQConsts())) {
+    if (Options::disableBBQConsts()) [[unlikely]] {
         Value stackResult = topValue(type.kind);
         emitStoreConst(result, canonicalSlot(stackResult));
         result = stackResult;
@@ -1202,7 +1202,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addDataDrop(unsigned dataSegmentIndex)
 
 PartialResult WARN_UNUSED_RETURN BBQJIT::atomicLoad(ExtAtomicOpType loadOp, Type valueType, ExpressionType pointer, ExpressionType& result, uint32_t uoffset)
 {
-    if (UNLIKELY(sumOverflows<uint32_t>(uoffset, sizeOfAtomicOpMemoryAccess(loadOp)))) {
+    if (sumOverflows<uint32_t>(uoffset, sizeOfAtomicOpMemoryAccess(loadOp))) [[unlikely]] {
         // FIXME: Same issue as in AirIRGenerator::load(): https://bugs.webkit.org/show_bug.cgi?id=166435
         emitThrowException(ExceptionType::OutOfBoundsMemoryAccess);
         consume(pointer);
@@ -1218,7 +1218,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::atomicLoad(ExtAtomicOpType loadOp, Type
 PartialResult WARN_UNUSED_RETURN BBQJIT::atomicStore(ExtAtomicOpType storeOp, Type valueType, ExpressionType pointer, ExpressionType value, uint32_t uoffset)
 {
     Location valueLocation = locationOf(value);
-    if (UNLIKELY(sumOverflows<uint32_t>(uoffset, sizeOfAtomicOpMemoryAccess(storeOp)))) {
+    if (sumOverflows<uint32_t>(uoffset, sizeOfAtomicOpMemoryAccess(storeOp))) [[unlikely]] {
         // FIXME: Same issue as in AirIRGenerator::load(): https://bugs.webkit.org/show_bug.cgi?id=166435
         emitThrowException(ExceptionType::OutOfBoundsMemoryAccess);
         consume(pointer);
@@ -1234,7 +1234,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::atomicStore(ExtAtomicOpType storeOp, Ty
 PartialResult WARN_UNUSED_RETURN BBQJIT::atomicBinaryRMW(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType value, ExpressionType& result, uint32_t uoffset)
 {
     Location valueLocation = locationOf(value);
-    if (UNLIKELY(sumOverflows<uint32_t>(uoffset, sizeOfAtomicOpMemoryAccess(op)))) {
+    if (sumOverflows<uint32_t>(uoffset, sizeOfAtomicOpMemoryAccess(op))) [[unlikely]] {
         // FIXME: Even though this is provably out of bounds, it's not a validation error, so we have to handle it
         // as a runtime exception. However, this may change: https://bugs.webkit.org/show_bug.cgi?id=166435
         emitThrowException(ExceptionType::OutOfBoundsMemoryAccess);
@@ -1252,7 +1252,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::atomicBinaryRMW(ExtAtomicOpType op, Typ
 PartialResult WARN_UNUSED_RETURN BBQJIT::atomicCompareExchange(ExtAtomicOpType op, Type valueType, ExpressionType pointer, ExpressionType expected, ExpressionType value, ExpressionType& result, uint32_t uoffset)
 {
     Location valueLocation = locationOf(value);
-    if (UNLIKELY(sumOverflows<uint32_t>(uoffset, sizeOfAtomicOpMemoryAccess(op)))) {
+    if (sumOverflows<uint32_t>(uoffset, sizeOfAtomicOpMemoryAccess(op))) [[unlikely]] {
         // FIXME: Even though this is provably out of bounds, it's not a validation error, so we have to handle it
         // as a runtime exception. However, this may change: https://bugs.webkit.org/show_bug.cgi?id=166435
         emitThrowException(ExceptionType::OutOfBoundsMemoryAccess);
@@ -2983,7 +2983,7 @@ void BBQJIT::emitEntryTierUpCheck()
 // Control flow
 ControlData WARN_UNUSED_RETURN BBQJIT::addTopLevel(BlockSignature signature)
 {
-    if (UNLIKELY(Options::verboseBBQJITInstructions())) {
+    if (Options::verboseBBQJITInstructions()) [[unlikely]] {
         auto nameSection = m_info.nameSection;
         std::pair<const Name*, RefPtr<NameSection>> name = nameSection->get(m_functionIndex);
         dataLog("BBQ\tFunction ");
@@ -3912,7 +3912,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::endTopLevel(BlockSignature, const Stack
     LOG_DEDENT();
     LOG_INSTRUCTION("End");
 
-    if (UNLIKELY(m_disassembler))
+    if (m_disassembler) [[unlikely]]
         m_disassembler->setEndOfOpcode(m_jit.label());
 
     for (const auto& latePath : m_latePaths)
@@ -4678,7 +4678,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addCrash()
 ALWAYS_INLINE void BBQJIT::willParseOpcode()
 {
     m_pcToCodeOriginMapBuilder.appendItem(m_jit.label(), CodeOrigin(BytecodeIndex(m_parser->currentOpcodeStartingOffset())));
-    if (UNLIKELY(m_disassembler)) {
+    if (m_disassembler) [[unlikely]] {
         OpType currentOpcode = m_parser->currentOpcode();
         switch (currentOpcode) {
         case OpType::Ext1:
@@ -4711,7 +4711,7 @@ ALWAYS_INLINE void BBQJIT::willParseOpcode()
 
 ALWAYS_INLINE void BBQJIT::willParseExtendedOpcode()
 {
-    if (UNLIKELY(m_disassembler)) {
+    if (m_disassembler) [[unlikely]] {
         OpType prefix = m_parser->currentOpcode();
         uint32_t opcode = m_parser->currentExtendedOpcode();
         m_disassembler->setOpcode(m_jit.label(), PrefixedOpcode(prefix, opcode), m_parser->currentOpcodeStartingOffset());
@@ -4742,7 +4742,7 @@ void BBQJIT::didPopValueFromStack(Value value, ASCIILiteral)
 
 void BBQJIT::finalize()
 {
-    if (UNLIKELY(m_disassembler))
+    if (m_disassembler) [[unlikely]]
         m_disassembler->setEndOfCode(m_jit.label());
 }
 
@@ -4924,7 +4924,7 @@ Location BBQJIT::allocateWithHint(Value value, Location hint)
     increaseKey(reg);
     if (value.isLocal())
         currentControlData().touch(value.asLocal());
-    if (UNLIKELY(Options::verboseBBQJITAllocation()))
+    if (Options::verboseBBQJITAllocation()) [[unlikely]]
         dataLogLn("BBQ\tAllocated ", value, " with type ", makeString(value.type()), " to ", reg);
     return bind(value, reg);
 }
@@ -4960,11 +4960,11 @@ Location BBQJIT::loadIfNecessary(Value value)
 {
     ASSERT(!value.isPinned()); // We should not load or move pinned values.
     ASSERT(!value.isConst()); // We should not be materializing things we know are constants.
-    if (UNLIKELY(Options::verboseBBQJITAllocation()))
+    if (Options::verboseBBQJITAllocation()) [[unlikely]]
         dataLogLn("BBQ\tLoading value ", value, " if necessary");
     Location loc = locationOf(value);
     if (loc.isMemory()) {
-        if (UNLIKELY(Options::verboseBBQJITAllocation()))
+        if (Options::verboseBBQJITAllocation()) [[unlikely]]
             dataLogLn("BBQ\tLoading local ", value, " to ", loc);
         loc = allocateRegister(value); // Find a register to store this value. Might spill older values if we run out.
         emitLoad(value, loc); // Generate the load instructions to move the value into the register.
@@ -5052,7 +5052,7 @@ Location BBQJIT::bind(Value value, Location loc)
         m_temps[value.asTemp()] = loc;
     }
 
-    if (UNLIKELY(Options::verboseBBQJITAllocation()))
+    if (Options::verboseBBQJITAllocation()) [[unlikely]]
         dataLogLn("BBQ\tBound value ", value, " to ", loc);
 
     return loc;
@@ -5081,7 +5081,7 @@ void BBQJIT::unbind(Value value, Location loc)
     else if (value.isTemp())
         m_temps[value.asTemp()] = Location::none();
 
-    if (UNLIKELY(Options::verboseBBQJITAllocation()))
+    if (Options::verboseBBQJITAllocation()) [[unlikely]]
         dataLogLn("BBQ\tUnbound value ", value, " from ", loc);
 }
 
@@ -5120,7 +5120,7 @@ GPRReg BBQJIT::evictGPR()
     auto lruGPR = m_gprLRU.findMin();
     auto lruBinding = gprBindings()[lruGPR];
 
-    if (UNLIKELY(Options::verboseBBQJITAllocation()))
+    if (Options::verboseBBQJITAllocation()) [[unlikely]]
         dataLogLn("BBQ\tEvicting GPR ", MacroAssembler::gprName(lruGPR), " currently bound to ", lruBinding);
     flushValue(lruBinding.toValue());
 
@@ -5134,7 +5134,7 @@ FPRReg BBQJIT::evictFPR()
     auto lruFPR = m_fprLRU.findMin();
     auto lruBinding = fprBindings()[lruFPR];
 
-    if (UNLIKELY(Options::verboseBBQJITAllocation()))
+    if (Options::verboseBBQJITAllocation()) [[unlikely]]
         dataLogLn("BBQ\tEvicting FPR ", MacroAssembler::fprName(lruFPR), " currently bound to ", lruBinding);
     flushValue(lruBinding.toValue());
 
@@ -5149,7 +5149,7 @@ void BBQJIT::clobber(GPRReg gpr)
 {
     if (m_validGPRs.contains(gpr, IgnoreVectors) && !m_gprSet.contains(gpr, IgnoreVectors)) {
         RegisterBinding& binding = gprBindings()[gpr];
-        if (UNLIKELY(Options::verboseBBQJITAllocation()))
+        if (Options::verboseBBQJITAllocation()) [[unlikely]]
             dataLogLn("BBQ\tClobbering GPR ", MacroAssembler::gprName(gpr), " currently bound to ", binding);
         RELEASE_ASSERT(!binding.isNone() && !binding.isScratch()); // We could probably figure out how to handle this, but let's just crash if it happens for now.
         flushValue(binding.toValue());
@@ -5160,7 +5160,7 @@ void BBQJIT::clobber(FPRReg fpr)
 {
     if (m_validFPRs.contains(fpr, Width::Width128) && !m_fprSet.contains(fpr, Width::Width128)) {
         RegisterBinding& binding = fprBindings()[fpr];
-        if (UNLIKELY(Options::verboseBBQJITAllocation()))
+        if (Options::verboseBBQJITAllocation()) [[unlikely]]
             dataLogLn("BBQ\tClobbering FPR ", MacroAssembler::fprName(fpr), " currently bound to ", binding);
         RELEASE_ASSERT(!binding.isNone() && !binding.isScratch()); // We could probably figure out how to handle this, but let's just crash if it happens for now.
         flushValue(binding.toValue());

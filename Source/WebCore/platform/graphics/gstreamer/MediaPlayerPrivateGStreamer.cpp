@@ -478,7 +478,7 @@ void MediaPlayerPrivateGStreamer::play()
         if (player) {
             if (player->isLooping()) {
                 GST_DEBUG_OBJECT(pipeline(), "Scheduling initial SEGMENT seek");
-                doSeek(SeekTarget { playbackPosition() }, m_playbackRate);
+                doSeek(SeekTarget { playbackPosition() }, m_playbackRate, true);
             } else
                 updateDownloadBufferingFlag();
         }
@@ -552,7 +552,7 @@ bool MediaPlayerPrivateGStreamer::paused() const
     return !m_isPipelinePlaying;
 }
 
-bool MediaPlayerPrivateGStreamer::doSeek(const SeekTarget& target, float rate)
+bool MediaPlayerPrivateGStreamer::doSeek(const SeekTarget& target, float rate, bool isAsync)
 {
     RefPtr player = m_player.get();
 
@@ -600,8 +600,20 @@ bool MediaPlayerPrivateGStreamer::doSeek(const SeekTarget& target, float rate)
 
     auto seekStart = toGstClockTime(startTime);
     auto seekStop = toGstClockTime(endTime);
+    GstEvent* event = gst_event_new_seek(rate, GST_FORMAT_TIME, m_seekFlags, GST_SEEK_TYPE_SET, seekStart, GST_SEEK_TYPE_SET, seekStop);
+
     GST_DEBUG_OBJECT(pipeline(), "[Seek] Performing actual seek to %" GST_TIMEP_FORMAT " (endTime: %" GST_TIMEP_FORMAT ") at rate %f", &seekStart, &seekStop, rate);
-    return gst_element_seek(m_pipeline.get(), rate, GST_FORMAT_TIME, m_seekFlags, GST_SEEK_TYPE_SET, seekStart, GST_SEEK_TYPE_SET, seekStop);
+
+    if (isAsync) {
+        gst_element_call_async(m_pipeline.get(), reinterpret_cast<GstElementCallAsyncFunc>(+[](GstElement* pipeline, gpointer userData) {
+            GstEvent* event = static_cast<GstEvent*>(userData);
+            gst_element_send_event(pipeline, event);
+        }), event, nullptr);
+
+        return true;
+    }
+
+    return gst_element_send_event(m_pipeline.get(), event);
 }
 
 void MediaPlayerPrivateGStreamer::seekToTarget(const SeekTarget& inTarget)
@@ -936,7 +948,7 @@ bool MediaPlayerPrivateGStreamer::didLoadingProgress() const
         return didLoadingProgress;
     }
 
-    if (UNLIKELY(!m_pipeline || !duration() || (!isMediaSource() && !totalBytes())))
+    if (!m_pipeline || !duration() || (!isMediaSource() && !totalBytes())) [[unlikely]]
         return false;
 
     MediaTime currentMaxTimeLoaded = maxTimeLoaded();
@@ -980,7 +992,7 @@ unsigned long long MediaPlayerPrivateGStreamer::totalBytes() const
             gst_iterator_resync(iter);
             break;
         case GST_ITERATOR_ERROR:
-            FALLTHROUGH;
+            [[fallthrough]];
         case GST_ITERATOR_DONE:
             done = true;
             break;
@@ -1152,7 +1164,7 @@ void MediaPlayerPrivateGStreamer::syncOnClock(bool sync)
 template <typename TrackPrivateType>
 void MediaPlayerPrivateGStreamer::notifyPlayerOfTrack()
 {
-    if (UNLIKELY(!m_pipeline || !m_source))
+    if (!m_pipeline || !m_source) [[unlikely]]
         return;
 
     RefPtr player = m_player.get();
@@ -2677,7 +2689,7 @@ void MediaPlayerPrivateGStreamer::downloadBufferFileCreatedCallback(MediaPlayerP
     GUniqueOutPtr<char> downloadFile;
     g_object_get(player->m_downloadBuffer.get(), "temp-location", &downloadFile.outPtr(), nullptr);
 
-    if (UNLIKELY(!FileSystem::deleteFile(String::fromUTF8(downloadFile.get())))) {
+    if (!FileSystem::deleteFile(String::fromUTF8(downloadFile.get()))) [[unlikely]] {
         GST_WARNING("Couldn't unlink media temporary file %s after creation", downloadFile.get());
         return;
     }
@@ -2697,7 +2709,7 @@ void MediaPlayerPrivateGStreamer::purgeOldDownloadFiles(const String& downloadFi
             continue;
 
         auto filePath = FileSystem::pathByAppendingComponent(templateDirectory, fileName);
-        if (UNLIKELY(!FileSystem::deleteFile(filePath))) {
+        if (!FileSystem::deleteFile(filePath)) [[unlikely]] {
             GST_WARNING("Couldn't unlink legacy media temporary file: %s", filePath.utf8().data());
             continue;
         }
@@ -2772,7 +2784,7 @@ void MediaPlayerPrivateGStreamer::updateStates()
             m_networkState = MediaPlayer::NetworkState::Empty;
             break;
         case GST_STATE_PAUSED:
-            FALLTHROUGH;
+            [[fallthrough]];
         case GST_STATE_PLAYING: {
             bool isLooping = player && player->isLooping();
             if (m_wasBuffering) {
@@ -3405,7 +3417,7 @@ void MediaPlayerPrivateGStreamer::setupCodecProbe(GstElement* element)
             return GST_PAD_PROBE_REMOVE;
 
         std::optional<TrackID> streamId(getStreamIdFromPad(pad));
-        if (UNLIKELY(!streamId)) {
+        if (!streamId) [[unlikely]] {
             // FIXME: This is a workaround for https://bugs.webkit.org/show_bug.cgi?id=256428.
             GST_WARNING_OBJECT(player->pipeline(), "Caps event received before stream-start. This shouldn't happen!");
             return GST_PAD_PROBE_REMOVE;
@@ -3799,7 +3811,7 @@ void MediaPlayerPrivateGStreamer::triggerRepaint(GRefPtr<GstSample>&& sample)
                 return;
             }
 
-            if (UNLIKELY(!gst_caps_is_empty(caps.get()) && !gst_caps_is_any(caps.get()))) {
+            if (!gst_caps_is_empty(caps.get()) && !gst_caps_is_any(caps.get())) [[unlikely]] {
                 auto structure = gst_caps_get_structure(caps.get(), 0);
                 int framerateNumerator, framerateDenominator;
                 if (gst_structure_get_fraction(structure, "framerate", &framerateNumerator, &framerateDenominator)) {
@@ -4531,7 +4543,7 @@ void MediaPlayerPrivateGStreamer::audioOutputDeviceChanged()
 String MediaPlayerPrivateGStreamer::codecForStreamId(TrackID streamId)
 {
     Locker locker { m_codecsLock };
-    if (UNLIKELY(!m_codecs.contains(streamId)))
+    if (!m_codecs.contains(streamId)) [[unlikely]]
         return emptyString();
 
     return m_codecs.get(streamId);

@@ -75,6 +75,14 @@ public:
         bool isInductionVariable(Node* node) { return node->operand() == inductionVariable->operand(); }
         void dump(PrintStream& out) const;
 
+        bool isProfitableToUnroll();
+
+        void analyzeLoopNode(Graph&, Node*);
+
+        // Returns true if the node would emit code when lowered to B3.
+        // Used to estimate unrolling cost more precisely, skipping Phantom-like ops.
+        bool isMaterialNode(Graph&, Node*);
+
         const NaturalLoop* loop { nullptr };
         BasicBlock* preHeader { nullptr };
         BasicBlock* tail { nullptr };
@@ -90,7 +98,9 @@ public:
 
         std::optional<bool> invertCondition { };
 
-        uint32_t loopBodySize { 0 };
+        uint32_t materialNodeCount { 0 };
+        uint32_t putByValCount { 0 };
+        uint32_t getByValCount { 0 };
     };
 
     LoopUnrollingPhase(Graph& graph)
@@ -103,7 +113,7 @@ public:
     {
         ASSERT(m_graph.m_form == ThreadedCPS);
 
-        if (UNLIKELY(!functionAllowlist().contains(m_graph.m_codeBlock)))
+        if (!functionAllowlist().contains(m_graph.m_codeBlock)) [[unlikely]]
             return false;
 
         dataLogIf(Options::verboseLoopUnrolling(), "Graph before Loop Unrolling Phase:\n", m_graph);
@@ -168,7 +178,7 @@ public:
 
     bool tryUnroll(const NaturalLoop* loop)
     {
-        if (UNLIKELY(Options::verboseLoopUnrolling())) {
+        if (Options::verboseLoopUnrolling()) [[unlikely]] {
             const NaturalLoop* outerLoop = m_graph.m_cpsNaturalLoops->innerMostOuterLoop(*loop);
             dataLogLnIf(Options::verboseLoopUnrolling(), "\nTry unroll innerMostLoop=", *loop, " with innerMostOuterLoop=", outerLoop ? *outerLoop : NaturalLoop());
         }
@@ -216,7 +226,7 @@ public:
             }
         }
 
-        dataLogLnIf(Options::printEachUnrolledLoop(), "\tIn function ", m_graph.m_codeBlock->inferredNameWithHash(), ", ", data.shouldFullyUnroll() ?  "fully" : "partially", " unrolling the loop with data=", data);
+        dataLogLnIf(Options::printEachUnrolledLoop(), "[UnrollLoop][", m_graph.m_plan.jitType(), "][", data.shouldFullyUnroll() ?  "Full" : "Partial", "] function: ", m_graph.m_codeBlock->inferredNameWithHash(), " data: ", data);
         unrollLoop(data);
 
         dataLogIf(Options::verboseLoopUnrolling(), "\tGraph after Loop Unrolling for loop\n", m_graph);
@@ -303,7 +313,7 @@ public:
 
         // ExitBlock: A block that exits the loop.
         BasicBlock* exit = nullptr;
-        for (unsigned i = 0; i < data.loopSize(); ++i) {
+        for (uint32_t i = 0; i < data.loopSize(); ++i) {
             BasicBlock* body = data.loopBody(i);
             for (BasicBlock* successor : body->successors()) {
                 if (data.loop->contains(successor))
@@ -462,7 +472,6 @@ public:
 
     bool isLoopBodyUnrollable(LoopData& data)
     {
-        uint32_t materialNodeCount = 0;
         uint32_t maxLoopUnrollingBodyNodeSize = data.shouldFullyUnroll() ? Options::maxLoopUnrollingBodyNodeSize() : Options::maxPartialLoopUnrollingBodyNodeSize();
         for (uint32_t i = 0; i < data.loopSize(); ++i) {
             BasicBlock* body = data.loopBody(i);
@@ -475,26 +484,36 @@ public:
             // If the block is unreachable or invalid in the CFG, we can directly
             // ignore the loop, avoiding unnecessary cloneability checks for nodes in invalid blocks.
 
-            HashSet<Node*> cloneableCache;
+            UncheckedKeyHashSet<Node*> cloneableCache;
             for (Node* node : *body) {
-                // Count only nodes that would generate real code. Helps avoid overestimating loop body size due to Phantom or ExitOK, etc.
-                if (isMaterialNode(node))
-                    ++materialNodeCount;
-
-                if (materialNodeCount > maxLoopUnrollingBodyNodeSize) {
-                    dataLogLnIf(Options::verboseLoopUnrolling(), "Skipping loop with header ", *data.header(), " and loop node count=", materialNodeCount, " since maxLoopUnrollingBodyNodeSize =", Options::maxLoopUnrollingBodyNodeSize());
+                if (data.materialNodeCount > maxLoopUnrollingBodyNodeSize) {
+                    dataLogLnIf(Options::verboseLoopUnrolling(), "Skipping loop with header ", *data.header(), " and loop node count=", data.materialNodeCount, " since maxLoopUnrollingBodyNodeSize=", maxLoopUnrollingBodyNodeSize);
                     return false;
                 }
 
-                if (!CloneHelper::isNodeCloneable(m_graph, cloneableCache, node)) {
+                if (node->op() == StringFromCharCode) {
+                    // Not supported due to performance regression rdar://150526635
+                    dataLogLnIf(Options::verboseLoopUnrolling(), "Skipping loop with header ", *data.header(), " since ", node, "<", node->op(), "> is not supported");
+                    return false;
+                }
+
+                bool isCloneable = CloneHelper::isNodeCloneable(m_graph, cloneableCache, node);
+#if ASSERT_ENABLED
+                ASSERT(CloneHelper::debugVisitingSet().isEmpty());
+#endif
+                if (!isCloneable) {
                     dataLogLnIf(Options::verboseLoopUnrolling(), "Skipping loop with header ", *data.header(), " since D@", node->index(), " with op ", node->op(), " is not cloneable");
                     return false;
                 }
+
+                data.analyzeLoopNode(m_graph, node);
             }
         }
 
-        data.loopBodySize = materialNodeCount;
-        return true;
+        if (Options::verboseLoopUnrolling()) [[unlikely]]
+            dumpLoopNodeTypeStats(data);
+
+        return data.isProfitableToUnroll();
     }
 
     void unrollLoop(LoopData& data)
@@ -573,11 +592,9 @@ public:
         m_unrolledLoopHeaders.add(header);
     }
 
-    // Returns true if the node would emit code when lowered to B3.
-    // Used to estimate unrolling cost more precisely, skipping Phantom-like ops.
-    bool isMaterialNode(Node*);
-
     FunctionAllowlist& functionAllowlist();
+
+    void dumpLoopNodeTypeStats(LoopData&);
 
 private:
     CloneHelper m_cloneHelper;
@@ -587,6 +604,53 @@ private:
 bool performLoopUnrolling(Graph& graph)
 {
     return runPhase<LoopUnrollingPhase>(graph);
+}
+
+bool LoopUnrollingPhase::LoopData::isProfitableToUnroll()
+{
+    if (putByValCount && !getByValCount) {
+        // Avoid unrolling loops that only perform stores. These tend to increase code size
+        // without improving performance, since they are often memory-bound and unrolling
+        // doesn't expose additional optimization opportunities. (e.g., rdar://150524264)
+        dataLogLnIf(Options::verboseLoopUnrolling(), "Skipping loop with header ", *header(), " since putByValCount=", putByValCount, " getByValCount=", getByValCount);
+        return false;
+    }
+
+    return true;
+}
+
+// This can be extended to count other categories, such as arithmetic operations,
+// and get/set operations for locals.
+void LoopUnrollingPhase::LoopData::analyzeLoopNode(Graph& graph, Node* node)
+{
+    // Count only nodes that would generate real code. Helps avoid overestimating
+    // loop body size due to Phantom or ExitOK, etc.
+    if (isMaterialNode(graph, node))
+        ++materialNodeCount;
+
+    if (node->op() == PutByVal)
+        ++putByValCount;
+    if (node->op() == GetByVal)
+        ++getByValCount;
+}
+
+void LoopUnrollingPhase::dumpLoopNodeTypeStats(LoopData& data)
+{
+    dataLogLn("Loop unrolling candidate of function ", m_graph.m_codeBlock->inferredNameWithHash(), " with data=", data);
+    Vector<uint32_t> counter(numberOfNodeTypes + 1, 0);
+    for (uint32_t i = 0; i < data.loopSize(); ++i) {
+        BasicBlock* body = data.loopBody(i);
+        for (Node* node : *body)
+            ++counter[static_cast<uint32_t>(node->op())];
+    }
+
+    for (uint32_t i = 0; i < counter.size(); i++) {
+        uint32_t count = counter[i];
+        if (count) {
+            double ratio = data.materialNodeCount ? static_cast<double>(count) / data.materialNodeCount : 0.0;
+            dataLogLn("  ", static_cast<NodeType>(i), ": count = ", count, ", ratio = ", ratio);
+        }
+    }
 }
 
 void LoopUnrollingPhase::LoopData::dump(PrintStream& out) const
@@ -652,7 +716,7 @@ void LoopUnrollingPhase::LoopData::dump(PrintStream& out) const
     else
         out.print("inverseCondition=<NULL>, ");
 
-    out.print("loopBodySize=", loopBodySize);
+    out.print("materialNodeCount=", materialNodeCount);
 }
 
 // FIXME: Add more condition and update operations if they are profitable.
@@ -728,7 +792,7 @@ LoopUnrollingPhase::UpdateFunction LoopUnrollingPhase::updateFunction(Node* upda
     }
 }
 
-bool LoopUnrollingPhase::isMaterialNode(Node* node)
+bool LoopUnrollingPhase::LoopData::isMaterialNode(Graph& graph, Node* node)
 {
     switch (node->op()) {
     // This aligns with DFGDCEPhase.
@@ -739,7 +803,7 @@ bool LoopUnrollingPhase::isMaterialNode(Node* node)
         break;
     case CheckVarargs: {
         bool isEmpty = true;
-        m_graph.doToChildren(node, [&] (Edge edge) {
+        graph.doToChildren(node, [&] (Edge edge) {
             isEmpty &= !edge;
         });
         if (isEmpty)

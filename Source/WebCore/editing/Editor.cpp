@@ -46,6 +46,7 @@
 #include "CommonAtomStrings.h"
 #include "CompositionEvent.h"
 #include "CompositionHighlight.h"
+#include "ContainerNodeInlines.h"
 #include "CreateLinkCommand.h"
 #include "CustomUndoStep.h"
 #include "DataTransfer.h"
@@ -462,7 +463,7 @@ static Ref<DataTransfer> createDataTransferForClipboardEvent(Document& document,
             pasteboard->writeString(plainTextType, plainText);
             return DataTransfer::createForCopyAndPaste(document, DataTransfer::StoreMode::Readonly, WTFMove(pasteboard));
         }
-        FALLTHROUGH;
+        [[fallthrough]];
     case ClipboardEventKind::Paste:
     case ClipboardEventKind::PasteAsQuotation:
     case ClipboardEventKind::PasteFont:
@@ -4644,7 +4645,7 @@ FontAttributes Editor::fontAttributesAtSelectionStart()
                 attributes.hasUnderline = true;
         }
     } else {
-        auto decoration = style->textDecorationsInEffect();
+        auto decoration = style->textDecorationLineInEffect();
         if (decoration & TextDecorationLine::LineThrough)
             attributes.hasStrikeThrough = true;
         if (decoration & TextDecorationLine::Underline)

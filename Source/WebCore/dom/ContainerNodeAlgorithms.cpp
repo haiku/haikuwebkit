@@ -31,6 +31,7 @@
 #include "HTMLFrameOwnerElement.h"
 #include "HTMLTextAreaElement.h"
 #include "InspectorInstrumentation.h"
+#include "NodeInlines.h"
 #include "ScriptDisallowedScope.h"
 #include "ShadowRoot.h"
 #include "TypedElementDescendantIteratorInlines.h"
@@ -260,7 +261,7 @@ void disconnectSubframes(ContainerNode& root, SubframeDisconnectPolicy policy)
     for (auto& owner : frameOwners) {
         // Don't need to traverse up the tree for the first owner since no
         // script could have moved it.
-        if (isFirst || root.containsIncludingShadowDOM(&owner.get()))
+        if (isFirst || root.isShadowIncludingInclusiveAncestorOf(&owner.get()))
             owner.get().disconnectContentFrame();
         isFirst = false;
     }

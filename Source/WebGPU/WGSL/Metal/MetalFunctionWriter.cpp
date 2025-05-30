@@ -667,7 +667,6 @@ void FunctionDefinitionWriter::visit(AST::Function& functionDefinition)
     for (auto& callee : m_shaderModule.callGraph().callees(functionDefinition))
         visit(*callee.target);
 
-    // FIXME: visit return attributes
     for (auto& attribute : functionDefinition.attributes()) {
         checkErrorAndVisit(attribute);
         m_body.append(' ');
@@ -713,7 +712,6 @@ void FunctionDefinitionWriter::visit(AST::Function& functionDefinition)
 
 void FunctionDefinitionWriter::visit(AST::Structure& structDecl)
 {
-    // FIXME: visit struct attributes
     m_structRole = { structDecl.role() };
     m_body.append(m_indent, "struct "_s, structDecl.name(), " {\n"_s);
     {
@@ -1483,7 +1481,6 @@ static void emitTextureLoad(FunctionDefinitionWriter* writer, AST::CallExpressio
     auto& texture = call.arguments()[0];
     auto* textureType = texture.inferredType();
 
-    // FIXME: this should become isPrimitiveReference once PR#14299 lands
     auto* primitive = std::get_if<Types::Primitive>(textureType);
     bool isExternalTexture = primitive && primitive->kind == Types::Primitive::TextureExternal;
     if (!isExternalTexture) {
@@ -1706,7 +1703,7 @@ static void emitTextureSampleBaseClampToEdge(FunctionDefinitionWriter* writer, A
     auto* textureType = std::get_if<Types::Texture>(texture.inferredType());
 
     if (textureType) {
-        // FIXME: this needs to clamp the coordinates
+        // FIXME: <rdar://150364488> this needs to clamp the coordinates
         writer->visit(texture);
         writer->stringBuilder().append(".sample"_s);
         visitArguments(writer, call, 1);
@@ -2384,7 +2381,7 @@ void FunctionDefinitionWriter::visit(AST::IndexAccessExpression& access)
 void FunctionDefinitionWriter::visit(AST::IdentifierExpression& identifier)
 {
     auto it = m_constantValues.find(identifier.identifier());
-    if (UNLIKELY(it != m_constantValues.end())) {
+    if (it != m_constantValues.end()) [[unlikely]] {
         m_body.append('(');
         serializeConstant(identifier.inferredType(), it->value);
         m_body.append(')');
@@ -2703,14 +2700,14 @@ void FunctionDefinitionWriter::visit(AST::SwitchStatement& statement)
         }
         if (isDefault)
             m_body.append('\n', m_indent, "default:"_s);
-        m_body.append(' ');
+        m_body.append("\n#if __wgslMetalAppleGPUFamily >= 9\n{ " DECLARE_FORWARD_PROGRESS "\n#endif\n"_s);
         visit(clause.body);
 
         IndentationScope scope(m_indent);
-        m_body.append('\n', m_indent, "break;"_s);
+        m_body.append('\n', m_indent, "#if __wgslMetalAppleGPUFamily >= 9\n}\n#endif\nbreak;"_s);
     };
 
-    m_body.append("\n#if __wgslMetalAppleGPUFamily >= 9\n{ " DECLARE_FORWARD_PROGRESS "\n#endif\nswitch ("_s);
+    m_body.append("switch ("_s);
     visit(statement.value());
     m_body.append(") {"_s);
     for (auto& clause : statement.clauses())
@@ -2732,7 +2729,6 @@ void FunctionDefinitionWriter::visit(AST::SwitchStatement& statement)
         }
         m_body.append('\n', m_indent, '}');
     }
-    m_body.append('\n', m_indent, "\n#if __wgslMetalAppleGPUFamily >= 9\n}\n#endif\n"_s);
 }
 
 void FunctionDefinitionWriter::visit(AST::BreakStatement&)

@@ -32,6 +32,7 @@
 #include "BitmapImage.h"
 #include "CachedImage.h"
 #include "Chrome.h"
+#include "ContainerNodeInlines.h"
 #include "DiagnosticLoggingClient.h"
 #include "DiagnosticLoggingKeys.h"
 #include "Document.h"
@@ -79,6 +80,7 @@
 #include "Logging.h"
 #include "NVShaderNoperspectiveInterpolation.h"
 #include "NavigatorWebXR.h"
+#include "NodeInlines.h"
 #include "NotImplemented.h"
 #include "OESDrawBuffersIndexed.h"
 #include "OESElementIndexUint.h"
@@ -1931,7 +1933,7 @@ WebGLAny WebGLRenderingContextBase::getParameter(GCGLenum pname)
     case GraphicsContextGL::GREEN_BITS:
         return getIntParameter(pname);
     case GraphicsContextGL::IMPLEMENTATION_COLOR_READ_FORMAT:
-        FALLTHROUGH;
+        [[fallthrough]];
     case GraphicsContextGL::IMPLEMENTATION_COLOR_READ_TYPE: {
         int value = getIntParameter(pname);
         if (!value) {
@@ -2251,7 +2253,7 @@ WebGLAny WebGLRenderingContextBase::getRenderbufferParameter(GCGLenum target, GC
             synthesizeGLError(GraphicsContextGL::INVALID_ENUM, "getRenderbufferParameter"_s, "invalid parameter name"_s);
             return nullptr;
         }
-        FALLTHROUGH;
+        [[fallthrough]];
     case GraphicsContextGL::RENDERBUFFER_WIDTH:
     case GraphicsContextGL::RENDERBUFFER_HEIGHT:
     case GraphicsContextGL::RENDERBUFFER_RED_SIZE:
@@ -3773,7 +3775,7 @@ bool WebGLRenderingContextBase::validateTypeAndArrayBufferType(ASCIILiteral func
             break;
         }
         ASSERT(functionType == ArrayBufferViewFunctionType::ReadPixels);
-        FALLTHROUGH;
+        [[fallthrough]];
     default:
         synthesizeGLError(GraphicsContextGL::INVALID_ENUM, functionName, "invalid type"_s);
         return false;
@@ -4189,7 +4191,7 @@ void WebGLRenderingContextBase::texParameter(GCGLenum target, GCGLenum pname, GC
             synthesizeGLError(GraphicsContextGL::INVALID_ENUM, "texParameter"_s, "invalid parameter name"_s);
             return;
         }
-        FALLTHROUGH;
+        [[fallthrough]];
     case GraphicsContextGL::TEXTURE_WRAP_S:
     case GraphicsContextGL::TEXTURE_WRAP_T:
         if ((paramf == GraphicsContextGL::MIRROR_CLAMP_TO_EDGE_EXT) || (parami == GraphicsContextGL::MIRROR_CLAMP_TO_EDGE_EXT)) {
@@ -5621,7 +5623,7 @@ void WebGLRenderingContextBase::prepareForDisplay()
     m_compositingResultsNeedUpdating = false;
     m_canvasBufferContents = std::nullopt;
 
-    if (UNLIKELY(hasActiveInspectorCanvasCallTracer()))
+    if (hasActiveInspectorCanvasCallTracer()) [[unlikely]]
         InspectorInstrumentation::didFinishRecordingCanvasFrame(*this);
 }
 

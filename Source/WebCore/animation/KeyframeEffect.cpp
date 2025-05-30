@@ -60,6 +60,7 @@
 #include "RenderBox.h"
 #include "RenderBoxModelObject.h"
 #include "RenderElement.h"
+#include "RenderObjectInlines.h"
 #include "RenderStyleInlines.h"
 #include "Settings.h"
 #include "StyleAdjuster.h"
@@ -78,6 +79,7 @@
 #include "TranslateTransformOperation.h"
 #include "ViewTimeline.h"
 #include <JavaScriptCore/Exception.h>
+#include <ranges>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/UUID.h>
 #include <wtf/text/TextStream.h>
@@ -375,7 +377,7 @@ static inline ExceptionOr<KeyframeEffect::KeyframeLikeObject> processKeyframeLik
     KeyframeEffect::BasePropertyIndexedKeyframe baseProperties;
     if (allowLists) {
         auto basePropertiesConversionResult = convert<IDLDictionary<KeyframeEffect::BasePropertyIndexedKeyframe>>(lexicalGlobalObject, keyframesInput.get());
-        if (UNLIKELY(basePropertiesConversionResult.hasException(scope)))
+        if (basePropertiesConversionResult.hasException(scope)) [[unlikely]]
             return Exception { ExceptionCode::TypeError };
         baseProperties = basePropertiesConversionResult.releaseReturnValue();
 
@@ -396,7 +398,7 @@ static inline ExceptionOr<KeyframeEffect::KeyframeLikeObject> processKeyframeLik
         }
     } else {
         auto baseKeyframeConversionResult = convert<IDLDictionary<KeyframeEffect::BaseKeyframe>>(lexicalGlobalObject, keyframesInput.get());
-        if (UNLIKELY(baseKeyframeConversionResult.hasException(scope)))
+        if (baseKeyframeConversionResult.hasException(scope)) [[unlikely]]
             return Exception { ExceptionCode::TypeError };
 
         auto baseKeyframe = baseKeyframeConversionResult.releaseReturnValue();
@@ -472,9 +474,7 @@ static inline ExceptionOr<KeyframeEffect::KeyframeLikeObject> processKeyframeLik
 
     // 5. Sort animation properties in ascending order by the Unicode codepoints that define each property name.
     auto sortPropertiesInAscendingOrder = [](auto& properties) {
-        std::sort(properties.begin(), properties.end(), [](auto& lhs, auto& rhs) {
-            return codePointCompareLessThan(lhs.string().string(), rhs.string().string());
-        });
+        std::ranges::sort(properties, codePointCompareLessThan, &JSC::Identifier::string);
     };
     sortPropertiesInAscendingOrder(logicalShorthands);
     sortPropertiesInAscendingOrder(physicalShorthands);
@@ -506,7 +506,7 @@ static inline ExceptionOr<KeyframeEffect::KeyframeLikeObject> processKeyframeLik
             // If property values is a single DOMString, replace property values with a sequence of DOMStrings with the original value of property
             // Values as the only element.
             auto propertyValuesConversionResult = convert<IDLUnion<IDLDOMString, IDLSequence<IDLDOMString>>>(lexicalGlobalObject, rawValue);
-            if (UNLIKELY(propertyValuesConversionResult.hasException(scope)))
+            if (propertyValuesConversionResult.hasException(scope)) [[unlikely]]
                 return Exception { ExceptionCode::TypeError };
 
             propertyValues = WTF::switchOn(propertyValuesConversionResult.releaseReturnValue(),
@@ -521,7 +521,7 @@ static inline ExceptionOr<KeyframeEffect::KeyframeLikeObject> processKeyframeLik
             // Otherwise,
             // Let property values be the result of converting raw value to a DOMString using the procedure for converting an ECMAScript value to a DOMString.
             auto propertyValuesConversionResult = convert<IDLDOMString>(lexicalGlobalObject, rawValue);
-            if (UNLIKELY(propertyValuesConversionResult.hasException(scope)))
+            if (propertyValuesConversionResult.hasException(scope)) [[unlikely]]
                 return Exception { ExceptionCode::TypeError };
 
             propertyValues = { propertyValuesConversionResult.releaseReturnValue() };
@@ -659,7 +659,7 @@ static inline ExceptionOr<void> processPropertyIndexedKeyframes(JSGlobalObject& 
     }
 
     // 3. Sort processed keyframes by the computed keyframe offset of each keyframe in increasing order.
-    std::sort(parsedKeyframes.begin(), parsedKeyframes.end(), [](auto& lhs, auto& rhs) {
+    std::ranges::sort(parsedKeyframes, [](auto& lhs, auto& rhs) {
         if (!std::isnan(lhs.computedOffset) && !std::isnan(rhs.computedOffset))
             return lhs.computedOffset < rhs.computedOffset;
         // This will sort nullopt values prior to other values.
@@ -2488,7 +2488,7 @@ const RenderStyle& KeyframeEffect::currentStyle() const
 {
     if (auto* renderer = this->renderer())
         return renderer->style();
-    return RenderStyle::defaultStyle();
+    return RenderStyle::defaultStyleSingleton();
 }
 
 bool KeyframeEffect::computeExtentOfTransformAnimation(LayoutRect& bounds) const

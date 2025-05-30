@@ -70,6 +70,7 @@
 #import <CoreText/CTFont.h>
 #import <WebCore/Autofill.h>
 #import <WebCore/AutofillElements.h>
+#import <WebCore/BoundaryPointInlines.h>
 #import <WebCore/Chrome.h>
 #import <WebCore/ContentChangeObserver.h>
 #import <WebCore/DOMTimerHoldingTank.h>
@@ -5984,7 +5985,7 @@ void WebPage::scheduleEditorStateUpdateAfterAnimationIfNeeded(const Element& ani
         return;
 
     auto scheduleEditorStateUpdateForStartOrEndContainerNodeIfNeeded = [&](const Node* container) {
-        if (!animatedElement.containsIncludingShadowDOM(container))
+        if (!animatedElement.isShadowIncludingInclusiveAncestorOf(container))
             return false;
 
         frame->selection().setCaretRectNeedsUpdate();

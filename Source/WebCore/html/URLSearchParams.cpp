@@ -26,6 +26,7 @@
 #include "URLSearchParams.h"
 
 #include "DOMURL.h"
+#include <ranges>
 #include <wtf/URLParser.h>
 
 namespace WebCore {
@@ -81,9 +82,7 @@ bool URLSearchParams::has(const String& name, const String& value) const
 
 void URLSearchParams::sort()
 {
-    std::stable_sort(m_pairs.begin(), m_pairs.end(), [] (const auto& a, const auto& b) {
-        return WTF::codePointCompareLessThan(a.key, b.key);
-    });
+    std::ranges::stable_sort(m_pairs, WTF::codePointCompareLessThan, &PairType::key);
     updateURL();
 }
 

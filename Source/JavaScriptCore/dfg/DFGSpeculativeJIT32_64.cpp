@@ -4426,6 +4426,7 @@ void SpeculativeJIT::compile(Node* node)
     case InByIdMegamorphic:
     case InByValMegamorphic:
     case MultiGetByVal:
+    case MultiPutByVal:
         DFG_CRASH(m_graph, node, "unexpected node in DFG backend");
         break;
     }
@@ -4929,7 +4930,7 @@ void SpeculativeJIT::compilePutByVal(Node* node)
     }
     case Array::Int32: {
         speculateInt32(child3);
-        FALLTHROUGH;
+        [[fallthrough]];
     }
     case Array::Contiguous: {
         compileContiguousPutByVal(node);

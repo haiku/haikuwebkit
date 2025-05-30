@@ -28,6 +28,7 @@
 
 #include "Logging.h"
 #include "MessageSenderInlines.h"
+#include "PluginView.h"
 #include "ViewGestureGeometryCollectorMessages.h"
 #include "WebFrame.h"
 #include "WebPage.h"
@@ -42,6 +43,7 @@
 #include <WebCore/Range.h>
 #include <WebCore/RenderView.h>
 #include <WebCore/TextIterator.h>
+#include <ranges>
 #include <wtf/HashCountedSet.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -213,9 +215,7 @@ std::optional<std::pair<double, double>> ViewGestureGeometryCollector::computeTe
         return FontSizeAndCount { entry.key, entry.value };
     });
 
-    std::sort(sortedFontSizesAndCounts.begin(), sortedFontSizesAndCounts.end(), [] (auto& first, auto& second) {
-        return first.fontSize < second.fontSize;
-    });
+    std::ranges::sort(sortedFontSizesAndCounts, { }, &FontSizeAndCount::fontSize);
 
     double defaultScale = clampTo<double>(defaultTextLegibilityZoomScale, viewportMinimumScale, viewportMaximumScale);
     double textLegibilityScale = defaultScale;

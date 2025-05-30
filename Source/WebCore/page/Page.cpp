@@ -36,6 +36,7 @@
 #include "BackForwardClient.h"
 #include "BackForwardController.h"
 #include "BadgeClient.h"
+#include "BoundaryPointInlines.h"
 #include "BroadcastChannelRegistry.h"
 #include "CacheStorageProvider.h"
 #include "CachedImage.h"
@@ -45,6 +46,7 @@
 #include "CommonAtomStrings.h"
 #include "CommonVM.h"
 #include "ConstantPropertyMap.h"
+#include "ContainerNodeInlines.h"
 #include "ContextMenuClient.h"
 #include "ContextMenuController.h"
 #include "CookieJar.h"
@@ -138,8 +140,10 @@
 #include "Range.h"
 #include "RemoteFrame.h"
 #include "RenderDescendantIterator.h"
+#include "RenderElementInlines.h"
 #include "RenderImage.h"
 #include "RenderLayerCompositor.h"
+#include "RenderObjectInlines.h"
 #include "RenderTheme.h"
 #include "RenderView.h"
 #include "RenderWidget.h"
@@ -195,6 +199,7 @@
 #include "WindowFeatures.h"
 #include "WorkerOrWorkletScriptController.h"
 #include <JavaScriptCore/VM.h>
+#include <ranges>
 #include <wtf/FileSystem.h>
 #include <wtf/RefCountedLeakCounter.h>
 #include <wtf/StdLibExtras.h>
@@ -451,7 +456,7 @@ Page::Page(PageConfiguration&& pageConfiguration)
 #if ENABLE(WRITING_TOOLS)
     , m_writingToolsController(makeUniqueRef<WritingToolsController>(*this))
 #endif
-    , m_activeNowPlayingSessionUpdateTimer(*this, &Page::activeNowPlayingSessionUpdateTimerFired)
+    , m_activeNowPlayingSessionUpdateTimer(*this, &Page::updateActiveNowPlayingSessionNow)
     , m_topDocumentSyncData(DocumentSyncData::create())
 #if HAVE(AUDIT_TOKEN)
     , m_presentingApplicationAuditToken(WTFMove(pageConfiguration.presentingApplicationAuditToken))
@@ -1342,7 +1347,7 @@ static void replaceRanges(Page& page, const Vector<FindReplacementRange>& ranges
     // Likewise, iterate backwards (in document and frame order) through editing containers that contain text matches,
     // so that we're consistent with our backwards iteration behavior per editing container when replacing text.
     auto containerNodesInOrderOfReplacement = copyToVector(rangesByContainerNode.keys());
-    std::sort(containerNodesInOrderOfReplacement.begin(), containerNodesInOrderOfReplacement.end(), [frameToTraversalIndexMap] (auto& firstNode, auto& secondNode) {
+    std::ranges::sort(containerNodesInOrderOfReplacement, [frameToTraversalIndexMap](auto& firstNode, auto& secondNode) {
         if (firstNode == secondNode)
             return false;
 
@@ -2231,7 +2236,7 @@ void Page::updateRendering()
 
     m_renderingUpdateRemainingSteps.last().remove(RenderingUpdateStep::WheelEventMonitorCallbacks);
 
-    if (UNLIKELY(isMonitoringWheelEvents()))
+    if (isMonitoringWheelEvents()) [[unlikely]]
         wheelEventTestMonitor()->checkShouldFireCallbacks();
 
     if (m_isTrackingRenderingUpdates)
@@ -4330,6 +4335,8 @@ void Page::didChangeMainDocument(Document* newDocument)
     clearSampledPageTopColor();
 
     checkedElementTargetingController()->didChangeMainDocument(newDocument);
+
+    updateActiveNowPlayingSessionNow();
 }
 
 RenderingUpdateScheduler& Page::renderingUpdateScheduler()
@@ -5473,9 +5480,16 @@ void Page::hasActiveNowPlayingSessionChanged()
         m_activeNowPlayingSessionUpdateTimer.startOneShot(0_s);
 }
 
-void Page::activeNowPlayingSessionUpdateTimerFired()
+void Page::updateActiveNowPlayingSessionNow()
 {
-    bool hasActiveNowPlayingSession = PlatformMediaSessionManager::singleton().hasActiveNowPlayingSessionInGroup(mediaSessionGroupIdentifier());
+    if (m_activeNowPlayingSessionUpdateTimer.isActive())
+        m_activeNowPlayingSessionUpdateTimer.stop();
+
+    RefPtr mediaSessionManager = PlatformMediaSessionManager::singletonIfExists();
+    if (!mediaSessionManager)
+        return;
+
+    bool hasActiveNowPlayingSession = mediaSessionManager->hasActiveNowPlayingSessionInGroup(mediaSessionGroupIdentifier());
     if (hasActiveNowPlayingSession == m_hasActiveNowPlayingSession)
         return;
 

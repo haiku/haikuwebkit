@@ -33,9 +33,7 @@
 #include "QualifiedName.h"
 #include "RenderPtr.h"
 #include "ScrollTypes.h"
-#include "ShadowRootMode.h"
 #include "SimulatedClickOptions.h"
-#include "WebAnimationTypes.h"
 #include <JavaScriptCore/Forward.h>
 
 #define DUMP_NODE_STATISTICS 0
@@ -50,6 +48,8 @@ namespace WebCore {
 class Attr;
 class Attribute;
 class AttributeIteratorAccessor;
+class CSSAnimation;
+class CSSTransition;
 class CustomElementDefaultARIA;
 class CustomElementReactionQueue;
 class CustomStateSet;
@@ -71,6 +71,7 @@ class IntSize;
 class JSCustomElementInterface;
 class KeyframeEffectStack;
 class KeyboardEvent;
+class LayoutUnit;
 class LocalFrame;
 class Locale;
 class PlatformKeyboardEvent;
@@ -80,6 +81,7 @@ class PopoverData;
 class PseudoElement;
 class RenderStyle;
 class RenderTreePosition;
+class Settings;
 class SpaceSplitString;
 class StylePropertyMap;
 class StylePropertyMapReadOnly;
@@ -95,6 +97,8 @@ class WebAnimation;
 class AttachmentAssociatedElement;
 #endif
 
+enum CSSPropertyID : uint16_t;
+
 enum class AnimationImpact : uint8_t;
 enum class EventHandling : uint8_t;
 enum class EventProcessing : uint8_t;
@@ -106,6 +110,7 @@ enum class PopoverState : uint8_t { None, Auto, Manual };
 enum class ResolveURLs : uint8_t { No, NoExcludingURLsForPrivacy, Yes, YesExcludingURLsForPrivacy };
 enum class SelectionRestorationMode : uint8_t;
 enum class ShadowRootDelegatesFocus : bool { No, Yes };
+enum class ShadowRootMode : uint8_t;
 enum class ShadowRootClonable : bool { No, Yes };
 enum class ShadowRootSerializable : bool { No, Yes };
 enum class VisibilityAdjustment : uint8_t;
@@ -137,6 +142,10 @@ struct ScrollToOptions;
 struct SecurityPolicyViolationEventInit;
 struct ShadowRootInit;
 
+using AnimatableCSSProperty = Variant<CSSPropertyID, AtomString>;
+using AnimatableCSSPropertyToTransitionMap = UncheckedKeyHashMap<AnimatableCSSProperty, Ref<CSSTransition>>;
+using AnimationCollection = ListHashSet<Ref<WebAnimation>>;
+using CSSAnimationCollection = ListHashSet<Ref<CSSAnimation>>;
 using ElementName = NodeName;
 using ExplicitlySetAttrElementsMap = UncheckedKeyHashMap<QualifiedName, Vector<WeakPtr<Element, WeakPtrImplWithEventTargetData>>>;
 using TrustedTypeOrString = Variant<RefPtr<TrustedHTML>, RefPtr<TrustedScript>, RefPtr<TrustedScriptURL>, AtomString>;
@@ -667,7 +676,7 @@ public:
     void removeFromTopLayer();
 
 #if ENABLE(FULLSCREEN_API)
-    bool hasFullscreenFlag() const { return hasElementStateFlag(ElementStateFlag::IsFullscreen); }
+    bool hasFullscreenFlag() const { return hasStateFlag(StateFlag::IsFullscreen); }
     void setFullscreenFlag(bool);
     WEBCORE_EXPORT void webkitRequestFullscreen();
     virtual void requestFullscreen(FullscreenOptions&&, RefPtr<DeferredPromise>&&);
@@ -1003,8 +1012,8 @@ private:
     bool hasLanguageAttribute() const { return hasLangAttr() || hasXMLLangAttr(); }
     bool hasLangAttrKnownToMatchDocumentElement() const { return hasLanguageAttribute() && effectiveLangKnownToMatchDocumentElement(); }
 
-    bool hasEverHadSmoothScroll() const { return hasElementStateFlag(ElementStateFlag::EverHadSmoothScroll); }
-    void setHasEverHadSmoothScroll(bool value) { return setElementStateFlag(ElementStateFlag::EverHadSmoothScroll, value); }
+    bool hasEverHadSmoothScroll() const { return hasStateFlag(StateFlag::EverHadSmoothScroll); }
+    void setHasEverHadSmoothScroll(bool value) { return setStateFlag(StateFlag::EverHadSmoothScroll, value); }
 
     void parentOrShadowHostNode() const = delete; // Call parentNode() instead.
 
@@ -1034,7 +1043,7 @@ inline void Element::clearAfterPseudoElement()
 inline void Element::disconnectFromIntersectionObservers()
 {
     auto* observerData = intersectionObserverDataIfExists();
-    if (LIKELY(!observerData))
+    if (!observerData) [[likely]]
         return;
     disconnectFromIntersectionObserversSlow(*observerData);
 }
@@ -1042,7 +1051,7 @@ inline void Element::disconnectFromIntersectionObservers()
 inline void Element::disconnectFromResizeObservers()
 {
     auto* observerData = resizeObserverDataIfExists();
-    if (LIKELY(!observerData))
+    if (!observerData) [[likely]]
         return;
     disconnectFromResizeObserversSlow(*observerData);
 }

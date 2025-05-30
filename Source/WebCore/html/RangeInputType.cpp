@@ -32,6 +32,7 @@
 #include "config.h"
 #include "RangeInputType.h"
 
+#include "ContainerNodeInlines.h"
 #include "Decimal.h"
 #include "DocumentInlines.h"
 #include "ElementInlines.h"
@@ -47,6 +48,7 @@
 #include "MouseEvent.h"
 #include "NodeName.h"
 #include "PlatformMouseEvent.h"
+#include "RenderObjectInlines.h"
 #include "RenderSlider.h"
 #include "ScopedEventQueue.h"
 #include "ScriptDisallowedScope.h"
@@ -55,6 +57,7 @@
 #include "StepRange.h"
 #include "UserAgentParts.h"
 #include <limits>
+#include <ranges>
 #include <wtf/MathExtras.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -400,7 +403,7 @@ void RangeInputType::updateTickMarkValues()
         m_tickMarkValues.append(parseToNumber(optionValue, Decimal::nan()));
     }
     m_tickMarkValues.shrinkToFit();
-    std::sort(m_tickMarkValues.begin(), m_tickMarkValues.end());
+    std::ranges::sort(m_tickMarkValues);
 }
 
 std::optional<Decimal> RangeInputType::findClosestTickMarkValue(const Decimal& value)

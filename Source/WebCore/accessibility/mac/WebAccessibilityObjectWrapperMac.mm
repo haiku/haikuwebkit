@@ -73,6 +73,7 @@
 #import "PluginViewBase.h"
 #import "Range.h"
 #import "RenderInline.h"
+#import "RenderObjectInlines.h"
 #import "RenderTextControl.h"
 #import "RenderView.h"
 #import "RenderWidget.h"
@@ -1988,6 +1989,14 @@ id parameterizedAttributeValueForTesting(const RefPtr<AXCoreObject>& backingObje
     if ([attribute isEqualToString:_AXTextMarkerRangeForNSRangeAttribute])
         return backingObject->textMarkerRangeForNSRange(nsRange).platformData().bridgingAutorelease();
 
+    if ([attribute isEqualToString:_AXPageBoundsForTextMarkerRangeAttribute]) {
+        NSRect rect = CGRectZero;
+        if (backingObject)
+            rect = computeTextBoundsForRange(nsRange, *backingObject);
+
+        return [NSValue valueWithRect:rect];
+    }
+
     return nil;
 }
 
@@ -2259,9 +2268,6 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
     if (backingObject->isTable() && backingObject->isExposable())
         return tableParamAttrs;
-
-    if (backingObject->isMenuRelated())
-        return nil;
 
     if (backingObject->isWebArea())
         return webAreaParamAttrs;
@@ -2859,6 +2865,30 @@ static bool isMatchingPlugin(AXCoreObject& axObject, const AccessibilitySearchCr
         && (!criteria.visibleOnly || axObject.isVisible());
 }
 
+static NSRect computeTextBoundsForRange(NSRange range, const AXCoreObject& backingObject)
+{
+#if ENABLE(AX_THREAD_TEXT_APIS)
+    if (AXObjectCache::useAXThreadTextApis()) {
+        auto markerToLocation = AXTextMarker { backingObject, 0 }.nextMarkerFromOffset(range.location);
+        auto markerToRangeEnd = markerToLocation.nextMarkerFromOffset(range.length);
+        if (!markerToRangeEnd.isValid())
+            return CGRectZero;
+
+        return AXTextMarkerRange { WTFMove(markerToLocation), WTFMove(markerToRangeEnd) }.viewportRelativeFrame();
+    }
+#endif // ENABLE(AX_THREAD_TEXT_APIS)
+
+    return Accessibility::retrieveValueFromMainThread<NSRect>([&range, &backingObject] () -> NSRect {
+        auto start = backingObject.visiblePositionForIndex(range.location);
+        auto end = backingObject.visiblePositionForIndex(range.location + range.length);
+        auto webRange = makeSimpleRange({ start, end });
+        if (!webRange)
+            return CGRectZero;
+
+        return FloatRect(backingObject.boundsForRange(*webRange));
+    });
+}
+
 ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 - (id)accessibilityAttributeValue:(NSString*)attribute forParameter:(id)parameter
 ALLOW_DEPRECATED_IMPLEMENTATIONS_END
@@ -3226,33 +3256,11 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     }
 
     if ([attribute isEqualToString:NSAccessibilityBoundsForRangeParameterizedAttribute]) {
-#if ENABLE(AX_THREAD_TEXT_APIS)
-        if (AXObjectCache::useAXThreadTextApis()) {
-            auto markerToLocation = AXTextMarker { *backingObject, 0 }.nextMarkerFromOffset(range.location);
-            auto markerToRangeEnd = markerToLocation.nextMarkerFromOffset(range.length);
-            if (!markerToRangeEnd.isValid())
-                return [NSValue valueWithRect:CGRectZero];
+        NSRect rect = CGRectZero;
+        if (backingObject)
+            rect = computeTextBoundsForRange(range, *backingObject);
 
-            auto bounds = AXTextMarkerRange { WTFMove(markerToLocation), WTFMove(markerToRangeEnd) }.viewportRelativeFrame();
-            return [NSValue valueWithRect:[self convertRectToSpace:bounds space:AccessibilityConversionSpace::Screen]];
-        }
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
-
-        NSRect rect = Accessibility::retrieveValueFromMainThread<NSRect>([&range, protectedSelf = retainPtr(self)] () -> NSRect {
-            auto* backingObject = protectedSelf.get().axBackingObject;
-            if (!backingObject)
-                return CGRectZero;
-
-            auto start = backingObject->visiblePositionForIndex(range.location);
-            auto end = backingObject->visiblePositionForIndex(range.location + range.length);
-            auto webRange = makeSimpleRange({ start, end });
-            if (!webRange)
-                return CGRectZero;
-
-            auto bounds = FloatRect(backingObject->boundsForRange(*webRange));
-            return [protectedSelf convertRectToSpace:bounds space:AccessibilityConversionSpace::Screen];
-        });
-        return [NSValue valueWithRect:rect];
+        return [NSValue valueWithRect:[self convertRectToSpace:rect space:AccessibilityConversionSpace::Screen]];
     }
 
     if ([attribute isEqualToString:NSAccessibilityStringForRangeParameterizedAttribute]) {

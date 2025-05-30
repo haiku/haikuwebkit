@@ -156,7 +156,6 @@ UIProcess/Cocoa/VideoPresentationManagerProxy.mm
 UIProcess/Cocoa/WKContactPicker.mm
 UIProcess/Cocoa/WKShareSheet.mm
 UIProcess/Cocoa/WKStorageAccessAlert.mm
-UIProcess/Cocoa/WKTextExtractionUtilities.mm
 UIProcess/Cocoa/WebKitSwiftSoftLink.h
 UIProcess/Cocoa/WebPageProxyCocoa.mm
 UIProcess/Cocoa/WebProcessPoolCocoa.mm
@@ -208,6 +207,7 @@ UIProcess/mac/WKPrintingView.mm
 UIProcess/mac/WKQuickLookPreviewController.mm
 UIProcess/mac/WKRevealItemPresenter.mm
 UIProcess/mac/WKSharingServicePickerDelegate.mm
+UIProcess/mac/WKTextAnimationManager.mm
 UIProcess/mac/WKTextFinderClient.mm
 UIProcess/mac/WebColorPickerMac.mm
 UIProcess/mac/WebContextMenuProxyMac.mm

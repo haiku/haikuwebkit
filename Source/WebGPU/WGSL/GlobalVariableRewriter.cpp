@@ -32,6 +32,7 @@
 #include "CallGraph.h"
 #include "WGSL.h"
 #include "WGSLShaderModule.h"
+#include <ranges>
 #include <wtf/DataLog.h>
 #include <wtf/HashMap.h>
 #include <wtf/ListHashSet.h>
@@ -353,7 +354,7 @@ void RewriteGlobalVariables::visit(AST::Function& function)
 
     // https://www.w3.org/TR/WGSL/#limits
     constexpr unsigned maximumCombinedFunctionVariablesSize = 8192;
-    if (UNLIKELY(m_combinedFunctionVariablesSize.hasOverflowed() || m_combinedFunctionVariablesSize.value() > maximumCombinedFunctionVariablesSize))
+    if (m_combinedFunctionVariablesSize.hasOverflowed() || m_combinedFunctionVariablesSize.value() > maximumCombinedFunctionVariablesSize) [[unlikely]]
         setError(Error(makeString("The combined byte size of all variables in this function exceeds "_s, String::number(maximumCombinedFunctionVariablesSize), " bytes"_s), function.span()));
 }
 
@@ -505,7 +506,7 @@ Packing RewriteGlobalVariables::getPacking(AST::FieldAccessExpression& expressio
 {
     auto* baseType = expression.base().inferredType();
     if (!baseType) {
-        // FIXME: all AST nodes should have an inferred type, but we create field
+        // All AST nodes should have an inferred type, but we create field
         // access nodes from the EntryPointRewriter which don't have a trivial
         // type, so we work around it by returning unpacked since those are only
         // used for marshalling inputs/outputs and don't need to packed/unpacked.
@@ -761,7 +762,7 @@ std::optional<Error> RewriteGlobalVariables::collectGlobals()
     }
 
     for (auto& [_, vector] : m_groupBindingMap)
-        std::sort(vector.begin(), vector.end(), [&](auto& a, auto& b) { return a.first < b.first; });
+        std::ranges::sort(vector, { }, &std::pair<unsigned, String>::first);
 
     if (!bufferLengths.isEmpty()) {
         for (const auto& [variable, group] : bufferLengths) {
@@ -1327,7 +1328,7 @@ auto RewriteGlobalVariables::determineUsedGlobals(const AST::Function& function)
         auto groupResult = usedGlobals.resources.add(group, IndexMap<Global*>());
         auto bindingResult = groupResult.iterator->value.add(binding, &global);
 
-        // FIXME: this check needs to occur during WGSL::staticCheck
+        // FIXME: <rdar://150368198> this check needs to occur during WGSL::staticCheck
         if (!bindingResult.isNewEntry)
             return makeUnexpected(Error(makeString("entry point '"_s, m_entryPointInformation->originalName, "' uses variables '"_s, bindingResult.iterator->value->declaration->originalName(), "' and '"_s, variable.originalName(), "', both which use the same resource binding: @group("_s, group, ") @binding("_s, binding, ')'), variable.span()));
     }
@@ -1336,7 +1337,7 @@ auto RewriteGlobalVariables::determineUsedGlobals(const AST::Function& function)
         CheckedUint32 combinedWorkgroupVariablesSize = 0;
         for (const Type* type : variables)
             combinedWorkgroupVariablesSize += type->size();
-        if (UNLIKELY(combinedWorkgroupVariablesSize.hasOverflowed() || combinedWorkgroupVariablesSize.value() > maximumCombinedWorkgroupVariablesSize))
+        if (combinedWorkgroupVariablesSize.hasOverflowed() || combinedWorkgroupVariablesSize.value() > maximumCombinedWorkgroupVariablesSize) [[unlikely]]
             return { Error(makeString("The combined byte size of all variables in the workgroup address space exceeds "_s, String::number(maximumCombinedWorkgroupVariablesSize), " bytes"_s), span) };
         return std::nullopt;
     });
@@ -1344,7 +1345,7 @@ auto RewriteGlobalVariables::determineUsedGlobals(const AST::Function& function)
         CheckedUint32 combinedPrivateVariablesSize = 0;
         for (const Type* type : variables)
             combinedPrivateVariablesSize += type->size();
-        if (UNLIKELY(combinedPrivateVariablesSize.hasOverflowed() || combinedPrivateVariablesSize.value() > maximumCombinedPrivateVariablesSize))
+        if (combinedPrivateVariablesSize.hasOverflowed() || combinedPrivateVariablesSize.value() > maximumCombinedPrivateVariablesSize) [[unlikely]]
             return { Error(makeString("The combined byte size of all variables in the private address space exceeds "_s, String::number(maximumCombinedPrivateVariablesSize), " bytes"_s), span) };
         return std::nullopt;
     });
@@ -1564,11 +1565,11 @@ Vector<unsigned> RewriteGlobalVariables::insertStructs(const UsedResources& used
                 auto* variable = bufferSizeIt->value;
                 bufferSizeToOwnerMap.add(variable, m_generatedLayout->bindGroupLayouts[group].entries.size());
             } else if (auto ownerIt = bufferSizeToOwnerMap.find(global.declaration); ownerIt != bufferSizeToOwnerMap.end()) {
-                // FIXME: since we only ever generate a layout for one shader stage
-                // at a time, we always store the indices in the vertex slot, but
-                // we should use a structs to pass information from the compiler to
-                // the API (instead of reusing the same struct the API uses to pass
-                // information to the compiler)
+                // FIXME: <rdar://150369108> since we only ever generate a layout
+                // for one shader stage at a time, we always store the indices in
+                // the vertex slot, but we should use a structs to pass information
+                // from the compiler to the API (instead of reusing the same struct
+                // the API uses to pass information to the compiler)
                 m_generatedLayout->bindGroupLayouts[group].entries[ownerIt->value].vertexArgumentBufferSizeIndex = metalId;
             }
 
@@ -1612,9 +1613,7 @@ AST::StructureMember& RewriteGlobalVariables::createArgumentBufferEntry(unsigned
 
 void RewriteGlobalVariables::finalizeArgumentBufferStruct(unsigned group, Vector<std::pair<unsigned, AST::StructureMember*>>& entries)
 {
-    std::sort(entries.begin(), entries.end(), [&](auto& a, auto& b) {
-        return a.first < b.first;
-    });
+    std::ranges::sort(entries, { }, &std::pair<unsigned, AST::StructureMember*>::first);
 
     AST::StructureMember::List structMembers;
     for (auto& [_, member] : entries)

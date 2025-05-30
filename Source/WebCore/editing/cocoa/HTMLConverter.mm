@@ -27,6 +27,7 @@
 #import "HTMLConverter.h"
 
 #import "ArchiveResource.h"
+#import "BoundaryPointInlines.h"
 #import "CSSColorValue.h"
 #import "CSSComputedStyleDeclaration.h"
 #import "CSSPrimitiveValue.h"
@@ -37,6 +38,7 @@
 #import "ColorMac.h"
 #import "CommonAtomStrings.h"
 #import "ComposedTreeIterator.h"
+#import "ContainerNodeInlines.h"
 #import "Document.h"
 #import "DocumentLoader.h"
 #import "Editing.h"
@@ -2533,12 +2535,12 @@ static void updateAttributes(const Node* node, const RenderStyle& style, OptionS
     UNUSED_PARAM(elementQualifiesForWritingToolsPreservationCache);
 #endif
 
-    if (style.textDecorationsInEffect() & TextDecorationLine::Underline)
+    if (style.textDecorationLineInEffect() & TextDecorationLine::Underline)
         [attributes setObject:[NSNumber numberWithInteger:NSUnderlineStyleSingle] forKey:NSUnderlineStyleAttributeName];
     else
         [attributes removeObjectForKey:NSUnderlineStyleAttributeName];
 
-    if (style.textDecorationsInEffect() & TextDecorationLine::LineThrough)
+    if (style.textDecorationLineInEffect() & TextDecorationLine::LineThrough)
         [attributes setObject:[NSNumber numberWithInteger:NSUnderlineStyleSingle] forKey:NSStrikethroughStyleAttributeName];
     else
         [attributes removeObjectForKey:NSStrikethroughStyleAttributeName];

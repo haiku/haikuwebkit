@@ -58,7 +58,6 @@ animation/AcceleratedEffectStackUpdater.cpp
 animation/BlendingKeyframes.cpp
 animation/DocumentTimeline.cpp
 animation/KeyframeEffect.cpp
-animation/KeyframeEffectStack.cpp
 animation/StyleOriginatedAnimation.cpp
 animation/StyleOriginatedAnimationEvent.cpp
 animation/ViewTimeline.cpp
@@ -92,7 +91,6 @@ bindings/js/ScheduledAction.cpp
 bindings/js/ScriptModuleLoader.cpp
 bindings/js/WebCoreJSClientData.cpp
 contentextensions/ContentExtensionsBackend.cpp
-css/CSSComputedStyleDeclaration.cpp
 css/CSSFontSelector.cpp
 css/CSSStyleSheet.cpp
 css/ComputedStyleExtractor.cpp
@@ -360,6 +358,7 @@ page/FrameSnapshotting.cpp
 page/FrameView.cpp
 page/ImageAnalysisQueue.cpp
 page/ImageOverlayController.cpp
+page/IntelligenceTextEffectsSupport.cpp
 page/InteractionRegion.cpp
 page/IntersectionObserver.cpp
 page/LocalDOMWindow.cpp
@@ -392,6 +391,7 @@ page/scrolling/ScrollAnchoringController.cpp
 page/scrolling/ScrollSnapOffsetsInfo.cpp
 page/scrolling/ScrollingCoordinator.cpp
 page/text-extraction/TextExtraction.cpp
+page/writing-tools/WritingToolsController.mm
 platform/CaretAnimator.cpp
 platform/DictationCaretAnimator.cpp
 platform/DragImage.cpp
@@ -505,7 +505,6 @@ rendering/RenderText.h
 rendering/RenderTextControl.cpp
 rendering/RenderTextControlMultiLine.cpp
 rendering/RenderTextControlSingleLine.cpp
-rendering/RenderTextControlSingleLine.h
 rendering/RenderTextFragment.cpp
 rendering/RenderTheme.cpp
 rendering/RenderTreeAsText.cpp

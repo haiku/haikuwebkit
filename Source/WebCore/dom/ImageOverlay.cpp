@@ -28,6 +28,7 @@
 
 #include "Blob.h"
 #include "CharacterRange.h"
+#include "ContainerNodeInlines.h"
 #include "DOMTokenList.h"
 #include "DOMURL.h"
 #include "Document.h"
@@ -46,6 +47,7 @@
 #include "HTMLStyleElement.h"
 #include "ImageOverlayController.h"
 #include "MediaControlsHost.h"
+#include "NodeInlines.h"
 #include "Page.h"
 #include "RenderBoxInlines.h"
 #include "RenderElementInlines.h"
@@ -110,7 +112,7 @@ static const AtomString& imageOverlayBlockClass()
 bool hasOverlay(const HTMLElement& element)
 {
     RefPtr shadowRoot = element.shadowRoot();
-    if (LIKELY(!shadowRoot || shadowRoot->mode() != ShadowRootMode::UserAgent))
+    if (!shadowRoot || shadowRoot->mode() != ShadowRootMode::UserAgent) [[likely]]
         return false;
 
     return shadowRoot->hasElementWithId(imageOverlayElementIdentifier());

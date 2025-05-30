@@ -529,7 +529,10 @@ void RenderLayerBacking::updateDebugIndicators(bool showBorder, bool showRepaint
     m_graphicsLayer->setShowDebugBorder(showBorder);
     m_graphicsLayer->setShowRepaintCounter(showRepaintCounter);
 
-    // m_viewportAnchorLayer can't show layer borders becuase it's a structural layer.
+    // m_viewportAnchorLayer can't show layer borders because it's a structural layer.
+
+    if (m_viewportClippingLayer)
+        m_viewportClippingLayer->setShowDebugBorder(showBorder);
 
     if (m_ancestorClippingStack) {
         for (auto& entry : m_ancestorClippingStack->stack())
@@ -661,6 +664,7 @@ void RenderLayerBacking::destroyGraphicsLayers()
 
     GraphicsLayer::unparentAndClear(m_transformFlatteningLayer);
     GraphicsLayer::unparentAndClear(m_viewportAnchorLayer);
+    GraphicsLayer::unparentAndClear(m_viewportClippingLayer);
     GraphicsLayer::unparentAndClear(m_contentsContainmentLayer);
     GraphicsLayer::unparentAndClear(m_foregroundLayer);
     GraphicsLayer::unparentAndClear(m_backgroundLayer);
@@ -913,7 +917,7 @@ void RenderLayerBacking::updateVideoGravity(const RenderStyle& style)
     case ObjectFit::None:
     case ObjectFit::ScaleDown:
         // FIXME: Add support for "None" and "ScaleDown" with video gravity modes
-        FALLTHROUGH;
+        [[fallthrough]];
     case ObjectFit::Fill:
         videoGravity = MediaPlayerVideoGravity::Resize;
         break;
@@ -1167,7 +1171,7 @@ bool RenderLayerBacking::updateConfiguration(const RenderLayer* compositingAnces
     if (updateTransformFlatteningLayer(compositingAncestor))
         layerConfigChanged = true;
 
-    if (updateViewportConstrainedAnchorLayer(compositor.isViewportConstrainedFixedOrStickyLayer(m_owningLayer)))
+    if (updateViewportConstrainedSublayers(compositor.viewportConstrainedSublayers(m_owningLayer, compositingAncestor)))
         layerConfigChanged = true;
 
     setBackgroundLayerPaintsFixedRootBackground(compositor.needsFixedRootBackgroundLayer(m_owningLayer));
@@ -1567,6 +1571,19 @@ void RenderLayerBacking::updateGeometry(const RenderLayer* compositedAncestor)
     bool preserves3D = style.preserves3D() && !renderer().hasReflection();
 
     if (m_viewportAnchorLayer) {
+        if (m_viewportClippingLayer) {
+            ASSERT(compositedAncestor == renderer().view().layer());
+            auto fixedPositionRect = renderer().view().frameView().rectForFixedPositionLayout();
+            if (m_ancestorClippingStack) {
+                for (auto& entry : m_ancestorClippingStack->stack()) {
+                    if (entry.clippingLayer)
+                        fixedPositionRect.moveBy(-LayoutPoint { entry.clippingLayer->position() });
+                }
+            }
+            m_viewportClippingLayer->setPosition(fixedPositionRect.location());
+            m_viewportClippingLayer->setSize(fixedPositionRect.size());
+            primaryLayerPosition.moveBy(-fixedPositionRect.location());
+        }
         m_viewportAnchorLayer->setPosition(primaryLayerPosition);
         primaryLayerPosition = { };
     }
@@ -1905,6 +1922,9 @@ void RenderLayerBacking::updateInternalHierarchy()
     if (lastClippingLayer)
         orderedLayers.append(lastClippingLayer);
 
+    if (m_viewportClippingLayer)
+        orderedLayers.append(m_viewportClippingLayer.get());
+
     if (m_viewportAnchorLayer)
         orderedLayers.append(m_viewportAnchorLayer.get());
 
@@ -2123,6 +2143,9 @@ void RenderLayerBacking::updateEventRegion()
             eventRegion.ensureEditableRegion();
 #endif
         auto eventRegionContext = eventRegion.makeContext();
+#if ENABLE(INTERACTION_REGIONS_IN_EVENT_REGION)
+        eventRegionContext.reserveCapacityForInteractionRegions(graphicsLayer.eventRegion().interactionRegions().size());
+#endif
         auto layerOffset = graphicsLayer.scrollOffset() - graphicsLayer.offsetFromRenderer();
         auto layerBounds = FloatRoundedRect(FloatRect(-layerOffset, graphicsLayer.size()));
 
@@ -2596,9 +2619,25 @@ bool RenderLayerBacking::updateTransformFlatteningLayer(const RenderLayer* compo
     return layerChanged;
 }
 
-bool RenderLayerBacking::updateViewportConstrainedAnchorLayer(bool needsAnchorLayer)
+bool RenderLayerBacking::updateViewportConstrainedSublayers(ViewportConstrainedSublayers sublayers)
 {
     bool layerChanged = false;
+
+    using enum ViewportConstrainedSublayers;
+
+    bool needsAnchorLayer = false;
+    bool needsClippingLayer = false;
+    switch (sublayers) {
+    case None:
+        break;
+    case ClippingAndAnchor:
+        needsClippingLayer = true;
+        [[fallthrough]];
+    case Anchor:
+        needsAnchorLayer = true;
+        break;
+    }
+
     if (needsAnchorLayer) {
         if (!m_viewportAnchorLayer) {
             auto layerName = makeString(m_owningLayer.name(), " (anchor)"_s);
@@ -2608,6 +2647,19 @@ bool RenderLayerBacking::updateViewportConstrainedAnchorLayer(bool needsAnchorLa
     } else if (m_viewportAnchorLayer) {
         willDestroyLayer(m_viewportAnchorLayer.get());
         GraphicsLayer::unparentAndClear(m_viewportAnchorLayer);
+        layerChanged = true;
+    }
+
+    if (needsClippingLayer) {
+        if (!m_viewportClippingLayer) {
+            auto layerName = makeString(m_owningLayer.name(), " (clipping)"_s);
+            m_viewportClippingLayer = createGraphicsLayer(layerName, GraphicsLayer::Type::Normal);
+            m_viewportClippingLayer->setMasksToBounds(true);
+            layerChanged = true;
+        }
+    } else if (m_viewportClippingLayer) {
+        willDestroyLayer(m_viewportClippingLayer.get());
+        GraphicsLayer::unparentAndClear(m_viewportClippingLayer);
         layerChanged = true;
     }
 
@@ -3528,8 +3580,8 @@ GraphicsLayer* RenderLayerBacking::childForSuperlayers() const
         // If the document element is captured, then the RenderView's layer will get attached
         // into the view-transition tree, and we instead want to attach the root of the VT tree to our ancestor.
         if (m_owningLayer.renderer().protectedDocument()->activeViewTransitionCapturedDocumentElement()) {
-            if (CheckedPtr viewTransitionRoot = m_owningLayer.lastChild(); viewTransitionRoot && viewTransitionRoot->renderer().isViewTransitionRoot() && viewTransitionRoot->backing())
-                return viewTransitionRoot->backing()->childForSuperlayers();
+            if (WeakPtr viewTransitionRoot = m_owningLayer.renderer().view().viewTransitionRoot(); viewTransitionRoot && viewTransitionRoot->hasLayer() && viewTransitionRoot->layer()->backing())
+                return viewTransitionRoot->layer()->backing()->childForSuperlayers();
         }
     }
     return childForSuperlayersExcludingViewTransitions();
@@ -3543,8 +3595,8 @@ GraphicsLayer* RenderLayerBacking::childForSuperlayersExcludingViewTransitions()
     if (m_ancestorClippingStack)
         return m_ancestorClippingStack->firstLayer();
 
-    if (m_viewportAnchorLayer)
-        return m_viewportAnchorLayer.get();
+    if (RefPtr viewportConstrainedLayer = viewportClippingOrAnchorLayer())
+        return viewportConstrainedLayer.get();
 
     if (m_contentsContainmentLayer)
         return m_contentsContainmentLayer.get();

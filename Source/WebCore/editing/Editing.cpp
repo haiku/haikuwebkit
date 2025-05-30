@@ -56,6 +56,7 @@
 #include "Range.h"
 #include "RenderBlock.h"
 #include "RenderElement.h"
+#include "RenderObjectInlines.h"
 #include "RenderStyleInlines.h"
 #include "RenderTableCell.h"
 #include "RenderTextControlSingleLine.h"
@@ -182,7 +183,7 @@ Element* editableRootForPosition(const Position& position, EditableType editable
     case HasEditableAXRole:
         if (CheckedPtr cache = node->document().existingAXObjectCache())
             return const_cast<Element*>(cache->rootAXEditableElement(node.get()));
-        FALLTHROUGH;
+        [[fallthrough]];
     case ContentIsEditable:
         return node->rootEditableElement();
     }
@@ -283,7 +284,7 @@ Position firstEditablePositionAfterPositionInRoot(const Position& position, Cont
     while (candidate.deprecatedNode() && !isEditablePosition(candidate) && candidate.protectedDeprecatedNode()->isDescendantOf(*highestRoot))
         candidate = isAtomicNode(candidate.deprecatedNode()) ? positionInParentAfterNode(candidate.protectedDeprecatedNode().get()) : nextVisuallyDistinctCandidate(candidate);
 
-    if (candidate.deprecatedNode() && candidate.deprecatedNode() != highestRoot && !candidate.protectedDeprecatedNode()->isDescendantOf(*highestRoot))
+    if (candidate.deprecatedNode() && !candidate.protectedDeprecatedNode()->isInclusiveDescendantOf(*highestRoot))
         return { };
 
     return candidate;
@@ -311,7 +312,7 @@ Position lastEditablePositionBeforePositionInRoot(const Position& position, Cont
     while (candidate.deprecatedNode() && !isEditablePosition(candidate) && candidate.protectedDeprecatedNode()->isDescendantOf(*highestRoot))
         candidate = isAtomicNode(candidate.deprecatedNode()) ? positionInParentBeforeNode(candidate.protectedDeprecatedNode().get()) : previousVisuallyDistinctCandidate(candidate);
     
-    if (candidate.deprecatedNode() && candidate.deprecatedNode() != highestRoot && !candidate.protectedDeprecatedNode()->isDescendantOf(*highestRoot))
+    if (candidate.deprecatedNode() && !candidate.protectedDeprecatedNode()->isInclusiveDescendantOf(*highestRoot))
         return { };
     
     return candidate;
@@ -840,25 +841,25 @@ void updatePositionForNodeRemoval(Position& position, Node& node)
         return;
     switch (position.anchorType()) {
     case Position::PositionIsBeforeChildren:
-        if (node.containsIncludingShadowDOM(position.containerNode()))
+        if (node.isShadowIncludingInclusiveAncestorOf(position.containerNode()))
             position = positionInParentBeforeNode(&node);
         break;
     case Position::PositionIsAfterChildren:
-        if (node.containsIncludingShadowDOM(position.containerNode()))
+        if (node.isShadowIncludingInclusiveAncestorOf(position.containerNode()))
             position = positionInParentBeforeNode(&node);
         break;
     case Position::PositionIsOffsetInAnchor:
         if (position.containerNode() == node.parentNode() && static_cast<unsigned>(position.offsetInContainerNode()) > node.computeNodeIndex())
             position.moveToOffset(position.offsetInContainerNode() - 1);
-        else if (node.containsIncludingShadowDOM(position.containerNode()))
+        else if (node.isShadowIncludingInclusiveAncestorOf(position.containerNode()))
             position = positionInParentBeforeNode(&node);
         break;
     case Position::PositionIsAfterAnchor:
-        if (node.containsIncludingShadowDOM(position.anchorNode()))
+        if (node.isShadowIncludingInclusiveAncestorOf(position.anchorNode()))
             position = positionInParentAfterNode(&node);
         break;
     case Position::PositionIsBeforeAnchor:
-        if (node.containsIncludingShadowDOM(position.anchorNode()))
+        if (node.isShadowIncludingInclusiveAncestorOf(position.anchorNode()))
             position = positionInParentBeforeNode(&node);
         break;
     }

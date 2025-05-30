@@ -106,7 +106,11 @@ namespace WebCore {
 struct AppHighlight;
 struct ExceptionDetails;
 struct DigitalCredentialsRequestData;
+struct TextAnimationData;
 enum class WheelScrollGestureState : uint8_t;
+namespace WritingTools {
+enum class TextSuggestionState : uint8_t;
+}
 }
 
 namespace WebKit {
@@ -425,6 +429,7 @@ struct PerWebProcessState {
 #endif
 
 #if ENABLE(GAMEPAD)
+    BOOL _gamepadsRecentlyAccessed;
     RetainPtr<id> _gamepadsRecentlyAccessedState;
 #endif
 

@@ -28,9 +28,11 @@
 #if ENABLE(WRITING_TOOLS)
 
 #import "AppKitSPI.h"
+#import "ClassMethodSwizzler.h"
 #import "InstanceMethodSwizzler.h"
 #import "PlatformUtilities.h"
 #import "Test.h"
+#import "TestCocoa.h"
 #import "TestInputDelegate.h"
 #import "TestNavigationDelegate.h"
 #import "TestUIDelegate.h"
@@ -50,7 +52,6 @@
 #import <WebKit/WebKit.h>
 #import <WebKit/_WKProcessPoolConfiguration.h>
 #import <WebKit/_WKTextPreview.h>
-#import <WebKitSwift/WKIntelligenceTextEffectCoordinator.h>
 #import <pal/spi/cocoa/WritingToolsSPI.h>
 #import <pal/spi/cocoa/WritingToolsUISPI.h>
 #import <wtf/RetainPtr.h>
@@ -89,6 +90,22 @@
 @end
 
 #endif
+
+@protocol WKIntelligenceTextEffectCoordinating;
+
+@protocol WKIntelligenceTextEffectCoordinatorDelegate <NSObject>
+
+#if defined(TARGET_OS_IPHONE) && TARGET_OS_IPHONE
+- (void)intelligenceTextEffectCoordinator:(id<WKIntelligenceTextEffectCoordinating>)coordinator textPreviewsForRange:(NSRange)range completion:(void (^)(UITargetedPreview *))completion;
+#else
+- (void)intelligenceTextEffectCoordinator:(id<WKIntelligenceTextEffectCoordinating>)coordinator textPreviewsForRange:(NSRange)range completion:(void (^)(NSArray<_WKTextPreview *> *))completion;
+#endif
+
+- (void)intelligenceTextEffectCoordinator:(id<WKIntelligenceTextEffectCoordinating>)coordinator rectsForProofreadingSuggestionsInRange:(NSRange)range completion:(void (^)(NSArray<NSValue *> *))completion;
+
+- (void)intelligenceTextEffectCoordinator:(id<WKIntelligenceTextEffectCoordinating>)coordinator updateTextVisibilityForRange:(NSRange)range visible:(BOOL)visible identifier:(NSUUID *)identifier completion:(void (^)(void))completion;
+
+@end
 
 @interface NSString (Extras)
 - (NSString *)_withVisibleReplacementCharacters;
@@ -136,6 +153,15 @@
 using PlatformTextPlaceholder = UITextPlaceholder;
 #else
 using PlatformTextPlaceholder = NSTextPlaceholder;
+#endif
+
+#if PLATFORM(MAC)
+#define FORCE_WRITING_TOOLS_AVAILABLE() \
+ClassMethodSwizzler availabilitySwizzler(PAL::getWTWritingToolsViewControllerClass(), @selector(isAvailable), imp_implementationWithBlock(^{ \
+    return YES; \
+}));
+#else
+#define FORCE_WRITING_TOOLS_AVAILABLE()
 #endif
 
 @interface WritingToolsWKWebView : TestWKWebView
@@ -2663,10 +2689,9 @@ TEST(WritingTools, APIWithBehaviorDefault)
 {
     // If `CocoaWritingToolsBehaviorDefault` (or `Limited`), there should be a context menu item, but no affordance nor inline editing support.
 
-#if PLATFORM(MAC)
-    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
-        return;
+    FORCE_WRITING_TOOLS_AVAILABLE()
 
+#if PLATFORM(MAC)
     InstanceMethodSwizzler swizzler(PAL::getWTWritingToolsClass(), @selector(scheduleShowAffordanceForSelectionRect:ofView:forDelegate:), imp_implementationWithBlock(^(id object, NSRect rect, NSView *view, id delegate) {
         didCallScheduleShowAffordanceForSelectionRect = true;
     }));
@@ -2709,10 +2734,9 @@ TEST(WritingTools, APIWithBehaviorComplete)
 {
     // If `CocoaWritingToolsBehaviorComplete`, there should be a context menu item, an affordance, and inline editing support.
 
-#if PLATFORM(MAC)
-    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
-        return;
+    FORCE_WRITING_TOOLS_AVAILABLE()
 
+#if PLATFORM(MAC)
     InstanceMethodSwizzler swizzler(PAL::getWTWritingToolsClass(), @selector(scheduleShowAffordanceForSelectionRect:ofView:forDelegate:), imp_implementationWithBlock(^(id object, NSRect rect, NSView *view, id delegate) {
         didCallScheduleShowAffordanceForSelectionRect = true;
     }));
@@ -2884,8 +2908,7 @@ TEST(WritingTools, PanelHidesInputAccessoryView)
 
 TEST(WritingTools, ShowAffordance)
 {
-    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
-        return;
+    FORCE_WRITING_TOOLS_AVAILABLE()
 
     InstanceMethodSwizzler swizzler(PAL::getWTWritingToolsClass(), @selector(scheduleShowAffordanceForSelectionRect:ofView:forDelegate:), imp_implementationWithBlock(^(id object, NSRect rect, NSView *view, id delegate) {
         didCallScheduleShowAffordanceForSelectionRect = true;
@@ -2916,10 +2939,10 @@ TEST(WritingTools, ShowAffordance)
 
 TEST(WritingTools, ShowAffordanceForMultipleLines)
 {
-    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
-        return;
+    FORCE_WRITING_TOOLS_AVAILABLE()
 
     static const Vector<WebCore::IntRect> expectedRects {
+        { { 0, 0 }, { 0, 0 } },
         { { 0, 0 }, { 0, 0 } },
         { { 8, 8 }, { 139, 52 } }
     };
@@ -2945,8 +2968,7 @@ TEST(WritingTools, ShowAffordanceForMultipleLines)
 
 TEST(WritingTools, ShowPanelWithNoSelection)
 {
-    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
-        return;
+    FORCE_WRITING_TOOLS_AVAILABLE()
 
     __block bool done = false;
     __block WTRequestedTool requestedTool = WTRequestedToolIndex;
@@ -2971,8 +2993,7 @@ TEST(WritingTools, ShowPanelWithNoSelection)
 
 TEST(WritingTools, ShowPanelWithCaretSelection)
 {
-    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
-        return;
+    FORCE_WRITING_TOOLS_AVAILABLE()
 
     __block bool done = false;
     __block WTRequestedTool requestedTool = WTRequestedToolIndex;
@@ -3013,8 +3034,7 @@ TEST(WritingTools, ShowPanelWithCaretSelection)
 
 TEST(WritingTools, ShowPanelWithRangedSelection)
 {
-    if (![PAL::getWTWritingToolsViewControllerClass() isAvailable])
-        return;
+    FORCE_WRITING_TOOLS_AVAILABLE()
 
     __block bool done = false;
     __block WTRequestedTool requestedTool = WTRequestedToolIndex;
@@ -3039,9 +3059,10 @@ TEST(WritingTools, ShowPanelWithRangedSelection)
     EXPECT_TRUE(NSEqualRects(expectedRect, selectionRect));
 }
 
-// rdar://144725722 (Disable 6x TestWebKitAPI.WritingTools.* (api-tests))
-TEST(WritingTools, DISABLED_ShowToolWithRangedSelection)
+TEST(WritingTools, ShowToolWithRangedSelection)
 {
+    FORCE_WRITING_TOOLS_AVAILABLE()
+
     __block bool done = false;
     __block WTRequestedTool requestedTool = WTRequestedToolIndex;
     __block NSRect selectionRect = NSZeroRect;
@@ -3067,9 +3088,10 @@ TEST(WritingTools, DISABLED_ShowToolWithRangedSelection)
     EXPECT_TRUE(NSEqualRects(expectedRect, selectionRect));
 }
 
-// rdar://144725722 (Disable 6x TestWebKitAPI.WritingTools.* (api-tests))
-TEST(WritingTools, DISABLED_ShowInvalidToolWithRangedSelection)
+TEST(WritingTools, ShowInvalidToolWithRangedSelection)
 {
+    FORCE_WRITING_TOOLS_AVAILABLE()
+
     __block bool done = false;
     __block WTRequestedTool requestedTool = WTRequestedToolIndex;
     __block NSRect selectionRect = NSZeroRect;
@@ -3133,7 +3155,7 @@ TEST(WritingTools, FocusWebViewAfterAnimation)
     TestWebKitAPI::Util::run(&writingToolsFinished);
 
     // FIXME: Remove the additional wait for the animations to finish.
-    TestWebKitAPI::Util::runFor(2_s);
+    TestWebKitAPI::Util::runFor(5_s);
 
     [[webView window] makeFirstResponder:nil];
     [webView sendClickAtPoint:NSMakePoint(50, 50)];
@@ -3209,6 +3231,8 @@ TEST(WritingTools, CompositionAnimationSizing)
 
         [[webView writingToolsDelegate] compositionSession:session.get() didReceiveText:attributedText.get() replacementRange:NSMakeRange(5, 4) inContext:contexts.firstObject finished:YES];
 
+        TestWebKitAPI::Util::runFor(3_s);
+
         [webView waitForNextPresentationUpdate];
 
         EXPECT_WK_STREQ(@"AAAA ZZZZ CCCC", [webView contentsAsStringWithoutNBSP]);
@@ -3226,6 +3250,8 @@ TEST(WritingTools, CompositionAnimationSizing)
         EXPECT_WK_STREQ(@"AAAA BBBB CCCC", [webView contentsAsStringWithoutNBSP]);
 
         [[webView writingToolsDelegate] compositionSession:session.get() didReceiveText:attributedText.get() replacementRange:NSMakeRange(5, 4) inContext:contexts.firstObject finished:NO];
+
+        TestWebKitAPI::Util::runFor(3_s);
 
         [webView waitForContentValue:@"AAAA ZZZZ CCCC"];
 
@@ -3253,9 +3279,10 @@ TEST(WritingTools, CompositionAnimationSizing)
     TestWebKitAPI::Util::run(&finished);
 }
 
-// rdar://144725722 (Disable 6x TestWebKitAPI.WritingTools.* (api-tests))
-TEST(WritingTools, DISABLED_ContextMenuItemsNonEditable)
+TEST(WritingTools, ContextMenuItemsNonEditable)
 {
+    FORCE_WRITING_TOOLS_AVAILABLE()
+
     RetainPtr delegate = adoptNS([[TestUIDelegate alloc] init]);
 
     __block RetainPtr<NSMenu> proposedMenu;
@@ -3289,9 +3316,10 @@ TEST(WritingTools, DISABLED_ContextMenuItemsNonEditable)
     }
 }
 
-// rdar://144725722 (Disable 6x TestWebKitAPI.WritingTools.* (api-tests))
-TEST(WritingTools, DISABLED_ContextMenuItemsEditable)
+TEST(WritingTools, ContextMenuItemsEditable)
 {
+    FORCE_WRITING_TOOLS_AVAILABLE()
+
     RetainPtr delegate = adoptNS([[TestUIDelegate alloc] init]);
 
     __block RetainPtr<NSMenu> proposedMenu;
@@ -3325,9 +3353,10 @@ TEST(WritingTools, DISABLED_ContextMenuItemsEditable)
     }
 }
 
-// rdar://144725722 (Disable 6x TestWebKitAPI.WritingTools.* (api-tests))
-TEST(WritingTools, DISABLED_ContextMenuItemsEditableEmpty)
+TEST(WritingTools, ContextMenuItemsEditableEmpty)
 {
+    FORCE_WRITING_TOOLS_AVAILABLE()
+
     RetainPtr delegate = adoptNS([[TestUIDelegate alloc] init]);
 
     __block RetainPtr<NSMenu> proposedMenu;
@@ -3853,12 +3882,7 @@ TEST(WritingTools, CompositionWithOmittedTrailingWhitespaceContent)
     TestWebKitAPI::Util::run(&finished);
 }
 
-// FIXME rdar://148280675
-#if PLATFORM(IOS) && !defined(NDEBUG)
-TEST(WritingTools, DISABLED_IntelligenceTextEffectCoordinatorDelegate_RectsForProofreadingSuggestionsInRange)
-#else
 TEST(WritingTools, IntelligenceTextEffectCoordinatorDelegate_RectsForProofreadingSuggestionsInRange)
-#endif
 {
     RetainPtr session = adoptNS([[WTSession alloc] initWithType:WTSessionTypeProofreading textViewDelegate:nil]);
 
@@ -3917,10 +3941,17 @@ TEST(WritingTools, IntelligenceTextEffectCoordinatorDelegate_RectsForProofreadin
     TestWebKitAPI::Util::run(&finished);
     finished = false;
 
+#if PLATFORM(MAC)
     const Vector<WebCore::IntRect> expectedRects {
         { { 196, 8 }, { 29, 18 } },
         { { 84, 42 }, { 40, 18 } },
     };
+#else
+    const Vector<WebCore::IntRect> expectedRects {
+        { { 196, 8 }, { 29, 19 } },
+        { { 84, 44 }, { 40, 19 } },
+    };
+#endif
 
     for (NSUInteger i = 0; i < [rectValues count]; i++) {
         auto actualRect = [rectValues objectAtIndex:i].rectValue;

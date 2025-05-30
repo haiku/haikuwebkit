@@ -30,6 +30,7 @@
 #include "BorderShape.h"
 #include "CachedImage.h"
 #include "ColorBlending.h"
+#include "ContainerNodeInlines.h"
 #include "FloatRoundedRect.h"
 #include "GeometryUtilities.h"
 #include "GraphicsContext.h"
@@ -512,7 +513,7 @@ void BackgroundPainter::paintFillLayer(const Color& color, const FillLayer& bgLa
 
 void BackgroundPainter::clipRoundedInnerRect(GraphicsContext& context, const FloatRoundedRect& clipRect)
 {
-    if (UNLIKELY(!clipRect.isRenderable())) {
+    if (!clipRect.isRenderable()) [[unlikely]] {
         auto adjustedClipRect = clipRect;
         adjustedClipRect.adjustRadii();
         context.clipRoundedRect(adjustedClipRect);
@@ -782,7 +783,7 @@ LayoutSize BackgroundPainter::calculateFillTileSize(const RenderBoxModelObject& 
         // If the image has neither an intrinsic width nor an intrinsic height, its size is determined as for ‘contain’.
         type = FillSizeType::Contain;
     }
-    FALLTHROUGH;
+    [[fallthrough]];
     case FillSizeType::Contain:
     case FillSizeType::Cover: {
         // Scale computation needs higher precision than what LayoutUnit can offer.

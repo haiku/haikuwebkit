@@ -122,7 +122,7 @@ String HTMLElement::nodeName() const
     // FIXME: Would be nice to have an AtomString lookup based off uppercase
     // ASCII characters that does not have to copy the string on a hit in the hash.
     if (document().isHTMLDocument()) {
-        if (LIKELY(!tagQName().hasPrefix()))
+        if (!tagQName().hasPrefix()) [[likely]]
             return tagQName().localNameUppercase();
         return Element::nodeName().convertToASCIIUppercase();
     }
@@ -223,7 +223,7 @@ void HTMLElement::collectPresentationalHintsForAttribute(const QualifiedName& na
             break;
         case ContentEditableType::PlaintextOnly:
             userModifyValue = CSSValueReadWritePlaintextOnly;
-            FALLTHROUGH;
+            [[fallthrough]];
         case ContentEditableType::True:
             addPropertyToPresentationalHintStyle(style, CSSPropertyOverflowWrap, CSSValueBreakWord);
             addPropertyToPresentationalHintStyle(style, CSSPropertyWebkitNbspMode, CSSValueSpace);
@@ -1259,7 +1259,7 @@ ExceptionOr<void> HTMLElement::hidePopoverInternal(FocusPreviousElement focusPre
 
     Ref document = this->document();
     if (RefPtr element = popoverData()->previouslyFocusedElement()) {
-        if (focusPreviousElement == FocusPreviousElement::Yes && containsIncludingShadowDOM(document->protectedFocusedElement().get())) {
+        if (focusPreviousElement == FocusPreviousElement::Yes && isShadowIncludingInclusiveAncestorOf(document->protectedFocusedElement().get())) {
             FocusOptions options;
             options.preventScroll = true;
             element->focus(options);
@@ -1380,6 +1380,11 @@ const AtomString& HTMLElement::popover() const
         return manualAtom();
     }
     return nullAtom();
+}
+
+void HTMLElement::setPopover(const AtomString& value)
+{
+    setAttributeWithoutSynchronization(HTMLNames::popoverAttr, value);
 }
 
 #if PLATFORM(IOS_FAMILY)

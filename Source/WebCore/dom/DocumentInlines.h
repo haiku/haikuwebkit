@@ -30,6 +30,7 @@
 #include "Document.h"
 #include "DocumentMarkerController.h"
 #include "DocumentParser.h"
+#include "DocumentSyncData.h"
 #include "Element.h"
 #include "ExtensionStyleSheets.h"
 #include "FocusOptions.h"
@@ -149,7 +150,7 @@ bool Document::hasNodeIterators() const
 
 inline void Document::invalidateAccessKeyCache()
 {
-    if (UNLIKELY(m_accessKeyCache))
+    if (m_accessKeyCache) [[unlikely]]
         invalidateAccessKeyCacheSlowCase();
 }
 
@@ -164,14 +165,14 @@ inline bool Document::isSameOriginAsTopDocument() const { return protectedSecuri
 
 inline bool Document::shouldMaskURLForBindings(const URL& urlToMask) const
 {
-    if (LIKELY(urlToMask.protocolIsInHTTPFamily()))
+    if (urlToMask.protocolIsInHTTPFamily()) [[likely]]
         return false;
     return shouldMaskURLForBindingsInternal(urlToMask);
 }
 
 inline const URL& Document::maskedURLForBindingsIfNeeded(const URL& url) const
 {
-    if (UNLIKELY(shouldMaskURLForBindings(url)))
+    if (shouldMaskURLForBindings(url)) [[unlikely]]
         return maskedURLForBindings();
     return url;
 }
@@ -271,6 +272,11 @@ inline CheckedRef<const DocumentMarkerController> Document::checkedMarkers() con
 inline Ref<SecurityOrigin> Document::protectedSecurityOrigin() const
 {
     return SecurityContext::protectedSecurityOrigin().releaseNonNull();
+}
+
+inline Ref<DocumentSyncData> Document::syncData()
+{
+    return m_syncData.get();
 }
 
 } // namespace WebCore

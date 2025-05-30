@@ -46,6 +46,7 @@
 #include "HTMLTableElement.h"
 #include "InlineIteratorLineBox.h"
 #include "InlineIteratorTextBox.h"
+#include "InlineWalker.h"
 #include "LayoutElementBox.h"
 #include "LayoutIntegrationLineLayout.h"
 #include "LengthFunctions.h"
@@ -76,6 +77,7 @@
 #include "RenderLineBreak.h"
 #include "RenderListItem.h"
 #include "RenderMultiColumnSpannerPlaceholder.h"
+#include "RenderObjectInlines.h"
 #include "RenderSVGResourceContainer.h"
 #include "RenderSVGViewportContainer.h"
 #include "RenderStyleSetters.h"
@@ -337,16 +339,41 @@ StyleDifference RenderElement::adjustStyleDifference(StyleDifference diff, Optio
 }
 
 
-inline bool RenderElement::shouldRepaintForStyleDifference(StyleDifference diff) const
+static inline bool hasNonWhitespaceTextContent(const RenderElement& renderer)
 {
-    auto hasImmediateNonWhitespaceTextChild = [&] {
-        for (auto& child : childrenOfType<RenderText>(*this)) {
-            if (!child.containsOnlyCollapsibleWhitespace())
+    if (!renderer.childrenInline())
+        return false;
+
+    if (auto* blockContainer = dynamicDowncast<RenderBlockFlow>(renderer)) {
+        for (InlineWalker walker(*blockContainer); !walker.atEnd(); walker.advance()) {
+            if (auto* textRenderer = dynamicDowncast<RenderText>(*walker.current()); textRenderer && !textRenderer->containsOnlyCollapsibleWhitespace())
                 return true;
         }
         return false;
-    };
-    return diff == StyleDifference::Repaint || (diff == StyleDifference::RepaintIfText && hasImmediateNonWhitespaceTextChild());
+    }
+
+    for (auto& textRenderer : childrenOfType<RenderText>(renderer)) {
+        if (!textRenderer.containsOnlyCollapsibleWhitespace())
+            return true;
+    }
+    return false;
+}
+
+inline bool RenderElement::shouldRepaintForStyleDifference(StyleDifference diff) const
+{
+    if (diff == StyleDifference::Repaint)
+        return true;
+
+    if (diff == StyleDifference::RepaintIfText) {
+        if (hasNonWhitespaceTextContent(*this))
+            return true;
+        for (auto& blockChild : childrenOfType<RenderBlock>(*this)) {
+            if (blockChild.isAnonymousBlock() && hasNonWhitespaceTextContent(blockChild))
+                return true;
+        }
+    }
+
+    return false;
 }
 
 void RenderElement::updateFillImages(const FillLayer* oldLayers, const FillLayer* newLayers)
@@ -2707,6 +2734,7 @@ void RenderElement::layoutIfNeeded()
 {
     if (!needsLayout())
         return;
+    // FIXME: Replace this with ASSERT after fixing FC layout code not calling into child layout.
     if (layoutContext().isSkippedContentForLayout(*this)) {
         clearNeedsLayoutForSkippedContent();
         return;

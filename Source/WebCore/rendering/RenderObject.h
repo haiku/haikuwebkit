@@ -26,19 +26,10 @@
 #pragma once
 
 #include "CachedImageClient.h"
-#include "FloatQuad.h"
-#include "FrameDestructionObserverInlines.h"
-#include "HTMLNames.h"
-#include "InspectorInstrumentationPublic.h"
 #include "LayoutRect.h"
-#include "LocalFrame.h"
-#include "Page.h"
 #include "PlatformLayerIdentifier.h"
 #include "RenderObjectEnums.h"
-#include "RenderStyle.h"
-#include "ScrollAlignment.h"
-#include "StyleImage.h"
-#include "TextAffinity.h"
+#include "RenderStyleConstants.h"
 #include <wtf/CheckedPtr.h>
 #include <wtf/TZoneMalloc.h>
 
@@ -53,15 +44,20 @@ class Color;
 class ControlPart;
 class Cursor;
 class Document;
+class FloatQuad;
 class HitTestLocation;
 class HitTestRequest;
 class HitTestResult;
 class HostWindow;
 class LegacyInlineBox;
+class LocalFrame;
 class LocalFrameViewLayoutContext;
+class Node;
+class Page;
 class Path;
 class Position;
 class ReferencedSVGResources;
+class RenderBox;
 class RenderBoxModelObject;
 class RenderInline;
 class RenderBlock;
@@ -72,11 +68,17 @@ class RenderGeometryMap;
 class RenderLayer;
 class RenderLayerModelObject;
 class RenderFragmentContainer;
+class RenderStyle;
 class RenderTheme;
 class RenderTreeBuilder;
+class RenderView;
 class RenderHighlight;
+class ScrollAnchoringController;
+class Settings;
 class TransformState;
+class TreeScope;
 class VisiblePosition;
+class WeakPtrImplWithEventTargetData;
 
 #if PLATFORM(IOS_FAMILY)
 class SelectionGeometry;
@@ -96,10 +98,15 @@ namespace Style {
 class PseudoElementRequest;
 }
 
+enum class Affinity : bool;
 enum class HitTestSource : bool;
 enum class RepaintRectCalculation : bool { Fast, Accurate };
 enum class RepaintOutlineBounds : bool { No, Yes };
+enum class PointerEvents : uint8_t;
 enum class RequiresFullRepaint : bool { No, Yes };
+enum class StyleColorOptions : uint8_t;
+
+typedef const void* WrappedImagePtr;
 
 // Base class for all rendering tree objects.
 class RenderObject : public CachedImageClient {
@@ -421,7 +428,7 @@ public:
     void outputRegionsInformation(WTF::TextStream&) const;
 #endif
 
-    bool isPseudoElement() const { return node() && node()->isPseudoElement(); }
+    inline bool isPseudoElement() const; // Defined in RenderObjectInlines.h
 
     bool isRenderElement() const { return !isRenderText(); }
     bool isRenderReplaced() const { return m_typeSpecificFlags.kind() == TypeSpecificFlags::Kind::Replaced; }
@@ -490,9 +497,9 @@ public:
     bool isRenderScrollbarPart() const { return type() == Type::ScrollbarPart; }
     bool isRenderVTTCue() const { return type() == Type::VTTCue; }
 
-    bool isDocumentElementRenderer() const { return document().documentElement() == m_node.ptr(); }
-    bool isBody() const { return node() && node()->hasTagName(HTMLNames::bodyTag); }
-    bool isHR() const { return node() && node()->hasTagName(HTMLNames::hrTag); }
+    inline bool isDocumentElementRenderer() const; // Defined in RenderObjectInlines.h
+    inline bool isBody() const; // Defined in RenderObjectInlines.h
+    inline bool isHR() const; // Defined in RenderObjectInlines.h
     bool isLegend() const;
 
     bool isHTMLMarquee() const;
@@ -714,7 +721,7 @@ public:
 
     inline bool preservesNewline() const;
 
-    RenderView& view() const { return *document().renderView(); }
+    inline RenderView& view() const; // Defined in RenderObjectInlines.h
     CheckedRef<RenderView> checkedView() const;
     inline const LocalFrameViewLayoutContext& layoutContext() const;
 
@@ -723,31 +730,26 @@ public:
     // Returns true if this renderer is rooted.
     bool isRooted() const;
 
-    Node* node() const
-    { 
-        if (isAnonymous())
-            return nullptr;
-        return m_node.ptr();
-    }
-    RefPtr<Node> protectedNode() const { return node(); }
+    inline Node* node() const; // Defined in RenderObjectInlines.h
+    inline RefPtr<Node> protectedNode() const; // Defined in RenderObjectInlines.h
 
-    Node* nonPseudoNode() const { return isPseudoElement() ? nullptr : node(); }
-    RefPtr<Node> protectedNonPseudoNode() const { return nonPseudoNode(); }
+    inline Node* nonPseudoNode() const; // Defined in RenderObjectInlines.h
+    inline RefPtr<Node> protectedNonPseudoNode() const; // Defined in RenderObjectInlines.h
 
     // Returns the styled node that caused the generation of this renderer.
     // This is the same as node() except for renderers of :before and :after
     // pseudo elements for which their parent node is returned.
-    Node* generatingNode() const { return isPseudoElement() ? generatingPseudoHostElement() : node(); }
+    inline Node* generatingNode() const; // Defined in RenderObjectInlines.h
 
-    Document& document() const { return m_node.get().document(); }
-    inline Ref<Document> protectedDocument() const; // Defined in RenderObjectInlines.h.
-    TreeScope& treeScopeForSVGReferences() const { return m_node.get().treeScopeForSVGReferences(); }
-    Ref<TreeScope> protectedTreeScopeForSVGReferences() const { return treeScopeForSVGReferences(); }
-    LocalFrame& frame() const;
-    Ref<LocalFrame> protectedFrame() const { return frame(); }
-    Page& page() const;
-    Ref<Page> protectedPage() const;
-    Settings& settings() const { return page().settings(); }
+    inline Document& document() const; // Defined in RenderObjectInlines.h
+    inline Ref<Document> protectedDocument() const; // Defined in RenderObjectInlines.h
+    inline TreeScope& treeScopeForSVGReferences() const; // Defined in RenderObjectInlines.h
+    inline Ref<TreeScope> protectedTreeScopeForSVGReferences() const; // Defined in RenderObjectInlines.h
+    inline LocalFrame& frame() const; // Defined in RenderObjectInlines.h
+    inline Ref<LocalFrame> protectedFrame() const; // Defined in RenderObjectInlines.h
+    inline Page& page() const; // Defined in RenderObjectInlines.h
+    inline Ref<Page> protectedPage() const; // Defined in RenderObjectInlines.h
+    inline Settings& settings() const; // Defined in RenderObjectInlines.h
 
     // Returns the object containing this one. Can be different from parent for positioned elements.
     // If repaintContainer and repaintContainerSkipped are not null, on return *repaintContainerSkipped
@@ -756,13 +758,13 @@ public:
     RenderElement* container(const RenderLayerModelObject* repaintContainer, bool& repaintContainerSkipped) const;
 
     RenderElement* markContainingBlocksForLayout(RenderElement* layoutRoot = nullptr);
-    void setNeedsLayout(MarkingBehavior = MarkContainingBlockChain);
+    inline void setNeedsLayout(MarkingBehavior = MarkContainingBlockChain);
     enum class HadSkippedLayout { No, Yes };
     void clearNeedsLayout(HadSkippedLayout = HadSkippedLayout::No);
     void setPreferredLogicalWidthsDirty(bool, MarkingBehavior = MarkContainingBlockChain);
     void invalidateContainerPreferredLogicalWidths();
     
-    void setNeedsLayoutAndPrefWidthsRecalc();
+    inline void setNeedsLayoutAndPrefWidthsRecalc();
 
     void setPositionState(PositionType);
     void clearPositionedState() { m_stateBitfields.clearPositionedState(); }
@@ -817,7 +819,7 @@ public:
     FloatPoint absoluteToLocal(const FloatPoint&, OptionSet<MapCoordinatesMode> = { }) const;
 
     // Convert a local quad to absolute coordinates, taking transforms into account.
-    FloatQuad localToAbsoluteQuad(const FloatQuad&, OptionSet<MapCoordinatesMode> = UseTransforms, bool* wasFixed = nullptr) const;
+    inline FloatQuad localToAbsoluteQuad(const FloatQuad&, OptionSet<MapCoordinatesMode> = UseTransforms, bool* wasFixed = nullptr) const; // Defined in RenderObjectInlines.h
     // Convert an absolute quad to local coordinates.
     FloatQuad absoluteToLocalQuad(const FloatQuad&, OptionSet<MapCoordinatesMode> = UseTransforms) const;
 
@@ -870,9 +872,10 @@ public:
     virtual LayoutUnit minPreferredLogicalWidth() const { return 0; }
     virtual LayoutUnit maxPreferredLogicalWidth() const { return 0; }
 
-    const RenderStyle& style() const;
+    const RenderStyle& style() const; // Defined in RenderObjectInlines.h.
+    inline CheckedRef<const RenderStyle> checkedStyle() const; // Defined in RenderObjectInlines.h.
     const RenderStyle& firstLineStyle() const;
-    WritingMode writingMode() const { return style().writingMode(); }
+    inline WritingMode writingMode() const; // Defined in RenderObjectInlines.h.
     // writingMode().isHorizontal() is cached by isHorizontalWritingMode() above.
 
     // Anonymous blocks that are part of of a continuation chain will return their inline continuation's outline style instead.
@@ -1072,7 +1075,7 @@ public:
     virtual bool shouldPaintSelectionGaps() const { return false; }
 
     // When performing a global document tear-down, or when going into the back/forward cache, the renderer of the document is cleared.
-    bool renderTreeBeingDestroyed() const;
+    bool renderTreeBeingDestroyed() const; // Defined in RenderObjectInlines.h
 
     void destroy();
 
@@ -1133,7 +1136,8 @@ protected:
     void setNextSibling(RenderObject* next) { m_next = next; }
     void setParent(RenderElement*);
     //////////////////////////////////////////
-    Node& nodeForNonAnonymous() const { ASSERT(!isAnonymous()); return m_node.get(); }
+
+    inline Node& nodeForNonAnonymous() const; // Defined in RenderObjectInlines.h
 
     virtual void willBeDestroyed();
 
@@ -1325,41 +1329,6 @@ private:
 #endif
 };
 
-inline LocalFrame& RenderObject::frame() const
-{
-    return *document().frame();
-}
-
-inline Page& RenderObject::page() const
-{
-    // The render tree will always be torn down before Frame is disconnected from Page,
-    // so it's safe to assume Frame::page() is non-null as long as there are live RenderObjects.
-    ASSERT(frame().page());
-    return *frame().page();
-}
-
-inline Ref<Page> RenderObject::protectedPage() const
-{
-    return page();
-}
-
-inline bool RenderObject::renderTreeBeingDestroyed() const
-{
-    return document().renderTreeBeingDestroyed();
-}
-
-inline void RenderObject::setNeedsLayout(MarkingBehavior markParents)
-{
-    ASSERT(!isSetNeedsLayoutForbidden());
-    if (selfNeedsLayout())
-        return;
-    m_stateBitfields.setFlag(StateFlag::NeedsLayout);
-    if (markParents == MarkContainingBlockChain)
-        scheduleLayout(markContainingBlocksForLayout());
-    if (hasLayer())
-        setLayerNeedsFullRepaint();
-}
-
 inline void RenderObject::setSelectionStateIfNeeded(HighlightState state)
 {
     if (selectionState() == state)
@@ -1418,21 +1387,10 @@ inline bool RenderObject::needsPositionedMovementLayoutOnly() const
         && !needsSimplifiedNormalFlowLayout();
 }
 
-inline void RenderObject::setNeedsLayoutAndPrefWidthsRecalc()
-{
-    setNeedsLayout();
-    setPreferredLogicalWidthsDirty(true);
-}
-
 inline void RenderObject::setPositionState(PositionType position)
 {
     ASSERT((position != PositionType::Absolute && position != PositionType::Fixed) || isRenderBox());
     m_stateBitfields.setPositionedState(position);
-}
-
-inline FloatQuad RenderObject::localToAbsoluteQuad(const FloatQuad& quad, OptionSet<MapCoordinatesMode> mode, bool* wasFixed) const
-{
-    return localToContainerQuad(quad, nullptr, mode, wasFixed);
 }
 
 inline auto RenderObject::visibleRectContextForRepaint() -> VisibleRectContext
@@ -1466,14 +1424,6 @@ inline RenderObject::SetLayoutNeededForbiddenScope::SetLayoutNeededForbiddenScop
 }
 
 #endif
-
-inline void Node::setRenderer(RenderObject* renderer)
-{
-    m_renderer = renderer;
-
-    if (UNLIKELY(InspectorInstrumentationPublic::hasFrontends()))
-        notifyInspectorOfRendererChange();
-}
 
 inline RenderObject* RenderObject::previousInFlowSibling() const
 {

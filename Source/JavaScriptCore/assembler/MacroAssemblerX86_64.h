@@ -5235,7 +5235,7 @@ public:
 
     void lshift64(TrustedImm32 imm, RegisterID dest)
     {
-        if (UNLIKELY(!imm.m_value))
+        if (!imm.m_value) [[unlikely]]
             return;
         m_assembler.shlq_i8r(imm.m_value, dest);
     }
@@ -5302,7 +5302,7 @@ public:
 
     void rshift64(TrustedImm32 imm, RegisterID dest)
     {
-        if (UNLIKELY(!imm.m_value))
+        if (!imm.m_value) [[unlikely]]
             return;
         m_assembler.sarq_i8r(imm.m_value, dest);
     }
@@ -5341,7 +5341,7 @@ public:
 
     void urshift64(TrustedImm32 imm, RegisterID dest)
     {
-        if (UNLIKELY(!imm.m_value))
+        if (!imm.m_value) [[unlikely]]
             return;
         m_assembler.shrq_i8r(imm.m_value, dest);
     }
@@ -5380,7 +5380,7 @@ public:
 
     void rotateRight64(TrustedImm32 imm, RegisterID dest)
     {
-        if (UNLIKELY(!imm.m_value))
+        if (!imm.m_value) [[unlikely]]
             return;
         m_assembler.rorq_i8r(imm.m_value, dest);
     }
@@ -5419,7 +5419,7 @@ public:
 
     void rotateLeft64(TrustedImm32 imm, RegisterID dest)
     {
-        if (UNLIKELY(!imm.m_value))
+        if (!imm.m_value) [[unlikely]]
             return;
         m_assembler.rolq_i8r(imm.m_value, dest);
     }
@@ -5637,7 +5637,7 @@ public:
             return;
         }
 
-        if (UNLIKELY(imm.m_value == INT32_MIN)) {
+        if (imm.m_value == INT32_MIN) [[unlikely]] {
             move(a, dest);
             sub64(imm, dest);
         } else
@@ -5661,12 +5661,14 @@ public:
             return;
         }
 
-        if (isRepresentableAs<int32_t>(imm.m_value) && LIKELY(imm.m_value != INT32_MIN))
-            m_assembler.leaq_mr(-imm.m_value, src, dest);
-        else {
-            move(src, dest);
-            sub64(imm, dest);
+        if (isRepresentableAs<int32_t>(imm.m_value)) {
+            if (imm.m_value != INT32_MIN) [[likely]] {
+                m_assembler.leaq_mr(-imm.m_value, src, dest);
+                return;
+            }
         }
+        move(src, dest);
+        sub64(imm, dest);
     }
 
     void sub64(TrustedImm32 imm, Address address)
@@ -8565,7 +8567,7 @@ public:
             return;
         case SIMDLane::i8x16:
             vectorReplaceLane(SIMDLane::i8x16, TrustedImm32(1), src, dest);
-            FALLTHROUGH;
+            [[fallthrough]];
         case SIMDLane::i16x8:
             m_assembler.vpshuflw_i8rr(0, dest, dest);
             m_assembler.vpunpcklqdq_rrr(dest, dest, dest);
@@ -8593,7 +8595,7 @@ public:
             return;
         case SIMDLane::i8x16:
             vectorReplaceLane(SIMDLane::i8x16, TrustedImm32(1), src, dest);
-            FALLTHROUGH;
+            [[fallthrough]];
         case SIMDLane::i16x8:
             m_assembler.pshuflw_i8rr(0, dest, dest);
             m_assembler.punpcklqdq_rr(dest, dest);

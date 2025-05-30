@@ -139,6 +139,8 @@ static AXTextEditType platformEditTypeForWebCoreEditType(WebCore::AXTextEditType
         return kAXTextEditTypeCut;
     case WebCore::AXTextEditTypePaste:
         return kAXTextEditTypePaste;
+    case WebCore::AXTextEditTypeReplace:
+        return kAXTextEditTypeUnknown; // Does not exist in platform enum.
     case WebCore::AXTextEditTypeAttributesChange:
         return kAXTextEditTypeAttributesChange;
     }
@@ -209,7 +211,7 @@ static void AXPostNotificationWithUserInfo(AccessibilityObjectWrapper *object, N
         object = associatedPluginParent;
 
     // To simplify monitoring for notifications in tests, repost as a simple NSNotification instead of forcing test infrastucture to setup an IPC client and do all the translation between WebCore types and platform specific IPC types and back
-    if (UNLIKELY(axShouldRepostNotificationsForTests))
+    if (axShouldRepostNotificationsForTests) [[unlikely]]
         [object accessibilityPostedNotification:notification userInfo:userInfo];
     else if (skipSystemNotification)
         return;
@@ -382,7 +384,7 @@ void AXObjectCache::postPlatformAnnouncementNotification(const String& message)
     NSAccessibilityPostNotificationWithUserInfo(NSApp, NSAccessibilityAnnouncementRequestedNotification, userInfo);
 
     // To simplify monitoring of notifications in tests, repost as a simple NSNotification instead of forcing test infrastucture to setup an IPC client and do all the translation between WebCore types and platform specific IPC types and back.
-    if (UNLIKELY(axShouldRepostNotificationsForTests)) {
+    if (axShouldRepostNotificationsForTests) [[unlikely]] {
         if (RefPtr root = getOrCreate(m_document->view()))
             [root->wrapper() accessibilityPostedNotification:NSAccessibilityAnnouncementRequestedNotification userInfo:userInfo];
     }
@@ -458,7 +460,7 @@ AXTextStateChangeIntent AXObjectCache::inferDirectionFromIntent(AccessibilityObj
     return intent;
 }
 
-void AXObjectCache::postTextStateChangePlatformNotification(AccessibilityObject* object, const AXTextStateChangeIntent& originalIntent, const VisibleSelection& selection)
+void AXObjectCache::postTextSelectionChangePlatformNotification(AccessibilityObject* object, const AXTextStateChangeIntent& originalIntent, const VisibleSelection& selection)
 {
     if (!object)
         object = rootWebArea();
@@ -650,7 +652,7 @@ void AXObjectCache::platformHandleFocusedUIElementChanged(Element*, Element*)
 {
     NSAccessibilityHandleFocusChanged();
     // AXFocusChanged is a test specific notification name and not something a real AT will be listening for
-    if (UNLIKELY(!axShouldRepostNotificationsForTests))
+    if (!axShouldRepostNotificationsForTests) [[unlikely]]
         return;
 
     auto* rootWebArea = this->rootWebArea();
@@ -680,16 +682,20 @@ static bool isTestAXClientType(AXClientType client)
 
 bool AXObjectCache::clientIsInTestMode()
 {
-    return UNLIKELY(isTestAXClientType(_AXGetClientForCurrentRequestUntrusted()));
+    if (isTestAXClientType(_AXGetClientForCurrentRequestUntrusted())) [[unlikely]]
+        return true;
+    return false;
 }
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 bool AXObjectCache::clientSupportsIsolatedTree()
 {
     auto client = _AXGetClientForCurrentRequestUntrusted();
-    return client == kAXClientTypeVoiceOver
-        || UNLIKELY(client == kAXClientTypeWebKitTesting
-        || client == kAXClientTypeXCTest);
+    if (client == kAXClientTypeVoiceOver)
+        return true;
+    if (client == kAXClientTypeWebKitTesting || client == kAXClientTypeXCTest) [[unlikely]]
+        return true;
+    return false;
 }
 
 bool AXObjectCache::isIsolatedTreeEnabled()
@@ -714,7 +720,7 @@ bool AXObjectCache::isIsolatedTreeEnabled()
 void AXObjectCache::initializeAXThreadIfNeeded()
 {
     static bool axThreadInitialized = false;
-    if (LIKELY(axThreadInitialized || !isMainThread()))
+    if (axThreadInitialized || !isMainThread()) [[likely]]
         return;
 
     if (_AXSIsolatedTreeModeFunctionIsAvailable() && _AXSIsolatedTreeMode_Soft() == AXSIsolatedTreeModeSecondaryThread) {
@@ -735,7 +741,7 @@ bool AXObjectCache::shouldSpellCheck()
     if (!accessibilityEnabled())
         return true;
 
-    if (UNLIKELY(forceDeferredSpellChecking()))
+    if (forceDeferredSpellChecking()) [[unlikely]]
         return false;
 
     auto client = _AXGetClientForCurrentRequestUntrusted();
@@ -743,7 +749,7 @@ bool AXObjectCache::shouldSpellCheck()
     if (client == kAXClientTypeVoiceOver)
         return false;
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    if (UNLIKELY(isTestAXClientType(client)))
+    if (isTestAXClientType(client)) [[unlikely]]
         return true;
     // ITM is currently only ever enabled for VoiceOver, so if it's enabled we can defer spell-checking.
     return !isIsolatedTreeEnabled();
@@ -1073,33 +1079,6 @@ std::optional<SimpleRange> rangeForTextMarkerRange(AXObjectCache* cache, AXTextM
     CharacterOffset startCharacterOffset = characterOffsetForTextMarker(cache, startTextMarker.get());
     CharacterOffset endCharacterOffset = characterOffsetForTextMarker(cache, endTextMarker.get());
     return cache->rangeForUnorderedCharacterOffsets(startCharacterOffset, endCharacterOffset);
-}
-
-void AXObjectCache::onSelectedTextChanged(const VisiblePositionRange& selection)
-{
-#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    if (auto tree = AXIsolatedTree::treeForPageID(m_pageID)) {
-        if (selection.isNull())
-            tree->setSelectedTextMarkerRange({ });
-        else {
-            auto startPosition = selection.start.deepEquivalent();
-            auto endPosition = selection.end.deepEquivalent();
-
-            if (startPosition.isNull() || endPosition.isNull())
-                tree->setSelectedTextMarkerRange({ });
-            else {
-                if (auto* startObject = get(startPosition.anchorNode()))
-                    createIsolatedObjectIfNeeded(*startObject);
-                if (auto* endObject = get(endPosition.anchorNode()))
-                    createIsolatedObjectIfNeeded(*endObject);
-
-                tree->setSelectedTextMarkerRange({ selection });
-            }
-        }
-    }
-#else
-    UNUSED_PARAM(selection);
-#endif
 }
 
 }

@@ -266,6 +266,7 @@
 #include <WebCore/WrappedCryptoKey.h>
 #include <WebCore/WritingDirection.h>
 #include <optional>
+#include <ranges>
 #include <stdio.h>
 #include <wtf/CallbackAggregator.h>
 #include <wtf/CoroutineUtilities.h>
@@ -930,6 +931,8 @@ WebPageProxy::WebPageProxy(PageClient& pageClient, WebProcessProxy& process, Ref
     if (RefPtr gpuProcess = GPUProcessProxy::singletonIfCreated())
         gpuProcess->setPresentingApplicationAuditToken(process.coreProcessIdentifier(), m_webPageID, m_presentingApplicationAuditToken);
 #endif
+    if (protectedPreferences()->siteIsolationEnabled())
+        IPC::Connection::setShouldCrashOnMessageCheckFailure(true);
 }
 
 WebPageProxy::~WebPageProxy()
@@ -7162,11 +7165,6 @@ void WebPageProxy::didCommitLoadForFrame(IPC::Connection& connection, FrameIdent
     if (frame->isMainFrame())
         resetMediaCapability();
 #endif
-
-#if PLATFORM(COCOA)
-    if (frame->isMainFrame() && preferences->textExtractionEnabled())
-        prepareTextExtractionSupportIfNeeded();
-#endif
 }
 
 void WebPageProxy::didFinishDocumentLoadForFrame(IPC::Connection& connection, FrameIdentifier frameID, std::optional<WebCore::NavigationIdentifier> navigationID, const UserData& userData, WallTime timestamp)
@@ -7507,11 +7505,6 @@ void WebPageProxy::didChangeMainDocument(IPC::Connection& connection, FrameIdent
     m_isQuotaIncreaseDenied = false;
 
     m_speechRecognitionPermissionManager = nullptr;
-
-    if (frame && frame->isMainFrame()) {
-        if (RefPtr pageClient = this->pageClient())
-            pageClient->hasActiveNowPlayingSessionChanged(false);
-    }
 }
 
 void WebPageProxy::viewIsBecomingVisible()
@@ -8939,7 +8932,7 @@ void WebPageProxy::runOpenPanel(IPC::Connection& connection, FrameIdentifier fra
 
     if (!m_uiClient->runOpenPanel(*this, frame.get(), WTFMove(frameInfo), parameters.ptr(), openPanelResultListener.ptr())) {
         RefPtr pageClient = this->pageClient();
-        if (!pageClient || !pageClient->handleRunOpenPanel(this, frame.get(), frameInfoForPageClient, parameters.ptr(), openPanelResultListener.ptr()))
+        if (!pageClient || !pageClient->handleRunOpenPanel(*this, *frame, frameInfoForPageClient, parameters, openPanelResultListener))
             didCancelForOpenPanel();
     }
 }
@@ -12171,7 +12164,7 @@ void WebPageProxy::willStartCapture(UserMediaPermissionRequestProxy& request, Co
         break;
     case WebCore::MediaStreamRequest::Type::DisplayMediaWithAudio:
         m_mutedCaptureKindsDesiredByWebApp.remove(WebCore::MediaProducerMediaCaptureKind::SystemAudio);
-        FALLTHROUGH;
+        [[fallthrough]];
     case WebCore::MediaStreamRequest::Type::DisplayMedia:
         m_mutedCaptureKindsDesiredByWebApp.remove(WebCore::MediaProducerMediaCaptureKind::Display);
         break;
@@ -14643,8 +14636,7 @@ bool WebPageProxy::checkURLReceivedFromCurrentOrPreviousWebProcess(WebProcessPro
         return path.startsWith(visitedPath);
     };
 
-    auto localPathsEnd = m_previouslyVisitedPaths.end();
-    if (std::find_if(m_previouslyVisitedPaths.begin(), localPathsEnd, startsWithURLPath) != localPathsEnd)
+    if (std::ranges::find_if(m_previouslyVisitedPaths, startsWithURLPath) != m_previouslyVisitedPaths.end())
         return true;
 
     return process.checkURLReceivedFromWebProcess(url);
@@ -14917,12 +14909,11 @@ void WebPageProxy::setMockWebAuthenticationConfiguration(MockWebAuthenticationCo
 
 void WebPageProxy::startTextManipulations(const Vector<TextManipulationController::ExclusionRule>& exclusionRules, bool includeSubframes, TextManipulationItemCallback&& callback, CompletionHandler<void()>&& completionHandler)
 {
-    if (!hasRunningProcess()) {
-        completionHandler();
-        return;
-    }
     m_textManipulationItemCallback = WTFMove(callback);
-    sendWithAsyncReply(Messages::WebPage::StartTextManipulations(exclusionRules, includeSubframes), WTFMove(completionHandler));
+    auto callbackAggregator = CallbackAggregator::create(WTFMove(completionHandler));
+    forEachWebContentProcess([&](auto& webProcess, auto pageID) {
+        webProcess.sendWithAsyncReply(Messages::WebPage::StartTextManipulations(exclusionRules, includeSubframes), [callbackAggregator] { }, pageID);
+    });
 }
 
 void WebPageProxy::didFindTextManipulationItems(const Vector<WebCore::TextManipulationItem>& items)
@@ -14932,13 +14923,70 @@ void WebPageProxy::didFindTextManipulationItems(const Vector<WebCore::TextManipu
     m_textManipulationItemCallback(items);
 }
 
-void WebPageProxy::completeTextManipulation(const Vector<TextManipulationItem>& items, Function<void(bool allFailed, const Vector<TextManipulationControllerManipulationFailure>&)>&& completionHandler)
+void WebPageProxy::completeTextManipulation(const Vector<TextManipulationItem>& items, CompletionHandler<void(Vector<TextManipulationControllerManipulationFailure>&&)>&& completionHandler)
 {
-    if (!hasRunningProcess()) {
-        completionHandler(true, { });
-        return;
-    }
-    sendWithAsyncReply(Messages::WebPage::CompleteTextManipulation(items), WTFMove(completionHandler));
+    class TextManipulationCallbackAggregator final : public ThreadSafeRefCounted<TextManipulationCallbackAggregator, WTF::DestructionThread::MainRunLoop> {
+    public:
+        struct ItemInfo {
+            Markable<FrameIdentifier> frameID;
+            Markable<TextManipulationItemIdentifier> identifier;
+        };
+
+        using Callback = CompletionHandler<void(Vector<TextManipulationControllerManipulationFailure>&&)>;
+
+        static Ref<TextManipulationCallbackAggregator> create(Vector<ItemInfo>&& items, Callback&& callback)
+        {
+            return adoptRef(*new TextManipulationCallbackAggregator(WTFMove(items), WTFMove(callback)));
+        }
+
+        ~TextManipulationCallbackAggregator()
+        {
+            ASSERT(RunLoop::isMain());
+            BitVector resultIndexes;
+            for (auto& failure : m_result.failures)
+                resultIndexes.set(failure.index);
+            for (auto& index : m_result.succeededIndexes)
+                resultIndexes.add(index);
+            for (unsigned index = 0; index < m_items.size(); ++index) {
+                if (resultIndexes.get(index))
+                    continue;
+
+                WebCore::TextManipulationControllerManipulationFailure failure { *m_items[index].frameID, m_items[index].identifier, index, WebCore::TextManipulationControllerManipulationFailure::Type::NotAvailable };
+                m_result.failures.append(WTFMove(failure));
+            }
+
+            m_callback(WTFMove(m_result.failures));
+        }
+
+        void addResult(TextManipulationControllerManipulationResult&& result)
+        {
+            m_result.failures.appendVector(WTFMove(result.failures));
+            m_result.succeededIndexes.appendVector(WTFMove(result.succeededIndexes));
+        }
+
+    private:
+        TextManipulationCallbackAggregator(Vector<ItemInfo>&& items, Callback&& callback)
+            : m_items(WTFMove(items))
+            , m_callback(WTFMove(callback))
+        {
+            ASSERT(RunLoop::isMain());
+        }
+
+        Vector<ItemInfo> m_items;
+        Callback m_callback;
+        TextManipulationControllerManipulationResult m_result;
+    };
+
+    Vector<TextManipulationCallbackAggregator::ItemInfo> itemInfos;
+    itemInfos.reserveCapacity(items.size());
+    for (auto& item : items)
+        itemInfos.append({ item.frameID, item.identifier });
+    auto callbackAggregator = TextManipulationCallbackAggregator::create(WTFMove(itemInfos), WTFMove(completionHandler));
+    forEachWebContentProcess([&](auto& webProcess, auto pageID) {
+        webProcess.sendWithAsyncReply(Messages::WebPage::CompleteTextManipulation(items), [callbackAggregator](auto&& result) {
+            callbackAggregator->addResult(WTFMove(result));
+        }, pageID);
+    });
 }
 
 void WebPageProxy::setCORSDisablingPatterns(Vector<String>&& patterns)

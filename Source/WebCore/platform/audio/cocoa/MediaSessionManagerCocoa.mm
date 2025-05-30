@@ -46,6 +46,7 @@
 #import <wtf/Function.h>
 #import <wtf/MathExtras.h>
 #import <wtf/TZoneMallocInlines.h>
+#import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 
 #import "MediaRemoteSoftLink.h"
 #include <pal/cocoa/AVFoundationSoftLink.h>
@@ -162,9 +163,8 @@ void MediaSessionManagerCocoa::updateSessionState()
         mode = AudioSession::Mode::VideoChat;
     } else if (hasAudibleVideoMediaType) {
         category = AudioSession::CategoryType::MediaPlayback;
-#if PLATFORM(VISION)
-        // visionOS AudioSessions are designed more like a headphone experience,
-        // and thus use a different mode.
+#if PLATFORM(VISION) || PLATFORM(APPLETV)
+        // On visionOS and tvOS, Mode::MoviePlayback is best tuned for web videos that contain music, speech, etc.
         mode = AudioSession::Mode::MoviePlayback;
 #endif
     } else if (hasAudibleAudioOrVideoMediaType)
@@ -286,6 +286,7 @@ void MediaSessionManagerCocoa::addSession(PlatformMediaSessionInterface& session
 void MediaSessionManagerCocoa::removeSession(PlatformMediaSessionInterface& session)
 {
     PlatformMediaSessionManager::removeSession(session);
+    session.setActiveNowPlayingSession(false);
 
     if (hasNoSession()) {
         m_nowPlayingManager->removeClient(*this);
@@ -608,9 +609,11 @@ void MediaSessionManagerCocoa::updateNowPlayingSuppression(const NowPlayingInfo*
         RELEASE_LOG(Media, "MediaSessionManagerCocoa::updateNowPlayingSuppression: clearing suppressPresentationOverBundleIdentifiers (hasNowPlayingInfo=%d, isVideo=%d)", !!nowPlayingInfo, nowPlayingInfo && nowPlayingInfo->isVideo);
         [nowPlayingActivityController() suppressPresentationOverBundleIdentifiers:nil];
     } else {
-        RetainPtr sourceApplicationIdentifier = nowPlayingInfo->metadata.sourceApplicationIdentifier.createNSString();
-        RELEASE_LOG(Media, "MediaSessionManagerCocoa::updateNowPlayingSuppression: setting suppressPresentationOverBundleIdentifiers to %@", sourceApplicationIdentifier.get());
-        [nowPlayingActivityController() suppressPresentationOverBundleIdentifiers:[NSSet setWithArray:@[sourceApplicationIdentifier.get()]]];
+        RetainPtr parentApplicationBundleIdentifier = applicationBundleIdentifier().createNSString();
+        RetainPtr presentingApplicationBundleIdentifier = nowPlayingInfo->metadata.sourceApplicationIdentifier.createNSString();
+        NSSet *bundleIdentifiers = [NSSet setWithArray:@[parentApplicationBundleIdentifier.get(), presentingApplicationBundleIdentifier.get()]];
+        RELEASE_LOG(Media, "MediaSessionManagerCocoa::updateNowPlayingSuppression: setting suppressPresentationOverBundleIdentifiers to %@", bundleIdentifiers);
+        [nowPlayingActivityController() suppressPresentationOverBundleIdentifiers:bundleIdentifiers];
     }
 }
 

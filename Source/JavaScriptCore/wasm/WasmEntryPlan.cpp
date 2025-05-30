@@ -229,8 +229,14 @@ void EntryPlan::compileFunctions()
     for (uint32_t index = functionIndex; index < functionIndexEnd; ++index)
         compileFunction(FunctionCodeIndex(index));
 
+    if (m_moduleInformation->m_usesModernExceptions.loadRelaxed() && m_moduleInformation->m_usesLegacyExceptions.loadRelaxed()) {
+        Locker locker { m_lock };
+        fail(makeString("Module uses both legacy exceptions and try_table"_s));
+        return;
+    }
+
     if (!areWasmToWasmStubsCompiled) {
-        if (UNLIKELY(!generateWasmToWasmStubs())) {
+        if (!generateWasmToWasmStubs()) [[unlikely]] {
             Locker locker { m_lock };
             fail(makeString("Out of executable memory at stub generation"_s));
             return;
@@ -238,7 +244,7 @@ void EntryPlan::compileFunctions()
     }
 
     if (!areWasmToJSStubsCompiled) {
-        if (UNLIKELY(!generateWasmToJSStubs())) {
+        if (!generateWasmToJSStubs()) [[unlikely]] {
             Locker locker { m_lock };
             fail(makeString("Out of executable memory at stub generation"_s));
             return;
@@ -279,14 +285,14 @@ bool EntryPlan::completeSyncIfPossible()
 void EntryPlan::generateStubsIfNecessary()
 {
     if (!std::exchange(m_areWasmToWasmStubsCompiled, true)) {
-        if (UNLIKELY(!generateWasmToWasmStubs())) {
+        if (!generateWasmToWasmStubs()) [[unlikely]] {
             fail(makeString("Out of executable memory at stub generation"_s));
             return;
         }
     }
 
     if (!std::exchange(m_areWasmToJSStubsCompiled, true)) {
-        if (UNLIKELY(!generateWasmToJSStubs())) {
+        if (!generateWasmToJSStubs()) [[unlikely]] {
             fail(makeString("Out of executable memory at stub generation"_s));
             return;
         }
@@ -306,7 +312,7 @@ bool EntryPlan::generateWasmToWasmStubs()
 #if ENABLE(JIT)
         if (Options::useWasmJIT()) {
             auto binding = wasmToWasm(importFunctionIndex);
-            if (UNLIKELY(!binding))
+            if (!binding) [[unlikely]]
                 return false;
             m_wasmToWasmExitStubs[importFunctionIndex++] = binding.value();
         }
@@ -334,7 +340,7 @@ bool EntryPlan::generateWasmToJSStubs()
         Wasm::TypeIndex typeIndex = m_moduleInformation->importFunctionTypeIndices.at(importIndex);
         if (Options::useWasmJIT()) {
             auto binding = wasmToJS(typeIndex, importIndex);
-            if (UNLIKELY(!binding))
+            if (!binding) [[unlikely]]
                 return false;
             m_wasmToJSExitStubs[importIndex] = binding.value();
         }

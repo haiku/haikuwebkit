@@ -106,7 +106,7 @@ ValueOrReference<String> EmailInputType::sanitizeValue(const String& proposedVal
 {
     // Passing a lambda instead of a function name helps the compiler inline isHTMLLineBreak.
     String noLineBreakValue = proposedValue;
-    if (UNLIKELY(containsHTMLLineBreak(proposedValue))) {
+    if (containsHTMLLineBreak(proposedValue)) [[unlikely]] {
         noLineBreakValue = proposedValue.removeCharacters([](auto character) {
             return isHTMLLineBreak(character);
         });
@@ -122,7 +122,7 @@ ValueOrReference<String> EmailInputType::sanitizeValue(const String& proposedVal
             strippedValue.append(',');
         strippedValue.append(addresses[i].trim(isASCIIWhitespace));
     }
-    return strippedValue.toString();
+    return String { strippedValue.toString() };
 }
 
 } // namespace WebCore

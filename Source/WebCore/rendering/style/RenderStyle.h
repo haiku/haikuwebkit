@@ -333,7 +333,7 @@ public:
     explicit RenderStyle(CreateDefaultStyleTag);
     RenderStyle(const RenderStyle&, CloneTag);
 
-    static RenderStyle& defaultStyle();
+    static RenderStyle& defaultStyleSingleton();
 
     WEBCORE_EXPORT static RenderStyle create();
     static std::unique_ptr<RenderStyle> createPtr();
@@ -593,7 +593,7 @@ public:
 
     inline FieldSizing fieldSizing() const;
 
-    WEBCORE_EXPORT const FontCascade& fontCascade() const;
+    inline const FontCascade& fontCascade() const;
     WEBCORE_EXPORT const FontMetrics& metricsOfPrimaryFont() const;
     WEBCORE_EXPORT const FontCascadeDescription& fontDescription() const;
 
@@ -619,7 +619,7 @@ public:
     inline TextAlignLast textAlignLast() const;
     inline TextGroupAlign textGroupAlign() const;
     inline OptionSet<TextTransform> textTransform() const;
-    inline OptionSet<TextDecorationLine> textDecorationsInEffect() const;
+    inline OptionSet<TextDecorationLine> textDecorationLineInEffect() const;
     inline OptionSet<TextDecorationLine> textDecorationLine() const;
     inline TextDecorationStyle textDecorationStyle() const;
     inline TextDecorationSkipInk textDecorationSkipInk() const;
@@ -738,6 +738,12 @@ public:
     inline const Length& paddingAfter() const;
     inline const Length& paddingStart() const;
     inline const Length& paddingEnd() const;
+
+    inline bool hasExplicitlySetPadding() const;
+    inline bool hasExplicitlySetPaddingBottom() const;
+    inline bool hasExplicitlySetPaddingLeft() const;
+    inline bool hasExplicitlySetPaddingRight() const;
+    inline bool hasExplicitlySetPaddingTop() const;
 
     CursorType cursor() const { return static_cast<CursorType>(m_inheritedFlags.cursor); }
 
@@ -1324,8 +1330,8 @@ public:
     inline void setTextAlignLast(TextAlignLast);
     inline void setTextGroupAlign(TextGroupAlign);
     inline void setTextTransform(OptionSet<TextTransform>);
-    inline void addToTextDecorationsInEffect(OptionSet<TextDecorationLine>);
-    inline void setTextDecorationsInEffect(OptionSet<TextDecorationLine>);
+    inline void addToTextDecorationLineInEffect(OptionSet<TextDecorationLine>);
+    inline void setTextDecorationLineInEffect(OptionSet<TextDecorationLine>);
     inline void setTextDecorationLine(OptionSet<TextDecorationLine>);
     inline void setTextDecorationStyle(TextDecorationStyle);
     inline void setTextDecorationSkipInk(TextDecorationSkipInk);
@@ -1435,6 +1441,11 @@ public:
     void setPaddingEnd(Length&&);
     void setPaddingBefore(Length&&);
     void setPaddingAfter(Length&&);
+
+    inline void setHasExplicitlySetPaddingBottom(bool);
+    inline void setHasExplicitlySetPaddingLeft(bool);
+    inline void setHasExplicitlySetPaddingRight(bool);
+    inline void setHasExplicitlySetPaddingTop(bool);
 
     void setCursor(CursorType c) { m_inheritedFlags.cursor = static_cast<unsigned>(c); }
     void addCursor(RefPtr<StyleImage>&&, const std::optional<IntPoint>& hotSpot);
@@ -2412,7 +2423,7 @@ private:
         unsigned char textWrapStyle : 2; // TextWrapStyle
         unsigned char textTransform : TextTransformBits; // OptionSet<TextTransform>
         unsigned char : 1; // byte alignment
-        unsigned char textDecorationLines : TextDecorationLineBits;
+        unsigned char textDecorationLineInEffect : TextDecorationLineBits;
 
         // Cursors and Visibility = 13 bits aligned onto 4 bits + 1 byte + 1 bit
         unsigned char pointerEvents : 4; // PointerEvents

@@ -31,6 +31,7 @@
 
 #include "ArchiveResource.h"
 #include "AttachmentAssociatedElement.h"
+#include "BoundaryPointInlines.h"
 #include "CSSPrimitiveValue.h"
 #include "CSSPropertyNames.h"
 #include "CSSSerializationContext.h"
@@ -41,6 +42,7 @@
 #include "Comment.h"
 #include "CommonAtomStrings.h"
 #include "ComposedTreeIterator.h"
+#include "ContainerNodeInlines.h"
 #include "CustomElementRegistry.h"
 #include "DeprecatedGlobalSettings.h"
 #include "Document.h"
@@ -82,6 +84,7 @@
 #include "Quirks.h"
 #include "Range.h"
 #include "RenderBlock.h"
+#include "RenderElementInlines.h"
 #include "ScriptWrappableInlines.h"
 #include "Settings.h"
 #include "SocketProvider.h"
@@ -328,7 +331,7 @@ public:
 
     RefPtr<Node> serializeNodes(const Position& start, const Position& end);
     void wrapWithNode(Node&, bool convertBlocksToInlines = false, RangeFullySelectsNode = DoesFullySelectNode);
-    void wrapWithStyleNode(StyleProperties*, Document&, bool isBlock = false);
+    void wrapWithStyleNode(StyleProperties*, bool isBlock = false);
     String takeResults();
     
     bool needRelativeStyleWrapper() const { return m_needRelativeStyleWrapper; }
@@ -338,7 +341,7 @@ public:
 
     ContainerNode* parentNode(Node& node)
     {
-        if (UNLIKELY(m_useComposedTree))
+        if (m_useComposedTree) [[unlikely]]
             return node.parentInComposedTree();
         return node.parentOrShadowHostNode();
     }
@@ -388,7 +391,7 @@ public:
 
 private:
     bool containsOnlyASCII() const;
-    void appendStyleNodeOpenTag(StringBuilder&, StyleProperties*, Document&, bool isBlock = false, std::optional<TextDirection> directionToAppend = std::nullopt);
+    void appendStyleNodeOpenTag(StringBuilder&, StyleProperties*, bool isBlock = false, std::optional<TextDirection> directionToAppend = std::nullopt);
     const String& styleNodeCloseTag(bool isBlock = false);
 
     String renderedTextRespectingRange(const Text&);
@@ -417,36 +420,36 @@ private:
 
     Node* firstChild(Node& node)
     {
-        if (UNLIKELY(m_useComposedTree))
+        if (m_useComposedTree) [[unlikely]]
             return firstChildInComposedTreeIgnoringUserAgentShadow(node);
         return node.firstChild();
     }
 
     Node* nextSibling(Node& node)
     {
-        if (UNLIKELY(m_useComposedTree))
+        if (m_useComposedTree) [[unlikely]]
             return nextSiblingInComposedTreeIgnoringUserAgentShadow(node);
         return node.nextSibling();
     }
     
     Node* nextSkippingChildren(Node& node)
     {
-        if (UNLIKELY(m_useComposedTree))
+        if (m_useComposedTree) [[unlikely]]
             return nextSkippingChildrenInComposedTreeIgnoringUserAgentShadow(node);
         return NodeTraversal::nextSkippingChildren(node);
     }
 
     bool hasChildNodes(Node& node)
     {
-        if (UNLIKELY(m_useComposedTree))
+        if (m_useComposedTree) [[unlikely]]
             return firstChildInComposedTreeIgnoringUserAgentShadow(node);
         return node.hasChildNodes();
     }
 
     bool isDescendantOf(Node& node, Node& possibleAncestor)
     {
-        if (UNLIKELY(m_useComposedTree))
-            return node.isDescendantOrShadowDescendantOf(&possibleAncestor);
+        if (m_useComposedTree) [[unlikely]]
+            return node.isShadowIncludingDescendantOf(&possibleAncestor);
         return node.isDescendantOf(&possibleAncestor);
     }
 
@@ -514,15 +517,15 @@ void StyledMarkupAccumulator::wrapWithNode(Node& node, bool convertBlocksToInlin
         m_nodes->append(node);
 }
 
-void StyledMarkupAccumulator::wrapWithStyleNode(StyleProperties* style, Document& document, bool isBlock)
+void StyledMarkupAccumulator::wrapWithStyleNode(StyleProperties* style, bool isBlock)
 {
     StringBuilder openTag;
-    appendStyleNodeOpenTag(openTag, style, document, isBlock);
+    appendStyleNodeOpenTag(openTag, style, isBlock);
     m_reversedPrecedingMarkup.append(openTag.toString());
     append(styleNodeCloseTag(isBlock));
 }
 
-void StyledMarkupAccumulator::appendStyleNodeOpenTag(StringBuilder& out, StyleProperties* style, Document& document, bool isBlock, std::optional<TextDirection> directionToAppend)
+void StyledMarkupAccumulator::appendStyleNodeOpenTag(StringBuilder& out, StyleProperties* style, bool isBlock, std::optional<TextDirection> directionToAppend)
 {
     // With AnnotateForInterchange::Yes, wrappingStyleForSerialization should have removed -webkit-text-decorations-in-effect
     ASSERT(!shouldAnnotate() || propertyMissingOrEqualToNone(style, CSSPropertyWebkitTextDecorationsInEffect));
@@ -531,7 +534,7 @@ void StyledMarkupAccumulator::appendStyleNodeOpenTag(StringBuilder& out, StylePr
         out.append(directionAttributeAndValue(*directionToAppend), ' ');
     out.append("style=\""_s);
 
-    appendAttributeValue(out, style->asText(CSS::defaultSerializationContext()), document.isHTMLDocument());
+    appendAttributeValue(out, style->asText(CSS::defaultSerializationContext()));
     out.append("\">"_s);
 }
 
@@ -577,7 +580,7 @@ void StyledMarkupAccumulator::appendText(StringBuilder& out, const Text& text)
         // FIXME: Should this be included in forceInline?
         wrappingStyle->style()->setProperty(CSSPropertyFloat, CSSValueNone);
 
-        appendStyleNodeOpenTag(out, wrappingStyle->style(), text.protectedDocument(), false, [&] -> std::optional<TextDirection> {
+        appendStyleNodeOpenTag(out, wrappingStyle->style(), false, [&] -> std::optional<TextDirection> {
             if (m_hasAppendedAnyText)
                 return std::nullopt;
 
@@ -701,10 +704,8 @@ StyledMarkupAccumulator::SpanReplacementType StyledMarkupAccumulator::spanReplac
 
 void StyledMarkupAccumulator::appendStartTag(StringBuilder& out, const Element& element, bool addDisplayInline, RangeFullySelectsNode rangeFullySelectsNode)
 {
-    const bool documentIsHTML = element.document().isHTMLDocument();
-
     auto replacementType = spanReplacementForElement(element);
-    if (UNLIKELY(replacementType != SpanReplacementType::None))
+    if (replacementType != SpanReplacementType::None) [[unlikely]]
         out.append("<span"_s);
     else
         appendOpenTag(out, element, nullptr);
@@ -769,7 +770,7 @@ void StyledMarkupAccumulator::appendStartTag(StringBuilder& out, const Element& 
 
         if (!newInlineStyle->isEmpty()) {
             out.append(" style=\""_s);
-            appendAttributeValue(out, newInlineStyle->style()->asText(CSS::defaultSerializationContext()), documentIsHTML);
+            appendAttributeValue(out, newInlineStyle->style()->asText(CSS::defaultSerializationContext()));
             out.append('"');
         }
     }
@@ -779,7 +780,7 @@ void StyledMarkupAccumulator::appendStartTag(StringBuilder& out, const Element& 
 
 void StyledMarkupAccumulator::appendEndTag(StringBuilder& out, const Element& element)
 {
-    if (UNLIKELY(spanReplacementForElement(element) != SpanReplacementType::None))
+    if (spanReplacementForElement(element) != SpanReplacementType::None) [[unlikely]]
         out.append("</span>"_s);
     else
         MarkupAccumulator::appendEndTag(out, element);
@@ -813,9 +814,11 @@ RefPtr<Node> StyledMarkupAccumulator::traverseNodesForSerialization(Node& startN
 
     unsigned depth = 0;
     auto enterNode = [&] (Node& node) {
-        if (UNLIKELY(m_shouldPreserveMSOList) && shouldEmit) {
-            if (appendNodeToPreserveMSOList(node))
-                return false;
+        if (m_shouldPreserveMSOList) [[unlikely]] {
+            if (shouldEmit) {
+                if (appendNodeToPreserveMSOList(node))
+                    return false;
+            }
         }
 
         RefPtr element = dynamicDowncast<Element>(node);
@@ -876,7 +879,7 @@ RefPtr<Node> StyledMarkupAccumulator::traverseNodesForSerialization(Node& startN
         else
             advanceToAncestorSibling();
 
-        ASSERT(next || !pastEnd || n->containsIncludingShadowDOM(pastEnd));
+        ASSERT(next || !pastEnd || n->isShadowIncludingInclusiveAncestorOf(pastEnd));
 
         if (isBlock(*n) && canHaveChildrenForEditing(*n) && next == pastEnd) {
             // Don't write out empty block containers that aren't fully selected.
@@ -1121,7 +1124,7 @@ static String serializePreservingVisualAppearanceInternal(const Position& start,
                         fullySelectedRootStyle->style()->setProperty(CSSPropertyTextDecorationLine, CSSValueNone);
                     if (!propertyMissingOrEqualToNone(fullySelectedRootStyle->style(), CSSPropertyWebkitTextDecorationsInEffect))
                         fullySelectedRootStyle->style()->setProperty(CSSPropertyWebkitTextDecorationsInEffect, CSSValueNone);
-                    accumulator.wrapWithStyleNode(fullySelectedRootStyle->style(), document, true);
+                    accumulator.wrapWithStyleNode(fullySelectedRootStyle->style(), true);
                 }
             } else {
                 // Since this node and all the other ancestors are not in the selection we want to set RangeFullySelectsNode to DoesNotFullySelectNode
@@ -1141,7 +1144,7 @@ static String serializePreservingVisualAppearanceInternal(const Position& start,
             accumulator.append("<div style=\"clear: both;\"></div>"_s);
         RefPtr<EditingStyle> positionRelativeStyle = styleFromMatchedRulesAndInlineDecl(*body);
         positionRelativeStyle->style()->setProperty(CSSPropertyPosition, CSSValueRelative);
-        accumulator.wrapWithStyleNode(positionRelativeStyle->style(), document, true);
+        accumulator.wrapWithStyleNode(positionRelativeStyle->style(), true);
     }
 
     // FIXME: The interchange newline should be placed in the block that it's in, not after all of the content, unconditionally.
@@ -1314,7 +1317,7 @@ static void fillContainerFromString(ContainerNode& paragraph, const String& stri
         // append the non-tab textual part
         if (!s.isEmpty()) {
             if (!tabText.isEmpty()) {
-                paragraph.appendChild(createTabSpanElement(document, tabText.toString()));
+                paragraph.appendChild(createTabSpanElement(document, String { tabText.toString() }));
                 tabText.clear();
             }
             Ref textNode = document->createTextNode(stringWithRebalancedWhitespace(s, first, i + 1 == numEntries));
@@ -1326,7 +1329,7 @@ static void fillContainerFromString(ContainerNode& paragraph, const String& stri
         if (i + 1 != numEntries)
             tabText.append('\t');
         else if (!tabText.isEmpty())
-            paragraph.appendChild(createTabSpanElement(document, tabText.toString()));
+            paragraph.appendChild(createTabSpanElement(document, String { tabText.toString() }));
 
         first = false;
     }

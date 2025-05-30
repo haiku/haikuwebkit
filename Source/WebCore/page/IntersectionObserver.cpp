@@ -45,9 +45,11 @@
 #include "RenderBoxInlines.h"
 #include "RenderInline.h"
 #include "RenderLineBreak.h"
+#include "RenderObjectInlines.h"
 #include "RenderView.h"
 #include "WebCoreOpaqueRootInlines.h"
 #include <JavaScriptCore/AbstractSlotVisitorInlines.h>
+#include <ranges>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/Vector.h>
 
@@ -162,7 +164,7 @@ IntersectionObserver::IntersectionObserver(Document& document, Ref<IntersectionO
             m_implicitRootDocument = localFrame->document();
     }
 
-    std::sort(m_thresholds.begin(), m_thresholds.end());
+    std::ranges::sort(m_thresholds);
     
     LOG_WITH_STREAM(IntersectionObserver, stream << "Created IntersectionObserver " << this << " root " << root << " root margin " << m_rootMargin << " scroll margin " << m_scrollMargin << " thresholds " << m_thresholds);
 }
