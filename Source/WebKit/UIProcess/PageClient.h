@@ -212,6 +212,7 @@ struct WebHitTestResultData;
 
 #if ENABLE(TOUCH_EVENTS)
 class NativeWebTouchEvent;
+class WebTouchEvent;
 #endif
 
 #if ENABLE(FULLSCREEN_API)
@@ -341,7 +342,7 @@ public:
 #if PLATFORM(GTK)
     virtual void startDrag(WebCore::SelectionData&&, OptionSet<WebCore::DragOperation>, RefPtr<WebCore::ShareableBitmap>&& dragImage, WebCore::IntPoint&& dragImageHotspot) = 0;
 #else
-    virtual void startDrag(const WebCore::DragItem&, WebCore::ShareableBitmap::Handle&&) { }
+    virtual void startDrag(const WebCore::DragItem&, WebCore::ShareableBitmap::Handle&&, const std::optional<WebCore::ElementIdentifier>&) { }
 #endif
     virtual void didPerformDragOperation(bool) { }
     virtual void didPerformDragControllerAction() { }
@@ -440,7 +441,7 @@ public:
 
     virtual void doneWithKeyEvent(const NativeWebKeyboardEvent&, bool wasEventHandled) = 0;
 #if ENABLE(TOUCH_EVENTS)
-    virtual void doneWithTouchEvent(const NativeWebTouchEvent&, bool wasEventHandled) = 0;
+    virtual void doneWithTouchEvent(const WebTouchEvent&, bool wasEventHandled) = 0;
 #endif
 #if ENABLE(IOS_TOUCH_EVENTS)
     virtual void doneDeferringTouchStart(bool preventNativeGestures) = 0;
@@ -535,7 +536,7 @@ public:
 
 #if PLATFORM(COCOA)
     virtual void didCommitLayerTree(const RemoteLayerTreeTransaction&) = 0;
-    virtual void layerTreeCommitComplete() = 0;
+    virtual void layerTreeCommitComplete() { }
 
     virtual void scrollingNodeScrollViewDidScroll(WebCore::ScrollingNodeID) = 0;
 
@@ -713,8 +714,6 @@ public:
 #endif
 
 #if PLATFORM(IOS_FAMILY) && ENABLE(DRAG_SUPPORT)
-    virtual void didHandleDragStartRequest(bool started) = 0;
-    virtual void didHandleAdditionalDragItemsRequest(bool added) = 0;
     virtual void willReceiveEditDragSnapshot() = 0;
     virtual void didReceiveEditDragSnapshot(std::optional<WebCore::TextIndicatorData>) = 0;
 #endif

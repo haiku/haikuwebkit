@@ -110,11 +110,9 @@ platform/graphics/ImageBufferContextSwitcher.h
 platform/graphics/StringTruncator.cpp
 platform/graphics/angle/ANGLEUtilities.cpp
 platform/graphics/angle/GraphicsContextGLANGLE.cpp
-platform/graphics/ca/GraphicsLayerCA.cpp
 platform/graphics/ca/PlatformCALayer.h
 platform/graphics/ca/TileController.cpp
 platform/graphics/mac/LegacyDisplayRefreshMonitorMac.h
-platform/mediarecorder/MediaRecorderPrivateEncoder.h
 platform/mediastream/libwebrtc/LibWebRTCDav1dDecoder.cpp
 platform/mediastream/mac/CoreAudioSharedUnit.h
 platform/network/cocoa/CredentialCocoa.h
@@ -132,9 +130,8 @@ rendering/line/LineWidth.h
 rendering/style/StyleCachedImage.cpp
 rendering/svg/SVGRenderingContext.h
 style/StyleBuilderState.h
+style/StyleExtractorState.h
 style/StyleScope.h
-svg/properties/SVGAnimationAdditiveListFunctionImpl.h
-svg/properties/SVGAnimationAdditiveValueFunctionImpl.h
 testing/Internals.cpp
 workers/DedicatedWorkerThread.cpp
 workers/Worker.h

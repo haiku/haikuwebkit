@@ -36,6 +36,8 @@
 #include "CSSValuePair.h"
 #include "CSSVariableReferenceValue.h"
 #include "Document.h"
+#include "ExceptionOr.h"
+#include "Settings.h"
 #include "StylePropertyShorthand.h"
 #include <wtf/FixedVector.h>
 #include <wtf/text/MakeString.h>

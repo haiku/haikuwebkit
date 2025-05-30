@@ -30,7 +30,10 @@
 #include "MessageReceiver.h"
 #include <WebCore/CertificateInfo.h>
 #include <WebCore/FrameLoaderTypes.h>
+#include <WebCore/IntSize.h>
 #include <WebCore/LayerHostingContextIdentifier.h>
+#include <WebCore/PageIdentifier.h>
+#include <WebCore/ScriptExecutionContextIdentifier.h>
 #include <wtf/CompletionHandler.h>
 #include <wtf/Forward.h>
 #include <wtf/ListHashSet.h>
@@ -170,7 +173,7 @@ public:
     void didSameDocumentNavigation(const URL&); // eg. anchor navigation, session state change.
     void didChangeTitle(const String&);
 
-    WebFramePolicyListenerProxy& setUpPolicyListenerProxy(CompletionHandler<void(WebCore::PolicyAction, API::WebsitePolicies*, ProcessSwapRequestedByClient, RefPtr<BrowsingWarning>&&, std::optional<NavigatingToAppBoundDomain>, WasNavigationIntercepted)>&&, ShouldExpectSafeBrowsingResult, ShouldExpectAppBoundDomainResult, ShouldWaitForInitialLinkDecorationFilteringData);
+    WebFramePolicyListenerProxy& setUpPolicyListenerProxy(CompletionHandler<void(WebCore::PolicyAction, API::WebsitePolicies*, ProcessSwapRequestedByClient, std::optional<NavigatingToAppBoundDomain>, WasNavigationIntercepted)>&&, ShouldExpectSafeBrowsingResult, ShouldExpectAppBoundDomainResult, ShouldWaitForInitialLinkDecorationFilteringData);
 
 #if ENABLE(CONTENT_FILTERING)
     void contentFilterDidBlockLoad(WebCore::ContentFilterUnblockHandler contentFilterUnblockHandler) { m_contentFilterUnblockHandler = WTFMove(contentFilterUnblockHandler); }

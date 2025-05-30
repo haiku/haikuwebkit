@@ -33,9 +33,9 @@
 #include "CSSStyleProperties.h"
 #include "CSSUnitValue.h"
 #include "CSSUnits.h"
+#include "CSSValuePool.h"
 #include "Chrome.h"
 #include "ChromeClient.h"
-#include "ComputedStyleExtractor.h"
 #include "DOMPromiseProxy.h"
 #include "Document.h"
 #include "DocumentInlines.h"
@@ -50,6 +50,7 @@
 #include "KeyframeEffectStack.h"
 #include "Logging.h"
 #include "RenderElement.h"
+#include "StyleExtractor.h"
 #include "StyleOriginatedAnimation.h"
 #include "StylePropertyShorthand.h"
 #include "StyleResolver.h"
@@ -132,7 +133,9 @@ void WebAnimation::remove()
     // This object could be deleted after either clearing the effect or timeline relationship.
     Ref protectedThis { *this };
     setEffectInternal(nullptr);
-    setTimeline(nullptr);
+    setTimelineInternal(nullptr);
+    m_holdTime = std::nullopt;
+    m_startTime = std::nullopt;
 }
 
 void WebAnimation::suspendEffectInvalidation()
@@ -1771,7 +1774,7 @@ ExceptionOr<void> WebAnimation::commitStyles()
         return RenderStyle::clone(renderer->style());
     }();
 
-    auto computedStyleExtractor = ComputedStyleExtractor(styledElement.get());
+    Style::Extractor computedStyleExtractor { styledElement.get() };
 
     auto inlineStyle = [&]() {
         if (auto existinInlineStyle = styledElement->inlineStyle())
@@ -1807,14 +1810,16 @@ ExceptionOr<void> WebAnimation::commitStyles()
         if (m_replaceState == ReplaceState::Removed)
             effect->animation()->resolve(*animatedStyle, { nullptr });
         return WTF::switchOn(property,
-            [&] (CSSPropertyID propertyId) {
-                if (auto cssValue = computedStyleExtractor.valueForPropertyInStyle(*animatedStyle, propertyId, nullptr, ComputedStyleExtractor::PropertyValueType::Computed))
-                    return inlineStyle->setProperty(propertyId, cssValue->cssText(CSS::defaultSerializationContext()), { styledElement->document() });
+            [&](CSSPropertyID propertyId) {
+                auto string = computedStyleExtractor.propertyValueSerializationInStyle(*animatedStyle, propertyId, CSS::defaultSerializationContext(), CSSValuePool::singleton(), nullptr, Style::ExtractorState::PropertyValueType::Computed);
+                if (!string.isEmpty())
+                    return inlineStyle->setProperty(propertyId, WTFMove(string), { styledElement->document() });
                 return false;
             },
-            [&] (const AtomString& customProperty) {
-                if (auto cssValue = computedStyleExtractor.customPropertyValue(customProperty))
-                    return inlineStyle->setCustomProperty(customProperty, cssValue->cssText(CSS::defaultSerializationContext()), { styledElement->document() });
+            [&](const AtomString& customProperty) {
+                auto string = computedStyleExtractor.customPropertyValueSerialization(customProperty, CSS::defaultSerializationContext());
+                if (!string.isEmpty())
+                    return inlineStyle->setCustomProperty(customProperty, WTFMove(string), { styledElement->document() });
                 return false;
             }
         );

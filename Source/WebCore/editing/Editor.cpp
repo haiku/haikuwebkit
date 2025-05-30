@@ -65,6 +65,7 @@
 #include "File.h"
 #include "FocusController.h"
 #include "FontAttributes.h"
+#include "FrameInlines.h"
 #include "FrameLoader.h"
 #include "FrameTree.h"
 #include "GraphicsContext.h"
@@ -312,6 +313,13 @@ void TemporarySelectionChange::setSelection(const VisibleSelection& selection, I
 
     m_document->selection().setSelection(selection, options);
 }
+
+IgnoreSelectionChangeForScope::IgnoreSelectionChangeForScope(LocalFrame& frame)
+    : m_selectionChange(*frame.document(), std::nullopt, TemporarySelectionOption::IgnoreSelectionChanges)
+{
+}
+
+IgnoreSelectionChangeForScope::~IgnoreSelectionChangeForScope() = default;
 
 // When an event handler has moved the selection outside of a text control
 // we should use the target control's selection for this editing operation.
@@ -1244,7 +1252,7 @@ void Editor::appliedEditing(CompositeEditCommand& command)
 
     bool wasUserEdit = [&command] {
         RefPtr typingCommand = dynamicDowncast<TypingCommand>(command);
-        return !typingCommand || !typingCommand->triggeringEventWasCreatedFromBindings();
+        return !typingCommand || !typingCommand->triggeringEventIsUntrusted();
     }();
     notifyTextFromControls(composition->startingRootEditableElement(), composition->endingRootEditableElement(), wasUserEdit);
 
@@ -1463,7 +1471,7 @@ bool Editor::insertTextWithoutSendingTextEvent(const String& text, bool selectIn
             // should be moved from Editor to a page-level like object. If it must remain a frame-specific concept
             // then this code should conditionalize revealing selection on whether the ignoreSelectionChanges() bit
             // is set for the newly focused frame.
-            if (client() && client()->shouldRevealCurrentSelectionAfterInsertion()) {
+            if ((!triggeringEvent || triggeringEvent->isTrusted()) && client() && client()->shouldRevealCurrentSelectionAfterInsertion()) {
                 if (RefPtr page = document->page())
                     page->revealCurrentSelection();
             }
@@ -2612,7 +2620,7 @@ void Editor::learnSpelling()
     if (!client())
         return;
         
-    // FIXME: On Mac OS X, when use "learn" button on "Spelling and Grammar" panel, we don't call this function. It should remove misspelling markers around the learned word, see <rdar://problem/5396072>.
+    // FIXME: On macOS, when use "learn" button on "Spelling and Grammar" panel, we don't call this function. It should remove misspelling markers around the learned word, see <rdar://problem/5396072>.
 
     if (auto selectedRange = document().selection().selection().toNormalizedRange())
         removeMarkers(*selectedRange, DocumentMarkerType::Spelling);

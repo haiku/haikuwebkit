@@ -51,6 +51,7 @@
 #include "BitmapImage.h"
 #include "BorderShape.h"
 #include "BoxLayoutShape.h"
+#include "ContainerNodeInlines.h"
 #include "CSSFilter.h"
 #include "CSSPropertyNames.h"
 #include "Chrome.h"
@@ -618,7 +619,7 @@ bool RenderLayer::shouldBeNormalFlowOnly() const
 
 bool RenderLayer::shouldBeCSSStackingContext() const
 {
-    return !renderer().style().hasAutoUsedZIndex() || renderer().shouldApplyLayoutContainment() || renderer().shouldApplyPaintContainment() || renderer().requiresRenderingConsolidationForViewTransition() || renderer().isRenderViewTransitionCapture() || renderer().isViewTransitionRoot() || isRenderViewLayer();
+    return !renderer().style().hasAutoUsedZIndex() || renderer().shouldApplyLayoutContainment() || renderer().shouldApplyPaintContainment() || renderer().requiresRenderingConsolidationForViewTransition() || renderer().isRenderViewTransitionCapture() ||  renderer().isViewTransitionRoot() || renderer().isViewTransitionContainingBlock() || isRenderViewLayer();
 }
 
 bool RenderLayer::computeCanBeBackdropRoot() const
@@ -851,10 +852,10 @@ void RenderLayer::rebuildZOrderLists(std::unique_ptr<Vector<RenderLayer*>>& posZ
     }
 
     if (isRenderViewLayer() && renderer().document().hasViewTransitionPseudoElementTree()) {
-        if (WeakPtr viewTransitionRoot = renderer().view().viewTransitionRoot(); viewTransitionRoot && viewTransitionRoot->hasLayer()) {
+        if (WeakPtr viewTransitionContainingBlock = renderer().view().viewTransitionContainingBlock(); viewTransitionContainingBlock && viewTransitionContainingBlock->hasLayer()) {
             if (!posZOrderList)
                 posZOrderList = makeUnique<Vector<RenderLayer*>>();
-            posZOrderList->append(viewTransitionRoot->layer());
+            posZOrderList->append(viewTransitionContainingBlock->layer());
         }
     }
 }
@@ -896,7 +897,7 @@ void RenderLayer::setWasOmittedFromZOrderTree()
 void RenderLayer::collectLayers(std::unique_ptr<Vector<RenderLayer*>>& positiveZOrderList, std::unique_ptr<Vector<RenderLayer*>>& negativeZOrderList, OptionSet<Compositing>& accumulatedDirtyFlags)
 {
     ASSERT(!descendantDependentFlagsAreDirty());
-    if (establishesTopLayer() || renderer().isViewTransitionRoot())
+    if (establishesTopLayer() || renderer().isViewTransitionContainingBlock())
         return;
 
     bool isStacking = isStackingContext();
@@ -1333,8 +1334,9 @@ void RenderLayer::recursiveUpdateLayerPositions(OptionSet<UpdateLayerPositionsFl
 
     }
 
-    if (!isRenderViewLayer() && renderer().canContainFixedPositionObjects()) {
-        flags.add(SeenFixedContainingBlockLayer);
+    if (!isRenderViewLayer()) {
+        if (renderer().canContainFixedPositionObjects())
+            flags.add(SeenFixedContainingBlockLayer);
 
         if (transform()) {
             flags.add(SeenTransformedLayer);
@@ -5915,6 +5917,10 @@ static bool hasVisibleBoxDecorationsOrBackground(const RenderElement& renderer)
 #if HAVE(SUPPORT_HDR_DISPLAY)
 static bool rendererHasHDRContent(const RenderElement& renderer)
 {
+    auto& style = renderer.style();
+    if (style.dynamicRangeLimit() == Style::DynamicRangeLimit(CSS::Keyword::Standard { }))
+        return false;
+
     if (CheckedPtr imageRenderer = dynamicDowncast<RenderImage>(renderer)) {
         if (auto* cachedImage = imageRenderer->cachedImage()) {
             if (cachedImage->hasHDRContent())
@@ -5934,24 +5940,21 @@ static bool rendererHasHDRContent(const RenderElement& renderer)
 #endif
     }
 
-    auto styleHasHDRContent = [](const auto* style) {
-        if (!style)
-            return false;
-
-        if (style->hasBackgroundImage()) {
-            if (style->backgroundLayers().hasHDRContent())
+    auto styleHasHDRContent = [](const auto& style) {
+        if (style.hasBackgroundImage()) {
+            if (style.backgroundLayers().hasHDRContent())
                 return true;
         }
 
-        if (style->hasBorderImage()) {
-            auto image = style->borderImage().image();
+        if (style.hasBorderImage()) {
+            auto image = style.borderImage().image();
             if (auto* cachedImage = image ? image->cachedImage() : nullptr) {
                 if (cachedImage->hasHDRContent())
                     return true;
             }
         }
 
-        if (auto image = style->listStyleImage()) {
+        if (auto image = style.listStyleImage()) {
             if (auto* cachedImage = image->cachedImage()) {
                 if (cachedImage->hasHDRContent())
                     return true;
@@ -5961,7 +5964,7 @@ static bool rendererHasHDRContent(const RenderElement& renderer)
         return false;
     };
 
-    return styleHasHDRContent(&renderer.style());
+    return styleHasHDRContent(style);
 }
 #endif
 

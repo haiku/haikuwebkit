@@ -54,6 +54,7 @@
 #include "URLKeepingBlobAlive.h"
 #include "UserActionElementSet.h"
 #include "ViewportArguments.h"
+#include <wtf/CompletionHandler.h>
 #include <wtf/Deque.h>
 #include <wtf/FixedVector.h>
 #include <wtf/Forward.h>
@@ -221,6 +222,7 @@ class ReportingScope;
 class RequestAnimationFrameCallback;
 class ResizeObserver;
 class ResourceMonitor;
+class FrameMemoryMonitor;
 class SVGDocumentExtensions;
 class SVGElement;
 class SVGSVGElement;
@@ -687,10 +689,10 @@ public:
     Vector<AtomString> formElementsState() const;
     void setStateForNewFormElements(const Vector<AtomString>&);
 
-    inline LocalFrameView* view() const; // Defined in LocalFrame.h.
-    RefPtr<LocalFrameView> protectedView() const;
-    inline Page* page() const; // Defined in Page.h.
-    inline RefPtr<Page> protectedPage() const; // Defined in Page.h.
+    inline LocalFrameView* view() const; // Defined in DocumentInlines.h.
+    inline RefPtr<LocalFrameView> protectedView() const; // Defined in DocumentInlines.h.
+    inline Page* page() const; // Defined in DocumentInlines.h.
+    inline RefPtr<Page> protectedPage() const; // Defined in DocumentInlines.h.
     WEBCORE_EXPORT RefPtr<LocalFrame> localMainFrame() const;
     const Settings& settings() const { return m_settings.get(); }
     Ref<Settings> protectedSettings() const;
@@ -763,7 +765,7 @@ public:
     void stopActiveDOMObjects() final;
     GraphicsClient* graphicsClient() final;
 
-    const Settings::Values& settingsValues() const final { return settings().values(); }
+    inline const SettingsValues& settingsValues() const final;
 
     void suspendDeviceMotionAndOrientationUpdates();
     void resumeDeviceMotionAndOrientationUpdates();
@@ -823,7 +825,7 @@ public:
     bool wellFormed() const { return m_wellFormed; }
 
     const URL& url() const final { return m_url; }
-    WEBCORE_EXPORT void setURL(const URL&);
+    WEBCORE_EXPORT void setURL(URL&&);
     WEBCORE_EXPORT const URL& urlForBindings();
 
     URL adjustedURL() const;
@@ -1292,7 +1294,7 @@ public:
     WEBCORE_EXPORT void postTask(Task&&) final; // Executes the task on context's thread asynchronously.
 
     WEBCORE_EXPORT EventLoopTaskGroup& eventLoop() final;
-    CheckedRef<EventLoopTaskGroup> checkedEventLoop() { return eventLoop(); }
+    inline CheckedRef<EventLoopTaskGroup> checkedEventLoop();
     WindowEventLoop& windowEventLoop();
     Ref<WindowEventLoop> protectedWindowEventLoop();
 
@@ -1961,7 +1963,7 @@ public:
     bool hasSleepDisabler() const { return !!m_sleepDisabler; }
 
     void notifyReportObservers(Ref<Report>&&) final;
-    void sendReportToEndpoints(const URL& baseURL, const Vector<String>& endpointURIs, const Vector<String>& endpointTokens, Ref<FormData>&& report, ViolationReportType) final;
+    void sendReportToEndpoints(const URL& baseURL, std::span<const String> endpointURIs, std::span<const String> endpointTokens, Ref<FormData>&& report, ViolationReportType) final;
     String httpUserAgent() const final;
 
     virtual void didChangeViewSize() { }
@@ -1980,6 +1982,9 @@ public:
     PermissionsPolicy permissionsPolicy() const;
 
     unsigned unloadCounter() const { return m_unloadCounter; }
+
+    WEBCORE_EXPORT FrameMemoryMonitor& frameMemoryMonitor();
+    Ref<FrameMemoryMonitor> protectedFrameMemoryMonitor();
 
 #if ENABLE(CONTENT_EXTENSIONS)
     ResourceMonitor* resourceMonitorIfExists();
@@ -2723,6 +2728,8 @@ private:
 
     mutable std::unique_ptr<CSSParserContext> m_cachedCSSParserContext;
     mutable std::unique_ptr<PermissionsPolicy> m_permissionsPolicy;
+
+    RefPtr<FrameMemoryMonitor> m_frameMemoryMonitor;
 
 #if ENABLE(CONTENT_EXTENSIONS)
     RefPtr<ResourceMonitor> m_resourceMonitor;

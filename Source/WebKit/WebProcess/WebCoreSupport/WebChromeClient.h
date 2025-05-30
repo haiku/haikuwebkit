@@ -39,6 +39,7 @@ enum class DidFilterLinkDecoration : bool;
 enum class IsLoggedIn : uint8_t;
 enum class StorageAccessPromptWasShown : bool;
 enum class StorageAccessWasGranted : uint8_t;
+struct SystemPreviewInfo;
 struct TextRecognitionOptions;
 }
 
@@ -562,8 +563,7 @@ private:
 
 #if ENABLE(DAMAGE_TRACKING)
     void resetDamageHistoryForTesting() final;
-
-    WebCore::FrameDamageHistory* damageHistoryForTesting() const final;
+    void foreachRegionInDamageHistoryForTesting(Function<void(const WebCore::Region&)>&& callback) const final;
 #endif
 
     void setNeedsFixedContainerEdgesUpdate() final;

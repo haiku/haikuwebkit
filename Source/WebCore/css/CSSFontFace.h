@@ -102,7 +102,7 @@ public:
         bool operator==(const UnicodeRange&) const = default;
     };
 
-    std::span<const UnicodeRange> ranges() const { ASSERT(m_status != Status::Failure); return m_ranges.span(); }
+    std::span<const UnicodeRange> ranges() const LIFETIME_BOUND { ASSERT(m_status != Status::Failure); return m_ranges.span(); }
 
     RefPtr<CSSValue> familyCSSValue() const;
 
@@ -156,7 +156,7 @@ public:
     void setErrorState();
 
 private:
-    CSSFontFace(const Settings::Values*, StyleRuleFontFace*, FontFace*, bool isLocalFallback);
+    CSSFontFace(const SettingsValues*, StyleRuleFontFace*, FontFace*, bool isLocalFallback);
 
     size_t pump(ExternalResourceDownloadPolicy);
     void setStatus(Status);
@@ -170,7 +170,7 @@ private:
     const StyleProperties& properties() const;
     MutableStyleProperties& mutableProperties();
 
-    Document* document();
+    RefPtr<Document> protectedDocument();
 
     const Variant<Ref<MutableStyleProperties>, Ref<StyleRuleFontFace>> m_propertiesOrCSSConnection;
     RefPtr<CSSValue> m_family;

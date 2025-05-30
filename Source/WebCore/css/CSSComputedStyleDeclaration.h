@@ -21,9 +21,9 @@
 #pragma once
 
 #include "CSSStyleProperties.h"
-#include "ComputedStyleExtractor.h"
 #include "PseudoElementIdentifier.h"
 #include "RenderStyleConstants.h"
+#include "StyleExtractor.h"
 #include <wtf/FixedVector.h>
 #include <wtf/RefPtr.h>
 #include <wtf/TZoneMalloc.h>
@@ -73,14 +73,15 @@ private:
     ExceptionOr<void> setPropertyInternal(CSSPropertyID, const String& value, IsImportant) final;
     Ref<MutableStyleProperties> copyProperties() const final;
 
-    RefPtr<CSSValue> getPropertyCSSValue(CSSPropertyID, ComputedStyleExtractor::UpdateLayout = ComputedStyleExtractor::UpdateLayout::Yes) const;
     Ref<Element> protectedElement() const { return m_element; }
 
     const Settings* settings() const final;
     RefPtr<const Settings> protectedSettings() const;
     const FixedVector<CSSPropertyID>& exposedComputedCSSPropertyIDs() const;
 
-    mutable Ref<Element> m_element;
+    Style::Extractor extractor() const;
+
+    const Ref<Element> m_element;
     std::optional<Style::PseudoElementIdentifier> m_pseudoElementIdentifier { std::nullopt };
     bool m_isEmpty { false };
     bool m_allowVisitedStyle { false };

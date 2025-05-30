@@ -239,6 +239,7 @@ public:
     LazyClassStructure m_typeErrorStructure;
     LazyClassStructure m_URIErrorStructure;
     LazyClassStructure m_aggregateErrorStructure;
+    LazyClassStructure m_suppressedErrorStructure;
 
     WriteBarrier<ObjectConstructor> m_objectConstructor;
     WriteBarrier<ArrayConstructor> m_arrayConstructor;
@@ -396,6 +397,7 @@ public:
     LazyProperty<JSGlobalObject, Structure> m_callableProxyObjectStructure;
     LazyProperty<JSGlobalObject, Structure> m_proxyRevokeStructure;
     LazyClassStructure m_sharedArrayBufferStructure;
+    LazyClassStructure m_disposableStackStructure;
 
 #define DEFINE_STORAGE_FOR_SIMPLE_TYPE_PROTOTYPE(capitalName, lowerName, properName, instanceType, jsName, prototypeBase, featureFlag) \
     WriteBarrier<capitalName ## Prototype> m_ ## lowerName ## Prototype;
@@ -914,6 +916,7 @@ public:
     Structure* proxyObjectStructure() const { return m_proxyObjectStructure.get(this); }
     Structure* callableProxyObjectStructure() const { return m_callableProxyObjectStructure.get(this); }
     Structure* proxyRevokeStructure() const { return m_proxyRevokeStructure.get(this); }
+    Structure* disposableStackStructure() const { return m_disposableStackStructure.get(this); }
     Structure* restParameterStructure() const { return arrayStructureForIndexingTypeDuringAllocation(ArrayWithContiguous); }
     Structure* originalRestParameterStructure() const { return originalArrayStructureForIndexingType(ArrayWithContiguous); }
 #if ENABLE(WEBASSEMBLY)
@@ -1202,6 +1205,8 @@ private:
     void initializeErrorConstructor(LazyClassStructure::Initializer&);
 
     void initializeAggregateErrorConstructor(LazyClassStructure::Initializer&);
+
+    void initializeSuppressedErrorConstructor(LazyClassStructure::Initializer&);
 
     JS_EXPORT_PRIVATE void init(VM&);
     void initStaticGlobals(VM&);

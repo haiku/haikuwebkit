@@ -49,10 +49,8 @@ static void applyUASheetBehaviorsToContext(CSSParserContext& context)
     // FIXME: We should turn all of the features on from their WebCore Settings defaults.
     context.cssAppearanceBaseEnabled = true;
     context.cssTextUnderlinePositionLeftRightEnabled = true;
-    context.lightDarkColorEnabled = true;
     context.popoverAttributeEnabled = true;
     context.propertySettings.cssInputSecurityEnabled = true;
-    context.propertySettings.cssCounterStyleAtRulesEnabled = true;
     context.propertySettings.supportHDRDisplayEnabled = true;
     context.propertySettings.viewTransitionsEnabled = true;
     context.propertySettings.cssFieldSizingEnabled = true;
@@ -92,10 +90,7 @@ CSSParserContext::CSSParserContext(const Document& document, const URL& sheetBas
     , masonryEnabled { document.settings().masonryEnabled() }
     , cssAppearanceBaseEnabled { document.settings().cssAppearanceBaseEnabled() }
     , cssPaintingAPIEnabled { document.settings().cssPaintingAPIEnabled() }
-    , cssScopeAtRuleEnabled { document.settings().cssScopeAtRuleEnabled() }
     , cssShapeFunctionEnabled { document.settings().cssShapeFunctionEnabled() }
-    , cssStartingStyleAtRuleEnabled { document.settings().cssStartingStyleAtRuleEnabled() }
-    , cssStyleQueriesEnabled { document.settings().cssStyleQueriesEnabled() }
     , cssTextUnderlinePositionLeftRightEnabled { document.settings().cssTextUnderlinePositionLeftRightEnabled() }
     , cssBackgroundClipBorderAreaEnabled  { document.settings().cssBackgroundClipBorderAreaEnabled() }
     , cssWordBreakAutoPhraseEnabled { document.settings().cssWordBreakAutoPhraseEnabled() }
@@ -107,7 +102,6 @@ CSSParserContext::CSSParserContext(const Document& document, const URL& sheetBas
     , imageControlsEnabled { document.settings().imageControlsEnabled() }
 #endif
     , colorLayersEnabled { document.settings().cssColorLayersEnabled() }
-    , lightDarkColorEnabled { document.settings().cssLightDarkEnabled() }
     , contrastColorEnabled { document.settings().cssContrastColorEnabled() }
     , targetTextPseudoElementEnabled { document.settings().targetTextPseudoElementEnabled() }
     , viewTransitionTypesEnabled { document.settings().viewTransitionsEnabled() && document.settings().viewTransitionTypesEnabled() }
@@ -136,30 +130,28 @@ void add(Hasher& hasher, const CSSParserContext& context)
         | context.masonryEnabled                            << 6
         | context.cssAppearanceBaseEnabled                  << 7
         | context.cssPaintingAPIEnabled                     << 8
-        | context.cssScopeAtRuleEnabled                     << 9
-        | context.cssShapeFunctionEnabled                   << 10
-        | context.cssTextUnderlinePositionLeftRightEnabled  << 11
-        | context.cssBackgroundClipBorderAreaEnabled        << 12
-        | context.cssWordBreakAutoPhraseEnabled             << 13
-        | context.popoverAttributeEnabled                   << 14
-        | context.sidewaysWritingModesEnabled               << 15
-        | context.cssTextWrapPrettyEnabled                  << 16
-        | context.thumbAndTrackPseudoElementsEnabled        << 17
+        | context.cssShapeFunctionEnabled                   << 9
+        | context.cssTextUnderlinePositionLeftRightEnabled  << 10
+        | context.cssBackgroundClipBorderAreaEnabled        << 11
+        | context.cssWordBreakAutoPhraseEnabled             << 12
+        | context.popoverAttributeEnabled                   << 13
+        | context.sidewaysWritingModesEnabled               << 14
+        | context.cssTextWrapPrettyEnabled                  << 15
+        | context.thumbAndTrackPseudoElementsEnabled        << 16
 #if ENABLE(SERVICE_CONTROLS)
-        | context.imageControlsEnabled                      << 18
+        | context.imageControlsEnabled                      << 17
 #endif
-        | context.colorLayersEnabled                        << 19
-        | context.lightDarkColorEnabled                     << 20
-        | context.contrastColorEnabled                      << 21
-        | context.targetTextPseudoElementEnabled            << 22
-        | context.viewTransitionTypesEnabled                << 23
-        | context.cssProgressFunctionEnabled                << 24
-        | context.cssMediaProgressFunctionEnabled           << 25
-        | context.cssContainerProgressFunctionEnabled       << 26
-        | context.cssRandomFunctionEnabled                  << 27
-        | context.cssTreeCountingFunctionsEnabled           << 28
-        | context.cssURLModifiersEnabled                    << 29
-        | context.cssAxisRelativePositionKeywordsEnabled    << 30;
+        | context.colorLayersEnabled                        << 18
+        | context.contrastColorEnabled                      << 19
+        | context.targetTextPseudoElementEnabled            << 20
+        | context.viewTransitionTypesEnabled                << 21
+        | context.cssProgressFunctionEnabled                << 22
+        | context.cssMediaProgressFunctionEnabled           << 23
+        | context.cssContainerProgressFunctionEnabled       << 24
+        | context.cssRandomFunctionEnabled                  << 25
+        | context.cssTreeCountingFunctionsEnabled           << 26
+        | context.cssURLModifiersEnabled                    << 27
+        | context.cssAxisRelativePositionKeywordsEnabled    << 28;
     add(hasher, context.baseURL, context.charset, context.propertySettings, context.mode, bits);
 }
 

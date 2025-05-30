@@ -2214,7 +2214,12 @@ static bool didInvokeUpdateState = false;
 
 @end
 
+// FIXME: Re-enable this test once webkit.org/b/292940 is resolved.
+#if PLATFORM(MAC) || defined(NDEBUG)
 TEST(WritingTools, RevealOffScreenSuggestionWhenActive)
+#else
+TEST(WritingTools, DISABLED_RevealOffScreenSuggestionWhenActive)
+#endif
 {
     auto firstSuggestion = adoptNS([[WTTextSuggestion alloc] initWithOriginalRange:NSMakeRange(0, 4) replacement:@"ZZZZ"]);
     auto secondSuggestion = adoptNS([[WTTextSuggestion alloc] initWithOriginalRange:NSMakeRange(12, 4) replacement:@"YYYY"]);
@@ -2676,12 +2681,17 @@ TEST(WritingTools, APIWithBehaviorNone)
     EXPECT_EQ([webView writingToolsBehaviorForTesting], CocoaWritingToolsBehaviorNone);
 
 #if PLATFORM(MAC)
-    [webView mouseDownAtPoint:NSMakePoint(10, 10) simulatePressure:NO withFlags:0 eventType:NSEventTypeRightMouseDown];
-    [webView mouseUpAtPoint:NSMakePoint(10, 10) withFlags:0 eventType:NSEventTypeRightMouseUp];
+    [webView rightClickAtPoint:NSMakePoint(10, [webView frame].size.height - 10)];
     TestWebKitAPI::Util::run(&gotProposedMenu);
 
-    NSMenuItem *writingToolsMenuItem = [proposedMenu itemWithIdentifier:_WKMenuItemIdentifierWritingTools];
-    EXPECT_NULL(writingToolsMenuItem);
+    RetainPtr writingToolsMenuItem = [proposedMenu itemWithIdentifier:_WKMenuItemIdentifierWritingTools];
+    EXPECT_NULL(writingToolsMenuItem.get());
+
+#if ENABLE(TOP_LEVEL_WRITING_TOOLS_CONTEXT_MENU_ITEMS)
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierSummarize]);
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierProofread]);
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierRewrite]);
+#endif
 #endif
 }
 
@@ -2721,12 +2731,17 @@ TEST(WritingTools, APIWithBehaviorDefault)
     EXPECT_EQ([webView writingToolsBehaviorForTesting], CocoaWritingToolsBehaviorLimited);
 
 #if PLATFORM(MAC)
-    [webView mouseDownAtPoint:NSMakePoint(10, 10) simulatePressure:NO withFlags:0 eventType:NSEventTypeRightMouseDown];
-    [webView mouseUpAtPoint:NSMakePoint(10, 10) withFlags:0 eventType:NSEventTypeRightMouseUp];
+    [webView rightClickAtPoint:NSMakePoint(10, [webView frame].size.height - 10)];
     TestWebKitAPI::Util::run(&gotProposedMenu);
 
-    NSMenuItem *writingToolsMenuItem = [proposedMenu itemWithIdentifier:_WKMenuItemIdentifierWritingTools];
-    EXPECT_NOT_NULL(writingToolsMenuItem);
+    RetainPtr writingToolsMenuItem = [proposedMenu itemWithIdentifier:_WKMenuItemIdentifierWritingTools];
+    EXPECT_NOT_NULL(writingToolsMenuItem.get());
+
+#if ENABLE(TOP_LEVEL_WRITING_TOOLS_CONTEXT_MENU_ITEMS)
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierSummarize]);
+    EXPECT_NOT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierProofread]);
+    EXPECT_NOT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierRewrite]);
+#endif
 #endif
 }
 
@@ -2766,12 +2781,17 @@ TEST(WritingTools, APIWithBehaviorComplete)
     EXPECT_EQ([webView writingToolsBehaviorForTesting], CocoaWritingToolsBehaviorComplete);
 
 #if PLATFORM(MAC)
-    [webView mouseDownAtPoint:NSMakePoint(10, 10) simulatePressure:NO withFlags:0 eventType:NSEventTypeRightMouseDown];
-    [webView mouseUpAtPoint:NSMakePoint(10, 10) withFlags:0 eventType:NSEventTypeRightMouseUp];
+    [webView rightClickAtPoint:NSMakePoint(10, [webView frame].size.height - 10)];
     TestWebKitAPI::Util::run(&gotProposedMenu);
 
     NSMenuItem *writingToolsMenuItem = [proposedMenu itemWithIdentifier:_WKMenuItemIdentifierWritingTools];
     EXPECT_NOT_NULL(writingToolsMenuItem);
+
+#if ENABLE(TOP_LEVEL_WRITING_TOOLS_CONTEXT_MENU_ITEMS)
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierSummarize]);
+    EXPECT_NOT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierProofread]);
+    EXPECT_NOT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierRewrite]);
+#endif
 #endif
 }
 
@@ -2872,7 +2892,8 @@ TEST(WritingTools, IsWritingToolsActiveAPIWithNoInlineEditing)
 
 #if PLATFORM(IOS_FAMILY)
 
-TEST(WritingTools, PanelHidesInputAccessoryView)
+// FIXME: Re-enable this test once webkit.org/b/292940 is resolved.
+TEST(WritingTools, DISABLED_PanelHidesInputAccessoryView)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 320, 500)]);
     RetainPtr delegate = adoptNS([TestInputDelegate new]);
@@ -2937,7 +2958,8 @@ TEST(WritingTools, ShowAffordance)
     expectScheduleShowAffordanceForSelectionRectCalled(true);
 }
 
-TEST(WritingTools, ShowAffordanceForMultipleLines)
+// FIXME: Re-enable this test once webkit.org/b/292940 is resolved.
+TEST(WritingTools, DISABLED_ShowAffordanceForMultipleLines)
 {
     FORCE_WRITING_TOOLS_AVAILABLE()
 
@@ -3298,13 +3320,18 @@ TEST(WritingTools, ContextMenuItemsNonEditable)
 
     [webView focusDocumentBodyAndSelectAll];
 
-    [webView mouseDownAtPoint:NSMakePoint(10, 10) simulatePressure:NO withFlags:0 eventType:NSEventTypeRightMouseDown];
-    [webView mouseUpAtPoint:NSMakePoint(10, 10) withFlags:0 eventType:NSEventTypeRightMouseUp];
+    [webView rightClickAtPoint:NSMakePoint(10, [webView frame].size.height - 10)];
     TestWebKitAPI::Util::run(&gotProposedMenu);
 
     RetainPtr writingToolsMenuItem = [proposedMenu itemWithIdentifier:_WKMenuItemIdentifierWritingTools];
     EXPECT_NOT_NULL(writingToolsMenuItem.get());
 
+#if ENABLE(TOP_LEVEL_WRITING_TOOLS_CONTEXT_MENU_ITEMS)
+    EXPECT_NULL([writingToolsMenuItem submenu]);
+    EXPECT_NOT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierSummarize]);
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierProofread]);
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierRewrite]);
+#else
     RetainPtr<NSArray<NSMenuItem *>> items = [writingToolsMenuItem submenu].itemArray;
     EXPECT_GT([items count], 0U);
 
@@ -3314,6 +3341,7 @@ TEST(WritingTools, ContextMenuItemsNonEditable)
 
         EXPECT_EQ(subItem.enabled, subItem.tag != WTRequestedToolCompose);
     }
+#endif
 }
 
 TEST(WritingTools, ContextMenuItemsEditable)
@@ -3335,13 +3363,18 @@ TEST(WritingTools, ContextMenuItemsEditable)
 
     [webView focusDocumentBodyAndSelectAll];
 
-    [webView mouseDownAtPoint:NSMakePoint(10, 10) simulatePressure:NO withFlags:0 eventType:NSEventTypeRightMouseDown];
-    [webView mouseUpAtPoint:NSMakePoint(10, 10) withFlags:0 eventType:NSEventTypeRightMouseUp];
+    [webView rightClickAtPoint:NSMakePoint(10, [webView frame].size.height - 10)];
     TestWebKitAPI::Util::run(&gotProposedMenu);
 
     RetainPtr writingToolsMenuItem = [proposedMenu itemWithIdentifier:_WKMenuItemIdentifierWritingTools];
     EXPECT_NOT_NULL(writingToolsMenuItem.get());
 
+#if ENABLE(TOP_LEVEL_WRITING_TOOLS_CONTEXT_MENU_ITEMS)
+    EXPECT_NULL([writingToolsMenuItem submenu]);
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierSummarize]);
+    EXPECT_NOT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierProofread]);
+    EXPECT_NOT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierRewrite]);
+#else
     RetainPtr<NSArray<NSMenuItem *>> items = [writingToolsMenuItem submenu].itemArray;
     EXPECT_GT([items count], 0U);
 
@@ -3351,6 +3384,7 @@ TEST(WritingTools, ContextMenuItemsEditable)
 
         EXPECT_TRUE(subItem.enabled);
     }
+#endif
 }
 
 TEST(WritingTools, ContextMenuItemsEditableEmpty)
@@ -3372,13 +3406,18 @@ TEST(WritingTools, ContextMenuItemsEditableEmpty)
 
     [webView focusDocumentBodyAndSelectAll];
 
-    [webView mouseDownAtPoint:NSMakePoint(10, 10) simulatePressure:NO withFlags:0 eventType:NSEventTypeRightMouseDown];
-    [webView mouseUpAtPoint:NSMakePoint(10, 10) withFlags:0 eventType:NSEventTypeRightMouseUp];
+    [webView rightClickAtPoint:NSMakePoint(10, [webView frame].size.height - 10)];
     TestWebKitAPI::Util::run(&gotProposedMenu);
 
     RetainPtr writingToolsMenuItem = [proposedMenu itemWithIdentifier:_WKMenuItemIdentifierWritingTools];
     EXPECT_NOT_NULL(writingToolsMenuItem.get());
 
+#if ENABLE(TOP_LEVEL_WRITING_TOOLS_CONTEXT_MENU_ITEMS)
+    EXPECT_NULL([writingToolsMenuItem submenu]);
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierSummarize]);
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierProofread]);
+    EXPECT_NULL([proposedMenu itemWithIdentifier:_WKMenuItemIdentifierRewrite]);
+#else
     RetainPtr<NSArray<NSMenuItem *>> items = [writingToolsMenuItem submenu].itemArray;
     EXPECT_GT([items count], 0U);
 
@@ -3388,6 +3427,7 @@ TEST(WritingTools, ContextMenuItemsEditableEmpty)
 
         EXPECT_EQ(subItem.enabled, subItem.tag == WTRequestedToolIndex || subItem.tag == WTRequestedToolCompose);
     }
+#endif
 }
 
 TEST(WritingTools, AppMenuNonEditable)

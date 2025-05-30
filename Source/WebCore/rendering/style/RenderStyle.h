@@ -184,7 +184,6 @@ enum class NinePieceImageRule : uint8_t;
 enum class NonCJKGlyphOrientation : bool;
 enum class ObjectFit : uint8_t;
 enum class Order : bool;
-enum class OutlineIsAuto : bool;
 enum class Overflow : uint8_t;
 enum class OverflowAnchor : bool;
 enum class OverflowContinue : bool;
@@ -379,6 +378,7 @@ public:
     RenderStyle* getCachedPseudoStyle(const Style::PseudoElementIdentifier&) const;
     RenderStyle* addCachedPseudoStyle(std::unique_ptr<RenderStyle>);
 
+    bool hasCachedPseudoStyles() const { return m_cachedPseudoStyles && m_cachedPseudoStyles->styles.size(); }
     const PseudoStyleCache* cachedPseudoStyles() const { return m_cachedPseudoStyles.get(); }
 
     inline const StyleCustomPropertyData& inheritedCustomProperties() const;
@@ -566,7 +566,7 @@ public:
     float outlineWidth() const;
     inline bool hasOutline() const;
     inline BorderStyle outlineStyle() const;
-    inline OutlineIsAuto outlineStyleIsAuto() const;
+    inline bool hasAutoOutlineStyle() const;
     inline bool hasOutlineInVisualOverflow() const;
     
     Overflow overflowX() const { return static_cast<Overflow>(m_nonInheritedFlags.overflowX); }
@@ -1033,6 +1033,7 @@ public:
     inline const Vector<Ref<ScrollTimeline>>& scrollTimelines() const;
     inline const Vector<ScrollAxis>& scrollTimelineAxes() const;
     inline const Vector<AtomString>& scrollTimelineNames() const;
+    inline bool hasScrollTimelines() const;
     inline void setScrollTimelineAxes(const Vector<ScrollAxis>&);
     inline void setScrollTimelineNames(const Vector<AtomString>&);
 
@@ -1040,6 +1041,7 @@ public:
     inline const Vector<ScrollAxis>& viewTimelineAxes() const;
     inline const Vector<ViewTimelineInsets>& viewTimelineInsets() const;
     inline const Vector<AtomString>& viewTimelineNames() const;
+    inline bool hasViewTimelines() const;
     inline void setViewTimelineAxes(const Vector<ScrollAxis>&);
     inline void setViewTimelineInsets(const Vector<ViewTimelineInsets>&);
     inline void setViewTimelineNames(const Vector<AtomString>&);
@@ -1283,8 +1285,8 @@ public:
     inline void setBorderBottomColor(const Style::Color&);
 
     inline void setOutlineWidth(float);
-    void setOutlineStyleIsAuto(OutlineIsAuto);
     inline void setOutlineStyle(BorderStyle);
+    inline void setHasAutoOutlineStyle();
     inline void setOutlineColor(const Style::Color&);
 
     void setOverflowX(Overflow v) { m_nonInheritedFlags.overflowX =  static_cast<unsigned>(v); }
@@ -1949,7 +1951,6 @@ public:
     static constexpr TableLayoutType initialTableLayout();
     static constexpr BorderCollapse initialBorderCollapse();
     static constexpr BorderStyle initialBorderStyle();
-    static constexpr OutlineIsAuto initialOutlineStyleIsAuto();
     static inline LengthSize initialBorderRadius();
     static constexpr Style::CornerShapeValue initialCornerShapeValue();
     static constexpr CaptionSide initialCaptionSide();

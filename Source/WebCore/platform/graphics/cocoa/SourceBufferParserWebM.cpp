@@ -31,6 +31,7 @@
 #include "AudioTrackPrivateWebM.h"
 #include "CMUtilities.h"
 #include "ContentType.h"
+#include "ExceptionOr.h"
 #include "H264UtilitiesCocoa.h"
 #include "InbandTextTrackPrivate.h"
 #include "LibWebRTCMacros.h"
@@ -43,7 +44,6 @@
 #include "VideoTrackPrivateWebM.h"
 #include "WebMAudioUtilitiesCocoa.h"
 #include <webm/webm_parser.h>
-#include <wtf/Algorithms.h>
 #include <wtf/StdLibExtras.h>
 #include <wtf/StdList.h>
 #include <wtf/TZoneMallocInlines.h>

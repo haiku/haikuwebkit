@@ -33,6 +33,7 @@
 #include "DocumentInlines.h"
 #include "Element.h"
 #include "RenderStyleInlines.h"
+#include "StyleExtractor.h"
 #include "StylePropertyShorthand.h"
 #include "StyleScope.h"
 #include <ranges>
@@ -52,18 +53,17 @@ ComputedStylePropertyMapReadOnly::ComputedStylePropertyMapReadOnly(Element& elem
 
 RefPtr<CSSValue> ComputedStylePropertyMapReadOnly::propertyValue(CSSPropertyID propertyID) const
 {
-    return ComputedStyleExtractor(m_element.get()).propertyValue(propertyID, ComputedStyleExtractor::UpdateLayout::Yes, ComputedStyleExtractor::PropertyValueType::Computed);
+    return Style::Extractor { m_element.get() }.propertyValue(propertyID, Style::Extractor::UpdateLayout::Yes, Style::ExtractorState::PropertyValueType::Computed);
 }
 
 String ComputedStylePropertyMapReadOnly::shorthandPropertySerialization(CSSPropertyID propertyID) const
 {
-    auto value = propertyValue(propertyID);
-    return value ? value->cssText(CSS::defaultSerializationContext()) : String();
+    return Style::Extractor { m_element.get() }.propertyValueSerialization(propertyID, CSS::defaultSerializationContext(), Style::Extractor::UpdateLayout::Yes, Style::ExtractorState::PropertyValueType::Computed);
 }
 
 RefPtr<CSSValue> ComputedStylePropertyMapReadOnly::customPropertyValue(const AtomString& property) const
 {
-    return ComputedStyleExtractor(m_element.get()).customPropertyValue(property);
+    return Style::Extractor { m_element.get() }.customPropertyValue(property);
 }
 
 unsigned ComputedStylePropertyMapReadOnly::size() const
@@ -73,7 +73,7 @@ unsigned ComputedStylePropertyMapReadOnly::size() const
     if (!element)
         return 0;
 
-    ComputedStyleExtractor::updateStyleIfNeededForProperty(*element.get(), CSSPropertyCustom);
+    Style::Extractor::updateStyleIfNeededForProperty(*element.get(), CSSPropertyCustom);
 
     auto* style = element->computedStyle();
     if (!style)
@@ -92,7 +92,7 @@ Vector<StylePropertyMapReadOnly::StylePropertyMapEntry> ComputedStylePropertyMap
     Vector<StylePropertyMapReadOnly::StylePropertyMapEntry> values;
 
     // Ensure custom property counts are correct.
-    ComputedStyleExtractor::updateStyleIfNeededForProperty(*element.get(), CSSPropertyCustom);
+    Style::Extractor::updateStyleIfNeededForProperty(*element.get(), CSSPropertyCustom);
 
     auto* style = element->computedStyle();
     if (!style)
@@ -104,9 +104,9 @@ Vector<StylePropertyMapReadOnly::StylePropertyMapEntry> ComputedStylePropertyMap
     const auto& exposedComputedCSSPropertyIDs = document->exposedComputedCSSPropertyIDs();
     values.reserveInitialCapacity(exposedComputedCSSPropertyIDs.size() + inheritedCustomProperties.size() + nonInheritedCustomProperties.size());
 
-    ComputedStyleExtractor extractor { element.get() };
+    Style::Extractor computedStyleExtractor { element.get() };
     values.appendContainerWithMapping(exposedComputedCSSPropertyIDs, [&](auto propertyID) {
-        auto value = extractor.propertyValue(propertyID, ComputedStyleExtractor::UpdateLayout::No, ComputedStyleExtractor::PropertyValueType::Computed);
+        auto value = computedStyleExtractor.propertyValue(propertyID, Style::Extractor::UpdateLayout::No, Style::ExtractorState::PropertyValueType::Computed);
         return makeKeyValuePair(nameString(propertyID), StylePropertyMapReadOnly::reifyValueToVector(document, WTFMove(value), propertyID));
     });
 

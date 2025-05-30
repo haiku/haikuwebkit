@@ -228,6 +228,22 @@ _PATH_RULES_SPECIFIER = [
      ["-readability/naming/underscores"]),
 
     ([
+     # MALLOC_HEAP_BREAKDOWN framework for non-apple ports exposes C-style header.
+     os.path.join('Source', 'WTF', 'wtf', 'malloc_heap_breakdown', 'malloc', 'malloc.h')],
+     ["-readability/naming/underscores", "-readability/parameter_name", "-readability/null"]),
+
+    ([
+     # MALLOC_HEAP_BREAKDOWN framework for non-apple ports is a first-party code, but it doesn't
+     # use WTF as it's indirect WTF's dependency.
+     os.path.join('Source', 'WTF', 'wtf', 'malloc_heap_breakdown', 'main.cpp')],
+     ["-readability/naming/underscores",
+      "-safercpp/atoi",
+      "-safercpp/printf",
+      "-runtime/lock_guard",
+      "-runtime/wtf_make_unique",
+      "-runtime/wtf_move"]),
+
+    ([
       # To use GStreamer GL without conflicts of GL symbols,
       # we should include gst/gl/gl.h before including OpenGL[ES]Shims
       os.path.join('Source', 'WebCore', 'platform', 'graphics', 'gstreamer', 'MediaPlayerPrivateGStreamer.cpp')],
@@ -301,6 +317,8 @@ _PATH_RULES_SPECIFIER = [
       os.path.join('Source', 'WebCore', 'platform', 'mediastream', 'gstreamer', 'GStreamerMockDevice.cpp'),
       os.path.join('Source', 'WebCore', 'platform', 'mediastream', 'gstreamer', 'GStreamerMockDeviceProvider.h'),
       os.path.join('Source', 'WebCore', 'platform', 'mediastream', 'gstreamer', 'GStreamerMockDeviceProvider.cpp'),
+      os.path.join('Source', 'WebCore', 'platform', 'mediastream', 'gstreamer', 'GStreamerRTPVideoRotationHeaderExtension.h'),
+      os.path.join('Source', 'WebCore', 'platform', 'mediastream', 'gstreamer', 'GStreamerRTPVideoRotationHeaderExtension.cpp'),
       os.path.join('Source', 'WebCore', 'platform', 'network', 'soup', 'ProxyResolverSoup.cpp'),
       os.path.join('Source', 'WebCore', 'platform', 'network', 'soup', 'ProxyResolverSoup.h'),
       os.path.join('Source', 'WebCore', 'platform', 'network', 'soup', 'WebKitAutoconfigProxyResolver.cpp'),
@@ -553,6 +571,9 @@ _SKIPPED_FILES_WITHOUT_WARNING = [
 
     # Skia.
     os.path.join('Source', 'ThirdParty', 'skia'),
+
+    # test262 tests are imported.
+    os.path.join('JSTests', 'test262'),
     ]
 
 # Extensions of files which are allowed to contain carriage returns.

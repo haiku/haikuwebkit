@@ -30,6 +30,7 @@
 #include "config.h"
 #include "LocalFrame.h"
 
+#include "AdjustViewSize.h"
 #include "AnimationTimelinesController.h"
 #include "ApplyStyleCommand.h"
 #include "BackForwardCache.h"
@@ -145,6 +146,12 @@ static const Seconds scrollFrequency { 1000_s / 60. };
 
 DEFINE_DEBUG_ONLY_GLOBAL(WTF::RefCountedLeakCounter, frameCounter, ("Frame"));
 
+struct OverrideScreenSize {
+    WTF_MAKE_STRUCT_FAST_ALLOCATED;
+
+    FloatSize size;
+};
+
 static inline float parentPageZoomFactor(LocalFrame* frame)
 {
     SUPPRESS_UNCOUNTED_LOCAL auto* parent = dynamicDowncast<LocalFrame>(frame->tree().parent());
@@ -174,6 +181,11 @@ LocalFrame::LocalFrame(Page& page, ClientCreator&& clientCreator, FrameIdentifie
     : Frame(page, identifier, FrameType::Local, ownerElement, parent, opener, WTFMove(frameTreeSyncData))
     , m_loader(makeUniqueRefWithoutRefCountedCheck<FrameLoader>(*this, WTFMove(clientCreator)))
     , m_script(makeUniqueRef<ScriptController>(*this))
+#if PLATFORM(IOS_FAMILY)
+    , m_viewportArguments(makeUniqueRef<ViewportArguments>())
+    , m_rangedSelectionBase(makeUniqueRef<VisibleSelection>())
+    , m_rangedSelectionInitialExtent(makeUniqueRef<VisibleSelection>())
+#endif
     , m_pageZoomFactor(parentPageZoomFactor(this))
     , m_textZoomFactor(parentTextZoomFactor(this))
     , m_rootFrame(WebCore::rootFrame(*this))
@@ -299,16 +311,6 @@ void LocalFrame::setView(RefPtr<LocalFrameView>&& view)
     // Since this part may be getting reused as a result of being
     // pulled from the back/forward cache, reset this flag.
     protectedLoader()->resetMultipleFormSubmissionProtection();
-}
-
-Ref<Editor> LocalFrame::protectedEditor()
-{
-    return editor();
-}
-
-Ref<const Editor> LocalFrame::protectedEditor() const
-{
-    return editor();
 }
 
 void LocalFrame::setDocument(RefPtr<Document>&& newDocument)
@@ -674,7 +676,7 @@ bool LocalFrame::requestDOMPasteAccess(DOMPasteAccessCategory pasteAccessCategor
     return false;
 }
 
-void LocalFrame::setPrinting(bool printing, const FloatSize& pageSize, const FloatSize& originalPageSize, float maximumShrinkRatio, AdjustViewSizeOrNot shouldAdjustViewSize)
+void LocalFrame::setPrinting(bool printing, const FloatSize& pageSize, const FloatSize& originalPageSize, float maximumShrinkRatio, AdjustViewSize shouldAdjustViewSize)
 {
     if (!view() || !document())
         return;
@@ -698,7 +700,7 @@ void LocalFrame::setPrinting(bool printing, const FloatSize& pageSize, const Flo
         frameView->forceLayoutForPagination(pageSize, originalPageSize, maximumShrinkRatio, shouldAdjustViewSize);
     else {
         frameView->forceLayout();
-        if (shouldAdjustViewSize == AdjustViewSize)
+        if (shouldAdjustViewSize == AdjustViewSize::Yes)
             frameView->adjustViewSize();
     }
 
@@ -835,16 +837,6 @@ void LocalFrame::clearTimers(LocalFrameView *view, Document *document)
 void LocalFrame::clearTimers()
 {
     clearTimers(protectedView().get(), protectedDocument().get());
-}
-
-Ref<const FrameLoader> LocalFrame::protectedLoader() const
-{
-    return m_loader.get();
-}
-
-Ref<FrameLoader> LocalFrame::protectedLoader()
-{
-    return m_loader.get();
 }
 
 CheckedRef<ScriptController> LocalFrame::checkedScript()
@@ -1163,8 +1155,8 @@ void LocalFrame::dropChildren()
 
 FloatSize LocalFrame::screenSize() const
 {
-    if (!m_overrideScreenSize.isEmpty())
-        return m_overrideScreenSize;
+    if (m_overrideScreenSize)
+        return m_overrideScreenSize->size;
 
     auto defaultSize = screenRect(protectedView().get()).size();
     RefPtr document = this->document();
@@ -1183,10 +1175,10 @@ FloatSize LocalFrame::screenSize() const
 
 void LocalFrame::setOverrideScreenSize(FloatSize&& screenSize)
 {
-    if (m_overrideScreenSize == screenSize)
+    if (m_overrideScreenSize && m_overrideScreenSize->size == screenSize)
         return;
 
-    m_overrideScreenSize = WTFMove(screenSize);
+    m_overrideScreenSize = makeUnique<OverrideScreenSize>(OverrideScreenSize { WTFMove(screenSize) });
     if (RefPtr document = this->document())
         document->updateViewportArguments();
 }
@@ -1270,16 +1262,6 @@ LocalFrame* LocalFrame::contentFrameFromWindowOrFrameElement(JSContextRef contex
     return frameOwner ? dynamicDowncast<LocalFrame>(frameOwner->contentFrame()) : nullptr;
 }
 
-CheckedRef<EventHandler> LocalFrame::checkedEventHandler()
-{
-    return m_eventHandler.get();
-}
-
-CheckedRef<const EventHandler> LocalFrame::checkedEventHandler() const
-{
-    return m_eventHandler.get();
-}
-
 void LocalFrame::documentURLOrOriginDidChange()
 {
     if (!isMainFrame())
@@ -1321,24 +1303,24 @@ void LocalFrame::frameWasDisconnectedFromOwner() const
     protectedDocument()->detachFromFrame();
 }
 
-CheckedRef<FrameSelection> LocalFrame::checkedSelection() const
-{
-    return document()->selection();
-}
-
 void LocalFrame::storageAccessExceptionReceivedForDomain(const RegistrableDomain& domain)
 {
-    m_storageAccessExceptionDomains.add(domain);
+    if (!m_storageAccessExceptionDomains)
+        m_storageAccessExceptionDomains = makeUnique<HashSet<RegistrableDomain>>();
+    m_storageAccessExceptionDomains->add(domain);
 }
 
 bool LocalFrame::requestSkipUserActivationCheckForStorageAccess(const RegistrableDomain& domain)
 {
-    auto iter = m_storageAccessExceptionDomains.find(domain);
-    if (iter == m_storageAccessExceptionDomains.end())
+    if (!m_storageAccessExceptionDomains)
+        return false;
+
+    auto iter = m_storageAccessExceptionDomains->find(domain);
+    if (iter == m_storageAccessExceptionDomains->end())
         return false;
 
     // We only allow the domain to skip check once.
-    m_storageAccessExceptionDomains.remove(iter);
+    m_storageAccessExceptionDomains->remove(iter);
     return true;
 }
 
@@ -1401,6 +1383,13 @@ OptionSet<AdvancedPrivacyProtections> LocalFrame::advancedPrivacyProtections() c
     if (auto* documentLoader = loader().activeDocumentLoader())
         return documentLoader->advancedPrivacyProtections();
     return { };
+}
+
+AutoplayPolicy LocalFrame::autoplayPolicy() const
+{
+    if (RefPtr documentLoader = loader().activeDocumentLoader())
+        return documentLoader->autoplayPolicy();
+    return AutoplayPolicy::Default;
 }
 
 SandboxFlags LocalFrame::effectiveSandboxFlags() const
@@ -1537,6 +1526,59 @@ void LocalFrame::reportResourceMonitoringWarning()
 }
 
 #endif
+
+static String generateFrameMemoryMonitorErrorHTML(OptionSet<ColorScheme> colorScheme)
+{
+    constexpr auto lightAndDarkColorScheme = ":root { color-scheme: light dark } "_s;
+    constexpr auto darkOnlyColorScheme = ":root { color-scheme: only dark } "_s;
+    constexpr auto lightStyle = "p { color: black } "_s;
+    constexpr auto darkStyle = "p { color: white } "_s;
+    constexpr auto empty = ""_s;
+
+    bool needDarkStyle = colorScheme.contains(ColorScheme::Dark);
+    bool needLightStyle = !needDarkStyle || colorScheme.contains(ColorScheme::Light);
+    bool conditionalStyle = needDarkStyle && needLightStyle;
+
+    const auto& colorSchemeStyle = conditionalStyle ? lightAndDarkColorScheme : needDarkStyle ? darkOnlyColorScheme : empty;
+    const auto& darkStyleOpen = conditionalStyle ? "@media (prefers-color-scheme: dark) { "_s : empty;
+    const auto& darkStyleClose = conditionalStyle ? "} "_s : empty;
+
+    return makeString(
+        "<style> body { background-color: gray }"_s,
+        colorSchemeStyle,
+        lightStyle,
+        darkStyleOpen,
+        (needDarkStyle ? darkStyle : empty),
+        darkStyleClose,
+        "</style><p>"_s,
+        WEB_UI_STRING("This frame is hidden for using too many system resources.", "Description HTML for frame unloaded by ResourceMonitor"),
+        "</p>"_s
+    );
+}
+
+void LocalFrame::showMemoryMonitorError()
+{
+    RefPtr iframeElement = dynamicDowncast<HTMLIFrameElement>(ownerElement());
+    RefPtr document = this->document();
+    if (!iframeElement || !document)
+        return;
+
+    for (RefPtr<Frame> frame = this; frame; frame = frame->tree().traverseNext()) {
+        if (RefPtr localFrame = dynamicDowncast<LocalFrame>(frame)) {
+            if (RefPtr window = localFrame->window())
+                window->removeAllEventListeners();
+        }
+    }
+
+    OptionSet<ColorScheme> colorScheme { ColorScheme::Light };
+
+#if ENABLE(DARK_MODE_CSS)
+    if (CheckedPtr style = iframeElement->existingComputedStyle())
+        colorScheme = document->resolvedColorScheme(style.get());
+#endif
+
+    iframeElement->setSrcdoc(generateFrameMemoryMonitorErrorHTML(colorScheme), SubstituteData::SessionHistoryVisibility::Hidden);
+}
 
 bool LocalFrame::frameCanCreatePaymentSession() const
 {

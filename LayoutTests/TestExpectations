@@ -313,8 +313,8 @@ fast/attachment/attachment-subtitle-resize.html [ Skip ]
 
 # This test only makes sense on iOS
 fast/attachment/attachment-truncated-action.html [ Skip ]
-fast/attachment/attachment-wrapping-action.html [ Skip ]
 fast/attachment/attachment-borderless.html [ Skip ]
+fast/attachment/attachment-wrapping-action.html [ Skip ]
 fast/attachment/attachment-dynamic-type.html [ Skip ]
 editing/selection/character-granularity-selected-range-after-dismissing-selection.html [ Skip ]
 editing/selection/character-granularity-select-text-with-click-handler.html [ Skip ]
@@ -558,7 +558,6 @@ imported/w3c/web-platform-tests/html/cross-origin-opener-policy/navigate-top-to-
 imported/w3c/web-platform-tests/html/cross-origin-opener-policy/popup-coop-by-sw.https.html [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/html/cross-origin-opener-policy/reporting/navigation-reporting/reporting-coop-navigated-popup.https.html [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/html/cross-origin-opener-policy/coop-noopener-allow-popups.https.html [ DumpJSConsoleLogInStdErr ]
-imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/named_targeting.https.html [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/html/infrastructure/urls/resolving-urls/query-encoding/utf-8.html?include=css [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/html/infrastructure/urls/resolving-urls/query-encoding/windows-1251.html?include=css [ DumpJSConsoleLogInStdErr ]
 imported/w3c/web-platform-tests/html/infrastructure/urls/resolving-urls/query-encoding/windows-1252.html?include=css [ DumpJSConsoleLogInStdErr ]
@@ -874,6 +873,8 @@ imported/w3c/web-platform-tests/workers/interfaces/WorkerGlobalScope/onerror/mes
 [ Debug ] imported/w3c/web-platform-tests/css/css-position/position-absolute-crash-chrome-013.html [ Skip ]
 [ Debug ] imported/w3c/web-platform-tests/css/css-properties-values-api/registered-property-revert.html [ Skip ]
 [ Debug ] imported/w3c/web-platform-tests/css/css-scoping/slotted-matches.html [ Skip ]
+imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-option-element/option-label-whitespace.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/rendering/replaced-elements/the-option-element/option-label-whitespace-2.html [ ImageOnlyFailure ]
 
 # Cookie tests that are flaky since their import because they fail and and out some kind of unique id.
 imported/w3c/web-platform-tests/cookies/prefix/__host.document-cookie.html [ Pass Failure ]
@@ -959,6 +960,7 @@ imported/w3c/web-platform-tests/html/rendering/widgets/the-select-element/option
 imported/w3c/web-platform-tests/html/rendering/widgets/the-select-element/option-empty-label.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/adopt-from-image-document.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-img-element/image-loading-lazy-slow-aspect-ratio.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/semantics/forms/the-input-element/range-tick-marks-02.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/semantics/forms/the-option-element/dynamic-content-change-rendering.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/semantics/forms/the-selectmenu-element/selectmenu-option-arbitrary-content-displayed.tentative.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/rendering/non-replaced-elements/phrasing-content-0/font-element-text-decoration-color/001-x.xhtml [ ImageOnlyFailure ]
@@ -1078,7 +1080,6 @@ imported/w3c/web-platform-tests/html/browsers/history/the-history-interface/001.
 imported/w3c/web-platform-tests/html/browsers/history/the-history-interface/002.html [ Failure Pass ]
 imported/w3c/web-platform-tests/html/browsers/history/the-history-interface/combination_history_002.html [ Failure Pass ]
 imported/w3c/web-platform-tests/html/browsers/history/the-history-interface/combination_history_003.html [ Failure Pass ]
-imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-un.https.html [ Failure Pass ]
 imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/execution-timing/058.html [ Failure Pass ]
 imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/json-module/repeated-imports.any.sharedworker.html [ Failure Pass ]
 imported/w3c/web-platform-tests/html/semantics/scripting-1/the-script-element/import-attributes/dynamic-import-with-attributes-argument.any.html [ Failure Pass ]
@@ -1820,8 +1821,6 @@ imported/w3c/web-platform-tests/css/selectors/old-tests/css3-modsel-173b.xml [ I
 webkit.org/b/185859 imported/w3c/web-platform-tests/css/selectors/focus-visible-002.html [ Skip ]
 webkit.org/b/185859 imported/w3c/web-platform-tests/css/selectors/focus-visible-003.html [ Skip ]
 webkit.org/b/185859 imported/w3c/web-platform-tests/css/selectors/focus-visible-004.html [ Skip ]
-webkit.org/b/234139 imported/w3c/web-platform-tests/css/selectors/focus-visible-024.html [ Skip ]
-webkit.org/b/234139 imported/w3c/web-platform-tests/css/selectors/focus-visible-025.html [ Skip ]
 webkit.org/b/217904 imported/w3c/web-platform-tests/css/selectors/is-where-visited.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/selectors/xml-class-selector.xml [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/selectors/case-insensitive-parent.html [ ImageOnlyFailure ]
@@ -2588,12 +2587,15 @@ fast/images/animated-jpegxl-loop-count.html [ Skip ]
 # Only applicable on platforms with HDR support
 compositing/hdr/hdr-basic-canvas.html [ Skip ]
 compositing/hdr/hdr-basic-image.html [ Skip ]
+compositing/hdr/hdr-basic-image-dynamic-range-limit.html [ Skip ]
 compositing/hdr/hdr-background-image.html [ Skip ]
 compositing/hdr/hdr-border-image.html [ Skip ]
 compositing/hdr/hdr-pseudo-before-image.html [ Skip ]
 compositing/hdr/hdr-svg-inline-image.html [ Skip ]
 fast/images/hdr-basic-image.html [ Skip ]
+fast/images/hdr-basic-image-dynamic-range-limit.html [ Skip ]
 fast/images/hdr-background-image.html [ Skip ]
+fast/images/hdr-image-layer-sdr-dynamic-range-limit.html [ Skip ]
 fast/images/hdr-border-image.html [ Skip ]
 fast/images/hdr-pseudo-before-image.html [ Skip ]
 fast/images/hdr-svg-inline-image.html [ Skip ]
@@ -2683,9 +2685,6 @@ imported/w3c/web-platform-tests/css/css-content/quotes-034.html [ ImageOnlyFailu
 imported/w3c/web-platform-tests/css/css-content/quotes-first-letter-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-content/quotes-first-letter-004.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-content/quotes-first-letter-005.html [ ImageOnlyFailure ]
-
-# Causes the following test to be flaky.
-webkit.org/b/148950 imported/w3c/web-platform-tests/html/semantics/document-metadata/the-base-element/base_href_specified.sub.html [ Skip ]
 
 imported/w3c/web-platform-tests/html/browsers/history/the-history-interface/history_go_zero.html [ Pass Failure ]
 
@@ -5816,6 +5815,7 @@ webkit.org/b/256888 imported/w3c/web-platform-tests/css/css-color/color-mix-basi
 # display-p3 canvas and ImageData are Cocoa only for now.
 fast/canvas/canvas-color-space-display-p3-ImageData.html [ Failure ]
 fast/canvas/canvas-color-space-display-p3.html [ ImageOnlyFailure ]
+fast/canvas/gradient-into-p3-canvas.html [ Failure ]
 imported/w3c/web-platform-tests/html/canvas/element/manual/wide-gamut-canvas/canvas-display-p3-drawImage.https.html [ Failure ]
 imported/w3c/web-platform-tests/html/canvas/element/manual/wide-gamut-canvas/canvas-display-p3-drawImage-ImageBitmap-Blob.html [ Failure ]
 imported/w3c/web-platform-tests/html/canvas/element/manual/wide-gamut-canvas/canvas-display-p3-drawImage-ImageBitmap-ImageBitmap.html [ Failure ]
@@ -6631,6 +6631,9 @@ imported/w3c/web-platform-tests/css/css-ruby/ruby-whitespace-001.html [ ImageOnl
 imported/w3c/web-platform-tests/css/css-ruby/ruby-whitespace-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-ruby/ruby-with-floats-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-ruby/ruby-with-floats-003.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-ruby/collapse-trailing-whitespace.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-ruby/ruby-align-002.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-ruby/ruby-align-002a.html [ ImageOnlyFailure ]
 
 # These tests are trying to use a WPT domain that are infrastructure doesn't support.
 imported/w3c/web-platform-tests/html/browsers/browsing-the-web/navigating-across-documents/replace-before-load/form-submit-cross-frame-crossorigin.sub.html [ Skip ]
@@ -6825,25 +6828,7 @@ imported/w3c/web-platform-tests/webtransport/constructor.https.any.html [ Skip ]
 imported/w3c/web-platform-tests/webtransport/back-forward-cache-with-open-webtransport-connection.https.window.html [ Skip ]
 imported/w3c/web-platform-tests/webtransport/back-forward-cache-with-closed-webtransport-connection.https.window.html [ Skip ]
 
-# These tests are slow and sometime time out in debug.
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-so.https.html?1-2 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-so.https.html?3-4 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-so.https.html?5-6 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-so.https.html?7-8 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-so.https.html?9-last [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-soap.https.html?1-2 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-soap.https.html?3-4 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-soap.https.html?5-6 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-soap.https.html?7-8 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/tentative/restrict-properties/iframe-popup-to-soap.https.html?9-last [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/iframe-popup-same-origin-allow-popups-to-same-origin.https.html?1-2 [ Skip ]
-[ debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/iframe-popup-same-origin-allow-popups-to-same-origin.https.html?3-4 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/iframe-popup-same-origin-allow-popups-to-same-origin.https.html?5-6 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/iframe-popup-same-origin-allow-popups-to-same-origin.https.html?7-8 [ Skip ]
-[ Debug ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/iframe-popup-same-origin-allow-popups-to-same-origin.https.html?9-last [ Skip ]
-
 # Some of Canvas Layer API features are not supported yet.
-
 imported/w3c/web-platform-tests/html/canvas/element/layers/2d.layer.anisotropic-blur.isotropic.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/canvas/element/layers/2d.layer.anisotropic-blur.mostly-x.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/canvas/element/layers/2d.layer.anisotropic-blur.mostly-y.html [ ImageOnlyFailure ]
@@ -7092,7 +7077,6 @@ imported/w3c/web-platform-tests/navigation-api/ordering-and-transition/navigate-
 # -- View Transitions -- #
 # Reftest failures:
 imported/w3c/web-platform-tests/css/css-view-transitions/content-with-clip-root.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/content-with-transform-old-image.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-new.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-old.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-with-overflow-children-old.html [ ImageOnlyFailure ]
@@ -7100,18 +7084,18 @@ imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-with-sha
 imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-with-shadow-old.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/inline-with-offset-from-containing-block.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/root-style-change-during-animation.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/snapshot-containing-block-absolute.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/span-with-overflowing-text.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/content-with-transform-new-image.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-with-overflow-children-new.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/new-content-captures-different-size.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-view-transitions/snapshot-containing-block-static.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/fractional-translation-from-position.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/scroller-child.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/scroller.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/iframe-and-main-frame-transition-old-main-new-iframe.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/iframe-and-main-frame-transition-old-main-old-iframe.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/paint-holding-in-iframe.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/auto-name-get-animations.html [ Failure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/fractional-translation-from-transform.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/nested-elements-in-overflow.html [ ImageOnlyFailure ]
 
 # Timeouts
 imported/w3c/web-platform-tests/css/css-view-transitions/iframe-transition.sub.html [ Skip ]
@@ -7150,6 +7134,9 @@ imported/w3c/web-platform-tests/css/css-view-transitions/navigation/transition-t
 
 # View transitions Level 2 - nested view-transitions
 imported/w3c/web-platform-tests/css/css-view-transitions/nested/ [ Skip ]
+
+# View transitions Level ? - scoped view-transitions
+imported/w3c/web-platform-tests/css/css-view-transitions/scoped/ [ Skip ]
 
 # Depends on overflow-clip-margin (unimplemented).
 imported/w3c/web-platform-tests/css/css-view-transitions/new-content-with-overflow-zoomed.html [ ImageOnlyFailure ]
@@ -7656,7 +7643,6 @@ webkit.org/b/282024 fast/text/text-box-edge-with-margin-padding-border-simple.ht
 # -- Anchor Positioning -- #
 
 # general failures
-webkit.org/b/291260 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-center-visibility-change.html [ ImageOnlyFailure ]
 webkit.org/b/289743 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-position-multicol-007.html [ ImageOnlyFailure ]
 webkit.org/b/289743 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-position-multicol-008.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-anchor-position/anchor-position-top-layer-001.html [ ImageOnlyFailure ]
@@ -7754,6 +7740,9 @@ inspector/css/getMatchedStylesForNodeNestingStyleGrouping.html [ Failure ]
 
 # https://bugs.webkit.org/show_bug.cgi?id=266843 flakey tests with racey promise console.logs
 imported/w3c/web-platform-tests/dom/observable/tentative/observable-from.any.html [ Skip ]
+
+# It is failing only via WebKit Test Runner but passes on WPT dashboard
+imported/w3c/web-platform-tests/dom/xslt/encoding-single-chunk.html [ ImageOnlyFailure ]
 
 # Dump `rendertree` rather than proper test expectation as `testharness` test
 imported/w3c/web-platform-tests/WebIDL/ecmascript-binding/global-mutable-prototype.any.html [ Skip ]
@@ -7898,3 +7887,10 @@ webkit.org/b/288831 [ Debug ] fast/css/shadow-box-recursion-depth.html [ Pass Ti
 imported/w3c/web-platform-tests/css/cssom/adoptedstylesheets-adopt-link.tentative.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/cssom/adoptedstylesheets-adopt-style-subresource.tentative.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/cssom/adoptedstylesheets-adopt-style.tentative.html [ ImageOnlyFailure ]
+
+imported/w3c/web-platform-tests/wasm/jsapi/jspi/js-promise-integration.any.html [ Pass Failure ]
+imported/w3c/web-platform-tests/wasm/webapi/esm-integration/script-src-blocks-wasm.tentative.sub.html [ Pass Failure ]
+
+webkit.org/b/293108 webanimations/document-teardown-due-to-last-reference-crash.html [ Pass Timeout ]
+
+http/tests/iframe-memory-monitor/video-iframe.html [ Skip ]

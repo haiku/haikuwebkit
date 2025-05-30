@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -36,6 +36,7 @@
 #import "DragController.h"
 #import "Editor.h"
 #import "FocusController.h"
+#import "FrameInlines.h"
 #import "FrameLoader.h"
 #import "HTMLBodyElement.h"
 #import "HTMLDocument.h"
@@ -632,10 +633,7 @@ void EventHandler::sendFakeEventsAfterWidgetTracking(NSEvent *initiatingEvent)
         // them in Cocoa, and because the event stream was stolen by the Carbon menu code we have
         // no up-to-date cache of them anywhere.
         fakeEvent = [NSEvent mouseEventWithType:NSEventTypeMouseMoved
-                                       location:[[view->platformWidget() window]
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-                                  convertScreenToBase:[NSEvent mouseLocation]]
-ALLOW_DEPRECATED_DECLARATIONS_END
+                                       location:[[view->platformWidget() window] convertPointFromScreen:[NSEvent mouseLocation]]
                                   modifierFlags:[initiatingEvent modifierFlags]
                                       timestamp:[initiatingEvent timestamp]
                                    windowNumber:[initiatingEvent windowNumber]
@@ -757,7 +755,7 @@ bool EventHandler::needsKeyboardEventDisambiguationQuirks() const
 
 OptionSet<PlatformEvent::Modifier> EventHandler::accessKeyModifiers()
 {
-    // Control+Option key combinations are usually unused on Mac OS X, but not when VoiceOver is enabled.
+    // Control+Option key combinations are usually unused on macOS, but not when VoiceOver is enabled.
     // So, we use Control in this case, even though it conflicts with Emacs-style key bindings.
     // See <https://bugs.webkit.org/show_bug.cgi?id=21107> for more detail.
     if (AXObjectCache::accessibilityEnhancedUserInterfaceEnabled())

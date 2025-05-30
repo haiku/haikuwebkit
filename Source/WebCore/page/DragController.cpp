@@ -99,6 +99,7 @@
 #include "VisiblePosition.h"
 #include "WebContentReader.h"
 #include "markup.h"
+#include <JavaScriptCore/ConsoleTypes.h>
 #include <wtf/SetForScope.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
@@ -1400,6 +1401,8 @@ void DragController::doSystemDrag(DragImage image, const IntPoint& dragLoc, cons
     item.eventPositionInContentCoordinates = mainFrameView->rootViewToContents(eventPositionInRootViewCoordinates);
     item.dragLocationInContentCoordinates = mainFrameView->rootViewToContents(dragLocationInRootViewCoordinates);
     item.dragLocationInWindowCoordinates = mainFrameView->contentsToWindow(item.dragLocationInContentCoordinates);
+
+    std::optional<ElementIdentifier> elementID;
     if (RefPtr element = state.source) {
         RefPtr dataTransferImageElement = state.dataTransfer->dragImageElement();
         if (state.type == DragSourceAction::DHTML) {
@@ -1428,8 +1431,9 @@ void DragController::doSystemDrag(DragImage image, const IntPoint& dragLoc, cons
         if (RefPtr modelElement = dynamicDowncast<HTMLModelElement>(state.source); modelElement && m_dragSourceAction.contains(DragSourceAction::Model))
             item.modelLayerID = modelElement->layerID();
 #endif
+        elementID = element->identifier();
     }
-    client().startDrag(WTFMove(item), *state.dataTransfer, mainFrame.get());
+    client().startDrag(WTFMove(item), *state.dataTransfer, mainFrame.get(), elementID);
     // DragClient::startDrag can cause our Page to dispear, deallocating |this|.
     if (!mainFrame->page())
         return;

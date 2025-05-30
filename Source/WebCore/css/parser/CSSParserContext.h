@@ -63,10 +63,7 @@ struct CSSParserContext {
     bool masonryEnabled : 1 { false };
     bool cssAppearanceBaseEnabled : 1 { false };
     bool cssPaintingAPIEnabled : 1 { false };
-    bool cssScopeAtRuleEnabled : 1 { false };
     bool cssShapeFunctionEnabled : 1 { false };
-    bool cssStartingStyleAtRuleEnabled : 1 { false };
-    bool cssStyleQueriesEnabled : 1 { false };
     bool cssTextUnderlinePositionLeftRightEnabled : 1 { false };
     bool cssBackgroundClipBorderAreaEnabled : 1 { false };
     bool cssWordBreakAutoPhraseEnabled : 1 { false };
@@ -78,7 +75,6 @@ struct CSSParserContext {
     bool imageControlsEnabled : 1 { false };
 #endif
     bool colorLayersEnabled : 1 { false };
-    bool lightDarkColorEnabled : 1 { false };
     bool contrastColorEnabled : 1 { false };
     bool targetTextPseudoElementEnabled : 1 { false };
     bool viewTransitionTypesEnabled : 1 { false };

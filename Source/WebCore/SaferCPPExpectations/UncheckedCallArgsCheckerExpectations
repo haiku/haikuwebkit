@@ -1,3 +1,4 @@
+StyleExtractorGenerated.cpp
 Modules/airplay/WebMediaSessionManager.cpp
 Modules/applepay-ams-ui/ApplePayAMSUIPaymentHandler.cpp
 Modules/applicationmanifest/ApplicationManifestParser.cpp
@@ -142,17 +143,14 @@ bindings/js/WorkerModuleScriptLoader.cpp
 bridge/objc/WebScriptObject.mm
 bridge/runtime_method.cpp
 contentextensions/ContentExtensionsBackend.cpp
-css/CSSFontFace.cpp
 css/CSSImageValue.cpp
 css/CSSStyleProperties.cpp
 css/CSSStyleSheet.cpp
 css/CSSStyleSheetObservableArray.cpp
 css/CSSToLengthConversionData.cpp
 css/CSSVariableReferenceValue.cpp
-css/ComputedStyleExtractor.cpp
 css/MediaQueryList.cpp
 css/MediaQueryMatcher.cpp
-css/SVGCSSComputedStyleDeclaration.cpp
 css/SelectorChecker.cpp
 css/SelectorCheckerTestFunctions.h
 css/SelectorFilter.cpp
@@ -618,7 +616,6 @@ platform/cocoa/LowPowerModeNotifier.mm
 platform/cocoa/VideoPresentationModelVideoElement.mm
 platform/cocoa/WebAVPlayerLayer.mm
 platform/graphics/ComplexTextController.cpp
-platform/graphics/FontCascade.h
 platform/graphics/WidthIterator.cpp
 platform/graphics/ca/GraphicsLayerCA.cpp
 platform/graphics/ca/PlatformCALayer.mm
@@ -655,7 +652,6 @@ rendering/ContentfulPaintChecker.cpp
 rendering/CounterNode.cpp
 rendering/EllipsisBoxPainter.cpp
 rendering/FixedTableLayout.cpp
-rendering/FlexibleBoxAlgorithm.cpp
 rendering/FloatingObjects.cpp
 rendering/GridMasonryLayout.cpp
 rendering/GridTrackSizingAlgorithm.cpp
@@ -910,6 +906,9 @@ style/StyleBuilderConverter.h
 style/StyleBuilderCustom.h
 style/StyleBuilderState.cpp
 style/StyleBuilderStateInlines.h
+style/StyleExtractor.cpp
+style/StyleExtractorConverter.h
+style/StyleExtractorCustom.h
 style/StyleInterpolation.cpp
 style/StyleInvalidationFunctions.h
 style/StyleInvalidator.cpp

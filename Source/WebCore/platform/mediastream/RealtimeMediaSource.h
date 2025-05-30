@@ -60,12 +60,17 @@
 #include <wtf/text/WTFString.h>
 
 #if USE(GSTREAMER)
-#include "GUniquePtrGStreamer.h"
+#include <gst/gststructure.h>
 #include <wtf/glib/GRefPtr.h>
 #endif
 
 namespace WebCore {
 class RealtimeMediaSourceObserver;
+
+#if PLATFORM(COCOA)
+class ImageRotationSessionVT;
+#endif
+
 }
 
 namespace WTF {
@@ -140,7 +145,7 @@ public:
         virtual void videoFrameAvailable(VideoFrame&, VideoFrameTimeMetadata) = 0;
 
 #if USE(GSTREAMER_WEBRTC)
-        virtual GUniquePtr<GstStructure> queryAdditionalStats() { return nullptr; }
+        virtual /* transfer full */ GstStructure* queryAdditionalStats() { return nullptr; }
 #endif
     };
 
@@ -306,6 +311,10 @@ public:
     virtual std::pair<GstClockTime, GstClockTime> queryCaptureLatency() const;
 #endif
 
+#if PLATFORM(COCOA)
+    void setCanUseIOSurface();
+#endif
+
     virtual void configurationChanged();
 
 protected:
@@ -395,6 +404,11 @@ private:
 
     CaptureDevice m_device;
 
+#if PLATFORM(COCOA)
+    std::unique_ptr<ImageRotationSessionVT> m_rotationSession;
+    std::atomic<bool> m_canUseIOSurface { false };
+#endif
+
     // Set on the main thread from constraints.
     IntSize m_size;
     // Set on sample generation thread.
@@ -417,6 +431,7 @@ private:
     bool m_captureDidFailed { false };
     bool m_isEnded { false };
     bool m_hasStartedProducingData { false };
+    std::atomic<bool> m_shouldApplyRotation { false };
 
     unsigned m_videoFrameObserversWithAdaptors { 0 };
 };
@@ -480,10 +495,12 @@ inline const String& RealtimeMediaSource::hashedGroupId() const
     return m_hashedGroupId;
 }
 
-inline bool RealtimeMediaSource::setShouldApplyRotation()
+#if PLATFORM(COCOA)
+inline void RealtimeMediaSource::setCanUseIOSurface()
 {
-    return false;
+    m_canUseIOSurface = true;
 }
+#endif
 
 } // namespace WebCore
 

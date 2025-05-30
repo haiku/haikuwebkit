@@ -12,12 +12,14 @@ Modules/screen-wake-lock/NavigatorScreenWakeLock.h
 Modules/storage/StorageManager.cpp
 Modules/webdatabase/DatabaseTask.h
 Modules/webdatabase/SQLTransactionBackend.h
-accessibility/AXCoreObject.h
 accessibility/AXSearchManager.h
 bindings/js/JSEventTargetCustom.h
 bindings/js/JSLazyEventListener.cpp
 css/CSSFontSelector.h
+css/CSSPrimitiveValue.h
+css/CSSRule.h
 css/CSSRuleList.h
+css/CSSSelector.h
 css/CSSStyleProperties.h
 css/CSSValueList.h
 css/MediaList.h
@@ -27,6 +29,7 @@ css/ShorthandSerializer.cpp
 css/StyleProperties.h
 css/StyleRuleImport.h
 css/StyleSheetContents.h
+css/values/primitives/CSSPrimitiveData.h
 dom/CollectionIndexCache.h
 dom/Node.cpp
 dom/Node.h
@@ -77,7 +80,6 @@ platform/mock/ScrollbarsControllerMock.h
 platform/network/cocoa/WebCoreNSURLSession.mm
 platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.h
 plugins/PluginData.h
-rendering/RenderQuote.cpp
 rendering/TextBoxPainter.h
 rendering/style/StyleGeneratedImage.cpp
 rendering/updating/RenderTreeUpdater.h
@@ -101,3 +103,5 @@ workers/service/ServiceWorkerContainer.h
 workers/service/background-fetch/ServiceWorkerRegistrationBackgroundFetchAPI.h
 xml/XMLHttpRequestProgressEventThrottle.h
 xml/XMLHttpRequestUpload.h
+xml/XPathGrammar.cpp
+xml/XPathGrammar.h

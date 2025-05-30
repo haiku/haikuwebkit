@@ -61,6 +61,7 @@
 #include "UnicodeBidi.h"
 #include "ViewTimeline.h"
 #include "WebAnimationTypes.h"
+#include "WillChangeData.h"
 
 #if ENABLE(APPLE_PAY)
 #include "ApplePayButtonPart.h"
@@ -469,7 +470,6 @@ inline LengthPoint RenderStyle::initialOffsetPosition() { return { { LengthType:
 constexpr OffsetRotation RenderStyle::initialOffsetRotate() { return { true }; }
 inline OrderedNamedGridLinesMap RenderStyle::initialOrderedNamedGridColumnLines() { return { }; }
 inline OrderedNamedGridLinesMap RenderStyle::initialOrderedNamedGridRowLines() { return { }; }
-constexpr OutlineIsAuto RenderStyle::initialOutlineStyleIsAuto() { return OutlineIsAuto::Off; }
 constexpr OverflowAnchor RenderStyle::initialOverflowAnchor() { return OverflowAnchor::Auto; }
 inline OverflowContinue RenderStyle::initialOverflowContinue() { return OverflowContinue::Auto; }
 constexpr OverflowWrap RenderStyle::initialOverflowWrap() { return OverflowWrap::Normal; }
@@ -684,7 +684,7 @@ inline const OrderedNamedGridLinesMap& RenderStyle::orderedNamedGridRowLines() c
 inline unsigned short RenderStyle::orphans() const { return m_rareInheritedData->orphans; }
 inline const Style::Color& RenderStyle::outlineColor() const { return m_nonInheritedData->backgroundData->outline.color(); }
 inline BorderStyle RenderStyle::outlineStyle() const { return m_nonInheritedData->backgroundData->outline.style(); }
-inline OutlineIsAuto RenderStyle::outlineStyleIsAuto() const { return static_cast<OutlineIsAuto>(m_nonInheritedData->backgroundData->outline.isAuto()); }
+inline bool RenderStyle::hasAutoOutlineStyle() const { return m_nonInheritedData->backgroundData->outline.isAuto(); }
 inline OverflowAnchor RenderStyle::overflowAnchor() const { return static_cast<OverflowAnchor>(m_nonInheritedData->rareData->overflowAnchor); }
 inline OverflowContinue RenderStyle::overflowContinue() const { return m_nonInheritedData->rareData->overflowContinue; }
 inline OverflowWrap RenderStyle::overflowWrap() const { return static_cast<OverflowWrap>(m_rareInheritedData->overflowWrap); }
@@ -728,10 +728,12 @@ inline ScaleTransformOperation* RenderStyle::scale() const { return m_nonInherit
 inline const Vector<Ref<ScrollTimeline>>& RenderStyle::scrollTimelines() const { return m_nonInheritedData->rareData->scrollTimelines; }
 inline const Vector<ScrollAxis>& RenderStyle::scrollTimelineAxes() const { return m_nonInheritedData->rareData->scrollTimelineAxes; }
 inline const Vector<AtomString>& RenderStyle::scrollTimelineNames() const { return m_nonInheritedData->rareData->scrollTimelineNames; }
+inline bool RenderStyle::hasScrollTimelines() const { return m_nonInheritedData->rareData->hasScrollTimelines(); }
 inline const Vector<Ref<ViewTimeline>>& RenderStyle::viewTimelines() const { return m_nonInheritedData->rareData->viewTimelines; }
 inline const Vector<ScrollAxis>& RenderStyle::viewTimelineAxes() const { return m_nonInheritedData->rareData->viewTimelineAxes; }
 inline const Vector<ViewTimelineInsets>& RenderStyle::viewTimelineInsets() const { return m_nonInheritedData->rareData->viewTimelineInsets; }
 inline const Vector<AtomString>& RenderStyle::viewTimelineNames() const { return m_nonInheritedData->rareData->viewTimelineNames; }
+inline bool RenderStyle::hasViewTimelines() const { return m_nonInheritedData->rareData->hasViewTimelines(); }
 inline const NameScope& RenderStyle::timelineScope() const { return m_nonInheritedData->rareData->timelineScope; }
 inline std::optional<ScrollbarColor> RenderStyle::scrollbarColor() const { return m_rareInheritedData->scrollbarColor.asOptional(); }
 inline const Style::Color& RenderStyle::scrollbarThumbColor() const { return m_rareInheritedData->scrollbarColor->thumbColor; }

@@ -250,6 +250,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     // ARIA content subroles.
     switch (role) {
+    case AccessibilityRole::Form:
+        return "AXLandmarkForm"_s;
     case AccessibilityRole::LandmarkBanner:
         return "AXLandmarkBanner"_s;
     case AccessibilityRole::LandmarkComplementary:
@@ -392,131 +394,20 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return "AXCodeStyleGroup"_s;
 
     using namespace HTMLNames;
-    const auto& tag = tagName();
-    if (tag == kbdTag)
+    auto elementName = this->elementName();
+    if (elementName == ElementName::HTML_kbd)
         return "AXKeyboardInputStyleGroup"_s;
-    if (tag == preTag)
+    if (elementName == ElementName::HTML_pre)
         return "AXPreformattedStyleGroup"_s;
-    if (tag == sampTag)
+    if (elementName == ElementName::HTML_samp)
         return "AXSampleStyleGroup"_s;
-    if (tag == varTag)
+    if (elementName == ElementName::HTML_var)
         return "AXVariableStyleGroup"_s;
-    if (tag == citeTag)
+    if (elementName == ElementName::HTML_cite)
         return "AXCiteStyleGroup"_s;
     ASSERT_WITH_MESSAGE(!isStyleFormatGroup(), "Should've been able to compute a subrole for style format group object");
 
     return String();
-}
-
-String AccessibilityObject::rolePlatformDescription()
-{
-    // Attachments have the AXImage role, but may have different subroles.
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    if (isAttachment())
-        return [[wrapper() attachmentView] accessibilityAttributeValue:NSAccessibilityRoleDescriptionAttribute];
-
-    if (isRemoteFrame())
-        return [remoteFramePlatformElement().get() accessibilityAttributeValue:NSAccessibilityRoleDescriptionAttribute];
-ALLOW_DEPRECATED_DECLARATIONS_END
-
-    RetainPtr axRole = rolePlatformString().createNSString();
-
-    if ([axRole isEqualToString:NSAccessibilityGroupRole]) {
-        if (isOutput())
-            return AXOutputText();
-
-        String ariaLandmarkRoleDescription = this->ariaLandmarkRoleDescription();
-        if (!ariaLandmarkRoleDescription.isEmpty())
-            return ariaLandmarkRoleDescription;
-
-        switch (roleValue()) {
-        case AccessibilityRole::Audio:
-            return localizedMediaControlElementString("AudioElement"_s);
-        case AccessibilityRole::Definition:
-            return AXDefinitionText();
-        case AccessibilityRole::DescriptionListTerm:
-        case AccessibilityRole::Term:
-            return AXDescriptionListTermText();
-        case AccessibilityRole::DescriptionListDetail:
-            return AXDescriptionListDetailText();
-        case AccessibilityRole::Details:
-            return AXDetailsText();
-        case AccessibilityRole::Feed:
-            return AXFeedText();
-        case AccessibilityRole::Footer:
-            return AXFooterRoleDescriptionText();
-        case AccessibilityRole::Mark:
-            return AXMarkText();
-        case AccessibilityRole::Video:
-            return localizedMediaControlElementString("VideoElement"_s);
-        case AccessibilityRole::GraphicsDocument:
-            return AXARIAContentGroupText("ARIADocument"_s);
-        default:
-            return { };
-        }
-    }
-
-    if ([axRole isEqualToString:NSAccessibilityWebAreaRole])
-        return AXWebAreaText();
-
-    if ([axRole isEqualToString:NSAccessibilityLinkRole])
-        return AXLinkText();
-
-    if ([axRole isEqualToString:NSAccessibilityListMarkerRole])
-        return AXListMarkerText();
-
-    if ([axRole isEqualToString:NSAccessibilityImageMapRole])
-        return AXImageMapText();
-
-    if ([axRole isEqualToString:NSAccessibilityHeadingRole])
-        return AXHeadingText();
-
-    if ([axRole isEqualToString:NSAccessibilityTextFieldRole]) {
-        if (RefPtr input = dynamicDowncast<HTMLInputElement>(node())) {
-            if (input->isEmailField())
-                return AXEmailFieldText();
-            if (input->isTelephoneField())
-                return AXTelephoneFieldText();
-            if (input->isURLField())
-                return AXURLFieldText();
-            if (input->isNumberField())
-                return AXNumberFieldText();
-
-            // These input types are not enabled on mac yet, we check the type attribute for now.
-            // FIXME: "date", "time", and "datetime-local" are enabled on macOS.
-            auto& type = input->attributeWithoutSynchronization(HTMLNames::typeAttr);
-            if (equalLettersIgnoringASCIICase(type, "date"_s))
-                return AXDateFieldText();
-            if (equalLettersIgnoringASCIICase(type, "time"_s))
-                return AXTimeFieldText();
-            if (equalLettersIgnoringASCIICase(type, "week"_s))
-                return AXWeekFieldText();
-            if (equalLettersIgnoringASCIICase(type, "month"_s))
-                return AXMonthFieldText();
-            if (equalLettersIgnoringASCIICase(type, "datetime-local"_s))
-                return AXDateTimeFieldText();
-        }
-    }
-
-    if (isFileUploadButton())
-        return AXFileUploadButtonText();
-
-    // Only returning for DL (not UL or OL) because description changed with HTML5 from 'definition list' to
-    // superset 'description list' and does not return the same values in AX API on some OS versions.
-    if (isDescriptionList())
-        return AXDescriptionListText();
-
-    if (roleValue() == AccessibilityRole::HorizontalRule)
-        return AXHorizontalRuleDescriptionText();
-
-    // AppKit also returns AXTab for the role description for a tab item.
-    if (isTabItem())
-        return NSAccessibilityRoleDescription(@"AXTab", nil);
-
-    if (isSummary())
-        return AXSummaryText();
-
-    return { };
 }
 
 // NSAttributedString support.

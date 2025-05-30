@@ -41,7 +41,6 @@
 #include <utility>
 #include <wtf/Assertions.h>
 #include <wtf/Brigand.h>
-#include <wtf/CheckedArithmetic.h>
 #include <wtf/Compiler.h>
 #include <wtf/GetPtr.h>
 #include <wtf/IterationStatus.h>
@@ -190,13 +189,6 @@ inline std::span<const std::byte> alignedBytes(std::span<const std::byte> buffer
     return buffer.subspan(alignedBytesCorrection(buffer, alignment));
 }
 
-template<typename ToType, typename FromType>
-inline ToType safeCast(FromType value)
-{
-    RELEASE_ASSERT(isInBounds<ToType>(value));
-    return static_cast<ToType>(value);
-}
-
 // Returns a count of the number of bits set in 'bits'.
 inline size_t bitCount(unsigned bits)
 {
@@ -210,8 +202,6 @@ inline size_t bitCount(uint64_t bits)
     return bitCount(static_cast<unsigned>(bits)) + bitCount(static_cast<unsigned>(bits >> 32));
 }
 
-inline constexpr bool isPowerOfTwo(size_t size) { return !(size & (size - 1)); }
-
 template<typename T> constexpr T mask(T value, uintptr_t mask)
 {
     static_assert(sizeof(T) == sizeof(uintptr_t), "sizeof(T) must be equal to sizeof(uintptr_t).");
@@ -221,73 +211,6 @@ template<typename T> constexpr T mask(T value, uintptr_t mask)
 template<typename T> inline T* mask(T* value, uintptr_t mask)
 {
     return reinterpret_cast<T*>(reinterpret_cast<uintptr_t>(value) & mask);
-}
-
-template<typename T, typename U>
-ALWAYS_INLINE constexpr T roundUpToMultipleOfImpl(U divisor, T x)
-{
-    T remainderMask = static_cast<T>(divisor) - 1;
-    return (x + remainderMask) & ~remainderMask;
-}
-
-// Efficient implementation that takes advantage of powers of two.
-template<typename T, typename U>
-inline constexpr T roundUpToMultipleOf(U divisor, T x)
-{
-    ASSERT_UNDER_CONSTEXPR_CONTEXT(divisor && isPowerOfTwo(divisor));
-    return roundUpToMultipleOfImpl<T, U>(divisor, x);
-}
-
-template<size_t divisor> constexpr size_t roundUpToMultipleOf(size_t x)
-{
-    static_assert(divisor && isPowerOfTwo(divisor));
-    return roundUpToMultipleOfImpl(divisor, x);
-}
-
-template<size_t divisor, typename T> inline constexpr T* roundUpToMultipleOf(T* x)
-{
-    static_assert(sizeof(T*) == sizeof(size_t));
-    return reinterpret_cast<T*>(roundUpToMultipleOf<divisor>(reinterpret_cast<size_t>(x)));
-}
-
-template<typename T, typename U>
-inline constexpr T roundUpToMultipleOfNonPowerOfTwo(U divisor, T x)
-{
-    T remainder = x % divisor;
-    if (!remainder)
-        return x;
-    return x + static_cast<T>(divisor - remainder);
-}
-
-template<typename T, typename C>
-inline constexpr Checked<T, C> roundUpToMultipleOfNonPowerOfTwo(Checked<T, C> divisor, Checked<T, C> x)
-{
-    if (x.hasOverflowed() || divisor.hasOverflowed())
-        return ResultOverflowed;
-    T remainder = x % divisor;
-    if (!remainder)
-        return x;
-    return x + static_cast<T>(divisor.value() - remainder);
-}
-
-template<typename T, typename U>
-inline constexpr T roundDownToMultipleOf(U divisor, T x)
-{
-    ASSERT_UNDER_CONSTEXPR_CONTEXT(divisor && isPowerOfTwo(divisor));
-    static_assert(sizeof(T) == sizeof(uintptr_t), "sizeof(T) must be equal to sizeof(uintptr_t).");
-    return static_cast<T>(mask(static_cast<uintptr_t>(x), ~(divisor - 1ul)));
-}
-
-template<typename T> inline constexpr T* roundDownToMultipleOf(size_t divisor, T* x)
-{
-    ASSERT_UNDER_CONSTEXPR_CONTEXT(isPowerOfTwo(divisor));
-    return reinterpret_cast<T*>(mask(reinterpret_cast<uintptr_t>(x), ~(divisor - 1ul)));
-}
-
-template<size_t divisor, typename T> constexpr T roundDownToMultipleOf(T x)
-{
-    static_assert(isPowerOfTwo(divisor), "'divisor' must be a power of two.");
-    return roundDownToMultipleOf(divisor, x);
 }
 
 template<typename IntType>
@@ -1319,6 +1242,11 @@ template<ByteType T, typename U> constexpr auto byteCast(const U& value)
     return ByteCastTraits<U>::template cast<T>(value);
 }
 
+template<typename T> constexpr auto unsignedCast(T value) requires (std::is_integral_v<T> || std::is_enum_v<T>)
+{
+    return static_cast<std::make_unsigned_t<T>>(value);
+}
+
 // This is like std::invocable but it takes the expected signature rather than just the arguments.
 template<typename Functor, typename Signature> concept Invocable = requires(std::decay_t<Functor>&& f, std::function<Signature> expected) {
     { expected = std::move(f) };
@@ -1619,10 +1547,6 @@ using WTF::memmoveSpan;
 using WTF::memsetSpan;
 using WTF::mergeDeduplicatedSorted;
 using WTF::reinterpretCastSpanStartTo;
-using WTF::roundUpToMultipleOf;
-using WTF::roundUpToMultipleOfNonPowerOfTwo;
-using WTF::roundDownToMultipleOf;
-using WTF::safeCast;
 using WTF::secureMemsetSpan;
 using WTF::singleElementSpan;
 using WTF::skip;
@@ -1635,6 +1559,7 @@ using WTF::stringToDouble;
 using WTF::toTwosComplement;
 using WTF::tryBinarySearch;
 using WTF::unsafeMakeSpan;
+using WTF::unsignedCast;
 using WTF::valueOrCompute;
 using WTF::valueOrDefault;
 using WTF::weakOrderingCast;

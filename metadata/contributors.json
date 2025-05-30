@@ -1069,8 +1069,10 @@
    },
    {
       "emails" : [
+         "a_renevier@apple.com",
          "a.renevier@samsung.com"
       ],
+      "github" : "arenevier",
       "name" : "Arno Renevier",
       "nicks" : [
          "arno"
@@ -1371,6 +1373,14 @@
       "nicks" : [
          "brendanlong"
       ]
+   },
+   {
+      "emails" : [
+         "b_forward@apple.com",
+         "brenfwd@gmail.com"
+      ],
+      "github" : "brenfwd",
+      "name" : "Brenden Forward"
    },
    {
       "emails" : [
@@ -2590,6 +2600,7 @@
    },
    {
       "emails" : [
+         "me@donolmstead.dev",
          "don.olmstead@sony.com",
          "don.olmstead@am.sony.com"
       ],
@@ -2987,7 +2998,8 @@
       "name" : "Fady Farag",
       "nicks" : [
          "ffarag"
-      ]
+      ],
+      "status" : "committer"
    },
    {
       "emails" : [
@@ -4836,6 +4848,13 @@
       "nicks" : [
          "keishi"
       ]
+   },
+   {
+      "emails" : [
+         "iKonnyaku40@gmail.com"
+      ],
+      "github" : "Gumichocopengin8",
+      "name" : "Keita Nonaka"
    },
    {
       "emails" : [

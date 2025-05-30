@@ -157,7 +157,7 @@ bool isShaderValidationEnabled(id<MTLDevice> device)
     dispatch_once(&onceToken, ^{
         // Workaround for rdar://141660277
         NSString* deviceName = NSStringFromClass([device class]);
-        if ((result = [deviceName containsString:@"Debug"] || [deviceName containsString:@"LegacySV"]))
+        if ((result = [deviceName containsString:@"Debug"] || [deviceName containsString:@"LegacySV"] || [deviceName containsString:@"CaptureMTLDevice"]))
             WTFLogAlways("WebGPU: Using DEBUG Metal device: retaining references"); // NOLINT
     });
     return result;
@@ -400,7 +400,7 @@ template <typename T>
 static T mergeAlignment(T previous, T next)
 {
     // https://gpuweb.github.io/gpuweb/#limit-class-alignment
-    return std::min(WTF::roundUpToPowerOfTwo(previous), WTF::roundUpToPowerOfTwo(next));
+    return std::min(roundUpToPowerOfTwo(previous), roundUpToPowerOfTwo(next));
 };
 
 static WGPULimits mergeLimits(const WGPULimits& previous, const WGPULimits& next)

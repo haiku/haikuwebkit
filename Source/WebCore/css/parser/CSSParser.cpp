@@ -78,6 +78,7 @@
 #include <bitset>
 #include <memory>
 #include <optional>
+#include <wtf/StdLibExtras.h>
 
 namespace WebCore {
 
@@ -694,12 +695,11 @@ Vector<Ref<StyleRuleBase>> CSSParser::consumeNestedGroupRules(CSSParserTokenRang
                 if (m_observerWrapper)
                     m_observerWrapper->observer().markRuleBodyContainsImplicitlyNestedProperties();
             }
-            for (auto& rule : topContext().m_parsedRules)
-                rules.append(rule);
+            rules.appendVector(topContext().m_parsedRules);
         });
     } else {
-        consumeRuleList(block, RuleList::Regular, [&rules](Ref<StyleRuleBase> rule) {
-            rules.append(rule);
+        consumeRuleList(block, RuleList::Regular, [&rules](Ref<StyleRuleBase>&& rule) {
+            rules.append(WTFMove(rule));
         });
     }
     rules.shrinkToFit();
@@ -821,7 +821,7 @@ RefPtr<StyleRuleFontFeatureValuesBlock> CSSParser::consumeFontFeatureValuesRuleB
             ASSERT(value->isInteger());
             auto tagInteger = value->resolveAsIntegerDeprecated();
             ASSERT(tagInteger >= 0);
-            values.append(std::make_unsigned_t<int>(tagInteger));
+            values.append(unsignedCast(tagInteger));
             if (maxValues && values.size() > *maxValues)
                 return { };
         }
@@ -1012,9 +1012,6 @@ RefPtr<StyleRulePage> CSSParser::consumePageRule(CSSParserTokenRange prelude, CS
 
 RefPtr<StyleRuleCounterStyle> CSSParser::consumeCounterStyleRule(CSSParserTokenRange prelude, CSSParserTokenRange block)
 {
-    if (!m_context.propertySettings.cssCounterStyleAtRulesEnabled)
-        return nullptr;
-
     auto rangeCopy = prelude; // For inspector callbacks
     auto name = CSSPropertyParserHelpers::consumeCounterStyleNameInPrelude(rangeCopy, m_context.mode);
     if (name.isNull())
@@ -1080,9 +1077,6 @@ RefPtr<StyleRulePositionTry> CSSParser::consumePositionTryRule(CSSParserTokenRan
 
 RefPtr<StyleRuleScope> CSSParser::consumeScopeRule(CSSParserTokenRange prelude, CSSParserTokenRange block)
 {
-    if (!m_context.cssScopeAtRuleEnabled)
-        return nullptr;
-
     auto preludeRangeCopy = prelude;
     CSSSelectorList scopeStart;
     CSSSelectorList scopeEnd;
@@ -1151,9 +1145,6 @@ RefPtr<StyleRuleScope> CSSParser::consumeScopeRule(CSSParserTokenRange prelude, 
 
 RefPtr<StyleRuleStartingStyle> CSSParser::consumeStartingStyleRule(CSSParserTokenRange prelude, CSSParserTokenRange block)
 {
-    if (!m_context.cssStartingStyleAtRuleEnabled)
-        return nullptr;
-
     if (!prelude.atEnd())
         return nullptr;
 

@@ -28,6 +28,7 @@
 
 #import "AudioSessionRoutingArbitratorProxy.h"
 #import "GPUProcessProxy.h"
+#import "LogStream.h"
 #import "MediaSessionCoordinatorProxyPrivate.h"
 #import "NetworkProcessProxy.h"
 #import "PlaybackSessionManagerProxy.h"
@@ -37,8 +38,10 @@
 #import "UserMediaProcessManager.h"
 #import "ViewGestureController.h"
 #import "ViewSnapshotStore.h"
+#import "WKColorExtensionView.h"
 #import "WKContentViewInteraction.h"
 #import "WKPreferencesInternal.h"
+#import "WKWebViewInternal.h"
 #import "WebPageProxy.h"
 #import "WebPageProxyTesting.h"
 #import "WebProcessPool.h"
@@ -47,6 +50,7 @@
 #import "WebsiteDataStore.h"
 #import "_WKFrameHandleInternal.h"
 #import "_WKInspectorInternal.h"
+#import <WebCore/BoxSides.h>
 #import <WebCore/NowPlayingInfo.h>
 #import <WebCore/ScrollingNodeID.h>
 #import <WebCore/ValidationBubble.h>
@@ -998,6 +1002,36 @@ static void dumpCALayer(TextStream& ts, CALayer *layer, bool traverse)
         @"opaque" : @(layer.get().opaque),
         @"opacity" : @(layer.get().opacity),
     };
+}
+
+- (void)_textFragmentRangesWithCompletionHandlerForTesting:(void(^)(NSArray<NSValue *> *fragmentRanges))completionHandler
+{
+    _page->getTextFragmentRanges([completion = makeBlockPtr(completionHandler)](const Vector<WebKit::EditingRange> editingRanges) {
+        RetainPtr<NSMutableArray<NSValue *>> resultRanges = [NSMutableArray array];
+        for (auto editingRange : editingRanges) {
+            NSRange resultRange = editingRange;
+            if (resultRange.location != NSNotFound)
+                [resultRanges addObject:[NSValue valueWithRange:resultRange]];
+        }
+        completion(resultRanges.get());
+    });
+}
+
+- (void)_cancelFixedColorExtensionFadeAnimationsForTesting
+{
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    for (auto side : WebCore::allBoxSides)
+        [_fixedColorExtensionViews.at(side) cancelFadeAnimation];
+#endif
+}
+
+- (unsigned)_forwardedLogsCountForTesting
+{
+#if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
+    return WebKit::LogStream::logCountForTesting();
+#else
+    return 0;
+#endif
 }
 
 @end

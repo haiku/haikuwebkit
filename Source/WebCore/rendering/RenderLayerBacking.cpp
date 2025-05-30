@@ -55,6 +55,7 @@
 #include "Model.h"
 #include "NullGraphicsContext.h"
 #include "Page.h"
+#include "PathOperation.h"
 #include "PerformanceLoggingClient.h"
 #include "PluginViewBase.h"
 #include "ProgressTracker.h"
@@ -79,7 +80,9 @@
 #include "RenderVideo.h"
 #include "RenderView.h"
 #include "RenderViewTransitionCapture.h"
+#include "RotateTransformOperation.h"
 #include "SVGGraphicsElement.h"
+#include "ScaleTransformOperation.h"
 #include "ScrollingCoordinator.h"
 #include "Settings.h"
 #include "StyleResolver.h"
@@ -3580,8 +3583,8 @@ GraphicsLayer* RenderLayerBacking::childForSuperlayers() const
         // If the document element is captured, then the RenderView's layer will get attached
         // into the view-transition tree, and we instead want to attach the root of the VT tree to our ancestor.
         if (m_owningLayer.renderer().protectedDocument()->activeViewTransitionCapturedDocumentElement()) {
-            if (WeakPtr viewTransitionRoot = m_owningLayer.renderer().view().viewTransitionRoot(); viewTransitionRoot && viewTransitionRoot->hasLayer() && viewTransitionRoot->layer()->backing())
-                return viewTransitionRoot->layer()->backing()->childForSuperlayers();
+            if (WeakPtr viewTransitionContainingBlock = m_owningLayer.renderer().view().viewTransitionContainingBlock(); viewTransitionContainingBlock && viewTransitionContainingBlock->hasLayer() && viewTransitionContainingBlock->layer()->backing())
+                return viewTransitionContainingBlock->layer()->backing()->childForSuperlayers();
         }
     }
     return childForSuperlayersExcludingViewTransitions();

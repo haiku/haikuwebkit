@@ -1,7 +1,4 @@
-GPUProcess/cocoa/GPUProcessCocoa.mm
 GPUProcess/mac/GPUProcessMac.mm
-GPUProcess/media/RemoteVideoFrameObjectHeap.cpp
-GPUProcess/media/cocoa/RemoteMediaPlayerProxyCocoa.mm
 GPUProcess/webrtc/RemoteSampleBufferDisplayLayer.mm
 GeneratedWebKitSecureCoding.mm
 NetworkProcess/Authentication/cocoa/AuthenticationManagerCocoa.mm
@@ -138,8 +135,6 @@ UIProcess/Cocoa/BrowsingWarningCocoa.mm
 UIProcess/Cocoa/DiagnosticLoggingClient.mm
 UIProcess/Cocoa/FindClient.mm
 UIProcess/Cocoa/GlobalFindInPageState.mm
-UIProcess/Cocoa/GroupActivities/GroupActivitiesCoordinator.mm
-UIProcess/Cocoa/GroupActivities/GroupActivitiesSessionNotifier.mm
 UIProcess/Cocoa/IconLoadingDelegate.mm
 UIProcess/Cocoa/LegacyDownloadClient.mm
 UIProcess/Cocoa/MediaPermissionUtilities.mm
@@ -244,6 +239,7 @@ WebProcess/WebPage/WebPage.cpp
 WebProcess/WebPage/mac/PageBannerMac.mm
 WebProcess/WebPage/mac/TiledCoreAnimationDrawingArea.mm
 WebProcess/WebPage/mac/WebPageMac.mm
+WebProcess/cocoa/IdentityDocumentServices/DigitalCredentialsRequestValidatorBridge.mm
 WebProcess/cocoa/LaunchServicesDatabaseManager.mm
 WebProcess/cocoa/WebProcessCocoa.mm
 webpushd/ApplePushServiceConnection.mm

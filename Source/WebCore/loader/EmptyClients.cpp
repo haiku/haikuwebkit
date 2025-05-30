@@ -263,7 +263,7 @@ class EmptyDragClient final : public DragClient {
     void willPerformDragDestinationAction(DragDestinationAction, const DragData&) final { }
     void willPerformDragSourceAction(DragSourceAction, const IntPoint&, DataTransfer&) final { }
     OptionSet<DragSourceAction> dragSourceActionMaskForPoint(const IntPoint&) final { return { }; }
-    void startDrag(DragItem, DataTransfer&, Frame&) final { }
+    void startDrag(DragItem, DataTransfer&, Frame&, const std::optional<ElementIdentifier>&) final { }
 };
 
 #endif // ENABLE(DRAG_SUPPORT)
@@ -480,7 +480,12 @@ class EmptyCredentialRequestCoordinatorClient final : public CredentialRequestCo
 public:
     EmptyCredentialRequestCoordinatorClient() = default;
 
-    void showDigitalCredentialsPicker(const DigitalCredentialsRequestData&, CompletionHandler<void(Expected<DigitalCredentialsResponseData, ExceptionData>&&)>&& completionHandler)
+    static Ref<EmptyCredentialRequestCoordinatorClient> create()
+    {
+        return adoptRef(*new EmptyCredentialRequestCoordinatorClient);
+    }
+
+    void showDigitalCredentialsPicker(Vector<WebCore::UnvalidatedDigitalCredentialRequest>&&, const DigitalCredentialsRequestData&, CompletionHandler<void(Expected<DigitalCredentialsResponseData, ExceptionData>&&)>&& completionHandler)
     {
         callOnMainThread([completionHandler = WTFMove(completionHandler)]() mutable {
             completionHandler(makeUnexpected(ExceptionData { ExceptionCode::NotSupportedError, "Empty client."_s }));
@@ -492,6 +497,11 @@ public:
         callOnMainThread([completionHandler = WTFMove(completionHandler)]() mutable {
             completionHandler(false);
         });
+    }
+
+    ExceptionOr<Vector<ValidatedDigitalCredentialRequest>> validateAndParseDigitalCredentialRequests(const SecurityOrigin&, const Document&, const Vector<UnvalidatedDigitalCredentialRequest>&)
+    {
+        return Exception { ExceptionCode::InvalidStateError };
     }
 };
 WTF_MAKE_TZONE_ALLOCATED_IMPL(EmptyCredentialRequestCoordinatorClient);
@@ -1240,7 +1250,7 @@ PageConfiguration pageConfigurationWithEmptyClients(std::optional<PageIdentifier
         makeUniqueRef<EmptyCryptoClient>(),
         makeUniqueRef<ProcessSyncClient>()
 #if HAVE(DIGITAL_CREDENTIALS_UI)
-        , makeUniqueRef<EmptyCredentialRequestCoordinatorClient>()
+        , EmptyCredentialRequestCoordinatorClient::create()
 #endif
     };
 

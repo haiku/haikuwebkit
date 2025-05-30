@@ -35,6 +35,7 @@
 #import <WebCore/PlatformScreen.h>
 #import <WebCore/ScreenProperties.h>
 #import <WebCore/WebMAudioUtilitiesCocoa.h>
+#import <algorithm>
 #import <pal/spi/cocoa/CoreServicesSPI.h>
 #import <pal/spi/cocoa/LaunchServicesSPI.h>
 #import <sysexits.h>
@@ -67,7 +68,8 @@ void GPUProcess::updateProcessName()
 {
 #if !PLATFORM(MACCATALYST)
     RetainPtr applicationName = adoptNS([[NSString alloc] initWithFormat:WEB_UI_NSSTRING(@"%@ Graphics and Media", "visible name of the GPU process. The argument is the application name."), m_uiProcessName.createNSString().get()]);
-    auto result = _LSSetApplicationInformationItem(kLSDefaultSessionID, _LSGetCurrentApplicationASN(), _kLSDisplayNameKey, (CFStringRef)applicationName.get(), nullptr);
+    RetainPtr asn = _LSGetCurrentApplicationASN();
+    auto result = _LSSetApplicationInformationItem(kLSDefaultSessionID, asn.get(), _kLSDisplayNameKey, (CFStringRef)applicationName.get(), nullptr);
     ASSERT_UNUSED(result, result == noErr);
 #endif
 }
@@ -97,7 +99,7 @@ void GPUProcess::setScreenProperties(const WebCore::ScreenProperties& screenProp
         return;
     }
 
-    bool allScreensAreHDR = allOf(screenProperties.screenDataMap.values(), [] (auto& screenData) {
+    bool allScreensAreHDR = std::ranges::all_of(screenProperties.screenDataMap.values(), [](auto& screenData) {
         return screenData.screenSupportsHighDynamicRange;
     });
     setShouldOverrideScreenSupportsHighDynamicRange(true, allScreensAreHDR);

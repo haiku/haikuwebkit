@@ -139,6 +139,7 @@
 #include "ScriptDisallowedScope.h"
 #include "ScrollIntoViewOptions.h"
 #include "ScrollLatchingController.h"
+#include "ScrollToOptions.h"
 #include "SecurityPolicyViolationEvent.h"
 #include "SelectorQuery.h"
 #include "Settings.h"
@@ -2616,9 +2617,9 @@ Style::Resolver& Element::styleResolver()
     return document().checkedStyleScope()->resolver();
 }
 
-Style::ResolvedStyle Element::resolveStyle(const Style::ResolutionContext& resolutionContext)
+Style::UnadjustedStyle Element::resolveStyle(const Style::ResolutionContext& resolutionContext)
 {
-    return styleResolver().styleForElement(*this, resolutionContext);
+    return styleResolver().unadjustedStyleForElement(*this, resolutionContext);
 }
 
 void invalidateForSiblingCombinators(Element* sibling)
@@ -2906,9 +2907,13 @@ void Element::updateEffectiveLangStateFromParent()
     }
 
     setEffectiveLangKnownToMatchDocumentElement(parent->effectiveLangKnownToMatchDocumentElement());
-    if (UNLIKELY(parent->hasRareData()) && !parent->elementRareData()->effectiveLang().isNull())
-        ensureElementRareData().setEffectiveLang(parent->elementRareData()->effectiveLang());
-    else if (hasRareData())
+    if (parent->hasRareData()) [[unlikely]] {
+        if (!parent->elementRareData()->effectiveLang().isNull()) {
+            ensureElementRareData().setEffectiveLang(parent->elementRareData()->effectiveLang());
+            return;
+        }
+    }
+    if (hasRareData())
         elementRareData()->setEffectiveLang(nullAtom());
 }
 
@@ -3075,7 +3080,13 @@ void Element::setEffectiveLangStateOnOldDocumentElement()
 
 bool Element::hasEffectiveLangState() const
 {
-    return effectiveLangKnownToMatchDocumentElement() || (UNLIKELY(hasRareData()) && !elementRareData()->effectiveLang().isNull());
+    if (effectiveLangKnownToMatchDocumentElement())
+        return true;
+
+    if (hasRareData()) [[unlikely]]
+        return !elementRareData()->effectiveLang().isNull();
+
+    return false;
 }
 
 void Element::removedFromAncestor(RemovalType removalType, ContainerNode& oldParentOfRemovedTree)
@@ -5052,6 +5063,11 @@ IntersectionObserverData* Element::intersectionObserverDataIfExists()
     return hasRareData() ? elementRareData()->intersectionObserverData() : nullptr;
 }
 
+bool Element::mayHaveKeyframeEffects() const
+{
+    return hasRareData() && elementRareData()->hasAnimationRareData();
+}
+
 ElementAnimationRareData* Element::animationRareData(const std::optional<Style::PseudoElementIdentifier>& pseudoElementIdentifier) const
 {
     return hasRareData() ? elementRareData()->animationRareData(pseudoElementIdentifier) : nullptr;
@@ -5641,7 +5657,7 @@ void Element::didDetachRenderers()
     ASSERT(hasCustomStyleResolveCallbacks());
 }
 
-std::optional<Style::ResolvedStyle> Element::resolveCustomStyle(const Style::ResolutionContext&, const RenderStyle*)
+std::optional<Style::UnadjustedStyle> Element::resolveCustomStyle(const Style::ResolutionContext&, const RenderStyle*)
 {
     ASSERT(hasCustomStyleResolveCallbacks());
     return std::nullopt;
@@ -5978,7 +5994,7 @@ Vector<RefPtr<WebAnimation>> Element::getAnimations(std::optional<GetAnimationsO
     // For the list of animations to be current, we need to account for any pending CSS changes,
     // such as updates to CSS Animations and CSS Transitions. This requires updating layout as
     // well since resolving layout-dependent media queries could yield animations.
-    // FIXME: We might be able to use ComputedStyleExtractor which is more optimized.
+    // FIXME: We might be able to use Style::Extractor which is more optimized.
     if (RefPtr owner = document->ownerElement())
         owner->protectedDocument()->updateLayout();
     document->updateStyleIfNeeded();

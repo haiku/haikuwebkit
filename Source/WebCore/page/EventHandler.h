@@ -27,6 +27,7 @@
 
 #include "Cursor.h"
 #include "DragActions.h"
+#include "ElementIdentifier.h"
 #include "FocusDirection.h"
 #include "HitTestRequest.h"
 #include "ImmediateActionStage.h"
@@ -91,6 +92,7 @@ class PlatformKeyboardEvent;
 class PlatformTouchEvent;
 class PlatformWheelEvent;
 class RemoteFrame;
+class RemoteFrameGeometryTransformer;
 class RenderBox;
 class RenderElement;
 class RenderEmbeddedObject;
@@ -121,7 +123,6 @@ extern const int ImageDragHysteresis;
 extern const int TextDragHysteresis;
 extern const int ColorDragHystersis;
 extern const int GeneralDragHysteresis;
-enum class DragStartRequestResult : uint8_t;
 #endif
 
 #if ENABLE(IOS_GESTURE_EVENTS) || ENABLE(MAC_GESTURE_EVENTS)
@@ -341,7 +342,7 @@ public:
 #endif
 
 #if ENABLE(TOUCH_EVENTS)
-    WEBCORE_EXPORT HandleUserInputEventResult handleTouchEvent(const PlatformTouchEvent&);
+    WEBCORE_EXPORT Expected<bool, RemoteFrameGeometryTransformer> handleTouchEvent(const PlatformTouchEvent&);
 #endif
 
     bool useHandCursor(Node*, bool isOverLink, bool shiftKey);
@@ -366,7 +367,7 @@ public:
 #endif
 
 #if PLATFORM(IOS_FAMILY) && ENABLE(DRAG_SUPPORT)
-    WEBCORE_EXPORT DragStartRequestResult tryToBeginDragAtPoint(const IntPoint& clientPosition, const IntPoint& globalPosition);
+    WEBCORE_EXPORT void tryToBeginDragAtPoint(const IntPoint& clientPosition, const IntPoint& globalPosition, CompletionHandler<void(Expected<bool, RemoteFrameGeometryTransformer>)>&&);
 #endif
     
 #if PLATFORM(IOS_FAMILY)
@@ -463,7 +464,7 @@ private:
     bool isInsideScrollbar(const IntPoint&) const;
 
 #if ENABLE(TOUCH_EVENTS)
-    HandleUserInputEventResult dispatchSyntheticTouchEventIfEnabled(const PlatformMouseEvent&);
+    bool dispatchSyntheticTouchEventIfEnabled(const PlatformMouseEvent&);
 #endif
     
     enum class FireMouseOverOut : bool { No, Yes };
@@ -622,6 +623,7 @@ private:
     bool mouseDownMayStartSelect() const;
 
     std::optional<RemoteUserInputEventData> userInputEventDataForRemoteFrame(const RemoteFrame*, const IntPoint&);
+    std::optional<RemoteFrameGeometryTransformer> geometryTransformerForRemoteFrame(RemoteFrame*);
 
     bool isCapturingMouseEventsElement() const { return m_capturingMouseEventsElement || m_isCapturingRootElementForMouseEvents; }
     void resetCapturingMouseEventsElement();

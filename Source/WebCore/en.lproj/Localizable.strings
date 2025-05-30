@@ -178,9 +178,6 @@
 /* Allow button title in speech recognition prompt */
 "Allow (speechrecognition)" = "Allow";
 
-/* Allow displaying QuickLook Preview of 3D model */
-"Allow (usdz QuickLook Preview)" = "Allow";
-
 /* Allow button title in user media prompt */
 "Allow (usermedia)" = "Allow";
 
@@ -1135,9 +1132,6 @@
 /* Title for Open in External Application Link action button */
 "Open in “%@”" = "Open in “%@”";
 
-/* Open this 3D model? */
-"Open this 3D model?" = "Open this 3D model?";
-
 /* context menu item for PDF */
 "Open with %@" = "Open with %@";
 
@@ -1249,6 +1243,9 @@
 /* VP8/9 Codec Level & Profile (Codec Strings) */
 "Profile %d, Level %s" = "Profile %d, Level %s";
 
+/* Proofread context menu item */
+"Proofread" = "Proofread";
+
 /* Undo action name */
 "Raise Baseline (Undo action name)" = "Raise Baseline";
 
@@ -1281,6 +1278,9 @@
 
 /* Reset button in date input context menu */
 "Reset Button Date/Time Context Menu" = "Reset";
+
+/* Rewrite context menu item */
+"Rewrite" = "Rewrite";
 
 /* Right to Left context menu item */
 "Right to Left" = "Right to Left";
@@ -1369,6 +1369,9 @@
 /* Title for Show Text action button */
 "Show Text" = "Show Text";
 
+/* Writing Tools context menu item */
+"Show Writing Tools" = "Show Writing Tools";
+
 /* Single Page context menu item */
 "Single Page" = "Single Page";
 
@@ -1452,6 +1455,9 @@
 
 /* Accessibility announcement that the suggestions list became visible. The format argument is for the first option in the list. */
 "Suggestions list visible, %@" = "Suggestions list visible, %@";
+
+/* Summarize context menu item */
+"Summarize" = "Summarize";
 
 /* Undo action name */
 "Superscript (Undo action name)" = "Superscript";
@@ -1714,6 +1720,15 @@
 /* Title for View Immersive action button while in fullscreen */
 "View Immersive" = "View Immersive";
 
+/* Allow displaying QuickLook Preview of 3D model */
+"View in AR (usdz QuickLook Preview)" = "View in AR";
+
+/* View in AR? */
+"View in AR?" = "View in AR?";
+
+/* View in AR? description */
+"You can view this object in 3D and place it in your surroundings using augmented reality." = "You can view this object in 3D and place it in your surroundings using augmented reality.";
+
 /* Title for View Spatial Photo action button */
 "View Spatial Photo" = "View Spatial Photo";
 
@@ -1893,6 +1908,9 @@
 
 /* accessibility role description for a footer */
 "footer" = "footer";
+
+/* accessibility role description for a form */
+ "form" = "form";
 
 /* Web Push Notification string to indicate the name of the Web App/Web Site a notification was sent from, such as 'from Wikipedia' */
 "from %@" = "from %@";

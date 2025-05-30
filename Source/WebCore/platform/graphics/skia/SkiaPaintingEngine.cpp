@@ -239,7 +239,7 @@ Ref<SkiaRecordingResult> SkiaPaintingEngine::record(const GraphicsLayer& layer, 
     // ### Asynchronous rendering on worker threads ###
     ASSERT(useThreadedRendering());
 
-    auto renderingMode = canPerformAcceleratedRendering() ? RenderingMode::Accelerated : RenderingMode::Unaccelerated;
+    auto renderingMode = (m_gpuWorkerPool && canPerformAcceleratedRendering()) ? RenderingMode::Accelerated : RenderingMode::Unaccelerated;
 
     WTFBeginSignpost(this, RecordTile);
     SkPictureRecorder pictureRecorder;
@@ -408,6 +408,22 @@ SkiaPaintingEngine::HybridPaintingStrategy SkiaPaintingEngine::hybridPaintingStr
     });
 
     return strategy;
+}
+
+bool SkiaPaintingEngine::shouldUseLinearTileTextures()
+{
+    static std::once_flag onceFlag;
+    static bool shouldUseLinearTextures = false;
+
+    std::call_once(onceFlag, [] {
+        if (const char* envString = getenv("WEBKIT_SKIA_USE_LINEAR_TILE_TEXTURES")) {
+            auto envStringView = StringView::fromLatin1(envString);
+            if (envStringView == "1"_s)
+                shouldUseLinearTextures = true;
+        }
+    });
+
+    return shouldUseLinearTextures;
 }
 
 } // namespace WebCore

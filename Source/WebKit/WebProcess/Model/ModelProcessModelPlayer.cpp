@@ -40,6 +40,7 @@
 #include <WebCore/ModelPlayerAnimationState.h>
 #include <WebCore/Page.h>
 #include <WebCore/ResourceError.h>
+#include <WebCore/Settings.h>
 #include <WebCore/TransformationMatrix.h>
 
 namespace WebKit {
@@ -156,9 +157,41 @@ void ModelProcessModelPlayer::load(WebCore::Model& model, WebCore::LayoutSize si
     send(Messages::ModelProcessModelPlayerProxy::LoadModel(model, size));
 }
 
+void ModelProcessModelPlayer::didUnload()
+{
+    RELEASE_ASSERT(modelProcessEnabled());
+    RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayer unload model id=%" PRIu64, this, m_id.toUInt64());
+
+    if (m_client)
+        m_client->didUnload(*this);
+}
+
+void ModelProcessModelPlayer::reload(WebCore::Model& model, WebCore::LayoutSize size, WebCore::ModelPlayerAnimationState& animationState, std::unique_ptr<WebCore::ModelPlayerTransformState>&& transformState)
+{
+    RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayer reload model id=%" PRIu64, this, m_id.toUInt64());
+
+    auto transformStateToRestore = WTFMove(transformState);
+    ASSERT(transformStateToRestore);
+    m_entityTransform = transformStateToRestore->entityTransform();
+    m_boundingBoxCenter = transformStateToRestore->boundingBoxCenter();
+    m_boundingBoxExtents = transformStateToRestore->boundingBoxExtents();
+    setHasPortal(transformStateToRestore->hasPortal());
+    setStageMode(transformStateToRestore->stageMode());
+    m_animationState = WebCore::ModelPlayerAnimationState(animationState);
+    send(Messages::ModelProcessModelPlayerProxy::ReloadModel(model, size, transformStateToRestore->entityTransform(), animationState));
+}
+
+void ModelProcessModelPlayer::visibilityStateDidChange()
+{
+    if (!m_client)
+        return;
+
+    send(Messages::ModelProcessModelPlayerProxy::ModelVisibilityDidChange(m_client->isVisible()));
+}
+
 void ModelProcessModelPlayer::sizeDidChange(WebCore::LayoutSize size)
 {
-    RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayer size did change to w=%f h=%f id=%" PRIu64, this, size.width().toFloat(), size.height().toFloat(), m_id.toUInt64());
+    RELEASE_LOG_INFO(ModelElement, "%p - ModelProcessModelPlayer size did change to w=%f h=%f id=%" PRIu64, this, size.width().toFloat(), size.height().toFloat(), m_id.toUInt64());
     send(Messages::ModelProcessModelPlayerProxy::SizeDidChange(size));
 }
 
@@ -386,10 +419,19 @@ void ModelProcessModelPlayer::endStageModeInteraction()
     send(Messages::ModelProcessModelPlayerProxy::EndStageModeInteraction());
 }
 
-void ModelProcessModelPlayer::renderingAbruptlyStopped()
+void ModelProcessModelPlayer::animateModelToFitPortal(CompletionHandler<void(bool)>&& completionHandler)
 {
-    if (m_client)
-        m_client->renderingAbruptlyStopped();
+    sendWithAsyncReply(Messages::ModelProcessModelPlayerProxy::AnimateModelToFitPortal(), WTFMove(completionHandler));
+}
+
+void ModelProcessModelPlayer::resetModelTransformAfterDrag()
+{
+    send(Messages::ModelProcessModelPlayerProxy::ResetModelTransformAfterDrag());
+}
+
+void ModelProcessModelPlayer::disableUnloadDelayForTesting()
+{
+    send(Messages::ModelProcessModelPlayerProxy::DisableUnloadDelayForTesting());
 }
 
 }

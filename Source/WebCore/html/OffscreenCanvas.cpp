@@ -167,7 +167,7 @@ static bool requiresAcceleratedCompositingForWebGL()
 #endif
 }
 
-static bool shouldEnableWebGL(const Settings::Values& settings, bool isWorker)
+static bool shouldEnableWebGL(const SettingsValues& settings, bool isWorker)
 {
     if (!settings.webGLEnabled)
         return false;
@@ -462,7 +462,7 @@ void OffscreenCanvas::queueTaskKeepingObjectAlive(TaskSource source, Function<vo
 
 void OffscreenCanvas::dispatchEvent(Event& event)
 {
-    EventDispatcher::dispatchEvent({ this }, event);
+    EventDispatcher::dispatchEvent(std::initializer_list<EventTarget*>({ this }), event);
 }
 
 std::unique_ptr<CSSParserContext> OffscreenCanvas::createCSSParserContext() const

@@ -29,10 +29,10 @@
 #include "HTTPParsers.h"
 #include "JSDOMPromise.h"
 #include "JSDOMPromiseDeferred.h"
+#include "ScriptExecutionContextInlines.h"
 #include "ServiceWorkerGlobalScope.h"
 #include "ServiceWorkerRoute.h"
 #include "WorkerSWClientConnection.h"
-#include <wtf/Algorithms.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebCore {

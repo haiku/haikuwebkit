@@ -68,7 +68,7 @@ public:
     // metrics and defaults given the contents of the style.  This includes sophisticated operations like
     // selection of control size based off the font, the disabling of appearance when CSS properties that
     // disable native appearance are set, or if the appearance is not supported by the theme.
-    void adjustStyle(RenderStyle&, const Element*, const RenderStyle* userAgentAppearanceStyle);
+    void adjustStyle(RenderStyle&, const RenderStyle& parentStyle, const Element*);
 
     virtual bool canCreateControlPartForRenderer(const RenderObject&) const { return false; }
     virtual bool canCreateControlPartForBorderOnly(const RenderObject&) const { return false; }
@@ -83,11 +83,11 @@ public:
     bool paint(const RenderBox&, ControlPart&, const PaintInfo&, const LayoutRect&);
     bool paint(const RenderBox&, const PaintInfo&, const LayoutRect&);
     
-    bool paintBorderOnly(const RenderBox&, const PaintInfo&, const LayoutRect&);
+    bool paintBorderOnly(const RenderBox&, const PaintInfo&);
     void paintDecorations(const RenderBox&, const PaintInfo&, const LayoutRect&);
 
     // The remaining methods should be implemented by the platform-specific portion of the theme, e.g.,
-    // RenderThemeMac.cpp for Mac OS X.
+    // RenderThemeMac.cpp for macOS.
 
     virtual String extraDefaultStyleSheet() { return String(); }
 #if ENABLE(VIDEO)
@@ -115,12 +115,12 @@ public:
     virtual bool controlSupportsTints(const RenderObject&) const { return false; }
 
     // Whether or not the control has been styled enough by the author to disable the native appearance.
-    virtual bool isControlStyled(const RenderStyle&, const RenderStyle& userAgentStyle) const;
+    virtual bool isControlStyled(const RenderStyle&) const;
 
     // A general method asking if any control tinting is supported at all.
     virtual bool supportsControlTints() const { return false; }
 
-    // Some controls may spill out of their containers (e.g., the check on an OS X checkbox).  When these controls repaint,
+    // Some controls may spill out of their containers (e.g., the check on a macOS checkbox). When these controls repaint,
     // the theme needs to communicate this inflated rect to the engine so that it can invalidate the whole control.
     virtual void inflateRectForControlRenderer(const RenderObject&, FloatRect&) { }
     virtual void adjustRepaintRect(const RenderBox&, FloatRect&) { }
@@ -246,6 +246,12 @@ public:
 
     virtual void paintPlatformResizer(const RenderLayerModelObject&, GraphicsContext&, const LayoutRect&);
     virtual void paintPlatformResizerFrame(const RenderLayerModelObject&, GraphicsContext&, const LayoutRect&);
+
+    static bool hasAppearanceForElementTypeFromUAStyle(const Element&);
+
+    virtual void adjustTextControlInnerContainerStyle(RenderStyle&, const RenderStyle&, const Element*) const { }
+    virtual void adjustTextControlInnerPlaceholderStyle(RenderStyle&, const RenderStyle&, const Element*) const { }
+    virtual void adjustTextControlInnerTextStyle(RenderStyle&, const RenderStyle&, const Element*) const { }
 
 protected:
     ControlStyle extractControlStyleForRenderer(const RenderObject&) const;
@@ -424,7 +430,7 @@ protected:
 
 private:
     StyleAppearance autoAppearanceForElement(RenderStyle&, const Element*) const;
-    StyleAppearance adjustAppearanceForElement(RenderStyle&, const Element*, StyleAppearance) const;
+    StyleAppearance adjustAppearanceForElement(RenderStyle&, const RenderStyle& parentStyle, const Element*, StyleAppearance) const;
 
     Color spellingMarkerColor(OptionSet<StyleColorOptions>) const;
     Color dictationAlternativesMarkerColor(OptionSet<StyleColorOptions>) const;

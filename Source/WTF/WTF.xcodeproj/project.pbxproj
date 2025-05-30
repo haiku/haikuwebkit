@@ -133,6 +133,7 @@
 		53CAC0632C6FBD8200B1A77C /* ScopedPrintStream.h in Headers */ = {isa = PBXBuildFile; fileRef = 53CAC0622C6FBD8200B1A77C /* ScopedPrintStream.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		53F202252CAB267000A33D14 /* TaggedPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 53F202242CAB267000A33D14 /* TaggedPtr.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		53FC70D023FB950C005B1990 /* OSLogPrintStream.mm in Sources */ = {isa = PBXBuildFile; fileRef = 53FC70CF23FB950C005B1990 /* OSLogPrintStream.mm */; };
+		5C12460E2DC25A130077D423 /* SwiftCXXThunk.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C12460D2DC25A130077D423 /* SwiftCXXThunk.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		5C1F05932164356B0039302C /* CFURLExtras.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C1F05912164356B0039302C /* CFURLExtras.cpp */; };
 		5C1F0595216437B30039302C /* URLCF.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5C1F0594216437B30039302C /* URLCF.cpp */; };
 		5C6552C029423F85008CD0F3 /* ThreadSafeWeakHashSet.h in Headers */ = {isa = PBXBuildFile; fileRef = 5C6552BF29423F85008CD0F3 /* ThreadSafeWeakHashSet.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -511,7 +512,6 @@
 		DD3DC95D27A4BF8E007E5B61 /* ForbidHeapAllocation.h in Headers */ = {isa = PBXBuildFile; fileRef = FE86A8741E59440200111BBF /* ForbidHeapAllocation.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC95E27A4BF8E007E5B61 /* LoggingHashMap.h in Headers */ = {isa = PBXBuildFile; fileRef = 0F30BA8D1E78708E002CA847 /* LoggingHashMap.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC95F27A4BF8E007E5B61 /* WeakObjCPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = 83ABB3C020B3823200BA3306 /* WeakObjCPtr.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		DD3DC96027A4BF8E007E5B61 /* Algorithms.h in Headers */ = {isa = PBXBuildFile; fileRef = CD6D9FCD1EEF3AD4008B0671 /* Algorithms.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC96127A4BF8E007E5B61 /* NoTailCalls.h in Headers */ = {isa = PBXBuildFile; fileRef = 526AEC911F6B4E5C00695F5D /* NoTailCalls.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC96227A4BF8E007E5B61 /* NakedPtr.h in Headers */ = {isa = PBXBuildFile; fileRef = FE8225301B2A1E5B00BA68FD /* NakedPtr.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		DD3DC96427A4BF8E007E5B61 /* CrossThreadTask.h in Headers */ = {isa = PBXBuildFile; fileRef = 515F794D1CFC9F4A00CCED93 /* CrossThreadTask.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -929,7 +929,7 @@
 		FE1E2C42224187C600F6B729 /* PlatformRegisters.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE1E2C41224187C600F6B729 /* PlatformRegisters.cpp */; };
 		FE35D09227DC5ECC009DFA5B /* StackCheck.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE35D09127DC5ECC009DFA5B /* StackCheck.cpp */; };
 		FE499A6F2CD153B000E34F32 /* OverflowPolicy.h in Headers */ = {isa = PBXBuildFile; fileRef = FE499A6E2CD153B000E34F32 /* OverflowPolicy.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		FE6997E129D241630078B9C6 /* AbortWithReasonSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = FE6997E029D241630078B9C6 /* AbortWithReasonSPI.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		FE6997E129D241630078B9C6 /* ReasonSPI.h in Headers */ = {isa = PBXBuildFile; fileRef = FE6997E029D241630078B9C6 /* ReasonSPI.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		FE7ACFEF285DC2F9007FC8E9 /* RawHex.h in Headers */ = {isa = PBXBuildFile; fileRef = FE7ACFEE285DC2F8007FC8E9 /* RawHex.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		FE9B8B1A28B1453D0088C6E1 /* CodePtr.h in Headers */ = {isa = PBXBuildFile; fileRef = FE9B8B1928B1453D0088C6E1 /* CodePtr.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		FE9B8B1E28B1B1C70088C6E1 /* CodePtr.cpp in Sources */ = {isa = PBXBuildFile; fileRef = FE9B8B1D28B1B1C60088C6E1 /* CodePtr.cpp */; };
@@ -1338,6 +1338,7 @@
 		553071C91C40427200384898 /* TinyLRUCache.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TinyLRUCache.h; sourceTree = "<group>"; };
 		5597F82C1D94B9970066BC21 /* SynchronizedFixedQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SynchronizedFixedQueue.h; sourceTree = "<group>"; };
 		5B43383A5D0B463C9433D933 /* IndexMap.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = IndexMap.h; sourceTree = "<group>"; };
+		5C12460D2DC25A130077D423 /* SwiftCXXThunk.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SwiftCXXThunk.h; sourceTree = "<group>"; };
 		5C1F05912164356B0039302C /* CFURLExtras.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = CFURLExtras.cpp; sourceTree = "<group>"; };
 		5C1F05922164356B0039302C /* CFURLExtras.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = CFURLExtras.h; sourceTree = "<group>"; };
 		5C1F0594216437B30039302C /* URLCF.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = URLCF.cpp; sourceTree = "<group>"; };
@@ -1646,7 +1647,6 @@
 		CD48A87024C8A21600F5800C /* Observer.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Observer.h; sourceTree = "<group>"; };
 		CD5497AA15857D0300B5BC30 /* MediaTime.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MediaTime.cpp; sourceTree = "<group>"; };
 		CD5497AB15857D0300B5BC30 /* MediaTime.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MediaTime.h; sourceTree = "<group>"; };
-		CD6D9FCD1EEF3AD4008B0671 /* Algorithms.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = Algorithms.h; sourceTree = "<group>"; };
 		CDCC9BC422382FCE00FFB51C /* AggregateLogger.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AggregateLogger.h; path = wtf/AggregateLogger.h; sourceTree = SOURCE_ROOT; };
 		CE1132832370634900A8C83B /* AnsiColors.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AnsiColors.h; sourceTree = "<group>"; };
 		CEA072A8236FFBF70018839C /* CrashReporter.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CrashReporter.h; sourceTree = "<group>"; };
@@ -1985,7 +1985,7 @@
 		FE35D09127DC5ECC009DFA5B /* StackCheck.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = StackCheck.cpp; sourceTree = "<group>"; };
 		FE3842342325CC80009DD445 /* ResourceUsage.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ResourceUsage.h; sourceTree = "<group>"; };
 		FE499A6E2CD153B000E34F32 /* OverflowPolicy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = OverflowPolicy.h; sourceTree = "<group>"; };
-		FE6997E029D241630078B9C6 /* AbortWithReasonSPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AbortWithReasonSPI.h; sourceTree = "<group>"; };
+		FE6997E029D241630078B9C6 /* ReasonSPI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ReasonSPI.h; sourceTree = "<group>"; };
 		FE7497E4208FFCAA0003565B /* PtrTag.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PtrTag.h; sourceTree = "<group>"; };
 		FE7ACFEE285DC2F8007FC8E9 /* RawHex.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = RawHex.h; sourceTree = "<group>"; };
 		FE8225301B2A1E5B00BA68FD /* NakedPtr.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = NakedPtr.h; sourceTree = "<group>"; };
@@ -2211,7 +2211,6 @@
 				5363861E2CFE391C0034E883 /* AbstractThreadSafeRefCountedAndCanMakeWeakPtr.h */,
 				E3B8E6012961EA7600A8AEE3 /* AccessibleAddress.h */,
 				CDCC9BC422382FCE00FFB51C /* AggregateLogger.h */,
-				CD6D9FCD1EEF3AD4008B0671 /* Algorithms.h */,
 				466E7A792D66E57E0096FDA4 /* AlignedStorage.h */,
 				CE1132832370634900A8C83B /* AnsiColors.h */,
 				E37E96522702AD0700E1C36A /* ApproximateTime.cpp */,
@@ -2629,6 +2628,7 @@
 				E3260E972DA0E508003FC93F /* StructDump.h */,
 				93B07ED726B8715B00A09B34 /* SuspendableWorkQueue.cpp */,
 				93B07ED626B86BB500A09B34 /* SuspendableWorkQueue.h */,
+				5C12460D2DC25A130077D423 /* SwiftCXXThunk.h */,
 				5597F82C1D94B9970066BC21 /* SynchronizedFixedQueue.h */,
 				E3E158251EADA53C004A079D /* SystemFree.h */,
 				E4D2AE4D268A4C7F00DFEA02 /* SystemMalloc.h */,
@@ -3160,13 +3160,13 @@
 		DDF306CF27C08654006A526F /* darwin */ = {
 			isa = PBXGroup;
 			children = (
-				FE6997E029D241630078B9C6 /* AbortWithReasonSPI.h */,
 				DDF306D727C08654006A526F /* CodeSignSPI.h */,
 				DDF306D527C08654006A526F /* DataVaultSPI.h */,
 				DDF306D327C08654006A526F /* DispatchSPI.h */,
 				DDF306D227C08654006A526F /* dyldSPI.h */,
 				DDF306D027C08654006A526F /* OSVariantSPI.h */,
 				DDF306D427C08654006A526F /* ProcessMemoryFootprint.h */,
+				FE6997E029D241630078B9C6 /* ReasonSPI.h */,
 				DDF306D127C08654006A526F /* SandboxSPI.h */,
 				DDF306D627C08654006A526F /* XPCSPI.h */,
 			);
@@ -3310,14 +3310,12 @@
 			isa = PBXHeadersBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				FE6997E129D241630078B9C6 /* AbortWithReasonSPI.h in Headers */,
 				144EB7462CBC94B100926E1B /* AbstractRefCounted.h in Headers */,
 				1404B3E52CBC954D00A7471C /* AbstractRefCountedAndCanMakeWeakPtr.h in Headers */,
 				5363861F2CFE391C0034E883 /* AbstractThreadSafeRefCountedAndCanMakeWeakPtr.h in Headers */,
 				E3B8E6032961EA7600A8AEE3 /* AccessibleAddress.h in Headers */,
 				E383AAC92B6C730B00058E60 /* AdaptiveStringSearcher.h in Headers */,
 				DD3DC8FA27A4BF8E007E5B61 /* AggregateLogger.h in Headers */,
-				DD3DC96027A4BF8E007E5B61 /* Algorithms.h in Headers */,
 				466E7A7A2D66E57E0096FDA4 /* AlignedStorage.h in Headers */,
 				DD3DC99627A4BF8E007E5B61 /* AnsiColors.h in Headers */,
 				DD3DC92527A4BF8E007E5B61 /* ApproximateTime.h in Headers */,
@@ -3655,6 +3653,7 @@
 				DD3DC99027A4BF8E007E5B61 /* RawPtrTraits.h in Headers */,
 				DD3DC91427A4BF8E007E5B61 /* RawValueTraits.h in Headers */,
 				DD3DC89D27A4BF8E007E5B61 /* ReadWriteLock.h in Headers */,
+				FE6997E129D241630078B9C6 /* ReasonSPI.h in Headers */,
 				DD3DC8EC27A4BF8E007E5B61 /* RecursableLambda.h in Headers */,
 				DD3DC91827A4BF8E007E5B61 /* RecursiveLockAdapter.h in Headers */,
 				DD3DC94127A4BF8E007E5B61 /* RedBlackTree.h in Headers */,
@@ -3762,6 +3761,7 @@
 				FF8CB4012A88C0D3004AF498 /* SuperFastHash.h in Headers */,
 				DD3DC89A27A4BF8E007E5B61 /* SuspendableWorkQueue.h in Headers */,
 				E396C11E2BE885D9000CBAE1 /* sve.h in Headers */,
+				5C12460E2DC25A130077D423 /* SwiftCXXThunk.h in Headers */,
 				DDF307DA27C086DF006A526F /* SymbolImpl.h in Headers */,
 				DDF307EC27C086DF006A526F /* SymbolRegistry.h in Headers */,
 				DD3DC86727A4BF8E007E5B61 /* SynchronizedFixedQueue.h in Headers */,

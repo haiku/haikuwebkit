@@ -30,6 +30,7 @@
 
 #import "AddEventListenerOptions.h"
 #import "DocumentFullscreen.h"
+#import "DocumentInlines.h"
 #import "Event.h"
 #import "EventListener.h"
 #import "EventNames.h"
@@ -44,6 +45,7 @@
 #import "PlaybackSessionModelMediaElement.h"
 #import "TextTrackList.h"
 #import "TimeRanges.h"
+#import "UserGestureIndicator.h"
 #import <QuartzCore/CoreAnimation.h>
 #import <wtf/LoggerHelper.h>
 #import <wtf/NeverDestroyed.h>

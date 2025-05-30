@@ -28,6 +28,7 @@
 
 #include "CryptoAlgorithmHkdfParams.h"
 #include "CryptoKeyRaw.h"
+#include "ExceptionOr.h"
 #include "OpenSSLUtilities.h"
 #if PLATFORM(HAIKU)
 #include <openssl/evp.h>

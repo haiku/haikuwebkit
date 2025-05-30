@@ -26,12 +26,12 @@
 
 #pragma once
 
-#include "Base64Utilities.h"
 #include "CacheStorageConnection.h"
 #include "ClientOrigin.h"
 #include "ImageBitmap.h"
 #include "ReportingClient.h"
 #include "ScriptExecutionContext.h"
+#include "Settings.h"
 #include "Supplementable.h"
 #include "WindowOrWorkerGlobalScope.h"
 #include "WorkerOrWorkletGlobalScope.h"
@@ -81,7 +81,7 @@ namespace IDBClient {
 class IDBConnectionProxy;
 }
 
-class WorkerGlobalScope : public Supplementable<WorkerGlobalScope>, public Base64Utilities, public WindowOrWorkerGlobalScope, public WorkerOrWorkletGlobalScope, public ReportingClient {
+class WorkerGlobalScope : public Supplementable<WorkerGlobalScope>, public WindowOrWorkerGlobalScope, public WorkerOrWorkletGlobalScope, public ReportingClient {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WorkerGlobalScope);
 public:
     virtual ~WorkerGlobalScope();
@@ -161,7 +161,7 @@ public:
     std::unique_ptr<FontLoadRequest> fontLoadRequest(const String& url, bool isSVG, bool isInitiatingElementInUserAgentShadowTree, LoadedFromOpaqueSource) final;
     void beginLoadingFontSoon(FontLoadRequest&) final;
 
-    const Settings::Values& settingsValues() const final { return m_settingsValues; }
+    const SettingsValues& settingsValues() const final { return m_settingsValues; }
 
     FetchOptions::Credentials credentials() const { return m_credentials; }
 
@@ -214,7 +214,7 @@ private:
     // ReportingClient.
     void notifyReportObservers(Ref<Report>&&) final;
     String endpointURIForToken(const String&) const final;
-    void sendReportToEndpoints(const URL& baseURL, const Vector<String>& endpointURIs, const Vector<String>& endpointTokens, Ref<FormData>&& report, ViolationReportType) final;
+    void sendReportToEndpoints(const URL& baseURL, std::span<const String> endpointURIs, std::span<const String> endpointTokens, Ref<FormData>&& report, ViolationReportType) final;
     String httpUserAgent() const final { return m_userAgent; }
 
     URL m_url;
@@ -247,7 +247,7 @@ private:
     std::unique_ptr<CSSValuePool> m_cssValuePool;
     std::unique_ptr<WorkerClient> m_workerClient;
     RefPtr<CSSFontSelector> m_cssFontSelector;
-    Settings::Values m_settingsValues;
+    SettingsValues m_settingsValues;
     WorkerType m_workerType;
     FetchOptions::Credentials m_credentials;
     RefPtr<WorkerStorageConnection> m_storageConnection;

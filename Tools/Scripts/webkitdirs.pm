@@ -182,17 +182,18 @@ BEGIN {
        &setXcodeSDK
        &setupMacWebKitEnvironment
        &setupUnixWebKitEnvironment
-       &setupWindowsWebKitEnvironment
        &sharedCommandLineOptions
        &sharedCommandLineOptionsUsage
        &shouldBuild32Bit
        &shouldBuildForCrossTarget
        &shouldUseFlatpak
+       &shouldUseVcpkg
        &sourceDir
        &splitVersionString
        &tsanIsEnabled
        &ubsanIsEnabled
        &usesCryptexPath
+       &vcpkgArgsFromFeatures
        &willUseAppleTVDeviceSDK
        &willUseAppleTVSimulatorSDK
        &willUseIOSDeviceSDK
@@ -2324,11 +2325,6 @@ sub windowsSourceSourceDir()
     return File::Spec->catdir(windowsSourceDir(), "Source");
 }
 
-sub windowsLibrariesDir()
-{
-    return File::Spec->catdir(windowsSourceDir(), "WebKitLibraries", "win");
-}
-
 sub windowsOutputDir()
 {
     return File::Spec->catdir(windowsSourceDir(), "WebKitBuild");
@@ -2351,7 +2347,6 @@ sub setupCygwinEnv()
 
     print "Building results into: ", baseProductDir(), "\n";
     print "WEBKIT_OUTPUTDIR is set to: ", $ENV{"WEBKIT_OUTPUTDIR"}, "\n";
-    print "WEBKIT_LIBRARIES is set to: ", $ENV{"WEBKIT_LIBRARIES"}, "\n";
 
     # We will actually use MSBuild to build WebKit, but we need to find the Visual Studio install (above) to make
     # sure we use the right options.
@@ -2503,13 +2498,20 @@ sub isCachedArgumentfileOutOfDate($@)
     }
 
     open(CONTENTS_FILE, $filename);
+    local $/; # Slurp whole input file at once.
     chomp(my $previousContents = <CONTENTS_FILE> || "");
     close(CONTENTS_FILE);
 
-    if ($previousContents ne $currentContents) {
-        print "Contents for file $filename have changed.\n";
-        print "Previous contents were: $previousContents\n\n";
-        print "New contents are: $currentContents\n";
+    my %old_lines = map { $_ => 1 } split /\n/, $previousContents;
+    my %new_lines = map { $_ => 1 } split /\n/, $currentContents;
+
+    my @removed = sort grep { !exists $new_lines{$_} } keys %old_lines;
+    my @added   = sort grep { !exists $old_lines{$_} } keys %new_lines;
+
+    if (@removed or @added) {
+        print "Contents for file $filename have changed:\n";
+        print "- $_\n" for @removed;
+        print "+ $_\n" for @added;
         return 1;
     }
 
@@ -2668,6 +2670,11 @@ sub shouldUseFlatpak()
     return ((! inFlatpakSandbox()) and (@prefix == 0) and -e getUserFlatpakPath());
 }
 
+sub shouldUseVcpkg()
+{
+    return isWin() || (isJSCOnly() && isWindows());
+}
+
 sub cmakeCachePath()
 {
     return File::Spec->catdir(productDir(), "CMakeCache.txt");
@@ -2684,11 +2691,20 @@ sub shouldRemoveCMakeCache(@)
     # We check this first, because we always want to create this file for a fresh build.
     my $productDir = productDir();
     my $optionsCache = File::Spec->catdir($productDir, "build-webkit-options.txt");
-    my $joinedBuildArgs = join(" ", @buildArgs);
-    if (isCachedArgumentfileOutOfDate($optionsCache, $joinedBuildArgs)) {
+    my $buildArgsEnv = "ARGS=" . join(" ", @buildArgs);
+    my @relevantEnvFlags = ( "AR", "AS", "CC", "CXX", "LD", "NM", "RANLIB", "STRIP", # Toolchain
+                             "CFLAGS", "CXXFLAGS", "CPPFLAGS", "LDFLAGS", # Compiler and linker flags
+                             "PKG_CONFIG_LIBDIR", "PKG_CONFIG_PATH", # pkg-config
+                             "CPATH", "LIBRARY_PATH", # GCC/Clang include/lib helpers
+                             "CMAKE_MODULE_PATH", "CMAKE_PREFIX_PATH"); # CMake-specific
+    for my $envFlag (@relevantEnvFlags) {
+        my $flagValue = $ENV{$envFlag} || "";
+            $buildArgsEnv .= "\n" . $envFlag . "=" . $flagValue;
+    }
+    if (isCachedArgumentfileOutOfDate($optionsCache, $buildArgsEnv)) {
         File::Path::mkpath($productDir) unless -d $productDir;
         open(CACHED_ARGUMENTS, ">", $optionsCache);
-        print CACHED_ARGUMENTS $joinedBuildArgs;
+        print CACHED_ARGUMENTS $buildArgsEnv;
         close(CACHED_ARGUMENTS);
 
         return 1;
@@ -2752,7 +2768,10 @@ sub removeCMakeCache(@)
     my (@buildArgs) = @_;
     if (shouldRemoveCMakeCache(@buildArgs)) {
         my $cmakeCache = cmakeCachePath();
-        unlink($cmakeCache) if -e $cmakeCache;
+        if (-e $cmakeCache) {
+            print "Removing CMake Cache at " . $cmakeCache . "\n";
+            unlink($cmakeCache);
+        }
     }
 }
 
@@ -2828,7 +2847,10 @@ sub generateBuildSystemFromCMakeProject
 
     push @args, "-DLTO_MODE=$ltoMode" if ltoMode();
 
-    if (isPlayStation()) {
+    if (shouldUseVcpkg()) {
+        push @args, '-DCMAKE_TOOLCHAIN_FILE="' . $ENV{VCPKG_ROOT} . '\\scripts\\buildsystems\\vcpkg.cmake"';
+        push @args, '-DVCPKG_TARGET_TRIPLET=x64-windows-webkit'
+    } elsif (isPlayStation()) {
         my $toolChainFile = $ENV{'CMAKE_TOOLCHAIN_FILE'} || "Platform/PlayStation5";
         push @args, '-DCMAKE_TOOLCHAIN_FILE=' . $toolChainFile;
     }
@@ -2987,6 +3009,51 @@ sub cmakeArgsFromFeatures(\@;$)
     return @args;
 }
 
+sub vcpkgArgsFromFeatures(\@;$)
+{
+    my ($featuresArrayRef, $enableExperimentalFeatures) = @_;
+
+    my @args;
+    my $avif = 0;
+    my $jpegxl = 1;
+    my $lcms = 1;
+    my $skia = 1;
+    my $woff2 = 1;
+
+    if (isJSCOnly()) {
+        return;
+    }
+
+    foreach (@$featuresArrayRef) {
+        my $featureName = $_->{define};
+        if ($featureName) {
+            my $featureValue = ${$_->{value}}; # Undef to let the build system use its default.
+            if (defined($featureValue)) {
+                if ($featureName eq "USE_AVIF") { 
+                    $avif = $featureValue;
+                } elsif ($featureName eq "USE_JPEGXL") { 
+                    $jpegxl = $featureValue;
+                } elsif ($featureName eq "USE_LCMS") {
+                    $lcms = $featureValue;
+                } elsif ($featureName eq "USE_SKIA") { 
+                    $skia = $featureValue;
+                } elsif ($featureName eq "USE_WOFF2") { 
+                    $woff2 = $featureValue;
+                }
+            }
+        }
+    }
+
+    push @args, "web";
+    push @args, "avif" if $avif;
+    push @args, "jpeg-xl" if $jpegxl;
+    push @args, "lcms" if $lcms;
+    push @args, $skia ? "skia" : "cairo";
+    push @args, "woff2" if $woff2;
+
+    return "-DVCPKG_MANIFEST_FEATURES=" . join(";", @args);
+}
+
 sub cmakeBasedPortName()
 {
     return ucfirst portName();
@@ -3103,17 +3170,6 @@ sub setupUnixWebKitEnvironment($)
     my ($productDir) = @_;
 
     $ENV{TEST_RUNNER_INJECTED_BUNDLE_FILENAME} = File::Spec->catfile($productDir, "lib", "libTestRunnerInjectedBundle.so");
-}
-
-sub setupWindowsWebKitEnvironment()
-{
-    my $lib;
-    if ($ENV{WEBKIT_LIBRARIES}) {
-        $lib = File::Spec->catfile($ENV{WEBKIT_LIBRARIES}, 'bin');
-    } else  {
-        $lib = File::Spec->catfile(sourceDir(), 'WebKitLibraries', 'win', 'bin');
-    }
-    $ENV{PATH} = $lib . ';' . $ENV{PATH};
 }
 
 sub setupIOSWebKitEnvironment($)

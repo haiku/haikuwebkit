@@ -29,6 +29,7 @@
 
 SOFT_LINK_LIBRARY_FOR_HEADER(WebKit, WebKitSwift)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKGroupSessionObserver)
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKMarketplaceKit)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKSLinearMediaContentMetadata)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKSLinearMediaPlayer)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKSLinearMediaTimeRange)
@@ -41,3 +42,13 @@ SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIntelligenceSmartReplyTextEffectCoordinator
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKSLinearMediaSpatialVideoMetadata)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKStageModeInteractionDriver)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, CredentialUpdaterShim)
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentRawRequestValidator);
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKISO18013Request);
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentRawRequest);
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentMobileDocumentElementInfo);
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentMobileDocumentPresentmentRequest);
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentController);
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentMobileDocumentIndividualDocumentRequest);
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentMobileDocumentRequest);
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentRequest);
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentRequestAuthenticationCertificate);

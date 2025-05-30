@@ -33,9 +33,7 @@
 #include "FrameLoaderTypes.h"
 #include "IntPoint.h"
 #include "IntRect.h"
-#include "LengthBox.h"
 #include "PolicyContainer.h"
-#include "SerializedScriptValue.h"
 #include <memory>
 #include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/TZoneMalloc.h>
@@ -60,6 +58,7 @@ class FormData;
 class HistoryItem;
 class Image;
 class ResourceRequest;
+class SerializedScriptValue;
 
 class HistoryItemClient : public RefCounted<HistoryItemClient> {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(HistoryItemClient, WEBCORE_EXPORT);
@@ -70,8 +69,6 @@ public:
 protected:
     HistoryItemClient() = default;
 };
-
-enum class ProcessSwapDisposition : uint8_t { None, COOP, Other };
 
 class HistoryItem : public RefCountedAndCanMakeWeakPtr<HistoryItem> {
 public:
@@ -137,9 +134,10 @@ public:
     void setURL(const URL&);
     WEBCORE_EXPORT void setURLString(const String&);
     WEBCORE_EXPORT void setOriginalURLString(const String&);
-    WEBCORE_EXPORT void setReferrer(const String&);
+    WEBCORE_EXPORT void setReferrer(String&&);
     WEBCORE_EXPORT void setTarget(const AtomString&);
     WEBCORE_EXPORT void setFrameID(std::optional<FrameIdentifier>);
+    WEBCORE_EXPORT void setTitle(String&&);
     WEBCORE_EXPORT void setTitle(const String&);
     void setIsTargetItem(bool isTargetItem) { m_isTargetItem = isTargetItem; }
     

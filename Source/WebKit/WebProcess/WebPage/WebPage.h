@@ -34,11 +34,13 @@
 #include <WebCore/DictionaryPopupInfo.h>
 #include <WebCore/DisabledAdaptations.h>
 #include <WebCore/DragActions.h>
+#include <WebCore/ElementIdentifier.h>
 #include <WebCore/FocusOptions.h>
 #include <WebCore/FrameIdentifier.h>
 #include <WebCore/FrameLoaderTypes.h>
 #include <WebCore/FrameTreeSyncData.h>
 #include <WebCore/HighlightVisibility.h>
+#include <WebCore/IntDegrees.h>
 #include <WebCore/IntSizeHash.h>
 #include <WebCore/LayerHostingContextIdentifier.h>
 #include <WebCore/MediaControlsContextMenuItem.h>
@@ -60,17 +62,12 @@
 #include <WebCore/SimpleRange.h>
 #include <WebCore/SnapshotIdentifier.h>
 #include <WebCore/SubstituteData.h>
-#include <WebCore/TextManipulationController.h>
-#include <WebCore/TextManipulationItem.h>
-#include <WebCore/Timer.h>
-#include <WebCore/UserActivity.h>
 #include <WebCore/UserContentTypes.h>
-#include <WebCore/UserMediaRequestIdentifier.h>
 #include <WebCore/UserScriptTypes.h>
-#include <WebCore/VisibilityState.h>
 #include <WebCore/WebCoreKeyboardUIMode.h>
 #include <memory>
 #include <pal/HysteresisActivity.h>
+#include <wtf/CompletionHandler.h>
 #include <wtf/HashMap.h>
 #include <wtf/MonotonicTime.h>
 #include <wtf/OptionSet.h>
@@ -177,6 +174,7 @@ class DocumentLoader;
 class DocumentSyncData;
 class DragData;
 class WeakPtrImplWithEventTargetData;
+class Exception;
 class FontAttributeChanges;
 class FontChanges;
 class Frame;
@@ -196,6 +194,7 @@ class ImageBuffer;
 class IntPoint;
 class IntRect;
 class KeyboardEvent;
+class LegacyWebArchive;
 class LocalFrame;
 class LocalFrameView;
 class MediaPlaybackTargetContext;
@@ -205,6 +204,7 @@ class PolicyDecision;
 class PrintContext;
 class Range;
 class RegistrableDomain;
+class RemoteFrameGeometryTransformer;
 class RenderImage;
 class Report;
 class ResourceRequest;
@@ -212,6 +212,7 @@ class ResourceResponse;
 class ScrollingCoordinator;
 class SelectionData;
 class SelectionGeometry;
+class Settings;
 class SharedBuffer;
 class FragmentedSharedBuffer;
 class SubstituteData;
@@ -225,6 +226,7 @@ enum class CreateNewGroupForHighlight : bool;
 enum class DidFilterLinkDecoration : bool;
 enum class DOMPasteAccessCategory : uint8_t;
 enum class DOMPasteAccessResponse : uint8_t;
+enum class DataDetectorType : uint8_t;
 enum class DragApplicationFlags : uint8_t;
 enum class DragHandlingMethod : uint8_t;
 enum class DeviceOrientationOrMotionPermissionState : uint8_t;
@@ -277,8 +279,6 @@ struct CompositionHighlight;
 struct CompositionUnderline;
 struct ContactInfo;
 struct ContactsRequestData;
-struct DigitalCredentialsRequestData;
-struct DigitalCredentialsResponseData;
 struct DataDetectorElementInfo;
 struct DictationAlternative;
 struct DictationContextType;
@@ -307,17 +307,29 @@ struct PromisedAttachmentInfo;
 struct RemoteUserInputEventData;
 struct RequestStorageAccessResult;
 struct ScrollingNodeIDType;
+struct SystemPreviewInfo;
 struct TargetedElementAdjustment;
 struct TargetedElementInfo;
 struct TargetedElementRequest;
 struct TextAnimationData;
 struct TextCheckingResult;
+struct TextManipulationControllerExclusionRule;
+struct TextManipulationControllerManipulationResult;
+struct TextManipulationItem;
 struct TextRecognitionOptions;
 struct TextRecognitionResult;
 #if HAVE(TRANSLATION_UI_SERVICES) && ENABLE(CONTEXT_MENUS)
 struct TranslationContextMenuInfo;
 #endif
+struct UserMediaRequestIdentifierType;
 struct ViewportArguments;
+
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+struct DigitalCredentialsRequestData;
+struct DigitalCredentialsResponseData;
+struct MobileDocumentRequest;
+struct OpenID4VPRequest;
+#endif
 
 using BackForwardItemIdentifier = ProcessQualified<ObjectIdentifier<BackForwardItemIdentifierType>>;
 using DictationContext = ObjectIdentifier<DictationContextType>;
@@ -327,6 +339,7 @@ using NavigationIdentifier = ObjectIdentifier<NavigationIdentifierType, uint64_t
 using PlatformDisplayID = uint32_t;
 using ScrollingNodeID = ProcessQualified<ObjectIdentifier<ScrollingNodeIDType>>;
 using ScrollOffset = IntPoint;
+using UserMediaRequestIdentifier = ObjectIdentifier<UserMediaRequestIdentifierType>;
 
 namespace TextExtraction {
 struct Item;
@@ -457,6 +470,7 @@ struct DataDetectionResult;
 struct DeferredDidReceiveMouseEvent;
 struct DocumentEditingContext;
 struct DocumentEditingContextRequest;
+struct DragInitiationResult;
 struct EditingRange;
 struct EditorState;
 struct FrameInfoData;
@@ -1007,8 +1021,8 @@ public:
     bool hasStablePageScaleFactor() const { return m_hasStablePageScaleFactor; }
 
     void attemptSyntheticClick(const WebCore::IntPoint&, OptionSet<WebKit::WebEventModifier>, TransactionID lastLayerTreeTransactionId);
-    void potentialTapAtPosition(WebKit::TapIdentifier, const WebCore::FloatPoint&, bool shouldRequestMagnificationInformation);
-    void commitPotentialTap(OptionSet<WebKit::WebEventModifier>, TransactionID lastLayerTreeTransactionId, WebCore::PointerID);
+    Awaitable<std::optional<WebCore::RemoteUserInputEventData>> potentialTapAtPosition(std::optional<WebCore::FrameIdentifier>, WebKit::TapIdentifier, WebCore::FloatPoint, bool shouldRequestMagnificationInformation);
+    Awaitable<std::optional<WebCore::FrameIdentifier>> commitPotentialTap(std::optional<WebCore::FrameIdentifier>, OptionSet<WebKit::WebEventModifier>, TransactionID lastLayerTreeTransactionId, WebCore::PointerID);
     void commitPotentialTapFailed();
     void didHandleTapAsHover();
     void cancelPotentialTap();
@@ -1291,6 +1305,9 @@ public:
     void didStartDrag();
     void dragCancelled();
     OptionSet<WebCore::DragSourceAction> allowedDragSourceActions() const { return m_allowedDragSourceActions; }
+#if ENABLE(MODEL_PROCESS)
+    void modelDragEnded(WebCore::ElementIdentifier);
+#endif
 #endif
 
 #if ENABLE(MODEL_PROCESS)
@@ -1419,7 +1436,7 @@ public:
 #endif
 
 #if ENABLE(IOS_TOUCH_EVENTS)
-    WebCore::HandleUserInputEventResult dispatchTouchEvent(WebCore::FrameIdentifier, const WebTouchEvent&);
+    Expected<bool, WebCore::RemoteFrameGeometryTransformer> dispatchTouchEvent(WebCore::FrameIdentifier, const WebTouchEvent&);
 #endif
 
     bool shouldUseCustomContentProviderForResponse(const WebCore::ResourceResponse&);
@@ -1617,8 +1634,10 @@ public:
     void showShareSheet(WebCore::ShareDataWithParsedURL&, CompletionHandler<void(bool)>&& callback);
     void showContactPicker(const WebCore::ContactsRequestData&, CompletionHandler<void(std::optional<Vector<WebCore::ContactInfo>>&&)>&&);
 
+#if HAVE(DIGITAL_CREDENTIALS_UI)
     void showDigitalCredentialsPicker(const WebCore::DigitalCredentialsRequestData&, CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&&);
     void dismissDigitalCredentialsPicker(CompletionHandler<void(bool)>&&);
+#endif
 
 #if ENABLE(ATTACHMENT_ELEMENT)
     void insertAttachment(const String& identifier, std::optional<uint64_t>&& fileSize, const String& fileName, const String& contentType, CompletionHandler<void()>&&);
@@ -1671,8 +1690,8 @@ public:
     RefPtr<WebCore::Element> elementForContext(const WebCore::ElementContext&) const;
     std::optional<WebCore::ElementContext> contextForElement(const WebCore::Element&) const;
 
-    void startTextManipulations(Vector<WebCore::TextManipulationController::ExclusionRule>&&, bool includesSubframes, CompletionHandler<void()>&&);
-    void completeTextManipulation(const Vector<WebCore::TextManipulationItem>&, CompletionHandler<void(const WebCore::TextManipulationController::ManipulationResult&)>&&);
+    void startTextManipulations(Vector<WebCore::TextManipulationControllerExclusionRule>&&, bool includesSubframes, CompletionHandler<void()>&&);
+    void completeTextManipulation(const Vector<WebCore::TextManipulationItem>&, CompletionHandler<void(const WebCore::TextManipulationControllerManipulationResult&)>&&);
 
 #if ENABLE(APPLE_PAY)
     WebPaymentCoordinator* paymentCoordinator();
@@ -1789,6 +1808,7 @@ public:
 #endif
 
     void createTextFragmentDirectiveFromSelection(CompletionHandler<void(URL&&)>&&);
+    void getTextFragmentRanges(CompletionHandler<void(const Vector<EditingRange>&&)>&&);
 
 #if ENABLE(APP_HIGHLIGHTS)
     WebCore::CreateNewGroupForHighlight highlightIsNewGroup() const;
@@ -1980,6 +2000,10 @@ public:
 
     void setNeedsFixedContainerEdgesUpdate() { m_needsFixedContainerEdgesUpdate = true; }
 
+#if ENABLE(MODEL_ELEMENT)
+    bool shouldDisableModelLoadDelaysForTesting() const;
+#endif
+
 private:
     WebPage(WebCore::PageIdentifier, WebPageCreationParameters&&);
 
@@ -2005,11 +2029,13 @@ private:
     void updateSizeForCSSSmallViewportUnits();
     void updateSizeForCSSLargeViewportUnits();
 
+    RefPtr<WebCore::LocalFrame> localRootFrame(std::optional<WebCore::FrameIdentifier>);
+
 #if PLATFORM(IOS_FAMILY)
     std::optional<FocusedElementInformation> focusedElementInformation();
     void generateSyntheticEditingCommand(SyntheticEditingCommandType);
-    void handleSyntheticClick(WebCore::Node& nodeRespondingToClick, const WebCore::FloatPoint& location, OptionSet<WebKit::WebEventModifier>, WebCore::PointerID = WebCore::mousePointerID);
-    void completeSyntheticClick(WebCore::Node& nodeRespondingToClick, const WebCore::FloatPoint& location, OptionSet<WebKit::WebEventModifier>, WebCore::SyntheticClickType, WebCore::PointerID = WebCore::mousePointerID);
+    void handleSyntheticClick(std::optional<WebCore::FrameIdentifier>, WebCore::Node& nodeRespondingToClick, const WebCore::FloatPoint& location, OptionSet<WebKit::WebEventModifier>, WebCore::PointerID = WebCore::mousePointerID);
+    void completeSyntheticClick(std::optional<WebCore::FrameIdentifier>, WebCore::Node& nodeRespondingToClick, const WebCore::FloatPoint& location, OptionSet<WebKit::WebEventModifier>, WebCore::SyntheticClickType, WebCore::PointerID = WebCore::mousePointerID);
     void sendTapHighlightForNodeIfNecessary(WebKit::TapIdentifier, WebCore::Node*, WebCore::FloatPoint);
     WebCore::VisiblePosition visiblePositionInFocusedNodeForPoint(const WebCore::LocalFrame&, const WebCore::IntPoint&, bool isInteractingWithFocusedElement);
     std::optional<WebCore::SimpleRange> rangeForGranularityAtPoint(WebCore::LocalFrame&, const WebCore::IntPoint&, WebCore::TextGranularity, bool isInteractingWithFocusedElement);
@@ -2065,8 +2091,8 @@ private:
     void removeReasonsToDisallowLayoutViewportHeightExpansion(OptionSet<DisallowLayoutViewportHeightExpansionReason>);
 
 #if PLATFORM(IOS_FAMILY) && ENABLE(DRAG_SUPPORT)
-    void requestDragStart(const WebCore::IntPoint& clientPosition, const WebCore::IntPoint& globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask);
-    void requestAdditionalItemsForDragSession(const WebCore::IntPoint& clientPosition, const WebCore::IntPoint& globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask);
+    Awaitable<DragInitiationResult> requestDragStart(std::optional<WebCore::FrameIdentifier>, WebCore::IntPoint clientPosition, WebCore::IntPoint globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask);
+    Awaitable<DragInitiationResult> requestAdditionalItemsForDragSession(std::optional<WebCore::FrameIdentifier>, WebCore::IntPoint clientPosition, WebCore::IntPoint globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask);
     void insertDroppedImagePlaceholders(const Vector<WebCore::IntSize>&, CompletionHandler<void(const Vector<WebCore::IntRect>&, std::optional<WebCore::TextIndicatorData>)>&& reply);
     void computeAndSendEditDragSnapshot();
 #endif
@@ -2195,6 +2221,9 @@ private:
     void getSelectionAsWebArchiveData(CompletionHandler<void(const std::optional<IPC::SharedBufferReference>&)>&&);
     void getSourceForFrame(WebCore::FrameIdentifier, CompletionHandler<void(const String&)>&&);
     void getWebArchiveOfFrame(std::optional<WebCore::FrameIdentifier>, CompletionHandler<void(const std::optional<IPC::SharedBufferReference>&)>&&);
+#if PLATFORM(COCOA)
+    void getWebArchives(CompletionHandler<void(HashMap<WebCore::FrameIdentifier, Ref<WebCore::LegacyWebArchive>>&&)>&&);
+#endif
     void getWebArchiveOfFrameWithFileName(WebCore::FrameIdentifier, const Vector<WebCore::MarkupExclusionRule>&, const String& fileName, CompletionHandler<void(const std::optional<IPC::SharedBufferReference>&)>&&);
     void runJavaScript(WebFrame*, RunJavaScriptParameters&&, ContentWorldIdentifier, bool, CompletionHandler<void(Expected<JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>>)>&&);
     void runJavaScriptInFrameInScriptWorld(RunJavaScriptParameters&&, std::optional<WebCore::FrameIdentifier>, const ContentWorldData&, bool, CompletionHandler<void(Expected<JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>>)>&&);
@@ -2404,7 +2433,7 @@ private:
 
     void urlSchemeTaskWillPerformRedirection(WebURLSchemeHandlerIdentifier, WebCore::ResourceLoaderIdentifier taskIdentifier, WebCore::ResourceResponse&&, WebCore::ResourceRequest&&, CompletionHandler<void(WebCore::ResourceRequest&&)>&&);
     void urlSchemeTaskDidPerformRedirection(WebURLSchemeHandlerIdentifier, WebCore::ResourceLoaderIdentifier taskIdentifier, WebCore::ResourceResponse&&, WebCore::ResourceRequest&&);
-    void urlSchemeTaskDidReceiveResponse(WebURLSchemeHandlerIdentifier, WebCore::ResourceLoaderIdentifier taskIdentifier, const WebCore::ResourceResponse&);
+    void urlSchemeTaskDidReceiveResponse(WebURLSchemeHandlerIdentifier, WebCore::ResourceLoaderIdentifier taskIdentifier, WebCore::ResourceResponse&&);
     void urlSchemeTaskDidReceiveData(WebURLSchemeHandlerIdentifier, WebCore::ResourceLoaderIdentifier taskIdentifier, Ref<WebCore::SharedBuffer>&&);
     void urlSchemeTaskDidComplete(WebURLSchemeHandlerIdentifier, WebCore::ResourceLoaderIdentifier taskIdentifier, const WebCore::ResourceError&);
 
@@ -2910,7 +2939,6 @@ private:
     OptionSet<WebCore::ActivityState> m_activityState;
 
     bool m_isAppNapEnabled { true };
-    UserActivity m_userActivity;
 
     Markable<WebCore::NavigationIdentifier> m_pendingNavigationID;
 
@@ -3009,7 +3037,6 @@ private:
     WeakPtr<WebCore::Node, WebCore::WeakPtrImplWithEventTargetData> m_lastNodeBeforeWritingSuggestions;
 
     bool m_textManipulationIncludesSubframes { false };
-    std::optional<Vector<WebCore::TextManipulationController::ExclusionRule>> m_textManipulationExclusionRules;
 
     Vector<String> m_corsDisablingPatterns;
 

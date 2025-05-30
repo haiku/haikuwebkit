@@ -49,6 +49,10 @@
 #include "WKSharedSimulationConnectionHelper.h"
 #endif
 
+#if USE(EXTENSIONKIT)
+#import "WKProcessExtension.h"
+#endif
+
 #import <pal/cocoa/AVFoundationSoftLink.h>
 
 namespace WebKit {
@@ -91,9 +95,10 @@ void GPUProcess::ensureAVCaptureServerConnection()
 {
     RELEASE_LOG(WebRTC, "GPUProcess::ensureAVCaptureServerConnection: Entering.");
 #if HAVE(AVCAPTUREDEVICE) && HAVE(AVSAMPLEBUFFERVIDEOOUTPUT)
-    if ([PAL::getAVCaptureDeviceClass() respondsToSelector:@selector(ensureServerConnection)]) {
+    RetainPtr deviceClass = PAL::getAVCaptureDeviceClass();
+    if ([deviceClass respondsToSelector:@selector(ensureServerConnection)]) {
         RELEASE_LOG(WebRTC, "GPUProcess::ensureAVCaptureServerConnection: Calling [AVCaptureDevice ensureServerConnection]");
-        [PAL::getAVCaptureDeviceClass() ensureServerConnection];
+        [deviceClass ensureServerConnection];
     }
 #endif
 }
@@ -140,6 +145,11 @@ void GPUProcess::platformInitializeGPUProcess(GPUProcessCreationParameters& para
 
 #if USE(SANDBOX_EXTENSIONS_FOR_CACHE_AND_TEMP_DIRECTORY_ACCESS) && USE(EXTENSIONKIT)
     MTLSetShaderCachePath(parameters.containerCachesDirectory.createNSString().get());
+#endif
+
+#if USE(EXTENSIONKIT)
+    if (WKProcessExtension.sharedInstance)
+        [WKProcessExtension.sharedInstance lockdownSandbox:@"1.0"];
 #endif
 }
 

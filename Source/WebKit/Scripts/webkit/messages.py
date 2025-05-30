@@ -1018,7 +1018,6 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::DragHandlingMethod': ['<WebCore/DragActions.h>'],
         'WebCore::DragOperation': ['<WebCore/DragActions.h>'],
         'WebCore::DragSourceAction': ['<WebCore/DragActions.h>'],
-        'WebCore::DragStartRequestResult': ['<WebCore/DragActions.h>'],
         'WebCore::DynamicRangeMode': ['<WebCore/PlatformScreen.h>'],
         'WebCore::ElementAnimationContext': ['<WebCore/ElementAnimationContext.h>'],
         'WebCore::ElementContext': ['<WebCore/ElementContext.h>'],
@@ -1083,7 +1082,6 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::PlatformMediaSessionRemoteCommandArgument': ['<WebCore/PlatformMediaSession.h>'],
         'WebCore::PlayingToAutomotiveHeadUnit': ['<WebCore/MediaSessionHelperIOS.h>'],
         'WebCore::PlaybackSessionModelExternalPlaybackTargetType': ['<WebCore/PlaybackSessionModel.h>'],
-        'WebCore::ProcessSwapDisposition': ['<WebCore/HistoryItem.h>'],
         'WebCore::LockBackForwardList': ['<WebCore/FrameLoaderTypes.h>'],
         'WebCore::MediaPlaybackTargetContextMockState': ['<WebCore/MediaPlaybackTargetContext.h>'],
         'WebCore::MediaPlayerBufferingPolicy': ['<WebCore/MediaPlayerEnums.h>'],
@@ -1197,7 +1195,6 @@ def headers_for_type(type, for_implementation_file=False):
         'WebCore::SupportsSpatialAudioPlayback': ['<WebCore/MediaSessionHelperIOS.h>'],
         'WebCore::SuspendedUnderLock': ['<WebCore/MediaSessionHelperIOS.h>'],
         'WebCore::SWServerConnectionIdentifier': ['<WebCore/ServiceWorkerTypes.h>'],
-        'WebCore::SystemPreviewInfo': ['<WebCore/FrameLoaderTypes.h>'],
         'WebCore::TargetedElementAdjustment': ['<WebCore/ElementTargetingTypes.h>'],
         'WebCore::TargetedElementInfo': ['<WebCore/ElementTargetingTypes.h>'],
         'WebCore::TargetedElementRequest': ['<WebCore/ElementTargetingTypes.h>'],
@@ -1742,6 +1739,7 @@ def generate_message_names_header(receivers):
     result.append('#pragma once\n')
     result.append('\n')
     result.append('#include <algorithm>\n')
+    result.append('#include <array>\n')
     result.append('#include <wtf/EnumTraits.h>\n')
     result.append('#include <wtf/text/ASCIILiteral.h>\n')
     result.append('\n')

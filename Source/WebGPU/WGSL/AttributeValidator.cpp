@@ -31,6 +31,7 @@
 #include "Constraints.h"
 #include "WGSLShaderModule.h"
 #include <wtf/CheckedArithmetic.h>
+#include <wtf/MathExtras.h>
 #include <wtf/text/MakeString.h>
 
 namespace WGSL {
@@ -351,13 +352,20 @@ void AttributeValidator::visit(AST::Structure& structure)
             member.m_size = fieldSize;
         }
 
-        unsigned currentSize = UNLIKELY(size.hasOverflowed()) ? std::numeric_limits<unsigned>::max() : size.value();
+        unsigned currentSize = [&] {
+            if (size.hasOverflowed()) [[unlikely]]
+                return std::numeric_limits<unsigned>::max();
+            return size.value();
+        }();
         unsigned offset;
         if (size.hasOverflowed()) [[unlikely]]
             offset = currentSize;
         else {
             CheckedUint32 checkedOffset = WTF::roundUpToMultipleOf(*fieldAlignment, static_cast<uint64_t>(currentSize));
-            offset = UNLIKELY(checkedOffset.hasOverflowed()) ? std::numeric_limits<unsigned>::max() : checkedOffset.value();
+            if (checkedOffset.hasOverflowed()) [[unlikely]]
+                offset = std::numeric_limits<unsigned>::max();
+            else
+                offset = checkedOffset.value();
         }
 
         member.m_offset = offset;
@@ -383,7 +391,10 @@ void AttributeValidator::visit(AST::Structure& structure)
         finalSize = std::numeric_limits<unsigned>::max();
     else {
         CheckedUint32 checkedFinalSize = WTF::roundUpToMultipleOf(alignment, static_cast<uint64_t>(size.value()));
-        finalSize = UNLIKELY(checkedFinalSize.hasOverflowed()) ? std::numeric_limits<unsigned>::max() : checkedFinalSize.value();
+        if (checkedFinalSize.hasOverflowed()) [[unlikely]]
+            finalSize = std::numeric_limits<unsigned>::max();
+        else
+            finalSize = checkedFinalSize.value();
     }
     previousMember->m_padding = finalSize - previousSize;
     structure.m_alignment = alignment;
@@ -441,10 +452,9 @@ void AttributeValidator::visit(AST::StructureMember& member)
                 continue;
             }
             auto alignmentValue = constantValue->integerValue();
-            auto isPowerOf2 = !(alignmentValue & (alignmentValue - 1));
             if (alignmentValue < 1)
                 error(attribute.span(), "@align value must be positive"_s);
-            else if (!isPowerOf2)
+            else if (!isPowerOfTwo(unsignedCast(alignmentValue)))
                 error(attribute.span(), "@align value must be a power of two"_s);
 
             if (!m_errors.isEmpty()) [[unlikely]] {

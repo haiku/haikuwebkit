@@ -48,12 +48,14 @@
 #include "Synchronousness.h"
 #include "WeakHandleOwner.h"
 #include <wtf/AutomaticThread.h>
+#include <wtf/Box.h>
 #include <wtf/ConcurrentPtrHashSet.h>
 #include <wtf/Deque.h>
 #include <wtf/HashCountedSet.h>
 #include <wtf/HashSet.h>
 #include <wtf/Lock.h>
 #include <wtf/Markable.h>
+#include <wtf/NotFound.h>
 #include <wtf/ParallelHelperPool.h>
 #include <wtf/Threading.h>
 
@@ -297,6 +299,7 @@ class Heap;
     v(wrapForValidIteratorSpace, cellHeapCellType, JSWrapForValidIterator) \
     v(asyncFromSyncIteratorSpace, cellHeapCellType, JSAsyncFromSyncIterator) \
     v(regExpStringIteratorSpace, cellHeapCellType, JSRegExpStringIterator) \
+    v(disposableStackSpace, cellHeapCellType, JSDisposableStack) \
     \
     FOR_EACH_JSC_WEBASSEMBLY_DYNAMIC_ISO_SUBSPACE(v)
 

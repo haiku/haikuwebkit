@@ -25,11 +25,10 @@
 #include "ContactInfo.h"
 #include "DatabaseDetails.h"
 #include "DeviceOrientationOrMotionPermissionState.h"
-#include "DigitalCredentialsRequestData.h"
-#include "DigitalCredentialsResponseData.h"
 #include "DisabledAdaptations.h"
 #include "DocumentStorageAccess.h"
 #include "ExceptionData.h"
+#include "ExceptionOr.h"
 #include "FocusDirection.h"
 #include "HTMLMediaElementEnums.h"
 #include "HighlightVisibility.h"
@@ -77,6 +76,14 @@ class HTMLModelElement;
 #include "PlatformXR.h"
 #endif
 
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+#include "DigitalCredentialsProtocols.h"
+#include "DigitalCredentialsRequestData.h"
+#include "DigitalCredentialsResponseData.h"
+#include "UnvalidatedDigitalCredentialRequest.h"
+#include "ValidatedMobileDocumentRequest.h"
+#endif
+
 OBJC_CLASS NSResponder;
 
 namespace WebCore {
@@ -113,6 +120,7 @@ class Node;
 class Page;
 class PopupMenu;
 class PopupMenuClient;
+class Region;
 class RegistrableDomain;
 class SearchPopupMenu;
 class SVGImageElement;
@@ -122,6 +130,11 @@ class SecurityOriginData;
 class ViewportConstraints;
 class Widget;
 class WorkerClient;
+
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+struct DigitalCredentialsRequestData;
+struct MobileDocumentRequest;
+#endif
 
 #if ENABLE(WEBGL)
 class GraphicsContextGL;
@@ -139,6 +152,7 @@ struct FocusOptions;
 struct GraphicsDeviceAdapter;
 struct MockWebAuthenticationConfiguration;
 struct ShareDataWithParsedURL;
+struct SystemPreviewInfo;
 struct TextIndicatorData;
 struct TextRecognitionOptions;
 struct ViewportArguments;
@@ -161,8 +175,6 @@ enum class TextAnimationRunMode : uint8_t;
 
 enum class MediaProducerMediaState : uint32_t;
 using MediaProducerMediaStateFlags = OptionSet<MediaProducerMediaState>;
-
-template<typename> class ExceptionOr;
 
 namespace ShapeDetection {
 class BarcodeDetector;
@@ -384,14 +396,19 @@ public:
     virtual void showShareSheet(ShareDataWithParsedURL&, CompletionHandler<void(bool)>&& callback) { callback(false); }
     virtual void showContactPicker(const ContactsRequestData&, CompletionHandler<void(std::optional<Vector<ContactInfo>>&&)>&& callback) { callback(std::nullopt); }
 
+#if HAVE(DIGITAL_CREDENTIALS_UI)
     virtual void showDigitalCredentialsPicker(const DigitalCredentialsRequestData&, CompletionHandler<void(Expected<DigitalCredentialsResponseData, ExceptionData>&&)>&& completionHandler)
     {
-        completionHandler(makeUnexpected(WebCore::ExceptionData { WebCore::ExceptionCode::NotSupportedError, "Digital credentials are not supported."_s }));
+        completionHandler(makeUnexpected(ExceptionData { ExceptionCode::NotSupportedError, "Digital credentials are not supported."_s }));
     }
+
     virtual void dismissDigitalCredentialsPicker(CompletionHandler<void(bool)>&& completionHandler)
     {
         completionHandler(false);
     }
+
+    WEBCORE_EXPORT virtual ExceptionOr<Vector<ValidatedDigitalCredentialRequest>> validateAndParseDigitalCredentialRequests(const SecurityOrigin&, const Document&, const Vector<UnvalidatedDigitalCredentialRequest>&);
+#endif
 
     // Asynchronous request to load an icon for specified filenames.
     virtual void loadIconForFiles(const Vector<String>&, FileIconLoader&) = 0;
@@ -500,11 +517,7 @@ public:
 
 #if ENABLE(FULLSCREEN_API)
     virtual bool supportsFullScreenForElement(const Element&, bool) { return false; }
-    virtual void enterFullScreenForElement(Element&, HTMLMediaElementEnums::VideoFullscreenMode, CompletionHandler<void(ExceptionOr<void>)>&& willEnterFullscreen, CompletionHandler<bool(bool)>&& didEnterFullscreen)
-    {
-        willEnterFullscreen({ });
-        didEnterFullscreen(false);
-    }
+    virtual void enterFullScreenForElement(Element&, HTMLMediaElementEnums::VideoFullscreenMode, CompletionHandler<void(ExceptionOr<void>)>&& willEnterFullscreen, CompletionHandler<bool(bool)>&& didEnterFullscreen);
 #if ENABLE(QUICKLOOK_FULLSCREEN)
     virtual void updateImageSource(Element&) { }
 #endif // ENABLE(QUICKLOOK_FULLSCREEN)
@@ -748,8 +761,7 @@ public:
 
 #if ENABLE(DAMAGE_TRACKING)
     virtual void resetDamageHistoryForTesting() { }
-
-    virtual WebCore::FrameDamageHistory* damageHistoryForTesting() const { return nullptr; }
+    virtual void foreachRegionInDamageHistoryForTesting(Function<void(const Region&)>&&) const { }
 #endif
 
     WEBCORE_EXPORT virtual ~ChromeClient();

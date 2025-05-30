@@ -209,6 +209,16 @@ void RenderBlockFlow::rebuildFloatingObjectSetFromIntrudingFloats()
     if (layoutContext().isSkippedContentRootForLayout(*this))
         return;
 
+    auto mayHaveStaleFloatingObjects = [&] {
+        if (style().isSkippedRootOrSkippedContent())
+            return true;
+        if (auto wasSkipped = wasSkippedDuringLastLayoutDueToContentVisibility())
+            return *wasSkipped;
+        return false;
+    };
+    if (mayHaveStaleFloatingObjects())
+        m_floatingObjects = { };
+
     UncheckedKeyHashSet<CheckedPtr<RenderBox>> oldIntrudingFloatSet;
 
     if (m_floatingObjects) {
@@ -583,16 +593,23 @@ void RenderBlockFlow::layoutBlock(RelayoutChildren relayoutChildren, LayoutUnit 
     updateLogicalHeight();
     LayoutUnit newHeight = logicalHeight();
 
-    LayoutUnit alignContentShift = 0_lu;
-    // Alignment isn't supported when fragmenting.
-    // Table cell alignment is handled in RenderTableCell::computeIntrinsicPadding.
-    if ((!isPaginated || pageRemaining > newHeight) && (settings().alignContentOnBlocksEnabled()) && !isRenderTableCell()) {
+    LayoutUnit alignContentShift;
+    auto shouldApplyAlignContent = [&] {
+        // Alignment isn't supported when fragmenting.
+        if (isPaginated && pageRemaining <= newHeight)
+            return false;
+        // Table cell alignment is handled in RenderTableCell::computeIntrinsicPadding.
+        if (isRenderTableCell())
+            return false;
+        return !is<HTMLInputElement>(element());
+    };
+    if (shouldApplyAlignContent()) {
         alignContentShift = shiftForAlignContent(oldHeight, repaintLogicalTop, repaintLogicalBottom);
         oldClientAfterEdge += alignContentShift;
         if (alignContentShift < 0)
             ensureRareBlockFlowData().m_alignContentShift = alignContentShift;
     } else if (hasRareBlockFlowData())
-        rareBlockFlowData()->m_alignContentShift = 0_lu;
+        rareBlockFlowData()->m_alignContentShift = { };
 
     {
         // FIXME: This could be removed once relayoutForPagination() either stop recursing or we manage to
@@ -612,7 +629,7 @@ void RenderBlockFlow::layoutBlock(RelayoutChildren relayoutChildren, LayoutUnit 
         }
 
         bool heightChanged = (previousHeight != newHeight);
-        if (heightChanged || alignContentShift != 0_lu)
+        if (heightChanged || alignContentShift)
             relayoutChildren = RelayoutChildren::Yes;
         if (isDocumentElementRenderer())
             layoutPositionedObjects(RelayoutChildren::Yes);
@@ -2413,6 +2430,9 @@ void RenderBlockFlow::addFloatsToNewParent(RenderBlockFlow& toBlockFlow) const
     if (!m_floatingObjects)
         return;
 
+    if (layoutContext().isSkippedContentForLayout(toBlockFlow))
+        return;
+
     if (!toBlockFlow.m_floatingObjects)
         toBlockFlow.createFloatingObjects();
 
@@ -2569,6 +2589,7 @@ void RenderBlockFlow::insertFloatingBoxAndMarkForLayout(RenderBox& floatBox)
 FloatingObject& RenderBlockFlow::insertFloatingBox(RenderBox& floatBox)
 {
     ASSERT(floatBox.isFloating());
+    ASSERT(!layoutContext().isSkippedContentForLayout(*this));
 
     if (!m_floatingObjects)
         createFloatingObjects();
@@ -2901,6 +2922,7 @@ std::optional<LayoutUnit> RenderBlockFlow::lowestInitialLetterLogicalBottom() co
 
 LayoutUnit RenderBlockFlow::addOverhangingFloats(RenderBlockFlow& child, bool makeChildPaintOtherFloats)
 {
+    ASSERT(!layoutContext().isSkippedContentForLayout(*this));
     // Prevent floats from being added to the canvas by the root element, e.g., <html>.
     if (!child.containsFloats() || child.createsNewFormattingContext())
         return 0;
@@ -2975,6 +2997,7 @@ bool RenderBlockFlow::hasOverhangingFloat(RenderBox& renderer)
 void RenderBlockFlow::addIntrudingFloats(RenderBlockFlow* prev, RenderBlockFlow* container, LayoutUnit logicalLeftOffset, LayoutUnit logicalTopOffset)
 {
     ASSERT(!avoidsFloats());
+    ASSERT(!layoutContext().isSkippedContentForLayout(*this));
 
     // If we create our own block formatting context then our contents don't interact with floats outside it, even those from our parent.
     if (createsNewFormattingContext())

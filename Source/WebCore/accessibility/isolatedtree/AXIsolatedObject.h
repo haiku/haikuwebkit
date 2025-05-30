@@ -32,6 +32,7 @@
 #include "AXObjectCache.h"
 #include "IntPoint.h"
 #include "LayoutRect.h"
+#include "NodeName.h"
 #include "Path.h"
 #include "RenderStyleConstants.h"
 #include <wtf/Forward.h>
@@ -64,9 +65,9 @@ public:
     bool hasClickHandler() const final { return boolAttributeValue(AXProperty::HasClickHandler); }
     FloatRect relativeFrame() const final;
 
-    bool hasAttachmentTag() const final { return propertyValue<TagName>(AXProperty::TagName) == TagName::attachment; }
-    bool hasBodyTag() const final { return propertyValue<TagName>(AXProperty::TagName) == TagName::body; }
-    bool hasMarkTag() const final { return propertyValue<TagName>(AXProperty::TagName) == TagName::mark; }
+    bool hasAttachmentTag() const final { return elementName() == ElementName::HTML_attachment; }
+    bool hasBodyTag() const final { return elementName() == ElementName::HTML_body; }
+    bool hasMarkTag() const final { return elementName() == ElementName::HTML_mark; }
     bool hasRowGroupTag() const final;
 
     const AccessibilityChildrenVector& children(bool updateChildrenIfNeeded = true) final;
@@ -81,6 +82,7 @@ public:
     AXIsolatedObject* editableAncestor() const final { return Accessibility::editableAncestor(*this); };
     bool canSetFocusAttribute() const final { return boolAttributeValue(AXProperty::CanSetFocusAttribute); }
     AttributedStringStyle stylesForAttributedString() const final;
+    Color textColor() const final { return colorAttributeValue(AXProperty::TextColor); }
 
 #if ENABLE(AX_THREAD_TEXT_APIS)
     const AXTextRuns* textRuns() const;
@@ -106,7 +108,7 @@ public:
     AXTextMarkerRange textMarkerRange() const final;
 
 #if PLATFORM(COCOA)
-    RetainPtr<CTFontRef> font() const final { return propertyValue<RetainPtr<CTFontRef>>(AXProperty::Font); }
+    RetainPtr<CTFontRef> font() const final { return fontAttributeValue(AXProperty::Font); }
 #endif
 
 private:
@@ -125,6 +127,7 @@ private:
 
     void initializeProperties(const Ref<AccessibilityObject>&);
     void initializePlatformProperties(const Ref<const AccessibilityObject>&);
+    void initializeBasePlatformProperties(const Ref<const AccessibilityObject>&);
 
     void setProperty(AXProperty, AXPropertyValueVariant&&);
     void setPropertyInVector(AXProperty property, AXPropertyValueVariant&& value)
@@ -149,6 +152,7 @@ private:
     void shrinkPropertiesAfterUpdates() { m_properties.shrinkToFit(); }
     void setObjectProperty(AXProperty, AXCoreObject*);
     void setObjectVectorProperty(AXProperty, const AccessibilityChildrenVector&);
+    template<typename T> void setOptionalProperty(AXProperty, const std::optional<T>&);
 
     void setPropertyFlag(AXPropertyFlag, bool);
     bool hasPropertyFlag(AXPropertyFlag) const;
@@ -166,6 +170,7 @@ private:
     AXIsolatedObject* objectAttributeValue(AXProperty) const;
     IntPoint intPointAttributeValue(AXProperty) const;
     Color colorAttributeValue(AXProperty) const;
+    RetainPtr<CTFontRef> fontAttributeValue(AXProperty) const;
     URL urlAttributeValue(AXProperty) const;
     uint64_t uint64AttributeValue(AXProperty) const;
     Path pathAttributeValue(AXProperty) const;
@@ -175,6 +180,15 @@ private:
     template<typename T> OptionSet<T> optionSetAttributeValue(AXProperty) const;
     template<typename T> std::optional<T> optionalAttributeValue(AXProperty) const;
     template<typename T> T propertyValue(AXProperty) const;
+
+#ifndef NDEBUG
+    // The color of |this| without any ancestry traversal.
+    Color cachedTextColor() const;
+#if PLATFORM(COCOA)
+    // The font of |this| without any ancestry traversal.
+    RetainPtr<CTFontRef> cachedFont() const;
+#endif // PLATFORM(COCOA)
+#endif // NDEBUG
 
     // The following method performs a lazy caching of the given property.
     // If the property is already in m_properties, returns the existing value.
@@ -202,11 +216,10 @@ private:
     // Attribute retrieval overrides.
     bool isSecureField() const final { return boolAttributeValue(AXProperty::IsSecureField); }
     bool isAttachment() const final { return boolAttributeValue(AXProperty::IsAttachment); }
-    bool isInputImage() const final { return boolAttributeValue(AXProperty::IsInputImage); }
-    bool isRadioInput() const final { return boolAttributeValue(AXProperty::IsRadioInput); }
 
     bool isKeyboardFocusable() const final { return boolAttributeValue(AXProperty::IsKeyboardFocusable); }
-    
+    bool isOutput() const final { return elementName() == ElementName::HTML_output; }
+
     // Table support.
     AXIsolatedObject* exposedTableAncestor(bool includeSelf = false) const final { return Accessibility::exposedTableAncestor(*this, includeSelf); }
     AccessibilityChildrenVector columns() final { return tree()->objectsForIDs(vectorAttributeValue<AXID>(AXProperty::Columns)); }
@@ -228,8 +241,8 @@ private:
     std::pair<unsigned, unsigned> rowIndexRange() const final { return indexRangePairAttributeValue(AXProperty::RowIndexRange); }
     // Returns the start location and column span of the cell.
     std::pair<unsigned, unsigned> columnIndexRange() const final { return indexRangePairAttributeValue(AXProperty::ColumnIndexRange); }
-    std::optional<unsigned> axColumnIndex() const final { return propertyValue<std::optional<unsigned>>(AXProperty::AXColumnIndex); }
-    std::optional<unsigned> axRowIndex() const final { return propertyValue<std::optional<unsigned>>(AXProperty::AXRowIndex); }
+    std::optional<unsigned> axColumnIndex() const final { return optionalAttributeValue<unsigned>(AXProperty::AXColumnIndex); }
+    std::optional<unsigned> axRowIndex() const final { return optionalAttributeValue<unsigned>(AXProperty::AXRowIndex); }
     bool isColumnHeader() const final { return boolAttributeValue(AXProperty::IsColumnHeader); }
     bool isRowHeader() const final { return boolAttributeValue(AXProperty::IsRowHeader); }
     String cellScope() const final { return stringAttributeValue(AXProperty::CellScope); }
@@ -240,10 +253,10 @@ private:
     // Table row support.
     bool isTableRow() const final { return boolAttributeValue(AXProperty::IsTableRow); }
     unsigned rowIndex() const final { return unsignedAttributeValue(AXProperty::RowIndex); }
-    AXIsolatedObject* rowHeader() final { return objectAttributeValue(AXProperty::RowHeader); };
 
     // ARIA tree/grid row support.
     bool isARIATreeGridRow() const final { return boolAttributeValue(AXProperty::IsARIATreeGridRow); }
+    bool isARIAGridRow() const final { return boolAttributeValue(AXProperty::IsARIAGridRow) || isARIATreeGridRow(); }
     AccessibilityChildrenVector disclosedRows() final { return tree()->objectsForIDs(vectorAttributeValue<AXID>(AXProperty::DisclosedRows)); }
     AXIsolatedObject* disclosedByRow() const final { return objectAttributeValue(AXProperty::DisclosedByRow); }
 
@@ -253,10 +266,11 @@ private:
     bool isSelected() const final { return boolAttributeValue(AXProperty::IsSelected); }
     bool isFocused() const final { return tree()->focusedNodeID() == objectID(); }
     bool isMultiSelectable() const final { return boolAttributeValue(AXProperty::IsMultiSelectable); }
-    InsideLink insideLink() const final { return propertyValue<InsideLink>(AXProperty::InsideLink); }
+    bool isVisited() const final { return boolAttributeValue(AXProperty::IsVisited); }
     bool isRequired() const final { return boolAttributeValue(AXProperty::IsRequired); }
     bool isExpanded() const final { return boolAttributeValue(AXProperty::IsExpanded); }
-    bool isFileUploadButton() const final { return boolAttributeValue(AXProperty::IsFileUploadButton); }
+    bool isDescriptionList() const final { return elementName() == ElementName::HTML_dl; }
+    std::optional<InputType::Type> inputType() const final { return optionalAttributeValue<InputType::Type>(AXProperty::InputType); };
     FloatPoint screenRelativePosition() const final;
     IntPoint remoteFrameOffset() const final;
     std::optional<IntRect> cachedRelativeFrame() const { return optionalAttributeValue<IntRect>(AXProperty::RelativeFrame); }
@@ -271,7 +285,7 @@ private:
     String datetimeAttributeValue() const final { return stringAttributeValue(AXProperty::DatetimeAttributeValue); }
     bool canSetValueAttribute() const final { return boolAttributeValue(AXProperty::CanSetValueAttribute); }
     bool canSetSelectedAttribute() const final { return boolAttributeValue(AXProperty::CanSetSelectedAttribute); }
-    unsigned headingLevel() const final { return unsignedAttributeValue(AXProperty::HeadingLevel); }
+    unsigned headingTagLevel() const final;
     AccessibilityButtonState checkboxOrRadioValue() const final { return propertyValue<AccessibilityButtonState>(AXProperty::ButtonState); }
     String valueDescription() const final { return stringAttributeValue(AXProperty::ValueDescription); }
     float valueForRange() const final { return floatAttributeValue(AXProperty::ValueForRange); }
@@ -309,8 +323,8 @@ private:
     String expandedTextValue() const final { return stringAttributeValue(AXProperty::ExpandedTextValue); }
     bool supportsExpandedTextValue() const final { return boolAttributeValue(AXProperty::SupportsExpandedTextValue); }
     SRGBA<uint8_t> colorValue() const final;
-    String roleDescription() final { return stringAttributeValue(AXProperty::RoleDescription); }
     String subrolePlatformString() const final { return stringAttributeValue(AXProperty::SubrolePlatformString); }
+    String ariaRoleDescription() const final { return stringAttributeValue(AXProperty::ARIARoleDescription); };
     LayoutRect elementRect() const final;
     IntPoint clickPoint() final;
     void accessibilityText(Vector<AccessibilityText>& texts) const final;
@@ -366,11 +380,8 @@ private:
 #endif
     AXIsolatedObject* focusableAncestor() final { return Accessibility::focusableAncestor(*this); }
     AXIsolatedObject* highestEditableAncestor() final { return Accessibility::highestEditableAncestor(*this); }
-    virtual std::optional<AccessibilityOrientation> explicitOrientation() const
-    {
-        return propertyValue<std::optional<AccessibilityOrientation>>(AXProperty::ExplicitOrientation);
-    }
-    unsigned hierarchicalLevel() const final { return unsignedAttributeValue(AXProperty::HierarchicalLevel); }
+    std::optional<AccessibilityOrientation> explicitOrientation() const { return optionalAttributeValue<AccessibilityOrientation>(AXProperty::ExplicitOrientation); }
+    unsigned ariaLevel() const final { return unsignedAttributeValue(AXProperty::ARIALevel); }
     String language() const final { return stringAttributeValue(AXProperty::Language); }
     void setSelectedChildren(const AccessibilityChildrenVector&) final;
     AccessibilityChildrenVector visibleChildren() final { return tree()->objectsForIDs(vectorAttributeValue<AXID>(AXProperty::VisibleChildren)); }
@@ -479,7 +490,6 @@ private:
     // Functions that should never be called on an isolated tree object. ASSERT that these are not reached;
     bool isAccessibilityRenderObject() const final;
     bool isAccessibilityTableInstance() const final;
-    bool isAccessibilityARIAGridRowInstance() const final { return false; }
     bool isAccessibilityARIAGridCellInstance() const final { return false; }
     bool isAXRemoteFrame() const final { return false; }
     bool isNativeTextControl() const final;
@@ -544,7 +554,7 @@ private:
     bool isPlugin() const final { return boolAttributeValue(AXProperty::IsPlugin); }
 
 #if PLATFORM(COCOA)
-    RemoteAXObjectRef remoteParentObject() const final;
+    RetainPtr<RemoteAXObjectRef> remoteParent() const final;
     FloatRect convertRectToPlatformSpace(const FloatRect&, AccessibilityConversionSpace) const final;
 #endif
     Page* page() const final;
@@ -556,6 +566,8 @@ private:
     bool isInDescriptionListTerm() const final;
 
     String nameAttribute() const final { return stringAttributeValue(AXProperty::NameAttribute); }
+    bool hasElementName(ElementName name) const final { return elementName() == name; };
+    ElementName elementName() const final { return propertyValue<ElementName>(AXProperty::ElementName); }
 #if PLATFORM(COCOA)
     bool hasApplePDFAnnotationAttribute() const final { return boolAttributeValue(AXProperty::HasApplePDFAnnotationAttribute); }
     RetainPtr<id> remoteFramePlatformElement() const final;
@@ -571,21 +583,24 @@ private:
     String innerHTML() const final;
     String outerHTML() const final;
 
-    // FIXME: Make this a ThreadSafeWeakPtr<AXIsolatedTree>.
-    RefPtr<AXIsolatedTree> m_cachedTree;
-    Markable<AXID> m_parentID;
-    bool m_childrenDirty { true };
+#ifndef NDEBUG
+    void verifyChildrenIndexInParent() const final { return AXCoreObject::verifyChildrenIndexInParent(m_children); }
+#endif
+
     Vector<AXID> m_childrenIDs;
     Vector<Ref<AXCoreObject>> m_children;
     AXPropertyVector m_properties;
+
+    // FIXME: Make this a ThreadSafeWeakPtr<AXIsolatedTree>.
+    RefPtr<AXIsolatedTree> m_cachedTree;
+    Markable<AXID> m_parentID;
+
     OptionSet<AXPropertyFlag> m_propertyFlags;
     // Some objects (e.g. display:contents) form their geometry through their children.
     bool m_getsGeometryFromChildren { false };
+    bool m_childrenDirty { true };
 
-#if PLATFORM(COCOA)
-    RetainPtr<NSView> m_platformWidget;
-    RetainPtr<RemoteAXObjectRef> m_remoteParent;
-#else
+#if !PLATFORM(COCOA)
     PlatformWidget m_platformWidget;
 #endif
 };

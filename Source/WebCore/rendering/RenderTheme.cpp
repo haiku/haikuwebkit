@@ -98,17 +98,7 @@ RenderTheme::RenderTheme()
 
 RenderTheme::~RenderTheme() = default;
 
-static bool parentOfElementUsesPrimitiveAppearance(const Element& element)
-{
-    if (RefPtr parent = element.parentOrShadowHostElement()) {
-        if (CheckedPtr computedStyle = parent->computedStyle())
-            return computedStyle->usedAppearance() == StyleAppearance::None;
-    }
-
-    return false;
-}
-
-StyleAppearance RenderTheme::adjustAppearanceForElement(RenderStyle& style, const Element* element, StyleAppearance autoAppearance) const
+StyleAppearance RenderTheme::adjustAppearanceForElement(RenderStyle& style, const RenderStyle& parentStyle, const Element* element, StyleAppearance autoAppearance) const
 {
     if (!element) {
         style.setUsedAppearance(StyleAppearance::None);
@@ -126,7 +116,7 @@ StyleAppearance RenderTheme::adjustAppearanceForElement(RenderStyle& style, cons
     if ((autoAppearance == StyleAppearance::ColorWellSwatch
         || autoAppearance == StyleAppearance::ColorWellSwatchOverlay
         || autoAppearance == StyleAppearance::ColorWellSwatchWrapper)
-        && parentOfElementUsesPrimitiveAppearance(*element)) {
+        && (parentStyle.usedAppearance() == StyleAppearance::None)) {
             style.setUsedAppearance(StyleAppearance::None);
             return StyleAppearance::None;
     }
@@ -238,10 +228,24 @@ static bool shouldCheckLegacyStylesForNativeAppearance(const Element* element)
 #endif
 }
 
-void RenderTheme::adjustStyle(RenderStyle& style, const Element* element, const RenderStyle* userAgentAppearanceStyle)
+bool RenderTheme::hasAppearanceForElementTypeFromUAStyle(const Element& element)
+{
+    // NOTE: This is just a legacy hard-coded list of elements that have some appearance value in html.css
+    // FIXME: Remove when devolvable widgets are universally enabled.
+    const auto& localName = element.localName();
+    return localName == HTMLNames::inputTag
+        || localName == HTMLNames::textareaTag
+        || localName == HTMLNames::buttonTag
+        || localName == HTMLNames::progressTag
+        || localName == HTMLNames::selectTag
+        || localName == HTMLNames::meterTag
+        || (element.isInUserAgentShadowTree() && element.userAgentPart() == UserAgentParts::webkitListButton());
+}
+
+void RenderTheme::adjustStyle(RenderStyle& style, const RenderStyle& parentStyle, const Element* element)
 {
     auto autoAppearance = autoAppearanceForElement(style, element);
-    auto appearance = adjustAppearanceForElement(style, element, autoAppearance);
+    auto appearance = adjustAppearanceForElement(style, parentStyle, element, autoAppearance);
     if (appearance == StyleAppearance::None || appearance == StyleAppearance::Base)
         return;
 
@@ -256,9 +260,10 @@ void RenderTheme::adjustStyle(RenderStyle& style, const Element* element, const 
 
     bool widgetMayDevolve = devolvableWidgetsEnabledAndSupported(element);
     bool widgetHasNativeAppearanceDisabled = widgetMayDevolve && element->isDevolvableWidget() && style.nativeAppearanceDisabled() && !isAppearanceAllowedForAllElements(appearance);
+    bool hasAppearanceFromUAStyle = element && hasAppearanceForElementTypeFromUAStyle(*element);
 
     if (!widgetMayDevolve || shouldCheckLegacyStylesForNativeAppearance(element))
-        widgetHasNativeAppearanceDisabled |= userAgentAppearanceStyle && isControlStyled(style, *userAgentAppearanceStyle);
+        widgetHasNativeAppearanceDisabled |= hasAppearanceFromUAStyle && isControlStyled(style);
 
     if (widgetHasNativeAppearanceDisabled) {
         switch (appearance) {
@@ -285,7 +290,7 @@ void RenderTheme::adjustStyle(RenderStyle& style, const Element* element, const 
     }
 
     if (!isAppearanceAllowedForAllElements(appearance)
-        && !userAgentAppearanceStyle
+        && !hasAppearanceFromUAStyle
         && autoAppearance == StyleAppearance::None
         && !style.borderAndBackgroundEqual(RenderStyle::defaultStyleSingleton()))
         style.setUsedAppearance(StyleAppearance::None);
@@ -746,7 +751,7 @@ OptionSet<ControlStyle::State> RenderTheme::extractControlStyleStatesForRenderer
         if (isSpinUpButtonPartPressed(renderer))
             states.add(ControlStyle::State::SpinUp);
     }
-    if (isFocused(renderer) && renderer.style().outlineStyleIsAuto() == OutlineIsAuto::On)
+    if (isFocused(renderer) && renderer.style().hasAutoOutlineStyle())
         states.add(ControlStyle::State::Focused);
     if (isEnabled(renderer))
         states.add(ControlStyle::State::Enabled);
@@ -897,7 +902,9 @@ bool RenderTheme::paint(const RenderBox& box, const PaintInfo& paintInfo, const 
     case StyleAppearance::SliderThumbVertical:
         return paintSliderThumb(box, paintInfo, devicePixelSnappedRect);
     case StyleAppearance::TextField:
+        return paintTextField(box, paintInfo, devicePixelSnappedRect);
     case StyleAppearance::TextArea:
+        return paintTextArea(box, paintInfo, devicePixelSnappedRect);
     case StyleAppearance::Listbox:
         return true;
     case StyleAppearance::InnerSpinButton:
@@ -936,23 +943,19 @@ bool RenderTheme::paint(const RenderBox& box, const PaintInfo& paintInfo, const 
     return true; // We don't support the appearance, so let the normal background/border paint.
 }
 
-bool RenderTheme::paintBorderOnly(const RenderBox& box, const PaintInfo& paintInfo, const LayoutRect& rect)
+bool RenderTheme::paintBorderOnly(const RenderBox& box, const PaintInfo& paintInfo)
 {
     if (paintInfo.context().paintingDisabled())
         return false;
 
 #if PLATFORM(IOS_FAMILY)
-    UNUSED_PARAM(rect);
     return box.style().usedAppearance() != StyleAppearance::None && box.style().usedAppearance() != StyleAppearance::Base;
 #else
-    FloatRect devicePixelSnappedRect = snapRectToDevicePixels(rect, box.document().deviceScaleFactor());
     // Call the appropriate paint method based off the appearance value.
     switch (box.style().usedAppearance()) {
     case StyleAppearance::TextField:
-        return paintTextField(box, paintInfo, devicePixelSnappedRect);
     case StyleAppearance::Listbox:
     case StyleAppearance::TextArea:
-        return paintTextArea(box, paintInfo, devicePixelSnappedRect);
     case StyleAppearance::MenulistButton:
     case StyleAppearance::SearchField:
         return true;
@@ -1159,7 +1162,7 @@ bool RenderTheme::isControlContainer(StyleAppearance appearance) const
     return appearance != StyleAppearance::Checkbox && appearance != StyleAppearance::Radio;
 }
 
-bool RenderTheme::isControlStyled(const RenderStyle& style, const RenderStyle& userAgentStyle) const
+bool RenderTheme::isControlStyled(const RenderStyle& style) const
 {
     switch (style.usedAppearance()) {
     case StyleAppearance::PushButton:
@@ -1175,7 +1178,7 @@ bool RenderTheme::isControlStyled(const RenderStyle& style, const RenderStyle& u
     case StyleAppearance::TextField:
     case StyleAppearance::TextArea:
         // Test the style to see if the UA border and background match.
-        return !style.borderAndBackgroundEqual(userAgentStyle);
+        return style.nativeAppearanceDisabled();
     default:
         return false;
     }

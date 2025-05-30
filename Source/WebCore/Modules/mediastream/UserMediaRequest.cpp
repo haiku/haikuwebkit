@@ -38,6 +38,7 @@
 
 #include "AudioSession.h"
 #include "DocumentInlines.h"
+#include "ExceptionCode.h"
 #include "JSDOMPromiseDeferred.h"
 #include "JSMediaStream.h"
 #include "JSOverconstrainedError.h"
@@ -54,6 +55,8 @@
 #include "Settings.h"
 #include "UserMediaController.h"
 #include "WindowEventLoop.h"
+#include <JavaScriptCore/ConsoleTypes.h>
+#include <algorithm>
 #include <wtf/Scope.h>
 
 namespace WebCore {
@@ -151,7 +154,7 @@ static inline bool isMediaStreamCorrectlyStarted(const MediaStream& stream)
     if (stream.getTracks().isEmpty())
         return false;
 
-    return WTF::allOf(stream.getTracks(), [](auto& track) {
+    return std::ranges::all_of(stream.getTracks(), [](auto& track) {
         return !track->source().captureDidFail();
     });
 }

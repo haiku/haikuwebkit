@@ -181,6 +181,7 @@ struct MediaPlayerLoadOptions {
     ContentType contentType { };
     bool requiresRemotePlayback { false };
     bool supportsLimitedMatroska { false };
+    VideoMediaSampleRendererPreferences videoMediaSampleRendererPreferences { };
 };
 
 class MediaPlayerClient : public CanMakeWeakPtr<MediaPlayerClient> {
@@ -287,6 +288,7 @@ public:
     virtual void mediaPlayerDidRemoveAudioTrack(AudioTrackPrivate&) { }
     virtual void mediaPlayerDidRemoveTextTrack(InbandTextTrackPrivate&) { }
     virtual void mediaPlayerDidRemoveVideoTrack(VideoTrackPrivate&) { }
+    virtual void mediaPlayerDidReportGPUMemoryFootprint(size_t) { }
 
     virtual void mediaPlayerReloadAndResumePlaybackIfNeeded() { }
 
@@ -335,8 +337,6 @@ public:
 #if PLATFORM(COCOA)
     virtual void mediaPlayerOnNewVideoFrameMetadata(VideoFrameMetadata&&, RetainPtr<CVPixelBufferRef>&&) { }
 #endif
-
-    virtual bool mediaPlayerPrefersSandboxedParsing() const { return false; }
 
     virtual bool mediaPlayerShouldDisableHDR() const { return false; }
 
@@ -682,6 +682,8 @@ public:
 
     size_t extraMemoryCost() const;
 
+    void reportGPUMemoryFootprint(uint64_t) const;
+
     unsigned long long fileSize() const;
 
     std::optional<VideoPlaybackQualityMetrics> videoPlaybackQualityMetrics();
@@ -720,7 +722,6 @@ public:
 
 #if USE(AVFOUNDATION)
     AVPlayer *objCAVFoundationAVPlayer() const;
-    void setDecompressionSessionPreferences(bool, bool);
 #endif
 
     bool performTaskAtTime(Function<void()>&&, const MediaTime&);
@@ -768,8 +769,6 @@ public:
     void playerContentBoxRectChanged(const LayoutRect&);
 
     String lastErrorMessage() const;
-
-    bool prefersSandboxedParsing() const { return client().mediaPlayerPrefersSandboxedParsing(); }
 
     void renderVideoWillBeDestroyed();
 
@@ -875,10 +874,6 @@ private:
 
     String m_lastErrorMessage;
     ProcessIdentity m_processIdentity;
-#if USE(AVFOUNDATION)
-    bool m_preferDecompressionSession { false };
-    bool m_canFallbackToDecompressionSession { false };
-#endif
 
 #if PLATFORM(IOS_FAMILY)
     String m_sceneIdentifier;

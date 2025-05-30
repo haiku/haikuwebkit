@@ -134,7 +134,7 @@ private:
     void relayAccessibilityNotification(const String&, const RetainPtr<NSData>&) override;
     void doneWithKeyEvent(const NativeWebKeyboardEvent&, bool wasEventHandled) override;
 #if ENABLE(TOUCH_EVENTS)
-    void doneWithTouchEvent(const NativeWebTouchEvent&, bool wasEventHandled) override;
+    void doneWithTouchEvent(const WebTouchEvent&, bool wasEventHandled) override;
 #endif
 #if ENABLE(IOS_TOUCH_EVENTS)
     void doneDeferringTouchStart(bool preventNativeGestures) override;
@@ -300,9 +300,7 @@ private:
 
 #if ENABLE(DRAG_SUPPORT)
     void didPerformDragOperation(bool handled) override;
-    void didHandleDragStartRequest(bool started) override;
-    void didHandleAdditionalDragItemsRequest(bool added) override;
-    void startDrag(const WebCore::DragItem&, WebCore::ShareableBitmap::Handle&& image) override;
+    void startDrag(const WebCore::DragItem&, WebCore::ShareableBitmap::Handle&& image, const std::optional<WebCore::ElementIdentifier>&) override;
     void willReceiveEditDragSnapshot() override;
     void didReceiveEditDragSnapshot(std::optional<WebCore::TextIndicatorData>) override;
     void didChangeDragCaretRect(const WebCore::IntRect& previousCaretRect, const WebCore::IntRect& caretRect) override;

@@ -277,6 +277,7 @@
 #include <WebCore/RemoteDOMWindow.h>
 #include <WebCore/RemoteFrame.h>
 #include <WebCore/RemoteFrameClient.h>
+#include <WebCore/RemoteFrameGeometryTransformer.h>
 #include <WebCore/RemoteFrameView.h>
 #include <WebCore/RemoteUserInputEventData.h>
 #include <WebCore/RenderImage.h>
@@ -307,8 +308,10 @@
 #include <WebCore/SubframeLoader.h>
 #include <WebCore/SubresourceLoader.h>
 #include <WebCore/SubstituteData.h>
+#include <WebCore/SystemPreviewInfo.h>
 #include <WebCore/TextExtraction.h>
 #include <WebCore/TextIterator.h>
+#include <WebCore/TextManipulationController.h>
 #include <WebCore/TextRecognitionOptions.h>
 #include <WebCore/TranslationContextMenuInfo.h>
 #include <WebCore/UserContentURLPattern.h>
@@ -321,6 +324,7 @@
 #include <WebCore/VisibleUnits.h>
 #include <WebCore/WritingDirection.h>
 #include <WebCore/markup.h>
+#include <algorithm>
 #include <pal/SessionID.h>
 #include <ranges>
 #include <wtf/CoroutineUtilities.h>
@@ -407,7 +411,6 @@
 #if ENABLE(WEB_AUTHN)
 #include "WebAuthenticatorCoordinator.h"
 #include <WebCore/AuthenticatorCoordinator.h>
-#endif // ENABLE(WEB_AUTHN)
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
 #include "DigitalCredentialsCoordinator.h"
@@ -415,6 +418,7 @@
 #include <WebCore/DigitalCredentialsResponseData.h>
 #include <WebCore/ExceptionData.h>
 #endif // HAVE(DIGITAL_CREDENTIALS_UI)
+#endif // ENABLE(WEB_AUTHN)
 
 #if PLATFORM(IOS_FAMILY) && ENABLE(DEVICE_ORIENTATION)
 #include "WebDeviceOrientationUpdateProvider.h"
@@ -657,7 +661,6 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
 #endif
     , m_layerVolatilityTimer(*this, &WebPage::layerVolatilityTimerFired)
     , m_activityState(parameters.activityState)
-    , m_userActivity("App nap disabled for page due to user activity"_s)
     , m_userInterfaceLayoutDirection(parameters.userInterfaceLayoutDirection)
     , m_overrideContentSecurityPolicy { WTFMove(parameters.overrideContentSecurityPolicy) }
     , m_cpuLimit(parameters.cpuLimit)
@@ -749,7 +752,7 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
     }
 #endif
 
-    m_pageGroup = WebProcess::singleton().webPageGroup(parameters.pageGroupData);
+    m_pageGroup = WebProcess::singleton().webPageGroup(WTFMove(parameters.pageGroupData));
 
     auto frameType = parameters.remotePageParameters ? Frame::FrameType::Remote : Frame::FrameType::Local;
     ASSERT(!parameters.remotePageParameters || parameters.remotePageParameters->frameTreeParameters.frameID == parameters.mainFrameIdentifier);
@@ -784,7 +787,7 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
         makeUniqueRef<WebCryptoClient>(this->identifier()),
         makeUniqueRef<WebProcessSyncClient>(*this)
 #if HAVE(DIGITAL_CREDENTIALS_UI)
-        , makeUniqueRef<DigitalCredentialsCoordinator>(*this)
+        , DigitalCredentialsCoordinator::create(*this)
 #endif
     );
 
@@ -1395,9 +1398,9 @@ void WebPage::updateThrottleState()
     // The UserActivity prevents App Nap. So if we want to allow App Nap of the page, stop the activity.
     // If the page should not be app nap'd, start it.
     if (isThrottleable)
-        m_userActivity.stop();
+        m_internals->userActivity.stop();
     else
-        m_userActivity.start();
+        m_internals->userActivity.start();
 
     if (m_page && m_page->settings().serviceWorkersEnabled()) {
         RunLoop::protectedMain()->dispatch([isThrottleable] {
@@ -2210,7 +2213,7 @@ void WebPage::loadData(LoadParameters&& loadParameters)
     if (loadParameters.baseURLString.isEmpty())
         baseURL = aboutBlankURL();
     else {
-        baseURL = URL { loadParameters.baseURLString };
+        baseURL = URL { WTFMove(loadParameters.baseURLString) };
         if (baseURL.isValid() && !baseURL.protocolIsInHTTPFamily())
             LegacySchemeRegistry::registerURLSchemeAsHandledBySchemeHandler(baseURL.protocol().toString());
     }
@@ -3510,7 +3513,7 @@ void WebPage::mouseEvent(FrameIdentifier frameID, const WebMouseEvent& mouseEven
 {
     SetForScope userIsInteractingChange { m_userIsInteracting, true };
 
-    m_userActivity.impulse();
+    m_internals->userActivity.impulse();
 
     bool shouldHandleEvent = true;
 #if ENABLE(DRAG_SUPPORT)
@@ -3667,7 +3670,7 @@ void WebPage::handleWheelEvent(FrameIdentifier frameID, const WebWheelEvent& eve
 
 std::pair<HandleUserInputEventResult, OptionSet<EventHandling>> WebPage::wheelEvent(const FrameIdentifier& frameID, const WebWheelEvent& wheelEvent, OptionSet<WheelEventProcessingSteps> processingSteps)
 {
-    m_userActivity.impulse();
+    m_internals->userActivity.impulse();
 
     CurrentEvent currentEvent(wheelEvent);
 
@@ -3705,7 +3708,7 @@ void WebPage::keyEvent(FrameIdentifier frameID, const WebKeyboardEvent& keyboard
 {
     SetForScope userIsInteractingChange { m_userIsInteracting, true };
 
-    m_userActivity.impulse();
+    m_internals->userActivity.impulse();
 
     PlatformKeyboardEvent::setCurrentModifierState(platform(keyboardEvent).modifiers());
 
@@ -3797,7 +3800,7 @@ void WebPage::cancelCurrentInteractionInformationRequest()
 }
 
 #if ENABLE(TOUCH_EVENTS)
-static HandleUserInputEventResult handleTouchEvent(FrameIdentifier frameID, const WebTouchEvent& touchEvent, Page* page)
+static Expected<bool, WebCore::RemoteFrameGeometryTransformer> handleTouchEvent(FrameIdentifier frameID, const WebTouchEvent& touchEvent, Page* page)
 {
     RefPtr frame = WebProcess::singleton().webFrame(frameID);
     if (!frame)
@@ -3811,14 +3814,27 @@ static HandleUserInputEventResult handleTouchEvent(FrameIdentifier frameID, cons
 }
 #endif
 
+RefPtr<WebCore::LocalFrame> WebPage::localRootFrame(std::optional<WebCore::FrameIdentifier> frameID)
+{
+    if (RefPtr webFrame = WebProcess::singleton().webFrame(frameID)) {
+        ASSERT(webFrame->coreLocalFrame());
+        ASSERT(webFrame->coreLocalFrame()->isRootFrame());
+        return webFrame->coreLocalFrame();
+    }
+    ASSERT(m_page);
+    ASSERT(m_page->localMainFrame());
+    RefPtr page = m_page;
+    return page ? page->localMainFrame() : nullptr;
+}
+
 #if ENABLE(IOS_TOUCH_EVENTS)
-HandleUserInputEventResult WebPage::dispatchTouchEvent(FrameIdentifier frameID, const WebTouchEvent& touchEvent)
+Expected<bool, WebCore::RemoteFrameGeometryTransformer> WebPage::dispatchTouchEvent(FrameIdentifier frameID, const WebTouchEvent& touchEvent)
 {
     SetForScope userIsInteractingChange { m_userIsInteracting, true };
     m_lastInteractionLocation = touchEvent.position();
     CurrentEvent currentEvent(touchEvent);
     auto handleTouchEventResult = handleTouchEvent(frameID, touchEvent, m_page.get());
-    updatePotentialTapSecurityOrigin(touchEvent, handleTouchEventResult.wasHandled());
+    updatePotentialTapSecurityOrigin(touchEvent, handleTouchEventResult.value_or(false));
     return handleTouchEventResult;
 }
 
@@ -3873,7 +3889,7 @@ void WebPage::touchEvent(const WebTouchEvent& touchEvent, CompletionHandler<void
 
     CurrentEvent currentEvent(touchEvent);
 
-    bool handled = handleTouchEvent(localMainFrame->frameID(), touchEvent, m_page.get()).wasHandled();
+    bool handled = handleTouchEvent(localMainFrame->frameID(), touchEvent, m_page.get()).value_or(false);
 
     completionHandler(touchEvent.type(), handled);
 }
@@ -4947,8 +4963,10 @@ void WebPage::willCommitLayerTree(RemoteLayerTreeTransaction& layerTransaction, 
     layerTransaction.setThemeColor(page->themeColor());
     layerTransaction.setPageExtendedBackgroundColor(page->pageExtendedBackgroundColor());
     layerTransaction.setSampledPageTopColor(page->sampledPageTopColor());
-    if (std::exchange(m_needsFixedContainerEdgesUpdate, false))
-        layerTransaction.setFixedContainerEdges(frameView->fixedContainerEdges(sidesRequiringFixedContainerEdges()));
+    if (std::exchange(m_needsFixedContainerEdgesUpdate, false)) {
+        page->updateFixedContainerEdges(sidesRequiringFixedContainerEdges());
+        layerTransaction.setFixedContainerEdges(page->fixedContainerEdges());
+    }
 
     layerTransaction.setBaseLayoutViewportSize(frameView->baseLayoutViewportSize());
     layerTransaction.setMinStableLayoutViewportOrigin(frameView->minStableLayoutViewportOrigin());
@@ -5561,6 +5579,21 @@ void WebPage::dragCancelled()
     if (RefPtr localMainFrame = this->localMainFrame())
         localMainFrame->eventHandler().dragCancelled();
 }
+
+#if ENABLE(MODEL_PROCESS)
+void WebPage::modelDragEnded(ElementIdentifier elementIdentifier)
+{
+    RefPtr element = Element::fromIdentifier(elementIdentifier);
+    if (!element)
+        return;
+
+    RefPtr modelElement = dynamicDowncast<HTMLModelElement>(element);
+    if (!modelElement)
+        return;
+
+    modelElement->resetModelTransformAfterDrag();
+}
+#endif
 
 #endif // ENABLE(DRAG_SUPPORT)
 
@@ -8505,12 +8538,12 @@ void WebPage::urlSchemeTaskDidPerformRedirection(WebURLSchemeHandlerIdentifier h
     handler->taskDidPerformRedirection(taskIdentifier, WTFMove(response), WTFMove(request), [] (ResourceRequest&&) {});
 }
     
-void WebPage::urlSchemeTaskDidReceiveResponse(WebURLSchemeHandlerIdentifier handlerIdentifier, WebCore::ResourceLoaderIdentifier taskIdentifier, const ResourceResponse& response)
+void WebPage::urlSchemeTaskDidReceiveResponse(WebURLSchemeHandlerIdentifier handlerIdentifier, WebCore::ResourceLoaderIdentifier taskIdentifier, ResourceResponse&& response)
 {
     RefPtr handler = m_identifierToURLSchemeHandlerProxyMap.get(handlerIdentifier);
     ASSERT(handler);
 
-    handler->taskDidReceiveResponse(taskIdentifier, response);
+    handler->taskDidReceiveResponse(taskIdentifier, WTFMove(response));
 }
 
 void WebPage::urlSchemeTaskDidReceiveData(WebURLSchemeHandlerIdentifier handlerIdentifier, WebCore::ResourceLoaderIdentifier taskIdentifier, Ref<WebCore::SharedBuffer>&& data)
@@ -8901,7 +8934,7 @@ void WebPage::startTextManipulations(Vector<WebCore::TextManipulationController:
     if (!m_page)
         return completionHandler();
 
-    m_textManipulationExclusionRules = WTFMove(exclusionRules);
+    m_internals->textManipulationExclusionRules = WTFMove(exclusionRules);
     m_textManipulationIncludesSubframes = includeSubframes;
     if (m_textManipulationIncludesSubframes) {
         for (RefPtr<Frame> frame = m_mainFrame->coreFrame(); frame; frame = frame->tree().traverseNext())
@@ -8920,7 +8953,7 @@ void WebPage::startTextManipulationForFrame(WebCore::Frame& frame)
     if (!document || document->textManipulationControllerIfExists())
         return;
 
-    auto exclusionRules = *m_textManipulationExclusionRules;
+    auto exclusionRules = *m_internals->textManipulationExclusionRules;
     document->textManipulationController().startObservingParagraphs([webPage = WeakPtr { *this }] (Document& document, const Vector<WebCore::TextManipulationItem>& items) {
         RefPtr frame = document.frame();
         if (!webPage || !frame)
@@ -8966,7 +8999,7 @@ void WebPage::completeTextManipulation(const Vector<WebCore::TextManipulationIte
         return controller->completeManipulation(items);
     };
 
-    bool containsItemsForMultipleFrames = WTF::anyOf(items, [&](auto& item) {
+    bool containsItemsForMultipleFrames = std::ranges::any_of(items, [&](auto& item) {
         return currentFrameID != item.frameID;
     });
     if (!containsItemsForMultipleFrames)
@@ -9382,6 +9415,34 @@ void WebPage::createTextFragmentDirectiveFromSelection(CompletionHandler<void(UR
 {
     auto url = protectedCorePage()->fragmentDirectiveURLForSelectedText();
     completionHandler(WTFMove(url));
+}
+
+void WebPage::getTextFragmentRanges(CompletionHandler<void(const Vector<EditingRange>&&)>&& completionHandler)
+{
+    RefPtr focusedOrMainFrame = protectedCorePage()->checkedFocusController()->focusedOrMainFrame();
+    if (!focusedOrMainFrame) {
+        completionHandler({ });
+        return;
+    }
+    RefPtr document = focusedOrMainFrame->document();
+
+    RefPtr frame = document->frame();
+    if (!frame) {
+        completionHandler({ });
+        return;
+    }
+
+    Vector<EditingRange> editingRanges;
+    if (RefPtr highlightRegistry = document->fragmentHighlightRegistryIfExists()) {
+        for (auto& highlight : highlightRegistry->map()) {
+            for (auto& highlightRange : highlight.value->highlightRanges()) {
+                Ref<AbstractRange> range = highlightRange->range();
+                editingRanges.append(EditingRange::fromRange(*frame, makeSimpleRange(range)));
+            }
+        }
+    }
+
+    completionHandler(WTFMove(editingRanges));
 }
 
 #if ENABLE(APP_HIGHLIGHTS)
@@ -9807,7 +9868,7 @@ void WebPage::remotePostMessage(WebCore::FrameIdentifier source, const String& s
     if (!targetWindow)
         return;
 
-    RefPtr targetCoreFrame = targetWindow->frame();
+    RefPtr targetCoreFrame = targetWindow->localFrame();
     if (!targetCoreFrame)
         return;
 
@@ -10344,6 +10405,13 @@ void WebPage::frameViewLayoutOrVisualViewportChanged(const LocalFrameView& frame
     UNUSED_PARAM(frameView);
 #endif
 }
+
+#if ENABLE(MODEL_ELEMENT)
+bool WebPage::shouldDisableModelLoadDelaysForTesting() const
+{
+    return m_page && m_page->shouldDisableModelLoadDelaysForTesting();
+}
+#endif
 
 } // namespace WebKit
 

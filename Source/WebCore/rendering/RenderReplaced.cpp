@@ -116,17 +116,13 @@ void RenderReplaced::styleDidChange(StyleDifference diff, const RenderStyle* old
         intrinsicSizeChanged();
 }
 
-static void issueFullRepaintOnSizeChangeIfNeeded(RenderReplaced& renderer)
+static bool shouldRepaintOnSizeChange(RenderReplaced& renderer)
 {
-    auto shouldRepaintOnSizeChange = [&] {
-        if (is<RenderHTMLCanvas>(renderer))
-            return true;
-        if (auto* renderImage = dynamicDowncast<RenderImage>(renderer); renderImage && !is<RenderMedia>(*renderImage) && !renderImage->isShowingMissingOrImageError())
-            return true;
-        return false;
-    };
-    if (shouldRepaintOnSizeChange())
-        renderer.repaint();
+    if (is<RenderHTMLCanvas>(renderer))
+        return true;
+    if (auto* renderImage = dynamicDowncast<RenderImage>(renderer); renderImage && !is<RenderMedia>(*renderImage) && !renderImage->isShowingMissingOrImageError())
+        return true;
+    return false;
 }
 
 void RenderReplaced::layout()
@@ -152,7 +148,8 @@ void RenderReplaced::layout()
 
     if (replacedContentRect() != oldContentRect) {
         setPreferredLogicalWidthsDirty(true);
-        issueFullRepaintOnSizeChangeIfNeeded(*this);
+        if (shouldRepaintOnSizeChange(*this))
+            repaint();
     }
 }
 
@@ -595,6 +592,30 @@ LayoutUnit RenderReplaced::computeConstrainedLogicalWidth() const
     return std::max(0_lu, (logicalWidth - (marginStart + marginEnd + borderLeft() + borderRight() + paddingLeft() + paddingRight())));
 }
 
+void RenderReplaced::computeAspectRatioAdjustedIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const
+{
+    computeIntrinsicLogicalWidths(minLogicalWidth, maxLogicalWidth);
+
+    if (!hasIntrinsicAspectRatio())
+        return;
+
+    auto& style = this->style();
+    auto computedAspectRatio = computeIntrinsicAspectRatio();
+    auto computedIntrinsicLogicalWidth = minLogicalWidth;
+
+    if (style.logicalHeight().isFixed())
+        computedIntrinsicLogicalWidth = style.logicalHeight().value() * computedAspectRatio;
+
+    if (style.logicalMaxHeight().isFixed())
+        computedIntrinsicLogicalWidth = std::min(computedIntrinsicLogicalWidth, LayoutUnit { style.logicalMaxHeight().value() * computedAspectRatio });
+
+    if (style.logicalMinHeight().isFixed())
+        computedIntrinsicLogicalWidth = std::max(computedIntrinsicLogicalWidth, LayoutUnit { style.logicalMinHeight().value() * computedAspectRatio });
+
+    minLogicalWidth = computedIntrinsicLogicalWidth;
+    maxLogicalWidth = minLogicalWidth;
+}
+
 static inline LayoutUnit resolveWidthForRatio(LayoutUnit borderAndPaddingLogicalHeight, LayoutUnit borderAndPaddingLogicalWidth, LayoutUnit logicalHeight, double aspectRatio, BoxSizing boxSizing)
 {
     if (boxSizing == BoxSizing::BorderBox)
@@ -747,7 +768,7 @@ void RenderReplaced::computePreferredLogicalWidths()
     // We cannot resolve any percent logical width here as the available logical
     // width may not be set on our containing block.
     if (style().logicalWidth().isPercentOrCalculated())
-        computeIntrinsicLogicalWidths(m_minPreferredLogicalWidth, m_maxPreferredLogicalWidth);
+        computeAspectRatioAdjustedIntrinsicLogicalWidths(m_minPreferredLogicalWidth, m_maxPreferredLogicalWidth);
     else
         m_minPreferredLogicalWidth = m_maxPreferredLogicalWidth = computeReplacedLogicalWidth(ShouldComputePreferred::ComputePreferred);
 

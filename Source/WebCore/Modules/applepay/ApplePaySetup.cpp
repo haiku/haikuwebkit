@@ -28,7 +28,7 @@
 
 #if ENABLE(APPLE_PAY)
 
-#include "Document.h"
+#include "DocumentInlines.h"
 #include "JSApplePaySetupFeature.h"
 #include "JSDOMPromiseDeferred.h"
 #include "Page.h"
@@ -36,6 +36,7 @@
 #include "PaymentCoordinatorClient.h"
 #include "PaymentSession.h"
 #include "Settings.h"
+#include "UserGestureIndicator.h"
 #include <wtf/CompletionHandler.h>
 
 namespace WebCore {

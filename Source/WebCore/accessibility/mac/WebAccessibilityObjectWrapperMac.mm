@@ -54,6 +54,7 @@
 #import "ChromeClient.h"
 #import "ContextMenuController.h"
 #import "DateComponents.h"
+#import "DocumentInlines.h"
 #import "ElementInlines.h"
 #import "Font.h"
 #import "FontCascade.h"
@@ -963,7 +964,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 - (id)remoteAccessibilityParentObject
 {
     RefPtr<AXCoreObject> backingObject = self.axBackingObject;
-    return backingObject ? backingObject->remoteParentObject() : nil;
+    return backingObject ? backingObject->remoteParent().get() : nil;
 }
 
 static void convertToVector(NSArray* array, AccessibilityObject::AccessibilityChildrenVector& vector)
@@ -1143,7 +1144,7 @@ static id scrollViewParent(AXCoreObject& axObject)
     if (auto platformWidget = axObject.platformWidget())
         return NSAccessibilityUnignoredAncestor(platformWidget);
 
-    return axObject.remoteParentObject();
+    return axObject.remoteParent().get();
 }
 
 - (id)windowElement:(NSString *)attributeName
@@ -1298,7 +1299,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     }
 
     if ([attributeName isEqualToString: NSAccessibilityVisitedAttribute])
-        return [NSNumber numberWithBool: backingObject->isVisited()];
+        return [NSNumber numberWithBool: backingObject->isVisitedLink()];
 
     if ([attributeName isEqualToString: NSAccessibilityTitleAttribute]) {
         if (backingObject->isAttachment()) {

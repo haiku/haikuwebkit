@@ -857,9 +857,9 @@ UncheckedKeyHashMap<String, String> AccessibilityObjectAtspi::attributes() const
 
     RefPtr liveObject = dynamicDowncast<AccessibilityObject>(m_coreObject);
 
-    String tagName = liveObject->tagName();
-    if (!tagName.isEmpty())
-        map.add("tag"_s, tagName);
+    auto tagName = tagNameForElementName(liveObject->elementName());
+    if (tagName != TagName::Unknown)
+        map.add("tag"_s, tagNameAsString(tagName));
 
     if (auto* element = m_coreObject->element()) {
         String id = element->getIdAttribute().string();
@@ -1215,6 +1215,13 @@ std::optional<Atspi::Role> AccessibilityObjectAtspi::effectiveRole() const
         if (m_coreObject->inheritsPresentationalRole())
             return Atspi::Role::Section;
         break;
+    }
+    case AccessibilityRole::Cell:
+    case AccessibilityRole::GridCell: {
+        if (m_coreObject->isColumnHeader())
+            return Atspi::Role::ColumnHeader;
+        if (m_coreObject->isRowHeader())
+            return Atspi::Role::RowHeader;
     }
     default:
         break;

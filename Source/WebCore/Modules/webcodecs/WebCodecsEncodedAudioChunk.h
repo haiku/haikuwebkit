@@ -29,18 +29,19 @@
 #if ENABLE(WEB_CODECS)
 
 #include "BufferSource.h"
-#include "ExceptionOr.h"
 #include "WebCodecsEncodedAudioChunkData.h"
 #include <wtf/ThreadSafeRefCounted.h>
 
 namespace WebCore {
+
+template<typename> class ExceptionOr;
 
 class WebCodecsEncodedAudioChunkStorage : public ThreadSafeRefCounted<WebCodecsEncodedAudioChunkStorage> {
 public:
     static Ref<WebCodecsEncodedAudioChunkStorage> create(WebCodecsEncodedAudioChunkType type, int64_t timestamp, std::optional<uint64_t> duration, Vector<uint8_t>&& buffer) { return create(WebCodecsEncodedAudioChunkData { type, timestamp, duration, WTFMove(buffer) }); }
     static Ref<WebCodecsEncodedAudioChunkStorage> create(WebCodecsEncodedAudioChunkData&& data) { return adoptRef(* new WebCodecsEncodedAudioChunkStorage(WTFMove(data))); }
 
-    const WebCodecsEncodedAudioChunkData& data() const { return m_data; }
+    const WebCodecsEncodedAudioChunkData& data() const LIFETIME_BOUND { return m_data; }
     uint64_t memoryCost() const { return m_data.buffer.size(); }
 
 private:
@@ -70,8 +71,8 @@ public:
 
     ExceptionOr<void> copyTo(BufferSource&&);
 
-    std::span<const uint8_t> span() const { return m_storage->data().buffer.span(); }
-    WebCodecsEncodedAudioChunkStorage& storage() { return m_storage.get(); }
+    std::span<const uint8_t> span() const LIFETIME_BOUND { return m_storage->data().buffer.span(); }
+    WebCodecsEncodedAudioChunkStorage& storage() LIFETIME_BOUND { return m_storage.get(); }
 
 private:
     explicit WebCodecsEncodedAudioChunk(Init&&);

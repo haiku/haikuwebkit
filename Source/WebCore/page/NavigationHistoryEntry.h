@@ -30,6 +30,7 @@
 #include "EventTarget.h"
 #include "HistoryItem.h"
 #include "ReferrerPolicy.h"
+#include "ScriptExecutionContextIdentifier.h"
 #include <wtf/RefCounted.h>
 
 namespace JSC {
@@ -38,6 +39,7 @@ class JSValue;
 
 namespace WebCore {
 
+class JSDOMGlobalObject;
 class Navigation;
 class SerializedScriptValue;
 
@@ -46,6 +48,8 @@ class NavigationHistoryEntry final : public RefCounted<NavigationHistoryEntry>, 
 public:
     static Ref<NavigationHistoryEntry> create(Navigation&, Ref<HistoryItem>&&);
     static Ref<NavigationHistoryEntry> create(Navigation&, const NavigationHistoryEntry&);
+
+    ~NavigationHistoryEntry();
 
     void ref() const final { RefCounted::ref(); }
     void deref() const final { RefCounted::deref(); }

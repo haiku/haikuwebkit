@@ -34,7 +34,6 @@
 #include "ColorHash.h"
 #include "PageIdentifier.h"
 #include "RenderStyleConstants.h"
-#include "TagName.h"
 #include <wtf/HashMap.h>
 #include <wtf/Lock.h>
 #include <wtf/RefPtr.h>
@@ -63,25 +62,29 @@ enum class AXPropertyFlag : uint32_t {
     CanSetSelectedAttribute                       = 1 << 1,
     CanSetValueAttribute                          = 1 << 2,
     HasBoldFont                                   = 1 << 3,
-    HasItalicFont                                 = 1 << 4,
-    HasPlainText                                  = 1 << 5,
-    IsEnabled                                     = 1 << 6,
-    IsExposedTableCell                            = 1 << 7,
-    IsGrabbed                                     = 1 << 8,
-    IsIgnored                                     = 1 << 9,
-    IsInlineText                                  = 1 << 10,
-    IsKeyboardFocusable                           = 1 << 11,
-    IsNonLayerSVGObject                           = 1 << 12,
-    IsTableRow                                    = 1 << 13,
-    SupportsCheckedState                          = 1 << 14,
-    SupportsDragging                              = 1 << 15,
-    SupportsExpanded                              = 1 << 16,
-    SupportsPath                                  = 1 << 17,
-    SupportsPosInSet                              = 1 << 18,
-    SupportsSetSize                               = 1 << 19
+    HasClickHandler                               = 1 << 4,
+    HasItalicFont                                 = 1 << 5,
+    HasPlainText                                  = 1 << 6,
+    IsEnabled                                     = 1 << 7,
+    IsExposedTableCell                            = 1 << 8,
+    IsGrabbed                                     = 1 << 9,
+    IsIgnored                                     = 1 << 10,
+    IsInlineText                                  = 1 << 11,
+    IsKeyboardFocusable                           = 1 << 12,
+    IsNonLayerSVGObject                           = 1 << 13,
+    IsTableRow                                    = 1 << 14,
+    IsVisited                                     = 1 << 15,
+    SupportsCheckedState                          = 1 << 16,
+    SupportsDragging                              = 1 << 17,
+    SupportsExpanded                              = 1 << 18,
+    SupportsPath                                  = 1 << 19,
+    SupportsPosInSet                              = 1 << 20,
+    SupportsSetSize                               = 1 << 21
 };
 
 enum class AXProperty : uint16_t {
+    ARIALevel,
+    ARIARoleDescription,
 #if !ENABLE(AX_THREAD_TEXT_APIS)
     // Rather than caching text content as property when ENABLE(AX_THREAD_TEXT_APIS), we should
     // synthesize it on-the-fly using AXProperty::TextRuns.
@@ -123,6 +126,7 @@ enum class AXProperty : uint16_t {
     DocumentEncoding,
     DocumentLinks,
     DocumentURI,
+    ElementName,
     EmbeddedImageDescription,
     ExpandedTextValue,
     ExplicitAutoCompleteValue,
@@ -144,20 +148,19 @@ enum class AXProperty : uint16_t {
     HasLinethrough,
     HasPlainText,
     HasRemoteFrameChild,
+    InputType,
     IsSubscript,
     IsSuperscript,
     HasTextShadow,
     HasUnderline,
-    HeadingLevel,
-    HierarchicalLevel,
     HorizontalScrollBar,
     IdentifierAttribute,
     IncrementButton,
     InitialFrameRect,
     InnerHTML,
     InternalLinkElement,
-    InsideLink,
     IsGrabbed,
+    IsARIAGridRow,
     IsARIATreeGridRow,
     IsAnonymousMathOperator,
     IsAttachment,
@@ -169,12 +172,9 @@ enum class AXProperty : uint16_t {
     IsExposable,
     IsExposedTableCell,
     IsFieldset,
-    IsFileUploadButton,
     IsIgnored,
     IsIndeterminate,
     IsInlineText,
-    IsRadioInput,
-    IsInputImage,
     IsKeyboardFocusable,
     IsMathElement,
     IsMathFraction,
@@ -204,6 +204,7 @@ enum class AXProperty : uint16_t {
     IsTreeItem,
     IsValueAutofillAvailable,
     IsVisible,
+    IsVisited,
     IsWidget,
     KeyShortcuts,
     Language,
@@ -234,16 +235,20 @@ enum class AXProperty : uint16_t {
     OuterHTML,
     Path,
     PlaceholderValue,
+#if PLATFORM(COCOA)
+    PlatformWidget,
+#endif
     PosInSet,
     PreventKeyboardDOMEventDispatch,
     RadioButtonGroup,
     RelativeFrame,
     RemoteFrameOffset,
     RemoteFramePlatformElement,
+#if PLATFORM(COCOA)
+    RemoteParent,
+#endif
     RolePlatformString,
-    RoleDescription,
     Rows,
-    RowHeader,
     RowHeaders,
     RowIndex,
     RowIndexRange,
@@ -266,7 +271,6 @@ enum class AXProperty : uint16_t {
     SupportsPath,
     SupportsPosInSet,
     SupportsSetSize,
-    TagName,
     TextContentPrefixFromListMarker,
 #if !ENABLE(AX_THREAD_TEXT_APIS)
     // Rather than caching text content as property when ENABLE(AX_THREAD_TEXT_APIS), we should
@@ -293,23 +297,28 @@ WTF::TextStream& operator<<(WTF::TextStream&, AXProperty);
 
 using AXPropertySet = HashSet<AXProperty, IntHash<AXProperty>, WTF::StrongEnumHashTraits<AXProperty>>;
 
+using AXIDAndCharacterRange = std::pair<Markable<AXID>, CharacterRange>;
+
 // If this type is modified, the switchOn statment in AXIsolatedObject::setProperty must be updated as well.
-using AXPropertyValueVariant = Variant<std::nullptr_t, Markable<AXID>, String, bool, int, unsigned, double, float, uint64_t, WallTime, DateComponentsType, AccessibilityButtonState, Color, std::shared_ptr<URL>, LayoutRect, FloatPoint, FloatRect, IntPoint, IntRect, std::pair<unsigned, unsigned>, std::optional<unsigned>, Vector<AccessibilityText>, Vector<AXID>, Vector<std::pair<Markable<AXID>, Markable<AXID>>>, Vector<String>, std::shared_ptr<Path>, OptionSet<AXAncestorFlag>, InsideLink, Vector<Vector<Markable<AXID>>>, CharacterRange, std::pair<Markable<AXID>, CharacterRange>, TagName, std::optional<AccessibilityOrientation>
+using AXPropertyValueVariant = Variant<std::nullptr_t, Markable<AXID>, String, bool, int, unsigned, double, float, uint64_t, WallTime, DateComponentsType, AccessibilityButtonState, Color, std::shared_ptr<URL>, LayoutRect, FloatPoint, FloatRect, InputType::Type, IntPoint, IntRect, std::pair<unsigned, unsigned>, Vector<AccessibilityText>, Vector<AXID>, Vector<std::pair<Markable<AXID>, Markable<AXID>>>, Vector<String>, std::shared_ptr<Path>, OptionSet<AXAncestorFlag>, Vector<Vector<Markable<AXID>>>, CharacterRange, std::shared_ptr<AXIDAndCharacterRange>, ElementName, AccessibilityOrientation
 #if PLATFORM(COCOA)
     , RetainPtr<NSAttributedString>
+    , RetainPtr<NSView>
     , RetainPtr<id>
     , OptionSet<SpeakAs>
 #endif // PLATFORM(COCOA)
 #if ENABLE(AX_THREAD_TEXT_APIS)
     , RetainPtr<CTFontRef>
     , FontOrientation
-    , AXTextRuns
+    , std::shared_ptr<AXTextRuns>
     , TextEmissionBehavior
     , AXTextRunLineID
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 >;
 using AXPropertyVector = Vector<std::pair<AXProperty, AXPropertyValueVariant>>;
 WTF::TextStream& operator<<(WTF::TextStream&, const AXPropertyVector&);
+
+static_assert(sizeof(AXPropertyValueVariant) == 24, "The AX property value variant should not be larger than 24.");
 
 struct AXPropertyChange {
     AXID axID; // ID of the object whose properties changed.
@@ -381,17 +390,8 @@ public:
 
     void generateSubtree(AccessibilityObject&);
     bool shouldCreateNodeChange(AccessibilityObject&);
-    void updateNode(AccessibilityObject&);
     enum class ResolveNodeChanges : bool { No, Yes };
-    void updateChildren(AccessibilityObject&, ResolveNodeChanges = ResolveNodeChanges::Yes);
     void updateChildrenForObjects(const ListHashSet<Ref<AccessibilityObject>>&);
-    void updateNodeProperty(AccessibilityObject& object, AXProperty property) { updateNodeProperties(object, { property }); }
-    void updateNodeProperties(AccessibilityObject&, const AXPropertySet&);
-    void updateNodeProperties(AccessibilityObject* axObject, const AXPropertySet& properties)
-    {
-        if (axObject)
-            updateNodeProperties(*axObject, properties);
-    }
     void updateDependentProperties(AccessibilityObject&);
     void updatePropertiesForSelfAndDescendants(AccessibilityObject&, const AXPropertySet&);
     void updateFrame(AXID, IntRect&&);
@@ -524,6 +524,10 @@ private:
 #endif
         AttachWrapper attachWrapper { AttachWrapper::OnMainThread };
     };
+
+    void updateChildren(AccessibilityObject&, ResolveNodeChanges = ResolveNodeChanges::Yes);
+    void updateNode(AccessibilityObject&);
+    void updateNodeProperties(AccessibilityObject&, const AXPropertySet&);
 
     std::optional<NodeChange> nodeChangeForObject(Ref<AccessibilityObject>, AttachWrapper = AttachWrapper::OnMainThread);
     void collectNodeChangesForSubtree(AccessibilityObject&);

@@ -48,7 +48,7 @@
 #include <wtf/ExportMacros.h>
 
 #if OS(DARWIN)
-#include <wtf/spi/darwin/AbortWithReasonSPI.h>
+#include <wtf/spi/darwin/ReasonSPI.h>
 #endif
 
 #if OS(HAIKU)
@@ -134,6 +134,14 @@
 extern "C" {
 #endif
 
+/*
+   This header file needs to be compatible with C code, [noreturn]] cannot be used here.
+   Use [[noreturn]] in WebKit except this header file.
+*/
+#if !defined(NO_RETURN_FOR_C)
+#define NO_RETURN_FOR_C __attribute((__noreturn__))
+#endif
+
 /* CRASH() - Raises a fatal error resulting in program termination and triggering either the debugger or the crash reporter.
 
    Use CRASH() in response to known, unrecoverable errors like out-of-memory.
@@ -142,7 +150,7 @@ extern "C" {
 
    Signals are ignored by the crash reporter on OS X so we must do better.
 */
-#define NO_RETURN_DUE_TO_CRASH NO_RETURN
+#define NO_RETURN_DUE_TO_CRASH NO_RETURN_FOR_C
 
 #ifdef __cplusplus
 enum class WTFLogChannelState : uint8_t { Off, On, OnWithAccumulation };
@@ -388,6 +396,12 @@ WTF_EXPORT_PRIVATE NO_RETURN_DUE_TO_CRASH void WTFCrashWithSecurityImplication(v
 #undef ASSERT
 #endif
 
+/* This header may be used in C code so we cannot rely on [[unlikely]]. */
+/* Use [[likely]] / [[unlikely]] in WebKit, do not call this macro outside this header. */
+#if !defined(UNLIKELY_FOR_C_ASSERTIONS)
+#define UNLIKELY_FOR_C_ASSERTIONS(x) __builtin_expect(!!(x), 0)
+#endif
+
 #if !ASSERT_ENABLED
 
 #define ASSERT(assertion, ...) ((void)0)
@@ -404,7 +418,7 @@ WTF_EXPORT_PRIVATE NO_RETURN_DUE_TO_CRASH void WTFCrashWithSecurityImplication(v
 #if ENABLE(SECURITY_ASSERTIONS)
 #define ASSERT_NOT_REACHED_WITH_SECURITY_IMPLICATION(...) CRASH_WITH_SECURITY_IMPLICATION_AND_INFO(__VA_ARGS__)
 #define ASSERT_WITH_SECURITY_IMPLICATION(assertion) \
-    (UNLIKELY(!(assertion)) ? \
+    (UNLIKELY_FOR_C_ASSERTIONS(!(assertion)) ? \
         (WTFReportAssertionFailure(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #assertion), \
          CRASH_WITH_SECURITY_IMPLICATION()) : \
         (void)0)
@@ -421,7 +435,7 @@ WTF_EXPORT_PRIVATE NO_RETURN_DUE_TO_CRASH void WTFCrashWithSecurityImplication(v
 #else /* ASSERT_ENABLED */
 
 #define ASSERT(assertion, ...) do { \
-    if (UNLIKELY(!(assertion))) { \
+    if (UNLIKELY_FOR_C_ASSERTIONS(!(assertion))) { \
         WTFReportAssertionFailure(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #assertion); \
         BACKTRACE(); \
         CRASH_WITH_INFO(__VA_ARGS__); \
@@ -429,7 +443,7 @@ WTF_EXPORT_PRIVATE NO_RETURN_DUE_TO_CRASH void WTFCrashWithSecurityImplication(v
 } while (0)
 
 #define ASSERT_UNDER_CONSTEXPR_CONTEXT(assertion) do { \
-    if (UNLIKELY(!(assertion))) { \
+    if (UNLIKELY_FOR_C_ASSERTIONS(!(assertion))) { \
         WTFReportAssertionFailure(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #assertion); \
         if (!std::is_constant_evaluated()) \
             BACKTRACE(); \
@@ -438,7 +452,7 @@ WTF_EXPORT_PRIVATE NO_RETURN_DUE_TO_CRASH void WTFCrashWithSecurityImplication(v
 } while (0)
 
 #define ASSERT_AT(assertion, file, line, function) do { \
-    if (UNLIKELY(!(assertion))) { \
+    if (UNLIKELY_FOR_C_ASSERTIONS(!(assertion))) { \
         WTFReportAssertionFailure(file, line, function, #assertion); \
         BACKTRACE(); \
         CRASH(); \
@@ -470,7 +484,7 @@ WTF_EXPORT_PRIVATE NO_RETURN_DUE_TO_CRASH void WTFCrashWithSecurityImplication(v
 } while (0)
 
 #define ASSERT_IMPLIES(condition, assertion) do { \
-    if (UNLIKELY((condition) && !(assertion))) { \
+    if (UNLIKELY_FOR_C_ASSERTIONS((condition) && !(assertion))) { \
         WTFReportAssertionFailure(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #condition " => " #assertion); \
         BACKTRACE(); \
         CRASH(); \
@@ -491,7 +505,7 @@ WTF_EXPORT_PRIVATE NO_RETURN_DUE_TO_CRASH void WTFCrashWithSecurityImplication(v
  
 */
 #define ASSERT_WITH_SECURITY_IMPLICATION(assertion) do { \
-    if (UNLIKELY(!(assertion))) { \
+    if (UNLIKELY_FOR_C_ASSERTIONS(!(assertion))) { \
         WTFReportAssertionFailure(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #assertion); \
         BACKTRACE(); \
         CRASH_WITH_SECURITY_IMPLICATION(); \
@@ -507,7 +521,7 @@ WTF_EXPORT_PRIVATE NO_RETURN_DUE_TO_CRASH void WTFCrashWithSecurityImplication(v
 #define ASSERT_WITH_MESSAGE(assertion, ...) ((void)0)
 #else
 #define ASSERT_WITH_MESSAGE(assertion, ...) do { \
-    if (UNLIKELY(!(assertion))) { \
+    if (UNLIKELY_FOR_C_ASSERTIONS(!(assertion))) { \
         WTFReportAssertionFailureWithMessage(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #assertion, __VA_ARGS__); \
         BACKTRACE(); \
         CRASH(); \
@@ -526,7 +540,7 @@ constexpr bool assertionFailureDueToUnreachableCode = false;
 #define ASSERT_WITH_MESSAGE_UNUSED(variable, assertion, ...) ((void)variable)
 #else
 #define ASSERT_WITH_MESSAGE_UNUSED(variable, assertion, ...) do { \
-    if (UNLIKELY(!(assertion))) { \
+    if (UNLIKELY_FOR_C_ASSERTIONS(!(assertion))) { \
         WTFReportAssertionFailureWithMessage(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #assertion, __VA_ARGS__); \
         BACKTRACE(); \
         CRASH(); \
@@ -544,7 +558,7 @@ constexpr bool assertionFailureDueToUnreachableCode = false;
 #else
 
 #define ASSERT_ARG(argName, assertion) do { \
-    if (UNLIKELY(!(assertion))) { \
+    if (UNLIKELY_FOR_C_ASSERTIONS(!(assertion))) { \
         WTFReportArgumentAssertionFailure(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #argName, #assertion); \
         BACKTRACE(); \
         CRASH(); \
@@ -684,7 +698,7 @@ static constexpr bool unreachableForValue = false;
 #define RELEASE_LOG_DEBUG(channel, ...) ((void)0)
 
 #define RELEASE_LOG_IF(isAllowed, channel, ...) ((void)0)
-#define RELEASE_LOG_ERROR_IF(isAllowed, channel, ...) do { if (UNLIKELY(isAllowed)) RELEASE_LOG_ERROR(channel, __VA_ARGS__); } while (0)
+#define RELEASE_LOG_ERROR_IF(isAllowed, channel, ...) do { if (UNLIKELY_FOR_C_ASSERTIONS(isAllowed)) RELEASE_LOG_ERROR(channel, __VA_ARGS__); } while (0)
 #define RELEASE_LOG_INFO_IF(isAllowed, channel, ...) ((void)0)
 #define RELEASE_LOG_DEBUG_IF(isAllowed, channel, ...) ((void)0)
 
@@ -768,9 +782,9 @@ static constexpr bool unreachableForValue = false;
 
 #if !RELEASE_LOG_DISABLED
 #define RELEASE_LOG_IF(isAllowed, channel, ...) do { if (isAllowed) RELEASE_LOG(channel, __VA_ARGS__); } while (0)
-#define RELEASE_LOG_ERROR_IF(isAllowed, channel, ...) do { if (UNLIKELY(isAllowed)) RELEASE_LOG_ERROR(channel, __VA_ARGS__); } while (0)
-#define RELEASE_LOG_INFO_IF(isAllowed, channel, ...) do { if (UNLIKELY(isAllowed)) RELEASE_LOG_INFO(channel, __VA_ARGS__); } while (0)
-#define RELEASE_LOG_DEBUG_IF(isAllowed, channel, ...) do { if (UNLIKELY(isAllowed)) RELEASE_LOG_DEBUG(channel, __VA_ARGS__); } while (0)
+#define RELEASE_LOG_ERROR_IF(isAllowed, channel, ...) do { if (UNLIKELY_FOR_C_ASSERTIONS(isAllowed)) RELEASE_LOG_ERROR(channel, __VA_ARGS__); } while (0)
+#define RELEASE_LOG_INFO_IF(isAllowed, channel, ...) do { if (UNLIKELY_FOR_C_ASSERTIONS(isAllowed)) RELEASE_LOG_INFO(channel, __VA_ARGS__); } while (0)
+#define RELEASE_LOG_DEBUG_IF(isAllowed, channel, ...) do { if (UNLIKELY_FOR_C_ASSERTIONS(isAllowed)) RELEASE_LOG_DEBUG(channel, __VA_ARGS__); } while (0)
 #endif
 
 /* ALWAYS_LOG */
@@ -792,7 +806,7 @@ static constexpr bool unreachableForValue = false;
 #if !ASSERT_ENABLED
 
 #define RELEASE_ASSERT(assertion, ...) do { \
-    if (UNLIKELY(!(assertion))) \
+    if (UNLIKELY_FOR_C_ASSERTIONS(!(assertion))) \
         CRASH_WITH_INFO(__VA_ARGS__); \
 } while (0)
 #define RELEASE_ASSERT_WITH_MESSAGE(assertion, ...) RELEASE_ASSERT(assertion)
@@ -800,12 +814,12 @@ static constexpr bool unreachableForValue = false;
 #define RELEASE_ASSERT_NOT_REACHED(...) CRASH_WITH_INFO(__VA_ARGS__)
 #define RELEASE_ASSERT_NOT_REACHED_UNDER_CONSTEXPR_CONTEXT() CRASH_UNDER_CONSTEXPR_CONTEXT();
 #define RELEASE_ASSERT_UNDER_CONSTEXPR_CONTEXT(assertion) do { \
-    if (UNLIKELY(!(assertion))) { \
+    if (UNLIKELY_FOR_C_ASSERTIONS(!(assertion))) { \
         CRASH_UNDER_CONSTEXPR_CONTEXT(); \
     } \
 } while (0)
 #define RELEASE_ASSERT_IMPLIES(condition, assertion) do { \
-    if (UNLIKELY((condition) && !(assertion))) { \
+    if (UNLIKELY_FOR_C_ASSERTIONS((condition) && !(assertion))) { \
         CRASH(); \
     } \
 } while (0)
@@ -843,11 +857,11 @@ static constexpr bool unreachableForValue = false;
 */
 #if ENABLE(CONJECTURE_ASSERT)
 #define CONJECTURE_ASSERT(assertion, ...) do { \
-        if (UNLIKELY(wtfConjectureAssertIsEnabled && !(assertion))) \
+        if (UNLIKELY_FOR_C_ASSERTIONS(wtfConjectureAssertIsEnabled && !(assertion))) \
             WTFCrashDueToConjectureAssert(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #assertion); \
     } while (false)
 #define CONJECTURE_ASSERT_IMPLIES(condition, assertion)  do { \
-        if (UNLIKELY(wtfConjectureAssertIsEnabled && (condition) && !(assertion))) \
+        if (UNLIKELY_FOR_C_ASSERTIONS(wtfConjectureAssertIsEnabled && (condition) && !(assertion))) \
             WTFCrashDueToConjectureAssert(__FILE__, __LINE__, WTF_PRETTY_FUNCTION, #assertion); \
     } while (false)
 #else

@@ -34,6 +34,7 @@
 #import <WebCore/DNS.h>
 #import <WebCore/LinkDecorationFilteringData.h>
 #import <WebCore/OrganizationStorageAccessPromptQuirk.h>
+#import <numeric>
 #import <pal/spi/cf/CFNetworkSPI.h>
 #import <pal/spi/cocoa/NetworkSPI.h>
 #import <time.h>
@@ -101,7 +102,7 @@ Ref<ListDataObserver> ListDataControllerBase::observeUpdates(Function<void()>&& 
 {
     ASSERT(RunLoop::isMain());
     if (!m_notificationListener) {
-        m_notificationListener = adoptNS([[WKWebPrivacyNotificationListener alloc] initWithType:resourceType() callback:^{
+        m_notificationListener = adoptNS([[WKWebPrivacyNotificationListener alloc] initWithType:static_cast<WPResourceType>(resourceTypeValue()) callback:^{
             updateList([weakThis = WeakPtr { *this }] {
                 RefPtr protectedThis = weakThis.get();
                 if (!protectedThis)
@@ -135,7 +136,7 @@ void ListDataControllerBase::initializeIfNeeded()
     });
 }
 
-WPResourceType LinkDecorationFilteringController::resourceType() const
+unsigned LinkDecorationFilteringController::resourceTypeValue() const
 {
     return WPResourceTypeLinkFilteringData;
 }
@@ -223,9 +224,9 @@ void requestLinkDecorationFilteringData(LinkFilteringRulesCallback&& callback)
     }];
 }
 
-WPResourceType StorageAccessPromptQuirkController::resourceType() const
+unsigned StorageAccessPromptQuirkController::resourceTypeValue() const
 {
-    return static_cast<WPResourceType>(WPResourceTypeStorageAccessPromptQuirksData);
+    return WPResourceTypeStorageAccessPromptQuirksData;
 }
 
 void StorageAccessPromptQuirkController::didUpdateCachedListData()
@@ -294,9 +295,9 @@ void StorageAccessPromptQuirkController::updateList(CompletionHandler<void()>&& 
     }];
 }
 
-WPResourceType StorageAccessUserAgentStringQuirkController::resourceType() const
+unsigned StorageAccessUserAgentStringQuirkController::resourceTypeValue() const
 {
-    return static_cast<WPResourceType>(WPResourceTypeStorageAccessUserAgentStringQuirksData);
+    return WPResourceTypeStorageAccessUserAgentStringQuirksData;
 }
 
 void StorageAccessUserAgentStringQuirkController::updateList(CompletionHandler<void()>&& completionHandler)
@@ -568,7 +569,7 @@ public:
             lower = upper;
         else {
             while (upper - lower > 1) {
-                auto middle = (lower + upper) / 2;
+                auto middle = std::midpoint(lower, upper);
                 auto compareResult = address <=> list[middle].m_network;
                 if (is_eq(compareResult))
                     return &list[middle];
@@ -757,12 +758,12 @@ void ScriptTelemetryController::updateList(CompletionHandler<void()>&& completio
 {
     RunLoop::protectedMain()->dispatch(WTFMove(completion));
 }
-
-WPResourceType ScriptTelemetryController::resourceType() const
-{
-    return static_cast<WPResourceType>(9);
-}
 #endif
+
+unsigned ScriptTelemetryController::resourceTypeValue() const
+{
+    return 9;
+}
 
 void ScriptTelemetryController::didUpdateCachedListData()
 {

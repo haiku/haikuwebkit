@@ -31,7 +31,7 @@
 #include "CachedRawResource.h"
 #include "CachedRawResourceClient.h"
 #include "CachedResourceHandle.h"
-#include "ExceptionOr.h"
+#include "EventLoop.h"
 #include "HTMLElement.h"
 #include "HTMLModelElementCamera.h"
 #include "IDLTypes.h"
@@ -53,6 +53,7 @@ class DOMMatrixReadOnly;
 class DOMPointReadOnly;
 class Event;
 class GraphicsLayer;
+class LayoutPoint;
 class LayoutSize;
 class Model;
 class ModelPlayer;
@@ -61,6 +62,7 @@ class MouseEvent;
 
 template<typename IDLType> class DOMPromiseDeferred;
 template<typename IDLType> class DOMPromiseProxyWithResolveCallback;
+template<typename> class ExceptionOr;
 
 #if ENABLE(MODEL_PROCESS)
 template<typename IDLType> class DOMPromiseProxy;
@@ -79,6 +81,8 @@ public:
     // ActiveDOMObject.
     void ref() const final { HTMLElement::ref(); }
     void deref() const final { HTMLElement::deref(); }
+    void suspend(ReasonForSuspension) final;
+    void resume() final;
 
     // VisibilityChangeClient.
     void visibilityStateChanged() final;
@@ -162,6 +166,8 @@ public:
     WEBCORE_EXPORT void beginStageModeTransform(const TransformationMatrix&);
     WEBCORE_EXPORT void updateStageModeTransform(const TransformationMatrix&);
     WEBCORE_EXPORT void endStageModeInteraction();
+    WEBCORE_EXPORT void tryAnimateModelToFitPortal(bool handledDrag, CompletionHandler<void(bool)>&&);
+    WEBCORE_EXPORT void resetModelTransformAfterDrag();
 #endif
 
 #if PLATFORM(COCOA)
@@ -182,6 +188,10 @@ private:
     void modelDidChange();
     void createModelPlayer();
     void deleteModelPlayer();
+    void unloadModelPlayer(bool onSuspend);
+    void reloadModelPlayer();
+    void startReloadModelTimer();
+    void reloadModelTimerFired();
 
     RefPtr<GraphicsLayer> graphicsLayer() const;
 
@@ -216,9 +226,10 @@ private:
     void didUpdateEntityTransform(ModelPlayer&, const TransformationMatrix&) final;
     void didUpdateBoundingBox(ModelPlayer&, const FloatPoint3D&, const FloatPoint3D&) final;
     void didFinishEnvironmentMapLoading(bool succeeded) final;
-    void renderingAbruptlyStopped() final;
+    void didUnload(ModelPlayer&) final;
 #endif
     std::optional<PlatformLayerIdentifier> modelContentsLayerID() const final;
+    bool isVisible() const final;
 
     Node::InsertedIntoAncestorResult insertedIntoAncestor(InsertionType , ContainerNode& parentOfInsertedTree) override;
     void removedFromAncestor(RemovalType, ContainerNode& oldParentOfRemovedTree) override;
@@ -262,6 +273,7 @@ private:
     bool m_shouldCreateModelPlayerUponRendererAttachment { false };
 
     RefPtr<ModelPlayer> m_modelPlayer;
+    EventLoopTimerHandle m_reloadModelTimer;
 #if ENABLE(MODEL_PROCESS)
     Ref<DOMMatrixReadOnly> m_entityTransform;
     Ref<DOMPointReadOnly> m_boundingBoxCenter;

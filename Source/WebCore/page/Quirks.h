@@ -52,6 +52,7 @@ class WeakPtrImplWithEventTargetData;
 
 enum class IsSyntheticClick : bool;
 enum class StorageAccessWasGranted : uint8_t;
+enum class UserAgentType;
 
 class Quirks {
     WTF_MAKE_TZONE_ALLOCATED(Quirks);
@@ -136,12 +137,15 @@ public:
 
     static bool shouldMakeEventListenerPassive(const EventTarget&, const EventTypeInfo&);
 
+    WEBCORE_EXPORT static bool shouldTranscodeHeicImagesForURL(const URL&);
+
 #if ENABLE(MEDIA_STREAM)
     bool shouldEnableLegacyGetUserMediaQuirk() const;
     bool shouldDisableImageCaptureQuirk() const;
     bool shouldEnableSpeakerSelectionPermissionsPolicyQuirk() const;
     bool shouldEnableEnumerateDeviceQuirk() const;
 #endif
+    bool shouldUnloadHeavyFrame() const;
 
     bool needsCanPlayAfterSeekedQuirk() const;
 
@@ -180,7 +184,6 @@ public:
 #if PLATFORM(IOS) || PLATFORM(VISION)
     WEBCORE_EXPORT bool allowLayeredFullscreenVideos() const;
 #endif
-    bool shouldEnableApplicationCacheQuirk() const;
     bool shouldEnableFontLoadingAPIQuirk() const;
     bool needsVideoShouldMaintainAspectRatioQuirk() const;
 
@@ -219,6 +222,7 @@ public:
     WEBCORE_EXPORT bool shouldUseEphemeralPartitionedStorageForDOMCookies(const URL&) const;
 
     bool needsLaxSameSiteCookieQuirk(const URL&) const;
+    static String standardUserAgentWithApplicationNameIncludingCompatOverrides(const String&, const String&, UserAgentType);
 
     String scriptToEvaluateBeforeRunningScriptFromURL(const URL&);
 
@@ -240,7 +244,7 @@ public:
 
     bool needsBingGestureEventQuirk(EventTarget*) const;
 
-    bool shouldAvoidStartingSelectionOnMouseDown(const Node&) const;
+    WEBCORE_EXPORT bool shouldAvoidStartingSelectionOnMouseDownOverPointerCursor(const Node&) const;
 
     bool shouldReuseLiveRangeForSelectionUpdate() const;
 
@@ -253,6 +257,8 @@ public:
     bool needsWebKitMediaTextTrackDisplayQuirk() const;
 
     bool shouldSupportHoverMediaQueries() const;
+
+    bool shouldRewriteMediaRangeRequestForURL(const URL&) const;
 
 private:
     bool needsQuirks() const;

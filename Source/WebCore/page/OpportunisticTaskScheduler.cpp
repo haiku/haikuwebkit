@@ -27,9 +27,11 @@
 #include "OpportunisticTaskScheduler.h"
 
 #include "CommonVM.h"
+#include "Document.h"
 #include "GCController.h"
 #include "IdleCallbackController.h"
 #include "Page.h"
+#include "Settings.h"
 #include <JavaScriptCore/HeapInlines.h>
 #include <JavaScriptCore/JSGlobalObject.h>
 #include <wtf/DataLog.h>
@@ -102,6 +104,9 @@ void OpportunisticTaskScheduler::runLoopObserverFired()
     m_runloopCountAfterBeingScheduled++;
 
     bool shouldRunTask = [&] {
+        if (m_runloopCountAfterBeingScheduled < 10 && hasImminentlyScheduledWork())
+            return false;
+
         static constexpr auto fractionOfRenderingIntervalWhenScheduledWorkIsImminent = 0.95;
         if (remainingTime > fractionOfRenderingIntervalWhenScheduledWorkIsImminent * page->preferredRenderingUpdateInterval())
             return true;

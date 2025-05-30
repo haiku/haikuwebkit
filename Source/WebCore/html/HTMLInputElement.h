@@ -30,6 +30,7 @@
 
 namespace WebCore {
 
+class Color;
 class Decimal;
 class DragData;
 class FileList;
@@ -87,7 +88,7 @@ public:
     WEBCORE_EXPORT void setType(const AtomString&);
     WEBCORE_EXPORT ValueOrReference<String> value() const final;
     WEBCORE_EXPORT ExceptionOr<void> setValue(const String&, TextFieldEventBehavior = DispatchNoEvent, TextControlSetValueSelection = TextControlSetValueSelection::SetSelectionToEnd) final;
-    void setValueForUser(const String& value) { setValue(value, DispatchInputAndChangeEvent); }
+    WEBCORE_EXPORT void setValueForUser(const String&);
     WEBCORE_EXPORT WallTime valueAsDate() const;
     WEBCORE_EXPORT ExceptionOr<void> setValueAsDate(WallTime);
     WallTime accessibilityValueAsDate() const;
@@ -138,6 +139,8 @@ public:
     std::optional<double> listOptionValueAsDouble(const HTMLOptionElement&);
 
     bool isPresentingAttachedView() const;
+
+    RefPtr<InputType> inputType() const;
 
     bool isSteppable() const; // stepUp()/stepDown() for user-interaction.
     WEBCORE_EXPORT bool isTextButton() const;

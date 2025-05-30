@@ -66,13 +66,16 @@
 #include "GridPositionsResolver.h"
 #include "LineClampValue.h"
 #include "LocalFrame.h"
+#include "PathOperation.h"
 #include "Quirks.h"
 #include "QuotesData.h"
 #include "RenderStyleInlines.h"
+#include "RotateTransformOperation.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGPathElement.h"
 #include "SVGRenderStyle.h"
 #include "SVGURIReference.h"
+#include "ScaleTransformOperation.h"
 #include "ScrollAxis.h"
 #include "ScrollbarColor.h"
 #include "ScrollbarGutter.h"
@@ -131,9 +134,8 @@ public:
     static OptionSet<TextDecorationLine> convertTextDecorationLine(BuilderState&, const CSSValue&);
     static OptionSet<TextTransform> convertTextTransform(BuilderState&, const CSSValue&);
     template<typename T> static T convertNumber(BuilderState&, const CSSValue&);
-    template<typename T> static T convertNumberOrAuto(BuilderState&, const CSSValue&);
-    static short convertWebkitHyphenateLimitLines(BuilderState&, const CSSValue&);
-    template<CSSPropertyID> static RefPtr<StyleImage> convertStyleImage(BuilderState&, CSSValue&);
+    template<typename T, CSSValueID> static T convertNumberOrKeyword(BuilderState&, const CSSValue&);
+    static RefPtr<StyleImage> convertImageOrNone(BuilderState&, CSSValue&);
     static ImageOrientation convertImageOrientation(BuilderState&, const CSSValue&);
     static TransformOperations convertTransform(BuilderState&, const CSSValue&);
     static RefPtr<RotateTransformOperation> convertRotate(BuilderState&, const CSSValue&);
@@ -143,10 +145,11 @@ public:
     static Style::ColorScheme convertColorScheme(BuilderState&, const CSSValue&);
 #endif
     static String convertString(BuilderState&, const CSSValue&);
-    static String convertStringOrAuto(BuilderState&, const CSSValue&);
-    static AtomString convertStringOrAutoAtom(BuilderState& state, const CSSValue& value) { return AtomString { convertStringOrAuto(state, value) }; }
-    static String convertStringOrNone(BuilderState&, const CSSValue&);
-    static AtomString convertStringOrNoneAtom(BuilderState& state, const CSSValue& value) { return AtomString { convertStringOrNone(state, value) }; }
+    template<CSSValueID> static String convertStringOrKeyword(BuilderState&, const CSSValue&);
+    template<CSSValueID> static String convertCustomIdentOrKeyword(BuilderState&, const CSSValue&);
+    template<CSSValueID> static AtomString convertStringAtomOrKeyword(BuilderState&, const CSSValue&);
+    template<CSSValueID> static AtomString convertCustomIdentAtomOrKeyword(BuilderState&, const CSSValue&);
+
     static OptionSet<TextEmphasisPosition> convertTextEmphasisPosition(BuilderState&, const CSSValue&);
     static TextAlignMode convertTextAlign(BuilderState&, const CSSValue&);
     static TextAlignLast convertTextAlignLast(BuilderState&, const CSSValue&);
@@ -167,7 +170,6 @@ public:
     static RefPtr<ShapeValue> convertShapeValue(BuilderState&, const CSSValue&);
     static ScrollSnapType convertScrollSnapType(BuilderState&, const CSSValue&);
     static ScrollSnapAlign convertScrollSnapAlign(BuilderState&, const CSSValue&);
-    static ScrollSnapStop convertScrollSnapStop(BuilderState&, const CSSValue&);
     static std::optional<ScrollbarColor> convertScrollbarColor(BuilderState&, const CSSValue&);
     static ScrollbarGutter convertScrollbarGutter(BuilderState&, const CSSValue&);
     // scrollbar-width converter is only needed for quirking.
@@ -229,7 +231,7 @@ public:
     static OffsetRotation convertOffsetRotate(BuilderState&, const CSSValue&);
 
     static OptionSet<Containment> convertContain(BuilderState&, const CSSValue&);
-    static Vector<Style::ScopedName> convertContainerName(BuilderState&, const CSSValue&);
+    static Vector<ScopedName> convertContainerNames(BuilderState&, const CSSValue&);
 
     static OptionSet<MarginTrimType> convertMarginTrim(BuilderState&, const CSSValue&);
 
@@ -238,15 +240,15 @@ public:
 
     static std::optional<WebCore::Length> convertBlockStepSize(BuilderState&, const CSSValue&);
 
-    static Vector<Style::ScopedName> convertViewTransitionClass(BuilderState&, const CSSValue&);
-    static Style::ViewTransitionName convertViewTransitionName(BuilderState&, const CSSValue&);
+    static Vector<ScopedName> convertViewTransitionClasses(BuilderState&, const CSSValue&);
+    static ViewTransitionName convertViewTransitionName(BuilderState&, const CSSValue&);
     static RefPtr<WillChangeData> convertWillChange(BuilderState&, const CSSValue&);
     
-    static Vector<AtomString> convertScrollTimelineName(BuilderState&, const CSSValue&);
-    static Vector<ScrollAxis> convertScrollTimelineAxis(BuilderState&, const CSSValue&);
-    static Vector<ViewTimelineInsets> convertViewTimelineInset(BuilderState&, const CSSValue&);
+    static Vector<AtomString> convertScrollTimelineNames(BuilderState&, const CSSValue&);
+    static Vector<ScrollAxis> convertScrollTimelineAxes(BuilderState&, const CSSValue&);
+    static Vector<ViewTimelineInsets> convertViewTimelineInsets(BuilderState&, const CSSValue&);
 
-    static Vector<ScopedName> convertAnchorName(BuilderState&, const CSSValue&);
+    static Vector<ScopedName> convertAnchorNames(BuilderState&, const CSSValue&);
     static std::optional<ScopedName> convertPositionAnchor(BuilderState&, const CSSValue&);
     static std::optional<PositionArea> convertPositionArea(BuilderState&, const CSSValue&);
     static OptionSet<PositionVisibility> convertPositionVisibility(BuilderState&, const CSSValue&);
@@ -470,13 +472,8 @@ inline ListStyleType BuilderConverter::convertListStyleType(BuilderState& builde
             return { ListStyleType::Type::None, nullAtom() };
         return { ListStyleType::Type::CounterStyle, makeAtomString(primitiveValue->stringValue()) };
     }
-    if (primitiveValue->isCustomIdent()) {
-        ASSERT(builderState.document().settings().cssCounterStyleAtRulesEnabled());
+    if (primitiveValue->isCustomIdent())
         return { ListStyleType::Type::CounterStyle, makeAtomString(primitiveValue->stringValue()) };
-    }
-#if !ASSERT_ENABLED
-    UNUSED_PARAM(builderState);
-#endif
     return { ListStyleType::Type::String, makeAtomString(primitiveValue->stringValue()) };
 }
 
@@ -641,26 +638,15 @@ inline T BuilderConverter::convertNumber(BuilderState& builderState, const CSSVa
     return primitiveValue->resolveAsNumber<T>(builderState.cssToLengthConversionData());
 }
 
-template<typename T>
-inline T BuilderConverter::convertNumberOrAuto(BuilderState& builderState, const CSSValue& value)
+template<typename T, CSSValueID keyword>
+inline T BuilderConverter::convertNumberOrKeyword(BuilderState& builderState, const CSSValue& value)
 {
-    if (value.valueID() == CSSValueAuto)
+    if (value.valueID() == keyword)
         return -1;
     return convertNumber<T>(builderState, value);
 }
 
-inline short BuilderConverter::convertWebkitHyphenateLimitLines(BuilderState& builderState, const CSSValue& value)
-{
-    auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
-    if (!primitiveValue)
-        return { };
-    if (primitiveValue->valueID() == CSSValueNoLimit)
-        return -1;
-    return primitiveValue->resolveAsNumber<short>(builderState.cssToLengthConversionData());
-}
-
-template<CSSPropertyID>
-inline RefPtr<StyleImage> BuilderConverter::convertStyleImage(BuilderState& builderState, CSSValue& value)
+inline RefPtr<StyleImage> BuilderConverter::convertImageOrNone(BuilderState& builderState, CSSValue& value)
 {
     return builderState.createStyleImage(value);
 }
@@ -725,18 +711,32 @@ inline String BuilderConverter::convertString(BuilderState& builderState, const 
     return primitiveValue->stringValue();
 }
 
-inline String BuilderConverter::convertStringOrAuto(BuilderState& builderState, const CSSValue& value)
+template<CSSValueID keyword> inline String BuilderConverter::convertStringOrKeyword(BuilderState& builderState, const CSSValue& value)
 {
-    if (value.valueID() == CSSValueAuto)
+    if (value.valueID() == keyword)
         return nullAtom();
     return convertString(builderState, value);
 }
 
-inline String BuilderConverter::convertStringOrNone(BuilderState& builderState, const CSSValue& value)
+template<CSSValueID keyword> inline String BuilderConverter::convertCustomIdentOrKeyword(BuilderState& builderState, const CSSValue& value)
 {
-    if (value.valueID() == CSSValueNone)
+    if (value.valueID() == keyword)
         return nullAtom();
     return convertString(builderState, value);
+}
+
+template<CSSValueID keyword> inline AtomString BuilderConverter::convertStringAtomOrKeyword(BuilderState& builderState, const CSSValue& value)
+{
+    if (value.valueID() == keyword)
+        return nullAtom();
+    return AtomString { convertString(builderState, value) };
+}
+
+template<CSSValueID keyword> inline AtomString BuilderConverter::convertCustomIdentAtomOrKeyword(BuilderState& builderState, const CSSValue& value)
+{
+    if (value.valueID() == keyword)
+        return nullAtom();
+    return AtomString { convertString(builderState, value) };
 }
 
 inline static OptionSet<TextEmphasisPosition> valueToEmphasisPosition(const CSSPrimitiveValue& primitiveValue)
@@ -1304,11 +1304,6 @@ inline ScrollSnapAlign BuilderConverter::convertScrollSnapAlign(BuilderState& bu
         fromCSSValue<ScrollSnapAxisAlignType>(pair->first),
         fromCSSValue<ScrollSnapAxisAlignType>(pair->second)
     };
-}
-
-inline ScrollSnapStop BuilderConverter::convertScrollSnapStop(BuilderState&, const CSSValue& value)
-{
-    return fromCSSValue<ScrollSnapStop>(value);
 }
 
 inline std::optional<ScrollbarColor> BuilderConverter::convertScrollbarColor(BuilderState& builderState, const CSSValue& value)
@@ -2147,7 +2142,7 @@ inline OffsetRotation BuilderConverter::convertOffsetRotate(BuilderState& builde
     return OffsetRotation(hasAuto, angleInDegrees);
 }
 
-inline Vector<Style::ScopedName> BuilderConverter::convertContainerName(BuilderState& builderState, const CSSValue& value)
+inline Vector<Style::ScopedName> BuilderConverter::convertContainerNames(BuilderState& builderState, const CSSValue& value)
 {
     if (is<CSSPrimitiveValue>(value)) {
         ASSERT(value.valueID() == CSSValueNone);
@@ -2296,7 +2291,7 @@ inline OptionSet<Containment> BuilderConverter::convertContain(BuilderState& bui
     return containment;
 }
 
-inline Vector<Style::ScopedName> BuilderConverter::convertViewTransitionClass(BuilderState& builderState, const CSSValue& value)
+inline Vector<Style::ScopedName> BuilderConverter::convertViewTransitionClasses(BuilderState& builderState, const CSSValue& value)
 {
     if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
         if (value.valueID() == CSSValueNone)
@@ -2365,7 +2360,7 @@ inline RefPtr<WillChangeData> BuilderConverter::convertWillChange(BuilderState& 
     return willChange;
 }
 
-inline Vector<AtomString> BuilderConverter::convertScrollTimelineName(BuilderState& builderState, const CSSValue& value)
+inline Vector<AtomString> BuilderConverter::convertScrollTimelineNames(BuilderState& builderState, const CSSValue& value)
 {
     if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
         if (value.valueID() == CSSValueNone)
@@ -2382,7 +2377,7 @@ inline Vector<AtomString> BuilderConverter::convertScrollTimelineName(BuilderSta
     });
 }
 
-inline Vector<ScrollAxis> BuilderConverter::convertScrollTimelineAxis(BuilderState& builderState, const CSSValue& value)
+inline Vector<ScrollAxis> BuilderConverter::convertScrollTimelineAxes(BuilderState& builderState, const CSSValue& value)
 {
     if (is<CSSPrimitiveValue>(value))
         return { fromCSSValueID<ScrollAxis>(value.valueID()) };
@@ -2396,7 +2391,7 @@ inline Vector<ScrollAxis> BuilderConverter::convertScrollTimelineAxis(BuilderSta
     });
 }
 
-inline Vector<ViewTimelineInsets> BuilderConverter::convertViewTimelineInset(BuilderState& builderState, const CSSValue& value)
+inline Vector<ViewTimelineInsets> BuilderConverter::convertViewTimelineInsets(BuilderState& builderState, const CSSValue& value)
 {
     // While parsing, consumeViewTimelineInset() and consumeViewTimelineShorthand() yield a CSSValueList exclusively.
     auto list = requiredListDowncast<CSSValueList, CSSValue>(builderState, value);
@@ -2413,7 +2408,7 @@ inline Vector<ViewTimelineInsets> BuilderConverter::convertViewTimelineInset(Bui
     });
 }
 
-inline Vector<ScopedName> BuilderConverter::convertAnchorName(BuilderState& builderState, const CSSValue& value)
+inline Vector<ScopedName> BuilderConverter::convertAnchorNames(BuilderState& builderState, const CSSValue& value)
 {
     if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
         if (value.valueID() == CSSValueNone)

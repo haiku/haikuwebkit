@@ -61,12 +61,7 @@ void GStreamerIncomingTrackProcessor::configure(ThreadSafeWeakPtr<GStreamerMedia
     }
     m_data.caps = WTFMove(caps);
 
-    m_data.mediaStreamBinName = makeString("incoming-"_s, typeName, "-track-"_s, unsafeSpan(GST_OBJECT_NAME(m_pad.get())));
-    m_bin = gst_bin_new(m_data.mediaStreamBinName.ascii().data());
     GST_DEBUG_OBJECT(m_bin.get(), "Processing track with caps %" GST_PTR_FORMAT, m_data.caps.get());
-
-    g_object_get(m_pad.get(), "transceiver", &m_data.transceiver.outPtr(), nullptr);
-
     auto structure = gst_caps_get_structure(m_data.caps.get(), 0);
     if (auto ssrc = gstStructureGet<unsigned>(structure, "ssrc"_s)) {
         m_data.ssrc = *ssrc;
@@ -77,6 +72,15 @@ void GStreamerIncomingTrackProcessor::configure(ThreadSafeWeakPtr<GStreamerMedia
                 m_sdpMsIdAndTrackId = { components[0], components[1] };
         }
     }
+
+    if (auto mid = gstStructureGetString(structure, "a-mid"))
+        m_data.mid = mid.toString();
+
+    m_data.mediaStreamBinName = makeString("incoming-"_s, typeName, "-track-"_s, m_data.ssrc, '-', unsafeSpan(GST_OBJECT_NAME(m_pad.get())));
+    m_bin = gst_bin_new(m_data.mediaStreamBinName.ascii().data());
+
+    g_object_get(m_pad.get(), "transceiver", &m_data.transceiver.outPtr(), nullptr);
+
     if (auto msIdAttribute = gstStructureGetString(structure, "a-msid"_s)) {
         if (msIdAttribute.startsWith(' '))
             m_sdpMsIdAndTrackId = { emptyString(), msIdAttribute.substring(1).toString() };
@@ -306,10 +310,6 @@ void GStreamerIncomingTrackProcessor::installRtpBufferPadProbe(const GRefPtr<Gst
             if (!rtpBuffer) [[unlikely]]
                 return GST_PAD_PROBE_OK;
 
-            // Do not process further if this packet doesn't mark the end of a frame.
-            if (!gst_rtp_buffer_get_marker(rtpBuffer.mappedData()))
-                return GST_PAD_PROBE_OK;
-
             videoFrameTimeMetadata.rtpTimestamp = gst_rtp_buffer_get_timestamp(rtpBuffer.mappedData());
         }
 
@@ -318,7 +318,7 @@ void GStreamerIncomingTrackProcessor::installRtpBufferPadProbe(const GRefPtr<Gst
             videoFrameTimeMetadata.captureTime = Seconds::fromNanoseconds(gst_rtcp_ntp_to_unix(ntpTimestamp));
         }
 
-        auto modifiedBuffer = webkitGstBufferSetVideoFrameTimeMetadata(GRefPtr(buffer), WTFMove(videoFrameTimeMetadata));
+        auto modifiedBuffer = webkitGstBufferSetVideoFrameMetadata(GRefPtr(buffer), WTFMove(videoFrameTimeMetadata));
         GST_PAD_PROBE_INFO_DATA(info) = modifiedBuffer.leakRef();
         return GST_PAD_PROBE_OK;
     }, gst_caps_new_empty_simple("timestamp/x-ntp"), reinterpret_cast<GDestroyNotify>(gst_caps_unref));

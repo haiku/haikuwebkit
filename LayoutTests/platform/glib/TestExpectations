@@ -761,6 +761,7 @@ accessibility/aria-controlled-table-row-visibility.html [ Skip ]
 accessibility/animated-dropdown.html [ Skip ]
 accessibility/aria-modal-with-text-crash.html [ Skip ]
 accessibility/button-inside-label-ax-text.html [ Skip ]
+accessibility/changing-aria-hidden-with-display-none-parent.html [ Skip ]
 accessibility/display-contents/dynamically-added-children.html [ Skip ]
 accessibility/display-contents/object-ordering.html [ Skip ]
 accessibility/display-contents/search-traversal.html [ Skip ]
@@ -935,37 +936,6 @@ webkit.org/b/169916 imported/blink/css3/blending/mix-blend-mode-with-squashing-l
 
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Compositing tests
-#////////////////////////////////////////////////////////////////////////////////////////
-
-
-#////////////////////////////////////////////////////////////////////////////////////////
-# Crypto tests
-#////////////////////////////////////////////////////////////////////////////////////////
-
-# These are failures that will be enabled once the relevant parts of implementation land.
-webkit.org/b/133122 crypto/subtle/aes-cfb-generate-export-key-jwk-length-128.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-generate-export-key-jwk-length-192.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-generate-export-key-jwk-length-256.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-generate-export-raw-key.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-generate-key-encrypt-decrypt.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-generate-key.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-import-jwk-key-length-128.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-import-jwk-key-length-192.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-import-jwk-key-length-256.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-import-key-decrypt.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-import-key-encrypt.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-import-key-unwrap-jwk-key.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-import-key-unwrap-raw-key.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-import-key-wrap-jwk-key.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-import-key-wrap-raw-key.html [ Skip ]
-webkit.org/b/133122 crypto/subtle/aes-cfb-import-raw-key.html [ Skip ]
-webkit.org/b/133122 crypto/workers/subtle/aes-cfb-import-key-decrypt.html [ Skip ]
-webkit.org/b/133122 crypto/workers/subtle/aes-cfb-import-key-encrypt.html [ Skip ]
-webkit.org/b/133122 crypto/workers/subtle/aes-cfb-import-key-unwrap-key.html [ Skip ]
-webkit.org/b/133122 crypto/workers/subtle/aes-cfb-import-key-wrap-key.html [ Skip ]
-
-#////////////////////////////////////////////////////////////////////////////////////////
-# End of Crypto tests
 #////////////////////////////////////////////////////////////////////////////////////////
 
 
@@ -1279,10 +1249,6 @@ webkit.org/b/292271 fast/mediastream/mediaStream-with-rotation.html [ Skip ]
 
 # No support for Matroska container in GStreamer port.
 http/wpt/mediarecorder/MediaRecorder-matroska-AV-audio-video-dataavailable.html
-
-# The mp4 test here is passing but the webm test fails, matroskademux fails to seek in push mode,
-# due to missing index. GLib baselines reflect this, the Pass expectation is kept here for future reference.
-webkit.org/b/282534 http/wpt/mediarecorder/MediaRecorder-audio-samplingrate-change.html [ Pass ]
 
 # The "Pausing and resuming the recording should impact the video duration" test fails.
 webkit.org/b/285813 http/wpt/mediarecorder/pause-recording.html [ Failure ]
@@ -1997,6 +1963,9 @@ media/audioSession [ Skip ]
 http/tests/webrtc/audioSessionInFrames.html [ Skip ]
 http/wpt/webrtc/rtcNetworkInterface.html [ Failure ]
 
+webkit.org/b/292839 media/media-fullscreen-not-in-document.html [ Timeout ]
+webkit.org/b/292842 fast/mediastream/stream-switch.html [ Timeout ]
+
 #////////////////////////////////////////////////////////////////////////////////////////
 # End of Media-related bugs
 #////////////////////////////////////////////////////////////////////////////////////////
@@ -2163,6 +2132,7 @@ webkit.org/b/172812 webgl/max-active-contexts-webglcontextlost-prevent-default.h
 webkit.org/b/210239 fast/canvas/webgl/out-of-bounds-simulated-vertexAttrib0-drawArrays.html [ Slow ]
 
 webkit.org/b/251195 webgl/1.0.x/conformance/extensions/ext-color-buffer-half-float.html [ Failure ]
+webkit.org/b/195714 fast/canvas/webgl/texImage2D-video-flipY-true.html [ Timeout ]
 
 # No colorspaces in non-Cocoa WebGL.
 
@@ -2241,17 +2211,11 @@ fast/mediastream/getUserMedia-video-rescaling.html [ Failure ]
 fast/mediastream/getUserMedia-frame-rate.html [ Failure ]
 fast/mediastream/get-user-media-constraints.html [ Failure ]
 fast/mediastream/get-user-media-ideal-constraints.html [ Failure ]
-fast/mediastream/video-rotation.html [ Skip ]
-webrtc/video-rotation-no-cvo.html [ Failure Timeout ]
-webrtc/video-rotation-black.html [ Crash Failure Pass Timeout ]
-
-fast/mediastream/video-rotation-clone.html [ Skip ]
 fast/mediastream/image-capture-grabFrame.html [ Failure ]
 
 # No AudioSession category handling in WPE/GTK ports.
 fast/mediastream/microphone-interruption-and-audio-session.html [ Skip ]
 
-webkit.org/b/261329 webrtc/video-clone-track.html [ Failure ]
 webrtc/clone-audio-track.html [ Pass Failure ]
 
 webkit.org/b/256758 fast/mediastream/captureStream/canvas3d.html [ Failure ]
@@ -2356,7 +2320,6 @@ webkit.org/b/252878 fast/mediastream/video-mediastream-restricted-invisible-auto
 webkit.org/b/252878 fast/mediastream/video-mediastream-restricted-invisible-autoplay-user-click.html [ Pass Timeout ]
 webkit.org/b/252878 http/tests/webrtc/video-mediastream-invisible-autoplay-detached.html [ Pass Timeout ]
 webkit.org/b/187064 webrtc/video-addTrack.html [ Failure Pass Timeout ]
-webkit.org/b/187064 webrtc/video-rotation.html [ Failure Timeout ]
 webkit.org/b/187064 webrtc/video-with-data-channel.html [ Failure ]
 webkit.org/b/177533 webrtc/video-interruption.html
 webkit.org/b/229346 webkit.org/b/235885 webrtc/multi-audio.html [ Timeout Pass Failure ]
@@ -2435,7 +2398,10 @@ webkit.org/b/286481 imported/w3c/web-platform-tests/webrtc/protocol/rtp-demuxing
 imported/w3c/web-platform-tests/webrtc/protocol/missing-fields.html [ Failure ]
 
 # Simulcast support is not complete yet.
-webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc/simulcast [ Skip ]
+imported/w3c/web-platform-tests/webrtc/simulcast [ Pass ]
+imported/w3c/web-platform-tests/webrtc/simulcast/negotiation-encodings.https.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/simulcast/setParameters-encodings.https.html [ Failure ]
+imported/w3c/web-platform-tests/webrtc/simulcast/setParameters-maxFramerate.https.html [ Failure ]
 webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc/protocol/simulcast-answer.html [ Skip ]
 webkit.org/b/235885 imported/w3c/web-platform-tests/webrtc/protocol/simulcast-offer.html [ Skip ]
 
@@ -3254,7 +3220,7 @@ Bug(GLIB) http/tests/contentextensions/text-track-blocked.html [ Failure ]
 Bug(GLIB) http/tests/contentextensions/top-url.html [ Failure ]
 Bug(GLIB) http/tests/contentextensions/allowlist.html [ Failure ]
 
-webkit.org/b/68512 accessibility/aria-hidden-updates-alldescendants.html [ Failure ]
+webkit.org/b/68512 accessibility/aria-hidden-updates-alldescendants.html [ Failure Timeout ]
 
 # locale-specific shaping isn't implemented on any non-Cocoa port yet.
 webkit.org/b/77568 fast/text/locale-shaping-complex.html [ ImageOnlyFailure ]
@@ -3509,7 +3475,7 @@ webkit.org/b/252878 imported/w3c/web-platform-tests/websockets/opening-handshake
 webkit.org/b/201259 http/wpt/beacon/cors/crossorigin-arraybufferview-no-preflight.html [ Failure ]
 webkit.org/b/201268 accessibility/insert-newline.html [ Timeout ]
 webkit.org/b/201982 fast/images/exif-orientation-border-image.html [ ImageOnlyFailure ]
-webkit.org/b/202225 accessibility/misspelling-range.html [ Failure ]
+webkit.org/b/202225 accessibility/misspelling-range.html [ Failure Timeout ]
 
 # Service worker tests flaky or failing.
 webkit.org/b/201981 http/wpt/resource-timing/rt-resources-per-worker.html [ Failure Pass ]
@@ -4163,6 +4129,7 @@ imported/w3c/web-platform-tests/css/css-view-transitions/navigation/with-types/a
 imported/w3c/web-platform-tests/css/css-view-transitions/navigation/with-types/at-rule-opt-in-auto-with-types.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/navigation/custom-scrollbar.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-view-transitions/navigation/auto-name-from-id.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/start-skip-start.html [ Pass ImageOnlyFailure ]
 http/wpt/css/css-view-transitions/navigation/old_vt_promises_bfcache.html [ Failure ]
 
 imported/w3c/web-platform-tests/svg/text/reftests/transform-dynamic-change.html [ ImageOnlyFailure ]
@@ -4318,6 +4285,8 @@ webkit.org/b/277255 fast/dynamic/layer-hit-test-crash.html [ Failure Pass ]
 
 webkit.org/b/124566 fast/dom/SelectorAPI/resig-SelectorsAPI-test.xhtml [ Skip ] # Timeout
 
+webkit.org/b/292843 fast/dom/Window/open-window-min-size.html [ Timeout ]
+
 # Failures related with compositing tests.
 webkit.org/b/169918 compositing/fixed-with-fixed-layout.html [ Crash Pass ]
 
@@ -4396,6 +4365,13 @@ imported/w3c/web-platform-tests/upgrade-insecure-requests/gen/srcdoc-inherit.met
 imported/w3c/web-platform-tests/upgrade-insecure-requests/gen/top.meta/unset/img-tag.https.html [ Failure Pass ]
 
 fullscreen/full-screen-enter-while-exiting-mid-completion-handler.html [ Skip ]
+
+# Failures in new tests introduced by a re-sync of imported wasm tests: https://bugs.webkit.org/show_bug.cgi?id=292629
+# These are benign and caused by the difference in the URLs appearing in the expected and actual output
+imported/w3c/web-platform-tests/wasm/core/data.wast.js.html [ Failure Pass ]
+imported/w3c/web-platform-tests/wasm/core/elem.wast.js.html [ Failure Pass ]
+imported/w3c/web-platform-tests/wasm/core/global.wast.js.html [ Failure Pass ]
+imported/w3c/web-platform-tests/wasm/core/unreached-invalid.wast.js.html [ Failure Pass ]
 
 # End: Common failures between GTK and WPE.
 

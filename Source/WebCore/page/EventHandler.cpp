@@ -85,7 +85,7 @@
 #include "MouseEventWithHitTestResults.h"
 #include "NodeInlines.h"
 #include "NotImplemented.h"
-#include "Page.h"
+#include "PageInlines.h"
 #include "PageOverlayController.h"
 #include "Pasteboard.h"
 #include "PlatformEvent.h"
@@ -99,6 +99,7 @@
 #include "Quirks.h"
 #include "Range.h"
 #include "RemoteFrame.h"
+#include "RemoteFrameGeometryTransformer.h"
 #include "RemoteFrameView.h"
 #include "RemoteUserInputEventData.h"
 #include "RenderFrameSet.h"
@@ -848,7 +849,7 @@ bool EventHandler::canMouseDownStartSelect(const MouseEventWithHitTestResults& e
     if (!node || !node->renderer())
         return true;
 
-    if (node->protectedDocument()->quirks().shouldAvoidStartingSelectionOnMouseDown(*node))
+    if (node->protectedDocument()->quirks().shouldAvoidStartingSelectionOnMouseDownOverPointerCursor(*node))
         return false;
 
     if (ImageOverlay::isOverlayText(*node))
@@ -1710,9 +1711,13 @@ std::optional<Cursor> EventHandler::selectCursor(const HitTestResult& result, bo
             return handCursor();
 
         bool inResizer = false;
-        if (renderer && renderer->hasLayer()) {
-            // FIXME: With right-aligned text in a box, the renderer here is usually a RenderText, which prevents showing the resize cursor: webkit.org/b/210935.
-            auto& layerRenderer = downcast<RenderLayerModelObject>(*renderer);
+        auto resizerRenderer = renderer;
+
+        if (is<RenderText>(resizerRenderer))
+            resizerRenderer = resizerRenderer->parent();
+
+        if (resizerRenderer && resizerRenderer->hasLayer()) {
+            auto& layerRenderer = downcast<RenderLayerModelObject>(*resizerRenderer);
             inResizer = layerRenderer.layer()->isPointInResizeControl(roundedIntPoint(result.localPoint()));
             if (inResizer)
                 return layerRenderer.shouldPlaceVerticalScrollbarOnLeft() ? southWestResizeCursor() : southEastResizeCursor();
@@ -1868,6 +1873,22 @@ std::optional<RemoteUserInputEventData> EventHandler::userInputEventDataForRemot
     };
 }
 
+std::optional<RemoteFrameGeometryTransformer> EventHandler::geometryTransformerForRemoteFrame(RemoteFrame* remoteFrame)
+{
+    if (!remoteFrame)
+        return std::nullopt;
+
+    RefPtr frameView = m_frame->view();
+    if (!frameView)
+        return std::nullopt;
+
+    RefPtr remoteFrameView = remoteFrame->view();
+    if (!remoteFrameView)
+        return std::nullopt;
+
+    return RemoteFrameGeometryTransformer(remoteFrameView.releaseNonNull(), frameView.releaseNonNull(), remoteFrame->frameID());
+}
+
 static Scrollbar* scrollbarForMouseEvent(const MouseEventWithHitTestResults& mouseEvent, LocalFrameView* view)
 {
     if (view) {
@@ -1899,7 +1920,7 @@ HandleUserInputEventResult EventHandler::handleMousePressEvent(const PlatformMou
         return true;
 
 #if ENABLE(TOUCH_EVENTS)
-    bool defaultPrevented = dispatchSyntheticTouchEventIfEnabled(platformMouseEvent).wasHandled();
+    bool defaultPrevented = dispatchSyntheticTouchEventIfEnabled(platformMouseEvent);
     if (defaultPrevented)
         return true;
 #endif
@@ -2194,7 +2215,7 @@ HitTestResult EventHandler::getHitTestResultForMouseEvent(const PlatformMouseEve
 HandleUserInputEventResult EventHandler::handleMouseMoveEvent(const PlatformMouseEvent& platformMouseEvent, HitTestResult* hitTestResult, bool onlyUpdateScrollbars)
 {
 #if ENABLE(TOUCH_EVENTS)
-    bool defaultPrevented = dispatchSyntheticTouchEventIfEnabled(platformMouseEvent).wasHandled();
+    bool defaultPrevented = dispatchSyntheticTouchEventIfEnabled(platformMouseEvent);
     if (defaultPrevented)
         return true;
 #endif
@@ -2404,7 +2425,7 @@ HandleUserInputEventResult EventHandler::handleMouseReleaseEvent(const PlatformM
         return true;
 
 #if ENABLE(TOUCH_EVENTS)
-    bool defaultPrevented = dispatchSyntheticTouchEventIfEnabled(platformMouseEvent).wasHandled();
+    bool defaultPrevented = dispatchSyntheticTouchEventIfEnabled(platformMouseEvent);
     if (defaultPrevented)
         return true;
 #endif
@@ -3946,7 +3967,7 @@ bool EventHandler::internalKeyEvent(const PlatformKeyboardEvent& initialKeyEvent
     frame->protectedLoader()->resetMultipleFormSubmissionProtection();
 
     // In IE, access keys are special, they are handled after default keydown processing, but cannot be canceled - this is hard to match.
-    // On Mac OS X, we process them before dispatching keydown, as the default keydown handler implements Emacs key bindings, which may conflict
+    // On macOS, we process them before dispatching keydown, as the default keydown handler implements Emacs key bindings, which may conflict
     // with access keys. Then we dispatch keydown, but suppress its default handling.
     // On Windows, WebKit explicitly calls handleAccessKey() instead of dispatching a keypress event for WM_SYSCHAR messages.
     // Other platforms currently match either Mac or Windows behavior, depending on whether they send combined KeyDown events.
@@ -4513,7 +4534,7 @@ bool EventHandler::handleDrag(const MouseEventWithHitTestResults& event, CheckDr
         RefPtr page = frame->page();
         m_didStartDrag = page && page->dragController().startDrag(frame, dragState(), sourceOperationMask, event.event(), m_mouseDownContentsPosition, hasNonDefaultPasteboardData);
         // In WebKit2 we could re-enter this code and start another drag.
-        // On OS X this causes problems with the ownership of the pasteboard and the promised types.
+        // On macOS this causes problems with the ownership of the pasteboard and the promised types.
         if (m_didStartDrag) {
             m_mouseDownMayStartDrag = false;
             return true;
@@ -5056,7 +5077,7 @@ static HitTestResult hitTestResultInFrame(LocalFrame* frame, const LayoutPoint& 
     return result;
 }
 
-HandleUserInputEventResult EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
+Expected<bool, RemoteFrameGeometryTransformer> EventHandler::handleTouchEvent(const PlatformTouchEvent& event)
 {
     Ref frame = m_frame.get();
 
@@ -5292,7 +5313,7 @@ HandleUserInputEventResult EventHandler::handleTouchEvent(const PlatformTouchEve
 #endif // ENABLE(TOUCH_EVENTS) && !ENABLE(IOS_TOUCH_EVENTS)
 
 #if ENABLE(TOUCH_EVENTS)
-HandleUserInputEventResult EventHandler::dispatchSyntheticTouchEventIfEnabled(const PlatformMouseEvent& platformMouseEvent)
+bool EventHandler::dispatchSyntheticTouchEventIfEnabled(const PlatformMouseEvent& platformMouseEvent)
 {
 #if ENABLE(IOS_TOUCH_EVENTS)
     UNUSED_PARAM(platformMouseEvent);
@@ -5315,7 +5336,7 @@ HandleUserInputEventResult EventHandler::dispatchSyntheticTouchEventIfEnabled(co
         return true;
 
     SyntheticSingleTouchEvent touchEvent(platformMouseEvent);
-    return handleTouchEvent(touchEvent);
+    return handleTouchEvent(touchEvent).value_or(false);
 #endif
 }
 #endif // ENABLE(TOUCH_EVENTS)

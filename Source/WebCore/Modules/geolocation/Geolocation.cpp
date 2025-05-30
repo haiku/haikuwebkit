@@ -43,6 +43,7 @@
 #include "Page.h"
 #include "PermissionsPolicy.h"
 #include "SecurityOrigin.h"
+#include <JavaScriptCore/ConsoleTypes.h>
 #include <wtf/Ref.h>
 #include <wtf/RuntimeApplicationChecks.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -252,7 +253,7 @@ void Geolocation::resetAllGeolocationPermission()
             GeolocationController::from(page.get())->cancelPermissionRequest(*this);
 
         // This return is not technically correct as GeolocationController::cancelPermissionRequest() should have cleared the active request.
-        // Neither iOS nor OS X supports cancelPermissionRequest() (https://bugs.webkit.org/show_bug.cgi?id=89524), so we workaround that and let ongoing requests complete. :(
+        // Neither iOS nor macOS supports cancelPermissionRequest() (https://bugs.webkit.org/show_bug.cgi?id=89524), so we workaround that and let ongoing requests complete. :(
         return;
     }
 

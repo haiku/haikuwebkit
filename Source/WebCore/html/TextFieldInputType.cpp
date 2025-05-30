@@ -66,6 +66,7 @@
 #include "TextNodeTraversal.h"
 #include "TypedElementDescendantIteratorInlines.h"
 #include "UserAgentParts.h"
+#include "UserGestureIndicator.h"
 #include "UserTypingGestureIndicator.h"
 #include <wtf/TZoneMallocInlines.h>
 
@@ -787,8 +788,6 @@ void TextFieldInputType::createContainer(PreserveSelectionRange preserveSelectio
 {
     ASSERT(!m_container);
     ASSERT(element());
-
-    static MainThreadNeverDestroyed<const AtomString> webkitTextfieldDecorationContainerName("-webkit-textfield-decoration-container"_s);
 
     Ref shadowRoot = *element()->userAgentShadowRoot();
     ScriptDisallowedScope::EventAllowedScope allowedScope(shadowRoot);

@@ -144,8 +144,8 @@
 #include <WebCore/SharedWorkerContextManager.h>
 #include <WebCore/SharedWorkerThreadProxy.h>
 #include <WebCore/UserGestureIndicator.h>
+#include <algorithm>
 #include <pal/Logging.h>
-#include <wtf/Algorithms.h>
 #include <wtf/CallbackAggregator.h>
 #include <wtf/DateMath.h>
 #include <wtf/Language.h>
@@ -280,7 +280,7 @@ using namespace WebCore;
 WTF_MAKE_TZONE_ALLOCATED_IMPL(WebProcess);
 
 #if !PLATFORM(GTK) && !PLATFORM(WPE)
-NO_RETURN static void callExit(IPC::Connection*)
+[[noreturn]] static void callExit(IPC::Connection*)
 {
     terminateProcess(EXIT_SUCCESS);
 }
@@ -1095,12 +1095,12 @@ void WebProcess::removeWebFrame(FrameIdentifier frameID, WebPage* page)
     page->send(Messages::WebPageProxy::DidDestroyFrame(frameID));
 }
 
-WebPageGroupProxy* WebProcess::webPageGroup(const WebPageGroupData& pageGroupData)
+WebPageGroupProxy* WebProcess::webPageGroup(WebPageGroupData&& pageGroupData)
 {
     auto result = m_pageGroupMap.add(pageGroupData.pageGroupID, nullptr);
     if (result.isNewEntry) {
         ASSERT(!result.iterator->value);
-        result.iterator->value = WebPageGroupProxy::create(pageGroupData);
+        result.iterator->value = WebPageGroupProxy::create(WTFMove(pageGroupData));
     }
 
     return result.iterator->value.get();
@@ -1231,7 +1231,7 @@ void WebProcess::setInjectedBundleParameters(std::span<const uint8_t> value)
     injectedBundle->setBundleParameters(value);
 }
 
-NO_RETURN inline void failedToGetNetworkProcessConnection()
+[[noreturn]] inline void failedToGetNetworkProcessConnection()
 {
 #if PLATFORM(GTK) || PLATFORM(WPE)
     // GTK and WPE ports don't exit on send sync message failure.
@@ -2215,11 +2215,11 @@ void WebProcess::grantUserMediaDeviceSandboxExtensions(MediaDeviceSandboxExtensi
 static inline void checkDocumentsCaptureStateConsistency(const Vector<String>& extensionIDs)
 {
 #if ASSERT_ENABLED
-    bool isCapturingAudio = WTF::anyOf(Document::allDocumentsMap().values(), [](auto& document) {
-        return document->mediaState() & MediaProducer::MicrophoneCaptureMask;
+    bool isCapturingAudio = std::ranges::any_of(Document::allDocumentsMap().values(), [](auto& document) {
+        return static_cast<bool>(document->mediaState() & MediaProducer::MicrophoneCaptureMask);
     });
-    bool isCapturingVideo = WTF::anyOf(Document::allDocumentsMap().values(), [](auto& document) {
-        return document->mediaState() & MediaProducer::VideoCaptureMask;
+    bool isCapturingVideo = std::ranges::any_of(Document::allDocumentsMap().values(), [](auto& document) {
+        return static_cast<bool>(document->mediaState() & MediaProducer::VideoCaptureMask);
     });
 
     if (isCapturingAudio)
@@ -2269,7 +2269,7 @@ void WebProcess::clearCurrentModifierStateForTesting()
 
 bool WebProcess::areAllPagesThrottleable() const
 {
-    return WTF::allOf(m_pageMap.values(), [](auto& page) {
+    return std::ranges::all_of(m_pageMap.values(), [](auto& page) {
         return page->isThrottleable();
     });
 }

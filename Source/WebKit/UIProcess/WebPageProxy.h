@@ -34,6 +34,7 @@
 #include <WebCore/LayerTreeAsTextOptions.h>
 #include <WebCore/NavigationIdentifier.h>
 #include <WebCore/NowPlayingMetadataObserver.h>
+#include <WebCore/ProcessSwapDisposition.h>
 #include <WebCore/ProcessSyncData.h>
 #include <WebCore/SnapshotIdentifier.h>
 #include <WebCore/SpatialBackdropSource.h>
@@ -291,7 +292,6 @@ struct MediaSessionIdentifierType;
 struct MediaStreamRequest;
 struct MediaUsageInfo;
 struct MessageWithMessagePorts;
-struct MockWebAuthenticationConfiguration;
 struct NotificationData;
 struct NowPlayingInfo;
 struct OrganizationStorageAccessPromptQuirk;
@@ -325,13 +325,13 @@ struct WheelEventHandlingResult;
 struct WindowFeatures;
 struct WrappedCryptoKey;
 
+#if ENABLE(WEB_AUTHN)
+struct MockWebAuthenticationConfiguration;
 struct DigitalCredentialsRequestData;
 struct DigitalCredentialsResponseData;
 struct ExceptionData;
-
-#if HAVE(DIGITAL_CREDENTIALS_UI)
-struct DigitalCredentialRequest;
-struct DigitalCredentialRequestOptions;
+struct MobileDocumentRequest;
+struct OpenID4VPRequest;
 #endif
 
 namespace TextExtraction {
@@ -1177,10 +1177,8 @@ public:
     void shouldDismissKeyboardAfterTapAtPoint(WebCore::FloatPoint, CompletionHandler<void(bool)>&&);
 
 #if ENABLE(DRAG_SUPPORT)
-    void didHandleDragStartRequest(bool started);
-    void didHandleAdditionalDragItemsRequest(bool added);
-    void requestDragStart(const WebCore::IntPoint& clientPosition, const WebCore::IntPoint& globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask);
-    void requestAdditionalItemsForDragSession(const WebCore::IntPoint& clientPosition, const WebCore::IntPoint& globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask);
+    void requestDragStart(std::optional<WebCore::FrameIdentifier>, const WebCore::IntPoint& clientPosition, const WebCore::IntPoint& globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask, CompletionHandler<void(bool)>&&);
+    void requestAdditionalItemsForDragSession(std::optional<WebCore::FrameIdentifier>, const WebCore::IntPoint& clientPosition, const WebCore::IntPoint& globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask, CompletionHandler<void(bool)>&&);
     void insertDroppedImagePlaceholders(const Vector<WebCore::IntSize>&, CompletionHandler<void(const Vector<WebCore::IntRect>&, std::optional<WebCore::TextIndicatorData>)>&& reply);
     void willReceiveEditDragSnapshot();
     void didReceiveEditDragSnapshot(std::optional<WebCore::TextIndicatorData>);
@@ -1345,7 +1343,7 @@ public:
 
 #if ENABLE(IOS_TOUCH_EVENTS)
     void didBeginTouchPoint(WebCore::FloatPoint locationInRootView);
-    void handlePreventableTouchEvent(IPC::Connection*, NativeWebTouchEvent&);
+    void handlePreventableTouchEvent(NativeWebTouchEvent&);
     void handleUnpreventableTouchEvent(const NativeWebTouchEvent&);
 
 #elif ENABLE(TOUCH_EVENTS)
@@ -1372,7 +1370,7 @@ public:
     const String& applicationNameForUserAgent() const { return m_applicationNameForUserAgent; }
     void setApplicationNameForDesktopUserAgent(const String& applicationName) { m_applicationNameForDesktopUserAgent = applicationName; }
     const String& applicationNameForDesktopUserAgent() const { return m_applicationNameForDesktopUserAgent; }
-    void setCustomUserAgent(const String&);
+    void setCustomUserAgent(String&&);
     const String& customUserAgent() const { return m_customUserAgent; }
     static String standardUserAgent(const String& applicationName = String());
 #if PLATFORM(IOS_FAMILY)
@@ -1585,6 +1583,10 @@ public:
     void getSelectionAsWebArchiveData(CompletionHandler<void(API::Data*)>&&);
     void getSourceForFrame(WebFrameProxy*, CompletionHandler<void(const String&)>&&);
     void getWebArchiveOfFrame(WebFrameProxy*, CompletionHandler<void(API::Data*)>&&);
+#if PLATFORM(COCOA)
+    void getWebArchiveData(CompletionHandler<void(API::Data*)>&&);
+#endif
+    void getWebArchive(CompletionHandler<void(API::Data*)>&&);
     void runJavaScriptInMainFrame(RunJavaScriptParameters&&, bool, CompletionHandler<void(Expected<JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>>)>&&);
     void runJavaScriptInFrameInScriptWorld(RunJavaScriptParameters&&, std::optional<WebCore::FrameIdentifier>, API::ContentWorld&, bool, CompletionHandler<void(Expected<JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>>)>&&);
     void getAccessibilityTreeData(CompletionHandler<void(API::Data*)>&&);
@@ -1620,12 +1622,15 @@ public:
     void dragCancelled();
     void setDragCaretRect(const WebCore::IntRect&);
 #if PLATFORM(COCOA)
-    void startDrag(const WebCore::DragItem&, WebCore::ShareableBitmapHandle&& dragImageHandle);
+    void startDrag(const WebCore::DragItem&, WebCore::ShareableBitmapHandle&& dragImageHandle, const std::optional<WebCore::ElementIdentifier>&);
     void setPromisedDataForImage(IPC::Connection&, const String& pasteboardName, WebCore::SharedMemoryHandle&& imageHandle, const String& filename, const String& extension,
         const String& title, const String& url, const String& visibleURL, WebCore::SharedMemoryHandle&& archiveHandle, const String& originIdentifier);
 #endif
 #if PLATFORM(GTK)
     void startDrag(WebCore::SelectionData&&, OptionSet<WebCore::DragOperation>, std::optional<WebCore::ShareableBitmapHandle>&& dragImage, WebCore::IntPoint&& dragImageHotspot);
+#endif
+#if ENABLE(MODEL_PROCESS)
+    void modelDragEnded(const WebCore::ElementIdentifier);
 #endif
 #endif
 
@@ -1845,8 +1850,8 @@ public:
     void didEndUserTriggeredZooming();
     bool mainFramePluginHandlesPageScaleGesture() const { return m_mainFramePluginHandlesPageScaleGesture; }
 
-    void potentialTapAtPosition(const WebCore::FloatPoint&, bool shouldRequestMagnificationInformation, TapIdentifier requestID);
-    void commitPotentialTap(OptionSet<WebEventModifier>, TransactionID layerTreeTransactionIdAtLastTouchStart, WebCore::PointerID);
+    void potentialTapAtPosition(std::optional<WebCore::FrameIdentifier>, const WebCore::FloatPoint&, bool shouldRequestMagnificationInformation, TapIdentifier requestID);
+    void commitPotentialTap(std::optional<WebCore::FrameIdentifier>, OptionSet<WebEventModifier>, TransactionID layerTreeTransactionIdAtLastTouchStart, WebCore::PointerID);
     void cancelPotentialTap();
     void tapHighlightAtPosition(const WebCore::FloatPoint&, TapIdentifier requestID);
     void attemptSyntheticClick(const WebCore::FloatPoint&, OptionSet<WebEventModifier>, TransactionID layerTreeTransactionIdAtLastTouchStart);
@@ -2223,7 +2228,13 @@ public:
     void maybeInitializeSandboxExtensionHandle(WebProcessProxy&, const URL&, const URL& resourceDirectoryURL, bool checkAssumedReadAccessToResourceURL, CompletionHandler<void(std::optional<SandboxExtensionHandle>&&)>&&);
 
 #if ENABLE(WEB_AUTHN)
+    // Web Authentication API
     void setMockWebAuthenticationConfiguration(WebCore::MockWebAuthenticationConfiguration&&);
+
+    // Digital Credentials API
+    void dismissDigitalCredentialsPicker(IPC::Connection&, CompletionHandler<void(bool)>&&);
+    void fetchRawDigitalCredentialRequests(CompletionHandler<void(Vector<Variant<WebCore::MobileDocumentRequest, WebCore::OpenID4VPRequest>>)>&&);
+    void showDigitalCredentialsPicker(IPC::Connection&, const WebCore::DigitalCredentialsRequestData&, CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&&);
 #endif
 
     using TextManipulationItemCallback = Function<void(const Vector<WebCore::TextManipulationItem>&)>;
@@ -2362,6 +2373,7 @@ public:
     void copyLinkWithHighlight();
 
     void createTextFragmentDirectiveFromSelection(CompletionHandler<void(URL&&)>&&);
+    void getTextFragmentRanges(CompletionHandler<void(const Vector<EditingRange>&&)>&&);
 
 #if ENABLE(APP_HIGHLIGHTS)
     void createAppHighlightInSelectedRange(WebCore::CreateNewGroupForHighlight, WebCore::HighlightRequestOriginatedInApp);
@@ -2416,6 +2428,7 @@ public:
 #endif
 #if ENABLE(CONTEXT_MENUS)
     bool canHandleContextMenuWritingTools() const;
+    void handleContextMenuWritingTools(const WebContextMenuItemData&);
     void handleContextMenuWritingTools(WebCore::WritingTools::RequestedTool);
 #endif
 #endif
@@ -2663,6 +2676,7 @@ public:
 
     BrowsingContextGroup& browsingContextGroup() const { return m_browsingContextGroup; }
     Ref<BrowsingContextGroup> protectedBrowsingContextGroup() const;
+    std::optional<WebCore::FrameIdentifier> openerFrameIdentifier() const { return m_openerFrameIdentifier; }
 
     WebPageProxyTesting* pageForTesting() const;
     RefPtr<WebPageProxyTesting> protectedPageForTesting() const;
@@ -2809,7 +2823,7 @@ private:
     void decidePolicyForNavigationAction(Ref<WebProcessProxy>&&, WebFrameProxy&, NavigationActionData&&, CompletionHandler<void(PolicyDecision&&)>&&);
     void decidePolicyForNewWindowAction(IPC::Connection&, NavigationActionData&&, const String& frameName, CompletionHandler<void(PolicyDecision&&)>&&);
     void decidePolicyForResponse(IPC::Connection&, FrameInfoData&&, std::optional<WebCore::NavigationIdentifier>, const WebCore::ResourceResponse&, const WebCore::ResourceRequest&, bool canShowMIMEType, const String& downloadAttribute, bool isShowingInitialAboutBlank, WebCore::CrossOriginOpenerPolicyValue activeDocumentCOOPValue, CompletionHandler<void(PolicyDecision&&)>&&);
-    void beginSafeBrowsingCheck(const URL&, bool, WebFramePolicyListenerProxy&);
+    void beginSafeBrowsingCheck(const URL&, RefPtr<API::Navigation>, WebFrameProxy&);
 
     WebContentMode effectiveContentModeAfterAdjustingPolicies(API::WebsitePolicies&, const WebCore::ResourceRequest&);
 
@@ -2856,10 +2870,6 @@ private:
     bool didChooseFilesForOpenPanelWithImageTranscoding(const Vector<String>& fileURLs, const Vector<String>& allowedMIMETypes);
     void showShareSheet(IPC::Connection&, const WebCore::ShareDataWithParsedURL&, CompletionHandler<void(bool)>&&);
     void showContactPicker(IPC::Connection&, const WebCore::ContactsRequestData&, CompletionHandler<void(std::optional<Vector<WebCore::ContactInfo>>&&)>&&);
-#if ENABLE(WEB_AUTHN)
-    void showDigitalCredentialsPicker(IPC::Connection&, const WebCore::DigitalCredentialsRequestData&, WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&&);
-    void dismissDigitalCredentialsPicker(IPC::Connection&, WTF::CompletionHandler<void(bool)>&&);
-#endif
     void printFrame(IPC::Connection&, WebCore::FrameIdentifier, const String&, const WebCore::FloatSize&,  CompletionHandler<void()>&&);
     void exceededDatabaseQuota(WebCore::FrameIdentifier, const String& originIdentifier, const String& databaseName, const String& displayName, uint64_t currentQuota, uint64_t currentOriginUsage, uint64_t currentDatabaseUsage, uint64_t expectedUsage, CompletionHandler<void(uint64_t)>&&);
 
@@ -3307,8 +3317,8 @@ private:
 
     template<typename F> decltype(auto) sendToWebPage(std::optional<WebCore::FrameIdentifier>, F&&);
 
-    void sendPreventableTouchEvent(WebCore::FrameIdentifier, const NativeWebTouchEvent&);
-    void sendUnpreventableTouchEvent(WebCore::FrameIdentifier, const NativeWebTouchEvent&);
+    void sendPreventableTouchEvent(WebCore::FrameIdentifier, const WebTouchEvent&);
+    void sendUnpreventableTouchEvent(WebCore::FrameIdentifier, const WebTouchEvent&);
 
     void broadcastFocusedFrameToOtherProcesses(IPC::Connection&, const WebCore::FrameIdentifier&);
 
@@ -3368,6 +3378,8 @@ private:
 #if PLATFORM(COCOA)
     String presentingApplicationBundleIdentifier() const;
 #endif
+
+    void setCustomUserAgentInternal();
 
     const UniqueRef<Internals> m_internals;
     Identifier m_identifier;
@@ -3860,6 +3872,7 @@ private:
 
     RefPtr<WebPageProxy> m_pageToCloneSessionStorageFrom;
     Ref<BrowsingContextGroup> m_browsingContextGroup;
+    const std::optional<WebCore::FrameIdentifier> m_openerFrameIdentifier;
 
 #if ENABLE(CONTEXT_MENUS)
     bool m_waitingForContextMenuToShow { false };

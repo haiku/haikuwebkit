@@ -126,6 +126,7 @@ static HashMap<RegistrableDomain, String>& updatableStorageAccessUserAgentString
 #else
 static inline bool needsDesktopUserAgentInternal(const URL&) { return false; }
 static inline bool shouldPreventOrientationMediaQueryFromEvaluatingToLandscapeInternal(const URL&) { return false; }
+static inline String standardUserAgentWithApplicationNameIncludingCompatOverridesInternal(const String&, const String&, UserAgentType) { return { }; }
 #endif
 
 Quirks::Quirks(Document& document)
@@ -703,6 +704,18 @@ bool Quirks::shouldAvoidScrollingWhenFocusedContentIsVisible() const
     return needsQuirks() && m_quirksData.shouldAvoidScrollingWhenFocusedContentIsVisibleQuirk;
 }
 
+// Some input only specify image/* as an acceptable type, which is failing sometimes for certains domain names
+// which do not support HEIC.
+bool Quirks::shouldTranscodeHeicImagesForURL(const URL& url)
+{
+    auto quirksDomain = RegistrableDomain(url);
+    // zillow.com rdar://79872092
+    if (quirksDomain.string() == "zillow.com"_s)
+        return true;
+
+    return false;
+}
+
 // att.com rdar://55185021
 bool Quirks::shouldUseLegacySelectPopoverDismissalBehaviorInDataActivation() const
 {
@@ -899,6 +912,11 @@ bool Quirks::shouldEnableEnumerateDeviceQuirk() const
     return needsQuirks() && m_quirksData.shouldEnableEnumerateDeviceQuirk;
 }
 #endif
+
+bool Quirks::shouldUnloadHeavyFrame() const
+{
+    return needsQuirks() && m_quirksData.shouldUnloadHeavyFrames;
+}
 
 // hulu.com rdar://55041979
 bool Quirks::needsCanPlayAfterSeekedQuirk() const
@@ -1242,12 +1260,6 @@ bool Quirks::shouldDisableFullscreenVideoAspectRatioAdaptiveSizing() const
 }
 #endif
 
-bool Quirks::shouldEnableApplicationCacheQuirk() const
-{
-    // FIXME: Remove this when deleting ApplicationCache APIs.
-    return false;
-}
-
 // play.hbomax.com https://bugs.webkit.org/show_bug.cgi?id=244737
 bool Quirks::shouldEnableFontLoadingAPIQuirk() const
 {
@@ -1421,9 +1433,6 @@ bool Quirks::needsIPadMiniUserAgent(const URL& url)
 {
     auto host = url.host();
 
-    if (host == "huya.com"_s || host.endsWith(".huya.com"_s))
-        return true;
-
     if (host == "cctv.com"_s || host.endsWith(".cctv.com"_s))
         return true;
 
@@ -1525,6 +1534,12 @@ bool Quirks::needsLaxSameSiteCookieQuirk(const URL& requestURL) const
     auto url = m_document->url();
     return url.protocolIs("https"_s) && url.host() == "login.microsoftonline.com"_s && requestURL.protocolIs("https"_s) && requestURL.host() == "www.bing.com"_s;
 }
+
+String Quirks::standardUserAgentWithApplicationNameIncludingCompatOverrides(const String& applicationName, const String& userAgentOSVersion, UserAgentType type)
+{
+    return standardUserAgentWithApplicationNameIncludingCompatOverridesInternal(applicationName, userAgentOSVersion, type);
+}
+
 #if ENABLE(TEXT_AUTOSIZING)
 // news.ycombinator.com: rdar://127246368
 bool Quirks::shouldIgnoreTextAutoSizing() const
@@ -1702,22 +1717,19 @@ bool Quirks::needsBingGestureEventQuirk(EventTarget* target) const
 }
 
 // spotify.com rdar://140707449
-bool Quirks::shouldAvoidStartingSelectionOnMouseDown(const Node& target) const
+bool Quirks::shouldAvoidStartingSelectionOnMouseDownOverPointerCursor(const Node& target) const
 {
-#if PLATFORM(MAC)
     if (!needsQuirks())
         return false;
 
-    if (!m_quirksData.shouldAvoidStartingSelectionOnMouseDown)
+    if (!m_quirksData.shouldAvoidStartingSelectionOnMouseDownOverPointerCursor)
         return false;
 
     if (CheckedPtr style = target.renderStyle()) {
-        if (style->usedTouchActions().contains(TouchAction::None) && style->cursor() == CursorType::Pointer)
+        if (style->cursor() == CursorType::Pointer)
             return true;
     }
-#else
-    UNUSED_PARAM(target);
-#endif
+
     return false;
 }
 
@@ -1853,6 +1865,11 @@ bool Quirks::shouldSupportHoverMediaQueries() const
 #else
     return false;
 #endif
+}
+
+bool Quirks::shouldRewriteMediaRangeRequestForURL(const URL& url) const
+{
+    return needsQuirks() && m_quirksData.needsMediaRewriteRangeRequestQuirk && RegistrableDomain(url).string() == "bing.com"_s;
 }
 
 URL Quirks::topDocumentURL() const
@@ -2188,6 +2205,17 @@ static void handleWarbyParkerQuirks(QuirksData& quirksData, const URL& quirksURL
 }
 #endif
 
+static void handleDailyMailCoUkQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
+{
+    if (quirksDomainString != "dailymail.co.uk"_s)
+        return;
+
+    UNUSED_PARAM(quirksURL);
+    UNUSED_PARAM(documentURL);
+
+    quirksData.shouldUnloadHeavyFrames = true;
+}
+
 #if ENABLE(TEXT_AUTOSIZING)
 static void handleYCombinatorQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
 {
@@ -2299,6 +2327,7 @@ static void handleBingQuirks(QuirksData& quirksData, const URL& quirksURL, const
     // bing.com rdar://126573838
     auto topDocumentHost = quirksURL.host();
     quirksData.needsBingGestureEventQuirk = topDocumentHost == "www.bing.com"_s && startsWithLettersIgnoringASCIICase(quirksURL.path(), "/maps"_s);
+    quirksData.needsMediaRewriteRangeRequestQuirk = true;
 }
 
 static void handleBungalowQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -2523,6 +2552,9 @@ static void handlePremierLeagueQuirks(QuirksData& quirksData, const URL& quirksU
 
     // premierleague.com: rdar://68938833
     quirksData.shouldDispatchPlayPauseEventsOnResume = true;
+
+    // premierleague.com: rdar://136791737
+    quirksData.shouldAvoidStartingSelectionOnMouseDownOverPointerCursor = true;
 }
 
 static void handleSFUSDQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -2571,9 +2603,7 @@ static void handleSpotifyQuirks(QuirksData& quirksData, const URL& quirksURL, co
 
     // spotify.com rdar://138918575
     quirksData.needsBodyScrollbarWidthNoneDisabledQuirk = true;
-#if PLATFORM(MAC)
-    quirksData.shouldAvoidStartingSelectionOnMouseDown = true;
-#endif
+    quirksData.shouldAvoidStartingSelectionOnMouseDownOverPointerCursor = true;
 }
 
 static void handleVictoriasSecretQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -2903,6 +2933,7 @@ void Quirks::determineRelevantQuirks()
         { "zomato"_s, &handleZomatoQuirks },
 #endif
         { "zoom"_s, &handleZoomQuirks },
+        { "dailymail"_s, &handleDailyMailCoUkQuirks }
     });
 
     auto findResult = dispatchMap->find(quirkDomainWithoutPSL);

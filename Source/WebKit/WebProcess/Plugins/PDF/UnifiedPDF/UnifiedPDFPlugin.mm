@@ -110,8 +110,8 @@
 #include <WebCore/StyleColorOptions.h>
 #include <WebCore/VoidCallback.h>
 #include <WebCore/WheelEventDeltaFilter.h>
+#include <algorithm>
 #include <pal/spi/cg/CoreGraphicsSPI.h>
-#include <wtf/Algorithms.h>
 #include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/cocoa/TypeCastsCocoa.h>
@@ -2442,7 +2442,7 @@ auto UnifiedPDFPlugin::toContextMenuItemTag(int tagValue) -> ContextMenuItemTag
         ContextMenuItemTag::ZoomOut,
         ContextMenuItemTag::ActualSize,
     };
-    const auto isKnownContextMenuItemTag = WTF::anyOf(regularContextMenuItemTags, [tagValue](ContextMenuItemTag tag) {
+    const auto isKnownContextMenuItemTag = std::ranges::any_of(regularContextMenuItemTags, [tagValue](ContextMenuItemTag tag) {
         return tagValue == enumToUnderlyingType(tag);
     });
     return isKnownContextMenuItemTag ? static_cast<ContextMenuItemTag>(tagValue) : ContextMenuItemTag::Unknown;
@@ -2806,9 +2806,10 @@ static NSData *htmlDataFromSelection(PDFSelection *selection)
     if ([selection respondsToSelector:@selector(htmlData)])
         return [selection htmlData];
 #endif
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    return [[selection html] dataUsingEncoding:NSUTF8StringEncoding];
-ALLOW_DEPRECATED_DECLARATIONS_END
+    auto attributedString = selection.attributedString;
+    return [attributedString dataFromRange:NSMakeRange(0, attributedString.length)
+                        documentAttributes:@{ NSDocumentTypeDocumentAttribute : NSHTMLTextDocumentType }
+                                     error:nil];
 }
 
 bool UnifiedPDFPlugin::performCopyEditingOperation() const
@@ -3249,16 +3250,6 @@ void UnifiedPDFPlugin::scrollWithDelta(const IntSize& scrollDelta)
 }
 
 #pragma mark -
-
-unsigned UnifiedPDFPlugin::countFindMatches(const String& target, WebCore::FindOptions options, unsigned maxMatchCount)
-{
-    // FIXME: Why is it OK to ignore the passed-in maximum match count?
-    if (!target.length())
-        return 0;
-
-    NSStringCompareOptions nsOptions = options.contains(FindOption::CaseInsensitive) ? NSCaseInsensitiveSearch : 0;
-    return [[m_pdfDocument findString:target.createNSString().get() withOptions:nsOptions] count];
-}
 
 static NSStringCompareOptions compareOptionsForFindOptions(WebCore::FindOptions options)
 {

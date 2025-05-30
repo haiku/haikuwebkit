@@ -23,6 +23,7 @@
 #if USE(GSTREAMER_WEBRTC)
 
 #include "Document.h"
+#include "ExceptionOr.h"
 #include "GStreamerCommon.h"
 #include "GStreamerDataChannelHandler.h"
 #include "GStreamerIncomingTrackProcessor.h"
@@ -51,7 +52,7 @@
 #include "RealtimeIncomingVideoSourceGStreamer.h"
 #include "RealtimeOutgoingAudioSourceGStreamer.h"
 #include "RealtimeOutgoingVideoSourceGStreamer.h"
-
+#include <algorithm>
 #include <gst/sdp/sdp.h>
 #include <wtf/MainThread.h>
 #include <wtf/ObjectIdentifier.h>
@@ -186,6 +187,30 @@ bool GStreamerMediaEndpoint::initializePipeline()
         GST_ERROR_OBJECT(m_webrtcBin.get(), "rtpbin not found. Please check that your GStreamer installation has the rtp and rtpmanager plugins.");
         return false;
     }
+
+    g_signal_connect_swapped(rtpBin.get(), "element-added", G_CALLBACK(+[](GStreamerMediaEndpoint* self, GstElement* element) {
+        GUniquePtr<char> elementName(gst_element_get_name(element));
+        auto view = StringView::fromLatin1(elementName.get());
+        if (!view.startsWith("rtpptdemux"_s))
+            return;
+
+        auto pad = adoptGRef(gst_element_get_static_pad(element, "sink"));
+        gst_pad_add_probe(pad.get(), static_cast<GstPadProbeType>(GST_PAD_PROBE_TYPE_BUFFER), [](GstPad*, GstPadProbeInfo* info, gpointer userData) -> GstPadProbeReturn {
+            auto self = reinterpret_cast<GStreamerMediaEndpoint*>(userData);
+            auto buffer = GST_PAD_PROBE_INFO_BUFFER(info);
+            GstMappedRtpBuffer rtpBuffer(buffer, GST_MAP_READ);
+            if (!rtpBuffer) [[unlikely]]
+                return GST_PAD_PROBE_OK;
+
+            uint32_t ssrc = gst_rtp_buffer_get_ssrc(rtpBuffer.mappedData());
+            self->m_inputBuffers.add(ssrc, GRefPtr<GstBuffer>(buffer));
+            return GST_PAD_PROBE_REMOVE;
+        }, self, nullptr);
+
+        g_signal_connect(element, "new-payload-type", G_CALLBACK(+[](GstElement* ptDemux, unsigned, GstPad* pad, GStreamerMediaEndpoint* self) {
+            self->updatePtDemuxSrcPadCaps(ptDemux, pad);
+        }), self);
+    }), this);
 
     if (gstObjectHasProperty(rtpBin.get(), "add-reference-timestamp-meta"_s)) {
         auto disableCaptureTimeTracking = StringView::fromLatin1(g_getenv("WEBKIT_GST_DISABLE_WEBRTC_CAPTURE_TIME_TRACKING"));
@@ -1097,7 +1122,7 @@ GRefPtr<GstPad> GStreamerMediaEndpoint::requestPad(const GRefPtr<GstCaps>& allow
             return false;
 
         bool isTransceiverAssociated = false;
-        for (auto pad : GstIteratorAdaptor<GstPad>(GUniquePtr<GstIterator>(gst_element_iterate_sink_pads(m_webrtcBin.get())))) {
+        for (auto pad : GstIteratorAdaptor<GstPad>(gst_element_iterate_sink_pads(m_webrtcBin.get()))) {
             GRefPtr<GstWebRTCRTPTransceiver> padTransceiver;
             g_object_get(pad, "transceiver", &padTransceiver.outPtr(), nullptr);
             if (padTransceiver.get() == transceiver.get()) {
@@ -1378,12 +1403,16 @@ void GStreamerMediaEndpoint::connectIncomingTrack(WebRTCTrackData& data)
 {
     ASSERT(isMainThread());
 
-    GRefPtr<GstWebRTCRTPTransceiver> rtcTransceiver(data.transceiver);
-    auto trackId = data.trackId;
+    // NOTE: Here ideally we should match WebKit-side transceivers with data.transceiver but we
+    // cannot because in some situations (simulcast, mostly), we can end-up with multiple webrtcbin
+    // src pads associated to the same transceiver.
     auto transceiver = m_peerConnectionBackend.existingTransceiver([&](auto& backend) -> bool {
-        return backend.rtcTransceiver() == rtcTransceiver.get();
+        GUniqueOutPtr<char> mid;
+        g_object_get(backend.rtcTransceiver(), "mid", &mid.outPtr(), nullptr);
+        return data.mid == StringView::fromLatin1(mid.get());
     });
     if (!transceiver) {
+        GRefPtr<GstWebRTCRTPTransceiver> rtcTransceiver(data.transceiver);
         unsigned mLineIndex;
         g_object_get(rtcTransceiver.get(), "mlineindex", &mLineIndex, nullptr);
         GUniqueOutPtr<GstWebRTCSessionDescription> description;
@@ -1393,6 +1422,7 @@ void GStreamerMediaEndpoint::connectIncomingTrack(WebRTCTrackData& data)
             GST_WARNING_OBJECT(m_pipeline.get(), "SDP media for transceiver %u not found, skipping incoming track setup", mLineIndex);
             return;
         }
+        const auto& trackId = data.trackId;
         transceiver = &m_peerConnectionBackend.newRemoteTransceiver(makeUnique<GStreamerRtpTransceiverBackend>(WTFMove(rtcTransceiver)), data.type, trackId.isolatedCopy());
     }
 
@@ -1671,7 +1701,7 @@ ExceptionOr<GStreamerMediaEndpoint::Backends> GStreamerMediaEndpoint::createTran
         scaleValues.reserveInitialCapacity(sendEncodings.size());
         if (sendEncodings.size() == 1 && sendEncodings[0].scaleResolutionDownBy)
             scaleValues.append(sendEncodings[0].scaleResolutionDownBy.value());
-        else if (allOf(sendEncodings, [](auto& encoding) { return encoding.scaleResolutionDownBy.value_or(1) == 1; })) {
+        else if (std::ranges::all_of(sendEncodings, [](auto& encoding) { return encoding.scaleResolutionDownBy.value_or(1) == 1; })) {
             for (unsigned i = sendEncodings.size() - 1; i >= 1; i--)
                 scaleValues.append(i * 2);
             scaleValues.append(1);
@@ -1696,7 +1726,7 @@ ExceptionOr<GStreamerMediaEndpoint::Backends> GStreamerMediaEndpoint::createTran
         }
         if (allRids.isEmpty() && sendEncodings.size() > 1)
             return Exception { ExceptionCode::TypeError, "Missing rid"_s };
-        if (allRids.size() > 1 && anyOf(allRids, [](auto& rid) { return rid.isNull() || rid.isEmpty(); }))
+        if (allRids.size() > 1 && std::ranges::any_of(allRids, [](auto& rid) { return rid.isNull() || rid.isEmpty(); }))
             return Exception { ExceptionCode::TypeError, "Empty rid"_s };
         if (allRids.size() == 1 && allRids[0] == emptyString())
             return Exception { ExceptionCode::TypeError, "Empty rid"_s };
@@ -2073,11 +2103,11 @@ void GStreamerMediaEndpoint::onIceCandidate(guint sdpMLineIndex, gchararray cand
     if (candidateString.isEmpty())
         return;
 
-    m_statsCollector->invalidateCache();
-
     callOnMainThread([protectedThis = Ref(*this), this, sdp = WTFMove(candidateString).isolatedCopy(), sdpMLineIndex]() mutable {
         if (isStopped())
             return;
+
+        m_statsCollector->invalidateCache();
 
         String mid;
         GUniqueOutPtr<GstWebRTCSessionDescription> description;
@@ -2487,6 +2517,66 @@ std::optional<bool> GStreamerMediaEndpoint::canTrickleIceCandidates() const
     return false;
 }
 
+
+void GStreamerMediaEndpoint::updatePtDemuxSrcPadCaps(GstElement* ptDemux, GstPad* pad)
+{
+    GUniqueOutPtr<GstWebRTCSessionDescription> description;
+    g_object_get(m_webrtcBin.get(), "current-remote-description", &description.outPtr(), nullptr);
+    if (!description)
+        return;
+
+    auto currentCaps = adoptGRef(gst_pad_get_current_caps(pad));
+
+    auto sinkPad = adoptGRef(gst_element_get_static_pad(ptDemux, "sink"));
+    auto sinkCaps = adoptGRef(gst_pad_get_current_caps(sinkPad.get()));
+    const auto structure = gst_caps_get_structure(sinkCaps.get(), 0);
+    auto ssrc = gstStructureGet<unsigned>(structure, "ssrc"_s);
+    if (!ssrc)
+        return;
+
+    auto buffer = m_inputBuffers.take(*ssrc);
+    if (!buffer)
+        return;
+
+    GstMappedRtpBuffer rtpBuffer(buffer, GST_MAP_READ);
+    if (!rtpBuffer) [[unlikely]]
+        return;
+
+    auto caps = extractMidAndRidFromRTPBuffer(rtpBuffer, description->sdp);
+    if (!caps) {
+        GST_DEBUG_OBJECT(pipeline(), "mid attribute not found in buffer %" GST_PTR_FORMAT, buffer.get());
+        return;
+    }
+
+    // Propagate several caps fields from the previous caps to the new caps.
+    auto s = gst_caps_get_structure(caps.get(), 0);
+    auto s2 = gst_caps_get_structure(currentCaps.get(), 0);
+    for (int j = 0; j < gst_structure_n_fields(s2); j++) {
+        const char* name = gst_structure_nth_field_name(s2, j);
+        if (!g_str_equal(name, "media") && !g_str_equal(name, "payload") && !g_str_equal(name, "clock-rate") && !g_str_equal(name, "encoding-name"))
+            continue;
+        gst_structure_set_value(s, name, gst_structure_get_value(s2, name));
+    }
+
+    // Remove "ssrc-*" attributes matching other SSRCs.
+    gstStructureFilterAndMapInPlace(s, [&](auto id, auto) -> bool {
+        auto idString = gstIdToString(id);
+        if (!idString.startsWith("ssrc-"_s))
+            return true;
+
+        auto value = parseInteger<unsigned>(idString.substring(5));
+        if (!value)
+            return true;
+
+        return *value == *ssrc;
+    });
+
+    gst_caps_set_simple(caps.get(), "ssrc", G_TYPE_UINT, *ssrc, nullptr);
+
+    GST_DEBUG_OBJECT(pipeline(), "mid and rid attribute set from buffer on caps %" GST_PTR_FORMAT, caps.get());
+    gst_pad_set_caps(pad, caps.get());
+}
+
 void GStreamerMediaEndpoint::startRTCLogs()
 {
     m_isGatheringRTCLogs = true;
@@ -2524,7 +2614,7 @@ GUniquePtr<GstSDPMessage> GStreamerMediaEndpoint::completeSDPAnswer(const String
 
             auto value = StringView::fromLatin1(attribute->value);
             Vector<String> tokens = value.toStringWithoutCopying().split(' ');
-            if (UNLIKELY(tokens.size() < 2))
+            if (tokens.size() < 2) [[unlikely]]
                 continue;
 
             if (!sdpMediaHasRTPHeaderExtension(media, tokens[1]))

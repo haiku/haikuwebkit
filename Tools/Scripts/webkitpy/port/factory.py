@@ -111,6 +111,7 @@ class PortFactory(object):
         'watch_simulator.WatchSimulatorPort',
         'watch_device.WatchDevicePort',
         'visionos_simulator.VisionOSSimulatorPort',
+        'visionos_device.VisionOSDevicePort',
         'jsc_only.JscOnlyPort',
         'mac.MacCatalystPort',
         'mac.MacPort',

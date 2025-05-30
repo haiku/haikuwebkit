@@ -587,6 +587,18 @@ ContainerNode* composedParentIgnoringDocumentFragments(Node* node)
     return node ? composedParentIgnoringDocumentFragments(*node) : nullptr;
 }
 
+ElementName elementName(Node* node)
+{
+    auto* element = dynamicDowncast<Element>(node);
+    return element ? element->elementName() : ElementName::Unknown;
+}
+
+ElementName elementName(Node& node)
+{
+    auto* element = dynamicDowncast<Element>(node);
+    return element ? element->elementName() : ElementName::Unknown;
+}
+
 bool hasAccNameAttribute(Element& element)
 {
     auto trimmed = [&] (const auto& attribute) {
@@ -682,8 +694,8 @@ bool hasPresentationRole(Element& element)
 
 bool isRowGroup(Element& element)
 {
-    auto tagName = element.localName();
-    return tagName == theadTag || tagName == tbodyTag || tagName == tfootTag || hasRole(element, "rowgroup"_s);
+    auto name = element.elementName();
+    return name == ElementName::HTML_thead || name == ElementName::HTML_tbody || name == ElementName::HTML_tfoot || hasRole(element, "rowgroup"_s);
 }
 
 bool isRowGroup(Node* node)
@@ -698,8 +710,8 @@ static bool isAccessibilityList(Element& element)
         return true;
 
     // Call it a list if it has no ARIA role and a list tag.
-    auto tagName = element.localName();
-    return hasRole(element, nullAtom()) && (tagName == ulTag || tagName == olTag || tagName == dlTag || tagName == menuTag);
+    auto name = element.elementName();
+    return hasRole(element, nullAtom()) && (name == ElementName::HTML_ul || name == ElementName::HTML_ol || name == ElementName::HTML_dl || name == ElementName::HTML_menu);
 }
 
 static bool isAccessibilityTree(Element& element)
@@ -1330,8 +1342,10 @@ void AXObjectCache::onEventListenerAdded(Node& node, const AtomString& eventType
     if (!isClickEvent(eventType))
         return;
 
-    if (RefPtr tree = AXIsolatedTree::treeForPageID(m_pageID))
-        tree->updateNodeProperties(get(node), { AXProperty::HasClickHandler });
+    if (RefPtr tree = AXIsolatedTree::treeForPageID(m_pageID)) {
+        if (auto* object = get(node))
+            tree->queueNodeUpdate(object->objectID(), { AXProperty::HasClickHandler });
+    }
 #else
     UNUSED_PARAM(node);
     UNUSED_PARAM(eventType);
@@ -1344,8 +1358,10 @@ void AXObjectCache::onEventListenerRemoved(Node& node, const AtomString& eventTy
     if (!isClickEvent(eventType))
         return;
 
-    if (RefPtr tree = AXIsolatedTree::treeForPageID(m_pageID))
-        tree->updateNodeProperties(get(node), { AXProperty::HasClickHandler });
+    if (RefPtr tree = AXIsolatedTree::treeForPageID(m_pageID)) {
+        if (auto* object = get(node))
+            tree->queueNodeUpdate(object->objectID(), { AXProperty::HasClickHandler });
+    }
 #else
     UNUSED_PARAM(node);
     UNUSED_PARAM(eventType);
@@ -1474,7 +1490,7 @@ void AXObjectCache::handleChildrenChanged(AccessibilityObject& object)
         for (const auto& describedObject : parent->descriptionForObjects())
             postNotification(&downcast<AccessibilityObject>(describedObject.get()), nullptr, AXNotification::ExtendedDescriptionChanged);
 
-        if (parent->hasTagName(captionTag))
+        if (parent->hasElementName(ElementName::HTML_caption))
             foundTableCaption = true;
         else if (foundTableCaption && parent->isTable()) {
             postNotification(parent.get(), nullptr, AXNotification::TextChanged);
@@ -2038,6 +2054,50 @@ void AXObjectCache::onStyleChange(Element& element, OptionSet<Style::Change> cha
 #endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 }
 
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+bool AXObjectCache::onFontChange(Element& element, const RenderStyle* oldStyle, const RenderStyle* newStyle)
+{
+    if (!oldStyle || !newStyle)
+        return false;
+
+    RefPtr object = get(element);
+    if (!object)
+        return false;
+
+    RefPtr tree = AXIsolatedTree::treeForPageID(m_pageID);
+    if (!tree)
+        return false;
+
+    if (!oldStyle->fontCascadeEqual(*newStyle)) {
+        tree->updatePropertiesForSelfAndDescendants(*object, { AXProperty::Font });
+        return true;
+    }
+
+    return false;
+}
+
+bool AXObjectCache::onTextColorChange(Element& element, const RenderStyle* oldStyle, const RenderStyle* newStyle)
+{
+    if (!oldStyle || !newStyle)
+        return false;
+
+    RefPtr object = get(element);
+    if (!object)
+        return false;
+
+    RefPtr tree = AXIsolatedTree::treeForPageID(m_pageID);
+    if (!tree)
+        return false;
+
+    if (oldStyle->visitedDependentColor(CSSPropertyColor) != newStyle->visitedDependentColor(CSSPropertyColor)) {
+        tree->updatePropertiesForSelfAndDescendants(*object, { AXProperty::TextColor });
+        return true;
+    }
+
+    return false;
+}
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+
 void AXObjectCache::onStyleChange(RenderText& renderText, StyleDifference difference, const RenderStyle* oldStyle, const RenderStyle& newStyle)
 {
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
@@ -2077,12 +2137,6 @@ void AXObjectCache::onStyleChange(RenderText& renderText, StyleDifference differ
         return;
 
 #if ENABLE(AX_THREAD_TEXT_APIS)
-    if (!oldStyle->fontCascadeEqual(newStyle))
-        tree->queueNodeUpdate(object->objectID(), { AXProperty::Font });
-
-    if (oldStyle->visitedDependentColor(CSSPropertyColor) != newStyle.visitedDependentColor(CSSPropertyColor))
-        tree->queueNodeUpdate(object->objectID(), { AXProperty::TextColor });
-
     if (oldStyle->visitedDependentColor(CSSPropertyBackgroundColor) != newStyle.visitedDependentColor(CSSPropertyBackgroundColor))
         tree->queueNodeUpdate(object->objectID(), { AXProperty::BackgroundColor });
 
@@ -2770,7 +2824,7 @@ void AXObjectCache::handleRoleChanged(Element& element, const AtomString& oldVal
     AXLOG(makeString("oldValue "_s, oldValue, " new value "_s, newValue));
     ASSERT(oldValue != newValue);
 
-    auto* object = get(element);
+    RefPtr object = get(element);
     if (!object)
         return;
 
@@ -2808,16 +2862,28 @@ void AXObjectCache::handleRoleChanged(AccessibilityObject& axObject, Accessibili
 #endif
 }
 
-void AXObjectCache::handleRoleDescriptionChanged(Element& element)
+void AXObjectCache::handleARIARoleDescriptionChanged(Element& element)
 {
-    auto* object = get(element);
+    RefPtr object = get(element);
     if (!object)
         return;
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    updateIsolatedTree(object, AXNotification::RoleDescriptionChanged);
+    updateIsolatedTree(object.get(), AXNotification::ARIARoleDescriptionChanged);
 #endif
 }
+
+void AXObjectCache::handleInputTypeChanged(Element& element)
+{
+    RefPtr object = get(element);
+    if (!object)
+        return;
+
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+    updateIsolatedTree(object.get(), AXNotification::InputTypeChanged);
+#endif
+}
+
 
 void AXObjectCache::deferAttributeChangeIfNeeded(Element& element, const QualifiedName& attrName, const AtomString& oldValue, const AtomString& newValue)
 {
@@ -2984,7 +3050,7 @@ void AXObjectCache::handleAttributeChange(Element* element, const QualifiedName&
         postNotification(element, AXNotification::ControlledObjectsChanged);
     else if (attrName == aria_valuenowAttr || attrName == aria_valuetextAttr)
         postNotification(element, AXNotification::ValueChanged);
-    else if (attrName == aria_labelAttr && element->hasTagName(htmlTag)) {
+    else if (attrName == aria_labelAttr && element->elementName() == ElementName::HTML_html) {
         // When aria-label changes on an <html> element, it's the web area who needs to re-compute its accessibility text.
         handleTextChanged(get(element->protectedDocument().ptr()));
     } else if (attrName == aria_labelAttr || attrName == aria_labeledbyAttr || attrName == aria_labelledbyAttr) {
@@ -3107,7 +3173,7 @@ void AXObjectCache::handleAttributeChange(Element* element, const QualifiedName&
     else if (attrName == aria_requiredAttr)
         postNotification(element, AXNotification::RequiredStatusChanged);
     else if (attrName == aria_roledescriptionAttr)
-        handleRoleDescriptionChanged(*element);
+        handleARIARoleDescriptionChanged(*element);
     else if (attrName == aria_rowcountAttr)
         handleRowCountChanged(get(*element), element->protectedDocument().ptr());
     else if (attrName == aria_rowspanAttr) {
@@ -3124,6 +3190,8 @@ void AXObjectCache::handleAttributeChange(Element* element, const QualifiedName&
     else if (attrName == aria_brailleroledescriptionAttr)
         postNotification(element, AXNotification::BrailleRoleDescriptionChanged);
 #endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+    else if (attrName == typeAttr)
+        handleInputTypeChanged(*element);
 }
 
 void AXObjectCache::handleLabelChanged(AccessibilityObject* object)
@@ -3323,7 +3391,7 @@ CharacterOffset AXObjectCache::traverseToOffsetInRange(const SimpleRange& range,
                             currentNode = shadowHost;
                             continue;
                         }
-                    } else if (previousNode && previousNode->isTextNode() && previousNode->isDescendantOf(currentNode) && currentNode->hasTagName(pTag)) {
+                    } else if (previousNode && previousNode->isTextNode() && previousNode->isDescendantOf(currentNode) && elementName(currentNode) == ElementName::HTML_p) {
                         // TextIterator is emitting an extra newline after the <p> element. We should
                         // ignore that since the extra text node is not in the DOM tree.
                         currentNode = previousNode;
@@ -3426,7 +3494,7 @@ std::optional<SimpleRange> AXObjectCache::rangeMatchesTextNearRange(const Simple
 
 static bool isReplacedNodeOrBR(Node& node)
 {
-    return AccessibilityObject::replacedNodeNeedsCharacter(node) || node.hasTagName(brTag);
+    return AccessibilityObject::replacedNodeNeedsCharacter(node) || WebCore::elementName(node) == ElementName::HTML_br;
 }
 
 static bool characterOffsetsInOrder(const CharacterOffset& characterOffset1, const CharacterOffset& characterOffset2)
@@ -4029,8 +4097,8 @@ static bool characterOffsetNodeIsBR(const CharacterOffset& characterOffset)
 {
     if (characterOffset.isNull())
         return false;
-    
-    return characterOffset.node->hasTagName(brTag);
+
+    return WebCore::elementName(*characterOffset.node) == ElementName::HTML_br;
 }
     
 static Node* parentEditingBoundary(Node* node)
@@ -4853,6 +4921,9 @@ void AXObjectCache::updateIsolatedTree(const Vector<std::pair<Ref<AccessibilityO
         case AXNotification::ARIAColumnIndexChanged:
             tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::AXColumnIndex });
             break;
+        case AXNotification::ARIARoleDescriptionChanged:
+            tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::ARIARoleDescription });
+            break;
         case AXNotification::ARIARowIndexChanged:
             tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::AXRowIndex });
             break;
@@ -4903,6 +4974,12 @@ void AXObjectCache::updateIsolatedTree(const Vector<std::pair<Ref<AccessibilityO
         case AXNotification::FocusableStateChanged:
             tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::CanSetFocusAttribute });
             break;
+        case AXNotification::InputTypeChanged:
+            tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::InputType });
+            break;
+        case AXNotification::LevelChanged:
+            tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::ARIALevel });
+            break;
         case AXNotification::MaximumValueChanged:
             tree->queueNodeUpdate(notification.first->objectID(), { { AXProperty::MaxValueForRange, AXProperty::ValueForRange } });
             break;
@@ -4939,9 +5016,6 @@ void AXObjectCache::updateIsolatedTree(const Vector<std::pair<Ref<AccessibilityO
             break;
         case AXNotification::RequiredStatusChanged:
             tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::IsRequired });
-            break;
-        case AXNotification::RoleDescriptionChanged:
-            tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::RoleDescription });
             break;
         case AXNotification::RowIndexChanged:
             tree->queueNodeUpdate(notification.first->objectID(), { { AXProperty::RowIndexRange, AXProperty::RowIndex } });
@@ -4987,7 +5061,7 @@ void AXObjectCache::updateIsolatedTree(const Vector<std::pair<Ref<AccessibilityO
             tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::IsVisible });
             break;
         case AXNotification::VisitedStateChanged:
-            tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::InsideLink });
+            tree->queueNodeUpdate(notification.first->objectID(), { AXProperty::IsVisited });
             break;
         case AXNotification::ActiveDescendantChanged:
         case AXNotification::RoleChanged:
@@ -5000,7 +5074,6 @@ void AXObjectCache::updateIsolatedTree(const Vector<std::pair<Ref<AccessibilityO
         case AXNotification::HasPopupChanged:
         case AXNotification::InvalidStatusChanged:
         case AXNotification::IsAtomicChanged:
-        case AXNotification::LevelChanged:
         case AXNotification::LiveRegionStatusChanged:
         case AXNotification::LiveRegionRelevantChanged:
         case AXNotification::PlaceholderChanged:
@@ -5344,7 +5417,8 @@ bool AXObjectCache::addRelation(Element& origin, Element& target, AXRelation rel
 
 static bool canHaveRelations(Element& element)
 {
-    return !(element.hasTagName(metaTag) || element.hasTagName(headTag) || element.hasTagName(scriptTag) || element.hasTagName(htmlTag) || element.hasTagName(styleTag));
+    auto elementName = element.elementName();
+    return !(elementName == ElementName::HTML_meta || elementName == ElementName::HTML_head || elementName == ElementName::HTML_script || elementName == ElementName::HTML_html || elementName == ElementName::HTML_style);
 }
 
 static bool relationCausesCycle(AccessibilityObject* origin, AccessibilityObject* target, AXRelation relation)
@@ -5600,9 +5674,9 @@ void AXObjectCache::addLabelForRelation(Element& origin)
     if (RefPtr label = dynamicDowncast<HTMLLabelElement>(origin)) {
         if (RefPtr control = Accessibility::controlForLabelElement(*label))
             addedRelation = addRelation(origin, *control, AXRelation::LabelFor);
-    } else if (origin.hasTagName(figcaptionTag)) {
-        RefPtr parent = origin.parentNode();
-        if (parent && parent->hasTagName(figureTag))
+    } else if (origin.elementName() == ElementName::HTML_figcaption) {
+        RefPtr parent = dynamicDowncast<Element>(origin.parentNode());
+        if (parent && parent->elementName() == ElementName::HTML_figure)
             addedRelation = addRelation(RefPtr { getOrCreate(origin) }.get(), RefPtr { getOrCreate(*parent) }.get(), AXRelation::LabelFor);
     }
 

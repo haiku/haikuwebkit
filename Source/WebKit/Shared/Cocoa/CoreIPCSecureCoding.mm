@@ -69,7 +69,7 @@ const HashSet<String>* classNamesExemptFromSecureCodingCrash()
     return internalClassNamesExemptFromSecureCodingCrash().get();
 }
 
-void applyProcessCreationParameters(const AuxiliaryProcessCreationParameters& parameters)
+void applyProcessCreationParameters(AuxiliaryProcessCreationParameters&& parameters)
 {
     RELEASE_ASSERT(isInAuxiliaryProcess());
 
@@ -93,7 +93,7 @@ bool conformsToWebKitSecureCoding(id object)
 }
 
 #if !HAVE(WK_SECURE_CODING_NSURLREQUEST)
-NO_RETURN static void crashWithClassName(Class objectClass)
+[[noreturn]] static void crashWithClassName(Class objectClass)
 {
     WebKit::logAndSetCrashLogMessage("NSSecureCoding path used for unexpected object"_s);
 

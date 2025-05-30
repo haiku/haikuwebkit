@@ -212,6 +212,7 @@
 #import <WebCore/ProgressTracker.h>
 #import <WebCore/Range.h>
 #import <WebCore/RemoteFrameClient.h>
+#import <WebCore/RemoteFrameGeometryTransformer.h>
 #import <WebCore/RemoteUserInputEventData.h>
 #import <WebCore/RenderStyleInlines.h>
 #import <WebCore/RenderTheme.h>
@@ -283,6 +284,7 @@
 #import <wtf/WorkQueue.h>
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #import <wtf/cocoa/VectorCocoa.h>
+#import <wtf/spi/darwin/ReasonSPI.h>
 #import <wtf/spi/darwin/dyldSPI.h>
 
 #if !PLATFORM(IOS_FAMILY)
@@ -1544,7 +1546,7 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
         makeUniqueRef<WebCryptoClient>(self),
         makeUniqueRef<WebCore::ProcessSyncClient>()
 #if HAVE(DIGITAL_CREDENTIALS_UI)
-        , makeUniqueRef<WebCore::DummyCredentialRequestCoordinatorClient>()
+        , WebCore::DummyCredentialRequestCoordinatorClient::create()
 #endif
     );
 #if !PLATFORM(IOS_FAMILY)
@@ -1806,7 +1808,7 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
         makeUniqueRef<WebCryptoClient>(self),
         makeUniqueRef<WebCore::ProcessSyncClient>()
 #if HAVE(DIGITAL_CREDENTIALS_UI)
-        , makeUniqueRef<WebCore::DummyCredentialRequestCoordinatorClient>()
+        , WebCore::DummyCredentialRequestCoordinatorClient::create()
 #endif
     );
 #if ENABLE(DRAG_SUPPORT)
@@ -1923,11 +1925,17 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
 - (BOOL)_requestStartDataInteraction:(CGPoint)clientPosition globalPosition:(CGPoint)globalPosition
 {
     WebThreadLock();
-    auto* localMainFrame = dynamicDowncast<WebCore::LocalFrame>(_private->page->mainFrame());
+    RefPtr localMainFrame = dynamicDowncast<WebCore::LocalFrame>(_private->page->mainFrame());
     if (!localMainFrame)
         return NO;
 
-    return localMainFrame->eventHandler().tryToBeginDragAtPoint(WebCore::IntPoint(clientPosition), WebCore::IntPoint(globalPosition)) == WebCore::DragStartRequestResult::Started;
+    auto result = Box<std::optional<bool>>::create();
+    localMainFrame->eventHandler().tryToBeginDragAtPoint(WebCore::IntPoint(clientPosition), WebCore::IntPoint(globalPosition), [result] (auto handled) mutable {
+        ASSERT_WITH_MESSAGE(handled.has_value(), "tryToBeginDragAtPoint should never run into a RemoteFrame in WebKitLegacy");
+        *result = handled.value_or(false);
+    });
+    ASSERT_WITH_MESSAGE(*result, "tryToBeginDragAtPoint should always complete synchronously in WebKitLegacy");
+    return result->value_or(false);
 }
 
 - (void)_startDrag:(const WebCore::DragItem&)dragItem
@@ -5038,6 +5046,9 @@ IGNORE_WARNINGS_END
     if (initialized)
         return;
     initialized = YES;
+
+    if (WTF::CocoaApplication::isAppleApplication() && !((rand() * 100) % 100))
+        os_fault_with_payload(OS_REASON_WEBKIT, 0, nullptr, 0, "WebView initialized", 0);
 
 #if !PLATFORM(IOS_FAMILY)
     JSC::initialize();

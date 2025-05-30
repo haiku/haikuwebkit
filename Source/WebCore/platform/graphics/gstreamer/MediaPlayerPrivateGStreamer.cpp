@@ -95,7 +95,6 @@
 #include <wtf/URL.h>
 #include <wtf/UniStdExtras.h>
 #include <wtf/WallTime.h>
-#include <wtf/glib/GUniquePtr.h>
 #include <wtf/glib/RunLoopSourcePriority.h>
 #include <wtf/text/AtomString.h>
 #include <wtf/text/CString.h>
@@ -2585,18 +2584,24 @@ void MediaPlayerPrivateGStreamer::configureElement(GstElement* element)
     // is not an issue in 1.22. Streams parsing is not needed for MediaStream cases because we do it
     // upfront for incoming WebRTC MediaStreams. It is however needed for MSE, otherwise decodebin3
     // might not auto-plug hardware decoders.
+    bool isBlob = m_url.protocolIs("blob"_s);
     auto nameView = StringView::fromLatin1(elementName.get());
-    if (webkitGstCheckVersion(1, 22, 0) && nameView.startsWith("urisourcebin"_s) && (isMediaSource() || isMediaStreamPlayer()))
+    if (webkitGstCheckVersion(1, 22, 0) && nameView.startsWith("urisourcebin"_s) && (isBlob || isMediaSource() || isMediaStreamPlayer()))
         g_object_set(element, "use-buffering", FALSE, "parse-streams", !isMediaStreamPlayer(), nullptr);
 
     if (nameView.startsWith("parsebin"_s))
         configureParsebin(element);
 
-    // In case of playbin3 with <video ... preload="auto">, instantiate
-    // downloadbuffer element, otherwise the playbin3 would instantiate
-    // a queue element instead .
-    if (nameView.startsWith("urisourcebin"_s) && !m_isLegacyPlaybin && !isMediaSource() && !isMediaStreamPlayer() && m_preload == MediaPlayer::Preload::Auto)
-        g_object_set(element, "download", TRUE, nullptr);
+    // In case of playbin3 with <video ... preload="auto">, instantiate downloadbuffer element,
+    // otherwise the playbin3 would instantiate a queue element instead. When playing blob URIs,
+    // configure urisourcebin to setup a ring buffer so that downstream demuxers operate in pull
+    // mode. Some demuxers (matroskademux) don't work as well in push mode.
+    if (nameView.startsWith("urisourcebin"_s) && !m_isLegacyPlaybin && m_preload == MediaPlayer::Preload::Auto) {
+        if (isBlob)
+            g_object_set(element, "ring-buffer-max-size", 2 * MB, nullptr);
+        else if (!isMediaSource() && !isMediaStreamPlayer())
+            g_object_set(element, "download", TRUE, nullptr);
+    }
 
     // Collect processing time metrics for video decoders and converters.
     if ((classifiers.contains("Converter"_s) || classifiers.contains("Decoder"_s)) && classifiers.contains("Video"_s) && !classifiers.contains("Parser"_s) && !classifiers.contains("Sink"_s))
@@ -3287,11 +3292,12 @@ void MediaPlayerPrivateGStreamer::createGSTPlayBin(const URL& url)
     GST_INFO("Creating pipeline for %s player", player->isVideoPlayer() ? "video" : "audio");
     ASCIILiteral playbinName = "playbin"_s;
 
-    // MSE and Mediastream require playbin3. Regular playback can use playbin3 on-demand with the
+    // MSE, Blob and Mediastream require playbin3. Regular playback can use playbin3 on-demand with the
     // WEBKIT_GST_USE_PLAYBIN3 environment variable.
-    const char* usePlaybin3 = g_getenv("WEBKIT_GST_USE_PLAYBIN3");
+    auto usePlaybin3 = StringView::fromLatin1(g_getenv("WEBKIT_GST_USE_PLAYBIN3"));
     bool isMediaStream = url.protocolIs("mediastream"_s);
-    if (isMediaSource() || isMediaStream || (usePlaybin3 && !strcmp(usePlaybin3, "1")))
+    bool isBlob = url.protocolIs("blob"_s);
+    if (isMediaSource() || isMediaStream || isBlob || usePlaybin3 == "1"_s)
         playbinName = "playbin3"_s;
 
     ASSERT(!m_pipeline);
@@ -3300,7 +3306,7 @@ void MediaPlayerPrivateGStreamer::createGSTPlayBin(const URL& url)
     if (elementId.isEmpty())
         elementId = "media-player"_s;
 
-    auto type = isMediaSource() ? "MSE-"_s : isMediaStream ? "mediastream-"_s : ""_s;
+    auto type = isMediaSource() ? "MSE-"_s : isMediaStream ? "mediastream-"_s : isBlob ? "blob-" : ""_s;
 
     m_isLegacyPlaybin = playbinName == "playbin"_s;
 
@@ -3610,29 +3616,30 @@ void MediaPlayerPrivateGStreamer::repaint()
     m_drawCondition.notifyOne();
 }
 
-static ImageOrientation getVideoOrientation(const GstTagList* tagList)
+ImageOrientation MediaPlayerPrivateGStreamer::getVideoOrientation(const GstTagList* tagList)
 {
     ASSERT(tagList);
-    GUniqueOutPtr<gchar> tag;
-    if (!gst_tag_list_get_string(tagList, GST_TAG_IMAGE_ORIENTATION, &tag.outPtr())) {
-        GST_DEBUG("No image_orientation tag, applying no rotation.");
+    GUniqueOutPtr<gchar> imageOrientationTag;
+    if (!gst_tag_list_get_string(tagList, GST_TAG_IMAGE_ORIENTATION, &imageOrientationTag.outPtr())) {
+        GST_DEBUG_OBJECT(pipeline(), "No image_orientation tag, applying no rotation.");
         return ImageOrientation::Orientation::None;
     }
 
-    GST_DEBUG("Found image_orientation tag: %s", tag.get());
-    if (!g_strcmp0(tag.get(), "flip-rotate-0"))
+    GST_DEBUG_OBJECT(pipeline(), "Found image_orientation tag: %s", imageOrientationTag.get());
+    auto tag = StringView::fromLatin1(imageOrientationTag.get());
+    if (tag == "flip-rotate-0"_s)
         return ImageOrientation::Orientation::OriginTopRight;
-    if (!g_strcmp0(tag.get(), "rotate-180"))
+    if (tag == "rotate-180"_s)
         return ImageOrientation::Orientation::OriginBottomRight;
-    if (!g_strcmp0(tag.get(), "flip-rotate-180"))
+    if (tag == "flip-rotate-180"_s)
         return ImageOrientation::Orientation::OriginBottomLeft;
-    if (!g_strcmp0(tag.get(), "flip-rotate-270"))
+    if (tag == "flip-rotate-270"_s)
         return ImageOrientation::Orientation::OriginLeftTop;
-    if (!g_strcmp0(tag.get(), "rotate-90"))
+    if (tag == "rotate-90"_s)
         return ImageOrientation::Orientation::OriginRightTop;
-    if (!g_strcmp0(tag.get(), "flip-rotate-90"))
+    if (tag == "flip-rotate-90"_s)
         return ImageOrientation::Orientation::OriginRightBottom;
-    if (!g_strcmp0(tag.get(), "rotate-270"))
+    if (tag == "rotate-270"_s)
         return ImageOrientation::Orientation::OriginLeftBottom;
 
     // Default rotation.
@@ -3647,11 +3654,17 @@ void MediaPlayerPrivateGStreamer::updateVideoOrientation(const GstTagList* tagLi
     if (!sizeActuallyChanged)
         return;
 
+    if (m_videoSizeFromCaps.isEmpty())
+        return;
+
+    m_videoSize = m_videoSizeFromCaps;
+    GST_DEBUG_OBJECT(pipeline(), "Size from caps: %dx%d", m_videoSizeFromCaps.width(), m_videoSizeFromCaps.height());
+
     // If the video is tagged as rotated 90 or 270 degrees, swap width and height.
     if (m_videoSourceOrientation.usesWidthAsHeight())
         m_videoSize = m_videoSize.transposedSize();
 
-    GST_DEBUG_OBJECT(pipeline(), "Enqueuing and waiting for main-thread task to call sizeChanged()...");
+    GST_DEBUG_OBJECT(pipeline(), "Enqueuing and waiting for main-thread task to call sizeChanged() for new size %fx%f ...", m_videoSize.width(), m_videoSize.height());
     [[maybe_unused]] bool sizeChangedProcessed = m_sinkTaskQueue.enqueueTaskAndWait<AbortableTaskQueue::Void>([weakThis = ThreadSafeWeakPtr { *this }, this] {
         RefPtr self = weakThis.get();
         if (!self)
@@ -3677,10 +3690,9 @@ void MediaPlayerPrivateGStreamer::updateVideoSizeAndOrientationFromCaps(const Gs
     // video-sink has likely not yet negotiated its caps.
     int pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride;
     double frameRate;
-    IntSize originalSize;
     GstVideoFormat format;
     PlatformVideoColorSpace colorSpace;
-    if (!getVideoSizeAndFormatFromCaps(caps, originalSize, format, pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride, frameRate, colorSpace)) {
+    if (!getVideoSizeAndFormatFromCaps(caps, m_videoSizeFromCaps, format, pixelAspectRatioNumerator, pixelAspectRatioDenominator, stride, frameRate, colorSpace)) {
         GST_WARNING("Failed to get size and format from caps: %" GST_PTR_FORMAT, caps);
         return;
     }
@@ -3695,6 +3707,8 @@ void MediaPlayerPrivateGStreamer::updateVideoSizeAndOrientationFromCaps(const Gs
         orientation = getVideoOrientation(tagList).orientation();
     }
 
+    auto originalSize = m_videoSizeFromCaps;
+
     setVideoSourceOrientation(orientation);
     // If the video is tagged as rotated 90 or 270 degrees, swap width and height.
     if (m_videoSourceOrientation.usesWidthAsHeight())
@@ -3707,13 +3721,7 @@ void MediaPlayerPrivateGStreamer::updateVideoSizeAndOrientationFromCaps(const Gs
         }
     });
 
-    GST_DEBUG_OBJECT(pipeline(), "Original video size: %dx%d", originalSize.width(), originalSize.height());
-    if (isMediaStreamPlayer()) {
-        GST_DEBUG_OBJECT(pipeline(), "Using original MediaStream track video intrinsic size");
-        m_videoSize = originalSize;
-        return;
-    }
-
+    GST_DEBUG_OBJECT(pipeline(), "Original video size: %dx%d, orientation: %u", originalSize.width(), originalSize.height(), static_cast<unsigned>(orientation));
     GST_DEBUG_OBJECT(pipeline(), "Applying pixel aspect ratio: %d/%d", pixelAspectRatioNumerator, pixelAspectRatioDenominator);
 
     // Calculate DAR based on PAR and video size.
@@ -4484,7 +4492,7 @@ std::optional<VideoFrameMetadata> MediaPlayerPrivateGStreamer::videoFrameMetadat
 
 static bool areAllSinksPlayingForBin(GstBin* bin)
 {
-    for (auto* element : GstIteratorAdaptor<GstElement>(GUniquePtr<GstIterator>(gst_bin_iterate_sinks(bin)))) {
+    for (auto* element : GstIteratorAdaptor<GstElement>(gst_bin_iterate_sinks(bin))) {
         if (GST_IS_BIN(element) && !areAllSinksPlayingForBin(GST_BIN_CAST(element)))
             return false;
 
@@ -4519,7 +4527,7 @@ void MediaPlayerPrivateGStreamer::checkPlayingConsistency()
 
 static void applyAudioSinkDevice(GstElement* audioSinkBin, const String& deviceId)
 {
-    for (auto* element : GstIteratorAdaptor<GstElement>(GUniquePtr<GstIterator>(gst_bin_iterate_sinks(GST_BIN_CAST(audioSinkBin))))) {
+    for (auto* element : GstIteratorAdaptor<GstElement>(gst_bin_iterate_sinks(GST_BIN_CAST(audioSinkBin)))) {
         // pulsesink and alsasink have a "device" property, whilst pipewiresink has "target-object"
         if (gstElementMatchesFactoryAndHasProperty(element, "pulsesink"_s, "device"_s) || gstElementMatchesFactoryAndHasProperty(element, "alsasink"_s, "device"_s))
             g_object_set(element, "device", deviceId.utf8().data(), nullptr);

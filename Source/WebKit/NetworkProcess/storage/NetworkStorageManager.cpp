@@ -60,6 +60,7 @@
 #include <WebCore/StorageUtilities.h>
 #include <WebCore/UniqueIDBDatabaseConnection.h>
 #include <WebCore/UniqueIDBDatabaseTransaction.h>
+#include <algorithm>
 #include <pal/crypto/CryptoDigest.h>
 #include <ranges>
 #include <wtf/SuspendableWorkQueue.h>
@@ -104,7 +105,7 @@ static String originDirectoryPath(const String& rootPath, const WebCore::ClientO
 
     auto encodedTopOrigin = encode(origin.topOrigin.toString(), salt);
     auto encodedOpeningOrigin = encode(origin.clientOrigin.toString(), salt);
-    return FileSystem::pathByAppendingComponents(rootPath, { encodedTopOrigin, encodedOpeningOrigin });
+    return FileSystem::pathByAppendingComponents(rootPath, std::initializer_list<StringView> { encodedTopOrigin, encodedOpeningOrigin });
 }
 
 static String originFilePath(const String& directory)
@@ -130,7 +131,7 @@ static bool isEmptyOriginDirectory(const String& directory)
         , ".DS_Store"_s
 #endif
     };
-    return WTF::allOf(children, [&] (auto& child) {
+    return std::ranges::all_of(children, [&](auto& child) {
         return invalidFileNames.contains(child);
     });
 }

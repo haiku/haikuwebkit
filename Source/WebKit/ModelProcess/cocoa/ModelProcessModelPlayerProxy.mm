@@ -42,7 +42,6 @@
 #import <WebCore/LayerHostingContextIdentifier.h>
 #import <WebCore/Model.h>
 #import <WebCore/ResourceError.h>
-#import <WebCore/TransformationMatrix.h>
 #import <WebKitAdditions/REModel.h>
 #import <WebKitAdditions/REModelLoader.h>
 #import <WebKitAdditions/REPtr.h>
@@ -89,6 +88,8 @@
 @end
 
 namespace WebKit {
+
+static const Seconds unloadModelDelay { 4_s };
 
 class RKModelUSD final : public WebCore::REModel {
 public:
@@ -229,6 +230,7 @@ ModelProcessModelPlayerProxy::ModelProcessModelPlayerProxy(ModelProcessModelPlay
     , m_webProcessConnection(WTFMove(connection))
     , m_manager(manager)
     , m_attributionTaskID(attributionTaskID)
+    , m_unloadModelTimer(RunLoop::main(), this, &ModelProcessModelPlayerProxy::unloadModelTimerFired)
 {
     RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayerProxy initialized id=%" PRIu64, this, identifier.toUInt64());
     m_objCAdapter = adoptNS([[WKModelProcessModelPlayerProxyObjCAdapter alloc] initWithModelProcessModelPlayerProxy:*this]);
@@ -301,6 +303,45 @@ void ModelProcessModelPlayerProxy::loadModel(Ref<WebCore::Model>&& model, WebCor
 {
     // FIXME: Change the IPC message to land on load() directly
     load(model, layoutSize);
+}
+
+void ModelProcessModelPlayerProxy::reloadModel(Ref<WebCore::Model>&& model, WebCore::LayoutSize layoutSize, std::optional<WebCore::TransformationMatrix> entityTransformToRestore, std::optional<WebCore::ModelPlayerAnimationState> animationStateToRestore)
+{
+    m_entityTransformToRestore = WTFMove(entityTransformToRestore);
+    m_animationStateToRestore = WTFMove(animationStateToRestore);
+    if (m_animationStateToRestore) {
+        m_autoplay = m_animationStateToRestore->autoplay();
+        m_loop = m_animationStateToRestore->loop();
+        if (auto playbackRate = m_animationStateToRestore->effectivePlaybackRate())
+            m_playbackRate = *playbackRate;
+    }
+
+    load(model, layoutSize);
+}
+
+void ModelProcessModelPlayerProxy::modelVisibilityDidChange(bool isVisible)
+{
+    m_unloadModelTimer.stop();
+
+    m_isVisible = isVisible;
+
+    if (m_isVisible)
+        m_unloadModelTimer.stop();
+    else
+        m_unloadModelTimer.startOneShot(m_unloadDelayDisabledForTesting ? 0_s : unloadModelDelay);
+}
+
+void ModelProcessModelPlayerProxy::unloadModelTimerFired()
+{
+    if (m_isVisible)
+        return;
+
+    RefPtr strongManager = m_manager.get();
+    if (!strongManager)
+        return;
+
+    RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayerProxy::unloadModelTimerFired(): inform manager to unload model id=%" PRIu64, this, m_id.toUInt64());
+    strongManager->unloadModelPlayer(m_id);
 }
 
 // MARK: - RE stuff
@@ -381,7 +422,7 @@ static CGFloat effectivePointsPerMeter(CALayer *caLayer)
 
 static RESRT modelStandardizedTransformSRT(RESRT originalSRT)
 {
-    constexpr float defaultScaleFactor = 0.32f;
+    constexpr float defaultScaleFactor = 0.36f;
 
     originalSRT.scale *= defaultScaleFactor;
     originalSRT.translation *= defaultScaleFactor;
@@ -391,7 +432,7 @@ static RESRT modelStandardizedTransformSRT(RESRT originalSRT)
 
 static RESRT modelLocalizedTransformSRT(RESRT originalSRT)
 {
-    constexpr float defaultScaleFactor = 0.32f;
+    constexpr float defaultScaleFactor = 0.36f;
 
     originalSRT.scale /= defaultScaleFactor;
     originalSRT.translation /= defaultScaleFactor;
@@ -516,12 +557,22 @@ void ModelProcessModelPlayerProxy::didFinishLoading(WebCore::REModelLoader& load
     if (!canLoadWithRealityKit)
         RENetworkMarkEntityMetadataDirty(m_model->rootEntity());
 
-    computeTransform(true);
-    updateTransform();
+    if (m_entityTransformToRestore) {
+        setEntityTransform(*m_entityTransformToRestore);
+        m_entityTransformToRestore = std::nullopt;
+    } else {
+        computeTransform(true);
+        updateTransform();
+    }
     [m_stageModeInteractionDriver setContainerTransformInPortal];
 
     updateOpacity();
     startAnimating();
+    if (m_animationStateToRestore) {
+        [m_modelRKEntity setPaused:m_animationStateToRestore->paused()];
+        [m_modelRKEntity setCurrentTime:m_animationStateToRestore->currentTime().seconds()];
+        m_animationStateToRestore = std::nullopt;
+    }
 
     applyEnvironmentMapDataAndRelease();
 
@@ -560,7 +611,7 @@ void ModelProcessModelPlayerProxy::load(WebCore::Model& model, WebCore::LayoutSi
 
 void ModelProcessModelPlayerProxy::sizeDidChange(WebCore::LayoutSize layoutSize)
 {
-    RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayerProxy::sizeDidChange w=%lf h=%lf id=%" PRIu64, this, layoutSize.width().toDouble(), layoutSize.height().toDouble(), m_id.toUInt64());
+    RELEASE_LOG_INFO(ModelElement, "%p - ModelProcessModelPlayerProxy::sizeDidChange w=%lf h=%lf id=%" PRIu64, this, layoutSize.width().toDouble(), layoutSize.height().toDouble(), m_id.toUInt64());
     [m_layer setFrame:CGRectMake(0, 0, layoutSize.width().toDouble(), layoutSize.height().toDouble())];
 }
 
@@ -745,6 +796,11 @@ void ModelProcessModelPlayerProxy::endStageModeInteraction()
     [m_stageModeInteractionDriver interactionDidEnd];
 }
 
+void ModelProcessModelPlayerProxy::resetModelTransformAfterDrag()
+{
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=291289
+}
+
 void ModelProcessModelPlayerProxy::stageModeInteractionDidUpdateModel()
 {
     if (stageModeInteractionInProgress() && m_modelRKEntity)
@@ -756,28 +812,61 @@ bool ModelProcessModelPlayerProxy::stageModeInteractionInProgress() const
     return [m_stageModeInteractionDriver stageModeInteractionInProgress];
 }
 
+void ModelProcessModelPlayerProxy::animateModelToFitPortal(CompletionHandler<void(bool)>&& completionHandler)
+{
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=291289
+    completionHandler(true);
+}
+
+#if HAVE(MODEL_MEMORY_ATTRIBUTION)
+static void setIBLAssetOwnership(const String& attributionTaskID, REAssetRef iblAsset)
+{
+    const char* attributionIDString = attributionTaskID.utf8().data();
+
+    if (REPtr<REAssetRef> skyboxTexture = REIBLAssetGetSkyboxTexture(iblAsset)) {
+        RELEASE_LOG_DEBUG(ModelElement, "Attributing skyboxTexture to task ID: %s", attributionIDString);
+        REAssetSetMemoryAttributionTarget(skyboxTexture.get(), attributionIDString);
+    }
+    if (REPtr<REAssetRef> diffuseTexture = REIBLAssetGetDiffuseTexture(iblAsset)) {
+        RELEASE_LOG_DEBUG(ModelElement, "Attributing diffuseTexture to task ID: %s", attributionIDString);
+        REAssetSetMemoryAttributionTarget(diffuseTexture.get(), attributionIDString);
+    }
+    if (REPtr<REAssetRef> specularTexture = REIBLAssetGetSpecularTexture(iblAsset)) {
+        RELEASE_LOG_DEBUG(ModelElement, "Attributing specularTexture to task ID: %s", attributionIDString);
+        REAssetSetMemoryAttributionTarget(specularTexture.get(), attributionIDString);
+    }
+}
+#endif
+
 void ModelProcessModelPlayerProxy::applyEnvironmentMapDataAndRelease()
 {
     if (m_transientEnvironmentMapData) {
         if (m_transientEnvironmentMapData->size() > 0) {
-            [m_modelRKEntity applyIBLData:m_transientEnvironmentMapData->createNSData().get() withCompletion:makeBlockPtr([weakThis = WeakPtr { *this }] (BOOL succeeded) {
+            [m_modelRKEntity applyIBLData:m_transientEnvironmentMapData->createNSData().get() attributionHandler:makeBlockPtr([weakThis = WeakPtr { *this }] (REAssetRef coreEnvironmentResourceAsset) {
+                RefPtr protectedThis = weakThis.get();
+                if (!protectedThis || !protectedThis->m_attributionTaskID || !coreEnvironmentResourceAsset)
+                    return;
+
+#if HAVE(MODEL_MEMORY_ATTRIBUTION)
+                setIBLAssetOwnership(*(protectedThis->m_attributionTaskID), coreEnvironmentResourceAsset);
+#endif
+            }).get() withCompletion:makeBlockPtr([weakThis = WeakPtr { *this }] (BOOL succeeded) {
                 RefPtr protectedThis = weakThis.get();
                 if (!protectedThis)
                     return;
 
                 if (!succeeded)
-                    [protectedThis->m_modelRKEntity applyDefaultIBL];
+                    protectedThis->applyDefaultIBL();
 
                 protectedThis->send(Messages::ModelProcessModelPlayer::DidFinishEnvironmentMapLoading(succeeded));
             }).get()];
         } else {
-            [m_modelRKEntity applyDefaultIBL];
+            applyDefaultIBL();
             send(Messages::ModelProcessModelPlayer::DidFinishEnvironmentMapLoading(true));
         }
         m_transientEnvironmentMapData = nullptr;
-    } else {
-        [m_modelRKEntity applyDefaultIBL];
-    }
+    } else
+        applyDefaultIBL();
 }
 
 void ModelProcessModelPlayerProxy::setHasPortal(bool hasPortal)
@@ -832,6 +921,19 @@ void ModelProcessModelPlayerProxy::applyStageModeOperationToDriver()
         break;
     }
     }
+}
+
+void ModelProcessModelPlayerProxy::applyDefaultIBL()
+{
+    [m_modelRKEntity applyDefaultIBLWithAttributionHandler:makeBlockPtr([weakThis = WeakPtr { *this }] (REAssetRef coreEnvironmentResourceAsset) {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis || !protectedThis->m_attributionTaskID || !coreEnvironmentResourceAsset)
+            return;
+
+#if HAVE(MODEL_MEMORY_ATTRIBUTION)
+        setIBLAssetOwnership(*(protectedThis->m_attributionTaskID), coreEnvironmentResourceAsset);
+#endif
+    }).get()];
 }
 
 } // namespace WebKit

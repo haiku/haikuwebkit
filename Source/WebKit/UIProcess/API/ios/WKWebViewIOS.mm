@@ -308,7 +308,7 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         orientation = application.statusBarOrientation;
 ALLOW_DEPRECATED_DECLARATIONS_END
     else if (auto windowScene = self.window.windowScene)
-        orientation = windowScene.interfaceOrientation;
+        orientation = windowScene.effectiveGeometry.interfaceOrientation;
     return deviceOrientationForUIInterfaceOrientation(orientation);
 }
 
@@ -1020,13 +1020,16 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
     [_scrollView _setScrollEnabledInternal:YES];
     if (!layerTreeTransaction.scaleWasSetByUIProcess() && ![_scrollView isZooming] && ![_scrollView isZoomBouncing] && ![_scrollView _wk_isZoomAnimating] && !WebKit::scalesAreEssentiallyEqual([_scrollView zoomScale], layerTreeTransaction.pageScaleFactor())) {
         LOG_WITH_STREAM(VisibleRects, stream << " updating scroll view with pageScaleFactor " << layerTreeTransaction.pageScaleFactor());
+        UIEdgeInsets contentInsets = [_scrollView adjustedContentInset];
+        CGPoint minimumContentOffset = CGPointMake(-contentInsets.left, -contentInsets.top);
+        CGPoint contentOffset = [_scrollView contentOffset];
 
         // When web-process-originated scale changes occur, pin the
         // scroll position to the top edge of the content,
         // instead of the center (which UIScrollView does by default).
         CGFloat scaleRatio = layerTreeTransaction.pageScaleFactor() / [_scrollView zoomScale];
-        CGFloat contentOffsetY = [_scrollView contentOffset].y * scaleRatio;
-        CGFloat contentOffsetX = [_scrollView contentOffset].x * scaleRatio;
+        CGFloat contentOffsetX = minimumContentOffset.x + ((contentOffset.x - minimumContentOffset.x) * scaleRatio);
+        CGFloat contentOffsetY = minimumContentOffset.y + ((contentOffset.y - minimumContentOffset.y) * scaleRatio);
 
         [_scrollView setZoomScale:layerTreeTransaction.pageScaleFactor()];
 
@@ -1165,27 +1168,22 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
 }
 
 #if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
-static void addOverlayEventRegions(WebCore::PlatformLayerIdentifier layerID, const WebKit::LayerPropertiesMap& changedLayerPropertiesMap, HashSet<WebCore::PlatformLayerIdentifier>& overlayRegionsIDs, const WebKit::RemoteLayerTreeHost& host)
+static void addOverlayEventRegions(WebCore::PlatformLayerIdentifier layerID, HashSet<WebCore::PlatformLayerIdentifier>& overlayRegionsIDs, const WebKit::RemoteLayerTreeHost& host)
 {
-    const auto& it = changedLayerPropertiesMap.find(layerID);
-    if (it == changedLayerPropertiesMap.end())
-        return;
-
     const auto* node = host.nodeForID(layerID);
     if (!node)
         return;
     if ([node->uiView() isKindOfClass:[WKBaseScrollView class]])
         return;
 
-    const auto& layerProperties = *it->value;
-    if (layerProperties.changedProperties & WebKit::LayerChange::EventRegionChanged) {
-        CGRect rect = layerProperties.eventRegion.region().bounds();
-        if (!CGRectIsEmpty(rect))
-            overlayRegionsIDs.add(layerID);
-    }
+    CGRect rect = node->eventRegion().region().bounds();
+    if (!CGRectIsEmpty(rect))
+        overlayRegionsIDs.add(layerID);
 
-    for (auto childLayerID : layerProperties.children)
-        addOverlayEventRegions(childLayerID, changedLayerPropertiesMap, overlayRegionsIDs, host);
+    for (CALayer *sublayer in node->layer().sublayers) {
+        if (auto *subnode = WebKit::RemoteLayerTreeNode::forCALayer(sublayer))
+            addOverlayEventRegions(subnode->layerID(), overlayRegionsIDs, host);
+    }
 }
 
 static CGRect snapRectToScrollViewEdges(CGRect rect, CGRect viewport)
@@ -1403,15 +1401,13 @@ static void configureScrollViewWithOverlayRegionsIDs(WKBaseScrollView* scrollVie
     scrollingCoordinatorProxy->removeDestroyedLayerIDs(destroyedLayers);
 
     WKBaseScrollView *overlayRegionScrollView = [self _selectOverlayRegionScrollView:scrollingCoordinatorProxy];
-    auto overlayRegionsIDs = scrollingCoordinatorProxy->overlayRegionLayerIDs();
+    HashSet<WebCore::PlatformLayerIdentifier> overlayRegionsIDs;
     const auto& fixedIDs = scrollingCoordinatorProxy->fixedScrollingNodeLayerIDs();
 
     for (auto layerID : fixedIDs)
-        addOverlayEventRegions(layerID, changedLayerPropertiesMap, overlayRegionsIDs, layerTreeHost);
+        addOverlayEventRegions(layerID, overlayRegionsIDs, layerTreeHost);
 
     configureScrollViewWithOverlayRegionsIDs(overlayRegionScrollView, layerTreeHost, overlayRegionsIDs);
-
-    scrollingCoordinatorProxy->updateOverlayRegionLayerIDs(overlayRegionsIDs);
 }
 
 - (void)_updateOverlayRegionsForCustomContentView
@@ -1987,7 +1983,9 @@ static WebCore::FloatPoint constrainContentOffset(WebCore::FloatPoint contentOff
 - (void)_updateLastKnownWindowSizeAndOrientation
 {
     UIWindowScene *scene = self.window.windowScene;
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     _lastKnownWindowSizeAndOrientation = { scene.coordinateSpace.bounds.size, scene.interfaceOrientation };
+ALLOW_DEPRECATED_DECLARATIONS_END
 }
 
 - (void)didMoveToWindow

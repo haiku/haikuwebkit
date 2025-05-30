@@ -2475,13 +2475,7 @@ sub GetEnumerationValueName
     return "EmptyString" if $name eq "";
     return "WebRTC" if $name eq "webrtc";
 
-    my @parts = split("-", $name);
-    @parts = map {
-        my $part = $_;
-        my @dotParts = split(/\./, $part);
-        join("", map { $codeGenerator->WK_ucfirst($_) } @dotParts)
-    } @parts;
-    $name = join("", @parts);
+    $name = join("", map { $codeGenerator->WK_ucfirst($_) } split("-", $name));
     $name = "_$name" if $name =~ /^\d/;
     return $name;
 }
@@ -3085,6 +3079,7 @@ sub GenerateHeader
     }
 
     $headerIncludes{"JSWindowProxy.h"} = 1 if $interfaceName eq "DOMWindow";
+    $headerIncludes{"EventTargetInlines.h"} = 1 if $parentClassName eq "JSEventTarget";
 
     my $exportMacro = GetExportMacroForJSClass($interface);
 
@@ -4289,7 +4284,8 @@ sub GenerateRuntimeEnableConditionalString
 
         my @flags = split(/&/, $context->extendedAttributes->{EnabledBySetting});
         my $exposedToWindowOnly = $interface->extendedAttributes->{Exposed} && $interface->extendedAttributes->{Exposed} eq "Window";
-        AddToImplIncludes($exposedToWindowOnly ? "Document.h" : "ScriptExecutionContext.h");
+        AddToImplIncludes($exposedToWindowOnly ? "DocumentInlines.h" : "ScriptExecutionContext.h");
+        AddToImplIncludes("Settings.h");
         foreach my $flag (@flags) {
             my @orflags = split(/\|/, $flag);
             my @orconjuncts;
@@ -7968,6 +7964,9 @@ sub WriteData
         $include = "\"$include\"" unless $include =~ /^["<]/; # "
 
         if ($condition eq 1) {
+            if ($include eq "\"JSEventTarget.h\"") {
+                push @includes, "\"EventTargetInlines.h\"";
+            }
             push @includes, $include;
         } else {
             push @{$implIncludeConditions{$codeGenerator->GenerateConditionalStringFromAttributeValue($condition)}}, $include;

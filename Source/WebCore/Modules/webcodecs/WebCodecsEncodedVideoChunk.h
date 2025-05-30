@@ -28,11 +28,12 @@
 #if ENABLE(WEB_CODECS)
 
 #include "BufferSource.h"
-#include "ExceptionOr.h"
 #include "WebCodecsEncodedVideoChunkData.h"
 #include <wtf/ThreadSafeRefCounted.h>
 
 namespace WebCore {
+
+template<typename> class ExceptionOr;
 
 class WebCodecsEncodedVideoChunkStorage : public ThreadSafeRefCounted<WebCodecsEncodedVideoChunkStorage> {
 public:
@@ -69,8 +70,8 @@ public:
 
     ExceptionOr<void> copyTo(BufferSource&&);
 
-    std::span<const uint8_t> span() const { return m_storage->data().buffer.span(); }
-    WebCodecsEncodedVideoChunkStorage& storage() { return m_storage.get(); }
+    std::span<const uint8_t> span() const LIFETIME_BOUND { return m_storage->data().buffer.span(); }
+    WebCodecsEncodedVideoChunkStorage& storage() LIFETIME_BOUND { return m_storage.get(); }
 
 private:
     explicit WebCodecsEncodedVideoChunk(Init&&);

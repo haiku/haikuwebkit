@@ -48,7 +48,6 @@
 #include <WebCore/LogInitialization.h>
 #include <WebCore/MemoryRelease.h>
 #include <WebCore/NowPlayingManager.h>
-#include <wtf/Algorithms.h>
 #include <wtf/CallbackAggregator.h>
 #include <wtf/Language.h>
 #include <wtf/LogInitialization.h>
@@ -215,7 +214,7 @@ void GPUProcess::initializeGPUProcess(GPUProcessCreationParameters&& parameters,
 {
     CompletionHandlerCallingScope callCompletionHandler(WTFMove(completionHandler));
 
-    applyProcessCreationParameters(parameters.auxiliaryProcessParameters);
+    applyProcessCreationParameters(WTFMove(parameters.auxiliaryProcessParameters));
     RELEASE_LOG(Process, "%p - GPUProcess::initializeGPUProcess:", this);
     WTF::Thread::setCurrentThreadIsUserInitiated();
     WebCore::initializeCommonAtomStrings();

@@ -448,6 +448,7 @@ UIProcess/Cocoa/WebProcessCacheCocoa.mm
 UIProcess/Cocoa/WebProcessPoolCocoa.mm
 UIProcess/Cocoa/WebProcessProxyCocoa.mm
 UIProcess/Cocoa/WebURLSchemeHandlerCocoa.mm
+UIProcess/Cocoa/WKColorExtensionView.mm
 UIProcess/Cocoa/WKContactPicker.mm
 UIProcess/Cocoa/WKEditCommand.mm
 UIProcess/Cocoa/WKFullKeyboardAccessWatcher.mm
@@ -661,6 +662,8 @@ WebProcess/cocoa/UserMediaCaptureManager.cpp
 WebProcess/cocoa/VideoPresentationManager.mm
 WebProcess/cocoa/WebProcessCocoa.mm
 
+WebProcess/cocoa/IdentityDocumentServices/DigitalCredentialsRequestValidatorBridge.mm
+
 WebProcess/EntryPoint/Cocoa/XPCService/WebContentServiceEntryPoint.mm
 
 WebProcess/Extensions/Bindings/JSWebExtensionWrapper.cpp
@@ -792,6 +795,7 @@ AuxiliaryProcessMessageReceiver.cpp
 DownloadProxyMessageReceiver.cpp
 DrawingAreaMessageReceiver.cpp
 DrawingAreaProxyMessageReceiver.cpp
+DigitalCredentialsCoordinatorMessageReceiver.cpp
 EventDispatcherMessageReceiver.cpp
 GPUConnectionToWebProcessMessageReceiver.cpp
 GPUProcessConnectionMessageReceiver.cpp

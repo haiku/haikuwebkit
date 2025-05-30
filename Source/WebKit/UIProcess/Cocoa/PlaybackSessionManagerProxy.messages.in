@@ -30,7 +30,7 @@
 messages -> PlaybackSessionManagerProxy {
     CurrentTimeChanged(WebCore::MediaPlayerClientIdentifier contextId, double currentTime, double hostTime)
     BufferedTimeChanged(WebCore::MediaPlayerClientIdentifier contextId, double bufferedTime)
-    SeekableRangesVectorChanged(WebCore::MediaPlayerClientIdentifier contextId, Vector<std::pair<double, double>> ranges, double lastModifiedTime, double liveUpdateInterval)
+    SeekableRangesVectorChanged(WebCore::MediaPlayerClientIdentifier contextId, WebCore::PlatformTimeRanges ranges, double lastModifiedTime, double liveUpdateInterval)
     CanPlayFastReverseChanged(WebCore::MediaPlayerClientIdentifier contextId, bool value)
     AudioMediaSelectionOptionsChanged(WebCore::MediaPlayerClientIdentifier contextId, Vector<WebCore::MediaSelectionOption> options, uint64_t selectedIndex)
     LegibleMediaSelectionOptionsChanged(WebCore::MediaPlayerClientIdentifier contextId, Vector<WebCore::MediaSelectionOption> options, uint64_t selectedIndex)
@@ -50,9 +50,9 @@ messages -> PlaybackSessionManagerProxy {
 #endif
 #if ENABLE(LINEAR_MEDIA_PLAYER)
     SupportsLinearMediaPlayerChanged(WebCore::MediaPlayerClientIdentifier contextId, bool supportsLinearMediaPlayer)
-    SpatialVideoMetadataChanged(WebCore::MediaPlayerClientIdentifier contextId, struct std::optional<WebCore::SpatialVideoMetadata> metadata);
-    IsImmersiveVideoChanged(WebCore::MediaPlayerClientIdentifier contextId, bool value);
 #endif
+    SpatialVideoMetadataChanged(WebCore::MediaPlayerClientIdentifier contextId, struct std::optional<WebCore::SpatialVideoMetadata> metadata);
+    VideoProjectionMetadataChanged(WebCore::MediaPlayerClientIdentifier contextId, struct std::optional<WebCore::VideoProjectionMetadata> metadata);
     SetUpPlaybackControlsManagerWithID(WebCore::MediaPlayerClientIdentifier contextId, bool isVideo)
     ClearPlaybackControlsManager()
 

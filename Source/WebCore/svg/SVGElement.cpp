@@ -29,7 +29,6 @@
 
 #include "CSSPrimitiveValueMappings.h"
 #include "CSSPropertyParser.h"
-#include "ComputedStyleExtractor.h"
 #include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "DocumentClasses.h"
@@ -53,6 +52,7 @@
 #include "SVGGraphicsElement.h"
 #include "SVGImageElement.h"
 #include "SVGNames.h"
+#include "SVGParsingError.h"
 #include "SVGPropertyAnimatorFactory.h"
 #include "SVGRenderStyle.h"
 #include "SVGRenderSupport.h"
@@ -62,6 +62,7 @@
 #include "SVGUseElement.h"
 #include "ShadowRoot.h"
 #include "StyleAdjuster.h"
+#include "StyleExtractor.h"
 #include "StyleResolver.h"
 #include "XMLNames.h"
 #include <wtf/HashMap.h>
@@ -79,6 +80,7 @@ SVGElement::SVGElement(const QualifiedName& tagName, Document& document, UniqueR
     : StyledElement(tagName, document, typeFlags | TypeFlag::IsSVGElement | TypeFlag::HasCustomStyleResolveCallbacks)
     , m_propertyAnimatorFactory(makeUnique<SVGPropertyAnimatorFactory>())
     , m_propertyRegistry(WTFMove(propertyRegistry))
+    , m_className(SVGAnimatedString::create(this))
 {
     static std::once_flag onceFlag;
     std::call_once(onceFlag, [] {
@@ -157,19 +159,19 @@ bool SVGElement::isOutermostSVGSVGElement() const
 
 void SVGElement::reportAttributeParsingError(SVGParsingError error, const QualifiedName& name, const AtomString& value)
 {
-    if (error == NoError)
+    if (error == SVGParsingError::None)
         return;
 
     auto errorString = makeString('<', tagName(), "> attribute "_s, name.toString(), "=\""_s, value, "\""_s);
     Ref document = this->document();
     CheckedRef extensions = document->svgExtensions();
 
-    if (error == NegativeValueForbiddenError) {
+    if (error == SVGParsingError::ForbiddenNegativeValue) {
         extensions->reportError(makeString("Invalid negative value for "_s, errorString));
         return;
     }
 
-    if (error == ParsingAttributeFailedError) {
+    if (error == SVGParsingError::ParsingFailed) {
         extensions->reportError(makeString("Invalid value for "_s, errorString));
         return;
     }
@@ -628,7 +630,7 @@ void SVGElement::animatorWillBeDeleted(const QualifiedName& attributeName)
     propertyAnimatorFactory().animatorWillBeDeleted(attributeName);
 }
 
-std::optional<Style::ResolvedStyle> SVGElement::resolveCustomStyle(const Style::ResolutionContext& resolutionContext, const RenderStyle*)
+std::optional<Style::UnadjustedStyle> SVGElement::resolveCustomStyle(const Style::ResolutionContext& resolutionContext, const RenderStyle*)
 {
     // If the element is in a <use> tree we get the style from the definition tree.
     if (RefPtr styleElement = this->correspondingElement()) {
@@ -636,9 +638,7 @@ std::optional<Style::ResolvedStyle> SVGElement::resolveCustomStyle(const Style::
         // Can't use the state since we are going to another part of the tree.
         styleElementResolutionContext.selectorMatchingState = nullptr;
         styleElementResolutionContext.isSVGUseTreeRoot = true;
-        auto resolvedStyle = styleElement->resolveStyle(styleElementResolutionContext);
-        Style::Adjuster::adjustSVGElementStyle(*resolvedStyle.style, *this);
-        return resolvedStyle;
+        return styleElement->resolveStyle(styleElementResolutionContext);
     }
 
     return resolveStyle(resolutionContext);
@@ -695,7 +695,7 @@ ColorInterpolation SVGElement::colorInterpolation() const
         return renderer->style().svgStyle().colorInterpolationFilters();
 
     // Try to determine the property value from the computed style.
-    if (auto value = ComputedStyleExtractor(const_cast<SVGElement*>(this)).propertyValue(CSSPropertyColorInterpolationFilters, ComputedStyleExtractor::UpdateLayout::No))
+    if (auto value = Style::Extractor(const_cast<SVGElement*>(this)).propertyValue(CSSPropertyColorInterpolationFilters, Style::Extractor::UpdateLayout::No))
         return fromCSSValue<ColorInterpolation>(*value);
 
     return ColorInterpolation::Auto;
@@ -1127,7 +1127,7 @@ void SVGElement::setInstanceUpdatesBlocked(bool value)
         m_svgRareData->setInstanceUpdatesBlocked(value);
 }
 
-AffineTransform SVGElement::localCoordinateSpaceTransform(SVGLocatable::CTMScope) const
+AffineTransform SVGElement::localCoordinateSpaceTransform(CTMScope) const
 {
     // To be overridden by SVGGraphicsElement (or as special case SVGTextElement and SVGPatternElement)
     return AffineTransform();

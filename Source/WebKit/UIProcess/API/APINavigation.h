@@ -39,6 +39,8 @@
 #include <WebCore/ResourceRequest.h>
 #include <WebCore/SecurityOriginData.h>
 #include <WebCore/SubstituteData.h>
+#include <wtf/ListHashSet.h>
+#include <wtf/MonotonicTime.h>
 #include <wtf/Ref.h>
 
 namespace WebCore {
@@ -48,6 +50,7 @@ class ResourceResponse;
 
 namespace WebKit {
 class WebBackForwardListFrameItem;
+class BrowsingWarning;
 }
 
 namespace API {
@@ -123,10 +126,13 @@ public:
 
     void appendRedirectionURL(const WTF::URL&);
     Vector<WTF::URL> takeRedirectChain() { return WTFMove(m_redirectChain); }
+    size_t redirectChainIndex(const WTF::URL&);
 
     bool wasUserInitiated() const { return m_lastNavigationAction && !!m_lastNavigationAction->userGestureTokenIdentifier; }
     bool isRequestFromClientOrUserInput() const;
     void markRequestAsFromClientInput();
+    void markAsFromLoadData() { m_isFromLoadData = true; }
+    bool isFromLoadData() const { return m_isFromLoadData; }
 
     bool shouldPerformDownload() const { return m_lastNavigationAction && !m_lastNavigationAction->downloadAttribute.isNull(); }
 
@@ -177,6 +183,13 @@ public:
 
     void setOriginatorAdvancedPrivacyProtections(OptionSet<WebCore::AdvancedPrivacyProtections> advancedPrivacyProtections) { m_originatorAdvancedPrivacyProtections = advancedPrivacyProtections; }
     std::optional<OptionSet<WebCore::AdvancedPrivacyProtections>> originatorAdvancedPrivacyProtections() const { return m_originatorAdvancedPrivacyProtections; }
+    void setSafeBrowsingCheckOngoing(size_t, bool);
+    bool safeBrowsingCheckOngoing(size_t);
+    bool safeBrowsingCheckOngoing();
+    void setSafeBrowsingWarning(RefPtr<WebKit::BrowsingWarning>&&);
+    RefPtr<WebKit::BrowsingWarning> safeBrowsingWarning();
+    MonotonicTime requestStart() const { return m_requestStart; }
+    void resetRequestStart();
 
     WebCore::ProcessIdentifier processID() const { return m_processID; }
     void setProcessID(WebCore::ProcessIdentifier processID) { m_processID = processID; }
@@ -204,13 +217,17 @@ private:
     std::optional<WebKit::NavigationActionData> m_lastNavigationAction;
     std::optional<WebKit::FrameInfoData> m_originatingFrameInfo;
     WebCore::SecurityOriginData m_destinationFrameSecurityOrigin;
-    bool m_userContentExtensionsEnabled { true };
     WebKit::WebContentMode m_effectiveContentMode { WebKit::WebContentMode::Recommended };
     Ref<WebKit::ProcessThrottler::TimedActivity> m_clientNavigationActivity;
-    bool m_isLoadedWithNavigationShared { false };
-    bool m_requestIsFromClientInput { false };
+    bool m_userContentExtensionsEnabled : 1 { true };
+    bool m_isLoadedWithNavigationShared : 1 { false };
+    bool m_requestIsFromClientInput : 1 { false };
+    bool m_isFromLoadData : 1 { false };
     RefPtr<API::WebsitePolicies> m_websitePolicies;
     std::optional<OptionSet<WebCore::AdvancedPrivacyProtections>> m_originatorAdvancedPrivacyProtections;
+    MonotonicTime m_requestStart { MonotonicTime::now() };
+    RefPtr<WebKit::BrowsingWarning> m_safeBrowsingWarning;
+    ListHashSet<size_t> m_ongoingSafeBrowsingChecks;
 };
 
 } // namespace API

@@ -1257,7 +1257,7 @@ void FrameLoader::loadInSameDocument(URL url, RefPtr<SerializedScriptValue> stat
     // Update the data source's request with the new URL to fake the URL change
     URL oldURL = document->url();
 
-    document->setURL(url);
+    document->setURL(URL { url });
     setOutgoingReferrer(url);
     protectedDocumentLoader()->replaceRequestURLForSameDocumentNavigation(url);
     if (isNewNavigation && !shouldTreatURLAsSameAsCurrent(requesterOrigin, url) && !stateObject) {
@@ -1607,7 +1607,7 @@ void FrameLoader::loadURL(FrameLoadRequest&& frameLoadRequest, const String& ref
             openerPolicy = NewFrameOpenerPolicy::Suppress;
         }
 
-        if (document->settingsValues().blobRegistryTopOriginPartitioningEnabled && frameLoadRequest.resourceRequest().url().protocolIsBlob() && !document->protectedSecurityOrigin()->isSameOriginAs(document->protectedTopOrigin())) {
+        if (frameLoadRequest.resourceRequest().url().protocolIsBlob() && !document->protectedSecurityOrigin()->isSameOriginAs(document->protectedTopOrigin())) {
             effectiveFrameName = blankTargetFrameName();
             openerPolicy = NewFrameOpenerPolicy::Suppress;
         }
@@ -2027,7 +2027,7 @@ void FrameLoader::reload(OptionSet<ReloadOption> options, bool isRequestFromClie
     if (documentLoader->request().url().isEmpty())
         return;
 
-    FRAMELOADER_RELEASE_LOG(ResourceLoading, "reload: frame load started");
+    FRAMELOADER_RELEASE_LOG_FORWARDABLE(FRAMELOADER_RELOAD);
 
     // Replace error-page URL with the URL we were trying to reach.
     ResourceRequest initialRequest = documentLoader->request();
@@ -3434,7 +3434,7 @@ void FrameLoader::scheduleRefreshIfNeeded(Document& document, const String& cont
     if (parseMetaHTTPEquivRefresh(content, delay, urlString)) {
         auto completedURL = urlString.isEmpty() ? document.url() : document.completeURL(urlString);
         if (!completedURL.protocolIsJavaScript())
-            protectedFrame()->protectedNavigationScheduler()->scheduleRedirect(document, delay, completedURL, isMetaRefresh);
+            protectedFrame()->protectedNavigationScheduler()->scheduleRedirect(document, delay, WTFMove(completedURL), isMetaRefresh);
         else {
             auto message = makeString("Refused to refresh "_s, document.url().stringCenterEllipsizedToLength(), " to a javascript: URL"_s);
             document.addConsoleMessage(MessageSource::Security, MessageLevel::Error, message);
@@ -3514,11 +3514,11 @@ void FrameLoader::loadPostRequest(FrameLoadRequest&& request, const String& refe
     NewFrameOpenerPolicy openerPolicy = request.newFrameOpenerPolicy();
 
     const ResourceRequest& inRequest = request.resourceRequest();
-    URL url = inRequest.url();
+    const URL& url = inRequest.url();
     const String& contentType = inRequest.httpContentType();
     String origin = inRequest.httpOrigin();
 
-    ResourceRequest workingResourceRequest(WTFMove(url));
+    ResourceRequest workingResourceRequest(URL { url });
 
     if (!referrer.isEmpty())
         workingResourceRequest.setHTTPReferrer(referrer);
@@ -3555,7 +3555,7 @@ void FrameLoader::loadPostRequest(FrameLoadRequest&& request, const String& refe
         }
 
         RefPtr document = frame->document();
-        if (document->settingsValues().blobRegistryTopOriginPartitioningEnabled && request.resourceRequest().url().protocolIsBlob() && !document->protectedSecurityOrigin()->isSameOriginAs(document->protectedTopOrigin())) {
+        if (request.resourceRequest().url().protocolIsBlob() && !document->protectedSecurityOrigin()->isSameOriginAs(document->protectedTopOrigin())) {
             frameName = blankTargetFrameName();
             openerPolicy = NewFrameOpenerPolicy::Suppress;
         }
@@ -3605,7 +3605,8 @@ ResourceLoaderIdentifier FrameLoader::loadResourceSynchronously(const ResourceRe
 
     applyUserAgentIfNeeded(initialRequest);
 
-    ResourceRequest newRequest(initialRequest);
+    URL initialRequestURL = initialRequest.url();
+    ResourceRequest newRequest = WTFMove(initialRequest);
     auto identifier = requestFromDelegate(newRequest, IsMainResourceLoad::No, error);
 
 #if ENABLE(CONTENT_EXTENSIONS)
@@ -3617,7 +3618,7 @@ ResourceLoaderIdentifier FrameLoader::loadResourceSynchronously(const ResourceRe
                 ContentExtensions::applyResultsToRequest(WTFMove(results), page.get(), newRequest);
                 if (blockedLoad) {
                     newRequest = { };
-                    error = ResourceError(errorDomainWebKitInternal, 0, initialRequest.url(), emptyString());
+                    error = ResourceError(errorDomainWebKitInternal, 0, WTFMove(initialRequestURL), emptyString());
                     response = { };
                     data = nullptr;
                 }
@@ -4269,7 +4270,7 @@ bool FrameLoader::shouldTreatURLAsSameAsCurrent(const SecurityOrigin* requesterO
         return false;
     if (requesterOrigin && (!m_frame->document() || !requesterOrigin->isSameOriginAs(m_frame->protectedDocument()->protectedSecurityOrigin())))
         return false;
-    return url == currentHistoryItem->url() || url == currentHistoryItem->originalURL();
+    return url == currentHistoryItem->url();
 }
 
 bool FrameLoader::shouldTreatURLAsSrcdocDocument(const URL& url) const

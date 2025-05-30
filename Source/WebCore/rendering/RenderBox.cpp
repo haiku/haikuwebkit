@@ -58,7 +58,7 @@
 #include "LayoutIntegrationLineLayout.h"
 #include "LegacyRenderSVGResourceClipper.h"
 #include "LocalFrame.h"
-#include "LocalFrameView.h"
+#include "LocalFrameViewInlines.h"
 #include "Page.h"
 #include "PaintInfo.h"
 #include "PositionedLayoutConstraints.h"
@@ -1754,7 +1754,7 @@ void RenderBox::paintBoxDecorations(PaintInfo& paintInfo, const LayoutPoint& pai
             if (auto* control = ensureControlPartForBorderOnly())
                 paintCSSBorder = theme().paint(*this, *control, paintInfo, paintRect);
             else
-                paintCSSBorder = theme().paintBorderOnly(*this, paintInfo, paintRect);
+                paintCSSBorder = theme().paintBorderOnly(*this, paintInfo);
         }
 
         if (paintCSSBorder && style().hasVisibleBorderDecoration())

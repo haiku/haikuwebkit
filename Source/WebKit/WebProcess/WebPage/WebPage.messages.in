@@ -45,7 +45,7 @@ messages -> WebPage WantsAsyncDispatchMessage {
     SetObscuredContentInsets(WebCore::FloatBoxExtent obscuredContentInsets)
 #endif
 
-    SetShouldSuppressHDR(bool shouldSuppressHDR)
+    [DeferSendingIfSuspended] SetShouldSuppressHDR(bool shouldSuppressHDR)
 
     SetUnderlayColor(WebCore::Color color)
     SetUnderPageBackgroundColorOverride(WebCore::Color underPageBackgroundColorOverride)
@@ -70,8 +70,8 @@ messages -> WebPage WantsAsyncDispatchMessage {
     SetInsertionPointColor(WebCore::Color color)
 
     AttemptSyntheticClick(WebCore::IntPoint point, OptionSet<WebKit::WebEventModifier> modifiers, WebKit::TransactionID lastLayerTreeTransactionId)
-    PotentialTapAtPosition(WebKit::TapIdentifier requestID, WebCore::FloatPoint point, bool shouldRequestMagnificationInformation)
-    CommitPotentialTap(OptionSet<WebKit::WebEventModifier> modifiers, WebKit::TransactionID lastLayerTreeTransactionId, WebCore::PointerID pointerId)
+    PotentialTapAtPosition(std::optional<WebCore::FrameIdentifier> frameID, WebKit::TapIdentifier requestID, WebCore::FloatPoint point, bool shouldRequestMagnificationInformation) -> (struct std::optional<WebCore::RemoteUserInputEventData> data)
+    CommitPotentialTap(std::optional<WebCore::FrameIdentifier> frameID, OptionSet<WebKit::WebEventModifier> modifiers, WebKit::TransactionID lastLayerTreeTransactionId, WebCore::PointerID pointerId) -> (std::optional<WebCore::FrameIdentifier> remoteFrameID)
     CancelPotentialTap()
     TapHighlightAtPosition(WebKit::TapIdentifier requestID, WebCore::FloatPoint point)
     DidRecognizeLongPress()
@@ -234,6 +234,9 @@ messages -> WebPage WantsAsyncDispatchMessage {
     GetSourceForFrame(WebCore::FrameIdentifier frameID) -> (String string)
     GetWebArchiveOfFrame(std::optional<WebCore::FrameIdentifier> frameID) -> (std::optional<IPC::SharedBufferReference> dataReference)
     GetWebArchiveOfFrameWithFileName(WebCore::FrameIdentifier frameID, Vector<WebCore::MarkupExclusionRule> markupExclusionRules, String fileName) -> (std::optional<IPC::SharedBufferReference> dataReference)
+#if PLATFORM(COCOA)
+    GetWebArchives() -> (HashMap<WebCore::FrameIdentifier, Ref<WebCore::LegacyWebArchive>> frameArchives)
+#endif
 
     RunJavaScriptInFrameInScriptWorld(struct WebKit::RunJavaScriptParameters parameters, std::optional<WebCore::FrameIdentifier> frameID, struct WebKit::ContentWorldData world, bool wantsResult) -> (Expected<WebKit::JavaScriptEvaluationResult, std::optional<WebCore::ExceptionDetails>> result)
 
@@ -368,9 +371,13 @@ messages -> WebPage WantsAsyncDispatchMessage {
     StageModeSessionDidEnd(std::optional<WebCore::ElementIdentifier> elementID)
 #endif
 
+#if ENABLE(MODEL_PROCESS) && ENABLE(DRAG_SUPPORT)
+    ModelDragEnded(WebCore::ElementIdentifier elementID)
+#endif
+
 #if PLATFORM(IOS_FAMILY) && ENABLE(DRAG_SUPPORT)
-    RequestDragStart(WebCore::IntPoint clientPosition, WebCore::IntPoint globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask)
-    RequestAdditionalItemsForDragSession(WebCore::IntPoint clientPosition, WebCore::IntPoint globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask)
+    RequestDragStart(std::optional<WebCore::FrameIdentifier> remoteFrameID, WebCore::IntPoint clientPosition, WebCore::IntPoint globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask) -> (struct WebKit::DragInitiationResult result)
+    RequestAdditionalItemsForDragSession(std::optional<WebCore::FrameIdentifier> rootFrameID, WebCore::IntPoint clientPosition, WebCore::IntPoint globalPosition, OptionSet<WebCore::DragSourceAction> allowedActionsMask) -> (struct WebKit::DragInitiationResult result)
     InsertDroppedImagePlaceholders(Vector<WebCore::IntSize> imageSize) -> (Vector<WebCore::IntRect> dropPreviewRects, struct std::optional<WebCore::TextIndicatorData> textIndicator)
     DidConcludeDrop()
 #endif
@@ -722,7 +729,8 @@ messages -> WebPage WantsAsyncDispatchMessage {
 #endif
 
     CreateTextFragmentDirectiveFromSelection() -> (URL url)
-    
+    GetTextFragmentRanges() -> (Vector<WebKit::EditingRange> textFragmentEditingRanges)
+
     HandleWheelEvent(WebCore::FrameIdentifier frameID, WebKit::WebWheelEvent event, OptionSet<WebCore::WheelEventProcessingSteps> processingSteps, std::optional<bool> willStartSwipe) -> (std::optional<WebCore::ScrollingNodeID> scrollingNodeID, enum:uint8_t std::optional<WebCore::WheelScrollGestureState> gestureState, bool handled, struct std::optional<WebCore::RemoteUserInputEventData> remoteUserInputEventData)
 
 #if PLATFORM(IOS_FAMILY)

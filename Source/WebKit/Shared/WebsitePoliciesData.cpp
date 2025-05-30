@@ -31,6 +31,7 @@
 #include <WebCore/FrameDestructionObserverInlines.h>
 #include <WebCore/LocalFrame.h>
 #include <WebCore/Page.h>
+#include <WebCore/Settings.h>
 #include <wtf/TZoneMallocInlines.h>
 
 namespace WebKit {
@@ -40,9 +41,9 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(WebsitePoliciesData);
 void WebsitePoliciesData::applyToDocumentLoader(WebsitePoliciesData&& websitePolicies, WebCore::DocumentLoader& documentLoader)
 {
     documentLoader.setCustomHeaderFields(WTFMove(websitePolicies.customHeaderFields));
-    documentLoader.setCustomUserAgent(websitePolicies.customUserAgent);
-    documentLoader.setCustomUserAgentAsSiteSpecificQuirks(websitePolicies.customUserAgentAsSiteSpecificQuirks);
-    documentLoader.setCustomNavigatorPlatform(websitePolicies.customNavigatorPlatform);
+    documentLoader.setCustomUserAgent(WTFMove(websitePolicies.customUserAgent));
+    documentLoader.setCustomUserAgentAsSiteSpecificQuirks(WTFMove(websitePolicies.customUserAgentAsSiteSpecificQuirks));
+    documentLoader.setCustomNavigatorPlatform(WTFMove(websitePolicies.customNavigatorPlatform));
     documentLoader.setAllowPrivacyProxy(websitePolicies.allowPrivacyProxy);
 
 #if ENABLE(DEVICE_ORIENTATION)
@@ -74,21 +75,7 @@ void WebsitePoliciesData::applyToDocumentLoader(WebsitePoliciesData&& websitePol
         quirks.add(WebCore::AutoplayQuirk::PerDocumentAutoplayBehavior);
 
     documentLoader.setAllowedAutoplayQuirks(quirks);
-
-    switch (websitePolicies.autoplayPolicy) {
-    case WebsiteAutoplayPolicy::Default:
-        documentLoader.setAutoplayPolicy(WebCore::AutoplayPolicy::Default);
-        break;
-    case WebsiteAutoplayPolicy::Allow:
-        documentLoader.setAutoplayPolicy(WebCore::AutoplayPolicy::Allow);
-        break;
-    case WebsiteAutoplayPolicy::AllowWithoutSound:
-        documentLoader.setAutoplayPolicy(WebCore::AutoplayPolicy::AllowWithoutSound);
-        break;
-    case WebsiteAutoplayPolicy::Deny:
-        documentLoader.setAutoplayPolicy(WebCore::AutoplayPolicy::Deny);
-        break;
-    }
+    documentLoader.setAutoplayPolicy(core(websitePolicies.autoplayPolicy));
 
     switch (websitePolicies.popUpPolicy) {
     case WebsitePopUpPolicy::Default:

@@ -132,8 +132,10 @@ RenderElement* Styleable::renderer() const
         }
         break;
     case PseudoId::ViewTransition:
-        if (element.renderer() && element.renderer()->isDocumentElementRenderer())
-            return element.renderer()->view().viewTransitionRoot().get();
+        if (element.renderer() && element.renderer()->isDocumentElementRenderer()) {
+            if (WeakPtr containingBlock = element.renderer()->view().viewTransitionContainingBlock())
+                return containingBlock->firstChildBox();
+        }
         break;
     case PseudoId::ViewTransitionGroup:
     case PseudoId::ViewTransitionImagePair:
@@ -315,6 +317,12 @@ OptionSet<AnimationImpact> Styleable::applyKeyframeEffects(RenderStyle& targetSt
 
 void Styleable::cancelStyleOriginatedAnimations() const
 {
+    // It is important we don't cancel style-originated animations when entering the page cache
+    // since any JS wrapper that is kept alive in the page cache could be associated with an animation
+    // that itself has not been kept alive (or rather canceled) when entering the page cache.
+    if (element.protectedDocument()->backForwardCacheState() != Document::NotInBackForwardCache)
+        return;
+
     cancelStyleOriginatedAnimations({ });
     if (CheckedPtr styleOriginatedTimelinesController = element.protectedDocument()->styleOriginatedTimelinesController())
         styleOriginatedTimelinesController->unregisterNamedTimelinesAssociatedWithElement(*this);

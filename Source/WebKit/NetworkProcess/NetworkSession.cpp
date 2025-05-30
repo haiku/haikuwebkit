@@ -189,10 +189,8 @@ NetworkSession::NetworkSession(NetworkProcess& networkProcess, const NetworkSess
             SandboxExtension::consumePermanently(parameters.networkCacheDirectoryExtensionHandle);
 
             auto cacheOptions = networkProcess.cacheOptions();
-#if ENABLE(NETWORK_CACHE_SPECULATIVE_REVALIDATION)
             if (parameters.networkCacheSpeculativeValidationEnabled)
                 cacheOptions.add(NetworkCache::CacheOption::SpeculativeRevalidation);
-#endif
             if (parameters.shouldUseTestingNetworkSession)
                 cacheOptions.add(NetworkCache::CacheOption::TestingMode);
 
@@ -214,7 +212,6 @@ NetworkSession::NetworkSession(NetworkProcess& networkProcess, const NetworkSess
 
     setTrackingPreventionEnabled(parameters.resourceLoadStatisticsParameters.enabled);
 
-    setBlobRegistryTopOriginPartitioningEnabled(parameters.isBlobRegistryTopOriginPartitioningEnabled);
     setShouldSendPrivateTokenIPCForTesting(parameters.shouldSendPrivateTokenIPCForTesting);
 #if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
     setOptInCookiePartitioningEnabled(parameters.isOptInCookiePartitioningEnabled);
@@ -534,12 +531,6 @@ void NetworkSession::setPrivateClickMeasurementDebugMode(bool enabled)
 void NetworkSession::firePrivateClickMeasurementTimerImmediatelyForTesting()
 {
     m_privateClickMeasurement->startTimerImmediatelyForTesting();
-}
-
-void NetworkSession::setBlobRegistryTopOriginPartitioningEnabled(bool enabled)
-{
-    RELEASE_LOG(Storage, "NetworkSession::setBlobRegistryTopOriginPartitioningEnabled as %" PUBLIC_LOG_STRING " for session %" PRIu64, enabled ? "enabled" : "disabled", m_sessionID.toUInt64());
-    m_blobRegistry.setPartitioningEnabled(enabled);
 }
 
 void NetworkSession::setShouldSendPrivateTokenIPCForTesting(bool enabled)
@@ -966,16 +957,9 @@ Ref<WebCore::ResourceMonitorThrottlerHolder> NetworkSession::protectedResourceMo
 
 void NetworkSession::clearResourceMonitorThrottlerData(CompletionHandler<void()>&& completionHandler)
 {
-    if (RefPtr throttler = m_resourceMonitorThrottler)
-        throttler->clearAllData(WTFMove(completionHandler));
-    else
-        completionHandler();
+    protectedResourceMonitorThrottler()->clearAllData(WTFMove(completionHandler));
 }
 
-void NetworkSession::resetResourceMonitorThrottlerForTesting()
-{
-    m_resourceMonitorThrottler = nullptr;
-}
 #endif
 
 } // namespace WebKit

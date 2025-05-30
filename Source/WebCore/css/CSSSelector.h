@@ -208,12 +208,6 @@ private:
     void setForPage() { m_isForPage = true; }
     void setImplicit() { m_isImplicit = true; }
 
-    unsigned simpleSelectorSpecificityForPage() const;
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-    CSSSelector* tagHistory() { return m_isLastInTagHistory ? nullptr : this + 1; }
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-
     unsigned m_relation : 4 { enumToUnderlyingType(Relation::DescendantSpace) };
     mutable unsigned m_match : 5 { enumToUnderlyingType(Match::Unknown) };
     mutable unsigned m_pseudoType : 8 { 0 }; // PseudoType.

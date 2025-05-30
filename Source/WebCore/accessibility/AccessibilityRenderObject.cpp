@@ -136,8 +136,15 @@ namespace WebCore {
 
 using namespace HTMLNames;
 
+static Node* nodeForRenderer(RenderObject& renderer)
+{
+    if (!renderer.isRenderView()) [[likely]]
+        return renderer.node();
+    return &renderer.document();
+}
+
 AccessibilityRenderObject::AccessibilityRenderObject(AXID axID, RenderObject& renderer)
-    : AccessibilityNodeObject(axID, LIKELY(!renderer.isRenderView()) ? renderer.node() : &renderer.document())
+    : AccessibilityNodeObject(axID, nodeForRenderer(renderer))
     , m_renderer(renderer)
 {
 #if ASSERT_ENABLED
@@ -1338,11 +1345,12 @@ bool AccessibilityRenderObject::computeIsIgnored() const
     // objects are often containers with meaningful information, the inclusion of a span can have
     // the side effect of causing the immediate parent accessible to be ignored. This is especially
     // problematic for platforms which have distinct roles for textual block elements.
-    if (node && node->hasTagName(spanTag))
+    auto elementName = WebCore::elementName(node);
+    if (elementName == ElementName::HTML_span)
         return true;
 
     // Other non-ignored host language elements
-    if (node && node->hasTagName(dfnTag))
+    if (elementName == ElementName::HTML_dfn)
         return false;
     
     if (isStyleFormatGroup())
@@ -1811,7 +1819,7 @@ RefPtr<Element> AccessibilityRenderObject::rootEditableElementForPosition(const 
     for (RefPtr ancestor = position.anchorElementAncestor(); ancestor && ancestor != rootEditableElement; ancestor = ancestor->parentElement()) {
         if (elementIsTextControl(*ancestor))
             result = ancestor;
-        if (ancestor->hasTagName(bodyTag))
+        if (ancestor->elementName() == ElementName::HTML_body)
             break;
     }
     return result ? result : rootEditableElement;
@@ -2159,7 +2167,8 @@ AccessibilityObject* AccessibilityRenderObject::observableObject() const
 String AccessibilityRenderObject::expandedTextValue() const
 {
     if (AccessibilityObject* parent = parentObject()) {
-        if (parent->hasTagName(abbrTag) || parent->hasTagName(acronymTag))
+        auto parentName = parent->elementName();
+        if (parentName == ElementName::HTML_abbr || parentName == ElementName::HTML_acronym)
             return parent->getAttribute(titleAttr);
     }
 
@@ -2169,8 +2178,10 @@ String AccessibilityRenderObject::expandedTextValue() const
 bool AccessibilityRenderObject::supportsExpandedTextValue() const
 {
     if (roleValue() == AccessibilityRole::StaticText) {
-        if (AccessibilityObject* parent = parentObject())
-            return parent->hasTagName(abbrTag) || parent->hasTagName(acronymTag);
+        if (AccessibilityObject* parent = parentObject()) {
+            auto parentName = parent->elementName();
+            return parentName == ElementName::HTML_abbr || parentName == ElementName::HTML_acronym;
+        }
     }
     
     return false;
@@ -2467,7 +2478,7 @@ void AccessibilityRenderObject::addCanvasChildren()
 {
     // Add the unrendered canvas children as AX nodes, unless we're not using a canvas renderer
     // because JS is disabled for example.
-    if (!node() || !node()->hasTagName(canvasTag) || (renderer() && !renderer()->isRenderHTMLCanvas()))
+    if (elementName() != ElementName::HTML_canvas || (renderer() && !renderer()->isRenderHTMLCanvas()))
         return;
 
     // If it's a canvas, it won't have rendered children, but it might have accessible fallback content.
@@ -2573,12 +2584,6 @@ RenderObject* AccessibilityRenderObject::markerRenderer() const
     return renderListItem->markerRenderer();
 }
 
-void AccessibilityRenderObject::addListItemMarker()
-{
-    if (auto* marker = markerRenderer())
-        insertChild(axObjectCache()->getOrCreate(*marker), 0);
-}
-
 void AccessibilityRenderObject::updateRoleAfterChildrenCreation()
 {
     // If a menu does not have valid menuitem children, it should not be exposed as a menu.
@@ -2640,13 +2645,18 @@ void AccessibilityRenderObject::addChildren()
         addChild(object);
     };
 
+    WeakPtr cache = axObjectCache();
+    auto addListItemMarker = [&] () {
+        if (CheckedPtr marker = markerRenderer(); marker && cache)
+            addChild(cache->getOrCreate(*marker));
+    };
+
 #if !USE(ATSPI)
     // Non-ATSPI platforms walk the DOM to build the accessibility tree.
     // Ideally this would be the case for all platforms, but there are GLib tests that rely on anonymous renderers
     // being part of the accessibility tree.
     RefPtr node = dynamicDowncast<ContainerNode>(this->node());
     auto* element = dynamicDowncast<Element>(node.get());
-    WeakPtr cache = axObjectCache();
 
     // ::before and ::after pseudos should be the first and last children of the element
     // that generates them (rather than being siblings to the generating element).
@@ -2654,6 +2664,9 @@ void AccessibilityRenderObject::addChildren()
         if (RefPtr pseudoObject = cache ? cache->getOrCreate(*beforePseudo) : nullptr)
             addChildIfNeeded(*pseudoObject);
     }
+
+    // If |this| has an associated list marker, it should be the first child (or second if |this| has a ::before pseudo).
+    addListItemMarker();
 
     if (node && !(element && element->isPseudoElement()) && cache) {
         // If we have a DOM node, use the DOM to find accessible children.
@@ -2683,6 +2696,7 @@ void AccessibilityRenderObject::addChildren()
     }
 #else
     // USE(ATPSI) within this block. Walk the render tree (primarily -- see comments for AccessibilityObject::iterator)
+    addListItemMarker();
     // to build the accessibility tree.
     // FIXME: Consider removing this ATSPI-only branch with https://bugs.webkit.org/show_bug.cgi?id=282117.
     for (auto& object : AXChildIterator(*this))
@@ -2696,7 +2710,6 @@ void AccessibilityRenderObject::addChildren()
     addImageMapChildren();
     addTextFieldChildren();
     addRemoteSVGChildren();
-    addListItemMarker();
 #if PLATFORM(COCOA)
     updateAttachmentViewParents();
 #endif
@@ -2704,6 +2717,10 @@ void AccessibilityRenderObject::addChildren()
 
     m_subtreeDirty = false;
     updateRoleAfterChildrenCreation();
+
+#ifndef NDEBUG
+    verifyChildrenIndexInParent();
+#endif
 }
 
 void AccessibilityRenderObject::setAccessibleName(const AtomString& name)

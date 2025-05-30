@@ -334,6 +334,7 @@ enum class WebCore::EnterKeyHint : uint8_t {
     Send
 };
 
+header: <WebCore/TrustedFonts.h>
 enum class WebCore::DownloadableBinaryFontTrustedTypes : uint8_t {
     Any,
     Restricted,
@@ -384,6 +385,7 @@ enum class WebCore::ScreenOrientationType : uint8_t {
     LandscapeSecondary
 };
 
+header: <WebCore/StorageBlockingPolicy.h>
 enum class WebCore::StorageBlockingPolicy : uint8_t {
     AllowAll,
     BlockThirdParty,
@@ -2083,8 +2085,7 @@ struct WebCore::ElementAnimationContext {
     bool isAnimating;
 };
 
-header: <WebCore/FrameLoaderTypes.h>
-[CustomHeader] struct WebCore::SystemPreviewInfo {
+struct WebCore::SystemPreviewInfo {
     WebCore::ElementContext element;
     WebCore::IntRect previewRect;
     bool isPreview;
@@ -2413,11 +2414,11 @@ struct WebCore::MediaStreamRequest {
 };
 #endif
 struct WebCore::MediaCapabilitiesDecodingInfo : WebCore::MediaCapabilitiesInfo {
-    WebCore::MediaDecodingConfiguration supportedConfiguration;
+    WebCore::MediaDecodingConfiguration configuration;
 }
 
 struct WebCore::MediaCapabilitiesEncodingInfo : WebCore::MediaCapabilitiesInfo {
-    WebCore::MediaEncodingConfiguration supportedConfiguration;
+    WebCore::MediaEncodingConfiguration configuration;
 }
 
 header: <WebCore/VideoCodecType.h>
@@ -3636,6 +3637,24 @@ enum class WebCore::WasPrivateRelayed : bool;
     std::optional<WebCore::CertificateInfo> certificateInfo;
 };
 
+#if PLATFORM(COCOA)
+[RefCounted, CreateUsing=createWithData] class WebCore::ArchiveResource {
+    Ref<WebCore::FragmentedSharedBuffer> protectedData();
+    URL url();
+    String mimeType();
+    String textEncoding();
+    String frameName();
+    WebCore::ResourceResponse response();
+    String relativeFilePath();
+};
+
+[RefCounted, CreateUsing=create] class WebCore::LegacyWebArchive {
+    Ref<WebCore::ArchiveResource> protectedMainResource();
+    Vector<Ref<WebCore::ArchiveResource>> subresources();
+    Vector<WebCore::FrameIdentifier> subframeIdentifiers();
+};
+#endif
+
 enum class WebCore::ReferrerPolicy : uint8_t {
     EmptyString,
     NoReferrer,
@@ -4713,11 +4732,18 @@ header: <WebCore/MediaPlayer.h>
     MediaTime positiveThreshold;
 };
 
+[OptionSet] enum class WebCore::VideoMediaSampleRendererPreference : uint8_t {
+    PrefersDecompressionSession,
+    ProtectedFallbackDisabled,
+    UseDecompressionSessionForProtectedContent
+};
+
 header: <WebCore/MediaPlayer.h>
 [CustomHeader] struct WebCore::MediaPlayerLoadOptions {
     WebCore::ContentType contentType;
     bool requiresRemotePlayback;
     bool supportsLimitedMatroska;
+    OptionSet<WebCore::VideoMediaSampleRendererPreference> videoMediaSampleRendererPreferences;
 };
 
 #endif
@@ -5949,6 +5975,22 @@ struct WebCore::SpatialVideoMetadata {
     float disparityAdjustment;
 };
 
+enum class WebCore::VideoProjectionMetadataKind : uint8_t {
+    Unknown,
+    Equirectangular,
+    HalfEquirectangular,
+    EquiAngularCubemap,
+    Parametric,
+    Pyramid,
+    AppleImmersiveVideo,
+};
+
+header: <WebCore/VideoProjectionMetadata.h>
+struct WebCore::VideoProjectionMetadata {
+    WebCore::VideoProjectionMetadataKind kind;
+    RefPtr<WTF::JSONImpl::Value> parameters;
+};
+
 struct WebCore::PlatformTrackConfiguration {
     String codec;
 };
@@ -5966,7 +6008,7 @@ struct WebCore::PlatformVideoTrackConfiguration : WebCore::PlatformTrackConfigur
     double framerate;
     uint64_t bitrate;
     std::optional<WebCore::SpatialVideoMetadata> spatialVideoMetadata;
-    bool isImmersiveVideo;
+    std::optional<WebCore::VideoProjectionMetadata> videoProjectionMetadata;
 };
 
 #endif
@@ -6498,23 +6540,47 @@ struct WebCore::MockWebAuthenticationConfiguration {
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
 
-[Nested] struct WebCore::OpenID4VPRequest {
+struct WebCore::OpenID4VPRequest {
 };
 
-[Nested] struct WebCore::MobileDocumentRequest {
+header: <WebCore/ISO18013.h>
+[Nested] struct WebCore::ISO18013ElementInfo {
+    bool isRetaining;
+};
+
+[Nested] struct WebCore::ISO18013DocumentRequest {
+    String documentType;
+    Vector<std::pair<String, Vector<std::pair<String, WebCore::ISO18013ElementInfo>>>> namespaces;
+};
+
+[Nested] struct WebCore::ISO18013DocumentRequestSet {
+    Vector<WebCore::ISO18013DocumentRequest> requests;
+};
+
+[Nested] struct WebCore::ISO18013PresentmentRequest {
+    bool isMandatory;
+    Vector<WebCore::ISO18013DocumentRequestSet> documentRequestSets;
+};
+
+struct WebCore::MobileDocumentRequest {
     String deviceRequest;
     String encryptionInfo;
 };
 
+[Nested] struct WebCore::ValidatedMobileDocumentRequest {
+    Vector<WebCore::CertificateInfo> requestAuthentications;
+    Vector<WebCore::ISO18013PresentmentRequest> presentmentRequests;
+};
+
 struct WebCore::DigitalCredentialsRequestData {
-    Vector<Variant<WebCore::MobileDocumentRequest, WebCore::OpenID4VPRequest>> requests;
+    Vector<Variant<WebCore::ValidatedMobileDocumentRequest, WebCore::OpenID4VPRequest>> requests;
     [Validator='!topOrigin->isNull()'] WebCore::SecurityOriginData topOrigin;
     [Validator='!documentOrigin->isNull()'] WebCore::SecurityOriginData documentOrigin;
 };
 
 struct WebCore::DigitalCredentialsResponseData {
     WebCore::IdentityCredentialProtocol protocol;
-    String responseData;
+    String responseDataJSON;
 };
 
 [Nested] enum class WebCore::IdentityCredentialProtocol : uint8_t {
@@ -7153,6 +7219,16 @@ struct WebCore::CookieChangeSubscription {
     Ref<WebCore::SharedBuffer> data()
     String mimeType()
     URL url()
+}
+
+class WebCore::ModelPlayerAnimationState {
+    bool autoplay()
+    bool loop()
+    bool paused()
+    Seconds duration()
+    std::optional<double> effectivePlaybackRate()
+    std::optional<Seconds> lastCachedCurrentTime()
+    std::optional<MonotonicTime> lastCachedClockTimestamp()
 }
 
 #if ENABLE(MODEL_PROCESS)
@@ -9060,7 +9136,7 @@ enum class WebCore::ShouldGoToHistoryItem : uint8_t {
     ItemUnknown
 };
 
-header: <WebCore/HistoryItem.h>
+header: <WebCore/ProcessSwapDisposition.h>
 enum class WebCore::ProcessSwapDisposition : uint8_t {
     None,
     COOP,

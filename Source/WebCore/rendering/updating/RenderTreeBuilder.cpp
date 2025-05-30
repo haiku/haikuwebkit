@@ -34,7 +34,7 @@
 #include "LegacyRenderSVGContainer.h"
 #include "LegacyRenderSVGRoot.h"
 #include "LocalFrame.h"
-#include "LocalFrameView.h"
+#include "LocalFrameViewInlines.h"
 #include "LocalFrameViewLayoutContext.h"
 #include "NodeInlines.h"
 #include "RenderBlockInlines.h"
@@ -517,7 +517,7 @@ void RenderTreeBuilder::attachToRenderElementInternal(RenderElement& parent, Ren
     if (AXObjectCache* cache = parent.document().axObjectCache())
         cache->childrenChanged(parent, newChild);
 
-    if (parent.hasOutlineAutoAncestor() || parent.outlineStyleForRepaint().outlineStyleIsAuto() == OutlineIsAuto::On)
+    if (parent.hasOutlineAutoAncestor() || parent.outlineStyleForRepaint().hasAutoOutlineStyle())
         if (!is<RenderMultiColumnSet>(newChild->previousSibling())) 
             newChild->setHasOutlineAutoAncestor();
 }

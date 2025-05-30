@@ -80,6 +80,8 @@ struct WEBCORE_EXPORT QuirksData {
     bool shouldPreventOrientationMediaQueryFromEvaluatingToLandscapeQuirk : 1 { false };
     bool shouldUseLegacySelectPopoverDismissalBehaviorInDataActivationQuirk : 1 { false };
     bool shouldDispatchPlayPauseEventsOnResume : 1 { false };
+    bool shouldUnloadHeavyFrames : 1 { false };
+    bool shouldAvoidStartingSelectionOnMouseDownOverPointerCursor : 1 { false };
 
     // Requires check at moment of use
     std::optional<bool> needsDisableDOMPasteAccessQuirk;
@@ -100,7 +102,6 @@ struct WEBCORE_EXPORT QuirksData {
     bool needsYouTubeOverflowScrollQuirk : 1 { false };
     bool shouldAvoidPastingImagesAsWebContent : 1 { false };
     bool shouldDisablePointerEventsQuirk : 1 { false };
-    bool shouldEnableApplicationCacheQuirk : 1 { false };
     bool shouldIgnoreAriaForFastPathContentObservationCheckQuirk : 1 { false };
     bool shouldNavigatorPluginsBeEmpty : 1 { false };
     bool shouldSilenceWindowResizeEventsDuringApplicationSnapshotting : 1 { false };
@@ -125,7 +126,6 @@ struct WEBCORE_EXPORT QuirksData {
     bool needsFormControlToBeMouseFocusableQuirk : 1 { false };
     bool needsPrimeVideoUserSelectNoneQuirk : 1 { false };
     bool needsZomatoEmailLoginLabelQuirk : 1 { false };
-    bool shouldAvoidStartingSelectionOnMouseDown : 1 { false };
 #endif
 
 #if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
@@ -182,6 +182,7 @@ struct WEBCORE_EXPORT QuirksData {
 
     bool needsNowPlayingFullscreenSwapQuirk : 1 { false };
     bool needsWebKitMediaTextTrackDisplayQuirk : 1 { false };
+    bool needsMediaRewriteRangeRequestQuirk : 1 { false };
 };
 
 } // namespace WebCore

@@ -664,9 +664,6 @@ static std::optional<CSS::Color> consumeLightDarkFunction(CSSParserTokenRange& r
 
     ASSERT(range.peek().functionId() == CSSValueLightDark);
 
-    if (!state.propertyParserState.context.lightDarkColorEnabled)
-        return std::nullopt;
-
     auto args = consumeFunction(range);
 
     auto lightColor = consumeColor(args, state);
@@ -892,7 +889,7 @@ Color consumeColorRaw(CSSParserTokenRange& range, CSS::PropertyParserState& prop
 
 // MARK: - Raw parsing entry points
 
-Color parseColorRawSlow(const String& string, const CSSParserContext& context, ScriptExecutionContext& scriptExecutionContext, const CSSColorParsingOptions& options, CSS::PlatformColorResolutionState& eagerResolutionState)
+Color parseColorRawGeneral(const String& string, const CSSParserContext& context, ScriptExecutionContext& scriptExecutionContext, const CSSColorParsingOptions& options, CSS::PlatformColorResolutionState& eagerResolutionState)
 {
     CSSTokenizer tokenizer(string);
     CSSParserTokenRange range(tokenizer.tokenRange());

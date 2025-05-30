@@ -758,6 +758,7 @@ enum ContentsFormat {
     boolean testProcessIncomingSyncMessagesWhenWaitingForSyncReply();
 
     undefined setResourceCachingDisabledByWebInspector(boolean disabled);
+    undefined lowerAllFrameMemoryMonitorLimits();
 
     [Conditional=DAMAGE_TRACKING] DamagePropagation? getCurrentDamagePropagation();
     [Conditional=DAMAGE_TRACKING] sequence<FrameDamage> getFrameDamageHistory();
@@ -1343,6 +1344,11 @@ enum ContentsFormat {
     boolean hasSandboxIOKitOpenAccessToClass(DOMString process, DOMString ioKitClass);
     boolean hasSandboxUnixSyscallAccess(DOMString process, unsigned long syscall);
 
+#if defined(ENABLE_LOGD_BLOCKING_IN_WEBCONTENT) && ENABLE_LOGD_BLOCKING_IN_WEBCONTENT
+    boolean emitWebCoreLogs(unsigned long logCount, boolean useMainThread);
+    boolean emitLogs(DOMString logString, unsigned long logCount, boolean useMainThread);
+#endif
+
     DOMString systemColorForCSSValue(DOMString cssValue, boolean useDarkModeAppearance, boolean useElevatedUserInterfaceLevel);
     DOMString focusRingColor();
 
@@ -1449,4 +1455,6 @@ enum ContentsFormat {
     undefined setResourceMonitorNetworkUsageThreshold(unsigned long threshold, double randomness);
     attribute boolean shouldSkipResourceMonitorThrottling;
 #endif
+
+    [Conditional=MODEL_ELEMENT] undefined disableModelLoadDelaysForTesting();
 };

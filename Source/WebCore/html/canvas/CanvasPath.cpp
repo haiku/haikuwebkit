@@ -37,6 +37,7 @@
 
 #include "AffineTransform.h"
 #include "DOMPointInit.h"
+#include "ExceptionOr.h"
 #include "FloatRect.h"
 #include "FloatRoundedRect.h"
 #include "FloatSize.h"
@@ -243,7 +244,7 @@ void CanvasPath::rect(float x, float y, float width, float height)
 
 ExceptionOr<void> CanvasPath::roundRect(float x, float y, float width, float height, const RadiusVariant& radii)
 {
-    return roundRect(x, y, width, height, std::span(&radii, 1));
+    return roundRect(x, y, width, height, singleElementSpan(radii));
 }
 
 ExceptionOr<void> CanvasPath::roundRect(float x, float y, float width, float height, std::span<const RadiusVariant> radii)

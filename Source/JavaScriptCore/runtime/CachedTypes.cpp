@@ -214,7 +214,7 @@ private:
 
         bool malloc(size_t size, ptrdiff_t& result)
         {
-            size_t alignment = std::min(alignof(std::max_align_t), static_cast<size_t>(WTF::roundUpToPowerOfTwo(size)));
+            size_t alignment = std::min(alignof(std::max_align_t), static_cast<size_t>(roundUpToPowerOfTwo(size)));
             ptrdiff_t offset = roundUpToMultipleOf(alignment, m_offset);
             size = roundUpToMultipleOf(alignment, size);
             if (static_cast<size_t>(offset + size) > capacity())
@@ -230,8 +230,8 @@ private:
         uint8_t* buffer() { return m_buffer.mutableSpan().data(); }
         size_t size() const { return static_cast<size_t>(m_offset); }
 
-        std::span<uint8_t> mutableSpan() { return m_buffer.mutableSpan().first(size()); }
-        std::span<const uint8_t> span() const { return m_buffer.span().first(size()); }
+        std::span<uint8_t> mutableSpan() LIFETIME_BOUND { return m_buffer.mutableSpan().first(size()); }
+        std::span<const uint8_t> span() const LIFETIME_BOUND { return m_buffer.span().first(size()); }
 
         bool getOffset(const void* address, ptrdiff_t& result) const
         {

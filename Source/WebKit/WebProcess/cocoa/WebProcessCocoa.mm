@@ -59,6 +59,7 @@
 #import <JavaScriptCore/ConfigFile.h>
 #import <JavaScriptCore/Options.h>
 #import <WebCore/AVAssetMIMETypeCache.h>
+#import <algorithm>
 #import <pal/spi/cf/VideoToolboxSPI.h>
 #import <pal/spi/cg/ImageIOSPI.h>
 
@@ -363,7 +364,7 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
     unsetenv("BSServiceDomains");
 #endif
 
-    applyProcessCreationParameters(parameters.auxiliaryProcessParameters);
+    applyProcessCreationParameters(WTFMove(parameters.auxiliaryProcessParameters));
 
     setQOS(parameters.latencyQOS, parameters.throughputQOS);
 
@@ -810,6 +811,16 @@ static void prewarmLogs()
 }
 #endif // PLATFORM(IOS_FAMILY)
 
+static bool shouldIgnoreLogMessage(const char* logSubsystem)
+{
+    auto subsystem = unsafeSpan8(logSubsystem);
+    if (equal(subsystem, "com.apple.xpc"_s))
+        return true;
+    if (equal(subsystem, "com.apple.CoreAnalytics"_s))
+        return true;
+    return false;
+}
+
 void WebProcess::registerLogHook()
 {
     static os_log_hook_t prevHook = nullptr;
@@ -835,6 +846,12 @@ void WebProcess::registerLogHook()
         if (type & (OS_LOG_TYPE_DEBUG | OS_LOG_TYPE_INFO))
             return;
 #endif
+
+        if (Thread::currentThreadIsRealtime())
+            return;
+
+        if (shouldIgnoreLogMessage(msg->subsystem))
+            return;
 
         auto logChannel = unsafeSpan8IncludingNullTerminator(msg->subsystem);
         auto logCategory = unsafeSpan8IncludingNullTerminator(msg->category);
@@ -1424,7 +1441,7 @@ void WebProcess::updatePageScreenProperties()
         return;
     }
 
-    bool allPagesAreOnHDRScreens = allOf(m_pageMap.values(), [] (auto& page) {
+    bool allPagesAreOnHDRScreens = std::ranges::all_of(m_pageMap.values(), [](auto& page) {
         return page && screenSupportsHighDynamicRange(page->localMainFrameView());
     });
     setShouldOverrideScreenSupportsHighDynamicRange(true, allPagesAreOnHDRScreens);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2012-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -233,7 +233,7 @@ public:
 
     void addWebsiteDataStore(WebsiteDataStoreParameters&&);
 
-    void registrableDomainsWithLastAccessedTime(PAL::SessionID, CompletionHandler<void(std::optional<HashMap<RegistrableDomain, WallTime>>)>&&);
+    void registrableDomainsWithLastAccessedTime(PAL::SessionID, CompletionHandler<void(std::optional<HashMap<RegistrableDomain, WallTime>>&&)>&&);
     void registrableDomainsExemptFromWebsiteDataDeletion(PAL::SessionID, CompletionHandler<void(HashSet<RegistrableDomain>)>&&);
     void clearPrevalentResource(PAL::SessionID, RegistrableDomain&&, CompletionHandler<void()>&&);
     void clearUserInteraction(PAL::SessionID, RegistrableDomain&&, CompletionHandler<void()>&&);
@@ -315,7 +315,6 @@ public:
     bool privateClickMeasurementEnabled() const;
     void setPrivateClickMeasurementDebugMode(PAL::SessionID, bool);
 
-    void setBlobRegistryTopOriginPartitioningEnabled(PAL::SessionID, bool) const;
     void setShouldSendPrivateTokenIPCForTesting(PAL::SessionID, bool) const;
 #if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
     void setOptInCookiePartitioningEnabled(PAL::SessionID, bool) const;

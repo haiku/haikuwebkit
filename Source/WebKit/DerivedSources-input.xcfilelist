@@ -2,7 +2,15 @@
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/AdditionalFeatureDefines.h
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/AdditionalPlatform.h
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/AdditionalPlatformHave.h
+$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/ISO18013MobileDocumentRequest+Extras.swift.in
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/MaterialAdditions.swift.in
+$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentController.swift.in
+$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentMobileDocumentRequest.swift.in
+$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentMobileDocumentRequest+Extras.swift.in
+$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentRawRequest.swift.in
+$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentRequest.swift.in
+$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentResponse.swift.in
+$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentRawRequestValidator.swift.in
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKSeparatedImageView.swift.in
 $(BUILT_PRODUCTS_DIR)/usr/local/include/wtf/Compiler.h
 $(BUILT_PRODUCTS_DIR)/usr/local/include/wtf/Platform.h
@@ -342,6 +350,7 @@ $(PROJECT_DIR)/Shared/ProvisionalFrameCreationParameters.serialization.in
 $(PROJECT_DIR)/Shared/PushMessageForTesting.serialization.in
 $(PROJECT_DIR)/Shared/RTCNetwork.serialization.in
 $(PROJECT_DIR)/Shared/RTCPacketOptions.serialization.in
+$(PROJECT_DIR)/Shared/RemoteWebTouchEvent.serialization.in
 $(PROJECT_DIR)/Shared/RemoteLayerTree/BufferAndBackendInfo.serialization.in
 $(PROJECT_DIR)/Shared/RemoteLayerTree/RemoteLayerTree.serialization.in
 $(PROJECT_DIR)/Shared/RemoteLayerTree/RemoteScrollingCoordinatorTransaction.serialization.in
@@ -494,6 +503,7 @@ $(PROJECT_DIR)/Shared/ios/GestureTypes.serialization.in
 $(PROJECT_DIR)/Shared/ios/HardwareKeyboardState.serialization.in
 $(PROJECT_DIR)/Shared/ios/InteractionInformationAtPosition.serialization.in
 $(PROJECT_DIR)/Shared/ios/InteractionInformationRequest.serialization.in
+$(PROJECT_DIR)/Shared/ios/DragInitiationResult.serialization.in
 $(PROJECT_DIR)/Shared/ios/WebAutocorrectionContext.serialization.in
 $(PROJECT_DIR)/Shared/ios/WebAutocorrectionData.serialization.in
 $(PROJECT_DIR)/Shared/mac/PDFContextMenuItem.serialization.in
@@ -554,6 +564,7 @@ $(PROJECT_DIR)/WebProcess/Automation/WebAutomationSessionProxy.js
 $(PROJECT_DIR)/WebProcess/Automation/WebAutomationSessionProxy.messages.in
 $(PROJECT_DIR)/WebProcess/Cache/WebCacheStorageConnection.messages.in
 $(PROJECT_DIR)/WebProcess/Databases/IndexedDB/WebIDBConnectionToServer.messages.in
+$(PROJECT_DIR)/WebProcess/DigitalCredentials/DigitalCredentialsCoordinator.messages.in
 $(PROJECT_DIR)/WebProcess/Extensions/Bindings/Scripts/CodeGeneratorExtensions.pm
 $(PROJECT_DIR)/WebProcess/Extensions/Bindings/Scripts/GenerateImports.pl
 $(PROJECT_DIR)/WebProcess/Extensions/Bindings/Scripts/IDLAttributes.json

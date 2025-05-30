@@ -1405,7 +1405,12 @@ public:
     bool hasSandboxMachLookupAccessToXPCServiceName(const String& process, const String& service);
     bool hasSandboxIOKitOpenAccessToClass(const String& process, const String& ioKitClass);
     bool hasSandboxUnixSyscallAccess(const String& process, unsigned syscall) const;
-        
+
+#if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
+    bool emitWebCoreLogs(unsigned logCount, bool useMainThread) const;
+    bool emitLogs(const String& logString, unsigned logCount, bool useMainThread) const;
+#endif
+
     String highlightPseudoElementColor(const AtomString& highlightName, Element&);
 
     String windowLocationHost(DOMWindow&);
@@ -1554,6 +1559,7 @@ public:
     void getImageBufferResourceLimits(ImageBufferResourceLimitsPromise&&);
 
     void setResourceCachingDisabledByWebInspector(bool);
+    ExceptionOr<void> lowerAllFrameMemoryMonitorLimits();
 
 #if ENABLE(CONTENT_EXTENSIONS)
     void setResourceMonitorNetworkUsageThreshold(size_t threshold, double randomness = ResourceMonitorChecker::defaultNetworkUsageThresholdRandomness);
@@ -1571,6 +1577,10 @@ public:
     std::optional<DamagePropagation> getCurrentDamagePropagation() const;
     ExceptionOr<Vector<FrameDamage>> getFrameDamageHistory() const;
 #endif // ENABLE(DAMAGE_TRACKING)
+
+#if ENABLE(MODEL_ELEMENT)
+    void disableModelLoadDelaysForTesting();
+#endif
 
 private:
     explicit Internals(Document&);

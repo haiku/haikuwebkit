@@ -40,6 +40,7 @@ class RemoteFrameView;
 class WeakPtrImplWithEventTargetData;
 
 enum class AdvancedPrivacyProtections : uint16_t;
+enum class AutoplayPolicy : uint8_t;
 enum class RenderAsTextFlag : uint16_t;
 
 class RemoteFrame final : public Frame {
@@ -65,16 +66,19 @@ public:
     void updateRemoteFrameAccessibilityOffset(IntPoint);
     void unbindRemoteAccessibilityFrames(int);
 
-    void setCustomUserAgent(const String& customUserAgent) { m_customUserAgent = customUserAgent; }
+    void setCustomUserAgent(String&& customUserAgent) { m_customUserAgent = WTFMove(customUserAgent); }
     String customUserAgent() const final;
-    void setCustomUserAgentAsSiteSpecificQuirks(const String& customUserAgentAsSiteSpecificQuirks) { m_customUserAgentAsSiteSpecificQuirks = customUserAgentAsSiteSpecificQuirks; }
+    void setCustomUserAgentAsSiteSpecificQuirks(String&& customUserAgentAsSiteSpecificQuirks) { m_customUserAgentAsSiteSpecificQuirks = WTFMove(customUserAgentAsSiteSpecificQuirks); }
     String customUserAgentAsSiteSpecificQuirks() const final;
 
-    void setCustomNavigatorPlatform(const String& customNavigatorPlatform) { m_customNavigatorPlatform = customNavigatorPlatform; }
+    void setCustomNavigatorPlatform(String&& customNavigatorPlatform) { m_customNavigatorPlatform = WTFMove(customNavigatorPlatform); }
     String customNavigatorPlatform() const final;
 
     void setAdvancedPrivacyProtections(OptionSet<AdvancedPrivacyProtections> advancedPrivacyProtections) { m_advancedPrivacyProtections = advancedPrivacyProtections; }
     OptionSet<AdvancedPrivacyProtections> advancedPrivacyProtections() const final;
+
+    void setAutoplayPolicy(AutoplayPolicy autoplayPolicy) { m_autoplayPolicy = autoplayPolicy; }
+    AutoplayPolicy autoplayPolicy() const final;
 
     void updateScrollingMode() final;
 
@@ -103,6 +107,7 @@ private:
     String m_customUserAgentAsSiteSpecificQuirks;
     String m_customNavigatorPlatform;
     OptionSet<AdvancedPrivacyProtections> m_advancedPrivacyProtections;
+    AutoplayPolicy m_autoplayPolicy;
     bool m_preventsParentFromBeingComplete { true };
 };
 

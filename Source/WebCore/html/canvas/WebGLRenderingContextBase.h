@@ -28,7 +28,6 @@
 #if ENABLE(WEBGL)
 
 #include "EventLoop.h"
-#include "ExceptionOr.h"
 #include "GPUBasedCanvasRenderingContext.h"
 #include "GraphicsContextGL.h"
 #include "ImageBuffer.h"
@@ -167,6 +166,8 @@ using WebGLCanvas = Variant<RefPtr<HTMLCanvasElement>>;
 #if ENABLE(MEDIA_STREAM)
 class VideoFrame;
 #endif
+
+template<typename> class ExceptionOr;
 
 class WebGLRenderingContextBase : public GraphicsContextGL::Client, public GPUBasedCanvasRenderingContext {
     WTF_MAKE_TZONE_OR_ISO_ALLOCATED(WebGLRenderingContextBase);
@@ -347,9 +348,9 @@ public:
         {
         }
 
-        std::span<const DataType> span() const { return unsafeMakeSpan(data(), length()); }
+        std::span<const DataType> span() const LIFETIME_BOUND { return unsafeMakeSpan(data(), length()); }
 
-        const DataType* data() const
+        const DataType* data() const LIFETIME_BOUND
         {
             return WTF::switchOn(m_variant,
                 [] (const RefPtr<TypedArray>& typedArray) -> const DataType* { return typedArray->data(); },

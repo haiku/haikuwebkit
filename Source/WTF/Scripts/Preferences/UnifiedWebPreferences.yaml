@@ -210,20 +210,6 @@ AggressiveTileRetentionEnabled:
     WebCore:
       default: false
 
-AlignContentOnBlocksEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "align-content on blocks"
-  humanReadableDescription: "Enable align-content for block containers"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 AllowContentSecurityPolicySourceStarToMatchAnyProtocol:
   type: bool
   status: embedder
@@ -883,20 +869,6 @@ BlobFileAccessEnforcementEnabled:
       "PLATFORM(COCOA)": true
       default: false
 
-BlobRegistryTopOriginPartitioningEnabled:
-  type: bool
-  status: stable
-  category: security
-  humanReadableName: "Partition Blob URL Registry"
-  humanReadableDescription: "Partition Blob URL Registry by Top-Level Origin"
-  defaultValue:
-    WebKitLegacy:
-      default: false
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 BlockFontServiceInWebContentSandbox:
   type: bool
   status: internal
@@ -1177,20 +1149,6 @@ CSSContainerProgressFunctionEnabled:
     WebCore:
       default: false
 
-CSSContentVisibilityEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSS Content Visibility"
-  humanReadableDescription: "Enable CSS content-visibility"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 CSSContrastColorEnabled:
   type: bool
   category: css
@@ -1233,20 +1191,6 @@ CSSCounterStyleAtRuleImageSymbolsEnabled:
     WebCore:
       default: false
 
-CSSCounterStyleAtRulesEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSS @counter-style"
-  humanReadableDescription: "Enable support for CSS @counter-style rules"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 CSSDPropertyEnabled:
   type: bool
   status: preview
@@ -1274,20 +1218,6 @@ CSSFieldSizingEnabled:
       default: false
     WebCore:
       default: false
-
-CSSFontFaceSizeAdjustEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSS @font-face size-adjust"
-  humanReadableDescription: "Enable size-adjust descriptor in @font-face"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
 
 CSSFontVariantEmojiEnabled:
   type: bool
@@ -1317,20 +1247,6 @@ CSSInputSecurityEnabled:
     WebCore:
       default: false
 
-CSSLightDarkEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSS light-dark()"
-  humanReadableDescription: "Enable support for CSS light-dark() defined in CSS Color 5"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 CSSLineClampEnabled:
   type: bool
   status: preview
@@ -1359,20 +1275,6 @@ CSSLineFitEdgeEnabled:
     WebCore:
       default: false
 
-CSSMarginTrimEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSS margin-trim property"
-  humanReadableDescription: "Enable margin-trim CSS property"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 CSSMediaProgressFunctionEnabled:
   type: bool
   category: css
@@ -1387,20 +1289,6 @@ CSSMediaProgressFunctionEnabled:
     WebCore:
       default: false
 
-CSSMotionPathEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSS Motion Path"
-  humanReadableDescription: "Enable CSS Motion Path support"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 CSSOMViewScrollingAPIEnabled:
   type: bool
   status: stable
@@ -1412,20 +1300,6 @@ CSSOMViewScrollingAPIEnabled:
       default: true
     WebKit:
       "PLATFORM(IOS_FAMILY)": WebKit::defaultCSSOMViewScrollingAPIEnabled()
-      default: true
-    WebCore:
-      default: false
-
-CSSOMViewSmoothScrollingEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSSOM View Smooth Scrolling"
-  humanReadableDescription: "Enable DOM API and CSS property for 'smooth' scroll behavior"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
       default: true
     WebCore:
       default: false
@@ -1515,20 +1389,6 @@ CSSRubyOverhangEnabled:
     WebCore:
       default: true
 
-CSSScopeAtRuleEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSS Scoping (@scope)"
-  humanReadableDescription: "Enable the CSS Scoping feature with @scope rule"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 CSSScrollAnchoringEnabled:
   type: bool
   status: testable
@@ -1591,34 +1451,6 @@ CSSShapeFunctionEnabled:
   category: css
   humanReadableName: "CSS shape() function"
   humanReadableDescription: "Enable the CSS shape() function"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
-CSSStartingStyleAtRuleEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSS @starting-style rule"
-  humanReadableDescription: "Enable CSS @starting-style rule"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
-CSSStyleQueriesEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSS style queries"
-  humanReadableDescription: "Enable CSS style queries for custom properties"
   defaultValue:
     WebKitLegacy:
       default: true
@@ -1724,20 +1556,6 @@ CSSTextWrapPrettyEnabled:
        default: true
      WebCore:
        default: true
-
-CSSTextWrapStyleEnabled:
-  type: bool
-  status: stable
-  category: css
-  humanReadableName: "CSS text-wrap-style property"
-  humanReadableDescription: "Enable the property text-wrap-style, defined in CSS Text 4"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
 
 CSSTransformStyleSeparatedEnabled:
   type: bool
@@ -2540,20 +2358,6 @@ DateTimeInputsEditableComponentsEnabled:
     WebCore:
       default: false
 
-DeclarativeShadowRootsSerializerAPIsEnabled:
-  type: bool
-  status: stable
-  category: dom
-  humanReadableName: "Declarative Shadow Roots Serializer APIs"
-  humanReadableDescription: "Declarative Shadow Roots Serializer APIs (Element/ShadowRoot's getHTML() and ShadowRoot's serializable)"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-
 DeclarativeWebPush:
   type: bool
   status: stable
@@ -2604,20 +2408,6 @@ DefaultTextEncodingName:
       default: PAL::defaultTextEncodingNameForSystemLanguage()
     WebCore:
       default: '{ }'
-
-DeprecateAESCFBWebCryptoEnabled:
-  type: bool
-  status: stable
-  category: dom
-  humanReadableName: "Deprecate AES-CFB Web Crypto"
-  humanReadableDescription: "Enable Deprecation of AES-CFB from Web Crypto"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
 
 DeprecationReportingEnabled:
   type: bool
@@ -2836,20 +2626,6 @@ EditableLinkBehavior:
       default: WebCore::EditableLinkBehavior::NeverLive
     WebCore:
       default: EditableLinkBehavior::Default
-
-ElementCheckVisibilityEnabled:
-  type: bool
-  status: stable
-  category: dom
-  humanReadableName: "element.checkVisibility() API"
-  humanReadableDescription: "Enable element.checkVisibility() API"
-  defaultValue:
-    WebKitLegacy:
-      default: true
-    WebKit:
-      default: true
-    WebCore:
-      default: true
 
 EmbedElementEnabled:
   type: bool
@@ -3456,22 +3232,6 @@ GoogleAntiFlickerOptimizationQuirkEnabled:
       default: true
     WebCore:
       default: true
-
-GraphicsContextFiltersEnabled:
-   type: bool
-   status: stable
-   category: media
-   webcoreOnChange: setNeedsRelayoutAllFrames
-   humanReadableName: "GraphicsContext Filter Rendering"
-   humanReadableDescription: "GraphicsContext Filter Rendering"
-   condition: USE(GRAPHICS_CONTEXT_FILTERS)
-   defaultValue:
-     WebKitLegacy:
-       default: true
-     WebKit:
-       default: true
-     WebCore:
-       default: true
 
 HTTPEquivEnabled:
   type: bool
@@ -4885,7 +4645,6 @@ MediaCapabilitiesEnabled:
     WebKitLegacy:
       default: false
     WebKit:
-      "PLATFORM(GTK) || PLATFORM(WPE)": false
       default: true
     WebCore:
       default: false
@@ -5186,22 +4945,6 @@ MediaSessionPlaylistEnabled:
       default: WebKit::defaultMediaSessionCoordinatorEnabled()
     WebCore:
       default: true
-
-MediaSourceCanFallbackToDecompressionSession:
-  type: bool
-  status: stable
-  category: media
-  humanReadableName: "MediaSource automatically falls back to DecompressionSession"
-  humanReadableDescription: "MediaSource automatically falls back to DecompressionSession"
-  condition: ENABLE(MEDIA_SOURCE) && USE(AVFOUNDATION)
-  defaultValue:
-    WebKitLegacy:
-      default: false
-    WebKit:
-      default: true
-    WebCore:
-      default: true
-  sharedPreferenceForWebProcess: true
 
 MediaSourceEnabled:
   type: bool
@@ -6098,21 +5841,6 @@ PreferPageRenderingUpdatesNear60FPSEnabled:
       default: true
     WebCore:
       "PLATFORM(VISION)": false
-      default: true
-
-PreferSandboxedMediaParsing:
-  type: bool
-  status: internal
-  category: media
-  humanReadableName: "Prefer Sandboxed Parsing of Media"
-  humanReadableDescription: "Prefer parsing media out-of-process in a sandboxed service"
-  condition: ENABLE(VIDEO)
-  defaultValue:
-    WebCore:
-      default: true
-    WebKitLegacy:
-      default: true
-    WebKit:
       default: true
 
 PreferSpatialAudioExperience:
@@ -8502,6 +8230,38 @@ VideoQualityIncludesDisplayCompositingEnabled:
       default: false
     WebCore:
       default: false
+
+VideoRendererProtectedFallbackDisabled:
+  type: bool
+  status: stable
+  category: media
+  humanReadableName: "VideoMediaSampleRenderer fallback to AVSBDL for protected content disabled"
+  humanReadableDescription: "VideoMediaSampleRenderer fallback to AVSBDL for protected content disabled"
+  condition: USE(MODERN_AVCONTENTKEYSESSION_WITH_VTDECOMPRESSIONSESSION)
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: true
+    WebCore:
+      default: true
+  sharedPreferenceForWebProcess: true
+
+VideoRendererUseDecompressionSessionForProtected:
+  type: bool
+  status: preview
+  category: media
+  humanReadableName: "VideoMediaSampleRenderer use DecompressionSession for protected content"
+  humanReadableDescription: "VideoMediaSampleRenderer use DecompressionSession for protected content"
+  condition: USE(MODERN_AVCONTENTKEYSESSION_WITH_VTDECOMPRESSIONSESSION)
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+  sharedPreferenceForWebProcess: true
 
 ViewGestureDebuggingEnabled:
   type: bool

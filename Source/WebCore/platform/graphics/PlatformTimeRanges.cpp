@@ -27,6 +27,7 @@
 #include "PlatformTimeRanges.h"
 
 #include <math.h>
+#include <numeric>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/PrintStream.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -202,10 +203,8 @@ MediaTime PlatformTimeRanges::minimumBufferedTime() const
 
 void PlatformTimeRanges::add(const MediaTime& start, const MediaTime& end, AddTimeRangeOption addTimeRangeOption)
 {
-#if !PLATFORM(MAC) // https://bugs.webkit.org/show_bug.cgi?id=180253
     ASSERT(start.isValid());
     ASSERT(end.isValid());
-#endif
     ASSERT(start <= end);
 
     auto startTime = start;
@@ -376,7 +375,7 @@ size_t PlatformTimeRanges::findLastRangeIndexBefore(const MediaTime& start, cons
 
     first = 0;
     last = m_ranges.size() - 1;
-    middle = first + ((last - first) / 2);
+    middle = std::midpoint(first, last);
 
     while (first < last && middle > 0) {
         if (m_ranges[middle].isBeforeRange(range)) {
@@ -385,7 +384,7 @@ size_t PlatformTimeRanges::findLastRangeIndexBefore(const MediaTime& start, cons
         } else
             last = middle - 1;
 
-        middle = first + ((last - first) / 2);
+        middle = std::midpoint(first, last);
     }
     return index;
 }

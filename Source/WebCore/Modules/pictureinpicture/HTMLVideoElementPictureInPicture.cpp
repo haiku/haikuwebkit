@@ -29,6 +29,7 @@
 
 #if ENABLE(PICTURE_IN_PICTURE_API)
 
+#include "Document.h"
 #include "EventNames.h"
 #include "HTMLVideoElement.h"
 #include "JSDOMPromiseDeferred.h"
@@ -37,6 +38,7 @@
 #include "PictureInPictureEvent.h"
 #include "PictureInPictureSupport.h"
 #include "PictureInPictureWindow.h"
+#include "UserGestureIndicator.h"
 #include "VideoTrackList.h"
 #include <wtf/TZoneMallocInlines.h>
 

@@ -59,6 +59,10 @@
 #import <wtf/BlockPtr.h>
 #import <wtf/text/MakeString.h>
 
+#if PLATFORM(IOS_FAMILY)
+#import <MobileCoreServices/MobileCoreServices.h>
+#endif
+
 @interface SiteIsolationTextManipulationDelegate : NSObject <_WKTextManipulationDelegate>
 - (void)_webView:(WKWebView *)webView didFindTextManipulationItems:(NSArray<_WKTextManipulationItem *> *)items;
 @property (nonatomic, readonly, copy) NSArray<_WKTextManipulationItem *> *items;
@@ -520,6 +524,26 @@ TEST(SiteIsolation, NavigationAfterWindowOpen)
         Util::spinRunLoop();
 }
 
+TEST(SiteIsolation, OpenBeforeInitialLoad)
+{
+    HTTPServer server({
+        { "/webkit"_s, { "<script>alert('loaded')</script>"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+    RetainPtr uiDelegate = adoptNS([TestUIDelegate new]);
+    RetainPtr<WKWebView> opened;
+    uiDelegate.get().createWebViewWithConfiguration = [&](WKWebViewConfiguration *configuration, WKNavigationAction *action, WKWindowFeatures *windowFeatures) {
+        opened = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectZero configuration:configuration]);
+        opened.get().navigationDelegate = navigationDelegate.get();
+        opened.get().UIDelegate = uiDelegate.get();
+        return opened.get();
+    };
+    [webView setUIDelegate:uiDelegate.get()];
+    [webView evaluateJavaScript:@"window.open('https://webkit.org/webkit')" completionHandler:nil];
+    EXPECT_WK_STREQ([uiDelegate waitForAlert], "loaded");
+}
+
 TEST(SiteIsolation, OpenWithNoopener)
 {
     HTTPServer server({
@@ -591,6 +615,52 @@ TEST(SiteIsolation, ParentOpener)
     EXPECT_WK_STREQ([opened.uiDelegate waitForAlert], "posted message 2");
 }
 
+TEST(SiteIsolation, LoadStringAfterOpen)
+{
+    NSString *alertOpener = @"<script>alert(!!window.opener)</script>";
+    HTTPServer server({
+        { "/example"_s, { "<script>w = window.open('https://webkit.org/webkit')</script>"_s } },
+        { "/webkit"_s, { "hi"_s } },
+        { "/apple"_s, { alertOpener } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [opener, opened] = openerAndOpenedViews(server);
+
+    [opened.webView evaluateJavaScript:@"window.location = 'https://apple.com/apple'" completionHandler:nil];
+    EXPECT_WK_STREQ([opened.uiDelegate waitForAlert], "true");
+
+    [opener.webView evaluateJavaScript:@"w.location = 'https://other.com/apple'" completionHandler:nil];
+    EXPECT_WK_STREQ([opened.uiDelegate waitForAlert], "true");
+
+    [opened.webView loadHTMLString:alertOpener baseURL:[NSURL URLWithString:@"https://example.org/"]];
+    EXPECT_WK_STREQ([opened.uiDelegate waitForAlert], "true");
+
+    [opened.webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.net/apple"]]];
+    EXPECT_WK_STREQ([opened.uiDelegate waitForAlert], "false");
+}
+
+TEST(SiteIsolation, LoadDuringOpen)
+{
+    HTTPServer server({
+        { "/example"_s, { "window.open('https://webkit.org/webkit')"_s } },
+        { "/webkit"_s, { "hi"_s } },
+    }, HTTPServer::Protocol::HttpsProxy);
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+    RetainPtr uiDelegate = adoptNS([TestUIDelegate new]);
+    uiDelegate.get().createWebViewWithConfiguration = [&](WKWebViewConfiguration *configuration, WKNavigationAction *action, WKWindowFeatures *windowFeatures) -> WKWebView * {
+        RetainPtr auxiliary = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectZero configuration:[webView configuration]]);
+        auxiliary.get().navigationDelegate = navigationDelegate.get();
+        [auxiliary loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+        [navigationDelegate waitForDidFinishNavigation];
+        return nil;
+    };
+    [webView setUIDelegate:uiDelegate.get()];
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+    [webView evaluateJavaScript:@"window.open('https://webkit.org/webkit');alert('done')" completionHandler:nil];
+    EXPECT_WK_STREQ([uiDelegate waitForAlert], "done");
+}
+
 TEST(SiteIsolation, WindowOpenRedirect)
 {
     HTTPServer server({
@@ -616,6 +686,40 @@ TEST(SiteIsolation, WindowOpenRedirect)
     {
         auto [opener, opened] = openerAndOpenedViews(server, @"https://example.com/example4");
         EXPECT_WK_STREQ(opened.webView.get().URL.absoluteString, "https://apple.com/apple");
+    }
+}
+
+void pollUntilOpenedWindowIsClosed(RetainPtr<WKWebView> webView, bool& finished)
+{
+    [webView evaluateJavaScript:@"openedWindow.closed" completionHandler:makeBlockPtr([webView, &finished](id result, NSError *error) {
+        if ([result boolValue])
+            finished = true;
+        else
+            pollUntilOpenedWindowIsClosed(webView, finished);
+    }).get()];
+}
+
+TEST(SiteIsolation, ClosedStatePropagation)
+{
+    HTTPServer server({
+        { "/example"_s, { "<script>let openedWindow = window.open('https://webkit.org/webkit')</script>"_s } },
+        { "/webkit"_s, { "hi"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    {
+        bool openerSawClosedState = false;
+        auto [opener, opened] = openerAndOpenedViews(server);
+        [opened.webView evaluateJavaScript:@"window.close()" completionHandler:nil];
+        pollUntilOpenedWindowIsClosed(opener.webView, openerSawClosedState);
+        Util::run(&openerSawClosedState);
+    }
+
+    {
+        bool openerSawClosedState = false;
+        auto [opener, opened] = openerAndOpenedViews(server);
+        [opened.webView _close];
+        pollUntilOpenedWindowIsClosed(opener.webView, openerSawClosedState);
+        Util::run(&openerSawClosedState);
     }
 }
 
@@ -1085,7 +1189,7 @@ TEST(SiteIsolation, ChildNavigatingToDomainLoadedOnADifferentPage)
     EXPECT_NE(mainFramePid, 0);
     EXPECT_NE(childFramePid, 0);
     EXPECT_NE(mainFramePid, childFramePid);
-    EXPECT_EQ(firstFramePID, childFramePid);
+    EXPECT_NE(firstFramePID, childFramePid);
     EXPECT_WK_STREQ(mainFrame.info.securityOrigin.host, "example.com");
     EXPECT_WK_STREQ(childFrame.info.securityOrigin.host, "webkit.org");
 }
@@ -4010,7 +4114,7 @@ TEST(SiteIsolation, ReuseConfigurationLoadHTMLString)
     [webView2 loadHTMLString:@"hi!" baseURL:[NSURL URLWithString:@"https://webkit.org/"]];
     [webView2 _test_waitForDidFinishNavigation];
 
-    EXPECT_EQ([webView1 _webProcessIdentifier], [webView2 _webProcessIdentifier]);
+    EXPECT_NE([webView1 _webProcessIdentifier], [webView2 _webProcessIdentifier]);
 }
 
 static void callMethodOnFirstVideoElementInFrame(WKWebView *webView, NSString *methodName, WKFrameInfo *frame)
@@ -4610,6 +4714,50 @@ TEST(SiteIsolation, CompleteTextManipulationFailsInSomeFrame)
     TestWebKitAPI::Util::run(&done);
 }
 
+TEST(SiteIsolation, CreateWebArchive)
+{
+    HTTPServer server({
+        { "/mainframe"_s, { "<div>mainframe content</div><iframe src='https://apple.com/iframe'></iframe>"_s } },
+        { "/iframe"_s, { "<div>iframe content</div>"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto webViewAndDelegates = makeWebViewAndDelegates(server);
+    RetainPtr webView = webViewAndDelegates.webView;
+    RetainPtr navigationDelegate = webViewAndDelegates.navigationDelegate;
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/mainframe"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    static bool done = false;
+    [webView createWebArchiveDataWithCompletionHandler:^(NSData *result, NSError *error) {
+        EXPECT_NULL(error);
+        EXPECT_NOT_NULL(result);
+        NSDictionary* actualDictionary = [NSPropertyListSerialization propertyListWithData:result options:0 format:nil error:nil];
+        EXPECT_NOT_NULL(actualDictionary);
+        NSDictionary *expectedDictionary = @{
+            @"WebMainResource" : @{
+                @"WebResourceData" : [@"<html><head></head><body><div>mainframe content</div><iframe src=\"https://apple.com/iframe\"></iframe></body></html>" dataUsingEncoding:NSUTF8StringEncoding],
+                @"WebResourceFrameName" : @"",
+                @"WebResourceMIMEType" : @"text/html",
+                @"WebResourceTextEncodingName" : @"UTF-8",
+                @"WebResourceURL" : @"https://example.com/mainframe"
+            },
+            @"WebSubframeArchives" : @[ @{
+                @"WebMainResource" : @{
+                    @"WebResourceData" : [@"<html><head></head><body><div>iframe content</div></body></html>" dataUsingEncoding:NSUTF8StringEncoding],
+                    @"WebResourceFrameName" : @"<!--frame1-->",
+                    @"WebResourceMIMEType" : @"text/html",
+                    @"WebResourceTextEncodingName" : @"UTF-8",
+                    @"WebResourceURL" : @"https://apple.com/iframe"
+                }
+            } ],
+        };
+        EXPECT_TRUE([expectedDictionary isEqualToDictionary:actualDictionary]);
+        done = true;
+    }];
+    Util::run(&done);
+    done = false;
+}
+
 // FIXME: Re-enable this once the extra resize events are gone.
 // https://bugs.webkit.org/show_bug.cgi?id=292311 might do it.
 TEST(SiteIsolation, DISABLED_Events)
@@ -4699,5 +4847,25 @@ TEST(SiteIsolation, DISABLED_Events)
         EXPECT_TRUE(false);
     }
 }
+
+#if ENABLE(DRAG_SUPPORT) && PLATFORM(IOS_FAMILY) && !PLATFORM(MACCATALYST)
+TEST(SiteIsolation, DragAndDrop)
+{
+    HTTPServer server({
+        { "/example"_s, { "<iframe src='https://webkit.org/iframe'></iframe>"_s } },
+        { "/iframe"_s, { [NSData dataWithContentsOfURL:[NSBundle.test_resourcesBundle URLForResource:@"link-and-target-div" withExtension:@"html"]] } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server, CGRectMake(0, 0, 800, 600));
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    auto simulator = adoptNS([[DragAndDropSimulator alloc] initWithWebView:webView.get()]);
+    [simulator runFrom:CGPointMake(100, 50) to:CGPointMake(100, 300)];
+
+    NSArray *registeredTypes = [[simulator sourceItemProviders].firstObject registeredTypeIdentifiers];
+    EXPECT_WK_STREQ((__bridge NSString *)kUTTypeURL, [registeredTypes firstObject]);
+}
+#endif
 
 }

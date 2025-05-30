@@ -641,8 +641,6 @@ RefPtr<CSSCustomPropertyValue> CSSPropertyParser::parseTypedCustomPropertyValue(
 
 RefPtr<CSSValue> CSSPropertyParser::parseCounterStyleDescriptor(CSSPropertyID property, const String& string, const CSSParserContext& context)
 {
-    ASSERT(context.propertySettings.cssCounterStyleAtRulesEnabled);
-
     auto tokenizer = CSSTokenizer(string);
     auto range = tokenizer.tokenRange();
 
@@ -669,8 +667,6 @@ RefPtr<CSSValue> CSSPropertyParser::parseCounterStyleDescriptor(CSSPropertyID pr
 
 bool CSSPropertyParser::parseCounterStyleDescriptor(CSSPropertyID property)
 {
-    ASSERT(m_context.propertySettings.cssCounterStyleAtRulesEnabled);
-
     auto state = CSS::PropertyParserState {
         .context = m_context,
         .currentRule = StyleRuleType::CounterStyle,
@@ -3167,7 +3163,7 @@ bool CSSPropertyParser::consumeTextWrapShorthand(CSS::PropertyParserState& state
     for (unsigned propertiesParsed = 0; propertiesParsed < 2 && !m_range.atEnd(); ++propertiesParsed) {
         if (!mode && (mode = CSSPropertyParsing::consumeTextWrapMode(m_range)))
             continue;
-        if (m_context.propertySettings.cssTextWrapStyleEnabled && !style && (style = CSSPropertyParsing::consumeTextWrapStyle(m_range, state)))
+        if (!style && (style = CSSPropertyParsing::consumeTextWrapStyle(m_range, state)))
             continue;
         // If we didn't find at least one match, this is an invalid shorthand and we have to ignore it.
         return false;

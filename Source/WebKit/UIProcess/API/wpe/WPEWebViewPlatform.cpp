@@ -35,8 +35,11 @@
 #include "NativeWebTouchEvent.h"
 #include "NativeWebWheelEvent.h"
 #include "ScreenManager.h"
+#include "UIGamepadProvider.h"
 #include "WebPreferences.h"
 #include <WebCore/Cursor.h>
+#include <WebCore/SystemSettings.h>
+#include <wtf/glib/GUniquePtr.h>
 
 #if USE(CAIRO)
 #include <WebCore/RefPtrCairo.h>
@@ -51,14 +54,14 @@ IGNORE_CLANG_WARNINGS_END
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_END
 #endif
 
-using namespace WebKit;
-
 namespace WKWPE {
+using namespace WebKit;
 
 ViewPlatform::ViewPlatform(WPEDisplay* display, const API::PageConfiguration& configuration)
     : m_wpeView(adoptGRef(wpe_view_new(display)))
 {
     ASSERT(m_wpeView);
+    g_object_set_data(G_OBJECT(m_wpeView.get()), "wk-view", this);
 
     m_inputMethodFilter.setUseWPEPlatformEvents(true);
     m_size.setWidth(wpe_view_get_width(m_wpeView.get()));
@@ -134,13 +137,21 @@ ViewPlatform::ViewPlatform(WPEDisplay* display, const API::PageConfiguration& co
 
     auto& pageConfiguration = m_pageProxy->configuration();
     m_pageProxy->initializeWebPage(pageConfiguration.openedSite(), pageConfiguration.initialSandboxFlags());
+
+    WebCore::SystemSettings::singleton().addObserver([this](const auto& state) {
+        if (state.darkMode)
+            page().effectiveAppearanceDidChange();
+    }, this);
 }
 
 ViewPlatform::~ViewPlatform()
 {
+    WebCore::SystemSettings::singleton().removeObserver(this);
     g_signal_handlers_disconnect_by_data(m_wpeView.get(), this);
+    dispatchPendingNextPresentationUpdateCallbacks();
     m_inputMethodFilter.setContext(nullptr);
     m_backingStore = nullptr;
+    g_object_set_data(G_OBJECT(m_wpeView.get()), "wk-view", nullptr);
 }
 
 #if ENABLE(FULLSCREEN_API)
@@ -207,6 +218,34 @@ void ViewPlatform::requestExitFullScreen()
 }
 #endif // ENABLE(FULLSCREEN_API)
 
+#if ENABLE(GAMEPAD)
+WebPageProxy* ViewPlatform::platformWebPageProxyForGamepadInput()
+{
+    // Find the visible view getting the input focus in the active toplevel.
+    GUniquePtr<GList> toplevels(wpe_toplevel_list());
+    for (GList* iter = toplevels.get(); iter; iter = g_list_next(iter)) {
+        auto* toplevel = WPE_TOPLEVEL(iter->data);
+        if (wpe_toplevel_get_state(toplevel) != WPE_TOPLEVEL_STATE_ACTIVE)
+            continue;
+
+        WPEView* view = nullptr;
+        wpe_toplevel_foreach_view(toplevel, +[](WPEToplevel* toplevel, WPEView* view, gpointer userData) -> gboolean {
+            if (wpe_view_get_visible(view) && wpe_view_get_has_focus(view)) {
+                *static_cast<WPEView**>(userData) = view;
+                return TRUE;
+            }
+            return FALSE;
+        }, &view);
+
+        if (view) {
+            if (auto* wkView = g_object_get_data(G_OBJECT(view), "wk-view"))
+                return &static_cast<View*>(wkView)->page();
+        }
+    }
+    return nullptr;
+}
+#endif
+
 void ViewPlatform::updateAcceleratedSurface(uint64_t surfaceID)
 {
     m_backingStore->updateSurfaceID(surfaceID);
@@ -237,10 +276,20 @@ bool ViewPlatform::activityStateChanged(WebCore::ActivityState state, bool value
         if (m_viewStateFlags.contains(state))
             return false;
 
+#if ENABLE(GAMEPAD)
+        if (state == WebCore::ActivityState::WindowIsActive)
+            UIGamepadProvider::singleton().viewBecameActive(page());
+#endif
+
         m_viewStateFlags.add(state);
     } else {
         if (!m_viewStateFlags.contains(state))
             return false;
+
+#if ENABLE(GAMEPAD)
+        if (state == WebCore::ActivityState::WindowIsActive)
+            UIGamepadProvider::singleton().viewBecameInactive(page());
+#endif
 
         m_viewStateFlags.remove(state);
     }
@@ -307,7 +356,7 @@ Vector<WebKit::WebPlatformTouchPoint> ViewPlatform::touchPointsForEvent(WPEEvent
         double x, y;
         wpe_event_get_position(currentEvent, &x, &y);
         WebCore::IntPoint position(x, y);
-        points.append(WebPlatformTouchPoint(it.key, stateForEvent(it.key, currentEvent), position, position));
+        points.append(WebPlatformTouchPoint(it.key, stateForEvent(it.key, event), position, position));
     }
     return points;
 }
@@ -592,15 +641,21 @@ void ViewPlatform::didLosePointerLock()
 }
 #endif
 
+void ViewPlatform::dispatchPendingNextPresentationUpdateCallbacks()
+{
+    while (!m_nextPresentationUpdateCallbacks.isEmpty()) {
+        auto callback = m_nextPresentationUpdateCallbacks.takeLast();
+        callback();
+    }
+}
+
 void ViewPlatform::callAfterNextPresentationUpdate(CompletionHandler<void()>&& callback)
 {
-    RELEASE_ASSERT(!m_nextPresentationUpdateCallback);
-    m_nextPresentationUpdateCallback = WTFMove(callback);
+    m_nextPresentationUpdateCallbacks.insert(0, WTFMove(callback));
     if (!m_bufferRenderedID) {
         m_bufferRenderedID = g_signal_connect_after(m_wpeView.get(), "buffer-rendered", G_CALLBACK(+[](WPEView* view, WPEBuffer*, gpointer userData) {
             auto& webView = *reinterpret_cast<ViewPlatform*>(userData);
-            if (webView.m_nextPresentationUpdateCallback)
-                webView.m_nextPresentationUpdateCallback();
+            webView.dispatchPendingNextPresentationUpdateCallbacks();
         }), this);
     }
 }

@@ -63,6 +63,7 @@
 #include "EventTargetInlines.h"
 #include "FourCC.h"
 #include "FrameLoader.h"
+#include "FrameMemoryMonitor.h"
 #include "HTMLAudioElement.h"
 #include "HTMLParserIdioms.h"
 #include "HTMLSourceElement.h"
@@ -117,6 +118,7 @@
 #include "ResourceLoadInfo.h"
 #include "ScriptController.h"
 #include "ScriptDisallowedScope.h"
+#include "ScriptExecutionContextInlines.h"
 #include "ScriptSourceCode.h"
 #include "SecurityOriginData.h"
 #include "SecurityPolicy.h"
@@ -143,7 +145,6 @@
 #include <limits>
 #include <pal/SessionID.h>
 #include <ranges>
-#include <wtf/Algorithms.h>
 #include <wtf/JSONValues.h>
 #include <wtf/Language.h>
 #include <wtf/MathExtras.h>
@@ -621,11 +622,9 @@ HTMLMediaElement::HTMLMediaElement(const QualifiedName& tagName, Document& docum
     , m_remote(RemotePlayback::create(*this))
 #endif
 {
-    RefPtr protectedMainFrameDocument = document.mainFrameDocument();
-    if (protectedMainFrameDocument) {
-        m_shouldAudioPlaybackRequireUserGesture = protectedMainFrameDocument->requiresUserGestureForAudioPlayback() && !processingUserGestureForMedia();
-        m_shouldVideoPlaybackRequireUserGesture = protectedMainFrameDocument->requiresUserGestureForVideoPlayback() && !processingUserGestureForMedia();
-    }
+    RefPtr page = document.page();
+    m_shouldAudioPlaybackRequireUserGesture = page && page->requiresUserGestureForAudioPlayback() && !processingUserGestureForMedia();
+    m_shouldVideoPlaybackRequireUserGesture = page && page->requiresUserGestureForVideoPlayback() && !processingUserGestureForMedia();
 
     allMediaElements().add(*this);
 
@@ -1797,6 +1796,22 @@ MediaPlayer::Preload HTMLMediaElement::effectivePreloadValue() const
     return m_preload;
 }
 
+#if USE(AVFOUNDATION) && ENABLE(MEDIA_SOURCE)
+static VideoMediaSampleRendererPreferences videoMediaSampleRendererPreferences(const Settings& settings)
+{
+    VideoMediaSampleRendererPreferences preferences { VideoMediaSampleRendererPreference::PrefersDecompressionSession };
+#if USE(MODERN_AVCONTENTKEYSESSION_WITH_VTDECOMPRESSIONSESSION)
+    if (settings.videoRendererProtectedFallbackDisabled())
+        preferences.add(VideoMediaSampleRendererPreference::ProtectedFallbackDisabled);
+    if (settings.videoRendererUseDecompressionSessionForProtected())
+        preferences.add(VideoMediaSampleRendererPreference::UseDecompressionSessionForProtectedContent);
+#else
+    UNUSED_PARAM(settings);
+#endif
+    return preferences;
+}
+#endif
+
 void HTMLMediaElement::loadResource(const URL& initialURL, const ContentType& initialContentType)
 {
     ASSERT(initialURL.isEmpty() || isSafeToLoadURL(initialURL, InvalidURLAction::Complain));
@@ -1917,6 +1932,7 @@ void HTMLMediaElement::loadResource(const URL& initialURL, const ContentType& in
             return;
         }
 
+
         MediaPlayer::LoadOptions options = {
             .contentType = *result,
             .requiresRemotePlayback = !!protectedThis->m_remotePlaybackConfiguration,
@@ -1924,6 +1940,10 @@ void HTMLMediaElement::loadResource(const URL& initialURL, const ContentType& in
         };
 
 #if ENABLE(MEDIA_SOURCE)
+#if USE(AVFOUNDATION)
+        if (protectedThis->document().settings().mediaSourcePrefersDecompressionSession())
+            options.videoMediaSampleRendererPreferences = videoMediaSampleRendererPreferences(protectedThis->document().settings());
+#endif
         if (!protectedThis->m_mediaSource && url.protocolIs(mediaSourceBlobProtocol) && !protectedThis->m_remotePlaybackConfiguration) {
             if (RefPtr mediaSource = MediaSource::lookup(url.string()))
                 protectedThis->m_mediaSource = MediaSourceInterfaceMainThread::create(mediaSource.releaseNonNull());
@@ -2509,6 +2529,12 @@ void HTMLMediaElement::audioTrackLanguageChanged(AudioTrack& track)
         audioTracks->scheduleChangeEvent();
 }
 
+void HTMLMediaElement::audioTrackConfigurationChanged(AudioTrack& track)
+{
+    UNUSED_PARAM(track);
+    ALWAYS_LOG(LOGIDENTIFIER, ", "_s, MediaElementSession::descriptionForTrack(track));
+}
+
 void HTMLMediaElement::willRemoveAudioTrack(AudioTrack& track)
 {
     removeAudioTrack(track);
@@ -2578,6 +2604,12 @@ void HTMLMediaElement::videoTrackSelectedChanged(VideoTrack& track)
     if (RefPtr videoTracks = m_videoTracks; videoTracks && videoTracks->contains(track))
         videoTracks->scheduleChangeEvent();
     checkForAudioAndVideo();
+}
+
+void HTMLMediaElement::videoTrackConfigurationChanged(VideoTrack& track)
+{
+    UNUSED_PARAM(track);
+    ALWAYS_LOG(LOGIDENTIFIER, ", "_s, MediaElementSession::descriptionForTrack(track));
 }
 
 void HTMLMediaElement::videoTrackKindChanged(VideoTrack& track)
@@ -2993,6 +3025,10 @@ void HTMLMediaElement::setNetworkState(MediaPlayer::NetworkState state)
                 .requiresRemotePlayback = !!protectedThis->m_remotePlaybackConfiguration,
                 .supportsLimitedMatroska = protectedThis->limitedMatroskaSupportEnabled()
             };
+#if ENABLE(MEDIA_SOURCE) && USE(AVFOUNDATION)
+            if (protectedThis->document().settings().mediaSourcePrefersDecompressionSession())
+                options.videoMediaSampleRendererPreferences = videoMediaSampleRendererPreferences(protectedThis->document().settings());
+#endif
             if (result->isEmpty() || lastContentType == *result || !player->load(url, options))
                 protectedThis->mediaLoadingFailed(MediaPlayer::NetworkState::FormatError);
             else
@@ -4984,12 +5020,22 @@ void HTMLMediaElement::mediaPlayerDidRemoveVideoTrack(VideoTrackPrivate& track)
     track.willBeRemoved();
 }
 
+void HTMLMediaElement::mediaPlayerDidReportGPUMemoryFootprint(size_t footPrint)
+{
+
+    RefPtr frame = document().frame();
+
+    if (frame && !frame->isMainFrame())
+        document().protectedFrameMemoryMonitor()->setUsage(footPrint);
+}
+
 void HTMLMediaElement::addAudioTrack(Ref<AudioTrack>&& track)
 {
 #if !RELEASE_LOG_DISABLED
     track->setLogger(protectedLogger(), logIdentifier());
 #endif
     track->addClient(*this);
+    ALWAYS_LOG(LOGIDENTIFIER, "id: "_s, track->id(), ", "_s, MediaElementSession::descriptionForTrack(track));
     ensureAudioTracks().append(WTFMove(track));
 }
 
@@ -5021,6 +5067,7 @@ void HTMLMediaElement::addVideoTrack(Ref<VideoTrack>&& track)
     track->setLogger(protectedLogger(), logIdentifier());
 #endif
     track->addClient(*this);
+    ALWAYS_LOG(LOGIDENTIFIER, "id: "_s, track->id(), ", "_s, MediaElementSession::descriptionForTrack(track));
     ensureVideoTracks().append(WTFMove(track));
 }
 
@@ -5029,6 +5076,7 @@ void HTMLMediaElement::removeAudioTrack(Ref<AudioTrack>&& track)
     if (!m_audioTracks || !m_audioTracks->contains(track))
         return;
     track->clearClient(*this);
+    ALWAYS_LOG(LOGIDENTIFIER, "id: "_s, track->id(), ", "_s, MediaElementSession::descriptionForTrack(track));
     m_audioTracks->remove(track.get());
 }
 
@@ -5066,6 +5114,7 @@ void HTMLMediaElement::removeVideoTrack(Ref<VideoTrack>&& track)
     if (!m_videoTracks || !m_videoTracks->contains(track))
         return;
     track->clearClient(*this);
+    ALWAYS_LOG(LOGIDENTIFIER, "id: "_s, track->id(), ", "_s, MediaElementSession::descriptionForTrack(track));
     RefPtr { m_videoTracks }->remove(track);
 }
 
@@ -6223,15 +6272,20 @@ Ref<TimeRanges> HTMLMediaElement::played()
 
 Ref<TimeRanges> HTMLMediaElement::seekable() const
 {
+    return TimeRanges::create(platformSeekable());
+}
+
+PlatformTimeRanges HTMLMediaElement::platformSeekable() const
+{
 #if ENABLE(MEDIA_SOURCE)
     if (m_mediaSource)
         return m_mediaSource->seekable();
 #endif
 
     if (m_player)
-        return TimeRanges::create(m_player->seekable());
+        return m_player->seekable();
 
-    return TimeRanges::create();
+    return { };
 }
 
 double HTMLMediaElement::seekableTimeRangesLastModifiedTime() const
@@ -8019,9 +8073,6 @@ void HTMLMediaElement::createMediaPlayer() WTF_IGNORES_THREAD_SAFETY_ANALYSIS
     player->setVisibleInViewport(isVisibleInViewport());
     player->setInFullscreenOrPictureInPicture(isFullscreen());
 
-#if USE(AVFOUNDATION) && ENABLE(MEDIA_SOURCE)
-    player->setDecompressionSessionPreferences(document().settings().mediaSourcePrefersDecompressionSession(), document().settings().mediaSourceCanFallbackToDecompressionSession());
-#endif
     schedulePlaybackControlsManagerUpdate();
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA) && ENABLE(ENCRYPTED_MEDIA)
     updateShouldContinueAfterNeedKey();
@@ -8597,11 +8648,6 @@ void HTMLMediaElement::mediaPlayerBufferedTimeRangesChanged()
     });
 }
 
-bool HTMLMediaElement::mediaPlayerPrefersSandboxedParsing() const
-{
-    return document().settings().preferSandboxedMediaParsing();
-}
-
 void HTMLMediaElement::removeBehaviorRestrictionsAfterFirstUserGesture(MediaElementSession::BehaviorRestrictions mask)
 {
     MediaElementSession::BehaviorRestrictions restrictionsToRemove = mask &
@@ -8635,18 +8681,16 @@ void HTMLMediaElement::updateRateChangeRestrictions()
     if (!document.ownerElement() && document.isMediaDocument())
         return;
 
-    RefPtr mainFrameDocument = document.protectedMainFrameDocument();
-    if (!mainFrameDocument) {
-        LOG_ONCE(SiteIsolation, "Unable to fully perform HTMLMediaElement::updateRateChangeRestrictions() without access to the main frame document ");
+    RefPtr page = document.page();
+    if (!page)
         return;
-    }
 
-    if (mainFrameDocument->requiresUserGestureForVideoPlayback())
+    if (page->requiresUserGestureForVideoPlayback())
         mediaSession().addBehaviorRestriction(MediaElementSession::RequireUserGestureForVideoRateChange);
     else
         mediaSession().removeBehaviorRestriction(MediaElementSession::RequireUserGestureForVideoRateChange);
 
-    if (mainFrameDocument->requiresUserGestureForAudioPlayback())
+    if (page->requiresUserGestureForAudioPlayback())
         mediaSession().addBehaviorRestriction(MediaElementSession::RequireUserGestureForAudioRateChange);
     else
         mediaSession().removeBehaviorRestriction(MediaElementSession::RequireUserGestureForAudioRateChange);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2012-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2018 Sony Interactive Entertainment Inc.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -94,7 +94,7 @@
 #include <WebCore/SecurityOriginData.h>
 #include <WebCore/SecurityPolicy.h>
 #include <WebCore/UserContentURLPattern.h>
-#include <wtf/Algorithms.h>
+#include <algorithm>
 #include <wtf/CallbackAggregator.h>
 #include <wtf/CryptographicallyRandomNumber.h>
 #include <wtf/OptionSet.h>
@@ -299,7 +299,7 @@ void NetworkProcess::initializeNetworkProcess(NetworkProcessCreationParameters&&
 {
     CompletionHandlerCallingScope callCompletionHandler(WTFMove(completionHandler));
 
-    applyProcessCreationParameters(parameters.auxiliaryProcessParameters);
+    applyProcessCreationParameters(WTFMove(parameters.auxiliaryProcessParameters));
 #if HAVE(SEC_KEY_PROXY)
     WTF::setProcessPrivileges({ ProcessPrivilege::CanAccessRawCookies });
 #else
@@ -650,7 +650,7 @@ void NetworkProcess::ensureSessionWithDataStoreIdentifierRemoved(WTF::UUID ident
     completionHandler();
 }
 
-void NetworkProcess::registrableDomainsWithLastAccessedTime(PAL::SessionID sessionID, CompletionHandler<void(std::optional<HashMap<RegistrableDomain, WallTime>>)>&& completionHandler)
+void NetworkProcess::registrableDomainsWithLastAccessedTime(PAL::SessionID sessionID, CompletionHandler<void(std::optional<HashMap<RegistrableDomain, WallTime>>&&)>&& completionHandler)
 {
     if (auto* session = networkSession(sessionID)) {
         if (auto* resourceLoadStatistics = session->resourceLoadStatistics()) {
@@ -1150,7 +1150,7 @@ void NetworkProcess::hasLocalStorage(PAL::SessionID sessionID, const Registrable
 
     auto types = OptionSet<WebsiteDataType> { WebsiteDataType::LocalStorage };
     session->protectedStorageManager()->fetchData(types, NetworkStorageManager::ShouldComputeSize::No, [domain, completionHandler = WTFMove(completionHandler)](auto entries) mutable {
-        completionHandler(WTF::anyOf(entries, [&domain](auto& entry) {
+        completionHandler(std::ranges::any_of(entries, [&domain](auto& entry) {
             return domain.matches(entry.origin);
         }));
     });
@@ -1500,12 +1500,6 @@ void NetworkProcess::setPrivateClickMeasurementDebugMode(PAL::SessionID sessionI
 {
     if (auto* session = networkSession(sessionID))
         session->setPrivateClickMeasurementDebugMode(enabled);
-}
-
-void NetworkProcess::setBlobRegistryTopOriginPartitioningEnabled(PAL::SessionID sessionID, bool enabled) const
-{
-    if (auto* session = networkSession(sessionID))
-        session->setBlobRegistryTopOriginPartitioningEnabled(enabled);
 }
 
 void NetworkProcess::setShouldSendPrivateTokenIPCForTesting(PAL::SessionID sessionID, bool enabled) const
@@ -3041,7 +3035,7 @@ void NetworkProcess::clearBundleIdentifier(CompletionHandler<void()>&& completio
 
 bool NetworkProcess::shouldDisableCORSForRequestTo(PageIdentifier pageIdentifier, const URL& url) const
 {
-    return WTF::anyOf(m_extensionCORSDisablingPatterns.get(pageIdentifier), [&] (const auto& pattern) {
+    return std::ranges::any_of(m_extensionCORSDisablingPatterns.get(pageIdentifier), [&](auto& pattern) {
         return pattern.matches(url);
     });
 }
@@ -3247,8 +3241,9 @@ ShouldRelaxThirdPartyCookieBlocking NetworkProcess::shouldRelaxThirdPartyCookieB
 void NetworkProcess::resetResourceMonitorThrottlerForTesting(PAL::SessionID sessionID, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID))
-        session->resetResourceMonitorThrottlerForTesting();
-    completionHandler();
+        session->clearResourceMonitorThrottlerData(WTFMove(completionHandler));
+    else
+        completionHandler();
 }
 #endif
 

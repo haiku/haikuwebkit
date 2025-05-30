@@ -297,6 +297,7 @@ Modules/model-element/ModelPlayer.cpp
 Modules/model-element/ModelPlayerAnimationState.cpp
 Modules/model-element/ModelPlayerClient.cpp
 Modules/model-element/ModelPlayerProvider.cpp
+Modules/model-element/PlaceholderModelPlayer.cpp
 Modules/model-element/dummy/DummyModelPlayer.cpp
 Modules/model-element/dummy/DummyModelPlayerProvider.cpp
 Modules/notifications/Notification.cpp
@@ -969,7 +970,6 @@ css/CSSVariableReferenceValue.cpp
 css/CSSViewValue.cpp
 css/CSSViewTransitionRule.cpp
 css/ComputedStyleDependencies.cpp
-css/ComputedStyleExtractor.cpp
 css/DOMCSSNamespace.cpp
 css/DOMCSSPaintWorklet.cpp
 css/DOMCSSRegisterCustomProperty.cpp
@@ -992,7 +992,6 @@ css/MediaQueryMatcher.cpp
 css/MediaQueryParserContext.cpp
 css/MutableStyleProperties.cpp
 css/PropertySetCSSDescriptors.cpp
-css/SVGCSSComputedStyleDeclaration.cpp
 css/SelectorChecker.cpp
 css/SelectorFilter.cpp
 css/ShorthandSerializer.cpp
@@ -2017,6 +2016,7 @@ loader/ResourceLoadObserver.cpp
 loader/ResourceLoadStatistics.cpp
 loader/ResourceLoader.cpp
 loader/ResourceMonitor.cpp
+loader/FrameMemoryMonitor.cpp
 loader/ResourceMonitorChecker.cpp
 loader/ResourceMonitorPersistence.cpp
 loader/ResourceMonitorThrottler.cpp
@@ -2040,7 +2040,6 @@ loader/appcache/ApplicationCacheManifestParser.cpp
 loader/appcache/ApplicationCacheResource.cpp
 loader/appcache/ApplicationCacheResourceLoader.cpp
 loader/appcache/ApplicationCacheStorage.cpp
-loader/appcache/DOMApplicationCache.cpp
 loader/archive/Archive.cpp
 loader/archive/ArchiveFactory.cpp
 loader/archive/ArchiveResource.cpp
@@ -2088,7 +2087,6 @@ mathml/MathMLUnknownElement.cpp
 page/ActivityState.cpp
 page/AutoscrollController.cpp
 page/BarProp.cpp
-page/Base64Utilities.cpp
 page/CaptionUserPreferences.cpp
 page/Chrome.cpp
 page/ChromeClient.cpp
@@ -2177,6 +2175,7 @@ page/ProcessWarming.cpp
 page/Quirks.cpp
 page/RemoteDOMWindow.cpp
 page/RemoteFrame.cpp
+page/RemoteFrameGeometryTransformer.cpp
 page/RemoteFrameView.cpp
 page/RenderingUpdateScheduler.cpp
 page/ResizeObservation.cpp
@@ -2277,6 +2276,7 @@ platform/EventTrackingRegions.cpp
 platform/FileChooser.cpp
 platform/FileMonitor.cpp
 platform/FileStream.cpp
+platform/FixedContainerEdges.cpp
 platform/FrameRateMonitor.cpp
 platform/KeyboardScroll.cpp
 platform/KeyboardScrollingAnimator.cpp
@@ -2786,7 +2786,6 @@ rendering/CounterNode.cpp
 rendering/EllipsisBoxPainter.cpp
 rendering/EventRegion.cpp
 rendering/FixedTableLayout.cpp
-rendering/FlexibleBoxAlgorithm.cpp
 rendering/FloatingObjects.cpp
 rendering/Grid.cpp
 rendering/GridBaselineAlignment.cpp
@@ -3120,6 +3119,7 @@ style/RuleSetBuilder.cpp
 style/StyleAdjuster.cpp
 style/StyleBuilder.cpp
 style/StyleBuilderState.cpp
+style/StyleExtractor.cpp
 style/StyleChange.cpp
 style/StyleFontSizeFunctions.cpp
 style/StyleInterpolation.cpp
@@ -3464,6 +3464,7 @@ MathMLElementFactory.cpp
 ProcessSyncClient.cpp
 SVGElementFactory.cpp
 StyleBuilderGenerated.cpp
+StyleExtractorGenerated.cpp
 StyleInterpolationWrapperMap.cpp
 StylePropertyShorthandFunctions.cpp
 UserAgentStyleSheetsData.cpp
@@ -3710,7 +3711,6 @@ JSCustomElementRegistry.cpp
 JSCustomEvent.cpp
 JSCustomStateSet.cpp
 JSCurrentUserDetailsOptions.cpp
-JSDOMApplicationCache.cpp
 JSDOMAudioSession.cpp
 JSDOMCSSCustomPropertyDescriptor.cpp
 JSDOMCSSNamespace.cpp

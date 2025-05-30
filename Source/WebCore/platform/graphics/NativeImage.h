@@ -27,9 +27,6 @@
 
 #pragma once
 
-#include "Color.h"
-#include "ImagePaintingOptions.h"
-#include "IntSize.h"
 #include "PlatformImage.h"
 #include "RenderingResource.h"
 #include <wtf/TZoneMalloc.h>
@@ -37,8 +34,14 @@
 
 namespace WebCore {
 
+class Color;
+class DestinationColorSpace;
+class FloatRect;
 class GraphicsContext;
+class IntSize;
 class NativeImageBackend;
+struct Headroom;
+struct ImagePaintingOptions;
 
 class NativeImage final : public RenderingResource {
     WTF_MAKE_TZONE_ALLOCATED(NativeImage);
@@ -55,9 +58,11 @@ public:
     bool hasAlpha() const;
     std::optional<Color> singlePixelSolidColor() const;
     WEBCORE_EXPORT DestinationColorSpace colorSpace() const;
+    WEBCORE_EXPORT bool hasHDRContent() const;
     WEBCORE_EXPORT Headroom headroom() const;
 
     void draw(GraphicsContext&, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions);
+    void drawWithToneMapping(GraphicsContext&, const FloatRect& destinationRect, const FloatRect& sourceRect, ImagePaintingOptions);
     void clearSubimages();
 
     WEBCORE_EXPORT void replaceBackend(UniqueRef<NativeImageBackend>);

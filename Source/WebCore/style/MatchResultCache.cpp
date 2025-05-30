@@ -77,7 +77,6 @@ inline UnadjustedStyle copy(const UnadjustedStyle& other)
 {
     return {
         .style = RenderStyle::clonePtr(*other.style),
-        .userAgentAppearanceStyle = other.userAgentAppearanceStyle ? RenderStyle::clonePtr(*other.userAgentAppearanceStyle) : nullptr,
         .relations = other.relations ? makeUnique<Relations>(*other.relations) : std::unique_ptr<Relations> { },
         .matchResult = other.matchResult
     };
@@ -169,6 +168,14 @@ const std::optional<CachedMatchResult> MatchResultCache::resultWithCurrentInline
 void MatchResultCache::update(CachedMatchResult& result, const RenderStyle& style)
 {
     result.styleToUpdate.get() = RenderStyle::clone(style);
+}
+
+void MatchResultCache::updateForFastPathInherit(const Element& element, const RenderStyle& parentStyle)
+{
+    auto entry = m_entries.get(element);
+    if (!entry)
+        return;
+    entry->unadjustedStyle.style->fastPathInheritFrom(parentStyle);
 }
 
 void MatchResultCache::set(const Element& element, const UnadjustedStyle& unadjustedStyle)

@@ -33,6 +33,7 @@
 #include "AccessibilityTable.h"
 #include "AccessibilityTableCell.h"
 #include "AccessibilityTableRow.h"
+#include "DocumentInlines.h"
 #include "FrameSelection.h"
 #include "LocalFrameView.h"
 #include "Page.h"
@@ -612,6 +613,12 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
             properties.append({ AXProperty::AccessibilityText, WTFMove(axTextValue) });
             break;
         }
+        case AXProperty::ARIARoleDescription:
+            properties.append({ AXProperty::ARIARoleDescription, axObject.ariaRoleDescription().isolatedCopy() });
+            break;
+        case AXProperty::ARIALevel:
+            properties.append({ AXProperty::ARIALevel, axObject.ariaLevel() });
+            break;
         case AXProperty::ValueAutofillButtonType:
             properties.append({ AXProperty::ValueAutofillButtonType, static_cast<int>(axObject.valueAutofillButtonType()) });
             properties.append({ AXProperty::IsValueAutofillAvailable, axObject.isValueAutofillAvailable() });
@@ -625,9 +632,11 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::BrailleRoleDescription:
             properties.append({ AXProperty::BrailleRoleDescription, axObject.brailleRoleDescription().isolatedCopy() });
             break;
-        case AXProperty::AXColumnIndex:
-            properties.append({ AXProperty::AXColumnIndex, axObject.axColumnIndex() });
+        case AXProperty::AXColumnIndex: {
+            if (std::optional<unsigned> columnIndex = axObject.axColumnIndex())
+                properties.append({ AXProperty::AXColumnIndex, *columnIndex });
             break;
+        }
         case AXProperty::CanSetFocusAttribute:
             properties.append({ AXProperty::CanSetFocusAttribute, axObject.canSetFocusAttribute() });
             break;
@@ -661,9 +670,11 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::DocumentLinks:
             properties.append({ AXProperty::DocumentLinks, axIDs(axObject.documentLinks()) });
             break;
-        case AXProperty::ExplicitOrientation:
-            properties.append({ AXProperty::ExplicitOrientation, axObject.explicitOrientation() });
+        case AXProperty::ExplicitOrientation: {
+            if (std::optional<AccessibilityOrientation> orientation = axObject.explicitOrientation())
+                properties.append({ AXProperty::ExplicitOrientation, *orientation });
             break;
+        }
         case AXProperty::ExtendedDescription:
             properties.append({ AXProperty::ExtendedDescription, axObject.extendedDescription().isolatedCopy() });
             break;
@@ -673,8 +684,9 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::IdentifierAttribute:
             properties.append({ AXProperty::IdentifierAttribute, axObject.identifierAttribute().isolatedCopy() });
             break;
-        case AXProperty::InsideLink:
-            properties.append({ AXProperty::InsideLink, axObject.insideLink() });
+        case AXProperty::InputType:
+            if (std::optional inputType = axObject.inputType())
+                properties.append({ AXProperty::InputType, *inputType });
             break;
         case AXProperty::InternalLinkElement: {
             auto* linkElement = axObject.internalLinkElement();
@@ -710,6 +722,9 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::IsVisible:
             properties.append({ AXProperty::IsVisible, axObject.isVisible() });
             break;
+        case AXProperty::IsVisited:
+            properties.append({ AXProperty::IsVisited, axObject.isVisited() });
+            break;
         case AXProperty::MaxValueForRange:
             properties.append({ AXProperty::MaxValueForRange, axObject.maxValueForRange() });
             break;
@@ -731,18 +746,17 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::HasRemoteFrameChild:
             properties.append({ AXProperty::HasRemoteFrameChild, axObject.hasRemoteFrameChild() });
             break;
-        case AXProperty::RoleDescription:
-            properties.append({ AXProperty::RoleDescription, axObject.roleDescription().isolatedCopy() });
-            break;
         case AXProperty::RowIndex:
             properties.append({ AXProperty::RowIndex, axObject.rowIndex() });
             break;
         case AXProperty::RowIndexRange:
             properties.append({ AXProperty::RowIndexRange, axObject.rowIndexRange() });
             break;
-        case AXProperty::AXRowIndex:
-            properties.append({ AXProperty::AXRowIndex, axObject.axRowIndex() });
+        case AXProperty::AXRowIndex: {
+            if (std::optional<unsigned> rowIndex = axObject.axRowIndex())
+                properties.append({ AXProperty::AXRowIndex, *rowIndex });
             break;
+        }
         case AXProperty::CellScope:
             properties.append({ AXProperty::CellScope, axObject.cellScope().isolatedCopy() });
             break;
@@ -781,20 +795,28 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
             properties.append({ AXProperty::SupportsSetSize, axObject.supportsSetSize() });
             break;
         case AXProperty::TextInputMarkedTextMarkerRange: {
-            std::pair<Markable<AXID>, CharacterRange> value;
+            AXIDAndCharacterRange value;
             auto range = axObject.textInputMarkedTextMarkerRange();
             if (auto characterRange = range.characterRange(); range && characterRange)
                 value = { range.start().objectID(), *characterRange };
-            properties.append({ AXProperty::TextInputMarkedTextMarkerRange, WTFMove(value) });
+            properties.append({ AXProperty::TextInputMarkedTextMarkerRange, std::make_shared<AXIDAndCharacterRange>(value) });
             break;
         }
 #if ENABLE(AX_THREAD_TEXT_APIS)
         case AXProperty::BackgroundColor:
             properties.append({ AXProperty::BackgroundColor, axObject.backgroundColor() });
             break;
-        case AXProperty::Font:
-            properties.append({ AXProperty::Font, axObject.font() });
+        case AXProperty::Font: {
+            if (RefPtr parent = axObject.parentObject()) {
+                RetainPtr font = axObject.font();
+                if (font != parent->font()) {
+                    properties.append({ AXProperty::Font, WTFMove(font) });
+                    break;
+                }
+            }
+            properties.append({ AXProperty::Font, nullptr });
             break;
+        }
         case AXProperty::HasLinethrough:
             properties.append({ AXProperty::HasLinethrough, axObject.lineDecorationStyle().hasLinethrough });
             break;
@@ -813,11 +835,20 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
         case AXProperty::LinethroughColor:
             properties.append({ AXProperty::LinethroughColor, axObject.lineDecorationStyle().linethroughColor });
             break;
-        case AXProperty::TextColor:
-            properties.append({ AXProperty::TextColor, axObject.textColor() });
+        case AXProperty::TextColor: {
+            if (RefPtr parent = axObject.parentObject()) {
+                auto color = axObject.textColor();
+                if (color != parent->textColor()) {
+                    properties.append({ AXProperty::TextColor, color });
+                    break;
+                }
+            }
+            // Setting text color to nullptr will remove it from the property map, and allow it to be inherited from an ancestor.
+            properties.append({ AXProperty::TextColor, nullptr });
             break;
+        }
         case AXProperty::TextRuns:
-            properties.append({ AXProperty::TextRuns, axObject.textRuns() });
+            properties.append({ AXProperty::TextRuns, std::make_shared<AXTextRuns>(axObject.textRuns()) });
             break;
         case AXProperty::UnderlineColor:
             properties.append({ AXProperty::UnderlineColor, axObject.lineDecorationStyle().underlineColor });
@@ -958,7 +989,7 @@ void AXIsolatedTree::updateChildren(AccessibilityObject& axObject, ResolveNodeCh
             // Don't immediately resolve node changes in these recursive calls to updateChildren. This avoids duplicate node change creation in this scenario:
             //   1. Some subtree is updated in the below call to updateChildren.
             //   2. Later in this function, when updating axAncestor, we update some higher subtree that includes the updated subtree from step 1.
-            updateChildren(liveChild, ResolveNodeChanges::No);
+            queueNodeUpdate(liveChild->objectID(), NodeUpdateOptions::childrenUpdate());
         }
     }
 #endif // !ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
@@ -979,7 +1010,7 @@ void AXIsolatedTree::updateChildren(AccessibilityObject& axObject, ResolveNodeCh
 
             // Propagate any subtree updates downwards for this already-existing child.
             if (auto* liveChild = dynamicDowncast<AccessibilityObject>(newChildren[i].get()); liveChild && liveChild->hasDirtySubtree())
-                updateChildren(*liveChild, ResolveNodeChanges::No);
+                queueNodeUpdate(liveChild->objectID(), NodeUpdateOptions::childrenUpdate());
         } else {
             // This is a new child, add it to the tree.
             childrenChanged = true;
@@ -1023,7 +1054,7 @@ void AXIsolatedTree::updateChildren(AccessibilityObject& axObject, ResolveNodeCh
 
     // Also queue updates to the target node itself and any properties that depend on children().
     if (childrenChanged || unconditionallyUpdate(axAncestor->roleValue())) {
-        updateNode(*axAncestor);
+        queueNodeUpdate(axAncestor->objectID(), NodeUpdateOptions::nodeUpdate());
         updateDependentProperties(*axAncestor);
     }
 
@@ -1041,7 +1072,7 @@ void AXIsolatedTree::updateChildrenForObjects(const ListHashSet<Ref<Accessibilit
 
     AXAttributeCacheEnabler enableCache(axObjectCache());
     for (auto& axObject : axObjects)
-        updateChildren(axObject.get(), ResolveNodeChanges::No);
+        queueNodeUpdate(axObject->objectID(), NodeUpdateOptions::childrenUpdate());
 
     queueRemovalsAndUnresolvedChanges();
 }
@@ -1199,7 +1230,7 @@ void AXIsolatedTree::updateRootScreenRelativePosition()
 
     CheckedPtr cache = m_axObjectCache.get();
     if (auto* axRoot = cache && cache->document() ? cache->getOrCreate(cache->document()->view()) : nullptr)
-        updateNodeProperties(*axRoot, { AXProperty::ScreenRelativePosition });
+        queueNodeUpdate(axRoot->objectID(), { AXProperty::ScreenRelativePosition });
 }
 
 void AXIsolatedTree::removeNode(AXID axID, std::optional<AXID> parentID)

@@ -31,7 +31,6 @@
 #include "ApplicationCacheResource.h"
 #include "ContentSecurityPolicy.h"
 #include "DocumentLoader.h"
-#include "DOMApplicationCache.h"
 #include "EventNames.h"
 #include "FrameDestructionObserverInlines.h"
 #include "FrameLoader.h"
@@ -254,7 +253,7 @@ static inline RefPtr<SharedBuffer> bufferFromResource(ApplicationCacheResource& 
     return SharedBuffer::createWithContentsOfFile(resource.path());
 }
 
-bool ApplicationCacheHost::maybeLoadSynchronously(ResourceRequest& request, ResourceError& error, ResourceResponse& response, RefPtr<SharedBuffer>& data)
+bool ApplicationCacheHost::maybeLoadSynchronously(const ResourceRequest& request, ResourceError& error, ResourceResponse& response, RefPtr<SharedBuffer>& data)
 {
     RefPtr<ApplicationCacheResource> resource;
     if (!shouldLoadResourceFromApplicationCache(request, resource))
@@ -290,12 +289,6 @@ void ApplicationCacheHost::maybeLoadFallbackSynchronously(const ResourceRequest&
 bool ApplicationCacheHost::canCacheInBackForwardCache()
 {
     return !applicationCache() && !candidateApplicationCacheGroup();
-}
-
-void ApplicationCacheHost::setDOMApplicationCache(DOMApplicationCache* domApplicationCache)
-{
-    ASSERT(!m_domApplicationCache || !domApplicationCache);
-    m_domApplicationCache = domApplicationCache;
 }
 
 void ApplicationCacheHost::notifyDOMApplicationCache(const AtomString& eventType, int total, int done)
@@ -366,19 +359,8 @@ ApplicationCacheHost::CacheInfo ApplicationCacheHost::applicationCacheInfo()
     return { cache->manifestResource()->url(), 0, 0, cache->estimatedSizeInStorage() };
 }
 
-static Ref<Event> createApplicationCacheEvent(const AtomString& eventType, int total, int done)
+void ApplicationCacheHost::dispatchDOMEvent(const AtomString&, int, int)
 {
-    if (eventType == eventNames().progressEvent)
-        return ProgressEvent::create(eventType, true, done, total);
-    return Event::create(eventType, Event::CanBubble::No, Event::IsCancelable::No);
-}
-
-void ApplicationCacheHost::dispatchDOMEvent(const AtomString& eventType, int total, int done)
-{
-    if (!m_domApplicationCache || !m_domApplicationCache->frame())
-        return;
-
-    m_domApplicationCache->dispatchEvent(createApplicationCacheEvent(eventType, total, done));
 }
 
 void ApplicationCacheHost::setCandidateApplicationCacheGroup(ApplicationCacheGroup* group)

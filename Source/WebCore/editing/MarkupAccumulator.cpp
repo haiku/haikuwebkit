@@ -54,6 +54,7 @@
 #include "XLinkNames.h"
 #include "XMLNSNames.h"
 #include "XMLNames.h"
+#include <algorithm>
 #include <memory>
 #include <wtf/NeverDestroyed.h>
 #include <wtf/URL.h>
@@ -164,36 +165,33 @@ static bool shouldSelfClose(const Element& element, SerializationSyntax syntax)
 }
 
 template<typename CharacterType>
-static inline void appendCharactersReplacingEntitiesInternal(StringBuilder& result, const String& source, unsigned offset, unsigned length, OptionSet<EntityMask> entityMask)
+static inline void appendCharactersReplacingEntitiesInternal(StringBuilder& result, const String& source, OptionSet<EntityMask> entityMask)
 {
-    auto text = source.span<CharacterType>().subspan(offset);
-
+    unsigned length = source.length();
     size_t positionAfterLastEntity = 0;
     for (size_t i = 0; i < length; ++i) {
-        CharacterType character = text[i];
+        CharacterType character = source[i];
         uint8_t substitution = character < std::size(entityMap) ? entityMap[character] : static_cast<uint8_t>(EntitySubstitutionIndex::Null);
         if (substitution != EntitySubstitutionIndex::Null) [[unlikely]] {
             if (entityMask.contains(*entitySubstitutionList[substitution].mask)) {
-                result.appendSubstring(source, offset + positionAfterLastEntity, i - positionAfterLastEntity);
+                result.appendSubstring(source, positionAfterLastEntity, i - positionAfterLastEntity);
                 result.append(entitySubstitutionList[substitution].characters);
                 positionAfterLastEntity = i + 1;
             }
         }
     }
-    result.appendSubstring(source, offset + positionAfterLastEntity, length - positionAfterLastEntity);
+    result.appendSubstring(source, positionAfterLastEntity, length - positionAfterLastEntity);
 }
 
-void MarkupAccumulator::appendCharactersReplacingEntities(StringBuilder& result, const String& source, unsigned offset, unsigned length, OptionSet<EntityMask> entityMask)
+void MarkupAccumulator::appendCharactersReplacingEntities(StringBuilder& result, const String& source, OptionSet<EntityMask> entityMask)
 {
-    ASSERT(offset + length <= source.length());
-
-    if (!length)
+    if (!source.length())
         return;
 
     if (source.is8Bit())
-        appendCharactersReplacingEntitiesInternal<LChar>(result, source, offset, length, entityMask);
+        appendCharactersReplacingEntitiesInternal<LChar>(result, source, entityMask);
     else
-        appendCharactersReplacingEntitiesInternal<UChar>(result, source, offset, length, entityMask);
+        appendCharactersReplacingEntitiesInternal<UChar>(result, source, entityMask);
 }
 
 MarkupAccumulator::MarkupAccumulator(Vector<Ref<Node>>* nodes, ResolveURLs resolveURLs, SerializationSyntax serializationSyntax, SerializeShadowRoots serializeShadowRoots, Vector<Ref<ShadowRoot>>&& explicitShadowRoots, const Vector<MarkupExclusionRule>& exclusionRules)
@@ -447,7 +445,7 @@ StringBuilder MarkupAccumulator::takeMarkup()
 
 void MarkupAccumulator::appendAttributeValue(StringBuilder& result, const String& attribute)
 {
-    appendCharactersReplacingEntities(result, attribute, 0, attribute.length(),
+    appendCharactersReplacingEntities(result, attribute,
         inXMLFragmentSerialization() ? EntityMaskInAttributeValue : EntityMaskInHTMLAttributeValue);
 }
 
@@ -552,7 +550,7 @@ OptionSet<EntityMask> MarkupAccumulator::entityMaskForText(const Text& text) con
 
 void MarkupAccumulator::appendText(StringBuilder& result, const Text& text)
 {
-    appendCharactersReplacingEntities(result, text.data(), 0, text.length(), entityMaskForText(text));
+    appendCharactersReplacingEntities(result, text.data(), entityMaskForText(text));
 }
 
 static void appendXMLDeclaration(StringBuilder& result, const Document& document)
@@ -845,8 +843,11 @@ void MarkupAccumulator::appendNonElementNode(StringBuilder& result, const Node& 
         ASSERT_NOT_REACHED();
         break;
     case Node::CDATA_SECTION_NODE:
-        // FIXME: CDATA content is not escaped, but XMLSerializer (and possibly other callers) should raise an exception if it includes "]]>".
-        result.append("<![CDATA["_s, uncheckedDowncast<CDATASection>(node).data(), "]]>"_s);
+        if (inXMLFragmentSerialization()) {
+            // FIXME: CDATA content is not escaped, but XMLSerializer (and possibly other callers) should raise an exception if it includes "]]>".
+            result.append("<![CDATA["_s, uncheckedDowncast<CDATASection>(node).data(), "]]>"_s);
+        } else
+            appendText(result, uncheckedDowncast<Text>(node));
         break;
     case Node::ATTRIBUTE_NODE:
         appendAttributeValue(result, uncheckedDowncast<Attr>(node).value());
@@ -883,9 +884,7 @@ static bool isElementExcludedByRule(const MarkupExclusionRule& rule, const Eleme
 
 bool MarkupAccumulator::shouldExcludeElement(const Element& element)
 {
-    return WTF::anyOf(m_exclusionRules, [&](auto& rule) {
-        return isElementExcludedByRule(rule, element);
-    });
+    return std::ranges::any_of(m_exclusionRules, std::bind(isElementExcludedByRule, std::placeholders::_1, std::ref(element)));
 }
 
 }

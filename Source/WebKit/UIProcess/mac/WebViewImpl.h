@@ -40,7 +40,7 @@
 #include <WebCore/PlatformPlaybackSessionInterface.h>
 #include <WebCore/ScrollTypes.h>
 #include <WebCore/ShareableBitmap.h>
-#include <WebCore/TextIndicatorWindow.h>
+#include <WebCore/TextIndicator.h>
 #include <WebCore/UserInterfaceLayoutDirection.h>
 #include <WebKit/WKDragDestinationAction.h>
 #include <WebKit/_WKOverlayScrollbarStyle.h>
@@ -66,6 +66,7 @@ OBJC_CLASS NSTextInputContext;
 OBJC_CLASS NSTextPlaceholder;
 OBJC_CLASS NSView;
 OBJC_CLASS QLPreviewPanel;
+OBJC_CLASS WebTextIndicatorLayer;
 OBJC_CLASS WKAccessibilitySettingsObserver;
 OBJC_CLASS WKBrowsingContextController;
 OBJC_CLASS WKDOMPasteMenuDelegate;
@@ -276,8 +277,6 @@ public:
     void updateLayer();
     static bool wantsUpdateLayer() { return true; }
 
-    void layerTreeCommitComplete();
-
     void drawRect(CGRect);
     bool canChangeFrameLayout(WebFrameProxy&);
     RetainPtr<NSPrintOperation> printOperationWithPrintInfo(NSPrintInfo *, WebFrameProxy&);
@@ -472,6 +471,8 @@ public:
     void updateTextIndicator(WebCore::TextIndicator&);
     void clearTextIndicatorWithAnimation(WebCore::TextIndicatorDismissalAnimation);
     void setTextIndicatorAnimationProgress(float);
+    void teardownTextIndicatorLayer();
+    void startTextIndicatoreFadeOut();
     void dismissContentRelativeChildWindowsFromViewOnly();
     void dismissContentRelativeChildWindowsWithAnimation(bool);
     void dismissContentRelativeChildWindowsWithAnimationFromViewOnly(bool);
@@ -793,6 +794,9 @@ public:
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
     void updateContentInsetFillViews();
+    WKNSContentInsetFillView *topContentInsetFillView() const { return m_topContentInsetFillView.get(); }
+    void registerViewAboveTopContentInsetArea(NSView *);
+    void unregisterViewAboveTopContentInsetArea(NSView *);
 #endif
 
 private:
@@ -815,10 +819,6 @@ private:
 
     void suppressContentRelativeChildViews();
     void restoreContentRelativeChildViews();
-
-#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    void updateContentInsetFillBackdropLayerParentIfNeeded();
-#endif
 
     bool m_clientWantsMediaPlaybackControlsView { false };
     bool m_canCreateTouchBars { false };
@@ -953,7 +953,9 @@ private:
 
     id m_flagsChangedEventMonitor { nullptr };
 
-    std::unique_ptr<WebCore::TextIndicatorWindow> m_textIndicatorWindow;
+    RunLoop::Timer m_textIndicatorTimer;
+    RefPtr<WebCore::TextIndicator> m_textIndicator;
+    RetainPtr<WebTextIndicatorLayer> m_textIndicatorLayer;
 
     std::unique_ptr<PAL::HysteresisActivity> m_contentRelativeViewsHysteresis;
 
@@ -1081,7 +1083,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
     RetainPtr<WKNSContentInsetFillView> m_topContentInsetFillView;
-    RetainPtr<NSView> m_topContentInsetOverlayView;
+    RetainPtr<NSHashTable<NSView *>> m_viewsAboveTopContentInsetArea;
 #endif
 
 #if HAVE(INLINE_PREDICTIONS)

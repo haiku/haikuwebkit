@@ -252,6 +252,7 @@ public:
         IsFragmentedFlow = 1 << 1,
         IsTextControl = 1 << 2,
         IsSVGBlock = 1 << 3,
+        IsViewTransitionContainingBlock = 1 << 4,
     };
 
     enum class LineBreakFlag : uint8_t {
@@ -496,6 +497,8 @@ public:
 
     bool isRenderScrollbarPart() const { return type() == Type::ScrollbarPart; }
     bool isRenderVTTCue() const { return type() == Type::VTTCue; }
+
+    bool isViewTransitionContainingBlock() const { return isRenderBlockFlow() && m_typeSpecificFlags.blockFlowFlags().contains(BlockFlowFlag::IsViewTransitionContainingBlock); }
 
     inline bool isDocumentElementRenderer() const; // Defined in RenderObjectInlines.h
     inline bool isBody() const; // Defined in RenderObjectInlines.h
@@ -1201,29 +1204,29 @@ private:
 #endif
 
     enum class StateFlag : uint32_t {
-        IsBlock = 1 << 0,
-        IsReplacedOrAtomicInline = 1 << 1,
-        BeingDestroyed = 1 << 2,
-        NeedsLayout = 1 << 3,
-        NeedsPositionedMovementLayout = 1 << 4,
-        NormalChildNeedsLayout = 1 << 5,
-        PosChildNeedsLayout = 1 << 6,
-        NeedsSimplifiedNormalFlowLayout = 1 << 7,
-        OutOfFlowChildNeedsStaticPositionLayout = 1 << 8,
-        EverHadLayout = 1 << 9,
-        IsExcludedFromNormalLayout = 1 << 10,
-        Floating = 1 << 11,
-        VerticalWritingMode = 1 << 12,
-        PreferredLogicalWidthsDirty = 1 << 13,
-        HasRareData = 1 << 14,
-        HasLayer = 1 << 15,
-        HasNonVisibleOverflow = 1 << 16,
-        HasTransformRelatedProperty = 1 << 17,
-        ChildrenInline = 1 << 18,
-        PaintContainmentApplies = 1 << 19,
-        HasSVGTransform = 1 << 20,
-        WasSkippedDuringLastLayoutDueToContentVisibility = 1 << 21,
-        CapturedInViewTransition = 1 << 22
+        IsBlock                                             = 1 << 0,
+        IsReplacedOrAtomicInline                            = 1 << 1,
+        BeingDestroyed                                      = 1 << 2,
+        NeedsLayout                                         = 1 << 3,
+        NeedsPositionedMovementLayout                       = 1 << 4,
+        NormalChildNeedsLayout                              = 1 << 5,
+        PosChildNeedsLayout                                 = 1 << 6,
+        NeedsSimplifiedNormalFlowLayout                     = 1 << 7,
+        OutOfFlowChildNeedsStaticPositionLayout             = 1 << 8,
+        EverHadLayout                                       = 1 << 9,
+        IsExcludedFromNormalLayout                          = 1 << 10,
+        Floating                                            = 1 << 11,
+        VerticalWritingMode                                 = 1 << 12,
+        PreferredLogicalWidthsDirty                         = 1 << 13,
+        HasRareData                                         = 1 << 14,
+        HasLayer                                            = 1 << 15,
+        HasNonVisibleOverflow                               = 1 << 16,
+        HasTransformRelatedProperty                         = 1 << 17,
+        ChildrenInline                                      = 1 << 18,
+        PaintContainmentApplies                             = 1 << 19,
+        HasSVGTransform                                     = 1 << 20,
+        WasSkippedDuringLastLayoutDueToContentVisibility    = 1 << 21,
+        CapturedInViewTransition                            = 1 << 22
     };
 
     class StateBitfields {

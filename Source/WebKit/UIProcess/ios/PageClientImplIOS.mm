@@ -517,7 +517,7 @@ void PageClientImpl::doneWithKeyEvent(const NativeWebKeyboardEvent& event, bool 
 }
 
 #if ENABLE(TOUCH_EVENTS)
-void PageClientImpl::doneWithTouchEvent(const NativeWebTouchEvent& nativeWebTouchEvent, bool eventHandled)
+void PageClientImpl::doneWithTouchEvent(const WebTouchEvent& nativeWebTouchEvent, bool eventHandled)
 {
     [contentView() _touchEvent:nativeWebTouchEvent preventsNativeGestures:eventHandled];
 }
@@ -1052,22 +1052,12 @@ void PageClientImpl::didPerformDragOperation(bool handled)
     [contentView() _didPerformDragOperation:handled];
 }
 
-void PageClientImpl::didHandleDragStartRequest(bool started)
-{
-    [contentView() _didHandleDragStartRequest:started];
-}
-
-void PageClientImpl::didHandleAdditionalDragItemsRequest(bool added)
-{
-    [contentView() _didHandleAdditionalDragItemsRequest:added];
-}
-
-void PageClientImpl::startDrag(const DragItem& item, ShareableBitmap::Handle&& image)
+void PageClientImpl::startDrag(const DragItem& item, ShareableBitmap::Handle&& image, const std::optional<ElementIdentifier>& elementID)
 {
     auto bitmap = ShareableBitmap::create(WTFMove(image));
     if (!bitmap)
         return;
-    [contentView() _startDrag:bitmap->makeCGImageCopy() item:item];
+    [contentView() _startDrag:bitmap->makeCGImageCopy() item:item elementID:elementID];
 }
 
 void PageClientImpl::willReceiveEditDragSnapshot()

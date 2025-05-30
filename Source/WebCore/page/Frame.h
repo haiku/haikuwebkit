@@ -28,7 +28,6 @@
 #include "FrameIdentifier.h"
 #include "FrameTree.h"
 #include "FrameTreeSyncData.h"
-#include "OwnerPermissionsPolicyData.h"
 #include "PageIdentifier.h"
 #include <wtf/CheckedRef.h>
 #include <wtf/Ref.h>
@@ -51,7 +50,10 @@ class Settings;
 class WeakPtrImplWithEventTargetData;
 class WindowProxy;
 
+struct OwnerPermissionsPolicyData;
+
 enum class AdvancedPrivacyProtections : uint16_t;
+enum class AutoplayPolicy : uint8_t;
 enum class SandboxFlag : uint16_t;
 enum class ScrollbarMode : uint8_t;
 
@@ -72,9 +74,9 @@ public:
     DOMWindow* window() const { return virtualWindow(); }
     FrameTree& tree() const { return m_treeNode; }
     FrameIdentifier frameID() const { return m_frameID; }
-    inline Page* page() const; // Defined in Page.h.
-    inline RefPtr<Page> protectedPage() const; // Defined in Page.h.
-    inline std::optional<PageIdentifier> pageID() const; // Defined in Page.h.
+    inline Page* page() const; // Defined in FrameInlines.h.
+    inline RefPtr<Page> protectedPage() const; // Defined in FrameInlines.h.
+    inline std::optional<PageIdentifier> pageID() const; // Defined in FrameInlines.h.
     Settings& settings() const { return m_settings.get(); }
     Frame& mainFrame() { return *m_mainFrame; }
     const Frame& mainFrame() const { return *m_mainFrame; }
@@ -96,8 +98,8 @@ public:
     WEBCORE_EXPORT void detachFromPage();
 
     WEBCORE_EXPORT void setOwnerElement(HTMLFrameOwnerElement*);
-    inline HTMLFrameOwnerElement* ownerElement() const; // Defined in HTMLFrameOwnerElement.h.
-    inline RefPtr<HTMLFrameOwnerElement> protectedOwnerElement() const; // Defined in HTMLFrameOwnerElement.h.
+    inline HTMLFrameOwnerElement* ownerElement() const; // Defined in FrameInlines.h.
+    inline RefPtr<HTMLFrameOwnerElement> protectedOwnerElement() const; // Defined in FrameInlines.h.
 
     WEBCORE_EXPORT void disconnectOwnerElement();
     NavigationScheduler& navigationScheduler() const { return m_navigationScheduler.get(); }
@@ -119,6 +121,7 @@ public:
     virtual String customUserAgentAsSiteSpecificQuirks() const = 0;
     virtual String customNavigatorPlatform() const = 0;
     virtual OptionSet<AdvancedPrivacyProtections> advancedPrivacyProtections() const = 0;
+    virtual AutoplayPolicy autoplayPolicy() const = 0;
 
     virtual void updateSandboxFlags(SandboxFlags, NotifyUIProcess);
 
@@ -158,7 +161,7 @@ private:
     mutable UniqueRef<NavigationScheduler> m_navigationScheduler;
     WeakPtr<Frame> m_opener;
     WeakHashSet<Frame> m_openedFrames;
-    std::optional<OwnerPermissionsPolicyData> m_ownerPermisssionsPolicyOverride;
+    std::unique_ptr<OwnerPermissionsPolicyData> m_ownerPermisssionsPolicyOverride;
 
     Ref<FrameTreeSyncData> m_frameTreeSyncData;
 };

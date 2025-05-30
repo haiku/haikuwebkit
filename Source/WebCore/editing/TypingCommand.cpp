@@ -243,10 +243,7 @@ void TypingCommand::insertText(Ref<Document>&& document, const String& text, Eve
 
     String newText = dispatchBeforeTextInsertedEvent(text, selectionForInsertion, compositionType == TextCompositionType::Pending);
 
-    bool eventWasCreatedFromBindings = [&] {
-        RefPtr textEvent = dynamicDowncast<TextEvent>(triggeringEvent);
-        return textEvent && textEvent->createdFromBindings();
-    }();
+    bool triggeringEventIsUntrusted = triggeringEvent && !triggeringEvent->isTrusted();
 
     // Set the starting and ending selection appropriately if we are using a selection
     // that is different from the current selection.  In the future, we should change EditCommand
@@ -261,7 +258,7 @@ void TypingCommand::insertText(Ref<Document>&& document, const String& text, Eve
         lastTypingCommand->setCompositionType(compositionType);
         lastTypingCommand->setShouldRetainAutocorrectionIndicator(options.contains(Option::RetainAutocorrectionIndicator));
         lastTypingCommand->setShouldPreventSpellChecking(options.contains(Option::PreventSpellChecking));
-        lastTypingCommand->setTriggeringEventWasCreatedFromBindings(eventWasCreatedFromBindings);
+        lastTypingCommand->setTriggeringEventIsUntrusted(triggeringEventIsUntrusted);
 #if HAVE(INLINE_PREDICTIONS)
         if (compositionType != TextCompositionType::None)
             lastTypingCommand->insertText(newText, options.contains(Option::SelectInsertedText));
@@ -273,7 +270,7 @@ void TypingCommand::insertText(Ref<Document>&& document, const String& text, Eve
 
     RefPtr frame = document->frame();
     auto command = TypingCommand::create(WTFMove(document), Type::InsertText, newText, options, compositionType);
-    command->setTriggeringEventWasCreatedFromBindings(eventWasCreatedFromBindings);
+    command->setTriggeringEventIsUntrusted(triggeringEventIsUntrusted);
     applyTextInsertionCommand(frame.get(), command.get(), selectionForInsertion, currentSelection);
 }
 
@@ -438,7 +435,7 @@ RefPtr<DataTransfer> TypingCommand::inputEventDataTransfer() const
         return nullptr;
 
     StringBuilder htmlText;
-    MarkupAccumulator::appendCharactersReplacingEntities(htmlText, m_currentTextToInsert, 0, m_currentTextToInsert.length(), EntityMaskInHTMLPCDATA);
+    MarkupAccumulator::appendCharactersReplacingEntities(htmlText, m_currentTextToInsert, EntityMaskInHTMLPCDATA);
     return DataTransfer::createForInputEvent(m_currentTextToInsert, htmlText.toString());
 }
 

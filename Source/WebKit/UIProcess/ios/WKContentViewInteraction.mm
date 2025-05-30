@@ -1806,11 +1806,6 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     return _interactionViewsContainerView.get();
 }
 
-- (CGFloat)inverseScale
-{
-    return 1 / [[self layer] transform].m11;
-}
-
 - (UIScrollView *)_scroller
 {
     return [_webView scrollView];
@@ -2222,7 +2217,7 @@ typedef NS_ENUM(NSInteger, EndEditingReason) {
     [self _handleTouchActionsForTouchEvent:nativeWebTouchEvent];
 
     if (_touchEventsCanPreventNativeGestures)
-        _page->handlePreventableTouchEvent(nullptr, nativeWebTouchEvent);
+        _page->handlePreventableTouchEvent(nativeWebTouchEvent);
     else
         _page->handleUnpreventableTouchEvent(nativeWebTouchEvent);
 
@@ -2429,7 +2424,7 @@ static WebCore::FloatQuad inflateQuad(const WebCore::FloatQuad& quad, float infl
 }
 
 #if ENABLE(TOUCH_EVENTS)
-- (void)_touchEvent:(const WebKit::NativeWebTouchEvent&)touchEvent preventsNativeGestures:(BOOL)preventsNativeGesture
+- (void)_touchEvent:(const WebKit::WebTouchEvent&)touchEvent preventsNativeGestures:(BOOL)preventsNativeGesture
 {
     if (!preventsNativeGesture || ![_touchEventGestureRecognizer isDispatchingTouchEvents])
         return;
@@ -3689,7 +3684,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (![self ensurePositionInformationIsUpToDate:request])
         return NO;
 
-    if (gesture == WKBEGestureTypeLoupe && _positionInformation.selectability == WebKit::InteractionInformationAtPosition::Selectability::UnselectableDueToUserSelectNone)
+    if (gesture == WKBEGestureTypeLoupe && _positionInformation.selectability == WebKit::InteractionInformationAtPosition::Selectability::UnselectableDueToUserSelectNoneOrQuirk)
         return NO;
 
     if (_positionInformation.preventTextInteraction)
@@ -3852,7 +3847,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (shouldRequestMagnificationInformation)
         RELEASE_LOG(ViewGestures, "Single tap identified. Request details on potential zoom. (%p, pageProxyID=%llu)", self, _page->identifier().toUInt64());
 
-    _page->potentialTapAtPosition(position, shouldRequestMagnificationInformation, [self nextTapIdentifier]);
+    _page->potentialTapAtPosition(std::nullopt, position, shouldRequestMagnificationInformation, [self nextTapIdentifier]);
     _potentialTapInProgress = YES;
     _isTapHighlightIDValid = YES;
     _isExpectingFastSingleTapCommit = !_doubleTapGestureRecognizer.get().enabled;
@@ -4001,7 +3996,7 @@ static void cancelPotentialTapIfNecessary(WKContentView* contentView)
         _commitPotentialTapPointerId = pointerId;
     }
     RELEASE_ASSERT(_layerTreeTransactionIdAtLastInteractionStart);
-    _page->commitPotentialTap(WebKit::webEventModifierFlags(gestureRecognizer.modifierFlags), *_layerTreeTransactionIdAtLastInteractionStart, pointerId);
+    _page->commitPotentialTap(std::nullopt, WebKit::webEventModifierFlags(gestureRecognizer.modifierFlags), *_layerTreeTransactionIdAtLastInteractionStart, pointerId);
 
     if (!_isExpectingFastSingleTapCommit)
         [self _finishInteraction];
@@ -6460,37 +6455,6 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
     return [self _wk_convertQuad:quad toCoordinateSpace:[self _selectionContainerViewInternal]];
 }
 
-- (WebCore::FloatRect)_scaledCaretRectForSelectionStart:(WebCore::FloatRect)caretRect
-{
-    // The logical height of the caret is scaled inversely by the view's zoom scale
-    // to achieve the visual effect that the caret is narrow when zoomed in and wide
-    // when zoomed out.
-    double inverseScale = [self inverseScale];
-    if (caretRect.width() < caretRect.height())
-        caretRect.setWidth(caretRect.width() * inverseScale);
-    else
-        caretRect.setHeight(caretRect.height() * inverseScale);
-    return caretRect;
-}
-
-- (WebCore::FloatRect)_scaledCaretRectForSelectionEnd:(WebCore::FloatRect)caretRect
-{
-    // The logical height of the caret is scaled inversely by the view's zoom scale
-    // to achieve the visual effect that the caret is narrow when zoomed in and wide
-    // when zoomed out.
-    double inverseScale = [self inverseScale];
-    if (caretRect.width() < caretRect.height()) {
-        float originalWidth = caretRect.width();
-        caretRect.setWidth(originalWidth * inverseScale);
-        caretRect.move(caretRect.width() - originalWidth, 0);
-    } else {
-        float originalHeight = caretRect.height();
-        caretRect.setHeight(caretRect.height() * inverseScale);
-        caretRect.move(0, caretRect.height() - originalHeight);
-    }
-    return caretRect;
-}
-
 - (UITextRange *)selectedTextRange
 {
     auto& editorState = _page->editorState();
@@ -6507,8 +6471,8 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
     if (_cachedSelectedTextRange)
         return _cachedSelectedTextRange.get();
 
-    auto caretStartRect = [self _scaledCaretRectForSelectionStart:_page->editorState().visualData->caretRectAtStart];
-    auto caretEndRect = [self _scaledCaretRectForSelectionEnd:_page->editorState().visualData->caretRectAtEnd];
+    auto caretStartRect = _page->editorState().visualData->caretRectAtStart;
+    auto caretEndRect = _page->editorState().visualData->caretRectAtEnd;
     auto selectionRects = [self _textSelectionRects:_page->editorState().visualData->selectionGeometries];
     auto selectedTextLength = editorState.postLayoutData->selectedTextLength;
 
@@ -6555,12 +6519,10 @@ static void logTextInteraction(const char* methodName, UIGestureRecognizer *loup
         return nil;
     auto& postLayoutData = *editorState.postLayoutData;
     auto& visualData = *editorState.visualData;
-    auto unscaledCaretRectAtStart = visualData.markedTextCaretRectAtStart;
-    auto unscaledCaretRectAtEnd = visualData.markedTextCaretRectAtEnd;
-    auto isRange = unscaledCaretRectAtStart != unscaledCaretRectAtEnd;
+    auto caretStartRect = visualData.markedTextCaretRectAtStart;
+    auto caretEndRect = visualData.markedTextCaretRectAtEnd;
+    auto isRange = caretStartRect != caretEndRect;
     auto isContentEditable = editorState.isContentEditable;
-    auto caretStartRect = [self _scaledCaretRectForSelectionStart:unscaledCaretRectAtStart];
-    auto caretEndRect = [self _scaledCaretRectForSelectionEnd:unscaledCaretRectAtEnd];
     auto selectionRects = [self _textSelectionRects:visualData.markedTextRects];
     auto selectedTextLength = postLayoutData.markedText.length();
     return [WKTextRange textRangeWithState:!hasComposition isRange:isRange isEditable:isContentEditable startRect:caretStartRect endRect:caretEndRect selectionRects:selectionRects selectedTextLength:selectedTextLength];
@@ -8868,7 +8830,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     _focusedFormControlView = adoptNS([[WKFocusedFormControlView alloc] initWithFrame:self.webView.bounds delegate:self]);
     [_focusedFormControlView hide:NO];
     [_webView addSubview:_focusedFormControlView.get()];
-    [self setInputDelegate:_focusedFormControlView.get()];
+    [self setInputDelegate:static_cast<id<UITextInputDelegate>>(_focusedFormControlView.get())];
 }
 
 - (void)removeFocusedFormControlOverlay
@@ -9698,7 +9660,7 @@ static bool canUseQuickboardControllerFor(UITextContentType type)
 #if HAVE(DIGITAL_CREDENTIALS_UI)
 - (void)_showDigitalCredentialsPicker:(const WebCore::DigitalCredentialsRequestData&)requestData completionHandler:(WTF::CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&&)completionHandler
 {
-    _digitalCredentialsPicker = adoptNS([[WKDigitalCredentialsPicker alloc] initWithView:self.webView]);
+    _digitalCredentialsPicker = adoptNS([[WKDigitalCredentialsPicker alloc] initWithView:self.webView page:_page.get()]);
     [_digitalCredentialsPicker presentWithRequestData:requestData completionHandler:WTFMove(completionHandler)];
 }
 
@@ -10535,11 +10497,12 @@ static BOOL shouldEnableDragInteractionForPolicy(_WKDragInteractionPolicy policy
     [self cleanUpDragSourceSessionState];
 }
 
-- (void)_startDrag:(RetainPtr<CGImageRef>)image item:(const WebCore::DragItem&)item
+- (void)_startDrag:(RetainPtr<CGImageRef>)image item:(const WebCore::DragItem&)item elementID:(std::optional<WebCore::ElementIdentifier>)elementID
 {
     ASSERT(item.sourceAction);
 
 #if ENABLE(MODEL_PROCESS)
+    _dragDropInteractionState.setElementIdentifier(elementID);
     if (item.modelLayerID && _page) {
         if (RefPtr modelPresentationManager = _page->modelPresentationManagerProxy()) {
             if (RetainPtr viewForDragPreview = modelPresentationManager->startDragForModel(*item.modelLayerID)) {
@@ -10684,6 +10647,9 @@ static std::optional<WebCore::DragOperation> coreDragOperationForUIDropOperation
     if (_page) {
         if (RefPtr modelPresentationManager = _page->modelPresentationManagerProxy())
             modelPresentationManager->doneWithCurrentDragSession();
+
+        if (_dragDropInteractionState.elementIdentifier())
+            _page->modelDragEnded(_dragDropInteractionState.elementIdentifier().value());
     }
 #endif
 
@@ -11074,7 +11040,9 @@ static Vector<WebCore::IntSize> sizesOfPlaceholderElementsToInsertWhenDroppingIt
     }
 
     _dragDropInteractionState.dragSessionWillRequestAdditionalItem(completion);
-    _page->requestAdditionalItemsForDragSession(WebCore::roundedIntPoint(point), WebCore::roundedIntPoint(point), self._allowedDragSourceActions);
+    _page->requestAdditionalItemsForDragSession(std::nullopt, WebCore::roundedIntPoint(point), WebCore::roundedIntPoint(point), self._allowedDragSourceActions, [weakSelf = WeakObjCPtr { self }] (bool handled) {
+        [weakSelf _didHandleAdditionalDragItemsRequest:handled];
+    });
 }
 
 - (void)_dragInteraction:(UIDragInteraction *)interaction prepareForSession:(id<UIDragSession>)session completion:(dispatch_block_t)completion
@@ -11098,7 +11066,9 @@ static Vector<WebCore::IntSize> sizesOfPlaceholderElementsToInsertWhenDroppingIt
 
         auto dragOrigin = [session locationInView:strongSelf.get()];
         strongSelf->_dragDropInteractionState.prepareForDragSession(session.get(), completion.get());
-        strongSelf->_page->requestDragStart(WebCore::roundedIntPoint(dragOrigin), WebCore::roundedIntPoint([strongSelf convertPoint:dragOrigin toView:[strongSelf window]]), [strongSelf _allowedDragSourceActions]);
+        strongSelf->_page->requestDragStart(std::nullopt, WebCore::roundedIntPoint(dragOrigin), WebCore::roundedIntPoint([strongSelf convertPoint:dragOrigin toView:[strongSelf window]]), [strongSelf _allowedDragSourceActions], [weakSelf = WeakObjCPtr { strongSelf.get() }] (bool started) {
+            [weakSelf _didHandleDragStartRequest:started];
+        });
         RELEASE_LOG(DragAndDrop, "Drag session requested: %p at origin: {%.0f, %.0f}", session.get(), dragOrigin.x, dragOrigin.y);
     };
 
@@ -12034,7 +12004,7 @@ static WebKit::DocumentEditingContextRequest toWebRequest(id request)
 
     bool isVisible = _page->appHighlightsVisibility();
     auto title = isVisible ? WebCore::contextMenuItemTagAddHighlightToCurrentQuickNote() : WebCore::contextMenuItemTagAddHighlightToNewQuickNote();
-    return [self menuWithInlineAction:title.createNSString().get() image:[UIImage systemImageNamed:@"quicknote"] identifier:@"WKActionCreateQuickNote" handler:[isVisible](WKContentView *view) mutable {
+    return [self menuWithInlineAction:title.createNSString().get() image:[UIImage _systemImageNamed:@"quicknote"] identifier:@"WKActionCreateQuickNote" handler:[isVisible](WKContentView *view) mutable {
         view->_page->createAppHighlightInSelectedRange(isVisible ? WebCore::CreateNewGroupForHighlight::No : WebCore::CreateNewGroupForHighlight::Yes, WebCore::HighlightRequestOriginatedInApp::No);
     }];
 }

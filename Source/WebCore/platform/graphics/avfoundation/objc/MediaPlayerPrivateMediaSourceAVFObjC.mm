@@ -801,9 +801,10 @@ void MediaPlayerPrivateMediaSourceAVFObjC::acceleratedRenderingStateChanged()
     RefPtr renderer = layerOrVideoRenderer();
     if (willUseDecompressionSessionIfNeeded()) {
         if (renderer && !renderer->isUsingDecompressionSession()) {
+            // Gathering video frame metadata changed.
             if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
                 mediaSourcePrivate->videoRendererWillReconfigure(*renderer);
-            renderer->setPrefersDecompressionSession(true);
+            renderer->setPreferences(m_loadOptions.videoMediaSampleRendererPreferences | VideoMediaSampleRendererPreference::PrefersDecompressionSession);
             if (RefPtr mediaSourcePrivate = m_mediaSourcePrivate)
                 mediaSourcePrivate->videoRendererDidReconfigure(*renderer);
             return;
@@ -1114,7 +1115,7 @@ Ref<VideoMediaSampleRenderer> MediaPlayerPrivateMediaSourceAVFObjC::createVideoM
             protectedThis->checkNewVideoFrameMetadata(presentationTime, displayTime);
     });
     videoRenderer->setResourceOwner(m_resourceOwner);
-    videoRenderer->setPrefersDecompressionSession(m_preferDecompressionSession);
+    videoRenderer->setPreferences(m_loadOptions.videoMediaSampleRendererPreferences);
     return videoRenderer;
 }
 
@@ -1125,7 +1126,8 @@ MediaPlayerPrivateMediaSourceAVFObjC::AcceleratedVideoMode MediaPlayerPrivateMed
 
 bool MediaPlayerPrivateMediaSourceAVFObjC::canUseDecompressionSession() const
 {
-    // FIXME: with shouldUseModernAVContentKeySession can a DecompressionSession be used so long as we have a AVSBDL considering the cryptor is now attached to the CMSampleBuffer?
+    if (m_loadOptions.videoMediaSampleRendererPreferences.contains(VideoMediaSampleRendererPreference::UseDecompressionSessionForProtectedContent))
+        return true;
     RefPtr mediaSourcePrivate = m_mediaSourcePrivate;
     return !mediaSourcePrivate || (!mediaSourcePrivate->cdmInstance() && !mediaSourcePrivate->needsVideoLayer());
 }
@@ -1142,7 +1144,7 @@ bool MediaPlayerPrivateMediaSourceAVFObjC::willUseDecompressionSessionIfNeeded()
     if (!canUseDecompressionSession())
         return false;
 
-    return m_preferDecompressionSession || (m_canFallbackToDecompressionSession && m_isGatheringVideoFrameMetadata);
+    return m_loadOptions.videoMediaSampleRendererPreferences.contains(VideoMediaSampleRendererPreference::PrefersDecompressionSession) || m_isGatheringVideoFrameMetadata;
 }
 
 bool MediaPlayerPrivateMediaSourceAVFObjC::shouldBePlaying() const

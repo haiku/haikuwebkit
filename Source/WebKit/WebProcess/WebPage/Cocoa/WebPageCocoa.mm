@@ -69,6 +69,7 @@
 #import <WebCore/HitTestResult.h>
 #import <WebCore/ImageOverlay.h>
 #import <WebCore/ImageUtilities.h>
+#import <WebCore/LegacyWebArchive.h>
 #import <WebCore/LocalFrameView.h>
 #import <WebCore/MIMETypeRegistry.h>
 #import <WebCore/MutableStyleProperties.h>
@@ -1319,6 +1320,11 @@ void WebPage::drawPagesToPDFFromPDFDocument(CGContextRef context, PDFDocument *p
 
 #else
 
+void WebPage::drawPDFDocument(CGContextRef, PDFDocument *, const PrintInfo&, const WebCore::IntRect&)
+{
+    notImplemented();
+}
+
 void WebPage::computePagesForPrintingPDFDocument(WebCore::FrameIdentifier, const PrintInfo&, Vector<IntRect>&)
 {
     notImplemented();
@@ -1357,6 +1363,27 @@ BoxSideSet WebPage::sidesRequiringFixedContainerEdges() const
         sides.add(BoxSideFlag::Bottom);
 
     return sides;
+}
+
+void WebPage::getWebArchives(CompletionHandler<void(HashMap<WebCore::FrameIdentifier, Ref<WebCore::LegacyWebArchive>>&&)>&& completionHandler)
+{
+    if (!m_page)
+        return completionHandler({ });
+
+    HashMap<WebCore::FrameIdentifier, Ref<LegacyWebArchive>> result;
+    for (RefPtr<Frame> frame = m_mainFrame->coreFrame(); frame; frame = frame->tree().traverseNext()) {
+        RefPtr localFrame = dynamicDowncast<LocalFrame>(frame);
+        if (!localFrame)
+            continue;
+
+        RefPtr document = localFrame->document();
+        if (!document)
+            continue;
+
+        if (RefPtr archive = WebCore::LegacyWebArchive::create(*document, { }, { }, { }, true, WebCore::LegacyWebArchive::ShouldArchiveSubframes::No))
+            result.add(localFrame->frameID(), archive.releaseNonNull());
+    }
+    completionHandler(WTFMove(result));
 }
 
 } // namespace WebKit

@@ -341,12 +341,6 @@ private:
 
     void isInFullscreenOrPictureInPictureChanged(bool) final;
 
-    void setDecompressionSessionPreferences(bool preferDecompressionSession, bool canFallbackToDecompressionSession) final
-    {
-        m_preferDecompressionSession = preferDecompressionSession;
-        m_canFallbackToDecompressionSession = canFallbackToDecompressionSession;
-    }
-
 #if ENABLE(LINEAR_MEDIA_PLAYER)
     bool supportsLinearMediaPlayer() const final { return true; }
 #endif
@@ -428,8 +422,6 @@ ALLOW_NEW_API_WITHOUT_GUARDS_END
     ProcessIdentity m_resourceOwner;
     bool m_shouldMaintainAspectRatio { true };
     bool m_needsPlaceholderImage { false };
-    bool m_preferDecompressionSession { false };
-    bool m_canFallbackToDecompressionSession { false };
     LoadOptions m_loadOptions;
 #if HAVE(SPATIAL_TRACKING_LABEL)
     String m_defaultSpatialTrackingLabel;

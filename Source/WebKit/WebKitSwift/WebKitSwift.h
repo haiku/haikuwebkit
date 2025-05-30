@@ -25,11 +25,24 @@
 
 #import "LinearMediaKitExtras.h"
 #import "RealityKitBridging.h"
+#import "WKGroupSession.h"
 #import "WKIntelligenceReplacementTextEffectCoordinator.h"
 #import "WKIntelligenceSmartReplyTextEffectCoordinator.h"
 #import "WKIntelligenceTextEffectCoordinator.h"
+#import "WKMarketplaceKit.h"
 #import "WKSLinearMediaPlayer.h"
 #import "WKSLinearMediaTypes.h"
 #import "WKSPreviewWindowController.h"
 #import "WKSTextAnimationSourceDelegate.h"
 #import "WKStageMode.h"
+
+#if HAVE(DIGITAL_CREDENTIALS_UI)
+#import "WKIdentityDocumentPresentmentController.h"
+#import "WKIdentityDocumentPresentmentDelegate.h"
+#import "WKIdentityDocumentPresentmentError.h"
+#import "WKIdentityDocumentPresentmentMobileDocumentRequest.h"
+#import "WKIdentityDocumentPresentmentRawRequest.h"
+#import "WKIdentityDocumentPresentmentRequest.h"
+#import "WKIdentityDocumentPresentmentResponse.h"
+#import "WKIdentityDocumentRawRequestValidator.h"
+#endif

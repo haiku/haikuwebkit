@@ -61,9 +61,9 @@ public:
 
     ~ScriptMessageClient() { }
 
-    void didPostMessage(WebPageProxy& page, FrameInfoData&&, API::ContentWorld&, std::optional<JavaScriptEvaluationResult>&& jsMessage) override
+    void didPostMessage(WebPageProxy& page, FrameInfoData&&, API::ContentWorld&, JavaScriptEvaluationResult&& jsMessage) override
     {
-        Ref serializedScriptValue = API::SerializedScriptValue::createFromWireBytes(jsMessage->wireBytes());
+        Ref serializedScriptValue = API::SerializedScriptValue::createFromWireBytes(jsMessage.wireBytes());
         auto valueAsString = serializedScriptValue->internalRepresentation().toString();
         auto tokens = StringView { valueAsString }.split(':');
         uint32_t connectionID = 0;
@@ -93,7 +93,7 @@ public:
         return false;
     }
     
-    void didPostMessageWithAsyncReply(WebPageProxy&, FrameInfoData&&, API::ContentWorld&, std::optional<JavaScriptEvaluationResult>&&, WTF::Function<void(Expected<JavaScriptEvaluationResult, String>&&)>&&) override
+    void didPostMessageWithAsyncReply(WebPageProxy&, FrameInfoData&&, API::ContentWorld&, JavaScriptEvaluationResult&&, WTF::Function<void(Expected<JavaScriptEvaluationResult, String>&&)>&&) override
     {
     }
 
@@ -249,7 +249,7 @@ void RemoteInspectorProtocolHandler::platformStartTask(WebPageProxy& pageProxy, 
     auto html = htmlBuilder.toString().utf8();
     auto data = SharedBuffer::create(html.span());
     ResourceResponse response(WTFMove(requestURL), "text/html"_s, html.length(), "UTF-8"_s);
-    task.didReceiveResponse(response);
+    task.didReceiveResponse(WTFMove(response));
     task.didReceiveData(WTFMove(data));
     task.didComplete(ResourceError());
 }

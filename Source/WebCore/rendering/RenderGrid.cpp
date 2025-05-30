@@ -40,6 +40,7 @@
 #include "RenderObjectInlines.h"
 #include "RenderTreeBuilder.h"
 #include "RenderView.h"
+#include <wtf/Range.h>
 #include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
 
@@ -272,11 +273,11 @@ static void cacheBaselineAlignedGridItems(const RenderGrid& grid, GridTrackSizin
 {
     ASSERT_IMPLIES(cachingRowSubgridsForRootGrid, !algorithm.renderGrid()->isSubgridRows() && (algorithm.renderGrid() == &grid || grid.isSubgridOf(GridLayoutFunctions::flowAwareDirectionForGridItem(*algorithm.renderGrid(), grid, GridTrackSizingDirection::ForRows), *algorithm.renderGrid())));
 
-    for (auto* gridItem = grid.firstChildBox(); gridItem; gridItem = gridItem->nextSiblingBox()) {
-        if (gridItem->isOutOfFlowPositioned() || gridItem->isLegend())
+    for (auto& gridItem : childrenOfType<RenderBox>(grid)) {
+        if (gridItem.isOutOfFlowPositioned() || gridItem.isLegend())
             continue;
 
-        callback(gridItem);
+        callback(const_cast<RenderBox*>(&gridItem));
 
         // We keep a cache of items with baseline as alignment values so that we only compute the baseline shims for
         // such items. This cache is needed for performance related reasons due to the cost of evaluating the item's
@@ -286,16 +287,16 @@ static void cacheBaselineAlignedGridItems(const RenderGrid& grid, GridTrackSizin
 
         if (alignmentContextTypes.contains(GridTrackSizingDirection::ForRows)) {
             if (inner && inner->isSubgridInParentDirection(GridTrackSizingDirection::ForRows))
-                innerAlignmentContextTypes.add(GridLayoutFunctions::isOrthogonalGridItem(grid, *gridItem) ? GridTrackSizingDirection::ForColumns : GridTrackSizingDirection::ForRows);
-            else if (grid.isBaselineAlignmentForGridItem(*gridItem, GridTrackSizingDirection::ForRows))
-                algorithm.cacheBaselineAlignedItem(*gridItem, gridAxisForDirection(GridTrackSizingDirection::ForRows), cachingRowSubgridsForRootGrid);
+                innerAlignmentContextTypes.add(GridLayoutFunctions::isOrthogonalGridItem(grid, gridItem) ? GridTrackSizingDirection::ForColumns : GridTrackSizingDirection::ForRows);
+            else if (grid.isBaselineAlignmentForGridItem(gridItem, GridTrackSizingDirection::ForRows))
+                algorithm.cacheBaselineAlignedItem(gridItem, gridAxisForDirection(GridTrackSizingDirection::ForRows), cachingRowSubgridsForRootGrid);
         }
 
         if (alignmentContextTypes.contains(GridTrackSizingDirection::ForColumns)) {
             if (inner && inner->isSubgridInParentDirection(GridTrackSizingDirection::ForColumns))
-                innerAlignmentContextTypes.add(GridLayoutFunctions::isOrthogonalGridItem(grid, *gridItem) ? GridTrackSizingDirection::ForRows : GridTrackSizingDirection::ForColumns);
-            else if (grid.isBaselineAlignmentForGridItem(*gridItem, GridTrackSizingDirection::ForColumns))
-                algorithm.cacheBaselineAlignedItem(*gridItem, gridAxisForDirection(GridTrackSizingDirection::ForColumns), cachingRowSubgridsForRootGrid);
+                innerAlignmentContextTypes.add(GridLayoutFunctions::isOrthogonalGridItem(grid, gridItem) ? GridTrackSizingDirection::ForRows : GridTrackSizingDirection::ForColumns);
+            else if (grid.isBaselineAlignmentForGridItem(gridItem, GridTrackSizingDirection::ForColumns))
+                algorithm.cacheBaselineAlignedItem(gridItem, gridAxisForDirection(GridTrackSizingDirection::ForColumns), cachingRowSubgridsForRootGrid);
         }
 
         if (inner && cachingRowSubgridsForRootGrid)
@@ -937,6 +938,14 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(GridTrackSizingDirection direc
     return repetitions * autoRepeatTrackListLength;
 }
 
+WTF::Range<size_t> RenderGrid::autoRepeatTracksRange(GridTrackSizingDirection direction) const
+{
+    auto insertionPoint = direction == GridTrackSizingDirection::ForColumns ? style().gridAutoRepeatColumnsInsertionPoint() : style().gridAutoRepeatRowsInsertionPoint();
+    auto firstAutoRepeatTrack = insertionPoint + currentGrid().explicitGridStart(direction);
+    auto lastAutoRepeatTrack = firstAutoRepeatTrack + currentGrid().autoRepeatTracks(direction);
+
+    return { firstAutoRepeatTrack, lastAutoRepeatTrack };
+}
 
 std::unique_ptr<OrderedTrackIndexSet> RenderGrid::computeEmptyTracksForAutoRepeat(GridTrackSizingDirection direction) const
 {
@@ -946,16 +955,14 @@ std::unique_ptr<OrderedTrackIndexSet> RenderGrid::computeEmptyTracksForAutoRepea
         return nullptr;
 
     std::unique_ptr<OrderedTrackIndexSet> emptyTrackIndexes;
-    unsigned insertionPoint = isRowAxis ? style().gridAutoRepeatColumnsInsertionPoint() : style().gridAutoRepeatRowsInsertionPoint();
-    unsigned firstAutoRepeatTrack = insertionPoint + currentGrid().explicitGridStart(direction);
-    unsigned lastAutoRepeatTrack = firstAutoRepeatTrack + currentGrid().autoRepeatTracks(direction);
+    auto autoRepeatTracksRange = this->autoRepeatTracksRange(direction);
 
-    if (!currentGrid().hasGridItems() || (shouldCheckExplicitIntrinsicInnerLogicalSize(direction) && !explicitIntrinsicInnerLogicalSize(direction))) {
+    if (!currentGrid().hasGridItems()) {
         emptyTrackIndexes = makeUnique<OrderedTrackIndexSet>();
-        for (unsigned trackIndex = firstAutoRepeatTrack; trackIndex < lastAutoRepeatTrack; ++trackIndex)
+        for (unsigned trackIndex = autoRepeatTracksRange.begin(); trackIndex < autoRepeatTracksRange.end(); ++trackIndex)
             emptyTrackIndexes->add(trackIndex);
     } else {
-        for (unsigned trackIndex = firstAutoRepeatTrack; trackIndex < lastAutoRepeatTrack; ++trackIndex) {
+        for (unsigned trackIndex = autoRepeatTracksRange.begin(); trackIndex < autoRepeatTracksRange.end(); ++trackIndex) {
             GridIterator iterator(currentGrid(), direction, trackIndex);
             if (!iterator.nextGridItem()) {
                 if (!emptyTrackIndexes)

@@ -1855,6 +1855,7 @@ webkit.org/b/231463 fast/css/accent-color/range.html [ ImageOnlyFailure ]
 
 # display-p3 canvas and ImageData are Cocoa only for now.
 fast/canvas/canvas-color-space-display-p3-ImageData.html [ Pass ]
+fast/canvas/gradient-into-p3-canvas.html [ Pass ]
 imported/w3c/web-platform-tests/html/canvas/element/manual/wide-gamut-canvas/canvas-display-p3-drawImage.https.html [ Pass ]
 imported/w3c/web-platform-tests/html/canvas/element/manual/wide-gamut-canvas/canvas-display-p3-drawImage-ImageBitmap-Blob.html [ Pass ]
 imported/w3c/web-platform-tests/html/canvas/element/manual/wide-gamut-canvas/canvas-display-p3-drawImage-ImageBitmap-ImageBitmap.html [ Pass ]
@@ -2209,7 +2210,6 @@ webkit.org/b/269873 imported/w3c/web-platform-tests/webrtc-extensions/transfer-d
 [ Sonoma ] fast/canvas/putImageData-multiple.html [ ImageOnlyFailure ]
 [ Sonoma ] fast/canvas/webgl/match-page-color-space-p3.html [ ImageOnlyFailure ]
 [ Sonoma ] fast/clip/hidpi-background-clip-with-text-fill-color.html [ ImageOnlyFailure ]
-[ Sonoma ] fast/css-grid-layout/grid-element-shrink-to-fit.html [ ImageOnlyFailure ]
 [ Sonoma ] fast/images/decode-static-image-resolve.html [ ImageOnlyFailure ]
 [ Sonoma ] fast/images/image-orientation-none-canvas.html [ ImageOnlyFailure ]
 [ Sonoma ] fast/images/svg-mask-in-canvas.html [ ImageOnlyFailure ]
@@ -2420,3 +2420,15 @@ fast/forms/color/input-color-swatch-overlay-appearance.html [ Pass ]
 webkit.org/b/291459 [ Release ] imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-018.html [ Pass Failure ]
 
 webkit.org/b/291785 [ Release ] security/decode-buffer-size.html [ Timeout ]
+
+webkit.org/b/292846 [ Debug ] inspector/model/source-map-spec.html [ Failure ]
+
+webkit.org/b/292957 imported/w3c/web-platform-tests/css/css-position/multicol/vlr-ltr-ltr-in-multicols.html [ Pass Failure ]
+
+webkit.org/b/292986 [ X86_64 Debug ] pdf/annotations/checkbox-set-active.html [ Slow ]
+webkit.org/b/292986 [ X86_64 Debug ] gamepad/gamepad-polling-access.html [ Slow ]
+webkit.org/b/292986 [ X86_64 Debug ] webgl/2.0.y/conformance/rendering/many-draw-calls.html [ Slow ]
+webkit.org/b/292986 [ X86_64 Debug ] fast/webgpu/nocrash/fuzz-284937.html [ Slow ]
+webkit.org/b/292986 [ X86_64 Debug ] webgl/1.0.x/conformance/textures/misc/tex-video-using-tex-unit-non-zero.html [ Slow ]
+webkit.org/b/292986 [ X86_64 Debug ] fast/css/css-parser-classifyblock-endblock-crash.html [ Slow ]
+webkit.org/b/292986 [ X86_64 Debug ] webgl/2.0.y/conformance2/misc/uninitialized-test-2.html [ Slow ]

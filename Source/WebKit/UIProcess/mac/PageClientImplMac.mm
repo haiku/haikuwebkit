@@ -100,8 +100,6 @@
 
 #import <pal/cocoa/WritingToolsUISoftLink.h>
 
-static NSString * const kAXLoadCompleteNotification = @"AXLoadComplete";
-
 @interface NSApplication (WebNSApplicationDetails)
 - (NSCursor *)_cursorRectCursor;
 @end
@@ -385,8 +383,9 @@ void PageClientImpl::executeUndoRedo(UndoOrRedo undoOrRedo)
     return (undoOrRedo == UndoOrRedo::Undo) ? [[m_view undoManager] undo] : [[m_view undoManager] redo];
 }
 
-void PageClientImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Handle&& image)
+void PageClientImpl::startDrag(const WebCore::DragItem& item, ShareableBitmap::Handle&& image, const std::optional<WebCore::ElementIdentifier>& elementID)
 {
+    UNUSED_PARAM(elementID);
     m_impl->startDrag(item, WTFMove(image));
 }
 
@@ -772,11 +771,6 @@ void PageClientImpl::setEditableElementIsFocused(bool editableElementIsFocused)
     m_impl->setEditableElementIsFocused(editableElementIsFocused);
 }
 
-void PageClientImpl::layerTreeCommitComplete()
-{
-    m_impl->layerTreeCommitComplete();
-}
-
 void PageClientImpl::scrollingNodeScrollViewDidScroll(WebCore::ScrollingNodeID)
 {
     m_impl->suppressContentRelativeChildViews(WebViewImpl::ContentRelativeChildViewsSuppressionType::TemporarilyRemove);
@@ -913,7 +907,7 @@ void PageClientImpl::didFinishNavigation(API::Navigation* navigation)
     if (RefPtr gestureController = m_impl->gestureController())
         gestureController->didFinishNavigation(navigation);
 
-    NSAccessibilityPostNotification(NSAccessibilityUnignoredAncestor(m_view.get().get()), kAXLoadCompleteNotification);
+    NSAccessibilityPostNotification(NSAccessibilityUnignoredAncestor(m_view.get().get()), @"AXLoadComplete");
 }
 
 void PageClientImpl::didFailNavigation(API::Navigation* navigation)
@@ -921,7 +915,7 @@ void PageClientImpl::didFailNavigation(API::Navigation* navigation)
     if (RefPtr gestureController = m_impl->gestureController())
         gestureController->didFailNavigation(navigation);
 
-    NSAccessibilityPostNotification(NSAccessibilityUnignoredAncestor(m_view.get().get()), kAXLoadCompleteNotification);
+    NSAccessibilityPostNotification(NSAccessibilityUnignoredAncestor(m_view.get().get()), @"AXLoadComplete");
 }
 
 void PageClientImpl::didSameDocumentNavigationForMainFrame(SameDocumentNavigationType type)

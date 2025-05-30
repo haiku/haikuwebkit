@@ -67,6 +67,9 @@
 #include "DebuggerScope.h"
 #include "DeferTermination.h"
 #include "DirectArguments.h"
+#include "DisposableStackConstructor.h"
+#include "DisposableStackPrototype.h"
+#include "DisposableStackPrototypeInlines.h"
 #include "ErrorConstructorInlines.h"
 #include "ErrorInstanceInlines.h"
 #include "ErrorPrototypeInlines.h"
@@ -128,6 +131,8 @@
 #include "JSCustomSetterFunctionInlines.h"
 #include "JSDataView.h"
 #include "JSDataViewPrototype.h"
+#include "JSDisposableStack.h"
+#include "JSDisposableStackInlines.h"
 #include "JSDollarVM.h"
 #include "JSFinalizationRegistry.h"
 #include "JSFunction.h"
@@ -236,6 +241,9 @@
 #include "StringIteratorPrototypeInlines.h"
 #include "StringObjectInlines.h"
 #include "StringPrototypeInlines.h"
+#include "SuppressedError.h"
+#include "SuppressedErrorConstructorInlines.h"
+#include "SuppressedErrorPrototypeInlines.h"
 #include "SymbolConstructorInlines.h"
 #include "SymbolObjectInlines.h"
 #include "SymbolPrototypeInlines.h"
@@ -821,6 +829,13 @@ void JSGlobalObject::initializeAggregateErrorConstructor(LazyClassStructure::Ini
     init.setConstructor(AggregateErrorConstructor::create(init.vm, AggregateErrorConstructor::createStructure(init.vm, this, m_errorStructure.constructor(this)), jsCast<AggregateErrorPrototype*>(init.prototype)));
 }
 
+void JSGlobalObject::initializeSuppressedErrorConstructor(LazyClassStructure::Initializer& init)
+{
+    init.setPrototype(SuppressedErrorPrototype::create(init.vm, SuppressedErrorPrototype::createStructure(init.vm, this, m_errorStructure.prototype(this))));
+    init.setStructure(ErrorInstance::createStructure(init.vm, this, init.prototype));
+    init.setConstructor(SuppressedErrorConstructor::create(init.vm, SuppressedErrorConstructor::createStructure(init.vm, this, m_errorStructure.constructor(this)), jsCast<SuppressedErrorPrototype*>(init.prototype)));
+}
+
 SUPPRESS_ASAN inline void JSGlobalObject::initStaticGlobals(VM& vm)
 {
     GlobalPropertyInfo staticGlobals[] = {
@@ -1134,13 +1149,19 @@ void JSGlobalObject::init(VM& vm)
             init.setConstructor(JSSharedArrayBufferConstructor::create(init.vm, JSSharedArrayBufferConstructor::createStructure(init.vm, init.global, init.global->m_functionPrototype.get()), jsCast<JSArrayBufferPrototype*>(init.prototype)));
         });
 
-    m_iteratorPrototype.set(vm, this, JSIteratorPrototype::create(vm, this, JSIteratorPrototype::createStructure(vm, this, m_objectPrototype.get())));
-    if (Options::useIteratorHelpers()) {
-        m_iteratorStructure.set(vm, this, JSIterator::createStructure(vm, this, m_iteratorPrototype.get()));
+    m_disposableStackStructure.initLater(
+        [] (LazyClassStructure::Initializer& init) -> void {
+            init.setPrototype(DisposableStackPrototype::create(init.vm, init.global, DisposableStackPrototype::createStructure(init.vm, init.global, init.global->m_objectPrototype.get())));
+            init.setStructure(JSDisposableStack::createStructure(init.vm, init.global, init.prototype));
+            init.setConstructor(DisposableStackConstructor::create(init.vm, init.global, DisposableStackConstructor::createStructure(init.vm, init.global, init.global->m_functionPrototype.get()), jsCast<DisposableStackPrototype*>(init.prototype)));
+        });
 
-        m_iteratorHelperPrototype.set(vm, this, JSIteratorHelperPrototype::create(vm, this, JSIteratorHelperPrototype::createStructure(vm, this, m_iteratorPrototype.get())));
-        m_iteratorHelperStructure.set(vm, this, JSIteratorHelper::createStructure(vm, this, m_iteratorHelperPrototype.get()));
-    }
+    m_iteratorPrototype.set(vm, this, JSIteratorPrototype::create(vm, this, JSIteratorPrototype::createStructure(vm, this, m_objectPrototype.get())));
+
+    m_iteratorStructure.set(vm, this, JSIterator::createStructure(vm, this, m_iteratorPrototype.get()));
+
+    m_iteratorHelperPrototype.set(vm, this, JSIteratorHelperPrototype::create(vm, this, JSIteratorHelperPrototype::createStructure(vm, this, m_iteratorPrototype.get())));
+    m_iteratorHelperStructure.set(vm, this, JSIteratorHelper::createStructure(vm, this, m_iteratorHelperPrototype.get()));
 
     m_asyncIteratorPrototype.set(vm, this, AsyncIteratorPrototype::create(vm, this, AsyncIteratorPrototype::createStructure(vm, this, m_objectPrototype.get())));
 
@@ -1171,14 +1192,11 @@ void JSGlobalObject::init(VM& vm)
             init.set(JSRegExpStringIterator::createStructure(init.vm, init.owner, regExpStringIteratorPrototype));
     });
 
-    if (Options::useIteratorHelpers()) {
-        m_wrapForValidIteratorStructure.initLater(
-            [] (const Initializer<Structure>& init) {
-                auto* wrapForValidIteratorPrototype = WrapForValidIteratorPrototype::create(init.vm, init.owner, WrapForValidIteratorPrototype::createStructure(init.vm, init.owner, init.owner->m_iteratorPrototype.get()));
-                init.set(JSWrapForValidIterator::createStructure(init.vm, init.owner, wrapForValidIteratorPrototype));
-        });
-
-    }
+    m_wrapForValidIteratorStructure.initLater(
+        [] (const Initializer<Structure>& init) {
+            auto* wrapForValidIteratorPrototype = WrapForValidIteratorPrototype::create(init.vm, init.owner, WrapForValidIteratorPrototype::createStructure(init.vm, init.owner, init.owner->m_iteratorPrototype.get()));
+            init.set(JSWrapForValidIterator::createStructure(init.vm, init.owner, wrapForValidIteratorPrototype));
+    });
 
     m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::sentinelString)].set(vm, this, vm.smallStrings.sentinelString());
 
@@ -1276,6 +1294,12 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
         [] (LazyClassStructure::Initializer& init) {
             init.global->initializeAggregateErrorConstructor(init);
         });
+    if (Options::useExplicitResourceManagement()) {
+        m_suppressedErrorStructure.initLater(
+            [] (LazyClassStructure::Initializer& init) {
+                init.global->initializeSuppressedErrorConstructor(init);
+            });
+    }
 
     m_generatorFunctionPrototype.set(vm, this, GeneratorFunctionPrototype::create(vm, GeneratorFunctionPrototype::createStructure(vm, this, m_functionPrototype.get())));
     GeneratorFunctionConstructor* generatorFunctionConstructor = GeneratorFunctionConstructor::create(vm, GeneratorFunctionConstructor::createStructure(vm, this, functionConstructor), m_generatorFunctionPrototype.get());
@@ -1311,15 +1335,18 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
     putDirectWithoutTransition(vm, vm.propertyNames->Array, arrayConstructor, static_cast<unsigned>(PropertyAttribute::DontEnum));
     putDirectWithoutTransition(vm, vm.propertyNames->RegExp, regExpConstructor, static_cast<unsigned>(PropertyAttribute::DontEnum));
 
-    if (Options::useIteratorHelpers()) {
-        JSIteratorConstructor* iteratorConstructor = JSIteratorConstructor::create(vm, this, JSIteratorConstructor::createStructure(vm, this, m_functionPrototype.get()), m_iteratorPrototype.get());
-        m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::Iterator)].set(vm, this, iteratorConstructor);
-        m_iteratorConstructor.set(vm, this, iteratorConstructor);
-        putDirectWithoutTransition(vm, vm.propertyNames->Iterator, iteratorConstructor, static_cast<unsigned>(PropertyAttribute::DontEnum));
-    }
+    JSIteratorConstructor* iteratorConstructor = JSIteratorConstructor::create(vm, this, JSIteratorConstructor::createStructure(vm, this, m_functionPrototype.get()), m_iteratorPrototype.get());
+    m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::Iterator)].set(vm, this, iteratorConstructor);
+    m_iteratorConstructor.set(vm, this, iteratorConstructor);
+    putDirectWithoutTransition(vm, vm.propertyNames->Iterator, iteratorConstructor, static_cast<unsigned>(PropertyAttribute::DontEnum));
 
     if (Options::useSharedArrayBuffer())
         putDirectWithoutTransition(vm, vm.propertyNames->SharedArrayBuffer, m_sharedArrayBufferStructure.constructor(this), static_cast<unsigned>(PropertyAttribute::DontEnum));
+
+    if (Options::useExplicitResourceManagement()) {
+        putDirectWithoutTransition(vm, vm.propertyNames->SuppressedError, m_suppressedErrorStructure.constructor(this), static_cast<unsigned>(PropertyAttribute::DontEnum));
+        putDirectWithoutTransition(vm, vm.propertyNames->DisposableStack, m_disposableStackStructure.constructor(this), static_cast<unsigned>(PropertyAttribute::DontEnum));
+    }
 
 #define PUT_CONSTRUCTOR_FOR_SIMPLE_TYPE(capitalName, lowerName, properName, instanceType, jsName, prototypeBase, featureFlag) \
     if (featureFlag) \
@@ -1571,16 +1598,14 @@ capitalName ## Constructor* lowerName ## Constructor = featureFlag ? capitalName
         init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 0, "regExpStringIteratorCreate"_s, regExpStringIteratorPrivateFuncCreate, ImplementationVisibility::Private));
     });
 
-    if (Options::useIteratorHelpers()) {
-        // WrapForValidIterator Helpers
-        m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::wrapForValidIteratorCreate)].initLater([](const Initializer<JSCell>& init) {
-            init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 0, "wrapForValidIteratorCreate"_s, wrapForValidIteratorPrivateFuncCreate, ImplementationVisibility::Private));
-        });
+    // WrapForValidIterator Helpers
+    m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::wrapForValidIteratorCreate)].initLater([](const Initializer<JSCell>& init) {
+        init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 0, "wrapForValidIteratorCreate"_s, wrapForValidIteratorPrivateFuncCreate, ImplementationVisibility::Private));
+    });
 
-        m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::iteratorHelperCreate)].initLater([](const Initializer<JSCell>& init) {
-            init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 2, "iteratorHelperCreate"_s, iteratorHelperPrivateFuncCreate, ImplementationVisibility::Private, IteratorHelperCreateIntrinsic));
-        });
-    }
+    m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::iteratorHelperCreate)].initLater([](const Initializer<JSCell>& init) {
+        init.set(JSFunction::create(init.vm, jsCast<JSGlobalObject*>(init.owner), 2, "iteratorHelperCreate"_s, iteratorHelperPrivateFuncCreate, ImplementationVisibility::Private, IteratorHelperCreateIntrinsic));
+    });
 
     // Global object and function helpers.
     m_linkTimeConstants[static_cast<unsigned>(LinkTimeConstant::isFinite)].initLater([] (const Initializer<JSCell>& init) {
@@ -2580,6 +2605,7 @@ void JSGlobalObject::visitChildrenImpl(JSCell* cell, Visitor& visitor)
     thisObject->m_typeErrorStructure.visit(visitor);
     thisObject->m_URIErrorStructure.visit(visitor);
     thisObject->m_aggregateErrorStructure.visit(visitor);
+    thisObject->m_suppressedErrorStructure.visit(visitor);
     visitor.append(thisObject->m_arrayConstructor);
     visitor.append(thisObject->m_shadowRealmConstructor);
     visitor.append(thisObject->m_regExpConstructor);
@@ -2724,6 +2750,7 @@ void JSGlobalObject::visitChildrenImpl(JSCell* cell, Visitor& visitor)
     thisObject->m_callableProxyObjectStructure.visit(visitor);
     thisObject->m_proxyRevokeStructure.visit(visitor);
     thisObject->m_sharedArrayBufferStructure.visit(visitor);
+    thisObject->m_disposableStackStructure.visit(visitor);
 
     for (auto& property : thisObject->m_linkTimeConstants)
         property.visit(visitor);

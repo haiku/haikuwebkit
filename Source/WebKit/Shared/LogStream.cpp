@@ -41,6 +41,8 @@
 
 namespace WebKit {
 
+static std::atomic<unsigned> globalLogCountForTesting { 0 };
+
 LogStream::LogStream(int32_t pid)
     : m_pid(pid)
 {
@@ -73,6 +75,8 @@ void LogStream::logOnBehalfOfWebContent(std::span<const uint8_t> logSubsystem, s
     if (isNullTerminated(logSubsystem) && isNullTerminated(logCategory)) {
         auto subsystem = byteCast<char>(logSubsystem.data());
         auto category = byteCast<char>(logCategory.data());
+        if (equalSpans("Testing\0"_span, logCategory))
+            globalLogCountForTesting++;
         osLog = adoptOSObject(os_log_create(subsystem, category));
     }
 
@@ -85,7 +89,7 @@ void LogStream::logOnBehalfOfWebContent(std::span<const uint8_t> logSubsystem, s
 
     // Use '%{public}s' in the format string for the preprocessed string from the WebContent process.
     // This should not reveal any redacted information in the string, since it has already been composed in the WebContent process.
-    os_log_with_type(osLogPointer, static_cast<os_log_type_t>(logType), "[PID=%d] %{public}s", m_pid, byteCast<char>(nullTerminatedLogString).data());
+    os_log_with_type(osLogPointer, static_cast<os_log_type_t>(logType), "WP[PID=%d] %{public}s", m_pid, byteCast<char>(nullTerminatedLogString).data());
 }
 
 void LogStream::setup(IPC::StreamServerConnectionHandle&& serverConnection, LogStreamIdentifier logStreamIdentifier, CompletionHandler<void(IPC::Semaphore& streamWakeUpSemaphore, IPC::Semaphore& streamClientWaitSemaphore)>&& completionHandler)
@@ -100,6 +104,11 @@ void LogStream::setup(IPC::StreamServerConnectionHandle&& serverConnection, LogS
         logStreamConnection->startReceivingMessages(*this, Messages::LogStream::messageReceiverName(), m_logStreamIdentifier->toUInt64());
         completionHandler(logQueue.get()->wakeUpSemaphore(), logStreamConnection->clientWaitSemaphore());
     }
+}
+
+unsigned LogStream::logCountForTesting()
+{
+    return globalLogCountForTesting;
 }
 
 #if __has_include("LogMessagesImplementations.h")

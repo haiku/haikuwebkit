@@ -520,7 +520,26 @@ String contextMenuItemTagTranslate(const String& selectedString)
 #if ENABLE(WRITING_TOOLS)
 String contextMenuItemTagWritingTools()
 {
+#if ENABLE(TOP_LEVEL_WRITING_TOOLS_CONTEXT_MENU_ITEMS)
+    return WEB_UI_STRING("Show Writing Tools", "Writing Tools context menu item");
+#else
     return WEB_UI_STRING("Writing Tools", "Writing Tools context menu item");
+#endif
+}
+
+String contextMenuItemTagProofread()
+{
+    return WEB_UI_STRING("Proofread", "Proofread context menu item");
+}
+
+String contextMenuItemTagRewrite()
+{
+    return WEB_UI_STRING("Rewrite", "Rewrite context menu item");
+}
+
+String contextMenuItemTagSummarize()
+{
+    return WEB_UI_STRING("Summarize", "Summarize context menu item");
 }
 #endif
 
@@ -822,6 +841,8 @@ String AXARIAContentGroupText(StringView ariaType)
         return WEB_UI_STRING("complementary", "An ARIA accessibility group that acts as a region of complementary information.");
     if (ariaType == "ARIALandmarkContentInfo"_s)
         return WEB_UI_STRING("content information", "An ARIA accessibility group that contains content.");
+    if (ariaType == "ARIALandmarkForm"_s)
+        return WEB_UI_STRING("form", "An ARIA accessibility group that acts as a form region.");
     if (ariaType == "ARIALandmarkMain"_s)
         return WEB_UI_STRING("main", "An ARIA accessibility group that is the main portion of the website.");
     if (ariaType == "ARIALandmarkNavigation"_s)

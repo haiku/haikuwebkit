@@ -56,6 +56,7 @@
 #include "MathMLElement.h"
 #include "NodeName.h"
 #include "Page.h"
+#include "PathOperation.h"
 #include "Quirks.h"
 #include "RenderBox.h"
 #include "RenderStyleSetters.h"
@@ -477,7 +478,7 @@ void Adjuster::adjustFromBuilder(RenderStyle& style)
     style.adjustViewTimelines();
 }
 
-void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearanceStyle) const
+void Adjuster::adjust(RenderStyle& style) const
 {
     if (style.display() == DisplayType::Contents)
         adjustDisplayContentsStyle(style);
@@ -717,7 +718,7 @@ void Adjuster::adjust(RenderStyle& style, const RenderStyle* userAgentAppearance
 
     // Let the theme also have a crack at adjusting the style.
     if (style.hasAppearance())
-        adjustThemeStyle(style, userAgentAppearanceStyle);
+        adjustThemeStyle(style, m_parentStyle);
 
     // This should be kept in sync with requiresRenderingConsolidationForViewTransition
     if (style.preserves3D()) {
@@ -924,7 +925,7 @@ void Adjuster::adjustSVGElementStyle(RenderStyle& style, const SVGElement& svgEl
 
 void Adjuster::adjustAnimatedStyle(RenderStyle& style, OptionSet<AnimationImpact> impact) const
 {
-    adjust(style, nullptr);
+    adjust(style);
 
     // Set an explicit used z-index in two cases:
     // 1. When the element respects z-index, and the style has an explicit z-index set (for example, the animation
@@ -937,7 +938,7 @@ void Adjuster::adjustAnimatedStyle(RenderStyle& style, OptionSet<AnimationImpact
         style.setUsedZIndex(0);
 }
 
-void Adjuster::adjustThemeStyle(RenderStyle& style, const RenderStyle* userAgentAppearanceStyle) const
+void Adjuster::adjustThemeStyle(RenderStyle& style, const RenderStyle& parentStyle) const
 {
     ASSERT(style.hasAppearance());
     auto isOldWidthAuto = style.width().isAuto();
@@ -945,7 +946,7 @@ void Adjuster::adjustThemeStyle(RenderStyle& style, const RenderStyle* userAgent
     auto isOldHeightAuto = style.height().isAuto();
     auto isOldMinHeightAuto = style.minHeight().isAuto();
 
-    RenderTheme::singleton().adjustStyle(style, m_element.get(), userAgentAppearanceStyle);
+    RenderTheme::singleton().adjustStyle(style, parentStyle, m_element.get());
 
     if (style.containsSize()) {
         if (style.containIntrinsicWidthType() != ContainIntrinsicSizeType::None) {

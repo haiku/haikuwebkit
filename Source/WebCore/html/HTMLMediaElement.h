@@ -317,6 +317,7 @@ public:
     void updatePlaybackRate();
     Ref<TimeRanges> played() override;
     Ref<TimeRanges> seekable() const override;
+    PlatformTimeRanges platformSeekable() const;
     double seekableTimeRangesLastModifiedTime() const;
     double liveUpdateInterval() const;
     WEBCORE_EXPORT bool ended() const;
@@ -431,6 +432,7 @@ public:
     void mediaPlayerDidRemoveAudioTrack(AudioTrackPrivate&) final;
     void mediaPlayerDidRemoveTextTrack(InbandTextTrackPrivate&) final;
     void mediaPlayerDidRemoveVideoTrack(VideoTrackPrivate&) final;
+    void mediaPlayerDidReportGPUMemoryFootprint(size_t) final;
 
     Vector<RefPtr<PlatformTextTrack>> outOfBandTrackSources() final;
 
@@ -448,6 +450,7 @@ public:
     void audioTrackKindChanged(AudioTrack&) final;
     void audioTrackLabelChanged(AudioTrack&) final;
     void audioTrackLanguageChanged(AudioTrack&) final;
+    void audioTrackConfigurationChanged(AudioTrack&) final;
     void willRemoveAudioTrack(AudioTrack&) final;
 
     // TextTrackClient
@@ -466,6 +469,7 @@ public:
     void videoTrackLabelChanged(VideoTrack&) final;
     void videoTrackLanguageChanged(VideoTrack&) final;
     void videoTrackSelectedChanged(VideoTrack&) final;
+    void videoTrackConfigurationChanged(VideoTrack&) final;
     void willRemoveVideoTrack(VideoTrack&) final;
 
     void setTextTrackRepresentataionBounds(const IntRect&);
@@ -908,7 +912,6 @@ private:
     const std::optional<Vector<FourCC>>& allowedMediaCaptionFormatTypes() const final;
 
     void mediaPlayerBufferedTimeRangesChanged() final;
-    bool mediaPlayerPrefersSandboxedParsing() const final;
 
     bool mediaPlayerShouldDisableHDR() const final { return shouldDisableHDR(); }
 

@@ -52,6 +52,7 @@ public:
         bool changed = false;
         changed |= convertValueRepsToUnboxed<DoubleRepUse>();
         changed |= convertValueRepsToUnboxed<Int52RepUse>();
+        changed |= convertValueRepsToUnboxed<Int32Use>();
         return changed;
     }
 
@@ -64,6 +65,9 @@ private:
             for (Node* node : *block) {
                 switch (node->op()) {
                 case ValueRep: {
+                    if constexpr (useKind != DoubleRepUse && useKind != Int52RepUse)
+                        break;
+
                     if (node->child1().useKind() == useKind)
                         candidates.add(node);
                     break;
@@ -71,9 +75,6 @@ private:
 
                 case DoubleRep: {
                     if constexpr (useKind != DoubleRepUse)
-                        break;
-
-                    if (!isARM64() && !isX86_64_AVX())
                         break;
 
                     switch (node->child1()->op()) {
@@ -139,6 +140,53 @@ private:
                     break;
                 }
 
+                case ValueToInt32: {
+                    if constexpr (useKind != Int32Use)
+                        break;
+
+                    Edge& child1 = node->child1();
+                    switch (child1->op()) {
+                    case MultiGetByVal: {
+                        if (child1->arrayMode().isOutOfBounds())
+                            break;
+
+                        if (child1->arrayMode().isInBoundsSaneChain())
+                            break;
+
+                        if (!bytecodeCanTruncateInteger(child1->arithNodeFlags()))
+                            break;
+
+                        if (!bytecodeCanIgnoreNaNAndInfinity(child1->arithNodeFlags()))
+                            break;
+
+                        if (!bytecodeCanIgnoreNegativeZero(child1->arithNodeFlags()))
+                            break;
+
+                        constexpr ArrayModes supportedArrays = 0
+                            | asArrayModesIgnoringTypedArrays(ArrayWithInt32)
+                            | asArrayModesIgnoringTypedArrays(ArrayWithDouble)
+                            | Int8ArrayMode
+                            | Int16ArrayMode
+                            | Int32ArrayMode
+                            | Uint8ArrayMode
+                            | Uint8ClampedArrayMode
+                            | Uint16ArrayMode
+                            | Uint32ArrayMode
+                            | 0;
+
+                        if (!(child1->arrayModes() & supportedArrays))
+                            break;
+
+                        if (child1->origin.exitOK)
+                            candidates.add(child1.node());
+                        break;
+                    }
+                    default:
+                        break;
+                    }
+                    break;
+                }
+
                 default:
                     break;
                 }
@@ -171,16 +219,13 @@ private:
                     if constexpr (useKind != DoubleRepUse)
                         break;
 
-                    if (!isARM64() && !isX86_64_AVX())
-                        break;
-
                     if (candidates.contains(node))
                         usersOf.add(node, Vector<Node*>());
                     break;
                 }
 
                 case MultiGetByVal: {
-                    if constexpr (useKind != Int52RepUse)
+                    if constexpr (useKind != Int52RepUse && useKind != Int32Use)
                         break;
 
                     if (candidates.contains(node))
@@ -189,6 +234,9 @@ private:
                 }
 
                 case ValueRep: {
+                    if constexpr (useKind != DoubleRepUse && useKind != Int52RepUse)
+                        break;
+
                     if (candidates.contains(node))
                         usersOf.add(node, Vector<Node*>());
                     break;
@@ -289,6 +337,12 @@ private:
                                     dumpEscape("Phi Incoming JSConstant not a anyint: ", node);
                                 }
                             }
+                            if constexpr (useKind == Int32Use) {
+                                if (!node->asJSValue().isInt32AsAnyInt()) {
+                                    ok = false;
+                                    dumpEscape("Phi Incoming JSConstant not a int32: ", node);
+                                }
+                            }
                             break;
                         }
 
@@ -297,12 +351,6 @@ private:
                         case GetGlobalLexicalVariable:
                         case MultiGetByOffset:
                         case GetByOffset: {
-                            if (!isARM64() && !isX86_64_AVX()) {
-                                ok = false;
-                                dumpEscape("Unsupported incoming value to Phi: ", node);
-                                break;
-                            }
-
                             if constexpr (useKind != DoubleRepUse) {
                                 ok = false;
                                 dumpEscape("Phi Incoming Get is escaped: ", node);
@@ -318,7 +366,7 @@ private:
                         }
 
                         case MultiGetByVal: {
-                            if constexpr (useKind != Int52RepUse) {
+                            if constexpr (useKind != Int52RepUse && useKind != Int32Use) {
                                 ok = false;
                                 dumpEscape("Phi Incoming Get is escaped: ", node);
                                 break;
@@ -333,6 +381,12 @@ private:
                         }
 
                         case ValueRep: {
+                            if constexpr (useKind != DoubleRepUse && useKind != Int52RepUse) {
+                                ok = false;
+                                dumpEscape("Phi Incoming ValueRep not DoubleRepUse / Int52RepUse: ", node);
+                                break;
+                            }
+
                             if (node->child1().useKind() != useKind) {
                                 ok = false;
                                 dumpEscape("Phi Incoming ValueRep not DoubleRepUse / Int52RepUse: ", node);
@@ -402,6 +456,15 @@ private:
                         break;
                     }
 
+                    case ValueToInt32: {
+                        if constexpr (useKind != Int32Use) {
+                            ok = false;
+                            dumpEscape("Int32Use escape: ", user);
+                            break;
+                        }
+                        break;
+                    }
+
                     case PutHint:
                     case MovHint:
                         break;
@@ -414,12 +477,6 @@ private:
                         if constexpr (useKind != DoubleRepUse) {
                             ok = false;
                             dumpEscape("Normal escape: ", user);
-                            break;
-                        }
-
-                        if (!isARM64() && !isX86_64_AVX()) {
-                            dumpEscape("Normal escape: ", user);
-                            ok = false;
                             break;
                         }
                         break;
@@ -483,6 +540,11 @@ private:
                             newChild = m_insertionSet.insertConstant(0, originForConstant, jsNumber(number), Int52Constant);
                             break;
                         }
+                        if constexpr (useKind == Int32Use) {
+                            int32_t number = incomingValue->asJSValue().asInt32AsAnyInt();
+                            newChild = m_insertionSet.insertConstant(0, originForConstant, jsNumber(number), JSConstant);
+                            break;
+                        }
                         break;
                     }
                     case ValueRep: {
@@ -502,8 +564,6 @@ private:
                     case GetGlobalLexicalVariable:
                     case MultiGetByOffset:
                     case GetByOffset: {
-                        if (!isARM64() && !isX86_64_AVX())
-                            RELEASE_ASSERT_NOT_REACHED();
                         newChild = incomingValue;
                         break;
                     }
@@ -525,6 +585,8 @@ private:
                     candidate->setResult(NodeResultDouble);
                 if constexpr (useKind == Int52RepUse)
                     candidate->setResult(NodeResultInt52);
+                if constexpr (useKind == Int32Use)
+                    candidate->setResult(NodeResultInt32);
                 break;
             }
 
@@ -538,15 +600,16 @@ private:
             case GetGlobalLexicalVariable:
             case MultiGetByOffset:
             case GetByOffset: {
-                if (!isARM64() && !isX86_64_AVX())
-                    RELEASE_ASSERT_NOT_REACHED();
                 candidate->setResult(NodeResultDouble);
                 resultNode = candidate;
                 break;
             }
 
             case MultiGetByVal: {
-                candidate->setResult(NodeResultInt52);
+                if constexpr (useKind == Int52RepUse)
+                    candidate->setResult(NodeResultInt52);
+                if constexpr (useKind == Int32Use)
+                    candidate->setResult(NodeResultInt32);
                 resultNode = candidate;
                 break;
             }
@@ -572,35 +635,38 @@ private:
                     break;
                 }
 
+                case ValueToInt32: {
+                    user->convertToIdentityOn(resultNode);
+                    break;
+                }
+
                 case PutHint:
-                    user->child2() = Edge(resultNode, useKind);
+                    if constexpr (useKind != DoubleRepUse && useKind != Int52RepUse)
+                        user->child2() = Edge(resultNode, UntypedUse);
+                    else
+                        user->child2() = Edge(resultNode, useKind);
                     break;
 
                 case MovHint:
-                    user->child1() = Edge(resultNode, useKind);
+                    if constexpr (useKind != DoubleRepUse && useKind != Int52RepUse)
+                        user->child1() = Edge(resultNode, UntypedUse);
+                    else
+                        user->child1() = Edge(resultNode, useKind);
                     break;
 
                 case PutByOffset:
-                    if (!isARM64() && !isX86_64_AVX())
-                        RELEASE_ASSERT_NOT_REACHED();
                     user->child3() = Edge(resultNode, useKind);
                     break;
 
                 case MultiPutByOffset:
-                    if (!isARM64() && !isX86_64_AVX())
-                        RELEASE_ASSERT_NOT_REACHED();
                     user->child2() = Edge(resultNode, useKind);
                     break;
 
                 case PutClosureVar:
-                    if (!isARM64() && !isX86_64_AVX())
-                        RELEASE_ASSERT_NOT_REACHED();
                     user->child2() = Edge(resultNode, useKind);
                     break;
 
                 case PutGlobalVariable:
-                    if (!isARM64() && !isX86_64_AVX())
-                        RELEASE_ASSERT_NOT_REACHED();
                     user->child2() = Edge(resultNode, useKind);
                     break;
 
