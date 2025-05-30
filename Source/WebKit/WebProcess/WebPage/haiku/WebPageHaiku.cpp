@@ -30,7 +30,9 @@
 #include <WebCore/EventHandler.h>
 #include <WebCore/KeyboardEvent.h>
 #include <WebCore/NotImplemented.h>
+#include <WebCore/Page.h>
 #include <WebCore/PlatformKeyboardEvent.h>
+#include <WebCore/Settings.h>
 #include <WebCore/UserAgent.h>
 #include <WebCore/WindowsKeyboardCodes.h>
 
