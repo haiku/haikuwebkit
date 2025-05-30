@@ -28,6 +28,7 @@
 
 #include "WebResourceLoadScheduler.h"
 
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/platform/haiku/ErrorsHaiku.h>
 #include <WebCore/ResourceError.h>
 #include <WebCore/ResourceRequest.h>

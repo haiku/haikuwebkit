@@ -193,27 +193,21 @@ PathHaiku::~PathHaiku()
 }
 
 
-Ref<PathHaiku> PathHaiku::create()
-{
-    return adoptRef(* new PathHaiku());
-}
-
-
 Ref<PathHaiku> PathHaiku::create(const PathSegment& segment)
 {
-    auto pathHaiku = PathHaiku::create();
+    auto pathHaiku = adoptRef(*new PathHaiku());
     pathHaiku->addSegment(segment);
     return pathHaiku;
 }
 
 
-Ref<PathHaiku> PathHaiku::create(const PathStream& stream)
+Ref<PathHaiku> PathHaiku::create(std::span<const PathSegment> stream)
 {
-    auto pathHaiku = PathHaiku::create();
+    auto pathHaiku = adoptRef(*new PathHaiku());
 
-    stream.applySegments([&](const PathSegment& segment) {
+    for (const auto& segment: stream) {
         pathHaiku->addSegment(segment);
-    });
+    }
 
     return pathHaiku;
 }
@@ -221,6 +215,12 @@ Ref<PathHaiku> PathHaiku::create(const PathStream& stream)
 Ref<PathHaiku> PathHaiku::create(const BShape& platformPath, RefPtr<PathStream>&& elementsStream)
 {
     return adoptRef(*new PathHaiku(platformPath, WTFMove(elementsStream)));
+}
+
+PlatformPathPtr PathHaiku::emptyPlatformPath()
+{
+    static BShape emptyPath;
+    return &emptyPath;
 }
 
 Ref<PathImpl> PathHaiku::copy() const
@@ -363,10 +363,6 @@ static inline float areaOfTriangleFormedByPoints(const FloatPoint& p1, const Flo
 
 void PathHaiku::add(PathArcTo arcTo)
 {
-    // FIXME: Why do we return if the path is empty? Can't a path start with an arc?
-    if (isEmpty())
-        return;
-
     FloatPoint p0(m_platformPath.CurrentPosition());
 
     const FloatPoint p1 = arcTo.controlPoint1;
@@ -473,7 +469,7 @@ void PathHaiku::add(PathArc arc)
 
     // Draw the radius or whatever line is needed to get to the start point
     // (or teleport there if there was no previous position)
-    if (!isEmpty())
+    if (m_platformPath.Bounds().IsValid())
         m_platformPath.LineTo(BPoint(startX, startY));
     else
         m_platformPath.MoveTo(BPoint(startX, startY));
@@ -667,12 +663,6 @@ void Path::clear()
 #endif
 
 
-bool PathHaiku::isEmpty() const
-{
-    return !m_platformPath.Bounds().IsValid();
-}
-
-
 void PathHaiku::applySegments(const PathSegmentApplier& applier) const
 {
     applyElements([&](const PathElement& pathElement) {
@@ -832,10 +822,6 @@ bool PathHaiku::transform(const AffineTransform& transform)
 FloatRect PathHaiku::strokeBoundingRect(const Function<void(GraphicsContext&)>& applier) const
 {
     // Used by the web inspector to highlight some element
-
-    if (isEmpty())
-        return FloatRect();
-
     if (applier) {
         notImplemented();
     }

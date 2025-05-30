@@ -41,6 +41,7 @@
 #include "WebCore/FrameView.h"
 #include "WebCore/HitTestResult.h"
 #include "WebCore/Icon.h"
+#include "WebCore/LocalFrameInlines.h"
 #include "WebCore/LocalFrameView.h"
 #include "WebCore/ModalContainerTypes.h"
 #include "WebCore/NotImplemented.h"

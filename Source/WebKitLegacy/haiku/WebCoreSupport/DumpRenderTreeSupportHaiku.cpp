@@ -40,6 +40,7 @@
 #include "WebCore/FrameLoader.h"
 #include "WebCore/FrameView.h"
 #include "WebCore/LocalDOMWindow.h"
+#include "WebCore/LocalFrameInlines.h"
 #include "WebCore/NotImplemented.h"
 #include "WebCore/Page.h"
 #include "WebCore/PageGroup.h"

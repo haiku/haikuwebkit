@@ -38,10 +38,10 @@ class GraphicsContext;
 
 class PathHaiku final: public PathImpl {
 public:
-    static Ref<PathHaiku> create();
+    static Ref<PathHaiku> create(std::span<const PathSegment> = { });
     static Ref<PathHaiku> create(const PathSegment&);
-    static Ref<PathHaiku> create(const PathStream&);
     static Ref<PathHaiku> create(const BShape&, RefPtr<PathStream>&& = nullptr);
+    static PlatformPathPtr emptyPlatformPath();
 
     PathHaiku();
     PathHaiku(const BShape&, RefPtr<PathStream>&&);
@@ -81,8 +81,6 @@ private:
     void add(PathCloseSubpath) final;
 
     void applySegments(const PathSegmentApplier&) const final;
-
-    bool isEmpty() const final;
 
     FloatPoint currentPoint() const final;
 

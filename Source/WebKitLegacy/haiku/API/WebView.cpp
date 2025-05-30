@@ -31,6 +31,7 @@
 
 #include "WebCore/Frame.h"
 #include "WebCore/GraphicsContextHaiku.h"
+#include "WebCore/LocalFrameInlines.h"
 #include "WebCore/LocalFrameView.h"
 #include "WebCore/NotImplemented.h"
 #include "WebCore/Page.h"

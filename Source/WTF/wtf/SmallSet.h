@@ -31,6 +31,8 @@
 #include <wtf/Noncopyable.h>
 #include <wtf/StdLibExtras.h>
 
+#include <limits>
+
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace WTF {

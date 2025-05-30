@@ -33,6 +33,7 @@
 #define EditorClientHaiku_h
 
 #include "WebCore/EditorClient.h"
+#include "WebCore/DOMPasteAccess.h"
 #include "WebCore/Page.h"
 #include "WebCore/TextCheckerClient.h"
 #include <wtf/RefCounted.h>

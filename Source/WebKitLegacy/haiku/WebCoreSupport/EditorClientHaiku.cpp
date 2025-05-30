@@ -37,12 +37,15 @@
 #include <WebCore/Editor.h>
 #include <WebCore/FocusController.h>
 #include <WebCore/Frame.h>
+#include <WebCore/FrameInlines.h>
 #include <WebCore/FrameSelection.h>
 #include <WebCore/KeyboardEvent.h>
+#include <WebCore/LocalFrameInlines.h>
 #include <WebCore/NotImplemented.h>
 #include <WebCore/Page.h>
 #include <WebCore/PlatformKeyboardEvent.h>
 #include <WebCore/Settings.h>
+#include <WebCore/SimpleRange.h>
 #include <WebCore/WindowsKeyboardCodes.h>
 
 #include "WebFrame.h"

@@ -46,6 +46,7 @@
 #include "WebCore/DOMWrapperWorld.h"
 #include "WebCore/FormState.h"
 #include "WebCore/Frame.h"
+#include "WebCore/FrameInlines.h"
 #include "WebCore/FrameLoader.h"
 #include "WebCore/FrameTree.h"
 #include "WebCore/FrameView.h"

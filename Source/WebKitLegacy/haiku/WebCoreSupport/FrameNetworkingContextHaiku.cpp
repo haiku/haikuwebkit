@@ -31,6 +31,7 @@
 #include "FrameNetworkingContextHaiku.h"
 
 #include "NetworkStorageSessionMap.h"
+#include "WebCore/FrameInlines.h"
 #include "WebCore/NetworkStorageSession.h"
 #include "WebCore/NotImplemented.h"
 #include "WebCore/Page.h"

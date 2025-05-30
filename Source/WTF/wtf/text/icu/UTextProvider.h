@@ -27,6 +27,8 @@
 
 #include <unicode/utext.h>
 
+#include <limits>
+
 namespace WTF {
 
 enum class UTextProviderContext {

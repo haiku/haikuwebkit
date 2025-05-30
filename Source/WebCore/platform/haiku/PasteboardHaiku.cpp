@@ -32,8 +32,10 @@
 #include "DragData.h"
 #include "Editor.h"
 #include "Frame.h"
+#include "LocalFrameInlines.h"
 #include "wtf/URL.h"
 #include "NotImplemented.h"
+#include "SimpleRange.h"
 #include "TextResourceDecoder.h"
 #include "markup.h"
 

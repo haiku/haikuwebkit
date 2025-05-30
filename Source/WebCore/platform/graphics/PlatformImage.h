@@ -34,6 +34,7 @@ typedef struct CGImage* CGImageRef;
 #include "RefPtrCairo.h"
 #elif USE(HAIKU)
 #include <Bitmap.h>
+#include <wtf/RefCounted.h>
 #elif USE(SKIA)
 WTF_IGNORE_WARNINGS_IN_THIRD_PARTY_CODE_BEGIN
 #include <skia/core/SkImage.h>
