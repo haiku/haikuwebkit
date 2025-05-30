@@ -45,7 +45,7 @@
 #include <unistd.h>
 #endif
 
-#if PLATFORM(HAIKU)
+#if PLATFORM(HAIKU) && !defined(MAP_FILE)
 #define MAP_FILE 0
 #endif
 

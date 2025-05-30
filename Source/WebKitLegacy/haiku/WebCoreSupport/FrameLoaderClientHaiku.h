@@ -191,7 +191,7 @@ class FrameLoaderClientHaiku : public LocalFrameLoaderClient {
     void provisionalLoadStarted() override;
     void didFinishLoad() override;
     void prepareForDataSourceReplacement() override;
-    Ref<DocumentLoader> createDocumentLoader(const ResourceRequest&, const SubstituteData&) override;
+    Ref<DocumentLoader> createDocumentLoader(ResourceRequest&&, SubstituteData&&) override;
 
     void setTitle(const StringWithDirection&, const URL&) override;
 

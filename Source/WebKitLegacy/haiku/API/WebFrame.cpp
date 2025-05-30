@@ -133,7 +133,7 @@ void BWebFrame::LoadURL(WTF::URL url)
     fData->requestedURL = url.string();
 
     WebCore::ResourceRequest req(std::move(url));
-    fData->frame->loader().load(WebCore::FrameLoadRequest(*fData->frame, req));
+    fData->frame->loader().load(WebCore::FrameLoadRequest(*fData->frame, std::move(req)));
 }
 
 void BWebFrame::StopLoading()

@@ -419,7 +419,7 @@ void PathHaiku::add(PathArcTo arcTo)
     orth_p1p0 = FloatPoint(-orth_p1p0.x(), -orth_p1p0.y());
     float sa = acos(orth_p1p0.x() / orth_p1p0_length);
     if (orth_p1p0.y() < 0.f)
-        sa = 2 * piDouble - sa;
+        sa = 2 * M_PI - sa;
 
     // anticlockwise logic
     RotationDirection direction = RotationDirection::Clockwise;
@@ -430,10 +430,10 @@ void PathHaiku::add(PathArcTo arcTo)
     float orth_p1p2_length = sqrtf(orth_p1p2.x() * orth_p1p2.x() + orth_p1p2.y() * orth_p1p2.y());
     float ea = acos(orth_p1p2.x() / orth_p1p2_length);
     if (orth_p1p2.y() < 0)
-        ea = 2 * piDouble - ea;
-    if ((sa > ea) && ((sa - ea) < piDouble))
+        ea = 2 * M_PI - ea;
+    if ((sa > ea) && ((sa - ea) < M_PI))
         direction = RotationDirection::Counterclockwise;
-    if ((sa < ea) && ((ea - sa) > piDouble))
+    if ((sa < ea) && ((ea - sa) > M_PI))
         direction = RotationDirection::Counterclockwise;
 
     m_platformPath.LineTo(t_p1p0);

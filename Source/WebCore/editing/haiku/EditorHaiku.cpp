@@ -28,6 +28,7 @@
 #include "config.h"
 #include "Editor.h"
 
+#include "ContainerNodeInlines.h"
 #include "DOMURL.h"
 #include "DocumentFragment.h"
 #include "HTMLEmbedElement.h"

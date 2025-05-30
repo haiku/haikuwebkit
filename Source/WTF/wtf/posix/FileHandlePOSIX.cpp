@@ -39,9 +39,9 @@
 #include <wtf/MallocSpan.h>
 #include <wtf/MappedFileData.h>
 
-#if OS(HAIKU)
-/* Haiku does not define MAP_FILE because it is the default mode (as specified in POSIX).
- * Most other system define it to the value 0 anyways */
+#if OS(HAIKU) && !defined(MAP_FILE)
+/* Haiku did not define MAP_FILE until R1beta6, because it is the default mode (as specified in
+ * POSIX). Most other system define it to the value 0 anyways. */
 #define MAP_FILE 0
 #endif
 

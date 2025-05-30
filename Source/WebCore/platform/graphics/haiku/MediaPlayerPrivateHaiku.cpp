@@ -340,7 +340,7 @@ void MediaPlayerPrivate::IdentifyTracks(const String& url)
     // TODO something here is blocking inside the Media Kit. We should rework
     // things so that this is run in a separate thread (Media Thread?). This
     // would avoid the annoying freeze whenever a media is being loaded.
-    m_mediaFile = new BMediaFile(BUrl(url.utf8().data()));
+    m_mediaFile = new BMediaFile(BUrl(url.utf8().data(), false));
 
     if (m_mediaFile->InitCheck() == B_OK) {
         for (int i = m_mediaFile->CountTracks() - 1; i >= 0; i--)

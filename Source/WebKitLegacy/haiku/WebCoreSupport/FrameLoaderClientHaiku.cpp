@@ -818,10 +818,10 @@ void FrameLoaderClientHaiku::prepareForDataSourceReplacement()
     // notImplemented(); // Nor does any port except Apple one.
 }
 
-WTF::Ref<DocumentLoader> FrameLoaderClientHaiku::createDocumentLoader(const ResourceRequest& request, const SubstituteData& substituteData)
+WTF::Ref<DocumentLoader> FrameLoaderClientHaiku::createDocumentLoader(ResourceRequest&& request, SubstituteData&& substituteData)
 {
     CALLED("request: %s", request.url().string().utf8().data());
-    return DocumentLoader::create(request, substituteData);
+    return DocumentLoader::create(std::move(request), std::move(substituteData));
 }
 
 void FrameLoaderClientHaiku::setTitle(const StringWithDirection&, const URL&)
