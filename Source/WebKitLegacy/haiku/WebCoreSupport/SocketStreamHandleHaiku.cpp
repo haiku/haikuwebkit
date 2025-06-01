@@ -133,22 +133,26 @@ void SocketStreamHandleImpl::threadEntryPoint()
         executeTasks();
 
         status_t readable = socket->WaitForReadable(20 * 1000);
+        if (readable != B_OK && readable != B_TIMED_OUT) {
+            handleError(readable);
+            break;
+        }
+
         status_t writable = B_ERROR;
-        if (m_writeBuffer.get() != nullptr)
+        if (m_writeBuffer.get() != nullptr) {
             writable = socket->WaitForWritable(20 * 1000);
+            if (writable != B_OK && writable != B_TIMED_OUT) {
+                handleError(writable);
+                break;
+            }
+        }
 
         // These logic only run when there's data waiting.
         if ((writable == B_OK) && m_running) {
             auto bytesSent = socket->Write(m_writeBuffer.get() + m_writeBufferOffset, m_writeBufferSize - m_writeBufferOffset);
-            if (bytesSent <= 0) {
-                // Make sure we are still connected.
-                if (!socket->IsConnected()) {
-                    m_running = false;
-                    callOnMainThread([this, protectedThis = Ref{*this}] {
-                            close();
-                            });
-                    break;
-                }
+            if (bytesSent < 0) {
+                handleError(bytesSent);
+                break;
             }
             m_writeBufferOffset += bytesSent;
 
@@ -167,17 +171,15 @@ void SocketStreamHandleImpl::threadEntryPoint()
         if ((readable == B_OK) && m_running) {
             auto readBuffer = makeUniqueArray<uint8_t>(kReadBufferSize);
             ssize_t bytesRead = socket->Read(readBuffer.get(), kReadBufferSize);
-            // `0` result means nothing to handle at this moment.
             if (bytesRead <= 0) {
-                // Make sure we are still connected.
-                if (!socket->IsConnected()) {
-                    m_running = false;
-                    callOnMainThread([this, protectedThis = Ref{*this}] {
-                            close();
-                            });
-                    break;
-                }
-                continue;
+                m_running = false;
+                callOnMainThread([this, protectedThis = Ref{*this}] {
+                    if (m_state == Closed)
+                        return;
+
+                    m_client.didFailToReceiveSocketStreamData(*this);
+                });
+                break;
             }
 
             callOnMainThread([this, protectedThis = Ref{*this}, buffer = WTFMove(readBuffer), size = bytesRead ] {
@@ -198,7 +200,6 @@ void SocketStreamHandleImpl::handleError(status_t errorCode)
         if (m_state == Closed)
             return;
 
-        // TODO: when to call m_client.didFailToReceiveSocketStreamData(*this); ?
         m_client.didFailSocketStream(*this, SocketStreamError(static_cast<int>(errorCode), String(), String::fromUTF8(localizedDescription)));
     });
 }
