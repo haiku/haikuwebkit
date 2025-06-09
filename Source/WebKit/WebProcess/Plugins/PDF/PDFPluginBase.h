@@ -170,7 +170,7 @@ public:
 
     void updateControlTints(WebCore::GraphicsContext&);
 
-    virtual RefPtr<WebCore::FragmentedSharedBuffer> liveResourceData() const = 0;
+    RefPtr<WebCore::FragmentedSharedBuffer> liveResourceData() const;
 
     virtual bool wantsWheelEvents() const = 0;
     virtual bool handleMouseEvent(const WebMouseEvent&) = 0;
@@ -382,7 +382,7 @@ protected:
     virtual unsigned firstPageHeight() const = 0;
 
     NSData *originalData() const;
-    virtual NSData *liveData() const = 0;
+    NSData *liveData() const;
 
     void addArchiveResource();
 
@@ -394,6 +394,9 @@ protected:
     WebCore::IntRect scrollCornerRect() const final;
     WebCore::ScrollableArea* enclosingScrollableArea() const final;
     bool scrollAnimatorEnabled() const final { return true; }
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+    bool vectorBasedControlsEnabled() const final;
+#endif
     bool isScrollableOrRubberbandable() final { return true; }
     bool hasScrollableOrRubberbandableAncestor() final { return true; }
     WebCore::IntRect scrollableAreaBoundingBox(bool* = nullptr) const final;

@@ -30,7 +30,7 @@
 #include "GraphicsContext.h"
 #include "LayoutRect.h"
 #include "Logging.h"
-#include "RenderStyle.h"
+#include "RenderStyleInlines.h"
 #include <pal/spi/cg/CoreGraphicsSPI.h>
 #include <wtf/MathExtras.h>
 #include <wtf/RuntimeApplicationChecks.h>
@@ -275,14 +275,14 @@ static void showGlyphsWithAdvances(const FloatPoint& point, const Font& font, CG
 
         Vector<CGSize, 256> translations(glyphs.size());
         RetainPtr ctFont = platformData.ctFont();
-        CTFontGetVerticalTranslationsForGlyphs(ctFont.get(), glyphs.data(), translations.data(), glyphs.size());
+        CTFontGetVerticalTranslationsForGlyphs(ctFont.get(), glyphs.data(), translations.mutableSpan().data(), glyphs.size());
 
         auto ascentDelta = font.fontMetrics().ascent(IdeographicBaseline) - font.fontMetrics().ascent();
         fillVectorWithVerticalGlyphPositions(positions, translations, advances, point, ascentDelta, CGContextGetTextMatrix(context));
-        CTFontDrawGlyphs(ctFont.get(), glyphs.data(), positions.data(), glyphs.size(), context);
+        CTFontDrawGlyphs(ctFont.get(), glyphs.data(), positions.span().data(), glyphs.size(), context);
     } else {
         fillVectorWithHorizontalGlyphPositions(positions, context, advances, point);
-        CTFontDrawGlyphs(RetainPtr { platformData.ctFont() }.get(), glyphs.data(), positions.data(), glyphs.size(), context);
+        CTFontDrawGlyphs(RetainPtr { platformData.ctFont() }.get(), glyphs.data(), positions.span().data(), glyphs.size(), context);
     }
 }
 
@@ -524,7 +524,7 @@ ResolvedEmojiPolicy FontCascade::resolveEmojiPolicy(FontVariantEmoji fontVariant
 bool FontCascade::canUseGlyphDisplayList(const RenderStyle& style)
 {
     // CoreText won't call the drawImage delegate for glyphs that are invisible, even if they have an associated shadow applied to its graphic context. This would result in a glyph display list without the invisible glyph which is drawn as image and we would not draw its associated shadow. Therefore, we won't use a display list for runs that are invisible and have an associated shadow.
-    return !(style.textShadow() && !style.color().isVisible());
+    return !(style.hasTextShadow() && !style.color().isVisible());
 }
 
 } // namespace WebCore

@@ -73,30 +73,11 @@ static std::optional<ShaderModuleParameters> findShaderModuleParameters(const WG
     return { { *wgsl, hints } };
 }
 
-static NSString* appleGPUFamilyToString(id<MTLDevice> device)
-{
-#if ENABLE(WEBGPU_BY_DEFAULT)
-    if ([device supportsFamily:MTLGPUFamilyApple9])
-        return @"9";
-    if ([device supportsFamily:MTLGPUFamilyApple8])
-        return @"8";
-#endif
-    if ([device supportsFamily:MTLGPUFamilyApple7])
-        return @"7";
-    if ([device supportsFamily:MTLGPUFamilyApple6])
-        return @"6";
-    if ([device supportsFamily:MTLGPUFamilyApple5])
-        return @"5";
-    if ([device supportsFamily:MTLGPUFamilyApple4])
-        return @"4";
-    return @"0xFF";
-}
-
-id<MTLLibrary> ShaderModule::createLibrary(id<MTLDevice> device, const String& msl, String&& label, NSError** error)
+id<MTLLibrary> ShaderModule::createLibrary(id<MTLDevice> device, const String& msl, String&& label, NSError** error, WGSL::DeviceState&& deviceState)
 {
     static bool requireSafeMath = false;
     auto options = [MTLCompileOptions new];
-    options.preprocessorMacros = @{ @"__wgslMetalAppleGPUFamily" : appleGPUFamilyToString(device) };
+    options.preprocessorMacros = @{ @"__wgslMetalAppleGPUFamily" : [NSString stringWithFormat:@"%u", deviceState.appleGPUFamily] };
 #if ENABLE(WEBGPU_BY_DEFAULT)
     static auto mathMode = MTLMathModeRelaxed;
     static auto mathFunctions = MTLMathFloatingPointFunctionsFast;
@@ -151,12 +132,18 @@ static RefPtr<ShaderModule> earlyCompileShaderModule(Device& device, Variant<WGS
         return nullptr;
     auto& result = std::get<WGSL::PrepareResult>(prepareResult);
     HashMap<String, WGSL::ConstantValue> wgslConstantValues;
-    auto generationResult = WGSL::generate(shaderModule, result, wgslConstantValues);
+    auto generationResult = WGSL::generate(shaderModule, result, wgslConstantValues, WGSL::DeviceState {
+        .appleGPUFamily = device.appleGPUFamily(),
+        .shaderValidationEnabled = device.isShaderValidationEnabled()
+    });
     if (std::holds_alternative<WGSL::Error>(generationResult))
         return nullptr;
     auto& msl = std::get<String>(generationResult);
     NSError *error = nil;
-    auto library = ShaderModule::createLibrary(device.device(), msl, WTFMove(label), &error);
+    auto library = ShaderModule::createLibrary(device.device(), msl, WTFMove(label), &error, WGSL::DeviceState {
+        .appleGPUFamily = device.appleGPUFamily(),
+        .shaderValidationEnabled = device.isShaderValidationEnabled()
+    });
     if (!library)
         return nullptr;
     return ShaderModule::create(WTFMove(checkResult), WTFMove(hints), WTFMove(result.entryPoints), library, device);
@@ -776,7 +763,7 @@ void ShaderModule::getCompilationInfo(CompletionHandler<void(WGPUCompilationInfo
         WGPUCompilationInfo compilationInfo {
             nullptr,
             static_cast<uint32_t>(compilationMessageData.compilationMessages.size()),
-            compilationMessageData.compilationMessages.data(),
+            compilationMessageData.compilationMessages.span().data(),
         };
         callback(WGPUCompilationInfoRequestStatus_Success, compilationInfo);
     }, [&](const WGSL::FailedCheck& failedCheck) {
@@ -786,7 +773,7 @@ void ShaderModule::getCompilationInfo(CompletionHandler<void(WGPUCompilationInfo
         WGPUCompilationInfo compilationInfo {
             nullptr,
             static_cast<uint32_t>(compilationMessageData.compilationMessages.size()),
-            compilationMessageData.compilationMessages.data(),
+            compilationMessageData.compilationMessages.span().data(),
         };
         callback(WGPUCompilationInfoRequestStatus_Error, compilationInfo);
     }, [&](std::monostate) {

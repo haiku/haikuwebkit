@@ -417,7 +417,7 @@ WebProcessProxy::~WebProcessProxy()
     platformDestroy();
 }
 
-#if !PLATFORM(IOS_FAMILY)
+#if !PLATFORM(COCOA)
 void WebProcessProxy::platformDestroy()
 {
 }
@@ -472,7 +472,7 @@ void WebProcessProxy::setWebsiteDataStore(WebsiteDataStore& dataStore)
 
     // Delay construction of the WebLockRegistryProxy until the WebProcessProxy has a data store since the data store holds the
     // LocalWebLockRegistry.
-    m_webLockRegistry = makeUniqueWithoutRefCountedCheck<WebLockRegistryProxy>(*this);
+    lazyInitialize(m_webLockRegistry, makeUniqueWithoutRefCountedCheck<WebLockRegistryProxy>(*this));
 }
 
 bool WebProcessProxy::isDummyProcessProxy() const
@@ -917,7 +917,7 @@ void WebProcessProxy::removeWebPage(WebPageProxy& webPage, EndsUsingDataStore en
     if (endsUsingDataStore == EndsUsingDataStore::Yes)
         protectedProcessPool()->pageEndUsingWebsiteDataStore(webPage, webPage.protectedWebsiteDataStore());
 
-    removeVisitedLinkStoreUser(webPage.protectedVisitedLinkStore(), webPage.identifier());
+    removeVisitedLinkStoreUser(webPage.visitedLinkStore(), webPage.identifier());
     updateRegistrationWithDataStore();
     updateAudibleMediaAssertions();
     updateMediaStreamingActivity();
@@ -2372,7 +2372,7 @@ void WebProcessProxy::enableMediaPlaybackIfNecessary()
 
 #if ENABLE(ROUTING_ARBITRATION)
     ASSERT(!m_routingArbitrator);
-    m_routingArbitrator = makeUniqueWithoutRefCountedCheck<AudioSessionRoutingArbitratorProxy>(*this);
+    lazyInitialize(m_routingArbitrator, makeUniqueWithoutRefCountedCheck<AudioSessionRoutingArbitratorProxy>(*this));
 #endif
 }
 
@@ -2559,7 +2559,7 @@ void WebProcessProxy::destroySpeechRecognitionServer(SpeechRecognitionServerIden
 SpeechRecognitionRemoteRealtimeMediaSourceManager& WebProcessProxy::ensureSpeechRecognitionRemoteRealtimeMediaSourceManager()
 {
     if (!m_speechRecognitionRemoteRealtimeMediaSourceManager) {
-        m_speechRecognitionRemoteRealtimeMediaSourceManager = makeUniqueWithoutRefCountedCheck<SpeechRecognitionRemoteRealtimeMediaSourceManager>(*this);
+        lazyInitialize(m_speechRecognitionRemoteRealtimeMediaSourceManager, makeUniqueWithoutRefCountedCheck<SpeechRecognitionRemoteRealtimeMediaSourceManager>(*this));
         addMessageReceiver(Messages::SpeechRecognitionRemoteRealtimeMediaSourceManager::messageReceiverName(), *protectedSpeechRecognitionRemoteRealtimeMediaSourceManager());
     }
 

@@ -26,6 +26,8 @@
 
 #pragma once
 
+#include <wtf/Platform.h>
+
 #if ENABLE(ASSEMBLER)
 
 #include "LinkBuffer.h"
@@ -42,7 +44,7 @@ class PerfLog {
     WTF_MAKE_NONCOPYABLE(PerfLog);
     friend class LazyNeverDestroyed<PerfLog>;
 public:
-    static void log(CString&& name, MacroAssemblerCodeRef<LinkBufferPtrTag>);
+    static void log(const CString& name, MacroAssemblerCodeRef<LinkBufferPtrTag>);
 
 private:
     PerfLog();

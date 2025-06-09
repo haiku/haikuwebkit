@@ -94,6 +94,7 @@ class DestinationColorSpace;
 class GraphicsContextGL;
 class GraphicsContext;
 class InbandTextTrackPrivate;
+class MessageClientForTesting;
 class LegacyCDM;
 class LegacyCDMSession;
 class LegacyCDMSessionClient;
@@ -811,6 +812,9 @@ public:
     const String& sceneIdentifier() const { return m_sceneIdentifier; }
 #endif
 
+    void setMessageClientForTesting(WeakPtr<MessageClientForTesting>);
+    MessageClientForTesting* messageClientForTesting() const;
+
 private:
     MediaPlayer(MediaPlayerClient&);
     MediaPlayer(MediaPlayerClient&, MediaPlayerEnums::MediaEngineIdentifier);
@@ -878,6 +882,8 @@ private:
 #if PLATFORM(IOS_FAMILY)
     String m_sceneIdentifier;
 #endif
+
+    WeakPtr<MessageClientForTesting> m_internalMessageClient;
 };
 
 class MediaPlayerFactory : public CanMakeWeakPtr<MediaPlayerFactory> {

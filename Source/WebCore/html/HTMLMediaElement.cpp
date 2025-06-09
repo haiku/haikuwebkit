@@ -95,6 +95,7 @@
 #include "MediaQueryEvaluator.h"
 #include "MediaResourceLoader.h"
 #include "MediaResourceSniffer.h"
+#include "MessageClientForTesting.h"
 #include "NavigatorMediaDevices.h"
 #include "NetworkingContext.h"
 #include "NodeInlines.h"
@@ -2710,7 +2711,7 @@ void HTMLMediaElement::textTrackRemoveCue(TextTrack&, TextTrackCue& cue)
     size_t index = m_cueData->currentlyActiveCues.find(interval);
     if (index != notFound) {
         cue.setIsActive(false);
-        m_cueData->currentlyActiveCues.remove(index);
+        m_cueData->currentlyActiveCues.removeAt(index);
     }
 
     cue.removeDisplayTree();
@@ -3787,6 +3788,7 @@ void HTMLMediaElement::setAudioOutputDevice(String&& deviceId, DOMPromiseDeferre
     }
 
     if (!document().processingUserGestureForMedia() && document().settings().speakerSelectionRequiresUserGesture()) {
+        ERROR_LOG(LOGIDENTIFIER, "rejecting promise as a user gesture is required");
         promise.reject(Exception { ExceptionCode::NotAllowedError, "A user gesture is required"_s });
         return;
     }
@@ -7330,6 +7332,17 @@ bool HTMLMediaElement::taintsOrigin(const SecurityOrigin& origin) const
     return m_player && m_player->isCrossOrigin(origin);
 }
 
+bool HTMLMediaElement::isInFullscreenOrPictureInPicture() const
+{
+    bool inFullscreenOrPictureInPicture = isFullscreen();
+#if ENABLE(LINEAR_MEDIA_PLAYER)
+    if (RefPtr asVideo = dynamicDowncast<HTMLVideoElement>(*this))
+        inFullscreenOrPictureInPicture |= asVideo->isInExternalPlayback();
+#endif
+
+    return inFullscreenOrPictureInPicture;
+}
+
 bool HTMLMediaElement::isFullscreen() const
 {
 #if ENABLE(FULLSCREEN_API)
@@ -8007,13 +8020,15 @@ PlatformDynamicRangeLimit HTMLMediaElement::computePlayerDynamicRangeLimit() con
         return m_platformDynamicRangeLimit;
 
     bool shouldSuppressHDR = [this]() {
-        if (m_videoFullscreenMode == VideoFullscreenModeStandard)
-            return false;
+        if (!document().settings().suppressHDRShouldBeAllowedInFullscreenVideo()) {
+            if (m_videoFullscreenMode == VideoFullscreenModeStandard)
+                return false;
 
 #if ENABLE(FULLSCREEN_API)
-        if (m_isChildOfElementFullscreen)
-            return false;
+            if (m_isChildOfElementFullscreen)
+                return false;
 #endif
+        }
 
         if (Page* page = document().page())
             return page->shouldSuppressHDR();
@@ -8062,6 +8077,7 @@ void HTMLMediaElement::createMediaPlayer() WTF_IGNORES_THREAD_SAFETY_ANALYSIS
 
     m_player = MediaPlayer::create(*this);
     RefPtr player = m_player;
+    player->setMessageClientForTesting(m_internalMessageClient.get());
     player->setBufferingPolicy(m_bufferingPolicy);
     player->setPreferredDynamicRangeMode(m_overrideDynamicRangeMode.value_or(preferredDynamicRangeMode(document().protectedView().get())));
     player->setShouldDisableHDR(shouldDisableHDR());
@@ -8071,7 +8087,7 @@ void HTMLMediaElement::createMediaPlayer() WTF_IGNORES_THREAD_SAFETY_ANALYSIS
     RefPtr page = document().page();
     player->setPageIsVisible(!m_elementIsHidden);
     player->setVisibleInViewport(isVisibleInViewport());
-    player->setInFullscreenOrPictureInPicture(isFullscreen());
+    player->setInFullscreenOrPictureInPicture(isInFullscreenOrPictureInPicture());
 
     schedulePlaybackControlsManagerUpdate();
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA) && ENABLE(ENCRYPTED_MEDIA)
@@ -9698,6 +9714,28 @@ void HTMLMediaElement::removeClient(const HTMLMediaElementClient& client)
     m_clients.remove(client);
 }
 
+void HTMLMediaElement::addMessageClientForTesting(MessageClientForTesting& client)
+{
+    if (!m_internalMessageClient) {
+        m_internalMessageClient = AggregateMessageClientForTesting::create();
+        if (RefPtr player = m_player)
+            player->setMessageClientForTesting(m_internalMessageClient.get());
+    }
+    m_internalMessageClient->addClient(client);
+}
+
+void HTMLMediaElement::removeMessageClientForTesting(const MessageClientForTesting& client)
+{
+    if (!m_internalMessageClient)
+        return;
+    m_internalMessageClient->removeClient(client);
+    if (m_internalMessageClient->isEmpty()) {
+        if (RefPtr player = m_player)
+            player->setMessageClientForTesting(nullptr);
+        m_internalMessageClient = nullptr;
+    }
+}
+
 void HTMLMediaElement::audioSessionCategoryChanged(AudioSessionCategory category, AudioSessionMode mode, RouteSharingPolicy policy)
 {
     m_clients.forEach([category, mode, policy] (auto& client) {
@@ -10111,6 +10149,44 @@ void HTMLMediaElement::watchtimeTimerFired()
         audioCodecDictionary.set(DiagnosticLoggingKeys::secondsKey(), numberOfSeconds);
         page->diagnosticLoggingClient().logDiagnosticMessageWithValueDictionary(DiagnosticLoggingKeys::mediaAudioCodecWatchTimeKey(), "Media Watchtime Interval By Audio Codec"_s, audioCodecDictionary, ShouldSample::Yes);
     }();
+
+    // Then log watchtime messages per-presentation-type:
+    enum class PresentationType : uint8_t {
+        None,
+        Inline,
+        PictureInPicture,
+        NativeFullscreen,
+        ElementFullscreen,
+        AirPlay,
+        TV,
+        AudioOnly,
+    };
+    auto presentationType = [&] {
+#if ENABLE(WIRELESS_PLAYBACK_TARGET)
+        if (m_player && m_player->wirelessPlaybackTargetType() == MediaPlayer::WirelessPlaybackTargetType::TargetTypeAirPlay)
+            return PresentationType::AirPlay;
+        if (m_player && m_player->wirelessPlaybackTargetType() == MediaPlayer::WirelessPlaybackTargetType::TargetTypeTVOut)
+            return PresentationType::TV;
+#endif
+        if (fullscreenMode() == VideoFullscreenModePictureInPicture)
+            return PresentationType::PictureInPicture;
+        if (fullscreenMode() == VideoFullscreenModeStandard)
+            return PresentationType::NativeFullscreen;
+#if ENABLE(FULLSCREEN_API)
+        RefPtr fullscreen = document().fullscreenIfExists();
+        if (fullscreen && fullscreen->fullscreenElement() && fullscreen->fullscreenElement()->contains(*this))
+            return PresentationType::ElementFullscreen;
+#endif
+        if (mediaType() == PlatformMediaSession::MediaType::Audio)
+            return PresentationType::AudioOnly;
+        if (!renderer())
+            return PresentationType::None;
+        return PresentationType::Inline;
+    }();
+    WebCore::DiagnosticLoggingClient::ValueDictionary presentationTypeDictionary;
+    presentationTypeDictionary.set(DiagnosticLoggingKeys::presentationTypeKey(), static_cast<uint64_t>(presentationType));
+    presentationTypeDictionary.set(DiagnosticLoggingKeys::secondsKey(), numberOfSeconds);
+    page->diagnosticLoggingClient().logDiagnosticMessageWithValueDictionary(DiagnosticLoggingKeys::mediaPresentationTypeWatchTimeKey(), "Media Watchtime Interval By Presentation Type"_s, presentationTypeDictionary, ShouldSample::Yes);
 
     if (RefPtr textTracks = m_textTracks) {
         for (unsigned i = 0; i < textTracks->length(); ++i)

@@ -410,18 +410,22 @@ private:
         case ArithBitLShift: 
         case ArithBitXor:
         case ArithBitOr:
-        case ArithBitAnd: {
+        case ArithBitAnd:
+        case ArithBitURShift: {
             fixIntConvertingEdge(node->child1());
             fixIntConvertingEdge(node->child2());
             break;
         }
 
-        case BitURShift: {
+        case ValueBitURShift: {
             if (Node::shouldSpeculateUntypedForBitOps(node->child1().node(), node->child2().node())) {
                 fixEdge<UntypedUse>(node->child1());
                 fixEdge<UntypedUse>(node->child2());
                 break;
             }
+
+            node->setOp(ArithBitURShift);
+            node->clearFlags(NodeMustGenerate);
             fixIntConvertingEdge(node->child1());
             fixIntConvertingEdge(node->child2());
             break;
@@ -1728,7 +1732,7 @@ private:
             if (op == StringReplace
                 && node->child1()->shouldSpeculateString()
                 && node->child2()->shouldSpeculateString()
-                && m_graph.isWatchingStringSymbolReplaceWatchpoint(node)) {
+                && m_graph.isWatchingStringSymbolReplaceWatchpoint(node->origin.semantic)) {
                 node->setOp(StringReplaceString);
                 fixEdge<StringUse>(node->child1());
                 fixEdge<StringUse>(node->child2());
@@ -2114,10 +2118,15 @@ private:
 
         case SkipScope:
         case GetScope:
+        case GetEvalScope:
         case GetGetter:
-        case GetSetter:
-        case GetGlobalObject: {
+        case GetSetter: {
             fixEdge<KnownCellUse>(node->child1());
+            break;
+        }
+
+        case GetGlobalObject: {
+            fixEdge<ObjectUse>(node->child1());
             break;
         }
 

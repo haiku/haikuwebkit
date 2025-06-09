@@ -1268,13 +1268,6 @@ void Element::scrollTo(const ScrollToOptions& options, ScrollClamping clamping, 
     LOG_WITH_STREAM(Scrolling, stream << "Element " << *this << " scrollTo " << options.left << ", " << options.top << " behavior " << options.behavior);
 
     Ref document = this->document();
-    if (!document->settings().CSSOMViewScrollingAPIEnabled()) {
-        // If the element is the root element and document is in quirks mode, terminate these steps.
-        // Note that WebKit always uses quirks mode document scrolling behavior. See Document::scrollingElement().
-        if (this == document->documentElement())
-            return;
-    }
-    
     if (RefPtr view = document->view())
         view->cancelScheduledScrolls();
 
@@ -1775,11 +1768,11 @@ static bool layoutOverflowRectContainsAllDescendants(const RenderBox& renderBox)
         return false;
 
     // If there are any position:fixed inside of us, game over.
-    if (auto* viewPositionedObjects = renderBox.view().positionedObjects()) {
-        for (CheckedRef positionedBox : *viewPositionedObjects) {
-            if (positionedBox.ptr() == &renderBox)
+    if (auto* viewPositionedOutOfFlowBoxes = renderBox.view().outOfFlowBoxes()) {
+        for (CheckedRef viewPositionedOutOfFlowBox : *viewPositionedOutOfFlowBoxes) {
+            if (viewPositionedOutOfFlowBox.ptr() == &renderBox)
                 continue;
-            if (positionedBox->isFixedPositioned() && renderBox.element()->contains(positionedBox->protectedElement().get()))
+            if (viewPositionedOutOfFlowBox->isFixedPositioned() && renderBox.element()->contains(viewPositionedOutOfFlowBox->protectedElement().get()))
                 return false;
         }
     }
@@ -1791,11 +1784,11 @@ static bool layoutOverflowRectContainsAllDescendants(const RenderBox& renderBox)
 
     // This renderer may have positioned descendants whose containing block is some ancestor.
     if (CheckedPtr containingBlock = RenderObject::containingBlockForPositionType(PositionType::Absolute, renderBox)) {
-        if (auto* positionedObjects = containingBlock->positionedObjects()) {
-            for (CheckedRef positionedBox : *positionedObjects) {
-                if (positionedBox.ptr() == &renderBox)
+        if (auto* outOfFlowBoxes = containingBlock->outOfFlowBoxes()) {
+            for (CheckedRef outOfFlowBox : *outOfFlowBoxes) {
+                if (outOfFlowBox.ptr() == &renderBox)
                     continue;
-                if (renderBox.protectedElement()->contains(positionedBox->protectedElement().get()))
+                if (renderBox.protectedElement()->contains(outOfFlowBox->protectedElement().get()))
                     return false;
             }
         }
@@ -3849,7 +3842,7 @@ void Element::removeAttributeInternal(unsigned index, InSynchronizationOfLazyAtt
         detachAttrNodeFromElementWithValue(attrNode.get(), elementData.attributeAt(index).value());
 
     if (inSynchronizationOfLazyAttribute == InSynchronizationOfLazyAttribute::Yes) {
-        elementData.removeAttribute(index);
+        elementData.removeAttributeAt(index);
         return;
     }
 
@@ -3857,7 +3850,7 @@ void Element::removeAttributeInternal(unsigned index, InSynchronizationOfLazyAtt
     willModifyAttribute(name, valueBeingRemoved, nullAtom());
     {
         Style::AttributeChangeInvalidation styleInvalidation(*this, name, valueBeingRemoved, nullAtom());
-        elementData.removeAttribute(index);
+        elementData.removeAttributeAt(index);
     }
 
     didRemoveAttribute(name, valueBeingRemoved);

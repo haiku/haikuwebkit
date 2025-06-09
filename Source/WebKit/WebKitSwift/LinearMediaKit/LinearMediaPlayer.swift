@@ -92,7 +92,7 @@ enum LinearMediaPlayerErrors: Error {
     var thumbnailLayer: CALayer?
     var captionLayer: CALayer?
     var captionContentInsets: UIEdgeInsets = .zero
-    var showsPlaybackControls = true
+    var showsPlaybackControls = false
     var canSeek = false
     var seekableTimeRanges: [WKSLinearMediaTimeRange] = []
     var isSeeking = false
@@ -212,6 +212,7 @@ enum LinearMediaPlayerErrors: Error {
             completionHandler(false, LinearMediaPlayerErrors.invalidStateError)
         case .inline:
             contentType = .planar
+            showsPlaybackControls = true
             swiftOnlyData.fullscreenBehaviorsSubject.send([ .hostContentInline ])
             swiftOnlyData.presentationState = .external
             contentOverlay = .init(frame: .zero)
@@ -232,6 +233,7 @@ enum LinearMediaPlayerErrors: Error {
             swiftOnlyData.presentationState = .inline
             swiftOnlyData.fullscreenBehaviorsSubject.send(FullscreenBehaviors.default)
             contentOverlay = nil
+            showsPlaybackControls = false
             contentType = .none
             completionHandler(true, nil)
         @unknown default:

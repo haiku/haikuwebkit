@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -45,6 +45,7 @@
 #import "ViewGestureController.h"
 #import "VisibleContentRectUpdateInfo.h"
 #import "WKBackForwardListItemInternal.h"
+#import "WKColorExtensionView.h"
 #import "WKContentViewInteraction.h"
 #import "WKDataDetectorTypesInternal.h"
 #import "WKErrorInternal.h"
@@ -66,6 +67,7 @@
 #import "WebProcessPool.h"
 #import "_WKActivatedElementInfoInternal.h"
 #import "_WKWarningView.h"
+#import <WebCore/BoxSides.h>
 #import <WebCore/ColorCocoa.h>
 #import <WebCore/ContentsFormatCocoa.h>
 #import <WebCore/FloatConversion.h>
@@ -1164,6 +1166,8 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
 #if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
     if (_page && _page->preferences().overlayRegionsEnabled())
         [self _updateOverlayRegions:layerTreeTransaction.changedLayerProperties() destroyedLayers:layerTreeTransaction.destroyedLayers()];
+    else
+        [self _resetOverlayRegions];
 #endif
 }
 
@@ -1386,6 +1390,24 @@ static void configureScrollViewWithOverlayRegionsIDs(WKBaseScrollView* scrollVie
 
     return overlayRegionScrollView;
 }
+
+#if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
+- (void)_resetOverlayRegions
+{
+    if (!_page)
+        return;
+
+    CheckedPtr scrollingCoordinatorProxy = downcast<WebKit::RemoteScrollingCoordinatorProxyIOS>(_page->scrollingCoordinatorProxy());
+    if (!scrollingCoordinatorProxy)
+        return;
+
+    [_scrollView _updateOverlayRegionsBehavior:NO];
+
+    auto candidates = scrollingCoordinatorProxy->overlayRegionScrollViewCandidates();
+    for (auto *scrollView : candidates)
+        [scrollView _updateOverlayRegionsBehavior:NO];
+}
+#endif
 
 - (void)_updateOverlayRegions:(const WebKit::LayerPropertiesMap&)changedLayerPropertiesMap destroyedLayers:(const Vector<WebCore::PlatformLayerIdentifier>&)destroyedLayers
 {
@@ -2311,12 +2333,55 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 #endif // HAVE(UISCROLLVIEW_ASYNCHRONOUS_SCROLL_EVENT_HANDLING)
 
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+
+- (void)_reinsertTopFixedColorExtensionViewIfNeeded
+{
+    RetainPtr topColorExtensionView = _fixedColorExtensionViews.at(WebCore::BoxSide::Top);
+    if (!topColorExtensionView || [topColorExtensionView isHidden])
+        return;
+
+    auto refreshControlIndex = NSNotFound;
+    auto topColorExtensionViewIndex = NSNotFound;
+
+    NSInteger index = 0;
+    RetainPtr refreshControl = [_scrollView refreshControl];
+    for (UIView *subview in [_scrollView subviews]) {
+        if (subview == refreshControl)
+            refreshControlIndex = index;
+        else if (subview == topColorExtensionView)
+            topColorExtensionViewIndex = index;
+
+        if (refreshControlIndex != NSNotFound && topColorExtensionViewIndex != NSNotFound)
+            break;
+
+        index++;
+    }
+
+    if (refreshControlIndex == NSNotFound || topColorExtensionViewIndex == NSNotFound)
+        return;
+
+    BOOL scrolledBeyondTopExtent = [_scrollView _wk_isScrolledBeyondTopExtent];
+    if (scrolledBeyondTopExtent == (refreshControlIndex > topColorExtensionViewIndex))
+        return;
+
+    if (scrolledBeyondTopExtent) {
+        [_scrollView insertSubview:topColorExtensionView.get() belowSubview:refreshControl.get()];
+        return;
+    }
+
+    [_scrollView insertSubview:topColorExtensionView.get() aboveSubview:_contentView.get()];
+}
+
+#endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
     if (scrollView == _scrollView) {
         [_scrollView updateInteractiveScrollVelocity];
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
         [self _updateFixedColorExtensionViewFrames];
+        [self _reinsertTopFixedColorExtensionViewIfNeeded];
 #endif
     }
 
@@ -2346,6 +2411,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     [self _updateScrollViewBackground];
     [self _scheduleVisibleContentRectUpdateAfterScrollInView:scrollView];
+
+#if ENABLE(MODEL_PROCESS)
+    [self _setWebViewTransform3DForModel:[scrollView zoomScale]];
+#endif
 }
 
 - (void)scrollViewDidEndZooming:(UIScrollView *)scrollView withView:(UIView *)view atScale:(CGFloat)scale
@@ -2491,21 +2560,29 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 #if HAVE(UI_WINDOW_SCENE_LIVE_RESIZE)
 
-- (void)_beginAutomaticLiveResizeIfNeeded
+- (BOOL)_canBeginAutomaticLiveResize
 {
     if (!_page)
-        return;
+        return false;
 
     if (!_page->preferences().automaticLiveResizeEnabled())
-        return;
+        return false;
 
     if (![self usesStandardContentView])
-        return;
+        return false;
 
     if (!self.window)
-        return;
+        return false;
 
     if (CGRectIsEmpty(self.bounds))
+        return false;
+
+    return true;
+}
+
+- (void)_beginAutomaticLiveResizeIfNeeded
+{
+    if (![self _canBeginAutomaticLiveResize])
         return;
 
     if (_perProcessState.dynamicViewportUpdateMode != WebKit::DynamicViewportUpdateMode::NotResizing)
@@ -3473,7 +3550,12 @@ static WebCore::UserInterfaceLayoutDirection toUserInterfaceLayoutDirection(UISe
 
     WKWEBVIEW_RELEASE_LOG("%p (pageProxyID=%llu) -[WKWebView _beginLiveResize]", self, _page->identifier().toUInt64());
 
-    _perProcessState.liveResizeParameters = { { self.bounds.size.width, self.scrollView.contentOffset } };
+    CGPoint contentOffsetWithoutObscuredInset = self.scrollView.contentOffset;
+    UIEdgeInsets contentInset = [self _computedObscuredInset];
+    contentOffsetWithoutObscuredInset.x += contentInset.left;
+    contentOffsetWithoutObscuredInset.y += contentInset.top;
+
+    _perProcessState.liveResizeParameters = { { self.bounds.size.width, contentOffsetWithoutObscuredInset } };
 
     [self _ensureResizeAnimationView];
 }
@@ -3944,6 +4026,13 @@ static bool isLockdownModeWarningNeeded()
 {
     [_contentView _willInvalidateDraggedModelWithContainerView:containerView];
 }
+
+- (void)_setWebViewTransform3DForModel:(CGFloat)newScale
+{
+    CATransform3D newTransform = self.transform3D;
+    newTransform.m33 = newScale;
+    self.transform3D = newTransform;
+}
 #endif
 
 #if HAVE(UI_CONVERSATION_CONTEXT)
@@ -4285,9 +4374,9 @@ static bool isLockdownModeWarningNeeded()
 - (void)_detectDataWithTypes:(WKDataDetectorTypes)types completionHandler:(dispatch_block_t)completion
 {
 #if ENABLE(DATA_DETECTION)
-    _page->detectDataInAllFrames(fromWKDataDetectorTypes(types), [completion = makeBlockPtr(completion), page = WeakPtr { _page.get() }] (auto& result) {
+    _page->detectDataInAllFrames(fromWKDataDetectorTypes(types), [completion = makeBlockPtr(completion), page = WeakPtr { _page.get() }] (auto&& result) {
         if (page)
-            page->setDataDetectionResult(result);
+            page->setDataDetectionResult(WTFMove(result));
         if (completion)
             completion();
     });
@@ -4358,6 +4447,16 @@ static bool isLockdownModeWarningNeeded()
 
         if (_perProcessState.liveResizeParameters)
             return false;
+
+#if HAVE(UI_WINDOW_SCENE_LIVE_RESIZE)
+        if ([self _canBeginAutomaticLiveResize]) {
+            auto sceneGeometry = self.window.windowScene.effectiveGeometry;
+            if ([sceneGeometry respondsToSelector:@selector(isInteractivelyResizing)]) {
+                if (sceneGeometry.isInteractivelyResizing)
+                    return false;
+            }
+        }
+#endif
 
         if (_page->isTakingSnapshotsForApplicationSuspension() && self._isDisplayingPDF)
             return false;

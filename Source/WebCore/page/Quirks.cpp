@@ -98,6 +98,8 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(Quirks);
 
+static constexpr auto chromeUserAgentScript = "(function() { let userAgent = navigator.userAgent; Object.defineProperty(navigator, 'userAgent', { get: () => { return userAgent + ' Chrome/130.0.0.0 Android/15.0'; }, configurable: true }); })();"_s;
+
 static inline OptionSet<AutoplayQuirk> allowedAutoplayQuirks(Document& document)
 {
     auto* loader = document.loader();
@@ -127,6 +129,7 @@ static HashMap<RegistrableDomain, String>& updatableStorageAccessUserAgentString
 static inline bool needsDesktopUserAgentInternal(const URL&) { return false; }
 static inline bool shouldPreventOrientationMediaQueryFromEvaluatingToLandscapeInternal(const URL&) { return false; }
 static inline String standardUserAgentWithApplicationNameIncludingCompatOverridesInternal(const String&, const String&, UserAgentType) { return { }; }
+static inline bool shouldNotAutoUpgradeToHTTPSNavigationInternal(const URL&) { return false; }
 #endif
 
 Quirks::Quirks(Document& document)
@@ -593,17 +596,6 @@ bool Quirks::needsFullscreenObjectFitQuirk() const
 #endif
 }
 
-// FIXME: weChat <rdar://problem/74377902>
-bool Quirks::needsWeChatScrollingQuirk() const
-{
-#if PLATFORM(IOS) || PLATFORM(VISION)
-    static bool shouldUseWeChatScrollingQuirk = !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::NoWeChatScrollingQuirk) && WTF::IOSApplication::isWechat();
-    return needsQuirks() && shouldUseWeChatScrollingQuirk;
-#else
-    return false;
-#endif
-}
-
 // zomato.com <rdar://problem/128962778>
 bool Quirks::needsZomatoEmailLoginLabelQuirk() const
 {
@@ -619,6 +611,16 @@ bool Quirks::needsGoogleMapsScrollingQuirk() const
 {
 #if PLATFORM(IOS_FAMILY)
     return needsQuirks() && m_quirksData.needsGoogleMapsScrollingQuirk;
+#else
+    return false;
+#endif
+}
+
+// translate.google.com rdar://106539018
+bool Quirks::needsGoogleTranslateScrollingQuirk() const
+{
+#if PLATFORM(IOS_FAMILY)
+    return needsQuirks() && m_quirksData.needsGoogleTranslateScrollingQuirk;
 #else
     return false;
 #endif
@@ -940,6 +942,11 @@ bool Quirks::shouldAvoidPastingImagesAsWebContent() const
 #else
     return false;
 #endif
+}
+
+bool Quirks::shouldNotAutoUpgradeToHTTPSNavigation(const URL& url)
+{
+    return needsQuirks() && shouldNotAutoUpgradeToHTTPSNavigationInternal(url);
 }
 
 // kinja.com and related sites rdar://60601895
@@ -1433,9 +1440,6 @@ bool Quirks::needsIPadMiniUserAgent(const URL& url)
 {
     auto host = url.host();
 
-    if (host == "cctv.com"_s || host.endsWith(".cctv.com"_s))
-        return true;
-
     // FIXME: Remove this quirk when <rdar://problem/61733101> is complete.
     if (host == "roblox.com"_s || host.endsWith(".roblox.com"_s))
         return true;
@@ -1570,8 +1574,11 @@ String Quirks::scriptToEvaluateBeforeRunningScriptFromURL(const URL& scriptURL)
     // player.anyclip.com rdar://138789765
     if (m_quirksData.isThesaurus && scriptURL.lastPathComponent().endsWith("lre.js"_s)) [[unlikely]] {
         if (scriptURL.host() == "player.anyclip.com"_s)
-            return "(function() { let userAgent = navigator.userAgent; Object.defineProperty(navigator, 'userAgent', { get: () => { return userAgent + ' Chrome/130.0.0.0 Android/15.0'; }, configurable: true }); })();"_s;
+            return chromeUserAgentScript;
     }
+
+    if (m_quirksData.needsGoogleTranslateScrollingQuirk && !scriptURL.isEmpty()) [[unlikely]]
+        return chromeUserAgentScript;
 
 #if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
     if (m_quirksData.isWebEx && scriptURL.lastPathComponent().startsWith("pushdownload."_s)) [[unlikely]]
@@ -1587,7 +1594,7 @@ String Quirks::scriptToEvaluateBeforeRunningScriptFromURL(const URL& scriptURL)
 // disneyplus: rdar://137613110
 bool Quirks::shouldHideCoarsePointerCharacteristics() const
 {
-#if PLATFORM(IOS_FAMILY) || ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
+#if PLATFORM(IOS_FAMILY)
     return needsQuirks() && m_quirksData.shouldHideCoarsePointerCharacteristicsQuirk;
 #else
     return false;
@@ -1840,7 +1847,7 @@ bool Quirks::needsHotelsAnimationQuirk(Element& element, const RenderStyle& styl
 
 bool Quirks::needsLimitedMatroskaSupport() const
 {
-#if ENABLE(MEDIA_RECORDER) && ENABLE(ALTERNATE_WEBM_PLAYER)
+#if ENABLE(MEDIA_RECORDER) && ENABLE(COCOA_WEBM_PLAYER)
     return isDomain("zencastr.com"_s);
 #else
     return false;
@@ -2141,7 +2148,7 @@ static void handleWeatherQuirks(QuirksData& quirksData, const URL& quirksURL, co
 }
 #endif
 
-#if PLATFORM(IOS_FAMILY) || ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
+#if PLATFORM(IOS_FAMILY)
 static void handleDisneyPlusQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
 {
     if (quirksDomainString != "disneyplus.com"_s)
@@ -2151,8 +2158,12 @@ static void handleDisneyPlusQuirks(QuirksData& quirksData, const URL& quirksURL,
     UNUSED_PARAM(documentURL);
     // disneyplus rdar://137613110
     quirksData.shouldHideCoarsePointerCharacteristicsQuirk = true;
-}
+#if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
+    // disneyplus rdar://151715964
+    quirksData.needsZeroMaxTouchPointsQuirk = true;
 #endif
+}
+#endif // PLATFORM(IOS_FAMILY)
 
 #if ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
 static void handleMaxQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -2384,6 +2395,10 @@ static void handleGoogleQuirks(QuirksData& quirksData, const URL& quirksURL, con
     } else if (topDocumentHost == "mail.google.com"_s) {
         // mail.google.com rdar://49403416
         quirksData.needsGMailOverflowScrollQuirk =true;
+    } else if (topDocumentHost == "translate.google.com"_s) {
+        // translate.google.com rdar://106539018
+        quirksData.needsGoogleTranslateScrollingQuirk = true;
+        quirksData.needsScriptToEvaluateBeforeRunningScriptFromURLQuirk = true;
     }
 #endif
     // docs.google.com rdar://59893415
@@ -2836,7 +2851,7 @@ void Quirks::determineRelevantQuirks()
         { "digitaltrends"_s, &handleDigitalTrendsQuirks },
         { "steampowered"_s, &handleSteamQuirks },
 #endif
-#if PLATFORM(IOS_FAMILY) || ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
+#if PLATFORM(IOS_FAMILY)
         { "disneyplus"_s, &handleDisneyPlusQuirks },
 #endif
         { "espn"_s, &handleESPNQuirks },

@@ -29,6 +29,7 @@
 #include "GridTrackSize.h"
 #include "RenderStyleConstants.h"
 #include "StyleContentAlignmentData.h"
+#include <wtf/FixedVector.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Vector.h>
@@ -81,6 +82,7 @@ inline WTF::TextStream& operator<<(WTF::TextStream& stream, const GridTrackList&
 
 WTF::TextStream& operator<<(WTF::TextStream&, const RepeatEntry&);
 WTF::TextStream& operator<<(WTF::TextStream&, const GridTrackEntry&);
+WTF::TextStream& operator<<(WTF::TextStream&, const NamedGridLinesMap&);
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleGridData);
 class StyleGridData : public RefCounted<StyleGridData> {

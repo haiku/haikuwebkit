@@ -32,6 +32,7 @@
 #include "RenderTableInlines.h"
 #include "RenderTableSection.h"
 #include "RenderView.h"
+#include <wtf/CheckedPtr.h>
 
 namespace WebCore {
 
@@ -56,7 +57,7 @@ void AutoTableLayout::recalcColumn(unsigned effCol)
             // RenderTableCols don't have the concept of preferred logical width, but we need to clear their dirty bits
             // so that if we call setPreferredWidthsDirty(true) on a col or one of its descendants, we'll mark its
             // ancestors as dirty.
-            column->clearPreferredLogicalWidthsDirtyBits();
+            column->clearNeedsPreferredLogicalWidthsUpdate();
         } else if (CheckedPtr section = dynamicDowncast<RenderTableSection>(child)) {
             unsigned numRows = section->numRows();
             for (unsigned i = 0; i < numRows; ++i) {
@@ -157,7 +158,7 @@ void AutoTableLayout::fullRecalc()
 
     Length groupLogicalWidth;
     unsigned currentColumn = 0;
-    for (RenderTableCol* column = m_table->firstColumn(); column; column = column->nextColumn()) {
+    for (CheckedPtr column = m_table->firstColumn(); column; column = column->nextColumn()) {
         if (column->isTableColumnGroupWithColumnChildren())
             groupLogicalWidth = column->style().logicalWidth();
         else {
@@ -186,9 +187,9 @@ void AutoTableLayout::fullRecalc()
         recalcColumn(i);
 
     for (auto& section : childrenOfType<RenderTableSection>(*m_table)) {
-        section.setPreferredLogicalWidthsDirty(false);
+        section.clearNeedsPreferredWidthsUpdate();
         for (auto* row = section.firstRow(); row; row = row->nextRow())
-            row->setPreferredLogicalWidthsDirty(false);
+            row->clearNeedsPreferredWidthsUpdate();
     }
 }
 

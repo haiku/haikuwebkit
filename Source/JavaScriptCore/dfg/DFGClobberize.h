@@ -268,6 +268,11 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
         def(PureValue(node));
         return;
 
+    // JSCallee for Eval can change the scope field.
+    case GetEvalScope:
+        read(World);
+        return;
+
     case NumberIsFinite:
     case NumberIsNaN:
         def(PureValue(node));
@@ -365,7 +370,7 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
     case ArithBitXor:
     case ArithBitLShift:
     case ArithBitRShift:
-    case BitURShift:
+    case ArithBitURShift:
         if (node->child1().useKind() == UntypedUse || node->child2().useKind() == UntypedUse) {
             clobberTop();
             return;
@@ -885,6 +890,11 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
             def(PureValue(node));
             return;
         }
+        clobberTop();
+        return;
+
+    case ValueBitURShift:
+        // URShift >>> does not accept BigInt.
         clobberTop();
         return;
 

@@ -153,7 +153,7 @@ MockRealtimeVideoSource::MockRealtimeVideoSource(String&& deviceID, AtomString&&
     ASSERT(device);
     m_device = *device;
 
-    m_dashWidths.appendList({ 6, 6 });
+    m_dashWidths = { 6, 6 };
 
     if (mockDisplay()) {
         auto& properties = std::get<MockDisplayProperties>(m_device.properties);
@@ -584,6 +584,7 @@ void MockRealtimeVideoSource::drawText(GraphicsContext& context)
     string = makeString("Size: "_s, size.width(), " x "_s, size.height());
     context.drawText(drawingState.statsFont(), TextRun(StringView(string)), statsLocation);
 
+    String deviceString;
     if (mockCamera()) {
         statsLocation.move(0, drawingState.statsFontSize());
         string = makeString("Preset size: "_s, captureSize.width(), " x "_s, captureSize.height());
@@ -607,13 +608,18 @@ void MockRealtimeVideoSource::drawText(GraphicsContext& context)
             camera = "Unknown"_s;
             break;
         }
-        string = makeString("Camera: "_s, camera);
-        statsLocation.move(0, drawingState.statsFontSize());
-        context.drawText(drawingState.statsFont(), TextRun(string), statsLocation);
-    } else if (!name().isNull()) {
-        statsLocation.move(0, drawingState.statsFontSize());
-        context.drawText(drawingState.statsFont(), TextRun { name() }, statsLocation);
-    }
+        deviceString = makeString("Camera: "_s, camera);
+    } else if (mockDisplay())
+        deviceString = "Display capture"_s;
+    else if (mockScreen())
+        deviceString = "Screen capture"_s;
+    else if (mockWindow())
+        deviceString = "Window capture"_s;
+    else
+        deviceString = "Unknown capture"_s;
+
+    statsLocation.move(0, drawingState.statsFontSize());
+    context.drawText(drawingState.statsFont(), TextRun(string), statsLocation);
 
     FloatPoint bipBopLocation(captureSize.width() * .6, captureSize.height() * .6);
     unsigned frameMod = m_frameNumber % 60;

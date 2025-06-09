@@ -1061,7 +1061,7 @@ void RenderThemeMac::adjustMenuListStyle(RenderStyle& style, const Element* elem
     // system font for the control size instead.
     setFontFromControlSize(style, controlSize);
 
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({ });
 }
 
 LengthBox RenderThemeMac::popupInternalPaddingBox(const RenderStyle& style) const
@@ -1133,13 +1133,13 @@ int RenderThemeMac::minimumMenuListSize(const RenderStyle& style) const
 void RenderThemeMac::adjustSliderTrackStyle(RenderStyle& style, const Element* element) const
 {
     RenderThemeCocoa::adjustSliderTrackStyle(style, element);
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({ });
 }
 
 void RenderThemeMac::adjustSliderThumbStyle(RenderStyle& style, const Element* element) const
 {
     RenderThemeCocoa::adjustSliderThumbStyle(style, element);
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({ });
 }
 
 std::span<const IntSize, 4> RenderThemeMac::searchFieldSizes() const
@@ -1196,7 +1196,7 @@ void RenderThemeMac::adjustSearchFieldStyle(RenderStyle& style, const Element* e
     style.setPaddingTop(Length(padding, LengthType::Fixed));
     style.setPaddingBottom(Length(padding, LengthType::Fixed));
 
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({ });
 }
 
 std::span<const IntSize, 4> RenderThemeMac::cancelButtonSizes() const
@@ -1219,7 +1219,7 @@ void RenderThemeMac::adjustSearchFieldCancelButtonStyle(RenderStyle& style, cons
     IntSize size = sizeForSystemFont(style, cancelButtonSizes());
     style.setWidth(Length(size.width(), LengthType::Fixed));
     style.setHeight(Length(size.height(), LengthType::Fixed));
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({ });
 }
 
 constexpr int resultsArrowWidth = 5;
@@ -1250,7 +1250,7 @@ void RenderThemeMac::adjustSearchFieldDecorationPartStyle(RenderStyle& style, co
         heightOffset = emptyResultsOffset;
     style.setWidth(Length(size.width() - widthOffset, LengthType::Fixed));
     style.setHeight(Length(size.height() - heightOffset, LengthType::Fixed));
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({ });
 }
 
 void RenderThemeMac::adjustSearchFieldResultsDecorationPartStyle(RenderStyle& style, const Element* element) const
@@ -1267,7 +1267,7 @@ void RenderThemeMac::adjustSearchFieldResultsDecorationPartStyle(RenderStyle& st
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
     style.setWidth(Length(size.width(), LengthType::Fixed));
     style.setHeight(Length(size.height(), LengthType::Fixed));
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({ });
 }
 
 void RenderThemeMac::adjustSearchFieldResultsButtonStyle(RenderStyle& style, const Element* element) const
@@ -1284,7 +1284,7 @@ void RenderThemeMac::adjustSearchFieldResultsButtonStyle(RenderStyle& style, con
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
     style.setWidth(Length(size.width() + resultsArrowWidth, LengthType::Fixed));
     style.setHeight(Length(size.height(), LengthType::Fixed));
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({ });
 }
 
 IntSize RenderThemeMac::sliderTickSize() const
@@ -1327,9 +1327,11 @@ String RenderThemeMac::fileListNameForWidth(const FileList* fileList, const Font
     String strToTruncate;
     if (fileList->isEmpty())
         strToTruncate = fileListDefaultLabel(multipleFilesAllowed);
-    else if (fileList->length() == 1)
-        strToTruncate = [[NSFileManager defaultManager] displayNameAtPath:fileList->item(0)->path().createNSString().get()];
-    else
+    else if (fileList->length() == 1) {
+        RefPtr file = fileList->item(0);
+        auto path = file->path();
+        strToTruncate = path.isEmpty() ? file->name() : [[NSFileManager defaultManager] displayNameAtPath:path.createNSString().get()];
+    } else
         return StringTruncator::rightTruncate(multipleFileUploadText(fileList->length()), width, font);
 
     return StringTruncator::centerTruncate(strToTruncate, width, font);

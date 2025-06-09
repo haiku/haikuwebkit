@@ -34,6 +34,7 @@
 #include "CSSCustomPropertyValue.h"
 #include "CSSTransition.h"
 #include "CommonAtomStrings.h"
+#include "ContainerNodeInlines.h"
 #include "Document.h"
 #include "DocumentInlines.h"
 #include "DocumentTimeline.h"
@@ -44,6 +45,7 @@
 #include "RenderChildIterator.h"
 #include "RenderDescendantIterator.h"
 #include "RenderElement.h"
+#include "RenderElementInlines.h"
 #include "RenderListItem.h"
 #include "RenderListMarker.h"
 #include "RenderStyleInlines.h"
@@ -225,14 +227,14 @@ bool Styleable::mayHaveNonZeroOpacity() const
     return false;
 }
 
-bool Styleable::isRunningAcceleratedTransformAnimation() const
+bool Styleable::isRunningAcceleratedAnimationOfProperty(CSSPropertyID property) const
 {
     auto* effectStack = keyframeEffectStack();
     if (!effectStack)
         return false;
 
     for (const auto& effect : effectStack->sortedEffects()) {
-        if (effect->isCurrentlyAffectingProperty(CSSPropertyTransform, KeyframeEffect::Accelerated::Yes))
+        if (effect->isCurrentlyAffectingProperty(property, KeyframeEffect::Accelerated::Yes))
             return true;
     }
 

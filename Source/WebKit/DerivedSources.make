@@ -418,8 +418,15 @@ LOG_OUTPUT_FILES = \
     WebKitLogClientDeclarations.h \
     WebCoreLogClientDeclarations.h \
 
-$(LOG_OUTPUT_FILES) : $(WebKit2)/Scripts/generate-derived-log-sources.py Platform/LogMessages.in $(WebCorePrivateHeaders)/LogMessages.in
-	PYTHONPATH=$(WebCorePrivateHeaders) $(PYTHON) $^ $(LOG_OUTPUT_FILES)
+LOG_IN_FILES = \
+	$(WebKit2)/Platform/LogMessages.in \
+	$(WebCorePrivateHeaders)/LogMessages.in \
+
+GENERATE_DERIVED_LOG_SOURCES_SCRIPT = $(WebKit2)/Scripts/generate-derived-log-sources.py
+
+$(LOG_OUTPUT_FILES) : $(GENERATE_DERIVED_LOG_SOURCES_SCRIPT) $(LOG_IN_FILES) $(FEATURE_AND_PLATFORM_DEFINE_DEPENDENCIES)
+	@echo Generating derived log sources from $(LOG_IN_FILES)
+	PYTHONPATH=$(WebCorePrivateHeaders) $(PYTHON) $(GENERATE_DERIVED_LOG_SOURCES_SCRIPT) $(LOG_IN_FILES) $(LOG_OUTPUT_FILES) "$(FEATURE_AND_PLATFORM_DEFINES)"
 
 all : $(GENERATED_MESSAGES_FILES)
 
@@ -1014,6 +1021,7 @@ all : JSWebExtensionAPIUnified.mm $(EXTENSION_INTERFACES:%=JS%.h) $(EXTENSION_IN
 ifeq ($(USE_INTERNAL_SDK),YES)
 WEBKIT_ADDITIONS_SWIFT_FILES = \
 	MaterialAdditions.swift \
+	WebPageWebViewAdditions.swift \
 	WKSeparatedImageView.swift \
 	CredentialUpdaterShim.swift \
 	ISO18013MobileDocumentRequest+Extras.swift \

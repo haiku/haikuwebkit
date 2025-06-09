@@ -85,6 +85,7 @@
 #if ENABLE(ENCRYPTED_MEDIA) && ENABLE(THUNDER)
 #include "CDMThunder.h"
 #include "WebKitThunderDecryptorGStreamer.h"
+#include "WebKitThunderParser.h"
 #endif
 
 #if ENABLE(VIDEO)
@@ -442,8 +443,10 @@ void registerWebKitGStreamerElements()
         // - Use GST_RANK_NONE for elements explicitely created by WebKit (no auto-plugging).
 
 #if ENABLE(ENCRYPTED_MEDIA) && ENABLE(THUNDER)
-        if (!CDMFactoryThunder::singleton().supportedKeySystems().isEmpty())
-            gst_element_register(nullptr, "webkitthunder", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_THUNDER_DECRYPT);
+        if (!CDMFactoryThunder::singleton().supportedKeySystems().isEmpty()) {
+            gst_element_register(nullptr, "webkitthunder", GST_RANK_NONE, WEBKIT_TYPE_MEDIA_THUNDER_DECRYPT);
+            gst_element_register(nullptr, "webkitthunderparser", GST_RANK_PRIMARY + 100, WEBKIT_TYPE_MEDIA_THUNDER_PARSER);
+        }
 #endif
 
 #if ENABLE(MEDIA_STREAM)
@@ -1274,6 +1277,51 @@ Vector<T> gstStructureGetArray(const GstStructure* structure, ASCIILiteral key)
 
 template Vector<const GstStructure*> gstStructureGetArray(const GstStructure*, ASCIILiteral key);
 
+template<typename T>
+Vector<T> gstStructureGetList(const GstStructure* structure, ASCIILiteral key)
+{
+    static_assert(std::is_same_v<T, int> || std::is_same_v<T, int64_t> || std::is_same_v<T, unsigned>
+        || std::is_same_v<T, uint64_t> || std::is_same_v<T, double> || std::is_same_v<T, const GstStructure*>);
+    Vector<T> result;
+    if (!structure)
+        return result;
+    const GValue* list = gst_structure_get_value(structure, key.characters());
+    RELEASE_ASSERT(GST_VALUE_HOLDS_LIST(list));
+    if (!GST_VALUE_HOLDS_LIST(list)) {
+        GST_WARNING("Structure field %s does not hold a list", key.characters());
+        return result;
+    }
+    unsigned size = gst_value_list_get_size(list);
+    for (unsigned i = 0; i < size; i++) {
+        const GValue* item = gst_value_list_get_value(list, i);
+        if constexpr(std::is_same_v<T, int>)
+            result.append(g_value_get_int(item));
+        else if constexpr(std::is_same_v<T, int64_t>)
+            result.append(g_value_get_int64(item));
+        else if constexpr(std::is_same_v<T, unsigned>)
+            result.append(g_value_get_uint(item));
+        else if constexpr(std::is_same_v<T, uint64_t>)
+            result.append(g_value_get_uint64(item));
+        else if constexpr(std::is_same_v<T, double>) {
+            if (G_VALUE_TYPE(item) == GST_TYPE_FRACTION) {
+                double doubleValue;
+                gst_util_fraction_to_double(gst_value_get_fraction_numerator(item), gst_value_get_fraction_denominator(item), &doubleValue);
+                result.append(doubleValue);
+            } else
+                result.append(g_value_get_double(item));
+        } else if constexpr(std::is_same_v<T, const GstStructure*>)
+            result.append(gst_value_get_structure(item));
+    }
+    return result;
+}
+
+template Vector<int> gstStructureGetList(const GstStructure*, ASCIILiteral key);
+template Vector<int64_t> gstStructureGetList(const GstStructure*, ASCIILiteral key);
+template Vector<unsigned> gstStructureGetList(const GstStructure*, ASCIILiteral key);
+template Vector<uint64_t> gstStructureGetList(const GstStructure*, ASCIILiteral key);
+template Vector<double> gstStructureGetList(const GstStructure*, ASCIILiteral key);
+template Vector<const GstStructure*> gstStructureGetList(const GstStructure*, ASCIILiteral key);
+
 static RefPtr<JSON::Value> gstStructureToJSON(const GstStructure*);
 
 static std::optional<RefPtr<JSON::Value>> gstStructureValueToJSON(const GValue* value)
@@ -1683,6 +1731,20 @@ void configureVideoDecoderForHarnessing(const GRefPtr<GstElement>& element)
         g_object_set(element.get(), "n-threads", 1, nullptr);
 }
 
+void configureMediaStreamAudioDecoder(GstElement* element)
+{
+    // Currently implemented only in opusdec.
+    if (gstObjectHasProperty(element, "plc"_s))
+        g_object_set(element, "plc", TRUE, nullptr);
+
+    // Currently implemented only in opusdec.
+    if (gstObjectHasProperty(element, "use-inband-fec"_s))
+        g_object_set(element, "use-inband-fec", TRUE, nullptr);
+
+    if (gstObjectHasProperty(element, "max-errors"_s))
+        g_object_set(element, "max-errors", -1, nullptr);
+}
+
 void configureMediaStreamVideoDecoder(GstElement* element)
 {
     if (gstObjectHasProperty(element, "automatic-request-sync-points"_s))
@@ -1958,6 +2020,21 @@ bool setGstElementGLContext(GstElement* element, ASCIILiteral contextType)
     return true;
 }
 #endif
+
+GstStateChangeReturn gstElementLockAndSetState(GstElement* element, GstState state)
+{
+    auto parent = adoptGRef(gst_element_get_parent(element));
+    if (parent)
+        GST_STATE_LOCK(parent.get());
+
+    gst_element_set_locked_state(element, TRUE);
+    auto result = gst_element_set_state(element, state);
+    gst_element_set_locked_state(element, FALSE);
+
+    if (parent)
+        GST_STATE_UNLOCK(parent.get());
+    return result;
+}
 
 #undef GST_CAT_DEFAULT
 

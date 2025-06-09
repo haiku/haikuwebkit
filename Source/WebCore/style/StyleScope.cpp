@@ -252,6 +252,11 @@ Scope* Scope::forOrdinal(Element& element, ScopeOrdinal ordinal)
     return slot ? &forNode(*slot) : nullptr;
 }
 
+const Scope* Scope::forOrdinal(const Element& element, ScopeOrdinal ordinal)
+{
+    return forOrdinal(const_cast<Element&>(element), ordinal);
+}
+
 void Scope::setPreferredStylesheetSetName(const String& name)
 {
     if (m_preferredStylesheetSetName == name)
@@ -1029,8 +1034,7 @@ bool Scope::invalidateForAnchorDependencies(LayoutDependencyUpdateContext& conte
         CheckedPtr renderer = toInvalidate->renderer();
         if (renderer && AnchorPositionEvaluator::isLayoutTimeAnchorPositioned(renderer->style()))
             renderer->setNeedsLayout();
-        else
-            toInvalidate->invalidateForAnchorRectChange();
+        toInvalidate->invalidateForAnchorRectChange();
     }
 
     return !anchoredElementsToInvalidate.isEmpty();

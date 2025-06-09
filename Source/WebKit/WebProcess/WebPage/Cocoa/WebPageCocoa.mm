@@ -95,6 +95,7 @@
 #import <wtf/cf/VectorCF.h>
 #import <wtf/cocoa/SpanCocoa.h>
 #import <wtf/spi/darwin/SandboxSPI.h>
+#import <wtf/text/StringToIntegerConversion.h>
 
 #if ENABLE(GPU_PROCESS) && PLATFORM(COCOA)
 #include "LibWebRTCCodecs.h"
@@ -169,7 +170,7 @@ void WebPage::setHasLaunchedWebContentProcess()
         auto auditToken = WebProcess::singleton().auditTokenForSelf();
 #if USE(EXTENSIONKIT)
         if (WKProcessExtension.sharedInstance)
-            [WKProcessExtension.sharedInstance lockdownSandbox:@"1.0"];
+            [WKProcessExtension.sharedInstance lockdownSandbox:@"2.0"];
 #endif
         sandbox_enable_state_flag("local:WebContentProcessLaunched", *auditToken);
         hasSetLaunchVariable = true;
@@ -311,11 +312,21 @@ DictionaryPopupInfo WebPage::dictionaryPopupInfoForRange(LocalFrame& frame, cons
         return dictionaryPopupInfo;
     }
 
-    dictionaryPopupInfo.textIndicator = textIndicator->data();
+    dictionaryPopupInfo.textIndicator = textIndicator;
 #if PLATFORM(MAC)
+#if ENABLE(LEGACY_PDFKIT_PLUGIN)
     dictionaryPopupInfo.platformData.attributedString = WebCore::AttributedString::fromNSAttributedString(scaledAttributedString);
+#else
+    dictionaryPopupInfo.text = [scaledAttributedString string];
+#endif
+
 #elif PLATFORM(MACCATALYST)
+#if ENABLE(LEGACY_PDFKIT_PLUGIN)
     dictionaryPopupInfo.platformData.attributedString = WebCore::AttributedString::fromNSAttributedString(adoptNS([[NSMutableAttributedString alloc] initWithString:plainText(range).createNSString().get()]));
+#else
+    dictionaryPopupInfo.text = plainText(range);
+#endif
+
 #endif
 
     editor->setIsGettingDictionaryPopupInfo(false);
@@ -888,26 +899,30 @@ std::pair<URL, DidFilterLinkDecoration> WebPage::applyLinkDecorationFilteringWit
         if (!loader)
             return false;
         auto effectivePolicies = trigger == LinkDecorationFilteringTrigger::Navigation ? loader->navigationalAdvancedPrivacyProtections() : loader->advancedPrivacyProtections();
-        return effectivePolicies.contains(AdvancedPrivacyProtections::LinkDecorationFiltering) || m_page->settings().filterLinkDecorationByDefaultEnabled();
+        return effectivePolicies.contains(AdvancedPrivacyProtections::LinkDecorationFiltering);
     };
 
-    bool shouldApplyLinkDecorationFiltering = [&] {
+    bool hasOptedInToLinkDecorationFiltering = [&] {
         if (isLinkDecorationFilteringEnabled(RefPtr { mainFrame->loader().activeDocumentLoader() }.get()))
             return true;
 
         return isLinkDecorationFilteringEnabled(RefPtr { mainFrame->loader().policyDocumentLoader() }.get());
     }();
 
-    if (!shouldApplyLinkDecorationFiltering)
+    if (!hasOptedInToLinkDecorationFiltering && !m_page->settings().filterLinkDecorationByDefaultEnabled())
         return { url, DidFilterLinkDecoration::No };
 
     if (!url.hasQuery())
         return { url, DidFilterLinkDecoration::No };
 
     auto sanitizedURL = url;
-    auto removedParameters = WTF::removeQueryParameters(sanitizedURL, [&](auto& parameter) {
-        auto it = m_internals->linkDecorationFilteringData.find(parameter);
+    auto removedParameters = WTF::removeQueryParameters(sanitizedURL, [&](auto& key, auto& value) {
+        auto it = m_internals->linkDecorationFilteringData.find(key);
         if (it == m_internals->linkDecorationFilteringData.end())
+            return false;
+
+        constexpr auto base = 10;
+        if (value.length() == 3 && !hasOptedInToLinkDecorationFiltering && WTF::parseInteger<uint8_t>(value, base, WTF::ParseIntegerWhitespacePolicy::Disallow))
             return false;
 
         const auto& conditionals = it->value;
@@ -951,8 +966,8 @@ URL WebPage::allowedQueryParametersForAdvancedPrivacyProtections(const URL& url)
     if (!allowedParameters.contains("#"_s))
         sanitizedURL.removeFragmentIdentifier();
 
-    WTF::removeQueryParameters(sanitizedURL, [&](auto& parameter) {
-        return !allowedParameters.contains(parameter);
+    WTF::removeQueryParameters(sanitizedURL, [&](auto& key, auto&) {
+        return !allowedParameters.contains(key);
     });
 
     return sanitizedURL;
@@ -1024,12 +1039,12 @@ void WebPage::proofreadingSessionUpdateStateForSuggestionWithID(WebCore::Writing
     send(Messages::WebPageProxy::ProofreadingSessionUpdateStateForSuggestionWithID(state, replacementID));
 }
 
-void WebPage::addTextAnimationForAnimationID(const WTF::UUID& uuid, const WebCore::TextAnimationData& styleData, const WebCore::TextIndicatorData& indicatorData, CompletionHandler<void(WebCore::TextAnimationRunMode)>&& completionHandler)
+void WebPage::addTextAnimationForAnimationID(const WTF::UUID& uuid, const WebCore::TextAnimationData& styleData, const RefPtr<WebCore::TextIndicator> textIndicator, CompletionHandler<void(WebCore::TextAnimationRunMode)>&& completionHandler)
 {
     if (completionHandler)
-        sendWithAsyncReply(Messages::WebPageProxy::AddTextAnimationForAnimationIDWithCompletionHandler(uuid, styleData, indicatorData), WTFMove(completionHandler));
+        sendWithAsyncReply(Messages::WebPageProxy::AddTextAnimationForAnimationIDWithCompletionHandler(uuid, styleData, textIndicator), WTFMove(completionHandler));
     else
-        send(Messages::WebPageProxy::AddTextAnimationForAnimationID(uuid, styleData, indicatorData));
+        send(Messages::WebPageProxy::AddTextAnimationForAnimationID(uuid, styleData, textIndicator));
 }
 
 void WebPage::removeTextAnimationForAnimationID(const WTF::UUID& uuid)
@@ -1067,7 +1082,7 @@ void WebPage::clearAnimationsForActiveWritingToolsSession()
     m_textAnimationController->clearAnimationsForActiveWritingToolsSession();
 }
 
-void WebPage::createTextIndicatorForTextAnimationID(const WTF::UUID& uuid, CompletionHandler<void(std::optional<WebCore::TextIndicatorData>&&)>&& completionHandler)
+void WebPage::createTextIndicatorForTextAnimationID(const WTF::UUID& uuid, CompletionHandler<void(RefPtr<WebCore::TextIndicator>&&)>&& completionHandler)
 {
     m_textAnimationController->createTextIndicatorForTextAnimationID(uuid, WTFMove(completionHandler));
 }
@@ -1089,10 +1104,10 @@ void WebPage::updateTextVisibilityForActiveWritingToolsSession(const WebCore::Ch
     completionHandler();
 }
 
-void WebPage::textPreviewDataForActiveWritingToolsSession(const WebCore::CharacterRange& rangeRelativeToSessionRange, CompletionHandler<void(std::optional<WebCore::TextIndicatorData>&&)>&& completionHandler)
+void WebPage::textPreviewDataForActiveWritingToolsSession(const WebCore::CharacterRange& rangeRelativeToSessionRange, CompletionHandler<void(RefPtr<WebCore::TextIndicator>&&)>&& completionHandler)
 {
-    auto data = corePage()->textPreviewDataForActiveWritingToolsSession(rangeRelativeToSessionRange);
-    completionHandler(WTFMove(data));
+    RefPtr textIndicator = corePage()->textPreviewDataForActiveWritingToolsSession(rangeRelativeToSessionRange);
+    completionHandler(WTFMove(textIndicator));
 }
 
 void WebPage::decorateTextReplacementsForActiveWritingToolsSession(const WebCore::CharacterRange& rangeRelativeToSessionRange, CompletionHandler<void(void)>&& completionHandler)

@@ -118,6 +118,7 @@ class RenderObject : public CachedImageClient {
     friend class RenderElement;
     friend class RenderLayer;
     friend class RenderLayerScrollableArea;
+    friend class RenderTreeBuilder;
 public:
     enum class Type : uint8_t {
 #if ENABLE(ATTACHMENT_ELEMENT)
@@ -695,6 +696,8 @@ public:
     bool hasVisibleBoxDecorations() const { return boxDecorationState() != BoxDecorationState::None; }
 
     bool needsLayout() const;
+    bool needsPreferredLogicalWidthsUpdate() const { return m_stateBitfields.hasFlag(StateFlag::PreferredLogicalWidthsNeedUpdate); }
+
     bool selfNeedsLayout() const { return m_stateBitfields.hasFlag(StateFlag::NeedsLayout); }
     bool needsPositionedMovementLayout() const { return m_stateBitfields.hasFlag(StateFlag::NeedsPositionedMovementLayout); }
     bool needsPositionedMovementLayoutOnly() const;
@@ -704,8 +707,6 @@ public:
     bool needsSimplifiedNormalFlowLayoutOnly() const;
     bool normalChildNeedsLayout() const { return m_stateBitfields.hasFlag(StateFlag::NormalChildNeedsLayout); }
     bool outOfFlowChildNeedsStaticPositionLayout() const { return m_stateBitfields.hasFlag(StateFlag::OutOfFlowChildNeedsStaticPositionLayout); }
-    
-    bool preferredLogicalWidthsDirty() const { return m_stateBitfields.hasFlag(StateFlag::PreferredLogicalWidthsDirty); }
 
     bool isSelectionBorder() const;
 
@@ -764,7 +765,8 @@ public:
     inline void setNeedsLayout(MarkingBehavior = MarkContainingBlockChain);
     enum class HadSkippedLayout { No, Yes };
     void clearNeedsLayout(HadSkippedLayout = HadSkippedLayout::No);
-    void setPreferredLogicalWidthsDirty(bool, MarkingBehavior = MarkContainingBlockChain);
+    void setNeedsPreferredWidthsUpdate(MarkingBehavior = MarkContainingBlockChain);
+    void clearNeedsPreferredWidthsUpdate() { m_stateBitfields.setFlag(StateFlag::PreferredLogicalWidthsNeedUpdate, { }); }
     void invalidateContainerPreferredLogicalWidths();
     
     inline void setNeedsLayoutAndPrefWidthsRecalc();
@@ -1143,6 +1145,7 @@ protected:
     inline Node& nodeForNonAnonymous() const; // Defined in RenderObjectInlines.h
 
     virtual void willBeDestroyed();
+    void setIsBeingDestroyed() { m_stateBitfields.setFlag(StateFlag::BeingDestroyed); }
 
     void scheduleLayout(RenderElement* layoutRoot);
     void setNeedsPositionedMovementLayoutBit(bool b) { m_stateBitfields.setFlag(StateFlag::NeedsPositionedMovementLayout, b); }
@@ -1217,7 +1220,7 @@ private:
         IsExcludedFromNormalLayout                          = 1 << 10,
         Floating                                            = 1 << 11,
         VerticalWritingMode                                 = 1 << 12,
-        PreferredLogicalWidthsDirty                         = 1 << 13,
+        PreferredLogicalWidthsNeedUpdate                    = 1 << 13,
         HasRareData                                         = 1 << 14,
         HasLayer                                            = 1 << 15,
         HasNonVisibleOverflow                               = 1 << 16,
@@ -1301,6 +1304,8 @@ private:
 
         bool hasReflection { false };
         bool hasOutlineAutoAncestor { false };
+        // Dirty bit was set with MarkingBehavior::MarkOnlyThis
+        bool preferredLogicalWidthsNeedUpdateIsMarkOnlyThis { false };
         OptionSet<MarginTrimType> trimmedMargins;
 
         // From RenderElement
@@ -1314,11 +1319,9 @@ private:
     WEBCORE_EXPORT const RenderObject::RenderObjectRareData& rareData() const;
     RenderObjectRareData& ensureRareData();
     void removeRareData();
-    
-    using RareDataMap = UncheckedKeyHashMap<SingleThreadWeakRef<const RenderObject>, std::unique_ptr<RenderObjectRareData>>;
 
+    using RareDataMap = SingleThreadWeakHashMap<const RenderObject, std::unique_ptr<RenderObjectRareData>>;
     static RareDataMap& rareDataMap();
-
 };
 
 class RenderObject::SetLayoutNeededForbiddenScope {

@@ -30,6 +30,7 @@
 
 #include "JSCJSValueInlines.h"
 #include "JSWebAssemblyArray.h"
+#include "JSWebAssemblyException.h"
 #include "JSWebAssemblyStruct.h"
 #include "WasmCallee.h"
 #include "WasmFormat.h"
@@ -643,7 +644,7 @@ struct FunctionParameterTypes {
 
     static unsigned hash(const FunctionParameterTypes& params)
     {
-        return computeSignatureHash(params.returnTypes.size(), params.returnTypes.data(), params.argumentTypes.size(), params.argumentTypes.data());
+        return computeSignatureHash(params.returnTypes.size(), params.returnTypes.span().data(), params.argumentTypes.size(), params.argumentTypes.span().data());
     }
 
     static bool equal(const TypeHash& sig, const FunctionParameterTypes& params)
@@ -711,7 +712,7 @@ struct StructParameterTypes {
 
     static unsigned hash(const StructParameterTypes& params)
     {
-        return computeStructTypeHash(params.fields.size(), params.fields.data());
+        return computeStructTypeHash(params.fields.size(), params.fields.span().data());
     }
 
     static bool equal(const TypeHash& sig, const StructParameterTypes& params)
@@ -733,7 +734,7 @@ struct StructParameterTypes {
 
     static void translate(TypeHash& entry, const StructParameterTypes& params, unsigned)
     {
-        RefPtr<TypeDefinition> signature = TypeDefinition::tryCreateStructType(params.fields.size(), params.fields.data());
+        RefPtr<TypeDefinition> signature = TypeDefinition::tryCreateStructType(params.fields.size(), params.fields.span().data());
         RELEASE_ASSERT(signature);
         entry.key = WTFMove(signature);
     }
@@ -778,7 +779,7 @@ struct RecursionGroupParameterTypes {
 
     static unsigned hash(const RecursionGroupParameterTypes& params)
     {
-        return computeRecursionGroupHash(params.types.size(), params.types.data());
+        return computeRecursionGroupHash(params.types.size(), params.types.span().data());
     }
 
     static bool equal(const TypeHash& sig, const RecursionGroupParameterTypes& params)
@@ -858,7 +859,7 @@ struct SubtypeParameterTypes {
 
     static unsigned hash(const SubtypeParameterTypes& params)
     {
-        return computeSubtypeHash(params.superTypes.size(), params.superTypes.data(), params.underlyingType, params.isFinal);
+        return computeSubtypeHash(params.superTypes.size(), params.superTypes.span().data(), params.underlyingType, params.isFinal);
     }
 
     static bool equal(const TypeHash& sig, const SubtypeParameterTypes& params)
@@ -1109,15 +1110,17 @@ bool TypeInformation::castReference(JSValue refValue, bool allowNull, TypeIndex 
 
     if (typeIndexIsType(typeIndex)) {
         switch (static_cast<TypeKind>(typeIndex)) {
-        case TypeKind::Exn:
         case TypeKind::Externref:
         case TypeKind::Anyref:
-            // Casts to these types cannot fail as any value can be an exn/externref/hostref.
+            // Casts to these types cannot fail as any value can be an externref/hostref.
             return true;
         case TypeKind::Funcref:
             return jsDynamicCast<WebAssemblyFunctionBase*>(refValue);
         case TypeKind::Eqref:
             return (refValue.isInt32() && refValue.asInt32() <= maxI31ref && refValue.asInt32() >= minI31ref) || jsDynamicCast<JSWebAssemblyArray*>(refValue) || jsDynamicCast<JSWebAssemblyStruct*>(refValue);
+        case TypeKind::Exn:
+            // Exn and Nullexn are in a different heap hierarchy
+            return jsDynamicCast<JSWebAssemblyException*>(refValue);
         case TypeKind::Nullexn:
         case TypeKind::Nullref:
         case TypeKind::Nullfuncref:

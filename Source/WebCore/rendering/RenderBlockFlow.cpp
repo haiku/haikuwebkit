@@ -178,8 +178,7 @@ void RenderBlockFlow::willBeDestroyed()
     if (svgTextLayout())
         svgTextLayout()->deleteLegacyRootBox();
 
-    // NOTE: This jumps down to RenderBox, bypassing RenderBlock since it would do duplicate work.
-    RenderBox::willBeDestroyed();
+    RenderBlock::willBeDestroyed();
 }
 
 RenderMultiColumnFlow* RenderBlockFlow::multiColumnFlowSlowCase() const
@@ -632,9 +631,9 @@ void RenderBlockFlow::layoutBlock(RelayoutChildren relayoutChildren, LayoutUnit 
         if (heightChanged || alignContentShift)
             relayoutChildren = RelayoutChildren::Yes;
         if (isDocumentElementRenderer())
-            layoutPositionedObjects(RelayoutChildren::Yes);
+            layoutOutOfFlowBoxes(RelayoutChildren::Yes);
         else
-            layoutPositionedObjects(relayoutChildren);
+            layoutOutOfFlowBoxes(relayoutChildren);
     }
 
     updateDescendantTransformsAfterLayout();
@@ -834,19 +833,25 @@ void RenderBlockFlow::layoutBlockChildren(RelayoutChildren relayoutChildren, Lay
     RenderBox* next = firstChildBox();
 
     while (next) {
-        ASSERT(!layoutContext().isSkippedContentForLayout(*next));
-
         RenderBox& child = *next;
         next = child.nextSiblingBox();
 
         if (child.isExcludedFromNormalLayout())
             continue; // Skip this child, since it will be positioned by the specialized subclass (fieldsets and ruby runs).
 
+        if (layoutContext().isSkippedContentForLayout(child)) {
+            ASSERT(child.isColumnSpanner());
+
+            child.clearNeedsLayout();
+            child.clearNeedsLayoutForSkippedContent();
+            continue;
+        }
+
         updateBlockChildDirtyBitsBeforeLayout(relayoutChildren, child);
 
         if (child.isOutOfFlowPositioned()) {
-            child.containingBlock()->insertPositionedObject(child);
-            adjustPositionedBlock(child, marginInfo);
+            child.containingBlock()->addOutOfFlowBox(child);
+            adjustOutOfFlowBlock(child, marginInfo);
             continue;
         }
         if (child.isFloating()) {
@@ -1151,7 +1156,7 @@ void RenderBlockFlow::layoutBlockChild(RenderBox& child, MarginInfo& marginInfo,
     ASSERT(view().frameView().layoutContext().layoutDeltaMatches(oldLayoutDelta));
 }
 
-void RenderBlockFlow::adjustPositionedBlock(RenderBox& child, const MarginInfo& marginInfo)
+void RenderBlockFlow::adjustOutOfFlowBlock(RenderBox& child, const MarginInfo& marginInfo)
 {
     bool isHorizontal = isHorizontalWritingMode();
     bool hasStaticBlockPosition = child.style().hasStaticBlockPosition(isHorizontal);
@@ -2366,7 +2371,7 @@ void RenderBlockFlow::styleDidChange(StyleDifference diff, const RenderStyle* ol
 
     if (diff == StyleDifference::Layout && selfNeedsLayout() && childrenInline()) {
         for (auto walker = InlineWalker(*this); !walker.atEnd(); walker.advance())
-            walker.current()->setPreferredLogicalWidthsDirty(true);
+            walker.current()->setNeedsPreferredWidthsUpdate();
     }
 
     if (multiColumnFlow())
@@ -3540,7 +3545,7 @@ void RenderBlockFlow::clearMultiColumnFlow()
 {
     ASSERT(hasRareBlockFlowData());
     ASSERT(rareBlockFlowData()->m_multiColumnFlow);
-    rareBlockFlowData()->m_multiColumnFlow.clear();
+    rareBlockFlowData()->m_multiColumnFlow = { };
 }
 
 int RenderBlockFlow::lineCount() const
@@ -3853,7 +3858,7 @@ void RenderBlockFlow::invalidateLineLayoutPath(InvalidationReason invalidationRe
                             continue;
                         if (!renderer.isInFlow() && inlineLayout()->contains(downcast<RenderElement>(renderer)))
                             renderer.repaint();
-                        renderer.setPreferredLogicalWidthsDirty(true);
+                        renderer.setNeedsPreferredWidthsUpdate();
                     }
                 };
                 repaintAndSetNeedsLayoutIncludingOutOfFlowBoxes();
@@ -3936,14 +3941,14 @@ void RenderBlockFlow::layoutInlineContent(RelayoutChildren relayoutChildren, Lay
         auto& renderer = *walker.current();
         auto* box = dynamicDowncast<RenderBox>(renderer);
         auto childNeedsLayout = relayoutChildren == RelayoutChildren::Yes || (box && box->hasRelativeDimensions());
-        auto childNeedsPreferredWidthComputation = relayoutChildren == RelayoutChildren::Yes && box && box->needsPreferredWidthsRecalculation();
+        auto childNeedsPreferredWidthComputation = relayoutChildren == RelayoutChildren::Yes && box && box->shouldInvalidatePreferredWidths();
         if (childNeedsLayout)
             renderer.setNeedsLayout(MarkOnlyThis);
         if (childNeedsPreferredWidthComputation)
-            renderer.setPreferredLogicalWidthsDirty(true, MarkOnlyThis);
+            renderer.setNeedsPreferredWidthsUpdate(MarkOnlyThis);
 
         if (renderer.isOutOfFlowPositioned()) {
-            renderer.containingBlock()->insertPositionedObject(*box);
+            renderer.containingBlock()->addOutOfFlowBox(*box);
             // FIXME: This is only needed because of the synchronous layout call in setStaticPositionsForSimpleOutOfFlowContent
             // which itself appears to be a workaround for a bad subtree layout shown by
             // fast/block/positioning/static_out_of_flow_inside_layout_boundary.html
@@ -3961,7 +3966,7 @@ void RenderBlockFlow::layoutInlineContent(RelayoutChildren relayoutChildren, Lay
         } else
             hasSimpleOutOfFlowContentOnly = false;
 
-        if (!renderer.needsLayout() && !renderer.preferredLogicalWidthsDirty())
+        if (!renderer.needsLayout() && !renderer.needsPreferredLogicalWidthsUpdate())
             continue;
 
         if (auto* renderText = dynamicDowncast<RenderText>(renderer))
@@ -4752,7 +4757,7 @@ void RenderBlockFlow::computeInlinePreferredLogicalWidths(LayoutUnit& minLogical
                             ASSERT_NOT_REACHED();
                     }
 
-                    child->setPreferredLogicalWidthsDirty(false);
+                    child->clearNeedsPreferredWidthsUpdate();
                 } else {
                     // Inline replaced boxes add in their margins to their min/max values.
                     if (!child->isFloating())
@@ -5020,7 +5025,7 @@ bool RenderBlockFlow::tryComputePreferredWidthsUsingInlinePath(LayoutUnit& minLo
     std::tie(minLogicalWidth, maxLogicalWidth) = inlineLayout()->computeIntrinsicWidthConstraints();
     for (auto walker = InlineWalker(*this); !walker.atEnd(); walker.advance()) {
         auto* renderer = walker.current();
-        renderer->setPreferredLogicalWidthsDirty(false);
+        renderer->clearNeedsPreferredWidthsUpdate();
         if (auto* renderText = dynamicDowncast<RenderText>(renderer))
             renderText->resetMinMaxWidth();
     }

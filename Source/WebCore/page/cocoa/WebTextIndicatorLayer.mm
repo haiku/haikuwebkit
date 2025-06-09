@@ -28,9 +28,9 @@
 
 #import "GeometryUtilities.h"
 #import "GraphicsContext.h"
+#import "NativeImage.h"
 #import "PathUtilities.h"
 #import "TextIndicator.h"
-#import "TextIndicatorWindow.h"
 #import "WebActionDisablingCALayerDelegate.h"
 #import <pal/spi/cg/CoreGraphicsSPI.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>

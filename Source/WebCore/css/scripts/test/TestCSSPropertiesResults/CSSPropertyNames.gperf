@@ -45,7 +45,7 @@ const std::array<CSSPropertyID, 102> computedPropertyIDs {
     CSSPropertyID::CSSPropertyTestColorAllowsTypesAbsolute,
     CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport,
     CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport,
-    CSSPropertyID::CSSPropertyTestCustonmExtractor,
+    CSSPropertyID::CSSPropertyTestCustomExtractor,
     CSSPropertyID::CSSPropertyTestExtractorConverter,
     CSSPropertyID::CSSPropertyTestFunctionBoundedParameters,
     CSSPropertyID::CSSPropertyTestFunctionFixedParameters,
@@ -154,7 +154,7 @@ constexpr ASCIILiteral propertyNameStrings[numCSSProperties] = {
     "test-color-allows-types-absolute"_s,
     "test-color-property-with-no-visited-link-support"_s,
     "test-color-property-with-visited-link-support"_s,
-    "test-custonm-extractor"_s,
+    "test-custom-extractor"_s,
     "test-extractor-converter"_s,
     "test-function-bounded-parameters"_s,
     "test-function-fixed-parameters"_s,
@@ -234,6 +234,7 @@ constexpr ASCIILiteral propertyNameStrings[numCSSProperties] = {
     "test-logical-property-group-physical-vertical"_s,
     "test-logical-property-group-logical-block"_s,
     "test-logical-property-group-logical-inline"_s,
+    "all"_s,
     "font"_s,
     "test-shorthand-one"_s,
     "test-shorthand-two"_s,
@@ -278,7 +279,7 @@ test-color, CSSPropertyID::CSSPropertyTestColor
 test-color-allows-types-absolute, CSSPropertyID::CSSPropertyTestColorAllowsTypesAbsolute
 test-color-property-with-no-visited-link-support, CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport
 test-color-property-with-visited-link-support, CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport
-test-custonm-extractor, CSSPropertyID::CSSPropertyTestCustonmExtractor
+test-custom-extractor, CSSPropertyID::CSSPropertyTestCustomExtractor
 test-extractor-converter, CSSPropertyID::CSSPropertyTestExtractorConverter
 test-function-bounded-parameters, CSSPropertyID::CSSPropertyTestFunctionBoundedParameters
 test-function-fixed-parameters, CSSPropertyID::CSSPropertyTestFunctionFixedParameters
@@ -358,6 +359,7 @@ test-logical-property-group-physical-horizontal, CSSPropertyID::CSSPropertyTestL
 test-logical-property-group-physical-vertical, CSSPropertyID::CSSPropertyTestLogicalPropertyGroupPhysicalVertical
 test-logical-property-group-logical-block, CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalBlock
 test-logical-property-group-logical-inline, CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalInline
+all, CSSPropertyID::CSSPropertyAll
 font, CSSPropertyID::CSSPropertyFont
 test-shorthand-one, CSSPropertyID::CSSPropertyTestShorthandOne
 test-shorthand-two, CSSPropertyID::CSSPropertyTestShorthandTwo
@@ -432,6 +434,8 @@ static bool isExposedNotInvalidAndNotInternal(CSSPropertyID id, const CSSPropert
         return settings.cssDescriptorEnabled;
     case CSSPropertyID::CSSPropertyTestSettingsOne:
         return settings.cssSettingsOneEnabled;
+    case CSSPropertyID::CSSPropertyTestShorthandTwo:
+        return settings.cssSettingsShorthandEnabled;
     default:
         return true;
     }
@@ -444,6 +448,8 @@ static bool isExposedNotInvalidAndNotInternal(CSSPropertyID id, const Settings& 
         return settings.cssDescriptorEnabled();
     case CSSPropertyID::CSSPropertyTestSettingsOne:
         return settings.cssSettingsOneEnabled();
+    case CSSPropertyID::CSSPropertyTestShorthandTwo:
+        return settings.cssSettingsShorthandEnabled();
     default:
         return true;
     }
@@ -508,7 +514,7 @@ constexpr bool isInheritedPropertyTable[cssPropertyIDEnumValueCount] = {
     false, // CSSPropertyID::CSSPropertyTestColorAllowsTypesAbsolute
     false, // CSSPropertyID::CSSPropertyTestColorPropertyWithNoVisitedLinkSupport
     false, // CSSPropertyID::CSSPropertyTestColorPropertyWithVisitedLinkSupport
-    false, // CSSPropertyID::CSSPropertyTestCustonmExtractor
+    false, // CSSPropertyID::CSSPropertyTestCustomExtractor
     false, // CSSPropertyID::CSSPropertyTestExtractorConverter
     false, // CSSPropertyID::CSSPropertyTestFunctionBoundedParameters
     false, // CSSPropertyID::CSSPropertyTestFunctionFixedParameters
@@ -588,6 +594,7 @@ constexpr bool isInheritedPropertyTable[cssPropertyIDEnumValueCount] = {
     false, // CSSPropertyID::CSSPropertyTestLogicalPropertyGroupPhysicalVertical
     false, // CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalBlock
     false, // CSSPropertyID::CSSPropertyTestLogicalPropertyGroupLogicalInline
+    false, // CSSPropertyID::CSSPropertyAll
     false, // CSSPropertyID::CSSPropertyFont
     false, // CSSPropertyID::CSSPropertyTestShorthandOne
     false, // CSSPropertyID::CSSPropertyTestShorthandTwo
@@ -658,7 +665,7 @@ bool CSSProperty::allowsNumberOrIntegerInput(CSSPropertyID id)
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeNoSingleItemOpt:
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeWithDefaultPrevious:
     case CSSPropertyID::CSSPropertyTestBoundedRepetitionWithSpacesWithTypeWithDefaultPreviousTwo:
-    case CSSPropertyID::CSSPropertyTestCustonmExtractor:
+    case CSSPropertyID::CSSPropertyTestCustomExtractor:
     case CSSPropertyID::CSSPropertyTestExtractorConverter:
     case CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalAndCustomType:
     case CSSPropertyID::CSSPropertyTestMatchAllAnyOrderWithOptionalAndPreserveOrderAndCustomType:
@@ -877,19 +884,22 @@ std::span<const CSSPropertyID> CSSProperty::allAcceleratedAnimationProperties([[
 CSSPropertySettings::CSSPropertySettings(const Settings& settings)
     : cssDescriptorEnabled { settings.cssDescriptorEnabled() }
     , cssSettingsOneEnabled { settings.cssSettingsOneEnabled() }
+    , cssSettingsShorthandEnabled { settings.cssSettingsShorthandEnabled() }
 {
 }
 
 bool operator==(const CSSPropertySettings& a, const CSSPropertySettings& b)
 {
     return a.cssDescriptorEnabled == b.cssDescriptorEnabled
-        && a.cssSettingsOneEnabled == b.cssSettingsOneEnabled;
+        && a.cssSettingsOneEnabled == b.cssSettingsOneEnabled
+        && a.cssSettingsShorthandEnabled == b.cssSettingsShorthandEnabled;
 }
 
 void add(Hasher& hasher, const CSSPropertySettings& settings)
 {
     uint64_t bits = settings.cssDescriptorEnabled << 0
-        | settings.cssSettingsOneEnabled << 1;
+        | settings.cssSettingsOneEnabled << 1
+        | settings.cssSettingsShorthandEnabled << 2;
     add(hasher, bits);
 }
 

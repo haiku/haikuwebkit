@@ -586,7 +586,6 @@ editing/selection/rtl-move-selection-right-left.html [ Skip ]
 editing/selection/select-bidi-run.html [ Skip ]
 editing/selection/select-line-break-with-opposite-directionality.html [ Skip ]
 editing/selection/select-out-of-editable.html [ Skip ]
-editing/selection/shift-click.html [ Skip ]
 editing/selection/shift-click-live-range.html [ Skip ]
 editing/selection/text-selection-counter.html [ Skip ]
 editing/selection/undo-crash.html [ Skip ]
@@ -1388,6 +1387,11 @@ imported/w3c/web-platform-tests/css/css-view-transitions/navigation/hide-before-
 imported/w3c/web-platform-tests/css/css-view-transitions/navigation/pageswap-push-from-click.html [ Failure ]
 
 imported/w3c/web-platform-tests/css/css-view-transitions/snapshot-containing-block-static-iframe.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-old.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/fractional-box-with-shadow-old.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/inline-child-with-filter.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/inline-child-with-composited-filter.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-view-transitions/inline-with-offset-from-containing-block.html [ ImageOnlyFailure ]
 
 # Needs special fuzziness on iOS.
 imported/w3c/web-platform-tests/css/css-view-transitions/rotated-cat-off-top-edge.html [ ImageOnlyFailure ]
@@ -3484,6 +3488,9 @@ http/tests/media/video-webm-stall.html [ Skip ]
 webkit.org/b/229291 imported/w3c/web-platform-tests/html/rendering/replaced-elements/images/revoked-blob-print.html [ Pass ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/rendering/widgets/input-checkbox-switch-rtl.tentative.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/rendering/widgets/input-date-baseline-min-height.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/rendering/widgets/button-layout/propagate-text-decoration.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/rendering/widgets/input-date-whitespace-pre-1.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/html/rendering/widgets/input-date-whitespace-pre-2.html [ ImageOnlyFailure ]
 
 #rdar://82146367 ([Mac, iOS Release] imported/w3c/web-platform-tests/worklets/layout-worklet-csp.https.html is a flaky failure) imported/w3c/web-platform-tests/worklets/layout-worklet-csp.https.html [ Pass Failure ] 
 
@@ -3581,8 +3588,6 @@ webkit.org/b/237987 imported/w3c/web-platform-tests/html/semantics/forms/textfie
 # webkit.org/b/237603 
 imported/w3c/web-platform-tests/content-security-policy/connect-src/shared-worker-connect-src-allowed.sub.html [ Pass Failure ]
 imported/w3c/web-platform-tests/content-security-policy/connect-src/shared-worker-connect-src-blocked.sub.html [ Pass Failure ]
-
-webkit.org/b/159755 fast/text/emoji-num-glyphs.html [ Pass ]
 
 # WPT css/css-pseudo import (webkit.org/b/235197)
 imported/w3c/web-platform-tests/css/css-pseudo/selection-background-painting-order.html [ ImageOnlyFailure ]
@@ -7862,3 +7867,20 @@ imported/w3c/web-platform-tests/navigation-api/navigate-event/navigate-form-with
 imported/w3c/web-platform-tests/navigation-api/navigate-event/navigate-form.html [ Failure ]
 
 webkit.org/b/292650 http/tests/iframe-monitor/throttler.html [ Timeout ]
+
+webkit.org/b/293642 imported/w3c/web-platform-tests/css/cssom/stylesheet-same-origin.sub.html [ Failure ]
+
+webkit.org/b/288957 imported/w3c/web-platform-tests/css/CSS2/tables/border-collapse-dynamic-column-001.xht [ ImageOnlyFailure ]
+
+# rdar://146986685 (REGRESSION(Sequoia 15.4): fast/canvas/webgl/gl-teximage.html is a constant text failure)
+fast/canvas/webgl/gl-teximage.html [ Pass ]
+
+#rdar://145604998 (REGRESSION(iOS 18.4, macOS Sequoia 15.4 ): fast/text/international/hindi-spacing.html is a constant text failure)
+fast/text/international/hindi-spacing.html [ Failure ]
+
+webkit.org/b/288518 fast/text/emoji-num-glyphs.html [ Failure ]
+
+# rdar://148254605 (REGRESSION (iOS 18.4): media/sources-fallback-codecs.html is constantly failing.)
+media/sources-fallback-codecs.html [ Failure ]
+
+webkit.org/b/293764 imported/w3c/web-platform-tests/trusted-types/SharedWorker-block-eval-function-constructor.html [ Pass Failure ]

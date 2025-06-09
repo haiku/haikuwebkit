@@ -34,6 +34,7 @@
 
 #if ENABLE(MEDIA_STREAM)
 
+#include "AudioMediaStreamTrackRenderer.h"
 #include "AudioSession.h"
 #include "CaptureDeviceWithCapabilities.h"
 #include "DocumentInlines.h"
@@ -45,6 +46,7 @@
 #include "JSInputDeviceInfo.h"
 #include "JSMediaDeviceInfo.h"
 #include "LocalFrame.h"
+#include "LocalizedStrings.h"
 #include "Logging.h"
 #include "MediaTrackSupportedConstraints.h"
 #include "PermissionsPolicy.h"
@@ -347,6 +349,19 @@ static inline bool haveMicrophoneDevice(const Vector<CaptureDeviceWithCapabiliti
     });
 }
 
+String MediaDevices::deviceIdToPersistentId(const String& deviceId) const
+{
+    if (deviceId == AudioMediaStreamTrackRenderer::defaultDeviceID())
+        return deviceId;
+
+    return m_audioOutputDeviceIdToPersistentId.get(deviceId);
+}
+
+static RefPtr<MediaDeviceInfo> createDefaultSpeakerAsSpecificDevice(const CaptureDevice& defaultRealDevice, const String& groupId)
+{
+    return MediaDeviceInfo::create(makeString(defaultSystemSpeakerLabel(), " - "_s, defaultRealDevice.label()), AudioMediaStreamTrackRenderer::defaultDeviceID(), groupId, MediaDeviceInfo::Kind::Audiooutput);
+}
+
 void MediaDevices::exposeDevices(Vector<CaptureDeviceWithCapabilities>&& newDevices, MediaDeviceHashSalts&& deviceIDHashSalts, EnumerateDevicesPromise&& promise)
 {
     if (isContextStopped())
@@ -357,6 +372,7 @@ void MediaDevices::exposeDevices(Vector<CaptureDeviceWithCapabilities>&& newDevi
     bool canAccessCamera = checkCameraAccess(document);
     bool canAccessMicrophone = checkMicrophoneAccess(document);
     bool canAccessSpeaker = checkSpeakerAccess(document);
+    bool shouldExposeDefaultSpeakerAsSpecificDevice = document->frame()->settings().exposeDefaultSpeakerAsSpecificDeviceEnabled();
 
     m_audioOutputDeviceIdToPersistentId.clear();
 
@@ -380,8 +396,13 @@ void MediaDevices::exposeDevices(Vector<CaptureDeviceWithCapabilities>&& newDevi
 
         if (newDevice.type() == CaptureDevice::DeviceType::Speaker) {
             if (exposeSpeakersWithoutMicrophoneAccess(document) || haveMicrophoneDevice(newDevices, newDevice.groupId())) {
+                if (shouldExposeDefaultSpeakerAsSpecificDevice) {
+                    shouldExposeDefaultSpeakerAsSpecificDevice = false;
+                    devices.append(createDefaultSpeakerAsSpecificDevice(newDevice, groupId));
+                }
+
                 m_audioOutputDeviceIdToPersistentId.add(deviceId, newDevice.persistentId());
-                devices.append(RefPtr<MediaDeviceInfo> { MediaDeviceInfo::create(newDevice.label(), WTFMove(deviceId), WTFMove(groupId), toMediaDeviceInfoKind(newDevice.type())) });
+                devices.append(RefPtr { MediaDeviceInfo::create(newDevice.label(), WTFMove(deviceId), WTFMove(groupId), MediaDeviceInfo::Kind::Audiooutput) });
             }
         } else {
             if (newDevice.type() == CaptureDevice::DeviceType::Camera && !newDevice.label().isEmpty())
@@ -418,10 +439,14 @@ void MediaDevices::enumerateDevices(EnumerateDevicesPromise&& promise)
         return;
     }
 
-    controller->enumerateMediaDevices(*document, [weakThis = WeakPtr { *this }, promise = WTFMove(promise)](Vector<CaptureDeviceWithCapabilities>&& newDevices, MediaDeviceHashSalts&& deviceIDHashSalts) mutable {
+    controller->enumerateMediaDevices(*document, [weakThis = WeakPtr { *this }, promise = WTFMove(promise), userGestureToken = UserGestureIndicator::currentUserGesture()](Vector<CaptureDeviceWithCapabilities>&& newDevices, MediaDeviceHashSalts&& deviceIDHashSalts) mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
+
+        std::optional<UserGestureIndicator> gestureIndicator;
+        if (userGestureToken)
+            gestureIndicator.emplace(userGestureToken, UserGestureToken::GestureScope::MediaOnly, UserGestureToken::ShouldPropagateToMicroTask::Yes);
 
         protectedThis->exposeDevices(WTFMove(newDevices), WTFMove(deviceIDHashSalts), WTFMove(promise));
     });
@@ -438,8 +463,8 @@ void MediaDevices::scheduledEventTimerFired()
     if (!document)
         return;
 
-    document->whenVisible([activity = makePendingActivity(*this), this, protectedThis = Ref { *this }] {
-        queueTaskToDispatchEvent(*this, TaskSource::DOMManipulation, Event::create(eventNames().devicechangeEvent, Event::CanBubble::No, Event::IsCancelable::No));
+    document->whenVisible([activity = makePendingActivity(*this)] {
+        activity->object().queueTaskForDeviceChangeEvent(UserActivation::Yes);
     });
 }
 
@@ -494,7 +519,19 @@ void MediaDevices::willStartMediaCapture(bool microphone, bool camera)
     if (!shouldFireDeviceChangeEvent || !m_listeningForDeviceChanges)
         return;
 
-    queueTaskToDispatchEvent(*this, TaskSource::DOMManipulation, Event::create(eventNames().devicechangeEvent, Event::CanBubble::No, Event::IsCancelable::No));
+    queueTaskForDeviceChangeEvent(microphone ? UserActivation::Yes : UserActivation::No);
+}
+
+void MediaDevices::queueTaskForDeviceChangeEvent(UserActivation userActivation)
+{
+    queueTaskKeepingObjectAlive(*this, TaskSource::DOMManipulation, [userActivation](auto& mediaDevices) {
+        std::optional<UserGestureIndicator> gestureIndicator;
+        if (userActivation == UserActivation::Yes) {
+            RefPtr document = mediaDevices.document();
+            gestureIndicator.emplace(IsProcessingUserGesture::Potentially, document.get(), UserGestureType::Other);
+        }
+        mediaDevices.dispatchEvent(Event::create(eventNames().devicechangeEvent, Event::CanBubble::No, Event::IsCancelable::No));
+    });
 }
 
 } // namespace WebCore

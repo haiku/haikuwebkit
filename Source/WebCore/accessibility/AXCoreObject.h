@@ -262,7 +262,6 @@ enum class AccessibilityRole : uint8_t {
     Video,
     WebApplication,
     WebArea,
-    WebCoreLink,
 };
 
 using AccessibilityRoleSet = HashSet<AccessibilityRole, IntHash<AccessibilityRole>, WTF::StrongEnumHashTraits<AccessibilityRole>>;
@@ -536,8 +535,6 @@ ALWAYS_INLINE String accessibilityRoleToString(AccessibilityRole role)
         return "WebApplication"_s;
     case AccessibilityRole::WebArea:
         return "WebArea"_s;
-    case AccessibilityRole::WebCoreLink:
-        return "WebCoreLink"_s;
     }
     UNREACHABLE();
     return ""_s;
@@ -710,7 +707,7 @@ enum class AXRelation : uint8_t {
     OwnedBy,
     OwnerFor,
 };
-using AXRelations = UncheckedKeyHashMap<AXRelation, ListHashSet<AXID>, DefaultHash<uint8_t>, WTF::UnsignedWithZeroKeyHashTraits<uint8_t>>;
+using AXRelations = HashMap<AXRelation, ListHashSet<AXID>, DefaultHash<uint8_t>, WTF::UnsignedWithZeroKeyHashTraits<uint8_t>>;
 
 enum class SpinButtonType : bool {
     // The spin button is standalone. It has no separate controls, and should receive and perform actions itself.
@@ -792,7 +789,7 @@ enum class TextEmissionBehavior : uint8_t {
     DoubleNewline
 };
 
-class AXCoreObject : public ThreadSafeRefCountedAndCanMakeThreadSafeWeakPtr<AXCoreObject> {
+class AXCoreObject : public RefCountedAndCanMakeWeakPtr<AXCoreObject> {
 public:
     virtual ~AXCoreObject() = default;
     String dbg(bool verbose = false) const { return dbgInternal(verbose, { }); }
@@ -806,6 +803,8 @@ public:
     // represents is deleted, it must be detached.
     void detach(AccessibilityDetachmentType);
     virtual bool isDetached() const = 0;
+
+    std::partial_ordering partialOrder(const AXCoreObject&);
 
     typedef Vector<Ref<AXCoreObject>> AccessibilityChildrenVector;
 
@@ -1026,7 +1025,6 @@ public:
 
     unsigned blockquoteLevel() const;
     unsigned headingLevel() const;
-    virtual unsigned headingTagLevel() const = 0;
     virtual AccessibilityButtonState checkboxOrRadioValue() const = 0;
     virtual String valueDescription() const = 0;
     virtual float valueForRange() const = 0;
@@ -1256,7 +1254,6 @@ public:
     virtual Page* page() const = 0;
     virtual Document* document() const = 0;
     virtual LocalFrameView* documentFrameView() const = 0;
-    virtual ScrollView* scrollView() const = 0;
     // Should eliminate the need for exposing scrollView().
     AXCoreObject* axScrollView() const;
 
@@ -1566,6 +1563,10 @@ protected:
         : m_id(axID)
     { }
 
+    explicit AXCoreObject(AXID axID, AccessibilityRole role)
+        : m_role(role)
+        , m_id(axID)
+    { }
 
 private:
     virtual String dbgInternal(bool, OptionSet<AXDebugStringOption>) const = 0;
@@ -1928,7 +1929,7 @@ template<typename T, typename U> inline T retrieveAutoreleasedValueFromMainThrea
 
 bool inRenderTreeOrStyleUpdate(const Document&);
 
-using PlatformRoleMap = UncheckedKeyHashMap<AccessibilityRole, String, DefaultHash<unsigned>, WTF::UnsignedWithZeroKeyHashTraits<unsigned>>;
+using PlatformRoleMap = HashMap<AccessibilityRole, String, DefaultHash<unsigned>, WTF::UnsignedWithZeroKeyHashTraits<unsigned>>;
 
 void initializeRoleMap();
 PlatformRoleMap createPlatformRoleMap();

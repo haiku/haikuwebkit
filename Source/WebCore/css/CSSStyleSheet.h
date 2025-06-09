@@ -64,7 +64,7 @@ public:
         Variant<RefPtr<MediaList>, String> media { emptyString() };
         bool disabled { false };
     };
-    static Ref<CSSStyleSheet> create(Ref<StyleSheetContents>&&, CSSImportRule* ownerRule = 0);
+    static Ref<CSSStyleSheet> create(Ref<StyleSheetContents>&&, CSSImportRule* ownerRule = nullptr, std::optional<bool>isOriginClean = std::nullopt);
     static Ref<CSSStyleSheet> create(Ref<StyleSheetContents>&&, Node& ownerNode, const std::optional<bool>& isOriginClean = std::nullopt);
     static Ref<CSSStyleSheet> createInline(Ref<StyleSheetContents>&&, Element& owner, const TextPosition& startPosition);
     static ExceptionOr<Ref<CSSStyleSheet>> create(Document&, Init&&);
@@ -159,12 +159,12 @@ public:
 
     String debugDescription() const final;
     String cssText(const CSS::SerializationContext&);
-    void getChildStyleSheets(UncheckedKeyHashSet<RefPtr<CSSStyleSheet>>&);
+    void getChildStyleSheets(HashSet<RefPtr<CSSStyleSheet>>&);
 
     bool isDetached() const;
 
 private:
-    CSSStyleSheet(Ref<StyleSheetContents>&&, CSSImportRule* ownerRule);
+    CSSStyleSheet(Ref<StyleSheetContents>&&, CSSImportRule* ownerRule, std::optional<bool> isOriginClean);
     CSSStyleSheet(Ref<StyleSheetContents>&&, Node* ownerNode, const TextPosition& startPosition, bool isInlineStylesheet);
     CSSStyleSheet(Ref<StyleSheetContents>&&, Node& ownerNode, const TextPosition& startPosition, bool isInlineStylesheet, const std::optional<bool>&);
     CSSStyleSheet(Ref<StyleSheetContents>&&, Document&, Init&&);

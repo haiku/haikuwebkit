@@ -3,7 +3,7 @@
  *                     1999 Lars Knoll <knoll@kde.org>
  *                     1999 Antti Koivisto <koivisto@kde.org>
  *                     2000 Dirk Mueller <mueller@kde.org>
- * Copyright (C) 2004-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  *           (C) 2006 Graham Dennis (graham.dennis@gmail.com)
  *           (C) 2006 Alexey Proskuryakov (ap@nypop.com)
  * Copyright (C) 2009 Google Inc. All rights reserved.
@@ -387,8 +387,12 @@ void LocalFrameView::recalculateScrollbarOverlayStyle()
         }
         return ScrollbarOverlayStyle::Default;
     }();
-    if (scrollbarOverlayStyle() != style)
+    if (scrollbarOverlayStyle() != style) {
         setScrollbarOverlayStyle(style);
+        setNeedsCompositingGeometryUpdate();
+        // The scroll corner must be repainted to match the new scrollbar appearance.
+        invalidateScrollCorner(scrollCornerRect());
+    }
 }
 
 void LocalFrameView::clear()
@@ -444,7 +448,7 @@ void LocalFrameView::setFrameRect(const IntRect& newRect)
     if (m_frame->isMainFrame() && m_frame->page())
         m_frame->page()->pageOverlayController().didChangeViewSize();
 
-    if (auto* document = m_frame->document())
+    if (RefPtr document = m_frame->document())
         document->didChangeViewSize();
 
     viewportContentsChanged();
@@ -471,7 +475,7 @@ void LocalFrameView::updateCanHaveScrollbars()
 RefPtr<Element> LocalFrameView::rootElementForCustomScrollbarPartStyle() const
 {
     // FIXME: We need to update the scrollbar dynamically as documents change (or as doc elements and bodies get discovered that have custom styles).
-    auto* document = m_frame->document();
+    RefPtr document = m_frame->document();
     if (!document)
         return nullptr;
 
@@ -993,6 +997,13 @@ GraphicsLayer* LocalFrameView::graphicsLayerForScrolledContents()
 {
     if (auto* renderView = m_frame->contentRenderer())
         return renderView->compositor().scrolledContentsLayer();
+    return nullptr;
+}
+
+GraphicsLayer* LocalFrameView::clipLayer() const
+{
+    if (CheckedPtr renderView = m_frame->contentRenderer())
+        return renderView->compositor().clipLayer();
     return nullptr;
 }
 
@@ -1911,20 +1922,22 @@ static bool isHiddenOrNearlyTransparent(const RenderBox& box)
     if (box.opacity() < PageColorSampler::nearlyTransparentAlphaThreshold)
         return true;
 
-    if (!box.hasBackground() && !box.firstChild())
+    if (!box.hasBackground() && !box.firstChild() && !is<RenderReplaced>(box))
         return true;
 
     return false;
 }
 
-FixedContainerEdges LocalFrameView::fixedContainerEdges(BoxSideSet sides) const
+std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerEdges(BoxSideSet sides) const
 {
+    WeakElementEdges containers;
+    FixedContainerEdges edges;
     if (sides.isEmpty())
-        return { };
+        return { WTFMove(edges), WTFMove(containers) };
 
     RefPtr page = m_frame->page();
     if (!page)
-        return { };
+        return { WTFMove(edges), WTFMove(containers) };
 
     bool mayUseSampledTopColor = [&] {
         if (scrollPosition().y() > minimumScrollPosition().y())
@@ -1942,11 +1955,11 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges(BoxSideSet sides) const
     }();
 
     if (!hasViewportConstrainedObjects() && !mayUseSampledTopColor)
-        return { };
+        return { WTFMove(edges), WTFMove(containers) };
 
     RefPtr document = m_frame->document();
     if (!document)
-        return { };
+        return { WTFMove(edges), WTFMove(containers) };
 
     TraceScope tracingScope { FixedContainerEdgeSamplingStart, FixedContainerEdgeSamplingEnd };
 
@@ -2228,8 +2241,6 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges(BoxSideSet sides) const
         return samplingRect;
     };
 
-    FixedContainerEdges edges;
-
     for (auto sideFlag : sides) {
         auto side = boxSideFromFlag(sideFlag);
         auto result = findFixedContainer(side, IgnoreCSSPointerEvents::Yes);
@@ -2239,13 +2250,15 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges(BoxSideSet sides) const
         if (!result.container)
             continue;
 
+        containers.setAt(side, *result.container);
+
         if (result.foundBackdropFilter) {
             edges.colors.setAt(side, PredominantColorType::Multiple);
             continue;
         }
 
         if (result.backgroundColor.isVisible()) {
-            edges.colors.setAt(side, WTFMove(result.backgroundColor));
+            edges.colors.setAt(side, result.backgroundColor.colorWithAlpha(1));
             continue;
         }
 
@@ -2277,7 +2290,7 @@ FixedContainerEdges LocalFrameView::fixedContainerEdges(BoxSideSet sides) const
     if (auto color = edgeColorFromSampledTopColor())
         edges.colors.setAt(BoxSide::Top, WTFMove(*color));
 
-    return edges;
+    return { WTFMove(edges), WTFMove(containers) };
 }
 
 FloatPoint LocalFrameView::positionForInsetClipLayer(const FloatPoint& scrollPosition, const FloatBoxExtent& obscuredContentInset)
@@ -4437,7 +4450,7 @@ void LocalFrameView::performSizeToContentAutoSize()
     LOG(Layout, "LocalFrameView %p performSizeToContentAutoSize", this);
     ASSERT(m_frame->document() && m_frame->document()->renderView());
 
-    auto document = m_frame->protectedDocument();
+    RefPtr document = m_frame->document();
     auto& renderView = *document->renderView();
     auto* documentRenderer = downcast<RenderElement>(renderView.firstChild());
     if (!documentRenderer) {
@@ -4549,7 +4562,7 @@ RenderElement* LocalFrameView::viewportRenderer() const
     if (m_viewportRendererType == ViewportRendererType::None)
         return nullptr;
 
-    auto* document = m_frame->document();
+    RefPtr document = m_frame->document();
     if (!document)
         return nullptr;
 
@@ -4679,22 +4692,22 @@ void LocalFrameView::scrollTo(const ScrollPosition& newPosition)
 
 float LocalFrameView::adjustVerticalPageScrollStepForFixedContent(float step)
 {
-    TrackedRendererListHashSet* positionedObjects = nullptr;
+    TrackedRendererListHashSet* viewPositionedOutOfFlowBoxes = { };
     if (RenderView* root = m_frame->contentRenderer()) {
-        if (!root->hasPositionedObjects())
+        if (!root->hasOutOfFlowBoxes())
             return step;
-        positionedObjects = root->positionedObjects();
+        viewPositionedOutOfFlowBoxes = root->outOfFlowBoxes();
     }
 
     FloatRect unobscuredContentRect = this->unobscuredContentRect();
     float topObscuredArea = 0;
     float bottomObscuredArea = 0;
-    for (const auto& positionedObject : *positionedObjects) {
-        const RenderStyle& style = positionedObject.style();
+    for (const auto& viewPositionedOutOfFlowBox : *viewPositionedOutOfFlowBoxes) {
+        const RenderStyle& style = viewPositionedOutOfFlowBox.style();
         if (style.position() != PositionType::Fixed || style.usedVisibility() == Visibility::Hidden || !style.opacity())
             continue;
 
-        FloatQuad contentQuad = positionedObject.absoluteContentQuad();
+        FloatQuad contentQuad = viewPositionedOutOfFlowBox.absoluteContentQuad();
         if (!contentQuad.isRectilinear())
             continue;
 
@@ -5118,7 +5131,7 @@ void LocalFrameView::setLastUserScrollType(std::optional<UserScrollType> userScr
 
 void LocalFrameView::willPaintContents(GraphicsContext& context, const IntRect&, PaintingState& paintingState, RegionContext* regionContext)
 {
-    Document* document = m_frame->document();
+    RefPtr document = m_frame->document();
 
     if (!context.paintingDisabled())
         InspectorInstrumentation::willPaint(*renderView());

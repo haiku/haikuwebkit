@@ -208,7 +208,7 @@ bool safeToExecute(AbstractStateType& state, Graph& graph, Node* node, bool igno
     case ArithBitXor:
     case ArithBitLShift:
     case ArithBitRShift:
-    case BitURShift:
+    case ArithBitURShift:
     case ValueToInt32:
     case UInt32ToNumber:
     case DoubleAsInt32:
@@ -239,6 +239,7 @@ bool safeToExecute(AbstractStateType& state, Graph& graph, Node* node, bool igno
     case CheckArray:
     case CheckArrayOrEmpty:
     case GetScope:
+    case GetEvalScope:
     case SkipScope:
     case GetGlobalObject:
     case GetGlobalThis:
@@ -800,6 +801,7 @@ bool safeToExecute(AbstractStateType& state, Graph& graph, Node* node, bool igno
     case ValueBitOr:
     case ValueBitLShift:
     case ValueBitRShift:
+    case ValueBitURShift:
     case ValueAdd:
     case ValueSub:
     case ValueMul:

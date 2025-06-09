@@ -67,7 +67,7 @@ private:
     String cssText(const CSS::SerializationContext&) const final;
     String cssTextInternal(StringBuilder& declarations, StringBuilder& rules) const;
     void reattach(StyleRuleBase&) final;
-    void getChildStyleSheets(UncheckedKeyHashSet<RefPtr<CSSStyleSheet>>&) final;
+    void getChildStyleSheets(HashSet<RefPtr<CSSStyleSheet>>&) final;
 
     String generateSelectorText() const;
     Vector<Ref<StyleRuleBase>> nestedRules() const;
@@ -79,7 +79,7 @@ private:
     RefPtr<StyleRuleCSSStyleProperties> m_propertiesCSSOMWrapper;
 
     mutable Vector<RefPtr<CSSRule>> m_childRuleCSSOMWrappers;
-    mutable std::unique_ptr<CSSRuleList> m_ruleListCSSOMWrapper;
+    const std::unique_ptr<CSSRuleList> m_ruleListCSSOMWrapper;
 };
 
 } // namespace WebCore

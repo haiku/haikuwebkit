@@ -1034,7 +1034,7 @@ RenderText::Widths RenderText::trimmedPreferredWidths(float leadWidth, bool& str
     if (!collapseWhiteSpace)
         stripFrontSpaces = false;
 
-    if (m_hasTab || preferredLogicalWidthsDirty() || !m_minWidth || !m_maxWidth)
+    if (m_hasTab || needsPreferredLogicalWidthsUpdate() || !m_minWidth || !m_maxWidth)
         computePreferredLogicalWidths(leadWidth, !m_minWidth || !m_maxWidth);
 
     Widths widths;
@@ -1115,16 +1115,16 @@ static inline bool isSpaceAccordingToStyle(UChar c, const RenderStyle& style)
 
 float RenderText::minLogicalWidth() const
 {
-    if (preferredLogicalWidthsDirty() || !m_minWidth)
-        const_cast<RenderText*>(this)->computePreferredLogicalWidths(0, !preferredLogicalWidthsDirty());
+    if (needsPreferredLogicalWidthsUpdate() || !m_minWidth)
+        const_cast<RenderText*>(this)->computePreferredLogicalWidths(0, !needsPreferredLogicalWidthsUpdate());
 
     return *m_minWidth;
 }
 
 float RenderText::maxLogicalWidth() const
 {
-    if (preferredLogicalWidthsDirty() || !m_maxWidth)
-        const_cast<RenderText*>(this)->computePreferredLogicalWidths(0, !preferredLogicalWidthsDirty());
+    if (needsPreferredLogicalWidthsUpdate() || !m_maxWidth)
+        const_cast<RenderText*>(this)->computePreferredLogicalWidths(0, !needsPreferredLogicalWidthsUpdate());
 
     return *m_maxWidth;
 }
@@ -1232,7 +1232,7 @@ float RenderText::maxWordFragmentWidth(const RenderStyle& style, const FontCasca
 
 void RenderText::computePreferredLogicalWidths(float leadWidth, SingleThreadWeakHashSet<const Font>& fallbackFonts, GlyphOverflow& glyphOverflow, bool forcedMinMaxWidthComputation)
 {
-    ASSERT_UNUSED(forcedMinMaxWidthComputation, m_hasTab || preferredLogicalWidthsDirty() || forcedMinMaxWidthComputation || !m_knownToHaveNoOverflowAndNoFallbackFonts);
+    ASSERT_UNUSED(forcedMinMaxWidthComputation, m_hasTab || needsPreferredLogicalWidthsUpdate() || forcedMinMaxWidthComputation || !m_knownToHaveNoOverflowAndNoFallbackFonts);
 
     m_minWidth = 0;
     m_beginMinWidth = 0;
@@ -1455,7 +1455,7 @@ void RenderText::computePreferredLogicalWidths(float leadWidth, SingleThreadWeak
         m_endMinWidth = currMaxWidth;
     }
 
-    setPreferredLogicalWidthsDirty(false);
+    clearNeedsPreferredWidthsUpdate();
 }
 
 template<typename CharacterType> static inline bool containsOnlyCollapsibleWhitespace(std::span<const CharacterType> characters, const RenderStyle& style)
@@ -1793,7 +1793,7 @@ void RenderText::secureText(UChar maskingCharacter)
         characters[revealedCharactersOffset] = characterToReveal;
 }
 
-static void invalidateLineLayoutPathOnContentChangeIfNeeded(RenderText& renderer, size_t offset, int delta)
+static void invalidateLineLayoutPathOnContentChangeIfNeeded(RenderText& renderer, std::optional<size_t> offset, size_t oldLength)
 {
     auto* container = LayoutIntegration::LineLayout::blockContainer(renderer);
     if (!container)
@@ -1807,7 +1807,7 @@ static void invalidateLineLayoutPathOnContentChangeIfNeeded(RenderText& renderer
         container->invalidateLineLayoutPath(RenderBlockFlow::InvalidationReason::ContentChange);
         return;
     }
-    if (!inlineLayout->updateTextContent(renderer, offset, delta))
+    if (!inlineLayout->updateTextContent(renderer, offset, oldLength))
         container->invalidateLineLayoutPath(RenderBlockFlow::InvalidationReason::ContentChange);
 }
 
@@ -1838,7 +1838,7 @@ void RenderText::setText(const String& newContent, bool force)
     auto isDifferent = newContent != text();
     setTextInternal(newContent, force);
     if (isDifferent || force)
-        invalidateLineLayoutPathOnContentChangeIfNeeded(*this, 0, text().length());
+        invalidateLineLayoutPathOnContentChangeIfNeeded(*this, { }, { });
 }
 
 void RenderText::setTextWithOffset(const String& newText, unsigned offset)
@@ -1846,9 +1846,9 @@ void RenderText::setTextWithOffset(const String& newText, unsigned offset)
     if (text() == newText)
         return;
 
-    int delta = newText.length() - text().length();
+    size_t oldLength = text().length();
     setTextInternal(newText, false);
-    invalidateLineLayoutPathOnContentChangeIfNeeded(*this, offset, delta);
+    invalidateLineLayoutPathOnContentChangeIfNeeded(*this, offset, oldLength);
 }
 
 String RenderText::textWithoutConvertingBackslashToYenSymbol() const
@@ -1892,7 +1892,7 @@ float RenderText::width(unsigned from, unsigned length, const FontCascade& fontC
         if (!style.preserveNewline() && !from && length == text().length() && (!glyphOverflow || !glyphOverflow->computeBounds)) {
             if (fallbackFonts) {
                 ASSERT(glyphOverflow);
-                if (preferredLogicalWidthsDirty() || !m_knownToHaveNoOverflowAndNoFallbackFonts) {
+                if (needsPreferredLogicalWidthsUpdate() || !m_knownToHaveNoOverflowAndNoFallbackFonts) {
                     const_cast<RenderText*>(this)->computePreferredLogicalWidths(0, *fallbackFonts, *glyphOverflow);
                     if (fallbackFonts->isEmptyIgnoringNullReferences() && !glyphOverflow->left && !glyphOverflow->right && !glyphOverflow->top && !glyphOverflow->bottom)
                         m_knownToHaveNoOverflowAndNoFallbackFonts = true;

@@ -579,18 +579,13 @@ void HTMLLinkElement::finishParsingChildren()
 
 void HTMLLinkElement::initializeStyleSheet(Ref<StyleSheetContents>&& styleSheet, const CachedCSSStyleSheet& cachedStyleSheet, MediaQueryParserContext context)
 {
-    // FIXME: originClean should be turned to false except if fetch mode is CORS.
-    std::optional<bool> originClean;
-    if (cachedStyleSheet.options().mode == FetchOptions::Mode::Cors)
-        originClean = cachedStyleSheet.isCORSSameOrigin();
-
     if (m_sheet) {
         ASSERT(m_sheet->ownerNode() == this);
         m_sheet->clearOwnerNode();
     }
 
-    m_sheet = CSSStyleSheet::create(WTFMove(styleSheet), *this, originClean);
-    m_sheet->setMediaQueries(MQ::MediaQueryParser::parse(m_media, context));
+    m_sheet = CSSStyleSheet::create(WTFMove(styleSheet), *this, cachedStyleSheet.isCORSSameOrigin());
+    m_sheet->setMediaQueries(MQ::MediaQueryParser::parse(m_media, context.context));
     if (!isInShadowTree())
         m_sheet->setTitle(title());
 
@@ -667,7 +662,7 @@ bool HTMLLinkElement::styleSheetIsLoading() const
 DOMTokenList& HTMLLinkElement::sizes()
 {
     if (!m_sizes)
-        m_sizes = makeUniqueWithoutRefCountedCheck<DOMTokenList>(*this, sizesAttr);
+        lazyInitialize(m_sizes, makeUniqueWithoutRefCountedCheck<DOMTokenList>(*this, sizesAttr));
     return *m_sizes;
 }
 
@@ -679,7 +674,7 @@ bool HTMLLinkElement::mediaAttributeMatches() const
     std::optional<RenderStyle> documentStyle;
     if (document().hasLivingRenderTree())
         documentStyle = Style::resolveForDocument(document());
-    auto mediaQueryList = MQ::MediaQueryParser::parse(m_media, { document() });
+    auto mediaQueryList = MQ::MediaQueryParser::parse(m_media, document().cssParserContext());
     LOG(MediaQueries, "HTMLLinkElement::mediaAttributeMatches");
 
     MQ::MediaQueryEvaluator evaluator(document().frame()->view()->mediaType(), document(), documentStyle ? &*documentStyle : nullptr);
@@ -722,9 +717,9 @@ void HTMLLinkElement::dispatchPendingEvent(LinkEventSender* eventSender, const A
 DOMTokenList& HTMLLinkElement::relList()
 {
     if (!m_relList) 
-        m_relList = makeUniqueWithoutRefCountedCheck<DOMTokenList>(*this, HTMLNames::relAttr, [](Document& document, StringView token) {
+        lazyInitialize(m_relList, makeUniqueWithoutRefCountedCheck<DOMTokenList>(*this, HTMLNames::relAttr, [](Document& document, StringView token) {
             return LinkRelAttribute::isSupported(document, token);
-        });
+        }));
     return *m_relList;
 }
 
@@ -732,11 +727,11 @@ DOMTokenList& HTMLLinkElement::relList()
 DOMTokenList& HTMLLinkElement::blocking()
 {
     if (!m_blockingList) {
-        m_blockingList = makeUniqueWithoutRefCountedCheck<DOMTokenList>(*this, HTMLNames::blockingAttr, [](Document&, StringView token) {
+        lazyInitialize(m_blockingList, makeUniqueWithoutRefCountedCheck<DOMTokenList>(*this, HTMLNames::blockingAttr, [](Document&, StringView token) {
             if (equalLettersIgnoringASCIICase(token, "render"_s))
                 return true;
             return false;
-        });
+        }));
     }
     return *m_blockingList;
 }

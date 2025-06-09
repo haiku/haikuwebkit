@@ -492,6 +492,10 @@
 #include "CoreIPCAuditToken.h"
 #endif
 
+#if __has_include(<WebKitAdditions/WebPreferencesDefaultValuesAdditions.h>)
+#include <WebKitAdditions/WebPreferencesDefaultValuesAdditions.h>
+#endif
+
 namespace WebKit {
 using namespace JSC;
 using namespace WebCore;
@@ -697,6 +701,10 @@ WebPage::WebPage(PageIdentifier pageID, WebPageCreationParameters&& parameters)
 #endif
 {
     WEBPAGE_RELEASE_LOG(Loading, "constructor:");
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL) && __has_include(<WebKitAdditions/WebPreferencesDefaultValuesAdditions.h>)
+    cachedValueDefaultContentInsetBackgroundFillEnabled() = parameters.defaultContentInsetBackgroundFillEnabled;
+#endif
 
 #if PLATFORM(COCOA)
 #if HAVE(SANDBOX_STATE_FLAGS)
@@ -2129,6 +2137,9 @@ void WebPage::loadRequest(LoadParameters&& loadParameters)
 
     platformDidReceiveLoadParameters(loadParameters);
 
+    if (loadParameters.originatingFrame && !loadParameters.frameIdentifier)
+        m_mainFrameNavigationInitiator = makeUnique<FrameInfoData>(*loadParameters.originatingFrame);
+
     // Initate the load in WebCore.
     ASSERT(localFrame->document());
     FrameLoadRequest frameLoadRequest { *localFrame, WTFMove(loadParameters.request) };
@@ -2168,6 +2179,7 @@ void WebPage::loadDataImpl(std::optional<WebCore::NavigationIdentifier> navigati
 #if ENABLE(APP_BOUND_DOMAINS)
     Ref mainFrame = m_mainFrame.copyRef();
     setIsNavigatingToAppBoundDomain(isNavigatingToAppBoundDomain, mainFrame.get());
+    mainFrame->setIsSafeBrowsingCheckOngoing(SafeBrowsingCheckOngoing::No);
 #else
     UNUSED_PARAM(isNavigatingToAppBoundDomain);
 #endif
@@ -4252,12 +4264,12 @@ String WebPage::userAgent(const URL& webCoreURL) const
     return m_userAgent;
 }
 
-void WebPage::setUserAgent(const String& userAgent)
+void WebPage::setUserAgent(String&& userAgent)
 {
     if (m_userAgent == userAgent)
         return;
 
-    m_userAgent = userAgent;
+    m_userAgent = WTFMove(userAgent);
 
     if (RefPtr page = m_page)
         page->userAgentChanged();
@@ -4835,10 +4847,6 @@ void WebPage::updatePreferences(const WebPreferencesStore& store)
 #endif // ENABLE(MODEL_PROCESS)
 #endif // ENABLE(IPC_TESTING_API)
     
-#if ENABLE(ALTERNATE_WEBM_PLAYER)
-    PlatformMediaSessionManager::setAlternateWebMPlayerEnabled(settings.alternateWebMPlayerEnabled());
-#endif
-
 #if ENABLE(VP9) && PLATFORM(COCOA)
     VP9TestingOverrides::singleton().setSWVPDecodersAlwaysEnabled(store.getBoolValueForKey(WebPreferencesKey::sWVPDecodersAlwaysEnabledKey()));
 #endif
@@ -4879,7 +4887,7 @@ void WebPage::setDataDetectionResults(NSArray *detectionResults)
     send(Messages::WebPageProxy::SetDataDetectionResult(dataDetectionResult));
 }
 
-void WebPage::removeDataDetectedLinks(CompletionHandler<void(const DataDetectionResult&)>&& completionHandler)
+void WebPage::removeDataDetectedLinks(CompletionHandler<void(DataDetectionResult&&)>&& completionHandler)
 {
     for (RefPtr frame = &m_page->mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(frame.get());
@@ -4900,11 +4908,11 @@ void WebPage::removeDataDetectedLinks(CompletionHandler<void(const DataDetection
     completionHandler({ });
 }
 
-static void detectDataInFrame(const Ref<Frame>& frame, OptionSet<WebCore::DataDetectorType> dataDetectorTypes, const std::optional<double>& dataDetectionReferenceDate, UniqueRef<DataDetectionResult>&& mainFrameResult, CompletionHandler<void(const DataDetectionResult&)>&& completionHandler)
+static void detectDataInFrame(const Ref<Frame>& frame, OptionSet<WebCore::DataDetectorType> dataDetectorTypes, const std::optional<double>& dataDetectionReferenceDate, UniqueRef<DataDetectionResult>&& mainFrameResult, CompletionHandler<void(DataDetectionResult&&)>&& completionHandler)
 {
     RefPtr localFrame = dynamicDowncast<LocalFrame>(frame.get());
     if (!localFrame) {
-        completionHandler(mainFrameResult.get());
+        completionHandler(WTFMove(mainFrameResult.get()));
         return;
     }
 
@@ -4915,7 +4923,7 @@ static void detectDataInFrame(const Ref<Frame>& frame, OptionSet<WebCore::DataDe
 
         RefPtr next = localFrame->tree().traverseNext();
         if (!next) {
-            completionHandler(mainFrameResult.get());
+            completionHandler(WTFMove(mainFrameResult.get()));
             return;
         }
 
@@ -4923,7 +4931,7 @@ static void detectDataInFrame(const Ref<Frame>& frame, OptionSet<WebCore::DataDe
     });
 }
 
-void WebPage::detectDataInAllFrames(OptionSet<WebCore::DataDetectorType> dataDetectorTypes, CompletionHandler<void(const DataDetectionResult&)>&& completionHandler)
+void WebPage::detectDataInAllFrames(OptionSet<WebCore::DataDetectorType> dataDetectorTypes, CompletionHandler<void(DataDetectionResult&&)>&& completionHandler)
 {
     auto mainFrameResult = makeUniqueRef<DataDetectionResult>();
     detectDataInFrame(protectedCorePage()->protectedMainFrame().get(), dataDetectorTypes, m_dataDetectionReferenceDate, WTFMove(mainFrameResult), WTFMove(completionHandler));
@@ -5073,23 +5081,24 @@ String WebPage::rootFrameOriginString()
     return makeString(rootFrameURL.protocol(), ':');
 }
 
-void WebPage::didUpdateRendering()
+void WebPage::didUpdateRendering(OptionSet<DidUpdateRenderingFlags> flags)
 {
-    didPaintLayers();
-
-    if (m_didUpdateRenderingAfterCommittingLoad)
-        return;
-
-    m_didUpdateRenderingAfterCommittingLoad = true;
-    send(Messages::WebPageProxy::DidUpdateRenderingAfterCommittingLoad());
-}
-
-void WebPage::didPaintLayers()
-{
+    if (flags & DidUpdateRenderingFlags::PaintedLayers) {
 #if ENABLE(GPU_PROCESS)
-    if (RefPtr proxy = m_remoteRenderingBackendProxy)
-        proxy->didPaintLayers();
+        if (RefPtr proxy = m_remoteRenderingBackendProxy)
+            proxy->didPaintLayers();
 #endif
+    }
+
+    if (flags & DidUpdateRenderingFlags::NotifyUIProcess) {
+        if (m_didUpdateRenderingAfterCommittingLoad)
+            return;
+
+        m_didUpdateRenderingAfterCommittingLoad = true;
+        send(Messages::WebPageProxy::DidUpdateRenderingAfterCommittingLoad());
+    }
+
+    protectedCorePage()->didUpdateRendering();
 }
 
 bool WebPage::shouldTriggerRenderingUpdate(unsigned rescheduledRenderingUpdateCount) const
@@ -5740,7 +5749,7 @@ void WebPage::setActiveOpenPanelResultListener(Ref<WebOpenPanelResultListener>&&
 
 void WebPage::setTextIndicator(const WebCore::TextIndicatorData& indicatorData)
 {
-    send(Messages::WebPageProxy::SetTextIndicatorFromFrame(m_mainFrame->frameID(), indicatorData, static_cast<uint64_t>(WebCore::TextIndicatorLifetime::Temporary)));
+    send(Messages::WebPageProxy::SetTextIndicatorFromFrame(m_mainFrame->frameID(), indicatorData, WebCore::TextIndicatorLifetime::Temporary));
 }
 
 void WebPage::updateTextIndicator(const WebCore::TextIndicatorData& indicatorData)
@@ -8327,7 +8336,7 @@ void WebPage::postMessageWithAsyncReply(const String& messageName, API::Object* 
 
 void WebPage::postMessageIgnoringFullySynchronousMode(const String& messageName, API::Object* messageBody)
 {
-    send(Messages::WebPageProxy::HandleMessage(messageName, UserData(WebProcess::singleton().transformObjectsToHandles(messageBody))), IPC::SendOption::IgnoreFullySynchronousMode);
+    send(Messages::WebPageProxy::HandleMessage(messageName, UserData(WebProcess::singleton().transformObjectsToHandles(messageBody))), IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }
 
 void WebPage::postSynchronousMessageForTesting(const String& messageName, API::Object* messageBody, RefPtr<API::Object>& returnData)
@@ -8679,14 +8688,14 @@ void WebPage::shouldAllowDeviceOrientationAndMotionAccess(FrameIdentifier frameI
 }
 #endif
     
-void WebPage::showShareSheet(ShareDataWithParsedURL& shareData, WTF::CompletionHandler<void(bool)>&& callback)
+void WebPage::showShareSheet(ShareDataWithParsedURL&& shareData, WTF::CompletionHandler<void(bool)>&& callback)
 {
     sendWithAsyncReply(Messages::WebPageProxy::ShowShareSheet(WTFMove(shareData)), WTFMove(callback));
 }
 
-void WebPage::showContactPicker(const WebCore::ContactsRequestData& requestData, CompletionHandler<void(std::optional<Vector<WebCore::ContactInfo>>&&)>&& callback)
+void WebPage::showContactPicker(WebCore::ContactsRequestData&& requestData, CompletionHandler<void(std::optional<Vector<WebCore::ContactInfo>>&&)>&& callback)
 {
-    sendWithAsyncReply(Messages::WebPageProxy::ShowContactPicker(requestData), WTFMove(callback));
+    sendWithAsyncReply(Messages::WebPageProxy::ShowContactPicker(WTFMove(requestData)), WTFMove(callback));
 }
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
@@ -9103,7 +9112,7 @@ void WebPage::textAutosizingUsesIdempotentModeChanged()
 PlatformXRSystemProxy& WebPage::xrSystemProxy()
 {
     if (!m_xrSystemProxy)
-        m_xrSystemProxy = makeUniqueWithoutRefCountedCheck<PlatformXRSystemProxy>(*this);
+        lazyInitialize(m_xrSystemProxy, makeUniqueWithoutRefCountedCheck<PlatformXRSystemProxy>(*this));
     return *m_xrSystemProxy;
 }
 #endif
@@ -9260,7 +9269,7 @@ void WebPage::requestTextRecognition(Element& element, TextRecognitionOptions&& 
         for (auto& completionHandler : protectedPage->m_elementsPendingTextRecognition[matchIndex].second)
             completionHandler(imageOverlayHost.copyRef());
 
-        protectedPage->m_elementsPendingTextRecognition.remove(matchIndex);
+        protectedPage->m_elementsPendingTextRecognition.removeAt(matchIndex);
     });
 }
 
@@ -10010,13 +10019,15 @@ void WebPage::contentsToRootViewPoint(FrameIdentifier frameID, FloatPoint point,
 
 void WebPage::remoteDictionaryPopupInfoToRootView(WebCore::FrameIdentifier frameID, WebCore::DictionaryPopupInfo popupInfo, CompletionHandler<void(WebCore::DictionaryPopupInfo)>&& completionHandler)
 {
+    RefPtr textIndicator = popupInfo.textIndicator;
     popupInfo.origin = contentsToRootView<FloatPoint>(frameID, popupInfo.origin);
 #if PLATFORM(COCOA)
-    popupInfo.textIndicator.selectionRectInRootViewCoordinates = contentsToRootView<FloatRect>(frameID, popupInfo.textIndicator.selectionRectInRootViewCoordinates);
-    popupInfo.textIndicator.textBoundingRectInRootViewCoordinates = contentsToRootView<FloatRect>(frameID, popupInfo.textIndicator.textBoundingRectInRootViewCoordinates);
-    popupInfo.textIndicator.contentImageWithoutSelectionRectInRootViewCoordinates = contentsToRootView<FloatRect>(frameID, popupInfo.textIndicator.contentImageWithoutSelectionRectInRootViewCoordinates);
+    auto textIndicatorData = textIndicator->data();
+    textIndicatorData.selectionRectInRootViewCoordinates = contentsToRootView<FloatRect>(frameID, popupInfo.textIndicator->selectionRectInRootViewCoordinates());
+    textIndicatorData.textBoundingRectInRootViewCoordinates = contentsToRootView<FloatRect>(frameID, popupInfo.textIndicator->textBoundingRectInRootViewCoordinates());
+    textIndicatorData.contentImageWithoutSelectionRectInRootViewCoordinates = contentsToRootView<FloatRect>(frameID, popupInfo.textIndicator->contentImageWithoutSelectionRectInRootViewCoordinates());
 
-    for (auto& textRect : popupInfo.textIndicator.textRectsInBoundingRectCoordinates)
+    for (auto& textRect : textIndicatorData.textRectsInBoundingRectCoordinates)
         textRect = contentsToRootView<FloatRect>(frameID, textRect);
 #endif
     completionHandler(popupInfo);
@@ -10412,6 +10423,11 @@ bool WebPage::shouldDisableModelLoadDelaysForTesting() const
     return m_page && m_page->shouldDisableModelLoadDelaysForTesting();
 }
 #endif
+
+std::unique_ptr<FrameInfoData> WebPage::takeMainFrameNavigationInitiator()
+{
+    return std::exchange(m_mainFrameNavigationInitiator, nullptr);
+}
 
 } // namespace WebKit
 

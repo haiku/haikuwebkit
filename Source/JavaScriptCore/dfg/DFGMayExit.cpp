@@ -82,6 +82,7 @@ ExitMode mayExitImpl(Graph& graph, Node* node, StateType& state)
     case SetArgumentCountIncludingThis:
     case GetRestLength:
     case GetScope:
+    case GetEvalScope:
     case PhantomLocal:
     case CountExecution:
     case SuperSamplerBegin:
@@ -126,7 +127,9 @@ ExitMode mayExitImpl(Graph& graph, Node* node, StateType& state)
 
     case Int52Rep:
         switch (node->child1().useKind()) {
+        case AnyIntUse:
         case RealNumberUse:
+        case DoubleRepAnyIntUse:
         case DoubleRepRealUse:
             return Exits;
         default:
@@ -214,7 +217,7 @@ ExitMode mayExitImpl(Graph& graph, Node* node, StateType& state)
 
     case ArithBitRShift:
     case ArithBitLShift:
-    case BitURShift:
+    case ArithBitURShift:
     case ArithBitAnd:
     case ArithBitOr:
     case ArithBitXor:
@@ -337,15 +340,34 @@ ExitMode mayExitImpl(Graph& graph, Node* node, StateType& state)
         case DoubleRepUse:
         case NotCellUse:
         case StringObjectUse:
-        case StringOrStringObjectUse:
             result = ExitsForExceptions;
             break;
         case StringOrOtherUse:
+        case StringOrStringObjectUse:
             break;
         default:
             return Exits;
         }
         break;
+
+    case MakeRope: {
+        result = ExitsForExceptions;
+        break;
+    }
+
+    case GetArrayLength: {
+        switch (node->arrayMode().type()) {
+        case Array::Undecided:
+        case Array::Int32:
+        case Array::Double:
+        case Array::Contiguous:
+        case Array::String:
+            break;
+        default:
+            return Exits;
+        }
+        break;
+    }
 
     case StringReplaceString: {
         if (node->child3().useKind() == StringUse) {

@@ -1,6 +1,31 @@
+# Copyright (C) 2024-2025 Apple Inc. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1. Redistributions of source code must retain the above copyright
+#    notice, this list of conditions and the following disclaimer.
+# 2. Redistributions in binary form must reproduce the above copyright
+#    notice, this list of conditions and the following disclaimer in the
+#    documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY APPLE INC. AND ITS CONTRIBUTORS ``AS IS''
+# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO,
+# THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+# PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL APPLE INC. OR ITS CONTRIBUTORS
+# BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
+# THE POSSIBILITY OF SUCH DAMAGE.
+
 ##########
 # Macros #
 ##########
+
+const StackValueShift = 4
 
 # Callee Save
 
@@ -18,14 +43,6 @@ macro restoreIPIntRegisters()
     loadp IPIntCalleeSaveSpaceWI[cfr], wasmInstance
     addp IPIntCalleeSaveSpaceStackAligned, sp
 end
-
-# Dispatch target bases
-
-const ipint_dispatch_base = _ipint_unreachable
-const ipint_gc_dispatch_base = _ipint_struct_new
-const ipint_conversion_dispatch_base = _ipint_i32_trunc_sat_f32_s
-const ipint_simd_dispatch_base = _ipint_simd_v128_load_mem
-const ipint_atomic_dispatch_base = _ipint_memory_atomic_notify
 
 # Tail-call dispatch
 
@@ -130,7 +147,7 @@ end
 
 macro peekDouble(i, reg)
     if ARMv7
-        loadi (i*16)[sp], reg
+        loadi (i * StackValueSize)[sp], reg
     else
         break
     end
@@ -138,7 +155,7 @@ end
 
 macro peekQuad(i, hi, lo)
     if ARMv7
-        load2ia (i*16)[sp], lo, hi
+        load2ia (i * StackValueSize)[sp], lo, hi
     else
         break
     end
@@ -207,8 +224,9 @@ macro ipintEntry()
     # Allocate space for locals and rethrow values
     loadi Wasm::IPIntCallee::m_localSizeToAlloc[ws0], argumINTTmp
     loadi Wasm::IPIntCallee::m_numRethrowSlotsToAlloc[ws0], argumINTEnd
-    addp argumINTEnd, argumINTTmp
+    mulp LocalSize, argumINTEnd
     mulp LocalSize, argumINTTmp
+    subp argumINTEnd, sp
     move sp, argumINTEnd
     subp argumINTTmp, sp
     move sp, argumINTDsp
@@ -405,14 +423,14 @@ ipintOp(_br, macro()
     #
     # [sp + k + numToPop] = [sp + k] for k in numToKeep-1 -> 0
     move t0, t2
-    lshiftp 4, t2
+    lshiftp StackValueShift, t2
     leap [sp, t2], t2
 
 .ipint_br_poploop:
     bpeq t4, 0, .ipint_br_popend
     subp 1, t4
     move t4, t3
-    lshiftp 4, t3
+    lshiftp StackValueShift, t3
     load2ia [sp, t3], t0, t1
     store2ia t0, t1, [t2, t3]
     load2ia 8[sp, t3], t0, t1
@@ -420,7 +438,7 @@ ipintOp(_br, macro()
     jmp .ipint_br_poploop
 .ipint_br_popend:
     loadh IPInt::BranchTargetMetadata::toPop[MC], t0
-    lshiftp 4, t0
+    lshiftp StackValueShift, t0
     leap [sp, t0], sp
     loadi IPInt::BlockMetadata::deltaPC[MC], t0
     loadi IPInt::BlockMetadata::deltaMC[MC], t1
@@ -3171,23 +3189,23 @@ reservedOpcode(0xf7)
 reservedOpcode(0xf8)
 reservedOpcode(0xf9)
 reservedOpcode(0xfa)
-unimplementedInstruction(_gc_prefix)
+unimplementedInstruction(_fb_block)
 
-ipintOp(_conversion_prefix, macro()
+ipintOp(_fc_block, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 18 (0x00 -> 0x11)
-    biaeq t0, 0x12, .ipint_conversion_nonexistent
+    biaeq t0, 0x12, .ipint_fc_nonexistent
     lshiftp 8, t0
-    leap (ipint_conversion_dispatch_base + 1), t1
+    leap (_ipint_i32_trunc_sat_f32_s + 1), t1
     addp t1, t0
     emit "bx r0"
 
-.ipint_conversion_nonexistent:
+.ipint_fc_nonexistent:
     break
 end)
 
-unimplementedInstruction(_simd_prefix)
-unimplementedInstruction(_atomic_prefix)
+unimplementedInstruction(_simd)
+unimplementedInstruction(_atomic)
 reservedOpcode(0xff)
 
     #######################
@@ -3615,7 +3633,6 @@ end)
     #######################
 
 # 0xFD 0x00 - 0xFD 0x0B: memory
-
 unimplementedInstruction(_simd_v128_load_mem)
 unimplementedInstruction(_simd_v128_load_8x8s_mem)
 unimplementedInstruction(_simd_v128_load_8x8u_mem)
@@ -4509,6 +4526,10 @@ mintAlign(_end)
     getIPIntCallee()
     pop MC
 
+    # Restore IB
+    IfIPIntUsesIB(macro()
+        pcrtoaddr _ipint_unreachable, IB
+    end)
     nextIPIntInstruction()
 
 .ipint_perform_tail_call:

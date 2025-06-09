@@ -2123,7 +2123,7 @@ class ValidateCommitterAndReviewer(buildstep.BuildStep, GitHubMixin, AddToLogMix
         if patch_id:
             comment += f'\n\nRejecting attachment {patch_id} from commit queue.'
         elif pr_number:
-            comment += f'\n\nIf you do have {status} permmissions, please ensure that your GitHub username is added to contributors.json.'
+            comment += f'\n\nIf you do have {status} permissions, please ensure that your GitHub username is added to contributors.json.'
             comment += f'\n\nRejecting {self.getProperty("github.head.sha", f"#{pr_number}")} from merge queue.'
         return self.fail_build(reason, comment)
 
@@ -2166,6 +2166,8 @@ class ValidateCommitterAndReviewer(buildstep.BuildStep, GitHubMixin, AddToLogMix
         return contributor and contributor['status'] == 'reviewer'
 
     def is_committer(self, email):
+        if email == 'webkit-integration':
+            return True
         contributor = self.contributors.get(email.lower())
         return contributor and contributor['status'] in ['reviewer', 'committer']
 
@@ -6883,6 +6885,7 @@ class PushPullRequestBranch(shell.ShellCommandNewStyle):
         if self.results == SUCCESS:
             return {'step': 'Pushed to pull request branch'}
         if self.results == FAILURE:
+            self.setProperty('build_summary', '')
             return {'step': 'Failed to push to pull request branch'}
         return super().getResultSummary()
 

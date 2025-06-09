@@ -45,18 +45,14 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(PlatformMediaSessionManager);
 
-#if ENABLE(ALTERNATE_WEBM_PLAYER)
-bool PlatformMediaSessionManager::m_alternateWebMPlayerEnabled;
-#endif
-
 #if ENABLE(VP9)
 bool PlatformMediaSessionManager::m_vp9DecoderEnabled;
 bool PlatformMediaSessionManager::m_swVPDecodersAlwaysEnabled;
 #endif
 
-static std::unique_ptr<PlatformMediaSessionManager>& sharedPlatformMediaSessionManager()
+static const std::unique_ptr<PlatformMediaSessionManager>& sharedPlatformMediaSessionManager()
 {
-    static NeverDestroyed<std::unique_ptr<PlatformMediaSessionManager>> platformMediaSessionManager;
+    static NeverDestroyed<const std::unique_ptr<PlatformMediaSessionManager>> platformMediaSessionManager;
     return platformMediaSessionManager.get();
 }
 
@@ -64,7 +60,7 @@ PlatformMediaSessionManager& PlatformMediaSessionManager::singleton()
 {
     auto& manager = sharedPlatformMediaSessionManager();
     if (!manager) {
-        manager = PlatformMediaSessionManager::create();
+        lazyInitialize(manager, PlatformMediaSessionManager::create());
         manager->resetRestrictions();
     }
     return *manager;
@@ -76,7 +72,7 @@ PlatformMediaSessionManager* PlatformMediaSessionManager::singletonIfExists()
 }
 
 #if !PLATFORM(COCOA) && (!USE(GLIB) || !ENABLE(MEDIA_SESSION))
-std::unique_ptr<PlatformMediaSessionManager> PlatformMediaSessionManager::create()
+const std::unique_ptr<PlatformMediaSessionManager> PlatformMediaSessionManager::create()
 {
     return std::unique_ptr<PlatformMediaSessionManager>(new PlatformMediaSessionManager);
 }
@@ -244,7 +240,7 @@ void PlatformMediaSessionManager::removeSession(PlatformMediaSessionInterface& s
     if (index == notFound)
         return;
 
-    m_sessions.remove(index);
+    m_sessions.removeAt(index);
 
     if (hasNoSession() && !activeAudioSessionRequired())
         maybeDeactivateAudioSession();
@@ -338,7 +334,7 @@ void PlatformMediaSessionManager::sessionWillEndPlayback(PlatformMediaSessionInt
     // last playing session, and re-inserting that pausing session at the
     // lastPlayingSessionIndex effectively places the pausing session immediately
     // after the last playing session.
-    m_sessions.remove(pausingSessionIndex);
+    m_sessions.removeAt(pausingSessionIndex);
     m_sessions.insert(lastPlayingSessionIndex, session);
 
     ALWAYS_LOG(LOGIDENTIFIER, "session moved from index ", pausingSessionIndex, " to ", lastPlayingSessionIndex);
@@ -372,7 +368,7 @@ void PlatformMediaSessionManager::setCurrentSession(PlatformMediaSessionInterfac
     if (!index || index == notFound)
         return;
 
-    m_sessions.remove(index);
+    m_sessions.removeAt(index);
     m_sessions.insert(0, session);
     
     ALWAYS_LOG(LOGIDENTIFIER, "session moved from index ", index, " to 0");
@@ -767,24 +763,6 @@ bool PlatformMediaSessionManager::shouldDeactivateAudioSession()
 void PlatformMediaSessionManager::setShouldDeactivateAudioSession(bool deactivate)
 {
     deactivateAudioSession() = deactivate;
-}
-
-void PlatformMediaSessionManager::setAlternateWebMPlayerEnabled(bool enabled)
-{
-#if ENABLE(ALTERNATE_WEBM_PLAYER)
-    m_alternateWebMPlayerEnabled = enabled;
-#else
-    UNUSED_PARAM(enabled);
-#endif
-}
-
-bool PlatformMediaSessionManager::alternateWebMPlayerEnabled()
-{
-#if ENABLE(ALTERNATE_WEBM_PLAYER)
-    return m_alternateWebMPlayerEnabled;
-#else
-    return false;
-#endif
 }
 
 WeakPtr<PlatformMediaSessionInterface> PlatformMediaSessionManager::bestEligibleSessionForRemoteControls(NOESCAPE const Function<bool(const PlatformMediaSessionInterface&)>& filterFunction, PlatformMediaSession::PlaybackControlsPurpose purpose)

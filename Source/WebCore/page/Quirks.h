@@ -119,9 +119,9 @@ public:
     bool needsYouTubeOverflowScrollQuirk() const;
     bool needsFullscreenDisplayNoneQuirk() const;
     bool needsFullscreenObjectFitQuirk() const;
-    bool needsWeChatScrollingQuirk() const;
     bool needsZomatoEmailLoginLabelQuirk() const;
     bool needsGoogleMapsScrollingQuirk() const;
+    bool needsGoogleTranslateScrollingQuirk() const;
 
     bool needsPrimeVideoUserSelectNoneQuirk() const;
 
@@ -150,6 +150,8 @@ public:
     bool needsCanPlayAfterSeekedQuirk() const;
 
     bool shouldAvoidPastingImagesAsWebContent() const;
+
+    bool shouldNotAutoUpgradeToHTTPSNavigation(const URL&);
 
     enum StorageAccessResult : bool { ShouldNotCancelEvent, ShouldCancelEvent };
     enum ShouldDispatchClick : bool { No, Yes };

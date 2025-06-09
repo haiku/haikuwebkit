@@ -99,6 +99,7 @@ BEGIN {
        &currentPerlPath
        &currentSVNRevision
        &debugMiniBrowser
+       &debugSwiftBrowser
        &debugSafari
        &debugWebKitTestRunner
        &determineCurrentSVNRevision
@@ -168,6 +169,7 @@ BEGIN {
        &runInFlatpakIfAvailable
        &runMacWebKitApp
        &runMiniBrowser
+       &runSwiftBrowser
        &runSafari
        &runWebKitTestRunner
        &safariPath
@@ -3228,6 +3230,21 @@ sub mobileMiniBrowserBundle()
     return installedMobileMiniBrowserBundle();
 }
 
+sub installedSwiftBrowserBundle()
+{
+    return File::Spec->catfile(iosSimulatorApplicationsPath(), "SwiftBrowser.app");
+}
+
+sub swiftBrowserBundle()
+{
+    determineConfigurationProductDir();
+
+    if (isIOSWebKit() && -d "$configurationProductDir/SwiftBrowser.app") {
+        return "$configurationProductDir/SwiftBrowser.app";
+    }
+    return installedSwiftBrowserBundle();
+}
+
 
 sub plistPathFromBundle($)
 {
@@ -3596,6 +3613,26 @@ sub debugMiniBrowser
         execMacWebKitAppForDebugging(File::Spec->catfile(productDir(), "MiniBrowser.app", "Contents", "MacOS", "MiniBrowser"));
     }
     
+    return 1;
+}
+
+sub runSwiftBrowser
+{
+    if (isAppleMacWebKit()) {
+        return runMacWebKitApp(File::Spec->catfile(productDir(), "SwiftBrowser.app", "Contents", "MacOS", "SwiftBrowser"));
+    }
+    if (isIOSWebKit()) {
+        return runIOSWebKitApp(swiftBrowserBundle());
+    }
+    return 1;
+}
+
+sub debugSwiftBrowser
+{
+    if (isAppleMacWebKit()) {
+        execMacWebKitAppForDebugging(File::Spec->catfile(productDir(), "SwiftBrowser.app", "Contents", "MacOS", "SwiftBrowser"));
+    }
+
     return 1;
 }
 

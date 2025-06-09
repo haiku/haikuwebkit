@@ -26,6 +26,7 @@
 #include "config.h"
 #include "MemoryRelease.h"
 
+#include "AsyncNodeDeletionQueueInlines.h"
 #include "BackForwardCache.h"
 #include "CSSFontSelector.h"
 #include "CSSValuePool.h"
@@ -98,6 +99,7 @@ static void releaseNoncriticalMemory(MaintainMemoryCache maintainMemoryCache)
         if (CheckedPtr renderView = document->renderView()) {
             LayoutIntegration::LineLayout::releaseCaches(*renderView);
             Layout::TextBreakingPositionCache::singleton().clear();
+            renderView->layoutContext().deleteDetachedRenderersNow();
         }
     }
 

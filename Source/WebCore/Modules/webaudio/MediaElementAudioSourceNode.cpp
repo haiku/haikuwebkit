@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2011, Google Inc. All rights reserved.
- * Copyright (C) 2020, Apple Inc. All rights reserved.
+ * Copyright (C) 2011 Google Inc. All rights reserved.
+ * Copyright (C) 2020 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -122,15 +122,14 @@ void MediaElementAudioSourceNode::setFormat(size_t numberOfChannels, float sourc
     }
 }
 
-void MediaElementAudioSourceNode::provideInput(AudioBus* bus, size_t framesToProcess)
+void MediaElementAudioSourceNode::provideInput(AudioBus& bus, size_t framesToProcess)
 {
-    ASSERT(bus);
     if (auto* provider = mediaElement().audioSourceProvider())
         provider->provideInput(bus, framesToProcess);
     else {
         // Either this port doesn't yet support HTMLMediaElement audio stream access,
         // or the stream is not yet available.
-        bus->zero();
+        bus.zero();
     }
 }
 
@@ -144,7 +143,7 @@ bool MediaElementAudioSourceNode::wouldTaintOrigin()
 
 void MediaElementAudioSourceNode::process(size_t numberOfFrames)
 {
-    AudioBus* outputBus = output(0)->bus();
+    Ref outputBus = output(0)->bus();
 
     // Use tryLock() to avoid contention in the real-time audio thread.
     // If we fail to acquire the lock then the HTMLMediaElement must be in the middle of
@@ -164,7 +163,7 @@ void MediaElementAudioSourceNode::process(size_t numberOfFrames)
 
     if (m_multiChannelResampler) {
         ASSERT(m_sourceSampleRate != sampleRate());
-        m_multiChannelResampler->process(outputBus, numberOfFrames);
+        m_multiChannelResampler->process(outputBus.get(), numberOfFrames);
     } else {
         // Bypass the resampler completely if the source is at the context's sample-rate.
         ASSERT(m_sourceSampleRate == sampleRate());

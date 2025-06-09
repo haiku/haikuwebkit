@@ -63,7 +63,7 @@ class ScrollableArea;
 
 enum class CommandType: uint8_t;
 
-class AccessibilityObject : public AXCoreObject, public CanMakeWeakPtr<AccessibilityObject> {
+class AccessibilityObject : public AXCoreObject {
 public:
     virtual ~AccessibilityObject();
 
@@ -214,7 +214,7 @@ public:
     FloatRect primaryScreenRect() const final;
 #endif
     FloatRect convertFrameToSpace(const FloatRect&, AccessibilityConversionSpace) const final;
-    UncheckedKeyHashMap<String, AXEditingStyleValueVariant> resolvedEditingStyles() const;
+    HashMap<String, AXEditingStyleValueVariant> resolvedEditingStyles() const;
 
     // In a multi-select list, many items can be selected but only one is active at a time.
     bool isSelectedOptionActive() const override { return false; }
@@ -258,7 +258,6 @@ public:
     bool isShowingValidationMessage() const;
     String validationMessage() const;
 
-    unsigned headingTagLevel() const override { return 0; }
     AccessibilityButtonState checkboxOrRadioValue() const override;
     String valueDescription() const override { return String(); }
     float valueForRange() const override { return 0.0f; }
@@ -490,7 +489,7 @@ public:
     RefPtr<LocalFrame> localMainFrame() const;
     Document* topDocument() const;
     RenderView* topRenderer() const;
-    ScrollView* scrollView() const override { return nullptr; }
+    virtual ScrollView* scrollView() const { return nullptr; }
     unsigned ariaLevel() const final;
     String language() const final;
     // 1-based, to match the aria-level spec.
@@ -522,7 +521,7 @@ public:
 
     void updateRole();
     bool childrenInitialized() const { return m_childrenInitialized; }
-    const AccessibilityChildrenVector& children(bool updateChildrenIfNeeded = true) override;
+    const AccessibilityChildrenVector& children(bool updateChildrenIfNeeded = true) final;
     virtual void addChildren() { }
     enum class DescendIfIgnored : bool { No, Yes };
     void insertChild(AccessibilityObject&, unsigned, DescendIfIgnored = DescendIfIgnored::Yes);
@@ -981,7 +980,7 @@ inline unsigned AccessibilityObject::getLengthForTextRange() const { return text
 inline bool AccessibilityObject::hasTextContent() const
 {
     return isStaticText()
-        || roleValue() == AccessibilityRole::WebCoreLink
+        || roleValue() == AccessibilityRole::Link
         || isTextControl() || isTabItem();
 }
 
@@ -989,7 +988,7 @@ inline bool AccessibilityObject::hasTextContent() const
 inline bool AccessibilityObject::hasAttributedText() const
 {
     return (isStaticText() && !isARIAStaticText())
-        || roleValue() == AccessibilityRole::WebCoreLink
+        || roleValue() == AccessibilityRole::Link
         || isTextControl() || isTabItem();
 }
 #endif

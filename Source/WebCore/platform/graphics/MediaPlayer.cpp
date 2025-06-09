@@ -40,6 +40,7 @@
 #include "MIMETypeRegistry.h"
 #include "MediaPlayerPrivate.h"
 #include "MediaStrategy.h"
+#include "MessageClientForTesting.h"
 #include "OriginAccessPatterns.h"
 #include "PlatformMediaResourceLoader.h"
 #include "PlatformMediaSessionManager.h"
@@ -96,7 +97,7 @@
 #include "MediaPlayerPrivateMediaStreamAVFObjC.h"
 #endif
 
-#if ENABLE(ALTERNATE_WEBM_PLAYER)
+#if ENABLE(COCOA_WEBM_PLAYER)
 #include "MediaPlayerPrivateWebM.h"
 #endif
 
@@ -308,8 +309,9 @@ static void buildMediaEnginesVector() WTF_REQUIRES_LOCK(mediaEngineVectorLock)
 #endif
 
     if (DeprecatedGlobalSettings::isAVFoundationEnabled()) {
-#if ENABLE(ALTERNATE_WEBM_PLAYER)
-        if (PlatformMediaSessionManager::alternateWebMPlayerEnabled()) {
+
+#if ENABLE(COCOA_WEBM_PLAYER)
+        if (!hasPlatformStrategies() || platformStrategies()->mediaStrategy().enableWebMMediaPlayer()) {
             if (registerRemoteEngine)
                 registerRemoteEngine(addMediaEngine, MediaPlayerEnums::MediaEngineIdentifier::CocoaWebM);
             else
@@ -640,6 +642,8 @@ void MediaPlayer::loadWithNextMediaEngine(const MediaPlayerFactory* current)
         m_private = playerPrivate;
         if (playerPrivate) {
             client().mediaPlayerEngineUpdated();
+            playerPrivate->setMessageClientForTesting(m_internalMessageClient);
+
             if (m_pageIsVisible)
                 playerPrivate->setPageIsVisible(m_pageIsVisible);
             if (m_visibleInViewport)
@@ -2068,6 +2072,17 @@ const Logger& MediaPlayer::mediaPlayerLogger()
     return client().mediaPlayerLogger();
 }
 #endif
+
+void MediaPlayer::setMessageClientForTesting(WeakPtr<MessageClientForTesting> internalMessageClient)
+{
+    m_internalMessageClient = WTFMove(internalMessageClient);
+    m_private->setMessageClientForTesting(m_internalMessageClient);
+}
+
+MessageClientForTesting* MediaPlayer::messageClientForTesting() const
+{
+    return m_internalMessageClient.get();
+}
 
 String convertEnumerationToString(MediaPlayer::ReadyState enumerationValue)
 {

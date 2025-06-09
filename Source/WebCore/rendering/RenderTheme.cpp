@@ -49,6 +49,7 @@
 #include "HTMLProgressElement.h"
 #include "HTMLSelectElement.h"
 #include "HTMLTextAreaElement.h"
+#include "ImageAdapter.h"
 #include "ImageControlsButtonPart.h"
 #include "InnerSpinButtonPart.h"
 #include "LocalFrame.h"
@@ -299,7 +300,7 @@ void RenderTheme::adjustStyle(RenderStyle& style, const RenderStyle& parentStyle
         return;
 
     if (!supportsBoxShadow(style))
-        style.setBoxShadow(nullptr);
+        style.setBoxShadow({ });
 
     switch (appearance) {
     case StyleAppearance::Checkbox:
@@ -1416,7 +1417,7 @@ void RenderTheme::adjustMenuListStyle(RenderStyle& style, const Element*) const
 
 void RenderTheme::adjustMeterStyle(RenderStyle& style, const Element*) const
 {
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({ });
 }
 
 FloatSize RenderTheme::meterSizeForBounds(const RenderMeter&, const FloatRect& bounds) const

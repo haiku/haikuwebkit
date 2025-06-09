@@ -3576,7 +3576,7 @@ FOR_EACH_WASM_MEMORY_STORE_OP(CREATE_CASE)
     case ThrowRef: {
         TypedExpression exn;
         WASM_TRY_POP_EXPRESSION_STACK_INTO(exn, "exception reference"_s);
-        WASM_VALIDATOR_FAIL_IF(exn.type() != exnrefType(), "throw_ref expected an exception reference"_s);
+        WASM_VALIDATOR_FAIL_IF(!isSubtype(exn.type(), exnrefType()), "throw_ref expected an exception reference"_s);
 
         WASM_TRY_ADD_TO_CONTEXT(addThrowRef(exn, m_expressionStack));
         m_unreachableBlocks = 1;
@@ -3900,6 +3900,8 @@ auto FunctionParser<Context>::parseUnreachableExpression() -> PartialResult
     }
 
     case TryTable: {
+        m_unreachableBlocks++;
+
         BlockSignature unused;
         uint32_t numberOfCatches;
         WASM_PARSER_FAIL_IF(!parseBlockSignatureAndNotifySIMDUseIfNeeded(unused), "can't get try_table's signature in unreachable context"_s);
@@ -4099,8 +4101,13 @@ auto FunctionParser<Context>::parseUnreachableExpression() -> PartialResult
         WASM_PARSER_FAIL_IF(!parseVarUInt32(tableIndex), "can't parse table index"_s);
         [[fallthrough]];
     }
-    case RefIsNull:
+    case RefIsNull: {
+        return { };
+    }
+
     case RefNull: {
+        int32_t unused;
+        WASM_PARSER_FAIL_IF(!parseHeapType(m_info, unused), "can't get heap type for "_s, m_currentOpcode, " in unreachable context"_s);
         return { };
     }
 
@@ -4145,6 +4152,24 @@ auto FunctionParser<Context>::parseUnreachableExpression() -> PartialResult
         case ExtGCOpType::ArrayNewDefault: {
             uint32_t unused;
             WASM_PARSER_FAIL_IF(!parseVarUInt32(unused), "can't get type index immediate for array.new_default in unreachable context"_s);
+            return { };
+        }
+        case ExtGCOpType::ArrayNewFixed: {
+            uint32_t unused;
+            WASM_PARSER_FAIL_IF(!parseVarUInt32(unused), "can't get type index immediate for array.new_fixed in unreachable context"_s);
+            WASM_PARSER_FAIL_IF(!parseVarUInt32(unused), "can't get argument count for array.new_fixed in unreachable context"_s);
+            return { };
+        }
+        case ExtGCOpType::ArrayNewData: {
+            uint32_t unused;
+            WASM_PARSER_FAIL_IF(!parseVarUInt32(unused), "can't get type index immediate for array.new_data in unreachable context"_s);
+            WASM_PARSER_FAIL_IF(!parseVarUInt32(unused), "can't get data segment index for array.new_data in unreachable context"_s);
+            return { };
+        }
+        case ExtGCOpType::ArrayNewElem: {
+            uint32_t unused;
+            WASM_PARSER_FAIL_IF(!parseVarUInt32(unused), "can't get type index immediate for array.new_elem in unreachable context"_s);
+            WASM_PARSER_FAIL_IF(!parseVarUInt32(unused), "can't get elements segment index for array.new_elem in unreachable context"_s);
             return { };
         }
         case ExtGCOpType::ArrayGet: {
@@ -4207,6 +4232,16 @@ auto FunctionParser<Context>::parseUnreachableExpression() -> PartialResult
             WASM_FAIL_IF_HELPER_FAILS(parseStructTypeIndexAndFieldIndex(unused, "struct.get"_s));
             return { };
         }
+        case ExtGCOpType::StructGetS: {
+            StructTypeIndexAndFieldIndex unused;
+            WASM_FAIL_IF_HELPER_FAILS(parseStructTypeIndexAndFieldIndex(unused, "struct.get_s"_s));
+            return { };
+        }
+        case ExtGCOpType::StructGetU: {
+            StructTypeIndexAndFieldIndex unused;
+            WASM_FAIL_IF_HELPER_FAILS(parseStructTypeIndexAndFieldIndex(unused, "struct.get_u"_s));
+            return { };
+        }
         case ExtGCOpType::StructSet: {
             StructTypeIndexAndFieldIndex unused;
             WASM_FAIL_IF_HELPER_FAILS(parseStructTypeIndexAndFieldIndex(unused, "struct.set"_s));
@@ -4221,6 +4256,38 @@ auto FunctionParser<Context>::parseUnreachableExpression() -> PartialResult
             WASM_PARSER_FAIL_IF(!parseHeapType(m_info, unused), "can't get heap type for "_s, opName);
             return { };
         }
+        case ExtGCOpType::BrOnCast:
+        case ExtGCOpType::BrOnCastFail: {
+            auto opName = op == ExtGCOpType::BrOnCast ? "br_on_cast"_s : "br_on_cast_fail"_s;
+            uint8_t flags;
+            WASM_VALIDATOR_FAIL_IF(!parseUInt8(flags), "can't get flags byte for "_s, opName);
+            bool hasNull1 = flags & 0x1;
+            bool hasNull2 = flags & 0x2;
+
+            uint32_t unused;
+            WASM_FAIL_IF_HELPER_FAILS(parseBranchTarget(unused));
+
+            int32_t heapType1, heapType2;
+            WASM_PARSER_FAIL_IF(!parseHeapType(m_info, heapType1), "can't get first heap type for "_s, opName);
+            WASM_PARSER_FAIL_IF(!parseHeapType(m_info, heapType2), "can't get second heap type for "_s, opName);
+
+            TypeIndex typeIndex1, typeIndex2;
+            if (isTypeIndexHeapType(heapType1))
+                typeIndex1 = m_info.typeSignatures[heapType1].get().index();
+            else
+                typeIndex1 = static_cast<TypeIndex>(heapType1);
+
+            if (isTypeIndexHeapType(heapType2))
+                typeIndex2 = m_info.typeSignatures[heapType2].get().index();
+            else
+                typeIndex2 = static_cast<TypeIndex>(heapType2);
+
+            WASM_VALIDATOR_FAIL_IF(!isSubtype(Type { hasNull2 ? TypeKind::RefNull : TypeKind::Ref, typeIndex2 }, Type { hasNull1 ? TypeKind::RefNull : TypeKind::Ref, typeIndex1 }), "target heaptype was not a subtype of source heaptype for "_s, opName);
+            return { };
+        }
+        case ExtGCOpType::AnyConvertExtern:
+        case ExtGCOpType::ExternConvertAny:
+            return { };
         default:
             WASM_PARSER_FAIL_IF(true, "invalid extended GC op "_s, m_currentExtOp);
             break;

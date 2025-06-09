@@ -550,8 +550,10 @@ void RenderLayerBacking::updateDebugIndicators(bool showBorder, bool showRepaint
     if (m_contentsContainmentLayer)
         m_contentsContainmentLayer->setShowDebugBorder(showBorder);
 
-    if (m_childContainmentLayer)
+    if (m_childContainmentLayer) {
         m_childContainmentLayer->setShowDebugBorder(showBorder);
+        m_childContainmentLayer->setShowFrameProcessBorders(renderer().settings().showFrameProcessBorders() && m_owningLayer.isRenderViewLayer());
+    }
 
     if (m_backgroundLayer) {
         m_backgroundLayer->setShowDebugBorder(showBorder);
@@ -717,7 +719,7 @@ void RenderLayerBacking::updateTransform(const RenderStyle& style)
         if (RefPtr activeViewTransition = renderer().document().activeViewTransition()) {
             if (CheckedPtr viewTransitionCapture = activeViewTransition->viewTransitionNewPseudoForCapturedElement(renderer())) {
                 t.scaleNonUniform(viewTransitionCapture->scale().width(), viewTransitionCapture->scale().height());
-                t.translate(viewTransitionCapture->captureContentInset().x(), viewTransitionCapture->captureContentInset().y());
+                t.translateRight(viewTransitionCapture->captureContentInset().x(), viewTransitionCapture->captureContentInset().y());
             }
             if (m_owningLayer.isRenderViewLayer()) {
                 auto scrollPosition = renderer().view().frameView().scrollPosition();
@@ -1527,7 +1529,7 @@ void RenderLayerBacking::updateGeometry(const RenderLayer* compositedAncestor)
 
     bool isRunningAcceleratedTransformAnimation = false;
     if (auto styleable = Styleable::fromRenderer(renderer()))
-        isRunningAcceleratedTransformAnimation = styleable->isRunningAcceleratedTransformAnimation();
+        isRunningAcceleratedTransformAnimation = styleable->isRunningAcceleratedAnimationOfProperty(CSSPropertyTransform);
 
     updateTransform(style);
     updateOpacity(style);
@@ -1553,7 +1555,7 @@ void RenderLayerBacking::updateGeometry(const RenderLayer* compositedAncestor)
         if (RefPtr activeViewTransition = renderer().document().activeViewTransition()) {
             if (CheckedPtr viewTransitionCapture = activeViewTransition->viewTransitionNewPseudoForCapturedElement(renderer())) {
                 ComputedOffsets computedOffsets(m_owningLayer, compositedAncestor, viewTransitionCapture->captureOverflowRect(), { }, { });
-                parentGraphicsLayerRect = { { computedOffsets.fromParentGraphicsLayer().width(), computedOffsets.fromParentGraphicsLayer().height() }, viewTransitionCapture->captureOverflowRect().size() };
+                parentGraphicsLayerRect = LayoutRect(snapRectToDevicePixelsIfNeeded(LayoutRect(toLayoutPoint(computedOffsets.fromParentGraphicsLayer()), viewTransitionCapture->captureOverflowRect().size()), renderer()));
             }
         }
     }
@@ -2916,7 +2918,7 @@ float RenderLayerBacking::compositingOpacity(float rendererOpacity) const
 // FIXME: Code is duplicated in RenderLayer. Also, we should probably not consider filters a box decoration here.
 static inline bool hasVisibleBoxDecorations(const RenderStyle& style)
 {
-    return style.hasVisibleBorder() || style.hasBorderRadius() || style.hasOutline() || style.hasUsedAppearance() || style.boxShadow() || style.hasFilter();
+    return style.hasVisibleBorder() || style.hasBorderRadius() || style.hasOutline() || style.hasUsedAppearance() || style.hasBoxShadow() || style.hasFilter();
 }
 
 static bool canDirectlyCompositeBackgroundBackgroundImage(const RenderElement& renderer)
@@ -3322,7 +3324,7 @@ bool RenderLayerBacking::containsPaintedContent(PaintedContentsInfo& contentsInf
 // that require painting. Direct compositing saves backing store.
 bool RenderLayerBacking::isDirectlyCompositedImage() const
 {
-    if (m_owningLayer.hasVisibleBoxDecorationsOrBackground() || m_owningLayer.paintsWithFilters() || renderer().hasClip())
+    if (m_owningLayer.hasVisibleBoxDecorationsOrBackground() || m_owningLayer.shouldPaintWithFilters() || renderer().hasClip())
         return false;
 
     // Fixed layers that allow detaching won't have a backing store,

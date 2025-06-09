@@ -85,6 +85,8 @@
 #include "EventListener.h"
 #include "EventLoop.h"
 #include "EventNames.h"
+#include "EventTargetForTesting.h"
+#include "EventTargetInlines.h"
 #include "ExtendableEvent.h"
 #include "ExtensionStyleSheets.h"
 #include "FetchRequest.h"
@@ -7776,6 +7778,11 @@ bool Internals::isEffectivelyMuted(const HTMLMediaElement& element)
 {
     return element.effectiveMuted();
 }
+
+Ref<EventTarget> Internals::addInternalEventTarget(HTMLMediaElement& element)
+{
+    return EventTargetForTesting::create(element.document(), element);
+}
 #endif
 
 std::optional<RenderingMode> Internals::getEffectiveRenderingModeOfNewlyCreatedAcceleratedImageBuffer()
@@ -7862,23 +7869,6 @@ void Internals::setShouldSkipResourceMonitorThrottling(bool flag)
 #endif
 
 #if ENABLE(DAMAGE_TRACKING)
-std::optional<Internals::DamagePropagation> Internals::getCurrentDamagePropagation() const
-{
-    RefPtr document = contextDocument();
-    if (!document || !document->page())
-        return std::nullopt;
-
-    auto damagePropagation = ([](const Settings& settings) {
-        if (!settings.propagateDamagingInformation())
-            return Damage::Propagation::None;
-        if (settings.unifyDamagedRegions())
-            return Damage::Propagation::Unified;
-        return Damage::Propagation::Region;
-    })(document->page()->settings());
-
-    return damagePropagation;
-}
-
 ExceptionOr<Vector<Internals::FrameDamage>> Internals::getFrameDamageHistory() const
 {
     RefPtr document = contextDocument();

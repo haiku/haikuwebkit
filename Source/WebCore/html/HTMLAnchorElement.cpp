@@ -233,7 +233,7 @@ void HTMLAnchorElement::attributeChanged(const QualifiedName& name, const AtomSt
         if (m_relList)
             m_relList->associatedAttributeValueChanged();
     } else if (name == nameAttr)
-        document().processInternalResourceLinks(this);
+        protectedDocument()->processInternalResourceLinks(this);
 }
 
 bool HTMLAnchorElement::isURLAttribute(const Attribute& attribute) const
@@ -260,7 +260,7 @@ bool HTMLAnchorElement::draggable() const
 
 URL HTMLAnchorElement::href() const
 {
-    return document().completeURL(attributeWithoutSynchronization(hrefAttr));
+    return protectedDocument()->completeURL(attributeWithoutSynchronization(hrefAttr));
 }
 
 void HTMLAnchorElement::setHref(const AtomString& value)
@@ -276,7 +276,7 @@ bool HTMLAnchorElement::hasRel(Relation relation) const
 DOMTokenList& HTMLAnchorElement::relList()
 {
     if (!m_relList) {
-        m_relList = makeUniqueWithoutRefCountedCheck<DOMTokenList>(*this, HTMLNames::relAttr, [](Document& document, StringView token) {
+        lazyInitialize(m_relList, makeUniqueWithoutRefCountedCheck<DOMTokenList>(*this, HTMLNames::relAttr, [](Document& document, StringView token) {
 #if USE(SYSTEM_PREVIEW)
             if (equalLettersIgnoringASCIICase(token, "ar"_s))
                 return document.settings().systemPreviewEnabled();
@@ -284,7 +284,7 @@ DOMTokenList& HTMLAnchorElement::relList()
             UNUSED_PARAM(document);
 #endif
             return equalLettersIgnoringASCIICase(token, "noreferrer"_s) || equalLettersIgnoringASCIICase(token, "noopener"_s) || equalLettersIgnoringASCIICase(token, "opener"_s);
-        });
+        }));
     }
     return *m_relList;
 }
@@ -337,9 +337,6 @@ bool HTMLAnchorElement::isLiveLink() const
 void HTMLAnchorElement::sendPings(const URL& destinationURL)
 {
     if (!document().frame())
-        return;
-
-    if (!document().settings().hyperlinkAuditingEnabled())
         return;
 
     const auto& pingValue = attributeWithoutSynchronization(pingAttr);

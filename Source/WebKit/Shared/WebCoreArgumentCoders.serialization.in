@@ -1005,9 +1005,11 @@ header: <WebCore/RenderStyleConstants.h>
 
 struct WebCore::DictionaryPopupInfo {
     WebCore::FloatPoint origin;
-    WebCore::TextIndicatorData textIndicator;
-#if PLATFORM(COCOA)
+    RefPtr<WebCore::TextIndicator> textIndicator;
+#if ENABLE(LEGACY_PDFKIT_PLUGIN)
     WebCore::DictionaryPopupInfoCocoa platformData;
+#else
+    String text;
 #endif
 };
 
@@ -2652,6 +2654,12 @@ enum class WebCore::ImageBufferPixelFormat : uint8_t {
 
 [RefCounted] class WebCore::TextIndicator {
     WebCore::TextIndicatorData data();
+};
+
+header: <WebCore/TextIndicator.h>
+[CustomHeader] enum class WebCore::TextIndicatorLifetime : uint8_t {
+    Permanent,
+    Temporary,
 };
 
 #if USE(SOUP)
@@ -6132,12 +6140,13 @@ enum class WebCore::AllowsContentJavaScript : bool
     HTTPSFirst,
     HTTPSOnly,
     HTTPSOnlyExplicitlyBypassedForDomain,
-    FailClosed,
+    FailClosedForUnreachableHosts,
     WebSearchContent,
     FingerprintingProtections,
     EnhancedNetworkPrivacy,
     LinkDecorationFiltering,
     ScriptTelemetry,
+    FailClosedForAllHosts,
 };
 
 enum class WebCore::ViolationReportType : uint8_t {
@@ -6509,6 +6518,8 @@ header: <WebCore/ISOVTTCue.h>
     bool expectCancel;
     bool supportClientPin;
     bool supportInternalUV;
+    long maxCredentialCountInList;
+    long maxCredentialIdLength;
 };
 
 [Nested] enum class WebCore::MockWebAuthenticationConfiguration::NfcError : uint8_t {
@@ -7669,7 +7680,7 @@ class WebCore::ContentSecurityPolicyResponseHeaders {
 };
 
 class WebCore::DragImage {
-    std::optional<WebCore::TextIndicatorData> indicatorData();
+    RefPtr<WebCore::TextIndicator> textIndicator();
     std::optional<WebCore::Path> visiblePath();
 };
 
@@ -8800,13 +8811,13 @@ enum class WebCore::PlatformMediaError : uint8_t {
 #endif
 
 #if USE(CG)
-using WebCore::DashArray = Vector<CGFloat>;
+using WebCore::DashArray = FixedVector<CGFloat>;
 #endif
 #if USE(CAIRO)
-using WebCore::DashArray = Vector<double>;
+using WebCore::DashArray = FixedVector<double>;
 #endif
 #if !USE(CG) && !USE(CAIRO)
-using WebCore::DashArray = Vector<float>;
+using WebCore::DashArray = FixedVector<float>;
 #endif
 
 [WebKitPlatform] enum class WebCore::NotificationDirection : uint8_t {
@@ -9141,4 +9152,9 @@ enum class WebCore::ProcessSwapDisposition : uint8_t {
     None,
     COOP,
     Other
+};
+
+struct WebCore::MessageForTesting {
+    AtomString type;
+    String data;
 };

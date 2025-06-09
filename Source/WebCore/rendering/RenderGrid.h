@@ -94,7 +94,7 @@ public:
     std::optional<LayoutUnit> explicitIntrinsicInnerLogicalSize(GridTrackSizingDirection) const;
     void updateGridAreaLogicalSize(RenderBox&, std::optional<LayoutUnit> width, std::optional<LayoutUnit> height) const;
     bool isBaselineAlignmentForGridItem(const RenderBox&) const;
-    bool isBaselineAlignmentForGridItem(const RenderBox& gridItem, GridTrackSizingDirection alignmentContext, AllowedBaseLine = AllowedBaseLine::BothLines) const;
+    bool isBaselineAlignmentForGridItem(const RenderBox& gridItem, GridTrackSizingDirection alignmentContext) const;
 
     StyleSelfAlignmentData selfAlignmentForGridItem(GridTrackSizingDirection alignmentContext, const RenderBox&, const RenderStyle* = nullptr) const;
 
@@ -213,7 +213,7 @@ private:
     bool canPerformSimplifiedLayout() const final;
     void prepareGridItemForPositionedLayout(RenderBox&);
     bool hasStaticPositionForGridItem(const RenderBox&, GridTrackSizingDirection) const;
-    void layoutPositionedObject(RenderBox&, RelayoutChildren, bool fixedPositionObjectsOnly) override;
+    void layoutOutOfFlowBox(RenderBox&, RelayoutChildren, bool fixedPositionObjectsOnly) override;
 
     void computeTrackSizesForDefiniteSize(GridTrackSizingDirection, LayoutUnit availableSpace, GridLayoutState&);
     void computeTrackSizesForIndefiniteSize(GridTrackSizingAlgorithm&, GridTrackSizingDirection, GridLayoutState&, LayoutUnit* minIntrinsicSize = nullptr, LayoutUnit* maxIntrinsicSize = nullptr) const;
@@ -316,12 +316,11 @@ private:
 
     mutable GridMasonryLayout m_masonryLayout;
 
-    using OutOfFlowPositionsMap = UncheckedKeyHashMap<SingleThreadWeakRef<const RenderBox>, std::optional<size_t>>;
+    using OutOfFlowPositionsMap = SingleThreadWeakHashMap<const RenderBox, std::optional<size_t>>;
     OutOfFlowPositionsMap m_outOfFlowItemColumn;
     OutOfFlowPositionsMap m_outOfFlowItemRow;
 
     bool m_baselineItemsCached {false};
-    bool m_hasAnyBaselineAlignmentItem { false };
 
     mutable std::optional<GridItemSizeCache> m_intrinsicLogicalHeightsForRowSizingFirstPass;
 };

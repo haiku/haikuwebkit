@@ -276,6 +276,11 @@ void Geolocation::resetAllGeolocationPermission()
         startRequest(watcher.get());
 }
 
+Document* Geolocation::document() const
+{
+    return downcast<Document>(scriptExecutionContext());
+}
+
 void Geolocation::stop()
 {
     RefPtr page = this->page();
@@ -640,6 +645,7 @@ void Geolocation::requestPermission()
         return;
 
     m_allowGeolocation = InProgress;
+    m_hasBeenRequested = true;
 
     // Ask the embedder: it maintains the geolocation challenge policy itself.
     GeolocationController::from(page)->requestPermission(*this);
@@ -661,6 +667,7 @@ void Geolocation::resetIsAllowed()
 {
     m_allowGeolocation = Unknown;
     revokeAuthorizationTokenIfNecessary();
+    m_hasBeenRequested = false;
 }
 
 void Geolocation::makeSuccessCallbacks(GeolocationPosition& position)

@@ -57,7 +57,9 @@
 #include "RenderTableSectionInlines.h"
 #include "RenderTreeBuilder.h"
 #include "RenderView.h"
+#include "StyleBoxShadow.h"
 #include "StyleInheritedData.h"
+#include <wtf/CheckedPtr.h>
 #include <wtf/SetForScope.h>
 #include <wtf/StackStats.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -170,7 +172,7 @@ void RenderTable::styleDidChange(StyleDifference diff, const RenderStyle* oldSty
                 for (auto& section : childrenOfType<RenderTableSection>(*this)) {
                     for (CheckedPtr row = section.firstRow(); row; row = row->nextRow()) {
                         for (CheckedPtr cell = row->firstCell(); cell; cell = cell->nextCell())
-                            cell->setPreferredLogicalWidthsDirty(true);
+                            cell->setNeedsPreferredWidthsUpdate();
                     }
                 }
             };
@@ -625,7 +627,7 @@ void RenderTable::layout()
 
         // table can be containing block of positioned elements.
         bool dimensionChanged = oldLogicalWidth != logicalWidth() || oldLogicalHeight != logicalHeight();
-        layoutPositionedObjects(dimensionChanged ? RelayoutChildren::Yes : RelayoutChildren::No);
+        layoutOutOfFlowBoxes(dimensionChanged ? RelayoutChildren::Yes : RelayoutChildren::No);
 
         updateLayerTransform();
 
@@ -883,7 +885,7 @@ void RenderTable::paintBoxDecorations(PaintInfo& paintInfo, const LayoutPoint& p
 
     auto bleedAvoidance = determineBleedAvoidance(paintInfo.context());
     if (!BackgroundPainter::boxShadowShouldBeAppliedToBackground(*this, rect.location(), bleedAvoidance, { }))
-        backgroundPainter.paintBoxShadow(rect, style(), ShadowStyle::Normal);
+        backgroundPainter.paintBoxShadow(rect, style(), Style::ShadowStyle::Normal);
 
     GraphicsContextStateSaver stateSaver(paintInfo.context(), false);
     if (bleedAvoidance == BleedAvoidance::UseTransparencyLayer) {
@@ -897,7 +899,7 @@ void RenderTable::paintBoxDecorations(PaintInfo& paintInfo, const LayoutPoint& p
     }
 
     backgroundPainter.paintBackground(rect, bleedAvoidance);
-    backgroundPainter.paintBoxShadow(rect, style(), ShadowStyle::Inset);
+    backgroundPainter.paintBoxShadow(rect, style(), Style::ShadowStyle::Inset);
 
     if (style().hasVisibleBorderDecoration() && !collapseBorders())
         BorderPainter { *this, paintInfo }.paintBorder(rect, style());
@@ -942,7 +944,7 @@ void RenderTable::computeIntrinsicKeywordLogicalWidths(LayoutUnit& minWidth, Lay
 
 void RenderTable::computePreferredLogicalWidths()
 {
-    ASSERT(preferredLogicalWidthsDirty());
+    ASSERT(needsPreferredLogicalWidthsUpdate());
 
     computeIntrinsicLogicalWidths(m_minPreferredLogicalWidth, m_maxPreferredLogicalWidth);
 
@@ -971,7 +973,7 @@ void RenderTable::computePreferredLogicalWidths()
 
     // FIXME: We should be adding borderAndPaddingLogicalWidth here, but m_tableLayout->computePreferredLogicalWidths already does,
     // so a bunch of tests break doing this naively.
-    setPreferredLogicalWidthsDirty(false);
+    clearNeedsPreferredWidthsUpdate();
 }
 
 RenderTableSection* RenderTable::topNonEmptySection() const
@@ -1047,10 +1049,10 @@ void RenderTable::updateColumnCache() const
     ASSERT(!m_columnRenderersValid);
 
     unsigned columnIndex = 0;
-    for (RenderTableCol* columnRenderer = firstColumn(); columnRenderer; columnRenderer = columnRenderer->nextColumn()) {
+    for (CheckedPtr columnRenderer = firstColumn(); columnRenderer; columnRenderer = columnRenderer->nextColumn()) {
         if (columnRenderer->isTableColumnGroupWithColumnChildren())
             continue;
-        m_columnRenderers.append(columnRenderer);
+        m_columnRenderers.append(*columnRenderer);
         // FIXME: We should look to compute the effective column index successively from previous values instead of
         // calling colToEffCol(), which is in O(numEffCols()). Although it's unlikely that this is a hot function.
         m_effectiveColumnIndexMap.add(*columnRenderer, colToEffCol(columnIndex));
@@ -1063,10 +1065,10 @@ unsigned RenderTable::effectiveIndexOfColumn(const RenderTableCol& column) const
 {
     if (!m_columnRenderersValid)
         updateColumnCache();
-    const RenderTableCol* columnToUse = &column;
+    CheckedPtr<const RenderTableCol> columnToUse = &column;
     if (columnToUse->isTableColumnGroupWithColumnChildren())
         columnToUse = columnToUse->nextColumn(); // First column in column-group
-    auto it = m_effectiveColumnIndexMap.find(columnToUse);
+    auto it = m_effectiveColumnIndexMap.find(columnToUse.get());
     ASSERT(it != m_effectiveColumnIndexMap.end());
     if (it == m_effectiveColumnIndexMap.end())
         return std::numeric_limits<unsigned>::max();
@@ -1095,7 +1097,7 @@ LayoutUnit RenderTable::offsetLeftForColumn(const RenderTableCol& column) const
 
 LayoutUnit RenderTable::offsetWidthForColumn(const RenderTableCol& column) const
 {
-    const RenderTableCol* currentColumn = &column;
+    CheckedPtr<const RenderTableCol> currentColumn = &column;
     bool hasColumnChildren;
     if ((hasColumnChildren = currentColumn->isTableColumnGroupWithColumnChildren()))
         currentColumn = currentColumn->nextColumn(); // First column in column-group

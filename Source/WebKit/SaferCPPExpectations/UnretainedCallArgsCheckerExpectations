@@ -59,7 +59,6 @@ Shared/Cocoa/RevealItem.mm
 Shared/Cocoa/WKKeyedCoder.mm
 Shared/Cocoa/WKNSError.mm
 Shared/Cocoa/WKNSURLRequest.mm
-Shared/Cocoa/WKObject.h
 Shared/Cocoa/WebIconUtilities.mm
 Shared/Cocoa/XPCEndpoint.mm
 Shared/Cocoa/XPCEndpointClient.mm
@@ -135,6 +134,7 @@ UIProcess/Cocoa/BrowsingWarningCocoa.mm
 UIProcess/Cocoa/DiagnosticLoggingClient.mm
 UIProcess/Cocoa/FindClient.mm
 UIProcess/Cocoa/GlobalFindInPageState.mm
+UIProcess/Cocoa/GroupActivities/GroupActivitiesCoordinator.mm
 UIProcess/Cocoa/IconLoadingDelegate.mm
 UIProcess/Cocoa/LegacyDownloadClient.mm
 UIProcess/Cocoa/MediaPermissionUtilities.mm

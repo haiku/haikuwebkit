@@ -172,7 +172,6 @@ RenderObject::RenderObject(Type type, Node& node, OptionSet<TypeFlag> typeFlags,
 RenderObject::~RenderObject()
 {
     clearLayoutBox();
-    checkedView()->didDestroyRenderer();
     ASSERT(!m_hasAXObject);
 #ifndef NDEBUG
     renderObjectCounter.decrement();
@@ -662,23 +661,31 @@ void RenderObject::checkBlockPositionedObjectsNeedLayout()
     ASSERT(!needsLayout());
 
     if (auto* renderBlock = dynamicDowncast<RenderBlock>(*this))
-        renderBlock->checkPositionedObjectsNeedLayout();
+        renderBlock->checkOutOfFlowBoxesNeedLayout();
 }
 #endif // ASSERT_ENABLED
 
-void RenderObject::setPreferredLogicalWidthsDirty(bool shouldBeDirty, MarkingBehavior markParents)
+void RenderObject::setNeedsPreferredWidthsUpdate(MarkingBehavior markParents)
 {
-    bool alreadyDirty = preferredLogicalWidthsDirty();
-    m_stateBitfields.setFlag(StateFlag::PreferredLogicalWidthsDirty, shouldBeDirty);
-    auto shouldMarkContainer = [&] {
-        if (markParents == MarkOnlyThis)
-            return false;
-        if (!shouldBeDirty || alreadyDirty)
-            return false;
-        return is<RenderText>(*this) || !downcast<RenderElement>(*this).style().hasOutOfFlowPosition();
-    };
-    if (shouldMarkContainer())
-        invalidateContainerPreferredLogicalWidths();
+    if (needsPreferredLogicalWidthsUpdate() && (!hasRareData() || !rareData().preferredLogicalWidthsNeedUpdateIsMarkOnlyThis)) {
+        // Both this and our ancestor chain are already marked dirty.
+        return;
+    }
+
+    m_stateBitfields.setFlag(StateFlag::PreferredLogicalWidthsNeedUpdate, true);
+    if (isOutOfFlowPositioned()) {
+        // A positioned object has no effect on the min/max width of its containing block ever. No need to mark ancestor chain.
+        return;
+    }
+
+    if (markParents == MarkOnlyThis) {
+        ensureRareData().preferredLogicalWidthsNeedUpdateIsMarkOnlyThis = true;
+        return;
+    }
+
+    invalidateContainerPreferredLogicalWidths();
+    if (hasRareData())
+        ensureRareData().preferredLogicalWidthsNeedUpdateIsMarkOnlyThis = false;
 }
 
 void RenderObject::invalidateContainerPreferredLogicalWidths()
@@ -686,14 +693,16 @@ void RenderObject::invalidateContainerPreferredLogicalWidths()
     // In order to avoid pathological behavior when inlines are deeply nested, we do include them
     // in the chain that we mark dirty (even though they're kind of irrelevant).
     CheckedPtr ancestor = isRenderTableCell() ? containingBlock() : container();
-    while (ancestor && !ancestor->preferredLogicalWidthsDirty()) {
+    while (ancestor) {
+        if (ancestor->needsPreferredLogicalWidthsUpdate() && (!ancestor->hasRareData() || !ancestor->rareData().preferredLogicalWidthsNeedUpdateIsMarkOnlyThis))
+            break;
         // Don't invalidate the outermost object of an unrooted subtree. That object will be
         // invalidated when the subtree is added to the document.
         CheckedPtr container = ancestor->isRenderTableCell() ? ancestor->containingBlock() : ancestor->container();
         if (!container && !ancestor->isRenderView())
             break;
 
-        ancestor->m_stateBitfields.setFlag(StateFlag::PreferredLogicalWidthsDirty, true);
+        ancestor->m_stateBitfields.setFlag(StateFlag::PreferredLogicalWidthsNeedUpdate, true);
         if (ancestor->style().hasOutOfFlowPosition()) {
             // A positioned object has no effect on the min/max width of its containing block ever.
             // We can optimize this case and not go up any further.
@@ -970,7 +979,7 @@ void RenderObject::propagateRepaintToParentWithOutlineAutoIfNeeded(const RenderL
         CheckedPtr originalRenderer = renderer;
         if (CheckedPtr previousMultiColumnSet = dynamicDowncast<RenderMultiColumnSet>(renderer->previousSibling()); previousMultiColumnSet && !renderer->isRenderMultiColumnSet() && !renderer->isLegend()) {
             CheckedPtr enclosingMultiColumnFlow = previousMultiColumnSet->multiColumnFlow();
-            CheckedPtr renderMultiColumnPlaceholder = enclosingMultiColumnFlow->findColumnSpannerPlaceholder(downcast<RenderBox>(renderer.get()));
+            CheckedPtr renderMultiColumnPlaceholder = enclosingMultiColumnFlow->findColumnSpannerPlaceholder(downcast<RenderBox>(*renderer));
             ASSERT(renderMultiColumnPlaceholder);
             renderer = WTFMove(renderMultiColumnPlaceholder);
         }
@@ -1483,9 +1492,8 @@ FloatPoint RenderObject::localToAbsolute(const FloatPoint& localPoint, OptionSet
 {
     TransformState transformState(TransformState::ApplyTransformDirection, localPoint);
     mapLocalToContainer(nullptr, transformState, mode | ApplyContainerFlip, wasFixed);
-    transformState.flatten();
     
-    return transformState.lastPlanarPoint();
+    return transformState.mappedPoint();
 }
 
 std::unique_ptr<TransformationMatrix> RenderObject::viewTransitionTransform() const
@@ -1497,7 +1505,6 @@ std::unique_ptr<TransformationMatrix> RenderObject::viewTransitionTransform() co
     transformState.setTransformMatrixTracking(TransformState::TrackSVGCTMMatrix);
     OptionSet<MapCoordinatesMode> mode { UseTransforms, ApplyContainerFlip };
     mapLocalToContainer(nullptr, transformState, mode, nullptr);
-    transformState.flatten();
     return transformState.releaseTrackedTransform();
 }
 
@@ -1505,17 +1512,15 @@ FloatPoint RenderObject::absoluteToLocal(const FloatPoint& containerPoint, Optio
 {
     TransformState transformState(TransformState::UnapplyInverseTransformDirection, containerPoint);
     mapAbsoluteToLocalPoint(mode, transformState);
-    transformState.flatten();
     
-    return transformState.lastPlanarPoint();
+    return transformState.mappedPoint();
 }
 
 FloatQuad RenderObject::absoluteToLocalQuad(const FloatQuad& quad, OptionSet<MapCoordinatesMode> mode) const
 {
     TransformState transformState(TransformState::UnapplyInverseTransformDirection, quad.boundingBox().center(), quad);
     mapAbsoluteToLocalPoint(mode, transformState);
-    transformState.flatten();
-    return transformState.lastPlanarQuad();
+    return transformState.mappedQuad();
 }
 
 void RenderObject::mapLocalToContainer(const RenderLayerModelObject* ancestorContainer, TransformState& transformState, OptionSet<MapCoordinatesMode> mode, bool* wasFixed) const
@@ -1610,18 +1615,16 @@ FloatQuad RenderObject::localToContainerQuad(const FloatQuad& localQuad, const R
     // it will use that point as the reference point to decide which column's transform to apply in multiple-column blocks.
     TransformState transformState(TransformState::ApplyTransformDirection, localQuad.boundingBox().center(), localQuad);
     mapLocalToContainer(container, transformState, mode | ApplyContainerFlip, wasFixed);
-    transformState.flatten();
     
-    return transformState.lastPlanarQuad();
+    return transformState.mappedQuad();
 }
 
 FloatPoint RenderObject::localToContainerPoint(const FloatPoint& localPoint, const RenderLayerModelObject* container, OptionSet<MapCoordinatesMode> mode, bool* wasFixed) const
 {
     TransformState transformState(TransformState::ApplyTransformDirection, localPoint);
     mapLocalToContainer(container, transformState, mode | ApplyContainerFlip, wasFixed);
-    transformState.flatten();
 
-    return transformState.lastPlanarPoint();
+    return transformState.mappedPoint();
 }
 
 LayoutSize RenderObject::offsetFromContainer(RenderElement& container, const LayoutPoint&, bool* offsetDependsOnPoint) const
@@ -1800,8 +1803,10 @@ void RenderObject::willBeDestroyed()
         // FIXME: Continuations should be anonymous.
         ASSERT(!node->renderer() || node->renderer() == this || (is<RenderElement>(*this) && downcast<RenderElement>(*this).isContinuation()));
         if (node->renderer() == this)
-            node->setRenderer(nullptr);
+            node->setRenderer({ });
     }
+
+    checkedView()->willDestroyRenderer();
 
     removeRareData();
 }
@@ -1827,7 +1832,7 @@ void RenderObject::destroy()
     RELEASE_ASSERT(!m_previous);
     RELEASE_ASSERT(!m_stateBitfields.hasFlag(StateFlag::BeingDestroyed));
 
-    m_stateBitfields.setFlag(StateFlag::BeingDestroyed);
+    setIsBeingDestroyed();
 
     willBeDestroyed();
 
@@ -2980,6 +2985,14 @@ String RenderObject::debugDescription() const
 
 bool RenderObject::isSkippedContent() const
 {
+    if (is<RenderText>(*this))
+        return style().isSkippedRootOrSkippedContent();
+
+    if (CheckedPtr renderBox = dynamicDowncast<RenderBox>(*this); renderBox && renderBox->isColumnSpanner()) {
+        // Checking if parent is root or part of a skipped tree does not work in cases when the renderer is
+        // moved out of its original position (e.g. column spanners).
+        return renderBox->style().isSkippedRootOrSkippedContent() && !isSkippedContentRoot(*renderBox);
+    }
     return parent() && parent()->style().isSkippedRootOrSkippedContent();
 }
 

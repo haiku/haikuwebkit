@@ -26,7 +26,7 @@
 #import "config.h"
 #import "GroupActivitiesSessionNotifier.h"
 
-#if USE(APPLE_INTERNAL_SDK) && ENABLE(MEDIA_SESSION_COORDINATOR) && HAVE(GROUP_ACTIVITIES)
+#if ENABLE(MEDIA_SESSION_COORDINATOR) && HAVE(GROUP_ACTIVITIES)
 
 #import "GroupActivitiesCoordinator.h"
 #import "WKGroupSession.h"
@@ -34,8 +34,6 @@
 #import "WebPageProxy.h"
 #import <mutex>
 #import <wtf/TZoneMallocInlines.h>
-
-#import "WebKitSwiftSoftLink.h"
 
 namespace WebKit {
 
@@ -51,7 +49,7 @@ GroupActivitiesSessionNotifier& GroupActivitiesSessionNotifier::singleton()
 }
 
 GroupActivitiesSessionNotifier::GroupActivitiesSessionNotifier()
-    : m_sessionObserver(adoptNS([allocWKGroupSessionObserverInstance() init]))
+    : m_sessionObserver(adoptNS([[WKGroupSessionObserver alloc] init]))
     , m_stateChangeObserver([this] (auto& session, auto state) { sessionStateChanged(session, state); })
 {
     m_sessionObserver.get().newSessionCallback = [weakThis = WeakPtr { *this }] (WKGroupSession *groupSession) {
@@ -136,4 +134,4 @@ RefPtr<GroupActivitiesSession> GroupActivitiesSessionNotifier::takeSessionForURL
 
 }
 
-#endif // USE(APPLE_INTERNAL_SDK) && ENABLE(MEDIA_SESSION_COORDINATOR) && HAVE(GROUP_ACTIVITIES)
+#endif // ENABLE(MEDIA_SESSION_COORDINATOR) && HAVE(GROUP_ACTIVITIES)

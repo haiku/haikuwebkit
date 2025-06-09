@@ -746,25 +746,23 @@ TEST(ContextMenuTests, HitTestResultImageMIMEType)
     Util::run(&gotProposedMenu);
 }
 
-TEST(ContextMenuTests, HitTestResultLinkLocalDataMIMEType)
+TEST(ContextMenuTests, HitTestResultLinkLocalResourceResponse)
 {
-    auto delegate = adoptNS([[TestUIDelegate alloc] init]);
-
-    __block bool gotProposedMenu = false;
-    [delegate setGetContextMenuFromProposedMenu:^(NSMenu *menu, _WKContextMenuElementInfo *elementInfo, id<NSSecureCoding>, void (^completion)(NSMenu *)) {
-        EXPECT_NOT_NULL(elementInfo.hitTestResult);
-        EXPECT_TRUE([elementInfo.hitTestResult.linkLocalDataMIMEType isEqualToString:@"image/jpeg"]);
-        completion(nil);
-        gotProposedMenu = true;
-    }];
+    _WKContextMenuElementInfo *elementInfo;
+    NSURLResponse* linkLocalResourceResponse;
 
     auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400)]);
-    [webView setUIDelegate:delegate.get()];
     [webView synchronouslyLoadHTMLString:@"<a href='sunset-in-cupertino-600px.jpg'><img src='sunset-in-cupertino-600px.jpg'></img></a>"];
+    elementInfo = [webView rightClickAtPointAndWaitForContextMenu:NSMakePoint(200, 200)];
+    linkLocalResourceResponse = elementInfo.hitTestResult.linkLocalResourceResponse;
+    EXPECT_NOT_NULL(linkLocalResourceResponse);
+    EXPECT_WK_STREQ(linkLocalResourceResponse.suggestedFilename, "sunset-in-cupertino-600px.jpg");
+    EXPECT_WK_STREQ(linkLocalResourceResponse.MIMEType, "image/jpeg");
 
-    [webView mouseDownAtPoint:NSMakePoint(200, 200) simulatePressure:NO withFlags:0 eventType:NSEventTypeRightMouseDown];
-    [webView mouseUpAtPoint:NSMakePoint(200, 200) withFlags:0 eventType:NSEventTypeRightMouseUp];
-    Util::run(&gotProposedMenu);
+    [webView synchronouslyLoadHTMLString:@"<a href='https://webkit.org/'><img src='sunset-in-cupertino-600px.jpg'></img></a>"];
+    elementInfo = [webView rightClickAtPointAndWaitForContextMenu:NSMakePoint(200, 200)];
+    linkLocalResourceResponse = elementInfo.hitTestResult.linkLocalResourceResponse;
+    EXPECT_NULL(linkLocalResourceResponse);
 }
 
 TEST(ContextMenuTests, HitTestResultLinkSuggestedFilename)
@@ -810,27 +808,6 @@ TEST(ContextMenuTests, HitTestResultImageSuggestedFilename)
     Util::run(&gotProposedMenu);
 }
 
-TEST(ContextMenuTests, HitTestResultHasLocalDataForLinkURL)
-{
-    auto delegate = adoptNS([[TestUIDelegate alloc] init]);
-
-    __block bool gotProposedMenu = false;
-    [delegate setGetContextMenuFromProposedMenu:^(NSMenu *menu, _WKContextMenuElementInfo *elementInfo, id<NSSecureCoding>, void (^completion)(NSMenu *)) {
-        EXPECT_NOT_NULL(elementInfo.hitTestResult);
-        EXPECT_TRUE(elementInfo.hitTestResult.hasLocalDataForLinkURL);
-        completion(nil);
-        gotProposedMenu = true;
-    }];
-
-    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400)]);
-    [webView setUIDelegate:delegate.get()];
-    [webView synchronouslyLoadHTMLString:@"<a href='sunset-in-cupertino-600px.jpg'><img src='sunset-in-cupertino-600px.jpg'></img></a>"];
-
-    [webView mouseDownAtPoint:NSMakePoint(200, 200) simulatePressure:NO withFlags:0 eventType:NSEventTypeRightMouseDown];
-    [webView mouseUpAtPoint:NSMakePoint(200, 200) withFlags:0 eventType:NSEventTypeRightMouseUp];
-    Util::run(&gotProposedMenu);
-}
-
 TEST(ContextMenuTests, HitTestResultLinkWithInvalidURL)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400)]);
@@ -868,6 +845,25 @@ TEST(ContextMenuTests, ContextMenuElementInfoAllowsFollowingLink)
     [webView synchronouslyLoadHTMLString:@"<a href='file:///simple.html' style='font-size: 100px;'>Hello world</a>"];
     elementInfo = [webView rightClickAtPointAndWaitForContextMenu:NSMakePoint(50, 350)];
     EXPECT_FALSE(elementInfo.allowsFollowingLink);
+}
+
+TEST(ContextMenuTests, ContextMenuTopLevelTextNodeInShadowDOMShouldNotCrash)
+{
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+    [configuration _setContextMenuQRCodeDetectionEnabled:YES];
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 400) configuration:configuration.get()]);
+    [webView synchronouslyLoadHTMLString:@(R"(
+    <body style='margin: 0; padding: 0; font-size:50px'>
+    </body>
+    <script>
+        const shadowRoot = document.body.attachShadow({ mode: "open" });
+        const textNode = document.createTextNode("Text Node in Shadow DOM");
+        shadowRoot.appendChild(textNode);
+    </script>
+    )")];
+    RetainPtr elementInfo = [webView rightClickAtPointAndWaitForContextMenu:NSMakePoint(5, 395)];
+    EXPECT_NOT_NULL([elementInfo hitTestResult]);
 }
 
 } // namespace TestWebKitAPI

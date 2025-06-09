@@ -52,6 +52,7 @@
 #include "JSHTMLModelElementCamera.h"
 #include "LayoutRect.h"
 #include "LayoutSize.h"
+#include "LegacySchemeRegistry.h"
 #include "Logging.h"
 #include "MIMETypeRegistry.h"
 #include "Model.h"
@@ -60,6 +61,7 @@
 #include "ModelPlayerProvider.h"
 #include "ModelPlayerTransformState.h"
 #include "MouseEvent.h"
+#include "NodeInlines.h"
 #include "Page.h"
 #include "PlaceholderModelPlayer.h"
 #include "RenderBoxInlines.h"
@@ -68,6 +70,7 @@
 #include "RenderLayerModelObject.h"
 #include "RenderModel.h"
 #include "RenderReplaced.h"
+#include <JavaScriptCore/ConsoleTypes.h>
 #include <wtf/Seconds.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/URL.h>
@@ -103,6 +106,13 @@ HTMLModelElement::~HTMLModelElement()
         m_resource->removeClient(*this);
         m_resource = nullptr;
     }
+
+#if ENABLE(MODEL_PROCESS)
+    if (m_environmentMapResource) {
+        m_environmentMapResource->removeClient(*this);
+        m_environmentMapResource = nullptr;
+    }
+#endif
 
     deleteModelPlayer();
 }
@@ -185,6 +195,25 @@ void HTMLModelElement::sourcesChanged()
     setSourceURL(selectModelSource());
 }
 
+CachedResourceRequest HTMLModelElement::createResourceRequest(const URL& resourceURL, FetchOptions::Destination destination)
+{
+    ResourceLoaderOptions options = CachedResourceLoader::defaultCachedResourceOptions();
+    options.destination = destination;
+    options.sameOriginDataURLFlag = SameOriginDataURLFlag::Set;
+
+    auto crossOriginAttribute = parseCORSSettingsAttribute(attributeWithoutSynchronization(HTMLNames::crossoriginAttr));
+    // Make sure CORS is always enabled by passing a non-null cross origin attribute
+    if (crossOriginAttribute.isNull()) {
+        auto documentOrigin = protectedDocument()->protectedSecurityOrigin();
+        if (LegacySchemeRegistry::shouldTreatURLSchemeAsCORSEnabled(documentOrigin->protocol()) || documentOrigin->protocol() != resourceURL.protocol())
+            crossOriginAttribute = "anonymous"_s;
+    }
+    auto request = createPotentialAccessControlRequest(ResourceRequest { URL { resourceURL } }, WTFMove(options), document(), crossOriginAttribute);
+    request.setInitiator(*this);
+
+    return request;
+}
+
 void HTMLModelElement::setSourceURL(const URL& url)
 {
     if (url == m_sourceURL)
@@ -193,7 +222,9 @@ void HTMLModelElement::setSourceURL(const URL& url)
     m_sourceURL = url;
 
     m_data.reset();
+    m_dataMemoryCost.store(0, std::memory_order_relaxed);
     m_dataComplete = false;
+    m_model = nullptr;
 
     if (m_resource) {
         m_resource->removeClient(*this);
@@ -216,17 +247,11 @@ void HTMLModelElement::setSourceURL(const URL& url)
 
     if (m_sourceURL.isEmpty()) {
         ActiveDOMObject::queueTaskToDispatchEvent(*this, TaskSource::DOMManipulation, Event::create(eventNames().errorEvent, Event::CanBubble::No, Event::IsCancelable::No));
+        reportExtraMemoryCost();
         return;
     }
 
-    ResourceLoaderOptions options = CachedResourceLoader::defaultCachedResourceOptions();
-    options.destination = FetchOptions::Destination::Model;
-    // FIXME: Set other options.
-
-    auto crossOriginAttribute = parseCORSSettingsAttribute(attributeWithoutSynchronization(HTMLNames::crossoriginAttr));
-    auto request = createPotentialAccessControlRequest(ResourceRequest { URL { m_sourceURL } }, WTFMove(options), document(), crossOriginAttribute);
-    request.setInitiator(*this);
-
+    auto request = createResourceRequest(m_sourceURL, FetchOptions::Destination::Model);
     auto resource = document().protectedCachedResourceLoader()->requestModelResource(WTFMove(request));
     if (!resource.has_value()) {
         ActiveDOMObject::queueTaskToDispatchEvent(*this, TaskSource::DOMManipulation, Event::create(eventNames().errorEvent, Event::CanBubble::No, Event::IsCancelable::No));
@@ -500,9 +525,18 @@ void HTMLModelElement::didUpdateLayerHostingContextIdentifier(ModelPlayer& model
         renderer->updateFromElement();
 }
 
+void HTMLModelElement::logWarning(ModelPlayer& modelPlayer, const String& warningMessage)
+{
+    ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
+
+    protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Warning, warningMessage);
+}
+
 void HTMLModelElement::didFinishLoading(ModelPlayer& modelPlayer)
 {
     ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
+
+    reportExtraMemoryCost();
 
     if (CheckedPtr renderer = this->renderer())
         renderer->updateFromElement();
@@ -515,6 +549,9 @@ void HTMLModelElement::didFailLoading(ModelPlayer& modelPlayer, const ResourceEr
     ASSERT_UNUSED(modelPlayer, &modelPlayer == m_modelPlayer);
     if (!m_readyPromise->isFulfilled())
         m_readyPromise->reject(Exception { ExceptionCode::AbortError });
+
+    m_dataMemoryCost.store(0, std::memory_order_relaxed);
+    reportExtraMemoryCost();
 }
 
 RefPtr<GraphicsLayer> HTMLModelElement::graphicsLayer() const
@@ -623,8 +660,11 @@ void HTMLModelElement::didFinishEnvironmentMapLoading(bool succeeded)
     if (!m_environmentMapURL.isEmpty() && !m_environmentMapReadyPromise->isFulfilled()) {
         if (succeeded)
             m_environmentMapReadyPromise->resolve();
-        else
+        else {
             m_environmentMapReadyPromise->reject(Exception { ExceptionCode::AbortError });
+            m_environmentMapDataMemoryCost.store(0, std::memory_order_relaxed);
+        }
+        reportExtraMemoryCost();
     }
 }
 
@@ -967,6 +1007,7 @@ void HTMLModelElement::setEnvironmentMap(const URL& url)
         return;
 
     m_environmentMapURL = url;
+    m_environmentMapDataMemoryCost.store(0, std::memory_order_relaxed);
 
     environmentMapResetAndReject(Exception { ExceptionCode::AbortError });
     m_environmentMapReadyPromise = makeUniqueRef<EnvironmentMapPromise>();
@@ -975,6 +1016,7 @@ void HTMLModelElement::setEnvironmentMap(const URL& url)
         // sending a message with empty data to indicate resource removal
         if (m_modelPlayer)
             m_modelPlayer->setEnvironmentMap(SharedBuffer::create());
+        reportExtraMemoryCost();
         return;
     }
 
@@ -1003,13 +1045,7 @@ URL HTMLModelElement::selectEnvironmentMapURL() const
 
 void HTMLModelElement::environmentMapRequestResource()
 {
-    ResourceLoaderOptions options = CachedResourceLoader::defaultCachedResourceOptions();
-    options.destination = FetchOptions::Destination::Environmentmap;
-
-    auto crossOriginAttribute = parseCORSSettingsAttribute(attributeWithoutSynchronization(HTMLNames::crossoriginAttr));
-    auto request = createPotentialAccessControlRequest(ResourceRequest { URL { m_environmentMapURL } }, WTFMove(options), document(), crossOriginAttribute);
-    request.setInitiator(*this);
-
+    auto request = createResourceRequest(m_environmentMapURL, FetchOptions::Destination::Environmentmap);
     auto resource = document().protectedCachedResourceLoader()->requestEnvironmentMapResource(WTFMove(request));
     if (!resource.has_value()) {
         if (!m_environmentMapReadyPromise->isFulfilled())
@@ -1050,8 +1086,10 @@ void HTMLModelElement::environmentMapResourceFinished()
             m_modelPlayer->setEnvironmentMap(SharedBuffer::create());
         return;
     }
-    if (m_modelPlayer)
+    if (m_modelPlayer) {
+        m_environmentMapDataMemoryCost.store(m_environmentMapData.size(), std::memory_order_relaxed);
         m_modelPlayer->setEnvironmentMap(m_environmentMapData.takeAsContiguous().get());
+    }
 
     m_environmentMapResource->removeClient(*this);
     m_environmentMapResource = nullptr;
@@ -1082,6 +1120,7 @@ void HTMLModelElement::modelResourceFinished()
     }
 
     m_dataComplete = true;
+    m_dataMemoryCost.store(m_data.size(), std::memory_order_relaxed);
     m_model = Model::create(m_data.takeAsContiguous().get(), m_resource->mimeType(), m_resource->url());
 
     ActiveDOMObject::queueTaskToDispatchEvent(*this, TaskSource::DOMManipulation, Event::create(eventNames().loadEvent, Event::CanBubble::No, Event::IsCancelable::No));
@@ -1335,6 +1374,41 @@ void HTMLModelElement::removedFromAncestor(RemovalType removalType, ContainerNod
         deleteModelPlayer();
     }
 }
+
+void HTMLModelElement::reportExtraMemoryCost()
+{
+    const size_t currentCost = memoryCost();
+    if (m_reportedDataMemoryCost < currentCost) {
+        auto* context = Node::scriptExecutionContext();
+        if (!context)
+            return;
+        JSC::VM& vm = context->vm();
+        JSC::JSLockHolder lock(vm);
+        ASSERT_WITH_MESSAGE(vm.currentThreadIsHoldingAPILock(), "Extra memory reporting expects to happen from one thread");
+        vm.heap.reportExtraMemoryAllocated(nullptr, currentCost - m_reportedDataMemoryCost);
+        m_reportedDataMemoryCost = currentCost;
+    }
+}
+
+size_t HTMLModelElement::memoryCost() const
+{
+    // May be called from GC threads.
+    auto cost = m_dataMemoryCost.load(std::memory_order_relaxed);
+#if ENABLE(MODEL_PROCESS)
+    cost += m_environmentMapDataMemoryCost.load(std::memory_order_relaxed);
+#endif
+    return cost;
+}
+
+#if ENABLE(RESOURCE_USAGE)
+size_t HTMLModelElement::externalMemoryCost() const
+{
+    // For the purposes of Web Inspector, external memory means memory reported as
+    // 1) being traceable from JS objects, i.e. GC owned memory
+    // 2) not allocated from "Page" category, e.g. from bmalloc.
+    return memoryCost();
+}
+#endif
 
 }
 

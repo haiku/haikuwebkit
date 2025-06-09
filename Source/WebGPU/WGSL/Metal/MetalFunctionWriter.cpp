@@ -114,12 +114,13 @@ DEFINE_VOLATILE_HELPER(pack_float_to_unorm4x8, PackFloatToUnorm4x8)
 
 class FunctionDefinitionWriter : public AST::Visitor {
 public:
-    FunctionDefinitionWriter(ShaderModule& shaderModule, StringBuilder& stringBuilder, PrepareResult& prepareResult, const HashMap<String, ConstantValue>& constantValues)
+    FunctionDefinitionWriter(ShaderModule& shaderModule, StringBuilder& stringBuilder, PrepareResult& prepareResult, const HashMap<String, ConstantValue>& constantValues, DeviceState&& deviceState)
         : m_helperGenerator(stringBuilder)
         , m_output(stringBuilder)
         , m_shaderModule(shaderModule)
         , m_prepareResult(prepareResult)
         , m_constantValues(constantValues)
+        , m_deviceState(WTFMove(deviceState))
     {
     }
 
@@ -188,6 +189,8 @@ public:
 
     StringBuilder& stringBuilder() { return m_body; }
     Indentation<4>& indent() { return m_indent; }
+    unsigned metalAppleGPUFamily() const { return m_deviceState.appleGPUFamily; }
+    bool shaderValidationEnabled() const { return m_deviceState.shaderValidationEnabled; }
 
 private:
     void emitNecessaryHelpers();
@@ -214,6 +217,7 @@ private:
     HashSet<AST::Function*> m_visitedFunctions;
     PrepareResult& m_prepareResult;
     const HashMap<String, ConstantValue>& m_constantValues;
+    DeviceState m_deviceState;
 };
 
 static ASCIILiteral serializeAddressSpace(AddressSpace addressSpace)
@@ -423,7 +427,7 @@ void FunctionDefinitionWriter::emitNecessaryHelpers()
 
     if (m_shaderModule.usesWorkgroupUniformLoad()) {
         m_body.append(m_indent, "template<typename T>\n"_s,
-            m_indent, "static T __workgroup_uniform_load(threadgroup T* const ptr)\n"_s,
+            m_indent, ((shaderValidationEnabled() && metalAppleGPUFamily() >= 9) ? "[[clang::optnone]] "_s : ""_s), "static T __workgroup_uniform_load(threadgroup T* const ptr)\n"_s,
             m_indent, "{\n"_s);
         {
             IndentationScope scope(m_indent);
@@ -1884,7 +1888,11 @@ static void atomicFunction(ASCIILiteral name, FunctionDefinitionWriter* writer, 
 
 static void emitAtomicLoad(FunctionDefinitionWriter* writer, AST::CallExpression& call)
 {
+    if (writer->metalAppleGPUFamily() >= 9)
+        writer->stringBuilder().append("({ volatile auto __wgslAtomicLoadResult = "_s);
     atomicFunction("atomic_load_explicit"_s, writer, call);
+    if (writer->metalAppleGPUFamily() >= 9)
+        writer->stringBuilder().append("; __wgslAtomicLoadResult; })"_s);
 }
 
 static void emitAtomicStore(FunctionDefinitionWriter* writer, AST::CallExpression& call)
@@ -2543,7 +2551,7 @@ void FunctionDefinitionWriter::visit(AST::DiscardStatement&)
 #if CPU(X86_64)
     m_body.append("__asm volatile(\"\"); discard_fragment()"_s);
 #else
-    m_body.append("{ volatile bool __wgslDiscardFragmentWorkaround = true; if (__wgslDiscardFragmentWorkaround) discard_fragment(); }"_s);
+    m_body.append("discard_fragment();"_s);
 #endif
 }
 
@@ -2618,7 +2626,11 @@ void FunctionDefinitionWriter::visit(AST::ReturnStatement& statement)
 
 void FunctionDefinitionWriter::visit(AST::ForStatement& statement)
 {
-    m_body.append("{ " DECLARE_FORWARD_PROGRESS " for ("_s);
+    if (statement.isInternallyGenerated())
+        m_body.append("for ("_s);
+    else
+        m_body.append("{ " DECLARE_FORWARD_PROGRESS " for ("_s);
+
     if (auto* initializer = statement.maybeInitializer())
         visit(*initializer);
     m_body.append(';');
@@ -2631,10 +2643,16 @@ void FunctionDefinitionWriter::visit(AST::ForStatement& statement)
         m_body.append(' ');
         visit(*update);
     }
-    m_body.append(") { " CHECK_FORWARD_PROGRESS " "_s);
+
+    if (statement.isInternallyGenerated())
+        m_body.append(')');
+    else
+        m_body.append(") { " CHECK_FORWARD_PROGRESS " "_s);
     visit(statement.body());
-    m_body.append('}');
-    m_body.append('}');
+    if (!statement.isInternallyGenerated()) {
+        m_body.append('}');
+        m_body.append('}');
+    }
 }
 
 void FunctionDefinitionWriter::visit(AST::LoopStatement& statement)
@@ -2899,9 +2917,9 @@ void FunctionDefinitionWriter::serializeConstant(const Type* type, ConstantValue
         });
 }
 
-void emitMetalFunctions(StringBuilder& stringBuilder, ShaderModule& shaderModule, PrepareResult& prepareResult, const HashMap<String, ConstantValue>& constantValues)
+void emitMetalFunctions(StringBuilder& stringBuilder, ShaderModule& shaderModule, PrepareResult& prepareResult, const HashMap<String, ConstantValue>& constantValues, DeviceState&& deviceState)
 {
-    FunctionDefinitionWriter functionDefinitionWriter(shaderModule, stringBuilder, prepareResult, constantValues);
+    FunctionDefinitionWriter functionDefinitionWriter(shaderModule, stringBuilder, prepareResult, constantValues, WTFMove(deviceState));
     functionDefinitionWriter.write();
 }
 

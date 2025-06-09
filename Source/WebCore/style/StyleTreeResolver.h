@@ -164,6 +164,7 @@ private:
     const Parent* boxGeneratingParent() const;
     const RenderStyle* parentBoxStyle() const;
     const RenderStyle* parentBoxStyleForPseudoElement(const ElementUpdate&) const;
+    const RenderStyle* documentElementStyle() const;
 
     LayoutInterleavingAction updateAnchorPositioningState(Element&, const RenderStyle*, OptionSet<Change>);
 
@@ -173,15 +174,18 @@ private:
     void sortPositionOptionsIfNeeded(PositionOptions&, const Styleable&);
     std::optional<ResolvedStyle> tryChoosePositionOption(const Styleable&, const RenderStyle* existingStyle);
 
+    void updateForPositionVisibility(RenderStyle&, const Styleable&);
+
     // This returns the style that was in effect (applied to the render tree) before we started the style resolution.
     // Layout interleaving may cause different styles to be applied during the style resolution.
     const RenderStyle* beforeResolutionStyle(const Element&, std::optional<PseudoElementIdentifier>);
     void saveBeforeResolutionStyleForInterleaving(const Element&);
 
     bool hasUnresolvedAnchorPosition(const Element&) const;
+    bool hasResolvedAnchorPosition(const Element&) const;
 
     CheckedRef<Document> m_document;
-    std::unique_ptr<RenderStyle> m_documentElementStyle;
+    std::unique_ptr<RenderStyle> m_computedDocumentElementStyle;
 
     Vector<Ref<Scope>, 4> m_scopeStack;
     Vector<Parent, 32> m_parentStack;

@@ -49,7 +49,6 @@
 #include "ScaleTransformOperation.h"
 #include "ScrollAxis.h"
 #include "ScrollbarGutter.h"
-#include "ShadowData.h"
 #include "StyleBuilderConverter.h"
 #include "StyleExtractor.h"
 #include "StyleImage.h"
@@ -525,8 +524,16 @@ bool RenderStyle::descendantAffectingNonInheritedPropertiesEqual(const RenderSty
         || m_nonInheritedData->miscData.ptr() == other.m_nonInheritedData->miscData.ptr())
         return true;
 
-    return m_nonInheritedData->miscData->alignItems == other.m_nonInheritedData->miscData->alignItems
-        && m_nonInheritedData->miscData->justifyItems == other.m_nonInheritedData->miscData->justifyItems;
+    if (m_nonInheritedData->miscData->alignItems != other.m_nonInheritedData->miscData->alignItems)
+        return false;
+
+    if (m_nonInheritedData->miscData->justifyItems != other.m_nonInheritedData->miscData->justifyItems)
+        return false;
+
+    if (m_nonInheritedData->miscData->usedAppearance != other.m_nonInheritedData->miscData->usedAppearance)
+        return false;
+
+    return true;
 }
 
 bool RenderStyle::borderAndBackgroundEqual(const RenderStyle& other) const
@@ -703,7 +710,7 @@ inline bool RenderStyle::changeAffectsVisualOverflow(const RenderStyle& other) c
             return false;
 
         if (m_nonInheritedData->miscData.ptr() != other.m_nonInheritedData->miscData.ptr()
-            && !arePointingToEqualData(m_nonInheritedData->miscData->boxShadow, other.m_nonInheritedData->miscData->boxShadow))
+            && m_nonInheritedData->miscData->boxShadow != other.m_nonInheritedData->miscData->boxShadow)
             return true;
 
         if (m_nonInheritedData->backgroundData.ptr() != other.m_nonInheritedData->backgroundData.ptr()) {
@@ -740,7 +747,7 @@ inline bool RenderStyle::changeAffectsVisualOverflow(const RenderStyle& other) c
         return true;
 
     if (m_rareInheritedData.ptr() != other.m_rareInheritedData.ptr()
-        && !arePointingToEqualData(m_rareInheritedData->textShadow, other.m_rareInheritedData->textShadow))
+        && m_rareInheritedData->textShadow != other.m_rareInheritedData->textShadow)
         return true;
 
     if (textDecorationsDiffer()) {
@@ -2101,7 +2108,7 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
             changingProperties.m_properties.set(CSSPropertyCaretColor);
         if (first.accentColor != second.accentColor || first.hasAutoAccentColor != second.hasAutoAccentColor)
             changingProperties.m_properties.set(CSSPropertyAccentColor);
-        if (!arePointingToEqualData(first.textShadow, second.textShadow))
+        if (first.textShadow != second.textShadow)
             changingProperties.m_properties.set(CSSPropertyTextShadow);
         if (first.indent != second.indent || first.textIndentLine != second.textIndentLine || first.textIndentType != second.textIndentType)
             changingProperties.m_properties.set(CSSPropertyTextIndent);
@@ -2516,32 +2523,6 @@ void RenderStyle::setPageScaleTransform(float scale)
     setTransformOriginY(Length(0, LengthType::Fixed));
 }
 
-void RenderStyle::setTextShadow(std::unique_ptr<ShadowData> shadowData, bool add)
-{
-    ASSERT(!shadowData || (shadowData->spread().isZero() && shadowData->style() == ShadowStyle::Normal));
-
-    auto& rareData = m_rareInheritedData.access();
-    if (!add) {
-        rareData.textShadow = WTFMove(shadowData);
-        return;
-    }
-
-    shadowData->setNext(WTFMove(rareData.textShadow));
-    rareData.textShadow = WTFMove(shadowData);
-}
-
-void RenderStyle::setBoxShadow(std::unique_ptr<ShadowData> shadowData, bool add)
-{
-    auto& rareData = m_nonInheritedData.access().miscData.access();
-    if (!add) {
-        rareData.boxShadow = WTFMove(shadowData);
-        return;
-    }
-
-    shadowData->setNext(WTFMove(rareData.boxShadow));
-    rareData.boxShadow = WTFMove(shadowData);
-}
-
 StyleImage* RenderStyle::listStyleImage() const
 {
     return m_rareInheritedData->listStyleImage.get();
@@ -2563,14 +2544,14 @@ const Color& RenderStyle::visitedLinkColor() const
     return m_inheritedData->visitedLinkColor;
 }
 
-void RenderStyle::setColor(const Color& v)
+void RenderStyle::setColor(Color&& v)
 {
-    SET_VAR(m_inheritedData, color, v);
+    SET_VAR(m_inheritedData, color, WTFMove(v));
 }
 
-void RenderStyle::setVisitedLinkColor(const Color& v)
+void RenderStyle::setVisitedLinkColor(Color&& v)
 {
-    SET_VAR(m_inheritedData, visitedLinkColor, v);
+    SET_VAR(m_inheritedData, visitedLinkColor, WTFMove(v));
 }
 
 float RenderStyle::horizontalBorderSpacing() const
@@ -2969,36 +2950,6 @@ void RenderStyle::setFontPalette(const FontPalette& value)
     auto description = fontDescription();
     description.setFontPalette(value);
     setFontDescription(WTFMove(description));
-}
-
-void RenderStyle::getShadowHorizontalExtent(const ShadowData* shadow, LayoutUnit& left, LayoutUnit& right)
-{
-    left = 0;
-    right = 0;
-
-    for ( ; shadow; shadow = shadow->next()) {
-        if (shadow->style() == ShadowStyle::Inset)
-            continue;
-
-        auto extentAndSpread = shadow->paintingExtent() + LayoutUnit(shadow->spread().value);
-        left = std::min<LayoutUnit>(left, LayoutUnit(shadow->x().value) - extentAndSpread);
-        right = std::max<LayoutUnit>(right, LayoutUnit(shadow->x().value) + extentAndSpread);
-    }
-}
-
-void RenderStyle::getShadowVerticalExtent(const ShadowData* shadow, LayoutUnit& top, LayoutUnit& bottom)
-{
-    top = 0;
-    bottom = 0;
-
-    for ( ; shadow; shadow = shadow->next()) {
-        if (shadow->style() == ShadowStyle::Inset)
-            continue;
-
-        auto extentAndSpread = shadow->paintingExtent() + LayoutUnit(shadow->spread().value);
-        top = std::min<LayoutUnit>(top, LayoutUnit(static_cast<int>(shadow->y().value)) - extentAndSpread);
-        bottom = std::max<LayoutUnit>(bottom, LayoutUnit(static_cast<int>(shadow->y().value)) + extentAndSpread);
-    }
 }
 
 const Style::Color& RenderStyle::unresolvedColorForProperty(CSSPropertyID colorProperty, bool visitedLink) const
@@ -3976,14 +3927,14 @@ UserSelect RenderStyle::usedUserSelect() const
     return value;
 }
 
-const Vector<Style::PositionTryFallback>& RenderStyle::positionTryFallbacks() const
+const FixedVector<Style::PositionTryFallback>& RenderStyle::positionTryFallbacks() const
 {
     return m_nonInheritedData->rareData->positionTryFallbacks;
 }
 
-void RenderStyle::setPositionTryFallbacks(const Vector<Style::PositionTryFallback>& fallbacks)
+void RenderStyle::setPositionTryFallbacks(FixedVector<Style::PositionTryFallback>&& fallbacks)
 {
-    SET_NESTED_VAR(m_nonInheritedData, rareData, positionTryFallbacks, fallbacks);
+    SET_NESTED_VAR(m_nonInheritedData, rareData, positionTryFallbacks, WTFMove(fallbacks));
 }
 
 void RenderStyle::adjustScrollTimelines()
@@ -3992,16 +3943,13 @@ void RenderStyle::adjustScrollTimelines()
     if (!names.size() && !scrollTimelines().size())
         return;
 
-    auto& timelines = m_nonInheritedData.access().rareData.access().scrollTimelines;
-    timelines.clear();
-
     auto& axes = scrollTimelineAxes();
     auto numberOfAxes = axes.size();
 
-    for (size_t i = 0; i < names.size(); ++i) {
+    m_nonInheritedData.access().rareData.access().scrollTimelines = FixedVector<Ref<ScrollTimeline>>::createWithSizeFromGenerator(names.size(), [&](auto i) {
         auto axis = numberOfAxes ? axes[i % numberOfAxes] : ScrollAxis::Block;
-        timelines.append(ScrollTimeline::create(names[i], axis));
-    }
+        return ScrollTimeline::create(names[i], axis);
+    });
 }
 
 void RenderStyle::adjustViewTimelines()
@@ -4010,20 +3958,17 @@ void RenderStyle::adjustViewTimelines()
     if (!names.size() && !viewTimelines().size())
         return;
 
-    auto& timelines = m_nonInheritedData.access().rareData.access().viewTimelines;
-    timelines.clear();
-
     auto& axes = viewTimelineAxes();
     auto numberOfAxes = axes.size();
 
     auto& insets = viewTimelineInsets();
     auto numberOfInsets = insets.size();
 
-    for (size_t i = 0; i < names.size(); ++i) {
+    m_nonInheritedData.access().rareData.access().viewTimelines = FixedVector<Ref<ViewTimeline>>::createWithSizeFromGenerator(names.size(), [&](auto i) {
         auto axis = numberOfAxes ? axes[i % numberOfAxes] : ScrollAxis::Block;
         auto inset = numberOfInsets ? insets[i % numberOfInsets] : ViewTimelineInsets();
-        timelines.append(ViewTimeline::create(names[i], axis, WTFMove(inset)));
-    }
+        return ViewTimeline::create(names[i], axis, WTFMove(inset));
+    });
 }
 
 #if !LOG_DISABLED

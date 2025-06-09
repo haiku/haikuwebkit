@@ -419,7 +419,7 @@ void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceL
 {
     auto identifier = *resourceLoader.identifier();
 
-    auto* frame = resourceLoader.frame();
+    RefPtr frame = resourceLoader.frame();
 
     if (auto* page = frame ? frame->page() : nullptr) {
         auto mainFrameMainResource = frame->isMainFrame()
@@ -461,7 +461,7 @@ void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceL
     loadParameters.options = resourceLoader.options();
     loadParameters.preflightPolicy = resourceLoader.options().preflightPolicy;
     bool isMainFrameNavigation = resourceLoader.frame() && resourceLoader.frame()->isMainFrame() && resourceLoader.options().mode == FetchOptions::Mode::Navigate;
-    addParametersShared(frame, loadParameters, isMainFrameNavigation);
+    addParametersShared(frame.get(), loadParameters, isMainFrameNavigation);
 
     loadParameters.serviceWorkersMode = resourceLoader.options().loadedFromOpaqueSource == LoadedFromOpaqueSource::No ? resourceLoader.options().serviceWorkersMode : ServiceWorkersMode::None;
     loadParameters.serviceWorkerRegistrationIdentifier = resourceLoader.options().serviceWorkerRegistrationIdentifier;
@@ -472,7 +472,7 @@ void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceL
     if (frame && !frame->isMainFrame())
         loadParameters.shouldRecordFrameLoadForStorageAccess = frame->settings().requestStorageAccessThrowsExceptionUntilReload();
 
-    auto* document = frame ? frame->document() : nullptr;
+    RefPtr document = frame ? frame->document() : nullptr;
     if (resourceLoader.options().cspResponseHeaders)
         loadParameters.cspResponseHeaders = resourceLoader.options().cspResponseHeaders;
     else if (document && !document->shouldBypassMainWorldContentSecurityPolicy() && resourceLoader.options().contentSecurityPolicyImposition == ContentSecurityPolicyImposition::DoPolicyCheck) {
@@ -571,7 +571,11 @@ void WebLoaderStrategy::scheduleLoadFromNetworkProcess(ResourceLoader& resourceL
 
     if (resourceLoader.options().mode == FetchOptions::Mode::Navigate) {
         Vector<Ref<SecurityOrigin>> frameAncestorOrigins;
-        for (RefPtr frame = resourceLoader.frame()->tree().parent(); frame; frame = frame->tree().parent()) {
+
+        // Use the WebFrame to get the parent because this may be a provisional frame not hooked up to its parent yet.
+        RefPtr thisWebFrame = WebFrame::webFrame(frame ? std::optional(frame->frameID()) : std::nullopt);
+        RefPtr parentWebFrame = thisWebFrame ? thisWebFrame->parentFrame() : nullptr;
+        for (RefPtr frame = parentWebFrame ? parentWebFrame->coreFrame() : nullptr; frame; frame = frame->tree().parent()) {
             RefPtr<WebCore::SecurityOrigin> frameOrigin = frame->frameDocumentSecurityOrigin();
             if (!frameOrigin) {
                 WEBLOADERSTRATEGY_RELEASE_LOG_ERROR("scheduleLoad: Unable to get document origin of frame (frameID=%" PRIu64 ")", frame->frameID().toUInt64());
@@ -715,7 +719,7 @@ void WebLoaderStrategy::networkProcessCrashed()
 static bool shouldClearReferrerOnHTTPSToHTTPRedirect(LocalFrame* frame)
 {
     if (frame) {
-        if (auto* document = frame->document())
+        if (RefPtr document = frame->document())
             return document->referrerPolicy() == ReferrerPolicy::NoReferrerWhenDowngrade;
     }
     return true;
@@ -960,7 +964,7 @@ void WebLoaderStrategy::preconnectTo(WebCore::ResourceRequest&& request, WebPage
     }
 
     auto* mainFrame = dynamicDowncast<WebCore::LocalFrame>(webPage.mainFrame());
-    if (auto* document = mainFrame ? mainFrame->document() : nullptr) {
+    if (RefPtr document = mainFrame ? mainFrame->document() : nullptr) {
         if (shouldPreconnectAsFirstParty == ShouldPreconnectAsFirstParty::Yes)
             request.setFirstPartyForCookies(request.url());
         else

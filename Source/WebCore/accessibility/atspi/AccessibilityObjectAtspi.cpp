@@ -53,7 +53,6 @@ static inline bool roleIsTextType(AccessibilityRole role)
         || role == AccessibilityRole::Generic
         || role == AccessibilityRole::Cell
         || role == AccessibilityRole::Link
-        || role == AccessibilityRole::WebCoreLink
         || role == AccessibilityRole::ListItem
         || role == AccessibilityRole::Pre
         || role == AccessibilityRole::GridCell
@@ -250,7 +249,6 @@ static Atspi::Role atspiRole(AccessibilityRole role)
     case AccessibilityRole::GridCell:
         return Atspi::Role::TableCell;
     case AccessibilityRole::Link:
-    case AccessibilityRole::WebCoreLink:
         return Atspi::Role::Link;
     case AccessibilityRole::ImageMap:
         return Atspi::Role::ImageMap;
@@ -844,9 +842,9 @@ String AccessibilityObjectAtspi::id() const
     return { };
 }
 
-UncheckedKeyHashMap<String, String> AccessibilityObjectAtspi::attributes() const
+HashMap<String, String> AccessibilityObjectAtspi::attributes() const
 {
-    UncheckedKeyHashMap<String, String> map;
+    HashMap<String, String> map;
 #if PLATFORM(GTK)
     map.add("toolkit"_s, "WebKitGTK"_s);
 #elif PLATFORM(WPE)

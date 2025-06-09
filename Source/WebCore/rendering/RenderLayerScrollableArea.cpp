@@ -366,7 +366,7 @@ void RenderLayerScrollableArea::scrollTo(const ScrollPosition& position)
     // Update the positions of our child layers (if needed as only fixed layers should be impacted by a scroll).
     // We don't update compositing layers, because we need to do a deep update from the compositing ancestor.
     if (!view.frameView().layoutContext().isInRenderTreeLayout()) {
-        Style::AnchorPositionEvaluator::updateSnapshottedScrollOffsets(m_layer.renderer().protectedDocument());
+        Style::AnchorPositionEvaluator::updateAfterOverflowScroll(m_layer.renderer().protectedDocument());
 
         // If we're in the middle of layout, we'll just update layers once layout has finished.
         view.protectedFrameView()->updateLayerPositionsAfterOverflowScroll(m_layer);
@@ -1282,6 +1282,14 @@ void RenderLayerScrollableArea::updateScrollbarsAfterStyleChange(const RenderSty
 
     if (!m_scrollDimensionsDirty)
         updateScrollableAreaSet(hasScrollableHorizontalOverflow() || hasScrollableVerticalOverflow());
+
+    const auto scrollbarsHaveDarkAppearance = useDarkAppearanceForScrollbars();
+    if (scrollbarsHaveDarkAppearance != m_useDarkAppearanceForScrollbars) {
+        m_useDarkAppearanceForScrollbars = scrollbarsHaveDarkAppearance;
+        m_layer.setNeedsCompositingGeometryUpdate();
+        // The scroll corner must be repainted to match the new scrollbar appearance.
+        invalidateScrollCorner(scrollCornerRect());
+    }
 }
 
 void RenderLayerScrollableArea::updateScrollbarsAfterLayout()
@@ -1434,7 +1442,7 @@ bool RenderLayerScrollableArea::showsOverflowControls() const
     return true;
 }
 
-void RenderLayerScrollableArea::paintOverflowControls(GraphicsContext& context, const IntPoint& paintOffset, const IntRect& damageRect, bool paintingOverlayControls)
+void RenderLayerScrollableArea::paintOverflowControls(GraphicsContext& context, OptionSet<PaintBehavior> paintBehavior, const IntPoint& paintOffset, const IntRect& damageRect, bool paintingOverlayControls)
 {
     // Don't do anything if we have no overflow.
     auto& renderer = m_layer.renderer();
@@ -1484,12 +1492,12 @@ void RenderLayerScrollableArea::paintOverflowControls(GraphicsContext& context, 
     positionOverflowControls(toIntSize(adjustedPaintOffset));
 
     // Now that we're sure the scrollbars are in the right place, paint them.
-    if (RefPtr hBar = m_hBar; hBar && !layerForHorizontalScrollbar())
+    if (RefPtr hBar = m_hBar; hBar && (!layerForHorizontalScrollbar() || (paintBehavior & PaintBehavior::FlattenCompositingLayers)))
         hBar->paint(context, damageRect);
-    if (RefPtr vBar = m_vBar; vBar && !layerForVerticalScrollbar())
+    if (RefPtr vBar = m_vBar; vBar && (!layerForVerticalScrollbar() || (paintBehavior & PaintBehavior::FlattenCompositingLayers)))
         vBar->paint(context, damageRect);
 
-    if (layerForScrollCorner())
+    if (layerForScrollCorner() && !(paintBehavior & PaintBehavior::FlattenCompositingLayers))
         return;
 
     // We fill our scroll corner with white if we have a scrollbar that doesn't run all the way up to the
@@ -2036,5 +2044,13 @@ void RenderLayerScrollableArea::scrollbarWidthChanged(ScrollbarWidth width)
     scrollbarsController().scrollbarWidthChanged(width);
     availableContentSizeChanged(AvailableSizeChangeReason::ScrollbarsChanged);
 }
+
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+bool RenderLayerScrollableArea::vectorBasedControlsEnabled() const
+{
+    return m_layer.page().settings().vectorBasedControlsOnMacEnabled();
+}
+#endif
+
 
 } // namespace WebCore

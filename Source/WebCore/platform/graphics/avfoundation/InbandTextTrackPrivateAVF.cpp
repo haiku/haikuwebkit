@@ -122,7 +122,7 @@ Ref<InbandGenericCue> InbandTextTrackPrivateAVF::processCueAttributes(CFAttribut
         CFIndex attributeCount = CFDictionaryGetCount(attributes);
         Vector<const void*> keys(attributeCount);
         Vector<const void*> values(attributeCount);
-        CFDictionaryGetKeysAndValues(attributes, keys.data(), values.data());
+        CFDictionaryGetKeysAndValues(attributes, keys.mutableSpan().data(), values.mutableSpan().data());
 
         for (CFIndex i = 0; i < attributeCount; ++i) {
             auto key = dynamic_cf_cast<CFStringRef>(keys[i]);
@@ -569,7 +569,7 @@ void InbandTextTrackPrivateAVF::processVTTSample(CMSampleBufferRef sampleBuffer,
             });
         }
 
-        m_sampleInputBuffer.remove(0, (size_t)boxLength);
+        m_sampleInputBuffer.removeAt(0, (size_t)boxLength);
     }
 }
 

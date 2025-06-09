@@ -3761,6 +3761,11 @@ bool RenderLayerCompositor::isSeparated(const RenderObject& renderer)
 // into the hierarchy between this layer and its children in the z-order hierarchy.
 bool RenderLayerCompositor::clipsCompositingDescendants(const RenderLayer& layer)
 {
+    // View transition new always has composited descendants in the graphics layer
+    // tree due to hosting (but not in the RenderLayer tree).
+    if (layer.renderer().style().pseudoElementType() == PseudoId::ViewTransitionNew && layer.renderer().hasClipOrNonVisibleOverflow())
+        return true;
+
     if (!(layer.hasCompositingDescendant() && layer.renderer().hasClipOrNonVisibleOverflow()))
         return false;
 
@@ -3867,7 +3872,7 @@ bool RenderLayerCompositor::requiresCompositingForBackfaceVisibility(RenderLayer
 
 bool RenderLayerCompositor::requiresCompositingForViewTransition(RenderLayerModelObject& renderer) const
 {
-    return renderer.effectiveCapturedInViewTransition() || renderer.isRenderViewTransitionCapture() || renderer.isViewTransitionContainingBlock();
+    return renderer.effectiveCapturedInViewTransition() || renderer.isRenderViewTransitionCapture() || renderer.isViewTransitionContainingBlock() || (renderer.isRenderView() && renderer.protectedDocument()->activeViewTransition());
 }
 
 bool RenderLayerCompositor::requiresCompositingForVideo(RenderLayerModelObject& renderer) const

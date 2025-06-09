@@ -27,6 +27,7 @@
 #include "RenderTableCol.h"
 #include "RenderTableInlines.h"
 #include "RenderTableSection.h"
+#include <wtf/CheckedPtr.h>
 
 /*
   The text below is from the CSS 2.1 specs.
@@ -87,11 +88,11 @@ float FixedTableLayout::calcWidthArray()
     m_width.fill(Length(LengthType::Auto));
 
     unsigned currentEffectiveColumn = 0;
-    for (RenderTableCol* col = m_table->firstColumn(); col; col = col->nextColumn()) {
+    for (CheckedPtr col = m_table->firstColumn(); col; col = col->nextColumn()) {
         // RenderTableCols don't have the concept of preferred logical width, but we need to clear their dirty bits
         // so that if we call setPreferredWidthsDirty(true) on a col or one of its descendants, we'll mark it's
         // ancestors as dirty.
-        col->clearPreferredLogicalWidthsDirtyBits();
+        col->clearNeedsPreferredLogicalWidthsUpdate();
 
         // Width specified by column-groups that have column child does not affect column width in fixed layout tables
         if (col->isTableColumnGroupWithColumnChildren())
@@ -165,9 +166,9 @@ float FixedTableLayout::calcWidthArray()
 
         // FixedTableLayout doesn't use min/maxPreferredLogicalWidths, but we need to clear the
         // dirty bit on the cell so that we'll correctly mark its ancestors dirty
-        // in case we later call setPreferredLogicalWidthsDirty(true) on it later.
-        if (cell->preferredLogicalWidthsDirty())
-            cell->setPreferredLogicalWidthsDirty(false);
+        // in case we later call setNeedsPreferredWidthsUpdate() on it later.
+        if (cell->needsPreferredLogicalWidthsUpdate())
+            cell->clearNeedsPreferredWidthsUpdate();
     }
 
     return usedWidth;

@@ -107,6 +107,7 @@
 		3ABB3C7A1309C3B500E93D94 /* WebStorageTrackerClient.h in Headers */ = {isa = PBXBuildFile; fileRef = 3ABB3C781309C3B500E93D94 /* WebStorageTrackerClient.h */; };
 		3ABB3C7B1309C3B500E93D94 /* WebStorageTrackerClient.mm in Sources */ = {isa = PBXBuildFile; fileRef = 3ABB3C791309C3B500E93D94 /* WebStorageTrackerClient.mm */; };
 		3AE15D5012DBDED4009323C8 /* WebStorageManagerInternal.h in Headers */ = {isa = PBXBuildFile; fileRef = 3AE15D4F12DBDED4009323C8 /* WebStorageManagerInternal.h */; };
+		4447DA332DE7A93700C3CB99 /* TextIndicatorWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 4447DA292DE783EF00C3CB99 /* TextIndicatorWindow.h */; };
 		44BB8B141241A022001E3A22 /* WebArchiveInternal.h in Headers */ = {isa = PBXBuildFile; fileRef = 44BB8B131241A022001E3A22 /* WebArchiveInternal.h */; };
 		44DDD0822540F97F00836F81 /* TestingFunctions.h in Headers */ = {isa = PBXBuildFile; fileRef = 44DDD0812540F8C800836F81 /* TestingFunctions.h */; };
 		460135E5269FAD31007A8A95 /* WebBroadcastChannelRegistry.h in Headers */ = {isa = PBXBuildFile; fileRef = 460135E3269FAD31007A8A95 /* WebBroadcastChannelRegistry.h */; };
@@ -597,7 +598,6 @@
 		A10C1D8C1820305E0036883A /* WebPDFViewIPhone.h in Headers */ = {isa = PBXBuildFile; fileRef = A10C1D871820305E0036883A /* WebPDFViewIPhone.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		A10C1D8D1820305E0036883A /* WebPDFViewPlaceholder.h in Headers */ = {isa = PBXBuildFile; fileRef = A10C1D881820305E0036883A /* WebPDFViewPlaceholder.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		A10C1D8E1820305E0036883A /* WebPDFViewPlaceholder.mm in Sources */ = {isa = PBXBuildFile; fileRef = A10C1D891820305E0036883A /* WebPDFViewPlaceholder.mm */; };
-		A1382CDF24B15A51001645B0 /* LaBanquePostaleQuirks.js in Resources */ = {isa = PBXBuildFile; fileRef = A1382CDE24B15A51001645B0 /* LaBanquePostaleQuirks.js */; };
 		A17A11B1180DC84800E5498C /* WebPluginPackagePrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = A17A11B0180DC84800E5498C /* WebPluginPackagePrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		A560946614D8AD2600799A8A /* WebIndicateLayer.h in Headers */ = {isa = PBXBuildFile; fileRef = A560946414D8AD2600799A8A /* WebIndicateLayer.h */; };
 		A560946714D8AD2600799A8A /* WebIndicateLayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A560946514D8AD2600799A8A /* WebIndicateLayer.mm */; };
@@ -787,6 +787,8 @@
 		3ABB3C781309C3B500E93D94 /* WebStorageTrackerClient.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebStorageTrackerClient.h; sourceTree = "<group>"; };
 		3ABB3C791309C3B500E93D94 /* WebStorageTrackerClient.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebStorageTrackerClient.mm; sourceTree = "<group>"; };
 		3AE15D4F12DBDED4009323C8 /* WebStorageManagerInternal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebStorageManagerInternal.h; sourceTree = "<group>"; };
+		4447DA292DE783EF00C3CB99 /* TextIndicatorWindow.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TextIndicatorWindow.h; sourceTree = "<group>"; };
+		4447DA2A2DE783EF00C3CB99 /* TextIndicatorWindow.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = TextIndicatorWindow.mm; sourceTree = "<group>"; };
 		44BB8B131241A022001E3A22 /* WebArchiveInternal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebArchiveInternal.h; sourceTree = "<group>"; };
 		44DDD0812540F8C800836F81 /* TestingFunctions.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = TestingFunctions.h; path = mac/TestingFunctions.h; sourceTree = "<group>"; };
 		460135E2269FAD31007A8A95 /* WebBroadcastChannelRegistry.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = WebBroadcastChannelRegistry.cpp; path = WebCoreSupport/WebBroadcastChannelRegistry.cpp; sourceTree = SOURCE_ROOT; };
@@ -1388,7 +1390,6 @@
 		A10C1D881820305E0036883A /* WebPDFViewPlaceholder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WebPDFViewPlaceholder.h; path = ios/WebView/WebPDFViewPlaceholder.h; sourceTree = SOURCE_ROOT; };
 		A10C1D891820305E0036883A /* WebPDFViewPlaceholder.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = WebPDFViewPlaceholder.mm; path = ios/WebView/WebPDFViewPlaceholder.mm; sourceTree = SOURCE_ROOT; };
 		A10C1D8F1820307D0036883A /* WebKit.iOS.exp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.exports; name = WebKit.iOS.exp; path = ios/WebKit.iOS.exp; sourceTree = "<group>"; };
-		A1382CDE24B15A51001645B0 /* LaBanquePostaleQuirks.js */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.javascript; path = LaBanquePostaleQuirks.js; sourceTree = "<group>"; };
 		A17A11B0180DC84800E5498C /* WebPluginPackagePrivate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebPluginPackagePrivate.h; sourceTree = "<group>"; };
 		A560946414D8AD2600799A8A /* WebIndicateLayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WebIndicateLayer.h; sourceTree = "<group>"; };
 		A560946514D8AD2600799A8A /* WebIndicateLayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WebIndicateLayer.mm; sourceTree = "<group>"; };
@@ -1587,7 +1588,6 @@
 			isa = PBXGroup;
 			children = (
 				939811320824BF01008DF038 /* Info.plist */,
-				A1382CDE24B15A51001645B0 /* LaBanquePostaleQuirks.js */,
 				F5B67130023EDF8901C1A525 /* url_icon.tiff */,
 				5DE83A740D0F7F9400CAD12A /* WebJavaScriptTextInputPanel.xib */,
 			);
@@ -2501,6 +2501,8 @@
 				5CB05C8829CA18C400CC1AA0 /* SocketStreamHandleImpl.cpp */,
 				5CB05C8929CA18C400CC1AA0 /* SocketStreamHandleImpl.h */,
 				5CB05C8629CA18C400CC1AA0 /* SocketStreamHandleImplCFNet.cpp */,
+				4447DA292DE783EF00C3CB99 /* TextIndicatorWindow.h */,
+				4447DA2A2DE783EF00C3CB99 /* TextIndicatorWindow.mm */,
 				CEDA12DA152CBE6800D9E08D /* WebAlternativeTextClient.h */,
 				CEDA12D9152CBE6800D9E08D /* WebAlternativeTextClient.mm */,
 				460135E2269FAD31007A8A95 /* WebBroadcastChannelRegistry.cpp */,
@@ -2838,6 +2840,7 @@
 				1A6B313C1A51F3A900422975 /* StorageTracker.h in Headers */,
 				1A6B313D1A51F3A900422975 /* StorageTrackerClient.h in Headers */,
 				44DDD0822540F97F00836F81 /* TestingFunctions.h in Headers */,
+				4447DA332DE7A93700C3CB99 /* TextIndicatorWindow.h in Headers */,
 				7C1FB3C21846E8E1001A03D8 /* WebAllowDenyPolicyListener.h in Headers */,
 				CEDA12DC152CBE6800D9E08D /* WebAlternativeTextClient.h in Headers */,
 				9398109A0824BF01008DF038 /* WebArchive.h in Headers */,
@@ -3140,7 +3143,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A1382CDF24B15A51001645B0 /* LaBanquePostaleQuirks.js in Resources */,
 				939810B70824BF01008DF038 /* url_icon.tiff in Resources */,
 				939810B50824BF01008DF038 /* WebAuthenticationPanel.xib in Resources */,
 				5DE83A7A0D0F7F9400CAD12A /* WebJavaScriptTextInputPanel.xib in Resources */,

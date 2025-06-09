@@ -21,6 +21,7 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
 
+
 # Callee save
 
 macro saveIPIntRegisters()
@@ -53,31 +54,51 @@ macro restoreIPIntRegisters()
     addp IPIntCalleeSaveSpaceStackAligned, sp
 end
 
-# Dispatch target bases
+# Tail-call dispatch
 
-const ipint_dispatch_base = _ipint_unreachable
-const ipint_gc_dispatch_base = _ipint_struct_new
-const ipint_conversion_dispatch_base = _ipint_i32_trunc_sat_f32_s
-const ipint_simd_dispatch_base = _ipint_simd_v128_load_mem
-const ipint_atomic_dispatch_base = _ipint_memory_atomic_notify
-
-# Tail-call bytecode dispatch
-
-macro nextIPIntInstruction()
-    loadb [PC], t0
+macro IPIntDispatch()
 if ARM64 or ARM64E
+    # x7 = IB
     # x0 = opcode
-    pcrtoaddr ipint_dispatch_base, t7
     emit "add x0, x7, x0, lsl #8"
     emit "br x0"
 elsif X86_64
     lshiftq 8, t0
-    leap ipint_dispatch_base, t1
-    addp t0, t1
-    jmp t1
+    leap [t0, IB], t0
+    jmp t0
 else
-    error
+    break
 end
+end
+
+macro IPIntDispatchFromHR()
+if ARM64 or ARM64E
+    # x7 = IB
+    # x3 = opcode
+    emit "add x0, x7, x3, lsl #8"
+    emit "br x0"
+elsif X86_64
+    lshiftq 8, t3
+    leap (_ipint_unreachable), t1
+    addq t1, t3
+    jmp t3
+else
+    break
+end
+end
+
+macro nextIPIntInstruction()
+    loadb [PC], t0
+    IPIntDispatch()
+end
+
+macro hoistedDispatch()
+    IfIPIntUsesHR(macro()
+        IPIntDispatchFromHR()
+    end, macro()
+        loadb [PC], t0
+        IPIntDispatch()
+    end)
 end
 
 # Stack operations
@@ -100,10 +121,10 @@ end
 macro popQuad(reg)
     # FIXME: emit post-increment in offlineasm
     if ARM64 or ARM64E
-        loadqinc [sp], reg, 16
+        loadqinc [sp], reg, V128ISize
     elsif X86_64
         loadq [sp], reg
-        addq 16, sp
+        addq V128ISize, sp
     else
         break
     end
@@ -167,7 +188,8 @@ const argumINTEnd = csr3
 const argumINTDsp = csr4
 
 macro ipintEntry()
-    checkStackOverflow(ws0, argumINTEnd)
+    const argumINTEndAsScratch = argumINTEnd
+    checkStackOverflow(ws0, argumINTEndAsScratch)
 
     # Allocate space for locals and rethrow values
     if ARM64 or ARM64E
@@ -176,8 +198,9 @@ macro ipintEntry()
         loadi Wasm::IPIntCallee::m_localSizeToAlloc[ws0], argumINTTmp
         loadi Wasm::IPIntCallee::m_numRethrowSlotsToAlloc[ws0], argumINTEnd
     end
-    addq argumINTEnd, argumINTTmp
+    mulq LocalSize, argumINTEnd
     mulq LocalSize, argumINTTmp
+    subq argumINTEnd, sp
     move sp, argumINTEnd
     subq argumINTTmp, sp
     move sp, argumINTDsp
@@ -411,6 +434,8 @@ end
     loadi Wasm::IPIntCallee::m_highestReturnStackOffset[ws0], sc0
     addp cfr, sc0
 
+    # since IB is an argument register, we swap back to PC (which is unused afterwards)
+    # for x86 PC base
     initPCRelative(mint_entry, PC)
     uintDispatch()
 
@@ -428,14 +453,14 @@ ipintOp(_br, macro()
     #
     # [sp + k + numToPop] = [sp + k] for k in numToKeep-1 -> 0
     move t0, t2
-    lshiftq StackValueShift, t2
+    mulq StackValueSize, t2
     leap [sp, t2], t2
 
 .ipint_br_poploop:
     bqeq t1, 0, .ipint_br_popend
     subq 1, t1
     move t1, t3
-    lshiftq StackValueShift, t3
+    mulq StackValueSize, t3
     loadq [sp, t3], t0
     storeq t0, [t2, t3]
     loadq 8[sp, t3], t0
@@ -443,7 +468,7 @@ ipintOp(_br, macro()
     jmp .ipint_br_poploop
 .ipint_br_popend:
     loadh IPInt::BranchTargetMetadata::toPop[MC], t0
-    lshiftq StackValueShift, t0
+    mulq StackValueSize, t0
     leap [sp, t0], sp
 
 if ARM64 or ARM64E
@@ -609,7 +634,7 @@ ipintOp(_call_ref, macro()
     loadq [sp], IPIntCallCallee
     loadq 8[sp], IPIntCallFunctionSlot
     addq 16, sp
-
+    
     loadb IPInt::CallRefMetadata::length[MC], t3
     advanceMC(IPInt::CallRefMetadata::signature)
     advancePCByReg(t3)
@@ -1752,6 +1777,8 @@ ipintOp(_i32_popcnt, macro()
 end)
 
 ipintOp(_i32_add, macro()
+    HoistNextOpcode(1)
+
     # i32.add
     popInt32(t1, t2)
     popInt32(t0, t2)
@@ -1759,7 +1786,7 @@ ipintOp(_i32_add, macro()
     pushInt32(t0)
 
     advancePC(1)
-    nextIPIntInstruction()
+    hoistedDispatch()
 end)
 
 ipintOp(_i32_sub, macro()
@@ -3140,74 +3167,74 @@ reservedOpcode(0xf8)
 reservedOpcode(0xf9)
 reservedOpcode(0xfa)
 
-ipintOp(_gc_prefix, macro()
+# If the following four instructions are given more descriptive names,
+# the changes should be matched in IPINT_INSTRUCTIONS in Tools/lldb/debug_ipint.py
+
+ipintOp(_fb_block, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 30 (0x00 -> 0x1e)
-    biaeq t0, 0x1f, .ipint_gc_nonexistent
+    biaeq t0, 0x1f, .ipint_fb_nonexistent
     if ARM64 or ARM64E
-        pcrtoaddr ipint_gc_dispatch_base, t1
+        pcrtoaddr _ipint_struct_new, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
         lshifti 8, t0
-        leap ipint_gc_dispatch_base, t1
+        leap (_ipint_struct_new - _ipint_unreachable)[IB], t1
         addq t1, t0
         jmp t0
     end
 
-.ipint_gc_nonexistent:
+.ipint_fb_nonexistent:
     break
 end)
 
-ipintOp(_conversion_prefix, macro()
+ipintOp(_fc_block, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 18 (0x00 -> 0x11)
-    biaeq t0, 0x12, .ipint_conversion_nonexistent
+    biaeq t0, 0x12, .ipint_fc_nonexistent
     if ARM64 or ARM64E
-        pcrtoaddr ipint_conversion_dispatch_base, t1
+        pcrtoaddr _ipint_i32_trunc_sat_f32_s, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
         lshifti 8, t0
-        leap ipint_conversion_dispatch_base, t1
+        leap (_ipint_i32_trunc_sat_f32_s - _ipint_unreachable)[IB], t1
         addq t1, t0
         jmp t0
     end
 
-.ipint_conversion_nonexistent:
+.ipint_fc_nonexistent:
     break
 end)
 
-ipintOp(_simd_prefix, macro()
+ipintOp(_simd, macro()
+    # TODO: for relaxed SIMD, handle parsing the value.
+    # Metadata? Could just hardcode loading two bytes though
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
-    # Securty guarantee: always less than 269 (0x00 -> 0x10c)
-    biaeq t0, 0x10d, .ipint_simd_nonexistent
     if ARM64 or ARM64E
-        pcrtoaddr ipint_simd_dispatch_base, t1
+        pcrtoaddr _ipint_simd_v128_load_mem, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
         lshifti 8, t0
-        leap ipint_simd_dispatch_base, t1
+        leap (_ipint_simd_v128_load_mem - _ipint_unreachable)[IB], t1
         addq t1, t0
         jmp t0
     end
-
-.ipint_simd_nonexistent:
-    break
 end)
 
-ipintOp(_atomic_prefix, macro()
+ipintOp(_atomic, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 78 (0x00 -> 0x4e)
     biaeq t0, 0x4f, .ipint_atomic_nonexistent
     if ARM64 or ARM64E
-        pcrtoaddr ipint_atomic_dispatch_base, t1
+        pcrtoaddr _ipint_memory_atomic_notify, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
         lshifti 8, t0
-        leap ipint_atomic_dispatch_base, t1
+        leap (_ipint_memory_atomic_notify - _ipint_unreachable)[IB], t1
         addq t1, t0
         jmp t0
     end
@@ -3219,12 +3246,11 @@ end)
 reservedOpcode(0xff)
     break
 
-    #####################
-    ## GC instructions ##
-    #####################
+    #######################
+    ## 0xFB instructions ##
+    #######################
 
 ipintOp(_struct_new, macro()
-_ipint_gc_dispatch_base:
     loadp IPInt::StructNewMetadata::typeIndex[MC], a1  # type index
     move sp, a2
     operationCallMayThrow(macro() cCall3(_ipint_extern_struct_new) end)
@@ -3332,7 +3358,7 @@ ipintOp(_array_new_fixed, macro()
 
     # pop all the arguments
     loadi IPInt::ArrayNewFixedMetadata::arraySize[MC], t3 # array length
-    lshifti StackValueShift, t3
+    muli StackValueSize, t3
     addp t3, sp
 
     pushQuad(r0)
@@ -3553,7 +3579,7 @@ ipintOp(_br_on_cast, macro()
     operationCall(macro() cCall3(_ipint_extern_ref_test) end)
 
     advanceMC(constexpr (sizeof(IPInt::RefTestCastMetadata)))
-
+    
     bineq r0, 0, _ipint_br
     loadb IPInt::BranchMetadata::instructionLength[MC], t0
     advanceMC(constexpr (sizeof(IPInt::BranchMetadata)))
@@ -3570,7 +3596,7 @@ ipintOp(_br_on_cast_fail, macro()
     operationCall(macro() cCall3(_ipint_extern_ref_test) end)
 
     advanceMC(constexpr (sizeof(IPInt::RefTestCastMetadata)))
-
+    
     bieq r0, 0, _ipint_br
     loadb IPInt::BranchMetadata::instructionLength[MC], t0
     advanceMC(constexpr (sizeof(IPInt::BranchMetadata)))
@@ -3594,11 +3620,10 @@ end)
 
 ipintOp(_ref_i31, macro()
     popInt32(t0, t1)
-    andq 0x7fffffff, t0
     lshifti 0x1, t0
     rshifti 0x1, t0
     orq TagNumber, t0
-    pushInt32(t0)
+    pushQuad(t0)
 
     advancePC(2)
     nextIPIntInstruction()
@@ -3627,9 +3652,9 @@ ipintOp(_i31_get_u, macro()
     throwException(NullI31Get)
 end)
 
-    #############################
-    ## Conversion instructions ##
-    #############################
+    #######################
+    ## 0xFC instructions ##
+    #######################
 
 ipintOp(_i32_trunc_sat_f32_s, macro()
     popFloat32(ft0)
@@ -4097,7 +4122,6 @@ end)
     #######################
 
 # 0xFD 0x00 - 0xFD 0x0B: memory
-
 unimplementedInstruction(_simd_v128_load_mem)
 unimplementedInstruction(_simd_v128_load_8x8s_mem)
 unimplementedInstruction(_simd_v128_load_8x8u_mem)
@@ -4141,12 +4165,10 @@ unimplementedInstruction(_simd_i16x8_replace_lane)
 ipintOp(_simd_i32x4_extract_lane, macro()
     # i32x4.extract_lane (lane)
     loadb 2[PC], t0  # lane index
-    andi 0x3, t0
     popv v0
     if ARM64 or ARM64E
         pcrtoaddr _simd_i32x4_extract_lane_0, t1
         leap [t1, t0, 8], t0
-        emit "br x0"
         _simd_i32x4_extract_lane_0:
         umovi t0, v0_i, 0
         jmp _simd_i32x4_extract_lane_end
@@ -5933,12 +5955,12 @@ const mintSS = sc1
 
 macro mintPop(reg)
     loadq [mintSS], reg
-    addq 16, mintSS
+    addq V128ISize, mintSS
 end
 
 macro mintPopF(reg)
     loadd [mintSS], reg
-    addq 16, mintSS
+    addq V128ISize, mintSS
 end
 
 macro mintArgDispatch()
@@ -6010,9 +6032,9 @@ end
 
     loadi IPInt::CallSignatureMetadata::stackFrameSize[MC], stackFrameSize
     loadh IPInt::CallSignatureMetadata::numExtraResults[MC], extraSpaceForReturns
-    lshiftq StackValueShift, extraSpaceForReturns
+    mulq StackValueSize, extraSpaceForReturns
     loadh IPInt::CallSignatureMetadata::numArguments[MC], numArguments
-    lshiftq StackValueShift, numArguments
+    mulq StackValueSize, numArguments
     advanceMC(constexpr (sizeof(IPInt::CallSignatureMetadata)))
 
     # calculate the SP after popping all arguments
@@ -6533,6 +6555,15 @@ if X86_64
     loadp 2*SlotSize[sc3], PC
 end
 
+    # Restore IB
+    IfIPIntUsesIB(macro()
+if ARM64 or ARM64E
+        pcrtoaddr _ipint_unreachable, IB
+elsif X86_64
+        initPCRelative(mint_end, IB)
+        leap (_ipint_unreachable - _mint_end_relativePCBase)[IB], IB
+end
+    end)
     # Restore memory
     ipintReloadMemory()
     nextIPIntInstruction()

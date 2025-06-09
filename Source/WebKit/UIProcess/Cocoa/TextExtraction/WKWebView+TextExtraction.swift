@@ -41,7 +41,13 @@ private func createEditable(for editable: WKTextExtractionEditable?) -> Intellig
         return nil
     }
 
-    return .init(label: editable.label, prompt: editable.placeholder, contentType: nil, isSecure: editable.isSecure, isFocused: editable.isFocused)
+    return .init(
+        label: editable.label,
+        prompt: editable.placeholder,
+        contentType: nil,
+        isSecure: editable.isSecure,
+        isFocused: editable.isFocused
+    )
 }
 
 private func createElementContent(for item: WKTextExtractionItem) -> IntelligenceElement.Content {
@@ -74,20 +80,26 @@ private func createIntelligenceElement(item: WKTextExtractionItem) -> Intelligen
 
 @_spi(WKIntelligenceSupport)
 extension WKWebView {
+    // swift-format-ignore: NoLeadingUnderscores
     open override var _intelligenceBaseClass: AnyClass {
         WKWebView.self
     }
 
+    // swift-format-ignore: NoLeadingUnderscores
     open override func _intelligenceCollectContent(in visibleRect: CGRect, collector: UIIntelligenceElementCollector) {
-#if canImport(UIIntelligenceSupport, _version: 9007)
+        #if canImport(UIIntelligenceSupport, _version: 9007)
         let context = collector.context.createRemoteContext(description: "WKWebView")
-#else
+        #else
         let context = collector.context.createRemoteContext()
-#endif
+        #endif
         collector.collect(.remote(context))
     }
 
-    open override func _intelligenceCollectRemoteContent(in visibleRect: CGRect, remoteContextWrapper: UIIntelligenceCollectionRemoteContextWrapper) {
+    // swift-format-ignore: NoLeadingUnderscores
+    open override func _intelligenceCollectRemoteContent(
+        in visibleRect: CGRect,
+        remoteContextWrapper: UIIntelligenceCollectionRemoteContextWrapper
+    ) {
         Task { @MainActor in
             let coordinator = IntelligenceCollectionCoordinator.shared
             let collector = coordinator.createCollector(remoteContextWrapper: remoteContextWrapper)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Apple Inc. All rights reserved.
+ * Copyright (C) 2012-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,6 +40,7 @@
 #import <WebCore/AudioSession.h>
 #import <WebCore/ContentChangeObserver.h>
 #import <WebCore/Icon.h>
+#import <WebCore/LocalFrame.h>
 #import <WebCore/MouseEvent.h>
 #import <WebCore/NotImplemented.h>
 #import <WebCore/PlatformMouseEvent.h>
@@ -74,10 +75,10 @@ void WebChromeClient::setNeedsScrollNotifications(WebCore::LocalFrame&, bool)
     notImplemented();
 }
 
-void WebChromeClient::didFinishContentChangeObserving(WebCore::LocalFrame&, WKContentChange observedContentChange)
+void WebChromeClient::didFinishContentChangeObserving(WebCore::LocalFrame& frame, WKContentChange observedContentChange)
 {
     if (RefPtr page = m_page.get())
-        page->didFinishContentChangeObserving(observedContentChange);
+        page->didFinishContentChangeObserving(frame.frameID(), observedContentChange);
 }
 
 void WebChromeClient::notifyRevealedSelectionByScrollingFrame(WebCore::LocalFrame&)
@@ -194,10 +195,10 @@ bool WebChromeClient::showDataDetectorsUIForElement(const Element& element, cons
     return true;
 }
 
-void WebChromeClient::relayAccessibilityNotification(const String& notificationName, const RetainPtr<NSData>& notificationData) const
+void WebChromeClient::relayAccessibilityNotification(String&& notificationName, RetainPtr<NSData>&& notificationData) const
 {
     if (RefPtr page = m_page.get())
-        page->relayAccessibilityNotification(notificationName, notificationData);
+        page->relayAccessibilityNotification(WTFMove(notificationName), WTFMove(notificationData));
 }
 
 } // namespace WebKit

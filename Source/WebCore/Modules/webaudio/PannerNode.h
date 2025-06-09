@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010, Google Inc. All rights reserved.
+ * Copyright (C) 2010 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -128,7 +128,7 @@ private:
     void invalidateCachedPropertiesIfNecessary() WTF_REQUIRES_LOCK(m_processLock);
 
     const AzimuthElevation& azimuthElevation() WTF_REQUIRES_LOCK(m_processLock);
-    void processSampleAccurateValues(AudioBus* destination, const AudioBus* source, size_t framesToProcess) WTF_REQUIRES_LOCK(m_processLock);
+    void processSampleAccurateValues(AudioBus& destination, const AudioBus& source, size_t framesToProcess) WTF_REQUIRES_LOCK(m_processLock);
     bool hasSampleAccurateValues() const WTF_REQUIRES_LOCK(m_processLock);
     bool shouldUseARate() const WTF_REQUIRES_LOCK(m_processLock);
 

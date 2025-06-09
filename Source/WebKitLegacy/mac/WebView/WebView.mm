@@ -197,6 +197,7 @@
 #import <WebCore/MemoryCache.h>
 #import <WebCore/MemoryRelease.h>
 #import <WebCore/MutableStyleProperties.h>
+#import <WebCore/NativeImage.h>
 #import <WebCore/NetworkStorageSession.h>
 #import <WebCore/NodeList.h>
 #import <WebCore/Notification.h>
@@ -288,6 +289,7 @@
 #import <wtf/spi/darwin/dyldSPI.h>
 
 #if !PLATFORM(IOS_FAMILY)
+#import "TextIndicatorWindow.h"
 #import "WebContextMenuClient.h"
 #import "WebFullScreenController.h"
 #import "WebImmediateActionController.h"
@@ -298,7 +300,6 @@
 #import "WebPDFView.h"
 #import "WebVideoFullscreenController.h"
 #import <WebCore/TextIndicator.h>
-#import <WebCore/TextIndicatorWindow.h>
 #import <pal/spi/cocoa/AVKitSPI.h>
 #import <pal/spi/mac/LookupSPI.h>
 #import <pal/spi/mac/NSImmediateActionGestureRecognizerSPI.h>
@@ -1334,31 +1335,6 @@ static RetainPtr<CFMutableSetRef>& allWebViewsSet()
 
 #endif
 
-#if PLATFORM(IOS) || PLATFORM(VISION)
-static bool needsLaBanquePostaleQuirks()
-{
-    static bool needsQuirks = WTF::IOSApplication::isLaBanquePostale() && !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::NoLaBanquePostaleQuirks);
-    return needsQuirks;
-}
-
-static RetainPtr<NSString> createLaBanquePostaleQuirksScript()
-{
-    NSURL *scriptURL = [[NSBundle bundleForClass:WebView.class] URLForResource:@"LaBanquePostaleQuirks" withExtension:@"js"];
-    NSStringEncoding encoding;
-    return adoptNS([[NSString alloc] initWithContentsOfURL:scriptURL usedEncoding:&encoding error:nullptr]);
-}
-
-- (void)_injectLaBanquePostaleQuirks
-{
-    ASSERT(needsLaBanquePostaleQuirks());
-    static NeverDestroyed<RetainPtr<NSString>> quirksScript = createLaBanquePostaleQuirksScript();
-
-    using namespace WebCore;
-    auto userScript = makeUnique<UserScript>(quirksScript.get().get(), URL(), Vector<String>(), Vector<String>(), UserScriptInjectionTime::DocumentEnd, UserContentInjectedFrames::InjectInAllFrames);
-    _private->group->userContentController().addUserScript(*core(WebScriptWorld.world), WTFMove(userScript));
-}
-#endif
-
 #if PLATFORM(IOS_FAMILY)
 static bool isInternalInstall()
 {
@@ -1585,11 +1561,6 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
 
     _private->page->setCanStartMedia([self window]);
     _private->page->settings().setLocalStorageDatabasePath([[self preferences] _localStorageDatabasePath]);
-
-#if PLATFORM(IOS) || PLATFORM(VISION)
-    if (needsLaBanquePostaleQuirks())
-        [self _injectLaBanquePostaleQuirks];
-#endif
 
 #if PLATFORM(IOS_FAMILY)
     // Preserve the behavior we had before <rdar://problem/7580867>
@@ -1942,10 +1913,10 @@ static WebCore::ApplicationCacheStorage& webApplicationCacheStorage()
 {
     auto& dragImage = dragItem.image;
     auto image = dragImage.get().get();
-    auto indicatorData = dragImage.indicatorData();
+    RefPtr<WebCore::TextIndicator> textIndicator = dragImage.textIndicator();
 
-    if (indicatorData)
-        _private->textIndicatorData = adoptNS([[WebUITextIndicatorData alloc] initWithImage:image textIndicatorData:indicatorData.value() scale:_private->page->deviceScaleFactor()]);
+    if (textIndicator)
+        _private->textIndicatorData = adoptNS([[WebUITextIndicatorData alloc] initWithImage:image textIndicatorData:textIndicator->data() scale:_private->page->deviceScaleFactor()]);
     else
         _private->textIndicatorData = adoptNS([[WebUITextIndicatorData alloc] initWithImage:image scale:_private->page->deviceScaleFactor()]);
     _private->draggedLinkURL = dragItem.url.isEmpty() ? RetainPtr<NSURL>() : dragItem.url.createNSURL();
@@ -8828,8 +8799,10 @@ FORWARD(toggleUnderline)
 
 - (void)_didCompleteRenderingUpdateDisplay
 {
-    if (_private->page)
+    if (_private->page) {
+        _private->page->didUpdateRendering();
         _private->page->didCompleteRenderingUpdateDisplay();
+    }
 
     if (_private->renderingUpdateScheduler)
         _private->renderingUpdateScheduler->didCompleteRenderingUpdateDisplay();
@@ -8897,7 +8870,7 @@ FORWARD(toggleUnderline)
 
     if (!_private->fullscreenControllersExiting.isEmpty()) {
         auto controller = _private->fullscreenControllersExiting.first();
-        _private->fullscreenControllersExiting.remove(0);
+        _private->fullscreenControllersExiting.removeAt(0);
 
         [controller exitFullscreen];
         return;
@@ -9059,8 +9032,13 @@ FORWARD(toggleUnderline)
 
 - (id)_animationControllerForDictionaryLookupPopupInfo:(const WebCore::DictionaryPopupInfo&)dictionaryPopupInfo
 {
+#if ENABLE(LEGACY_PDFKIT_PLUGIN)
     if (!dictionaryPopupInfo.platformData.attributedString.nsAttributedString())
         return nil;
+#else
+    if (!dictionaryPopupInfo.text)
+        return nil;
+#endif
 
     [self _prepareForDictionaryLookup];
 
@@ -9091,7 +9069,7 @@ FORWARD(toggleUnderline)
 - (void)_setTextIndicator:(WebCore::TextIndicator&)textIndicator withLifetime:(WebCore::TextIndicatorLifetime)lifetime
 {
     if (!_private->textIndicatorWindow)
-        _private->textIndicatorWindow = makeUnique<WebCore::TextIndicatorWindow>(self);
+        _private->textIndicatorWindow = makeUnique<TextIndicatorWindow>(self);
 
     NSRect textBoundingRectInWindowCoordinates = [self convertRect:[self _convertRectFromRootView:textIndicator.textBoundingRectInRootViewCoordinates()] toView:nil];
     NSRect textBoundingRectInScreenCoordinates = [self.window convertRectToScreen:textBoundingRectInWindowCoordinates];
@@ -9127,8 +9105,13 @@ FORWARD(toggleUnderline)
 
 - (void)_showDictionaryLookupPopup:(const WebCore::DictionaryPopupInfo&)dictionaryPopupInfo
 {
+#if ENABLE(LEGACY_PDFKIT_PLUGIN)
     if (!dictionaryPopupInfo.platformData.attributedString.nsAttributedString())
         return;
+#else
+    if (!dictionaryPopupInfo.text)
+        return;
+#endif
 
     [self _prepareForDictionaryLookup];
 

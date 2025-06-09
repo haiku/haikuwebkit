@@ -168,6 +168,7 @@ public:
     WEBCORE_EXPORT GraphicsLayer* graphicsLayerForPlatformWidget(PlatformWidget);
     WEBCORE_EXPORT GraphicsLayer* graphicsLayerForPageScale();
     WEBCORE_EXPORT GraphicsLayer* graphicsLayerForScrolledContents();
+    WEBCORE_EXPORT GraphicsLayer* clipLayer() const;
 #if HAVE(RUBBER_BANDING)
     WEBCORE_EXPORT GraphicsLayer* graphicsLayerForTransientZoomShadow();
 #endif
@@ -364,7 +365,7 @@ public:
     // and adjusting for page scale.
     LayoutPoint scrollPositionForFixedPosition() const;
 
-    WEBCORE_EXPORT FixedContainerEdges fixedContainerEdges(BoxSideSet) const;
+    WEBCORE_EXPORT std::pair<FixedContainerEdges, WeakElementEdges> fixedContainerEdges(BoxSideSet) const;
     
     // Static function can be called from another thread.
     WEBCORE_EXPORT static LayoutPoint scrollPositionForFixedPosition(const LayoutRect& visibleContentRect, const LayoutSize& totalContentsSize, const LayoutPoint& scrollPosition, const LayoutPoint& scrollOrigin, float frameScaleFactor, bool fixedElementsLayoutRelativeToFrame, ScrollBehaviorForFixedElements, int headerHeight, int footerHeight);

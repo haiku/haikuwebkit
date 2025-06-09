@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -76,7 +76,6 @@
 #import <WebCore/PromisedAttachmentInfo.h>
 #import <WebCore/SharedBuffer.h>
 #import <WebCore/TextIndicator.h>
-#import <WebCore/TextIndicatorWindow.h>
 #import <WebCore/TextUndoInsertionMarkupMac.h>
 #import <WebCore/ValidationBubble.h>
 #import <WebCore/WebCoreCALayerExtras.h>
@@ -530,9 +529,9 @@ RefPtr<WebDateTimePicker> PageClientImpl::createDateTimePicker(WebPageProxy& pag
     return WebDateTimePickerMac::create(page, m_view.get().get());
 }
 
-Ref<ValidationBubble> PageClientImpl::createValidationBubble(const String& message, const ValidationBubble::Settings& settings)
+Ref<ValidationBubble> PageClientImpl::createValidationBubble(String&& message, const ValidationBubble::Settings& settings)
 {
-    return ValidationBubble::create(m_view.get().get(), message, settings);
+    return ValidationBubble::create(m_view.get().get(), WTFMove(message), settings);
 }
 
 void PageClientImpl::showBrowsingWarning(const BrowsingWarning& warning, CompletionHandler<void(Variant<WebKit::ContinueUnsafeLoad, URL>&&)>&& completionHandler)
@@ -559,24 +558,9 @@ void PageClientImpl::clearBrowsingWarningIfForMainFrameNavigation()
     m_impl->clearWarningViewIfForMainFrameNavigation();
 }
 
-void PageClientImpl::setTextIndicator(Ref<TextIndicator> textIndicator, WebCore::TextIndicatorLifetime lifetime)
+CALayer* PageClientImpl::textIndicatorInstallationLayer()
 {
-    m_impl->setTextIndicator(textIndicator.get(), lifetime);
-}
-
-void PageClientImpl::updateTextIndicator(Ref<TextIndicator> textIndicator)
-{
-    m_impl->updateTextIndicator(textIndicator.get());
-}
-
-void PageClientImpl::clearTextIndicator(WebCore::TextIndicatorDismissalAnimation dismissalAnimation)
-{
-    m_impl->clearTextIndicatorWithAnimation(dismissalAnimation);
-}
-
-void PageClientImpl::setTextIndicatorAnimationProgress(float progress)
-{
-    m_impl->setTextIndicatorAnimationProgress(progress);
+    return m_impl->textIndicatorInstallationLayer();
 }
 
 void PageClientImpl::accessibilityWebProcessTokenReceived(std::span<const uint8_t> data, pid_t pid)
@@ -648,9 +632,9 @@ void PageClientImpl::selectionDidChange()
     m_impl->selectionDidChange();
 }
 
-bool PageClientImpl::showShareSheet(const ShareDataWithParsedURL& shareData, WTF::CompletionHandler<void(bool)>&& completionHandler)
+bool PageClientImpl::showShareSheet(ShareDataWithParsedURL&& shareData, WTF::CompletionHandler<void(bool)>&& completionHandler)
 {
-    m_impl->showShareSheet(shareData, WTFMove(completionHandler), webView().get());
+    m_impl->showShareSheet(WTFMove(shareData), WTFMove(completionHandler), webView().get());
     return true;
 }
 
@@ -682,12 +666,6 @@ void PageClientImpl::gestureEventWasNotHandledByWebCore(const NativeWebGestureEv
 void PageClientImpl::didPerformDictionaryLookup(const DictionaryPopupInfo& dictionaryPopupInfo)
 {
     m_impl->prepareForDictionaryLookup();
-
-    DictionaryLookup::showPopup(dictionaryPopupInfo, m_view.get().get(), [this](TextIndicator& textIndicator) {
-        m_impl->setTextIndicator(textIndicator, WebCore::TextIndicatorLifetime::Permanent);
-    }, nullptr, [this]() {
-        m_impl->clearTextIndicatorWithAnimation(WebCore::TextIndicatorDismissalAnimation::None);
-    });
 }
 
 void PageClientImpl::showCorrectionPanel(AlternativeTextType type, const FloatRect& boundingBoxOfReplacedString, const String& replacedString, const String& replacementString, const Vector<String>& alternativeReplacementStrings)

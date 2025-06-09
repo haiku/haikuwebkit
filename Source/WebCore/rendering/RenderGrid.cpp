@@ -289,14 +289,14 @@ static void cacheBaselineAlignedGridItems(const RenderGrid& grid, GridTrackSizin
             if (inner && inner->isSubgridInParentDirection(GridTrackSizingDirection::ForRows))
                 innerAlignmentContextTypes.add(GridLayoutFunctions::isOrthogonalGridItem(grid, gridItem) ? GridTrackSizingDirection::ForColumns : GridTrackSizingDirection::ForRows);
             else if (grid.isBaselineAlignmentForGridItem(gridItem, GridTrackSizingDirection::ForRows))
-                algorithm.cacheBaselineAlignedItem(gridItem, gridAxisForDirection(GridTrackSizingDirection::ForRows), cachingRowSubgridsForRootGrid);
+                algorithm.cacheBaselineAlignedItem(gridItem, GridTrackSizingDirection::ForRows, cachingRowSubgridsForRootGrid);
         }
 
         if (alignmentContextTypes.contains(GridTrackSizingDirection::ForColumns)) {
             if (inner && inner->isSubgridInParentDirection(GridTrackSizingDirection::ForColumns))
                 innerAlignmentContextTypes.add(GridLayoutFunctions::isOrthogonalGridItem(grid, gridItem) ? GridTrackSizingDirection::ForRows : GridTrackSizingDirection::ForColumns);
             else if (grid.isBaselineAlignmentForGridItem(gridItem, GridTrackSizingDirection::ForColumns))
-                algorithm.cacheBaselineAlignedItem(gridItem, gridAxisForDirection(GridTrackSizingDirection::ForColumns), cachingRowSubgridsForRootGrid);
+                algorithm.cacheBaselineAlignedItem(gridItem, GridTrackSizingDirection::ForColumns, cachingRowSubgridsForRootGrid);
         }
 
         if (inner && cachingRowSubgridsForRootGrid)
@@ -494,9 +494,9 @@ void RenderGrid::layoutGrid(RelayoutChildren relayoutChildren)
             relayoutChildren = RelayoutChildren::Yes;
 
         if (isDocumentElementRenderer())
-            layoutPositionedObjects(RelayoutChildren::Yes);
+            layoutOutOfFlowBoxes(RelayoutChildren::Yes);
         else
-            layoutPositionedObjects(relayoutChildren);
+            layoutOutOfFlowBoxes(relayoutChildren);
 
         m_trackSizingAlgorithm.reset();
 
@@ -631,9 +631,9 @@ void RenderGrid::layoutMasonry(RelayoutChildren relayoutChildren)
             relayoutChildren = RelayoutChildren::Yes;
 
         if (isDocumentElementRenderer())
-            layoutPositionedObjects(RelayoutChildren::Yes);
+            layoutOutOfFlowBoxes(RelayoutChildren::Yes);
         else
-            layoutPositionedObjects(relayoutChildren);
+            layoutOutOfFlowBoxes(relayoutChildren);
 
         m_trackSizingAlgorithm.reset();
 
@@ -769,7 +769,7 @@ void RenderGrid::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, Layo
     performPreLayoutForGridItems(algorithm, ShouldUpdateGridAreaLogicalSize::No);
 
     if (m_baselineItemsCached)
-        algorithm.copyBaselineItemsCache(m_trackSizingAlgorithm, gridAxisForDirection(GridTrackSizingDirection::ForColumns));
+        algorithm.copyBaselineItemsCache(m_trackSizingAlgorithm, GridTrackSizingDirection::ForColumns);
     else {
         auto emptyCallback = [](RenderBox*) { };
         cacheBaselineAlignedGridItems(*this, algorithm, { GridTrackSizingDirection::ForColumns }, emptyCallback, !isSubgridRows());
@@ -1592,7 +1592,7 @@ void RenderGrid::layoutMasonryItems(GridLayoutState& gridLayoutState)
 void RenderGrid::prepareGridItemForPositionedLayout(RenderBox& gridItem)
 {
     ASSERT(gridItem.isOutOfFlowPositioned());
-    gridItem.containingBlock()->insertPositionedObject(gridItem);
+    gridItem.containingBlock()->addOutOfFlowBox(gridItem);
 
     RenderLayer* gridItemLayer = gridItem.layer();
     // Static position of a positioned grid item should use the content-box (https://drafts.csswg.org/css-grid/#static-position).
@@ -1605,7 +1605,7 @@ bool RenderGrid::hasStaticPositionForGridItem(const RenderBox& gridItem, GridTra
     return direction == GridTrackSizingDirection::ForColumns ? gridItem.style().hasStaticInlinePosition(isHorizontalWritingMode()) : gridItem.style().hasStaticBlockPosition(isHorizontalWritingMode());
 }
 
-void RenderGrid::layoutPositionedObject(RenderBox& gridItem, RelayoutChildren relayoutChildren, bool fixedPositionObjectsOnly)
+void RenderGrid::layoutOutOfFlowBox(RenderBox& gridItem, RelayoutChildren relayoutChildren, bool fixedPositionObjectsOnly)
 {
     if (layoutContext().isSkippedContentRootForLayout(*this)) {
         gridItem.clearNeedsLayoutForSkippedContent();
@@ -1622,7 +1622,7 @@ void RenderGrid::layoutPositionedObject(RenderBox& gridItem, RelayoutChildren re
     // for positioned items in order to get the offsets properly resolved.
     gridItem.setChildNeedsLayout(MarkOnlyThis);
 
-    RenderBlock::layoutPositionedObject(gridItem, relayoutChildren, fixedPositionObjectsOnly);
+    RenderBlock::layoutOutOfFlowBox(gridItem, relayoutChildren, fixedPositionObjectsOnly);
 }
 
 LayoutUnit RenderGrid::gridAreaBreadthForGridItemIncludingAlignmentOffsets(const RenderBox& gridItem, GridTrackSizingDirection direction) const
@@ -1951,14 +1951,13 @@ bool RenderGrid::isBaselineAlignmentForGridItem(const RenderBox& gridItem) const
     return isBaselineAlignmentForGridItem(gridItem, GridTrackSizingDirection::ForColumns) || isBaselineAlignmentForGridItem(gridItem, GridTrackSizingDirection::ForRows);
 }
 
-bool RenderGrid::isBaselineAlignmentForGridItem(const RenderBox& gridItem, GridTrackSizingDirection alignmentContextType, AllowedBaseLine allowed) const
+bool RenderGrid::isBaselineAlignmentForGridItem(const RenderBox& gridItem, GridTrackSizingDirection alignmentContextType) const
 {
     if (gridItem.isOutOfFlowPositioned())
         return false;
     auto align = selfAlignmentForGridItem(alignmentContextType, gridItem).position();
     bool hasAutoMargins = alignmentContextType == GridTrackSizingDirection::ForRows ? hasAutoMarginsInColumnAxis(gridItem) : hasAutoMarginsInRowAxis(gridItem);
-    bool isBaseline = allowed == AllowedBaseLine::FirstLine ? isFirstBaselinePosition(align) : isBaselinePosition(align);
-    return isBaseline && !hasAutoMargins;
+    return isBaselinePosition(align) && !hasAutoMargins;
 }
 
 // FIXME: This logic is shared by RenderFlexibleBox, so it might be refactored somehow.
@@ -2025,7 +2024,7 @@ SingleThreadWeakPtr<RenderBox> RenderGrid::getBaselineGridItem(ItemPosition alig
         for (auto& gridItem : cell) {
             ASSERT(gridItem.get());
             // If an item participates in baseline alignment, we select such item.
-            if (isBaselineAlignmentForGridItem(*gridItem, GridTrackSizingDirection::ForRows, AllowedBaseLine::BothLines)) {
+            if (isBaselineAlignmentForGridItem(*gridItem, GridTrackSizingDirection::ForRows)) {
                 auto gridItemAlignment = selfAlignmentForGridItem(GridTrackSizingDirection::ForRows, *gridItem).position();
                 if (rowIndexDeterminingBaseline == GridLayoutFunctions::alignmentContextForBaselineAlignment(gridSpanForGridItem(*gridItem, GridTrackSizingDirection::ForRows), gridItemAlignment)) {
                     // FIXME: self-baseline and content-baseline alignment not implemented yet.
@@ -2058,7 +2057,7 @@ LayoutUnit RenderGrid::columnAxisBaselineOffsetForGridItem(const RenderBox& grid
             return outer->rowAxisBaselineOffsetForGridItem(gridItem);
         return outer->columnAxisBaselineOffsetForGridItem(gridItem);
     }
-    return m_trackSizingAlgorithm.baselineOffsetForGridItem(gridItem, gridAxisForDirection(GridTrackSizingDirection::ForRows));
+    return m_trackSizingAlgorithm.baselineOffsetForGridItem(gridItem, GridTrackSizingDirection::ForRows);
 }
 
 LayoutUnit RenderGrid::rowAxisBaselineOffsetForGridItem(const RenderBox& gridItem) const
@@ -2074,7 +2073,7 @@ LayoutUnit RenderGrid::rowAxisBaselineOffsetForGridItem(const RenderBox& gridIte
             return outer->columnAxisBaselineOffsetForGridItem(gridItem);
         return outer->rowAxisBaselineOffsetForGridItem(gridItem);
     }
-    return m_trackSizingAlgorithm.baselineOffsetForGridItem(gridItem, gridAxisForDirection(GridTrackSizingDirection::ForColumns));
+    return m_trackSizingAlgorithm.baselineOffsetForGridItem(gridItem, GridTrackSizingDirection::ForColumns);
 }
 
 GridAxisPosition RenderGrid::columnAxisPositionForGridItem(const RenderBox& gridItem) const
@@ -2352,7 +2351,7 @@ std::optional<LayoutRange> RenderGrid::gridAreaRowRangeForOutOfFlow(const Render
     if (!areaSize)
         return std::nullopt;
     LayoutRange range(borderBefore(), areaSize->value());
-    if (auto line = m_outOfFlowItemRow.get(&gridItem))
+    if (auto line = m_outOfFlowItemRow.get(gridItem))
         range.moveTo(m_rowPositions[line.value()]);
     return range;
 }
@@ -2364,7 +2363,7 @@ std::optional<LayoutRange> RenderGrid::gridAreaColumnRangeForOutOfFlow(const Ren
     if (!areaSize)
         return std::nullopt;
     LayoutRange range(borderStart(), areaSize->value());
-    if (auto line = m_outOfFlowItemColumn.get(&gridItem))
+    if (auto line = m_outOfFlowItemColumn.get(gridItem))
         range.moveTo(m_columnPositions[line.value()]);
     return range;
 }

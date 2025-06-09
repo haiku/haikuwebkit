@@ -90,9 +90,9 @@ static bool isAcceptableCSSStyleSheetParent(Node* parentNode)
 }
 #endif // ASSERT_ENABLED
 
-Ref<CSSStyleSheet> CSSStyleSheet::create(Ref<StyleSheetContents>&& sheet, CSSImportRule* ownerRule)
+Ref<CSSStyleSheet> CSSStyleSheet::create(Ref<StyleSheetContents>&& sheet, CSSImportRule* ownerRule, std::optional<bool> isOriginClean)
 {
-    return adoptRef(*new CSSStyleSheet(WTFMove(sheet), ownerRule));
+    return adoptRef(*new CSSStyleSheet(WTFMove(sheet), ownerRule, isOriginClean));
 }
 
 Ref<CSSStyleSheet> CSSStyleSheet::create(Ref<StyleSheetContents>&& sheet, Node& ownerNode, const std::optional<bool>& isCleanOrigin)
@@ -121,8 +121,9 @@ ExceptionOr<Ref<CSSStyleSheet>> CSSStyleSheet::create(Document& document, Init&&
     return adoptRef(*new CSSStyleSheet(StyleSheetContents::create(parserContext), document, WTFMove(init)));
 }
 
-CSSStyleSheet::CSSStyleSheet(Ref<StyleSheetContents>&& contents, CSSImportRule* ownerRule)
+CSSStyleSheet::CSSStyleSheet(Ref<StyleSheetContents>&& contents, CSSImportRule* ownerRule, std::optional<bool> isOriginClean)
     : m_contents(WTFMove(contents))
+    , m_isOriginClean(isOriginClean)
     , m_ownerRule(ownerRule)
 {
     if (auto* parent = parentStyleSheet())
@@ -158,7 +159,7 @@ CSSStyleSheet::CSSStyleSheet(Ref<StyleSheetContents>&& contents, Document& docum
         if (auto queries = mediaList->mediaQueries(); !queries.isEmpty())
             setMediaQueries(WTFMove(queries));
     }, [this](String&& mediaString) {
-        setMediaQueries(MQ::MediaQueryParser::parse(mediaString, { }));
+        setMediaQueries(MQ::MediaQueryParser::parse(mediaString, strictCSSParserContext()));
     });
 }
 
@@ -337,9 +338,11 @@ bool CSSStyleSheet::canAccessRules() const
     URL baseURL = m_contents->baseURL();
     if (baseURL.isEmpty())
         return true;
+
     Document* document = ownerDocument();
     if (!document)
-        return true;
+        return false;
+
     return document->protectedSecurityOrigin()->canRequest(baseURL, OriginAccessPatternsForWebProcess::singleton());
 }
 
@@ -348,6 +351,9 @@ ExceptionOr<unsigned> CSSStyleSheet::insertRule(const String& ruleString, unsign
     LOG_WITH_STREAM(StyleSheets, stream << "CSSStyleSheet " << this << " insertRule() " << ruleString << " at " << index);
 
     ASSERT(m_childRuleCSSOMWrappers.isEmpty() || m_childRuleCSSOMWrappers.size() == m_contents->ruleCount());
+
+    if (!canAccessRules())
+        return Exception { ExceptionCode::SecurityError, "Not allowed to insert rule into cross-origin stylesheet"_s };
 
     if (index > length())
         return Exception { ExceptionCode::IndexSizeError };
@@ -376,6 +382,9 @@ ExceptionOr<void> CSSStyleSheet::deleteRule(unsigned index)
 
     ASSERT(m_childRuleCSSOMWrappers.isEmpty() || m_childRuleCSSOMWrappers.size() == m_contents->ruleCount());
 
+    if (!canAccessRules())
+        return Exception { ExceptionCode::SecurityError, "Not allowed to delete rule from cross-origin stylesheet"_s };
+
     if (index >= length())
         return Exception { ExceptionCode::IndexSizeError };
     RuleMutationScope mutationScope(this);
@@ -386,7 +395,7 @@ ExceptionOr<void> CSSStyleSheet::deleteRule(unsigned index)
     if (!m_childRuleCSSOMWrappers.isEmpty()) {
         if (m_childRuleCSSOMWrappers[index])
             m_childRuleCSSOMWrappers[index]->setParentStyleSheet(nullptr);
-        m_childRuleCSSOMWrappers.remove(index);
+        m_childRuleCSSOMWrappers.removeAt(index);
     }
 
     return { };
@@ -584,7 +593,7 @@ Ref<StyleSheetContents> CSSStyleSheet::protectedContents()
     return m_contents;
 }
 
-void CSSStyleSheet::getChildStyleSheets(UncheckedKeyHashSet<RefPtr<CSSStyleSheet>>& childStyleSheets)
+void CSSStyleSheet::getChildStyleSheets(HashSet<RefPtr<CSSStyleSheet>>& childStyleSheets)
 {
     RefPtr ruleList = cssRules();
     if (!ruleList)

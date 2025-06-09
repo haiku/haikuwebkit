@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -37,6 +37,7 @@
 #include "VisibleUnits.h"
 #include <limits.h>
 #include <wtf/Compiler.h>
+#include <wtf/Deque.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
 #include <wtf/ListHashSet.h>
@@ -119,7 +120,7 @@ private:
         AccessibilityObjectInclusion ignored;
     };
 
-    UncheckedKeyHashMap<AXID, CachedAXObjectAttributes> m_idMapping;
+    HashMap<AXID, CachedAXObjectAttributes> m_idMapping;
 };
 
 struct VisiblePositionIndex {
@@ -444,7 +445,7 @@ public:
         AtomString oldValue;
         AtomString newValue;
     };
-    using DeferredCollection = Variant<UncheckedKeyHashMap<Element*, String>
+    using DeferredCollection = Variant<HashMap<Element*, String>
         , HashSet<AXID>
         , ListHashSet<Node*>
         , ListHashSet<Ref<AccessibilityObject>>
@@ -644,7 +645,7 @@ public:
     void updateRelations(Element&, const QualifiedName&);
 
 #if PLATFORM(IOS_FAMILY)
-    void relayNotification(const String&, RetainPtr<NSData>);
+    void relayNotification(String&&, RetainPtr<NSData>&&);
 #endif
 
 #if PLATFORM(MAC)
@@ -664,9 +665,8 @@ public:
     WEBCORE_EXPORT static void initializeAXThreadIfNeeded();
 private:
     static bool clientSupportsIsolatedTree();
-    AXCoreObject* isolatedTreeRootObject();
     // Propagates the root of the isolated tree back into the Core and WebKit.
-    void setIsolatedTreeRoot(AXCoreObject*);
+    void setIsolatedTree(Ref<AXIsolatedTree>);
     void setIsolatedTreeFocusedObject(AccessibilityObject*);
     RefPtr<AXIsolatedTree> getOrCreateIsolatedTree();
     void buildIsolatedTree();
@@ -820,7 +820,7 @@ private:
     void updateRelationsForTree(ContainerNode&);
     void relationsNeedUpdate(bool);
     void dirtyIsolatedTreeRelations();
-    UncheckedKeyHashMap<AXID, AXRelations> relations();
+    HashMap<AXID, AXRelations> relations();
     const HashSet<AXID>& relationTargetIDs();
     bool isDescendantOfRelatedNode(Node&);
 
@@ -835,13 +835,13 @@ private:
     WeakPtr<Document, WeakPtrImplWithEventTargetData> m_document;
     const std::optional<PageIdentifier> m_pageID; // constant for object's lifetime.
     OptionSet<ActivityState> m_pageActivityState;
-    UncheckedKeyHashMap<AXID, Ref<AccessibilityObject>> m_objects;
+    HashMap<AXID, Ref<AccessibilityObject>> m_objects;
 
     WeakHashMap<RenderObject, AXID, SingleThreadWeakPtrImpl> m_renderObjectMapping;
     WeakHashMap<Widget, AXID, SingleThreadWeakPtrImpl> m_widgetObjectMapping;
 
     // FIXME: The type for m_nodeObjectMapping really should be:
-    // UncheckedKeyHashMap<WeakRef<Node, WeakPtrImplWithEventTargetData>, AXID>
+    // HashMap<WeakRef<Node, WeakPtrImplWithEventTargetData>, AXID>
     // As this guarantees that we've called AXObjectCache::remove(Node&) for every node we store.
     // However, in rare circumstances, we can add a node to this map, then later the document associated
     // with the node loses its m_frame via detachFromFrame(). Then the node gets destroyed, but we can't
@@ -869,7 +869,7 @@ private:
 
 #if PLATFORM(COCOA)
     Timer m_passwordNotificationTimer;
-    Vector<std::pair<Ref<AccessibilityObject>, AXTextChangeContext>> m_passwordNotifications;
+    Deque<std::pair<Ref<AccessibilityObject>, AXTextChangeContext>> m_passwordNotifications;
 #endif
 
     Timer m_liveRegionChangedPostTimer;
@@ -933,13 +933,13 @@ private:
     unsigned m_cacheUpdateDeferredCount { 0 };
 
     // Relationships between objects.
-    UncheckedKeyHashMap<AXID, AXRelations> m_relations;
+    HashMap<AXID, AXRelations> m_relations;
     bool m_relationsNeedUpdate { true };
     HashSet<AXID> m_relationTargets;
-    UncheckedKeyHashMap<AXID, AXRelations> m_recentlyRemovedRelations;
+    HashMap<AXID, AXRelations> m_recentlyRemovedRelations;
 
 #if USE(ATSPI)
-    ListHashSet<RefPtr<AXCoreObject>> m_deferredParentChangedList;
+    ListHashSet<RefPtr<AccessibilityObject>> m_deferredParentChangedList;
 #endif
 
 #if PLATFORM(MAC)

@@ -292,6 +292,9 @@ StringView gstStructureGetName(const GstStructure*);
 template<typename T>
 Vector<T> gstStructureGetArray(const GstStructure*, ASCIILiteral key);
 
+template<typename T>
+Vector<T> gstStructureGetList(const GstStructure*, ASCIILiteral key);
+
 String gstStructureToJSONString(const GstStructure*);
 
 GstClockTime webkitGstInitTime();
@@ -302,6 +305,8 @@ void fillVideoInfoColorimetryFromColorSpace(GstVideoInfo*, const PlatformVideoCo
 
 void configureAudioDecoderForHarnessing(const GRefPtr<GstElement>&);
 void configureVideoDecoderForHarnessing(const GRefPtr<GstElement>&);
+
+void configureMediaStreamAudioDecoder(GstElement*);
 
 void configureMediaStreamVideoDecoder(GstElement*);
 void configureVideoRTPDepayloader(GstElement*);
@@ -356,6 +361,9 @@ WARN_UNUSED_RETURN GRefPtr<GstCaps> buildDMABufCaps();
 #if USE(GSTREAMER_GL)
 bool setGstElementGLContext(GstElement*, ASCIILiteral contextType);
 #endif
+
+GstStateChangeReturn gstElementLockAndSetState(GstElement*, GstState);
+
 } // namespace WebCore
 
 #ifndef GST_BUFFER_DTS_OR_PTS

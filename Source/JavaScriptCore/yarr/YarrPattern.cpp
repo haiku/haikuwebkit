@@ -368,6 +368,15 @@ public:
         performSetOpWithMatches(matches, emptyRanges, matchesUnicode, emptyRanges);
     }
 
+    void invertMatches()
+    {
+        if (!m_strings.isEmpty())
+            m_invertedStrings = true;
+
+        asciiInvert();
+        unicodeInvert();
+    }
+
     void performSetOpWith(CharacterClassConstructor* rhs)
     {
         performSetOpWithStrings(rhs->m_strings);
@@ -498,10 +507,10 @@ private:
                 if (val == 1) {
                     char32_t lo = ch;
                     char32_t hi = ch + 1;
-                    matches.remove(pos + index);
+                    matches.removeAt(pos + index);
                     if (pos + index > 0 && matches[pos + index - 1] == ch - 1) {
                         lo = ch - 1;
-                        matches.remove(pos + index - 1);
+                        matches.removeAt(pos + index - 1);
                     }
                     addSortedRange(isASCII(ch) ? m_ranges : m_rangesUnicode, lo, hi);
                     return;
@@ -511,10 +520,10 @@ private:
                 if (val == -1) {
                     char32_t lo = ch - 1;
                     char32_t hi = ch;
-                    matches.remove(pos + index);
+                    matches.removeAt(pos + index);
                     if (pos + index + 1 < matches.size() && matches[pos + index + 1] == ch + 1) {
                         hi = ch + 1;
-                        matches.remove(pos + index + 1);
+                        matches.removeAt(pos + index + 1);
                     }
                     addSortedRange(isASCII(ch) ? m_ranges : m_rangesUnicode, lo, hi);
                     return;
@@ -590,7 +599,7 @@ private:
             if (ranges[next].begin <= (ranges[index].end + 1)) {
                 // the next entry now overlaps / concatenates with this one.
                 ranges[index].end = std::max(ranges[index].end, ranges[next].end);
-                ranges.remove(next);
+                ranges.removeAt(next);
             } else
                 break;
         }
@@ -736,6 +745,55 @@ private:
         };
 
         for (auto setVal : lhsASCIIBitSet) {
+            char32_t ch = setVal;
+            if (firstCharUnset) {
+                lo = hi = ch;
+                firstCharUnset = false;
+            } else {
+                if (ch == hi + 1)
+                    hi = ch;
+                else {
+                    addCharToResults();
+                    lo = hi = ch;
+                }
+            }
+        }
+
+        if (!firstCharUnset)
+            addCharToResults();
+
+        m_matches.swap(resultMatches);
+        m_ranges.swap(resultRanges);
+    }
+
+    void asciiInvert()
+    {
+        Vector<char32_t> resultMatches;
+        Vector<CharacterRange> resultRanges;
+        WTF::BitSet<0x80> ASCIIBitSet;
+
+        for (auto match : m_matches)
+            ASCIIBitSet.set(match);
+
+        for (auto range : m_ranges) {
+            for (char32_t ch = range.begin; ch <= range.end; ch++)
+                ASCIIBitSet.set(ch);
+        }
+
+        ASCIIBitSet.invert();
+
+        bool firstCharUnset = true;
+        char32_t lo = 0;
+        char32_t hi = 0;
+
+        auto addCharToResults = [&]() {
+            if (lo == hi)
+                resultMatches.append(lo);
+            else
+                resultRanges.append(CharacterRange(lo, hi));
+        };
+
+        for (auto setVal : ASCIIBitSet) {
             char32_t ch = setVal;
             if (firstCharUnset) {
                 lo = hi = ch;
@@ -912,6 +970,24 @@ private:
         m_rangesUnicode.swap(resultRanges);
     }
 
+    void unicodeInvert()
+    {
+        auto currentSetOp = m_setOp;
+        m_setOp = CharacterClassSetOp::Subtraction;
+
+        Vector<char32_t> matches { };
+        Vector<CharacterRange> ranges {
+            CharacterRange(0x0080, UCHAR_MAX_VALUE)
+        };
+
+        std::swap(m_matchesUnicode, matches);
+        std::swap(m_rangesUnicode, ranges);
+
+        unicodeOpSorted(matches, ranges);
+
+        m_setOp = currentSetOp;
+    }
+
     void coalesceTables()
     {
         auto coalesceMatchesAndRanges = [&](Vector<char32_t>& matches, Vector<CharacterRange>& ranges) {
@@ -926,7 +1002,7 @@ private:
 
                     if (matchesIndex < matches.size() && matches[matchesIndex] == ranges[rangesIndex].begin - 1) {
                         ranges[rangesIndex].begin = matches[matchesIndex];
-                        matches.remove(matchesIndex);
+                        matches.removeAt(matchesIndex);
                     }
                 }
 
@@ -941,7 +1017,7 @@ private:
 
                     if (matches[matchesIndex] == ranges[rangesIndex].end + 1) {
                         ranges[rangesIndex].end = matches[matchesIndex];
-                        matches.remove(matchesIndex);
+                        matches.removeAt(matchesIndex);
 
                         mergeRangesFrom(ranges, rangesIndex);
                     } else
@@ -953,7 +1029,7 @@ private:
                 for (auto rangesIndex = ranges.size() - 1; rangesIndex > 0; rangesIndex--) {
                     if (ranges[rangesIndex].begin == ranges[rangesIndex - 1].end + 1) {
                         ranges[rangesIndex - 1].end = ranges[rangesIndex].end;
-                        ranges.remove(rangesIndex);
+                        ranges.removeAt(rangesIndex);
                     }
                 }
             }
@@ -1287,21 +1363,26 @@ public:
         m_currentCharacterClassConstructor->combiningSetOp(setOp);
     }
 
-    void atomCharacterClassPushNested()
+    void atomCharacterClassPushNested(bool invert)
     {
         m_characterClassStack.append(CharacterClassConstructor(ignoreCase(), m_pattern.compileMode()));
         m_currentCharacterClassConstructor = &m_characterClassStack.last();
+        m_invertCharacterClass = invert;
     }
 
-    void atomCharacterClassPopNested()
+    void atomCharacterClassPopNested(bool invert)
     {
         if (m_characterClassStack.isEmpty())
             return;
+
+        if (m_invertCharacterClass)
+            m_currentCharacterClassConstructor->invertMatches();
 
         CharacterClassConstructor* priorCharacterClassConstructor = m_characterClassStack.size() == 1 ? &m_baseCharacterClassConstructor : &m_characterClassStack[m_characterClassStack.size() - 2];
         priorCharacterClassConstructor->performSetOpWith(m_currentCharacterClassConstructor);
         m_characterClassStack.removeLast();
         m_currentCharacterClassConstructor = priorCharacterClassConstructor;
+        m_invertCharacterClass = invert;
     }
 
     void atomCharacterClassEnd()
@@ -2051,10 +2132,10 @@ public:
 
             if (!containsCapturingTerms(alternative, firstExpressionTerm, endIndex)) {
                 for (termIndex = terms.size() - 1; termIndex >= endIndex; --termIndex)
-                    terms.remove(termIndex);
+                    terms.removeAt(termIndex);
 
                 for (termIndex = firstExpressionTerm; termIndex > 0; --termIndex)
-                    terms.remove(termIndex - 1);
+                    terms.removeAt(termIndex - 1);
 
                 terms.append(PatternTerm(startsWithBOL, endsWithEOL, m_flags));
                 

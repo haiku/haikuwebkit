@@ -194,12 +194,11 @@ function webcontent_sandbox_entitlements()
     plistbuddy Add :com.apple.private.security.mutable-state-flags:4 string ParentProcessCanEnableQuickLookStateFlag
     plistbuddy Add :com.apple.private.security.mutable-state-flags:5 string BlockOpenDirectoryInWebContentSandbox
     plistbuddy Add :com.apple.private.security.mutable-state-flags:6 string BlockMobileAssetInWebContentSandbox
-    plistbuddy Add :com.apple.private.security.mutable-state-flags:7 string BlockMobileGestaltInWebContentSandbox
-    plistbuddy Add :com.apple.private.security.mutable-state-flags:8 string BlockWebInspectorInWebContentSandbox
-    plistbuddy Add :com.apple.private.security.mutable-state-flags:9 string BlockIconServicesInWebContentSandbox
-    plistbuddy Add :com.apple.private.security.mutable-state-flags:10 string BlockFontServiceInWebContentSandbox
-    plistbuddy Add :com.apple.private.security.mutable-state-flags:11 string UnifiedPDFEnabled
-    plistbuddy Add :com.apple.private.security.mutable-state-flags:12 string WebProcessDidNotInjectStoreBundle
+    plistbuddy Add :com.apple.private.security.mutable-state-flags:7 string BlockWebInspectorInWebContentSandbox
+    plistbuddy Add :com.apple.private.security.mutable-state-flags:8 string BlockIconServicesInWebContentSandbox
+    plistbuddy Add :com.apple.private.security.mutable-state-flags:9 string BlockFontServiceInWebContentSandbox
+    plistbuddy Add :com.apple.private.security.mutable-state-flags:10 string UnifiedPDFEnabled
+    plistbuddy Add :com.apple.private.security.mutable-state-flags:11 string WebProcessDidNotInjectStoreBundle
     plistbuddy Add :com.apple.private.security.enable-state-flags array
     plistbuddy Add :com.apple.private.security.enable-state-flags:0 string EnableExperimentalSandbox
     plistbuddy Add :com.apple.private.security.enable-state-flags:1 string BlockIOKitInWebContentSandbox
@@ -207,12 +206,11 @@ function webcontent_sandbox_entitlements()
     plistbuddy Add :com.apple.private.security.enable-state-flags:3 string ParentProcessCanEnableQuickLookStateFlag
     plistbuddy Add :com.apple.private.security.enable-state-flags:4 string BlockOpenDirectoryInWebContentSandbox
     plistbuddy Add :com.apple.private.security.enable-state-flags:5 string BlockMobileAssetInWebContentSandbox
-    plistbuddy Add :com.apple.private.security.enable-state-flags:6 string BlockMobileGestaltInWebContentSandbox
-    plistbuddy Add :com.apple.private.security.enable-state-flags:7 string BlockWebInspectorInWebContentSandbox
-    plistbuddy Add :com.apple.private.security.enable-state-flags:8 string BlockIconServicesInWebContentSandbox
-    plistbuddy Add :com.apple.private.security.enable-state-flags:9 string BlockFontServiceInWebContentSandbox
-    plistbuddy Add :com.apple.private.security.enable-state-flags:10 string UnifiedPDFEnabled
-    plistbuddy Add :com.apple.private.security.enable-state-flags:11 string WebProcessDidNotInjectStoreBundle
+    plistbuddy Add :com.apple.private.security.enable-state-flags:6 string BlockWebInspectorInWebContentSandbox
+    plistbuddy Add :com.apple.private.security.enable-state-flags:7 string BlockIconServicesInWebContentSandbox
+    plistbuddy Add :com.apple.private.security.enable-state-flags:8 string BlockFontServiceInWebContentSandbox
+    plistbuddy Add :com.apple.private.security.enable-state-flags:9 string UnifiedPDFEnabled
+    plistbuddy Add :com.apple.private.security.enable-state-flags:10 string WebProcessDidNotInjectStoreBundle
 }
 
 function extract_notification_names() {
@@ -450,6 +448,7 @@ function ios_family_process_webcontent_shared_entitlements()
     plistbuddy Add :com.apple.private.allow-explicit-graphics-priority bool YES
     plistbuddy Add :com.apple.private.coremedia.extensions.audiorecording.allow bool YES
     plistbuddy Add :com.apple.private.coremedia.pidinheritance.allow bool YES
+    plistbuddy Add :com.apple.private.disable-log-mach-ports bool YES
     plistbuddy Add :com.apple.private.memorystatus bool YES
     plistbuddy Add :com.apple.private.network.socket-delegate bool YES
     plistbuddy Add :com.apple.private.webinspector.allow-remote-inspection bool YES

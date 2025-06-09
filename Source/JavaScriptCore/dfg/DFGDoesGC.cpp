@@ -85,7 +85,7 @@ bool doesGC(Graph& graph, Node* node)
     case ArithBitXor:
     case ArithBitLShift:
     case ArithBitRShift:
-    case BitURShift:
+    case ArithBitURShift:
     case ValueToInt32:
     case UInt32ToNumber:
     case DoubleAsInt32:
@@ -121,6 +121,7 @@ bool doesGC(Graph& graph, Node* node)
     case CheckArrayOrEmpty:
     case CheckDetached:
     case GetScope:
+    case GetEvalScope:
     case SkipScope:
     case GetGlobalObject:
     case GetGlobalThis:
@@ -465,6 +466,7 @@ bool doesGC(Graph& graph, Node* node)
     case ValueBitXor:
     case ValueBitLShift:
     case ValueBitRShift:
+    case ValueBitURShift:
     case ValueAdd:
     case ValueSub:
     case ValueMul:

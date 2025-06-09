@@ -1900,7 +1900,7 @@ WebGLAny WebGLRenderingContextBase::getParameter(GCGLenum pname)
     case GraphicsContextGL::COLOR_WRITEMASK:
         return getBooleanArrayParameter(pname);
     case GraphicsContextGL::COMPRESSED_TEXTURE_FORMATS:
-        return Uint32Array::tryCreate(m_compressedTextureFormats.data(), m_compressedTextureFormats.size());
+        return Uint32Array::tryCreate(m_compressedTextureFormats.span());
     case GraphicsContextGL::CULL_FACE:
         return getBooleanParameter(pname);
     case GraphicsContextGL::CULL_FACE_MODE:
@@ -5613,9 +5613,8 @@ Lock& WebGLRenderingContextBase::objectGraphLock()
 
 void WebGLRenderingContextBase::prepareForDisplay()
 {
-    if (!m_context)
+    if (!m_context || !m_compositingResultsNeedUpdating)
         return;
-    ASSERT(m_compositingResultsNeedUpdating);
 
     clearIfComposited(CallerTypeOther);
     m_context->prepareForDisplay();

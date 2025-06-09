@@ -46,6 +46,7 @@
 #include <WebCore/CommonAtomStrings.h>
 #include <WebCore/DeprecatedGlobalSettings.h>
 #include <WebCore/LogInitialization.h>
+#include <WebCore/MediaPlayer.h>
 #include <WebCore/MemoryRelease.h>
 #include <WebCore/NowPlayingManager.h>
 #include <wtf/CallbackAggregator.h>
@@ -91,6 +92,9 @@ GPUProcess::GPUProcess()
     : m_idleExitTimer(*this, &GPUProcess::tryExitIfUnused)
 {
     RELEASE_LOG(Process, "%p - GPUProcess::GPUProcess:", this);
+#if ASSERT_ENABLED && PLATFORM(COCOA)
+    CoreAudioSharedUnit::singleton().allowStarting();
+#endif
 }
 
 GPUProcess::~GPUProcess()
@@ -279,11 +283,6 @@ void GPUProcess::updateGPUProcessPreferences(GPUProcessPreferences&& preferences
 #if USE(MODERN_AVCONTENTKEYSESSION)
     if (updatePreference(m_preferences.shouldUseModernAVContentKeySession, preferences.shouldUseModernAVContentKeySession))
         MediaSessionManagerCocoa::setShouldUseModernAVContentKeySession(*m_preferences.shouldUseModernAVContentKeySession);
-#endif
-
-#if ENABLE(ALTERNATE_WEBM_PLAYER)
-    if (updatePreference(m_preferences.alternateWebMPlayerEnabled, preferences.alternateWebMPlayerEnabled))
-        PlatformMediaSessionManager::setAlternateWebMPlayerEnabled(*m_preferences.alternateWebMPlayerEnabled);
 #endif
 
 #if ENABLE(VP9)

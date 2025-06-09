@@ -2553,6 +2553,7 @@ void RewriteGlobalVariables::storeInitialValue(AST::Expression& target, AST::Sta
             &forUpdate,
             forBody
         );
+        forStatement.setInternallyGenerated();
 
         statements.append(AST::Statement::Ref(forStatement));
         return;

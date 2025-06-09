@@ -659,7 +659,7 @@ public:
         case ArithBitLShift:
             lshift32(op1, Imm32(shiftAmount), result);
             break;
-        case BitURShift:
+        case ArithBitURShift:
             urshift32(op1, Imm32(shiftAmount), result);
             break;
         default:
@@ -675,7 +675,7 @@ public:
         case ArithBitLShift:
             lshift32(op1, shiftAmount, result);
             break;
-        case BitURShift:
+        case ArithBitURShift:
             urshift32(op1, shiftAmount, result);
             break;
         default:
@@ -1542,7 +1542,7 @@ public:
     void compileGetPrivateNameById(Node*);
     void compileGetPrivateNameByVal(Node*, JSValueRegs base, JSValueRegs property);
 
-    void compileGetScope(Node*);
+    void compileGetScopeOrGetEvalScope(Node*);
     void compileSkipScope(Node*);
     void compileGetGlobalObject(Node*);
     void compileGetGlobalThis(Node*);
@@ -1581,6 +1581,7 @@ public:
     void emitUntypedOrBigIntRightShiftBitOp(Node*);
     void compileValueLShiftOp(Node*);
     void compileValueBitRShift(Node*);
+    void compileValueBitURShift(Node*);
     void compileShiftOp(Node*);
 
     template <typename Generator, typename RepatchingFunction, typename NonRepatchingFunction>
@@ -1877,12 +1878,15 @@ public:
     // Add a speculation check with additional recovery.
     void speculationCheck(ExitKind, JSValueSource, Node*, Jump jumpToFail, const SpeculationRecovery&);
     void speculationCheck(ExitKind, JSValueSource, Edge, Jump jumpToFail, const SpeculationRecovery&);
+
+    void speculationCheckOutOfMemory(JSValueSource, Node*, const JumpList&);
     
     void compileInvalidationPoint(Node*);
     
     void unreachable(Node*);
-    
+
     // Called when we statically determine that a speculation will fail.
+    void terminateUnreachableNode();
     void terminateSpeculativeExecution(ExitKind, JSValueRegs, Node*);
     void terminateSpeculativeExecution(ExitKind, JSValueRegs, Edge);
     
@@ -1984,7 +1988,10 @@ public:
     void checkArray(Node*);
     void arrayify(Node*, GPRReg baseReg, GPRReg propertyReg);
     void arrayify(Node*);
-    
+
+    unsigned appendOSRExit(OSRExit&&, bool isExceptionHandler = false);
+    unsigned appendExceptionHandlingOSRExit(ExitKind, unsigned eventStreamIndex, CodeOrigin, HandlerInfo* exceptionHandler, CallSiteIndex, MacroAssembler::JumpList jumpsToFail = MacroAssembler::JumpList());
+
     template<bool strict>
     GPRReg fillSpeculateInt32Internal(Edge, DataFormat& returnFormat);
     

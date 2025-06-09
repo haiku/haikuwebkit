@@ -283,11 +283,9 @@ static LayoutSize scrollOffsetFromAncestorContainer(const RenderElement& descend
     ASSERT(descendant.isDescendantOf(&ancestorContainer));
 
     auto offset = LayoutSize { };
-    for (auto* ancestor = descendant.container(); ancestor; ancestor = ancestor->container()) {
+    for (auto* ancestor = descendant.container(); ancestor && ancestor != &ancestorContainer; ancestor = ancestor->container()) {
         if (auto* box = dynamicDowncast<RenderBox>(ancestor))
             offset -= toLayoutSize(box->scrollPosition());
-        if (ancestor == &ancestorContainer)
-            break;
     }
     return offset;
 }
@@ -460,12 +458,13 @@ static LayoutUnit computeInsetValue(CSSPropertyID insetPropertyID, CheckedRef<co
     return removeBorderForInsetValue(insetValue, insetPropertySide, *containingBlock);
 }
 
-RefPtr<Element> AnchorPositionEvaluator::findAnchorForAnchorFunctionAndAttemptResolution(BuilderState& builderState, std::optional<ScopedName> elementName)
+RefPtr<Element> AnchorPositionEvaluator::findAnchorForAnchorFunctionAndAttemptResolution(BuilderState& builderState, std::optional<ScopedName> anchorName)
 {
+    auto& style = builderState.style();
+    style.setUsesAnchorFunctions();
+
     if (!builderState.anchorPositionedStates())
         return { };
-
-    auto& style = builderState.style();
 
     auto isValid = [&] {
         if (!builderState.element())
@@ -488,14 +487,16 @@ RefPtr<Element> AnchorPositionEvaluator::findAnchorForAnchorFunctionAndAttemptRe
         return WTF::makeUnique<AnchorPositionedState>();
     }).iterator->value.get();
 
-    style.setUsesAnchorFunctions();
+    if (!anchorName)
+        anchorName = style.positionAnchor();
 
-    if (!elementName)
-        elementName = style.positionAnchor();
+    std::optional<ResolvedScopedName> resolvedAnchorName;
 
-    if (elementName) {
+    if (anchorName) {
+        resolvedAnchorName = ResolvedScopedName::createFromScopedName(anchorPositionedElement, *anchorName);
+
         // Collect anchor names that this element refers to in anchor() or anchor-size()
-        bool isNewAnchorName = anchorPositionedState.anchorNames.add(elementName->name).isNewEntry;
+        bool isNewAnchorName = anchorPositionedState.anchorNames.add(*resolvedAnchorName).isNewEntry;
 
         // If anchor resolution has progressed past FindAnchors, and we pick up a new anchor name, set the
         // stage back to Initial. This restarts the resolution process to resolve newly added names.
@@ -520,7 +521,7 @@ RefPtr<Element> AnchorPositionEvaluator::findAnchorForAnchorFunctionAndAttemptRe
 
     // Anchor value may now be resolved using layout information
 
-    RefPtr anchorElement = elementName ? anchorPositionedState.anchorElements.get(elementName->name).get() : nullptr;
+    RefPtr anchorElement = resolvedAnchorName ? anchorPositionedState.anchorElements.get(*resolvedAnchorName).get() : nullptr;
     if (!anchorElement) {
         // See: https://drafts.csswg.org/css-anchor-position-1/#valid-anchor-function
         anchorPositionedState.stage = AnchorPositionResolutionStage::Resolved;
@@ -742,16 +743,24 @@ static const RenderElement* penultimateContainingBlockChainElement(const RenderE
 
 static bool firstChildPrecedesSecondChild(const RenderObject* firstChild, const RenderObject* secondChild, const RenderBlock* containingBlock)
 {
-    auto positionedObjects = containingBlock->positionedObjects();
-    ASSERT(positionedObjects);
-    for (auto it = positionedObjects->begin(); it != positionedObjects->end(); ++it) {
-        auto child = it.get();
-        if (child == firstChild)
-            return true;
-        if (child == secondChild)
-            return false;
+    HashSet<CheckedRef<const RenderObject>> firstAncestorChain;
+
+    for (auto* first = firstChild; first; first = first->parent()) {
+        firstAncestorChain.add(*first);
+        if (first == containingBlock)
+            break;
     }
-    ASSERT_NOT_REACHED();
+
+    auto* second = secondChild;
+    for (; second != containingBlock; second = second->parent()) {
+        if (firstAncestorChain.contains(second->parent())) {
+            for (auto* sibling = second->previousSibling(); sibling; sibling = sibling->previousSibling()) {
+                if (firstAncestorChain.contains(sibling))
+                    return true;
+            }
+            return false;
+        }
+    }
     return false;
 }
 
@@ -761,13 +770,17 @@ static bool firstChildPrecedesSecondChild(const RenderObject* firstChild, const 
 // returns nullptr.
 // (*): an anchor element can also establish an anchor scope containing itself. In this
 // case, the return value is itself.
-static CheckedPtr<const Element> anchorScopeForAnchorElement(const Element& anchorElement, const Vector<ScopedName>& anchorNames)
+static CheckedPtr<const Element> anchorScopeForAnchorName(const RenderBoxModelObject& anchorRenderer, const AtomString anchorName)
 {
-    // Precondition: anchorElement is an anchor, which has at least one anchor name.
-    ASSERT(!anchorNames.isEmpty());
+    // Precondition: anchorElement is an anchor, which has the specified name.
+    ASSERT(anchorRenderer.style().anchorNames().containsIf(
+        [anchorName](auto& scopedName) { return scopedName.name == anchorName; }
+    ));
 
     // Traverse up the composed tree through itself and each ancestor.
-    for (CheckedPtr<const Element> currentAncestor = &anchorElement; currentAncestor; currentAncestor = currentAncestor->parentElementInComposedTree()) {
+    CheckedPtr<const Element> anchorElement = anchorRenderer.element();
+    ASSERT(anchorElement);
+    for (CheckedPtr<const Element> currentAncestor = anchorElement; currentAncestor; currentAncestor = currentAncestor->parentElementInComposedTree()) {
         CheckedPtr currentAncestorStyle = currentAncestor->renderStyle();
         if (!currentAncestorStyle)
             continue;
@@ -785,11 +798,8 @@ static CheckedPtr<const Element> anchorScopeForAnchorElement(const Element& anch
         // Scopes anchors that are (1) descendants of the current ancestor and
         // (2) its name is specified in the scope.
         case NameScope::Type::Ident:
-            for (const auto& anchorName : anchorNames) {
-                if (currentAncestorAnchorScope.names.contains(anchorName.name))
-                    return currentAncestor;
-            }
-
+            if (currentAncestorAnchorScope.names.contains(anchorName))
+                return currentAncestor;
             continue;
         }
     }
@@ -798,18 +808,17 @@ static CheckedPtr<const Element> anchorScopeForAnchorElement(const Element& anch
 }
 
 // See: https://drafts.csswg.org/css-anchor-position-1/#acceptable-anchor-element
-static bool isAcceptableAnchorElement(const RenderBoxModelObject& anchorRenderer, Ref<const Element> anchorPositionedElement)
+static bool isAcceptableAnchorElement(const RenderBoxModelObject& anchorRenderer, Ref<const Element> anchorPositionedElement, const std::optional<AtomString> anchorName = { })
 {
-    CheckedPtr anchorElement = anchorRenderer.element();
-
     // "Possible anchor is either an element or a fully styleable tree-abiding pseudo-element."
     // This always have an associated Element (for ::before/::after it is PseudoElement).
-    if (!anchorElement)
+    if (!anchorRenderer.element())
         return false;
 
-    if (auto anchorScopeElement = anchorScopeForAnchorElement(*anchorElement, anchorRenderer.style().anchorNames())) {
+    if (anchorName) {
+        auto anchorScopeElement = anchorScopeForAnchorName(anchorRenderer, *anchorName);
         // If the anchor is scoped, the anchor-positioned element must also be in the same scope.
-        if (!anchorPositionedElement->isComposedTreeDescendantOf(*anchorScopeElement))
+        if (anchorScopeElement && !anchorPositionedElement->isComposedTreeDescendantOf(*anchorScopeElement))
             return false;
     }
 
@@ -833,12 +842,12 @@ static bool isAcceptableAnchorElement(const RenderBoxModelObject& anchorRenderer
 }
 
 
-static std::optional<Ref<Element>> findLastAcceptableAnchorWithName(AtomString anchorName, Ref<const Element> anchorPositionedElement, const AnchorsForAnchorName& anchorsForAnchorName)
+static std::optional<Ref<Element>> findLastAcceptableAnchorWithName(ResolvedScopedName anchorName, Ref<const Element> anchorPositionedElement, const AnchorsForAnchorName& anchorsForAnchorName)
 {
     const auto& anchors = anchorsForAnchorName.get(anchorName);
 
     for (auto& anchor : makeReversedRange(anchors)) {
-        if (isAcceptableAnchorElement(anchor.get(), anchorPositionedElement))
+        if (isAcceptableAnchorElement(anchor.get(), anchorPositionedElement, anchorName.name()))
             return *anchor->element();
     }
 
@@ -854,8 +863,13 @@ static AnchorsForAnchorName collectAnchorsForAnchorName(const Document& document
 
     auto& anchors = document.renderView()->anchors();
     for (auto& anchorRenderer : anchors) {
+        CheckedPtr anchorElement = anchorRenderer.element();
+        ASSERT(anchorElement);
+
         for (auto& scopedName : anchorRenderer.style().anchorNames()) {
-            anchorsForAnchorName.ensure(scopedName.name, [&] {
+            auto resolvedScopedName = ResolvedScopedName::createFromScopedName(*anchorElement, scopedName);
+
+            anchorsForAnchorName.ensure(resolvedScopedName, [&] {
                 return AnchorsForAnchorName::MappedType { };
             }).iterator->value.append(anchorRenderer);
         }
@@ -874,7 +888,7 @@ static AnchorsForAnchorName collectAnchorsForAnchorName(const Document& document
     return anchorsForAnchorName;
 }
 
-AnchorElements AnchorPositionEvaluator::findAnchorsForAnchorPositionedElement(const Element& anchorPositionedElement, const UncheckedKeyHashSet<AtomString>& anchorNames, const AnchorsForAnchorName& anchorsForAnchorName)
+AnchorElements AnchorPositionEvaluator::findAnchorsForAnchorPositionedElement(const Element& anchorPositionedElement, const UncheckedKeyHashSet<ResolvedScopedName>& anchorNames, const AnchorsForAnchorName& anchorsForAnchorName)
 {
     AnchorElements anchorElements;
 
@@ -928,7 +942,8 @@ void AnchorPositionEvaluator::updateAnchorPositionedStateForLayoutTimePositioned
         return makeUnique<AnchorPositionedState>();
     }).iterator->value.get();
 
-    state->anchorNames.add(style.positionAnchor()->name);
+    auto resolvedDefaultAnchor = ResolvedScopedName::createFromScopedName(element, *style.positionAnchor());
+    state->anchorNames.add(resolvedDefaultAnchor);
 }
 
 void AnchorPositionEvaluator::updateSnapshottedScrollOffsets(Document& document)
@@ -973,6 +988,15 @@ void AnchorPositionEvaluator::updateSnapshottedScrollOffsets(Document& document)
 
         anchorPositionedRenderer->layer()->setSnapshottedScrollOffsetForAnchorPositioning(scrollOffset);
     }
+}
+
+void AnchorPositionEvaluator::updateAfterOverflowScroll(Document& document)
+{
+    updateSnapshottedScrollOffsets(document);
+
+    // Also check if scrolling has caused any anchor boxes to move.
+    Style::Scope::LayoutDependencyUpdateContext context;
+    document.checkedStyleScope()->invalidateForAnchorDependencies(context);
 }
 
 auto AnchorPositionEvaluator::makeAnchorPositionedForAnchorMap(AnchorPositionedToAnchorMap& toAnchorMap) -> AnchorToAnchorPositionedMap
@@ -1113,6 +1137,44 @@ bool AnchorPositionEvaluator::overflowsInsetModifiedContainingBlock(const Render
 
     return inlineConstraints.insetModifiedContainingSize() < anchorInlineSize
         || blockConstraints.insetModifiedContainingSize() < anchorBlockSize;
+}
+
+bool AnchorPositionEvaluator::isDefaultAnchorInvisibleOrClippedByInterveningBoxes(const RenderBox& anchoredBox)
+{
+    CheckedPtr defaultAnchor = anchoredBox.defaultAnchorRenderer();
+    if (!defaultAnchor)
+        return false;
+
+    auto& anchorBox = *defaultAnchor;
+
+    if (anchorBox.style().usedVisibility() == Visibility::Hidden)
+        return true;
+
+    // https://drafts.csswg.org/css-anchor-position-1/#position-visibility
+    // "An anchor box anchor is clipped by intervening boxes relative to a positioned box abspos relying on it if anchor’s ink overflow
+    // rectangle is fully clipped by a box which is an ancestor of anchor but a descendant of abspos’s containing block."
+
+    auto localAnchorRect = [&] {
+        if (auto* box = dynamicDowncast<RenderBox>(anchorBox))
+            return box->visualOverflowRect();
+        return downcast<RenderInline>(anchorBox).linesVisualOverflowBoundingBox();
+    }();
+    auto* anchoredContainingBlock = anchoredBox.container();
+
+    auto anchorRect = anchorBox.localToAbsoluteQuad(FloatQuad { localAnchorRect }).boundingBox();
+
+    for (auto* anchorAncestor = anchorBox.parent(); anchorAncestor && anchorAncestor != anchoredContainingBlock; anchorAncestor = anchorAncestor->parent()) {
+        if (!anchorAncestor->hasNonVisibleOverflow())
+            continue;
+        auto* clipAncestor = dynamicDowncast<RenderBox>(*anchorAncestor);
+        if (!clipAncestor)
+            continue;
+        auto localClipRect = clipAncestor->overflowClipRect({ });
+        auto clipRect = clipAncestor->localToAbsoluteQuad(FloatQuad { localClipRect }).boundingBox();
+        if (!clipRect.intersects(anchorRect))
+            return true;
+    }
+    return false;
 }
 
 } // namespace WebCore::Style

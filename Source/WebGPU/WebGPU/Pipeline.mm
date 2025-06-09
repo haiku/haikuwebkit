@@ -154,14 +154,20 @@ std::optional<LibraryCreationResult> createLibrary(id<MTLDevice> device, const S
         }
     }
 
-    auto generationResult = WGSL::generate(*ast, result, wgslConstantValues);
+    auto generationResult = WGSL::generate(*ast, result, wgslConstantValues, WGSL::DeviceState {
+        .appleGPUFamily = shaderModule.device().appleGPUFamily(),
+        .shaderValidationEnabled = shaderModule.device().isShaderValidationEnabled()
+    });
     if (auto* generationError = std::get_if<WGSL::Error>(&generationResult)) {
         *error = [NSError errorWithDomain:@"WebGPU" code:1 userInfo:@{ NSLocalizedDescriptionKey: generationError->message().createNSString().get() }];
         return std::nullopt;
     }
     auto& msl = std::get<String>(generationResult);
 
-    auto library = ShaderModule::createLibrary(device, msl, label, error);
+    auto library = ShaderModule::createLibrary(device, msl, label, error, WGSL::DeviceState {
+        .appleGPUFamily = shaderModule.device().appleGPUFamily(),
+        .shaderValidationEnabled = shaderModule.device().isShaderValidationEnabled()
+    });
     if (error && *error)
         return { };
 

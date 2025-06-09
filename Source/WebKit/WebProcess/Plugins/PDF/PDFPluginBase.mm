@@ -268,6 +268,30 @@ NSData *PDFPluginBase::originalData() const
     return (__bridge NSData *)m_data.get();
 }
 
+RefPtr<FragmentedSharedBuffer> PDFPluginBase::liveResourceData() const
+{
+    RetainPtr pdfData = liveData();
+
+    if (!pdfData)
+        return nullptr;
+
+    return SharedBuffer::create(pdfData.get());
+}
+
+NSData *PDFPluginBase::liveData() const
+{
+#if PLATFORM(MAC)
+    if (m_activeAnnotation)
+        m_activeAnnotation->commit();
+#endif
+    // Save data straight from the resource instead of PDFKit if the document is
+    // untouched by the user, so that PDFs which PDFKit can't display will still be downloadable.
+    if (m_pdfDocumentWasMutated)
+        return [m_pdfDocument dataRepresentation];
+
+    return originalData();
+}
+
 void PDFPluginBase::ensureDataBufferLength(uint64_t targetLength)
 {
     if (!m_data)
@@ -763,6 +787,16 @@ ScrollableArea* PDFPluginBase::enclosingScrollableArea() const
 
     return enclosingScrollableLayer->scrollableArea();
 }
+
+#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+bool PDFPluginBase::vectorBasedControlsEnabled() const
+{
+    if (RefPtr page = this->page())
+        return page->settings().vectorBasedControlsOnMacEnabled();
+
+    return false;
+}
+#endif
 
 IntRect PDFPluginBase::scrollableAreaBoundingBox(bool*) const
 {

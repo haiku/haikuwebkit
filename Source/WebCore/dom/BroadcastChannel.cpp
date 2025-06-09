@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,9 +65,7 @@ static HashMap<BroadcastChannelIdentifier, ScriptExecutionContextIdentifier>& ch
 
 static PartitionedSecurityOrigin partitionedSecurityOriginFromContext(ScriptExecutionContext& context)
 {
-    Ref securityOrigin { *context.securityOrigin() };
-    Ref topOrigin { context.settingsValues().broadcastChannelOriginPartitioningEnabled ? context.topOrigin() : securityOrigin.get() };
-    return { WTFMove(topOrigin), WTFMove(securityOrigin) };
+    return { context.topOrigin(), context.protectedSecurityOrigin().releaseNonNull() };
 }
 
 class BroadcastChannel::MainThreadBridge : public ThreadSafeRefCounted<MainThreadBridge, WTF::DestructionThread::Main>, public Identified<BroadcastChannelIdentifier> {
@@ -112,12 +110,12 @@ void BroadcastChannel::MainThreadBridge::ensureOnMainThread(Function<void(Page*)
         return;
     ASSERT(context->isContextThread());
 
-    if (auto* document = dynamicDowncast<Document>(*context)) {
+    if (RefPtr document = dynamicDowncast<Document>(*context)) {
         task(document->protectedPage().get());
         return;
     }
 
-    auto* workerLoaderProxy = downcast<WorkerGlobalScope>(*context).thread().workerLoaderProxy();
+    auto* workerLoaderProxy = downcast<WorkerGlobalScope>(*context).protectedThread()->workerLoaderProxy();
     if (!workerLoaderProxy)
         return;
 
@@ -179,11 +177,6 @@ BroadcastChannel::~BroadcastChannel()
     }
 }
 
-auto BroadcastChannel::protectedMainThreadBridge() const -> Ref<MainThreadBridge>
-{
-    return m_mainThreadBridge;
-}
-
 BroadcastChannelIdentifier BroadcastChannel::identifier() const
 {
     return m_mainThreadBridge->identifier();
@@ -208,7 +201,7 @@ ExceptionOr<void> BroadcastChannel::postMessage(JSC::JSGlobalObject& globalObjec
         return messageData.releaseException();
     ASSERT(ports.isEmpty());
 
-    protectedMainThreadBridge()->postMessage(messageData.releaseReturnValue());
+    m_mainThreadBridge->postMessage(messageData.releaseReturnValue());
     return { };
 }
 
@@ -218,7 +211,7 @@ void BroadcastChannel::close()
         return;
 
     m_isClosed = true;
-    protectedMainThreadBridge()->unregisterChannel();
+    m_mainThreadBridge->unregisterChannel();
 }
 
 void BroadcastChannel::dispatchMessageTo(BroadcastChannelIdentifier channelIdentifier, Ref<SerializedScriptValue>&& message, CompletionHandler<void()>&& completionHandler)
@@ -289,7 +282,7 @@ bool BroadcastChannel::isEligibleForMessaging() const
     if (!context)
         return false;
 
-    if (auto document = dynamicDowncast<Document>(*context))
+    if (RefPtr document = dynamicDowncast<Document>(*context))
         return document->isFullyActive();
 
     return !downcast<WorkerGlobalScope>(*context).isClosing();

@@ -290,6 +290,8 @@ void RenderTreeUpdater::updateRenderTree(ContainerNode& root)
 
         if (!mayHaveRenderedDescendants) {
             it.traverseNextSkippingChildren();
+            if (&element == element.document().documentElement())
+                viewTransition().updatePseudoElementTree(nullptr, StyleDifference::Equal);
             continue;
         }
 
@@ -358,8 +360,11 @@ void RenderTreeUpdater::updateAfterDescendants(Element& element, const Style::El
         generatedContent().updateBeforeOrAfterPseudoElement(element, *update, PseudoId::After);
 
     auto* renderer = element.renderer();
-    if (!renderer)
+    if (!renderer) {
+        if (&element == element.document().documentElement())
+            viewTransition().updatePseudoElementTree(nullptr, StyleDifference::Equal);
         return;
+    }
 
     StyleDifference minimalStyleDifference = StyleDifference::Equal;
     if (update && update->recompositeLayer)
@@ -368,7 +373,7 @@ void RenderTreeUpdater::updateAfterDescendants(Element& element, const Style::El
     generatedContent().updateBackdropRenderer(*renderer, minimalStyleDifference);
     generatedContent().updateWritingSuggestionsRenderer(*renderer, minimalStyleDifference);
     if (&element == element.document().documentElement())
-        viewTransition().updatePseudoElementTree(*renderer, minimalStyleDifference);
+        viewTransition().updatePseudoElementTree(renderer, minimalStyleDifference);
 
     m_builder.updateAfterDescendants(*renderer);
 
@@ -736,7 +741,7 @@ static std::optional<DidRepaintAndMarkContainingBlock> repaintAndMarkContainingB
         }
         if (!renderer.isOutOfFlowPositioned()) {
             container->setChildNeedsLayout();
-            container->setPreferredLogicalWidthsDirty(true);
+            container->setNeedsPreferredWidthsUpdate();
             return;
         }
         container->setNeedsLayoutForOverflowChange();
@@ -899,7 +904,7 @@ void RenderTreeUpdater::tearDownTextRenderer(Text& text, const ContainerNode* ro
         renderer->repaint();
         if (auto* parent = renderer->parent()) {
             parent->setChildNeedsLayout();
-            parent->setPreferredLogicalWidthsDirty(true);
+            parent->setNeedsPreferredWidthsUpdate();
         }
     }
     builder.destroyAndCleanUpAnonymousWrappers(*renderer, root ? root->renderer() : nullptr);
@@ -910,12 +915,18 @@ void RenderTreeUpdater::tearDownLeftoverPaginationRenderersIfNeeded(Element& roo
 {
     if (&root != root.document().documentElement())
         return;
-    for (auto* child = root.document().renderView()->firstChild(); child;) {
+    WeakPtr renderView = root.document().renderView();
+    for (auto* child = renderView->firstChild(); child;) {
         auto* nextSibling = child->nextSibling();
-        if (is<RenderMultiColumnFlow>(*child) || is<RenderMultiColumnSet>(*child))
+        if (is<RenderMultiColumnFlow>(*child)) {
+            ASSERT(renderView->multiColumnFlow());
+            renderView->clearMultiColumnFlow();
+            builder.destroyAndCleanUpAnonymousWrappers(*child, root.renderer());
+        } else if (is<RenderMultiColumnSet>(*child))
             builder.destroyAndCleanUpAnonymousWrappers(*child, root.renderer());
         child = nextSibling;
     }
+    ASSERT(!renderView->multiColumnFlow());
 }
 
 void RenderTreeUpdater::tearDownLeftoverChildrenOfComposedTree(Element& element, RenderTreeBuilder& builder)
@@ -935,6 +946,21 @@ void RenderTreeUpdater::tearDownLeftoverChildrenOfComposedTree(Element& element,
 RenderView& RenderTreeUpdater::renderView()
 {
     return *m_document->renderView();
+}
+
+void RenderTreeUpdater::destroyAndCancelAnimationsForSubtree(RenderElement& renderer)
+{
+    auto styleable = Styleable::fromRenderer(renderer);
+    if (styleable)
+        styleable->cancelStyleOriginatedAnimations();
+
+    for (auto& descendant : descendantsOfType<RenderElement>(renderer)) {
+        auto styleable = Styleable::fromRenderer(descendant);
+        if (styleable)
+            styleable->cancelStyleOriginatedAnimations();
+    }
+
+    m_builder.destroy(renderer);
 }
 
 }

@@ -1429,30 +1429,6 @@ RetainPtr<PDFPage> UnifiedPDFPlugin::pageAtIndex(PDFDocumentLayout::PageIndex pa
     return m_documentLayout.pageAtIndex(pageIndex);
 }
 
-RefPtr<FragmentedSharedBuffer> UnifiedPDFPlugin::liveResourceData() const
-{
-    RetainPtr pdfData = liveData();
-
-    if (!pdfData)
-        return nullptr;
-
-    return SharedBuffer::create(pdfData.get());
-}
-
-NSData *UnifiedPDFPlugin::liveData() const
-{
-#if PLATFORM(MAC)
-    if (m_activeAnnotation)
-        m_activeAnnotation->commit();
-#endif
-    // Save data straight from the resource instead of PDFKit if the document is
-    // untouched by the user, so that PDFs which PDFKit can't display will still be downloadable.
-    if (m_pdfDocumentWasMutated)
-        return [m_pdfDocument dataRepresentation];
-
-    return originalData();
-}
-
 void UnifiedPDFPlugin::releaseMemory()
 {
     if (m_presentationController)
@@ -3577,10 +3553,14 @@ WebCore::DictionaryPopupInfo UnifiedPDFPlugin::dictionaryPopupInfoForSelection(P
     }();
 
     dictionaryPopupInfo.origin = rectForSelectionInRootView(selection).location();
+#if ENABLE(LEGACY_PDFKIT_PLUGIN)
     dictionaryPopupInfo.platformData.attributedString = WebCore::AttributedString::fromNSAttributedString(nsAttributedString.get());
+#else
+    dictionaryPopupInfo.text = [nsAttributedString string];
+#endif
 
     if (auto textIndicator = textIndicatorForSelection(selection, { }, presentationTransition))
-        dictionaryPopupInfo.textIndicator = textIndicator->data();
+        dictionaryPopupInfo.textIndicator = textIndicator;
 
     return dictionaryPopupInfo;
 }

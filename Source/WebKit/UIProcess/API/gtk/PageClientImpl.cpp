@@ -189,9 +189,9 @@ void PageClientImpl::setCursor(const WebCore::Cursor& cursor)
 #else
     GdkWindow* window = gtk_widget_get_window(m_viewWidget);
     GdkCursor* currentCursor = gdk_window_get_cursor(window);
-    GdkCursor* newCursor = cursor.platformCursor().get();
-    if (currentCursor != newCursor)
-        gdk_window_set_cursor(window, newCursor);
+    GRefPtr<GdkCursor> newCursor = cursor.platformCursor();
+    if (currentCursor != newCursor.get())
+        gdk_window_set_cursor(window, newCursor.get());
 #endif
 }
 
@@ -323,9 +323,9 @@ RefPtr<WebDataListSuggestionsDropdown> PageClientImpl::createDataListSuggestions
     return WebDataListSuggestionsDropdownGtk::create(m_viewWidget, page);
 }
 
-Ref<ValidationBubble> PageClientImpl::createValidationBubble(const String& message, const ValidationBubble::Settings& settings)
+Ref<ValidationBubble> PageClientImpl::createValidationBubble(String&& message, const ValidationBubble::Settings& settings)
 {
-    return ValidationBubble::create(m_viewWidget, message, settings, [](GtkWidget* webView, bool shouldNotifyFocusEvents) {
+    return ValidationBubble::create(m_viewWidget, WTFMove(message), settings, [](GtkWidget* webView, bool shouldNotifyFocusEvents) {
         webkitWebViewBaseSetShouldNotifyFocusEvents(WEBKIT_WEB_VIEW_BASE(webView), shouldNotifyFocusEvents);
     });
 }

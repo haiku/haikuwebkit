@@ -37,6 +37,7 @@
 #include "AccessibilitySpinButton.h"
 #include "AccessibilityTable.h"
 #include "CachedImage.h"
+#include "ComplexTextController.h"
 #include "ComposedTreeIterator.h"
 #include "DocumentSVG.h"
 #include "Editing.h"
@@ -46,6 +47,7 @@
 #include "EventTargetInlines.h"
 #include "FloatRect.h"
 #include "FocusOptions.h"
+#include "FontCascade.h"
 #include "FrameLoader.h"
 #include "FrameSelection.h"
 #include "HTMLAreaElement.h"
@@ -120,6 +122,7 @@
 #include "TextIterator.h"
 #include "TypedElementDescendantIteratorInlines.h"
 #include "VisibleUnits.h"
+#include "WidthIterator.h"
 #include <algorithm>
 #include <ranges>
 #include <wtf/NeverDestroyed.h>
@@ -1499,16 +1502,38 @@ AXTextRuns AccessibilityRenderObject::textRuns()
             distanceFromBoundsInDirection = isHorizontal ? lineBox->contentLogicalLeft() + containingBlockOffset - elementRect().x() : -textRun.xPos() + containingBlockOffset - elementRect().y();
         }
 
-        auto appendCharacterWidth = [&] (unsigned characterIndex) {
-            float characterWidth = textBox->fontCascade().widthForCharacterInRun(textRun, characterIndex);
+        // Populate GlyphBuffer with all of the glyphs for the text runs, enabling us to measure character widths.
+        const FontCascade& fontCascade = textBox->fontCascade();
+        GlyphBuffer glyphBuffer;
+        if (fontCascade.codePath(textRun) == FontCascade::CodePath::Complex) {
+            ComplexTextController complexTextController(fontCascade, textRun, true, nil);
+            complexTextController.advance(text.length(), &glyphBuffer);
+        } else {
+            WidthIterator simpleIterator(fontCascade, textRun);
+            simpleIterator.advance(text.length(), glyphBuffer);
+        }
+
+        // Iterate over the glyphs and populate characterWidths. Sometimes multiple characters correspond to just
+        // a single glyph so we might need to insert extras zeros into characterWidths for those indexes that
+        // don't correspond to a glyph.
+        characterWidths.reserveCapacity(text.length());
+        unsigned characterIndex = 0;
+        for (unsigned glyphIndex = 0; glyphIndex < glyphBuffer.size() && characterIndex < text.length(); glyphIndex++) {
+            unsigned newCharacterIndex = glyphBuffer.uncheckedStringOffsetAt(glyphIndex);
+            float characterWidth = WebCore::width(glyphBuffer.advanceAt(glyphIndex));
+            while (characterIndex + 1 < newCharacterIndex && characterIndex < text.length()) {
+                characterWidths.append(0);
+                characterIndex++;
+            }
+
+            // Round to integer widths, using the fractional part of accumulatedDistanceFromStart to avoid accumulating rounding errors.
             characterWidths.append(static_cast<uint16_t>(characterWidth + fmod(accumulatedDistanceFromStart, 1)));
             accumulatedDistanceFromStart += characterWidth;
-        };
+            characterIndex = newCharacterIndex;
+        }
 
         if (!collapseTabs && !collapseNewlines) {
             lineString.append(text);
-            for (unsigned i = 0; i < text.length(); i++)
-                appendCharacterWidth(i);
             return;
         }
 
@@ -1521,8 +1546,6 @@ AXTextRuns AccessibilityRenderObject::textRuns()
                 lineString.append(' ');
             else
                 lineString.append(character);
-
-            appendCharacterWidth(i);
         }
     };
 
@@ -1536,41 +1559,45 @@ AXTextRuns AccessibilityRenderObject::textRuns()
     // FIXME: Use InlineIteratorLogicalOrderTraversal instead. Otherwise we'll do the wrong thing for mixed direction content.
     auto textBox = InlineIterator::lineLeftmostTextBoxFor(*renderText);
     size_t currentLineIndex = textBox ? textBox->lineIndex() : 0;
-    for (; textBox; textBox.traverseNextTextBox()) {
+
+    bool containsOnlyASCII = true;
+    while (textBox) {
         size_t newLineIndex = textBox->lineIndex();
+        uint16_t startDOMOffset = domOffset(textBox->minimumCaretOffset());
+        uint16_t endDOMOffset = domOffset(textBox->maximumCaretOffset());
         if (newLineIndex != currentLineIndex) {
-            // FIXME: Currently, this is only ever called to ship text runs off to the accessibility thread. But maybe we should we make the isolatedCopy()s in this function optional based on a parameter?
-            runs.append({ currentLineIndex, lineString.toString().isolatedCopy(), { std::exchange(textRunDomOffsets, { }) }, std::exchange(characterWidths, { }), lineHeight, distanceFromBoundsInDirection });
+            auto string = lineString.toString().isolatedCopy();
+            if (containsOnlyASCII)
+                containsOnlyASCII = string.containsOnlyASCII();
+
+            if (textRunDomOffsets.size() && startDOMOffset != textRunDomOffsets.last()[1]) {
+                // If a space was trimmed in this text run (i.e., there's a gap between the end
+                // of the current run's DOM offset and the start of the next), add it back.
+                string = makeString(string, ' ');
+                characterWidths.append(0);
+            }
+            runs.append({ currentLineIndex, WTFMove(string), { std::exchange(textRunDomOffsets, { }) }, std::exchange(characterWidths, { }), lineHeight, distanceFromBoundsInDirection });
+
+            currentLineIndex = newLineIndex;
+            // Reset variables used in appendToLineString().
             lineString.clear();
             accumulatedDistanceFromStart = 0.0;
             lineHeight = 0.0;
             distanceFromBoundsInDirection = 0.0;
         }
-        currentLineIndex = newLineIndex;
+        appendToLineString(textBox);
 
         // Within each iteration of this loop, we are looking at the *next* text box to compare to the current.
         // So, we need to set the textRunDomOffsets after the line index comparison, in order to assign the right DOM offsets per text box.
-        textRunDomOffsets.append({ domOffset(textBox->minimumCaretOffset()), domOffset(textBox->maximumCaretOffset()) });
-        appendToLineString(textBox);
+        textBox.traverseNextTextBox();
+        textRunDomOffsets.append({ startDOMOffset, endDOMOffset });
     }
 
-    if (!lineString.isEmpty())
-        runs.append({ currentLineIndex, lineString.toString().isolatedCopy(), WTFMove(textRunDomOffsets), std::exchange(characterWidths, { }), lineHeight, distanceFromBoundsInDirection });
-
-    bool containsOnlyASCII = true;
-    for (size_t i = 0; i < runs.size(); i++) {
-        if (containsOnlyASCII && !runs[i].text.containsOnlyASCII())
-            containsOnlyASCII = false;
-
-        // If a space was trimmed in this text run (i.e., there's a gap between the end of the current run's DOM offset and the start of the next), add it back.
-        if (i != runs.size() - 1 && runs[i + 1].domOffsets().size()) {
-            uint16_t currentDOMEnd = runs[i].domOffsets().last()[1];
-            uint16_t nextDOMStart = runs[i + 1].domOffsets().first()[0];
-            if (currentDOMEnd != nextDOMStart) {
-                runs[i].text = makeString(runs[i].text, ' ');
-                runs[i].characterAdvances.append(0);
-            }
-        }
+    if (!lineString.isEmpty()) {
+        auto string = lineString.toString().isolatedCopy();
+        if (containsOnlyASCII)
+            containsOnlyASCII = string.containsOnlyASCII();
+        runs.append({ currentLineIndex, WTFMove(string), WTFMove(textRunDomOffsets), std::exchange(characterWidths, { }), lineHeight, distanceFromBoundsInDirection });
     }
     return { renderText->containingBlock(), WTFMove(runs), containsOnlyASCII };
 }

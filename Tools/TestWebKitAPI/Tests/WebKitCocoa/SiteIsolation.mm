@@ -184,7 +184,7 @@ static bool frameTreesMatch(_WKFrameTreeNode *actualRoot, ExpectedFrameTree&& ex
         });
         if (index == WTF::notFound)
             return false;
-        expectedRoot.children.remove(index);
+        expectedRoot.children.removeAt(index);
     }
     return expectedRoot.children.isEmpty();
 }
@@ -200,7 +200,7 @@ static bool frameTreesMatch(NSSet<_WKFrameTreeNode *> *actualFrameTrees, Vector<
         });
         if (index == WTF::notFound)
             return false;
-        expectedFrameTrees.remove(index);
+        expectedFrameTrees.removeAt(index);
     }
     return expectedFrameTrees.isEmpty();
 }
@@ -765,45 +765,40 @@ TEST(SiteIsolation, PostMessageWithMessagePorts)
 
     auto webkitHTML = "<script>"
     "    window.addEventListener('message', (event) => {"
-    "           event.ports[0].postMessage('got port and message ' + event.data);"
+    "        event.ports[0].postMessage('got port and message ' + event.data);"
     "    }, false)"
     "</script>"_s;
 
-    bool finishedLoading { false };
+    auto example2HTML = "<script>"
+    "    onload = () => {"
+    "        const channel = new MessageChannel();"
+    "        document.getElementById('webkit_frame').contentWindow.postMessage('ping', '*', [channel.port2]);"
+    "        channel.port1.postMessage('sent message after sending port');"
+    "    }"
+    "</script>"
+    "<iframe id='webkit_frame' src='https://webkit.org/webkit2'></iframe>"_s;
+
+    auto webkit2HTML = "<script>"
+    "    window.addEventListener('message', (event) => {"
+    "        event.ports[0].onmessage = (e)=>{ alert('port received message ' + event.data); }"
+    "    }, false)"
+    "</script>"_s;
+
     HTTPServer server({
         { "/example"_s, { exampleHTML } },
-        { "/webkit"_s, { webkitHTML } }
+        { "/webkit"_s, { webkitHTML } },
+        { "/example2"_s, { example2HTML } },
+        { "/webkit2"_s, { webkit2HTML } }
     }, HTTPServer::Protocol::HttpsProxy);
     auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
 
-    navigationDelegate.get().didFinishNavigation = makeBlockPtr([&](WKWebView *, WKNavigation *navigation) {
-        if (navigation._request) {
-            EXPECT_WK_STREQ(navigation._request.URL.absoluteString, "https://example.com/example");
-            finishedLoading = true;
-        }
-    }).get();
-
-    __block RetainPtr<NSString> alert;
-    auto uiDelegate = adoptNS([TestUIDelegate new]);
-    uiDelegate.get().runJavaScriptAlertPanelWithMessage = ^(WKWebView *, NSString *message, WKFrameInfo *, void (^completionHandler)(void)) {
-        alert = message;
-        completionHandler();
-    };
-
-    webView.get().UIDelegate = uiDelegate.get();
     [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
-    Util::run(&finishedLoading);
+    [navigationDelegate waitForDidFinishNavigation];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "parent frame received got port and message ping");
 
-    while (!alert)
-        Util::spinRunLoop();
-    EXPECT_WK_STREQ(alert.get(), "parent frame received got port and message ping");
-
-    auto mainFrame = [webView mainFrame];
-    pid_t mainFramePid = mainFrame.info._processIdentifier;
-    pid_t childFramePid = mainFrame.childFrames.firstObject.info._processIdentifier;
-    EXPECT_NE(mainFramePid, 0);
-    EXPECT_NE(childFramePid, 0);
-    EXPECT_NE(mainFramePid, childFramePid);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example2"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "port received message ping");
 }
 
 TEST(SiteIsolation, PostMessageWithNotAllowedTargetOrigin)
@@ -4758,6 +4753,58 @@ TEST(SiteIsolation, CreateWebArchive)
     done = false;
 }
 
+TEST(SiteIsolation, CreateWebArchiveNestedFrame)
+{
+    HTTPServer server({
+        { "/mainframe"_s, { "<iframe src='https://domain2.com/subframe'></iframe>"_s } },
+        { "/subframe"_s, { "<iframe src='https://domain3.com/nestedframe'></iframe>"_s } },
+        { "/nestedframe"_s, { "<p>hello</p>"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://domain1.com/mainframe"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    static bool done = false;
+    [webView createWebArchiveDataWithCompletionHandler:^(NSData *result, NSError *error) {
+        EXPECT_NULL(error);
+        EXPECT_NOT_NULL(result);
+        NSDictionary* actualDictionary = [NSPropertyListSerialization propertyListWithData:result options:0 format:nil error:nil];
+        EXPECT_NOT_NULL(actualDictionary);
+        NSDictionary *expectedDictionary = @{
+            @"WebMainResource" : @{
+                @"WebResourceData" : [@"<html><head></head><body><iframe src=\"https://domain2.com/subframe\"></iframe></body></html>" dataUsingEncoding:NSUTF8StringEncoding],
+                @"WebResourceFrameName" : @"",
+                @"WebResourceMIMEType" : @"text/html",
+                @"WebResourceTextEncodingName" : @"UTF-8",
+                @"WebResourceURL" : @"https://domain1.com/mainframe"
+            },
+            @"WebSubframeArchives" : @[ @{
+                @"WebMainResource" : @{
+                    @"WebResourceData" : [@"<html><head></head><body><iframe src=\"https://domain3.com/nestedframe\"></iframe></body></html>" dataUsingEncoding:NSUTF8StringEncoding],
+                    @"WebResourceFrameName" : @"<!--frame1-->",
+                    @"WebResourceMIMEType" : @"text/html",
+                    @"WebResourceTextEncodingName" : @"UTF-8",
+                    @"WebResourceURL" : @"https://domain2.com/subframe"
+                },
+                @"WebSubframeArchives" : @[ @{
+                    @"WebMainResource" : @{
+                        @"WebResourceData" : [@"<html><head></head><body><p>hello</p></body></html>" dataUsingEncoding:NSUTF8StringEncoding],
+                        @"WebResourceFrameName" : @"<!--frame2-->",
+                        @"WebResourceMIMEType" : @"text/html",
+                        @"WebResourceTextEncodingName" : @"UTF-8",
+                        @"WebResourceURL" : @"https://domain3.com/nestedframe"
+                    }
+                } ]
+            } ],
+        };
+        EXPECT_TRUE([expectedDictionary isEqualToDictionary:actualDictionary]);
+        done = true;
+    }];
+    Util::run(&done);
+    done = false;
+}
+
 // FIXME: Re-enable this once the extra resize events are gone.
 // https://bugs.webkit.org/show_bug.cgi?id=292311 might do it.
 TEST(SiteIsolation, DISABLED_Events)
@@ -4867,5 +4914,32 @@ TEST(SiteIsolation, DragAndDrop)
     EXPECT_WK_STREQ((__bridge NSString *)kUTTypeURL, [registeredTypes firstObject]);
 }
 #endif
+
+TEST(SiteIsolation, FramesDuringProvisionalNavigation)
+{
+    HTTPServer server({
+        { "/example"_s, { "<iframe src='https://webkit.org/iframe'></iframe>"_s } },
+        { "/iframe"_s, { "hi"_s } },
+        { "/second_iframe"_s, { TestWebKitAPI::HTTPResponse::Behavior::NeverSendResponse } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server, CGRectMake(0, 0, 800, 600));
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+    EXPECT_EQ(server.totalRequests(), 2u);
+
+    [webView evaluateJavaScript:@"var iframe = document.createElement('iframe');document.body.appendChild(iframe);iframe.src = 'https://webkit.org/second_iframe'" completionHandler:nil];
+    while (server.totalRequests() < 3)
+        Util::spinRunLoop();
+    EXPECT_EQ([[webView objectByEvaluatingJavaScript:@"window.parent.length" inFrame:[webView firstChildFrame]] intValue], 2);
+
+    checkFrameTreesInProcesses(webView.get(), {
+        { "https://example.com"_s,
+            { { RemoteFrame }, { "https://example.com"_s } }
+        }, { RemoteFrame,
+            { { "https://webkit.org"_s }, { RemoteFrame } }
+        },
+    });
+}
 
 }

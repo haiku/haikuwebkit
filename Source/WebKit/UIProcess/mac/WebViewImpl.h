@@ -346,11 +346,9 @@ public:
 
     void pageDidScroll(const WebCore::IntPoint&);
 
-#if HAVE(NSSCROLLVIEW_SEPARATOR_TRACKING_ADAPTER)
     NSRect scrollViewFrame();
     bool hasScrolledContentsUnderTitlebar();
     void updateTitlebarAdjacencyState();
-#endif
 
     RetainPtr<NSView> hitTest(CGPoint);
 
@@ -467,12 +465,9 @@ public:
 
     void preferencesDidChange();
 
-    void setTextIndicator(WebCore::TextIndicator&, WebCore::TextIndicatorLifetime = WebCore::TextIndicatorLifetime::Permanent);
-    void updateTextIndicator(WebCore::TextIndicator&);
-    void clearTextIndicatorWithAnimation(WebCore::TextIndicatorDismissalAnimation);
-    void setTextIndicatorAnimationProgress(float);
     void teardownTextIndicatorLayer();
-    void startTextIndicatoreFadeOut();
+    void startTextIndicatorFadeOut();
+    CALayer *textIndicatorInstallationLayer();
     void dismissContentRelativeChildWindowsFromViewOnly();
     void dismissContentRelativeChildWindowsWithAnimation(bool);
     void dismissContentRelativeChildWindowsWithAnimationFromViewOnly(bool);
@@ -534,7 +529,7 @@ public:
     void setInspectorAttachmentView(NSView *);
     RetainPtr<NSView> inspectorAttachmentView();
     
-    void showShareSheet(const WebCore::ShareDataWithParsedURL&, WTF::CompletionHandler<void(bool)>&&, WKWebView *);
+    void showShareSheet(WebCore::ShareDataWithParsedURL&&, WTF::CompletionHandler<void(bool)>&&, WKWebView *);
     void shareSheetDidDismiss(WKShareSheet *);
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
@@ -797,6 +792,8 @@ public:
     WKNSContentInsetFillView *topContentInsetFillView() const { return m_topContentInsetFillView.get(); }
     void registerViewAboveTopContentInsetArea(NSView *);
     void unregisterViewAboveTopContentInsetArea(NSView *);
+    void updateTopContentInsetFillDueToScrolling();
+    void updateTopContentInsetFillCaptureColor();
 #endif
 
 private:
@@ -953,10 +950,6 @@ private:
 
     id m_flagsChangedEventMonitor { nullptr };
 
-    RunLoop::Timer m_textIndicatorTimer;
-    RefPtr<WebCore::TextIndicator> m_textIndicator;
-    RetainPtr<WebTextIndicatorLayer> m_textIndicatorLayer;
-
     std::unique_ptr<PAL::HysteresisActivity> m_contentRelativeViewsHysteresis;
 
     RetainPtr<NSColorSpace> m_colorSpace;
@@ -1042,11 +1035,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     RetainPtr<WKTextAnimationManager> m_textAnimationTypeManager;
 #endif
 
-#if HAVE(NSSCROLLVIEW_SEPARATOR_TRACKING_ADAPTER)
     bool m_pageIsScrolledToTop { true };
     bool m_isRegisteredScrollViewSeparatorTrackingAdapter { false };
     NSRect m_lastScrollViewFrame { NSZeroRect };
-#endif
 
     RetainPtr<NSMenu> m_domPasteMenu;
     RetainPtr<WKDOMPasteMenuDelegate> m_domPasteMenuDelegate;

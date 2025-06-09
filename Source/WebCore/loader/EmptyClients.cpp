@@ -640,7 +640,7 @@ void EmptyChromeClient::runOpenPanel(LocalFrame&, FileChooser&)
 {
 }
     
-void EmptyChromeClient::showShareSheet(ShareDataWithParsedURL&, CompletionHandler<void(bool)>&&)
+void EmptyChromeClient::showShareSheet(ShareDataWithParsedURL&&, CompletionHandler<void(bool)>&&)
 {
 }
 
@@ -1094,7 +1094,7 @@ IntPoint EmptyFrameLoaderClient::accessibilityRemoteFrameOffset()
 }
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-void EmptyFrameLoaderClient::setAXIsolatedTreeRoot(WebCore::AXCoreObject*)
+void EmptyFrameLoaderClient::setIsolatedTree(Ref<WebCore::AXIsolatedTree>&&)
 {
 }
 #endif

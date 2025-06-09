@@ -1012,6 +1012,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/values/CSSValueTypes.h
 
     css/values/borders/CSSBorderRadius.h
+    css/values/borders/CSSBoxShadow.h
 
     css/values/color/CSSColor.h
     css/values/color/CSSColorDescriptors.h
@@ -1053,6 +1054,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/values/shapes/CSSRectFunction.h
     css/values/shapes/CSSShapeFunction.h
     css/values/shapes/CSSXywhFunction.h
+
+    css/values/text-decoration/CSSTextShadow.h
 
     cssjit/CompiledSelector.h
 
@@ -1708,6 +1711,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     page/FrameSnapshotting.h
     page/FrameTree.h
     page/FrameView.h
+    page/GetComposedRangesOptions.h
     page/GlobalFrameIdentifier.h
     page/GlobalWindowIdentifier.h
     page/HandleUserInputEventResult.h
@@ -1919,6 +1923,9 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/MediaSessionIdentifier.h
     platform/MediaStrategy.h
     platform/MediaUniqueIdentifier.h
+    platform/MessageClientForTesting.h
+    platform/MessageForTesting.h
+    platform/MessageTargetForTesting.h
     platform/NowPlayingManager.h
     platform/NotImplemented.h
     platform/OrientationNotifier.h
@@ -2537,6 +2544,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/sql/SQLiteDatabase.h
     platform/sql/SQLiteDatabaseTracker.h
     platform/sql/SQLiteDatabaseTrackerClient.h
+    platform/sql/SQLiteExtras.h
     platform/sql/SQLiteFileSystem.h
     platform/sql/SQLiteStatement.h
     platform/sql/SQLiteStatementAutoResetScope.h
@@ -2656,6 +2664,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/GridLength.h
     rendering/style/GridPosition.h
     rendering/style/GridPositionsResolver.h
+    rendering/style/GridSpan.h
     rendering/style/GridTrackSize.h
     rendering/style/LineClampValue.h
     rendering/style/ListStyleType.h
@@ -2674,7 +2683,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/ScrollbarGutter.h
     rendering/style/SVGRenderStyle.h
     rendering/style/SVGRenderStyleDefs.h
-    rendering/style/ShadowData.h
     rendering/style/ShapeValue.h
     rendering/style/StyleBackgroundData.h
     rendering/style/StyleBoxData.h
@@ -2727,17 +2735,21 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/AnchorPositionEvaluator.h
     style/PseudoElementIdentifier.h
+    style/ResolvedScopedName.h
     style/ScopedName.h
     style/StyleChange.h
     style/StyleInterpolationClient.h
     style/StyleScope.h
+    style/StyleScopeIdentifier.h
     style/StyleScopeOrdinal.h
     style/StyleUpdate.h
     style/StyleValidity.h
     style/Styleable.h
 
     style/values/borders/StyleBorderRadius.h
+    style/values/borders/StyleBoxShadow.h
     style/values/borders/StyleCornerShapeValue.h
+    style/values/borders/StyleShadow.h
 
     style/values/color/StyleColor.h
     style/values/color/StyleColorOptions.h
@@ -2777,6 +2789,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/shapes/StyleShapeFunction.h
     style/values/shapes/StyleWindRuleComputation.h
     style/values/shapes/StyleXywhFunction.h
+
+    style/values/text-decoration/StyleTextShadow.h
 
     style/values/StyleValueTypes.h
 

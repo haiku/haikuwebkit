@@ -42,11 +42,13 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdlib.h>
+#if !PAS_OS(WINDOWS)
 #include <sys/mman.h>
 #include <unistd.h>
+#endif
 
-/* PlayStation does not currently support the backtrace API. Android API versions < 33 don't, either */
-#if !PAS_PLATFORM(PLAYSTATION) && (!PAS_OS(ANDROID) || __ANDROID_API__ >= 33)
+/* PlayStation does not currently support the backtrace API. Android API versions < 33 don't, either. Windows does not either. */
+#if !PAS_PLATFORM(PLAYSTATION) && (!PAS_OS(ANDROID) || __ANDROID_API__ >= 33) && !PAS_OS(WINDOWS)
 #include <execinfo.h>
 #else
 size_t backtrace(void** buffer, size_t size)
@@ -179,6 +181,23 @@ pas_allocation_result pas_probabilistic_guard_malloc_allocate(pas_large_heap* la
     uintptr_t upper_guard = pas_round_up(key + size, page_size);
     size_t upper_guard_size = (result.begin + mem_to_alloc) - upper_guard;
 
+#if PAS_OS(WINDOWS)
+    void* virtualalloc_res = VirtualAlloc((void*) lower_guard, lower_guard_size, MEM_COMMIT, PAGE_NOACCESS);
+    PAS_ASSERT(virtualalloc_res);
+
+    virtualalloc_res = VirtualAlloc((void*) upper_guard, upper_guard_size, MEM_COMMIT, PAGE_NOACCESS);
+    PAS_ASSERT(virtualalloc_res);
+
+    /* 
+     * ensure physical addresses are released
+     * loop using meminfo here if the upper guard free is failing 
+     */
+    bool virtualfree_res = VirtualFree((void*) lower_guard, lower_guard_size, MEM_DECOMMIT);
+    PAS_ASSERT(virtualfree_res);
+
+    virtualfree_res = VirtualFree((void*) upper_guard, upper_guard_size, MEM_DECOMMIT);
+    PAS_ASSERT(virtualfree_res);
+#else
     int mprotect_res = mprotect((void*)lower_guard, lower_guard_size, PROT_NONE);
     PAS_ASSERT(!mprotect_res);
 
@@ -194,6 +213,7 @@ pas_allocation_result pas_probabilistic_guard_malloc_allocate(pas_large_heap* la
 
     madvise_res = madvise((void*)lower_guard, lower_guard_size, MADV_FREE);
     PAS_ASSERT(!madvise_res);
+#endif
 
     PAS_PROFILE(PGM_ALLOCATE, heap_config, key);
 
@@ -251,6 +271,29 @@ void pas_probabilistic_guard_malloc_deallocate(void* mem)
         return;
 
     pas_pgm_storage* value = (pas_pgm_storage*)entry->value;
+#if PAS_OS(WINDOWS)
+    MEMORY_BASIC_INFORMATION memInfo;
+    VirtualQuery((void *) value->start_of_data_pages, &memInfo, sizeof(memInfo));
+
+    void* virtualalloc_res = NULL;
+    bool virtualfree_res = false;
+    size_t totalSeen = 0;
+    void *currentPtr = (void*) value->start_of_data_pages;
+    while (totalSeen < value->size_of_data_pages) {
+        MEMORY_BASIC_INFORMATION memInfo;
+        VirtualQuery(currentPtr, &memInfo, sizeof(memInfo));
+        virtualalloc_res = VirtualAlloc(currentPtr, memInfo.RegionSize, MEM_COMMIT, PAGE_NOACCESS);
+        PAS_ASSERT(virtualalloc_res);
+
+        /* ensure physical addresses are released */
+        virtualfree_res = VirtualFree(currentPtr, memInfo.RegionSize, MEM_DECOMMIT);
+        PAS_ASSERT(virtualfree_res);
+
+        PAS_ASSERT(memInfo.RegionSize > 0);
+        currentPtr = (void*) ((uintptr_t) currentPtr + memInfo.RegionSize);
+        totalSeen += memInfo.RegionSize;
+    }
+#else
     int mprotect_res = mprotect((void*)value->start_of_data_pages, value->size_of_data_pages, PROT_NONE);
     PAS_ASSERT(!mprotect_res);
 
@@ -264,6 +307,7 @@ void pas_probabilistic_guard_malloc_deallocate(void* mem)
      */
     int madvise_res = madvise((void*)value->start_of_data_pages, value->size_of_data_pages, MADV_FREE);
     PAS_ASSERT(!madvise_res);
+#endif
 
     free_wasted_mem  += value->mem_to_waste;
     free_virtual_mem += value->size_of_allocated_pages;

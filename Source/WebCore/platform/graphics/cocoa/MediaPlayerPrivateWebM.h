@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if ENABLE(ALTERNATE_WEBM_PLAYER)
+#if ENABLE(COCOA_WEBM_PLAYER)
 
 #include "MediaPlayerPrivate.h"
 #include "PlatformLayer.h"
@@ -211,7 +211,6 @@ private:
     void notifyClientWhenReadyForMoreSamples(TrackID);
 
     void setMinimumUpcomingPresentationTime(TrackID, const MediaTime&);
-    void clearMinimumUpcomingPresentationTime(TrackID);
 
     bool isReadyForMoreSamples(TrackID);
     void didBecomeReadyForMoreSamples(TrackID);
@@ -421,4 +420,4 @@ private:
 
 } // namespace WebCore
 
-#endif // ENABLE(ALTERNATE_WEBM_PLAYER)
+#endif // ENABLE(COCOA_WEBM_PLAYER)

@@ -293,6 +293,7 @@ auto TreeResolver::resolveElement(Element& element, const RenderStyle* existingS
     auto resolvedStyle = styleForStyleable(styleable, resolutionType, resolutionContext, existingStyle);
 
     generatePositionOptionsIfNeeded(resolvedStyle, styleable, resolutionContext);
+    updateForPositionVisibility(*resolvedStyle.style, styleable);
 
     auto update = createAnimatedElementUpdate(WTFMove(resolvedStyle), styleable, parent().changes, resolutionContext, parent().isInDisplayNoneTree);
 
@@ -593,7 +594,7 @@ ResolutionContext TreeResolver::makeResolutionContext()
     return {
         &parent().style,
         parentBoxStyle(),
-        m_documentElementStyle.get(),
+        documentElementStyle(),
         &scope().selectorMatchingState,
         &m_treeResolutionState
     };
@@ -612,7 +613,7 @@ ResolutionContext TreeResolver::makeResolutionContextForPseudoElement(const Elem
     return {
         parentStyle(),
         parentBoxStyleForPseudoElement(elementUpdate),
-        m_documentElementStyle.get(),
+        documentElementStyle(),
         &scope().selectorMatchingState,
         &m_treeResolutionState
     };
@@ -628,10 +629,18 @@ std::optional<ResolutionContext> TreeResolver::makeResolutionContextForInherited
     return ResolutionContext {
         parentFirstLineStyle,
         parentBoxStyleForPseudoElement(elementUpdate),
-        m_documentElementStyle.get(),
+        documentElementStyle(),
         &scope().selectorMatchingState,
         &m_treeResolutionState
     };
+}
+
+const RenderStyle* TreeResolver::documentElementStyle() const
+{
+    if (m_computedDocumentElementStyle)
+        return m_computedDocumentElementStyle.get();
+
+    return m_document->documentElement()->renderStyle();
 }
 
 auto TreeResolver::boxGeneratingParent() const -> const Parent*
@@ -1190,7 +1199,7 @@ void TreeResolver::resolveComposedTree()
             if (style || element.hasDisplayNone())
                 m_update->addElement(element, parent.element, WTFMove(elementUpdate));
             if (style && &element == m_document->documentElement())
-                m_documentElementStyle = RenderStyle::clonePtr(*style);
+                m_computedDocumentElementStyle = RenderStyle::clonePtr(*style);
             clearNeedsStyleResolution(element);
         }
 
@@ -1247,9 +1256,9 @@ const RenderStyle* TreeResolver::existingStyle(const Element& element)
 
     if (style && &element == m_document->documentElement()) {
         // Document element style may have got adjusted based on body style but we don't want to inherit those adjustments.
-        m_documentElementStyle = Adjuster::restoreUsedDocumentElementStyleToComputed(*style);
-        if (m_documentElementStyle)
-            style = m_documentElementStyle.get();
+        m_computedDocumentElementStyle = Adjuster::restoreUsedDocumentElementStyleToComputed(*style);
+        if (m_computedDocumentElementStyle)
+            style = m_computedDocumentElementStyle.get();
     }
 
     return style;
@@ -1542,6 +1551,30 @@ std::optional<ResolvedStyle> TreeResolver::tryChoosePositionOption(const Styleab
     return ResolvedStyle { RenderStyle::clonePtr(*optionStyle) };
 }
 
+void TreeResolver::updateForPositionVisibility(RenderStyle& style, const Styleable& styleable)
+{
+    if (!hasResolvedAnchorPosition(styleable.element))
+        return;
+
+    auto shouldHideAnchorPositioned = [&] {
+        CheckedPtr anchored = dynamicDowncast<RenderBox>(styleable.renderer());
+        if (!anchored)
+            return false;
+
+        if (style.positionVisibility().contains(PositionVisibility::AnchorsVisible)) {
+            // "If the box has a default anchor box but that anchor box is invisible or clipped by intervening boxes, the box’s visibility property computes to force-hidden."
+            if (AnchorPositionEvaluator::isDefaultAnchorInvisibleOrClippedByInterveningBoxes(*anchored))
+                return true;
+        }
+        // FIXME: Remaining `position-visibility` values.
+        return false;
+    };
+
+    // FIXME: Implement via "visibility: force-hidden".
+    if (shouldHideAnchorPositioned())
+        style.setIsForceHidden();
+}
+
 const RenderStyle* TreeResolver::beforeResolutionStyle(const Element& element, std::optional<PseudoElementIdentifier> pseudo)
 {
     auto resolvePseudoStyle = [&](auto* style) -> const RenderStyle* {
@@ -1575,7 +1608,16 @@ bool TreeResolver::hasUnresolvedAnchorPosition(const Element& element) const
         return true;
 
     return false;
-};
+}
+
+bool TreeResolver::hasResolvedAnchorPosition(const Element& element) const
+{
+    auto* anchorPositionedState = m_treeResolutionState.anchorPositionedStates.get(element);
+    if (anchorPositionedState && anchorPositionedState->stage >= AnchorPositionResolutionStage::Resolved)
+        return true;
+
+    return false;
+}
 
 static Vector<Function<void ()>>& postResolutionCallbackQueue()
 {

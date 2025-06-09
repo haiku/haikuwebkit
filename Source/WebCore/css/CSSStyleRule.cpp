@@ -279,11 +279,11 @@ ExceptionOr<void> CSSStyleRule::deleteRule(unsigned index)
     auto& rules = downcast<StyleRuleWithNesting>(m_styleRule.get()).nestedRules();
     
     CSSStyleSheet::RuleMutationScope mutationScope(this);
-    rules.remove(index);
+    rules.removeAt(index);
 
     if (m_childRuleCSSOMWrappers[index])
         m_childRuleCSSOMWrappers[index]->setParentRule(nullptr);
-    m_childRuleCSSOMWrappers.remove(index);
+    m_childRuleCSSOMWrappers.removeAt(index);
 
     return { };
 }
@@ -310,12 +310,12 @@ CSSRule* CSSStyleRule::item(unsigned index) const
 CSSRuleList& CSSStyleRule::cssRules() const
 {
     if (!m_ruleListCSSOMWrapper)
-        m_ruleListCSSOMWrapper = makeUniqueWithoutRefCountedCheck<LiveCSSRuleList<CSSStyleRule>>(const_cast<CSSStyleRule&>(*this));
+        lazyInitialize(m_ruleListCSSOMWrapper, makeUniqueWithoutRefCountedCheck<LiveCSSRuleList<CSSStyleRule>>(const_cast<CSSStyleRule&>(*this)));
 
     return *m_ruleListCSSOMWrapper;
 }
 
-void CSSStyleRule::getChildStyleSheets(UncheckedKeyHashSet<RefPtr<CSSStyleSheet>>& childStyleSheets)
+void CSSStyleRule::getChildStyleSheets(HashSet<RefPtr<CSSStyleSheet>>& childStyleSheets)
 {
     for (unsigned index = 0; index < length(); ++index)
         item(index)->getChildStyleSheets(childStyleSheets);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, Google Inc. All rights reserved.
+ * Copyright (C) 2012 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -56,7 +56,7 @@ private:
     // AudioSourceProviderClient
     void setFormat(size_t numberOfChannels, float sampleRate) final;
 
-    void provideInput(AudioBus*, size_t framesToProcess);
+    void provideInput(AudioBus&, size_t framesToProcess);
 
     double tailTime() const override { return 0; }
     double latencyTime() const override { return 0; }

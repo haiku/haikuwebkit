@@ -1927,7 +1927,7 @@ void CodeBlock::stronglyVisitStrongReferences(const ConcurrentJSLocker& locker, 
     visitor.append(m_unlinkedCode);
     if (m_rareData)
         m_rareData->m_directEvalCodeCache.visitAggregate(visitor);
-    visitor.appendValues(m_constantRegisters.data(), m_constantRegisters.size());
+    visitor.appendValues(m_constantRegisters.span().data(), m_constantRegisters.size());
     for (auto& functionExpr : m_functionExprs)
         visitor.append(functionExpr);
     for (auto& functionDecl : m_functionDecls)
@@ -2135,7 +2135,7 @@ void CodeBlock::removeExceptionHandlerForCallSite(DisposableCallSiteIndex callSi
     for (size_t i = 0; i < exceptionHandlers.size(); ++i) {
         HandlerInfo& handler = exceptionHandlers[i];
         if (handler.start <= index && handler.end > index) {
-            exceptionHandlers.remove(i);
+            exceptionHandlers.removeAt(i);
             return;
         }
     }

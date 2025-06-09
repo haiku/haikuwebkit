@@ -2856,6 +2856,51 @@ def check_ismainthread(filename, clean_lines, line_number, file_state, error):
     error(line_number, 'runtime/ismainthread', 4, "Use 'isMainRunLoop()' instead of 'isMainThread()' in Source/WebKit.")
 
 
+def check_mainthreadneverdestroyed(filename, clean_lines, line_number, file_state, error):
+    """Looks for use of 'MainThreadNeverDestroyed' which should be replaced with 'MainRunLoopNeverDestroyed'.
+
+    Args:
+      filename: The current file cpp_style is running over.
+      clean_lines: A CleansedLines instance containing the file.
+      line_number: The number of the line to check.
+      file_state: A _FileState instance which maintains information about
+                  the state of things in the file.
+      error: The function to call with any errors found.
+    """
+
+    if not _is_webkit2_file(filename):
+        return
+
+    line = clean_lines.elided[line_number]  # Get rid of comments and strings.
+    using_mainthreadneverdestroyed = search(r'\bMainThreadNeverDestroyed<', line)
+    if not using_mainthreadneverdestroyed:
+        return
+
+    error(line_number, 'runtime/mainthreadneverdestroyed', 4, "Use 'MainRunLoopNeverDestroyed' instead of 'MainThreadNeverDestroyed' in Source/WebKit.")
+
+
+def check_mainthreadlazyneverdestroyed(filename, clean_lines, line_number, file_state, error):
+    """Looks for use of 'MainThreadLazyNeverDestroyed' which should be replaced with 'MainRunLoopLazyNeverDestroyed'.
+
+    Args:
+      filename: The current file cpp_style is running over.
+      clean_lines: A CleansedLines instance containing the file.
+      line_number: The number of the line to check.
+      file_state: A _FileState instance which maintains information about
+                  the state of things in the file.
+      error: The function to call with any errors found.
+    """
+
+    if not _is_webkit2_file(filename):
+        return
+
+    line = clean_lines.elided[line_number]  # Get rid of comments and strings.
+    using_mainthreadlazyneverdestroyed = search(r'\bMainThreadLazyNeverDestroyed<', line)
+    if not using_mainthreadlazyneverdestroyed:
+        return
+
+    error(line_number, 'runtime/mainthreadlazyneverdestroyed', 4, "Use 'MainRunLoopLazyNeverDestroyed' instead of 'MainThreadLazyNeverDestroyed' in Source/WebKit.")
+
 def check_wtf_make_unique(clean_lines, line_number, file_state, error):
     """Looks for use of 'std::make_unique<>' which should be replaced with 'WTF::makeUnique<>'.
 
@@ -3581,6 +3626,24 @@ def check_safer_cpp(clean_lines, line_number, error):
     uses_xpc_string_get_string_ptr = search(r'xpc_string_get_string_ptr\(', line)
     if uses_xpc_string_get_string_ptr:
         error(line_number, 'safercpp/xpc_string_get_string_ptr', 4, "Use xpcStringGetString() instead of xpc_string_get_string_ptr().")
+
+    if search(r'sqlite3_bind_blob\(', line) or search(r'sqlite3_bind_blob64\(', line):
+        error(line_number, 'safercpp/sqlite3_bind_blob', 4, "Use sqliteBindBlob() instead of sqlite3_bind_blob() or sqlite3_bind_blob64().")
+
+    if search(r'sqlite3_bind_text\(', line):
+        error(line_number, 'safercpp/sqlite3_bind_text', 4, "Use sqliteBindText() instead of sqlite3_bind_text().")
+
+    if search(r'sqlite3_column_name\(', line):
+        error(line_number, 'safercpp/sqlite3_column_name', 4, "Use sqliteColumnName() instead of sqlite3_column_name().")
+
+    if search(r'sqlite3_value_text\(', line):
+        error(line_number, 'safercpp/sqlite3_value_text', 4, "Use sqliteValueText() instead of sqlite3_value_text().")
+
+    if search(r'sqlite3_column_text\(', line):
+        error(line_number, 'safercpp/sqlite3_column_text', 4, "Use sqliteColumnText() instead of sqlite3_column_text().")
+
+    if search(r'sqlite3_column_blob\(', line):
+        error(line_number, 'safercpp/sqlite3_column_blob', 4, "Use sqliteColumnBlob() instead of sqlite3_column_blob().")
 
 
 def check_style(clean_lines, line_number, file_extension, class_state, file_state, enum_state, error):
@@ -4765,6 +4828,8 @@ def process_line(filename, file_extension,
     check_os_version_checks(filename, clean_lines, line, error)
     check_callonmainthread(filename, clean_lines, line, file_state, error)
     check_ismainthread(filename, clean_lines, line, file_state, error)
+    check_mainthreadneverdestroyed(filename, clean_lines, line, file_state, error)
+    check_mainthreadlazyneverdestroyed(filename, clean_lines, line, file_state, error)
 
 
 class _InlineASMState(object):
@@ -4897,6 +4962,8 @@ class CppChecker(object):
         'runtime/leaky_pattern',
         'runtime/lock_guard',
         'runtime/log',
+        'runtime/mainthreadlazyneverdestroyed',
+        'runtime/mainthreadneverdestroyed',
         'runtime/max_min_macros',
         'runtime/memset',
         'runtime/once_flag',

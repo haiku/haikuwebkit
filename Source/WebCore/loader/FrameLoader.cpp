@@ -548,7 +548,7 @@ void FrameLoader::submitForm(Ref<FormSubmission>&& submission)
     if (!document->checkedContentSecurityPolicy()->allowFormAction(formAction))
         return;
 
-    RefPtr targetFrame = findFrameForNavigation(submission->target(), submission->state().protectedSourceDocument().ptr());
+    RefPtr targetFrame = findFrameForNavigation(submission->target(), &submission->state().sourceDocument());
     if (!targetFrame) {
         if (!LocalDOMWindow::allowPopUp(frame) && !UserGestureIndicator::processingUserGesture())
             return;
@@ -2864,7 +2864,7 @@ void FrameLoader::checkLoadCompleteForThisFrame(LoadWillContinueInAnotherProcess
                     item = localMainFrame->loader().history().currentItem();
             }
 
-            isHTTPSByDefaultEnabled = page->protectedSettings()->httpsByDefault();
+            isHTTPSByDefaultEnabled = page->settings().httpsByDefault();
         }
 
         bool isHTTPSFirstApplicable = (isHTTPSByDefaultEnabled || provisionalDocumentLoader->httpsByDefaultMode() == HTTPSByDefaultMode::UpgradeWithAutomaticFallback)
@@ -3155,6 +3155,15 @@ void FrameLoader::checkLoadComplete(LoadWillContinueInAnotherProcess loadWillCon
             frames.append(localFrame.releaseNonNull());
     }
 
+    // Provisional frames that are not in the frame tree need to be included to report provisional load failures.
+    if (m_frame->settings().siteIsolationEnabled()) {
+        bool containsThisFrame = std::ranges::any_of(frames, [thisFrame = Ref { m_frame.get() }] (auto& frame) {
+            return frame.ptr() == thisFrame.ptr();
+        });
+        if (!containsThisFrame)
+            frames.append(m_frame);
+    }
+
     // To process children before their parents, iterate the vector backwards.
     for (Ref frame : makeReversedRange(frames)) {
         if (frame->page())
@@ -3279,6 +3288,8 @@ void FrameLoader::detachFromParent()
         parentLoader->scheduleCheckCompleted();
         parentLoader->scheduleCheckLoadComplete();
     } else {
+        if (RefPtr parent = frame->tree().parent())
+            parent->tree().removeChild(frame);
         frame->setView(nullptr);
         frame->willDetachPage();
         frame->detachFromPage();
@@ -3940,7 +3951,7 @@ bool FrameLoader::dispatchBeforeUnloadEvent(Chrome& chrome, FrameLoader* frameLo
     frameLoaderBeingNavigated->m_currentNavigationHasShownBeforeUnloadConfirmPanel = true;
 
     String text = document->displayStringModifiedByEncoding(beforeUnloadEvent->returnValue());
-    return chrome.runBeforeUnloadConfirmPanel(text, protectedFrame());
+    return chrome.runBeforeUnloadConfirmPanel(WTFMove(text), protectedFrame());
 }
 
 void FrameLoader::executeJavaScriptURL(const URL& url, const NavigationAction& action)

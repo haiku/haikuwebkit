@@ -39,7 +39,6 @@
 #import "WebViewImpl.h"
 #import <WebCore/DictionaryLookup.h>
 #import <WebCore/GeometryUtilities.h>
-#import <WebCore/TextIndicatorWindow.h>
 #import <pal/spi/mac/LookupSPI.h>
 #import <pal/spi/mac/NSMenuSPI.h>
 #import <pal/spi/mac/NSPopoverSPI.h>
@@ -306,7 +305,7 @@
             _currentQLPreviewMenuItem = item.get();
 
             if (RefPtr textIndicator = _hitTestResultData.linkTextIndicator)
-                RefPtr { _page.get() }->setTextIndicator(textIndicator->data());
+                RefPtr { _page.get() }->setTextIndicator(textIndicator->data(), WebCore::TextIndicatorLifetime::Permanent);
 
             return (id<NSImmediateActionAnimationController>)item.autorelease();
         }
@@ -433,7 +432,7 @@
         page->protectedLegacyMainFrameProcess()->send(Messages::WebPage::DataDetectorsDidPresentUI(overlayID), page->webPageIDInMainFrameProcess());
     } interactionChangedHandler:^() {
         if (RefPtr detectedDataTextIndicator = _hitTestResultData.platformData.detectedDataTextIndicator)
-            page->setTextIndicator(detectedDataTextIndicator->data());
+            page->setTextIndicator(detectedDataTextIndicator->data(), WebCore::TextIndicatorLifetime::Permanent);
         page->protectedLegacyMainFrameProcess()->send(Messages::WebPage::DataDetectorsDidChangeUI(overlayID), page->webPageIDInMainFrameProcess());
     } interactionStoppedHandler:^() {
         page->protectedLegacyMainFrameProcess()->send(Messages::WebPage::DataDetectorsDidHideUI(overlayID), page->webPageIDInMainFrameProcess());
@@ -466,7 +465,7 @@
     _currentActionContext = (WKDDActionContext *)[actionContext contextForView:_view altMode:YES interactionStartedHandler:^() {
     } interactionChangedHandler:^() {
         if (RefPtr linkTextIndicator = _hitTestResultData.linkTextIndicator)
-            page->setTextIndicator(linkTextIndicator->data());
+            page->setTextIndicator(linkTextIndicator->data(), WebCore::TextIndicatorLifetime::Permanent);
     } interactionStoppedHandler:^() {
         [self _clearImmediateActionState];
     }];
@@ -493,15 +492,21 @@
         return nil;
 
     WebCore::DictionaryPopupInfo dictionaryPopupInfo = _hitTestResultData.dictionaryPopupInfo;
+
+#if ENABLE(LEGACY_PDFKIT_PLUGIN)
     if (!dictionaryPopupInfo.platformData.attributedString.nsAttributedString())
         return nil;
+#else
+    if (!dictionaryPopupInfo.text)
+        return nil;
+#endif
 
     CheckedPtr { _viewImpl.get() }->prepareForDictionaryLookup();
 
     return WebCore::DictionaryLookup::animationControllerForPopup(dictionaryPopupInfo, _view, [self](WebCore::TextIndicator& textIndicator) {
-        CheckedPtr { _viewImpl.get() }->setTextIndicator(textIndicator, WebCore::TextIndicatorLifetime::Permanent);
+        RefPtr { _page.get() }->setTextIndicator(textIndicator.data(), WebCore::TextIndicatorLifetime::Permanent);
     }, nullptr, [strongSelf = retainPtr(self)]() {
-        CheckedPtr { strongSelf->_viewImpl.get() }->clearTextIndicatorWithAnimation(WebCore::TextIndicatorDismissalAnimation::None);
+        RefPtr { strongSelf->_page.get() }->clearTextIndicatorWithAnimation(WebCore::TextIndicatorDismissalAnimation::None);
     });
 }
 

@@ -106,7 +106,7 @@ static inline Ref<XMLDocument> createXMLDocument(const String& namespaceURI, con
 ExceptionOr<Ref<XMLDocument>> DOMImplementation::createDocument(const AtomString& namespaceURI, const AtomString& qualifiedName, DocumentType* documentType)
 {
     Ref thisDocument = m_document.get();
-    Ref document = createXMLDocument(namespaceURI, thisDocument->protectedSettings());
+    Ref document = createXMLDocument(namespaceURI, thisDocument->settings());
     document->setParserContentPolicy({ ParserContentPolicy::AllowScriptingContent });
     document->setContextDocument(thisDocument->contextDocument());
     document->setSecurityOriginPolicy(thisDocument->securityOriginPolicy());
@@ -133,14 +133,14 @@ Ref<CSSStyleSheet> DOMImplementation::createCSSStyleSheet(const String&, const S
     // FIXME: Title should be set.
     // FIXME: Media could have wrong syntax, in which case we should generate an exception.
     auto sheet = CSSStyleSheet::create(StyleSheetContents::create());
-    sheet->setMediaQueries(MQ::MediaQueryParser::parse(media, { }));
+    sheet->setMediaQueries(MQ::MediaQueryParser::parse(media, strictCSSParserContext()));
     return sheet;
 }
 
 Ref<HTMLDocument> DOMImplementation::createHTMLDocument(String&& title)
 {
     Ref thisDocument = m_document.get();
-    Ref document = HTMLDocument::create(nullptr, thisDocument->protectedSettings(), URL(), { });
+    Ref document = HTMLDocument::create(nullptr, thisDocument->settings(), URL(), { });
     document->setParserContentPolicy({ ParserContentPolicy::AllowScriptingContent });
     document->open();
     document->write(nullptr, FixedVector<String> { "<!doctype html><html><head></head><body></body></html>"_s });
@@ -202,7 +202,7 @@ Ref<Document> DOMImplementation::createDocument(const String& contentType, Local
 
     // The following is the relatively costly lookup that requires initializing the plug-in database.
     if (frame && frame->page()) {
-        if (frame->page()->pluginData().supportsWebVisibleMimeType(contentType, PluginData::OnlyApplicationPlugins))
+        if (frame->page()->protectedPluginData()->supportsWebVisibleMimeType(contentType, PluginData::OnlyApplicationPlugins))
             return PluginDocument::create(*frame, url);
     }
 

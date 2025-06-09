@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2025 Apple Inc. All rights reserved.
+# Copyright (C) 2011-2024 Apple Inc. All rights reserved.
 #
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
@@ -144,6 +144,8 @@ if ARMv7k
 end
 if ARMv7s
 end
+
+nop
 
 # First come the common protocols that both interpreters use. Note that each
 # of these must have an ASSERT() in LLIntData.cpp
@@ -1795,7 +1797,6 @@ else
     _vmEntryToNative:
 end
     doVMEntry(makeHostFunctionCall)
-
 if ARM64E
     global _vmEntryToYarrJITAfter
 end

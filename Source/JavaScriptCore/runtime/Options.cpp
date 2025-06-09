@@ -653,6 +653,7 @@ void Options::setAllJITCodeValidations(bool value)
 {
     Options::validateDFGClobberize() = value;
     Options::validateDFGExceptionHandling() = value;
+    Options::validateDFGMayExit() = value;
     Options::validateDoesGC() = value;
     Options::useJITAsserts() = value;
 }
@@ -764,6 +765,11 @@ void Options::notifyOptionsChanged()
     unsigned thresholdForGlobalLexicalBindingEpoch = Options::thresholdForGlobalLexicalBindingEpoch();
     if (thresholdForGlobalLexicalBindingEpoch == 0 || thresholdForGlobalLexicalBindingEpoch == 1)
         Options::thresholdForGlobalLexicalBindingEpoch() = UINT_MAX;
+
+#if !ENABLE(OFFLINE_ASM_ALT_ENTRY)
+    if (Options::useGdbJITInfo())
+        dataLogLn("useGdbJITInfo should be used with OFFLINE_ASM_ALT_ENTRY");
+#endif
 
 #if !ENABLE(JIT)
     Options::useJIT() = false;
@@ -1358,9 +1364,9 @@ void Options::assertOptionsAreCoherent()
         coherent = false;
         dataLog("INCOHERENT OPTIONS: at least one of useLLInt or useJIT must be true\n");
     }
-    if (useWasm() && !(useWasmLLInt() || useBBQJIT())) {
+    if (useWasm() && !(useWasmIPInt() || useWasmLLInt() || useBBQJIT())) {
         coherent = false;
-        dataLog("INCOHERENT OPTIONS: at least one of useWasmLLInt or useBBQJIT must be true\n");
+        dataLog("INCOHERENT OPTIONS: at least one of useWasmIPInt, useWasmLLInt, or useBBQJIT must be true\n");
     }
     if (useProfiler() && useConcurrentJIT()) {
         coherent = false;

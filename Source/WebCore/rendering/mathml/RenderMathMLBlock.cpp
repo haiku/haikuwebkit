@@ -218,7 +218,7 @@ void RenderMathMLBlock::layoutBlock(RelayoutChildren relayoutChildren, LayoutUni
 
     updateLogicalHeight();
 
-    layoutPositionedObjects(relayoutChildren);
+    layoutOutOfFlowBoxes(relayoutChildren);
 
     repainter.repaintAfterLayout();
 
@@ -246,7 +246,7 @@ void RenderMathMLBlock::insertPositionedChildrenIntoContainingBlock()
 {
     for (auto& child : childrenOfType<RenderBox>(*this)) {
         if (child.isOutOfFlowPositioned())
-            child.containingBlock()->insertPositionedObject(child);
+            child.containingBlock()->addOutOfFlowBox(child);
     }
 }
 
@@ -273,7 +273,7 @@ void RenderMathMLBlock::shiftInFlowChildren(LayoutUnit left, LayoutUnit top)
 
 void RenderMathMLBlock::adjustPreferredLogicalWidthsForBorderAndPadding()
 {
-    ASSERT(preferredLogicalWidthsDirty());
+    ASSERT(needsPreferredLogicalWidthsUpdate());
     m_minPreferredLogicalWidth += borderAndPaddingLogicalWidth();
     m_maxPreferredLogicalWidth += borderAndPaddingLogicalWidth();
 }
@@ -304,7 +304,7 @@ RenderMathMLBlock::SizeAppliedToMathContent RenderMathMLBlock::sizeAppliedToMath
 LayoutUnit RenderMathMLBlock::applySizeToMathContent(LayoutPhase phase, const SizeAppliedToMathContent& sizes)
 {
     if (phase == LayoutPhase::CalculatePreferredLogicalWidth) {
-        ASSERT(preferredLogicalWidthsDirty());
+        ASSERT(needsPreferredLogicalWidthsUpdate());
         if (sizes.logicalWidth) {
             m_minPreferredLogicalWidth = *sizes.logicalWidth;
             m_maxPreferredLogicalWidth = *sizes.logicalWidth;

@@ -93,6 +93,7 @@
 #include "ScrollbarTheme.h"
 #include "ScrollbarsController.h"
 #include "Settings.h"
+#include "StyleBoxShadow.h"
 #include "StyleReflection.h"
 #include "StyleScrollSnapPoints.h"
 #include "TransformOperationData.h"
@@ -231,7 +232,7 @@ void RenderBox::removeFloatingAndInvalidateForLayout()
     }
 }
 
-void RenderBox::removeFloatingOrPositionedChildFromBlockLists()
+void RenderBox::removeFloatingOrOutOfFlowChildFromBlockLists()
 {
     ASSERT(!renderTreeBeingDestroyed());
 
@@ -239,7 +240,7 @@ void RenderBox::removeFloatingOrPositionedChildFromBlockLists()
         return removeFloatingAndInvalidateForLayout();
 
     if (isOutOfFlowPositioned())
-        return RenderBlock::removePositionedObject(*this);
+        return RenderBlock::removeOutOfFlowBox(*this);
 
     ASSERT_NOT_REACHED();
 }
@@ -280,7 +281,7 @@ void RenderBox::styleWillChange(StyleDifference diff, const RenderStyle& newStyl
             if (oldStyle->position() != PositionType::Static && newStyle.hasOutOfFlowPosition())
                 parent()->setChildNeedsLayout();
             if (isFloating() && !isOutOfFlowPositioned() && newStyle.hasOutOfFlowPosition())
-                removeFloatingOrPositionedChildFromBlockLists();
+                removeFloatingOrOutOfFlowChildFromBlockLists();
         }
     } else if (isBody())
         view().repaintRootContents();
@@ -331,7 +332,7 @@ void RenderBox::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle
 
     const RenderStyle& newStyle = style();
     if (needsLayout() && oldStyle) {
-        RenderBlock::removePercentHeightDescendantIfNeeded(*this);
+        RenderBlock::removePercentHeightDescendant(*this);
 
         // Normally we can do optimized positioning layout for absolute/fixed positioned objects. There is one special case, however, which is
         // when the positioned object's margin-before is changed. In this case the parent has to get a layout in order to run margin collapsing
@@ -409,14 +410,16 @@ void RenderBox::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle
     }
 }
 
-static bool gridStyleHasNotChanged(const RenderStyle& style, const RenderStyle* oldStyle)
+static bool hasEquivalentGridPositioningStyle(const RenderStyle& style, const RenderStyle& oldStyle)
 {
-    return (oldStyle->gridItemColumnStart() == style.gridItemColumnStart()
-        && oldStyle->gridItemColumnEnd() == style.gridItemColumnEnd()
-        && oldStyle->gridItemRowStart() == style.gridItemRowStart()
-        && oldStyle->gridItemRowEnd() == style.gridItemRowEnd()
-        && oldStyle->order() == style.order()
-        && oldStyle->hasOutOfFlowPosition() == style.hasOutOfFlowPosition());
+    return (oldStyle.gridItemColumnStart() == style.gridItemColumnStart()
+        && oldStyle.gridItemColumnEnd() == style.gridItemColumnEnd()
+        && oldStyle.gridItemRowStart() == style.gridItemRowStart()
+        && oldStyle.gridItemRowEnd() == style.gridItemRowEnd()
+        && oldStyle.order() == style.order()
+        && oldStyle.hasOutOfFlowPosition() == style.hasOutOfFlowPosition())
+        && (oldStyle.gridSubgridColumns() == style.gridSubgridColumns() || style.orderedNamedGridColumnLines().map.isEmpty())
+        && (oldStyle.gridSubgridRows() == style.gridSubgridRows() || style.orderedNamedGridRowLines().map.isEmpty());
 }
 
 void RenderBox::updateGridPositionAfterStyleChange(const RenderStyle& style, const RenderStyle* oldStyle)
@@ -429,7 +432,7 @@ void RenderBox::updateGridPositionAfterStyleChange(const RenderStyle& style, con
 
     // Positioned items don't participate on the layout of the grid,
     // so we don't need to mark the grid as dirty if they change positions.
-    if ((oldStyle->hasOutOfFlowPosition() && style.hasOutOfFlowPosition()) || gridStyleHasNotChanged(style, oldStyle))
+    if ((oldStyle->hasOutOfFlowPosition() && style.hasOutOfFlowPosition()) || hasEquivalentGridPositioningStyle(style, *oldStyle))
         return;
 
     // It should be possible to not dirty the grid in some cases (like moving an
@@ -1193,7 +1196,7 @@ bool RenderBox::hasAlwaysPresentScrollbar(ScrollbarOrientation orientation) cons
     return false;
 }
 
-bool RenderBox::needsPreferredWidthsRecalculation() const
+bool RenderBox::shouldInvalidatePreferredWidths() const
 {
     return style().paddingStart().isPercentOrCalculated() || style().paddingEnd().isPercentOrCalculated() || (style().hasAspectRatio() && (hasRelativeLogicalHeight() || (isFlexItem() && hasStretchedLogicalHeight())));
 }
@@ -1269,7 +1272,7 @@ bool RenderBox::applyCachedClipAndScrollPosition(RepaintRects& rects, const Rend
 
 LayoutUnit RenderBox::minPreferredLogicalWidth() const
 {
-    if (preferredLogicalWidthsDirty()) {
+    if (needsPreferredLogicalWidthsUpdate()) {
         SetLayoutNeededForbiddenScope layoutForbiddenScope(*this);
         const_cast<RenderBox&>(*this).computePreferredLogicalWidths();
     }
@@ -1278,7 +1281,7 @@ LayoutUnit RenderBox::minPreferredLogicalWidth() const
 
 LayoutUnit RenderBox::maxPreferredLogicalWidth() const
 {
-    if (preferredLogicalWidthsDirty()) {
+    if (needsPreferredLogicalWidthsUpdate()) {
         SetLayoutNeededForbiddenScope layoutForbiddenScope(*this);
         const_cast<RenderBox&>(*this).computePreferredLogicalWidths();
     }
@@ -1703,7 +1706,7 @@ void RenderBox::paintBoxDecorations(PaintInfo& paintInfo, const LayoutPoint& pai
     // FIXME: Should eventually give the theme control over whether the box shadow should paint, since controls could have
     // custom shadows of their own.
     if (!BackgroundPainter::boxShadowShouldBeAppliedToBackground(*this, paintRect.location(), bleedAvoidance, { }))
-        backgroundPainter.paintBoxShadow(paintRect, style(), ShadowStyle::Normal);
+        backgroundPainter.paintBoxShadow(paintRect, style(), Style::ShadowStyle::Normal);
 
     GraphicsContextStateSaver stateSaver(paintInfo.context(), false);
     if (bleedAvoidance == BleedAvoidance::UseTransparencyLayer) {
@@ -1742,7 +1745,7 @@ void RenderBox::paintBoxDecorations(PaintInfo& paintInfo, const LayoutPoint& pai
         }
     }
 
-    backgroundPainter.paintBoxShadow(paintRect, style(), ShadowStyle::Inset);
+    backgroundPainter.paintBoxShadow(paintRect, style(), Style::ShadowStyle::Inset);
 
     if (bleedAvoidance != BleedAvoidance::BackgroundOverBorder) {
         bool paintCSSBorder = false;
@@ -3611,10 +3614,10 @@ bool RenderBox::shouldComputePreferredLogicalWidthsFromStyle() const
 
 void RenderBox::computePreferredLogicalWidths()
 {
-    ASSERT(preferredLogicalWidthsDirty());
+    ASSERT(needsPreferredLogicalWidthsUpdate());
 
     computePreferredLogicalWidths(style().logicalMinWidth(), style().logicalMaxWidth(), borderAndPaddingLogicalWidth());
-    setPreferredLogicalWidthsDirty(false);
+    clearNeedsPreferredWidthsUpdate();
 }
 
 void RenderBox::computePreferredLogicalWidths(const Length& minLogicalWidth, const Length& maxLogicalWidth, LayoutUnit borderAndPaddingLogicalWidth)
@@ -4326,7 +4329,7 @@ bool RenderBox::avoidsFloats() const
 
 void RenderBox::addVisualEffectOverflow()
 {
-    bool hasBoxShadow = style().boxShadow();
+    bool hasBoxShadow = style().hasBoxShadow();
     bool hasBorderImageOutsets = style().hasBorderImageOutsets();
     bool hasOutline = outlineStyleForRepaint().hasOutlineInVisualOverflow();
     if (!hasBoxShadow && !hasBorderImageOutsets && !hasOutline)
@@ -4346,7 +4349,7 @@ LayoutRect RenderBox::applyVisualEffectOverflow(const LayoutRect& borderBox) con
     LayoutUnit overflowMaxY = borderBox.maxY();
     
     // Compute box-shadow overflow first.
-    if (style().boxShadow()) {
+    if (style().hasBoxShadow()) {
         auto shadowExtent = style().boxShadowExtent();
 
         // Note that box-shadow extent's left and top are negative when extends to left and top, respectively.

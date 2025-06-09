@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010, Google Inc. All rights reserved.
+ * Copyright (C) 2010 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -48,7 +48,7 @@ public:
     
     std::unique_ptr<AudioDSPKernel> createKernel() override;
         
-    void process(const AudioBus* source, AudioBus* destination, size_t framesToProcess) override;
+    void process(const AudioBus& source, AudioBus& destination, size_t framesToProcess) override;
     void processOnlyAudioParams(size_t framesToProcess) final;
 
     // Get the magnitude and phase response of the filter at the given

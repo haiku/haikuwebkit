@@ -147,9 +147,16 @@ WTF_MAKE_TZONE_ALLOCATED_IMPL(AXObjectCache);
 using namespace HTMLNames;
 
 #if PLATFORM(COCOA)
-// Post value change notifications for password fields or elements contained in password fields at a 40hz interval to thwart analysis of typing cadence
+
+// Post notifications for secure fields or elements contained in secure fields at a 40hz interval to thwart analysis of typing cadence.
 static const Seconds accessibilityPasswordValueChangeNotificationInterval { 25_ms };
-#endif
+
+static bool isSecureFieldOrContainedBySecureField(AccessibilityObject& object)
+{
+    return object.isSecureField() || object.isContainedBySecureField();
+}
+
+#endif // PLATFORM(COCOA)
 
 static bool rendererNeedsDeferredUpdate(const RenderObject& renderer)
 {
@@ -177,7 +184,7 @@ AccessibilityObjectInclusion AXComputedObjectAttributeCache::getIgnored(AXID id)
 
 void AXComputedObjectAttributeCache::setIgnored(AXID id, AccessibilityObjectInclusion inclusion)
 {
-    UncheckedKeyHashMap<AXID, CachedAXObjectAttributes>::iterator it = m_idMapping.find(id);
+    HashMap<AXID, CachedAXObjectAttributes>::iterator it = m_idMapping.find(id);
     if (it != m_idMapping.end())
         it->value.ignored = inclusion;
     else {
@@ -1063,21 +1070,11 @@ void AXObjectCache::buildIsolatedTree()
     }
 }
 
-AXCoreObject* AXObjectCache::isolatedTreeRootObject()
-{
-    if (auto tree = getOrCreateIsolatedTree())
-        return tree->rootNode();
-
-    // Should not get here, couldn't create the IsolatedTree.
-    ASSERT_NOT_REACHED();
-    return nullptr;
-}
-
-void AXObjectCache::setIsolatedTreeRoot(AXCoreObject* root)
+void AXObjectCache::setIsolatedTree(Ref<AXIsolatedTree> tree)
 {
     ASSERT(isMainThread());
     if (RefPtr frame = m_document ? m_document->frame() : nullptr)
-        frame->loader().client().setAXIsolatedTreeRoot(root);
+        frame->loader().client().setIsolatedTree(WTFMove(tree));
 }
 #endif
 
@@ -1087,8 +1084,13 @@ AXCoreObject* AXObjectCache::rootObjectForFrame(LocalFrame& frame)
         return nullptr;
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    if (isIsolatedTreeEnabled())
-        return isolatedTreeRootObject();
+    if (isIsolatedTreeEnabled()) {
+        RefPtr tree = getOrCreateIsolatedTree();
+        if (!isMainThread()) {
+            tree->applyPendingChanges();
+            return tree->rootNode();
+        }
+    }
 #endif
 
     return getOrCreate(frame.view());
@@ -1766,6 +1768,12 @@ void AXObjectCache::postNotification(AccessibilityObject* object, Document* docu
     if (!object)
         return;
 
+#if PLATFORM(COCOA)
+    if (notification == AXNotification::ValueChanged
+        && enqueuePasswordNotification(*object, { }))
+        return;
+#endif
+
     m_notificationsToPost.append(std::make_pair(Ref { *object }, notification));
     if (!m_notificationPostTimer.isActive())
         m_notificationPostTimer.startOneShot(0_s);
@@ -1778,6 +1786,12 @@ void AXObjectCache::postNotification(AccessibilityObject& object, AXNotification
     ASSERT(isMainThread());
 
     stopCachingComputedObjectAttributes();
+
+#if PLATFORM(COCOA)
+    if (notification == AXNotification::ValueChanged
+        && enqueuePasswordNotification(object, { }))
+        return;
+#endif
 
     m_notificationsToPost.append(std::make_pair(Ref { object }, notification));
     if (!m_notificationPostTimer.isActive())
@@ -2143,7 +2157,7 @@ void AXObjectCache::onStyleChange(RenderText& renderText, StyleDifference differ
     if (oldStyle->verticalAlign() != newStyle.verticalAlign())
         tree->queueNodeUpdate(object->objectID(), { { AXProperty::IsSuperscript, AXProperty::IsSubscript } });
 
-    if (!!oldStyle->textShadow() != !!newStyle.textShadow())
+    if (oldStyle->hasTextShadow() != newStyle.hasTextShadow())
         tree->queueNodeUpdate(object->objectID(), { AXProperty::HasTextShadow });
 
     auto oldDecor = oldStyle->textDecorationLineInEffect();
@@ -2357,13 +2371,6 @@ void AXObjectCache::setIsSynchronizingSelection(bool isSynchronizing)
     m_isSynchronizingSelection = isSynchronizing;
 }
 
-#if PLATFORM(COCOA)
-static bool isSecureFieldOrContainedBySecureField(AccessibilityObject& object)
-{
-    return object.isSecureField() || object.isContainedBySecureField();
-}
-#endif
-
 void AXObjectCache::postTextStateChangeNotification(Node* node, const AXTextStateChangeIntent& intent, const VisibleSelection& selection)
 {
     if (!node)
@@ -2576,60 +2583,50 @@ bool AXObjectCache::enqueuePasswordNotification(AccessibilityObject& object, AXT
 
     m_passwordNotifications.append({ *observableObject, secureContext(*observableObject, context) });
     if (!m_passwordNotificationTimer.isActive())
-        m_passwordNotificationTimer.startOneShot(accessibilityPasswordValueChangeNotificationInterval);
+        m_passwordNotificationTimer.startRepeating(accessibilityPasswordValueChangeNotificationInterval);
 
     return true;
 }
 
 void AXObjectCache::passwordNotificationTimerFired()
 {
-    m_passwordNotificationTimer.stop();
+    if (m_passwordNotifications.isEmpty()) {
+        m_passwordNotificationTimer.stop();
+        return;
+    }
 
-    // In tests, posting notifications has a tendency to immediately queue up other notifications, which can lead to unexpected behavior
-    // when the notification list is cleared at the end. Instead copy this list at the start.
-    auto passwordNotifications = std::exchange(m_passwordNotifications, { });
-
+    auto notification = m_passwordNotifications.takeFirst();
+    auto& context = notification.second;
+    switch (context.intent.type) {
+    case AXTextStateChangeTypeEdit:
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    Vector<std::pair<Ref<AccessibilityObject>, AXNotification>> notifications;
-    for (const auto& note : passwordNotifications) {
-        switch (note.second.intent.type) {
-        case AXTextStateChangeTypeEdit:
-            notifications.append({ note.first, AXNotification::ValueChanged });
-            break;
-        case AXTextStateChangeTypeSelectionMove:
-        case AXTextStateChangeTypeSelectionExtend:
-        case AXTextStateChangeTypeSelectionBoundary:
-            notifications.append({ note.first, AXNotification::SelectedTextChanged });
-            break;
-        case AXTextStateChangeTypeUnknown:
-            break;
-        };
-    }
-    updateIsolatedTree(notifications);
-#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-
-    for (const auto& note : passwordNotifications) {
-        auto& context = note.second;
-        switch (context.intent.type) {
-        case AXTextStateChangeTypeEdit:
-            if (context.intent.editType == AXTextEditTypeReplace) {
-                postTextReplacementPlatformNotification(note.first.ptr(),
-                    AXTextEditTypeDelete, context.deletedText, AXTextEditTypeInsert, context.insertedText, context.selection.start());
-            } else {
-                postTextStateChangePlatformNotification(note.first.ptr(),
-                    context.intent.editType, context.insertedText, context.selection.start());
-            }
-            break;
-        case AXTextStateChangeTypeSelectionMove:
-        case AXTextStateChangeTypeSelectionExtend:
-        case AXTextStateChangeTypeSelectionBoundary:
-            postTextSelectionChangePlatformNotification(note.first.ptr(),
-                context.intent, context.selection);
-            break;
-        case AXTextStateChangeTypeUnknown:
-            break;
-        };
-    }
+        updateIsolatedTree(notification.first, AXNotification::ValueChanged);
+#endif
+        if (context.intent.editType == AXTextEditTypeReplace) {
+            postTextReplacementPlatformNotification(notification.first.ptr(),
+                AXTextEditTypeDelete, context.deletedText, AXTextEditTypeInsert, context.insertedText, context.selection.start());
+        } else {
+            postTextStateChangePlatformNotification(notification.first.ptr(),
+                context.intent.editType, context.insertedText, context.selection.start());
+        }
+        break;
+    case AXTextStateChangeTypeSelectionMove:
+    case AXTextStateChangeTypeSelectionExtend:
+    case AXTextStateChangeTypeSelectionBoundary:
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+        updateIsolatedTree(notification.first, AXNotification::SelectedTextChanged);
+#endif
+        postTextSelectionChangePlatformNotification(notification.first.ptr(),
+            context.intent, context.selection);
+        break;
+    case AXTextStateChangeTypeUnknown:
+        // No additional context, fallback to a ValueChanged notification.
+#if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+        updateIsolatedTree(notification.first, AXNotification::ValueChanged);
+#endif
+        postPlatformNotification(notification.first, AXNotification::ValueChanged);
+        break;
+    };
 }
 
 #endif // PLATFORM(COCOA)
@@ -3391,7 +3388,7 @@ CharacterOffset AXObjectCache::traverseToOffsetInRange(const SimpleRange& range,
                             currentNode = shadowHost;
                             continue;
                         }
-                    } else if (previousNode && previousNode->isTextNode() && previousNode->isDescendantOf(currentNode) && elementName(currentNode) == ElementName::HTML_p) {
+                    } else if (previousNode && previousNode->isTextNode() && previousNode->isDescendantOf(currentNode) && elementName(*currentNode) == ElementName::HTML_p) {
                         // TextIterator is emitting an extra newline after the <p> element. We should
                         // ignore that since the extra text node is not in the DOM tree.
                         currentNode = previousNode;
@@ -3802,22 +3799,16 @@ CharacterOffset AXObjectCache::characterOffsetFromVisiblePosition(const VisibleP
     auto visiblePosition = object->visiblePositionRange().start;
     int characterOffset = 0;
     auto currentPosition = visiblePosition.deepEquivalent();
-    auto startPosition = currentPosition;
-
     while (!currentPosition.isNull() && !targetDeepPosition.equals(currentPosition)) {
-        auto previousPosition = visiblePosition.deepEquivalent();
-        visiblePosition = VisiblePosition(nextVisuallyDistinctCandidate(visiblePosition.deepEquivalent(), SkipDisplayContents::No), visiblePosition.affinity());
-        currentPosition = visiblePosition.deepEquivalent();
-        // Sometimes nextVisiblePosition will give the same VisiblePostion,
-        // we break here to avoid infinite loop.
-        if (currentPosition.equals(previousPosition))
-            break;
-        // FIXME: Due to a foundational editing bug, it's possible to end up back at the start position, causing
-        // an infinite loop. This break condition should be removed after this bug is fixed (tracked by https://bugs.webkit.org/show_bug.cgi?id=276460).
-        if (startPosition.equals(currentPosition))
-            break;
-        characterOffset++;
+        auto previousPosition = currentPosition;
+        // Note that we explicitly _do not_ want currentPosition to be derived from visiblePositon.deepEquivalent(),
+        // as creating a VisiblePosition with a Position calls |canonicalPosition| on said Position, which critically
+        // can return a previous position, resulting in us looping infinitely. Iterating solely through
+        // |nextVisuallyDistinctCandidate|s should guarantee forward progress.
+        currentPosition = nextVisuallyDistinctCandidate(currentPosition, SkipDisplayContents::No);
+        visiblePosition = VisiblePosition(currentPosition, visiblePosition.affinity());
 
+        characterOffset++;
         // When VisiblePostion moves to next node, it will count the leading line break as
         // 1 offset, which we shouldn't include in CharacterOffset.
         if (currentPosition.deprecatedNode() != previousPosition.deprecatedNode()) {
@@ -4526,7 +4517,7 @@ static void filterVectorPairForRemoval(const Vector<std::pair<T, T>>& list, cons
 }
     
 template<typename T, typename U>
-static void filterMapForRemoval(const UncheckedKeyHashMap<T, U>& list, const Document& document, HashSet<Ref<Node>>& nodesToRemove)
+static void filterMapForRemoval(const HashMap<T, U>& list, const Document& document, HashSet<Ref<Node>>& nodesToRemove)
 {
     for (auto& entry : list)
         conditionallyAddNodeToFilterList(entry.key, document, nodesToRemove);
@@ -4880,7 +4871,7 @@ void AXObjectCache::updateIsolatedTree(const Vector<std::pair<Ref<AccessibilityO
         DependentProperties = 1 << 1,
         Node = 1 << 2,
     };
-    UncheckedKeyHashMap<AXID, OptionSet<Field>> updatedObjects;
+    HashMap<AXID, OptionSet<Field>> updatedObjects;
     auto updateChildren = [&] (const Ref<AccessibilityObject>& axObject) {
         auto updatedFields = updatedObjects.get(axObject->objectID());
         if (!updatedFields.contains(Field::Children)) {
@@ -5720,7 +5711,7 @@ void AXObjectCache::relationsNeedUpdate(bool needUpdate)
         dirtyIsolatedTreeRelations();
 }
 
-UncheckedKeyHashMap<AXID, AXRelations> AXObjectCache::relations()
+HashMap<AXID, AXRelations> AXObjectCache::relations()
 {
     updateRelationsIfNeeded();
     return m_relations;

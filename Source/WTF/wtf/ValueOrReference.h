@@ -30,7 +30,9 @@
 namespace WTF {
 
 // ValueOrReference<T> is just like const T&, except that it can also optionally hold T.
-
+//
+// When T has an efficient default constructor, use ValueOrReference<T>; otherwise use OptionalOrReference<T>.
+//
 // ValueOrReference<T> is an optimization when you need to return a value that is
 // usually an existing reference, but sometimes a temporary, e.g.:
 //

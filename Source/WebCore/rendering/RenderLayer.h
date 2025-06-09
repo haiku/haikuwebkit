@@ -750,6 +750,7 @@ public:
         IncludeRootBackgroundPaintingArea              = 1 << 9,
         PreserveAncestorFlags                          = 1 << 10,
         UseLocalClipRectExcludingCompositingIfPossible = 1 << 11,
+        ExcludeViewTransitionCapturedDescendants       = 1 << 12,
     };
     static constexpr OptionSet<CalculateLayerBoundsFlag> defaultCalculateLayerBoundsFlags() { return { IncludeSelfTransform, UseLocalClipRectIfPossible, IncludePaintedFilterOutsets, UseFragmentBoxesExcludingCompositing }; }
 
@@ -904,7 +905,7 @@ public:
     // The query rect is given in local coordinates.
     bool backgroundIsKnownToBeOpaqueInRect(const LayoutRect&) const;
 
-    bool paintsWithFilters() const;
+    bool shouldPaintWithFilters(OptionSet<PaintBehavior> = { }) const;
     bool requiresFullLayerImageForFilters() const;
 
     Element* enclosingElement() const;
@@ -1171,13 +1172,14 @@ private:
     void setupClipPath(GraphicsContext&, GraphicsContextStateSaver&, RegionContextStateSaver&, const LayerPaintingInfo&, OptionSet<PaintLayerFlag>&, const LayoutSize& offsetFromRoot);
     void clearLayerClipPath();
 
-    void ensureLayerFilters();
+    RenderLayerFilters& ensureLayerFilters();
     void clearLayerFilters();
 
     void updateLayerScrollableArea();
     void clearLayerScrollableArea();
 
-    RenderLayerFilters* filtersForPainting(GraphicsContext&, OptionSet<PaintLayerFlag>) const;
+    bool shouldHaveFiltersForPainting(GraphicsContext&, OptionSet<PaintLayerFlag>, OptionSet<PaintBehavior>) const;
+    RenderLayerFilters* filtersForPainting(GraphicsContext&, OptionSet<PaintLayerFlag>, OptionSet<PaintBehavior>);
     GraphicsContext* setupFilters(GraphicsContext& destinationContext, LayerPaintingInfo&, OptionSet<PaintLayerFlag>, const LayoutSize& offsetFromRoot, const ClipRect& backgroundRect);
     void applyFilters(GraphicsContext& originalContext, const LayerPaintingInfo&, OptionSet<PaintBehavior>, const ClipRect& backgroundRect);
 
@@ -1488,8 +1490,7 @@ inline void RenderLayer::setIsHiddenByOverflowTruncation(bool isHidden)
     if (m_isHiddenByOverflowTruncation == isHidden)
         return;
     m_isHiddenByOverflowTruncation = isHidden;
-    m_visibleContentStatusDirty = true;
-    setNeedsPositionUpdate();
+    dirtyVisibleContentStatus();
 }
 
 #if ASSERT_ENABLED
@@ -1534,4 +1535,3 @@ void showPaintOrderTree(const WebCore::RenderLayer*);
 void showPaintOrderTree(const WebCore::RenderObject*);
 void showLayerPositionTree(const WebCore::RenderLayer* root, const WebCore::RenderLayer* mark = nullptr);
 #endif
-

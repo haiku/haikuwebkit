@@ -208,8 +208,8 @@ static void writeSVGStrokePaintingResource(TextStream& ts, const RenderElement& 
     SVGLengthContext lengthContext(&shape);
     double dashOffset = lengthContext.valueForLength(svgStyle.strokeDashOffset());
     double strokeWidth = lengthContext.valueForLength(style.strokeWidth());
-    auto dashArray = svgStyle.strokeDashArray().map([&](auto& length) -> DashArrayElement {
-        return length.value(lengthContext);
+    auto dashArray = WTF::map(svgStyle.strokeDashArray(), [&](auto& length) -> DashArrayElement {
+        return lengthContext.valueForLength(length);
     });
 
     writeIfNotDefault(ts, "opacity"_s, svgStyle.strokeOpacity(), 1.0f);

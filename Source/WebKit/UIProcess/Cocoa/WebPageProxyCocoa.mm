@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -89,6 +89,7 @@
 #import <WebCore/TextAnimationTypes.h>
 #import <WebCore/ValidationBubble.h>
 #import <WebCore/VideoPresentationInterfaceIOS.h>
+#import <WebCore/WebTextIndicatorLayer.h>
 #import <pal/spi/cocoa/LaunchServicesSPI.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <pal/spi/ios/BrowserEngineKitSPI.h>
@@ -193,9 +194,9 @@ void WebPageProxy::layerTreeCommitComplete()
 
 #if ENABLE(DATA_DETECTION)
 
-void WebPageProxy::setDataDetectionResult(const DataDetectionResult& dataDetectionResult)
+void WebPageProxy::setDataDetectionResult(DataDetectionResult&& dataDetectionResult)
 {
-    m_dataDetectionResults = dataDetectionResult.results;
+    m_dataDetectionResults = WTFMove(dataDetectionResult.results);
 }
 
 void WebPageProxy::handleClickForDataDetectionResult(const DataDetectorElementInfo& info, const IntPoint& clickLocation)
@@ -413,13 +414,13 @@ static RefPtr<WebCore::ShareableBitmap> convertPlatformImageToBitmap(CocoaImage 
 RefPtr<WebCore::ShareableBitmap> WebPageProxy::iconForAttachment(const String& fileName, const String& contentType, const String& title, FloatSize& size)
 {
 #if PLATFORM(IOS_FAMILY)
-    auto imageAndSize = RenderThemeIOS::iconForAttachment(fileName, contentType, title);
-    auto image = imageAndSize.icon;
-    size = imageAndSize.size;
+    auto iconAndSize = RenderThemeIOS::iconForAttachment(fileName, contentType, title);
+    auto icon = iconAndSize.icon;
+    size = iconAndSize.size;
 #else
-    auto image = RenderThemeMac::iconForAttachment(fileName, contentType, title);
+    auto icon = RenderThemeMac::iconForAttachment(fileName, contentType, title);
 #endif
-    return convertPlatformImageToBitmap(image.get(), iconSize);
+    return convertPlatformImageToBitmap(icon.get(), iconSize);
 }
 
 #endif // ENABLE(ATTACHMENT_ELEMENT)
@@ -489,15 +490,6 @@ void WebPageProxy::clearDictationAlternatives(Vector<DictationContext>&& alterna
 
     protectedLegacyMainFrameProcess()->send(Messages::WebPage::ClearDictationAlternatives(WTFMove(alternativesToClear)), webPageIDInMainFrameProcess());
 }
-
-#if USE(DICTATION_ALTERNATIVES)
-
-PlatformTextAlternatives *WebPageProxy::platformDictationAlternatives(WebCore::DictationContext dictationContext)
-{
-    return protectedPageClient()->platformDictationAlternatives(dictationContext);
-}
-
-#endif
 
 ResourceError WebPageProxy::errorForUnpermittedAppBoundDomainNavigation(const URL& url)
 {
@@ -1345,7 +1337,7 @@ void WebPageProxy::updateTextVisibilityForActiveWritingToolsSession(const WebCor
     protectedLegacyMainFrameProcess()->sendWithAsyncReply(Messages::WebPage::UpdateTextVisibilityForActiveWritingToolsSession(rangeRelativeToSessionRange, visible, identifier), WTFMove(completionHandler), webPageIDInMainFrameProcess());
 }
 
-void WebPageProxy::textPreviewDataForActiveWritingToolsSession(const WebCore::CharacterRange& rangeRelativeToSessionRange, CompletionHandler<void(std::optional<WebCore::TextIndicatorData>&&)>&& completionHandler)
+void WebPageProxy::textPreviewDataForActiveWritingToolsSession(const WebCore::CharacterRange& rangeRelativeToSessionRange, CompletionHandler<void(RefPtr<WebCore::TextIndicator>&&)>&& completionHandler)
 {
     protectedLegacyMainFrameProcess()->sendWithAsyncReply(Messages::WebPage::TextPreviewDataForActiveWritingToolsSession(rangeRelativeToSessionRange), WTFMove(completionHandler), webPageIDInMainFrameProcess());
 }
@@ -1360,19 +1352,19 @@ void WebPageProxy::setSelectionForActiveWritingToolsSession(const WebCore::Chara
     protectedLegacyMainFrameProcess()->sendWithAsyncReply(Messages::WebPage::SetSelectionForActiveWritingToolsSession(rangeRelativeToSessionRange), WTFMove(completionHandler), webPageIDInMainFrameProcess());
 }
 
-void WebPageProxy::addTextAnimationForAnimationID(IPC::Connection& connection, const WTF::UUID& uuid, const WebCore::TextAnimationData& styleData, const WebCore::TextIndicatorData& indicatorData)
+void WebPageProxy::addTextAnimationForAnimationID(IPC::Connection& connection, const WTF::UUID& uuid, const WebCore::TextAnimationData& styleData, const RefPtr<WebCore::TextIndicator> textIndicator)
 {
-    addTextAnimationForAnimationIDWithCompletionHandler(connection, uuid, styleData, indicatorData, { });
+    addTextAnimationForAnimationIDWithCompletionHandler(connection, uuid, styleData, textIndicator, { });
 }
 
-void WebPageProxy::addTextAnimationForAnimationIDWithCompletionHandler(IPC::Connection& connection, const WTF::UUID& uuid, const WebCore::TextAnimationData& styleData, const WebCore::TextIndicatorData& indicatorData, CompletionHandler<void(WebCore::TextAnimationRunMode)>&& completionHandler)
+void WebPageProxy::addTextAnimationForAnimationIDWithCompletionHandler(IPC::Connection& connection, const WTF::UUID& uuid, const WebCore::TextAnimationData& styleData, const RefPtr<WebCore::TextIndicator> textIndicator, CompletionHandler<void(WebCore::TextAnimationRunMode)>&& completionHandler)
 {
     if (completionHandler)
         MESSAGE_CHECK_COMPLETION(uuid.isValid(), connection, completionHandler({ }));
     else
         MESSAGE_CHECK(uuid.isValid(), connection);
 
-    internals().textIndicatorDataForAnimationID.add(uuid, indicatorData);
+    internals().textIndicatorDataForAnimationID.add(uuid, textIndicator);
 
     if (completionHandler)
         internals().completionHandlerForAnimationID.add(uuid, WTFMove(completionHandler));
@@ -1381,7 +1373,7 @@ void WebPageProxy::addTextAnimationForAnimationIDWithCompletionHandler(IPC::Conn
     // The shape of the iOS API requires us to have stored this completionHandler when we call into the WebProcess
     // to replace the text and generate the text indicator of the replacement text.
     if (auto destinationAnimationCompletionHandler = internals().completionHandlerForDestinationTextIndicatorForSourceID.take(uuid))
-        destinationAnimationCompletionHandler(indicatorData);
+        destinationAnimationCompletionHandler(textIndicator->data());
 
     // Storing and sending information for the different shaped SPI on iOS.
     if (styleData.runMode == WebCore::TextAnimationRunMode::RunAnimation) {
@@ -1391,7 +1383,7 @@ void WebPageProxy::addTextAnimationForAnimationIDWithCompletionHandler(IPC::Conn
         if (styleData.style == WebCore::TextAnimationType::Final) {
             if (auto sourceAnimationID = internals().sourceAnimationIDtoDestinationAnimationID.take(uuid)) {
                 if (auto completionHandler = internals().completionHandlerForDestinationTextIndicatorForSourceID.take(sourceAnimationID))
-                    completionHandler(indicatorData);
+                    completionHandler(textIndicator->data());
             }
         }
     }
@@ -1417,17 +1409,17 @@ void WebPageProxy::storeDestinationCompletionHandlerForAnimationID(const WTF::UU
 }
 #endif
 
-void WebPageProxy::getTextIndicatorForID(const WTF::UUID& uuid, CompletionHandler<void(std::optional<WebCore::TextIndicatorData>&&)>&& completionHandler)
+void WebPageProxy::getTextIndicatorForID(const WTF::UUID& uuid, CompletionHandler<void(RefPtr<WebCore::TextIndicator>&&)>&& completionHandler)
 {
     if (!hasRunningProcess()) {
-        completionHandler(std::nullopt);
+        completionHandler(nullptr);
         return;
     }
 
-    auto textIndicatorData = internals().textIndicatorDataForAnimationID.getOptional(uuid);
+    RefPtr textIndicator = internals().textIndicatorDataForAnimationID.get(uuid);
 
-    if (textIndicatorData) {
-        completionHandler(*textIndicatorData);
+    if (textIndicator) {
+        completionHandler(WTFMove(textIndicator));
         return;
     }
 
@@ -1501,6 +1493,116 @@ void WebPageProxy::createTextIndicatorForElementWithID(const String& elementID, 
     }
 
     protectedLegacyMainFrameProcess()->sendWithAsyncReply(Messages::WebPage::CreateTextIndicatorForElementWithID(elementID), WTFMove(completionHandler), webPageIDInMainFrameProcess());
+}
+
+void WebPageProxy::setTextIndicatorFromFrame(FrameIdentifier frameID, const WebCore::TextIndicatorData& indicatorData, WebCore::TextIndicatorLifetime lifetime)
+{
+    RefPtr frame = WebFrameProxy::webFrame(frameID);
+    if (!frame)
+        return;
+
+    auto rect = indicatorData.textBoundingRectInRootViewCoordinates;
+    convertRectToMainFrameCoordinates(rect, frame->rootFrame().frameID(), [weakThis = WeakPtr { *this }, indicatorData = WTFMove(indicatorData), lifetime] (std::optional<FloatRect> convertedRect) mutable {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis || !convertedRect)
+            return;
+        indicatorData.textBoundingRectInRootViewCoordinates = *convertedRect;
+        protectedThis->setTextIndicator(WTFMove(indicatorData), lifetime);
+    });
+}
+
+void WebPageProxy::setTextIndicator(const WebCore::TextIndicatorData& indicatorData, WebCore::TextIndicatorLifetime lifetime)
+{
+    RefPtr pageClient = this->pageClient();
+    if (!pageClient)
+        return;
+
+    RetainPtr<CALayer> installationLayer = pageClient->textIndicatorInstallationLayer();
+
+    teardownTextIndicatorLayer();
+    m_textIndicatorFadeTimer.stop();
+
+    m_textIndicator = TextIndicator::create(indicatorData);
+
+    CGRect frame = m_textIndicator->textBoundingRectInRootViewCoordinates();
+    m_textIndicatorLayer = adoptNS([[WebTextIndicatorLayer alloc] initWithFrame:frame
+        textIndicator:m_textIndicator margin:CGSizeZero offset:CGPointZero]);
+
+    [installationLayer addSublayer:m_textIndicatorLayer.get()];
+
+    if (m_textIndicator->presentationTransition() != WebCore::TextIndicatorPresentationTransition::None)
+        [m_textIndicatorLayer present];
+
+    if ((TextIndicatorLifetime)lifetime == TextIndicatorLifetime::Temporary)
+        m_textIndicatorFadeTimer.startOneShot(WebCore::timeBeforeFadeStarts);
+}
+
+void WebPageProxy::updateTextIndicatorFromFrame(FrameIdentifier frameID, const WebCore::TextIndicatorData& indicatorData)
+{
+    RefPtr frame = WebFrameProxy::webFrame(frameID);
+    if (!frame)
+        return;
+
+    auto rect = indicatorData.textBoundingRectInRootViewCoordinates;
+    convertRectToMainFrameCoordinates(rect, frame->rootFrame().frameID(), [weakThis = WeakPtr { *this }, indicatorData = WTFMove(indicatorData)] (std::optional<FloatRect> convertedRect) mutable {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis || !convertedRect)
+            return;
+        indicatorData.textBoundingRectInRootViewCoordinates = *convertedRect;
+        protectedThis->updateTextIndicator(WTFMove(indicatorData));
+    });
+}
+
+void WebPageProxy::updateTextIndicator(const WebCore::TextIndicatorData& indicatorData)
+{
+    if (m_textIndicator && m_textIndicatorLayer)
+        setTextIndicator(indicatorData, TextIndicatorLifetime::Temporary);
+}
+
+void WebPageProxy::clearTextIndicator()
+{
+    clearTextIndicatorWithAnimation(WebCore::TextIndicatorDismissalAnimation::FadeOut);
+}
+
+void WebPageProxy::clearTextIndicatorWithAnimation(WebCore::TextIndicatorDismissalAnimation animation)
+{
+    if ([m_textIndicatorLayer isFadingOut])
+        return;
+
+    RefPtr textIndicator = m_textIndicator;
+
+    if (textIndicator && textIndicator->wantsManualAnimation() && [m_textIndicatorLayer hasCompletedAnimation] && animation == WebCore::TextIndicatorDismissalAnimation::FadeOut) {
+        startTextIndicatorFadeOut();
+        return;
+    }
+
+    teardownTextIndicatorLayer();
+}
+
+void WebPageProxy::setTextIndicatorAnimationProgress(float animationProgress)
+{
+    if (!m_textIndicator)
+        return;
+
+    [m_textIndicatorLayer setAnimationProgress:animationProgress];
+}
+
+void WebPageProxy::teardownTextIndicatorLayer()
+{
+    [m_textIndicatorLayer removeFromSuperlayer];
+    m_textIndicatorLayer = nil;
+}
+
+void WebPageProxy::startTextIndicatorFadeOut()
+{
+    [m_textIndicatorLayer setFadingOut:YES];
+
+    [m_textIndicatorLayer hideWithCompletionHandler:[weakThis = WeakPtr { *this }] {
+        RefPtr protectedThis = weakThis.get();
+        if (!protectedThis)
+            return;
+        protectedThis->teardownTextIndicatorLayer();
+    }];
 }
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)

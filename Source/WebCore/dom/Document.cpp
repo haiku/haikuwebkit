@@ -31,6 +31,7 @@
 #include "AXObjectCache.h"
 #include "AnimationTimelinesController.h"
 #include "ApplicationManifest.h"
+#include "AsyncNodeDeletionQueueInlines.h"
 #include "Attr.h"
 #include "BeforeUnloadEvent.h"
 #include "CDATASection.h"
@@ -1186,7 +1187,7 @@ ExceptionOr<Ref<Document>> Document::parseHTMLUnsafe(Document& context, Variant<
     if (stringValueHolder.hasException())
         return stringValueHolder.releaseException();
 
-    Ref document = HTMLDocument::create(nullptr, context.protectedSettings(), URL { });
+    Ref document = HTMLDocument::create(nullptr, context.settings(), URL { });
     document->setMarkupUnsafe(stringValueHolder.releaseReturnValue(), { ParserContentPolicy::AllowDeclarativeShadowRoots });
     return { document };
 }
@@ -1259,7 +1260,7 @@ void Document::addResultForSelectorAll(ContainerNode& context, const String& sel
     });
     auto& entries = result.iterator->value->entries;
     if (entries.size() >= QuerySelectorAllResults::maxSize)
-        entries.remove(weakRandomNumber<uint32_t>() % entries.size());
+        entries.removeAt(weakRandomNumber<uint32_t>() % entries.size());
     entries.append({ selectorString, nodeList, classNameToMatch });
 }
 
@@ -1291,7 +1292,7 @@ void Document::invalidateQuerySelectorAllResultsForClassAttributeChange(Node& st
         while (index < entries.size()) {
             auto& entry = entries[index];
             if (!entry.classNameToMatch.isNull() && oldClasses.contains(entry.classNameToMatch) != newClasses.contains(entry.classNameToMatch))
-                entries.remove(index);
+                entries.removeAt(index);
             else
                 ++index;
         }
@@ -1446,7 +1447,7 @@ void Document::resetActiveLinkColor()
 DOMImplementation& Document::implementation()
 {
     if (!m_implementation)
-        m_implementation = makeUniqueWithoutRefCountedCheck<DOMImplementation>(*this);
+        lazyInitialize(m_implementation, makeUniqueWithoutRefCountedCheck<DOMImplementation>(*this));
     return *m_implementation;
 }
 
@@ -2358,34 +2359,29 @@ bool Document::isBodyPotentiallyScrollable(HTMLBodyElement& body)
 
 Element* Document::scrollingElementForAPI()
 {
-    if (inQuirksMode() && settings().CSSOMViewScrollingAPIEnabled())
+    if (inQuirksMode())
         updateLayoutIgnorePendingStylesheets();
     return scrollingElement();
 }
 
 Element* Document::scrollingElement()
 {
-    if (settings().CSSOMViewScrollingAPIEnabled()) {
-        // See https://drafts.csswg.org/cssom-view/#dom-document-scrollingelement.
-        // The scrollingElement attribute, on getting, must run these steps:
-        // 1. If the Document is in quirks mode, follow these substeps:
-        if (inQuirksMode()) {
-            RefPtr firstBody = body();
-            // 1. If the HTML body element exists, and it is not potentially scrollable, return the
-            // HTML body element and abort these steps.
-            if (firstBody && !isBodyPotentiallyScrollable(*firstBody))
-                return firstBody.get();
+    // See https://drafts.csswg.org/cssom-view/#dom-document-scrollingelement.
+    // The scrollingElement attribute, on getting, must run these steps:
+    // 1. If the Document is in quirks mode, follow these substeps:
+    if (inQuirksMode()) {
+        // 1. If the HTML body element exists, and it is not potentially scrollable, return the
+        // HTML body element and abort these steps.
+        if (RefPtr firstBody = body(); firstBody && !isBodyPotentiallyScrollable(*firstBody))
+            return firstBody.get();
 
-            // 2. Return null and abort these steps.
-            return nullptr;
-        }
-
-        // 2. If there is a root element, return the root element and abort these steps.
-        // 3. Return null.
-        return documentElement();
+        // 2. Return null and abort these steps.
+        return nullptr;
     }
 
-    return body();
+    // 2. If there is a root element, return the root element and abort these steps.
+    // 3. Return null.
+    return documentElement();
 }
 
 static String canonicalizedTitle(Document& document, const String& title)
@@ -2652,7 +2648,7 @@ String Document::nodeName() const
 WakeLockManager& Document::wakeLockManager()
 {
     if (!m_wakeLockManager)
-        m_wakeLockManager = makeUniqueWithoutRefCountedCheck<WakeLockManager>(*this);
+        lazyInitialize(m_wakeLockManager, makeUniqueWithoutRefCountedCheck<WakeLockManager>(*this));
     return *m_wakeLockManager;
 }
 
@@ -3490,6 +3486,10 @@ void Document::destroyRenderTree()
         // FIXME: This is a workaround for leftover content (see webkit.org/b/182547).
         while (m_renderView->firstChild())
             builder.destroy(*m_renderView->firstChild());
+
+        if (RefPtr view = this->view())
+            view->layoutContext().deleteDetachedRenderersNow();
+
         m_renderView->destroy();
     }
     m_renderView.release();
@@ -5216,7 +5216,7 @@ void Document::processColorScheme(const String& colorSchemeString)
 
 void Document::metaElementColorSchemeChanged()
 {
-    const auto& context = this->cssParserContext();
+    auto& context = this->cssParserContext();
 
     auto parseColorScheme = [&](const auto& metaElement) -> std::optional<CSS::ColorScheme> {
         const AtomString& nameValue = metaElement.attributeWithoutSynchronization(nameAttr);
@@ -9591,11 +9591,6 @@ EditingBehavior Document::editingBehavior() const
     return EditingBehavior { settings().editingBehaviorType() };
 }
 
-Ref<Settings> Document::protectedSettings() const
-{
-    return const_cast<Settings&>(m_settings.get());
-}
-
 float Document::deviceScaleFactor() const
 {
     float deviceScaleFactor = 1.0;
@@ -10886,7 +10881,7 @@ CSSCounterStyleRegistry& Document::counterStyleRegistry()
     return styleScope().counterStyleRegistry();
 }
 
-CSSParserContext Document::cssParserContext() const
+const CSSParserContext& Document::cssParserContext() const
 {
     if (!m_cachedCSSParserContext)
         m_cachedCSSParserContext = makeUnique<CSSParserContext>(*this, URL { }, ""_s);
@@ -11004,7 +10999,7 @@ void Document::setPaintWorkletGlobalScopeForName(const String& name, Ref<PaintWo
 ContentChangeObserver& Document::contentChangeObserver()
 {
     if (!m_contentChangeObserver)
-        m_contentChangeObserver = makeUniqueWithoutRefCountedCheck<ContentChangeObserver>(*this);
+        lazyInitialize(m_contentChangeObserver, makeUniqueWithoutRefCountedCheck<ContentChangeObserver>(*this));
     return *m_contentChangeObserver;
 }
 
@@ -11423,7 +11418,17 @@ void Document::setActiveViewTransition(RefPtr<ViewTransition>&& viewTransition)
     }
 
     clearRenderingIsSuppressedForViewTransition();
+    bool hadViewTransition = !!m_activeViewTransition;
     m_activeViewTransition = WTFMove(viewTransition);
+    bool hasViewTransition = !!m_activeViewTransition;
+    if (hadViewTransition != hasViewTransition) {
+        if (CheckedPtr view = renderView()) {
+            if (hasViewTransition)
+                view->compositor().enableCompositingMode();
+            else
+                view->layer()->setNeedsCompositingConfigurationUpdate();
+        }
+    }
 }
 
 bool Document::hasViewTransitionPseudoElementTree() const

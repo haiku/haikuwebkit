@@ -1025,7 +1025,6 @@
    },
    {
       "emails" : [
-         "anuj1panta@gmail.com",
          "a_panta@apple.com"
       ],
       "expertise" : "Web Inspector",
@@ -1108,6 +1107,14 @@
       "nicks" : [
          "anilsson"
       ]
+   },
+   {
+      "emails" : [
+         "a_kutirakulam@apple.com",
+         "akutira@umich.edu"
+      ],
+      "github" : "akutira-umich",
+      "name" : "Arvind Kutirakulam"
    },
    {
       "emails" : [
@@ -7168,6 +7175,17 @@
       "nicks" : [
          "ruthfong",
          "ruth_fong"
+      ]
+   },
+   {
+      "emails" : [
+         "rkonda2@apple.com",
+         "ruthvikkonda@gmail.com"
+      ],
+      "github" : "ruthvikkonda",
+      "name" : "Ruthvik Konda",
+      "nicks" : [
+         "rkonda"
       ]
    },
    {

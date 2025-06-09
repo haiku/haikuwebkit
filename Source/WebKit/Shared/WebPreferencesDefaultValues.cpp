@@ -64,12 +64,6 @@ bool defaultPassiveTouchListenersAsDefaultOnDocument()
     return result;
 }
 
-bool defaultCSSOMViewScrollingAPIEnabled()
-{
-    static bool result = WTF::IOSApplication::isIMDb() && !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::NoIMDbCSSOMViewScrollingQuirk);
-    return !result;
-}
-
 bool defaultShouldPrintBackgrounds()
 {
     static bool result = !linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::DefaultsToExcludingBackgroundsWhenPrinting);
@@ -230,16 +224,6 @@ bool defaultLinearMediaPlayerEnabled()
 #else
     return false;
 #endif
-}
-
-bool defaultLiveRangeSelectionEnabled()
-{
-#if PLATFORM(IOS_FAMILY)
-    static bool enableForAllApps = linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::LiveRangeSelectionEnabledForAllApps);
-    if (!enableForAllApps && WTF::IOSApplication::isGmail())
-        return false;
-#endif
-    return true;
 }
 
 bool defaultShowModalDialogEnabled()

@@ -1826,9 +1826,6 @@ webkit.org/b/228311 imported/w3c/web-platform-tests/css/css-scoping/css-scoping-
 
 webkit.org/b/229291 imported/w3c/web-platform-tests/html/rendering/replaced-elements/images/revoked-blob-print.html [ Pass ImageOnlyFailure ]
 
-# Below test is flaky and only fail on 'stress' test bot and sometime due to race condition, show result of other tests
-imported/w3c/web-platform-tests/html/rendering/widgets/button-layout/block-in-inline.html [ ImageOnlyFailure ]
-
 #rdar://82146367 ([Mac, iOS Release] imported/w3c/web-platform-tests/worklets/layout-worklet-csp.https.html is a flaky failure) 
 imported/w3c/web-platform-tests/worklets/layout-worklet-csp.https.html [ Pass Failure ]
 
@@ -2126,8 +2123,6 @@ imported/w3c/web-platform-tests/media-source/mediasource-redundant-seek.html [ P
 imported/w3c/web-platform-tests/media-source/mediasource-remove-preserves-currentTime.html [ Pass Failure ]
 imported/w3c/web-platform-tests/media-source/mediasource-remove.html [ Pass Failure ]
 
-webkit.org/b/266683 imported/w3c/web-platform-tests/html/semantics/popovers/popover-light-dismiss.html [ Failure ]
-
 # Failing word-break: auto-phrase tests.
 webkit.org/b/257698 [ Sonoma+ ] imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-004.html [ ImageOnlyFailure ]
 webkit.org/b/257698 [ Sonoma+ ] imported/w3c/web-platform-tests/css/css-text/word-break/auto-phrase/word-break-auto-phrase-005.html [ ImageOnlyFailure ]
@@ -2390,8 +2385,6 @@ webkit.org/b/287990 [ Sonoma+ ] fast/canvas/webgl/drawingbuffer-test.html [ Pass
 
 webkit.org/b/288507 [ Debug x86_64 ] media/media-source/remoteplayback-availability-callback-does-not-leak.html [ Timeout ]
 
-webkit.org/b/288518 [ Debug ] fast/text/emoji-num-glyphs.html [ Timeout ]
-
 webkit.org/b/288546 imported/w3c/web-platform-tests/fullscreen/api/element-ready-allowed.html [ Pass Failure ]
 
 webkit.org/b/288631 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-after-snap.html [ Failure ]
@@ -2414,6 +2407,9 @@ imported/w3c/web-platform-tests/svg/pservers/reftests/meshgradient-complex-001.s
 # webkit.org/b/290848 : AX: accessibility/mac/line-boundary-at-br.html asserts on Debug
 [ Debug ] accessibility/mac/line-boundary-at-br.html [ Skip ]
 
+# Timing is different in debug, thus skip.
+[ Debug ] accessibility/password-notifications-timing.html [ Skip ]
+
 # The color input only has a swatch overlay on macOS
 fast/forms/color/input-color-swatch-overlay-appearance.html [ Pass ]
 
@@ -2425,10 +2421,19 @@ webkit.org/b/292846 [ Debug ] inspector/model/source-map-spec.html [ Failure ]
 
 webkit.org/b/292957 imported/w3c/web-platform-tests/css/css-position/multicol/vlr-ltr-ltr-in-multicols.html [ Pass Failure ]
 
-webkit.org/b/292986 [ X86_64 Debug ] pdf/annotations/checkbox-set-active.html [ Slow ]
 webkit.org/b/292986 [ X86_64 Debug ] gamepad/gamepad-polling-access.html [ Slow ]
 webkit.org/b/292986 [ X86_64 Debug ] webgl/2.0.y/conformance/rendering/many-draw-calls.html [ Slow ]
 webkit.org/b/292986 [ X86_64 Debug ] fast/webgpu/nocrash/fuzz-284937.html [ Slow ]
 webkit.org/b/292986 [ X86_64 Debug ] webgl/1.0.x/conformance/textures/misc/tex-video-using-tex-unit-non-zero.html [ Slow ]
 webkit.org/b/292986 [ X86_64 Debug ] fast/css/css-parser-classifyblock-endblock-crash.html [ Slow ]
 webkit.org/b/292986 [ X86_64 Debug ] webgl/2.0.y/conformance2/misc/uninitialized-test-2.html [ Slow ]
+
+# rdar://146986685 (REGRESSION(Sequoia 15.4): fast/canvas/webgl/gl-teximage.html is a constant text failure)
+fast/canvas/webgl/gl-teximage.html [ Failure ]
+
+#rdar://145604998 (REGRESSION(iOS 18.4, macOS Sequoia 15.4 ): fast/text/international/hindi-spacing.html is a constant text failure)
+fast/text/international/hindi-spacing.html [ Failure ]
+
+# webkit.org/b/293838 ([macOS] 2x tests in imported/w3c/web-platform-tests/url/ are constant failures (flaky in EWS)
+[ Sequoia ] imported/w3c/web-platform-tests/url/IdnaTestV2.window.html [ Failure ]
+[ Sequoia ] imported/w3c/web-platform-tests/url/toascii.window.html [ Failure ]

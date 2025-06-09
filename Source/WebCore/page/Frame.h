@@ -31,7 +31,7 @@
 #include "PageIdentifier.h"
 #include <wtf/CheckedRef.h>
 #include <wtf/Ref.h>
-#include <wtf/ThreadSafeRefCounted.h>
+#include <wtf/RefCountedAndCanMakeWeakPtr.h>
 #include <wtf/UniqueRef.h>
 #include <wtf/WeakHashSet.h>
 #include <wtf/WeakPtr.h>
@@ -59,10 +59,11 @@ enum class ScrollbarMode : uint8_t;
 
 using SandboxFlags = OptionSet<SandboxFlag>;
 
-class Frame : public ThreadSafeRefCounted<Frame, WTF::DestructionThread::Main>, public CanMakeWeakPtr<Frame> {
+class Frame : public RefCountedAndCanMakeWeakPtr<Frame> {
 public:
     virtual ~Frame();
 
+    enum class AddToFrameTree : bool { No, Yes };
     enum class NotifyUIProcess : bool { No, Yes };
     enum class FrameType : bool { Local, Remote };
     FrameType frameType() const { return m_frameType; }
@@ -141,7 +142,7 @@ public:
     WEBCORE_EXPORT virtual RefPtr<SecurityOrigin> frameDocumentSecurityOrigin() const = 0;
 
 protected:
-    Frame(Page&, FrameIdentifier, FrameType, HTMLFrameOwnerElement*, Frame* parent, Frame* opener, Ref<FrameTreeSyncData>&&);
+    Frame(Page&, FrameIdentifier, FrameType, HTMLFrameOwnerElement*, Frame* parent, Frame* opener, Ref<FrameTreeSyncData>&&, AddToFrameTree = AddToFrameTree::Yes);
     void resetWindowProxy();
 
     virtual void frameWasDisconnectedFromOwner() const { }

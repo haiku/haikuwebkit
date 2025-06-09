@@ -229,6 +229,7 @@ public:
     WriteBarrier<JSScope> m_globalScopeExtension;
     WriteBarrier<JSCallee> m_globalCallee;
     WriteBarrier<JSCallee> m_partiallyInitializedFrameCallee;
+    WriteBarrier<JSCallee> m_evalCallee;
 
     JS_GLOBAL_OBJECT_ADDITIONS_1;
 
@@ -398,6 +399,7 @@ public:
     LazyProperty<JSGlobalObject, Structure> m_proxyRevokeStructure;
     LazyClassStructure m_sharedArrayBufferStructure;
     LazyClassStructure m_disposableStackStructure;
+    LazyClassStructure m_asyncDisposableStackStructure;
 
 #define DEFINE_STORAGE_FOR_SIMPLE_TYPE_PROTOTYPE(capitalName, lowerName, properName, instanceType, jsName, prototypeBase, featureFlag) \
     WriteBarrier<capitalName ## Prototype> m_ ## lowerName ## Prototype;
@@ -476,6 +478,7 @@ public:
     InlineWatchpointSet m_setIteratorProtocolWatchpointSet { IsWatched };
     InlineWatchpointSet m_stringIteratorProtocolWatchpointSet { IsWatched };
     InlineWatchpointSet m_stringSymbolReplaceWatchpointSet { IsWatched };
+    InlineWatchpointSet m_stringSymbolToPrimitiveWatchpointSet { IsWatched };
     InlineWatchpointSet m_regExpPrimordialPropertiesWatchpointSet { IsWatched };
     InlineWatchpointSet m_mapSetWatchpointSet { IsWatched };
     InlineWatchpointSet m_setAddWatchpointSet { IsWatched };
@@ -487,6 +490,8 @@ public:
     InlineWatchpointSet m_objectPrototypeChainIsSaneWatchpointSet { IsWatched };
     InlineWatchpointSet m_stringPrototypeChainIsSaneWatchpointSet { IsWatched };
     InlineWatchpointSet m_numberToStringWatchpointSet { IsWatched };
+    InlineWatchpointSet m_stringToStringWatchpointSet { IsWatched };
+    InlineWatchpointSet m_stringValueOfWatchpointSet { IsWatched };
     InlineWatchpointSet m_structureCacheClearedWatchpointSet { IsWatched };
     InlineWatchpointSet m_arrayBufferSpeciesWatchpointSet { ClearWatchpoint };
     InlineWatchpointSet m_sharedArrayBufferSpeciesWatchpointSet { ClearWatchpoint };
@@ -517,6 +522,8 @@ public:
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_stringIteratorPrototypeNextWatchpoint;
     std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_stringPrototypeSymbolReplaceMissWatchpoint;
     std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_objectPrototypeSymbolReplaceMissWatchpoint;
+    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_stringPrototypeSymbolToPrimitiveMissWatchpoint;
+    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_objectPrototypeSymbolToPrimitiveMissWatchpoint;
     std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_arrayPrototypeNegativeOneMissWatchpoint;
     std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_objectPrototypeNegativeOneMissWatchpoint;
     std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_arrayPrototypeIsConcatSpreadableMissWatchpoint;
@@ -535,6 +542,8 @@ public:
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_mapPrototypeSetWatchpoint;
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_setPrototypeAddWatchpoint;
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_numberPrototypeToStringWatchpoint;
+    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_stringPrototypeToStringWatchpoint;
+    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_stringPrototypeValueOfWatchpoint;
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_arrayBufferConstructorSpeciesWatchpoints[2];
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_arrayBufferPrototypeConstructorWatchpoints[2];
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_typedArrayConstructorSpeciesWatchpoint;
@@ -563,6 +572,9 @@ public:
     InlineWatchpointSet& setIteratorProtocolWatchpointSet() { return m_setIteratorProtocolWatchpointSet; }
     InlineWatchpointSet& stringIteratorProtocolWatchpointSet() { return m_stringIteratorProtocolWatchpointSet; }
     InlineWatchpointSet& stringSymbolReplaceWatchpointSet() { return m_stringSymbolReplaceWatchpointSet; }
+    InlineWatchpointSet& stringSymbolToPrimitiveWatchpointSet() { return m_stringSymbolToPrimitiveWatchpointSet; }
+    InlineWatchpointSet& stringToStringWatchpointSet() { return m_stringToStringWatchpointSet; }
+    InlineWatchpointSet& stringValueOfWatchpointSet() { return m_stringValueOfWatchpointSet; }
     InlineWatchpointSet& regExpPrimordialPropertiesWatchpointSet() { return m_regExpPrimordialPropertiesWatchpointSet; }
     InlineWatchpointSet& mapSetWatchpointSet() { return m_mapSetWatchpointSet; }
     InlineWatchpointSet& setAddWatchpointSet() { return m_setAddWatchpointSet; }
@@ -673,8 +685,8 @@ public:
     std::optional<unsigned> stackTraceLimit() const { return m_stackTraceLimit; }
     void setStackTraceLimit(std::optional<unsigned> value) { m_stackTraceLimit = value; }
 
-    void startSignpost(String&&);
-    void stopSignpost(String&&);
+    JS_EXPORT_PRIVATE void startSignpost(String&&);
+    JS_EXPORT_PRIVATE void stopSignpost(String&&);
 
 protected:
     JS_EXPORT_PRIVATE explicit JSGlobalObject(VM&, Structure*, const GlobalObjectMethodTable* = nullptr);
@@ -709,6 +721,7 @@ public:
     void clearGlobalScopeExtension();
 
     JSCallee* globalCallee() { return m_globalCallee.get(); }
+    JSCallee* evalCallee() { return m_evalCallee.get(); }
 
     // The following accessors return pristine values, even if a script 
     // replaces the global object's associated property.
@@ -917,6 +930,7 @@ public:
     Structure* callableProxyObjectStructure() const { return m_callableProxyObjectStructure.get(this); }
     Structure* proxyRevokeStructure() const { return m_proxyRevokeStructure.get(this); }
     Structure* disposableStackStructure() const { return m_disposableStackStructure.get(this); }
+    Structure* asyncDisposableStackStructure() const { return m_asyncDisposableStackStructure.get(this); }
     Structure* restParameterStructure() const { return arrayStructureForIndexingTypeDuringAllocation(ArrayWithContiguous); }
     Structure* originalRestParameterStructure() const { return originalArrayStructureForIndexingType(ArrayWithContiguous); }
 #if ENABLE(WEBASSEMBLY)

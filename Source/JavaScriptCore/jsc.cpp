@@ -428,6 +428,8 @@ static JSC_DECLARE_HOST_FUNCTION(functionAsDoubleNumber);
 static JSC_DECLARE_HOST_FUNCTION(functionDropAllLocks);
 
 static JSC_DECLARE_HOST_FUNCTION(functionPerformanceNow);
+static JSC_DECLARE_HOST_FUNCTION(functionPerformanceMark);
+static JSC_DECLARE_HOST_FUNCTION(functionPerformanceMeasure);
 
 #if ENABLE(FUZZILLI)
 static JSC_DECLARE_HOST_FUNCTION(functionFuzzilli);
@@ -819,10 +821,11 @@ private:
 
         addFunction(vm, "dropAllLocks"_s, functionDropAllLocks, 1);
 
-        // We'll probably have to make this a real class if we want to add performance.mark in the future.
         JSObject* performance = JSFinalObject::create(vm, plainObjectStructure);
         putDirect(vm, Identifier::fromString(vm, "performance"_s), performance, DontEnum);
         addFunctionToObject(vm, performance, "now"_s, functionPerformanceNow, 0);
+        addFunctionToObject(vm, performance, "mark"_s, functionPerformanceMark, 1);
+        addFunctionToObject(vm, performance, "measure"_s, functionPerformanceMeasure, 2);
 
 #if ENABLE(FUZZILLI)
         addFunction(vm, "fuzzilli"_s, functionFuzzilli, 2);
@@ -3358,6 +3361,37 @@ JSC_DEFINE_HOST_FUNCTION(functionPerformanceNow, (JSGlobalObject*, CallFrame*))
     return JSValue::encode(jsNumber((MonotonicTime::now() - timeOrigin).reduceTimeResolution(Seconds::highTimePrecision()).milliseconds()));
 }
 
+static String asSignpostString(JSGlobalObject* globalObject, JSValue v)
+{
+    if (v.isUndefined())
+        return emptyString();
+    return v.toWTFString(globalObject);
+}
+
+JSC_DEFINE_HOST_FUNCTION(functionPerformanceMark, (JSGlobalObject* globalObject, CallFrame* callFrame))
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    auto message = asSignpostString(globalObject, callFrame->argument(0));
+    RETURN_IF_EXCEPTION(scope, EncodedJSValue());
+
+    globalObject->startSignpost(WTFMove(message));
+    return JSValue::encode(jsUndefined());
+}
+
+JSC_DEFINE_HOST_FUNCTION(functionPerformanceMeasure, (JSGlobalObject* globalObject, CallFrame* callFrame))
+{
+    VM& vm = globalObject->vm();
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    auto message = asSignpostString(globalObject, callFrame->argument(0));
+    RETURN_IF_EXCEPTION(scope, EncodedJSValue());
+
+    globalObject->stopSignpost(WTFMove(message));
+    return JSValue::encode(jsUndefined());
+}
+
 #if ENABLE(FUZZILLI)
 
 // We have to assume that the fuzzer will be able to call this function e.g. by
@@ -4003,7 +4037,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 static NEVER_INLINE void crashPGMUAF()
 {
     WTF::forceEnablePGM(1);
-    size_t allocSize = getpagesize() * 10000;
+    size_t allocSize = WTF::pageSize() * 10000;
     char* result = static_cast<char*>(fastMalloc(allocSize));
     fastFree(result);
     *result = 'a';
@@ -4012,7 +4046,7 @@ static NEVER_INLINE void crashPGMUAF()
 static NEVER_INLINE void crashPGMUpperGuardPage()
 {
     WTF::forceEnablePGM(1);
-    size_t allocSize = getpagesize() * 10000;
+    size_t allocSize = WTF::pageSize() * 10000;
     char* result = static_cast<char*>(fastMalloc(allocSize));
     result = result + allocSize;
     *result = 'a';
@@ -4021,7 +4055,7 @@ static NEVER_INLINE void crashPGMUpperGuardPage()
 static NEVER_INLINE void crashPGMLowerGuardPage()
 {
     WTF::forceEnablePGM(1);
-    size_t allocSize = getpagesize() * 10000;
+    size_t allocSize = WTF::pageSize() * 10000;
     char* result = static_cast<char*>(fastMalloc(allocSize));
     result = result - 1;
     *result = 'a';

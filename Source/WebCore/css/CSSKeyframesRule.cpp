@@ -75,7 +75,7 @@ void StyleRuleKeyframes::wrapperAppendKeyframe(Ref<StyleRuleKeyframe>&& keyframe
 
 void StyleRuleKeyframes::wrapperRemoveKeyframe(unsigned index)
 {
-    m_keyframes.remove(index);
+    m_keyframes.removeAt(index);
 }
 
 std::optional<size_t> StyleRuleKeyframes::findKeyframeIndex(const String& key) const
@@ -153,7 +153,7 @@ void CSSKeyframesRule::deleteRule(const String& s)
 
     if (m_childRuleCSSOMWrappers[*i])
         m_childRuleCSSOMWrappers[*i]->setParentRule(nullptr);
-    m_childRuleCSSOMWrappers.remove(*i);
+    m_childRuleCSSOMWrappers.removeAt(*i);
 }
 
 CSSKeyframeRule* CSSKeyframesRule::findRule(const String& s)
@@ -191,7 +191,7 @@ CSSKeyframeRule* CSSKeyframesRule::item(unsigned index) const
 CSSRuleList& CSSKeyframesRule::cssRules()
 {
     if (!m_ruleListCSSOMWrapper)
-        m_ruleListCSSOMWrapper = makeUniqueWithoutRefCountedCheck<LiveCSSRuleList<CSSKeyframesRule>>(*this);
+        lazyInitialize(m_ruleListCSSOMWrapper, makeUniqueWithoutRefCountedCheck<LiveCSSRuleList<CSSKeyframesRule>>(*this));
     return *m_ruleListCSSOMWrapper;
 }
 

@@ -27,9 +27,9 @@
 #include "RenderStyleInlines.h"
 #include "RenderStyleConstants.h"
 #include "RenderStyleDifference.h"
-#include "ShadowData.h"
 #include "StyleFilterData.h"
 #include "StyleImage.h"
+#include "StylePrimitiveNumericTypes+Logging.h"
 #include <wtf/PointerComparison.h>
 
 namespace WebCore {
@@ -144,6 +144,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , effectiveInert(false)
     , isInSubtreeWithBlendMode(false)
     , isInVisibilityAdjustmentSubtree(false)
+    , isForceHidden(false)
     , usedContentVisibility(static_cast<unsigned>(ContentVisibility::Visible))
     , insideDefaultButton(false)
 #if HAVE(CORE_MATERIAL)
@@ -185,7 +186,7 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , visitedLinkCaretColor(o.visitedLinkCaretColor)
     , accentColor(o.accentColor)
     , dynamicRangeLimit(o.dynamicRangeLimit)
-    , textShadow(o.textShadow ? makeUnique<ShadowData>(*o.textShadow) : nullptr)
+    , textShadow(o.textShadow)
     , cursorData(o.cursorData)
     , indent(o.indent)
     , usedZoom(o.usedZoom)
@@ -245,6 +246,7 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , effectiveInert(o.effectiveInert)
     , isInSubtreeWithBlendMode(o.isInSubtreeWithBlendMode)
     , isInVisibilityAdjustmentSubtree(o.isInVisibilityAdjustmentSubtree)
+    , isForceHidden(o.isForceHidden)
     , usedContentVisibility(o.usedContentVisibility)
     , insideDefaultButton(o.insideDefaultButton)
 #if HAVE(CORE_MATERIAL)
@@ -303,7 +305,7 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
 #if ENABLE(TOUCH_EVENTS)
         && tapHighlightColor == o.tapHighlightColor
 #endif
-        && arePointingToEqualData(textShadow, o.textShadow)
+        && textShadow == o.textShadow
         && arePointingToEqualData(cursorData, o.cursorData)
         && indent == o.indent
         && usedZoom == o.usedZoom
@@ -377,6 +379,7 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && hasAutoAccentColor == o.hasAutoAccentColor
         && isInSubtreeWithBlendMode == o.isInSubtreeWithBlendMode
         && isInVisibilityAdjustmentSubtree == o.isInVisibilityAdjustmentSubtree
+        && isForceHidden == o.isForceHidden
         && usedTouchActions == o.usedTouchActions
         && eventListenerRegionTypes == o.eventListenerRegionTypes
         && effectiveInert == o.effectiveInert
@@ -504,6 +507,7 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT_WITH_CAST(bool, effectiveInert);
     LOG_IF_DIFFERENT_WITH_CAST(bool, isInSubtreeWithBlendMode);
     LOG_IF_DIFFERENT_WITH_CAST(bool, isInVisibilityAdjustmentSubtree);
+    LOG_IF_DIFFERENT_WITH_CAST(bool, isForceHidden);
 
     LOG_IF_DIFFERENT_WITH_CAST(ContentVisibility, usedContentVisibility);
 

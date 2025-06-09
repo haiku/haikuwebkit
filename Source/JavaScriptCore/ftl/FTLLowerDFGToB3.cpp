@@ -735,9 +735,11 @@ private:
         switch (m_node->op()) {
         case DFG::Upsilon:
             compileUpsilon();
+            codeGenerationResult = CodeGenerationResult::NotGenerated;
             break;
         case DFG::Phi:
             compilePhi();
+            codeGenerationResult = CodeGenerationResult::NotGenerated;
             break;
         case ExtractFromTuple:
             compileExtractFromTuple();
@@ -924,8 +926,11 @@ private:
         case ValueBitLShift:
             compileValueBitLShift();
             break;
-        case BitURShift:
-            compileBitURShift();
+        case ArithBitURShift:
+            compileArithBitURShift();
+            break;
+        case ValueBitURShift:
+            compileValueBitURShift();
             break;
         case UInt32ToNumber:
             compileUInt32ToNumber();
@@ -1393,7 +1398,8 @@ private:
             compileSetArgumentCountIncludingThis();
             break;
         case GetScope:
-            compileGetScope();
+        case GetEvalScope:
+            compileGetScopeOrGetEvalScope();
             break;
         case SkipScope:
             compileSkipScope();
@@ -1872,6 +1878,7 @@ private:
 
         case LoopHint: {
             compileLoopHint();
+            codeGenerationResult = CodeGenerationResult::NotGenerated;
             break;
         }
 
@@ -3917,15 +3924,16 @@ private:
         emitBinaryBitOpSnippet<JITLeftShiftGenerator>(operationValueBitLShift);
     }
 
-    void compileBitURShift()
+    void compileArithBitURShift()
     {
-        if (m_node->isBinaryUseKind(UntypedUse)) {
-            emitRightShiftSnippet(JITRightShiftGenerator::UnsignedShift);
-            return;
-        }
         setInt32(m_out.lShr(
             lowInt32(m_node->child1()),
             m_out.bitAnd(lowInt32(m_node->child2()), m_out.constInt32(31)))); // FIXME: I don't think that the BitAnd is useful, it is included in the semantics of shift in B3
+    }
+
+    void compileValueBitURShift()
+    {
+        emitRightShiftSnippet(JITRightShiftGenerator::UnsignedShift);
     }
 
     void compileUInt32ToNumber()
@@ -5366,8 +5374,7 @@ private:
         // FIXME: If this is a PutByIdFlush, we might want to late-clobber volatile registers.
         // https://bugs.webkit.org/show_bug.cgi?id=152848
 
-        RefPtr<PatchpointExceptionHandle> exceptionHandle =
-            preparePatchpointForExceptions(patchpoint);
+        RefPtr<PatchpointExceptionHandle> exceptionHandle = preparePatchpointForExceptions(patchpoint);
 
         State* state = &m_ftlState;
 
@@ -7333,10 +7340,6 @@ IGNORE_CLANG_WARNINGS_END
                 if (arrayMode.isInBounds() || m_node->op() == PutByValAlias)
                     storeValue(value, pointer);
                 else {
-                    LBasicBlock isInBounds = m_out.newBlock();
-                    LBasicBlock isOutOfBounds = m_out.newBlock();
-                    LBasicBlock continuation = m_out.newBlock();
-
                     LValue isOutOfBoundsCondition;
                     if (child5.useKind() == Int52RepUse) {
                         // The preprocessor chokes on RELEASE_ASSERT(USE(LARGE_TYPED_ARRAYS)), this is equivalent.
@@ -7346,21 +7349,21 @@ IGNORE_CLANG_WARNINGS_END
                         DFG_ASSERT(m_graph, m_node, child5.useKind() == KnownInt32Use, child5.useKind());
                         isOutOfBoundsCondition = m_out.aboveOrEqual(index, lowInt32(child5));
                     }
-                    if (m_node->op() == PutByValDirect)
-                        m_out.branch(isOutOfBoundsCondition, rarely(isOutOfBounds), usually(isInBounds));
-                    else
-                        m_out.branch(isOutOfBoundsCondition, unsure(isOutOfBounds), unsure(isInBounds));
+                    if (m_node->op() == PutByValDirect) {
+                        speculate(Uncountable, noValue(), nullptr, isOutOfBoundsCondition);
+                        storeValue(value, pointer);
+                    } else {
+                        LBasicBlock isInBounds = m_out.newBlock();
+                        LBasicBlock continuation = m_out.newBlock();
 
-                    LBasicBlock lastNext = m_out.appendTo(isInBounds, isOutOfBounds);
-                    storeValue(value, pointer);
-                    m_out.jump(continuation);
+                        m_out.branch(isOutOfBoundsCondition, unsure(continuation), unsure(isInBounds));
 
-                    m_out.appendTo(isOutOfBounds, continuation);
-                    if (m_node->op() == PutByValDirect)
-                        speculate(Uncountable, noValue(), nullptr, m_out.booleanTrue);
-                    m_out.jump(continuation);
+                        LBasicBlock lastNext = m_out.appendTo(isInBounds, continuation);
+                        storeValue(value, pointer);
+                        m_out.jump(continuation);
 
-                    m_out.appendTo(continuation, lastNext);
+                        m_out.appendTo(continuation, lastNext);
+                    }
                 }
 
                 // We have to keep base alive since that keeps storage alive.
@@ -8773,7 +8776,7 @@ IGNORE_CLANG_WARNINGS_END
 
         // We don't need memory barriers since we just fast-created the function, so it
         // must be young.
-        m_out.storePtr(scope, fastObject, m_heaps.JSFunction_scope);
+        m_out.storePtr(scope, fastObject, m_heaps.JSCallee_scope);
         m_out.storePtr(weakPointer(executable), fastObject, m_heaps.JSFunction_executableOrRareData);
         mutatorFence();
 
@@ -8830,7 +8833,7 @@ IGNORE_CLANG_WARNINGS_END
 
         // We don't need memory barriers since we just fast-created the function, so it
         // must be young.
-        m_out.storePtr(weakPointer(globalObject), fastObject, m_heaps.JSFunction_scope);
+        m_out.storePtr(weakPointer(globalObject), fastObject, m_heaps.JSCallee_scope);
         m_out.storePtr(weakPointer(executable), fastObject, m_heaps.JSFunction_executableOrRareData);
         m_out.storePtr(target, fastObject, m_heaps.JSBoundFunction_targetFunction);
         m_out.store64(thisValue, fastObject, m_heaps.JSBoundFunction_boundThis);
@@ -10551,17 +10554,12 @@ IGNORE_CLANG_WARNINGS_END
                 unsure(continuation), unsure(notString));
 
             LBasicBlock lastNext = m_out.appendTo(notString, continuation);
-            speculate(
-                BadType, jsValueValue(cell), m_node->child1().node(),
-                m_out.notEqual(type, m_out.constInt32(StringObjectType)));
-            ValueFromBlock unboxedResult = m_out.anchor(
-                m_out.loadPtr(cell, m_heaps.JSWrapperObject_internalValue));
+            FTL_TYPE_CHECK(jsValueValue(cell), m_node->child1(), (SpecString | SpecStringObject), m_out.notEqual(type, m_out.constInt32(StringObjectType)));
+            ValueFromBlock unboxedResult = m_out.anchor(m_out.loadPtr(cell, m_heaps.JSWrapperObject_internalValue));
             m_out.jump(continuation);
 
             m_out.appendTo(continuation, lastNext);
             setJSValue(m_out.phi(Int64, simpleResult, unboxedResult));
-
-            m_interpreter.filter(m_node->child1(), SpecString | SpecStringObject);
             return;
         }
 
@@ -10906,7 +10904,7 @@ IGNORE_CLANG_WARNINGS_END
                 FlagsAndLength flagsAndLength = getFlagsAndLength(edge, child);
                 LValue flags = m_out.bitAnd(previousFlagsAndLength.flags, flagsAndLength.flags);
                 CheckValue* lengthCheck = m_out.speculateAdd(previousFlagsAndLength.length, flagsAndLength.length);
-                blessSpeculation(lengthCheck, Uncountable, noValue(), nullptr, m_origin);
+                blessSpeculationOutOfMemory(lengthCheck, noValue(), nullptr, m_origin);
                 return FlagsAndLength {
                     flags,
                     lengthCheck
@@ -11685,24 +11683,17 @@ IGNORE_CLANG_WARNINGS_END
 
     void compileNotifyWrite()
     {
-        WatchpointSet* set = m_node->watchpointSet();
-
         LBasicBlock isNotInvalidated = m_out.newBlock();
         LBasicBlock continuation = m_out.newBlock();
 
-        LValue state = m_out.load8ZeroExt32(m_out.absolute(set->addressOfState()));
+        LValue set = m_out.constIntPtr(m_node->watchpointSet());
+        LValue state = m_out.load8ZeroExt32(set, m_heaps.WatchpointSet_state);
         m_out.branch(
             m_out.equal(state, m_out.constInt32(IsInvalidated)),
             usually(continuation), rarely(isNotInvalidated));
 
         LBasicBlock lastNext = m_out.appendTo(isNotInvalidated, continuation);
-
-        VM& vm = this->vm();
-        lazySlowPath(
-            [=, &vm] (const Vector<Location>& locations) -> RefPtr<LazySlowPath::Generator> {
-                return createLazyCallGenerator(vm,
-                    operationNotifyWrite, InvalidGPRReg, locations[1].directGPR(), CCallHelpers::TrustedImmPtr(set));
-            }, m_vmValue);
+        vmCall(Void, operationNotifyWrite, m_vmValue, set);
         m_out.jump(continuation);
 
         m_out.appendTo(continuation, lastNext);
@@ -11734,9 +11725,9 @@ IGNORE_CLANG_WARNINGS_END
         m_out.store32(m_out.constInt32(m_node->argumentCountIncludingThis()), payloadFor(VirtualRegister(CallFrameSlot::argumentCountIncludingThis)));
     }
 
-    void compileGetScope()
+    void compileGetScopeOrGetEvalScope()
     {
-        setJSValue(m_out.loadPtr(lowCell(m_node->child1()), m_heaps.JSFunction_scope));
+        setJSValue(m_out.loadPtr(lowCell(m_node->child1()), m_heaps.JSCallee_scope));
     }
 
     void compileSkipScope()
@@ -11746,7 +11737,7 @@ IGNORE_CLANG_WARNINGS_END
 
     void compileGetGlobalObject()
     {
-        LValue structure = loadStructure(lowCell(m_node->child1()));
+        LValue structure = loadStructure(lowObject(m_node->child1()));
         setJSValue(m_out.loadPtr(structure, m_heaps.Structure_globalObject));
     }
 
@@ -12630,7 +12621,7 @@ IGNORE_CLANG_WARNINGS_END
                         jit.move(CCallHelpers::TrustedImmPtr(calleeScope), GPRInfo::argumentGPR0);
                     else {
                         jit.emitGetFromCallFrameHeaderPtr(CallFrameSlot::callee, GPRInfo::argumentGPR2);
-                        jit.loadPtr(CCallHelpers::Address(GPRInfo::argumentGPR2, JSFunction::offsetOfScopeChain()), GPRInfo::argumentGPR0);
+                        jit.loadPtr(CCallHelpers::Address(GPRInfo::argumentGPR2, JSCallee::offsetOfScopeChain()), GPRInfo::argumentGPR0);
                     }
                     jit.move(GPRInfo::callFrameRegister, GPRInfo::argumentGPR1);
                     if (Options::useJITCage()) {
@@ -17122,9 +17113,7 @@ IGNORE_CLANG_WARNINGS_END
                 break;
             case ALL_INT32_INDEXING_TYPES:
             case ALL_CONTIGUOUS_INDEXING_TYPES: {
-                LValue value = lowJSValue(edge, ManualOperandSpeculation);
-                if (hasInt32(m_node->indexingType()))
-                    speculate(BadType, noValue(), nullptr, isNotInt32(value));
+                LValue value = lowJSValue(edge, ManualOperandSpeculation); // We already speculated it so it is fine.
                 m_out.store64(value, butterfly, m_heaps.forIndexingType(indexingType)->at(index));
                 break;
             }
@@ -21967,14 +21956,12 @@ IGNORE_CLANG_WARNINGS_END
         return result;
     }
 
-    void speculate(
-        ExitKind kind, FormattedValue lowValue, Node* highValue, LValue failCondition)
+    void speculate(ExitKind kind, FormattedValue lowValue, Node* highValue, LValue failCondition)
     {
         appendOSRExit(kind, lowValue, highValue, failCondition, m_origin);
     }
 
-    void speculate(
-        ExitKind kind, FormattedValue lowValue, const MethodOfGettingAValueProfile& profile, LValue failCondition)
+    void speculate(ExitKind kind, FormattedValue lowValue, const MethodOfGettingAValueProfile& profile, LValue failCondition)
     {
         appendOSRExit(kind, lowValue, profile, failCondition, m_origin);
     }
@@ -24134,6 +24121,14 @@ IGNORE_CLANG_WARNINGS_END
 
     RefPtr<PatchpointExceptionHandle> preparePatchpointForExceptions(PatchpointValue* value)
     {
+        if (Options::validateDFGMayExit()) [[unlikely]] {
+            // When code path is terminated, execution does not reach to the code generated now.
+            if (m_state.isValid()) {
+                if (m_node)
+                    DFG_ASSERT(m_graph, m_node, mayExit(m_graph, m_node) != DoesNotExit);
+            }
+        }
+
         CodeOrigin opCatchOrigin;
         HandlerInfo* exceptionHandler;
         bool willCatchException = m_graph.willCatchExceptionInMachineFrame(m_origin.forExit, opCatchOrigin, exceptionHandler);
@@ -24145,7 +24140,8 @@ IGNORE_CLANG_WARNINGS_END
         bool exitOK = true;
         NodeOrigin origin = m_origin.withForExitAndExitOK(opCatchOrigin, exitOK);
 
-        OSRExitDescriptor* exitDescriptor = appendOSRExitDescriptor(noValue(), nullptr);
+        constexpr bool isExceptionHandler = true;
+        OSRExitDescriptor* exitDescriptor = appendOSRExitDescriptor(noValue(), nullptr, isExceptionHandler);
 
         // Compute the offset into the StackmapGenerationParams where we will find the exit arguments
         // we are about to append. We need to account for both the children we've already added, and
@@ -24169,13 +24165,30 @@ IGNORE_CLANG_WARNINGS_END
         return m_blocks.get(block);
     }
 
-    OSRExitDescriptor* appendOSRExitDescriptor(FormattedValue lowValue, Node* highValue)
+    OSRExitDescriptor* appendOSRExitDescriptor(FormattedValue lowValue, Node* highValue, bool isExceptionHandler = false)
     {
-        return appendOSRExitDescriptor(lowValue, m_graph.methodOfGettingAValueProfileFor(m_node, highValue));
+        return appendOSRExitDescriptor(lowValue, m_graph.methodOfGettingAValueProfileFor(m_node, highValue), isExceptionHandler);
     }
 
-    OSRExitDescriptor* appendOSRExitDescriptor(FormattedValue lowValue, const MethodOfGettingAValueProfile& profile)
+    OSRExitDescriptor* appendOSRExitDescriptor(FormattedValue lowValue, const MethodOfGettingAValueProfile& profile, bool isExceptionHandler = false)
     {
+        if (Options::validateDFGMayExit()) [[unlikely]] {
+            // When code path is terminated, execution does not reach to the code generated now.
+            if (m_state.isValid()) {
+                if (m_node) {
+                    switch (mayExit(m_graph, m_node)) {
+                    case DoesNotExit:
+                        DFG_CRASH(m_graph, m_node, "Generating OSR exit while node says DoesNotExit");
+                        break;
+                    case ExitsForExceptions:
+                        DFG_ASSERT(m_graph, m_node, isExceptionHandler);
+                        break;
+                    case Exits:
+                        break;
+                    }
+                }
+            }
+        }
         return &m_ftlState.jitCode->osrExitDescriptors.alloc(
             lowValue.format(), profile,
             availabilityMap().m_locals.numberOfArguments(),
@@ -24187,8 +24200,7 @@ IGNORE_CLANG_WARNINGS_END
         ExitKind kind, FormattedValue lowValue, Node* highValue, LValue failCondition,
         NodeOrigin origin, bool isExceptionHandler = false)
     {
-        return appendOSRExit(kind, lowValue, m_graph.methodOfGettingAValueProfileFor(m_node, highValue),
-            failCondition, origin, isExceptionHandler);
+        return appendOSRExit(kind, lowValue, m_graph.methodOfGettingAValueProfileFor(m_node, highValue), failCondition, origin, isExceptionHandler);
     }
 
     void appendOSRExit(
@@ -24224,18 +24236,17 @@ IGNORE_CLANG_WARNINGS_END
         if (failCondition == m_out.booleanFalse)
             return;
 
-        blessSpeculation(
-            m_out.speculate(failCondition), kind, lowValue, profile, origin);
+        blessSpeculation(m_out.speculate(failCondition), kind, lowValue, profile, origin, isExceptionHandler);
     }
 
-    void blessSpeculation(CheckValue* value, ExitKind kind, FormattedValue lowValue, Node* highValue, NodeOrigin origin)
+    void blessSpeculation(CheckValue* value, ExitKind kind, FormattedValue lowValue, Node* highValue, NodeOrigin origin, bool isExceptionHandler = false)
     {
-        blessSpeculation(value, kind, lowValue, m_graph.methodOfGettingAValueProfileFor(m_node, highValue), origin);
+        blessSpeculation(value, kind, lowValue, m_graph.methodOfGettingAValueProfileFor(m_node, highValue), origin, isExceptionHandler);
     }
 
-    void blessSpeculation(CheckValue* value, ExitKind kind, FormattedValue lowValue, const MethodOfGettingAValueProfile& profile, NodeOrigin origin)
+    void blessSpeculation(CheckValue* value, ExitKind kind, FormattedValue lowValue, const MethodOfGettingAValueProfile& profile, NodeOrigin origin, bool isExceptionHandler = false)
     {
-        OSRExitDescriptor* exitDescriptor = appendOSRExitDescriptor(lowValue, profile);
+        OSRExitDescriptor* exitDescriptor = appendOSRExitDescriptor(lowValue, profile, isExceptionHandler);
 
         value->appendColdAnys(buildExitArguments(exitDescriptor, origin.forExit, lowValue));
 
@@ -24245,6 +24256,43 @@ IGNORE_CLANG_WARNINGS_END
             [=] (CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
                 exitDescriptor->emitOSRExit(
                     *state, kind, origin, jit, params, nodeIndex, 0);
+            });
+    }
+
+    void blessSpeculationOutOfMemory(CheckValue* value, FormattedValue lowValue, Node* highValue, NodeOrigin origin)
+    {
+        blessSpeculationOutOfMemory(value, lowValue, m_graph.methodOfGettingAValueProfileFor(m_node, highValue), origin);
+    }
+
+    void blessSpeculationOutOfMemory(CheckValue* value, FormattedValue lowValue, const MethodOfGettingAValueProfile& profile, NodeOrigin origin)
+    {
+        CodeOrigin opCatchOrigin;
+        HandlerInfo* exceptionHandler;
+        if (m_graph.willCatchExceptionInMachineFrame(origin.forExit, opCatchOrigin, exceptionHandler)) {
+            constexpr bool isExceptionHandler = true;
+            constexpr bool exitOK = true;
+            auto exitOrigin = origin.withForExitAndExitOK(opCatchOrigin, exitOK);
+            OSRExitDescriptor* exitDescriptor = appendOSRExitDescriptor(lowValue, profile, isExceptionHandler);
+
+            value->appendColdAnys(buildExitArguments(exitDescriptor, exitOrigin.forExit, lowValue));
+
+            State* state = &m_ftlState;
+            auto nodeIndex = m_nodeIndexInGraph;
+            value->setGenerator(
+                [=](CCallHelpers& jit, const B3::StackmapGenerationParams& params) {
+                    exitDescriptor->emitOSRExit(*state, WillThrowOutOfMemoryError, exitOrigin, jit, params, nodeIndex, 0);
+                });
+            return;
+        }
+
+        CallSiteIndex callSiteIndex = m_ftlState.jitCode->common.codeOrigins->addCodeOrigin(origin.semantic);
+        State* state = &m_ftlState;
+        value->setGenerator(
+            [=](CCallHelpers& jit, const B3::StackmapGenerationParams&) {
+                // Since we no longer use any registers, we can just use the macro scratch register freely. We will just jump to the thunk.
+                AllowMacroScratchRegisterUsage allowScratch(jit);
+                jit.store32(CCallHelpers::TrustedImm32(callSiteIndex.bits()), CCallHelpers::tagFor(CallFrameSlot::argumentCountIncludingThis));
+                jit.jumpThunk(CodeLocationLabel(state->vm().getCTIStub(CommonJITThunkID::ThrowOutOfMemoryError).retaggedCode<NoPtrTag>()));
             });
     }
 

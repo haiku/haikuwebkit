@@ -49,6 +49,7 @@
 
 namespace WebCore {
 
+class CachedResourceRequest;
 class DOMMatrixReadOnly;
 class DOMPointReadOnly;
 class Event;
@@ -180,6 +181,11 @@ public:
     WEBCORE_EXPORT String inlinePreviewUUIDForTesting() const;
 #endif
 
+    size_t memoryCost() const;
+#if ENABLE(RESOURCE_USAGE)
+    size_t externalMemoryCost() const;
+#endif
+
 private:
     HTMLModelElement(const QualifiedName&, Document&);
 
@@ -196,6 +202,8 @@ private:
     RefPtr<GraphicsLayer> graphicsLayer() const;
 
     HTMLModelElement& readyPromiseResolve();
+
+    CachedResourceRequest createResourceRequest(const URL&, FetchOptions::Destination);
 
     // ActiveDOMObject.
     bool virtualHasPendingActivity() const final;
@@ -230,6 +238,7 @@ private:
 #endif
     std::optional<PlatformLayerIdentifier> modelContentsLayerID() const final;
     bool isVisible() const final;
+    void logWarning(ModelPlayer&, const String&) final;
 
     Node::InsertedIntoAncestorResult insertedIntoAncestor(InsertionType , ContainerNode& parentOfInsertedTree) override;
     void removedFromAncestor(RemovalType, ContainerNode& oldParentOfRemovedTree) override;
@@ -244,6 +253,8 @@ private:
     void setAnimationIsPlaying(bool, DOMPromiseDeferred<void>&&);
 
     LayoutSize contentSize() const;
+
+    void reportExtraMemoryCost();
 
 #if ENABLE(MODEL_PROCESS)
     bool autoplay() const;
@@ -265,6 +276,8 @@ private:
     URL m_sourceURL;
     CachedResourceHandle<CachedRawResource> m_resource;
     SharedBufferBuilder m_data;
+    mutable std::atomic<size_t> m_dataMemoryCost { 0 };
+    size_t m_reportedDataMemoryCost { 0 };
     WeakPtr<ModelPlayerProvider> m_modelPlayerProvider;
     RefPtr<Model> m_model;
     UniqueRef<ReadyPromise> m_readyPromise;
@@ -281,6 +294,7 @@ private:
     double m_playbackRate { 1.0 };
     URL m_environmentMapURL;
     SharedBufferBuilder m_environmentMapData;
+    mutable std::atomic<size_t> m_environmentMapDataMemoryCost { 0 };
     CachedResourceHandle<CachedRawResource> m_environmentMapResource;
     UniqueRef<EnvironmentMapPromise> m_environmentMapReadyPromise;
 #endif

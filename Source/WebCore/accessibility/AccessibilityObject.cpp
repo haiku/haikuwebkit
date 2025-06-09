@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -700,6 +700,7 @@ void AccessibilityObject::insertChild(AccessibilityObject& child, unsigned index
     } else {
         // Table component child-parent relationships often don't line up properly, hence the need for methods
         // like parentTable() and parentRow(). Exclude them from this ASSERT.
+        // FIXME: We hit this ASSERT on gmail.com. https://bugs.webkit.org/show_bug.cgi?id=293264
         ASSERT(isTableComponent(child) || isTableComponent(*this) || child.parentObject() == this);
         insert(Ref { child }, index);
     }
@@ -2295,7 +2296,6 @@ String AccessibilityObject::localizedActionVerb() const
     case AccessibilityRole::Switch:
         return isChecked() ? checkedCheckboxAction : uncheckedCheckboxAction;
     case AccessibilityRole::Link:
-    case AccessibilityRole::WebCoreLink:
         return linkAction;
     case AccessibilityRole::PopUpButton:
         return menuListAction;
@@ -2328,7 +2328,6 @@ String AccessibilityObject::actionVerb() const
     case AccessibilityRole::Switch:
         return isChecked() ? "uncheck"_s : "check"_s;
     case AccessibilityRole::Link:
-    case AccessibilityRole::WebCoreLink:
         return "jump"_s;
     case AccessibilityRole::PopUpButton:
     case AccessibilityRole::MenuListPopup:
@@ -2557,8 +2556,8 @@ bool AccessibilityObject::insertText(const String& text)
     return editor.insertText(text, nullptr);
 }
 
-using ARIARoleMap = UncheckedKeyHashMap<String, AccessibilityRole, ASCIICaseInsensitiveHash>;
-using ARIAReverseRoleMap = UncheckedKeyHashMap<AccessibilityRole, String, DefaultHash<int>, WTF::UnsignedWithZeroKeyHashTraits<int>>;
+using ARIARoleMap = HashMap<String, AccessibilityRole, ASCIICaseInsensitiveHash>;
+using ARIAReverseRoleMap = HashMap<AccessibilityRole, String, DefaultHash<int>, WTF::UnsignedWithZeroKeyHashTraits<int>>;
 
 static ARIARoleMap* gAriaRoleMap = nullptr;
 static ARIAReverseRoleMap* gAriaReverseRoleMap = nullptr;
@@ -2596,10 +2595,10 @@ static void initializeRoleMap()
         RoleEntry { "doc-acknowledgments"_s, AccessibilityRole::LandmarkDocRegion },
         RoleEntry { "doc-afterword"_s, AccessibilityRole::LandmarkDocRegion },
         RoleEntry { "doc-appendix"_s, AccessibilityRole::LandmarkDocRegion },
-        RoleEntry { "doc-backlink"_s, AccessibilityRole::WebCoreLink },
+        RoleEntry { "doc-backlink"_s, AccessibilityRole::Link },
         RoleEntry { "doc-biblioentry"_s, AccessibilityRole::ListItem },
         RoleEntry { "doc-bibliography"_s, AccessibilityRole::LandmarkDocRegion },
-        RoleEntry { "doc-biblioref"_s, AccessibilityRole::WebCoreLink },
+        RoleEntry { "doc-biblioref"_s, AccessibilityRole::Link },
         RoleEntry { "doc-chapter"_s, AccessibilityRole::LandmarkDocRegion },
         RoleEntry { "doc-colophon"_s, AccessibilityRole::TextGroup },
         RoleEntry { "doc-conclusion"_s, AccessibilityRole::LandmarkDocRegion },
@@ -2616,10 +2615,10 @@ static void initializeRoleMap()
         RoleEntry { "doc-footnote"_s, AccessibilityRole::Footnote },
         RoleEntry { "doc-foreword"_s, AccessibilityRole::LandmarkDocRegion },
         RoleEntry { "doc-glossary"_s, AccessibilityRole::LandmarkDocRegion },
-        RoleEntry { "doc-glossref"_s, AccessibilityRole::WebCoreLink },
+        RoleEntry { "doc-glossref"_s, AccessibilityRole::Link },
         RoleEntry { "doc-index"_s, AccessibilityRole::LandmarkNavigation },
         RoleEntry { "doc-introduction"_s, AccessibilityRole::LandmarkDocRegion },
-        RoleEntry { "doc-noteref"_s, AccessibilityRole::WebCoreLink },
+        RoleEntry { "doc-noteref"_s, AccessibilityRole::Link },
         RoleEntry { "doc-notice"_s, AccessibilityRole::DocumentNote },
         RoleEntry { "doc-pagebreak"_s, AccessibilityRole::Splitter },
         RoleEntry { "doc-pagelist"_s, AccessibilityRole::LandmarkNavigation },
@@ -2655,7 +2654,7 @@ static void initializeRoleMap()
         RoleEntry { "image"_s, AccessibilityRole::Image },
         RoleEntry { "img"_s, AccessibilityRole::Image },
         RoleEntry { "insertion"_s, AccessibilityRole::Insertion },
-        RoleEntry { "link"_s, AccessibilityRole::WebCoreLink },
+        RoleEntry { "link"_s, AccessibilityRole::Link },
         RoleEntry { "list"_s, AccessibilityRole::List },
         RoleEntry { "listitem"_s, AccessibilityRole::ListItem },
         RoleEntry { "listbox"_s, AccessibilityRole::ListBox },
@@ -3271,6 +3270,7 @@ bool AccessibilityObject::supportsExpanded() const
             case CommandType::Custom:
             case CommandType::ShowModal:
             case CommandType::Close:
+            case CommandType::RequestClose:
                 break;
             default:
                 ASSERT_NOT_REACHED();
@@ -3406,7 +3406,7 @@ AccessibilityButtonState AccessibilityObject::checkboxOrRadioValue() const
     return AccessibilityButtonState::Off;
 }
 
-UncheckedKeyHashMap<String, AXEditingStyleValueVariant> AccessibilityObject::resolvedEditingStyles() const
+HashMap<String, AXEditingStyleValueVariant> AccessibilityObject::resolvedEditingStyles() const
 {
     auto document = this->document();
     if (!document)
@@ -3416,7 +3416,7 @@ UncheckedKeyHashMap<String, AXEditingStyleValueVariant> AccessibilityObject::res
     if (!selectionStyle)
         return { };
 
-    UncheckedKeyHashMap<String, AXEditingStyleValueVariant> styles;
+    HashMap<String, AXEditingStyleValueVariant> styles;
     styles.add("bold"_s, selectionStyle->hasStyle(CSSPropertyFontWeight, "bold"_s));
     styles.add("italic"_s, selectionStyle->hasStyle(CSSPropertyFontStyle, "italic"_s));
     styles.add("underline"_s, selectionStyle->hasStyle(CSSPropertyWebkitTextDecorationsInEffect, "underline"_s));
@@ -3783,7 +3783,7 @@ bool AccessibilityObject::ignoredFromPresentationalRole() const
 bool AccessibilityObject::includeIgnoredInCoreTree() const
 {
 #if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
-    RefPtr document = protectedDocument();
+    RefPtr document = this->document();
     return document ? document->settings().includeIgnoredInCoreAXTree() : false;
 #else
     return false;

@@ -182,6 +182,7 @@ class StorageConnection;
 class StorageNamespace;
 class StorageNamespaceProvider;
 class StorageProvider;
+class TextIndicator;
 class ThermalMitigationNotifier;
 class UserContentProvider;
 class UserContentURLPattern;
@@ -228,7 +229,6 @@ struct ProcessSyncData;
 struct SimpleRange;
 struct SpatialBackdropSource;
 struct SystemPreviewInfo;
-struct TextIndicatorData;
 struct TextRecognitionResult;
 struct ViewportArguments;
 struct WindowFeatures;
@@ -238,6 +238,7 @@ using SharedStringHash = uint32_t;
 
 enum class ActivityState : uint16_t;
 enum class AdvancedPrivacyProtections : uint16_t;
+enum class BoxSide : uint8_t;
 enum class BoxSideFlag : uint8_t;
 enum class CanWrap : bool;
 enum class ContentSecurityPolicyModeForExtension : uint8_t;
@@ -354,6 +355,7 @@ constexpr auto allRenderingUpdateSteps = updateRenderingSteps | OptionSet<Render
 #endif
 };
 
+using WeakElementEdges = RectEdges<WeakPtr<Element, WeakPtrImplWithEventTargetData>>;
 
 class Page : public RefCountedAndCanMakeWeakPtr<Page>, public Supplementable<Page> {
     WTF_MAKE_TZONE_ALLOCATED_EXPORT(Page, WEBCORE_EXPORT);
@@ -527,7 +529,6 @@ public:
     WEBCORE_EXPORT void settingsDidChange();
 
     Settings& settings() const { return *m_settings; }
-    Ref<Settings> protectedSettings() const;
 
     ProgressTracker& progress() { return m_progress.get(); }
     const ProgressTracker& progress() const { return m_progress.get(); }
@@ -814,11 +815,14 @@ public:
     WEBCORE_EXPORT void finalizeRenderingUpdateForRootFrame(LocalFrame&, OptionSet<FinalizeRenderingUpdateFlags>);
 
     // Called before and after the "display" steps of the rendering update: painting, and when we push
-    // layers to the platform compositor.
+    // layers to the platform compositor (including async painting).
     WEBCORE_EXPORT void willStartRenderingUpdateDisplay();
     WEBCORE_EXPORT void didCompleteRenderingUpdateDisplay();
     // Called after didCompleteRenderingUpdateDisplay, but in the same run loop iteration (i.e. before zero-delay timers triggered from the rendering update).
     WEBCORE_EXPORT void didCompleteRenderingFrame();
+    // Called after the "display" steps of the rendering update, but before any async delays
+    // waiting for async painting.
+    WEBCORE_EXPORT void didUpdateRendering();
 
     // Schedule a rendering update that coordinates with display refresh.
     WEBCORE_EXPORT void scheduleRenderingUpdate(OptionSet<RenderingUpdateStep> requestedSteps);
@@ -909,8 +913,8 @@ public:
     WEBCORE_EXPORT Color sampledPageTopColor() const;
 
     WEBCORE_EXPORT void updateFixedContainerEdges(OptionSet<BoxSideFlag>);
-    const FixedContainerEdges& fixedContainerEdges() const { return m_fixedContainerEdges; }
     Color lastTopFixedContainerColor() const;
+    const FixedContainerEdges& fixedContainerEdges() const { return m_fixedContainerEdgesAndElements.first; }
 
 #if ENABLE(WEB_PAGE_SPATIAL_BACKDROP)
     WEBCORE_EXPORT std::optional<SpatialBackdropSource> spatialBackdropSource() const;
@@ -1225,7 +1229,7 @@ public:
 
     void opportunisticallyRunIdleCallbacks(MonotonicTime deadline);
     WEBCORE_EXPORT void performOpportunisticallyScheduledTasks(MonotonicTime deadline);
-    void deleteRemovedNodes();
+    void deleteRemovedNodesAndDetachedRenderers();
     String ensureMediaKeysStorageDirectoryForOrigin(const SecurityOriginData&);
     WEBCORE_EXPORT void setMediaKeysStorageDirectory(const String&);
 
@@ -1283,7 +1287,7 @@ public:
 
     WEBCORE_EXPORT Vector<FloatRect> proofreadingSessionSuggestionTextRectsInRootViewCoordinates(const CharacterRange&) const;
     WEBCORE_EXPORT void updateTextVisibilityForActiveWritingToolsSession(const CharacterRange&, bool, const WTF::UUID&);
-    WEBCORE_EXPORT std::optional<TextIndicatorData> textPreviewDataForActiveWritingToolsSession(const CharacterRange&);
+    WEBCORE_EXPORT RefPtr<TextIndicator> textPreviewDataForActiveWritingToolsSession(const CharacterRange&);
     WEBCORE_EXPORT void decorateTextReplacementsForActiveWritingToolsSession(const CharacterRange&);
     WEBCORE_EXPORT void setSelectionForActiveWritingToolsSession(const CharacterRange&);
 
@@ -1635,7 +1639,7 @@ private:
     std::optional<EventThrottlingBehavior> m_eventThrottlingBehaviorOverride;
     std::optional<CompositingPolicy> m_compositingPolicyOverride;
 
-    std::unique_ptr<PerformanceMonitor> m_performanceMonitor;
+    const std::unique_ptr<PerformanceMonitor> m_performanceMonitor;
     std::unique_ptr<LowPowerModeNotifier> m_lowPowerModeNotifier;
     std::unique_ptr<ThermalMitigationNotifier> m_thermalMitigationNotifier;
     OptionSet<ThrottlingReason> m_throttlingReasons;
@@ -1645,7 +1649,7 @@ private:
 
     std::unique_ptr<PerformanceLogging> m_performanceLogging;
 #if ENABLE(WHEEL_EVENT_LATCHING)
-    std::unique_ptr<ScrollLatchingController> m_scrollLatchingController;
+    const std::unique_ptr<ScrollLatchingController> m_scrollLatchingController;
 #endif
 #if PLATFORM(MAC) && (ENABLE(SERVICE_CONTROLS) || ENABLE(TELEPHONE_NUMBER_DETECTION))
     const UniqueRef<ServicesOverlayController> m_servicesOverlayController;
@@ -1709,7 +1713,7 @@ private:
 
     Color m_underPageBackgroundColorOverride;
     std::optional<Color> m_sampledPageTopColor;
-    UniqueRef<FixedContainerEdges> m_fixedContainerEdges;
+    std::pair<UniqueRef<FixedContainerEdges>, WeakElementEdges> m_fixedContainerEdgesAndElements;
 
     const bool m_httpsUpgradeEnabled { true };
     mutable Markable<MediaSessionGroupIdentifier> m_mediaSessionGroupIdentifier;

@@ -48,6 +48,7 @@
 #include "LegacyRenderSVGShapeInlines.h"
 #include "LocalFrame.h"
 #include "LocalFrameView.h"
+#include "NativeImage.h"
 #include "Page.h"
 #include "PathOperation.h"
 #include "PlatformMouseEvent.h"
@@ -159,7 +160,6 @@ static bool shouldAllowAccessibilityRoleAsPointerCursorReplacement(const Element
     case AccessibilityRole::Button:
     case AccessibilityRole::Checkbox:
     case AccessibilityRole::Link:
-    case AccessibilityRole::WebCoreLink:
     case AccessibilityRole::ListBoxOption:
     case AccessibilityRole::MenuItem:
     case AccessibilityRole::MenuItemCheckbox:
@@ -249,7 +249,7 @@ static bool hasTransparentContainerStyle(const RenderStyle& style)
 {
     return !style.hasBackground()
         && !style.hasOutline()
-        && !style.boxShadow()
+        && !style.hasBoxShadow()
         && !style.clipPath()
         && !style.hasExplicitlySetBorderRadius()
         // No visible borders or borders that do not create a complete box.

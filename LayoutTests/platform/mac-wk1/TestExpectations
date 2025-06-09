@@ -110,6 +110,10 @@ imported/w3c/web-platform-tests/screen-orientation [ Skip ]
 # webkit.org/b/247981
 imported/w3c/web-platform-tests/fetch [ Skip ]
 
+# The Digital Credentials API is not supported in WebKit1.
+http/wpt/identity/ [ Skip ]
+imported/w3c/web-platform-tests/digital-credentials/ [ Skip ]
+
 # Shared & service workers are only implemented for WebKit2.
 http/tests/navigation/page-cache-shared-worker.html [ Skip ]
 http/tests/workers/shared [ Skip ]
@@ -953,6 +957,7 @@ accessibility/mac/lazy-spellchecking.html [ Skip ]
 accessibility/mac/spellcheck-with-voiceover.html [ Skip ]
 accessibility/text-marker/text-marker-range-with-unordered-markers.html
 accessibility/mac/line-boundary-at-br.html [ Skip ]
+accessibility/mac/text-marker-ordering.html [ Skip ]
 
 accessibility/aria-controlled-table-row-visibility.html [ Skip ]
 
@@ -2800,6 +2805,8 @@ imported/w3c/web-platform-tests/css/motion/offset-path-shape-polygon-003.html [ 
 imported/w3c/web-platform-tests/css/css-masking/clip-path/animations/clip-path-animation-custom-timing-function.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/html/canvas/offscreen/manual/the-offscreen-canvas/offscreencanvas.transfer.to.imagebitmap.w.html [ Pass Failure ]
 
+webkit.org/b/290442 imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.fillText.html [ ImageOnlyFailure ]
+
 webkit.org/b/261427 media/track/track-in-band-mode.html [ Pass Crash ]
 
 webkit.org/b/261618 [ Debug ] imported/w3c/web-platform-tests/preload/link-header-preload-non-html.html [ Pass Crash ]
@@ -3117,3 +3124,8 @@ webkit.org/b/292218 [ Sonoma Release ] media/media-source/media-source-video-ren
 webkit.org/b/292395 [ Debug ] fast/picture/viewport-resize.html [ Pass Crash ]
 
 http/tests/iframe-memory-monitor/media-video-autoplay-in-frames.html [ Skip ]
+
+# webkit.org/b/293249 third-party cookie blocking is not supported in WK1
+http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie-preexisting-cookie.html [ Skip ]
+http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie.html [ Skip ]
+http/tests/websocket/tests/hybi/websocket-allowed-setting-cookie-as-third-party-with-third-party-cookie-blocking.https.html [ Skip ]

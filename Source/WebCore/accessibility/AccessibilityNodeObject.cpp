@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2012, Google Inc. All rights reserved.
+* Copyright (C) 2012 Google Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions
@@ -327,7 +327,7 @@ AccessibilityRole AccessibilityNodeObject::determineAccessibilityRoleFromNode(Tr
         return AccessibilityRole::Unknown;
 
     if (element->isLink())
-        return AccessibilityRole::WebCoreLink;
+        return AccessibilityRole::Link;
     if (RefPtr selectElement = dynamicDowncast<HTMLSelectElement>(*element))
         return selectElement->multiple() ? AccessibilityRole::ListBox : AccessibilityRole::PopUpButton;
     if (is<HTMLImageElement>(*element) && element->hasAttributeWithoutSynchronization(usemapAttr))
@@ -783,7 +783,7 @@ bool AccessibilityNodeObject::isNativeImage() const
     if (is<HTMLImageElement>(*node))
         return true;
 
-    auto elementName = WebCore::elementName(node);
+    auto elementName = WebCore::elementName(*node);
     if (elementName == ElementName::HTML_applet || elementName == ElementName::HTML_embed || elementName == ElementName::HTML_object)
         return true;
 
@@ -983,25 +983,6 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityNodeObject::radioButtonGr
     }
 
     return result;
-}
-
-unsigned AccessibilityNodeObject::headingTagLevel() const
-{
-    auto elementName = this->elementName();
-    if (elementName == ElementName::HTML_h1)
-        return 1;
-    if (elementName == ElementName::HTML_h2)
-        return 2;
-    if (elementName == ElementName::HTML_h3)
-        return 3;
-    if (elementName == ElementName::HTML_h4)
-        return 4;
-    if (elementName == ElementName::HTML_h5)
-        return 5;
-    if (elementName == ElementName::HTML_h6)
-        return 6;
-
-    return 0;
 }
 
 String AccessibilityNodeObject::valueDescription() const
@@ -2309,7 +2290,7 @@ String AccessibilityNodeObject::textUnderElement(TextUnderElementMode mode) cons
 
 String AccessibilityNodeObject::title() const
 {
-    WeakPtr node = this->node();
+    RefPtr node = this->node();
     if (!node)
         return { };
 

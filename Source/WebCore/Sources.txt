@@ -559,6 +559,7 @@ accessibility/AXRemoteFrame.cpp
 accessibility/AXSearchManager.cpp
 accessibility/AXTextMarker.cpp
 accessibility/AXTextRun.cpp
+accessibility/AXTreeStore.cpp
 accessibility/AccessibilityARIAGridCell.cpp
 accessibility/AccessibilityARIAGridRow.cpp
 accessibility/AccessibilityARIATable.cpp
@@ -931,6 +932,7 @@ css/CSSPositionTryRule.cpp
 css/CSSPositionValue.cpp
 css/CSSPrimitiveValue.cpp
 css/CSSProperty.cpp
+css/CSSPropertyInitialValues.cpp
 css/CSSPropertyRule.cpp
 css/CSSPropertySourceData.cpp
 css/CSSQuadValue.cpp
@@ -1027,6 +1029,7 @@ css/parser/CSSParserObserverWrapper.cpp
 css/parser/CSSParserToken.cpp
 css/parser/CSSParserTokenRange.cpp
 css/parser/CSSPropertyParser.cpp
+css/parser/CSSPropertyParserResult.cpp
 css/parser/CSSPropertyParserConsumer+Align.cpp
 css/parser/CSSPropertyParserConsumer+Anchor.cpp
 css/parser/CSSPropertyParserConsumer+Animations.cpp
@@ -2610,6 +2613,7 @@ platform/graphics/filters/FilterFunction.cpp
 platform/graphics/filters/FilterImage.cpp
 platform/graphics/filters/FilterOperation.cpp
 platform/graphics/filters/FilterOperations.cpp
+platform/graphics/filters/FilterRenderingMode.cpp
 platform/graphics/filters/FilterResults.cpp
 platform/graphics/filters/PointLightSource.cpp
 platform/graphics/filters/SourceAlpha.cpp
@@ -2940,6 +2944,7 @@ rendering/style/FillLayer.cpp
 rendering/style/GapLength.cpp
 rendering/style/GridPosition.cpp
 rendering/style/GridPositionsResolver.cpp
+rendering/style/GridSpan.cpp
 rendering/style/GridTrackSize.cpp
 rendering/style/ListStyleType.cpp
 rendering/style/NinePieceImage.cpp
@@ -2955,7 +2960,6 @@ rendering/style/SVGRenderStyle.cpp
 rendering/style/SVGRenderStyleDefs.cpp
 rendering/style/ScrollbarColor.cpp
 rendering/style/ScrollbarGutter.cpp
-rendering/style/ShadowData.cpp
 rendering/style/ShapeValue.cpp
 rendering/style/StyleBackgroundData.cpp
 rendering/style/StyleBoxData.cpp
@@ -3112,6 +3116,7 @@ style/PageRuleCollector.cpp
 style/PropertyAllowlist.cpp
 style/PropertyCascade.cpp
 style/PseudoClassChangeInvalidation.cpp
+style/ResolvedScopedName.cpp
 style/RuleData.cpp
 style/RuleFeature.cpp
 style/RuleSet.cpp

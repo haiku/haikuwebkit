@@ -150,7 +150,6 @@ extern NSString *WebPreferencesCacheModelChangedInternalNotification WEBKIT_DEPR
 @property (nonatomic) BOOL webAudioEnabled;
 @property (nonatomic) BOOL webGLEnabled;
 @property (nonatomic, getter=forceLowPowerGPUForWebGL) BOOL forceWebGLUsesLowPower;
-@property (nonatomic) BOOL hyperlinkAuditingEnabled;
 @property (nonatomic) BOOL mediaPlaybackRequiresUserGesture; // Deprecated. Use videoPlaybackRequiresUserGesture and audioPlaybackRequiresUserGesture instead.
 @property (nonatomic) BOOL videoPlaybackRequiresUserGesture;
 @property (nonatomic) BOOL audioPlaybackRequiresUserGesture;
@@ -208,7 +207,6 @@ extern NSString *WebPreferencesCacheModelChangedInternalNotification WEBKIT_DEPR
 @property (nonatomic) BOOL layoutFormattingContextIntegrationEnabled;
 @property (nonatomic, getter=isInAppBrowserPrivacyEnabled) BOOL inAppBrowserPrivacyEnabled;
 @property (nonatomic) BOOL webSQLEnabled;
-@property (nonatomic) BOOL CSSOMViewScrollingAPIEnabled;
 @property (nonatomic) BOOL largeImageAsyncDecodingEnabled;
 @property (nonatomic) BOOL animatedImageAsyncDecodingEnabled;
 @property (nonatomic) BOOL javaScriptMarkupEnabled;
@@ -313,6 +311,8 @@ extern NSString *WebPreferencesCacheModelChangedInternalNotification WEBKIT_DEPR
 // The preferences in this category are deprecated and have no effect. They should
 // be removed when it is considered safe to do so.
 
+@property (nonatomic) BOOL CSSOMViewScrollingAPIEnabled;
+@property (nonatomic) BOOL hyperlinkAuditingEnabled;
 @property (nonatomic) BOOL CSSOMViewSmoothScrollingEnabled;
 @property (nonatomic, getter=isDNSPrefetchingEnabled) BOOL DNSPrefetchingEnabled;
 @property (nonatomic) BOOL linkPreloadResponsiveImagesEnabled;

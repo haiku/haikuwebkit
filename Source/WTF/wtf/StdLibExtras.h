@@ -818,15 +818,6 @@ IteratorTypeDst mergeDeduplicatedSorted(IteratorTypeLeft leftBegin, IteratorType
     return dstIter;
 }
 
-// libstdc++5 does not have constexpr std::tie. Since we cannot redefine std::tie with constexpr, we define WTF::tie instead.
-// This workaround can be removed after 2019-04 and all users of WTF::tie can be converted to std::tie
-// For more info see: https://bugs.webkit.org/show_bug.cgi?id=180692 and https://gcc.gnu.org/bugzilla/show_bug.cgi?id=65978
-template <class ...Args>
-constexpr std::tuple<Args&...> tie(Args&... values)
-{
-    return std::tuple<Args&...>(values...);
-}
-
 } // namespace WTF
 
 // This version of placement new omits a 0 check.
@@ -862,11 +853,15 @@ ALWAYS_INLINE decltype(auto) makeUnique(Args&&... args)
     return std::make_unique<T>(std::forward<Args>(args)...);
 }
 
-template<class T, class... Args>
-ALWAYS_INLINE decltype(auto) makeUniqueWithoutRefCountedCheck(Args&&... args)
+// This function is useful when constructing an object that is forwarding its ref-counting to its
+// owner. The function returns a `const std::unique_ptr<>` so that it cannot be reassigned. In
+// case of reassignment, ref-counting forwarding wouldn't be safe. This function is commonly used
+// with `lazyInitialize()` to initialize a const data member.
+template<class T, class U = T, class... Args>
+ALWAYS_INLINE const std::unique_ptr<U> makeUniqueWithoutRefCountedCheck(Args&&... args)
 {
     static_assert(std::is_same<typename T::WTFIsFastMallocAllocated, int>::value, "T should use FastMalloc (WTF_MAKE_FAST_ALLOCATED)");
-    return std::make_unique<T>(std::forward<Args>(args)...);
+    return std::unique_ptr<U>(std::make_unique<T>(std::forward<Args>(args)...));
 }
 
 template<class T, class... Args>
@@ -1469,10 +1464,10 @@ template<typename Object, typename Allocator = FastMalloc> void destroyWithTrail
 }
 
 template<typename T, typename U>
-ALWAYS_INLINE void lazyInitialize(const std::unique_ptr<T>& ptr, std::unique_ptr<U>&& obj)
+ALWAYS_INLINE void lazyInitialize(const std::unique_ptr<T>& ptr, const std::unique_ptr<U>&& obj)
 {
     RELEASE_ASSERT(!ptr);
-    const_cast<std::unique_ptr<T>&>(ptr) = std::move(obj);
+    const_cast<std::unique_ptr<T>&>(ptr) = std::move(const_cast<std::unique_ptr<U>&&>(obj));
 }
 
 ALWAYS_INLINE std::optional<double> stringToDouble(std::span<const char> buffer, size_t& parsedLength)

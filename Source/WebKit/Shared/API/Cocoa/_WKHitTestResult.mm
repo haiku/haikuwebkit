@@ -67,12 +67,12 @@ static NSURL *URLFromString(const WTF::String& urlString)
 
 - (BOOL)hasLocalDataForLinkURL
 {
-    return _hitTestResult->hasLocalDataForLinkURL();
+    return NO;
 }
 
 - (NSString *)linkLocalDataMIMEType
 {
-    return _hitTestResult->linkLocalDataMIMEType().createNSString().autorelease();
+    return nil;
 }
 
 - (NSURL *)absoluteMediaURL
@@ -148,6 +148,13 @@ static NSURL *URLFromString(const WTF::String& urlString)
 
     ASSERT_NOT_REACHED();
     return _WKHitTestResultElementTypeNone;
+}
+
+- (NSURLResponse *)linkLocalResourceResponse
+{
+    if (auto& response = _hitTestResult->linkLocalResourceResponse())
+        return response->nsURLResponse();
+    return nil;
 }
 
 - (WKFrameInfo *)frameInfo

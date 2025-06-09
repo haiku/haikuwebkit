@@ -27,10 +27,12 @@
 
 #import <wtf/Platform.h>
 
+#import "WKGroupSession.h"
 #import "WKMaterialHostingSupport.h"
 #import "WKPDFPageNumberIndicator.h"
 #import "WKPreferencesInternal.h"
 #import "WKScrollGeometry.h"
+#import "WKSeparatedImageView.h"
 #import "WKTextExtractionItem.h"
 #import "WKUIDelegateInternal.h"
 #import "WKWebViewConfigurationInternal.h"

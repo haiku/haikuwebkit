@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, Google Inc. All rights reserved.
+ * Copyright (C) 2012 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -89,8 +89,6 @@ public:
 
     std::optional<AccessibilityOrientation> orientationFromARIA() const;
     std::optional<AccessibilityOrientation> explicitOrientation() const override { return orientationFromARIA(); }
-
-    unsigned headingTagLevel() const final;
 
     AccessibilityButtonState checkboxOrRadioValue() const final;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2012-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -286,9 +286,9 @@ RetainPtr<NSData> WebPage::accessibilityRemoteTokenData() const
     return WebCore::Accessibility::newAccessibilityRemoteToken([[NSUUID UUID] UUIDString]);
 }
 
-void WebPage::relayAccessibilityNotification(const String& notificationName, const RetainPtr<NSData>& notificationData)
+void WebPage::relayAccessibilityNotification(String&& notificationName, RetainPtr<NSData>&& notificationData)
 {
-    send(Messages::WebPageProxy::RelayAccessibilityNotification(notificationName, span(notificationData.get())));
+    send(Messages::WebPageProxy::RelayAccessibilityNotification(WTFMove(notificationName), span(notificationData.get())));
 }
 
 static void computeEditableRootHasContentAndPlainText(const VisibleSelection& selection, EditorState::PostLayoutData& data)
@@ -952,12 +952,21 @@ void WebPage::didHandleTapAsHover()
     send(Messages::WebPageProxy::DidHandleTapAsHover());
 }
 
-void WebPage::didFinishContentChangeObserving(WKContentChange observedContentChange)
+void WebPage::didFinishContentChangeObserving(WebCore::FrameIdentifier frameID, WKContentChange observedContentChange)
 {
     LOG_WITH_STREAM(ContentObservation, stream << "didFinishContentChangeObserving: pending target node(" << m_pendingSyntheticClickNode << ")");
     if (!m_pendingSyntheticClickNode)
         return;
-    callOnMainRunLoop([protectedThis = Ref { *this }, targetNode = Ref<Node>(*m_pendingSyntheticClickNode), originalDocument = WeakPtr<Document, WeakPtrImplWithEventTargetData> { m_pendingSyntheticClickNode->document() }, observedContentChange, location = m_pendingSyntheticClickLocation, modifiers = m_pendingSyntheticClickModifiers, pointerId = m_pendingSyntheticClickPointerId] {
+    callOnMainRunLoop([
+        protectedThis = Ref { *this },
+        targetNode = Ref<Node>(*m_pendingSyntheticClickNode),
+        originalDocument = WeakPtr<Document, WeakPtrImplWithEventTargetData> { m_pendingSyntheticClickNode->document() },
+        observedContentChange,
+        location = m_pendingSyntheticClickLocation,
+        modifiers = m_pendingSyntheticClickModifiers,
+        pointerId = m_pendingSyntheticClickPointerId,
+        frameID
+    ] {
         if (protectedThis->m_isClosed || !protectedThis->corePage())
             return;
         if (!originalDocument || &targetNode->document() != originalDocument)
@@ -966,13 +975,13 @@ void WebPage::didFinishContentChangeObserving(WKContentChange observedContentCha
         // Only dispatch the click if the document didn't get changed by any timers started by the move event.
         if (observedContentChange == WKContentNoChange) {
             LOG(ContentObservation, "No change was observed -> click.");
-            protectedThis->completeSyntheticClick(std::nullopt, targetNode, location, modifiers, WebCore::SyntheticClickType::OneFingerTap, pointerId);
+            protectedThis->completeSyntheticClick(frameID, targetNode, location, modifiers, WebCore::SyntheticClickType::OneFingerTap, pointerId);
             return;
         }
         // Ensure that the mouse is on the most recent content.
         LOG(ContentObservation, "Observed meaningful visible change -> hover.");
-        if (auto* localMainFrame = dynamicDowncast<WebCore::LocalFrame>(protectedThis->corePage()->mainFrame()))
-            dispatchSyntheticMouseMove(*localMainFrame, location, modifiers, pointerId);
+        if (RefPtr localRootFrame = protectedThis->localRootFrame(frameID))
+            dispatchSyntheticMouseMove(*localRootFrame, location, modifiers, pointerId);
 
         protectedThis->didHandleTapAsHover();
     });
@@ -1457,7 +1466,9 @@ Awaitable<std::optional<WebCore::FrameIdentifier>> WebPage::commitPotentialTap(s
     }
 
     auto firstTransactionID = WebFrame::fromCoreFrame(*frameRespondingToClick)->firstLayerTreeTransactionIDAfterDidCommitLoad();
-    if (firstTransactionID && lastLayerTreeTransactionId.lessThanSameProcess(*firstTransactionID)) {
+    if (firstTransactionID
+        && lastLayerTreeTransactionId.processIdentifier() == firstTransactionID->processIdentifier()
+        && lastLayerTreeTransactionId.lessThanSameProcess(*firstTransactionID)) {
         commitPotentialTapFailed();
         co_return std::nullopt;
     }
@@ -3438,7 +3449,7 @@ static void linkIndicatorPositionInformation(WebPage& page, Element& linkElement
     auto textIndicator = TextIndicator::createWithRange(linkRange, textIndicatorOptions, TextIndicatorPresentationTransition::None, FloatSize(marginInPoints * deviceScaleFactor, marginInPoints * deviceScaleFactor));
 
     if (textIndicator)
-        info.linkIndicator = textIndicator->data();
+        info.textIndicator = textIndicator;
 }
     
 #if ENABLE(DATA_DETECTION)
@@ -3973,7 +3984,7 @@ InteractionInformationAtPosition WebPage::positionInformation(const InteractionI
             info.isLink = true;
             info.url = WTFMove(url);
             info.bounds = enclosingIntRect(bounds);
-            info.linkIndicator = textIndicator->data();
+            info.textIndicator = textIndicator;
         }
         info.isInPlugin = true;
     }
@@ -4214,7 +4225,7 @@ std::optional<FocusedElementInformation> WebPage::focusedElementInformation()
                     information.selectOptions.append(OptionItem(emptyString(), true, false, false, parentGroupID));
                 }
 
-                information.selectOptions.append(OptionItem(optionElement->displayLabel(), false, optionElement->selected(), optionElement->hasAttributeWithoutSynchronization(WebCore::HTMLNames::disabledAttr), parentGroupID));
+                information.selectOptions.append(OptionItem(optionElement->label(), false, optionElement->selected(), optionElement->hasAttributeWithoutSynchronization(WebCore::HTMLNames::disabledAttr), parentGroupID));
             } else if (auto* optGroupElement = dynamicDowncast<HTMLOptGroupElement>(item.get())) {
                 if (selectPickerUsesMenu)
                     parentGroup = optGroupElement;
@@ -6115,79 +6126,14 @@ void WebPage::shouldDismissKeyboardAfterTapAtPoint(FloatPoint point, CompletionH
 
 void WebPage::computeEnclosingLayerID(EditorState& state, const VisibleSelection& selection) const
 {
-    if (selection.isNoneOrOrphaned())
+    auto selectionRange = selection.range();
+
+    if (!selectionRange)
         return;
 
-    if (!state.isContentEditable && selection.isCaret())
-        return;
+    auto [startLayer, endLayer, enclosingLayer, enclosingGraphicsLayerID] = computeEnclosingLayer(*selectionRange);
 
-    auto findEnclosingLayer = [](const Position& position) -> RenderLayer* {
-        RefPtr container = position.containerNode();
-        if (!container)
-            return nullptr;
-
-        CheckedPtr renderer = container->renderer();
-        if (!renderer)
-            return nullptr;
-
-        return renderer->enclosingLayer();
-    };
-
-    auto [startLayer, endLayer] = [&] -> std::pair<CheckedPtr<RenderLayer>, CheckedPtr<RenderLayer>> {
-        if (RefPtr container = selection.start().containerNode(); container && ImageOverlay::isInsideOverlay(*container)) {
-            RefPtr host = container->shadowHost();
-            if (!host) {
-                ASSERT_NOT_REACHED();
-                return { };
-            }
-
-            CheckedPtr renderer = host->renderer();
-            if (!renderer)
-                return { };
-
-            CheckedPtr enclosingLayer = renderer->enclosingLayer();
-            return { enclosingLayer, enclosingLayer };
-        }
-
-        return { findEnclosingLayer(selection.start()), findEnclosingLayer(selection.end()) };
-    }();
-
-    if (!startLayer)
-        return;
-
-    if (!endLayer)
-        return;
-
-    CheckedPtr<RenderLayer> enclosingLayer;
-    for (CheckedPtr layer = startLayer->commonAncestorWithLayer(*endLayer); layer; layer = layer->enclosingContainingBlockLayer(CrossFrameBoundaries::Yes)) {
-        if (!layer->isComposited())
-            continue;
-
-        RefPtr graphicsLayer = [layer] -> RefPtr<GraphicsLayer> {
-            auto* backing = layer->backing();
-            if (RefPtr scrolledContentsLayer = backing->scrolledContentsLayer())
-                return scrolledContentsLayer;
-
-            if (RefPtr foregroundLayer = backing->foregroundLayer())
-                return foregroundLayer;
-
-            if (backing->isFrameLayerWithTiledBacking())
-                return backing->parentForSublayers();
-
-            return backing->graphicsLayer();
-        }();
-
-        if (!graphicsLayer)
-            continue;
-
-        auto identifier = graphicsLayer->primaryLayerID();
-        if (!identifier)
-            continue;
-
-        enclosingLayer = layer;
-        state.visualData->enclosingLayerID = WTFMove(identifier);
-        break;
-    }
+    state.visualData->enclosingLayerID = WTFMove(enclosingGraphicsLayerID);
 
     if (!state.visualData->enclosingLayerID)
         return;

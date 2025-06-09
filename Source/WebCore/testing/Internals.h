@@ -55,10 +55,6 @@
 #include "MediaUniqueIdentifier.h"
 #endif
 
-#if ENABLE(DAMAGE_TRACKING)
-#include "Damage.h"
-#endif
-
 #if USE(AUDIO_SESSION)
 #include "AudioSession.h"
 #endif
@@ -107,8 +103,9 @@ class HTMLSelectElement;
 class HTMLVideoElement;
 class ImageData;
 class InspectorStubFrontend;
-class InternalsMapLike;
+class EventTargetForTesting;
 class InternalSettings;
+class InternalsMapLike;
 class InternalsSetLike;
 class LocalFrame;
 class Location;
@@ -1549,6 +1546,7 @@ public:
 
 #if ENABLE(VIDEO)
     bool isEffectivelyMuted(const HTMLMediaElement&);
+    Ref<EventTarget> addInternalEventTarget(HTMLMediaElement&);
 #endif
 
     using RenderingMode = WebCore::RenderingMode;
@@ -1568,13 +1566,11 @@ public:
 #endif
 
 #if ENABLE(DAMAGE_TRACKING)
-    using DamagePropagation = Damage::Propagation;
     struct FrameDamage {
         unsigned sequenceId { 0 };
         RefPtr<DOMRectReadOnly> bounds;
         Vector<Ref<DOMRectReadOnly>> rects;
     };
-    std::optional<DamagePropagation> getCurrentDamagePropagation() const;
     ExceptionOr<Vector<FrameDamage>> getFrameDamageHistory() const;
 #endif // ENABLE(DAMAGE_TRACKING)
 

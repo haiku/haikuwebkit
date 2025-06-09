@@ -95,6 +95,7 @@ struct WEBCORE_EXPORT QuirksData {
     bool needsFullscreenObjectFitQuirk : 1 { false };
     bool needsGMailOverflowScrollQuirk : 1 { false };
     bool needsGoogleMapsScrollingQuirk : 1 { false };
+    bool needsGoogleTranslateScrollingQuirk : 1 { false };
     bool needsIPadSkypeOverflowScrollQuirk : 1 { false };
     bool needsPreloadAutoQuirk : 1 { false };
     bool needsScriptToEvaluateBeforeRunningScriptFromURLQuirk : 1 { false };
@@ -133,7 +134,7 @@ struct WEBCORE_EXPORT QuirksData {
     bool shouldSupportHoverMediaQueriesQuirk : 1 { false };
 #endif
 
-#if PLATFORM(IOS_FAMILY) || ENABLE(DESKTOP_CONTENT_MODE_QUIRKS)
+#if PLATFORM(IOS_FAMILY)
     bool shouldHideCoarsePointerCharacteristicsQuirk : 1 { false };
 #endif
 

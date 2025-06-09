@@ -1317,7 +1317,8 @@ void GraphicsContextCG::setLineDash(const DashArray& dashes, float dashOffset)
         if (length)
             dashOffset = fmod(dashOffset, length) + length;
     }
-    CGContextSetLineDash(platformContext(), dashOffset, dashes.data(), dashes.size());
+    auto dashesSpan = dashes.span();
+    CGContextSetLineDash(platformContext(), dashOffset, dashesSpan.data(), dashesSpan.size());
 }
 
 void GraphicsContextCG::setLineJoin(LineJoin join)
@@ -1397,7 +1398,7 @@ void GraphicsContextCG::drawLinesForText(const FloatPoint& origin, float thickne
     bool changeFillColor = fillColor() != color;
     if (changeFillColor)
         setCGFillColor(platformContext(), color);
-    CGContextFillRects(platformContext(), rects.data(), rects.size());
+    CGContextFillRects(platformContext(), rects.span().data(), rects.size());
     if (changeFillColor)
         setCGFillColor(platformContext(), fillColor());
 }

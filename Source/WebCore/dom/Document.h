@@ -30,7 +30,7 @@
 #include "AsyncNodeDeletionQueue.h"
 #include "Color.h"
 #include "ContainerNode.h"
-#include "ContextDestructionObserverInlines.h"
+#include "ContextDestructionObserver.h"
 #include "DocumentClasses.h"
 #include "DocumentEnums.h"
 #include "DocumentEventTiming.h"
@@ -41,6 +41,7 @@
 #include "PageIdentifier.h"
 #include "PlaybackTargetClientContextIdentifier.h"
 #include "PseudoElementIdentifier.h"
+#include "QualifiedName.h"
 #include "RegistrableDomain.h"
 #include "RenderPtr.h"
 #include "ReportingClient.h"
@@ -676,7 +677,7 @@ public:
     const CSSCounterStyleRegistry& counterStyleRegistry() const;
     CSSCounterStyleRegistry& counterStyleRegistry();
 
-    WEBCORE_EXPORT CSSParserContext cssParserContext() const;
+    WEBCORE_EXPORT const CSSParserContext& cssParserContext() const;
     void invalidateCachedCSSParserContext();
 
     bool gotoAnchorNeededAfterStylesheetsLoad() { return m_gotoAnchorNeededAfterStylesheetsLoad; }
@@ -695,7 +696,6 @@ public:
     inline RefPtr<Page> protectedPage() const; // Defined in DocumentInlines.h.
     WEBCORE_EXPORT RefPtr<LocalFrame> localMainFrame() const;
     const Settings& settings() const { return m_settings.get(); }
-    Ref<Settings> protectedSettings() const;
     EditingBehavior editingBehavior() const;
 
     inline Quirks& quirks();
@@ -2221,7 +2221,7 @@ private:
     // MIME type of the document in case it was cloned or created by XHR.
     String m_overriddenMIMEType;
 
-    std::unique_ptr<DOMImplementation> m_implementation;
+    const std::unique_ptr<DOMImplementation> m_implementation;
 
     RefPtr<Node> m_focusNavigationStartingNode;
     Deque<WeakPtr<Element, WeakPtrImplWithEventTargetData>> m_autofocusCandidates;
@@ -2488,7 +2488,7 @@ private:
     UncheckedKeyHashMap<String, Ref<PaintWorkletGlobalScope>> m_paintWorkletGlobalScopes;
 
 #if ENABLE(CONTENT_CHANGE_OBSERVER)
-    std::unique_ptr<ContentChangeObserver> m_contentChangeObserver;
+    const std::unique_ptr<ContentChangeObserver> m_contentChangeObserver;
     std::unique_ptr<DOMTimerHoldingTank> m_domTimerHoldingTank;
 #endif
 
@@ -2523,7 +2523,7 @@ private:
 
     const RefPtr<ReportingScope> m_reportingScope;
 
-    std::unique_ptr<WakeLockManager> m_wakeLockManager;
+    const std::unique_ptr<WakeLockManager> m_wakeLockManager;
     std::unique_ptr<SleepDisabler> m_sleepDisabler;
 
 #if ENABLE(MEDIA_STREAM)

@@ -444,9 +444,9 @@ void RenderFlexibleBox::layoutBlock(RelayoutChildren relayoutChildren, LayoutUni
             relayoutChildren = RelayoutChildren::Yes;
 
         if (isDocumentElementRenderer())
-            layoutPositionedObjects(RelayoutChildren::Yes);
+            layoutOutOfFlowBoxes(RelayoutChildren::Yes);
         else
-            layoutPositionedObjects(relayoutChildren);
+            layoutOutOfFlowBoxes(relayoutChildren);
 
         repaintFlexItemsDuringLayoutIfMoved(oldFlexItemRects);
         // FIXME: css3/flexbox/repaint-rtl-column.html seems to repaint more overflow than it needs to.
@@ -732,13 +732,13 @@ std::optional<LayoutUnit> RenderFlexibleBox::computeMainAxisExtentForFlexItem(Re
     // that here. (Compare code in RenderBlock::computePreferredLogicalWidths)
     if (flexItem.style().logicalWidth().isAuto() && !flexItemHasAspectRatio(flexItem)) {
         if (size.isMinContent()) {
-            if (flexItem.needsPreferredWidthsRecalculation())
-                flexItem.setPreferredLogicalWidthsDirty(true, MarkOnlyThis);
+            if (flexItem.shouldInvalidatePreferredWidths())
+                flexItem.setNeedsPreferredWidthsUpdate(MarkOnlyThis);
             return flexItem.minPreferredLogicalWidth() - flexItem.borderAndPaddingLogicalWidth();
         }
         if (size.isMaxContent()) {
-            if (flexItem.needsPreferredWidthsRecalculation())
-                flexItem.setPreferredLogicalWidthsDirty(true, MarkOnlyThis);
+            if (flexItem.shouldInvalidatePreferredWidths())
+                flexItem.setNeedsPreferredWidthsUpdate(MarkOnlyThis);
             return flexItem.maxPreferredLogicalWidth() - flexItem.borderAndPaddingLogicalWidth();
         }
     }
@@ -1060,6 +1060,26 @@ Length RenderFlexibleBox::mainSizeLengthForFlexItem(RenderBox::SizeType sizeType
     return { };
 }
 
+double RenderFlexibleBox::preferredAspectRatioForFlexItem(const RenderBox& flexItem) const
+{
+    auto flexItemAspectRatio = [&] {
+        auto flexItemIntrinsicSize = LayoutSize { flexItem.intrinsicLogicalWidth(), flexItem.intrinsicLogicalHeight() };
+        if (flexItem.isRenderOrLegacyRenderSVGRoot())
+            return downcast<RenderReplaced>(flexItem).computeIntrinsicAspectRatio();
+        if (flexItem.style().aspectRatioType() == AspectRatioType::Ratio || (flexItem.style().aspectRatioType() == AspectRatioType::AutoAndRatio && flexItemIntrinsicSize.isEmpty()))
+            return flexItem.style().aspectRatioLogicalWidth() / flexItem.style().aspectRatioLogicalHeight();
+        if (auto* replacedElement = dynamicDowncast<RenderReplaced>(flexItem))
+            return replacedElement->computeIntrinsicAspectRatio();
+
+        ASSERT(flexItem.intrinsicLogicalHeight());
+        return flexItem.intrinsicLogicalWidth().toDouble() / flexItem.intrinsicLogicalHeight().toDouble();
+    };
+
+    if (mainAxisIsFlexItemInlineAxis(flexItem))
+        return flexItemAspectRatio();
+    return 1 / flexItemAspectRatio();
+}
+
 // FIXME: computeMainSizeFromAspectRatioUsing may need to return an std::optional<LayoutUnit> in the future
 // rather than returning indefinite sizes as 0/-1.
 LayoutUnit RenderFlexibleBox::computeMainSizeFromAspectRatioUsing(const RenderBox& flexItem, Length crossSizeLength) const
@@ -1091,18 +1111,6 @@ LayoutUnit RenderFlexibleBox::computeMainSizeFromAspectRatioUsing(const RenderBo
     }
 
     auto flexItemIntrinsicSize = flexItem.intrinsicSize();
-    auto preferredAspectRatio = [&] {
-        if (flexItem.isRenderOrLegacyRenderSVGRoot())
-            return downcast<RenderReplaced>(flexItem).computeIntrinsicAspectRatio();
-        if (flexItem.style().aspectRatioType() == AspectRatioType::Ratio || (flexItem.style().aspectRatioType() == AspectRatioType::AutoAndRatio && flexItemIntrinsicSize.isEmpty()))
-            return flexItem.style().aspectRatioWidth() / flexItem.style().aspectRatioHeight();
-        if (auto* replacedElement = dynamicDowncast<RenderReplaced>(flexItem))
-            return replacedElement->computeIntrinsicAspectRatio();
-
-        ASSERT(flexItemIntrinsicSize.height());
-        return flexItemIntrinsicSize.width().toDouble() / flexItemIntrinsicSize.height().toDouble();
-    };
-
     LayoutUnit borderAndPadding;
     if (flexItem.style().aspectRatioType() == AspectRatioType::Ratio || (flexItem.style().aspectRatioType() == AspectRatioType::AutoAndRatio && flexItemIntrinsicSize.isEmpty())) {
         if (flexItem.style().boxSizingForAspectRatio() == BoxSizing::ContentBox)
@@ -1112,9 +1120,8 @@ LayoutUnit RenderFlexibleBox::computeMainSizeFromAspectRatioUsing(const RenderBo
     } else
         crossSize = adjustForBoxSizing(flexItem, crossSize);
 
-    if (isHorizontalFlow())
-        return std::max(0_lu, LayoutUnit(crossSize * preferredAspectRatio()) - borderAndPadding);
-    return std::max(0_lu, LayoutUnit(crossSize / preferredAspectRatio()) - borderAndPadding);
+    auto preferredAspectRatio = preferredAspectRatioForFlexItem(flexItem);
+    return std::max(0_lu, LayoutUnit(crossSize * preferredAspectRatio) - borderAndPadding);
 }
 
 void RenderFlexibleBox::setFlowAwareLocationForFlexItem(RenderBox& flexItem, const LayoutPoint& location)
@@ -1786,8 +1793,8 @@ RenderFlexibleBox::FlexLayoutItem RenderFlexibleBox::constructFlexLayoutItem(Ren
     if (everHadLayout && flexItem.hasTrimmedMargin(std::optional<MarginTrimType> { }))
         flexItem.clearTrimmedMarginsMarkings();
     
-    if (flexItem.needsPreferredWidthsRecalculation())
-        flexItem.setPreferredLogicalWidthsDirty(true, MarkingBehavior::MarkOnlyThis);
+    if (flexItem.shouldInvalidatePreferredWidths())
+        flexItem.setNeedsPreferredWidthsUpdate(MarkOnlyThis);
 
     LayoutUnit borderAndPadding = isHorizontalFlow() ? flexItem.horizontalBorderAndPaddingExtent() : flexItem.verticalBorderAndPaddingExtent();
     LayoutUnit innerFlexBaseSize = computeFlexBaseSizeForFlexItem(flexItem, borderAndPadding, relayoutChildren);
@@ -2080,7 +2087,7 @@ LayoutUnit RenderFlexibleBox::computeCrossSizeForFlexItemUsingContainerCrossSize
 void RenderFlexibleBox::prepareFlexItemForPositionedLayout(RenderBox& flexItem)
 {
     ASSERT(flexItem.isOutOfFlowPositioned());
-    flexItem.containingBlock()->insertPositionedObject(flexItem);
+    flexItem.containingBlock()->addOutOfFlowBox(flexItem);
     auto* layer = flexItem.layer();
     LayoutUnit staticInlinePosition = flowAwareBorderStart() + flowAwarePaddingStart();
     if (layer->staticInlinePosition() != staticInlinePosition) {

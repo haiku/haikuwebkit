@@ -27,6 +27,7 @@
 #include "CSSCustomPropertyValue.h"
 #include "CSSPendingSubstitutionValue.h"
 #include "CSSPrimitiveValue.h"
+#include "CSSPropertyInitialValues.h"
 #include "CSSPropertyNames.h"
 #include "CSSPropertyParserConsumer+Color.h"
 #include "CSSPropertyParserConsumer+Font.h"
@@ -406,7 +407,7 @@ CSSStyleProperties& MutableStyleProperties::ensureCSSStyleProperties()
         ASSERT(!m_cssomWrapper->parentElement());
         return *m_cssomWrapper;
     }
-    m_cssomWrapper = makeUniqueWithoutRefCountedCheck<PropertySetCSSStyleProperties>(*this);
+    lazyInitialize(m_cssomWrapper, makeUniqueWithoutRefCountedCheck<PropertySetCSSStyleProperties>(*this));
     return *m_cssomWrapper;
 }
 

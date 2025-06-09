@@ -315,7 +315,7 @@ StyleDifference RenderElement::adjustStyleDifference(StyleDifference diff, Optio
     
     if ((contextSensitiveProperties & StyleDifferenceContextSensitiveProperty::Filter) && hasLayer()) {
         auto& layer = *downcast<RenderLayerModelObject>(*this).layer();
-        if (!layer.isComposited() || layer.paintsWithFilters())
+        if (!layer.isComposited() || layer.shouldPaintWithFilters())
             diff = std::max(diff, StyleDifference::RepaintLayer);
         else
             diff = std::max(diff, StyleDifference::RecompositeLayer);
@@ -965,11 +965,11 @@ void RenderElement::styleWillChange(StyleDifference diff, const RenderStyle& new
         if (isFloating() && m_style.floating() != newStyle.floating()) {
             // For changes in float styles, we need to conceivably remove ourselves
             // from the floating objects list.
-            downcast<RenderBox>(*this).removeFloatingOrPositionedChildFromBlockLists();
+            downcast<RenderBox>(*this).removeFloatingOrOutOfFlowChildFromBlockLists();
         } else if (isOutOfFlowPositioned() && m_style.position() != newStyle.position()) {
             // For changes in positioning styles, we need to conceivably remove ourselves
             // from the positioned objects list.
-            downcast<RenderBox>(*this).removeFloatingOrPositionedChildFromBlockLists();
+            downcast<RenderBox>(*this).removeFloatingOrOutOfFlowChildFromBlockLists();
         }
 
         // reset style flags
@@ -1688,10 +1688,10 @@ const Element* RenderElement::defaultAnchor() const
     return nullptr;
 }
 
-const RenderElement* RenderElement::defaultAnchorRenderer() const
+const RenderBoxModelObject* RenderElement::defaultAnchorRenderer() const
 {
     if (auto* defaultAnchor = this->defaultAnchor())
-        return defaultAnchor->renderer();
+        return dynamicDowncast<RenderBoxModelObject>(defaultAnchor->renderer());
     return nullptr;
 }
 
@@ -2541,7 +2541,7 @@ void RenderElement::adjustComputedFontSizesOnBlocks(float size, float visibleWid
     // which has fixed height but its content overflows intentionally.
     for (CheckedPtr descendant = traverseNext(this, includeNonFixedHeight, currentDepth, newFixedDepth); descendant; descendant = descendant->traverseNext(this, includeNonFixedHeight, currentDepth, newFixedDepth)) {
         while (depthStack.size() > 0 && currentDepth <= depthStack[depthStack.size() - 1])
-            depthStack.remove(depthStack.size() - 1);
+            depthStack.removeAt(depthStack.size() - 1);
         if (newFixedDepth)
             depthStack.append(newFixedDepth);
 
@@ -2571,7 +2571,7 @@ void RenderElement::resetTextAutosizing()
 
     for (CheckedPtr descendant = traverseNext(this, includeNonFixedHeight, currentDepth, newFixedDepth); descendant; descendant = descendant->traverseNext(this, includeNonFixedHeight, currentDepth, newFixedDepth)) {
         while (depthStack.size() > 0 && currentDepth <= depthStack[depthStack.size() - 1])
-            depthStack.remove(depthStack.size() - 1);
+            depthStack.removeAt(depthStack.size() - 1);
         if (newFixedDepth)
             depthStack.append(newFixedDepth);
 
@@ -2702,7 +2702,7 @@ void RenderElement::markRendererDirtyAfterTopLayerChange(RenderElement* renderer
     if (!renderBox->isOutOfFlowPositioned())
         return;
 
-    RenderBlock::removePositionedObject(*renderBox);
+    RenderBlock::removeOutOfFlowBox(*renderBox);
     // This is to make sure we insert the box to the correct containing block list during static position computation.
     renderBox->parent()->setChildNeedsLayout();
     newContainingBlock->setChildNeedsLayout();

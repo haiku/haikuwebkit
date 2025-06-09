@@ -57,10 +57,6 @@
 #include <WebCore/SimpleRange.h>
 #include <wtf/TZoneMallocInlines.h>
 
-#if PLATFORM(COCOA)
-#include <WebCore/TextIndicatorWindow.h>
-#endif
-
 namespace WebKit {
 using namespace WebCore;
 
@@ -479,7 +475,7 @@ bool FindController::updateFindIndicator(bool isShowingOverlay, bool shouldAnima
 
     m_findIndicatorRect = enclosingIntRect(indicator->selectionRectInRootViewCoordinates());
 #if PLATFORM(COCOA)
-    m_webPage->send(Messages::WebPageProxy::SetTextIndicatorFromFrame(frame->frameID(), indicator->data(), static_cast<uint64_t>(isShowingOverlay ? WebCore::TextIndicatorLifetime::Permanent : WebCore::TextIndicatorLifetime::Temporary)));
+    m_webPage->send(Messages::WebPageProxy::SetTextIndicatorFromFrame(frame->frameID(), indicator->data(), isShowingOverlay ? WebCore::TextIndicatorLifetime::Permanent : WebCore::TextIndicatorLifetime::Temporary));
 #endif
     m_isShowingFindIndicator = true;
 

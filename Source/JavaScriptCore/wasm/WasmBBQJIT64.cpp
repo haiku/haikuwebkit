@@ -1502,7 +1502,8 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::truncSaturated(Ext1OpType truncationOp,
 PartialResult WARN_UNUSED_RETURN BBQJIT::addRefI31(ExpressionType value, ExpressionType& result)
 {
     if (value.isConst()) {
-        result = Value::fromI64((((value.asI32() & 0x7fffffff) << 1) >> 1) | JSValue::NumberTag);
+        uint32_t lo32 = (value.asI32() << 1) >> 1;
+        result = Value::fromI64(lo32 | JSValue::NumberTag);
         LOG_INSTRUCTION("RefI31", value, RESULT(result));
         return { };
     }
@@ -1515,7 +1516,6 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addRefI31(ExpressionType value, Express
 
     LOG_INSTRUCTION("RefI31", value, RESULT(result));
 
-    m_jit.and32(TrustedImm32(0x7fffffff), initialValue.asGPR(), resultLocation.asGPR());
     m_jit.lshift32(TrustedImm32(1), resultLocation.asGPR());
     m_jit.rshift32(TrustedImm32(1), resultLocation.asGPR());
     m_jit.or64(TrustedImm64(JSValue::NumberTag), resultLocation.asGPR());
@@ -1801,7 +1801,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addArrayGet(ExtGCOpType arrayGetKind, u
         ASSERT(arrayref.asI64() == JSValue::encode(jsNull()));
         consume(index);
         emitThrowException(ExceptionType::NullArrayGet);
-        result = Value::fromRef(resultType.kind, JSValue::encode(jsNull()));
+        result = topValue(resultType.kind);
         return { };
     }
 
@@ -1817,6 +1817,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addArrayGet(ExtGCOpType arrayGetKind, u
         indexLocation = loadIfNecessary(index);
         throwExceptionIf(ExceptionType::OutOfBoundsArrayGet,
             m_jit.branch32(MacroAssembler::AboveOrEqual, indexLocation.asGPR(), MacroAssembler::Address(arrayLocation.asGPR(), JSWebAssemblyArray::offsetOfSize())));
+        m_jit.zeroExtend32ToWord(indexLocation.asGPR(), indexLocation.asGPR());
     }
 
     emitArrayGetPayload(elementType, arrayLocation.asGPR(), wasmScratchGPR);
@@ -2001,6 +2002,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addArraySet(uint32_t typeIndex, Express
         Location indexLocation = loadIfNecessary(index);
         throwExceptionIf(ExceptionType::OutOfBoundsArraySet,
             m_jit.branch32(MacroAssembler::AboveOrEqual, indexLocation.asGPR(), MacroAssembler::Address(arrayLocation.asGPR(), JSWebAssemblyArray::offsetOfSize())));
+        m_jit.zeroExtend32ToWord(indexLocation.asGPR(), indexLocation.asGPR());
     }
 
     emitArraySetUnchecked(typeIndex, arrayref, index, value);
@@ -2246,7 +2248,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addStructGet(ExtGCOpType structGetKind,
         // This is the only constant struct currently possible.
         ASSERT(JSValue::decode(structValue.asRef()).isNull());
         emitThrowException(ExceptionType::NullStructGet);
-        result = Value::fromRef(resultKind, JSValue::encode(jsNull()));
+        result = topValue(resultKind);
         LOG_INSTRUCTION("StructGet", structValue, fieldIndex, "Exception");
         return { };
     }

@@ -678,7 +678,11 @@ private:
     void sharedPreferencesDidChange();
 
 #if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
+#if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
     void setupLogStream(uint32_t pid, IPC::StreamServerConnectionHandle&&, LogStreamIdentifier, CompletionHandler<void(IPC::Semaphore& streamWakeUpSemaphore, IPC::Semaphore& streamClientWaitSemaphore)>&&);
+#else
+    void setupLogStream(uint32_t pid, LogStreamIdentifier, CompletionHandler<void()>&&);
+#endif
 #endif
 
 #if ENABLE(REMOTE_INSPECTOR) && PLATFORM(COCOA)
@@ -816,12 +820,12 @@ private:
     using SpeechRecognitionServerMap = HashMap<SpeechRecognitionServerIdentifier, Ref<SpeechRecognitionServer>>;
     SpeechRecognitionServerMap m_speechRecognitionServerMap;
 #if ENABLE(MEDIA_STREAM)
-    std::unique_ptr<SpeechRecognitionRemoteRealtimeMediaSourceManager> m_speechRecognitionRemoteRealtimeMediaSourceManager;
+    const std::unique_ptr<SpeechRecognitionRemoteRealtimeMediaSourceManager> m_speechRecognitionRemoteRealtimeMediaSourceManager;
 #endif
-    std::unique_ptr<WebLockRegistryProxy> m_webLockRegistry;
+    const std::unique_ptr<WebLockRegistryProxy> m_webLockRegistry;
     UniqueRef<WebPermissionControllerProxy> m_webPermissionController;
 #if ENABLE(ROUTING_ARBITRATION)
-    std::unique_ptr<AudioSessionRoutingArbitratorProxy> m_routingArbitrator;
+    const std::unique_ptr<AudioSessionRoutingArbitratorProxy> m_routingArbitrator;
 #endif
     bool m_isConnectedToHardwareConsole { true };
 #if PLATFORM(MAC)
@@ -853,7 +857,11 @@ private:
     bool m_hasRegisteredServiceWorkerClients { true };
 
 #if ENABLE(LOGD_BLOCKING_IN_WEBCONTENT)
+#if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
     IPC::ScopedActiveMessageReceiveQueue<LogStream> m_logStream;
+#else
+    RefPtr<LogStream> m_logStream;
+#endif
 #endif
 
 #if ENABLE(CONTENT_EXTENSIONS)

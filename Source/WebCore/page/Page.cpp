@@ -29,6 +29,7 @@
 #include "AppHighlightStorage.h"
 #include "ApplicationCacheStorage.h"
 #include "ArchiveResource.h"
+#include "AsyncNodeDeletionQueueInlines.h"
 #include "AttachmentElementClient.h"
 #include "AuthenticatorCoordinator.h"
 #include "AuthenticatorCoordinatorClient.h"
@@ -440,7 +441,7 @@ Page::Page(PageConfiguration&& pageConfiguration)
     , m_allowedNetworkHosts(WTFMove(pageConfiguration.allowedNetworkHosts))
     , m_loadsSubresources(pageConfiguration.loadsSubresources)
     , m_shouldRelaxThirdPartyCookieBlocking(pageConfiguration.shouldRelaxThirdPartyCookieBlocking)
-    , m_fixedContainerEdges(makeUniqueRef<FixedContainerEdges>())
+    , m_fixedContainerEdgesAndElements(std::make_pair(makeUniqueRef<FixedContainerEdges>(), WeakElementEdges { }))
     , m_httpsUpgradeEnabled(pageConfiguration.httpsUpgradeEnabled)
     , m_portsForUpgradingInsecureSchemeForTesting(WTFMove(pageConfiguration.portsForUpgradingInsecureSchemeForTesting))
     , m_storageProvider(WTFMove(pageConfiguration.storageProvider))
@@ -1028,11 +1029,6 @@ void Page::setGroupName(const String& name)
 const String& Page::groupName() const
 {
     return m_group ? m_group->name() : nullAtom().string();
-}
-
-Ref<Settings> Page::protectedSettings() const
-{
-    return *m_settings;
 }
 
 Ref<BroadcastChannelRegistry> Page::protectedBroadcastChannelRegistry() const
@@ -1823,7 +1819,7 @@ void Page::didCommitLoad()
         geolocationController->didNavigatePage();
 #endif
 
-    m_fixedContainerEdges = makeUniqueRef<FixedContainerEdges>();
+    m_fixedContainerEdgesAndElements = std::make_pair(makeUniqueRef<FixedContainerEdges>(), WeakElementEdges { });
 
     m_elementTargetingController->reset();
 
@@ -2458,7 +2454,11 @@ void Page::didCompleteRenderingFrame()
     // FIXME: This is where we'd call requestPostAnimationFrame callbacks: webkit.org/b/249798.
     // FIXME: Run WindowEventLoop tasks from here: webkit.org/b/249684.
     InspectorInstrumentation::didCompleteRenderingFrame(m_mainFrame);
+}
 
+void Page::didUpdateRendering()
+{
+    LOG_WITH_STREAM(EventLoop, stream << "Page " << this << " didUpdateRendering()");
     forEachDocument([&] (Document& document) {
         document.flushDeferredRenderingIsSuppressedForViewTransitionChanges();
     });
@@ -4529,7 +4529,7 @@ void Page::applicationDidBecomeActive()
 ScrollLatchingController& Page::scrollLatchingController()
 {
     if (!m_scrollLatchingController)
-        m_scrollLatchingController = makeUniqueWithoutRefCountedCheck<ScrollLatchingController>(*this);
+        lazyInitialize(m_scrollLatchingController, makeUniqueWithoutRefCountedCheck<ScrollLatchingController>(*this));
         
     return *m_scrollLatchingController;
 }
@@ -5177,10 +5177,10 @@ void Page::performOpportunisticallyScheduledTasks(MonotonicTime deadline)
         options.add(JSC::VM::SchedulerOptions::HasImminentlyScheduledWork);
     commonVM().performOpportunisticallyScheduledTasks(deadline, options);
 
-    deleteRemovedNodes();
+    deleteRemovedNodesAndDetachedRenderers();
 }
 
-void Page::deleteRemovedNodes()
+void Page::deleteRemovedNodesAndDetachedRenderers()
 {
     RefPtr localMainFrame = dynamicDowncast<LocalFrame>(mainFrame());
     if (!localMainFrame)
@@ -5193,6 +5193,7 @@ void Page::deleteRemovedNodes()
         if (!document)
             return;
         document->asyncNodeDeletionQueue().deleteNodesNow();
+        document->view()->layoutContext().deleteDetachedRenderersNow();
     });
 }
 
@@ -5252,12 +5253,29 @@ void Page::updateFixedContainerEdges(BoxSideSet sides)
     if (!frameView)
         return;
 
-    m_fixedContainerEdges = makeUniqueRef<FixedContainerEdges>(frameView->fixedContainerEdges(sides));
+    auto [edges, elements] = frameView->fixedContainerEdges(sides);
+    for (auto sideFlag : sides) {
+        auto side = boxSideFromFlag(sideFlag);
+        if (edges.hasFixedEdge(side))
+            continue;
+
+        WeakPtr lastElement = m_fixedContainerEdgesAndElements.second.at(side);
+        if (!lastElement)
+            continue;
+
+        if (!lastElement->renderer())
+            continue;
+
+        elements.setAt(side, WTFMove(lastElement));
+        edges.colors.setAt(side, m_fixedContainerEdgesAndElements.first->colors.at(side));
+    }
+
+    m_fixedContainerEdgesAndElements = std::make_pair(makeUniqueRef<FixedContainerEdges>(WTFMove(edges)), WTFMove(elements));
 }
 
 Color Page::lastTopFixedContainerColor() const
 {
-    return m_fixedContainerEdges->predominantColor(BoxSide::Top);
+    return m_fixedContainerEdgesAndElements.first->predominantColor(BoxSide::Top);
 }
 
 void Page::setPortsForUpgradingInsecureSchemeForTesting(uint16_t upgradeFromInsecurePort, uint16_t upgradeToSecurePort)
@@ -5441,18 +5459,18 @@ void Page::updateTextVisibilityForActiveWritingToolsSession(const CharacterRange
     IntelligenceTextEffectsSupport::updateTextVisibility(*localTopDocument, *scope, rangeRelativeToSessionRange, visible, identifier);
 }
 
-std::optional<TextIndicatorData> Page::textPreviewDataForActiveWritingToolsSession(const CharacterRange& rangeRelativeToSessionRange)
+RefPtr<TextIndicator> Page::textPreviewDataForActiveWritingToolsSession(const CharacterRange& rangeRelativeToSessionRange)
 {
     RefPtr localTopDocument = this->localTopDocument();
     if (!localTopDocument) {
         ASSERT_NOT_REACHED();
-        return std::nullopt;
+        return nullptr;
     }
 
     auto scope = m_writingToolsController->activeSessionRange();
     if (!scope) {
         ASSERT_NOT_REACHED();
-        return std::nullopt;
+        return nullptr;
     }
 
     return IntelligenceTextEffectsSupport::textPreviewDataForRange(*localTopDocument, *scope, rangeRelativeToSessionRange);
@@ -5545,8 +5563,7 @@ void Page::setLastAuthentication(LoginStatus::AuthenticationType authType)
 #if ENABLE(FULLSCREEN_API)
 bool Page::isDocumentFullscreenEnabled() const
 {
-    Ref settings = protectedSettings();
-    return settings->fullScreenEnabled() || settings->videoFullscreenRequiresElementFullscreen();
+    return m_settings->fullScreenEnabled() || m_settings->videoFullscreenRequiresElementFullscreen();
 }
 #endif
 
@@ -5661,7 +5678,7 @@ void Page::applyWindowFeatures(const WindowFeatures& features)
 
 bool Page::isAlwaysOnLoggingAllowed() const
 {
-    return m_sessionID.isAlwaysOnLoggingAllowed() || protectedSettings()->allowPrivacySensitiveOperationsInNonPersistentDataStores();
+    return m_sessionID.isAlwaysOnLoggingAllowed() || settings().allowPrivacySensitiveOperationsInNonPersistentDataStores();
 }
 
 Ref<InspectorController> Page::protectedInspectorController()

@@ -174,7 +174,7 @@ Ref<WebFrame> WebFrame::createRemoteSubframe(WebPage& page, WebFrame& parent, We
     RELEASE_ASSERT(parentCoreFrame);
     auto coreFrame = RemoteFrame::createSubframe(*corePage, [frame] (auto&) {
         return makeUniqueRef<WebRemoteFrameClient>(frame.copyRef(), frame->makeInvalidator());
-    }, frameID, *parentCoreFrame, opener.get(), WTFMove(frameTreeSyncData));
+    }, frameID, *parentCoreFrame, opener.get(), WTFMove(frameTreeSyncData), WebCore::Frame::AddToFrameTree::Yes);
     frame->m_coreFrame = coreFrame.get();
     coreFrame->tree().setSpecifiedName(AtomString(frameName));
     return frame;
@@ -404,8 +404,6 @@ void WebFrame::loadDidCommitInAnotherProcess(std::optional<WebCore::LayerHosting
     auto* ownerRenderer = localFrame->ownerRenderer();
     localFrame->setView(nullptr);
 
-    if (parent)
-        parent->tree().removeChild(*localFrame);
     if (ownerElement)
         localFrame->disconnectOwnerElement();
     auto clientCreator = [protectedThis = Ref { *this }, invalidator = WTFMove(invalidator)] (auto&) mutable {
@@ -415,8 +413,10 @@ void WebFrame::loadDidCommitInAnotherProcess(std::optional<WebCore::LayerHosting
     Ref frameTreeSyncData = localFrame->frameTreeSyncData();
     auto newFrame = ownerElement
         ? WebCore::RemoteFrame::createSubframeWithContentsInAnotherProcess(*corePage, WTFMove(clientCreator), m_frameID, *ownerElement, layerHostingContextIdentifier, WTFMove(frameTreeSyncData))
-        : parent ? WebCore::RemoteFrame::createSubframe(*corePage, WTFMove(clientCreator), m_frameID, *parent, nullptr, WTFMove(frameTreeSyncData)) : WebCore::RemoteFrame::createMainFrame(*corePage, WTFMove(clientCreator), m_frameID, nullptr, WTFMove(frameTreeSyncData));
-    if (!parent)
+        : parent ? WebCore::RemoteFrame::createSubframe(*corePage, WTFMove(clientCreator), m_frameID, *parent, nullptr, WTFMove(frameTreeSyncData), WebCore::Frame::AddToFrameTree::No) : WebCore::RemoteFrame::createMainFrame(*corePage, WTFMove(clientCreator), m_frameID, nullptr, WTFMove(frameTreeSyncData));
+    if (parent)
+        parent->tree().replaceChild(*localFrame, newFrame);
+    else
         corePage->setMainFrame(newFrame.copyRef());
     newFrame->takeWindowProxyAndOpenerFrom(*localFrame);
 
@@ -470,8 +470,6 @@ void WebFrame::destroyProvisionalFrame()
     if (RefPtr frame = std::exchange(m_provisionalFrame, nullptr)) {
         if (auto* client = dynamicDowncast<WebLocalFrameLoaderClient>(frame->loader().client()))
             client->takeFrameInvalidator().release();
-        if (RefPtr parent = frame->tree().parent())
-            parent->tree().removeChild(*frame);
         frame->loader().detachFromParent();
         frame->setView(nullptr);
         m_frameIDBeforeProvisionalNavigation = std::nullopt;
@@ -506,7 +504,7 @@ void WebFrame::commitProvisionalFrame()
     auto* ownerRenderer = remoteFrame->ownerRenderer();
 
     if (parent)
-        parent->tree().removeChild(*remoteFrame);
+        parent->tree().replaceChild(*remoteFrame, *localFrame);
     remoteFrame->disconnectOwnerElement();
     downcast<WebRemoteFrameClient>(remoteFrame->client()).takeFrameInvalidator().release();
 
@@ -583,6 +581,7 @@ void WebFrame::didReceivePolicyDecision(uint64_t listenerID, PolicyDecision&& po
 
     if (!m_coreFrame)
         return;
+    setIsSafeBrowsingCheckOngoing(policyDecision.isSafeBrowsingCheckOngoing);
 
     auto policyCheck = m_pendingPolicyChecks.take(listenerID);
     if (!policyCheck.policyFunction)
@@ -1509,6 +1508,26 @@ uint64_t WebFrame::messageSenderDestinationID() const
 void WebFrame::setAppBadge(const WebCore::SecurityOriginData& origin, std::optional<uint64_t> badge)
 {
     send(Messages::WebFrameProxy::SetAppBadge(origin, badge));
+}
+
+std::optional<ResourceResponse> WebFrame::resourceResponseForURL(const URL& url) const
+{
+    RefPtr localFrame = dynamicDowncast<LocalFrame>(m_coreFrame.get());
+    if (!localFrame)
+        return std::nullopt;
+
+    RefPtr loader = localFrame->loader().documentLoader();
+    if (!loader)
+        return std::nullopt;
+
+    if (loader->url() == url)
+        return loader->response();
+
+    RefPtr resource = loader->subresource(url);
+    if (resource)
+        return resource->response();
+
+    return std::nullopt;
 }
 
 } // namespace WebKit

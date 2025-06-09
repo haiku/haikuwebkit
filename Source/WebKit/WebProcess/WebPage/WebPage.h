@@ -167,7 +167,7 @@ class SharedBufferReference;
 
 namespace WebCore {
 
-class AXCoreObject;
+class AXIsolatedTree;
 class CachedPage;
 class CaptureDevice;
 class DocumentLoader;
@@ -893,8 +893,11 @@ public:
     bool isTransparentOrFullyClipped(const WebCore::Node&) const;
 #endif
 
-    void didUpdateRendering();
-    void didPaintLayers();
+    enum class DidUpdateRenderingFlags {
+        PaintedLayers = 1 << 0,
+        NotifyUIProcess = 1 << 1,
+    };
+    void didUpdateRendering(OptionSet<DidUpdateRenderingFlags> = { DidUpdateRenderingFlags::PaintedLayers, DidUpdateRenderingFlags::NotifyUIProcess });
 
     // A "platform rendering update" here describes the work done by the system graphics framework before work is submitted to the system compositor.
     // On macOS, this is a CoreAnimation commit.
@@ -938,7 +941,7 @@ public:
     WebCore::IntPoint accessibilityScreenToRootView(const WebCore::IntPoint&);
     WebCore::IntRect rootViewToAccessibilityScreen(const WebCore::IntRect&);
 #if PLATFORM(IOS_FAMILY)
-    void relayAccessibilityNotification(const String&, const RetainPtr<NSData>&);
+    void relayAccessibilityNotification(String&&, RetainPtr<NSData>&&);
 #endif
 
     RefPtr<WebImage> scaledSnapshotWithOptions(const WebCore::IntRect&, double additionalScaleFactor, SnapshotOptions);
@@ -1214,7 +1217,7 @@ public:
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     void cacheAXPosition(const WebCore::FloatPoint&);
     void cacheAXSize(const WebCore::IntSize&);
-    void setAXIsolatedTreeRoot(WebCore::AXCoreObject*);
+    void setIsolatedTree(Ref<WebCore::AXIsolatedTree>&&);
 #endif
     NSObject *accessibilityObjectForMainFramePlugin();
     const WebCore::FloatPoint& accessibilityPosition() const { return m_accessibilityPosition; }
@@ -1407,7 +1410,7 @@ public:
     void applicationDidBecomeActive();
     void applicationDidEnterBackgroundForMedia(bool isSuspendedUnderLock);
     void applicationWillEnterForegroundForMedia(bool isSuspendedUnderLock);
-    void didFinishContentChangeObserving(WKContentChange);
+    void didFinishContentChangeObserving(WebCore::FrameIdentifier, WKContentChange);
 
     bool platformPrefersTextLegibilityBasedZoomScaling() const;
 
@@ -1484,8 +1487,8 @@ public:
 
 #if ENABLE(DATA_DETECTION)
     void setDataDetectionResults(NSArray *);
-    void detectDataInAllFrames(OptionSet<WebCore::DataDetectorType>, CompletionHandler<void(const DataDetectionResult&)>&&);
-    void removeDataDetectedLinks(CompletionHandler<void(const DataDetectionResult&)>&&);
+    void detectDataInAllFrames(OptionSet<WebCore::DataDetectorType>, CompletionHandler<void(DataDetectionResult&&)>&&);
+    void removeDataDetectedLinks(CompletionHandler<void(DataDetectionResult&&)>&&);
     void handleClickForDataDetectionResult(const WebCore::DataDetectorElementInfo&, const WebCore::IntPoint&);
 #endif
 
@@ -1631,8 +1634,8 @@ public:
     void shouldAllowDeviceOrientationAndMotionAccess(WebCore::FrameIdentifier, FrameInfoData&&, bool mayPrompt, CompletionHandler<void(WebCore::DeviceOrientationOrMotionPermissionState)>&&);
 #endif
 
-    void showShareSheet(WebCore::ShareDataWithParsedURL&, CompletionHandler<void(bool)>&& callback);
-    void showContactPicker(const WebCore::ContactsRequestData&, CompletionHandler<void(std::optional<Vector<WebCore::ContactInfo>>&&)>&&);
+    void showShareSheet(WebCore::ShareDataWithParsedURL&&, CompletionHandler<void(bool)>&& callback);
+    void showContactPicker(WebCore::ContactsRequestData&&, CompletionHandler<void(std::optional<Vector<WebCore::ContactInfo>>&&)>&&);
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
     void showDigitalCredentialsPicker(const WebCore::DigitalCredentialsRequestData&, CompletionHandler<void(Expected<WebCore::DigitalCredentialsResponseData, WebCore::ExceptionData>&&)>&&);
@@ -1933,7 +1936,7 @@ public:
 
     void proofreadingSessionUpdateStateForSuggestionWithID(WebCore::WritingTools::TextSuggestionState, const WebCore::WritingTools::TextSuggestionID&);
 
-    void addTextAnimationForAnimationID(const WTF::UUID&, const WebCore::TextAnimationData&, const WebCore::TextIndicatorData&, CompletionHandler<void(WebCore::TextAnimationRunMode)>&& = { });
+    void addTextAnimationForAnimationID(const WTF::UUID&, const WebCore::TextAnimationData&, const RefPtr<WebCore::TextIndicator>, CompletionHandler<void(WebCore::TextAnimationRunMode)>&& = { });
 
     void removeTextAnimationForAnimationID(const WTF::UUID&);
 
@@ -1945,7 +1948,7 @@ public:
     void clearAnimationsForActiveWritingToolsSession();
 
     std::optional<WebCore::TextIndicatorData> createTextIndicatorForRange(const WebCore::SimpleRange&);
-    void createTextIndicatorForTextAnimationID(const WTF::UUID&, CompletionHandler<void(std::optional<WebCore::TextIndicatorData>&&)>&&);
+    void createTextIndicatorForTextAnimationID(const WTF::UUID&, CompletionHandler<void(RefPtr<WebCore::TextIndicator>&&)>&&);
 
     void didEndPartialIntelligenceTextAnimation();
 #endif
@@ -2003,6 +2006,8 @@ public:
 #if ENABLE(MODEL_ELEMENT)
     bool shouldDisableModelLoadDelaysForTesting() const;
 #endif
+
+    std::unique_ptr<FrameInfoData> takeMainFrameNavigationInitiator();
 
 private:
     WebPage(WebCore::PageIdentifier, WebPageCreationParameters&&);
@@ -2245,7 +2250,7 @@ private:
     void clearServiceWorkerEntitlementOverride(CompletionHandler<void()>&& completionHandler) { completionHandler(); }
 #endif
 
-    void setUserAgent(const String&);
+    void setUserAgent(String&&);
     void setHasCustomUserAgent(bool);
     void setCustomTextEncodingName(const String&);
     void suspendActiveDOMObjectsAndAnimations();
@@ -2508,7 +2513,7 @@ private:
 
     void proofreadingSessionSuggestionTextRectsInRootViewCoordinates(const WebCore::CharacterRange&, CompletionHandler<void(Vector<WebCore::FloatRect>&&)>&&) const;
     void updateTextVisibilityForActiveWritingToolsSession(const WebCore::CharacterRange&, bool, const WTF::UUID&, CompletionHandler<void()>&&);
-    void textPreviewDataForActiveWritingToolsSession(const WebCore::CharacterRange&, CompletionHandler<void(std::optional<WebCore::TextIndicatorData>&&)>&&);
+    void textPreviewDataForActiveWritingToolsSession(const WebCore::CharacterRange&, CompletionHandler<void(RefPtr<WebCore::TextIndicator>&&)>&&);
     void decorateTextReplacementsForActiveWritingToolsSession(const WebCore::CharacterRange&, CompletionHandler<void()>&&);
     void setSelectionForActiveWritingToolsSession(const WebCore::CharacterRange&, CompletionHandler<void()>&&);
 
@@ -3061,7 +3066,7 @@ private:
 #endif
 
 #if ENABLE(WEBXR) && !USE(OPENXR)
-    std::unique_ptr<PlatformXRSystemProxy> m_xrSystemProxy;
+    const std::unique_ptr<PlatformXRSystemProxy> m_xrSystemProxy;
 #endif
 
 #if ENABLE(APP_HIGHLIGHTS)
@@ -3083,6 +3088,7 @@ private:
 #endif
 
     std::unique_ptr<WebCore::NowPlayingMetadataObserver> m_nowPlayingMetadataObserver;
+    std::unique_ptr<FrameInfoData> m_mainFrameNavigationInitiator;
 
     mutable RefPtr<Logger> m_logger;
 };

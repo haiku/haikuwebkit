@@ -954,7 +954,7 @@ void WebLocalFrameLoaderClient::dispatchDecidePolicyForResponse(const ResourceRe
         return;
     }
 
-    if (webPage->shouldSkipDecidePolicyForResponse(response)) {
+    if ((!m_frame->isMainFrame() || m_frame->isSafeBrowsingCheckOngoing() == SafeBrowsingCheckOngoing::No) && webPage->shouldSkipDecidePolicyForResponse(response)) {
         WebLocalFrameLoaderClient_RELEASE_LOG(Network, "dispatchDecidePolicyForResponse: continuing because injected bundle says so");
         function(PolicyAction::Use);
         return;
@@ -1833,11 +1833,11 @@ RemoteAXObjectRef WebLocalFrameLoaderClient::accessibilityRemoteObject()
 }
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-void WebLocalFrameLoaderClient::setAXIsolatedTreeRoot(WebCore::AXCoreObject* axObject)
+void WebLocalFrameLoaderClient::setIsolatedTree(Ref<WebCore::AXIsolatedTree>&& tree)
 {
     ASSERT(isMainRunLoop());
     if (RefPtr webPage = m_frame->page())
-        webPage->setAXIsolatedTreeRoot(axObject);
+        webPage->setIsolatedTree(WTFMove(tree));
 }
 #endif
 

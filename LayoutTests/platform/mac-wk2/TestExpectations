@@ -104,6 +104,8 @@ imported/w3c/web-platform-tests/media-source/dedicated-worker/ [ Pass ]
 imported/w3c/web-platform-tests/media-source/dedicated-worker/mediasource-worker-play-terminate-worker.html [ Pass Failure ]
 http/tests/security/contentSecurityPolicy/manifest-src-allowed.html [ Pass ]
 http/tests/security/contentSecurityPolicy/manifest-src-blocked.html [ Pass ]
+http/wpt/content-security-policy/sandbox-manifest-blocked.html [ Pass ]
+http/wpt/content-security-policy/sandbox-manifest-blocked-cross-origin.sub.html [ Pass ]
 
 applicationmanifest/ [ Pass ]
 
@@ -1103,9 +1105,6 @@ webkit.org/b/179796 http/tests/cache/disk-cache/disk-cache-validation-back-navig
 
 # rdar://65642935 ([AS] 20A2323e: 15 canvas layout tests consistently failing)
 [ arm64 ] fast/canvas/canvas-ellipse-zero-lineto.html [ Failure ]
-[ arm64 ] imported/w3c/web-platform-tests/html/canvas/element/line-styles/2d.line.miter.obtuse.html [ Failure ]
-[ arm64 ] imported/w3c/web-platform-tests/html/canvas/element/path-objects/2d.path.arc.selfintersect.1.html [ Failure ]
-[ arm64 ] imported/w3c/web-platform-tests/html/canvas/element/path-objects/2d.path.arc.shape.3.html [ Failure ]
 [ arm64 ] inspector/canvas/memory.html [ Failure ]
 
 webkit.org/b/230691 [ Release ] imported/w3c/web-platform-tests/html/cross-origin-opener-policy/iframe-popup-unsafe-none-to-unsafe-none.https.html [ Pass Failure ]
@@ -1575,6 +1574,7 @@ fast/webgpu/nocrash/fuzz-286820.html [ Skip ]
 [ x86_64 ] fast/webgpu/nocrash/fuzz-281555.html [ Skip ]
 [ x86_64 ] fast/webgpu/nocrash/fuzz-282499.html [ Skip ]
 [ x86_64 ] fast/webgpu/nocrash/fuzz-283196.html [ Skip ]
+[ x86_64 ] fast/webgpu/nocrash/fuzz-293750.html [ Skip ]
 
 [ x86_64 ] fast/webgpu/nocrash/fuzz-145583179.html [ Pass Failure ]
 [ x86_64 ] fast/webgpu/nocrash/fuzz-145584310.html [ Pass Failure ]
@@ -1601,8 +1601,8 @@ fast/webgpu/nocrash/fuzz-286820.html [ Skip ]
 # skipped due to failing when run in stress test mode
 [ Sonoma ] fast/webgpu/nocrash/RenderBundle_WRITE.html [ Skip ]
 
-[ Slow arm64 Sequoia+ ] http/tests/webgpu/webgpu/api [ Pass ]
-[ Slow arm64 Sequoia+ ] http/tests/webgpu/webgpu/shader [ Pass ]
+webkit.org/b/293808 [ Sequoia+ Release arm64 ] http/tests/webgpu/webgpu/api [ Pass ]
+webkit.org/b/293808 [ Sequoia+ Release arm64 ] http/tests/webgpu/webgpu/shader [ Pass ]
 [ Release arm64 Sequoia+ ] http/tests/webgpu/webgpu/web_platform [ Pass Failure Timeout ]
 
 [ arm64 ] http/tests/webgpu/webgpu/api/validation/capability_checks/features/texture_formats.html [ Pass ]
@@ -1930,10 +1930,6 @@ editing/input/scroll-viewport-page-up-down.html [ Pass Failure ]
 [ Sequoia+ arm64 Release ] http/tests/resourceLoadStatistics/prune-statistics.html [ Pass Failure ]
 [ Sequoia+ arm64 Release ] http/tests/resourceLoadStatistics/remove-website-data-for-origin-deletes-link-decoration.html [ Pass Failure ]
 
-# webkit.org/b/280922 REGRESSION(284532@main): [ macOS wk2 ] 2x tiled-drawing/* test are flaky failing. (280922)
-tiled-drawing/scrolling/fixed-background/fixed-body-background-zoomed.html [ Pass Failure ]
-tiled-drawing/tile-size-slow-zoomed.html [ Pass Failure ]
-
 # webkit.org/b/280989 [ Sequoia wk2 x86_64 ] webanimations/frame-rate/document-timeline-maximum-frame-rate.html is a constant failure
 [ Sequoia x86_64 ] webanimations/frame-rate/document-timeline-maximum-frame-rate.html [ Failure ]
 
@@ -2169,14 +2165,13 @@ webkit.org/b/292883 http/wpt/service-workers/basic-fetch-with-contentfilter.http
 
 webkit.org/b/283410 media/media-vp8-webm-with-poster.html [ Pass ImageOnlyFailure ]
 
-webkit.org/b/293023 http/wpt/content-security-policy/sandbox-manifest-blocked-cross-origin.sub.html [ Pass Failure ]
-
-webkit.org/b/293142 http/wpt/content-security-policy/sandbox-manifest-blocked.html [ Pass Failure ]
-
-webkit.org/b/293132 http/tests/contentextensions/make-https.html [ Pass Failure ]
-
 webkit.org/b/293145 [ Debug arm64 ] imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-for-user-scroll.html [ Pass Failure ]
 
-webkit.org/b/293149 [ X86_64 ] media/media-vp9-yuv422p10.html [ Pass ImageOnlyFailure ]
+webkit.org/b/293761 http/wpt/service-workers/navigate-iframes-window-client.https.html [ Failure ]
+webkit.org/b/293761 http/tests/navigation/keyboard-events-during-provisional-navigation.html [ Failure ]
 
-webkit.org/b/293154 [ X86_64 ] media/media-vp8-hiddenframes.html [ Pass ImageOnlyFailure ]
+webkit.org/b/293804 [ Debug ] pdf/annotations/checkbox-set-active.html [ Pass Timeout ]
+
+# webkit.org/b/293827 [macOS] 2x tests in webgl are constant failures (flaky in EWS)
+[ Sequoia ] webgl/1.0.x/conformance/textures/misc/gl-teximage.html [ Failure ]
+[ Sequoia ] webgl/2.0.y/conformance/textures/misc/gl-teximage.html [ Failure ]

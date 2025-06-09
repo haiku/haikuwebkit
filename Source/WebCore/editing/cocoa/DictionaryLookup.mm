@@ -433,19 +433,19 @@ static WKRevealController showPopupOrCreateAnimationController(bool createAnimat
     if (!PAL::isRevealFrameworkAvailable() || !canCreateRevealItems() || !PAL::getRVPresenterClass())
         return nil;
 
-    auto textIndicator = TextIndicator::create(dictionaryPopupInfo.textIndicator);
+    auto textIndicator = dictionaryPopupInfo.textIndicator;
 
     auto presenter = adoptNS([PAL::allocRVPresenterInstance() init]);
 
     NSRect highlightRect;
     NSPoint pointerLocation;
 
-    if (textIndicator.get().contentImage()) {
-        textIndicatorInstallationCallback(textIndicator.get());
+    if (textIndicator->contentImage()) {
+        textIndicatorInstallationCallback(*textIndicator);
 
-        FloatRect firstTextRectInViewCoordinates = textIndicator.get().textRectsInBoundingRectCoordinates()[0];
-        FloatRect textBoundingRectInViewCoordinates = textIndicator.get().textBoundingRectInRootViewCoordinates();
-        FloatRect selectionBoundingRectInViewCoordinates = textIndicator.get().selectionRectInRootViewCoordinates();
+        FloatRect firstTextRectInViewCoordinates = textIndicator->textRectsInBoundingRectCoordinates()[0];
+        FloatRect textBoundingRectInViewCoordinates = textIndicator->textBoundingRectInRootViewCoordinates();
+        FloatRect selectionBoundingRectInViewCoordinates = textIndicator->selectionRectInRootViewCoordinates();
 
         if (rootViewToViewConversionCallback) {
             textBoundingRectInViewCoordinates = rootViewToViewConversionCallback(textBoundingRectInViewCoordinates);
@@ -461,9 +461,16 @@ static WKRevealController showPopupOrCreateAnimationController(bool createAnimat
         pointerLocation = [view convertPoint:textBaselineOrigin toView:nil];
     }
 
+#if ENABLE(LEGACY_PDFKIT_PLUGIN)
     auto attributedString = dictionaryPopupInfo.platformData.attributedString.nsAttributedString();
-    auto webHighlight = adoptNS([[WebRevealHighlight alloc] initWithHighlightRect:highlightRect useDefaultHighlight:!textIndicator.get().contentImage() attributedString:attributedString.get() clearTextIndicatorCallback:WTFMove(clearTextIndicator)]);
+    auto webHighlight = adoptNS([[WebRevealHighlight alloc] initWithHighlightRect:highlightRect useDefaultHighlight:!textIndicator->contentImage() attributedString:attributedString.get() clearTextIndicatorCallback:WTFMove(clearTextIndicator)]);
     auto item = adoptNS([PAL::allocRVItemInstance() initWithText:attributedString.get().string selectedRange:NSMakeRange(0, attributedString.get().string.length)]);
+#else
+    RetainPtr text = dictionaryPopupInfo.text.createNSString();
+    RetainPtr webHighlight = adoptNS([[WebRevealHighlight alloc] initWithHighlightRect:highlightRect useDefaultHighlight:!textIndicator->contentImage() attributedString:adoptNS([[NSAttributedString alloc] initWithString:text.get()]).get() clearTextIndicatorCallback:WTFMove(clearTextIndicator)]);
+    RetainPtr item = adoptNS([PAL::allocRVItemInstance() initWithText:text.get() selectedRange:NSMakeRange(0, text.get().length)]);
+#endif
+
     auto context = createRVPresentingContextWithRetainedDelegate(pointerLocation, view, webHighlight.get());
     if (createAnimationController)
         return [presenter animationControllerForItem:item.get() documentContext:nil presentingContext:context.get() options:nil];
@@ -475,10 +482,15 @@ static WKRevealController showPopupOrCreateAnimationController(bool createAnimat
     UNUSED_PARAM(rootViewToViewConversionCallback);
     UNUSED_PARAM(clearTextIndicator);
     ASSERT_UNUSED(createAnimationController, !createAnimationController);
-    auto textIndicator = TextIndicator::create(dictionaryPopupInfo.textIndicator);
+    auto textIndicator = dictionaryPopupInfo.textIndicator;
     auto webHighlight = adoptNS([[WebRevealHighlight alloc] initWithHighlightRect:[view convertRect:textIndicator->selectionRectInRootViewCoordinates() toView:nil] view:view image:textIndicator->contentImage()]);
+#if ENABLE(LEGACY_PDFKIT_PLUGIN)
     auto attributedString = dictionaryPopupInfo.platformData.attributedString.nsAttributedString();
     auto item = adoptNS([PAL::allocRVItemInstance() initWithText:attributedString.get().string selectedRange:NSMakeRange(0, attributedString.get().string.length)]);
+#else
+    RetainPtr text = dictionaryPopupInfo.text.createNSString();
+    RetainPtr item = adoptNS([PAL::allocRVItemInstance() initWithText:text.get() selectedRange:NSMakeRange(0, text.get().length)]);
+#endif
 
     [UINSSharedRevealController() revealItem:item.get() locationInWindow:dictionaryPopupInfo.origin window:view.window highlighter:webHighlight.get()];
     return nil;

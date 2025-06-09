@@ -138,9 +138,9 @@ NSURL *URLByTruncatingOneCharacterBeforeComponent(NSURL *URL, CFURLComponentType
 
     auto bytes = bytesAsVector(bridge_cast(URL));
 
-    auto result = adoptCF(CFURLCreateWithBytes(nullptr, bytes.data(), range.location - 1, kCFStringEncodingUTF8, nullptr));
+    auto result = adoptCF(CFURLCreateWithBytes(nullptr, bytes.span().data(), range.location - 1, kCFStringEncodingUTF8, nullptr));
     if (!result)
-        result = adoptCF(CFURLCreateWithBytes(nullptr, bytes.data(), range.location - 1, kCFStringEncodingISOLatin1, nullptr));
+        result = adoptCF(CFURLCreateWithBytes(nullptr, bytes.span().data(), range.location - 1, kCFStringEncodingISOLatin1, nullptr));
 
     return result ? result.bridgingAutorelease() : URL;
 }
@@ -198,7 +198,7 @@ static RetainPtr<NSData> dataWithUserTypedString(NSString *string)
     
     auto outBytesSpan = outBytes.releaseBuffer().leakSpan();
     return adoptNS([[NSData alloc] initWithBytesNoCopy:outBytesSpan.data() length:outBytesSpan.size() deallocator:^(void* bytes, NSUInteger) {
-        FastMalloc::free(bytes);
+        VectorBufferMalloc::free(bytes);
     }]); // adopts outBytes
 }
 

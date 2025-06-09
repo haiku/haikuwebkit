@@ -146,6 +146,8 @@ void HTMLFormElement::removedFromAncestor(RemovalType removalType, ContainerNode
     for (auto& imageElement : imageElements)
         imageElement->formOwnerRemovedFromTree(root);
     HTMLElement::removedFromAncestor(removalType, oldParentOfRemovedTree);
+    if (removalType.disconnectedFromDocument)
+      m_controlsCollection = nullptr; // Avoid leaks since HTMLCollection has a back Ref to this element.
 }
 
 unsigned HTMLFormElement::length() const
@@ -606,7 +608,7 @@ void HTMLFormElement::unregisterFormListedElement(FormListedElement& element)
     if (index < m_listedElementsAfterIndex)
         --m_listedElementsAfterIndex;
     removeFromPastNamesMap(element);
-    m_listedElements.remove(index);
+    m_listedElements.removeAt(index);
 
     if (auto* nodeLists = this->nodeLists())
         nodeLists->invalidateCaches();
@@ -659,7 +661,15 @@ void HTMLFormElement::unregisterImgElement(HTMLImageElement& element)
 
 Ref<HTMLFormControlsCollection> HTMLFormElement::elements()
 {
-    return ensureRareData().ensureNodeLists().addCachedCollection<HTMLFormControlsCollection>(*this, CollectionType::FormControls);
+    // Ordinarily JS wrapper keeps the collection alive but this function is used by HTMLFormElement::namedElements internally without creating one.
+    // This cache is cleared whenever this element is disconnected from a document.
+    if (!m_controlsCollection) {
+        Ref controlsCollection = ensureRareData().ensureNodeLists().addCachedCollection<HTMLFormControlsCollection>(*this, CollectionType::FormControls);
+        if (!isConnected())
+            return controlsCollection;
+        m_controlsCollection = WTFMove(controlsCollection);
+    }
+    return *m_controlsCollection;
 }
 
 Ref<HTMLCollection> HTMLFormElement::elementsForNativeBindings()
@@ -708,9 +718,9 @@ void HTMLFormElement::setMethod(const AtomString& value)
 DOMTokenList& HTMLFormElement::relList()
 {
     if (!m_relList) {
-        m_relList = makeUniqueWithoutRefCountedCheck<DOMTokenList>(*this, HTMLNames::relAttr, [](Document&, StringView token) {
+        lazyInitialize(m_relList, makeUniqueWithoutRefCountedCheck<DOMTokenList>(*this, HTMLNames::relAttr, [](Document&, StringView token) {
             return equalLettersIgnoringASCIICase(token, "noreferrer"_s) || equalLettersIgnoringASCIICase(token, "noopener"_s) || equalLettersIgnoringASCIICase(token, "opener"_s);
-        });
+        }));
     }
     return *m_relList;
 }

@@ -140,7 +140,6 @@
 #import <WebCore/TextAlternativeWithRange.h>
 #import <WebCore/TextAnimationTypes.h>
 #import <WebCore/TextIndicator.h>
-#import <WebCore/TextIndicatorWindow.h>
 #import <WebCore/TextRecognitionResult.h>
 #import <WebCore/TouchAction.h>
 #import <WebCore/UTIRegistry.h>
@@ -2443,7 +2442,7 @@ static WebCore::FloatQuad inflateQuad(const WebCore::FloatQuad& quad, float infl
 - (WebKit::GestureRecognizerConsistencyEnforcer&)gestureRecognizerConsistencyEnforcer
 {
     if (!_gestureRecognizerConsistencyEnforcer)
-        _gestureRecognizerConsistencyEnforcer = makeUniqueWithoutRefCountedCheck<WebKit::GestureRecognizerConsistencyEnforcer>(self);
+        lazyInitialize(_gestureRecognizerConsistencyEnforcer, makeUniqueWithoutRefCountedCheck<WebKit::GestureRecognizerConsistencyEnforcer>(self));
 
     return *_gestureRecognizerConsistencyEnforcer;
 }
@@ -3319,7 +3318,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     for (int index = _pendingPositionInformationHandlers.size() - 1; index >= 0; --index) {
         if (!_pendingPositionInformationHandlers[index])
-            _pendingPositionInformationHandlers.remove(index);
+            _pendingPositionInformationHandlers.removeAt(index);
     }
 }
 
@@ -4352,7 +4351,7 @@ FOR_EACH_PRIVATE_WKCONTENTVIEW_ACTION(FORWARD_ACTION_TO_WKWEBVIEW)
         return nil;
     auto& dictationContextsForSelection = _page->editorState().postLayoutData->dictationContextsForSelection;
     return createNSArray(dictationContextsForSelection, [&] (auto& dictationContext) -> NSObject * {
-        RetainPtr alternatives = _page->platformDictationAlternatives(dictationContext);
+        RetainPtr alternatives = _page->protectedPageClient()->platformDictationAlternatives(dictationContext);
 #if USE(BROWSERENGINEKIT)
         if (!self.shouldUseAsyncInteractions)
             return [[alternatives _nsTextAlternative] autorelease];
@@ -6975,7 +6974,7 @@ static WebKit::WritingDirection coreWritingDirection(NSWritingDirection directio
         RefPtr page = strongSelf->_page;
         Vector<WebCore::DictationContext> contextsToRemove;
         for (auto context : contexts) {
-            auto alternatives = page->platformDictationAlternatives(context);
+            auto alternatives = page->protectedPageClient()->platformDictationAlternatives(context);
             if (!alternatives)
                 continue;
 
@@ -7687,7 +7686,7 @@ static UITextAutocapitalizationType toUITextAutocapitalize(WebCore::Autocapitali
         return;
     }
 
-    _keyWebEventHandlers.remove(indexOfHandlerToCall);
+    _keyWebEventHandlers.removeAt(indexOfHandlerToCall);
     handler(event, eventWasHandled);
 }
 
@@ -10025,7 +10024,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     CGRect sourceRect;
     if (positionInformation.isLink)
-        sourceRect = positionInformation.linkIndicator.textBoundingRectInRootViewCoordinates;
+        sourceRect = positionInformation.textIndicator->textBoundingRectInRootViewCoordinates();
     else if (!positionInformation.dataDetectorBounds.isEmpty())
         sourceRect = positionInformation.dataDetectorBounds;
     else
@@ -11657,11 +11656,11 @@ static RetainPtr<UITargetedPreview> createFallbackTargetedPreview(UIView *rootVi
 {
     RetainPtr<UITargetedPreview> targetedPreview;
 
-    if (_positionInformation.isLink && _positionInformation.linkIndicator.contentImage) {
-        auto indicator = _positionInformation.linkIndicator;
-        _positionInformationLinkIndicator = indicator;
+    if (_positionInformation.isLink && _positionInformation.textIndicator->contentImage()) {
+        RefPtr indicator = _positionInformation.textIndicator;
+        _positionInformationLinkIndicator = indicator ? std::optional { indicator->data() } : std::nullopt;
 
-        targetedPreview = [self _createTargetedPreviewFromTextIndicator:indicator previewContainer:self.containerForContextMenuHintPreviews];
+        targetedPreview = [self _createTargetedPreviewFromTextIndicator:indicator->data() previewContainer:self.containerForContextMenuHintPreviews];
     } else if ((_positionInformation.isAttachment || _positionInformation.isImage) && _positionInformation.image) {
         auto cgImage = _positionInformation.image->makeCGImageCopy();
         auto image = adoptNS([[UIImage alloc] initWithCGImage:cgImage.get()]);
@@ -12441,6 +12440,11 @@ static RetainPtr<NSItemProvider> createItemProvider(const WebKit::WebPageProxy& 
 }
 
 #endif // ENABLE(IMAGE_ANALYSIS)
+
+- (CALayer *)textIndicatorInstallationLayer
+{
+    return [self layer];
+}
 
 - (void)setUpTextIndicator:(Ref<WebCore::TextIndicator>)textIndicator
 {
@@ -13885,13 +13889,13 @@ inline static NSString *extendSelectionCommand(UITextLayoutDirection direction)
 {
     auto animationID = WTF::UUID::fromNSUUID(uuid);
 
-    _page->getTextIndicatorForID(*animationID, [protectedSelf = retainPtr(self), completionHandler = makeBlockPtr(completionHandler)] (auto&& indicatorData) {
-        if (!indicatorData) {
+    _page->getTextIndicatorForID(*animationID, [protectedSelf = retainPtr(self), completionHandler = makeBlockPtr(completionHandler)] (auto&& textIndicator) {
+        if (!textIndicator) {
             completionHandler(nil);
             return;
         }
 
-        RetainPtr targetedPreview = [protectedSelf _createTargetedPreviewFromTextIndicator:*indicatorData previewContainer:[protectedSelf containerForContextMenuHintPreviews]];
+        RetainPtr targetedPreview = [protectedSelf _createTargetedPreviewFromTextIndicator:textIndicator->data() previewContainer:[protectedSelf containerForContextMenuHintPreviews]];
         completionHandler(targetedPreview.get());
     });
 }
@@ -15617,10 +15621,10 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (UIImage *)_presentationSnapshotForPreviewItemController:(UIPreviewItemController *)controller
 {
-    if (!_positionInformation.linkIndicator.contentImage)
+    if (!_positionInformation.textIndicator->contentImage())
         return nullptr;
 
-    auto nativeImage = _positionInformation.linkIndicator.contentImage->nativeImage();
+    auto nativeImage = _positionInformation.textIndicator->contentImage()->nativeImage();
     if (!nativeImage)
         return nullptr;
 
@@ -15629,9 +15633,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (NSArray *)_presentationRectsForPreviewItemController:(UIPreviewItemController *)controller
 {
-    if (_positionInformation.linkIndicator.contentImage) {
-        auto origin = _positionInformation.linkIndicator.textBoundingRectInRootViewCoordinates.location();
-        return createNSArray(_positionInformation.linkIndicator.textRectsInBoundingRectCoordinates, [&] (CGRect rect) {
+    if (_positionInformation.textIndicator->contentImage()) {
+        auto origin = _positionInformation.textIndicator->textBoundingRectInRootViewCoordinates().location();
+        return createNSArray(_positionInformation.textIndicator->textRectsInBoundingRectCoordinates(), [&] (CGRect rect) {
             return [NSValue valueWithCGRect:CGRectOffset(rect, origin.x(), origin.y())];
         }).autorelease();
     } else {

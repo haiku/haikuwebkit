@@ -31,6 +31,7 @@
 #include <unicode/utypes.h>
 #include <wtf/CheckedRef.h>
 #include <wtf/DataRef.h>
+#include <wtf/FixedVector.h>
 #include <wtf/OptionSet.h>
 #include <wtf/Vector.h>
 
@@ -85,7 +86,6 @@ class SVGLengthValue;
 class SVGRenderStyle;
 class ScaleTransformOperation;
 class ScrollTimeline;
-class ShadowData;
 class ShapeValue;
 class StyleContentAlignmentData;
 class StyleCustomPropertyData;
@@ -287,6 +287,7 @@ using IntOutsets = RectEdges<int>;
 namespace Style {
 class CustomPropertyRegistry;
 class ViewTransitionName;
+struct BoxShadow;
 struct Color;
 struct ColorScheme;
 struct CornerShapeValue;
@@ -297,6 +298,7 @@ struct ScrollMargin;
 struct ScrollMarginEdge;
 struct ScrollPadding;
 struct ScrollPaddingEdge;
+struct TextShadow;
 
 enum class Change : uint8_t;
 enum class LineBoxContain : uint8_t;
@@ -768,10 +770,6 @@ public:
     OptionSet<HangingPunctuation> hangingPunctuation() const;
 
     float outlineOffset() const;
-    const ShadowData* textShadow() const;
-    LayoutBoxExtent textShadowExtent() const;
-    inline void getTextShadowInlineDirectionExtent(LayoutUnit& logicalLeft, LayoutUnit& logicalRight) const;
-    inline void getTextShadowBlockDirectionExtent(LayoutUnit& logicalTop, LayoutUnit& logicalBottom) const;
 
     inline float textStrokeWidth() const;
     inline float opacity() const;
@@ -797,7 +795,7 @@ public:
     inline bool containsPaint() const;
     inline bool containsLayoutOrPaint() const;
     inline ContainerType containerType() const;
-    inline const Vector<Style::ScopedName>& containerNames() const;
+    inline const FixedVector<Style::ScopedName>& containerNames() const;
     inline bool containerTypeAndNamesEqual(const RenderStyle&) const;
 
     inline ContentVisibility contentVisibility() const;
@@ -890,7 +888,16 @@ public:
     inline const GridPosition& gridItemRowStart() const;
     inline const GridPosition& gridItemRowEnd() const;
 
-    inline const ShadowData* boxShadow() const;
+    inline const FixedVector<Style::TextShadow>& textShadow() const;
+    inline bool hasTextShadow() const;
+    inline LayoutBoxExtent textShadowExtent() const;
+    inline void getTextShadowHorizontalExtent(LayoutUnit& left, LayoutUnit& right) const;
+    inline void getTextShadowVerticalExtent(LayoutUnit& top, LayoutUnit& bottom) const;
+    inline void getTextShadowInlineDirectionExtent(LayoutUnit& logicalLeft, LayoutUnit& logicalRight) const;
+    inline void getTextShadowBlockDirectionExtent(LayoutUnit& logicalTop, LayoutUnit& logicalBottom) const;
+
+    inline const FixedVector<Style::BoxShadow>& boxShadow() const;
+    inline bool hasBoxShadow() const;
     inline LayoutBoxExtent boxShadowExtent() const;
     inline LayoutBoxExtent boxShadowInsetExtent() const;
     inline void getBoxShadowHorizontalExtent(LayoutUnit& left, LayoutUnit& right) const;
@@ -1030,21 +1037,21 @@ public:
     PointerEvents pointerEvents() const { return static_cast<PointerEvents>(m_inheritedFlags.pointerEvents); }
     inline PointerEvents usedPointerEvents() const;
 
-    inline const Vector<Ref<ScrollTimeline>>& scrollTimelines() const;
-    inline const Vector<ScrollAxis>& scrollTimelineAxes() const;
-    inline const Vector<AtomString>& scrollTimelineNames() const;
+    inline const FixedVector<Ref<ScrollTimeline>>& scrollTimelines() const;
+    inline const FixedVector<ScrollAxis>& scrollTimelineAxes() const;
+    inline const FixedVector<AtomString>& scrollTimelineNames() const;
     inline bool hasScrollTimelines() const;
-    inline void setScrollTimelineAxes(const Vector<ScrollAxis>&);
-    inline void setScrollTimelineNames(const Vector<AtomString>&);
+    inline void setScrollTimelineAxes(FixedVector<ScrollAxis>&&);
+    inline void setScrollTimelineNames(FixedVector<AtomString>&&);
 
-    inline const Vector<Ref<ViewTimeline>>& viewTimelines() const;
-    inline const Vector<ScrollAxis>& viewTimelineAxes() const;
-    inline const Vector<ViewTimelineInsets>& viewTimelineInsets() const;
-    inline const Vector<AtomString>& viewTimelineNames() const;
+    inline const FixedVector<Ref<ViewTimeline>>& viewTimelines() const;
+    inline const FixedVector<ScrollAxis>& viewTimelineAxes() const;
+    inline const FixedVector<ViewTimelineInsets>& viewTimelineInsets() const;
+    inline const FixedVector<AtomString>& viewTimelineNames() const;
     inline bool hasViewTimelines() const;
-    inline void setViewTimelineAxes(const Vector<ScrollAxis>&);
-    inline void setViewTimelineInsets(const Vector<ViewTimelineInsets>&);
-    inline void setViewTimelineNames(const Vector<AtomString>&);
+    inline void setViewTimelineAxes(FixedVector<ScrollAxis>&&);
+    inline void setViewTimelineInsets(FixedVector<ViewTimelineInsets>&&);
+    inline void setViewTimelineNames(FixedVector<AtomString>&&);
 
     static inline const NameScope initialTimelineScope();
     inline const NameScope& timelineScope() const;
@@ -1168,6 +1175,9 @@ public:
     inline void setIsInVisibilityAdjustmentSubtree();
     inline bool isInVisibilityAdjustmentSubtree() const;
 
+    inline void setIsForceHidden();
+    inline bool isForceHidden() const;
+
     inline void setIsolation(Isolation);
 
     inline BlendMode blendMode() const;
@@ -1196,8 +1206,8 @@ public:
 
     inline MathStyle mathStyle() const;
 
-    inline const Vector<Style::ScopedName>& viewTransitionClasses() const;
-    inline Style::ViewTransitionName viewTransitionName() const;
+    inline const FixedVector<Style::ScopedName>& viewTransitionClasses() const;
+    inline const Style::ViewTransitionName& viewTransitionName() const;
 
     void setDisplay(DisplayType value)
     {
@@ -1242,7 +1252,7 @@ public:
     inline void resetBorderBottomLeftRadius();
     inline void resetBorderBottomRightRadius();
 
-    inline void setBackgroundColor(const Style::Color&);
+    inline void setBackgroundColor(Style::Color&&);
     inline void setBackgroundAttachment(FillAttachment);
     inline void setBackgroundClip(FillBox);
     inline void setBackgroundOrigin(FillBox);
@@ -1273,21 +1283,21 @@ public:
 
     inline void setBorderLeftWidth(float);
     inline void setBorderLeftStyle(BorderStyle);
-    inline void setBorderLeftColor(const Style::Color&);
+    inline void setBorderLeftColor(Style::Color&&);
     inline void setBorderRightWidth(float);
     inline void setBorderRightStyle(BorderStyle);
-    inline void setBorderRightColor(const Style::Color&);
+    inline void setBorderRightColor(Style::Color&&);
     inline void setBorderTopWidth(float);
     inline void setBorderTopStyle(BorderStyle);
-    inline void setBorderTopColor(const Style::Color&);
+    inline void setBorderTopColor(Style::Color&&);
     inline void setBorderBottomWidth(float);
     inline void setBorderBottomStyle(BorderStyle);
-    inline void setBorderBottomColor(const Style::Color&);
+    inline void setBorderBottomColor(Style::Color&&);
 
     inline void setOutlineWidth(float);
     inline void setOutlineStyle(BorderStyle);
     inline void setHasAutoOutlineStyle();
-    inline void setOutlineColor(const Style::Color&);
+    inline void setOutlineColor(Style::Color&&);
 
     void setOverflowX(Overflow v) { m_nonInheritedFlags.overflowX =  static_cast<unsigned>(v); }
     void setOverflowY(Overflow v) { m_nonInheritedFlags.overflowY = static_cast<unsigned>(v); }
@@ -1326,7 +1336,7 @@ public:
     void setFontItalic(std::optional<FontSelectionValue>);
     void setFontPalette(const FontPalette&);
 
-    void setColor(const Color&);
+    void setColor(Color&&);
     inline void setTextIndent(Length&&);
     void setTextAlign(TextAlignMode v) { m_inheritedFlags.textAlign = static_cast<unsigned>(v); }
     inline void setTextAlignLast(TextAlignLast);
@@ -1409,7 +1419,7 @@ public:
 
     inline void setContain(OptionSet<Containment>);
     inline void setContainerType(ContainerType);
-    inline void setContainerNames(const Vector<Style::ScopedName>&);
+    inline void setContainerNames(FixedVector<Style::ScopedName>&&);
 
     inline void setContainIntrinsicWidthType(ContainIntrinsicSizeType);
     inline void setContainIntrinsicHeightType(ContainIntrinsicSizeType);
@@ -1481,13 +1491,13 @@ public:
     inline void setOrphans(unsigned short);
 
     inline void setOutlineOffset(float);
-    void setTextShadow(std::unique_ptr<ShadowData>, bool add = false);
-    inline void setTextStrokeColor(const Style::Color&);
+    inline void setTextShadow(FixedVector<Style::TextShadow>&&);
+    inline void setTextStrokeColor(Style::Color&&);
     inline void setTextStrokeWidth(float);
-    inline void setTextFillColor(const Style::Color&);
-    inline void setCaretColor(const Style::Color&);
+    inline void setTextFillColor(Style::Color&&);
+    inline void setCaretColor(Style::Color&&);
     inline void setHasAutoCaretColor();
-    inline void setAccentColor(const Style::Color&);
+    inline void setAccentColor(Style::Color&&);
     inline void setHasAutoAccentColor();
     inline void setOpacity(float);
     inline void setAppearance(StyleAppearance);
@@ -1500,7 +1510,7 @@ public:
     inline void setBoxOrdinalGroup(unsigned);
     inline void setBoxOrient(BoxOrient);
     inline void setBoxPack(BoxPack);
-    void setBoxShadow(std::unique_ptr<ShadowData>, bool add = false);
+    inline void setBoxShadow(FixedVector<Style::BoxShadow>&&);
     inline void setBoxReflect(RefPtr<StyleReflection>&&);
     inline void setBoxSizing(BoxSizing);
     inline void setFlexGrow(float);
@@ -1524,8 +1534,8 @@ public:
 
     inline void setGridColumnList(const GridTrackList&);
     inline void setGridRowList(const GridTrackList&);
-    inline void setGridAutoColumns(const Vector<GridTrackSize>&);
-    inline void setGridAutoRows(const Vector<GridTrackSize>&);
+    inline void setGridAutoColumns(Vector<GridTrackSize>&&);
+    inline void setGridAutoRows(Vector<GridTrackSize>&&);
     inline void setImplicitNamedGridColumnLines(const NamedGridLinesMap&);
     inline void setImplicitNamedGridRowLines(const NamedGridLinesMap&);
     inline void setNamedGridArea(const NamedGridAreaMap&);
@@ -1565,7 +1575,7 @@ public:
     inline void setColumnFill(ColumnFill);
     inline void setColumnGap(GapLength&&);
     inline void setRowGap(GapLength&&);
-    inline void setColumnRuleColor(const Style::Color&);
+    inline void setColumnRuleColor(Style::Color&&);
     inline void setColumnRuleStyle(BorderStyle);
     inline void setColumnRuleWidth(unsigned short);
     inline void resetColumnRule();
@@ -1584,8 +1594,8 @@ public:
 
     inline void setSpeakAs(OptionSet<SpeakAs>);
     inline void setTextCombine(TextCombine);
-    inline void setTextDecorationColor(const Style::Color&);
-    inline void setTextEmphasisColor(const Style::Color&);
+    inline void setTextDecorationColor(Style::Color&&);
+    inline void setTextEmphasisColor(Style::Color&&);
     inline void setTextEmphasisFill(TextEmphasisFill);
     inline void setTextEmphasisMark(TextEmphasisMark);
     inline void setTextEmphasisCustomMark(const AtomString&);
@@ -1674,13 +1684,13 @@ public:
     void setScrollSnapStop(ScrollSnapStop);
 
     inline void setScrollbarColor(const std::optional<ScrollbarColor>&);
-    inline void setScrollbarThumbColor(const Style::Color&);
-    inline void setScrollbarTrackColor(const Style::Color&);
+    inline void setScrollbarThumbColor(Style::Color&&);
+    inline void setScrollbarTrackColor(Style::Color&&);
     void setScrollbarGutter(ScrollbarGutter);
     inline void setScrollbarWidth(ScrollbarWidth);
 
 #if ENABLE(TOUCH_EVENTS)
-    inline void setTapHighlightColor(const Style::Color&);
+    inline void setTapHighlightColor(Style::Color&&);
 #endif
 
 #if PLATFORM(IOS_FAMILY)
@@ -1739,8 +1749,8 @@ public:
     bool hasPositiveStrokeWidth() const;
     
     inline const Style::Color& strokeColor() const;
-    inline void setStrokeColor(const Style::Color&);
-    inline void setVisitedLinkStrokeColor(const Style::Color&);
+    inline void setStrokeColor(Style::Color&&);
+    inline void setVisitedLinkStrokeColor(Style::Color&&);
     inline const Style::Color& visitedLinkStrokeColor() const;
     inline void setHasExplicitlySetStrokeColor(bool);
     inline bool hasExplicitlySetStrokeColor() const;
@@ -1759,8 +1769,8 @@ public:
     inline SVGPaintType visitedFillPaintType() const;
     inline const Style::Color& fillPaintColor() const;
     inline const Style::Color& visitedFillPaintColor() const;
-    inline void setFillPaintColor(const Style::Color&);
-    inline void setVisitedFillPaintColor(const Style::Color&);
+    inline void setFillPaintColor(Style::Color&&);
+    inline void setVisitedFillPaintColor(Style::Color&&);
     inline void setHasExplicitlySetColor(bool);
     inline bool hasExplicitlySetColor() const;
     inline float fillOpacity() const;
@@ -1770,12 +1780,12 @@ public:
     inline SVGPaintType visitedStrokePaintType() const;
     inline const Style::Color& strokePaintColor() const;
     inline const Style::Color& visitedStrokePaintColor() const;
-    inline void setStrokePaintColor(const Style::Color&);
-    inline void setVisitedStrokePaintColor(const Style::Color&);
+    inline void setStrokePaintColor(Style::Color&&);
+    inline void setVisitedStrokePaintColor(Style::Color&&);
     inline float strokeOpacity() const;
     inline void setStrokeOpacity(float);
-    inline Vector<SVGLengthValue> strokeDashArray() const;
-    inline void setStrokeDashArray(Vector<SVGLengthValue>);
+    inline const FixedVector<Length>& strokeDashArray() const;
+    inline void setStrokeDashArray(FixedVector<Length>&&);
     inline const Length& strokeDashOffset() const;
     inline void setStrokeDashOffset(Length&&);
 
@@ -1804,12 +1814,12 @@ public:
     inline float stopOpacity() const;
     inline void setStopOpacity(float);
 
-    inline void setStopColor(const Style::Color&);
-    inline void setFloodColor(const Style::Color&);
-    inline void setLightingColor(const Style::Color&);
+    inline void setStopColor(Style::Color&&);
+    inline void setFloodColor(Style::Color&&);
+    inline void setLightingColor(Style::Color&&);
 
-    inline SVGLengthValue baselineShiftValue() const;
-    inline void setBaselineShiftValue(SVGLengthValue);
+    inline const Length& baselineShiftValue() const;
+    inline void setBaselineShiftValue(Length&&);
     inline SVGLengthValue kerning() const;
     inline void setKerning(SVGLengthValue);
 
@@ -1852,8 +1862,8 @@ public:
     inline QuotesData* quotes() const;
     void setQuotes(RefPtr<QuotesData>&&);
 
-    inline void setViewTransitionClasses(const Vector<Style::ScopedName>&);
-    inline void setViewTransitionName(Style::ViewTransitionName);
+    inline void setViewTransitionClasses(FixedVector<Style::ScopedName>&&);
+    inline void setViewTransitionName(Style::ViewTransitionName&&);
 
     inline WillChangeData* willChange() const;
     void setWillChange(RefPtr<WillChangeData>&&);
@@ -1966,7 +1976,7 @@ public:
     static constexpr ListStylePosition initialListStylePosition();
     static inline ListStyleType initialListStyleType();
     static constexpr OptionSet<TextTransform> initialTextTransform();
-    static inline Vector<Style::ScopedName> initialViewTransitionClasses();
+    static inline FixedVector<Style::ScopedName> initialViewTransitionClasses();
     static inline Style::ViewTransitionName initialViewTransitionName();
     static constexpr Visibility initialVisibility();
     static constexpr WhiteSpaceCollapse initialWhiteSpaceCollapse();
@@ -2063,7 +2073,7 @@ public:
     static constexpr OptionSet<Containment> contentContainment();
     static constexpr ContainerType initialContainerType();
     static constexpr ContentVisibility initialContentVisibility();
-    static Vector<Style::ScopedName> initialContainerNames();
+    static FixedVector<Style::ScopedName> initialContainerNames();
     static double initialAspectRatioWidth() { return 1.0; }
     static double initialAspectRatioHeight() { return 1.0; }
 
@@ -2142,12 +2152,12 @@ public:
     static ScrollSnapAlign initialScrollSnapAlign();
     static ScrollSnapStop initialScrollSnapStop();
 
-    static Vector<ScrollAxis> initialScrollTimelineAxes() { return { }; }
-    static Vector<AtomString> initialScrollTimelineNames() { return { }; }
+    static FixedVector<ScrollAxis> initialScrollTimelineAxes() { return { }; }
+    static FixedVector<AtomString> initialScrollTimelineNames() { return { }; }
 
-    static Vector<ScrollAxis> initialViewTimelineAxes() { return { }; }
-    static Vector<ViewTimelineInsets> initialViewTimelineInsets();
-    static Vector<AtomString> initialViewTimelineNames() { return { }; }
+    static FixedVector<ScrollAxis> initialViewTimelineAxes() { return { }; }
+    static FixedVector<ViewTimelineInsets> initialViewTimelineInsets();
+    static FixedVector<AtomString> initialViewTimelineNames() { return { }; }
 
     static inline std::optional<ScrollbarColor> initialScrollbarColor();
     static ScrollbarGutter initialScrollbarGutter();
@@ -2231,25 +2241,27 @@ public:
 
     static constexpr MathStyle initialMathStyle();
 
-    void setVisitedLinkColor(const Color&);
-    inline void setVisitedLinkBackgroundColor(const Style::Color&);
-    inline void setVisitedLinkBorderLeftColor(const Style::Color&);
-    inline void setVisitedLinkBorderRightColor(const Style::Color&);
-    inline void setVisitedLinkBorderBottomColor(const Style::Color&);
-    inline void setVisitedLinkBorderTopColor(const Style::Color&);
-    inline void setVisitedLinkOutlineColor(const Style::Color&);
-    inline void setVisitedLinkColumnRuleColor(const Style::Color&);
-    inline void setVisitedLinkTextDecorationColor(const Style::Color&);
-    inline void setVisitedLinkTextEmphasisColor(const Style::Color&);
-    inline void setVisitedLinkTextFillColor(const Style::Color&);
-    inline void setVisitedLinkTextStrokeColor(const Style::Color&);
-    inline void setVisitedLinkCaretColor(const Style::Color&);
+    void setVisitedLinkColor(Color&&);
+    inline void setVisitedLinkBackgroundColor(Style::Color&&);
+    inline void setVisitedLinkBorderLeftColor(Style::Color&&);
+    inline void setVisitedLinkBorderRightColor(Style::Color&&);
+    inline void setVisitedLinkBorderBottomColor(Style::Color&&);
+    inline void setVisitedLinkBorderTopColor(Style::Color&&);
+    inline void setVisitedLinkOutlineColor(Style::Color&&);
+    inline void setVisitedLinkColumnRuleColor(Style::Color&&);
+    inline void setVisitedLinkTextDecorationColor(Style::Color&&);
+    inline void setVisitedLinkTextEmphasisColor(Style::Color&&);
+    inline void setVisitedLinkTextFillColor(Style::Color&&);
+    inline void setVisitedLinkTextStrokeColor(Style::Color&&);
+    inline void setVisitedLinkCaretColor(Style::Color&&);
     inline void setHasVisitedLinkAutoCaretColor();
 
     void inheritUnicodeBidiFrom(const RenderStyle* parent) { m_nonInheritedFlags.unicodeBidi = parent->m_nonInheritedFlags.unicodeBidi; }
 
-    inline void getShadowInlineDirectionExtent(const ShadowData*, LayoutUnit& logicalLeft, LayoutUnit& logicalRight) const;
-    inline void getShadowBlockDirectionExtent(const ShadowData*, LayoutUnit& logicalTop, LayoutUnit& logicalBottom) const;
+    template<typename ShadowType> static void getShadowHorizontalExtent(const FixedVector<ShadowType>&, LayoutUnit& left, LayoutUnit& right);
+    template<typename ShadowType> static void getShadowVerticalExtent(const FixedVector<ShadowType>&, LayoutUnit& top, LayoutUnit& bottom);
+    template<typename ShadowType> void getShadowInlineDirectionExtent(const FixedVector<ShadowType>&, LayoutUnit& logicalLeft, LayoutUnit& logicalRight) const;
+    template<typename ShadowType> void getShadowBlockDirectionExtent(const FixedVector<ShadowType>&, LayoutUnit& logicalTop, LayoutUnit& logicalBottom) const;
 
     inline const Style::Color& borderLeftColor() const;
     inline const Style::Color& borderRightColor() const;
@@ -2334,9 +2346,9 @@ public:
     bool scrollAnchoringSuppressionStyleDidChange(const RenderStyle*) const;
     bool outOfFlowPositionStyleDidChange(const RenderStyle*) const;
 
-    static Vector<Style::ScopedName> initialAnchorNames();
-    inline const Vector<Style::ScopedName>& anchorNames() const;
-    inline void setAnchorNames(const Vector<Style::ScopedName>&);
+    static FixedVector<Style::ScopedName> initialAnchorNames();
+    inline const FixedVector<Style::ScopedName>& anchorNames() const;
+    inline void setAnchorNames(FixedVector<Style::ScopedName>&&);
 
     static inline NameScope initialAnchorScope();
     inline const NameScope& anchorScope() const;
@@ -2354,9 +2366,9 @@ public:
     inline Style::PositionTryOrder positionTryOrder() const;
     inline void setPositionTryOrder(Style::PositionTryOrder);
 
-    static Vector<Style::PositionTryFallback> initialPositionTryFallbacks();
-    const Vector<Style::PositionTryFallback>& positionTryFallbacks() const;
-    void setPositionTryFallbacks(const Vector<Style::PositionTryFallback>&);
+    static FixedVector<Style::PositionTryFallback> initialPositionTryFallbacks();
+    const FixedVector<Style::PositionTryFallback>& positionTryFallbacks() const;
+    void setPositionTryFallbacks(FixedVector<Style::PositionTryFallback>&&);
 
     static constexpr OptionSet<PositionVisibility> initialPositionVisibility();
     inline OptionSet<PositionVisibility> positionVisibility() const;
@@ -2475,9 +2487,6 @@ private:
     static constexpr bool isDisplayTableOrTablePart(DisplayType);
     static constexpr bool isInternalTableBox(DisplayType);
     static constexpr bool isRubyContainerOrInternalRubyBox(DisplayType);
-
-    static void getShadowHorizontalExtent(const ShadowData*, LayoutUnit& left, LayoutUnit& right);
-    static void getShadowVerticalExtent(const ShadowData*, LayoutUnit& top, LayoutUnit& bottom);
 
     bool changeAffectsVisualOverflow(const RenderStyle&) const;
     bool changeRequiresLayout(const RenderStyle&, OptionSet<StyleDifferenceContextSensitiveProperty>& changedContextSensitiveProperties) const;

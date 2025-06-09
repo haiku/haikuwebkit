@@ -579,10 +579,8 @@ Ref<RenderPassEncoder> CommandEncoder::beginRenderPass(const WGPURenderPassDescr
         if (!attachment.view)
             continue;
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
         // MTLRenderPassColorAttachmentDescriptorArray is bounds-checked internally.
         const auto& mtlAttachment = mtlDescriptor.colorAttachments[i];
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
         mtlAttachment.clearColor = MTLClearColorMake(attachment.clearValue.r,
             attachment.clearValue.g,
@@ -910,11 +908,6 @@ NSString* CommandEncoder::errorValidatingImageCopyBuffer(const WGPUImageCopyBuff
     Ref buffer = fromAPI(imageCopyBuffer.buffer);
     if (!isValidToUseWith(buffer, *this))
         return @"buffer is not valid";
-
-    if (!buffer->isDestroyed()) {
-        if (buffer->state() != Buffer::State::Unmapped)
-            return @"buffer state != Unmapped";
-    }
 
     if (imageCopyBuffer.layout.bytesPerRow != WGPU_COPY_STRIDE_UNDEFINED && (imageCopyBuffer.layout.bytesPerRow % 256))
         return @"imageCopyBuffer.layout.bytesPerRow is not a multiple of 256";

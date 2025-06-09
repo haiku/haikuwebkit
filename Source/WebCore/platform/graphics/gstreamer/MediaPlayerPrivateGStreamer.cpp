@@ -70,6 +70,9 @@
 #include "GStreamerEMEUtilities.h"
 #include "SharedBuffer.h"
 #include "WebKitCommonEncryptionDecryptorGStreamer.h"
+#if ENABLE(THUNDER)
+#include "CDMThunder.h"
+#endif
 #endif
 
 #if ENABLE(WEB_AUDIO)
@@ -2542,7 +2545,12 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
     g_signal_connect(parsebin, "autoplug-select",
         G_CALLBACK(+[](GstElement*, GstPad*, GstCaps* caps, GstElementFactory* factory, MediaPlayerPrivateGStreamer* player) -> unsigned {
             static auto tryAutoPlug = *gstGetAutoplugSelectResult("try"_s);
+            static auto skipAutoPlug = *gstGetAutoplugSelectResult("skip"_s);
             static auto exposeAutoPlug = *gstGetAutoplugSelectResult("expose"_s);
+
+            auto name = StringView::fromLatin1(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE_CAST(factory)));
+            if (name == "webkitthunderparser"_s && player->m_url.protocolIsBlob())
+                return skipAutoPlug;
 
             auto* structure = gst_caps_get_structure(caps, 0);
             if (!structure)
@@ -2572,6 +2580,26 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
         }), this);
 }
 
+void MediaPlayerPrivateGStreamer::configureUriDecodebin2(GstElement* element)
+{
+    ASSERT(m_isLegacyPlaybin);
+#if ENABLE(ENCRYPTED_MEDIA) && ENABLE(THUNDER)
+    if (CDMFactoryThunder::singleton().supportedKeySystems().isEmpty())
+        return;
+
+    g_signal_connect(element, "autoplug-select", G_CALLBACK(+[](GstElement*, GstPad*, GstCaps*, GstElementFactory* factory, gpointer) -> unsigned {
+        static auto tryAutoPlug = *gstGetAutoplugSelectResult("try"_s);
+        static auto skipAutoPlug = *gstGetAutoplugSelectResult("skip"_s);
+        auto name = StringView::fromLatin1(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE_CAST(factory)));
+        if (name == "webkitthunderparser"_s)
+            return skipAutoPlug;
+        return tryAutoPlug;
+    }), nullptr);
+#else
+    UNUSED_PARAM(element);
+#endif
+}
+
 void MediaPlayerPrivateGStreamer::configureElement(GstElement* element)
 {
     configureElementPlatformQuirks(element);
@@ -2591,6 +2619,11 @@ void MediaPlayerPrivateGStreamer::configureElement(GstElement* element)
 
     if (nameView.startsWith("parsebin"_s))
         configureParsebin(element);
+
+    // The legacy decodebin2 stack doesn't integrate well with parsebin, so prevent auto-plugging of
+    // the webkitthunderparser.
+    if (nameView.startsWith("uridecodebin"_s) && m_isLegacyPlaybin)
+        configureUriDecodebin2(element);
 
     // In case of playbin3 with <video ... preload="auto">, instantiate downloadbuffer element,
     // otherwise the playbin3 would instantiate a queue element instead. When playing blob URIs,
@@ -3444,6 +3477,9 @@ void MediaPlayerPrivateGStreamer::setupCodecProbe(GstElement* element)
 void MediaPlayerPrivateGStreamer::configureAudioDecoder(GstElement* decoder)
 {
     setupCodecProbe(decoder);
+
+    if (isMediaStreamPlayer())
+        configureMediaStreamAudioDecoder(decoder);
 }
 
 void MediaPlayerPrivateGStreamer::configureVideoDecoder(GstElement* decoder)
@@ -4493,13 +4529,17 @@ std::optional<VideoFrameMetadata> MediaPlayerPrivateGStreamer::videoFrameMetadat
 static bool areAllSinksPlayingForBin(GstBin* bin)
 {
     for (auto* element : GstIteratorAdaptor<GstElement>(gst_bin_iterate_sinks(bin))) {
-        if (GST_IS_BIN(element) && !areAllSinksPlayingForBin(GST_BIN_CAST(element)))
+        if (GST_IS_BIN(element) && !areAllSinksPlayingForBin(GST_BIN_CAST(element))) {
+            GST_WARNING_OBJECT(element, "Unexpectedly not in PLAYING state");
             return false;
+        }
 
         GstState state, pending;
         gst_element_get_state(element, &state, &pending, 0);
-        if (state != GST_STATE_PLAYING && pending != GST_STATE_PLAYING)
+        if (state != GST_STATE_PLAYING && pending != GST_STATE_PLAYING) {
+            GST_WARNING_OBJECT(element, "Unexpectedly not in PLAYING state");
             return false;
+        }
     }
     return true;
 }
@@ -4507,6 +4547,12 @@ static bool areAllSinksPlayingForBin(GstBin* bin)
 void MediaPlayerPrivateGStreamer::checkPlayingConsistency()
 {
     if (!pipeline())
+        return;
+
+    // Do not check "playing consistency" for mediastream cases, because the pipeline can reach a
+    // state where a track was added, then removed and added again and then the audio sink would be
+    // in a PAUSED-to-PAUSED transition until it has received a new buffer.
+    if (isMediaStreamPlayer())
         return;
 
     GstState state, pending;
@@ -4560,6 +4606,7 @@ String MediaPlayerPrivateGStreamer::codecForStreamId(TrackID streamId)
 #if ENABLE(MEDIA_TELEMETRY)
 MediaTelemetryReport::DrmType MediaPlayerPrivateGStreamer::getDrm() const
 {
+#if ENABLE(ENCRYPTED_MEDIA)
     if (!m_pipeline)
         return MediaTelemetryReport::DrmType::None;
 
@@ -4571,11 +4618,11 @@ MediaTelemetryReport::DrmType MediaPlayerPrivateGStreamer::getDrm() const
     if (!drmCdmInstanceStructure)
         return MediaTelemetryReport::DrmType::None;
 
-    const GValue* drmCdmInstanceVal = gst_structure_get_value(drmCdmInstanceStructure, "cdm-instance");
-    if (!drmCdmInstanceVal)
+    const GValue* drmCdmInstanceValue = gst_structure_get_value(drmCdmInstanceStructure, "cdm-instance");
+    if (!drmCdmInstanceValue)
         return MediaTelemetryReport::DrmType::None;
 
-    const CDMInstance* drmCdmInstance = static_cast<const CDMInstance*>(g_value_get_pointer(drmCdmInstanceVal));
+    const CDMInstance* drmCdmInstance = static_cast<const CDMInstance*>(g_value_get_pointer(drmCdmInstanceValue));
     if (!drmCdmInstance)
         return MediaTelemetryReport::DrmType::None;
 
@@ -4585,8 +4632,10 @@ MediaTelemetryReport::DrmType MediaPlayerPrivateGStreamer::getDrm() const
     if (GStreamerEMEUtilities::isWidevineKeySystem(keySystem))
         return MediaTelemetryReport::DrmType::Widevine;
     return MediaTelemetryReport::DrmType::Unknown;
+#endif // ENABLE(ENCRYPTED_MEDIA)
+    return MediaTelemetryReport::DrmType::None;
 }
-#endif
+#endif // ENABLE(MEDIA_TELEMETRY)
 
 #undef GST_CAT_DEFAULT
 

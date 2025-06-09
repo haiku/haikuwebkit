@@ -37,6 +37,7 @@
 #import "FontSelector.h"
 #import "GraphicsContextCG.h"
 #import "Image.h"
+#import "ImageAdapter.h"
 #import "LocalDefaultSystemAppearance.h"
 #import "NodeInlines.h"
 #import "Page.h"
@@ -246,7 +247,7 @@ LinkImageLayout::LinkImageLayout(URL& url, const String& titleString)
         Vector<CGPoint> origins(lineCount);
         CGRect lineBounds;
         CGFloat height = 0;
-        CTFrameGetLineOrigins(textFrame.get(), CFRangeMake(0, 0), origins.data());
+        CTFrameGetLineOrigins(textFrame.get(), CFRangeMake(0, 0), origins.mutableSpan().data());
         for (CFIndex lineIndex = 0; lineIndex < lineCount; ++lineIndex) {
             CTLineRef line = (CTLineRef)CFArrayGetValueAtIndex(ctLines, lineIndex);
 

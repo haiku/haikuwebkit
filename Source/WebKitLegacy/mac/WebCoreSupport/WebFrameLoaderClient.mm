@@ -101,6 +101,7 @@
 #import <WebCore/HistoryController.h>
 #import <WebCore/HistoryItem.h>
 #import <WebCore/HitTestResult.h>
+#import <WebCore/ImageAdapter.h>
 #import <WebCore/LoaderNSURLExtras.h>
 #import <WebCore/LocalFrame.h>
 #import <WebCore/LocalFrameView.h>
@@ -2027,12 +2028,8 @@ static NSImage *webGetNSImage(WebCore::Image* image, NSSize size)
     NSImage* nsImage = image->adapter().nsImage();
     if (!nsImage)
         return nil;
-    if (!NSEqualSizes([nsImage size], size)) {
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-        [nsImage setScalesWhenResized:YES];
-ALLOW_DEPRECATED_DECLARATIONS_END
+    if (!NSEqualSizes([nsImage size], size))
         [nsImage setSize:size];
-    }
     return nsImage;
 }
 #endif // !PLATFORM(IOS_FAMILY)

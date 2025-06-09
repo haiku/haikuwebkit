@@ -1003,7 +1003,8 @@ private:
         case ArithBitXor:
         case ArithBitRShift:
         case ArithBitLShift:
-        case BitURShift:
+        case ArithBitURShift:
+        case ValueBitURShift: // URShift >>> does not accept BigInt.
         case ArithIMul:
         case ArithClz32: {
             setPrediction(SpecInt32Only);
@@ -1440,6 +1441,7 @@ private:
         }
 
         case GetScope:
+        case GetEvalScope:
             setPrediction(SpecObjectOther);
             break;
 

@@ -57,7 +57,7 @@
 #include <wpe/wpe.h>
 #endif
 
-#if PLATFORM(GTK) || (PLATFORM(WPE) && ENABLE(WPE_PLATFORM))
+#if PLATFORM(GTK) || ENABLE(WPE_PLATFORM)
 #include "ScreenManager.h"
 #endif
 
@@ -67,7 +67,8 @@
 #include <gtk/gtk.h>
 #endif
 
-#if PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
+#if ENABLE(WPE_PLATFORM)
+#include "WPEUtilities.h"
 #include <wpe/wpe-platform.h>
 #endif
 
@@ -79,7 +80,7 @@ WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 namespace WebKit {
 
-#if PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
+#if ENABLE(WPE_PLATFORM)
 static OptionSet<AvailableInputDevices> toAvailableInputDevices(WPEAvailableInputDevices inputDevices)
 {
     OptionSet<AvailableInputDevices> availableInputDevices;
@@ -112,10 +113,11 @@ static OptionSet<AvailableInputDevices> toAvailableInputDevices(GdkSeatCapabilit
 static OptionSet<AvailableInputDevices> availableInputDevices()
 {
 #if ENABLE(WPE_PLATFORM)
-    bool usingWPEPlatformAPI = !!g_type_class_peek(WPE_TYPE_DISPLAY);
-    if (usingWPEPlatformAPI) {
-        const auto inputDevices = wpe_display_get_available_input_devices(wpe_display_get_primary());
-        return toAvailableInputDevices(inputDevices);
+    if (WKWPE::isUsingWPEPlatformAPI()) {
+        if (auto* display = wpe_display_get_primary()) {
+            const auto inputDevices = wpe_display_get_available_input_devices(display);
+            return toAvailableInputDevices(inputDevices);
+        }
     }
 #endif
 #if PLATFORM(GTK)
@@ -166,13 +168,13 @@ void WebProcessPool::platformInitialize(NeedsGlobalStaticInitialization)
 #endif
 
 #if ENABLE(WPE_PLATFORM)
-    bool usingWPEPlatformAPI = !!g_type_class_peek(WPE_TYPE_DISPLAY);
-    if (usingWPEPlatformAPI) {
-        auto* display = wpe_display_get_primary();
-        g_signal_connect(display, "notify::available-input-devices", G_CALLBACK(+[](WPEDisplay* display, GParamSpec*, WebProcessPool* pool) {
-            auto availableInputDevices = toAvailableInputDevices(wpe_display_get_available_input_devices(display));
-            pool->sendToAllProcesses(Messages::WebProcess::SetAvailableInputDevices(availableInputDevices));
-        }), this);
+    if (WKWPE::isUsingWPEPlatformAPI()) {
+        if (auto* display = wpe_display_get_primary()) {
+            g_signal_connect(display, "notify::available-input-devices", G_CALLBACK(+[](WPEDisplay* display, GParamSpec*, WebProcessPool* pool) {
+                auto availableInputDevices = toAvailableInputDevices(wpe_display_get_available_input_devices(display));
+                pool->sendToAllProcesses(Messages::WebProcess::SetAvailableInputDevices(availableInputDevices));
+            }), this);
+        }
     }
 #endif
 
@@ -188,8 +190,8 @@ void WebProcessPool::platformInitialize(NeedsGlobalStaticInitialization)
 
 void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process, WebProcessCreationParameters& parameters)
 {
-#if PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
-    bool usingWPEPlatformAPI = !!g_type_class_peek(WPE_TYPE_DISPLAY);
+#if ENABLE(WPE_PLATFORM)
+    bool usingWPEPlatformAPI = WKWPE::isUsingWPEPlatformAPI();
 #endif
 
 #if USE(GBM)
@@ -198,7 +200,7 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
 
 #if PLATFORM(GTK)
     parameters.rendererBufferTransportMode = AcceleratedBackingStoreDMABuf::rendererBufferTransportMode();
-#elif PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
+#elif ENABLE(WPE_PLATFORM)
     if (usingWPEPlatformAPI) {
 #if USE(GBM)
         if (!parameters.renderDeviceFile.isEmpty())
@@ -260,7 +262,7 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
     parameters.screenProperties = ScreenManager::singleton().collectScreenProperties();
 #endif
 
-#if PLATFORM(WPE) && ENABLE(WPE_PLATFORM)
+#if ENABLE(WPE_PLATFORM)
     if (usingWPEPlatformAPI)
         parameters.screenProperties = ScreenManager::singleton().collectScreenProperties();
 #endif
@@ -269,10 +271,9 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
 void WebProcessPool::platformInvalidateContext()
 {
 #if ENABLE(WPE_PLATFORM)
-    bool usingWPEPlatformAPI = !!g_type_class_peek(WPE_TYPE_DISPLAY);
-    if (usingWPEPlatformAPI) {
-        auto* display = wpe_display_get_primary();
-        g_signal_handlers_disconnect_by_data(display, this);
+    if (WKWPE::isUsingWPEPlatformAPI()) {
+        if (auto* display = wpe_display_get_primary())
+            g_signal_handlers_disconnect_by_data(display, this);
     }
 #endif
 #if PLATFORM(GTK)
