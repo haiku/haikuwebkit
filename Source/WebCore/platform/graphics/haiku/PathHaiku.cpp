@@ -35,6 +35,7 @@
 #include "FloatRect.h"
 #include "GraphicsContextHaiku.h"
 #include "NotImplemented.h"
+#include "PlatformImage.h"
 #include "TransformationMatrix.h"
 #include <Bitmap.h>
 #include <Shape.h>
