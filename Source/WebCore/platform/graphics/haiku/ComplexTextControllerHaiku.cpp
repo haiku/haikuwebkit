@@ -39,18 +39,18 @@ void ComplexTextController::collectComplexTextRunsForCharacters(std::span<const 
     unsigned length = characters.size();
 
     if (!font) {
-        m_complexTextRuns.append(ComplexTextRun::create(m_fontCascade.primaryFont(), characters, stringLocation, 0, length, m_run.ltr()));
+        m_complexTextRuns.append(ComplexTextRun::create(m_fontCascade->primaryFont(), characters, stringLocation, 0, length, m_run->ltr()));
         return;
     }
 
     UErrorCode errorCode = U_ZERO_ERROR;
 
     UBiDi* text = ubidi_openSized(length, 0, &errorCode);
-    ubidi_setPara(text, characters.data(), length, m_run.ltr() ? UBIDI_DEFAULT_LTR : UBIDI_DEFAULT_RTL, NULL, &errorCode);
+    ubidi_setPara(text, characters.data(), length, m_run->ltr() ? UBIDI_DEFAULT_LTR : UBIDI_DEFAULT_RTL, NULL, &errorCode);
     int32_t runs = ubidi_countRuns(text, &errorCode);
     if (!U_SUCCESS(errorCode)) {
         ubidi_close(text);
-        m_complexTextRuns.append(ComplexTextRun::create(*font, characters, stringLocation, 0, length, m_run.ltr()));
+        m_complexTextRuns.append(ComplexTextRun::create(*font, characters, stringLocation, 0, length, m_run->ltr()));
         return;
     }
 

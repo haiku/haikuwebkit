@@ -30,6 +30,8 @@
 
 #include "Image.h"
 
+#include "PlatformImage.h"
+
 #include <Bitmap.h>
 #include <View.h>
 

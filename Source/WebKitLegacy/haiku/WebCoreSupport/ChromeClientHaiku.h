@@ -96,7 +96,7 @@ namespace WebCore {
                                          const String& message, unsigned int lineNumber, unsigned columnNumber, const String& sourceID) override;
 
         bool canRunBeforeUnloadConfirmPanel() override;
-        bool runBeforeUnloadConfirmPanel(const String& message, LocalFrame& frame) override;
+        bool runBeforeUnloadConfirmPanel(String&& message, LocalFrame& frame) override;
 
         void runJavaScriptAlert(LocalFrame&, const String&) override;
         bool runJavaScriptConfirm(LocalFrame&, const String&) override;

@@ -68,7 +68,7 @@ void BackForwardList::addItem(Ref<HistoryItem>&& newItem)
     // (or even if we are, if we only want 1 entry).
     if (m_entries.size() == m_capacity && (m_current || m_capacity == 1)) {
         RefPtr<HistoryItem> item = WTFMove(m_entries[0]);
-        m_entries.remove(0);
+        m_entries.removeAt(0);
         m_entryHash.remove(item);
         --m_current;
     }

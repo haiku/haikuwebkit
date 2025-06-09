@@ -89,13 +89,13 @@ bool RenderThemeHaiku::paintSliderTrack(const RenderObject& object, const PaintI
 
 void RenderThemeHaiku::adjustSliderTrackStyle(RenderStyle& style, const Element*) const
 {
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({});
 }
 
 void RenderThemeHaiku::adjustSliderThumbStyle(RenderStyle& style, const Element* element) const
 {
     RenderTheme::adjustSliderThumbStyle(style, element);
-    style.setBoxShadow(nullptr);
+    style.setBoxShadow({});
 }
 
 void RenderThemeHaiku::adjustSliderThumbSize(RenderStyle& style, const Element*) const

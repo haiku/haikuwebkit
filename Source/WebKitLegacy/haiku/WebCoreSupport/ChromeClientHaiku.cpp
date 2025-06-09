@@ -245,7 +245,7 @@ bool ChromeClientHaiku::canRunBeforeUnloadConfirmPanel()
     return true;
 }
 
-bool ChromeClientHaiku::runBeforeUnloadConfirmPanel(const String& message, LocalFrame& frame)
+bool ChromeClientHaiku::runBeforeUnloadConfirmPanel(String&& message, LocalFrame& frame)
 {
     return runJavaScriptConfirm(frame, message);
 }
