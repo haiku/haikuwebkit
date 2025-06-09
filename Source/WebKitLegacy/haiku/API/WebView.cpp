@@ -35,6 +35,7 @@
 #include "WebCore/LocalFrameView.h"
 #include "WebCore/NotImplemented.h"
 #include "WebCore/Page.h"
+#include "WebCore/PlatformImage.h"
 #include "WebCore/PointerLockController.h"
 #include "WebCore/RemoteFrameClient.h"
 #include "WebCore/ScrollableArea.h"
