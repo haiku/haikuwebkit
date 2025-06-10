@@ -11,4 +11,4 @@ list(APPEND PAL_SOURCES
     unix/LoggingUnix.cpp
 )
 
-list(APPEND PAL_LIBRARIES crypto)
+list(APPEND PAL_LIBRARIES crypto WTF)
