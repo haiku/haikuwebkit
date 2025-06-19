@@ -808,7 +808,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     self._webView = webView;
 #if !RELEASE_LOG_DISABLED
     if (auto webPage = RefPtr { [webView _page].get() }) {
-        _logger = &webPage->logger();
+        _logger = webPage->logger();
         _logIdentifier = webPage->logIdentifier();
     }
 #endif
@@ -946,7 +946,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
             UIWindowScene *scene = [window windowScene];
             _previewWindowController = adoptNS([WebKit::allocWKPreviewWindowControllerInstance() initWithURL:url.createNSURL().get() sceneID:scene._sceneIdentifier]);
             [_previewWindowController setDelegate:self];
-            [_previewWindowController presentWindow];
+            [_previewWindowController presentWindowWithCompletionHandler:^{ }];
             _fullScreenState = WebKit::InFullScreen;
 
             OBJC_ALWAYS_LOG(logIdentifier, "(QL) presentation completed");
@@ -1111,7 +1111,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return;
 
     manager->prepareQuickLookImageURL([strongSelf = retainPtr(self), self, window = retainPtr([webView window]), logIdentifier = OBJC_LOGIDENTIFIER](URL&& url) mutable {
-        [_previewWindowController updateImage:url.createNSURL().get()];
+        [_previewWindowController updateImage:url.createNSURL().get() completionHandler:^{ }];
     });
 }
 #endif
@@ -1289,7 +1289,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         _fullScreenState = WebKit::NotInFullScreen;
 
         if (_previewWindowController) {
-            [_previewWindowController dismissWindow];
+            [_previewWindowController dismissWindowWithCompletionHandler:^{ }];
             [_previewWindowController setDelegate:nil];
             _previewWindowController = nil;
         }

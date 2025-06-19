@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2021 Igalia S.L.
- * Copyright (C) 2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2025 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -276,7 +276,7 @@ String AccessibilityObjectAtspi::text() const
 
     m_hasListMarkerAtStart = false;
 
-    if (m_coreObject->roleValue() == AccessibilityRole::ColorWell) {
+    if (m_coreObject->role() == AccessibilityRole::ColorWell) {
         auto color = convertColor<SRGBA<float>>(m_coreObject->colorValue()).resolved();
         GUniquePtr<char> colorString(g_strdup_printf("rgb %7.5f %7.5f %7.5f 1", color.red, color.green, color.blue));
         return String::fromUTF8(colorString.get());
@@ -851,7 +851,7 @@ AccessibilityObjectAtspi::TextAttributes AccessibilityObjectAtspi::textAttribute
     }
 
     VisiblePosition offsetPosition = m_coreObject->visiblePositionForIndex(adjustInputOffset(*utf16Offset, m_hasListMarkerAtStart));
-    auto childNode = offsetPosition.deepEquivalent().protectedDeprecatedNode();
+    RefPtr childNode = offsetPosition.deepEquivalent().deprecatedNode();
     if (!childNode)
         return { WTFMove(defaultAttributes), -1, -1 };
 

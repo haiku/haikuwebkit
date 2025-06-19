@@ -650,11 +650,10 @@ void CommandQueue::onCommandBufferCompleted(id<MTLCommandBuffer> buf,
     MTLCommandBufferStatus status = buf.status;
     if (status != MTLCommandBufferStatusCompleted)
     {
-        NSError *error = buf.error;
         // MTLCommandBufferErrorNotPermitted is non-fatal, all other errors
         // result in device lost.
         // TODO(djg): Should this also check error.domain for MTLCommandBufferErrorDomain?
-        mIsDeviceLost  = !error || error.code != MTLCommandBufferErrorNotPermitted;
+        mIsDeviceLost = !error || error.code != MTLCommandBufferErrorNotPermitted;
         if (mIsDeviceLost)
         {
             return;
@@ -1852,7 +1851,8 @@ RenderCommandEncoder &RenderCommandEncoder::setViewport(const MTLViewport &viewp
     return *this;
 }
 
-RenderCommandEncoder &RenderCommandEncoder::setScissorRect(const MTLScissorRect &rect, id<MTLRasterizationRateMap> map)
+RenderCommandEncoder &RenderCommandEncoder::setScissorRect(const MTLScissorRect &rect,
+                                                           id<MTLRasterizationRateMap> map)
 {
     auto maxScissorRect =
         MTLCoordinate2DMake(mRenderPassMaxScissorRect.width, mRenderPassMaxScissorRect.height);
@@ -1861,7 +1861,9 @@ RenderCommandEncoder &RenderCommandEncoder::setScissorRect(const MTLScissorRect 
     {
         maxScissorRect = [map mapPhysicalToScreenCoordinates:maxScissorRect forLayer:0];
         if (!(rect.width * rect.height))
+        {
             return *this;
+        }
     }
 
     NSUInteger clampedWidth =
@@ -1892,8 +1894,8 @@ RenderCommandEncoder &RenderCommandEncoder::setScissorRect(const MTLScissorRect 
         clampedRect.x      = (NSUInteger)roundf(adjustedOrigin.x);
         clampedRect.y      = (NSUInteger)roundf(adjustedOrigin.y);
         MTLSize screenSize = [map screenSize];
-        clampedRect.width  = std::min<NSUInteger>(screenSize.width, roundf(adjustedSize.x));
-        clampedRect.height = std::min<NSUInteger>(screenSize.height, roundf(adjustedSize.y));
+        clampedRect.width  = std::min(screenSize.width, static_cast<NSUInteger>(roundf(adjustedSize.x)));
+        clampedRect.height = std::min(screenSize.height, static_cast<NSUInteger>(roundf(adjustedSize.y)));
     }
 
     mCommands.push(CmdType::SetScissorRect).push(clampedRect);
@@ -1987,7 +1989,7 @@ RenderCommandEncoder &RenderCommandEncoder::commonSetBuffer(gl::ShaderType shade
 }
 
 RenderCommandEncoder &RenderCommandEncoder::setBytes(gl::ShaderType shaderType,
-                                                     const uint8_t *bytes,
+                                                     const void *bytes,
                                                      size_t size,
                                                      uint32_t index)
 {
@@ -2002,7 +2004,7 @@ RenderCommandEncoder &RenderCommandEncoder::setBytes(gl::ShaderType shaderType,
 
     mCommands.push(static_cast<CmdType>(mSetBytesCmds[shaderType]))
         .push(size)
-        .push(bytes, size)
+        .push(reinterpret_cast<const uint8_t *>(bytes), size)
         .push(index);
 
     return *this;
@@ -2301,13 +2303,16 @@ void RenderCommandEncoder::popDebugGroup()
     mCommands.push(CmdType::PopDebugGroup);
 }
 
-id<MTLRasterizationRateMap> RenderCommandEncoder::rasterizationRateMapForPass(id<MTLRasterizationRateMap> map,
-                                                                              id<MTLTexture> texture) const
+id<MTLRasterizationRateMap> RenderCommandEncoder::rasterizationRateMapForPass(
+    id<MTLRasterizationRateMap> map,
+    id<MTLTexture> texture) const
 {
     if (!mCachedRenderPassDescObjC.get())
+    {
         return nil;
+    }
 
-    MTLSize size = [map physicalSizeForLayer:0];
+    MTLSize size     = [map physicalSizeForLayer:0];
     id<MTLTexture> t = mCachedRenderPassDescObjC.get().colorAttachments[0].texture;
     return t.width == size.width && t.height == size.height ? map : nil;
 }
@@ -2724,7 +2729,7 @@ ComputeCommandEncoder &ComputeCommandEncoder::setBufferForWrite(const BufferRef 
     return setBuffer(buffer, offset, index);
 }
 
-ComputeCommandEncoder &ComputeCommandEncoder::setBytes(const uint8_t *bytes,
+ComputeCommandEncoder &ComputeCommandEncoder::setBytes(const void *bytes,
                                                        size_t size,
                                                        uint32_t index)
 {

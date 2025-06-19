@@ -179,7 +179,7 @@ bool DisplayMtl::testDeviceLost()
 #if ANGLE_METAL_LOSE_CONTEXT_ON_ERROR == ANGLE_ENABLED
     return mCmdQueue.isDeviceLost();
 #else
-     return false;
+    return false;
 #endif
 }
 
@@ -188,7 +188,7 @@ egl::Error DisplayMtl::restoreLostDevice(const egl::Display *display)
 #if ANGLE_METAL_LOSE_CONTEXT_ON_ERROR == ANGLE_ENABLED
     // A Metal device cannot be restored, the entire context would have to be
     // re-created along with any other EGL objects that reference it.
-    return  egl::Error(EGL_BAD_DISPLAY);
+    return egl::Error(EGL_BAD_DISPLAY);
 #else
     return egl::NoError();
 #endif
@@ -1146,7 +1146,8 @@ void DisplayMtl::initializeExtensions() const
     }
 
     // GL_ANGLE_variable_rasterization_rate_metal
-    mNativeExtensions.variableRasterizationRateMetalANGLE = mFeatures.hasVariableRasterizationRate.enabled;
+    mNativeExtensions.variableRasterizationRateMetalANGLE =
+        mFeatures.hasVariableRasterizationRate.enabled;
 #if ANGLE_WEBKIT_EXPLICIT_RESOLVE_TARGET_ENABLED
     // GL_WEBKIT_explicit_resolve_target
     mNativeExtensions.explicitResolveTargetWEBKIT = true;
@@ -1338,9 +1339,15 @@ void DisplayMtl::initializeFeatures()
 
     // Metal compiler optimizations may remove infinite loops causing crashes later in shader
     // execution. http://crbug.com/1513738
-    // Disabled on Mac11 due to test failures. http://crbug.com/1522730
+    ANGLE_FEATURE_CONDITION((&mFeatures), ensureLoopForwardProgress, false);
+
+    // Once not used, injectAsmStatementIntoLoopBodies should be removed and
+    // ensureLoopForwardProgress should default to true. Disabled on Mac11 due to test failures.
+    // http://crbug.com/1522730
+    bool shouldUseInjectAsmIntoLoopBodies = !mFeatures.ensureLoopForwardProgress.enabled &&
+                                            (!isOSX || GetMacOSVersion() >= OSVersion(12, 0, 0));
     ANGLE_FEATURE_CONDITION((&mFeatures), injectAsmStatementIntoLoopBodies,
-                            !isOSX || GetMacOSVersion() >= OSVersion(12, 0, 0));
+                            shouldUseInjectAsmIntoLoopBodies);
 }
 
 angle::Result DisplayMtl::initializeShaderLibrary()

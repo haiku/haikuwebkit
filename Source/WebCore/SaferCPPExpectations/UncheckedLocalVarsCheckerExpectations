@@ -107,7 +107,6 @@ css/typedom/ComputedStylePropertyMapReadOnly.cpp
 css/typedom/HashMapStylePropertyMapReadOnly.cpp
 css/typedom/MainThreadStylePropertyMapReadOnly.cpp
 dom/ActiveDOMObject.cpp
-dom/BroadcastChannel.cpp
 dom/CollectionIndexCacheInlines.h
 dom/ComposedTreeAncestorIterator.h
 dom/ComposedTreeIterator.cpp
@@ -125,8 +124,6 @@ dom/ElementTextDirection.cpp
 dom/ElementTraversal.h
 dom/EventLoop.cpp
 dom/EventPath.cpp
-dom/FragmentDirectiveGenerator.cpp
-dom/FragmentDirectiveRangeFinder.cpp
 dom/InlineStyleSheetOwner.cpp
 dom/Microtasks.cpp
 dom/MouseRelatedEvent.cpp
@@ -147,7 +144,6 @@ dom/Text.cpp
 dom/TextNodeTraversal.cpp
 dom/TextNodeTraversal.h
 dom/TreeScope.cpp
-dom/TrustedType.cpp
 dom/TypedElementDescendantIteratorInlines.h
 dom/ViewTransition.cpp
 dom/mac/ImageControlsMac.cpp
@@ -186,23 +182,17 @@ editing/mac/FrameSelectionMac.mm
 editing/markup.cpp
 history/CachedFrame.cpp
 html/Autofill.cpp
-html/BaseDateAndTimeInputType.cpp
 html/CachedHTMLCollectionInlines.h
 html/CanvasBase.cpp
 html/CollectionTraversalInlines.h
-html/CustomPaintImage.cpp
 html/FormAssociatedCustomElement.cpp
 html/FormListedElement.cpp
 html/HTMLAttachmentElement.cpp
-html/HTMLCollection.cpp
 html/HTMLDialogElement.cpp
 html/HTMLDocument.cpp
 html/HTMLEmbedElement.cpp
 html/HTMLFormControlElement.cpp
-html/HTMLFormControlsCollection.cpp
 html/HTMLFormElement.cpp
-html/HTMLFrameElement.cpp
-html/HTMLFrameElementBase.cpp
 html/HTMLImageElement.cpp
 html/HTMLInputElement.cpp
 html/HTMLLabelElement.cpp
@@ -223,13 +213,10 @@ html/HTMLVideoElement.cpp
 html/MediaElementSession.cpp
 html/ModelDocument.cpp
 html/PluginDocument.cpp
-html/RangeInputType.cpp
-html/TextFieldInputType.cpp
 html/ValidatedFormListedElement.cpp
 html/ValidationMessage.cpp
 html/canvas/CanvasRenderingContext2D.cpp
 html/canvas/CanvasRenderingContext2DBase.cpp
-html/canvas/GPUCanvasContextCocoa.mm
 html/parser/HTMLConstructionSite.cpp
 html/shadow/DateTimeEditElement.cpp
 html/shadow/DateTimeNumericFieldElement.cpp
@@ -361,7 +348,6 @@ page/PageOverlay.cpp
 page/PageSerializer.cpp
 page/PerformanceTiming.cpp
 page/PrintContext.cpp
-page/Quirks.cpp
 page/RemoteFrame.cpp
 page/ResizeObservation.cpp
 page/ResizeObserver.cpp
@@ -389,7 +375,6 @@ platform/Widget.cpp
 platform/animation/AcceleratedEffect.cpp
 platform/cocoa/VideoPresentationModelVideoElement.mm
 platform/graphics/GraphicsLayer.cpp
-platform/graphics/SystemFallbackFontCache.cpp
 platform/graphics/ca/GraphicsLayerCA.cpp
 platform/graphics/ca/PlatformCALayer.mm
 platform/graphics/ca/cocoa/PlatformCALayerCocoa.mm
@@ -432,7 +417,6 @@ rendering/RenderAttachment.cpp
 rendering/RenderBlock.cpp
 rendering/RenderBlockFlow.cpp
 rendering/RenderBox.cpp
-rendering/RenderBox.h
 rendering/RenderBoxModelObject.cpp
 rendering/RenderButton.cpp
 rendering/RenderCounter.cpp
@@ -453,11 +437,9 @@ rendering/RenderImageResourceStyleImage.cpp
 rendering/RenderInline.cpp
 rendering/RenderIterator.h
 rendering/RenderLayer.cpp
-rendering/RenderLayer.h
 rendering/RenderLayerBacking.cpp
 rendering/RenderLayerCompositor.cpp
 rendering/RenderLayerFilters.cpp
-rendering/RenderLayerInlines.h
 rendering/RenderLayerModelObject.cpp
 rendering/RenderLayerScrollableArea.cpp
 rendering/RenderLayoutState.cpp
@@ -479,7 +461,6 @@ rendering/RenderReplica.cpp
 rendering/RenderScrollbar.cpp
 rendering/RenderSearchField.cpp
 rendering/RenderSelection.cpp
-rendering/RenderSlider.cpp
 rendering/RenderTable.cpp
 rendering/RenderTableCaption.cpp
 rendering/RenderTableCell.cpp
@@ -566,7 +547,6 @@ rendering/svg/legacy/LegacyRenderSVGResourceClipper.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceContainer.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceContainer.h
 rendering/svg/legacy/LegacyRenderSVGResourceGradient.cpp
-rendering/svg/legacy/LegacyRenderSVGResourceMasker.cpp
 rendering/svg/legacy/LegacyRenderSVGResourcePattern.cpp
 rendering/svg/legacy/LegacyRenderSVGRoot.cpp
 rendering/svg/legacy/LegacyRenderSVGTransformableContainer.cpp

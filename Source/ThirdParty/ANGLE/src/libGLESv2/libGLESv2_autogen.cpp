@@ -3950,9 +3950,10 @@ void GL_APIENTRY glGetTranslatedShaderSourceANGLE(GLuint shader,
 }
 
 // GL_ANGLE_variable_rasterization_rate_metal
-void GL_APIENTRY glBindMetalRasterizationRateMapANGLE(GLuint renderbuffer, GLMTLRasterizationRateMapANGLE map)
+void GL_APIENTRY glBindMetalRasterizationRateMapANGLE(GLuint framebuffer,
+                                                      GLMTLRasterizationRateMapANGLE map)
 {
-    return GL_BindMetalRasterizationRateMapANGLE(renderbuffer, map);
+    return GL_BindMetalRasterizationRateMapANGLE(framebuffer, map);
 }
 
 // GL_ANGLE_vulkan_image
@@ -4729,7 +4730,9 @@ void GL_APIENTRY glBindProgramPipelineEXT(GLuint pipeline)
     return GL_BindProgramPipelineEXT(pipeline);
 }
 
-GLuint GL_APIENTRY glCreateShaderProgramvEXT(GLenum type, GLsizei count, const GLchar **strings)
+GLuint GL_APIENTRY glCreateShaderProgramvEXT(GLenum type,
+                                             GLsizei count,
+                                             const GLchar *const *strings)
 {
     return GL_CreateShaderProgramvEXT(type, count, strings);
 }
@@ -5399,6 +5402,8 @@ void GL_APIENTRY glBlitFramebufferNV(GLint srcX0,
     return GL_BlitFramebufferNV(srcX0, srcY0, srcX1, srcY1, dstX0, dstY0, dstX1, dstY1, mask,
                                 filter);
 }
+
+// GL_NV_pack_subimage
 
 // GL_NV_pixel_buffer_object
 

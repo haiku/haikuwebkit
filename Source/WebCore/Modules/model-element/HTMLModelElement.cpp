@@ -204,7 +204,7 @@ CachedResourceRequest HTMLModelElement::createResourceRequest(const URL& resourc
     auto crossOriginAttribute = parseCORSSettingsAttribute(attributeWithoutSynchronization(HTMLNames::crossoriginAttr));
     // Make sure CORS is always enabled by passing a non-null cross origin attribute
     if (crossOriginAttribute.isNull()) {
-        auto documentOrigin = protectedDocument()->protectedSecurityOrigin();
+        Ref documentOrigin = protectedDocument()->securityOrigin();
         if (LegacySchemeRegistry::shouldTreatURLSchemeAsCORSEnabled(documentOrigin->protocol()) || documentOrigin->protocol() != resourceURL.protocol())
             crossOriginAttribute = "anonymous"_s;
     }
@@ -1297,6 +1297,15 @@ bool HTMLModelElement::virtualHasPendingActivity() const
     // We need to ensure the JS wrapper is kept alive if a load is in progress and we may yet dispatch
     // "load" or "error" events, ie. as long as we have a resource, meaning we are in the process of loading.
     return m_resource;
+}
+
+void HTMLModelElement::stop()
+{
+    RELEASE_LOG(ModelElement, "%p - HTMLModelElement::stop()", this);
+
+    // Once an active DOM object has been stopped it cannot be restarted,
+    // so we can delete the model player now.
+    deleteModelPlayer();
 }
 
 #if PLATFORM(COCOA)

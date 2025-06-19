@@ -59,17 +59,12 @@ public:
 
     WEBCORE_EXPORT static Color systemFocusRingColor();
 
-    struct IconAndSize {
-        RetainPtr<UIImage> icon;
-        FloatSize size;
-    };
-
     WEBCORE_EXPORT static IconAndSize iconForAttachment(const String& fileName, const String& attachmentType, const String& title);
 
 private:
     bool canCreateControlPartForRenderer(const RenderObject&) const final;
 
-    LengthBox popupInternalPaddingBox(const RenderStyle&) const override;
+    Style::PaddingBox popupInternalPaddingBox(const RenderStyle&) const override;
 
     LayoutRect adjustedPaintRect(const RenderBox&, const LayoutRect&) const override;
 

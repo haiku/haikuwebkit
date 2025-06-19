@@ -77,7 +77,7 @@ String AXIsolatedObject::dbgInternal(bool verbose, OptionSet<AXDebugStringOption
 {
     StringBuilder result;
     result.append("{"_s);
-    result.append("role: "_s, accessibilityRoleToString(roleValue()));
+    result.append("role: "_s, accessibilityRoleToString(role()));
     result.append(", ID "_s, objectID().loggingString());
 
     if (verbose || debugOptions & AXDebugStringOption::Ignored)
@@ -302,7 +302,7 @@ void AXIsolatedObject::setSelectedChildren(const AccessibilityChildrenVector& se
 bool AXIsolatedObject::isInDescriptionListTerm() const
 {
     return Accessibility::findAncestor<AXIsolatedObject>(*this, false, [&] (const auto& ancestor) {
-        return ancestor.roleValue() == AccessibilityRole::DescriptionListTerm;
+        return ancestor.role() == AccessibilityRole::DescriptionListTerm;
     });
 }
 
@@ -1097,7 +1097,7 @@ FloatRect AXIsolatedObject::relativeFrame() const
         // a rect at the position of the nearest render tree ancestor with some made-up size (AccessibilityNodeObject::boundingBoxRect does this).
         // However, we don't have access to the render tree in this context (only the AX isolated tree, which is too sparse for this purpose), so
         // until we cache the necessary information let's go to the main-thread.
-    } else if (roleValue() == AccessibilityRole::Column || roleValue() == AccessibilityRole::TableHeaderContainer)
+    } else if (role() == AccessibilityRole::Column || role() == AccessibilityRole::TableHeaderContainer)
         relativeFrame = exposedTableAncestor() ? relativeFrameFromChildren() : FloatRect();
 
     // Mock objects and SVG objects need use the main thread since they do not have render nodes and are not painted with layers, respectively.
@@ -1310,11 +1310,16 @@ CharacterRange AXIsolatedObject::doAXRangeForLine(unsigned lineIndex) const
     });
 }
 
-String AXIsolatedObject::doAXStringForRange(const CharacterRange& axRange) const
+String AXIsolatedObject::doAXStringForRange(const CharacterRange& range) const
 {
-    return Accessibility::retrieveValueFromMainThread<String>([&axRange, this] () -> String {
+#if ENABLE(AX_THREAD_TEXT_APIS)
+    if (AXObjectCache::useAXThreadTextApis())
+        return textMarkerRange().toString().substring(range.location, range.length);
+#endif // ENABLE(AX_THREAD_TEXT_APIS)
+
+    return Accessibility::retrieveValueFromMainThread<String>([&range, this] () -> String {
         if (auto* object = associatedAXObject())
-            return object->doAXStringForRange(axRange).isolatedCopy();
+            return object->doAXStringForRange(range).isolatedCopy();
         return { };
     });
 }
@@ -1849,7 +1854,7 @@ AXCoreObject::AccessibilityChildrenVector AXIsolatedObject::rowHeaders()
 AXIsolatedObject* AXIsolatedObject::headerContainer()
 {
     for (const auto& child : unignoredChildren()) {
-        if (child->roleValue() == AccessibilityRole::TableHeaderContainer)
+        if (child->role() == AccessibilityRole::TableHeaderContainer)
             return downcast<AXIsolatedObject>(child.ptr());
     }
     return nullptr;

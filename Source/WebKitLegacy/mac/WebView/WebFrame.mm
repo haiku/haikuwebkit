@@ -464,9 +464,7 @@ static NSURL *createUniqueWebDataURL();
         if (auto* view = frame->view()) {
             view->setTransparent(!drawsBackground);
 #if !PLATFORM(IOS_FAMILY)
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-            auto color = WebCore::colorFromCocoaColor([backgroundColor colorUsingColorSpaceName:NSDeviceRGBColorSpace]);
-ALLOW_DEPRECATED_DECLARATIONS_END
+            auto color = WebCore::colorFromCocoaColor([backgroundColor colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace]);
 #else
             WebCore::Color color(WebCore::roundAndClampToSRGBALossy(backgroundColor));
 #endif
@@ -1275,9 +1273,11 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
 - (CGSize)renderedSizeOfNode:(DOMNode *)node constrainedToWidth:(float)width
 {
     WebCore::Node* n = core(node);
-    auto* renderer = n ? n->renderer() : nullptr;
-    float w = std::min((float)renderer->maxPreferredLogicalWidth(), width);
-    return is<WebCore::RenderBox>(renderer) ? CGSizeMake(w, downcast<WebCore::RenderBox>(*renderer).height()) : CGSizeMake(0, 0);
+    if (!n)
+        return CGSizeMake(0, 0);
+    if (auto* renderBox = dynamicDowncast<WebCore::RenderBox>(n->renderer()))
+        return CGSizeMake(std::min((float)renderBox->maxPreferredLogicalWidth(), width), renderBox->height());
+    return CGSizeMake(0, 0);
 }
 
 - (DOMNode *)deepestNodeAtViewportLocation:(CGPoint)aViewportLocation

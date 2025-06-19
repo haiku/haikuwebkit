@@ -160,8 +160,8 @@ public:
     // Only meaningful when `hasClip` is true.
     LengthBox clip;
 
-    Style::ScrollMargin scrollMargin { 0_css_px };
-    Style::ScrollPadding scrollPadding { CSS::Keyword::Auto { } };
+    Style::ScrollMarginBox scrollMargin { 0_css_px };
+    Style::ScrollPaddingBox scrollPadding { CSS::Keyword::Auto { } };
 
     CounterDirectiveMap counterDirectives;
 
@@ -292,6 +292,8 @@ public:
 
     unsigned usesAnchorFunctions : 1;
     unsigned usesTreeCountingFunctions : 1;
+
+    unsigned isPopoverInvoker : 1;
 
 private:
     StyleRareNonInheritedData();

@@ -51,6 +51,13 @@ class RenderProgress;
 class RenderStyle;
 class Settings;
 
+template<typename> struct MinimallySerializingSpaceSeparatedRectEdges;
+
+namespace Style {
+struct PaddingEdge;
+using PaddingBox = MinimallySerializingSpaceSeparatedRectEdges<PaddingEdge>;
+}
+
 class RenderTheme {
 protected:
     RenderTheme();
@@ -183,7 +190,7 @@ public:
 
     virtual void adjustSliderThumbSize(RenderStyle&, const Element*) const { }
 
-    virtual LengthBox popupInternalPaddingBox(const RenderStyle&) const { return { 0, 0, 0, 0 }; }
+    virtual Style::PaddingBox popupInternalPaddingBox(const RenderStyle&) const;
     virtual bool popupOptionSupportsTextIndent() const { return false; }
     virtual PopupMenuStyle::Size popupMenuSize(const RenderStyle&, IntRect&) const { return PopupMenuStyle::Size::Normal; }
 
@@ -372,6 +379,23 @@ protected:
     virtual bool paintSwitchThumb(const RenderObject&, const PaintInfo&, const FloatRect&) { return true; }
     virtual bool paintSwitchTrack(const RenderObject&, const PaintInfo&, const FloatRect&) { return true; }
 
+    // The font description result should have a zoomed font size.
+    virtual std::optional<FontCascadeDescription> controlFont(StyleAppearance, const FontCascade&, float) const;
+
+    virtual Style::PaddingBox controlPadding(StyleAppearance, const Style::PaddingBox&, float zoomFactor) const;
+
+    // The size here is in zoomed coordinates already. If a new size is returned, it also needs to be in zoomed coordinates.
+    virtual LengthSize controlSize(StyleAppearance, const FontCascade&, const LengthSize&, float) const;
+
+    // Returns the minimum size for a control in zoomed coordinates.
+    LengthSize minimumControlSize(StyleAppearance, const FontCascade&, const LengthSize& zoomedSize, const LengthSize& nonShrinkableZoomedSize, float zoomFactor) const;
+
+    // Allows the theme to modify the existing border.
+    virtual LengthBox controlBorder(StyleAppearance, const FontCascade&, const LengthBox& zoomedBox, float zoomFactor) const;
+
+    // Whether or not whitespace: pre should be forced on always.
+    virtual bool controlRequiresPreWhiteSpace(StyleAppearance) const { return false; }
+
 private:
     OptionSet<ControlStyle::State> extractControlStyleStatesForRendererInternal(const RenderObject&) const;
 
@@ -427,6 +451,8 @@ protected:
     virtual ColorCache& colorCache(OptionSet<StyleColorOptions>) const;
 
     virtual Color autocorrectionReplacementMarkerColor(const RenderText&) const;
+
+    virtual LengthSize minimumControlSize(StyleAppearance, const FontCascade&, const LengthSize& zoomedSize, float zoomFactor) const;
 
 private:
     StyleAppearance autoAppearanceForElement(RenderStyle&, const Element*) const;

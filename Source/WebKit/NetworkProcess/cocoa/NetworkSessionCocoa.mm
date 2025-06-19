@@ -1445,7 +1445,10 @@ NetworkSessionCocoa::NetworkSessionCocoa(NetworkProcess& networkProcess, const N
 #if HAVE(NETWORK_LOADER)
     if (parameters.useNetworkLoader) {
         RELEASE_LOG_IF(*parameters.useNetworkLoader, NetworkSession, "Using experimental network loader.");
+// FIXME: rdar://152673570 Stop using `_usesNWLoader` as it is deprecated
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         configuration.get()._usesNWLoader = *parameters.useNetworkLoader;
+ALLOW_DEPRECATED_DECLARATIONS_END
     }
 #endif
 
@@ -2369,7 +2372,7 @@ void NetworkSessionCocoa::setProxyConfigData(const Vector<std::pair<Vector<uint8
         else
             zeroBytes(identifier);
 
-        auto nwProxyConfig = adoptNS(createProxyConfig(config.first.data(), config.first.size(), identifier));
+        auto nwProxyConfig = adoptNS(createProxyConfig(config.first.span().data(), config.first.size(), identifier));
 
         if (requiresHTTPProtocols(nwProxyConfig.get()))
             recreateSessions = true;

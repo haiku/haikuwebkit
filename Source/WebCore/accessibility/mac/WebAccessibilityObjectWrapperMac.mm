@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -444,7 +444,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         || backingObject->isRadioGroup()
         || backingObject->isSplitter()
         || backingObject->isToolbar()
-        || backingObject->roleValue() == AccessibilityRole::HorizontalRule)
+        || backingObject->role() == AccessibilityRole::HorizontalRule)
         [additional addObject:NSAccessibilityOrientationAttribute];
 
     if (backingObject->supportsDragging())
@@ -931,7 +931,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     else if (backingObject->isControl())
         objectAttributes = controlAttrs.get().get();
 
-    else if (backingObject->isGroup() || backingObject->isListItem() || backingObject->roleValue() == AccessibilityRole::Figure)
+    else if (backingObject->isGroup() || backingObject->isListItem() || backingObject->role() == AccessibilityRole::Figure)
         objectAttributes = groupAttrs.get().get();
     else if (backingObject->isTabList())
         objectAttributes = tabListAttrs.get().get();
@@ -2354,7 +2354,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         return;
     }
 
-    if (backingObject->roleValue() == AccessibilityRole::ComboBox) {
+    if (backingObject->role() == AccessibilityRole::ComboBox) {
         backingObject->setIsExpanded(true);
         return;
     }
@@ -2654,7 +2654,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 - (void)showNodeForTextMarker:(AXTextMarkerRef)textMarker
 {
     auto visiblePosition = visiblePositionForTextMarker(self.axBackingObject->axObjectCache(), textMarker);
-    auto node = visiblePosition.deepEquivalent().protectedDeprecatedNode();
+    RefPtr node = visiblePosition.deepEquivalent().deprecatedNode();
     if (!node)
         return;
     node->showNode();
@@ -2664,7 +2664,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 - (void)showNodeTreeForTextMarker:(AXTextMarkerRef)textMarker
 {
     auto visiblePosition = visiblePositionForTextMarker(self.axBackingObject->axObjectCache(), textMarker);
-    auto node = visiblePosition.deepEquivalent().protectedDeprecatedNode();
+    RefPtr node = visiblePosition.deepEquivalent().deprecatedNode();
     if (!node)
         return;
     node->showTreeForThis();
@@ -2866,16 +2866,27 @@ static bool isMatchingPlugin(AXCoreObject& axObject, const AccessibilitySearchCr
         && (!criteria.visibleOnly || axObject.isVisible());
 }
 
+#if ENABLE(AX_THREAD_TEXT_APIS)
+static std::optional<AXTextMarkerRange> markerRangeFrom(NSRange range, const AXCoreObject& object)
+{
+    auto markerToLocation = AXTextMarker { object, 0 }.nextMarkerFromOffset(range.location, ForceSingleOffsetMovement::Yes);
+    if (!markerToLocation.isValid())
+        return std::nullopt;
+
+    auto markerToRangeEnd = markerToLocation.nextMarkerFromOffset(range.length, ForceSingleOffsetMovement::Yes);
+    if (!markerToRangeEnd.isValid())
+        return std::nullopt;
+    return std::optional(AXTextMarkerRange { WTFMove(markerToLocation), WTFMove(markerToRangeEnd) });
+}
+
+#endif // ENABLE(AX_THREAD_TEXT_APIS)
+
 static NSRect computeTextBoundsForRange(NSRange range, const AXCoreObject& backingObject)
 {
 #if ENABLE(AX_THREAD_TEXT_APIS)
     if (AXObjectCache::useAXThreadTextApis()) {
-        auto markerToLocation = AXTextMarker { backingObject, 0 }.nextMarkerFromOffset(range.location);
-        auto markerToRangeEnd = markerToLocation.nextMarkerFromOffset(range.length);
-        if (!markerToRangeEnd.isValid())
-            return CGRectZero;
-
-        return AXTextMarkerRange { WTFMove(markerToLocation), WTFMove(markerToRangeEnd) }.viewportRelativeFrame();
+        std::optional markerRange = markerRangeFrom(range, backingObject);
+        return markerRange ? static_cast<CGRect>(markerRange->viewportRelativeFrame()) : CGRectZero;
     }
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 
@@ -3267,6 +3278,13 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     if ([attribute isEqualToString:NSAccessibilityStringForRangeParameterizedAttribute]) {
         if (backingObject->isTextControl())
             return backingObject->doAXStringForRange(range).createNSString().autorelease();
+
+#if ENABLE(AX_THREAD_TEXT_APIS)
+        if (AXObjectCache::useAXThreadTextApis()) {
+            std::optional markerRange = markerRangeFrom(range, *backingObject);
+            return markerRange ? markerRange->toString().createNSString().autorelease() : @"";
+        }
+#endif // ENABLE(AX_THREAD_TEXT_APIS)
 
         return Accessibility::retrieveValueFromMainThread<RetainPtr<NSString>>([&range, protectedSelf = retainPtr(self)] () -> RetainPtr<NSString> {
             auto* backingObject = protectedSelf.get().axBackingObject;

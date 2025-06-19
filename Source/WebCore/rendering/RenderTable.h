@@ -29,7 +29,6 @@
 #include "CollapsedBorderValue.h"
 #include "RenderBlock.h"
 #include <memory>
-#include <wtf/CheckedPtr.h>
 #include <wtf/HashMap.h>
 #include <wtf/Vector.h>
 
@@ -70,7 +69,7 @@ public:
     inline LayoutUnit borderTop() const final;
     inline LayoutUnit borderBottom() const final;
 
-    Color bgColor() const { return style().visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor); }
+    Color bgColor() const { return checkedStyle()->visitedDependentColorWithColorFilter(CSSPropertyBackgroundColor); }
 
     LayoutUnit outerBorderBefore() const;
     LayoutUnit outerBorderAfter() const;
@@ -194,9 +193,6 @@ public:
             recalcSections();
     }
 
-    static RenderPtr<RenderTable> createAnonymousWithParentRenderer(const RenderElement&);
-    inline RenderPtr<RenderBox> createAnonymousBoxWithSameTypeAs(const RenderBox& renderer) const override; // Defined in RenderTableInlines.h
-
     void addCaption(RenderTableCaption&);
     void removeCaption(RenderTableCaption&);
     void addColumn(const RenderTableCol*);
@@ -221,9 +217,6 @@ public:
 protected:
     void styleDidChange(StyleDifference, const RenderStyle* oldStyle) final;
     void simplifiedNormalFlowLayout() final;
-
-private:
-    static RenderPtr<RenderTable> createTableWithStyle(Document&, const RenderStyle&);
 
     ASCIILiteral renderName() const override { return "RenderTable"_s; }
 

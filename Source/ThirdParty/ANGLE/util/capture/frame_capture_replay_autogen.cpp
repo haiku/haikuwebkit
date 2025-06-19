@@ -107,7 +107,7 @@ void ReplayTraceFunctionCall(const CallCapture &call, const TraceFunctionMap &cu
             break;
         case angle::EntryPoint::GLBindMetalRasterizationRateMapANGLE:
             glBindMetalRasterizationRateMapANGLE(
-                captures[0].value.GLMTLRasterizationRateMapANGLEVal);
+                captures[0].value.GLuintVal, captures[1].value.GLMTLRasterizationRateMapANGLEVal);
             break;
         case angle::EntryPoint::GLBindProgramPipeline:
             glBindProgramPipeline(gProgramPipelineMap[captures[0].value.GLuintVal]);
@@ -578,9 +578,8 @@ void ReplayTraceFunctionCall(const CallCapture &call, const TraceFunctionMap &cu
                                    captures[2].value.GLcharConstPointerPointerVal);
             break;
         case angle::EntryPoint::GLCreateShaderProgramvEXT:
-            glCreateShaderProgramvEXT(
-                captures[0].value.GLenumVal, captures[1].value.GLsizeiVal,
-                const_cast<const char **>(captures[2].value.GLcharConstPointerPointerVal));
+            glCreateShaderProgramvEXT(captures[0].value.GLenumVal, captures[1].value.GLsizeiVal,
+                                      captures[2].value.GLcharConstPointerPointerVal);
             break;
         case angle::EntryPoint::GLCullFace:
             glCullFace(captures[0].value.GLenumVal);

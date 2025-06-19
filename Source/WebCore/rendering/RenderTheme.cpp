@@ -72,6 +72,7 @@
 #include "SliderTrackPart.h"
 #include "SpinButtonElement.h"
 #include "StringTruncator.h"
+#include "StylePadding.h"
 #include "SwitchThumbPart.h"
 #include "SwitchTrackPart.h"
 #include "TextAreaPart.h"
@@ -91,6 +92,7 @@
 
 namespace WebCore {
 
+using namespace CSS::Literals;
 using namespace HTMLNames;
 
 RenderTheme::RenderTheme()
@@ -1298,6 +1300,61 @@ bool RenderTheme::hasListButtonPressed(const RenderObject& renderer) const
     return input && input->dataListButtonElement() && input->dataListButtonElement()->active();
 }
 
+std::optional<FontCascadeDescription> RenderTheme::controlFont(StyleAppearance, const FontCascade&, float) const
+{
+    return std::nullopt;
+}
+
+Style::PaddingBox RenderTheme::controlPadding(StyleAppearance appearance, const Style::PaddingBox& padding, float) const
+{
+    switch (appearance) {
+    case StyleAppearance::Menulist:
+    case StyleAppearance::MenulistButton:
+    case StyleAppearance::Checkbox:
+    case StyleAppearance::Radio:
+        return Style::PaddingBox { 0_css_px };
+    default:
+        return padding;
+    }
+}
+
+LengthSize RenderTheme::controlSize(StyleAppearance, const FontCascade&, const LengthSize& zoomedSize, float) const
+{
+    return zoomedSize;
+}
+
+LengthSize RenderTheme::minimumControlSize(StyleAppearance appearance, const FontCascade& fontCascade, const LengthSize& zoomedSize, const LengthSize& nonShrinkableZoomedSize, float zoom) const
+{
+    auto minSize = minimumControlSize(appearance, fontCascade, zoomedSize, zoom);
+    // Other StyleAppearance types are composed controls with shadow subtree.
+    if (appearance == StyleAppearance::Radio || appearance == StyleAppearance::Checkbox) {
+        if (zoomedSize.width.isIntrinsicOrAuto())
+            minSize.width = nonShrinkableZoomedSize.width;
+        if (zoomedSize.height.isIntrinsicOrAuto())
+            minSize.height = nonShrinkableZoomedSize.height;
+    }
+    return minSize;
+}
+
+LengthSize RenderTheme::minimumControlSize(StyleAppearance, const FontCascade&, const LengthSize&, float) const
+{
+    return { { 0, LengthType::Fixed }, { 0, LengthType::Fixed } };
+}
+
+LengthBox RenderTheme::controlBorder(StyleAppearance appearance, const FontCascade&, const LengthBox& zoomedBox, float) const
+{
+    switch (appearance) {
+    case StyleAppearance::PushButton:
+    case StyleAppearance::Menulist:
+    case StyleAppearance::SearchField:
+    case StyleAppearance::Checkbox:
+    case StyleAppearance::Radio:
+        return LengthBox(0);
+    default:
+        return zoomedBox;
+    }
+}
+
 // FIXME: iOS does not use this so arguably this should be better abstracted. Or maybe we should
 // investigate if we can bring the various ports closer together.
 void RenderTheme::adjustButtonOrCheckboxOrColorWellOrInnerSpinButtonOrRadioStyle(RenderStyle& style, const Element* element) const
@@ -1305,7 +1362,7 @@ void RenderTheme::adjustButtonOrCheckboxOrColorWellOrInnerSpinButtonOrRadioStyle
     auto appearance = style.usedAppearance();
 
     LengthBox borderBox(style.borderTopWidth(), style.borderRightWidth(), style.borderBottomWidth(), style.borderLeftWidth());
-    borderBox = Theme::singleton().controlBorder(appearance, style.fontCascade(), borderBox, style.usedZoom());
+    borderBox = controlBorder(appearance, style.fontCascade(), borderBox, style.usedZoom());
 
     auto supportsVerticalWritingMode = [](StyleAppearance appearance) {
         return appearance == StyleAppearance::Button
@@ -1346,12 +1403,12 @@ void RenderTheme::adjustButtonOrCheckboxOrColorWellOrInnerSpinButtonOrRadioStyle
     }
 
     // Padding
-    LengthBox paddingBox = Theme::singleton().controlPadding(appearance, style.fontCascade(), style.paddingBox(), style.usedZoom());
+    auto paddingBox = controlPadding(appearance, style.paddingBox(), style.usedZoom());
     if (paddingBox != style.paddingBox())
         style.setPaddingBox(WTFMove(paddingBox));
 
     // Whitespace
-    if (Theme::singleton().controlRequiresPreWhiteSpace(appearance)) {
+    if (controlRequiresPreWhiteSpace(appearance)) {
         style.setWhiteSpaceCollapse(WhiteSpaceCollapse::Preserve);
         style.setTextWrapMode(TextWrapMode::NoWrap);
     }
@@ -1359,24 +1416,25 @@ void RenderTheme::adjustButtonOrCheckboxOrColorWellOrInnerSpinButtonOrRadioStyle
     // Width / Height
     // The width and height here are affected by the zoom.
     // FIXME: Check is flawed, since it doesn't take min-width/max-width into account.
-    LengthSize controlSize = Theme::singleton().controlSize(appearance, style.fontCascade(), { style.width(), style.height() }, style.usedZoom());
+    auto controlSize = this->controlSize(appearance, style.fontCascade(), { style.width(), style.height() }, style.usedZoom());
     if (controlSize.width != style.width())
         style.setWidth(WTFMove(controlSize.width));
     if (controlSize.height != style.height())
         style.setHeight(WTFMove(controlSize.height));
 
     // Min-Width / Min-Height
-    LengthSize minControlSize = Theme::singleton().minimumControlSize(appearance, style.fontCascade(), { style.minWidth(), style.minHeight() }, { style.width(), style.height() }, style.usedZoom());
-    if (minControlSize.width.value() > style.minWidth().value())
-        style.setMinWidth(WTFMove(minControlSize.width));
-    if (minControlSize.height.value() > style.minHeight().value())
-        style.setMinHeight(WTFMove(minControlSize.height));
+    auto minimumControlSize = this->minimumControlSize(appearance, style.fontCascade(), { style.minWidth(), style.minHeight() }, { style.width(), style.height() }, style.usedZoom());
+    // FIXME: This check makes no sense for cases when the LengthType of the values are different.
+    if (minimumControlSize.width.value() > style.minWidth().value())
+        style.setMinWidth(WTFMove(minimumControlSize.width));
+    if (minimumControlSize.height.value() > style.minHeight().value())
+        style.setMinHeight(WTFMove(minimumControlSize.height));
 
     // Font
-    if (auto themeFont = Theme::singleton().controlFont(appearance, style.fontCascade(), style.usedZoom())) {
+    if (auto controlFont = this->controlFont(appearance, style.fontCascade(), style.usedZoom())) {
         // If overriding the specified font with the theme font, also override the line height with the standard line height.
         style.setLineHeight(RenderStyle::initialLineHeight());
-        style.setFontDescription(WTFMove(themeFont.value()));
+        style.setFontDescription(WTFMove(controlFont.value()));
     }
 
     // Special style that tells enabled default buttons in active windows to use the ActiveButtonText color.
@@ -1589,7 +1647,7 @@ void RenderTheme::adjustSwitchStyle(RenderStyle& style, const Element*) const
     // FIXME: This probably has the same flaw as
     // RenderTheme::adjustButtonOrCheckboxOrColorWellOrInnerSpinButtonOrRadioStyle() by not taking
     // min-width/min-height into account.
-    auto controlSize = Theme::singleton().controlSize(StyleAppearance::Switch, style.fontCascade(), { style.logicalWidth(), style.logicalHeight() }, style.usedZoom());
+    auto controlSize = this->controlSize(StyleAppearance::Switch, style.fontCascade(), { style.logicalWidth(), style.logicalHeight() }, style.usedZoom());
     style.setLogicalWidth(WTFMove(controlSize.width));
     style.setLogicalHeight(WTFMove(controlSize.height));
 
@@ -1603,6 +1661,11 @@ void RenderTheme::adjustSwitchThumbOrSwitchTrackStyle(RenderStyle& style) const
 
     style.setGridItemRowStart(position);
     style.setGridItemColumnStart(position);
+}
+
+Style::PaddingBox RenderTheme::popupInternalPaddingBox(const RenderStyle&) const
+{
+    return Style::PaddingBox { 0_css_px };
 }
 
 void RenderTheme::purgeCaches()

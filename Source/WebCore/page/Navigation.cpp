@@ -125,7 +125,7 @@ void Navigation::initializeForNewWindow(std::optional<NavigationNavigationType> 
         return;
     // For main frames we can still rely on the page b/f list. However for subframes we need below logic to not lose the bookkeeping done in the previous window.
     if (previousWindow && !frame()->isMainFrame()) {
-        Ref previousNavigation = previousWindow->protectedNavigation();
+        Ref previousNavigation = previousWindow->navigation();
         bool shouldProcessPreviousNavigationEntries = [&]() {
             if (!previousNavigation->m_entries.size())
                 return false;
@@ -209,7 +209,7 @@ void Navigation::updateForActivation(HistoryItem* previousItem, std::optional<Na
         return;
 
     ASSERT(m_currentEntryIndex);
-    if (currentEntry()->protectedAssociatedHistoryItem()->url().isAboutBlank())
+    if (currentEntry()->associatedHistoryItem().url().isAboutBlank())
         return;
 
     bool wasAboutBlank = previousItem && previousItem->url().isAboutBlank(); // FIXME: *Initial* about:blank
@@ -912,7 +912,7 @@ Navigation::DispatchResult Navigation::innerDispatchNavigateEvent(NavigationNavi
         { false, canBeCanceled, false },
         navigationType,
         destination.ptr(),
-        abortController->protectedSignal(),
+        Ref { abortController->signal() },
         formData,
         downloadRequestFilename,
         info,

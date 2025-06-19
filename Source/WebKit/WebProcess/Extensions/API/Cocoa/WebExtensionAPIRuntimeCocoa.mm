@@ -85,7 +85,7 @@ using ReplyCallbackAggregator = EagerCallbackAggregator<void(id, IsDefaultReply)
     if (!(self = [super init]))
         return nil;
 
-    _aggregator = &aggregator;
+    _aggregator = aggregator;
 
     return self;
 }
@@ -599,7 +599,11 @@ static bool matches(WebFrame& frame, const std::optional<WebExtensionMessageTarg
     if (!targetParameters)
         return true;
 
-    // Skip all frames / documents that don't match the target parameters.
+    // Skip all pages / frames / documents that don't match the target parameters.
+    auto& pageProxyIdentifier = targetParameters.value().pageProxyIdentifier;
+    if (pageProxyIdentifier && pageProxyIdentifier != frame.protectedPage()->webPageProxyIdentifier())
+        return false;
+
     auto& frameIdentifier = targetParameters.value().frameIdentifier;
     if (frameIdentifier && !matchesFrame(frameIdentifier.value(), frame))
         return false;

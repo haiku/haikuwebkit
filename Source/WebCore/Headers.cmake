@@ -2057,6 +2057,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/audio/PlatformMediaSessionManager.h
     platform/audio/PlatformRawAudioData.h
     platform/audio/PushPullFIFO.h
+    platform/audio/RealtimeAudioThread.h
     platform/audio/SharedAudioDestination.h
 
     platform/calc/CalculationCategory.h
@@ -2751,6 +2752,9 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/borders/StyleCornerShapeValue.h
     style/values/borders/StyleShadow.h
 
+    style/values/box/StyleMargin.h
+    style/values/box/StylePadding.h
+
     style/values/color/StyleColor.h
     style/values/color/StyleColorOptions.h
     style/values/color/StyleCurrentColor.h
@@ -2765,6 +2769,8 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/inline/StyleLineBoxContain.h
 
     style/values/motion/StyleRayFunction.h
+
+    style/values/position/StyleInset.h
 
     style/values/primitives/StylePosition.h
     style/values/primitives/StylePrimitiveNumeric.h

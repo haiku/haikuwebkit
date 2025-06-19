@@ -4,7 +4,7 @@
  *           (C) 2001 Peter Kelly (pmk@post.com)
  *           (C) 2001 Dirk Mueller (mueller@kde.org)
  *           (C) 2007 David Smith (catfish.man@gmail.com)
- * Copyright (C) 2004-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  *           (C) 2007 Eric Seidel (eric@webkit.org)
  *
  * This library is free software; you can redistribute it and/or
@@ -237,7 +237,7 @@ static Attr* findAttrNodeInList(Vector<RefPtr<Attr>>& attrNodeList, const Qualif
 static bool shouldAutofocus(const Element& element)
 {
     Ref document = element.document();
-    RefPtr page = document->protectedPage();
+    RefPtr page = document->page();
     if (!page || page->autofocusProcessed())
         return false;
 
@@ -3204,6 +3204,9 @@ void Element::setInvokedPopover(RefPtr<Element>&& element)
 {
     auto& data = ensureElementRareData();
     data.setInvokedPopover(WTFMove(element));
+
+    // Invalidate so isPopoverInvoker style bit gets updated.
+    invalidateStyleInternal();
 }
 
 void Element::addShadowRoot(Ref<ShadowRoot>&& newShadowRoot)
@@ -4782,6 +4785,20 @@ PseudoElement* Element::beforePseudoElement() const
 PseudoElement* Element::afterPseudoElement() const
 {
     return hasRareData() ? elementRareData()->afterPseudoElement() : nullptr;
+}
+
+RefPtr<PseudoElement> Element::pseudoElementIfExists(Style::PseudoElementIdentifier pseudoElementIdentifier)
+{
+    if (pseudoElementIdentifier.pseudoId == PseudoId::Before)
+        return beforePseudoElement();
+    if (pseudoElementIdentifier.pseudoId == PseudoId::After)
+        return afterPseudoElement();
+    return nullptr;
+}
+
+RefPtr<const PseudoElement> Element::pseudoElementIfExists(Style::PseudoElementIdentifier pseudoElementIdentifier) const
+{
+    return const_cast<Element&>(*this).pseudoElementIfExists(pseudoElementIdentifier);
 }
 
 static void disconnectPseudoElement(PseudoElement* pseudoElement)

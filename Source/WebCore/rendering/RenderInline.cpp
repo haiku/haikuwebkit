@@ -166,13 +166,16 @@ static void updateStyleOfAnonymousBlockContinuations(const RenderBlock& block, c
 void RenderInline::styleWillChange(StyleDifference diff, const RenderStyle& newStyle)
 {
     RenderBoxModelObject::styleWillChange(diff, newStyle);
+
     // RenderInlines forward their absolute positioned descendants to their (non-anonymous) containing block.
     // Check if this non-anonymous containing block can hold the absolute positioned elements when the inline is no longer positioned.
-    if (canContainAbsolutelyPositionedObjects() && newStyle.position() == PositionType::Static) {
-        auto* container = RenderObject::containingBlockForPositionType(PositionType::Absolute, *this);
-        if (container && !container->canContainAbsolutelyPositionedObjects())
-            container->removeOutOfFlowBoxes({ }, RenderBlock::ContainingBlockState::NewContainingBlock);
-    }
+    CheckedPtr container = containingBlock();
+    if (!container)
+        return;
+
+    const RenderStyle* oldStyle = hasInitializedStyle() ? &style() : nullptr;
+    if (oldStyle)
+        removeOutOfFlowBoxesIfNeededOnStyleChange(*container, *oldStyle, newStyle);
 }
 
 void RenderInline::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)
@@ -343,15 +346,9 @@ LayoutPoint RenderInline::firstInlineBoxTopLeft() const
     return { };
 }
 
-static LayoutUnit computeMargin(const RenderInline* renderer, const Length& margin)
+static LayoutUnit computeMargin(const RenderInline* renderer, const Style::MarginEdge& margin)
 {
-    if (margin.isAuto())
-        return 0;
-    if (margin.isFixed())
-        return LayoutUnit(margin.value());
-    if (margin.isPercentOrCalculated())
-        return minimumValueForLength(margin, std::max<LayoutUnit>(0, renderer->containingBlock()->contentBoxLogicalWidth()));
-    return 0;
+    return Style::evaluateMinimum(margin, [&] ALWAYS_INLINE_LAMBDA { return std::max<LayoutUnit>(0, renderer->containingBlock()->contentBoxLogicalWidth()); });
 }
 
 LayoutUnit RenderInline::marginLeft() const
@@ -435,18 +432,6 @@ VisiblePosition RenderInline::positionForPoint(const LayoutPoint& point, HitTest
 
     return containingBlock.positionForPoint(point, source, fragment);
 }
-
-class LinesBoundingBoxGeneratorContext {
-public:
-    LinesBoundingBoxGeneratorContext(FloatRect& rect) : m_rect(rect) { }
-
-    void addRect(const FloatRect& rect)
-    {
-        m_rect.uniteIfNonZero(rect);
-    }
-private:
-    FloatRect& m_rect;
-};
 
 LayoutUnit RenderInline::innerPaddingBoxWidth() const
 {
@@ -1016,7 +1001,7 @@ inline bool RenderInline::willChangeCreatesStackingContext() const
 
 bool RenderInline::requiresLayer() const
 {
-    return isInFlowPositioned() || createsGroup() || hasClipPath() || shouldApplyPaintContainment() || willChangeCreatesStackingContext() || hasRunningAcceleratedAnimations() || requiresRenderingConsolidationForViewTransition();
+    return isInFlowPositioned() || createsGroup() || hasClipPath() || willChangeCreatesStackingContext() || hasRunningAcceleratedAnimations() || requiresRenderingConsolidationForViewTransition();
 }
 
 } // namespace WebCore

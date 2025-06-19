@@ -28,6 +28,7 @@
 #if PLATFORM(MAC)
 
 #import "TestWKWebView.h"
+#import <WebKit/WKWebViewPrivate.h>
 #import <WebKit/WKWebViewPrivateForTesting.h>
 
 namespace TestWebKitAPI {

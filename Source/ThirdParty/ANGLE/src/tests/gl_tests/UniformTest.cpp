@@ -9,7 +9,6 @@
 #include "test_utils/angle_test_configs.h"
 #include "test_utils/angle_test_instantiate.h"
 #include "test_utils/gl_raii.h"
-#include "util/gles_loader_autogen.h"
 #include "util/shader_utils.h"
 
 #include <array>
@@ -2228,7 +2227,7 @@ TEST_P(UniformTestES3, MatrixUniformUpload)
         matrixValues[i] = static_cast<GLfloat>(i);
     }
 
-    using UniformMatrixCxRfv = decltype(glUniformMatrix2fv);
+    using UniformMatrixCxRfv = GL_APIENTRY void (*)(GLint, GLsizei, GLboolean, const GLfloat *);
     UniformMatrixCxRfv uniformMatrixCxRfv[kMaxDims + 1][kMaxDims + 1] = {
         {nullptr, nullptr, nullptr, nullptr, nullptr},
         {nullptr, nullptr, nullptr, nullptr, nullptr},

@@ -144,7 +144,7 @@ void UserMediaRequest::start()
     }
 
     ASSERT(document.page());
-    if (RefPtr page = document.protectedPage())
+    if (RefPtr page = document.page())
         PlatformMediaSessionManager::singleton().prepareToSendUserMediaPermissionRequestForPage(*page);
     controller->requestUserMediaAccess(*this);
 }
@@ -164,7 +164,7 @@ void UserMediaRequest::allow(CaptureDevice&& audioDevice, CaptureDevice&& videoD
     RELEASE_LOG(MediaStream, "UserMediaRequest::allow %s %s", audioDevice ? audioDevice.persistentId().utf8().data() : "", videoDevice ? videoDevice.persistentId().utf8().data() : "");
 
     Ref document = downcast<Document>(*scriptExecutionContext());
-    RefPtr localWindow = document->protectedWindow();
+    RefPtr localWindow = document->domWindow();
     RefPtr mediaDevices = localWindow ? NavigatorMediaDevices::mediaDevices(localWindow->protectedNavigator()) : nullptr;
     if (mediaDevices)
         mediaDevices->willStartMediaCapture(!!audioDevice, !!videoDevice);

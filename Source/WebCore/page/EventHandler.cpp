@@ -2039,6 +2039,7 @@ HandleUserInputEventResult EventHandler::handleMousePressEvent(const PlatformMou
         layer->setInResizeMode(true);
         m_resizeLayer = *layer;
         m_offsetFromResizeCorner = layer->offsetFromResizeCorner(localPoint);
+        dispatchMouseEvent(eventNames().mousedownEvent, mouseEvent.protectedTargetNode().get(), m_clickCount, platformMouseEvent, FireMouseOverOut::Yes);
         return true;
     }
 
@@ -2413,7 +2414,7 @@ bool EventHandler::swallowAnyClickEvent(const PlatformMouseEvent& platformMouseE
     auto& eventName = isPrimaryPointerButton ? eventNames().clickEvent : eventNames().auxclickEvent;
     bool swallowed = !dispatchMouseEvent(eventName, nodeToClick.get(), m_clickCount, platformMouseEvent, FireMouseOverOut::Yes);
 
-    if (RefPtr page = m_frame->protectedPage())
+    if (RefPtr page = m_frame->page())
         page->chrome().client().didDispatchClickEvent(platformMouseEvent, *nodeToClick);
 
     return swallowed;
@@ -3879,8 +3880,8 @@ bool EventHandler::isKeyEventAllowedInFullScreen(const PlatformKeyboardEvent& ke
 bool EventHandler::keyEvent(const PlatformKeyboardEvent& keyEvent)
 {
     Ref frame = m_frame.get();
-    RefPtr page = frame->protectedPage();
-    RefPtr mainFrameDocument = frame->document() ? frame->document()->protectedMainFrameDocument() : nullptr;
+    RefPtr page = frame->page();
+    RefPtr mainFrameDocument = frame->document() ? frame->document()->mainFrameDocument() : nullptr;
     MonotonicTime savedLastHandledUserGestureTimestamp;
     bool savedUserDidInteractWithPage = page ? page->userDidInteractWithPage() : false;
 

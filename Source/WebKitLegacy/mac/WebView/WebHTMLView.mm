@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2005-2025 Apple Inc. All rights reserved.
  *           (C) 2006, 2007 Graham Dennis (graham.dennis@gmail.com)
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1357,7 +1357,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     // Put HTML on the pasteboard.
     if ([types containsObject:WebArchivePboardType]) {
-        if (auto coreArchive = WebCore::LegacyWebArchive::createFromSelection(core([self _frame]), false)) {
+        if (auto coreArchive = WebCore::LegacyWebArchive::createFromSelection(core([self _frame]), { WebCore::LegacyWebArchive::ShouldSaveScriptsFromMemoryCache::No })) {
             if (RetainPtr<CFDataRef> data = coreArchive ? coreArchive->rawDataRepresentation() : 0)
                 [pasteboard setData:(__bridge NSData *)data.get() forType:WebArchivePboardType];
         }
@@ -1503,9 +1503,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 {
     NSEvent *fakeEvent = [NSEvent mouseEventWithType:NSEventTypeMouseMoved
         location:[[self window]
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-        convertScreenToBase:[NSEvent mouseLocation]]
-ALLOW_DEPRECATED_DECLARATIONS_END
+        convertPointFromScreen:[NSEvent mouseLocation]]
         modifierFlags:[[NSApp currentEvent] modifierFlags]
         timestamp:[NSDate timeIntervalSinceReferenceDate]
         windowNumber:[[self window] windowNumber]
@@ -2084,9 +2082,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
     NSEvent *fakeEvent = [NSEvent mouseEventWithType:NSEventTypeLeftMouseDragged
         location:[[self window]
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-        convertScreenToBase:[NSEvent mouseLocation]]
-ALLOW_DEPRECATED_DECLARATIONS_END
+        convertPointFromScreen:[NSEvent mouseLocation]]
         modifierFlags:[[NSApp currentEvent] modifierFlags]
         timestamp:[NSDate timeIntervalSinceReferenceDate]
         windowNumber:[[self window] windowNumber]
@@ -2156,11 +2152,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (![self _hasSelection])
         return nil;
 
-    auto* coreFrame = core([self _frame]);
+    RefPtr coreFrame = core([self _frame]);
     if (!coreFrame)
         return nil;
-
-    Ref protectedCoreFrame(*coreFrame);
 
     WebCore::TextIndicatorData textIndicator;
     auto dragImage = createDragImageForSelection(*coreFrame, textIndicator);
@@ -5046,9 +5040,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 #if PLATFORM(IOS_FAMILY)
         return [accTree accessibilityHitTest:point];
 #else
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-        NSPoint windowCoord = [[self window] convertScreenToBase:point];
-ALLOW_DEPRECATED_DECLARATIONS_END
+        NSPoint windowCoord = [[self window] convertPointFromScreen:point];
         return [accTree accessibilityHitTest:[self convertPoint:windowCoord fromView:nil]];
 #endif
     }
@@ -5110,9 +5102,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (NSString *)_colorAsString:(NSColor *)color
 {
-ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    NSColor *rgbColor = [color colorUsingColorSpaceName:NSDeviceRGBColorSpace];
-ALLOW_DEPRECATED_DECLARATIONS_END
+    NSColor *rgbColor = [color colorUsingColorSpace:NSColorSpace.deviceRGBColorSpace];
     // FIXME: If color is non-nil and rgbColor is nil, that means we got some kind
     // of fancy color that can't be converted to RGB. Changing that to "transparent"
     // might not be great, but it's probably OK.
@@ -6915,7 +6905,7 @@ static CGImageRef imageFromRect(WebCore::LocalFrame* frame, CGRect rect)
     size_t bitsPerComponent = 8;
     size_t bitsPerPixel = 4 * bitsPerComponent;
     size_t bytesPerRow = ((bitsPerPixel + 7) / 8) * width;
-    RetainPtr<CGContextRef> context = adoptCF(CGBitmapContextCreate(NULL, width, height, bitsPerComponent, bytesPerRow, WebCore::sRGBColorSpaceRef(), kCGImageAlphaPremultipliedLast));
+    RetainPtr<CGContextRef> context = adoptCF(CGBitmapContextCreate(NULL, width, height, bitsPerComponent, bytesPerRow, WebCore::sRGBColorSpaceSingleton(), kCGImageAlphaPremultipliedLast));
     if (!context)
         return nil;
     
@@ -6967,14 +6957,12 @@ static CGImageRef selectionImage(WebCore::LocalFrame* frame, bool forceBlackText
     if (![self _hasSelection])
         return nil;
 
-    auto* coreFrame = core([self _frame]);
+    RefPtr coreFrame = core([self _frame]);
     if (!coreFrame)
         return nil;
 
-    Ref<WebCore::LocalFrame> protectedCoreFrame(*coreFrame);
-
 #if PLATFORM(IOS_FAMILY)
-    return selectionImage(coreFrame, forceBlackText);
+    return selectionImage(coreFrame.get(), forceBlackText);
 #else
     WebCore::TextIndicatorData textIndicator;
     return createDragImageForSelection(*coreFrame, textIndicator, forceBlackText).autorelease();

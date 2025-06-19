@@ -339,6 +339,7 @@ Modules/push-api/PushManager.cpp
 Modules/push-api/ServiceWorkerRegistrationPushAPI.cpp
 Modules/remoteplayback/RemotePlayback.cpp
 Modules/reporting/DeprecationReportBody.cpp
+Modules/reporting/IntegrityPolicyViolationReportBody.cpp
 Modules/reporting/Report.cpp
 Modules/reporting/ReportBody.cpp
 Modules/reporting/ReportingObserver.cpp
@@ -1995,6 +1996,7 @@ loader/HTTPHeaderField.cpp
 loader/HeaderFieldTokenizer.cpp
 loader/HistoryController.cpp
 loader/ImageLoader.cpp
+loader/IntegrityPolicy.cpp
 loader/LinkHeader.cpp
 loader/LinkLoader.cpp
 loader/LinkPreloadResourceClients.cpp
@@ -2400,6 +2402,7 @@ platform/audio/PlatformMediaSessionInterface.cpp
 platform/audio/PlatformMediaSessionManager.cpp
 platform/audio/PlatformRawAudioData.cpp
 platform/audio/PushPullFIFO.cpp
+platform/audio/RealtimeAudioThread.cpp
 platform/audio/Reverb.cpp
 platform/audio/ReverbAccumulationBuffer.cpp
 platform/audio/ReverbConvolver.cpp
@@ -3145,6 +3148,8 @@ style/UserAgentStyle.cpp
 style/values/borders/StyleBorderRadius.cpp
 style/values/borders/StyleBoxShadow.cpp
 style/values/borders/StyleCornerShapeValue.cpp
+style/values/box/StyleMargin.cpp
+style/values/box/StylePadding.cpp
 style/values/color-adjust/StyleColorScheme.cpp
 style/values/color/StyleColor.cpp
 style/values/color/StyleColorLayers.cpp
@@ -3178,6 +3183,7 @@ style/values/filter-effects/StyleOpacityFunction.cpp
 style/values/filter-effects/StyleSaturateFunction.cpp
 style/values/filter-effects/StyleSepiaFunction.cpp
 style/values/images/StyleGradient.cpp
+style/values/position/StyleInset.cpp
 style/values/primitives/StyleLengthResolution.cpp
 style/values/primitives/StylePosition.cpp
 style/values/primitives/StylePrimitiveNumericTypes+Conversions.cpp
@@ -4154,6 +4160,7 @@ JSInspectorAuditDOMObject.cpp
 JSInspectorAuditResourcesObject.cpp
 JSInspectorFrontendHost.cpp
 JSInstallEvent.cpp
+JSIntegrityPolicyViolationReportBody.cpp
 JSIntersectionObserver.cpp
 JSIntersectionObserverCallback.cpp
 JSIntersectionObserverEntry.cpp

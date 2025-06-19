@@ -616,7 +616,7 @@ void ContainerNode::appendChildCommon(Node& child)
 
     child.setParentNode(this);
 
-    if (auto lastChild = protectedLastChild()) {
+    if (RefPtr lastChild = this->lastChild()) {
         child.setPreviousSibling(lastChild.get());
         lastChild->setNextSibling(&child);
     } else
@@ -1216,7 +1216,7 @@ ExceptionOr<void> ContainerNode::prepend(FixedVector<NodeOrString>&& vector)
     if (result.hasException())
         return result.releaseException();
 
-    RefPtr nextChild = protectedFirstChild();
+    RefPtr nextChild = firstChild();
     auto newChildren = result.releaseReturnValue();
     if (auto checkResult = ensurePreInsertionValidityForPhantomDocumentFragment(newChildren, nextChild.get()); checkResult.hasException())
         return checkResult;

@@ -1664,37 +1664,6 @@ bool RenderElement::isVisibleInViewport() const
     return isVisibleInDocumentRect(visibleRect);
 }
 
-const Element* RenderElement::defaultAnchor() const
-{
-    if (!element())
-        return nullptr;
-
-    auto& anchorPositionedMap = document().styleScope().anchorPositionedToAnchorMap();
-    auto it = anchorPositionedMap.find(*element());
-    if (it == anchorPositionedMap.end())
-        return nullptr;
-    const auto& anchorName = style().positionAnchor();
-    if (!anchorName)
-        return nullptr;
-
-    for (auto& anchor : it->value) {
-        if (!anchor)
-            continue;
-        for (auto& name : anchor->style().anchorNames()) {
-            if (name.name == anchorName->name)
-                return anchor->element();
-        }
-    }
-    return nullptr;
-}
-
-const RenderBoxModelObject* RenderElement::defaultAnchorRenderer() const
-{
-    if (auto* defaultAnchor = this->defaultAnchor())
-        return dynamicDowncast<RenderBoxModelObject>(defaultAnchor->renderer());
-    return nullptr;
-}
-
 VisibleInViewportState RenderElement::imageFrameAvailable(CachedImage& image, ImageAnimatingState animatingState, const IntRect* changeRect)
 {
     bool isVisible = isVisibleInViewport();
@@ -2086,8 +2055,8 @@ MarginRect RenderElement::absoluteAnchorRectWithScrollMargin(bool* insideFixed) 
 {
     auto anchorRect = absoluteAnchorRect(insideFixed);
 
-    const auto& scrollMargin = style().scrollMargin();
-    if (Style::isZero(scrollMargin))
+    auto& scrollMarginBox = style().scrollMarginBox();
+    if (Style::isZero(scrollMarginBox))
         return { anchorRect, anchorRect };
 
     // The scroll snap specification says that the scroll-margin should be applied in the
@@ -2095,7 +2064,7 @@ MarginRect RenderElement::absoluteAnchorRectWithScrollMargin(bool* insideFixed) 
     // box of the transformed border box of the target element.
     // See https://www.w3.org/TR/css-scroll-snap-1/#scroll-margin.
     auto marginRect = anchorRect;
-    marginRect.expand(Style::extentForRect(scrollMargin, anchorRect));
+    marginRect.expand(Style::extentForRect(scrollMarginBox, anchorRect));
     return { marginRect, anchorRect };
 }
 

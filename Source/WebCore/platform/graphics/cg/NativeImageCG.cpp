@@ -93,7 +93,7 @@ std::optional<Color> NativeImage::singlePixelSolidColor() const
         return std::nullopt;
 
     std::array<uint8_t, 4> pixel; // RGBA
-    auto bitmapContext = adoptCF(CGBitmapContextCreate(pixel.data(), 1, 1, 8, pixel.size(), sRGBColorSpaceRef(), static_cast<uint32_t>(kCGImageAlphaPremultipliedLast) | static_cast<uint32_t>(kCGBitmapByteOrder32Big)));
+    auto bitmapContext = adoptCF(CGBitmapContextCreate(pixel.data(), 1, 1, 8, pixel.size(), sRGBColorSpaceSingleton(), static_cast<uint32_t>(kCGImageAlphaPremultipliedLast) | static_cast<uint32_t>(kCGBitmapByteOrder32Big)));
 
     if (!bitmapContext)
         return std::nullopt;
@@ -116,13 +116,6 @@ void NativeImage::draw(GraphicsContext& context, const FloatRect& destinationRec
 
 #if !HAVE(FIX_FOR_RADAR_93560567)
     if (!context.colorSpace().usesITUR_2100TF()) {
-        drawWithToneMapping(context, destinationRect, sourceRect, options);
-        return;
-    }
-#endif
-
-#if !HAVE(FIX_FOR_RADAR_147007029)
-    if (options.dynamicRangeLimit() == PlatformDynamicRangeLimit::standard()) {
         drawWithToneMapping(context, destinationRect, sourceRect, options);
         return;
     }

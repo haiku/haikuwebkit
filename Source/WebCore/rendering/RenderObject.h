@@ -651,7 +651,6 @@ public:
     // rest of the rendering tree will move to a similar model.
     virtual bool nodeAtFloatPoint(const HitTestRequest&, HitTestResult&, const FloatPoint& pointInParent, HitTestAction);
 
-    virtual bool hasIntrinsicAspectRatio() const { return isReplacedOrAtomicInline() && (isImage() || isRenderVideo() || isRenderHTMLCanvas() || isRenderViewTransitionCapture()); }
     bool isAnonymous() const { return m_typeFlags.contains(TypeFlag::IsAnonymous); }
 
     bool isFloating() const { return m_stateBitfields.hasFlag(StateFlag::Floating); }
@@ -767,7 +766,6 @@ public:
     void clearNeedsLayout(HadSkippedLayout = HadSkippedLayout::No);
     void setNeedsPreferredWidthsUpdate(MarkingBehavior = MarkContainingBlockChain);
     void clearNeedsPreferredWidthsUpdate() { m_stateBitfields.setFlag(StateFlag::PreferredLogicalWidthsNeedUpdate, { }); }
-    void invalidateContainerPreferredLogicalWidths();
     
     inline void setNeedsLayoutAndPrefWidthsRecalc();
 
@@ -820,7 +818,7 @@ public:
 
     // Convert the given local point to absolute coordinates. If OptionSet<MapCoordinatesMode> includes UseTransforms, take transforms into account.
     WEBCORE_EXPORT FloatPoint localToAbsolute(const FloatPoint& localPoint = FloatPoint(), OptionSet<MapCoordinatesMode> = { }, bool* wasFixed = nullptr) const;
-    std::unique_ptr<TransformationMatrix> viewTransitionTransform() const;
+    TransformState viewTransitionTransform() const;
     FloatPoint absoluteToLocal(const FloatPoint&, OptionSet<MapCoordinatesMode> = { }) const;
 
     // Convert a local quad to absolute coordinates, taking transforms into account.
@@ -873,9 +871,6 @@ public:
 
     // the rect that will be painted if this object is passed as the paintingRoot
     WEBCORE_EXPORT LayoutRect paintingRootRect(LayoutRect& topLevelRect);
-
-    virtual LayoutUnit minPreferredLogicalWidth() const { return 0; }
-    virtual LayoutUnit maxPreferredLogicalWidth() const { return 0; }
 
     const RenderStyle& style() const; // Defined in RenderObjectInlines.h.
     inline CheckedRef<const RenderStyle> checkedStyle() const; // Defined in RenderObjectInlines.h.
@@ -1050,8 +1045,6 @@ public:
 
     WEBCORE_EXPORT bool hasEmptyVisibleRectRespectingParentFrames() const;
 
-    virtual unsigned length() const { return 1; }
-
     bool isFloatingOrOutOfFlowPositioned() const { return (isFloating() || isOutOfFlowPositioned()); }
     bool isInFlow() const { return !isFloatingOrOutOfFlowPositioned(); }
 
@@ -1177,6 +1170,8 @@ private:
     void setLayerNeedsFullRepaint();
     void setLayerNeedsFullRepaintForPositionedMovementLayout();
 
+    void invalidateContainerPreferredLogicalWidths();
+
 #if PLATFORM(IOS_FAMILY)
     struct SelectionGeometriesInternal {
         Vector<SelectionGeometry> geometries;
@@ -1198,7 +1193,6 @@ private:
 
 #if ASSERT_ENABLED
     void setNeedsLayoutIsForbidden(bool flag) const { m_setNeedsLayoutForbidden = flag; }
-    void checkBlockPositionedObjectsNeedLayout();
 #endif
 
 #if ASSERT_ENABLED

@@ -173,6 +173,8 @@
 		075A9CF326169BAB006DFA3A /* MediaSessionCoordinatorProxyPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 077BA570260E8F630072F19F /* MediaSessionCoordinatorProxyPrivate.h */; };
 		075C079A2D92125D00B3E900 /* WKContextMenuElementInfoAdapter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 075C07992D9211F700B3E900 /* WKContextMenuElementInfoAdapter.swift */; };
 		07642AEF2DEABBA100561888 /* WKWebsiteDataStore+SwiftOverlay.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07642AEE2DEABB7300561888 /* WKWebsiteDataStore+SwiftOverlay.swift */; };
+		0765D1C42DEBFF7E0029CDD0 /* WKGroupSession.h in Headers */ = {isa = PBXBuildFile; fileRef = 0753932A2DC94A2B0002EBCD /* WKGroupSession.h */; };
+		0765D1C52DEBFF840029CDD0 /* WKGroupSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF1B90D266F395E0007EC10 /* WKGroupSession.swift */; };
 		076867FF2D4C283E004DA801 /* WebViewRepresentable.swift in Sources */ = {isa = PBXBuildFile; fileRef = 076867F72D4C26A8004DA801 /* WebViewRepresentable.swift */; };
 		076868022D4C285B004DA801 /* WebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 076867F62D4C26A8004DA801 /* WebView.swift */; };
 		076868032D4C2867004DA801 /* View+WebViewModifiers.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078B04B52CF2B4D300B453A6 /* View+WebViewModifiers.swift */; };
@@ -188,7 +190,6 @@
 		078B04B42CF1A27F00B453A6 /* WebPage+FrameInfo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078B04B32CF1A27F00B453A6 /* WebPage+FrameInfo.swift */; };
 		078F21312DD9A05F00E87858 /* RunLoopQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078F21272DD9710700E87858 /* RunLoopQueue.swift */; };
 		0792314C239CBCB8009598E2 /* RemoteMediaPlayerManagerProxyMessages.h in Headers */ = {isa = PBXBuildFile; fileRef = 07923146239CBCB7009598E2 /* RemoteMediaPlayerManagerProxyMessages.h */; };
-		079992992DD86DC800882A0A /* WKGroupSession.swift in Sources */ = {isa = PBXBuildFile; fileRef = CDF1B90D266F395E0007EC10 /* WKGroupSession.swift */; };
 		079A4DA12D72CC0D00CA387F /* WebPageWebView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 079A4DA02D72CC0D00CA387F /* WebPageWebView.swift */; };
 		079A4DA32D72CDB400CA387F /* WKWebViewConfiguration+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 079A4DA22D72CDB400CA387F /* WKWebViewConfiguration+Extras.swift */; };
 		079A4DA52D72CE3F00CA387F /* WKWebpagePreferences+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 079A4DA42D72CE3F00CA387F /* WKWebpagePreferences+Extras.swift */; };
@@ -1374,10 +1375,10 @@
 		526C5722284ADCBC00E08955 /* CtapCcidDriver.h in Headers */ = {isa = PBXBuildFile; fileRef = 526C5720284ADCBC00E08955 /* CtapCcidDriver.h */; };
 		526C5723284ADCBC00E08955 /* CtapCcidDriver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 526C5721284ADCBC00E08955 /* CtapCcidDriver.cpp */; };
 		5272D4C91E735F0900EB4290 /* WKProtectionSpaceNS.h in Headers */ = {isa = PBXBuildFile; fileRef = 5272D4C71E735F0900EB4290 /* WKProtectionSpaceNS.h */; settings = {ATTRIBUTES = (Private, ); }; };
-		5274A4BB2C7082AC00B1A742 /* RealityKitBridging.h in Headers */ = {isa = PBXBuildFile; fileRef = 5289527E2C7077B000D0357E /* RealityKitBridging.h */; };
+		5274A4BB2C7082AC00B1A742 /* WKRKEntity.h in Headers */ = {isa = PBXBuildFile; fileRef = 5289527E2C7077B000D0357E /* WKRKEntity.h */; };
 		527DA5E32B698159004E6A68 /* CoreIPCCVPixelBufferRef.h in Headers */ = {isa = PBXBuildFile; fileRef = 527DA5E22B697DC0004E6A68 /* CoreIPCCVPixelBufferRef.h */; };
-		5289527F2C7077B000D0357E /* RealityKitBridging.h in Headers */ = {isa = PBXBuildFile; fileRef = 5289527E2C7077B000D0357E /* RealityKitBridging.h */; };
-		528952812C70797900D0357E /* RKEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528952802C70797900D0357E /* RKEntity.swift */; };
+		5289527F2C7077B000D0357E /* WKRKEntity.h in Headers */ = {isa = PBXBuildFile; fileRef = 5289527E2C7077B000D0357E /* WKRKEntity.h */; };
+		528952812C70797900D0357E /* WKRKEntity.swift in Sources */ = {isa = PBXBuildFile; fileRef = 528952802C70797900D0357E /* WKRKEntity.swift */; };
 		528C37C1195CBB1A00D8B9CC /* WKBackForwardListPrivate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1A9F28101958F478008CAC72 /* WKBackForwardListPrivate.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		52A69BEA286CFFAC00893E8F /* CryptoTokenKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 52A69BE9286CFFAC00893E8F /* CryptoTokenKit.framework */; };
 		52B060F92B745E4D009B1666 /* CoreIPCCVPixelBufferRef.mm in Sources */ = {isa = PBXBuildFile; fileRef = 52B060F82B745E00009B1666 /* CoreIPCCVPixelBufferRef.mm */; };
@@ -1588,6 +1589,8 @@
 		5CE912142293C280005BEC78 /* WKMain.h in Headers */ = {isa = PBXBuildFile; fileRef = 5CE9120B2293C1E0005BEC78 /* WKMain.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		5CF62B9628D4436A00C0EAE0 /* DaemonCoders.h in Headers */ = {isa = PBXBuildFile; fileRef = 5CF62B9428D4436A00C0EAE0 /* DaemonCoders.h */; };
 		5CFC9C812B71809600F8D289 /* CoreIPCCFDictionary.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5CFC9C7F2B717EFA00F8D289 /* CoreIPCCFDictionary.mm */; };
+		5EEC724C2DC1B30700D012DD /* BidiStorageAgent.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5EEC724B2DC1B30700D012DD /* BidiStorageAgent.cpp */; };
+		5EEC724E2DC1B31800D012DD /* BidiStorageAgent.h in Headers */ = {isa = PBXBuildFile; fileRef = 5EEC724D2DC1B31300D012DD /* BidiStorageAgent.h */; };
 		63108F961F96719C00A0DB84 /* _WKApplicationManifest.h in Headers */ = {isa = PBXBuildFile; fileRef = 63108F941F96719C00A0DB84 /* _WKApplicationManifest.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		63108F991F9671F700A0DB84 /* _WKApplicationManifestInternal.h in Headers */ = {isa = PBXBuildFile; fileRef = 63108F981F9671F700A0DB84 /* _WKApplicationManifestInternal.h */; };
 		634842511FB26E7100946E3C /* APIApplicationManifest.h in Headers */ = {isa = PBXBuildFile; fileRef = 6348424F1FB26E7100946E3C /* APIApplicationManifest.h */; };
@@ -6039,8 +6042,8 @@
 		527D1AEC2AD0A5BB00D145E5 /* WebUserContentControllerDataTypes.serialization.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = WebUserContentControllerDataTypes.serialization.in; sourceTree = "<group>"; };
 		527DA5E22B697DC0004E6A68 /* CoreIPCCVPixelBufferRef.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoreIPCCVPixelBufferRef.h; sourceTree = "<group>"; };
 		527DA5E42B69815F004E6A68 /* CoreIPCCVPixelBufferRef.serialization.in */ = {isa = PBXFileReference; lastKnownFileType = text; path = CoreIPCCVPixelBufferRef.serialization.in; sourceTree = "<group>"; };
-		5289527E2C7077B000D0357E /* RealityKitBridging.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = RealityKitBridging.h; sourceTree = "<group>"; };
-		528952802C70797900D0357E /* RKEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RKEntity.swift; sourceTree = "<group>"; };
+		5289527E2C7077B000D0357E /* WKRKEntity.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WKRKEntity.h; sourceTree = "<group>"; };
+		528952802C70797900D0357E /* WKRKEntity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKRKEntity.swift; sourceTree = "<group>"; };
 		52A69BE9286CFFAC00893E8F /* CryptoTokenKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CryptoTokenKit.framework; path = System/Library/Frameworks/CryptoTokenKit.framework; sourceTree = SDKROOT; };
 		52B060F82B745E00009B1666 /* CoreIPCCVPixelBufferRef.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = CoreIPCCVPixelBufferRef.mm; sourceTree = "<group>"; };
 		52B5C0372D40232500110DF0 /* GPUProcessExtension-visionOS.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = "GPUProcessExtension-visionOS.entitlements"; sourceTree = "<group>"; };
@@ -6570,6 +6573,9 @@
 		5CFC9C802B717EFA00F8D289 /* CoreIPCCFDictionary.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CoreIPCCFDictionary.h; sourceTree = "<group>"; };
 		5CFECB031E1ED1C800F88504 /* LegacyCustomProtocolManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = LegacyCustomProtocolManager.cpp; sourceTree = "<group>"; };
 		5DAD73F1116FF90C00EE5396 /* BaseTarget.xcconfig */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xcconfig; path = BaseTarget.xcconfig; sourceTree = "<group>"; };
+		5EB592AB2DC2049A0058664B /* BidiStorage.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = BidiStorage.json; sourceTree = "<group>"; };
+		5EEC724B2DC1B30700D012DD /* BidiStorageAgent.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = BidiStorageAgent.cpp; sourceTree = "<group>"; };
+		5EEC724D2DC1B31300D012DD /* BidiStorageAgent.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = BidiStorageAgent.h; sourceTree = "<group>"; };
 		63108F941F96719C00A0DB84 /* _WKApplicationManifest.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = _WKApplicationManifest.h; sourceTree = "<group>"; };
 		63108F951F96719C00A0DB84 /* _WKApplicationManifest.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = _WKApplicationManifest.mm; sourceTree = "<group>"; };
 		63108F981F9671F700A0DB84 /* _WKApplicationManifestInternal.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = _WKApplicationManifestInternal.h; sourceTree = "<group>"; };
@@ -8167,6 +8173,7 @@
 		DDC7AB862DB2DE4800A38D68 /* _AuthenticationServices_SwiftUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = _AuthenticationServices_SwiftUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		DDC907B6298B43D700ECA4D6 /* MigratedHeaders-output.xcfilelist */ = {isa = PBXFileReference; lastKnownFileType = text.xcfilelist; path = "MigratedHeaders-output.xcfilelist"; sourceTree = "<group>"; };
 		DDC907B7298B43D700ECA4D6 /* MigratedHeaders-input.xcfilelist */ = {isa = PBXFileReference; lastKnownFileType = text.xcfilelist; path = "MigratedHeaders-input.xcfilelist"; sourceTree = "<group>"; };
+		DDDB911E2DEA2A9900341445 /* create-legacy-swift-overlay-symlink.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = "create-legacy-swift-overlay-symlink.sh"; sourceTree = "<group>"; };
 		DDDFE826284699E6006F1EE5 /* SafariServicesSPI.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = SafariServicesSPI.h; sourceTree = "<group>"; };
 		DDE992F4278D06D900F60D26 /* libWebKitAdditions.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; path = libWebKitAdditions.a; sourceTree = BUILT_PRODUCTS_DIR; };
 		DF0C5F23252ECB8D00D921DB /* WKDownload.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WKDownload.mm; sourceTree = "<group>"; };
@@ -8958,6 +8965,15 @@
 				073A63D72DC344F40057A3F5 /* WKWebView+TextExtraction.swift */,
 			);
 			path = TextExtraction;
+			sourceTree = "<group>";
+		};
+		0765D1C32DEBFF460029CDD0 /* GroupActivities */ = {
+			isa = PBXGroup;
+			children = (
+				0753932A2DC94A2B0002EBCD /* WKGroupSession.h */,
+				CDF1B90D266F395E0007EC10 /* WKGroupSession.swift */,
+			);
+			path = GroupActivities;
 			sourceTree = "<group>";
 		};
 		0785E7FE2CBCDFDD00F68126 /* WritingTools */ = {
@@ -13267,8 +13283,8 @@
 		5260053F2C707686005D813A /* RealityKit */ = {
 			isa = PBXGroup;
 			children = (
-				5289527E2C7077B000D0357E /* RealityKitBridging.h */,
-				528952802C70797900D0357E /* RKEntity.swift */,
+				5289527E2C7077B000D0357E /* WKRKEntity.h */,
+				528952802C70797900D0357E /* WKRKEntity.swift */,
 			);
 			path = RealityKit;
 			sourceTree = "<group>";
@@ -14199,6 +14215,8 @@
 				F3272B7C2DB997C6007B3A9A /* BidiBrowsingContextAgent.h */,
 				F3272B7F2DB997C6007B3A9A /* BidiScriptAgent.cpp */,
 				F3272B7E2DB997C6007B3A9A /* BidiScriptAgent.h */,
+				5EEC724B2DC1B30700D012DD /* BidiStorageAgent.cpp */,
+				5EEC724D2DC1B31300D012DD /* BidiStorageAgent.h */,
 				F3A94F002DB6F3310023CE9D /* BidiUserContext.cpp */,
 				F3A94EFF2DB6F3310023CE9D /* BidiUserContext.h */,
 				995226D5207D184600F78420 /* SimulatedInputDispatcher.cpp */,
@@ -14221,6 +14239,7 @@
 				996D00422D7AA0CD0049C7D8 /* BidiLog.json */,
 				996D00432D7AA0CD0049C7D8 /* BidiScript.json */,
 				99965A552DA096EF0039DFF5 /* BidiSession.json */,
+				5EB592AB2DC2049A0058664B /* BidiStorage.json */,
 			);
 			path = protocol;
 			sourceTree = "<group>";
@@ -14253,6 +14272,7 @@
 		A1071FAD2B643ED100E9FC57 /* WebKitSwift */ = {
 			isa = PBXGroup;
 			children = (
+				0765D1C32DEBFF460029CDD0 /* GroupActivities */,
 				F4D59BEB2DCBD862004492FB /* IdentityDocumentServices */,
 				A14F9B602B686DAE00AD9C56 /* LinearMediaKit */,
 				A14F9B332B68467F00AD9C56 /* MarketplaceKit */,
@@ -16247,6 +16267,7 @@
 				0FC0856E187CE0A900780D86 /* __init__.py */,
 				E3A997B92AFFCEA2006C90F1 /* compile-sandbox.sh */,
 				4157853021276B6F00DD3800 /* copy-webcontent-resources-to-private-headers.sh */,
+				DDDB911E2DEA2A9900341445 /* create-legacy-swift-overlay-symlink.sh */,
 				E3AA48772CFE941500760D28 /* generate-derived-log-sources.py */,
 				C0CE73361247F70E00BC0EC4 /* generate-message-receiver.py */,
 				5CD4F01C28B6ADDB00F9ECEA /* generate-serializers.py */,
@@ -16404,8 +16425,6 @@
 				CDF1B911266F395E0007EC10 /* GroupActivitiesSession.mm */,
 				CDF1B914266F395F0007EC10 /* GroupActivitiesSessionNotifier.h */,
 				CDF1B913266F395E0007EC10 /* GroupActivitiesSessionNotifier.mm */,
-				0753932A2DC94A2B0002EBCD /* WKGroupSession.h */,
-				CDF1B90D266F395E0007EC10 /* WKGroupSession.swift */,
 			);
 			path = GroupActivities;
 			sourceTree = "<group>";
@@ -17087,6 +17106,7 @@
 				F3EEEE592DB318270038CC1D /* BidiBrowserAgent.h in Headers */,
 				F3272B822DB997C6007B3A9A /* BidiBrowsingContextAgent.h in Headers */,
 				F3272B832DB997C6007B3A9A /* BidiScriptAgent.h in Headers */,
+				5EEC724E2DC1B31800D012DD /* BidiStorageAgent.h in Headers */,
 				F3A94F022DB6F3310023CE9D /* BidiUserContext.h in Headers */,
 				E164A2F2191AF14E0010737D /* BlobDataFileReferenceWithSandboxExtension.h in Headers */,
 				E170876C16D6CA6900F99226 /* BlobRegistryProxy.h in Headers */,
@@ -17513,7 +17533,6 @@
 				EBA8D3B527A5E33F00CB7900 /* PushServiceConnection.h in Headers */,
 				411B89CC27B2B89800F9EBD3 /* QueryPermissionResultCallback.h in Headers */,
 				93B631F327ABAD8000443A44 /* QuotaIncreaseRequestIdentifier.h in Headers */,
-				5274A4BB2C7082AC00B1A742 /* RealityKitBridging.h in Headers */,
 				E539DFED2A44A78600769F09 /* RealitySimulationServicesSPI.h in Headers */,
 				7BE9326327F5C75A00D5FEFB /* ReceiverMatcher.h in Headers */,
 				950FECF4285027200002DE4E /* RecurringPaymentRequest.h in Headers */,
@@ -18400,6 +18419,7 @@
 				3336763B130C99DC006C9DE2 /* WKResourceCacheManager.h in Headers */,
 				BC8A501511765F5600757573 /* WKRetainPtr.h in Headers */,
 				F4974E76265ECBBC00B49B8C /* WKRevealItemPresenter.h in Headers */,
+				5274A4BB2C7082AC00B1A742 /* WKRKEntity.h in Headers */,
 				1A7E377918E4A4FE003D0FFF /* WKScriptMessage.h in Headers */,
 				1A7E377518E4A33A003D0FFF /* WKScriptMessageHandler.h in Headers */,
 				5109099723DACBF2003B1E4C /* WKScriptMessageHandlerWithReply.h in Headers */,
@@ -18595,8 +18615,8 @@
 			files = (
 				A1098E682BB6410800449EE0 /* LinearMediaKitExtras.h in Headers */,
 				073A63CB2DC33D710057A3F5 /* LinearMediaKitSPI.h in Headers */,
-				5289527F2C7077B000D0357E /* RealityKitBridging.h in Headers */,
 				A14F9B672B686E0200AD9C56 /* WebKitSwift.h in Headers */,
+				0765D1C42DEBFF7E0029CDD0 /* WKGroupSession.h in Headers */,
 				F4D59C002DCBDC9F004492FB /* WKIdentityDocumentPresentmentController.h in Headers */,
 				F4D59C042DCBDC9F004492FB /* WKIdentityDocumentPresentmentDelegate.h in Headers */,
 				F4D59BFF2DCBDC9F004492FB /* WKIdentityDocumentPresentmentError.h in Headers */,
@@ -18611,6 +18631,7 @@
 				F4D59BFD2DCBDC9F004492FB /* WKISO18013Request.h in Headers */,
 				07A7EAD32DC7FBEB007E7680 /* WKMarketplaceKit.h in Headers */,
 				B66F88C22B6D202600FB1734 /* WKPreviewWindowController.h in Headers */,
+				5289527F2C7077B000D0357E /* WKRKEntity.h in Headers */,
 				A14F9B762B68CA6C00AD9C56 /* WKSLinearMediaPlayer.h in Headers */,
 				A14F9B632B686DD300AD9C56 /* WKSLinearMediaTypes.h in Headers */,
 				EEA52F482D70545300D578B5 /* WKStageMode.h in Headers */,
@@ -19984,6 +20005,7 @@
 			inputFileListPaths = (
 			);
 			inputPaths = (
+				"$(SRCROOT)/Scripts/create-legacy-swift-overlay-symlink.sh",
 			);
 			name = "Create legacy Swift overlay symlink";
 			outputFileListPaths = (
@@ -19994,7 +20016,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 1;
 			shellPath = /bin/sh;
-			shellScript = "set -e\nif [ \"${ACTION}\" != installhdrs -a \"${WK_USE_OVERRIDE_FRAMEWORKS_DIR}\" = NO ]; then\n    if [ \"${ACTION}\" != installapi ]; then\n        ln -sfhv \"../../../System/Library/Frameworks/WebKit.framework/${WK_FRAMEWORK_VERSION_PREFIX}WebKit\" \"${SCRIPT_OUTPUT_FILE_0}\" \n    fi\n    ln -sfhv \"../../../System/Library/Frameworks/WebKit.framework/${WK_FRAMEWORK_VERSION_PREFIX}WebKit.tbd\" \"${SCRIPT_OUTPUT_FILE_1}\"\nfi\n";
+			shellScript = "\"${SCRIPT_INPUT_FILE_0}\"\n";
 		};
 		DD5697CB2DC0625300050321 /* Generate Swift platform args */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -20600,6 +20622,7 @@
 				F3EEEE5A2DB318270038CC1D /* BidiBrowserAgent.cpp in Sources */,
 				F3272B802DB997C6007B3A9A /* BidiBrowsingContextAgent.cpp in Sources */,
 				F3272B812DB997C6007B3A9A /* BidiScriptAgent.cpp in Sources */,
+				5EEC724C2DC1B30700D012DD /* BidiStorageAgent.cpp in Sources */,
 				F3A94F012DB6F3310023CE9D /* BidiUserContext.cpp in Sources */,
 				1C62747E288B4C3E00CED3A2 /* CocoaHelpers.mm in Sources */,
 				49DC1DE127E5129100C1CB36 /* CSPExtensionUtilities.mm in Sources */,
@@ -21039,7 +21062,6 @@
 				2D93116A212F61B500044BFE /* WKContentViewInteraction.mm in Sources */,
 				075C079A2D92125D00B3E900 /* WKContextMenuElementInfoAdapter.swift in Sources */,
 				637281A321ADC744009E0DE6 /* WKDownloadProgress.mm in Sources */,
-				079992992DD86DC800882A0A /* WKGroupSession.swift in Sources */,
 				5CE9120D2293C219005BEC78 /* WKMain.mm in Sources */,
 				E502E4F82D4810EA00C3D56D /* WKMaterialHostingSupport.swift in Sources */,
 				07CB79982CE943E400199C49 /* WKNavigationDelegateAdapter.swift in Sources */,
@@ -21110,8 +21132,8 @@
 				A14F9B642B686DD300AD9C56 /* LinearMediaTypes.swift in Sources */,
 				0785E8002CBCDFFD00F68126 /* PlatformIntelligenceTextEffectView.swift in Sources */,
 				DD5697CD2DC06F7700050321 /* rdar150228472.swift in Sources */,
-				528952812C70797900D0357E /* RKEntity.swift in Sources */,
 				440DB5B72C1914DC0021639B /* TextAnimationManager.swift in Sources */,
+				0765D1C52DEBFF840029CDD0 /* WKGroupSession.swift in Sources */,
 				F46C34352DCD369B00B476F8 /* WKIdentityDocumentPresentmentController.swift in Sources */,
 				F4D59C122DCC0292004492FB /* WKIdentityDocumentPresentmentError.mm in Sources */,
 				F46C342D2DCD350D00B476F8 /* WKIdentityDocumentPresentmentMobileDocumentRequest+Extras.swift in Sources */,
@@ -21124,6 +21146,7 @@
 				0735F3222D38B09E0003D029 /* WKIntelligenceSmartReplyTextEffectCoordinator.swift in Sources */,
 				EB0FBFA72B66C61E00269CC1 /* WKMarketplaceKit.swift in Sources */,
 				B66F88C02B6D1F2300FB1734 /* WKPreviewWindowController.swift in Sources */,
+				528952812C70797900D0357E /* WKRKEntity.swift in Sources */,
 				EEA52F492D7055A700D578B5 /* WKStageMode.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

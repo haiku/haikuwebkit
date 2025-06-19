@@ -533,6 +533,7 @@ struct PerWebProcessState {
 #endif
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+- (void)_updateFixedColorExtensionViews;
 - (void)_updateFixedColorExtensionViewFrames;
 - (BOOL)_hasVisibleColorExtensionView:(WebCore::BoxSide)side;
 - (void)_addReasonToHideTopContentInsetFill:(WebKit::HideContentInsetFillReason)reason;
@@ -612,6 +613,8 @@ RetainPtr<NSError> nsErrorFromExceptionDetails(const std::optional<WebCore::Exce
 #if PLATFORM(IOS_FAMILY)
 @property (nonatomic, setter=_setAllowsMagnification:) BOOL _allowsMagnification;
 #endif
+
+@property (nonatomic, readonly) NSString *_nameForVisualIdentificationOverlay;
 
 - (void)_scrollToEdge:(_WKRectEdge)edge animated:(BOOL)animated;
 

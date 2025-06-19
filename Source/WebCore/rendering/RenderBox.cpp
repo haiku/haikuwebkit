@@ -299,12 +299,7 @@ void RenderBox::styleWillChange(StyleDifference diff, const RenderStyle& newStyl
     else if (oldStyle && oldStyle->containerType() != ContainerType::Normal)
         view().unregisterContainerQueryBox(*this);
 
-    if (!style().anchorNames().isEmpty())
-        view().registerAnchor(*this);
-    else if (oldStyle && !oldStyle->anchorNames().isEmpty())
-        view().unregisterAnchor(*this);
-
-    if (!style().positionTryFallbacks().isEmpty() && style().hasOutOfFlowPosition())
+    if (!newStyle.positionTryFallbacks().isEmpty() && newStyle.hasOutOfFlowPosition())
         view().registerPositionTryBox(*this);
     else if (oldStyle && !oldStyle->positionTryFallbacks().isEmpty() && oldStyle->hasOutOfFlowPosition())
         view().unregisterPositionTryBox(*this);
@@ -2694,8 +2689,8 @@ void RenderBox::computeLogicalWidth(LogicalExtentComputedValues& computedValues)
     auto& styleToUse = style();
     if (isInline() && is<RenderReplaced>(*this)) {
         // just calculate margins
-        computedValues.m_margins.m_start = minimumValueForLength(styleToUse.marginStart(), containerLogicalWidth);
-        computedValues.m_margins.m_end = minimumValueForLength(styleToUse.marginEnd(), containerLogicalWidth);
+        computedValues.m_margins.m_start = Style::evaluateMinimum(styleToUse.marginStart(), containerLogicalWidth);
+        computedValues.m_margins.m_end = Style::evaluateMinimum(styleToUse.marginEnd(), containerLogicalWidth);
         if (treatAsReplaced)
             computedValues.m_extent = std::max(LayoutUnit(floatValueForLength(usedLogicalWidthLength, 0) + borderAndPaddingLogicalWidth()), minPreferredLogicalWidth());
         return;
@@ -2721,10 +2716,10 @@ void RenderBox::computeLogicalWidth(LogicalExtentComputedValues& computedValues)
     // Margin calculations.
     if (hasPerpendicularContainingBlock || isFloating() || isInline()) {
         computedValues.m_margins.m_start = computeOrTrimInlineMargin(containingBlock, MarginTrimType::BlockStart, [&] {
-            return minimumValueForLength(styleToUse.marginStart(), containerLogicalWidth);
+            return Style::evaluateMinimum(styleToUse.marginStart(), containerLogicalWidth);
         });
         computedValues.m_margins.m_end = computeOrTrimInlineMargin(containingBlock, MarginTrimType::BlockEnd, [&] {
-            return minimumValueForLength(styleToUse.marginEnd(), containerLogicalWidth);
+            return Style::evaluateMinimum(styleToUse.marginEnd(), containerLogicalWidth);
         });
     } else {
         auto containerLogicalWidthForAutoMargins = containerLogicalWidth;
@@ -2776,14 +2771,14 @@ LayoutUnit RenderBox::fillAvailableMeasure(LayoutUnit availableLogicalWidth, Lay
 {
     auto* container = containingBlock();
     bool isOrthogonalElement = isHorizontalWritingMode() != container->isHorizontalWritingMode();
-    auto marginStartLength = style().marginStart();
-    auto marginEndLength = style().marginEnd();
+    auto& marginStartLength = style().marginStart();
+    auto& marginEndLength = style().marginEnd();
     LayoutUnit availableSizeForResolvingMargin = isOrthogonalElement ? containingBlockLogicalWidthForContent() : availableLogicalWidth;
     marginStart = computeOrTrimInlineMargin(*container, MarginTrimType::InlineStart, [&] {
-        return minimumValueForLength(marginStartLength, availableSizeForResolvingMargin);
+        return Style::evaluateMinimum(marginStartLength, availableSizeForResolvingMargin);
     });
     marginEnd = computeOrTrimInlineMargin(*container, MarginTrimType::InlineEnd, [&] {
-        return minimumValueForLength(marginEndLength, availableSizeForResolvingMargin);
+        return Style::evaluateMinimum(marginEndLength, availableSizeForResolvingMargin);
     });
     return availableLogicalWidth - marginStart - marginEnd;
 }
@@ -3002,23 +2997,23 @@ LayoutUnit RenderBox::computeOrTrimInlineMargin(const RenderBlock& containingBlo
 
 void RenderBox::computeInlineDirectionMargins(const RenderBlock& containingBlock, LayoutUnit containerWidth, std::optional<LayoutUnit> availableSpaceAdjustedWithFloats, LayoutUnit childWidth, LayoutUnit& marginStart, LayoutUnit& marginEnd) const
 {
-    const RenderStyle& containingBlockStyle = containingBlock.style();
-    Length marginStartLength = style().marginStart(containingBlockStyle.writingMode());
-    Length marginEndLength = style().marginEnd(containingBlockStyle.writingMode());
+    auto& containingBlockStyle = containingBlock.style();
+    auto marginStartLength = style().marginStart(containingBlockStyle.writingMode());
+    auto marginEndLength = style().marginEnd(containingBlockStyle.writingMode());
 
     if (isFloating()) {
-        marginStart = minimumValueForLength(marginStartLength, containerWidth);
-        marginEnd = minimumValueForLength(marginEndLength, containerWidth);
+        marginStart = Style::evaluateMinimum(marginStartLength, containerWidth);
+        marginEnd = Style::evaluateMinimum(marginEndLength, containerWidth);
         return;
     }
 
     if (isInline()) {
         // Inline blocks/tables don't have their margins increased.
         marginStart = computeOrTrimInlineMargin(containingBlock, MarginTrimType::InlineStart, [&] {
-            return minimumValueForLength(marginStartLength, containerWidth);
+            return Style::evaluateMinimum(marginStartLength, containerWidth);
         });
         marginEnd = computeOrTrimInlineMargin(containingBlock, MarginTrimType::InlineStart, [&] {
-            return minimumValueForLength(marginEndLength, containerWidth);
+            return Style::evaluateMinimum(marginEndLength, containerWidth);
         });
         return;
     }
@@ -3028,9 +3023,9 @@ void RenderBox::computeInlineDirectionMargins(const RenderBlock& containingBlock
         // will think we're wider than we actually are and calculate line sizes
         // wrong. See also http://dev.w3.org/csswg/css-flexbox/#auto-margins
         if (marginStartLength.isAuto())
-            marginStartLength = Length(0, LengthType::Fixed);
+            marginStartLength = 0_css_px;
         if (marginEndLength.isAuto())
-            marginEndLength = Length(0, LengthType::Fixed);
+            marginEndLength = 0_css_px;
     }
 
     auto handleMarginAuto = [&] {
@@ -3041,13 +3036,13 @@ void RenderBox::computeInlineDirectionMargins(const RenderBlock& containingBlock
         if (marginAutoCenter || alignModeCenter) {
             // Other browsers center the margin box for align=center elements so we match them here.
             marginStart = computeOrTrimInlineMargin(containingBlock, MarginTrimType::InlineStart, [&] {
-                LayoutUnit marginStartWidth = minimumValueForLength(marginStartLength, containerWidthForMarginAuto);
-                LayoutUnit marginEndWidth = minimumValueForLength(marginEndLength, containerWidthForMarginAuto);
+                LayoutUnit marginStartWidth = Style::evaluateMinimum(marginStartLength, containerWidthForMarginAuto);
+                LayoutUnit marginEndWidth = Style::evaluateMinimum(marginEndLength, containerWidthForMarginAuto);
                 LayoutUnit centeredMarginBoxStart = std::max<LayoutUnit>(0, (containerWidthForMarginAuto - childWidth - marginStartWidth - marginEndWidth) / 2);
                 return centeredMarginBoxStart + marginStartWidth;
             });
             marginEnd = computeOrTrimInlineMargin(containingBlock, MarginTrimType::InlineEnd, [&] {
-                LayoutUnit marginEndWidth = minimumValueForLength(marginEndLength, containerWidthForMarginAuto);
+                LayoutUnit marginEndWidth = Style::evaluateMinimum(marginEndLength, containerWidthForMarginAuto);
                 return containerWidthForMarginAuto - childWidth - marginStart + marginEndWidth;
             });
             return true;
@@ -3055,7 +3050,7 @@ void RenderBox::computeInlineDirectionMargins(const RenderBlock& containingBlock
 
         // Case Two: The object is being pushed to the start of the containing block's available logical width.
         if (marginEndLength.isAuto() && childWidth < containerWidthForMarginAuto) {
-            marginStart = valueForLength(marginStartLength, containerWidthForMarginAuto);
+            marginStart = Style::evaluate(marginStartLength, containerWidthForMarginAuto);
             marginEnd = containerWidthForMarginAuto - childWidth - marginStart;
             return true;
         }
@@ -3065,7 +3060,7 @@ void RenderBox::computeInlineDirectionMargins(const RenderBlock& containingBlock
             || (containingBlockStyle.writingMode().isBidiLTR() && containingBlockStyle.textAlign() == TextAlignMode::WebKitRight));
         if ((marginStartLength.isAuto() || pushToEndFromTextAlign) && childWidth < containerWidthForMarginAuto) {
             marginEnd = computeOrTrimInlineMargin(containingBlock, MarginTrimType::InlineEnd, [&] {
-                return valueForLength(marginEndLength, containerWidthForMarginAuto);
+                return Style::evaluate(marginEndLength, containerWidthForMarginAuto);
             });
             marginStart = computeOrTrimInlineMargin(containingBlock, MarginTrimType::InlineStart, [&] {
                 return containerWidthForMarginAuto - childWidth - marginEnd;
@@ -3080,10 +3075,10 @@ void RenderBox::computeInlineDirectionMargins(const RenderBlock& containingBlock
     // Case Four: Either no auto margins, or our width is >= the container width (css2.1, 10.3.3). In that case
     // auto margins will just turn into 0.
     marginStart = computeOrTrimInlineMargin(containingBlock, MarginTrimType::InlineStart, [&] {
-        return minimumValueForLength(marginStartLength, containerWidth);
+        return Style::evaluateMinimum(marginStartLength, containerWidth);
     });
     marginEnd = computeOrTrimInlineMargin(containingBlock, MarginTrimType::InlineEnd, [&] {
-        return minimumValueForLength(marginEndLength, containerWidth);
+        return Style::evaluateMinimum(marginEndLength, containerWidth);
     });
 }
 
@@ -3874,8 +3869,8 @@ LayoutUnit RenderBox::constrainBlockMarginInAvailableSpaceOrTrim(const RenderBox
     }
     
     return marginSide == MarginTrimType::BlockStart
-        ? minimumValueForLength(style().marginBefore(containingBlock.writingMode()), availableSpace)
-        : minimumValueForLength(style().marginAfter(containingBlock.writingMode()), availableSpace);
+        ? Style::evaluateMinimum(style().marginBefore(containingBlock.writingMode()), availableSpace)
+        : Style::evaluateMinimum(style().marginAfter(containingBlock.writingMode()), availableSpace);
 }
 
 // MARK: - Positioned Layout
@@ -4341,6 +4336,28 @@ void RenderBox::addVisualEffectOverflow()
         fragmentedFlow->addFragmentsVisualEffectOverflow(*this);
 }
 
+static LayoutBoxExtent shadowOutsetsForWritingMode(const LayoutBoxExtent& shadowExtent, WritingMode writingMode)
+{
+    auto result = shadowExtent;
+    // Box-shadow extent's left and top are negative when extends to left and top, respectively, so negate to convert to outsets.
+    result.left() = -result.left();
+    result.top() = -result.top();
+
+    switch (writingMode.blockDirection()) {
+    case FlowDirection::TopToBottom:
+    case FlowDirection::LeftToRight:
+        break;
+    case FlowDirection::BottomToTop:
+        std::swap(result.top(), result.bottom());
+        break;
+    case FlowDirection::RightToLeft:
+        std::swap(result.left(), result.right());
+        break;
+    }
+
+    return result;
+}
+
 LayoutRect RenderBox::applyVisualEffectOverflow(const LayoutRect& borderBox) const
 {
     LayoutUnit overflowMinX = borderBox.x();
@@ -4350,12 +4367,11 @@ LayoutRect RenderBox::applyVisualEffectOverflow(const LayoutRect& borderBox) con
     
     // Compute box-shadow overflow first.
     if (style().hasBoxShadow()) {
-        auto shadowExtent = style().boxShadowExtent();
+        auto shadowExtent = shadowOutsetsForWritingMode(style().boxShadowExtent(), writingMode());
 
-        // Note that box-shadow extent's left and top are negative when extends to left and top, respectively.
-        overflowMinX = borderBox.x() + shadowExtent.left();
+        overflowMinX = borderBox.x() - shadowExtent.left();
         overflowMaxX = borderBox.maxX() + shadowExtent.right();
-        overflowMinY = borderBox.y() + shadowExtent.top();
+        overflowMinY = borderBox.y() - shadowExtent.top();
         overflowMaxY = borderBox.maxY() + shadowExtent.bottom();
     }
 
@@ -4682,9 +4698,7 @@ LayoutRect RenderBox::flippedClientBoxRect() const
     // quite physical), we need to flip the block progression coordinate in vertical-rl and
     // horizontal-bt writing modes. Apart from that, this method does the same as clientBoxRect().
 
-    auto borderWidths = this->borderWidths();
-    // Calculate physical padding box.
-    LayoutRect rect(borderWidths.left(), borderWidths.top(), width() - borderWidths.left() - borderWidths.right(), height() - borderWidths.top() - borderWidths.bottom());
+    auto rect = paddingBoxRectIncludingScrollbar();
     // Flip block progression axis if writing mode is vertical-rl or horizontal-bt.
     flipForWritingMode(rect);
     if (hasNonVisibleOverflow()) {
@@ -4957,7 +4971,7 @@ LayoutUnit RenderBox::offsetFromLogicalTopOfFirstPage() const
 
 LayoutBoxExtent RenderBox::scrollPaddingForViewportRect(const LayoutRect& viewportRect)
 {
-    return Style::extentForRect(style().scrollPadding(), viewportRect);
+    return Style::extentForRect(style().scrollPaddingBox(), viewportRect);
 }
 
 LayoutUnit synthesizedBaseline(const RenderBox& box, const RenderStyle& parentStyle, LineDirectionMode direction, BaselineSynthesisEdge edge)

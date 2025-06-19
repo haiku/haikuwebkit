@@ -87,6 +87,20 @@ imported/w3c/web-platform-tests/css/css-pseudo/highlight-custom-properties-dynam
 # Tests that require wheel events
 compositing/repaint/sticky-repaint-on-scroll.html [ Pass ]
 
+# Some of these have failing results: webkit.org/b/293983
+imported/w3c/web-platform-tests/dom/events/scrolling/iframe-chains.html [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/scroll-cross-origin-iframes.html [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-basic.html?include=scroll-over-scrollable-child [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-basic.html?include=target-basic [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-multiple-action-chains.html [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-target-display-change.html?include=contents [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-target-display-change.html?include=none [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-target-elements.html [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-target-move.html [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-target-removal.html [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-target-resize.html?include=passive-false [ Pass ]
+imported/w3c/web-platform-tests/dom/events/scrolling/wheel-event-transactions-target-resize.html?include=passive-true [ Pass ]
+
 # These tests are checking that WebContent is terminated when performing an invalid IPC operation for WK2.
 # They crash in debug (as expected) so we skip them there. <rdar://problem/117742950>
 [ Debug ] ipc/restrictedendpoints/mac/deny-access-modelElement.html [ Skip ]
@@ -1773,6 +1787,7 @@ http/tests/webgpu/webgpu/shader/execution/flow_control/switch.html [ Pass ]
 webkit.org/b/264306 fast/scrolling/mac/scrollbars/very-wide-overlay-scrollbar.html [ Pass ImageOnlyFailure Timeout ]
 
 webkit.org/b/265599 [ Sonoma+ Debug x86_64 ] imported/w3c/web-platform-tests/html/browsers/the-window-object/open-close/open-features-tokenization-noreferrer.html [ Pass Crash ]
+imported/w3c/web-platform-tests/html/browsers/the-window-object/open-close/open_initial_size.html [ Skip ]
 
 # WindowProxy property access delegate callbacks are only implemented on Mac and iOS WK2.
 http/wpt/opener/child-access-parent-via-windowproxy.html [ Pass ]
@@ -2165,8 +2180,6 @@ webkit.org/b/292883 http/wpt/service-workers/basic-fetch-with-contentfilter.http
 
 webkit.org/b/283410 media/media-vp8-webm-with-poster.html [ Pass ImageOnlyFailure ]
 
-webkit.org/b/293145 [ Debug arm64 ] imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-for-user-scroll.html [ Pass Failure ]
-
 webkit.org/b/293761 http/wpt/service-workers/navigate-iframes-window-client.https.html [ Failure ]
 webkit.org/b/293761 http/tests/navigation/keyboard-events-during-provisional-navigation.html [ Failure ]
 
@@ -2175,3 +2188,5 @@ webkit.org/b/293804 [ Debug ] pdf/annotations/checkbox-set-active.html [ Pass Ti
 # webkit.org/b/293827 [macOS] 2x tests in webgl are constant failures (flaky in EWS)
 [ Sequoia ] webgl/1.0.x/conformance/textures/misc/gl-teximage.html [ Failure ]
 [ Sequoia ] webgl/2.0.y/conformance/textures/misc/gl-teximage.html [ Failure ]
+
+webkit.org/b/294087 [ Sequoia ] svg/zoom/page/text-with-non-scaling-stroke.html [ ImageOnlyFailure ]

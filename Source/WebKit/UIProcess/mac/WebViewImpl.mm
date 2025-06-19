@@ -360,6 +360,10 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     [defaultNotificationCenter addObserver:self selector:@selector(_windowDidChangeScreen:) name:NSWindowDidChangeScreenNotification object:window];
     [defaultNotificationCenter addObserver:self selector:@selector(_windowDidChangeOcclusionState:) name:NSWindowDidChangeOcclusionStateNotification object:window];
     [defaultNotificationCenter addObserver:self selector:@selector(_windowWillClose:) name:NSWindowWillCloseNotification object:window];
+    [defaultNotificationCenter addObserver:self selector:@selector(_windowWillEnterOrExitFullScreen:) name:NSWindowWillEnterFullScreenNotification object:window];
+    [defaultNotificationCenter addObserver:self selector:@selector(_windowDidEnterOrExitFullScreen:) name:NSWindowDidEnterFullScreenNotification object:window];
+    [defaultNotificationCenter addObserver:self selector:@selector(_windowWillEnterOrExitFullScreen:) name:NSWindowWillExitFullScreenNotification object:window];
+    [defaultNotificationCenter addObserver:self selector:@selector(_windowDidEnterOrExitFullScreen:) name:NSWindowDidExitFullScreenNotification object:window];
 
     [defaultNotificationCenter addObserver:self selector:@selector(_screenDidChangeColorSpace:) name:NSScreenColorSpaceDidChangeNotification object:nil];
     [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldBeginSuppressingHDR:) name:@"NSApplicationShouldBeginSuppressingHighDynamicRangeContentNotification" object:NSApp];
@@ -409,6 +413,10 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     [defaultNotificationCenter removeObserver:self name:_NSWindowDidChangeContentsHostedInLayerSurfaceNotification object:window.get()];
     [defaultNotificationCenter removeObserver:self name:NSWindowDidChangeOcclusionStateNotification object:window.get()];
     [defaultNotificationCenter removeObserver:self name:NSWindowWillCloseNotification object:window.get()];
+    [defaultNotificationCenter removeObserver:self name:NSWindowWillEnterFullScreenNotification object:window.get()];
+    [defaultNotificationCenter removeObserver:self name:NSWindowDidEnterFullScreenNotification object:window.get()];
+    [defaultNotificationCenter removeObserver:self name:NSWindowWillExitFullScreenNotification object:window.get()];
+    [defaultNotificationCenter removeObserver:self name:NSWindowDidExitFullScreenNotification object:window.get()];
 
     [defaultNotificationCenter removeObserver:self name:NSScreenColorSpaceDidChangeNotification object:nil];
 
@@ -572,6 +580,18 @@ static void* keyValueObservingContext = &keyValueObservingContext;
         _impl->clearTextIndicatorWithAnimation(WebCore::TextIndicatorDismissalAnimation::None);
 }
 #endif
+
+- (void)_windowDidEnterOrExitFullScreen:(NSNotification *)notification
+{
+    if (_impl)
+        _impl->windowDidEnterOrExitFullScreen();
+}
+
+- (void)_windowWillEnterOrExitFullScreen:(NSNotification *)notification
+{
+    if (_impl)
+        _impl->windowWillEnterOrExitFullScreen();
+}
 
 - (void)_activeSpaceDidChange:(NSNotification *)notification
 {
@@ -2069,6 +2089,20 @@ float WebViewImpl::intrinsicDeviceScaleFactor() const
     return [NSScreen mainScreen].backingScaleFactor;
 }
 
+void WebViewImpl::windowWillEnterOrExitFullScreen()
+{
+    m_windowIsEnteringOrExitingFullScreen = true;
+}
+
+void WebViewImpl::windowDidEnterOrExitFullScreen()
+{
+    m_windowIsEnteringOrExitingFullScreen = false;
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    updateContentInsetFillViews();
+#endif
+}
+
 void WebViewImpl::windowDidOrderOffScreen()
 {
     LOG(ActivityState, "WebViewImpl %p (page %llu) windowDidOrderOffScreen", this, m_page->identifier().toUInt64());
@@ -2265,6 +2299,8 @@ void WebViewImpl::viewWillMoveToWindowImpl(NSWindow *window)
         [currentWindow unregisterScrollViewSeparatorTrackingAdapter:(NSObject<NSScrollViewSeparatorTrackingAdapter> *)m_view.get().get()];
         m_isRegisteredScrollViewSeparatorTrackingAdapter = false;
     }
+
+    m_windowIsEnteringOrExitingFullScreen = false;
 }
 
 void WebViewImpl::viewWillMoveToWindow(NSWindow *window)
@@ -4486,7 +4522,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     if (customDataBuffer)
         [pasteboard setData:customDataBuffer.get() forType:@(WebCore::PasteboardCustomData::cocoaType().characters())];
 
-    m_promisedImage = &image;
+    m_promisedImage = image;
 }
 
 void WebViewImpl::clearPromisedDragImage()
@@ -6408,17 +6444,17 @@ void WebViewImpl::togglePictureInPicture()
 }
 
 
-RefPtr<PlatformPlaybackSessionInterface> WebViewImpl::protectedPlaybackSessionInterface() const
+PlatformPlaybackSessionInterface* WebViewImpl::playbackSessionInterface() const
 {
     if (RefPtr manager = m_page->playbackSessionManager())
-        return manager->controlsManagerInterface();
+        return manager->controlsManagerInterface().get();
 
     return nullptr;
 }
 
 bool WebViewImpl::isInWindowFullscreenActive() const
 {
-    if (RefPtr interface = protectedPlaybackSessionInterface())
+    if (RefPtr interface = playbackSessionInterface())
         return interface->isInWindowFullscreenActive();
 
     return false;
@@ -6426,13 +6462,13 @@ bool WebViewImpl::isInWindowFullscreenActive() const
 
 void WebViewImpl::enterInWindowFullscreen()
 {
-    if (RefPtr interface = protectedPlaybackSessionInterface())
+    if (RefPtr interface = playbackSessionInterface())
         return interface->enterInWindowFullscreen();
 }
 
 void WebViewImpl::exitInWindowFullscreen()
 {
-    if (RefPtr interface = protectedPlaybackSessionInterface())
+    if (RefPtr interface = playbackSessionInterface())
         return interface->exitInWindowFullscreen();
 }
 
@@ -6447,7 +6483,7 @@ void WebViewImpl::updateMediaPlaybackControlsManager()
         [m_playbackControlsManager setCanTogglePictureInPicture:NO];
     }
 
-    if (RefPtr interface = protectedPlaybackSessionInterface()) {
+    if (RefPtr interface = playbackSessionInterface()) {
         [m_playbackControlsManager setPlaybackSessionInterfaceMac:interface.get()];
         interface->updatePlaybackControlsManagerCanTogglePictureInPicture();
     }

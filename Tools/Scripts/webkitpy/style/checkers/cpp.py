@@ -134,6 +134,9 @@ _AUTO_GENERATED_FILES = [
     # VisualStudio resource files
     'Tools/MiniBrowser/win/MiniBrowserLibResource.h',
 
+    # Swift bridging header
+    'Source/WTF/wtf/SwiftBridging.h',
+
     # Generated Test Results
     'Source/WebCore/css/scripts/test/TestCSSPropertiesResults/CSSPropertyNames.gperf',
     'Source/WebCore/css/scripts/test/TestCSSPropertiesResults/CSSPropertyNames.h',
@@ -2596,7 +2599,7 @@ def check_namespace_indentation(clean_lines, line_number, file_extension, file_s
 _ALLOW_ALL_UPPERCASE_ENUM = ['JSTokenType']
 
 # Enum value allowlist
-_ALLOW_ABBREVIATION_ENUM_VALUES = ['AM', 'CF', 'GPU', 'PM', 'URL', 'XHR']
+_ALLOW_ABBREVIATION_ENUM_VALUES = ['AM', 'CF', 'GPU', 'LTR', 'PM', 'RTL', 'URL', 'XHR']
 
 
 def check_enum_members(clean_lines, line_number, enum_state, error):
@@ -3645,6 +3648,11 @@ def check_safer_cpp(clean_lines, line_number, error):
     if search(r'sqlite3_column_blob\(', line):
         error(line_number, 'safercpp/sqlite3_column_blob', 4, "Use sqliteColumnBlob() instead of sqlite3_column_blob().")
 
+    if search(r'= [a-zA-Z0-9_.(),\s\->]*protected[a-zA-Z0-9]+\(\)[;\)]', line):
+        error(line_number, 'safercpp/protected_getter_for_init', 4, "Use m_foo or foo() instead of protectedFoo() for variable initialization.")
+
+    if search(r'= [a-zA-Z0-9_.(),\s\->]*checked[a-zA-Z0-9]+\(\)[;\)]', line):
+        error(line_number, 'safercpp/checked_getter_for_init', 4, "Use m_foo or foo() instead of checkedFoo() for variable initialization.")
 
 def check_style(clean_lines, line_number, file_extension, class_state, file_state, enum_state, error):
     """Checks rules from the 'C++ style rules' section of cppguide.html.
@@ -4983,6 +4991,7 @@ class CppChecker(object):
         'runtime/wtf_move',
         'runtime/wtf_never_destroyed',
         'safercpp/atoi',
+        'safercpp/checked_getter_for_init',
         'safercpp/memchr',
         'safercpp/memcmp',
         'safercpp/memcpy',
@@ -4994,6 +5003,7 @@ class CppChecker(object):
         'safercpp/strcmp',
         'safercpp/strncmp',
         'safercpp/printf',
+        'safercpp/protected_getter_for_init',
         'safercpp/strchr',
         'safercpp/strstr',
         'safercpp/timer_exception',

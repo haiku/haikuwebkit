@@ -55,7 +55,6 @@ platform/mac/WebPlaybackControlsManager.h
 platform/mock/DeviceOrientationClientMock.h
 rendering/BackgroundPainter.h
 rendering/GlyphDisplayListCache.cpp
-rendering/GridMasonryLayout.h
 rendering/GridTrackSizingAlgorithm.h
 rendering/ImageQualityController.h
 rendering/InlineBoxPainter.h
@@ -82,7 +81,6 @@ rendering/RenderLayerBacking.cpp
 rendering/RenderLayerBacking.h
 rendering/RenderLayerCompositor.cpp
 rendering/RenderLayerCompositor.h
-rendering/RenderLayerFilters.h
 rendering/RenderLayerScrollableArea.h
 rendering/RenderLayoutState.h
 rendering/RenderMarquee.h

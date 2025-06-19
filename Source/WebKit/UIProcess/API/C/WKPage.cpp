@@ -2901,7 +2901,7 @@ void WKPageComputePagesForPrinting(WKPageRef pageRef, WKFrameRef frame, WKPrintI
         Vector<WKRect> wkRects(rects.size());
         for (size_t i = 0; i < rects.size(); ++i)
             wkRects[i] = toAPI(rects[i]);
-        callback(wkRects.data(), wkRects.size(), scaleFactor, nullptr, context);
+        callback(wkRects.mutableSpan().data(), wkRects.size(), scaleFactor, nullptr, context);
     });
 }
 
@@ -3395,7 +3395,7 @@ void WKPageSetMockCaptureDevicesInterrupted(WKPageRef pageRef, bool isCameraInte
 {
     CRASH_IF_SUSPENDED;
 #if ENABLE(MEDIA_STREAM) && ENABLE(GPU_PROCESS)
-    auto preferences = toImpl(pageRef)->protectedPreferences();
+    Ref preferences = toImpl(pageRef)->preferences();
     if (preferences->useGPUProcessForMediaEnabled()) {
         Ref gpuProcess = toImpl(pageRef)->configuration().processPool().ensureGPUProcess();
         gpuProcess->setMockCaptureDevicesInterrupted(isCameraInterrupted, isMicrophoneInterrupted);
@@ -3417,7 +3417,7 @@ void WKPageTriggerMockCaptureConfigurationChange(WKPageRef pageRef, bool forCame
 #endif // USE(GSTREAMER)
 
 #if ENABLE(GPU_PROCESS)
-    auto preferences = toImpl(pageRef)->protectedPreferences();
+    Ref preferences = toImpl(pageRef)->preferences();
     if (!preferences->useGPUProcessForMediaEnabled())
         return;
 

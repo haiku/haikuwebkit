@@ -986,8 +986,8 @@ void RenderTableSection::paintCell(RenderTableCell* cell, PaintInfo& paintInfo, 
         // Note that we deliberately ignore whether or not the cell has a layer, since these backgrounds paint "behind" the
         // cell.
         if (RenderTableCol* column = table()->colElement(cell->col())) {
-            if (CheckedPtr columnGroup = column->enclosingColumnGroup())
-                cell->paintBackgroundsBehindCell(paintInfo, cellPoint, columnGroup.get(), cellPoint);
+            if (RenderTableCol* columnGroup = column->enclosingColumnGroup())
+                cell->paintBackgroundsBehindCell(paintInfo, cellPoint, columnGroup, cellPoint);
             cell->paintBackgroundsBehindCell(paintInfo, cellPoint, column, cellPoint);
         }
 
@@ -1602,18 +1602,6 @@ CollapsedBorderValue RenderTableSection::cachedCollapsedBorder(const RenderTable
     if (it == m_cellsCollapsedBorders.end())
         return CollapsedBorderValue(BorderValue(), Color(), BorderPrecedence::Cell);
     return it->value;
-}
-
-RenderPtr<RenderTableSection> RenderTableSection::createTableSectionWithStyle(Document& document, const RenderStyle& style)
-{
-    auto section = createRenderer<RenderTableSection>(document, RenderStyle::createAnonymousStyleWithDisplay(style, DisplayType::TableRowGroup));
-    section->initializeStyle();
-    return section;
-}
-
-RenderPtr<RenderTableSection> RenderTableSection::createAnonymousWithParentRenderer(const RenderTable& parent)
-{
-    return RenderTableSection::createTableSectionWithStyle(parent.document(), parent.style());
 }
 
 void RenderTableSection::setLogicalPositionForCell(RenderTableCell* cell, unsigned effectiveColumn) const

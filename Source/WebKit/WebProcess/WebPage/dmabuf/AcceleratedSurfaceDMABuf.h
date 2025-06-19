@@ -203,7 +203,7 @@ private:
         void didRenderFrame() override;
 
         unsigned m_colorBuffer { 0 };
-        Ref<WebCore::ShareableBitmap> m_bitmap;
+        const Ref<WebCore::ShareableBitmap> m_bitmap;
     };
 
     class RenderTargetTexture final : public RenderTarget {
@@ -267,7 +267,7 @@ private:
 #endif
     };
 
-    CheckedRef<ThreadedCompositor> m_compositor;
+    const CheckedRef<ThreadedCompositor> m_compositor;
     uint64_t m_id { 0 };
     SwapChain m_swapChain;
     RenderTarget* m_target { nullptr };

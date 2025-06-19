@@ -465,7 +465,7 @@ void WebProcessProxy::setWebsiteDataStore(WebsiteDataStore& dataStore)
     if (!m_websiteDataStore)
         dataStore.protectedNetworkProcess()->sendXPCEndpointToProcess(*this);
 #endif
-    m_websiteDataStore = &dataStore;
+    m_websiteDataStore = dataStore;
     logger().setEnabled(this, isAlwaysOnLoggingAllowed());
     updateRegistrationWithDataStore();
     send(Messages::WebProcess::SetWebsiteDataStoreParameters(protectedProcessPool()->webProcessDataStoreParameters(*this, dataStore)), 0);
@@ -2164,7 +2164,7 @@ void WebProcessProxy::didExceedMemoryFootprintThreshold(size_t footprint)
 {
     WEBPROCESSPROXY_RELEASE_LOG(PerformanceLogging, "didExceedMemoryFootprintThreshold: WebProcess exceeded notification threshold (current footprint: %zu MB)", footprint >> 20);
 
-    RefPtr dataStore = protectedWebsiteDataStore();
+    RefPtr dataStore = websiteDataStore();
     if (!dataStore)
         return;
 

@@ -59,7 +59,6 @@
 #include "RenderView.h"
 #include "StyleBoxShadow.h"
 #include "StyleInheritedData.h"
-#include <wtf/CheckedPtr.h>
 #include <wtf/SetForScope.h>
 #include <wtf/StackStats.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -305,8 +304,8 @@ void RenderTable::updateLogicalWidth()
         setLogicalWidth(convertStyleLogicalWidthToComputedWidth(styleLogicalWidth, containerWidthInInlineDirection));
     else {
         // Subtract out any fixed margins from our available width for auto width tables.
-        LayoutUnit marginStart = minimumValueForLength(style().marginStart(), availableLogicalWidth);
-        LayoutUnit marginEnd = minimumValueForLength(style().marginEnd(), availableLogicalWidth);
+        LayoutUnit marginStart = Style::evaluateMinimum(style().marginStart(), availableLogicalWidth);
+        LayoutUnit marginEnd = Style::evaluateMinimum(style().marginEnd(), availableLogicalWidth);
         LayoutUnit marginTotal = marginStart + marginEnd;
 
         // Subtract out our margins to get the available content width.
@@ -359,8 +358,8 @@ void RenderTable::updateLogicalWidth()
         setMarginStart(marginValues.m_start);
         setMarginEnd(marginValues.m_end);
     } else {
-        setMarginStart(minimumValueForLength(style().marginStart(), availableLogicalWidth));
-        setMarginEnd(minimumValueForLength(style().marginEnd(), availableLogicalWidth));
+        setMarginStart(Style::evaluateMinimum(style().marginStart(), availableLogicalWidth));
+        setMarginEnd(Style::evaluateMinimum(style().marginEnd(), availableLogicalWidth));
     }
 }
 
@@ -1049,10 +1048,10 @@ void RenderTable::updateColumnCache() const
     ASSERT(!m_columnRenderersValid);
 
     unsigned columnIndex = 0;
-    for (CheckedPtr columnRenderer = firstColumn(); columnRenderer; columnRenderer = columnRenderer->nextColumn()) {
+    for (RenderTableCol* columnRenderer = firstColumn(); columnRenderer; columnRenderer = columnRenderer->nextColumn()) {
         if (columnRenderer->isTableColumnGroupWithColumnChildren())
             continue;
-        m_columnRenderers.append(*columnRenderer);
+        m_columnRenderers.append(columnRenderer);
         // FIXME: We should look to compute the effective column index successively from previous values instead of
         // calling colToEffCol(), which is in O(numEffCols()). Although it's unlikely that this is a hot function.
         m_effectiveColumnIndexMap.add(*columnRenderer, colToEffCol(columnIndex));
@@ -1065,10 +1064,10 @@ unsigned RenderTable::effectiveIndexOfColumn(const RenderTableCol& column) const
 {
     if (!m_columnRenderersValid)
         updateColumnCache();
-    CheckedPtr<const RenderTableCol> columnToUse = &column;
+    const RenderTableCol* columnToUse = &column;
     if (columnToUse->isTableColumnGroupWithColumnChildren())
         columnToUse = columnToUse->nextColumn(); // First column in column-group
-    auto it = m_effectiveColumnIndexMap.find(columnToUse.get());
+    auto it = m_effectiveColumnIndexMap.find(columnToUse);
     ASSERT(it != m_effectiveColumnIndexMap.end());
     if (it == m_effectiveColumnIndexMap.end())
         return std::numeric_limits<unsigned>::max();
@@ -1097,7 +1096,7 @@ LayoutUnit RenderTable::offsetLeftForColumn(const RenderTableCol& column) const
 
 LayoutUnit RenderTable::offsetWidthForColumn(const RenderTableCol& column) const
 {
-    CheckedPtr<const RenderTableCol> currentColumn = &column;
+    const RenderTableCol* currentColumn = &column;
     bool hasColumnChildren;
     if ((hasColumnChildren = currentColumn->isTableColumnGroupWithColumnChildren()))
         currentColumn = currentColumn->nextColumn(); // First column in column-group
@@ -1694,18 +1693,6 @@ bool RenderTable::nodeAtPoint(const HitTestRequest& request, HitTestResult& resu
     }
 
     return false;
-}
-
-RenderPtr<RenderTable> RenderTable::createTableWithStyle(Document& document, const RenderStyle& style)
-{
-    auto table = createRenderer<RenderTable>(Type::Table, document, RenderStyle::createAnonymousStyleWithDisplay(style, style.display() == DisplayType::Inline ? DisplayType::InlineTable : DisplayType::Table));
-    table->initializeStyle();
-    return table;
-}
-
-RenderPtr<RenderTable> RenderTable::createAnonymousWithParentRenderer(const RenderElement& parent)
-{
-    return RenderTable::createTableWithStyle(parent.document(), parent.style());
 }
 
 void RenderTable::markForPaginationRelayoutIfNeeded()

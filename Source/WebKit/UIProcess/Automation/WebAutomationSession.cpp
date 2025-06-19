@@ -177,12 +177,12 @@ void WebAutomationSession::setClient(std::unique_ptr<API::AutomationSessionClien
 
 void WebAutomationSession::setProcessPool(WebKit::WebProcessPool* processPool)
 {
-    if (auto pool = protectedProcessPool())
+    if (RefPtr pool = m_processPool.get())
         pool->removeMessageReceiver(Messages::WebAutomationSession::messageReceiverName());
 
     m_processPool = processPool;
 
-    if (auto pool = protectedProcessPool())
+    if (RefPtr pool = m_processPool.get())
         pool->addMessageReceiver(Messages::WebAutomationSession::messageReceiverName(), *this);
 }
 
@@ -440,13 +440,19 @@ void WebAutomationSession::createBrowsingContext(std::optional<Inspector::Protoc
     });
 }
 
-CommandResult<void> WebAutomationSession::closeBrowsingContext(const Inspector::Protocol::Automation::BrowsingContextHandle& handle)
+void WebAutomationSession::closeBrowsingContext(const Inspector::Protocol::Automation::BrowsingContextHandle& handle, CommandCallback<void>&& callback)
 {
     auto page = webPageProxyForHandle(handle);
-    SYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!page, WindowNotFound);
+    ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!page, WindowNotFound);
+
+    // Prevent further uses of the page's handle while the page is being closed.
+    m_handleWebPageMap.remove(handle);
 
     page->closePage();
-    return { };
+
+    RunLoop::protectedMain()->dispatch([callback = WTFMove(callback)] {
+        callback({ });
+    });
 }
 
 CommandResult<void> WebAutomationSession::deleteSession()

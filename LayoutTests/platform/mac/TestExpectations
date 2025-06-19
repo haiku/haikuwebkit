@@ -2387,8 +2387,6 @@ webkit.org/b/288507 [ Debug x86_64 ] media/media-source/remoteplayback-availabil
 
 webkit.org/b/288546 imported/w3c/web-platform-tests/fullscreen/api/element-ready-allowed.html [ Pass Failure ]
 
-webkit.org/b/288631 imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-after-snap.html [ Failure ]
-
 webkit.org/b/260320 imported/w3c/web-platform-tests/css/selectors/invalidation/nth-child-in-shadow-root.html [ ImageOnlyFailure ]
 
 webkit.org/b/289275 [ Release ] media/media-garbage-collection.html [ Pass Failure Timeout ]
@@ -2437,3 +2435,9 @@ fast/text/international/hindi-spacing.html [ Failure ]
 # webkit.org/b/293838 ([macOS] 2x tests in imported/w3c/web-platform-tests/url/ are constant failures (flaky in EWS)
 [ Sequoia ] imported/w3c/web-platform-tests/url/IdnaTestV2.window.html [ Failure ]
 [ Sequoia ] imported/w3c/web-platform-tests/url/toascii.window.html [ Failure ]
+
+webkit.org/b/293981 [ Sequoia ] imported/w3c/web-platform-tests/mimesniff/media/media-sniff.window.html [ Failure ]
+
+webkit.org/b/294043 [ Sequoia ] platform/mac/fast/text/line-break-locale.html [ Failure ]
+
+webkit.org/b/294152 [ Sequoia ] http/tests/misc/timer-vs-loading.html [ Timeout ]

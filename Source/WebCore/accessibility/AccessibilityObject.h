@@ -352,7 +352,7 @@ public:
 
     virtual AccessibilityRole ariaRoleAttribute() const { return AccessibilityRole::Unknown; }
     bool hasExplicitGenericRole() const { return ariaRoleAttribute() == AccessibilityRole::Generic; }
-    bool hasImplicitGenericRole() const { return roleValue() == AccessibilityRole::Generic && !hasExplicitGenericRole(); }
+    bool hasImplicitGenericRole() const { return role() == AccessibilityRole::Generic && !hasExplicitGenericRole(); }
     bool ariaRoleHasPresentationalChildren() const;
     bool inheritsPresentationalRole() const override { return false; }
 
@@ -873,7 +873,7 @@ public:
 
         RefPtr<const AccessibilityObject> m_current;
         // If the original object had a display:contents parent, it is stored here. This is nullptr otherwise.
-        RefPtr<const AccessibilityObject> m_displayContentsParent { nullptr };
+        const RefPtr<const AccessibilityObject> m_displayContentsParent { nullptr };
     }; // class iterator
 
 protected:
@@ -980,7 +980,7 @@ inline unsigned AccessibilityObject::getLengthForTextRange() const { return text
 inline bool AccessibilityObject::hasTextContent() const
 {
     return isStaticText()
-        || roleValue() == AccessibilityRole::Link
+        || role() == AccessibilityRole::Link
         || isTextControl() || isTabItem();
 }
 
@@ -988,7 +988,7 @@ inline bool AccessibilityObject::hasTextContent() const
 inline bool AccessibilityObject::hasAttributedText() const
 {
     return (isStaticText() && !isARIAStaticText())
-        || roleValue() == AccessibilityRole::Link
+        || role() == AccessibilityRole::Link
         || isTextControl() || isTabItem();
 }
 #endif
@@ -1017,7 +1017,7 @@ public:
         return AccessibilityObject::iterator { };
     }
 private:
-    Ref<const AccessibilityObject> m_parent;
+    const Ref<const AccessibilityObject> m_parent;
 }; // class AXChildIterator
 
 #if PLATFORM(COCOA)

@@ -54,9 +54,6 @@ inline bool RenderElement::hasAppleVisualEffectRequiringBackdropFilter() const {
 inline bool RenderElement::isBlockLevelBox() const { return style().isDisplayBlockLevel(); }
 inline bool RenderElement::isAnonymousBlock() const
 {
-    // This function must be kept in sync with anonymous block creation conditions in RenderBlock::createAnonymousBlock().
-    // FIXME: That seems difficult. Can we come up with a simpler way to make behavior correct?
-    // FIXME: Does this relatively long function benefit from being inlined?
     return isAnonymous()
         && (style().display() == DisplayType::Block || style().display() == DisplayType::Box)
         && style().pseudoElementType() == PseudoId::None
@@ -94,6 +91,7 @@ inline bool RenderElement::mayContainOutOfFlowPositionedObjects(const RenderStyl
     return isRenderView()
         || (canEstablishContainingBlockWithTransform() && (styleToUse ? styleToUse->hasTransformRelatedProperty() : hasTransformRelatedProperty()))
         || (style.hasBackdropFilter() && !isDocumentElementRenderer())
+        || (style.hasFilter() && !isDocumentElementRenderer())
 #if HAVE(CORE_MATERIAL)
         || (style.hasAppleVisualEffectRequiringBackdropFilter() && !isDocumentElementRenderer())
 #endif

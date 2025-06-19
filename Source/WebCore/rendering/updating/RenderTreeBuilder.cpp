@@ -447,7 +447,7 @@ void RenderTreeBuilder::attachToRenderElement(RenderElement& parent, RenderPtr<R
         if (afterChild && afterChild->isAnonymous() && !afterChild->isBeforeContent())
             table = afterChild;
         else {
-            auto newTable = RenderTable::createAnonymousWithParentRenderer(parent);
+            auto newTable = Table::createAnonymousTableWithStyle(parent.protectedDocument(), parent.style());
             table = newTable.get();
             attach(parent, WTFMove(newTable), beforeChild);
         }
@@ -560,14 +560,12 @@ void RenderTreeBuilder::move(RenderBoxModelObject& from, RenderBoxModelObject& t
     }
 
     auto findBFCRootAndDestroyInlineTree = [&] {
-        auto* containingBlock = &from;
-        while (containingBlock) {
+        for (CheckedPtr containingBlock = &from; containingBlock; containingBlock = containingBlock->containingBlock()) {
             containingBlock->setNeedsLayout();
-            if (CheckedPtr blockFlow = dynamicDowncast<RenderBlockFlow>(*containingBlock)) {
+            if (auto* blockFlow = dynamicDowncast<RenderBlockFlow>(*containingBlock)) {
                 blockFlow->deleteLines();
                 break;
             }
-            containingBlock = containingBlock->containingBlock();
         }
     };
     // When moving a subtree out of a BFC we need to make sure that the line boxes generated for the inline tree are not accessible anymore from the renderers.
@@ -775,7 +773,7 @@ void RenderTreeBuilder::createAnonymousWrappersForInlineContent(RenderBlock& par
 
         child = inlineRunEnd->nextSibling();
 
-        auto newBlock = parent.createAnonymousBlock();
+        auto newBlock = Block::createAnonymousBlockWithStyle(parent.protectedDocument(), parent.style());
         auto& block = *newBlock;
         attachToRenderElementInternal(parent, WTFMove(newBlock), inlineRunStart);
         moveChildren(parent, block, inlineRunStart, child, RenderTreeBuilder::NormalizeAfterInsertion::No);
@@ -800,7 +798,7 @@ RenderObject* RenderTreeBuilder::splitAnonymousBoxesAroundChild(RenderBox& paren
 
             // We have to split the parent box into two boxes and move children
             // from |beforeChild| to end into the new post box.
-            auto newPostBox = boxToSplit.createAnonymousBoxWithSameTypeAs(parent);
+            auto newPostBox = createAnonymousBoxWithSameTypeAndWithStyle(boxToSplit, parent.style());
             auto& postBox = *newPostBox;
             postBox.setChildrenInline(boxToSplit.childrenInline());
             RenderBox* parentBox = downcast<RenderBox>(boxToSplit.parent());
@@ -845,7 +843,7 @@ void RenderTreeBuilder::childFlowStateChangesAndAffectsParentBlock(RenderElement
     }
     // An anonymous block must be made to wrap this inline.
     auto* parent = child.parent();
-    auto newBlock = downcast<RenderBlock>(*parent).createAnonymousBlock();
+    auto newBlock = Block::createAnonymousBlockWithStyle(parent->protectedDocument(), parent->style());
     auto& block = *newBlock;
     attachToRenderElementInternal(*parent, WTFMove(newBlock), &child);
     auto thisToMove = detachFromRenderElement(*parent, child, WillBeDestroyed::No);
@@ -1156,6 +1154,27 @@ void RenderTreeBuilder::removeFloatingObjects(RenderBlock& renderer)
     });
     for (auto* floatingObject : copyOfFloatingObjects)
         floatingObject->renderer().removeFloatingOrOutOfFlowChildFromBlockLists();
+}
+
+RenderPtr<RenderBox> RenderTreeBuilder::createAnonymousBoxWithSameTypeAndWithStyle(const RenderBox& renderer, const RenderStyle& style)
+{
+    if (is<RenderTableCell>(renderer))
+        return Table::createAnonymousTableCellWithStyle(renderer.protectedDocument(), style);
+
+    if (is<RenderTableRow>(renderer))
+        return Table::createAnonymousTableRowWithStyle(renderer.protectedDocument(), style);
+
+    if (is<RenderTableSection>(renderer))
+        return Table::createAnonymousTableSectionWithStyle(renderer.protectedDocument(), style);
+
+    if (is<RenderTable>(renderer))
+        return Table::createAnonymousTableWithStyle(renderer.protectedDocument(), style);
+
+    if (is<RenderBlock>(renderer))
+        return Block::createAnonymousBlockWithStyle(renderer.protectedDocument(), style);
+
+    ASSERT_NOT_REACHED();
+    return { };
 }
 
 }

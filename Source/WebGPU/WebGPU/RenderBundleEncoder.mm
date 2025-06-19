@@ -298,8 +298,9 @@ bool RenderBundleEncoder::executePreDrawCommands(bool needsValidationLayerWorkar
         makeInvalid(@"Pipeline was not set prior to draw command");
         return false;
     }
+    m_requiresCommandReplay = m_requiresCommandReplay || !pipeline->vertexShaderBindingCount();
 
-    auto pipelineLayout = pipeline->protectedPipelineLayout();
+    Ref pipelineLayout = pipeline->pipelineLayout();
     auto vertexDynamicOffsetSum = checkedSum<uint64_t>(m_vertexDynamicOffset, sizeof(uint32_t) * pipelineLayout->sizeOfVertexDynamicOffsets());
     if (vertexDynamicOffsetSum.hasOverflowed()) {
         makeInvalid(@"Invalid vertexDynamicOffset");
@@ -373,7 +374,6 @@ bool RenderBundleEncoder::executePreDrawCommands(bool needsValidationLayerWorkar
         if (protectedGroup && (protectedGroup->makeSubmitInvalid(ShaderStage::Vertex, pipelineOptionalBindGroupLayout) || protectedGroup->makeSubmitInvalid(ShaderStage::Fragment, pipelineOptionalBindGroupLayout)))
             m_makeSubmitInvalid = true;
     }
-    m_requiresCommandReplay = m_requiresCommandReplay || !pipeline->vertexShaderBindingCount();
 
     if (NSString* error = pipeline->protectedPipelineLayout()->errorValidatingBindGroupCompatibility(m_bindGroups)) {
         makeInvalid(error);
@@ -1051,7 +1051,7 @@ void RenderBundleEncoder::replayCommands(RenderPassEncoder& renderPassEncoder)
     if (!renderPassEncoder.renderCommandEncoder() || !isValid() || !m_device->isValid())
         return;
 
-    m_renderPassEncoder = &renderPassEncoder;
+    m_renderPassEncoder = renderPassEncoder;
     endCurrentICB();
     m_renderPassEncoder = nullptr;
     m_currentPipelineState = nil;
@@ -1196,7 +1196,7 @@ void RenderBundleEncoder::setBindGroup(uint32_t groupIndex, const BindGroup* gro
 void RenderBundleEncoder::setIndexBuffer(Buffer& buffer, WGPUIndexFormat format, uint64_t offset, uint64_t size)
 {
     RETURN_IF_FINISHED();
-    m_indexBuffer = &buffer;
+    m_indexBuffer = buffer;
     RELEASE_ASSERT(m_indexBuffer);
     m_indexType = format == WGPUIndexFormat_Uint32 ? MTLIndexTypeUInt32 : MTLIndexTypeUInt16;
     m_indexBufferOffset = offset;
@@ -1389,7 +1389,7 @@ void RenderBundleEncoder::setPipeline(const RenderPipeline& pipeline)
         });
     }
 
-    m_pipeline = &pipeline;
+    m_pipeline = pipeline;
 }
 
 void RenderBundleEncoder::setVertexBuffer(uint32_t slot, Buffer* optionalBuffer, uint64_t offset, uint64_t size)

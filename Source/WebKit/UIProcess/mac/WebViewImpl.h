@@ -326,6 +326,8 @@ public:
     void windowDidChangeScreen();
     void windowDidChangeOcclusionState();
     void windowWillClose();
+    void windowWillEnterOrExitFullScreen();
+    void windowDidEnterOrExitFullScreen();
     void screenDidChangeColorSpace();
     bool shouldDelayWindowOrderingForEvent(NSEvent *);
     bool windowResizeMouseLocationIsInVisibleScrollerThumb(CGPoint);
@@ -702,7 +704,7 @@ public:
     NSTouchBar *currentTouchBar() const { return m_currentTouchBar.get(); }
     NSCandidateListTouchBarItem *candidateListTouchBarItem() const;
 #if ENABLE(WEB_PLAYBACK_CONTROLS_MANAGER)
-    RefPtr<WebCore::PlatformPlaybackSessionInterface> protectedPlaybackSessionInterface() const;
+    WebCore::PlatformPlaybackSessionInterface* playbackSessionInterface() const;
     bool isPictureInPictureActive();
     void togglePictureInPicture();
     bool isInWindowFullscreenActive() const;
@@ -794,6 +796,7 @@ public:
     void unregisterViewAboveTopContentInsetArea(NSView *);
     void updateTopContentInsetFillDueToScrolling();
     void updateTopContentInsetFillCaptureColor();
+    void updateTopContentInsetFillStyle();
 #endif
 
 private:
@@ -913,6 +916,7 @@ private:
     bool m_needsViewFrameInWindowCoordinates;
     bool m_didScheduleWindowAndViewFrameUpdate { false };
     bool m_windowOcclusionDetectionEnabled { true };
+    bool m_windowIsEnteringOrExitingFullScreen { false };
 
     CGSize m_scrollOffsetAdjustment { 0, 0 };
 

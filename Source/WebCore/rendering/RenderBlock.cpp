@@ -329,42 +329,12 @@ RenderBlock::~RenderBlock()
     // Do not add any more code here. Add it to willBeDestroyed() instead.
 }
 
-void RenderBlock::removeOutOfFlowBoxesIfNeededOnStyleChange(const RenderStyle& oldStyle, const RenderStyle& newStyle)
-{
-    auto wasContainingBlockForFixedContent = canContainFixedPositionObjects(&oldStyle);
-    auto wasContainingBlockForAbsoluteContent = canContainAbsolutelyPositionedObjects(&oldStyle);
-    auto isContainingBlockForFixedContent = canContainFixedPositionObjects(&newStyle);
-    auto isContainingBlockForAbsoluteContent = canContainAbsolutelyPositionedObjects(&newStyle);
-
-    if ((wasContainingBlockForFixedContent && !isContainingBlockForFixedContent) || (wasContainingBlockForAbsoluteContent && !isContainingBlockForAbsoluteContent)) {
-        // We are no longer the containing block for out-of-flow descendants.
-        removeOutOfFlowBoxes({ }, ContainingBlockState::NewContainingBlock);
-    }
-
-    if ((!wasContainingBlockForFixedContent && isContainingBlockForFixedContent) || (!wasContainingBlockForAbsoluteContent && isContainingBlockForAbsoluteContent)) {
-        // We are a new containing block.
-        // Remove our absolutely positioned descendants from their current containing block.
-        // They will be inserted into our positioned objects list during layout.
-        auto* containingBlock = parent();
-        while (containingBlock && !is<RenderView>(*containingBlock)
-            && (containingBlock->style().position() == PositionType::Static || (containingBlock->isInline() && !containingBlock->isReplacedOrAtomicInline()))) {
-            if (containingBlock->style().position() == PositionType::Relative && containingBlock->isInline() && !containingBlock->isReplacedOrAtomicInline()) {
-                containingBlock = containingBlock->containingBlock();
-                break;
-            }
-            containingBlock = containingBlock->parent();
-        }
-        if (CheckedPtr renderBlock = dynamicDowncast<RenderBlock>(containingBlock))
-            renderBlock->removeOutOfFlowBoxes(this, ContainingBlockState::NewContainingBlock);
-    }
-}
-
 void RenderBlock::styleWillChange(StyleDifference diff, const RenderStyle& newStyle)
 {
     const RenderStyle* oldStyle = hasInitializedStyle() ? &style() : nullptr;
     setReplacedOrAtomicInline(newStyle.isDisplayInlineType());
     if (oldStyle) {
-        removeOutOfFlowBoxesIfNeededOnStyleChange(*oldStyle, newStyle);
+        removeOutOfFlowBoxesIfNeededOnStyleChange(*this, *oldStyle, newStyle);
         if (isLegend() && !oldStyle->isFloating() && newStyle.isFloating())
             setIsExcludedFromNormalLayout(false);
     }
@@ -420,26 +390,6 @@ void RenderBlock::styleDidChange(StyleDifference diff, const RenderStyle* oldSty
         shouldForceRelayoutChildren = contentBoxLogicalWidthChanged(*oldStyle, style()) || (outOfFlowBoxes() && paddingBoxLogicaHeightChanged(*oldStyle, style()));
     }
     setShouldForceRelayoutChildren(shouldForceRelayoutChildren);
-}
-
-RenderPtr<RenderBlock> RenderBlock::clone() const
-{
-    RenderPtr<RenderBlock> cloneBlock;
-    if (isAnonymousBlock()) {
-        cloneBlock = RenderPtr<RenderBlock>(createAnonymousBlock());
-        cloneBlock->setChildrenInline(childrenInline());
-    } else {
-        RenderTreePosition insertionPosition(*parent());
-        cloneBlock = static_pointer_cast<RenderBlock>(protectedElement()->createElementRenderer(RenderStyle::clone(style()), insertionPosition));
-        cloneBlock->initializeStyle();
-
-        // This takes care of setting the right value of childrenInline in case
-        // generated content is added to cloneBlock and 'this' does not have
-        // generated content added yet.
-        cloneBlock->setChildrenInline(cloneBlock->firstChild() ? cloneBlock->firstChild()->isInline() : childrenInline());
-    }
-    cloneBlock->setFragmentedFlowState(fragmentedFlowState());
-    return cloneBlock;
 }
 
 void RenderBlock::deleteLines()
@@ -792,46 +742,6 @@ void RenderBlock::updateBlockChildDirtyBitsBeforeLayout(RelayoutChildren relayou
         child.setNeedsPreferredWidthsUpdate(MarkOnlyThis);
 }
 
-void RenderBlock::dirtyForLayoutFromPercentageHeightDescendants()
-{
-    if (!percentHeightDescendantsMap)
-        return;
-
-    auto* descendants = percentHeightDescendantsMap->get(*this);
-    if (!descendants)
-        return;
-
-    for (auto& descendant : *descendants) {
-        // Let's not dirty the height perecentage descendant when it has an absolutely positioned containing block ancestor. We should be able to dirty such boxes through the regular invalidation logic.
-        bool descendantNeedsLayout = true;
-        for (auto* ancestor = descendant.containingBlock(); ancestor && ancestor != this; ancestor = ancestor->containingBlock()) {
-            if (ancestor->isOutOfFlowPositioned()) {
-                descendantNeedsLayout = false;
-                break;
-            }
-        }
-        if (!descendantNeedsLayout)
-            continue;
-
-        CheckedPtr<RenderElement> renderer = &descendant;
-        while (renderer != this) {
-            if (renderer->normalChildNeedsLayout())
-                break;
-            renderer->setChildNeedsLayout(MarkOnlyThis);
-            
-            // If the width of an image is affected by the height of a child (e.g., an image with an aspect ratio),
-            // then we have to dirty preferred widths, since even enclosing blocks can become dirty as a result.
-            // (A horizontal flexbox that contains an inline image wrapped in an anonymous block for example.)
-            if (renderer->hasIntrinsicAspectRatio() || renderer->style().hasAspectRatio())
-                renderer->setNeedsPreferredWidthsUpdate();
-            renderer = renderer->container();
-            ASSERT(renderer);
-            if (!renderer)
-                break;
-        }
-    }
-}
-
 void RenderBlock::simplifiedNormalFlowLayout()
 {
     ASSERT(!childrenInline());
@@ -932,13 +842,13 @@ LayoutUnit RenderBlock::marginIntrinsicLogicalWidthForChild(RenderBox& child) co
     // A margin has three types: fixed, percentage, and auto (variable).
     // Auto and percentage margins become 0 when computing min/max width.
     // Fixed margins can be added in as is.
-    Length marginLeft = child.style().marginStart(writingMode());
-    Length marginRight = child.style().marginEnd(writingMode());
+    auto& marginLeft = child.style().marginStart(writingMode());
+    auto& marginRight = child.style().marginEnd(writingMode());
     LayoutUnit margin;
-    if (marginLeft.isFixed() && !shouldTrimChildMargin(MarginTrimType::InlineStart, child))
-        margin += marginLeft.value();
-    if (marginRight.isFixed() && !shouldTrimChildMargin(MarginTrimType::InlineEnd, child))
-        margin += marginRight.value();
+    if (auto fixedMarginLeft = marginLeft.tryFixed(); fixedMarginLeft && !shouldTrimChildMargin(MarginTrimType::InlineStart, child))
+        margin += fixedMarginLeft->value;
+    if (auto fixedMarginRight = marginRight.tryFixed(); fixedMarginRight && !shouldTrimChildMargin(MarginTrimType::InlineEnd, child))
+        margin += fixedMarginRight->value;
     return margin;
 }
 
@@ -2451,16 +2361,13 @@ void RenderBlock::computeBlockPreferredLogicalWidths(LayoutUnit& minLogicalWidth
         // A margin basically has three types: fixed, percentage, and auto (variable).
         // Auto and percentage margins simply become 0 when computing min/max width.
         // Fixed margins can be added in as is.
-        Length startMarginLength = childStyle.marginStart(writingMode());
-        Length endMarginLength = childStyle.marginEnd(writingMode());
-        LayoutUnit margin;
         LayoutUnit marginStart;
         LayoutUnit marginEnd;
-        if (startMarginLength.isFixed())
-            marginStart += startMarginLength.value();
-        if (endMarginLength.isFixed())
-            marginEnd += endMarginLength.value();
-        margin = marginStart + marginEnd;
+        if (auto fixedMarginStart = childStyle.marginStart(writingMode()).tryFixed())
+            marginStart += fixedMarginStart->value;
+        if (auto fixedMarginEnd = childStyle.marginEnd(writingMode()).tryFixed())
+            marginEnd += fixedMarginEnd->value;
+        auto margin = marginStart + marginEnd;
 
         LayoutUnit childMinPreferredLogicalWidth;
         LayoutUnit childMaxPreferredLogicalWidth;
@@ -2995,13 +2902,6 @@ void RenderBlock::addFocusRingRects(Vector<LayoutRect>& rects, const LayoutPoint
         inlineContinuation->addFocusRingRects(rects, flooredLayoutPoint(LayoutPoint(additionalOffset + inlineContinuation->containingBlock()->location() - location())), paintContainer);
 }
 
-RenderPtr<RenderBlock> RenderBlock::createAnonymousBlockWithStyle(Document& document, const RenderStyle& style)
-{
-    RenderPtr<RenderBlock> newBox = createRenderer<RenderBlockFlow>(RenderObject::Type::BlockFlow, document, RenderStyle::createAnonymousStyleWithDisplay(style, DisplayType::Block));
-    newBox->initializeStyle();
-    return newBox;
-}
-
 LayoutUnit RenderBlock::offsetFromLogicalTopOfFirstPage() const
 {
     auto* layoutState = view().frameView().layoutContext().layoutState();
@@ -3311,18 +3211,6 @@ TextRun RenderBlock::constructTextRun(std::span<const UChar> characters, const R
     return constructTextRun(StringView { characters }, style, expansion);
 }
 
-#if ASSERT_ENABLED
-void RenderBlock::checkOutOfFlowBoxesNeedLayout()
-{
-    auto* outOfFlowDescendants = outOfFlowBoxes();
-    if (!outOfFlowDescendants)
-        return;
-
-    for (auto& renderer : *outOfFlowDescendants)
-        ASSERT(!renderer.needsLayout());
-}
-#endif // ASSERT_ENABLED
-
 bool RenderBlock::hasDefiniteLogicalHeight() const
 {
     return (bool)availableLogicalHeightForPercentageComputation();
@@ -3605,17 +3493,16 @@ bool RenderBlock::computePreferredWidthsForExcludedChildren(LayoutUnit& minWidth
     maxWidth -= scrollbarWidth;
     
     const auto& childStyle = legend->style();
-    auto startMarginLength = childStyle.marginStart(writingMode());
-    auto endMarginLength = childStyle.marginEnd(writingMode());
-    LayoutUnit margin;
+
     LayoutUnit marginStart;
     LayoutUnit marginEnd;
-    if (startMarginLength.isFixed())
-        marginStart += startMarginLength.value();
-    if (endMarginLength.isFixed())
-        marginEnd += endMarginLength.value();
-    margin = marginStart + marginEnd;
-    
+    if (auto fixedMarginStart = childStyle.marginStart(writingMode()).tryFixed())
+        marginStart += fixedMarginStart->value;
+    if (auto fixedMarginEnd = childStyle.marginEnd(writingMode()).tryFixed())
+        marginEnd += fixedMarginEnd->value;
+
+    auto margin = marginStart + marginEnd;
+
     minWidth += margin;
     maxWidth += margin;
 

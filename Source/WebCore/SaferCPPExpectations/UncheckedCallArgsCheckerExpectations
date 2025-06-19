@@ -24,7 +24,6 @@ Modules/indexeddb/server/MemoryIndex.cpp
 Modules/indexeddb/server/MemoryObjectStore.cpp
 Modules/indexeddb/server/SQLiteIDBBackingStore.cpp
 Modules/indexeddb/server/SQLiteIDBCursor.cpp
-Modules/indexeddb/server/SQLiteIDBTransaction.cpp
 Modules/indexeddb/server/UniqueIDBDatabase.cpp
 Modules/mediacontrols/MediaControlsHost.cpp
 Modules/mediarecorder/MediaRecorder.cpp
@@ -45,7 +44,6 @@ Modules/screen-wake-lock/WakeLock.cpp
 Modules/screen-wake-lock/WakeLockManager.cpp
 Modules/speech/SpeechRecognitionCaptureSource.cpp
 Modules/storage/StorageManager.cpp
-Modules/webaudio/AudioWorkletMessagingProxy.cpp
 Modules/webaudio/BiquadFilterNode.cpp
 Modules/webaudio/DefaultAudioDestinationNode.cpp
 Modules/webaudio/IIRFilterNode.cpp
@@ -120,9 +118,7 @@ bindings/js/JSIntersectionObserverEntryCustom.cpp
 bindings/js/JSLazyEventListener.cpp
 bindings/js/JSNavigatorCustom.cpp
 bindings/js/JSNodeCustom.cpp
-bindings/js/JSNodeListCustom.cpp
 bindings/js/JSPluginElementFunctions.cpp
-bindings/js/JSResizeObserverEntryCustom.cpp
 bindings/js/JSSVGViewSpecCustom.cpp
 bindings/js/JSStylePropertyMapReadOnlyCustom.cpp
 bindings/js/JSWorkerGlobalScopeBase.cpp
@@ -132,7 +128,6 @@ bindings/js/JSXMLHttpRequestCustom.cpp
 bindings/js/ScheduledAction.cpp
 bindings/js/ScriptModuleLoader.cpp
 bindings/js/WindowProxy.cpp
-bindings/js/WorkerModuleScriptLoader.cpp
 bridge/objc/WebScriptObject.mm
 bridge/runtime_method.cpp
 contentextensions/ContentExtensionsBackend.cpp
@@ -172,7 +167,6 @@ dom/ElementInternals.cpp
 dom/ElementIteratorInlines.h
 dom/ElementTraversal.h
 dom/EventLoop.cpp
-dom/EventPath.cpp
 dom/ExtensionStyleSheets.cpp
 dom/FragmentDirectiveRangeFinder.cpp
 dom/IdTargetObserver.cpp
@@ -180,7 +174,6 @@ dom/IdleCallbackController.cpp
 dom/ImageOverlay.cpp
 dom/InlineStyleSheetOwner.cpp
 dom/KeyboardEvent.cpp
-dom/LiveNodeList.h
 dom/LiveNodeListInlines.h
 dom/MouseRelatedEvent.cpp
 dom/MutationObserver.cpp
@@ -209,13 +202,11 @@ dom/SimulatedClick.cpp
 dom/StaticRange.cpp
 dom/TreeScope.cpp
 dom/TreeScopeOrderedMap.cpp
-dom/TreeWalker.cpp
 dom/TypedElementDescendantIteratorInlines.h
 dom/ViewTransition.cpp
 dom/WindowEventLoop.cpp
 dom/mac/ImageControlsMac.cpp
 editing/AlternativeTextController.cpp
-editing/AppendNodeCommand.cpp
 editing/ApplyBlockElementCommand.cpp
 editing/ApplyStyleCommand.cpp
 editing/BreakBlockquoteCommand.cpp
@@ -269,13 +260,11 @@ fileapi/FileReader.cpp
 history/BackForwardCache.cpp
 history/CachedFrame.cpp
 html/AttachmentAssociatedElement.cpp
-html/BaseButtonInputType.cpp
 html/CachedHTMLCollection.h
 html/CachedHTMLCollectionInlines.h
 html/CollectionTraversalInlines.h
 html/DOMTokenList.cpp
 html/FTPDirectoryDocument.cpp
-html/FileInputType.cpp
 html/FormAssociatedCustomElement.cpp
 html/FormAssociatedElement.cpp
 html/HTMLAnchorElement.cpp
@@ -285,14 +274,11 @@ html/HTMLBaseElement.cpp
 html/HTMLBodyElement.cpp
 html/HTMLButtonElement.cpp
 html/HTMLCanvasElement.cpp
-html/HTMLCollection.cpp
-html/HTMLCollectionInlines.h
 html/HTMLDialogElement.cpp
 html/HTMLFieldSetElement.cpp
 html/HTMLFormControlElement.cpp
 html/HTMLFormControlsCollection.cpp
 html/HTMLFormElement.cpp
-html/HTMLFrameElement.cpp
 html/HTMLFrameElementBase.cpp
 html/HTMLFrameSetElement.cpp
 html/HTMLIFrameElement.cpp
@@ -326,9 +312,6 @@ html/HTMLVideoElement.cpp
 html/HTMLWBRElement.cpp
 html/ImageBitmap.cpp
 html/ImageDocument.cpp
-html/ImageInputType.cpp
-html/InputType.cpp
-html/LabelsNodeList.cpp
 html/LazyLoadFrameObserver.cpp
 html/LazyLoadImageObserver.cpp
 html/MediaDocument.cpp
@@ -336,9 +319,6 @@ html/MediaElementSession.cpp
 html/ModelDocument.cpp
 html/PluginDocument.cpp
 html/RadioNodeList.cpp
-html/RangeInputType.cpp
-html/SearchInputType.cpp
-html/TextFieldInputType.cpp
 html/ValidatedFormListedElement.cpp
 html/ValidationMessage.cpp
 html/canvas/CanvasRenderingContext2D.cpp
@@ -346,7 +326,6 @@ html/canvas/CanvasRenderingContext2DBase.cpp
 html/canvas/CanvasRenderingContext2DBase.h
 html/canvas/EXTDisjointTimerQuery.cpp
 html/canvas/OffscreenCanvasRenderingContext2D.cpp
-html/canvas/WebGL2RenderingContext.cpp
 html/canvas/WebGLRenderingContextBase.cpp
 html/parser/HTMLConstructionSite.cpp
 html/parser/HTMLConstructionSite.h
@@ -402,7 +381,6 @@ inspector/agents/page/PageTimelineAgent.cpp
 inspector/agents/worker/WorkerAuditAgent.cpp
 inspector/agents/worker/WorkerDebuggerAgent.cpp
 inspector/agents/worker/WorkerRuntimeAgent.cpp
-layout/LayoutState.cpp
 layout/floats/FloatingContext.cpp
 layout/floats/PlacedFloats.cpp
 layout/formattingContexts/FormattingContext.h
@@ -472,7 +450,6 @@ layout/layouttree/LayoutBox.cpp
 layout/layouttree/LayoutContainingBlockChainIterator.h
 layout/layouttree/LayoutTreeBuilder.cpp
 loader/ApplicationManifestLoader.cpp
-loader/ContentFilter.cpp
 loader/CrossOriginPreflightChecker.cpp
 loader/DocumentLoader.cpp
 loader/DocumentThreadableLoader.cpp
@@ -519,7 +496,6 @@ page/DebugPageOverlays.cpp
 page/DragController.cpp
 page/ElementTargetingController.cpp
 page/EventHandler.cpp
-page/EventSource.cpp
 page/FocusController.cpp
 page/Frame.cpp
 page/FrameSnapshotting.cpp
@@ -594,10 +570,8 @@ platform/graphics/ca/GraphicsLayerCA.cpp
 platform/graphics/ca/PlatformCALayer.mm
 platform/graphics/ca/TileController.cpp
 platform/graphics/ca/TileCoverageMap.cpp
-platform/graphics/ca/TileGrid.cpp
 platform/graphics/ca/cocoa/WebTiledBackingLayer.mm
 platform/graphics/cg/CGSubimageCacheWithTimer.cpp
-platform/graphics/coretext/ComplexTextControllerCoreText.mm
 platform/ios/PlaybackSessionInterfaceIOS.mm
 platform/ios/WebAVPlayerController.mm
 platform/mac/PlaybackSessionInterfaceMac.mm
@@ -626,7 +600,6 @@ rendering/CounterNode.cpp
 rendering/EllipsisBoxPainter.cpp
 rendering/FixedTableLayout.cpp
 rendering/FloatingObjects.cpp
-rendering/GridMasonryLayout.cpp
 rendering/GridTrackSizingAlgorithm.cpp
 rendering/HitTestResult.cpp
 rendering/ImageQualityController.cpp
@@ -653,7 +626,6 @@ rendering/RegionContext.h
 rendering/RenderAttachment.cpp
 rendering/RenderBlock.cpp
 rendering/RenderBlockFlow.cpp
-rendering/RenderBlockInlines.h
 rendering/RenderBox.cpp
 rendering/RenderBoxInlines.h
 rendering/RenderBoxModelObject.cpp
@@ -672,7 +644,6 @@ rendering/RenderFlexibleBox.cpp
 rendering/RenderFragmentContainer.cpp
 rendering/RenderFragmentContainerSet.cpp
 rendering/RenderFragmentedFlow.cpp
-rendering/RenderFrame.cpp
 rendering/RenderFrameSet.cpp
 rendering/RenderGeometryMap.cpp
 rendering/RenderGrid.cpp
@@ -686,12 +657,9 @@ rendering/RenderImageResourceStyleImage.h
 rendering/RenderInline.cpp
 rendering/RenderIterator.h
 rendering/RenderLayer.cpp
-rendering/RenderLayer.h
 rendering/RenderLayerBacking.cpp
 rendering/RenderLayerBacking.h
 rendering/RenderLayerCompositor.cpp
-rendering/RenderLayerFilters.cpp
-rendering/RenderLayerInlines.h
 rendering/RenderLayerModelObject.cpp
 rendering/RenderLayerScrollableArea.cpp
 rendering/RenderLayoutState.cpp
@@ -701,7 +669,6 @@ rendering/RenderListItem.cpp
 rendering/RenderListMarker.cpp
 rendering/RenderMarquee.cpp
 rendering/RenderMenuList.cpp
-rendering/RenderMeter.cpp
 rendering/RenderMultiColumnFlow.cpp
 rendering/RenderMultiColumnSet.cpp
 rendering/RenderMultiColumnSpannerPlaceholder.cpp
@@ -715,16 +682,12 @@ rendering/RenderScrollbarPart.cpp
 rendering/RenderSearchField.cpp
 rendering/RenderSelection.cpp
 rendering/RenderSelectionGeometry.cpp
-rendering/RenderSlider.cpp
 rendering/RenderTable.cpp
-rendering/RenderTable.h
 rendering/RenderTableCaption.cpp
 rendering/RenderTableCell.cpp
 rendering/RenderTableCellInlines.h
 rendering/RenderTableRow.cpp
-rendering/RenderTableRowInlines.h
 rendering/RenderTableSection.cpp
-rendering/RenderTableSectionInlines.h
 rendering/RenderText.cpp
 rendering/RenderText.h
 rendering/RenderTextControl.cpp
@@ -824,16 +787,10 @@ rendering/svg/legacy/LegacyRenderSVGModelObject.cpp
 rendering/svg/legacy/LegacyRenderSVGPath.cpp
 rendering/svg/legacy/LegacyRenderSVGResource.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceClipper.cpp
-rendering/svg/legacy/LegacyRenderSVGResourceClipperInlines.h
 rendering/svg/legacy/LegacyRenderSVGResourceContainer.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceFilter.cpp
-rendering/svg/legacy/LegacyRenderSVGResourceFilterInlines.h
 rendering/svg/legacy/LegacyRenderSVGResourceFilterPrimitive.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceGradient.cpp
-rendering/svg/legacy/LegacyRenderSVGResourceMarker.cpp
-rendering/svg/legacy/LegacyRenderSVGResourceMarkerInlines.h
-rendering/svg/legacy/LegacyRenderSVGResourceMasker.cpp
-rendering/svg/legacy/LegacyRenderSVGResourceMaskerInlines.h
 rendering/svg/legacy/LegacyRenderSVGResourcePattern.cpp
 rendering/svg/legacy/LegacyRenderSVGResourceSolidColor.cpp
 rendering/svg/legacy/LegacyRenderSVGRoot.cpp
@@ -896,7 +853,6 @@ style/Styleable.cpp
 style/Styleable.h
 style/values/color/StyleColor.cpp
 style/values/color/StyleKeywordColor.cpp
-style/values/color/StyleLightDarkColor.cpp
 style/values/primitives/StyleLengthResolution.cpp
 svg/SVGAElement.cpp
 svg/SVGAltGlyphElement.cpp

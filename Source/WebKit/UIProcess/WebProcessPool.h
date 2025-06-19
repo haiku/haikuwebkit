@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -107,6 +107,7 @@ class RegistrableDomain;
 class Site;
 enum class EventMakesGamepadsVisible : bool;
 enum class GamepadHapticEffectType : uint8_t;
+enum class ProcessSwapDisposition : uint8_t;
 struct GamepadEffectParameters;
 struct MockMediaDevice;
 #if PLATFORM(COCOA)
@@ -173,7 +174,6 @@ public:
     void deref() const final { API::ObjectImpl<API::Object::Type::ProcessPool>::deref(); }
 
     API::ProcessPoolConfiguration& configuration() { return m_configuration.get(); }
-    Ref<API::ProcessPoolConfiguration> protectedConfiguration() { return m_configuration; }
 
     static Vector<Ref<WebProcessPool>> allProcessPools();
 
@@ -344,7 +344,7 @@ public:
 
     void reportWebContentCPUTime(Seconds cpuTime, uint64_t activityState);
 
-    Ref<WebProcessProxy> processForSite(WebsiteDataStore&, const std::optional<WebCore::Site>&, WebProcessProxy::LockdownMode, const API::PageConfiguration&); // Will return an existing one if limit is met or due to caching.
+    Ref<WebProcessProxy> processForSite(WebsiteDataStore&, const std::optional<WebCore::Site>&, WebProcessProxy::LockdownMode, const API::PageConfiguration&, WebCore::ProcessSwapDisposition); // Will return an existing one if limit is met or due to caching.
 
     void prewarmProcess();
 
@@ -628,6 +628,10 @@ public:
     void markHasReceivedAXRequestInUIProcess() { m_hasReceivedAXRequestInUIProcess = true; }
     bool hasReceivedAXRequestInUIProcess() const { return m_hasReceivedAXRequestInUIProcess; }
 
+#if PLATFORM(MAC)
+    void registerAdditionalFonts(NSArray *fontNames);
+#endif
+
 private:
     enum class NeedsGlobalStaticInitialization : bool { No, Yes };
     void platformInitialize(NeedsGlobalStaticInitialization);
@@ -759,7 +763,7 @@ private:
     String platformResourceMonitorRuleListSourceForTesting();
 #endif
 
-    Ref<API::ProcessPoolConfiguration> m_configuration;
+    const Ref<API::ProcessPoolConfiguration> m_configuration;
 
     IPC::MessageReceiverMap m_messageReceiverMap;
 
@@ -782,7 +786,7 @@ private:
     WeakHashSet<WebProcessProxy> m_processesWithModelPlayers;
 #endif
 
-    Ref<WebPageGroup> m_defaultPageGroup;
+    const Ref<WebPageGroup> m_defaultPageGroup;
 
     RefPtr<API::Object> m_injectedBundleInitializationUserData;
     std::unique_ptr<API::InjectedBundleClient> m_injectedBundleClient;
@@ -794,7 +798,7 @@ private:
 
     RefPtr<WebAutomationSession> m_automationSession;
 
-    Ref<VisitedLinkStore> m_visitedLinkStore;
+    const Ref<VisitedLinkStore> m_visitedLinkStore;
     bool m_visitedLinksPopulated { false };
 
     HashSet<String> m_schemesToRegisterAsEmptyDocument;

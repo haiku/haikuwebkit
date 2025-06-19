@@ -767,6 +767,7 @@ BackgroundFetchAPIEnabled:
       default: false
     WebKit:
       default: false
+  sharedPreferenceForWebProcess: true
 
 BackgroundWebContentRunningBoardThrottlingEnabled:
   type: bool
@@ -1548,7 +1549,7 @@ CSSTransformStyleSeparatedEnabled:
 CSSTreeCountingFunctionsEnabled:
   type: bool
   category: css
-  status: testable
+  status: preview
   humanReadableName: "CSS Tree Counting Functions"
   humanReadableDescription: "Enable support for CSS Values and Units Module Level 5 tree counting functions sibling-count() and sibling-index()"
   defaultValue:
@@ -2626,6 +2627,20 @@ EnableAccessibilityOnDemand:
   defaultValue:
     WebKit:
       "ENABLE(INITIALIZE_ACCESSIBILITY_ON_DEMAND)": true
+      default: false
+
+EnableDebuggingFeaturesInSandbox:
+  type: bool
+  status: internal
+  category: security
+  humanReadableName: "Enable debugging features in sandbox"
+  humanReadableDescription: "Enable debugging features in sandbox"
+  condition: HAVE(SANDBOX_STATE_FLAGS)
+  defaultsOverridable: true
+  webcoreBinding: none
+  exposed: [ WebKit ]
+  defaultValue:
+    WebKit:
       default: false
 
 EnableInheritURIQueryComponent:
@@ -5943,6 +5958,7 @@ PushAPIEnabled:
     WebKit:
       default: false
   disableInLockdownMode: true
+  sharedPreferenceForWebProcess: true
 
 ReadableByteStreamAPIEnabled:
   type: bool
@@ -6656,6 +6672,7 @@ ServiceWorkerNavigationPreloadEnabled:
       default: false
     WebKit:
       default: true
+  sharedPreferenceForWebProcess: true
 
 ServiceWorkersEnabled:
   type: bool
@@ -8898,6 +8915,22 @@ WebRTCH265CodecEnabled:
     WebCore:
       "PLATFORM(COCOA)": true
       default: false
+
+WebRTCInterfaceMonitoringViaNWEnabled:
+  type: bool
+  status: internal
+  category: media
+  condition: ENABLE(WEB_RTC) && PLATFORM(COCOA)
+  humanReadableName: "WebRTC interface monitoring via NW"
+  humanReadableDescription: "Enable WebRTC interface monitoring via NW"
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
+  sharedPreferenceForWebProcess: true
 
 WebRTCL4SEnabled:
   type: bool

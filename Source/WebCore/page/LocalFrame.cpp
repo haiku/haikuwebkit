@@ -773,7 +773,7 @@ void LocalFrame::injectUserScriptImmediately(DOMWrapperWorld& world, const UserS
     if (!document)
         return;
 
-    RefPtr page = document->protectedPage();
+    RefPtr page = document->page();
     if (!page)
         return;
 
@@ -1267,7 +1267,7 @@ void LocalFrame::documentURLOrOriginDidChange()
     if (!isMainFrame())
         return;
 
-    RefPtr page = this->protectedPage();
+    RefPtr page = this->page();
     RefPtr document = this->document();
     if (page && document)
         page->setMainFrameURLAndOrigin(document->url(), document->protectedSecurityOrigin());
@@ -1482,7 +1482,7 @@ void LocalFrame::showResourceMonitoringError()
     URL mainFrameURL;
     if (document)
         url = document->url();
-    if (RefPtr page = protectedPage()) {
+    if (RefPtr page = this->page()) {
         mainFrameURL = page->mainFrameURL();
         page->diagnosticLoggingClient().logDiagnosticMessageWithValueDictionary(DiagnosticLoggingKeys::iframeResourceMonitoringKey(), "IFrame ResourceMonitoring Unloaded"_s, valueDictionaryForResult(true), ShouldSample::No);
     }
@@ -1512,9 +1512,9 @@ void LocalFrame::reportResourceMonitoringWarning()
 {
     URL url;
     URL mainFrameURL;
-    if (RefPtr document = protectedDocument())
+    if (RefPtr document = this->document())
         url = document->url();
-    if (RefPtr page = protectedPage()) {
+    if (RefPtr page = this->page()) {
         mainFrameURL = page->mainFrameURL();
         page->diagnosticLoggingClient().logDiagnosticMessageWithValueDictionary(DiagnosticLoggingKeys::iframeResourceMonitoringKey(), "IFrame ResourceMonitoring Throttled"_s, valueDictionaryForResult(false), ShouldSample::No);
     }

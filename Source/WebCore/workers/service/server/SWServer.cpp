@@ -1199,7 +1199,8 @@ void SWServer::registerServiceWorkerClient(ClientOrigin&& clientOrigin, ServiceW
 
     auto addResult = m_visibleClientIdToInternalClientIdMap.add(data.identifier.object().toString(), clientIdentifier);
     if (!addResult.isNewEntry) {
-        if (addResult.iterator->value.processIdentifier() == clientIdentifier.processIdentifier()) {
+        auto registeredClientIdentifier = addResult.iterator->value;
+        if (registeredClientIdentifier.processIdentifier() == clientIdentifier.processIdentifier()) {
             ASSERT(m_visibleClientIdToInternalClientIdMap.get(data.identifier.object().toString()) == clientIdentifier);
             ASSERT(m_clientsById.contains(clientIdentifier));
             if (data.isFocused)
@@ -1209,7 +1210,7 @@ void SWServer::registerServiceWorkerClient(ClientOrigin&& clientOrigin, ServiceW
         }
 
         // The client is being process-swapped, we clear the hash maps so that they get properly populated.
-        unregisterServiceWorkerClientInternal(clientOrigin, clientIdentifier, ShouldUpdateRegistrations::No);
+        unregisterServiceWorkerClientInternal(clientOrigin, registeredClientIdentifier, ShouldUpdateRegistrations::No);
         m_visibleClientIdToInternalClientIdMap.add(data.identifier.object().toString(), clientIdentifier);
     }
 
@@ -1355,6 +1356,10 @@ void SWServer::unregisterServiceWorkerClientInternal(const ClientOrigin& clientO
     }
 
     m_clientToControllingRegistration.remove(registrationIterator);
+    if (m_clientToControllingRegistration.isEmpty()) {
+        for (auto&& handler : std::exchange(m_controlledClientsBecomesEmptyHandlers, { }))
+            handler();
+    }
 }
 
 void SWServer::unregisterServiceWorkerClient(const ClientOrigin& clientOrigin, ScriptExecutionContextIdentifier clientIdentifier)
@@ -1904,6 +1909,17 @@ BackgroundFetchEngine& SWServer::backgroundFetchEngine()
 Ref<BackgroundFetchEngine> SWServer::protectedBackgroundFetchEngine()
 {
     return backgroundFetchEngine();
+}
+
+bool SWServer::addHandlerIfHasControlledClients(CompletionHandler<void()>&& completionHandler)
+{
+    if (m_clientToControllingRegistration.isEmpty()) {
+        completionHandler();
+        return false;
+    }
+
+    m_controlledClientsBecomesEmptyHandlers.append(WTFMove(completionHandler));
+    return true;
 }
 
 void SWServer::Connection::backgroundFetchInformation(ServiceWorkerRegistrationIdentifier registrationIdentifier, const String& backgroundFetchIdentifier, BackgroundFetchEngine::ExceptionOrBackgroundFetchInformationCallback&& callback)

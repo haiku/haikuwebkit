@@ -830,7 +830,7 @@ bool Editor::shouldInsertText(const String& text, const std::optional<SimpleRang
 void Editor::respondToChangedContents(const VisibleSelection& endingSelection)
 {
     if (AXObjectCache::accessibilityEnabled()) {
-        auto node = endingSelection.start().protectedDeprecatedNode();
+        RefPtr node = endingSelection.start().deprecatedNode();
         if (AXObjectCache* cache = document().existingAXObjectCache())
             cache->postNotification(node.get(), AXNotification::ValueChanged, PostTarget::ObservableParent);
     }
@@ -849,12 +849,12 @@ bool Editor::hasBidiSelection() const
 
     RefPtr<Node> startNode;
     if (document->selection().isRange()) {
-        startNode = document->selection().selection().start().downstream().protectedDeprecatedNode();
-        auto endNode = document->selection().selection().end().upstream().protectedDeprecatedNode();
+        startNode = document->selection().selection().start().downstream().deprecatedNode();
+        RefPtr endNode = document->selection().selection().end().upstream().deprecatedNode();
         if (enclosingBlock(startNode.get()) != enclosingBlock(endNode.get()))
             return false;
     } else
-        startNode = document->selection().selection().visibleStart().deepEquivalent().protectedDeprecatedNode();
+        startNode = document->selection().selection().visibleStart().deepEquivalent().deprecatedNode();
 
     if (!startNode || !startNode->renderer())
         return false;
@@ -1448,8 +1448,8 @@ bool Editor::insertTextWithoutSendingTextEvent(const String& text, bool selectIn
     // that is contained in the event target.
     selection = selectionForCommand(triggeringEvent);
     if (selection.isContentEditable()) {
-        if (auto selectionStart = selection.start().protectedDeprecatedNode()) {
-            Ref<Document> document(selectionStart->document());
+        if (RefPtr selectionStart = selection.start().deprecatedNode()) {
+            Ref document = selectionStart->document();
 
             // Insert the text
             if (triggeringEvent && triggeringEvent->isDictation())
@@ -2183,7 +2183,7 @@ WritingDirection Editor::baseWritingDirectionForSelectionStart() const
     auto result = WritingDirection::LeftToRight;
 
     Position pos = document().selection().selection().visibleStart().deepEquivalent();
-    auto node = pos.protectedDeprecatedNode();
+    RefPtr node = pos.deprecatedNode();
     if (!node)
         return result;
 
@@ -2550,9 +2550,9 @@ void Editor::setComposition(const String& text, const Vector<CompositionUnderlin
         // Find out what node has the composition now.
         Position base = document->selection().selection().base().downstream();
         Position extent = document->selection().selection().extent();
-        auto baseNode = base.protectedDeprecatedNode();
+        RefPtr baseNode = base.deprecatedNode();
         unsigned baseOffset = base.deprecatedEditingOffset();
-        auto extentNode = extent.protectedDeprecatedNode();
+        RefPtr extentNode = extent.deprecatedNode();
         unsigned extentOffset = extent.deprecatedEditingOffset();
 
         if (is<Text>(baseNode) && baseNode == extentNode && baseOffset + text.length() == extentOffset) {
@@ -2591,7 +2591,7 @@ void Editor::setComposition(const String& text, const Vector<CompositionUnderlin
             auto state = m_compositionNode ? CompositionState::InProgress : CompositionState::Ended;
             cache->onTextCompositionChange(*previousCompositionNode, state, true, text, m_compositionStart, m_isHandlingAcceptedCandidate);
         }
-        if (auto compositionNode = protectedCompositionNode()) {
+        if (RefPtr compositionNode = this->compositionNode()) {
             auto state = previousCompositionNode ? CompositionState::InProgress : CompositionState::Started;
             cache->onTextCompositionChange(*compositionNode, state, true, text, m_compositionStart, m_isHandlingAcceptedCandidate);
         }
@@ -2908,7 +2908,7 @@ void Editor::markMisspellingsAndBadGrammar(const VisibleSelection &movingSelecti
     markMisspellingsAndBadGrammar(movingSelection, isContinuousSpellCheckingEnabled() && isGrammarCheckingEnabled(), movingSelection);
 }
 
-void Editor::markMisspellingsAfterTypingToWord(const VisiblePosition& wordStart, const VisibleSelection& selectionAfterTyping, bool doReplacement)
+void Editor::markMisspellingsAfterTypingToWord(const VisiblePosition& wordStart, const VisibleSelection& selectionAfterTyping, AllowTextReplacement allowTextReplacement)
 {
     Ref document = this->document();
 
@@ -2917,7 +2917,7 @@ void Editor::markMisspellingsAfterTypingToWord(const VisiblePosition& wordStart,
 
 #if PLATFORM(IOS_FAMILY)
     UNUSED_PARAM(selectionAfterTyping);
-    UNUSED_PARAM(doReplacement);
+    UNUSED_PARAM(allowTextReplacement);
     OptionSet<TextCheckingType> textCheckingOptions;
     if (isContinuousSpellCheckingEnabled())
         textCheckingOptions.add(TextCheckingType::Spelling);
@@ -2946,7 +2946,7 @@ void Editor::markMisspellingsAfterTypingToWord(const VisiblePosition& wordStart,
     }
 #else
 #if !USE(AUTOMATIC_TEXT_REPLACEMENT)
-    UNUSED_PARAM(doReplacement);
+    UNUSED_PARAM(allowTextReplacement);
 #endif
 
     if (unifiedTextCheckerEnabled()) {
@@ -2958,7 +2958,7 @@ void Editor::markMisspellingsAfterTypingToWord(const VisiblePosition& wordStart,
             textCheckingOptions.add(TextCheckingType::Spelling);
 
 #if USE(AUTOMATIC_TEXT_REPLACEMENT)
-        if (doReplacement
+        if (allowTextReplacement == AllowTextReplacement::Yes
             && (isAutomaticQuoteSubstitutionEnabled()
                 || isAutomaticLinkDetectionEnabled()
                 || isAutomaticDashSubstitutionEnabled()
@@ -4400,7 +4400,7 @@ void Editor::selectionStartSetMarkerForTesting(DocumentMarkerType markerType, in
     if (!text)
         return;
 
-    CheckedRef markers = document().checkedMarkers();
+    CheckedRef markers = document().markers();
 
     unsigned unsignedFrom = static_cast<unsigned>(from);
     unsigned unsignedLength = static_cast<unsigned>(length);
@@ -4890,7 +4890,7 @@ const RenderStyle* Editor::styleForSelectionStart(RefPtr<Node>& nodeToRemove)
 
     styleElement->appendChild(document->createEditingTextNode(String { emptyString() }));
 
-    auto positionNode = position.protectedDeprecatedNode();
+    RefPtr positionNode = position.deprecatedNode();
     ASSERT(positionNode);
     RefPtr parent { positionNode->parentNode() };
     if (!parent || parent->appendChild(styleElement.get()).hasException())

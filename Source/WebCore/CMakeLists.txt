@@ -191,6 +191,7 @@ set(WebCore_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/style"
     "${WEBCORE_DIR}/style/values"
     "${WEBCORE_DIR}/style/values/borders"
+    "${WEBCORE_DIR}/style/values/box"
     "${WEBCORE_DIR}/style/values/color"
     "${WEBCORE_DIR}/style/values/color-adjust"
     "${WEBCORE_DIR}/style/values/easing"
@@ -198,6 +199,7 @@ set(WebCore_PRIVATE_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/style/values/images"
     "${WEBCORE_DIR}/style/values/inline"
     "${WEBCORE_DIR}/style/values/motion"
+    "${WEBCORE_DIR}/style/values/position"
     "${WEBCORE_DIR}/style/values/primitives"
     "${WEBCORE_DIR}/style/values/scroll-snap"
     "${WEBCORE_DIR}/style/values/shapes"
@@ -648,6 +650,7 @@ set(WebCore_NON_SVG_IDL_FILES
     Modules/remoteplayback/RemotePlaybackAvailabilityCallback.idl
 
     Modules/reporting/DeprecationReportBody.idl
+    Modules/reporting/IntegrityPolicyViolationReportBody.idl
     Modules/reporting/Report.idl
     Modules/reporting/ReportBody.idl
     Modules/reporting/ReportingObserver.idl

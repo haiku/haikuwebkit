@@ -542,7 +542,7 @@ void LocalFrameView::setContentsSize(const IntSize& size)
     ScrollView::setContentsSize(size);
     contentsResized();
 
-    Page* page = m_frame->page();
+    RefPtr page = m_frame->page();
     if (!page)
         return;
 
@@ -1916,7 +1916,7 @@ LayoutPoint LocalFrameView::scrollPositionForFixedPosition(const LayoutRect& vis
 
 static bool isHiddenOrNearlyTransparent(const RenderBox& box)
 {
-    if (CheckedPtr layer = box.checkedLayer(); layer && layer->isVisibilityHiddenOrOpacityZero())
+    if (CheckedPtr layer = box.layer(); layer && layer->isVisibilityHiddenOrOpacityZero())
         return true;
 
     if (box.opacity() < PageColorSampler::nearlyTransparentAlphaThreshold)
@@ -1980,6 +1980,21 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         fixedRect.intersect(view->unscaledDocumentRect());
     fixedRect.contract({ sampleRectMargin });
     unclampedFixedRect.contract({ sampleRectMargin });
+
+    auto adjacentSideInClockwiseOrder = [](BoxSide side) {
+        switch (side) {
+        case BoxSide::Left:
+            return BoxSide::Top;
+        case BoxSide::Top:
+            return BoxSide::Right;
+        case BoxSide::Right:
+            return BoxSide::Bottom;
+        case BoxSide::Bottom:
+            return BoxSide::Left;
+        }
+        ASSERT_NOT_REACHED();
+        return side;
+    };
 
     auto lengthOnSide = [](BoxSide side, const LayoutRect& rect) -> LayoutUnit {
         switch (side) {
@@ -2084,6 +2099,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
         IsHiddenOrTransparent,
         IsScrollable,
         TooSmall,
+        TooLarge,
         IsCandidate,
     };
     using enum ContainerEdgeCandidateResult;
@@ -2107,6 +2123,9 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
             if (!isNearlyViewportSized(side, renderer))
                 return TooSmall;
         }
+
+        if (isNearlyViewportSized(adjacentSideInClockwiseOrder(side), renderer))
+            return TooLarge;
 
         return IsCandidate;
     };
@@ -2167,6 +2186,7 @@ std::pair<FixedContainerEdges, WeakElementEdges> LocalFrameView::fixedContainerE
             case IsScrollable:
             case TooSmall:
                 break;
+            case TooLarge:
             case IsHiddenOrTransparent: {
                 hitInvisiblePointerEventsNoneContainer = ancestor->usedPointerEvents() == PointerEvents::None;
                 break;
@@ -4452,7 +4472,7 @@ void LocalFrameView::performSizeToContentAutoSize()
 
     RefPtr document = m_frame->document();
     auto& renderView = *document->renderView();
-    auto* documentRenderer = downcast<RenderElement>(renderView.firstChild());
+    CheckedPtr documentRenderer = dynamicDowncast<RenderBox>(renderView.firstChild());
     if (!documentRenderer) {
         ASSERT_NOT_REACHED();
         return;

@@ -248,12 +248,12 @@ private:
 #endif
 
 #if !RELEASE_LOG_DISABLED
-    Ref<const Logger> m_logger;
+    const Ref<const Logger> m_logger;
     uint64_t m_logIdentifier { 0 };
 #endif
     std::atomic<uint64_t> m_associatedRegistryCount { 0 };
     RefPtr<MediaSourcePrivate> m_private;
-    Ref<MediaSourceClientImpl> m_client;
+    const Ref<MediaSourceClientImpl> m_client;
 };
 
 String convertEnumerationToString(MediaSource::EndOfStreamError);

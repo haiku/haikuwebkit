@@ -4358,7 +4358,7 @@ class NoNonVirtualDestructorsTest(CppStyleTestBase):
             '')
 
         self.assert_lint(
-            '''enum class CommonAbbreviations { AM, CF, PM, URL, XHR };''',
+            '''enum class CommonAbbreviations { AM, CF, GPU, LTR, PM, RTL, URL, XHR };''',
             '')
 
         self.assert_multi_line_lint(
@@ -4366,7 +4366,10 @@ class NoNonVirtualDestructorsTest(CppStyleTestBase):
                 enum class CommonAbbreviationsMultiline {
                     AM,
                     CF,
+                    GPU,
+                    LTR,
                     PM,
+                    RTL,
                     URL,
                     XHR
                 };''',
@@ -6376,6 +6379,140 @@ class WebKitStyleTest(CppStyleTestBase):
             'auto* result = xpc_string_get_string_ptr(value);',
             'Use xpcStringGetString() instead of xpc_string_get_string_ptr().  [safercpp/xpc_string_get_string_ptr] [4]',
             'foo.cpp')
+
+        self.assert_lint(
+            'auto foo = protectedFoo();',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'auto foo = checkedFoo();',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'Ref foo = protectedFoo();',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'CheckedRef foo = checkedFoo();',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'RefPtr foo = protectedFoo();',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'CheckedPtr foo = checkedFoo();',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'RefPtr bar = foo()->protectedBar();',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'CheckedPtr bar = foo()->checkedBar();',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'RefPtr bar = foo().protectedBar();',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'CheckedPtr bar = foo().checkedBar();',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'RefPtr bar = m_foo->protectedBar();',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'CheckedPtr bar = m_foo->checkedBar();',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'RefPtr bar = foo(1, 2)->protectedBar();',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'CheckedPtr bar = foo(1, 2)->checkedBar();',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'if (RefPtr bar = protectedBar())',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'if (CheckedPtr bar = checkedBar())',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'if (RefPtr bar = foo()->protectedBar())',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'if (CheckedPtr bar = foo()->checkedBar())',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'if (RefPtr bar = protectedBar()) {',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'if (CheckedPtr bar = checkedBar()) {',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'if (RefPtr bar = foo()->protectedBar()) {',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'if (CheckedPtr bar = foo()->checkedBar()) {',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'if (RefPtr bar = foo().protectedBar()) {',
+            'Use m_foo or foo() instead of protectedFoo() for variable initialization.  [safercpp/protected_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint(
+            'if (CheckedPtr bar = foo().checkedBar()) {',
+            'Use m_foo or foo() instead of checkedFoo() for variable initialization.  [safercpp/checked_getter_for_init] [4]',
+            'foo.cpp')
+
+        self.assert_lint('auto foo = protectedFoo()->bar();', '')
+        self.assert_lint('postTask([foo = protectedFoo()] {', '')
+        self.assert_lint('postTask([foo = protectedFoo(), bar] {', '')
+        self.assert_lint('postTask([foo = protectedFoo(), bar]() {', '')
+        self.assert_lint('postTask([foo = protectedFoo(), bar](ScriptExecutionContext& context) {', '')
+        self.assert_lint('postTask([foo = bar().protectedFoo(), bar](ScriptExecutionContext& context) {', '')
+
+        self.assert_lint('auto foo = checkedFoo()->bar();', '')
+        self.assert_lint('postTask([foo = checkedFoo()] {', '')
+        self.assert_lint('postTask([foo = checkedFoo(), bar] {', '')
+        self.assert_lint('postTask([foo = checkedFoo(), bar]() {', '')
+        self.assert_lint('postTask([foo = checkedFoo(), bar](ScriptExecutionContext& context) {', '')
+        self.assert_lint('postTask([foo = bar().checkedFoo(), bar](ScriptExecutionContext& context) {', '')
 
     def test_ctype_fucntion(self):
         self.assert_lint(

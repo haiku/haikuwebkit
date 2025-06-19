@@ -769,6 +769,10 @@
                 iokit-async-external-method
                 iokit-external-method
                 iokit-external-trap)
+            ;; Intel
+            (when (equal? (param "CPU") "x86_64")
+                (allow iokit-external-method
+                    (iokit-method-number 3 4 5)))
             (allow iokit-external-method
                 (iokit-method-number 0 1))))
     ;; else
@@ -1289,6 +1293,7 @@
         task_get_special_port_from_user
         task_info_from_user
         task_policy_set
+        task_restartable_ranges_register
         task_restartable_ranges_synchronize
         task_set_special_port
         thread_get_state_to_user

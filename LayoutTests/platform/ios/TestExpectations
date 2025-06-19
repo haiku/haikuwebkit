@@ -1302,6 +1302,7 @@ fast/css/resize-rtl.html [ Skip ]
 fast/css/resize-single-axis.html [ Skip ]
 fast/css/resize-textarea-align-content.html [ Skip ]
 fast/events/mouse-events-on-textarea-resize.html [ Skip ]
+fast/events/mouse_resizer_mousedown.html [ Skip ]
 
 # The file-wrapper part of <attachment> is not yet working on iOS
 fast/attachment/attachment-type-attribute.html [ Skip ]
@@ -2316,6 +2317,7 @@ accessibility/changing-aria-hidden-with-display-none-parent.html [ Pass ]
 accessibility/checkbox-mixed-value.html [ Pass ]
 accessibility/clip-path-bounding-box.html [ Pass ]
 accessibility/dialog-slotted-content.html [ Pass ]
+accessibility/dirty-relations-and-modal-tree-update-crash.html [ Pass ]
 accessibility/dirty-style-and-relations-crash.html [ Pass ]
 accessibility/display-contents/dynamically-added-children.html [ Pass ]
 accessibility/display-contents/element-roles.html [ Pass ]
@@ -2329,8 +2331,10 @@ accessibility/duplicate-hidden-label-text.html [ Pass ]
 accessibility/dynamic-aria-describedby-subtree.html [ Pass ]
 accessibility/dynamic-aria-describedby-text.html [ Pass ]
 accessibility/dynamic-datetime-attribute.html [ Pass ]
+accessibility/dynamic-font-change-dirty-style-and-relations.html [ Pass ]
 accessibility/dynamic-speak-as.html [ Pass ]
 accessibility/dynamic-text.html [ Pass ]
+accessibility/dynamic-text-color-change-dirty-style-and-relations.html [ Pass ]
 accessibility/dynamically-ignored-canvas.html [ Pass ]
 accessibility/editable-webpage-focused-ui-element.html [ Pass ]
 accessibility/element-haspopup.html [ Pass ]
@@ -2643,8 +2647,6 @@ media/video-volume.html [ Failure ]
 media/W3C/audio/canPlayType/canPlayType_supported_but_no_codecs_parameter_1.html [ Failure ]
 
 media/video-seek-to-current-time.html [ Failure Pass ]
-
-imported/w3c/web-platform-tests/dom/events/scrolling [ Pass ]
 
 fast/attachment/attachment-truncated-action.html [ Pass ]
 # fast/attachment/attachment-wrapping-action.html [ Pass ] # TODO: ImageOnlyFailure expectation set below. Uncomment this line when that issue is resolved.
@@ -4596,7 +4598,6 @@ imported/w3c/web-platform-tests/css/css-tables/visibility-collapse-rowspan-002.h
 imported/w3c/web-platform-tests/css/css-tables/visibility-collapse-rowspan-003-border-separate.html [ Failure ]
 imported/w3c/web-platform-tests/css/css-tables/visibility-collapse-rowspan-003.html [ Failure ]
 imported/w3c/web-platform-tests/css/css-tables/visibility-collapse-rowspan-004-dynamic.html [ Failure ]
-imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-fired-after-sequence-of-scrolls.tentative.html [ Failure ]
 imported/w3c/web-platform-tests/editing/run/caret-navigation-around-line-break.html [ Failure ]
 imported/w3c/web-platform-tests/html/semantics/popovers/popover-anchor-nesting.tentative.html [ Failure ]
 imported/w3c/web-platform-tests/service-workers/service-worker/fetch-request-redirect.https.html [ Failure ]
@@ -4635,6 +4636,7 @@ imported/w3c/web-platform-tests/css/filter-effects/filter-function/filter-functi
 imported/w3c/web-platform-tests/css/filter-effects/filter-function/filter-function-repeating-conic-gradient.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/filter-effects/filter-function/filter-function-repeating-linear-gradient.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/filter-effects/filter-function/filter-function-repeating-radial-gradient.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/filter-effects/backdrop-filter-plus-mask-large.html [ ImageOnlyFailure ]
 
 http/tests/site-isolation/mouse-events/ [ Skip ]
 webkit.org/b/257904 http/tests/site-isolation/draw-after-navigation.html [ Skip ]
@@ -4653,6 +4655,8 @@ imported/w3c/web-platform-tests/css/filter-effects/effect-reference-feimage-001.
 imported/w3c/web-platform-tests/css/filter-effects/effect-reference-feimage-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/filter-effects/filter-function/filter-function-002.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/filter-effects/svg-image-root-filter.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/filter-effects/filtered-block-is-container.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/filter-effects/filtered-inline-is-container.html [ ImageOnlyFailure ]
 
 # webkit.org/b/260224 / rdar://113930861 (3D transforms with scaleZ(0) don't get rendered, even when combined with other transforms using preserve-3d (260224))
 compositing/geometry/clipped-out-perspective.html [ ImageOnlyFailure ]
@@ -4675,6 +4679,7 @@ webkit.org/b/263396 css3/color/text.html [ Skip ]
 imported/w3c/web-platform-tests/css/css-overscroll-behavior/overscroll-behavior.html [ Skip ]
 imported/w3c/web-platform-tests/css/css-scroll-snap/snap-at-user-scroll-end.html [ Skip ]
 imported/w3c/web-platform-tests/css/css-transforms/scroll-preserve-3d.html [ Skip ]
+
 imported/w3c/web-platform-tests/dom/events/non-cancelable-when-passive/non-passive-mousewheel-event-listener-on-body.html [ Skip ]
 imported/w3c/web-platform-tests/dom/events/non-cancelable-when-passive/non-passive-mousewheel-event-listener-on-div.html [ Skip ]
 imported/w3c/web-platform-tests/dom/events/non-cancelable-when-passive/non-passive-mousewheel-event-listener-on-document.html [ Skip ]
@@ -4695,9 +4700,7 @@ imported/w3c/web-platform-tests/dom/events/non-cancelable-when-passive/passive-w
 imported/w3c/web-platform-tests/dom/events/non-cancelable-when-passive/passive-wheel-event-listener-on-document.html [ Skip ]
 imported/w3c/web-platform-tests/dom/events/non-cancelable-when-passive/passive-wheel-event-listener-on-root.html [ Skip ]
 imported/w3c/web-platform-tests/dom/events/non-cancelable-when-passive/passive-wheel-event-listener-on-window.html [ Skip ]
-imported/w3c/web-platform-tests/dom/events/scrolling/iframe-chains.html [ Skip ]
-imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-for-user-scroll.html [ Skip ]
-imported/w3c/web-platform-tests/dom/events/scrolling/scrollend-event-not-fired-on-no-scroll.html [ Skip ]
+
 imported/w3c/web-platform-tests/html/semantics/popovers/popover-light-dismiss-scroll-within.html [ Skip ]
 imported/w3c/web-platform-tests/uievents/order-of-events/mouse-events/wheel-scrolling.html [ Skip ]
 
@@ -7820,8 +7823,6 @@ webkit.org/b/291115 imported/w3c/web-platform-tests/websockets/back-forward-cach
 
 webkit.org/b/290568 fast/multicol/simple-line-layout-line-index-after-strut.html [ Crash ImageOnlyFailure ]
 
-webkit.org/b/291278 http/tests/IndexedDB/storage-limit-1.https.html [ Pass Failure ]
-
 # webkit.org/b/292268 [ iOS ] Due to harness issues various trusted types tests are flaky timeouts on iOS.
 imported/w3c/web-platform-tests/trusted-types/ServiceWorker-block-eval-function-constructor.https.html [ Skip ]
 imported/w3c/web-platform-tests/trusted-types/ServiceWorker-eval.https.html [ Skip ]
@@ -7831,6 +7832,19 @@ imported/w3c/web-platform-tests/trusted-types/ServiceWorkerContainer-register-fr
 imported/w3c/web-platform-tests/trusted-types/ServiceWorkerContainer-register-from-ServiceWorker.https.html [ Skip ]
 imported/w3c/web-platform-tests/trusted-types/ServiceWorkerContainer-register-from-SharedWorker.https.html [ Skip ]
 imported/w3c/web-platform-tests/trusted-types/DedicatedWorker-constructor-from-SharedWorker.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/DedicatedWorker-constructor-from-DedicatedWorker.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/DedicatedWorker-constructor.https.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/DedicatedWorker-eval.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/DedicatedWorker-importScripts.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/DedicatedWorker-setTimeout-setInterval.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/DedicatedWorker-block-eval-function-constructor.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/SharedWorker-block-eval-function-constructor.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/SharedWorker-constructor.https.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/SharedWorker-eval.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/SharedWorker-importScripts.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/SharedWorker-setTimeout-setInterval.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/block-string-assignment-to-DedicatedWorker-setTimeout-setInterval.html [ Skip ]
+imported/w3c/web-platform-tests/trusted-types/block-string-assignment-to-SharedWorker-setTimeout-setInterval.html [ Skip ]
 
 webkit.org/b/291436 http/tests/security/contentSecurityPolicy/extensions/manifest-v3/default-src/manifest-v3-default-src-block-wildcard.html [ Failure ]
 
@@ -7868,12 +7882,7 @@ imported/w3c/web-platform-tests/navigation-api/navigate-event/navigate-form.html
 
 webkit.org/b/292650 http/tests/iframe-monitor/throttler.html [ Timeout ]
 
-webkit.org/b/293642 imported/w3c/web-platform-tests/css/cssom/stylesheet-same-origin.sub.html [ Failure ]
-
 webkit.org/b/288957 imported/w3c/web-platform-tests/css/CSS2/tables/border-collapse-dynamic-column-001.xht [ ImageOnlyFailure ]
-
-# rdar://146986685 (REGRESSION(Sequoia 15.4): fast/canvas/webgl/gl-teximage.html is a constant text failure)
-fast/canvas/webgl/gl-teximage.html [ Pass ]
 
 #rdar://145604998 (REGRESSION(iOS 18.4, macOS Sequoia 15.4 ): fast/text/international/hindi-spacing.html is a constant text failure)
 fast/text/international/hindi-spacing.html [ Failure ]
@@ -7883,4 +7892,10 @@ webkit.org/b/288518 fast/text/emoji-num-glyphs.html [ Failure ]
 # rdar://148254605 (REGRESSION (iOS 18.4): media/sources-fallback-codecs.html is constantly failing.)
 media/sources-fallback-codecs.html [ Failure ]
 
-webkit.org/b/293764 imported/w3c/web-platform-tests/trusted-types/SharedWorker-block-eval-function-constructor.html [ Pass Failure ]
+# webkit.org/b/293838 ([macOS] 2x tests in imported/w3c/web-platform-tests/url/ are constant failures (flaky in EWS)
+imported/w3c/web-platform-tests/url/IdnaTestV2.window.html [ Failure ]
+imported/w3c/web-platform-tests/url/toascii.window.html [ Failure ]
+
+webkit.org/b/294142 fast/canvas/webgl/gl-teximage.html [ Failure ]
+
+webkit.org/b/294152 http/tests/misc/timer-vs-loading.html [ Timeout ]

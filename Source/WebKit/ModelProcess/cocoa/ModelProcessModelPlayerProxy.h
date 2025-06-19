@@ -50,7 +50,7 @@
 
 OBJC_CLASS WKModelProcessModelLayer;
 OBJC_CLASS WKModelProcessModelPlayerProxyObjCAdapter;
-OBJC_CLASS WKSRKEntity;
+OBJC_CLASS WKRKEntity;
 OBJC_CLASS WKStageModeInteractionDriver;
 
 namespace WebCore {
@@ -145,6 +145,7 @@ public:
     USING_CAN_MAKE_WEAKPTR(WebCore::REModelLoaderClient);
 
     void disableUnloadDelayForTesting() { m_unloadDelayDisabledForTesting = true; }
+    static uint64_t objectCountForTesting() { return gObjectCountForTesting; }
 
 private:
     ModelProcessModelPlayerProxy(ModelProcessModelPlayerManagerProxy&, WebCore::ModelPlayerIdentifier, Ref<IPC::Connection>&&, const std::optional<String>&);
@@ -165,7 +166,7 @@ private:
     std::unique_ptr<LayerHostingContext> m_layerHostingContext;
     RetainPtr<WKModelProcessModelLayer> m_layer;
     RefPtr<WebCore::REModelLoader> m_loader;
-    RetainPtr<WKSRKEntity> m_modelRKEntity;
+    RetainPtr<WKRKEntity> m_modelRKEntity;
     REPtr<RESceneRef> m_scene;
     REPtr<REEntityRef> m_hostingEntity;
     REPtr<REEntityRef> m_containerEntity;
@@ -196,6 +197,7 @@ private:
 
     // For testing
     bool m_unloadDelayDisabledForTesting { false };
+    static uint64_t gObjectCountForTesting;
 };
 
 } // namespace WebKit

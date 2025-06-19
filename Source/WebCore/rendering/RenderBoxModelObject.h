@@ -249,6 +249,8 @@ public:
 
     RenderBlock* containingBlockForAutoHeightDetection(Length logicalHeight) const;
 
+    void removeOutOfFlowBoxesIfNeededOnStyleChange(RenderBlock& delegateBlock, const RenderStyle& oldStyle, const RenderStyle& newStyle);
+
     struct ContinuationChainNode {
         WTF_MAKE_STRUCT_FAST_ALLOCATED;
 
@@ -265,7 +267,8 @@ public:
     ContinuationChainNode* continuationChainNode() const;
 
 protected:
-    LayoutUnit resolveLengthPercentageUsingContainerLogicalWidth(const Length&) const;
+    LayoutUnit resolveLengthPercentageUsingContainerLogicalWidth(const auto&) const;
+
     virtual void absoluteQuadsIgnoringContinuation(const FloatRect&, Vector<FloatQuad>&, bool* /*wasFixed*/) const { ASSERT_NOT_REACHED(); }
     void collectAbsoluteQuadsForContinuation(Vector<FloatQuad>& quads, bool* wasFixed) const;
 
