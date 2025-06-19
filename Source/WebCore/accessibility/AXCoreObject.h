@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Apple Inc. All rights reserved.
+ * Copyright (C) 2019-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -164,7 +164,6 @@ enum class AccessibilityRole : uint8_t {
     Emphasis,
     Feed,
     Figure,
-    Footer,
     Footnote,
     Form,
     Generic,
@@ -225,6 +224,8 @@ enum class AccessibilityRole : uint8_t {
     ScrollArea,
     ScrollBar,
     SearchField,
+    SectionFooter,
+    SectionHeader,
     Slider,
     SliderThumb,
     SpinButton,
@@ -339,8 +340,6 @@ ALWAYS_INLINE String accessibilityRoleToString(AccessibilityRole role)
         return "Feed"_s;
     case AccessibilityRole::Figure:
         return "Figure"_s;
-    case AccessibilityRole::Footer:
-        return "Footer"_s;
     case AccessibilityRole::Footnote:
         return "Footnote"_s;
     case AccessibilityRole::Form:
@@ -461,6 +460,10 @@ ALWAYS_INLINE String accessibilityRoleToString(AccessibilityRole role)
         return "ScrollBar"_s;
     case AccessibilityRole::SearchField:
         return "SearchField"_s;
+    case AccessibilityRole::SectionFooter:
+        return "SectionFooter"_s;
+    case AccessibilityRole::SectionHeader:
+        return "SectionHeader"_s;
     case AccessibilityRole::Slider:
         return "Slider"_s;
     case AccessibilityRole::SliderThumb:
@@ -795,7 +798,7 @@ public:
     String dbg(bool verbose = false) const { return dbgInternal(verbose, { }); }
     String dbg(OptionSet<AXDebugStringOption> options) const { return dbgInternal(false, options); }
 
-    AXID objectID() const { return m_id; }
+    inline AXID objectID() const { return m_id; }
     virtual std::optional<AXID> treeID() const = 0;
     virtual ProcessID processID() const = 0;
 
@@ -925,6 +928,7 @@ public:
     bool isSwitch() const { return role() == AccessibilityRole::Switch; }
     bool isToggleButton() const { return role() == AccessibilityRole::ToggleButton; }
     bool isTextControl() const;
+    virtual bool isEditableWebArea() const = 0;
     virtual bool isNonNativeTextControl() const = 0;
     bool isTabList() const { return role() == AccessibilityRole::TabList; }
     bool isTabItem() const { return role() == AccessibilityRole::Tab; }
@@ -1325,6 +1329,11 @@ public:
     AXCoreObject* nextSiblingIncludingIgnored(bool updateChildrenIfNeeded) const;
     AXCoreObject* nextUnignoredSibling(bool updateChildrenIfNeeded, AXCoreObject* unignoredParent = nullptr) const;
     AXCoreObject* nextSiblingIncludingIgnoredOrParent() const;
+    std::optional<AXID> idOfNextSiblingIncludingIgnoredOrParent() const
+    {
+        RefPtr object = nextSiblingIncludingIgnoredOrParent();
+        return object ? std::optional(object->objectID()) : std::nullopt;
+    }
 
     AXCoreObject* previousInPreOrder(bool updateChildrenIfNeeded = true, AXCoreObject* stayWithin = nullptr);
     AXCoreObject* previousSiblingIncludingIgnored(bool updateChildrenIfNeeded);
@@ -1770,32 +1779,32 @@ T* clickableSelfOrAncestor(const T& startObject, ClickHandlerFilter filter)
 template<typename T, typename F>
 T* clickableSelfOrAncestor(const T& startObject, const F& shouldStop)
 {
-    T* ancestor = findAncestor<T>(startObject, true, [] (const auto& ancestor) {
+    RefPtr<T> ancestor = findAncestor<T>(startObject, true, [](const auto& ancestor) {
         return ancestor.hasClickHandler();
     }, shouldStop);
 
     // Presentational objects should not be allowed to be clicked.
     if (ancestor && ancestor->role() == AccessibilityRole::Presentational)
         return nullptr;
-    return ancestor;
+    return ancestor.get();
 }
 
 template<typename T>
 T* editableAncestor(const T& startObject)
 {
     return findAncestor<T>(startObject, false, [] (const auto& ancestor) {
-        return ancestor.isTextControl();
+        return ancestor.isTextControl() || ancestor.isEditableWebArea();
     });
 }
 
 template<typename T>
 T* highestEditableAncestor(T& startObject)
 {
-    T* editableAncestor = startObject.editableAncestor();
-    T* previousEditableAncestor = nullptr;
+    RefPtr<T> editableAncestor = startObject.editableAncestor();
+    RefPtr<T> previousEditableAncestor;
     while (editableAncestor) {
         if (editableAncestor == previousEditableAncestor) {
-            if (T* parent = editableAncestor->parentObject()) {
+            if (RefPtr<T> parent = editableAncestor->parentObject()) {
                 editableAncestor = parent->editableAncestor();
                 continue;
             }
@@ -1804,7 +1813,7 @@ T* highestEditableAncestor(T& startObject)
         previousEditableAncestor = editableAncestor;
         editableAncestor = editableAncestor->editableAncestor();
     }
-    return previousEditableAncestor;
+    return previousEditableAncestor.get();
 }
 
 template<typename T>
@@ -1812,11 +1821,11 @@ T* findRelatedObjectInAncestry(const T& object, AXRelation relation, const T& de
 {
     auto relatedObjects = object.relatedObjects(relation);
     for (const auto& relatedObject : relatedObjects) {
-        auto* ancestor = findAncestor(descendant, false, [&relatedObject] (const auto& ancestor) {
+        RefPtr ancestor = findAncestor(descendant, false, [&relatedObject](const auto& ancestor) {
             return relatedObject.get() == &ancestor;
         });
         if (ancestor)
-            return ancestor;
+            return ancestor.get();
     }
     return nullptr;
 }
@@ -1844,8 +1853,8 @@ AXCoreObject* findUnignoredDescendant(T& object, bool includeSelf, const F& matc
         return &object;
 
     for (Ref child : object.childrenIncludingIgnored()) {
-        if (auto* descendant = findUnignoredDescendant(child.get(), /* includeSelf */ true, matches))
-            return descendant;
+        if (RefPtr descendant = findUnignoredDescendant(child.get(), /* includeSelf */ true, matches))
+            return descendant.get();
     }
     return nullptr;
 }
@@ -1934,6 +1943,9 @@ using PlatformRoleMap = HashMap<AccessibilityRole, String, DefaultHash<unsigned>
 void initializeRoleMap();
 PlatformRoleMap createPlatformRoleMap();
 String roleToPlatformString(AccessibilityRole);
+#if ENABLE(AX_THREAD_TEXT_APIS)
+std::optional<AXTextMarkerRange> markerRangeFrom(NSRange, const AXCoreObject&);
+#endif
 
 } // namespace Accessibility
 

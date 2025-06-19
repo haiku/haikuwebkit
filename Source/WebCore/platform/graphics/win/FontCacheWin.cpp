@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2023 Apple Inc.  All rights reserved.
+ * Copyright (C) 2006-2023 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -99,7 +99,7 @@ WEBCORE_EXPORT void appendLinkedFonts(WCHAR* linkedFonts, unsigned length, Vecto
 
 static const Vector<String>* getLinkedFonts(String& family)
 {
-    static UncheckedKeyHashMap<String, Vector<String>*> systemLinkMap;
+    static HashMap<String, Vector<String>*> systemLinkMap;
     Vector<String>* result = systemLinkMap.get(family);
     if (result)
         return result;

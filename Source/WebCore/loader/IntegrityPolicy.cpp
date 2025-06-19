@@ -112,23 +112,24 @@ bool shouldRequestBeBlockedByIntegrityPolicy(ScriptExecutionContext& context, co
     // 2. Let parsedMetadata be the result of calling parse metadata with request’s integrity metadata.
     auto parsedMetadata = parseIntegrityMetadata(options.integrity);
     // 3. If parsedMetadata is not the empty set and request’s mode is either "cors" or "same-origin", return "Allowed".
-    if ((parsedMetadata && parsedMetadata->size() && options.mode != FetchOptions::Mode::NoCors) || url.protocolIsBlob() || url.protocolIsData())
+    // 4. If request’s url is local, return "Allowed".
+    if ((parsedMetadata && parsedMetadata->size() && options.mode != FetchOptions::Mode::NoCors) || url.hasLocalScheme())
         return false;
-    // 6. If both policy and reportPolicy are empty integrity policy structs, return "Allowed".
+    // 7. If both policy and reportPolicy are empty integrity policy structs, return "Allowed".
     if (!integrityPolicy && !integrityPolicyReportOnly)
         return false;
     // We don't currently support anything but script
     if (options.destination != FetchOptionsDestination::Script)
         return false;
 
-    // 9. Let block be a boolean, initially false.
+    // 10. Let block be a boolean, initially false.
     bool block = false;
-    // 10. Let reportBlock be a boolean, initially false.
+    // 11. Let reportBlock be a boolean, initially false.
     bool reportBlock = false;
-    // 11. If policy’s sources contains "inline" and policy’s blocked destinations contains request’s destination, set block to true.
+    // 12. If policy’s sources contains "inline" and policy’s blocked destinations contains request’s destination, set block to true.
     if (integrityPolicy && integrityPolicy->sources.contains("inline"_s) && integrityPolicy->blockedDestinations.contains("script"_s))
         block = true;
-    // 12. If reportPolicy’s sources contains "inline" and reportPolicy’s blocked destinations contains request’s destination, set reportBlock to true.
+    // 13. If reportPolicy’s sources contains "inline" and reportPolicy’s blocked destinations contains request’s destination, set reportBlock to true.
     if (integrityPolicyReportOnly && integrityPolicyReportOnly->sources.contains("inline"_s) && integrityPolicyReportOnly->blockedDestinations.contains("script"_s))
         reportBlock = true;
 

@@ -20,6 +20,6 @@ PASS Scoped nested within another scope
 PASS Implicit (prelude-less) @scope as a nested group rule
 PASS Insert a nested style rule within @scope, &
 PASS Insert a nested style rule within @scope, :scope
-FAIL Insert a CSSNestedDeclarations rule directly in top-level @scope The string did not match the expected pattern.
+PASS Insert a CSSNestedDeclarations rule directly in top-level @scope
 PASS Mutating selectorText on outer style rule causes correct inner specificity
 

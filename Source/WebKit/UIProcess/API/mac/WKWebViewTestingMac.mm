@@ -154,10 +154,10 @@
     return _impl->hasFlagsChangedEventMonitor();
 }
 
-- (NSView *)_contentInsetFillViewForTesting
+- (NSView *)_scrollPocketForTesting
 {
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    return _impl->topContentInsetFillView();
+    return _impl->topScrollPocket();
 #else
     return nil;
 #endif

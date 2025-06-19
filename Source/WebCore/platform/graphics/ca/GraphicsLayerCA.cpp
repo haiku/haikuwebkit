@@ -382,7 +382,7 @@ Ref<PlatformCAAnimation> GraphicsLayerCA::createPlatformCAAnimation(PlatformCAAn
     return PlatformCAAnimationCocoa::create(type, keyPath);
 }
 
-typedef UncheckedKeyHashMap<const GraphicsLayerCA*, std::pair<FloatRect, Ref<const DisplayList::DisplayList>>> LayerDisplayListHashMap;
+using LayerDisplayListHashMap = HashMap<const GraphicsLayerCA*, std::pair<FloatRect, Ref<const DisplayList::DisplayList>>>;
 
 static LayerDisplayListHashMap& layerDisplayListMap()
 {
@@ -500,6 +500,11 @@ String GraphicsLayerCA::debugName() const
 std::optional<PlatformLayerIdentifier> GraphicsLayerCA::primaryLayerID() const
 {
     return primaryLayer()->layerID();
+}
+
+std::optional<PlatformLayerIdentifier> GraphicsLayerCA::layerIDIgnoringStructuralLayer() const
+{
+    return protectedLayer()->layerID();
 }
 
 PlatformLayer* GraphicsLayerCA::platformLayer() const

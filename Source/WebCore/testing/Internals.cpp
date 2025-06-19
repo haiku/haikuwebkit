@@ -98,6 +98,7 @@
 #include "FragmentDirectiveGenerator.h"
 #include "FrameLoader.h"
 #include "FrameMemoryMonitor.h"
+#include "FrameSnapshotting.h"
 #include "GCObservation.h"
 #include "GridPosition.h"
 #include "HEVCUtilities.h"
@@ -122,6 +123,7 @@
 #include "HitTestResult.h"
 #include "IDBRequest.h"
 #include "IDBTransaction.h"
+#include "ImageData.h"
 #include "ImageOverlay.h"
 #include "ImageOverlayController.h"
 #include "InlineIteratorLineBox.h"
@@ -2108,6 +2110,43 @@ ExceptionOr<void> Internals::setMarkedTextMatchesAreHighlighted(bool flag)
         return Exception { ExceptionCode::InvalidAccessError };
     document->editor().setMarkedTextMatchesAreHighlighted(flag);
     return { };
+}
+
+ExceptionOr<RefPtr<ImageData>> Internals::snapshotNode(Node& node)
+{
+    RefPtr document = contextDocument();
+    if (!document || !document->frame())
+        return Exception { ExceptionCode::InvalidAccessError };
+
+    SnapshotOptions options { { }, ImageBufferPixelFormat::BGRA8, DestinationColorSpace::SRGB() };
+
+    RefPtr imageBuffer = WebCore::snapshotNode(*document->frame(), node, WTFMove(options));
+    if (!imageBuffer)
+        return Exception { ExceptionCode::InvalidStateError, "Failed to create snapshot"_s };
+
+    auto size = imageBuffer->logicalSize();
+    IntRect sourceRect(IntPoint(), imageBuffer->calculateBackendSize(size,
+        document->frame()->page()->deviceScaleFactor()));
+
+    PixelBufferFormat destinationFormat {
+        AlphaPremultiplication::Unpremultiplied,
+        PixelFormat::RGBA8,
+        DestinationColorSpace::SRGB()
+    };
+
+    auto pixelBuffer = imageBuffer->getPixelBuffer(destinationFormat, sourceRect);
+    if (!pixelBuffer)
+        return Exception { ExceptionCode::InvalidStateError, "Failed to get pixel buffer"_s };
+
+    auto byteArrayPixelBuffer = dynamicDowncast<ByteArrayPixelBuffer>(pixelBuffer.get());
+    if (!byteArrayPixelBuffer)
+        return Exception { ExceptionCode::InvalidStateError, "Pixel buffer is not a ByteArrayPixelBuffer"_s };
+
+    RefPtr imageData = ImageData::create(WTFMove(byteArrayPixelBuffer));
+    if (!imageData)
+        return Exception { ExceptionCode::InvalidStateError, "Failed to create ImageData"_s };
+
+    return imageData;
 }
 
 void Internals::invalidateFontCache()

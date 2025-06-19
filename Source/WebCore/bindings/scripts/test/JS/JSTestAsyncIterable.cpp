@@ -304,7 +304,9 @@ extern "C" { extern void (*const __identifier("??_7TestAsyncIterable@WebCore@@6B
 #else
 extern "C" { extern void* _ZTVN7WebCore17TestAsyncIterableE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestAsyncIterable>, void>> static inline void verifyVTable(TestAsyncIterable* ptr) {
+template<std::same_as<TestAsyncIterable> T>
+static inline void verifyVTable(TestAsyncIterable* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

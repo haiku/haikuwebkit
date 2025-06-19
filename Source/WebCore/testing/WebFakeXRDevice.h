@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2020 Igalia S.L. All rights reserved.
- * Copyright (C) 2022-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -140,7 +140,7 @@ public:
 private:
     WebFakeXRDevice();
 
-    Ref<SimulatedXRDevice> m_device;
+    const Ref<SimulatedXRDevice> m_device;
     PlatformXR::InputSourceHandle mInputSourceHandleIndex { 0 };
 };
 

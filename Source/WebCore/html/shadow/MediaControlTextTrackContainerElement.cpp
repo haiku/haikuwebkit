@@ -492,7 +492,7 @@ bool MediaControlTextTrackContainerElement::isShowing() const
 const Logger& MediaControlTextTrackContainerElement::logger() const
 {
     if (!m_logger)
-        m_logger = &document().logger();
+        m_logger = document().logger();
 
     return *m_logger;
 }

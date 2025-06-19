@@ -1225,13 +1225,14 @@ static CGRect snapRectToScrollViewEdges(CGRect rect, CGRect viewport)
     return CGRectIntersection(rect, viewport);
 }
 
-static void configureScrollViewWithOverlayRegionsIDs(WKBaseScrollView* scrollView, const WebKit::RemoteLayerTreeHost& host, const HashSet<WebCore::PlatformLayerIdentifier>& overlayRegionsIDs)
+static void configureScrollViewWithOverlayRegionsIDs(RetainPtr<WKBaseScrollView>& scrollView, const WebKit::RemoteLayerTreeHost& host, const HashSet<WebCore::PlatformLayerIdentifier>& overlayRegionsIDs, const WebKit::RemoteScrollingCoordinatorProxyIOS::OverlayRegionCandidatesMap& candidatesMap)
 {
     HashSet<WebCore::IntRect> overlayRegionRects;
     Vector<WebCore::IntRect> fullWidthRects;
     Vector<WebCore::IntRect> fullHeightRects;
     constexpr float rectCandidateEpsilon = 0.5;
-    CGRect viewport = CGRectOffset(scrollView.frame, -scrollView.frame.origin.x, -scrollView.frame.origin.y);
+    CGRect frame = [scrollView frame];
+    CGRect viewport = CGRectOffset(frame, -frame.origin.x, -frame.origin.y);
     CGFloat viewportWidth = CGRectGetWidth(viewport);
     CGFloat viewportHeight = CGRectGetHeight(viewport);
     CGFloat halfWidth = viewportWidth * 0.5;
@@ -1280,7 +1281,7 @@ static void configureScrollViewWithOverlayRegionsIDs(WKBaseScrollView* scrollVie
         if (!enclosingScrollView)
             continue;
 
-        if (enclosingScrollView != scrollView) {
+        if (enclosingScrollView != scrollView.get()) {
             // Overlays on parent scrollViews should still be taken into account if they draw above the selected scrollView.
             bool shouldKeepOverlay = false;
             UIView * previousScrollViewAncestor = nil;
@@ -1313,8 +1314,8 @@ static void configureScrollViewWithOverlayRegionsIDs(WKBaseScrollView* scrollVie
         // Overlay regions are positioned relative to the viewport of the scrollview,
         // not the frame (external) nor the bounds (origin moves while scrolling).
         for (auto regionRect : node->eventRegion().region().rects()) {
-            CGRect rect = [overlayView convertRect:regionRect toView:scrollView.superview];
-            CGRect offsetRect = CGRectOffset(rect, -scrollView.frame.origin.x, -scrollView.frame.origin.y);
+            CGRect rect = [overlayView convertRect:regionRect toView:[scrollView superview]];
+            CGRect offsetRect = CGRectOffset(rect, -frame.origin.x, -frame.origin.y);
             CGRect snappedRect = snapRectToScrollViewEdges(offsetRect, viewport);
 
             if (CGRectIsEmpty(snappedRect))
@@ -1364,6 +1365,10 @@ static void configureScrollViewWithOverlayRegionsIDs(WKBaseScrollView* scrollVie
 
     [scrollView _updateOverlayRegionsBehavior:YES];
     [scrollView _updateOverlayRegionRects:overlayRegionRects];
+
+    auto relatedIterator = candidatesMap.find(scrollView);
+    if (relatedIterator != candidatesMap.end())
+        [scrollView _associateRelatedLayersForOverlayRegions:relatedIterator->value with:host];
 }
 
 - (bool)_scrollViewCanHaveOverlayRegions:(WKBaseScrollView*)scrollView
@@ -1380,22 +1385,24 @@ static void configureScrollViewWithOverlayRegionsIDs(WKBaseScrollView* scrollVie
     return scrollViewArea > mainScrollViewArea / 2;
 }
 
-- (WKBaseScrollView*)_selectOverlayRegionScrollView:(WebKit::RemoteScrollingCoordinatorProxyIOS*)coordinatorProxy
+- (RetainPtr<WKBaseScrollView>)_selectOverlayRegionScrollView:(const WebKit::RemoteScrollingCoordinatorProxyIOS::OverlayRegionCandidatesMap&)candidatesMap
 {
-    WKBaseScrollView *overlayRegionScrollView = nil;
+    RetainPtr<WKBaseScrollView> overlayRegionScrollView;
 
     if ([self _scrollViewCanHaveOverlayRegions:_scrollView.get()])
-        overlayRegionScrollView = _scrollView.get();
+        overlayRegionScrollView = _scrollView;
     else
         [_scrollView _updateOverlayRegionsBehavior:NO];
 
-    auto candidates = coordinatorProxy->overlayRegionScrollViewCandidates();
+    auto candidates = copyToVector(candidatesMap.keys());
     std::ranges::sort(candidates, [](auto& first, auto& second) {
-        return first.frame.size.width * first.frame.size.height
-            > second.frame.size.width * second.frame.size.height;
+        auto firstFrame = [first frame];
+        auto secondFrame = [second frame];
+        return firstFrame.size.width * firstFrame.size.height
+            > secondFrame.size.width * secondFrame.size.height;
     });
-    for (auto* scrollView : candidates) {
-        if (!overlayRegionScrollView && [self _scrollViewCanHaveOverlayRegions:scrollView])
+    for (auto scrollView : candidates) {
+        if (!overlayRegionScrollView && [self _scrollViewCanHaveOverlayRegions:scrollView.get()])
             overlayRegionScrollView = scrollView;
         else
             [scrollView _updateOverlayRegionsBehavior:NO];
@@ -1416,8 +1423,8 @@ static void configureScrollViewWithOverlayRegionsIDs(WKBaseScrollView* scrollVie
 
     [_scrollView _updateOverlayRegionsBehavior:NO];
 
-    auto candidates = scrollingCoordinatorProxy->overlayRegionScrollViewCandidates();
-    for (auto *scrollView : candidates)
+    auto candidates = scrollingCoordinatorProxy->overlayRegionCandidates();
+    for (auto scrollView : candidates.keys())
         [scrollView _updateOverlayRegionsBehavior:NO];
 }
 #endif
@@ -1435,14 +1442,19 @@ static void configureScrollViewWithOverlayRegionsIDs(WKBaseScrollView* scrollVie
 
     scrollingCoordinatorProxy->removeDestroyedLayerIDs(destroyedLayers);
 
-    WKBaseScrollView *overlayRegionScrollView = [self _selectOverlayRegionScrollView:scrollingCoordinatorProxy];
+    auto candidatesMap = scrollingCoordinatorProxy->overlayRegionCandidates();
+
+    RetainPtr overlayRegionScrollView = [self _selectOverlayRegionScrollView:candidatesMap];
+    if (!overlayRegionScrollView)
+        return;
+
     HashSet<WebCore::PlatformLayerIdentifier> overlayRegionsIDs;
     const auto& fixedIDs = scrollingCoordinatorProxy->fixedScrollingNodeLayerIDs();
 
     for (auto layerID : fixedIDs)
         addOverlayEventRegions(layerID, overlayRegionsIDs, layerTreeHost);
 
-    configureScrollViewWithOverlayRegionsIDs(overlayRegionScrollView, layerTreeHost, overlayRegionsIDs);
+    configureScrollViewWithOverlayRegionsIDs(overlayRegionScrollView, layerTreeHost, overlayRegionsIDs, candidatesMap);
 }
 
 - (void)_updateOverlayRegionsForCustomContentView
@@ -3801,8 +3813,10 @@ static bool isLockdownModeWarningNeeded()
     if (WTF::IOSApplication::isMobileSafari())
         return false;
 
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     if (![WKProcessPool _lockdownModeEnabledGloballyForTesting] || [[NSUserDefaults standardUserDefaults] boolForKey:WebKitLockdownModeAlertShownKey])
         return false;
+    ALLOW_DEPRECATED_DECLARATIONS_END
 
     return true;
 }

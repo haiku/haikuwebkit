@@ -586,7 +586,7 @@ LocalFrameView* AsyncScrollingCoordinator::frameViewForScrollingNode(LocalFrame&
 
     // Walk the frame tree to find the matching LocalFrameView. This is not ideal, but avoids back pointers to LocalFrameViews
     // from ScrollingTreeStateNodes.
-    for (RefPtr<Frame> frame = &rootFrame; frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr<Frame> frame = rootFrame; frame; frame = frame->tree().traverseNext()) {
         auto* localFrame = dynamicDowncast<LocalFrame>(frame.get());
         if (!localFrame)
             continue;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -655,7 +655,7 @@ void AXObjectCache::platformHandleFocusedUIElementChanged(Element*, Element*)
     if (!axShouldRepostNotificationsForTests) [[unlikely]]
         return;
 
-    auto* rootWebArea = this->rootWebArea();
+    RefPtr rootWebArea = this->rootWebArea();
     if (!rootWebArea)
         return;
 

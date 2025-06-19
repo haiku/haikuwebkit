@@ -61,6 +61,7 @@
     _configuration->addURLSchemeHandler(WebKit::WebURLSchemeHandlerCocoa::create(urlSchemeHandler), urlScheme);
 }
 
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 - (void)setProcessPool:(WKProcessPool *)processPool
 {
     _configuration->setProcessPool(processPool ? processPool->_processPool.get() : nullptr);
@@ -70,6 +71,7 @@
 {
     return wrapper(_configuration->processPool());
 }
+ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)applyToWebViewConfiguration:(WKWebViewConfiguration *)configuration
 {
@@ -78,8 +80,10 @@
         [configuration setURLSchemeHandler:handler.apiHandler() forURLScheme:pair.second.createNSString().get()];
     }
 
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     if (auto* processPool = self.processPool)
         [configuration setProcessPool:processPool];
+    ALLOW_DEPRECATED_DECLARATIONS_END
 
     if (auto* groupIdentifier = self.groupIdentifier)
         [configuration _setGroupIdentifier:groupIdentifier];

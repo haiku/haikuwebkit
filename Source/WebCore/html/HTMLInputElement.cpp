@@ -2220,7 +2220,7 @@ RefPtr<HTMLInputElement> HTMLInputElement::checkedRadioButtonForGroup() const
     RefPtr<HTMLInputElement> checkedRadio;
     RadioInputType::forEachButtonInDetachedGroup(rootNode(), name, [&](auto& input) {
         if (input.checked()) {
-            checkedRadio = &input;
+            checkedRadio = input;
             return false;
         }
         return true;
@@ -2402,7 +2402,7 @@ RenderStyle HTMLInputElement::createInnerTextStyle(const RenderStyle& style)
 
     if (hasAutofillStrongPasswordButton() && isMutable()) {
         textBlockStyle.setDisplay(DisplayType::InlineBlock);
-        textBlockStyle.setLogicalMaxWidth(Length { 100, LengthType::Percent });
+        textBlockStyle.setLogicalMaxWidth(100_css_percentage);
         textBlockStyle.setColor(Color::black.colorWithAlphaByte(153));
         textBlockStyle.setTextOverflow(TextOverflow::Clip);
         textBlockStyle.setMaskImage(autoFillStrongPasswordMaskImage());

@@ -58,8 +58,13 @@ public:
     void setAllowElementUserInfo() { m_allowElementUserInfo = true; }
     bool allowElementUserInfo() const { return m_allowElementUserInfo; }
 
+    bool canAccessAnyShadowRoot() const { return shadowRootIsAlwaysOpen() || closedShadowRootIsExposedForExtensions(); }
+
     void setShadowRootIsAlwaysOpen() { m_shadowRootIsAlwaysOpen = true; }
     bool shadowRootIsAlwaysOpen() const { return m_shadowRootIsAlwaysOpen; }
+
+    void setClosedShadowRootIsExposedForExtensions() { m_closedShadowRootIsExposedForExtensions = true; }
+    bool closedShadowRootIsExposedForExtensions() const { return m_closedShadowRootIsExposedForExtensions; }
 
     void disableLegacyOverrideBuiltInsBehavior() { m_shouldDisableLegacyOverrideBuiltInsBehavior = true; }
     bool shouldDisableLegacyOverrideBuiltInsBehavior() const { return m_shouldDisableLegacyOverrideBuiltInsBehavior; }
@@ -88,6 +93,7 @@ private:
     bool m_allowAutofill { false };
     bool m_allowElementUserInfo { false };
     bool m_shadowRootIsAlwaysOpen { false };
+    bool m_closedShadowRootIsExposedForExtensions { false };
     bool m_shouldDisableLegacyOverrideBuiltInsBehavior { false };
 };
 

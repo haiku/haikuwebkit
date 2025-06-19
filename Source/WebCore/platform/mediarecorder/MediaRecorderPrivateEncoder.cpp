@@ -190,6 +190,8 @@ bool MediaRecorderPrivateEncoder::initialize(const MediaRecorderPrivateOptions& 
             return false; // unsupported codec.
     }
 
+    RELEASE_LOG(WebRTC, "MediaRecorderPrivateEncoder::initialize isWebM=%d, audioCodec=%d, videCodec=%d", isWebM, hasAudio() ? (int)m_audioCodec : -1, hasVideo() ? (int)m_videoCodec : -1);
+
     m_audioBitsPerSecond = options.audioBitsPerSecond.value_or(0);
     m_videoBitsPerSecond = options.videoBitsPerSecond.value_or(0);
 

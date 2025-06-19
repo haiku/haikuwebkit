@@ -69,9 +69,7 @@ GStreamerVideoCaptureDeviceManager::GStreamerVideoCaptureDeviceManager()
 void GStreamerVideoCaptureDeviceManager::computeCaptureDevices(CompletionHandler<void()>&& callback)
 {
     m_devices.clear();
-    m_pipewireCaptureDeviceManager->computeCaptureDevices();
-
-    callback();
+    m_pipewireCaptureDeviceManager->computeCaptureDevices(WTFMove(callback));
 }
 
 CaptureSourceOrError GStreamerVideoCaptureDeviceManager::createVideoCaptureSource(const CaptureDevice& device, MediaDeviceHashSalts&& hashSalts, const MediaConstraints* constraints)

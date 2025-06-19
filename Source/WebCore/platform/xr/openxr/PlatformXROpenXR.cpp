@@ -217,7 +217,7 @@ void OpenXRDevice::requestFrame(std::optional<RequestData>&&, RequestFrameCallba
 
             auto viewState = createStructure<XrViewState, XR_TYPE_VIEW_STATE>();
             uint32_t viewCountOutput;
-            result = xrLocateViews(m_session, &viewLocateInfo, &viewState, viewCount, &viewCountOutput, m_frameViews.data());
+            result = xrLocateViews(m_session, &viewLocateInfo, &viewState, viewCount, &viewCountOutput, m_frameViews.mutableSpan().data());
             if (!XR_FAILED(result)) {
                 for (auto& view : m_frameViews)
                     frameData.views.append(xrViewToPose(view));
@@ -286,7 +286,7 @@ void OpenXRDevice::submitFrame(Vector<Device::Layer>&& layers)
         frameEndInfo.displayTime = m_frameState.predictedDisplayTime;
         frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
         frameEndInfo.layerCount = frameEndLayers.size();
-        frameEndInfo.layers = frameEndLayers.data();
+        frameEndInfo.layers = frameEndLayers.span().data();
         auto result = xrEndFrame(m_session, &frameEndInfo);
         RETURN_IF_FAILED(result, "xrEndFrame", m_instance);
     });
@@ -369,7 +369,7 @@ void OpenXRDevice::collectSupportedSessionModes()
     RETURN_IF_FAILED(result, "xrEnumerateViewConfigurations", m_instance);
 
     Vector<XrViewConfigurationType> viewConfigurations(viewConfigurationCount);
-    result = xrEnumerateViewConfigurations(m_instance, m_systemId, viewConfigurationCount, &viewConfigurationCount, viewConfigurations.data());
+    result = xrEnumerateViewConfigurations(m_instance, m_systemId, viewConfigurationCount, &viewConfigurationCount, viewConfigurations.mutableSpan().data());
     RETURN_IF_FAILED(result, "xrEnumerateViewConfigurations", m_instance);
 
     FeatureList features = collectSupportedFeatures();
@@ -414,7 +414,7 @@ void OpenXRDevice::collectConfigurationViews()
                 object.type = XR_TYPE_VIEW_CONFIGURATION_VIEW;
                 return object;
             }());
-        result = xrEnumerateViewConfigurationViews(m_instance, m_systemId, configType, viewCount, &viewCount, configViews.data());
+        result = xrEnumerateViewConfigurationViews(m_instance, m_systemId, configType, viewCount, &viewCount, configViews.mutableSpan().data());
         if (result != XR_SUCCESS)
             continue;
         m_configurationViews.add(configType, WTFMove(configViews));

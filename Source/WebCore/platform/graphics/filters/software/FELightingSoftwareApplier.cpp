@@ -204,7 +204,7 @@ bool FELightingSoftwareApplier::apply(const Filter& filter, std::span<const Ref<
     data.diffuseConstant = m_effect->diffuseConstant();
     data.specularConstant = m_effect->specularConstant();
     data.specularExponent = m_effect->specularExponent();
-    data.lightSource = m_effect->lightSource().ptr();
+    data.lightSource = m_effect->lightSource();
     data.operatingColorSpace = &m_effect->operatingColorSpace();
 
     data.pixels = destinationPixelBuffer.releaseNonNull();

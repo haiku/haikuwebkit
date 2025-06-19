@@ -2,6 +2,7 @@
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  * Copyright (C) 2003-2025 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -295,10 +296,10 @@ public:
     // These are currently only used by Flexbox code. In some cases we must layout flex items with a different main size
     // (the size in the main direction) than the one specified by the item in order to compute the value of flex basis, i.e.,
     // the initial main size of the flex item before the free space is distributed.
-    std::optional<Length> overridingLogicalHeightForFlexBasisComputation() const;
-    std::optional<Length> overridingLogicalWidthForFlexBasisComputation() const;
-    void setOverridingBorderBoxLogicalHeightForFlexBasisComputation(const Length&);
-    void setOverridingBorderBoxLogicalWidthForFlexBasisComputation(const Length&);
+    std::optional<Style::PreferredSize> overridingLogicalHeightForFlexBasisComputation() const;
+    std::optional<Style::PreferredSize> overridingLogicalWidthForFlexBasisComputation() const;
+    void setOverridingBorderBoxLogicalHeightForFlexBasisComputation(const Style::PreferredSize&);
+    void setOverridingBorderBoxLogicalWidthForFlexBasisComputation(const Style::PreferredSize&);
     void clearOverridingLogicalHeightForFlexBasisComputation();
     void clearOverridingLogicalWidthForFlexBasisComputation();
 
@@ -308,8 +309,8 @@ public:
 
     LayoutSize offsetFromContainer(RenderElement&, const LayoutPoint&, bool* offsetDependsOnPoint = nullptr) const override;
     
-    LayoutUnit adjustBorderBoxLogicalWidthForBoxSizing(const Length& logicalWidth) const;
-    LayoutUnit adjustContentBoxLogicalWidthForBoxSizing(const Length& logicalWidth) const;
+    LayoutUnit adjustBorderBoxLogicalWidthForBoxSizing(const Style::Length<CSS::Nonnegative, float>& logicalWidth) const;
+    LayoutUnit adjustContentBoxLogicalWidthForBoxSizing(const Style::Length<CSS::Nonnegative, float>& logicalWidth) const;
 
     LayoutUnit adjustBorderBoxLogicalWidthForBoxSizing(LayoutUnit computedLogicalWidth, LengthType originalType) const;
     LayoutUnit adjustContentBoxLogicalWidthForBoxSizing(LayoutUnit computedLogicalWidth, LengthType originalType) const;
@@ -385,12 +386,7 @@ public:
 
     // Whether or not the element shrinks to its intrinsic width (rather than filling the width
     // of a containing block).  HTML4 buttons, <select>s, <input>s, legends, and floating/compact elements do this.
-    enum class SizeType : uint8_t {
-        MainOrPreferredSize,
-        MinSize,
-        MaxSize
-    };
-    bool sizesLogicalWidthToFitContent(SizeType) const;
+    bool sizesPreferredLogicalWidthToFitContent() const;
 
     bool hasStretchedLogicalHeight() const;
     bool hasStretchedLogicalWidth(StretchingMode = StretchingMode::Any) const;
@@ -399,13 +395,30 @@ public:
     
     LayoutUnit shrinkLogicalWidthToAvoidFloats(LayoutUnit childMarginStart, LayoutUnit childMarginEnd, const RenderBlock& containingBlock) const;
 
-    LayoutUnit computeLogicalWidthUsing(SizeType, Length logicalWidth, LayoutUnit availableLogicalWidth, const RenderBlock& containingBlock) const;
-    std::optional<LayoutUnit> computeLogicalHeightUsing(SizeType, const Length& height, std::optional<LayoutUnit> intrinsicContentHeight) const;
-    std::optional<LayoutUnit> computeContentLogicalHeight(SizeType, const Length& height, std::optional<LayoutUnit> intrinsicContentHeight) const;
-    std::optional<LayoutUnit> computeContentAndScrollbarLogicalHeightUsing(SizeType, const Length& height, std::optional<LayoutUnit> intrinsicContentHeight) const;
-    LayoutUnit computeReplacedLogicalWidthUsing(SizeType, Length width) const;
-    LayoutUnit computeReplacedLogicalWidthRespectingMinMaxWidth(LayoutUnit logicalWidth, ShouldComputePreferred  = ShouldComputePreferred::ComputeActual) const;
-    LayoutUnit computeReplacedLogicalHeightUsing(SizeType, Length height) const;
+    LayoutUnit computeLogicalWidthUsing(const Style::PreferredSize& logicalWidth, LayoutUnit availableLogicalWidth, const RenderBlock& containingBlock) const;
+    LayoutUnit computeLogicalWidthUsing(const Style::MinimumSize& logicalWidth, LayoutUnit availableLogicalWidth, const RenderBlock& containingBlock) const;
+    LayoutUnit computeLogicalWidthUsing(const Style::MaximumSize& logicalWidth, LayoutUnit availableLogicalWidth, const RenderBlock& containingBlock) const;
+    LayoutUnit computeLogicalWidthUsing(const Style::FlexBasis& logicalWidth, LayoutUnit availableLogicalWidth, const RenderBlock& containingBlock) const;
+
+    std::optional<LayoutUnit> computeLogicalHeightUsing(const Style::PreferredSize& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight) const;
+    std::optional<LayoutUnit> computeLogicalHeightUsing(const Style::MinimumSize& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight) const;
+    std::optional<LayoutUnit> computeLogicalHeightUsing(const Style::MaximumSize& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight) const;
+
+    std::optional<LayoutUnit> computeContentLogicalHeight(const Style::PreferredSize& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight) const;
+    std::optional<LayoutUnit> computeContentLogicalHeight(const Style::MinimumSize& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight) const;
+    std::optional<LayoutUnit> computeContentLogicalHeight(const Style::MaximumSize& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight) const;
+    std::optional<LayoutUnit> computeContentLogicalHeight(const Style::FlexBasis& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight) const;
+
+    LayoutUnit computeReplacedLogicalWidthUsing(const Style::PreferredSize& logicalWidth) const;
+    LayoutUnit computeReplacedLogicalWidthUsing(const Style::MinimumSize& logicalWidth) const;
+    LayoutUnit computeReplacedLogicalWidthUsing(const Style::MaximumSize& logicalWidth) const;
+
+    LayoutUnit computeReplacedLogicalWidthRespectingMinMaxWidth(LayoutUnit logicalWidth, ShouldComputePreferred = ShouldComputePreferred::ComputeActual) const;
+
+    LayoutUnit computeReplacedLogicalHeightUsing(const Style::PreferredSize& logicalHeight) const;
+    LayoutUnit computeReplacedLogicalHeightUsing(const Style::MinimumSize& logicalHeight) const;
+    LayoutUnit computeReplacedLogicalHeightUsing(const Style::MaximumSize& logicalHeight) const;
+
     LayoutUnit computeReplacedLogicalHeightRespectingMinMaxHeight(LayoutUnit logicalHeight) const;
 
     template<typename T> LayoutUnit computeReplacedLogicalWidthRespectingMinMaxWidth(T logicalWidth, ShouldComputePreferred shouldComputePreferred = ShouldComputePreferred::ComputeActual) const { return computeReplacedLogicalWidthRespectingMinMaxWidth(LayoutUnit(logicalWidth), shouldComputePreferred); }
@@ -415,11 +428,15 @@ public:
     virtual LayoutUnit computeReplacedLogicalHeight(std::optional<LayoutUnit> estimatedUsedWidth = std::nullopt) const;
 
     enum class UpdatePercentageHeightDescendants : bool { No, Yes };
-    std::optional<LayoutUnit> computePercentageLogicalHeight(const Length& height, UpdatePercentageHeightDescendants = UpdatePercentageHeightDescendants::Yes) const;
+    std::optional<LayoutUnit> computePercentageLogicalHeight(const Style::PreferredSize& logicalHeight, UpdatePercentageHeightDescendants = UpdatePercentageHeightDescendants::Yes) const;
+    std::optional<LayoutUnit> computePercentageLogicalHeight(const Style::MinimumSize& logicalHeight, UpdatePercentageHeightDescendants = UpdatePercentageHeightDescendants::Yes) const;
+    std::optional<LayoutUnit> computePercentageLogicalHeight(const Style::MaximumSize& logicalHeight, UpdatePercentageHeightDescendants = UpdatePercentageHeightDescendants::Yes) const;
+    std::optional<LayoutUnit> computePercentageLogicalHeight(const Style::FlexBasis& logicalHeight, UpdatePercentageHeightDescendants = UpdatePercentageHeightDescendants::Yes) const;
+    std::optional<LayoutUnit> computePercentageLogicalHeight(const Style::Percentage<CSS::Nonnegative, float>& logicalHeight, UpdatePercentageHeightDescendants = UpdatePercentageHeightDescendants::Yes) const;
     bool hasAutoHeightOrContainingBlockWithAutoHeight(UpdatePercentageHeightDescendants = UpdatePercentageHeightDescendants::Yes) const;
 
     virtual LayoutUnit availableLogicalHeight(AvailableLogicalHeightType) const;
-    LayoutUnit availableLogicalHeightUsing(const Length&, AvailableLogicalHeightType) const;
+    LayoutUnit availableLogicalHeightUsing(const Style::PreferredSize&, AvailableLogicalHeightType) const;
 
     WEBCORE_EXPORT virtual int verticalScrollbarWidth() const;
     WEBCORE_EXPORT virtual int horizontalScrollbarHeight() const;
@@ -609,7 +626,15 @@ public:
 
     ShapeOutsideInfo* shapeOutsideInfo() const;
 
-    LayoutUnit computeIntrinsicLogicalWidthUsing(Length logicalWidthLength, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
+    LayoutUnit computeIntrinsicLogicalWidthUsing(CSS::Keyword::WebkitFillAvailable, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
+    LayoutUnit computeIntrinsicLogicalWidthUsing(CSS::Keyword::MinIntrinsic, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
+    LayoutUnit computeIntrinsicLogicalWidthUsing(CSS::Keyword::MaxContent, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
+    LayoutUnit computeIntrinsicLogicalWidthUsing(CSS::Keyword::MinContent, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
+    LayoutUnit computeIntrinsicLogicalWidthUsing(CSS::Keyword::FitContent, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
+    LayoutUnit computeIntrinsicLogicalWidthUsing(const Style::PreferredSize& logicalWidth, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
+    LayoutUnit computeIntrinsicLogicalWidthUsing(const Style::MinimumSize& logicalWidth, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
+    LayoutUnit computeIntrinsicLogicalWidthUsing(const Style::MaximumSize& logicalWidth, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
+    LayoutUnit computeIntrinsicLogicalWidthUsing(const Style::FlexBasis& logicalWidth, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
 
     bool includeVerticalScrollbarSize() const;
     bool includeHorizontalScrollbarSize() const;
@@ -633,7 +658,7 @@ protected:
     inline bool shouldTrimChildMargin(MarginTrimType, const RenderBox&) const;
     virtual bool isChildEligibleForMarginTrim(MarginTrimType, const RenderBox&) const { return false; }
 
-    virtual bool shouldResetLogicalHeightBeforeLayout() const { return false; }
+    virtual bool shouldResetLogicalHeightBeforeLayout() const;
     void resetLogicalHeightBeforeLayoutIfNeeded();
 
     virtual ItemPosition selfAlignmentNormalBehavior(const RenderBox* = nullptr) const { return ItemPosition::Stretch; }
@@ -653,8 +678,11 @@ protected:
 
     void computePositionedLogicalWidth(LogicalExtentComputedValues&) const;
 
-    std::optional<LayoutUnit> computeIntrinsicLogicalContentHeightUsing(Length logicalHeightLength, std::optional<LayoutUnit> intrinsicContentHeight, LayoutUnit borderAndPadding) const;
-    
+    std::optional<LayoutUnit> computeIntrinsicLogicalContentHeightUsing(const Style::PreferredSize& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight, LayoutUnit borderAndPadding) const;
+    std::optional<LayoutUnit> computeIntrinsicLogicalContentHeightUsing(const Style::MinimumSize& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight, LayoutUnit borderAndPadding) const;
+    std::optional<LayoutUnit> computeIntrinsicLogicalContentHeightUsing(const Style::MaximumSize& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight, LayoutUnit borderAndPadding) const;
+    std::optional<LayoutUnit> computeIntrinsicLogicalContentHeightUsing(const Style::FlexBasis& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight, LayoutUnit borderAndPadding) const;
+
     LayoutRect localOutlineBoundsRepaintRect() const;
 
     void mapLocalToContainer(const RenderLayerModelObject* ancestorContainer, TransformState&, OptionSet<MapCoordinatesMode>, bool* wasFixed) const override;
@@ -684,14 +712,16 @@ protected:
         return LayoutUnit((inlineSize - borderPaddingInlineSum) / aspectRatio) + borderPaddingBlockSum;
     }
 
-    void computePreferredLogicalWidths(const Length& minLogicalWidth, const Length& maxLogicalWidth, LayoutUnit borderAndPaddingLogicalWidth);
-    
+    void computePreferredLogicalWidths(const Style::MinimumSize& minLogicalWidth, const Style::MaximumSize& maxLogicalWidth, LayoutUnit borderAndPaddingLogicalWidth);
+
     bool isAspectRatioDegenerate(double aspectRatio) const { return !aspectRatio || isnan(aspectRatio); }
 
     bool overflowChangesMayAffectLayout() const final;
 
 private:
-    bool replacedMinMaxLogicalHeightComputesAsNone(SizeType) const;
+    bool replacedMinMaxLogicalHeightComputesAsNone(const auto& logicalHeight, const auto& initialLogicalHeight) const;
+    bool replacedMinLogicalHeightComputesAsNone() const;
+    bool replacedMaxLogicalHeightComputesAsNone() const;
 
     void updateShapeOutsideInfoAfterStyleChange(const RenderStyle&, const RenderStyle* oldStyle);
 
@@ -709,8 +739,14 @@ private:
     bool repaintLayerRectsForImage(WrappedImagePtr, const FillLayer& layers, bool drawingBackground);
 
     void computePositionedLogicalHeight(LogicalExtentComputedValues&) const;
-    LayoutUnit computePositionedLogicalWidthUsing(SizeType, Length logicalWidth, const PositionedLayoutConstraints&) const;
-    LayoutUnit computePositionedLogicalHeightUsing(SizeType, Length logicalHeightLength, LayoutUnit computedHeight, const PositionedLayoutConstraints&) const;
+
+    LayoutUnit computePositionedLogicalWidthUsing(const Style::PreferredSize& logicalWidth, const PositionedLayoutConstraints& inlineConstraints) const;
+    LayoutUnit computePositionedLogicalWidthUsing(const Style::MinimumSize& logicalWidth, const PositionedLayoutConstraints& inlineConstraints) const;
+    LayoutUnit computePositionedLogicalWidthUsing(const Style::MaximumSize& logicalWidth, const PositionedLayoutConstraints& inlineConstraints) const;
+
+    LayoutUnit computePositionedLogicalHeightUsing(const Style::PreferredSize& logicalHeight, LayoutUnit computedHeight, const PositionedLayoutConstraints& blockConstraints) const;
+    LayoutUnit computePositionedLogicalHeightUsing(const Style::MinimumSize& logicalHeight, LayoutUnit computedHeight, const PositionedLayoutConstraints& blockConstraints) const;
+    LayoutUnit computePositionedLogicalHeightUsing(const Style::MaximumSize& logicalHeight, LayoutUnit computedHeight, const PositionedLayoutConstraints& blockConstraints) const;
 
     void computePositionedLogicalHeightReplaced(LogicalExtentComputedValues&) const;
     void computePositionedLogicalWidthReplaced(LogicalExtentComputedValues&) const;
@@ -718,10 +754,23 @@ private:
     LayoutUnit fillAvailableMeasure(LayoutUnit availableLogicalWidth) const;
     LayoutUnit fillAvailableMeasure(LayoutUnit availableLogicalWidth, LayoutUnit& marginStart, LayoutUnit& marginEnd) const;
 
+    template<typename Keyword> void computeIntrinsicKeywordLogicalWidths(Keyword, LayoutUnit borderAndPadding, LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const;
     virtual void computeIntrinsicKeywordLogicalWidths(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const
     {
         computeIntrinsicLogicalWidths(minLogicalWidth, maxLogicalWidth);
     }
+
+    template<typename SizeType> LayoutUnit computeLogicalWidthUsingGeneric(const SizeType& logicalWidth, LayoutUnit availableLogicalWidth, const RenderBlock& containingBlock) const;
+    template<typename SizeType> LayoutUnit computeIntrinsicLogicalWidthUsingGeneric(const SizeType& logicalWidth, LayoutUnit availableLogicalWidth, LayoutUnit borderAndPadding) const;
+
+    template<typename SizeType> std::optional<LayoutUnit> computeLogicalHeightUsingGeneric(const SizeType& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight) const;
+    template<typename SizeType> std::optional<LayoutUnit> computeIntrinsicLogicalContentHeightUsingGeneric(const SizeType& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight, LayoutUnit borderAndPadding) const;
+    template<typename SizeType> std::optional<LayoutUnit> computePercentageLogicalHeightGeneric(const SizeType& logicalHeight, UpdatePercentageHeightDescendants = UpdatePercentageHeightDescendants::Yes) const;
+    template<typename SizeType> std::optional<LayoutUnit> computeContentLogicalHeightGeneric(const SizeType& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight) const;
+    template<typename SizeType> std::optional<LayoutUnit> computeContentAndScrollbarLogicalHeightUsing(const SizeType& logicalHeight, std::optional<LayoutUnit> intrinsicContentHeight) const;
+
+    template<typename SizeType> LayoutUnit computeReplacedLogicalWidthUsingGeneric(const SizeType& logicalWidth) const;
+    template<typename SizeType> LayoutUnit computeReplacedLogicalHeightUsingGeneric(const SizeType& logicalHeight) const;
 
     // This function calculates the minimum and maximum preferred widths for an object.
     // These values are used in shrink-to-fit layout systems.

@@ -312,6 +312,7 @@ public:
     virtual void initialize(Type) { }
 
     virtual std::optional<PlatformLayerIdentifier> primaryLayerID() const { return std::nullopt; }
+    virtual std::optional<PlatformLayerIdentifier> layerIDIgnoringStructuralLayer() const { return primaryLayerID(); }
 
     GraphicsLayerClient& client() const { return *m_client; }
 

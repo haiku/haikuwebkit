@@ -36,6 +36,7 @@
 #include "FontInterrogation.h"
 #include "FontMetricsNormalization.h"
 #include "FontPaletteValues.h"
+#include "Logging.h"
 #include "StyleFontSizeFunctions.h"
 #include "SystemFontDatabaseCoreText.h"
 #include "UnrealizedCoreTextFont.h"
@@ -290,7 +291,7 @@ public:
     static Lock lock;
 
 private:
-    UncheckedKeyHashSet<String, ASCIICaseInsensitiveHash> m_families;
+    HashSet<String, ASCIICaseInsensitiveHash> m_families;
 };
 
 Lock FontCacheAllowlist::lock;
@@ -668,6 +669,27 @@ static void autoActivateFont(const String& name, CGFloat size)
 
 std::unique_ptr<FontPlatformData> FontCache::createFontPlatformData(const FontDescription& fontDescription, const AtomString& family, const FontCreationContext& fontCreationContext, OptionSet<FontLookupOptions> options)
 {
+    {
+        Locker locker(userInstalledFontMapLock());
+        if (!userInstalledFontMap().isEmpty()) {
+            auto fontKey = family.string().convertToASCIILowercase();
+            if (auto fontURL = userInstalledFontMap().getOptional(fontKey)) {
+                RELEASE_LOG(Fonts, "FontCache user installed fonts contains family %{private}s with fontURL %{private}s", family.string().utf8().data(), fontURL->string().utf8().data());
+                RetainPtr cfURL = fontURL->createCFURL();
+
+                CFErrorRef error = nullptr;
+                if (!CTFontManagerRegisterFontsForURL(cfURL.get(), kCTFontManagerScopeProcess, &error)) {
+                    RetainPtr descriptionCF = adoptCF(CFErrorCopyDescription(error));
+                    String error(descriptionCF.get());
+                    RELEASE_LOG(Fonts, "Could not register font family %{private}s, error %s", family.string().utf8().data(), error.utf8().data());
+                }
+                userInstalledFontMap().removeIf([&](auto& keyAndValue) {
+                    return keyAndValue.value == fontURL;
+                });
+            }
+        }
+    }
+
     auto size = fontDescription.adjustedSizeForFontFace(fontCreationContext.sizeAdjust());
     auto& fontDatabase = database(fontDescription.shouldAllowUserInstalledFonts());
     auto font = fontWithFamily(fontDatabase, family, fontDescription, fontCreationContext, size, options);
@@ -988,6 +1010,18 @@ void FontCache::platformReleaseNoncriticalMemory()
     m_systemFontDatabaseCoreText.clear();
     m_fontFamilySpecificationCoreTextCache.clear();
 #endif
+}
+
+HashMap<String, URL>& userInstalledFontMap()
+{
+    static NeverDestroyed<HashMap<String, URL>> fontMap;
+    return fontMap.get();
+}
+
+Lock& userInstalledFontMapLock()
+{
+    static Lock lock;
+    return lock;
 }
 
 }

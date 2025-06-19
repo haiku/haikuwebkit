@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -201,16 +201,16 @@ static void appendAccessibilityObject(Ref<AXCoreObject> object, AccessibilityObj
         results.append(WTFMove(object));
     else {
         // Find the next descendant of this attachment object so search can continue through frames.
-        Widget* widget = object->widgetForAttachmentView();
-        auto* frameView = dynamicDowncast<LocalFrameView>(widget);
+        RefPtr widget = object->widgetForAttachmentView();
+        RefPtr frameView = dynamicDowncast<LocalFrameView>(widget);
         if (!frameView)
             return;
-        auto* document = frameView->frame().document();
+        RefPtr document = frameView->frame().document();
         if (!document || !document->hasLivingRenderTree())
             return;
 
         CheckedPtr cache = object->axObjectCache();
-        if (auto* axDocument = cache ? cache->getOrCreate(*document) : nullptr)
+        if (RefPtr axDocument = cache ? cache->getOrCreate(*document) : nullptr)
             results.append(*axDocument);
     }
 }
@@ -244,7 +244,7 @@ static void appendChildrenToArray(Ref<AXCoreObject> object, bool isForward, RefP
         // FIXME: This is not true for ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE), fix this before shipping it.
         // FIXME: We hit this ASSERT on google.com. https://bugs.webkit.org/show_bug.cgi?id=293263
         ASSERT(is<AccessibilityObject>(startObject));
-        auto* newStartObject = dynamicDowncast<AccessibilityObject>(startObject.get());
+        RefPtr newStartObject = dynamicDowncast<AccessibilityObject>(startObject.get());
         // Get the un-ignored sibling based on the search direction, and update the searchPosition.
         if (newStartObject && newStartObject->isIgnored())
             newStartObject = isForward ? newStartObject->previousSiblingUnignored() : newStartObject->nextSiblingUnignored();
@@ -331,7 +331,7 @@ AXCoreObject::AccessibilityChildrenVector AXSearchManager::findMatchingObjectsIn
     }
 
     // The outer loop steps up the parent chain each time (unignored is important here because otherwise elements would be searched twice)
-    for (auto* stopSearchElement = criteria.anchorObject->parentObjectUnignored(); startObject && startObject != stopSearchElement; startObject = startObject->parentObjectUnignored()) {
+    for (RefPtr stopSearchElement = criteria.anchorObject->parentObjectUnignored(); startObject && startObject != stopSearchElement; startObject = startObject->parentObjectUnignored()) {
         // Only append the children after/before the previous element, so that the search does not check elements that are
         // already behind/ahead of start element.
         AXCoreObject::AccessibilityChildrenVector searchStack;

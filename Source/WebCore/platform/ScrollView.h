@@ -103,7 +103,7 @@ public:
     virtual IntRect windowClipRect() const = 0;
 
     // Functions for child manipulation and inspection.
-    const UncheckedKeyHashSet<Ref<Widget>>& children() const { return m_children; }
+    const HashSet<Ref<Widget>>& children() const { return m_children; }
     WEBCORE_EXPORT virtual void addChild(Widget&);
     WEBCORE_EXPORT virtual void removeChild(Widget&);
 
@@ -166,13 +166,13 @@ public:
         WTF_MAKE_TZONE_ALLOCATED(ProhibitScrollingWhenChangingContentSizeForScope);
     public:
         ProhibitScrollingWhenChangingContentSizeForScope(ScrollView&);
-        ~ProhibitScrollingWhenChangingContentSizeForScope();
+        WEBCORE_EXPORT ~ProhibitScrollingWhenChangingContentSizeForScope();
 
     private:
         SingleThreadWeakPtr<ScrollView> m_scrollView;
     };
 
-    std::unique_ptr<ProhibitScrollingWhenChangingContentSizeForScope> prohibitScrollingWhenChangingContentSizeForScope();
+    WEBCORE_EXPORT std::unique_ptr<ProhibitScrollingWhenChangingContentSizeForScope> prohibitScrollingWhenChangingContentSizeForScope();
 
     // Whether or not a scroll view will blit visible contents when it is scrolled. Blitting is disabled in situations
     // where it would cause rendering glitches (such as with fixed backgrounds or when the view is partially transparent).
@@ -336,10 +336,15 @@ public:
     // Event coordinates are assumed to be in the coordinate space of a window that contains
     // the entire widget hierarchy. It is up to the platform to decide what the precise definition
     // of containing window is. (For example on Mac it is the containing NSWindow.)
-    WEBCORE_EXPORT IntPoint windowToContents(const IntPoint&) const;
-    WEBCORE_EXPORT IntPoint contentsToWindow(const IntPoint&) const;
+    WEBCORE_EXPORT IntPoint windowToContents(IntPoint) const;
+    FloatPoint windowToContents(FloatPoint) const;
     WEBCORE_EXPORT IntRect windowToContents(const IntRect&) const;
+    FloatRect windowToContents(const FloatRect&) const;
+
+    WEBCORE_EXPORT IntPoint contentsToWindow(IntPoint) const;
+    FloatPoint contentsToWindow(FloatPoint) const;
     WEBCORE_EXPORT IntRect contentsToWindow(const IntRect&) const;
+    FloatRect contentsToWindow(const FloatRect&) const;
 
     // Functions for converting to and from screen coordinates.
     WEBCORE_EXPORT IntRect contentsToScreen(const IntRect&) const;
@@ -363,7 +368,9 @@ public:
 
     IntPoint convertChildToSelf(const Widget*, IntPoint) const;
     FloatPoint convertChildToSelf(const Widget*, FloatPoint) const;
+
     IntPoint convertSelfToChild(const Widget*, IntPoint) const;
+    FloatPoint convertSelfToChild(const Widget*, FloatPoint) const;
 
     // Widget override. Handles painting of the contents of the view as well as the scrollbars.
     WEBCORE_EXPORT void paint(GraphicsContext&, const IntRect&, Widget::SecurityOriginPaintPolicy = SecurityOriginPaintPolicy::AnyOrigin, RegionContext* = nullptr) final;
@@ -522,7 +529,7 @@ private:
             didFinishProhibitingScrollingWhenChangingContentSize();
     }
 
-    UncheckedKeyHashSet<Ref<Widget>> m_children;
+    HashSet<Ref<Widget>> m_children;
 
     RefPtr<Scrollbar> m_horizontalScrollbar;
     RefPtr<Scrollbar> m_verticalScrollbar;

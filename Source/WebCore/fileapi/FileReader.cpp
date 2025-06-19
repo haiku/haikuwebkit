@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Google Inc.  All rights reserved.
+ * Copyright (C) 2010 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -120,7 +120,7 @@ ExceptionOr<void> FileReader::readInternal(Blob& blob, FileReaderLoader::ReadTyp
     if (m_state == LOADING)
         return Exception { ExceptionCode::InvalidStateError };
 
-    m_blob = &blob;
+    m_blob = blob;
     m_readType = type;
     m_state = LOADING;
     m_error = nullptr;

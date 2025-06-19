@@ -121,9 +121,8 @@ RenderBlockFlow::MarginInfo::MarginInfo(const RenderBlockFlow& block, LayoutUnit
     // margins with our children's margins. To do otherwise would be to risk odd visual
     // effects when the children overflow out of the parent block and yet still collapse
     // with it. We also don't collapse if we have any bottom border/padding.
-    m_canCollapseMarginAfterWithChildren = m_canCollapseWithChildren && !afterBorderPadding
-        && blockStyle.logicalHeight().isAuto() && !blockStyle.logicalHeight().value();
-    
+    m_canCollapseMarginAfterWithChildren = m_canCollapseWithChildren && !afterBorderPadding && blockStyle.logicalHeight().isAuto();
+
     m_quirkContainer = block.isRenderTableCell() || block.isBody();
 
     m_positiveMargin = m_canCollapseMarginBeforeWithChildren ? block.maxPositiveMarginBefore() : 0_lu;
@@ -218,7 +217,7 @@ void RenderBlockFlow::rebuildFloatingObjectSetFromIntrudingFloats()
     if (mayHaveStaleFloatingObjects())
         m_floatingObjects = { };
 
-    UncheckedKeyHashSet<CheckedPtr<RenderBox>> oldIntrudingFloatSet;
+    HashSet<CheckedPtr<RenderBox>> oldIntrudingFloatSet;
 
     if (m_floatingObjects) {
         m_floatingObjects->setHorizontalWritingMode(isHorizontalWritingMode());
@@ -331,9 +330,9 @@ void RenderBlockFlow::computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth,
     }
 
     if (auto* cell = dynamicDowncast<RenderTableCell>(*this)) {
-        Length tableCellWidth = cell->styleOrColLogicalWidth();
-        if (tableCellWidth.isFixed() && tableCellWidth.value() > 0)
-            maxLogicalWidth = std::max(minLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(tableCellWidth));
+        auto tableCellWidth = cell->styleOrColLogicalWidth();
+        if (auto fixedTableCellWidth = tableCellWidth.tryFixed(); fixedTableCellWidth && fixedTableCellWidth->value > 0)
+            maxLogicalWidth = std::max(minLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(*fixedTableCellWidth));
     }
 
     int scrollbarWidth = intrinsicScrollbarLogicalWidthIncludingGutter();
@@ -1428,7 +1427,7 @@ std::optional<LayoutUnit> RenderBlockFlow::selfCollapsingMarginBeforeWithClear(R
     if (RenderStyle::usedClear(*candidateBlockFlow) == UsedClear::None || !containsFloats())
         return { };
 
-    auto clear = getClearDelta(*candidateBlockFlow, candidateBlockFlow->logicalHeight());
+    auto clear = computedClearDeltaForChild(*candidateBlockFlow, candidateBlockFlow->logicalHeight());
     // Just because a block box has the clear property set, it does not mean we always get clearance (e.g. when the box is below the cleared floats)
     if (clear < candidateBlockFlow->logicalBottom())
         return { };
@@ -1566,14 +1565,29 @@ bool RenderBlockFlow::isChildEligibleForMarginTrim(MarginTrimType marginTrimType
     ASSERT(style().marginTrim().contains(marginTrimType));
     if (!child.style().isDisplayBlockLevel())
         return false;
-    if (marginTrimType == MarginTrimType::BlockStart)
+    // https://drafts.csswg.org/css-box-4/#margin-trim-block
+    // 3.3.1. Trimming Block Container Content
+    // For block containers specifically, margin-trim discards:
+    switch (marginTrimType) {
+    case MarginTrimType::BlockStart:
+        // The block-start margin of a block-level first child, when trimming at the block-start edge.
         return firstInFlowChildBox() == &child;
-    return lastInFlowChildBox() == &child;
+    case MarginTrimType::BlockEnd:
+        // The block-end margin of a block-level last child, when trimming at the block-end edge.
+        return lastInFlowChildBox() == &child;
+    case MarginTrimType::InlineStart:
+    case MarginTrimType::InlineEnd:
+        // It has no effect on the inline-axis margins of block-level descendants, nor on any margins of inline-level descendants.
+        return false;
+    default:
+        ASSERT_NOT_REACHED();
+        return false;
+    }
 }
 
 LayoutUnit RenderBlockFlow::clearFloatsIfNeeded(RenderBox& child, MarginInfo& marginInfo, LayoutUnit oldTopPosMargin, LayoutUnit oldTopNegMargin, LayoutUnit yPos)
 {
-    LayoutUnit heightIncrease = getClearDelta(child, yPos);
+    LayoutUnit heightIncrease = computedClearDeltaForChild(child, yPos);
     if (!heightIncrease)
         return yPos;
 
@@ -1702,7 +1716,7 @@ LayoutUnit RenderBlockFlow::estimateLogicalTopPosition(RenderBox& child, const M
         && hasNextPage(logicalHeight()))
         logicalTopEstimate = std::min(logicalTopEstimate, nextPageLogicalTop(logicalHeight()));
 
-    logicalTopEstimate += getClearDelta(child, logicalTopEstimate);
+    logicalTopEstimate += computedClearDeltaForChild(child, logicalTopEstimate);
 
     estimateWithoutPagination = logicalTopEstimate;
 
@@ -3117,7 +3131,7 @@ LayoutPoint RenderBlockFlow::flipFloatForWritingModeForChild(const FloatingObjec
     return LayoutPoint(point.x() + width() - child.renderer().width() - 2 * child.locationOffsetOfBorderBox().width(), point.y());
 }
 
-LayoutUnit RenderBlockFlow::getClearDelta(RenderBox& child, LayoutUnit logicalTop)
+LayoutUnit RenderBlockFlow::computedClearDeltaForChild(RenderBox& child, LayoutUnit logicalTop)
 {
     // There is no need to compute clearance if we have no floats.
     if (!containsFloats())
@@ -4610,13 +4624,16 @@ static inline LayoutUnit preferredWidth(LayoutUnit preferredWidth, float result)
 static inline std::optional<LayoutUnit> textIndentForBlockContainer(const RenderBlockFlow& renderer)
 {
     auto& style = renderer.style();
+    if (auto fixedTextIndent = style.textIndent().tryFixed())
+        return fixedTextIndent->value ? std::make_optional(LayoutUnit { fixedTextIndent->value }) : std::nullopt;
+
     auto indentValue = LayoutUnit { };
-    if (style.textIndent().isFixed())
-        indentValue = LayoutUnit { style.textIndent().value() };
-    else if (auto* containingBlock = renderer.containingBlock(); containingBlock && containingBlock->style().logicalWidth().isFixed()) {
-        // At this point of the shrink-to-fit computatation, we don't have a used value for the containing block width
-        // (that's exactly to what we try to contribute here) unless the computed value is fixed.
-        indentValue = minimumValueForLength(style.textIndent(), containingBlock->style().logicalWidth().value());
+    if (auto* containingBlock = renderer.containingBlock()) {
+        if (auto containingBlockFixedLogicalWidth = containingBlock->style().logicalWidth().tryFixed()) {
+            // At this point of the shrink-to-fit computation, we don't have a used value for the containing block width
+            // (that's exactly to what we try to contribute here) unless the computed value is fixed.
+            indentValue = minimumValueForLength(style.textIndent(), containingBlockFixedLogicalWidth->value);
+        }
     }
     return indentValue ? std::make_optional(indentValue) : std::nullopt;
 }
@@ -4640,7 +4657,7 @@ void RenderBlockFlow::computeInlinePreferredLogicalWidths(LayoutUnit& minLogical
     // Firefox and Opera will allow a table cell to grow to fit an image inside it under
     // very specific cirucumstances (in order to match common WinIE renderings). 
     // Not supporting the quirk has caused us to mis-render some real sites. (See Bugzilla 10517.) 
-    bool allowImagesToBreak = !document().inQuirksMode() || !isRenderTableCell() || !styleToUse.logicalWidth().isIntrinsicOrAuto();
+    bool allowImagesToBreak = !document().inQuirksMode() || !isRenderTableCell() || !styleToUse.logicalWidth().isIntrinsicOrLegacyIntrinsicOrAuto();
 
     bool oldAutoWrap = styleToUse.autoWrap();
 

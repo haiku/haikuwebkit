@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2010 Google Inc. All rights reserved.
- * Copyright (C) 2012 Apple Inc. All Rights Reserved.
+ * Copyright (C) 2012 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -90,7 +90,8 @@ private:
         PermissionStateAllowed,
         PermissionStateDenied,
     } m_permissionState;
-    typedef UncheckedKeyHashSet<RefPtr<Geolocation>> GeolocationSet;
+
+    using GeolocationSet = HashSet<RefPtr<Geolocation>>;
     GeolocationSet m_pendingPermission;
 };
 

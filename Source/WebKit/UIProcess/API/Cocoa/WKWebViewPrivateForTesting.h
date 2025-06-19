@@ -150,7 +150,7 @@ struct WKAppPrivacyReportTestingData {
 
 - (void)_terminateIdleServiceWorkersForTesting;
 
-- (void)_getNotifyStateForTesting:(NSString *)notificationName completionHandler:(void(^)(NSNumber * _Nullable))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA));
+- (void)_getNotifyStateForTesting:(NSString *)notificationName completionHandler:(void(^)(NSNumber * _Nullable))completionHandler WK_API_AVAILABLE(macos(15.4), ios(18.4), visionos(2.4));
 
 @property (nonatomic, readonly) BOOL _hasAccessibilityActivityForTesting;
 

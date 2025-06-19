@@ -73,7 +73,7 @@ static URL completeURL(const String& string, const WTF::URL& baseURL)
 {
     if (string.isEmpty() || string.startsWith('#'))
         return URL { .specified = string, .resolved = WTF::URL { string }, .modifiers = { } };
-    if (baseURL.isNull())
+    if (baseURL.isNull() || baseURL.isAboutBlank())
         return URL { .specified = string, .resolved = WTF::URL { }, .modifiers = { } };
     return URL { .specified = string, .resolved = WTF::URL { baseURL, string }, .modifiers = { } };
 }

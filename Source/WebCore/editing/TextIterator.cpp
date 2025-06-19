@@ -199,7 +199,7 @@ static RefPtr<Node> nextInPreOrderCrossingShadowBoundaries(Node& rangeEndContain
         if (RefPtr next = rangeEndContainer.traverseToChildAt(rangeEndOffset))
             return next;
     }
-    for (RefPtr node = &rangeEndContainer; node; node = node->parentOrShadowHostNode()) {
+    for (RefPtr node = rangeEndContainer; node; node = node->parentOrShadowHostNode()) {
         if (RefPtr next = node->nextSibling())
             return next;
     }
@@ -962,7 +962,7 @@ static bool shouldEmitNewlineAfterNode(Node& node, bool emitsCharactersBetweenAl
     // Don't emit a new line at the end of the document unless we're matching the behavior of VisiblePosition.
     if (emitsCharactersBetweenAllVisiblePositions)
         return true;
-    RefPtr subsequentNode = &node;
+    RefPtr subsequentNode = node;
     while ((subsequentNode = NodeTraversal::nextSkippingChildren(*subsequentNode))) {
         if (subsequentNode->renderer())
             return true;
@@ -1206,7 +1206,7 @@ void TextIterator::emitText(Text& textNode, RenderText& renderer, int textStartO
 
     textEndOffset = std::min(string.length(), static_cast<unsigned>(textEndOffset));
 
-    m_positionNode = &textNode;
+    m_positionNode = textNode;
     m_positionOffsetBaseNode = nullptr;
     m_positionStartOffset = textStartOffset;
     m_positionEndOffset = textEndOffset;

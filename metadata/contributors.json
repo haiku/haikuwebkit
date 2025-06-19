@@ -2999,6 +2999,7 @@
    },
    {
       "emails" : [
+         "com.webkit.iidmsa@gmail.com",
          "com.idmsa@gmail.com"
       ],
       "github" : "iidmsa",
@@ -3654,6 +3655,13 @@
       "nicks" : [
          "iana"
       ]
+   },
+   {
+      "emails" : [
+         "i_gower@apple.com"
+      ],
+      "github" : "igower",
+      "name" : "Ian Gower"
    },
    {
       "emails" : [
@@ -6792,7 +6800,8 @@
          "p_choudhury@apple.com"
       ],
       "github" : "pratiksha-99",
-      "name" : "Pratiksha Choudhury"
+      "name" : "Pratiksha Choudhury",
+      "status" : "committer"
    },
    {
       "emails" : [

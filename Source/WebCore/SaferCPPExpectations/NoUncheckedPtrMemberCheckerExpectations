@@ -49,9 +49,7 @@ platform/Scrollbar.h
 platform/ScrollbarsController.h
 platform/graphics/TextBoxIterator.h
 platform/graphics/ca/TileCoverageMap.h
-platform/ios/WebAVPlayerController.h
 platform/mac/VideoPresentationInterfaceMac.mm
-platform/mac/WebPlaybackControlsManager.h
 platform/mock/DeviceOrientationClientMock.h
 rendering/BackgroundPainter.h
 rendering/GlyphDisplayListCache.cpp
@@ -83,7 +81,6 @@ rendering/RenderLayerCompositor.cpp
 rendering/RenderLayerCompositor.h
 rendering/RenderLayerScrollableArea.h
 rendering/RenderLayoutState.h
-rendering/RenderMarquee.h
 rendering/RenderSelection.h
 rendering/RenderSelectionGeometry.h
 rendering/RenderTableSection.h

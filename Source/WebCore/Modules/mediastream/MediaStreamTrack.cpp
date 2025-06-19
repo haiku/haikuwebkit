@@ -105,6 +105,14 @@ MediaStreamTrack::MediaStreamTrack(ScriptExecutionContext& context, Ref<MediaStr
 
 MediaStreamTrack::~MediaStreamTrack()
 {
+    if (isCaptureTrack() && !ended()) {
+        if (RefPtr context = scriptExecutionContext()) {
+            context->postTask([](auto& context) {
+                context.addConsoleMessage(MessageSource::JS, MessageLevel::Warning, "A capture MediaStreamTrack was destroyed without having been stopped explicitly"_s);
+            });
+        }
+    }
+
     m_private->removeObserver(*this);
     stopTrack();
 

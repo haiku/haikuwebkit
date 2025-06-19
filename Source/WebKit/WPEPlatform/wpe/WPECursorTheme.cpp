@@ -240,7 +240,7 @@ static std::optional<CursorTheme::CursorImage> readImage(FILE* file, const Xcuso
 
     auto imageSize = image.width * image.height;
     image.pixels.grow(imageSize);
-    auto* pixels = image.pixels.data();
+    auto* pixels = image.pixels.mutableSpan().data();
     while (imageSize--) {
         if (!readUint32(file, pixels))
             return std::nullopt;

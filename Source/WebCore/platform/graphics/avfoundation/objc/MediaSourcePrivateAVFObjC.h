@@ -154,7 +154,7 @@ private:
     uint64_t m_nextSourceBufferID { 0 };
 #endif
 
-    UncheckedKeyHashMap<SourceBufferPrivate*, Vector<PlatformTimeRanges>> m_bufferedRanges;
+    HashMap<SourceBufferPrivate*, Vector<PlatformTimeRanges>> m_bufferedRanges;
     ProcessIdentity m_resourceOwner;
 };
 

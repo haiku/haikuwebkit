@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -123,9 +123,8 @@ private:
     using WakeUpServer = StreamClientConnectionBuffer::WakeUpServer;
     void wakeUpServerBatched(WakeUpServer);
     void wakeUpServer(WakeUpServer);
-    Ref<Connection> protectedConnection() const { return m_connection; }
 
-    Ref<Connection> m_connection;
+    const Ref<Connection> m_connection;
     class DedicatedConnectionClient final : public Connection::Client {
         WTF_MAKE_NONCOPYABLE(DedicatedConnectionClient);
     public:
@@ -178,7 +177,7 @@ Error StreamClientConnection::send(T&& message, ObjectIdentifierGeneric<U, V, W>
             return Error::NoError;
     }
     sendProcessOutOfStreamMessage(WTFMove(*span));
-    return protectedConnection()->send(std::forward<T>(message), destinationID, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
+    return m_connection->send(std::forward<T>(message), destinationID, IPC::SendOption::DispatchMessageEvenWhenWaitingForSyncReply);
 }
 
 template<typename T, typename C, typename U, typename V, typename W>
@@ -277,21 +276,21 @@ StreamClientConnection::SendSyncResult<T> StreamClientConnection::sendSync(T&& m
             return WTFMove(*maybeSendResult);
     }
     sendProcessOutOfStreamMessage(WTFMove(*span));
-    return protectedConnection()->sendSync(std::forward<T>(message), destinationID.toUInt64(), timeout);
+    return m_connection->sendSync(std::forward<T>(message), destinationID.toUInt64(), timeout);
 }
 
 template<typename T, typename U, typename V, typename W>
 Error StreamClientConnection::waitForAndDispatchImmediately(ObjectIdentifierGeneric<U, V, W> destinationID, OptionSet<WaitForOption> waitForOptions)
 {
     Timeout timeout = defaultTimeout();
-    return protectedConnection()->waitForAndDispatchImmediately<T>(destinationID, timeout, waitForOptions);
+    return m_connection->waitForAndDispatchImmediately<T>(destinationID, timeout, waitForOptions);
 }
 
 template<typename T>
 Error StreamClientConnection::waitForAsyncReplyAndDispatchImmediately(AsyncReplyID replyID)
 {
     Timeout timeout = defaultTimeout();
-    return protectedConnection()->waitForAsyncReplyAndDispatchImmediately<T>(replyID, timeout);
+    return m_connection->waitForAsyncReplyAndDispatchImmediately<T>(replyID, timeout);
 }
 
 template<typename T>

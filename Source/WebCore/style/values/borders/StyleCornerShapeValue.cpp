@@ -28,11 +28,54 @@
 #include "CSSFunctionValue.h"
 #include "CSSPrimitiveValue.h"
 #include "CSSValuePool.h"
+#include "StyleBuilderConverter.h"
+#include "StyleBuilderState.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include "StylePrimitiveNumericTypes+CSSValueCreation.h"
 
 namespace WebCore {
 namespace Style {
+
+// MARK: - Conversion
+
+auto CSSValueConversion<CornerShapeValue>::operator()(BuilderState& state, const CSSValue& value) -> CornerShapeValue
+{
+    if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
+        switch (primitiveValue->valueID()) {
+        case CSSValueRound:
+            return CornerShapeValue::round();
+        case CSSValueScoop:
+            return CornerShapeValue::scoop();
+        case CSSValueBevel:
+            return CornerShapeValue::bevel();
+        case CSSValueNotch:
+            return CornerShapeValue::notch();
+        case CSSValueStraight:
+            return CornerShapeValue::straight();
+        case CSSValueSquircle:
+            return CornerShapeValue::squircle();
+        default:
+            break;
+        }
+
+        state.setCurrentPropertyInvalidAtComputedValueTime();
+        return CornerShapeValue::round();
+    }
+
+    auto superellipseFunction = BuilderConverter::requiredFunctionDowncast<CSSValueSuperellipse, CSSPrimitiveValue>(state, value);
+    if (!superellipseFunction)
+        return CornerShapeValue::round();
+
+    Ref superellipseDescriptor = superellipseFunction->item(0);
+    if (superellipseDescriptor->valueID() == CSSValueInfinity)
+        return { SuperellipseFunction { Number<CSS::Nonnegative>(std::numeric_limits<double>::infinity()) } };
+
+    if (superellipseDescriptor->isNumber())
+        return { SuperellipseFunction { Number<CSS::Nonnegative>(std::max(0.0, superellipseDescriptor->resolveAsNumber<double>(state.cssToLengthConversionData()))) } };
+
+    state.setCurrentPropertyInvalidAtComputedValueTime();
+    return CornerShapeValue::round();
+}
 
 // MARK: - Blending
 

@@ -59,7 +59,7 @@ void ResourceTimingInformation::addResourceTiming(CachedResource& resource, Docu
     if (info.added == Added)
         return;
 
-    RefPtr initiatorDocument = &document;
+    RefPtr initiatorDocument = document;
     if (resource.type() == CachedResource::Type::MainResource && document.frame() && document.frame()->loader().shouldReportResourceTimingToParentFrame()) {
         initiatorDocument = document.parentDocument();
         if (initiatorDocument)

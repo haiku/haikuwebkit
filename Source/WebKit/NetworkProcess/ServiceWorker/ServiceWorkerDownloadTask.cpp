@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -72,11 +72,6 @@ ServiceWorkerDownloadTask::~ServiceWorkerDownloadTask()
 void ServiceWorkerDownloadTask::startListeningForIPC()
 {
     RefPtr { m_serviceWorkerConnection.get() }->protectedIPCConnection()->addMessageReceiver(*this, *this, Messages::ServiceWorkerDownloadTask::messageReceiverName(), fetchIdentifier().toUInt64());
-}
-
-Ref<NetworkProcess> ServiceWorkerDownloadTask::protectedNetworkProcess() const
-{
-    return m_networkProcess;
 }
 
 void ServiceWorkerDownloadTask::close()
@@ -182,7 +177,7 @@ void ServiceWorkerDownloadTask::start()
 
     m_state = State::Running;
 
-    auto& manager = protectedNetworkProcess()->downloadManager();
+    auto& manager = m_networkProcess->downloadManager();
     Ref download = Download::create(manager, m_downloadID, *this, *networkSession());
     manager.dataTaskBecameDownloadTask(m_downloadID, download.copyRef());
     download->didCreateDestination(m_pendingDownloadLocation);
@@ -204,7 +199,7 @@ void ServiceWorkerDownloadTask::didReceiveData(const IPC::SharedBufferReference&
 
     callOnMainRunLoop([this, protectedThis = Ref { *this }, bytesWritten = *bytesWritten] {
         m_downloadBytesWritten += bytesWritten;
-        if (RefPtr download = protectedNetworkProcess()->downloadManager().download(*m_pendingDownloadID))
+        if (RefPtr download = m_networkProcess->downloadManager().download(*m_pendingDownloadID))
             download->didReceiveData(bytesWritten, m_downloadBytesWritten, std::max(m_expectedContentLength.value_or(0), m_downloadBytesWritten));
     });
 }
@@ -233,7 +228,7 @@ void ServiceWorkerDownloadTask::didFinish()
             sandboxExtension->revoke();
 #endif
 
-        if (RefPtr download = protectedNetworkProcess()->downloadManager().download(*m_pendingDownloadID)) {
+        if (RefPtr download = m_networkProcess->downloadManager().download(*m_pendingDownloadID)) {
 #if HAVE(MODERN_DOWNLOADPROGRESS)
             if (RefPtr sandboxExtension = std::exchange(m_sandboxExtension, nullptr))
                 download->setSandboxExtension(WTFMove(sandboxExtension));
@@ -270,7 +265,7 @@ void ServiceWorkerDownloadTask::didFailDownload(std::optional<ResourceError>&& e
             sandboxExtension->revoke();
 
         auto resourceError = error.value_or(cancelledError(firstRequest()));
-        if (RefPtr download = protectedNetworkProcess()->downloadManager().download(*m_pendingDownloadID))
+        if (RefPtr download = m_networkProcess->downloadManager().download(*m_pendingDownloadID))
             download->didFail(resourceError, { });
 
         if (RefPtr client = m_client.get())

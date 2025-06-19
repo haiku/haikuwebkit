@@ -93,7 +93,27 @@ inline constexpr auto ClosedPercentageRangeClampUpper = Range { 0, 100, RangeOpt
 // Clamps a floating point value to within `range`.
 template<Range range, std::floating_point T> constexpr T clampToRange(T value)
 {
-    return std::clamp<T>(value, range.min, range.max);
+    if constexpr (range.min == -Range::infinity && range.max == Range::infinity)
+        return value;
+    else if constexpr (range.max == Range::infinity)
+        return std::max<T>(value, range.min);
+    else if constexpr (range.min == -Range::infinity)
+        return std::min<T>(value, range.max);
+    else
+        return std::clamp<T>(value, range.min, range.max);
+}
+
+// Checks if a floating point value is within `range`.
+template<Range range, std::floating_point T> constexpr bool isWithinRange(T value)
+{
+    if constexpr (range.min == -Range::infinity && range.max == Range::infinity)
+        return true;
+    else if constexpr (range.max == Range::infinity)
+        return value >= range.min;
+    else if constexpr (range.min == -Range::infinity)
+        return value <= range.max;
+    else
+        return value >= range.min && value <= range.max;
 }
 
 } // namespace CSS

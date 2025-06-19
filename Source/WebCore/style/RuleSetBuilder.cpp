@@ -345,17 +345,28 @@ void RuleSetBuilder::addStyleRule(StyleRuleNestedDeclarations& rule)
     };
 
     auto selectorList = [&] {
-        ASSERT(m_selectorListStack.size());
         ASSERT(m_ancestorStack.size());
-        if (m_ancestorStack.last() == CSSParserEnum::NestedContextType::Style)
+        auto parentIsStyleRule = [&] {
+            return m_ancestorStack.last() == CSSParserEnum::NestedContextType::Style;
+        };
+        auto parentIsScopeRule = [&] {
+            return m_ancestorStack.last() == CSSParserEnum::NestedContextType::Scope;
+        };
+
+        if (parentIsStyleRule()) {
+            ASSERT(m_selectorListStack.size());
             return *m_selectorListStack.last();
-        ASSERT(m_ancestorStack.last() == CSSParserEnum::NestedContextType::Scope);
-        return CSSSelectorList { MutableCSSSelectorList::from(whereScopeSelector()) };
+        }
+
+        if (parentIsScopeRule())
+            return CSSSelectorList { MutableCSSSelectorList::from(whereScopeSelector()) };
+
+        ASSERT_NOT_REACHED();
+        return CSSSelectorList { };
     };
 
     if (m_shouldResolveNestingForSheet)
         rule.wrapperAdoptSelectorList(selectorList());
-
     addStyleRuleWithSelectorList(rule.selectorList(), rule);
 }
 

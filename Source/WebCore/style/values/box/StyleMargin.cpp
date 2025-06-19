@@ -34,7 +34,7 @@ namespace Style {
 
 // MARK: - Conversion
 
-MarginEdge marginEdgeFromCSSValue(const CSSValue& value, BuilderState& state)
+auto CSSValueConversion<MarginEdge>::operator()(BuilderState& state, const CSSValue& value) -> MarginEdge
 {
     return MarginEdge { BuilderConverter::convertLengthOrAuto(state, value) };
 }

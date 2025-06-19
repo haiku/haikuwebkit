@@ -254,6 +254,7 @@ bool hasCapacityToUseLargeGigacage();
     v(Bool, useJITDebugAssertions, ASSERT_ENABLED, Normal, nullptr) \
     v(Bool, useAccessInlining, true, Normal, nullptr) \
     v(Unsigned, maxAccessVariantListSize, 8, Normal, nullptr) \
+    v(Double, thresholdForUndesiredMegamorphicAccessVariantListSize, 0.5, Normal, nullptr) \
     v(Bool, usePolyvariantDevirtualization, true, Normal, nullptr) \
     v(Bool, usePolymorphicAccessInlining, true, Normal, nullptr) \
     v(Unsigned, maxPolymorphicAccessInliningListSize, 8, Normal, nullptr) \
@@ -607,7 +608,6 @@ bool hasCapacityToUseLargeGigacage();
     v(Bool, verboseExecutablePoolAllocation, false, Normal, nullptr) \
     v(Bool, useHandlerIC, canUseHandlerIC(), Normal, nullptr) \
     v(Bool, useDataICInFTL, false, Normal, nullptr) \
-    v(Bool, useDataICSharing, false, Normal, nullptr) \
     v(Bool, useLLIntICs, true, Normal, "Use property and call ICs in LLInt code."_s) \
     v(Bool, useBaselineJITCodeSharing, is64Bit(), Normal, nullptr) \
     v(Bool, libpasScavengeContinuously, false, Normal, nullptr) \

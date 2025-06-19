@@ -81,6 +81,7 @@ static void wpeDisplayDRMDispose(GObject* object)
 {
     auto* priv = WPE_DISPLAY_DRM(object)->priv;
 
+    priv->cursor = nullptr;
     g_clear_pointer(&priv->device, gbm_device_destroy);
 
     if (priv->fd) {

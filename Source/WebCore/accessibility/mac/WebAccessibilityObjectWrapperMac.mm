@@ -2866,26 +2866,11 @@ static bool isMatchingPlugin(AXCoreObject& axObject, const AccessibilitySearchCr
         && (!criteria.visibleOnly || axObject.isVisible());
 }
 
-#if ENABLE(AX_THREAD_TEXT_APIS)
-static std::optional<AXTextMarkerRange> markerRangeFrom(NSRange range, const AXCoreObject& object)
-{
-    auto markerToLocation = AXTextMarker { object, 0 }.nextMarkerFromOffset(range.location, ForceSingleOffsetMovement::Yes);
-    if (!markerToLocation.isValid())
-        return std::nullopt;
-
-    auto markerToRangeEnd = markerToLocation.nextMarkerFromOffset(range.length, ForceSingleOffsetMovement::Yes);
-    if (!markerToRangeEnd.isValid())
-        return std::nullopt;
-    return std::optional(AXTextMarkerRange { WTFMove(markerToLocation), WTFMove(markerToRangeEnd) });
-}
-
-#endif // ENABLE(AX_THREAD_TEXT_APIS)
-
 static NSRect computeTextBoundsForRange(NSRange range, const AXCoreObject& backingObject)
 {
 #if ENABLE(AX_THREAD_TEXT_APIS)
     if (AXObjectCache::useAXThreadTextApis()) {
-        std::optional markerRange = markerRangeFrom(range, backingObject);
+        std::optional markerRange = Accessibility::markerRangeFrom(range, backingObject);
         return markerRange ? static_cast<CGRect>(markerRange->viewportRelativeFrame()) : CGRectZero;
     }
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
@@ -3281,7 +3266,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
 #if ENABLE(AX_THREAD_TEXT_APIS)
         if (AXObjectCache::useAXThreadTextApis()) {
-            std::optional markerRange = markerRangeFrom(range, *backingObject);
+            std::optional markerRange = Accessibility::markerRangeFrom(range, *backingObject);
             return markerRange ? markerRange->toString().createNSString().autorelease() : @"";
         }
 #endif // ENABLE(AX_THREAD_TEXT_APIS)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007, 2013 Apple Inc.  All rights reserved.
+ * Copyright (C) 2007-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -201,8 +201,8 @@ public:
     ~FlexPercentResolveDisabler();
 
 private:
-    CheckedRef<LocalFrameViewLayoutContext> m_layoutContext;
-    CheckedRef<const RenderBox> m_flexItem;
+    const CheckedRef<LocalFrameViewLayoutContext> m_layoutContext;
+    const CheckedRef<const RenderBox> m_flexItem;
 };
 
 class ContentVisibilityOverrideScope {
@@ -215,7 +215,7 @@ public:
     ~ContentVisibilityOverrideScope();
 
 private:
-    CheckedRef<LocalFrameViewLayoutContext> m_layoutContext;
+    const CheckedRef<LocalFrameViewLayoutContext> m_layoutContext;
 };
 
 } // namespace WebCore

@@ -143,7 +143,7 @@ bool SVGLinearGradientElement::collectGradientAttributes(LinearGradientAttribute
     if (!renderer())
         return false;
 
-    UncheckedKeyHashSet<Ref<SVGGradientElement>> processedGradients;
+    HashSet<Ref<SVGGradientElement>> processedGradients;
     Ref<SVGGradientElement> current { *this };
 
     setGradientAttributes(current.get(), attributes);

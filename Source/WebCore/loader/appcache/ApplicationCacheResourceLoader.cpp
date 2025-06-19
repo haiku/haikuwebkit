@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2025 Apple Inc. All Rights Reserved.
+ * Copyright (C) 2018-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -101,7 +101,7 @@ void ApplicationCacheResourceLoader::responseReceived(const CachedResource& reso
 
 void ApplicationCacheResourceLoader::dataReceived(CachedResource&, const SharedBuffer& buffer)
 {
-    m_applicationCacheResource->append(buffer);
+    protectedApplicationCacheResource()->append(buffer);
 }
 
 void ApplicationCacheResourceLoader::redirectReceived(CachedResource&, ResourceRequest&& newRequest, const ResourceResponse&, CompletionHandler<void(ResourceRequest&&)>&& callback)

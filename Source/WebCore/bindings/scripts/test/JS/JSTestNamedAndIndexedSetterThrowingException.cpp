@@ -436,7 +436,9 @@ extern "C" { extern void (*const __identifier("??_7TestNamedAndIndexedSetterThro
 #else
 extern "C" { extern void* _ZTVN7WebCore42TestNamedAndIndexedSetterThrowingExceptionE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestNamedAndIndexedSetterThrowingException>, void>> static inline void verifyVTable(TestNamedAndIndexedSetterThrowingException* ptr) {
+template<std::same_as<TestNamedAndIndexedSetterThrowingException> T>
+static inline void verifyVTable(TestNamedAndIndexedSetterThrowingException* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

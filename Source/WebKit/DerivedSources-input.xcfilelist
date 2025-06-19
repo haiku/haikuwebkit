@@ -3,10 +3,9 @@ $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/AdditionalFeatureDefines
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/AdditionalPlatform.h
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/AdditionalPlatformHave.h
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/ISO18013MobileDocumentRequest+Extras.swift.in
-$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/MaterialAdditions.swift.in
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentController.swift.in
-$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentMobileDocumentRequest.swift.in
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentMobileDocumentRequest+Extras.swift.in
+$(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentMobileDocumentRequest.swift.in
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentRawRequest.swift.in
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentRequest.swift.in
 $(BUILT_PRODUCTS_DIR)/usr/local/include/WebKitAdditions/WKIdentityDocumentPresentmentResponse.swift.in
@@ -351,11 +350,11 @@ $(PROJECT_DIR)/Shared/ProvisionalFrameCreationParameters.serialization.in
 $(PROJECT_DIR)/Shared/PushMessageForTesting.serialization.in
 $(PROJECT_DIR)/Shared/RTCNetwork.serialization.in
 $(PROJECT_DIR)/Shared/RTCPacketOptions.serialization.in
-$(PROJECT_DIR)/Shared/RemoteWebTouchEvent.serialization.in
 $(PROJECT_DIR)/Shared/RemoteLayerTree/BufferAndBackendInfo.serialization.in
 $(PROJECT_DIR)/Shared/RemoteLayerTree/RemoteLayerTree.serialization.in
 $(PROJECT_DIR)/Shared/RemoteLayerTree/RemoteScrollingCoordinatorTransaction.serialization.in
 $(PROJECT_DIR)/Shared/RemoteLayerTree/RemoteScrollingUIState.serialization.in
+$(PROJECT_DIR)/Shared/RemoteWebTouchEvent.serialization.in
 $(PROJECT_DIR)/Shared/RemoteWorkerInitializationData.serialization.in
 $(PROJECT_DIR)/Shared/RemoteWorkerType.serialization.in
 $(PROJECT_DIR)/Shared/ResourceLoadInfo.serialization.in
@@ -499,12 +498,12 @@ $(PROJECT_DIR)/Shared/cf/CoreIPCSecKeychainItem.serialization.in
 $(PROJECT_DIR)/Shared/cf/CoreIPCSecTrust.serialization.in
 $(PROJECT_DIR)/Shared/graphics/RemoteImageBufferSetConfiguration.serialization.in
 $(PROJECT_DIR)/Shared/ios/CursorContext.serialization.in
+$(PROJECT_DIR)/Shared/ios/DragInitiationResult.serialization.in
 $(PROJECT_DIR)/Shared/ios/DynamicViewportSizeUpdate.serialization.in
 $(PROJECT_DIR)/Shared/ios/GestureTypes.serialization.in
 $(PROJECT_DIR)/Shared/ios/HardwareKeyboardState.serialization.in
 $(PROJECT_DIR)/Shared/ios/InteractionInformationAtPosition.serialization.in
 $(PROJECT_DIR)/Shared/ios/InteractionInformationRequest.serialization.in
-$(PROJECT_DIR)/Shared/ios/DragInitiationResult.serialization.in
 $(PROJECT_DIR)/Shared/ios/WebAutocorrectionContext.serialization.in
 $(PROJECT_DIR)/Shared/ios/WebAutocorrectionData.serialization.in
 $(PROJECT_DIR)/Shared/mac/PDFContextMenuItem.serialization.in
@@ -574,6 +573,7 @@ $(PROJECT_DIR)/WebProcess/Extensions/Interfaces/WebExtensionAPIAction.idl
 $(PROJECT_DIR)/WebProcess/Extensions/Interfaces/WebExtensionAPIAlarms.idl
 $(PROJECT_DIR)/WebProcess/Extensions/Interfaces/WebExtensionAPICommands.idl
 $(PROJECT_DIR)/WebProcess/Extensions/Interfaces/WebExtensionAPICookies.idl
+$(PROJECT_DIR)/WebProcess/Extensions/Interfaces/WebExtensionAPIDOM.idl
 $(PROJECT_DIR)/WebProcess/Extensions/Interfaces/WebExtensionAPIDeclarativeNetRequest.idl
 $(PROJECT_DIR)/WebProcess/Extensions/Interfaces/WebExtensionAPIDevTools.idl
 $(PROJECT_DIR)/WebProcess/Extensions/Interfaces/WebExtensionAPIDevToolsExtensionPanel.idl

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -139,7 +139,7 @@ private:
 
     friend class UserMediaCaptureManagerProxySourceProxy;
     HashMap<WebCore::RealtimeMediaSourceIdentifier, Ref<UserMediaCaptureManagerProxySourceProxy>> m_proxies;
-    UniqueRef<ConnectionProxy> m_connectionProxy;
+    const UniqueRef<ConnectionProxy> m_connectionProxy;
     WebCore::OrientationNotifier m_orientationNotifier { 0 };
     Ref<GenericPromise> m_pendingAction { GenericPromise::createAndResolve() };
 

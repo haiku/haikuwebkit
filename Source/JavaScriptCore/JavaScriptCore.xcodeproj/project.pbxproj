@@ -2060,6 +2060,8 @@
 		E3A32BC71FC83147007D7E76 /* WeakMapImpl.h in Headers */ = {isa = PBXBuildFile; fileRef = E3A32BC61FC8312E007D7E76 /* WeakMapImpl.h */; };
 		E3A421431D6F58930007C617 /* PreciseJumpTargetsInlines.h in Headers */ = {isa = PBXBuildFile; fileRef = E3A421421D6F588F0007C617 /* PreciseJumpTargetsInlines.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		E3AC277721FDB4940024452C /* RegExpCachedResult.h in Headers */ = {isa = PBXBuildFile; fileRef = 86F75EFC151C062F007C9BA3 /* RegExpCachedResult.h */; settings = {ATTRIBUTES = (Private, ); }; };
+		E3B2329D2DF7A0CC00ECC447 /* ConcatKeyAtomStringCache.h in Headers */ = {isa = PBXBuildFile; fileRef = E3B2329A2DF7A0BE00ECC447 /* ConcatKeyAtomStringCache.h */; };
+		E3B2329E2DF7A0D300ECC447 /* ConcatKeyAtomStringCacheInlines.h in Headers */ = {isa = PBXBuildFile; fileRef = E3B2329C2DF7A0BE00ECC447 /* ConcatKeyAtomStringCacheInlines.h */; };
 		E3B24859291224540029C08A /* BufferMemoryHandle.h in Headers */ = {isa = PBXBuildFile; fileRef = E3B24857291224530029C08A /* BufferMemoryHandle.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		E3B876292C40CC170004DF71 /* JSFloat16Array.h in Headers */ = {isa = PBXBuildFile; fileRef = E3B876282C40CC0C0004DF71 /* JSFloat16Array.h */; settings = {ATTRIBUTES = (Private, ); }; };
 		E3B8762A2C40CC1F0004DF71 /* Float16Array.h in Headers */ = {isa = PBXBuildFile; fileRef = E3B876272C40CC0C0004DF71 /* Float16Array.h */; settings = {ATTRIBUTES = (Private, ); }; };
@@ -5799,6 +5801,9 @@
 		E3A32BC51FC8312D007D7E76 /* WeakMapImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = WeakMapImpl.cpp; sourceTree = "<group>"; };
 		E3A32BC61FC8312E007D7E76 /* WeakMapImpl.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WeakMapImpl.h; sourceTree = "<group>"; };
 		E3A421421D6F588F0007C617 /* PreciseJumpTargetsInlines.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PreciseJumpTargetsInlines.h; sourceTree = "<group>"; };
+		E3B2329A2DF7A0BE00ECC447 /* ConcatKeyAtomStringCache.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ConcatKeyAtomStringCache.h; sourceTree = "<group>"; };
+		E3B2329B2DF7A0BE00ECC447 /* ConcatKeyAtomStringCache.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = ConcatKeyAtomStringCache.cpp; sourceTree = "<group>"; };
+		E3B2329C2DF7A0BE00ECC447 /* ConcatKeyAtomStringCacheInlines.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ConcatKeyAtomStringCacheInlines.h; sourceTree = "<group>"; };
 		E3B24857291224530029C08A /* BufferMemoryHandle.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = BufferMemoryHandle.h; sourceTree = "<group>"; };
 		E3B24858291224530029C08A /* BufferMemoryHandle.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = BufferMemoryHandle.cpp; sourceTree = "<group>"; };
 		E3B4683D2DD25DFC00F7DBBF /* Zydis.c.inc */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.pascal; name = Zydis.c.inc; path = disassembler/zydis/Zydis.c.inc; sourceTree = SOURCE_ROOT; };
@@ -8112,6 +8117,9 @@
 				A7E5A3A61797432D00E893C0 /* CompilationResult.h */,
 				969A09220ED1E09C00F1F681 /* Completion.cpp */,
 				F5BB2BC5030F772101FCFE1D /* Completion.h */,
+				E3B2329B2DF7A0BE00ECC447 /* ConcatKeyAtomStringCache.cpp */,
+				E3B2329A2DF7A0BE00ECC447 /* ConcatKeyAtomStringCache.h */,
+				E3B2329C2DF7A0BE00ECC447 /* ConcatKeyAtomStringCacheInlines.h */,
 				E36EDCE424F0975700E60DA2 /* Concurrency.h */,
 				0FDB2CE9174896C7007B3C1B /* ConcurrentJSLock.h */,
 				658824B01E5CFDF400FB7359 /* ConfigFile.cpp */,
@@ -10625,6 +10633,8 @@
 				0FD2FD9420B52BDE00F09441 /* CompleteSubspaceInlines.h in Headers */,
 				BC18C3F40E16F5CD00B34460 /* Completion.h in Headers */,
 				0F6FC751196110A800E1D02D /* ComplexGetStatus.h in Headers */,
+				E3B2329D2DF7A0CC00ECC447 /* ConcatKeyAtomStringCache.h in Headers */,
+				E3B2329E2DF7A0D300ECC447 /* ConcatKeyAtomStringCacheInlines.h in Headers */,
 				E36EDCE524F0975700E60DA2 /* Concurrency.h in Headers */,
 				0FDB2CEA174896C7007B3C1B /* ConcurrentJSLock.h in Headers */,
 				BC18C3F50E16F5CD00B34460 /* config.h in Headers */,

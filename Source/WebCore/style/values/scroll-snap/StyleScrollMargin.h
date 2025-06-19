@@ -44,27 +44,25 @@ struct ExtractorState;
 // <'scroll-margin-*'> = <length>
 // https://drafts.csswg.org/css-scroll-snap-1/#margin-longhands-physical
 struct ScrollMarginEdge {
-    explicit ScrollMarginEdge(WebCore::Length&& value)
-        : m_value { WTFMove(value) }
-    {
-        RELEASE_ASSERT(m_value.isFixed());
-    }
+    using Fixed = Length<>;
 
-    ScrollMarginEdge(CSS::ValueLiteral<CSS::LengthUnit::Px> pixels)
-        : m_value { pixels.value, WebCore::LengthType::Fixed }
-    {
-    }
+    ScrollMarginEdge(Fixed&& fixed) : m_value(fixed.value, WebCore::LengthType::Fixed) { }
+    ScrollMarginEdge(const Fixed& fixed) : m_value(fixed.value, WebCore::LengthType::Fixed) { }
 
-    ScrollMarginEdge(Style::Length<> pixels)
-        : m_value { pixels.value, WebCore::LengthType::Fixed }
-    {
-    }
+    ScrollMarginEdge(CSS::ValueLiteral<CSS::LengthUnit::Px> literal) : m_value(static_cast<float>(literal.value), WebCore::LengthType::Fixed) { }
 
-    bool isZero() const { return m_value.isZero(); }
+    explicit ScrollMarginEdge(WebCore::Length&& other) : m_value(WTFMove(other)) { RELEASE_ASSERT(isValid(m_value)); }
+    explicit ScrollMarginEdge(const WebCore::Length& other) : m_value(other) { RELEASE_ASSERT(isValid(m_value)); }
 
-    template<typename F> decltype(auto) switchOn(F&& functor) const
+    ALWAYS_INLINE bool isZero() const { return m_value.isZero(); }
+    ALWAYS_INLINE bool isPositive() const { return m_value.isPositive(); }
+    ALWAYS_INLINE bool isNegative() const { return m_value.isNegative(); }
+
+    template<typename... F> decltype(auto) switchOn(F&&... f) const
     {
-        return functor(Style::Length<> { m_value.value() });
+        auto visitor = WTF::makeVisitor(std::forward<F>(f)...);
+
+        return visitor(Fixed { m_value.value() });
     }
 
     bool operator==(const ScrollMarginEdge&) const = default;
@@ -72,6 +70,29 @@ struct ScrollMarginEdge {
 private:
     friend struct Evaluation<ScrollMarginEdge>;
     friend WTF::TextStream& operator<<(WTF::TextStream&, const ScrollMarginEdge&);
+
+    static bool isValid(const WebCore::Length& length)
+    {
+        switch (length.type()) {
+        case WebCore::LengthType::Fixed:
+            return CSS::isWithinRange<Fixed::range>(length.value());
+        case WebCore::LengthType::Percent:
+        case WebCore::LengthType::Calculated:
+        case WebCore::LengthType::Auto:
+        case WebCore::LengthType::Intrinsic:
+        case WebCore::LengthType::MinIntrinsic:
+        case WebCore::LengthType::MinContent:
+        case WebCore::LengthType::MaxContent:
+        case WebCore::LengthType::FillAvailable:
+        case WebCore::LengthType::FitContent:
+        case WebCore::LengthType::Content:
+        case WebCore::LengthType::Normal:
+        case WebCore::LengthType::Relative:
+        case WebCore::LengthType::Undefined:
+            break;
+        }
+        return false;
+    }
 
     WebCore::Length m_value;
 };
@@ -82,7 +103,7 @@ using ScrollMarginBox = MinimallySerializingSpaceSeparatedRectEdges<ScrollMargin
 
 // MARK: - Conversion
 
-ScrollMarginEdge scrollMarginEdgeFromCSSValue(const CSSValue&, BuilderState&);
+template<> struct CSSValueConversion<ScrollMarginEdge> { auto operator()(BuilderState&, const CSSValue&) -> ScrollMarginEdge; };
 
 // MARK: - Evaluation
 

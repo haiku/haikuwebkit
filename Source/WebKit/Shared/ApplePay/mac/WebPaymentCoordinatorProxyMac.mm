@@ -53,7 +53,7 @@ void WebPaymentCoordinatorProxy::platformCanMakePayments(CompletionHandler<void(
     });
 }
 
-void WebPaymentCoordinatorProxy::platformShowPaymentUI(WebPageProxyIdentifier webPageProxyID, const URL& originatingURL, const Vector<URL>& linkIconURLStrings, const WebCore::ApplePaySessionPaymentRequest& request, CompletionHandler<void(bool)>&& completionHandler)
+void WebPaymentCoordinatorProxy::platformShowPaymentUI(WebPageProxyIdentifier webPageProxyID, const URL& originatingURL, const Vector<URL>& linkIconURLs, const WebCore::ApplePaySessionPaymentRequest& request, CompletionHandler<void(bool)>&& completionHandler)
 {
 #if HAVE(PASSKIT_MODULARIZATION) && HAVE(PASSKIT_MAC_HELPER_TEMP)
     if (!PAL::isPassKitMacHelperTempFrameworkAvailable())
@@ -72,7 +72,7 @@ void WebPaymentCoordinatorProxy::platformShowPaymentUI(WebPageProxyIdentifier we
         paymentRequest = RetainPtr<PKPaymentRequest>((PKPaymentRequest *)disbursementRequest.get());
     } else
 #endif
-        paymentRequest = platformPaymentRequest(originatingURL, linkIconURLStrings, request);
+        paymentRequest = platformPaymentRequest(originatingURL, linkIconURLs, request);
 
     checkedClient()->getPaymentCoordinatorEmbeddingUserAgent(webPageProxyID, [weakThis = WeakPtr { *this }, paymentRequest, completionHandler = WTFMove(completionHandler)](const String& userAgent) mutable {
         RefPtr paymentCoordinatorProxy = weakThis.get();

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2020 Apple Inc.  All rights reserved.
+ * Copyright (C) 2006-2020 Apple Inc. All rights reserved.
  * Copyright (C) 2010 Igalia S.L
  *
  * Redistribution and use in source and binary forms, with or without

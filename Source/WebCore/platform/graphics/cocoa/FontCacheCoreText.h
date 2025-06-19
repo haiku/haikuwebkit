@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Apple Inc.  All rights reserved.
+ * Copyright (C) 2017-2023 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -74,7 +74,7 @@ struct VariationDefaults {
     }
 };
 
-typedef UncheckedKeyHashMap<FontTag, VariationDefaults, FourCharacterTagHash, FourCharacterTagHashTraits> VariationDefaultsMap;
+using VariationDefaultsMap = HashMap<FontTag, VariationDefaults, FourCharacterTagHash, FourCharacterTagHashTraits>;
 
 enum class FontTypeForPreparation : bool {
     SystemFont,
@@ -99,5 +99,8 @@ WEBCORE_EXPORT void setContentSizeCategory(const String&);
 WEBCORE_EXPORT CFStringRef contentSizeCategory();
 
 VariationDefaultsMap defaultVariationValues(CTFontRef, ShouldLocalizeAxisNames);
+
+WEBCORE_EXPORT Lock& userInstalledFontMapLock();
+WEBCORE_EXPORT HashMap<String, URL>& userInstalledFontMap() WTF_REQUIRES_LOCK(userInstalledFontMapLock());
 
 } // namespace WebCore

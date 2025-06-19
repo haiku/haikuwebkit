@@ -228,8 +228,8 @@ static inline ChildElementPosition findChild(const Element& element, const Eleme
 
         if (child.tagName() == elementTagName) {
             if (!firstOfType)
-                firstOfType = &child;
-            lastOfType = &child;
+                firstOfType = child;
+            lastOfType = child;
         }
         currentChildIndex++;
     }
@@ -726,7 +726,7 @@ static std::optional<TargetedElementInfo> targetedElementInfo(Element& element, 
     }
 
     bool isInVisibilityAdjustmentSubtree = [&] {
-        for (RefPtr ancestor = &element; ancestor; ancestor = ancestor->parentElementInComposedTree()) {
+        for (RefPtr ancestor = element; ancestor; ancestor = ancestor->parentElementInComposedTree()) {
             if (adjustedElements.contains(*ancestor))
                 return true;
         }
@@ -768,7 +768,7 @@ static const HTMLElement* findOnlyMainElement(const HTMLBodyElement& bodyElement
             break;
         }
 
-        onlyMainElement = &descendant;
+        onlyMainElement = descendant;
     }
     return onlyMainElement.get();
 }
@@ -1310,7 +1310,7 @@ Vector<TargetedElementInfo> ElementTargetingController::extractTargets(Vector<Re
             if (RefPtr pseudo = dynamicDowncast<PseudoElement>(candidate))
                 candidateOrHost = pseudo->hostElement();
             else
-                candidateOrHost = &candidate;
+                candidateOrHost = candidate;
             return candidateOrHost && target.isShadowIncludingInclusiveAncestorOf(candidateOrHost.get());
         };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2016 Google, Inc. All Rights Reserved.
+ * Copyright (C) 2010-2016 Google, Inc. All rights reserved.
  * Copyright (C) 2011-2023 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -2295,7 +2295,7 @@ void HTMLTreeBuilder::processEndTag(AtomHTMLToken&& token)
             // Pause ourselves so that parsing stops until the script can be processed by the caller.
             ASSERT(m_tree.currentStackItem().elementName() == HTML::script);
             if (scriptingContentIsAllowed(m_tree.parserContentPolicy()))
-                m_scriptToProcess = &downcast<HTMLScriptElement>(m_tree.currentElement());
+                m_scriptToProcess = downcast<HTMLScriptElement>(m_tree.currentElement());
             m_tree.openElements().pop();
             m_insertionMode = m_originalInsertionMode;
 
@@ -2470,7 +2470,7 @@ void HTMLTreeBuilder::linkifyPhoneNumbers(const String& string)
     // While there's a phone number in the rest of the string...
     while (!span.empty() && TelephoneNumberDetector::find(span, &relativeStartPosition, &relativeEndPosition)) {
         if (std::exchange(shouldCheckElementAncestors, false)) {
-            for (RefPtr ancestor = &m_tree.currentElement(); ancestor; ancestor = ancestor->parentElement()) {
+            for (RefPtr ancestor = m_tree.currentElement(); ancestor; ancestor = ancestor->parentElement()) {
                 if (auto value = ancestor->getAttribute("data-mime-type"_s); value == "text/latex"_s) {
                     m_tree.insertTextNode(string);
                     return;
@@ -3079,7 +3079,7 @@ void HTMLTreeBuilder::processTokenInForeignContent(AtomHTMLToken&& token)
 
         if (token.tagName() == TagName::script && m_tree.currentStackItem().elementName() == SVG::script) {
             if (scriptingContentIsAllowed(m_tree.parserContentPolicy()))
-                m_scriptToProcess = &downcast<SVGScriptElement>(m_tree.currentElement());
+                m_scriptToProcess = downcast<SVGScriptElement>(m_tree.currentElement());
             m_tree.openElements().pop();
             return;
         }

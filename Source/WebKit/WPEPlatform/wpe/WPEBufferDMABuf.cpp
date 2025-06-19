@@ -169,7 +169,7 @@ static gpointer wpeBufferDMABufImportToEGLImage(WPEBuffer* buffer, GError** erro
 #undef ADD_PLANE_ATTRIBUTES
 
     attributes.append(EGL_NONE);
-    priv->eglImage = s_eglCreateImageKHR(eglDisplay, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, attributes.data());
+    priv->eglImage = s_eglCreateImageKHR(eglDisplay, EGL_NO_CONTEXT, EGL_LINUX_DMA_BUF_EXT, nullptr, attributes.span().data());
     if (!priv->eglImage)
         g_set_error(error, WPE_BUFFER_ERROR, WPE_BUFFER_ERROR_IMPORT_FAILED, "Failed to import buffer to EGL image: eglCreateImageKHR failed with error %#04x", eglGetError());
     return priv->eglImage;
@@ -301,9 +301,9 @@ WPEBufferDMABuf* wpe_buffer_dma_buf_new(WPEDisplay* display, int width, int heig
     for (guint32 i = 0; i < planeCount; ++i)
         buffer->priv->fds.append(UnixFileDescriptor { fds[i], UnixFileDescriptor::Adopt });
     buffer->priv->offsets.grow(planeCount);
-    memcpy(buffer->priv->offsets.data(), offsets, planeCount * sizeof(guint32));
+    memcpy(buffer->priv->offsets.mutableSpan().data(), offsets, planeCount * sizeof(guint32));
     buffer->priv->strides.grow(planeCount);
-    memcpy(buffer->priv->strides.data(), strides, planeCount * sizeof(guint32));
+    memcpy(buffer->priv->strides.mutableSpan().data(), strides, planeCount * sizeof(guint32));
     buffer->priv->modifier = modifier;
 
     return buffer;

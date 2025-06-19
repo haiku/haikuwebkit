@@ -313,6 +313,7 @@ inline CapabilityLevel canCompile(Node* node)
     case NumberIsNaN:
     case GlobalIsFinite:
     case NumberIsFinite:
+    case NumberIsSafeInteger:
     case IsObject:
     case IsCallable:
     case IsConstructor:

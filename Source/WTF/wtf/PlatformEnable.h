@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2007-2009 Torch Mobile, Inc.
  * Copyright (C) 2010, 2011 Research In Motion Limited. All rights reserved.
  * Copyright (C) 2013 Samsung Electronics. All rights reserved.
@@ -122,10 +122,6 @@
 
 #if !defined(ENABLE_AIRPLAY_PICKER)
 #define ENABLE_AIRPLAY_PICKER 0
-#endif
-
-#if !defined(ENABLE_ALTERNATIVE_TEXT_REQUIRES_AUTOMATIC_SPELLING_CORRECTION)
-#define ENABLE_ALTERNATIVE_TEXT_REQUIRES_AUTOMATIC_SPELLING_CORRECTION 0
 #endif
 
 #if !defined(ENABLE_COCOA_WEBM_PLAYER)

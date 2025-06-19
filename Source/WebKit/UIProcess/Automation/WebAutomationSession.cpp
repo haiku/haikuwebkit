@@ -471,14 +471,24 @@ void WebAutomationSession::switchToBrowsingContext(const Inspector::Protocol::Au
     ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!page, WindowNotFound);
 
     bool frameNotFound = false;
-    webFrameIDForHandle(frameHandle, frameNotFound);
+    auto frameID = webFrameIDForHandle(frameHandle, frameNotFound);
     ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(frameNotFound, FrameNotFound);
 
-    // FIXME: Should we also switch to the frame that frameHandle points to?
-    m_client->requestSwitchToPage(*this, *page, [page = Ref { *page }, callback = WTFMove(callback)]() {
+    m_client->requestSwitchToPage(*this, *page, [frameID, page = Ref { *page }, callback = WTFMove(callback)]() mutable {
         page->setFocus(true);
 
-        callback({ });
+        if (!frameID) {
+            callback({ });
+            return;
+        }
+
+        ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF(!WebFrameProxy::webFrame(frameID.value()), FrameNotFound);
+
+        page->sendWithAsyncReplyToProcessContainingFrameWithoutDestinationIdentifier(frameID, Messages::WebAutomationSessionProxy::FocusFrame(page->webPageIDInMainFrameProcess(), frameID.value()), WTF::CompletionHandler<void(std::optional<String>&&)> { [callback = WTFMove(callback)] (std::optional<String>&& optionalError) mutable {
+            ASYNC_FAIL_WITH_PREDEFINED_ERROR_IF_SET(optionalError);
+            callback({ });
+            }
+        });
     });
 }
 

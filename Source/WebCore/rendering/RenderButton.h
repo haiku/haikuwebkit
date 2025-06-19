@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005-2022 Apple Inc.
+ * Copyright (C) 2005-2022 Apple Inc. All rights reserved.
  * Copyright (C) 2022 Google Inc. All rights reserved.
  * 
  * This library is free software; you can redistribute it and/or

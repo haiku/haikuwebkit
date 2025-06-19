@@ -346,7 +346,8 @@ void LineBoxBuilder::setVerticalPropertiesForInlineLevelBox(const LineBox& lineB
             // This needs to consult the list marker's style (and not the root) because we don't follow the DOM insertion point in case like this:
             // <li><div>content</div></li>
             // where the list marker ends up inside the <div> and the <div>'s style != <li>'s style.
-            inlineLevelBox.setLayoutBounds({ *ascent, layoutBox.style().computedLineHeight() - *ascent });
+            auto listMarkerLayoutBounds = layoutBox.layoutBoundsForListMarker();
+            inlineLevelBox.setLayoutBounds({ InlineLayoutUnit(listMarkerLayoutBounds.first), InlineLayoutUnit(listMarkerLayoutBounds.second) });
 
             auto& fontMetrics = inlineLevelBox.primarymetricsOfPrimaryFont();
             auto fontBaseline = lineBox.baselineType();

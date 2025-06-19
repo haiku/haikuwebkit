@@ -88,8 +88,8 @@ private:
     void setLogIdentifier(uint64_t);
 
     WeakPtr<RemoteCDMFactoryProxy> m_factory;
-    std::unique_ptr<WebCore::CDMPrivate> m_private;
-    UniqueRef<RemoteCDMConfiguration> m_configuration;
+    const std::unique_ptr<WebCore::CDMPrivate> m_private;
+    const UniqueRef<RemoteCDMConfiguration> m_configuration;
 
 #if !RELEASE_LOG_DISABLED
     const Ref<const Logger> m_logger;

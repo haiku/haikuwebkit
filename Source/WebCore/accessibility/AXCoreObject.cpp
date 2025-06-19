@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -291,8 +291,8 @@ AXCoreObject::AccessibilityChildrenVector AXCoreObject::unignoredChildren(bool u
 
         unignoredChildren.append(*descendant);
         for (; descendant && descendant != this; descendant = descendant->parentObject()) {
-            if (auto* nextSibling = descendant->nextSiblingIncludingIgnored(updateChildrenIfNeeded)) {
-                descendant = nextSibling;
+            if (RefPtr nextSibling = descendant->nextSiblingIncludingIgnored(updateChildrenIfNeeded)) {
+                descendant = WTFMove(nextSibling);
                 break;
             }
         }
@@ -453,8 +453,8 @@ AXCoreObject* AXCoreObject::nextUnignoredSibling(bool updateChildrenIfNeeded, AX
 AXCoreObject* AXCoreObject::nextSiblingIncludingIgnoredOrParent() const
 {
     RefPtr parent = parentObject();
-    if (auto* nextSibling = nextSiblingIncludingIgnored(/* updateChildrenIfNeeded */ true))
-        return nextSibling;
+    if (RefPtr nextSibling = nextSiblingIncludingIgnored(/* updateChildrenIfNeeded */ true))
+        return nextSibling.get();
     return parent.get();
 }
 
@@ -624,8 +624,8 @@ AXCoreObject::AccessibilityChildrenVector AXCoreObject::selectedChildren()
 
     switch (role()) {
     case AccessibilityRole::ComboBox:
-        if (auto* descendant = activeDescendant())
-            return { { *descendant } };
+        if (RefPtr descendant = activeDescendant())
+            return { { descendant.releaseNonNull() } };
         break;
     case AccessibilityRole::ListBox:
         return listboxSelectedChildren();
@@ -634,8 +634,8 @@ AXCoreObject::AccessibilityChildrenVector AXCoreObject::selectedChildren()
     case AccessibilityRole::TreeGrid:
         return selectedRows();
     case AccessibilityRole::TabList:
-        if (auto* selectedTab = selectedTabItem())
-            return { { *selectedTab } };
+        if (RefPtr selectedTab = selectedTabItem())
+            return { { selectedTab.releaseNonNull() } };
         break;
     case AccessibilityRole::List:
         return selectedListItems();
@@ -643,8 +643,8 @@ AXCoreObject::AccessibilityChildrenVector AXCoreObject::selectedChildren()
     case AccessibilityRole::MenuBar:
         if (auto* descendant = activeDescendant())
             return { { *descendant } };
-        if (auto* focusedElement = focusedUIElement())
-            return { { *focusedElement } };
+        if (RefPtr focusedElement = focusedUIElement())
+            return { { focusedElement.releaseNonNull() } };
         break;
     case AccessibilityRole::MenuListPopup: {
         AccessibilityChildrenVector selectedItems;
@@ -686,7 +686,7 @@ AXCoreObject::AccessibilityChildrenVector AXCoreObject::selectedRows()
 
     AccessibilityChildrenVector result;
     // Prefer active descendant over aria-selected.
-    auto* activeDescendant = this->activeDescendant();
+    RefPtr activeDescendant = this->activeDescendant();
     if (activeDescendant && (activeDescendant->isTreeItem() || activeDescendant->isTableRow())) {
         result.append(*activeDescendant);
         if (!isMulti)
@@ -1016,8 +1016,8 @@ AXCoreObject::AccessibilityChildrenVector AXCoreObject::columnHeaders()
     } else if (isTable()) {
         auto columns = this->columns();
         for (const auto& column : columns) {
-            if (auto* header = column->columnHeader())
-                headers.append(*header);
+            if (RefPtr header = column->columnHeader())
+                headers.append(header.releaseNonNull());
         }
     }
     return headers;
@@ -1028,7 +1028,7 @@ std::optional<AXID> AXCoreObject::rowGroupAncestorID() const
     if (!hasCellRole())
         return { };
 
-    auto* rowGroup = Accessibility::findAncestor<AXCoreObject>(*this, /* includeSelf */ false, [] (const auto& ancestor) {
+    RefPtr rowGroup = Accessibility::findAncestor<AXCoreObject>(*this, /* includeSelf */ false, [] (const auto& ancestor) {
         return ancestor.hasRowGroupTag();
     });
 
@@ -1072,7 +1072,7 @@ bool AXCoreObject::isReplacedElement() const
 bool AXCoreObject::containsOnlyStaticText() const
 {
     bool hasText = false;
-    auto* nonTextDescendant = Accessibility::findUnignoredDescendant(const_cast<AXCoreObject&>(*this), /* includeSelf */ false, [&] (auto& descendant) {
+    RefPtr nonTextDescendant = Accessibility::findUnignoredDescendant(const_cast<AXCoreObject&>(*this), /* includeSelf */ false, [&] (auto& descendant) {
         if (descendant.isGroup()) {
             // Skip through groups to keep looking for text.
             return false;
@@ -1132,6 +1132,10 @@ String AXCoreObject::ariaLandmarkRoleDescription() const
         return AXARIAContentGroupText("ARIALandmarkRegion"_s);
     case AccessibilityRole::LandmarkSearch:
         return AXARIAContentGroupText("ARIALandmarkSearch"_s);
+    case AccessibilityRole::SectionFooter:
+        return AXARIAContentGroupText("ARIASectionFooter"_s);
+    case AccessibilityRole::SectionHeader:
+        return AXARIAContentGroupText("ARIASectionHeader"_s);
     case AccessibilityRole::ApplicationAlert:
         return AXARIAContentGroupText("ARIAApplicationAlert"_s);
     case AccessibilityRole::ApplicationAlertDialog:
@@ -1321,7 +1325,7 @@ String AXCoreObject::languageIncludingAncestors() const
     if (!language.isEmpty())
         return language;
 
-    auto* parent = parentObject();
+    RefPtr parent = parentObject();
     return parent ? parent->languageIncludingAncestors() : nullAtom();
 }
 
@@ -1536,8 +1540,8 @@ void AXCoreObject::appendRadioButtonGroupMembers(AccessibilityChildrenVector& li
 AXCoreObject* AXCoreObject::parentObjectUnignored() const
 {
     if (role() == AccessibilityRole::Row) {
-        if (auto* table = exposedTableAncestor())
-            return table;
+        if (RefPtr table = exposedTableAncestor())
+            return table.get();
     }
 
     return Accessibility::findAncestor<AXCoreObject>(*this, false, [&] (const AXCoreObject& object) {
@@ -1575,7 +1579,7 @@ std::partial_ordering AXCoreObject::partialOrder(const AXCoreObject& other)
         return std::partial_ordering::equivalent;
 
     RefPtr current = this;
-    RefPtr otherCurrent = &other;
+    RefPtr otherCurrent = other;
 
     auto orderingFromIndices = [&] (unsigned ourAncestorIndex, unsigned otherAncestorIndex) {
         if (ourAncestorIndex < otherAncestorIndex)

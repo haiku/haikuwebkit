@@ -181,14 +181,18 @@ static void* const safeAreaInsetsKVOContext = (void*)&safeAreaInsetsKVOContext;
     // WKInspectorConfiguration allows the client to specify a process pool to use.
     // If not specified or the inspection level is >1, use the default strategy.
     // This ensures that Inspector^2 cannot be affected by client (mis)configuration.
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     auto* customProcessPool = configuration.get().processPool;
+    ALLOW_DEPRECATED_DECLARATIONS_END
     auto inspectorLevel = WebKit::inspectorLevelForPage(inspectedPage.get());
     auto useDefaultProcessPool = inspectorLevel > 1 || !customProcessPool;
     if (customProcessPool && !useDefaultProcessPool)
         WebKit::prepareProcessPoolForInspector(Ref { *customProcessPool->_processPool.get() });
 
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     if (useDefaultProcessPool)
         [configuration setProcessPool:wrapper(Ref { WebKit::defaultInspectorProcessPool(inspectorLevel) }.get())];
+    ALLOW_DEPRECATED_DECLARATIONS_END
 
     // Ensure that a page group identifier is set. This is for computing inspection levels.
     if (!configuration.get()._groupIdentifier)

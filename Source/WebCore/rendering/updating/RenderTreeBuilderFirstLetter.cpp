@@ -128,15 +128,13 @@ void RenderTreeBuilder::FirstLetter::updateAfterDescendants(RenderBlock& block)
 {
     if (!block.style().hasPseudoStyle(PseudoId::FirstLetter))
         return;
+
     if (!supportsFirstLetter(block))
         return;
 
     // FIXME: This should be refactored, firstLetterContainer is not needed.
-    RenderObject* firstLetterRenderer;
-    RenderElement* firstLetterContainer;
-    block.getFirstLetter(firstLetterRenderer, firstLetterContainer);
-
-    if (!firstLetterRenderer)
+    auto [firstLetter, firstLetterContainer] = block.firstLetterAndContainer();
+    if (!firstLetter)
         return;
 
     // Other containers are handled when updating their renderers.
@@ -145,15 +143,15 @@ void RenderTreeBuilder::FirstLetter::updateAfterDescendants(RenderBlock& block)
 
     // If the child already has style, then it has already been created, so we just want
     // to update it.
-    if (firstLetterRenderer->parent()->style().pseudoElementType() == PseudoId::FirstLetter) {
-        updateStyle(block, *firstLetterRenderer);
+    if (firstLetter->parent()->style().pseudoElementType() == PseudoId::FirstLetter) {
+        updateStyle(block, *firstLetter);
         return;
     }
 
-    if (!is<RenderText>(firstLetterRenderer))
+    if (!is<RenderText>(firstLetter))
         return;
 
-    createRenderers(downcast<RenderText>(*firstLetterRenderer));
+    createRenderers(downcast<RenderText>(*firstLetter));
 }
 
 void RenderTreeBuilder::FirstLetter::cleanupOnDestroy(RenderTextFragment& textFragment)

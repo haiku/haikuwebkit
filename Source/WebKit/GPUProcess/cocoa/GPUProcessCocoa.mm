@@ -120,11 +120,7 @@ void GPUProcess::platformInitializeGPUProcess(GPUProcessCreationParameters& para
     updateProcessName();
 
     // Close connection to launch services.
-#if HAVE(HAVE_LS_SERVER_CONNECTION_STATUS_RELEASE_NOTIFICATIONS_MASK)
     _LSSetApplicationLaunchServicesServerConnectionStatus(kLSServerConnectionStatusDoNotConnectToServerMask | kLSServerConnectionStatusReleaseNotificationsMask, nullptr);
-#else
-    _LSSetApplicationLaunchServicesServerConnectionStatus(kLSServerConnectionStatusDoNotConnectToServerMask, nullptr);
-#endif
 
     if (launchServicesExtension)
         launchServicesExtension->revoke();

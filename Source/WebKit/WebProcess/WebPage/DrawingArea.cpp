@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -201,11 +201,15 @@ void DrawingArea::scaleViewToFitDocumentIfNeeded()
     webPage->layoutIfNeeded();
 
     RefPtr frameView = webPage->localMainFrameView();
-    if (!frameView || !frameView->renderView())
+    if (!frameView)
+        return;
+
+    CheckedPtr renderView = frameView->renderView();
+    if (!renderView)
         return;
 
     int viewWidth = webPage->size().width();
-    int documentWidth = frameView->renderView()->unscaledDocumentRect().width();
+    int documentWidth = renderView->unscaledDocumentRect().width();
 
     bool documentWidthChanged = m_lastDocumentSizeForScaleToFit.width() != documentWidth;
     bool viewWidthChanged = m_lastViewSizeForScaleToFit.width() != viewWidth;
@@ -252,10 +256,14 @@ void DrawingArea::scaleViewToFitDocumentIfNeeded()
     webPage->layoutIfNeeded();
 
     frameView = webPage->localMainFrameView();
-    if (!frameView || !frameView->renderView())
+    if (!frameView)
         return;
 
-    IntSize documentSize = frameView->renderView()->unscaledDocumentRect().size();
+    renderView = frameView->renderView();
+    if (!renderView)
+        return;
+
+    auto documentSize = renderView->unscaledDocumentRect().size();
     m_lastViewSizeForScaleToFit = webPage->size();
     m_lastDocumentSizeForScaleToFit = documentSize;
 

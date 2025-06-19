@@ -214,7 +214,7 @@ static std::optional<SimpleRange> findRangeFromNodeList(const String& query, con
 static std::optional<SimpleRange> rangeOfStringInRange(const String& query, SimpleRange& searchRange, WordBounded wordStartBounded, WordBounded wordEndBounded)
 {
     while (!searchRange.collapsed()) {
-        RefPtr currentNode = &searchRange.startContainer();
+        RefPtr currentNode = searchRange.startContainer();
         
         if (isNonSearchableSubtree(*currentNode)) {
             if (RefPtr newStart = NodeTraversal::nextSkippingChildren(*currentNode))

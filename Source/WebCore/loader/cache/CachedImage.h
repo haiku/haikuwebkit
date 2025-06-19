@@ -26,7 +26,6 @@
 #include "Image.h"
 #include "ImageObserver.h"
 #include "IntRect.h"
-#include "IntSizeHash.h"
 #include "LayoutSize.h"
 #include "SVGImageCache.h"
 #include <wtf/HashMap.h>

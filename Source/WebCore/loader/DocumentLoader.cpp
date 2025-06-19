@@ -2061,7 +2061,7 @@ void DocumentLoader::removeSubresourceLoader(LoadCompletionType type, Subresourc
         return;
     checkLoadComplete();
     if (RefPtr frame = m_frame.get())
-        frame->protectedLoader()->subresourceLoadDone(type);
+        frame->loader().subresourceLoadDone(type);
 }
 
 void DocumentLoader::addPlugInStreamLoader(ResourceLoader& loader)

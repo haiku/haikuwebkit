@@ -351,6 +351,7 @@ RefPtr<Page> WebChromeClient::createWindow(LocalFrame& frame, const String& open
     if (!page)
         return nullptr;
 
+    auto& originalRequest = navigationAction.originalRequest();
     NavigationActionData navigationActionData {
         navigationAction.type(),
         modifiersForNavigationAction(navigationAction),
@@ -391,8 +392,9 @@ RefPtr<Page> WebChromeClient::createWindow(LocalFrame& frame, const String& open
         webFrame->page()->webPageProxyIdentifier(),
         webFrame->info(), /* frameInfo */
         std::nullopt, /* navigationID */
-        navigationAction.originalRequest(), /* originalRequest */
-        navigationAction.originalRequest() /* request */
+        originalRequest, /* originalRequest */
+        originalRequest, /* request */
+        originalRequest.url().isValid() ? String() : originalRequest.url().string(), /* invalidURLString */
     };
 
     auto sendResult = webProcess.parentProcessConnection()->sendSync(Messages::WebPageProxy::CreateNewPage(windowFeatures, navigationActionData), page->identifier(), IPC::Timeout::infinity(), { IPC::SendSyncOption::MaintainOrderingWithAsyncMessages });
@@ -1425,10 +1427,10 @@ void WebChromeClient::prepareForVideoFullscreen()
         page->videoPresentationManager();
 }
 
-bool WebChromeClient::canEnterVideoFullscreen(HTMLMediaElementEnums::VideoFullscreenMode mode) const
+bool WebChromeClient::canEnterVideoFullscreen(HTMLVideoElement& videoElement, HTMLMediaElementEnums::VideoFullscreenMode mode) const
 {
     RefPtr page = m_page.get();
-    return page && page->videoPresentationManager().canEnterVideoFullscreen(mode);
+    return page && page->videoPresentationManager().canEnterVideoFullscreen(videoElement, mode);
 }
 
 bool WebChromeClient::supportsVideoFullscreen(HTMLMediaElementEnums::VideoFullscreenMode mode)

@@ -70,7 +70,7 @@ private:
     // RTCSctpTransport::Client
     void onStateChanged(RTCSctpTransportState, std::optional<double>, std::optional<unsigned short>) final;
 
-    UniqueRef<RTCSctpTransportBackend> m_backend;
+    const UniqueRef<RTCSctpTransportBackend> m_backend;
     const Ref<RTCDtlsTransport> m_transport;
     RTCSctpTransportState m_state { RTCSctpTransportState::Connecting };
     std::optional<double> m_maxMessageSize;

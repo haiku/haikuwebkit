@@ -21,7 +21,6 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
 # THE POSSIBILITY OF SUCH DAMAGE.
 
-
 # Callee save
 
 macro saveIPIntRegisters()
@@ -54,51 +53,34 @@ macro restoreIPIntRegisters()
     addp IPIntCalleeSaveSpaceStackAligned, sp
 end
 
-# Tail-call dispatch
+# Dispatch target bases
 
-macro IPIntDispatch()
 if ARM64 or ARM64E
-    # x7 = IB
-    # x0 = opcode
-    emit "add x0, x7, x0, lsl #8"
-    emit "br x0"
-elsif X86_64
-    lshiftq 8, t0
-    leap [t0, IB], t0
-    jmp t0
-else
-    break
-end
+const ipint_dispatch_base = _ipint_unreachable
+const ipint_gc_dispatch_base = _ipint_struct_new
+const ipint_conversion_dispatch_base = _ipint_i32_trunc_sat_f32_s
+const ipint_simd_dispatch_base = _ipint_simd_v128_load_mem
+const ipint_atomic_dispatch_base = _ipint_memory_atomic_notify
 end
 
-macro IPIntDispatchFromHR()
-if ARM64 or ARM64E
-    # x7 = IB
-    # x3 = opcode
-    emit "add x0, x7, x3, lsl #8"
-    emit "br x0"
-elsif X86_64
-    lshiftq 8, t3
-    leap (_ipint_unreachable), t1
-    addq t1, t3
-    jmp t3
-else
-    break
-end
-end
+# Tail-call bytecode dispatch
 
 macro nextIPIntInstruction()
     loadb [PC], t0
-    IPIntDispatch()
+if ARM64 or ARM64E
+    # x0 = opcode
+    pcrtoaddr ipint_dispatch_base, t7
+    emit "add x0, x7, x0, lsl #8"
+    emit "br x0"
+elsif X86_64
+    leap _g_config, t1
+    loadp JSCConfigOffset + JSC::Config::ipint_dispatch_base[t1], t1
+    lshiftq 8, t0
+    addq t1, t0
+    jmp t0
+else
+    error
 end
-
-macro hoistedDispatch()
-    IfIPIntUsesHR(macro()
-        IPIntDispatchFromHR()
-    end, macro()
-        loadb [PC], t0
-        IPIntDispatch()
-    end)
 end
 
 # Stack operations
@@ -434,8 +416,6 @@ end
     loadi Wasm::IPIntCallee::m_highestReturnStackOffset[ws0], sc0
     addp cfr, sc0
 
-    # since IB is an argument register, we swap back to PC (which is unused afterwards)
-    # for x86 PC base
     initPCRelative(mint_entry, PC)
     uintDispatch()
 
@@ -634,7 +614,7 @@ ipintOp(_call_ref, macro()
     loadq [sp], IPIntCallCallee
     loadq 8[sp], IPIntCallFunctionSlot
     addq 16, sp
-    
+
     loadb IPInt::CallRefMetadata::length[MC], t3
     advanceMC(IPInt::CallRefMetadata::signature)
     advancePCByReg(t3)
@@ -1777,8 +1757,6 @@ ipintOp(_i32_popcnt, macro()
 end)
 
 ipintOp(_i32_add, macro()
-    HoistNextOpcode(1)
-
     # i32.add
     popInt32(t1, t2)
     popInt32(t0, t2)
@@ -1786,7 +1764,7 @@ ipintOp(_i32_add, macro()
     pushInt32(t0)
 
     advancePC(1)
-    hoistedDispatch()
+    nextIPIntInstruction()
 end)
 
 ipintOp(_i32_sub, macro()
@@ -3170,71 +3148,78 @@ reservedOpcode(0xfa)
 # If the following four instructions are given more descriptive names,
 # the changes should be matched in IPINT_INSTRUCTIONS in Tools/lldb/debug_ipint.py
 
-ipintOp(_fb_block, macro()
+ipintOp(_gc_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 30 (0x00 -> 0x1e)
-    biaeq t0, 0x1f, .ipint_fb_nonexistent
+    biaeq t0, 0x1f, .ipint_gc_nonexistent
     if ARM64 or ARM64E
-        pcrtoaddr _ipint_struct_new, t1
+        pcrtoaddr ipint_gc_dispatch_base, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
-        lshifti 8, t0
-        leap (_ipint_struct_new - _ipint_unreachable)[IB], t1
+        leap _g_config, t1
+        loadp JSCConfigOffset + JSC::Config::ipint_gc_dispatch_base[t1], t1
+        lshiftq 8, t0
         addq t1, t0
         jmp t0
     end
 
-.ipint_fb_nonexistent:
+.ipint_gc_nonexistent:
     break
 end)
 
-ipintOp(_fc_block, macro()
+ipintOp(_conversion_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 18 (0x00 -> 0x11)
-    biaeq t0, 0x12, .ipint_fc_nonexistent
+    biaeq t0, 0x12, .ipint_conversion_nonexistent
     if ARM64 or ARM64E
-        pcrtoaddr _ipint_i32_trunc_sat_f32_s, t1
+        pcrtoaddr ipint_conversion_dispatch_base, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
-        lshifti 8, t0
-        leap (_ipint_i32_trunc_sat_f32_s - _ipint_unreachable)[IB], t1
+        leap _g_config, t1
+        loadp JSCConfigOffset + JSC::Config::ipint_conversion_dispatch_base[t1], t1
+        lshiftq 8, t0
         addq t1, t0
         jmp t0
     end
 
-.ipint_fc_nonexistent:
+.ipint_conversion_nonexistent:
     break
 end)
 
-ipintOp(_simd, macro()
-    # TODO: for relaxed SIMD, handle parsing the value.
-    # Metadata? Could just hardcode loading two bytes though
+ipintOp(_simd_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
+    # Security guarantee: always less than 256 (0x00 -> 0xff)
+    biaeq t0, 0x100, .ipint_simd_nonexistent
     if ARM64 or ARM64E
-        pcrtoaddr _ipint_simd_v128_load_mem, t1
+        pcrtoaddr ipint_simd_dispatch_base, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
-        lshifti 8, t0
-        leap (_ipint_simd_v128_load_mem - _ipint_unreachable)[IB], t1
+        leap _g_config, t1
+        loadp JSCConfigOffset + JSC::Config::ipint_simd_dispatch_base[t1], t1
+        lshiftq 8, t0
         addq t1, t0
         jmp t0
     end
+
+.ipint_simd_nonexistent:
+    break
 end)
 
-ipintOp(_atomic, macro()
+ipintOp(_atomic_prefix, macro()
     decodeLEBVarUInt32(1, t0, t1, t2, t3, t4)
     # Security guarantee: always less than 78 (0x00 -> 0x4e)
     biaeq t0, 0x4f, .ipint_atomic_nonexistent
     if ARM64 or ARM64E
-        pcrtoaddr _ipint_memory_atomic_notify, t1
+        pcrtoaddr ipint_atomic_dispatch_base, t1
         emit "add x0, x1, x0, lsl 8"
         emit "br x0"
     elsif X86_64
-        lshifti 8, t0
-        leap (_ipint_memory_atomic_notify - _ipint_unreachable)[IB], t1
+        leap _g_config, t1
+        loadp JSCConfigOffset + JSC::Config::ipint_atomic_dispatch_base[t1], t1
+        lshiftq 8, t0
         addq t1, t0
         jmp t0
     end
@@ -3246,9 +3231,9 @@ end)
 reservedOpcode(0xff)
     break
 
-    #######################
-    ## 0xFB instructions ##
-    #######################
+    #####################
+    ## GC instructions ##
+    #####################
 
 ipintOp(_struct_new, macro()
     loadp IPInt::StructNewMetadata::typeIndex[MC], a1  # type index
@@ -3579,7 +3564,7 @@ ipintOp(_br_on_cast, macro()
     operationCall(macro() cCall3(_ipint_extern_ref_test) end)
 
     advanceMC(constexpr (sizeof(IPInt::RefTestCastMetadata)))
-    
+
     bineq r0, 0, _ipint_br
     loadb IPInt::BranchMetadata::instructionLength[MC], t0
     advanceMC(constexpr (sizeof(IPInt::BranchMetadata)))
@@ -3596,7 +3581,7 @@ ipintOp(_br_on_cast_fail, macro()
     operationCall(macro() cCall3(_ipint_extern_ref_test) end)
 
     advanceMC(constexpr (sizeof(IPInt::RefTestCastMetadata)))
-    
+
     bieq r0, 0, _ipint_br
     loadb IPInt::BranchMetadata::instructionLength[MC], t0
     advanceMC(constexpr (sizeof(IPInt::BranchMetadata)))
@@ -3652,9 +3637,9 @@ ipintOp(_i31_get_u, macro()
     throwException(NullI31Get)
 end)
 
-    #######################
-    ## 0xFC instructions ##
-    #######################
+    #############################
+    ## Conversion instructions ##
+    #############################
 
 ipintOp(_i32_trunc_sat_f32_s, macro()
     popFloat32(ft0)
@@ -3670,6 +3655,7 @@ ipintOp(_i32_trunc_sat_f32_s, macro()
     truncatef2is ft0, t0
     pushInt32(t0)
 
+.end:
     loadb IPInt::InstructionLengthMetadata::length[MC], t0
     advancePCByReg(t0)
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
@@ -3679,29 +3665,17 @@ ipintOp(_i32_trunc_sat_f32_s, macro()
     bfeq ft0, ft0, .ipint_i32_trunc_sat_f32_s_outOfBoundsTruncSatMin
     move 0, t0
     pushInt32(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i32_trunc_sat_f32_s_outOfBoundsTruncSatMax:
     move (constexpr INT32_MAX), t0
     pushInt32(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i32_trunc_sat_f32_s_outOfBoundsTruncSatMin:
     move (constexpr INT32_MIN), t0
     pushInt32(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 end)
 
 ipintOp(_i32_trunc_sat_f32_u, macro()
@@ -3718,6 +3692,7 @@ ipintOp(_i32_trunc_sat_f32_u, macro()
     truncatef2i ft0, t0
     pushInt32(t0)
 
+.end:
     loadb IPInt::InstructionLengthMetadata::length[MC], t0
     advancePCByReg(t0)
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
@@ -3726,20 +3701,12 @@ ipintOp(_i32_trunc_sat_f32_u, macro()
 .ipint_i32_trunc_sat_f32_u_outOfBoundsTruncSatMin:
     move 0, t0
     pushInt32(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i32_trunc_sat_f32_u_outOfBoundsTruncSatMax:
     move (constexpr UINT32_MAX), t0
     pushInt32(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 end)
 
 ipintOp(_i32_trunc_sat_f64_s, macro()
@@ -3756,6 +3723,7 @@ ipintOp(_i32_trunc_sat_f64_s, macro()
     truncated2is ft0, t0
     pushInt32(t0)
 
+.end:
     loadb IPInt::InstructionLengthMetadata::length[MC], t0
     advancePCByReg(t0)
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
@@ -3765,29 +3733,17 @@ ipintOp(_i32_trunc_sat_f64_s, macro()
     bdeq ft0, ft0, .ipint_i32_trunc_sat_f64_s_outOfBoundsTruncSatMin
     move 0, t0
     pushInt32(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i32_trunc_sat_f64_s_outOfBoundsTruncSatMax:
     move (constexpr INT32_MAX), t0
     pushInt32(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i32_trunc_sat_f64_s_outOfBoundsTruncSatMin:
     move (constexpr INT32_MIN), t0
     pushInt32(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 end)
 
 ipintOp(_i32_trunc_sat_f64_u, macro()
@@ -3804,6 +3760,7 @@ ipintOp(_i32_trunc_sat_f64_u, macro()
     truncated2i ft0, t0
     pushInt32(t0)
 
+.end:
     loadb IPInt::InstructionLengthMetadata::length[MC], t0
     advancePCByReg(t0)
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
@@ -3812,20 +3769,12 @@ ipintOp(_i32_trunc_sat_f64_u, macro()
 .ipint_i32_trunc_sat_f64_u_outOfBoundsTruncSatMin:
     move 0, t0
     pushInt32(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i32_trunc_sat_f64_u_outOfBoundsTruncSatMax:
     move (constexpr UINT32_MAX), t0
     pushInt32(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 end)
 
 ipintOp(_i64_trunc_sat_f32_s, macro()
@@ -3842,6 +3791,7 @@ ipintOp(_i64_trunc_sat_f32_s, macro()
     truncatef2qs ft0, t0
     pushInt64(t0)
 
+.end:
     loadb IPInt::InstructionLengthMetadata::length[MC], t0
     advancePCByReg(t0)
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
@@ -3851,29 +3801,17 @@ ipintOp(_i64_trunc_sat_f32_s, macro()
     bfeq ft0, ft0, .ipint_i64_trunc_sat_f32_s_outOfBoundsTruncSatMin
     move 0, t0
     pushInt64(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i64_trunc_sat_f32_s_outOfBoundsTruncSatMax:
     move (constexpr INT64_MAX), t0
     pushInt64(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i64_trunc_sat_f32_s_outOfBoundsTruncSatMin:
     move (constexpr INT64_MIN), t0
     pushInt64(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 end)
 
 ipintOp(_i64_trunc_sat_f32_u, macro()
@@ -3890,6 +3828,7 @@ ipintOp(_i64_trunc_sat_f32_u, macro()
     truncatef2q ft0, t0
     pushInt64(t0)
 
+.end:
     loadb IPInt::InstructionLengthMetadata::length[MC], t0
     advancePCByReg(t0)
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
@@ -3898,20 +3837,12 @@ ipintOp(_i64_trunc_sat_f32_u, macro()
 .ipint_i64_trunc_sat_f32_u_outOfBoundsTruncSatMin:
     move 0, t0
     pushInt64(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i64_trunc_sat_f32_u_outOfBoundsTruncSatMax:
     move (constexpr UINT64_MAX), t0
     pushInt64(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 end)
 
 ipintOp(_i64_trunc_sat_f64_s, macro()
@@ -3927,6 +3858,7 @@ ipintOp(_i64_trunc_sat_f64_s, macro()
     truncated2qs ft0, t0
     pushInt64(t0)
 
+.end:
     loadb IPInt::InstructionLengthMetadata::length[MC], t0
     advancePCByReg(t0)
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
@@ -3936,29 +3868,17 @@ ipintOp(_i64_trunc_sat_f64_s, macro()
     bdeq ft0, ft0, .ipint_i64_trunc_sat_f64_s_outOfBoundsTruncSatMin
     move 0, t0
     pushInt64(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i64_trunc_sat_f64_s_outOfBoundsTruncSatMax:
     move (constexpr INT64_MAX), t0
     pushInt64(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i64_trunc_sat_f64_s_outOfBoundsTruncSatMin:
     move (constexpr INT64_MIN), t0
     pushInt64(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 end)
 
 ipintOp(_i64_trunc_sat_f64_u, macro()
@@ -3975,6 +3895,7 @@ ipintOp(_i64_trunc_sat_f64_u, macro()
     truncated2q ft0, t0
     pushInt64(t0)
 
+.end:
     loadb IPInt::InstructionLengthMetadata::length[MC], t0
     advancePCByReg(t0)
     advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
@@ -3983,20 +3904,12 @@ ipintOp(_i64_trunc_sat_f64_u, macro()
 .ipint_i64_trunc_sat_f64_u_outOfBoundsTruncSatMin:
     move 0, t0
     pushInt64(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 
 .ipint_i64_trunc_sat_f64_u_outOfBoundsTruncSatMax:
     move (constexpr UINT64_MAX), t0
     pushInt64(t0)
-
-    loadb IPInt::InstructionLengthMetadata::length[MC], t0
-    advancePCByReg(t0)
-    advanceMC(constexpr (sizeof(IPInt::InstructionLengthMetadata)))
-    nextIPIntInstruction()
+    jmp .end
 end)
 
 ipintOp(_memory_init, macro()
@@ -4122,6 +4035,7 @@ end)
     #######################
 
 # 0xFD 0x00 - 0xFD 0x0B: memory
+
 unimplementedInstruction(_simd_v128_load_mem)
 unimplementedInstruction(_simd_v128_load_8x8s_mem)
 unimplementedInstruction(_simd_v128_load_8x8u_mem)
@@ -4165,10 +4079,12 @@ unimplementedInstruction(_simd_i16x8_replace_lane)
 ipintOp(_simd_i32x4_extract_lane, macro()
     # i32x4.extract_lane (lane)
     loadb 2[PC], t0  # lane index
+    andi 0x3, t0
     popv v0
     if ARM64 or ARM64E
         pcrtoaddr _simd_i32x4_extract_lane_0, t1
         leap [t1, t0, 8], t0
+        emit "br x0"
         _simd_i32x4_extract_lane_0:
         umovi t0, v0_i, 0
         jmp _simd_i32x4_extract_lane_end
@@ -6555,15 +6471,6 @@ if X86_64
     loadp 2*SlotSize[sc3], PC
 end
 
-    # Restore IB
-    IfIPIntUsesIB(macro()
-if ARM64 or ARM64E
-        pcrtoaddr _ipint_unreachable, IB
-elsif X86_64
-        initPCRelative(mint_end, IB)
-        leap (_ipint_unreachable - _mint_end_relativePCBase)[IB], IB
-end
-    end)
     # Restore memory
     ipintReloadMemory()
     nextIPIntInstruction()

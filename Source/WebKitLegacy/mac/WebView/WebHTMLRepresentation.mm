@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2005, 2006, 2007 Apple Inc. All rights reserved.
+ * Copyright (C) 2005-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -433,7 +433,7 @@ static RetainPtr<NSString> searchForLabelsBeforeElement(LocalFrame* frame, NSArr
             break;
         }
         if (n->hasTagName(tdTag) && !startingTableCell) {
-            startingTableCell = static_cast<HTMLTableCellElement*>(n);
+            startingTableCell = downcast<HTMLTableCellElement>(n);
         } else if (n->hasTagName(trTag) && startingTableCell) {
             RetainPtr result = frame->searchForLabelsAboveCell(*regExp, startingTableCell, resultDistance).createNSString();
             if ([result length]) {

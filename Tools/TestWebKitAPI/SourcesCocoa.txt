@@ -333,6 +333,7 @@ Tests/WebKitCocoa/WKWebExtensionAPICommands.mm
 Tests/WebKitCocoa/WKWebExtensionAPICookies.mm
 Tests/WebKitCocoa/WKWebExtensionAPIDeclarativeNetRequest.mm
 Tests/WebKitCocoa/WKWebExtensionAPIDevTools.mm
+Tests/WebKitCocoa/WKWebExtensionAPIDOM.mm
 Tests/WebKitCocoa/WKWebExtensionAPIEvent.mm
 Tests/WebKitCocoa/WKWebExtensionAPIExtension.mm
 Tests/WebKitCocoa/WKWebExtensionAPIMenus.mm

@@ -1186,6 +1186,11 @@ typedef struct WGPUCompilationInfo {
     WGPUCompilationMessage const * messages;
 } WGPUCompilationInfo WGPU_STRUCTURE_ATTRIBUTE;
 
+inline std::span<const WGPUCompilationMessage> messagesSpan(const WGPUCompilationInfo& compilationInfo)
+{
+    return unsafeMakeSpan(compilationInfo.messages, compilationInfo.messageCount);
+}
+
 typedef struct WGPUComputePassDescriptor {
     WGPUChainedStruct const * nextInChain;
     WGPU_NULLABLE char const * label;

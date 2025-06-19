@@ -186,7 +186,7 @@ PluginViewBase* PluginDocument::pluginWidget()
 
 void PluginDocument::setPluginElement(HTMLPlugInElement& element)
 {
-    m_pluginElement = &element;
+    m_pluginElement = element;
 }
 
 void PluginDocument::detachFromPluginElement()

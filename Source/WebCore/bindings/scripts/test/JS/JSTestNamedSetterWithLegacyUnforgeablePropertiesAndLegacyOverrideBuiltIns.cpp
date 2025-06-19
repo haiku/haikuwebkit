@@ -430,7 +430,9 @@ extern "C" { extern void (*const __identifier("??_7TestNamedSetterWithLegacyUnfo
 #else
 extern "C" { extern void* _ZTVN7WebCore71TestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltInsE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns>, void>> static inline void verifyVTable(TestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns* ptr) {
+template<std::same_as<TestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns> T>
+static inline void verifyVTable(TestNamedSetterWithLegacyUnforgeablePropertiesAndLegacyOverrideBuiltIns* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

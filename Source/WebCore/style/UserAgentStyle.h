@@ -57,7 +57,7 @@ public:
 #if ENABLE(ATTACHMENT_ELEMENT)
     static StyleSheetContents* attachmentStyleSheet;
 #endif
-#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
+#if ENABLE(FORM_CONTROL_REFRESH)
     static StyleSheetContents* vectorControlsStyleSheet;
 #endif
 

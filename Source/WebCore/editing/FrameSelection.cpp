@@ -273,7 +273,7 @@ void DragCaretController::setCaretPosition(const VisiblePosition& position)
     RefPtr<Document> document;
     if (RefPtr node = m_position.deepEquivalent().deprecatedNode()) {
         invalidateCaretRect(node.get());
-        document = &node->document();
+        document = node->document();
     }
     if (m_position.isNull() || m_position.isOrphan())
         clearCaretRect();
@@ -3079,7 +3079,7 @@ void FrameSelection::disassociateLiveRange()
 void FrameSelection::associateLiveRange(Range& liveRange)
 {
     disassociateLiveRange();
-    m_associatedLiveRange = &liveRange;
+    m_associatedLiveRange = liveRange;
     liveRange.didAssociateWithSelection();
     updateFromAssociatedLiveRange();
 }

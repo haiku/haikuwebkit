@@ -295,8 +295,8 @@ void ModelProcessProxy::updateProcessAssertion()
     bool hasAnyBackgroundWebProcesses = false;
 
     for (auto& processPool : WebProcessPool::allProcessPools()) {
-        hasAnyForegroundWebProcesses |= processPool->hasForegroundWebProcesses();
-        hasAnyBackgroundWebProcesses |= processPool->hasBackgroundWebProcesses();
+        hasAnyForegroundWebProcesses |= processPool->hasForegroundWebProcessesWithModels();
+        hasAnyBackgroundWebProcesses |= processPool->hasBackgroundWebProcessesWithModels();
     }
 
     if (hasAnyForegroundWebProcesses) {
@@ -309,6 +309,9 @@ void ModelProcessProxy::updateProcessAssertion()
             m_activityFromWebProcesses = protectedThrottler()->backgroundActivity("Model for background view(s)"_s);
         return;
     }
+
+    if (!!m_activityFromWebProcesses)
+        RELEASE_LOG(ModelElement, "Releasing all activities from model process");
 
     // Use std::exchange() instead of a simple nullptr assignment to avoid re-entering this
     // function during the destructor of the ProcessThrottler activity, before setting

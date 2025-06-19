@@ -594,7 +594,9 @@ static void addBrowsingContextControllerMethodStubsIfNeeded()
     }
     ALLOW_DEPRECATED_DECLARATIONS_END
 
+    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
     Ref processPool = *[_configuration processPool]->_processPool;
+    ALLOW_DEPRECATED_DECLARATIONS_END
 
     // FIXME: This copy is probably not necessary.
     Ref pageConfiguration = Ref { *_configuration->_pageConfiguration }->copy();
@@ -1983,7 +1985,7 @@ inline OptionSet<WebKit::FindOptions> toFindOptions(WKFindConfiguration *configu
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
     [self _updateFixedColorExtensionViews];
 #if PLATFORM(MAC)
-    _impl->updateContentInsetFillViews();
+    _impl->updateScrollPocket();
 #endif
 #endif
 
@@ -3063,7 +3065,7 @@ static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::Fixe
 
 #if PLATFORM(MAC) && ENABLE(CONTENT_INSET_BACKGROUND_FILL)
     if (isTopFixedEdgeChanging)
-        _impl->updateContentInsetFillViews();
+        _impl->updateScrollPocket();
 #else
     UNUSED_VARIABLE(isTopFixedEdgeChanging);
 #endif
@@ -3118,10 +3120,10 @@ static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::Fixe
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 
-- (void)_updateTopContentInsetFillCaptureColor
+- (void)_updateTopScrollPocketCaptureColor
 {
 #if PLATFORM(MAC)
-    _impl->updateTopContentInsetFillCaptureColor();
+    _impl->updateTopScrollPocketCaptureColor();
 #endif
 }
 
@@ -3157,8 +3159,8 @@ static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::Fixe
     RetainPtr parentView = [self _containerForFixedColorExtension];
     auto addColorExtensionView = [&](CocoaView *extensionView) {
 #if PLATFORM(MAC)
-        if (RetainPtr contentInsetFillView = _impl->topContentInsetFillView())
-            [parentView addSubview:extensionView positioned:NSWindowBelow relativeTo:contentInsetFillView.get()];
+        if (RetainPtr scrollPocket = _impl->topScrollPocket())
+            [parentView addSubview:extensionView positioned:NSWindowBelow relativeTo:scrollPocket.get()];
         else
             [parentView addSubview:extensionView];
 #else
@@ -3232,12 +3234,12 @@ static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::Fixe
         [view setFrame:[parentView convertRect:CGRectMake(insets.left(), bounds.height() - insets.bottom(), bounds.width() - insets.left() - insets.right(), insets.bottom()) fromView:self]];
 }
 
-- (void)_updateHiddenContentInsetFillEdges
+- (void)_updateHiddenScrollPocketEdges
 {
 #if PLATFORM(IOS_FAMILY)
-    [_scrollView _setHiddenContentInsetFillEdges:[&] {
+    [_scrollView _setHiddenPocketEdgesInternal:[&] {
         UIRectEdge edges = UIRectEdgeNone;
-        if (_reasonsToHideTopContentInsetFill || [self _hasVisibleColorExtensionView:WebCore::BoxSide::Top])
+        if (_reasonsToHideTopScrollPocket || [self _hasVisibleColorExtensionView:WebCore::BoxSide::Top])
             edges |= UIRectEdgeTop;
         if ([self _hasVisibleColorExtensionView:WebCore::BoxSide::Right])
             edges |= UIRectEdgeRight;
@@ -3248,7 +3250,7 @@ static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::Fixe
         return edges;
     }()];
 #else
-    _impl->updateContentInsetFillViews();
+    _impl->updateScrollPocket();
 #endif
 }
 
@@ -3258,39 +3260,39 @@ static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::Fixe
     return view && ![view isHiddenOrFadingOut];
 }
 
-- (void)_addReasonToHideTopContentInsetFill:(WebKit::HideContentInsetFillReason)reason
+- (void)_addReasonToHideTopScrollPocket:(WebKit::HideScrollPocketReason)reason
 {
-    if (_reasonsToHideTopContentInsetFill.contains(reason))
+    if (_reasonsToHideTopScrollPocket.contains(reason))
         return;
 
-    if (!_reasonsToHideTopContentInsetFill)
-        [self _setTopContentInsetFillHidden:YES];
+    if (!_reasonsToHideTopScrollPocket)
+        [self _setTopScrollPocketHidden:YES];
 
-    _reasonsToHideTopContentInsetFill.add(reason);
+    _reasonsToHideTopScrollPocket.add(reason);
 }
 
-- (void)_removeReasonToHideTopContentInsetFill:(WebKit::HideContentInsetFillReason)reason
+- (void)_removeReasonToHideTopScrollPocket:(WebKit::HideScrollPocketReason)reason
 {
-    if (!_reasonsToHideTopContentInsetFill.contains(reason))
+    if (!_reasonsToHideTopScrollPocket.contains(reason))
         return;
 
-    _reasonsToHideTopContentInsetFill.remove(reason);
+    _reasonsToHideTopScrollPocket.remove(reason);
 
-    if (!_reasonsToHideTopContentInsetFill)
-        [self _setTopContentInsetFillHidden:NO];
+    if (!_reasonsToHideTopScrollPocket)
+        [self _setTopScrollPocketHidden:NO];
 }
 
-- (void)_setTopContentInsetFillHidden:(BOOL)hidden
+- (void)_setTopScrollPocketHidden:(BOOL)hidden
 {
 #if PLATFORM(IOS_FAMILY)
-    [_scrollView _setHiddenContentInsetFillEdges:[&] {
-        UIRectEdge hiddenEdges = [_scrollView _hiddenContentInsetFillEdges];
+    [_scrollView _setHiddenPocketEdgesInternal:[&] {
+        UIRectEdge hiddenEdges = [_scrollView _hiddenPocketEdges];
         return hidden ? (hiddenEdges | UIRectEdgeTop) : (hiddenEdges & ~UIRectEdgeTop);
     }()];
 #else
-    RetainPtr topContentInsetFillView = _impl->topContentInsetFillView();
-    RetainPtr captureView = [topContentInsetFillView captureView];
-    [topContentInsetFillView setHidden:hidden];
+    RetainPtr scrollPocket = _impl->topScrollPocket();
+    RetainPtr captureView = [scrollPocket captureView];
+    [scrollPocket setHidden:hidden];
     [captureView setHidden:hidden];
 #endif
 }
@@ -3300,14 +3302,14 @@ static WebCore::CocoaColor *sampledFixedPositionContentColor(const WebCore::Fixe
 - (void)colorExtensionViewWillDisappear:(WKColorExtensionView *)view
 {
 #if PLATFORM(IOS_FAMILY)
-    [self _updateHiddenContentInsetFillEdges];
+    [self _updateHiddenScrollPocketEdges];
 #endif
 }
 
 - (void)colorExtensionViewDidAppear:(WKColorExtensionView *)view
 {
 #if PLATFORM(IOS_FAMILY)
-    [self _updateHiddenContentInsetFillEdges];
+    [self _updateHiddenScrollPocketEdges];
 #endif
 }
 
@@ -4821,7 +4823,7 @@ static void convertAndAddHighlight(Vector<Ref<WebCore::SharedMemory>>& buffers, 
 - (void)_clearBackForwardCache
 {
     THROW_IF_SUSPENDED;
-    _page->configuration().protectedProcessPool()->protectedBackForwardCache()->removeEntriesForPage(*_page);
+    _page->configuration().protectedProcessPool()->backForwardCache().removeEntriesForPage(*_page);
 }
 
 + (BOOL)_handlesSafeBrowsing

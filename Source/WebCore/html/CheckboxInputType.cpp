@@ -277,7 +277,7 @@ void CheckboxInputType::startSwitchPointerTracking(LayoutPoint absoluteLocation)
     Ref element = *this->element();
     ASSERT(element->renderer());
     if (RefPtr frame = element->protectedDocument()->frame()) {
-        frame->checkedEventHandler()->setCapturingMouseEventsElement(element.ptr());
+        frame->eventHandler().setCapturingMouseEventsElement(element.ptr());
         m_isSwitchVisuallyOn = element->checked();
         m_switchPointerTrackingLogicalLeftPositionStart = switchPointerTrackingLogicalLeftPosition(element.get(), absoluteLocation);
     }
@@ -290,7 +290,7 @@ void CheckboxInputType::stopSwitchPointerTracking()
         return;
 
     if (RefPtr frame = protectedElement()->protectedDocument()->frame())
-        frame->checkedEventHandler()->setCapturingMouseEventsElement(nullptr);
+        frame->eventHandler().setCapturingMouseEventsElement(nullptr);
     m_hasSwitchVisuallyOnChanged = false;
     m_switchPointerTrackingLogicalLeftPositionStart = { };
 }

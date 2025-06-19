@@ -526,7 +526,7 @@ ExceptionOr<Ref<WebCodecsVideoFrame>> WebCodecsVideoFrame::clone(ScriptExecution
 
     auto clone = adoptRef(*new WebCodecsVideoFrame(context, WebCodecsVideoFrameData { m_data }));
 
-    clone->m_colorSpace = &colorSpace();
+    clone->m_colorSpace = colorSpace();
     clone->m_codedRect = codedRect();
     clone->m_visibleRect = visibleRect();
     clone->m_isDetached = m_isDetached;

@@ -902,7 +902,7 @@ FloatPoint ScrollView::viewToContents(const FloatPoint& point) const
     if (delegatesScrollingToNativeView())
         return point;
 
-    return viewToContents(IntPoint(point));
+    return point + toIntSize(documentScrollPositionRelativeToViewOrigin());
 }
 
 FloatPoint ScrollView::contentsToView(const FloatPoint& point) const
@@ -1043,14 +1043,16 @@ IntRect ScrollView::contentsToRootView(const IntRect& contentsRect) const
     return convertToRootView(contentsToView(contentsRect));
 }
 
-IntPoint ScrollView::windowToContents(const IntPoint& windowPoint) const
+// MARK: -
+
+IntPoint ScrollView::windowToContents(IntPoint windowPoint) const
 {
     return viewToContents(convertFromContainingWindow(windowPoint));
 }
 
-IntPoint ScrollView::contentsToWindow(const IntPoint& contentsPoint) const
+FloatPoint ScrollView::windowToContents(FloatPoint windowPoint) const
 {
-    return convertToContainingWindow(contentsToView(contentsPoint));
+    return viewToContents(convertFromContainingWindow(windowPoint));
 }
 
 IntRect ScrollView::windowToContents(const IntRect& windowRect) const
@@ -1058,10 +1060,34 @@ IntRect ScrollView::windowToContents(const IntRect& windowRect) const
     return viewToContents(convertFromContainingWindow(windowRect));
 }
 
+FloatRect ScrollView::windowToContents(const FloatRect& windowRect) const
+{
+    return viewToContents(convertFromContainingWindow(windowRect));
+}
+
+// MARK: -
+
+IntPoint ScrollView::contentsToWindow(IntPoint contentsPoint) const
+{
+    return convertToContainingWindow(contentsToView(contentsPoint));
+}
+
+FloatPoint ScrollView::contentsToWindow(FloatPoint contentsPoint) const
+{
+    return convertToContainingWindow(contentsToView(contentsPoint));
+}
+
 IntRect ScrollView::contentsToWindow(const IntRect& contentsRect) const
 {
     return convertToContainingWindow(contentsToView(contentsRect));
 }
+
+FloatRect ScrollView::contentsToWindow(const FloatRect& contentsRect) const
+{
+    return convertToContainingWindow(contentsToView(contentsRect));
+}
+
+// MARK: -
 
 IntRect ScrollView::contentsToScreen(const IntRect& rect) const
 {
@@ -1135,6 +1161,14 @@ FloatPoint ScrollView::convertChildToSelf(const Widget* child, FloatPoint point)
 }
 
 IntPoint ScrollView::convertSelfToChild(const Widget* child, IntPoint point) const
+{
+    if (!isScrollViewScrollbar(child))
+        point += toIntSize(documentScrollPositionRelativeToViewOrigin());
+    point.moveBy(-child->location());
+    return point;
+}
+
+FloatPoint ScrollView::convertSelfToChild(const Widget* child, FloatPoint point) const
 {
     if (!isScrollViewScrollbar(child))
         point += toIntSize(documentScrollPositionRelativeToViewOrigin());

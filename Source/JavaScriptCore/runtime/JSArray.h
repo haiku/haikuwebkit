@@ -131,6 +131,8 @@ public:
 
     JSArray* fastToSpliced(JSGlobalObject*, CallFrame*, uint64_t length, uint64_t newLength, uint64_t start, uint64_t deleteCount, uint64_t insertCount);
 
+    JSString* fastToString(JSGlobalObject*);
+
     ALWAYS_INLINE bool definitelyNegativeOneMiss() const;
 
     enum ShiftCountMode {
@@ -166,6 +168,7 @@ public:
     JS_EXPORT_PRIVATE void copyToArguments(JSGlobalObject*, JSValue* firstElementDest, unsigned offset, unsigned length);
 
     JS_EXPORT_PRIVATE bool isIteratorProtocolFastAndNonObservable();
+    bool isToPrimitiveFastAndNonObservable();
 
     inline static Structure* createStructure(VM&, JSGlobalObject*, JSValue, IndexingType);
 

@@ -61,6 +61,11 @@
     _world->makeAllShadowRootsOpen();
 }
 
+- (void)exposeClosedShadowRootsForExtensions
+{
+    _world->exposeClosedShadowRootsForExtensions();
+}
+
 - (void)disableOverrideBuiltinsBehavior
 {
     _world->disableOverrideBuiltinsBehavior();

@@ -138,6 +138,7 @@ template<> struct ToStyle<CSS::DynamicRangeLimit> { auto operator()(const CSS::D
 
 // `DynamicRangeLimit` is special-cased to return a `CSSDynamicRangeLimitValue`.
 template<> struct CSSValueCreation<DynamicRangeLimit> { Ref<CSSValue> operator()(CSSValuePool&, const RenderStyle&, const DynamicRangeLimit&); };
+template<> struct CSSValueConversion<DynamicRangeLimit> { auto operator()(BuilderState&, const CSSValue&) -> DynamicRangeLimit; };
 
 // MARK: Serialization
 

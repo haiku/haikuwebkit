@@ -275,7 +275,9 @@ extern "C" { extern void (*const __identifier("??_7TestOverloadedConstructorsWit
 #else
 extern "C" { extern void* _ZTVN7WebCore38TestOverloadedConstructorsWithSequenceE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestOverloadedConstructorsWithSequence>, void>> static inline void verifyVTable(TestOverloadedConstructorsWithSequence* ptr) {
+template<std::same_as<TestOverloadedConstructorsWithSequence> T>
+static inline void verifyVTable(TestOverloadedConstructorsWithSequence* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

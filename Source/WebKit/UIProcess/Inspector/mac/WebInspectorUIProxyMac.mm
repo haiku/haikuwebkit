@@ -380,11 +380,7 @@ RetainPtr<NSWindow> WebInspectorUIProxy::createFrontendWindow(NSRect savedWindow
     CGFloat approximatelyHalfScreenSize = ([window screen].frame.size.width / 2) - 4;
     CGFloat minimumFullScreenWidth = std::max<CGFloat>(636, approximatelyHalfScreenSize);
     [window setMinFullScreenContentSize:NSMakeSize(minimumFullScreenWidth, minimumWindowHeight)];
-    [window setCollectionBehavior:([window collectionBehavior] | NSWindowCollectionBehaviorFullScreenAllowsTiling)];
-
-#if HAVE(STAGE_MANAGER_NS_WINDOW_COLLECTION_BEHAVIORS)
-    [window setCollectionBehavior:([window collectionBehavior] | NSWindowCollectionBehaviorAuxiliary)];
-#endif
+    [window setCollectionBehavior:([window collectionBehavior] | NSWindowCollectionBehaviorFullScreenAllowsTiling | NSWindowCollectionBehaviorAuxiliary)];
 
     [window setTitlebarAppearsTransparent:YES];
 

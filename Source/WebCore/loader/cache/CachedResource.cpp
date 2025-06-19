@@ -1047,7 +1047,7 @@ void CachedResource::tryReplaceEncodedData(SharedBuffer& newBuffer)
     if (*m_data != newBuffer)
         return;
 
-    m_data = &newBuffer;
+    m_data = newBuffer;
     didReplaceSharedBufferContents();
 }
 

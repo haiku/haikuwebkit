@@ -77,26 +77,6 @@ inline Ref<const Editor> LocalFrame::protectedEditor() const
     return editor();
 }
 
-inline CheckedRef<EventHandler> LocalFrame::checkedEventHandler()
-{
-    return m_eventHandler.get();
-}
-
-inline CheckedRef<const EventHandler> LocalFrame::checkedEventHandler() const
-{
-    return m_eventHandler.get();
-}
-
-inline Ref<const FrameLoader> LocalFrame::protectedLoader() const
-{
-    return m_loader.get();
-}
-
-inline Ref<FrameLoader> LocalFrame::protectedLoader()
-{
-    return m_loader.get();
-}
-
 inline FrameSelection& LocalFrame::selection()
 {
     return document()->selection();

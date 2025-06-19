@@ -196,11 +196,6 @@ RefPtr<WebFrameProxy> ProvisionalPageProxy::protectedMainFrame() const
     return m_mainFrame.copyRef();
 }
 
-Ref<BrowsingContextGroup> ProvisionalPageProxy::protectedBrowsingContextGroup()
-{
-    return m_browsingContextGroup;
-}
-
 void ProvisionalPageProxy::processDidTerminate()
 {
     PROVISIONALPAGEPROXY_RELEASE_LOG_ERROR(ProcessSwapping, "processDidTerminate:");
@@ -263,7 +258,7 @@ void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& webs
     Ref process = this->process();
     Ref preferences = page->preferences();
     if (preferences->siteIsolationEnabled()) {
-        if (RefPtr existingRemotePageProxy = protectedBrowsingContextGroup()->takeRemotePageInProcessForProvisionalPage(page, process)) {
+        if (RefPtr existingRemotePageProxy = m_browsingContextGroup->takeRemotePageInProcessForProvisionalPage(page, process)) {
             if (m_isProcessSwappingForNewWindow) {
                 m_webPageID = existingRemotePageProxy->pageID();
                 m_mainFrame = existingRemotePageProxy->page()->mainFrame();
@@ -276,7 +271,7 @@ void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& webs
             } else
                 m_takenRemotePage = WTFMove(existingRemotePageProxy);
         }
-        protectedBrowsingContextGroup()->addFrameProcessAndInjectPageContextIf(m_frameProcess, [m_page = m_page](WebPageProxy& page) {
+        m_browsingContextGroup->addFrameProcessAndInjectPageContextIf(m_frameProcess, [m_page = m_page](WebPageProxy& page) {
             return m_page != &page;
         });
     }
@@ -447,9 +442,9 @@ void ProvisionalPageProxy::didFailProvisionalLoadForFrame(FrameInfoData&& frameI
     // didFailProvisionalLoadForFrameShared will call didFailProvisionalLoad on the same main frame.
     if (page->protectedPreferences()->siteIsolationEnabled()) {
         if (m_isProcessSwappingForNewWindow)
-            protectedBrowsingContextGroup()->transitionProvisionalPageToRemotePage(*this, Site(request.url()));
+            m_browsingContextGroup->transitionProvisionalPageToRemotePage(*this, Site(request.url()));
         else if (m_takenRemotePage)
-            protectedBrowsingContextGroup()->addRemotePage(*page, m_takenRemotePage.releaseNonNull());
+            m_browsingContextGroup->addRemotePage(*page, m_takenRemotePage.releaseNonNull());
         m_shouldClosePage = false;
     } else if (RefPtr pageMainFrame = page->mainFrame())
         pageMainFrame->didFailProvisionalLoad();
@@ -476,7 +471,7 @@ void ProvisionalPageProxy::didCommitLoadForFrame(IPC::Connection& connection, Fr
             Site openedSite(request.url());
             if (openerSite != openedSite && m_browsingContextGroup.ptr() == &page->browsingContextGroup()) {
                 page->protectedLegacyMainFrameProcess()->send(Messages::WebPage::LoadDidCommitInAnotherProcess(page->mainFrame()->frameID(), std::nullopt), page->webPageIDInMainFrameProcess());
-                protectedBrowsingContextGroup()->transitionPageToRemotePage(*page, openerSite);
+                m_browsingContextGroup->transitionPageToRemotePage(*page, openerSite);
             }
         }
     }

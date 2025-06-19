@@ -62,6 +62,11 @@
 @end
 
 #if PLATFORM(IOS_FAMILY)
+@interface WKWebView ()
+- (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView;
+- (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view;
+@end
+
 @interface UIPrintInteractionController ()
 - (BOOL)_setupPrintPanel:(void (^)(UIPrintInteractionController *printInteractionController, BOOL completed, NSError *error))completion;
 - (void)_generatePrintPreview:(void (^)(NSURL *previewPDF, BOOL shouldRenderOnChosenPaper))completionHandler;
@@ -466,8 +471,8 @@ UNIFIED_PDF_TEST(PrintPDFUsingPrintInteractionController)
     TestWebKitAPI::Util::run(&done);
     EXPECT_NE([pdfData length], 0UL);
 
-    Ref pdf = TestWebKitAPI::TestPDFDocument::createFromData(pdfData.get());
-    EXPECT_EQ(pdf->pageCount(), 16UL);
+    RetainPtr pdf = adoptNS([[TestPDFDocument alloc] initFromData:pdfData.get()]);
+    EXPECT_EQ([pdf pageCount], 16);
 }
 
 // FIXME: <webkit.org/b/288401> [ iOS Debug ] TestWebKitAPI.UnifiedPDF.ShouldNotRespectSetViewScale(api-test) is a constant timeout
@@ -548,6 +553,43 @@ UNIFIED_PDF_TEST(KeepRelativeScrollPositionAfterAnimatedResize)
     [webView waitForNextPresentationUpdate];
 
     EXPECT_EQ([webView scrollView].contentOffset, CGPointMake(0, 2533));
+}
+
+UNIFIED_PDF_TEST(KeepRelativeScrollPositionAfterZoomingAndViewportUpdate)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 600, 800) configuration:configurationForWebViewTestingUnifiedPDF().get()]);
+
+    RetainPtr scrollView = [webView scrollView];
+
+    RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"multiple-pages" withExtension:@"pdf"]];
+    [webView synchronouslyLoadRequest:request.get()];
+    [webView waitForNextPresentationUpdate];
+
+    {
+        InstanceMethodSwizzler lookupSwizzler {
+            [UIPinchGestureRecognizer class],
+            @selector(state),
+            imp_implementationWithBlock(^UIGestureRecognizerState {
+                return UIGestureRecognizerStateBegan;
+            })
+        };
+
+        [webView scrollViewWillBeginZooming:scrollView.get() withView:[webView viewForZoomingInScrollView:scrollView.get()]];
+        [scrollView setZoomScale:3];
+    }
+
+    [scrollView setContentOffset:CGPointMake([scrollView contentSize].width - [scrollView frame].size.width, 12000)];
+    [webView waitForNextVisibleContentRectUpdate];
+    [webView waitForNextPresentationUpdate];
+
+    CGSize originalSize = [webView frame].size;
+    CGSize layoutSize = CGSizeMake(originalSize.width - 200, originalSize.height);
+    [webView _overrideLayoutParametersWithMinimumLayoutSize:layoutSize minimumUnobscuredSizeOverride:layoutSize maximumUnobscuredSizeOverride:layoutSize];
+
+    [webView waitForNextVisibleContentRectUpdate];
+    [webView waitForNextPresentationUpdate];
+
+    EXPECT_EQ([webView scrollView].contentOffset, CGPointMake(600, 8002));
 }
 
 UNIFIED_PDF_TEST(ScrollOffsetResetWhenChangingPDF)

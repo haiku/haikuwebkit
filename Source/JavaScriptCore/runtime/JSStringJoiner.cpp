@@ -261,7 +261,7 @@ inline unsigned JSStringJoiner::joinedLength(JSGlobalObject* globalObject) const
     return totalLength;
 }
 
-JSValue JSStringJoiner::joinImpl(JSGlobalObject* globalObject)
+JSString* JSStringJoiner::joinImpl(JSGlobalObject* globalObject)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
@@ -296,7 +296,7 @@ JSValue JSStringJoiner::joinImpl(JSGlobalObject* globalObject)
     return jsString(vm, WTFMove(result));
 }
 
-JSValue JSOnlyStringsAndInt32sJoiner::joinImpl(JSGlobalObject* globalObject, const WriteBarrier<Unknown>* data, unsigned length)
+JSString* JSOnlyStringsAndInt32sJoiner::joinImpl(JSGlobalObject* globalObject, const WriteBarrier<Unknown>* data, unsigned length)
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);

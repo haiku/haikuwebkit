@@ -41,56 +41,69 @@ class BuilderState;
 // <'padding-*'> = <length-percentage [0,∞]>
 // https://drafts.csswg.org/css-box/#padding-physical
 struct PaddingEdge {
-    explicit PaddingEdge(WebCore::Length&& value)
-        : m_value { WTFMove(value) }
+    using Specified = LengthPercentage<CSS::Nonnegative>;
+    using Fixed = typename Specified::Dimension;
+    using Percentage = typename Specified::Percentage;
+    using Calc = typename Specified::Calc;
+
+    PaddingEdge(Fixed&& fixed) : m_value(fixed.value, WebCore::LengthType::Fixed) { }
+    PaddingEdge(const Fixed& fixed) : m_value(fixed.value, WebCore::LengthType::Fixed) { }
+    PaddingEdge(Percentage&& percent) : m_value(percent.value, WebCore::LengthType::Percent) { }
+    PaddingEdge(const Percentage& percent) : m_value(percent.value, WebCore::LengthType::Percent) { }
+
+    PaddingEdge(CSS::ValueLiteral<CSS::LengthUnit::Px> literal) : m_value(static_cast<float>(literal.value), WebCore::LengthType::Fixed) { }
+    PaddingEdge(CSS::ValueLiteral<CSS::PercentageUnit::Percentage> literal) : m_value(static_cast<float>(literal.value), WebCore::LengthType::Percent) { }
+
+    explicit PaddingEdge(WebCore::Length&& other) : m_value(WTFMove(other)) { RELEASE_ASSERT(isValid(m_value)); }
+    explicit PaddingEdge(const WebCore::Length& other) : m_value(other) { RELEASE_ASSERT(isValid(m_value)); }
+
+    ALWAYS_INLINE bool isFixed() const { return m_value.isFixed(); }
+    ALWAYS_INLINE bool isPercent() const { return m_value.isPercent(); }
+    ALWAYS_INLINE bool isCalculated() const { return m_value.isCalculated(); }
+    ALWAYS_INLINE bool isPercentOrCalculated() const { return m_value.isPercentOrCalculated(); }
+    ALWAYS_INLINE bool isSpecified() const { return m_value.isSpecified(); }
+
+    ALWAYS_INLINE bool isZero() const { return m_value.isZero(); }
+    ALWAYS_INLINE bool isPositive() const { return m_value.isPositive(); }
+    ALWAYS_INLINE bool isNegative() const { return m_value.isNegative(); }
+
+    std::optional<Fixed> tryFixed() const { return isFixed() ? std::make_optional(Fixed { m_value.value() }) : std::nullopt; }
+    std::optional<Percentage> tryPercentage() const { return isPercent() ? std::make_optional(Percentage { m_value.value() }) : std::nullopt; }
+    std::optional<Calc> tryCalc() const { return isCalculated() ? std::make_optional(Calc { m_value.calculationValue() }) : std::nullopt; }
+
+    template<typename T> bool holdsAlternative() const
     {
-        RELEASE_ASSERT(m_value.isSpecified());
+             if constexpr (std::same_as<T, Fixed>)              return isFixed();
+        else if constexpr (std::same_as<T, Percentage>)         return isPercent();
+        else if constexpr (std::same_as<T, Calc>)               return isCalculated();
     }
 
-    PaddingEdge(CSS::ValueLiteral<CSS::LengthUnit::Px> pixels)
-        : m_value { pixels.value, WebCore::LengthType::Fixed }
+    template<typename... F> decltype(auto) switchOn(F&&... f) const
     {
-    }
+        auto visitor = WTF::makeVisitor(std::forward<F>(f)...);
 
-    PaddingEdge(CSS::ValueLiteral<CSS::PercentageUnit::Percentage> percentage)
-        : m_value { percentage.value, WebCore::LengthType::Percent }
-    {
-    }
-
-    PaddingEdge(Style::Length<CSS::Nonnegative> pixels)
-        : m_value { pixels.value, WebCore::LengthType::Fixed }
-    {
-    }
-
-    PaddingEdge(Style::Percentage<CSS::Nonnegative> percentage)
-        : m_value { percentage.value, WebCore::LengthType::Percent }
-    {
-    }
-
-    bool isZero() const { return m_value.isZero(); }
-
-    bool isFixed() const { return m_value.isFixed(); }
-    bool isPercent() const { return m_value.isPercent(); }
-    bool isCalculated() const { return m_value.isCalculated(); }
-    bool isPercentOrCalculated() const { return m_value.isPercentOrCalculated(); }
-
-    std::optional<Length<CSS::Nonnegative>> tryFixed() const { return isFixed() ? std::make_optional(Length<CSS::Nonnegative> { m_value.value() }) : std::nullopt; }
-    std::optional<Percentage<CSS::Nonnegative>> tryPercentage() const { return isPercent() ? std::make_optional(Percentage<CSS::Nonnegative> { m_value.value() }) : std::nullopt; }
-
-    template<typename F> decltype(auto) switchOn(F&& functor) const
-    {
         switch (m_value.type()) {
-        case WebCore::LengthType::Fixed:
-            return functor(LengthPercentage<CSS::Nonnegative>::Dimension { m_value.value() });
-        case WebCore::LengthType::Percent:
-            return functor(LengthPercentage<CSS::Nonnegative>::Percentage { m_value.value() });
-        case WebCore::LengthType::Calculated:
-            return functor(LengthPercentage<CSS::Nonnegative>::Calc { m_value.protectedCalculationValue() });
-        default:
+        case WebCore::LengthType::Fixed:            return visitor(Fixed { m_value.value() });
+        case WebCore::LengthType::Percent:          return visitor(Percentage { m_value.value() });
+        case WebCore::LengthType::Calculated:       return visitor(Calc { m_value.calculationValue() });
+
+        case WebCore::LengthType::Auto:
+        case WebCore::LengthType::Intrinsic:
+        case WebCore::LengthType::MinIntrinsic:
+        case WebCore::LengthType::MinContent:
+        case WebCore::LengthType::MaxContent:
+        case WebCore::LengthType::FillAvailable:
+        case WebCore::LengthType::FitContent:
+        case WebCore::LengthType::Content:
+        case WebCore::LengthType::Normal:
+        case WebCore::LengthType::Relative:
+        case WebCore::LengthType::Undefined:
             break;
         }
         RELEASE_ASSERT_NOT_REACHED();
     }
+
+    bool hasSameType(const PaddingEdge& other) const { return m_value.type() == other.m_value.type(); }
 
     bool operator==(const PaddingEdge&) const = default;
 
@@ -101,6 +114,31 @@ private:
     friend LayoutUnit evaluateMinimum(const PaddingEdge&, LayoutUnit);
     friend WTF::TextStream& operator<<(WTF::TextStream&, const PaddingEdge&);
 
+    static bool isValid(const WebCore::Length& length)
+    {
+        switch (length.type()) {
+        case WebCore::LengthType::Fixed:
+            return CSS::isWithinRange<Fixed::range>(length.value());
+        case WebCore::LengthType::Percent:
+            return CSS::isWithinRange<Percentage::range>(length.value());
+        case WebCore::LengthType::Calculated:
+        case WebCore::LengthType::Auto:
+            return true;
+        case WebCore::LengthType::Intrinsic:
+        case WebCore::LengthType::MinIntrinsic:
+        case WebCore::LengthType::MinContent:
+        case WebCore::LengthType::MaxContent:
+        case WebCore::LengthType::FillAvailable:
+        case WebCore::LengthType::FitContent:
+        case WebCore::LengthType::Content:
+        case WebCore::LengthType::Normal:
+        case WebCore::LengthType::Relative:
+        case WebCore::LengthType::Undefined:
+            break;
+        }
+        return false;
+    }
+
     WebCore::Length m_value;
 };
 
@@ -110,7 +148,7 @@ using PaddingBox = MinimallySerializingSpaceSeparatedRectEdges<PaddingEdge>;
 
 // MARK: - Conversion
 
-PaddingEdge paddingEdgeFromCSSValue(const CSSValue&, BuilderState&);
+template<> struct CSSValueConversion<PaddingEdge> { auto operator()(BuilderState&, const CSSValue&) -> PaddingEdge; };
 
 // MARK: - Evaluation
 
@@ -118,11 +156,6 @@ template<> struct Evaluation<PaddingEdge> {
     auto operator()(const PaddingEdge& edge, LayoutUnit referenceLength) -> LayoutUnit
     {
         return valueForLength(edge.m_value, referenceLength);
-    }
-
-    auto operator()(const PaddingEdge& edge, int referenceLength) -> int
-    {
-        return static_cast<int>(valueForLength(edge.m_value, referenceLength));
     }
 
     auto operator()(const PaddingEdge& edge, float referenceLength) -> float

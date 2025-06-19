@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015, 2016 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -68,7 +68,7 @@ public:
 
     WEBCORE_EXPORT IDBConnectionIdentifier identifier() const;
 
-    IDBConnectionProxy& proxy();
+    IDBConnectionProxy& proxy() { return m_proxy; }
 
     void deleteDatabase(const IDBOpenRequestData&);
     WEBCORE_EXPORT void didDeleteDatabase(const IDBResultData&);
@@ -162,7 +162,7 @@ private:
     WeakPtr<IDBConnectionToServerDelegate> m_delegate;
     bool m_serverConnectionIsValid { true };
 
-    UniqueRef<IDBConnectionProxy> m_proxy;
+    const UniqueRef<IDBConnectionProxy> m_proxy;
 };
 
 } // namespace IDBClient

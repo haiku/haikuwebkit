@@ -3,7 +3,7 @@
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2005 Allan Sandfeld Jensen (kde@carewolf.com)
  *           (C) 2005, 2006 Samuel Weinig (sam.weinig@gmail.com)
- * Copyright (C) 2005-2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2005-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2010-2018 Google Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -1091,7 +1091,7 @@ void RenderElement::styleDidChange(StyleDifference diff, const RenderStyle* oldS
 
 #if !PLATFORM(IOS_FAMILY)
     if (oldStyle && !areCursorsEqual(oldStyle, &style()))
-        protectedFrame()->checkedEventHandler()->scheduleCursorUpdate();
+        protectedFrame()->eventHandler().scheduleCursorUpdate();
 #endif
 
     bool hadOutlineAuto = oldStyle && oldStyle->hasAutoOutlineStyle();
@@ -2482,11 +2482,11 @@ void RenderElement::repaintOldAndNewPositionsForSVGRenderer() const
 static RenderObject::BlockContentHeightType includeNonFixedHeight(const RenderObject& renderer)
 {
     const RenderStyle& style = renderer.style();
-    if (style.height().isFixed()) {
+    if (auto fixedHeight = style.height().tryFixed()) {
         if (CheckedPtr block = dynamicDowncast<RenderBlock>(renderer)) {
             // For fixed height styles, if the overflow size of the element spills out of the specified
             // height, assume we can apply text auto-sizing.
-            if (block->effectiveOverflowY() == Overflow::Visible && style.height().value() < block->layoutOverflowRect().maxY())
+            if (block->effectiveOverflowY() == Overflow::Visible && fixedHeight->value < block->layoutOverflowRect().maxY())
                 return RenderObject::OverflowHeight;
         }
         return RenderObject::FixedHeight;

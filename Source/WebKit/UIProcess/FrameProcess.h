@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -51,7 +51,7 @@ private:
     static Ref<FrameProcess> create(WebProcessProxy& process, BrowsingContextGroup& group, const WebCore::Site& site, const WebPreferences& preferences, InjectBrowsingContextIntoProcess injectBrowsingContextIntoProcess) { return adoptRef(*new FrameProcess(process, group, site, preferences, injectBrowsingContextIntoProcess)); }
     FrameProcess(WebProcessProxy&, BrowsingContextGroup&, const WebCore::Site&, const WebPreferences&, InjectBrowsingContextIntoProcess);
 
-    Ref<WebProcessProxy> m_process;
+    const Ref<WebProcessProxy> m_process;
     WeakPtr<BrowsingContextGroup> m_browsingContextGroup;
     const WebCore::Site m_site;
 };

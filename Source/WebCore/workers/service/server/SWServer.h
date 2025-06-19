@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -379,7 +379,7 @@ private:
     Vector<CompletionHandler<void()>> m_controlledClientsBecomesEmptyHandlers;
     MemoryCompactRobinHoodHashMap<String, ScriptExecutionContextIdentifier> m_visibleClientIdToInternalClientIdMap;
 
-    UniqueRef<SWOriginStore> m_originStore;
+    const UniqueRef<SWOriginStore> m_originStore;
     RefPtr<SWRegistrationStore> m_registrationStore;
     HashMap<RegistrableDomain, Vector<ServiceWorkerContextData>> m_pendingContextDatas;
     HashMap<RegistrableDomain, HashMap<ServiceWorkerIdentifier, Vector<RunServiceWorkerCallback>>> m_serviceWorkerRunRequests;

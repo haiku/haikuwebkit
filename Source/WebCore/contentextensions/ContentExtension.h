@@ -54,7 +54,7 @@ public:
 
 private:
     ContentExtension(const String& identifier, Ref<CompiledContentExtension>&&, URL&&, ShouldCompileCSS);
-    uint32_t findFirstIgnorePreviousRules() const;
+    uint32_t findFirstIgnoreRule() const;
     
     String m_identifier;
     const Ref<CompiledContentExtension> m_compiledExtension;

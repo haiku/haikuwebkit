@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2019-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -156,11 +156,11 @@ RefPtr<AXIsolatedTree> AXIsolatedTree::create(AXObjectCache& axObjectCache)
 
     // Generate the nodes of the tree and set its root and focused objects.
     // For this, we need the root and focused objects of the AXObject tree.
-    auto* axRoot = axObjectCache.getOrCreate(document->view());
+    RefPtr axRoot = axObjectCache.getOrCreate(document->view());
     if (axRoot)
         tree->generateSubtree(*axRoot);
 
-    auto* axFocus = axObjectCache.focusedObjectForPage(document->page());
+    RefPtr axFocus = axObjectCache.focusedObjectForPage(document->page());
     if (axFocus)
         tree->setFocusedNodeID(axFocus->objectID());
     tree->setSelectedTextMarkerRange(document->selection().selection());
@@ -244,7 +244,7 @@ void AXIsolatedTree::removeTreeForPageID(PageIdentifier pageID)
     ASSERT(isMainThread());
 
     Locker locker { s_storeLock };
-    if (auto tree = treePageCache().take(pageID)) {
+    if (RefPtr tree = treePageCache().take(pageID)) {
         tree->m_geometryManager = nullptr;
         tree->queueForDestruction();
     }
@@ -253,7 +253,7 @@ void AXIsolatedTree::removeTreeForPageID(PageIdentifier pageID)
 RefPtr<AXIsolatedTree> AXIsolatedTree::treeForPageID(PageIdentifier pageID)
 {
     Locker locker { s_storeLock };
-    if (auto tree = treePageCache().get(pageID))
+    if (RefPtr tree = treePageCache().get(pageID))
         return tree;
     return nullptr;
 }
@@ -451,7 +451,7 @@ void AXIsolatedTree::collectNodeChangesForSubtree(AccessibilityObject& axObject)
 
     SetForScope isCollectingNodeChanges(m_isCollectingNodeChanges, true);
 
-    auto* axParent = axObject.parentInCoreTree();
+    RefPtr axParent = axObject.parentInCoreTree();
     auto parentID = axParent ? std::optional { axParent->objectID() } : std::nullopt;
     auto axChildrenCopy = axObject.children();
 
@@ -529,7 +529,7 @@ void AXIsolatedTree::updateNode(AccessibilityObject& axObject)
     if (!axObject.isDescendantOfBarrenParent())
         return;
 
-    auto* axParent = axObject.parentInCoreTree();
+    RefPtr axParent = axObject.parentInCoreTree();
     if (!axParent)
         return;
 
@@ -544,8 +544,8 @@ void AXIsolatedTree::objectChangedIgnoredState(const AccessibilityObject& object
 #if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
     ASSERT(isMainThread());
 
-    if (auto* cell = dynamicDowncast<AccessibilityTableCell>(object)) {
-        if (auto* parentTable = cell->parentTable()) {
+    if (RefPtr cell = dynamicDowncast<AccessibilityTableCell>(object)) {
+        if (RefPtr parentTable = cell->parentTable()) {
             // FIXME: This should be as simple as:
             //     queueNodeUpdate(*parentTable->objectID(), { { AXProperty::Cells, AXProperty::CellSlots, AXProperty::Columns } });
             // As these are the table properties that depend on cells. But we can't do that, because we compute "new" column accessibility objects
@@ -691,6 +691,9 @@ void AXIsolatedTree::updateNodeProperties(AccessibilityObject& axObject, const A
             break;
         case AXProperty::IsColumnHeader:
             properties.append({ AXProperty::IsColumnHeader, axObject.isColumnHeader() });
+            break;
+        case AXProperty::IsEditableWebArea:
+            properties.append({ AXProperty::IsEditableWebArea, axObject.isEditableWebArea() });
             break;
         case AXProperty::IsEnabled:
             properties.append({ AXProperty::IsEnabled, axObject.isEnabled() });
@@ -969,7 +972,7 @@ void AXIsolatedTree::updateChildren(AccessibilityObject& axObject, ResolveNodeCh
 
                 // This child should be added to the isolated tree but hasn't been yet.
                 // Add it to the nodemap so the recursive call to updateChildren below properly builds the subtree for this object.
-                auto* parent = axObject.parentInCoreTree();
+                RefPtr parent = axObject.parentInCoreTree();
                 m_nodeMap.set(liveChild->objectID(), ParentChildrenIDs { parent ? std::optional { parent->objectID() } : std::nullopt, liveChild->childrenIDs() });
                 m_unresolvedPendingAppends.add(liveChild->objectID());
             }
@@ -1000,7 +1003,7 @@ void AXIsolatedTree::updateChildren(AccessibilityObject& axObject, ResolveNodeCh
             oldChildrenIDs.removeAt(index);
 
             // Propagate any subtree updates downwards for this already-existing child.
-            if (auto* liveChild = dynamicDowncast<AccessibilityObject>(newChildren[i].get()); liveChild && liveChild->hasDirtySubtree())
+            if (RefPtr liveChild = dynamicDowncast<AccessibilityObject>(newChildren[i].get()); liveChild && liveChild->hasDirtySubtree())
                 queueNodeUpdate(liveChild->objectID(), NodeUpdateOptions::childrenUpdate());
         } else {
             // This is a new child, add it to the tree.
@@ -1226,7 +1229,7 @@ void AXIsolatedTree::updateRootScreenRelativePosition()
     ASSERT(isMainThread());
 
     CheckedPtr cache = m_axObjectCache.get();
-    if (auto* axRoot = cache && cache->document() ? cache->getOrCreate(cache->document()->view()) : nullptr)
+    if (RefPtr axRoot = cache && cache->document() ? cache->getOrCreate(cache->document()->view()) : nullptr)
         queueNodeUpdate(axRoot->objectID(), { AXProperty::ScreenRelativePosition });
 }
 
@@ -1842,6 +1845,9 @@ IsolatedObjectData createIsolatedObjectData(const Ref<AccessibilityObject>& axOb
             setProperty(AXProperty::RelativeFrame, IntRect());
         } else
             setProperty(AXProperty::InitialFrameRect, object.frameRect());
+
+        if (isWebArea)
+            setProperty(AXProperty::IsEditableWebArea, object.isEditableWebArea());
 
         if (object.supportsPath()) {
             setProperty(AXProperty::SupportsPath, true);

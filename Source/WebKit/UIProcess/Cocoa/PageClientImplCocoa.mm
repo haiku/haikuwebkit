@@ -83,7 +83,7 @@ void PageClientImplCocoa::underPageBackgroundColorDidChange()
 
     [webView didChangeValueForKey:@"underPageBackgroundColor"];
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    [webView _updateTopContentInsetFillCaptureColor];
+    [webView _updateTopScrollPocketCaptureColor];
 #endif
 }
 

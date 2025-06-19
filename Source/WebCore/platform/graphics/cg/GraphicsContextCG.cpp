@@ -1128,21 +1128,13 @@ void GraphicsContextCG::setCGShadow(const std::optional<GraphicsDropShadow>& sha
 
     CGContextSetAlpha(context, shadow->opacity);
 
-#if HAVE(CGSTYLE_CREATE_SHADOW2)
     auto style = adoptCF(CGStyleCreateShadow2(CGSizeMake(xOffset, yOffset), blurRadius, cachedCGColor(shadow->color).get()));
     CGContextSetStyle(context, style.get());
-#else
-    CGContextSetShadowWithColor(context, CGSizeMake(xOffset, yOffset), blurRadius, cachedCGColor(shadow->color).get());
-#endif
 }
 
 void GraphicsContextCG::clearCGShadow()
 {
-#if HAVE(CGSTYLE_CREATE_SHADOW2)
     CGContextSetStyle(platformContext(), nullptr);
-#else
-    CGContextSetShadowWithColor(platformContext(), CGSizeZero, 0, 0);
-#endif
 }
 
 void GraphicsContextCG::setCGStyle(const std::optional<GraphicsStyle>& style, bool shadowsIgnoreTransforms)

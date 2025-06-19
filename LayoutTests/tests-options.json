@@ -2018,6 +2018,9 @@
     "imported/w3c/web-platform-tests/css/css-view-transitions/update-callback-timeout.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/css/css-writing-modes/forms/select-multiple-options-visual-order.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/css/cssom-view/idlharness.html": [
         "slow"
     ],
@@ -5066,6 +5069,9 @@
     "imported/w3c/web-platform-tests/pointerevents/coalesced_events_attributes_under_load.https.optional.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/pointerevents/pointerevent_fractional_coordinates_untrusted.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/pointerevents/pointerevent_movementxy.html": [
         "slow"
     ],
@@ -5097,9 +5103,6 @@
         "slow"
     ],
     "imported/w3c/web-platform-tests/pointerevents/pointerevent_touch-action-table-none-test_touch.html": [
-        "slow"
-    ],
-    "imported/w3c/web-platform-tests/pointerevents/pointerlock/pointerevent_movementxy.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/pointerlock/movementX_Y_basic.html": [

@@ -4687,61 +4687,53 @@ RefPtr<AccessCase> InlineCacheCompiler::tryFoldToMegamorphic(CodeBlock* codeBloc
                 return AccessCase::create(vm(), codeBlock, AccessCase::IndexedMegamorphicStore, nullptr);
             return nullptr;
         }
+#if USE(JSVALUE64)
         case AccessType::InById: {
             auto identifier = m_stubInfo.m_identifier;
-            bool allAreSimpleHitOrMiss = true;
+            unsigned numberOfUndesiredMegamorphicAccessVariants = 0;
             for (auto& accessCase : cases) {
-                if (accessCase->type() != AccessCase::InHit && accessCase->type() != AccessCase::InMiss) {
-                    allAreSimpleHitOrMiss = false;
-                    break;
-                }
-                if (accessCase->usesPolyProto()) {
-                    allAreSimpleHitOrMiss = false;
-                    break;
-                }
-                if (accessCase->viaGlobalProxy()) {
-                    allAreSimpleHitOrMiss = false;
-                    break;
-                }
+                if (accessCase->type() != AccessCase::InHit && accessCase->type() != AccessCase::InMiss)
+                    return nullptr;
+
+                if (accessCase->viaGlobalProxy())
+                    return nullptr;
+
+                if (accessCase->usesPolyProto())
+                    ++numberOfUndesiredMegamorphicAccessVariants;
             }
 
             // Currently, we do not apply megamorphic cache for "length" property since Array#length and String#length are too common.
             if (!canUseMegamorphicInById(vm(), identifier.uid()))
-                allAreSimpleHitOrMiss = false;
+                return nullptr;
 
-#if USE(JSVALUE32_64)
-            allAreSimpleHitOrMiss = false;
-#endif
-
-            if (allAreSimpleHitOrMiss)
-                return AccessCase::create(vm(), codeBlock, AccessCase::InMegamorphic, useHandlerIC() ? nullptr : identifier);
-            return nullptr;
-        }
-        case AccessType::InByVal: {
-            bool allAreSimpleHitOrMiss = true;
-            for (auto& accessCase : cases) {
-                if (accessCase->type() != AccessCase::InHit && accessCase->type() != AccessCase::InMiss) {
-                    allAreSimpleHitOrMiss = false;
-                    break;
-                }
-                if (accessCase->usesPolyProto()) {
-                    allAreSimpleHitOrMiss = false;
-                    break;
-                }
-                if (accessCase->viaGlobalProxy()) {
-                    allAreSimpleHitOrMiss = false;
-                    break;
-                }
+            if (numberOfUndesiredMegamorphicAccessVariants) {
+                if ((numberOfUndesiredMegamorphicAccessVariants / static_cast<double>(cases.size())) >= Options::thresholdForUndesiredMegamorphicAccessVariantListSize())
+                    return nullptr;
             }
 
-#if USE(JSVALUE32_64)
-            allAreSimpleHitOrMiss = false;
-#endif
-
-            if (allAreSimpleHitOrMiss)
-                return AccessCase::create(vm(), codeBlock, AccessCase::IndexedMegamorphicIn, nullptr);
-            return nullptr;
+            return AccessCase::create(vm(), codeBlock, AccessCase::InMegamorphic, useHandlerIC() ? nullptr : identifier);
         }
+        case AccessType::InByVal: {
+            unsigned numberOfUndesiredMegamorphicAccessVariants = 0;
+            for (auto& accessCase : cases) {
+                if (accessCase->type() != AccessCase::InHit && accessCase->type() != AccessCase::InMiss)
+                    return nullptr;
+
+                if (accessCase->viaGlobalProxy())
+                    return nullptr;
+
+                if (accessCase->usesPolyProto())
+                    ++numberOfUndesiredMegamorphicAccessVariants;
+            }
+
+            if (numberOfUndesiredMegamorphicAccessVariants) {
+                if ((numberOfUndesiredMegamorphicAccessVariants / static_cast<double>(cases.size())) >= Options::thresholdForUndesiredMegamorphicAccessVariantListSize())
+                    return nullptr;
+            }
+
+            return AccessCase::create(vm(), codeBlock, AccessCase::IndexedMegamorphicIn, nullptr);
+        }
+#endif
         default:
             break;
         }

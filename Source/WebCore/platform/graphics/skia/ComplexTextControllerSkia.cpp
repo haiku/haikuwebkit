@@ -71,7 +71,7 @@ ComplexTextController::ComplexTextRun::ComplexTextRun(hb_buffer_t* buffer, const
         m_coreTextIndices[i] = glyphInfos[i].cluster;
 
         uint16_t glyph = glyphInfos[i].codepoint;
-        if (m_font.isZeroWidthSpaceGlyph(glyph) || !m_font.platformData().size()) {
+        if (m_font->isZeroWidthSpaceGlyph(glyph) || !m_font->platformData().size()) {
             m_glyphs[i] = glyph;
             m_baseAdvances[i] = { };
             m_glyphOrigins[i] = { };
@@ -180,14 +180,14 @@ void ComplexTextController::collectComplexTextRunsForCharacters(std::span<const 
     const auto& features = fontPlatformData.features();
     // Kerning is not handled as font features, so only in case it's explicitly disabled
     // we need to create a new vector to include kern feature.
-    const hb_feature_t* featuresData = features.isEmpty() ? nullptr : features.data();
+    const hb_feature_t* featuresData = features.isEmpty() ? nullptr : features.span().data();
     unsigned featuresSize = features.size();
     Vector<hb_feature_t> featuresWithKerning;
     if (!m_fontCascade->enableKerning()) {
         featuresWithKerning.reserveInitialCapacity(featuresSize + 1);
         featuresWithKerning.append({ HB_TAG('k', 'e', 'r', 'n'), 0, 0, static_cast<unsigned>(-1) });
         featuresWithKerning.appendVector(features);
-        featuresData = featuresWithKerning.data();
+        featuresData = featuresWithKerning.span().data();
         featuresSize = featuresWithKerning.size();
     }
 

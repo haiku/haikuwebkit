@@ -30,6 +30,11 @@
 namespace WebCore {
 namespace Style {
 
+UnevaluatedCalculationBase::UnevaluatedCalculationBase(CalculationValue& value)
+    : calc { value }
+{
+}
+
 UnevaluatedCalculationBase::UnevaluatedCalculationBase(Ref<CalculationValue>&& value)
     : calc { WTFMove(value) }
 {

@@ -470,7 +470,9 @@ extern "C" { extern void (*const __identifier("??_7TestNamedSetterWithIndexedGet
 #else
 extern "C" { extern void* _ZTVN7WebCore32TestNamedSetterWithIndexedGetterE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestNamedSetterWithIndexedGetter>, void>> static inline void verifyVTable(TestNamedSetterWithIndexedGetter* ptr) {
+template<std::same_as<TestNamedSetterWithIndexedGetter> T>
+static inline void verifyVTable(TestNamedSetterWithIndexedGetter* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

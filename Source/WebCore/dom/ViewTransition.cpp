@@ -133,8 +133,6 @@ RefPtr<ViewTransition> ViewTransition::resolveInboundCrossDocumentViewTransition
     Ref { viewTransition->m_updateCallbackDone.second }->resolve();
     viewTransition->m_phase = ViewTransitionPhase::UpdateCallbackCalled;
 
-    // FIXME: Setup implementation-defined timeout.
-
     return viewTransition;
 }
 

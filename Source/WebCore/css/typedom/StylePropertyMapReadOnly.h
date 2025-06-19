@@ -45,7 +45,7 @@ public:
     enum class Type {
         Computed,
         Declared,
-        UncheckedKeyHashMap,
+        HashMap,
         Inline,
     };
 

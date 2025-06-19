@@ -338,7 +338,9 @@ extern "C" { extern void (*const __identifier("??_7TestReadOnlyMapLike@WebCore@@
 #else
 extern "C" { extern void* _ZTVN7WebCore19TestReadOnlyMapLikeE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestReadOnlyMapLike>, void>> static inline void verifyVTable(TestReadOnlyMapLike* ptr) {
+template<std::same_as<TestReadOnlyMapLike> T>
+static inline void verifyVTable(TestReadOnlyMapLike* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

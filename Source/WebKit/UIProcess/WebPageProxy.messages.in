@@ -87,7 +87,7 @@ messages -> WebPageProxy {
     DidChangeScrollbarsForMainFrame(bool hasHorizontalScrollbar, bool hasVerticalScrollbar)
     DidChangeScrollOffsetPinningForMainFrame(WebCore::RectEdges<bool> pinnedState)
     DidChangePageCount(unsigned pageCount)
-#if PLATFORM(MAC)
+#if PLATFORM(MAC) || PLATFORM(WPE) || PLATFORM(GTK)
     ThemeColorChanged(WebCore::Color themeColor)
 #endif
 #if ENABLE(WEB_PAGE_SPATIAL_BACKDROP)

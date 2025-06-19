@@ -71,9 +71,9 @@ void FrameTree::appendChild(Frame& child)
 
     if (oldLast) {
         child.tree().m_previousSibling = oldLast;
-        oldLast->tree().m_nextSibling = &child;
+        oldLast->tree().m_nextSibling = child;
     } else
-        m_firstChild = &child;
+        m_firstChild = child;
 
     m_scopedChildCount = invalidCount;
 
@@ -122,9 +122,9 @@ void FrameTree::replaceChild(Frame& oldChild, Frame& newChild)
     newTree.m_previousSibling = oldPreviousSibling.get();
 
     if (oldChildWasFirst)
-        m_firstChild = &newChild;
+        m_firstChild = newChild;
     if (oldChildWasLast)
-        m_lastChild = &newChild;
+        m_lastChild = newChild;
     if (oldNextSibling)
         oldNextSibling->tree().m_previousSibling = &newChild;
     if (oldPreviousSibling)

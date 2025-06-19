@@ -191,8 +191,8 @@ public:
 
     bool contains(InstructionType* instruction) const
     {
-        const uint8_t* pointer = std::bit_cast<const uint8_t*>(instruction);
-        return pointer >= m_instructions.data() && pointer < (m_instructions.data() + m_instructions.size());
+        auto* pointer = std::bit_cast<const uint8_t*>(instruction);
+        return pointer >= m_instructions.begin() && pointer < m_instructions.end();
     }
 
 protected:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -198,6 +198,11 @@ UnifiedPDFPlugin::UnifiedPDFPlugin(HTMLPlugInElement& element)
 
     if (m_presentationController->wantsWheelEvents())
         wantsWheelEventsChanged();
+
+    if (shouldSizeToFitContent()) {
+        if (RefPtr frameView = m_frame->coreLocalFrame()->view())
+            m_prohibitScrollingDueToContentSizeChanges = frameView->prohibitScrollingWhenChangingContentSizeForScope();
+    }
 }
 
 void UnifiedPDFPlugin::installAnnotationContainer()
@@ -2046,7 +2051,7 @@ bool UnifiedPDFPlugin::handleMouseEvent(const WebMouseEvent& event)
                     if (RefPtr webPage = frame->page(); webPage && webPage->hasActiveContextMenuInteraction())
                         return false;
 #endif
-                    auto immediateActionStage = frame->protectedCoreLocalFrame()->checkedEventHandler()->immediateActionStage();
+                    auto immediateActionStage = frame->protectedCoreLocalFrame()->eventHandler().immediateActionStage();
                     return !immediateActionBeganOrWasCompleted(immediateActionStage);
                 }();
 

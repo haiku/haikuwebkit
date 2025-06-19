@@ -81,16 +81,15 @@ void RemoteLayerBackingStoreCollection::prepareBackingStoresForDisplay(RemoteLay
         layer->properties().notePropertiesChanged(LayerChange::BackingStoreChanged);
         transaction.layerPropertiesChanged(layer);
 
-        if (CheckedPtr remoteBackingStore = dynamicDowncast<RemoteLayerWithRemoteRenderingBackingStore>(backingStore.get())) {
-            if (remoteBackingStore->performDelegatedLayerDisplay())
-                continue;
+        if (backingStore->performDelegatedLayerDisplay())
+            continue;
 
+        backingStore->prepareToDisplay();
+
+        if (CheckedPtr remoteBackingStore = dynamicDowncast<RemoteLayerWithRemoteRenderingBackingStore>(backingStore.get())) {
             RefPtr bufferSet = remoteBackingStore->bufferSet();
             if (!bufferSet)
                 continue;
-
-            if (!remoteBackingStore->hasFrontBuffer() || !remoteBackingStore->supportsPartialRepaint())
-                remoteBackingStore->setNeedsDisplay();
 
             prepareBuffersData.append({
                 bufferSet,
@@ -102,8 +101,6 @@ void RemoteLayerBackingStoreCollection::prepareBackingStoresForDisplay(RemoteLay
 
             backingStoreList.append(*remoteBackingStore);
         }
-
-        backingStore->prepareToDisplay();
     }
 
     if (prepareBuffersData.size()) {

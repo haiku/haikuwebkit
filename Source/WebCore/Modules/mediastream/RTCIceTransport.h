@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2016 Ericsson AB. All rights reserved.
- * Copyright (C) 2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -88,7 +88,7 @@ private:
     void onSelectedCandidatePairChanged(RefPtr<RTCIceCandidate>&&, RefPtr<RTCIceCandidate>&&) final;
 
     bool m_isStopped { false };
-    UniqueRef<RTCIceTransportBackend> m_backend;
+    const UniqueRef<RTCIceTransportBackend> m_backend;
     WeakPtr<RTCPeerConnection, WeakPtrImplWithEventTargetData> m_connection;
     RTCIceTransportState m_transportState { RTCIceTransportState::New };
     RTCIceGatheringState m_gatheringState { RTCIceGatheringState::New };

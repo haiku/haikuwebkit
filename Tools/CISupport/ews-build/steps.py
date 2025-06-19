@@ -5508,7 +5508,7 @@ class RunAPITests(shell.TestNewStyle, AddToLogMixin, ShellMixin):
     test_failures_log_name = 'test-failures'
     results_db_log_name = 'results-db'
     suffix = 'first_run'
-    command = ['python3', 'Tools/Scripts/run-api-tests', '--no-build',
+    command = ['python3', 'Tools/Scripts/run-api-tests', '--timestamps', '--no-build',
                WithProperties('--%(configuration)s'), '--verbose', '--json-output={0}'.format(jsonFileName)]
     failedTestsFormatString = '%d api test%s failed or timed out'
     failedTestCount = 0
@@ -5990,9 +5990,9 @@ class PrintConfiguration(steps.ShellSequence):
             return 'Unknown'
 
         build_to_name_mapping = {
+            '26': 'Tahoe',
             '15': 'Sequoia',
-            '14': 'Sonoma',
-            '13': 'Ventura'
+            '14': 'Sonoma'
         }
 
         for key, value in build_to_name_mapping.items():

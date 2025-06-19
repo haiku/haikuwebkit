@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Apple Inc.  All rights reserved.
+ * Copyright (C) 2017-2023 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -54,10 +54,10 @@ static MemoryCompactLookupOnlyRobinHoodHashSet<String> filterSupportedImageTypes
     auto systemSupportedCFImageTypes = adoptCF(CGImageSourceCopyTypeIdentifiers());
     CFIndex count = CFArrayGetCount(systemSupportedCFImageTypes.get());
 
-    UncheckedKeyHashSet<String> systemSupportedImageTypes;
+    HashSet<String> systemSupportedImageTypes;
     CFArrayApplyFunction(systemSupportedCFImageTypes.get(), CFRangeMake(0, count), [](const void *value, void *context) {
         String imageType = static_cast<CFStringRef>(value);
-        static_cast<UncheckedKeyHashSet<String>*>(context)->add(imageType);
+        static_cast<HashSet<String>*>(context)->add(imageType);
     }, &systemSupportedImageTypes);
 
     MemoryCompactLookupOnlyRobinHoodHashSet<String> filtered;

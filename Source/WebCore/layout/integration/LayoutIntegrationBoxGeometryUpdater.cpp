@@ -494,6 +494,7 @@ void BoxGeometryUpdater::updateBoxGeometryAfterIntegrationLayout(const Layout::E
             boxGeometry.setHorizontalMargin(horizontalLogicalMargin(*renderListMarker, { }, style.writingMode()));
             if (!renderListMarker->isInside())
                 setListMarkerOffsetForMarkerOutside(*renderListMarker);
+            const_cast<Layout::ElementBox&>(layoutBox).setListMarkerLayoutBounds(renderListMarker->layoutBounds());
         }
 
         if (is<RenderTable>(*renderBox)) {

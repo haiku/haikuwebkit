@@ -185,18 +185,8 @@ void PlaybackSessionModelMediaElement::updateForEventName(const WTF::AtomString&
         || eventName == eventNames().playEvent
         || eventName == eventNames().ratechangeEvent
         || eventName == eventNames().waitingEvent
-        || eventName == eventNames().canplayEvent) {
-        OptionSet<PlaybackSessionModel::PlaybackState> playbackState;
-        if (isPlaying())
-            playbackState.add(PlaybackSessionModel::PlaybackState::Playing);
-        if (isStalled())
-            playbackState.add(PlaybackSessionModel::PlaybackState::Stalled);
-
-        double playbackRate =  this->playbackRate();
-        double defaultPlaybackRate = this->defaultPlaybackRate();
-        for (auto& client : m_clients)
-            client->rateChanged(playbackState, playbackRate, defaultPlaybackRate);
-    }
+        || eventName == eventNames().canplayEvent)
+        updateRate();
 
     if (all
         || eventName == eventNames().timeupdateEvent) {
@@ -283,12 +273,22 @@ void PlaybackSessionModelMediaElement::play()
 {
     if (RefPtr mediaElement = m_mediaElement)
         mediaElement->play();
+
+    // If the media element is already playing, it will not result in a "play"
+    // event, so explicitly send a rateChanged() notification, to update the
+    // cached playback state:
+    updateRate();
 }
 
 void PlaybackSessionModelMediaElement::pause()
 {
     if (RefPtr mediaElement = m_mediaElement)
         mediaElement->pause();
+
+    // If the media element is already paused, it will not result in a "pause"
+    // event, so explicitly send a rateChanged() notification, to update the
+    // cached playback state:
+    updateRate();
 }
 
 void PlaybackSessionModelMediaElement::togglePlayState()
@@ -565,6 +565,20 @@ void PlaybackSessionModelMediaElement::maybeUpdateVideoMetadata()
         for (auto& client : m_clients)
             client->videoProjectionMetadataChanged(m_videoProjectionMetadata);
     }
+}
+
+void PlaybackSessionModelMediaElement::updateRate()
+{
+    OptionSet<PlaybackSessionModel::PlaybackState> playbackState;
+    if (isPlaying())
+        playbackState.add(PlaybackSessionModel::PlaybackState::Playing);
+    if (isStalled())
+        playbackState.add(PlaybackSessionModel::PlaybackState::Stalled);
+
+    double playbackRate =  this->playbackRate();
+    double defaultPlaybackRate = this->defaultPlaybackRate();
+    for (auto& client : m_clients)
+        client->rateChanged(playbackState, playbackRate, defaultPlaybackRate);
 }
 
 void PlaybackSessionModelMediaElement::updateMediaSelectionIndices()

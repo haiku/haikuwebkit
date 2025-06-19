@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -40,7 +40,7 @@ Ref<AXRemoteFrame> AXRemoteFrame::create(AXID axID)
 
 LayoutRect AXRemoteFrame::elementRect() const
 {
-    auto* parent = parentObject();
+    RefPtr parent = parentObject();
     return parent ? parent->elementRect() : LayoutRect();
 }
 

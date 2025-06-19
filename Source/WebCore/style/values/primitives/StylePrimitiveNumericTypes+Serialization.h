@@ -41,6 +41,14 @@ template<Numeric StyleType> struct Serialize<StyleType> {
     }
 };
 
+template<DimensionPercentageNumeric StyleType> struct Serialize<StyleType> {
+    void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value)
+    {
+        // FIXME: Do this more efficiently without creating and destroying a CSS::Numeric object.
+        CSS::serializationForCSS(builder, context, toCSS(value, style));
+    }
+};
+
 template<Calc StyleType> struct Serialize<StyleType> {
     void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value)
     {

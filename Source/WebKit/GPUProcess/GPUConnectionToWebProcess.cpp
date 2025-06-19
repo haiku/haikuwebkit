@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2019-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -176,7 +176,7 @@
 #include "RemoteVideoFrameObjectHeap.h"
 #endif
 
-#define MESSAGE_CHECK(assertion) MESSAGE_CHECK_BASE(assertion, protectedConnection().get())
+#define MESSAGE_CHECK(assertion) MESSAGE_CHECK_BASE(assertion, m_connection)
 
 namespace WebKit {
 using namespace WebCore;
@@ -375,7 +375,7 @@ GPUConnectionToWebProcess::GPUConnectionToWebProcess(GPUProcess& gpuProcess, Web
         hasAV1HardwareDecoder
 #endif
     };
-    protectedConnection()->send(Messages::GPUProcessConnection::DidInitialize(info), 0);
+    m_connection->send(Messages::GPUProcessConnection::DidInitialize(info), 0);
     ++gObjectCountForTesting;
 }
 
@@ -383,18 +383,13 @@ GPUConnectionToWebProcess::~GPUConnectionToWebProcess()
 {
     RELEASE_ASSERT(RunLoop::isMain());
 
-    protectedConnection()->invalidate();
+    m_connection->invalidate();
 
 #if PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
-    protectedSampleBufferDisplayLayerManager()->close();
+    m_sampleBufferDisplayLayerManager->close();
 #endif
 
     --gObjectCountForTesting;
-}
-
-Ref<GPUProcess> GPUConnectionToWebProcess::protectedGPUProcess() const
-{
-    return m_gpuProcess.copyRef();
 }
 
 #if PLATFORM(COCOA) && USE(LIBWEBRTC)
@@ -424,7 +419,7 @@ void GPUConnectionToWebProcess::didClose(IPC::Connection& connection)
 
 #if USE(AUDIO_SESSION)
     if (RefPtr autoSessionProxy = m_audioSessionProxy) {
-        protectedGPUProcess()->protectedAudioSessionManager()->removeProxy(*autoSessionProxy);
+        m_gpuProcess->protectedAudioSessionManager()->removeProxy(*autoSessionProxy);
         m_audioSessionProxy = nullptr;
     }
 #endif
@@ -544,7 +539,7 @@ bool GPUConnectionToWebProcess::allowsExitUnderMemoryPressure() const
         return false;
     if (m_audioMediaStreamTrackRendererInternalUnitManager && m_audioMediaStreamTrackRendererInternalUnitManager->hasUnits())
         return false;
-    if (!protectedSampleBufferDisplayLayerManager()->allowsExitUnderMemoryPressure())
+    if (!m_sampleBufferDisplayLayerManager->allowsExitUnderMemoryPressure())
         return false;
 #endif
 #if HAVE(AVASSETREADER)
@@ -626,7 +621,7 @@ RemoteMediaResourceManager& GPUConnectionToWebProcess::remoteMediaResourceManage
 
     if (!m_remoteMediaResourceManager) {
         Ref manager = RemoteMediaResourceManager::create();
-        manager->initializeConnection(protectedConnection().ptr());
+        manager->initializeConnection(m_connection.ptr());
         m_remoteMediaResourceManager = WTFMove(manager);
     }
 
@@ -655,11 +650,6 @@ Ref<RemoteMediaRecorderPrivateWriterManager> GPUConnectionToWebProcess::protecte
 #endif // PLATFORM(COCOA) && ENABLE(MEDIA_RECORDER)
 
 #if PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
-Ref<RemoteSampleBufferDisplayLayerManager> GPUConnectionToWebProcess::protectedSampleBufferDisplayLayerManager() const
-{
-    return m_sampleBufferDisplayLayerManager.copyRef();
-}
-
 UserMediaCaptureManagerProxy& GPUConnectionToWebProcess::userMediaCaptureManagerProxy()
 {
     if (!m_userMediaCaptureManagerProxy)
@@ -708,7 +698,7 @@ RemoteAudioSessionProxy& GPUConnectionToWebProcess::audioSessionProxy()
         Ref audioSessionProxy = RemoteAudioSessionProxy::create(*this);
         m_audioSessionProxy = audioSessionProxy.ptr();
         auto auditToken = gpuProcess().protectedParentProcessConnection()->getAuditToken();
-        protectedGPUProcess()->protectedAudioSessionManager()->addProxy(audioSessionProxy, auditToken);
+        m_gpuProcess->protectedAudioSessionManager()->addProxy(audioSessionProxy, auditToken);
     }
     return *m_audioSessionProxy;
 }
@@ -755,7 +745,7 @@ void GPUConnectionToWebProcess::releaseRenderingBackend(RenderingBackendIdentifi
 {
     bool found = m_remoteRenderingBackendMap.remove(renderingBackendIdentifier);
     ASSERT_UNUSED(found, found);
-    protectedGPUProcess()->tryExitIfUnusedAndUnderMemoryPressure();
+    m_gpuProcess->tryExitIfUnusedAndUnderMemoryPressure();
 }
 
 #if ENABLE(WEBGL)
@@ -787,7 +777,7 @@ void GPUConnectionToWebProcess::releaseGraphicsContextGL(GraphicsContextGLIdenti
 
     m_remoteGraphicsContextGLMap.remove(identifier);
     if (m_remoteGraphicsContextGLMap.isEmpty())
-        protectedGPUProcess()->tryExitIfUnusedAndUnderMemoryPressure();
+        m_gpuProcess->tryExitIfUnusedAndUnderMemoryPressure();
 }
 
 void GPUConnectionToWebProcess::releaseGraphicsContextGLForTesting(GraphicsContextGLIdentifier identifier)
@@ -860,7 +850,7 @@ void GPUConnectionToWebProcess::releaseGPU(WebGPUIdentifier identifier)
 void GPUConnectionToWebProcess::clearNowPlayingInfo()
 {
     m_isActiveNowPlayingProcess = false;
-    protectedGPUProcess()->nowPlayingManager().removeClient(*this);
+    m_gpuProcess->nowPlayingManager().removeClient(*this);
 }
 
 void GPUConnectionToWebProcess::setNowPlayingInfo(NowPlayingInfo&& nowPlayingInfo)
@@ -884,7 +874,7 @@ void GPUConnectionToWebProcess::updateSupportedRemoteCommands()
 
 void GPUConnectionToWebProcess::didReceiveRemoteControlCommand(PlatformMediaSession::RemoteControlCommandType type, const PlatformMediaSession::RemoteCommandArgument& argument)
 {
-    protectedConnection()->send(Messages::GPUProcessConnection::DidReceiveRemoteCommand(type, argument), 0);
+    m_connection->send(Messages::GPUProcessConnection::DidReceiveRemoteCommand(type, argument), 0);
 }
 
 #if USE(AUDIO_SESSION)
@@ -1191,13 +1181,13 @@ bool GPUConnectionToWebProcess::dispatchSyncMessage(IPC::Connection& connection,
 
 const String& GPUConnectionToWebProcess::mediaCacheDirectory() const
 {
-    return protectedGPUProcess()->mediaCacheDirectory(m_sessionID);
+    return m_gpuProcess->mediaCacheDirectory(m_sessionID);
 }
 
 #if ENABLE(LEGACY_ENCRYPTED_MEDIA) || ENABLE(ENCRYPTED_MEDIA)
 const String& GPUConnectionToWebProcess::mediaKeysStorageDirectory() const
 {
-    return protectedGPUProcess()->mediaKeysStorageDirectory(m_sessionID);
+    return m_gpuProcess->mediaKeysStorageDirectory(m_sessionID);
 }
 #endif
 
@@ -1260,7 +1250,7 @@ void GPUConnectionToWebProcess::updateCaptureOrigin(const WebCore::SecurityOrigi
 #if PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
 void GPUConnectionToWebProcess::startCapturingAudio()
 {
-    protectedGPUProcess()->processIsStartingToCaptureAudio(*this);
+    m_gpuProcess->processIsStartingToCaptureAudio(*this);
 }
 
 void GPUConnectionToWebProcess::processIsStartingToCaptureAudio(GPUConnectionToWebProcess& process)
@@ -1300,7 +1290,7 @@ void GPUConnectionToWebProcess::enableMockMediaSource()
 #if PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
 void GPUConnectionToWebProcess::updateSampleBufferDisplayLayerBoundsAndPosition(SampleBufferDisplayLayerIdentifier identifier, WebCore::FloatRect bounds, std::optional<MachSendRight>&& fence)
 {
-    protectedSampleBufferDisplayLayerManager()->updateSampleBufferDisplayLayerBoundsAndPosition(identifier, bounds, WTFMove(fence));
+    m_sampleBufferDisplayLayerManager->updateSampleBufferDisplayLayerBoundsAndPosition(identifier, bounds, WTFMove(fence));
 }
 #endif
 
@@ -1311,7 +1301,7 @@ void GPUConnectionToWebProcess::updateSharedPreferencesForWebProcess(SharedPrefe
     protectedLibWebRTCCodecsProxy()->updateSharedPreferencesForWebProcess(m_sharedPreferencesForWebProcess);
 #endif
 #if PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
-    protectedSampleBufferDisplayLayerManager()->updateSharedPreferencesForWebProcess(m_sharedPreferencesForWebProcess);
+    m_sampleBufferDisplayLayerManager->updateSharedPreferencesForWebProcess(m_sharedPreferencesForWebProcess);
 #endif
 
     enableMediaPlaybackIfNecessary();
@@ -1327,7 +1317,7 @@ void GPUConnectionToWebProcess::enableMediaPlaybackIfNecessary()
 #if ENABLE(ROUTING_ARBITRATION) && HAVE(AVAUDIO_ROUTING_ARBITER)
     ASSERT(!m_routingArbitrator);
     m_routingArbitrator = LocalAudioSessionRoutingArbitrator::create(*this);
-    protectedGPUProcess()->protectedAudioSessionManager()->protectedSession()->setRoutingArbitrationClient(m_routingArbitrator.get());
+    m_gpuProcess->protectedAudioSessionManager()->protectedSession()->setRoutingArbitrationClient(m_routingArbitrator.get());
 #endif
 }
 
@@ -1343,7 +1333,7 @@ std::optional<audit_token_t> GPUConnectionToWebProcess::presentingApplicationAud
     if (iterator != m_presentingApplicationAuditTokens.end())
         return iterator->value.auditToken();
 
-    if (auto parentAuditToken = protectedGPUProcess()->protectedParentProcessConnection()->getAuditToken())
+    if (auto parentAuditToken = m_gpuProcess->protectedParentProcessConnection()->getAuditToken())
         return *parentAuditToken;
 
     return std::nullopt;

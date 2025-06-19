@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2014 Igalia S.L.
- * Copyright (C) 2016-2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -52,32 +52,32 @@ void WebUserMediaClient::pageDestroyed()
 
 void WebUserMediaClient::requestUserMediaAccess(UserMediaRequest& request)
 {
-    protectedPage()->protectedUserMediaPermissionRequestManager()->startUserMediaRequest(request);
+    protectedPage()->userMediaPermissionRequestManager().startUserMediaRequest(request);
 }
 
 void WebUserMediaClient::cancelUserMediaAccessRequest(UserMediaRequest& request)
 {
-    protectedPage()->protectedUserMediaPermissionRequestManager()->cancelUserMediaRequest(request);
+    protectedPage()->userMediaPermissionRequestManager().cancelUserMediaRequest(request);
 }
 
 void WebUserMediaClient::enumerateMediaDevices(Document& document, UserMediaClient::EnumerateDevicesCallback&& completionHandler)
 {
-    protectedPage()->protectedUserMediaPermissionRequestManager()->enumerateMediaDevices(document, WTFMove(completionHandler));
+    protectedPage()->userMediaPermissionRequestManager().enumerateMediaDevices(document, WTFMove(completionHandler));
 }
 
 WebUserMediaClient::DeviceChangeObserverToken WebUserMediaClient::addDeviceChangeObserver(WTF::Function<void()>&& observer)
 {
-    return protectedPage()->protectedUserMediaPermissionRequestManager()->addDeviceChangeObserver(WTFMove(observer));
+    return protectedPage()->userMediaPermissionRequestManager().addDeviceChangeObserver(WTFMove(observer));
 }
 
 void WebUserMediaClient::removeDeviceChangeObserver(DeviceChangeObserverToken token)
 {
-    protectedPage()->protectedUserMediaPermissionRequestManager()->removeDeviceChangeObserver(token);
+    protectedPage()->userMediaPermissionRequestManager().removeDeviceChangeObserver(token);
 }
 
 void WebUserMediaClient::updateCaptureState(const WebCore::Document& document, bool isActive, WebCore::MediaProducerMediaCaptureKind kind, CompletionHandler<void(std::optional<WebCore::Exception>&&)>&& completionHandler)
 {
-    protectedPage()->protectedUserMediaPermissionRequestManager()->updateCaptureState(document, isActive, kind, WTFMove(completionHandler));
+    protectedPage()->userMediaPermissionRequestManager().updateCaptureState(document, isActive, kind, WTFMove(completionHandler));
 }
 
 void WebUserMediaClient::setShouldListenToVoiceActivity(bool shouldListen)

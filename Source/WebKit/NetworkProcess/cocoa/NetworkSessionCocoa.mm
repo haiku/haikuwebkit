@@ -1636,7 +1636,7 @@ SessionWrapper& NetworkSessionCocoa::sessionWrapperForTask(std::optional<WebPage
     if (isParentProcessAFullWebBrowser(networkProcess()))
         shouldBeConsideredAppBound = NavigatingToAppBoundDomain::No;
 
-    if (auto* storageSession = networkStorageSession()) {
+    if (CheckedPtr storageSession = networkStorageSession()) {
         auto firstParty = WebCore::RegistrableDomain(request.firstPartyForCookies());
         if (storageSession->shouldBlockThirdPartyCookiesButKeepFirstPartyCookiesFor(firstParty))
             return protectedSessionSetForPage(webPageProxyID)->isolatedSession(storedCredentialsPolicy, firstParty, shouldBeConsideredAppBound, *this);
@@ -1952,10 +1952,8 @@ std::unique_ptr<WebSocketTask> NetworkSessionCocoa::createWebSocketTask(WebPageP
     appPrivacyReportTestingData().didLoadAppInitiatedRequest(nsRequest.get().attribution == NSURLRequestAttributionDeveloper);
 #endif
 
-#if HAVE(PROHIBIT_PRIVACY_PROXY)
     if (!allowPrivacyProxy)
         ensureMutableRequest()._prohibitPrivacyProxy = YES;
-#endif
 
     if (hadMainFrameMainResourcePrivateRelayed || request.url().host() == clientOrigin.topOrigin.host()) {
         if ([NSMutableURLRequest instancesRespondToSelector:@selector(_setPrivacyProxyFailClosedForUnreachableNonMainHosts:)])

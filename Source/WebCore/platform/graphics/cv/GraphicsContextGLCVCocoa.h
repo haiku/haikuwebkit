@@ -85,7 +85,7 @@ private:
 
         friend bool operator==(const TextureContent&, const TextureContent&) = default;
     };
-    using TextureContentMap = UncheckedKeyHashMap<GCGLuint, TextureContent, IntHash<GCGLuint>, WTF::UnsignedWithZeroKeyHashTraits<GCGLuint>>;
+    using TextureContentMap = HashMap<GCGLuint, TextureContent, IntHash<GCGLuint>, WTF::UnsignedWithZeroKeyHashTraits<GCGLuint>>;
     TextureContentMap m_knownContent;
 };
 

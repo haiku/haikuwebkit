@@ -457,7 +457,7 @@ static GRefPtr<WPEBufferDMABufFormats> wpeDisplayPreferredDMABufFormats(WPEDispl
         return nullptr;
 
     Vector<EGLint> formats(formatsCount);
-    if (!s_eglQueryDmaBufFormatsEXT(eglDisplay, formatsCount, reinterpret_cast<EGLint*>(formats.data()), &formatsCount))
+    if (!s_eglQueryDmaBufFormatsEXT(eglDisplay, formatsCount, reinterpret_cast<EGLint*>(formats.mutableSpan().data()), &formatsCount))
         return nullptr;
 
     static PFNEGLQUERYDMABUFMODIFIERSEXTPROC s_eglQueryDmaBufModifiersEXT = wpeDisplayCheckEGLExtension(display, "EXT_image_dma_buf_import_modifiers") ?
@@ -472,7 +472,7 @@ static GRefPtr<WPEBufferDMABufFormats> wpeDisplayPreferredDMABufFormats(WPEDispl
             return { DRM_FORMAT_MOD_INVALID };
 
         Vector<EGLuint64KHR> modifiers(modifiersCount);
-        if (!s_eglQueryDmaBufModifiersEXT(eglDisplay, format, modifiersCount, reinterpret_cast<EGLuint64KHR*>(modifiers.data()), nullptr, &modifiersCount))
+        if (!s_eglQueryDmaBufModifiersEXT(eglDisplay, format, modifiersCount, reinterpret_cast<EGLuint64KHR*>(modifiers.mutableSpan().data()), nullptr, &modifiersCount))
             return { DRM_FORMAT_MOD_INVALID };
 
         return modifiers;

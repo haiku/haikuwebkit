@@ -208,7 +208,7 @@ public:
     LayoutUnit collapsedMarginBeforeForChild(const RenderBox& child) const;
     LayoutUnit collapsedMarginAfterForChild(const RenderBox& child) const;
 
-    void getFirstLetter(RenderObject*& firstLetter, RenderElement*& firstLetterContainer, RenderObject* skipObject = nullptr);
+    std::pair<RenderObject*, RenderElement*> firstLetterAndContainer(RenderObject* skipThisAsFirstLetter = nullptr);
 
     virtual void scrollbarsChanged(bool /*horizontalScrollbarChanged*/, bool /*verticalScrollbarChanged*/) { }
 
@@ -236,8 +236,6 @@ public:
 
     std::optional<LayoutUnit> availableLogicalHeightForPercentageComputation() const;
     bool hasDefiniteLogicalHeight() const;
-
-    virtual bool shouldResetChildLogicalHeightBeforeLayout(const RenderBox&) const { return false; }
 
     static String updateSecurityDiscCharacters(const RenderStyle&, String&&);
 
@@ -344,7 +342,7 @@ protected:
     virtual void computeChildIntrinsicLogicalWidths(RenderBox&, LayoutUnit& minPreferredLogicalWidth, LayoutUnit& maxPreferredLogicalWidth) const;
 
     RenderBlockRareData& ensureBlockRareData();
-    RenderBlockRareData* getBlockRareData() const;
+    RenderBlockRareData* blockRareData() const;
     bool recomputeLogicalWidth();
 
 private:

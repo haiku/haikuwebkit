@@ -66,6 +66,7 @@
 #include "StyleTextShadow.h"
 #include "TransformState.h"
 #include "VisiblePosition.h"
+#include <tuple>
 #include <wtf/StackStats.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/ParsingUtilities.h>
@@ -123,35 +124,34 @@ static inline void collectLayoutAttributes(RenderObject* text, Vector<SVGTextLay
     }
 }
 
-static inline bool findPreviousAndNextAttributes(RenderElement& start, RenderSVGInlineText* locateElement, bool& stopAfterNext, SVGTextLayoutAttributes*& previous, SVGTextLayoutAttributes*& next)
+static inline std::tuple<SVGTextLayoutAttributes*, SVGTextLayoutAttributes*> findPreviousAndNextAttributes(RenderElement& root, RenderSVGInlineText& locateElement)
 {
-    ASSERT(locateElement);
-    // FIXME: Make this iterative.
-    for (CheckedRef child : childrenOfType<RenderObject>(start)) {
-        if (auto* text = dynamicDowncast<RenderSVGInlineText>(child.get())) {
-            if (locateElement != text) {
-                if (stopAfterNext) {
-                    next = text->layoutAttributes();
-                    return true;
-                }
+    SVGTextLayoutAttributes* previous = nullptr;
+    bool foundLocateElement = false;
 
-                previous = text->layoutAttributes();
-                continue;
-            }
-
-            stopAfterNext = true;
+    for (CheckedPtr current = root.firstChild(); current;) {
+        if (auto* childSVGInline = dynamicDowncast<RenderSVGInline>(*current)) {
+            if (auto* child = childSVGInline->firstChild())
+                current = child;
+            else
+                current = current->nextInPreOrderAfterChildren(&root);
             continue;
         }
 
-        auto* childSVGInline = dynamicDowncast<RenderSVGInline>(child.get());
-        if (!childSVGInline)
-            continue;
+        if (auto* text = dynamicDowncast<RenderSVGInlineText>(*current)) {
+            if (foundLocateElement)
+                return { previous, text->layoutAttributes() };
 
-        if (findPreviousAndNextAttributes(*childSVGInline, locateElement, stopAfterNext, previous, next))
-            return true;
+            if (&locateElement == text)
+                foundLocateElement = true;
+            else
+                previous = text->layoutAttributes();
+        }
+
+        current = current->nextInPreOrderAfterChildren(&root);
     }
 
-    return false;
+    return { previous, nullptr };
 }
 
 inline bool RenderSVGText::shouldHandleSubtreeMutations() const
@@ -192,11 +192,8 @@ void RenderSVGText::subtreeChildWasAdded(RenderObject* child)
         attributes = newLayoutAttributes[i];
         if (m_layoutAttributes.find(attributes) == notFound) {
             // Every time this is invoked, there's only a single new entry in the newLayoutAttributes list, compared to the old in m_layoutAttributes.
-            bool stopAfterNext = false;
-            SVGTextLayoutAttributes* previous = 0;
-            SVGTextLayoutAttributes* next = 0;
             ASSERT_UNUSED(child, &attributes->context() == child);
-            findPreviousAndNextAttributes(*this, &attributes->context(), stopAfterNext, previous, next);
+            auto [previous, next] = findPreviousAndNextAttributes(*this, attributes->context());
 
             if (previous)
                 m_layoutAttributesBuilder.buildLayoutAttributesForTextRenderer(previous->context());
@@ -252,16 +249,13 @@ void RenderSVGText::subtreeChildWillBeRemoved(RenderObject* child, Vector<SVGTex
 
     // This logic requires that the 'text' child is still inserted in the tree.
     auto& text = downcast<RenderSVGInlineText>(*child);
-    bool stopAfterNext = false;
-    SVGTextLayoutAttributes* previous = nullptr;
-    SVGTextLayoutAttributes* next = nullptr;
-    if (!renderTreeBeingDestroyed())
-        findPreviousAndNextAttributes(*this, &text, stopAfterNext, previous, next);
-
-    if (previous)
-        affectedAttributes.append(previous);
-    if (next)
-        affectedAttributes.append(next);
+    if (!renderTreeBeingDestroyed()) {
+        auto [previous, next] = findPreviousAndNextAttributes(*this, text);
+        if (previous)
+            affectedAttributes.append(previous);
+        if (next)
+            affectedAttributes.append(next);
+    }
 
     bool removed = m_layoutAttributes.removeFirst(text.layoutAttributes());
     ASSERT_UNUSED(removed, removed);

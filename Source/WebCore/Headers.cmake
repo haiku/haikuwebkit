@@ -378,22 +378,22 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     Modules/fetch/FetchRequestMode.h
     Modules/fetch/RequestPriority.h
 
-    Modules/filesystemaccess/FileSystemDirectoryHandle.h
-    Modules/filesystemaccess/FileSystemFileHandle.h
-    Modules/filesystemaccess/FileSystemHandle.h
-    Modules/filesystemaccess/FileSystemHandleCloseScope.h
-    Modules/filesystemaccess/FileSystemHandleIdentifier.h
-    Modules/filesystemaccess/FileSystemStorageConnection.h
-    Modules/filesystemaccess/FileSystemSyncAccessHandle.h
-    Modules/filesystemaccess/FileSystemSyncAccessHandleIdentifier.h
-    Modules/filesystemaccess/FileSystemWritableFileStream.h
-    Modules/filesystemaccess/FileSystemWritableFileStreamIdentifier.h
-    Modules/filesystemaccess/FileSystemWritableFileStreamSink.h
-    Modules/filesystemaccess/FileSystemWriteCloseReason.h
-    Modules/filesystemaccess/FileSystemWriteCommandType.h
-    Modules/filesystemaccess/StorageManagerFileSystemAccess.h
-    Modules/filesystemaccess/WorkerFileSystemStorageConnection.h
-    Modules/filesystemaccess/WorkerFileSystemStorageConnectionCallbackIdentifier.h
+    Modules/filesystem/FileSystemDirectoryHandle.h
+    Modules/filesystem/FileSystemFileHandle.h
+    Modules/filesystem/FileSystemHandle.h
+    Modules/filesystem/FileSystemHandleCloseScope.h
+    Modules/filesystem/FileSystemHandleIdentifier.h
+    Modules/filesystem/FileSystemStorageConnection.h
+    Modules/filesystem/FileSystemSyncAccessHandle.h
+    Modules/filesystem/FileSystemSyncAccessHandleIdentifier.h
+    Modules/filesystem/FileSystemWritableFileStream.h
+    Modules/filesystem/FileSystemWritableFileStreamIdentifier.h
+    Modules/filesystem/FileSystemWritableFileStreamSink.h
+    Modules/filesystem/FileSystemWriteCloseReason.h
+    Modules/filesystem/FileSystemWriteCommandType.h
+    Modules/filesystem/StorageManagerFileSystem.h
+    Modules/filesystem/WorkerFileSystemStorageConnection.h
+    Modules/filesystem/WorkerFileSystemStorageConnectionCallbackIdentifier.h
 
     Modules/gamepad/GamepadEffectParameters.h
     Modules/gamepad/GamepadHapticEffectType.h
@@ -1642,6 +1642,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     loader/archive/Archive.h
     loader/archive/ArchiveError.h
     loader/archive/ArchiveResource.h
+    loader/archive/ArchiveResourceCollection.h
 
     loader/archive/mhtml/MHTMLArchive.h
 
@@ -1656,6 +1657,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     loader/cache/CachedResourceHandle.h
     loader/cache/CachedResourceLoader.h
     loader/cache/CachedResourceRequest.h
+    loader/cache/CachedSVGDocumentReference.h
     loader/cache/CachedStyleSheetClient.h
     loader/cache/KeepaliveRequestTracker.h
     loader/cache/MemoryCache.h
@@ -2671,7 +2673,6 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     rendering/style/ListStyleType.h
     rendering/style/NameScope.h
     rendering/style/NinePieceImage.h
-    rendering/style/OffsetRotation.h
     rendering/style/OutlineValue.h
     rendering/style/PositionArea.h
     rendering/style/PositionTryFallback.h
@@ -2764,10 +2765,16 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/color-adjust/StyleColorScheme.h
 
+    style/values/flexbox/StyleFlexBasis.h
+
     style/values/images/StyleGradient.h
 
     style/values/inline/StyleLineBoxContain.h
 
+    style/values/motion/StyleOffsetDistance.h
+    style/values/motion/StyleOffsetAnchor.h
+    style/values/motion/StyleOffsetPosition.h
+    style/values/motion/StyleOffsetRotate.h
     style/values/motion/StyleRayFunction.h
 
     style/values/position/StyleInset.h
@@ -2795,6 +2802,10 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/shapes/StyleShapeFunction.h
     style/values/shapes/StyleWindRuleComputation.h
     style/values/shapes/StyleXywhFunction.h
+
+    style/values/sizing/StyleMaximumSize.h
+    style/values/sizing/StyleMinimumSize.h
+    style/values/sizing/StylePreferredSize.h
 
     style/values/text-decoration/StyleTextShadow.h
 

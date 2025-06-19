@@ -70,7 +70,7 @@ private:
     Type m_type;
     CheckedRef<NetworkRTCProvider> m_rtcProvider;
     std::unique_ptr<rtc::AsyncPacketSocket> m_socket;
-    Ref<IPC::Connection> m_connection;
+    const Ref<IPC::Connection> m_connection;
     int m_sendError { 0 };
 };
 

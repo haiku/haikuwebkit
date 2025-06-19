@@ -1255,6 +1255,7 @@ private:
         case NumberIsNaN:
         case GlobalIsFinite:
         case NumberIsFinite:
+        case NumberIsSafeInteger:
         case IsObject:
         case IsCallable:
         case IsConstructor:

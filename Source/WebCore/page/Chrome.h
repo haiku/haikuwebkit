@@ -252,7 +252,7 @@ private:
     Ref<Page> protectedPage() const;
 
     WeakRef<Page> m_page;
-    UniqueRef<ChromeClient> m_client;
+    const UniqueRef<ChromeClient> m_client;
     Vector<WeakPtr<PopupOpeningObserver>> m_popupOpeningObservers;
 #if PLATFORM(IOS_FAMILY)
     bool m_isDispatchViewportDataDidChangeSuppressed { false };

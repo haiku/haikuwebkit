@@ -165,7 +165,7 @@ void RejectedPromiseTracker::reportUnhandledRejections(Vector<UnhandledPromise>&
 
         PromiseRejectionEvent::Init initializer;
         initializer.cancelable = true;
-        initializer.promise = &domPromise;
+        initializer.promise = domPromise;
         initializer.reason = promise.result(vm);
 
         Ref event = PromiseRejectionEvent::create(eventNames().unhandledrejectionEvent, initializer);

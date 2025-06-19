@@ -39,6 +39,13 @@ template<Numeric StyleType> struct CSSValueCreation<StyleType> {
     }
 };
 
+template<DimensionPercentageNumeric StyleType> struct CSSValueCreation<StyleType> {
+    Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const StyleType& value)
+    {
+        return CSS::createCSSValue(pool, toCSS(value, style));
+    }
+};
+
 template<Calc StyleType> struct CSSValueCreation<StyleType> {
     Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const StyleType& value)
     {

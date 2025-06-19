@@ -117,7 +117,7 @@ private:
 
     Vector<RefPtr<WebCore::BlobDataFileReference>> m_fileReferences;
     RefPtr<SandboxExtension> m_sandboxExtension;
-    Ref<NetworkProcess> m_networkProcess;
+    const Ref<NetworkProcess> m_networkProcess;
 };
 
 } // namespace WebKit

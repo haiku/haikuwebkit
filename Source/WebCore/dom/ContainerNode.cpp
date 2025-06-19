@@ -437,7 +437,7 @@ static inline bool isChildTypeAllowed(ContainerNode& newParent, Node& child)
 
 static bool containsIncludingHostElements(const Node& possibleAncestor, const Node& node)
 {
-    RefPtr<const Node> currentNode = &node;
+    RefPtr<const Node> currentNode = node;
     do {
         if (currentNode == &possibleAncestor)
             return true;
@@ -1084,7 +1084,7 @@ static void dispatchChildInsertionEvents(Node& child)
 
     ASSERT_WITH_SECURITY_IMPLICATION(ScriptDisallowedScope::InMainThread::isEventDispatchAllowedInSubtree(child));
 
-    RefPtr c = &child;
+    RefPtr c = child;
     if (c->parentNode() && document->hasListenerType(Document::ListenerType::DOMNodeInserted))
         c->dispatchScopedEvent(MutationEvent::create(eventNames().DOMNodeInsertedEvent, Event::CanBubble::Yes, c->protectedParentNode().get()));
 

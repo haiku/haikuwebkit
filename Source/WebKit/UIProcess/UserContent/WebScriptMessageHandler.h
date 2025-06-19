@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,7 +66,6 @@ public:
     String name() const { return m_name; }
 
     API::ContentWorld& world() { return m_world.get(); }
-    Ref<API::ContentWorld> protectedWorld();
 
     Client& client() const { return *m_client; }
 
@@ -75,7 +74,7 @@ private:
 
     std::unique_ptr<Client> m_client;
     String m_name;
-    Ref<API::ContentWorld> m_world;
+    const Ref<API::ContentWorld> m_world;
 };
 
 } // namespace API

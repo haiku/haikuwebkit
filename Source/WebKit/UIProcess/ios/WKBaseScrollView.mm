@@ -41,6 +41,7 @@
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 
 #if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
+#import "RemoteLayerTreeHost.h"
 #import "UIKitUtilities.h"
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <wtf/cocoa/VectorCocoa.h>
@@ -115,6 +116,7 @@ private:
     ScrollingDeltaWindow<3> _scrollingDeltaWindow;
 #if ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
     HashSet<WebCore::IntRect> _overlayRegionRects;
+    HashSet<WebCore::PlatformLayerIdentifier> _overlayRegionAssociatedLayers;
 #endif
 }
 
@@ -260,6 +262,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 - (BOOL)_hasEnoughContentForOverlayRegions { return false; }
 - (void)_updateOverlayRegionsBehavior:(BOOL)selected { }
 - (void)_updateOverlayRegionRects:(const HashSet<WebCore::IntRect>&)overlayRegions { }
+- (void)_associateRelatedLayersForOverlayRegions:(const HashSet<WebCore::PlatformLayerIdentifier>&)relatedLayers with:(const WebKit::RemoteLayerTreeHost&)host { }
 - (void)_updateOverlayRegions:(NSArray<NSData *> *)overlayRegions { }
 #endif
 

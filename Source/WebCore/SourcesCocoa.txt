@@ -498,7 +498,6 @@ platform/graphics/coreimage/FEColorMatrixCoreImageApplier.mm
 platform/graphics/coreimage/FEComponentTransferCoreImageApplier.mm
 platform/graphics/coreimage/FilterImageCoreImage.mm
 platform/graphics/coreimage/SourceGraphicCoreImageApplier.mm
-platform/graphics/gpu/cocoa/GPUPrewarmingMetal.mm
 platform/graphics/ios/DisplayRefreshMonitorIOS.mm
 platform/graphics/ios/IconIOS.mm
 platform/graphics/ios/controls/ControlFactoryIOS.mm

@@ -339,7 +339,7 @@ public:
     // Returns a range pointing to the start and end positions that have the same text styles as `this`.
     AXTextMarkerRange rangeWithSameStyle() const;
     // Starting from this marker, return a text marker that is `offset` characters away.
-    AXTextMarker nextMarkerFromOffset(unsigned, ForceSingleOffsetMovement = ForceSingleOffsetMovement::No) const;
+    AXTextMarker nextMarkerFromOffset(unsigned, ForceSingleOffsetMovement = ForceSingleOffsetMovement::No, std::optional<AXID> stopAtID = std::nullopt) const;
     // Returns the number of intermediate text markers between this and the root.
     unsigned offsetFromRoot() const;
     // Starting from this marker, navigate to the last marker before the given AXID. Assumes `this`

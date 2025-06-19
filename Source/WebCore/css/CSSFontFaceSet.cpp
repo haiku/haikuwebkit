@@ -381,7 +381,7 @@ static FontSelectionRequest computeFontSelectionRequest(CSSPropertyParserHelpers
     return { weightSelectionValue, widthSelectionValue, styleSelectionValue };
 }
 
-using CodePointsMap = UncheckedKeyHashSet<uint32_t, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>;
+using CodePointsMap = HashSet<uint32_t, DefaultHash<uint32_t>, WTF::UnsignedWithZeroKeyHashTraits<uint32_t>>;
 static CodePointsMap codePointsFromString(StringView stringView)
 {
     CodePointsMap result;
@@ -406,7 +406,7 @@ ExceptionOr<Vector<std::reference_wrapper<CSSFontFace>>> CSSFontFaceSet::matchin
     if (!font)
         return Exception { ExceptionCode::SyntaxError };
 
-    UncheckedKeyHashSet<AtomString> uniqueFamilies;
+    HashSet<AtomString> uniqueFamilies;
     Vector<AtomString> familyOrder;
     for (auto& familyRaw : font->family) {
         auto familyAtom = WTF::switchOn(familyRaw,
@@ -424,7 +424,7 @@ ExceptionOr<Vector<std::reference_wrapper<CSSFontFace>>> CSSFontFaceSet::matchin
             familyOrder.append(familyAtom);
     }
 
-    UncheckedKeyHashSet<CSSFontFace*> resultConstituents;
+    HashSet<CSSFontFace*> resultConstituents;
     auto request = computeFontSelectionRequest(*font);
     for (auto codePoint : codePointsFromString(string)) {
         bool found = false;

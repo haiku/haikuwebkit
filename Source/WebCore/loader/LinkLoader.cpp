@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2011 Google Inc. All rights reserved.
- * Copyright (C) 2016-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -292,7 +292,7 @@ void LinkLoader::preconnectIfNeeded(const LinkLoadParameters& params, Document& 
         return;
 
     auto results = page->protectedUserContentProvider()->processContentRuleListsForLoad(*page, params.href, ContentExtensions::ResourceType::Ping, *documentLoader);
-    if (results.summary.blockedLoad)
+    if (results.summary.blockedLoad && !results.summary.redirectedPriorToBlock)
         return;
 
     ContentExtensions::applyResultsToRequest(WTFMove(results), page.get(), request);
@@ -303,7 +303,7 @@ void LinkLoader::preconnectIfNeeded(const LinkLoadParameters& params, Document& 
     if (equalLettersIgnoringASCIICase(params.crossOrigin, "anonymous"_s) && !document.protectedSecurityOrigin()->isSameOriginDomain(SecurityOrigin::create(params.href)))
         storageCredentialsPolicy = StoredCredentialsPolicy::DoNotUse;
     ASSERT(document.frame()->loader().networkingContext());
-    platformStrategies()->loaderStrategy()->preconnectTo(document.protectedFrame()->protectedLoader(), WTFMove(request), storageCredentialsPolicy, LoaderStrategy::ShouldPreconnectAsFirstParty::No, [weakDocument = WeakPtr { document }, href = params.href](ResourceError error) {
+    platformStrategies()->loaderStrategy()->preconnectTo(document.protectedFrame()->loader(), WTFMove(request), storageCredentialsPolicy, LoaderStrategy::ShouldPreconnectAsFirstParty::No, [weakDocument = WeakPtr { document }, href = params.href](ResourceError error) {
         RefPtr document = weakDocument.get();
         if (!document)
             return;

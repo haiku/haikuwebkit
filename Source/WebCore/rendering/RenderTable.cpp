@@ -297,7 +297,7 @@ void RenderTable::updateLogicalWidth()
     bool hasPerpendicularContainingBlock = writingMode().isOrthogonal(cb.writingMode());
     LayoutUnit containerWidthInInlineDirection = hasPerpendicularContainingBlock ? perpendicularContainingBlockLogicalHeight() : availableLogicalWidth;
 
-    Length styleLogicalWidth = style().logicalWidth();
+    auto& styleLogicalWidth = style().logicalWidth();
     if (auto overridingLogicalWidth = this->overridingBorderBoxLogicalWidth())
         setLogicalWidth(*overridingLogicalWidth);
     else if ((styleLogicalWidth.isSpecified() && styleLogicalWidth.isPositive()) || styleLogicalWidth.isIntrinsic())
@@ -327,7 +327,7 @@ void RenderTable::updateLogicalWidth()
     }
 
     // Ensure we aren't bigger than our max-width style.
-    Length styleMaxLogicalWidth = style().logicalMaxWidth();
+    auto& styleMaxLogicalWidth = style().logicalMaxWidth();
     if ((styleMaxLogicalWidth.isSpecified() && !styleMaxLogicalWidth.isNegative()) || styleMaxLogicalWidth.isIntrinsic()) {
         LayoutUnit computedMaxLogicalWidth = convertStyleLogicalWidthToComputedWidth(styleMaxLogicalWidth, availableLogicalWidth);
         setLogicalWidth(std::min(logicalWidth(), computedMaxLogicalWidth));
@@ -337,7 +337,7 @@ void RenderTable::updateLogicalWidth()
     setLogicalWidth(std::max(logicalWidth(), minPreferredLogicalWidth()));    
 
     // Ensure we aren't smaller than our min-width style.
-    Length styleMinLogicalWidth = style().logicalMinWidth();
+    auto& styleMinLogicalWidth = style().logicalMinWidth();
     if ((styleMinLogicalWidth.isSpecified() && !styleMinLogicalWidth.isNegative()) || styleMinLogicalWidth.isIntrinsic()) {
         LayoutUnit computedMinLogicalWidth = convertStyleLogicalWidthToComputedWidth(styleMinLogicalWidth, availableLogicalWidth);
         setLogicalWidth(std::max(logicalWidth(), computedMinLogicalWidth));
@@ -364,7 +364,8 @@ void RenderTable::updateLogicalWidth()
 }
 
 // This method takes a RenderStyle's logical width, min-width, or max-width length and computes its actual value.
-LayoutUnit RenderTable::convertStyleLogicalWidthToComputedWidth(const Length& styleLogicalWidth, LayoutUnit availableWidth)
+
+template<typename SizeType> LayoutUnit RenderTable::convertStyleLogicalWidthToComputedWidth(const SizeType& styleLogicalWidth, LayoutUnit availableWidth)
 {
     if (styleLogicalWidth.isIntrinsic())
         return computeIntrinsicLogicalWidthUsing(styleLogicalWidth, availableWidth, bordersPaddingAndSpacingInRowDirection());
@@ -375,22 +376,22 @@ LayoutUnit RenderTable::convertStyleLogicalWidthToComputedWidth(const Length& st
     if (isCSSTable && styleLogicalWidth.isSpecified() && styleLogicalWidth.isPositive() && style().boxSizing() == BoxSizing::ContentBox)
         borders = borderStart() + borderEnd() + (collapseBorders() ? 0_lu : paddingStart() + paddingEnd());
 
-    return minimumValueForLength(styleLogicalWidth, availableWidth) + borders;
+    return Style::evaluateMinimum(styleLogicalWidth, availableWidth) + borders;
 }
 
-LayoutUnit RenderTable::convertStyleLogicalHeightToComputedHeight(const Length& styleLogicalHeight)
+template<typename SizeType> LayoutUnit RenderTable::convertStyleLogicalHeightToComputedHeight(const SizeType& styleLogicalHeight)
 {
     LayoutUnit borderAndPaddingBefore = borderBefore() + (collapseBorders() ? 0_lu : paddingBefore());
     LayoutUnit borderAndPaddingAfter = borderAfter() + (collapseBorders() ? 0_lu : paddingAfter());
     LayoutUnit borderAndPadding = borderAndPaddingBefore + borderAndPaddingAfter;
-    if (styleLogicalHeight.isFixed()) {
+    if (auto fixedStyleLogicalHeight =  styleLogicalHeight.tryFixed()) {
         // HTML tables size as though CSS height includes border/padding, CSS tables do not.
         LayoutUnit borders;
         // FIXME: We cannot apply box-sizing: content-box on <table> which other browsers allow.
         if (is<HTMLTableElement>(element()) || style().boxSizing() == BoxSizing::BorderBox) {
             borders = borderAndPadding;
         }
-        return LayoutUnit(styleLogicalHeight.value() - borders);
+        return LayoutUnit(fixedStyleLogicalHeight->value - borders);
     } else if (styleLogicalHeight.isPercentOrCalculated())
         return computePercentageLogicalHeight(styleLogicalHeight).value_or(0);
     else if (styleLogicalHeight.isIntrinsic())
@@ -556,7 +557,7 @@ void RenderTable::layout()
 
         LayoutUnit computedLogicalHeight;
 
-        Length logicalHeightLength = style().logicalHeight();
+        auto& logicalHeightLength = style().logicalHeight();
         if (logicalHeightLength.isIntrinsic() || (logicalHeightLength.isSpecified() && logicalHeightLength.isPositive()))
             computedLogicalHeight = convertStyleLogicalHeightToComputedHeight(logicalHeightLength);
 
@@ -564,16 +565,16 @@ void RenderTable::layout()
             computedLogicalHeight = std::max(computedLogicalHeight, *overridingLogicalHeight - borderAndPaddingAfter - sumCaptionsLogicalHeight());
 
         if (!shouldIgnoreLogicalMinMaxHeightSizes()) {
-            Length logicalMaxHeightLength = style().logicalMaxHeight();
+            auto& logicalMaxHeightLength = style().logicalMaxHeight();
             if (logicalMaxHeightLength.isFillAvailable() || (logicalMaxHeightLength.isSpecified() && !logicalMaxHeightLength.isNegative()
                 && !logicalMaxHeightLength.isMinContent() && !logicalMaxHeightLength.isMaxContent() && !logicalMaxHeightLength.isFitContent())) {
                 LayoutUnit computedMaxLogicalHeight = convertStyleLogicalHeightToComputedHeight(logicalMaxHeightLength);
                 computedLogicalHeight = std::min(computedLogicalHeight, computedMaxLogicalHeight);
             }
 
-            Length logicalMinHeightLength = style().logicalMinHeight();
+            auto logicalMinHeightLength = style().logicalMinHeight();
             if (logicalMinHeightLength.isMinContent() || logicalMinHeightLength.isMaxContent() || logicalMinHeightLength.isFitContent())
-                logicalMinHeightLength = LengthType::Auto;
+                logicalMinHeightLength = CSS::Keyword::Auto { };
             if (logicalMinHeightLength.isIntrinsic() || (logicalMinHeightLength.isSpecified() && !logicalMinHeightLength.isNegative())) {
                 LayoutUnit computedMinLogicalHeight = convertStyleLogicalHeightToComputedHeight(logicalMinHeightLength);
                 computedLogicalHeight = std::max(computedLogicalHeight, computedMinLogicalHeight);
@@ -959,14 +960,14 @@ void RenderTable::computePreferredLogicalWidths()
 
     auto& styleToUse = style();
     // FIXME: This should probably be checking for isSpecified since you should be able to use percentage or calc values for min-width.
-    if (styleToUse.logicalMinWidth().isFixed() && styleToUse.logicalMinWidth().value() > 0) {
-        m_maxPreferredLogicalWidth = std::max(m_maxPreferredLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(styleToUse.logicalMinWidth()));
-        m_minPreferredLogicalWidth = std::max(m_minPreferredLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(styleToUse.logicalMinWidth()));
+    if (auto fixedLogicalMinWidth = styleToUse.logicalMinWidth().tryFixed(); fixedLogicalMinWidth && fixedLogicalMinWidth->value > 0) {
+        m_maxPreferredLogicalWidth = std::max(m_maxPreferredLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(*fixedLogicalMinWidth));
+        m_minPreferredLogicalWidth = std::max(m_minPreferredLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(*fixedLogicalMinWidth));
     }
 
     // FIXME: This should probably be checking for isSpecified since you should be able to use percentage or calc values for maxWidth.
-    if (styleToUse.logicalMaxWidth().isFixed()) {
-        m_maxPreferredLogicalWidth = std::min(m_maxPreferredLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(styleToUse.logicalMaxWidth()));
+    if (auto fixedLogicalMaxWidth = styleToUse.logicalMaxWidth().tryFixed()) {
+        m_maxPreferredLogicalWidth = std::min(m_maxPreferredLogicalWidth, adjustContentBoxLogicalWidthForBoxSizing(*fixedLogicalMaxWidth));
         m_maxPreferredLogicalWidth = std::max(m_maxPreferredLogicalWidth, m_minPreferredLogicalWidth);
     }
 

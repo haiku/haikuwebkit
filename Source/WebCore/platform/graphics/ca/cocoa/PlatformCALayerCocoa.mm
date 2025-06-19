@@ -74,7 +74,7 @@
 
 namespace WebCore {
 
-using LayerToPlatformCALayerMap = UncheckedKeyHashMap<void*, PlatformCALayer*>;
+using LayerToPlatformCALayerMap = HashMap<void*, PlatformCALayer*>;
 
 static Lock layerToPlatformLayerMapLock;
 static LayerToPlatformCALayerMap& layerToPlatformLayerMap() WTF_REQUIRES_LOCK(layerToPlatformLayerMapLock)

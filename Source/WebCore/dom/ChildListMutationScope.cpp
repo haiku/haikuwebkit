@@ -90,7 +90,7 @@ void ChildListMutationAccumulator::childAdded(Node& child)
         m_nextSibling = child.nextSibling();
     }
 
-    m_lastAdded = &child;
+    m_lastAdded = child;
     m_addedNodes.append(child);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Google Inc. All Rights Reserved.
+ * Copyright (C) 2011 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -39,13 +39,13 @@
 namespace WebCore {
 
 struct NamedGridLinesMap {
-    UncheckedKeyHashMap<String, Vector<unsigned>> map;
+    HashMap<String, Vector<unsigned>> map;
 
     friend bool operator==(const NamedGridLinesMap&, const NamedGridLinesMap&) = default;
 };
 
 struct OrderedNamedGridLinesMap {
-    UncheckedKeyHashMap<unsigned, Vector<String>, IntHash<unsigned>, WTF::UnsignedWithZeroKeyHashTraits<unsigned>> map;
+    HashMap<unsigned, Vector<String>, IntHash<unsigned>, WTF::UnsignedWithZeroKeyHashTraits<unsigned>> map;
 };
 
 typedef Variant<GridTrackSize, Vector<String>> RepeatEntry;

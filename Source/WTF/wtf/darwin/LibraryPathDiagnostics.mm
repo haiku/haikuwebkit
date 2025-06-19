@@ -54,9 +54,7 @@ namespace WTF {
 static char const * const notificationName = "com.apple.WebKit.LibraryPathDiagnostics";
 static char const * const loggingSubsystem = "com.apple.WebKit.LibraryPathDiagnostics";
 static char const * const loggingCategory = "LibraryPathDiagnostics";
-#if HAVE(DYLD_DLOPEN_IMAGE_HEADER_SPI)
 static char const * const libraryListEnvironmentVariableName = "LIBRARY_PATH_DIAGNOSTICS_LIBRARIES";
-#endif
 static char const * const bundleListEnvironmentVariableName = "LIBRARY_PATH_DIAGNOSTICS_BUNDLES";
 
 static String uuidToString(const uuid_t& uuid)
@@ -78,10 +76,8 @@ private:
 
     void logExecutablePath(void);
     void logDYLDSharedCacheInfo(void);
-#if HAVE(DYLD_DLOPEN_IMAGE_HEADER_SPI)
     void logDynamicLibraryInfo(const String&);
     void logDynamicLibraryInfo(void);
-#endif
     void logBundleInfo(const String&);
     void logBundleInfo(void);
 #if HAVE(CHIRP_SPI)
@@ -161,7 +157,6 @@ void LibraryPathDiagnosticsLogger::logDYLDSharedCacheInfo(void)
     logObject(std::initializer_list<String> { "SharedCache"_s }, WTFMove(sharedCacheInfo));
 }
 
-#if HAVE(DYLD_DLOPEN_IMAGE_HEADER_SPI)
 #if HAVE(SHARED_REGION_SPI)
 static bool isAddressInSharedRegion(const void* addr)
 {
@@ -216,7 +211,6 @@ void LibraryPathDiagnosticsLogger::logDynamicLibraryInfo(void)
     for (const auto& installName : libraries)
         logDynamicLibraryInfo(installName);
 }
-#endif // HAVE(DYLD_DLOPEN_IMAGE_HEADER_SPI)
 
 void LibraryPathDiagnosticsLogger::logBundleInfo(const String& bundleIdentifier)
 {
@@ -280,9 +274,7 @@ void LibraryPathDiagnosticsLogger::log(void)
 {
     logExecutablePath();
     logDYLDSharedCacheInfo();
-#if HAVE(DYLD_DLOPEN_IMAGE_HEADER_SPI)
     logDynamicLibraryInfo();
-#endif
     logBundleInfo();
 #if HAVE(CHIRP_SPI)
     logCryptexCanaryInfo();

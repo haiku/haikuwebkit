@@ -27,6 +27,7 @@
 
 #include "CachedResourceHandle.h"
 #include "CachedSVGDocumentClient.h"
+#include "LoaderMalloc.h"
 #include "StyleURL.h"
 
 namespace WebCore {

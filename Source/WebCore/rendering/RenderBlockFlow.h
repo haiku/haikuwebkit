@@ -502,7 +502,7 @@ private:
     bool hasOverhangingFloat(RenderBox&);
     void addIntrudingFloats(RenderBlockFlow* prev, RenderBlockFlow* container, LayoutUnit xoffset, LayoutUnit yoffset);
     inline bool hasOverhangingFloats() const;
-    LayoutUnit getClearDelta(RenderBox& child, LayoutUnit yPos);
+    LayoutUnit computedClearDeltaForChild(RenderBox& child, LayoutUnit yPos);
 
     void determineLogicalLeftPositionForChild(RenderBox& child, ApplyLayoutDeltaMode = DoNotApplyLayoutDelta);
     
@@ -517,7 +517,6 @@ private:
     VisiblePosition positionForPointWithInlineChildren(const LayoutPoint& pointInLogicalContents, HitTestSource) override;
     void addFocusRingRectsForInlineChildren(Vector<LayoutRect>& rects, const LayoutPoint& additionalOffset, const RenderLayerModelObject*) const override;
 
-private:
     bool hasSvgTextLayout() const;
 
     bool hasInlineLayout() const;

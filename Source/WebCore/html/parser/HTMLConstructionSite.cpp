@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010 Google, Inc. All Rights Reserved.
+ * Copyright (C) 2010 Google, Inc. All rights reserved.
  * Copyright (C) 2011-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -133,7 +133,7 @@ static inline bool causesFosterParenting(const HTMLStackItem& item)
 static inline void insert(HTMLConstructionSiteTask& task)
 {
     if (auto templateElement = dynamicDowncast<HTMLTemplateElement>(task.parent)) {
-        task.parent = &templateElement->fragmentForInsertion();
+        task.parent = templateElement->fragmentForInsertion();
         task.nextChild = nullptr;
     }
 
@@ -692,7 +692,7 @@ static ALWAYS_INLINE unsigned findBreakIndex(const String& string, unsigned curr
 void HTMLConstructionSite::insertTextNode(const String& characters)
 {
     HTMLConstructionSiteTask task(HTMLConstructionSiteTask::Insert);
-    task.parent = &currentNode();
+    task.parent = currentNode();
 
     if (shouldFosterParent())
         findFosterSite(task);
@@ -744,8 +744,8 @@ void HTMLConstructionSite::insertTextNode(const String& characters)
 void HTMLConstructionSite::reparent(HTMLElementStack::ElementRecord& newParent, HTMLElementStack::ElementRecord& child)
 {
     HTMLConstructionSiteTask task(HTMLConstructionSiteTask::Reparent);
-    task.parent = &newParent.node();
-    task.child = &child.element();
+    task.parent = newParent.node();
+    task.child = child.element();
     m_taskQueue.append(WTFMove(task));
 }
 
@@ -756,16 +756,16 @@ void HTMLConstructionSite::insertAlreadyParsedChild(HTMLStackItem& newParent, HT
         findFosterSite(task);
         ASSERT(task.parent);
     } else
-        task.parent = &newParent.node();
-    task.child = &child.element();
+        task.parent = newParent.node();
+    task.child = child.element();
     m_taskQueue.append(WTFMove(task));
 }
 
 void HTMLConstructionSite::takeAllChildrenAndReparent(HTMLStackItem& newParent, HTMLElementStack::ElementRecord& oldParent)
 {
     HTMLConstructionSiteTask task(HTMLConstructionSiteTask::TakeAllChildrenAndReparent);
-    task.parent = &newParent.node();
-    task.child = &oldParent.node();
+    task.parent = newParent.node();
+    task.child = oldParent.node();
     m_taskQueue.append(WTFMove(task));
 }
 
@@ -946,23 +946,23 @@ void HTMLConstructionSite::findFosterSite(HTMLConstructionSiteTask& task)
     auto* lastTemplate = m_openElements.topmost(HTML::template_);
     auto* lastTable = m_openElements.topmost(HTML::table);
     if (lastTemplate && (!lastTable || lastTemplate->isAbove(*lastTable))) {
-        task.parent = &lastTemplate->element();
+        task.parent = lastTemplate->element();
         return;
     }
 
     if (!lastTable) {
         // Fragment case
-        task.parent = &m_openElements.rootNode();
+        task.parent = m_openElements.rootNode();
         return;
     }
 
     if (auto* parent = lastTable->element().parentNode()) {
         task.parent = parent;
-        task.nextChild = &lastTable->element();
+        task.nextChild = lastTable->element();
         return;
     }
 
-    task.parent = &lastTable->next()->element();
+    task.parent = lastTable->next()->element();
 }
 
 bool HTMLConstructionSite::shouldFosterParent() const

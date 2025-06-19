@@ -185,7 +185,7 @@ Vector<CaptureDevice> AVCaptureDeviceManager::retrieveCaptureDevices()
 #if HAVE(AVCAPTUREDEVICE)
     auto currentDevices = currentCameras();
     AVCaptureDevice *defaultVideoDevice = nil;
-#if HAVE(CONTINUITY_CAMERA)
+#if HAVE(CONTINUITY_CAMERA) && !PLATFORM(IOS_FAMILY_SIMULATOR)
     auto haveSystemPreferredCamera = !![PAL::getAVCaptureDeviceClass() respondsToSelector:@selector(systemPreferredCamera)];
     if (haveSystemPreferredCamera)
         defaultVideoDevice = [PAL::getAVCaptureDeviceClass() systemPreferredCamera];
@@ -195,7 +195,7 @@ Vector<CaptureDevice> AVCaptureDeviceManager::retrieveCaptureDevices()
 
 #if PLATFORM(IOS) || PLATFORM(VISION)
     ([&] {
-#if HAVE(CONTINUITY_CAMERA)
+#if HAVE(CONTINUITY_CAMERA) && !PLATFORM(IOS_FAMILY_SIMULATOR)
         if (haveSystemPreferredCamera && defaultVideoDevice)
             return;
 #endif

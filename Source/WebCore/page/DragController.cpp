@@ -221,7 +221,7 @@ void DragController::dragExited(LocalFrame& frame, DragData&& dragData)
 {
     disallowFileAccessIfNeeded(dragData);
     if (frame.view())
-        frame.checkedEventHandler()->cancelDragAndDrop(createMouseEvent(dragData), Pasteboard::create(dragData), dragData.draggingSourceOperationMask(), dragData.containsFiles());
+        frame.eventHandler().cancelDragAndDrop(createMouseEvent(dragData), Pasteboard::create(dragData), dragData.draggingSourceOperationMask(), dragData.containsFiles());
     mouseMovedIntoDocument(nullptr);
     if (RefPtr fileInput = std::exchange(m_fileInputElementUnderMouse, nullptr))
         fileInput->setCanReceiveDroppedFiles(false);
@@ -267,7 +267,7 @@ bool DragController::performDragOperation(DragData&& dragData)
         client().willPerformDragDestinationAction(DragDestinationAction::DHTML, dragData);
         bool preventedDefault = false;
         if (localMainFrame->view())
-            preventedDefault = localMainFrame->checkedEventHandler()->performDragAndDrop(createMouseEvent(dragData), Pasteboard::create(dragData), dragData.draggingSourceOperationMask(), dragData.containsFiles());
+            preventedDefault = localMainFrame->eventHandler().performDragAndDrop(createMouseEvent(dragData), Pasteboard::create(dragData), dragData.draggingSourceOperationMask(), dragData.containsFiles());
         if (preventedDefault) {
             clearDragCaret();
             m_documentUnderMouse = nullptr;
@@ -298,7 +298,7 @@ bool DragController::performDragOperation(DragData&& dragData)
     FrameLoadRequest frameLoadRequest { *localMainFrame, WTFMove(resourceRequest) };
     frameLoadRequest.setShouldOpenExternalURLsPolicy(shouldOpenExternalURLsPolicy);
     frameLoadRequest.setIsRequestFromClientOrUserInput();
-    localMainFrame->protectedLoader()->load(WTFMove(frameLoadRequest));
+    localMainFrame->loader().load(WTFMove(frameLoadRequest));
     return true;
 }
 
@@ -319,10 +319,10 @@ Variant<std::optional<DragOperation>, RemoteUserInputEventData> DragController::
     auto hitTestResult = HitTestResult(point);
     if (frame.contentRenderer()) {
         constexpr OptionSet<HitTestRequest::Type> hitType { HitTestRequest::Type::ReadOnly, HitTestRequest::Type::Active, HitTestRequest::Type::DisallowUserAgentShadowContent, HitTestRequest::Type::AllowChildFrameContent };
-        hitTestResult = frame.checkedEventHandler()->hitTestResultAtPoint(point, hitType);
+        hitTestResult = frame.eventHandler().hitTestResultAtPoint(point, hitType);
     }
 
-    if (RefPtr remoteSubframe = dynamicDowncast<RemoteFrame>(frame.checkedEventHandler()->subframeForTargetNode(hitTestResult.targetNode()))) {
+    if (RefPtr remoteSubframe = dynamicDowncast<RemoteFrame>(frame.eventHandler().subframeForTargetNode(hitTestResult.targetNode()))) {
         // FIXME(264611): These mouse coordinates need to be correctly transformed.
         return RemoteUserInputEventData { remoteSubframe->frameID(), dragData.clientPosition() };
     }
@@ -665,7 +665,7 @@ bool DragController::concludeEditDrag(const DragData& dragData)
 
     if (rootEditableElement) {
         if (RefPtr frame = rootEditableElement->document().frame())
-            frame->checkedEventHandler()->updateDragStateAfterEditDragIfNeeded(*rootEditableElement);
+            frame->eventHandler().updateDragStateAfterEditDragIfNeeded(*rootEditableElement);
     }
 
     return true;
@@ -682,7 +682,7 @@ bool DragController::canProcessDrag(const DragData& dragData)
         return false;
 
     constexpr OptionSet<HitTestRequest::Type> hitType { HitTestRequest::Type::ReadOnly, HitTestRequest::Type::Active, HitTestRequest::Type::AllowChildFrameContent };
-    result = localMainFrame->checkedEventHandler()->hitTestResultAtPoint(point, hitType);
+    result = localMainFrame->eventHandler().hitTestResultAtPoint(point, hitType);
 
     RefPtr dragNode = result.innerNonSharedNode();
     if (!dragNode)
@@ -742,7 +742,7 @@ bool DragController::tryDHTMLDrag(LocalFrame& frame, const DragData& dragData, s
         return false;
 
     auto sourceOperationMask = dragData.draggingSourceOperationMask();
-    auto targetResponse = protectedFrame->checkedEventHandler()->updateDragAndDrop(createMouseEvent(dragData), [&dragData]() {
+    auto targetResponse = protectedFrame->eventHandler().updateDragAndDrop(createMouseEvent(dragData), [&dragData]() {
         return Pasteboard::create(dragData);
     }, sourceOperationMask, dragData.containsFiles());
     if (!targetResponse.accept)
@@ -1190,14 +1190,14 @@ bool DragController::startDrag(LocalFrame& src, const DragState& state, OptionSe
 
         client().willPerformDragSourceAction(DragSourceAction::Link, dragOrigin, dataTransfer);
         if (!dragImage) {
-            TextIndicatorData textIndicator;
-            dragImage = DragImage { createDragImageForLink(element, linkURL, textContentWithSimplifiedWhiteSpace, textIndicator, m_page->deviceScaleFactor()) };
+            auto [dragImageRef, textIndicator] = createDragImageForLink(element, linkURL, textContentWithSimplifiedWhiteSpace, m_page->deviceScaleFactor());
+            dragImage = DragImage { dragImageRef };
             if (dragImage) {
                 m_dragOffset = dragOffsetForLinkDragImage(dragImage.get());
                 dragLoc = IntPoint(dragOrigin.x() + m_dragOffset.x(), dragOrigin.y() + m_dragOffset.y());
                 dragImage = DragImage { platformAdjustDragImageForDeviceScaleFactor(dragImage.get(), m_page->deviceScaleFactor()) };
-                if (textIndicator.contentImage)
-                    dragImage.setTextIndicator(TextIndicator::create(textIndicator));
+                if (textIndicator && textIndicator->contentImage())
+                    dragImage.setTextIndicator(textIndicator);
             }
         }
 

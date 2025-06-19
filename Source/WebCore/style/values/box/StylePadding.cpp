@@ -34,7 +34,7 @@ namespace Style {
 
 // MARK: - Conversion
 
-PaddingEdge paddingEdgeFromCSSValue(const CSSValue& value, BuilderState& state)
+auto CSSValueConversion<PaddingEdge>::operator()(BuilderState& state, const CSSValue& value) -> PaddingEdge
 {
     return PaddingEdge { BuilderConverter::convertLength(state, value) };
 }

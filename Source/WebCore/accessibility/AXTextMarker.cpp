@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -111,12 +111,12 @@ AXTextMarker::AXTextMarker(const VisiblePosition& visiblePosition, TextMarkerOri
     if (visiblePosition.isNull())
         return;
 
-    auto* node = visiblePosition.deepEquivalent().anchorNode();
+    RefPtr node = visiblePosition.deepEquivalent().anchorNode();
     ASSERT(node);
     if (!node)
         return;
 
-    auto* cache = node->document().axObjectCache();
+    CheckedPtr cache = node->document().axObjectCache();
     if (!cache)
         return;
 
@@ -678,7 +678,7 @@ int AXTextMarker::lineIndex() const
     RefPtr object = isolatedObject();
     if (object->isTextControl())
         startMarker = { *object, 0 };
-    else if (auto* editableAncestor = object->editableAncestor())
+    else if (RefPtr editableAncestor = object->editableAncestor())
         startMarker = { editableAncestor->treeID(), editableAncestor->objectID(), 0 };
     else if (RefPtr tree = std::get<RefPtr<AXIsolatedTree>>(axTreeForID(treeID())))
         startMarker = tree->firstMarker();
@@ -722,9 +722,7 @@ CharacterRange AXTextMarker::characterRangeForLine(unsigned lineIndex) const
     // This implementation doesn't respect the offset as the only known callsite hardcodes zero. We'll need to make changes to support this if a usecase arrives for it.
     TEXT_MARKER_ASSERT(!offset(), "characterRangeForLine");
 
-    auto* stopObject = object->nextSiblingIncludingIgnoredOrParent();
-    auto stopAtID = stopObject ? std::optional { stopObject->objectID() } : std::nullopt;
-
+    std::optional stopAtID = object->idOfNextSiblingIncludingIgnoredOrParent();
     auto textRunMarker = toTextRunMarker(stopAtID);
     // If we couldn't convert this object to a text-run marker, it means we are a text control with no text descendant.
     if (!textRunMarker.isValid())
@@ -770,14 +768,13 @@ int AXTextMarker::lineNumberForIndex(unsigned index) const
     RefPtr object = isolatedObject();
     if (!object)
         return -1;
-    auto* stopObject = object->nextSiblingIncludingIgnoredOrParent();
-    auto stopAtID = stopObject ? std::optional { stopObject->objectID() } : std::nullopt;
 
     if (object->isTextControl() && index >= object->textMarkerRange().toString().length() - 1) {
         // Mimic behavior of AccessibilityRenderObject::visiblePositionForIndex.
         return -1;
     }
 
+    std::optional stopAtID = object->idOfNextSiblingIncludingIgnoredOrParent();
     unsigned lineIndex = 0;
     auto currentMarker = *this;
     while (index) {
@@ -814,7 +811,7 @@ bool AXTextMarker::atLineBoundaryForDirection(AXDirection direction) const
 
 bool AXTextMarker::atLineBoundaryForDirection(AXDirection direction, const AXTextRuns* runs, size_t runIndex) const
 {
-    auto* nextObjectWithRuns = findObjectWithRuns(*isolatedObject(), direction);
+    RefPtr nextObjectWithRuns = findObjectWithRuns(*isolatedObject(), direction);
     // If the next object is a line break, it will often have the same line index as the previous static text
     // (even though it is a newline). In this case, advance one object to check the next line index.
     if (nextObjectWithRuns && nextObjectWithRuns->isLineBreak())
@@ -896,18 +893,18 @@ unsigned AXTextMarker::offsetFromRoot() const
     return 0;
 }
 
-AXTextMarker AXTextMarker::nextMarkerFromOffset(unsigned offset, ForceSingleOffsetMovement forceSingleOffsetMovement) const
+AXTextMarker AXTextMarker::nextMarkerFromOffset(unsigned offset, ForceSingleOffsetMovement forceSingleOffsetMovement, std::optional<AXID> stopAtID) const
 {
     RELEASE_ASSERT(!isMainThread());
 
     if (!isValid())
         return { };
     if (!isInTextRun())
-        return toTextRunMarker().nextMarkerFromOffset(offset, forceSingleOffsetMovement);
+        return toTextRunMarker(stopAtID).nextMarkerFromOffset(offset, forceSingleOffsetMovement, stopAtID);
 
     auto marker = *this;
     while (offset) {
-        if (auto newMarker = marker.findMarker(AXDirection::Next, CoalesceObjectBreaks::No, IgnoreBRs::No, /* stopAtID */ std::nullopt, forceSingleOffsetMovement))
+        if (auto newMarker = marker.findMarker(AXDirection::Next, CoalesceObjectBreaks::No, IgnoreBRs::No, stopAtID, forceSingleOffsetMovement))
             marker = WTFMove(newMarker);
         else
             break;
@@ -1617,7 +1614,7 @@ AXIsolatedObject* findObjectWithRuns(AXIsolatedObject& start, AXDirection direct
                 }
             }
 
-            RefPtr current = &object;
+            RefPtr current = object;
             RefPtr next = object.nextSiblingIncludingIgnored(/* updateChildrenIfNeeded */ true);
             for (; !next; next = current->nextSiblingIncludingIgnored(/* updateChildrenIfNeeded */ true)) {
                 if (shouldStop(*current))

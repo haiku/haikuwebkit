@@ -239,9 +239,6 @@ void RemoteLayerWithInProcessRenderingBackingStore::prepareToDisplay()
 
     LOG_WITH_STREAM(RemoteLayerBuffers, stream << "RemoteLayerBackingStore " << m_layer->layerID() << " prepareToDisplay()");
 
-    if (performDelegatedLayerDisplay())
-        return;
-
     m_contentsBufferHandle = std::nullopt;
     auto displayRequirement = m_bufferSet.swapBuffersForDisplay(hasEmptyDirtyRegion(), supportsPartialRepaint());
     if (displayRequirement == SwapBuffersDisplayRequirement::NeedsNoDisplay)

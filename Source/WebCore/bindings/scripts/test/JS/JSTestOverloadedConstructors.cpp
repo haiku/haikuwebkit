@@ -340,7 +340,9 @@ extern "C" { extern void (*const __identifier("??_7TestOverloadedConstructors@We
 #else
 extern "C" { extern void* _ZTVN7WebCore26TestOverloadedConstructorsE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestOverloadedConstructors>, void>> static inline void verifyVTable(TestOverloadedConstructors* ptr) {
+template<std::same_as<TestOverloadedConstructors> T>
+static inline void verifyVTable(TestOverloadedConstructors* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

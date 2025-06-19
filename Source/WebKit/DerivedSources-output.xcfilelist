@@ -14,14 +14,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/AuxiliaryProcessMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/AuxiliaryProcessMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/CombinedWebDriverBidiDomains.json
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/CredentialUpdaterShim.swift
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/ISO18013MobileDocumentRequest+Extras.swift
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentController.swift
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentMobileDocumentRequest.swift
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentMobileDocumentRequest+Extras.swift
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentRawRequest.swift
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentRequest.swift
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentResponse.swift
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentRawRequestValidator.swift
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/DigitalCredentialsCoordinatorMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/DigitalCredentialsCoordinatorMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/DigitalCredentialsCoordinatorProxyMessageReceiver.cpp
@@ -61,6 +53,7 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/IPCTesterReceiverMessagesReplies.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/ISO18013MobileDocumentRequest+Extras.swift
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPIAction.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPIAction.mm
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPIAlarms.h
@@ -69,6 +62,8 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPICommands.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPICommands.mm
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPICookies.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPICookies.mm
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPIDOM.h
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPIDOM.mm
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPIDeclarativeNetRequest.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPIDeclarativeNetRequest.mm
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/JSWebExtensionAPIDevTools.h
@@ -147,7 +142,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/LogMessagesImplementations.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/LogStream.messages.in
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/LogStreamMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/LogStreamMessages.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/MaterialAdditions.swift
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/MediaPlayerPrivateRemoteMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/MediaPlayerPrivateRemoteMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/MediaSourcePrivateRemoteMessageReceiverMessageReceiver.cpp
@@ -456,6 +450,14 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/VisitedLinkStoreMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/VisitedLinkTableControllerMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/VisitedLinkTableControllerMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKApplicationUtilities.swift
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentController.swift
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentMobileDocumentRequest+Extras.swift
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentMobileDocumentRequest.swift
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentRawRequest.swift
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentRequest.swift
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentPresentmentResponse.swift
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKIdentityDocumentRawRequestValidator.swift
+$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKPDFPageNumberIndicatorAdditions.swift
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKSeparatedImageView.swift
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKWebView+TextExtraction.swift
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebAuthenticatorCoordinatorMessageReceiver.cpp
@@ -609,7 +611,6 @@ $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebUserContentControllerMessageRecei
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebUserContentControllerMessages.h
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebUserContentControllerProxyMessageReceiver.cpp
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WebUserContentControllerProxyMessages.h
-$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKPDFPageNumberIndicatorAdditions.swift
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/com.apple.WebKit.GPU.sb
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/com.apple.WebKit.GPUProcess.sb
 $(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/com.apple.WebKit.Model.sb

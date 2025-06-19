@@ -102,6 +102,7 @@ class NullGetterFunction;
 class NullSetterFunction;
 class ObjectAdaptiveStructureWatchpoint;
 class ObjectConstructor;
+class ObjectPropertyCondition;
 class ObjectPrototype;
 class RegExpConstructor;
 class RegExpPrototype;
@@ -479,11 +480,13 @@ public:
     InlineWatchpointSet m_stringIteratorProtocolWatchpointSet { IsWatched };
     InlineWatchpointSet m_stringSymbolReplaceWatchpointSet { IsWatched };
     InlineWatchpointSet m_stringSymbolToPrimitiveWatchpointSet { IsWatched };
+    InlineWatchpointSet m_arraySymbolToPrimitiveWatchpointSet { IsWatched };
     InlineWatchpointSet m_regExpPrimordialPropertiesWatchpointSet { IsWatched };
     InlineWatchpointSet m_mapSetWatchpointSet { IsWatched };
     InlineWatchpointSet m_setAddWatchpointSet { IsWatched };
     InlineWatchpointSet m_arraySpeciesWatchpointSet { ClearWatchpoint };
     InlineWatchpointSet m_arrayJoinWatchpointSet { IsWatched };
+    InlineWatchpointSet m_arrayToStringWatchpointSet { IsWatched };
     InlineWatchpointSet m_arrayNegativeOneWatchpointSet { IsWatched };
     InlineWatchpointSet m_arrayIsConcatSpreadableWatchpointSet { IsWatched };
     InlineWatchpointSet m_arrayPrototypeChainIsSaneWatchpointSet { IsWatched };
@@ -506,44 +509,6 @@ public:
 
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_arrayConstructorSpeciesWatchpoint;
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_arrayPrototypeConstructorWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_arrayPrototypeSymbolIteratorWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_arrayPrototypeJoinWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_arrayPrototypeAbsenceOfIndexedPropertiesWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_stringPrototypeAbsenceOfIndexedPropertiesWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_objectPrototypeAbsenceOfIndexedPropertiesWatchpoint;
-    std::unique_ptr<ChainedWatchpoint> m_objectPrototypeAbsenceOfIndexedPropertiesWatchpointForArray;
-    std::unique_ptr<ChainedWatchpoint> m_objectPrototypeAbsenceOfIndexedPropertiesWatchpointForString;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_arrayIteratorPrototypeNext;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_mapPrototypeSymbolIteratorWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_mapIteratorPrototypeNextWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_setPrototypeSymbolIteratorWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_setIteratorPrototypeNextWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_stringPrototypeSymbolIteratorWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_stringIteratorPrototypeNextWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_stringPrototypeSymbolReplaceMissWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_objectPrototypeSymbolReplaceMissWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_stringPrototypeSymbolToPrimitiveMissWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_objectPrototypeSymbolToPrimitiveMissWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_arrayPrototypeNegativeOneMissWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_objectPrototypeNegativeOneMissWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_arrayPrototypeIsConcatSpreadableMissWatchpoint;
-    std::unique_ptr<ObjectAdaptiveStructureWatchpoint> m_objectPrototypeIsConcatSpreadableMissWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeExecWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeFlagsWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeDotAllWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeGlobalWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeHasIndicesWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeIgnoreCaseWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeMultilineWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeStickyWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeUnicodeWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeUnicodeSetsWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_regExpPrototypeSymbolReplaceWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_mapPrototypeSetWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_setPrototypeAddWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_numberPrototypeToStringWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_stringPrototypeToStringWatchpoint;
-    std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_stringPrototypeValueOfWatchpoint;
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_arrayBufferConstructorSpeciesWatchpoints[2];
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_arrayBufferPrototypeConstructorWatchpoints[2];
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_typedArrayConstructorSpeciesWatchpoint;
@@ -554,15 +519,21 @@ public:
     std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>> m_typedArray ## name ## PrototypeConstructorWatchpoint;
     FOR_EACH_TYPED_ARRAY_TYPE(DECLARE_TYPED_ARRAY_TYPE_WATCHPOINT)
 #undef DECLARE_TYPED_ARRAY_TYPE_WATCHPOINT
-    Vector<std::unique_ptr<ObjectAdaptiveStructureWatchpoint>> m_missWatchpoints;
+    Vector<UniqueRef<ObjectAdaptiveStructureWatchpoint>> m_installedObjectAdaptiveStructureWatchpoints;
+    Vector<UniqueRef<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>>> m_installedObjectPropertyChangeAdaptiveWatchpoints;
+    Vector<UniqueRef<ChainedWatchpoint>> m_installedChainedWatchpoints;
 
-    void addWeakTicket(DeferredWorkTimer::Ticket);
-    void clearWeakTickets();
-    std::unique_ptr<ThreadSafeWeakHashSet<DeferredWorkTimer::TicketData>> m_weakTickets;
+    void installObjectAdaptiveStructureWatchpoint(const ObjectPropertyCondition&, InlineWatchpointSet&);
+    void installObjectPropertyChangeAdaptiveWatchpoint(const ObjectPropertyCondition&, InlineWatchpointSet&);
+    void installChainedWatchpoint(InlineWatchpointSet& from, InlineWatchpointSet& to);
 
     inline std::unique_ptr<ObjectAdaptiveStructureWatchpoint>& typedArrayConstructorSpeciesAbsenceWatchpoint(TypedArrayType);
     inline std::unique_ptr<ObjectAdaptiveStructureWatchpoint>& typedArrayPrototypeSymbolIteratorAbsenceWatchpoint(TypedArrayType);
     inline std::unique_ptr<ObjectPropertyChangeAdaptiveWatchpoint<InlineWatchpointSet>>& typedArrayPrototypeConstructorWatchpoint(TypedArrayType);
+
+    void addWeakTicket(DeferredWorkTimer::Ticket);
+    void clearWeakTickets();
+    std::unique_ptr<ThreadSafeWeakHashSet<DeferredWorkTimer::TicketData>> m_weakTickets;
 
 public:
     JSCallee* partiallyInitializedFrameCallee() const { return m_partiallyInitializedFrameCallee.get(); }
@@ -573,6 +544,7 @@ public:
     InlineWatchpointSet& stringIteratorProtocolWatchpointSet() { return m_stringIteratorProtocolWatchpointSet; }
     InlineWatchpointSet& stringSymbolReplaceWatchpointSet() { return m_stringSymbolReplaceWatchpointSet; }
     InlineWatchpointSet& stringSymbolToPrimitiveWatchpointSet() { return m_stringSymbolToPrimitiveWatchpointSet; }
+    InlineWatchpointSet& arraySymbolToPrimitiveWatchpointSet() { return m_arraySymbolToPrimitiveWatchpointSet; }
     InlineWatchpointSet& stringToStringWatchpointSet() { return m_stringToStringWatchpointSet; }
     InlineWatchpointSet& stringValueOfWatchpointSet() { return m_stringValueOfWatchpointSet; }
     InlineWatchpointSet& regExpPrimordialPropertiesWatchpointSet() { return m_regExpPrimordialPropertiesWatchpointSet; }
@@ -583,6 +555,7 @@ public:
     InlineWatchpointSet& objectPrototypeChainIsSaneWatchpointSet() { return m_objectPrototypeChainIsSaneWatchpointSet; }
     InlineWatchpointSet& stringPrototypeChainIsSaneWatchpointSet() { return m_stringPrototypeChainIsSaneWatchpointSet; }
     InlineWatchpointSet& arrayJoinWatchpointSet() { return m_arrayJoinWatchpointSet; }
+    InlineWatchpointSet& arrayToStringWatchpointSet() { return m_arrayToStringWatchpointSet; }
     InlineWatchpointSet& arrayNegativeOneWatchpointSet() { return m_arrayNegativeOneWatchpointSet; }
     InlineWatchpointSet& arrayIsConcatSpreadableWatchpointSet() { return m_arrayIsConcatSpreadableWatchpointSet; }
     InlineWatchpointSet& numberToStringWatchpointSet()

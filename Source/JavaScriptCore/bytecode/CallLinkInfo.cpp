@@ -88,7 +88,7 @@ void CallLinkInfo::clearStub()
     if (!stub())
         return;
 
-    m_stub->clearCallNodesFor(this);
+    m_stub->unlinkForcefully();
     m_stub = nullptr;
 }
 

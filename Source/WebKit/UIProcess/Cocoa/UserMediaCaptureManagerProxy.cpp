@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -823,8 +823,7 @@ bool UserMediaCaptureManagerProxy::hasSourceProxies() const
 
 std::optional<SharedPreferencesForWebProcess> UserMediaCaptureManagerProxy::sharedPreferencesForWebProcess() const
 {
-    auto& connectionProxy = m_connectionProxy;
-    return connectionProxy->sharedPreferencesForWebProcess();
+    return m_connectionProxy->sharedPreferencesForWebProcess();
 }
 
 }

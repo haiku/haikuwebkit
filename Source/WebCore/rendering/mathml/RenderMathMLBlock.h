@@ -103,7 +103,7 @@ private:
     bool canDropAnonymousBlockChild() const final { return false; }
     void layoutItems(RelayoutChildren);
 
-    Ref<MathMLStyle> m_mathMLStyle;
+    const Ref<MathMLStyle> m_mathMLStyle;
 };
 
 class RenderMathMLTable final : public RenderTable {
@@ -119,7 +119,7 @@ private:
     ASCIILiteral renderName() const final { return "RenderMathMLTable"_s; }
     std::optional<LayoutUnit> firstLineBaseline() const final;
 
-    Ref<MathMLStyle> m_mathMLStyle;
+    const Ref<MathMLStyle> m_mathMLStyle;
 };
 
 LayoutUnit toUserUnits(const MathMLElement::Length&, const RenderStyle&, const LayoutUnit& referenceValue);

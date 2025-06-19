@@ -174,7 +174,8 @@ std::optional<NavigationActionData> WebFrameLoaderClient::navigationActionData(c
         m_frame->info(),
         navigationID,
         navigationAction.originalRequest(),
-        request
+        request,
+        request.url().isValid() ? String() : request.url().string(),
     };
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -162,7 +162,7 @@ void FindController::updateFindUIAfterPageScroll(bool found, const String& strin
             webPage->protectedCorePage()->unmarkAllTextMatches();
 
         if (selectedFrame && shouldSetSelection)
-            selectedFrame->selection().clear();
+            selectedFrame->checkedSelection()->clear();
 
         hideFindIndicator();
         resetMatchIndex();
@@ -292,7 +292,7 @@ void FindController::findString(const String& string, OptionSet<FindOptions> opt
 #endif
     {
         if (RefPtr selectedFrame = frameWithSelection(webPage->protectedCorePage().get())) {
-            if (selectedFrame->selection().selectionBounds().isEmpty()) {
+            if (selectedFrame->checkedSelection()->selectionBounds().isEmpty()) {
                 auto result = webPage->protectedCorePage()->findTextMatches(string, coreOptions, maxMatchCount);
                 m_findMatches = WTFMove(result.ranges);
                 m_foundStringMatchIndex = result.indexForSelection;
@@ -384,12 +384,13 @@ void FindController::getImageForFindMatch(uint32_t matchIndex)
     if (!frame)
         return;
 
-    VisibleSelection oldSelection = frame->selection().selection();
-    frame->selection().setSelection(m_findMatches[matchIndex]);
+    CheckedRef frameSelection = frame->selection();
+    auto oldSelection = frameSelection->selection();
+    frameSelection->setSelection(m_findMatches[matchIndex]);
 
     auto selectionSnapshot = WebFrame::fromCoreFrame(*frame)->createSelectionSnapshot();
 
-    frame->selection().setSelection(oldSelection);
+    frameSelection->setSelection(oldSelection);
 
     if (!selectionSnapshot)
         return;
@@ -408,7 +409,7 @@ void FindController::selectFindMatch(uint32_t matchIndex)
     RefPtr frame = m_findMatches[matchIndex].start.document().frame();
     if (!frame)
         return;
-    frame->selection().setSelection(m_findMatches[matchIndex]);
+    frame->checkedSelection()->setSelection(m_findMatches[matchIndex]);
 }
 
 void FindController::indicateFindMatch(uint32_t matchIndex)
@@ -461,7 +462,7 @@ bool FindController::updateFindIndicator(bool isShowingOverlay, bool shouldAnima
             return { webPage->mainFrame(), pluginView->textIndicatorForCurrentSelection(textIndicatorOptions, presentationTransition) };
 #endif
         if (RefPtr selectedFrame = frameWithSelection(webPage->protectedCorePage().get())) {
-            if (auto selectedRange = selectedFrame->selection().selection().range(); selectedRange && ImageOverlay::isInsideOverlay(*selectedRange))
+            if (auto selectedRange = selectedFrame->checkedSelection()->selection().range(); selectedRange && ImageOverlay::isInsideOverlay(*selectedRange))
                 textIndicatorOptions.add({ TextIndicatorOption::PaintAllContent, TextIndicatorOption::PaintBackgrounds });
 
             return { selectedFrame, TextIndicator::createWithSelectionInFrame(*selectedFrame, textIndicatorOptions, presentationTransition) };
@@ -507,7 +508,7 @@ void FindController::didFindString()
     if (!selectedFrame)
         return;
 
-    selectedFrame->selection().revealSelection();
+    selectedFrame->checkedSelection()->revealSelection();
 }
 
 void FindController::didHideFindIndicator()
@@ -563,7 +564,7 @@ Vector<FloatRect> FindController::rectsForTextMatchesInRect(IntRect clipRect)
         if (!document)
             continue;
 
-        for (FloatRect rect : document->markers().renderedRectsForMarkers(DocumentMarkerType::TextMatch)) {
+        for (FloatRect rect : document->checkedMarkers()->renderedRectsForMarkers(DocumentMarkerType::TextMatch)) {
             if (!localFrame->isMainFrame())
                 rect = mainFrameView->windowToContents(localFrame->protectedView()->contentsToWindow(enclosingIntRect(rect)));
 
@@ -631,7 +632,7 @@ void FindController::drawRect(PageOverlay&, GraphicsContext& graphicsContext, co
         return;
 
     if (RefPtr selectedFrame = frameWithSelection(protectedWebPage()->protectedCorePage().get())) {
-        IntRect findIndicatorRect = selectedFrame->protectedView()->contentsToRootView(enclosingIntRect(selectedFrame->selection().selectionBounds(FrameSelection::ClipToVisibleContent::No)));
+        auto findIndicatorRect = selectedFrame->protectedView()->contentsToRootView(enclosingIntRect(selectedFrame->checkedSelection()->selectionBounds(FrameSelection::ClipToVisibleContent::No)));
 
         if (findIndicatorRect != m_findIndicatorRect) {
             // We are underneath painting, so it's not safe to mutate the layer tree synchronously.

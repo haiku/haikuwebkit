@@ -76,7 +76,7 @@ Vector<MarkedText> MarkedText::subdivide(const Vector<MarkedText>& markedTexts, 
     // 3. Compute intersection.
     Vector<MarkedText> result;
     result.reserveInitialCapacity(numberOfMarkedTexts);
-    UncheckedKeyHashSet<CheckedPtr<const MarkedText>> processedMarkedTexts;
+    HashSet<CheckedPtr<const MarkedText>> processedMarkedTexts;
     unsigned offsetSoFar = offsets[0].value;
     for (unsigned i = 1; i < numberOfOffsets; ++i) {
         if (offsets[i].value > offsets[i - 1].value) {

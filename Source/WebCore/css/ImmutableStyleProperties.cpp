@@ -68,7 +68,7 @@ Ref<ImmutableStyleProperties> ImmutableStyleProperties::create(std::span<const C
 
 static auto& deduplicationMap()
 {
-    static NeverDestroyed<UncheckedKeyHashMap<unsigned, Ref<ImmutableStyleProperties>, AlreadyHashed>> map;
+    static NeverDestroyed<HashMap<unsigned, Ref<ImmutableStyleProperties>, AlreadyHashed>> map;
     return map.get();
 }
 

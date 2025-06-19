@@ -667,7 +667,7 @@ void ApplyStyleCommand::applyInlineStyle(EditingStyle& style)
     // to check a computed style
     document().updateLayoutIgnorePendingStylesheets();
 
-    RefPtr<EditingStyle> styleToApply = &style;
+    RefPtr styleToApply = style;
     if (textDirection) {
         // Avoid applying the unicode-bidi and direction properties beneath ancestors that already have them.
         RefPtr startNode = start.deprecatedNode();
@@ -775,7 +775,7 @@ void ApplyStyleCommand::applyInlineStyleToNodeRange(EditingStyle& style, Node& s
     document().updateLayoutIgnorePendingStylesheets();
 
     Vector<InlineRunToApplyStyle> runs;
-    RefPtr<Node> node = &startNode;
+    RefPtr node = startNode;
     for (RefPtr<Node> next; node && node != pastEndNode; node = next) {
         next = NodeTraversal::next(*node);
 
@@ -1339,17 +1339,17 @@ bool ApplyStyleCommand::mergeEndWithNextIfIdentical(const Position& start, const
 
 bool ApplyStyleCommand::surroundNodeRangeWithElement(Node& startNode, Node& endNode, Ref<Element>&& elementToInsert)
 {
-    Ref<Node> protectedStartNode = startNode;
-    Ref<Element> element = WTFMove(elementToInsert);
+    Ref protectedStartNode = startNode;
+    Ref element = WTFMove(elementToInsert);
 
     if (!insertNodeBefore(element.copyRef(), startNode) || !element->isContentRichlyEditable()) {
         removeNode(element);
         return false;
     }
 
-    RefPtr<Node> node = &startNode;
+    RefPtr node = startNode;
     while (node) {
-        RefPtr<Node> next = node->nextSibling();
+        RefPtr next = node->nextSibling();
         if (isEditableNode(*node)) {
             removeNode(*node);
             appendNode(*node, element.copyRef());
@@ -1359,8 +1359,8 @@ bool ApplyStyleCommand::surroundNodeRangeWithElement(Node& startNode, Node& endN
         node = next;
     }
 
-    RefPtr<Node> nextSibling = element->nextSibling();
-    RefPtr<Node> previousSibling = element->previousSibling();
+    RefPtr nextSibling = element->nextSibling();
+    RefPtr previousSibling = element->previousSibling();
 
     if (nextSibling && nextSibling->hasEditableStyle()) {
         if (RefPtr nextElement = elementIfEquivalent(element, *nextSibling))
@@ -1427,8 +1427,8 @@ Position ApplyStyleCommand::positionToComputeInlineStyleChange(Node& startNode, 
 
 void ApplyStyleCommand::applyInlineStyleChange(Node& passedStart, Node& passedEnd, StyleChange& styleChange, AddStyledElement addStyledElement)
 {
-    RefPtr<Node> startNode = &passedStart;
-    RefPtr<Node> endNode = &passedEnd;
+    RefPtr startNode = passedStart;
+    RefPtr endNode = passedEnd;
     ASSERT(startNode->isConnected());
     ASSERT(endNode->isConnected());
 

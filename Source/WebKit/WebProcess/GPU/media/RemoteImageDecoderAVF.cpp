@@ -147,11 +147,6 @@ bool RemoteImageDecoderAVF::frameHasAlphaAtIndex(size_t index) const
     return m_frameInfos[index].hasAlpha;
 }
 
-unsigned RemoteImageDecoderAVF::frameBytesAtIndex(size_t, SubsamplingLevel) const
-{
-    return size().area() * 4;
-}
-
 PlatformImagePtr RemoteImageDecoderAVF::createFrameImageAtIndex(size_t index, SubsamplingLevel, const DecodingOptions&)
 {
     if (m_frameImages.contains(index))

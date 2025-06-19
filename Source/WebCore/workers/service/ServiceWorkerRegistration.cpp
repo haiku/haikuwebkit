@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -386,7 +386,7 @@ void ServiceWorkerRegistration::addCookieChangeSubscriptions(Vector<CookieStoreG
         cookieChangeSubscriptions.append({ WTFMove(subscription.name), WTFMove(url) });
     }
 
-    protectedContainer()->addCookieChangeSubscriptions(identifier(), WTFMove(cookieChangeSubscriptions), WTFMove(promise));
+    m_container->addCookieChangeSubscriptions(identifier(), WTFMove(cookieChangeSubscriptions), WTFMove(promise));
 }
 
 void ServiceWorkerRegistration::removeCookieChangeSubscriptions(Vector<CookieStoreGetOptions>&& subscriptions, Ref<DeferredPromise>&& promise)
@@ -414,7 +414,7 @@ void ServiceWorkerRegistration::removeCookieChangeSubscriptions(Vector<CookieSto
         cookieChangeSubscriptions.append({ WTFMove(subscription.name), WTFMove(url) });
     }
 
-    protectedContainer()->removeCookieChangeSubscriptions(identifier(), WTFMove(cookieChangeSubscriptions), WTFMove(promise));
+    m_container->removeCookieChangeSubscriptions(identifier(), WTFMove(cookieChangeSubscriptions), WTFMove(promise));
 }
 
 void ServiceWorkerRegistration::cookieChangeSubscriptions(Ref<DeferredPromise>&& promise)
@@ -424,12 +424,7 @@ void ServiceWorkerRegistration::cookieChangeSubscriptions(Ref<DeferredPromise>&&
         return;
     }
 
-    protectedContainer()->cookieChangeSubscriptions(identifier(), WTFMove(promise));
-}
-
-Ref<ServiceWorkerContainer> ServiceWorkerRegistration::protectedContainer() const
-{
-    return m_container;
+    m_container->cookieChangeSubscriptions(identifier(), WTFMove(promise));
 }
 
 } // namespace WebCore

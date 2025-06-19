@@ -74,6 +74,11 @@ bool RemoteLayerWithRemoteRenderingBackingStore::frontBufferMayBeVolatile() cons
 void RemoteLayerWithRemoteRenderingBackingStore::prepareToDisplay()
 {
     m_contentsBufferHandle = std::nullopt;
+
+    if (!hasFrontBuffer() || !supportsPartialRepaint())
+        setNeedsDisplay();
+
+    dirtyRepaintCounterIfNecessary();
 }
 
 void RemoteLayerWithRemoteRenderingBackingStore::clearBackingStore()

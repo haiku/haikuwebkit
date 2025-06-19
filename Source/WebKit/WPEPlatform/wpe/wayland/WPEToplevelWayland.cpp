@@ -755,7 +755,7 @@ static bool regionsEqual(WPERectangle* rectsA, unsigned rectsACount, WPERectangl
 void wpeToplevelWaylandSetOpaqueRectangles(WPEToplevelWayland* toplevel, WPERectangle* rects, unsigned rectsCount)
 {
     auto* priv = toplevel->priv;
-    if (regionsEqual(priv->opaqueRegion.rects.data(), priv->opaqueRegion.rects.size(), rects, rectsCount))
+    if (regionsEqual(priv->opaqueRegion.rects.mutableSpan().data(), priv->opaqueRegion.rects.size(), rects, rectsCount))
         return;
 
     priv->opaqueRegion.rects.clear();

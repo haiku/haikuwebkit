@@ -577,7 +577,7 @@ GCGLExternalImage GraphicsContextGLCocoa::createExternalImage(ExternalImageSourc
     UNUSED_VARIABLE(internalFormat);
 #endif
     attributes.appendList({ EGL_NONE, EGL_NONE });
-    auto eglImage = EGL_CreateImageKHR(platformDisplay(), EGL_NO_CONTEXT, EGL_METAL_TEXTURE_ANGLE, reinterpret_cast<EGLClientBuffer>(texture.get()), attributes.data());
+    auto eglImage = EGL_CreateImageKHR(platformDisplay(), EGL_NO_CONTEXT, EGL_METAL_TEXTURE_ANGLE, reinterpret_cast<EGLClientBuffer>(texture.get()), attributes.span().data());
     if (!eglImage) {
         addError(GCGLErrorCode::InvalidOperation);
         return { };

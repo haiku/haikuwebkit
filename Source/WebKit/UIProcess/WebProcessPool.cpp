@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -367,7 +367,7 @@ WebProcessPool::~WebProcessPool()
         GPUProcessProxy::keepProcessAliveTemporarily();
 #endif
 
-    checkedWebProcessCache()->clear();
+    m_webProcessCache->clear();
 
     bool removed = processPools().removeFirst(*this);
     ASSERT_UNUSED(removed, removed);
@@ -475,7 +475,7 @@ void WebProcessPool::textCheckerStateChanged()
 
 void WebProcessPool::setApplicationIsActive(bool isActive)
 {
-    checkedWebProcessCache()->setApplicationIsActive(isActive);
+    m_webProcessCache->setApplicationIsActive(isActive);
 }
 
 static bool shouldReportNetworkOrGPUProcessCrash(ProcessTerminationReason reason)
@@ -651,6 +651,7 @@ void WebProcessPool::startedPlayingModels(IPC::Connection& connection)
     ASSERT(!m_processesWithModelPlayers.contains(*proxy));
     WEBPROCESSPOOL_RELEASE_LOG(Process, "startedPlayingModels (process=%p, PID=%i)", proxy.get(), proxy->processID());
     m_processesWithModelPlayers.add(*proxy);
+    updateModelProcessAssertion();
 }
 
 void WebProcessPool::stoppedPlayingModels(IPC::Connection& connection)
@@ -662,7 +663,32 @@ void WebProcessPool::stoppedPlayingModels(IPC::Connection& connection)
     if (m_processesWithModelPlayers.contains(*proxy)) {
         WEBPROCESSPOOL_RELEASE_LOG(Process, "stoppedPlayingModels (process=%p, PID=%i)", proxy.get(), proxy->processID());
         m_processesWithModelPlayers.remove(*proxy);
+        updateModelProcessAssertion();
     }
+}
+
+bool WebProcessPool::hasForegroundWebProcessesWithModels() const
+{
+    for (Ref process : m_processesWithModelPlayers) {
+        if (process->isForeground())
+            return true;
+    }
+    return false;
+}
+
+bool WebProcessPool::hasBackgroundWebProcessesWithModels() const
+{
+    for (Ref process : m_processesWithModelPlayers) {
+        if (process->isBackground())
+            return true;
+    }
+    return false;
+}
+
+void WebProcessPool::updateModelProcessAssertion()
+{
+    if (RefPtr modelProcess = ModelProcessProxy::singletonIfCreated())
+        modelProcess->updateProcessAssertion();
 }
 
 void WebProcessPool::terminateAllWebContentProcessesWithModelPlayers()
@@ -697,7 +723,7 @@ void WebProcessPool::establishRemoteWorkerContextConnectionToNetworkProcess(Remo
         remoteWorkerProcessProxy = process;
         process.enableRemoteWorkers(workerType, processPool->userContentControllerIdentifierForRemoteWorkers());
         if (process.isInProcessCache()) {
-            processPool->checkedWebProcessCache()->removeProcess(process, WebProcessCache::ShouldShutDownProcess::No);
+            processPool->webProcessCache().removeProcess(process, WebProcessCache::ShouldShutDownProcess::No);
             ASSERT(!process.isInProcessCache());
         }
     };
@@ -1183,7 +1209,7 @@ void WebProcessPool::disconnectProcess(WebProcessProxy& process)
     process.unregisterMemoryAttributionIDIfNeeded();
 #endif
 
-    protectedBackForwardCache()->removeEntriesForProcess(process);
+    m_backForwardCache->removeEntriesForProcess(process);
 
     if (process.isRunningWorkers())
         process.disableRemoteWorkers({ RemoteWorkerType::ServiceWorker, RemoteWorkerType::SharedWorker });
@@ -1318,7 +1344,7 @@ Ref<WebPageProxy> WebProcessPool::createWebPage(PageClient& pageClient, Ref<API:
     bool wasProcessSwappingOnNavigationEnabled = configuration->processSwapsOnNavigation();
     configuration->setProcessSwapsOnNavigationFromExperimentalFeatures(enableProcessSwapOnCrossSiteNavigation);
     if (wasProcessSwappingOnNavigationEnabled != configuration->processSwapsOnNavigation())
-        checkedWebProcessCache()->updateCapacity(*this);
+        m_webProcessCache->updateCapacity(*this);
 
 #if ENABLE(GPU_PROCESS)
     if (pagePreference->useGPUProcessForDOMRenderingEnabled())
@@ -1371,7 +1397,7 @@ void WebProcessPool::pageEndUsingWebsiteDataStore(WebPageProxy& page, WebsiteDat
         m_sessionToPageIDsMap.remove(iterator);
 
         if (sessionID.isEphemeral())
-            checkedWebProcessCache()->clearAllProcessesForSession(sessionID);
+            m_webProcessCache->clearAllProcessesForSession(sessionID);
     }
     dataStore.removePage(page);
 }
@@ -1446,8 +1472,8 @@ void WebProcessPool::handleMemoryPressureWarning(Critical)
 
     // Clear back/forward cache first as processes removed from the back/forward cache will likely
     // be added to the WebProcess cache.
-    protectedBackForwardCache()->clear();
-    checkedWebProcessCache()->clear();
+    m_backForwardCache->clear();
+    m_webProcessCache->clear();
 
     if (RefPtr prewarmedProcess = m_prewarmedProcess.get())
         prewarmedProcess->shutDown();
@@ -1580,7 +1606,7 @@ void WebProcessPool::updateBackForwardCacheCapacity()
     unsigned backForwardCacheCapacity = 0;
     calculateMemoryCacheSizes(LegacyGlobalSettings::singleton().cacheModel(), dummy, dummy, dummy, dummyInterval, backForwardCacheCapacity);
 
-    protectedBackForwardCache()->setCapacity(*this, backForwardCacheCapacity);
+    m_backForwardCache->setCapacity(*this, backForwardCacheCapacity);
 }
 
 void WebProcessPool::setCacheModel(CacheModel cacheModel)
@@ -1953,7 +1979,7 @@ void WebProcessPool::updateHiddenPageThrottlingAutoIncreaseLimit()
 void WebProcessPool::reportWebContentCPUTime(Seconds cpuTime, uint64_t activityState)
 {
 #if PLATFORM(MAC)
-    Ref { m_perActivityStateCPUUsageSampler.get() }->reportWebContentCPUTime(cpuTime, static_cast<WebCore::ActivityStateForCPUSampling>(activityState));
+    m_perActivityStateCPUUsageSampler->reportWebContentCPUTime(cpuTime, static_cast<WebCore::ActivityStateForCPUSampling>(activityState));
 #else
     UNUSED_PARAM(cpuTime);
     UNUSED_PARAM(activityState);
@@ -1977,8 +2003,7 @@ void WebProcessPool::updateProcessAssertions()
 #endif
 
 #if ENABLE(MODEL_PROCESS)
-    if (RefPtr modelProcess = ModelProcessProxy::singletonIfCreated())
-        modelProcess->updateProcessAssertion();
+    updateModelProcessAssertion();
 #endif
 
     // Check on next run loop since the web process proxy tokens are probably being updated.
@@ -2171,7 +2196,7 @@ std::tuple<Ref<WebProcessProxy>, RefPtr<SuspendedPageProxy>, ASCIILiteral> WebPr
             if (process->state() != WebProcessProxy::State::Terminated && process->hasSameGPUAndNetworkProcessPreferencesAs(pageConfiguration)) {
                 // Make sure we remove the process from the cache if it is in there since we're about to use it.
                 if (process->isInProcessCache()) {
-                    checkedWebProcessCache()->removeProcess(*process, WebProcessCache::ShouldShutDownProcess::No);
+                    m_webProcessCache->removeProcess(*process, WebProcessCache::ShouldShutDownProcess::No);
                     ASSERT(!process->isInProcessCache());
                 }
 
@@ -2455,16 +2480,6 @@ void WebProcessPool::forEachProcessForSession(PAL::SessionID sessionID, NOESCAPE
             continue;
         apply(process);
     }
-}
-
-CheckedRef<WebProcessCache> WebProcessPool::checkedWebProcessCache()
-{
-    return m_webProcessCache.get();
-}
-
-Ref<WebBackForwardCache> WebProcessPool::protectedBackForwardCache()
-{
-    return m_backForwardCache.get();
 }
 
 size_t WebProcessPool::serviceWorkerProxiesCount() const

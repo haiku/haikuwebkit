@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Apple Inc.
+ * Copyright (C) 2022 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -97,9 +97,9 @@ LayoutUnit GridMasonryLayout::calculateMasonryIntrinsicLogicalWidth(RenderBox& g
 {
     switch (layoutPhase) {
     case MasonryLayoutPhase::MinContentPhase:
-        return gridItem.computeIntrinsicLogicalWidthUsing(Length(LengthType::MinContent), { }, gridItem.borderAndPaddingLogicalWidth());
+        return gridItem.computeIntrinsicLogicalWidthUsing(CSS::Keyword::MinContent { }, { }, gridItem.borderAndPaddingLogicalWidth());
     case MasonryLayoutPhase::MaxContentPhase:
-        return gridItem.computeIntrinsicLogicalWidthUsing(Length(LengthType::MaxContent), { }, gridItem.borderAndPaddingLogicalWidth());
+        return gridItem.computeIntrinsicLogicalWidthUsing(CSS::Keyword::MaxContent { }, { }, gridItem.borderAndPaddingLogicalWidth());
     case MasonryLayoutPhase::LayoutPhase:
         ASSERT_NOT_REACHED();
         return { };

@@ -445,7 +445,11 @@ void WebFrameProxy::didCreateSubframe(WebCore::FrameIdentifier frameID, String&&
     RefPtr page = m_page.get();
     MESSAGE_CHECK(page);
     MESSAGE_CHECK(WebFrameProxy::canCreateFrame(frameID));
-    MESSAGE_CHECK((frameID.toUInt64() >> 32) == process().coreProcessIdentifier().toUInt64());
+
+    // This can happen with site isolation right after a frame does a cross-site navigation
+    // if the old process creates a subframe before it is told the frame has become a RemoteFrame.
+    if ((frameID.toUInt64() >> 32) != process().coreProcessIdentifier().toUInt64())
+        return;
 
     Ref child = WebFrameProxy::create(*page, m_frameProcess, frameID, effectiveSandboxFlags, scrollingMode, nullptr, IsMainFrame::No);
     child->m_parentFrame = *this;

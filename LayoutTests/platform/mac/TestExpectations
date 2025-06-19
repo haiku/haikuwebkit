@@ -1387,8 +1387,11 @@ imported/w3c/web-platform-tests/pointerevents/pointerevent_touch-adjustment_clic
 imported/w3c/web-platform-tests/pointerevents/pointerup_after_pointerdown_target_removed.html?touch [ Skip ]
 imported/w3c/web-platform-tests/pointerevents/predicted_events_attributes.html?touch [ Skip ]
 imported/w3c/web-platform-tests/pointerevents/touch-action-with-swipe-dir-change.html?touch [ Skip ]
+imported/w3c/web-platform-tests/pointerevents/coalesced_events_attributes_on_redispatch.https.html?touch [ Skip ]
 
 webkit.org/b/274686 imported/w3c/web-platform-tests/pointerevents/pointerevent_capture_mouse_and_release_and_capture_again.html [ Skip ]
+
+webkit.org/b/294102 imported/w3c/web-platform-tests/pointerevents/pointerevent_pointerout_no_pointer_movement.html [ Skip ]
 
 webkit.org/b/197473 imported/w3c/web-platform-tests/resource-timing/resource-timing-level1.sub.html [ Pass Failure ]
 
@@ -2432,12 +2435,13 @@ fast/canvas/webgl/gl-teximage.html [ Failure ]
 #rdar://145604998 (REGRESSION(iOS 18.4, macOS Sequoia 15.4 ): fast/text/international/hindi-spacing.html is a constant text failure)
 fast/text/international/hindi-spacing.html [ Failure ]
 
-# webkit.org/b/293838 ([macOS] 2x tests in imported/w3c/web-platform-tests/url/ are constant failures (flaky in EWS)
-[ Sequoia ] imported/w3c/web-platform-tests/url/IdnaTestV2.window.html [ Failure ]
-[ Sequoia ] imported/w3c/web-platform-tests/url/toascii.window.html [ Failure ]
-
 webkit.org/b/293981 [ Sequoia ] imported/w3c/web-platform-tests/mimesniff/media/media-sniff.window.html [ Failure ]
 
 webkit.org/b/294043 [ Sequoia ] platform/mac/fast/text/line-break-locale.html [ Failure ]
 
 webkit.org/b/294152 [ Sequoia ] http/tests/misc/timer-vs-loading.html [ Timeout ]
+
+webkit.org/b/294295 fullscreen/full-screen-request-removed-with-raf.html [ Pass Timeout ]
+
+webkit.org/b/294316 [ Debug ] imported/w3c/web-platform-tests/pointerevents/coalesced_events_attributes.https.html?mouse [ Skip ]
+webkit.org/b/294316 [ Debug ] imported/w3c/web-platform-tests/pointerevents/coalesced_events_attributes.https.html?pen [ Skip ]

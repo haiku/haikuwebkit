@@ -245,8 +245,8 @@ protected:
     
     void updateLogicalWidth() final;
 
-    LayoutUnit convertStyleLogicalWidthToComputedWidth(const Length& styleLogicalWidth, LayoutUnit availableWidth);
-    LayoutUnit convertStyleLogicalHeightToComputedHeight(const Length& styleLogicalHeight);
+    template<typename SizeType> LayoutUnit convertStyleLogicalWidthToComputedWidth(const SizeType& styleLogicalWidth, LayoutUnit availableWidth);
+    template<typename SizeType> LayoutUnit convertStyleLogicalHeightToComputedHeight(const SizeType& styleLogicalHeight);
 
     LayoutRect overflowClipRect(const LayoutPoint& location, OverlayScrollbarSizeRelevancy = OverlayScrollbarSizeRelevancy::IgnoreOverlayScrollbarSize, PaintPhase = PaintPhase::BlockBackground) const final;
     LayoutRect overflowClipRectForChildLayers(const LayoutPoint& location, OverlayScrollbarSizeRelevancy relevancy) const override { return RenderBox::overflowClipRect(location, relevancy); }
@@ -269,7 +269,7 @@ protected:
     mutable Vector<SingleThreadWeakPtr<RenderTableCol>> m_columnRenderers;
 
     unsigned effectiveIndexOfColumn(const RenderTableCol&) const;
-    using EffectiveColumnIndexMap = UncheckedKeyHashMap<SingleThreadWeakRef<const RenderTableCol>, unsigned>;
+    using EffectiveColumnIndexMap = HashMap<SingleThreadWeakRef<const RenderTableCol>, unsigned>;
     mutable EffectiveColumnIndexMap m_effectiveColumnIndexMap;
 
     mutable SingleThreadWeakPtr<RenderTableSection> m_head;

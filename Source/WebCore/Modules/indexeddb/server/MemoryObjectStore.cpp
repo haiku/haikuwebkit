@@ -81,7 +81,7 @@ void MemoryObjectStore::writeTransactionStarted(MemoryBackingStoreTransaction& t
     LOG(IndexedDB, "MemoryObjectStore::writeTransactionStarted");
 
     ASSERT(!m_writeTransaction);
-    m_writeTransaction = &transaction;
+    m_writeTransaction = transaction;
     m_keyGeneratorValueBeforeTransaction = m_keyGeneratorValue;
 
     for (auto& index : m_indexesByIdentifier.values())

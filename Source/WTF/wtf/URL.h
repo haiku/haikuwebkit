@@ -234,6 +234,7 @@ public:
 #if USE(CF)
     WTF_EXPORT_PRIVATE URL(CFURLRef);
     WTF_EXPORT_PRIVATE RetainPtr<CFURLRef> createCFURL() const;
+    WTF_EXPORT_PRIVATE static RetainPtr<CFURLRef> createCFURL(const String&);
 #endif
 
 #if USE(FOUNDATION)

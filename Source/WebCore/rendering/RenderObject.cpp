@@ -547,7 +547,7 @@ static inline bool isLayoutBoundary(const RenderElement& renderer)
         return false;
     }
 
-    if (style.width().isIntrinsicOrAuto() || style.height().isIntrinsicOrAuto() || style.height().isPercentOrCalculated())
+    if (style.width().isIntrinsicOrLegacyIntrinsicOrAuto() || style.height().isIntrinsicOrLegacyIntrinsicOrAuto() || style.height().isPercentOrCalculated())
         return false;
 
     if (renderer.document().settings().layerBasedSVGEngineEnabled() && renderer.isSVGLayerAwareRenderer())
@@ -2259,7 +2259,7 @@ static Vector<FloatRect> borderAndTextRects(const SimpleRange& range, Coordinate
 
     bool useVisibleBounds = behavior.contains(RenderObject::BoundingRectBehavior::UseVisibleBounds);
 
-    UncheckedKeyHashSet<RefPtr<Element>> selectedElementsSet;
+    HashSet<RefPtr<Element>> selectedElementsSet;
     for (Ref node : intersectingNodesWithDeprecatedZeroOffsetStartQuirk(range)) {
         if (RefPtr element = dynamicDowncast<Element>(WTFMove(node)))
             selectedElementsSet.add(element.releaseNonNull());

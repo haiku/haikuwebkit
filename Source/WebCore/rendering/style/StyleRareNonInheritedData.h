@@ -31,7 +31,6 @@
 #include "LineClampValue.h"
 #include "NameScope.h"
 #include "NinePieceImage.h"
-#include "OffsetRotation.h"
 #include "PositionArea.h"
 #include "PositionTryFallback.h"
 #include "ScopedName.h"
@@ -42,6 +41,10 @@
 #include "ShapeValue.h"
 #include "StyleColor.h"
 #include "StyleContentAlignmentData.h"
+#include "StyleOffsetAnchor.h"
+#include "StyleOffsetDistance.h"
+#include "StyleOffsetPosition.h"
+#include "StyleOffsetRotate.h"
 #include "StylePrimitiveNumericTypes.h"
 #include "StyleScrollMargin.h"
 #include "StyleScrollPadding.h"
@@ -184,7 +187,7 @@ public:
     Style::Color textDecorationColor;
 
     DataRef<StyleCustomPropertyData> customProperties;
-    UncheckedKeyHashSet<AtomString> customPaintWatchedProperties;
+    HashSet<AtomString> customPaintWatchedProperties;
 
     RefPtr<RotateTransformOperation> rotate;
     RefPtr<ScaleTransformOperation> scale;
@@ -199,10 +202,10 @@ public:
     GapLength columnGap;
     GapLength rowGap;
 
-    Length offsetDistance;
-    LengthPoint offsetPosition;
-    LengthPoint offsetAnchor;
-    OffsetRotation offsetRotate;
+    Style::OffsetDistance offsetDistance;
+    Style::OffsetPosition offsetPosition;
+    Style::OffsetAnchor offsetAnchor;
+    Style::OffsetRotate offsetRotate;
 
     TextDecorationThickness textDecorationThickness;
 

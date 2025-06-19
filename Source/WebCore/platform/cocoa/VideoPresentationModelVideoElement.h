@@ -142,7 +142,7 @@ private:
     RefPtr<HTMLVideoElement> m_videoElement;
     RetainPtr<PlatformLayer> m_videoFullscreenLayer;
     bool m_isListening { false };
-    UncheckedKeyHashSet<CheckedPtr<VideoPresentationModelClient>> m_clients;
+    HashSet<CheckedPtr<VideoPresentationModelClient>> m_clients;
     bool m_hasVideo { false };
     bool m_documentIsVisible { true };
     bool m_isChildOfElementFullscreen { false };

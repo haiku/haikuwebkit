@@ -35,6 +35,7 @@
 #include <WebCore/GraphicsLayer.h>
 #include <WebCore/GraphicsLayerClient.h>
 #include <WebCore/Page.h>
+#include <WebCore/ScrollView.h>
 #include <WebCore/Timer.h>
 #include <WebCore/ViewportConfiguration.h>
 #include <wtf/OptionSet.h>
@@ -712,6 +713,8 @@ private:
 #endif
 
     RefPtr<WebCore::ShadowRoot> m_shadowRoot;
+
+    std::unique_ptr<WebCore::ScrollView::ProhibitScrollingWhenChangingContentSizeForScope> m_prohibitScrollingDueToContentSizeChanges;
 
     // FIXME: We should rationalize these with the values in ViewGestureController.
     // For now, we'll leave them differing as they do in PDFPlugin.

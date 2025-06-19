@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -279,7 +279,7 @@ Ref<WebProcessProxy> WebProcessProxy::create(WebProcessPool& processPool, Websit
     if (shouldLaunchProcess == ShouldLaunchProcess::Yes) {
         if (liveProcessesLRU().computeSize() >= s_maxProcessCount) {
             for (auto& processPool : WebProcessPool::allProcessPools())
-                processPool->checkedWebProcessCache()->clear();
+                processPool->webProcessCache().clear();
             if (liveProcessesLRU().computeSize() >= s_maxProcessCount)
                 Ref { liveProcessesLRU().first() }->requestTermination(ProcessTerminationReason::ExceededProcessCountLimit);
         }
@@ -729,7 +729,7 @@ void WebProcessProxy::shutDown()
     WEBPROCESSPROXY_RELEASE_LOG(Process, "shutDown:");
 
     if (m_isInProcessCache) {
-        protectedProcessPool()->checkedWebProcessCache()->removeProcess(*this, WebProcessCache::ShouldShutDownProcess::No);
+        protectedProcessPool()->webProcessCache().removeProcess(*this, WebProcessCache::ShouldShutDownProcess::No);
         ASSERT(!m_isInProcessCache);
     }
 
@@ -1323,13 +1323,6 @@ void WebProcessProxy::didClose(IPC::Connection& connection)
     processDidTerminateOrFailedToLaunch(terminationReason());
 }
 
-#if PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
-Ref<UserMediaCaptureManagerProxy> WebProcessProxy::protectedUserMediaCaptureManagerProxy()
-{
-    return m_userMediaCaptureManagerProxy.get();
-}
-#endif
-
 void WebProcessProxy::processDidTerminateOrFailedToLaunch(ProcessTerminationReason reason)
 {
     WEBPROCESSPROXY_RELEASE_LOG_ERROR(Process, "processDidTerminateOrFailedToLaunch: reason=%" PUBLIC_LOG_STRING, processTerminationReasonToString(reason).characters());
@@ -1648,7 +1641,7 @@ void WebProcessProxy::maybeShutDown()
     if (state() == State::Terminated || !canTerminateAuxiliaryProcess())
         return;
 
-    if (canBeAddedToWebProcessCache() && protectedProcessPool()->checkedWebProcessCache()->addProcessIfPossible(*this))
+    if (canBeAddedToWebProcessCache() && protectedProcessPool()->webProcessCache().addProcessIfPossible(*this))
         return;
 
     shutDown();

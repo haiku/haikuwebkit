@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -939,8 +939,7 @@ AnchorElements AnchorPositionEvaluator::findAnchorsForAnchorPositionedElement(co
 
     for (auto& anchorName : anchorNames) {
         auto anchor = findLastAcceptableAnchorWithName(anchorName, anchorPositionedElement, anchorsForAnchorName);
-        if (anchor)
-            anchorElements.add(anchorName, anchor);
+        anchorElements.add(anchorName, anchor);
     }
 
     return anchorElements;
@@ -970,8 +969,9 @@ void AnchorPositionEvaluator::updateAnchorPositioningStatesAfterInterleavedLayou
 
                 Vector<ResolvedAnchor> anchors;
                 for (auto& anchorNameAndElement : state.anchorElements) {
+                    CheckedPtr anchorElement = anchorNameAndElement.value.get();
                     anchors.append(ResolvedAnchor {
-                        .renderer = dynamicDowncast<RenderBoxModelObject>(anchorNameAndElement.value->renderer()),
+                        .renderer = anchorElement ? dynamicDowncast<RenderBoxModelObject>(anchorElement->renderer()) : nullptr,
                         .name = anchorNameAndElement.key
                     });
                 }
@@ -987,7 +987,7 @@ void AnchorPositionEvaluator::updateAnchorPositioningStatesAfterInterleavedLayou
 
 void AnchorPositionEvaluator::updateAnchorPositionedStateForLayoutTimePositioned(Element& element, const RenderStyle& style, AnchorPositionedStates& states)
 {
-    if (!style.positionAnchor() && !isLayoutTimeAnchorPositioned(style))
+    if (!isLayoutTimeAnchorPositioned(style))
         return;
 
     auto* state = states.ensure({ &element, style.pseudoElementIdentifier() }, [&] {
@@ -1019,6 +1019,9 @@ void AnchorPositionEvaluator::updateSnapshottedScrollOffsets(Document& document)
             if (elementAndAnchors.value.size() != 1)
                 return false;
 
+            if (!elementAndAnchors.value[0].renderer)
+                return false;
+
             return true;
         }();
 
@@ -1048,7 +1051,7 @@ void AnchorPositionEvaluator::updateAfterOverflowScroll(Document& document)
 
     // Also check if scrolling has caused any anchor boxes to move.
     Style::Scope::LayoutDependencyUpdateContext context;
-    document.checkedStyleScope()->invalidateForAnchorDependencies(context);
+    document.styleScope().invalidateForAnchorDependencies(context);
 }
 
 auto AnchorPositionEvaluator::makeAnchorPositionedForAnchorMap(AnchorPositionedToAnchorMap& toAnchorMap) -> AnchorToAnchorPositionedMap

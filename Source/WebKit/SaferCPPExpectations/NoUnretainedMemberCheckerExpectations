@@ -77,7 +77,6 @@ UIProcess/API/Cocoa/_WKPublicKeyCredentialRelyingPartyEntity.h
 UIProcess/API/Cocoa/_WKPublicKeyCredentialRequestOptions.h
 UIProcess/API/Cocoa/_WKPublicKeyCredentialUserEntity.h
 UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.h
-UIProcess/API/Cocoa/_WKRemoteWebInspectorViewController.mm
 UIProcess/API/Cocoa/_WKResourceLoadInfo.h
 UIProcess/API/Cocoa/_WKResourceLoadStatisticsFirstParty.h
 UIProcess/API/Cocoa/_WKResourceLoadStatisticsThirdParty.h
@@ -107,7 +106,6 @@ UIProcess/Cocoa/TextExtraction/WKTextExtractionItem.h
 UIProcess/Inspector/mac/WKInspectorViewController.h
 UIProcess/Inspector/mac/WebInspectorUIProxyMac.mm
 UIProcess/WebAuthentication/Cocoa/AuthenticationServicesForwardDeclarations.h
-UIProcess/WebAuthentication/Mock/MockNfcService.mm
 UIProcess/mac/WKFullScreenWindowController.h
 UIProcess/mac/WKImmediateActionController.h
 UIProcess/mac/WKPrintingView.h

@@ -87,7 +87,7 @@ struct CryptoDigestContextImpl : public CryptoDigestContext {
     Vector<uint8_t> computeHash() override
     {
         Vector<uint8_t> result(SHAFunctions::digestLength);
-        SHAFunctions::final(result.data(), &m_context);
+        SHAFunctions::final(result.mutableSpan().data(), &m_context);
         return result;
     }
 

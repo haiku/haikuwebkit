@@ -40,9 +40,9 @@
 namespace WebCore {
 
 // Keeps track of loaders on a per-sample-rate basis.
-static UncheckedKeyHashMap<double, HRTFDatabaseLoader*>& loaderMap()
+static HashMap<double, HRTFDatabaseLoader*>& loaderMap()
 {
-    static NeverDestroyed<UncheckedKeyHashMap<double, HRTFDatabaseLoader*>> loaderMap;
+    static NeverDestroyed<HashMap<double, HRTFDatabaseLoader*>> loaderMap;
     return loaderMap;
 }
 

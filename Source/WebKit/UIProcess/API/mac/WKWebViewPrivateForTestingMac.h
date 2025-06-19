@@ -61,7 +61,7 @@
 - (void)_createFlagsChangedEventMonitorForTesting;
 - (BOOL)_hasFlagsChangedEventMonitorForTesting;
 
-@property (nonatomic, readonly) NSView *_contentInsetFillViewForTesting;
+@property (nonatomic, readonly) NSView *_scrollPocketForTesting;
 
 @end
 

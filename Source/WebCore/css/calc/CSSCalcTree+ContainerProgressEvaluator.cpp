@@ -38,7 +38,7 @@ std::optional<double> evaluateContainerProgress(const ContainerProgress& root, c
 {
     // FIXME: This lookup loop is the same as the one used in CSSPrimitiveValue for resolving container units. Would be good to figure out a nice place to share this.
 
-    RefPtr element = &initialElement;
+    RefPtr element = initialElement;
 
     auto mode = conversionData.style()->pseudoElementType() == PseudoId::None
         ? Style::ContainerQueryEvaluator::SelectionMode::Element

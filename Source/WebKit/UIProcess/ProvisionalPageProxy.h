@@ -107,7 +107,6 @@ public:
     WebCore::PageIdentifier webPageID() const { return m_webPageID; }
     WebFrameProxy* mainFrame() const { return m_mainFrame.get(); }
     BrowsingContextGroup& browsingContextGroup() { return m_browsingContextGroup.get(); }
-    Ref<BrowsingContextGroup> protectedBrowsingContextGroup();
     WebProcessProxy& process();
     Ref<WebProcessProxy> protectedProcess();
     ProcessSwapRequestedByClient processSwapRequestedByClient() const { return m_processSwapRequestedByClient; }
@@ -211,8 +210,8 @@ private:
 
     WeakPtr<WebPageProxy> m_page;
     WebCore::PageIdentifier m_webPageID;
-    Ref<FrameProcess> m_frameProcess;
-    Ref<BrowsingContextGroup> m_browsingContextGroup;
+    const Ref<FrameProcess> m_frameProcess;
+    const Ref<BrowsingContextGroup> m_browsingContextGroup;
     RefPtr<RemotePageProxy> m_takenRemotePage;
 
     // Keep WebsiteDataStore alive for provisional page load.
@@ -244,7 +243,7 @@ private:
     CompletionHandler<void(String&&)> m_accessibilityBindCompletionHandler;
 #endif
 #if USE(RUNNINGBOARD)
-    Ref<ProcessThrottler::ForegroundActivity> m_provisionalLoadActivity;
+    const Ref<ProcessThrottler::ForegroundActivity> m_provisionalLoadActivity;
 #endif
 #if HAVE(VISIBILITY_PROPAGATION_VIEW)
     LayerHostingContextID m_contextIDForVisibilityPropagationInWebProcess { 0 };

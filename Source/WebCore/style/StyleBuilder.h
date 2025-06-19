@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "CSSCustomPropertyValue.h"
 #include "PropertyCascade.h"
 #include "StyleBuilderState.h"
 #include <wtf/TZoneMalloc.h>

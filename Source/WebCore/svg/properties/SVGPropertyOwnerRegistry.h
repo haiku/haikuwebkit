@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2024 Apple Inc.  All rights reserved.
+ * Copyright (C) 2018-2024 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -285,9 +285,9 @@ public:
 
     // Enumerate recursively the SVGMemberAccessors of the OwnerType and all its BaseTypes.
     // Collect all the pairs <AttributeName, String> only for the dirty properties.
-    UncheckedKeyHashMap<QualifiedName, String> synchronizeAllAttributes() const override
+    HashMap<QualifiedName, String> synchronizeAllAttributes() const override
     {
-        UncheckedKeyHashMap<QualifiedName, String> map;
+        HashMap<QualifiedName, String> map;
         enumerateRecursively([&](const auto& entry) -> bool {
             if (auto string = entry.value->synchronize(m_owner))
                 map.add(entry.key, *string);
@@ -310,7 +310,7 @@ public:
 
     bool isAnimatedStylePropertyAttribute(const QualifiedName& attributeName) const override
     {
-        static NeverDestroyed<UncheckedKeyHashSet<QualifiedName::QualifiedNameImpl*>> animatedStyleAttributes = std::initializer_list<QualifiedName::QualifiedNameImpl*> {
+        static NeverDestroyed<HashSet<QualifiedName::QualifiedNameImpl*>> animatedStyleAttributes = std::initializer_list<QualifiedName::QualifiedNameImpl*> {
             SVGNames::cxAttr->impl(),
             SVGNames::cyAttr->impl(),
             SVGNames::rAttr->impl(),
@@ -342,7 +342,7 @@ public:
 
 private:
     // Singleton map for every OwnerType.
-    using QualifiedNameAccessorHashMap = UncheckedKeyHashMap<QualifiedName, const SVGMemberAccessor<OwnerType>*, SVGAttributeHashTranslator>;
+    using QualifiedNameAccessorHashMap = HashMap<QualifiedName, const SVGMemberAccessor<OwnerType>*, SVGAttributeHashTranslator>;
 
     static QualifiedNameAccessorHashMap& attributeNameToAccessorMap()
     {

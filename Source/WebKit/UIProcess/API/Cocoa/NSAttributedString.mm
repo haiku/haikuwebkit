@@ -168,6 +168,7 @@ static NSMutableArray<NSURL *> *readOnlyAccessPaths()
     if (!configuration) {
         configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
 
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         RetainPtr<WKProcessPool> processPool;
         if (readOnlyAccessPaths().count) {
             RELEASE_ASSERT(readOnlyAccessPaths().count <= 2);
@@ -176,6 +177,7 @@ static NSMutableArray<NSURL *> *readOnlyAccessPaths()
             processPool = adoptNS([[WKProcessPool alloc] _initWithConfiguration:processPoolConfiguration.get()]);
         } else
             processPool = adoptNS([[WKProcessPool alloc] init]).get();
+        ALLOW_DEPRECATED_DECLARATIONS_END
 
         auto dataStore = [] {
             auto identifier = sourceApplicationBundleIdentifier();
@@ -187,7 +189,9 @@ static NSMutableArray<NSURL *> *readOnlyAccessPaths()
             return adoptNS([[WKWebsiteDataStore alloc] _initWithConfiguration:configuration.get()]);
         }();
 
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         [configuration setProcessPool:processPool.get()];
+        ALLOW_DEPRECATED_DECLARATIONS_END
         [configuration setWebsiteDataStore:dataStore.get()];
         [configuration setMediaTypesRequiringUserActionForPlayback:WKAudiovisualMediaTypeAll];
         [configuration _setAllowsJavaScriptMarkup:NO];

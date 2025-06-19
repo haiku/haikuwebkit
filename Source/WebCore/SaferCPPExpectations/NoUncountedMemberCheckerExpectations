@@ -56,9 +56,7 @@ page/scrolling/ScrollLatchingController.h
 page/scrolling/ScrollingCoordinator.h
 page/scrolling/ScrollingTreeGestureState.h
 platform/PODInterval.h
-platform/cocoa/WebAVPlayerLayer.h
 platform/encryptedmedia/CDMProxy.h
-platform/graphics/ComplexTextController.h
 platform/graphics/GraphicsLayer.h
 platform/graphics/avfoundation/AudioSourceProviderAVFObjC.mm
 platform/graphics/avfoundation/objc/MediaSourcePrivateAVFObjC.h
@@ -66,14 +64,11 @@ platform/graphics/avfoundation/objc/WebCoreAVFResourceLoader.mm
 platform/graphics/ca/TileController.h
 platform/graphics/controls/PlatformControl.h
 platform/graphics/coretext/DrawGlyphsRecorder.h
-platform/ios/WebAVPlayerController.h
 platform/mac/VideoPresentationInterfaceMac.mm
-platform/mac/WebPlaybackControlsManager.h
 platform/mediarecorder/MediaRecorderPrivate.h
 platform/mediastream/AudioMediaStreamTrackRenderer.h
 platform/mediastream/mac/CoreAudioCaptureSource.h
 platform/mock/ScrollbarsControllerMock.h
-platform/network/cocoa/WebCoreNSURLSession.mm
 platform/network/mac/WebCoreResourceHandleAsOperationQueueDelegate.h
 plugins/PluginData.h
 rendering/TextBoxPainter.h

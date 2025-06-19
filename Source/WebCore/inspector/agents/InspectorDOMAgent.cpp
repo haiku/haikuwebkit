@@ -2136,7 +2136,7 @@ Ref<Inspector::Protocol::DOM::EventListener> InspectorDOMAgent::buildObjectForEv
         if (auto* scriptExecutionContext = eventTarget.scriptExecutionContext())
             document = dynamicDowncast<Document>(*scriptExecutionContext);
         else if (RefPtr node = dynamicDowncast<Node>(eventTarget))
-            document = &node->document();
+            document = node->document();
 
         JSC::JSObject* handlerObject = nullptr;
         JSC::JSGlobalObject* globalObject = nullptr;

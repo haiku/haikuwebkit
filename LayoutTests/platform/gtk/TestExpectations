@@ -80,8 +80,13 @@ webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_a
 webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_attributes.html?touch-nonstandard
 webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_capture_mouse_and_release_and_capture_again.html
 webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_capture_touch_and_release_at_got_capture.html
-webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_hit_test_scroll_background.html
 webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_pointermove_isprimary_same_as_pointerdown.html?touch
+webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/coalesced_events_attributes_on_redispatch.https.html?touch [ Skip ]
+webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/crashtests/longpress-crash.html [ Skip ]
+webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_click_during_parent_capture.html?pointerType=touch&preventDefault= [ Skip ]
+webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_click_during_parent_capture.html?pointerType=touch&preventDefault=pointerdown [ Skip ]
+webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_click_during_parent_capture.html?pointerType=touch&preventDefault=touchstart [ Skip ]
+webkit.org/b/263473 imported/w3c/web-platform-tests/pointerevents/pointerevent_range_input.html?touch [ Skip ]
 # PointerEvents currently only supports mouse on GTK (no Touch/Pen support)
 webkit.org/b/204115 imported/w3c/web-platform-tests/pointerevents/pointerevent_change-touch-action-onpointerdown_touch.html [ Skip ]
 webkit.org/b/204115 imported/w3c/web-platform-tests/pointerevents/pointerevent_pointercancel_touch.html [ Skip ]
@@ -150,6 +155,9 @@ imported/w3c/web-platform-tests/pointerevents/pointerevent_sequence_at_implicit_
 imported/w3c/web-platform-tests/pointerevents/persistentDeviceId/get-persistendeviceid-from-pointer-event.tentative.html [ Skip ]
 imported/w3c/web-platform-tests/pointerevents/pointerevent_to_slotted_target.html?touch [ Skip ]
 imported/w3c/web-platform-tests/uievents/interface/keyboard-accesskey-click-event.html [ Skip ]
+
+webkit.org/b/294316 imported/w3c/web-platform-tests/pointerevents/coalesced_events_attributes.https.html?mouse [ Skip ]
+webkit.org/b/294316 imported/w3c/web-platform-tests/pointerevents/coalesced_events_attributes.https.html?pen [ Skip ]
 
 http/tests/cookies/same-site [ Pass ]
 
@@ -1795,6 +1803,8 @@ webkit.org/b/273396 imported/w3c/web-platform-tests/css/css-transforms/transform
 webkit.org/b/273396 imported/w3c/web-platform-tests/css/motion/offset-path-shape-inset-002.html [ ImageOnlyFailure ]
 webkit.org/b/273396 imported/w3c/web-platform-tests/css/motion/offset-path-shape-polygon-002.html [ ImageOnlyFailure ]
 webkit.org/b/273396 platform/gtk/fonts/webkit-font-smoothing.html [ ImageOnlyFailure ]
+
+imported/w3c/web-platform-tests/css/css-fonts/generic-family-keywords-002.html [ Failure ]
 
 # Bidi content-aware paste not yet supported
 editing/pasteboard/paste-rtl-paragraph-with-leading-ltr-text.html [ ImageOnlyFailure ]

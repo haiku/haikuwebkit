@@ -250,27 +250,27 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
 {
     return @[
         @{
-            @"label" : @"Safari 18.0",
+            @"label" : @"Safari 18.5",
             @"identifier" : @"safari",
-            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15"
+            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
         },
         @{
             @"label" : @"-",
         },
         @{
-            @"label" : @"Safari—iOS 18.0—iPhone",
+            @"label" : @"Safari—iOS 18.5—iPhone",
             @"identifier" : @"iphone-safari",
-            @"userAgent" : @"Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+            @"userAgent" : @"Mozilla/5.0 (iPhone; CPU iPhone OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1"
         },
         @{
-            @"label" : @"Safari—iPadOS 18.0—iPad mini",
+            @"label" : @"Safari—iPadOS 18.5—iPad mini",
             @"identifier" : @"ipad-mini-safari",
-            @"userAgent" : @"Mozilla/5.0 (iPad; CPU OS 18_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Mobile/15E148 Safari/604.1"
+            @"userAgent" : @"Mozilla/5.0 (iPad; CPU OS 18_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Mobile/15E148 Safari/604.1"
         },
         @{
-            @"label" : @"Safari—iPadOS 18.0—iPad",
+            @"label" : @"Safari—iPadOS 18.5—iPad",
             @"identifier" : @"ipad-safari",
-            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.0 Safari/605.1.15"
+            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.5 Safari/605.1.15"
         },
         @{
             @"label" : @"-",
@@ -278,17 +278,17 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
         @{
             @"label" : @"Firefox—macOS",
             @"identifier" : @"firefox",
-            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:127.0) Gecko/20100101 Firefox/127.0"
+            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:139.0) Gecko/20100101 Firefox/139.0"
         },
         @{
             @"label" : @"Firefox—Windows",
             @"identifier" : @"windows-firefox",
-            @"userAgent" : @"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:127.0) Gecko/20100101 Firefox/127.0"
+            @"userAgent" : @"Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:139.0) Gecko/20100101 Firefox/139.0"
         },
         @{
             @"label" : @"Firefox—Android",
             @"identifier" : @"android-firefox",
-            @"userAgent" : @"Mozilla/5.0 (Android 15; Mobile; rv:68.0) Gecko/68.0 Firefox/132.0"
+            @"userAgent" : @"Mozilla/5.0 (Android 15; Mobile; rv:139.0) Gecko/139.0 Firefox/139.0"
         },
         @{
             @"label" : @"-",
@@ -296,17 +296,17 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
         @{
             @"label" : @"Chrome—macOS",
             @"identifier" : @"chrome",
-            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
         },
         @{
             @"label" : @"Chrome—Windows",
             @"identifier" : @"windows-chrome",
-            @"userAgent" : @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
+            @"userAgent" : @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36"
         },
         @{
             @"label" : @"Chrome—Android",
             @"identifier" : @"android-chrome",
-            @"userAgent" : @"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36"
+            @"userAgent" : @"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36"
         },
         @{
             @"label" : @"ChromeOS",
@@ -319,17 +319,17 @@ static NSMenu *addSubmenuToMenu(NSMenu *menu, NSString *title)
         @{
             @"label" : @"Edge—macOS",
             @"identifier" : @"edge",
-            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
+            @"userAgent" : @"Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"
         },
         @{
             @"label" : @"Edge—Windows",
             @"identifier" : @"windows-edge",
-            @"userAgent" : @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36 Edg/126.0.0.0"
+            @"userAgent" : @"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36 Edg/137.0.0.0"
         },
         @{
             @"label" : @"Edge—Android",
             @"identifier" : @"android-edge",
-            @"userAgent" : @"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Mobile Safari/537.36 EdgA/131.0.0.0"
+            @"userAgent" : @"Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Mobile Safari/537.36 EdgA/137.0.0.0"
         },
     ];
 }

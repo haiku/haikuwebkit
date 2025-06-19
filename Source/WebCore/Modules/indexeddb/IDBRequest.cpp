@@ -193,7 +193,7 @@ void IDBRequest::setVersionChangeTransaction(IDBTransaction& transaction)
     ASSERT(transaction.isVersionChange());
     ASSERT(!transaction.isFinishedOrFinishing());
 
-    m_transaction = &transaction;
+    m_transaction = transaction;
 }
 
 RefPtr<WebCore::IDBTransaction> IDBRequest::transaction() const
@@ -296,7 +296,7 @@ void IDBRequest::dispatchEvent(Event& event)
         return;
     }
 
-    m_eventBeingDispatched = &event;
+    m_eventBeingDispatched = event;
 
     if (event.type() != eventNames().blockedEvent) {
         m_readyState = ReadyState::Done;
@@ -465,7 +465,7 @@ void IDBRequest::willIterateCursor(IDBCursor& cursor)
     ASSERT(!m_pendingCursor);
     ASSERT(&cursor == resultCursor());
 
-    m_pendingCursor = &cursor;
+    m_pendingCursor = cursor;
     m_result = NullResultType::Undefined;
 
     RefPtr context = scriptExecutionContext();

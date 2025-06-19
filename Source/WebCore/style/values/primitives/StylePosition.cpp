@@ -31,11 +31,28 @@
 #include "RenderStyle.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
 #include "StylePrimitiveNumericTypes+Evaluation.h"
+#include "StylePrimitiveNumericTypes+Platform.h"
 
 namespace WebCore {
 namespace Style {
 
 using namespace CSS::Literals;
+
+static LengthPercentage<> toPositionLengthPercentage(const WebCore::Length& length)
+{
+    ASSERT(length.isSpecified());
+    if (length.isCalculated())
+        return LengthPercentage<>::Calc { length.calculationValue() };
+    if (length.isPercent())
+        return LengthPercentage<>::Percentage { length.value() };
+    ASSERT(length.isFixed());
+    return LengthPercentage<>::Dimension { length.value() };
+}
+
+Position::Position(const WebCore::LengthPoint& point)
+    : value { toPositionLengthPercentage(point.x), toPositionLengthPercentage(point.y) }
+{
+}
 
 // MARK: Core Keyword Resolution
 
@@ -246,32 +263,17 @@ auto Evaluation<Position>::operator()(const Position& position, FloatSize refere
 
 // MARK: - Platform
 
-static auto toPlatform(const LengthPercentage<>& length) -> WebCore::Length
-{
-    return WTF::switchOn(length,
-        [](const LengthPercentage<>::Dimension& dimension) {
-            return WebCore::Length { dimension.value, WebCore::LengthType::Fixed };
-        },
-        [](const LengthPercentage<>::Percentage& percentage) {
-            return WebCore::Length { percentage.value, WebCore::LengthType::Percent };
-        },
-        [](const LengthPercentage<>::Calc& calc) {
-            return WebCore::Length { calc.protectedCalculation() };
-        }
-    );
-}
-
-auto toPlatform(const Position& position) -> WebCore::LengthPoint
+auto ToPlatform<Position>::operator()(const Position& position) -> WebCore::LengthPoint
 {
     return { toPlatform(position.x()), toPlatform(position.y()) };
 }
 
-auto toPlatform(const PositionX& positionX) -> WebCore::Length
+auto ToPlatform<PositionX>::operator()(const PositionX& positionX) -> WebCore::Length
 {
     return toPlatform(positionX.value);
 }
 
-auto toPlatform(const PositionY& positionY) -> WebCore::Length
+auto ToPlatform<PositionY>::operator()(const PositionY& positionY) -> WebCore::Length
 {
     return toPlatform(positionY.value);
 }

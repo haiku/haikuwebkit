@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,6 +32,7 @@
 #include "WebExtensionAPIAlarms.h"
 #include "WebExtensionAPICommands.h"
 #include "WebExtensionAPICookies.h"
+#include "WebExtensionAPIDOM.h"
 #include "WebExtensionAPIDeclarativeNetRequest.h"
 #include "WebExtensionAPIDevTools.h"
 #include "WebExtensionAPIExtension.h"
@@ -73,6 +74,7 @@ public:
 #if ENABLE(INSPECTOR_EXTENSIONS)
     WebExtensionAPIDevTools& devtools();
 #endif
+    WebExtensionAPIDOM& dom();
     WebExtensionAPIExtension& extension();
     WebExtensionAPILocalization& i18n();
     WebExtensionAPIMenus& menus();
@@ -102,6 +104,7 @@ private:
 #if ENABLE(INSPECTOR_EXTENSIONS)
     RefPtr<WebExtensionAPIDevTools> m_devtools;
 #endif
+    RefPtr<WebExtensionAPIDOM> m_dom;
     RefPtr<WebExtensionAPIExtension> m_extension;
     RefPtr<WebExtensionAPILocalization> m_i18n;
     RefPtr<WebExtensionAPIMenus> m_menus;

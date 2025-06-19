@@ -92,6 +92,7 @@ platform/network/cocoa/NetworkStorageSessionCocoa.mm
 platform/sql/SQLiteDatabase.cpp
 rendering/BackgroundPainter.cpp
 rendering/BorderPainter.cpp
+rendering/RenderBox.cpp
 rendering/RenderElement.cpp
 rendering/RenderGrid.cpp
 rendering/RenderLayer.cpp

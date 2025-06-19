@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -286,7 +286,7 @@ void RemoteAudioDestinationManager::deleteAudioDestination(RemoteAudioDestinatio
     m_audioDestinations.remove(identifier);
 
     if (allowsExitUnderMemoryPressure())
-        connection->protectedGPUProcess()->tryExitIfUnusedAndUnderMemoryPressure();
+        connection->gpuProcess().tryExitIfUnusedAndUnderMemoryPressure();
 }
 
 void RemoteAudioDestinationManager::startAudioDestination(RemoteAudioDestinationIdentifier identifier, CompletionHandler<void(bool, size_t)>&& completionHandler)

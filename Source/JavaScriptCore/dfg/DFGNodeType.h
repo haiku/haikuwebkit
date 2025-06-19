@@ -463,6 +463,7 @@ namespace JSC { namespace DFG {
     macro(GlobalIsFinite, NodeMustGenerate | NodeResultBoolean) \
     macro(NumberIsFinite, NodeResultBoolean) \
     macro(NumberIsInteger, NodeResultBoolean) \
+    macro(NumberIsSafeInteger, NodeResultBoolean) \
     macro(IsObject, NodeResultBoolean) \
     macro(IsCallable, NodeResultBoolean) \
     macro(IsConstructor, NodeResultBoolean) \

@@ -235,9 +235,9 @@ static inline bool isStringType(CSSUnitType type)
 
 #endif // ASSERT_ENABLED
 
-static UncheckedKeyHashMap<const CSSPrimitiveValue*, String>& serializedPrimitiveValues()
+static HashMap<const CSSPrimitiveValue*, String>& serializedPrimitiveValues()
 {
-    static NeverDestroyed<UncheckedKeyHashMap<const CSSPrimitiveValue*, String>> map;
+    static NeverDestroyed<HashMap<const CSSPrimitiveValue*, String>> map;
     return map;
 }
 

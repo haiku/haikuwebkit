@@ -140,4 +140,3 @@ workers/WorkerGlobalScope.cpp
 workers/WorkerMessagingProxy.cpp
 workers/WorkerThread.cpp
 workers/service/background-fetch/ServiceWorkerRegistrationBackgroundFetchAPI.cpp
-xml/XPathStep.cpp

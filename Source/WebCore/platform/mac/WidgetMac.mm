@@ -275,7 +275,32 @@ void Widget::removeFromSuperview()
     END_BLOCK_OBJC_EXCEPTIONS
 }
 
+// MARK: -
+
 // These are here to deal with flipped coords on Mac.
+
+IntPoint Widget::convertFromRootToContainingWindow(const Widget* rootWidget, IntPoint point)
+{
+    if (!rootWidget->platformWidget())
+        return point;
+
+    BEGIN_BLOCK_OBJC_EXCEPTIONS
+    return IntPoint([rootWidget->platformWidget() convertPoint:point toView:nil]);
+    END_BLOCK_OBJC_EXCEPTIONS
+    return point;
+}
+
+FloatPoint Widget::convertFromRootToContainingWindow(const Widget* rootWidget, FloatPoint point)
+{
+    if (!rootWidget->platformWidget())
+        return point;
+
+    BEGIN_BLOCK_OBJC_EXCEPTIONS
+    return [rootWidget->platformWidget() convertPoint:point toView:nil];
+    END_BLOCK_OBJC_EXCEPTIONS
+    return point;
+}
+
 IntRect Widget::convertFromRootToContainingWindow(const Widget* rootWidget, const IntRect& rect)
 {
     if (!rootWidget->platformWidget())
@@ -286,6 +311,44 @@ IntRect Widget::convertFromRootToContainingWindow(const Widget* rootWidget, cons
     END_BLOCK_OBJC_EXCEPTIONS
 
     return rect;
+}
+
+FloatRect Widget::convertFromRootToContainingWindow(const Widget* rootWidget, const FloatRect& rect)
+{
+    if (!rootWidget->platformWidget())
+        return rect;
+
+    BEGIN_BLOCK_OBJC_EXCEPTIONS
+    return [rootWidget->platformWidget() convertRect:rect toView:nil];
+    END_BLOCK_OBJC_EXCEPTIONS
+
+    return rect;
+}
+
+// MARK: -
+
+IntPoint Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, IntPoint point)
+{
+    if (!rootWidget->platformWidget())
+        return point;
+
+    BEGIN_BLOCK_OBJC_EXCEPTIONS
+    return IntPoint([rootWidget->platformWidget() convertPoint:point fromView:nil]);
+    END_BLOCK_OBJC_EXCEPTIONS
+
+    return point;
+}
+
+FloatPoint Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, FloatPoint point)
+{
+    if (!rootWidget->platformWidget())
+        return point;
+
+    BEGIN_BLOCK_OBJC_EXCEPTIONS
+    return [rootWidget->platformWidget() convertPoint:point fromView:nil];
+    END_BLOCK_OBJC_EXCEPTIONS
+
+    return point;
 }
 
 IntRect Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, const IntRect& rect)
@@ -300,28 +363,19 @@ IntRect Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, cons
     return rect;
 }
 
-IntPoint Widget::convertFromRootToContainingWindow(const Widget* rootWidget, const IntPoint& point)
+FloatRect Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, const FloatRect& rect)
 {
     if (!rootWidget->platformWidget())
-        return point;
+        return rect;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return IntPoint([rootWidget->platformWidget() convertPoint:point toView:nil]);
-    END_BLOCK_OBJC_EXCEPTIONS
-    return point;
-}
-
-IntPoint Widget::convertFromContainingWindowToRoot(const Widget* rootWidget, const IntPoint& point)
-{
-    if (!rootWidget->platformWidget())
-        return point;
-
-    BEGIN_BLOCK_OBJC_EXCEPTIONS
-    return IntPoint([rootWidget->platformWidget() convertPoint:point fromView:nil]);
+    return [rootWidget->platformWidget() convertRect:rect fromView:nil];
     END_BLOCK_OBJC_EXCEPTIONS
 
-    return point;
+    return rect;
 }
+
+// MARK: -
 
 NSView *Widget::platformWidget() const
 {

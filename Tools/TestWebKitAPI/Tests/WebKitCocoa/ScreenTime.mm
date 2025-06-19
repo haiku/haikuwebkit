@@ -331,7 +331,7 @@ TEST(ScreenTime, IdentifierNil)
         return;
 
     __block bool done = false;
-    __block NSString * identifier = @"testing123";
+    __block NSString *identifier = @"testing123";
 
     InstanceMethodSwizzler swizzler {
         PAL::getSTWebpageControllerClass(),
@@ -619,7 +619,7 @@ TEST(ScreenTime, RemoveDataWithTimeInterval)
     InstanceMethodSwizzler swizzler {
         PAL::getSTWebHistoryClass(),
         @selector(deleteHistoryDuringInterval:),
-        imp_implementationWithBlock(^(id object, NSDateInterval * interval) {
+        imp_implementationWithBlock(^(id object, NSDateInterval *interval) {
             removedHistory = true;
         })
     };
@@ -648,7 +648,56 @@ TEST(ScreenTime, RemoveDataWithTimeInterval)
 
 TEST(ScreenTime, RemoveData)
 {
-    // FIXME: Add test once Screen Time implements fetchAllHistoryWithCompletionHandler API
+    if (![PAL::getSTWebHistoryClass() instancesRespondToSelector:@selector(fetchAllHistoryWithCompletionHandler:)])
+        return;
+
+    __block RetainPtr<NSSet<NSURL *>> fetchedURLs = adoptNS([[NSSet alloc] initWithArray:@[
+        adoptNS([[NSURL alloc] initWithString:@"https://www.github.com/WebKit/WebKit"]).get(),
+        adoptNS([[NSURL alloc] initWithString:@"https://www.github.com/APPLE"]).get(),
+        adoptNS([[NSURL alloc] initWithString:@"https://fonts.github.com/"]).get(),
+        adoptNS([[NSURL alloc] initWithString:@"https://abcdefg.github.com/aPPLe/abc"]).get()
+    ]]);
+
+    InstanceMethodSwizzler fetchHistorySwizzler {
+        PAL::getSTWebHistoryClass(),
+        @selector(fetchAllHistoryWithCompletionHandler:),
+        imp_implementationWithBlock(^(id object, void (^completionHandler)(NSSet<NSURL *> *urls, NSError *error)) {
+            completionHandler(fetchedURLs.get(), nil);
+        })
+    };
+
+    __block RetainPtr<NSMutableSet<NSURL *>> deletedURLs = adoptNS([[NSMutableSet alloc] init]);
+    InstanceMethodSwizzler deleteHistorySwizzler {
+        PAL::getSTWebHistoryClass(),
+        @selector(deleteHistoryForURL:),
+        imp_implementationWithBlock(^(id object, NSURL *url) {
+            [deletedURLs addObject:url];
+        })
+    };
+
+    RetainPtr dataTypeScreenTime = adoptNS([[NSSet alloc] initWithArray:@[ WKWebsiteDataTypeScreenTime ]]);
+
+    RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
+
+    RetainPtr websiteDataStore = [WKWebsiteDataStore defaultDataStore];
+    [configuration setWebsiteDataStore:websiteDataStore.get()];
+
+    RetainPtr webView = webViewForScreenTimeTests(configuration.get());
+    [webView synchronouslyLoadHTMLString:@"https://www.github.com/WebKit/WebKit"];
+
+    __block bool done = false;
+    [websiteDataStore fetchDataRecordsOfTypes:dataTypeScreenTime.get() completionHandler:^(NSArray<WKWebsiteDataRecord *> *dataRecords) {
+        [websiteDataStore removeDataOfTypes:[WKWebsiteDataStore allWebsiteDataTypes] forDataRecords:dataRecords completionHandler:^{
+            done = true;
+        }];
+    }];
+
+    TestWebKitAPI::Util::run(&done);
+
+    EXPECT_EQ([deletedURLs count], [fetchedURLs count]);
+
+    for (NSURL *url in fetchedURLs.get())
+        EXPECT_TRUE([deletedURLs containsObject:url]);
 }
 
 TEST(ScreenTime, OffscreenSystemScreenTimeBlockingView)

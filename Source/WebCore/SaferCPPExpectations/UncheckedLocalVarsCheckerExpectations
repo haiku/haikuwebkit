@@ -29,7 +29,6 @@ Modules/webdatabase/SQLStatement.cpp
 Modules/websockets/WebSocket.cpp
 accessibility/AXCoreObject.cpp
 accessibility/AXObjectCache.cpp
-accessibility/AXSearchManager.cpp
 accessibility/AXTextMarker.cpp
 accessibility/AccessibilityListBox.cpp
 accessibility/AccessibilityListBoxOption.cpp
@@ -167,7 +166,6 @@ editing/ModifySelectionListLevel.cpp
 editing/RemoveNodePreservingChildrenCommand.cpp
 editing/RenderedPosition.cpp
 editing/ReplaceSelectionCommand.cpp
-editing/SetSelectionCommand.cpp
 editing/SimplifyMarkupCommand.cpp
 editing/SplitElementCommand.cpp
 editing/TextIterator.cpp
@@ -412,7 +410,6 @@ rendering/LegacyLineLayout.cpp
 rendering/MarkedText.cpp
 rendering/MotionPath.cpp
 rendering/PositionedLayoutConstraints.cpp
-rendering/ReferencedSVGResources.cpp
 rendering/RenderAttachment.cpp
 rendering/RenderBlock.cpp
 rendering/RenderBlockFlow.cpp
@@ -448,7 +445,6 @@ rendering/RenderLineBreak.cpp
 rendering/RenderListBox.cpp
 rendering/RenderListItem.cpp
 rendering/RenderListMarker.cpp
-rendering/RenderMarquee.cpp
 rendering/RenderMenuList.cpp
 rendering/RenderMultiColumnFlow.cpp
 rendering/RenderMultiColumnSet.cpp
@@ -476,7 +472,6 @@ rendering/RenderTextFragment.cpp
 rendering/RenderTheme.cpp
 rendering/RenderTreeAsText.cpp
 rendering/RenderVTTCue.cpp
-rendering/RenderVideo.cpp
 rendering/RenderView.cpp
 rendering/RenderWidget.cpp
 rendering/StyledMarkedText.cpp
@@ -635,9 +630,3 @@ workers/WorkerOrWorkletThread.cpp
 workers/WorkerRunLoop.cpp
 workers/service/server/SWServer.cpp
 worklets/Worklet.cpp
-xml/XPathFunctions.cpp
-xml/XPathNodeSet.cpp
-xml/XPathPath.cpp
-xml/XPathStep.cpp
-xml/XSLStyleSheetLibxslt.cpp
-xml/XSLTProcessor.cpp

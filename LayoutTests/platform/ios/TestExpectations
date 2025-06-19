@@ -3550,6 +3550,7 @@ webkit.org/b/229397 imported/w3c/web-platform-tests/css/css-writing-modes/clip-r
 webkit.org/b/229397 imported/w3c/web-platform-tests/css/css-writing-modes/clip-rect-vrl-004.xht [ ImageOnlyFailure ]
 webkit.org/b/229397 imported/w3c/web-platform-tests/css/css-writing-modes/clip-rect-vrl-006.xht [ ImageOnlyFailure ]
 webkit.org/b/229397 imported/w3c/web-platform-tests/css/css-writing-modes/clip-rect-vrl-008.xht [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-writing-modes/wm-propagation-svg-root-scrollbar.svg [ ImageOnlyFailure ]
 
 # These three tests will be fixed by rdar://80384564.
 editing/selection/ios/change-selection-by-tapping-with-existing-selection.html [ Pass Failure ]
@@ -7854,6 +7855,8 @@ webkit.org/b/291456 fast/forms/state-restore-per-form.html [ Pass Timeout ]
 
 webkit.org/b/291459 imported/w3c/web-platform-tests/css/css-shapes/shape-outside/shape-image/shape-image-018.html [ Pass Failure ]
 
+http/tests/site-isolation/fullscreen-escape-key.html [ Skip ]
+
 # webkit.org/b/268568 [iOS] Assertion failure causing fast/forms/ios/file-upload-panel-capture.html to consistently crash. (268568) -[DOCWeakProxy forwardingTargetForSelector:]
 fast/forms/ios/file-upload-panel-accept.html [ Pass Crash ]
 fast/forms/ios/file-upload-panel-capture.html [ Pass Crash ]
@@ -7892,10 +7895,34 @@ webkit.org/b/288518 fast/text/emoji-num-glyphs.html [ Failure ]
 # rdar://148254605 (REGRESSION (iOS 18.4): media/sources-fallback-codecs.html is constantly failing.)
 media/sources-fallback-codecs.html [ Failure ]
 
-# webkit.org/b/293838 ([macOS] 2x tests in imported/w3c/web-platform-tests/url/ are constant failures (flaky in EWS)
-imported/w3c/web-platform-tests/url/IdnaTestV2.window.html [ Failure ]
-imported/w3c/web-platform-tests/url/toascii.window.html [ Failure ]
-
 webkit.org/b/294142 fast/canvas/webgl/gl-teximage.html [ Failure ]
 
 webkit.org/b/294152 http/tests/misc/timer-vs-loading.html [ Timeout ]
+
+webkit.org/b/293761 http/wpt/service-workers/navigate-iframes-window-client.https.html [ Failure ]
+
+webkit.org/b/294215 imported/blink/accessibility/link-inside-label.html [ Failure ]
+
+webkit.org/b/294222 [ Debug ] compositing/cocoa/clip-sticky-element-with-overflow-clip-on-root.html [ Crash ]
+
+webkit.org/b/294229 http/tests/site-isolation/page-scale.html [ Pass ImageOnlyFailure ]
+
+webkit.org/b/294276 [ Debug ] http/wpt/mediarecorder/MediaRecorder-first-frame.html [ Failure ]
+
+webkit.org/b/294277 [ Release ] imported/w3c/web-platform-tests/css/css-position/sticky/position-sticky-fixed-ancestor-iframe.html [ Pass ImageOnlyFailure ]
+
+# webkit.org/b/294285 REGRESSION( 295257@main - 295259@main?): [ wk2 Debug ] 3x imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.*.html are flaky crashes.
+[ Debug ] imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.lang.inherit.html [ Pass Crash ]
+[ Debug ] imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.lang.html [ Pass Crash ]
+[ Debug ] imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.direction.inherit.html [ Pass Crash ]
+
+webkit.org/b/294291 [ Debug ] ipc/invalid-addSourceBuffer-to-GPU-process-crash.html [ Failure ]
+
+webkit.org/b/294274 [ Debug ] platform/ios/mediastream/audio-muted-in-background-tab.html [ Crash ]
+
+# webkit.org/b/293827 [macOS] 2x tests in webgl are constant failures (flaky in EWS)
+ webgl/1.0.x/conformance/textures/misc/gl-teximage.html [ Failure ]
+ webgl/2.0.y/conformance/textures/misc/gl-teximage.html [ Failure ]
+
+fast/snapshot/nested-stacking-context.html [ Skip ]
+fast/snapshot/positioned-abs-relative-body.html [ Skip ]

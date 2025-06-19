@@ -79,7 +79,6 @@ void RenderPassEncoder::setVertexBuffer(id<MTLRenderCommandEncoder> commandEncod
     if (auto key = makeKey(bufferIdentifier, offset); m_existingVertexBuffers[bufferIndex] != key || !bufferIdentifier) {
         [commandEncoder setVertexBuffer:buffer offset:offset atIndex:bufferIndex];
         m_existingVertexBuffers[bufferIndex] = key;
-        m_vertexBuffersValidatedForPipeline[bufferIndex] = bufferIdentifier;
     }
 }
 
@@ -491,8 +490,6 @@ NSString* RenderPassEncoder::errorValidatingAndBindingBuffers()
     auto& requiredBufferIndices = m_pipeline->requiredBufferIndices();
     for (auto& [bufferIndex, _] : requiredBufferIndices) {
         auto& bufferAndOffset = m_vertexBuffers[bufferIndex];
-        if (m_vertexBuffersValidatedForPipeline[bufferIndex] == bufferAndOffset.buffer.gpuAddress)
-            continue;
         if (!bufferAndOffset.buffer)
             return [NSString stringWithFormat:@"Buffer1 index[%u] is missing", bufferIndex];
 
@@ -1317,7 +1314,6 @@ void RenderPassEncoder::executeBundles(Vector<Ref<RenderBundle>>&& bundles)
     }
 
     m_vertexBuffers.fill(BufferAndOffset { });
-    m_vertexBuffersValidatedForPipeline.fill(0);
     m_bindGroups.clear();
     m_bindGroupDynamicOffsets.clear();
     m_bindGroupDynamicOffsetsChanged.fill(true);
@@ -1541,7 +1537,6 @@ void RenderPassEncoder::setPipeline(const RenderPipeline& pipeline)
         m_bindGroupDynamicOffsetsChanged.fill(true);
         m_maxDynamicOffsetAtIndex.fill(0);
     }
-    m_vertexBuffersValidatedForPipeline.fill(0);
 
     m_vertexDynamicOffsets.resize(pipeline.protectedPipelineLayout()->sizeOfVertexDynamicOffsets());
     m_vertexDynamicOffsets.fill(0);
@@ -1574,10 +1569,9 @@ void RenderPassEncoder::setVertexBuffer(uint32_t slot, const Buffer* optionalBuf
 {
     RETURN_IF_FINISHED()
     if (!optionalBuffer) {
-        if (slot <= m_device->limits().maxBindGroupsPlusVertexBuffers) {
+        if (slot <= m_device->limits().maxBindGroupsPlusVertexBuffers)
             m_vertexBuffers[slot] = { };
-            m_vertexBuffersValidatedForPipeline[slot] = 0;
-        }
+
         return;
     }
 
@@ -1607,7 +1601,6 @@ void RenderPassEncoder::setVertexBuffer(uint32_t slot, const Buffer* optionalBuf
     if (size == WGPU_WHOLE_SIZE)
         size = buffer.initialSize();
     m_vertexBuffers[slot] = BufferAndOffset { .buffer = mtlBuffer, .offset = offset, .size = size };
-    m_vertexBuffersValidatedForPipeline[slot] = 0;
     if (offset == bufferLength && !size)
         return;
     if (offset >= bufferLength) {

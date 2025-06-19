@@ -84,7 +84,7 @@ protected:
     Ref<MutableStyleProperties> protectedPropertySet() const;
 
     WeakPtr<CSSRule> m_parentRule;
-    UncheckedKeyHashMap<CSSValue*, WeakPtr<DeprecatedCSSOMValue>> m_cssomValueWrappers;
+    HashMap<CSSValue*, WeakPtr<DeprecatedCSSOMValue>> m_cssomValueWrappers;
 
     // FIXME: Replaced this with a more descriptor specific property map that doesn't have all the complexity of the Style one.
     Ref<MutableStyleProperties> m_propertySet;

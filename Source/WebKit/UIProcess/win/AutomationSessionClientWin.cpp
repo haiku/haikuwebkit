@@ -100,7 +100,8 @@ void AutomationSessionClient::requestNewPageWithOptions(WebKit::WebAutomationSes
                 legacyEmptyFrameInfo(WebCore::ResourceRequest()), /* frameInfo */
                 std::nullopt, /* navigationID */
                 { }, /* originalRequest */
-                { } /* request */
+                { }, /* request */
+                { } /* invalidURLString */
             };
 
             auto userInitiatedActivity = API::UserInitiatedAction::create();

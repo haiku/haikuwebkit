@@ -35,7 +35,7 @@ namespace NetworkCache {
 Data::Data(std::span<const uint8_t> data)
     : m_buffer(Box<std::variant<Vector<uint8_t>, FileSystem::MappedFileData>>::create(Vector<uint8_t>(data.size())))
 {
-    memcpy(std::get<Vector<uint8_t>>(*m_buffer).data(), data.data(), data.size());
+    memcpySpan(std::get<Vector<uint8_t>>(*m_buffer).mutableSpan(), data);
 }
 
 Data::Data(std::variant<Vector<uint8_t>, FileSystem::MappedFileData>&& data)

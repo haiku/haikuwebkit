@@ -234,14 +234,14 @@ bool Connection::processMessage()
     processIncomingMessage(makeUniqueRefFromNonNullUniquePtr(WTFMove(decoder)));
 
     if (m_readBuffer.size() > messageLength) {
-        memmove(m_readBuffer.data(), m_readBuffer.data() + messageLength, m_readBuffer.size() - messageLength);
+        memmoveSpan(m_readBuffer.mutableSpan(), m_readBuffer.subspan(messageLength));
         m_readBuffer.shrink(m_readBuffer.size() - messageLength);
     } else
         m_readBuffer.shrink(0);
 
     if (attachmentFileDescriptorCount) {
         if (m_fileDescriptors.size() > attachmentFileDescriptorCount) {
-            memmove(m_fileDescriptors.data(), m_fileDescriptors.data() + attachmentFileDescriptorCount, (m_fileDescriptors.size() - attachmentFileDescriptorCount) * sizeof(int));
+            memmoveSpan(m_fileDescriptors.mutableSpan(), m_fileDescriptors.subspan(attachmentFileDescriptorCount));
             m_fileDescriptors.shrink(m_fileDescriptors.size() - attachmentFileDescriptorCount);
         } else
             m_fileDescriptors.shrink(0);
@@ -266,7 +266,7 @@ static ssize_t readBytesFromSocket(int socketDescriptor, Vector<uint8_t>& buffer
 
     size_t previousBufferSize = buffer.size();
     buffer.grow(buffer.capacity());
-    iov[0].iov_base = buffer.data() + previousBufferSize;
+    iov[0].iov_base = buffer.mutableSpan().data() + previousBufferSize;
     iov[0].iov_len = buffer.size() - previousBufferSize;
 
     message.msg_iov = iov;
@@ -299,7 +299,7 @@ static ssize_t readBytesFromSocket(int socketDescriptor, Vector<uint8_t>& buffer
                 size_t previousFileDescriptorsSize = fileDescriptors.size();
                 size_t fileDescriptorsCount = (controlMessage->cmsg_len - CMSG_LEN(0)) / sizeof(int);
                 fileDescriptors.grow(fileDescriptors.size() + fileDescriptorsCount);
-                memcpy(fileDescriptors.data() + previousFileDescriptorsSize, CMSG_DATA(controlMessage), sizeof(int) * fileDescriptorsCount);
+                memcpy(fileDescriptors.mutableSpan().subspan(previousFileDescriptorsSize).data(), CMSG_DATA(controlMessage), sizeof(int) * fileDescriptorsCount);
 
                 for (size_t i = 0; i < fileDescriptorsCount; ++i) {
                     if (!setCloseOnExec(fileDescriptors[previousFileDescriptorsSize + i])) {
@@ -497,7 +497,7 @@ bool Connection::sendOutputMessage(UnixMessage& outputMessage)
                 attachmentInfo[i].setNull();
         }
 
-        iov[iovLength].iov_base = attachmentInfo.data();
+        iov[iovLength].iov_base = attachmentInfo.mutableSpan().data();
         iov[iovLength].iov_len = sizeof(AttachmentInfo) * attachments.size();
         ++iovLength;
     }

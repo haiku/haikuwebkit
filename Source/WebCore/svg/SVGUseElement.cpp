@@ -486,7 +486,7 @@ RefPtr<SVGElement> SVGUseElement::findTarget(AtomString* targetID) const
 
 void SVGUseElement::cloneTarget(ContainerNode& container, SVGElement& target) const
 {
-    Ref targetClone = static_cast<SVGElement&>(target.cloneElementWithChildren(protectedDocument(), nullptr).get());
+    Ref targetClone = downcast<SVGElement>(target.cloneElementWithChildren(protectedDocument(), nullptr));
     ScriptDisallowedScope::EventAllowedScope eventAllowedScope { targetClone };
     associateClonesWithOriginals(targetClone.get(), target);
     removeDisallowedElementsFromSubtree(targetClone.get());

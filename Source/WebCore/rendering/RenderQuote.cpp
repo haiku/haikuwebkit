@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Nokia Inc.  All rights reserved.
+ * Copyright (C) 2011 Nokia Inc. All rights reserved.
  * Copyright (C) 2012 Google Inc. All rights reserved.
  * Copyright (C) 2013, 2017 Apple Inc. All rights reserved.
  *

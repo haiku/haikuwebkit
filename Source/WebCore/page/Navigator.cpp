@@ -2,7 +2,7 @@
  *  Copyright (C) 2000 Harri Porten (porten@kde.org)
  *  Copyright (c) 2000 Daniel Molkentin (molkentin@kde.org)
  *  Copyright (c) 2000 Stefan Schimanski (schimmi@kde.org)
- *  Copyright (C) 2003-2025 Apple Inc.
+ *  Copyright (C) 2003-2025 Apple Inc. All rights reserved.
  *  Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies)
  *
  *  This library is free software; you can redistribute it and/or

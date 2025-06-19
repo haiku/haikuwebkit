@@ -364,6 +364,7 @@ public:
     ExceptionOr<String> markerDescriptionForNode(Node&, const String& markerType, unsigned index);
     ExceptionOr<String> dumpMarkerRects(const String& markerType);
     ExceptionOr<void> setMarkedTextMatchesAreHighlighted(bool);
+    ExceptionOr<RefPtr<ImageData>> snapshotNode(Node&);
 
     void invalidateFontCache();
 

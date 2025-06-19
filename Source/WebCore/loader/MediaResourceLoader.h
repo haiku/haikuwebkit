@@ -108,7 +108,6 @@ public:
     void notifyFinished(CachedResource&, const NetworkLoadMetrics&, LoadWillContinueInAnotherProcess) override;
 
 private:
-    Ref<MediaResourceLoader> protectedLoader() const;
     CachedResourceHandle<CachedRawResource> protectedResource() const;
 
     MediaResource(MediaResourceLoader&, CachedResourceHandle<CachedRawResource>&&);

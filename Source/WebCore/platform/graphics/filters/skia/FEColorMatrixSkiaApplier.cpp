@@ -101,7 +101,7 @@ bool FEColorMatrixSkiaApplier::apply(const Filter&, std::span<const Ref<FilterIm
     }
 
     SkPaint paint;
-    paint.setColorFilter(SkColorFilters::Matrix(matrix.data()));
+    paint.setColorFilter(SkColorFilters::Matrix(matrix.span().data()));
 
     auto inputOffsetWithinResult = input->absoluteImageRectRelativeTo(result).location();
     resultImage->context().platformContext()->drawImage(nativeImage->platformImage(), inputOffsetWithinResult.x(), inputOffsetWithinResult.y(), { }, &paint);

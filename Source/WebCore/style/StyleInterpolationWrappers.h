@@ -324,27 +324,6 @@ private:
     void (RenderStyle::*m_setter)(LengthPoint);
 };
 
-// This class extends LengthPointWrapper to accommodate `auto` or `normal` values expressed as
-// LengthPoint(Length(LengthType::Auto/Normal), Length(LengthType::Auto/Normal)). This is used for
-// offset-anchor and offset-position, which allows `auto` and `normal`, and is expressed like so.
-class LengthPointOrAutoWrapper final : public LengthPointWrapper {
-public:
-    LengthPointOrAutoWrapper(CSSPropertyID property, const LengthPoint& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(LengthPoint))
-        : LengthPointWrapper(property, getter, setter)
-    {
-    }
-
-    // Check if it's possible to interpolate between the from and to values. In particular,
-    // it's only possible if they're both not auto or normal.
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        auto valueFrom = value(from);
-        auto valueTo = value(to);
-
-        return !valueFrom.x.isAuto() && !valueTo.x.isAuto() && !valueFrom.x.isNormal() && !valueTo.x.isNormal();
-    }
-};
-
 template<typename T>
 class LengthVariantWrapper final : public WrapperWithGetter<const T&> {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
@@ -722,25 +701,6 @@ public:
 };
 
 // MARK: - Customized Wrappers
-
-class OffsetRotateWrapper final : public WrapperWithGetter<OffsetRotation> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    OffsetRotateWrapper()
-        : WrapperWithGetter(CSSPropertyOffsetRotate, &RenderStyle::offsetRotate)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        return value(from).canBlend(value(to));
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        destination.setOffsetRotate(value(from).blend(value(to), context));
-    }
-};
 
 class GridTemplateWrapper final : public Wrapper<const GridTrackList&> {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);

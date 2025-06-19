@@ -305,7 +305,7 @@ void Clipboard::write(WebCore::SelectionData&& selectionData, CompletionHandler<
         return;
     }
 
-    GRefPtr<GdkContentProvider> provider = adoptGRef(gdk_content_provider_new_union(providers.data(), providers.size()));
+    GRefPtr<GdkContentProvider> provider = adoptGRef(gdk_content_provider_new_union(providers.mutableSpan().data(), providers.size()));
     gdk_clipboard_set_content(m_clipboard, provider.get());
     completionHandler(m_changeCount);
 }

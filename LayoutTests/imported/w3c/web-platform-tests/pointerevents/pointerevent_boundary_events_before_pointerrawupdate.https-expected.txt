@@ -1,0 +1,4 @@
+CONSOLE MESSAGE: Viewport argument key "initial-scale:1" not recognized and ignored.
+
+FAIL Pointer boundary events should be fired before `pointerrawupdate` assert_equals: expected "pointerover, pointerenter, pointerrawupdate, pointermove" but got "pointerover, mouseover, pointerenter, mouseenter, pointermove"
+

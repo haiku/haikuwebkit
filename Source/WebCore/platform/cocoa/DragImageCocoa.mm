@@ -287,7 +287,7 @@ LinkImageLayout::LinkImageLayout(URL& url, const String& titleString)
     boundingRect.setHeight((static_cast<int>(boundingRect.height() / 2) * 2));
 }
 
-DragImageRef createDragImageForLink(Element& element, URL& url, const String& title, TextIndicatorData&, float deviceScaleFactor)
+DragImageData createDragImageForLink(Element& element, URL& url, const String& title, float deviceScaleFactor)
 {
     LinkImageLayout layout(url, title);
 
@@ -309,7 +309,7 @@ DragImageRef createDragImageForLink(Element& element, URL& url, const String& ti
 
     [dragImage unlockFocus];
 
-    return dragImage;
+    return  { dragImage, nullptr };
 }
 
 DragImageRef createDragImageForColor(const Color& color, const FloatRect&, float, Path&)

@@ -325,7 +325,7 @@ template<typename CSSType, size_t inlineCapacity> struct ToStyle<CommaSeparatedV
     }
 };
 
-// MARK: - Conversion from "Style to "Ref<CSSValue>"
+// MARK: - Conversion directly from "Style to "Ref<CSSValue>"
 
 // All leaf types must implement the following:
 //
@@ -335,6 +335,7 @@ template<typename CSSType, size_t inlineCapacity> struct ToStyle<CommaSeparatedV
 
 template<typename StyleType> struct CSSValueCreation;
 
+// Conversion Invoker
 template<typename StyleType> Ref<CSSValue> createCSSValue(CSSValuePool& pool, const RenderStyle& style, const StyleType& value)
 {
     return CSSValueCreation<StyleType>{}(pool, style, value);
@@ -414,6 +415,46 @@ template<typename CSSType> struct CSSValueCreation<MinimallySerializingSpaceSepa
         return CSS::makeSpaceSeparatedCoalescingPairCSSValue(createCSSValue(pool, style, get<0>(value)), createCSSValue(pool, style, get<1>(value)));
     }
 };
+
+// MARK: - Conversion directly from "Ref<CSSValue>" to "Style"
+
+// All leaf types must implement the following:
+//
+//    template<> struct WebCore::Style::CSSValueConversion<StyleType> {
+//        StyleType operator()(BuilderState&, const CSSValue&);
+//    };
+
+template<typename StyleType> struct CSSValueConversion;
+
+// Conversion Invoker
+template<typename StyleType> StyleType toStyleFromCSSValue(BuilderState& builderState, const CSSValue& value)
+{
+    return CSSValueConversion<StyleType>{}(builderState, value);
+}
+
+// Constrained for `TreatAsVariantLike`.
+template<VariantLike StyleType> struct CSSValueConversion<StyleType> {
+    StyleType operator()(BuilderState& builderState, const CSSValue& value)
+    {
+        return WTF::switchOn(value, [&](const auto& alternative) -> StyleType { return toStyleFromCSSValue(builderState, alternative); });
+    }
+};
+
+// MARK: - Conversion directly from "Style" to "Platform"
+
+// All leaf types must implement the following:
+//
+//    template<> struct WebCore::Style::ToPlatform<StyleType> {
+//        PlatformType operator()(const StyleType&);
+//    };
+
+template<typename StyleType> struct ToPlatform;
+
+// Conversion Invoker
+template<typename StyleType> decltype(auto) toPlatform(const StyleType& value)
+{
+    return ToPlatform<StyleType>{}(value);
+}
 
 // MARK: - Serialization
 

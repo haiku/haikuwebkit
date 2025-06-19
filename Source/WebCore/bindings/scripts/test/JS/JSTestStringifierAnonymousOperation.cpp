@@ -222,7 +222,9 @@ extern "C" { extern void (*const __identifier("??_7TestStringifierAnonymousOpera
 #else
 extern "C" { extern void* _ZTVN7WebCore33TestStringifierAnonymousOperationE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestStringifierAnonymousOperation>, void>> static inline void verifyVTable(TestStringifierAnonymousOperation* ptr) {
+template<std::same_as<TestStringifierAnonymousOperation> T>
+static inline void verifyVTable(TestStringifierAnonymousOperation* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

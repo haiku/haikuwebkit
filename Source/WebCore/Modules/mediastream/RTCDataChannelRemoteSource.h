@@ -57,7 +57,7 @@ private:
     size_t bufferedAmount() const final { return 0; }
 
     RTCDataChannelIdentifier m_identifier;
-    UniqueRef<RTCDataChannelHandler> m_handler;
+    const UniqueRef<RTCDataChannelHandler> m_handler;
     const Ref<RTCDataChannelRemoteSourceConnection> m_connection;
 };
 

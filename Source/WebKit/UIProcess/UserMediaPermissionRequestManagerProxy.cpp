@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2014 Igalia S.L.
- * Copyright (C) 2016-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -439,9 +439,9 @@ const UserMediaPermissionRequestProxy* UserMediaPermissionRequestManagerProxy::s
     for (Ref grantedRequest : m_grantedRequests) {
         if (grantedRequest->requiresDisplayCapture())
             continue;
-        if (!grantedRequest->protectedUserMediaDocumentSecurityOrigin()->isSameSchemeHostPort(userMediaDocumentOrigin))
+        if (!grantedRequest->userMediaDocumentSecurityOrigin().isSameSchemeHostPort(userMediaDocumentOrigin))
             continue;
-        if (!grantedRequest->protectedTopLevelDocumentSecurityOrigin()->isSameSchemeHostPort(topLevelDocumentOrigin))
+        if (!grantedRequest->topLevelDocumentSecurityOrigin().isSameSchemeHostPort(topLevelDocumentOrigin))
             continue;
         if (frameID && grantedRequest->frameID() != frameID)
             continue;
@@ -463,8 +463,8 @@ const UserMediaPermissionRequestProxy* UserMediaPermissionRequestManagerProxy::s
 static bool isMatchingDeniedRequest(const UserMediaPermissionRequestProxy& request, const UserMediaPermissionRequestManagerProxy::DeniedRequest& deniedRequest)
 {
     return deniedRequest.mainFrameID == request.mainFrameID()
-        && Ref { deniedRequest.userMediaDocumentOrigin }->isSameSchemeHostPort(request.protectedUserMediaDocumentSecurityOrigin())
-        && Ref { deniedRequest.topLevelDocumentOrigin }->isSameSchemeHostPort(request.protectedTopLevelDocumentSecurityOrigin());
+        && Ref { deniedRequest.userMediaDocumentOrigin }->isSameSchemeHostPort(request.userMediaDocumentSecurityOrigin())
+        && Ref { deniedRequest.topLevelDocumentOrigin }->isSameSchemeHostPort(request.topLevelDocumentSecurityOrigin());
 }
 
 bool UserMediaPermissionRequestManagerProxy::wasRequestDenied(const UserMediaPermissionRequestProxy& request, bool needsAudio, bool needsVideo, bool needsScreenCapture)
@@ -544,7 +544,7 @@ UserMediaPermissionRequestManagerProxy::RequestAction UserMediaPermissionRequest
     if (requestingScreenCapture)
         return RequestAction::Prompt;
 
-    return searchForGrantedRequest(request.frameID(), request.protectedUserMediaDocumentSecurityOrigin(), request.protectedTopLevelDocumentSecurityOrigin(), requestingMicrophone, requestingCamera) ? RequestAction::Grant : RequestAction::Prompt;
+    return searchForGrantedRequest(request.frameID(), request.userMediaDocumentSecurityOrigin(), request.topLevelDocumentSecurityOrigin(), requestingMicrophone, requestingCamera) ? RequestAction::Grant : RequestAction::Prompt;
 }
 #endif
 
@@ -795,8 +795,8 @@ void UserMediaPermissionRequestManagerProxy::decidePolicyForUserMediaPermissionR
     }
 
     // FIXME: Remove webFrame, userMediaOrigin and topLevelOrigin from this uiClient API call.
-    Ref userMediaOrigin = API::SecurityOrigin::create(currentUserMediaRequest->protectedUserMediaDocumentSecurityOrigin());
-    Ref topLevelOrigin = API::SecurityOrigin::create(currentUserMediaRequest->protectedTopLevelDocumentSecurityOrigin());
+    Ref userMediaOrigin = API::SecurityOrigin::create(currentUserMediaRequest->userMediaDocumentSecurityOrigin());
+    Ref topLevelOrigin = API::SecurityOrigin::create(currentUserMediaRequest->topLevelDocumentSecurityOrigin());
     page->uiClient().decidePolicyForUserMediaPermissionRequest(*page, *webFrame, WTFMove(userMediaOrigin), WTFMove(topLevelOrigin), *currentUserMediaRequest);
 }
 

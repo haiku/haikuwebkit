@@ -126,7 +126,7 @@ private:
     bool m_forward;
     unsigned m_currentOrdinal;
     unsigned m_largestOrdinal;
-    UncheckedKeyHashSet<unsigned> m_ordinalValues;
+    HashSet<unsigned> m_ordinalValues;
     Vector<unsigned> m_sortedOrdinalValues;
     unsigned m_ordinalIteration;
 };
@@ -247,8 +247,8 @@ void RenderDeprecatedFlexibleBox::computePreferredLogicalWidths()
     ASSERT(needsPreferredLogicalWidthsUpdate());
 
     m_minPreferredLogicalWidth = m_maxPreferredLogicalWidth = 0;
-    if (style().width().isFixed() && style().width().value() > 0)
-        m_minPreferredLogicalWidth = m_maxPreferredLogicalWidth = adjustContentBoxLogicalWidthForBoxSizing(style().width());
+    if (auto fixedWidth = style().width().tryFixed(); fixedWidth && fixedWidth->value > 0)
+        m_minPreferredLogicalWidth = m_maxPreferredLogicalWidth = adjustContentBoxLogicalWidthForBoxSizing(*fixedWidth);
     else
         computeIntrinsicLogicalWidths(m_minPreferredLogicalWidth, m_maxPreferredLogicalWidth);
 
@@ -743,8 +743,7 @@ void RenderDeprecatedFlexibleBox::layoutSingleClampedFlexItem()
         childBoxBottom += clampedRendererCandidate.contentBoxRect().height() + clampedRendererCandidate.marginBottom();
 
     setHeight(childBoxBottom + paddingBottom() + borderBottom());
-    if (overridingBorderBoxLogicalHeight().has_value() || !style().logicalMinHeight().isAuto() || !style().logicalMaxHeight().isAuto())
-        updateLogicalHeight();
+    updateLogicalHeight();
 
     computeOverflow({ });
 
@@ -1158,8 +1157,8 @@ LayoutUnit RenderDeprecatedFlexibleBox::allowedChildFlex(RenderBox* child, bool 
             // FIXME: For now just handle fixed values.
             LayoutUnit maxWidth = LayoutUnit::max();
             LayoutUnit width = contentWidthForChild(child);
-            if (!child->style().maxWidth().isUndefined() && child->style().maxWidth().isFixed())
-                maxWidth = child->style().maxWidth().value();
+            if (auto fixedMaxWidth = child->style().maxWidth().tryFixed())
+                maxWidth = fixedMaxWidth->value;
             else if (child->style().maxWidth().type() == LengthType::Intrinsic)
                 maxWidth = child->maxPreferredLogicalWidth();
             else if (child->style().maxWidth().isMinIntrinsic())
@@ -1171,8 +1170,8 @@ LayoutUnit RenderDeprecatedFlexibleBox::allowedChildFlex(RenderBox* child, bool 
             // FIXME: For now just handle fixed values.
             LayoutUnit maxHeight = LayoutUnit::max();
             LayoutUnit height = contentHeightForChild(child);
-            if (!child->style().maxHeight().isUndefined() && child->style().maxHeight().isFixed())
-                maxHeight = child->style().maxHeight().value();
+            if (auto fixedMaxHeight = child->style().maxHeight().tryFixed())
+                maxHeight = fixedMaxHeight->value;
             if (maxHeight == LayoutUnit::max())
                 return maxHeight;
             return std::max<LayoutUnit>(0, maxHeight - height);
@@ -1183,8 +1182,8 @@ LayoutUnit RenderDeprecatedFlexibleBox::allowedChildFlex(RenderBox* child, bool 
     if (isHorizontal()) {
         LayoutUnit minWidth = child->minPreferredLogicalWidth();
         LayoutUnit width = contentWidthForChild(child);
-        if (child->style().minWidth().isFixed())
-            minWidth = child->style().minWidth().value();
+        if (auto fixedMinWidth = child->style().minWidth().tryFixed())
+            minWidth = fixedMinWidth->value;
         else if (child->style().minWidth().type() == LengthType::Intrinsic)
             minWidth = child->maxPreferredLogicalWidth();
         else if (child->style().minWidth().isMinIntrinsic())
@@ -1195,9 +1194,15 @@ LayoutUnit RenderDeprecatedFlexibleBox::allowedChildFlex(RenderBox* child, bool 
         LayoutUnit allowedShrinkage = std::min<LayoutUnit>(0, minWidth - width);
         return allowedShrinkage;
     } else {
-        Length minHeight = child->style().minHeight();
-        if (minHeight.isFixed() || minHeight.isAuto()) {
-            LayoutUnit minHeight { child->style().minHeight().value() };
+        auto& minHeight = child->style().minHeight();
+        if (auto fixedMinHeight = minHeight.tryFixed()) {
+            LayoutUnit minHeight { fixedMinHeight->value };
+            LayoutUnit height = contentHeightForChild(child);
+            LayoutUnit allowedShrinkage = std::min<LayoutUnit>(0, minHeight - height);
+            return allowedShrinkage;
+        }
+        if (minHeight.isAuto()) {
+            LayoutUnit minHeight { 0 };
             LayoutUnit height = contentHeightForChild(child);
             LayoutUnit allowedShrinkage = std::min<LayoutUnit>(0, minHeight - height);
             return allowedShrinkage;

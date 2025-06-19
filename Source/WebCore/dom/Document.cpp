@@ -1271,7 +1271,7 @@ void Document::invalidateQuerySelectorAllResults(Node& startingNode)
 {
     if (m_querySelectorAllResults.isEmptyIgnoringNullReferences())
         return;
-    for (RefPtr<Node> currentNode = &startingNode; currentNode; currentNode = currentNode->parentNode()) {
+    for (RefPtr currentNode = startingNode; currentNode; currentNode = currentNode->parentNode()) {
         if (!currentNode->hasValidQuerySelectorAllResults())
             continue;
         m_querySelectorAllResults.remove(*currentNode);
@@ -1283,7 +1283,7 @@ void Document::invalidateQuerySelectorAllResultsForClassAttributeChange(Node& st
 {
     if (m_querySelectorAllResults.isEmptyIgnoringNullReferences())
         return;
-    for (RefPtr<Node> currentNode = &startingNode; currentNode; currentNode = currentNode->parentNode()) {
+    for (RefPtr currentNode = startingNode; currentNode; currentNode = currentNode->parentNode()) {
         if (!currentNode->hasValidQuerySelectorAllResults())
             continue;
         auto it = m_querySelectorAllResults.find(*currentNode);
@@ -2082,7 +2082,7 @@ void Document::addVisualUpdatePreventedReason(VisualUpdatesPreventedReason reaso
 {
     if (m_visualUpdatesPreventedReasons.isEmpty()) {
         if (RefPtr frame = this->frame(); frame && frame->document() == this)
-            frame->protectedLoader()->setDocumentVisualUpdatesAllowed(false);
+            frame->loader().setDocumentVisualUpdatesAllowed(false);
     }
 
     m_visualUpdatesPreventedReasons.add(reason);
@@ -2110,7 +2110,7 @@ void Document::removeVisualUpdatePreventedReasons(OptionSet<VisualUpdatesPrevent
     m_visualUpdatesSuppressionTimer.stop();
 
     if (RefPtr frame = this->frame(); frame && frame->document() == this)
-        frame->protectedLoader()->setDocumentVisualUpdatesAllowed(true);
+        frame->loader().setDocumentVisualUpdatesAllowed(true);
 
     if (m_visualUpdatesAllowedChangeRequiresLayoutMilestones) {
         RefPtr frameView = view();
@@ -2118,7 +2118,7 @@ void Document::removeVisualUpdatePreventedReasons(OptionSet<VisualUpdatesPrevent
             if (frame()->isMainFrame()) {
                 frameView->addPaintPendingMilestones(LayoutMilestone::DidFirstPaintAfterSuppressedIncrementalRendering);
                 if (page->requestedLayoutMilestones() & LayoutMilestone::DidFirstLayoutAfterSuppressedIncrementalRendering)
-                    protectedFrame()->protectedLoader()->didReachLayoutMilestone(LayoutMilestone::DidFirstLayoutAfterSuppressedIncrementalRendering);
+                    protectedFrame()->loader().didReachLayoutMilestone(LayoutMilestone::DidFirstLayoutAfterSuppressedIncrementalRendering);
             }
         }
         m_visualUpdatesAllowedChangeRequiresLayoutMilestones = false;
@@ -2128,7 +2128,7 @@ void Document::removeVisualUpdatePreventedReasons(OptionSet<VisualUpdatesPrevent
         renderView->repaintViewAndCompositedLayers();
 
     if (RefPtr frame = this->frame(); frame && m_visualUpdatesAllowedChangeCompletesPageTransition)
-        frame->protectedLoader()->completePageTransitionIfNeeded();
+        frame->loader().completePageTransitionIfNeeded();
     m_visualUpdatesAllowedChangeCompletesPageTransition = false;
     scheduleRenderingUpdate({ });
 }
@@ -2580,8 +2580,24 @@ void Document::unregisterForVisibilityStateChangedCallbacks(VisibilityChangeClie
 
 void Document::visibilityStateChanged()
 {
+    bool pageIsVisible = page() && page()->isVisible();
+
     // https://w3c.github.io/page-visibility/#reacting-to-visibilitychange-changes
-    queueTaskToDispatchEvent(TaskSource::UserInteraction, Event::create(eventNames().visibilitychangeEvent, Event::CanBubble::Yes, Event::IsCancelable::No));
+    if (!pageIsVisible)
+        m_deferResizeEventForVisibilityChange = true;
+
+    eventLoop().queueTask(TaskSource::UserInteraction, [this, protectedDocument = Ref { *this }] {
+        dispatchEvent(Event::create(eventNames().visibilitychangeEvent, Event::CanBubble::Yes, Event::IsCancelable::No));
+
+        bool pageIsVisible = page() && page()->isVisible();
+        if (!pageIsVisible)
+            return;
+
+        m_deferResizeEventForVisibilityChange = false;
+        if (m_needsDOMWindowResizeEvent || m_needsVisualViewportResizeEvent)
+            scheduleRenderingUpdate(RenderingUpdateStep::Resize);
+    });
+
     m_visibilityStateCallbackClients.forEach([](auto& client) {
         Ref { client }->visibilityStateChanged();
     });
@@ -3187,7 +3203,6 @@ bool Document::updateLayoutIfDimensionsOutOfDate(Element& element, OptionSet<Dim
 
         CheckedPtr renderer = element.renderer();
 
-        bool hasSpecifiedLogicalHeight = renderer->style().logicalMinHeight() == Length(0, LengthType::Fixed) && renderer->style().logicalHeight().isFixed() && renderer->style().logicalMaxHeight().isAuto();
         bool isVertical = !renderer->isHorizontalWritingMode();
         bool checkingLogicalWidth = (dimensionsCheck.contains(DimensionsCheck::Width) && !isVertical) || (dimensionsCheck.contains(DimensionsCheck::Height) && isVertical);
         bool checkingLogicalHeight = (dimensionsCheck.contains(DimensionsCheck::Height) && !isVertical) || (dimensionsCheck.contains(DimensionsCheck::Width) && isVertical);
@@ -3228,14 +3243,14 @@ bool Document::updateLayoutIfDimensionsOutOfDate(Element& element, OptionSet<Dim
 
                 // If a box has changed children and sizes its width to
                 // its content, then require a full layout.
-                if (checkingLogicalWidth && currentBox->needsLayout() && currentBox->sizesLogicalWidthToFitContent(RenderBox::SizeType::MainOrPreferredSize)) {
+                if (checkingLogicalWidth && currentBox->needsLayout() && currentBox->sizesPreferredLogicalWidthToFitContent()) {
                     requireFullLayout = true;
                     break;
                 }
 
                 // If a block contains floats and the child's height isn't specified, then
                 // give up also, since our height could end up being influenced by the floats.
-                if (checkingLogicalHeight && !hasSpecifiedLogicalHeight) {
+                if (checkingLogicalHeight) {
                     if (CheckedPtr currentBlockFlow = dynamicDowncast<RenderBlockFlow>(*currentBox)) {
                         if (currentBlockFlow->containsFloats() && previousBox && !previousBox->isFloatingOrOutOfFlowPositioned()) {
                             requireFullLayout = true;
@@ -3931,7 +3946,7 @@ ExceptionOr<void> Document::open(Document* entryDocument)
             frame->loader().policyChecker().stopCheck();
         // Null-checking m_frame again as `policyChecker().stopCheck()` may have cleared it.
         if (isNavigating && m_frame)
-            protectedFrame()->protectedLoader()->stopAllLoaders();
+            protectedFrame()->loader().stopAllLoaders();
     }
 
     removeAllEventListeners();
@@ -4175,7 +4190,7 @@ void Document::implicitClose()
         m_whenWindowLoadEventOrDestroyed();
 
     if (frame)
-        frame->protectedLoader()->dispatchOnloadEvents();
+        frame->loader().dispatchOnloadEvents();
 
     // An event handler may have removed the frame
     frame = this->frame();
@@ -4184,7 +4199,7 @@ void Document::implicitClose()
         return;
     }
 
-    frame->protectedLoader()->checkCallImplicitClose();
+    frame->loader().checkCallImplicitClose();
 
     // We used to force a synchronous display and flush here. This really isn't
     // necessary and can in fact be actively harmful if pages are loading at a rate of > 60fps
@@ -4630,7 +4645,7 @@ void Document::processBaseElement()
     auto baseDescendants = descendantsOfType<HTMLBaseElement>(*this);
     for (auto& base : baseDescendants) {
         if (!baseElement)
-            baseElement = &base;
+            baseElement = base;
 
         if (href.isNull()) {
             auto& value = base.attributeWithoutSynchronization(hrefAttr);
@@ -4671,7 +4686,7 @@ void Document::processBaseElement()
 String Document::userAgent(const URL& url) const
 {
     RefPtr frame = this->frame();
-    return frame ? frame->protectedLoader()->userAgent(url) : String();
+    return frame ? frame->loader().userAgent(url) : String();
 }
 
 void Document::disableEval(const String& errorMessage)
@@ -4711,7 +4726,7 @@ IDBClient::IDBConnectionProxy* Document::idbConnectionProxy()
         RefPtr currentPage = page();
         if (!currentPage)
             return nullptr;
-        m_idbConnectionProxy = &currentPage->idbConnection().proxy();
+        m_idbConnectionProxy = currentPage->idbConnection().proxy();
     }
     return m_idbConnectionProxy.get();
 }
@@ -5000,7 +5015,7 @@ void Document::processMetaHttpEquiv(const String& equiv, const AtomString& conte
 
     case HTTPHeaderName::Refresh:
         if (frame)
-            frame->protectedLoader()->scheduleRefreshIfNeeded(*this, content, IsMetaRefresh::Yes);
+            frame->loader().scheduleRefreshIfNeeded(*this, content, IsMetaRefresh::Yes);
         break;
 
     case HTTPHeaderName::SetCookie:
@@ -5511,6 +5526,9 @@ void Document::setNeedsVisualViewportResize()
 void Document::runResizeSteps()
 {
     if (auto page = this->page(); page && page->shouldDeferResizeEvents())
+        return;
+
+    if (m_deferResizeEventForVisibilityChange)
         return;
 
     // FIXME: The order of dispatching is not specified: https://github.com/WICG/visual-viewport/issues/65.
@@ -7721,6 +7739,8 @@ void Document::setDesignMode(const String& value)
     DesignMode mode = equalLettersIgnoringASCIICase(value, "on"_s) ? DesignMode::On : DesignMode::Off;
     m_designMode = mode;
     scheduleFullStyleRebuild();
+    if (CheckedPtr cache = existingAXObjectCache())
+        cache->handlePageEditibilityChanged(*this);
 }
 
 Document* Document::parentDocument() const
@@ -7967,7 +7987,7 @@ void Document::finishedParsing()
         // See https://bugs.webkit.org/show_bug.cgi?id=36864 starting around comment 35.
         updateStyleIfNeeded();
 
-        frame->protectedLoader()->finishedParsing();
+        frame->loader().finishedParsing();
         InspectorInstrumentation::domContentLoadedEventFired(*frame);
     }
 
@@ -8823,13 +8843,13 @@ void Document::loadEventDelayTimerFired()
     // visible to WebKit clients, but it's more like a race than a well-defined relationship.
     checkCompleted();
     if (RefPtr frame = this->frame())
-        frame->protectedLoader()->checkLoadComplete();
+        frame->loader().checkLoadComplete();
 }
 
 void Document::checkCompleted()
 {
     if (RefPtr frame = this->frame())
-        frame->protectedLoader()->checkCompleted();
+        frame->loader().checkCompleted();
 }
 
 double Document::monotonicTimestamp() const
@@ -8913,16 +8933,6 @@ void Document::processInternalResourceLinks(Element* element)
         if (RefPtr link = dynamicDowncast<HTMLLinkElement>(blockingElement.get()))
             link->processInternalResourceLink(element);
     }
-}
-
-CheckedRef<FrameSelection> Document::checkedSelection()
-{
-    return m_selection.get();
-}
-
-CheckedRef<const FrameSelection> Document::checkedSelection() const
-{
-    return m_selection.get();
 }
 
 int Document::requestIdleCallback(Ref<IdleRequestCallback>&& callback, Seconds timeout)
@@ -9370,7 +9380,7 @@ void Document::decrementActiveParserCount()
     // FIXME: We should call DocumentLoader::checkLoadComplete as well here,
     // but it seems to cause http/tests/security/feed-urls-from-remote.html
     // to timeout on Mac WK1; see http://webkit.org/b/110554 and http://webkit.org/b/110401.
-    frame->protectedLoader()->checkLoadComplete();
+    frame->loader().checkLoadComplete();
 }
 
 DocumentParserYieldToken::DocumentParserYieldToken(Document& document)
@@ -10000,23 +10010,48 @@ void Document::updateIntersectionObservations(const Vector<WeakPtr<IntersectionO
         return;
     }
 
-    Vector<WeakPtr<IntersectionObserver>> intersectionObserversWithPendingNotifications;
+    Vector<WeakPtr<IntersectionObserver>> intersectionObserversToNotifyAsynchronously;
+    Vector<RefPtr<IntersectionObserver>> intersectionObserversToNotifySynchronously;
 
     for (auto& weakObserver : intersectionObservers) {
         RefPtr observer = weakObserver.get();
         if (!observer)
             continue;
 
-        auto needNotify = observer->updateObservations(*this);
-        if (needNotify == IntersectionObserver::NeedNotify::Yes)
-            intersectionObserversWithPendingNotifications.append(observer);
+        if (observer->updateObservations(*this)) {
+            switch (observer->notificationDelivery()) {
+            case IntersectionObserver::NotificationDelivery::Asynchronous:
+                intersectionObserversToNotifyAsynchronously.append(observer);
+                break;
+            case IntersectionObserver::NotificationDelivery::Synchronous:
+                intersectionObserversToNotifySynchronously.append(observer);
+                break;
+            }
+        }
     }
 
-    if (intersectionObserversWithPendingNotifications.size())
-        LOG_WITH_STREAM(IntersectionObserver, stream << "Document " << this << " updateIntersectionObservations - notifying observers");
+    if (!m_intersectionObserverUpdateTaskQueued && intersectionObserversToNotifyAsynchronously.size()) {
+        LOG_WITH_STREAM(IntersectionObserver, stream << "Document " << this << " updateIntersectionObservations - queueing task to notify JavaScript observers");
+        m_intersectionObserverUpdateTaskQueued = true;
 
-    for (auto& weakObserver : intersectionObserversWithPendingNotifications) {
-        if (RefPtr observer = weakObserver.get())
+        eventLoop().queueTask(TaskSource::IntersectionObserver, [weakThis = WeakPtr<Document, WeakPtrImplWithEventTargetData> { *this }, weakObservers = WTFMove(intersectionObserversToNotifyAsynchronously)]() mutable {
+            RefPtr protectedDocument = weakThis.get();
+
+            if (!protectedDocument)
+                return;
+
+            for (auto& weakObserver : weakObservers) {
+                if (RefPtr observer = weakObserver.get())
+                    observer->notify();
+            }
+            protectedDocument->m_intersectionObserverUpdateTaskQueued = false;
+        });
+    }
+
+    if (intersectionObserversToNotifySynchronously.size()) {
+        LOG_WITH_STREAM(IntersectionObserver, stream << "Document " << this << " updateIntersectionObservations - notifying internal observers.");
+
+        for (const auto& observer : intersectionObserversToNotifySynchronously)
             observer->notify();
     }
 }
@@ -10847,6 +10882,9 @@ void Document::updateServiceWorkerClientData()
     if (!serviceWorkerConnection)
         return;
 
+    if (!Ref { topOrigin() }->isHTTPFamily() && !(page() && page()->isServiceWorkerPage()))
+        return;
+
     auto controllingServiceWorkerRegistrationIdentifier = activeServiceWorker() ? std::make_optional<ServiceWorkerRegistrationIdentifier>(activeServiceWorker()->registrationIdentifier()) : std::nullopt;
     serviceWorkerConnection->registerServiceWorkerClient(clientOrigin(), ServiceWorkerClientData::from(*this), controllingServiceWorkerRegistrationIdentifier, userAgent(url()));
 }
@@ -11541,16 +11579,6 @@ String Document::mediaKeysStorageDirectory()
 {
     RefPtr currentPage = page();
     return currentPage ? currentPage->ensureMediaKeysStorageDirectoryForOrigin(securityOrigin().data()) : emptyString();
-}
-
-CheckedRef<Style::Scope> Document::checkedStyleScope()
-{
-    return m_styleScope.get();
-}
-
-CheckedRef<const Style::Scope> Document::checkedStyleScope() const
-{
-    return m_styleScope.get();
 }
 
 CheckedPtr<RenderView> Document::checkedRenderView() const

@@ -204,7 +204,7 @@ JSC::JSInternalPromise* ScriptModuleLoader::fetch(JSC::JSGlobalObject* jsGlobalO
 
     RefPtr<JSC::ScriptFetchParameters> parameters;
     if (auto* scriptFetchParameters = JSC::jsDynamicCast<JSC::JSScriptFetchParameters*>(parametersValue))
-        parameters = &scriptFetchParameters->parameters();
+        parameters = scriptFetchParameters->parameters();
 
     if (m_ownerType == OwnerType::Document) {
         auto loader = CachedModuleScriptLoader::create(*this, deferred.get(), *static_cast<CachedScriptFetcher*>(JSC::jsCast<JSC::JSScriptFetcher*>(scriptFetcher)->fetcher()), WTFMove(parameters));

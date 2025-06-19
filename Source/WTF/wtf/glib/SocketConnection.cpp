@@ -26,6 +26,7 @@
 #include <wtf/CheckedArithmetic.h>
 #include <wtf/FastMalloc.h>
 #include <wtf/RunLoop.h>
+#include <wtf/StdLibExtras.h>
 
 namespace WTF {
 
@@ -67,9 +68,8 @@ bool SocketConnection::read()
             m_readBuffer.reserveCapacity(m_readBuffer.capacity() + defaultBufferSize);
         m_readBuffer.grow(m_readBuffer.capacity());
         GUniqueOutPtr<GError> error;
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // Glib port.
-        auto bytesRead = g_socket_receive(g_socket_connection_get_socket(m_connection.get()), m_readBuffer.data() + previousBufferSize, m_readBuffer.size() - previousBufferSize, nullptr, &error.outPtr());
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+        auto bufferSpan = m_readBuffer.mutableSpan().subspan(previousBufferSize);
+        auto bytesRead = g_socket_receive(g_socket_connection_get_socket(m_connection.get()), bufferSpan.data(), bufferSpan.size(), nullptr, &error.outPtr());
         if (bytesRead == -1) {
             if (g_error_matches(error.get(), G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK)) {
                 m_readBuffer.shrink(previousBufferSize);
@@ -115,7 +115,7 @@ bool SocketConnection::readMessage()
         return false;
 
     WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GLib port.
-    auto* messageData = m_readBuffer.data();
+    auto* messageData = m_readBuffer.mutableSpan().data();
     WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     uint32_t bodySizeHeader;
     memcpy(&bodySizeHeader, messageData, sizeof(uint32_t));
@@ -155,9 +155,7 @@ bool SocketConnection::readMessage()
     }
 
     if (m_readBuffer.size() > messageSize) {
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GLib port.
-        std::memmove(m_readBuffer.data(), m_readBuffer.data() + messageSize.value(), m_readBuffer.size() - messageSize.value());
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+        memmoveSpan(m_readBuffer.mutableSpan(), m_readBuffer.subspan(messageSize.value()));
         m_readBuffer.shrink(m_readBuffer.size() - messageSize.value());
     } else
         m_readBuffer.shrink(0);
@@ -187,7 +185,7 @@ void SocketConnection::sendMessage(const char* messageName, GVariant* parameters
     m_writeBuffer.grow(previousBufferSize + sizeof(uint32_t) + sizeof(MessageFlags) + bodySize.value());
 
     WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GLib port.
-    auto* messageData = m_writeBuffer.data() + previousBufferSize;
+    auto* messageData = m_writeBuffer.mutableSpan().subspan(previousBufferSize).data();
     WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
     uint32_t bodySizeHeader = htonl(bodySize.value());
     memcpy(messageData, &bodySizeHeader, sizeof(uint32_t));
@@ -212,7 +210,7 @@ void SocketConnection::write()
         return;
 
     GUniqueOutPtr<GError> error;
-    auto bytesWritten = g_socket_send(g_socket_connection_get_socket(m_connection.get()), m_writeBuffer.data(), m_writeBuffer.size(), nullptr, &error.outPtr());
+    auto bytesWritten = g_socket_send(g_socket_connection_get_socket(m_connection.get()), m_writeBuffer.mutableSpan().data(), m_writeBuffer.size(), nullptr, &error.outPtr());
     if (bytesWritten == -1) {
         if (g_error_matches(error.get(), G_IO_ERROR, G_IO_ERROR_WOULD_BLOCK)) {
             waitForSocketWritability();
@@ -225,9 +223,7 @@ void SocketConnection::write()
     }
 
     if (m_writeBuffer.size() > static_cast<size_t>(bytesWritten)) {
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GLib port.
-        std::memmove(m_writeBuffer.data(), m_writeBuffer.data() + bytesWritten, m_writeBuffer.size() - bytesWritten);
-        WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+        memmoveSpan(m_writeBuffer.mutableSpan(), m_writeBuffer.subspan(bytesWritten));
         m_writeBuffer.shrink(m_writeBuffer.size() - bytesWritten);
     } else
         m_writeBuffer.shrink(0);

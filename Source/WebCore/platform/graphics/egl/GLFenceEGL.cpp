@@ -40,12 +40,12 @@ static std::unique_ptr<GLFence> createEGLFence(EGLenum type, const Vector<EGLAtt
     EGLSync sync = nullptr;
     auto& display = PlatformDisplay::sharedDisplay();
     if (display.eglCheckVersion(1, 5))
-        sync = eglCreateSync(display.eglDisplay(), type, attributes.isEmpty() ? nullptr : attributes.data());
+        sync = eglCreateSync(display.eglDisplay(), type, attributes.isEmpty() ? nullptr : attributes.span().data());
     else {
         Vector<EGLint> intAttributes = attributes.map<Vector<EGLint>>([] (EGLAttrib value) {
             return value;
         });
-        sync = eglCreateSyncKHR(display.eglDisplay(), type, intAttributes.isEmpty() ? nullptr : intAttributes.data());
+        sync = eglCreateSyncKHR(display.eglDisplay(), type, intAttributes.isEmpty() ? nullptr : intAttributes.span().data());
     }
     if (sync == EGL_NO_SYNC)
         return nullptr;

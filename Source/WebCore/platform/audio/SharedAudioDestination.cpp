@@ -353,6 +353,10 @@ void SharedAudioDestination::setSceneIdentifier(const String& identifier)
     // changes, as the adapter may be shared with other destinations
     // whose sceneIdentifier is _not_ changing.
     auto ensureFunction = protectedOutputAdapter()->takeEnsureFunction();
+    ASSERT(ensureFunction);
+    if (!ensureFunction)
+        return;
+
     bool wasPlaying = isPlaying();
 
     if (wasPlaying)

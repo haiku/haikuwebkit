@@ -733,6 +733,7 @@ static ALWAYS_INLINE JSValue inByIdMegamorphic(JSGlobalObject* globalObject, VM&
 
     JSObject* baseObject = asObject(baseValue);
     JSObject* object = baseObject;
+    bool shouldGiveUp = false;
     bool cacheable = true;
     while (true) {
         if (TypeInfo::overridesGetOwnPropertySlot(object->inlineTypeFlags()) && object->type() != ArrayType && object->type() != JSFunctionType && object != globalObject->arrayPrototype()) [[unlikely]] {
@@ -746,14 +747,17 @@ static ALWAYS_INLINE JSValue inByIdMegamorphic(JSGlobalObject* globalObject, VM&
         Structure* structure = object->structure();
         bool hasProperty = object->getOwnNonIndexPropertySlot(vm, structure, uid, slot);
         structure = object->structure(); // Reload it again since static-class-table can cause transition. But this transition only affects on this Structure.
-        cacheable &= structure->propertyAccessesAreCacheable();
+        if (!structure->propertyAccessesAreCacheable()) {
+            shouldGiveUp = true;
+            cacheable = false;
+        }
         if (hasProperty) {
             if (cacheable && slot.isCacheable()) [[likely]] {
                 if (slot.slotBase() == baseObject || !baseObject->structure()->isDictionary())
                     vm.megamorphicCache()->initAsHasHit(baseObject->structureID(), uid);
                 else {
                     if (baseObject->structure()->hasBeenFlattenedBefore()) [[unlikely]] {
-                        if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
+                        if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
                             dataLogLnIf(verbose, " ", __LINE__);
                             repatchInBySlowPathCall(callFrame->codeBlock(), *stubInfo, InByKind::ById);
                         }
@@ -761,7 +765,7 @@ static ALWAYS_INLINE JSValue inByIdMegamorphic(JSGlobalObject* globalObject, VM&
                     dataLogLnIf(verbose, " ", __LINE__);
                 }
             } else {
-                if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
+                if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
                     dataLogLnIf(verbose, " ", __LINE__);
                     repatchInBySlowPathCall(callFrame->codeBlock(), *stubInfo, InByKind::ById);
                 }
@@ -769,7 +773,10 @@ static ALWAYS_INLINE JSValue inByIdMegamorphic(JSGlobalObject* globalObject, VM&
             return jsBoolean(true);
         }
 
-        cacheable &= structure->propertyAccessesAreCacheableForAbsence();
+        if (!structure->propertyAccessesAreCacheableForAbsence()) {
+            shouldGiveUp = true;
+            cacheable = false;
+        }
         cacheable &= structure->hasMonoProto();
 
         JSValue prototype = object->getPrototypeDirect();
@@ -782,7 +789,7 @@ static ALWAYS_INLINE JSValue inByIdMegamorphic(JSGlobalObject* globalObject, VM&
                 if (!baseObject->structure()->hasBeenFlattenedBefore()) [[likely]]
                     return jsBoolean(false);
             }
-            if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
+            if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
                 dataLogLnIf(verbose, " ", __LINE__);
                 repatchInBySlowPathCall(callFrame->codeBlock(), *stubInfo, InByKind::ById);
             }
@@ -916,6 +923,7 @@ static ALWAYS_INLINE JSValue inByValMegamorphic(JSGlobalObject* globalObject, VM
 
     PropertySlot slot(baseValue, PropertySlot::InternalMethodType::HasProperty);
     JSObject* object = baseObject;
+    bool shouldGiveUp = false;
     bool cacheable = true;
     while (true) {
         if (TypeInfo::overridesGetOwnPropertySlot(object->inlineTypeFlags()) && object->type() != ArrayType && object->type() != JSFunctionType && object != globalObject->arrayPrototype()) [[unlikely]] {
@@ -929,7 +937,10 @@ static ALWAYS_INLINE JSValue inByValMegamorphic(JSGlobalObject* globalObject, VM
         Structure* structure = object->structure();
         bool hasProperty = object->getOwnNonIndexPropertySlot(vm, structure, uid, slot);
         structure = object->structure(); // Reload it again since static-class-table can cause transition. But this transition only affects on this Structure.
-        cacheable &= structure->propertyAccessesAreCacheable();
+        if (!structure->propertyAccessesAreCacheable()) {
+            cacheable = false;
+            shouldGiveUp = true;
+        }
         if (hasProperty) {
             if (cacheable && slot.isCacheable()) [[likely]] {
                 if (slot.slotBase() == baseObject || !baseObject->structure()->isDictionary())
@@ -937,21 +948,24 @@ static ALWAYS_INLINE JSValue inByValMegamorphic(JSGlobalObject* globalObject, VM
                 else {
                     if (baseObject->structure()->hasBeenFlattenedBefore()) [[unlikely]] {
                         dataLogLnIf(verbose, " ", __LINE__);
-                        if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
+                        if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
                             repatchInBySlowPathCall(callFrame->codeBlock(), *stubInfo, InByKind::ByVal);
                         }
                     }
                 }
             } else {
                 dataLogLnIf(verbose, " ", __LINE__);
-                if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
+                if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
                     repatchInBySlowPathCall(callFrame->codeBlock(), *stubInfo, InByKind::ByVal);
                 }
             }
             return jsBoolean(true);
         }
 
-        cacheable &= structure->propertyAccessesAreCacheableForAbsence();
+        if (!structure->propertyAccessesAreCacheableForAbsence()) {
+            cacheable = false;
+            shouldGiveUp = true;
+        }
         cacheable &= structure->hasMonoProto();
 
         JSValue prototype = object->getPrototypeDirect();
@@ -966,7 +980,7 @@ static ALWAYS_INLINE JSValue inByValMegamorphic(JSGlobalObject* globalObject, VM
             }
 
             dataLogLnIf(verbose, " ", __LINE__);
-            if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
+            if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm)) {
                 repatchInBySlowPathCall(callFrame->codeBlock(), *stubInfo, InByKind::ByVal);
             }
             return jsBoolean(false);

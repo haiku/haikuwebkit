@@ -1007,6 +1007,7 @@ class RunAPITests(TestWithFailureCount, CustomFlagsMixin, ShellMixin):
     command = [
         "python3",
         "Tools/Scripts/run-api-tests",
+        "--timestamps",
         "--no-build",
         f"--json-output={jsonFileName}",
         WithProperties("--%(configuration)s"),
@@ -2047,9 +2048,9 @@ class PrintConfiguration(steps.ShellSequence, ShellMixin):
             return 'Unknown'
 
         build_to_name_mapping = {
+            '26': 'Tahoe',
             '15': 'Sequoia',
-            '14': 'Sonoma',
-            '13': 'Ventura',
+            '14': 'Sonoma'
         }
 
         for key, value in build_to_name_mapping.items():

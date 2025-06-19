@@ -342,6 +342,7 @@ bool safeToExecute(AbstractStateType& state, Graph& graph, Node* node, bool igno
     case ResolveRope:
     case NumberIsNaN:
     case NumberIsFinite:
+    case NumberIsSafeInteger:
     case StringIndexOf:
         return true;
 

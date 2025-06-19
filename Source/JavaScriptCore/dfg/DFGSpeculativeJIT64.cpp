@@ -5330,6 +5330,11 @@ void SpeculativeJIT::compile(Node* node)
         break;
     }
 
+    case NumberIsSafeInteger: {
+        compileNumberIsSafeInteger(node);
+        break;
+    }
+
     case MapHash: {
         switch (node->child1().useKind()) {
 #if USE(BIGINT32)

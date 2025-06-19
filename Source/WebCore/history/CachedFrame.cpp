@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2009 Apple Inc. All rights reserved.
+ * Copyright (C) 2009-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -248,7 +248,7 @@ void CachedFrame::open()
     ASSERT(m_document || is<RemoteFrameView>(m_view.get()));
 
     if (RefPtr localFrameView = dynamicDowncast<LocalFrameView>(m_view.get()))
-        localFrameView->protectedFrame()->protectedLoader()->open(*this);
+        localFrameView->protectedFrame()->loader().open(*this);
 }
 
 void CachedFrame::clear()
@@ -291,7 +291,7 @@ void CachedFrame::destroy()
     Ref frame = m_view->frame();
     if (!m_isMainFrame && m_view->frame().page()) {
         if (RefPtr localFrame = dynamicDowncast<LocalFrame>(frame.get()))
-            localFrame->protectedLoader()->detachViewsAndDocumentLoader();
+            localFrame->loader().detachViewsAndDocumentLoader();
         frame->detachFromPage();
     }
     

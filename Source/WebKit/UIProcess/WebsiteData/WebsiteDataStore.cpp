@@ -930,8 +930,8 @@ void WebsiteDataStore::removeData(OptionSet<WebsiteDataType> dataTypes, WallTime
         for (Ref processPool : WebProcessPool::allProcessPools()) {
             // Clear back/forward cache first as processes removed from the back/forward cache will likely
             // be added to the WebProcess cache.
-            processPool->protectedBackForwardCache()->removeEntriesForSession(sessionID());
-            processPool->checkedWebProcessCache()->clearAllProcessesForSession(sessionID());
+            processPool->backForwardCache().removeEntriesForSession(sessionID());
+            processPool->webProcessCache().clearAllProcessesForSession(sessionID());
         }
     }
 

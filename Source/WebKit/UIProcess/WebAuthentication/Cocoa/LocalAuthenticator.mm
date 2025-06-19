@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2018-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -189,7 +189,7 @@ LocalAuthenticator::LocalAuthenticator(Ref<LocalConnection>&& connection)
 
 std::optional<Vector<Ref<AuthenticatorAssertionResponse>>> LocalAuthenticator::getExistingCredentials(const String& rpId)
 {
-    RetainPtr sortedAttributesArray = protectedConnection()->getExistingCredentials(rpId);
+    RetainPtr sortedAttributesArray = m_connection->getExistingCredentials(rpId);
     Vector<Ref<AuthenticatorAssertionResponse>> result;
     result.reserveInitialCapacity([sortedAttributesArray count]);
     for (NSDictionary *attributes in sortedAttributesArray.get()) {
@@ -317,7 +317,7 @@ void LocalAuthenticator::continueMakeCredentialAfterReceivingLAContext(LAContext
         if (RefPtr protectedThis = weakThis.get())
             protectedThis->continueMakeCredentialAfterUserVerification(accessControl.get(), verification, context.get());
     };
-    protectedConnection()->verifyUser(accessControl.get(), context, WTFMove(callback));
+    m_connection->verifyUser(accessControl.get(), context, WTFMove(callback));
 }
 
 std::optional<WebCore::ExceptionData> LocalAuthenticator::processLargeBlobExtension(const WebCore::PublicKeyCredentialCreationOptions& options, WebCore::AuthenticationExtensionsClientOutputs& extensionOutputs)
@@ -493,7 +493,7 @@ void LocalAuthenticator::continueMakeCredentialAfterUserVerification(SecAccessCo
 
     // Step 7.
     // The above-to-create private key will be inserted into keychain while using SEP.
-    auto privateKey = protectedConnection()->createCredentialPrivateKey(context, accessControlRef, secAttrLabel, secAttrApplicationTag.get());
+    auto privateKey = m_connection->createCredentialPrivateKey(context, accessControlRef, secAttrLabel, secAttrApplicationTag.get());
     if (!privateKey) {
         receiveException({ ExceptionCode::UnknownError, "Couldn't create private key."_s });
         return;
@@ -624,7 +624,7 @@ void LocalAuthenticator::getAssertion()
     }
 
     // Step 6-7. User consent is implicitly acquired by selecting responses.
-    protectedConnection()->filterResponses(assertionResponses);
+    m_connection->filterResponses(assertionResponses);
 
     if (RefPtr observer = this->observer()) {
         auto callback = [weakThis = WeakPtr { *this }] (AuthenticatorAssertionResponse* response) {
@@ -657,7 +657,7 @@ void LocalAuthenticator::continueGetAssertionAfterResponseSelected(Ref<WebCore::
             protectedThis->continueGetAssertionAfterUserVerification(WTFMove(response), verification, response->laContext());
     };
 
-    protectedConnection()->verifyUser(accessControlRef.get(), context.get(), WTFMove(callback));
+    m_connection->verifyUser(accessControlRef.get(), context.get(), WTFMove(callback));
 }
 
 void LocalAuthenticator::continueGetAssertionAfterUserVerification(Ref<WebCore::AuthenticatorAssertionResponse>&& response, LocalConnection::UserVerification verification, LAContext *context)

@@ -218,7 +218,7 @@ static void orderHighlights(const ListHashSet<AtomString>& markedTextsNames, Vec
     if (markedTexts.isEmpty())
         return;
 
-    UncheckedKeyHashMap<AtomString, int> markedTextsNamesPriority;
+    HashMap<AtomString, int> markedTextsNamesPriority;
     int index = 0;
     for (auto& highlightName : markedTextsNames) {
         markedTextsNamesPriority.add(highlightName, index);

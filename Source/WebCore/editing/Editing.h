@@ -121,7 +121,7 @@ struct EnclosingLayerInfomation {
     CheckedPtr<RenderLayer> startLayer;
     CheckedPtr<RenderLayer> endLayer;
     CheckedPtr<RenderLayer> enclosingLayer;
-    std::optional<WebCore::PlatformLayerIdentifier> enclosingGraphicsLayerID;
+    std::optional<PlatformLayerIdentifier> enclosingGraphicsLayerID;
 };
 
 WEBCORE_EXPORT EnclosingLayerInfomation computeEnclosingLayer(const SimpleRange&);

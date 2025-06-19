@@ -2963,8 +2963,8 @@ LayoutSize RenderLayer::minimumSizeForResizing(float zoomFactor) const
 {
     // Use the resizer size as the strict minimum size
     auto resizerRect = overflowControlsRects().resizer;
-    LayoutUnit minWidth = minimumValueForLength(renderer().style().minWidth(), renderer().containingBlock()->width());
-    LayoutUnit minHeight = minimumValueForLength(renderer().style().minHeight(), renderer().containingBlock()->height());
+    LayoutUnit minWidth = Style::evaluateMinimum(renderer().style().minWidth(), renderer().containingBlock()->width());
+    LayoutUnit minHeight = Style::evaluateMinimum(renderer().style().minHeight(), renderer().containingBlock()->height());
     minWidth = std::max(LayoutUnit(minWidth / zoomFactor), LayoutUnit(resizerRect.width()));
     minHeight = std::max(LayoutUnit(minHeight / zoomFactor), LayoutUnit(resizerRect.height()));
     return LayoutSize(minWidth, minHeight);
@@ -3742,6 +3742,24 @@ void RenderLayer::paintLayerContents(GraphicsContext& context, const LayerPainti
 
         return isPaintingCompositedBackground;
     }();
+
+    if (shouldPaintContent && paintingInfo.subtreePaintRoot) {
+        RenderLayer* subtreeRootLayer = paintingInfo.subtreePaintRoot->enclosingLayer();
+
+        if (subtreeRootLayer) {
+            bool isLayerInSubtree = (this == subtreeRootLayer) || isDescendantOf(*subtreeRootLayer);
+
+            if (isLayerInSubtree) {
+                if (paintingInfo.subtreePaintRoot != &renderer()) {
+                    if (CheckedPtr rootAsBlock = dynamicDowncast<RenderBlock>(paintingInfo.subtreePaintRoot)) {
+                        if (!rootAsBlock->isContainingBlockAncestorFor(renderer()))
+                            shouldPaintContent = false;
+                    }
+                }
+            } else
+                shouldPaintContent = false;
+        }
+    }
 
     if (localPaintFlags.contains(PaintLayerFlag::PaintingRootBackgroundOnly) && !renderer().isRenderView() && !renderer().isDocumentElementRenderer()) {
         // If beginTransparencyLayers was called prior to this, ensure the transparency state is cleaned up before returning.

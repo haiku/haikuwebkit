@@ -132,6 +132,15 @@ rendering/svg/SVGRenderingContext.h
 style/StyleBuilderState.h
 style/StyleExtractorState.h
 style/StyleScope.h
+style/values/box/StyleMargin.h
+style/values/box/StylePadding.h
+style/values/flexbox/StyleFlexBasis.h
+style/values/motion/StyleOffsetDistance.h
+style/values/position/StyleInset.h
+style/values/scroll-snap/StyleScrollPadding.h
+style/values/sizing/StyleMaximumSize.h
+style/values/sizing/StyleMinimumSize.h
+style/values/sizing/StylePreferredSize.h
 testing/Internals.cpp
 workers/DedicatedWorkerThread.cpp
 workers/Worker.h

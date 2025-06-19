@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -82,6 +82,7 @@ bool isValidMarkerStyleProperty(CSSPropertyID id)
     case CSSPropertyTextEmphasisColor:
     case CSSPropertyTextEmphasisPosition:
     case CSSPropertyTextEmphasisStyle:
+    case CSSPropertyTextIndent:
     case CSSPropertyTextShadow:
     case CSSPropertyTextTransform:
     case CSSPropertyTextWrapMode:

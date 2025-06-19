@@ -607,11 +607,6 @@ bool ImageDecoderCG::frameHasAlphaAtIndex(size_t index) const
     return !frameIsCompleteAtIndex(index) || hasAlpha();
 }
 
-unsigned ImageDecoderCG::frameBytesAtIndex(size_t index, SubsamplingLevel subsamplingLevel) const
-{
-    return frameSizeAtIndex(index, subsamplingLevel).area() * 4;
-}
-
 bool ImageDecoderCG::fetchFrameMetaDataAtIndex(size_t index, SubsamplingLevel subsamplingLevel, const DecodingOptions& options, ImageFrame& frame) const
 {
     auto properties = adoptCF(CGImageSourceCopyPropertiesAtIndex(m_nativeDecoder.get(), index, imageSourceOptions(subsamplingLevel).get()));

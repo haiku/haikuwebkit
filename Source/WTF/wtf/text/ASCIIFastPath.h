@@ -33,6 +33,7 @@
 
 namespace WTF {
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 template<unsigned charactersCount>
 inline constexpr BitSet<256> makeLatin1CharacterBitSet(const char (&characters)[charactersCount])
 {
@@ -42,6 +43,7 @@ inline constexpr BitSet<256> makeLatin1CharacterBitSet(const char (&characters)[
         bitmap.set(characters[i]);
     return bitmap;
 }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 inline constexpr BitSet<256> makeLatin1CharacterBitSet(NOESCAPE const Invocable<bool(LChar)> auto& matches)
 {

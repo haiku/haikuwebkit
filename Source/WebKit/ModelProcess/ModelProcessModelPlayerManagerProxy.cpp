@@ -92,6 +92,11 @@ void ModelProcessModelPlayerManagerProxy::unloadModelPlayer(WebCore::ModelPlayer
     m_modelConnectionToWebProcess->didUnloadModelPlayer(identifier);
 }
 
+bool ModelProcessModelPlayerManagerProxy::hasModelPlayers() const
+{
+    return m_proxies.size();
+}
+
 void ModelProcessModelPlayerManagerProxy::didReceivePlayerMessage(IPC::Connection& connection, IPC::Decoder& decoder)
 {
     ASSERT(RunLoop::isMain());

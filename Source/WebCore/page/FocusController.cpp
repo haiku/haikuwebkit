@@ -350,7 +350,7 @@ FocusNavigationScope FocusNavigationScope::scopeOf(Node& startingNode)
     ASSERT(startingNode.isInTreeScope());
     RefPtr<Node> root;
     RefPtr<Node> parentNode;
-    for (RefPtr<Node> currentNode = &startingNode; currentNode; currentNode = parentNode) {
+    for (RefPtr<Node> currentNode = startingNode; currentNode; currentNode = parentNode) {
         root = currentNode;
         if (HTMLSlotElement* slot = currentNode->assignedSlot()) {
             if (isFocusScopeOwner(*slot))
@@ -1155,7 +1155,7 @@ void FocusController::findFocusCandidateInContainer(const ContainerNode& contain
             continue;
 
         candidateCount++;
-        candidate.enclosingScrollableBox = &container;
+        candidate.enclosingScrollableBox = container;
         updateFocusCandidateIfNeeded(direction, current, candidate, closest);
     }
 

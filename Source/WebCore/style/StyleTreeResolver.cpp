@@ -790,6 +790,8 @@ ElementUpdate TreeResolver::createAnimatedElementUpdate(ResolvedStyle&& resolved
     if (element.hasInvalidRenderer() || parentChanges.contains(Change::Renderer))
         changes.add(Change::Renderer);
 
+    collectChangedAnchorNames(*newStyle, currentStyle);
+
     auto animationsAffectedDisplay = [&, animatedDisplay = newStyle->display()]() {
         auto* keyframeEffectStack = styleable.keyframeEffectStack();
         if (!keyframeEffectStack)
@@ -1207,7 +1209,7 @@ void TreeResolver::resolveComposedTree()
             resetStyleForNonRenderedDescendants(element);
 
         auto queryContainerAction = updateStateForQueryContainer(element, style, descendantsToResolve);
-        auto anchorPositionedElementAction = updateAnchorPositioningState(element, style, changes);
+        auto anchorPositionedElementAction = updateAnchorPositioningState(element, style);
 
         resumeDescendantResolutionIfNeeded(element, changes, descendantsToResolve);
 
@@ -1312,6 +1314,8 @@ auto TreeResolver::updateStateForQueryContainer(Element& element, const RenderSt
 std::unique_ptr<Update> TreeResolver::resolve()
 {
     auto didInterleavedLayout = std::exchange(m_needsInterleavedLayout, false);
+    if (didInterleavedLayout)
+        m_didFirstInterleavedLayout = true;
 
     Element* documentElement = m_document->documentElement();
     if (!documentElement) {
@@ -1366,15 +1370,36 @@ std::unique_ptr<Update> TreeResolver::resolve()
         }
     }
 
+    if (!m_changedAnchorNames.isEmpty() || m_allAnchorNamesInvalid) {
+        // If there are changes to the anchor names then loop through the existing anchors and see if any of them references those names.
+        for (auto entry : m_document->styleScope().anchorPositionedToAnchorMap()) {
+            CheckedRef anchorPositionedElement = entry.key;
+            auto& anchors = entry.value;
+            for (auto& anchor : anchors) {
+                if (m_changedAnchorNames.contains(anchor.name.name()) || m_allAnchorNamesInvalid) {
+                    // We need to recompute this anchored element as a change in anchor names may have caused it to be anchored differently.
+                    anchorPositionedElement->invalidateForResumingAnchorPositionedElementResolution();
+                    m_needsInterleavedLayout = true;
+                }
+            }
+        }
+        m_changedAnchorNames = { };
+        m_allAnchorNamesInvalid = false;
+    }
+
     if (m_update->roots().isEmpty())
         return { };
+
+    // Ensure we do at least one interleaved layout as any style change may affect existing anchor positions.
+    if (!m_didFirstInterleavedLayout && !m_document->styleScope().anchorPositionedToAnchorMap().isEmptyIgnoringNullReferences())
+        m_needsInterleavedLayout = true;
 
     Adjuster::propagateToDocumentElementAndInitialContainingBlock(*m_update, m_document);
 
     return WTFMove(m_update);
 }
 
-auto TreeResolver::updateAnchorPositioningState(Element& element, const RenderStyle* style, OptionSet<Change> changes) -> LayoutInterleavingAction
+auto TreeResolver::updateAnchorPositioningState(Element& element, const RenderStyle* style) -> LayoutInterleavingAction
 {
     if (!style)
         return LayoutInterleavingAction::None;
@@ -1382,13 +1407,7 @@ auto TreeResolver::updateAnchorPositioningState(Element& element, const RenderSt
     auto update = [&](const RenderStyle* style) {
         if (!style)
             return;
-
         AnchorPositionEvaluator::updateAnchorPositionedStateForLayoutTimePositioned(element, *style, m_treeResolutionState.anchorPositionedStates);
-
-        if (changes && !style->anchorNames().isEmpty()) {
-            // Existing anchor positions may change due to a style change. We need a round of interleaving.
-            m_needsInterleavedLayout = true;
-        }
     };
 
     update(style);
@@ -1626,6 +1645,44 @@ bool TreeResolver::hasResolvedAnchorPosition(const Styleable& styleable) const
         return true;
 
     return false;
+}
+
+void TreeResolver::collectChangedAnchorNames(const RenderStyle& newStyle, const RenderStyle* currentStyle)
+{
+    // A changed anchor name is either a name being added, a name being removed, or a name whose interpretation changes.
+    // This may change which elements get anchored to it.
+
+    if (!currentStyle || currentStyle->anchorNames() != newStyle.anchorNames()) {
+        // This could check which individual names differ but usually there is just one.
+        auto addChanged = [&](auto& style) {
+            for (auto& name : style.anchorNames())
+                m_changedAnchorNames.add(name.name);
+        };
+        if (currentStyle)
+            addChanged(*currentStyle);
+        addChanged(newStyle);
+    }
+
+    // Only anchor-names in self and descendants are affected by anchor-scope so we need to check only if there is an existing style.
+    if (currentStyle && currentStyle->anchorScope() != newStyle.anchorScope()) {
+        auto addChanged = [&](auto& style) {
+            switch (style.anchorScope().type) {
+            case NameScope::Type::None:
+                break;
+            case NameScope::Type::All:
+                // This affects desdendants too so lets just say all names are invalid.
+                m_allAnchorNamesInvalid = true;
+                break;
+            case NameScope::Type::Ident:
+                // A scope change changes interpretation of these names.
+                for (auto& name : style.anchorScope().names)
+                    m_changedAnchorNames.add(name);
+                break;
+            }
+        };
+        addChanged(*currentStyle);
+        addChanged(newStyle);
+    }
 }
 
 static Vector<Function<void ()>>& postResolutionCallbackQueue()

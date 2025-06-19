@@ -98,7 +98,7 @@ static bool containsElement(const Vector<WeakStyleable>& timelineScopeElements, 
 
 ScrollTimeline* StyleOriginatedTimelinesController::determineTreeOrder(const Vector<Ref<ScrollTimeline>>& ancestorTimelines, const Styleable& styleable, const Vector<WeakStyleable>& timelineScopeElements)
 {
-    RefPtr element = &styleable.element;
+    RefPtr element = styleable.element;
     while (element) {
         Vector<Ref<ScrollTimeline>> matchedTimelines;
         for (auto& timeline : ancestorTimelines) {
@@ -177,7 +177,7 @@ void StyleOriginatedTimelinesController::updateTimelineForTimelineScope(const Re
                 matchedTimelineScopeElements.appendIfNotContains(*entryElement);
         }
     }
-    RefPtr element = &timelineElement->element;
+    RefPtr element = timelineElement->element;
     while (element) {
         auto it = matchedTimelineScopeElements.findIf([element] (const Styleable& entry) {
             return &entry.element == element;

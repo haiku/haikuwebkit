@@ -572,7 +572,7 @@ void ImageLoader::updatedHasPendingEvent()
         if (m_derefElementTimer.isActive())
             m_derefElementTimer.stop();
         else
-            m_protectedElement = &element();
+            m_protectedElement = element();
     } else {
         ASSERT(!m_derefElementTimer.isActive());
         m_derefElementTimer.startOneShot(0_s);

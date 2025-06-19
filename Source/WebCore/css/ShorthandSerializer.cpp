@@ -887,8 +887,8 @@ String ShorthandSerializer::serializeBorderRadius() const
     std::array<RefPtr<const CSSValue>, 4> verticalRadii;
     for (unsigned i = 0; i < 4; ++i) {
         auto& value = longhandValue(i);
-        horizontalRadii[i] = &value.first();
-        verticalRadii[i] = &value.second();
+        horizontalRadii[i] = value.first();
+        verticalRadii[i] = value.second();
     }
 
     bool serializeBoth = false;

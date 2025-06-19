@@ -158,14 +158,14 @@ void Event::setCurrentTarget(RefPtr<EventTarget>&& currentTarget, std::optional<
 
 void Event::setEventPath(const EventPath& path)
 {
-    m_eventPath = &path;
+    m_eventPath = path;
 }
 
 Vector<Ref<EventTarget>> Event::composedPath(JSC::JSGlobalObject& lexicalGlobalObject) const
 {
     if (!m_eventPath)
         return Vector<Ref<EventTarget>>();
-    if (JSC::jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)->world().shadowRootIsAlwaysOpen())
+    if (JSC::jsCast<JSDOMGlobalObject*>(&lexicalGlobalObject)->world().canAccessAnyShadowRoot())
         return m_eventPath->computePathTreatingAllShadowRootsAsOpen();
     return m_eventPath->computePathUnclosedToTarget(*protectedCurrentTarget());
 }
@@ -184,9 +184,9 @@ DOMHighResTimeStamp Event::timeStampForBindings(ScriptExecutionContext& context)
 {
     RefPtr<Performance> performance;
     if (auto* globalScope = dynamicDowncast<WorkerGlobalScope>(context))
-        performance = &globalScope->performance();
+        performance = globalScope->performance();
     else if (RefPtr window = downcast<Document>(context).domWindow())
-        performance = &window->performance();
+        performance = window->performance();
 
     if (!performance)
         return 0;

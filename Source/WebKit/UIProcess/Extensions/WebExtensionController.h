@@ -260,7 +260,7 @@ private:
 
     RefPtr<HTTPCookieStoreObserver> protectedCookieStoreObserver() { return m_cookieStoreObserver; }
 
-    Ref<WebExtensionControllerConfiguration> m_configuration;
+    const Ref<WebExtensionControllerConfiguration> m_configuration;
 
 #if PLATFORM(COCOA)
     RetainPtr<_WKWebExtensionControllerHelper> m_webExtensionControllerHelper;

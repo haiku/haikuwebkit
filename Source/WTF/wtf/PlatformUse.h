@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2007-2009 Torch Mobile, Inc.
  * Copyright (C) 2010, 2011 Research In Motion Limited. All rights reserved.
  *
@@ -273,7 +273,7 @@
 #define USE_DARWIN_REGISTER_MACROS 1
 #endif
 
-#if (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED >= 130000)
+#if PLATFORM(MAC)
 #define USE_NSIMAGE_FOR_SVG_SUPPORT 1
 #endif
 
@@ -345,11 +345,11 @@
 #define USE_MEDIAPARSERD 1
 #endif
 
-#if (PLATFORM(MAC) && __MAC_OS_X_VERSION_MIN_REQUIRED < 130000)
-#define USE_AVIF 1
+#if !defined(USE_AVIF)
+#define USE_AVIF 0
 #endif
 
-#if PLATFORM(COCOA) && (HAVE(CGSTYLE_CREATE_SHADOW2) || HAVE(CGSTYLE_COLORMATRIX_BLUR))
+#if PLATFORM(COCOA) && HAVE(CGSTYLE_COLORMATRIX_BLUR)
 #define USE_GRAPHICS_CONTEXT_FILTERS 1
 #endif
 

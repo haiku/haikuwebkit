@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -262,9 +262,7 @@ typedef CF_ENUM(int, CFURLCredentialPersistence)
 - (void)setBoundInterfaceIdentifier:(NSString *)identifier;
 - (void)_setPreventHSTSStorage:(BOOL)preventHSTSStorage;
 - (void)_setIgnoreHSTS:(BOOL)ignoreHSTS;
-#if HAVE(PROHIBIT_PRIVACY_PROXY)
 @property (setter=_setProhibitPrivacyProxy:) BOOL _prohibitPrivacyProxy;
-#endif
 #if HAVE(PRIVACY_PROXY_FAIL_CLOSED_FOR_UNREACHABLE_HOSTS)
 @property (setter=_setPrivacyProxyFailClosedForUnreachableHosts:) BOOL _privacyProxyFailClosedForUnreachableHosts;
 #endif

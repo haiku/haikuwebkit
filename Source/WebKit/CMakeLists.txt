@@ -140,6 +140,7 @@ set(WebKit_BINDINGS_IN_FILES
     WebProcess/Extensions/Interfaces/WebExtensionAPIAlarms
     WebProcess/Extensions/Interfaces/WebExtensionAPICommands
     WebProcess/Extensions/Interfaces/WebExtensionAPICookies
+    WebProcess/Extensions/Interfaces/WebExtensionAPIDOM
     WebProcess/Extensions/Interfaces/WebExtensionAPIDeclarativeNetRequest
     WebProcess/Extensions/Interfaces/WebExtensionAPIDevTools
     WebProcess/Extensions/Interfaces/WebExtensionAPIDevToolsExtensionPanel

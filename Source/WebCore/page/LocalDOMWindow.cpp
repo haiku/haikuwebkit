@@ -286,7 +286,7 @@ bool LocalDOMWindow::dispatchAllPendingBeforeUnloadEvents()
         if (!frame)
             continue;
 
-        if (!frame->protectedLoader()->shouldClose())
+        if (!frame->loader().shouldClose())
             return false;
 
         window->enableSuddenTermination();
@@ -1091,7 +1091,7 @@ void LocalDOMWindow::focus(bool allowFocus)
     if (focusedFrame && focusedFrame != frame)
         focusedFrame->protectedDocument()->setFocusedElement(nullptr);
 
-    frame->checkedEventHandler()->focusDocumentView();
+    frame->eventHandler().focusDocumentView();
 }
 
 void LocalDOMWindow::blur()
@@ -1157,7 +1157,7 @@ void LocalDOMWindow::stop()
     SetForScope isStopping { m_isStopping, true };
     // We must check whether the load is complete asynchronously, because we might still be parsing
     // the document until the callstack unwinds.
-    frame->protectedLoader()->stopForUserCancel(true);
+    frame->loader().stopForUserCancel(true);
 }
 
 void LocalDOMWindow::alert(const String& message)
@@ -1477,7 +1477,7 @@ void LocalDOMWindow::setName(const AtomString& string)
         return;
 
     frame->tree().setSpecifiedName(string);
-    frame->protectedLoader()->client().frameNameChanged(string.string());
+    frame->loader().client().frameNameChanged(string.string());
 }
 
 void LocalDOMWindow::setStatus(const String& string)
@@ -2699,7 +2699,7 @@ ExceptionOr<RefPtr<WindowProxy>> LocalDOMWindow::open(LocalDOMWindow& activeWind
     if (!firstWindow.allowPopUp()) {
         // Because FrameTree::findFrameForNavigation() returns true for empty strings, we must check for empty frame names.
         // Otherwise, illegitimate window.open() calls with no name will pass right through the popup blocker.
-        if (frameName.isEmpty() || !frame->protectedLoader()->findFrameForNavigation(frameName, activeDocument.get()))
+        if (frameName.isEmpty() || !frame->loader().findFrameForNavigation(frameName, activeDocument.get()))
             return RefPtr<WindowProxy> { nullptr };
     }
 
@@ -2707,7 +2707,7 @@ ExceptionOr<RefPtr<WindowProxy>> LocalDOMWindow::open(LocalDOMWindow& activeWind
     // In those cases, we schedule a location change right now and return early.
     RefPtr<Frame> targetFrame;
     if (isTopTargetFrameName(frameName))
-        targetFrame = &frame->tree().top();
+        targetFrame = frame->tree().top();
     else if (isParentTargetFrameName(frameName)) {
         if (RefPtr parent = frame->tree().parent())
             targetFrame = parent.get();

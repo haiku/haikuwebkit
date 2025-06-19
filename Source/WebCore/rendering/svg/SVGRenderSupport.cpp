@@ -2,7 +2,7 @@
  * Copyright (C) 2007, 2008 Rob Buis <buis@kde.org>
  * Copyright (C) 2007 Nikolas Zimmermann <zimmermann@kde.org>
  * Copyright (C) 2007 Eric Seidel <eric@webkit.org>
- * Copyright (C) 2009-2016 Google, Inc.  All rights reserved.
+ * Copyright (C) 2009-2016 Google, Inc. All rights reserved.
  * Copyright (C) 2009 Dirk Schulze <krit@webkit.org>
  * Copyright (C) Research In Motion Limited 2009-2010. All rights reserved.
  * Copyright (C) 2018 Adobe Systems Incorporated. All rights reserved.
@@ -606,7 +606,8 @@ FloatRect SVGRenderSupport::calculateApproximateStrokeBoundingBox(const RenderEl
             auto* usePath = renderer.nonScalingStrokePath(&renderer.path(), nonScalingTransform);
             auto strokeBoundingRect = calculateApproximateScalingStrokeBoundingBox(renderer, usePath->fastBoundingRect());
             strokeBoundingRect = inverse.value().mapRect(strokeBoundingRect);
-            strokeBoundingBox.unite(strokeBoundingRect);
+            if (!strokeBoundingRect.isNaN())
+                strokeBoundingBox.unite(strokeBoundingRect);
         }
         return strokeBoundingBox;
     };

@@ -125,7 +125,7 @@ RefPtr<Font> FontCache::systemFallbackForCharacterCluster(const FontDescription&
 
     // FIXME: handle synthetic properties.
     auto features = computeFeatures(description, { });
-    auto typeface = fontManager().matchFamilyStyleCharacter(nullptr, skiaFontStyle(description), bcp47.data(), bcp47.size(), baseCharacter);
+    auto typeface = fontManager().matchFamilyStyleCharacter(nullptr, skiaFontStyle(description), bcp47.mutableSpan().data(), bcp47.size(), baseCharacter);
     FontPlatformData alternateFontData(WTFMove(typeface), description.computedSize(), false /* syntheticBold */, false /* syntheticOblique */, description.orientation(), description.widthVariant(), description.textRenderingMode(), WTFMove(features));
     return fontForPlatformData(alternateFontData);
 }

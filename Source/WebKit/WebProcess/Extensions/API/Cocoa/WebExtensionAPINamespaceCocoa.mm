@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -161,6 +161,16 @@ WebExtensionAPIDevTools& WebExtensionAPINamespace::devtools()
     return *m_devtools;
 }
 #endif // ENABLE(INSPECTOR_EXTENSIONS)
+
+WebExtensionAPIDOM& WebExtensionAPINamespace::dom()
+{
+    // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/dom
+
+    if (!m_dom)
+        m_dom = WebExtensionAPIDOM::create(*this);
+
+    return *m_dom;
+}
 
 WebExtensionAPIExtension& WebExtensionAPINamespace::extension()
 {

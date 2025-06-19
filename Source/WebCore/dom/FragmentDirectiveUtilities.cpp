@@ -37,7 +37,7 @@ namespace FragmentDirectiveUtilities {
 // https://wicg.github.io/scroll-to-text-fragment/#nearest-block-ancestor
 ContainerNode& nearestBlockAncestor(Node& node)
 {
-    for (RefPtr currentNode = &node; currentNode; currentNode = currentNode->parentNode()) {
+    for (RefPtr currentNode = node; currentNode; currentNode = currentNode->parentNode()) {
         if (CheckedPtr renderElement = dynamicDowncast<RenderElement>(currentNode->renderer()); renderElement && renderElement->style().isDisplayBlockLevel())
             return downcast<ContainerNode>(*currentNode);
     }

@@ -503,7 +503,9 @@ extern "C" { extern void (*const __identifier("??_7TestEnabledBySetting@WebCore@
 #else
 extern "C" { extern void* _ZTVN7WebCore20TestEnabledBySettingE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestEnabledBySetting>, void>> static inline void verifyVTable(TestEnabledBySetting* ptr) {
+template<std::same_as<TestEnabledBySetting> T>
+static inline void verifyVTable(TestEnabledBySetting* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

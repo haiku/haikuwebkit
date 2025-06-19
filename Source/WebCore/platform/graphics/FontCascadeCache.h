@@ -274,7 +274,7 @@ public:
     Ref<FontCascadeFonts> retrieveOrAddCachedFonts(const FontCascadeDescription&, FontSelector*);
 
 private:
-    UncheckedKeyHashMap<FontCascadeCacheKey, std::unique_ptr<FontCascadeCacheEntry>, FontCascadeCacheKeyHash, FontCascadeCacheKeyHashTraits> m_entries;
+    HashMap<FontCascadeCacheKey, std::unique_ptr<FontCascadeCacheEntry>, FontCascadeCacheKeyHash, FontCascadeCacheKeyHashTraits> m_entries;
 };
 
 } // namespace WebCore

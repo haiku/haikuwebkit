@@ -98,7 +98,7 @@ public:
     const Vector<Entry>& data() const { return m_data; }
 
 private:
-    UncheckedKeyHashMap<String, String> sameOriginCustomStringData() const;
+    HashMap<String, String> sameOriginCustomStringData() const;
     Entry& addOrMoveEntryToEnd(const String&);
 
     String m_origin;

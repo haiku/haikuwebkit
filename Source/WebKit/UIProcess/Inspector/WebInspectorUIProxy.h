@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2010-2021 Apple Inc. All rights reserved.
- * Portions Copyright (c) 2011 Motorola Mobility, Inc.  All rights reserved.
+ * Portions Copyright (c) 2011 Motorola Mobility, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions

@@ -113,7 +113,7 @@ private:
 
     WebSampleBufferVideoRendering *rendererOrDisplayLayer() const;
 
-    void resetReadyForMoreSample();
+    void resetReadyForMoreMediaData();
     void initializeDecompressionSession();
     void decodeNextSampleIfNeeded();
     using FlushId = int;
@@ -166,7 +166,6 @@ private:
     std::atomic<FlushId> m_flushId { 0 };
     Deque<std::tuple<Ref<const MediaSample>, MediaTime, FlushId>> m_compressedSampleQueue WTF_GUARDED_BY_CAPABILITY(dispatcher().get());
     std::atomic<uint32_t> m_compressedSamplesCount { 0 };
-    static constexpr MediaTime s_decodeAhead { 133, 1000 };
     RetainPtr<CMBufferQueueRef> m_decodedSampleQueue; // created on the main thread, immutable after creation.
     RefPtr<WebCoreDecompressionSession> m_decompressionSession WTF_GUARDED_BY_LOCK(m_lock);
     std::atomic<bool> m_isUsingDecompressionSession { false };
@@ -177,7 +176,8 @@ private:
     std::optional<CMTime> m_lastDisplayedSample WTF_GUARDED_BY_CAPABILITY(dispatcher().get());
     std::optional<CMTime> m_nextScheduledPurge WTF_GUARDED_BY_CAPABILITY(dispatcher().get());
 
-    Function<void()> m_readyForMoreSampleFunction;
+    bool m_waitingForMoreMediaData WTF_GUARDED_BY_CAPABILITY(dispatcher().get()) { false };
+    Function<void()> m_readyForMoreMediaDataFunction WTF_GUARDED_BY_CAPABILITY(mainThread);
     Preferences m_preferences;
     std::optional<uint32_t> m_currentCodec;
     std::atomic<bool> m_gotDecodingError { false };

@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2020 Igalia S.L. All rights reserved.
- * Copyright (C) 2022-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -112,11 +112,6 @@ XRVisibilityState WebXRSession::visibilityState() const
 const WebXRRenderState& WebXRSession::renderState() const
 {
     return *m_activeRenderState;
-}
-
-const WebXRInputSourceArray& WebXRSession::inputSources() const
-{
-    return m_inputSources;
 }
 
 // https://www.w3.org/TR/webxr/#dom-xrsession-enabledfeatures

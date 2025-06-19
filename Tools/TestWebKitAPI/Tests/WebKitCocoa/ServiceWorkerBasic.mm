@@ -1923,7 +1923,45 @@ TEST(ServiceWorkers, LoadAboutBlankBeforeNavigatingThroughInProcessServiceWorker
     EXPECT_EQ(2u, launchServiceWorkerProcess(useSeparateServiceWorkerProcess, firstLoadAboutBlank));
 }
 
-TEST(ServiceWorkers, LockdownModeInServiceWorkerProcess)
+
+static constexpr auto mainSharedWorkerBytes = R"SWRESOURCE(
+<script>
+function log(msg)
+{
+    window.webkit.messageHandlers.sw.postMessage(msg);
+}
+
+var sharedWorker;
+
+try {
+    var sharedWorker = new SharedWorker("sharedWorker.js");
+    sharedWorker.port.start();
+    sharedWorker.port.postMessage("Hello from the web page");
+} catch(e) {
+    log("Exception: " + e);
+}
+
+sharedWorker.port.onmessage = e => {
+    log("Message from worker: " + e.data);
+};
+</script>
+)SWRESOURCE"_s;
+
+static constexpr auto sharedWorkerScriptWithEvalBytes = R"SWRESOURCE(
+onconnect = e => {
+    const port = e.ports[0];
+    port.onmessage = event => {
+        if (event.data == "Hello from the web page") {
+                port.postMessage("SharedWorker received: " + event.data);
+            return;
+        }
+        port.postMessage("Evaluation result: " + eval(event.data));
+    };
+    port.start();
+};
+)SWRESOURCE"_s;
+
+TEST(ServiceWorkers, LockdownModeInSharedWorkerProcess)
 {
     // Turn on lockdown mode globally.
     [WKProcessPool _setCaptivePortalModeEnabledGloballyForTesting:YES];
@@ -1939,12 +1977,12 @@ TEST(ServiceWorkers, LockdownModeInServiceWorkerProcess)
 
     RetainPtr configuration = adoptNS([[WKWebViewConfiguration alloc] init]);
 
-    RetainPtr messageHandler = adoptNS([[SWMessageHandlerForRestoreFromDiskTest alloc] initWithExpectedMessage:@"Message from worker: ServiceWorker received: Hello from the web page"]);
+    RetainPtr messageHandler = adoptNS([[SWMessageHandlerForRestoreFromDiskTest alloc] initWithExpectedMessage:@"Message from worker: SharedWorker received: Hello from the web page"]);
     [[configuration userContentController] addScriptMessageHandler:messageHandler.get() name:@"sw"];
 
     TestWebKitAPI::HTTPServer server({
-        { "/"_s, { mainBytes } },
-        { "/sw.js"_s, { {{ "Content-Type"_s, "application/javascript"_s }}, scriptWithEvalBytes } }
+        { "/"_s, { mainSharedWorkerBytes } },
+        { "/sharedWorker.js"_s, { {{ "Content-Type"_s, "application/javascript"_s }}, sharedWorkerScriptWithEvalBytes } }
     });
 
     RetainPtr processPool = retainPtr(configuration.get().processPool);
@@ -1964,7 +2002,7 @@ TEST(ServiceWorkers, LockdownModeInServiceWorkerProcess)
     TestWebKitAPI::Util::run(&done);
     done = false;
 
-    EXPECT_TRUE(waitUntilEvaluatesToTrue([&] { return [processPool _serviceWorkerProcessCount] == 1; }));
+    EXPECT_TRUE(waitUntilEvaluatesToTrue([&] { return [processPool _webProcessCount] == 2; }));
 
     // Check that JIT is disabled in the service worker process.
     done = false;
@@ -1977,7 +2015,7 @@ TEST(ServiceWorkers, LockdownModeInServiceWorkerProcess)
     auto runJSCheck = [&](const String& jsToEvalInWorker) {
         bool finishedRunningScript = false;
         done = false;
-        auto js = makeString("worker.postMessage('"_s, jsToEvalInWorker,"');"_s);
+        auto js = makeString("sharedWorker.port.postMessage('"_s, jsToEvalInWorker,"');"_s);
         [webView evaluateJavaScript:js.createNSString().get() completionHandler:[&] (id result, NSError *error) {
             EXPECT_NULL(error);
             finishedRunningScript = true;

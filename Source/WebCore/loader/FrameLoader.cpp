@@ -727,7 +727,7 @@ void FrameLoader::clear(RefPtr<Document>&& newDocument, bool clearWindowProperti
             frame->tree().setSpecifiedName(nullAtom());
     }
 
-    frame->checkedEventHandler()->clear();
+    frame->eventHandler().clear();
 
     if (clearFrameView && frame->view())
         frame->protectedView()->clear();
@@ -1054,7 +1054,7 @@ void FrameLoader::loadURLIntoChildFrame(const URL& url, const String& referer, L
 #if ENABLE(WEB_ARCHIVE) || ENABLE(MHTML)
     if (RefPtr activeLoader = activeDocumentLoader()) {
         if (RefPtr subframeArchive = activeLoader->popArchiveForSubframe(childFrame.tree().uniqueName(), url)) {
-            childFrame.protectedLoader()->loadArchive(subframeArchive.releaseNonNull());
+            childFrame.loader().loadArchive(subframeArchive.releaseNonNull());
             return;
         }
     }
@@ -1081,7 +1081,7 @@ void FrameLoader::loadURLIntoChildFrame(const URL& url, const String& referer, L
     frameLoadRequest.setNewFrameOpenerPolicy(NewFrameOpenerPolicy::Suppress);
     frameLoadRequest.setLockBackForwardList(LockBackForwardList::Yes);
     frameLoadRequest.setIsInitialFrameSrcLoad(true);
-    childFrame.protectedLoader()->loadURL(WTFMove(frameLoadRequest), referer, FrameLoadType::RedirectWithLockedBackForwardList, nullptr, { }, std::nullopt, [] { });
+    childFrame.loader().loadURL(WTFMove(frameLoadRequest), referer, FrameLoadType::RedirectWithLockedBackForwardList, nullptr, { }, std::nullopt, [] { });
 }
 
 #if ENABLE(WEB_ARCHIVE) || ENABLE(MHTML)
@@ -1304,7 +1304,7 @@ void FrameLoader::loadInSameDocument(URL url, RefPtr<SerializedScriptValue> stat
 
     // If we were in the autoscroll/panScroll mode we want to stop it before following the link to the anchor
     if (hashChange)
-        protectedFrame()->checkedEventHandler()->stopAutoscrollTimer();
+        protectedFrame()->eventHandler().stopAutoscrollTimer();
     
     // It's important to model this as a load that starts and immediately finishes.
     // Otherwise, the parent frame may think we never finished loading.
@@ -1366,7 +1366,7 @@ void FrameLoader::completed()
 
     if (RefPtr parent = frame->tree().parent()) {
         if (RefPtr localParent = dynamicDowncast<LocalFrame>(parent.releaseNonNull()))
-            localParent->protectedLoader()->checkCompleted();
+            localParent->loader().checkCompleted();
     }
 
     if (RefPtr view = frame->view())
@@ -1471,9 +1471,9 @@ void FrameLoader::loadFrameRequest(FrameLoadRequest&& request, Event* event, Ref
 
     auto finishLoadFrameRequest = [referrer, event = RefPtr { event }, loadType] (Ref<LocalFrame>&& frame, FrameLoadRequest&& request, RefPtr<FormState>&& formState, std::optional<PrivateClickMeasurement>&& privateClickMeasurement, CompletionHandler<void()>&& completionHandler) mutable {
         if (request.resourceRequest().httpMethod() == "POST"_s)
-            frame->protectedLoader()->loadPostRequest(WTFMove(request), referrer, loadType, event.get(), WTFMove(formState), WTFMove(completionHandler));
+            frame->loader().loadPostRequest(WTFMove(request), referrer, loadType, event.get(), WTFMove(formState), WTFMove(completionHandler));
         else
-            frame->protectedLoader()->loadURL(WTFMove(request), referrer, loadType, event.get(), WTFMove(formState), WTFMove(privateClickMeasurement), WTFMove(completionHandler));
+            frame->loader().loadURL(WTFMove(request), referrer, loadType, event.get(), WTFMove(formState), WTFMove(privateClickMeasurement), WTFMove(completionHandler));
     };
 
     if (loadType == FrameLoadType::Reload) {
@@ -1562,7 +1562,7 @@ void FrameLoader::loadURL(FrameLoadRequest&& frameLoadRequest, const String& ref
     RefPtr targetFrame = isFormSubmission ? nullptr : dynamicDowncast<LocalFrame>(effectiveTargetFrame);
     if (targetFrame && targetFrame != frame.ptr()) {
         frameLoadRequest.setFrameName(selfTargetFrameName());
-        targetFrame->protectedLoader()->loadURL(WTFMove(frameLoadRequest), referrer, newLoadType, event, WTFMove(formState), WTFMove(privateClickMeasurement), completionHandlerCaller.release());
+        targetFrame->loader().loadURL(WTFMove(frameLoadRequest), referrer, newLoadType, event, WTFMove(formState), WTFMove(privateClickMeasurement), completionHandlerCaller.release());
         return;
     }
 
@@ -1703,7 +1703,7 @@ void FrameLoader::load(FrameLoadRequest&& request)
         if (RefPtr frame = dynamicDowncast<LocalFrame>(findFrameForNavigation(request.frameName()))) {
             request.setShouldCheckNewWindowPolicy(false);
             if (&frame->loader() != this) {
-                frame->protectedLoader()->load(WTFMove(request));
+                frame->loader().load(WTFMove(request));
                 return;
             }
         }
@@ -2105,7 +2105,7 @@ void FrameLoader::stopAllLoaders(ClearProvisionalItem clearProvisionalItem, Stop
 
     for (RefPtr child = frame->tree().firstChild(); child; child = child->tree().nextSibling()) {
         if (RefPtr localChild = dynamicDowncast<LocalFrame>(child.get()))
-            localChild->protectedLoader()->stopAllLoaders(clearProvisionalItem);
+            localChild->loader().stopAllLoaders(clearProvisionalItem);
     }
 
     FRAMELOADER_RELEASE_LOG_FORWARDABLE(FRAMELOADER_STOPALLLOADERS, (uintptr_t)m_provisionalDocumentLoader.get(), (uintptr_t)m_documentLoader.get());
@@ -2307,7 +2307,7 @@ void FrameLoader::provisionalLoadFailedInAnotherProcess()
 {
     m_provisionalLoadHappeningInAnotherProcess = false;
     if (RefPtr localParent = dynamicDowncast<LocalFrame>(m_frame->tree().parent()))
-        localParent->protectedLoader()->checkLoadComplete();
+        localParent->loader().checkLoadComplete();
 }
 
 void FrameLoader::commitProvisionalLoad()
@@ -2440,7 +2440,7 @@ void FrameLoader::commitProvisionalLoad()
         }
 
         for (auto& frame : targetFrames)
-            frame->protectedLoader()->checkCompleted();
+            frame->loader().checkCompleted();
     } else
         didOpenURL();
 
@@ -2639,7 +2639,7 @@ void FrameLoader::closeOldDataSources()
     // use a recursive algorithm here.
     for (RefPtr child = m_frame->tree().firstChild(); child; child = child->tree().nextSibling()) {
         if (RefPtr localChild = dynamicDowncast<LocalFrame>(child))
-            localChild->protectedLoader()->closeOldDataSources();
+            localChild->loader().closeOldDataSources();
     }
     
     if (m_documentLoader)
@@ -3133,7 +3133,7 @@ void FrameLoader::detachChildren()
             childrenToDetach.append(localChild.releaseNonNull());
     }
     for (auto& child : childrenToDetach)
-        child->protectedLoader()->detachFromParent();
+        child->loader().detachFromParent();
 }
 
 void FrameLoader::closeAndRemoveChild(LocalFrame& child)
@@ -3160,7 +3160,7 @@ void FrameLoader::checkLoadComplete(LoadWillContinueInAnotherProcess loadWillCon
     // FIXME: Always traversing the entire frame tree is a bit inefficient, but 
     // is currently needed in order to null out the previous history item for all frames.
     Vector<Ref<LocalFrame>, 16> frames;
-    for (RefPtr frame = &m_frame->mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = m_frame->mainFrame(); frame; frame = frame->tree().traverseNext()) {
         if (RefPtr localFrame = dynamicDowncast<LocalFrame>(frame))
             frames.append(localFrame.releaseNonNull());
     }
@@ -3177,7 +3177,7 @@ void FrameLoader::checkLoadComplete(LoadWillContinueInAnotherProcess loadWillCon
     // To process children before their parents, iterate the vector backwards.
     for (Ref frame : makeReversedRange(frames)) {
         if (frame->page())
-            frame->protectedLoader()->checkLoadCompleteForThisFrame(loadWillContinueInAnotherProcess);
+            frame->loader().checkLoadCompleteForThisFrame(loadWillContinueInAnotherProcess);
     }
 }
 
@@ -3565,7 +3565,7 @@ void FrameLoader::loadPostRequest(FrameLoadRequest&& request, const String& refe
     if (!frameName.isEmpty()) {
         // The search for a target frame is done earlier in the case of form submission.
         if (targetFrame) {
-            targetFrame->protectedLoader()->loadWithNavigationAction(WTFMove(workingResourceRequest), WTFMove(action), loadType, WTFMove(formState), allowNavigationToInvalidURL, request.shouldTreatAsContinuingLoad(), WTFMove(completionHandler));
+            targetFrame->loader().loadWithNavigationAction(WTFMove(workingResourceRequest), WTFMove(action), loadType, WTFMove(formState), allowNavigationToInvalidURL, request.shouldTreatAsContinuingLoad(), WTFMove(completionHandler));
             return;
         }
 
@@ -3637,7 +3637,7 @@ ResourceLoaderIdentifier FrameLoader::loadResourceSynchronously(const ResourceRe
                 auto results = page->protectedUserContentProvider()->processContentRuleListsForLoad(*page, newRequest.url(), ContentExtensions::ResourceType::Fetch, *documentLoader);
                 bool blockedLoad = results.summary.blockedLoad;
                 ContentExtensions::applyResultsToRequest(WTFMove(results), page.get(), newRequest);
-                if (blockedLoad) {
+                if (blockedLoad && !results.summary.redirectedPriorToBlock) {
                     newRequest = { };
                     error = ResourceError(errorDomainWebKitInternal, 0, WTFMove(initialRequestURL), emptyString());
                     response = { };
@@ -3809,7 +3809,7 @@ bool FrameLoader::shouldClose()
         for (i = 0; i < targetFrames.size(); i++) {
             if (!targetFrames[i]->tree().isDescendantOf(frame.ptr()))
                 continue;
-            if (!Ref { targetFrames[i] }->protectedLoader()->dispatchBeforeUnloadEvent(page->chrome(), this))
+            if (!Ref { targetFrames[i] }->loader().dispatchBeforeUnloadEvent(page->chrome(), this))
                 break;
         }
 
@@ -4499,7 +4499,7 @@ void FrameLoader::loadDifferentDocumentItem(HistoryItem& item, HistoryItem* from
 // Loads content into this frame, as specified by history item
 void FrameLoader::loadItem(HistoryItem& item, HistoryItem* fromItem, FrameLoadType loadType, ShouldTreatAsContinuingLoad shouldTreatAsContinuingLoad)
 {
-    m_requestedHistoryItem = &item;
+    m_requestedHistoryItem = item;
     RefPtr currentItem = history().currentItem();
 
     if (frame().document() && frame().document()->settings().navigationAPIEnabled() && fromItem && SecurityOrigin::create(item.url())->isSameOriginAs(SecurityOrigin::create(fromItem->url()))) {

@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2005-2022 Apple Inc.
+ * Copyright (C) 2005-2022 Apple Inc. All rights reserved.
  * Copyright (C) 2015 Google Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -94,11 +94,11 @@ void RenderButton::updateAnonymousChildStyle(RenderStyle& childStyle) const
     // Use margin-block:auto instead of align-items:center to get safe centering, i.e.
     // when the content overflows, treat it the same as align-items: flex-start.
     if (isHorizontalWritingMode()) {
-        childStyle.setMinWidth(Length(0, LengthType::Fixed));
+        childStyle.setMinWidth(0_css_px);
         childStyle.setMarginTop(CSS::Keyword::Auto { });
         childStyle.setMarginBottom(CSS::Keyword::Auto { });
     } else {
-        childStyle.setMinHeight(Length(0, LengthType::Fixed));
+        childStyle.setMinHeight(0_css_px);
         childStyle.setMarginLeft(CSS::Keyword::Auto { });
         childStyle.setMarginRight(CSS::Keyword::Auto { });
     }

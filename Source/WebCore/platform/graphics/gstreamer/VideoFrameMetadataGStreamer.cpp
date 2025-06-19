@@ -36,7 +36,7 @@ struct VideoFrameMetadataPrivate {
     VideoFrame::Rotation rotation { VideoFrame::Rotation::None };
     bool isMirrored { false };
     Lock lock;
-    UncheckedKeyHashMap<GstElement*, std::pair<GstClockTime, GstClockTime>> processingTimes WTF_GUARDED_BY_LOCK(lock);
+    HashMap<GstElement*, std::pair<GstClockTime, GstClockTime>> processingTimes WTF_GUARDED_BY_LOCK(lock);
 };
 
 WEBKIT_DEFINE_ASYNC_DATA_STRUCT(VideoFrameMetadataPrivate);

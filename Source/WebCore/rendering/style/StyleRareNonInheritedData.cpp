@@ -28,6 +28,7 @@
 #include "RotateTransformOperation.h"
 #include "ScaleTransformOperation.h"
 #include "StyleImage.h"
+#include "StylePrimitiveNumericTypes+Logging.h"
 #include "StyleReflection.h"
 #include "StyleResolver.h"
 #include "StyleTextEdge.h"

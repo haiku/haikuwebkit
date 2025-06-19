@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2019 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2006 James G. Speth (speth@end.com)
  * Copyright (C) 2006 Samuel Weinig (sam.weinig@gmail.com)
  *
@@ -45,6 +45,7 @@
 #import <WebCore/FocusController.h>
 #import <WebCore/FontCascade.h>
 #import <WebCore/GeometryUtilities.h>
+#import <WebCore/HTMLDocument.h>
 #import <WebCore/HTMLLinkElement.h>
 #import <WebCore/HTMLNames.h>
 #import <WebCore/HTMLTableCellElement.h>
@@ -265,8 +266,8 @@ Class kitClass(Node* impl)
 {
     switch (impl->nodeType()) {
         case Node::ELEMENT_NODE:
-            if (is<HTMLElement>(*impl))
-                return elementClass(downcast<HTMLElement>(*impl).tagQName(), [DOMHTMLElement class]);
+            if (RefPtr htmlElement = dynamicDowncast<HTMLElement>(*impl))
+                return elementClass(htmlElement->tagQName(), [DOMHTMLElement class]);
             return [DOMElement class];
         case Node::ATTRIBUTE_NODE:
             return [DOMAttr class];
@@ -279,7 +280,7 @@ Class kitClass(Node* impl)
         case Node::COMMENT_NODE:
             return [DOMComment class];
         case Node::DOCUMENT_NODE:
-            if (static_cast<Document*>(impl)->isHTMLDocument())
+            if (is<HTMLDocument>(impl))
                 return [DOMHTMLDocument class];
             return [DOMDocument class];
         case Node::DOCUMENT_TYPE_NODE:

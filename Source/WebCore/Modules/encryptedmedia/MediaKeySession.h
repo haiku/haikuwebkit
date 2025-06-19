@@ -134,7 +134,7 @@ private:
     WeakPtr<MediaKeys> m_keys;
     String m_sessionId;
     double m_expiration;
-    UniqueRef<ClosedPromise> m_closedPromise;
+    const UniqueRef<ClosedPromise> m_closedPromise;
     const Ref<MediaKeyStatusMap> m_keyStatuses;
     bool m_closed { false };
     bool m_uninitialized { true };

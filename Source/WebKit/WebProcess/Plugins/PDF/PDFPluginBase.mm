@@ -789,11 +789,11 @@ ScrollableArea* PDFPluginBase::enclosingScrollableArea() const
     return enclosingScrollableLayer->scrollableArea();
 }
 
-#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
-bool PDFPluginBase::vectorBasedControlsEnabled() const
+#if ENABLE(FORM_CONTROL_REFRESH)
+bool PDFPluginBase::formControlRefreshEnabled() const
 {
     if (RefPtr page = this->page())
-        return page->settings().vectorBasedControlsOnMacEnabled();
+        return page->settings().formControlRefreshEnabled();
 
     return false;
 }

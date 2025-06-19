@@ -1570,7 +1570,7 @@ EnclosingLayerInfomation computeEnclosingLayer(const SimpleRange& range)
         if (!graphicsLayer)
             continue;
 
-        auto identifier = graphicsLayer->primaryLayerID();
+        auto identifier = graphicsLayer->layerIDIgnoringStructuralLayer();
         if (!identifier)
             continue;
 

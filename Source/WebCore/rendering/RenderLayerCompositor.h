@@ -690,7 +690,7 @@ private:
     Color m_viewBackgroundColor;
     Color m_rootExtendedBackgroundColor;
 
-    UncheckedKeyHashMap<ScrollingNodeID, SingleThreadWeakPtr<RenderLayer>> m_scrollingNodeToLayerMap;
+    HashMap<ScrollingNodeID, SingleThreadWeakPtr<RenderLayer>> m_scrollingNodeToLayerMap;
     SingleThreadWeakHashSet<RenderLayer> m_layersWithUnresolvedRelations;
 #if PLATFORM(IOS_FAMILY)
     std::unique_ptr<LegacyWebKitScrollingLayerCoordinator> m_legacyScrollingLayerCoordinator;

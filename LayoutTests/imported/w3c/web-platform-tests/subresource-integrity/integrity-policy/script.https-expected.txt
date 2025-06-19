@@ -10,4 +10,6 @@ PASS Ensure that a data URI script with no integrity runs
 PASS Ensure that a no-CORS data URI script with no integrity runs
 PASS Ensure that a blob URL script with no integrity runs
 PASS Ensure that a no-CORS blob URL script with no integrity runs
+PASS Ensure that an about:blank URL script with no integrity runs
+PASS Ensure that a no-CORS about:blank URL script with no integrity runs
 

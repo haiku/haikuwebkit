@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -95,16 +95,6 @@ WebUserContentControllerProxy::~WebUserContentControllerProxy()
 #endif
 }
 
-Ref<API::Array> WebUserContentControllerProxy::protectedUserScripts() const
-{
-    return m_userScripts;
-}
-
-Ref<API::Array> WebUserContentControllerProxy::protectedUserStyleSheets() const
-{
-    return m_userStyleSheets;
-}
-
 #if ENABLE(CONTENT_EXTENSIONS)
 void WebUserContentControllerProxy::addNetworkProcess(NetworkProcessProxy& proxy)
 {
@@ -134,11 +124,11 @@ UserContentControllerParameters WebUserContentControllerProxy::parameters() cons
     });
 
     Vector<WebUserScriptData> userScripts;
-    for (auto userScript : protectedUserScripts()->elementsOfType<API::UserScript>())
+    for (auto userScript : m_userScripts->elementsOfType<API::UserScript>())
         userScripts.append({ userScript->identifier(), userScript->contentWorld().identifier(), userScript->userScript() });
 
     Vector<WebUserStyleSheetData> userStyleSheets;
-    for (auto userStyleSheet : protectedUserStyleSheets()->elementsOfType<API::UserStyleSheet>())
+    for (auto userStyleSheet : m_userStyleSheets->elementsOfType<API::UserStyleSheet>())
         userStyleSheets.append({ userStyleSheet->identifier(), userStyleSheet->contentWorld().identifier(), userStyleSheet->userStyleSheet() });
 
     auto messageHandlers = WTF::map(m_scriptMessageHandlers, [](auto entry) {
@@ -198,11 +188,6 @@ void WebUserContentControllerProxy::contentWorldDestroyed(API::ContentWorld& wor
         process->send(Messages::WebUserContentController::RemoveContentWorlds({ world.identifier() }), identifier());
 }
 
-Ref<API::Array> WebUserContentControllerProxy::protectedUserScripts()
-{
-    return m_userScripts.get();
-}
-
 void WebUserContentControllerProxy::addUserScript(API::UserScript& userScript, InjectUserScriptImmediately immediately)
 {
     Ref<API::ContentWorld> world = userScript.contentWorld();
@@ -230,7 +215,7 @@ void WebUserContentControllerProxy::removeAllUserScripts(API::ContentWorld& worl
     for (Ref process : m_processes)
         process->send(Messages::WebUserContentController::RemoveAllUserScripts({ world.identifier() }), identifier());
 
-    protectedUserScripts()->removeAllOfTypeMatching<API::UserScript>([&](const auto& userScript) {
+    m_userScripts->removeAllOfTypeMatching<API::UserScript>([&](const auto& userScript) {
         return &userScript->contentWorld() == &world;
     });
 }
@@ -246,7 +231,7 @@ void WebUserContentControllerProxy::removeAllUserScripts()
 #endif
     {
         HashCountedSet<RefPtr<API::ContentWorld>> worlds;
-        for (auto userScript : protectedUserScripts()->elementsOfType<API::UserScript>())
+        for (auto userScript : m_userScripts->elementsOfType<API::UserScript>())
             worlds.add(const_cast<API::ContentWorld*>(&userScript->contentWorld()));
 
         auto worldIdentifiers = WTF::map(worlds, [](auto& entry) {
@@ -265,7 +250,7 @@ void WebUserContentControllerProxy::removeAllUserScripts()
     ASSERT(removeWebExtensions == RemoveWebExtensions::No);
 
     Vector<Ref<API::UserScript>> scriptsToRemove;
-    for (auto userScript : protectedUserScripts()->elementsOfType<API::UserScript>()) {
+    for (auto userScript : m_userScripts->elementsOfType<API::UserScript>()) {
         if (WebExtensionMatchPattern::isWebExtensionURL(userScript->userScript().url()))
             continue;
         scriptsToRemove.append(const_cast<API::UserScript&>(*userScript));
@@ -303,7 +288,7 @@ void WebUserContentControllerProxy::removeAllUserStyleSheets(API::ContentWorld& 
     for (Ref process : m_processes)
         process->send(Messages::WebUserContentController::RemoveAllUserStyleSheets({ world.identifier() }), identifier());
 
-    protectedUserStyleSheets()->removeAllOfTypeMatching<API::UserStyleSheet>([&](const auto& userStyleSheet) {
+    m_userStyleSheets->removeAllOfTypeMatching<API::UserStyleSheet>([&](const auto& userStyleSheet) {
         return &userStyleSheet->contentWorld() == &world;
     });
 }
@@ -319,7 +304,7 @@ void WebUserContentControllerProxy::removeAllUserStyleSheets()
 #endif
     {
         HashCountedSet<RefPtr<API::ContentWorld>> worlds;
-        for (auto userStyleSheet : protectedUserStyleSheets()->elementsOfType<API::UserStyleSheet>())
+        for (auto userStyleSheet : m_userStyleSheets->elementsOfType<API::UserStyleSheet>())
             worlds.add(const_cast<API::ContentWorld*>(&userStyleSheet->contentWorld()));
 
         auto worldIdentifiers = WTF::map(worlds, [](auto& entry) {
@@ -338,7 +323,7 @@ void WebUserContentControllerProxy::removeAllUserStyleSheets()
     ASSERT(removeWebExtensions == RemoveWebExtensions::No);
 
     Vector<Ref<API::UserStyleSheet>> styleSheetsToRemove;
-    for (auto userStyleSheet : protectedUserStyleSheets()->elementsOfType<API::UserStyleSheet>()) {
+    for (auto userStyleSheet : m_userStyleSheets->elementsOfType<API::UserStyleSheet>()) {
         if (WebExtensionMatchPattern::isWebExtensionURL(userStyleSheet->userStyleSheet().url()))
             continue;
         styleSheetsToRemove.append(const_cast<API::UserStyleSheet&>(*userStyleSheet));
@@ -414,11 +399,11 @@ void WebUserContentControllerProxy::didPostMessage(WebPageProxyIdentifier pagePr
         return reply(makeUnexpected(String()));
 
     if (!handler->client().supportsAsyncReply()) {
-        handler->client().didPostMessage(*page, WTFMove(frameInfoData), handler->protectedWorld(), WTFMove(message));
+        handler->client().didPostMessage(*page, WTFMove(frameInfoData), handler->world(), WTFMove(message));
         return reply(makeUnexpected(String()));
     }
 
-    handler->client().didPostMessageWithAsyncReply(*page, WTFMove(frameInfoData), handler->protectedWorld(), WTFMove(message), WTFMove(reply));
+    handler->client().didPostMessageWithAsyncReply(*page, WTFMove(frameInfoData), handler->world(), WTFMove(message), WTFMove(reply));
 }
 
 #if ENABLE(CONTENT_EXTENSIONS)

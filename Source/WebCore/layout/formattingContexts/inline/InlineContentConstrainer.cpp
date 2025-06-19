@@ -602,24 +602,27 @@ std::optional<Vector<LayoutUnit>> InlineContentConstrainer::prettifyRange(Inline
     // breakOpportunities[firstStartIndex] is the first possible starting position for a candidate line that is NOT the first line
     size_t firstStartIndex = 1;
     SlidingWidth slidingWidth { *this, m_inlineItemList, breakOpportunities[firstStartIndex], breakOpportunities[firstStartIndex], false, false };
-    for (size_t breakIndex = 1; breakIndex < numberOfBreakOpportunities; breakIndex++) {
+    // breakIndex should always be one or more break opportunities ahead of firstStartIndex.
+    for (size_t breakIndex = firstStartIndex + 1; breakIndex < numberOfBreakOpportunities; breakIndex++) {
         size_t end = breakOpportunities[breakIndex];
         slidingWidth.advanceEndTo(end);
 
         // We prune our search space by limiting the possible starting positions for our candidate line.
         while (computeLineWidthFromSlidingWidth(textIndent, slidingWidth) > m_maximumLineWidthConstraint) {
             firstStartIndex++;
-            if (firstStartIndex > breakIndex)
+            if (firstStartIndex >= breakIndex)
                 break;
             slidingWidth.advanceStartTo(breakOpportunities[firstStartIndex]);
         }
+        ASSERT(firstStartIndex < breakIndex);
 
         // If the start of our slidingWidth is past the last valid breaking point, we will not be able to find a valid solution.
         // Try to find a solution using hyphenation.
         if (firstStartIndex>lastValidStateIndex.value()) {
-            // If hyphenation does not create a valid solution, we should return early.
+            // Perform a single line layout from lastValidStateIndex.value().
             auto newEntry = layoutSingleLineForPretty({ state[lastValidStateIndex.value()].lineEnd.index, range.endIndex() }, idealLineWidth, state[lastValidStateIndex.value()], lastValidStateIndex.value());
             auto it = std::ranges::find(breakOpportunities, newEntry.lineEnd.index);
+            // If hyphenation does not create a valid solution, we should return early.
             if (it == breakOpportunities.end())
                 return { };
             lastValidStateIndex = std::distance(breakOpportunities.begin(), it);
@@ -642,6 +645,7 @@ std::optional<Vector<LayoutUnit>> InlineContentConstrainer::prettifyRange(Inline
             if (accumulatedCost < state[breakIndex].accumulatedCost) {
                 lastValidStateIndex = breakIndex;
                 state[breakIndex].accumulatedCost = accumulatedCost;
+                ASSERT(breakIndex > startIndex);
                 state[breakIndex].previousBreakIndex = startIndex;
                 state[breakIndex].lastLineWidth = candidateLineWidth;
                 state[breakIndex].lineEnd = { .index = breakIndex, .offset = 0 };
@@ -661,6 +665,13 @@ std::optional<Vector<LayoutUnit>> InlineContentConstrainer::prettifyRange(Inline
     Vector<LayoutUnit> widths;
     size_t breakIndex = numberOfBreakOpportunities - 1;
     do {
+        // state[breakIndex].previousBreakIndex should always be less than breakIndex.
+        // If this invariant fails, we will find ourselves in an infinite loop.
+        // In the case we should fall back to auto layout.
+        if (breakIndex <= state[breakIndex].previousBreakIndex) {
+            ASSERT_NOT_REACHED_WITH_SECURITY_IMPLICATION();
+            return { };
+        }
         widths.append(state[breakIndex].lastLineWidth);
         breakIndex = state[breakIndex].previousBreakIndex;
     } while (breakIndex);

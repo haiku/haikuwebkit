@@ -712,7 +712,7 @@ public:
 private:
     explicit FastStringifier(JSGlobalObject&);
     void append(JSValue);
-    String result() const;
+    String result();
 
     void append(char, char, char, char);
     void append(char, char, char, char, char);
@@ -745,7 +745,7 @@ private:
     bool m_checkedObjectPrototype { false };
     bool m_checkedArrayPrototype { false };
     std::optional<FailureReason> m_failureReason;
-    Vector<CharType, dynamicBufferInlineCapacity> m_dynamicBuffer;
+    Vector<CharType, dynamicBufferInlineCapacity, CrashOnOverflow, 16, WTF::StringImplMalloc> m_dynamicBuffer;
     uint8_t* m_stackLimit { nullptr };
 
     CharType m_buffer[staticBufferSize];
@@ -909,7 +909,7 @@ inline bool FastStringifier<CharType, bufferMode>::haveFailure() const
 }
 
 template<typename CharType, BufferMode bufferMode>
-inline String FastStringifier<CharType, bufferMode>::result() const
+inline String FastStringifier<CharType, bufferMode>::result()
 {
     if (haveFailure())
         return { };
@@ -921,7 +921,11 @@ inline String FastStringifier<CharType, bufferMode>::result() const
     }
     logOutcome("success"_s);
 #endif
-    return std::span { buffer(), m_length };
+    if constexpr (bufferMode == BufferMode::DynamicBuffer) {
+        m_dynamicBuffer.shrink(m_length);
+        return StringImpl::adopt(WTFMove(m_dynamicBuffer));
+    }
+    return std::span { static_cast<const FastStringifier*>(this)->buffer(), m_length };
 }
 
 template<typename CharType, BufferMode bufferMode>

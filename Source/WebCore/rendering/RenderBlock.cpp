@@ -520,7 +520,7 @@ void RenderBlock::layout()
     invalidateBackgroundObscurationStatus();
 }
 
-RenderBlockRareData* RenderBlock::getBlockRareData() const
+RenderBlockRareData* RenderBlock::blockRareData() const
 {
     if (!renderBlockHasRareData())
         return nullptr;
@@ -2296,12 +2296,12 @@ void RenderBlock::computePreferredLogicalWidths()
     m_minPreferredLogicalWidth = 0;
     m_maxPreferredLogicalWidth = 0;
 
-    const RenderStyle& styleToUse = style();
-    auto lengthToUse = overridingLogicalWidthForFlexBasisComputation().value_or(styleToUse.logicalWidth());
-    if (!isRenderTableCell() && lengthToUse.isFixed() && lengthToUse.value() >= 0 && !(isDeprecatedFlexItem() && !lengthToUse.intValue())) {
-        m_minPreferredLogicalWidth = adjustContentBoxLogicalWidthForBoxSizing(lengthToUse);
+    auto& styleToUse = style();
+    auto logicalWidth = overridingLogicalWidthForFlexBasisComputation().value_or(styleToUse.logicalWidth());
+    if (auto fixedLogicalWidth = logicalWidth.tryFixed(); !isRenderTableCell() && fixedLogicalWidth && fixedLogicalWidth->value >= 0 && !(isDeprecatedFlexItem() && !static_cast<int>(fixedLogicalWidth->value))) {
+        m_minPreferredLogicalWidth = adjustContentBoxLogicalWidthForBoxSizing(*fixedLogicalWidth);
         m_maxPreferredLogicalWidth = m_minPreferredLogicalWidth;
-    } else if (lengthToUse.isMaxContent()) {
+    } else if (logicalWidth.isMaxContent()) {
         computeIntrinsicLogicalWidths(m_minPreferredLogicalWidth, m_maxPreferredLogicalWidth);
         m_minPreferredLogicalWidth = m_maxPreferredLogicalWidth;
     } else if (shouldComputeLogicalWidthFromAspectRatio()) {
@@ -2434,14 +2434,16 @@ void RenderBlock::computeChildPreferredLogicalWidths(RenderBox& childBox, Layout
             return;
         }
         auto& childBoxStyle = childBox.style();
-        if (childBox.shouldComputeLogicalHeightFromAspectRatio() && childBoxStyle.logicalWidth().isFixed()) {
-            auto aspectRatioSize = blockSizeFromAspectRatio(childBox.horizontalBorderAndPaddingExtent()
-                , childBox.verticalBorderAndPaddingExtent()
-                , LayoutUnit { childBoxStyle.logicalAspectRatio() }
-                , childBoxStyle.boxSizingForAspectRatio()
-                , LayoutUnit { childBoxStyle.logicalWidth().value() }
-                , style().aspectRatioType()
-                , isRenderReplaced());
+        if (auto fixedChildBoxStyleLogicalWidth = childBoxStyle.logicalWidth().tryFixed(); childBox.shouldComputeLogicalHeightFromAspectRatio() && fixedChildBoxStyleLogicalWidth) {
+            auto aspectRatioSize = blockSizeFromAspectRatio(
+                childBox.horizontalBorderAndPaddingExtent(),
+                childBox.verticalBorderAndPaddingExtent(),
+                LayoutUnit { childBoxStyle.logicalAspectRatio() },
+                childBoxStyle.boxSizingForAspectRatio(),
+                LayoutUnit { fixedChildBoxStyleLogicalWidth->value },
+                style().aspectRatioType(),
+                isRenderReplaced()
+            );
             minPreferredLogicalWidth = aspectRatioSize;
             maxPreferredLogicalWidth = aspectRatioSize;
             return;
@@ -2650,30 +2652,26 @@ static inline RenderBlock* findFirstLetterBlock(RenderBlock* start)
     return nullptr;
 }
 
-void RenderBlock::getFirstLetter(RenderObject*& firstLetter, RenderElement*& firstLetterContainer, RenderObject* skipObject)
+std::pair<RenderObject*, RenderElement*> RenderBlock::firstLetterAndContainer(RenderObject* skipThisAsFirstLetter)
 {
-    firstLetter = nullptr;
-    firstLetterContainer = nullptr;
-
     // Don't recur
     if (style().pseudoElementType() == PseudoId::FirstLetter)
-        return;
+        return { };
     
     // FIXME: We need to destroy the first-letter object if it is no longer the first child. Need to find
     // an efficient way to check for that situation though before implementing anything.
-    firstLetterContainer = findFirstLetterBlock(this);
+    RenderElement* firstLetterContainer = findFirstLetterBlock(this);
     if (!firstLetterContainer)
-        return;
+        return { };
     
     // Drill into inlines looking for our first text descendant.
-    firstLetter = firstLetterContainer->firstChild();
+    auto* firstLetter = firstLetterContainer->firstChild();
     while (firstLetter) {
         if (is<RenderText>(*firstLetter)) {
-            if (firstLetter == skipObject) {
+            if (firstLetter == skipThisAsFirstLetter) {
                 firstLetter = firstLetter->nextSibling();
                 continue;
             }
-            
             break;
         }
 
@@ -2699,12 +2697,14 @@ void RenderBlock::getFirstLetter(RenderObject*& firstLetter, RenderElement*& fir
     }
     
     if (!firstLetter)
-        firstLetterContainer = nullptr;
+        return { };
+
+    return { firstLetter, firstLetterContainer };
 }
 
 RenderFragmentedFlow* RenderBlock::cachedEnclosingFragmentedFlow() const
 {
-    RenderBlockRareData* rareData = getBlockRareData();
+    RenderBlockRareData* rareData = blockRareData();
 
     if (!rareData || !rareData->m_enclosingFragmentedFlow)
         return nullptr;
@@ -2714,7 +2714,7 @@ RenderFragmentedFlow* RenderBlock::cachedEnclosingFragmentedFlow() const
 
 bool RenderBlock::cachedEnclosingFragmentedFlowNeedsUpdate() const
 {
-    RenderBlockRareData* rareData = getBlockRareData();
+    RenderBlockRareData* rareData = blockRareData();
 
     if (!rareData || !rareData->m_enclosingFragmentedFlow)
         return true;
@@ -2738,7 +2738,7 @@ RenderFragmentedFlow* RenderBlock::updateCachedEnclosingFragmentedFlow(RenderFra
 
 RenderFragmentedFlow* RenderBlock::locateEnclosingFragmentedFlow() const
 {
-    RenderBlockRareData* rareData = getBlockRareData();
+    RenderBlockRareData* rareData = blockRareData();
     if (!rareData || !rareData->m_enclosingFragmentedFlow)
         return updateCachedEnclosingFragmentedFlow(RenderBox::locateEnclosingFragmentedFlow());
 
@@ -2759,19 +2759,19 @@ void RenderBlock::resetEnclosingFragmentedFlowAndChildInfoIncludingDescendants(R
 
 LayoutUnit RenderBlock::paginationStrut() const
 {
-    RenderBlockRareData* rareData = getBlockRareData();
+    RenderBlockRareData* rareData = blockRareData();
     return rareData ? rareData->m_paginationStrut : 0_lu;
 }
 
 LayoutUnit RenderBlock::pageLogicalOffset() const
 {
-    RenderBlockRareData* rareData = getBlockRareData();
+    RenderBlockRareData* rareData = blockRareData();
     return rareData ? rareData->m_pageLogicalOffset : 0_lu;
 }
 
 void RenderBlock::setPaginationStrut(LayoutUnit strut)
 {
-    RenderBlockRareData* rareData = getBlockRareData();
+    RenderBlockRareData* rareData = blockRareData();
     if (!rareData) {
         if (!strut)
             return;
@@ -2782,7 +2782,7 @@ void RenderBlock::setPaginationStrut(LayoutUnit strut)
 
 void RenderBlock::setPageLogicalOffset(LayoutUnit logicalOffset)
 {
-    RenderBlockRareData* rareData = getBlockRareData();
+    RenderBlockRareData* rareData = blockRareData();
     if (!rareData) {
         if (!logicalOffset)
             return;
@@ -3231,8 +3231,8 @@ std::optional<LayoutUnit> RenderBlock::availableLogicalHeightForPercentageComput
             return contentBoxLogicalHeight(*overridingLogicalHeightForGrid);
 
         auto& style = this->style();
-        if (style.logicalHeight().isFixed()) {
-            auto contentBoxHeight = adjustContentBoxLogicalHeightForBoxSizing(LayoutUnit { style.logicalHeight().value() });
+        if (auto fixedLogicalHeight = style.logicalHeight().tryFixed()) {
+            auto contentBoxHeight = adjustContentBoxLogicalHeightForBoxSizing(LayoutUnit { fixedLogicalHeight->value });
             return std::max(0_lu, constrainContentBoxLogicalHeightByMinMax(contentBoxHeight - scrollbarLogicalHeight(), { }));
         }
 
@@ -3255,7 +3255,7 @@ std::optional<LayoutUnit> RenderBlock::availableLogicalHeightForPercentageComput
 
         if (style.logicalHeight().isPercentOrCalculated()) {
             if (auto heightWithScrollbar = computePercentageLogicalHeight(style.logicalHeight())) {
-                auto contentBoxHeightWithScrollbar = adjustContentBoxLogicalHeightForBoxSizing(heightWithScrollbar.value());
+                auto contentBoxHeightWithScrollbar = adjustContentBoxLogicalHeightForBoxSizing(*heightWithScrollbar);
                 // We need to adjust for min/max height because this method does not handle the min/max of the current block, its caller does.
                 // So the return value from the recursive call will not have been adjusted yet.
                 return std::max(0_lu, constrainContentBoxLogicalHeightByMinMax(contentBoxHeightWithScrollbar - scrollbarLogicalHeight(), { }));
@@ -3412,13 +3412,13 @@ LayoutRect RenderBlock::paintRectToClipOutFromBorder(const LayoutRect& paintRect
 
 LayoutUnit RenderBlock::intrinsicBorderForFieldset() const
 {
-    auto* rareData = getBlockRareData();
+    auto* rareData = blockRareData();
     return rareData ? rareData->m_intrinsicBorderForFieldset : 0_lu;
 }
 
 void RenderBlock::setIntrinsicBorderForFieldset(LayoutUnit padding)
 {
-    auto* rareData = getBlockRareData();
+    auto* rareData = blockRareData();
     if (!rareData) {
         if (!padding)
             return;

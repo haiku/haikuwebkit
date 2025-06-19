@@ -253,6 +253,7 @@ webkit.org/b/258543 scrollingcoordinator/scrolling-tree/composited-in-offscreen-
 webkit.org/b/258543 scrollingcoordinator/scrolling-tree/fixed-inside-relative-inside-stacking-overflow-inside-transformed.html [ Failure ]
 webkit.org/b/258543 scrollingcoordinator/scrolling-tree/fixed-position-within-transformed.html [ Failure ]
 webkit.org/b/258543 scrollingcoordinator/scrolling-tree/absolute-in-nested-overflow-scroll.html [ Failure ]
+webkit.org/b/258543 scrollingcoordinator/scrolling-tree/absolute-in-nested-sc-scrollers.html [ Failure ]
 
 # WebXR tests failing since 249564@main
 http/wpt/webxr/xrFrame_fillJointRadii.html [ Failure ]
@@ -570,6 +571,7 @@ Bug(WPE) http/tests/contentfiltering [ Skip ]
 webkit.org/b/212351 fast/events/mouse-cursor-udpate-during-raf.html [ Failure ]
 
 webkit.org/b/214300 imported/w3c/web-platform-tests/css/css-fonts/font-language-override-01.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-fonts/generic-family-keywords-002.html [ Failure ]
 
 webkit.org/b/217370 fast/events/setDragImage-element-non-nullable.html [ Failure ]
 Bug(WPE) fast/events/selectstart-by-drag.html [ Failure ]
@@ -934,6 +936,7 @@ webkit.org/b/173419 fast/events/page-visibility-iframe-delete-test.html [ Timeou
 webkit.org/b/173419 fast/events/page-visibility-iframe-move-test.html [ Timeout ]
 webkit.org/b/173419 fast/events/page-visibility-iframe-propagation-test.html [ Timeout ]
 webkit.org/b/173419 fast/events/page-visibility-onvisibilitychange.html [ Timeout ]
+webkit.org/b/173419 fast/events/page-visibility-resize-event-order.html [ Timeout ]
 webkit.org/b/173419 fast/events/page-visibility-transition-test.html [ Timeout ]
 webkit.org/b/173419 fast/events/scroll-in-scaled-page-with-overflow-hidden.html [ Failure Timeout ]
 webkit.org/b/173419 fast/events/shadow-event-path-2.html [ Failure ]

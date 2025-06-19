@@ -867,7 +867,9 @@ extern "C" { extern void (*const __identifier("??_7TestDefaultToJSON@WebCore@@6B
 #else
 extern "C" { extern void* _ZTVN7WebCore17TestDefaultToJSONE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestDefaultToJSON>, void>> static inline void verifyVTable(TestDefaultToJSON* ptr) {
+template<std::same_as<TestDefaultToJSON> T>
+static inline void verifyVTable(TestDefaultToJSON* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

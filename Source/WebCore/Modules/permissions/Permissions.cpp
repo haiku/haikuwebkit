@@ -204,6 +204,14 @@ void Permissions::query(JSC::Strong<JSC::JSObject> permissionDescriptorValue, DO
         PermissionController::shared().query(ClientOrigin { document->topOrigin().data(), WTFMove(originData) }, permissionDescriptor, page, source, [contextIdentifier, permissionDescriptor, promise = WTFMove(promise), source, page, document](auto permissionState) mutable {
             ASSERT(isMainThread());
 
+            if (!permissionState) {
+                ScriptExecutionContext::postTaskTo(contextIdentifier, [promise = WTFMove(promise)](auto&) mutable {
+                    promise.reject(Exception { ExceptionCode::NotSupportedError, "Permissions::query does not support this API"_s });
+                });
+
+                return;
+            }
+
 #if ENABLE(GEOLOCATION)
             if (permissionDescriptor.name == PermissionName::Geolocation) {
                 if (auto geolocationPermissionState = determineGeolocationPermissionState(*permissionState, document))
@@ -219,11 +227,6 @@ void Permissions::query(JSC::Strong<JSC::JSObject> permissionDescriptorValue, DO
 #endif
 
             ScriptExecutionContext::postTaskTo(contextIdentifier, [promise = WTFMove(promise), permissionState, permissionDescriptor, source, page = WTFMove(page)](auto& context) mutable {
-                if (!permissionState) {
-                    promise.reject(Exception { ExceptionCode::NotSupportedError, "Permissions::query does not support this API"_s });
-                    return;
-                }
-
                 promise.resolve(PermissionStatus::create(context, *permissionState, permissionDescriptor, source, WTFMove(page)));
             });
         });

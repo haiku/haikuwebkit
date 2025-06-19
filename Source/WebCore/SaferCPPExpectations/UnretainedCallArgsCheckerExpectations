@@ -178,7 +178,6 @@ platform/graphics/cv/GraphicsContextGLCVCocoa.mm
 platform/graphics/cv/ImageRotationSessionVT.mm
 platform/graphics/cv/ImageTransferSessionVT.mm
 platform/graphics/cv/VideoFrameCV.mm
-platform/graphics/gpu/cocoa/GPUPrewarmingMetal.mm
 platform/graphics/mac/ColorMac.mm
 platform/graphics/mac/LegacyDisplayRefreshMonitorMac.cpp
 platform/graphics/mac/PDFDocumentImageMac.mm

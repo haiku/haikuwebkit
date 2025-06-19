@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,7 +64,7 @@ NetworkRTCProvider::NetworkRTCProvider(NetworkConnectionToWebProcess& connection
     , m_ipcConnection(connection.connection())
     , m_rtcMonitor(*this)
 #if PLATFORM(COCOA)
-    , m_sourceApplicationAuditToken(connection.protectedNetworkProcess()->sourceApplicationAuditToken())
+    , m_sourceApplicationAuditToken(connection.networkProcess().sourceApplicationAuditToken())
     , m_rtcNetworkThreadQueue(WorkQueue::create("NetworkRTCProvider Queue"_s, WorkQueue::QOS::UserInitiated))
 #else
     , m_packetSocketFactory(makeUniqueRefWithoutFastMallocCheck<rtc::BasicPacketSocketFactory>(rtcNetworkThread().socketserver()))
@@ -201,7 +201,7 @@ void NetworkRTCProvider::createResolver(LibWebRTCResolverIdentifier identifier, 
 
         if (!result.has_value()) {
             if (result.error() != WebCore::DNSError::Cancelled)
-                protectedConnection->protectedConnection()->send(Messages::WebRTCResolver::ResolvedAddressError(1), identifier);
+                protectedConnection->connection().send(Messages::WebRTCResolver::ResolvedAddressError(1), identifier);
             return;
         }
 
@@ -215,7 +215,7 @@ void NetworkRTCProvider::createResolver(LibWebRTCResolverIdentifier identifier, 
             return std::nullopt;
         });
 
-        protectedConnection->protectedConnection()->send(Messages::WebRTCResolver::SetResolvedAddress(ipAddresses), identifier);
+        protectedConnection->connection().send(Messages::WebRTCResolver::SetResolvedAddress(ipAddresses), identifier);
     };
 
     WebCore::resolveDNS(address, identifier.toUInt64(), WTFMove(completionHandler));

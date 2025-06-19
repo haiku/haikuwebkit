@@ -68,13 +68,13 @@ XrResult OpenXRInput::initialize()
         auto suggestedBinding = createStructure<XrInteractionProfileSuggestedBinding, XR_TYPE_INTERACTION_PROFILE_SUGGESTED_BINDING>();
         RETURN_RESULT_IF_FAILED(xrStringToPath(m_instance, binding.key, &suggestedBinding.interactionProfile), m_instance);
         suggestedBinding.countSuggestedBindings = binding.value.size();
-        suggestedBinding.suggestedBindings = binding.value.data();
+        suggestedBinding.suggestedBindings = binding.value.span().data();
         RETURN_RESULT_IF_FAILED(xrSuggestInteractionProfileBindings(m_instance, &suggestedBinding), m_instance);
     }
 
     auto attachInfo = createStructure<XrSessionActionSetsAttachInfo, XR_TYPE_SESSION_ACTION_SETS_ATTACH_INFO>();
     attachInfo.countActionSets = actionSets.size();
-    attachInfo.actionSets = actionSets.data();
+    attachInfo.actionSets = actionSets.span().data();
     RETURN_RESULT_IF_FAILED(xrAttachSessionActionSets(m_session, &attachInfo), m_instance);
 
     return XR_SUCCESS;
@@ -88,7 +88,7 @@ Vector<FrameData::InputSource> OpenXRInput::collectInputSources(const XrFrameSta
 
     auto syncInfo = createStructure<XrActionsSyncInfo, XR_TYPE_ACTIONS_SYNC_INFO>();
     syncInfo.countActiveActionSets = actionSets.size();
-    syncInfo.activeActionSets = actionSets.data();
+    syncInfo.activeActionSets = actionSets.span().data();
     RETURN_IF_FAILED(xrSyncActions(m_session, &syncInfo), "xrSyncActions", m_instance, { });
 
     Vector<FrameData::InputSource> result;

@@ -103,7 +103,7 @@ private:
 
     ThreadSafeWeakPtr<GPUConnectionToWebProcess> m_gpuConnection WTF_GUARDED_BY_CAPABILITY(m_consumeThread);
     SampleBufferDisplayLayerIdentifier m_identifier;
-    Ref<IPC::Connection> m_connection;
+    const Ref<IPC::Connection> m_connection;
     RefPtr<WebCore::LocalSampleBufferDisplayLayer> m_sampleBufferDisplayLayer;
     std::unique_ptr<LayerHostingContext> m_layerHostingContext;
     SharedVideoFrameReader m_sharedVideoFrameReader;

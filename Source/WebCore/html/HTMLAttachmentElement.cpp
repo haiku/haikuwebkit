@@ -94,12 +94,8 @@ static CString compactStackTrace(StackTrace& stackTrace)
 {
     StringPrintStream stack;
     stackTrace.forEachFrame([&stack](int, void*, const char* fullName) {
-        constexpr size_t maxWorkLen = 1023;
-        constexpr bool is8Bit = true;
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-        StringView name { fullName ? fullName : "?", fullName ? unsigned(std::min(strlen(fullName), maxWorkLen)) : 1u, is8Bit };
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
-
+        constexpr size_t maxWorkLength = 1023;
+        auto name = StringView::fromLatin1(fullName ? fullName : "?").left(maxWorkLength);
         for (const auto& prefix : { "auto void "_s, "auto "_s }) {
             if (name.startsWith(prefix)) {
                 name = name.substring(prefix.length());

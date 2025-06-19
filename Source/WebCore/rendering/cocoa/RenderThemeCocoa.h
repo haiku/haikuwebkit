@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2016-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -55,6 +56,8 @@ protected:
 #endif
 
     void inflateRectForControlRenderer(const RenderObject&, FloatRect&) override;
+
+    LengthBox controlBorder(StyleAppearance, const FontCascade&, const LengthBox& zoomedBox, float zoomFactor, const Element*) const override;
 
     Color platformSpellingMarkerColor(OptionSet<StyleColorOptions>) const override;
     Color platformDictationAlternativesMarkerColor(OptionSet<StyleColorOptions>) const override;
@@ -144,8 +147,94 @@ protected:
 
     bool supportsFocusRing(const RenderObject&, const RenderStyle&) const override;
 
-#if USE(APPLE_INTERNAL_SDK)
-#import <WebKitAdditions/RenderThemeCocoaAdditions.h>
+#if ENABLE(FORM_CONTROL_REFRESH)
+    bool inflateRectForControlRendererForVectorBasedControls(const RenderObject& renderer, FloatRect&) const;
+
+    bool canCreateControlPartForRendererForVectorBasedControls(const RenderObject&) const;
+    bool canCreateControlPartForBorderOnlyForVectorBasedControls(const RenderObject&) const;
+    bool canCreateControlPartForDecorationsForVectorBasedControls(const RenderObject&) const;
+
+    Color checkboxRadioBackgroundColorForVectorBasedControls(const RenderStyle&, OptionSet<ControlStyle::State>, OptionSet<StyleColorOptions>) const;
+
+    bool adjustCheckboxStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintCheckboxForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustRadioStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintRadioForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustButtonStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintButtonForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustColorWellStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintColorWellForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+    bool paintColorWellDecorationsForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustColorWellSwatchStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool adjustColorWellSwatchOverlayStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool adjustColorWellSwatchWrapperStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintColorWellSwatchForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustInnerSpinButtonStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintInnerSpinButtonStyleForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustTextFieldStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintTextFieldForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+    bool paintTextFieldDecorationsForVectorBasedControls(const RenderBox&, const PaintInfo&, const FloatRect&);
+
+    bool adjustTextAreaStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintTextAreaForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+    bool paintTextAreaDecorationsForVectorBasedControls(const RenderBox&, const PaintInfo&, const FloatRect&);
+
+    bool adjustMenuListStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintMenuListForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+    bool paintMenuListDecorationsForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustMenuListButtonStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintMenuListButtonForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+    bool paintMenuListButtonDecorationsForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustMeterStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintMeterForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustListButtonStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintListButtonForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustProgressBarStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintProgressBarForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustSliderTrackStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintSliderTrackForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustSliderThumbSizeForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool adjustSliderThumbStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintSliderThumbForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustSearchFieldStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintSearchFieldForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+    bool paintSearchFieldDecorationsForVectorBasedControls(const RenderBox&, const PaintInfo&, const FloatRect&);
+
+    bool adjustSearchFieldCancelButtonStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintSearchFieldCancelButtonForVectorBasedControls(const RenderBox&, const PaintInfo&, const FloatRect&);
+
+    bool adjustSearchFieldDecorationPartStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintSearchFieldDecorationPartForVectorBasedControls(const RenderObject&, const PaintInfo&, const FloatRect&);
+
+    bool adjustSearchFieldResultsDecorationPartStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintSearchFieldResultsDecorationPartForVectorBasedControls(const RenderBox&, const PaintInfo&, const FloatRect&);
+
+    bool adjustSearchFieldResultsButtonStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+    bool paintSearchFieldResultsButtonForVectorBasedControls(const RenderBox&, const PaintInfo&, const FloatRect&);
+
+    bool adjustSwitchStyleForVectorBasedControls(RenderStyle&, const Element*) const;
+
+    bool paintPlatformResizerForVectorBasedControls(const RenderLayerModelObject&, GraphicsContext&, const LayoutRect&);
+    bool paintPlatformResizerFrameForVectorBasedControls(const RenderLayerModelObject&, GraphicsContext&, const LayoutRect&);
+
+    bool supportsFocusRingForVectorBasedControls(const RenderObject&, const RenderStyle&) const;
+
+    bool adjustTextControlInnerContainerStyleForVectorBasedControls(RenderStyle&, const RenderStyle&, const Element*) const;
+    bool adjustTextControlInnerPlaceholderStyleForVectorBasedControls(RenderStyle&, const RenderStyle&, const Element*) const;
+    bool adjustTextControlInnerTextStyleForVectorBasedControls(RenderStyle&, const RenderStyle&, const Element*) const;
 #endif
 
 private:

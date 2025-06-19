@@ -73,7 +73,7 @@ void CachedResourceRequest::setInitiator(Element& element)
 {
     ASSERT(!m_initiatorElement);
     ASSERT(m_initiatorType.isEmpty());
-    m_initiatorElement = &element;
+    m_initiatorElement = element;
 }
 
 void CachedResourceRequest::setInitiatorType(const AtomString& type)
@@ -98,7 +98,7 @@ void CachedResourceRequest::updateForAccessControl(Document& document)
 {
     ASSERT(m_options.mode == FetchOptions::Mode::Cors);
 
-    m_origin = &document.securityOrigin();
+    m_origin = document.securityOrigin();
     updateRequestForAccessControl(m_resourceRequest, *m_origin, m_options.storedCredentialsPolicy);
 }
 

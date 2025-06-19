@@ -537,8 +537,10 @@ bool StyleSheetContents::hasNestingRules() const
     if (m_hasNestingRulesCache)
         return *m_hasNestingRulesCache;
 
-    m_hasNestingRulesCache = traverseRulesInVector(m_childRules, [&] (auto& rule) {
+    m_hasNestingRulesCache = traverseRulesInVector(m_childRules, [&] (const auto& rule) {
         if (rule.isStyleRuleWithNesting())
+            return true;
+        if (rule.isNestedDeclarationsRule())
             return true;
         return false;
     });

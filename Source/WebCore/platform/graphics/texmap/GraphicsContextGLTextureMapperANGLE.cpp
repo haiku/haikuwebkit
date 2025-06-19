@@ -277,7 +277,7 @@ bool GraphicsContextGLTextureMapperANGLE::platformInitializeContext()
     }
     eglContextAttributes.append(EGL_NONE);
 
-    m_contextObj = EGL_CreateContext(m_displayObj, m_configObj, sharedDisplay.angleSharingGLContext(), eglContextAttributes.data());
+    m_contextObj = EGL_CreateContext(m_displayObj, m_configObj, sharedDisplay.angleSharingGLContext(), eglContextAttributes.span().data());
     if (m_contextObj == EGL_NO_CONTEXT) {
         LOG(WebGL, "EGLContext Initialization failed.");
         return false;

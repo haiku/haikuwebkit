@@ -441,12 +441,12 @@ TEST_F(SharedBufferChunkReaderTest, peekData)
         size_t read = chunkReader.peek(data, 3);
         EXPECT_EQ(read, 3u);
 
-        EXPECT_EQ(String({ data.data(), 3 }), " is"_s);
+        EXPECT_EQ(String(data.span().first(3)), " is"_s);
 
         read = chunkReader.peek(data, 1000);
         EXPECT_EQ(read, 18u);
 
-        EXPECT_EQ(String({ data.data(), 18 }), " is a simple test."_s);
+        EXPECT_EQ(String(data.span().first(18)), " is a simple test."_s);
 
         // Ensure the cursor has not changed.
         chunk = chunkReader.nextChunkAsUTF8StringWithLatin1Fallback();

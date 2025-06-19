@@ -5,7 +5,7 @@
  *           (C) 2006 Alexey Proskuryakov (ap@nypop.com)
  * Copyright (C) 2004-2023 Apple Inc. All rights reserved.
  * Copyright (C) 2010-2017 Google Inc. All rights reserved.
- * Copyright (C) 2011 Motorola Mobility, Inc.  All rights reserved.
+ * Copyright (C) 2011 Motorola Mobility, Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public

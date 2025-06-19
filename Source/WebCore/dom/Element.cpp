@@ -2605,9 +2605,9 @@ bool Element::allowsDoubleTapGesture() const
 Style::Resolver& Element::styleResolver()
 {
     if (RefPtr shadowRoot = containingShadowRoot())
-        return shadowRoot->checkedStyleScope()->resolver();
+        return shadowRoot->styleScope().resolver();
 
-    return document().checkedStyleScope()->resolver();
+    return document().styleScope().resolver();
 }
 
 Style::UnadjustedStyle Element::resolveStyle(const Style::ResolutionContext& resolutionContext)
@@ -3371,6 +3371,11 @@ RefPtr<ShadowRoot> Element::shadowRootForBindings(JSC::JSGlobalObject& lexicalGl
     return nullptr;
 }
 
+RefPtr<ShadowRoot> Element::openOrClosedShadowRoot() const
+{
+    return shadowRoot();
+}
+
 RefPtr<Element> Element::resolveReferenceTarget() const
 {
     if (!document().settings().shadowRootReferenceTargetEnabled())
@@ -4073,7 +4078,7 @@ void Element::focus(const FocusOptions& options)
 
     if (RefPtr page = document->page()) {
         Ref frame = *document->frame();
-        if (!frame->hasHadUserInteraction() && !frame->isMainFrame() && !document->topOrigin().isSameOriginDomain(document->securityOrigin()))
+        if (!frame->hasHadUserInteraction() && !UserGestureIndicator::processingUserGesture() && !frame->isMainFrame() && !document->topOrigin().isSameOriginDomain(document->securityOrigin()))
             return;
 
         FocusOptions optionsWithVisibility = options;
@@ -4537,7 +4542,7 @@ const RenderStyle* Element::resolveComputedStyle(ResolveComputedStyleMode mode)
     ASSERT(isConnected());
 
     Ref document = this->document();
-    document->checkedStyleScope()->flushPendingUpdate();
+    document->styleScope().flushPendingUpdate();
 
     bool isInDisplayNoneTree = false;
 
@@ -6270,7 +6275,7 @@ HTMLElement* Element::topmostPopoverAncestor(TopLayerElementType topLayerType)
 
         // https://html.spec.whatwg.org/#nearest-inclusive-open-popover
         auto nearestInclusiveOpenPopover = [](Element& candidate) -> HTMLElement* {
-            for (RefPtr element = &candidate; element; element = element->parentElementInComposedTree()) {
+            for (RefPtr element = candidate; element; element = element->parentElementInComposedTree()) {
                 if (auto* htmlElement = dynamicDowncast<HTMLElement>(element.get())) {
                     if (htmlElement->popoverState() == PopoverState::Auto && htmlElement->popoverData()->visibilityState() == PopoverVisibilityState::Showing)
                         return htmlElement;

@@ -415,9 +415,7 @@ static SandboxProfilePtr compileAndCacheSandboxProfile(const SandboxInfo& info)
         CachedSandboxVersionNumber,
         static_cast<uint32_t>(libsandboxVersion),
         safeCast<uint32_t>(info.header.length()),
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-        haveBuiltin ? safeCast<uint32_t>(strlen(sandboxProfile->builtin)) : std::numeric_limits<uint32_t>::max(),
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
+        haveBuiltin ? safeCast<uint32_t>(unsafeSpan(sandboxProfile->builtin).size()) : std::numeric_limits<uint32_t>::max(),
         safeCast<uint32_t>(sandboxProfile->size),
         { 0 },
         { 0 }

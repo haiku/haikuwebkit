@@ -50,8 +50,8 @@ private:
     void insertSpanCell(RenderTableCell*);
 
     struct Layout {
-        Length logicalWidth;
-        Length effectiveLogicalWidth;
+        Style::PreferredSize logicalWidth { CSS::Keyword::Auto { } };
+        Style::PreferredSize effectiveLogicalWidth { CSS::Keyword::Auto { } };
         float minLogicalWidth { 0 };
         float maxLogicalWidth { 0 };
         float effectiveMinLogicalWidth { 0 };

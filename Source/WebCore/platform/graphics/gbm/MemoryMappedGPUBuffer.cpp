@@ -124,7 +124,7 @@ bool MemoryMappedGPUBuffer::allocate(struct gbm_device* device, const GLDisplay:
 {
     m_modifier = DRM_FORMAT_MOD_INVALID;
     if (!bufferFormat.modifiers.isEmpty())
-        m_bo = gbm_bo_create_with_modifiers2(device, m_size.width(), m_size.height(), bufferFormat.fourcc, bufferFormat.modifiers.data(), bufferFormat.modifiers.size(), GBM_BO_USE_RENDERING);
+        m_bo = gbm_bo_create_with_modifiers2(device, m_size.width(), m_size.height(), bufferFormat.fourcc, bufferFormat.modifiers.span().data(), bufferFormat.modifiers.size(), GBM_BO_USE_RENDERING);
 
     if (m_bo)
         m_modifier = gbm_bo_get_modifier(m_bo);

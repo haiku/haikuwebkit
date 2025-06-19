@@ -602,11 +602,8 @@ static Ref<PlatformPlaybackSessionInterface> playbackSessionInterface(WebPagePro
 #endif
 
 #if ENABLE(LINEAR_MEDIA_PLAYER)
-    if (page.preferences().linearMediaPlayerEnabled()) {
-        Ref interface = PlaybackSessionInterfaceLMK::create(model);
-        interface->setSpatialVideoEnabled(page.preferences().spatialVideoEnabled());
-        return interface;
-    }
+    if (page.preferences().linearMediaPlayerEnabled())
+        return PlaybackSessionInterfaceLMK::create(model);
 #endif
 
 #if PLATFORM(IOS) || PLATFORM(MACCATALYST) || PLATFORM(VISION)

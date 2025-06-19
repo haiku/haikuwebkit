@@ -35,6 +35,9 @@
 #include "RenderElementInlines.h"
 #include "RenderLayerModelObject.h"
 #include "RenderStyleInlines.h"
+#include "StyleOffsetAnchor.h"
+#include "StyleOffsetDistance.h"
+#include "StyleOffsetPosition.h"
 #include "TransformOperationData.h"
 
 namespace WebCore {
@@ -122,10 +125,10 @@ AcceleratedEffectValues::AcceleratedEffectValues(const RenderStyle& style, const
     transformOrigin = nonCalculatedLengthPoint(style.transformOriginXY(), borderBoxSize);
 
     offsetPath = style.offsetPath();
-    offsetPosition = nonCalculatedLengthPoint(style.offsetPosition(), borderBoxSize);
-    offsetAnchor = nonCalculatedLengthPoint(style.offsetAnchor(), borderBoxSize);
+    offsetPosition = nonCalculatedLengthPoint(Style::toPlatform(style.offsetPosition()), borderBoxSize);
+    offsetAnchor = nonCalculatedLengthPoint(Style::toPlatform(style.offsetAnchor()), borderBoxSize);
     offsetRotate = style.offsetRotate();
-    offsetDistance = style.offsetDistance();
+    offsetDistance = Style::toPlatform(style.offsetDistance());
     if (offsetDistance.isCalculated() && offsetPath) {
         auto anchor = borderBoxRect.location() + floatPointForLengthPoint(transformOrigin, borderBoxSize);
         if (!offsetAnchor.x.isAuto())
@@ -164,7 +167,7 @@ TransformationMatrix AcceleratedEffectValues::computedTransformationMatrix(const
     // 6. Translate and rotate by the transform specified by offset.
     if (transformOperationData && offsetPath) {
         auto computedTransformOrigin = boundingBox.location() + floatPointForLengthPoint(transformOrigin, boundingBox.size());
-        MotionPath::applyMotionPathTransform(matrix, *transformOperationData, computedTransformOrigin, *offsetPath, offsetAnchor, offsetDistance, offsetRotate, transformBox);
+        MotionPath::applyMotionPathTransform(matrix, *transformOperationData, computedTransformOrigin, *offsetPath, Style::OffsetAnchor { offsetAnchor }, Style::OffsetDistance { offsetDistance }, offsetRotate, transformBox);
     }
 
     // 7. Multiply by each of the transform functions in transform from left to right.

@@ -70,50 +70,49 @@ bool GraphicsLayerCARemote::filtersCanBeComposited(const FilterOperations& filte
 
 Ref<PlatformCALayer> GraphicsLayerCARemote::createPlatformCALayer(PlatformCALayer::LayerType layerType, PlatformCALayerClient* owner)
 {
-    RELEASE_ASSERT(m_context.get());
-    auto result = PlatformCALayerRemote::create(layerType, owner, *m_context);
+    Ref context = *m_context;
+    Ref result = PlatformCALayerRemote::create(layerType, owner, context.get());
 
     if (result->canHaveBackingStore()) {
-        auto* localMainFrameView = m_context->webPage().localMainFrameView();
-        result->setContentsFormat(PlatformCALayer::contentsFormatForLayer(localMainFrameView, owner));
+        RefPtr localMainFrameView = context->webPage().localMainFrameView();
+        result->setContentsFormat(PlatformCALayer::contentsFormatForLayer(localMainFrameView.get(), owner));
     }
-
     return WTFMove(result);
 }
 
 Ref<PlatformCALayer> GraphicsLayerCARemote::createPlatformCALayer(PlatformLayer* platformLayer, PlatformCALayerClient* owner)
 {
-    RELEASE_ASSERT(m_context.get());
-    return PlatformCALayerRemote::create(platformLayer, owner, *m_context);
+    Ref context = *m_context;
+    return PlatformCALayerRemote::create(platformLayer, owner, context.get());
 }
 
 #if ENABLE(MODEL_PROCESS)
 Ref<PlatformCALayer> GraphicsLayerCARemote::createPlatformCALayer(Ref<WebCore::ModelContext> modelContext, PlatformCALayerClient* owner)
 {
-    RELEASE_ASSERT(m_context.get());
-    return PlatformCALayerRemote::create(modelContext, owner, *m_context);
+    Ref context = *m_context;
+    return PlatformCALayerRemote::create(modelContext, owner, context.get());
 }
 #endif
 
 #if ENABLE(MODEL_ELEMENT)
 Ref<PlatformCALayer> GraphicsLayerCARemote::createPlatformCALayer(Ref<WebCore::Model> model, PlatformCALayerClient* owner)
 {
-    RELEASE_ASSERT(m_context.get());
-    return PlatformCALayerRemote::create(model, owner, *m_context);
+    Ref context = *m_context;
+    return PlatformCALayerRemote::create(model, owner, context.get());
 }
 #endif
 
 Ref<PlatformCALayer> GraphicsLayerCARemote::createPlatformCALayerHost(WebCore::LayerHostingContextIdentifier identifier, PlatformCALayerClient* owner)
 {
-    RELEASE_ASSERT(m_context.get());
-    return PlatformCALayerRemoteHost::create(identifier, owner, *m_context);
+    Ref context = *m_context;
+    return PlatformCALayerRemoteHost::create(identifier, owner, context.get());
 }
 
 #if HAVE(AVKIT)
 Ref<PlatformCALayer> GraphicsLayerCARemote::createPlatformVideoLayer(WebCore::HTMLVideoElement& videoElement, PlatformCALayerClient* owner)
 {
-    RELEASE_ASSERT(m_context.get());
-    return PlatformCALayerRemote::create(videoElement, owner, *m_context);
+    Ref context = *m_context;
+    return PlatformCALayerRemote::create(videoElement, owner, context.get());
 }
 #endif
 

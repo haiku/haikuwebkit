@@ -164,7 +164,7 @@ private:
     void refEventTarget() final { ref(); }
     void derefEventTarget() final { deref(); }
 
-    UniqueRef<LostPromise> m_lostPromise;
+    const UniqueRef<LostPromise> m_lostPromise;
     const Ref<WebGPU::Device> m_backing;
     const Ref<GPUQueue> m_queue;
     RefPtr<GPUPipelineLayout> m_autoPipelineLayout;

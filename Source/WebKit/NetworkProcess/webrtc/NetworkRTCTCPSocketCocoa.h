@@ -60,7 +60,7 @@ private:
 
     WebCore::LibWebRTCSocketIdentifier m_identifier;
     CheckedRef<NetworkRTCProvider> m_rtcProvider;
-    Ref<IPC::Connection> m_connection;
+    const Ref<IPC::Connection> m_connection;
     RetainPtr<nw_connection_t> m_nwConnection;
     bool m_isSTUN { false };
 #if ASSERT_ENABLED

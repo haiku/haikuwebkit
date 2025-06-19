@@ -600,7 +600,7 @@ std::pair<id<MTLBuffer>, uint64_t> Queue::newTemporaryBufferWithBytes(std::span<
     }
 
     auto priorOffset = m_temporaryBufferOffset;
-    m_temporaryBufferOffset += WTF::roundUpToMultipleOf(16, dataSize);
+    m_temporaryBufferOffset += WTF::roundUpToMultipleOf(64, dataSize);
     memcpySpan(span(m_temporaryBuffer).subspan(priorOffset), dataSpan);
     return std::make_pair(m_temporaryBuffer, priorOffset);
 }
@@ -1147,7 +1147,7 @@ void Queue::writeTexture(const WGPUImageCopyTexture& destination, std::span<uint
             [m_blitCommandEncoder
                 copyFromBuffer:temporaryBuffer
                 sourceOffset:sourceOffset + temporaryBufferOffset
-                sourceBytesPerRow:0
+                sourceBytesPerRow:bytesPerRow
                 sourceBytesPerImage:0
                 sourceSize:sourceSize
                 toTexture:mtlTexture

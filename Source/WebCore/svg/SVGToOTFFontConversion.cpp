@@ -233,9 +233,9 @@ private:
 
     Vector<char> transcodeGlyphPaths(float width, const SVGElement& glyphOrMissingGlyphElement, std::optional<FloatRect>& boundingBox) const;
 
-    void addCodepointRanges(const UnicodeRanges&, UncheckedKeyHashSet<Glyph>& glyphSet) const;
-    void addCodepoints(const UncheckedKeyHashSet<String>& codepoints, UncheckedKeyHashSet<Glyph>& glyphSet) const;
-    void addGlyphNames(const UncheckedKeyHashSet<String>& glyphNames, UncheckedKeyHashSet<Glyph>& glyphSet) const;
+    void addCodepointRanges(const UnicodeRanges&, HashSet<Glyph>& glyphSet) const;
+    void addCodepoints(const HashSet<String>& codepoints, HashSet<Glyph>& glyphSet) const;
+    void addGlyphNames(const HashSet<String>& glyphNames, HashSet<Glyph>& glyphSet) const;
     void addKerningPair(Vector<KerningData>&, SVGKerningPair&&) const;
     template<typename T> size_t appendKERNSubtable(std::optional<SVGKerningPair> (T::*buildKerningPair)() const, uint16_t coverage);
     size_t finishAppendingKERNSubtable(Vector<KerningData>, uint16_t coverage);
@@ -254,8 +254,8 @@ private:
     Ref<const SVGFontElement> protectedFontElement() const { return m_fontElement.get(); }
 
     Vector<GlyphData> m_glyphs;
-    UncheckedKeyHashMap<String, Glyph> m_glyphNameToIndexMap; // SVG 1.1: "It is recommended that glyph names be unique within a font."
-    UncheckedKeyHashMap<String, Vector<Glyph, 1>> m_codepointsToIndicesMap;
+    HashMap<String, Glyph> m_glyphNameToIndexMap; // SVG 1.1: "It is recommended that glyph names be unique within a font."
+    HashMap<String, Vector<Glyph, 1>> m_codepointsToIndicesMap;
     Vector<uint8_t> m_result;
     Vector<char, 17> m_emptyGlyphCharString;
     FloatRect m_boundingBox;
@@ -1019,7 +1019,7 @@ Vector<Glyph, 1> SVGToOTFFontConverter::glyphsForCodepoint(char32_t codepoint) c
     return m_codepointsToIndicesMap.get(codepointToString(codepoint));
 }
 
-void SVGToOTFFontConverter::addCodepointRanges(const UnicodeRanges& unicodeRanges, UncheckedKeyHashSet<Glyph>& glyphSet) const
+void SVGToOTFFontConverter::addCodepointRanges(const UnicodeRanges& unicodeRanges, HashSet<Glyph>& glyphSet) const
 {
     for (auto& unicodeRange : unicodeRanges) {
         for (auto codepoint = unicodeRange.first; codepoint <= unicodeRange.second; ++codepoint) {
@@ -1029,7 +1029,7 @@ void SVGToOTFFontConverter::addCodepointRanges(const UnicodeRanges& unicodeRange
     }
 }
 
-void SVGToOTFFontConverter::addCodepoints(const UncheckedKeyHashSet<String>& codepoints, UncheckedKeyHashSet<Glyph>& glyphSet) const
+void SVGToOTFFontConverter::addCodepoints(const HashSet<String>& codepoints, HashSet<Glyph>& glyphSet) const
 {
     for (auto& codepointString : codepoints) {
         for (auto index : m_codepointsToIndicesMap.get(codepointString))
@@ -1037,7 +1037,7 @@ void SVGToOTFFontConverter::addCodepoints(const UncheckedKeyHashSet<String>& cod
     }
 }
 
-void SVGToOTFFontConverter::addGlyphNames(const UncheckedKeyHashSet<String>& glyphNames, UncheckedKeyHashSet<Glyph>& glyphSet) const
+void SVGToOTFFontConverter::addGlyphNames(const HashSet<String>& glyphNames, HashSet<Glyph>& glyphSet) const
 {
     for (auto& glyphName : glyphNames) {
         if (Glyph glyph = m_glyphNameToIndexMap.get(glyphName))
@@ -1047,8 +1047,8 @@ void SVGToOTFFontConverter::addGlyphNames(const UncheckedKeyHashSet<String>& gly
 
 void SVGToOTFFontConverter::addKerningPair(Vector<KerningData>& data, SVGKerningPair&& kerningPair) const
 {
-    UncheckedKeyHashSet<Glyph> glyphSet1;
-    UncheckedKeyHashSet<Glyph> glyphSet2;
+    HashSet<Glyph> glyphSet1;
+    HashSet<Glyph> glyphSet2;
 
     addCodepointRanges(kerningPair.unicodeRange1, glyphSet1);
     addCodepointRanges(kerningPair.unicodeRange2, glyphSet2);
@@ -1308,8 +1308,8 @@ void SVGToOTFFontConverter::processGlyphElement(const SVGElement& glyphOrMissing
 
 void SVGToOTFFontConverter::appendLigatureGlyphs()
 {
-    UncheckedKeyHashSet<uint32_t> ligatureCodepoints;
-    UncheckedKeyHashSet<uint32_t> nonLigatureCodepoints;
+    HashSet<uint32_t> ligatureCodepoints;
+    HashSet<uint32_t> nonLigatureCodepoints;
     for (auto& glyph : m_glyphs) {
         auto codePoints = StringView(glyph.codepoints).codePoints();
         auto codePointsIterator = codePoints.begin();

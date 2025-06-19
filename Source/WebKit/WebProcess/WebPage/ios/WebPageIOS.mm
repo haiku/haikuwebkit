@@ -2130,7 +2130,7 @@ void WebPage::clearSelectionAfterTappingSelectionHighlightIfNeeded(WebCore::Floa
     if (!localMainFrame)
         return;
 
-    auto result = localMainFrame->checkedEventHandler()->hitTestResultAtPoint(LayoutPoint { location }, {
+    auto result = localMainFrame->eventHandler().hitTestResultAtPoint(LayoutPoint { location }, {
         HitTestRequest::Type::ReadOnly,
         HitTestRequest::Type::AllowVisibleChildFrameContentOnly,
         HitTestRequest::Type::IncludeAllElementsUnderPoint,
@@ -4426,7 +4426,7 @@ void WebPage::dynamicViewportSizeUpdate(const DynamicViewportSizeUpdate& target)
     auto oldUnobscuredContentRect = frameView.unobscuredContentRect();
     bool wasAtInitialScale = scalesAreEssentiallyEqual(oldPageScaleFactor, m_viewportConfiguration.initialScale());
 
-    m_dynamicSizeUpdateHistory.add(std::make_pair(oldContentSize, oldPageScaleFactor), frameView.scrollPosition());
+    m_internals->dynamicSizeUpdateHistory.add(std::make_pair(oldContentSize, oldPageScaleFactor), frameView.scrollPosition());
 
     RefPtr<Node> oldNodeAtCenter;
     double visibleHorizontalFraction = 1;
@@ -4514,8 +4514,8 @@ void WebPage::dynamicViewportSizeUpdate(const DynamicViewportSizeUpdate& target)
         newUnobscuredContentRect.setHeight(std::min(static_cast<float>(newContentSize.height()), newUnobscuredContentRect.height()));
 
         bool positionWasRestoredFromSizeUpdateHistory = false;
-        const auto& previousPosition = m_dynamicSizeUpdateHistory.find(std::pair<IntSize, float>(newContentSize, scale));
-        if (previousPosition != m_dynamicSizeUpdateHistory.end()) {
+        const auto& previousPosition = m_internals->dynamicSizeUpdateHistory.find(std::pair<IntSize, float>(newContentSize, scale));
+        if (previousPosition != m_internals->dynamicSizeUpdateHistory.end()) {
             IntPoint restoredPosition = previousPosition->value;
             FloatPoint deltaPosition(restoredPosition.x() - newUnobscuredContentRect.x(), restoredPosition.y() - newUnobscuredContentRect.y());
             newUnobscuredContentRect.moveBy(deltaPosition);
@@ -5133,7 +5133,7 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
             m_scaleWasSetByUIProcess = true;
             m_hasStablePageScaleFactor = m_isInStableState;
 
-            m_dynamicSizeUpdateHistory.clear();
+            m_internals->dynamicSizeUpdateHistory.clear();
 
             if (shouldSetCorePageScale)
                 setCorePageScaleFactor(scaleFromUIProcess.value(), scrollPosition, m_isInStableState);
@@ -5147,7 +5147,7 @@ void WebPage::updateVisibleContentRects(const VisibleContentRectUpdateInfo& visi
     }
 
     if (scrollPosition != frameView.scrollPosition())
-        m_dynamicSizeUpdateHistory.clear();
+        m_internals->dynamicSizeUpdateHistory.clear();
 
     if (m_viewportConfiguration.setCanIgnoreScalingConstraints(visibleContentRectUpdateInfo.allowShrinkToFit()))
         viewportConfigurationChanged();
@@ -6246,7 +6246,7 @@ void WebPage::didDispatchClickEvent(const PlatformMouseEvent& event, Node& node)
 
     callOnMainRunLoop([bounds, document = WTFMove(document)] mutable {
         if (RefPtr frame = document->frame())
-            frame->checkedEventHandler()->dispatchSimulatedTouchEvent(roundedIntPoint(bounds.center()));
+            frame->eventHandler().dispatchSimulatedTouchEvent(roundedIntPoint(bounds.center()));
     });
 }
 

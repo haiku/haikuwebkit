@@ -75,7 +75,7 @@ UserGestureToken::UserGestureToken(IsProcessingUserGesture isProcessingUserGestu
     }
 
     Ref documentOrigin = document->securityOrigin();
-    for (RefPtr frame = &documentFrame->tree().top(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = documentFrame->tree().top(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(frame);
         if (!localFrame)
             continue;

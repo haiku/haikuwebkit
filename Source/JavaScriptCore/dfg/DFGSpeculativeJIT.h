@@ -1797,6 +1797,7 @@ public:
     void compileNumberIsNaN(Node*);
     void compileGlobalIsFinite(Node*);
     void compileNumberIsFinite(Node*);
+    void compileNumberIsSafeInteger(Node*);
     void compileToIntegerOrInfinity(Node*);
     void compileToLength(Node*);
 

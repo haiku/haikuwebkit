@@ -860,8 +860,6 @@ public:
     T& operator[](size_t i) LIFETIME_BOUND { return at(i); }
     const T& operator[](size_t i) const LIFETIME_BOUND { return at(i); }
 
-    T* data() LIFETIME_BOUND { return Base::buffer(); }
-    const T* data() const LIFETIME_BOUND { return Base::buffer(); }
     static constexpr ptrdiff_t dataMemoryOffset() { return Base::bufferMemoryOffset(); }
 
     iterator begin() LIFETIME_BOUND { return data(); }
@@ -1030,6 +1028,9 @@ private:
         ASSERT_WITH_SECURITY_IMPLICATION(position < capacity());
         new (NotNull, begin() + position) T(std::forward<U>(value));
     }
+
+    T* data() LIFETIME_BOUND { return Base::buffer(); }
+    const T* data() const LIFETIME_BOUND { return Base::buffer(); }
 
     void asanSetInitialBufferSizeTo(size_t);
     void asanSetBufferSizeToFullCapacity(size_t);

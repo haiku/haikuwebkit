@@ -62,6 +62,7 @@ OBJC_CLASS NSAccessibilityRemoteUIElement;
 OBJC_CLASS NSImmediateActionGestureRecognizer;
 OBJC_CLASS NSMenu;
 OBJC_CLASS NSPopover;
+OBJC_CLASS NSScrollPocket;
 OBJC_CLASS NSTextInputContext;
 OBJC_CLASS NSTextPlaceholder;
 OBJC_CLASS NSView;
@@ -135,10 +136,6 @@ enum class ReplacementBehavior : uint8_t;
 }
 
 } // namespace WebCore
-
-#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/WebViewImplAdditionsBefore.h>)
-#import <WebKitAdditions/WebViewImplAdditionsBefore.h>
-#endif
 
 @protocol WebViewImplDelegate
 
@@ -790,13 +787,13 @@ public:
 #endif
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    void updateContentInsetFillViews();
-    WKNSContentInsetFillView *topContentInsetFillView() const { return m_topContentInsetFillView.get(); }
-    void registerViewAboveTopContentInsetArea(NSView *);
-    void unregisterViewAboveTopContentInsetArea(NSView *);
-    void updateTopContentInsetFillDueToScrolling();
-    void updateTopContentInsetFillCaptureColor();
-    void updateTopContentInsetFillStyle();
+    void updateScrollPocket();
+    NSScrollPocket *topScrollPocket() const { return m_topScrollPocket.get(); }
+    void registerViewAboveScrollPocket(NSView *);
+    void unregisterViewAboveScrollPocket(NSView *);
+    void updateScrollPocketVisibilityWhenScrolledToTop();
+    void updateTopScrollPocketCaptureColor();
+    void updateTopScrollPocketStyle();
 #endif
 
 private:
@@ -1077,8 +1074,8 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    RetainPtr<WKNSContentInsetFillView> m_topContentInsetFillView;
-    RetainPtr<NSHashTable<NSView *>> m_viewsAboveTopContentInsetArea;
+    RetainPtr<NSScrollPocket> m_topScrollPocket;
+    RetainPtr<NSHashTable<NSView *>> m_viewsAboveScrollPocket;
 #endif
 
 #if HAVE(INLINE_PREDICTIONS)

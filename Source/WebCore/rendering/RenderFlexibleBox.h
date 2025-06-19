@@ -127,10 +127,10 @@ public:
 
     bool hasModernLayout() const { return m_hasFlexFormattingContextLayout && *m_hasFlexFormattingContextLayout; }
 
+    bool shouldResetFlexItemLogicalHeightBeforeLayout() const { return m_shouldResetFlexItemLogicalHeightBeforeLayout; }
+
 protected:
     void computeIntrinsicLogicalWidths(LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const override;
-
-    bool shouldResetChildLogicalHeightBeforeLayout(const RenderBox&) const override { return m_shouldResetFlexItemLogicalHeightBeforeLayout; }
 
 private:
     class FlexLayoutItem {
@@ -204,9 +204,13 @@ private:
     bool isColumnOrRowReverse() const;
     bool isLeftToRightFlow() const;
     bool isMultiline() const;
-    Length flexBasisForFlexItem(const RenderBox& flexItem) const;
-    Length mainSizeLengthForFlexItem(RenderBox::SizeType, const RenderBox&) const;
-    Length crossSizeLengthForFlexItem(RenderBox::SizeType, const RenderBox&) const;
+    Style::FlexBasis flexBasisForFlexItem(const RenderBox& flexItem) const;
+    const Style::PreferredSize& preferredMainSizeLengthForFlexItem(const RenderBox&) const;
+    const Style::MinimumSize& minMainSizeLengthForFlexItem(const RenderBox&) const;
+    const Style::MaximumSize& maxMainSizeLengthForFlexItem(const RenderBox&) const;
+    const Style::PreferredSize& preferredCrossSizeLengthForFlexItem(const RenderBox&) const;
+    const Style::MinimumSize& minCrossSizeLengthForFlexItem(const RenderBox&) const;
+    const Style::MaximumSize& maxCrossSizeLengthForFlexItem(const RenderBox&) const;
     bool shouldApplyMinSizeAutoForFlexItem(const RenderBox&) const;
     LayoutUnit crossAxisExtentForFlexItem(const RenderBox& flexItem) const;
     LayoutUnit crossAxisIntrinsicExtentForFlexItem(RenderBox& flexItem);
@@ -218,7 +222,7 @@ private:
     LayoutUnit mainAxisExtent() const;
     LayoutUnit crossAxisContentExtent() const;
     LayoutUnit mainAxisContentExtent(LayoutUnit contentLogicalHeight);
-    std::optional<LayoutUnit> computeMainAxisExtentForFlexItem(RenderBox& flexItem, RenderBox::SizeType, const Length& size);
+    template<typename SizeType> std::optional<LayoutUnit> computeMainAxisExtentForFlexItem(RenderBox& flexItem, const SizeType&);
     FlowDirection transformedBlockFlowDirection() const;
     LayoutUnit flowAwareBorderStart() const;
     LayoutUnit flowAwareBorderEnd() const;
@@ -245,23 +249,21 @@ private:
     bool flexItemCrossSizeShouldUseContainerCrossSize(const RenderBox& flexItem) const;
     LayoutUnit computeCrossSizeForFlexItemUsingContainerCrossSize(const RenderBox& flexItem) const;
     void computeChildIntrinsicLogicalWidths(RenderBox&, LayoutUnit& minLogicalWidth, LayoutUnit& maxLogicalWidth) const override;
-    LayoutUnit computeMainSizeFromAspectRatioUsing(const RenderBox& flexItem, Length crossSizeLength) const;
+    template<typename SizeType> LayoutUnit computeMainSizeFromAspectRatioUsing(const RenderBox& flexItem, const SizeType& crossSizeLength) const;
     void setFlowAwareLocationForFlexItem(RenderBox& flexItem, const LayoutPoint&);
     LayoutUnit computeFlexBaseSizeForFlexItem(RenderBox& flexItem, LayoutUnit mainAxisBorderAndPadding, RelayoutChildren);
     void maybeCacheFlexItemMainIntrinsicSize(RenderBox& flexItem, RelayoutChildren);
     void adjustAlignmentForFlexItem(RenderBox& flexItem, LayoutUnit);
     ItemPosition alignmentForFlexItem(const RenderBox& flexItem) const;
     inline OverflowAlignment overflowAlignmentForFlexItem(const RenderBox& flexItem) const;
-    bool canComputePercentageFlexBasis(const RenderBox& flexItem, const Length& flexBasis, UpdatePercentageHeightDescendants);
-    bool flexItemMainSizeIsDefinite(const RenderBox&, const Length& flexBasis);
-    bool flexItemCrossSizeIsDefinite(const RenderBox&, const Length& flexBasis);
+    template<typename SizeType> bool canComputePercentageFlexBasis(const RenderBox& flexItem, const SizeType&, UpdatePercentageHeightDescendants);
+    template<typename SizeType> bool flexItemMainSizeIsDefinite(const RenderBox&, const SizeType&);
+    template<typename SizeType> bool flexItemCrossSizeIsDefinite(const RenderBox&, const SizeType&);
     bool needToStretchFlexItemLogicalHeight(const RenderBox& flexItem) const;
     bool flexItemHasIntrinsicMainAxisSize(const RenderBox& flexItem);
     Overflow mainAxisOverflowForFlexItem(const RenderBox& flexItem) const;
     Overflow crossAxisOverflowForFlexItem(const RenderBox& flexItem) const;
     void cacheFlexItemMainSize(const RenderBox& flexItem);
-
-
 
     void performFlexLayout(RelayoutChildren);
 
@@ -338,11 +340,11 @@ private:
 
     // This is used to cache the preferred size for orthogonal flow children so we
     // don't have to relayout to get it
-    UncheckedKeyHashMap<SingleThreadWeakRef<const RenderBox>, LayoutUnit> m_intrinsicSizeAlongMainAxis;
+    HashMap<SingleThreadWeakRef<const RenderBox>, LayoutUnit> m_intrinsicSizeAlongMainAxis;
     
     // This is used to cache the intrinsic size on the cross axis to avoid
     // relayouts when stretching.
-    UncheckedKeyHashMap<SingleThreadWeakRef<const RenderBox>, LayoutUnit> m_intrinsicContentLogicalHeights;
+    HashMap<SingleThreadWeakRef<const RenderBox>, LayoutUnit> m_intrinsicContentLogicalHeights;
 
     // This set is used to keep track of which children we laid out in this
     // current layout iteration. We need it because the ones in this set may

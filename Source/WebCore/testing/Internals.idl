@@ -588,6 +588,7 @@ enum ContentsFormat {
     DOMString markerDescriptionForNode(Node node, DOMString markerType, unsigned long index);
     DOMString dumpMarkerRects(DOMString markerType);
     undefined setMarkedTextMatchesAreHighlighted(boolean flag);
+    ImageData snapshotNode(Node node);
 
     undefined invalidateFontCache();
 

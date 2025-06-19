@@ -5,7 +5,7 @@
  *                     2000-2001 Simon Hausmann <hausmann@kde.org>
  *                     2000-2001 Dirk Mueller <mueller@kde.org>
  *                     2000 Stefan Schimanski <1Stein@gmx.de>
- * Copyright (C) 2004-2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies)
  * Copyright (C) 2008 Eric Seidel <eric@webkit.org>
  *
@@ -164,13 +164,9 @@ public:
 
     EventHandler& eventHandler() { return m_eventHandler; }
     const EventHandler& eventHandler() const { return m_eventHandler; }
-    inline CheckedRef<EventHandler> checkedEventHandler(); // Defined in LocalFrameInlines.h
-    inline CheckedRef<const EventHandler> checkedEventHandler() const; // Defined in LocalFrameInlines.h
 
     const FrameLoader& loader() const { return m_loader.get(); }
     FrameLoader& loader() { return m_loader.get(); }
-    inline Ref<const FrameLoader> protectedLoader() const; // Defined in LocalFrameInlines.h
-    inline Ref<FrameLoader> protectedLoader(); // Defined in LocalFrameInlines.h
 
     inline FrameSelection& selection(); // Defined in LocalFrameInlines.h
     inline const FrameSelection& selection() const; // Defined in LocalFrameInlines.h
@@ -392,9 +388,9 @@ private:
 
     void setTimersPausedInternal(bool);
 
-    UniqueRef<ViewportArguments> m_viewportArguments;
-    UniqueRef<VisibleSelection> m_rangedSelectionBase;
-    UniqueRef<VisibleSelection> m_rangedSelectionInitialExtent;
+    const UniqueRef<ViewportArguments> m_viewportArguments;
+    const UniqueRef<VisibleSelection> m_rangedSelectionBase;
+    const UniqueRef<VisibleSelection> m_rangedSelectionInitialExtent;
     bool m_selectionChangeCallbacksDisabled { false };
 #endif
 
@@ -416,7 +412,7 @@ private:
 
     const WeakPtr<LocalFrame> m_rootFrame;
     SandboxFlags m_sandboxFlags;
-    UniqueRef<EventHandler> m_eventHandler;
+    const UniqueRef<EventHandler> m_eventHandler;
     std::unique_ptr<HashSet<RegistrableDomain>> m_storageAccessExceptionDomains;
 };
 

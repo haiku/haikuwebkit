@@ -87,8 +87,16 @@ inline ScrollPaddingEdge forwardInheritedValue(const ScrollPaddingEdge& value) {
 inline MarginEdge forwardInheritedValue(const MarginEdge& value) { auto copy = value; return copy; }
 inline PaddingEdge forwardInheritedValue(const PaddingEdge& value) { auto copy = value; return copy; }
 inline InsetEdge forwardInheritedValue(const InsetEdge& value) { auto copy = value; return copy; }
+inline PreferredSize forwardInheritedValue(const PreferredSize& value) { auto copy = value; return copy; }
+inline MinimumSize forwardInheritedValue(const MinimumSize& value) { auto copy = value; return copy; }
+inline MaximumSize forwardInheritedValue(const MaximumSize& value) { auto copy = value; return copy; }
+inline FlexBasis forwardInheritedValue(const FlexBasis& value) { auto copy = value; return copy; }
 inline DynamicRangeLimit forwardInheritedValue(const DynamicRangeLimit& value) { auto copy = value; return copy; }
 inline CornerShapeValue forwardInheritedValue(const CornerShapeValue& value) { auto copy = value; return copy; }
+inline OffsetAnchor forwardInheritedValue(const OffsetAnchor& value) { auto copy = value; return copy; }
+inline OffsetDistance forwardInheritedValue(const OffsetDistance& value) { auto copy = value; return copy; }
+inline OffsetPosition forwardInheritedValue(const OffsetPosition& value) { auto copy = value; return copy; }
+inline OffsetRotate forwardInheritedValue(const OffsetRotate& value) { auto copy = value; return copy; }
 inline URL forwardInheritedValue(const URL& value) { auto copy = value; return copy; }
 inline ViewTransitionName forwardInheritedValue(const ViewTransitionName& value) { auto copy = value; return copy; }
 inline FixedVector<WebCore::Length> forwardInheritedValue(const FixedVector<WebCore::Length>& value) { auto copy = value; return copy; }
@@ -716,7 +724,7 @@ inline void BuilderCustom::applyValueWebkitTextZoom(BuilderState& builderState, 
 #if ENABLE(DARK_MODE_CSS)
 inline void BuilderCustom::applyValueColorScheme(BuilderState& builderState, CSSValue& value)
 {
-    builderState.style().setColorScheme(BuilderConverter::convertColorScheme(builderState, value));
+    builderState.style().setColorScheme(BuilderConverter::convertStyleType<ColorScheme>(builderState, value));
     builderState.style().setHasExplicitlySetColorScheme();
 }
 #endif
@@ -1887,7 +1895,7 @@ inline void BuilderCustom::applyInheritPaddingBottom(BuilderState& builderState)
 
 inline void BuilderCustom::applyValuePaddingBottom(BuilderState& builderState, CSSValue& value)
 {
-    builderState.style().setPaddingBottom(BuilderConverter::convertPaddingEdge(builderState, value));
+    builderState.style().setPaddingBottom(BuilderConverter::convertStyleType<PaddingEdge>(builderState, value));
     builderState.style().setHasExplicitlySetPaddingBottom(builderState.isAuthorOrigin());
 }
 
@@ -1905,7 +1913,7 @@ inline void BuilderCustom::applyInheritPaddingLeft(BuilderState& builderState)
 
 inline void BuilderCustom::applyValuePaddingLeft(BuilderState& builderState, CSSValue& value)
 {
-    builderState.style().setPaddingLeft(BuilderConverter::convertPaddingEdge(builderState, value));
+    builderState.style().setPaddingLeft(BuilderConverter::convertStyleType<PaddingEdge>(builderState, value));
     builderState.style().setHasExplicitlySetPaddingLeft(builderState.isAuthorOrigin());
 }
 
@@ -1923,7 +1931,7 @@ inline void BuilderCustom::applyInheritPaddingRight(BuilderState& builderState)
 
 inline void BuilderCustom::applyValuePaddingRight(BuilderState& builderState, CSSValue& value)
 {
-    builderState.style().setPaddingRight(BuilderConverter::convertPaddingEdge(builderState, value));
+    builderState.style().setPaddingRight(BuilderConverter::convertStyleType<PaddingEdge>(builderState, value));
     builderState.style().setHasExplicitlySetPaddingRight(builderState.isAuthorOrigin());
 }
 
@@ -1941,7 +1949,7 @@ inline void BuilderCustom::applyInheritPaddingTop(BuilderState& builderState)
 
 inline void BuilderCustom::applyValuePaddingTop(BuilderState& builderState, CSSValue& value)
 {
-    builderState.style().setPaddingTop(BuilderConverter::convertPaddingEdge(builderState, value));
+    builderState.style().setPaddingTop(BuilderConverter::convertStyleType<PaddingEdge>(builderState, value));
     builderState.style().setHasExplicitlySetPaddingTop(builderState.isAuthorOrigin());
 }
 

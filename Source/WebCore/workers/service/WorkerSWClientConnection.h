@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,7 +86,7 @@ private:
     void cookieChangeSubscriptions(ServiceWorkerRegistrationIdentifier, ExceptionOrCookieChangeSubscriptionsCallback&&) final;
     Ref<AddRoutePromise> addRoutes(ServiceWorkerRegistrationIdentifier, Vector<ServiceWorkerRoute>&&) final;
 
-    Ref<WorkerThread> m_thread;
+    const Ref<WorkerThread> m_thread;
 
     struct SWClientRequestIdentifierType;
     using SWClientRequestIdentifier = AtomicObjectIdentifier<SWClientRequestIdentifierType>;

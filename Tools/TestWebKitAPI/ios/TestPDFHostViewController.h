@@ -25,7 +25,7 @@
 
 #pragma once
 
-#if USE(PDFKIT_FOR_TESTING) && PLATFORM(IOS_FAMILY)
+#if HAVE(PDFKIT) && PLATFORM(IOS_FAMILY)
 
 class ClassMethodSwizzler;
 
@@ -35,4 +35,4 @@ std::unique_ptr<ClassMethodSwizzler> createPDFHostViewControllerSwizzler();
 
 } // namespace TestWebKitAPI
 
-#endif // USE(PDFKIT_FOR_TESTING) && PLATFORM(IOS_FAMILY)
+#endif // HAVE(PDFKIT) && PLATFORM(IOS_FAMILY)

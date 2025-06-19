@@ -1,6 +1,6 @@
-LIST(APPEND WTF_SOURCES
-    generic/WorkQueueGeneric.cpp
+list(APPEND WTF_SOURCES
     generic/MainThreadGeneric.cpp
+    generic/WorkQueueGeneric.cpp
 
     haiku/CurrentProcessMemoryStatus.cpp
     haiku/FileSystemHaiku.cpp
@@ -19,11 +19,16 @@ LIST(APPEND WTF_SOURCES
 
     unicode/icu/CollatorICU.cpp
 
+    unix/LoggingUnix.cpp
     unix/MemoryPressureHandlerUnix.cpp
     unix/UniStdExtrasUnix.cpp
 )
 
-LIST(APPEND WTF_LIBRARIES
+list(APPEND WTF_PUBLIC_HEADERS
+    unix/UnixFileDescriptor.h
+)
+
+list(APPEND WTF_LIBRARIES
     ${ZLIB_LIBRARIES}
     be execinfo
 )

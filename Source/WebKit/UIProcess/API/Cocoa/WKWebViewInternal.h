@@ -138,7 +138,7 @@ class WebViewImpl;
 #if PLATFORM(IOS_FAMILY)
 class ViewGestureController;
 #endif
-enum class HideContentInsetFillReason : uint8_t {
+enum class HideScrollPocketReason : uint8_t {
     FullScreen      = 1 << 0,
     ScrolledToTop   = 1 << 1,
 };
@@ -462,7 +462,7 @@ struct PerWebProcessState {
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
     WebCore::RectEdges<RetainPtr<WKColorExtensionView>> _fixedColorExtensionViews;
-    OptionSet<WebKit::HideContentInsetFillReason> _reasonsToHideTopContentInsetFill;
+    OptionSet<WebKit::HideScrollPocketReason> _reasonsToHideTopScrollPocket;
 #endif
 }
 
@@ -536,9 +536,9 @@ struct PerWebProcessState {
 - (void)_updateFixedColorExtensionViews;
 - (void)_updateFixedColorExtensionViewFrames;
 - (BOOL)_hasVisibleColorExtensionView:(WebCore::BoxSide)side;
-- (void)_addReasonToHideTopContentInsetFill:(WebKit::HideContentInsetFillReason)reason;
-- (void)_removeReasonToHideTopContentInsetFill:(WebKit::HideContentInsetFillReason)reason;
-- (void)_updateTopContentInsetFillCaptureColor;
+- (void)_addReasonToHideTopScrollPocket:(WebKit::HideScrollPocketReason)reason;
+- (void)_removeReasonToHideTopScrollPocket:(WebKit::HideScrollPocketReason)reason;
+- (void)_updateTopScrollPocketCaptureColor;
 #endif
 
 #if ENABLE(GAMEPAD)

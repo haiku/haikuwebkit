@@ -977,17 +977,12 @@ static void webkitMediaStreamSrcConstructed(GObject* object)
 static void webkitMediaStreamSrcDispose(GObject* object)
 {
     auto self = WEBKIT_MEDIA_STREAM_SRC_CAST(object);
-    auto element = GST_ELEMENT_CAST(self);
     auto priv = self->priv;
 
     GST_DEBUG_OBJECT(self, "Disposing");
-    for (auto& source : priv->sources.values()) {
-        source->stopObserving();
-
-        auto pad = adoptGRef(gst_element_get_static_pad(element, source->padName().ascii().data()));
-        GRefPtr appSrc = source->get();
+    for (auto& source : priv->sources.values())
         webkitMediaStreamSrcCleanup(self, source);
-    }
+
     priv->sources.clear();
 
     if (priv->stream) {

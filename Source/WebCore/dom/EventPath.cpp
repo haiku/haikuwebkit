@@ -319,7 +319,7 @@ RelatedNodeRetargeter::RelatedNodeRetargeter(Ref<Node>&& relatedNode, Node& targ
     , m_retargetedRelatedNode(m_relatedNode.copyRef())
 {
     auto& targetTreeScope = target.treeScope();
-    RefPtr currentTreeScope = &m_relatedNode->treeScope();
+    RefPtr currentTreeScope = m_relatedNode->treeScope();
     if (currentTreeScope == &targetTreeScope && target.isConnected() && m_relatedNode->isConnected()) [[likely]]
         return;
 

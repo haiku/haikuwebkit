@@ -394,7 +394,7 @@ public:
     {
     }
 
-    Ref<ImageBuffer> imageBuffer() const { return m_imageBuffer; }
+    ImageBuffer& imageBuffer() const { return m_imageBuffer; }
     FloatRect destinationRect() const { return m_destinationRect; }
 
     void apply(GraphicsContext&) const;
@@ -478,9 +478,9 @@ public:
     {
     }
 
-    RefPtr<ImageBuffer> sourceImage() const { return m_sourceImage; }
+    ImageBuffer* sourceImage() const { return m_sourceImage.get(); }
     FloatRect sourceImageRect() const { return m_sourceImageRect; }
-    Ref<Filter> filter() const { return m_filter; }
+    Filter& filter() const { return m_filter; }
 
     void apply(GraphicsContext&) const;
     void dump(TextStream&, OptionSet<AsTextFlag>) const;
@@ -571,7 +571,7 @@ public:
     {
     }
 
-    Ref<ImageBuffer> imageBuffer() const { return m_imageBuffer; }
+    ImageBuffer& imageBuffer() const { return m_imageBuffer; }
     FloatRect source() const { return m_srcRect; }
     FloatRect destinationRect() const { return m_destinationRect; }
     ImagePaintingOptions options() const { return m_options; }
@@ -598,7 +598,7 @@ public:
     {
     }
 
-    Ref<NativeImage> nativeImage() const { return m_image; }
+    NativeImage& nativeImage() const { return m_image; }
     const FloatRect& destinationRect() const { return m_destinationRect; }
     const FloatRect& source() const { return m_srcRect; }
     ImagePaintingOptions options() const { return m_options; }
@@ -623,7 +623,7 @@ public:
     {
     }
 
-    const Ref<SystemImage>& systemImage() const { return m_systemImage; }
+    const SystemImage& systemImage() const { return m_systemImage; }
     const FloatRect& destinationRect() const { return m_destinationRect; }
 
     void apply(GraphicsContext&) const;
@@ -648,7 +648,7 @@ public:
         , m_options(options)
     {
     }
-    Ref<NativeImage> nativeImage() const { return m_image; }
+    NativeImage& nativeImage() const { return m_image; }
     FloatRect destRect() const { return m_destination; }
     FloatRect tileRect() const { return m_tileRect; }
     const AffineTransform& patternTransform() const { return m_patternTransform; }
@@ -683,7 +683,7 @@ public:
         , m_options(options)
     {
     }
-    Ref<ImageBuffer> imageBuffer() const { return m_imageBuffer; }
+    ImageBuffer& imageBuffer() const { return m_imageBuffer; }
     FloatRect destRect() const { return m_destination; }
     FloatRect tileRect() const { return m_tileRect; }
     const AffineTransform& patternTransform() const { return m_patternTransform; }
@@ -993,7 +993,7 @@ public:
     WEBCORE_EXPORT FillRectWithGradient(FloatRect&&, Ref<Gradient>&&);
 
     const FloatRect& rect() const { return m_rect; }
-    const Ref<Gradient>& gradient() const { return m_gradient; }
+    const Gradient& gradient() const { return m_gradient; }
 
     WEBCORE_EXPORT void apply(GraphicsContext&) const;
     void dump(TextStream&, OptionSet<AsTextFlag>) const;
@@ -1011,7 +1011,7 @@ public:
     WEBCORE_EXPORT FillRectWithGradientAndSpaceTransform(FloatRect&&, Ref<Gradient>&&, AffineTransform&&, GraphicsContext::RequiresClipToRect);
 
     const FloatRect& rect() const { return m_rect; }
-    const Ref<Gradient>& gradient() const { return m_gradient; }
+    const Gradient& gradient() const { return m_gradient; }
     const AffineTransform& gradientSpaceTransform() const { return m_gradientSpaceTransform; }
     GraphicsContext::RequiresClipToRect requiresClipToRect() const { return m_requiresClipToRect; }
 
@@ -1227,7 +1227,7 @@ public:
 
     WEBCORE_EXPORT DrawControlPart(ControlPart&, const FloatRoundedRect& borderRect, float deviceScaleFactor, const ControlStyle&);
 
-    Ref<ControlPart> part() const { return m_part; }
+    ControlPart& part() const { return m_part; }
     FloatRoundedRect borderRect() const { return m_borderRect; }
     float deviceScaleFactor() const { return m_deviceScaleFactor; }
     const ControlStyle& style() const { return m_style; }

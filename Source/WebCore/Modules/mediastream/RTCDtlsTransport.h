@@ -74,7 +74,7 @@ private:
     void onStateChanged(RTCDtlsTransportState, Vector<Ref<JSC::ArrayBuffer>>&&) final;
     void onError() final;
 
-    UniqueRef<RTCDtlsTransportBackend> m_backend;
+    const UniqueRef<RTCDtlsTransportBackend> m_backend;
     const Ref<RTCIceTransport> m_iceTransport;
     RTCDtlsTransportState m_state { RTCDtlsTransportState::New };
     Vector<Ref<JSC::ArrayBuffer>> m_remoteCertificates;

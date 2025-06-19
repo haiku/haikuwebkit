@@ -30,6 +30,7 @@
 #include "AssemblyHelpers.h"
 #include "BytecodeLivenessAnalysisInlines.h"
 #include "CodeBlock.h"
+#include "ConcatKeyAtomStringCache.h"
 #include "DFGArgumentPosition.h"
 #include "DFGBasicBlock.h"
 #include "DFGFrozenValue.h"
@@ -1225,6 +1226,7 @@ public:
     bool isNeverResizableOrGrowableSharedTypedArrayIncludingDataView(const AbstractValue&);
 
     const BoyerMooreHorspoolTable<uint8_t>* tryAddStringSearchTable8(const String&);
+    const ConcatKeyAtomStringCache* tryAddConcatKeyAtomStringCache(const String&, const String&, ConcatKeyAtomStringCache::Mode);
 
     bool afterFixup() { return m_planStage >= PlanStage::AfterFixup; }
 
@@ -1252,6 +1254,7 @@ public:
     Vector<const UnlinkedStringJumpTable*> m_unlinkedStringSwitchJumpTables;
     Vector<StringJumpTable> m_stringSwitchJumpTables;
     UncheckedKeyHashMap<String, std::unique_ptr<BoyerMooreHorspoolTable<uint8_t>>> m_stringSearchTable8;
+    Vector<std::unique_ptr<ConcatKeyAtomStringCache>> m_concatKeyAtomStringCaches;
 
     UncheckedKeyHashMap<EncodedJSValue, FrozenValue*, EncodedJSValueHash, EncodedJSValueHashTraits> m_frozenValueMap;
     SegmentedVector<FrozenValue, 16> m_frozenValues;

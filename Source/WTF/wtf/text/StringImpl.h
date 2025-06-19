@@ -24,8 +24,6 @@
 
 #include <wtf/Compiler.h>
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 #include <limits.h>
 #include <unicode/ustring.h>
 #include <wtf/ASCIICType.h>
@@ -310,8 +308,8 @@ public:
     bool isEmpty() const { return !m_length; }
 
     bool is8Bit() const { return m_hashAndFlags & s_hashFlag8BitBuffer; }
-    ALWAYS_INLINE std::span<const LChar> span8() const LIFETIME_BOUND { ASSERT(is8Bit()); return { m_data8, length() }; }
-    ALWAYS_INLINE std::span<const UChar> span16() const LIFETIME_BOUND { ASSERT(!is8Bit() || isEmpty()); return { m_data16, length() }; }
+    ALWAYS_INLINE std::span<const LChar> span8() const LIFETIME_BOUND { ASSERT(is8Bit()); return unsafeMakeSpan(m_data8, length()); }
+    ALWAYS_INLINE std::span<const UChar> span16() const LIFETIME_BOUND { ASSERT(!is8Bit() || isEmpty()); return unsafeMakeSpan(m_data16, length()); }
 
     template<typename CharacterType> std::span<const CharacterType> span() const LIFETIME_BOUND;
 
@@ -774,6 +772,7 @@ template<size_t inlineCapacity> inline bool equalIgnoringNullity(const Vector<UC
     return equalIgnoringNullity(a.data(), a.size(), b);
 }
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 template<typename CharacterType1, typename CharacterType2> inline std::strong_ordering codePointCompare(std::span<const CharacterType1> characters1, std::span<const CharacterType2> characters2)
 {
     size_t commonLength = std::min(characters1.size(), characters2.size());
@@ -794,6 +793,7 @@ template<typename CharacterType1, typename CharacterType2> inline std::strong_or
         return std::strong_ordering::equal;
     return (characters1.size() > characters2.size()) ? std::strong_ordering::greater : std::strong_ordering::less;
 }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 inline std::strong_ordering codePointCompare(const StringImpl* string1, const StringImpl* string2)
 {
@@ -917,7 +917,7 @@ template<bool isSpecialCharacter(UChar)> inline bool StringImpl::containsOnly() 
 }
 
 inline StringImpl::StringImpl(unsigned length, Force8Bit)
-    : StringImplShape(s_refCountIncrement, { tailPointer<LChar>(), length }, s_hashFlag8BitBuffer | StringNormal | BufferInternal)
+    : StringImplShape(s_refCountIncrement, unsafeMakeSpan(tailPointer<LChar>(), length), s_hashFlag8BitBuffer | StringNormal | BufferInternal)
 {
     ASSERT(m_data8);
     ASSERT(m_length);
@@ -926,7 +926,7 @@ inline StringImpl::StringImpl(unsigned length, Force8Bit)
 }
 
 inline StringImpl::StringImpl(unsigned length)
-    : StringImplShape(s_refCountIncrement, { tailPointer<UChar>(), length }, s_hashZeroValue | StringNormal | BufferInternal)
+    : StringImplShape(s_refCountIncrement, unsafeMakeSpan(tailPointer<UChar>(), length), s_hashZeroValue | StringNormal | BufferInternal)
 {
     ASSERT(m_data16);
     ASSERT(m_length);
@@ -1161,8 +1161,7 @@ inline void StringImpl::deref()
 
 inline UChar StringImpl::at(unsigned i) const
 {
-    RELEASE_ASSERT(i < m_length);
-    return is8Bit() ? m_data8[i] : m_data16[i];
+    return is8Bit() ? span8()[i] : span16()[i];
 }
 
 inline StringImpl::StringImpl(CreateSymbolTag, std::span<const LChar> characters)
@@ -1216,6 +1215,7 @@ inline bool StringImpl::requiresCopy() const
     return m_data16 == tailPointer<UChar>();
 }
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 template<typename T> inline const T* StringImpl::tailPointer() const
 {
     return reinterpret_cast_ptr<const T*>(reinterpret_cast<const uint8_t*>(this) + tailOffset<T>());
@@ -1225,6 +1225,7 @@ template<typename T> inline T* StringImpl::tailPointer()
 {
     return reinterpret_cast_ptr<T*>(reinterpret_cast<uint8_t*>(this) + tailOffset<T>());
 }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 inline StringImpl* const& StringImpl::substringBuffer() const
 {
@@ -1297,6 +1298,7 @@ inline bool equalLettersIgnoringASCIICase(const StringImpl* string, ASCIILiteral
     return string && equalLettersIgnoringASCIICase(*string, literal);
 }
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 template<typename CharacterType, typename Predicate> ALWAYS_INLINE Ref<StringImpl> StringImpl::removeCharactersImpl(std::span<const CharacterType> characters, const Predicate& findMatch)
 {
     auto* from = characters.data();
@@ -1325,6 +1327,7 @@ template<typename CharacterType, typename Predicate> ALWAYS_INLINE Ref<StringImp
 
     return adopt(WTFMove(data));
 }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 template<typename Predicate>
 inline Ref<StringImpl> StringImpl::removeCharacters(const Predicate& findMatch)
@@ -1449,5 +1452,3 @@ using WTF::equal;
 using WTF::isUnicodeWhitespace;
 using WTF::deprecatedIsSpaceOrNewline;
 using WTF::deprecatedIsNotSpaceOrNewline;
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

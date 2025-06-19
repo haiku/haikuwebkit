@@ -86,7 +86,7 @@ FontPlatformData FontCustomPlatformData::fontPlatformData(const FontDescription&
 
         if (!variationsToBeApplied.isEmpty()) {
             SkFontArguments fontArgs;
-            fontArgs.setVariationDesignPosition({ variationsToBeApplied.data(), static_cast<int>(variationsToBeApplied.size()) });
+            fontArgs.setVariationDesignPosition({ variationsToBeApplied.span().data(), static_cast<int>(variationsToBeApplied.size()) });
             if (auto variationTypeface = typeface->makeClone(fontArgs))
                 typeface = WTFMove(variationTypeface);
         }

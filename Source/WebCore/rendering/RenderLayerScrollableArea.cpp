@@ -2045,10 +2045,10 @@ void RenderLayerScrollableArea::scrollbarWidthChanged(ScrollbarWidth width)
     availableContentSizeChanged(AvailableSizeChangeReason::ScrollbarsChanged);
 }
 
-#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
-bool RenderLayerScrollableArea::vectorBasedControlsEnabled() const
+#if ENABLE(FORM_CONTROL_REFRESH)
+bool RenderLayerScrollableArea::formControlRefreshEnabled() const
 {
-    return m_layer.page().settings().vectorBasedControlsOnMacEnabled();
+    return m_layer.page().settings().formControlRefreshEnabled();
 }
 #endif
 

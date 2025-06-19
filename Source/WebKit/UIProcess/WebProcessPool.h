@@ -201,7 +201,6 @@ public:
     void removeMessageReceiver(IPC::ReceiverName, uint64_t destinationID);
 
     WebBackForwardCache& backForwardCache() { return m_backForwardCache.get(); }
-    Ref<WebBackForwardCache> protectedBackForwardCache();
     
     template<typename RawValue>
     void addMessageReceiver(IPC::ReceiverName messageReceiverName, const ObjectIdentifierGenericBase<RawValue>& destinationID, IPC::MessageReceiver& receiver)
@@ -239,7 +238,6 @@ public:
     void processDidFinishLaunching(WebProcessProxy&);
 
     WebProcessCache& webProcessCache() { return m_webProcessCache.get(); }
-    CheckedRef<WebProcessCache> checkedWebProcessCache();
 
     // Disconnect the process from the context.
     void disconnectProcess(WebProcessProxy&);
@@ -495,6 +493,11 @@ public:
     BackgroundWebProcessToken backgroundWebProcessToken() const { return BackgroundWebProcessToken(m_backgroundWebProcessCounter.count()); }
     bool hasForegroundWebProcesses() const { return m_foregroundWebProcessCounter.value(); }
     bool hasBackgroundWebProcesses() const { return m_backgroundWebProcessCounter.value(); }
+
+#if ENABLE(MODEL_PROCESS)
+    bool hasForegroundWebProcessesWithModels() const;
+    bool hasBackgroundWebProcessesWithModels() const;
+#endif
 
     void processForNavigation(WebPageProxy&, WebFrameProxy&, const API::Navigation&, const URL& sourceURL, ProcessSwapRequestedByClient, WebProcessProxy::LockdownMode, LoadedWebArchive, const FrameInfoData&, Ref<WebsiteDataStore>&&, CompletionHandler<void(Ref<WebProcessProxy>&&, SuspendedPageProxy*, ASCIILiteral)>&&);
 
@@ -752,6 +755,7 @@ private:
 
 #if ENABLE(MODEL_PROCESS)
     ModelProcessProxy& ensureModelProcess();
+    void updateModelProcessAssertion();
     void terminateAllWebContentProcessesWithModelPlayers();
 #endif
 
@@ -839,7 +843,7 @@ private:
     RetainPtr<NSObject> m_deactivationObserver;
     RetainPtr<WKWebInspectorPreferenceObserver> m_webInspectorPreferenceObserver;
 
-    UniqueRef<PerActivityStateCPUUsageSampler> m_perActivityStateCPUUsageSampler;
+    const UniqueRef<PerActivityStateCPUUsageSampler> m_perActivityStateCPUUsageSampler;
 #endif
 
 #if PLATFORM(COCOA)
@@ -910,9 +914,9 @@ private:
     ForegroundWebProcessCounter m_foregroundWebProcessCounter;
     BackgroundWebProcessCounter m_backgroundWebProcessCounter;
 
-    UniqueRef<WebBackForwardCache> m_backForwardCache;
+    const UniqueRef<WebBackForwardCache> m_backForwardCache;
 
-    UniqueRef<WebProcessCache> m_webProcessCache;
+    const UniqueRef<WebProcessCache> m_webProcessCache;
     HashMap<WebCore::RegistrableDomain, RefPtr<WebProcessProxy>> m_swappedProcessesPerRegistrableDomain;
 
     HashMap<WebCore::RegistrableDomain, std::unique_ptr<WebCore::PrewarmInformation>> m_prewarmInformationPerRegistrableDomain;
@@ -932,6 +936,10 @@ private:
     mutable std::optional<String> m_accessibilityBusName;
     String m_sandboxedAccessibilityBusAddress;
 #endif
+#endif
+
+#if ENABLE(WPE_PLATFORM)
+    unsigned long m_availableInputDevicesSignalID { 0 };
 #endif
 
     WebProcessWithAudibleMediaCounter m_webProcessWithAudibleMediaCounter;
@@ -1002,7 +1010,8 @@ private:
 
 #if PLATFORM(COCOA)
     std::optional<Vector<URL>> m_assetFontURLs;
-    std::optional<Vector<URL>> m_userInstalledFontURLs;
+    std::optional<HashMap<String, URL>> m_userInstalledFontURLs;
+    std::optional<Vector<URL>> m_sandboxExtensionURLs;
 #endif
 
 #if ENABLE(IPC_TESTING_API)

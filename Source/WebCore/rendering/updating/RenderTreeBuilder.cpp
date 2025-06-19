@@ -618,15 +618,12 @@ void RenderTreeBuilder::moveChildren(RenderBoxModelObject& from, RenderBoxModelO
         // When the |child| object will be moved, its firstLetter will be recreated,
         // so saving it now in nextSibling would leave us with a stale object.
         if (is<RenderTextFragment>(*child) && is<RenderText>(nextSibling)) {
-            RenderObject* firstLetterObj = nullptr;
-            if (RenderBlock* block = downcast<RenderTextFragment>(*child).blockForAccompanyingFirstLetter()) {
-                RenderElement* firstLetterContainer = nullptr;
-                block->getFirstLetter(firstLetterObj, firstLetterContainer, child);
+            if (auto* block = downcast<RenderTextFragment>(*child).blockForAccompanyingFirstLetter()) {
+                auto [firstLetter, firstLetterContainer] = block->firstLetterAndContainer(child);
+                // This is the first letter, skip it.
+                if (firstLetter == nextSibling)
+                    nextSibling = nextSibling->nextSibling();
             }
-
-            // This is the first letter, skip it.
-            if (firstLetterObj == nextSibling)
-                nextSibling = nextSibling->nextSibling();
         }
 
         move(from, to, *child, beforeChild, normalizeAfterInsertion);
@@ -1105,9 +1102,11 @@ void RenderTreeBuilder::reportVisuallyNonEmptyContent(const RenderElement& paren
     if (child.isRenderOrLegacyRenderSVGRoot()) {
         auto fixedSize = [] (const auto& renderer) -> std::optional<IntSize> {
             auto& style = renderer.style();
-            if (!style.width().isFixed() || !style.height().isFixed())
+            auto fixedWidth = style.width().tryFixed();
+            auto fixedHeight = style.height().tryFixed();
+            if (!fixedWidth || !fixedHeight)
                 return { };
-            return std::make_optional(IntSize { style.width().intValue(), style.height().intValue() });
+            return std::make_optional(IntSize { static_cast<int>(fixedWidth->value), static_cast<int>(fixedHeight->value) });
         };
         // SVG content tends to have a fixed size construct. However this is known to be inaccurate in certain cases (box-sizing: border-box) or especially when the parent box is oversized.
         auto candidateSize = IntSize { };

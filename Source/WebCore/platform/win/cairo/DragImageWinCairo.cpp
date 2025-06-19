@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008, 2013 Apple Inc.  All rights reserved.
+ * Copyright (C) 2008, 2013 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -249,7 +249,7 @@ static FontCascade dragLabelFont(int size, bool bold)
     return result;
 }
 
-DragImageRef createDragImageForLink(Element&, URL& url, const String& inLabel, TextIndicatorData&, float)
+DragImageData createDragImageForLink(Element&, URL& url, const String& inLabel, float)
 {
     static const FontCascade labelFont = dragLabelFont(DragLinkLabelFontsize, true);
     static const FontCascade urlFont = dragLabelFont(DragLinkURLFontSize, false);
@@ -327,7 +327,7 @@ DragImageRef createDragImageForLink(Element&, URL& url, const String& inLabel, T
     WebCoreDrawDoubledTextAtPoint(context, label, textPos, labelFont, topColor, bottomColor);
 
     deallocContext(contextRef);
-    return image.leak();
+    return { image.leak(), nullptr };
 }
 
 DragImageRef createDragImageForColor(const Color&, const FloatRect&, float, Path&)

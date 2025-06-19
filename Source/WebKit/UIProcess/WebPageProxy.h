@@ -680,7 +680,6 @@ public:
     DrawingAreaProxy* provisionalDrawingArea() const;
 
     WebNavigationState& navigationState() { return *m_navigationState; }
-    Ref<WebNavigationState> protectedNavigationState();
 
     WebsiteDataStore& websiteDataStore() { return m_websiteDataStore; }
     Ref<WebsiteDataStore> protectedWebsiteDataStore() const;
@@ -972,6 +971,7 @@ public:
     WebCore::Color sampledPageTopColor() const;
 
     WebCore::Color underPageBackgroundColor() const;
+    WebCore::Color underPageBackgroundColorIgnoringPlatformColor() const;
     WebCore::Color underPageBackgroundColorOverride() const;
     void setUnderPageBackgroundColorOverride(WebCore::Color&&);
 
@@ -2702,7 +2702,7 @@ public:
     void startNetworkRequestsForPageLoadTiming(WebCore::FrameIdentifier);
     void endNetworkRequestsForPageLoadTiming(WebCore::FrameIdentifier, WallTime);
 
-    WebProcessActivityState& processActivityState();
+    WebProcessActivityState& processActivityState() { return m_mainFrameProcessActivityState; }
 
 #if ENABLE(WEB_PROCESS_SUSPENSION_DELAY)
     void updateWebProcessSuspensionDelay();
@@ -3411,7 +3411,7 @@ private:
     std::unique_ptr<WebPageInjectedBundleClient> m_injectedBundleClient;
     RefPtr<PageLoadStateObserverBase> m_pageLoadStateObserver;
 
-    UniqueRef<WebNavigationState> m_navigationState;
+    const UniqueRef<WebNavigationState> m_navigationState;
     String m_failingProvisionalLoadURL;
     bool m_isLoadingAlternateHTMLStringForFailingProvisionalLoad { false };
 
@@ -3549,7 +3549,7 @@ private:
 #endif
     bool m_allowsMediaDocumentInlinePlayback { false };
 
-    UniqueRef<WebProcessActivityState> m_mainFrameProcessActivityState;
+    const UniqueRef<WebProcessActivityState> m_mainFrameProcessActivityState;
 
     bool m_initialCapitalizationEnabled { false };
     std::optional<double> m_cpuLimit;

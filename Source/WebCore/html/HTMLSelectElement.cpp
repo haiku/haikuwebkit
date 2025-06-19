@@ -829,13 +829,13 @@ void HTMLSelectElement::recalcListItems(bool updateSelectedStates, AllowStyleInv
         m_listItems.append(&option);
         if (updateSelectedStates && !m_multiple) {
             if (!firstOption)
-                firstOption = &option;
+                firstOption = option;
             if (option.selected()) {
                 if (foundSelected)
                     foundSelected->setSelectedState(false, allowStyleInvalidation);
-                foundSelected = &option;
+                foundSelected = option;
             } else if (m_size <= 1 && !foundSelected && !option.isDisabledFormControl()) {
-                foundSelected = &option;
+                foundSelected = option;
                 foundSelected->setSelectedState(true, allowStyleInvalidation);
             }
         }

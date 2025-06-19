@@ -1,6 +1,5 @@
 Storage/WebStorageNamespaceProvider.cpp
 WebCoreSupport/WebResourceLoadScheduler.cpp
-mac/DOM/DOM.mm
 mac/DOM/DOMAttr.mm
 mac/DOM/DOMCDATASection.mm
 mac/DOM/DOMCSSImportRule.mm

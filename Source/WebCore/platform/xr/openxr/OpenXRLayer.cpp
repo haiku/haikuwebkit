@@ -93,7 +93,7 @@ XrCompositionLayerBaseHeader* OpenXRLayerProjection::endFrame(const Device::Laye
 
     m_layerProjection.space = space;
     m_layerProjection.viewCount = m_projectionViews.size();
-    m_layerProjection.views = m_projectionViews.data();
+    m_layerProjection.views = m_projectionViews.span().data();
 
     m_swapchain->releaseImage();
 

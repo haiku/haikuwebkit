@@ -60,7 +60,7 @@ WebExtensionStorageSQLiteStore::WebExtensionStorageSQLiteStore(const String& uni
 
 void WebExtensionStorageSQLiteStore::getAllKeys(CompletionHandler<void(Vector<String> keys, const String& errorMessage)>&& completionHandler)
 {
-    queue()->dispatch([weakThis = ThreadSafeWeakPtr { *this }, uniqueIdentifier = crossThreadCopy(uniqueIdentifier()), completionHandler = WTFMove(completionHandler)]() mutable {
+    queue().dispatch([weakThis = ThreadSafeWeakPtr { *this }, uniqueIdentifier = crossThreadCopy(uniqueIdentifier()), completionHandler = WTFMove(completionHandler)]() mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis) {
             RELEASE_LOG_ERROR(Extensions, "Failed to retrieve all keys for extension %s.", uniqueIdentifier.utf8().data());
@@ -79,7 +79,7 @@ void WebExtensionStorageSQLiteStore::getAllKeys(CompletionHandler<void(Vector<St
 
 void WebExtensionStorageSQLiteStore::getValuesForKeys(Vector<String> keys, CompletionHandler<void(HashMap<String, String> results, const String& errorMessage)>&& completionHandler)
 {
-    queue()->dispatch([weakThis = ThreadSafeWeakPtr { *this }, uniqueIdentifier = crossThreadCopy(uniqueIdentifier()), keys = crossThreadCopy(keys), completionHandler = WTFMove(completionHandler)]() mutable {
+    queue().dispatch([weakThis = ThreadSafeWeakPtr { *this }, uniqueIdentifier = crossThreadCopy(uniqueIdentifier()), keys = crossThreadCopy(keys), completionHandler = WTFMove(completionHandler)]() mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis) {
             RELEASE_LOG_ERROR(Extensions, "Failed to retrieve values for keys: %s for extension %s.", rowFilterStringFromRowKeys(keys).utf8().data(), uniqueIdentifier.utf8().data());
@@ -111,7 +111,7 @@ static size_t storageSizeOf(HashMap<String, String> map)
 
 void WebExtensionStorageSQLiteStore::getStorageSizeForKeys(Vector<String> keys, CompletionHandler<void(size_t storageSize, const String& errorMessage)>&& completionHandler)
 {
-    queue()->dispatch([protectedThis = Ref { *this }, uniqueIdentifier = crossThreadCopy(uniqueIdentifier()), keys = crossThreadCopy(keys), completionHandler = WTFMove(completionHandler)]() mutable {
+    queue().dispatch([protectedThis = Ref { *this }, uniqueIdentifier = crossThreadCopy(uniqueIdentifier()), keys = crossThreadCopy(keys), completionHandler = WTFMove(completionHandler)]() mutable {
         String errorMessage;
         if (!keys.isEmpty()) {
             auto keysAndValues = protectedThis->getValuesForKeysWithErrorMessage(keys, errorMessage);
@@ -167,7 +167,7 @@ void WebExtensionStorageSQLiteStore::getStorageSizeForAllKeys(HashMap<String, St
             return;
         }
 
-        queue()->dispatch([weakThis = ThreadSafeWeakPtr { *this }, uniqueIdentifier = crossThreadCopy(uniqueIdentifier()), storageSize, additionalKeyedData = crossThreadCopy(additionalKeyedData), completionHandler = WTFMove(completionHandler)]() mutable {
+        queue().dispatch([weakThis = ThreadSafeWeakPtr { *this }, uniqueIdentifier = crossThreadCopy(uniqueIdentifier()), storageSize, additionalKeyedData = crossThreadCopy(additionalKeyedData), completionHandler = WTFMove(completionHandler)]() mutable {
             RefPtr protectedThis = weakThis.get();
             if (!protectedThis) {
                 RELEASE_LOG_ERROR(Extensions, "Failed to calculate storage size for extension %s.", uniqueIdentifier.utf8().data());
@@ -193,7 +193,7 @@ void WebExtensionStorageSQLiteStore::getStorageSizeForAllKeys(HashMap<String, St
 
 void WebExtensionStorageSQLiteStore::setKeyedData(HashMap<String, String> keyedData, CompletionHandler<void(Vector<String> keysSuccessfullySet, const String& errorMessage)>&& completionHandler)
 {
-    queue()->dispatch([weakThis = ThreadSafeWeakPtr { *this }, keyedData = crossThreadCopy(keyedData), completionHandler = WTFMove(completionHandler)]() mutable {
+    queue().dispatch([weakThis = ThreadSafeWeakPtr { *this }, keyedData = crossThreadCopy(keyedData), completionHandler = WTFMove(completionHandler)]() mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis) {
             completionHandler({ }, makeString("Failed to set keys: "_s, rowFilterStringFromRowKeys(toVector(keyedData, true))));
@@ -227,7 +227,7 @@ void WebExtensionStorageSQLiteStore::setKeyedData(HashMap<String, String> keyedD
 
 void WebExtensionStorageSQLiteStore::deleteValuesForKeys(Vector<String> keys, CompletionHandler<void(const String& errorMessage)>&& completionHandler)
 {
-    queue()->dispatch([weakThis = ThreadSafeWeakPtr { *this }, keys = crossThreadCopy(keys), completionHandler = WTFMove(completionHandler)]() mutable {
+    queue().dispatch([weakThis = ThreadSafeWeakPtr { *this }, keys = crossThreadCopy(keys), completionHandler = WTFMove(completionHandler)]() mutable {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis) {
             completionHandler(makeString("Failed to delete keys: "_s, rowFilterStringFromRowKeys(keys)));

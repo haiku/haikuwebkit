@@ -186,7 +186,7 @@ void AudioWorkletNode::setProcessor(RefPtr<AudioWorkletProcessor>&& processor)
     if (processor) {
         Locker locker { m_processLock };
         m_processor = WTFMove(processor);
-        m_workletThread = &Thread::currentSingleton();
+        m_workletThread = Thread::currentSingleton();
     } else
         fireProcessorErrorOnMainThread(ProcessorError::ConstructorError);
 }

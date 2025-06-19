@@ -70,6 +70,8 @@ struct Position {
     {
     }
 
+    Position(const WebCore::LengthPoint&);
+
     bool operator==(const Position&) const = default;
 
     LengthPercentage<> x() const { return value.x(); }
@@ -120,15 +122,15 @@ template<> struct Evaluation<Position> { auto operator()(const Position&, FloatS
 
 // MARK: - Platform
 
-auto toPlatform(const Position&) -> WebCore::LengthPoint;
-auto toPlatform(const PositionX&) -> WebCore::Length;
-auto toPlatform(const PositionY&) -> WebCore::Length;
+template<> struct ToPlatform<Position> { auto operator()(const Position&) -> WebCore::LengthPoint; };
+template<> struct ToPlatform<PositionX> { auto operator()(const PositionX&) -> WebCore::Length; };
+template<> struct ToPlatform<PositionY> { auto operator()(const PositionY&) -> WebCore::Length; };
 
 } // namespace Style
 } // namespace WebCore
 
 DEFINE_TUPLE_LIKE_CONFORMANCE(WebCore::Style::TwoComponentPositionHorizontal, 1)
 DEFINE_TUPLE_LIKE_CONFORMANCE(WebCore::Style::TwoComponentPositionVertical, 1)
-DEFINE_TUPLE_LIKE_CONFORMANCE(WebCore::Style::Position, 2)
 DEFINE_TUPLE_LIKE_CONFORMANCE(WebCore::Style::PositionX, 1)
 DEFINE_TUPLE_LIKE_CONFORMANCE(WebCore::Style::PositionY, 1)
+DEFINE_SPACE_SEPARATED_TUPLE_LIKE_CONFORMANCE(WebCore::Style::Position, 2)

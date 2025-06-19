@@ -121,7 +121,7 @@ bool GLContext::getEGLConfig(PlatformDisplay& platformDisplay, EGLConfig* config
 
     EGLint numberConfigsReturned;
     Vector<EGLConfig> configs(count);
-    if (!eglChooseConfig(display, attributeList, reinterpret_cast<EGLConfig*>(configs.data()), count, &numberConfigsReturned) || !numberConfigsReturned) {
+    if (!eglChooseConfig(display, attributeList, reinterpret_cast<EGLConfig*>(configs.mutableSpan().data()), count, &numberConfigsReturned) || !numberConfigsReturned) {
         RELEASE_LOG_INFO(Compositing, "Cannot get available EGL configurations: %s.", lastErrorString());
         return false;
     }

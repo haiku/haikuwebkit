@@ -273,8 +273,8 @@ public:
 
     void scrollbarWidthChanged(ScrollbarWidth) override;
 
-#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
-    bool vectorBasedControlsEnabled() const override;
+#if ENABLE(FORM_CONTROL_REFRESH)
+    bool formControlRefreshEnabled() const override;
 #endif
 
 private:

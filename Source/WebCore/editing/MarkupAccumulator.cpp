@@ -283,7 +283,7 @@ void MarkupAccumulator::serializeNodesWithNamespaces(Node& targetNode, Serialize
         return currentTemplate ? currentTemplate->content().firstChild() : current.firstChild();
     };
 
-    RefPtr<const Node> current = &targetNode;
+    RefPtr<const Node> current = targetNode;
     do {
         bool shouldSkipNode = false;
         if (RefPtr element = dynamicDowncast<const Element>(current); element && shouldExcludeElement(*element))

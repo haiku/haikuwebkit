@@ -30,6 +30,7 @@
 #include "ColorBlending.h"
 #include "ColorHash.h"
 #include "Document.h"
+#include "Editing.h"
 #include "Editor.h"
 #include "Element.h"
 #include "ElementAncestorIteratorInlines.h"
@@ -384,6 +385,9 @@ static bool initializeIndicator(TextIndicatorData& data, LocalFrame& frame, cons
         rect.moveBy(-textBoundingRectInRootViewCoordinates.location());
         return rect;
     });
+
+    auto [startLayer, endLayer, enclosingLayer, enclosingGraphicsLayerID] = computeEnclosingLayer(range);
+    data.enclosingGraphicsLayerID = enclosingGraphicsLayerID;
 
     // Store the selection rect in window coordinates, to be used subsequently
     // to determine if the indicator and selection still precisely overlap.

@@ -378,11 +378,22 @@ void JSFunction::getOwnSpecialPropertyNames(JSObject* object, JSGlobalObject* gl
 {
     JSFunction* thisObject = jsCast<JSFunction*>(object);
     VM& vm = globalObject->vm();
+    auto scope = DECLARE_CATCH_SCOPE(vm);
 
     if (mode == DontEnumPropertiesMode::Include) {
-        if (!thisObject->hasReifiedLength())
+        bool hasLength = thisObject->hasOwnProperty(globalObject, vm.propertyNames->length);
+        if (scope.exception()) [[unlikely]] {
+            hasLength = false;
+            scope.clearException();
+        }
+        if (!thisObject->hasReifiedLength() || hasLength)
             propertyNames.add(vm.propertyNames->length);
-        if (!thisObject->hasReifiedName())
+        bool hasName = thisObject->hasOwnProperty(globalObject, vm.propertyNames->name);
+        if (scope.exception()) [[unlikely]] {
+            hasName = false;
+            scope.clearException();
+        }
+        if (!thisObject->hasReifiedName() || hasName)
             propertyNames.add(vm.propertyNames->name);
         if (!thisObject->isHostOrBuiltinFunction() && thisObject->jsExecutable()->hasPrototypeProperty())
             propertyNames.add(vm.propertyNames->prototype);

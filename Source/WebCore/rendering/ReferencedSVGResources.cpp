@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2023, 2024 Igalia S.L.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -59,7 +59,7 @@ public:
     const RenderElement& renderer() const final { return m_clientRenderer.get(); }
 
 private:
-    CheckedRef<RenderElement> m_clientRenderer;
+    const CheckedRef<RenderElement> m_clientRenderer;
 };
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(CSSSVGResourceElementClient);
@@ -186,7 +186,7 @@ ReferencedSVGResources::SVGElementIdentifierAndTagPairs ReferencedSVGResources::
 
 void ReferencedSVGResources::updateReferencedResources(TreeScope& treeScope, const ReferencedSVGResources::SVGElementIdentifierAndTagPairs& referencedResources)
 {
-    UncheckedKeyHashSet<AtomString> oldKeys;
+    HashSet<AtomString> oldKeys;
     for (auto& key : m_elementClients.keys())
         oldKeys.add(key);
 

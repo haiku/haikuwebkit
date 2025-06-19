@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Apple Inc.  All rights reserved.
+ * Copyright (C) 2007 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -100,7 +100,13 @@ WEBCORE_EXPORT DragImageRef createDragImageForSelection(LocalFrame&, TextIndicat
 WEBCORE_EXPORT DragImageRef createDragImageForRange(LocalFrame&, const SimpleRange&, bool forceBlackText = false);
 DragImageRef createDragImageForColor(const Color&, const FloatRect&, float, Path&);
 DragImageRef createDragImageForImage(LocalFrame&, Node&, IntRect& imageRect, IntRect& elementRect);
-DragImageRef createDragImageForLink(Element&, URL&, const String& label, TextIndicatorData&, float deviceScaleFactor);
+
+struct DragImageData {
+    DragImageRef dragImageRef;
+    RefPtr<TextIndicator> textIndicator;
+};
+
+DragImageData createDragImageForLink(Element&, URL&, const String& label, float deviceScaleFactor);
 void deleteDragImage(DragImageRef);
 
 IntPoint dragOffsetForLinkDragImage(DragImageRef);

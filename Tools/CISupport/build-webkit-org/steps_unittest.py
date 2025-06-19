@@ -1225,7 +1225,7 @@ class TestRunAPITests(BuildStepMixinAdditions, unittest.TestCase):
         self.configureStep(platform='mac', fullPlatform='mac-highsierra', configuration='release')
         next_steps = []
         self.patch(self.build, 'addStepsAfterCurrentStep', lambda s: next_steps.extend(s))
-        command = f'python3 Tools/Scripts/run-api-tests --no-build --json-output={self.jsonFileName} --release --verbose --buildbot-master {CURRENT_HOSTNAME} --builder-name API-Tests --build-number 101 --buildbot-worker bot100 --report https://results.webkit.org'
+        command = f'python3 Tools/Scripts/run-api-tests --timestamps --no-build --json-output={self.jsonFileName} --release --verbose --buildbot-master {CURRENT_HOSTNAME} --builder-name API-Tests --build-number 101 --buildbot-worker bot100 --report https://results.webkit.org'
         self.expectRemoteCommands(
             ExpectShell(workdir='wkdir',
                         logEnviron=False,

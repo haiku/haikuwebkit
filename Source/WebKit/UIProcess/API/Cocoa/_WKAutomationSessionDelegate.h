@@ -53,7 +53,7 @@ typedef NS_ENUM(NSInteger, _WKAutomationSessionWebExtensionResourceOptions) {
     _WKAutomationSessionWebExtensionResourceOptionsPath,
     _WKAutomationSessionWebExtensionResourceOptionsArchivePath,
     _WKAutomationSessionWebExtensionResourceOptionsBase64,
-} WK_API_AVAILABLE(macos(WK_MAC_TBA));
+} WK_API_AVAILABLE(macos(15.4));
 
 @protocol _WKAutomationSessionDelegate <NSObject>
 @optional
@@ -75,8 +75,8 @@ typedef NS_ENUM(NSInteger, _WKAutomationSessionWebExtensionResourceOptions) {
 - (_WKAutomationSessionJavaScriptDialogType)_automationSession:(_WKAutomationSession *)automationSession typeOfCurrentJavaScriptDialogForWebView:(WKWebView *)webView WK_API_AVAILABLE(macos(10.14), ios(12.0));
 - (_WKAutomationSessionBrowsingContextPresentation)_automationSession:(_WKAutomationSession *)automationSession currentPresentationForWebView:(WKWebView *)webView WK_API_AVAILABLE(macos(10.15), ios(13.0));
 
-- (void)_automationSession:(_WKAutomationSession *)automationSession loadWebExtensionWithOptions:(_WKAutomationSessionWebExtensionResourceOptions)options resource:(NSString *)resource completionHandler:(void(^)(NSString *))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA));
-- (void)_automationSession:(_WKAutomationSession *)automationSession unloadWebExtensionWithIdentifier:(NSString *)identifier completionHandler:(void(^)(BOOL))completionHandler WK_API_AVAILABLE(macos(WK_MAC_TBA));
+- (void)_automationSession:(_WKAutomationSession *)automationSession loadWebExtensionWithOptions:(_WKAutomationSessionWebExtensionResourceOptions)options resource:(NSString *)resource completionHandler:(void(^)(NSString *))completionHandler WK_API_AVAILABLE(macos(15.4));
+- (void)_automationSession:(_WKAutomationSession *)automationSession unloadWebExtensionWithIdentifier:(NSString *)identifier completionHandler:(void(^)(BOOL))completionHandler WK_API_AVAILABLE(macos(15.4));
 
 @end
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2004, 2005, 2006, 2008 Nikolas Zimmermann <zimmermann@kde.org>
  * Copyright (C) 2004, 2005, 2006, 2007 Rob Buis <buis@kde.org>
- * Copyright (C) 2009-2019 Apple Inc. All rights reserved.
+ * Copyright (C) 2009-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2013 Samsung Electronics. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -231,9 +231,9 @@ private:
     bool m_selfHasRelativeLengths { false };
     bool m_hasInitializedRelativeLengthsState { false };
 
-    std::unique_ptr<SVGPropertyAnimatorFactory> m_propertyAnimatorFactory;
+    const std::unique_ptr<SVGPropertyAnimatorFactory> m_propertyAnimatorFactory;
 
-    UniqueRef<SVGPropertyRegistry> m_propertyRegistry;
+    const UniqueRef<SVGPropertyRegistry> m_propertyRegistry;
     Ref<SVGAnimatedString> m_className;
 };
 

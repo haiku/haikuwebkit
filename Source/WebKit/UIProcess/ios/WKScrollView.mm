@@ -137,7 +137,7 @@ static BOOL shouldForwardScrollViewDelegateMethodToExternalDelegate(SEL selector
     BOOL _indicatorStyleSetByClient;
     BOOL _decelerationRateSetByClient;
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    BOOL _hiddenContentInsetFillEdgesSetByClient;
+    BOOL _hiddenScrollPocketEdgesSetByClient;
 #endif
 // FIXME: Likely we can remove this special case for watchOS.
 #if !PLATFORM(WATCHOS)
@@ -581,9 +581,24 @@ static inline bool valuesAreWithinOnePixel(CGFloat a, CGFloat b)
 
 #endif // HAVE(PEPPER_UI_CORE)
 
-#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/WKScrollViewAdditions.mm>)
-#import <WebKitAdditions/WKScrollViewAdditions.mm>
-#endif
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+
+- (void)_setHiddenPocketEdges:(UIRectEdge)edges
+{
+    _hiddenScrollPocketEdgesSetByClient = YES;
+
+    super._hiddenPocketEdges = edges;
+}
+
+- (void)_setHiddenPocketEdgesInternal:(UIRectEdge)edges
+{
+    if (_hiddenScrollPocketEdgesSetByClient)
+        return;
+
+    super._hiddenPocketEdges = edges;
+}
+
+#endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 
 @end
 

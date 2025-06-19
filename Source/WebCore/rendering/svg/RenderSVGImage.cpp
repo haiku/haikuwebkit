@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2006 Alexander Kellett <lypanov@kde.org>
- * Copyright (C) 2006 Apple Inc.
+ * Copyright (C) 2006 Apple Inc. All rights reserved.
  * Copyright (C) 2007 Nikolas Zimmermann <zimmermann@kde.org>
  * Copyright (C) 2007, 2008, 2009 Rob Buis <buis@kde.org>
  * Copyright (C) 2009 Google, Inc.
@@ -93,8 +93,8 @@ FloatRect RenderSVGImage::calculateObjectBoundingBox() const
     Ref imageElement = this->imageElement();
     SVGLengthContext lengthContext(imageElement.ptr());
 
-    Length width = style().width();
-    Length height = style().height();
+    auto& width = style().width();
+    auto& height = style().height();
 
     float concreteWidth;
     if (!width.isAuto())

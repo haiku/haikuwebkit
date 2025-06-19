@@ -127,9 +127,9 @@ Vector<SnapOffset<LayoutUnit>> ScrollSnapAnimatorState::currentlySnappedOffsetsF
     return currentlySnappedOffsets;
 }
 
-UncheckedKeyHashSet<ElementIdentifier> ScrollSnapAnimatorState::currentlySnappedBoxes(const Vector<SnapOffset<LayoutUnit>>& horizontalOffsets, const Vector<SnapOffset<LayoutUnit>>& verticalOffsets) const
+HashSet<ElementIdentifier> ScrollSnapAnimatorState::currentlySnappedBoxes(const Vector<SnapOffset<LayoutUnit>>& horizontalOffsets, const Vector<SnapOffset<LayoutUnit>>& verticalOffsets) const
 {
-    UncheckedKeyHashSet<ElementIdentifier> snappedBoxIDs;
+    HashSet<ElementIdentifier> snappedBoxIDs;
         
     for (auto offset : horizontalOffsets) {
         if (!offset.snapTargetID)
@@ -163,7 +163,7 @@ void ScrollSnapAnimatorState::updateCurrentlySnappedBoxes()
     m_currentlySnappedBoxes = currentlySnappedBoxes(horizontalOffsets, verticalOffsets);
 }
 
-static ElementIdentifier chooseBoxToResnapTo(const UncheckedKeyHashSet<ElementIdentifier>& snappedBoxes, const Vector<SnapOffset<LayoutUnit>>& horizontalOffsets, const Vector<SnapOffset<LayoutUnit>>& verticalOffsets)
+static ElementIdentifier chooseBoxToResnapTo(const HashSet<ElementIdentifier>& snappedBoxes, const Vector<SnapOffset<LayoutUnit>>& horizontalOffsets, const Vector<SnapOffset<LayoutUnit>>& verticalOffsets)
 {
     ASSERT(snappedBoxes.size());
 

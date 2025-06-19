@@ -382,7 +382,7 @@ void PlaybackSessionInterfaceLMK::supportsLinearMediaPlayerChanged(bool supports
 void PlaybackSessionInterfaceLMK::spatialVideoMetadataChanged(const std::optional<WebCore::SpatialVideoMetadata>& metadata)
 {
     RetainPtr<WKSLinearMediaSpatialVideoMetadata> spatialVideoMetadata;
-    if (metadata && spatialVideoEnabled())
+    if (metadata)
         spatialVideoMetadata = adoptNS([allocWKSLinearMediaSpatialVideoMetadataInstance() initWithWidth:metadata->size.width() height:metadata->size.height() horizontalFOVDegrees:metadata->horizontalFOVDegrees baseline:metadata->baseline disparityAdjustment:metadata->disparityAdjustment]);
     [m_player setSpatialVideoMetadata:spatialVideoMetadata.get()];
 }

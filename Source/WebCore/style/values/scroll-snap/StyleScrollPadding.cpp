@@ -96,7 +96,7 @@ float Evaluation<ScrollPaddingEdge>::operator()(const ScrollPaddingEdge& edge, f
     return 0;
 }
 
-ScrollPaddingEdge scrollPaddingEdgeFromCSSValue(const CSSValue& value, BuilderState& state)
+auto CSSValueConversion<ScrollPaddingEdge>::operator()(BuilderState& state, const CSSValue& value) -> ScrollPaddingEdge
 {
     return ScrollPaddingEdge { BuilderConverter::convertLengthOrAuto(state, value) };
 }

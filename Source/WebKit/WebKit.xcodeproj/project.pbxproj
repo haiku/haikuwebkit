@@ -444,6 +444,9 @@
 		1C04983F289AFF9B0010308B /* WKWebExtensionControllerDelegate.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C04983B289AFF9B0010308B /* WKWebExtensionControllerDelegate.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1C049840289AFF9B0010308B /* WKWebExtensionTab.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C04983C289AFF9B0010308B /* WKWebExtensionTab.h */; settings = {ATTRIBUTES = (Public, ); }; };
 		1C049841289AFF9B0010308B /* WKWebExtensionWindow.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C04983D289AFF9B0010308B /* WKWebExtensionWindow.h */; settings = {ATTRIBUTES = (Public, ); }; };
+		1C05906D2DFA0FB7000406F9 /* JSWebExtensionAPIDOM.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C05906A2DFA0FB7000406F9 /* JSWebExtensionAPIDOM.h */; };
+		1C05906F2DFA1039000406F9 /* WebExtensionAPIDOM.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C05906E2DFA1039000406F9 /* WebExtensionAPIDOM.h */; };
+		1C0590712DFA1115000406F9 /* WebExtensionAPIDOMCocoa.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1C0590702DFA1115000406F9 /* WebExtensionAPIDOMCocoa.mm */; settings = {COMPILER_FLAGS = "-fobjc-arc"; }; };
 		1C0A19471C8FF1A800FE0EBB /* WebAutomationSessionProxy.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C0A19451C8FF1A800FE0EBB /* WebAutomationSessionProxy.h */; };
 		1C0A19541C8FFDFB00FE0EBB /* WebAutomationSessionProxyMessages.h in Headers */ = {isa = PBXBuildFile; fileRef = 1C0A19521C8FFDFB00FE0EBB /* WebAutomationSessionProxyMessages.h */; };
 		1C0A19571C90068F00FE0EBB /* WebAutomationSessionMessageReceiver.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1C0A19551C90068F00FE0EBB /* WebAutomationSessionMessageReceiver.cpp */; };
@@ -2446,8 +2449,6 @@
 		E568B92220A3AC6A00E3C856 /* WebDataListSuggestionsDropdownMac.h in Headers */ = {isa = PBXBuildFile; fileRef = E568B92020A3AC6A00E3C856 /* WebDataListSuggestionsDropdownMac.h */; };
 		E596DD6A251E71D400C275A7 /* WKContactPicker.h in Headers */ = {isa = PBXBuildFile; fileRef = E596DD68251E71D300C275A7 /* WKContactPicker.h */; };
 		E5AF80FD2BB4F05F00726F63 /* PickerDismissalReason.h in Headers */ = {isa = PBXBuildFile; fileRef = E5AF80FC2BB4F00A00726F63 /* PickerDismissalReason.h */; };
-		E5BBD4192D58AD4B0083FD2D /* WKPDFPageNumberIndicatorAdditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5BBD4182D58AD4B0083FD2D /* WKPDFPageNumberIndicatorAdditions.swift */; };
-		E5BBD4192D58AD4B0083FD2E /* MaterialAdditions.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5BBD4182D58AD4B0083FD2E /* MaterialAdditions.swift */; };
 		E5BEF6822130C48000F31111 /* WebDataListSuggestionsDropdownIOS.h in Headers */ = {isa = PBXBuildFile; fileRef = E5BEF6802130C47F00F31111 /* WebDataListSuggestionsDropdownIOS.h */; };
 		E5CB07DC20E1678F0022C183 /* WKFormColorControl.h in Headers */ = {isa = PBXBuildFile; fileRef = E5CB07DA20E1678F0022C183 /* WKFormColorControl.h */; };
 		E5CBA76427A318E100DF7858 /* UnifiedSource120.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E5CBA75F27A3187800DF7858 /* UnifiedSource120.cpp */; };
@@ -3906,6 +3907,11 @@
 		1C04983B289AFF9B0010308B /* WKWebExtensionControllerDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKWebExtensionControllerDelegate.h; sourceTree = "<group>"; };
 		1C04983C289AFF9B0010308B /* WKWebExtensionTab.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKWebExtensionTab.h; sourceTree = "<group>"; };
 		1C04983D289AFF9B0010308B /* WKWebExtensionWindow.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKWebExtensionWindow.h; sourceTree = "<group>"; };
+		1C0590692DFA0EDB000406F9 /* WebExtensionAPIDOM.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = WebExtensionAPIDOM.idl; sourceTree = "<group>"; };
+		1C05906A2DFA0FB7000406F9 /* JSWebExtensionAPIDOM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = JSWebExtensionAPIDOM.h; sourceTree = "<group>"; };
+		1C05906B2DFA0FB7000406F9 /* JSWebExtensionAPIDOM.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = JSWebExtensionAPIDOM.mm; sourceTree = "<group>"; };
+		1C05906E2DFA1039000406F9 /* WebExtensionAPIDOM.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = WebExtensionAPIDOM.h; sourceTree = "<group>"; };
+		1C0590702DFA1115000406F9 /* WebExtensionAPIDOMCocoa.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WebExtensionAPIDOMCocoa.mm; sourceTree = "<group>"; };
 		1C08AB282B73FC410009A6C3 /* WebExtensionAPIDevTools.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = WebExtensionAPIDevTools.idl; sourceTree = "<group>"; };
 		1C08AB292B73FC410009A6C3 /* WebExtensionAPIDevToolsInspectedWindow.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = WebExtensionAPIDevToolsInspectedWindow.idl; sourceTree = "<group>"; };
 		1C08AB2B2B73FC420009A6C3 /* WebExtensionAPIDevToolsPanels.idl */ = {isa = PBXFileReference; lastKnownFileType = text; path = WebExtensionAPIDevToolsPanels.idl; sourceTree = "<group>"; };
@@ -8344,8 +8350,6 @@
 		E596DD68251E71D300C275A7 /* WKContactPicker.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = WKContactPicker.h; sourceTree = "<group>"; };
 		E596DD69251E71D400C275A7 /* WKContactPicker.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WKContactPicker.mm; sourceTree = "<group>"; };
 		E5AF80FC2BB4F00A00726F63 /* PickerDismissalReason.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = PickerDismissalReason.h; sourceTree = "<group>"; };
-		E5BBD4182D58AD4B0083FD2D /* WKPDFPageNumberIndicatorAdditions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = WKPDFPageNumberIndicatorAdditions.swift; path = "$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/WKPDFPageNumberIndicatorAdditions.swift"; sourceTree = "<group>"; };
-		E5BBD4182D58AD4B0083FD2E /* MaterialAdditions.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; name = MaterialAdditions.swift; path = "$(BUILT_PRODUCTS_DIR)/DerivedSources/WebKit/MaterialAdditions.swift"; sourceTree = "<group>"; };
 		E5BEF6802130C47F00F31111 /* WebDataListSuggestionsDropdownIOS.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = WebDataListSuggestionsDropdownIOS.h; path = ios/WebDataListSuggestionsDropdownIOS.h; sourceTree = "<group>"; };
 		E5BEF6812130C47F00F31111 /* WebDataListSuggestionsDropdownIOS.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = WebDataListSuggestionsDropdownIOS.mm; path = ios/WebDataListSuggestionsDropdownIOS.mm; sourceTree = "<group>"; };
 		E5CB07DA20E1678F0022C183 /* WKFormColorControl.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WKFormColorControl.h; path = ios/forms/WKFormColorControl.h; sourceTree = "<group>"; };
@@ -10369,6 +10373,7 @@
 				1C517F502B743EC900C46EDC /* WebExtensionAPIDevToolsInspectedWindow.h */,
 				1C517F522B743ED900C46EDC /* WebExtensionAPIDevToolsNetwork.h */,
 				1C517F542B743EE500C46EDC /* WebExtensionAPIDevToolsPanels.h */,
+				1C05906E2DFA1039000406F9 /* WebExtensionAPIDOM.h */,
 				B6544F912937E45000034EB0 /* WebExtensionAPIEvent.h */,
 				1C5DC468290B239C0061EC62 /* WebExtensionAPIExtension.h */,
 				B6E5F2A4299C105500DBCEA3 /* WebExtensionAPILocalization.h */,
@@ -10411,6 +10416,7 @@
 				1C87C7DF2B754CFB0054BF11 /* WebExtensionAPIDevToolsInspectedWindowCocoa.mm */,
 				1C87C7E12B754D0D0054BF11 /* WebExtensionAPIDevToolsNetworkCocoa.mm */,
 				1C87C7E32B754D200054BF11 /* WebExtensionAPIDevToolsPanelsCocoa.mm */,
+				1C0590702DFA1115000406F9 /* WebExtensionAPIDOMCocoa.mm */,
 				B6544F952937E46900034EB0 /* WebExtensionAPIEventCocoa.mm */,
 				1C5DC465290B23890061EC62 /* WebExtensionAPIExtensionCocoa.mm */,
 				B6E5F2A6299C10B100DBCEA3 /* WebExtensionAPILocalizationCocoa.mm */,
@@ -10604,6 +10610,7 @@
 				1C08AB292B73FC410009A6C3 /* WebExtensionAPIDevToolsInspectedWindow.idl */,
 				1C08AB2D2B73FC420009A6C3 /* WebExtensionAPIDevToolsNetwork.idl */,
 				1C08AB2B2B73FC420009A6C3 /* WebExtensionAPIDevToolsPanels.idl */,
+				1C0590692DFA0EDB000406F9 /* WebExtensionAPIDOM.idl */,
 				B6544F7C29357B1B00034EB0 /* WebExtensionAPIEvent.idl */,
 				1C9DD99028FA19A30093BDB0 /* WebExtensionAPIExtension.idl */,
 				B6E5F2A3299C0FFB00DBCEA3 /* WebExtensionAPILocalization.idl */,
@@ -12829,7 +12836,6 @@
 				F4351B9F25EEC87800D63892 /* ImageAnalysisUtilities.mm */,
 				BCE0937614FB128B001138D9 /* LayerHostingContext.h */,
 				BCE0937514FB128B001138D9 /* LayerHostingContext.mm */,
-				E5BBD4182D58AD4B0083FD2E /* MaterialAdditions.swift */,
 				A141DF4D2B06ECFB00E80B2D /* MediaCapability.h */,
 				A141DF4E2B06ECFB00E80B2D /* MediaCapability.mm */,
 				516E092C2B953EDC00A8C5B0 /* MediaPlaybackTargetContextSerialized.h */,
@@ -15916,6 +15922,8 @@
 				1C08AB3B2B74004F0009A6C3 /* JSWebExtensionAPIDevToolsNetwork.mm */,
 				1C08AB322B74004D0009A6C3 /* JSWebExtensionAPIDevToolsPanels.h */,
 				1C08AB392B74004F0009A6C3 /* JSWebExtensionAPIDevToolsPanels.mm */,
+				1C05906A2DFA0FB7000406F9 /* JSWebExtensionAPIDOM.h */,
+				1C05906B2DFA0FB7000406F9 /* JSWebExtensionAPIDOM.mm */,
 				B6114A7C2939498000380B1B /* JSWebExtensionAPIEvent.h */,
 				B6114A7D29394A1500380B1B /* JSWebExtensionAPIEvent.mm */,
 				1C5DC462290B1C470061EC62 /* JSWebExtensionAPIExtension.h */,
@@ -16468,7 +16476,6 @@
 				DF84CEE2249AA21F009096F6 /* WKPDFHUDView.mm */,
 				33E743E62D66C0AC00AC715E /* WKPDFPageNumberIndicator.h */,
 				33E743E72D66C0AC00AC715E /* WKPDFPageNumberIndicator.mm */,
-				E5BBD4182D58AD4B0083FD2D /* WKPDFPageNumberIndicatorAdditions.swift */,
 			);
 			name = PDF;
 			sourceTree = "<group>";
@@ -17316,6 +17323,7 @@
 				1C517F3A2B74393C00C46EDC /* JSWebExtensionAPIDevToolsInspectedWindow.h in Headers */,
 				1C517F3B2B74393C00C46EDC /* JSWebExtensionAPIDevToolsNetwork.h in Headers */,
 				1C517F3C2B74393C00C46EDC /* JSWebExtensionAPIDevToolsPanels.h in Headers */,
+				1C05906D2DFA0FB7000406F9 /* JSWebExtensionAPIDOM.h in Headers */,
 				1CCEE4522B0989FC0034E059 /* JSWebExtensionAPIMenus.h in Headers */,
 				1C386F352AF409F9004108F0 /* JSWebExtensionAPINotifications.h in Headers */,
 				B61AFA4829510D0F008220B1 /* JSWebExtensionAPIPermissions.h in Headers */,
@@ -17824,6 +17832,7 @@
 				1C517F512B743EC900C46EDC /* WebExtensionAPIDevToolsInspectedWindow.h in Headers */,
 				1C517F532B743ED900C46EDC /* WebExtensionAPIDevToolsNetwork.h in Headers */,
 				1C517F552B743EE500C46EDC /* WebExtensionAPIDevToolsPanels.h in Headers */,
+				1C05906F2DFA1039000406F9 /* WebExtensionAPIDOM.h in Headers */,
 				B6544F932937E45100034EB0 /* WebExtensionAPIEvent.h in Headers */,
 				1C5DC46D290B271E0061EC62 /* WebExtensionAPIExtension.h in Headers */,
 				B6E5F2A5299C105500DBCEA3 /* WebExtensionAPILocalization.h in Headers */,
@@ -20648,7 +20657,6 @@
 				41A0EB142641714900794471 /* LibWebRTCCodecsProxy.mm in Sources */,
 				449D90DA21FDC30B00F677C0 /* LocalAuthenticationSoftLink.mm in Sources */,
 				E326F4DC2CA6C44F00182187 /* LogStream.cpp in Sources */,
-				E5BBD4192D58AD4B0083FD2E /* MaterialAdditions.swift in Sources */,
 				9B4790912531563200EC11AB /* MessageArgumentDescriptions.cpp in Sources */,
 				EBA8D3B627A5E33F00CB7900 /* MockPushServiceConnection.mm in Sources */,
 				57B826452304F14000B72EB0 /* NearFieldSoftLink.mm in Sources */,
@@ -20966,6 +20974,7 @@
 				1C87C7E02B754CFB0054BF11 /* WebExtensionAPIDevToolsInspectedWindowCocoa.mm in Sources */,
 				1C87C7E22B754D0D0054BF11 /* WebExtensionAPIDevToolsNetworkCocoa.mm in Sources */,
 				1C87C7E42B754D200054BF11 /* WebExtensionAPIDevToolsPanelsCocoa.mm in Sources */,
+				1C0590712DFA1115000406F9 /* WebExtensionAPIDOMCocoa.mm in Sources */,
 				B6544F972937E46900034EB0 /* WebExtensionAPIEventCocoa.mm in Sources */,
 				1C5DC467290B23890061EC62 /* WebExtensionAPIExtensionCocoa.mm in Sources */,
 				B6E5F2A7299C10B100DBCEA3 /* WebExtensionAPILocalizationCocoa.mm in Sources */,
@@ -21067,7 +21076,6 @@
 				07CB79982CE943E400199C49 /* WKNavigationDelegateAdapter.swift in Sources */,
 				DF84CEE4249AA24D009096F6 /* WKPDFHUDView.mm in Sources */,
 				33E743E82D66C0AC00AC715E /* WKPDFPageNumberIndicator.mm in Sources */,
-				E5BBD4192D58AD4B0083FD2D /* WKPDFPageNumberIndicatorAdditions.swift in Sources */,
 				E31869C42B1A7C2400571519 /* WKProcessExtension.mm in Sources */,
 				07AF79E12D693DD7004E8D3A /* WKScrollGeometryAdapter.swift in Sources */,
 				B62449482CF672D800CBB3CF /* WKSeparatedImageView.mm in Sources */,

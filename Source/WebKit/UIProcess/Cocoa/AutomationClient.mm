@@ -44,6 +44,7 @@ namespace WebKit {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(AutomationClient);
 
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 AutomationClient::AutomationClient(WKProcessPool *processPool, id <_WKAutomationDelegate> delegate)
     : m_processPool(processPool)
     , m_delegate(delegate)
@@ -56,6 +57,7 @@ AutomationClient::AutomationClient(WKProcessPool *processPool, id <_WKAutomation
 
     RemoteInspector::singleton().setClient(this);
 }
+ALLOW_DEPRECATED_DECLARATIONS_END
 
 AutomationClient::~AutomationClient()
 {
@@ -81,6 +83,8 @@ void AutomationClient::requestAutomationSession(const String& sessionIdentifier,
         [configuration setAllowsInsecureMediaCapture:sessionCapabilities.allowInsecureMediaCapture.value()];
     if (sessionCapabilities.suppressICECandidateFiltering)
         [configuration setSuppressesICECandidateFiltering:sessionCapabilities.suppressICECandidateFiltering.value()];
+    if (sessionCapabilities.alwaysAllowAutoplay)
+        [configuration setAlwaysAllowAutoplay:sessionCapabilities.alwaysAllowAutoplay.value()];
 
     // Force clients to create and register a session asynchronously. Otherwise,
     // RemoteInspector will try to acquire its lock to register the new session and

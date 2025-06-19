@@ -27,6 +27,7 @@
 
 #include "FloatRect.h"
 #include "Image.h"
+#include "PlatformLayerIdentifier.h"
 #include <wtf/OptionSet.h>
 #include <wtf/RefCounted.h>
 #include <wtf/Seconds.h>
@@ -140,6 +141,7 @@ struct TextIndicatorData {
     Color estimatedBackgroundColor;
     TextIndicatorPresentationTransition presentationTransition { TextIndicatorPresentationTransition::None };
     OptionSet<TextIndicatorOption> options;
+    std::optional<WebCore::PlatformLayerIdentifier> enclosingGraphicsLayerID;
 };
 
 class TextIndicator : public RefCounted<TextIndicator> {

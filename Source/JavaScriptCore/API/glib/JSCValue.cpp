@@ -878,12 +878,12 @@ static JSValueRef jsObjectCall(JSGlobalContextRef jsContext, JSObjectRef functio
 {
     switch (functionType) {
     case JSC::JSCCallbackFunction::Type::Constructor:
-        return JSObjectCallAsConstructor(jsContext, function, arguments.size(), arguments.data(), exception);
+        return JSObjectCallAsConstructor(jsContext, function, arguments.size(), arguments.span().data(), exception);
     case JSC::JSCCallbackFunction::Type::Method:
         ASSERT(thisObject);
         [[fallthrough]];
     case JSC::JSCCallbackFunction::Type::Function:
-        return JSObjectCallAsFunction(jsContext, function, thisObject, arguments.size(), arguments.data(), exception);
+        return JSObjectCallAsFunction(jsContext, function, thisObject, arguments.size(), arguments.span().data(), exception);
     }
     RELEASE_ASSERT_NOT_REACHED();
 }

@@ -83,7 +83,7 @@ static void wpeViewWaylandConstructed(GObject* object)
         priv->opaqueRegion.clear();
         priv->opaqueRegion.append({ 0, 0, wpe_view_get_width(view), wpe_view_get_height(view) });
         if (auto* toplevel = wpe_view_get_toplevel(view))
-            wpeToplevelWaylandSetOpaqueRectangles(WPE_TOPLEVEL_WAYLAND(toplevel), priv->opaqueRegion.data(), priv->opaqueRegion.size());
+            wpeToplevelWaylandSetOpaqueRectangles(WPE_TOPLEVEL_WAYLAND(toplevel), priv->opaqueRegion.mutableSpan().data(), priv->opaqueRegion.size());
     }), nullptr);
 
     g_signal_connect(view, "notify::toplevel", G_CALLBACK(+[](WPEView* view, GParamSpec*, gpointer) {
@@ -100,7 +100,7 @@ static void wpeViewWaylandConstructed(GObject* object)
             wpe_view_resized(view, width, height);
 
         auto* priv = WPE_VIEW_WAYLAND(view)->priv;
-        wpeToplevelWaylandSetOpaqueRectangles(WPE_TOPLEVEL_WAYLAND(toplevel), !priv->opaqueRegion.isEmpty() ? priv->opaqueRegion.data() : nullptr, priv->opaqueRegion.size());
+        wpeToplevelWaylandSetOpaqueRectangles(WPE_TOPLEVEL_WAYLAND(toplevel), !priv->opaqueRegion.isEmpty() ? priv->opaqueRegion.mutableSpan().data() : nullptr, priv->opaqueRegion.size());
 
         wpe_view_map(view);
     }), nullptr);
@@ -509,7 +509,7 @@ static void wpeViewWaylandSetOpaqueRectangles(WPEView* view, WPERectangle* rects
             priv->opaqueRegion.append(rects[i]);
     }
     if (auto* toplevel = wpe_view_get_toplevel(view))
-        wpeToplevelWaylandSetOpaqueRectangles(WPE_TOPLEVEL_WAYLAND(toplevel), !priv->opaqueRegion.isEmpty() ? priv->opaqueRegion.data() : nullptr, priv->opaqueRegion.size());
+        wpeToplevelWaylandSetOpaqueRectangles(WPE_TOPLEVEL_WAYLAND(toplevel), !priv->opaqueRegion.isEmpty() ? priv->opaqueRegion.mutableSpan().data() : nullptr, priv->opaqueRegion.size());
 }
 
 static gboolean wpeViewWaylandCanBeMapped(WPEView* view)

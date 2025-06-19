@@ -368,11 +368,13 @@ void MediaDevices::exposeDevices(Vector<CaptureDeviceWithCapabilities>&& newDevi
         return;
 
     Ref document = *this->document();
+    if (!document->frame())
+        return;
 
+    bool shouldExposeDefaultSpeakerAsSpecificDevice = document->frame()->settings().exposeDefaultSpeakerAsSpecificDeviceEnabled();
     bool canAccessCamera = checkCameraAccess(document);
     bool canAccessMicrophone = checkMicrophoneAccess(document);
     bool canAccessSpeaker = checkSpeakerAccess(document);
-    bool shouldExposeDefaultSpeakerAsSpecificDevice = document->frame()->settings().exposeDefaultSpeakerAsSpecificDeviceEnabled();
 
     m_audioOutputDeviceIdToPersistentId.clear();
 

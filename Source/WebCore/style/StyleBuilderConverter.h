@@ -33,7 +33,6 @@
 #include "CSSBasicShapeValue.h"
 #include "CSSCalcSymbolTable.h"
 #include "CSSCalcValue.h"
-#include "CSSColorSchemeValue.h"
 #include "CSSContentDistributionValue.h"
 #include "CSSCounterStyleRegistry.h"
 #include "CSSDynamicRangeLimitValue.h"
@@ -86,11 +85,19 @@
 #include "StyleCornerShapeValue.h"
 #include "StyleDynamicRangeLimit.h"
 #include "StyleEasingFunction.h"
+#include "StyleFlexBasis.h"
 #include "StyleInset.h"
 #include "StyleLineBoxContain.h"
 #include "StyleMargin.h"
+#include "StyleMaximumSize.h"
+#include "StyleMinimumSize.h"
+#include "StyleOffsetAnchor.h"
+#include "StyleOffsetDistance.h"
+#include "StyleOffsetPosition.h"
+#include "StyleOffsetRotate.h"
 #include "StylePadding.h"
 #include "StylePathData.h"
+#include "StylePreferredSize.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
 #include "StyleRayFunction.h"
 #include "StyleReflection.h"
@@ -118,10 +125,11 @@ namespace Style {
 
 class BuilderConverter {
 public:
+    template<typename T> static T convertStyleType(BuilderState&, const CSSValue&);
+
     static WebCore::Length convertLength(BuilderState&, const CSSValue&);
     static WebCore::Length convertLengthOrAuto(BuilderState&, const CSSValue&);
     static WebCore::Length convertLengthSizing(BuilderState&, const CSSValue&);
-    static WebCore::Length convertLengthMaxSizing(BuilderState&, const CSSValue&);
     static WebCore::Length convertLengthAllowingNumber(BuilderState&, const CSSValue&); // Assumes unit is 'px' if input is a number.
     static WebCore::Length convertTextLengthOrNormal(BuilderState&, const CSSValue&); // Converts length by text zoom factor, normal to zero
     static TabSize convertTabSize(BuilderState&, const CSSValue&);
@@ -129,8 +137,6 @@ public:
     template<typename T> static T convertLineWidth(BuilderState&, const CSSValue&);
     static LengthSize convertRadius(BuilderState&, const CSSValue&);
     static LengthPoint convertPosition(BuilderState&, const CSSValue&);
-    static LengthPoint convertPositionOrAuto(BuilderState&, const CSSValue&);
-    static LengthPoint convertPositionOrAutoOrNormal(BuilderState&, const CSSValue&);
     static WebCore::Length convertPositionComponentX(BuilderState&, const CSSValue&);
     static WebCore::Length convertPositionComponentY(BuilderState&, const CSSValue&);
     static OptionSet<TextDecorationLine> convertTextDecorationLine(BuilderState&, const CSSValue&);
@@ -143,9 +149,6 @@ public:
     static RefPtr<RotateTransformOperation> convertRotate(BuilderState&, const CSSValue&);
     static RefPtr<ScaleTransformOperation> convertScale(BuilderState&, const CSSValue&);
     static RefPtr<TranslateTransformOperation> convertTranslate(BuilderState&, const CSSValue&);
-#if ENABLE(DARK_MODE_CSS)
-    static ColorScheme convertColorScheme(BuilderState&, const CSSValue&);
-#endif
     static String convertString(BuilderState&, const CSSValue&);
     template<CSSValueID> static String convertStringOrKeyword(BuilderState&, const CSSValue&);
     template<CSSValueID> static String convertCustomIdentOrKeyword(BuilderState&, const CSSValue&);
@@ -228,8 +231,6 @@ public:
 
     static GapLength convertGapLength(BuilderState&, const CSSValue&);
 
-    static OffsetRotation convertOffsetRotate(BuilderState&, const CSSValue&);
-
     static OptionSet<Containment> convertContain(BuilderState&, const CSSValue&);
     static FixedVector<ScopedName> convertContainerNames(BuilderState&, const CSSValue&);
 
@@ -264,14 +265,6 @@ public:
 
     static SingleTimelineRange convertAnimationRangeStart(BuilderState&, const CSSValue&);
     static SingleTimelineRange convertAnimationRangeEnd(BuilderState&, const CSSValue&);
-
-    static InsetEdge convertInsetEdge(BuilderState&, const CSSValue&);
-    static MarginEdge convertMarginEdge(BuilderState&, const CSSValue&);
-    static PaddingEdge convertPaddingEdge(BuilderState&, const CSSValue&);
-    static ScrollPaddingEdge convertScrollPaddingEdge(BuilderState&, const CSSValue&);
-    static ScrollMarginEdge convertScrollMarginEdge(BuilderState&, const CSSValue&);
-    static DynamicRangeLimit convertDynamicRangeLimit(BuilderState&, const CSSValue&);
-    static CornerShapeValue convertCornerShapeValue(BuilderState&, const CSSValue&);
 
     static FixedVector<PositionTryFallback> convertPositionTryFallbacks(BuilderState&, const CSSValue&);
 
@@ -382,6 +375,11 @@ inline auto BuilderConverter::requiredFunctionDowncast(BuilderState& builderStat
     return function;
 }
 
+template<typename T> inline T BuilderConverter::convertStyleType(BuilderState& builderState, const CSSValue& value)
+{
+    return toStyleFromCSSValue<T>(builderState, value);
+}
+
 inline WebCore::Length BuilderConverter::convertLength(BuilderState& builderState, const CSSValue& value)
 {
     auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
@@ -480,13 +478,6 @@ inline ListStyleType BuilderConverter::convertListStyleType(BuilderState& builde
     return { ListStyleType::Type::String, makeAtomString(primitiveValue->stringValue()) };
 }
 
-inline WebCore::Length BuilderConverter::convertLengthMaxSizing(BuilderState& builderState, const CSSValue& value)
-{
-    if (value.valueID() == CSSValueNone)
-        return WebCore::Length(LengthType::Undefined);
-    return convertLengthSizing(builderState, value);
-}
-
 inline TabSize BuilderConverter::convertTabSize(BuilderState& builderState, const CSSValue& value)
 {
     auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
@@ -577,22 +568,6 @@ inline LengthPoint BuilderConverter::convertPosition(BuilderState& builderState,
     if (!positionValue)
         return RenderStyle::initialObjectPosition();
     return toPlatform(toStyle(positionValue->position(), builderState));
-}
-
-inline LengthPoint BuilderConverter::convertPositionOrAutoOrNormal(BuilderState& builderState, const CSSValue& value)
-{
-    if (value.isPositionValue())
-        return convertPosition(builderState, value);
-    if (value.valueID() == CSSValueNormal)
-        return { { LengthType::Normal }, { LengthType::Normal } };
-    return { };
-}
-
-inline LengthPoint BuilderConverter::convertPositionOrAuto(BuilderState& builderState, const CSSValue& value)
-{
-    if (value.isPositionValue())
-        return convertPosition(builderState, value);
-    return { };
 }
 
 inline WebCore::Length BuilderConverter::convertPositionComponentX(BuilderState& builderState, const CSSValue& value)
@@ -694,16 +669,6 @@ inline RefPtr<ScaleTransformOperation> BuilderConverter::convertScale(BuilderSta
         : builderState.cssToLengthConversionData();
     return createScale(value, conversionData);
 }
-
-#if ENABLE(DARK_MODE_CSS)
-inline ColorScheme BuilderConverter::convertColorScheme(BuilderState& builderState, const CSSValue& value)
-{
-    RefPtr colorSchemeValue = requiredDowncast<CSSColorSchemeValue>(builderState, value);
-    if (!colorSchemeValue)
-        return { };
-    return toStyle(colorSchemeValue->colorScheme(), builderState);
-}
-#endif
 
 inline String BuilderConverter::convertString(BuilderState& builderState, const CSSValue& value)
 {
@@ -2092,45 +2057,6 @@ inline GapLength BuilderConverter::convertGapLength(BuilderState& builderState, 
     return (value.valueID() == CSSValueNormal) ? GapLength() : GapLength(convertLength(builderState, value));
 }
 
-inline OffsetRotation BuilderConverter::convertOffsetRotate(BuilderState& builderState, const CSSValue& value)
-{
-    RefPtr<const CSSPrimitiveValue> modifierValue;
-    RefPtr<const CSSPrimitiveValue> angleValue;
-
-    if (auto* offsetRotateValue = dynamicDowncast<CSSOffsetRotateValue>(value)) {
-        modifierValue = offsetRotateValue->modifier();
-        angleValue = offsetRotateValue->angle();
-    } else if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
-        // Values coming from CSSTypedOM didn't go through the parser and may not have been converted to a CSSOffsetRotateValue.
-        if (primitiveValue->valueID() == CSSValueAuto || primitiveValue->valueID() == CSSValueReverse)
-            modifierValue = primitiveValue;
-        else if (primitiveValue->isAngle())
-            angleValue = primitiveValue;
-    }
-
-    bool hasAuto = false;
-    float angleInDegrees = 0;
-
-    if (angleValue)
-        angleInDegrees = angleValue->resolveAsAngle<float>(builderState.cssToLengthConversionData());
-
-    if (modifierValue) {
-        switch (modifierValue->valueID()) {
-        case CSSValueAuto:
-            hasAuto = true;
-            break;
-        case CSSValueReverse:
-            hasAuto = true;
-            angleInDegrees += 180.0;
-            break;
-        default:
-            ASSERT_NOT_REACHED();
-        }
-    }
-
-    return OffsetRotation(hasAuto, angleInDegrees);
-}
-
 inline FixedVector<ScopedName> BuilderConverter::convertContainerNames(BuilderState& builderState, const CSSValue& value)
 {
     if (is<CSSPrimitiveValue>(value)) {
@@ -2910,95 +2836,6 @@ inline FixedVector<PositionTryFallback> BuilderConverter::convertPositionTryFall
         auto fallback = convertFallback(item);
         return fallback ? *fallback : PositionTryFallback { };
     });
-}
-
-inline InsetEdge BuilderConverter::convertInsetEdge(BuilderState& builderState, const CSSValue& value)
-{
-    return insetEdgeFromCSSValue(value, builderState);
-}
-
-inline MarginEdge BuilderConverter::convertMarginEdge(BuilderState& builderState, const CSSValue& value)
-{
-    return marginEdgeFromCSSValue(value, builderState);
-}
-
-inline PaddingEdge BuilderConverter::convertPaddingEdge(BuilderState& builderState, const CSSValue& value)
-{
-    return paddingEdgeFromCSSValue(value, builderState);
-}
-
-inline ScrollPaddingEdge BuilderConverter::convertScrollPaddingEdge(BuilderState& builderState, const CSSValue& value)
-{
-    return scrollPaddingEdgeFromCSSValue(value, builderState);
-}
-
-inline ScrollMarginEdge BuilderConverter::convertScrollMarginEdge(BuilderState& builderState, const CSSValue& value)
-{
-    return scrollMarginEdgeFromCSSValue(value, builderState);
-}
-
-inline DynamicRangeLimit BuilderConverter::convertDynamicRangeLimit(BuilderState& builderState, const CSSValue& value)
-{
-    if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
-        switch (primitiveValue->valueID()) {
-        case CSSValueStandard:
-            return DynamicRangeLimit { CSS::Keyword::Standard { } };
-        case CSSValueConstrained:
-            return DynamicRangeLimit { CSS::Keyword::Constrained { } };
-        case CSSValueNoLimit:
-            return DynamicRangeLimit { CSS::Keyword::NoLimit { } };
-        default:
-            break;
-        }
-
-        builderState.setCurrentPropertyInvalidAtComputedValueTime();
-        return DynamicRangeLimit { CSS::Keyword::NoLimit { } };
-    }
-
-    RefPtr dynamicRangeLimit = requiredDowncast<CSSDynamicRangeLimitValue>(builderState, value);
-    if (!dynamicRangeLimit)
-        return DynamicRangeLimit { CSS::Keyword::NoLimit { } };
-
-    return toStyle(dynamicRangeLimit->dynamicRangeLimit(), builderState);
-}
-
-inline CornerShapeValue BuilderConverter::convertCornerShapeValue(BuilderState& builderState, const CSSValue& value)
-{
-    if (auto* primitiveValue = dynamicDowncast<CSSPrimitiveValue>(value)) {
-        switch (primitiveValue->valueID()) {
-        case CSSValueRound:
-            return CornerShapeValue::round();
-        case CSSValueScoop:
-            return CornerShapeValue::scoop();
-        case CSSValueBevel:
-            return CornerShapeValue::bevel();
-        case CSSValueNotch:
-            return CornerShapeValue::notch();
-        case CSSValueStraight:
-            return CornerShapeValue::straight();
-        case CSSValueSquircle:
-            return CornerShapeValue::squircle();
-        default:
-            break;
-        }
-
-        builderState.setCurrentPropertyInvalidAtComputedValueTime();
-        return CornerShapeValue::round();
-    }
-
-    auto superellipseFunction = requiredFunctionDowncast<CSSValueSuperellipse, CSSPrimitiveValue>(builderState, value);
-    if (!superellipseFunction)
-        return CornerShapeValue::round();
-
-    Ref superellipseDescriptor = superellipseFunction->item(0);
-    if (superellipseDescriptor->valueID() == CSSValueInfinity)
-        return { SuperellipseFunction { Number<CSS::Nonnegative>(std::numeric_limits<double>::infinity()) } };
-
-    if (superellipseDescriptor->isNumber())
-        return { SuperellipseFunction { Number<CSS::Nonnegative>(std::max(0.0, superellipseDescriptor->resolveAsNumber<double>(builderState.cssToLengthConversionData()))) } };
-
-    builderState.setCurrentPropertyInvalidAtComputedValueTime();
-    return CornerShapeValue::round();
 }
 
 } // namespace Style

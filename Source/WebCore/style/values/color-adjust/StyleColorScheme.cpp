@@ -30,6 +30,8 @@
 #include "CSSColorSchemeValue.h"
 #include "CSSToLengthConversionData.h"
 #include "CSSValueKeywords.h"
+#include "StyleBuilderConverter.h"
+#include "StyleBuilderState.h"
 #include <wtf/text/TextStream.h>
 
 namespace WebCore {
@@ -47,10 +49,22 @@ OptionSet<WebCore::ColorScheme> ColorScheme::colorScheme() const
     return result;
 }
 
+// MARK: - Conversion
+
 Ref<CSSValue> CSSValueCreation<ColorScheme>::operator()(CSSValuePool&, const RenderStyle& style, const ColorScheme& value)
 {
     return CSSColorSchemeValue::create(toCSS(value, style));
 }
+
+auto CSSValueConversion<ColorScheme>::operator()(BuilderState& state, const CSSValue& value) -> ColorScheme
+{
+    RefPtr colorSchemeValue = BuilderConverter::requiredDowncast<CSSColorSchemeValue>(state, value);
+    if (!colorSchemeValue)
+        return { };
+    return toStyle(colorSchemeValue->colorScheme(), state);
+}
+
+// MARK: - Serialization
 
 void Serialize<ColorScheme>::operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const ColorScheme& value)
 {
@@ -65,6 +79,8 @@ void Serialize<ColorScheme>::operator()(StringBuilder& builder, const CSS::Seria
         serializationForCSS(builder, context, style, *value.only);
     }
 }
+
+// MARK: - Logging
 
 WTF::TextStream& operator<<(WTF::TextStream& ts, const ColorScheme& value)
 {

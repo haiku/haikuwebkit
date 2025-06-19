@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2010 Apple Inc. All rights reserved.
- * Portions Copyright (c) 2010 Motorola Mobility, Inc.  All rights reserved.
- * Copyright (C) 2012 Samsung Electronics Ltd. All Rights Reserved.
+ * Portions Copyright (c) 2010 Motorola Mobility, Inc. All rights reserved.
+ * Copyright (C) 2012 Samsung Electronics Ltd. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -167,17 +167,6 @@ void WebProcessPool::platformInitialize(NeedsGlobalStaticInitialization)
         installMemoryPressureHandler();
 #endif
 
-#if ENABLE(WPE_PLATFORM)
-    if (WKWPE::isUsingWPEPlatformAPI()) {
-        if (auto* display = wpe_display_get_primary()) {
-            g_signal_connect(display, "notify::available-input-devices", G_CALLBACK(+[](WPEDisplay* display, GParamSpec*, WebProcessPool* pool) {
-                auto availableInputDevices = toAvailableInputDevices(wpe_display_get_available_input_devices(display));
-                pool->sendToAllProcesses(Messages::WebProcess::SetAvailableInputDevices(availableInputDevices));
-            }), this);
-        }
-    }
-#endif
-
 #if PLATFORM(GTK)
     if (auto* display = gdk_display_get_default()) {
         if (auto* seat = gdk_display_get_default_seat(display)) {
@@ -192,6 +181,13 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
 {
 #if ENABLE(WPE_PLATFORM)
     bool usingWPEPlatformAPI = WKWPE::isUsingWPEPlatformAPI();
+    if (usingWPEPlatformAPI && !m_availableInputDevicesSignalID) {
+        auto* display = wpe_display_get_primary();
+        m_availableInputDevicesSignalID = g_signal_connect(display, "notify::available-input-devices", G_CALLBACK(+[](WPEDisplay* display, GParamSpec*, WebProcessPool* pool) {
+            auto availableInputDevices = toAvailableInputDevices(wpe_display_get_available_input_devices(display));
+            pool->sendToAllProcesses(Messages::WebProcess::SetAvailableInputDevices(availableInputDevices));
+        }), this);
+    }
 #endif
 
 #if USE(GBM)
@@ -271,9 +267,12 @@ void WebProcessPool::platformInitializeWebProcess(const WebProcessProxy& process
 void WebProcessPool::platformInvalidateContext()
 {
 #if ENABLE(WPE_PLATFORM)
-    if (WKWPE::isUsingWPEPlatformAPI()) {
-        if (auto* display = wpe_display_get_primary())
-            g_signal_handlers_disconnect_by_data(display, this);
+    if (WKWPE::isUsingWPEPlatformAPI() && m_availableInputDevicesSignalID) {
+        if (auto* display = wpe_display_get_primary()) {
+            if (g_signal_handler_is_connected(display, m_availableInputDevicesSignalID))
+                g_signal_handler_disconnect(display, m_availableInputDevicesSignalID);
+        }
+        m_availableInputDevicesSignalID = 0;
     }
 #endif
 #if PLATFORM(GTK)

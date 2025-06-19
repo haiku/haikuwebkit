@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2018-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -173,6 +173,7 @@ void Frame::disconnectOwnerElement()
 
 void Frame::takeWindowProxyAndOpenerFrom(Frame& frame)
 {
+    ASSERT(is<LocalDOMWindow>(window()) != is<LocalDOMWindow>(frame.window()) || page() != frame.page());
     ASSERT(m_windowProxy->frame() == this);
     m_windowProxy->detachFromFrame();
     m_windowProxy = frame.windowProxy();
@@ -309,7 +310,7 @@ void Frame::updateSandboxFlags(SandboxFlags flags, NotifyUIProcess notifyUIProce
 void Frame::stopForBackForwardCache()
 {
     if (RefPtr localFrame = dynamicDowncast<LocalFrame>(*this))
-        localFrame->protectedLoader()->stopForBackForwardCache();
+        localFrame->loader().stopForBackForwardCache();
     else {
         for (RefPtr child = tree().firstChild(); child; child = child->tree().nextSibling())
             child->stopForBackForwardCache();

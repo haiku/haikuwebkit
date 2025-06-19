@@ -1116,6 +1116,7 @@
             (subpath "/private/tmp/AudioCapture")
             (subpath "/tmp/AudioCapture"))
         (allow file-read* (subpath "/usr/local/lib"))
+        (allow file-map-executable (literal "/usr/local/lib/libAudioDiagnostics.dylib"))
         (allow file-read-data (subpath "/AppleInternal/Library/Audio"))))
 
 (deny mach-lookup (with no-report)

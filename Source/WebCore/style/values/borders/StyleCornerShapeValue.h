@@ -67,6 +67,10 @@ struct CornerShapeValue {
     bool operator==(const CornerShapeValue&) const = default;
 };
 
+// MARK: - Conversion
+
+template<> struct CSSValueConversion<CornerShapeValue> { auto operator()(BuilderState&, const CSSValue&) -> CornerShapeValue; };
+
 // MARK: - Blending
 
 template<> struct Blending<CornerShapeValue> {

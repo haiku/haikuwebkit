@@ -298,7 +298,9 @@ extern "C" { extern void (*const __identifier("??_7TestCEReactionsStringifier@We
 #else
 extern "C" { extern void* _ZTVN7WebCore26TestCEReactionsStringifierE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestCEReactionsStringifier>, void>> static inline void verifyVTable(TestCEReactionsStringifier* ptr) {
+template<std::same_as<TestCEReactionsStringifier> T>
+static inline void verifyVTable(TestCEReactionsStringifier* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

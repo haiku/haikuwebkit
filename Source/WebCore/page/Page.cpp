@@ -998,14 +998,14 @@ void Page::goToItem(LocalFrame& frame, HistoryItem& item, FrameLoadType type, Sh
     Ref protectedItem { item };
 
     if (frame.loader().protectedHistory()->shouldStopLoadingForHistoryItem(item))
-        frame.protectedLoader()->stopAllLoadersAndCheckCompleteness();
+        frame.loader().stopAllLoadersAndCheckCompleteness();
     frame.loader().protectedHistory()->goToItem(item, type, shouldTreatAsContinuingLoad, processSwapDisposition);
 }
 
 void Page::goToItemForNavigationAPI(LocalFrame& frame, HistoryItem& item, FrameLoadType type, LocalFrame& triggeringFrame, NavigationAPIMethodTracker* tracker)
 {
     if (frame.loader().protectedHistory()->shouldStopLoadingForHistoryItem(item))
-        frame.protectedLoader()->stopAllLoadersAndCheckCompleteness();
+        frame.loader().stopAllLoadersAndCheckCompleteness();
     frame.loader().protectedHistory()->goToItemForNavigationAPI(item, type, triggeringFrame, tracker);
 }
 
@@ -1055,7 +1055,7 @@ void Page::updateStyleAfterChangeInEnvironment()
         if (RefPtr styleResolver = document.styleScope().resolverIfExists())
             styleResolver->invalidateMatchedDeclarationsCache();
         document.scheduleFullStyleRebuild();
-        document.checkedStyleScope()->didChangeStyleSheetEnvironment();
+        document.styleScope().didChangeStyleSheetEnvironment();
         document.updateElementsAffectedByMediaQueries();
         document.scheduleRenderingUpdate(RenderingUpdateStep::MediaQueryEvaluation);
     });
@@ -1071,7 +1071,7 @@ void Page::setNeedsRecalcStyleInAllFrames()
 {
     // FIXME: Figure out what this function is actually trying to add in different call sites.
     forEachDocument([] (Document& document) {
-        document.checkedStyleScope()->didChangeStyleSheetEnvironment();
+        document.styleScope().didChangeStyleSheetEnvironment();
     });
 }
 
@@ -1113,7 +1113,7 @@ bool Page::showAllPlugins() const
 
 inline std::optional<std::pair<WeakRef<MediaCanStartListener>, WeakRef<Document, WeakPtrImplWithEventTargetData>>>  Page::takeAnyMediaCanStartListener()
 {
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)
             continue;
@@ -1297,7 +1297,7 @@ unsigned Page::findMatchesForText(const String& target, FindOptions options, uns
 
     unsigned matchCount = 0;
 
-    RefPtr frame = &mainFrame();
+    RefPtr frame = mainFrame();
     do {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(frame.get());
         if (!localFrame) {
@@ -1559,9 +1559,9 @@ void Page::setDefersLoading(bool defers)
     }
 
     m_defersLoading = defers;
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         if (RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame))
-            localFrame->protectedLoader()->setDefersLoading(defers);
+            localFrame->loader().setDefersLoading(defers);
     }
 }
 
@@ -1912,7 +1912,7 @@ void Page::lockAllOverlayScrollbarsToHidden(bool lockOverlayScrollbars)
 
     view->lockOverlayScrollbarStateToHidden(lockOverlayScrollbars);
     
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)
             continue;
@@ -1998,7 +1998,7 @@ void Page::setIsInWindow(bool isInWindow)
 
 void Page::setIsInWindowInternal(bool isInWindow)
 {
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)
             continue;
@@ -2129,7 +2129,7 @@ void Page::updateRendering()
 
     runProcessingStep(RenderingUpdateStep::RestoreScrollPositionAndViewState, [] (Document& document) {
         if (RefPtr frame = document.frame())
-            frame->protectedLoader()->restoreScrollPositionAndViewStateNowIfNeeded();
+            frame->loader().restoreScrollPositionAndViewStateNowIfNeeded();
     });
 
 #if ENABLE(ASYNC_SCROLLING)
@@ -2281,7 +2281,7 @@ void Page::doAfterUpdateRendering()
 
     runProcessingStep(RenderingUpdateStep::CursorUpdate, [] (Document& document) {
         if (RefPtr frame = document.frame())
-            frame->checkedEventHandler()->updateCursorIfNeeded();
+            frame->eventHandler().updateCursorIfNeeded();
     });
 
     forEachRenderableDocument([] (Document& document) {
@@ -2289,7 +2289,7 @@ void Page::doAfterUpdateRendering()
     });
 
     forEachRenderableDocument([] (Document& document) {
-        document.checkedSelection()->updateAppearanceAfterUpdatingRendering();
+        document.selection().updateAppearanceAfterUpdatingRendering();
     });
 
     forEachRenderableDocument([] (Document& document) {
@@ -2532,7 +2532,7 @@ bool Page::shouldUpdateAccessibilityRegions() const
             protectedMainDocument = localMainFrame ? localMainFrame->document() : nullptr;
         else if (RefPtr remoteFrame = dynamicDowncast<RemoteFrame>(mainFrame())) {
             if (auto* owner = remoteFrame->ownerElement())
-                protectedMainDocument = &(owner->document());
+                protectedMainDocument = owner->document();
         }
 
         // If accessibility is enabled and we have a main document, that document should have an AX object cache.
@@ -2789,7 +2789,7 @@ void Page::setDebugger(JSC::Debugger* debugger)
 
     m_debugger = debugger;
 
-    for (RefPtr frame = &m_mainFrame.get(); frame; frame = frame->tree().traverseNext())
+    for (RefPtr frame = m_mainFrame.get(); frame; frame = frame->tree().traverseNext())
         frame->protectedWindowProxy()->attachDebugger(m_debugger);
 }
 
@@ -2823,11 +2823,22 @@ void Page::setMemoryCacheClientCallsEnabled(bool enabled)
     if (!enabled || !m_hasPendingMemoryCacheLoadNotifications)
         return;
 
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         if (RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame))
-            localFrame->protectedLoader()->tellClientAboutPastMemoryCacheLoads();
+            localFrame->loader().tellClientAboutPastMemoryCacheLoads();
     }
     m_hasPendingMemoryCacheLoadNotifications = false;
+}
+
+void Page::setEditable(bool isEditable)
+{
+    m_isEditable = isEditable;
+
+    if (CheckedPtr cache = axObjectCache()) {
+        forEachDocument([&] (Document& document) {
+            cache->handlePageEditibilityChanged(document);
+        });
+    }
 }
 
 void Page::hiddenPageDOMTimerThrottlingStateChanged()
@@ -3215,7 +3226,7 @@ void Page::setActivityState(OptionSet<ActivityState> activityState)
 
 void Page::stopKeyboardScrollAnimation()
 {
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)
             continue;
@@ -3643,7 +3654,7 @@ void Page::addRelevantRepaintedObject(const RenderObject& object, const LayoutRe
         m_isCountingRelevantRepaintedObjects = false;
         resetRelevantPaintedObjectCounter();
         if (RefPtr frame = dynamicDowncast<LocalFrame>(mainFrame()))
-            frame->protectedLoader()->didReachLayoutMilestone(LayoutMilestone::DidHitRelevantRepaintedObjectsAreaThreshold);
+            frame->loader().didReachLayoutMilestone(LayoutMilestone::DidHitRelevantRepaintedObjectsAreaThreshold);
     }
 }
 
@@ -3662,7 +3673,7 @@ void Page::addRelevantUnpaintedObject(const RenderObject& object, const LayoutRe
 
 void Page::suspendActiveDOMObjectsAndAnimations()
 {
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         if (RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame))
             localFrame->suspendActiveDOMObjectsAndAnimations();
     }
@@ -3670,7 +3681,7 @@ void Page::suspendActiveDOMObjectsAndAnimations()
 
 void Page::resumeActiveDOMObjectsAndAnimations()
 {
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         if (RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame))
             localFrame->resumeActiveDOMObjectsAndAnimations();
     }
@@ -3913,7 +3924,7 @@ void Page::setSessionID(PAL::SessionID sessionID)
 
     if (sessionID != m_sessionID) {
         constexpr auto doNotCreate = StorageNamespaceProvider::ShouldCreateNamespace::No;
-        RefPtr topOrigin = &mainFrameOrigin();
+        RefPtr topOrigin = mainFrameOrigin();
         if (RefPtr sessionStorage = topOrigin ? m_storageNamespaceProvider->sessionStorageNamespace(*topOrigin, *this, doNotCreate) : nullptr)
             sessionStorage->setSessionIDForTesting(sessionID);
     }
@@ -4072,7 +4083,7 @@ void Page::setAllowsMediaDocumentInlinePlayback(bool flag)
 IDBClient::IDBConnectionToServer& Page::idbConnection()
 {
     if (!m_idbConnectionToServer)
-        m_idbConnectionToServer = &m_databaseProvider->idbConnectionToServerForSession(m_sessionID);
+        m_idbConnectionToServer = m_databaseProvider->idbConnectionToServerForSession(m_sessionID);
     
     return *m_idbConnectionToServer;
 }
@@ -4116,7 +4127,7 @@ void Page::setCaptionUserPreferencesStyleSheet(const String& styleSheet)
 void Page::accessibilitySettingsDidChange()
 {
     forEachDocument([] (auto& document) {
-        document.checkedStyleScope()->evaluateMediaQueriesForAccessibilitySettingsChange();
+        document.styleScope().evaluateMediaQueriesForAccessibilitySettingsChange();
         document.updateElementsAffectedByMediaQueries();
         document.scheduleRenderingUpdate(RenderingUpdateStep::MediaQueryEvaluation);
     });
@@ -4127,8 +4138,8 @@ void Page::accessibilitySettingsDidChange()
 void Page::appearanceDidChange()
 {
     forEachDocument([] (auto& document) {
-        document.checkedStyleScope()->didChangeStyleSheetEnvironment();
-        document.checkedStyleScope()->evaluateMediaQueriesForAppearanceChange();
+        document.styleScope().didChangeStyleSheetEnvironment();
+        document.styleScope().evaluateMediaQueriesForAppearanceChange();
         document.updateElementsAffectedByMediaQueries();
         document.scheduleRenderingUpdate(RenderingUpdateStep::MediaQueryEvaluation);
         document.invalidateScrollbars();
@@ -4371,7 +4382,7 @@ RenderingUpdateScheduler* Page::existingRenderingUpdateScheduler()
 void Page::forEachDocumentFromMainFrame(const Frame& mainFrame, NOESCAPE const Function<void(Document&)>& functor)
 {
     Vector<Ref<Document>, 8> documents;
-    for (RefPtr frame = &mainFrame; frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame; frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)
             continue;
@@ -4390,7 +4401,7 @@ void Page::forEachDocument(NOESCAPE const Function<void(Document&)>& functor) co
 
 bool Page::findMatchingLocalDocument(NOESCAPE const Function<bool(Document&)>& functor) const
 {
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)
             continue;
@@ -4406,7 +4417,7 @@ bool Page::findMatchingLocalDocument(NOESCAPE const Function<bool(Document&)>& f
 void Page::forEachRenderableDocument(NOESCAPE const Function<void(Document&)>& functor) const
 {
     Vector<Ref<Document>, 8> documents;
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)
             continue;
@@ -4437,7 +4448,7 @@ void Page::forEachMediaElement(NOESCAPE const Function<void(HTMLMediaElement&)>&
 void Page::forEachLocalFrame(NOESCAPE const Function<void(LocalFrame&)>& functor)
 {
     Vector<Ref<LocalFrame>> frames;
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         if (RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame))
             frames.append(localFrame.releaseNonNull());
     }
@@ -4450,7 +4461,7 @@ void Page::forEachWindowEventLoop(NOESCAPE const Function<void(WindowEventLoop&)
 {
     UncheckedKeyHashSet<Ref<WindowEventLoop>> windowEventLoops;
     RefPtr<WindowEventLoop> lastEventLoop;
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)
             continue;
@@ -4544,7 +4555,7 @@ enum class DispatchedOnDocumentEventLoop : bool { No, Yes };
 static void dispatchPrintEvent(Frame& mainFrame, const AtomString& eventType, DispatchedOnDocumentEventLoop dispatchedOnDocumentEventLoop)
 {
     Vector<Ref<LocalFrame>> frames;
-    for (RefPtr frame = &mainFrame; frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame; frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(frame);
         if (!localFrame)
             continue;
@@ -4588,7 +4599,7 @@ bool Page::startApplePayAMSUISession(const URL& originatingURL, ApplePayAMSUIPay
     if (hasActiveApplePayAMSUISession())
         return false;
 
-    m_activeApplePayAMSUIPaymentHandler = &paymentHandler;
+    m_activeApplePayAMSUIPaymentHandler = paymentHandler;
 
     chrome().client().startApplePayAMSUISession(originatingURL, request, [weakThis = WeakPtr { *this }, paymentHandler = Ref { paymentHandler }] (std::optional<bool>&& result) {
         RefPtr protectedThis = weakThis.get();
@@ -4773,12 +4784,12 @@ void Page::injectUserStyleSheet(UserStyleSheet& userStyleSheet)
 {
 #if ENABLE(APP_BOUND_DOMAINS)
     if (RefPtr localMainFrame = dynamicDowncast<LocalFrame>(m_mainFrame.get())) {
-        if (localMainFrame->protectedLoader()->client().shouldEnableInAppBrowserPrivacyProtections()) {
+        if (localMainFrame->loader().client().shouldEnableInAppBrowserPrivacyProtections()) {
             if (RefPtr document = localMainFrame->document())
                 document->addConsoleMessage(MessageSource::Security, MessageLevel::Warning, "Ignoring user style sheet for non-app bound domain."_s);
             return;
         }
-        localMainFrame->protectedLoader()->client().notifyPageOfAppBoundBehavior();
+        localMainFrame->loader().client().notifyPageOfAppBoundBehavior();
     }
 #endif
 
@@ -5007,7 +5018,7 @@ void Page::setupForRemoteWorker(const URL& scriptURL, const SecurityOriginData& 
     if (!localMainFrame)
         return;
     // FIXME: <rdar://117922051> Investigate if the correct origins are set here with site isolation enabled.
-    localMainFrame->protectedLoader()->initForSynthesizedDocument({ });
+    localMainFrame->loader().initForSynthesizedDocument({ });
     Ref document = Document::createNonRenderedPlaceholder(*localMainFrame, scriptURL);
     document->createDOMWindow();
     document->storageBlockingStateDidChange();
@@ -5017,7 +5028,7 @@ void Page::setupForRemoteWorker(const URL& scriptURL, const SecurityOriginData& 
     document->setSiteForCookies(originAsURL);
     document->setFirstPartyForCookies(originAsURL);
 
-    if (RefPtr documentLoader = localMainFrame->protectedLoader()->documentLoader())
+    if (RefPtr documentLoader = localMainFrame->loader().documentLoader())
         documentLoader->setAdvancedPrivacyProtections(advancedPrivacyProtections);
 
     if (document->settings().storageBlockingPolicy() != StorageBlockingPolicy::BlockThirdParty)
@@ -5033,7 +5044,7 @@ void Page::setupForRemoteWorker(const URL& scriptURL, const SecurityOriginData& 
 
 void Page::forceRepaintAllFrames()
 {
-    for (RefPtr frame = &mainFrame(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame)
             continue;
@@ -5142,7 +5153,7 @@ void Page::reloadExecutionContextsForOrigin(const ClientOrigin& origin, std::opt
     if (!localMainFrame || localMainFrame->protectedDocument()->topOrigin().data() != origin.topOrigin)
         return;
 
-    for (RefPtr frame = &m_mainFrame.get(); frame;) {
+    for (RefPtr frame = m_mainFrame.get(); frame;) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         if (!localFrame || frame->frameID() == triggeringFrame) {
             frame = frame->tree().traverseNext();
@@ -5193,7 +5204,10 @@ void Page::deleteRemovedNodesAndDetachedRenderers()
         if (!document)
             return;
         document->asyncNodeDeletionQueue().deleteNodesNow();
-        document->view()->layoutContext().deleteDetachedRenderersNow();
+        RefPtr frameView = document->view();
+        if (!frameView)
+            return;
+        frameView->layoutContext().deleteDetachedRenderersNow();
     });
 }
 
@@ -5310,7 +5324,7 @@ bool Page::hasActiveImmersiveSession() const
 
 RefPtr<WebXRSession> Page::activeImmersiveXRSession() const
 {
-    for (RefPtr frame = &m_mainFrame.get(); frame; frame = frame->tree().traverseNext()) {
+    for (RefPtr frame = m_mainFrame.get(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
         RefPtr window = localFrame ? localFrame->window() : nullptr;
         if (!window)

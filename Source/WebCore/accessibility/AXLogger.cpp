@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -807,6 +807,9 @@ TextStream& operator<<(WTF::TextStream& stream, AXProperty property)
     case AXProperty::HasRemoteFrameChild:
         stream << "HasRemoteFrameChild";
         break;
+    case AXProperty::IsEditableWebArea:
+        stream << "IsEditableWebArea";
+        break;
     case AXProperty::IsSubscript:
         stream << "IsSubscript";
         break;
@@ -1300,7 +1303,7 @@ void streamAXCoreObject(TextStream& stream, const AXCoreObject& object, const Op
     }
 
     if (options & AXStreamOptions::ParentID) {
-        auto* parent = object.parentObjectUnignored();
+        RefPtr parent = object.parentObjectUnignored();
         stream.dumpProperty("parentID"_s, parent ? parent->objectID().toUInt64() : 0);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Google Inc. All Rights Reserved.
+ * Copyright (C) 2011 Google Inc. All rights reserved.
  * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Nikolas Zimmermann <zimmermann@kde.org>
  * Copyright (C) 2007 Rob Buis <buis@kde.org>

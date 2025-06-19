@@ -16393,27 +16393,32 @@ void SpeculativeJIT::compileMakeRope(Node* node)
 
     JumpList outOfMemory;
 
-    for (unsigned i = 1; i < numOpGPRs; ++i) {
-        if (JSString* string = edges[i]->dynamicCastConstant<JSString*>()) {
-            and32(TrustedImm32(string->is8Bit() ? StringImpl::flagIs8Bit() : 0), scratchGPR);
-            outOfMemory.append(branchAdd32(Overflow, TrustedImm32(string->length()), allocatorGPR));
-        } else {
-            bool needsRopeCase = canBeRope(edges[i]);
-            loadPtr(Address(opGPRs[i], JSString::offsetOfValue()), scratch2GPR);
-            Jump isRope;
-            if (needsRopeCase)
-                isRope = branchIfRopeStringImpl(scratch2GPR);
+    // This pattern can be seen when the code is doing `string += string`.
+    if (numOpGPRs == 2 && node->child1().node() == node->child2().node())
+        outOfMemory.append(branchAdd32(Overflow, allocatorGPR, allocatorGPR));
+    else {
+        for (unsigned i = 1; i < numOpGPRs; ++i) {
+            if (JSString* string = edges[i]->dynamicCastConstant<JSString*>()) {
+                and32(TrustedImm32(string->is8Bit() ? StringImpl::flagIs8Bit() : 0), scratchGPR);
+                outOfMemory.append(branchAdd32(Overflow, TrustedImm32(string->length()), allocatorGPR));
+            } else {
+                bool needsRopeCase = canBeRope(edges[i]);
+                loadPtr(Address(opGPRs[i], JSString::offsetOfValue()), scratch2GPR);
+                Jump isRope;
+                if (needsRopeCase)
+                    isRope = branchIfRopeStringImpl(scratch2GPR);
 
-            and32(Address(scratch2GPR, StringImpl::flagsOffset()), scratchGPR);
-            outOfMemory.append(branchAdd32(Overflow, Address(scratch2GPR, StringImpl::lengthMemoryOffset()), allocatorGPR));
-            if (needsRopeCase) {
-                auto done = jump();
+                and32(Address(scratch2GPR, StringImpl::flagsOffset()), scratchGPR);
+                outOfMemory.append(branchAdd32(Overflow, Address(scratch2GPR, StringImpl::lengthMemoryOffset()), allocatorGPR));
+                if (needsRopeCase) {
+                    auto done = jump();
 
-                isRope.link(this);
-                and32(Address(opGPRs[i], JSRopeString::offsetOfFlags()), scratchGPR);
-                load32(Address(opGPRs[i], JSRopeString::offsetOfLength()), scratch2GPR);
-                outOfMemory.append(branchAdd32(Overflow, scratch2GPR, allocatorGPR));
-                done.link(this);
+                    isRope.link(this);
+                    and32(Address(opGPRs[i], JSRopeString::offsetOfFlags()), scratchGPR);
+                    load32(Address(opGPRs[i], JSRopeString::offsetOfLength()), scratch2GPR);
+                    outOfMemory.append(branchAdd32(Overflow, scratch2GPR, allocatorGPR));
+                    done.link(this);
+                }
             }
         }
     }
@@ -16524,12 +16529,37 @@ void SpeculativeJIT::compileMakeAtomString(Node* node)
     case 1:
         callOperation(operationMakeAtomString1, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0]);
         break;
-    case 2:
-        callOperation(operationMakeAtomString2, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1]);
+    case 2: {
+        const ConcatKeyAtomStringCache* cache = nullptr;
+        if (auto string = node->child1()->tryGetString(m_graph); !string.isNull())
+            cache = m_graph.tryAddConcatKeyAtomStringCache(string, emptyString(), ConcatKeyAtomStringCache::Mode::Variable1);
+        else if (auto string = node->child2()->tryGetString(m_graph); !string.isNull())
+            cache = m_graph.tryAddConcatKeyAtomStringCache(string, emptyString(), ConcatKeyAtomStringCache::Mode::Variable0);
+
+        if (cache)
+            callOperation(operationMakeAtomString2WithCache, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1], TrustedImmPtr(cache));
+        else
+            callOperation(operationMakeAtomString2, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1]);
         break;
-    case 3:
-        callOperation(operationMakeAtomString3, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1], opGPRs[2]);
+    }
+    case 3: {
+        const ConcatKeyAtomStringCache* cache = nullptr;
+        if (auto s0 = node->child1()->tryGetString(m_graph); !s0.isNull()) {
+            if (auto s1 = node->child2()->tryGetString(m_graph); !s1.isNull())
+                cache = m_graph.tryAddConcatKeyAtomStringCache(s0, s1, ConcatKeyAtomStringCache::Mode::Variable2);
+            else if (auto s2 = node->child3()->tryGetString(m_graph); !s2.isNull())
+                cache = m_graph.tryAddConcatKeyAtomStringCache(s0, s2, ConcatKeyAtomStringCache::Mode::Variable1);
+        } else if (auto s1 = node->child2()->tryGetString(m_graph); !s1.isNull()) {
+            if (auto s2 = node->child3()->tryGetString(m_graph); !s2.isNull())
+                cache = m_graph.tryAddConcatKeyAtomStringCache(s1, s2, ConcatKeyAtomStringCache::Mode::Variable0);
+        }
+
+        if (cache)
+            callOperation(operationMakeAtomString3WithCache, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1], opGPRs[2], TrustedImmPtr(cache));
+        else
+            callOperation(operationMakeAtomString3, resultGPR, LinkableConstant::globalObject(*this, node), opGPRs[0], opGPRs[1], opGPRs[2]);
         break;
+    }
     default:
         RELEASE_ASSERT_NOT_REACHED();
         break;
@@ -16863,6 +16893,74 @@ void SpeculativeJIT::compileNumberIsFinite(Node* node)
             isInt32 = branchIfInt32(argumentRegs);
         }
         callOperation(operationNumberIsFinite, scratch1GPR, argumentRegs);
+        if (mayBeInt32)
+            isInt32.link(this);
+        unblessedBooleanResult(scratch1GPR, node);
+        break;
+    }
+    default:
+        DFG_CRASH(m_graph, node, "Bad use kind");
+        break;
+    }
+}
+
+void SpeculativeJIT::compileNumberIsSafeInteger(Node* node)
+{
+    switch (node->child1().useKind()) {
+    case DoubleRepUse: {
+        SpeculateDoubleOperand argument(this, node->child1());
+        GPRTemporary scratch(this);
+        GPRTemporary isValid(this);
+        FPRTemporary temp(this);
+        FPRTemporary limit(this);
+
+        FPRReg argumentFPR = argument.fpr();
+        GPRReg scratchGPR = scratch.gpr();
+        GPRReg isValidGPR = isValid.gpr();
+        FPRReg tempFPR = temp.fpr();
+        FPRReg limitFPR = limit.fpr();
+
+        // check if the value is an integer
+        if (supportsFloatingPointRounding()) {
+            truncDouble(argumentFPR, tempFPR);
+            compareDouble(DoubleEqualAndOrdered, argumentFPR, tempFPR, isValidGPR);
+        } else {
+            silentSpillAllRegisters(tempFPR);
+            callOperationWithoutExceptionCheck(Math::truncDouble, tempFPR, argumentFPR);
+            silentFillAllRegisters();
+            compareDouble(DoubleEqualAndOrdered, argumentFPR, tempFPR, isValidGPR);
+        }
+
+        // check if the value is finite
+        subDouble(argumentFPR, argumentFPR, tempFPR);
+        compareDouble(DoubleEqualAndOrdered, tempFPR, tempFPR, scratchGPR);
+        and32(scratchGPR, isValidGPR);
+
+        // check if the value is in the range
+        absDouble(argumentFPR, tempFPR);
+        move64ToDouble(TrustedImm64(std::bit_cast<uint64_t>(maxSafeInteger())), limitFPR);
+        compareDouble(DoubleLessThanOrEqualAndOrdered, tempFPR, limitFPR, scratchGPR);
+        and32(scratchGPR, isValidGPR);
+
+        unblessedBooleanResult(isValidGPR, node);
+        break;
+    }
+    case UntypedUse: {
+        JSValueOperand argument(this, node->child1());
+        GPRTemporary scratch1(this);
+
+        bool mayBeInt32 = m_interpreter.forNode(node->child1()).m_type & SpecInt32Only;
+
+        JSValueRegs argumentRegs = argument.jsValueRegs();
+        GPRReg scratch1GPR = scratch1.gpr();
+
+        flushRegisters();
+        Jump isInt32;
+        if (mayBeInt32) {
+            move(TrustedImm32(1), scratch1GPR);
+            isInt32 = branchIfInt32(argumentRegs);
+        }
+        callOperation(operationNumberIsSafeInteger, scratch1GPR, argumentRegs);
         if (mayBeInt32)
             isInt32.link(this);
         unblessedBooleanResult(scratch1GPR, node);

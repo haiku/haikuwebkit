@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -89,7 +89,7 @@ private:
     RefPtr<WorkerScriptLoader> m_scriptLoader;
 
 #if ASSERT_ENABLED
-    Ref<Thread> m_creationThread { Thread::currentSingleton() };
+    const Ref<Thread> m_creationThread { Thread::currentSingleton() };
 #endif
 };
 

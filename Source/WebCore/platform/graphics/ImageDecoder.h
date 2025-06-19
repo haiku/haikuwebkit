@@ -108,7 +108,6 @@ public:
 
     virtual Seconds frameDurationAtIndex(size_t) const = 0;
     virtual bool frameHasAlphaAtIndex(size_t) const = 0;
-    virtual unsigned frameBytesAtIndex(size_t, SubsamplingLevel = SubsamplingLevel::Default) const = 0;
 
     WEBCORE_EXPORT virtual bool fetchFrameMetaDataAtIndex(size_t, SubsamplingLevel, const DecodingOptions&, ImageFrame&) const;
 

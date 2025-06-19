@@ -1301,7 +1301,7 @@ TEST_F(ContentExtensionTest, LargeJumps)
         combinedBytecode.appendVector(bytecode);
     }
     
-    DFABytecodeInterpreter interpreter({ combinedBytecode.data(), combinedBytecode.size() });
+    DFABytecodeInterpreter interpreter(combinedBytecode.span());
     
     patternId = 0;
     for (char c1 = 'A'; c1 <= 'Z'; ++c1) {
@@ -3188,24 +3188,240 @@ TEST_F(ContentExtensionTest, RegexSubstitution)
 
 TEST_F(ContentExtensionTest, IgnoreFollowingRules)
 {
+    // ignore-following-rules mixed into block rules
     auto backend = makeBackend("["_s
         "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
         "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.apple.com/\"}},"_s
         "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"https://www.apple.com/\"}},"_s
-        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+        "{\"action\":{\"type\":\"block-cookies\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
     "]"_s);
 
-    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction>, variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction>, variantIndex<ContentExtensions::BlockCookiesAction> });
     testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
-    testRequest(backend, mainDocumentRequest("https://www.w3.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.w3.org/"_s), { variantIndex<ContentExtensions::BlockCookiesAction> });
 
     backend = makeBackend("["_s
         "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"https://www.apple.com/\"}},"_s
+        "{\"action\":{\"type\":\"block-cookies\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    testRequest(backend, mainDocumentRequest("https://www.w3.org/"_s), { });
+
+    // ignore-previous-rules and ignore-following-rules sandwiched together
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"block-cookies\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-previous-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"block-cookies\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> }, 0);
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { variantIndex<ContentExtensions::BlockCookiesAction>, variantIndex<ContentExtensions::BlockCookiesAction> });
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"block-cookies\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-previous-rules\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"block-cookies\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> }, 0);
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { variantIndex<ContentExtensions::BlockLoadAction> }, 0);
+
+    // ignore-following-rules and ignore-previous-rules sandwiched together
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"block-cookies\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-previous-rules\"},\"trigger\":{\"url-filter\":\"https://www.example.com/\"}},"_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.example.com/"_s), { variantIndex<ContentExtensions::BlockLoadAction> }, 0);
+    testRequest(backend, mainDocumentRequest("https://www.w3.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction>, variantIndex<ContentExtensions::BlockCookiesAction>, variantIndex<ContentExtensions::BlockLoadAction> });
+    EXPECT_TRUE(nullptr != backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    // ignore-following-rules before ignore-previous-rules
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-previous-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-previous-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-previous-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-previous-rules\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { }, 0);
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
         "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
         "{\"action\":{\"type\":\"ignore-previous-rules\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
     "]"_s);
 
     testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+
+    // ignore-following-rules before a css-display-none with specific URL filters
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    EXPECT_EQ(nullptr, backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    EXPECT_EQ(nullptr, backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { variantIndex<ContentExtensions::CSSDisplayNoneSelectorAction> });
+    EXPECT_EQ(nullptr, backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    EXPECT_EQ(nullptr, backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    // ignore-following-rules after a css-display-none with specific URL filters
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::CSSDisplayNoneSelectorAction> });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    EXPECT_EQ(nullptr, backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    EXPECT_TRUE(nullptr != backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::CSSDisplayNoneSelectorAction> });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    EXPECT_EQ(nullptr, backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    EXPECT_TRUE(nullptr != backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    // ignore-following-rules sandwiched in between css-display-none
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { variantIndex<ContentExtensions::CSSDisplayNoneSelectorAction> });
+    EXPECT_TRUE(nullptr != backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::CSSDisplayNoneSelectorAction> });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    EXPECT_EQ(nullptr, backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    EXPECT_TRUE(nullptr != backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"css-display-none\",\"selector\":\".hidden\"},\"trigger\":{\"url-filter\":\".*\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { });
+    EXPECT_TRUE(nullptr != backend.globalDisplayNoneStyleSheet("testFilter"_s));
+
+    // ignore-following-rules stacked together
+    backend = makeBackend("["_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\".*\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}},"_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"https://www.apple.com/\"}},"_s
+        "{\"action\":{\"type\":\"ignore-following-rules\"},\"trigger\":{\"url-filter\":\"https://www.apple.com/\"}},"_s
+        "{\"action\":{\"type\":\"block\"},\"trigger\":{\"url-filter\":\"https://www.webkit.org/\"}}"_s
+    "]"_s);
+
+    testRequest(backend, mainDocumentRequest("https://www.webkit.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.apple.com/"_s), { variantIndex<ContentExtensions::BlockLoadAction>, variantIndex<ContentExtensions::BlockLoadAction> });
+    testRequest(backend, mainDocumentRequest("https://www.w3.org/"_s), { variantIndex<ContentExtensions::BlockLoadAction> });
 }
 
 } // namespace TestWebKitAPI

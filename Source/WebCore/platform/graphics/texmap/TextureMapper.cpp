@@ -109,7 +109,7 @@ private:
     private:
         friend class TextureMapperGLData;
 
-        using GLContextDataMap = UncheckedKeyHashMap<void*, SharedGLData*>;
+        using GLContextDataMap = HashMap<void*, SharedGLData*>;
         static GLContextDataMap& contextDataMap()
         {
             static NeverDestroyed<GLContextDataMap> map;
@@ -121,13 +121,13 @@ private:
             glGetIntegerv(GL_MAX_TEXTURE_SIZE, &m_maxTextureSize);
         }
 
-        UncheckedKeyHashMap<unsigned, RefPtr<TextureMapperShaderProgram>> m_programs;
+        HashMap<unsigned, RefPtr<TextureMapperShaderProgram>> m_programs;
         int32_t m_maxTextureSize;
     };
 
     const Ref<SharedGLData> m_sharedGLData;
-    UncheckedKeyHashMap<const void*, GLuint> m_vbos;
-    UncheckedKeyHashMap<uint64_t, Vector<Ref<TextureMapperGPUBuffer>>> m_buffers;
+    HashMap<const void*, GLuint> m_vbos;
+    HashMap<uint64_t, Vector<Ref<TextureMapperGPUBuffer>>> m_buffers;
 };
 
 TextureMapperGLData::TextureMapperGLData(void* platformContext)

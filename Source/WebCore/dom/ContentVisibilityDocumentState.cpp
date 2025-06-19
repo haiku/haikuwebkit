@@ -105,7 +105,7 @@ IntersectionObserver* ContentVisibilityDocumentState::intersectionObserver(Docum
         auto callback = ContentVisibilityIntersectionObserverCallback::create(document);
         IntersectionObserver::Init options { &document, { }, { }, { } };
         auto includeObscuredInsets = document.settings().contentInsetBackgroundFillEnabled() ? IncludeObscuredInsets::Yes : IncludeObscuredInsets::No;
-        auto observer = IntersectionObserver::create(document, WTFMove(callback), WTFMove(options), includeObscuredInsets);
+        auto observer = IntersectionObserver::create(document, WTFMove(callback), WTFMove(options), includeObscuredInsets, IntersectionObserver::NotificationDelivery::Synchronous);
         if (observer.hasException())
             return nullptr;
         m_observer = observer.releaseReturnValue();
@@ -222,7 +222,7 @@ void ContentVisibilityDocumentState::updateContentRelevancyForScrollIfNeeded(con
     auto findSkippedContentRoot = [](const Element& element) -> RefPtr<const Element> {
         RefPtr<const Element> found;
         if (element.renderer() && element.renderer()->isSkippedContent()) {
-            for (RefPtr candidate = &element; candidate; candidate = candidate->parentElementInComposedTree()) {
+            for (RefPtr candidate = element; candidate; candidate = candidate->parentElementInComposedTree()) {
                 if (candidate->renderer() && candidate->renderStyle()->contentVisibility() == ContentVisibility::Auto)
                     found = candidate;
             }

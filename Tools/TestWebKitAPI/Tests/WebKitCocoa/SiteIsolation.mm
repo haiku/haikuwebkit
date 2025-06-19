@@ -44,6 +44,7 @@
 #import <WebKit/WKPreferencesPrivate.h>
 #import <WebKit/WKProcessPoolPrivate.h>
 #import <WebKit/WKURLSchemeTaskPrivate.h>
+#import <WebKit/WKUserContentControllerPrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
 #import <WebKit/WKWebViewPrivateForTesting.h>
 #import <WebKit/WKWebpagePreferencesPrivate.h>
@@ -4940,6 +4941,23 @@ TEST(SiteIsolation, FramesDuringProvisionalNavigation)
             { { "https://webkit.org"_s }, { RemoteFrame } }
         },
     });
+}
+
+TEST(SiteIsolation, UserScript)
+{
+    HTTPServer server({
+        { "/example"_s, { "<iframe src='https://webkit.org/iframe'></iframe>"_s } },
+        { "/iframe"_s, { "hi"_s } }
+    }, HTTPServer::Protocol::HttpsProxy);
+
+    auto [webView, navigationDelegate] = siteIsolatedViewAndDelegate(server);
+    [webView loadRequest:[NSURLRequest requestWithURL:[NSURL URLWithString:@"https://example.com/example"]]];
+    [navigationDelegate waitForDidFinishNavigation];
+
+    NSString *js = @"if (window.parent != window.self) { alert('script ran in iframe') }";
+    RetainPtr script = adoptNS([[WKUserScript alloc] initWithSource:js injectionTime:WKUserScriptInjectionTimeAtDocumentStart forMainFrameOnly:NO]);
+    [[webView configuration].userContentController _addUserScriptImmediately:script.get()];
+    EXPECT_WK_STREQ([webView _test_waitForAlert], "script ran in iframe");
 }
 
 }

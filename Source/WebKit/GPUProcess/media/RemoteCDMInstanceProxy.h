@@ -63,7 +63,6 @@ public:
 
     const RemoteCDMInstanceConfiguration& configuration() const { return m_configuration.get(); }
     WebCore::CDMInstance& instance() { return m_instance; }
-    Ref<WebCore::CDMInstance> protectedInstance() const;
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess() const;
 
 private:
@@ -94,8 +93,8 @@ private:
     RefPtr<RemoteCDMProxy> protectedCdm() const;
 
     WeakPtr<RemoteCDMProxy> m_cdm;
-    Ref<WebCore::CDMInstance> m_instance;
-    UniqueRef<RemoteCDMInstanceConfiguration> m_configuration;
+    const Ref<WebCore::CDMInstance> m_instance;
+    const UniqueRef<RemoteCDMInstanceConfiguration> m_configuration;
     RemoteCDMInstanceIdentifier m_identifier;
     HashMap<RemoteCDMInstanceSessionIdentifier, Ref<RemoteCDMInstanceSessionProxy>> m_sessions;
 

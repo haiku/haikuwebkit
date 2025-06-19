@@ -264,7 +264,9 @@ extern "C" { extern void (*const __identifier("??_7TestOperationConditional@WebC
 #else
 extern "C" { extern void* _ZTVN7WebCore24TestOperationConditionalE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestOperationConditional>, void>> static inline void verifyVTable(TestOperationConditional* ptr) {
+template<std::same_as<TestOperationConditional> T>
+static inline void verifyVTable(TestOperationConditional* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

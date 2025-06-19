@@ -46,7 +46,8 @@ struct JSToWrappedOverloader {
 };
 
 template<typename T>
-struct JSToWrappedOverloader<T, typename std::enable_if<JSDOMWrapperConverterTraits<T>::needsState>::type> {
+    requires JSDOMWrapperConverterTraits<T>::needsState
+struct JSToWrappedOverloader<T> {
     using ReturnType = typename JSDOMWrapperConverterTraits<T>::ToWrappedReturnType;
     using WrapperType = typename JSDOMWrapperConverterTraits<T>::WrapperClass;
 

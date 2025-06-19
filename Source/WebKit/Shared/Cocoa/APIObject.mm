@@ -215,11 +215,15 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         break;
 
     case Type::ProcessPool:
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         wrapper = [WKProcessPool alloc];
+        ALLOW_DEPRECATED_DECLARATIONS_END
         break;
 
     case Type::ProcessPoolConfiguration:
+        ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         wrapper = [_WKProcessPoolConfiguration alloc];
+        ALLOW_DEPRECATED_DECLARATIONS_END
         break;
 
     case Type::PageConfiguration:

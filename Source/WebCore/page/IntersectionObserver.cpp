@@ -106,7 +106,7 @@ static ExceptionOr<LengthBox> parseMargin(String& margin, const String& marginNa
     return LengthBox(WTFMove(margins[0]), WTFMove(margins[1]), WTFMove(margins[2]), WTFMove(margins[3]));
 }
 
-ExceptionOr<Ref<IntersectionObserver>> IntersectionObserver::create(Document& document, Ref<IntersectionObserverCallback>&& callback, IntersectionObserver::Init&& init, IncludeObscuredInsets includeObscuredInsets)
+ExceptionOr<Ref<IntersectionObserver>> IntersectionObserver::create(Document& document, Ref<IntersectionObserverCallback>&& callback, IntersectionObserver::Init&& init, IncludeObscuredInsets includeObscuredInsets, IntersectionObserver::NotificationDelivery notificationDelivery)
 {
     RefPtr<ContainerNode> root;
     if (init.root) {
@@ -140,18 +140,19 @@ ExceptionOr<Ref<IntersectionObserver>> IntersectionObserver::create(Document& do
             return Exception { ExceptionCode::RangeError, "Failed to construct 'IntersectionObserver': all thresholds must lie in the range [0.0, 1.0]."_s };
     }
 
-    return adoptRef(*new IntersectionObserver(document, WTFMove(callback), root.get(), rootMarginOrException.releaseReturnValue(), scrollMarginOrException.releaseReturnValue(), WTFMove(thresholds), includeObscuredInsets));
+    return adoptRef(*new IntersectionObserver(document, WTFMove(callback), root.get(), rootMarginOrException.releaseReturnValue(), scrollMarginOrException.releaseReturnValue(), WTFMove(thresholds), includeObscuredInsets, notificationDelivery));
 }
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(IntersectionObserver);
 
-IntersectionObserver::IntersectionObserver(Document& document, Ref<IntersectionObserverCallback>&& callback, ContainerNode* root, LengthBox&& parsedRootMargin, LengthBox&& parsedScrollMargin, Vector<double>&& thresholds, IncludeObscuredInsets includeObscuredInsets)
+IntersectionObserver::IntersectionObserver(Document& document, Ref<IntersectionObserverCallback>&& callback, ContainerNode* root, LengthBox&& parsedRootMargin, LengthBox&& parsedScrollMargin, Vector<double>&& thresholds, IncludeObscuredInsets includeObscuredInsets, IntersectionObserver::NotificationDelivery notificationDelivery)
     : m_root(root)
     , m_rootMargin(WTFMove(parsedRootMargin))
     , m_scrollMargin(WTFMove(parsedScrollMargin))
     , m_thresholds(WTFMove(thresholds))
     , m_callback(WTFMove(callback))
     , m_includeObscuredInsets(includeObscuredInsets)
+    , m_notificationDelivery(notificationDelivery)
 {
     if (RefPtr rootDocument = dynamicDowncast<Document>(root)) {
         auto& observerData = rootDocument->ensureIntersectionObserverData();
@@ -165,7 +166,7 @@ IntersectionObserver::IntersectionObserver(Document& document, Ref<IntersectionO
     }
 
     std::ranges::sort(m_thresholds);
-    
+
     LOG_WITH_STREAM(IntersectionObserver, stream << "Created IntersectionObserver " << this << " root " << root << " root margin " << m_rootMargin << " scroll margin " << m_scrollMargin << " thresholds " << m_thresholds);
 }
 
@@ -497,17 +498,17 @@ auto IntersectionObserver::computeIntersectionState(const IntersectionObserverRe
     return intersectionState;
 }
 
-auto IntersectionObserver::updateObservations(Document& hostDocument) -> NeedNotify
+bool IntersectionObserver::updateObservations(Document& hostDocument)
 {
     RefPtr frameView = hostDocument.view();
     if (!frameView)
-        return NeedNotify::No;
+        return false;
 
     auto timestamp = nowTimestamp();
     if (!timestamp)
-        return NeedNotify::No;
+        return false;
 
-    auto needNotify = NeedNotify::No;
+    bool needNotify = false;
 
     for (auto& target : observationTargets()) {
         auto& targetRegistrations = target->intersectionObserverDataIfExists()->registrations;
@@ -558,7 +559,7 @@ auto IntersectionObserver::updateObservations(Document& hostDocument) -> NeedNot
                 intersectionState.thresholdIndex > 0,
             }));
 
-            needNotify = NeedNotify::Yes;
+            needNotify = true;
             registration.previousThresholdIndex = intersectionState.thresholdIndex;
         }
     }

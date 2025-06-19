@@ -56,7 +56,7 @@ SpeechRecognition::SpeechRecognition(Document& document)
     : ActiveDOMObject(document)
 {
     if (auto* page = document.page()) {
-        m_connection = &page->speechRecognitionConnection();
+        m_connection = page->speechRecognitionConnection();
         m_connection->registerClient(*this);
     }
 }

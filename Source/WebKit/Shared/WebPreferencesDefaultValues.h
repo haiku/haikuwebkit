@@ -182,12 +182,8 @@ bool defaultContentInsetBackgroundFillEnabled();
 bool defaultScreenTimeEnabled();
 #endif
 
-#if ENABLE(MAC_STYLE_CONTROLS_ON_CATALYST)
-bool defaultMacStyleControlsOnCatalyst();
-#endif
-
-#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
-bool defaultVectorBasedControlsOnMacEnabled();
+#if ENABLE(FORM_CONTROL_REFRESH)
+bool defaultFormControlRefreshEnabled();
 #endif
 
 #if ENABLE(CONTENT_EXTENSIONS)

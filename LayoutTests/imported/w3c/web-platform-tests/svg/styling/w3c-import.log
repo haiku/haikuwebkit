@@ -20,6 +20,12 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/svg/styling/css-selectors-case-sensitivity.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/styling/cx-sibling-index-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/styling/font-size-number-calc-crash.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/styling/nested-svg-sizing-expected.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/styling/nested-svg-sizing-expected.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/styling/nested-svg-sizing-with-use-expected.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/styling/nested-svg-sizing-with-use-expected.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/styling/nested-svg-sizing-with-use.svg
+/LayoutTests/imported/w3c/web-platform-tests/svg/styling/nested-svg-sizing.svg
 /LayoutTests/imported/w3c/web-platform-tests/svg/styling/padding-on-svg-via-img-ref.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/styling/padding-on-svg-via-img.tentative-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/styling/padding-on-svg-via-img.tentative.html

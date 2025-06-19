@@ -843,13 +843,21 @@ def decode_cf_type(type):
         result.append('    return result->toCF();')
     return result
 
-def decode_type(type):
+
+def should_decode_ref(member, serialized_types):
+    for serialized_type in serialized_types:
+        if serialized_type.namespace_and_name() == member.type:
+            return serialized_type.members_are_subclasses
+    return False
+
+
+def decode_type(type, serialized_types):
     if type.cf_type is not None:
         return decode_cf_type(type)
 
     result = []
     if type.parent_class is not None:
-        result = result + decode_type(type.parent_class)
+        result = result + decode_type(type.parent_class, serialized_types)
 
     if type.members_are_subclasses:
         result.append(f'    auto type = decoder.decode<{type.subclass_enum_name()}>();')
@@ -916,7 +924,10 @@ def decode_type(type):
                 result.append('    }')
         else:
             assert len(decodable_classes) == 0
-            result.append(f'    auto {sanitized_variable_name} = decoder.decode<{member.type}>();')
+            if should_decode_ref(member, serialized_types):
+                result.append(f'    auto {sanitized_variable_name} = decoder.decode<Ref<{member.type}>>();')
+            else:
+                result.append(f'    auto {sanitized_variable_name} = decoder.decode<{member.type}>();')
             if 'EncodeRequestBody' in member.attributes:
                 result.append(f'    if ({sanitized_variable_name}) {{')
                 result.append(f'        if (auto {sanitized_variable_name}Body = decoder.decode<IPC::FormDataReference>())')
@@ -989,7 +1000,7 @@ def construct_type(type, specialization, indentation):
     return result
 
 
-def generate_one_impl(type, template_argument):
+def generate_one_impl(type, template_argument, serialized_types):
     result = []
     name_with_template = type.namespace_and_name()
     if template_argument is not None:
@@ -1045,7 +1056,7 @@ def generate_one_impl(type, template_argument):
     else:
         result.append(f'std::optional<{name_with_template}> ArgumentCoder<{name_with_template}>::decode(Decoder& decoder)')
     result.append('{')
-    result = result + decode_type(type)
+    result = result + decode_type(type, serialized_types)
     if type.cf_type is None:
         if not type.members_are_subclasses:
             result.append('    if (!decoder.isValid()) [[unlikely]]')
@@ -1155,9 +1166,9 @@ def generate_impl(serialized_types, serialized_enums, headers, generating_webkit
             continue
         if type.templates:
             for template in type.templates:
-                result.extend(generate_one_impl(type, template))
+                result.extend(generate_one_impl(type, template, serialized_types))
         else:
-            result.extend(generate_one_impl(type, None))
+            result.extend(generate_one_impl(type, None, serialized_types))
     result.append('} // namespace IPC')
     result.append('')
     result.append('namespace WTF {')

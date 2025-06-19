@@ -143,7 +143,7 @@ void RemoteAudioMediaStreamTrackRendererInternalUnitManager::deleteUnit(AudioMed
 
     if (m_units.isEmpty()) {
         if (auto connection = m_gpuConnectionToWebProcess.get())
-            connection->protectedGPUProcess()->tryExitIfUnusedAndUnderMemoryPressure();
+            connection->gpuProcess().tryExitIfUnusedAndUnderMemoryPressure();
     }
 }
 
@@ -223,7 +223,7 @@ void RemoteAudioMediaStreamTrackRendererInternalUnitManagerUnit::reset()
 
     m_canReset = false;
     if (RefPtr connection = m_connection.get())
-        connection->protectedConnection()->send(Messages::GPUProcessConnection::ResetAudioMediaStreamTrackRendererInternalUnit { m_identifier }, 0);
+        connection->connection().send(Messages::GPUProcessConnection::ResetAudioMediaStreamTrackRendererInternalUnit { m_identifier }, 0);
 }
 
 void RemoteAudioMediaStreamTrackRendererInternalUnitManagerUnit::setShouldRegisterAsSpeakerSamplesProducer(bool value)

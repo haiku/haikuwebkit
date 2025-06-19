@@ -118,10 +118,10 @@ struct FontDataCacheKeyTraits : WTF::GenericHashTraits<FontPlatformData> {
     }
 };
 
-using FontPlatformDataCache = UncheckedKeyHashMap<FontPlatformDataCacheKey, std::unique_ptr<FontPlatformData>, FontPlatformDataCacheKeyHash, FontPlatformDataCacheKeyHashTraits>;
-using FontDataCache = UncheckedKeyHashMap<FontPlatformData, Ref<Font>, FontDataCacheKeyHash, FontDataCacheKeyTraits>;
+using FontPlatformDataCache = HashMap<FontPlatformDataCacheKey, std::unique_ptr<FontPlatformData>, FontPlatformDataCacheKeyHash, FontPlatformDataCacheKeyHashTraits>;
+using FontDataCache = HashMap<FontPlatformData, Ref<Font>, FontDataCacheKeyHash, FontDataCacheKeyTraits>;
 #if ENABLE(OPENTYPE_VERTICAL)
-using FontVerticalDataCache = UncheckedKeyHashMap<FontPlatformData, RefPtr<OpenTypeVerticalData>, FontDataCacheKeyHash, FontDataCacheKeyTraits>;
+using FontVerticalDataCache = HashMap<FontPlatformData, RefPtr<OpenTypeVerticalData>, FontDataCacheKeyHash, FontDataCacheKeyTraits>;
 #endif
 
 struct FontCache::FontDataCaches {

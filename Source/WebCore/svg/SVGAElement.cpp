@@ -2,7 +2,7 @@
  * Copyright (C) 2004, 2005, 2008 Nikolas Zimmermann <zimmermann@kde.org>
  * Copyright (C) 2004, 2005, 2007 Rob Buis <buis@kde.org>
  * Copyright (C) 2007 Eric Seidel <eric@webkit.org>
- * Copyright (C) 2010-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2016 Google Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -144,7 +144,7 @@ void SVGAElement::defaultEventHandler(Event& event)
             event.setDefaultHandled();
 
             if (RefPtr frame = document().frame())
-                frame->protectedLoader()->changeLocation(protectedDocument()->completeURL(url), target, &event, ReferrerPolicy::EmptyString, document().shouldOpenExternalURLsPolicyToPropagate());
+                frame->loader().changeLocation(protectedDocument()->completeURL(url), target, &event, ReferrerPolicy::EmptyString, document().shouldOpenExternalURLsPolicyToPropagate());
             return;
         }
     }

@@ -23,6 +23,7 @@
 #include "JSExportMacros.h"
 #include "PropertyOffset.h"
 #include "Structure.h"
+#include "VM.h"
 #include "WriteBarrier.h"
 #include <wtf/HashTable.h>
 #include <wtf/MathExtras.h>

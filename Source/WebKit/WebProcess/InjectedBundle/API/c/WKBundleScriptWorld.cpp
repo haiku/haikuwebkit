@@ -56,6 +56,11 @@ void WKBundleScriptWorldMakeAllShadowRootsOpen(WKBundleScriptWorldRef scriptWorl
     WebKit::toImpl(scriptWorldRef)->makeAllShadowRootsOpen();
 }
 
+void WKBundleScriptWorldExposeClosedShadowRootsForExtensions(WKBundleScriptWorldRef scriptWorldRef)
+{
+    WebKit::toImpl(scriptWorldRef)->exposeClosedShadowRootsForExtensions();
+}
+
 void WKBundleScriptWorldDisableOverrideBuiltinsBehavior(WKBundleScriptWorldRef scriptWorldRef)
 {
     WebKit::toImpl(scriptWorldRef)->disableOverrideBuiltinsBehavior();

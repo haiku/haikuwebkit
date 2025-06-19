@@ -1,5 +1,5 @@
 /*
- * Portions Copyright (c) 2011 Motorola Mobility, Inc.  All rights reserved.
+ * Portions Copyright (c) 2011 Motorola Mobility, Inc. All rights reserved.
  * Copyright (C) 2014 Collabora Ltd.
  * Copyright (C) 2011, 2017, 2020 Igalia S.L.
  *
@@ -116,6 +116,7 @@
 #if ENABLE(WPE_PLATFORM)
 #include "WebKitInputMethodContextImplWPE.h"
 #endif
+#include "WebKitColor.h"
 #endif
 
 #if ENABLE(2022_GLIB_API)
@@ -243,6 +244,8 @@ enum {
 
     PROP_WEB_EXTENSION_MODE,
     PROP_DEFAULT_CONTENT_SECURITY_POLICY,
+
+    PROP_THEME_COLOR,
 
     N_PROPERTIES,
 };
@@ -555,6 +558,11 @@ void WebKitWebViewClient::didReceiveUserMessage(WKWPE::View&, UserMessage&& mess
 WebKitWebResourceLoadManager* WebKitWebViewClient::webResourceLoadManager()
 {
     return webkitWebViewGetWebResourceLoadManager(m_webView);
+}
+
+void WebKitWebViewClient::themeColorDidChange()
+{
+    webkitWebViewEmitThemeColorChanged(m_webView);
 }
 
 #if ENABLE(FULLSCREEN_API)
@@ -1177,6 +1185,18 @@ static void webkitWebViewGetProperty(GObject* object, guint propId, GValue* valu
     case PROP_DEFAULT_CONTENT_SECURITY_POLICY:
         g_value_set_string(value, webkit_web_view_get_default_content_security_policy(webView));
         break;
+    case PROP_THEME_COLOR: {
+#if PLATFORM(GTK)
+        GdkRGBA color;
+        webkit_web_view_get_theme_color(webView, &color);
+        g_value_set_boxed(value, static_cast<gconstpointer>(&color));
+#else
+        auto* color = static_cast<WebKitColor*>(fastMalloc(sizeof(WebKitColor)));
+        webkit_web_view_get_theme_color(webView, color);
+        g_value_take_boxed(value, static_cast<gconstpointer>(color));
+#endif
+        break;
+    }
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, propId, paramSpec);
     }
@@ -1709,6 +1729,23 @@ static void webkit_web_view_class_init(WebKitWebViewClass* webViewClass)
         nullptr, nullptr,
         nullptr,
         static_cast<GParamFlags>(WEBKIT_PARAM_READWRITE | G_PARAM_CONSTRUCT_ONLY));
+
+    /**
+     * WebKitWebView:theme-color:
+     *
+     * The theme color of the WebView's current page.
+     *
+     * Since: 2.50
+     */
+    sObjProperties[PROP_THEME_COLOR] = g_param_spec_boxed(
+        "theme-color",
+        nullptr, nullptr,
+#if PLATFORM(WPE)
+        WEBKIT_TYPE_COLOR,
+#else
+        GDK_TYPE_RGBA,
+#endif
+        WEBKIT_PARAM_READABLE);
 
     g_object_class_install_properties(gObjectClass, N_PROPERTIES, sObjProperties.data());
 
@@ -2715,6 +2752,11 @@ void webkitWebViewRunAsModal(WebKitWebView* webView)
     gdk_threads_enter();
     ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
+}
+
+void webkitWebViewEmitThemeColorChanged(WebKitWebView* webView)
+{
+    g_object_notify_by_pspec(G_OBJECT(webView), sObjProperties[PROP_THEME_COLOR]);
 }
 
 void webkitWebViewClosePage(WebKitWebView* webView)

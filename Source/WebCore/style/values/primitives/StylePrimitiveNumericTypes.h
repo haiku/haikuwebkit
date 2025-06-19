@@ -119,7 +119,7 @@ using NumberAll = Number<CSS::All>;
 using NumberNonnegative = Number<CSS::Nonnegative>;
 
 // Standard Angles
-using AngleAll = Length<CSS::All>;
+using AngleAllFloat = Angle<CSS::All, float>;
 
 // Standard Lengths
 using LengthAll = Length<CSS::All>;

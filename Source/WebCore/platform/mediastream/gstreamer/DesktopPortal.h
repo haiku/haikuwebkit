@@ -57,12 +57,12 @@ public:
     static RefPtr<DesktopPortalCamera> create();
 
     bool isCameraPresent();
-    bool accessCamera();
-    std::optional<int> openCameraPipewireRemote();
+    void accessCamera(Function<void(std::optional<int>)>&&);
 
 private:
+    std::optional<int> openCameraPipewireRemote();
+
     DesktopPortalCamera(ASCIILiteral, GRefPtr<GDBusProxy>&&);
-    HashMap<String, std::optional<bool>> m_cameraAccessResults;
 };
 
 class DesktopPortalScreenCast : public DesktopPortal {

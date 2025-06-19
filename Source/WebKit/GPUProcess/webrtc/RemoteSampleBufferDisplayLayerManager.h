@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -86,12 +86,10 @@ private:
     void createLayer(SampleBufferDisplayLayerIdentifier, bool hideRootLayer, WebCore::IntSize, bool shouldMaintainAspectRatio, bool canShowWhileLocked, LayerCreationCallback);
     void releaseLayer(SampleBufferDisplayLayerIdentifier);
 
-    Ref<WorkQueue> protectedQueue() const { return m_queue; }
-
     ThreadSafeWeakPtr<GPUConnectionToWebProcess> m_connectionToWebProcess;
-    Ref<IPC::Connection> m_connection;
+    const Ref<IPC::Connection> m_connection;
     SharedPreferencesForWebProcess m_sharedPreferencesForWebProcess;
-    Ref<WorkQueue> m_queue;
+    const Ref<WorkQueue> m_queue;
     mutable Lock m_layersLock;
     HashMap<SampleBufferDisplayLayerIdentifier, Ref<RemoteSampleBufferDisplayLayer>> m_layers WTF_GUARDED_BY_LOCK(m_layersLock);
 };

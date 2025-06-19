@@ -192,6 +192,7 @@ void JITCompiler::link(LinkBuffer& linkBuffer)
             tables[index++] = WTFMove(entry.value);
         m_jitCode->common.m_stringSearchTable8 = WTFMove(tables);
     }
+    m_jitCode->common.m_concatKeyAtomStringCaches = WTFMove(m_graph.m_concatKeyAtomStringCaches);
 
 #if USE(JSVALUE32_64)
     m_jitCode->common.doubleConstants = WTFMove(m_graph.m_doubleConstants);

@@ -169,8 +169,7 @@ void ModelConnectionToWebProcess::didUnloadModelPlayer(WebCore::ModelPlayerIdent
 
 bool ModelConnectionToWebProcess::allowsExitUnderMemoryPressure() const
 {
-    // FIXME: Should allow exit if we have no models.
-    return false;
+    return !m_modelProcessModelPlayerManagerProxy->hasModelPlayers();
 }
 
 Logger& ModelConnectionToWebProcess::logger()

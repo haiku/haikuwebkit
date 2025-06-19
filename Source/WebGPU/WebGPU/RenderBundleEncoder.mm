@@ -298,7 +298,6 @@ bool RenderBundleEncoder::executePreDrawCommands(bool needsValidationLayerWorkar
         makeInvalid(@"Pipeline was not set prior to draw command");
         return false;
     }
-    m_requiresCommandReplay = m_requiresCommandReplay || !pipeline->vertexShaderBindingCount();
 
     Ref pipelineLayout = pipeline->pipelineLayout();
     auto vertexDynamicOffsetSum = checkedSum<uint64_t>(m_vertexDynamicOffset, sizeof(uint32_t) * pipelineLayout->sizeOfVertexDynamicOffsets());

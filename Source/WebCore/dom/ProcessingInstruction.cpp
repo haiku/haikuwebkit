@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2000 Peter Kelly (pmk@post.com)
- * Copyright (C) 2006-2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2013 Samsung Electronics. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,7 +65,7 @@ ProcessingInstruction::~ProcessingInstruction()
         cachedSheet->removeClient(*this);
 
     if (isConnected())
-        document().checkedStyleScope()->removeStyleSheetCandidateNode(*this);
+        document().styleScope().removeStyleSheetCandidateNode(*this);
 }
 
 String ProcessingInstruction::nodeName() const
@@ -128,7 +128,7 @@ void ProcessingInstruction::checkStyleSheet()
             
             if (!m_loading) {
                 m_loading = true;
-                document->checkedStyleScope()->addPendingSheet(*this);
+                document->styleScope().addPendingSheet(*this);
             }
 
             ASSERT_WITH_SECURITY_IMPLICATION(!m_cachedSheet);
@@ -151,7 +151,7 @@ void ProcessingInstruction::checkStyleSheet()
             else {
                 // The request may have been denied if (for example) the stylesheet is local and the document is remote.
                 m_loading = false;
-                document->checkedStyleScope()->removePendingSheet(*this);
+                document->styleScope().removePendingSheet(*this);
 #if ENABLE(XSLT)
                 if (m_isXSL)
                     document->scheduleToApplyXSLTransforms();
@@ -260,7 +260,7 @@ Node::InsertedIntoAncestorResult ProcessingInstruction::insertedIntoAncestor(Ins
     CharacterData::insertedIntoAncestor(insertionType, parentOfInsertedTree);
     if (!insertionType.connectedToDocument)
         return InsertedIntoAncestorResult::Done;
-    protectedDocument()->checkedStyleScope()->addStyleSheetCandidateNode(*this, m_createdByParser);
+    protectedDocument()->styleScope().addStyleSheetCandidateNode(*this, m_createdByParser);
     return InsertedIntoAncestorResult::NeedsPostInsertionCallback;
 }
 

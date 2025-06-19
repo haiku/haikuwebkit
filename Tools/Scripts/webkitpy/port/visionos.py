@@ -36,7 +36,7 @@ _log = logging.getLogger(__name__)
 class VisionOSPort(DevicePort):
     port_name = 'visionos'
 
-    CURRENT_VERSION = Version(2)
+    CURRENT_VERSION = Version(26)
     DEVICE_TYPE = DeviceType(software_variant='visionOS')
 
     def __init__(self, *args, **kwargs):

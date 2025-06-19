@@ -27,6 +27,8 @@
 
 #include "IdentifierTypes.h"
 #include "WebPage.h"
+#include <WebCore/IntPointHash.h>
+#include <WebCore/IntSizeHash.h>
 #include <WebCore/ScrollTypes.h>
 #include <WebCore/TextManipulationControllerExclusionRule.h>
 #include <WebCore/UserActivity.h>
@@ -57,6 +59,7 @@ struct WebPage::Internals {
     HashSet<WebCore::RegistrableDomain> loadedSubresourceDomains;
     UserActivity userActivity { "App nap disabled for page due to user activity"_s };
     std::optional<Vector<WebCore::TextManipulationControllerExclusionRule>> textManipulationExclusionRules;
+    HashMap<std::pair<WebCore::IntSize, double>, WebCore::IntPoint> dynamicSizeUpdateHistory;
 #if ENABLE(ADVANCED_PRIVACY_PROTECTIONS)
     struct LinkDecorationFilteringConditionals {
         HashSet<WebCore::RegistrableDomain> domains;

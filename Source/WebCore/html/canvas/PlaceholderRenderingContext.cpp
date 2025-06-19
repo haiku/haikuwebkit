@@ -102,7 +102,7 @@ PlaceholderRenderingContext::PlaceholderRenderingContext(HTMLCanvasElement& canv
 
 HTMLCanvasElement& PlaceholderRenderingContext::canvas() const
 {
-    return static_cast<HTMLCanvasElement&>(canvasBase());
+    return downcast<HTMLCanvasElement>(canvasBase());
 }
 
 IntSize PlaceholderRenderingContext::size() const

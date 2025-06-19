@@ -33,6 +33,7 @@
 #include <wtf/TZoneMalloc.h>
 #include <wtf/Vector.h>
 #include <wtf/WeakHashSet.h>
+#include <wtf/WeakRef.h>
 #include <wtf/text/WTFString.h>
 
 #if USE(HAIKU)
@@ -143,7 +144,7 @@ public:
         Vector<unsigned, 64> m_glyphEndOffsets;
         CoreTextIndicesVector m_coreTextIndices;
         FloatSize m_initialAdvance;
-        const Font& m_font;
+        SingleThreadWeakRef<const Font> m_font;
         std::span<const UChar> m_characters;
         unsigned m_indexBegin;
         unsigned m_indexEnd;

@@ -1,7 +1,7 @@
 /*
  *  Copyright (C) 1999-2001 Harri Porten (porten@kde.org)
  *  Copyright (C) 2001 Peter Kelly (pmk@post.com)
- *  Copyright (C) 2006-2020 Apple Inc. All rights reserved.
+ *  Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  *
  *  This library is free software; you can redistribute it and/or
  *  modify it under the terms of the GNU Lesser General Public
@@ -320,7 +320,7 @@ void ScriptController::initScriptForWindowProxy(JSWindowProxy& windowProxy)
         windowProxy.window()->setConsoleClient(page->console());
     }
 
-    protectedFrame()->protectedLoader()->dispatchDidClearWindowObjectInWorld(world);
+    protectedFrame()->loader().dispatchDidClearWindowObjectInWorld(world);
 }
 
 Ref<LocalFrame> ScriptController::protectedFrame() const
@@ -538,7 +538,7 @@ void ScriptController::collectIsolatedContexts(Vector<std::pair<JSC::JSGlobalObj
 {
     for (auto& jsWindowProxy : protectedWindowProxy()->jsWindowProxiesAsVector()) {
         auto* lexicalGlobalObject = jsWindowProxy->window();
-        RefPtr origin = &downcast<LocalDOMWindow>(jsWindowProxy->protectedWrapped())->protectedDocument()->securityOrigin();
+        RefPtr origin = downcast<LocalDOMWindow>(jsWindowProxy->protectedWrapped())->protectedDocument()->securityOrigin();
         result.append(std::make_pair(lexicalGlobalObject, WTFMove(origin)));
     }
 }

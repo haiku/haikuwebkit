@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -147,9 +147,9 @@ void WebUserContentController::addContentWorlds(const Vector<ContentWorldData>& 
                 if (&page.userContentProvider() != this)
                     return;
 
-                auto& mainFrame = page.mainFrame();
-                for (auto* frame = &mainFrame; frame; frame = frame->tree().traverseNext()) {
-                    auto* localFrame = dynamicDowncast<LocalFrame>(frame);
+                Ref mainFrame = page.mainFrame();
+                for (RefPtr frame = mainFrame.ptr(); frame; frame = frame->tree().traverseNext()) {
+                    RefPtr localFrame = dynamicDowncast<LocalFrame>(frame);
                     if (!localFrame)
                         continue;
                     localFrame->loader().client().dispatchGlobalObjectAvailable(contentWorld->coreWorld());
@@ -450,17 +450,15 @@ void WebUserContentController::addUserScriptInternal(InjectedBundleScriptWorld& 
         Page::forEachPage([&] (auto& page) {
             if (&page.userContentProvider() != this)
                 return;
-            
-            RefPtr localMainFrame = page.localMainFrame();
-            if (!localMainFrame)
-                return;
 
             if (userScript.injectedFrames() == UserContentInjectedFrames::InjectInTopFrameOnly) {
-                localMainFrame->injectUserScriptImmediately(world.coreWorld(), userScript);
+                if (RefPtr localMainFrame = page.localMainFrame())
+                    localMainFrame->injectUserScriptImmediately(world.coreWorld(), userScript);
                 return;
             }
 
-            for (RefPtr<Frame> frame = localMainFrame.get(); frame; frame = frame->tree().traverseNext(localMainFrame.get())) {
+            Ref mainFrame { page.mainFrame() };
+            for (RefPtr frame = mainFrame.ptr(); frame; frame = frame->tree().traverseNext(mainFrame.ptr())) {
                 RefPtr localFrame = dynamicDowncast<LocalFrame>(frame);
                 if (!localFrame)
                     continue;
@@ -573,8 +571,8 @@ void WebUserContentController::removeUserStyleSheetInternal(InjectedBundleScript
 
         auto& userStyleSheet = pair.second;
         if (auto pageID = userStyleSheet.pageID()) {
-            if (auto* webPage = WebProcess::singleton().webPage(*pageID)) {
-                if (auto* page = webPage->corePage())
+            if (RefPtr webPage = WebProcess::singleton().webPage(*pageID)) {
+                if (RefPtr page = webPage->corePage())
                     page->removeInjectedUserStyleSheet(userStyleSheet);
             }
         }

@@ -955,6 +955,8 @@ accessibility/display-contents/aria-owns.html [ Skip ]
 accessibility/mac/text-field-number-of-characters.html [ Skip ]
 accessibility/mac/content-editable-attributed-string.html [ Skip ]
 accessibility/mac/lazy-spellchecking.html [ Skip ]
+accessibility/mac/editable-page-lazy-spellchecking.html [ Skip ]
+accessibility/mac/designmode-lazy-spellchecking.html [ Skip ]
 accessibility/mac/spellcheck-with-voiceover.html [ Skip ]
 accessibility/text-marker/text-marker-range-with-unordered-markers.html
 accessibility/mac/line-boundary-at-br.html [ Skip ]
@@ -2497,7 +2499,6 @@ imported/w3c/web-platform-tests/pointerevents/pointerevent_capture_mouse.html [ 
 imported/w3c/web-platform-tests/pointerevents/pointerevent_click_during_capture.html [ Pass Failure ]
 imported/w3c/web-platform-tests/pointerevents/pointerevent_element_haspointercapture.html [ Pass Failure ]
 imported/w3c/web-platform-tests/pointerevents/pointerevent_mouse_capture_change_hover.html [ Pass Failure ]
-imported/w3c/web-platform-tests/pointerevents/pointerevent_mouse_pointercapture_in_frame.html [ Pass Failure ]
 imported/w3c/web-platform-tests/pointerevents/pointerevent_pointercapture-in-custom-element.html [ Pass Failure ]
 
 webkit.org/b/236128 fullscreen/full-screen-iframe-with-max-width-height.html [ Skip ]
@@ -3131,3 +3132,5 @@ http/tests/iframe-memory-monitor/media-video-autoplay-in-frames.html [ Skip ]
 http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie-preexisting-cookie.html [ Skip ]
 http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie.html [ Skip ]
 http/tests/websocket/tests/hybi/websocket-allowed-setting-cookie-as-third-party-with-third-party-cookie-blocking.https.html [ Skip ]
+
+webkit.org/b/294301 http/tests/media/hls/hls-audio-tracks-language.html [ Pass Failure ]

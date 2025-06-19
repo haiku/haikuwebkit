@@ -1131,16 +1131,25 @@ private:
 #endif
     }
 
-    template<typename Func>
-    IterationStatus forEachTmpInGroup(Tmp grp, const Func& func)
+    template<typename Func, size_t inlineCapacity>
+    IterationStatus forEachTmpInGroup(Tmp grp, Vector<Tmp, inlineCapacity>& worklist, const Func& func)
     {
-        TmpData& data = m_map[grp];
-        if (!data.isGroup())
-            return func(grp);
-        ASSERT(data.subGroup0 && data.subGroup1);
-        if (forEachTmpInGroup(data.subGroup0, func) == IterationStatus::Done)
-            return IterationStatus::Done;
-        return forEachTmpInGroup(data.subGroup1, func);
+        ASSERT(worklist.isEmpty());
+        worklist.append(grp);
+
+        while (!worklist.isEmpty()) {
+            Tmp tmp = worklist.takeLast();
+            TmpData& data = m_map[tmp];
+
+            if (data.isGroup()) {
+                worklist.append(data.subGroup1);
+                worklist.append(data.subGroup0);
+            } else if (func(tmp) == IterationStatus::Done) {
+                worklist.resize(0);
+                return IterationStatus::Done;
+            }
+        }
+        return IterationStatus::Continue;
     }
 
     template <Bank bank>
@@ -1158,6 +1167,7 @@ private:
             }
         };
         Vector<Move> moves;
+        Vector<Tmp, 8> worklist0, worklist1;
 
         m_code.forEachTmp<bank>([&](Tmp tmp) {
             ASSERT(!tmp.isReg());
@@ -1189,13 +1199,13 @@ private:
                 return a.tmp1.tmpIndex(bank) < b.tmp1.tmpIndex(bank);
             });
 
-        auto hasConflict = [this](Tmp group0, Tmp group1) {
+        auto hasConflict = [this, &worklist0, &worklist1](Tmp group0, Tmp group1) {
             bool conflicts = false;
-            forEachTmpInGroup(group0, [&](Tmp tmp0) {
+            forEachTmpInGroup(group0, worklist0, [&](Tmp tmp0) {
                 ASSERT(!conflicts);
                 TmpData& data0 = m_map[tmp0];
                 ASSERT(!data0.subGroup0 && !data0.subGroup1);
-                forEachTmpInGroup(group1, [&](Tmp tmp1) {
+                forEachTmpInGroup(group1, worklist1, [&](Tmp tmp1) {
                     ASSERT(!conflicts);
                     ASSERT(tmp0 != tmp1);
                     TmpData& data1 = m_map[tmp1];
@@ -1254,7 +1264,7 @@ private:
                 if (!data.parentGroup && data.isGroup()) {
                     dataLog("Group: ", tmp, " = { ");
                     CommaPrinter comma;
-                    forEachTmpInGroup(tmp, [&comma](Tmp member) {
+                    forEachTmpInGroup(tmp, worklist0, [&comma](Tmp member) {
                         dataLog(comma, member);
                         return IterationStatus::Continue;
                     });
@@ -1466,9 +1476,10 @@ private:
 
         ScalarRegisterSet alreadyAttempted;
         if (eagerGroupsExhaustiveSearch) {
+            Vector<Tmp, 8> worklist;
             // FIXME: this will check coalescables within the group, which is wasteful and common.
             // But without doing this, we won't try to coalescables between partially split groups.
-            IterationStatus status = forEachTmpInGroup(tmp, [&](Tmp member) {
+            IterationStatus status = forEachTmpInGroup(tmp, worklist, [&](Tmp member) {
                 for (auto& with : m_map[member].coalescables) {
                     Reg r = assignedReg(with.tmp);
                     if (r) {

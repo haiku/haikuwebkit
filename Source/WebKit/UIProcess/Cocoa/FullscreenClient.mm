@@ -79,7 +79,7 @@ void FullscreenClient::willEnterFullscreen(WebPageProxy*)
 #endif
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    [webView _addReasonToHideTopContentInsetFill:HideContentInsetFillReason::FullScreen];
+    [webView _addReasonToHideTopScrollPocket:HideScrollPocketReason::FullScreen];
 #endif
 }
 
@@ -119,7 +119,7 @@ void FullscreenClient::willExitFullscreen(WebPageProxy*)
 #endif
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    [webView _removeReasonToHideTopContentInsetFill:HideContentInsetFillReason::FullScreen];
+    [webView _removeReasonToHideTopScrollPocket:HideScrollPocketReason::FullScreen];
 #endif
 }
 

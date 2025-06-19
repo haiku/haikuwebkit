@@ -76,9 +76,9 @@ private:
         bool hasMarkedPurgeable;
     };
 
-    typedef Deque<std::unique_ptr<IOSurface>> CachedSurfaceQueue;
-    typedef UncheckedKeyHashMap<IntSize, CachedSurfaceQueue> CachedSurfaceMap;
-    typedef UncheckedKeyHashMap<IOSurface*, CachedSurfaceDetails> CachedSurfaceDetailsMap;
+    using CachedSurfaceQueue = Deque<std::unique_ptr<IOSurface>>;
+    using CachedSurfaceMap = HashMap<IntSize, CachedSurfaceQueue>;
+    using CachedSurfaceDetailsMap = HashMap<IOSurface*, CachedSurfaceDetails>;
 
 #if PLATFORM(MAC)
     static constexpr size_t defaultMaximumBytesCached { 256 * MB };

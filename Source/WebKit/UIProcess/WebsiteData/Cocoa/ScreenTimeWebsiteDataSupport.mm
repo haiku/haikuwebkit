@@ -88,8 +88,22 @@ void removeScreenTimeData(const HashSet<URL>& websitesToRemove, const WebsiteDat
 
     RetainPtr webHistory = adoptNS([PAL::allocSTWebHistoryInstance() initWithProfileIdentifier:profileIdentifier.get()]);
 
+    RetainPtr<NSMutableSet<NSString *>> websitesToRemoveDomains = [NSMutableSet set];
     for (auto& url : websitesToRemove)
-        [webHistory deleteHistoryForURL:url.createNSURL().get()];
+        if (RetainPtr nsURL = url.createNSURL())
+            [websitesToRemoveDomains addObject:[nsURL host]];
+
+    [webHistory fetchAllHistoryWithCompletionHandler:^(NSSet<NSURL *> *urls, NSError *error) {
+        if (error)
+            return;
+
+        for (NSURL *url in urls) {
+            for (NSString *domainString in websitesToRemoveDomains.get()) {
+                if ([[url host] hasSuffix:domainString])
+                    [webHistory deleteHistoryForURL:url];
+            }
+        }
+    }];
 }
 
 void removeScreenTimeDataWithInterval(WallTime modifiedSince, const WebsiteDataStoreConfiguration& configuration)

@@ -170,7 +170,7 @@ private:
     const Ref<PlatformCALayer> m_containerLayer;
 #endif
 
-    UncheckedKeyHashMap<TileIndex, TileInfo> m_tiles;
+    HashMap<TileIndex, TileInfo> m_tiles;
 
     IntRect m_primaryTileCoverageRect;
     Vector<FloatRect> m_secondaryTileCoverageRects;

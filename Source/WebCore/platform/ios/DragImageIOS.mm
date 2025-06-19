@@ -123,7 +123,7 @@ static RetainPtr<CGImageRef> cgImageFromTextIndicator(const TextIndicator& textI
     return nativeImage->platformImage();
 }
 
-DragImageRef createDragImageForLink(Element& linkElement, URL&, const String&, TextIndicatorData& indicatorData, float)
+DragImageData createDragImageForLink(Element& linkElement, URL&, const String&, float)
 {
     constexpr OptionSet<TextIndicatorOption> defaultLinkIndicatorOptions {
         TextIndicatorOption::TightlyFitContent,
@@ -133,12 +133,11 @@ DragImageRef createDragImageForLink(Element& linkElement, URL&, const String&, T
         TextIndicatorOption::ComputeEstimatedBackgroundColor
     };
 
-    auto textIndicator = TextIndicator::createWithRange(makeRangeSelectingNodeContents(linkElement), defaultLinkIndicatorOptions, TextIndicatorPresentationTransition::None, { });
+    RefPtr textIndicator = TextIndicator::createWithRange(makeRangeSelectingNodeContents(linkElement), defaultLinkIndicatorOptions, TextIndicatorPresentationTransition::None, { });
     if (!textIndicator)
-        return nullptr;
+        return  { nullptr, nullptr };
 
-    indicatorData = textIndicator->data();
-    return cgImageFromTextIndicator(*textIndicator).autorelease();
+    return  { cgImageFromTextIndicator(*textIndicator).autorelease(), textIndicator };
 }
 
 DragImageRef createDragImageIconForCachedImageFilename(const String&)

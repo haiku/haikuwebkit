@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2009 Alex Milowski (alex@milowski.com). All rights reserved.
- * Copyright (C) 2010 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2010 François Sausset (sausset@gmail.com). All rights reserved.
  * Copyright (C) 2016 Igalia S.L.
  *
@@ -248,7 +248,7 @@ void MathMLElement::defaultEventHandler(Event& event)
             const auto& href = attributeWithoutSynchronization(hrefAttr);
             event.setDefaultHandled();
             if (RefPtr frame = document().frame())
-                frame->protectedLoader()->changeLocation(document().completeURL(href), selfTargetFrameName(), &event, ReferrerPolicy::EmptyString, document().shouldOpenExternalURLsPolicyToPropagate());
+                frame->loader().changeLocation(document().completeURL(href), selfTargetFrameName(), &event, ReferrerPolicy::EmptyString, document().shouldOpenExternalURLsPolicyToPropagate());
             return;
         }
     }

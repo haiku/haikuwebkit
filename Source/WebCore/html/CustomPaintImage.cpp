@@ -96,7 +96,7 @@ ImageDrawResult CustomPaintImage::doCustomPaint(GraphicsContext& destContext, co
     Ref canvas = CustomPaintCanvas::create(*scriptExecutionContext, destSize.width(), destSize.height());
     RefPtr context = canvas->getContext();
 
-    UncheckedKeyHashMap<AtomString, RefPtr<CSSValue>> propertyValues;
+    HashMap<AtomString, RefPtr<CSSValue>> propertyValues;
 
     if (RefPtr element = renderElement->element()) {
         for (auto& name : m_inputProperties)

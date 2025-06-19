@@ -658,6 +658,8 @@ static ThunkGenerator thunkGeneratorForIntrinsic(Intrinsic intrinsic)
         return globalIsFiniteThunkGenerator;
     case NumberIsFiniteIntrinsic:
         return numberIsFiniteThunkGenerator;
+    case NumberIsSafeIntegerIntrinsic:
+        return numberIsSafeIntegerThunkGenerator;
     case SqrtIntrinsic:
         return sqrtThunkGenerator;
     case AbsIntrinsic:

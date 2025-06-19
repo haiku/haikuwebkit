@@ -591,15 +591,6 @@ Vector<ImageDecoder::FrameInfo> ImageDecoderAVFObjC::frameInfos() const
     });
 }
 
-unsigned ImageDecoderAVFObjC::frameBytesAtIndex(size_t index, SubsamplingLevel subsamplingLevel) const
-{
-    if (!frameIsCompleteAtIndex(index))
-        return 0;
-
-    IntSize frameSize = frameSizeAtIndex(index, subsamplingLevel);
-    return frameSize.area() * 4;
-}
-
 PlatformImagePtr ImageDecoderAVFObjC::createFrameImageAtIndex(size_t index, SubsamplingLevel, const DecodingOptions&)
 {
     Locker locker { m_sampleGeneratorLock };

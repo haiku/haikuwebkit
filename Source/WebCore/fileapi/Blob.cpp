@@ -427,7 +427,7 @@ ExceptionOr<Ref<ReadableStream>> Blob::stream()
             return didSucceed;
         }
 
-        UniqueRef<FileReaderLoader> m_loader;
+        const UniqueRef<FileReaderLoader> m_loader;
         Deque<Ref<FragmentedSharedBuffer>> m_queue;
         std::optional<Exception> m_exception;
         enum class StreamState : uint8_t { NotStarted, Started, Waiting };

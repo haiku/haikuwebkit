@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2016 Apple Inc. All Rights Reserved.
+ * Copyright (C) 2008-2016 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -436,8 +436,8 @@ public:
     virtual IntSize totalScrollbarSpace() const { return { }; }
     virtual int insetForLeftScrollbarSpace() const { return 0; }
 
-#if ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
-    virtual bool vectorBasedControlsEnabled() const { return false; }
+#if ENABLE(FORM_CONTROL_REFRESH)
+    virtual bool formControlRefreshEnabled() const { return false; }
 #endif
 
 protected:

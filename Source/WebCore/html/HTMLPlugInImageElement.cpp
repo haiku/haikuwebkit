@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2019 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -330,7 +330,7 @@ bool HTMLPlugInImageElement::requestObject(const String& relativeURL, const Stri
         RefPtr frame = this->document().frame();
         if (!frame)
             return;
-        frame->protectedLoader()->subframeLoader().requestObject(*this, relativeURL, nameAttribute, mimeType, paramNames, paramValues);
+        frame->loader().subframeLoader().requestObject(*this, relativeURL, nameAttribute, mimeType, paramNames, paramValues);
     });
     return true;
 }

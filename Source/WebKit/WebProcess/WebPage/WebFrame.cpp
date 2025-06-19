@@ -519,6 +519,8 @@ void WebFrame::commitProvisionalFrame()
     if (remoteFrame->isMainFrame())
         corePage->setMainFrame(*localFrame);
     localFrame->takeWindowProxyAndOpenerFrom(*remoteFrame);
+    if (RefPtr document = localFrame->document())
+        document->didBecomeCurrentDocumentInFrame();
 
     if (corePage->focusController().focusedFrame() == remoteFrame.get())
         corePage->focusController().setFocusedFrame(localFrame.get(), FocusController::BroadcastFocusedFrame::No);
@@ -1444,8 +1446,8 @@ bool WebFrame::handleKeyEvent(const WebKeyboardEvent& keyboardEvent)
         return false;
 
     if (keyboardEvent.type() == WebEventType::Char && keyboardEvent.isSystemKey())
-        return coreFrame->checkedEventHandler()->handleAccessKey(platform(keyboardEvent));
-    return coreFrame->checkedEventHandler()->keyEvent(platform(keyboardEvent));
+        return coreFrame->eventHandler().handleAccessKey(platform(keyboardEvent));
+    return coreFrame->eventHandler().keyEvent(platform(keyboardEvent));
 }
 
 bool WebFrame::isFocused() const

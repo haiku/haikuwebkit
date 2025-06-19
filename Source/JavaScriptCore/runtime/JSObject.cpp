@@ -2572,6 +2572,12 @@ JSValue JSObject::toPrimitive(JSGlobalObject* globalObject, PreferredPrimitiveTy
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
+    if (isJSArray(this)) {
+        auto* array = jsCast<JSArray*>(const_cast<JSObject*>(this));
+        if (array->isToPrimitiveFastAndNonObservable()) [[likely]]
+            RELEASE_AND_RETURN(scope, array->fastToString(globalObject));
+    }
+
     JSValue value = callToPrimitiveFunction<CachedSpecialPropertyKey::ToPrimitive>(globalObject, this, vm.propertyNames->toPrimitiveSymbol, preferredType);
     RETURN_IF_EXCEPTION(scope, { });
     if (value)
@@ -2808,6 +2814,12 @@ JSString* JSObject::toString(JSGlobalObject* globalObject) const
 {
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
+
+    if (isJSArray(this)) {
+        auto* array = jsCast<JSArray*>(const_cast<JSObject*>(this));
+        if (array->isToPrimitiveFastAndNonObservable()) [[likely]]
+            RELEASE_AND_RETURN(scope, array->fastToString(globalObject));
+    }
 
     JSValue primitive = callToPrimitiveFunction<CachedSpecialPropertyKey::ToPrimitive>(globalObject, this, vm.propertyNames->toPrimitiveSymbol, PreferString);
     RETURN_IF_EXCEPTION(scope, jsEmptyString(vm));

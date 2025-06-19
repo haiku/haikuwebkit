@@ -48,7 +48,6 @@
 #include "CSSPropertyParserConsumer+Anchor.h"
 #include "CSSPropertyParserConsumer+AngleDefinitions.h"
 #include "CSSPropertyParserConsumer+Animations.h"
-#include "CSSPropertyParserConsumer+AppleVisualEffect.h"
 #include "CSSPropertyParserConsumer+Attr.h"
 #include "CSSPropertyParserConsumer+Background.h"
 #include "CSSPropertyParserConsumer+Box.h"

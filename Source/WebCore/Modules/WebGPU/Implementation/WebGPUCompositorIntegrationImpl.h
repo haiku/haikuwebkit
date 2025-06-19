@@ -65,7 +65,7 @@ public:
     void setPresentationContext(PresentationContextImpl& presentationContext)
     {
         ASSERT(!m_presentationContext);
-        m_presentationContext = &presentationContext;
+        m_presentationContext = presentationContext;
     }
 
     void registerCallbacks(WTF::Function<void(CFArrayRef)>&& renderBuffersWereRecreatedCallback, WTF::Function<void(CompletionHandler<void()>&&)>&& onSubmittedWorkScheduledCallback)

@@ -152,5 +152,22 @@ TEST(WebKit, LoadNSURLRequestWithMutablePropertiesAndKeys)
     [webView _test_waitForDidFinishNavigation];
 }
 
+TEST(WebKit, NavigateToInvalidURL)
+{
+    auto webView = adoptNS([WKWebView new]);
+    auto delegate = adoptNS([TestNavigationDelegate new]);
+    webView.get().navigationDelegate = delegate.get();
+    __block bool finished { false };
+    delegate.get().decidePolicyForNavigationAction = ^(WKNavigationAction *action, void (^decisionHandler)(WKNavigationActionPolicy)) {
+        if ([action.request.URL.absoluteString isEqualToString:@"https://webkit.org/"])
+            return decisionHandler(WKNavigationActionPolicyAllow);
+        EXPECT_WK_STREQ(action.request.URL.absoluteString, "customscheme://Help%20Central/123456");
+        decisionHandler(WKNavigationActionPolicyCancel);
+        finished = true;
+    };
+    [webView loadHTMLString:@"<a id='link' href='customscheme://Help Central/123456'</a><script>link.click()</script>" baseURL:[NSURL URLWithString:@"https://webkit.org/"]];
+    Util::run(&finished);
+}
+
 } // namespace TestWebKitAPI
 

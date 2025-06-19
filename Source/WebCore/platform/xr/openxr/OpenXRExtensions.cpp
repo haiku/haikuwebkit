@@ -44,7 +44,7 @@ std::unique_ptr<OpenXRExtensions> OpenXRExtensions::create()
         return createStructure<XrExtensionProperties, XR_TYPE_EXTENSION_PROPERTIES>();
     }());
 
-    result = xrEnumerateInstanceExtensionProperties(nullptr, extensionCount, &extensionCount, extensions.data());
+    result = xrEnumerateInstanceExtensionProperties(nullptr, extensionCount, &extensionCount, extensions.mutableSpan().data());
     if (XR_FAILED(result)) {
         LOG(XR, "xrEnumerateInstanceExtensionProperties() failed: %d\n", result);
         return nullptr;

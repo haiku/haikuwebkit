@@ -429,8 +429,13 @@ void RenderStyle::copyPseudoElementsFrom(const RenderStyle& other)
     if (!other.m_cachedPseudoStyles)
         return;
 
-    for (auto& [key, pseudoElementStyle] : other.m_cachedPseudoStyles->styles)
+    for (auto& [key, pseudoElementStyle] : other.m_cachedPseudoStyles->styles) {
+        if (!pseudoElementStyle) {
+            ASSERT_NOT_REACHED();
+            continue;
+        }
         addCachedPseudoStyle(makeUnique<RenderStyle>(cloneIncludingPseudoElements(*pseudoElementStyle)));
+    }
 }
 
 void RenderStyle::copyPseudoElementBitsFrom(const RenderStyle& other)
@@ -613,18 +618,18 @@ bool RenderStyle::isIdempotentTextAutosizingCandidate(AutosizeStatus status) con
             if (whiteSpaceCollapse() == WhiteSpaceCollapse::Collapse && textWrapMode() == TextWrapMode::NoWrap) {
                 if (width().isFixed())
                     return false;
-                if (height().isFixed() && specifiedLineHeight().isFixed()) {
+                if (auto fixedHeight = height().tryFixed(); fixedHeight && specifiedLineHeight().isFixed()) {
                     float specifiedSize = specifiedFontSize();
-                    if (height().value() == specifiedSize && specifiedLineHeight().value() == specifiedSize)
+                    if (fixedHeight->value == specifiedSize && specifiedLineHeight().value() == specifiedSize)
                         return false;
                 }
                 return true;
             }
             if (fields.contains(AutosizeStatus::Fields::Floating)) {
-                if (specifiedLineHeight().isFixed() && height().isFixed()) {
+                if (auto fixedHeight = height().tryFixed(); specifiedLineHeight().isFixed() && fixedHeight) {
                     float specifiedSize = specifiedFontSize();
                     if (specifiedLineHeight().value() - specifiedSize > smallMinimumDifferenceThresholdBetweenLineHeightAndSpecifiedFontSizeForBoostingText
-                        && height().value() - specifiedSize > smallMinimumDifferenceThresholdBetweenLineHeightAndSpecifiedFontSizeForBoostingText) {
+                        && fixedHeight->value - specifiedSize > smallMinimumDifferenceThresholdBetweenLineHeightAndSpecifiedFontSizeForBoostingText) {
                         return true;
                     }
                 }
@@ -676,14 +681,14 @@ void RenderStyle::setAutosizeStatus(AutosizeStatus autosizeStatus)
 
 #endif // ENABLE(TEXT_AUTOSIZING)
 
-static bool positionChangeIsMovementOnly(const Style::InsetBox& a, const Style::InsetBox& b, const Length& width)
+static bool positionChangeIsMovementOnly(const Style::InsetBox& a, const Style::InsetBox& b, const Style::PreferredSize& width)
 {
     // If any unit types are different, then we can't guarantee
     // that this was just a movement.
-    if (a.left().type() != b.left().type()
-        || a.right().type() != b.right().type()
-        || a.top().type() != b.top().type()
-        || a.bottom().type() != b.bottom().type())
+    if (!a.left().hasSameType(b.left())
+        || !a.right().hasSameType(b.right())
+        || !a.top().hasSameType(b.top())
+        || !a.bottom().hasSameType(b.bottom()))
         return false;
 
     // Only one unit can be non-auto in the horizontal direction and
@@ -695,7 +700,7 @@ static bool positionChangeIsMovementOnly(const Style::InsetBox& a, const Style::
         return false;
     // If our width is auto and left or right is specified then this 
     // is not just a movement - we need to resize to our container.
-    if ((!a.left().isAuto() || !a.right().isAuto()) && width.isIntrinsicOrAuto())
+    if ((!a.left().isAuto() || !a.right().isAuto()) && width.isIntrinsicOrLegacyIntrinsicOrAuto())
         return false;
 
     // One of the units is fixed or percent in both directions and stayed

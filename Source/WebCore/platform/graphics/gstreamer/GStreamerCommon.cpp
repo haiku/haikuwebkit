@@ -562,9 +562,9 @@ void registerWebKitGStreamerVideoEncoder()
 // We use a recursive lock because the removal of a pipeline can trigger the removal of another one,
 // from the same thread, specially when using chained element harnesses.
 static RecursiveLock s_activePipelinesMapLock;
-static UncheckedKeyHashMap<String, GRefPtr<GstElement>>& activePipelinesMap()
+static HashMap<String, GRefPtr<GstElement>>& activePipelinesMap()
 {
-    static NeverDestroyed<UncheckedKeyHashMap<String, GRefPtr<GstElement>>> activePipelines;
+    static NeverDestroyed<HashMap<String, GRefPtr<GstElement>>> activePipelines;
     return activePipelines.get();
 }
 
@@ -1804,7 +1804,7 @@ GRefPtr<GstBuffer> wrapSpanData(const std::span<const uint8_t>& span)
 
     Vector<uint8_t> data { span };
     auto bufferSize = data.size();
-    auto bufferData = data.data();
+    auto bufferData = data.mutableSpan().data();
     auto buffer = adoptGRef(gst_buffer_new_wrapped_full(GST_MEMORY_FLAG_READONLY, bufferData, bufferSize, 0, bufferSize, new Vector<uint8_t>(WTFMove(data)), [](gpointer data) {
         delete static_cast<Vector<uint8_t>*>(data);
     }));

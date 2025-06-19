@@ -310,7 +310,7 @@ private:
 
 #if ENABLE(VIDEO_PRESENTATION_MODE)
     void prepareForVideoFullscreen() final;
-    bool canEnterVideoFullscreen(WebCore::HTMLMediaElementEnums::VideoFullscreenMode) const final;
+    bool canEnterVideoFullscreen(WebCore::HTMLVideoElement&, WebCore::HTMLMediaElementEnums::VideoFullscreenMode) const final;
     bool supportsVideoFullscreen(WebCore::HTMLMediaElementEnums::VideoFullscreenMode) final;
     bool supportsVideoFullscreenStandby() final;
     void setMockVideoPresentationModeEnabled(bool) final;

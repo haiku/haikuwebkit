@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -230,7 +230,7 @@ void ClipToImageBuffer::apply(GraphicsContext& context) const
 void ClipToImageBuffer::dump(TextStream& ts, OptionSet<AsTextFlag> flags) const
 {
     if (flags.contains(AsTextFlag::IncludeResourceIdentifiers))
-        ts.dumpProperty("image-buffer-identifier"_s, imageBuffer()->renderingResourceIdentifier());
+        ts.dumpProperty("image-buffer-identifier"_s, m_imageBuffer->renderingResourceIdentifier());
     ts.dumpProperty("dest-rect"_s, destinationRect());
 }
 
@@ -270,7 +270,7 @@ void DrawFilteredImageBuffer::dump(TextStream& ts, OptionSet<AsTextFlag> flags) 
 {
     if (flags.contains(AsTextFlag::IncludeResourceIdentifiers)) {
         if (m_sourceImage)
-            ts.dumpProperty("source-image-identifier"_s, sourceImage()->renderingResourceIdentifier());
+            ts.dumpProperty("source-image-identifier"_s, m_sourceImage->renderingResourceIdentifier());
     }
     ts.dumpProperty("source-image-rect"_s, sourceImageRect());
 }
@@ -345,7 +345,7 @@ void DrawImageBuffer::apply(GraphicsContext& context) const
 void DrawImageBuffer::dump(TextStream& ts, OptionSet<AsTextFlag> flags) const
 {
     if (flags.contains(AsTextFlag::IncludeResourceIdentifiers))
-        ts.dumpProperty("image-buffer-identifier"_s, imageBuffer()->renderingResourceIdentifier());
+        ts.dumpProperty("image-buffer-identifier"_s, m_imageBuffer->renderingResourceIdentifier());
     ts.dumpProperty("source-rect"_s, source());
     ts.dumpProperty("dest-rect"_s, destinationRect());
 }
@@ -358,7 +358,7 @@ void DrawNativeImage::apply(GraphicsContext& context) const
 void DrawNativeImage::dump(TextStream& ts, OptionSet<AsTextFlag> flags) const
 {
     if (flags.contains(AsTextFlag::IncludeResourceIdentifiers))
-        ts.dumpProperty("image-identifier"_s, nativeImage()->renderingResourceIdentifier());
+        ts.dumpProperty("image-identifier"_s, m_image->renderingResourceIdentifier());
     ts.dumpProperty("source-rect"_s, source());
     ts.dumpProperty("dest-rect"_s, destinationRect());
 }
@@ -382,7 +382,7 @@ void DrawPatternNativeImage::apply(GraphicsContext& context) const
 void DrawPatternNativeImage::dump(TextStream& ts, OptionSet<AsTextFlag> flags) const
 {
     if (flags.contains(AsTextFlag::IncludeResourceIdentifiers))
-        ts.dumpProperty("image-identifier"_s, nativeImage()->renderingResourceIdentifier());
+        ts.dumpProperty("image-identifier"_s, m_image->renderingResourceIdentifier());
     ts.dumpProperty("pattern-transform"_s, patternTransform());
     ts.dumpProperty("tile-rect"_s, tileRect());
     ts.dumpProperty("dest-rect"_s, destRect());
@@ -398,7 +398,7 @@ void DrawPatternImageBuffer::apply(GraphicsContext& context) const
 void DrawPatternImageBuffer::dump(TextStream& ts, OptionSet<AsTextFlag> flags) const
 {
     if (flags.contains(AsTextFlag::IncludeResourceIdentifiers))
-        ts.dumpProperty("image-identifier"_s, imageBuffer()->renderingResourceIdentifier());
+        ts.dumpProperty("image-identifier"_s, m_imageBuffer->renderingResourceIdentifier());
     ts.dumpProperty("pattern-transform"_s, patternTransform());
     ts.dumpProperty("tile-rect"_s, tileRect());
     ts.dumpProperty("dest-rect"_s, destRect());

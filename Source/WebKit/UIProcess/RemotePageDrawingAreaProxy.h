@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -46,7 +46,6 @@ public:
     void deref() const final { RefCounted::deref(); }
 
     WebProcessProxy& process() { return m_process; }
-    Ref<WebProcessProxy> protectedProcess();
 
 private:
     RemotePageDrawingAreaProxy(DrawingAreaProxy&, WebProcessProxy&);
@@ -57,7 +56,7 @@ private:
     WeakPtr<DrawingAreaProxy> m_drawingArea;
     DrawingAreaIdentifier m_identifier;
     std::span<IPC::ReceiverName> m_names;
-    Ref<WebProcessProxy> m_process;
+    const Ref<WebProcessProxy> m_process;
 };
 
 }

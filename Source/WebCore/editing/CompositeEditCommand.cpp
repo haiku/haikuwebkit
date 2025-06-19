@@ -1785,13 +1785,13 @@ RefPtr<Node> CompositeEditCommand::splitTreeToNode(Node& start, Node& end, bool 
 {
     ASSERT(&start != &end);
 
-    RefPtr adjustedEnd = &end;
+    RefPtr adjustedEnd = end;
     if (shouldSplitAncestor && adjustedEnd->parentNode())
         adjustedEnd = adjustedEnd->parentNode();
 
     ASSERT(adjustedEnd);
     RefPtr<Node> node;
-    for (node = &start; node && node->parentNode() != adjustedEnd;) {
+    for (node = start; node && node->parentNode() != adjustedEnd;) {
         RefPtr parentNode = node->parentNode();
         RefPtr parentElement = dynamicDowncast<Element>(parentNode);
         if (!parentElement || editingIgnoresContent(*parentNode))

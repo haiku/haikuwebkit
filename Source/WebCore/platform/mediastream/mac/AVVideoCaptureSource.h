@@ -27,7 +27,7 @@
 
 #if ENABLE(MEDIA_STREAM) && HAVE(AVCAPTUREDEVICE)
 
-#include "IntSizeHash.h"
+#include "IntSize.h"
 #include "OrientationNotifier.h"
 #include "RealtimeVideoCaptureSource.h"
 #include "Timer.h"

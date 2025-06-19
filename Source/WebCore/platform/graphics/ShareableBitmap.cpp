@@ -41,6 +41,7 @@ ShareableBitmapConfiguration::ShareableBitmapConfiguration(const IntSize& size, 
     , m_colorSpace(validateColorSpace(colorSpace))
     , m_headroom(headroom)
     , m_isOpaque(isOpaque)
+    , m_bitsPerComponent(calculateBitsPerComponent(this->colorSpace()))
     , m_bytesPerPixel(calculateBytesPerPixel(this->colorSpace()))
     , m_bytesPerRow(calculateBytesPerRow(size, this->colorSpace()))
 #if USE(CG)
@@ -53,7 +54,7 @@ ShareableBitmapConfiguration::ShareableBitmapConfiguration(const IntSize& size, 
     ASSERT(!m_size.isEmpty());
 }
 
-ShareableBitmapConfiguration::ShareableBitmapConfiguration(const IntSize& size, std::optional<DestinationColorSpace> colorSpace, Headroom headroom, bool isOpaque, unsigned bytesPerPixel, unsigned bytesPerRow
+ShareableBitmapConfiguration::ShareableBitmapConfiguration(const IntSize& size, std::optional<DestinationColorSpace> colorSpace, Headroom headroom, bool isOpaque, unsigned bitsPerComponent, unsigned bytesPerPixel, unsigned bytesPerRow
 #if USE(CG)
     , CGBitmapInfo bitmapInfo
 #endif
@@ -62,6 +63,7 @@ ShareableBitmapConfiguration::ShareableBitmapConfiguration(const IntSize& size, 
     , m_colorSpace(colorSpace)
     , m_headroom(headroom)
     , m_isOpaque(isOpaque)
+    , m_bitsPerComponent(bitsPerComponent)
     , m_bytesPerPixel(bytesPerPixel)
     , m_bytesPerRow(bytesPerRow)
 #if USE(CG)

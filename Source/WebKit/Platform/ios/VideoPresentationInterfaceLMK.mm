@@ -274,7 +274,7 @@ void VideoPresentationInterfaceLMK::captionsLayerBoundsChanged(const WebCore::Fl
     [m_spatialTrackingLayer setPosition:bounds.center()];
 #endif
     if (RefPtr model = videoPresentationModel())
-        model->setVideoFullscreenFrame(enclosingIntRect(bounds));
+        model->setTextTrackRepresentationBounds(enclosingIntRect(bounds));
 }
 
 void VideoPresentationInterfaceLMK::setupCaptionsLayer(CALayer *, const WebCore::FloatSize& initialSize)

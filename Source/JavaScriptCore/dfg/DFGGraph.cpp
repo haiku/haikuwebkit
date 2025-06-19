@@ -2024,6 +2024,14 @@ const BoyerMooreHorspoolTable<uint8_t>* Graph::tryAddStringSearchTable8(const St
     }).iterator->value.get();
 }
 
+const ConcatKeyAtomStringCache* Graph::tryAddConcatKeyAtomStringCache(const String& s0, const String& s1, ConcatKeyAtomStringCache::Mode mode)
+{
+    if ((s0.length() + s1.length()) > ConcatKeyAtomStringCache::maxStringLengthForCache)
+        return nullptr;
+    m_concatKeyAtomStringCaches.append(makeUnique<ConcatKeyAtomStringCache>(m_codeBlock, mode));
+    return m_concatKeyAtomStringCaches.last().get();
+}
+
 void Prefix::dump(PrintStream& out) const
 {
     if (!m_enabled)

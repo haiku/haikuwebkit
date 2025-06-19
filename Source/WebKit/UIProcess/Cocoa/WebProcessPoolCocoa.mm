@@ -1426,8 +1426,25 @@ String WebProcessPool::platformResourceMonitorRuleListSourceForTesting()
 }
 #endif
 
-static void addUserInstalledFontURLs(NSString *path, Vector<URL>& fontURLs)
+static Vector<SandboxExtension::Handle> sandboxExtensionsForUserInstalledFonts(const Vector<URL>& fontPathURLs, std::optional<audit_token_t> auditToken)
 {
+    Vector<SandboxExtension::Handle> handles;
+    for (auto& fontPathURL : fontPathURLs) {
+        std::optional<SandboxExtension::Handle> sandboxExtensionHandle;
+        if (auditToken)
+            sandboxExtensionHandle = SandboxExtension::createHandleForReadByAuditToken(fontPathURL.fileSystemPath(), *auditToken);
+        else
+            sandboxExtensionHandle = SandboxExtension::createHandle(fontPathURL.fileSystemPath(), SandboxExtension::Type::ReadOnly);
+        if (sandboxExtensionHandle)
+            handles.append(WTFMove(*sandboxExtensionHandle));
+    }
+    return handles;
+}
+
+static void addUserInstalledFontURLs(NSString *path, HashMap<String, URL>& fontURLs, Vector<URL>& sandboxExtensionURLs)
+{
+    bool didAddFontToMap = false;
+
     RetainPtr enumerator = [NSFileManager.defaultManager enumeratorAtPath:path];
 
     for (NSString *font in enumerator.get()) {
@@ -1435,36 +1452,49 @@ static void addUserInstalledFontURLs(NSString *path, Vector<URL>& fontURLs)
         RetainPtr utType = [UTType typeWithFilenameExtension:nsFontURL.get().pathExtension];
         if ([utType isSubtypeOfType:UTTypeFont]) {
             URL fontURL(nsFontURL.get());
-            fontURLs.append(fontURL);
-            RELEASE_LOG(Process, "Registering font url %s", fontURL.string().utf8().data());
+            RetainPtr fontDescriptors = adoptCF(CTFontManagerCreateFontDescriptorsFromURL(bridge_cast(nsFontURL.get())));
+            for (CFIndex i = 0; i < CFArrayGetCount(fontDescriptors.get()); ++i) {
+                RetainPtr fontDescriptor = checked_cf_cast<CTFontDescriptorRef>(CFArrayGetValueAtIndex(fontDescriptors.get(), i));
+                if (!fontDescriptor)
+                    continue;
+                RetainPtr fontNameAttribute = adoptCF(checked_cf_cast<CFStringRef>(CTFontDescriptorCopyAttribute(fontDescriptor.get(), kCTFontNameAttribute)));
+                RetainPtr fontDisplayNameAttribute = adoptCF(checked_cf_cast<CFStringRef>(CTFontDescriptorCopyAttribute(fontDescriptor.get(), kCTFontDisplayNameAttribute)));
+                RetainPtr fontFamilyNameAttribute = adoptCF(checked_cf_cast<CFStringRef>(CTFontDescriptorCopyAttribute(fontDescriptor.get(), kCTFontFamilyNameAttribute)));
+                String fontName(fontNameAttribute.get());
+                String fontDisplayName(fontDisplayNameAttribute.get());
+                String fontFamilyName(fontFamilyNameAttribute.get());
+                fontURLs.add(fontName.convertToASCIILowercase(), fontURL);
+                fontURLs.add(fontFamilyName.convertToASCIILowercase(), fontURL);
+                didAddFontToMap = true;
+                RELEASE_LOG(Process, "Registering font name %{private}s, display name %{private}s, family name %{private}s,  with URL %{private}s", fontName.utf8().data(), fontDisplayName.utf8().data(), fontFamilyName.utf8().data(), fontURL.string().utf8().data());
+            }
         }
+    }
+
+    if (didAddFontToMap) {
+        RetainPtr pathURL = adoptNS([[NSURL alloc] initFileURLWithPath:path isDirectory:YES]);
+        sandboxExtensionURLs.append(URL(pathURL.get()));
     }
 }
 
 void WebProcessPool::registerUserInstalledFonts(WebProcessProxy& process)
 {
     if (m_userInstalledFontURLs) {
-        process.send(Messages::WebProcess::RegisterAdditionalFonts(AdditionalFonts::additionalFonts(*m_userInstalledFontURLs, process.auditToken())), 0);
+        process.send(Messages::WebProcess::RegisterFontMap(*m_userInstalledFontURLs, sandboxExtensionsForUserInstalledFonts(*m_sandboxExtensionURLs, process.auditToken())), 0);
         return;
     }
 
-    auto blockPtr = makeBlockPtr([weakThis = WeakPtr { *this }, weakProcess = WeakPtr { process }] {
-        RetainPtr userInstalledFontsPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Fonts"];
+    RetainPtr userInstalledFontsPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Fonts"];
 
-        Vector<URL> fontURLs;
-        addUserInstalledFontURLs(userInstalledFontsPath.get(), fontURLs);
-        addUserInstalledFontURLs(@"/Library/Fonts", fontURLs);
-        addUserInstalledFontURLs(@"/System/Library/AssetsV2/com_apple_MobileAsset_Font7", fontURLs);
+    HashMap<String, URL> fontURLs;
+    Vector<URL> sandboxExtensionURLs;
+    addUserInstalledFontURLs(userInstalledFontsPath.get(), fontURLs, sandboxExtensionURLs);
+    addUserInstalledFontURLs(@"/Library/Fonts", fontURLs, sandboxExtensionURLs);
+    addUserInstalledFontURLs(@"/System/Library/AssetsV2/com_apple_MobileAsset_Font7", fontURLs, sandboxExtensionURLs);
 
-        RunLoop::protectedMain()->dispatch([weakThis = WTFMove(weakThis), weakProcess = WTFMove(weakProcess), fontURLs = crossThreadCopy(WTFMove(fontURLs))] {
-            if (weakProcess)
-                weakProcess->send(Messages::WebProcess::RegisterAdditionalFonts(AdditionalFonts::additionalFonts(fontURLs, weakProcess->auditToken())), 0);
-            if (RefPtr protectedThis = weakThis.get())
-                protectedThis->m_userInstalledFontURLs = WTFMove(fontURLs);
-        });
-    });
-
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_DEFAULT, 0), blockPtr.get());
+    process.send(Messages::WebProcess::RegisterFontMap(fontURLs, sandboxExtensionsForUserInstalledFonts(sandboxExtensionURLs, process.auditToken())), 0);
+    m_userInstalledFontURLs = WTFMove(fontURLs);
+    m_sandboxExtensionURLs = WTFMove(sandboxExtensionURLs);
 }
 
 #if PLATFORM(MAC)
@@ -1473,27 +1503,29 @@ void WebProcessPool::registerAdditionalFonts(NSArray *fontNames)
     if (!fontNames)
         return;
 
-    Vector<URL> fontURLs;
+    if (!m_userInstalledFontURLs) {
+        m_userInstalledFontURLs = HashMap<String, URL>();
+        m_sandboxExtensionURLs = Vector<URL>();
+    }
 
-    for (NSString *fontName : fontNames) {
-        RetainPtr ctFont = adoptCF(CTFontCreateWithName(bridge_cast(fontName), 0.0, nullptr));
+    for (NSString *nsFontName : fontNames) {
+        RetainPtr ctFont = adoptCF(CTFontCreateWithName(bridge_cast(nsFontName), 0.0, nullptr));
         RetainPtr downloaded = adoptCF(static_cast<CFBooleanRef>(CTFontCopyAttribute(ctFont.get(), kCTFontDownloadedAttribute)));
         if (downloaded == kCFBooleanFalse)
             return;
         RetainPtr url = adoptCF(static_cast<CFURLRef>(CTFontCopyAttribute(ctFont.get(), kCTFontURLAttribute)));
-        fontURLs.append(URL(url.get()));
+        URL fontURL(url.get());
+        String fontName(nsFontName);
+        m_userInstalledFontURLs->add(fontName, fontURL);
+        m_sandboxExtensionURLs->append(WTFMove(fontURL));
     }
 
     for (Ref process : m_processes) {
         if (!process->canSendMessage())
             continue;
-        process->send(Messages::WebProcess::RegisterAdditionalFonts(AdditionalFonts::additionalFonts(fontURLs, process->auditToken())), 0);
+        process->send(Messages::WebProcess::RegisterFontMap(*m_userInstalledFontURLs, sandboxExtensionsForUserInstalledFonts(*m_sandboxExtensionURLs, process->auditToken())), 0);
     }
 
-    if (m_userInstalledFontURLs)
-        m_userInstalledFontURLs->appendVector(WTFMove(fontURLs));
-    else
-        m_userInstalledFontURLs = WTFMove(fontURLs);
 }
 #endif
 

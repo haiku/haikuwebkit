@@ -5438,7 +5438,9 @@ extern "C" { extern void (*const ${vtableRefWin}[])(); }
 #else
 extern "C" { extern void* ${vtableNameGnu}[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, ${implType}>, void>> static inline void verifyVTable(${implType}* ptr) {
+template<std::same_as<${implType}> T>
+static inline void verifyVTable(${implType}* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

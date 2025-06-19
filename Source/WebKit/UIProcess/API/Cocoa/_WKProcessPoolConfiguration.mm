@@ -32,7 +32,9 @@
 #import <wtf/RetainPtr.h>
 #import <wtf/cocoa/VectorCocoa.h>
 
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 @implementation _WKProcessPoolConfiguration
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
 - (instancetype)init
 {

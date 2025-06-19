@@ -279,9 +279,10 @@ typedef struct {
                 ((pas_basic_heap_config_arguments){__VA_ARGS__}).medium_page_size, \
             .granule_size = \
                 ((pas_basic_heap_config_arguments){__VA_ARGS__}).granule_size, \
-            .max_object_size = PAS_MAX_BITFIT_OBJECT_SIZE( \
+            .max_object_size = PAS_MAX_BITFIT_OBJECT_SIZE_WITH_MAX_BITS( \
                 ((pas_basic_heap_config_arguments){__VA_ARGS__}).medium_page_size, \
-                ((pas_basic_heap_config_arguments){__VA_ARGS__}).medium_bitfit_min_align_shift), \
+                ((pas_basic_heap_config_arguments){__VA_ARGS__}).medium_bitfit_min_align_shift, \
+                PAS_BITFIT_MAX_FREE_MAX_VALID_MEDIUM), \
             .page_header_for_boundary = name ## _medium_bitfit_page_header_for_boundary, \
             .boundary_for_page_header = name ## _medium_bitfit_boundary_for_page_header, \
             .page_header_for_boundary_remote = name ## _medium_bitfit_page_header_for_boundary_remote, \

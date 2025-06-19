@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007, 2014, 2015 Apple Inc. All rights reserved.
+ * Copyright (C) 2007-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -445,7 +445,7 @@ static void firePageHideEventRecursively(Frame& frame)
         // https://html.spec.whatwg.org/multipage/browsers.html#unload-a-document
         unloadCountIncrementer.emplace(document.get());
 
-        localFrame->protectedLoader()->stopLoading(UnloadEventPolicy::UnloadAndPageHide);
+        localFrame->loader().stopLoading(UnloadEventPolicy::UnloadAndPageHide);
     }
     for (RefPtr child = frame.tree().firstChild(); child; child = child->tree().nextSibling())
         firePageHideEventRecursively(*child);

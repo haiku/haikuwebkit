@@ -326,7 +326,7 @@ void MemoryIndex::writeTransactionStarted(MemoryBackingStoreTransaction& transac
 {
     ASSERT(!m_writeTransaction);
 
-    m_writeTransaction = &transaction;
+    m_writeTransaction = transaction;
 }
 
 void MemoryIndex::writeTransactionFinished(MemoryBackingStoreTransaction& transaction)

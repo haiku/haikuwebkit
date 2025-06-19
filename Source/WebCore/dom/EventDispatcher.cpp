@@ -2,7 +2,7 @@
  * Copyright (C) 1999 Lars Knoll (knoll@kde.org)
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2001 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2004-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies)
  * Copyright (C) 2009 Torch Mobile Inc. All rights reserved. (http://www.torchmobile.com/)
  * Copyright (C) 2010, 2011, 2012, 2013 Google Inc. All rights reserved.
@@ -124,7 +124,7 @@ static bool shouldSuppressEventDispatchInDOM(Node& node, Event& event)
     if (!localMainFrame)
         return false;
 
-    if (!localMainFrame->protectedLoader()->shouldSuppressTextInputFromEditing())
+    if (!localMainFrame->loader().shouldSuppressTextInputFromEditing())
         return false;
 
     if (auto* textEvent = dynamicDowncast<TextEvent>(event))

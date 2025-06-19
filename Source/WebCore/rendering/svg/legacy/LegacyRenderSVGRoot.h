@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2004, 2005, 2007 Nikolas Zimmermann <zimmermann@kde.org>
  * Copyright (C) 2004, 2005, 2007 Rob Buis <buis@kde.org>
- * Copyright (C) 2009-2018 Google, Inc.  All rights reserved.
+ * Copyright (C) 2009-2018 Google, Inc. All rights reserved.
  * Copyright (C) 2009-2025 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or

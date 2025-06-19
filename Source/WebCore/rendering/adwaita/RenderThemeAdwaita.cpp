@@ -335,10 +335,10 @@ Style::PaddingBox RenderThemeAdwaita::popupInternalPaddingBox(const RenderStyle&
     int rightPadding = menuListButtonPadding + (style.writingMode().isBidiLTR() ? zoomedArrowSize : 0);
 
     return {
-        Style::Length<CSS::Nonnegative> { static_cast<float>(menuListButtonPadding) },
-        Style::Length<CSS::Nonnegative> { static_cast<float>(rightPadding) },
-        Style::Length<CSS::Nonnegative> { static_cast<float>(menuListButtonPadding) },
-        Style::Length<CSS::Nonnegative> { static_cast<float>(leftPadding) },
+        Style::PaddingEdge::Fixed { static_cast<float>(menuListButtonPadding) },
+        Style::PaddingEdge::Fixed { static_cast<float>(rightPadding) },
+        Style::PaddingEdge::Fixed { static_cast<float>(menuListButtonPadding) },
+        Style::PaddingEdge::Fixed { static_cast<float>(leftPadding) },
     };
 }
 
@@ -359,8 +359,8 @@ void RenderThemeAdwaita::adjustSliderThumbSize(RenderStyle& style, const Element
     if (appearance != StyleAppearance::SliderThumbHorizontal && appearance != StyleAppearance::SliderThumbVertical)
         return;
 
-    style.setWidth(Length(sliderThumbSize, LengthType::Fixed));
-    style.setHeight(Length(sliderThumbSize, LengthType::Fixed));
+    style.setWidth(Style::PreferredSize::Fixed { static_cast<float>(sliderThumbSize) });
+    style.setHeight(Style::PreferredSize::Fixed { static_cast<float>(sliderThumbSize) });
 }
 
 IntSize RenderThemeAdwaita::sliderTickSize() const
@@ -382,28 +382,30 @@ void RenderThemeAdwaita::adjustListButtonStyle(RenderStyle& style, const Element
         style.setMarginLeft(-2_css_px);
 }
 
-LengthSize RenderThemeAdwaita::controlSize(StyleAppearance appearance, const FontCascade& fontCascade, const LengthSize& zoomedSize, float zoomFactor) const
+Style::PreferredSizePair RenderThemeAdwaita::controlSize(StyleAppearance appearance, const FontCascade& fontCascade, const Style::PreferredSizePair& zoomedSize, float zoomFactor) const
 {
-    if (!zoomedSize.width.isIntrinsicOrAuto() && !zoomedSize.height.isIntrinsicOrAuto())
+    if (!zoomedSize.width().isIntrinsicOrLegacyIntrinsicOrAuto() && !zoomedSize.height().isIntrinsicOrLegacyIntrinsicOrAuto())
         return RenderTheme::controlSize(appearance, fontCascade, zoomedSize, zoomFactor);
 
     switch (appearance) {
     case StyleAppearance::Checkbox:
     case StyleAppearance::Radio: {
-        auto buttonSize = zoomedSize;
-        if (buttonSize.width.isIntrinsicOrAuto())
-            buttonSize.width = Length(12 * zoomFactor, LengthType::Fixed);
-        if (buttonSize.height.isIntrinsicOrAuto())
-            buttonSize.height = Length(12 * zoomFactor, LengthType::Fixed);
-        return buttonSize;
+        auto buttonSizeWidth = zoomedSize.width();
+        auto buttonSizeHeight = zoomedSize.height();
+        if (buttonSizeWidth.isIntrinsicOrLegacyIntrinsicOrAuto())
+            buttonSizeWidth = 12_css_px * zoomFactor;
+        if (buttonSizeHeight.isIntrinsicOrLegacyIntrinsicOrAuto())
+            buttonSizeHeight = 12_css_px * zoomFactor;
+        return { WTFMove(buttonSizeWidth), WTFMove(buttonSizeHeight) };
     }
     case StyleAppearance::InnerSpinButton: {
-        auto spinButtonSize = zoomedSize;
-        if (spinButtonSize.width.isIntrinsicOrAuto())
-            spinButtonSize.width = Length(static_cast<int>(arrowSize * zoomFactor), LengthType::Fixed);
-        if (spinButtonSize.height.isIntrinsicOrAuto() || fontCascade.size() > arrowSize)
-            spinButtonSize.height = Length(fontCascade.size(), LengthType::Fixed);
-        return spinButtonSize;
+        auto spinButtonSizeWidth = zoomedSize.width();
+        auto spinButtonSizeHeight = zoomedSize.height();
+        if (spinButtonSizeWidth.isIntrinsicOrLegacyIntrinsicOrAuto())
+            spinButtonSizeWidth = Style::PreferredSize::Fixed { static_cast<float>(static_cast<int>(arrowSize * zoomFactor)) };
+        if (spinButtonSizeHeight.isIntrinsicOrLegacyIntrinsicOrAuto() || fontCascade.size() > arrowSize)
+            spinButtonSizeHeight = Style::PreferredSize::Fixed { fontCascade.size() };
+        return { WTFMove(spinButtonSizeWidth), WTFMove(spinButtonSizeHeight) };
     }
     default:
         break;
@@ -412,20 +414,23 @@ LengthSize RenderThemeAdwaita::controlSize(StyleAppearance appearance, const Fon
     return RenderTheme::controlSize(appearance, fontCascade, zoomedSize, zoomFactor);
 }
 
-LengthSize RenderThemeAdwaita::minimumControlSize(StyleAppearance, const FontCascade&, const LengthSize& zoomedSize, float) const
+Style::MinimumSizePair RenderThemeAdwaita::minimumControlSize(StyleAppearance, const FontCascade&, const Style::MinimumSizePair& zoomedSize, float) const
 {
-    if (!zoomedSize.width.isIntrinsicOrAuto() && !zoomedSize.height.isIntrinsicOrAuto())
+    if (!zoomedSize.width().isIntrinsicOrLegacyIntrinsicOrAuto() && !zoomedSize.height().isIntrinsicOrLegacyIntrinsicOrAuto())
         return zoomedSize;
 
-    auto minSize = zoomedSize;
-    if (minSize.width.isIntrinsicOrAuto())
-        minSize.width = Length(0, LengthType::Fixed);
-    if (minSize.height.isIntrinsicOrAuto())
-        minSize.height = Length(0, LengthType::Fixed);
-    return minSize;
+    auto resultWidth = zoomedSize.width();
+    auto resultHeight = zoomedSize.height();
+
+    if (resultWidth.isIntrinsicOrLegacyIntrinsicOrAuto())
+        resultWidth = 0_css_px;
+    if (resultHeight.isIntrinsicOrLegacyIntrinsicOrAuto())
+        resultHeight = 0_css_px;
+
+    return { WTFMove(resultWidth), WTFMove(resultHeight) };
 }
 
-LengthBox RenderThemeAdwaita::controlBorder(StyleAppearance appearance, const FontCascade& font, const LengthBox& zoomedBox, float zoomFactor) const
+LengthBox RenderThemeAdwaita::controlBorder(StyleAppearance appearance, const FontCascade& font, const LengthBox& zoomedBox, float zoomFactor, const Element* element) const
 {
     switch (appearance) {
     case StyleAppearance::PushButton:
@@ -437,7 +442,7 @@ LengthBox RenderThemeAdwaita::controlBorder(StyleAppearance appearance, const Fo
         break;
     }
 
-    return RenderTheme::controlBorder(appearance, font, zoomedBox, zoomFactor);
+    return RenderTheme::controlBorder(appearance, font, zoomedBox, zoomFactor, element);
 }
 
 #if PLATFORM(GTK) || PLATFORM(WPE)

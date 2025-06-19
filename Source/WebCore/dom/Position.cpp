@@ -61,6 +61,7 @@
 #include "VisiblePosition.h"
 #include "VisibleUnits.h"
 #include <stdio.h>
+#include <wtf/StdLibExtras.h>
 #include <wtf/text/CString.h>
 #include <wtf/text/MakeString.h>
 #include <wtf/text/TextStream.h>
@@ -1387,8 +1388,6 @@ TextDirection Position::primaryDirection() const
 
 #if ENABLE(TREE_DEBUGGING)
 
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 void Position::debugPosition(ASCIILiteral msg) const
 {
     if (isNull())
@@ -1406,29 +1405,30 @@ String Position::debugDescription() const
 
 void Position::showAnchorTypeAndOffset() const
 {
+    ASCIILiteral legacy = ""_s;
     if (m_isLegacyEditingPosition)
-        fputs("legacy, ", stderr);
+        legacy = "legacy, "_s;
+
+    ASCIILiteral position;
     switch (anchorType()) {
     case PositionIsOffsetInAnchor:
-        fputs("offset", stderr);
+        position = "offset"_s;
         break;
     case PositionIsBeforeChildren:
-        fputs("beforeChildren", stderr);
+        position = "beforeChildren"_s;
         break;
     case PositionIsAfterChildren:
-        fputs("afterChildren", stderr);
+        position = "afterChildren"_s;
         break;
     case PositionIsBeforeAnchor:
-        fputs("before", stderr);
+        position = "before"_s;
         break;
     case PositionIsAfterAnchor:
-        fputs("after", stderr);
+        position = "after"_s;
         break;
     }
-    fprintf(stderr, ", offset:%d\n", m_offset);
+    SAFE_FPRINTF(stderr, "%s%s, offset:%d\n", legacy, position, m_offset);
 }
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 void Position::showTreeForThis() const
 {

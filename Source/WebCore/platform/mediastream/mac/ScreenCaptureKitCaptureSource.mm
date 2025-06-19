@@ -41,6 +41,7 @@
 #import <wtf/BlockObjCExceptions.h>
 #import <wtf/BlockPtr.h>
 #import <wtf/NeverDestroyed.h>
+#import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/text/StringToIntegerConversion.h>
 
 #import <pal/cf/CoreMediaSoftLink.h>

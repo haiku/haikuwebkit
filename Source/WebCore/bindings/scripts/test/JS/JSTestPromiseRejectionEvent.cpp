@@ -323,7 +323,9 @@ extern "C" { extern void (*const __identifier("??_7TestPromiseRejectionEvent@Web
 #else
 extern "C" { extern void* _ZTVN7WebCore25TestPromiseRejectionEventE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestPromiseRejectionEvent>, void>> static inline void verifyVTable(TestPromiseRejectionEvent* ptr) {
+template<std::same_as<TestPromiseRejectionEvent> T>
+static inline void verifyVTable(TestPromiseRejectionEvent* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

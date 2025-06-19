@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008, 2009, 2010, 2011 Apple Inc. All Rights Reserved.
+ * Copyright (C) 2008, 2009, 2010, 2011 Apple Inc. All rights reserved.
  * Copyright (C) 2009 Torch Mobile, Inc.
  * Copyright 2010, The Android Open Source Project
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -114,19 +114,19 @@ void StreamClientConnection::setMaxBatchSize(unsigned size)
 void StreamClientConnection::open(Connection::Client& receiver, SerialFunctionDispatcher& dispatcher)
 {
     m_dedicatedConnectionClient.emplace(*this, receiver);
-    protectedConnection()->open(*m_dedicatedConnectionClient, dispatcher);
+    m_connection->open(*m_dedicatedConnectionClient, dispatcher);
 }
 
 Error StreamClientConnection::flushSentMessages()
 {
     auto timeout = defaultTimeout();
     wakeUpServer(WakeUpServer::Yes);
-    return protectedConnection()->flushSentMessages(WTFMove(timeout));
+    return m_connection->flushSentMessages(WTFMove(timeout));
 }
 
 void StreamClientConnection::invalidate()
 {
-    protectedConnection()->invalidate();
+    m_connection->invalidate();
 }
 
 void StreamClientConnection::wakeUpServer(WakeUpServer wakeUpResult)
@@ -158,12 +158,12 @@ Connection& StreamClientConnection::connectionForTesting()
 
 void StreamClientConnection::addWorkQueueMessageReceiver(ReceiverName name, WorkQueue& workQueue, WorkQueueMessageReceiverBase& receiver, uint64_t destinationID)
 {
-    protectedConnection()->addWorkQueueMessageReceiver(name, workQueue, receiver, destinationID);
+    m_connection->addWorkQueueMessageReceiver(name, workQueue, receiver, destinationID);
 }
 
 void StreamClientConnection::removeWorkQueueMessageReceiver(ReceiverName name, uint64_t destinationID)
 {
-    protectedConnection()->removeWorkQueueMessageReceiver(name, destinationID);
+    m_connection->removeWorkQueueMessageReceiver(name, destinationID);
 }
 
 }

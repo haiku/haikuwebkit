@@ -44,8 +44,6 @@ webkit.org/b/194221 fast/forms/datalist/datalist-hide-using-escape-key.html [ Sk
 
 webkit.org/b/193970 compositing/ios/overflow-scroll-update-overlap.html [ ImageOnlyFailure ]
 
-webkit.org/b/194228 fast/media/invalid-media-query-list.html [ ImageOnlyFailure ]
-
 webkit.org/b/194234 media/modern-media-controls/media-documents/background-color-and-centering.html [ ImageOnlyFailure ]
 
 webkit.org/b/165311 platform/ipad/media/modern-media-controls/pip-support/pip-support-tap.html [ Skip ]
@@ -122,3 +120,4 @@ webkit.org/b/271712 fast/forms/datalist/datalist-textinput-dynamically-add-optio
 # webkit.org/b/269496 [ iOS17 ] fast/forms/datalist/datalist-option-labels.html is a flaky timeout
 fast/forms/datalist/datalist-option-labels.html [ Pass Timeout ]
 
+webkit.org/b/294218 media/video-suppress-hdr-fullscreen.html [ Failure ]

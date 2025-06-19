@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 2007 Eric Seidel <eric@webkit.org>
  * Copyright (C) 2007, 2008 Nikolas Zimmermann <zimmermann@kde.org>
- * Copyright (C) 2008-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -326,7 +326,7 @@ void SVGFontFaceElement::removedFromAncestor(RemovalType removalType, ContainerN
             fontFaceSet->remove(*fontFace);
         fontFaceRule->mutableProperties().clear();
 
-        document->checkedStyleScope()->didChangeStyleSheetEnvironment();
+        document->styleScope().didChangeStyleSheetEnvironment();
     } else
         ASSERT(!m_fontElement);
 }

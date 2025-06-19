@@ -68,7 +68,7 @@ struct SnapshotOptions {
 
 WEBCORE_EXPORT RefPtr<ImageBuffer> snapshotFrameRect(LocalFrame&, const IntRect&, SnapshotOptions&&);
 RefPtr<ImageBuffer> snapshotFrameRectWithClip(LocalFrame&, const IntRect&, const Vector<FloatRect>& clipRects, SnapshotOptions&&);
-RefPtr<ImageBuffer> snapshotNode(LocalFrame&, Node&, SnapshotOptions&&);
+WEBCORE_EXPORT RefPtr<ImageBuffer> snapshotNode(LocalFrame&, Node&, SnapshotOptions&&);
 WEBCORE_EXPORT RefPtr<ImageBuffer> snapshotSelection(LocalFrame&, SnapshotOptions&&);
 
 Color estimatedBackgroundColorForRange(const SimpleRange&, const LocalFrame&);

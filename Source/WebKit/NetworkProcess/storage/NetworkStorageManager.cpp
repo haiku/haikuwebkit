@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1735,19 +1735,19 @@ void NetworkStorageManager::deleteDatabase(IPC::Connection& connection, const We
 
 void NetworkStorageManager::establishTransaction(WebCore::IDBDatabaseConnectionIdentifier databaseConnectionIdentifier, const WebCore::IDBTransactionInfo& transactionInfo)
 {
-    if (auto connection = m_idbStorageRegistry->connection(databaseConnectionIdentifier))
+    if (RefPtr connection = m_idbStorageRegistry->connection(databaseConnectionIdentifier))
         connection->establishTransaction(transactionInfo);
 }
 
 void NetworkStorageManager::databaseConnectionPendingClose(WebCore::IDBDatabaseConnectionIdentifier databaseConnectionIdentifier)
 {
-    if (auto connection = m_idbStorageRegistry->connection(databaseConnectionIdentifier))
+    if (RefPtr connection = m_idbStorageRegistry->connection(databaseConnectionIdentifier))
         connection->connectionPendingCloseFromClient();
 }
 
 void NetworkStorageManager::databaseConnectionClosed(WebCore::IDBDatabaseConnectionIdentifier databaseConnectionIdentifier)
 {
-    if (auto connection = m_idbStorageRegistry->connection(databaseConnectionIdentifier))
+    if (RefPtr connection = m_idbStorageRegistry->connection(databaseConnectionIdentifier))
         connection->connectionClosedFromClient();
 }
 

@@ -72,14 +72,20 @@ std::optional<MotionPathData> MotionPath::motionPathDataForRenderer(const Render
     if (shapeOperation && std::holds_alternative<Style::PathFunction>(shapeOperation->shape()))
         return std::nullopt;
 
-    auto startingPositionForOffsetPosition = [&](const LengthPoint& offsetPosition, const FloatRect& referenceRect, RenderBlock& container) -> FloatPoint {
-        // If offset-position is normal, the element does not have an offset starting position.
-        if (offsetPosition.x.isNormal())
-            return normalPositionForOffsetPath(pathOperation, referenceRect);
-        // If offset-position is auto, use top / left corner of the box.
-        if (offsetPosition.x.isAuto())
-            return offsetFromContainer(renderer, container, referenceRect);
-        return floatPointForLengthPoint(offsetPosition, referenceRect.size());
+    auto startingPositionForOffsetPosition = [&](const Style::OffsetPosition& offsetPosition, const FloatRect& referenceRect, RenderBlock& container) -> FloatPoint {
+        return WTF::switchOn(offsetPosition,
+            [&](const CSS::Keyword::Normal&) -> FloatPoint {
+                // If offset-position is normal, the element does not have an offset starting position.
+                return normalPositionForOffsetPath(pathOperation, referenceRect);
+            },
+            [&](const CSS::Keyword::Auto&) -> FloatPoint  {
+                // If offset-position is auto, use top / left corner of the box.
+                return offsetFromContainer(renderer, container, referenceRect);
+            },
+            [&](const Style::Position& position) -> FloatPoint {
+                return Style::evaluate(position, referenceRect.size());
+            }
+        );
     };
 
     auto* container = renderer.containingBlock();
@@ -102,10 +108,10 @@ std::optional<MotionPathData> MotionPath::motionPathDataForRenderer(const Render
     return data;
 }
 
-static PathTraversalState traversalStateAtDistance(const Path& path, const Length& distance)
+static PathTraversalState traversalStateAtDistance(const Path& path, const Style::OffsetDistance& distance)
 {
     auto pathLength = path.length();
-    auto distanceValue = floatValueForLength(distance, pathLength);
+    auto distanceValue = Style::evaluate(distance, pathLength);
 
     float resolvedLength = 0;
     if (path.isClosed()) {
@@ -121,12 +127,16 @@ static PathTraversalState traversalStateAtDistance(const Path& path, const Lengt
     return path.traversalStateAtLength(resolvedLength);
 }
 
-void MotionPath::applyMotionPathTransform(TransformationMatrix& matrix, const TransformOperationData& transformData, const FloatPoint& transformOrigin, const PathOperation& offsetPath, const LengthPoint& offsetAnchor, const Length& offsetDistance, const OffsetRotation& offsetRotate, TransformBox transformBox)
+void MotionPath::applyMotionPathTransform(TransformationMatrix& matrix, const TransformOperationData& transformData, const FloatPoint& transformOrigin, const PathOperation& offsetPath, const Style::OffsetAnchor& offsetAnchor, const Style::OffsetDistance& offsetDistance, const Style::OffsetRotate& offsetRotate, TransformBox transformBox)
 {
     auto boundingBox = transformData.boundingBox;
     auto anchor = transformOrigin;
-    if (!offsetAnchor.x.isAuto())
-        anchor = floatPointForLengthPoint(offsetAnchor, boundingBox.size()) + boundingBox.location();
+    WTF::switchOn(offsetAnchor,
+        [&](const Style::Position& position) {
+            anchor = Style::evaluate(position, boundingBox.size()) + boundingBox.location();
+        },
+        [&](const CSS::Keyword::Auto&) { }
+    );
 
     // Shift element to the point on path specified by offset-path and offset-distance.
     auto path = offsetPath.getPath(transformData);
@@ -150,9 +160,9 @@ void MotionPath::applyMotionPathTransform(TransformationMatrix& matrix, const Tr
     // Apply rotation.
     auto& rotation = offsetRotate;
     if (rotation.hasAuto())
-        matrix.rotate(traversalState.normalAngle() + rotation.angle());
+        matrix.rotate(traversalState.normalAngle() + rotation.angle().value);
     else
-        matrix.rotate(rotation.angle());
+        matrix.rotate(rotation.angle().value);
 
     matrix.translate(-shiftToOrigin.width(), -shiftToOrigin.height());
 }

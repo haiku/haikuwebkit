@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, 2013 Google Inc.  All rights reserved.
+ * Copyright (C) 2011, 2013 Google Inc. All rights reserved.
  * Copyright (C) 2011-2023 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1443,7 +1443,7 @@ void VTTCue::prepareToSpeak(SpeechSynthesis& speechSynthesis, double rate, doubl
     }
 
     Ref track = *this->track();
-    m_speechSynthesis = &speechSynthesis;
+    m_speechSynthesis = speechSynthesis;
     m_speechUtterance = SpeechSynthesisUtterance::create(Ref { *track->scriptExecutionContext() }, m_content, [protectedThis = Ref { *this }, completion = WTFMove(completion)](const SpeechSynthesisUtterance&) {
         protectedThis->m_speechUtterance = nullptr;
         protectedThis->m_speechSynthesis = nullptr;

@@ -168,10 +168,10 @@ static MTCoreMaterialRecipe materialRecipeForAppleVisualEffect(AppleVisualEffect
     case AppleVisualEffect::None:
         return PAL::get_CoreMaterial_MTCoreMaterialRecipeNone();
 #if HAVE(MATERIAL_HOSTING)
-    case AppleVisualEffect::HostedBlurMaterial:
-    case AppleVisualEffect::HostedThinBlurMaterial:
-    case AppleVisualEffect::HostedMediaControlsMaterial:
-    case AppleVisualEffect::HostedThinMediaControlsMaterial:
+    case AppleVisualEffect::GlassMaterial:
+    case AppleVisualEffect::GlassSubduedMaterial:
+    case AppleVisualEffect::GlassMediaControlsMaterial:
+    case AppleVisualEffect::GlassSubduedMediaControlsMaterial:
 #endif
     case AppleVisualEffect::VibrancyLabel:
     case AppleVisualEffect::VibrancySecondaryLabel:
@@ -209,10 +209,10 @@ static MTCoreMaterialVisualStyle materialVisualStyleForAppleVisualEffect(AppleVi
     case AppleVisualEffect::BlurThickMaterial:
     case AppleVisualEffect::BlurChromeMaterial:
 #if HAVE(MATERIAL_HOSTING)
-    case AppleVisualEffect::HostedBlurMaterial:
-    case AppleVisualEffect::HostedThinBlurMaterial:
-    case AppleVisualEffect::HostedMediaControlsMaterial:
-    case AppleVisualEffect::HostedThinMediaControlsMaterial:
+    case AppleVisualEffect::GlassMaterial:
+    case AppleVisualEffect::GlassSubduedMaterial:
+    case AppleVisualEffect::GlassMediaControlsMaterial:
+    case AppleVisualEffect::GlassSubduedMediaControlsMaterial:
 #endif
         ASSERT_NOT_REACHED();
         return nil;
@@ -239,10 +239,10 @@ static MTCoreMaterialVisualStyleCategory materialVisualStyleCategoryForAppleVisu
     case AppleVisualEffect::BlurThickMaterial:
     case AppleVisualEffect::BlurChromeMaterial:
 #if HAVE(MATERIAL_HOSTING)
-    case AppleVisualEffect::HostedBlurMaterial:
-    case AppleVisualEffect::HostedThinBlurMaterial:
-    case AppleVisualEffect::HostedMediaControlsMaterial:
-    case AppleVisualEffect::HostedThinMediaControlsMaterial:
+    case AppleVisualEffect::GlassMaterial:
+    case AppleVisualEffect::GlassSubduedMaterial:
+    case AppleVisualEffect::GlassMediaControlsMaterial:
+    case AppleVisualEffect::GlassSubduedMediaControlsMaterial:
 #endif
         ASSERT_NOT_REACHED();
         return nil;
@@ -254,14 +254,14 @@ static MTCoreMaterialVisualStyleCategory materialVisualStyleCategoryForAppleVisu
 static WKHostedMaterialEffectType hostedMaterialEffectTypeForAppleVisualEffect(AppleVisualEffect effect)
 {
     switch (effect) {
-    case AppleVisualEffect::HostedBlurMaterial:
-        return WKHostedMaterialEffectTypeBlur;
-    case AppleVisualEffect::HostedThinBlurMaterial:
-        return WKHostedMaterialEffectTypeThinBlur;
-    case AppleVisualEffect::HostedMediaControlsMaterial:
-        return WKHostedMaterialEffectTypeMediaControls;
-    case AppleVisualEffect::HostedThinMediaControlsMaterial:
-        return WKHostedMaterialEffectTypeThinMediaControls;
+    case AppleVisualEffect::GlassMaterial:
+        return WKHostedMaterialEffectTypeGlass;
+    case AppleVisualEffect::GlassSubduedMaterial:
+        return WKHostedMaterialEffectTypeSubduedGlass;
+    case AppleVisualEffect::GlassMediaControlsMaterial:
+        return WKHostedMaterialEffectTypeMediaControlsGlass;
+    case AppleVisualEffect::GlassSubduedMediaControlsMaterial:
+        return WKHostedMaterialEffectTypeSubduedMediaControlsGlass;
     case AppleVisualEffect::None:
     case AppleVisualEffect::BlurUltraThinMaterial:
     case AppleVisualEffect::BlurThinMaterial:

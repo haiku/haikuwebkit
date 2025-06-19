@@ -444,7 +444,7 @@ namespace WebCore {
     macro(StylePropertyMapReadOnly) \
     macro(StylePropertyMap) \
     macro(StorageManager) \
-    macro(StorageManagerFileSystemAccess) \
+    macro(StorageManagerFileSystem) \
     macro(Subscriber) \
     macro(SubtleCrypto) \
     macro(TestReportBody) \

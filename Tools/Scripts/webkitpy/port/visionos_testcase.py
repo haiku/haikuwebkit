@@ -29,7 +29,7 @@ from webkitpy.tool.mocktool import MockOptions
 class VisionOSTest(darwin_testcase.DarwinTest):
     disable_setup = True
 
-    def make_port(self, host=None, port_name=None, options=None, os_name=None, os_version=Version(5), **kwargs):
+    def make_port(self, host=None, port_name=None, options=None, os_name=None, os_version=Version(26), **kwargs):
         if options:
             options.architecture = 'arm64'
             options.webkit_test_runner = True

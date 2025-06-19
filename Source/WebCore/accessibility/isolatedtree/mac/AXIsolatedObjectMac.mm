@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -145,10 +145,10 @@ AttributedStringStyle AXIsolatedObject::stylesForAttributedString() const
 
 RetainPtr<RemoteAXObjectRef> AXIsolatedObject::remoteParent() const
 {
-    auto* scrollView = Accessibility::findAncestor<AXCoreObject>(*this, true, [] (const AXCoreObject& object) {
+    RefPtr scrollView = Accessibility::findAncestor<AXCoreObject>(*this, true, [] (const AXCoreObject& object) {
         return object.isScrollView();
     });
-    auto* isolatedObject = dynamicDowncast<AXIsolatedObject>(scrollView);
+    RefPtr isolatedObject = dynamicDowncast<AXIsolatedObject>(scrollView);
     return isolatedObject ? isolatedObject->propertyValue<RetainPtr<id>>(AXProperty::RemoteParent) : nil;
 }
 
@@ -164,7 +164,7 @@ FloatRect AXIsolatedObject::convertRectToPlatformSpace(const FloatRect& rect, Ac
         return convertFrameToSpace(rect, space);
 
     return Accessibility::retrieveValueFromMainThread<FloatRect>([&rect, &space, this] () -> FloatRect {
-        if (auto* axObject = associatedAXObject())
+        if (RefPtr axObject = associatedAXObject())
             return axObject->convertRectToPlatformSpace(rect, space);
         return { };
     });
@@ -241,12 +241,12 @@ AXTextMarkerRange AXIsolatedObject::textMarkerRange() const
         // {ID 5, Role Group}
         //
         // We would expect the returned range to be: {ID 2, offset 0} to {ID 4, offset 3}
-        auto* stopObject = nextSiblingIncludingIgnoredOrParent();
+        std::optional stopAtID = idOfNextSiblingIncludingIgnoredOrParent();
 
         auto thisMarker = AXTextMarker { *this, 0 };
         AXTextMarkerRange range { thisMarker, thisMarker };
-        auto startMarker = thisMarker.toTextRunMarker();
-        auto endMarker = startMarker.findLastBefore(stopObject ? std::optional { stopObject->objectID() } : std::nullopt);
+        auto startMarker = thisMarker.toTextRunMarker(stopAtID);
+        auto endMarker = startMarker.findLastBefore(stopAtID);
         if (endMarker.isValid() && endMarker.isInTextRun()) {
             // One or more of our descendants have text, so let's form a range from the first and last text positions.
             range = { WTFMove(startMarker), WTFMove(endMarker) };
@@ -256,7 +256,7 @@ AXTextMarkerRange AXIsolatedObject::textMarkerRange() const
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 
     return Accessibility::retrieveValueFromMainThread<AXTextMarkerRange>([this] () {
-        auto* axObject = associatedAXObject();
+        RefPtr axObject = associatedAXObject();
         return axObject ? axObject->textMarkerRange() : AXTextMarkerRange();
     });
 }
@@ -273,8 +273,19 @@ AXTextMarkerRange AXIsolatedObject::textMarkerRangeForNSRange(const NSRange& ran
             return { tree()->treeID(), objectID(), start, end };
     }
 
+#if ENABLE(AX_THREAD_TEXT_APIS)
+    if (AXObjectCache::useAXThreadTextApis()) {
+        if (std::optional markerRange = markerRangeFrom(range, *this)) {
+            if (range.length > markerRange->toString().length())
+                return { };
+            return WTFMove(*markerRange);
+        }
+        return { };
+    }
+#endif // ENABLE(AX_THREAD_TEXT_APIS)
+
     return Accessibility::retrieveValueFromMainThread<AXTextMarkerRange>([&range, this] () -> AXTextMarkerRange {
-        auto* axObject = associatedAXObject();
+        RefPtr axObject = associatedAXObject();
         return axObject ? axObject->textMarkerRangeForNSRange(range) : AXTextMarkerRange();
     });
 }
@@ -406,7 +417,7 @@ IntPoint AXIsolatedObject::clickPoint()
     ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<IntPoint>([this] () -> IntPoint {
-        if (auto* object = associatedAXObject())
+        if (RefPtr object = associatedAXObject())
             return object->clickPoint();
         return { };
     });
@@ -417,7 +428,7 @@ bool AXIsolatedObject::pressedIsPresent() const
     ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<bool>([this] () -> bool {
-        if (auto* object = associatedAXObject())
+        if (RefPtr object = associatedAXObject())
             return object->pressedIsPresent();
         return false;
     });
@@ -428,7 +439,7 @@ Vector<String> AXIsolatedObject::determineDropEffects() const
     ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<Vector<String>>([this] () -> Vector<String> {
-        if (auto* object = associatedAXObject())
+        if (RefPtr object = associatedAXObject())
             return object->determineDropEffects();
         return { };
     });
@@ -439,7 +450,7 @@ int AXIsolatedObject::layoutCount() const
     ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<int>([this] () -> int {
-        if (auto* object = associatedAXObject())
+        if (RefPtr object = associatedAXObject())
             return object->layoutCount();
         return { };
     });
@@ -450,7 +461,7 @@ Vector<String> AXIsolatedObject::classList() const
     ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<Vector<String>>([this] () -> Vector<String> {
-        if (auto* object = associatedAXObject())
+        if (RefPtr object = associatedAXObject())
             return object->classList();
         return { };
     });
@@ -461,7 +472,7 @@ String AXIsolatedObject::computedRoleString() const
     ASSERT(_AXGetClientForCurrentRequestUntrusted() != kAXClientTypeVoiceOver);
 
     return Accessibility::retrieveValueFromMainThread<String>([this] () -> String {
-        if (auto* object = associatedAXObject())
+        if (RefPtr object = associatedAXObject())
             return object->computedRoleString().isolatedCopy();
         return { };
     });

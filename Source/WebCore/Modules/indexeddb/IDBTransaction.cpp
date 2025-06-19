@@ -191,7 +191,7 @@ void IDBTransaction::abortDueToFailedRequest(DOMException& error)
     if (isFinishedOrFinishing())
         return;
 
-    m_domError = &error;
+    m_domError = error;
     abortInternal();
 }
 
@@ -436,7 +436,7 @@ void IDBTransaction::completeNoncursorRequest(IDBRequest& request, const IDBResu
 
     request.completeRequestAndDispatchEvent(result);
 
-    m_currentlyCompletingRequest = &request;
+    m_currentlyCompletingRequest = request;
 }
 
 void IDBTransaction::completeCursorRequest(IDBRequest& request, const IDBResultData& result)
@@ -445,7 +445,7 @@ void IDBTransaction::completeCursorRequest(IDBRequest& request, const IDBResultD
 
     request.didOpenOrIterateCursor(result);
 
-    m_currentlyCompletingRequest = &request;
+    m_currentlyCompletingRequest = request;
 }
 
 void IDBTransaction::finishedDispatchEventForRequest(IDBRequest& request)

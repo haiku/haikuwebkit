@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2025 Apple Inc.  All rights reserved.
+ * Copyright (C) 2003-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2007-2009 Torch Mobile, Inc.
  * Copyright (C) 2011 University of Szeged. All rights reserved.
  *
@@ -186,8 +186,8 @@ ALLOW_NONLITERAL_FORMAT_END
         Vector<char> buffer(size);
         do {
             buffer.grow(size);
-            if (vsnprintf(buffer.data(), size, format, args) != -1) {
-                OutputDebugStringA(buffer.data());
+            if (vsnprintf(buffer.mutableSpan().data(), size, format, args) != -1) {
+                OutputDebugStringA(buffer.span().data());
                 break;
             }
             size *= 2;

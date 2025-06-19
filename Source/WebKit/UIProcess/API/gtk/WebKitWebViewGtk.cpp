@@ -471,3 +471,32 @@ void webkit_web_view_get_background_color(WebKitWebView* webView, GdkRGBA* rgba)
     auto& page = *webkitWebViewBaseGetPage(reinterpret_cast<WebKitWebViewBase*>(webView));
     *rgba = page.backgroundColor().value_or(WebCore::Color::white);
 }
+
+/**
+ * webkit_web_view_get_theme_color:
+ * @web_view: a #WebKitWebView
+ * @rgba: (out): a #GdkRGBA to fill in with the theme color
+ *
+ * Gets the theme color that is specified by the content in the @web_view.
+ * If the @web_view doesn't have a theme color it will fill the @rgba
+ * with transparent black content.
+ *
+ * Returns: Whether the currently loaded page defines a theme color.
+ *
+ * Since: 2.50
+ */
+gboolean webkit_web_view_get_theme_color(WebKitWebView* webView, GdkRGBA* rgba)
+{
+    g_return_val_if_fail(WEBKIT_IS_WEB_VIEW(webView), FALSE);
+    g_return_val_if_fail(rgba, FALSE);
+
+    auto& page = webkitWebViewGetPage(webView);
+
+    if (!page.themeColor().isValid()) {
+        *rgba = static_cast<WebCore::Color>(WebCore::Color::transparentBlack);
+        return FALSE;
+    }
+
+    *rgba = page.themeColor();
+    return TRUE;
+}

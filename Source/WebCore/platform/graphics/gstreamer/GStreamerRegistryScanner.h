@@ -210,9 +210,9 @@ private:
 
     bool m_isMediaSource { false };
     HashSet<String> m_decoderMimeTypeSet;
-    UncheckedKeyHashMap<String, RegistryLookupResult> m_decoderCodecMap;
+    HashMap<String, RegistryLookupResult> m_decoderCodecMap;
     HashSet<String> m_encoderMimeTypeSet;
-    UncheckedKeyHashMap<String, RegistryLookupResult> m_encoderCodecMap;
+    HashMap<String, RegistryLookupResult> m_encoderCodecMap;
 };
 
 } // namespace WebCore

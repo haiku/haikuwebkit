@@ -3820,6 +3820,11 @@ void SpeculativeJIT::compile(Node* node)
         break;
     }
 
+    case NumberIsSafeInteger: {
+        compileNumberIsSafeInteger(node);
+        break;
+    }
+
     case IsObject: {
         compileIsObject(node);
         break;

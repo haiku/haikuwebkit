@@ -101,19 +101,145 @@ public:
     Damage& operator=(const Damage&) = default;
     Damage& operator=(Damage&&) = default;
 
-    ALWAYS_INLINE const IntRect& bounds() const { return m_minimumBoundingRectangle; }
+    ALWAYS_INLINE Mode mode() const { return m_mode; }
 
     // May return both empty and overlapping rects.
-    ALWAYS_INLINE const Rects& rects() const { return m_rects; }
-    ALWAYS_INLINE bool isEmpty() const  { return m_rects.isEmpty(); }
-    ALWAYS_INLINE Mode mode() const { return m_mode; }
+    ALWAYS_INLINE Rects rects() const
+    {
+        // FIXME: we should not allow to create a Damage for an empty rect.
+        if (m_rect.isEmpty())
+            return { };
+
+        switch (m_mode) {
+        case Mode::Rectangles:
+            return m_rects.rects;
+        case Mode::BoundingBox:
+            return { m_minimumBoundingRectangle };
+        case Mode::Full:
+            return { m_rect };
+        }
+
+        RELEASE_ASSERT_NOT_REACHED();
+    }
+
+    ALWAYS_INLINE size_t size() const
+    {
+        // FIXME: we should not allow to create a Damage for an empty rect.
+        if (m_rect.isEmpty())
+            return 0;
+
+        switch (m_mode) {
+        case Mode::Rectangles:
+            return m_rects.rects.size();
+        case Mode::BoundingBox:
+            return m_minimumBoundingRectangle.isEmpty() ? 0 : 1;
+        case Mode::Full:
+            return 1;
+        }
+
+        RELEASE_ASSERT_NOT_REACHED();
+    }
+
+    ALWAYS_INLINE bool isEmpty() const
+    {
+        // FIXME: we should not allow to create a Damage for an empty rect.
+        if (m_rect.isEmpty())
+            return true;
+
+        switch (m_mode) {
+        case Mode::Rectangles:
+            return m_rects.rects.isEmpty();
+        case Mode::BoundingBox:
+            return m_minimumBoundingRectangle.isEmpty();
+        case Mode::Full:
+            return false;
+        }
+
+        RELEASE_ASSERT_NOT_REACHED();
+    }
+
+    ALWAYS_INLINE const IntRect& bounds() const
+    {
+        switch (m_mode) {
+        case Mode::Rectangles:
+        case Mode::BoundingBox:
+            return m_minimumBoundingRectangle;
+        case Mode::Full:
+            return m_rect;
+        }
+
+        RELEASE_ASSERT_NOT_REACHED();
+    }
 
     Region regionForTesting() const
     {
         Region region;
-        for (const auto& rect : m_rects)
-            region.unite(Region { rect });
+
+        // FIXME: we should not allow to create a Damage for an empty rect.
+        if (m_rect.isEmpty())
+            return region;
+
+        switch (m_mode) {
+        case Mode::Rectangles:
+            for (const auto& rect : m_rects.rects)
+                region.unite(Region { rect });
+            break;
+        case Mode::BoundingBox:
+            region.unite(Region { m_minimumBoundingRectangle });
+            break;
+        case Mode::Full:
+            region.unite(Region { m_rect });
+            break;
+        }
         return region;
+    }
+
+    ALWAYS_INLINE Rects nonEmptyRects() const
+    {
+        // FIXME: we should not allow to create a Damage for an empty rect.
+        if (m_rect.isEmpty())
+            return { };
+
+        switch (m_mode) {
+        case Mode::Rectangles:
+            if (!m_rects.shouldUnite)
+                return m_rects.rects;
+
+            return WTF::compactMap<1>(m_rects.rects, [](const auto& value) -> std::optional<IntRect> {
+                if (value.isEmpty())
+                    return std::nullopt;
+                return value;
+            });
+            break;
+        case Mode::BoundingBox:
+            if (!m_minimumBoundingRectangle.isEmpty())
+                return { m_minimumBoundingRectangle };
+            break;
+        case Mode::Full:
+            return { m_rect };
+        }
+
+        return { };
+    }
+
+    template <typename Functor>
+    void forEachNonEmptyRect(const Functor& functor) const
+    {
+        switch (m_mode) {
+        case Mode::Rectangles:
+            for (const auto& rect : m_rects.rects) {
+                if (!rect.isEmpty())
+                    functor(rect);
+            }
+            break;
+        case Mode::BoundingBox:
+            if (!m_minimumBoundingRectangle.isEmpty())
+                functor(m_minimumBoundingRectangle);
+            break;
+        case Mode::Full:
+            functor(m_rect);
+            break;
+        }
     }
 
     void makeFull()
@@ -122,8 +248,6 @@ public:
             return;
 
         m_mode = Mode::Full;
-        m_rects.clear();
-        m_shouldUnite = false;
         initialize(NoMaxRectangles);
     }
 
@@ -137,12 +261,16 @@ public:
             return true;
         }
 
-        const auto rectsCount = m_rects.size();
+        const auto rectsCount = size();
         if (!rectsCount || rect.contains(m_minimumBoundingRectangle)) {
-            m_rects.clear();
-            if (m_mode == Mode::Rectangles)
-                m_shouldUnite = m_gridCells.width() == 1 && m_gridCells.height() == 1;
-            m_rects.append(rect);
+            if (m_mode == Mode::Rectangles) {
+                if (rectsCount) {
+                    m_rects.rects.clear();
+                    m_rects.shouldUnite = m_rects.gridCells.width() == 1 && m_rects.gridCells.height() == 1;
+                }
+                m_rects.rects.append(rect);
+            }
+
             m_minimumBoundingRectangle = rect;
             return true;
         }
@@ -153,23 +281,23 @@ public:
         m_minimumBoundingRectangle.unite(rect);
         if (m_mode == Mode::BoundingBox) {
             ASSERT(rectsCount == 1);
-            m_rects[0] = m_minimumBoundingRectangle;
             return true;
         }
 
-        if (m_shouldUnite) {
+        ASSERT(m_mode == Mode::Rectangles);
+        if (m_rects.shouldUnite) {
             unite(rect);
             return true;
         }
 
-        if (rectsCount == m_gridCells.unclampedArea()) {
-            m_shouldUnite = true;
+        if (rectsCount == m_rects.gridCells.unclampedArea()) {
+            m_rects.shouldUnite = true;
             uniteExistingRects();
             unite(rect);
             return true;
         }
 
-        m_rects.append(rect);
+        m_rects.rects.append(rect);
         return true;
     }
 
@@ -188,12 +316,12 @@ public:
 
         // When adding rects to an empty Damage and we know we will need to unite,
         // we can unite the rects directly.
-        if (m_mode == Mode::Rectangles && m_rects.isEmpty()) {
+        if (m_mode == Mode::Rectangles && isEmpty()) {
             auto rectsCount = rects.size();
-            auto gridArea = m_gridCells.unclampedArea();
+            auto gridArea = m_rects.gridCells.unclampedArea();
 
             if (rectsCount > gridArea) {
-                m_rects.grow(gridArea);
+                m_rects.rects.grow(gridArea);
                 for (const auto& rect : rects) {
                     if (rect.isEmpty())
                         continue;
@@ -209,10 +337,10 @@ public:
 
                 if (m_minimumBoundingRectangle.isEmpty()) {
                     // All rectangles were empty.
-                    m_rects.clear();
+                    m_rects.rects.clear();
                     return false;
                 }
-                m_shouldUnite = true;
+                m_rects.shouldUnite = true;
 
                 return true;
             }
@@ -234,11 +362,13 @@ public:
             return true;
         }
 
-        // When both Damage are already united and have the same rect and grid, we can just iterate the rects and unite them.
-        if (m_mode == Mode::Rectangles && m_shouldUnite && m_mode == other.m_mode && m_rect == other.m_rect && m_gridCells == other.m_gridCells && other.m_shouldUnite && m_rects.size() == other.m_rects.size()) {
-            for (unsigned i = 0; i < m_rects.size(); ++i)
-                m_rects[i].unite(other.m_rects[i]);
-            return true;
+        if (m_mode == Mode::Rectangles) {
+            // When both Damage are already united and have the same rect and grid, we can just iterate the rects and unite them.
+            if (m_rects.shouldUnite && m_mode == other.m_mode && m_rect == other.m_rect && m_rects.gridCells == other.m_rects.gridCells && other.m_rects.shouldUnite && m_rects.rects.size() == other.m_rects.rects.size()) {
+                for (unsigned i = 0; i < m_rects.rects.size(); ++i)
+                    m_rects.rects[i].unite(other.m_rects.rects[i]);
+                return true;
+            }
         }
 
         return add(other.rects());
@@ -266,34 +396,34 @@ private:
         switch (m_mode) {
         case Mode::Rectangles:
             if (maxRectangles != NoMaxRectangles) {
-                m_gridCells = gridSize(maxRectangles);
-                m_cellSize = IntSize(std::ceil(static_cast<float>(m_rect.width()) / m_gridCells.width()), std::ceil(static_cast<float>(m_rect.height()) / m_gridCells.height()));
+                m_rects.gridCells = gridSize(maxRectangles);
+                m_rects.cellSize = IntSize(std::ceil(static_cast<float>(m_rect.width()) / m_rects.gridCells.width()), std::ceil(static_cast<float>(m_rect.height()) / m_rects.gridCells.height()));
             } else {
                 static constexpr int defaultCellSize { 256 };
-                m_cellSize = { defaultCellSize, defaultCellSize };
-                m_gridCells = IntSize(std::ceil(static_cast<float>(m_rect.width()) / m_cellSize.width()), std::ceil(static_cast<float>(m_rect.height()) / m_cellSize.height())).expandedTo({ 1, 1 });
+                m_rects.cellSize = { defaultCellSize, defaultCellSize };
+                m_rects.gridCells = IntSize(std::ceil(static_cast<float>(m_rect.width()) / m_rects.cellSize.width()), std::ceil(static_cast<float>(m_rect.height()) / m_rects.cellSize.height())).expandedTo({ 1, 1 });
             }
 
-            m_shouldUnite = m_gridCells.width() == 1 && m_gridCells.height() == 1;
+            m_rects.shouldUnite = m_rects.gridCells.width() == 1 && m_rects.gridCells.height() == 1;
             break;
         case Mode::BoundingBox:
-            break;
         case Mode::Full:
-            m_minimumBoundingRectangle = m_rect;
-            m_rects.append(m_minimumBoundingRectangle);
+            m_minimumBoundingRectangle = { };
+            m_rects = { };
             break;
         }
     }
 
     ALWAYS_INLINE bool shouldAdd() const
     {
+        // FIXME: we should not allow to create a Damage for an empty rect.
         return !m_rect.isEmpty() && m_mode != Mode::Full;
     }
 
     void uniteExistingRects()
     {
-        Rects rectsCopy(m_rects.size());
-        m_rects.swap(rectsCopy);
+        Rects rectsCopy(m_rects.rects.size());
+        m_rects.rects.swap(rectsCopy);
 
         for (const auto& rect : rectsCopy)
             unite(rect);
@@ -301,11 +431,11 @@ private:
 
     ALWAYS_INLINE size_t cellIndexForRect(const IntRect& rect) const
     {
-        ASSERT(m_rects.size() > 1);
+        ASSERT(m_rects.rects.size() > 1);
 
         const auto rectCenter = IntPoint(rect.center() - m_rect.location());
-        const auto rectCell = flooredIntPoint(FloatPoint { static_cast<float>(rectCenter.x()) / m_cellSize.width(), static_cast<float>(rectCenter.y()) / m_cellSize.height() });
-        return std::clamp(rectCell.x(), 0, m_gridCells.width() - 1) + std::clamp(rectCell.y(), 0, m_gridCells.height() - 1) * m_gridCells.width();
+        const auto rectCell = flooredIntPoint(FloatPoint { static_cast<float>(rectCenter.x()) / m_rects.cellSize.width(), static_cast<float>(rectCenter.y()) / m_rects.cellSize.height() });
+        return std::clamp(rectCell.x(), 0, m_rects.gridCells.width() - 1) + std::clamp(rectCell.y(), 0, m_rects.gridCells.height() - 1) * m_rects.gridCells.width();
     }
 
     void unite(const IntRect& rect)
@@ -313,25 +443,25 @@ private:
         // When merging cannot be avoided, we use m_rects to store minimal bounding rectangles
         // and perform merging while trying to keep minimal bounding rectangles small and
         // separated from each other.
-        if (m_rects.size() == 1) {
-            m_rects[0] = m_minimumBoundingRectangle;
+        if (m_rects.rects.size() == 1) {
+            m_rects.rects[0] = m_minimumBoundingRectangle;
             return;
         }
 
         const auto index = cellIndexForRect(rect);
-        ASSERT(index < m_rects.size());
-        m_rects[index].unite(rect);
+        ASSERT(index < m_rects.rects.size());
+        m_rects.rects[index].unite(rect);
     }
 
     Mode m_mode { Mode::Rectangles };
     IntRect m_rect;
-    bool m_shouldUnite { false };
-    IntSize m_cellSize;
-    IntSize m_gridCells;
-    Rects m_rects;
     IntRect m_minimumBoundingRectangle;
-
-    friend bool operator==(const Damage&, const Damage&) = default;
+    struct {
+        Rects rects;
+        bool shouldUnite { false };
+        IntSize cellSize;
+        IntSize gridCells;
+    } m_rects;
 };
 
 static inline WTF::TextStream& operator<<(WTF::TextStream& ts, const Damage& damage)

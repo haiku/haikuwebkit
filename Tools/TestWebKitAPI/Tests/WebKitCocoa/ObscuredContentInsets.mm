@@ -169,38 +169,45 @@ TEST(ObscuredContentInsets, ScrollViewFrameWithObscuredInsets)
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 
-TEST(ObscuredContentInsets, ResizeContentInsetFillView)
+TEST(ObscuredContentInsets, ResizeScrollPocket)
 {
     RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 400, 600)]);
     [webView _setAutomaticallyAdjustsContentInsets:NO];
     [webView _setObscuredContentInsets:NSEdgeInsetsMake(100, 100, 0, 0) immediate:NO];
     [webView synchronouslyLoadTestPageNamed:@"simple"];
     [webView waitForNextPresentationUpdate];
-    EXPECT_EQ(NSMakeRect(0, 0, 400, 100), [webView _contentInsetFillViewForTesting].frame);
+    EXPECT_EQ(NSMakeRect(0, 0, 400, 100), [webView _scrollPocketForTesting].frame);
 
     [webView setFrame:NSMakeRect(0, 0, 800, 600)];
     [webView waitForNextVisibleContentRectUpdate];
     [webView waitForNextPresentationUpdate];
-    EXPECT_EQ(NSMakeRect(0, 0, 800, 100), [webView _contentInsetFillViewForTesting].frame);
+    EXPECT_EQ(NSMakeRect(0, 0, 800, 100), [webView _scrollPocketForTesting].frame);
 }
 
-TEST(ObscuredContentInsets, ContentInsetFillCaptureColor)
+TEST(ObscuredContentInsets, ScrollPocketCaptureColor)
 {
-    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 600, 400)]);
+    RetainPtr webView = adoptNS([TestWKWebView new]);
+
     [webView _setAutomaticallyAdjustsContentInsets:NO];
     [webView _setObscuredContentInsets:NSEdgeInsetsMake(100, 0, 0, 0) immediate:NO];
+    [webView setFrame:NSMakeRect(0, 0, 600, 400)];
+    [webView waitForNextPresentationUpdate];
+
+    RetainPtr initialColor = [[webView _scrollPocketForTesting] captureColor];
+
     [webView synchronouslyLoadTestPageNamed:@"simple"];
     [webView waitForNextPresentationUpdate];
 
-    auto initialColor = WebCore::colorFromCocoaColor([[webView _contentInsetFillViewForTesting] captureColor]);
+    auto colorBeforeChangingBackground = WebCore::colorFromCocoaColor([[webView _scrollPocketForTesting] captureColor]);
 
     [webView stringByEvaluatingJavaScript:@"document.body.style.backgroundColor = '#222'"];
     [webView waitForNextPresentationUpdate];
 
-    auto finalColor = WebCore::colorFromCocoaColor([[webView _contentInsetFillViewForTesting] captureColor]);
+    auto colorAfterChangingBackground = WebCore::colorFromCocoaColor([[webView _scrollPocketForTesting] captureColor]);
 
-    EXPECT_EQ(WebCore::serializationForCSS(initialColor), "rgb(255, 255, 255)"_s);
-    EXPECT_EQ(WebCore::serializationForCSS(finalColor), "rgb(34, 34, 34)"_s);
+    EXPECT_TRUE([initialColor isEqual:NSColor.controlBackgroundColor]);
+    EXPECT_EQ(WebCore::serializationForCSS(colorBeforeChangingBackground), "rgb(255, 255, 255)"_s);
+    EXPECT_EQ(WebCore::serializationForCSS(colorAfterChangingBackground), "rgb(34, 34, 34)"_s);
 }
 
 #endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)

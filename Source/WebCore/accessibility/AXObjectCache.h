@@ -199,6 +199,7 @@ protected:
     macro(InertOrVisibilityChanged) \
     macro(InputTypeChanged) \
     macro(IsAtomicChanged) \
+    macro(IsEditableWebAreaChanged) \
     macro(KeyShortcutsChanged) \
     macro(LabelChanged) \
     macro(LanguageChanged) \
@@ -417,6 +418,7 @@ public:
     void autofillTypeChanged(HTMLInputElement&);
     void handleRoleChanged(AccessibilityObject&, AccessibilityRole previousRole);
     void handleReferenceTargetChanged();
+    void handlePageEditibilityChanged(Document&);
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     void columnIndexChanged(AccessibilityObject&);
@@ -968,7 +970,7 @@ inline Node* AXObjectCache::nodeForID(std::optional<AXID> axID) const
     if (!axID)
         return nullptr;
 
-    auto* object = m_objects.get(*axID);
+    RefPtr object = m_objects.get(*axID);
     return object ? object->node() : nullptr;
 }
 

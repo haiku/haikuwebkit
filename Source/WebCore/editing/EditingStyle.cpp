@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2025 Apple Inc.
+ * Copyright (C) 2007-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2010, 2011 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -1331,7 +1331,7 @@ Ref<EditingStyle> EditingStyle::wrappingStyleForSerialization(Node& context, boo
     auto wrappingStyle = EditingStyle::create();
 
     // When not annotating for interchange, we only preserve inline style declarations.
-    for (RefPtr node = &context; node && !node->isDocumentNode(); node = node->parentNode()) {
+    for (RefPtr node = context; node && !node->isDocumentNode(); node = node->parentNode()) {
         if (auto* element = dynamicDowncast<StyledElement>(*node); element && !isMailBlockquote(*element))
             wrappingStyle->mergeInlineAndImplicitStyleOfElement(*element, DoNotOverrideValues, PropertiesToInclude::EditingPropertiesInEffect, standardFontFamilySerializationMode);
     }

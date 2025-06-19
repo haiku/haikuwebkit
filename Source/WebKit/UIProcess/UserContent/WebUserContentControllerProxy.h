@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -93,7 +93,6 @@ public:
     void removeProcess(WebProcessProxy&);
 
     API::Array& userScripts() { return m_userScripts.get(); }
-    Ref<API::Array> protectedUserScripts();
     void addUserScript(API::UserScript&, InjectUserScriptImmediately);
     void removeUserScript(API::UserScript&);
     void removeAllUserScripts(API::ContentWorld&);
@@ -140,9 +139,6 @@ public:
     bool operator==(const WebUserContentControllerProxy& other) const { return (this == &other); }
 
 private:
-    Ref<API::Array> protectedUserScripts() const;
-    Ref<API::Array> protectedUserStyleSheets() const;
-
     // IPC::MessageReceiver.
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) override;
 
@@ -151,8 +147,8 @@ private:
     void addContentWorld(API::ContentWorld&);
 
     WeakHashSet<WebProcessProxy> m_processes;
-    Ref<API::Array> m_userScripts;
-    Ref<API::Array> m_userStyleSheets;
+    const Ref<API::Array> m_userScripts;
+    const Ref<API::Array> m_userStyleSheets;
     HashMap<ScriptMessageHandlerIdentifier, RefPtr<WebScriptMessageHandler>> m_scriptMessageHandlers;
     HashSet<ContentWorldIdentifier> m_associatedContentWorlds;
 

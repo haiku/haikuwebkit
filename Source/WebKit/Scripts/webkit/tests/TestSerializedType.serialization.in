@@ -156,6 +156,7 @@ headers: "CommonHeader.h"
 headers: "CommonHeader.h"
 [CustomHeader] class Namespace::CommonClass {
     int value;
+    WebCore::TimingFunction nonRefMemberWithSubclasses;
 }
 
 headers: "CommonHeader.h"

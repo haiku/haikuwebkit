@@ -59,7 +59,9 @@ public:
     void didDispatchAsyncCall();
     void didCancelAsyncCall();
 
-    Ref<Protocol::Console::StackTrace> buildInspectorObject() const;
+    // May be nullptr if the async stack trace doesn't contain any actionable information.
+    // For example, if each parentStackTrace is just the boundary frame with nothing else in it.
+    RefPtr<Protocol::Console::StackTrace> buildInspectorObject() const;
 
     JS_EXPORT_PRIVATE ~AsyncStackTrace();
 

@@ -83,13 +83,8 @@ Modules/websockets/WebSocket.cpp
 Modules/webtransport/WebTransport.cpp
 StyleBuilderGenerated.cpp
 accessibility/AXCoreObject.cpp
-accessibility/AXCoreObject.h
 accessibility/AXLogger.cpp
 accessibility/AXObjectCache.cpp
-accessibility/AXObjectCache.h
-accessibility/AXRemoteFrame.cpp
-accessibility/AXSearchManager.cpp
-accessibility/AXTextMarker.cpp
 accessibility/AccessibilityARIAGridRow.cpp
 accessibility/AccessibilityList.cpp
 accessibility/AccessibilityListBox.cpp
@@ -114,7 +109,6 @@ accessibility/AccessibilityTreeItem.cpp
 accessibility/cocoa/AccessibilityObjectCocoa.mm
 accessibility/isolatedtree/AXIsolatedObject.cpp
 accessibility/isolatedtree/AXIsolatedTree.cpp
-accessibility/isolatedtree/mac/AXIsolatedObjectMac.mm
 accessibility/mac/AXObjectCacheMac.mm
 accessibility/mac/AccessibilityObjectMac.mm
 accessibility/mac/WebAccessibilityObjectWrapperBase.mm
@@ -314,7 +308,6 @@ editing/cocoa/HTMLConverter.mm
 editing/cocoa/WebContentReaderCocoa.mm
 editing/mac/EditorMac.mm
 editing/mac/FrameSelectionMac.mm
-editing/markup.cpp
 history/CachedFrame.cpp
 history/CachedPage.cpp
 history/HistoryItem.cpp
@@ -555,7 +548,6 @@ rendering/RenderLayerFilters.cpp
 rendering/RenderLayerModelObject.cpp
 rendering/RenderListBox.cpp
 rendering/RenderListItem.cpp
-rendering/RenderMarquee.cpp
 rendering/RenderMenuList.cpp
 rendering/RenderObject.cpp
 rendering/RenderProgress.cpp
@@ -570,7 +562,6 @@ rendering/RenderTheme.cpp
 rendering/RenderTreeAsText.cpp
 rendering/RenderWidget.cpp
 rendering/TextBoxPainter.cpp
-rendering/TextPaintStyle.cpp
 rendering/mac/RenderThemeMac.mm
 rendering/mathml/MathMLStyle.cpp
 rendering/shapes/ShapeOutsideInfo.cpp
@@ -701,10 +692,3 @@ workers/service/server/SWServer.cpp
 workers/shared/SharedWorkerObjectConnection.cpp
 workers/shared/SharedWorkerScriptLoader.cpp
 worklets/Worklet.cpp
-xml/XPathFunctions.cpp
-xml/XPathNodeSet.cpp
-xml/XPathPath.cpp
-xml/XPathStep.cpp
-xml/XSLStyleSheetLibxslt.cpp
-xml/XSLTProcessor.cpp
-xml/XSLTProcessorLibxslt.cpp

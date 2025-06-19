@@ -52,9 +52,9 @@ String MIMETypeFromUTI(const String& uti)
     return type.get().preferredMIMEType;
 }
 
-UncheckedKeyHashSet<String> RequiredMIMETypesFromUTI(const String& uti)
+HashSet<String> RequiredMIMETypesFromUTI(const String& uti)
 {
-    UncheckedKeyHashSet<String> mimeTypes;
+    HashSet<String> mimeTypes;
 
     auto mainMIMEType = MIMETypeFromUTI(uti);
     if (!mainMIMEType.isEmpty())

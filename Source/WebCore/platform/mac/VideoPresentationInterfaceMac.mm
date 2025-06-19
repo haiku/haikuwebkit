@@ -631,6 +631,7 @@ void VideoPresentationInterfaceMac::currentTimeChanged(double currentTime, doubl
 
 void VideoPresentationInterfaceMac::rateChanged(OptionSet<PlaybackSessionModel::PlaybackState> playbackState, double playbackRate, double /* defaultPlaybackRate */)
 {
+    ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER, "playbackState: ", playbackState, ", playbackRate: ", playbackRate);
     AVPlayerTimeControlStatus timeControlStatus = AVPlayerTimeControlStatusPaused;
     if (playbackState.containsAll({ PlaybackSessionModel::PlaybackState::Stalled, PlaybackSessionModel::PlaybackState::Playing }))
         timeControlStatus = AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate;

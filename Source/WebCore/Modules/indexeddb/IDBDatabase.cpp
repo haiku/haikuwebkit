@@ -332,7 +332,7 @@ Ref<IDBTransaction> IDBDatabase::startVersionChangeTransaction(const IDBTransact
     ASSERT(scriptExecutionContext());
 
     Ref<IDBTransaction> transaction = IDBTransaction::create(*this, info, request);
-    m_versionChangeTransaction = &transaction.get();
+    m_versionChangeTransaction = transaction.get();
 
     m_activeTransactions.set(transaction->info().identifier(), &transaction.get());
 

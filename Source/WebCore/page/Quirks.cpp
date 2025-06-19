@@ -966,7 +966,7 @@ static bool isKinjaLoginAvatarElement(const Element& element)
 
     RefPtr<const Element> svgElement;
     if (is<SVGSVGElement>(element))
-        svgElement = &element;
+        svgElement = element;
     else if (is<SVGPathElement>(element) && is<SVGSVGElement>(element.parentElement()))
         svgElement = element.parentElement();
 

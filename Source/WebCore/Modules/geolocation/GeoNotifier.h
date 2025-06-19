@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2025 Apple Inc. All Rights Reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  * Copyright 2010, The Android Open Source Project
  *
  * Redistribution and use in source and binary forms, with or without

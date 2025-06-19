@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2005 Frerich Raabe <raabe@kde.org>
- * Copyright (C) 2006-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2019 Google Inc. All rights reserved.
  * Copyright (C) 2007 Alexey Proskuryakov <ap@webkit.org>
  *
@@ -353,7 +353,7 @@ Value FunId::evaluate() const
         }
     }
     
-    TreeScope& contextScope = evaluationContext().node->treeScope();
+    Ref contextScope = evaluationContext().node->treeScope();
     NodeSet result;
     HashSet<Ref<Node>> resultSet;
 
@@ -372,7 +372,7 @@ Value FunId::evaluate() const
 
         // If there are several nodes with the same id, id() should return the first one.
         // In WebKit, getElementById behaves so, too, although its behavior in this case is formally undefined.
-        RefPtr node = contextScope.getElementById(StringView(idList).substring(startPos, endPos - startPos));
+        RefPtr node = contextScope->getElementById(StringView(idList).substring(startPos, endPos - startPos));
         if (node && resultSet.add(*node).isNewEntry)
             result.append(WTFMove(node));
         
@@ -404,7 +404,7 @@ Value FunLocalName::evaluate() const
         if (!a.isNodeSet())
             return emptyString();
 
-        auto* node = a.toNodeSet().firstNode();
+        RefPtr node = a.toNodeSet().firstNode();
         return node ? expandedNameLocalPart(*node) : emptyString();
     }
 
@@ -418,7 +418,7 @@ Value FunNamespaceURI::evaluate() const
         if (!a.isNodeSet())
             return emptyString();
 
-        Node* node = a.toNodeSet().firstNode();
+        RefPtr node = a.toNodeSet().firstNode();
         return node ? node->namespaceURI().string() : emptyString();
     }
 
@@ -432,7 +432,7 @@ Value FunName::evaluate() const
         if (!a.isNodeSet())
             return emptyString();
 
-        auto* node = a.toNodeSet().firstNode();
+        RefPtr node = a.toNodeSet().firstNode();
         return node ? expandedName(*node) : emptyString();
     }
 
@@ -668,7 +668,7 @@ Value FunLang::evaluate() const
     String lang = argument(0).evaluate().toString();
 
     const Attribute* languageAttribute = nullptr;
-    Node* node = evaluationContext().node.get();
+    RefPtr node = evaluationContext().node.get();
     while (node) {
         if (RefPtr element = dynamicDowncast<Element>(*node)) {
             if (element->hasAttributes())

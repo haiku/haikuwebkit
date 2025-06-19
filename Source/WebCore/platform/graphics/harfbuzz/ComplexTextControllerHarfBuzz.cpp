@@ -159,7 +159,7 @@ ComplexTextController::ComplexTextRun::ComplexTextRun(hb_buffer_t* buffer, const
         m_coreTextIndices[i] = glyphInfos[i].cluster;
 
         uint16_t glyph = glyphInfos[i].codepoint;
-        if (m_font.isZeroWidthSpaceGlyph(glyph) || !m_font.platformData().size()) {
+        if (m_font->isZeroWidthSpaceGlyph(glyph) || !m_font->platformData().size()) {
             m_glyphs[i] = glyph;
             m_baseAdvances[i] = { };
             m_glyphOrigins[i] = { };
@@ -351,13 +351,13 @@ void ComplexTextController::collectComplexTextRunsForCharacters(std::span<const 
     if (!FT_Get_MM_Var(ftFace, &ftMMVar)) {
         Vector<FT_Fixed, 4> coords;
         coords.resize(ftMMVar->num_axis);
-        if (!FT_Get_Var_Design_Coordinates(ftFace, coords.size(), coords.data())) {
+        if (!FT_Get_Var_Design_Coordinates(ftFace, coords.size(), coords.mutableSpan().data())) {
             Vector<hb_variation_t, 4> variations(coords.size());
             for (FT_UInt i = 0; i < ftMMVar->num_axis; ++i) {
                 variations[i].tag = ftMMVar->axis[i].tag;
                 variations[i].value = coords[i] / 65536.0;
             }
-            hb_font_set_variations(harfBuzzFont.get(), variations.data(), variations.size());
+            hb_font_set_variations(harfBuzzFont.get(), variations.span().data(), variations.size());
         }
         FT_Done_MM_Var(ftFace->glyph->library, ftMMVar);
     }
@@ -383,7 +383,7 @@ void ComplexTextController::collectComplexTextRunsForCharacters(std::span<const 
         }
         hb_buffer_add_utf16(buffer.get(), reinterpret_cast<const uint16_t*>(characters.data()), characters.size(), run.startIndex, run.endIndex - run.startIndex);
 
-        hb_shape(harfBuzzFont.get(), buffer.get(), features.isEmpty() ? nullptr : features.data(), features.size());
+        hb_shape(harfBuzzFont.get(), buffer.get(), features.isEmpty() ? nullptr : features.span().data(), features.size());
         m_complexTextRuns.append(ComplexTextRun::create(buffer.get(), *font, characters, stringLocation, run.startIndex, run.endIndex));
         hb_buffer_reset(buffer.get());
     }

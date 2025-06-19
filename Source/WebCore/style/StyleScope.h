@@ -3,7 +3,7 @@
  *           (C) 1999 Antti Koivisto (koivisto@kde.org)
  *           (C) 2001 Dirk Mueller (mueller@kde.org)
  *           (C) 2006 Alexey Proskuryakov (ap@webkit.org)
- * Copyright (C) 2004-2010, 2012-2013, 2015-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2008, 2009 Torch Mobile Inc. All rights reserved. (http://www.torchmobile.com/)
  * Copyright (C) 2010 Nokia Corporation and/or its subsidiary(-ies)
  * Copyright (C) 2011 Google Inc. All rights reserved.
@@ -224,7 +224,7 @@ private:
     bool invalidateForContainerDependencies(LayoutDependencyUpdateContext&);
     bool invalidateForPositionTryFallbacks(LayoutDependencyUpdateContext&);
 
-    CheckedRef<Document> m_document;
+    const CheckedRef<Document> m_document;
     ShadowRoot* m_shadowRoot { nullptr };
 
     RefPtr<Resolver> m_resolver;
@@ -270,8 +270,8 @@ private:
 
     std::unique_ptr<MatchResultCache> m_matchResultCache;
 
-    UniqueRef<CustomPropertyRegistry> m_customPropertyRegistry;
-    UniqueRef<CSSCounterStyleRegistry> m_counterStyleRegistry;
+    const UniqueRef<CustomPropertyRegistry> m_customPropertyRegistry;
+    const UniqueRef<CSSCounterStyleRegistry> m_counterStyleRegistry;
 
     // FIXME: These (and some things above) are only relevant for the root scope.
     UncheckedKeyHashMap<ResolverSharingKey, Ref<Resolver>> m_sharedShadowTreeResolvers;

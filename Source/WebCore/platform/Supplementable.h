@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012 Google, Inc. All Rights Reserved.
+ * Copyright (C) 2012 Google, Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -116,10 +116,10 @@ protected:
 #endif
 
 private:
-    using SupplementMap = UncheckedKeyHashMap<ASCIILiteral, std::unique_ptr<Supplement<T>>>;
+    using SupplementMap = HashMap<ASCIILiteral, std::unique_ptr<Supplement<T>>>;
     SupplementMap m_supplements;
 #if ASSERT_ENABLED
-    Ref<Thread> m_thread { Thread::currentSingleton() };
+    const Ref<Thread> m_thread { Thread::currentSingleton() };
 #endif
 };
 

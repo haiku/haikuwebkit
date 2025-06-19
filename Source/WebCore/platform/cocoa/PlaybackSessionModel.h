@@ -198,4 +198,20 @@ public:
 
 } // namespace WebCore
 
+namespace WTF {
+
+template <>
+struct LogArgument<OptionSet<WebCore::PlaybackSessionModel::PlaybackState>> {
+    static String toString(const OptionSet<WebCore::PlaybackSessionModel::PlaybackState> state)
+    {
+        if (!state.toRaw())
+            return "Paused"_s;
+        if (state.contains(WebCore::PlaybackSessionModel::PlaybackState::Stalled))
+            return "Stalled"_s;
+        return "Playing"_s;
+    }
+};
+
+}
+
 #endif // PLATFORM(IOS_FAMILY) || (PLATFORM(MAC) && ENABLE(VIDEO_PRESENTATION_MODE))

@@ -52,7 +52,7 @@ public:
     ShareableBitmapConfiguration() = default;
 
     WEBCORE_EXPORT ShareableBitmapConfiguration(const IntSize&, std::optional<DestinationColorSpace> = std::nullopt, Headroom = Headroom::None, bool isOpaque = false);
-    WEBCORE_EXPORT ShareableBitmapConfiguration(const IntSize&, std::optional<DestinationColorSpace>, Headroom, bool isOpaque, unsigned bytesPerPixel, unsigned bytesPerRow
+    WEBCORE_EXPORT ShareableBitmapConfiguration(const IntSize&, std::optional<DestinationColorSpace>, Headroom, bool isOpaque, unsigned bitsPerComponent, unsigned bytesPerPixel, unsigned bytesPerRow
 #if USE(CG)
         , CGBitmapInfo
 #endif
@@ -67,6 +67,7 @@ public:
     Headroom headroom() const { return m_headroom; }
     bool isOpaque() const { return m_isOpaque; }
 
+    unsigned bitsPerComponent() const { ASSERT(!m_bitsPerComponent.hasOverflowed()); return m_bitsPerComponent; }
     unsigned bytesPerPixel() const { ASSERT(!m_bytesPerPixel.hasOverflowed()); return m_bytesPerPixel; }
     unsigned bytesPerRow() const { ASSERT(!m_bytesPerRow.hasOverflowed()); return m_bytesPerRow; }
 #if USE(CG)
@@ -85,6 +86,7 @@ private:
     friend struct IPC::ArgumentCoder<ShareableBitmapConfiguration, void>;
 
     static std::optional<DestinationColorSpace> validateColorSpace(std::optional<DestinationColorSpace>);
+    static CheckedUint32 calculateBitsPerComponent(const DestinationColorSpace&);
     static CheckedUint32 calculateBytesPerPixel(const DestinationColorSpace&);
 #if USE(CG)
     static CGBitmapInfo calculateBitmapInfo(const DestinationColorSpace&, bool isOpaque);
@@ -95,6 +97,7 @@ private:
     Headroom m_headroom { Headroom::None };
     bool m_isOpaque { false };
 
+    CheckedUint32 m_bitsPerComponent;
     CheckedUint32 m_bytesPerPixel;
     CheckedUint32 m_bytesPerRow;
 #if USE(CG)

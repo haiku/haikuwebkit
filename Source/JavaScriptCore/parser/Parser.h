@@ -634,7 +634,6 @@ public:
     }
     void usePrivateName(const Identifier& ident)
     {
-        ASSERT(m_allowsLexicalDeclarations);
         useVariable(&ident, false);
     }
 

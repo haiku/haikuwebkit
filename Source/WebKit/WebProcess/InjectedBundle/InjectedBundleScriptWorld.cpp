@@ -131,6 +131,11 @@ void InjectedBundleScriptWorld::makeAllShadowRootsOpen()
     m_world->setShadowRootIsAlwaysOpen();
 }
 
+void InjectedBundleScriptWorld::exposeClosedShadowRootsForExtensions()
+{
+    m_world->setClosedShadowRootIsExposedForExtensions();
+}
+
 void InjectedBundleScriptWorld::disableOverrideBuiltinsBehavior()
 {
     m_world->disableLegacyOverrideBuiltInsBehavior();

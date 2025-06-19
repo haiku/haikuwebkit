@@ -67,11 +67,12 @@ class VersionNameMap(object):
                 'Ventura': Version(13, 0),
                 'Sonoma': Version(14, 0),
                 'Sequoia': Version(15, 0),
+                'Tahoe': Version(26, 0)
             },
-            'ios': self._automap_to_major_version('iOS', minimum=Version(10), maximum=Version(18)),
-            'tvos': self._automap_to_major_version('tvOS', minimum=Version(10), maximum=Version(18)),
-            'watchos': self._automap_to_major_version('watchOS', minimum=Version(1), maximum=Version(11)),
-            'visionos': self._automap_to_major_version('visionOS', minimum=Version(1), maximum=Version(2)),
+            'ios': self._automap_to_major_version('iOS', minimum=Version(10), maximum=Version(26)),
+            'tvos': self._automap_to_major_version('tvOS', minimum=Version(10), maximum=Version(26)),
+            'watchos': self._automap_to_major_version('watchOS', minimum=Version(1), maximum=Version(26)),
+            'visionos': self._automap_to_major_version('visionOS', minimum=Version(1), maximum=Version(26)),
             'win': {
                 'Win10': Version(10),
                 '8.1': Version(6, 3),

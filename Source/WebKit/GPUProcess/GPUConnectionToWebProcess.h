@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2019-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -158,10 +158,8 @@ public:
     USING_CAN_MAKE_WEAKPTR(WebCore::NowPlayingManagerClient);
 
     IPC::Connection& connection() { return m_connection.get(); }
-    Ref<IPC::Connection> protectedConnection() { return m_connection; }
     IPC::MessageReceiverMap& messageReceiverMap() { return m_messageReceiverMap; }
     GPUProcess& gpuProcess() { return m_gpuProcess.get(); }
-    Ref<GPUProcess> protectedGPUProcess() const;
     WebCore::ProcessIdentifier webProcessIdentifier() const { return m_webProcessIdentifier; }
     Ref<RemoteSharedResourceCache> sharedResourceCache();
 
@@ -296,7 +294,6 @@ private:
     Ref<RemoteAudioDestinationManager> protectedRemoteAudioDestinationManager();
 #endif
 #if PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
-    Ref<RemoteSampleBufferDisplayLayerManager> protectedSampleBufferDisplayLayerManager() const;
     UserMediaCaptureManagerProxy& userMediaCaptureManagerProxy();
     Ref<UserMediaCaptureManagerProxy> protectedUserMediaCaptureManagerProxy();
     RemoteAudioMediaStreamTrackRendererInternalUnitManager& audioMediaStreamTrackRendererInternalUnitManager();
@@ -373,9 +370,9 @@ private:
 
     RefPtr<Logger> m_logger;
 
-    Ref<IPC::Connection> m_connection;
+    const Ref<IPC::Connection> m_connection;
     IPC::MessageReceiverMap m_messageReceiverMap;
-    Ref<GPUProcess> m_gpuProcess;
+    const Ref<GPUProcess> m_gpuProcess;
     const WebCore::ProcessIdentifier m_webProcessIdentifier;
     const WebCore::ProcessIdentity m_webProcessIdentity;
 #if ENABLE(WEB_AUDIO)
@@ -395,7 +392,7 @@ private:
     const std::unique_ptr<RemoteAudioMediaStreamTrackRendererInternalUnitManager> m_audioMediaStreamTrackRendererInternalUnitManager;
     bool m_isLastToCaptureAudio { false };
 
-    Ref<RemoteSampleBufferDisplayLayerManager> m_sampleBufferDisplayLayerManager;
+    const Ref<RemoteSampleBufferDisplayLayerManager> m_sampleBufferDisplayLayerManager;
 #endif
 
 #if ENABLE(MEDIA_STREAM)

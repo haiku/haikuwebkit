@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013, 2015, 2016 Apple Inc. All Rights Reserved.
+ * Copyright (C) 2013, 2015, 2016 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -109,6 +109,7 @@ public:
 #if PLATFORM(COCOA)
             std::optional<bool> allowInsecureMediaCapture;
             std::optional<bool> suppressICECandidateFiltering;
+            std::optional<bool> alwaysAllowAutoplay;
 #endif
         };
 
@@ -119,7 +120,7 @@ public:
         virtual String browserVersion() const { return { }; }
         virtual void requestAutomationSession(const String& sessionIdentifier, const SessionCapabilities&) = 0;
         virtual void requestedDebuggablesToWakeUp() { };
-#if USE(INSPECTOR_SOCKET_SERVER)
+#if USE(INSPECTOR_SOCKET_SERVER) || USE(GLIB)
         virtual void closeAutomationSession() = 0;
 #endif
     };
@@ -174,6 +175,7 @@ public:
 
 #if USE(GLIB)
     void requestAutomationSession(const char* sessionID, const Client::SessionCapabilities&);
+    void automationConnectionDidClose();
 #endif
 #if USE(GLIB) || USE(INSPECTOR_SOCKET_SERVER)
     void setup(TargetID);

@@ -200,7 +200,9 @@ extern "C" { extern void (*const __identifier("??_7TestTaggedWrapper@WebCore@@6B
 #else
 extern "C" { extern void* _ZTVN7WebCore17TestTaggedWrapperE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestTaggedWrapper>, void>> static inline void verifyVTable(TestTaggedWrapper* ptr) {
+template<std::same_as<TestTaggedWrapper> T>
+static inline void verifyVTable(TestTaggedWrapper* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

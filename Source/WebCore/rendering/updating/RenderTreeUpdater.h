@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -108,7 +108,7 @@ private:
 
     RenderView& renderView();
 
-    Ref<Document> m_document;
+    const Ref<Document> m_document;
     std::unique_ptr<Style::Update> m_styleUpdate;
 
     Vector<Parent> m_parentStack;

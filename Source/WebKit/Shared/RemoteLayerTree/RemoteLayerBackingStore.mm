@@ -386,7 +386,7 @@ void RemoteLayerBackingStore::dirtyRepaintCounterIfNecessary()
 {
     Ref layer = m_layer.get();
     if (layer->owner()->platformCALayerShowRepaintCounter(layer.ptr())) {
-        IntRect indicatorRect(0, 0, 52, 27);
+        IntRect indicatorRect(0, 0, 52, 28);
         m_dirtyRegion.unite(indicatorRect);
     }
 }

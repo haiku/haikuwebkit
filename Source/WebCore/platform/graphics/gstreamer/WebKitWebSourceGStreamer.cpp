@@ -123,7 +123,7 @@ struct WebKitWebSrcPrivate {
         uint64_t stopPosition { UINT64_MAX };
 
         bool isRequestPending { true };
-        UncheckedKeyHashSet<RefPtr<WebCore::SecurityOrigin>> origins;
+        HashSet<RefPtr<WebCore::SecurityOrigin>> origins;
 
         RefPtr<PlatformMediaResource> resource;
     };

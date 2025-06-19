@@ -225,7 +225,7 @@ private:
     {
         {
             Locker locker(m_frameLock);
-            m_frame = &frame;
+            m_frame = frame;
         }
         callOnMainThread([weakThis = ThreadSafeWeakPtr { *this }] {
             RefPtr protectedThis = weakThis.get();

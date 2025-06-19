@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2014-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -203,7 +203,6 @@ public:
     void browsingContextRemoved(WebPageProxyIdentifier, WebCore::PageIdentifier, WebCore::FrameIdentifier);
 
     NetworkProcess& networkProcess() { return m_networkProcess.get(); }
-    Ref<NetworkProcess> protectedNetworkProcess();
     PAL::SessionID sessionID() const { return m_sessionID; }
     const String& storageDirectory() const { return m_storageDirectory; }
     void fetchData(bool shouldComputeSize, CompletionHandler<void(Vector<WebsiteData::Entry>&&)>&&);

@@ -141,7 +141,7 @@ static xmlDocPtr docLoaderFunc(const xmlChar* uri,
             return nullptr;
 
         PageConsoleClient* console = nullptr;
-        auto* frame = globalProcessor->xslStylesheet()->ownerDocument()->frame();
+        RefPtr frame = globalProcessor->xslStylesheet()->ownerDocument()->frame();
         if (frame && frame->page())
             console = &frame->page()->console();
         XMLDocumentParserScope scope(cachedResourceLoader.get(), XSLTProcessor::genericErrorFunc, XSLTProcessor::parseErrorFunc, console);

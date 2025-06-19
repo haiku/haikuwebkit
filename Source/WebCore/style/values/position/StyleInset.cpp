@@ -34,7 +34,7 @@ namespace Style {
 
 // MARK: - Conversion
 
-InsetEdge insetEdgeFromCSSValue(const CSSValue& value, BuilderState& state)
+auto CSSValueConversion<InsetEdge>::operator()(BuilderState& state, const CSSValue& value) -> InsetEdge
 {
     return InsetEdge { BuilderConverter::convertLengthOrAuto(state, value) };
 }

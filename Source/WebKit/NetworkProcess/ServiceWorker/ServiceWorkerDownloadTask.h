@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,8 +69,6 @@ private:
     ServiceWorkerDownloadTask(NetworkSession&, NetworkDataTaskClient&, WebSWServerToContextConnection&, WebCore::ServiceWorkerIdentifier, WebCore::SWServerConnectionIdentifier, WebCore::FetchIdentifier, const WebCore::ResourceRequest&, const WebCore::ResourceResponse& response, DownloadID);
     void startListeningForIPC();
 
-    Ref<NetworkProcess> protectedNetworkProcess() const;
-
     // IPC Message
     void didReceiveData(const IPC::SharedBufferReference&);
     void didReceiveFormData(const IPC::FormDataReference&);
@@ -99,7 +97,7 @@ private:
     WebCore::SWServerConnectionIdentifier m_serverConnectionIdentifier;
     WebCore::FetchIdentifier m_fetchIdentifier;
     DownloadID m_downloadID;
-    Ref<NetworkProcess> m_networkProcess;
+    const Ref<NetworkProcess> m_networkProcess;
     RefPtr<SandboxExtension> m_sandboxExtension;
     FileSystem::FileHandle m_downloadFile;
     uint64_t m_downloadBytesWritten { 0 };

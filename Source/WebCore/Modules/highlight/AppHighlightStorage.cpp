@@ -70,7 +70,7 @@ static std::pair<RefPtr<Node>, size_t> findNodeStartingAtPathComponentIndex(cons
     if (initialIndexToFollow >= path.size())
         return { nullptr, initialIndexToFollow };
 
-    RefPtr currentNode = &initialNode;
+    RefPtr currentNode = initialNode;
     size_t currentPathIndex = initialIndexToFollow;
     for (; currentPathIndex < path.size(); ++currentPathIndex) {
         auto& component = path[currentPathIndex];

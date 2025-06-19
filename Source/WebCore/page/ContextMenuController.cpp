@@ -150,7 +150,7 @@ static std::unique_ptr<ContextMenuItem> separatorItem()
 
 void ContextMenuController::showContextMenu(Event& event, ContextMenuProvider& provider)
 {
-    m_menuProvider = &provider;
+    m_menuProvider = provider;
 
     auto contextType = provider.contextMenuContextType();
 
@@ -192,7 +192,7 @@ static void prepareContextForQRCode(ContextMenuContext& context)
     RefPtr<Element> element;
     for (auto& lineage : lineageOfType<Element>(*nodeElement)) {
         if (is<HTMLTableElement>(lineage) || is<HTMLCanvasElement>(lineage) || is<HTMLImageElement>(lineage) || is<SVGSVGElement>(lineage)) {
-            element = &lineage;
+            element = lineage;
             break;
         }
     }
@@ -238,7 +238,7 @@ std::unique_ptr<ContextMenu> ContextMenuController::maybeCreateContextMenu(Event
     if (!frame)
         return nullptr;
 
-    auto result = frame->checkedEventHandler()->hitTestResultAtPoint(mouseEvent->absoluteLocation(), WTFMove(hitType));
+    auto result = frame->eventHandler().hitTestResultAtPoint(mouseEvent->absoluteLocation(), WTFMove(hitType));
     if (!result.innerNonSharedNode())
         return nullptr;
 
@@ -279,7 +279,7 @@ static void openNewWindow(const URL& urlToLoad, LocalFrame& frame, Event* event,
         return;
     newPage->chrome().show();
     if (RefPtr localMainFrame = dynamicDowncast<LocalFrame>(newPage->mainFrame()))
-        localMainFrame->protectedLoader()->loadFrameRequest(WTFMove(frameLoadRequest), event, { });
+        localMainFrame->loader().loadFrameRequest(WTFMove(frameLoadRequest), event, { });
 }
 
 #if PLATFORM(GTK)
@@ -428,10 +428,10 @@ void ContextMenuController::contextMenuItemSelected(ContextMenuAction action, co
             page->checkedBackForward()->goBackOrForward(1);
         break;
     case ContextMenuItemTagStop:
-        frame->protectedLoader()->stop();
+        frame->loader().stop();
         break;
     case ContextMenuItemTagReload:
-        frame->protectedLoader()->reload();
+        frame->loader().reload();
         break;
     case ContextMenuItemTagCut:
         frame->editor().command("Cut"_s).execute();
@@ -1866,8 +1866,8 @@ void ContextMenuController::showContextMenuAt(LocalFrame& frame, const IntPoint&
     // Simulate a click in the middle of the accessibility object.
     PlatformMouseEvent mouseEvent(clickPoint, clickPoint, MouseButton::Right, PlatformEvent::Type::MousePressed, 1, { }, WallTime::now(), ForceAtClick, SyntheticClickType::NoTap);
 
-    frame.checkedEventHandler()->handleMousePressEvent(mouseEvent);
-    bool handled = frame.checkedEventHandler()->sendContextMenuEvent(mouseEvent);
+    frame.eventHandler().handleMousePressEvent(mouseEvent);
+    bool handled = frame.eventHandler().sendContextMenuEvent(mouseEvent);
     if (handled)
         m_client->showContextMenu();
 }

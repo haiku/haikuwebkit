@@ -2422,7 +2422,7 @@ def check_spacing(file_extension, clean_lines, line_number, file_state, error):
     # 'delete []' or 'new char * []'. Objective-C can't follow this rule
     # because of method calls.
     if file_extension != 'mm' and file_extension != 'm':
-        if search(r'\w\s+\[', line) and not search(r'(delete|return|auto)\s+\[', line):
+        if search(r'\w\s+\[', line) and not search(r'(delete|return|auto)\s+\[', line) and not search(r'\s+\[\[(likely|unlikely)\]\]', line):
             error(line_number, 'whitespace/brackets', 5,
                   'Extra space before [.')
 
@@ -3150,7 +3150,8 @@ def check_braces(clean_lines, line_number, file_state, error):
     # Likewise, an else should never have the else clause on the same line
     if (search(r'\belse [^\s{]', line)
         and not search(r'\belse if\b', line)
-        and not search(r'\belse\s*\\$', line)):
+        and not search(r'\belse\s*\\$', line)
+            and not search(r'\belse\s*\[\[(likely|unlikely)\]\]', line)):
         error(line_number, 'whitespace/newline', 4,
               'Else clause should never be on same line as else (use 2 lines)')
 

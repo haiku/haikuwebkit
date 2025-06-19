@@ -4265,7 +4265,9 @@ void WebExtensionContext::loadInspectorBackgroundPage(WebInspectorUIProxy& inspe
             ALLOW_DEPRECATED_DECLARATIONS_END
 
             auto *inspectorWebViewConfiguration = inspectorWebView.configuration;
+            ALLOW_DEPRECATED_DECLARATIONS_BEGIN
             configuration.processPool = inspectorWebViewConfiguration.processPool;
+            ALLOW_DEPRECATED_DECLARATIONS_END
             configuration.websiteDataStore = inspectorWebViewConfiguration.websiteDataStore;
             configuration._processDisplayName = inspectorWebViewConfiguration._processDisplayName;
         }

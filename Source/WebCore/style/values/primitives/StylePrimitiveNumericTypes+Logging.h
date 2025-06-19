@@ -44,12 +44,14 @@ WTF::TextStream& operator<<(WTF::TextStream& ts, Numeric auto const& value)
 
 WTF::TextStream& operator<<(WTF::TextStream& ts, DimensionPercentageNumeric auto const& value)
 {
-    return WTF::switchOn(value, [&](const auto& value) -> WTF::TextStream& { return ts << value; });
+    WTF::switchOn(value, [&](const auto& value) { ts << value; });
+    return ts;
 }
 
 template<auto nR, auto pR, typename V> WTF::TextStream& operator<<(WTF::TextStream& ts, const NumberOrPercentage<nR, pR, V>& value)
 {
-    return WTF::switchOn(value, [&](const auto& value) -> WTF::TextStream& { return ts << value; });
+    WTF::switchOn(value, [&](const auto& value) { ts << value; });
+    return ts;
 }
 
 template<auto nR, auto pR, typename V> WTF::TextStream& operator<<(WTF::TextStream& ts, const NumberOrPercentageResolvedToNumber<nR, pR, V>& value)

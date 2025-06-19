@@ -46,6 +46,10 @@ template<typename T> requires std::is_enum_v<T> struct Serialize<T> {
 
 class ExtractorSerializer {
 public:
+    // MARK: Strong value conversions
+
+    template<typename T> static void serializeStyleType(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const T&);
+
     // MARK: Primitive serializations
 
     template<typename ConvertibleType>
@@ -86,20 +90,6 @@ public:
     static void serializeTransformationMatrix(const RenderStyle&, StringBuilder&, const CSS::SerializationContext&, const TransformationMatrix&);
     static void serializeTransformOperation(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const TransformOperation&);
     static void serializeTransformOperation(const RenderStyle&, StringBuilder&, const CSS::SerializationContext&, const TransformOperation&);
-
-    // MARK: Strong value conversions
-
-    static void serializeColor(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const Color&);
-    static void serializeInsetEdge(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const InsetEdge&);
-    static void serializeMarginEdge(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const MarginEdge&);
-    static void serializePaddingEdge(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const PaddingEdge&);
-    static void serializeScrollMarginEdge(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const ScrollMarginEdge&);
-    static void serializeScrollPaddingEdge(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const ScrollPaddingEdge&);
-    static void serializeCornerShapeValue(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const CornerShapeValue&);
-    static void serializeDynamicRangeLimit(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const DynamicRangeLimit&);
-#if ENABLE(DARK_MODE_CSS)
-    static void serializeColorScheme(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const ColorScheme&);
-#endif
 
     // MARK: Shared serializations
 
@@ -150,8 +140,6 @@ public:
     static void serializeLineBoxContain(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<Style::LineBoxContain>);
     static void serializeWebkitRubyPosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, RubyPosition);
     static void serializePosition(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const LengthPoint&);
-    static void serializePositionOrAuto(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const LengthPoint&);
-    static void serializePositionOrAutoOrNormal(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const LengthPoint&);
     static void serializeContainIntrinsicSize(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const ContainIntrinsicSizeType&, const std::optional<WebCore::Length>&);
     static void serializeTouchAction(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TouchAction>);
     static void serializeTextTransform(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, OptionSet<TextTransform>);
@@ -168,7 +156,6 @@ public:
     static void serializeWebkitColumnBreak(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, BreakInside);
     static void serializeSelfOrDefaultAlignmentData(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const StyleSelfAlignmentData&);
     static void serializeContentAlignmentData(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const StyleContentAlignmentData&);
-    static void serializeOffsetRotate(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const OffsetRotation&);
     static void serializePaintOrder(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, PaintOrder);
     static void serializeScrollTimelineAxes(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FixedVector<ScrollAxis>&);
     static void serializeScrollTimelineNames(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const FixedVector<AtomString>&);
@@ -253,6 +240,13 @@ public:
     static void serializeGridTrackSize(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const GridTrackSize&);
     static void serializeGridTrackSizeList(ExtractorState&, StringBuilder&, const CSS::SerializationContext&, const Vector<GridTrackSize>&);
 };
+
+// MARK: - Strong value serializations
+
+template<typename T> void ExtractorSerializer::serializeStyleType(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const T& value)
+{
+    serializationForCSS(builder, context, state.style, value);
+}
 
 // MARK: - Primitive serializations
 
@@ -511,7 +505,7 @@ inline void ExtractorSerializer::serializeSVGPaint(ExtractorState& state, String
         [[fallthrough]];
     case SVGPaintType::RGBColor:
     case SVGPaintType::CurrentColor:
-        serializeColor(state, builder, context, color);
+        serializeStyleType(state, builder, context, color);
         return;
     }
 
@@ -740,55 +734,6 @@ inline void ExtractorSerializer::serializeTransformOperation(const RenderStyle& 
 
     RELEASE_ASSERT_NOT_REACHED();
 }
-
-// MARK: - Strong value serializations
-
-inline void ExtractorSerializer::serializeColor(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const Color& value)
-{
-    serializationForCSS(builder, context, state.style, value);
-}
-
-inline void ExtractorSerializer::serializeInsetEdge(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const InsetEdge& value)
-{
-    serializationForCSS(builder, context, state.style, value);
-}
-
-inline void ExtractorSerializer::serializeMarginEdge(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const MarginEdge& value)
-{
-    serializationForCSS(builder, context, state.style, value);
-}
-
-inline void ExtractorSerializer::serializePaddingEdge(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const PaddingEdge& value)
-{
-    serializationForCSS(builder, context, state.style, value);
-}
-
-inline void ExtractorSerializer::serializeScrollMarginEdge(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const ScrollMarginEdge& value)
-{
-    serializationForCSS(builder, context, state.style, value);
-}
-
-inline void ExtractorSerializer::serializeScrollPaddingEdge(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const ScrollPaddingEdge& value)
-{
-    serializationForCSS(builder, context, state.style, value);
-}
-
-inline void ExtractorSerializer::serializeCornerShapeValue(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const CornerShapeValue& value)
-{
-    serializationForCSS(builder, context, state.style, value);
-}
-
-inline void ExtractorSerializer::serializeDynamicRangeLimit(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const DynamicRangeLimit& value)
-{
-    serializationForCSS(builder, context, state.style, value);
-}
-
-#if ENABLE(DARK_MODE_CSS)
-inline void ExtractorSerializer::serializeColorScheme(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const ColorScheme& value)
-{
-    serializationForCSS(builder, context, state.style, value);
-}
-#endif
 
 // MARK: - Shared serializations
 
@@ -1503,9 +1448,9 @@ inline void ExtractorSerializer::serializeScrollbarColor(ExtractorState& state, 
         return;
     }
 
-    serializeColor(state, builder, context, scrollbarColor->thumbColor);
+    serializeStyleType(state, builder, context, scrollbarColor->thumbColor);
     builder.append(' ');
-    serializeColor(state, builder, context, scrollbarColor->trackColor);
+    serializeStyleType(state, builder, context, scrollbarColor->trackColor);
 }
 
 inline void ExtractorSerializer::serializeScrollbarGutter(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const ScrollbarGutter& gutter)
@@ -1571,31 +1516,6 @@ inline void ExtractorSerializer::serializePosition(ExtractorState& state, String
     serializeLength(state, builder, context, position.x);
     builder.append(' ');
     serializeLength(state, builder, context, position.y);
-}
-
-inline void ExtractorSerializer::serializePositionOrAuto(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const LengthPoint& position)
-{
-    if (position.x.isAuto() && position.y.isAuto()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-        return;
-    }
-
-    serializePosition(state, builder, context, position);
-}
-
-inline void ExtractorSerializer::serializePositionOrAutoOrNormal(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const LengthPoint& position)
-{
-    if (position.x.isAuto() && position.y.isAuto()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-        return;
-    }
-
-    if (position.x.isNormal()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Normal { });
-        return;
-    }
-
-    serializePosition(state, builder, context, position);
 }
 
 inline void ExtractorSerializer::serializeContainIntrinsicSize(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const ContainIntrinsicSizeType& type, const std::optional<WebCore::Length>& containIntrinsicLength)
@@ -1925,16 +1845,6 @@ inline void ExtractorSerializer::serializeContentAlignmentData(ExtractorState& s
     ASSERT(list.size() > 0);
     ASSERT(list.size() <= 3);
     builder.append(CSSValueList::createSpaceSeparated(WTFMove(list))->cssText(context));
-}
-
-inline void ExtractorSerializer::serializeOffsetRotate(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, const OffsetRotation& rotation)
-{
-    if (rotation.hasAuto()) {
-        serializationForCSS(builder, context, state.style, CSS::Keyword::Auto { });
-        builder.append(' ');
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { CSS::AngleUnit::Deg, rotation.angle() });
-    } else
-        CSS::serializationForCSS(builder, context, CSS::AngleRaw<> { CSS::AngleUnit::Deg, rotation.angle() });
 }
 
 inline void ExtractorSerializer::serializePaintOrder(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context, PaintOrder paintOrder)

@@ -364,7 +364,8 @@ public:
 
     // Exactly equivalent to codeBlock->ownerExecutable()->newReplacementCodeBlockFor(codeBlock->specializationKind())
     CodeBlock* newReplacement();
-    
+    CodeBlock* replacement();
+
     void setJITCode(Ref<JSC::JITCode>&& code)
     {
         if (!code->isShared())
@@ -394,8 +395,6 @@ public:
     CodePtr<JSEntryPtrTag> addressForCallConcurrently(const ConcurrentJSLocker&, ArityCheckMode) const;
 
 #if ENABLE(JIT)
-    CodeBlock* replacement();
-
     DFG::CapabilityLevel computeCapabilityLevel();
     DFG::CapabilityLevel capabilityLevel();
     DFG::CapabilityLevel capabilityLevelState() { return static_cast<DFG::CapabilityLevel>(m_capabilityLevelState); }

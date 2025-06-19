@@ -1285,7 +1285,7 @@ void Editor::appliedEditing(CompositeEditCommand& command)
         else {
             // Only register a new undo command if the command passed in is
             // different from the last command
-            m_lastEditCommand = &command;
+            m_lastEditCommand = command;
             if (client())
                 client()->registerUndoStep(m_lastEditCommand->ensureComposition());
         }

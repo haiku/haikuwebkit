@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies)
  * Copyright (C) 2008, 2009 Torch Mobile Inc. All rights reserved. (http://www.torchmobile.com/)
  * Copyright (C) 2008 Alp Toker <alp@atoker.com>
@@ -110,7 +110,7 @@ void FrameLoader::SubframeLoader::createFrameIfNecessary(HTMLFrameOwnerElement& 
         return;
     if (!canCreateSubFrame())
         return;
-    protectedFrame()->protectedLoader()->client().createFrame(frameName, ownerElement);
+    protectedFrame()->loader().client().createFrame(frameName, ownerElement);
     if (!ownerElement.contentFrame())
         return;
 
@@ -326,7 +326,7 @@ RefPtr<LocalFrame> FrameLoader::SubframeLoader::loadSubframe(HTMLFrameOwnerEleme
 
     RefPtr subFrame = frame->loader().client().createFrame(name, ownerElement);
     if (!subFrame)  {
-        frame->protectedLoader()->checkCallImplicitClose();
+        frame->loader().checkCallImplicitClose();
         document->decrementLoadEventDelayCount();
         return nullptr;
     }
@@ -345,7 +345,7 @@ RefPtr<LocalFrame> FrameLoader::SubframeLoader::loadSubframe(HTMLFrameOwnerEleme
     // which case, Referrer Policy is applied).
     auto referrerToUse = url.isAboutBlank() ? referrer.string() : SecurityPolicy::generateReferrerHeader(policy, url, referrer, OriginAccessPatternsForWebProcess::singleton());
 
-    frame->protectedLoader()->loadURLIntoChildFrame(url, referrerToUse, *subFrame);
+    frame->loader().loadURLIntoChildFrame(url, referrerToUse, *subFrame);
 
 #if ENABLE(CONTENT_EXTENSIONS)
     RefPtr subFramePage = subFrame->page();
@@ -361,7 +361,7 @@ RefPtr<LocalFrame> FrameLoader::SubframeLoader::loadSubframe(HTMLFrameOwnerEleme
 
     // The frame's onload handler may have removed it from the document.
     if (!subFrame || !subFrame->tree().parent()) {
-        frame->protectedLoader()->checkCallImplicitClose();
+        frame->loader().checkCallImplicitClose();
         return nullptr;
     }
 
@@ -371,7 +371,7 @@ RefPtr<LocalFrame> FrameLoader::SubframeLoader::loadSubframe(HTMLFrameOwnerEleme
     // actually completed below. (Note that we set m_isComplete to false even for synchronous
     // loads, so that checkCompleted() below won't bail early.)
     // FIXME: Can we remove this entirely? m_isComplete normally gets set to false when a load is committed.
-    subFrame->protectedLoader()->started();
+    subFrame->loader().started();
    
     {
         CheckedPtr renderWidget = dynamicDowncast<RenderWidget>(ownerElement.renderer());
@@ -380,7 +380,7 @@ RefPtr<LocalFrame> FrameLoader::SubframeLoader::loadSubframe(HTMLFrameOwnerEleme
             renderWidget->setWidget(WTFMove(view));
     }
 
-    frame->protectedLoader()->checkCallImplicitClose();
+    frame->loader().checkCallImplicitClose();
 
     // Some loads are performed synchronously (e.g., about:blank and loads
     // cancelled by returning a null ResourceRequest from requestFromDelegate).
@@ -392,7 +392,7 @@ RefPtr<LocalFrame> FrameLoader::SubframeLoader::loadSubframe(HTMLFrameOwnerEleme
     // it's being added to the child list. It would be a good idea to
     // create the child first, then invoke the loader separately.
     if (subFrame->loader().state() == FrameState::Complete && !subFrame->loader().policyDocumentLoader())
-        subFrame->protectedLoader()->checkCompleted();
+        subFrame->loader().checkCompleted();
 
     if (!subFrame->tree().parent())
         return nullptr;
@@ -404,7 +404,7 @@ bool FrameLoader::SubframeLoader::shouldUsePlugin(const URL& url, const String& 
 {
     Ref frame = m_frame.get();
 
-    ObjectContentType objectType = frame->protectedLoader()->client().objectContentType(url, mimeType);
+    ObjectContentType objectType = frame->loader().client().objectContentType(url, mimeType);
     // If an object's content can't be handled and it has no fallback, let
     // it be handled as a plugin to show the broken plugin icon.
     useFallback = objectType == ObjectContentType::None && hasFallback;

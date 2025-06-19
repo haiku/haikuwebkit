@@ -403,7 +403,7 @@ void NetworkProcess::createNetworkConnectionToWebProcess(ProcessIdentifier ident
             for (auto& site : iter->value.second)
                 allowedSites.append(site);
         }
-        session->protectedStorageManager()->startReceivingMessageFromConnection(connection->protectedConnection(), allowedSites, connection->sharedPreferencesForWebProcessValue());
+        session->protectedStorageManager()->startReceivingMessageFromConnection(connection->connection(), allowedSites, connection->sharedPreferencesForWebProcessValue());
     }
 }
 
@@ -594,6 +594,11 @@ WebCore::NetworkStorageSession* NetworkProcess::storageSession(PAL::SessionID se
     return m_networkStorageSessions.get(sessionID);
 }
 
+CheckedPtr<WebCore::NetworkStorageSession> NetworkProcess::checkedStorageSession(PAL::SessionID sessionID) const
+{
+    return storageSession(sessionID);
+}
+
 void NetworkProcess::forEachNetworkStorageSession(NOESCAPE const Function<void(WebCore::NetworkStorageSession&)>& functor)
 {
     for (auto& storageSession : m_networkStorageSessions.values())
@@ -604,6 +609,11 @@ NetworkSession* NetworkProcess::networkSession(PAL::SessionID sessionID) const
 {
     ASSERT(RunLoop::isMain());
     return m_networkSessions.get(sessionID);
+}
+
+CheckedPtr<NetworkSession> NetworkProcess::checkedNetworkSession(PAL::SessionID sessionID) const
+{
+    return networkSession(sessionID);
 }
 
 void NetworkProcess::setSession(PAL::SessionID sessionID, std::unique_ptr<NetworkSession>&& session)
@@ -654,7 +664,7 @@ void NetworkProcess::ensureSessionWithDataStoreIdentifierRemoved(WTF::UUID ident
 void NetworkProcess::registrableDomainsWithLastAccessedTime(PAL::SessionID sessionID, CompletionHandler<void(std::optional<HashMap<RegistrableDomain, WallTime>>&&)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics()) {
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics()) {
             resourceLoadStatistics->registrableDomainsWithLastAccessedTime(WTFMove(completionHandler));
             return;
         }
@@ -665,7 +675,7 @@ void NetworkProcess::registrableDomainsWithLastAccessedTime(PAL::SessionID sessi
 void NetworkProcess::registrableDomainsExemptFromWebsiteDataDeletion(PAL::SessionID sessionID, CompletionHandler<void(HashSet<RegistrableDomain>)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics()) {
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics()) {
             resourceLoadStatistics->registrableDomainsExemptFromWebsiteDataDeletion(WTFMove(completionHandler));
             return;
         }
@@ -676,7 +686,7 @@ void NetworkProcess::registrableDomainsExemptFromWebsiteDataDeletion(PAL::Sessio
 void NetworkProcess::dumpResourceLoadStatistics(PAL::SessionID sessionID, CompletionHandler<void(String)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->dumpResourceLoadStatistics(WTFMove(completionHandler));
         else
             completionHandler({ });
@@ -696,7 +706,7 @@ void NetworkProcess::updatePrevalentDomainsToBlockCookiesFor(PAL::SessionID sess
 void NetworkProcess::isGrandfathered(PAL::SessionID sessionID, RegistrableDomain&& domain, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->isGrandfathered(WTFMove(domain), WTFMove(completionHandler));
         else
             completionHandler(false);
@@ -709,7 +719,7 @@ void NetworkProcess::isGrandfathered(PAL::SessionID sessionID, RegistrableDomain
 void NetworkProcess::isPrevalentResource(PAL::SessionID sessionID, RegistrableDomain&& domain, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->isPrevalentResource(WTFMove(domain), WTFMove(completionHandler));
         else
             completionHandler(false);
@@ -722,7 +732,7 @@ void NetworkProcess::isPrevalentResource(PAL::SessionID sessionID, RegistrableDo
 void NetworkProcess::isVeryPrevalentResource(PAL::SessionID sessionID, RegistrableDomain&& domain, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->isVeryPrevalentResource(WTFMove(domain), WTFMove(completionHandler));
         else
             completionHandler(false);
@@ -735,7 +745,7 @@ void NetworkProcess::isVeryPrevalentResource(PAL::SessionID sessionID, Registrab
 void NetworkProcess::setGrandfathered(PAL::SessionID sessionID, RegistrableDomain&& domain, bool isGrandfathered, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setGrandfathered(WTFMove(domain), isGrandfathered, WTFMove(completionHandler));
         else
             completionHandler();
@@ -748,7 +758,7 @@ void NetworkProcess::setGrandfathered(PAL::SessionID sessionID, RegistrableDomai
 void NetworkProcess::setPrevalentResource(PAL::SessionID sessionID, RegistrableDomain&& domain, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setPrevalentResource(WTFMove(domain), WTFMove(completionHandler));
         else
             completionHandler();
@@ -761,7 +771,7 @@ void NetworkProcess::setPrevalentResource(PAL::SessionID sessionID, RegistrableD
 void NetworkProcess::setPrevalentResourceForDebugMode(PAL::SessionID sessionID, RegistrableDomain&& domain, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setPrevalentResourceForDebugMode(WTFMove(domain), WTFMove(completionHandler));
         else
             completionHandler();
@@ -774,7 +784,7 @@ void NetworkProcess::setPrevalentResourceForDebugMode(PAL::SessionID sessionID, 
 void NetworkProcess::setVeryPrevalentResource(PAL::SessionID sessionID, RegistrableDomain&& domain, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setVeryPrevalentResource(WTFMove(domain), WTFMove(completionHandler));
         else
             completionHandler();
@@ -787,7 +797,7 @@ void NetworkProcess::setVeryPrevalentResource(PAL::SessionID sessionID, Registra
 void NetworkProcess::clearPrevalentResource(PAL::SessionID sessionID, RegistrableDomain&& domain, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->clearPrevalentResource(WTFMove(domain), WTFMove(completionHandler));
         else
             completionHandler();
@@ -800,7 +810,7 @@ void NetworkProcess::clearPrevalentResource(PAL::SessionID sessionID, Registrabl
 void NetworkProcess::scheduleCookieBlockingUpdate(PAL::SessionID sessionID, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->scheduleCookieBlockingUpdate(WTFMove(completionHandler));
         else
             completionHandler();
@@ -814,7 +824,7 @@ void NetworkProcess::scheduleClearInMemoryAndPersistent(PAL::SessionID sessionID
 {
     if (CheckedPtr session = networkSession(sessionID)) {
         session->clearIsolatedSessions();
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics()) {
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics()) {
             if (modifiedSince)
                 resourceLoadStatistics->scheduleClearInMemoryAndPersistent(modifiedSince.value(), shouldGrandfather, WTFMove(completionHandler));
             else
@@ -830,7 +840,7 @@ void NetworkProcess::scheduleClearInMemoryAndPersistent(PAL::SessionID sessionID
 void NetworkProcess::getResourceLoadStatisticsDataSummary(PAL::SessionID sessionID, CompletionHandler<void(Vector<ITPThirdPartyData>&&)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->aggregatedThirdPartyData(WTFMove(completionHandler));
         else
             completionHandler({ });
@@ -844,7 +854,7 @@ void NetworkProcess::resetParametersToDefaultValues(PAL::SessionID sessionID, Co
 {
     if (CheckedPtr session = networkSession(sessionID)) {
         session->resetFirstPartyDNSData();
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->resetParametersToDefaultValues(WTFMove(completionHandler));
         else
             completionHandler();
@@ -857,7 +867,7 @@ void NetworkProcess::resetParametersToDefaultValues(PAL::SessionID sessionID, Co
 void NetworkProcess::scheduleStatisticsAndDataRecordsProcessing(PAL::SessionID sessionID, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->scheduleStatisticsAndDataRecordsProcessing(WTFMove(completionHandler));
         else
             completionHandler();
@@ -870,7 +880,7 @@ void NetworkProcess::scheduleStatisticsAndDataRecordsProcessing(PAL::SessionID s
 void NetworkProcess::statisticsDatabaseHasAllTables(PAL::SessionID sessionID, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->statisticsDatabaseHasAllTables(WTFMove(completionHandler));
         else
             completionHandler(false);
@@ -883,7 +893,7 @@ void NetworkProcess::statisticsDatabaseHasAllTables(PAL::SessionID sessionID, Co
 void NetworkProcess::setResourceLoadStatisticsTimeAdvanceForTesting(PAL::SessionID sessionID, Seconds time, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             return resourceLoadStatistics->setTimeAdvanceForTesting(time, WTFMove(completionHandler));
     }
     completionHandler();
@@ -892,7 +902,7 @@ void NetworkProcess::setResourceLoadStatisticsTimeAdvanceForTesting(PAL::Session
 void NetworkProcess::setIsRunningResourceLoadStatisticsTest(PAL::SessionID sessionID, bool value, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setIsRunningTest(value, WTFMove(completionHandler));
         else
             completionHandler();
@@ -905,7 +915,7 @@ void NetworkProcess::setIsRunningResourceLoadStatisticsTest(PAL::SessionID sessi
 void NetworkProcess::setSubframeUnderTopFrameDomain(PAL::SessionID sessionID, RegistrableDomain&& subFrameDomain, RegistrableDomain&& topFrameDomain, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setSubframeUnderTopFrameDomain(WTFMove(subFrameDomain), WTFMove(topFrameDomain), WTFMove(completionHandler));
         else
             completionHandler();
@@ -918,7 +928,7 @@ void NetworkProcess::setSubframeUnderTopFrameDomain(PAL::SessionID sessionID, Re
 void NetworkProcess::isRegisteredAsRedirectingTo(PAL::SessionID sessionID, RegistrableDomain&& domainRedirectedFrom, RegistrableDomain&& domainRedirectedTo, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->isRegisteredAsRedirectingTo(WTFMove(domainRedirectedFrom), WTFMove(domainRedirectedTo), WTFMove(completionHandler));
         else
             completionHandler(false);
@@ -931,7 +941,7 @@ void NetworkProcess::isRegisteredAsRedirectingTo(PAL::SessionID sessionID, Regis
 void NetworkProcess::isRegisteredAsSubFrameUnder(PAL::SessionID sessionID, RegistrableDomain&& subFrameDomain, RegistrableDomain&& topFrameDomain, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->isRegisteredAsSubFrameUnder(WTFMove(subFrameDomain), WTFMove(topFrameDomain), WTFMove(completionHandler));
         else
             completionHandler(false);
@@ -944,7 +954,7 @@ void NetworkProcess::isRegisteredAsSubFrameUnder(PAL::SessionID sessionID, Regis
 void NetworkProcess::setSubresourceUnderTopFrameDomain(PAL::SessionID sessionID, RegistrableDomain&& subresourceDomain, RegistrableDomain&& topFrameDomain, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setSubresourceUnderTopFrameDomain(WTFMove(subresourceDomain), WTFMove(topFrameDomain), WTFMove(completionHandler));
         else
             completionHandler();
@@ -957,7 +967,7 @@ void NetworkProcess::setSubresourceUnderTopFrameDomain(PAL::SessionID sessionID,
 void NetworkProcess::setSubresourceUniqueRedirectTo(PAL::SessionID sessionID, RegistrableDomain&& subresourceDomain, RegistrableDomain&& domainRedirectedTo, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setSubresourceUniqueRedirectTo(WTFMove(subresourceDomain), WTFMove(domainRedirectedTo), WTFMove(completionHandler));
         else
             completionHandler();
@@ -970,7 +980,7 @@ void NetworkProcess::setSubresourceUniqueRedirectTo(PAL::SessionID sessionID, Re
 void NetworkProcess::setSubresourceUniqueRedirectFrom(PAL::SessionID sessionID, RegistrableDomain&& subresourceDomain, RegistrableDomain&& domainRedirectedFrom, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setSubresourceUniqueRedirectFrom(WTFMove(subresourceDomain), WTFMove(domainRedirectedFrom), WTFMove(completionHandler));
         else
             completionHandler();
@@ -983,7 +993,7 @@ void NetworkProcess::setSubresourceUniqueRedirectFrom(PAL::SessionID sessionID, 
 void NetworkProcess::isRegisteredAsSubresourceUnder(PAL::SessionID sessionID, RegistrableDomain&& subresourceDomain, RegistrableDomain&& topFrameDomain, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->isRegisteredAsSubresourceUnder(WTFMove(subresourceDomain), WTFMove(topFrameDomain), WTFMove(completionHandler));
         else
             completionHandler(false);
@@ -996,7 +1006,7 @@ void NetworkProcess::isRegisteredAsSubresourceUnder(PAL::SessionID sessionID, Re
 void NetworkProcess::setTopFrameUniqueRedirectTo(PAL::SessionID sessionID, RegistrableDomain&& topFrameDomain, RegistrableDomain&& domainRedirectedTo, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setTopFrameUniqueRedirectTo(WTFMove(topFrameDomain), WTFMove(domainRedirectedTo), WTFMove(completionHandler));
         else
             completionHandler();
@@ -1009,7 +1019,7 @@ void NetworkProcess::setTopFrameUniqueRedirectTo(PAL::SessionID sessionID, Regis
 void NetworkProcess::setTopFrameUniqueRedirectFrom(PAL::SessionID sessionID, RegistrableDomain&& topFrameDomain, RegistrableDomain&& domainRedirectedFrom, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setTopFrameUniqueRedirectFrom(WTFMove(topFrameDomain), WTFMove(domainRedirectedFrom), WTFMove(completionHandler));
         else
             completionHandler();
@@ -1023,7 +1033,7 @@ void NetworkProcess::setTopFrameUniqueRedirectFrom(PAL::SessionID sessionID, Reg
 void NetworkProcess::setLastSeen(PAL::SessionID sessionID, RegistrableDomain&& domain, Seconds seconds, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setLastSeen(WTFMove(domain), seconds, WTFMove(completionHandler));
         else
             completionHandler();
@@ -1036,7 +1046,7 @@ void NetworkProcess::setLastSeen(PAL::SessionID sessionID, RegistrableDomain&& d
 void NetworkProcess::domainIDExistsInDatabase(PAL::SessionID sessionID, int domainID, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->domainIDExistsInDatabase(domainID, WTFMove(completionHandler));
         else
             completionHandler(false);
@@ -1049,7 +1059,7 @@ void NetworkProcess::domainIDExistsInDatabase(PAL::SessionID sessionID, int doma
 void NetworkProcess::mergeStatisticForTesting(PAL::SessionID sessionID, RegistrableDomain&& domain, RegistrableDomain&& topFrameDomain1, RegistrableDomain&& topFrameDomain2, Seconds lastSeen, bool hadUserInteraction, Seconds mostRecentUserInteraction, bool isGrandfathered, bool isPrevalent, bool isVeryPrevalent, uint64_t dataRecordsRemoved, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->mergeStatisticForTesting(WTFMove(domain), WTFMove(topFrameDomain1), WTFMove(topFrameDomain2), lastSeen, hadUserInteraction, mostRecentUserInteraction, isGrandfathered, isPrevalent, isVeryPrevalent, unsigned(dataRecordsRemoved), WTFMove(completionHandler));
         else
             completionHandler();
@@ -1062,7 +1072,7 @@ void NetworkProcess::mergeStatisticForTesting(PAL::SessionID sessionID, Registra
 void NetworkProcess::insertExpiredStatisticForTesting(PAL::SessionID sessionID, RegistrableDomain&& domain, uint64_t numberOfOperatingDaysPassed, bool hadUserInteraction, bool isScheduledForAllButCookieDataRemoval, bool isPrevalent, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->insertExpiredStatisticForTesting(WTFMove(domain), unsigned(numberOfOperatingDaysPassed), hadUserInteraction, isScheduledForAllButCookieDataRemoval, isPrevalent, WTFMove(completionHandler));
         else
             completionHandler();
@@ -1085,7 +1095,7 @@ void NetworkProcess::getAllStorageAccessEntries(PAL::SessionID sessionID, Comple
 void NetworkProcess::logFrameNavigation(PAL::SessionID sessionID, RegistrableDomain&& targetDomain, RegistrableDomain&& topFrameDomain, RegistrableDomain&& sourceDomain, bool isRedirect, bool isMainFrame, Seconds delayAfterMainFrameDocumentLoad, bool wasPotentiallyInitiatedByUser)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->logFrameNavigation(WTFMove(targetDomain), WTFMove(topFrameDomain), WTFMove(sourceDomain), isRedirect, isMainFrame, delayAfterMainFrameDocumentLoad, wasPotentiallyInitiatedByUser);
     } else
         ASSERT_NOT_REACHED();
@@ -1094,7 +1104,7 @@ void NetworkProcess::logFrameNavigation(PAL::SessionID sessionID, RegistrableDom
 void NetworkProcess::logUserInteraction(PAL::SessionID sessionID, RegistrableDomain&& domain, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->logUserInteraction(WTFMove(domain), WTFMove(completionHandler));
         else
             completionHandler();
@@ -1107,7 +1117,7 @@ void NetworkProcess::logUserInteraction(PAL::SessionID sessionID, RegistrableDom
 void NetworkProcess::hadUserInteraction(PAL::SessionID sessionID, RegistrableDomain&& domain, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->hasHadUserInteraction(WTFMove(domain), WTFMove(completionHandler));
         else
             completionHandler(false);
@@ -1120,7 +1130,7 @@ void NetworkProcess::hadUserInteraction(PAL::SessionID sessionID, RegistrableDom
 void NetworkProcess::isRelationshipOnlyInDatabaseOnce(PAL::SessionID sessionID, RegistrableDomain&& subDomain, RegistrableDomain&& topDomain, CompletionHandler<void(bool)>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->isRelationshipOnlyInDatabaseOnce(WTFMove(subDomain), WTFMove(topDomain), WTFMove(completionHandler));
         else
             completionHandler(false);
@@ -1133,7 +1143,7 @@ void NetworkProcess::isRelationshipOnlyInDatabaseOnce(PAL::SessionID sessionID, 
 void NetworkProcess::clearUserInteraction(PAL::SessionID sessionID, RegistrableDomain&& domain, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->clearUserInteraction(WTFMove(domain), WTFMove(completionHandler));
         else
             completionHandler();
@@ -1169,7 +1179,7 @@ void NetworkProcess::setCacheMaxAgeCapForPrevalentResources(PAL::SessionID sessi
 void NetworkProcess::setGrandfatheringTime(PAL::SessionID sessionID, Seconds seconds, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setGrandfatheringTime(seconds, WTFMove(completionHandler));
         else
             completionHandler();
@@ -1182,7 +1192,7 @@ void NetworkProcess::setGrandfatheringTime(PAL::SessionID sessionID, Seconds sec
 void NetworkProcess::setMaxStatisticsEntries(PAL::SessionID sessionID, uint64_t maximumEntryCount, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setMaxStatisticsEntries(maximumEntryCount, WTFMove(completionHandler));
         else
             completionHandler();
@@ -1195,7 +1205,7 @@ void NetworkProcess::setMaxStatisticsEntries(PAL::SessionID sessionID, uint64_t 
 void NetworkProcess::setMinimumTimeBetweenDataRecordsRemoval(PAL::SessionID sessionID, Seconds seconds, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setMinimumTimeBetweenDataRecordsRemoval(seconds, WTFMove(completionHandler));
         else
             completionHandler();
@@ -1208,7 +1218,7 @@ void NetworkProcess::setMinimumTimeBetweenDataRecordsRemoval(PAL::SessionID sess
 void NetworkProcess::setPruneEntriesDownTo(PAL::SessionID sessionID, uint64_t pruneTargetCount, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setPruneEntriesDownTo(pruneTargetCount, WTFMove(completionHandler));
         else
             completionHandler();
@@ -1221,7 +1231,7 @@ void NetworkProcess::setPruneEntriesDownTo(PAL::SessionID sessionID, uint64_t pr
 void NetworkProcess::setTimeToLiveUserInteraction(PAL::SessionID sessionID, Seconds seconds, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setTimeToLiveUserInteraction(seconds, WTFMove(completionHandler));
         else
             completionHandler();
@@ -1234,7 +1244,7 @@ void NetworkProcess::setTimeToLiveUserInteraction(PAL::SessionID sessionID, Seco
 void NetworkProcess::setShouldClassifyResourcesBeforeDataRecordsRemoval(PAL::SessionID sessionID, bool value, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setShouldClassifyResourcesBeforeDataRecordsRemoval(value, WTFMove(completionHandler));
         else
             completionHandler();
@@ -1265,7 +1275,7 @@ void NetworkProcess::setResourceLoadStatisticsLogTestingEvent(bool enabled)
 void NetworkProcess::setResourceLoadStatisticsDebugMode(PAL::SessionID sessionID, bool debugMode, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setResourceLoadStatisticsDebugMode(debugMode, WTFMove(completionHandler));
         else
             completionHandler();
@@ -1278,7 +1288,7 @@ void NetworkProcess::setResourceLoadStatisticsDebugMode(PAL::SessionID sessionID
 void NetworkProcess::isResourceLoadStatisticsEphemeral(PAL::SessionID sessionID, CompletionHandler<void(bool)>&& completionHandler) const
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics()) {
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics()) {
             completionHandler(resourceLoadStatistics->isEphemeral());
             return;
         }
@@ -1314,7 +1324,7 @@ void NetworkProcess::didCommitCrossSiteLoadWithDataTransfer(PAL::SessionID sessi
 
     if (navigationDataTransfer.contains(CrossSiteNavigationDataTransfer::Flag::DestinationLinkDecoration)) {
         if (CheckedPtr session = networkSession(sessionID)) {
-            if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+            if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
                 resourceLoadStatistics->logCrossSiteLoadWithLinkDecoration(WTFMove(fromDomain), WTFMove(toDomain), didFilterKnownLinkDecoration, [] { });
         } else
             ASSERT_NOT_REACHED();
@@ -1324,7 +1334,7 @@ void NetworkProcess::didCommitCrossSiteLoadWithDataTransfer(PAL::SessionID sessi
 void NetworkProcess::setCrossSiteLoadWithLinkDecorationForTesting(PAL::SessionID sessionID, RegistrableDomain&& fromDomain, RegistrableDomain&& toDomain, DidFilterKnownLinkDecoration didFilterKnownLinkDecoration, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics()) {
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics()) {
             resourceLoadStatistics->logCrossSiteLoadWithLinkDecoration(WTFMove(fromDomain), WTFMove(toDomain), didFilterKnownLinkDecoration, WTFMove(completionHandler));
             return;
         }
@@ -1369,7 +1379,7 @@ void NetworkProcess::hasIsolatedSession(PAL::SessionID sessionID, const WebCore:
 void NetworkProcess::setAppBoundDomainsForResourceLoadStatistics(PAL::SessionID sessionID, HashSet<WebCore::RegistrableDomain>&& appBoundDomains, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics()) {
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics()) {
             resourceLoadStatistics->setAppBoundDomains(WTFMove(appBoundDomains), WTFMove(completionHandler));
             return;
         }
@@ -1385,7 +1395,7 @@ void NetworkProcess::setManagedDomainsForResourceLoadStatistics(PAL::SessionID s
     if (CheckedPtr session = networkSession(sessionID)) {
         RefPtr { supplement<WebCookieManager>() }->setHTTPCookieAcceptPolicy(sessionID, WebCore::HTTPCookieAcceptPolicy::AlwaysAccept, [session = WeakPtr { *session }, managedDomains = WTFMove(managedDomains), completionHandler = WTFMove(completionHandler)]() mutable {
             if (session) {
-                if (auto* resourceLoadStatistics = session->resourceLoadStatistics()) {
+                if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics()) {
                     resourceLoadStatistics->setManagedDomains(WTFMove(managedDomains), WTFMove(completionHandler));
                     return;
                 }
@@ -1428,7 +1438,7 @@ void NetworkProcess::setShouldEnbleSameSiteStrictEnforcementForTesting(PAL::Sess
 void NetworkProcess::setFirstPartyWebsiteDataRemovalModeForTesting(PAL::SessionID sessionID, WebCore::FirstPartyWebsiteDataRemovalMode mode, CompletionHandler<void()>&& completionHandler)
 {
     if (CheckedPtr session = networkSession(sessionID)) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
             resourceLoadStatistics->setFirstPartyWebsiteDataRemovalMode(mode, WTFMove(completionHandler));
         else
             completionHandler();
@@ -1647,7 +1657,7 @@ void NetworkProcess::fetchWebsiteData(PAL::SessionID sessionID, OptionSet<Websit
 #endif
 
     if (websiteDataTypes.contains(WebsiteDataType::ResourceLoadStatistics) && session) {
-        if (auto* resourceLoadStatistics = session->resourceLoadStatistics()) {
+        if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics()) {
             resourceLoadStatistics->registrableDomains([callbackAggregator](auto&& domains) mutable {
                 while (!domains.isEmpty())
                     callbackAggregator->m_websiteData.registrableDomainsWithResourceLoadStatistics.add(domains.takeLast());
@@ -1756,7 +1766,7 @@ void NetworkProcess::deleteWebsiteDataImpl(PAL::SessionID sessionID, OptionSet<W
     }
 
     if (websiteDataTypes.contains(WebsiteDataType::ResourceLoadStatistics)) {
-        if (auto* resourceLoadStatistics = session ? session->resourceLoadStatistics() : nullptr) {
+        if (RefPtr resourceLoadStatistics = session ? session->resourceLoadStatistics() : nullptr) {
             // If we are deleting all of the data types that the resource load statistics store monitors
             // we do not need to re-grandfather old data.
             auto shouldGrandfather = websiteDataTypes.containsAll(WebResourceLoadStatisticsStore::monitoredDataTypes()) ? ShouldGrandfatherStatistics::No : ShouldGrandfatherStatistics::Yes;
@@ -1896,7 +1906,7 @@ void NetworkProcess::deleteWebsiteDataForOrigins(PAL::SessionID sessionID, Optio
 
     if (websiteDataTypes.contains(WebsiteDataType::ResourceLoadStatistics) && session) {
         for (auto& domain : registrableDomains) {
-            if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+            if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
                 resourceLoadStatistics->removeDataForDomain(domain, [clearTasksHandler] { });
         }
     }
@@ -2298,7 +2308,7 @@ void NetworkProcess::setCacheModel(CacheModel cacheModel)
     m_cacheModel = cacheModel;
 
     forEachNetworkSession([](auto& session) {
-        if (auto* cache = session.cache())
+        if (RefPtr cache = session.cache())
             cache->updateCapacity();
     });
 }
@@ -2356,7 +2366,7 @@ void NetworkProcess::terminateRemoteWorkerContextConnectionWhenPossible(RemoteWo
             swServer->terminateContextConnectionWhenPossible(registrableDomain, processIdentifier);
         break;
     case RemoteWorkerType::SharedWorker:
-        if (auto* sharedWorkerServer = session->sharedWorkerServer())
+        if (CheckedPtr sharedWorkerServer = session->sharedWorkerServer())
             sharedWorkerServer->terminateContextConnectionWhenPossible(registrableDomain, processIdentifier);
         break;
     }
@@ -3125,7 +3135,7 @@ void NetworkProcess::removeWebPageNetworkParameters(PAL::SessionID sessionID, We
     session->removeWebPageNetworkParameters(pageID);
     session->protectedStorageManager()->clearStorageForWebPage(pageID);
 
-    if (auto* resourceLoadStatistics = session->resourceLoadStatistics())
+    if (RefPtr resourceLoadStatistics = session->resourceLoadStatistics())
         resourceLoadStatistics->clearFrameLoadRecordsForStorageAccess(pageID);
 
     m_pagesWithRelaxedThirdPartyCookieBlocking.remove(pageID);

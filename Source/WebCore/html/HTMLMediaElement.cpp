@@ -1417,7 +1417,7 @@ String HTMLMediaElement::canPlayType(const String& mimeType) const
             break;
     }
 
-    ALWAYS_LOG(LOGIDENTIFIER, mimeType, ": ", canPlay);
+    HTMLMEDIAELEMENT_RELEASE_LOG(HTMLMEDIAELEMENT_CANPLAYTYPE, mimeType.utf8().data(), canPlay.utf8().data());
 
     return canPlay;
 }
@@ -2383,7 +2383,7 @@ void HTMLMediaElement::speakCueText(TextTrackCue& cue)
     if (m_speechState != SpeechSynthesisState::None)
         cancelSpeakingCueText();
 
-    m_cueBeingSpoken = &cue;
+    m_cueBeingSpoken = cue;
     RefPtr { m_cueBeingSpoken }->prepareToSpeak(protectedSpeechSynthesis(), m_reportedPlaybackRate ? m_reportedPlaybackRate : m_requestedPlaybackRate, volume(), [weakThis = WeakPtr { *this }](const TextTrackCue&) {
         ASSERT(isMainThread());
         RefPtr<HTMLMediaElement> protectedThis = weakThis.get();
@@ -3111,11 +3111,11 @@ void HTMLMediaElement::mediaPlayerReadyStateChanged()
 Expected<void, MediaPlaybackDenialReason> HTMLMediaElement::canTransitionFromAutoplayToPlay() const
 {
     if (m_readyState != HAVE_ENOUGH_DATA) {
-        ALWAYS_LOG(LOGIDENTIFIER, "m_readyState != HAVE_ENOUGH_DATA");
+        HTMLMEDIAELEMENT_RELEASE_LOG(HTMLMEDIAELEMENT_CANTRANSITIONFROMAUTOPLAYTOPLAY, "m_readyState != HAVE_ENOUGH_DATA");
         return makeUnexpected(MediaPlaybackDenialReason::PageConsentRequired);
     }
     if (!isAutoplaying()) {
-        ALWAYS_LOG(LOGIDENTIFIER, "!isAutoplaying");
+        HTMLMEDIAELEMENT_RELEASE_LOG(HTMLMEDIAELEMENT_CANTRANSITIONFROMAUTOPLAYTOPLAY, "!isAutoplaying");
         return makeUnexpected(MediaPlaybackDenialReason::PageConsentRequired);
     }
     if (!mediaSession().autoplayPermitted()) {
@@ -5024,7 +5024,6 @@ void HTMLMediaElement::mediaPlayerDidRemoveVideoTrack(VideoTrackPrivate& track)
 
 void HTMLMediaElement::mediaPlayerDidReportGPUMemoryFootprint(size_t footPrint)
 {
-
     RefPtr frame = document().frame();
 
     if (frame && !frame->isMainFrame())
@@ -5037,7 +5036,7 @@ void HTMLMediaElement::addAudioTrack(Ref<AudioTrack>&& track)
     track->setLogger(protectedLogger(), logIdentifier());
 #endif
     track->addClient(*this);
-    ALWAYS_LOG(LOGIDENTIFIER, "id: "_s, track->id(), ", "_s, MediaElementSession::descriptionForTrack(track));
+    HTMLMEDIAELEMENT_RELEASE_LOG(HTMLMEDIAELEMENT_ADDAUDIOTRACK, track->id().string().utf8().data(), MediaElementSession::descriptionForTrack(track).utf8().data());
     ensureAudioTracks().append(WTFMove(track));
 }
 
@@ -5069,7 +5068,7 @@ void HTMLMediaElement::addVideoTrack(Ref<VideoTrack>&& track)
     track->setLogger(protectedLogger(), logIdentifier());
 #endif
     track->addClient(*this);
-    ALWAYS_LOG(LOGIDENTIFIER, "id: "_s, track->id(), ", "_s, MediaElementSession::descriptionForTrack(track));
+    HTMLMEDIAELEMENT_RELEASE_LOG(HTMLMEDIAELEMENT_ADDVIDEOTRACK, track->id().string().utf8().data(), MediaElementSession::descriptionForTrack(track).utf8().data());
     ensureVideoTracks().append(WTFMove(track));
 }
 
@@ -5304,7 +5303,7 @@ void HTMLMediaElement::configureTextTrackGroup(const TrackGroup& group)
             currentlyEnabledTracks.append(textTrack);
 
         int trackScore = captionPreferences ? captionPreferences->textTrackSelectionScore(textTrack.get(), this) : 0;
-        ALWAYS_LOG(LOGIDENTIFIER, "'", textTrack->kindKeyword(), "' track with language '", textTrack->language(), "' and BCP 47 language '", textTrack->validBCP47Language(), "' has score ", trackScore);
+        HTMLMEDIAELEMENT_RELEASE_LOG(HTMLMEDIAELEMENT_CONFIGURETEXTTRACKGROUP, textTrack->kindKeyword().string().utf8().data(), textTrack->language().string().utf8().data(), textTrack->validBCP47Language().string().utf8().data(), trackScore);
 
         if (trackScore) {
 
@@ -5787,7 +5786,7 @@ void HTMLMediaElement::sourceWasAdded(HTMLSourceElement& source)
     // attribute and whose networkState has the value NETWORK_EMPTY, the user agent must invoke
     // the media element's resource selection algorithm.
     if (m_networkState == NETWORK_EMPTY) {
-        m_nextChildNodeToConsider = &source;
+        m_nextChildNodeToConsider = source;
 #if PLATFORM(IOS_FAMILY)
         if (mediaSession().dataLoadingPermitted())
 #endif
@@ -5797,7 +5796,7 @@ void HTMLMediaElement::sourceWasAdded(HTMLSourceElement& source)
 
     if (m_currentSourceNode && &source == Traversal<HTMLSourceElement>::nextSibling(*m_currentSourceNode.copyRef())) {
         INFO_LOG(LOGIDENTIFIER, "<source> inserted immediately after current source");
-        m_nextChildNodeToConsider = &source;
+        m_nextChildNodeToConsider = source;
         return;
     }
 
@@ -5815,7 +5814,7 @@ void HTMLMediaElement::sourceWasAdded(HTMLSourceElement& source)
     m_networkState = NETWORK_LOADING;
 
     // 25. Jump back to the find next candidate step above.
-    m_nextChildNodeToConsider = &source;
+    m_nextChildNodeToConsider = source;
     scheduleNextSourceChild();
 }
 
@@ -6124,7 +6123,7 @@ void HTMLMediaElement::scheduleMediaEngineWasUpdated()
 
 void HTMLMediaElement::mediaEngineWasUpdated()
 {
-    ALWAYS_LOG(LOGIDENTIFIER);
+    HTMLMEDIAELEMENT_RELEASE_LOG(HTMLMEDIAELEMENT_MEDIAENGINEWASUPDATED);
 
     beginProcessingMediaPlayerCallback();
     updateRenderer();
@@ -7466,7 +7465,7 @@ void HTMLMediaElement::enterFullscreen(VideoFullscreenMode mode)
         if (RefPtr asVideo = dynamicDowncast<HTMLVideoElement>(element)) {
             auto& client = element.document().page()->chrome().client();
             auto supportsFullscreen = client.supportsVideoFullscreen(mode);
-            auto canEnterFullscreen = client.canEnterVideoFullscreen(mode);
+            auto canEnterFullscreen = client.canEnterVideoFullscreen(*asVideo, mode);
             if (supportsFullscreen && canEnterFullscreen) {
                 ALWAYS_LOG_WITH_THIS(&element, logIdentifier, "Entering fullscreen mode ", mode, ", element.m_videoFullscreenStandby = ", element.m_videoFullscreenStandby);
 
@@ -7766,7 +7765,7 @@ void HTMLMediaElement::textTrackReadyStateChanged(TextTrack* track)
 
 void HTMLMediaElement::configureTextTrackDisplay(TextTrackVisibilityCheckType checkType)
 {
-    ALWAYS_LOG(LOGIDENTIFIER, checkType);
+    HTMLMEDIAELEMENT_RELEASE_LOG(HTMLMEDIAELEMENT_CONFIGURETEXTTRACKDISPLAY, convertEnumerationToString(checkType).utf8().data());
     ASSERT(m_textTracks);
 
     if (m_processingPreferenceChange)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -151,11 +151,6 @@ bool RemotePageProxy::didReceiveSyncMessage(IPC::Connection& connection, IPC::De
     return false;
 }
 
-Ref<WebProcessProxy> RemotePageProxy::protectedProcess() const
-{
-    return m_process;
-}
-
 RefPtr<WebPageProxy> RemotePageProxy::protectedPage() const
 {
     return m_page.get();
@@ -188,7 +183,7 @@ void RemotePageProxy::isPlayingMediaDidChange(WebCore::MediaProducerMediaStateFl
 
 #if ENABLE(MEDIA_STREAM)
     if (didStopAudioCapture || didStopVideoCapture)
-        UserMediaProcessManager::singleton().revokeSandboxExtensionsIfNeeded(protectedProcess().get());
+        UserMediaProcessManager::singleton().revokeSandboxExtensionsIfNeeded(m_process);
 #endif
 }
 

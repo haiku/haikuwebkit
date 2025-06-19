@@ -261,6 +261,11 @@ static void dumpUIView(TextStream& ts, UIView *view)
         [overlaysAsStrings sortUsingSelector:@selector(localizedCaseInsensitiveCompare:)];
         for (NSString *overlayAsString in overlaysAsStrings.get())
             ts.dumpProperty("overlay region"_s, overlayAsString);
+
+        auto& associatedLayers = [(WKBaseScrollView *)view overlayRegionAssociatedLayersForTesting];
+        auto associatedLayersCount = associatedLayers.size();
+        if (associatedLayersCount > 0)
+            ts.dumpProperty("associated layers"_s, associatedLayersCount);
     }
 #endif
 

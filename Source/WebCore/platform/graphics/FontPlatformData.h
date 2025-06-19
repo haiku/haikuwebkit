@@ -507,7 +507,7 @@ private:
     TextRenderingMode m_textRenderingMode { TextRenderingMode::AutoTextRendering };
 
     // This is conceptually const, but we can't make it actually const,
-    // because FontPlatformData is used as a key in a UncheckedKeyHashMap.
+    // because FontPlatformData is used as a key in a HashMap.
     RefPtr<const FontCustomPlatformData> m_customPlatformData;
 
     bool m_syntheticBold { false };

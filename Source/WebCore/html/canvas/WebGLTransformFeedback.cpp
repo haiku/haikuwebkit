@@ -66,7 +66,7 @@ void WebGLTransformFeedback::deleteObjectImpl(const AbstractLocker&, GraphicsCon
 
 void WebGLTransformFeedback::setProgram(const AbstractLocker&, WebGLProgram& program)
 {
-    m_program = &program;
+    m_program = program;
     m_programLinkCount = program.getLinkCount();
 }
 

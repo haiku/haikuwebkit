@@ -121,7 +121,7 @@ String animatedPropertyIDAsString(AnimatedProperty property)
     return ""_s;
 }
 
-typedef UncheckedKeyHashMap<const GraphicsLayer*, Vector<FloatRect>> RepaintMap;
+using RepaintMap = HashMap<const GraphicsLayer*, Vector<FloatRect>>;
 static RepaintMap& repaintRectMap()
 {
     static NeverDestroyed<RepaintMap> map;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2024 Apple Inc. All Rights Reserved.
+ * Copyright (C) 2012-2024 Apple Inc. All rights reserved.
  * Copyright (C) 2012 Patrick Gansterer <paroga@paroga.com>
  *
  * This library is free software; you can redistribute it and/or

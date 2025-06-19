@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2008 Nokia Corporation and/or its subsidiary(-ies)
  * Copyright (C) 2008, 2009 Torch Mobile Inc. All rights reserved. (http://www.torchmobile.com/)
  *
@@ -197,7 +197,7 @@ void PolicyChecker::checkNavigationPolicy(ResourceRequest&& request, const Resou
     if (m_contentFilterUnblockHandler.canHandleRequest(request)) {
         m_contentFilterUnblockHandler.requestUnblockAsync([frame](bool unblocked) {
             if (unblocked)
-                frame->protectedLoader()->reload();
+                frame->loader().reload();
         });
         POLICYCHECKER_RELEASE_LOG("checkNavigationPolicy: ignoring because ContentFilterUnblockHandler can handle the request");
         return function({ }, nullptr, NavigationPolicyDecision::IgnoreLoad);
@@ -327,7 +327,7 @@ std::optional<HitTestResult> PolicyChecker::hitTestResult(const NavigationAction
     if (!mouseEventData)
         return std::nullopt;
     constexpr OptionSet<HitTestRequest::Type> hitType { HitTestRequest::Type::ReadOnly, HitTestRequest::Type::Active, HitTestRequest::Type::DisallowUserAgentShadowContent, HitTestRequest::Type::AllowChildFrameContent };
-    return protectedFrame()->checkedEventHandler()->hitTestResultAtPoint(mouseEventData->absoluteLocation, hitType);
+    return protectedFrame()->eventHandler().hitTestResultAtPoint(mouseEventData->absoluteLocation, hitType);
 }
 
 void PolicyChecker::checkNewWindowPolicy(NavigationAction&& navigationAction, ResourceRequest&& request, RefPtr<FormState>&& formState, const AtomString& frameName, NewWindowPolicyDecisionFunction&& function)
@@ -341,13 +341,13 @@ void PolicyChecker::checkNewWindowPolicy(NavigationAction&& navigationAction, Re
     auto blobURLLifetimeExtension = extendBlobURLLifetimeIfNecessary(request, *m_frame->document());
 
     Ref frame = m_frame.get();
-    frame->protectedLoader()->client().dispatchDecidePolicyForNewWindowAction(navigationAction, request, formState.get(), frameName, hitTestResult(navigationAction), [frame, request,
+    frame->loader().client().dispatchDecidePolicyForNewWindowAction(navigationAction, request, formState.get(), frameName, hitTestResult(navigationAction), [frame, request,
         formState = WTFMove(formState), frameName, navigationAction, function = WTFMove(function), blobURLLifetimeExtension = WTFMove(blobURLLifetimeExtension)] (PolicyAction policyAction) mutable {
 
         switch (policyAction) {
         case PolicyAction::Download:
             if (!frame->effectiveSandboxFlags().contains(SandboxFlag::Downloads))
-                frame->protectedLoader()->client().startDownload(request);
+                frame->loader().client().startDownload(request);
             else if (RefPtr document = frame->document())
                 document->addConsoleMessage(MessageSource::Security, MessageLevel::Error, "Not allowed to download due to sandboxing"_s);
             [[fallthrough]];
@@ -369,7 +369,7 @@ void PolicyChecker::checkNewWindowPolicy(NavigationAction&& navigationAction, Re
 void PolicyChecker::stopCheck()
 {
     m_javaScriptURLPolicyCheckIdentifier++;
-    protectedFrame()->protectedLoader()->client().cancelPolicyCheck();
+    protectedFrame()->loader().client().cancelPolicyCheck();
 }
 
 void PolicyChecker::cannotShowMIMEType(const ResourceResponse& response)
@@ -380,7 +380,7 @@ void PolicyChecker::cannotShowMIMEType(const ResourceResponse& response)
 void PolicyChecker::handleUnimplementablePolicy(const ResourceError& error)
 {
     m_delegateIsHandlingUnimplementablePolicy = true;
-    protectedFrame()->protectedLoader()->client().dispatchUnableToImplementPolicy(error);
+    protectedFrame()->loader().client().dispatchUnableToImplementPolicy(error);
     m_delegateIsHandlingUnimplementablePolicy = false;
 }
 

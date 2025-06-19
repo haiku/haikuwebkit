@@ -39,6 +39,7 @@
 #include "RenderObjectInlines.h"
 #include "RenderView.h"
 #include "StyleScope.h"
+#include "TextUtil.h"
 #include <wtf/StackStats.h>
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/text/MakeString.h>
@@ -256,9 +257,11 @@ void RenderListMarker::layout()
         updateInlineMarginsAndContent();
         setWidth(m_image->imageSize(this, style().usedZoom()).width());
         setHeight(m_image->imageSize(this, style().usedZoom()).height());
+        m_layoutBounds = { height(), 0 };
     } else {
         setLogicalWidth(minPreferredLogicalWidth());
         setLogicalHeight(style().metricsOfPrimaryFont().intHeight());
+        m_layoutBounds = layoutBoundForTextContent(textWithSuffix());
     }
 
     setMarginStart(0);
@@ -415,8 +418,8 @@ void RenderListMarker::updateInlineMargins()
     };
 
     auto [marginStart, marginEnd] = isInside() ? marginsForInsideMarker() : marginsForOutsideMarker();
-    mutableStyle().setMarginStart(Style::Length<> { marginStart });
-    mutableStyle().setMarginEnd(Style::Length<> { marginEnd });
+    mutableStyle().setMarginStart(Style::MarginEdge::Fixed { marginStart });
+    mutableStyle().setMarginEnd(Style::MarginEdge::Fixed { marginEnd });
 }
 
 LayoutUnit RenderListMarker::lineHeight(bool firstLine, LineDirectionMode direction, LinePositionMode linePositionMode) const
@@ -486,6 +489,42 @@ bool RenderListMarker::widthUsesMetricsOfPrimaryFont() const
 {
     auto listType = style().listStyleType();
     return listType.isCircle() || listType.isDisc() || listType.isSquare();
+}
+
+std::pair<int, int> RenderListMarker::layoutBoundForTextContent(String text) const
+{
+    // FIXME: This should be part of InlineBoxBuilder (webkit.org/b/294342)
+    // This is essentially what we do in LineBoxBuilder::enclosingAscentDescentWithFallbackFonts.
+    auto ascentAndDescent = [&](auto& fontMetrics) {
+        float ascent = fontMetrics.intAscent();
+        float descent = fontMetrics.intDescent();
+        float halfLeading = (fontMetrics.intLineSpacing() - (ascent + descent)) / 2.f;
+        return std::pair<int, int> { floorf(ascent + halfLeading), ceilf(descent + halfLeading) };
+    };
+    auto& style = this->style();
+    auto& metricsOfPrimaryFont = style.metricsOfPrimaryFont();
+    auto primaryFontHeight = metricsOfPrimaryFont.intHeight();
+
+    if (style.lineHeight().isNormal()) {
+        auto maxAscentAndDescent = ascentAndDescent(metricsOfPrimaryFont);
+
+        for (auto& fallbackFont : Layout::TextUtil::fallbackFontsForText(text, style, Layout::TextUtil::IncludeHyphen::No)) {
+            auto& fontMetrics = fallbackFont.fontMetrics();
+            if (primaryFontHeight >= floorf(fontMetrics.height())) {
+                // FIXME: Figure out why certain symbols (e.g. disclosure-open) would initiate fallback fonts with just slightly different (subpixel) metrics.
+                // This is mainly about preserving legacy behavior.
+                continue;
+            }
+            auto ascentDescent = ascentAndDescent(fontMetrics);
+            maxAscentAndDescent.first = std::max(maxAscentAndDescent.first, ascentDescent.first);
+            maxAscentAndDescent.second = std::max(maxAscentAndDescent.second, ascentDescent.second);
+        }
+        return { maxAscentAndDescent.first, maxAscentAndDescent.second };
+    }
+
+    auto primaryFontAscentAndDescent = ascentAndDescent(metricsOfPrimaryFont);
+    auto halfLeading = (floorf(style.computedLineHeight()) - (primaryFontAscentAndDescent.first + primaryFontAscentAndDescent.second)) / 2.f;
+    return { floorf(primaryFontAscentAndDescent.first + halfLeading), ceilf(primaryFontAscentAndDescent.second + halfLeading) };
 }
 
 } // namespace WebCore

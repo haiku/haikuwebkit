@@ -101,7 +101,7 @@ private:
 
     const Ref<RemoteDOMWindow> m_window;
     RefPtr<RemoteFrameView> m_view;
-    UniqueRef<RemoteFrameClient> m_client;
+    const UniqueRef<RemoteFrameClient> m_client;
     Markable<LayerHostingContextIdentifier> m_layerHostingContextIdentifier;
     String m_customUserAgent;
     String m_customUserAgentAsSiteSpecificQuirks;

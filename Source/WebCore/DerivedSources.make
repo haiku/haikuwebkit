@@ -354,12 +354,12 @@ JS_BINDING_IDLS := \
     $(WebCore)/Modules/fetch/FetchResponse.idl \
     $(WebCore)/Modules/fetch/RequestPriority.idl \
     $(WebCore)/Modules/fetch/WindowOrWorkerGlobalScope+Fetch.idl \
-    $(WebCore)/Modules/filesystemaccess/FileSystemDirectoryHandle.idl \
-    $(WebCore)/Modules/filesystemaccess/FileSystemFileHandle.idl \
-    $(WebCore)/Modules/filesystemaccess/FileSystemHandle.idl \
-    $(WebCore)/Modules/filesystemaccess/FileSystemSyncAccessHandle.idl \
-	$(WebCore)/Modules/filesystemaccess/FileSystemWritableFileStream.idl \
-    $(WebCore)/Modules/filesystemaccess/StorageManager+FileSystemAccess.idl \
+    $(WebCore)/Modules/filesystem/FileSystemDirectoryHandle.idl \
+    $(WebCore)/Modules/filesystem/FileSystemFileHandle.idl \
+    $(WebCore)/Modules/filesystem/FileSystemHandle.idl \
+    $(WebCore)/Modules/filesystem/FileSystemSyncAccessHandle.idl \
+	$(WebCore)/Modules/filesystem/FileSystemWritableFileStream.idl \
+    $(WebCore)/Modules/filesystem/StorageManager+FileSystem.idl \
     $(WebCore)/Modules/gamepad/Gamepad.idl \
     $(WebCore)/Modules/gamepad/GamepadButton.idl \
     $(WebCore)/Modules/gamepad/GamepadEffectParameters.idl \

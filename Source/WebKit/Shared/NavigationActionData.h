@@ -88,6 +88,7 @@ struct NavigationActionData {
     std::optional<WebCore::NavigationIdentifier> navigationID;
     WebCore::ResourceRequest originalRequest;
     WebCore::ResourceRequest request;
+    String invalidURLString;
 };
 
 }

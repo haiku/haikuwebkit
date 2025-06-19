@@ -50,7 +50,7 @@ public:
 
     void notifyLoadCompleted(UniquedStringImpl& moduleKey)
     {
-        m_moduleKey = &moduleKey;
+        m_moduleKey = moduleKey;
         m_isLoaded = true;
     }
 

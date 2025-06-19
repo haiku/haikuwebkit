@@ -229,14 +229,14 @@ private:
     bool m_isOnline;
     bool m_shouldBypassMainWorldContentSecurityPolicy;
 
-    Ref<SecurityOrigin> m_topOrigin;
+    const Ref<SecurityOrigin> m_topOrigin;
 
     RefPtr<IDBClient::IDBConnectionProxy> m_connectionProxy;
 
     RefPtr<SocketProvider> m_socketProvider;
 
     RefPtr<Performance> m_performance;
-    Ref<ReportingScope> m_reportingScope;
+    const Ref<ReportingScope> m_reportingScope;
     mutable RefPtr<Crypto> m_crypto;
 
     WeakPtr<ScriptBufferSourceProvider> m_mainScriptSourceProvider;

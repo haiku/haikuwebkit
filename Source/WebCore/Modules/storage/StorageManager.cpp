@@ -126,7 +126,7 @@ void StorageManager::estimate(DOMPromiseDeferred<IDLDictionary<StorageEstimate>>
     });
 }
 
-void StorageManager::fileSystemAccessGetDirectory(DOMPromiseDeferred<IDLInterface<FileSystemDirectoryHandle>>&& promise)
+void StorageManager::fileSystemGetDirectory(DOMPromiseDeferred<IDLInterface<FileSystemDirectoryHandle>>&& promise)
 {
     auto connectionInfoOrException = connectionInfo(m_navigator.get(), ExceptionCode::SecurityError);
     if (connectionInfoOrException.hasException())

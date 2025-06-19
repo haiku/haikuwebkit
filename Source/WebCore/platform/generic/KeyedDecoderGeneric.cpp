@@ -47,7 +47,7 @@ public:
     Node* get(const String& key) { return m_map.get(key); }
 
 private:
-    UncheckedKeyHashMap<String, std::unique_ptr<Node>> m_map;
+    HashMap<String, std::unique_ptr<Node>> m_map;
 };
 
 static std::optional<String> readString(WTF::Persistence::Decoder& decoder)
@@ -62,7 +62,7 @@ static std::optional<String> readString(WTF::Persistence::Decoder& decoder)
     if (!decoder.bufferIsLargeEnoughToContain<uint8_t>(*size))
         return std::nullopt;
     Vector<uint8_t> buffer(size.value());
-    if (!decoder.decodeFixedLengthData({ buffer.data(), size.value() }))
+    if (!decoder.decodeFixedLengthData(buffer.mutableSpan()))
         return std::nullopt;
     auto result = String::fromUTF8(buffer.span());
     if (result.isNull())
@@ -121,7 +121,7 @@ KeyedDecoderGeneric::KeyedDecoderGeneric(std::span<const uint8_t> data)
             if (!ok)
                 break;
             Vector<uint8_t> buffer(*size);
-            ok = decoder.decodeFixedLengthData({ buffer.data(), *size });
+            ok = decoder.decodeFixedLengthData(buffer.mutableSpan());
             if (!ok)
                 break;
             m_dictionaryStack.last()->add(*key, WTFMove(buffer));

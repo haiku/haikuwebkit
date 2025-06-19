@@ -112,6 +112,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/interval-restart-events.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/keysplines-x-limits.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/keysplines-y-limits.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/animations/mpath-zero-radius-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/multiple-animations-ending.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/multiple-animations-fill-freeze.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/multiple-begin-additive-animation.html
@@ -217,6 +218,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/svgnumberoptionalnumber-animation-3.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/svgnumberoptionalnumber-animation-4.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/svgpath-animation-1.tentative.html
+/LayoutTests/imported/w3c/web-platform-tests/svg/animations/svgpath-animation-2.tentative.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/svgpointlist-animation-1.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/svgpointlist-animation-2.html
 /LayoutTests/imported/w3c/web-platform-tests/svg/animations/svgrect-animation-1.html

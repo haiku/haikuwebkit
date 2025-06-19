@@ -501,7 +501,7 @@ TextFieldSelectionDirection HTMLTextFormControlElement::computeSelectionDirectio
 static void setContainerAndOffsetForRange(Node& node, unsigned offset, RefPtr<Node>& containerNode, unsigned& offsetInContainer)
 {
     if (node.isTextNode()) {
-        containerNode = &node;
+        containerNode = node;
         offsetInContainer = offset;
     } else {
         containerNode = node.parentNode();
@@ -918,7 +918,7 @@ void HTMLTextFormControlElement::adjustInnerTextStyle(const RenderStyle& parentS
     }
 
     if (parentStyle.fieldSizing() == FieldSizing::Content)
-        textBlockStyle.setLogicalMinWidth(Length { caretWidth(), LengthType::Fixed });
+        textBlockStyle.setLogicalMinWidth(Style::MinimumSize::Fixed { static_cast<float>(caretWidth()) });
 
 #if PLATFORM(IOS_FAMILY)
     if (textBlockStyle.textSecurity() != TextSecurity::None && textBlockStyle.writingMode().isBidiRTL()) {

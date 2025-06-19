@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -93,7 +93,7 @@ void RemoteImageDecoderAVFProxy::deleteDecoder(ImageDecoderIdentifier identifier
     if (!connection)
         return;
     if (allowsExitUnderMemoryPressure())
-        connection->protectedGPUProcess()->tryExitIfUnusedAndUnderMemoryPressure();
+        connection->gpuProcess().tryExitIfUnusedAndUnderMemoryPressure();
 }
 
 void RemoteImageDecoderAVFProxy::encodedDataStatusChanged(ImageDecoderIdentifier identifier)
@@ -106,7 +106,7 @@ void RemoteImageDecoderAVFProxy::encodedDataStatusChanged(ImageDecoderIdentifier
     if (!imageDecoder)
         return;
 
-    connection->protectedConnection()->send(Messages::RemoteImageDecoderAVFManager::EncodedDataStatusChanged(identifier, imageDecoder->frameCount(), imageDecoder->size(), imageDecoder->hasTrack()), 0);
+    connection->connection().send(Messages::RemoteImageDecoderAVFManager::EncodedDataStatusChanged(identifier, imageDecoder->frameCount(), imageDecoder->size(), imageDecoder->hasTrack()), 0);
 }
 
 void RemoteImageDecoderAVFProxy::setExpectedContentSize(ImageDecoderIdentifier identifier, long long expectedContentSize)

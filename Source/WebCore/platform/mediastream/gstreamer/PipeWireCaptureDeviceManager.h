@@ -39,13 +39,12 @@ public:
     static RefPtr<PipeWireCaptureDeviceManager> create(OptionSet<CaptureDevice::DeviceType>);
     PipeWireCaptureDeviceManager(OptionSet<CaptureDevice::DeviceType>);
 
-    void computeCaptureDevices();
+    void computeCaptureDevices(CompletionHandler<void()>&&);
     const Vector<CaptureDevice>& captureDevices() const { return m_devices; }
     CaptureSourceOrError createCaptureSource(const CaptureDevice&, MediaDeviceHashSalts&&, const MediaConstraints*);
 
 private:
     OptionSet<CaptureDevice::DeviceType> m_deviceTypes;
-    RefPtr<DesktopPortalCamera> m_portal;
     GRefPtr<GstDeviceProvider> m_pipewireDeviceProvider;
     Vector<CaptureDevice> m_devices;
 };

@@ -542,9 +542,9 @@ void AppendPipeline::didReceiveInitializationSegment()
                 linkPadWithTrack(pad, *track);
         }
     } else {
-        UncheckedKeyHashSet<String> videoPadStreamIDs;
-        UncheckedKeyHashSet<String> audioPadStreamIDs;
-        UncheckedKeyHashSet<String> textPadStreamIDs;
+        HashSet<String> videoPadStreamIDs;
+        HashSet<String> audioPadStreamIDs;
+        HashSet<String> textPadStreamIDs;
         for (auto pad : GstIteratorAdaptor<GstPad>(gst_element_iterate_src_pads(m_demux.get()))) {
             auto [parsedCaps, streamType, presentationSize] = parseDemuxerSrcPadCaps(adoptGRef(gst_pad_get_current_caps(pad)).get());
             UNUSED_VARIABLE(parsedCaps);

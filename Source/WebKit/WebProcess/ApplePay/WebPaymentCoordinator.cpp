@@ -114,11 +114,7 @@ bool WebPaymentCoordinator::showPaymentUI(const URL& originatingURL, const Vecto
     if (!webPage)
         return false;
 
-    auto linkIconURLStrings = linkIconURLs.map([](auto& linkIconURL) {
-        return linkIconURL.string();
-    });
-
-    auto sendResult = sendSync(Messages::WebPaymentCoordinatorProxy::ShowPaymentUI(webPage->identifier(), webPage->webPageProxyIdentifier(), originatingURL.string(), linkIconURLStrings, paymentRequest));
+    auto sendResult = sendSync(Messages::WebPaymentCoordinatorProxy::ShowPaymentUI(webPage->identifier(), webPage->webPageProxyIdentifier(), originatingURL, linkIconURLs, paymentRequest));
     auto [result] = sendResult.takeReplyOr(false);
     return result;
 }

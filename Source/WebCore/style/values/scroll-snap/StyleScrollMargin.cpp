@@ -92,7 +92,7 @@ float Evaluation<ScrollMarginEdge>::operator()(const ScrollMarginEdge& edge, flo
     return 0.0f;
 }
 
-ScrollMarginEdge scrollMarginEdgeFromCSSValue(const CSSValue& value, BuilderState& state)
+auto CSSValueConversion<ScrollMarginEdge>::operator()(BuilderState& state, const CSSValue& value) -> ScrollMarginEdge
 {
     return ScrollMarginEdge { BuilderConverter::convertLength(state, value) };
 }

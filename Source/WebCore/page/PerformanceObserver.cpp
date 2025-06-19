@@ -40,9 +40,9 @@ PerformanceObserver::PerformanceObserver(ScriptExecutionContext& scriptExecution
 {
     if (RefPtr document = dynamicDowncast<Document>(scriptExecutionContext)) {
         if (auto* window = document->domWindow())
-            m_performance = &window->performance();
+            m_performance = window->performance();
     } else if (RefPtr workerGlobalScope = dynamicDowncast<WorkerGlobalScope>(scriptExecutionContext))
-        m_performance = &workerGlobalScope->performance();
+        m_performance = workerGlobalScope->performance();
     else
         ASSERT_NOT_REACHED();
 }

@@ -2,7 +2,7 @@
  * Copyright (C) 2000 Lars Knoll (knoll@kde.org)
  *           (C) 2000 Antti Koivisto (koivisto@kde.org)
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
- * Copyright (C) 2003-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2003-2025 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -88,7 +88,7 @@ private:
     bool isRenderSVGResource(const RenderElement*) const;
 
     Style::URL m_url;
-    Ref<CSSImageValue> m_cssValue;
+    const Ref<CSSImageValue> m_cssValue;
     bool m_isPending { true };
     mutable float m_scaleFactor { 1 };
     mutable CachedResourceHandle<CachedImage> m_cachedImage;

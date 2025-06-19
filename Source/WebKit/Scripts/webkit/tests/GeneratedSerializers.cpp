@@ -740,25 +740,31 @@ std::optional<Namespace::ConditionalCommonClass> ArgumentCoder<Namespace::Condit
 void ArgumentCoder<Namespace::CommonClass>::encode(Encoder& encoder, const Namespace::CommonClass& instance)
 {
     static_assert(std::is_same_v<std::remove_cvref_t<decltype(instance.value)>, int>);
+    static_assert(std::is_same_v<std::remove_cvref_t<decltype(instance.nonRefMemberWithSubclasses)>, WebCore::TimingFunction>);
     struct ShouldBeSameSizeAsCommonClass : public VirtualTableAndRefCountOverhead<std::is_polymorphic_v<Namespace::CommonClass>, false> {
         int value;
+        WebCore::TimingFunction nonRefMemberWithSubclasses;
     };
     static_assert(sizeof(ShouldBeSameSizeAsCommonClass) == sizeof(Namespace::CommonClass));
     static_assert(MembersInCorrectOrder < 0
         , offsetof(Namespace::CommonClass, value)
+        , offsetof(Namespace::CommonClass, nonRefMemberWithSubclasses)
     >::value);
 
     encoder << instance.value;
+    encoder << instance.nonRefMemberWithSubclasses;
 }
 
 std::optional<Namespace::CommonClass> ArgumentCoder<Namespace::CommonClass>::decode(Decoder& decoder)
 {
     auto value = decoder.decode<int>();
+    auto nonRefMemberWithSubclasses = decoder.decode<Ref<WebCore::TimingFunction>>();
     if (!decoder.isValid()) [[unlikely]]
         return std::nullopt;
     return {
         Namespace::CommonClass {
-            WTFMove(*value)
+            WTFMove(*value),
+            WTFMove(*nonRefMemberWithSubclasses)
         }
     };
 }

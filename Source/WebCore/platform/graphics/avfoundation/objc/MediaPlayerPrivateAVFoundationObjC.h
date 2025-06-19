@@ -427,7 +427,7 @@ private:
     std::unique_ptr<PixelBufferConformerCV> m_pixelBufferConformer;
 
     friend class WebCoreAVFResourceLoader;
-    UncheckedKeyHashMap<RetainPtr<CFTypeRef>, RefPtr<WebCoreAVFResourceLoader>> m_resourceLoaderMap;
+    HashMap<RetainPtr<CFTypeRef>, RefPtr<WebCoreAVFResourceLoader>> m_resourceLoaderMap;
     RetainPtr<WebCoreAVFLoaderDelegate> m_loaderDelegate;
     MemoryCompactRobinHoodHashMap<String, RetainPtr<AVAssetResourceLoadingRequest>> m_keyURIToRequestMap;
     MemoryCompactRobinHoodHashMap<String, RetainPtr<AVAssetResourceLoadingRequest>> m_sessionIDToRequestMap;

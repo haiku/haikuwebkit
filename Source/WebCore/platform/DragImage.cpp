@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007 Apple Inc.  All rights reserved.
+ * Copyright (C) 2007 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -317,10 +317,10 @@ DragImageRef createDragImageIconForCachedImageFilename(const String&)
     return nullptr;
 }
 
-DragImageRef createDragImageForLink(Element&, URL&, const String&, TextIndicatorData&, float)
+DragImageData createDragImageForLink(Element&, URL&, const String&, float)
 {
     notImplemented();
-    return nullptr;
+    return  { nullptr, nullptr };
 }
 
 #endif

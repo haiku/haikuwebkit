@@ -250,7 +250,7 @@ void StorageAreaMap::dispatchSessionStorageEvent(const std::optional<StorageArea
     if (!webPage)
         return;
 
-    auto* page = webPage->corePage();
+    RefPtr page = webPage->corePage();
     if (!page)
         return;
 

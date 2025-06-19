@@ -146,6 +146,7 @@ private:
     void updateMediaSelectionOptions();
     void updateMediaSelectionIndices();
     void maybeUpdateVideoMetadata();
+    void updateRate();
 
     void videoTrackConfigurationChanged();
 
@@ -158,7 +159,7 @@ private:
 
     RefPtr<HTMLMediaElement> m_mediaElement;
     bool m_isListening { false };
-    UncheckedKeyHashSet<CheckedPtr<PlaybackSessionModelClient>> m_clients;
+    HashSet<CheckedPtr<PlaybackSessionModelClient>> m_clients;
     Vector<RefPtr<TextTrack>> m_legibleTracksForMenu;
     Vector<RefPtr<AudioTrack>> m_audioTracksForMenu;
     AudioSessionSoundStageSize m_soundStageSize;

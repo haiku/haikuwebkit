@@ -52,8 +52,9 @@ void TextureMapperDamageVisualizer::paintDamage(TextureMapper& textureMapper, co
         return;
 
     const auto color = Color::red.colorWithAlphaByte(200);
-    for (const auto& rect : damage->rects())
+    damage->forEachNonEmptyRect([&](const auto& rect) {
         textureMapper.drawSolidColor(rect + m_margin, { }, color, true);
+    });
 }
 
 } // namespace WebCore

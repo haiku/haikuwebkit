@@ -163,6 +163,9 @@ SOFT_LINK_CONSTANT_FOR_HEADER(WebCore, CoreVideo, kCVPixelBufferOpenGLCompatibil
 #define kCVPixelBufferOpenGLCompatibilityKey get_CoreVideo_kCVPixelBufferOpenGLCompatibilityKey()
 #endif
 
+SOFT_LINK_CONSTANT_FOR_HEADER(WebCore, CoreVideo, kCVPixelBufferPreferRealTimeCacheModeIfEveryoneDoesKey, CFStringRef)
+#define kCVPixelBufferPreferRealTimeCacheModeIfEveryoneDoesKey get_CoreVideo_kCVPixelBufferPreferRealTimeCacheModeIfEveryoneDoesKey()
+
 SOFT_LINK_FUNCTION_FOR_HEADER(WebCore, CoreVideo, CVPixelBufferCreate, CVReturn, (CFAllocatorRef allocator, size_t width, size_t height, OSType pixelFormatType, CFDictionaryRef pixelBufferAttributes, CF_RETURNS_RETAINED CVPixelBufferRef *pixelBufferOut), (allocator, width, height, pixelFormatType, pixelBufferAttributes, pixelBufferOut))
 #define CVPixelBufferCreate softLink_CoreVideo_CVPixelBufferCreate
 

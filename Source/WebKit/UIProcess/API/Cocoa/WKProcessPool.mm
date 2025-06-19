@@ -77,12 +77,15 @@
 - (instancetype)initWithTaskInfo:(const WebKit::AuxiliaryProcessProxy::TaskInfo&)info process:(const WebKit::WebProcessProxy&)process;
 @end
 
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 static RetainPtr<WKProcessPool>& sharedProcessPool()
 {
     static NeverDestroyed<RetainPtr<WKProcessPool>> sharedProcessPool;
     return sharedProcessPool;
 }
+ALLOW_DEPRECATED_DECLARATIONS_END
 
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 @implementation WKProcessPool {
     WeakObjCPtr<id <_WKAutomationDelegate>> _automationDelegate;
     WeakObjCPtr<id <_WKDownloadDelegate>> _downloadDelegate;
@@ -93,9 +96,11 @@ static RetainPtr<WKProcessPool>& sharedProcessPool()
     RetainPtr<id <_WKGeolocationCoreLocationProvider>> _coreLocationProvider;
 #endif // PLATFORM(IOS_FAMILY)
 }
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
 WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
 
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 - (instancetype)_initWithConfiguration:(_WKProcessPoolConfiguration *)configuration
 {
     if (!(self = [super init]))
@@ -110,6 +115,7 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
 {
     return [self _initWithConfiguration:adoptNS([[_WKProcessPoolConfiguration alloc] init]).get()];
 }
+ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)dealloc
 {
@@ -153,10 +159,12 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
     return [NSString stringWithFormat:@"<%@: %p; configuration = %@>", NSStringFromClass(self.class), self, wrapper(_processPool->configuration())];
 }
 
+ALLOW_DEPRECATED_DECLARATIONS_BEGIN
 - (_WKProcessPoolConfiguration *)_configuration
 {
     return wrapper(_processPool->configuration().copy()).autorelease();
 }
+ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (API::Object&)_apiObject
 {
@@ -174,7 +182,9 @@ WK_OBJECT_DISABLE_DISABLE_KVC_IVAR_ACCESS;
 
 @end
 
+ALLOW_DEPRECATED_IMPLEMENTATIONS_BEGIN
 @implementation WKProcessPool (WKPrivate)
+ALLOW_DEPRECATED_IMPLEMENTATIONS_END
 
 + (WKProcessPool *)_sharedProcessPool
 {

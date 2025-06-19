@@ -277,6 +277,7 @@ bool doesGC(Graph& graph, Node* node)
     case WeakMapGet:
     case NumberIsNaN:
     case NumberIsFinite:
+    case NumberIsSafeInteger:
         return false;
 
 #if ASSERT_ENABLED

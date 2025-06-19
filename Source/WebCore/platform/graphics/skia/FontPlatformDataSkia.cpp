@@ -158,7 +158,7 @@ RefPtr<SharedBuffer> FontPlatformData::openTypeTable(uint32_t table) const
         return nullptr;
 
     Vector<uint8_t> data(tableSize);
-    if (typeface->getTableData(tag, 0, tableSize, data.data()) != tableSize)
+    if (typeface->getTableData(tag, 0, tableSize, data.mutableSpan().data()) != tableSize)
         return nullptr;
 
     return SharedBuffer::create(WTFMove(data));

@@ -4338,7 +4338,7 @@ class GenerateStyleExtractorGenerated:
         elif property.codegen_properties.fill_layer_property:
             return f"ExtractorConverter::convertFillLayer{property.codegen_properties.fill_layer_name_for_methods}(extractorState, {value})"
         elif property.codegen_properties.color_property:
-            return f"ExtractorConverter::convertColor(extractorState, {value})"
+            return f"ExtractorConverter::convertStyleType<Color>(extractorState, {value})"
         else:
             return f"ExtractorConverter::convert(extractorState, {value})"
 
@@ -4351,7 +4351,7 @@ class GenerateStyleExtractorGenerated:
         elif property.codegen_properties.fill_layer_property:
             return f"ExtractorSerializer::serializeFillLayer{property.codegen_properties.fill_layer_name_for_methods}(extractorState, builder, context, {value})"
         elif property.codegen_properties.color_property:
-            return f"ExtractorSerializer::serializeColor(extractorState, builder, context, {value})"
+            return f"ExtractorSerializer::serializeStyleType<Color>(extractorState, builder, context, {value})"
         else:
             return f"ExtractorSerializer::serialize(extractorState, builder, context, {value})"
 

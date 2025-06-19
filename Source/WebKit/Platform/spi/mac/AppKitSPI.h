@@ -43,6 +43,10 @@ DECLARE_SYSTEM_HEADER
 #import <AppKit/NSWindow_Private.h>
 #import <AppKit/NSScrollViewSeparatorTrackingAdapter_Private.h>
 
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+#import <AppKit/NSScrollPocket_Private.h>
+#endif
+
 #else
 
 @interface NSInspectorBar : NSObject
@@ -118,8 +122,17 @@ typedef void (^NSWindowSnapshotReadinessHandler) (void);
 @end
 #endif
 
-#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/AppKitSPIAdditions.h>)
-#import <WebKitAdditions/AppKitSPIAdditions.h>
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+
+@interface NSScrollPocket (Staging_147805180)
+@property (nonatomic, copy) NSColor *captureColor;
+@end
+
+@interface NSScrollPocket (Staging_151173930)
+- (void)addElementContainer:(NSView *)elementContainer;
+- (void)removeElementContainer:(NSView *)elementContainer;
+@end
+
 #endif
 
 #endif // PLATFORM(MAC)

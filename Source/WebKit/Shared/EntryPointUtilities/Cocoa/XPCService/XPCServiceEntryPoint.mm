@@ -235,6 +235,27 @@ void setJSCOptions(xpc_object_t initializerMessage, EnableLockdownMode enableLoc
         JSC::Options::notifyOptionsChanged();
 }
 
+void disableJSC(NOESCAPE WTF::CompletionHandler<void(void)>&& beforeFinalizeHandler)
+{
+    g_jscConfig.vmCreationDisallowed = true;
+    g_jscConfig.vmEntryDisallowed = true;
+    g_wtfConfig.useSpecialAbortForExtraSecurityImplications = true;
+
+    WTF::initializeMainThread();
+    {
+        JSC::Options::initialize();
+        JSC::Options::AllowUnfinalizedAccessScope scope;
+        JSC::ExecutableAllocator::disableJIT();
+        JSC::Options::useWasm() = false;
+        JSC::Options::notifyOptionsChanged();
+    }
+    WTF::compilerFence();
+
+    beforeFinalizeHandler();
+
+    JSC::Config::finalize();
+}
+
 void XPCServiceExit()
 {
 #if !USE(RUNNINGBOARD)

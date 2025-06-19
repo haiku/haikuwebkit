@@ -126,7 +126,7 @@ bool PaymentCoordinator::beginPaymentSession(Document& document, PaymentSession&
         document.addConsoleMessage(MessageSource::PaymentRequest, MessageLevel::Warning, "`enabled` is a deprecated value for `shippingContactEditingMode`. Please use `available` instead."_s);
 #endif
 
-    m_activeSession = &paymentSession;
+    m_activeSession = paymentSession;
     return true;
 }
 

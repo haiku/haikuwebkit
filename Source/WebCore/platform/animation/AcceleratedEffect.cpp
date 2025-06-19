@@ -37,8 +37,8 @@
 #include "FloatRect.h"
 #include "KeyframeEffect.h"
 #include "LayoutSize.h"
-#include "OffsetRotation.h"
 #include "StyleInterpolation.h"
+#include "StyleOffsetRotate.h"
 #include "StyleOriginatedAnimation.h"
 #include "WebAnimation.h"
 #include "WebAnimationTypes.h"
@@ -334,11 +334,11 @@ static void blend(AcceleratedEffectProperty property, AcceleratedEffectValues& o
         output.offsetPosition = blend(from.offsetPosition, to.offsetPosition, blendingContext);
         break;
     case AcceleratedEffectProperty::OffsetRotate:
-        if (!from.offsetRotate.canBlend(to.offsetRotate)) {
+        if (!Style::canBlend(from.offsetRotate, to.offsetRotate)) {
             blendingContext.isDiscrete = true;
             blendingContext.normalizeProgress();
         }
-        output.offsetRotate = from.offsetRotate.blend(to.offsetRotate, blendingContext);
+        output.offsetRotate = Style::blend(from.offsetRotate, to.offsetRotate, blendingContext);
         break;
     case AcceleratedEffectProperty::Filter:
         output.filter = to.filter.blend(from.filter, blendingContext);

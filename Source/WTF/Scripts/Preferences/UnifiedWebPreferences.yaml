@@ -170,7 +170,7 @@ AccentColorEnabled:
 
 AccessHandleEnabled:
   type: bool
-  status: stable
+  status: mature
   category: dom
   humanReadableName: "AccessHandle API"
   humanReadableDescription: "Enable AccessHandle API"
@@ -2879,12 +2879,12 @@ FileReaderAPIEnabled:
       default: true
   disableInLockdownMode: true
 
-FileSystemAccessEnabled:
+FileSystemEnabled:
   type: bool
-  status: stable
+  status: mature
   category: dom
-  humanReadableName: "File System Access API"
-  humanReadableDescription: "Enable File System Access API"
+  humanReadableName: "File System API"
+  humanReadableDescription: "Enable File System API"
   defaultValue:
     WebKitLegacy:
       default: false
@@ -3013,6 +3013,20 @@ ForceWebGLUsesLowPower:
       default: true
     WebKit:
       default: false
+    WebCore:
+      default: false
+
+FormControlRefreshEnabled:
+  type: bool
+  status: internal
+  humanReadableName: "Form control refresh for Cocoa platforms"
+  humanReadableDescription: "Enable form control refresh for Cocoa platforms"
+  condition: ENABLE(FORM_CONTROL_REFRESH)
+  defaultValue:
+    WebKit:
+      default: defaultFormControlRefreshEnabled()
+    WebKitLegacy:
+      default: WebKit::defaultFormControlRefreshEnabled()
     WebCore:
       default: false
 
@@ -4483,20 +4497,6 @@ LowPowerVideoAudioBufferSizeEnabled:
       default: false
     WebKit:
       default: true
-      
-MacStyleControlsOnCatalyst:
-  type: bool
-  status: internal
-  humanReadableName: "Mac style controls on Catalyst"
-  humanReadableDescription: "Use Mac style controls on Catalyst"
-  condition: ENABLE(MAC_STYLE_CONTROLS_ON_CATALYST)
-  defaultValue:
-    WebKit:
-      default: defaultMacStyleControlsOnCatalyst()
-    WebKitLegacy:
-      default: WebKit::defaultMacStyleControlsOnCatalyst()
-    WebCore:
-      default: false
 
 MainContentUserGestureOverrideEnabled:
   type: bool
@@ -4974,7 +4974,7 @@ MediaSourceInWorkerEnabled:
 
 MediaSourcePrefersDecompressionSession:
   type: bool
-  status: preview
+  status: stable
   category: media
   humanReadableName: "MediaSource prefers DecompressionSession"
   humanReadableDescription: "MediaSource prefers DecompressionSession"
@@ -4983,9 +4983,9 @@ MediaSourcePrefersDecompressionSession:
     WebKitLegacy:
       default: false
     WebKit:
-      default: false
+      default: true
     WebCore:
-      default: false
+      default: true
   sharedPreferenceForWebProcess: true
 
 MediaStreamTrackProcessingEnabled:
@@ -6658,6 +6658,7 @@ ServiceWorkerInstallEventEnabled:
       default: false
     WebCore:
       default: false
+  disableInLockdownMode: true
 
 ServiceWorkerNavigationPreloadEnabled:
   type: bool
@@ -6673,6 +6674,7 @@ ServiceWorkerNavigationPreloadEnabled:
     WebKit:
       default: true
   sharedPreferenceForWebProcess: true
+  disableInLockdownMode: true
 
 ServiceWorkersEnabled:
   type: bool
@@ -6689,6 +6691,7 @@ ServiceWorkersEnabled:
     WebCore:
       default: false
   sharedPreferenceForWebProcess: true
+  disableInLockdownMode: true
 
 ServiceWorkersUserGestureEnabled:
   type: bool
@@ -7152,21 +7155,6 @@ SpatialImageControlsEnabled:
 SpatialNavigationEnabled:
   type: bool
   status: embedder
-  defaultValue:
-    WebKitLegacy:
-      default: false
-    WebKit:
-      default: false
-    WebCore:
-      default: false
-
-SpatialVideoEnabled:
-  type: bool
-  status: preview
-  category: media
-  humanReadableName: "Spatial video playback enabled"
-  humanReadableDescription: "Spatial video playback enabled"
-  condition: ENABLE(LINEAR_MEDIA_PLAYER)
   defaultValue:
     WebKitLegacy:
       default: false
@@ -8125,20 +8113,6 @@ VP9DecoderEnabled:
     WebKit:
       default: true
 
-VectorBasedControlsOnMacEnabled:
-  type: bool
-  status: internal
-  humanReadableName: "Vector based controls on macOS"
-  humanReadableDescription: "Enable vector based controls on macOS"
-  condition: ENABLE(VECTOR_BASED_CONTROLS_ON_MAC)
-  defaultValue:
-    WebKit:
-      default: defaultVectorBasedControlsOnMacEnabled()
-    WebKitLegacy:
-      default: WebKit::defaultVectorBasedControlsOnMacEnabled()
-    WebCore:
-      default: false
-
 VerifyWindowOpenUserGestureFromUIProcess:
   type: bool
   status: testable
@@ -8670,6 +8644,21 @@ WebCryptoX25519Enabled:
       default: true
     WebCore:
       default: true
+
+WebExtensionBookmarksEnabled:
+  type: bool
+  status: testable
+  category: extensions
+  humanReadableName: "WebExtension Bookmarks API"
+  humanReadableDescription: "Enable support for WebExtensions using the Bookmarks API"
+  condition: ENABLE(WK_WEB_EXTENSIONS_BOOKMARKS)
+  defaultValue:
+    WebKitLegacy:
+      default: false
+    WebKit:
+      default: false
+    WebCore:
+      default: false
 
 WebExtensionSidebarEnabled:
   type: bool

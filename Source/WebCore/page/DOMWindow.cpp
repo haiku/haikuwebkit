@@ -65,7 +65,7 @@ ExceptionOr<RefPtr<SecurityOrigin>> DOMWindow::createTargetOriginForPostMessage(
 {
     RefPtr<SecurityOrigin> targetSecurityOrigin;
     if (targetOrigin == "/"_s)
-        targetSecurityOrigin = &sourceDocument.securityOrigin();
+        targetSecurityOrigin = sourceDocument.securityOrigin();
     else if (targetOrigin != "*"_s) {
         targetSecurityOrigin = SecurityOrigin::createFromString(targetOrigin);
         // It doesn't make sense target a postMessage at an opaque origin
@@ -119,7 +119,7 @@ void DOMWindow::close()
     }
 
     RefPtr localFrame = dynamicDowncast<LocalFrame>(frame);
-    if (localFrame && !localFrame->protectedLoader()->shouldClose())
+    if (localFrame && !localFrame->loader().shouldClose())
         return;
 
     ResourceLoadObserver::shared().updateCentralStatisticsStore([] { });

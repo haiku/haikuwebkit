@@ -75,7 +75,7 @@ private:
 
     using ElementAttributePair = std::pair<SVGElement*, QualifiedName>;
     using AnimationsVector = Vector<SVGSMILElement*>;
-    using GroupedAnimationsMap = UncheckedKeyHashMap<ElementAttributePair, AnimationsVector>;
+    using GroupedAnimationsMap = HashMap<ElementAttributePair, AnimationsVector>;
 
     void processScheduledAnimations(NOESCAPE const Function<void(SVGSMILElement&)>&);
     void updateDocumentOrderIndexes();

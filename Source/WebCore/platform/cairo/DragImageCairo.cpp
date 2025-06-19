@@ -90,9 +90,9 @@ DragImageRef createDragImageIconForCachedImageFilename(const String&)
     return nullptr;
 }
 
-DragImageRef createDragImageForLink(Element&, URL&, const String&, TextIndicatorData&, float)
+DragImageData createDragImageForLink(Element&, URL&, const String&, float)
 {
-    return nullptr;
+    return { nullptr, nullptr };
 }
 
 DragImageRef createDragImageForColor(const Color&, const FloatRect&, float, Path&)

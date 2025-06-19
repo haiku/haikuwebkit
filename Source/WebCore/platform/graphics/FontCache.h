@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2006-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2006-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2007-2008 Torch Mobile, Inc.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -242,7 +242,7 @@ private:
 
     WeakHashSet<FontSelector> m_clients;
     struct FontDataCaches;
-    UniqueRef<FontDataCaches> m_fontDataCaches;
+    const UniqueRef<FontDataCaches> m_fontDataCaches;
     FontCascadeCache m_fontCascadeCache;
     SystemFallbackFontCache m_systemFallbackFontCache;
     MemoryCompactLookupOnlyRobinHoodHashSet<AtomString> m_familiesUsingBackslashAsYenSign;
@@ -254,14 +254,14 @@ private:
 #endif
 
 #if PLATFORM(MAC)
-    UncheckedKeyHashSet<AtomString> m_knownFamilies;
+    HashSet<AtomString> m_knownFamilies;
 #endif
 
 #if PLATFORM(COCOA)
     FontDatabase m_databaseAllowingUserInstalledFonts { AllowUserInstalledFonts::Yes };
     FontDatabase m_databaseDisallowingUserInstalledFonts { AllowUserInstalledFonts::No };
 
-    using FallbackFontSet = UncheckedKeyHashSet<RetainPtr<CTFontRef>, WTF::RetainPtrObjectHash<CTFontRef>, WTF::RetainPtrObjectHashTraits<CTFontRef>>;
+    using FallbackFontSet = HashSet<RetainPtr<CTFontRef>, WTF::RetainPtrObjectHash<CTFontRef>, WTF::RetainPtrObjectHashTraits<CTFontRef>>;
     FallbackFontSet m_fallbackFonts;
 
     ListHashSet<String> m_seenFamiliesForPrewarming;

@@ -384,7 +384,7 @@ bool ValidatedFormListedElement::computeIsDisabledByFieldsetAncestor() const
             bool isInFirstLegend = is<HTMLLegendElement>(previousAncestor) && previousAncestor == fieldset->legend();
             return !isInFirstLegend;
         }
-        previousAncestor = &ancestor;
+        previousAncestor = ancestor;
     }
     return false;
 }

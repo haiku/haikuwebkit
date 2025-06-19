@@ -159,7 +159,7 @@ bool HTMLFrameOwnerElement::isProhibitedSelfReference(const URL& completeURL) co
 
 bool SubframeLoadingDisabler::canLoadFrame(HTMLFrameOwnerElement& owner)
 {
-    for (RefPtr<ContainerNode> node = &owner; node; node = node->parentOrShadowHostNode()) {
+    for (RefPtr<ContainerNode> node = owner; node; node = node->parentOrShadowHostNode()) {
         if (disabledSubtreeRoots().contains(node.get()))
             return false;
     }

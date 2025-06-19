@@ -65,7 +65,7 @@ TEST(ApplicationStateTracking, WindowDeallocDoesNotPermanentlyFreezeLayerTree)
     [webView waitForNextPresentationUpdate];
 }
 
-#if USE(PDFKIT_FOR_TESTING)
+#if HAVE(PDFKIT)
 
 TEST(ApplicationStateTracking, NavigatingFromPDFDoesNotLeaveWebViewInactive)
 {
@@ -93,7 +93,7 @@ TEST(ApplicationStateTracking, NavigatingFromPDFDoesNotLeaveWebViewInactive)
     EXPECT_TRUE([[webView objectByEvaluatingJavaScript:@"internals.isPageActive()"] boolValue]);
 }
 
-#endif // USE(PDFKIT_FOR_TESTING)
+#endif // HAVE(PDFKIT)
 
 } // namespace TestWebKitAPI
 

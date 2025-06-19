@@ -104,23 +104,23 @@ void OpportunisticTaskScheduler::runLoopObserverFired()
     m_runloopCountAfterBeingScheduled++;
 
     bool shouldRunTask = [&] {
-        if (m_runloopCountAfterBeingScheduled < 10 && hasImminentlyScheduledWork())
-            return false;
+        static constexpr auto numRetriesWhileScheduledWorkIsImminent = 9;
+        if (hasImminentlyScheduledWork())
+            return m_runloopCountAfterBeingScheduled > numRetriesWhileScheduledWorkIsImminent;
 
-        static constexpr auto fractionOfRenderingIntervalWhenScheduledWorkIsImminent = 0.95;
-        if (remainingTime > fractionOfRenderingIntervalWhenScheduledWorkIsImminent * page->preferredRenderingUpdateInterval())
+        static constexpr auto maxRetriesWhenScheduledWorkIsNotImminent = 4;
+        if (m_runloopCountAfterBeingScheduled > maxRetriesWhenScheduledWorkIsNotImminent)
             return true;
 
-        static constexpr auto minimumRunloopCountWhenScheduledWorkIsImminent = 4;
-        if (m_runloopCountAfterBeingScheduled > minimumRunloopCountWhenScheduledWorkIsImminent)
+        static constexpr auto desiredFractionOfRenderingInterval = 0.95;
+        if (remainingTime > desiredFractionOfRenderingInterval * page->preferredRenderingUpdateInterval())
             return true;
 
-        dataLogLnIf(verbose, "[OPPORTUNISTIC TASK] GaveUp: task does not get scheduled ", remainingTime, " ", hasImminentlyScheduledWork(), " ", page->preferredRenderingUpdateInterval(), " ", m_runloopCountAfterBeingScheduled, " signpost:(", JSC::activeJSGlobalObjectSignpostIntervalCount.load(), ")");
         return false;
     }();
 
     if (!shouldRunTask) {
-        dataLogLnIf(verbose, "[OPPORTUNISTIC TASK] RunLoopObserverInvalidate", " signpost:(", JSC::activeJSGlobalObjectSignpostIntervalCount.load(), ")");
+        dataLogLnIf(verbose, "[OPPORTUNISTIC TASK] GaveUp: task gets rescheduled ", remainingTime, " ", hasImminentlyScheduledWork(), " ", page->preferredRenderingUpdateInterval(), " ", m_runloopCountAfterBeingScheduled, " signpost:(", JSC::activeJSGlobalObjectSignpostIntervalCount.load(), ")");
         m_runLoopObserver->invalidate();
         m_runLoopObserver->schedule();
         return;

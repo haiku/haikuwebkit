@@ -63,7 +63,7 @@ public:
             }
 
             SubscribeOptions options;
-            options.signal = &subscriber.signal();
+            options.signal = subscriber.signal();
             m_sourceObservable->subscribeInternal(*context, InternalObserverMap::create(*context, subscriber, m_mapper), options);
 
             return { };

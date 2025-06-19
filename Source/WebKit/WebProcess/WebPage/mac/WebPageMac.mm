@@ -138,11 +138,7 @@ void WebPage::platformInitializeAccessibility(ShouldInitializeNSAccessibility sh
         accessibilityTransferRemoteToken(accessibilityRemoteTokenData());
 
     // Close Mach connection to Launch Services.
-#if HAVE(LS_SERVER_CONNECTION_STATUS_RELEASE_NOTIFICATIONS_MASK)
     _LSSetApplicationLaunchServicesServerConnectionStatus(kLSServerConnectionStatusDoNotConnectToServerMask | kLSServerConnectionStatusReleaseNotificationsMask, nullptr);
-#else
-    _LSSetApplicationLaunchServicesServerConnectionStatus(kLSServerConnectionStatusDoNotConnectToServerMask, nullptr);
-#endif
 
     WebProcess::singleton().revokeLaunchServicesSandboxExtension();
 }

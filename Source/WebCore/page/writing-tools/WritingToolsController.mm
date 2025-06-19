@@ -1181,8 +1181,8 @@ std::optional<std::tuple<Node&, DocumentMarker&>> WritingToolsController::findTe
         if (data.suggestionID != textSuggestionID)
             return false;
 
-        targetNode = &node;
-        targetMarker = &marker;
+        targetNode = node;
+        targetMarker = marker;
 
         return true;
     });
@@ -1211,8 +1211,8 @@ std::optional<std::tuple<Node&, DocumentMarker&>> WritingToolsController::findTe
         if (!contains(TreeType::ComposedTree, markerRange, range))
             return false;
 
-        targetNode = &node;
-        targetMarker = &marker;
+        targetNode = node;
+        targetMarker = marker;
 
         return true;
     });

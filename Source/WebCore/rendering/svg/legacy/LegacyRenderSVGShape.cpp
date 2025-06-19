@@ -398,7 +398,8 @@ FloatRect LegacyRenderSVGShape::calculateStrokeBoundingBox() const
                     SVGRenderSupport::applyStrokeStyleToContext(context, style(), *this);
                 } });
                 strokeBoundingRect = inverse.value().mapRect(strokeBoundingRect);
-                strokeBoundingBox.unite(strokeBoundingRect);
+                if (!strokeBoundingRect.isNaN())
+                    strokeBoundingBox.unite(strokeBoundingRect);
             }
         } else {
             strokeBoundingBox.unite(path().strokeBoundingRect(Function<void(GraphicsContext&)> { [this] (GraphicsContext& context) {

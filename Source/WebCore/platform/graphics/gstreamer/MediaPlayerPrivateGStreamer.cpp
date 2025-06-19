@@ -1,6 +1,6 @@
 /*
- * Copyright (C) 2007, 2009 Apple Inc.  All rights reserved.
- * Copyright (C) 2007 Collabora Ltd.  All rights reserved.
+ * Copyright (C) 2007, 2009 Apple Inc. All rights reserved.
+ * Copyright (C) 2007 Collabora Ltd. All rights reserved.
  * Copyright (C) 2007 Alp Toker <alp@atoker.com>
  * Copyright (C) 2009 Gustavo Noronha Silva <gns@gnome.org>
  * Copyright (C) 2014 Cable Television Laboratories, Inc.
@@ -719,10 +719,9 @@ void MediaPlayerPrivateGStreamer::updatePlaybackRate()
         auto& quirksManager = GStreamerQuirksManager::singleton();
         const auto [processed, didInstantRateChange] = quirksManager.applyCustomInstantRateChange(
             m_isPipelinePlaying, isPipelineWaitingPreroll(), m_playbackRate, mute, pipeline());
-        if (processed) {
-            if (didInstantRateChange)
+        if (processed && didInstantRateChange)
                 m_lastPlaybackRate = m_playbackRate;
-        } else if (doSeek(SeekTarget { playbackPosition() }, m_playbackRate)) {
+        else if (doSeek(SeekTarget { playbackPosition() }, m_playbackRate)) {
             g_object_set(m_pipeline.get(), "mute", mute, nullptr);
             m_lastPlaybackRate = m_playbackRate;
         } else {
@@ -2546,7 +2545,6 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
         G_CALLBACK(+[](GstElement*, GstPad*, GstCaps* caps, GstElementFactory* factory, MediaPlayerPrivateGStreamer* player) -> unsigned {
             static auto tryAutoPlug = *gstGetAutoplugSelectResult("try"_s);
             static auto skipAutoPlug = *gstGetAutoplugSelectResult("skip"_s);
-            static auto exposeAutoPlug = *gstGetAutoplugSelectResult("expose"_s);
 
             auto name = StringView::fromLatin1(gst_plugin_feature_get_name(GST_PLUGIN_FEATURE_CAST(factory)));
             if (name == "webkitthunderparser"_s && player->m_url.protocolIsBlob())
@@ -2563,6 +2561,8 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
             if (!isParsed || !*isParsed)
                 return tryAutoPlug;
 
+#if GST_CHECK_VERSION(1, 20, 0)
+            static auto exposeAutoPlug = *gstGetAutoplugSelectResult("expose"_s);
             auto& scanner = GStreamerRegistryScanner::singleton();
             GUniquePtr<char> gstCodecName(gst_codec_utils_caps_get_mime_codec(caps));
             auto codecName = String::fromUTF8(gstCodecName.get());
@@ -2575,6 +2575,7 @@ void MediaPlayerPrivateGStreamer::configureParsebin(GstElement* parsebin)
 
             if (decoderFactoryAcceptsCaps)
                 return exposeAutoPlug;
+#endif
 
             return tryAutoPlug;
         }), this);

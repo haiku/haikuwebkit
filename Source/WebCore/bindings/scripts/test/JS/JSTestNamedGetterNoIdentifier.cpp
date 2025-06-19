@@ -375,7 +375,9 @@ extern "C" { extern void (*const __identifier("??_7TestNamedGetterNoIdentifier@W
 #else
 extern "C" { extern void* _ZTVN7WebCore27TestNamedGetterNoIdentifierE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestNamedGetterNoIdentifier>, void>> static inline void verifyVTable(TestNamedGetterNoIdentifier* ptr) {
+template<std::same_as<TestNamedGetterNoIdentifier> T>
+static inline void verifyVTable(TestNamedGetterNoIdentifier* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

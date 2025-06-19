@@ -52,12 +52,14 @@
 		04DB2396235E43EC00328F17 /* BumpPointerAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0451A5A6235E438E009DF945 /* BumpPointerAllocator.cpp */; };
 		07275CBC2D01398C002315A5 /* _WebKit_SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 07275CBB2D01398C002315A5 /* _WebKit_SwiftUI.framework */; };
 		074E87E52CF920A20059E469 /* Bundle+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 074E87E42CF920A20059E469 /* Bundle+Extras.swift */; };
+		075663822DF68BAB00E9A4E3 /* TestPDFDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078B0CA82DF656BD00B3E569 /* TestPDFDocument.swift */; };
 		075A9CF526177218006DFA3A /* MediaSessionCoordinatorTest.mm in Sources */ = {isa = PBXBuildFile; fileRef = 075A9CF426177217006DFA3A /* MediaSessionCoordinatorTest.mm */; };
 		076E507F1F4513D6006E9F5A /* Logging.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 076E507E1F45031E006E9F5A /* Logging.cpp */; };
 		077489CC2CE4061A00133938 /* WKWebViewSwiftOverlayTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 070721142CE2F5F6004D9EC8 /* WKWebViewSwiftOverlayTests.swift */; };
 		077A5AF3230638A600A7105C /* AccessibilityTestPlugin.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0746645822FF630500E3451A /* AccessibilityTestPlugin.mm */; };
 		078B04482CF118BD00B453A6 /* URLSchemeHandlerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078B04472CF118BD00B453A6 /* URLSchemeHandlerTests.swift */; };
 		078B044A2CF139BF00B453A6 /* Foundation+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078B04492CF139BF00B453A6 /* Foundation+Extras.swift */; };
+		078B0CA92DF656BD00B3E569 /* TestPDFDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078B0CA82DF656BD00B3E569 /* TestPDFDocument.swift */; };
 		078F21302DD99E6A00E87858 /* RunLoopQueueTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078F21282DD99E6300E87858 /* RunLoopQueueTests.swift */; };
 		079D45F22A2A6BBE003830C7 /* Viewport.mm in Sources */ = {isa = PBXBuildFile; fileRef = 079D45F12A2A6BBE003830C7 /* Viewport.mm */; };
 		07C02FD22D6D6FBC0004ED97 /* rtl-sideways-scrolling.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = 07C02FD12D6D6FBC0004ED97 /* rtl-sideways-scrolling.html */; };
@@ -230,7 +232,6 @@
 		51393E221523952D005F39C5 /* DOMWindowExtensionBasic_Bundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 51393E1D1523944A005F39C5 /* DOMWindowExtensionBasic_Bundle.cpp */; };
 		514958BE1F7427AC00E87BAD /* WKWebViewAutofillTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = 514958BD1F7427AC00E87BAD /* WKWebViewAutofillTests.mm */; };
 		5159F267260D43E300B2DA3C /* NowPlayingInfoTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 5159F266260D43E300B2DA3C /* NowPlayingInfoTests.cpp */; };
-		516281252325C18000BB7E42 /* TestPDFDocument.mm in Sources */ = {isa = PBXBuildFile; fileRef = 516281242325C17B00BB7E42 /* TestPDFDocument.mm */; };
 		516404382AB1D9BC0042B1C3 /* NativePromise.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 516404372AB1D9BB0042B1C3 /* NativePromise.cpp */; };
 		516B289E2CFEA5BC003C544C /* AudioSampleFormat.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 516B289D2CFEA5BC003C544C /* AudioSampleFormat.cpp */; };
 		5175C7A226F876230003AF5C /* BundlePageConsoleMessage.mm in Sources */ = {isa = PBXBuildFile; fileRef = 5175C7A126F876230003AF5C /* BundlePageConsoleMessage.mm */; };
@@ -646,9 +647,9 @@
 		A14FC58B1B89927100D107EB /* ContentFilteringPlugIn.mm in Sources */ = {isa = PBXBuildFile; fileRef = A14FC5891B89927100D107EB /* ContentFilteringPlugIn.mm */; };
 		A170E3AA2ABA7857009EA799 /* VectorCocoa.mm in Sources */ = {isa = PBXBuildFile; fileRef = A170E3A22ABA7857009EA799 /* VectorCocoa.mm */; };
 		A17191AD2CD2DB090088944E /* WKWebViewLogging.mm in Sources */ = {isa = PBXBuildFile; fileRef = A17191AC2CD2DB090088944E /* WKWebViewLogging.mm */; };
-		A176D24B2D6D2A4E00C63915 /* GPUExtension.appex in Embed Extensions */ = {isa = PBXBuildFile; fileRef = A176D2472D6D295400C63915 /* GPUExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		A176D24C2D6D2A4E00C63915 /* NetworkingExtension.appex in Embed Extensions */ = {isa = PBXBuildFile; fileRef = A176D2482D6D295400C63915 /* NetworkingExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
-		A176D24D2D6D2A4E00C63915 /* WebContentExtension.appex in Embed Extensions */ = {isa = PBXBuildFile; fileRef = A176D2492D6D295400C63915 /* WebContentExtension.appex */; platformFilter = ios; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A176D24B2D6D2A4E00C63915 /* GPUExtension.appex in Embed Extensions */ = {isa = PBXBuildFile; fileRef = A176D2472D6D295400C63915 /* GPUExtension.appex */; platformFilters = (ios, ); settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A176D24C2D6D2A4E00C63915 /* NetworkingExtension.appex in Embed Extensions */ = {isa = PBXBuildFile; fileRef = A176D2482D6D295400C63915 /* NetworkingExtension.appex */; platformFilters = (ios, ); settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		A176D24D2D6D2A4E00C63915 /* WebContentExtension.appex in Embed Extensions */ = {isa = PBXBuildFile; fileRef = A176D2492D6D295400C63915 /* WebContentExtension.appex */; platformFilters = (ios, ); settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		A1798B7F22431D2B000764BD /* libWebCoreTestSupport.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = A1798B7E22431D2B000764BD /* libWebCoreTestSupport.dylib */; };
 		A1798B8522433647000764BD /* WebProcessPlugInWithInternals.mm in Sources */ = {isa = PBXBuildFile; fileRef = A1798B8422433647000764BD /* WebProcessPlugInWithInternals.mm */; };
 		A17991881E1C994E00A505ED /* SharedBuffer.mm in Sources */ = {isa = PBXBuildFile; fileRef = A17991861E1C994E00A505ED /* SharedBuffer.mm */; };
@@ -2242,6 +2243,8 @@
 		076E507E1F45031E006E9F5A /* Logging.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Logging.cpp; sourceTree = "<group>"; };
 		078B04472CF118BD00B453A6 /* URLSchemeHandlerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = URLSchemeHandlerTests.swift; sourceTree = "<group>"; };
 		078B04492CF139BF00B453A6 /* Foundation+Extras.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Foundation+Extras.swift"; sourceTree = "<group>"; };
+		078B0C9E2DF6550A00B3E569 /* TestPDFDocument.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = TestPDFDocument.h; sourceTree = "<group>"; };
+		078B0CA82DF656BD00B3E569 /* TestPDFDocument.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TestPDFDocument.swift; sourceTree = "<group>"; };
 		078F21282DD99E6300E87858 /* RunLoopQueueTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RunLoopQueueTests.swift; sourceTree = "<group>"; };
 		0794740C25CA0BDE00C597EB /* MediaSession.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MediaSession.mm; sourceTree = "<group>"; };
 		0794742C25CB33B000C597AA /* media-session-capture.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "media-session-capture.html"; sourceTree = "<group>"; };
@@ -2332,6 +2335,7 @@
 		1AEF994817A09F5300998EF0 /* GetPIDAfterAbortedProcessLaunch.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = GetPIDAfterAbortedProcessLaunch.cpp; sourceTree = "<group>"; };
 		1AF7B21D1D6CD12E008C126C /* EnumTraits.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = EnumTraits.cpp; sourceTree = "<group>"; };
 		1AF86FBF2CD5526B00AD337C /* ScrollbarWidthCrash.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = ScrollbarWidthCrash.mm; sourceTree = "<group>"; };
+		1C0590722DFA1A8E000406F9 /* WKWebExtensionAPIDOM.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebExtensionAPIDOM.mm; sourceTree = "<group>"; };
 		1C1549852926F4CA001B9E5B /* WKWebExtensionAPIRuntime.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebExtensionAPIRuntime.mm; sourceTree = "<group>"; };
 		1C15498E2926F701001B9E5B /* WebExtensionUtilities.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = WebExtensionUtilities.mm; path = cocoa/WebExtensionUtilities.mm; sourceTree = "<group>"; };
 		1C15498F2926F944001B9E5B /* WebExtensionUtilities.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = WebExtensionUtilities.h; path = cocoa/WebExtensionUtilities.h; sourceTree = "<group>"; };
@@ -2764,8 +2768,6 @@
 		5159F266260D43E300B2DA3C /* NowPlayingInfoTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NowPlayingInfoTests.cpp; sourceTree = "<group>"; };
 		515BE16E1D4288FF00DD7C68 /* StoreBlobToBeDeleted.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = StoreBlobToBeDeleted.html; sourceTree = "<group>"; };
 		515BE1701D428BD100DD7C68 /* StoreBlobThenDelete.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = StoreBlobThenDelete.mm; sourceTree = "<group>"; };
-		516281232325C17A00BB7E42 /* TestPDFDocument.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = TestPDFDocument.h; path = cocoa/TestPDFDocument.h; sourceTree = "<group>"; };
-		516281242325C17B00BB7E42 /* TestPDFDocument.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = TestPDFDocument.mm; path = cocoa/TestPDFDocument.mm; sourceTree = "<group>"; };
 		516281262325C19100BB7E42 /* PDFSnapshot.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PDFSnapshot.mm; sourceTree = "<group>"; };
 		516281282325C45400BB7E42 /* PDFKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PDFKit.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS.sdk/System/Library/Frameworks/PDFKit.framework; sourceTree = DEVELOPER_DIR; };
 		516404372AB1D9BB0042B1C3 /* NativePromise.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = NativePromise.cpp; sourceTree = "<group>"; };
@@ -4305,8 +4307,8 @@
 				2D1C04A61D76298B000A6816 /* TestNavigationDelegate.mm */,
 				A17C48572C98FA3F0023F3C7 /* TestNSBundleExtras.h */,
 				A17C48582C98FA3F0023F3C7 /* TestNSBundleExtras.m */,
-				516281232325C17A00BB7E42 /* TestPDFDocument.h */,
-				516281242325C17B00BB7E42 /* TestPDFDocument.mm */,
+				078B0C9E2DF6550A00B3E569 /* TestPDFDocument.h */,
+				078B0CA82DF656BD00B3E569 /* TestPDFDocument.swift */,
 				A14FC58D1B8AE36500D107EB /* TestProtocol.h */,
 				A14FC58E1B8AE36500D107EB /* TestProtocol.mm */,
 				F4C192CD2B027C93001F75CE /* TestResourceLoadDelegate.h */,
@@ -4752,6 +4754,7 @@
 				1C40052E2B2CEE8C00F2D9EE /* WKWebExtensionAPICookies.mm */,
 				33C39CFF2B07D4B9008FA14B /* WKWebExtensionAPIDeclarativeNetRequest.mm */,
 				1C38A9192B7AB310006B1333 /* WKWebExtensionAPIDevTools.mm */,
+				1C0590722DFA1A8E000406F9 /* WKWebExtensionAPIDOM.mm */,
 				B6E1E1E02942B0DD00F314D2 /* WKWebExtensionAPIEvent.mm */,
 				1C1549A2292ADB64001B9E5B /* WKWebExtensionAPIExtension.mm */,
 				B6D1708E2A9F9C9F004C72E6 /* WKWebExtensionAPILocalization.mm */,
@@ -7550,7 +7553,7 @@
 				F45E15762112CE6200307E82 /* TestInputDelegate.mm in Sources */,
 				F45D3891215A7B4B002A2979 /* TestInspectorBar.mm in Sources */,
 				A17C48592C98FA3F0023F3C7 /* TestNSBundleExtras.m in Sources */,
-				516281252325C18000BB7E42 /* TestPDFDocument.mm in Sources */,
+				075663822DF68BAB00E9A4E3 /* TestPDFDocument.swift in Sources */,
 				F4CB8A7D2856462B0017ECD3 /* TestPDFHostViewController.mm in Sources */,
 				7B774906267CCE72009873B4 /* TestRunnerTests.cpp in Sources */,
 				F4D5C55827C6FF4800ED1C23 /* TestUIMenuBuilder.mm in Sources */,
@@ -7767,6 +7770,7 @@
 				A17C58472C9BF524009DD0B5 /* GoogleTests.mm in Sources */,
 				DD5698002DC1320500050321 /* rdar150228472.swift in Sources */,
 				078F21302DD99E6A00E87858 /* RunLoopQueueTests.swift in Sources */,
+				078B0CA92DF656BD00B3E569 /* TestPDFDocument.swift in Sources */,
 				078B04482CF118BD00B453A6 /* URLSchemeHandlerTests.swift in Sources */,
 				07FAA74D2CE95E3200128360 /* WebPageTests.swift in Sources */,
 				077489CC2CE4061A00133938 /* WKWebViewSwiftOverlayTests.swift in Sources */,

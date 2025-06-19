@@ -104,7 +104,7 @@ void AcceleratedBackingStoreDMABuf::didCreateBuffer(uint64_t id, const WebCore::
     fileDescriptors.reserveInitialCapacity(fds.size());
     for (auto& fd : fds)
         fileDescriptors.append(fd.release());
-    GRefPtr<WPEBuffer> buffer = adoptGRef(WPE_BUFFER(wpe_buffer_dma_buf_new(wpe_view_get_display(m_wpeView.get()), size.width(), size.height(), format, fds.size(), fileDescriptors.data(), offsets.data(), strides.data(), modifier)));
+    GRefPtr<WPEBuffer> buffer = adoptGRef(WPE_BUFFER(wpe_buffer_dma_buf_new(wpe_view_get_display(m_wpeView.get()), size.width(), size.height(), format, fds.size(), fileDescriptors.mutableSpan().data(), offsets.mutableSpan().data(), strides.mutableSpan().data(), modifier)));
     g_object_set_data(G_OBJECT(buffer.get()), "wk-buffer-format-usage", GUINT_TO_POINTER(usage));
     m_bufferIDs.add(buffer.get(), id);
     m_buffers.add(id, WTFMove(buffer));
@@ -160,7 +160,7 @@ void AcceleratedBackingStoreDMABuf::renderPendingBuffer()
     static_assert(sizeof(WebCore::IntRect) == sizeof(WPERectangle));
 
     ASSERT(m_pendingDamageRects.size() <= std::numeric_limits<guint>::max());
-    const auto* rects = !m_pendingDamageRects.isEmpty() ? reinterpret_cast<const WPERectangle*>(m_pendingDamageRects.data()) : nullptr;
+    const auto* rects = !m_pendingDamageRects.isEmpty() ? reinterpret_cast<const WPERectangle*>(m_pendingDamageRects.span().data()) : nullptr;
 
     GUniqueOutPtr<GError> error;
     if (!wpe_view_render_buffer(m_wpeView.get(), m_pendingBuffer.get(), rects, m_pendingDamageRects.size(), &error.outPtr())) {

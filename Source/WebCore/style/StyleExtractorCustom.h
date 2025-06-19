@@ -430,7 +430,7 @@ template<CSSPropertyID propertyID, typename InsetEdgeApplier, typename NumberAsP
 template<CSSPropertyID propertyID> Ref<CSSValue> extractZoomAdjustedInsetValue(ExtractorState& state)
 {
     return extractZoomAdjustedInset<propertyID>(state,
-        [&](const auto& edge)   -> Ref<CSSValue> { return ExtractorConverter::convertInsetEdge(state, edge); },
+        [&](const auto& edge)   -> Ref<CSSValue> { return ExtractorConverter::convertStyleType(state, edge); },
         [&](const auto& number) -> Ref<CSSValue> { return ExtractorConverter::convertNumberAsPixels(state, number); },
         [&](const auto& value)  -> Ref<CSSValue> { return CSSPrimitiveValue::create(value); }
     );
@@ -439,7 +439,7 @@ template<CSSPropertyID propertyID> Ref<CSSValue> extractZoomAdjustedInsetValue(E
 template<CSSPropertyID propertyID> void extractZoomAdjustedInsetSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
     extractZoomAdjustedInset<propertyID>(state,
-        [&](const auto& edge)   { ExtractorSerializer::serializeInsetEdge(state, builder, context, edge); },
+        [&](const auto& edge)   { ExtractorSerializer::serializeStyleType(state, builder, context, edge); },
         [&](const auto& number) { ExtractorSerializer::serializeNumberAsPixels(state, builder, context, number); },
         [&](const auto& value)  { builder.append(nameLiteralForSerialization(value)); }
     );
@@ -500,7 +500,7 @@ template<auto styleGetter, auto computedCSSValueGetter> Ref<CSSValue> extractZoo
 {
     auto* renderBox = dynamicDowncast<RenderBox>(state.renderer);
     if (!renderBox)
-        return ExtractorConverter::convertMarginEdge(state, (state.style.*styleGetter)());
+        return ExtractorConverter::convertStyleType(state, (state.style.*styleGetter)());
     return ExtractorConverter::convertNumberAsPixels(state, (renderBox->*computedCSSValueGetter)());
 }
 
@@ -508,7 +508,7 @@ template<auto styleGetter, auto computedCSSValueGetter> void extractZoomAdjusted
 {
     auto* renderBox = dynamicDowncast<RenderBox>(state.renderer);
     if (!renderBox) {
-        ExtractorSerializer::serializeMarginEdge(state, builder, context, (state.style.*styleGetter)());
+        ExtractorSerializer::serializeStyleType(state, builder, context, (state.style.*styleGetter)());
         return;
     }
 
@@ -520,7 +520,7 @@ template<auto styleGetter, auto computedCSSValueGetter> Ref<CSSValue> extractZoo
     auto& paddingEdge  = (state.style.*styleGetter)();
     auto* renderBox = dynamicDowncast<RenderBox>(state.renderer);
     if (!renderBox || paddingEdge.isFixed())
-        return ExtractorConverter::convertPaddingEdge(state, paddingEdge);
+        return ExtractorConverter::convertStyleType(state, paddingEdge);
     return ExtractorConverter::convertNumberAsPixels(state, (renderBox->*computedCSSValueGetter)());
 }
 
@@ -529,7 +529,7 @@ template<auto styleGetter, auto computedCSSValueGetter> void extractZoomAdjusted
     auto paddingEdge = (state.style.*styleGetter)();
     auto* renderBox = dynamicDowncast<RenderBox>(state.renderer);
     if (!renderBox || paddingEdge.isFixed()) {
-        ExtractorSerializer::serializePaddingEdge(state, builder, context, paddingEdge);
+        ExtractorSerializer::serializeStyleType(state, builder, context, paddingEdge);
         return;
     }
     ExtractorSerializer::serializeNumberAsPixels(state, builder, context, (renderBox->*computedCSSValueGetter)());
@@ -554,7 +554,7 @@ template<auto styleGetter, auto boxGetter> Ref<CSSValue> extractZoomAdjustedPref
         if (!isNonReplacedInline(*state.renderer))
             return ExtractorConverter::convertNumberAsPixels(state, (sizingBox(*state.renderer).*boxGetter)());
     }
-    return ExtractorConverter::convertLength(state, (state.style.*styleGetter)());
+    return ExtractorConverter::convertStyleType(state, (state.style.*styleGetter)());
 }
 
 template<auto styleGetter, auto boxGetter> void extractZoomAdjustedPreferredSizeSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
@@ -579,26 +579,26 @@ template<auto styleGetter, auto boxGetter> void extractZoomAdjustedPreferredSize
         }
     }
 
-    ExtractorSerializer::serializeLength(state, builder, context, (state.style.*styleGetter)());
+    ExtractorSerializer::serializeStyleType(state, builder, context, (state.style.*styleGetter)());
 }
 
 template<auto styleGetter> Ref<CSSValue> extractZoomAdjustedMaxSizeValue(ExtractorState& state)
 {
     auto unzoomedLength = (state.style.*styleGetter)();
-    if (unzoomedLength.isUndefined())
+    if (unzoomedLength.isNone())
         return CSSPrimitiveValue::create(CSSValueNone);
-    return ExtractorConverter::convertLength(state, unzoomedLength);
+    return ExtractorConverter::convertStyleType(state, unzoomedLength);
 }
 
 template<auto styleGetter> void extractZoomAdjustedMaxSizeSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
 {
     auto unzoomedLength = (state.style.*styleGetter)();
-    if (unzoomedLength.isUndefined()) {
+    if (unzoomedLength.isNone()) {
         CSS::serializationForCSS(builder, context, CSS::Keyword::None { });
         return;
     }
 
-    ExtractorSerializer::serializeLength(state, builder, context, unzoomedLength);
+    ExtractorSerializer::serializeStyleType(state, builder, context, unzoomedLength);
 }
 
 template<auto styleGetter> Ref<CSSValue> extractZoomAdjustedMinSizeValue(ExtractorState& state)
@@ -614,7 +614,7 @@ template<auto styleGetter> Ref<CSSValue> extractZoomAdjustedMinSizeValue(Extract
             return CSSPrimitiveValue::create(CSSValueAuto);
         return ExtractorConverter::convertNumberAsPixels(state, 0);
     }
-    return ExtractorConverter::convertLength(state, unzoomedLength);
+    return ExtractorConverter::convertStyleType(state, unzoomedLength);
 }
 
 template<auto styleGetter> void extractZoomAdjustedMinSizeSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)
@@ -635,7 +635,7 @@ template<auto styleGetter> void extractZoomAdjustedMinSizeSerialization(Extracto
         return;
     }
 
-    ExtractorSerializer::serializeLength(state, builder, context, unzoomedLength);
+    ExtractorSerializer::serializeStyleType(state, builder, context, unzoomedLength);
 }
 
 template<CSSPropertyID propertyID> Ref<CSSValue> extractCounterValue(ExtractorState& state)
@@ -1962,7 +1962,7 @@ inline Ref<CSSValue> ExtractorCustom::extractMarginRight(ExtractorState& state)
 
     auto& marginRight = state.style.marginRight();
     if (marginRight.isFixed() || !box)
-        return ExtractorConverter::convertMarginEdge(state, marginRight);
+        return ExtractorConverter::convertStyleType(state, marginRight);
 
     float value;
     if (marginRight.isPercentOrCalculated()) {
@@ -1985,7 +1985,7 @@ inline void ExtractorCustom::extractMarginRightSerialization(ExtractorState& sta
 
     auto& marginRight = state.style.marginRight();
     if (marginRight.isFixed() || !box) {
-        ExtractorSerializer::serializeMarginEdge(state, builder, context, marginRight);
+        ExtractorSerializer::serializeStyleType(state, builder, context, marginRight);
         return;
     }
 
@@ -3165,33 +3165,42 @@ inline RefPtr<CSSValue> ExtractorCustom::extractOffsetShorthand(ExtractorState& 
     // The first four elements are serialized in a space separated CSSValueList.
     // This is then combined with offset-anchor in a slash separated CSSValueList.
 
-    auto isAuto = [](const auto& position) { return position.x.isAuto() && position.y.isAuto(); };
-    auto isNormal = [](const auto& position) { return position.x.isNormal(); };
-
     CSSValueListBuilder innerList;
 
-    if (!isAuto(state.style.offsetPosition()) && !isNormal(state.style.offsetPosition()))
-        innerList.append(ExtractorConverter::convertPosition(state, state.style.offsetPosition()));
+    WTF::switchOn(state.style.offsetPosition(),
+        [&](const CSS::Keyword::Auto&) { },
+        [&](const CSS::Keyword::Normal&) { },
+        [&](const Position& position) {
+            innerList.append(ExtractorConverter::convertStyleType(state, position));
+        }
+    );
 
-    bool nonInitialDistance = !state.style.offsetDistance().isZero();
+    bool nonInitialDistance = state.style.offsetDistance() != state.style.initialOffsetDistance();
     bool nonInitialRotate = state.style.offsetRotate() != state.style.initialOffsetRotate();
 
     if (state.style.offsetPath() || nonInitialDistance || nonInitialRotate)
         innerList.append(ExtractorConverter::convertPathOperation(state, state.style.offsetPath(), PathConversion::ForceAbsolute));
 
     if (nonInitialDistance)
-        innerList.append(CSSPrimitiveValue::create(state.style.offsetDistance(), state.style));
+        innerList.append(ExtractorConverter::convertStyleType(state, state.style.offsetDistance()));
     if (nonInitialRotate)
-        innerList.append(ExtractorConverter::convertOffsetRotate(state, state.style.offsetRotate()));
+        innerList.append(ExtractorConverter::convertStyleType(state, state.style.offsetRotate()));
 
     auto inner = innerList.isEmpty()
         ? Ref<CSSValue> { CSSPrimitiveValue::create(CSSValueAuto) }
         : Ref<CSSValue> { CSSValueList::createSpaceSeparated(WTFMove(innerList)) };
 
-    if (isAuto(state.style.offsetAnchor()))
-        return inner;
-
-    return CSSValueList::createSlashSeparated(WTFMove(inner), ExtractorConverter::convertPosition(state, state.style.offsetAnchor()));
+    return WTF::switchOn(state.style.offsetAnchor(),
+        [&](const CSS::Keyword::Auto&) -> Ref<CSSValue> {
+            return inner;
+        },
+        [&](const Position& position) -> Ref<CSSValue> {
+            return CSSValueList::createSlashSeparated(
+                WTFMove(inner),
+                ExtractorConverter::convertStyleType(state, position)
+            );
+        }
+    );
 }
 
 inline void ExtractorCustom::extractOffsetShorthandSerialization(ExtractorState& state, StringBuilder& builder, const CSS::SerializationContext& context)

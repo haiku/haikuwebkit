@@ -118,6 +118,7 @@ private:
         case NumberIsNaN:
         case GlobalIsFinite:
         case NumberIsFinite:
+        case NumberIsSafeInteger:
         case ParseInt:
         case ToIntegerOrInfinity:
         case ToLength:

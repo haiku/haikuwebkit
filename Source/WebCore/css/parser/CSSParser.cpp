@@ -135,7 +135,7 @@ auto CSSParser::parseCustomPropertyValue(MutableStyleProperties& declaration, co
     return declaration.addParsedProperties(parser.topContext().m_parsedProperties) ? ParseResult::Changed : ParseResult::Unchanged;
 }
 
-static inline void filterProperties(IsImportant important, const ParsedPropertyVector& input, ParsedPropertyVector& output, size_t& unusedEntries, std::bitset<numCSSProperties>& seenProperties, UncheckedKeyHashSet<AtomString>& seenCustomProperties)
+static inline void filterProperties(IsImportant important, const ParsedPropertyVector& input, ParsedPropertyVector& output, size_t& unusedEntries, std::bitset<numCSSProperties>& seenProperties, HashSet<AtomString>& seenCustomProperties)
 {
     // Add properties in reverse order so that highest priority definitions are reached first. Duplicate definitions can then be ignored when found.
     for (size_t i = input.size(); i--;) {
@@ -166,7 +166,7 @@ static Ref<ImmutableStyleProperties> createStyleProperties(ParsedPropertyVector&
     std::bitset<numCSSProperties> seenProperties;
     size_t unusedEntries = parsedProperties.size();
     ParsedPropertyVector results(unusedEntries);
-    UncheckedKeyHashSet<AtomString> seenCustomProperties;
+    HashSet<AtomString> seenCustomProperties;
 
     filterProperties(IsImportant::Yes, parsedProperties, results, unusedEntries, seenProperties, seenCustomProperties);
     filterProperties(IsImportant::No, parsedProperties, results, unusedEntries, seenProperties, seenCustomProperties);
@@ -197,7 +197,7 @@ bool CSSParser::parseDeclarationList(MutableStyleProperties& declaration, const 
     std::bitset<numCSSProperties> seenProperties;
     size_t unusedEntries = parser.topContext().m_parsedProperties.size();
     ParsedPropertyVector results(unusedEntries);
-    UncheckedKeyHashSet<AtomString> seenCustomProperties;
+    HashSet<AtomString> seenCustomProperties;
     filterProperties(IsImportant::Yes, parser.topContext().m_parsedProperties, results, unusedEntries, seenProperties, seenCustomProperties);
     filterProperties(IsImportant::No, parser.topContext().m_parsedProperties, results, unusedEntries, seenProperties, seenCustomProperties);
     if (unusedEntries)
@@ -682,7 +682,9 @@ Vector<Ref<StyleRuleBase>> CSSParser::consumeNestedGroupRules(CSSParserTokenRang
         return { };
 
     Vector<Ref<StyleRuleBase>> rules;
-    if (hasStyleRuleAncestor()) {
+    // Declarations are allowed if there is either a parent style rule or parent scope rule.
+    // https://drafts.csswg.org/css-cascade-6/#scoped-declarations
+    if (isStyleNestedContext()) {
         runInNewNestingContext([&] {
             consumeStyleBlock(block, StyleRuleType::Style, ParsingStyleDeclarationsInRuleList::Yes);
 
@@ -1389,7 +1391,7 @@ RefPtr<StyleRuleBase> CSSParser::consumeStyleRule(CSSParserTokenRange prelude, C
 void CSSParser::consumeBlockContent(CSSParserTokenRange range, StyleRuleType ruleType, OnlyDeclarations onlyDeclarations, ParsingStyleDeclarationsInRuleList isParsingStyleDeclarationsInRuleList)
 {
     auto nestedRulesAllowed = [&] {
-        return hasStyleRuleAncestor() && onlyDeclarations == OnlyDeclarations::No;
+        return isStyleNestedContext() && onlyDeclarations == OnlyDeclarations::No;
     };
 
     ASSERT(topContext().m_parsedProperties.isEmpty());
@@ -1485,7 +1487,10 @@ void CSSParser::consumeBlockContent(CSSParserTokenRange range, StyleRuleType rul
                 RefPtr rule = consumeAtRule(range, AllowedRules::RegularRules);
                 if (!rule)
                     break;
-                if (!rule->isGroupRule())
+                auto lastAncestor = lastAncestorRuleType();
+                ASSERT(lastAncestor);
+                // Style rule only support nested group rule.
+                if (*lastAncestor == CSSParserEnum::NestedContextType::Style && !rule->isGroupRule())
                     break;
                 storeDeclarations();
                 topContext().m_parsedRules.append(rule.releaseNonNull());

@@ -1,9 +1,6 @@
-The pointerout event should not be fired if the pointer doesn't move
 
-Test Description: This test checks if the pointerout event dispatched unexpectedly.
-Click on the black rectangle.
-Don't move mouse after clicking.
+Harness Error (TIMEOUT), message = null
 
-
-PASS The pointerout event should not be fired if the pointer doesn't move
+TIMEOUT Layout change under a stationary pointer (a new element appears) fires boundary events and no pointermove event Test timed out
+NOTRUN Layout change under a stationary pointer (the element disappears) fires boundary events and no pointermove event
 

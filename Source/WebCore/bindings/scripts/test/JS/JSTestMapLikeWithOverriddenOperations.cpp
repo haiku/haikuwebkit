@@ -416,7 +416,9 @@ extern "C" { extern void (*const __identifier("??_7TestMapLikeWithOverriddenOper
 #else
 extern "C" { extern void* _ZTVN7WebCore35TestMapLikeWithOverriddenOperationsE[]; }
 #endif
-template<typename T, typename = std::enable_if_t<std::is_same_v<T, TestMapLikeWithOverriddenOperations>, void>> static inline void verifyVTable(TestMapLikeWithOverriddenOperations* ptr) {
+template<std::same_as<TestMapLikeWithOverriddenOperations> T>
+static inline void verifyVTable(TestMapLikeWithOverriddenOperations* ptr) 
+{
     if constexpr (std::is_polymorphic_v<T>) {
         const void* actualVTablePointer = getVTablePointer<T>(ptr);
 #if PLATFORM(WIN)

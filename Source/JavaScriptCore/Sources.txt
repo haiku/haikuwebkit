@@ -774,6 +774,7 @@ runtime/CommonIdentifiers.cpp
 runtime/CommonSlowPaths.cpp
 runtime/CompilationResult.cpp
 runtime/Completion.cpp
+runtime/ConcatKeyAtomStringCache.cpp
 runtime/ConfigFile.cpp
 runtime/ConsoleClient.cpp
 runtime/ConsoleObject.cpp

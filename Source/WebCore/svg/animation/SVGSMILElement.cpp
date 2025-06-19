@@ -454,7 +454,7 @@ void SVGSMILElement::parseBeginOrEnd(StringView parseString, BeginOrEnd beginOrE
     Vector<SMILTimeWithOrigin>& timeList = beginOrEnd == Begin ? m_beginTimes : m_endTimes;
     if (beginOrEnd == End)
         m_hasEndEventConditions = false;
-    UncheckedKeyHashSet<double> existing;
+    HashSet<double> existing;
     for (auto& time : timeList)
         existing.add(time.time().value());
     for (auto string : parseString.split(';')) {

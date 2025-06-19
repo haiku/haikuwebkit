@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2022 Apple Inc. All Rights Reserved.
+ * Copyright (C) 2013-2022 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -847,6 +847,11 @@ void RemoteInspector::receivedAutomationSessionRequestMessage(NSDictionary *user
     if (NSNumber *value = forwardedCapabilities[WIRSuppressICECandidateFilteringCapabilityKey]) {
         if ([value isKindOfClass:[NSNumber class]])
             sessionCapabilities.suppressICECandidateFiltering = value.boolValue;
+    }
+
+    if (NSNumber *value = forwardedCapabilities[WIRAlwaysAllowAutoplay]) {
+        if ([value isKindOfClass:NSNumber.class])
+            sessionCapabilities.alwaysAllowAutoplay = value.boolValue;
     }
 
     if (!m_client)

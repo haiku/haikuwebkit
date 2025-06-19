@@ -85,12 +85,12 @@ public:
         bool hasCells() const { return cells.size() > 0; }
     };
 
-    typedef Vector<CellStruct> Row;
+    using Row = Vector<CellStruct>;
     struct RowStruct {
         Row row;
         RenderTableRow* rowRenderer { nullptr };
         LayoutUnit baseline;
-        Length logicalHeight;
+        Style::PreferredSize logicalHeight { CSS::Keyword::Auto { } };
     };
 
     inline const BorderValue& borderAdjoiningTableStart() const;
@@ -239,7 +239,7 @@ private:
 
     // This map holds the collapsed border values for cells with collapsed borders.
     // It is held at RenderTableSection level to spare memory consumption by table cells.
-    UncheckedKeyHashMap<std::pair<const RenderTableCell*, int>, CollapsedBorderValue > m_cellsCollapsedBorders;
+    HashMap<std::pair<const RenderTableCell*, int>, CollapsedBorderValue > m_cellsCollapsedBorders;
 
     bool m_forceSlowPaintPathWithOverflowingCell { false };
     bool m_hasMultipleCellLevels { false };

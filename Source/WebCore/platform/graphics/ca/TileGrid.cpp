@@ -597,7 +597,7 @@ IntRect TileGrid::ensureTilesForRect(const FloatRect& rect, HashSet<TileIndex>& 
 
             IntRect tileRect = rectForTileIndex(tileIndex);
 
-            UncheckedKeyHashMap<TileIndex, TileInfo>::iterator it;
+            HashMap<TileIndex, TileInfo>::iterator it;
             constexpr size_t kMaxTileCountPerGrid = 6 * 1024;
             if (m_tiles.size() >= kMaxTileCountPerGrid) [[unlikely]] {
                 it = m_tiles.find(tileIndex);

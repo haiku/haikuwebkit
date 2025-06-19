@@ -280,7 +280,7 @@ void BitmapTexture::updateContents(const void* srcData, const IntRect& targetRec
     if (requireSubImageBuffer) {
         WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN // GLib/Win port
         temporaryData.resize(targetRect.width() * targetRect.height() * bytesPerPixel);
-        auto dst = temporaryData.data();
+        auto dst = temporaryData.mutableSpan().data();
         data = dst;
         auto bits = static_cast<const uint8_t*>(srcData);
         auto src = bits + sourceOffset.y() * bytesPerLine + sourceOffset.x() * bytesPerPixel;

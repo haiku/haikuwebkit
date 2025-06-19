@@ -2809,6 +2809,26 @@ class CppStyleTest(CppStyleTestBase):
         self.assert_lint('    else if (blah) {', '')
         self.assert_lint('    variable_ends_in_else = true;', '')
         self.assert_lint('    else \\', '')
+        self.assert_lint('    else [[likely]] {', '')
+        self.assert_lint('    else [[unlikely]] {', '')
+        self.assert_multi_line_lint(
+            '    if (condition) {\n'
+            '        foo();\n'
+            '        baz();\n'
+            '    } else [[likely]] {\n'
+            '        bar();\n'
+            '        qux();\n'
+            '    }\n',
+            '')
+        self.assert_multi_line_lint(
+            '    if (condition) {\n'
+            '        foo();\n'
+            '        baz();\n'
+            '    } else [[unlikely]] {\n'
+            '        bar();\n'
+            '        qux();\n'
+            '    }\n',
+            '')
 
     def test_comma(self):
         self.assert_lint('a = f(1,2);',

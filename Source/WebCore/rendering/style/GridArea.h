@@ -43,7 +43,7 @@ namespace WebCore {
 class GridArea {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(GridArea);
 public:
-    // UncheckedKeyHashMap requires a default constuctor.
+    // HashMap requires a default constuctor.
     GridArea()
         : columns(GridSpan::indefiniteGridSpan())
         , rows(GridSpan::indefiniteGridSpan())
@@ -66,7 +66,7 @@ public:
 };
 
 struct NamedGridAreaMap {
-    UncheckedKeyHashMap<String, GridArea> map;
+    HashMap<String, GridArea> map;
 
     friend bool operator==(const NamedGridAreaMap&, const NamedGridAreaMap&) = default;
 };

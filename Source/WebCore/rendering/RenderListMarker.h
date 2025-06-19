@@ -71,6 +71,8 @@ public:
     LayoutUnit lineLogicalOffsetForListItem() const { return m_lineLogicalOffsetForListItem; }
     const RenderListItem* listItem() const;
 
+    std::pair<int, int> layoutBounds() const { return m_layoutBounds; }
+
 private:
     void willBeDestroyed() final;
     ASCIILiteral renderName() const final { return "RenderListMarker"_s; }
@@ -86,6 +88,7 @@ private:
     void styleWillChange(StyleDifference, const RenderStyle& newStyle) final;
     void styleDidChange(StyleDifference, const RenderStyle* oldStyle) final;
     void computeIntrinsicLogicalWidths(LayoutUnit&, LayoutUnit&) const override { ASSERT_NOT_REACHED(); }
+    std::pair<int, int> layoutBoundForTextContent(String) const;
 
     void element() const = delete;
 
@@ -104,6 +107,7 @@ private:
     SingleThreadWeakPtr<RenderListItem> m_listItem;
     LayoutUnit m_lineOffsetForListItem;
     LayoutUnit m_lineLogicalOffsetForListItem;
+    std::pair<int, int> m_layoutBounds;
 };
 
 } // namespace WebCore

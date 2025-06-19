@@ -65,7 +65,7 @@ public:
         Vector<char> buffer(1024);
         va_list args;
         va_start(args, description);
-        vsnprintf(buffer.data(), buffer.size(), description, args);
+        vsnprintf(buffer.mutableSpan().data(), buffer.size(), description, args);
         va_end(args);
 
         auto value = std::make_pair(SYSPROF_CAPTURE_CURRENT_TIME, WTFMove(buffer));
@@ -90,7 +90,7 @@ public:
         if (value) {
             int64_t startTime = std::get<0>(*value);
             const Vector<char>& description = std::get<1>(*value);
-            sysprof_collector_mark(startTime, SYSPROF_CAPTURE_CURRENT_TIME - startTime, m_processName, name.data(), description[0] ? description.data() : nullptr);
+            sysprof_collector_mark(startTime, SYSPROF_CAPTURE_CURRENT_TIME - startTime, m_processName, name.data(), description[0] ? description.span().data() : nullptr);
         } else {
             va_list args;
             va_start(args, description);

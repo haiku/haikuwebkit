@@ -914,7 +914,7 @@ ComplexTextController::ComplexTextRun::ComplexTextRun(const Font& font, std::spa
     // Synthesize a run of missing glyphs.
     m_glyphs.fill(0, m_glyphCount);
     // Synthetic bold will be handled later in adjustGlyphsAndAdvances().
-    m_baseAdvances.fill(FloatSize(m_font.widthForGlyph(0, Font::SyntheticBoldInclusion::Exclude), 0), m_glyphCount);
+    m_baseAdvances.fill(FloatSize(m_font->widthForGlyph(0, Font::SyntheticBoldInclusion::Exclude), 0), m_glyphCount);
 }
 
 ComplexTextController::ComplexTextRun::ComplexTextRun(const Vector<FloatSize>& advances, const Vector<FloatPoint>& origins, const Vector<Glyph>& glyphs, const Vector<unsigned>& stringIndices, FloatSize initialAdvance, const Font& font, std::span<const UChar> characters, unsigned stringLocation, unsigned indexBegin, unsigned indexEnd, bool ltr)

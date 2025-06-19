@@ -138,7 +138,7 @@ private:
     //    - how {Audio,Video,Text}TrackList stores its tracks
     //    - prevents a potential out-of-bounds crash in TextTrackList
     //    Just like for IDs, we store known indices here to enforce uniqueness by player.
-    UncheckedKeyHashMap<TrackID, RegisteredTrack, WTF::IntHash<TrackID>, WTF::UnsignedWithZeroKeyHashTraits<TrackID>> m_trackRegistry;
+    HashMap<TrackID, RegisteredTrack, WTF::IntHash<TrackID>, WTF::UnsignedWithZeroKeyHashTraits<TrackID>> m_trackRegistry;
 };
 
 } // namespace WebCore

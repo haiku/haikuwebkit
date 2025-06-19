@@ -1035,8 +1035,8 @@ static URL currentWorkingDirectory()
     // https://msdn.microsoft.com/en-us/library/dd374081.aspx
     // https://msdn.microsoft.com/en-us/library/windows/desktop/ff381407.aspx
     Vector<wchar_t> buffer(bufferLength);
-    DWORD lengthNotIncludingNull = ::GetCurrentDirectoryW(bufferLength, buffer.data());
-    String directoryString(buffer.data(), lengthNotIncludingNull);
+    DWORD lengthNotIncludingNull = ::GetCurrentDirectoryW(bufferLength, buffer.mutableSpan().data());
+    String directoryString(buffer.span().data(), lengthNotIncludingNull);
     // We don't support network path like \\host\share\<path name>.
     if (directoryString.startsWith("\\\\"_s))
         return { };
@@ -1434,12 +1434,12 @@ static bool fetchModuleFromLocalFileSystem(const URL& fileURL, Vector& buffer)
     fileName = makeStringByReplacingAll(fileName, '/', '\\');
     auto pathName = makeString("\\\\?\\"_s, fileName).wideCharacters();
     struct _stat status { };
-    if (_wstat(pathName.data(), &status))
+    if (_wstat(pathName.span().data(), &status))
         return false;
     if ((status.st_mode & S_IFMT) != S_IFREG)
         return false;
 
-    FILE* f = _wfopen(pathName.data(), L"rb");
+    FILE* f = _wfopen(pathName.span().data(), L"rb");
 #else
     auto pathName = fileName.utf8();
     struct stat status { };

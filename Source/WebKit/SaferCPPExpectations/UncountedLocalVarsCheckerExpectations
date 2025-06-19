@@ -1,9 +1,4 @@
-NetworkProcess/NetworkConnectionToWebProcess.cpp
-NetworkProcess/NetworkProcess.cpp
-NetworkProcess/ServiceWorker/WebSWServerConnection.cpp
-NetworkProcess/ServiceWorker/WebSWServerToContextConnection.cpp
 NetworkProcess/SharedWorker/WebSharedWorkerServer.cpp
-NetworkProcess/storage/NetworkStorageManager.cpp
 UIProcess/API/Cocoa/_WKInspectorConfiguration.mm
 UIProcess/Cocoa/VideoPresentationManagerProxy.mm
 UIProcess/Notifications/WebNotificationManagerProxy.cpp
@@ -15,7 +10,6 @@ WebProcess/Automation/WebAutomationSessionProxy.cpp
 WebProcess/Extensions/Bindings/JSWebExtensionWrapper.cpp
 WebProcess/FullScreen/WebFullScreenManager.cpp
 WebProcess/GPU/webrtc/SampleBufferDisplayLayerManager.cpp
-WebProcess/Geolocation/GeolocationPermissionRequestManager.cpp
 WebProcess/InjectedBundle/API/Cocoa/WKWebProcessPlugInFrame.mm
 WebProcess/InjectedBundle/API/c/WKBundle.cpp
 WebProcess/InjectedBundle/API/c/WKBundleFrame.cpp
@@ -32,7 +26,6 @@ WebProcess/Inspector/WebInspectorInternal.cpp
 WebProcess/Model/mac/ARKitInlinePreviewModelPlayerMac.mm
 WebProcess/Network/WebLoaderStrategy.cpp
 WebProcess/Network/webrtc/LibWebRTCNetworkManager.cpp
-WebProcess/Network/webrtc/LibWebRTCProvider.cpp
 WebProcess/Notifications/WebNotificationManager.cpp
 WebProcess/Storage/WebSWClientConnection.cpp
 WebProcess/Storage/WebServiceWorkerProvider.cpp
@@ -45,7 +38,6 @@ WebProcess/WebCoreSupport/WebRemoteFrameClient.cpp
 WebProcess/WebCoreSupport/WebResourceLoadObserver.cpp
 WebProcess/WebCoreSupport/WebSpeechSynthesisClient.cpp
 WebProcess/WebCoreSupport/mac/WebDragClientMac.mm
-WebProcess/WebPage/RemoteLayerTree/GraphicsLayerCARemote.mm
 WebProcess/WebPage/RemoteLayerTree/PlatformCALayerRemote.mm
 WebProcess/WebPage/RemoteLayerTree/RemoteLayerTreeContext.mm
 WebProcess/WebPage/RemoteLayerTree/RemoteScrollingCoordinator.mm
@@ -57,6 +49,5 @@ WebProcess/WebPage/mac/WKAccessibilityWebPageObjectBase.mm
 WebProcess/WebPage/mac/WKAccessibilityWebPageObjectMac.mm
 WebProcess/WebProcess.cpp
 WebProcess/WebSleepDisablerClient.cpp
-WebProcess/WebStorage/StorageAreaMap.cpp
 WebProcess/cocoa/TextTrackRepresentationCocoa.mm
 WebProcess/cocoa/WebProcessCocoa.mm

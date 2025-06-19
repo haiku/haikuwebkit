@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2003-2023 Apple Inc.  All rights reserved.
+ * Copyright (C) 2003-2023 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Rob Buis <buis@kde.org>
  * Copyright (C) 2007 Eric Seidel <eric@webkit.org>
  *

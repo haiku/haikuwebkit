@@ -161,7 +161,7 @@ private:
     void resume() final;
     bool virtualHasPendingActivity() const final;
 
-    UniqueRef<DefaultAudioDestinationNode> m_destinationNode;
+    const UniqueRef<DefaultAudioDestinationNode> m_destinationNode;
     const Ref<PlatformMediaSession> m_mediaSession;
     MediaUniqueIdentifier m_currentIdentifier;
 
