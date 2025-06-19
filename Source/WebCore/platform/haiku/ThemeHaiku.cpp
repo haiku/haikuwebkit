@@ -117,49 +117,6 @@ void ThemeHaiku::paintArrow(GraphicsContext& graphicsContext, const FloatRect& r
 	}
 }
 
-LengthSize ThemeHaiku::controlSize(StyleAppearance appearance, const FontCascade& fontCascade, const LengthSize& zoomedSize, float zoomFactor) const
-{
-    if (!zoomedSize.width.isIntrinsicOrAuto() && !zoomedSize.height.isIntrinsicOrAuto())
-        return Theme::controlSize(appearance, fontCascade, zoomedSize, zoomFactor);
-
-    switch (appearance) {
-    case StyleAppearance::Checkbox:
-    case StyleAppearance::Radio: {
-        LengthSize buttonSize = zoomedSize;
-        if (buttonSize.width.isIntrinsicOrAuto())
-            buttonSize.width = Length(16 * zoomFactor, LengthType::Fixed);
-        if (buttonSize.height.isIntrinsicOrAuto())
-            buttonSize.height = Length(16 * zoomFactor, LengthType::Fixed);
-        return buttonSize;
-    }
-    case StyleAppearance::InnerSpinButton: {
-        LengthSize spinButtonSize = zoomedSize;
-        if (spinButtonSize.width.isIntrinsicOrAuto())
-            spinButtonSize.width = Length(static_cast<int>(arrowSize * zoomFactor), LengthType::Fixed);
-        if (spinButtonSize.height.isIntrinsicOrAuto() || fontCascade.size() > arrowSize)
-            spinButtonSize.height = Length(fontCascade.size(), LengthType::Fixed);
-        return spinButtonSize;
-    }
-    default:
-        break;
-    }
-
-    return Theme::controlSize(appearance, fontCascade, zoomedSize, zoomFactor);
-}
-
-LengthSize ThemeHaiku::minimumControlSize(StyleAppearance, const FontCascade&, const LengthSize& zoomedSize, float) const
-{
-    if (!zoomedSize.width.isIntrinsicOrAuto() && !zoomedSize.height.isIntrinsicOrAuto())
-        return zoomedSize;
-
-    LengthSize minSize = zoomedSize;
-    if (minSize.width.isIntrinsicOrAuto())
-        minSize.width = Length(0, LengthType::Fixed);
-    if (minSize.height.isIntrinsicOrAuto())
-        minSize.height = Length(0, LengthType::Fixed);
-    return minSize;
-}
-
 rgb_color ThemeHaiku::colorForValue(color_which colorConstant, bool useDarkAppearance)
 {
 		rgb_color systemColor = ui_color(B_DOCUMENT_BACKGROUND_COLOR);

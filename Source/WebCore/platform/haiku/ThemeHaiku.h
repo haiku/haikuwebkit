@@ -28,6 +28,10 @@
 #include "Theme.h"
 
 #include "Color.h"
+#include "FloatRect.h"
+#include "FontCascade.h"
+#include "LengthSize.h"
+#include "StyleAppearance.h"
 
 #include <InterfaceDefs.h>
 
@@ -45,9 +49,6 @@ public:
     enum class ArrowDirection { Up, Down };
     static void paintArrow(GraphicsContext&, const FloatRect&, ArrowDirection, bool);
 private:
-    LengthSize controlSize(StyleAppearance, const FontCascade&, const LengthSize&, float) const final;
-    LengthSize minimumControlSize(StyleAppearance, const FontCascade&, const LengthSize&, float) const final;
-
     static rgb_color colorForValue(color_which colorConstant, bool useDarkAppearance);
 
     static Color focusColor(const Color&);
