@@ -102,11 +102,11 @@ void RenderThemeHaiku::adjustSliderThumbSize(RenderStyle& style, const Element*)
 {
     const StyleAppearance& appearance = style.appearance();
     if (appearance == StyleAppearance::SliderVertical) {
-        style.setWidth(Length(sliderThumbHeight, LengthType::Fixed));
-        style.setHeight(Length(sliderThumbWidth, LengthType::Fixed));
+        style.setWidth(WebCore::Style::PreferredSize(Length(sliderThumbHeight, LengthType::Fixed)));
+        style.setHeight(WebCore::Style::PreferredSize(Length(sliderThumbWidth, LengthType::Fixed)));
     } else if (appearance == StyleAppearance::SliderHorizontal) {
-        style.setWidth(Length(sliderThumbWidth, LengthType::Fixed));
-        style.setHeight(Length(sliderThumbHeight, LengthType::Fixed));
+        style.setWidth(WebCore::Style::PreferredSize(Length(sliderThumbWidth, LengthType::Fixed)));
+        style.setHeight(WebCore::Style::PreferredSize(Length(sliderThumbHeight, LengthType::Fixed)));
     }
 }
 
@@ -207,14 +207,14 @@ void RenderThemeHaiku::adjustMenuListButtonStyle(RenderStyle& style, const Eleme
     style.setPaddingBottom(WebCore::Style::PaddingEdge(Length(3, LengthType::Fixed)));
 
     // Height is locked to auto
-    style.setHeight(Length(LengthType::Auto));
+    style.setHeight(WebCore::Style::PreferredSize(Length(LengthType::Auto)));
 
     // Calculate our min-height
     const int menuListButtonMinHeight = 20;
     int minHeight = style.computedFontSize();
     minHeight = std::max(minHeight, menuListButtonMinHeight);
 
-    style.setMinHeight(Length(minHeight, LengthType::Fixed));
+    style.setMinHeight(WebCore::Style::MinimumSize(Length(minHeight, LengthType::Fixed)));
 }
 
 void RenderThemeHaiku::paintMenuListButtonDecorations(const RenderBox& object, const PaintInfo& info, const FloatRect& floatRect)

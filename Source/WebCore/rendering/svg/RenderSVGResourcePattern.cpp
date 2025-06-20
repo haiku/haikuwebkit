@@ -23,6 +23,7 @@
 #include "ContainerNodeInlines.h"
 #include "ElementChildIteratorInlines.h"
 #include "ImageBuffer.h"
+#include "NativeImage.h"
 #include "RenderLayer.h"
 #include "RenderObjectInlines.h"
 #include "RenderSVGModelObjectInlines.h"

@@ -1818,7 +1818,7 @@ RefPtr<SharedBuffer> IconDatabase::getImageDataForIconURLFromSQLDatabase(const S
     int result = m_getImageDataForIconURLStatement->step();
     if (result == SQLITE_ROW) {
         auto data = m_getImageDataForIconURLStatement->columnBlob(0);
-        imageData = SharedBuffer::create(std::span<const unsigned char>(data.data(), data.size()));
+        imageData = SharedBuffer::create(data.span());
     } else if (result != SQLITE_DONE)
         LOG_ERROR("getImageDataForIconURLFromSQLDatabase failed for url %s", urlForLogging(iconURL).ascii().data());
 

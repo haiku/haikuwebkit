@@ -83,13 +83,18 @@ RefPtr<Image> ShareableBitmap::createImage()
     return BitmapImage::create(std::move(surface));
 }
 
-Checked<unsigned, RecordOverflow> ShareableBitmapConfiguration::calculateBytesPerRow(const WebCore::IntSize& size,
+CheckedUint32 ShareableBitmapConfiguration::calculateBitsPerComponent(const DestinationColorSpace& colorSpace)
+{
+    return (calculateBytesPerPixel(colorSpace) / 4) * 8;
+}
+
+CheckedUint32 ShareableBitmapConfiguration::calculateBytesPerRow(const WebCore::IntSize& size,
     const WebCore::DestinationColorSpace& config)
 {
     return 4 * size.width();
 }
 
-Checked<unsigned int, RecordOverflow> ShareableBitmapConfiguration::calculateBytesPerPixel(const WebCore::DestinationColorSpace&)
+CheckedUint32 ShareableBitmapConfiguration::calculateBytesPerPixel(const WebCore::DestinationColorSpace&)
 {
     return 4;
 }
