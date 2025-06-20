@@ -66,6 +66,7 @@
 #include "WebCore/ResourceRequest.h"
 #include "WebCore/ScriptController.h"
 #include "WebCore/Settings.h"
+#include "WebCore/UserAgent.h"
 #include "WebFrame.h"
 #include "WebFramePrivate.h"
 #include "WebKitInfo.h"
@@ -870,11 +871,7 @@ void FrameLoaderClientHaiku::transitionToCommittedForNewPage(InitializingIframe)
 String FrameLoaderClientHaiku::userAgent(const URL&) const
 {
     // FIXME: Get the app name from the app. Hardcoded WebPositive for now.
-    // We have to look as close to Safari as possible for some sites like gmail.com 
-	// A fixed version of webkit is reported here, see https://bugs.webkit.org/show_bug.cgi?id=180365
-	// However some websites still use the Version/ component to detect old browsers, apparently (hi Github!)
-	// so we still need to bump that to match Safari from time to time.
-    return ASCIILiteral::fromLiteralUnsafe("Mozilla/5.0 (Macintosh; Intel Haiku R1) AppleWebKit/605.1.15 (KHTML, like Gecko) WebPositive/1.3 Version/14.1.2 Safari/605.1.15");
+    return WebCore::standardUserAgent("WebPositive"_s, "1.3"_s);
 }
 
 bool FrameLoaderClientHaiku::canCachePage() const
