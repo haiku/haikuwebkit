@@ -59,13 +59,17 @@ public:
     virtual void FrameResized(float, float);
     virtual void MouseDown(BPoint);
     virtual void MouseUp(BPoint);
+    virtual void KeyDown(const char* bytes, int32 numBytes);
+    virtual void KeyUp(const char* bytes, int32 numBytes);
     virtual void MouseMoved(BPoint, uint32, const BMessage*);
     virtual void Draw(BRect);
+    virtual void MakeFocus(bool focused);
 private:
     WebViewBase(const char*, BRect, BWindow*, const API::PageConfiguration&);
 
     void paint(const WebCore::IntRect&);
     void handleMouseEvent(BMessage* message);
+    void handleKeyboardEvent(BMessage* message);
 
     RefPtr<WebPageProxy> fPage;
     std::unique_ptr<PageClientImpl> fPageClient;
