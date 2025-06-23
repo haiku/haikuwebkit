@@ -79,6 +79,8 @@ public:
     NativeWebKeyboardEvent(GdkEvent*, const String&, bool isAutoRepeat, Vector<String>&& commands);
     NativeWebKeyboardEvent(const String&, std::optional<Vector<WebCore::CompositionUnderline>>&&, std::optional<EditingRange>&&);
     NativeWebKeyboardEvent(WebEventType, const String& text, const String& key, const String& code, const String& keyIdentifier, int windowsVirtualKeyCode, int nativeVirtualKeyCode, Vector<String>&& commands, bool isAutoRepeat, bool isKeypad, OptionSet<WebEventModifier>);
+#elif PLATFORM(HAIKU)
+    NativeWebKeyboardEvent(const BMessage*);
 #elif PLATFORM(IOS_FAMILY)
     enum class HandledByInputMethod : bool { No, Yes };
     NativeWebKeyboardEvent(::WebEvent *, HandledByInputMethod);
@@ -116,7 +118,7 @@ private:
 #elif PLATFORM(GTK)
     GUniquePtr<GdkEvent> m_nativeEvent;
 #elif PLATFORM(HAIKU)
-    BMessage* m_nativeEvent;
+    const BMessage* m_nativeEvent;
 #elif PLATFORM(IOS_FAMILY)
     RetainPtr<::WebEvent> m_nativeEvent;
 #elif PLATFORM(WIN)

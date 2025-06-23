@@ -28,6 +28,7 @@
 #include "APIPageConfiguration.h"
 #include "DrawingAreaProxy.h"
 #include "NativeWebMouseEvent.h"
+#include "NativeWebKeyboardEvent.h"
 #include "PageClientImplHaiku.h"
 #include "PageLoadState.h"
 #include "WebPageGroup.h"
@@ -47,7 +48,7 @@ using namespace WebCore;
 
 WebViewBase::WebViewBase(const char* name, BRect rect, BWindow* parentWindow,
     const API::PageConfiguration& pageConfig)
-    : BView(name, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE)
+    : BView(name, B_WILL_DRAW | B_FRAME_EVENTS | B_FULL_UPDATE_ON_RESIZE | B_NAVIGABLE)
     , fPageClient(makeUniqueWithoutRefCountedCheck<PageClientImpl>(*this))
 {
     auto config = pageConfig.copy();
@@ -84,12 +85,29 @@ void WebViewBase::MouseDown(BPoint where)
 
 void WebViewBase::MouseUp(BPoint where)
 {
+    MakeFocus(true);
     handleMouseEvent(Window()->CurrentMessage());
+}
+
+void WebViewBase::KeyDown(const char* bytes, int32 numBytes)
+{
+    handleKeyboardEvent(Window()->CurrentMessage());
+}
+
+void WebViewBase::KeyUp(const char* bytes, int32 numBytes)
+{
+    handleKeyboardEvent(Window()->CurrentMessage());
 }
 
 void WebViewBase::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
 {
     handleMouseEvent(Window()->CurrentMessage());
+}
+
+void WebViewBase::MakeFocus(bool focused)
+{
+    BView::MakeFocus(focused);
+    fPage->setFocus(focused);
 }
 
 void WebViewBase::Draw(BRect update)
@@ -121,5 +139,11 @@ void WebViewBase::paint(const IntRect& dirtyRect)
 void WebViewBase::handleMouseEvent(BMessage* message) {
     callOnMainRunLoop([this, message = *message](){
         fPage->handleMouseEvent(NativeWebMouseEvent(&message));
+    });
+}
+
+void WebViewBase::handleKeyboardEvent(BMessage* message) {
+    callOnMainRunLoop([this, message = *message](){
+        fPage->handleKeyboardEvent(NativeWebKeyboardEvent(&message));
     });
 }
