@@ -79,6 +79,8 @@ public:
 #endif
 #elif PLATFORM(PLAYSTATION)
     NativeWebWheelEvent(struct wpe_input_axis_event*, float deviceScaleFactor, WebWheelEvent::Phase, WebWheelEvent::Phase momentumPhase);
+#elif PLATFORM(HAIKU)
+    NativeWebWheelEvent(const BMessage*);
 #elif PLATFORM(WIN)
     NativeWebWheelEvent(HWND, UINT message, WPARAM, LPARAM, float deviceScaleFactor);
 #endif

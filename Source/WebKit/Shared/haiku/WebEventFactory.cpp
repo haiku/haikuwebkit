@@ -27,8 +27,7 @@
 #include "WebEventFactory.h"
 
 #include "WebEventModifier.h"
-#include "WebMouseEvent.h"
-#include "WebKeyboardEvent.h"
+
 #include "WebCore/PlatformKeyboardEvent.h"
 #include <WebCore/IntPoint.h>
 #include <wtf/WallTime.h>
@@ -170,6 +169,32 @@ WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(const BMessage* message
         autorepeat,
         false, // isKeypad
         false); //isSystemKey
+}
+
+WebWheelEvent WebEventFactory::createWebWheelEvent(const BMessage* message)
+{
+    // Is there any purpose to adding current modifiers to this message?
+    OptionSet<WebEventModifier> modifiers;
+
+    float wheelDeltaX;
+    float wheelDeltaY;
+
+    message->FindFloat("be:wheel_delta_x", &wheelDeltaX);
+    message->FindFloat("be:wheel_delta_y", &wheelDeltaY);
+    // should roughly match what BScrollview does...
+    font_height fontHeight;
+	be_plain_font->GetHeight(&fontHeight);
+    float lineHeight = (fontHeight.ascent + fontHeight.descent) * -1.33;
+    wheelDeltaY *= lineHeight; // what is this? natural scrolling? :(
+
+    return WebWheelEvent(
+        { WebEventType::Wheel, modifiers, WallTime::now()},
+        IntPoint(0, 0), // position
+        IntPoint(0, 0), // globalPosition
+        FloatSize(wheelDeltaX, wheelDeltaY), //delta
+        FloatSize(0,0),// wheelticks
+        WebWheelEvent::Granularity::ScrollByPixelWheelEvent// granularity
+        );
 }
 
 }

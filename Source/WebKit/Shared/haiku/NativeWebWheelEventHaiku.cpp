@@ -1,5 +1,7 @@
 /*
- * Copyright (C) 2019 Haiku, Inc. All rights reserved.
+ * Copyright (C) 2025 Haiku Inc. All rights reserved.
+ *
+ * Authors: nephele
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -22,51 +24,19 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
-#pragma once
+ 
+ 
+#include "config.h"
+#include "NativeWebWheelEvent.h"
 
-#include "APIObject.h"
-
-#include <Rect.h>
-#include <View.h>
-
-class BWindow;
-
-namespace API {
-class PageConfiguration;
-}
-
-namespace WebCore {
-class IntRect;
-}
+#include "WebEventFactory.h"
 
 namespace WebKit {
 
-class PageClientImpl;
-class WebPageProxy;
-
-class WebViewBase: public API::ObjectImpl<API::Object::Type::View>, public BView {
-public:
-    static RefPtr<WebViewBase> create(const char* name, BRect rect,
-        BWindow* parentWindow, const API::PageConfiguration& config)
-    {
-        auto fWebView = adoptRef(*new WebViewBase(name, rect, parentWindow, config));
-        return fWebView;
-    }
-    WebPageProxy* page() const { return fPage.get(); }
-    const char* currentURL() const;
-
-    virtual void MessageReceived(BMessage*);
-    // hook methods
-    virtual void FrameResized(float, float);
-    virtual void Draw(BRect);
-    virtual void MakeFocus(bool focused);
-private:
-    WebViewBase(const char*, BRect, BWindow*, const API::PageConfiguration&);
-
-    void paint(const WebCore::IntRect&);
-
-    RefPtr<WebPageProxy> fPage;
-    std::unique_ptr<PageClientImpl> fPageClient;
-};
+NativeWebWheelEvent::NativeWebWheelEvent(const BMessage* wheelEvent)
+	: WebWheelEvent(WebEventFactory::createWebWheelEvent(wheelEvent))
+	, m_nativeEvent(wheelEvent)
+{
+}
 
 }

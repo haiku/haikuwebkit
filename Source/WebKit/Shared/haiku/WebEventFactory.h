@@ -27,6 +27,7 @@
 
 #include "WebMouseEvent.h"
 #include "WebKeyboardEvent.h"
+#include "WebWheelEvent.h"
 
 class BMessage;
 

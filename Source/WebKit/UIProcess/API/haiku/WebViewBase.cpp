@@ -27,8 +27,11 @@
 
 #include "APIPageConfiguration.h"
 #include "DrawingAreaProxy.h"
+
 #include "NativeWebMouseEvent.h"
 #include "NativeWebKeyboardEvent.h"
+#include "NativeWebWheelEvent.h"
+
 #include "PageClientImplHaiku.h"
 #include "PageLoadState.h"
 #include "WebPageGroup.h"
@@ -78,30 +81,34 @@ void WebViewBase::FrameResized(float newWidth, float newHeight)
 #endif
 }
 
-void WebViewBase::MouseDown(BPoint where)
+void WebViewBase::MessageReceived(BMessage* message)
 {
-    handleMouseEvent(Window()->CurrentMessage());
-}
-
-void WebViewBase::MouseUp(BPoint where)
-{
-    MakeFocus(true);
-    handleMouseEvent(Window()->CurrentMessage());
-}
-
-void WebViewBase::KeyDown(const char* bytes, int32 numBytes)
-{
-    handleKeyboardEvent(Window()->CurrentMessage());
-}
-
-void WebViewBase::KeyUp(const char* bytes, int32 numBytes)
-{
-    handleKeyboardEvent(Window()->CurrentMessage());
-}
-
-void WebViewBase::MouseMoved(BPoint where, uint32 code, const BMessage* dragMessage)
-{
-    handleMouseEvent(Window()->CurrentMessage());
+    switch (message->what)
+    {
+        case B_MOUSE_WHEEL_CHANGED:
+            callOnMainRunLoop([this, message = *message](){
+                fPage->handleNativeWheelEvent(NativeWebWheelEvent(&message));
+            });
+            break;
+        case B_MOUSE_UP:
+        case B_MOUSE_DOWN:
+        case B_MOUSE_MOVED:
+            callOnMainRunLoop([this, message = *message](){
+                fPage->handleMouseEvent(NativeWebMouseEvent(&message));
+            });
+            break;
+        case B_KEY_DOWN:
+        case B_KEY_UP:
+        case B_UNMAPPED_KEY_DOWN:
+        case B_UNMAPPED_KEY_UP:
+            callOnMainRunLoop([this, message = *message](){
+                fPage->handleKeyboardEvent(NativeWebKeyboardEvent(&message));
+            });
+            break;
+        default:
+            BView::MessageReceived(message);
+            break;
+    }
 }
 
 void WebViewBase::MakeFocus(bool focused)
@@ -134,16 +141,4 @@ void WebViewBase::Draw(BRect update)
 
 void WebViewBase::paint(const IntRect& dirtyRect)
 {
-}
-
-void WebViewBase::handleMouseEvent(BMessage* message) {
-    callOnMainRunLoop([this, message = *message](){
-        fPage->handleMouseEvent(NativeWebMouseEvent(&message));
-    });
-}
-
-void WebViewBase::handleKeyboardEvent(BMessage* message) {
-    callOnMainRunLoop([this, message = *message](){
-        fPage->handleKeyboardEvent(NativeWebKeyboardEvent(&message));
-    });
 }

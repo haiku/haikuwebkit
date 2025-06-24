@@ -24,6 +24,7 @@ list(APPEND WebKit_SOURCES
 
     Shared/haiku/NativeWebMouseEventHaiku.cpp
     Shared/haiku/NativeWebKeyboardEventHaiku.cpp
+    Shared/haiku/NativeWebWheelEventHaiku.cpp
     Shared/haiku/ProcessExecutablePathHaiku.cpp
     Shared/haiku/WebEventFactory.cpp
     Shared/haiku/WebMemorySamplerHaiku.cpp
