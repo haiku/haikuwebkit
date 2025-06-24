@@ -76,6 +76,8 @@ public:
     NativeWebWheelEvent(WPEEvent*, WebWheelEvent::Phase);
 #endif
 
+#elif PLATFORM(HAIKU)
+    NativeWebWheelEvent(const BMessage*);
 #elif PLATFORM(WIN)
     NativeWebWheelEvent(HWND, UINT message, WPARAM, LPARAM, float deviceScaleFactor);
 #endif

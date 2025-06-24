@@ -115,7 +115,7 @@ private:
 #elif PLATFORM(WIN)
     MSG m_nativeEvent;
 #elif PLATFORM(HAIKU)
-    BMessage m_nativeEvent;
+    const BMessage m_nativeEvent;
 #endif
 };
 
