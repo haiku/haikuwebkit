@@ -91,6 +91,7 @@ void WebViewBase::MessageReceived(BMessage* message)
             });
             break;
         case B_MOUSE_UP:
+            MakeFocus(true);
         case B_MOUSE_DOWN:
         case B_MOUSE_MOVED:
             callOnMainRunLoop([this, message = *message](){
