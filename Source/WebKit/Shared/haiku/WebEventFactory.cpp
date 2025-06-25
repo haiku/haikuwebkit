@@ -122,7 +122,6 @@ WebMouseEvent WebEventFactory::createWebMouseEvent(const BMessage* message)
 
 WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(const BMessage* message)
 {
-
     WebEventType type;
     auto messageType = message->what;
     if (messageType == B_KEY_DOWN || messageType == B_UNMAPPED_KEY_DOWN)
@@ -137,14 +136,18 @@ WebKeyboardEvent WebEventFactory::createWebKeyboardEvent(const BMessage* message
     int32 rawChar;
     bool autorepeat;
     const char* bytes;
-    message->FindInt32("key", &nativeVirtualKeyCode);
-    message->FindInt32("modifiers", &nativeModifiers);
-    message->FindBool("be:key_repeat", &autorepeat);
-    message->FindInt32("raw_char", &rawChar);
-    message->FindString("bytes", &bytes);
+    status_t status = B_OK;
+    message->FindInt32("key", &nativeVirtualKeyCode); // y
+    message->FindInt32("modifiers", &nativeModifiers); // y
+    message->FindBool("be:key_repeat", &autorepeat); // n
+    status = message->FindInt32("raw_char", &rawChar); // n
+    if (status != B_OK)
+        rawChar = 0;
+    status = message->FindString("bytes", &bytes); //n
+    if (status != B_OK)
+        bytes = "";
 
     OptionSet<WebEventModifier> modifiers;
-    message->FindInt32("modifiers", &nativeModifiers);
     if (nativeModifiers & B_SHIFT_KEY)
         modifiers.add(WebEventModifier::ShiftKey);
     if (nativeModifiers & B_COMMAND_KEY)
