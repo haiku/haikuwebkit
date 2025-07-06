@@ -110,7 +110,7 @@ DumpRenderTreeClient::setShouldTrackVisitedLinks(bool)
 
 unsigned DumpRenderTreeClient::pendingUnloadEventCount(const BWebFrame* frame)
 {
-    return frame->Frame()->document()->domWindow()->pendingUnloadEventListeners();
+    return frame->Frame()->document()->window()->pendingUnloadEventListeners();
 }
 
 
