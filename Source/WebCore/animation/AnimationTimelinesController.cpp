@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -58,7 +58,7 @@ DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(AnimationTimelinesController);
 AnimationTimelinesController::AnimationTimelinesController(Document& document)
     : m_document(document)
 {
-    if (auto* page = document.page()) {
+    if (RefPtr page = document.page()) {
         if (page->settings().hiddenPageCSSAnimationSuspensionEnabled() && !page->isVisible())
             suspendAnimations();
     }
@@ -172,7 +172,7 @@ void AnimationTimelinesController::updateAnimationsAndSendEvents(ReducedResoluti
             if (!animation->isRelevant() && !animation->needsTick() && !isPendingTimelineAttachment(animation))
                 animationsToRemove.append(animation);
 
-            if (auto* transition = dynamicDowncast<CSSTransition>(animation.get())) {
+            if (RefPtr transition = dynamicDowncast<CSSTransition>(animation)) {
                 if (!transition->needsTick() && transition->playState() == WebAnimation::PlayState::Finished && transition->owningElement())
                     completedTransitions.append(*transition);
             }
@@ -228,7 +228,7 @@ void AnimationTimelinesController::updateAnimationsAndSendEvents(ReducedResoluti
     for (auto& animation : animationsToRemove) {
         // An animation that was initially marked as irrelevant may have changed while
         // we were sending events, so redo the the check for whether it should be removed.
-        if (auto timeline = animation->timeline()) {
+        if (RefPtr timeline = animation->timeline()) {
             if (!animation->isRelevant() && !animation->needsTick())
                 timeline->removeAnimation(animation);
         }
@@ -238,7 +238,7 @@ void AnimationTimelinesController::updateAnimationsAndSendEvents(ReducedResoluti
     // This needs to happen after dealing with the list of animations to remove as the animation may have been
     // removed from the list of completed transitions otherwise.
     for (auto& completedTransition : completedTransitions) {
-        if (auto documentTimeline = dynamicDowncast<DocumentTimeline>(completedTransition->timeline()))
+        if (RefPtr documentTimeline = dynamicDowncast<DocumentTimeline>(completedTransition->timeline()))
             documentTimeline->transitionDidComplete(WTFMove(completedTransition));
     }
 
@@ -271,8 +271,8 @@ void AnimationTimelinesController::suspendAnimations()
     if (!m_cachedCurrentTime)
         m_cachedCurrentTime = liveCurrentTime();
 
-    for (auto& timeline : m_timelines)
-        timeline.suspendAnimations();
+    for (Ref timeline : m_timelines)
+        timeline->suspendAnimations();
 
     m_isSuspended = true;
 }
@@ -286,18 +286,18 @@ void AnimationTimelinesController::resumeAnimations()
 
     m_isSuspended = false;
 
-    for (auto& timeline : m_timelines)
-        timeline.resumeAnimations();
+    for (Ref timeline : m_timelines)
+        timeline->resumeAnimations();
 }
 
 ReducedResolutionSeconds AnimationTimelinesController::liveCurrentTime() const
 {
-    return m_document->domWindow()->nowTimestamp();
+    return m_document->window()->nowTimestamp();
 }
 
 std::optional<Seconds> AnimationTimelinesController::currentTime()
 {
-    if (!m_document->domWindow())
+    if (!m_document->window())
         return std::nullopt;
 
     if (!m_cachedCurrentTime)

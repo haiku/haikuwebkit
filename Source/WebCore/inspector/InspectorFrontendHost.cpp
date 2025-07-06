@@ -611,8 +611,14 @@ void InspectorFrontendHost::dispatchEventAsContextMenuEvent(Event& event)
         return;
 
     auto& mouseEvent = downcast<MouseEvent>(event);
-    auto& frame = *downcast<Node>(mouseEvent.target())->document().frame();
-    m_frontendPage->contextMenuController().showContextMenuAt(frame, roundedIntPoint(mouseEvent.absoluteLocation()));
+    LocalFrame& frame = *downcast<Node>(mouseEvent.target())->document().frame();
+    LayoutPoint location = mouseEvent.absoluteLocation();
+    if (RefPtr<LocalFrameView> view = frame.view()) {
+        FloatBoxExtent insets = view->obscuredContentInsets();
+        location.move(insets.left(), insets.top());
+    }
+
+    m_frontendPage->contextMenuController().showContextMenuAt(frame, roundedIntPoint(location));
 #else
     UNUSED_PARAM(event);
 #endif

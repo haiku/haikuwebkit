@@ -305,7 +305,7 @@ static bool computeFeatureEnabled(PermissionsPolicy::Feature feature, const Docu
     bool enabled = checkPermissionsPolicy(document.permissionsPolicy(), feature, origin, document.securityOrigin().data());
     // FIXME: Spec suggests generating violation report for Reporting API but we only add log now.
     if (!enabled && shouldReportViolation == PermissionsPolicy::ShouldReportViolation::Yes) {
-        if (RefPtr window = document.domWindow())
+        if (RefPtr window = document.window())
             window->printErrorMessage(makeString("Permission policy '"_s, toFeatureNameForLogging(feature), "' check failed for document with origin '"_s, origin.toString(), "'."_s));
     }
 
@@ -367,7 +367,7 @@ PermissionsPolicy::PolicyDirective PermissionsPolicy::processPermissionsPolicyAt
     auto allowAttributeValue = iframe.attributeWithoutSynchronization(allowAttr);
     auto policyDirective = parsePolicyDirective(allowAttributeValue, iframe.protectedDocument()->securityOrigin().data(), declaredOrigin(iframe)->data());
 
-    if (iframe.hasAttribute(allowfullscreenAttr) || iframe.hasAttribute(webkitallowfullscreenAttr))
+    if (iframe.hasAttributeWithoutSynchronization(allowfullscreenAttr) || iframe.hasAttributeWithoutSynchronization(webkitallowfullscreenAttr))
         policyDirective.add(Feature::Fullscreen, Allowlist::AllowAllOrigins { });
 
     return policyDirective;

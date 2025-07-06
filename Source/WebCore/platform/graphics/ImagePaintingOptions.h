@@ -48,6 +48,7 @@ struct ImagePaintingOptions {
         || std::is_same_v<Type, StrictImageClamping>
 #endif
         || std::is_same_v<Type, ShowDebugBackground>
+        || std::is_same_v<Type, DrawsHDRContent>
         || std::is_same_v<Type, Headroom>
         || std::is_same_v<Type, PlatformDynamicRangeLimit>;
 
@@ -101,6 +102,7 @@ struct ImagePaintingOptions {
     StrictImageClamping strictImageClamping() const { return m_strictImageClamping; }
 #endif
     ShowDebugBackground showDebugBackground() const { return m_showDebugBackground; }
+    DrawsHDRContent drawsHDRContent() const { return m_drawsHDRContent; }
     Headroom headroom() const { return m_headroom; }
     PlatformDynamicRangeLimit dynamicRangeLimit() const { return m_dynamicRangeLimit; }
 
@@ -116,6 +118,7 @@ private:
     void setOption(StrictImageClamping strictImageClamping) { m_strictImageClamping = strictImageClamping; }
 #endif
     void setOption(ShowDebugBackground showDebugBackground) { m_showDebugBackground = showDebugBackground; }
+    void setOption(DrawsHDRContent drawsHDRContent) { m_drawsHDRContent = drawsHDRContent; }
     void setOption(Headroom headroom) { m_headroom = headroom; }
     void setOption(PlatformDynamicRangeLimit dynamicRangeLimit) { m_dynamicRangeLimit = dynamicRangeLimit; }
 
@@ -129,6 +132,7 @@ private:
     StrictImageClamping m_strictImageClamping: 1 { StrictImageClamping::Yes };
 #endif
     ShowDebugBackground m_showDebugBackground : 1 { ShowDebugBackground::No };
+    DrawsHDRContent m_drawsHDRContent : 1 { DrawsHDRContent::No };
     Headroom m_headroom { Headroom::FromImage };
     PlatformDynamicRangeLimit m_dynamicRangeLimit { PlatformDynamicRangeLimit::initialValue() };
 };

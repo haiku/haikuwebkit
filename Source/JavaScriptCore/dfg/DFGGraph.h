@@ -992,6 +992,8 @@ public:
     // computed by tracking which conditions we track with watchCondition().
     bool isSafeToLoad(JSObject* base, PropertyOffset);
 
+    GetByOffsetMethod promoteToConstant(GetByOffsetMethod);
+
     // This uses either constant property inference or property type inference to derive a good abstract
     // value for some property accessed with the given abstract value base.
     AbstractValue inferredValueForProperty(const AbstractValue& base, PropertyOffset, StructureClobberState);

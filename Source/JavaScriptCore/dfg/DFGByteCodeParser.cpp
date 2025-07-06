@@ -293,8 +293,6 @@ private:
     // condition no longer holds, and therefore no reasonable check can be emitted.
     bool check(const ObjectPropertyCondition&);
     
-    GetByOffsetMethod promoteToConstant(GetByOffsetMethod);
-    
     // Either register a watchpoint or emit a check for this condition. It must be a Presence
     // condition. It will attempt to promote a Presence condition to an Equivalence condition.
     // Emits code for the loaded value that the condition guards, and returns a node containing
@@ -3159,7 +3157,7 @@ auto ByteCodeParser::handleIntrinsicCall(Node* callee, Operand resultOperand, Ca
             
             return CallOptimizationResult::Inlined;
         }
-            
+
         case RegExpTestIntrinsic: {
             if (argumentCountIncludingThis < 2)
                 return CallOptimizationResult::DidNothing;
@@ -3203,6 +3201,60 @@ auto ByteCodeParser::handleIntrinsicCall(Node* callee, Operand resultOperand, Ca
 
             insertChecks();
             Node* regExpExec = addToGraph(RegExpTest, OpInfo(0), OpInfo(prediction), addToGraph(GetGlobalObject, callee), regExpObject, get(virtualRegisterForArgumentIncludingThis(1, registerOffset)));
+            setResult(regExpExec);
+
+            return CallOptimizationResult::Inlined;
+        }
+
+        case RegExpSearchIntrinsic: {
+            if (argumentCountIncludingThis < 2)
+                return CallOptimizationResult::DidNothing;
+
+            // Don't inline intrinsic if we exited due to one of the primordial RegExp checks failing.
+            if (m_inlineStackTop->m_exitProfile.hasExitSite(m_currentIndex, BadConstantValue))
+                return CallOptimizationResult::DidNothing;
+
+            if (m_inlineStackTop->m_exitProfile.hasExitSite(m_currentIndex, ExoticObjectMode))
+                return CallOptimizationResult::DidNothing;
+
+            JSGlobalObject* globalObject = m_inlineStackTop->m_codeBlock->globalObject();
+            if (!globalObject->regExpPrimordialPropertiesWatchpointSet().isStillValid())
+                return CallOptimizationResult::DidNothing;
+
+            Structure* regExpStructure = globalObject->regExpStructure();
+            m_graph.registerStructure(regExpStructure);
+            ASSERT(regExpStructure->storedPrototype().isObject());
+            ASSERT(regExpStructure->storedPrototype().asCell()->classInfo() == RegExpPrototype::info());
+
+            FrozenValue* regExpPrototypeObjectValue = m_graph.freeze(regExpStructure->storedPrototype());
+            Structure* regExpPrototypeStructure = regExpPrototypeObjectValue->structure();
+
+            auto isRegExpPropertySame = [&] (JSValue primordialProperty, UniquedStringImpl* propertyUID) {
+                JSValue currentProperty;
+                if (!m_graph.getRegExpPrototypeProperty(regExpStructure->storedPrototypeObject(), regExpPrototypeStructure, propertyUID, currentProperty))
+                    return false;
+
+                return currentProperty == primordialProperty;
+            };
+
+            // Check that RegExp.exec is still the primordial RegExp.prototype.exec
+            if (!isRegExpPropertySame(globalObject->regExpProtoExecFunction(), m_vm->propertyNames->exec.impl()))
+                return CallOptimizationResult::DidNothing;
+
+            // Check that regExpObject is actually a RegExp object.
+            Node* regExpObject = get(virtualRegisterForArgumentIncludingThis(0, registerOffset));
+            addToGraph(Check, Edge(regExpObject, RegExpObjectUse));
+
+            // Check that regExpObject's exec is actually the primodial RegExp.prototype.exec.
+            UniquedStringImpl* execPropertyID = m_vm->propertyNames->exec.impl();
+            m_graph.identifiers().ensure(execPropertyID);
+            auto* data = m_graph.m_getByIdData.add(GetByIdData { CacheableIdentifier::createFromImmortalIdentifier(execPropertyID), CacheType::GetByIdPrototype });
+            Node* actualProperty = addToGraph(TryGetById, OpInfo(data), OpInfo(SpecFunction), Edge(regExpObject, CellUse));
+            FrozenValue* regExpPrototypeExec = m_graph.freeze(globalObject->regExpProtoExecFunction());
+            addToGraph(CheckIsConstant, OpInfo(regExpPrototypeExec), Edge(actualProperty, CellUse));
+
+            insertChecks();
+            Node* regExpExec = addToGraph(RegExpSearch, OpInfo(0), OpInfo(prediction), addToGraph(GetGlobalObject, callee), regExpObject, get(virtualRegisterForArgumentIncludingThis(1, registerOffset)));
             setResult(regExpExec);
             
             return CallOptimizationResult::Inlined;
@@ -5279,17 +5331,6 @@ bool ByteCodeParser::check(const ObjectPropertyCondition& condition)
     return true;
 }
 
-GetByOffsetMethod ByteCodeParser::promoteToConstant(GetByOffsetMethod method)
-{
-    if (method.kind() == GetByOffsetMethod::LoadFromPrototype
-        && method.prototype()->structure()->dfgShouldWatch()) {
-        if (JSValue constant = m_graph.tryGetConstantProperty(method.prototype()->value(), method.prototype()->structure(), method.offset()))
-            return GetByOffsetMethod::constant(m_graph.freeze(constant));
-    }
-    
-    return method;
-}
-
 bool ByteCodeParser::needsDynamicLookup(ResolveType type, OpcodeID opcode)
 {
     ASSERT(opcode == op_resolve_scope || opcode == op_get_from_scope || opcode == op_put_to_scope);
@@ -5404,12 +5445,12 @@ GetByOffsetMethod ByteCodeParser::planLoad(const ObjectPropertyCondition& condit
     // If the structure is watched by the DFG already, then just use this fact to emit the load.
     // This is case (2) above.
     if (structure->dfgShouldWatch())
-        return promoteToConstant(GetByOffsetMethod::loadFromPrototype(base, condition.offset()));
+        return m_graph.promoteToConstant(GetByOffsetMethod::loadFromPrototype(base, condition.offset()));
     
     // If we can watch the condition right now, then we can emit the load after watching it. This
     // is case (3) above.
     if (m_graph.watchCondition(condition))
-        return promoteToConstant(GetByOffsetMethod::loadFromPrototype(base, condition.offset()));
+        return m_graph.promoteToConstant(GetByOffsetMethod::loadFromPrototype(base, condition.offset()));
     
     // We can't watch anything but we know that the current structure satisfies the condition. So,
     // check for that structure and then emit the load.
@@ -5417,7 +5458,7 @@ GetByOffsetMethod ByteCodeParser::planLoad(const ObjectPropertyCondition& condit
         CheckStructure, 
         OpInfo(m_graph.addStructureSet(structure)),
         addToGraph(JSConstant, OpInfo(base)));
-    return promoteToConstant(GetByOffsetMethod::loadFromPrototype(base, condition.offset()));
+    return m_graph.promoteToConstant(GetByOffsetMethod::loadFromPrototype(base, condition.offset()));
 }
 
 Node* ByteCodeParser::load(
@@ -5463,7 +5504,7 @@ bool ByteCodeParser::check(const ObjectPropertyConditionSet& conditionSet)
 GetByOffsetMethod ByteCodeParser::planLoad(const ObjectPropertyConditionSet& conditionSet)
 {
     VERBOSE_LOG("conditionSet = ", conditionSet, "\n");
-    
+
     GetByOffsetMethod result;
     for (const ObjectPropertyCondition& condition : conditionSet) {
         switch (condition.kind()) {
@@ -7660,11 +7701,20 @@ void ByteCodeParser::parseBlock(unsigned limit)
 
             Node* base = get(bytecode.m_base);
             Node* property = get(bytecode.m_property);
-            bool shouldCompileAsGetById = false;
             GetByStatus getByStatus = GetByStatus::computeFor(m_inlineStackTop->m_profiledBlock, m_inlineStackTop->m_baselineMap, m_icContextStack, currentCodeOrigin());
             unsigned identifierNumber = 0;
-
             CacheableIdentifier identifier;
+
+            if (auto* string = property->dynamicCastConstant<JSString*>()) {
+                auto* impl = string->tryGetValueImpl();
+                if (impl && impl->isAtom() && !parseIndex(*const_cast<StringImpl*>(impl))) {
+                    auto* uid = static_cast<UniquedStringImpl*>(impl);
+                    identifierNumber = m_graph.identifiers().ensure(uid);
+                    m_graph.freezeStrong(string);
+                    getByStatus.filterById(uid);
+                }
+            }
+
             if (!m_inlineStackTop->m_exitProfile.hasExitSite(m_currentIndex, BadIdent)
                 && !m_inlineStackTop->m_exitProfile.hasExitSite(m_currentIndex, BadType)
                 && !m_inlineStackTop->m_exitProfile.hasExitSite(m_currentIndex, BadConstantValue)) {
@@ -7684,31 +7734,28 @@ void ByteCodeParser::parseBlock(unsigned limit)
                             addToGraph(CheckIdent, OpInfo(uid), property);
                     } else
                         addToGraph(CheckIdent, OpInfo(uid), property);
-                    shouldCompileAsGetById = true;
+                    handleGetById(bytecode.m_dst, prediction, base, identifier, identifierNumber, getByStatus, AccessType::GetById, nextOpcodeIndex());
+                    NEXT_OPCODE(op_get_by_val);
                 }
             }
 
-            if (shouldCompileAsGetById)
-                handleGetById(bytecode.m_dst, prediction, base, identifier, identifierNumber, getByStatus, AccessType::GetById, nextOpcodeIndex());
-            else {
-                if (getByStatus.isProxyObject()) {
-                    if (handleIndexedProxyObjectLoad(bytecode.m_dst, prediction, base, property, getByStatus, nextOpcodeIndex())) {
-                        NEXT_OPCODE(op_get_by_val);
-                    }
+            if (getByStatus.isProxyObject()) {
+                if (handleIndexedProxyObjectLoad(bytecode.m_dst, prediction, base, property, getByStatus, nextOpcodeIndex())) {
+                    NEXT_OPCODE(op_get_by_val);
                 }
-                ArrayMode arrayMode = getArrayMode(bytecode.metadata(codeBlock).m_arrayProfile, Array::Read);
-                // FIXME: We could consider making this not vararg, since it only uses three child
-                // slots.
-                // https://bugs.webkit.org/show_bug.cgi?id=184192
-                addVarArgChild(base);
-                addVarArgChild(property);
-                addVarArgChild(nullptr); // Leave room for property storage.
-                Node* getByVal = addToGraph(Node::VarArg, getByStatus.isMegamorphic() ? GetByValMegamorphic : GetByVal, OpInfo(arrayMode.asWord()), OpInfo(prediction));
-                m_exitOK = false; // GetByVal must be treated as if it clobbers exit state, since FixupPhase may make it generic.
-                set(bytecode.m_dst, getByVal);
-                if (!getByStatus.isMegamorphic() && getByStatus.observedStructureStubInfoSlowPath())
-                    m_graph.m_slowGetByVal.add(getByVal);
             }
+            ArrayMode arrayMode = getArrayMode(bytecode.metadata(codeBlock).m_arrayProfile, Array::Read);
+            // FIXME: We could consider making this not vararg, since it only uses three child
+            // slots.
+            // https://bugs.webkit.org/show_bug.cgi?id=184192
+            addVarArgChild(base);
+            addVarArgChild(property);
+            addVarArgChild(nullptr); // Leave room for property storage.
+            Node* getByVal = addToGraph(Node::VarArg, getByStatus.isMegamorphic() ? GetByValMegamorphic : GetByVal, OpInfo(arrayMode.asWord()), OpInfo(prediction));
+            m_exitOK = false; // GetByVal must be treated as if it clobbers exit state, since FixupPhase may make it generic.
+            set(bytecode.m_dst, getByVal);
+            if (!getByStatus.isMegamorphic() && getByStatus.observedStructureStubInfoSlowPath())
+                m_graph.m_slowGetByVal.add(getByVal);
 
             NEXT_OPCODE(op_get_by_val);
         }
@@ -8405,6 +8452,20 @@ void ByteCodeParser::parseBlock(unsigned limit)
                 ASSERT(entry.key.get()->isAtom());
                 data.cases.append(
                     SwitchCase::withBytecodeIndex(LazyJSValue::knownStringImpl(static_cast<AtomStringImpl*>(entry.key.get())), target));
+            }
+
+            bool foundCharCase = !data.cases.isEmpty();
+            for (auto& myCase : data.cases) {
+                StringImpl* string = myCase.value.stringImpl();
+                foundCharCase &= string->length() == 1;
+            }
+            if (foundCharCase) {
+                data.kind = SwitchChar;
+                data.clearSwitchTableIndex();
+                for (auto& myCase : data.cases) {
+                    StringImpl* string = myCase.value.stringImpl();
+                    myCase.value = LazyJSValue::singleCharacterString(string->at(0));
+                }
             }
             addToGraph(Switch, OpInfo(&data), get(bytecode.m_scrutinee));
             flushIfTerminal(data);
@@ -9299,11 +9360,12 @@ void ByteCodeParser::parseBlock(unsigned limit)
 
                 SpeculatedType prediction = getPrediction();
 
-                GetByStatus status = GetByStatus::computeFor(structure, uid);
+                CacheableIdentifier identifier = CacheableIdentifier::createFromIdentifierOwnedByCodeBlock(m_inlineStackTop->m_profiledBlock, uid);
+                GetByStatus status = GetByStatus::computeFor(globalObject, structure, identifier);
                 if (status.state() != GetByStatus::Simple
                     || status.numVariants() != 1
                     || status[0].structureSet().size() != 1) {
-                    auto* data = m_graph.m_getByIdData.add(GetByIdData { CacheableIdentifier::createFromIdentifierOwnedByCodeBlock(m_inlineStackTop->m_profiledBlock, uid), CacheType::GetByIdSelf });
+                    auto* data = m_graph.m_getByIdData.add(GetByIdData { identifier, CacheType::GetByIdSelf });
                     set(bytecode.m_dst, addToGraph(GetByIdFlush, OpInfo(data), OpInfo(prediction), get(bytecode.m_scope)));
                     break;
                 }

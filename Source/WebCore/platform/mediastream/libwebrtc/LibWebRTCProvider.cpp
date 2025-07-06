@@ -556,6 +556,7 @@ std::optional<MediaCapabilitiesEncodingInfo> LibWebRTCProvider::videoEncodingCap
         info.powerEfficient = info.smooth = false;
 
     info.supported = true;
+    info.configuration.type = MediaEncodingType::WebRTC;
     return { info };
 }
 

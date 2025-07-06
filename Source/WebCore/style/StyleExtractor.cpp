@@ -32,7 +32,6 @@
 #include "CSSValuePool.h"
 #include "ComposedTreeAncestorIterator.h"
 #include "ContainerNodeInlines.h"
-#include "CustomPropertyRegistry.h"
 #include "DocumentInlines.h"
 #include "FontCascade.h"
 #include "HTMLFrameOwnerElement.h"
@@ -43,6 +42,8 @@
 #include "RenderObjectInlines.h"
 #include "SVGElement.h"
 #include "ShorthandSerializer.h"
+#include "StyleCustomProperty.h"
+#include "StyleCustomPropertyRegistry.h"
 #include "StyleExtractorGenerated.h"
 #include "StyleInterpolation.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
@@ -216,7 +217,7 @@ static inline const RenderStyle* computeRenderStyleForProperty(Element& element,
     return element.computedStyle(pseudoElementIdentifier);
 }
 
-RefPtr<CSSValue> Extractor::customPropertyValue(const AtomString& propertyName) const
+const RenderStyle* Extractor::computeStyleForCustomProperty(std::unique_ptr<RenderStyle>& ownedStyle) const
 {
     RefPtr element = m_element;
     if (!element)
@@ -224,7 +225,6 @@ RefPtr<CSSValue> Extractor::customPropertyValue(const AtomString& propertyName) 
 
     updateStyleIfNeededForProperty(*element, CSSPropertyCustom);
 
-    std::unique_ptr<RenderStyle> ownedStyle;
     auto* style = computeRenderStyleForProperty(*element, m_pseudoElementIdentifier, CSSPropertyCustom, ownedStyle);
     if (!style)
         return nullptr;
@@ -238,13 +238,35 @@ RefPtr<CSSValue> Extractor::customPropertyValue(const AtomString& propertyName) 
         }
     }
 
-    return const_cast<CSSCustomPropertyValue*>(style->customPropertyValue(propertyName));
+    return style;
+}
+
+RefPtr<CSSValue> Extractor::customPropertyValue(const AtomString& propertyName) const
+{
+    std::unique_ptr<RenderStyle> ownedStyle;
+    auto* style = computeStyleForCustomProperty(ownedStyle);
+    if (!style)
+        return nullptr;
+
+    RefPtr value = style->customPropertyValue(propertyName);
+    if (!value)
+        return nullptr;
+
+    return value->propertyValue(CSSValuePool::singleton(), *style);
 }
 
 String Extractor::customPropertyValueSerialization(const AtomString& propertyName, const CSS::SerializationContext& serializationContext) const
 {
-    RefPtr propertyValue = customPropertyValue(propertyName);
-    return propertyValue ? propertyValue->cssText(serializationContext) : emptyString();
+    std::unique_ptr<RenderStyle> ownedStyle;
+    auto* style = computeStyleForCustomProperty(ownedStyle);
+    if (!style)
+        return emptyString();
+
+    RefPtr value = style->customPropertyValue(propertyName);
+    if (!value)
+        return emptyString();
+
+    return value->propertyValueSerialization(serializationContext, *style);
 }
 
 static bool isLayoutDependent(CSSPropertyID propertyID, const RenderStyle* style, const RenderObject* renderer)

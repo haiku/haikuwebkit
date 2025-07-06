@@ -119,7 +119,7 @@ void DigitalCredential::discoverFromExternalSource(const Document& document, Cre
     }
 
     RefPtr frame = document.frame();
-    RefPtr window = document.domWindow();
+    RefPtr window = document.window();
     if (!frame || !window) {
         LOG(DigitalCredentials, "Preconditions for DigitalCredential.get() are not met");
         promise.reject(ExceptionCode::InvalidStateError, "Preconditions for calling .get() are not met."_s);

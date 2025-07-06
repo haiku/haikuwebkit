@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -49,6 +49,48 @@ static auto *manifest = @{
         @"js": @[ @"content.js" ]
     }]
 };
+
+TEST(WKWebExtensionAPITest, TestStartedEvent)
+{
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.test.onTestStarted.addListener((data) => {",
+        @"  browser.test.assertEq(data?.testName, 'test', 'data.testName should be')",
+
+        @"  browser.test.notifyPass()",
+        @"})",
+
+        @"browser.test.sendMessage('Send Test Message')"
+    ]);
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript });
+
+    [manager runUntilTestMessage:@"Send Test Message"];
+
+    [manager sendTestStartedWithArgument:@{ @"testName": @"test" }];
+
+    [manager run];
+}
+
+TEST(WKWebExtensionAPITest, TestFinishedEvent)
+{
+    auto *backgroundScript = Util::constructScript(@[
+        @"browser.test.onTestFinished.addListener((data) => {",
+        @"  browser.test.assertEq(data?.testName, 'test', 'data.testName should be')",
+
+        @"  browser.test.notifyPass()",
+        @"})",
+
+        @"browser.test.sendMessage('Send Test Message')"
+    ]);
+
+    auto manager = Util::loadExtension(manifest, @{ @"background.js": backgroundScript });
+
+    [manager runUntilTestMessage:@"Send Test Message"];
+
+    [manager sendTestFinishedWithArgument:@{ @"testName": @"test" }];
+
+    [manager run];
+}
 
 TEST(WKWebExtensionAPITest, MessageEvent)
 {

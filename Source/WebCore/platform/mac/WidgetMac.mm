@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -92,7 +92,7 @@ void Widget::setFocus(bool focused)
     if (!focused)
         return;
 
-    auto* frame = LocalFrame::frameForWidget(*this);
+    RefPtr frame = LocalFrame::frameForWidget(*this);
     if (!frame)
         return;
 
@@ -100,7 +100,7 @@ void Widget::setFocus(bool focused)
  
     // Call this even when there is no platformWidget(). WK2 will focus on the widget in the UIProcess.
     NSView *view = [platformWidget() _webcore_effectiveFirstResponder];
-    if (Page* page = frame->page())
+    if (RefPtr page = frame->page())
         page->chrome().focusNSView(view);
 
     END_BLOCK_OBJC_EXCEPTIONS

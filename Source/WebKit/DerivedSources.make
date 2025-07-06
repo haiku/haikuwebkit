@@ -972,6 +972,7 @@ BINDINGS_SCRIPTS = \
 EXTENSION_INTERFACES = \
     WebExtensionAPIAction \
     WebExtensionAPIAlarms \
+    WebExtensionAPIBookmarks \
     WebExtensionAPICommands \
     WebExtensionAPICookies \
     WebExtensionAPIDeclarativeNetRequest \

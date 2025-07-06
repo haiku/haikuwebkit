@@ -54,9 +54,7 @@ ResourceRequest::ResourceRequest(NSURLRequest *nsRequest)
 #if ENABLE(APP_PRIVACY_REPORT)
     setIsAppInitiated(nsRequest.attribution == NSURLRequestAttributionDeveloper);
 #endif
-#if HAVE(PRIVACY_PROXY_FAIL_CLOSED_FOR_UNREACHABLE_HOSTS)
     setPrivacyProxyFailClosedForUnreachableNonMainHosts(nsRequest._privacyProxyFailClosedForUnreachableNonMainHosts);
-#endif
 #if HAVE(SYSTEM_SUPPORT_FOR_ADVANCED_PRIVACY_PROTECTIONS)
     setUseAdvancedPrivacyProtections(nsRequest._useEnhancedPrivacyMode);
 #endif
@@ -256,9 +254,7 @@ static void configureRequestWithData(NSMutableURLRequest *request, const Resourc
     UNUSED_PARAM(data);
 #endif
 
-#if HAVE(PRIVACY_PROXY_FAIL_CLOSED_FOR_UNREACHABLE_HOSTS)
     request._privacyProxyFailClosedForUnreachableNonMainHosts = data.m_privacyProxyFailClosedForUnreachableNonMainHosts;
-#endif
 
 #if HAVE(SYSTEM_SUPPORT_FOR_ADVANCED_PRIVACY_PROTECTIONS)
     request._useEnhancedPrivacyMode = data.m_useAdvancedPrivacyProtections;

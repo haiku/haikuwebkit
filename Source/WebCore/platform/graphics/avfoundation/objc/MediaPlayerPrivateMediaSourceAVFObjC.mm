@@ -63,6 +63,7 @@
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <wtf/Deque.h>
 #import <wtf/FileSystem.h>
+#import <wtf/MachSendRightAnnotated.h>
 #import <wtf/MainThread.h>
 #import <wtf/NativePromise.h>
 #import <wtf/NeverDestroyed.h>
@@ -792,7 +793,7 @@ void MediaPlayerPrivateMediaSourceAVFObjC::setPresentationSize(const IntSize& ne
         updateDisplayLayer();
 }
 
-void MediaPlayerPrivateMediaSourceAVFObjC::setVideoLayerSizeFenced(const FloatSize& newSize, WTF::MachSendRight&&)
+void MediaPlayerPrivateMediaSourceAVFObjC::setVideoLayerSizeFenced(const FloatSize& newSize, WTF::MachSendRightAnnotated&&)
 {
     if (!layerOrVideoRenderer() && !newSize.isEmpty())
         updateDisplayLayer();

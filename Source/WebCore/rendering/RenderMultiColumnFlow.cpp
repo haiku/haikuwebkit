@@ -283,7 +283,7 @@ bool RenderMultiColumnFlow::addForcedFragmentBreak(const RenderBlock* block, Lay
     return false;
 }
 
-LayoutSize RenderMultiColumnFlow::offsetFromContainer(RenderElement& enclosingContainer, const LayoutPoint& physicalPoint, bool* offsetDependsOnPoint) const
+LayoutSize RenderMultiColumnFlow::offsetFromContainer(const RenderElement& enclosingContainer, const LayoutPoint& physicalPoint, bool* offsetDependsOnPoint) const
 {
     ASSERT(&enclosingContainer == container());
 

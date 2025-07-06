@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -175,12 +175,12 @@ void JSVMClientData::getAllWorlds(Vector<Ref<DOMWrapperWorld>>& worlds)
         worlds.append(mainNormalWorld);
 
     // Add other normal worlds.
-    for (auto* world : m_worldSet) {
+    for (RefPtr world : m_worldSet) {
         if (world->type() != DOMWrapperWorld::Type::Normal)
             continue;
         if (world == &mainNormalWorld)
             continue;
-        worlds.append(*world);
+        worlds.append(world.releaseNonNull());
     }
 
     // Add non-normal worlds.
@@ -214,7 +214,7 @@ String JSVMClientData::overrideSourceURL(const JSC::StackFrame& frame, const Str
     if (!globalObject->inherits<JSDOMWindowBase>())
         return nullString();
 
-    auto* document = jsCast<const JSDOMWindowBase*>(globalObject)->wrapped().documentIfLocal();
+    RefPtr document = jsCast<const JSDOMWindowBase*>(globalObject)->wrapped().documentIfLocal();
     if (!document)
         return nullString();
 

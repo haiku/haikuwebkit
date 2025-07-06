@@ -276,7 +276,7 @@ void RemoteLayerTreeHost::asyncSetLayerContents(PlatformLayerIdentifier layerID,
     if (!node)
         return;
 
-    RetainPtr<id> contents = RemoteLayerBackingStoreProperties::layerContentsBufferFromBackendHandle(WTFMove(handle), layerContentsType());
+    RetainPtr<id> contents = RemoteLayerBackingStoreProperties::layerContentsBufferFromBackendHandle(WTFMove(handle), layerContentsType(), true);
     node->layer().contents = contents.get();
     node->setAsyncContentsIdentifier(identifier);
 }
@@ -495,7 +495,7 @@ RefPtr<RemoteLayerTreeNode> RemoteLayerTreeHost::makeNode(const RemoteLayerTreeT
             RefPtr page = m_drawingArea->page();
             if (RefPtr videoManager = page ? page->videoPresentationManager() : nullptr) {
                 m_videoLayers.add(*properties.layerID, properties.videoElementData->playerIdentifier);
-                return makeWithLayer(videoManager->createLayerWithID(properties.videoElementData->playerIdentifier, properties.hostingContextID(), properties.videoElementData->initialSize, properties.videoElementData->naturalSize, properties.hostingDeviceScaleFactor()));
+                return makeWithLayer(videoManager->createLayerWithID(properties.videoElementData->playerIdentifier, { properties.hostingContextID() }, properties.videoElementData->initialSize, properties.videoElementData->naturalSize, properties.hostingDeviceScaleFactor()));
             }
         }
 #endif

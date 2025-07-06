@@ -81,22 +81,12 @@ String HTMLFormControlElement::formEnctype() const
     return FormSubmission::Attributes::parseEncodingType(formEnctypeAttr);
 }
 
-void HTMLFormControlElement::setFormEnctype(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(formenctypeAttr, value);
-}
-
 String HTMLFormControlElement::formMethod() const
 {
     auto& formMethodAttr = attributeWithoutSynchronization(formmethodAttr);
     if (formMethodAttr.isNull())
         return emptyString();
     return FormSubmission::Attributes::methodString(FormSubmission::Attributes::parseMethodType(formMethodAttr));
-}
-
-void HTMLFormControlElement::setFormMethod(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(formmethodAttr, value);
 }
 
 bool HTMLFormControlElement::formNoValidate() const
@@ -110,11 +100,6 @@ String HTMLFormControlElement::formAction() const
     if (value.isEmpty())
         return document().url().string();
     return document().completeURL(value).string();
-}
-
-void HTMLFormControlElement::setFormAction(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(formactionAttr, value);
 }
 
 Node::InsertedIntoAncestorResult HTMLFormControlElement::insertedIntoAncestor(InsertionType insertionType, ContainerNode& parentOfInsertedTree)
@@ -307,11 +292,6 @@ String HTMLFormControlElement::autocomplete() const
     return autofillData().idlExposedValue;
 }
 
-void HTMLFormControlElement::setAutocomplete(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(autocompleteAttr, value);
-}
-
 AutofillMantle HTMLFormControlElement::autofillMantle() const
 {
     auto* input = dynamicDowncast<HTMLInputElement>(this);
@@ -386,11 +366,6 @@ const AtomString& HTMLFormControlElement::popoverTargetAction() const
         return hideAtom();
 
     return toggleAtom();
-}
-
-void HTMLFormControlElement::setPopoverTargetAction(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(HTMLNames::popovertargetactionAttr, value);
 }
 
 // https://html.spec.whatwg.org/#popover-target-attribute-activation-behavior

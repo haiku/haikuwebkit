@@ -376,7 +376,7 @@ void NetworkStorageManager::includeOriginInBackupIfNecessary(OriginStorageManage
 void NetworkStorageManager::writeOriginToFileIfNecessary(const WebCore::ClientOrigin& origin, StorageAreaBase* storageArea)
 {
     assertIsCurrent(workQueue());
-    auto* manager = m_originStorageManagers.get(origin);
+    CheckedPtr manager = m_originStorageManagers.get(origin);
     if (!manager)
         return;
 
@@ -616,7 +616,7 @@ OriginStorageManager& NetworkStorageManager::originStorageManager(const WebCore:
 {
     assertIsCurrent(workQueue());
 
-    auto& originStorageManager = *m_originStorageManagers.ensure(origin, [&] {
+    CheckedRef originStorageManager = *m_originStorageManagers.ensure(origin, [&] {
         auto originDirectory = originDirectoryPath(m_path, origin, m_salt);
         auto localStoragePath = LocalStorageManager::localStorageFilePath(m_customLocalStoragePath, origin);
         auto idbStoragePath = IDBStorageManager::idbStorageOriginDirectory(m_customIDBStoragePath, origin);
@@ -632,7 +632,7 @@ OriginStorageManager& NetworkStorageManager::originStorageManager(const WebCore:
     if (shouldWriteOriginFile == ShouldWriteOriginFile::Yes)
         writeOriginToFileIfNecessary(origin);
 
-    return originStorageManager;
+    return originStorageManager.get();
 }
 
 bool NetworkStorageManager::removeOriginStorageManagerIfPossible(const WebCore::ClientOrigin& origin)
@@ -673,7 +673,7 @@ void NetworkStorageManager::updateLastModificationTimeForOrigin(const WebCore::C
     });
 
     // This function must be called when origin is in use, i.e. OriginStorageManager exists.
-    auto* manager = m_originStorageManagers.get(origin);
+    CheckedPtr manager = m_originStorageManagers.get(origin);
     ASSERT(manager);
 
     auto originDirectory = manager->path();
@@ -1472,7 +1472,7 @@ void NetworkStorageManager::resetQuotaUpdatedBasedOnUsageForTesting(WebCore::Cli
 {
     assertIsCurrent(workQueue());
 
-    if (auto manager = m_originStorageManagers.get(origin))
+    if (CheckedPtr manager = m_originStorageManagers.get(origin))
         manager->protectedQuotaManager()->resetQuotaUpdatedBasedOnUsageForTesting();
 }
 

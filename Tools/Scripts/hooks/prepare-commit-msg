@@ -404,6 +404,7 @@ def main(file_name=None, source=None, sha=None):
                 capture_output=True,
                 check=True
             ).stdout.strip()
+            update_changelog = True if update_changelog == 'true' else False
         except subprocess.CalledProcessError as error:
             if error.returncode != 1:
                 sys.stderr.write(error.stderr)

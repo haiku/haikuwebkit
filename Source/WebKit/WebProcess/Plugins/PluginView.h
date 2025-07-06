@@ -166,6 +166,8 @@ public:
 
     void frameViewLayoutOrVisualViewportChanged(const WebCore::IntRect& unobscuredContentRect);
 
+    bool pluginDelegatesScrollingToMainFrame() const;
+
 private:
     PluginView(WebCore::HTMLPlugInElement&, const URL&, const String& contentType, bool shouldUseManualLoader, WebPage&);
     virtual ~PluginView();

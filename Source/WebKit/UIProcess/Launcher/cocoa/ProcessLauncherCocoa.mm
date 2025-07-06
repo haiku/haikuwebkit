@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -64,12 +64,6 @@
 #import <BrowserEngineKit/BERenderingProcess.h>
 #import <BrowserEngineKit/BEWebContentProcess.h>
 
-#if USE(LEGACY_EXTENSIONKIT_SPI)
-SOFT_LINK_FRAMEWORK_OPTIONAL(ServiceExtensions);
-SOFT_LINK_CLASS_OPTIONAL(ServiceExtensions, _SEServiceConfiguration);
-SOFT_LINK_CLASS_OPTIONAL(ServiceExtensions, _SEServiceManager);
-#endif // USE(LEGACY_EXTENSIONKIT_SPI)
-
 #endif // USE(EXTENSIONKIT)
 
 namespace WebKit {
@@ -102,40 +96,6 @@ static std::pair<ASCIILiteral, RetainPtr<NSString>> serviceNameAndIdentifier(Pro
     }
 }
 
-#if USE(LEGACY_EXTENSIONKIT_SPI)
-static void launchWithExtensionKitFallback(ProcessLauncher& processLauncher, ProcessLauncher::ProcessType processType, ProcessLauncher::Client* client, WTF::Function<void(ThreadSafeWeakPtr<ProcessLauncher> weakProcessLauncher, ExtensionProcess&& process, ASCIILiteral name, NSError *error)>&& handler)
-{
-    auto [name, identifier] = serviceNameAndIdentifier(processType, client, processLauncher.isRetryingLaunch());
-
-    RetainPtr configuration = adoptNS([alloc_SEServiceConfigurationInstance() initWithServiceIdentifier:identifier.get()]);
-    _SEServiceManager* manager = [get_SEServiceManagerClass() performSelector:@selector(sharedInstance)];
-
-    switch (processType) {
-    case ProcessLauncher::ProcessType::Web: {
-        auto block = makeBlockPtr([handler = WTFMove(handler), weakProcessLauncher = ThreadSafeWeakPtr { processLauncher }, name = name](_SEExtensionProcess *_Nullable process, NSError *_Nullable error) {
-            handler(WTFMove(weakProcessLauncher), process, name, error);
-        });
-        [manager performSelector:@selector(contentProcessWithConfiguration:completion:) withObject:configuration.get() withObject:block.get()];
-        break;
-    }
-    case ProcessLauncher::ProcessType::Network: {
-        auto block = makeBlockPtr([handler = WTFMove(handler), weakProcessLauncher = ThreadSafeWeakPtr { processLauncher }, name = name](_SEExtensionProcess *_Nullable process, NSError *_Nullable error) {
-            handler(WTFMove(weakProcessLauncher), process, name, error);
-        });
-        [manager performSelector:@selector(networkProcessWithConfiguration:completion:) withObject:configuration.get() withObject:block.get()];
-        break;
-    }
-    case ProcessLauncher::ProcessType::GPU: {
-        auto block = makeBlockPtr([handler = WTFMove(handler), weakProcessLauncher = ThreadSafeWeakPtr { processLauncher }, name = name](_SEExtensionProcess *_Nullable process, NSError *_Nullable error) {
-            handler(WTFMove(weakProcessLauncher), process, name, error);
-        });
-        [manager performSelector:@selector(gpuProcessWithConfiguration:completion:) withObject:configuration.get() withObject:block.get()];
-        break;
-    }
-    }
-}
-#endif // USE(LEGACY_EXTENSIONKIT_SPI)
-
 bool ProcessLauncher::hasExtensionsInAppBundle()
 {
 #if PLATFORM(IOS)
@@ -154,12 +114,6 @@ bool ProcessLauncher::hasExtensionsInAppBundle()
 
 static void launchWithExtensionKit(ProcessLauncher& processLauncher, ProcessLauncher::ProcessType processType, ProcessLauncher::Client* client, WTF::Function<void(ThreadSafeWeakPtr<ProcessLauncher> weakProcessLauncher, ExtensionProcess&& process, ASCIILiteral name, NSError *error)>&& handler)
 {
-#if USE(LEGACY_EXTENSIONKIT_SPI)
-    if (!ProcessLauncher::hasExtensionsInAppBundle()) {
-        launchWithExtensionKitFallback(processLauncher, processType, client, WTFMove(handler));
-        return;
-    }
-#endif
     auto [name, identifier] = serviceNameAndIdentifier(processType, client, processLauncher.isRetryingLaunch());
 
     switch (processType) {

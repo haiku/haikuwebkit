@@ -257,3 +257,10 @@ enum class WTFLogLevel : uint8_t {
 };
 
 using FileSystem::Salt = std::array<uint8_t, 8>;
+
+#if PLATFORM(COCOA)
+[CustomEncoder] struct WTF::MachSendRightAnnotated {
+    MachSendRight sendRight;
+    FixedVector<uint8_t> data;
+}
+#endif

@@ -95,6 +95,7 @@ private:
 #endif
 
     void prepareForDisplay(uint32_t frameIndex, CompletionHandler<void()>&&) override;
+    void updateContentsHeadroom(float) override;
 
     WebGPUIdentifier m_backing;
     const Ref<ConvertToBackingContext> m_convertToBackingContext;

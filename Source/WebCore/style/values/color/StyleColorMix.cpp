@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,7 +28,6 @@
 #include "StyleColorMix.h"
 
 #include "CSSColorMixResolver.h"
-#include "CSSColorMixSerialization.h"
 #include "CSSPrimitiveNumericTypes+Serialization.h"
 #include "ColorSerialization.h"
 #include "StyleColorResolutionState.h"
@@ -109,20 +109,6 @@ bool containsCurrentColor(const ColorMix& colorMix)
 {
     return WebCore::Style::containsCurrentColor(colorMix.mixComponents1.color)
         || WebCore::Style::containsCurrentColor(colorMix.mixComponents2.color);
-}
-
-// MARK: - Serialization
-
-void serializationForCSS(StringBuilder& builder, const CSS::SerializationContext& context, const ColorMix& colorMix)
-{
-    CSS::serializationForCSSColorMix(builder, context, colorMix);
-}
-
-String serializationForCSS(const CSS::SerializationContext& context, const ColorMix& colorMix)
-{
-    StringBuilder builder;
-    serializationForCSS(builder, context, colorMix);
-    return builder.toString();
 }
 
 // MARK: - TextStream

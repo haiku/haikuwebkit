@@ -81,8 +81,8 @@ void ScriptCachedFrameData::restore(LocalFrame& frame)
         if (auto* window = m_windows.get(world).get())
             windowProxy->setWindow(window->vm(), *window);
         else {
-            ASSERT(frame.document()->domWindow());
-            auto& domWindow = *frame.document()->domWindow();
+            ASSERT(frame.document()->window());
+            auto& domWindow = *frame.document()->window();
             if (&windowProxy->wrapped() == &domWindow)
                 continue;
 

@@ -37,6 +37,7 @@
 #include "GraphicsLayerContentsDisplayDelegate.h"
 #include "GraphicsLayerFactory.h"
 #include "HTMLVideoElement.h"
+#include "HostingContext.h"
 #include "Image.h"
 #include "Logging.h"
 #include "Model.h"
@@ -743,6 +744,14 @@ void GraphicsLayerCA::setDrawsHDRContent(bool drawsHDRContent)
     GraphicsLayer::setDrawsHDRContent(drawsHDRContent);
     noteLayerPropertyChanged(DrawsHDRContentChanged | DebugIndicatorsChanged);
 }
+
+void GraphicsLayerCA::setNeedsDisplayIfEDRHeadroomExceeds(float headroom)
+{
+    if (protectedLayer()->setNeedsDisplayIfEDRHeadroomExceeds(headroom)) {
+        if (!!m_uncommittedChanges)
+            client().notifyFlushRequired(this);
+    }
+}
 #endif
 
 void GraphicsLayerCA::setContentsVisible(bool contentsVisible)
@@ -1421,7 +1430,7 @@ void GraphicsLayerCA::setContentsToModelContext(Ref<ModelContext> modelContext, 
 void GraphicsLayerCA::setContentsToVideoElement(HTMLVideoElement& videoElement, ContentsLayerPurpose purpose)
 {
 #if HAVE(AVKIT)
-    if (auto hostingContextID = videoElement.layerHostingContextID()) {
+    if (auto hostingContextID = videoElement.layerHostingContext().contextID) {
         if (m_contentsLayer && !m_contentsDisplayDelegate
             && m_layerHostingContextID == hostingContextID
             && m_contentsLayerPurpose == purpose) {

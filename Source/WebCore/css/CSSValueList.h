@@ -33,7 +33,7 @@ using CSSValueListBuilder = Vector<Ref<CSSValue>, CSSValueListBuilderInlineCapac
 class CSSValueContainingVector : public CSSValue {
 public:
     unsigned size() const { return m_size; }
-    const CSSValue& operator[](unsigned index) const;
+    const CSSValue& operator[](unsigned index) const LIFETIME_BOUND;
 
     struct iterator {
         using iterator_category = std::forward_iterator_tag;
@@ -72,9 +72,9 @@ public:
 
     // Consider removing these functions and having callers use size() and operator[] instead.
     unsigned length() const { return size(); }
-    const CSSValue* item(unsigned index) const { return index < size() ? &(*this)[index] : nullptr; }
+    const CSSValue* item(unsigned index) const LIFETIME_BOUND { return index < size() ? &(*this)[index] : nullptr; }
     RefPtr<const CSSValue> protectedItem(unsigned index) const { return item(index); }
-    const CSSValue* itemWithoutBoundsCheck(unsigned index) const { return &(*this)[index]; }
+    const CSSValue* itemWithoutBoundsCheck(unsigned index) const LIFETIME_BOUND { return &(*this)[index]; }
 
     IterationStatus customVisitChildren(NOESCAPE const Function<IterationStatus(CSSValue&)>&) const;
 

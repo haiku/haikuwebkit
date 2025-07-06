@@ -741,7 +741,7 @@ private:
             case GetPrivateNameById: {
                 Edge childEdge = node->child1();
                 Node* child = childEdge.node();
-                UniquedStringImpl* uid = node->cacheableIdentifier().uid();
+                CacheableIdentifier identifier = node->cacheableIdentifier();
                 
                 AbstractValue baseValue = m_state.forNode(child);
 
@@ -754,26 +754,19 @@ private:
                 if (!baseValue.m_structure.isFinite()
                     || (node->child1().useKind() == UntypedUse || (baseValue.m_type & ~SpecCell)))
                     break;
-                
-                GetByStatus status = GetByStatus::computeFor(baseValue.m_structure.toStructureSet(), uid);
+
+                GetByStatus status = GetByStatus::computeFor(m_graph.globalObjectFor(node->origin.semantic), baseValue.m_structure.toStructureSet(), identifier);
                 if (!status.isSimple())
                     break;
-                
-                for (unsigned i = status.numVariants(); i--;) {
-                    if (!status[i].conditionSet().isEmpty()) {
-                        // FIXME: We could handle prototype cases.
-                        // https://bugs.webkit.org/show_bug.cgi?id=110386
-                        break;
-                    }
-                }
-                
+
+
                 auto addFilterStatus = [&] () {
                     m_insertionSet.insertNode(
                         indexInBlock, SpecNone, FilterGetByStatus, node->origin,
                         OpInfo(m_graph.m_plan.recordedStatuses().addGetByStatus(node->origin.semantic, status)),
                         Edge(child));
                 };
-                
+
                 // AI already concluded this was a constant so we're safe to do so as well.
                 if (AbstractValue constantResult = m_state.forNode(node); constantResult.value()) {
                     addFilterStatus();
@@ -783,7 +776,18 @@ private:
                 }
 
                 if (status.numVariants() == 1) {
-                    unsigned identifierNumber = m_graph.identifiers().ensure(uid);
+                    auto variant = status[0];
+                    if (!variant.conditionSet().isEmpty())
+                        break;
+                }
+
+                for (unsigned i = status.numVariants(); i--;) {
+                    if (!status[i].conditionSet().isEmpty())
+                        break;
+                }
+
+                if (status.numVariants() == 1) {
+                    unsigned identifierNumber = m_graph.identifiers().ensure(identifier.uid());
                     addFilterStatus();
                     emitGetByOffset(indexInBlock, node, baseValue, status[0], identifierNumber);
                     changed = true;
@@ -793,7 +797,7 @@ private:
                 if (!m_graph.m_plan.isFTL())
                     break;
                 
-                unsigned identifierNumber = m_graph.identifiers().ensure(uid);
+                unsigned identifierNumber = m_graph.identifiers().ensure(identifier.uid());
                 addFilterStatus();
                 MultiGetByOffsetData* data = m_graph.m_multiGetByOffsetData.add();
                 for (const GetByVariant& variant : status.variants()) {

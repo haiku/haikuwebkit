@@ -453,6 +453,10 @@ void GraphicsLayer::setDrawsHDRContent(bool b)
     ASSERT(m_type != Type::Structural);
     m_drawsHDRContent = b;
 }
+
+void GraphicsLayer::setNeedsDisplayIfEDRHeadroomExceeds(float)
+{
+}
 #endif
 
 const TransformationMatrix& GraphicsLayer::transform() const

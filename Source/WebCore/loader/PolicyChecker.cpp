@@ -121,7 +121,7 @@ void PolicyChecker::checkNavigationPolicy(ResourceRequest&& request, const Resou
     Ref frame = m_frame.get();
     if (action.isEmpty()) {
         action = NavigationAction { frame->protectedDocument().releaseNonNull(), request, InitiatedByMainFrame::Unknown, loader->isRequestFromClientOrUserInput(), NavigationType::Other, loader->shouldOpenExternalURLsPolicyToPropagate() };
-        action.setIsContentExtensionRedirect(loader->isContentExtensionRedirect());
+        action.setIsContentRuleListRedirect(loader->isContentRuleListRedirect());
         loader->setTriggeringAction(NavigationAction { action });
     }
 
@@ -216,8 +216,8 @@ void PolicyChecker::checkNavigationPolicy(ResourceRequest&& request, const Resou
     if (!action.downloadAttribute().isNull()) {
         RefPtr document = frame->document();
         if (document && document->settings().navigationAPIEnabled()) {
-            if (RefPtr domWindow = document->domWindow()) {
-                if (!domWindow->protectedNavigation()->dispatchDownloadNavigateEvent(request.url(), action.downloadAttribute()))
+            if (RefPtr window = document->window()) {
+                if (!window->protectedNavigation()->dispatchDownloadNavigateEvent(request.url(), action.downloadAttribute()))
                     return function({ }, nullptr, NavigationPolicyDecision::IgnoreLoad);
             }
         }

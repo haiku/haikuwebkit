@@ -2172,6 +2172,7 @@ void clobberize(Graph& graph, Node* node, const ReadFunctor& read, const WriteFu
         write(HeapObjectCount);
         return;
 
+    case RegExpSearch:
     case RegExpExec:
     case RegExpTest:
     case RegExpTestInline:

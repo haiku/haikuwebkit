@@ -24,8 +24,13 @@
 #include "src/ports/SkTypeface_fontations_priv.h"
 #include "src/ports/fontations/src/skpath_bridge.h"
 
+#if defined(SK_USE_LEGACY_PNG_DECODING_FONTATIONS)
+#include "include/codec/SkPngDecoder.h"
+#endif
+
 namespace {
 
+#if !defined(SK_USE_LEGACY_PNG_DECODING_FONTATIONS)
 void CheckPng() {
 #if defined(SK_DEBUG)
     if (!SkCodecs::HasDecoder("png")) {
@@ -33,6 +38,7 @@ void CheckPng() {
     }
 #endif
 }
+#endif
 
 [[maybe_unused]] static inline const constexpr bool kSkShowTextBlitCoverage = false;
 
@@ -497,12 +503,10 @@ public:
                                                    scalerMetrics)) {
             return false;
         }
-        *path = SkPath::Make(reinterpret_cast<const SkPoint*>(fPathPoints.data()),
-                             fPathPoints.size(),
-                             fPathVerbs.data(),
-                             fPathVerbs.size(),
-                             nullptr,
-                             0,
+        *path = SkPath::Make({reinterpret_cast<const SkPoint*>(fPathPoints.data()),
+                              fPathPoints.size()},
+                             fPathVerbs,
+                             {},
                              SkPathFillType::kWinding);
 
         // See https://issues.skia.org/345178242 for details:
@@ -575,7 +579,7 @@ protected:
                 }
             }
         }
-        mx.advance = fRemainingMatrix.mapXY(x_advance, SkFloatToScalar(0.f));
+        mx.advance = fRemainingMatrix.mapPoint({x_advance, 0});
 
         if (has_colrv1_glyph || has_colrv0_glyph) {
             mx.extraBits = has_colrv1_glyph ? ScalerContextBits::COLRv1 : ScalerContextBits::COLRv0;
@@ -638,6 +642,15 @@ protected:
             const fontations_ffi::BitmapMetrics bitmapMetrics =
                     fontations_ffi::bitmap_metrics(*bitmap_glyph);
 
+#if defined(SK_USE_LEGACY_PNG_DECODING_FONTATIONS)
+            std::unique_ptr<SkCodec> codec = SkPngDecoder::Decode(
+                    SkData::MakeWithoutCopy(png_data.data(), png_data.size()), nullptr);
+            if (!codec) {
+                return mx;
+            }
+
+            SkImageInfo info = codec->getInfo();
+#else
             sk_sp<SkImage> img = SkImages::DeferredFromEncodedData(
                     SkData::MakeWithoutCopy(png_data.data(), png_data.size()));
             if (!img) {
@@ -646,6 +659,7 @@ protected:
             }
 
             SkImageInfo info = img->imageInfo();
+#endif
 
             SkRect bounds = SkRect::Make(info.bounds());
             SkMatrix matrix = fRemainingMatrix;
@@ -654,8 +668,9 @@ protected:
             // device pixels, and scaling the embedded PNG from its number of
             // rows to a specific size, depending on the ppem values in the
             // bitmap glyph information.
-            SkScalar imageToSize = fScale.y() / bitmapMetrics.ppem_y;
-            float fontUnitsToSize = fScale.y() / fontations_ffi::units_per_em_or_zero(fBridgeFontRef);
+            float imageToSize = fScale.y() / bitmapMetrics.ppem_y;
+            float fontUnitsToSize = fScale.y() /
+                                    fontations_ffi::units_per_em_or_zero(fBridgeFontRef);
 
             // The offset from origin is given in font units, so requires a
             // different scale factor than the scaling of the image.
@@ -705,12 +720,26 @@ protected:
         rust::cxxbridge1::Slice<const uint8_t> png_data = fontations_ffi::png_data(*bitmap_glyph);
         SkASSERT(png_data.size());
 
+#if defined(SK_USE_LEGACY_PNG_DECODING_FONTATIONS)
+        std::unique_ptr<SkCodec> codec = SkPngDecoder::Decode(
+                SkData::MakeWithoutCopy(png_data.data(), png_data.size()), nullptr);
+
+        if (!codec) {
+            return;
+        }
+
+        auto [glyph_image, result] = codec->getImage();
+        if (result != SkCodec::Result::kSuccess) {
+            return;
+        }
+#else
         sk_sp<SkImage> glyph_image = SkImages::DeferredFromEncodedData(
                 SkData::MakeWithoutCopy(png_data.data(), png_data.size()));
         if (!glyph_image) {
             CheckPng();
             return;
         }
+#endif
 
         canvas.clear(SK_ColorTRANSPARENT);
         canvas.concat(fRemainingMatrix);

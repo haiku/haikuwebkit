@@ -98,3 +98,8 @@ header: <WebCore/ProcessQualified.h>
     WebKit::TransactionIdentifier object();
     WebCore::ProcessIdentifier processIdentifier();
 };
+
+[Alias=class WebCore::ProcessQualified<ObjectIdentifier<WebCore::MediaPlayerClientIdentifierType>>, CustomHeader] alias WebKit::PlaybackSessionContextIdentifier {
+    WebCore::MediaPlayerClientIdentifier object();
+    WebCore::ProcessIdentifier processIdentifier();
+};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -306,7 +306,7 @@ void RemoteLayerTreeEventDispatcher::wheelEventHandlingCompleted(const PlatformW
 
         auto result = scrollingTree->handleWheelEventAfterDefaultHandling(wheelEvent, scrollingNodeID, gestureState);
         RunLoop::protectedMain()->dispatch([protectedThis, wasHandled, result]() {
-            if (auto* scrollingCoordinator = protectedThis->scrollingCoordinator())
+            if (CheckedPtr scrollingCoordinator = protectedThis->scrollingCoordinator())
                 scrollingCoordinator->protectedWebPageProxy()->wheelEventHandlingCompleted(wasHandled || result.wasHandled);
         });
 

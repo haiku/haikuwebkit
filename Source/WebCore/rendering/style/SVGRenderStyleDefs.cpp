@@ -42,24 +42,16 @@ DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleFillData);
 
 StyleFillData::StyleFillData()
     : opacity(SVGRenderStyle::initialFillOpacity())
-    , paintColor(SVGRenderStyle::initialFillPaintColor())
-    , visitedLinkPaintColor(SVGRenderStyle::initialFillPaintColor())
-    , paintUri(SVGRenderStyle::initialFillPaintUri())
-    , visitedLinkPaintUri(SVGRenderStyle::initialFillPaintUri())
-    , paintType(SVGRenderStyle::initialFillPaintType())
-    , visitedLinkPaintType(SVGRenderStyle::initialFillPaintType())
+    , paint(SVGRenderStyle::initialFill())
+    , visitedLinkPaint(SVGRenderStyle::initialFill())
 {
 }
 
 inline StyleFillData::StyleFillData(const StyleFillData& other)
     : RefCounted<StyleFillData>()
     , opacity(other.opacity)
-    , paintColor(other.paintColor)
-    , visitedLinkPaintColor(other.visitedLinkPaintColor)
-    , paintUri(other.paintUri)
-    , visitedLinkPaintUri(other.visitedLinkPaintUri)
-    , paintType(other.paintType)
-    , visitedLinkPaintType(other.visitedLinkPaintType)
+    , paint(other.paint)
+    , visitedLinkPaint(other.visitedLinkPaint)
 {
 }
 
@@ -72,53 +64,36 @@ Ref<StyleFillData> StyleFillData::copy() const
 void StyleFillData::dumpDifferences(TextStream& ts, const StyleFillData& other) const
 {
     LOG_IF_DIFFERENT(opacity);
-    LOG_IF_DIFFERENT(paintColor);
-    LOG_IF_DIFFERENT(visitedLinkPaintColor);
-    LOG_IF_DIFFERENT(paintUri);
-    LOG_IF_DIFFERENT(visitedLinkPaintUri);
-    LOG_IF_DIFFERENT(paintType);
-    LOG_IF_DIFFERENT(visitedLinkPaintType);
+    LOG_IF_DIFFERENT(paint);
+    LOG_IF_DIFFERENT(visitedLinkPaint);
 }
 #endif
 
 bool StyleFillData::operator==(const StyleFillData& other) const
 {
     return opacity == other.opacity
-        && paintColor == other.paintColor
-        && visitedLinkPaintColor == other.visitedLinkPaintColor
-        && paintUri == other.paintUri
-        && visitedLinkPaintUri == other.visitedLinkPaintUri
-        && paintType == other.paintType
-        && visitedLinkPaintType == other.visitedLinkPaintType;
-    
+        && paint == other.paint
+        && visitedLinkPaint == other.visitedLinkPaint;
 }
 
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleStrokeData);
 
 StyleStrokeData::StyleStrokeData()
     : opacity(SVGRenderStyle::initialStrokeOpacity())
-    , paintColor(SVGRenderStyle::initialStrokePaintColor())
-    , visitedLinkPaintColor(SVGRenderStyle::initialStrokePaintColor())
-    , paintUri(SVGRenderStyle::initialStrokePaintUri())
-    , visitedLinkPaintUri(SVGRenderStyle::initialStrokePaintUri())
+    , paint(SVGRenderStyle::initialStroke())
+    , visitedLinkPaint(SVGRenderStyle::initialStroke())
     , dashOffset(RenderStyle::zeroLength())
     , dashArray(SVGRenderStyle::initialStrokeDashArray())
-    , paintType(SVGRenderStyle::initialStrokePaintType())
-    , visitedLinkPaintType(SVGRenderStyle::initialStrokePaintType())
 {
 }
 
 inline StyleStrokeData::StyleStrokeData(const StyleStrokeData& other)
     : RefCounted<StyleStrokeData>()
     , opacity(other.opacity)
-    , paintColor(other.paintColor)
-    , visitedLinkPaintColor(other.visitedLinkPaintColor)
-    , paintUri(other.paintUri)
-    , visitedLinkPaintUri(other.visitedLinkPaintUri)
+    , paint(other.paint)
+    , visitedLinkPaint(other.visitedLinkPaint)
     , dashOffset(other.dashOffset)
     , dashArray(other.dashArray)
-    , paintType(other.paintType)
-    , visitedLinkPaintType(other.visitedLinkPaintType)
 {
 }
 
@@ -130,30 +105,20 @@ Ref<StyleStrokeData> StyleStrokeData::copy() const
 bool StyleStrokeData::operator==(const StyleStrokeData& other) const
 {
     return opacity == other.opacity
-        && paintColor == other.paintColor
-        && visitedLinkPaintColor == other.visitedLinkPaintColor
-        && paintUri == other.paintUri
-        && visitedLinkPaintUri == other.visitedLinkPaintUri
+        && paint == other.paint
+        && visitedLinkPaint == other.visitedLinkPaint
         && dashOffset == other.dashOffset
-        && dashArray == other.dashArray
-        && paintType == other.paintType
-        && visitedLinkPaintType == other.visitedLinkPaintType;
+        && dashArray == other.dashArray;
 }
 
 #if !LOG_DISABLED
 void StyleStrokeData::dumpDifferences(TextStream& ts, const StyleStrokeData& other) const
 {
     LOG_IF_DIFFERENT(opacity);
-    LOG_IF_DIFFERENT(paintColor);
-    LOG_IF_DIFFERENT(visitedLinkPaintColor);
-    LOG_IF_DIFFERENT(paintUri);
-    LOG_IF_DIFFERENT(visitedLinkPaintUri);
-
+    LOG_IF_DIFFERENT(paint);
+    LOG_IF_DIFFERENT(visitedLinkPaint);
     LOG_IF_DIFFERENT(dashOffset);
     LOG_IF_DIFFERENT(dashArray);
-
-    LOG_IF_DIFFERENT(paintType);
-    LOG_IF_DIFFERENT(visitedLinkPaintType);
 }
 #endif
 
@@ -457,20 +422,6 @@ TextStream& operator<<(TextStream& ts, MaskType value)
     return ts;
 }
 
-TextStream& operator<<(TextStream& ts, SVGPaintType paintType)
-{
-    switch (paintType) {
-    case SVGPaintType::RGBColor: ts << "rgb-color"_s; break;
-    case SVGPaintType::None: ts << "none"_s; break;
-    case SVGPaintType::CurrentColor: ts << "current-color"_s; break;
-    case SVGPaintType::URINone: ts << "uri-none"_s; break;
-    case SVGPaintType::URICurrentColor: ts << "uri-current-color"_s; break;
-    case SVGPaintType::URIRGBColor: ts << "uri-rgb-color"_s; break;
-    case SVGPaintType::URI: ts << "uri"_s; break;
-    }
-    return ts;
-}
-
 TextStream& operator<<(TextStream& ts, ShapeRendering value)
 {
     switch (value) {
@@ -504,26 +455,18 @@ TextStream& operator<<(TextStream& ts, VectorEffect value)
 TextStream& operator<<(TextStream& ts, const StyleFillData& data)
 {
     ts.dumpProperty("opacity"_s, data.opacity);
-    ts.dumpProperty("paint-color"_s, data.paintColor);
-    ts.dumpProperty("visited link paint-color"_s, data.visitedLinkPaintColor);
-    ts.dumpProperty("paint uri"_s, data.paintUri);
-    ts.dumpProperty("visited link paint uri"_s, data.visitedLinkPaintUri);
-    ts.dumpProperty("visited link paint type"_s, data.paintType);
-    ts.dumpProperty("visited link paint type"_s, data.visitedLinkPaintType);
+    ts.dumpProperty("paint"_s, data.paint);
+    ts.dumpProperty("visited link paint"_s, data.visitedLinkPaint);
     return ts;
 }
 
 TextStream& operator<<(TextStream& ts, const StyleStrokeData& data)
 {
     ts.dumpProperty("opacity"_s, data.opacity);
-    ts.dumpProperty("paint-color"_s, data.paintColor);
-    ts.dumpProperty("visited link paint-color"_s, data.visitedLinkPaintColor);
-    ts.dumpProperty("paint uri"_s, data.paintUri);
-    ts.dumpProperty("visited link paint uri"_s, data.visitedLinkPaintUri);
+    ts.dumpProperty("paint"_s, data.paint);
+    ts.dumpProperty("visited link paint"_s, data.visitedLinkPaint);
     ts.dumpProperty("dashOffset"_s, data.dashOffset);
     ts.dumpProperty("dash array"_s, data.dashArray);
-    ts.dumpProperty("visited link paint type"_s, data.paintType);
-    ts.dumpProperty("visited link paint type"_s, data.visitedLinkPaintType);
     return ts;
 }
 

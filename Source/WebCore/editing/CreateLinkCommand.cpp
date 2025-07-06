@@ -45,8 +45,8 @@ void CreateLinkCommand::doApply()
 
     Ref document = this->document();
     Ref anchorElement = HTMLAnchorElement::create(document);
-    anchorElement->setHref(AtomString { m_url });
-    
+    anchorElement->setAttributeWithoutSynchronization(HTMLNames::hrefAttr, AtomString { m_url });
+
     if (endingSelection().isRange())
         applyStyledElement(WTFMove(anchorElement));
     else {

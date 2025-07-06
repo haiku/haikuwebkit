@@ -248,6 +248,11 @@ public:
     virtual void recentlyAccessedGamepadsForTesting(WebKit::WebPageProxy&) { }
     virtual void stoppedAccessingGamepadsForTesting(WebKit::WebPageProxy&) { }
 #endif
+
+#if PLATFORM(IOS_FAMILY)
+    virtual void didEnterStandby(WebKit::WebPageProxy&) { }
+    virtual void didExitStandby(WebKit::WebPageProxy&) { }
+#endif
 };
 
 } // namespace API

@@ -371,7 +371,7 @@ RefPtr<Page> WebChromeClient::createWindow(LocalFrame& frame, const String& open
         navigationAction.newFrameOpenerPolicy() == NewFrameOpenerPolicy::Allow, /* hasOpener */
         frame.loader().isHTTPFallbackInProgress(),
         navigationAction.isInitialFrameSrcLoad(),
-        navigationAction.isContentExtensionRedirect(),
+        navigationAction.isContentRuleListRedirect(),
         openedMainFrameName,
         { }, /* requesterOrigin */
         { }, /* requesterTopOrigin */
@@ -598,7 +598,7 @@ void WebChromeClient::rootFrameAdded(const WebCore::LocalFrame& frame)
     if (!m_page)
         return;
 
-    if (auto* drawingArea = m_page->drawingArea())
+    if (RefPtr drawingArea = m_page->drawingArea())
         drawingArea->addRootFrame(frame.frameID());
 }
 
@@ -607,7 +607,7 @@ void WebChromeClient::rootFrameRemoved(const WebCore::LocalFrame& frame)
     if (!m_page)
         return;
 
-    if (auto* drawingArea = m_page->drawingArea())
+    if (RefPtr drawingArea = m_page->drawingArea())
         drawingArea->removeRootFrame(frame.frameID());
 }
 
@@ -943,7 +943,7 @@ void WebChromeClient::print(LocalFrame& frame, const StringWithDirection& title)
 
     WebCore::FloatSize pdfFirstPageSize;
 #if ENABLE(PDF_PLUGIN)
-    if (auto* pluginView = WebPage::pluginViewForFrame(&frame))
+    if (RefPtr pluginView = WebPage::pluginViewForFrame(&frame))
         pdfFirstPageSize = pluginView->pdfDocumentSizeForPrinting();
 #endif
 
@@ -1097,7 +1097,7 @@ GraphicsLayerFactory* WebChromeClient::graphicsLayerFactory() const
     RefPtr page = m_page.get();
     if (!page)
         return nullptr;
-    if (auto drawingArea = page->drawingArea())
+    if (RefPtr drawingArea = page->drawingArea())
         return drawingArea->graphicsLayerFactory();
     return nullptr;
 }
@@ -1186,12 +1186,12 @@ RefPtr<WebCore::ShapeDetection::BarcodeDetector> WebChromeClient::createBarcodeD
     if (!page)
         return nullptr;
 
-    auto& remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
+    Ref remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
     // FIXME(https://bugs.webkit.org/show_bug.cgi?id=275245): Does not work when GPUP crashes.
-    RefPtr connection = remoteRenderingBackendProxy.connection();
+    RefPtr connection = remoteRenderingBackendProxy->connection();
     if (!connection)
         return nullptr;
-    return ShapeDetection::RemoteBarcodeDetectorProxy::create(connection.releaseNonNull(), remoteRenderingBackendProxy.renderingBackendIdentifier(), ShapeDetectionIdentifier::generate(), barcodeDetectorOptions);
+    return ShapeDetection::RemoteBarcodeDetectorProxy::create(connection.releaseNonNull(), remoteRenderingBackendProxy->renderingBackendIdentifier(), ShapeDetectionIdentifier::generate(), barcodeDetectorOptions);
 #elif HAVE(SHAPE_DETECTION_API_IMPLEMENTATION)
     return WebCore::ShapeDetection::BarcodeDetectorImpl::create(barcodeDetectorOptions);
 #else
@@ -1207,14 +1207,14 @@ void WebChromeClient::getBarcodeDetectorSupportedFormats(CompletionHandler<void(
         completionHandler({ });
         return;
     }
-    auto& remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
+    Ref remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
     // FIXME(https://bugs.webkit.org/show_bug.cgi?id=275245): Does not work when GPUP crashes.
-    RefPtr connection = remoteRenderingBackendProxy.connection();
+    RefPtr connection = remoteRenderingBackendProxy->connection();
     if (!connection) {
         completionHandler({ });
         return;
     }
-    ShapeDetection::RemoteBarcodeDetectorProxy::getSupportedFormats(connection.releaseNonNull(), remoteRenderingBackendProxy.renderingBackendIdentifier(), WTFMove(completionHandler));
+    ShapeDetection::RemoteBarcodeDetectorProxy::getSupportedFormats(connection.releaseNonNull(), remoteRenderingBackendProxy->renderingBackendIdentifier(), WTFMove(completionHandler));
 #elif HAVE(SHAPE_DETECTION_API_IMPLEMENTATION)
     WebCore::ShapeDetection::BarcodeDetectorImpl::getSupportedFormats(WTFMove(completionHandler));
 #else
@@ -1229,12 +1229,12 @@ RefPtr<WebCore::ShapeDetection::FaceDetector> WebChromeClient::createFaceDetecto
     if (!page)
         return nullptr;
 
-    auto& remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
+    Ref remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
     // FIXME(https://bugs.webkit.org/show_bug.cgi?id=275245): Does not work when GPUP crashes.
-    RefPtr connection = remoteRenderingBackendProxy.connection();
+    RefPtr connection = remoteRenderingBackendProxy->connection();
     if (!connection)
         return nullptr;
-    return ShapeDetection::RemoteFaceDetectorProxy::create(connection.releaseNonNull(), remoteRenderingBackendProxy.renderingBackendIdentifier(), ShapeDetectionIdentifier::generate(), faceDetectorOptions);
+    return ShapeDetection::RemoteFaceDetectorProxy::create(connection.releaseNonNull(), remoteRenderingBackendProxy->renderingBackendIdentifier(), ShapeDetectionIdentifier::generate(), faceDetectorOptions);
 #elif HAVE(SHAPE_DETECTION_API_IMPLEMENTATION)
     return WebCore::ShapeDetection::FaceDetectorImpl::create(faceDetectorOptions);
 #else
@@ -1249,12 +1249,12 @@ RefPtr<WebCore::ShapeDetection::TextDetector> WebChromeClient::createTextDetecto
     if (!page)
         return nullptr;
 
-    auto& remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
+    Ref remoteRenderingBackendProxy = page->ensureRemoteRenderingBackendProxy();
     // FIXME(https://bugs.webkit.org/show_bug.cgi?id=275245): Does not work when GPUP crashes.
-    RefPtr connection = remoteRenderingBackendProxy.connection();
+    RefPtr connection = remoteRenderingBackendProxy->connection();
     if (!connection)
         return nullptr;
-    return ShapeDetection::RemoteTextDetectorProxy::create(connection.releaseNonNull(), remoteRenderingBackendProxy.renderingBackendIdentifier(), ShapeDetectionIdentifier::generate());
+    return ShapeDetection::RemoteTextDetectorProxy::create(connection.releaseNonNull(), remoteRenderingBackendProxy->renderingBackendIdentifier(), ShapeDetectionIdentifier::generate());
 #elif HAVE(SHAPE_DETECTION_API_IMPLEMENTATION)
     return WebCore::ShapeDetection::TextDetectorImpl::create();
 #else
@@ -1280,7 +1280,7 @@ void WebChromeClient::attachViewOverlayGraphicsLayer(GraphicsLayer* graphicsLaye
     if (!page)
         return;
 
-    auto* drawingArea = page->drawingArea();
+    RefPtr drawingArea = page->drawingArea();
     if (!drawingArea)
         return;
 
@@ -1306,7 +1306,7 @@ void WebChromeClient::triggerRenderingUpdate()
     if (!page)
         return;
 
-    if (auto* drawingArea = page->drawingArea())
+    if (RefPtr drawingArea = page->drawingArea())
         drawingArea->triggerRenderingUpdate();
 }
 
@@ -1315,7 +1315,7 @@ bool WebChromeClient::scheduleRenderingUpdate()
     RefPtr page = m_page.get();
     if (!page)
         return false;
-    if (auto* drawingArea = page->drawingArea())
+    if (RefPtr drawingArea = page->drawingArea())
         return drawingArea->scheduleRenderingUpdate();
     return false;
 }
@@ -1326,7 +1326,7 @@ void WebChromeClient::renderingUpdateFramesPerSecondChanged()
     if (!page)
         return;
 
-    if (auto* drawingArea = page->drawingArea())
+    if (RefPtr drawingArea = page->drawingArea())
         drawingArea->renderingUpdateFramesPerSecondChanged();
 }
 
@@ -1356,7 +1356,7 @@ bool WebChromeClient::layerTreeStateIsFrozen() const
     if (!page)
         return false;
 
-    if (auto* drawingArea = page->drawingArea())
+    if (RefPtr drawingArea = page->drawingArea())
         return drawingArea->layerTreeStateIsFrozen();
 
     return false;
@@ -1713,7 +1713,7 @@ void WebChromeClient::didAddHeaderLayer(GraphicsLayer& headerParent)
     if (!page)
         return;
 
-    if (auto* banner = page->headerPageBanner())
+    if (RefPtr banner = page->headerPageBanner())
         banner->didAddParentLayer(&headerParent);
 #else
     UNUSED_PARAM(headerParent);
@@ -1727,7 +1727,7 @@ void WebChromeClient::didAddFooterLayer(GraphicsLayer& footerParent)
     if (!page)
         return;
 
-    if (auto* banner = page->footerPageBanner())
+    if (RefPtr banner = page->footerPageBanner())
         banner->didAddParentLayer(&footerParent);
 #else
     UNUSED_PARAM(footerParent);
@@ -2367,7 +2367,7 @@ void WebChromeClient::resetDamageHistoryForTesting()
     if (!m_page)
         return;
 
-    if (auto* drawingArea = m_page->drawingArea())
+    if (RefPtr drawingArea = m_page->drawingArea())
         drawingArea->resetDamageHistoryForTesting();
 }
 
@@ -2376,7 +2376,7 @@ void WebChromeClient::foreachRegionInDamageHistoryForTesting(Function<void(const
     if (!m_page)
         return;
 
-    if (const auto* drawingArea = m_page->drawingArea())
+    if (const RefPtr drawingArea = m_page->drawingArea())
         drawingArea->foreachRegionInDamageHistoryForTesting(WTFMove(callback));
 }
 #endif
@@ -2384,6 +2384,15 @@ void WebChromeClient::foreachRegionInDamageHistoryForTesting(Function<void(const
 void WebChromeClient::setNeedsFixedContainerEdgesUpdate()
 {
     m_page->setNeedsFixedContainerEdgesUpdate();
+}
+
+bool WebChromeClient::usePluginRendererScrollableArea(LocalFrame& frame) const
+{
+#if ENABLE(PDF_PLUGIN)
+    if (RefPtr pluginView = WebPage::pluginViewForFrame(&frame))
+        return !pluginView->pluginDelegatesScrollingToMainFrame();
+#endif
+    return true;
 }
 
 } // namespace WebKit

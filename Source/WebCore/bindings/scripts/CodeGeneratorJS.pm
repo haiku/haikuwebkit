@@ -7682,7 +7682,7 @@ sub NativeToJSValue
     # We could instead overload a function to work with optional as well as non-optional numbers, but this
     # is slightly better because it guarantees we will fail to compile if the IDL file doesn't match the C++.
     if ($context->extendedAttributes->{Reflect} and ($type->name eq "unsigned long" or $type->name eq "unsigned short")) {
-        $value =~ s/getUnsignedIntegralAttribute/getIntegralAttribute/g;
+        $value =~ s/unsignedIntegral/integral/g;
         $value = "std::max(0, $value)";
     }
 

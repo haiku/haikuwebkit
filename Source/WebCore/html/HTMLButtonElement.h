@@ -35,13 +35,9 @@ class HTMLButtonElement final : public HTMLFormControlElement {
 public:
     static Ref<HTMLButtonElement> create(const QualifiedName&, Document&, HTMLFormElement*);
     static Ref<HTMLButtonElement> create(Document&);
-
-    WEBCORE_EXPORT void setType(const AtomString&);
     
     const AtomString& value() const;
-
     const AtomString& command() const;
-    void setCommand(const AtomString&);
 
     RefPtr<Element> commandForElement() const;
     CommandType commandType() const;

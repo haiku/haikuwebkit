@@ -88,7 +88,7 @@ void BreakBlockquoteCommand::doApply()
             return lineBreak;
 
         auto container = HTMLDivElement::create(document());
-        container->setDir(autoAtom());
+        container->setAttributeWithoutSynchronization(dirAttr, autoAtom());
         container->appendChild(lineBreak);
         return container;
     }();

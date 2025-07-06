@@ -112,6 +112,20 @@ function visibleRange(axElement, {width, height, scrollTop}) {
     return `Range with view ${width}x${height}, scrollTop ${scrollTop}: ${axElement.stringDescriptionOfAttributeValue("AXVisibleCharacterRange")}\n`;
 }
 
+async function verifyVisibleRange(axElement, {width, height, scrollTop}, allowedRangeStrings) {
+    testRunner.setViewSize(width, height);
+    document.body.scrollTop = scrollTop;
+    await waitFor(() => {
+        const visibleRange = axElement.stringDescriptionOfAttributeValue("AXVisibleCharacterRange");
+        for (let i = 0; i < allowedRangeStrings.length; i++) {
+            if (visibleRange.includes(allowedRangeStrings[i]))
+                return true;
+        }
+        return false;
+    });
+    return `Got expected visible-character-range for window width ${width}px, height ${height}px, scrollTop ${scrollTop}px\n`;
+}
+
 function platformValueForW3CName(accessibilityObject, includeSource=false) {
     var result;
     if (accessibilityController.platformName == "atspi")

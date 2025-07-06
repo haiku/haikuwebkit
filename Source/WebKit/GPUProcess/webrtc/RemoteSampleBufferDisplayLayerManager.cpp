@@ -101,12 +101,12 @@ void RemoteSampleBufferDisplayLayerManager::createLayer(SampleBufferDisplayLayer
             callback({ });
             return;
         }
-        layer->initialize(hideRootLayer, size, shouldMaintainAspectRatio, canShowWhileLocked, [this, protectedThis = Ref { *this }, callback = WTFMove(callback), identifier, layer = Ref { *layer }](auto layerId) mutable {
-            m_queue->dispatch([protectedThis = Ref { *this }, callback = WTFMove(callback), identifier, layer = WTFMove(layer), layerId = WTFMove(layerId)]() mutable {
+        layer->initialize(hideRootLayer, size, shouldMaintainAspectRatio, canShowWhileLocked, [this, protectedThis = Ref { *this }, callback = WTFMove(callback), identifier, layer = Ref { *layer }](auto hostingContext) mutable {
+            m_queue->dispatch([protectedThis = Ref { *this }, callback = WTFMove(callback), identifier, layer = WTFMove(layer), hostingContext = WTFMove(hostingContext)]() mutable {
                 Locker lock(protectedThis->m_layersLock);
                 ASSERT(!protectedThis->m_layers.contains(identifier));
                 protectedThis->m_layers.add(identifier, WTFMove(layer));
-                callback(WTFMove(layerId));
+                callback(WTFMove(hostingContext));
             });
         });
     });

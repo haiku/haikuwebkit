@@ -276,7 +276,7 @@ inline void RenderStyle::setPaddingTop(Style::PaddingEdge&& edge) { SET_NESTED(m
 inline void RenderStyle::setPageSize(LengthSize size) { SET_NESTED(m_nonInheritedData, rareData, pageSize, WTFMove(size)); }
 inline void RenderStyle::setPageSizeType(PageSizeType type) { SET_NESTED(m_nonInheritedData, rareData, pageSizeType, static_cast<unsigned>(type)); }
 inline void RenderStyle::setPaintOrder(PaintOrder order) { SET(m_rareInheritedData, paintOrder, static_cast<unsigned>(order)); }
-inline void RenderStyle::setPerspective(float perspective) { SET_NESTED(m_nonInheritedData, rareData, perspective, perspective); }
+inline void RenderStyle::setPerspective(Style::Perspective&& perspective) { SET_NESTED(m_nonInheritedData, rareData, perspective, WTFMove(perspective)); }
 inline void RenderStyle::setPerspectiveOriginX(Length&& length) { SET_NESTED(m_nonInheritedData, rareData, perspectiveOriginX, WTFMove(length)); }
 inline void RenderStyle::setPerspectiveOriginY(Length&& length) { SET_NESTED(m_nonInheritedData, rareData, perspectiveOriginY, WTFMove(length)); }
 inline void RenderStyle::setPositionAnchor(const std::optional<Style::ScopedName>& anchor) { SET_NESTED(m_nonInheritedData, rareData, positionAnchor, anchor); }
@@ -285,10 +285,12 @@ inline void RenderStyle::setPositionTryOrder(Style::PositionTryOrder order) { SE
 inline void RenderStyle::setPositionVisibility(OptionSet<PositionVisibility> value) { SET_NESTED(m_nonInheritedData, rareData, positionVisibility, value.toRaw()); }
 inline void RenderStyle::setResize(Resize r) { SET_NESTED(m_nonInheritedData, miscData, resize, static_cast<unsigned>(r)); }
 inline void RenderStyle::setRight(Style::InsetEdge&& edge) { SET_NESTED(m_nonInheritedData, surroundData, inset.right(), WTFMove(edge)); }
+inline void RenderStyle::setRotate(Style::Rotate&& rotate) { SET_NESTED(m_nonInheritedData, rareData, rotate, WTFMove(rotate)); }
 inline void RenderStyle::setRowGap(GapLength&& gapLength) { SET_NESTED(m_nonInheritedData, rareData, rowGap, WTFMove(gapLength)); }
 inline void RenderStyle::setRubyPosition(RubyPosition position) { SET(m_rareInheritedData, rubyPosition, static_cast<unsigned>(position)); }
 inline void RenderStyle::setRubyAlign(RubyAlign alignment) { SET(m_rareInheritedData, rubyAlign, static_cast<unsigned>(alignment)); }
 inline void RenderStyle::setRubyOverhang(RubyOverhang overhang) { SET(m_rareInheritedData, rubyOverhang, static_cast<unsigned>(overhang)); }
+inline void RenderStyle::setScale(Style::Scale&& scale) { SET_NESTED(m_nonInheritedData, rareData, scale, WTFMove(scale)); }
 inline void RenderStyle::setScrollTimelineAxes(FixedVector<ScrollAxis>&& axes) { SET_NESTED(m_nonInheritedData, rareData, scrollTimelineAxes, WTFMove(axes)); }
 inline void RenderStyle::setScrollTimelineNames(FixedVector<AtomString>&& names) { SET_NESTED(m_nonInheritedData, rareData, scrollTimelineNames, WTFMove(names)); }
 inline void RenderStyle::setViewTimelineAxes(FixedVector<ScrollAxis>&& axes) { SET_NESTED(m_nonInheritedData, rareData, viewTimelineAxes, WTFMove(axes)); }
@@ -347,6 +349,7 @@ inline void RenderStyle::setTransformOriginY(Length&& length) { SET_DOUBLY_NESTE
 inline void RenderStyle::setTransformOriginZ(float value) { SET_DOUBLY_NESTED(m_nonInheritedData, miscData, transform, z, value); }
 inline void RenderStyle::setTransformStyle3D(TransformStyle3D b) { SET_NESTED(m_nonInheritedData, rareData, transformStyle3D, static_cast<unsigned>(b)); }
 inline void RenderStyle::setTransformStyleForcedToFlat(bool b) { SET_NESTED(m_nonInheritedData, rareData, transformStyleForcedToFlat, static_cast<unsigned>(b)); }
+inline void RenderStyle::setTranslate(Style::Translate&& translate) { SET_NESTED(m_nonInheritedData, rareData, translate, WTFMove(translate)); }
 inline void RenderStyle::setUsesAnchorFunctions() { SET_NESTED(m_nonInheritedData, rareData, usesAnchorFunctions, true); }
 inline void RenderStyle::setIsPopoverInvoker() { SET_NESTED(m_nonInheritedData, rareData, isPopoverInvoker, true); }
 inline void RenderStyle::setUseSmoothScrolling(bool value) { SET_NESTED(m_nonInheritedData, rareData, useSmoothScrolling, value); }

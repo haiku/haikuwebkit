@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -572,12 +572,23 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     _cachedHasCustomTintColor = std::nullopt;
 
-    if (self.window) {
-        [self setUpInteraction];
-        _page->setScreenIsBeingCaptured([self screenIsBeingCaptured]);
-    }
-    else
+    if (!self.window) {
         [self cleanUpInteractionPreviewContainers];
+        return;
+    }
+
+    [self setUpInteraction];
+    _page->setScreenIsBeingCaptured([self screenIsBeingCaptured]);
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    RunLoop::protectedMain()->dispatch([strongSelf = retainPtr(self)] {
+        if (![strongSelf window])
+            return;
+
+        // FIXME: This is only necessary to work around rdar://153991882.
+        [strongSelf->_webView _updateHiddenScrollPocketEdges];
+    });
+#endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 }
 
 - (WKPageRef)_pageRef
@@ -672,7 +683,7 @@ static WebCore::FloatBoxExtent floatBoxExtent(UIEdgeInsets insets)
     enclosedInScrollableAncestorView:(BOOL)enclosedInScrollableAncestorView
     sendEvenIfUnchanged:(BOOL)sendEvenIfUnchanged
 {
-    auto drawingArea = _page->drawingArea();
+    RefPtr drawingArea = _page->drawingArea();
     if (!drawingArea)
         return;
 

@@ -507,6 +507,7 @@ void LocalMatrixShaderBlock::BeginBlock(const KeyContext& keyContext,
 namespace {
 
 void add_color_space_uniforms(const SkColorSpaceXformSteps& steps,
+                              bool has_ootf,
                               ReadSwizzle readSwizzle,
                               PipelineDataGatherer* gatherer) {
     SkMatrix gamutTransform;
@@ -566,11 +567,11 @@ void add_color_space_uniforms(const SkColorSpaceXformSteps& steps,
                            type == skcms_TFType_PQish ? -2.f :
                            type == skcms_TFType_HLGish ? -1.f :
                                                          0.f;
-        gatherer->writeHalf(SkV4{srcG, steps.fSrcTF.a, steps.fSrcTF.b, steps.fSrcTF.c});
-        gatherer->writeHalf(SkV4{steps.fSrcTF.d, steps.fSrcTF.e, steps.fSrcTF.f, srcW});
+        gatherer->write(SkV4{srcG, steps.fSrcTF.a, steps.fSrcTF.b, steps.fSrcTF.c});
+        gatherer->write(SkV4{steps.fSrcTF.d, steps.fSrcTF.e, steps.fSrcTF.f, srcW});
     } else {
-        gatherer->writeHalf(SkV4{0.f, 0.f, 0.f, 0.f});
-        gatherer->writeHalf(SkV4{0.f, 0.f, 0.f, srcW});
+        gatherer->write(SkV4{0.f, 0.f, 0.f, 0.f});
+        gatherer->write(SkV4{0.f, 0.f, 0.f, srcW});
     }
 
     if (steps.fFlags.encode) {
@@ -579,11 +580,17 @@ void add_color_space_uniforms(const SkColorSpaceXformSteps& steps,
                            type == skcms_TFType_PQish ? -2.f :
                            type == skcms_TFType_HLGinvish ? -1.f :
                                                             0.f;
-        gatherer->writeHalf(SkV4{dstG, steps.fDstTFInv.a, steps.fDstTFInv.b, steps.fDstTFInv.c});
-        gatherer->writeHalf(SkV4{steps.fDstTFInv.d, steps.fDstTFInv.e, steps.fDstTFInv.f, dstW});
+        gatherer->write(SkV4{dstG, steps.fDstTFInv.a, steps.fDstTFInv.b, steps.fDstTFInv.c});
+        gatherer->write(SkV4{steps.fDstTFInv.d, steps.fDstTFInv.e, steps.fDstTFInv.f, dstW});
     } else {
-        gatherer->writeHalf(SkV4{0.f, 0.f, 0.f, 0.f});
-        gatherer->writeHalf(SkV4{0.f, 0.f, 0.f, dstW});
+        gatherer->write(SkV4{0.f, 0.f, 0.f, 0.f});
+        gatherer->write(SkV4{0.f, 0.f, 0.f, dstW});
+    }
+
+    if (has_ootf) {
+        // TODO(https://issues.skia.org/issues/420956739): Populate OOTF parameters.
+        gatherer->write(SkV4{0.f, 0.f, 0.f, 0.f});
+        gatherer->write(SkV4{0.f, 0.f, 0.f, 0.f});
     }
 }
 
@@ -1071,15 +1078,16 @@ void add_matrix_colorfilter_uniform_data(const ShaderCodeDictionary* dict,
                                          const MatrixColorFilterBlock::MatrixColorFilterData& data,
                                          PipelineDataGatherer* gatherer) {
     BEGIN_WRITE_UNIFORMS(gatherer, dict, BuiltInCodeSnippetID::kMatrixColorFilter)
-
     gatherer->writeHalf(data.fMatrix);
     gatherer->writeHalf(data.fTranslate);
     if (data.fClamp) {
-        gatherer->writeHalf(SkV4{1.f, 1.f, 1.f, 1.f});
+        gatherer->writeHalf(SkV2{0.f, 1.f});
     } else {
         // Alpha is always clamped to 1. RGB clamp to the max finite half value.
         static constexpr float kUnclamped = 65504.f; // SK_HalfMax converted back to float
-        gatherer->writeHalf(SkV4{kUnclamped, kUnclamped, kUnclamped, 1.f});
+        SkASSERT(SkHalfToFloat(SkFloatToHalf(kUnclamped)) == kUnclamped);
+        SkASSERT(SkHalfToFloat(SkFloatToHalf(-kUnclamped)) == -kUnclamped);
+        gatherer->writeHalf(SkV2{-kUnclamped, kUnclamped});
     }
 }
 
@@ -1142,7 +1150,7 @@ void add_color_space_xform_uniform_data(
         const ColorSpaceTransformBlock::ColorSpaceTransformData& data,
         PipelineDataGatherer* gatherer) {
     BEGIN_WRITE_UNIFORMS(gatherer, dict, BuiltInCodeSnippetID::kColorSpaceXformColorFilter)
-    add_color_space_uniforms(data.fSteps, data.fReadSwizzle, gatherer);
+    add_color_space_uniforms(data.fSteps, /*has_ootf=*/true, data.fReadSwizzle, gatherer);
 }
 
 void add_color_space_xform_premul_uniform_data(
@@ -1176,7 +1184,7 @@ void add_color_space_xform_srgb_uniform_data(
         const ColorSpaceTransformBlock::ColorSpaceTransformData& data,
         PipelineDataGatherer* gatherer) {
     BEGIN_WRITE_UNIFORMS(gatherer, dict, BuiltInCodeSnippetID::kColorSpaceXformSRGB)
-    add_color_space_uniforms(data.fSteps, data.fReadSwizzle, gatherer);
+    add_color_space_uniforms(data.fSteps, /*has_ootf=*/false, data.fReadSwizzle, gatherer);
 }
 
 }  // anonymous namespace

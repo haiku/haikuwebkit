@@ -281,7 +281,7 @@ std::error_code compileRuleList(ContentExtensionCompilationClient& client, Strin
 {
 #if ASSERT_ENABLED
     callOnMainThread([ruleJSON = ruleJSON.isolatedCopy(), parsedRuleList = crossThreadCopy(parsedRuleList)] {
-        ASSERT(parseRuleList(ruleJSON).value() == parsedRuleList);
+        ASSERT(parseRuleList(ruleJSON, WebCore::ContentExtensions::CSSSelectorsAllowed::Yes).value() == parsedRuleList);
     });
 #endif
 

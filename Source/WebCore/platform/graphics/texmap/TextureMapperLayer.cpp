@@ -511,15 +511,13 @@ void TextureMapperLayer::collectDamageSelf(TextureMapperPaintOptions& options, D
     // layer-level operations such as resizes, transformations, etc.
     const auto& clipBounds = options.textureMapper.clipBounds();
     if (m_damageInGlobalCoordinateSpace) {
-        m_damageInGlobalCoordinateSpace->forEachNonEmptyRect([&](const auto& rect) {
+        for (const auto& rect : *m_damageInGlobalCoordinateSpace)
             damage.add(intersection(rect, clipBounds));
-        });
     }
 
     if (m_damageInLayerCoordinateSpace) {
-        m_damageInLayerCoordinateSpace->forEachNonEmptyRect([&](const auto& rect) {
+        for (const auto& rect : *m_damageInLayerCoordinateSpace)
             damage.add(intersection(transformRectFromLayerToGlobalCoordinateSpace(rect, transform, options), clipBounds));
-        });
     }
 }
 

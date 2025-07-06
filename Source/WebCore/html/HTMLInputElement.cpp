@@ -505,11 +505,6 @@ void HTMLInputElement::handleBlurEvent()
     invalidateStyleOnFocusChangeIfNeeded();
 }
 
-void HTMLInputElement::setType(const AtomString& type)
-{
-    setAttributeWithoutSynchronization(typeAttr, type);
-}
-
 void HTMLInputElement::resignStrongPasswordAppearance()
 {
     if (!hasAutofillStrongPasswordButton())
@@ -864,7 +859,7 @@ void HTMLInputElement::attributeChanged(const QualifiedName& name, const AtomStr
         unsigned oldSize = m_size;
         m_size = limitToOnlyHTMLNonNegativeNumbersGreaterThanZero(newValue, defaultSize);
         if (m_size != oldSize && renderer())
-            renderer()->setNeedsLayoutAndPrefWidthsRecalc();
+            renderer()->setNeedsLayoutAndPreferredWidthsUpdate();
         break;
     }
     case AttributeNames::resultsAttr:
@@ -1456,16 +1451,6 @@ ExceptionOr<void> HTMLInputElement::showPicker()
     return { };
 }
 
-const AtomString& HTMLInputElement::defaultValue() const
-{
-    return attributeWithoutSynchronization(valueAttr);
-}
-
-void HTMLInputElement::setDefaultValue(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(valueAttr, value);
-}
-
 static inline bool isRFC2616TokenCharacter(UChar ch)
 {
     return isASCII(ch) && ch > ' ' && ch != '"' && ch != '(' && ch != ')' && ch != ',' && ch != '/' && (ch < ':' || ch > '@') && (ch < '[' || ch > ']') && ch != '{' && ch != '}' && ch != 0x7f;
@@ -1518,11 +1503,6 @@ Vector<String> HTMLInputElement::acceptFileExtensions() const
     return parseAcceptAttribute(attributeWithoutSynchronization(acceptAttr), isValidFileExtension);
 }
 
-String HTMLInputElement::alt() const
-{
-    return attributeWithoutSynchronization(altAttr);
-}
-
 unsigned HTMLInputElement::effectiveMaxLength() const
 {
     // The number -1 represents no maximum at all; conveniently it becomes a super-large value when converted to unsigned.
@@ -1540,11 +1520,6 @@ ExceptionOr<void> HTMLInputElement::setSize(unsigned size)
         return Exception { ExceptionCode::IndexSizeError };
     setUnsignedIntegralAttribute(sizeAttr, limitToOnlyHTMLNonNegativeNumbersGreaterThanZero(size, defaultSize));
     return { };
-}
-
-URL HTMLInputElement::src() const
-{
-    return document().completeURL(attributeWithoutSynchronization(srcAttr));
 }
 
 void HTMLInputElement::logUserInteraction()
@@ -1740,7 +1715,7 @@ bool HTMLInputElement::needsSuspensionCallback()
     // the page is restored. Non-empty textual default values indicate that the field
     // is not really sensitive -- there's no default value for an account number --
     // and we would see unexpected results if we reset to something other than blank.
-    bool isSensitive = m_autocomplete == Off && !(m_inputType->isTextType() && !defaultValue().isEmpty());
+    bool isSensitive = m_autocomplete == Off && !(m_inputType->isTextType() && !attributeWithoutSynchronization(valueAttr).isEmpty());
 
     return isSensitive;
 }
@@ -1881,7 +1856,7 @@ void HTMLInputElement::addSubresourceAttributeURLs(ListHashSet<URL>& urls) const
 {
     HTMLTextFormControlElement::addSubresourceAttributeURLs(urls);
 
-    addSubresourceURL(urls, src());
+    addSubresourceURL(urls, getURLAttribute(srcAttr));
 }
 
 bool HTMLInputElement::computeWillValidate() const
@@ -2259,16 +2234,6 @@ unsigned HTMLInputElement::height() const
 unsigned HTMLInputElement::width() const
 {
     return m_inputType->width();
-}
-
-void HTMLInputElement::setHeight(unsigned height)
-{
-    setUnsignedIntegralAttribute(heightAttr, height);
-}
-
-void HTMLInputElement::setWidth(unsigned width)
-{
-    setUnsignedIntegralAttribute(widthAttr, width);
 }
 
 ListAttributeTargetObserver::ListAttributeTargetObserver(const AtomString& id, HTMLInputElement& element)

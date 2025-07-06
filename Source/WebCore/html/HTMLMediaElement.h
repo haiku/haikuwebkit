@@ -125,6 +125,8 @@ class VideoTrackList;
 class VideoTrackPrivate;
 class WebKitMediaKeys;
 
+struct MachSendRightAnnotated;
+
 enum class AudioSessionCategory : uint8_t;
 enum class AudioSessionMode : uint8_t;
 enum class DynamicRangeMode : uint8_t;
@@ -274,7 +276,6 @@ public:
     const MediaProvider& srcObject() const { return m_mediaProvider; }
     void setSrcObject(MediaProvider&&);
 
-    WEBCORE_EXPORT void setCrossOrigin(const AtomString&);
     WEBCORE_EXPORT String crossOrigin() const;
 
 // network state
@@ -704,12 +705,11 @@ public:
 
     bool hasSource() const { return hasCurrentSrc() || srcObject(); }
 
-    WEBCORE_EXPORT void requestHostingContextID(Function<void(LayerHostingContextID)>&&);
-    WEBCORE_EXPORT LayerHostingContextID layerHostingContextID();
+    WEBCORE_EXPORT void requestHostingContext(Function<void(HostingContext)>&&);
+    WEBCORE_EXPORT WebCore::HostingContext layerHostingContext();
     WEBCORE_EXPORT WebCore::FloatSize naturalSize();
-
     WEBCORE_EXPORT WebCore::FloatSize videoLayerSize() const;
-    void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRight&&);
+    void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRightAnnotated&&);
     void updateMediaState();
 
     using SourceType = HTMLMediaElementSourceType;

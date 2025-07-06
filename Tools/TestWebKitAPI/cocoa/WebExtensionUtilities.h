@@ -63,6 +63,8 @@
 
 - (void)sendTestMessage:(NSString *)message;
 - (void)sendTestMessage:(NSString *)message withArgument:(id)argument;
+- (void)sendTestStartedWithArgument:(id)argument;
+- (void)sendTestFinishedWithArgument:(id)argument;
 
 - (void)loadAndRun;
 

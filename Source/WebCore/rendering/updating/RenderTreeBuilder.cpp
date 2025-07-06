@@ -497,7 +497,7 @@ void RenderTreeBuilder::attachToRenderElementInternal(RenderElement& parent, Ren
             listItemRenderer->updateListMarkerNumbers();
     }
 
-    newChild->setNeedsLayoutAndPrefWidthsRecalc();
+    newChild->setNeedsLayoutAndPreferredWidthsUpdate();
     auto isOutOfFlowBox = newChild->style().hasOutOfFlowPosition();
     if (!isOutOfFlowBox)
         parent.setNeedsPreferredWidthsUpdate();
@@ -505,7 +505,7 @@ void RenderTreeBuilder::attachToRenderElementInternal(RenderElement& parent, Ren
     if (!parent.normalChildNeedsLayout()) {
         if (isOutOfFlowBox) {
             auto isEligibleForStaticPositionLayoutOnly = [&] {
-                // setNeedsLayoutAndPrefWidthsRecalc above already takes care of propagating dirty bits on the ancestor chain, but
+                // setNeedsLayoutAndPreferredWidthsUpdate above already takes care of propagating dirty bits on the ancestor chain, but
                 // in order to compute static position for out of flow boxes, the parent has to run normal flow layout as well (as opposed to simplified)
                 if (newChild->containingBlock() != &parent)
                     return false;
@@ -1025,7 +1025,7 @@ static void resetRendererStateOnDetach(RenderElement& parent, RenderObject& chil
     }
 
     if (willBeDestroyed == RenderTreeBuilder::WillBeDestroyed::No)
-        child.setNeedsLayoutAndPrefWidthsRecalc();
+        child.setNeedsLayoutAndPreferredWidthsUpdate();
 
     // If we have a line box wrapper, delete it.
     if (CheckedPtr textRenderer = dynamicDowncast<RenderSVGInlineText>(child))
@@ -1132,7 +1132,7 @@ void RenderTreeBuilder::markBoxForRelayoutAfterSplit(RenderBox& box)
     } else if (CheckedPtr tableSection = dynamicDowncast<RenderTableSection>(box))
         tableSection->setNeedsCellRecalc();
 
-    box.setNeedsLayoutAndPrefWidthsRecalc();
+    box.setNeedsLayoutAndPreferredWidthsUpdate();
 }
 
 void RenderTreeBuilder::removeFloatingObjects(RenderBlock& renderer)

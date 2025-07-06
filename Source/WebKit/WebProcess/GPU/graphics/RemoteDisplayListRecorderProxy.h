@@ -159,6 +159,13 @@ private:
     RefPtr<WebCore::ImageBuffer> createAlignedImageBuffer(const WebCore::FloatSize&, const WebCore::DestinationColorSpace&, std::optional<WebCore::RenderingMethod>) const final;
     RefPtr<WebCore::ImageBuffer> createAlignedImageBuffer(const WebCore::FloatRect&, const WebCore::DestinationColorSpace&, std::optional<WebCore::RenderingMethod>) const final;
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    void setMaxEDRHeadroom(std::optional<float> headroom) final { m_maxEDRHeadroom = headroom; }
+    float maxPaintedEDRHeadroom() const final { return m_maxPaintedEDRHeadroom; }
+    bool hasPaintedClampedEDRHeadroom() const final { return m_hasPaintedClampedEDRHeadroom; }
+    void clearMaxPaintedEDRHeadroom() final { m_maxPaintedEDRHeadroom = 1; m_hasPaintedClampedEDRHeadroom = false; }
+#endif
+
     const WebCore::RenderingMode m_renderingMode;
     const RemoteDisplayListRecorderIdentifier m_identifier;
     RefPtr<IPC::StreamClientConnection> m_connection;
@@ -168,6 +175,11 @@ private:
 #if PLATFORM(COCOA) && ENABLE(VIDEO)
     Lock m_sharedVideoFrameWriterLock;
     std::unique_ptr<SharedVideoFrameWriter> m_sharedVideoFrameWriter WTF_GUARDED_BY_LOCK(m_sharedVideoFrameWriterLock);
+#endif
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    std::optional<float> m_maxEDRHeadroom;
+    float m_maxPaintedEDRHeadroom { 1 };
+    bool m_hasPaintedClampedEDRHeadroom { false };
 #endif
     // Flag for pending draws. Start with true because we do not know what commands have been scheduled to the context.
     bool m_hasDrawn { true };

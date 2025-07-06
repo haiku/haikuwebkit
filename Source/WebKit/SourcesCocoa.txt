@@ -1,4 +1,4 @@
-// Copyright (C) 2018-2021 Apple Inc. All rights reserved.
+// Copyright (C) 2018-2025 Apple Inc. All rights reserved.
 //
 // Redistribution and use in source and binary forms, with or without
 // modification, are permitted provided that the following conditions
@@ -172,7 +172,6 @@ Shared/Cocoa/AuxiliaryProcessCocoa.mm
 Shared/Cocoa/CodeSigning.mm
 Shared/Cocoa/CompletionHandlerCallChecker.mm
 Shared/Cocoa/DefaultWebBrowserChecks.mm
-Shared/Cocoa/ExtensionKitSoftLink.mm
 Shared/Cocoa/LoadParametersCocoa.mm
 Shared/Cocoa/PDFKitSoftLink.mm
 Shared/Cocoa/RevealItem.mm
@@ -578,7 +577,7 @@ UIProcess/mac/WKQuickLookPreviewController.mm
 UIProcess/mac/WKRevealItemPresenter.mm
 UIProcess/mac/WKSharingServicePickerDelegate.mm
 UIProcess/mac/WKTextFinderClient.mm
-UIProcess/mac/WKTextAnimationManager.mm
+UIProcess/mac/WKTextAnimationManagerMac.mm
 UIProcess/mac/WKViewLayoutStrategy.mm
 UIProcess/mac/WebViewImpl.mm
 

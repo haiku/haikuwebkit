@@ -25,6 +25,10 @@
 
 #import <WebKit/WKWebExtensionPermission.h>
 
+/*! @abstract The `bookmarks` permission requests access to the `browser.bookmarks` APIs. */
+WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA), visionos(WK_XROS_TBA))
+WK_EXTERN WKWebExtensionPermission const WKWebExtensionPermissionBookmarks NS_SWIFT_NONISOLATED;
+
 /*! @abstract The `notifications` permission requests access to the `browser.notifications` APIs. */
 WK_API_AVAILABLE(macos(15.4), ios(18.4), visionos(2.4))
 WK_EXTERN WKWebExtensionPermission const WKWebExtensionPermissionNotifications NS_SWIFT_NONISOLATED;

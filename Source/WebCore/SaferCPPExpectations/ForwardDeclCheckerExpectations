@@ -51,7 +51,6 @@ css/CSSToLengthConversionData.h
 css/MediaList.h
 css/StyleSheetContents.cpp
 css/StyleSheetContents.h
-css/calc/CSSCalcTree.h
 css/values/primitives/CSSPrimitiveData.h
 dom/CustomElementReactionQueue.h
 dom/Element.h
@@ -129,7 +128,6 @@ rendering/TextPainter.h
 rendering/line/LineWidth.h
 rendering/style/StyleCachedImage.cpp
 rendering/svg/SVGRenderingContext.h
-style/StyleBuilderState.h
 style/StyleExtractorState.h
 style/StyleScope.h
 style/values/box/StyleMargin.h

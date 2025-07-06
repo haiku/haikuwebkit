@@ -400,7 +400,7 @@ bool LocalDOMWindow::canShowModalDialog(const LocalFrame& frame)
 {
     // Override support for layout testing purposes.
     if (RefPtr document = frame.document()) {
-        if (RefPtr window = document->domWindow()) {
+        if (RefPtr window = document->window()) {
             if (window->m_canShowModalDialogOverride)
                 return window->m_canShowModalDialogOverride.value();
         }
@@ -613,7 +613,7 @@ void LocalDOMWindow::resumeFromBackForwardCache()
 bool LocalDOMWindow::isCurrentlyDisplayedInFrame() const
 {
     RefPtr frame = localFrame();
-    return frame && frame->document()->domWindow() == this;
+    return frame && frame->document()->window() == this;
 }
 
 CustomElementRegistry& LocalDOMWindow::ensureCustomElementRegistry()
@@ -2212,7 +2212,7 @@ void LocalDOMWindow::failedToRegisterDeviceMotionEventListener()
     if (RegistrableDomain::uncheckedCreateFromRegistrableDomainString("chase.com"_s).matches(document()->url())) {
         // Fire a fake DeviceMotionEvent with acceleration data to unblock the site's login flow.
         protectedDocument()->postTask([](auto& context) {
-            if (RefPtr window = downcast<Document>(context).domWindow()) {
+            if (RefPtr window = downcast<Document>(context).window()) {
                 auto acceleration = DeviceMotionData::Acceleration::create();
                 window->dispatchEvent(DeviceMotionEvent::create(eventNames().devicemotionEvent, DeviceMotionData::create(acceleration.copyRef(), acceleration.copyRef(), DeviceMotionData::RotationRate::create(), std::nullopt).ptr()));
             }

@@ -214,7 +214,7 @@ MediaPlayerPrivateRemote::~MediaPlayerPrivateRemote()
         audioSourceProvider->close();
 #endif
 
-    for (auto& request : std::exchange(m_layerHostingContextIDRequests, { }))
+    for (auto& request : std::exchange(m_layerHostingContextRequests, { }))
         request({ });
 
     // Shutdown any stale MediaResources.
@@ -1087,9 +1087,9 @@ void MediaPlayerPrivateRemote::load(MediaStreamPrivate&)
 PlatformLayer* MediaPlayerPrivateRemote::platformLayer() const
 {
 #if PLATFORM(COCOA)
-    if (!m_videoLayer && m_layerHostingContextID) {
+    if (!m_videoLayer && m_layerHostingContext.contextID) {
         auto expandedVideoLayerSize = expandedIntSize(videoLayerSize());
-        m_videoLayer = createVideoLayerRemote(const_cast<MediaPlayerPrivateRemote*>(this), m_layerHostingContextID, m_videoFullscreenGravity, expandedVideoLayerSize);
+        m_videoLayer = createVideoLayerRemote(const_cast<MediaPlayerPrivateRemote*>(this), m_layerHostingContext.contextID, m_videoFullscreenGravity, expandedVideoLayerSize);
         m_videoLayerManager->setVideoLayer(m_videoLayer.get(), expandedVideoLayerSize);
     }
     return m_videoLayerManager->videoInlineLayer();
@@ -1728,37 +1728,37 @@ WTFLogChannel& MediaPlayerPrivateRemote::logChannel() const
 }
 #endif
 
-void MediaPlayerPrivateRemote::requestHostingContextID(LayerHostingContextIDCallback&& completionHandler)
+void MediaPlayerPrivateRemote::requestHostingContext(LayerHostingContextCallback&& completionHandler)
 {
-    if (m_layerHostingContextID) {
-        completionHandler(m_layerHostingContextID);
+    if (m_layerHostingContext.contextID) {
+        completionHandler(m_layerHostingContext);
         return;
     }
 
-    m_layerHostingContextIDRequests.append(WTFMove(completionHandler));
-    connection().sendWithAsyncReply(Messages::RemoteMediaPlayerProxy::RequestHostingContextID(), [weakThis = ThreadSafeWeakPtr { *this }] (auto contextID) {
+    m_layerHostingContextRequests.append(WTFMove(completionHandler));
+    connection().sendWithAsyncReply(Messages::RemoteMediaPlayerProxy::RequestHostingContext(), [weakThis = ThreadSafeWeakPtr { *this }] (WebCore::HostingContext context) {
         if (RefPtr protectedThis = weakThis.get())
-            protectedThis->setLayerHostingContextID(contextID);
+            protectedThis->setLayerHostingContext(WTFMove(context));
     }, m_id);
 }
 
-LayerHostingContextID MediaPlayerPrivateRemote::hostingContextID() const
+WebCore::HostingContext MediaPlayerPrivateRemote::hostingContext() const
 {
-    return m_layerHostingContextID;
+    return m_layerHostingContext;
 }
 
-void MediaPlayerPrivateRemote::setLayerHostingContextID(LayerHostingContextID inID)
+void MediaPlayerPrivateRemote::setLayerHostingContext(WebCore::HostingContext&& hostingContext)
 {
-    if (m_layerHostingContextID == inID)
+    if (m_layerHostingContext.contextID == hostingContext.contextID)
         return;
 
-    m_layerHostingContextID = inID;
+    m_layerHostingContext = WTFMove(hostingContext);
 #if PLATFORM(COCOA)
     m_videoLayer = nullptr;
 #endif
 
-    for (auto& request : std::exchange(m_layerHostingContextIDRequests, { }))
-        request(inID);
+    for (auto& request : std::exchange(m_layerHostingContextRequests, { }))
+        request(m_layerHostingContext);
 }
 
 #if ENABLE(MEDIA_SOURCE)

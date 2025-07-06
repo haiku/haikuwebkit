@@ -851,6 +851,16 @@ static inline OptionSet<WebKit::WebExtensionTab::ChangedProperties> toImpl(WKWeb
     self._protectedWebExtensionContext->sendTestMessage(message, argument);
 }
 
+- (void)_sendTestStartedWithArgument:(id)argument
+{
+    self._protectedWebExtensionContext->sendTestStarted(argument);
+}
+
+- (void)_sendTestFinishedWithArgument:(id)argument
+{
+    self._protectedWebExtensionContext->sendTestFinished(argument);
+}
+
 #if ENABLE(WK_WEB_EXTENSIONS_SIDEBAR)
 - (nullable _WKWebExtensionSidebar *)sidebarForTab:(id<WKWebExtensionTab>)tab
 {
@@ -1272,6 +1282,14 @@ static inline OptionSet<WebKit::WebExtensionTab::ChangedProperties> toImpl(WKWeb
 }
 
 - (void)_sendTestMessage:(NSString *)message withArgument:(id)argument
+{
+}
+
+- (void)_sendTestStartedWithArgument:(nullable id)argument
+{
+}
+
+- (void)_sendTestFinishedWithArgument:(nullable id)argument
 {
 }
 

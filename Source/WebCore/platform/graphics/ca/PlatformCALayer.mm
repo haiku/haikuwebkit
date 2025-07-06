@@ -253,6 +253,13 @@ void PlatformCALayer::setAcceleratedEffectsAndBaseValues(const AcceleratedEffect
 }
 #endif
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+bool PlatformCALayer::setNeedsDisplayIfEDRHeadroomExceeds(float)
+{
+    return false;
+}
+#endif
+
 void PlatformCALayer::dumpAdditionalProperties(TextStream&, OptionSet<PlatformLayerTreeAsTextFlags>)
 {
 }

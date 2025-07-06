@@ -27,6 +27,7 @@
 
 #if ENABLE(VIDEO)
 
+#include "HostingContext.h"
 #include "MediaPlayer.h"
 #include "MediaPlayerIdentifier.h"
 #include "NativeImage.h"
@@ -91,11 +92,11 @@ public:
     virtual void videoFullscreenStandbyChanged() { }
 #endif
 
-    using LayerHostingContextIDCallback = CompletionHandler<void(LayerHostingContextID)>;
-    virtual void requestHostingContextID(LayerHostingContextIDCallback&& completionHandler) { completionHandler({ }); }
-    virtual LayerHostingContextID hostingContextID() const { return 0; }
+    using LayerHostingContextCallback = CompletionHandler<void(HostingContext)>;
+    virtual void requestHostingContext(LayerHostingContextCallback&& completionHandler) { completionHandler({ }); }
+    virtual HostingContext hostingContext() const { return { }; }
     virtual FloatSize videoLayerSize() const { return { }; }
-    virtual void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRight&&) { }
+    virtual void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRightAnnotated&&) { }
 
 #if PLATFORM(IOS_FAMILY)
     virtual NSArray *timedMetadata() const { return nil; }

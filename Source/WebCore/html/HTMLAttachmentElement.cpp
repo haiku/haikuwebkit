@@ -857,11 +857,11 @@ void HTMLAttachmentElement::updateImage()
 
     if (!m_iconForWideLayout.isEmpty()) {
         dispatchEvent(Event::create(eventNames().loadeddataEvent, Event::CanBubble::No, Event::IsCancelable::No));
-        m_imageElement->setSrc(AtomString { DOMURL::createObjectURL(document(), Blob::create(protectedDocument().ptr(), Vector<uint8_t>(m_iconForWideLayout), "image/png"_s)) });
+        m_imageElement->setAttributeWithoutSynchronization(srcAttr, AtomString { DOMURL::createObjectURL(document(), Blob::create(protectedDocument().ptr(), Vector<uint8_t>(m_iconForWideLayout), "image/png"_s)) });
         return;
     }
 
-    m_imageElement->setSrc(nullAtom());
+    m_imageElement->removeAttribute(srcAttr);
 }
 
 void HTMLAttachmentElement::updateIconForNarrowLayout(const RefPtr<Image>& icon, const WebCore::FloatSize& iconSize)

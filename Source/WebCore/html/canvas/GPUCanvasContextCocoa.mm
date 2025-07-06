@@ -35,7 +35,9 @@
 #include "GraphicsLayerContentsDisplayDelegate.h"
 #include "ImageBitmap.h"
 #include "PlatformCALayerDelegatedContents.h"
+#include "PlatformScreen.h"
 #include "RenderBox.h"
+#include "ScreenProperties.h"
 #include "Settings.h"
 #include <wtf/TZoneMallocInlines.h>
 
@@ -102,9 +104,9 @@ private:
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(GPUCanvasContextCocoa);
 
-std::unique_ptr<GPUCanvasContext> GPUCanvasContext::create(CanvasBase& canvas, GPU& gpu)
+std::unique_ptr<GPUCanvasContext> GPUCanvasContext::create(CanvasBase& canvas, GPU& gpu, Document* document)
 {
-    auto context = GPUCanvasContextCocoa::create(canvas, gpu);
+    auto context = GPUCanvasContextCocoa::create(canvas, gpu, document);
     if (context)
         context->suspendIfNeeded();
     return context;
@@ -117,7 +119,7 @@ static GPUPresentationContextDescriptor presentationContextDescriptor(GPUComposi
     };
 }
 
-std::unique_ptr<GPUCanvasContextCocoa> GPUCanvasContextCocoa::create(CanvasBase& canvas, GPU& gpu)
+std::unique_ptr<GPUCanvasContextCocoa> GPUCanvasContextCocoa::create(CanvasBase& canvas, GPU& gpu, Document* document)
 {
     RefPtr compositorIntegration = gpu.createCompositorIntegration();
     if (!compositorIntegration)
@@ -125,7 +127,7 @@ std::unique_ptr<GPUCanvasContextCocoa> GPUCanvasContextCocoa::create(CanvasBase&
     RefPtr presentationContext = gpu.createPresentationContext(presentationContextDescriptor(*compositorIntegration));
     if (!presentationContext)
         return nullptr;
-    return std::unique_ptr<GPUCanvasContextCocoa>(new GPUCanvasContextCocoa(canvas, compositorIntegration.releaseNonNull(), presentationContext.releaseNonNull()));
+    return std::unique_ptr<GPUCanvasContextCocoa>(new GPUCanvasContextCocoa(canvas, compositorIntegration.releaseNonNull(), presentationContext.releaseNonNull(), document));
 }
 
 static GPUIntegerCoordinate getCanvasWidth(const GPUCanvasContext::CanvasType& canvas)
@@ -161,14 +163,40 @@ GPUCanvasContextCocoa::CanvasType GPUCanvasContextCocoa::htmlOrOffscreenCanvas()
     return &downcast<OffscreenCanvas>(canvasBase());
 }
 
-GPUCanvasContextCocoa::GPUCanvasContextCocoa(CanvasBase& canvas, Ref<GPUCompositorIntegration>&& compositorIntegration, Ref<GPUPresentationContext>&& presentationContext)
+GPUCanvasContextCocoa::GPUCanvasContextCocoa(CanvasBase& canvas, Ref<GPUCompositorIntegration>&& compositorIntegration, Ref<GPUPresentationContext>&& presentationContext, Document* document)
     : GPUCanvasContext(canvas)
     , m_layerContentsDisplayDelegate(GPUDisplayBufferDisplayDelegate::create())
     , m_compositorIntegration(WTFMove(compositorIntegration))
     , m_presentationContext(WTFMove(presentationContext))
     , m_width(getCanvasWidth(htmlOrOffscreenCanvas()))
     , m_height(getCanvasHeight(htmlOrOffscreenCanvas()))
+    , m_screenPropertiesChangedObserver([this](auto displayID) {
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        if (auto* screenData = WebCore::screenData(displayID))
+            updateContentsHeadroom(screenData->currentEDRHeadroom);
+#else
+        UNUSED_PARAM(displayID);
+        UNUSED_PARAM(this);
+#endif
+    })
 {
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    if (document)
+        document->addScreenPropertiesChangedObserver(*m_screenPropertiesChangedObserver);
+    else
+        m_screenPropertiesChangedObserver = std::nullopt;
+#else
+    UNUSED_PARAM(document);
+#endif
+}
+
+void GPUCanvasContextCocoa::updateContentsHeadroom(float headroom)
+{
+    if (m_contentsHeadroom == headroom)
+        return;
+
+    m_contentsHeadroom = headroom;
+    m_compositorIntegration->updateContentsHeadroom(headroom);
 }
 
 void GPUCanvasContextCocoa::reshape()
@@ -203,6 +231,16 @@ RefPtr<ImageBuffer> GPUCanvasContextCocoa::surfaceBufferToImageBuffer(SurfaceBuf
     // FIXME(https://bugs.webkit.org/show_bug.cgi?id=263957): WebGPU should support obtaining drawing buffer for Web Inspector.
     if (!m_configuration)
         return canvasBase().buffer();
+
+    // FIXME: https://bugs.webkit.org/show_bug.cgi?id=294654 - OffscreenCanvas may not reflect the display the OffscreenCanvas is displayed on during background / resume
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    if (!m_screenPropertiesChangedObserver) {
+        float maxHeadroom = 1.f;
+        for (auto& screenData : WebCore::getScreenProperties().screenDataMap.values())
+            maxHeadroom = std::max(maxHeadroom, screenData.maxEDRHeadroom);
+        updateContentsHeadroom(maxHeadroom);
+    }
+#endif
 
     auto frameCount = m_configuration->frameCount;
     m_compositorIntegration->prepareForDisplay(frameCount, [weakThis = WeakPtr { *this }, frameCount] {
@@ -311,6 +349,7 @@ ExceptionOr<void> GPUCanvasContextCocoa::configure(GPUCanvasConfiguration&& conf
     m_layerContentsDisplayDelegate->setContentsFormat(textureFormat != WebGPU::TextureFormat::Rgba16float ? ContentsFormat::RGBA8 : ContentsFormat::RGBA16F);
 #endif
 
+    m_contentsHeadroom = 0.f;
     auto renderBuffers = m_compositorIntegration->recreateRenderBuffers(m_width, m_height, toWebCoreColorSpace(configuration.colorSpace, configuration.toneMapping), configuration.alphaMode == GPUCanvasAlphaMode::Premultiplied ? WebCore::AlphaPremultiplication::Premultiplied : WebCore::AlphaPremultiplication::Unpremultiplied, textureFormat, configuration.device->backing());
     // FIXME: This ASSERT() is wrong. It's totally possible for the IPC to the GPU process to timeout if the GPUP is busy, and return nothing here.
     ASSERT(!renderBuffers.isEmpty());

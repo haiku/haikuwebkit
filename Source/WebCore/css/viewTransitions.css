@@ -48,6 +48,7 @@
 
     animation-duration: inherit;
     animation-fill-mode: inherit;
+    animation-delay: inherit;
 }
 
 :root::view-transition-old(*),
@@ -59,6 +60,7 @@
 
     animation-duration: inherit;
     animation-fill-mode: inherit;
+    animation-delay: inherit;
 }
 
 /* Default cross-fade transition */

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Apple Inc. All rights reserved.
+ * Copyright (C) 2011-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2011 Nokia Corporation and/or its subsidiary(-ies).
  * Copyright (C) 2012 Company 100, Inc.
  * Copyright (C) 2014-2019 Igalia S.L.
@@ -217,7 +217,7 @@ void LayerTreeHost::flushLayers()
 #endif
 
 #if PLATFORM(GTK) || PLATFORM(WPE)
-    if (auto* drawingArea = m_webPage.drawingArea())
+    if (RefPtr drawingArea = m_webPage.drawingArea())
         drawingArea->dispatchPendingCallbacksAfterEnsuringDrawing();
 #endif
 
@@ -487,13 +487,13 @@ void LayerTreeHost::handleDisplayRefreshMonitorUpdate(bool hasBeenRescheduled)
 
 void LayerTreeHost::willRenderFrame()
 {
-    if (auto* drawingArea = m_webPage.drawingArea())
+    if (RefPtr drawingArea = m_webPage.drawingArea())
         drawingArea->willStartRenderingUpdateDisplay();
 }
 
 void LayerTreeHost::didRenderFrame()
 {
-    if (auto* drawingArea = m_webPage.drawingArea())
+    if (RefPtr drawingArea = m_webPage.drawingArea())
         drawingArea->didCompleteRenderingUpdateDisplay();
     if (auto fps = m_compositor->fps()) {
         if (RefPtr document = m_webPage.corePage()->localTopDocument())

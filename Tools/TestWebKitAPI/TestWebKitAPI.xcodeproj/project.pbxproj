@@ -50,6 +50,7 @@
 /* Begin PBXBuildFile section */
 		041A1E34216FFDBC00789E0A /* PublicSuffix.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 041A1E33216FFDBC00789E0A /* PublicSuffix.cpp */; };
 		04DB2396235E43EC00328F17 /* BumpPointerAllocator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 0451A5A6235E438E009DF945 /* BumpPointerAllocator.cpp */; };
+		0714677A2DFE8DEA00F77867 /* WebPageTransferableTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 071467792DFE8DEA00F77867 /* WebPageTransferableTests.swift */; };
 		07275CBC2D01398C002315A5 /* _WebKit_SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 07275CBB2D01398C002315A5 /* _WebKit_SwiftUI.framework */; };
 		074E87E52CF920A20059E469 /* Bundle+Extras.swift in Sources */ = {isa = PBXBuildFile; fileRef = 074E87E42CF920A20059E469 /* Bundle+Extras.swift */; };
 		075663822DF68BAB00E9A4E3 /* TestPDFDocument.swift in Sources */ = {isa = PBXBuildFile; fileRef = 078B0CA82DF656BD00B3E569 /* TestPDFDocument.swift */; };
@@ -65,6 +66,7 @@
 		07C02FD22D6D6FBC0004ED97 /* rtl-sideways-scrolling.html in Copy Resources */ = {isa = PBXBuildFile; fileRef = 07C02FD12D6D6FBC0004ED97 /* rtl-sideways-scrolling.html */; };
 		07C046CA1E4262A8007201E7 /* CARingBufferTest.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 07C046C91E42573E007201E7 /* CARingBufferTest.cpp */; };
 		07CE1CF31F06A7E000BF89F5 /* GetUserMediaNavigation.mm in Sources */ = {isa = PBXBuildFile; fileRef = 07CE1CF21F06A7E000BF89F5 /* GetUserMediaNavigation.mm */; };
+		07DF05182E0531AD00007A1B /* WebPageNavigationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07DF05172E0531AD00007A1B /* WebPageNavigationTests.swift */; };
 		07E499911F9E56DF002F1EF3 /* GetUserMediaReprompt.mm in Sources */ = {isa = PBXBuildFile; fileRef = 07E499901F9E56A1002F1EF3 /* GetUserMediaReprompt.mm */; };
 		07FAA74D2CE95E3200128360 /* WebPageTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 07FAA74C2CE95E3200128360 /* WebPageTests.swift */; };
 		0DE559ED2A6B0AAF009AA320 /* WKWebViewResize.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0DE559E52A6B0AAF009AA320 /* WKWebViewResize.mm */; };
@@ -118,6 +120,7 @@
 		1CF59AE321E68932006E37EC /* ForceLightAppearanceInBundle.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1CF59ADF21E68925006E37EC /* ForceLightAppearanceInBundle.mm */; };
 		1CFD5D3F2851B62100A0E30B /* EnumeratedArray.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 1CFD5D3E2851B62100A0E30B /* EnumeratedArray.cpp */; };
 		1D67BFDC2433E0A7006B5047 /* PreemptVideoFullscreen.mm in Sources */ = {isa = PBXBuildFile; fileRef = 1D67BFDB2433E0A7006B5047 /* PreemptVideoFullscreen.mm */; };
+		23CB493B2DFEAD81006E424B /* PreciseSum.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 23CB493A2DFEAD7B006E424B /* PreciseSum.cpp */; };
 		272A691022F012DA000FDABB /* PageLoadState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 272A690F22F012C7000FDABB /* PageLoadState.cpp */; };
 		278E3E1923CD842F005A6B80 /* KeyedCoding.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 278E3E1823CD82FA005A6B80 /* KeyedCoding.cpp */; };
 		297234B7173AFAC700983601 /* CustomProtocolsInvalidScheme_Bundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 297234B5173AFAC700983601 /* CustomProtocolsInvalidScheme_Bundle.cpp */; };
@@ -629,6 +632,11 @@
 		946422142BC83114001B42B3 /* SerializedScriptValue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9464220C2BC8306D001B42B3 /* SerializedScriptValue.cpp */; };
 		9528E5FD279A0341008ADFEF /* BundleCSSStyleDeclarationHandlePlugIn.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9528E5FC279A0338008ADFEF /* BundleCSSStyleDeclarationHandlePlugIn.mm */; };
 		95C52729275F35E100DA7E40 /* FontShadowTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 95C52728275F35E100DA7E40 /* FontShadowTests.cpp */; };
+		97A826852DF8B677004EA039 /* JavaScriptCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = BC90964D1255620C00083756 /* JavaScriptCore.framework */; };
+		97A826862DF8B677004EA039 /* JavaScriptCore.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = BC90964D1255620C00083756 /* JavaScriptCore.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		97DAA8C32DF096CE004B3040 /* TypeCheckingTests.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 97DAA8C22DF096CE004B3040 /* TypeCheckingTests.cpp */; };
+		97DAA8CE2DF1F325004B3040 /* MetalCompilationTests.mm in Sources */ = {isa = PBXBuildFile; fileRef = 97DAA8CD2DF1F325004B3040 /* MetalCompilationTests.mm */; };
+		97DAA8D02DF70B91004B3040 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 97DAA8CF2DF70B91004B3040 /* Metal.framework */; };
 		9B0786A51C5885C300D159E3 /* InjectedBundleMakeAllShadowRootsOpen_Bundle.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B0786A41C5885C300D159E3 /* InjectedBundleMakeAllShadowRootsOpen_Bundle.cpp */; };
 		9B0C051924FDFB7D00F2FE31 /* CompactUniquePtrTuple.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 9B0C051824FDFB7000F2FE31 /* CompactUniquePtrTuple.cpp */; };
 		9B19CDA01F06DFE3000548DD /* NetworkProcessCrashWithPendingConnection.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9B19CD9E1F06DFE3000548DD /* NetworkProcessCrashWithPendingConnection.mm */; };
@@ -1618,6 +1626,17 @@
 			name = "Product Dependencies";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		97A826872DF8B677004EA039 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				97A826862DF8B677004EA039 /* JavaScriptCore.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		A176D23F2D6D079900C63915 /* Embed Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
 			buildActionMask = 2147483647;
@@ -2228,6 +2247,7 @@
 		070721142CE2F5F6004D9EC8 /* WKWebViewSwiftOverlayTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WKWebViewSwiftOverlayTests.swift; sourceTree = "<group>"; };
 		0711DF51226A95FB003DD2F7 /* AVFoundationSoftLinkTest.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AVFoundationSoftLinkTest.mm; sourceTree = "<group>"; };
 		07137049265320E500CA2C9A /* AudioBufferSize.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AudioBufferSize.mm; sourceTree = "<group>"; };
+		071467792DFE8DEA00F77867 /* WebPageTransferableTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebPageTransferableTests.swift; sourceTree = "<group>"; };
 		0721D4582838295400A95853 /* start-offset.ts */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.typescript; path = "start-offset.ts"; sourceTree = "<group>"; };
 		07275CBB2D01398C002315A5 /* _WebKit_SwiftUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = _WebKit_SwiftUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		07338E042B7433A400F949EB /* WritingSuggestions.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WritingSuggestions.mm; sourceTree = "<group>"; };
@@ -2261,6 +2281,7 @@
 		07CD32F52065B5420064A4BE /* AVFoundationPreference.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = AVFoundationPreference.mm; sourceTree = "<group>"; };
 		07CD32F72065B72A0064A4BE /* video.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = video.html; sourceTree = "<group>"; };
 		07CE1CF21F06A7E000BF89F5 /* GetUserMediaNavigation.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = GetUserMediaNavigation.mm; sourceTree = "<group>"; };
+		07DF05172E0531AD00007A1B /* WebPageNavigationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WebPageNavigationTests.swift; sourceTree = "<group>"; };
 		07E1F6A01FFC3A080096C7EC /* GetDisplayMedia.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = GetDisplayMedia.mm; sourceTree = "<group>"; };
 		07E1F6A11FFC44F90096C7EC /* getDisplayMedia.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = getDisplayMedia.html; path = ../WebKit/getDisplayMedia.html; sourceTree = "<group>"; };
 		07E499901F9E56A1002F1EF3 /* GetUserMediaReprompt.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = GetUserMediaReprompt.mm; sourceTree = "<group>"; };
@@ -2402,6 +2423,7 @@
 		1DAA52CB243BE621001A3159 /* one-video.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "one-video.html"; sourceTree = "<group>"; };
 		1F0559E42890A09D002E279C /* image-with-text.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "image-with-text.html"; sourceTree = "<group>"; };
 		1F83571A1D3FFB0E00E3967B /* WKBackForwardListTests.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = WKBackForwardListTests.mm; path = Tests/WebKit/WKBackForwardListTests.mm; sourceTree = SOURCE_ROOT; };
+		23CB493A2DFEAD7B006E424B /* PreciseSum.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = PreciseSum.cpp; sourceTree = "<group>"; };
 		260BA5781B1D2E7B004FA07C /* DFACombiner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = DFACombiner.cpp; sourceTree = "<group>"; };
 		260BA57A1B1D2EE2004FA07C /* DFAHelpers.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = DFAHelpers.h; sourceTree = "<group>"; };
 		261516D515B0E60500A2C201 /* SetAndUpdateCacheModel.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = SetAndUpdateCacheModel.mm; sourceTree = "<group>"; };
@@ -3319,6 +3341,10 @@
 		95A524942581A10D00461FE9 /* WKWebViewThemeColor.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebViewThemeColor.mm; sourceTree = "<group>"; };
 		95B6B3B6251EBF2F00FC4382 /* MediaDocument.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MediaDocument.mm; sourceTree = "<group>"; };
 		95C52728275F35E100DA7E40 /* FontShadowTests.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FontShadowTests.cpp; sourceTree = "<group>"; };
+		96E05A012DF7B66F00285827 /* WKWebExtensionAPIBookmarks.mm */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebExtensionAPIBookmarks.mm; sourceTree = "<group>"; };
+		97DAA8C22DF096CE004B3040 /* TypeCheckingTests.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = TypeCheckingTests.cpp; sourceTree = "<group>"; };
+		97DAA8CD2DF1F325004B3040 /* MetalCompilationTests.mm */ = {isa = PBXFileReference; explicitFileType = sourcecode.cpp.objcpp; path = MetalCompilationTests.mm; sourceTree = "<group>"; };
+		97DAA8CF2DF70B91004B3040 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
 		996EDCCA270E70AB006DF175 /* InspectorExtension-basic-page.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = "InspectorExtension-basic-page.html"; sourceTree = "<group>"; };
 		9984FACA1CFFAEEE008D198C /* WKWebViewTextInput.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = WKWebViewTextInput.mm; sourceTree = "<group>"; };
 		9984FACD1CFFB038008D198C /* editable-body.html */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; path = "editable-body.html"; sourceTree = "<group>"; };
@@ -4079,12 +4105,14 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				97A826852DF8B677004EA039 /* JavaScriptCore.framework in Frameworks */,
 				DDB3724628ECE32F00A2F32D /* libbmalloc.a in Frameworks */,
 				DDADB22628FA094400918467 /* libgtest.a in Frameworks */,
 				3A5DDAF528D1638A004DA950 /* libicucore.tbd in Frameworks */,
 				DDAA0E2929E640FA003ECAE2 /* libpas.a in Frameworks */,
 				3A5DDB2D28D55265004DA950 /* libwgsl.a in Frameworks */,
 				3A5DDB2C28D5525E004DA950 /* libWTF.a in Frameworks */,
+				97DAA8D02DF70B91004B3040 /* Metal.framework in Frameworks */,
 				FE9CD7E42D10CE7500266FDD /* Security.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -4184,7 +4212,9 @@
 				078F21282DD99E6300E87858 /* RunLoopQueueTests.swift */,
 				070721102CE2F4B8004D9EC8 /* TestWebKitAPIBundle-Bridging-Header.h */,
 				078B04472CF118BD00B453A6 /* URLSchemeHandlerTests.swift */,
+				07DF05172E0531AD00007A1B /* WebPageNavigationTests.swift */,
 				07FAA74C2CE95E3200128360 /* WebPageTests.swift */,
+				071467792DFE8DEA00F77867 /* WebPageTransferableTests.swift */,
 				070721142CE2F5F6004D9EC8 /* WKWebViewSwiftOverlayTests.swift */,
 			);
 			path = "WebKit Swift";
@@ -4750,6 +4780,7 @@
 				1CFAA40828947999009F894D /* WKWebExtension.mm */,
 				1CC94E3D2AC75AB10045F269 /* WKWebExtensionAPIAction.mm */,
 				1C2B4D4C2A81F42800C528A1 /* WKWebExtensionAPIAlarms.mm */,
+				96E05A012DF7B66F00285827 /* WKWebExtensionAPIBookmarks.mm */,
 				1C8ECFF12AFD6F49007BAA62 /* WKWebExtensionAPICommands.mm */,
 				1C40052E2B2CEE8C00F2D9EE /* WKWebExtensionAPICookies.mm */,
 				33C39CFF2B07D4B9008FA14B /* WKWebExtensionAPIDeclarativeNetRequest.mm */,
@@ -4841,10 +4872,12 @@
 				3A9C438028E3E057002F7294 /* ASTStringDumperTests.cpp */,
 				3A7AA55F28E28E99009E09C2 /* ConstLiteralTests.cpp */,
 				3A5DDAD228D15169004DA950 /* LexerTests.cpp */,
+				97DAA8CD2DF1F325004B3040 /* MetalCompilationTests.mm */,
 				3ADD897E299F1400005DCE4E /* MetalGenerationTests.cpp */,
 				3A5DDAED28D156FC004DA950 /* ParserTests.cpp */,
 				3A9C438928E3E240002F7294 /* TestWGSLAPI.cpp */,
 				3A9C438A28E3E240002F7294 /* TestWGSLAPI.h */,
+				97DAA8C22DF096CE004B3040 /* TypeCheckingTests.cpp */,
 			);
 			path = WGSL;
 			sourceTree = "<group>";
@@ -5163,6 +5196,7 @@
 				466CBA072DADC50A00B32457 /* libWTF.a */,
 				7C83E0291D0A5CDF00FEBCF3 /* libWTF.a */,
 				578CBD66204FB2C70083B9F2 /* LocalAuthentication.framework */,
+				97DAA8CF2DF70B91004B3040 /* Metal.framework */,
 				516281282325C45400BB7E42 /* PDFKit.framework */,
 				7A010BCC1D877C0D00EDE72A /* QuartzCore.framework */,
 				574F55D0204D471C002948C6 /* Security.framework */,
@@ -5931,6 +5965,7 @@
 				E38D65C823A45FA90063D69A /* PackedRef.cpp */,
 				E38D65C923A45FA90063D69A /* PackedRefPtr.cpp */,
 				0FE447971B76F1E3009498EB /* ParkingLot.cpp */,
+				23CB493A2DFEAD7B006E424B /* PreciseSum.cpp */,
 				53EC253F1E96BC80000831B9 /* PriorityQueue.cpp */,
 				0FC6C4CB141027E0005B7F0C /* RedBlackTree.cpp */,
 				93A427AA180DA26400CD24D7 /* Ref.cpp */,
@@ -6507,6 +6542,7 @@
 				3A15783D28D1505B00142DB1 /* Product Dependencies */,
 				3A15783F28D1505B00142DB1 /* Sources */,
 				3A15784628D1505B00142DB1 /* Frameworks */,
+				97A826872DF8B677004EA039 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -6996,10 +7032,12 @@
 				3A5DDADA28D15169004DA950 /* LexerTests.cpp in Sources */,
 				3A15784128D1505B00142DB1 /* mainIOS.mm in Sources */,
 				3A15784228D1505B00142DB1 /* mainMac.mm in Sources */,
+				97DAA8CE2DF1F325004B3040 /* MetalCompilationTests.mm in Sources */,
 				3ADD8988299F192F005DCE4E /* MetalGenerationTests.cpp in Sources */,
 				3A5DDAEE28D156FC004DA950 /* ParserTests.cpp in Sources */,
 				3A15784428D1505B00142DB1 /* TestsController.cpp in Sources */,
 				3A9C438B28E3E240002F7294 /* TestWGSLAPI.cpp in Sources */,
+				97DAA8C32DF096CE004B3040 /* TypeCheckingTests.cpp in Sources */,
 				3A15784528D1505B00142DB1 /* UtilitiesCocoa.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -7104,6 +7142,7 @@
 				E38D65CA23A45FAA0063D69A /* PackedRef.cpp in Sources */,
 				E38D65CB23A45FAA0063D69A /* PackedRefPtr.cpp in Sources */,
 				7C83DF591D0A590C00FEBCF3 /* ParkingLot.cpp in Sources */,
+				23CB493B2DFEAD81006E424B /* PreciseSum.cpp in Sources */,
 				53EC25411E96FD87000831B9 /* PriorityQueue.cpp in Sources */,
 				7C83DF131D0A590C00FEBCF3 /* RedBlackTree.cpp in Sources */,
 				7C83DF141D0A590C00FEBCF3 /* Ref.cpp in Sources */,
@@ -7772,7 +7811,9 @@
 				078F21302DD99E6A00E87858 /* RunLoopQueueTests.swift in Sources */,
 				078B0CA92DF656BD00B3E569 /* TestPDFDocument.swift in Sources */,
 				078B04482CF118BD00B453A6 /* URLSchemeHandlerTests.swift in Sources */,
+				07DF05182E0531AD00007A1B /* WebPageNavigationTests.swift in Sources */,
 				07FAA74D2CE95E3200128360 /* WebPageTests.swift in Sources */,
+				0714677A2DFE8DEA00F77867 /* WebPageTransferableTests.swift in Sources */,
 				077489CC2CE4061A00133938 /* WKWebViewSwiftOverlayTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -339,8 +339,8 @@ void LocalFrame::setDocument(RefPtr<Document>&& newDocument)
     }
 
     m_doc = newDocument.copyRef();
-    ASSERT(!m_doc || m_doc->domWindow());
-    ASSERT(!m_doc || m_doc->domWindow()->frame() == this);
+    ASSERT(!m_doc || m_doc->window());
+    ASSERT(!m_doc || m_doc->window()->frame() == this);
 
     // Don't use m_doc because it can be overwritten and we want to guarantee
     // that the document is not destroyed during this function call.
@@ -974,7 +974,7 @@ void LocalFrame::createView(const IntSize& viewportSize, const std::optional<Col
 
 LocalDOMWindow* LocalFrame::window() const
 {
-    return document() ? document()->domWindow() : nullptr;
+    return document() ? document()->window() : nullptr;
 }
 
 RefPtr<LocalDOMWindow> LocalFrame::protectedWindow() const
@@ -1297,7 +1297,7 @@ void LocalFrame::frameWasDisconnectedFromOwner() const
     if (!m_doc)
         return;
 
-    if (RefPtr window = m_doc->domWindow())
+    if (RefPtr window = m_doc->window())
         window->willDetachDocumentFromFrame();
 
     protectedDocument()->detachFromFrame();

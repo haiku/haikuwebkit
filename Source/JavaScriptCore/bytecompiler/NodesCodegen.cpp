@@ -5065,7 +5065,7 @@ SwitchInfo::SwitchType CaseBlockNode::tryTableSwitch(Vector<ExpressionNode*, 8>&
     
     if (typeForTable == SwitchNumber) {
         int32_t range = max_num - min_num;
-        if (min_num <= max_num && range <= 1000 && (range / literalVector.size()) < 10)
+        if (min_num <= max_num && range <= 1000 && (range / literalVector.size()) < Options::switchJumpTableAmountThreshold())
             return SwitchInfo::SwitchImmediate;
         return SwitchInfo::SwitchNone;
     } 
@@ -5074,7 +5074,7 @@ SwitchInfo::SwitchType CaseBlockNode::tryTableSwitch(Vector<ExpressionNode*, 8>&
     
     if (singleCharacterSwitch) {
         int32_t range = max_num - min_num;
-        if (min_num <= max_num && range <= 1000 && (range / literalVector.size()) < 10)
+        if (min_num <= max_num && range <= 1000 && (range / literalVector.size()) < Options::switchJumpTableAmountThreshold())
             return SwitchInfo::SwitchCharacter;
     }
 

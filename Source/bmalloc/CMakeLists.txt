@@ -13,7 +13,7 @@ set(bmalloc_SOURCES
     bmalloc/Cache.cpp
     bmalloc/CryptoRandom.cpp
     bmalloc/Deallocator.cpp
-    bmalloc/DebugHeap.cpp
+    bmalloc/SystemHeap.cpp
     bmalloc/Environment.cpp
     bmalloc/FreeList.cpp
     bmalloc/Gigacage.cpp
@@ -230,7 +230,7 @@ set(bmalloc_PUBLIC_HEADERS
     bmalloc/Chunk.h
     bmalloc/CryptoRandom.h
     bmalloc/Deallocator.h
-    bmalloc/DebugHeap.h
+    bmalloc/SystemHeap.h
     bmalloc/DeferredDecommit.h
     bmalloc/DeferredDecommitInlines.h
     bmalloc/DeferredTrigger.h
@@ -440,7 +440,7 @@ set(bmalloc_PUBLIC_HEADERS
     libpas/src/libpas/pas_deallocator.h
     libpas/src/libpas/pas_deallocator_scavenge_action.h
     libpas/src/libpas/pas_decommit_exclusion_range.h
-    libpas/src/libpas/pas_debug_heap.h
+    libpas/src/libpas/pas_system_heap.h
     libpas/src/libpas/pas_debug_spectrum.h
     libpas/src/libpas/pas_deferred_decommit_log.h
     libpas/src/libpas/pas_designated_intrinsic_heap.h

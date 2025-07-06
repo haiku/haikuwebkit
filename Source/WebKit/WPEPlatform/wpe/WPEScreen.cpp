@@ -530,3 +530,22 @@ void wpe_screen_set_refresh_rate(WPEScreen* screen, int refreshRate)
     screen->priv->refreshRate = refreshRate;
     g_object_notify_by_pspec(G_OBJECT(screen), sObjProperties[PROP_REFRESH_RATE]);
 }
+
+/**
+ * wpe_screen_get_sync_observer:
+ * @screen: a #WPEScreen
+ *
+ * Get the #WPEScreenSyncObserver of @screen. If screen sync is not supported, %NULL is returned.
+ *
+ * Returns: (transfer none) (nullable): a #WPEScreenSyncObserver or %NULL
+ */
+WPEScreenSyncObserver* wpe_screen_get_sync_observer(WPEScreen* screen)
+{
+    g_return_val_if_fail(WPE_IS_SCREEN(screen), nullptr);
+
+    auto* screenClass = WPE_SCREEN_GET_CLASS(screen);
+    if (screenClass->get_sync_observer)
+        return screenClass->get_sync_observer(screen);
+
+    return nullptr;
+}

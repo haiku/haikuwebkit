@@ -678,6 +678,26 @@ struct TextUnderElementMode {
     bool isHidden() { return considerHiddenState && inHiddenSubtree; }
 };
 
+struct LineRange {
+    unsigned startLineIndex;
+    // This index is inclusive.
+    unsigned endLineIndex;
+
+    LineRange()
+        : startLineIndex(0)
+        , endLineIndex(0)
+    { }
+    explicit LineRange(unsigned startIndex, unsigned endIndex)
+        : startLineIndex(startIndex)
+        , endLineIndex(endIndex)
+    { }
+
+    String debugDescription() const
+    {
+        return makeString("{start: "_s, startLineIndex, ", end: "_s, endLineIndex, '}');
+    }
+};
+
 enum class AccessibilityVisiblePositionForBounds {
     First,
     Last,
@@ -998,7 +1018,9 @@ public:
     // Returns all ranges of misspellings contained within the object.
     virtual Vector<AXTextMarkerRange> misspellingRanges() const = 0;
     virtual std::optional<SimpleRange> misspellingRange(const SimpleRange& start, AccessibilitySearchDirection) const = 0;
-    virtual std::optional<SimpleRange> visibleCharacterRange() const = 0;
+#if PLATFORM(COCOA)
+    virtual std::optional<NSRange> visibleCharacterRange() const = 0;
+#endif
     virtual bool hasPlainText() const = 0;
     virtual bool hasSameFont(AXCoreObject&) = 0;
     virtual bool hasSameFontColor(AXCoreObject&) = 0;

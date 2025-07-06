@@ -76,6 +76,10 @@ public:
     void setNeedsDisplayInRect(const IntRect&);
     void dropTilesInRect(const IntRect&);
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    bool setNeedsDisplayIfEDRHeadroomExceeds(float);
+#endif
+
     void updateTileLayerProperties();
 
     bool prepopulateRect(const FloatRect&);

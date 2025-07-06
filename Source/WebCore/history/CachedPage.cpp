@@ -185,10 +185,10 @@ void CachedPage::restore(Page& page)
             frameView->updateContentsSize();
     }
 
-    if (CheckedRef backForwardController = page.backForward(); page.settings().navigationAPIEnabled() && focusedDocument->domWindow() && backForwardController->currentItem()) {
+    if (CheckedRef backForwardController = page.backForward(); page.settings().navigationAPIEnabled() && focusedDocument->window() && backForwardController->currentItem()) {
         Ref currentItem = *backForwardController->currentItem();
         auto allItems = backForwardController->allItems();
-        focusedDocument->domWindow()->navigation().updateForReactivation(allItems, currentItem);
+        focusedDocument->window()->navigation().updateForReactivation(allItems, currentItem);
     }
 
     firePageShowEvent(page);

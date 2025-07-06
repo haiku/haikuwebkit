@@ -142,7 +142,7 @@ public:
     {
         CompiledContentExtensionData extensionData;
         InMemoryContentExtensionCompilationClient client(extensionData);
-        auto parsedRules = ContentExtensions::parseRuleList(filter);
+        auto parsedRules = ContentExtensions::parseRuleList(filter, WebCore::ContentExtensions::CSSSelectorsAllowed::Yes);
         auto compilerError = ContentExtensions::compileRuleList(client, WTFMove(filter), WTFMove(parsedRules.value()));
 
         // Compiling should always succeed here. We have other tests for compile failures.
@@ -1400,7 +1400,7 @@ void checkCompilerError(String&& json, std::error_code expectedError)
 {
     CompiledContentExtensionData extensionData;
     InMemoryContentExtensionCompilationClient client(extensionData);
-    auto parsedRules = ContentExtensions::parseRuleList(json);
+    auto parsedRules = ContentExtensions::parseRuleList(json, WebCore::ContentExtensions::CSSSelectorsAllowed::Yes);
     std::error_code compilerError;
     if (parsedRules.has_value())
         compilerError = ContentExtensions::compileRuleList(client, WTFMove(json), WTFMove(parsedRules.value()));

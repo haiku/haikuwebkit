@@ -48,27 +48,33 @@ struct SerializationContext;
 
 template<typename CSSType> struct Serialize;
 
-// Serialization Invokers
-template<typename CSSType> void serializationForCSS(StringBuilder& builder, const SerializationContext& context, const CSSType& value)
-{
-    Serialize<CSSType>{}(builder, context, value);
-}
+struct SerializeInvoker {
+   template<typename CSSType, typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const CSSType& value, Rest&&... rest) const
+   {
+        Serialize<CSSType>{}(builder, context, value, std::forward<Rest>(rest)...);
+   }
 
-template<typename CSSType> [[nodiscard]] String serializationForCSS(const SerializationContext& context, const CSSType& value)
-{
-    StringBuilder builder;
-    serializationForCSS(builder, context, value);
-    return builder.toString();
-}
+    template<typename CSSType, typename... Rest> [[nodiscard]] String operator()(const SerializationContext& context, const CSSType& value, Rest&&... rest) const
+    {
+        StringBuilder builder;
+        this->operator()(builder, context, value, std::forward<Rest>(rest)...);
+        return builder.toString();
+    }
+};
+inline constexpr SerializeInvoker serializationForCSS{};
 
-template<typename CSSType> void serializationForCSSOnOptionalLike(StringBuilder& builder, const SerializationContext& context, const CSSType& value)
+void serializationForCSSCustomIdentifier(StringBuilder&, const SerializationContext&, const CustomIdentifier&);
+void serializationForCSSString(StringBuilder&, const SerializationContext&, const WTF::AtomString&);
+void serializationForCSSString(StringBuilder&, const SerializationContext&, const WTF::String&);
+
+template<typename CSSType, typename... Rest> void serializationForCSSOnOptionalLike(StringBuilder& builder, const SerializationContext& context, const CSSType& value, Rest&&... rest)
 {
     if (!value)
         return;
-    serializationForCSS(builder, context, *value);
+    serializationForCSS(builder, context, *value, std::forward<Rest>(rest)...);
 }
 
-template<typename CSSType> void serializationForCSSOnTupleLike(StringBuilder& builder, const SerializationContext& context, const CSSType& value, ASCIILiteral separator)
+template<typename CSSType, typename... Rest> void serializationForCSSOnTupleLike(StringBuilder& builder, const SerializationContext& context, const CSSType& value, ASCIILiteral separator, Rest&&... rest)
 {
     auto swappedSeparator = ""_s;
     auto caller = WTF::makeVisitor(
@@ -76,79 +82,79 @@ template<typename CSSType> void serializationForCSSOnTupleLike(StringBuilder& bu
             if (!element)
                 return;
             builder.append(std::exchange(swappedSeparator, separator));
-            serializationForCSS(builder, context, *element);
+            serializationForCSS(builder, context, *element, rest...);
         },
         [&]<typename T>(const Markable<T>& element) {
             if (!element)
                 return;
             builder.append(std::exchange(swappedSeparator, separator));
-            serializationForCSS(builder, context, *element);
+            serializationForCSS(builder, context, *element, rest...);
         },
         [&](const auto& element) {
             builder.append(std::exchange(swappedSeparator, separator));
-            serializationForCSS(builder, context, element);
+            serializationForCSS(builder, context, element, rest...);
         }
     );
 
     WTF::apply([&](const auto& ...x) { (..., caller(x)); }, value);
 }
 
-template<typename CSSType> void serializationForCSSOnRangeLike(StringBuilder& builder, const SerializationContext& context, const CSSType& value, ASCIILiteral separator)
+template<typename CSSType, typename... Rest> void serializationForCSSOnRangeLike(StringBuilder& builder, const SerializationContext& context, const CSSType& value, ASCIILiteral separator, Rest&&... rest)
 {
     auto swappedSeparator = ""_s;
     for (const auto& element : value) {
         builder.append(std::exchange(swappedSeparator, separator));
-        serializationForCSS(builder, context, element);
+        serializationForCSS(builder, context, element, rest...);
     }
 }
 
-template<typename CSSType> void serializationForCSSOnVariantLike(StringBuilder& builder, const SerializationContext& context, const CSSType& value)
+template<typename CSSType, typename... Rest> void serializationForCSSOnVariantLike(StringBuilder& builder, const SerializationContext& context, const CSSType& value, Rest&&... rest)
 {
-    WTF::switchOn(value, [&](const auto& alternative) { serializationForCSS(builder, context, alternative); });
+    WTF::switchOn(value, [&](const auto& alternative) { serializationForCSS(builder, context, alternative, std::forward<Rest>(rest)...); });
 }
 
 // Constrained for `TreatAsEmptyLike`.
 template<EmptyLike CSSType> struct Serialize<CSSType> {
-    void operator()(StringBuilder&, const SerializationContext&, const CSSType&)
+    template<typename... Rest> void operator()(StringBuilder&, const SerializationContext&, const CSSType&, Rest&&...)
     {
     }
 };
 
 // Constrained for `TreatAsOptionalLike`.
 template<OptionalLike CSSType> struct Serialize<CSSType> {
-    void operator()(StringBuilder& builder, const SerializationContext& context, const CSSType& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const CSSType& value, Rest&&... rest)
     {
-        serializationForCSSOnOptionalLike(builder, context, value);
+        serializationForCSSOnOptionalLike(builder, context, value, std::forward<Rest>(rest)...);
     }
 };
 
 // Constrained for `TreatAsTupleLike`.
 template<TupleLike CSSType> struct Serialize<CSSType> {
-    void operator()(StringBuilder& builder, const SerializationContext& context, const CSSType& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const CSSType& value, Rest&&... rest)
     {
-        serializationForCSSOnTupleLike(builder, context, value, SerializationSeparatorString<CSSType>);
+        serializationForCSSOnTupleLike(builder, context, value, SerializationSeparatorString<CSSType>, std::forward<Rest>(rest)...);
     }
 };
 
 // Constrained for `TreatAsRangeLike`.
 template<RangeLike CSSType> struct Serialize<CSSType> {
-    void operator()(StringBuilder& builder, const SerializationContext& context, const CSSType& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const CSSType& value, Rest&&... rest)
     {
-        serializationForCSSOnRangeLike(builder, context, value, SerializationSeparatorString<CSSType>);
+        serializationForCSSOnRangeLike(builder, context, value, SerializationSeparatorString<CSSType>, std::forward<Rest>(rest)...);
     }
 };
 
 // Constrained for `TreatAsVariantLike`.
 template<VariantLike CSSType> struct Serialize<CSSType> {
-    void operator()(StringBuilder& builder, const SerializationContext& context, const CSSType& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const CSSType& value, Rest&&... rest)
     {
-        serializationForCSSOnVariantLike(builder, context, value);
+        serializationForCSSOnVariantLike(builder, context, value, std::forward<Rest>(rest)...);
     }
 };
 
 // Specialization for `Constant`.
 template<CSSValueID C> struct Serialize<Constant<C>> {
-    void operator()(StringBuilder& builder, const SerializationContext&, const Constant<C>& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext&, const Constant<C>& value, Rest&&...)
     {
         builder.append(nameLiteralForSerialization(value.value));
     }
@@ -156,62 +162,71 @@ template<CSSValueID C> struct Serialize<Constant<C>> {
 
 // Specialization for `CustomIdentifier`.
 template<> struct Serialize<CustomIdentifier> {
-    void operator()(StringBuilder&, const SerializationContext&, const CustomIdentifier&);
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const CustomIdentifier& value, Rest&&...)
+    {
+        serializationForCSSCustomIdentifier(builder, context, value);
+    }
 };
 
 // Specialization for `WTF::AtomString`.
 template<> struct Serialize<WTF::AtomString> {
-    void operator()(StringBuilder&, const SerializationContext&, const WTF::AtomString&);
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const WTF::AtomString& value, Rest&&...)
+    {
+        serializationForCSSString(builder, context, value);
+    }
 };
 
 // Specialization for `WTF::String`.
 template<> struct Serialize<WTF::String> {
-    void operator()(StringBuilder&, const SerializationContext&, const WTF::String&);
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const WTF::String& value, Rest&&...)
+    {
+        serializationForCSSString(builder, context, value);
+    }
 };
 
 // Specialization for `FunctionNotation`.
 template<CSSValueID Name, typename CSSType> struct Serialize<FunctionNotation<Name, CSSType>> {
-    void operator()(StringBuilder& builder, const SerializationContext& context, const FunctionNotation<Name, CSSType>& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const FunctionNotation<Name, CSSType>& value, Rest&&... rest)
     {
         builder.append(nameLiteralForSerialization(value.name), '(');
-        serializationForCSS(builder, context, value.parameters);
+        serializationForCSS(builder, context, value.parameters, std::forward<Rest>(rest)...);
         builder.append(')');
     }
 };
 
 // Specialization for `MinimallySerializingSpaceSeparatedSize`.
 template<typename CSSType> struct Serialize<MinimallySerializingSpaceSeparatedSize<CSSType>> {
-    void operator()(StringBuilder& builder, const SerializationContext& context, const MinimallySerializingSpaceSeparatedSize<CSSType>& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const MinimallySerializingSpaceSeparatedSize<CSSType>& value, Rest&&... rest)
     {
         constexpr auto separator = SerializationSeparatorString<MinimallySerializingSpaceSeparatedSize<CSSType>>;
 
         if (get<0>(value) != get<1>(value)) {
-            serializationForCSSOnTupleLike(builder, context, std::tuple { get<0>(value), get<1>(value) }, separator);
+            serializationForCSSOnTupleLike(builder, context, std::tuple { get<0>(value), get<1>(value) }, separator, std::forward<Rest>(rest)...);
             return;
         }
-        serializationForCSS(builder, context, get<0>(value));
+        serializationForCSS(builder, context, get<0>(value), std::forward<Rest>(rest)...);
     }
 };
 
 // Specialization for `MinimallySerializingSpaceSeparatedRectEdges`.
 template<typename CSSType> struct Serialize<MinimallySerializingSpaceSeparatedRectEdges<CSSType>> {
-    void operator()(StringBuilder& builder, const SerializationContext& context, const MinimallySerializingSpaceSeparatedRectEdges<CSSType>& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const SerializationContext& context, const MinimallySerializingSpaceSeparatedRectEdges<CSSType>& value, Rest&&... rest)
     {
         constexpr auto separator = SerializationSeparatorString<MinimallySerializingSpaceSeparatedRectEdges<CSSType>>;
 
         if (value.left() != value.right()) {
-            serializationForCSSOnTupleLike(builder, context, std::tuple { value.top(), value.right(), value.bottom(), value.left() }, separator);
+            serializationForCSSOnTupleLike(builder, context, std::tuple { value.top(), value.right(), value.bottom(), value.left() }, separator, std::forward<Rest>(rest)...);
             return;
         }
         if (value.bottom() != value.top()) {
-            serializationForCSSOnTupleLike(builder, context, std::tuple { value.top(), value.right(), value.bottom() }, separator);
+            serializationForCSSOnTupleLike(builder, context, std::tuple { value.top(), value.right(), value.bottom() }, separator, std::forward<Rest>(rest)...);
             return;
         }
         if (value.right() != value.top()) {
-            serializationForCSSOnTupleLike(builder, context, std::tuple { value.top(), value.right() }, separator);
+            serializationForCSSOnTupleLike(builder, context, std::tuple { value.top(), value.right() }, separator, std::forward<Rest>(rest)...);
             return;
         }
-        serializationForCSS(builder, context, value.top());
+        serializationForCSS(builder, context, value.top(), std::forward<Rest>(rest)...);
     }
 };
 
@@ -227,18 +242,21 @@ template<typename CSSType> struct Serialize<MinimallySerializingSpaceSeparatedRe
 
 template<typename CSSType> struct ComputedStyleDependenciesCollector;
 
-// ComputedStyleDependencies Invoker
-template<typename CSSType> void collectComputedStyleDependencies(ComputedStyleDependencies& dependencies, const CSSType& value)
-{
-    ComputedStyleDependenciesCollector<CSSType>{}(dependencies, value);
-}
+struct ComputedStyleDependenciesCollectorInvoker {
+    // ComputedStyleDependencies Invoker
+    template<typename CSSType> void operator()(ComputedStyleDependencies& dependencies, const CSSType& value) const
+    {
+        ComputedStyleDependenciesCollector<CSSType>{}(dependencies, value);
+    }
 
-template<typename CSSType> [[nodiscard]] ComputedStyleDependencies collectComputedStyleDependencies(const CSSType& value)
-{
-    ComputedStyleDependencies dependencies;
-    collectComputedStyleDependencies(dependencies, value);
-    return dependencies;
-}
+    template<typename CSSType> [[nodiscard]] ComputedStyleDependencies operator()(const CSSType& value) const
+    {
+        ComputedStyleDependencies dependencies;
+        this->operator()(dependencies, value);
+        return dependencies;
+    }
+};
+inline constexpr ComputedStyleDependenciesCollectorInvoker collectComputedStyleDependencies{};
 
 template<typename CSSType> auto collectComputedStyleDependenciesOnOptionalLike(ComputedStyleDependencies& dependencies, const CSSType& value)
 {
@@ -352,11 +370,13 @@ template<> struct ComputedStyleDependenciesCollector<WTF::URL> {
 
 template<typename CSSType> struct CSSValueChildrenVisitor;
 
-// CSSValueVisitor Invoker
-template<typename CSSType> IterationStatus visitCSSValueChildren(NOESCAPE const Function<IterationStatus(CSSValue&)>& func, const CSSType& value)
-{
-    return CSSValueChildrenVisitor<CSSType>{}(func, value);
-}
+struct CSSValueChildrenVisitorInvoker {
+    template<typename CSSType> IterationStatus operator()(NOESCAPE const Function<IterationStatus(CSSValue&)>& func, const CSSType& value) const
+    {
+        return CSSValueChildrenVisitor<CSSType>{}(func, value);
+    }
+};
+inline constexpr CSSValueChildrenVisitorInvoker visitCSSValueChildren{};
 
 template<typename CSSType> IterationStatus visitCSSValueChildrenOnOptionalLike(NOESCAPE const Function<IterationStatus(CSSValue&)>& func, const CSSType& value)
 {
@@ -477,10 +497,13 @@ template<> struct CSSValueChildrenVisitor<WTF::URL> {
 
 template<typename CSSType> struct CSSValueCreation;
 
-template<typename CSSType> Ref<CSSValue> createCSSValue(CSSValuePool& pool, const CSSType& value)
-{
-    return CSSValueCreation<CSSType>{}(pool, value);
-}
+struct CSSValueCreationInvoker {
+    template<typename CSSType, typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const CSSType& value, Rest&&... rest) const
+    {
+        return CSSValueCreation<CSSType>{}(pool, value, std::forward<Rest>(rest)...);
+    }
+};
+inline constexpr CSSValueCreationInvoker createCSSValue{};
 
 Ref<CSSValue> makePrimitiveCSSValue(CSSValueID);
 Ref<CSSValue> makePrimitiveCSSValue(const CustomIdentifier&);
@@ -495,18 +518,18 @@ template<> Ref<CSSValue> makeListCSSValue<SerializationSeparatorType::Slash>(CSS
 
 // Constrained for `TreatAsVariantLike`.
 template<VariantLike CSSType> struct CSSValueCreation<CSSType> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const CSSType& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const CSSType& value, Rest&&... rest)
     {
-        return WTF::switchOn(value, [&](const auto& alternative) { return createCSSValue(pool, alternative); });
+        return WTF::switchOn(value, [&](const auto& alternative) { return createCSSValue(pool, alternative, std::forward<Rest>(rest)...); });
     }
 };
 
 // Constrained for `TreatAsTupleLike`
 template<TupleLike CSSType> struct CSSValueCreation<CSSType> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const CSSType& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const CSSType& value, Rest&&... rest)
     {
         if constexpr (std::tuple_size_v<CSSType> == 1 && SerializationSeparator<CSSType> == SerializationSeparatorType::None) {
-            return createCSSValue(pool, get<0>(value));
+            return createCSSValue(pool, get<0>(value), std::forward<Rest>(rest)...);
         } else {
             CSSValueListBuilder list;
 
@@ -514,15 +537,15 @@ template<TupleLike CSSType> struct CSSValueCreation<CSSType> {
                 [&]<typename T>(const std::optional<T>& element) {
                     if (!element)
                         return;
-                    list.append(createCSSValue(pool, *element));
+                    list.append(createCSSValue(pool, *element, rest...));
                 },
                 [&]<typename T>(const Markable<T>& element) {
                     if (!element)
                         return;
-                    list.append(createCSSValue(pool, *element));
+                    list.append(createCSSValue(pool, *element, rest...));
                 },
                 [&](const auto& element) {
-                    list.append(createCSSValue(pool, element));
+                    list.append(createCSSValue(pool, element, rest...));
                 }
             );
             WTF::apply([&](const auto& ...x) { (..., caller(x)); }, value);
@@ -534,11 +557,11 @@ template<TupleLike CSSType> struct CSSValueCreation<CSSType> {
 
 // Constrained for `TreatAsRangeLike`
 template<RangeLike CSSType> struct CSSValueCreation<CSSType> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const CSSType& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const CSSType& value, Rest&&... rest)
     {
         CSSValueListBuilder list;
         for (const auto& element : value)
-            list.append(createCSSValue(pool, element));
+            list.append(createCSSValue(pool, element, rest...));
 
         return makeListCSSValue<SerializationSeparator<CSSType>>(WTFMove(list));
     }
@@ -546,7 +569,7 @@ template<RangeLike CSSType> struct CSSValueCreation<CSSType> {
 
 // Specialization for `Constant`.
 template<CSSValueID Id> struct CSSValueCreation<Constant<Id>> {
-    Ref<CSSValue> operator()(CSSValuePool&, const Constant<Id>&)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool&, const Constant<Id>&, Rest&&...)
     {
         return makePrimitiveCSSValue(Id);
     }
@@ -554,7 +577,7 @@ template<CSSValueID Id> struct CSSValueCreation<Constant<Id>> {
 
 // Specialization for `CustomIdentifier`.
 template<> struct CSSValueCreation<CustomIdentifier> {
-    Ref<CSSValue> operator()(CSSValuePool&, const CustomIdentifier& customIdentifier)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool&, const CustomIdentifier& customIdentifier, Rest&&...)
     {
         return makePrimitiveCSSValue(customIdentifier);
     }
@@ -562,7 +585,7 @@ template<> struct CSSValueCreation<CustomIdentifier> {
 
 // Specialization for `WTF::AtomString`.
 template<> struct CSSValueCreation<WTF::AtomString> {
-    Ref<CSSValue> operator()(CSSValuePool&, const WTF::AtomString& string)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool&, const WTF::AtomString& string, Rest&&...)
     {
         return makePrimitiveCSSValue(string);
     }
@@ -570,7 +593,7 @@ template<> struct CSSValueCreation<WTF::AtomString> {
 
 // Specialization for `WTF::String`.
 template<> struct CSSValueCreation<WTF::String> {
-    Ref<CSSValue> operator()(CSSValuePool&, const WTF::String& string)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool&, const WTF::String& string, Rest&&...)
     {
         return makePrimitiveCSSValue(string);
     }
@@ -578,87 +601,19 @@ template<> struct CSSValueCreation<WTF::String> {
 
 // Specialization for `FunctionNotation`.
 template<CSSValueID Name, typename CSSType> struct CSSValueCreation<FunctionNotation<Name, CSSType>> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const FunctionNotation<Name, CSSType>& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const FunctionNotation<Name, CSSType>& value, Rest&&... rest)
     {
-        return makeFunctionCSSValue(value.name, createCSSValue(pool, value.parameters));
+        return makeFunctionCSSValue(value.name, createCSSValue(pool, value.parameters, std::forward<Rest>(rest)...));
     }
 };
 
 // Specialization for `MinimallySerializingSpaceSeparatedSize`.
 template<typename CSSType> struct CSSValueCreation<MinimallySerializingSpaceSeparatedSize<CSSType>> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const MinimallySerializingSpaceSeparatedSize<CSSType>& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const MinimallySerializingSpaceSeparatedSize<CSSType>& value, Rest&&... rest)
     {
-        return makeSpaceSeparatedCoalescingPairCSSValue(createCSSValue(pool, get<0>(value)), createCSSValue(pool, get<1>(value)));
+        return makeSpaceSeparatedCoalescingPairCSSValue(createCSSValue(pool, get<0>(value), rest...), createCSSValue(pool, get<1>(value), rest...));
     }
 };
-
-// MARK: - Logging
-
-template<typename CSSType> void logForCSSOnTupleLike(TextStream& ts, const CSSType& value, ASCIILiteral separator)
-{
-    auto swappedSeparator = ""_s;
-    auto caller = WTF::makeVisitor(
-        [&]<typename T>(const std::optional<T>& element) {
-            if (!element)
-                return;
-            ts << std::exchange(swappedSeparator, separator);
-            ts << *element;
-        },
-        [&]<typename T>(const Markable<T>& element) {
-            if (!element)
-                return;
-            ts << std::exchange(swappedSeparator, separator);
-            ts << *element;
-        },
-        [&](const auto& element) {
-            ts << std::exchange(swappedSeparator, separator);
-            ts << element;
-        }
-    );
-
-    WTF::apply([&](const auto& ...x) { (..., caller(x)); }, value);
-}
-
-template<typename CSSType> void logForCSSOnRangeLike(TextStream& ts, const CSSType& value, ASCIILiteral separator)
-{
-    auto swappedSeparator = ""_s;
-    for (const auto& element : value) {
-        ts << std::exchange(swappedSeparator, separator);
-        ts << element;
-    }
-}
-
-template<typename CSSType> void logForCSSOnVariantLike(TextStream& ts, const CSSType& value)
-{
-    WTF::switchOn(value, [&](const auto& value) { ts << value; });
-}
-
-// Constrained for `TreatAsEmptyLike`.
-template<EmptyLike CSSType> TextStream& operator<<(TextStream& ts, const CSSType&)
-{
-    return ts;
-}
-
-// Constrained for `TreatAsTupleLike`.
-template<TupleLike CSSType> TextStream& operator<<(TextStream& ts, const CSSType& value)
-{
-    logForCSSOnTupleLike(ts, value, SerializationSeparator<CSSType>);
-    return ts;
-}
-
-// Constrained for `TreatAsRangeLike`.
-template<RangeLike CSSType> TextStream& operator<<(TextStream& ts, const CSSType& value)
-{
-    logForCSSOnRangeLike(ts, value, SerializationSeparator<CSSType>);
-    return ts;
-}
-
-// Constrained for `TreatAsVariantLike`.
-template<VariantLike CSSType> TextStream& operator<<(TextStream& ts, const CSSType& value)
-{
-    logForCSSOnVariantLike(ts, value);
-    return ts;
-}
 
 } // namespace CSS
 } // namespace WebCore

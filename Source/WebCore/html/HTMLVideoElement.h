@@ -65,7 +65,6 @@ public:
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
     bool webkitWirelessVideoPlaybackDisabled() const;
-    void setWebkitWirelessVideoPlaybackDisabled(bool);
 #endif
 
 #if ENABLE(MEDIA_STATISTICS)

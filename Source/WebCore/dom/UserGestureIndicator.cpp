@@ -145,7 +145,7 @@ UserGestureIndicator::UserGestureIndicator(std::optional<IsProcessingUserGesture
         // https://html.spec.whatwg.org/multipage/interaction.html#user-activation-processing-model
         // When a user interaction causes firing of an activation triggering input event in a Document...
         // NOTE: Only activate the relevent DOMWindow when the gestureType is an ActivationTriggering one
-        RefPtr window = document->domWindow();
+        RefPtr window = document->window();
         if (window && gestureType == UserGestureType::ActivationTriggering)
             window->notifyActivated(currentToken()->startTime());
     }

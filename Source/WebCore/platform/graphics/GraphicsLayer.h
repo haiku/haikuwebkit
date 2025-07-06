@@ -428,6 +428,8 @@ public:
 #if HAVE(SUPPORT_HDR_DISPLAY)
     bool drawsHDRContent() const { return m_drawsHDRContent; }
     WEBCORE_EXPORT virtual void setDrawsHDRContent(bool);
+
+    WEBCORE_EXPORT virtual void setNeedsDisplayIfEDRHeadroomExceeds(float);
 #endif
 
     bool contentsAreVisible() const { return m_contentsVisible; }

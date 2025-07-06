@@ -2492,6 +2492,11 @@ header: <WebCore/ScreenProperties.h>
     bool screenSupportsExtendedColor;
     bool screenHasInvertedColors;
     bool screenSupportsHighDynamicRange;
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    bool suppressEDR;
+    float currentEDRHeadroom;
+    float maxEDRHeadroom;
+#endif
 #if PLATFORM(MAC)
     WebCore::FloatSize screenSize;
     bool screenIsMonochrome;
@@ -5327,6 +5332,11 @@ header: <WebCore/DisplayListItems.h>
     WebCore::ImageOrientation::Orientation orientation()
 };
 
+[AdditionalEncoder=StreamConnectionEncoder] enum class WebCore::DrawsHDRContent : uint8_t {
+    No,
+    Yes
+};
+
 header: <WebCore/ImageTypes.h>
 [CustomHeader, AdditionalEncoder=StreamConnectionEncoder] struct WebCore::Headroom {
     float headroom;
@@ -5338,6 +5348,7 @@ header: <WebCore/ImageTypes.h>
     WebCore::DecodingMode decodingMode();
     WebCore::ImageOrientation::Orientation orientation().orientation();
     WebCore::InterpolationQuality interpolationQuality();
+    WebCore::DrawsHDRContent drawsHDRContent();
     WebCore::Headroom headroom();
     WebCore::PlatformDynamicRangeLimit dynamicRangeLimit();
 };
@@ -9177,3 +9188,10 @@ struct WebCore::MessageForTesting {
     AtomString type;
     String data;
 };
+
+struct WebCore::HostingContext {
+    uint32_t contextID;
+#if ENABLE(MACH_PORT_LAYER_HOSTING)
+    WTF::MachSendRightAnnotated sendRightAnnotated;
+#endif
+}

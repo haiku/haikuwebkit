@@ -373,7 +373,7 @@ String HitTestResult::altDisplayString() const
         return displayString(image->attributeWithoutSynchronization(altAttr), m_innerNonSharedNode.get());
 
     if (RefPtr input = dynamicDowncast<HTMLInputElement>(*m_innerNonSharedNode))
-        return displayString(input->alt(), m_innerNonSharedNode.get());
+        return displayString(input->attributeWithoutSynchronization(altAttr), m_innerNonSharedNode.get());
 
     return String();
 }

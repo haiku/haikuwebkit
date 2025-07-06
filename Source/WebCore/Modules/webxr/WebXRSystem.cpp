@@ -489,7 +489,7 @@ void WebXRSystem::requestSession(Document& document, XRSessionMode mode, const X
     // 3. Let global object be the relevant Global object for the XRSystem on which this method was invoked.
     bool immersive = isImmersive(mode);
     Ref protectedDocument { document };
-    RefPtr globalObject = protectedDocument->domWindow();
+    RefPtr globalObject = protectedDocument->window();
     if (!globalObject) {
         promise.reject(Exception { ExceptionCode::InvalidAccessError });
         return;

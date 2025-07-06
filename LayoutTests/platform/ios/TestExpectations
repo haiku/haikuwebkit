@@ -675,6 +675,7 @@ fast/events/input-image-scrolled-x-y.html [ Skip ]
 fast/events/keydown-1.html [ Skip ]
 fast/events/monotonic-event-time.html [ Skip ]
 fast/events/mosuedrag-on-canvas-should-not-start-selection.html [ Skip ]
+fast/events/mousemove-events-within-no-element.html [ Skip ]
 fast/events/mouse-click-events.html [ Skip ]
 fast/events/mouse-cursor-change.html [ Skip ]
 fast/events/mouse-cursor-image-set.html [ Skip ]
@@ -2395,7 +2396,6 @@ accessibility/video-element-url-attribute.html [ Pass ]
 accessibility/visible-character-range-basic.html [ Pass ]
 accessibility/visible-character-range-height-changes.html [ Pass ]
 accessibility/visible-character-range-vertical-rl.html [ Pass ]
-accessibility/visible-character-range-width-changes.html [ Pass ]
 accessibility/visibility-visible-inside-hidden.html [ Pass ]
 
 # Enable "aria-current" tests for iOS.
@@ -4503,13 +4503,7 @@ fast/images/pagewide-play-pause-animateTransform-svg-animation.html [ Pass ]
 fast/images/pagewide-play-pause-offscreen-animations.html [ Pass ]
 
 # Only applicable on platforms with HDR support
-compositing/hdr/hdr-basic-canvas.html [ Pass ]
-compositing/hdr/hdr-basic-image.html [ Pass ]
-compositing/hdr/hdr-basic-image-dynamic-range-limit.html [ Pass ]
-compositing/hdr/hdr-background-image.html [ Pass ]
-compositing/hdr/hdr-border-image.html [ Pass ]
-compositing/hdr/hdr-pseudo-before-image.html [ Pass ]
-compositing/hdr/hdr-svg-inline-image.html [ Pass ]
+compositing/hdr [ Pass ]
 fast/images/hdr-basic-image.html [ Pass ]
 fast/images/hdr-basic-image-dynamic-range-limit.html [ Pass ]
 fast/images/hdr-background-image.html [ Pass ]
@@ -7701,8 +7695,6 @@ webkit.org/b/288677 [ Debug arm64 ] fast/scrolling/ios/body-overflow-hidden-keyb
 
 webkit.org/b/288694 [ Debug arm64 ] fast/multicol/body-stuck-with-dirty-bit-with-columns.html [ Crash ]
 
-webkit.org/b/288888 [ arm64 ] compositing/contents-format/deep-color-backing-store.html [ Failure ]
-
 webkit.org/b/287569 http/tests/site-isolation/page-visibility-onvisibilitychange-in-iframe.html [ Timeout ]
 
 webkit.org/b/287033 fast/mediastream/microphone-interruption-and-audio-session.html [ Failure ]
@@ -7911,11 +7903,6 @@ webkit.org/b/294276 [ Debug ] http/wpt/mediarecorder/MediaRecorder-first-frame.h
 
 webkit.org/b/294277 [ Release ] imported/w3c/web-platform-tests/css/css-position/sticky/position-sticky-fixed-ancestor-iframe.html [ Pass ImageOnlyFailure ]
 
-# webkit.org/b/294285 REGRESSION( 295257@main - 295259@main?): [ wk2 Debug ] 3x imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.*.html are flaky crashes.
-[ Debug ] imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.lang.inherit.html [ Pass Crash ]
-[ Debug ] imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.lang.html [ Pass Crash ]
-[ Debug ] imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.direction.inherit.html [ Pass Crash ]
-
 webkit.org/b/294291 [ Debug ] ipc/invalid-addSourceBuffer-to-GPU-process-crash.html [ Failure ]
 
 webkit.org/b/294274 [ Debug ] platform/ios/mediastream/audio-muted-in-background-tab.html [ Crash ]
@@ -7924,5 +7911,6 @@ webkit.org/b/294274 [ Debug ] platform/ios/mediastream/audio-muted-in-background
  webgl/1.0.x/conformance/textures/misc/gl-teximage.html [ Failure ]
  webgl/2.0.y/conformance/textures/misc/gl-teximage.html [ Failure ]
 
-fast/snapshot/nested-stacking-context.html [ Skip ]
-fast/snapshot/positioned-abs-relative-body.html [ Skip ]
+fast/snapshot [ Skip ]
+
+imported/w3c/web-platform-tests/focus/focus-contenteditable-element-in-iframe-scroll-into-view.html [ Skip ]

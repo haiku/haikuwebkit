@@ -714,7 +714,7 @@ bool WebXRSession::posesCanBeReported(const Document& document) const
 {
     // 1. If session’s relevant global object is not the current global object, return false.
     RefPtr sessionDocument = downcast<Document>(scriptExecutionContext());
-    if (!sessionDocument || sessionDocument->domWindow() != document.domWindow())
+    if (!sessionDocument || sessionDocument->window() != document.window())
         return false;
 
     // 2. If session's visibilityState is "hidden", return false.

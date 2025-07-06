@@ -1592,7 +1592,7 @@ MediaSession* MediaElementSession::mediaSession() const
     if (!element)
         return nullptr;
 
-    auto* window = element->document().domWindow();
+    auto* window = element->document().window();
     if (!window)
         return nullptr;
     return &NavigatorMediaSession::mediaSession(window->protectedNavigator());

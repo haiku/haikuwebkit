@@ -77,7 +77,6 @@
 #import "WKSelectMenuListViewController.h"
 #import "WKSyntheticFlagsChangedWebEvent.h"
 #import "WKTapHighlightView.h"
-#import "WKTextAnimationType.h"
 #import "WKTextInputListViewController.h"
 #import "WKTextInteractionWrapper.h"
 #import "WKTextPlaceholder.h"
@@ -212,7 +211,7 @@
 #endif
 
 #if ENABLE(WRITING_TOOLS)
-#import "WKSTextAnimationManager.h"
+#import "WKTextAnimationManagerIOS.h"
 #endif
 
 #if ENABLE(MODEL_PROCESS) || ENABLE(WRITING_TOOLS)
@@ -12037,52 +12036,20 @@ static WebKit::DocumentEditingContextRequest toWebRequest(id request)
 
 #if HAVE(UIKIT_WITH_MOUSE_SUPPORT)
 
-static BOOL applicationIsKnownToIgnoreMouseEvents(const char* &warningVersion)
-{
-    // System apps will always be linked on the current OS, so
-    // check them before the linked-on-or-after.
-
-    // <rdar://problem/59521967> iAd Video does not respond to mouse events, only touch events
-    if (WTF::IOSApplication::isNews() || WTF::IOSApplication::isStocks()) {
-        warningVersion = nullptr;
-        return YES;
-    }
-
-    if (!linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::SupportsiOSAppsOnMacOS)) {
-        if (WTF::IOSApplication::isFIFACompanion() // <rdar://problem/67093487>
-            || WTF::IOSApplication::isNoggin() // <rdar://problem/64830335>
-            || WTF::IOSApplication::isOKCupid() // <rdar://problem/65698496>
-            || WTF::IOSApplication::isJWLibrary() // <rdar://problem/68104852>
-            || WTF::IOSApplication::isPaperIO() // <rdar://problem/68738585>
-            || WTF::IOSApplication::isCrunchyroll()) { // <rdar://problem/66362029>
-            warningVersion = "14.2";
-            return YES;
-        }
-    }
-
-    if (!linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::SendsNativeMouseEvents)) {
-        if (WTF::IOSApplication::isPocketCity() // <rdar://problem/62273077>
-            || WTF::IOSApplication::isEssentialSkeleton() // <rdar://problem/62694519>
-            || WTF::IOSApplication::isESPNFantasySports() // <rdar://problem/64671543>
-            || WTF::IOSApplication::isDoubleDown()) { // <rdar://problem/64668138>
-            warningVersion = "13.4";
-            return YES;
-        }
-    }
-
-    return NO;
-}
-
 - (BOOL)shouldUseMouseGestureRecognizer
 {
     static const BOOL shouldUseMouseGestureRecognizer = []() -> BOOL {
-        const char* warningVersion = nullptr;
-        BOOL knownToIgnoreMouseEvents = applicationIsKnownToIgnoreMouseEvents(warningVersion);
+        // <rdar://problem/59521967> iAd Video does not respond to mouse events, only touch events
+        if (WTF::IOSApplication::isNews() || WTF::IOSApplication::isStocks())
+            return NO;
 
-        if (knownToIgnoreMouseEvents && warningVersion)
-            os_log_error(OS_LOG_DEFAULT, "WARNING: This application has been observed to ignore mouse events in web content; touch events will be sent until it is built against the iOS %s SDK, but after that, the web content must respect mouse or pointer events in addition to touch events in order to behave correctly when a trackpad or mouse is used.", warningVersion);
+        if (!linkedOnOrAfterSDKWithBehavior(SDKAlignedBehavior::SendsNativeMouseEvents)
+            && WTF::IOSApplication::isEssentialSkeleton()) { // <rdar://problem/62694519>
+            os_log_error(OS_LOG_DEFAULT, "WARNING: This application has been observed to ignore mouse events in web content; touch events will be sent until it is built against the iOS 13.4 SDK, but after that, the web content must respect mouse or pointer events in addition to touch events in order to behave correctly when a trackpad or mouse is used.");
+            return NO;
+        }
 
-        return !knownToIgnoreMouseEvents;
+        return YES;
     }();
 
     switch (_mouseEventPolicy) {
@@ -13882,7 +13849,7 @@ inline static NSString *extendSelectionCommand(UITextLayoutDirection direction)
     return !!_suppressSelectionAssistantReasons;
 }
 
-#pragma mark - WKSTextAnimationSourceDelegate
+#pragma mark - WKTextAnimationSourceDelegate
 
 #if ENABLE(WRITING_TOOLS)
 - (void)targetedPreviewForID:(NSUUID *)uuid completionHandler:(void (^)(UITargetedPreview *))completionHandler
@@ -14055,7 +14022,7 @@ static inline WKTextAnimationType toWKTextAnimationType(WebCore::TextAnimationTy
         [_sourceAnimationIDtoDestinationAnimationID setObject:uuid forKey:data.sourceAnimationUUID.value_or(WTF::UUID(WTF::UUID::emptyValue)).createNSUUID().get()];
 
     if (!_textAnimationManager)
-        _textAnimationManager = adoptNS([WebKit::allocWKSTextAnimationManagerInstance() initWithDelegate:self]);
+        _textAnimationManager = adoptNS([WebKit::allocWKTextAnimationManagerInstance() initWithDelegate:self]);
 
     [_textAnimationManager addTextAnimationForAnimationID:uuid withStyleType:toWKTextAnimationType(data.style)];
 }

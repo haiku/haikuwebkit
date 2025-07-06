@@ -33,6 +33,7 @@
 #include "StyleBoxShadow.h"
 #include "StyleColor.h"
 #include "StylePathData.h"
+#include "StyleSVGPaint.h"
 #include "StyleURL.h"
 #include <wtf/FixedVector.h>
 #include <wtf/RefCounted.h>
@@ -46,17 +47,6 @@ namespace WebCore {
 
 class CSSValue;
 class CSSValueList;
-class SVGPaint;
-
-enum class SVGPaintType : uint8_t {
-    RGBColor,
-    None,
-    CurrentColor,
-    URINone,
-    URICurrentColor,
-    URIRGBColor,
-    URI
-};
 
 enum class BaselineShift : uint8_t {
     Baseline,
@@ -158,12 +148,8 @@ public:
 #endif
 
     float opacity;
-    Style::Color paintColor;
-    Style::Color visitedLinkPaintColor;
-    Style::URL paintUri;
-    Style::URL visitedLinkPaintUri;
-    SVGPaintType paintType;
-    SVGPaintType visitedLinkPaintType;
+    Style::SVGPaint paint;
+    Style::SVGPaint visitedLinkPaint;
 
 private:
     StyleFillData();
@@ -184,18 +170,10 @@ public:
 #endif
 
     float opacity;
-
-    Style::Color paintColor;
-    Style::Color visitedLinkPaintColor;
-
-    Style::URL paintUri;
-    Style::URL visitedLinkPaintUri;
-
+    Style::SVGPaint paint;
+    Style::SVGPaint visitedLinkPaint;
     Length dashOffset;
     FixedVector<Length> dashArray;
-
-    SVGPaintType paintType;
-    SVGPaintType visitedLinkPaintType;
 
 private:
     StyleStrokeData();
@@ -328,7 +306,6 @@ WTF::TextStream& operator<<(WTF::TextStream&, ColorRendering);
 WTF::TextStream& operator<<(WTF::TextStream&, DominantBaseline);
 WTF::TextStream& operator<<(WTF::TextStream&, GlyphOrientation);
 WTF::TextStream& operator<<(WTF::TextStream&, MaskType);
-WTF::TextStream& operator<<(WTF::TextStream&, SVGPaintType);
 WTF::TextStream& operator<<(WTF::TextStream&, ShapeRendering);
 WTF::TextStream& operator<<(WTF::TextStream&, TextAnchor);
 WTF::TextStream& operator<<(WTF::TextStream&, VectorEffect);

@@ -106,7 +106,7 @@ void RemoteLayerTreeDrawingAreaProxy::sizeDidChange()
     RefPtr page = this->page();
     if (!page || !page->hasRunningProcess())
         return;
-    if (auto scrollingCoordinator = page->scrollingCoordinatorProxy())
+    if (CheckedPtr scrollingCoordinator = page->scrollingCoordinatorProxy())
         scrollingCoordinator->viewSizeDidChange();
 
     if (m_isWaitingForDidUpdateGeometry)
@@ -119,7 +119,7 @@ void RemoteLayerTreeDrawingAreaProxy::remotePageProcessDidTerminate(WebCore::Pro
     if (!m_remoteLayerTreeHost)
         return;
 
-    if (auto* scrollingCoordinator = page() ? page()->scrollingCoordinatorProxy() : nullptr) {
+    if (CheckedPtr scrollingCoordinator = page() ? page()->scrollingCoordinatorProxy() : nullptr) {
         scrollingCoordinator->willCommitLayerAndScrollingTrees();
         m_remoteLayerTreeHost->remotePageProcessDidTerminate(processIdentifier);
         scrollingCoordinator->didCommitLayerAndScrollingTrees();
@@ -128,13 +128,13 @@ void RemoteLayerTreeDrawingAreaProxy::remotePageProcessDidTerminate(WebCore::Pro
 
 void RemoteLayerTreeDrawingAreaProxy::viewWillStartLiveResize()
 {
-    if (auto scrollingCoordinator = page() ? page()->scrollingCoordinatorProxy() : nullptr)
+    if (CheckedPtr scrollingCoordinator = page() ? page()->scrollingCoordinatorProxy() : nullptr)
         scrollingCoordinator->viewWillStartLiveResize();
 }
 
 void RemoteLayerTreeDrawingAreaProxy::viewWillEndLiveResize()
 {
-    if (auto scrollingCoordinator = page() ? page()->scrollingCoordinatorProxy() : nullptr)
+    if (CheckedPtr scrollingCoordinator = page() ? page()->scrollingCoordinatorProxy() : nullptr)
         scrollingCoordinator->viewWillEndLiveResize();
 }
 

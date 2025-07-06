@@ -148,7 +148,7 @@ public:
     void setChildNeedsLayout(MarkingBehavior = MarkContainingBlockChain);
     void setOutOfFlowChildNeedsStaticPositionLayout();
     void clearChildNeedsLayout();
-    void setNeedsPositionedMovementLayout(const RenderStyle* oldStyle);
+    void setNeedsOutOfFlowMovementLayout(const RenderStyle* oldStyle);
     void setNeedsLayoutForStyleDifference(StyleDifference, const RenderStyle* oldStyle);
     void setNeedsLayoutForOverflowChange();
 
@@ -240,6 +240,11 @@ public:
     bool repaintForPausedImageAnimationsIfNeeded(const IntRect& visibleRect, CachedImage&);
     bool hasPausedImageAnimations() const { return m_hasPausedImageAnimations; }
     void setHasPausedImageAnimations(bool b) { m_hasPausedImageAnimations = b; }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    bool hasHDRImages() const { return m_hasHDRImages; }
+    void setHasHDRImages(bool b) { m_hasHDRImages = b; }
+#endif
 
     bool hasCounterNodeMap() const { return m_hasCounterNodeMap; }
     void setHasCounterNodeMap(bool f) { m_hasCounterNodeMap = f; }
@@ -391,7 +396,6 @@ private:
     RenderElement(Type, ContainerNode&, RenderStyle&&, OptionSet<TypeFlag>, TypeSpecificFlags);
     void node() const = delete;
     void nonPseudoNode() const = delete;
-    void generatingNode() const = delete;
     void isRenderText() const = delete;
     void isRenderElement() const = delete;
 
@@ -441,6 +445,9 @@ private:
     unsigned m_hasPausedImageAnimations : 1;
     unsigned m_hasCounterNodeMap : 1;
     unsigned m_hasContinuationChainNode : 1;
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    unsigned m_hasHDRImages : 1;
+#endif
 
     unsigned m_isContinuation : 1;
     unsigned m_isFirstLetter : 1;

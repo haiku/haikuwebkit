@@ -96,11 +96,13 @@ template<> inline constexpr bool TreatAsNonConverting<WTF::URL> = true;
 
 // MARK: - Conversion from "Style to "CSS"
 
-// Conversion Invoker
-template<typename StyleType, typename... Rest> decltype(auto) toCSS(const StyleType& styleType, const RenderStyle& style, Rest&&... rest)
-{
-    return ToCSS<StyleType>{}(styleType, style, std::forward<Rest>(rest)...);
-}
+struct ToCSSInvoker {
+    template<typename StyleType, typename... Rest> decltype(auto) operator()(const StyleType& styleType, const RenderStyle& style, Rest&&... rest) const
+    {
+        return ToCSS<StyleType>{}(styleType, style, std::forward<Rest>(rest)...);
+    }
+};
+inline constexpr ToCSSInvoker toCSS{};
 
 // Conversion Utility Types
 template<typename StyleType> using CSSType = std::decay_t<decltype(toCSS(std::declval<const StyleType&>(), std::declval<const RenderStyle&>()))>;
@@ -141,7 +143,7 @@ template<typename... Ts> struct ToCSSMapping<Variant<Ts...>> {
 
 // Constrained for `TreatAsNonConverting`.
 template<NonConverting StyleType> struct ToCSS<StyleType> {
-    constexpr StyleType operator()(const StyleType& value, const RenderStyle&)
+    template<typename... Rest> constexpr StyleType operator()(const StyleType& value, const RenderStyle&, Rest&&...)
     {
         return value;
     }
@@ -151,10 +153,10 @@ template<NonConverting StyleType> struct ToCSS<StyleType> {
 template<OptionalLike StyleType> struct ToCSS<StyleType> {
     using Result = typename ToCSSMapping<StyleType>::type;
 
-    Result operator()(const StyleType& value, const RenderStyle& style)
+    template<typename... Rest> Result operator()(const StyleType& value, const RenderStyle& style, Rest&&... rest)
     {
         if (value)
-            return toCSS(*value, style);
+            return toCSS(*value, style, std::forward<Rest>(rest)...);
         return std::nullopt;
     }
 };
@@ -163,9 +165,9 @@ template<OptionalLike StyleType> struct ToCSS<StyleType> {
 template<TupleLike StyleType> struct ToCSS<StyleType> {
     using Result = typename ToCSSMapping<StyleType>::type;
 
-    Result operator()(const StyleType& value, const RenderStyle& style)
+    template<typename... Rest> Result operator()(const StyleType& value, const RenderStyle& style, Rest&&... rest)
     {
-        return toCSSOnTupleLike<Result>(value, style);
+        return toCSSOnTupleLike<Result>(value, style, std::forward<Rest>(rest)...);
     }
 };
 
@@ -173,9 +175,9 @@ template<TupleLike StyleType> struct ToCSS<StyleType> {
 template<VariantLike StyleType> struct ToCSS<StyleType> {
     using Result = typename ToCSSMapping<StyleType>::type;
 
-    Result operator()(const StyleType& value, const RenderStyle& style)
+    template<typename... Rest> Result operator()(const StyleType& value, const RenderStyle& style, Rest&&... rest)
     {
-        return WTF::switchOn(value, [&](const auto& alternative) { return Result { toCSS(alternative, style) }; });
+        return WTF::switchOn(value, [&](const auto& alternative) { return Result { toCSS(alternative, style, std::forward<Rest>(rest)...) }; });
     }
 };
 
@@ -183,9 +185,9 @@ template<VariantLike StyleType> struct ToCSS<StyleType> {
 template<typename StyleType, size_t inlineCapacity> struct ToCSS<SpaceSeparatedVector<StyleType, inlineCapacity>> {
     using Result = SpaceSeparatedVector<CSSType<StyleType>, inlineCapacity>;
 
-    Result operator()(const SpaceSeparatedVector<StyleType, inlineCapacity>& value, const RenderStyle& style)
+    template<typename... Rest> Result operator()(const SpaceSeparatedVector<StyleType, inlineCapacity>& value, const RenderStyle& style, Rest&&... rest)
     {
-        return Result { value.value.template map<typename Result::Vector>([&](const auto& x) { return toCSS(x, style); }) };
+        return Result { value.value.template map<typename Result::Vector>([&](const auto& x) { return toCSS(x, style, rest...); }) };
     }
 };
 
@@ -193,36 +195,42 @@ template<typename StyleType, size_t inlineCapacity> struct ToCSS<SpaceSeparatedV
 template<typename StyleType, size_t inlineCapacity> struct ToCSS<CommaSeparatedVector<StyleType, inlineCapacity>> {
     using Result = CommaSeparatedVector<CSSType<StyleType>, inlineCapacity>;
 
-    Result operator()(const CommaSeparatedVector<StyleType, inlineCapacity>& value, const RenderStyle& style)
+    template<typename... Rest> Result operator()(const CommaSeparatedVector<StyleType, inlineCapacity>& value, const RenderStyle& style, Rest&&... rest)
     {
-        return Result { value.value.template map<typename Result::Vector>([&](const auto& x) { return toCSS(x, style); }) };
+        return Result { value.value.template map<typename Result::Vector>([&](const auto& x) { return toCSS(x, style, rest...); }) };
     }
 };
 
 // MARK: - Conversion from "CSS" to "Style"
 
-// Conversion Invokers
-template<typename CSSType, typename... Rest> decltype(auto) toStyle(const CSSType& cssType, const CSSToLengthConversionData& conversionData, Rest&&... rest)
-{
-    return ToStyle<CSSType>{}(cssType, conversionData, std::forward<Rest>(rest)...);
-}
+struct ToStyleInvoker {
+    template<typename CSSType, typename... Rest> decltype(auto) operator()(const CSSType& cssType, const CSSToLengthConversionData& conversionData, Rest&&... rest) const
+    {
+        return ToStyle<CSSType>{}(cssType, conversionData, std::forward<Rest>(rest)...);
+    }
 
-template<typename CSSType, typename... Rest> decltype(auto) toStyle(const CSSType& cssType, const BuilderState& builderState, Rest&&... rest)
-{
-    return ToStyle<CSSType>{}(cssType, builderState, std::forward<Rest>(rest)...);
-}
+    template<typename CSSType, typename... Rest> decltype(auto) operator()(const CSSType& cssType, const BuilderState& builderState, Rest&&... rest) const
+    {
+        return ToStyle<CSSType>{}(cssType, builderState, std::forward<Rest>(rest)...);
+    }
 
-template<typename CSSType, typename... Rest> decltype(auto) toStyle(const CSSType& cssType, NoConversionDataRequiredToken token, Rest&&... rest)
-{
-    return ToStyle<CSSType>{}(cssType, token, std::forward<Rest>(rest)...);
-}
+    template<typename CSSType, typename... Rest> decltype(auto) operator()(const CSSType& cssType, NoConversionDataRequiredToken token, Rest&&... rest) const
+    {
+        return ToStyle<CSSType>{}(cssType, token, std::forward<Rest>(rest)...);
+    }
+};
+inline constexpr ToStyleInvoker toStyle{};
 
 // Convenience invoker that adds a `NoConversionDataRequiredToken` argument.
-template<typename CSSType, typename... Rest> decltype(auto) toStyleNoConversionDataRequired(const CSSType& cssType, Rest&&... rest)
-{
-    return toStyle(cssType, NoConversionDataRequiredToken { }, std::forward<Rest>(rest)...);
-}
+struct ToStyleNoConversionDataRequiredInvoker {
+    template<typename CSSType, typename... Rest> decltype(auto) operator()(const CSSType& cssType, Rest&&... rest) const
+    {
+        return WebCore::Style::toStyle(cssType, NoConversionDataRequiredToken { }, std::forward<Rest>(rest)...);
+    }
+};
+inline constexpr ToStyleNoConversionDataRequiredInvoker toStyleNoConversionDataRequired{};
 
+// Conversion Utilities
 template<typename To, typename From, typename... Rest> auto toStyleOnTupleLike(const From& tupleLike, Rest&&... rest) -> To
 {
     return WTF::apply([&](const auto& ...x) { return To { toStyle(x, rest...)... }; }, tupleLike);
@@ -233,7 +241,6 @@ template<typename To, typename From, typename... Rest> auto toStyleNoConversionD
     return WTF::apply([&](const auto& ...x) { return To { toStyleNoConversionDataRequired(x, rest...)... }; }, tupleLike);
 }
 
-// Conversion Utility Types
 template<typename CSSType> using StyleType = std::decay_t<decltype(toStyle(std::declval<const CSSType&>(), std::declval<const BuilderState&>()))>;
 
 // Standard NonConverting type mappings (identity mappings):
@@ -335,26 +342,28 @@ template<typename CSSType, size_t inlineCapacity> struct ToStyle<CommaSeparatedV
 
 template<typename StyleType> struct CSSValueCreation;
 
-// Conversion Invoker
-template<typename StyleType> Ref<CSSValue> createCSSValue(CSSValuePool& pool, const RenderStyle& style, const StyleType& value)
-{
-    return CSSValueCreation<StyleType>{}(pool, style, value);
-}
+struct CSSValueCreationInvoker {
+    template<typename StyleType, typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const StyleType& value, Rest&&... rest) const
+    {
+        return CSSValueCreation<StyleType>{}(pool, style, value, std::forward<Rest>(rest)...);
+    }
+};
+inline constexpr CSSValueCreationInvoker createCSSValue{};
 
 // Constrained for `TreatAsVariantLike`.
 template<VariantLike StyleType> struct CSSValueCreation<StyleType> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const StyleType& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const StyleType& value, Rest&&... rest)
     {
-        return WTF::switchOn(value, [&](const auto& alternative) -> Ref<CSSValue> { return createCSSValue(pool, style, alternative); });
+        return WTF::switchOn(value, [&](const auto& alternative) -> Ref<CSSValue> { return createCSSValue(pool, style, alternative, std::forward<Rest>(rest)...); });
     }
 };
 
 // Constrained for `TreatAsTupleLike`
 template<TupleLike StyleType> struct CSSValueCreation<StyleType> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const StyleType& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const StyleType& value, Rest&&... rest)
     {
         if constexpr (std::tuple_size_v<StyleType> == 1 && SerializationSeparator<StyleType> == SerializationSeparatorType::None) {
-            return createCSSValue(pool, style, get<0>(value));
+            return createCSSValue(pool, style, get<0>(value), std::forward<Rest>(rest)...);
         } else {
             CSSValueListBuilder list;
 
@@ -362,15 +371,15 @@ template<TupleLike StyleType> struct CSSValueCreation<StyleType> {
                 [&]<typename T>(const std::optional<T>& element) {
                     if (!element)
                         return;
-                    list.append(createCSSValue(pool, style, *element));
+                    list.append(createCSSValue(pool, style, *element, rest...));
                 },
                 [&]<typename T>(const Markable<T>& element) {
                     if (!element)
                         return;
-                    list.append(createCSSValue(pool, style, *element));
+                    list.append(createCSSValue(pool, style, *element, rest...));
                 },
                 [&](const auto& element) {
-                    list.append(createCSSValue(pool, style, element));
+                    list.append(createCSSValue(pool, style, element, rest...));
                 }
             );
             WTF::apply([&](const auto& ...x) { (..., caller(x)); }, value);
@@ -382,11 +391,11 @@ template<TupleLike StyleType> struct CSSValueCreation<StyleType> {
 
 // Constrained for `TreatAsRangeLike`
 template<RangeLike StyleType> struct CSSValueCreation<StyleType> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const StyleType& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const StyleType& value, Rest&&... rest)
     {
         CSSValueListBuilder list;
         for (const auto& element : value)
-            list.append(createCSSValue(pool, style, element));
+            list.append(createCSSValue(pool, style, element, rest...));
 
         return CSS::makeListCSSValue<SerializationSeparator<StyleType>>(WTFMove(list));
     }
@@ -394,25 +403,25 @@ template<RangeLike StyleType> struct CSSValueCreation<StyleType> {
 
 // Constrained for `TreatAsNonConverting`.
 template<NonConverting StyleType> struct CSSValueCreation<StyleType> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle&, const StyleType& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle&, const StyleType& value, Rest&&... rest)
     {
-        return CSS::createCSSValue(pool, value);
+        return CSS::createCSSValue(pool, value, std::forward<Rest>(rest)...);
     }
 };
 
 // Specialization for `FunctionNotation`.
 template<CSSValueID Name, typename StyleType> struct CSSValueCreation<FunctionNotation<Name, StyleType>> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const FunctionNotation<Name, StyleType>& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const FunctionNotation<Name, StyleType>& value, Rest&&... rest)
     {
-        return CSS::makeFunctionCSSValue(value.name, createCSSValue(pool, style, value.parameters));
+        return CSS::makeFunctionCSSValue(value.name, createCSSValue(pool, style, value.parameters, std::forward<Rest>(rest)...));
     }
 };
 
 // Specialization for `MinimallySerializingSpaceSeparatedSize`.
 template<typename CSSType> struct CSSValueCreation<MinimallySerializingSpaceSeparatedSize<CSSType>> {
-    Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const MinimallySerializingSpaceSeparatedSize<CSSType>& value)
+    template<typename... Rest> Ref<CSSValue> operator()(CSSValuePool& pool, const RenderStyle& style, const MinimallySerializingSpaceSeparatedSize<CSSType>& value, Rest&&... rest)
     {
-        return CSS::makeSpaceSeparatedCoalescingPairCSSValue(createCSSValue(pool, style, get<0>(value)), createCSSValue(pool, style, get<1>(value)));
+        return CSS::makeSpaceSeparatedCoalescingPairCSSValue(createCSSValue(pool, style, get<0>(value), rest...), createCSSValue(pool, style, get<1>(value), rest...));
     }
 };
 
@@ -426,19 +435,13 @@ template<typename CSSType> struct CSSValueCreation<MinimallySerializingSpaceSepa
 
 template<typename StyleType> struct CSSValueConversion;
 
-// Conversion Invoker
-template<typename StyleType> StyleType toStyleFromCSSValue(BuilderState& builderState, const CSSValue& value)
-{
-    return CSSValueConversion<StyleType>{}(builderState, value);
-}
-
-// Constrained for `TreatAsVariantLike`.
-template<VariantLike StyleType> struct CSSValueConversion<StyleType> {
-    StyleType operator()(BuilderState& builderState, const CSSValue& value)
+template<typename StyleType> struct CSSValueConversionInvoker {
+    template<typename... Rest> StyleType operator()(BuilderState& builderState, const CSSValue& value, Rest&&... rest) const
     {
-        return WTF::switchOn(value, [&](const auto& alternative) -> StyleType { return toStyleFromCSSValue(builderState, alternative); });
+        return CSSValueConversion<StyleType>{}(builderState, value, std::forward<Rest>(rest)...);
     }
 };
+template<typename StyleType> inline constexpr CSSValueConversionInvoker<StyleType> toStyleFromCSSValue{};
 
 // MARK: - Conversion directly from "Style" to "Platform"
 
@@ -450,11 +453,13 @@ template<VariantLike StyleType> struct CSSValueConversion<StyleType> {
 
 template<typename StyleType> struct ToPlatform;
 
-// Conversion Invoker
-template<typename StyleType> decltype(auto) toPlatform(const StyleType& value)
-{
-    return ToPlatform<StyleType>{}(value);
-}
+struct ToPlatformInvoker {
+    template<typename StyleType, typename... Rest> decltype(auto) operator()(const StyleType& value, Rest&&... rest) const
+    {
+        return ToPlatform<StyleType>{}(value, std::forward<Rest>(rest)...);
+    }
+};
+inline constexpr ToPlatformInvoker toPlatform{};
 
 // MARK: - Serialization
 
@@ -466,27 +471,29 @@ template<typename StyleType> decltype(auto) toPlatform(const StyleType& value)
 
 template<typename StyleType> struct Serialize;
 
-// Serialization Invokers
-template<typename StyleType> void serializationForCSS(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value)
-{
-    Serialize<StyleType>{}(builder, context, style, value);
-}
+struct SerializeInvoker {
+    template<typename StyleType, typename... Rest> void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, Rest&&... rest) const
+    {
+        Serialize<StyleType>{}(builder, context, style, value, std::forward<Rest>(rest)...);
+    }
 
-template<typename StyleType> [[nodiscard]] String serializationForCSS(const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value)
-{
-    StringBuilder builder;
-    serializationForCSS(builder, context, style, value);
-    return builder.toString();
-}
+    template<typename StyleType, typename... Rest> [[nodiscard]] String operator()(const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, Rest&&... rest) const
+    {
+        StringBuilder builder;
+        this->operator()(builder, context, style, value, std::forward<Rest>(rest)...);
+        return builder.toString();
+    }
+};
+inline constexpr SerializeInvoker serializationForCSS{};
 
-template<typename StyleType> void serializationForCSSOnOptionalLike(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value)
+template<typename StyleType, typename... Rest> void serializationForCSSOnOptionalLike(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, Rest&&... rest)
 {
     if (!value)
         return;
-    serializationForCSS(builder, context, style, *value);
+    serializationForCSS(builder, context, style, *value, std::forward<Rest>(rest)...);
 }
 
-template<typename StyleType> void serializationForCSSOnTupleLike(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, ASCIILiteral separator)
+template<typename StyleType, typename... Rest> void serializationForCSSOnTupleLike(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, ASCIILiteral separator, Rest&&... rest)
 {
     auto swappedSeparator = ""_s;
     auto caller = WTF::makeVisitor(
@@ -494,127 +501,127 @@ template<typename StyleType> void serializationForCSSOnTupleLike(StringBuilder& 
             if (!element)
                 return;
             builder.append(std::exchange(swappedSeparator, separator));
-            serializationForCSS(builder, context, style, *element);
+            serializationForCSS(builder, context, style, *element, rest...);
         },
         [&]<typename T>(const Markable<T>& element) {
             if (!element)
                 return;
             builder.append(std::exchange(swappedSeparator, separator));
-            serializationForCSS(builder, context, style, *element);
+            serializationForCSS(builder, context, style, *element, rest...);
         },
         [&](const auto& element) {
             builder.append(std::exchange(swappedSeparator, separator));
-            serializationForCSS(builder, context, style, element);
+            serializationForCSS(builder, context, style, element, rest...);
         }
     );
 
     WTF::apply([&](const auto& ...x) { (..., caller(x)); }, value);
 }
 
-template<typename StyleType> void serializationForCSSOnRangeLike(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, ASCIILiteral separator)
+template<typename StyleType, typename... Rest> void serializationForCSSOnRangeLike(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, ASCIILiteral separator, Rest&&... rest)
 {
     auto swappedSeparator = ""_s;
     for (const auto& element : value) {
         builder.append(std::exchange(swappedSeparator, separator));
-        serializationForCSS(builder, context, style, element);
+        serializationForCSS(builder, context, style, element, rest...);
     }
 }
 
-template<typename StyleType> void serializationForCSSOnVariantLike(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value)
+template<typename StyleType, typename... Rest> void serializationForCSSOnVariantLike(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, Rest&&... rest)
 {
-    WTF::switchOn(value, [&](const auto& alternative) { serializationForCSS(builder, context, style, alternative); });
+    WTF::switchOn(value, [&](const auto& alternative) { serializationForCSS(builder, context, style, alternative, std::forward<Rest>(rest)...); });
 }
 
 // Constrained for `TreatAsEmptyLike`.
 template<EmptyLike StyleType> struct Serialize<StyleType> {
-    void operator()(StringBuilder&, const CSS::SerializationContext&, const RenderStyle&, const StyleType&)
+    template<typename... Rest> void operator()(StringBuilder&, const CSS::SerializationContext&, const RenderStyle&, const StyleType&, Rest&&...)
     {
     }
 };
 
 // Constrained for `TreatAsOptionalLike`.
 template<OptionalLike StyleType> struct Serialize<StyleType> {
-    void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, Rest&&... rest)
     {
-        serializationForCSSOnOptionalLike(builder, context, style, value);
+        serializationForCSSOnOptionalLike(builder, context, style, value, std::forward<Rest>(rest)...);
     }
 };
 
 // Constrained for `TreatAsTupleLike`.
 template<TupleLike StyleType> struct Serialize<StyleType> {
-    void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, Rest&&... rest)
     {
-        serializationForCSSOnTupleLike(builder, context, style, value, SerializationSeparatorString<StyleType>);
+        serializationForCSSOnTupleLike(builder, context, style, value, SerializationSeparatorString<StyleType>, std::forward<Rest>(rest)...);
     }
 };
 
 // Constrained for `TreatAsRangeLike`.
 template<RangeLike StyleType> struct Serialize<StyleType> {
-    void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, Rest&&... rest)
     {
-        serializationForCSSOnRangeLike(builder, context, style, value, SerializationSeparatorString<StyleType>);
+        serializationForCSSOnRangeLike(builder, context, style, value, SerializationSeparatorString<StyleType>, std::forward<Rest>(rest)...);
     }
 };
 
 // Constrained for `TreatAsVariantLike`.
 template<VariantLike StyleType> struct Serialize<StyleType> {
-    void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const StyleType& value, Rest&&... rest)
     {
-        serializationForCSSOnVariantLike(builder, context, style, value);
+        serializationForCSSOnVariantLike(builder, context, style, value, std::forward<Rest>(rest)...);
     }
 };
 
 // Constrained for `TreatAsNonConverting`.
 template<NonConverting StyleType> struct Serialize<StyleType> {
-    void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle&, const StyleType& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle&, const StyleType& value, Rest&&... rest)
     {
-        CSS::serializationForCSS(builder, context, value);
+        CSS::serializationForCSS(builder, context, value, std::forward<Rest>(rest)...);
     }
 };
 
 // Specialization for `FunctionNotation`.
 template<CSSValueID Name, typename StyleType> struct Serialize<FunctionNotation<Name, StyleType>> {
-    void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const FunctionNotation<Name, StyleType>& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const FunctionNotation<Name, StyleType>& value, Rest&&... rest)
     {
         builder.append(nameLiteralForSerialization(value.name), '(');
-        serializationForCSS(builder, context, style, value.parameters);
+        serializationForCSS(builder, context, style, value.parameters, std::forward<Rest>(rest)...);
         builder.append(')');
     }
 };
 
 // Specialization for `MinimallySerializingSpaceSeparatedSize`.
 template<typename CSSType> struct Serialize<MinimallySerializingSpaceSeparatedSize<CSSType>> {
-    void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const MinimallySerializingSpaceSeparatedSize<CSSType>& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const MinimallySerializingSpaceSeparatedSize<CSSType>& value, Rest&&... rest)
     {
         constexpr auto separator = SerializationSeparatorString<MinimallySerializingSpaceSeparatedSize<CSSType>>;
 
         if (get<0>(value) != get<1>(value)) {
-            serializationForCSSOnTupleLike(builder, context, style, std::tuple { get<0>(value), get<1>(value) }, separator);
+            serializationForCSSOnTupleLike(builder, context, style, std::tuple { get<0>(value), get<1>(value) }, separator, std::forward<Rest>(rest)...);
             return;
         }
-        serializationForCSS(builder, context, style, get<0>(value));
+        serializationForCSS(builder, context, style, get<0>(value), std::forward<Rest>(rest)...);
     }
 };
 
 // Specialization for `MinimallySerializingSpaceSeparatedRectEdges`.
 template<typename StyleType> struct Serialize<MinimallySerializingSpaceSeparatedRectEdges<StyleType>> {
-    void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const MinimallySerializingSpaceSeparatedRectEdges<StyleType>& value)
+    template<typename... Rest> void operator()(StringBuilder& builder, const CSS::SerializationContext& context, const RenderStyle& style, const MinimallySerializingSpaceSeparatedRectEdges<StyleType>& value, Rest&&... rest)
     {
         constexpr auto separator = SerializationSeparatorString<MinimallySerializingSpaceSeparatedRectEdges<StyleType>>;
 
         if (value.left() != value.right()) {
-            serializationForCSSOnTupleLike(builder, context, style, std::tuple { value.top(), value.right(), value.bottom(), value.left() }, separator);
+            serializationForCSSOnTupleLike(builder, context, style, std::tuple { value.top(), value.right(), value.bottom(), value.left() }, separator, std::forward<Rest>(rest)...);
             return;
         }
         if (value.bottom() != value.top()) {
-            serializationForCSSOnTupleLike(builder, context, style, std::tuple { value.top(), value.right(), value.bottom() }, separator);
+            serializationForCSSOnTupleLike(builder, context, style, std::tuple { value.top(), value.right(), value.bottom() }, separator, std::forward<Rest>(rest)...);
             return;
         }
         if (value.right() != value.top()) {
-            serializationForCSSOnTupleLike(builder, context, style, std::tuple { value.top(), value.right() }, separator);
+            serializationForCSSOnTupleLike(builder, context, style, std::tuple { value.top(), value.right() }, separator, std::forward<Rest>(rest)...);
             return;
         }
-        serializationForCSS(builder, context, style, value.top());
+        serializationForCSS(builder, context, style, value.top(), std::forward<Rest>(rest)...);
     }
 };
 
@@ -660,7 +667,8 @@ template<TupleLike StyleType> requires (std::tuple_size_v<StyleType> == 1) struc
 // All non-tuple-like leaf types must specialize `Blending` with the following member functions:
 //
 //    template<> struct WebCore::Style::Blending<StyleType> {
-//        [optional default=true]  bool canBlend(const StyleType&, const StyleType&);
+//        [optional default=(a==b)] bool equals(const StyleType&, const StyleType&);
+//        [optional default=true] bool canBlend(const StyleType&, const StyleType&);
 //        [optional default=false] bool requiresInterpolationForAccumulativeIteration(const StyleType&, const StyleType&);
 //        StyleType blend(const StyleType&, const StyleType&, const BlendingContext&);
 //    };
@@ -668,12 +676,20 @@ template<TupleLike StyleType> requires (std::tuple_size_v<StyleType> == 1) struc
 // or, if a RenderStyle is needed for blending:
 //
 //    template<> struct WebCore::Style::Blending<StyleType> {
-//        [optional default=true]  bool canBlend(const StyleType&, const StyleType&, const RenderStyle&, const RenderStyle&);
+//        [optional default=(a==b)] bool equals(const StyleType&, const StyleType&, const RenderStyle&, const RenderStyle&);
+//        [optional default=true] bool canBlend(const StyleType&, const StyleType&, const RenderStyle&, const RenderStyle&);
 //        [optional default=false] bool requiresInterpolationForAccumulativeIteration(const StyleType&, const StyleType&, const RenderStyle&, const RenderStyle&);
 //        StyleType blend(const StyleType&, const StyleType&, const RenderStyle&, const RenderStyle&, const BlendingContext&);
 //    };
 
 template<typename> struct Blending;
+
+template<typename StyleType> concept HasEqualsForBlendingWithoutRenderStyle = requires {
+    { Blending<StyleType>{}.equals(std::declval<const StyleType&>(), std::declval<const StyleType&>()) } -> std::same_as<bool>;
+};
+template<typename StyleType> concept HasEqualsForBlendingWithRenderStyle = requires {
+    { Blending<StyleType>{}.equals(std::declval<const StyleType&>(), std::declval<const StyleType&>(), std::declval<const RenderStyle&>(), std::declval<const RenderStyle&>()) } -> std::same_as<bool>;
+};
 
 template<typename StyleType> concept HasCanBlendWithoutRenderStyle = requires {
     { Blending<StyleType>{}.canBlend(std::declval<const StyleType&>(), std::declval<const StyleType&>()) } -> std::same_as<bool>;
@@ -694,55 +710,94 @@ template<typename StyleType> concept HasBlendWithRenderStyle = requires {
     { Blending<StyleType>{}.blend(std::declval<const StyleType&>(), std::declval<const StyleType&>(), std::declval<const RenderStyle&>(), std::declval<const RenderStyle&>(), std::declval<const BlendingContext&>()) } -> std::same_as<StyleType>;
 };
 
-// `CanBlend` Invoker
-template<typename StyleType> auto canBlend(const StyleType& a, const StyleType& b) -> bool
-{
-    if constexpr (HasCanBlendWithoutRenderStyle<StyleType>)
-        return Blending<StyleType>{}.canBlend(a, b);
-    else
-        return true;
-}
+struct EqualsForBlendingInvoker {
+    template<typename StyleType> auto operator()(const StyleType& a, const StyleType& b) const -> bool
+    {
+        if constexpr (HasEqualsForBlendingWithoutRenderStyle<StyleType>)
+            return Blending<StyleType>{}.equals(a, b);
+        else
+            return a == b;
+    }
 
-template<typename StyleType> auto canBlend(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle) -> bool
-{
-    if constexpr (HasCanBlendWithRenderStyle<StyleType>)
-        return Blending<StyleType>{}.canBlend(a, b, aStyle, bStyle);
-    else
-        return WebCore::Style::canBlend(a, b);
-}
+    template<typename StyleType> auto operator()(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle) const -> bool
+    {
+        if constexpr (HasEqualsForBlendingWithRenderStyle<StyleType>)
+            return Blending<StyleType>{}.equals(a, b, aStyle, bStyle);
+        else
+            return this->operator()(a, b);
+    }
+};
+inline constexpr EqualsForBlendingInvoker equalsForBlending{};
 
-// `RequiresInterpolationForAccumulativeIteration` Invoker
-template<typename StyleType> auto requiresInterpolationForAccumulativeIteration(const StyleType& a, const StyleType& b) -> bool
-{
-    if constexpr (HasRequiresInterpolationForAccumulativeIterationWithoutRenderStyle<StyleType>)
-        return Blending<StyleType>{}.requiresInterpolationForAccumulativeIteration(a, b);
-    else
-        return false;
-}
+struct CanBlendInvoker {
+    template<typename StyleType> auto operator()(const StyleType& a, const StyleType& b) const -> bool
+    {
+        if constexpr (HasCanBlendWithoutRenderStyle<StyleType>)
+            return Blending<StyleType>{}.canBlend(a, b);
+        else
+            return true;
+    }
 
-template<typename StyleType> auto requiresInterpolationForAccumulativeIteration(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle) -> bool
-{
-    if constexpr (HasRequiresInterpolationForAccumulativeIterationWithRenderStyle<StyleType>)
-        return Blending<StyleType>{}.requiresInterpolationForAccumulativeIteration(a, b, aStyle, bStyle);
-    else
-        return WebCore::Style::requiresInterpolationForAccumulativeIteration(a, b);
-}
+    template<typename StyleType> auto operator()(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle) const -> bool
+    {
+        if constexpr (HasCanBlendWithRenderStyle<StyleType>)
+            return Blending<StyleType>{}.canBlend(a, b, aStyle, bStyle);
+        else
+            return this->operator()(a, b);
+    }
+};
+inline constexpr CanBlendInvoker canBlend{};
 
-// `Blend` Invoker
-template<typename StyleType> auto blend(const StyleType& a, const StyleType& b, const BlendingContext& context) -> StyleType
-{
-    return Blending<StyleType>{}.blend(a, b, context);
-}
+struct RequiresInterpolationForAccumulativeIterationInvoker {
+    template<typename StyleType> auto operator()(const StyleType& a, const StyleType& b) const -> bool
+    {
+        if constexpr (HasRequiresInterpolationForAccumulativeIterationWithoutRenderStyle<StyleType>)
+            return Blending<StyleType>{}.requiresInterpolationForAccumulativeIteration(a, b);
+        else
+            return false;
+    }
 
-template<typename StyleType> auto blend(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle, const BlendingContext& context) -> StyleType
-{
-    if constexpr (HasBlendWithRenderStyle<StyleType>)
-        return Blending<StyleType>{}.blend(a, b, aStyle, bStyle, context);
-    else
-        return WebCore::Style::blend(a, b, context);
-}
+    template<typename StyleType> auto operator()(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle) const -> bool
+    {
+        if constexpr (HasRequiresInterpolationForAccumulativeIterationWithRenderStyle<StyleType>)
+            return Blending<StyleType>{}.requiresInterpolationForAccumulativeIteration(a, b, aStyle, bStyle);
+        else
+            return this->operator()(a, b);
+    }
+};
+inline constexpr RequiresInterpolationForAccumulativeIterationInvoker requiresInterpolationForAccumulativeIteration{};
+
+struct BlendInvoker {
+    template<typename StyleType> auto operator()(const StyleType& a, const StyleType& b, const BlendingContext& context) const -> StyleType
+    {
+        return Blending<StyleType>{}.blend(a, b, context);
+    }
+
+    template<typename StyleType> auto operator()(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle, const BlendingContext& context) const -> StyleType
+    {
+        if constexpr (HasBlendWithRenderStyle<StyleType>)
+            return Blending<StyleType>{}.blend(a, b, aStyle, bStyle, context);
+        else
+            return this->operator()(a, b, context);
+    }
+};
+inline constexpr BlendInvoker blend{};
 
 // Utilities for blending
+
+template<typename StyleType> auto equalsForBlendingOnOptionalLike(const StyleType& a, const StyleType& b) -> bool
+{
+    if (a && b)
+        return WebCore::Style::equalsForBlending(*a, *b);
+    return !a && !b;
+}
+
+template<typename StyleType> auto equalsForBlendingOnOptionalLike(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle) -> bool
+{
+    if (a && b)
+        return WebCore::Style::equalsForBlending(*a, *b, aStyle, bStyle);
+    return !a && !b;
+}
 
 template<typename StyleType> auto canBlendOnOptionalLike(const StyleType& a, const StyleType& b) -> bool
 {
@@ -784,6 +839,20 @@ template<typename StyleType> auto blendOnOptionalLike(const StyleType& a, const 
     if (a && b)
         return WebCore::Style::blend(*a, *b, aStyle, bStyle, context);
     return std::nullopt;
+}
+
+template<typename StyleType> auto equalsForBlendingOnTupleLike(const StyleType& a, const StyleType& b) -> bool
+{
+    return WTF::apply([&](const auto& ...pair) {
+        return (WebCore::Style::equalsForBlending(std::get<0>(pair), std::get<1>(pair)) && ...);
+    }, WTF::tuple_zip(a, b));
+}
+
+template<typename StyleType> auto equalsForBlendingOnTupleLike(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle) -> bool
+{
+    return WTF::apply([&](const auto& ...pair) {
+        return (WebCore::Style::equalsForBlending(std::get<0>(pair), std::get<1>(pair), aStyle, bStyle) && ...);
+    }, WTF::tuple_zip(a, b));
 }
 
 template<typename StyleType> auto canBlendOnTupleLike(const StyleType& a, const StyleType& b) -> bool
@@ -830,6 +899,14 @@ template<typename StyleType> auto blendOnTupleLike(const StyleType& a, const Sty
 
 // Constrained for `TreatAsOptionalLike`.
 template<OptionalLike StyleType> struct Blending<StyleType> {
+    constexpr auto equals(const StyleType& a, const StyleType& b) -> bool
+    {
+        return equalsForBlendingOnOptionalLike(a, b);
+    }
+    constexpr auto equals(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle) -> bool
+    {
+        return equalsForBlendingOnOptionalLike(a, b, aStyle, bStyle);
+    }
     constexpr auto canBlend(const StyleType& a, const StyleType& b) -> bool
     {
         return canBlendOnOptionalLike(a, b);
@@ -858,6 +935,14 @@ template<OptionalLike StyleType> struct Blending<StyleType> {
 
 // Constrained for `TreatAsTupleLike`.
 template<TupleLike StyleType> struct Blending<StyleType> {
+    constexpr auto equals(const StyleType& a, const StyleType& b) -> bool
+    {
+        return equalsForBlendingOnTupleLike(a, b);
+    }
+    constexpr auto equals(const StyleType& a, const StyleType& b, const RenderStyle& aStyle, const RenderStyle& bStyle) -> bool
+    {
+        return equalsForBlendingOnTupleLike(a, b, aStyle, bStyle);
+    }
     constexpr auto canBlend(const StyleType& a, const StyleType& b) -> bool
     {
         return canBlendOnTupleLike(a, b);
@@ -898,6 +983,28 @@ template<CSSValueID C> struct Blending<Constant<C>> {
 
 // Specialization for `Variant`.
 template<typename... StyleTypes> struct Blending<Variant<StyleTypes...>> {
+    auto equals(const Variant<StyleTypes...>& a, const Variant<StyleTypes...>& b) -> bool
+    {
+        return WTF::visit(WTF::makeVisitor(
+            []<typename T>(const T& a, const T& b) -> bool {
+                return WebCore::Style::equalsForBlending(a, b);
+            },
+            [](const auto&, const auto&) -> bool {
+                return false;
+            }
+        ), a, b);
+    }
+    auto equals(const Variant<StyleTypes...>& a, const Variant<StyleTypes...>& b, const RenderStyle& aStyle, const RenderStyle& bStyle) -> bool
+    {
+        return WTF::visit(WTF::makeVisitor(
+            [&]<typename T>(const T& a, const T& b) -> bool {
+                return WebCore::Style::equalsForBlending(a, b, aStyle, bStyle);
+            },
+            [](const auto&, const auto&) -> bool {
+                return false;
+            }
+        ), a, b);
+    }
     auto canBlend(const Variant<StyleTypes...>& a, const Variant<StyleTypes...>& b) -> bool
     {
         return WTF::visit(WTF::makeVisitor(
@@ -968,6 +1075,26 @@ template<typename... StyleTypes> struct Blending<Variant<StyleTypes...>> {
 
 // Specialization for `SpaceSeparatedVector`.
 template<typename StyleType, size_t inlineCapacity> struct Blending<SpaceSeparatedVector<StyleType, inlineCapacity>> {
+    auto equals(const SpaceSeparatedVector<StyleType, inlineCapacity>& a, const SpaceSeparatedVector<StyleType, inlineCapacity>& b) -> bool
+    {
+        if (a.size() != b.size())
+            return false;
+        for (size_t i = 0; i < a.size(); ++i) {
+            if (!WebCore::Style::equalsForBlending(a[i], b[i]))
+                return false;
+        }
+        return true;
+    }
+    auto equals(const SpaceSeparatedVector<StyleType, inlineCapacity>& a, const SpaceSeparatedVector<StyleType, inlineCapacity>& b, const RenderStyle& aStyle, const RenderStyle& bStyle) -> bool
+    {
+        if (a.size() != b.size())
+            return false;
+        for (size_t i = 0; i < a.size(); ++i) {
+            if (!WebCore::Style::equalsForBlending(a[i], b[i], aStyle, bStyle))
+                return false;
+        }
+        return true;
+    }
     auto canBlend(const SpaceSeparatedVector<StyleType, inlineCapacity>& a, const SpaceSeparatedVector<StyleType, inlineCapacity>& b) -> bool
     {
         if (a.size() != b.size())
@@ -1030,6 +1157,26 @@ template<typename StyleType, size_t inlineCapacity> struct Blending<SpaceSeparat
 
 // Specialization for `CommaSeparatedVector`.
 template<typename StyleType, size_t inlineCapacity> struct Blending<CommaSeparatedVector<StyleType, inlineCapacity>> {
+    auto equals(const CommaSeparatedVector<StyleType, inlineCapacity>& a, const CommaSeparatedVector<StyleType, inlineCapacity>& b) -> bool
+    {
+        if (a.size() != b.size())
+            return false;
+        for (size_t i = 0; i < a.size(); ++i) {
+            if (!WebCore::Style::equalsForBlending(a[i], b[i]))
+                return false;
+        }
+        return true;
+    }
+    auto equals(const CommaSeparatedVector<StyleType, inlineCapacity>& a, const CommaSeparatedVector<StyleType, inlineCapacity>& b, const RenderStyle& aStyle, const RenderStyle& bStyle) -> bool
+    {
+        if (a.size() != b.size())
+            return false;
+        for (size_t i = 0; i < a.size(); ++i) {
+            if (!WebCore::Style::equalsForBlending(a[i], b[i], aStyle, bStyle))
+                return false;
+        }
+        return true;
+    }
     auto canBlend(const CommaSeparatedVector<StyleType, inlineCapacity>& a, const CommaSeparatedVector<StyleType, inlineCapacity>& b) -> bool
     {
         if (a.size() != b.size())
@@ -1104,14 +1251,16 @@ template<typename StyleType, size_t inlineCapacity> struct Blending<CommaSeparat
 
 template<typename> struct IsZero;
 
-// IsZero Invoker
-template<typename T> bool isZero(const T& value)
-{
-    if constexpr (HasIsZero<T>)
-        return value.isZero();
-    else
-        return IsZero<T>{}(value);
-}
+struct IsZeroInvoker {
+    template<typename T> bool operator()(const T& value) const
+    {
+        if constexpr (HasIsZero<T>)
+            return value.isZero();
+        else
+            return IsZero<T>{}(value);
+    }
+};
+inline constexpr IsZeroInvoker isZero{};
 
 // Constrained for `TreatAsTupleLike`.
 template<TupleLike T> struct IsZero<T> {
@@ -1143,14 +1292,16 @@ template<VariantLike T> struct IsZero<T> {
 
 template<typename> struct IsEmpty;
 
-// IsEmpty Invoker
-template<typename T> bool isEmpty(const T& value)
-{
-    if constexpr (HasIsEmpty<T>)
-        return value.isEmpty();
-    else
-        return IsEmpty<T>{}(value);
-}
+struct IsEmptyInvoker {
+    template<typename T> bool operator()(const T& value) const
+    {
+        if constexpr (HasIsEmpty<T>)
+            return value.isEmpty();
+        else
+            return IsEmpty<T>{}(value);
+    }
+};
+inline constexpr IsEmptyInvoker isEmpty{};
 
 // Specialization for `SpaceSeparatedSize`.
 template<typename T> struct IsEmpty<SpaceSeparatedSize<T>> {
@@ -1162,67 +1313,28 @@ template<typename T> struct IsEmpty<SpaceSeparatedSize<T>> {
 
 // MARK: - Logging
 
-template<typename StyleType> void logForCSSOnTupleLike(TextStream& ts, const StyleType& value, ASCIILiteral separator)
-{
-    auto swappedSeparator = ""_s;
-    auto caller = WTF::makeVisitor(
-        [&]<typename T>(const std::optional<T>& element) {
-            if (!element)
-                return;
-            ts << std::exchange(swappedSeparator, separator);
-            ts << *element;
-        },
-        [&]<typename T>(const Markable<T>& element) {
-            if (!element)
-                return;
-            ts << std::exchange(swappedSeparator, separator);
-            ts << *element;
-        },
-        [&](const auto& element) {
-            ts << std::exchange(swappedSeparator, separator);
-            ts << element;
-        }
-    );
-
-    WTF::apply([&](const auto& ...x) { (..., caller(x)); }, value);
-}
-
-template<typename StyleType> void logForCSSOnRangeLike(TextStream& ts, const StyleType& value, ASCIILiteral separator)
-{
-    auto swappedSeparator = ""_s;
-    for (const auto& element : value) {
-        ts << std::exchange(swappedSeparator, separator);
-        ts << element;
-    }
-}
-
-template<typename StyleType> void logForCSSOnVariantLike(TextStream& ts, const StyleType& value)
-{
-    WTF::switchOn(value, [&](const auto& value) { ts << value; });
-}
-
 // Constrained for `TreatAsEmptyLike`.
-template<EmptyLike StyleType> TextStream& operator<<(TextStream& ts, const StyleType&)
+template<EmptyLike T> TextStream& operator<<(TextStream& ts, const T&)
 {
     return ts;
 }
 
 // Constrained for `TreatAsTupleLike`.
-template<TupleLike StyleType> TextStream& operator<<(TextStream& ts, const StyleType& value)
+template<TupleLike T> TextStream& operator<<(TextStream& ts, const T& value)
 {
-    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<StyleType>);
+    logForCSSOnTupleLike(ts, value, SerializationSeparatorString<T>);
     return ts;
 }
 
 // Constrained for `TreatAsRangeLike`.
-template<RangeLike StyleType> TextStream& operator<<(TextStream& ts, const StyleType& value)
+template<RangeLike T> TextStream& operator<<(TextStream& ts, const T& value)
 {
-    logForCSSOnRangeLike(ts, value, SerializationSeparatorString<StyleType>);
+    logForCSSOnRangeLike(ts, value, SerializationSeparatorString<T>);
     return ts;
 }
 
 // Constrained for `TreatAsVariantLike`.
-template<VariantLike StyleType> TextStream& operator<<(TextStream& ts, const StyleType& value)
+template<VariantLike T> TextStream& operator<<(TextStream& ts, const T& value)
 {
     logForCSSOnVariantLike(ts, value);
     return ts;

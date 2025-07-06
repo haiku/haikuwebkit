@@ -31,13 +31,6 @@
 
 extern "C" void SYSV_ABI ipint_entry();
 extern "C" void SYSV_ABI ipint_entry_simd();
-extern "C" void SYSV_ABI ipint_catch_entry();
-extern "C" void SYSV_ABI ipint_catch_all_entry();
-
-extern "C" void SYSV_ABI ipint_table_catch_entry();
-extern "C" void SYSV_ABI ipint_table_catch_ref_entry();
-extern "C" void SYSV_ABI ipint_table_catch_all_entry();
-extern "C" void SYSV_ABI ipint_table_catch_allref_entry();
 
 #define IPINT_VALIDATE_DEFINE_FUNCTION(opcode, name) \
     extern "C" void SYSV_ABI ipint_ ## name ## _validate() REFERENCED_FROM_ASM WTF_INTERNAL NO_REORDER;

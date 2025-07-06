@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Samuel Weinig <sam@webkit.org>
+ * Copyright (C) 2024-2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -52,9 +52,6 @@ inline bool operator==(const UniqueRef<ContrastColor>& a, const UniqueRef<Contra
 Color toStyleColor(const CSS::ContrastColor&, ColorResolutionState&);
 WebCore::Color resolveColor(const ContrastColor&, const WebCore::Color& currentColor);
 bool containsCurrentColor(const ContrastColor&);
-
-void serializationForCSS(StringBuilder&, const CSS::SerializationContext&, const ContrastColor&);
-String serializationForCSS(const CSS::SerializationContext&, const ContrastColor&);
 
 WTF::TextStream& operator<<(WTF::TextStream&, const ContrastColor&);
 

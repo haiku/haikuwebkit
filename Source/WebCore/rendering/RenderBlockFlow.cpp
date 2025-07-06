@@ -2422,7 +2422,7 @@ void RenderBlockFlow::updateStylesForColumnChildren(const RenderStyle* oldStyle)
     for (auto* child = firstChildBox(); child && (child->isRenderFragmentedFlow() || child->isRenderMultiColumnSet()); child = child->nextSiblingBox()) {
         child->setStyle(RenderStyle::createAnonymousStyleWithDisplay(style(), DisplayType::Block));
         if (columnsNeedLayout)
-            child->setNeedsLayoutAndPrefWidthsRecalc();
+            child->setNeedsLayoutAndPreferredWidthsUpdate();
     }
 }
 
@@ -3994,7 +3994,7 @@ void RenderBlockFlow::layoutInlineContent(RelayoutChildren relayoutChildren, Lay
 
         if (auto* inlineLevelBox = dynamicDowncast<RenderBox>(renderer)) {
             // FIXME: Move this to where the actual content change happens and call it on the parent IFC.
-            auto shouldTriggerFullLayout = inlineLevelBox->isInline() && (inlineLevelBox->needsSimplifiedNormalFlowLayout() || inlineLevelBox->normalChildNeedsLayout() || inlineLevelBox->posChildNeedsLayout()) && inlineLayout();
+            auto shouldTriggerFullLayout = inlineLevelBox->isInline() && (inlineLevelBox->needsSimplifiedNormalFlowLayout() || inlineLevelBox->normalChildNeedsLayout() || inlineLevelBox->outOfFlowChildNeedsLayout()) && inlineLayout();
             if (shouldTriggerFullLayout)
                 inlineLayout()->boxContentWillChange(*inlineLevelBox);
         }
@@ -4403,7 +4403,7 @@ void RenderBlockFlow::updateColumnProgressionFromStyle(const RenderStyle& style)
     }
 
     if (needsLayout)
-        setNeedsLayoutAndPrefWidthsRecalc();
+        setNeedsLayoutAndPreferredWidthsUpdate();
 }
 
 LayoutUnit RenderBlockFlow::computedColumnWidth() const

@@ -49,6 +49,7 @@ namespace WebKit {
 
 class WebPageProxy;
 class PlaybackSessionManagerProxy;
+class RemotePagePlaybackSessionManagerProxy;
 class VideoReceiverEndpointMessage;
 class VideoReceiverSwapEndpointMessage;
 struct SharedPreferencesForWebProcess;
@@ -268,10 +269,13 @@ public:
 
 private:
     friend class PlaybackSessionModelContext;
+    friend class RemotePagePlaybackSessionManagerProxy;
     friend class VideoPresentationManagerProxy;
 
     explicit PlaybackSessionManagerProxy(WebPageProxy&);
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) final;
+
+    template <typename Message> void sendToWebProcess(PlaybackSessionContextIdentifier, Message&&);
 
     typedef std::tuple<Ref<PlaybackSessionModelContext>, Ref<WebCore::PlatformPlaybackSessionInterface>> ModelInterfaceTuple;
     ModelInterfaceTuple createModelAndInterface(PlaybackSessionContextIdentifier);

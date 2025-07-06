@@ -104,7 +104,7 @@ void RenderTableCol::updateFromElement()
         m_span = 1;
     if (m_span != oldSpan && parent()) {
         if (hasInitializedStyle())
-            setNeedsLayoutAndPrefWidthsRecalc();
+            setNeedsLayoutAndPreferredWidthsUpdate();
         if (CheckedPtr table = this->table())
             table->invalidateColumns();
     }

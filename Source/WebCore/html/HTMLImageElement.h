@@ -90,24 +90,10 @@ public:
     bool matchesUsemap(const AtomString&) const;
     RefPtr<HTMLMapElement> associatedMapElement() const;
 
-    WEBCORE_EXPORT const AtomString& alt() const;
-
-    WEBCORE_EXPORT void setHeight(unsigned);
-
-    URL src() const;
-    void setSrc(const AtomString&);
-
-    WEBCORE_EXPORT void setCrossOrigin(const AtomString&);
     WEBCORE_EXPORT String crossOrigin() const;
-
-    WEBCORE_EXPORT void setWidth(unsigned);
-
     WEBCORE_EXPORT int x() const;
     WEBCORE_EXPORT int y() const;
-
     WEBCORE_EXPORT bool complete() const;
-
-    void setDecoding(AtomString&&);
     String decoding() const;
 
     DecodingMode decodingMode() const;
@@ -150,12 +136,10 @@ public:
     void loadDeferredImage();
 
     AtomString srcsetForBindings() const;
-    void setSrcsetForBindings(const AtomString&);
 
     bool usesSrcsetOrPicture() const;
 
     const AtomString& loadingForBindings() const;
-    void setLoadingForBindings(const AtomString&);
 
     bool isLazyLoadable() const;
     static bool hasLazyLoadableAttributeValue(StringView);
@@ -167,7 +151,6 @@ public:
 
     void evaluateDynamicMediaQueryDependencies();
 
-    void setReferrerPolicyForBindings(const AtomString&);
     String referrerPolicyForBindings() const;
     ReferrerPolicy referrerPolicy() const;
 
@@ -178,7 +161,6 @@ public:
     WEBCORE_EXPORT void setAllowsAnimation(std::optional<bool>);
 #endif
 
-    void setFetchPriorityForBindings(const AtomString&);
     String fetchPriorityForBindings() const;
     RequestPriority fetchPriority() const;
 

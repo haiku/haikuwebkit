@@ -179,7 +179,7 @@ void RenderLayerModelObject::styleDidChange(StyleDifference diff, const RenderSt
         if (s_wasFloating && isFloating())
             setChildNeedsLayout();
         if (s_wasTransformed)
-            setNeedsLayoutAndPrefWidthsRecalc();
+            setNeedsLayoutAndPreferredWidthsUpdate();
     }
 
     if (gainedOrLostLayer)
@@ -393,7 +393,7 @@ void RenderLayerModelObject::applySVGTransform(TransformationMatrix& transform, 
 
     // This check does not use style.hasTransformRelatedProperty() on purpose -- we only want to know if either the 'transform' property, an
     // offset path, or the individual transform operations are set (perspective / transform-style: preserve-3d are not relevant here).
-    bool hasCSSTransform = style.hasTransform() || style.rotate() || style.translate() || style.scale();
+    bool hasCSSTransform = style.hasTransform() || style.hasRotate() || style.hasTranslate() || style.hasScale();
     bool hasSVGTransform = !svgTransform.isIdentity() || preApplySVGTransformMatrix || postApplySVGTransformMatrix || supplementalTransform;
 
     // Common case: 'viewBox' set on outermost <svg> element -> 'preApplySVGTransformMatrix'
@@ -552,16 +552,16 @@ RenderSVGResourcePaintServer* RenderLayerModelObject::svgFillPaintServerResource
         return nullptr;
 
     const auto& svgStyle = style.svgStyle();
-    if (svgStyle.fillPaintType() < SVGPaintType::URINone)
+    if (svgStyle.fill().type < Style::SVGPaintType::URINone)
         return nullptr;
 
-    if (RefPtr referencedElement = ReferencedSVGResources::referencedPaintServerElement(treeScopeForSVGReferences(), svgStyle.fillPaintUri())) {
+    if (RefPtr referencedElement = ReferencedSVGResources::referencedPaintServerElement(treeScopeForSVGReferences(), svgStyle.fill().url)) {
         if (auto* referencedPaintServerRenderer = dynamicDowncast<RenderSVGResourcePaintServer>(referencedElement->renderer()))
             return referencedPaintServerRenderer;
     }
 
     if (auto* element = this->element())
-        document().addPendingSVGResource(AtomString(svgStyle.fillPaintUri().resolved.string()), downcast<SVGElement>(*element));
+        document().addPendingSVGResource(AtomString(svgStyle.fill().url.resolved.string()), downcast<SVGElement>(*element));
 
     return nullptr;
 }
@@ -572,16 +572,16 @@ RenderSVGResourcePaintServer* RenderLayerModelObject::svgStrokePaintServerResour
         return nullptr;
 
     const auto& svgStyle = style.svgStyle();
-    if (svgStyle.strokePaintType() < SVGPaintType::URINone)
+    if (svgStyle.stroke().type < Style::SVGPaintType::URINone)
         return nullptr;
 
-    if (RefPtr referencedElement = ReferencedSVGResources::referencedPaintServerElement(treeScopeForSVGReferences(), svgStyle.strokePaintUri())) {
+    if (RefPtr referencedElement = ReferencedSVGResources::referencedPaintServerElement(treeScopeForSVGReferences(), svgStyle.stroke().url)) {
         if (auto* referencedPaintServerRenderer = dynamicDowncast<RenderSVGResourcePaintServer>(referencedElement->renderer()))
             return referencedPaintServerRenderer;
     }
 
     if (auto* element = this->element())
-        document().addPendingSVGResource(AtomString(svgStyle.strokePaintUri().resolved.string()), downcast<SVGElement>(*element));
+        document().addPendingSVGResource(AtomString(svgStyle.stroke().url.resolved.string()), downcast<SVGElement>(*element));
 
     return nullptr;
 }

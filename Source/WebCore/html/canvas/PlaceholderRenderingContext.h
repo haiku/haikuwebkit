@@ -45,7 +45,7 @@ public:
     virtual ~PlaceholderRenderingContextSource() = default;
 
     // Called by the offscreen context to submit the frame.
-    void setPlaceholderBuffer(RefPtr<ImageBuffer>&&);
+    void setPlaceholderBuffer(ImageBuffer&);
 
     // Called by the placeholder context to attach to compositor layer.
     void setContentsToLayer(GraphicsLayer&);
@@ -54,7 +54,6 @@ private:
     explicit PlaceholderRenderingContextSource(PlaceholderRenderingContext&);
 
     WeakPtr<PlaceholderRenderingContext> m_placeholder; // For main thread use.
-    RefPtr<ImageBuffer> m_imageBufferForDelegate;
     Lock m_lock;
     RefPtr<GraphicsLayerAsyncContentsDisplayDelegate> m_delegate WTF_GUARDED_BY_LOCK(m_lock);
 };

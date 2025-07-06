@@ -256,6 +256,11 @@ void UIDelegate::setDelegate(id<WKUIDelegate> delegate)
     m_delegateMethods.webViewRecentlyAccessedGamepadsForTesting = [delegate respondsToSelector:@selector(_webViewRecentlyAccessedGamepadsForTesting:)];
     m_delegateMethods.webViewStoppedAccessingGamepadsForTesting = [delegate respondsToSelector:@selector(_webViewStoppedAccessingGamepadsForTesting:)];
 #endif
+
+#if PLATFORM(IOS_FAMILY)
+    m_delegateMethods.webViewDidEnterStandby = [delegate respondsToSelector:@selector(_webViewDidEnterStandbyForTesting:)];
+    m_delegateMethods.webViewDidExitStandby = [delegate respondsToSelector:@selector(_webViewDidExitStandbyForTesting:)];
+#endif
 }
 
 #if ENABLE(CONTEXT_MENUS)
@@ -2233,5 +2238,39 @@ void UIDelegate::UIClient::endXRSession(WebPageProxy&, PlatformXRSessionEndReaso
 #endif // PLATFORM(IOS_FAMILY)
 
 #endif // ENABLE(WEBXR)
+
+#if PLATFORM(IOS_FAMILY)
+void UIDelegate::UIClient::didEnterStandby(WebPageProxy&)
+{
+    RefPtr uiDelegate = m_uiDelegate.get();
+    if (!uiDelegate)
+        return;
+
+    if (!uiDelegate->m_delegateMethods.webViewDidEnterStandby)
+        return;
+
+    RetainPtr delegate = uiDelegatePrivate();
+    if (!delegate)
+        return;
+
+    [delegate _webViewDidEnterStandbyForTesting:uiDelegate->m_webView.get().get()];
+}
+
+void UIDelegate::UIClient::didExitStandby(WebPageProxy&)
+{
+    RefPtr uiDelegate = m_uiDelegate.get();
+    if (!uiDelegate)
+        return;
+
+    if (!uiDelegate->m_delegateMethods.webViewDidExitStandby)
+        return;
+
+    RetainPtr delegate = uiDelegatePrivate();
+    if (!delegate)
+        return;
+
+    [delegate _webViewDidExitStandbyForTesting:uiDelegate->m_webView.get().get()];
+}
+#endif // PLATFORM(IOS_FAMILY)
 
 } // namespace WebKit

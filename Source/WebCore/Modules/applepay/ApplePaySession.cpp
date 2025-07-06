@@ -643,7 +643,7 @@ ExceptionOr<void> ApplePaySession::completeMerchantValidation(JSC::JSGlobalObjec
         return Exception { ExceptionCode::TypeError };
 
     auto& document = *downcast<Document>(scriptExecutionContext());
-    auto& window = *document.domWindow();
+    auto& window = *document.window();
 
     String errorMessage;
     auto merchantSession = PaymentMerchantSession::fromJS(state, asObject(merchantSessionValue), errorMessage);

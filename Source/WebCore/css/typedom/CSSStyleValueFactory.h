@@ -49,8 +49,6 @@ public:
     static RefPtr<CSSStyleValue> constructStyleValueForShorthandSerialization(Document&, const String&);
     static ExceptionOr<Vector<Ref<CSSStyleValue>>> vectorFromStyleValuesOrStrings(Document&, const AtomString& property, FixedVector<Variant<RefPtr<CSSStyleValue>, String>>&&);
 
-    static RefPtr<CSSStyleValue> constructStyleValueForCustomPropertySyntaxValue(const CSSCustomPropertyValue::SyntaxValue&);
-
 protected:
     CSSStyleValueFactory() = delete;
 

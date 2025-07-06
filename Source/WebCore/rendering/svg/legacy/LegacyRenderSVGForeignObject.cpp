@@ -187,7 +187,7 @@ bool LegacyRenderSVGForeignObject::nodeAtFloatPoint(const HitTestRequest& reques
         || RenderBlock::nodeAtPoint(request, result, hitTestLocation, LayoutPoint(), HitTestChildBlockBackgrounds);
 }
 
-LayoutSize LegacyRenderSVGForeignObject::offsetFromContainer(RenderElement& container, const LayoutPoint&, bool*) const
+LayoutSize LegacyRenderSVGForeignObject::offsetFromContainer(const RenderElement& container, const LayoutPoint&, bool*) const
 {
     ASSERT_UNUSED(container, &container == this->container());
     ASSERT(!isInFlowPositioned());

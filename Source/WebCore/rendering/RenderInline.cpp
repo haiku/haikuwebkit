@@ -709,7 +709,7 @@ auto RenderInline::computeVisibleRectsInContainer(const RepaintRects& rects, con
     return localContainer->computeVisibleRectsInContainer(adjustedRects, container, context);
 }
 
-LayoutSize RenderInline::offsetFromContainer(RenderElement& container, const LayoutPoint&, bool* offsetDependsOnPoint) const
+LayoutSize RenderInline::offsetFromContainer(const RenderElement& container, const LayoutPoint&, bool* offsetDependsOnPoint) const
 {
     ASSERT(&container == this->container());
     

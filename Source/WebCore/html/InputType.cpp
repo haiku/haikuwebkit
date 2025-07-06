@@ -265,10 +265,10 @@ FormControlState InputType::saveFormControlState() const
 {
     ASSERT(element());
     Ref input = *element();
-    auto currentValue = input->value();
-    if (currentValue == input->defaultValue())
+    AtomString currentValue { input->value().get() };
+    if (currentValue == input->attributeWithoutSynchronization(valueAttr))
         return { };
-    return { { AtomString { currentValue } } };
+    return { { currentValue } };
 }
 
 void InputType::restoreFormControlState(const FormControlState& state)

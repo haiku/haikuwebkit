@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, 2013 Apple Inc. All rights reserved.
+ * Copyright (C) 2011-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -132,7 +132,7 @@ bool WebNotificationManagerProxy::showImpl(WebPageProxy* webPage, Ref<WebNotific
 
 void WebNotificationManagerProxy::cancel(WebPageProxy* page, const WTF::UUID& pageNotificationID)
 {
-    if (auto webNotification = m_notifications.get(pageNotificationID)) {
+    if (RefPtr webNotification = m_notifications.get(pageNotificationID)) {
         m_provider->cancel(*webNotification);
         didDestroyNotification(page, pageNotificationID);
     }
@@ -186,7 +186,7 @@ void WebNotificationManagerProxy::providerDidShowNotification(WebNotificationIde
     if (it == m_globalNotificationMap.end())
         return;
 
-    auto notification = m_notifications.get(it->value);
+    RefPtr notification = m_notifications.get(it->value);
     if (!notification) {
         ASSERT_NOT_REACHED();
         return;
@@ -265,7 +265,7 @@ void WebNotificationManagerProxy::providerDidCloseNotifications(API::Array* glob
 
         ASSERT(coreNotificationID);
 
-        auto notification = m_notifications.take(*coreNotificationID);
+        RefPtr notification = m_notifications.take(*coreNotificationID);
         if (!notification)
             continue;
 

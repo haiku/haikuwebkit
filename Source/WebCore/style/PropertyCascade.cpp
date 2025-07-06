@@ -178,6 +178,18 @@ bool PropertyCascade::hasProperty(CSSPropertyID propertyID, const CSSValue& valu
     return propertyID < firstLogicalGroupProperty ? hasNormalProperty(propertyID) : hasLogicalGroupProperty(propertyID);
 }
 
+bool PropertyCascade::mayOverrideExistingProperty(CSSPropertyID propertyID, const CSSValue& value)
+{
+    if (propertyID == CSSPropertyCustom)
+        return hasCustomProperty(downcast<CSSCustomPropertyValue>(value).name());
+    if (propertyID < firstLogicalGroupProperty)
+        return hasNormalProperty(propertyID);
+
+    // Apply all logical group properties if we have applied any. They may override the ones we already applied.
+    // FIXME: This could check if any existing properties are actually in the same group.
+    return !!m_lastIndexForLogicalGroup;
+}
+
 const PropertyCascade::Property* PropertyCascade::lastPropertyResolvingLogicalPropertyPair(CSSPropertyID propertyID, WritingMode writingMode) const
 {
     ASSERT(CSSProperty::isInLogicalPropertyGroup(propertyID));
@@ -250,7 +262,7 @@ bool PropertyCascade::addMatch(const MatchedProperties& matchedProperties, Casca
                 return true;
 
             // If we have applied this property for some reason already we must apply anything that overrides it.
-            if (hasProperty(propertyID, *current.value()))
+            if (mayOverrideExistingProperty(propertyID, *current.value()))
                 return true;
 
             if (m_includedProperties.types.containsAny({ PropertyType::AfterAnimation, PropertyType::AfterTransition })) {
@@ -267,10 +279,6 @@ bool PropertyCascade::addMatch(const MatchedProperties& matchedProperties, Casca
             if (m_includedProperties.types.contains(PropertyType::ExplicitlyInherited) && isValueID(*current.value(), CSSValueInherit))
                 return true;
             if (m_includedProperties.types.contains(PropertyType::NonInherited) && !currentIsInherited)
-                return true;
-
-            // Apply all logical group properties if we have applied any. They may override the ones we already applied.
-            if (propertyID >= firstLogicalGroupProperty && m_lastIndexForLogicalGroup)
                 return true;
 
             return false;
@@ -310,7 +318,7 @@ bool PropertyCascade::shouldApplyAfterAnimation(const StyleProperties::PropertyR
     // If we are animating custom properties they may affect other properties so we need to re-resolve them.
     if (m_animationLayer->hasCustomProperties) {
         // We could check if the we are actually animating the referenced variable. Indirect cases would need to be taken into account.
-        if (customProperty && !customProperty->isResolved())
+        if (customProperty && customProperty->isVariableReference())
             return true;
         if (property.value()->hasVariableReferences())
             return true;

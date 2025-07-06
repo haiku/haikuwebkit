@@ -101,6 +101,7 @@ namespace JSC {
     macro(RegExpExecIntrinsic) \
     macro(RegExpTestIntrinsic) \
     macro(RegExpMatchFastIntrinsic) \
+    macro(RegExpSearchIntrinsic) \
     macro(ObjectAssignIntrinsic) \
     macro(ObjectCreateIntrinsic) \
     macro(ObjectGetOwnPropertyNamesIntrinsic) \

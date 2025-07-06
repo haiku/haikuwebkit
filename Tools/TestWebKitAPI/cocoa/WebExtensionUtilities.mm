@@ -244,6 +244,16 @@ static constexpr BOOL shouldEnableSiteIsolation = NO;
     [_context _sendTestMessage:message withArgument:argument];
 }
 
+- (void)sendTestStartedWithArgument:(id)argument
+{
+    [_context _sendTestStartedWithArgument:argument];
+}
+
+- (void)sendTestFinishedWithArgument:(id)argument
+{
+    [_context _sendTestFinishedWithArgument:argument];
+}
+
 - (void)load
 {
     NSError *error;
@@ -786,9 +796,8 @@ static WKUserContentController *userContentController(BOOL usingPrivateBrowsing)
 
 - (TestWebExtensionTab *)openNewTabAtIndex:(NSUInteger)index
 {
-    index = std::min(index, _tabs.count);
+    index = MIN(index, _tabs.count);
 
-    ASSERT(index <= _tabs.count);
 
     auto *newTab = [[TestWebExtensionTab alloc] initWithWindow:self extensionController:_extensionController];
 

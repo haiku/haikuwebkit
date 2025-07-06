@@ -67,7 +67,7 @@
 #import "WKPrintingView.h"
 #import "WKQuickLookPreviewController.h"
 #import "WKRevealItemPresenter.h"
-#import "WKTextAnimationManager.h"
+#import "WKTextAnimationManagerMac.h"
 #import "WKTextPlaceholder.h"
 #import "WKViewLayoutStrategy.h"
 #import "WKWebViewMac.h"
@@ -366,8 +366,10 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     [defaultNotificationCenter addObserver:self selector:@selector(_windowDidEnterOrExitFullScreen:) name:NSWindowDidExitFullScreenNotification object:window];
 
     [defaultNotificationCenter addObserver:self selector:@selector(_screenDidChangeColorSpace:) name:NSScreenColorSpaceDidChangeNotification object:nil];
-    [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldBeginSuppressingHDR:) name:@"NSApplicationShouldBeginSuppressingHighDynamicRangeContentNotification" object:NSApp];
-    [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldEndSuppressingHDR:) name:@"NSApplicationShouldEndSuppressingHighDynamicRangeContentNotification" object:NSApp];
+#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
+    [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldBeginSuppressingHDR:) name:NSApplicationShouldBeginSuppressingHighDynamicRangeContentNotification object:NSApp];
+    [defaultNotificationCenter addObserver:self selector:@selector(_applicationShouldEndSuppressingHDR:) name:NSApplicationShouldEndSuppressingHighDynamicRangeContentNotification object:NSApp];
+#endif // HAVE(SUPPORT_HDR_DISPLAY_APIS)
 
     if (_shouldObserveFontPanel) {
         ASSERT(!_isObservingFontPanel);
@@ -543,6 +545,7 @@ static void* keyValueObservingContext = &keyValueObservingContext;
         _impl->screenDidChangeColorSpace();
 }
 
+#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
 - (void)_applicationShouldBeginSuppressingHDR:(NSNotification *)notification
 {
     if (_impl)
@@ -554,6 +557,7 @@ static void* keyValueObservingContext = &keyValueObservingContext;
     if (_impl)
         _impl->applicationShouldSuppressHDR(false);
 }
+#endif // HAVE(SUPPORT_HDR_DISPLAY_APIS)
 
 - (void)observeValueForKeyPath:(NSString *)keyPath ofObject:(id)object change:(NSDictionary *)change context:(void *)context
 {
@@ -1262,39 +1266,6 @@ static NSTrackingAreaOptions flagsChangedEventMonitorTrackingAreaOptions()
 static RetainPtr<_WKWebViewTextInputNotifications> subscribeToTextInputNotifications(WebViewImpl*);
 #endif
 
-static bool isInRecoveryOS()
-{
-    return os_variant_is_basesystem("WebKit");
-}
-
-#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
-static void setDynamicRangeLimitRecursive(CALayer* layer, LayerDynamicRangeLimitSetter layerDynamicRangeLimitSetter)
-{
-    ALLOW_DEPRECATED_DECLARATIONS_BEGIN
-    if ([layer wantsExtendedDynamicRangeContent]) {
-    ALLOW_DEPRECATED_DECLARATIONS_END
-        layerDynamicRangeLimitSetter(layer);
-    }
-    for (CALayer* sublayer in [layer sublayers])
-        setDynamicRangeLimitRecursive(sublayer, layerDynamicRangeLimitSetter);
-}
-#endif
-
-static void setDynamicRangeLimit(CALayer* layer, PlatformDynamicRangeLimit platformDynamicRangeLimit, bool animate)
-{
-#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
-    if (animate)
-        [CATransaction begin];
-    setDynamicRangeLimitRecursive(layer, layerDynamicRangeLimitSetter(platformDynamicRangeLimit));
-    if (animate)
-        [CATransaction commit];
-#else
-    UNUSED_PARAM(layer);
-    UNUSED_PARAM(platformDynamicRangeLimit);
-    UNUSED_PARAM(animate);
-#endif
-}
-
 WTF_MAKE_TZONE_ALLOCATED_IMPL(WebViewImpl);
 
 WebViewImpl::WebViewImpl(WKWebView *view, WebProcessPool& processPool, Ref<API::PageConfiguration>&& configuration)
@@ -1327,12 +1298,6 @@ WebViewImpl::WebViewImpl(WKWebView *view, WebProcessPool& processPool, Ref<API::
 
         if (m_page->protectedPreferences()->siteIsolationEnabled())
             result = true;
-
-        if (isInRecoveryOS()) {
-            // Temporarily disable UI side compositing in Recovery OS <rdar://107964149>.
-            WTFLogAlways("Disabling UI side compositing in Recovery OS");
-            result = false;
-        }
 
         return result;
     };
@@ -2201,8 +2166,6 @@ void WebViewImpl::screenDidChangeColorSpace()
 void WebViewImpl::applicationShouldSuppressHDR(bool suppress)
 {
     m_page->setShouldSuppressHDR(suppress);
-    if (m_page->protectedPreferences()->acceleratedDrawingEnabled())
-        setDynamicRangeLimit(m_rootLayer.get(), suppress ? PlatformDynamicRangeLimit::defaultWhenSuppressingHDR() : PlatformDynamicRangeLimit::noLimit(), true);
 }
 
 bool WebViewImpl::mightBeginDragWhileInactive()
@@ -2365,7 +2328,7 @@ void WebViewImpl::viewDidChangeBackingProperties()
         return;
 
     m_colorSpace = nullptr;
-    if (DrawingAreaProxy *drawingArea = m_page->drawingArea())
+    if (RefPtr drawingArea = m_page->drawingArea())
         drawingArea->colorSpaceDidChange();
 }
 
@@ -2401,7 +2364,6 @@ void WebViewImpl::pageDidScroll(const IntPoint& scrollPosition)
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
     updateScrollPocketVisibilityWhenScrolledToTop();
-    updateTopScrollPocketCaptureColor();
 #endif
 
     [m_view didChangeValueForKey:@"hasScrolledContentsUnderTitlebar"];
@@ -2421,8 +2383,14 @@ void WebViewImpl::updateScrollPocketVisibilityWhenScrolledToTop()
 void WebViewImpl::updateTopScrollPocketCaptureColor()
 {
     RetainPtr view = m_view.get();
-    RetainPtr captureColor = [view _sampledTopFixedPositionContentColor];
-    if (!captureColor && (m_pageIsScrolledToTop || [view _hasVisibleColorExtensionView:BoxSide::Top])) {
+    if ([view _usesAutomaticContentInsetBackgroundFill])
+        return;
+
+    RetainPtr captureColor = [view _overrideTopScrollEdgeEffectColor];
+    if (!captureColor && ![view _shouldSuppressTopColorExtensionView])
+        captureColor = [view _sampledTopFixedPositionContentColor];
+
+    if (!captureColor) {
         if (auto backgroundColor = m_page->underPageBackgroundColorIgnoringPlatformColor(); backgroundColor.isValid())
             captureColor = cocoaColor(backgroundColor);
         else
@@ -6975,7 +6943,10 @@ void WebViewImpl::updateScrollPocket()
 
     RetainPtr view = m_view.get();
     CGFloat topContentInset = obscuredContentInsets().top();
-    bool needsTopView = m_page->preferences().contentInsetBackgroundFillEnabled() && view && topContentInset > 0;
+    bool needsTopView = m_page->preferences().contentInsetBackgroundFillEnabled()
+        && view
+        && !view->_reasonsToHideTopScrollPocket
+        && topContentInset > 0;
 
     if (!needsTopView) {
         if (RetainPtr scrollPocket = std::exchange(m_topScrollPocket, nil)) {

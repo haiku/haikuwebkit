@@ -503,6 +503,17 @@ static void convertPathToScreenSpaceFunction(PathConversionInfo& conversion, con
 // advancing forward by line from top and backwards by line from the bottom, until we have a visible range.
 - (NSRange)accessibilityVisibleCharacterRange
 {
+
+#if ENABLE(AX_THREAD_TEXT_APIS)
+    if (AXObjectCache::useAXThreadTextApis()) {
+        RefPtr<AXCoreObject> backingObject = self.baseUpdateBackingStore;
+        if (!backingObject)
+            return NSMakeRange(NSNotFound, 0);
+        std::optional range = backingObject->visibleCharacterRange();
+        return range ? *range : NSMakeRange(NSNotFound, 0);
+    }
+#endif // ENABLE(AX_THREAD_TEXT_APIS)
+
     return Accessibility::retrieveValueFromMainThread<NSRange>([protectedSelf = retainPtr(self)] () -> NSRange {
         auto backingObject = protectedSelf.get().baseUpdateBackingStore;
         if (!backingObject)
@@ -511,12 +522,12 @@ static void convertPathToScreenSpaceFunction(PathConversionInfo& conversion, con
         auto elementRange = makeNSRange(backingObject->simpleRange());
         if (elementRange.location == NSNotFound)
             return elementRange;
-        
-        auto visibleRange = makeNSRange(backingObject->visibleCharacterRange());
-        if (visibleRange.location == NSNotFound)
-            return visibleRange;
 
-        return NSMakeRange(visibleRange.location - elementRange.location, visibleRange.length);
+        std::optional visibleRange = backingObject->visibleCharacterRange();
+        if (!visibleRange || visibleRange->location == NSNotFound)
+            return NSMakeRange(NSNotFound, 0);
+
+        return NSMakeRange(visibleRange->location - elementRange.location, visibleRange->length);
     });
 }
 

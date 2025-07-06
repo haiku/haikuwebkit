@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -78,8 +78,8 @@ DocumentTimeline::~DocumentTimeline() = default;
 
 AnimationTimelinesController* DocumentTimeline::controller() const
 {
-    if (m_document)
-        return &m_document->ensureTimelinesController();
+    if (RefPtr document = m_document.get())
+        return &document->ensureTimelinesController();
     return nullptr;
 }
 
@@ -225,7 +225,7 @@ bool DocumentTimeline::animationCanBeRemoved(WebAnimation& animation)
         return false;
 
     // - has an associated animation effect whose target element is a descendant of doc, and
-    auto* keyframeEffect = dynamicDowncast<KeyframeEffect>(animation.effect());
+    RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(animation.effect());
     if (!keyframeEffect)
         return false;
 
@@ -265,7 +265,7 @@ IGNORE_GCC_WARNINGS_END
             break;
 
         if (animationWithHigherCompositeOrder && animationWithHigherCompositeOrder->isReplaceable()) {
-            if (auto* keyframeEffectWithHigherCompositeOrder = dynamicDowncast<KeyframeEffect>(animationWithHigherCompositeOrder->effect())) {
+            if (RefPtr keyframeEffectWithHigherCompositeOrder = dynamicDowncast<KeyframeEffect>(animationWithHigherCompositeOrder->effect())) {
                 for (auto property : keyframeEffectWithHigherCompositeOrder->animatedProperties()) {
                     if (propertiesToMatch.remove(resolvedProperty(property)) && propertiesToMatch.isEmpty())
                         break;
@@ -300,7 +300,7 @@ void DocumentTimeline::removeReplacedAnimations()
         //    to convert timeline time to origin-relative time to the current time of the timeline with which animation is associated.
         //    Otherwise, queue a task to dispatch removeEvent at animation. The task source for this task is the DOM manipulation task source.
         auto scheduledTime = [&]() -> std::optional<Seconds> {
-            if (auto* documentTimeline = dynamicDowncast<DocumentTimeline>(animation->timeline())) {
+            if (RefPtr documentTimeline = dynamicDowncast<DocumentTimeline>(animation->timeline())) {
                 auto currentTime = MonotonicTime::now().secondsSinceEpoch();
                 return documentTimeline->convertTimelineTimeToOriginRelativeTime(currentTime);
             }
@@ -317,7 +317,7 @@ void DocumentTimeline::removeReplacedAnimations()
     }
 
     for (auto& animation : animationsToRemove) {
-        if (auto* timeline = animation->timeline())
+        if (RefPtr timeline = animation->timeline())
             timeline->removeAnimation(animation);
     }
 }
@@ -325,7 +325,7 @@ void DocumentTimeline::removeReplacedAnimations()
 void DocumentTimeline::transitionDidComplete(Ref<CSSTransition>&& transition)
 {
     removeAnimation(transition.get());
-    if (auto* keyframeEffect = dynamicDowncast<KeyframeEffect>(transition->effect())) {
+    if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(transition->effect())) {
         if (auto styleable = keyframeEffect->targetStyleable()) {
             auto property = transition->property();
             if (styleable->hasRunningTransitionForProperty(property))
@@ -424,7 +424,7 @@ void DocumentTimeline::applyPendingAcceleratedAnimations()
 
     bool hasForcedLayout = false;
     for (auto& animation : acceleratedAnimationsPendingRunningStateChange) {
-        if (auto* keyframeEffect = dynamicDowncast<KeyframeEffect>(animation->effect())) {
+        if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(animation->effect())) {
             if (!hasForcedLayout)
                 hasForcedLayout |= keyframeEffect->forceLayoutIfNeeded();
 
@@ -474,7 +474,7 @@ Vector<std::pair<String, double>> DocumentTimeline::acceleratedAnimationsForElem
     auto* renderer = element.renderer();
     if (renderer && renderer->isComposited()) {
         auto* compositedRenderer = downcast<RenderBoxModelObject>(renderer);
-        if (auto* graphicsLayer = compositedRenderer->layer()->backing()->graphicsLayer())
+        if (RefPtr graphicsLayer = compositedRenderer->layer()->backing()->graphicsLayer())
             return graphicsLayer->acceleratedAnimationsForTesting(m_document->settings());
     }
     return { };

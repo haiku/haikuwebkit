@@ -84,7 +84,7 @@ public:
     static bool areInSameLogicalPropertyGroupWithDifferentMappingLogic(CSSPropertyID, CSSPropertyID);
     static bool isDescriptorOnly(CSSPropertyID);
     static UChar listValuedPropertySeparator(CSSPropertyID);
-    static bool isListValuedProperty(CSSPropertyID propertyID) { return !!listValuedPropertySeparator(propertyID); }
+    static bool isListValuedProperty(CSSPropertyID propertyID) { return !!listValuedPropertySeparator(propertyID) || propertyID == CSSPropertyCustom; }
     static bool allowsNumberOrIntegerInput(CSSPropertyID);
 
     static bool animationUsesNonAdditiveOrCumulativeInterpolation(CSSPropertyID);

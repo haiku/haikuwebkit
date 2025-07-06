@@ -28,9 +28,11 @@ import json
 import logging
 import os
 import subprocess
+import sys
 import tempfile
 import urllib
 from datetime import datetime
+from importlib.util import spec_from_file_location, module_from_spec
 
 from webkitpy.benchmark_runner.benchmark_runner import BenchmarkRunner
 from webkitpy.benchmark_runner.browser_driver.browser_driver_factory import BrowserDriverFactory
@@ -39,6 +41,7 @@ from webkitpy.benchmark_runner.utils import get_path_from_project_root
 from webkitpy.benchmark_runner.webserver_benchmark_runner import WebServerBenchmarkRunner
 
 _log = logging.getLogger(__name__)
+BROWSERPERFDASH_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
 def parse_args():
@@ -56,16 +59,20 @@ def parse_args():
     parser.add_argument('--local-copy', dest='localCopy', help='Path to a local copy of the benchmark (e.g. PerformanceTests/SunSpider/).')
     parser.add_argument('--count', dest='countOverride', type=int, help='Number of times to run the benchmark (e.g. 5).')
     parser.add_argument('--timeout', dest='timeoutOverride', type=int, help='Number of seconds to wait for the benchmark to finish (e.g. 600).')
+    parser.add_argument('--save-results-directory', help='Optional: a directory where to keep a copy of the json results that are sent to the remote server.')
     parser_group_timestamp = parser.add_mutually_exclusive_group(required=False)
     parser_group_timestamp.add_argument('--timestamp', dest='timestamp', type=int, help='Date of when the benchmark was run that will be sent to the performance dashboard server. Format is Unix timestamp (second since epoch). Optional. The server will use as date "now" if not specified.')
     parser_group_timestamp.add_argument('--timestamp-from-repo', dest='local_path_to_repo', default=None, help='Use the commit date of the checked-out git commit (HEAD) on the specified local path as the date to send to the server of when the benchmark was run. Useful for running bots in parallel (or even re-testing old checkouts) and ensuring that the timestamps of the benchmark data on the server gets the same value than the commit date of the checked-out commit on the given repository.')
     parser_group_plan_selection = parser.add_mutually_exclusive_group(required=True)
     parser_group_plan_selection.add_argument('--plan', dest='plan', help='Benchmark plan to run. e.g. speedometer, jetstream')
+    parser_group_plan_selection.add_argument('--list-plans', action='store_true', help='List the available plans')
+    parser_group_plan_selection.add_argument('--read-results-json', help='Instead of running a benchmark, format the output saved in JSON_FILE.')
     parser_group_plan_selection.add_argument('--plans-from-config', action='store_true', help='Run the list of plans specified in the config file.')
     parser_group_plan_selection.add_argument('--allplans', action='store_true', help='Run all available benchmark plans sequentially')
-
     parser.add_argument('browser_args', nargs='*', help='Additional arguments to pass to the browser process. These are positional arguments and must follow all other arguments. If the pass through arguments begin with a dash, use `--` before the argument list begins.')
     args = parser.parse_args()
+    if args.save_results_directory and not os.path.isdir(args.save_results_directory):
+        parser.error(f'The results directory "{args.save_results_directory}" does not exist')
     return args
 
 
@@ -74,11 +81,17 @@ class BrowserPerfDashRunner(object):
 
     def __init__(self, args):
         self._args = args
-        self._plandir = os.path.abspath(BenchmarkRunner.plan_directory())
-        if not os.path.isdir(self._plandir):
-            raise Exception('Cant find plandir: {plandir}'.format(plandir=self._plandir))
+        self._benchmark_runner_plan_directory = os.path.abspath(BenchmarkRunner.plan_directory())
+        self._browserperfdash_runner_plan_directory = os.path.abspath(os.path.join(BROWSERPERFDASH_DIR, 'plans'))
+        for plan_dir in [self._benchmark_runner_plan_directory, self._browserperfdash_runner_plan_directory]:
+            if not os.path.isdir(plan_dir):
+                raise Exception(f"Can't find plan directory: {plan_dir}")
+        self._benchmark_runner_available_plans = BenchmarkRunner.available_plans()
+        self._browserperfdash_runner_available_plans = self._load_and_list_plan_plugins()
+        self._available_plans = sorted(self._benchmark_runner_available_plans + list(self._browserperfdash_runner_available_plans.keys()))
         self._parse_config_file(self._args.config_file)
         self._set_args_default_values_from_config_file()
+        self._browser_driver = BrowserDriverFactory.create(self._args.platform, self._args.browser, self._args.browser_args)
         # This is the dictionary that will be sent as the HTTP POST request that browserperfdash expects
         # (as defined in https://github.com/Igalia/browserperfdash/blob/master/docs/design-document.md)
         # - The bot_* data its obtained from the config file
@@ -110,6 +123,13 @@ class BrowserPerfDashRunner(object):
             date_str = datetime.fromtimestamp(timestamp).isoformat()
             _log.info('Will send the benchmark data as if it was generated on date: {date}'.format(date=date_str))
             self._result_data['timestamp'] = timestamp
+
+        # Get the browser version if needed
+        if self._args.query_browser_version:
+            self._result_data['browser_version'] = self._browser_driver.browser_version()
+            if not self._result_data['browser_version']:
+                raise NotImplementedError('The driver for browser {browser} does not implement a way to automatically obtain the version. Please specify the version manually.'.format(browser=self._args.browser))
+        _log.info('Browser version is: {browser_version}'.format(browser_version=self._result_data['browser_version']))
 
     # The precedence order for setting the value for the arguments is:
     # 1 - What the user defines via command line switches (current_value is not None).
@@ -157,34 +177,43 @@ class BrowserPerfDashRunner(object):
         if not found_one_valid_server:
             raise ValueError('At least one server should be defined on the config file "{config_file}"'.format(config_file=config_file))
 
-    # As version of the test we calculate a hash of the contents of the plan and patch files
-    def _get_test_version_string(self, plan_name):
+    def _get_plan_version_hash(self, plan):
+        if self._is_benchmark_runner_plan(plan):
+            return self._calculate_benchmark_runner_plan_version_hash(plan)
+
+    # As version of the test we calculate a hash of the contents
+    def _get_plan_version_hash(self, plan_name):
         version_hash = hashlib.md5()
-        plan_file_path = os.path.join(self._plandir, '{plan_name}.plan'.format(plan_name=plan_name))
+        if self._is_benchmark_runner_plan(plan_name):
+            plan_file_path = os.path.join(self._benchmark_runner_plan_directory, f'{plan_name}.plan')
+        else:
+            plan_file_path = self._browserperfdash_runner_available_plans[plan_name]['path']
         with open(plan_file_path, 'r') as plan_fd:
             plan_content = plan_fd.read().encode('utf-8', errors='ignore')
             version_hash.update(plan_content)
-            plan_dict = json.loads(plan_content)
-            if 'import_plan_file' in plan_dict:
-                imported_plan_file = os.path.join(self._plandir, plan_dict.pop('import_plan_file'))
-                with open(imported_plan_file, 'r') as imported_plan_fd:
-                    imported_plan_content = imported_plan_fd.read().encode('utf-8', errors='ignore')
-                    version_hash.update(imported_plan_content)
-                    imported_plan_dict = json.loads(imported_plan_content)
-                imported_plan_dict.update(plan_dict)
-                plan_dict = imported_plan_dict
-            plan_patches = []
-            for plan_key in plan_dict:
-                if plan_key.endswith('_patch'):
-                    plan_patches.append(get_path_from_project_root(plan_dict[plan_key]))
-                if plan_key.endswith('_patches'):
-                    for plan_patch in plan_dict[plan_key]:
-                        plan_patches.append(get_path_from_project_root(plan_patch))
-            for patch_file_path in plan_patches:
-                if not os.path.isfile(patch_file_path):
-                    raise Exception('Can not find patch file "{patch_file_path}" referenced in plan "{plan_file_path}"'.format(patch_file_path=patch_file_path, plan_file_path=plan_file_path))
-                with open(patch_file_path, 'r') as patch_fd:
-                    version_hash.update(patch_fd.read().encode('utf-8', errors='ignore'))
+            # For benchmark runner plans we load the json and we add the hashes of patches and other imported plans
+            if self._is_benchmark_runner_plan(plan_name):
+                plan_dict = json.loads(plan_content)
+                if 'import_plan_file' in plan_dict:
+                    imported_plan_file = os.path.join(self._benchmark_runner_plan_directory, plan_dict.pop('import_plan_file'))
+                    with open(imported_plan_file, 'r') as imported_plan_fd:
+                        imported_plan_content = imported_plan_fd.read().encode('utf-8', errors='ignore')
+                        version_hash.update(imported_plan_content)
+                        imported_plan_dict = json.loads(imported_plan_content)
+                    imported_plan_dict.update(plan_dict)
+                    plan_dict = imported_plan_dict
+                plan_patches = []
+                for plan_key in plan_dict:
+                    if plan_key.endswith('_patch'):
+                        plan_patches.append(get_path_from_project_root(plan_dict[plan_key]))
+                    if plan_key.endswith('_patches'):
+                        for plan_patch in plan_dict[plan_key]:
+                            plan_patches.append(get_path_from_project_root(plan_patch))
+                for patch_file_path in plan_patches:
+                    if not os.path.isfile(patch_file_path):
+                        raise Exception('Can not find patch file "{patch_file_path}" referenced in plan "{plan_file_path}"'.format(patch_file_path=patch_file_path, plan_file_path=plan_file_path))
+                    with open(patch_file_path, 'r') as patch_fd:
+                        version_hash.update(patch_fd.read().encode('utf-8', errors='ignore'))
         return version_hash.hexdigest()
 
     def _get_test_data_json_string(self, temp_result_file):
@@ -194,6 +223,29 @@ class BrowserPerfDashRunner(object):
         if 'debugOutput' in temp_result_json:
             del temp_result_json['debugOutput']
         return json.dumps(temp_result_json)
+
+    def _load_and_list_plan_plugins(self):
+        plugins = {}
+        for filename in os.listdir(self._browserperfdash_runner_plan_directory):
+            if filename.endswith('.py') and not filename.startswith('_'):
+                plugin_path = os.path.join(self._browserperfdash_runner_plan_directory, filename)
+                module_name = os.path.splitext(filename)[0]
+                spec = spec_from_file_location(module_name, plugin_path)
+                module = module_from_spec(spec)
+                sys.modules[module_name] = module
+                spec.loader.exec_module(module)
+                if hasattr(module, "register"):
+                    plugin = module.register()
+                    for required_key in ['name', 'run']:
+                        if required_key not in plugin:
+                            raise ValueError(f'Required key "{required_key}" not found in plugin defined at "{plugin_path}"')
+                    plugin_name = plugin['name']
+                    if plugin_name in plugins:
+                        raise ValueError(f'Plugin "{plugin_name}" defined in "{plugin_path}" was already defined by other plugin.')
+                    plugins[plugin_name] = {'run': plugin['run'], 'path': plugin_path}
+                else:
+                    _log.warning(f'Plugin {filename} has no register() function. Ignoring plugin')
+        return plugins
 
     # urllib.request.urlopen always raises an exception when the http return code is not 200
     # so this wraps the call to return the HTTPError object instead of raising the exception.
@@ -266,20 +318,61 @@ class BrowserPerfDashRunner(object):
                 _log.error(e)
         return not upload_failed
 
+    def _is_benchmark_runner_plan(self, plan):
+        return plan in self._benchmark_runner_available_plans
+
+    def is_browserperfdash_runner_plan(self, plan):
+        return plan in self._browserperfdash_runner_available_plans
+
+    def available_plans(self):
+        return self._available_plans
+
+    def _run_benchmark_runner_plan(self, plan, result_file_path):
+        assert(self._is_benchmark_runner_plan(plan)), f'plan {plan} is not a valid benchmark-runner plan'
+        benchmark_runner_class = benchmark_runner_subclasses[self._args.driver]
+        runner = benchmark_runner_class(plan,
+                                        self._args.localCopy,
+                                        self._args.countOverride,
+                                        self._args.timeoutOverride,
+                                        self._args.buildDir,
+                                        result_file_path,
+                                        self._args.platform,
+                                        self._args.browser,
+                                        None,
+                                        browser_args=self._args.browser_args)
+        runner.execute()
+
+    def _run_plan(self, plan, result_file_path):
+        if self._is_benchmark_runner_plan(plan):
+            return self._run_benchmark_runner_plan(plan, result_file_path)
+        if self.is_browserperfdash_runner_plan(plan):
+            return self._browserperfdash_runner_available_plans[plan]['run'](self._browser_driver, result_file_path)
+        raise NotImplementedError(f'Implementation missing to run plan {plan}')
+
+    def _save_to_results_directory(self, plan, upload_worked):
+        stamp = datetime.now().strftime("%Y%m%dT%H%M%S")
+        worked_str = 'worked' if upload_worked else 'failed'
+        copy_file_name = f'{self._args.browser}_{self._result_data["browser_version"]}_{plan}_{self._result_data["test_version"]}_{stamp}_upload-{worked_str}.json'
+        copy_file_path = os.path.join(self._args.save_results_directory, copy_file_name)
+        _log.info(f'Saving results to {copy_file_path}')
+        with open(copy_file_path, "w") as f:
+            json.dump(self._result_data, f, indent=2)
+            f.write("\n")
+
     def run(self):
         failed = []
         worked = []
         skipped = []
         plan_list = []
         if self._args.plan:
-            if not os.path.isfile(os.path.join(self._plandir, '{plan_name}.plan'.format(plan_name=self._args.plan))):
-                raise Exception('Can\'t find a file named {plan_name}.plan in directory {plan_directory}'.format(plan_name=self._args.plan, plan_directory=self._plandir))
+            if self._args.plan not in self.available_plans():
+                raise Exception(f"Can't find a a plan named '{self._args.plan}'")
             plan_list = [self._args.plan]
         elif self._args.allplans:
-            plan_list = sorted(BenchmarkRunner.available_plans())
-            skippedfile = os.path.join(self._plandir, 'Skipped')
+            plan_list = self.available_plans()
+            skippedfile = os.path.join(self._benchmark_runner_plan_directory, 'Skipped')
             if not plan_list:
-                raise Exception('Can\'t find any plan in the directory {plan_directory}'.format(plan_directory=self._plandir))
+                raise Exception('Can\'t find any plan in the directory {plan_directory}'.format(plan_directory=self._benchmark_runner_plan_directory))
             if os.path.isfile(skippedfile):
                 skipped = [line.strip() for line in open(skippedfile) if not line.startswith('#') and len(line) > 1]
         elif self._args.plans_from_config:
@@ -288,7 +381,7 @@ class BrowserPerfDashRunner(object):
             plan_list_from_config_str = self._config_parser.get('settings', 'plan_list')
             plan_list_from_config = plan_list_from_config_str.split()
             _log.info('Read a list of {number_plans} plans from the config file: "{plan_list}"'.format(number_plans=len(plan_list_from_config), plan_list=' '.join(plan_list_from_config)))
-            available_plans = BenchmarkRunner.available_plans()
+            available_plans = self.available_plans()
             for plan in plan_list_from_config:
                 if plan in available_plans:
                     if plan not in plan_list:
@@ -299,7 +392,7 @@ class BrowserPerfDashRunner(object):
             _log.info('Running {number_plans} plans: "{plan_list}"'.format(number_plans=len(plan_list), plan_list=' '.join(plan_list)))
 
         if len(plan_list) < 1:
-            _log.error('No benchmarks plans available to run in directory {plan_directory}'.format(plan_directory=self._plandir))
+            _log.error('No benchmarks plans available to run in directory {plan_directory}'.format(plan_directory=self._benchmark_runner_plan_directory))
             return max(1, len(failed))
 
         _log.info('Starting benchmark for browser {browser}'.format(browser=self._args.browser))
@@ -312,41 +405,21 @@ class BrowserPerfDashRunner(object):
                 continue
             _log.info('Starting benchmark plan: {plan_name} [benchmark {iteration} of {total}]'.format(plan_name=plan, iteration=iteration_count, total=len(plan_list)))
             try:
-                # Run test and save test info
                 with tempfile.NamedTemporaryFile() as temp_result_file:
-                    benchmark_runner_class = benchmark_runner_subclasses[self._args.driver]
-                    runner = benchmark_runner_class(plan,
-                                                    self._args.localCopy,
-                                                    self._args.countOverride,
-                                                    self._args.timeoutOverride,
-                                                    self._args.buildDir,
-                                                    temp_result_file.name,
-                                                    self._args.platform,
-                                                    self._args.browser,
-                                                    None,
-                                                    browser_args=self._args.browser_args)
-                    if self._args.query_browser_version:
-                        self._result_data['browser_version'] = runner._browser_driver.browser_version()
-                        if not self._result_data['browser_version']:
-                            raise NotImplementedError('The driver for browser {browser} does not implement a way to automatically obtain the version. Please specify the version manually.'.format(browser=self._args.browser))
-                    _log.info('Browser version is: {browser_version}'.format(browser_version=self._result_data['browser_version']))
                     self._result_data['local_timestamp_teststart'] = datetime.now().strftime('%s')
-                    runner.execute()
+                    self._run_plan(plan, temp_result_file.name)
                     self._result_data['local_timestamp_testend'] = datetime.now().strftime('%s')
                     _log.info('Finished benchmark plan: {plan_name}'.format(plan_name=plan))
                     # Fill test info for upload
                     self._result_data['test_id'] = plan
-                    self._result_data['test_version'] = self._get_test_version_string(plan)
+                    self._result_data['test_version'] = self._get_plan_version_hash(plan)
                     # Fill obtained test results for upload
                     self._result_data['test_data'] = self._get_test_data_json_string(temp_result_file)
-
-                # Now upload data to server(s)
-                _log.info('Uploading results for plan: {plan_name} and browser {browser} version {browser_version}'.format(plan_name=plan, browser=self._args.browser, browser_version=self._result_data['browser_version']))
-                if self._upload_result():
-                    worked.append(plan)
-                else:
-                    failed.append(plan)
-
+                    _log.info(f'Uploading results for plan: {plan} and browser {self._args.browser} version {self._result_data["browser_version"]}')
+                    upload_worked = self._upload_result()
+                    (worked if upload_worked else failed).append(plan)
+                    if self._args.save_results_directory:
+                        self._save_to_results_directory(plan, upload_worked)
             except KeyboardInterrupt:
                 raise
             except:
@@ -371,6 +444,33 @@ def format_logger(logger):
     logger.addHandler(ch)
 
 
+def read_results_json(file_path):
+    if not os.path.isfile(file_path):
+        raise ValueError(f"Can't find file {file_path}")
+    with open(file_path, 'r') as f:
+        json_data = json.load(f)
+    is_browserperfdash_runner_json_result = "test_data" in json_data
+    if is_browserperfdash_runner_json_result:
+        print('---- TEST RUN INFO ----')
+        for key in json_data.keys():
+            if key != "test_data":
+                print(f"{key} = {json_data[key]}")
+    print('---- TEST RESULTS -----')
+    results_json = json.loads(json_data["test_data"]) if is_browserperfdash_runner_json_result else json_data
+    if 'debugOutput' in results_json:
+        del results_json['debugOutput']
+    BenchmarkRunner.show_results(results_json, True, False)
+    return 0
+
+
 def main():
-    perfdashrunner = BrowserPerfDashRunner(parse_args())
+    args = parse_args()
+    if args.read_results_json:
+        return read_results_json(args.read_results_json)
+    perfdashrunner = BrowserPerfDashRunner(args)
+    if args.list_plans:
+        print("Available plans: ")
+        for plan in perfdashrunner.available_plans():
+            print("\t%s" % plan)
+        return 0
     return perfdashrunner.run()

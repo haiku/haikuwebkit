@@ -824,7 +824,8 @@ sub runTest {
     my $defaultHarness = '';
     $defaultHarness = $deffile if $scenario ne 'raw';
 
-    my $prefix = !isWindows() && $DYLD_FRAMEWORK_PATH ? qq(DYLD_FRAMEWORK_PATH=$DYLD_FRAMEWORK_PATH) : "";
+    my $tz = $ENV{TZ} ? "TZ=$ENV{TZ}" : "TZ=PST";
+    my $prefix = !isWindows() && $DYLD_FRAMEWORK_PATH ? qq(DYLD_FRAMEWORK_PATH=$DYLD_FRAMEWORK_PATH $tz) : $tz;
     my $execTimeStart = time();
 
     my $result = qx($prefix $JSC $args $defaultHarness $asyncHarness $includesfile $prefixFile$filename 2>&1);

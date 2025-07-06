@@ -33,6 +33,7 @@
 
 #include "CSSParserContext.h"
 #include "CSSValueKeywords.h"
+#include "CSSWideKeyword.h"
 #include <wtf/ASCIICType.h>
 
 namespace WebCore {
@@ -58,20 +59,6 @@ template <typename CharacterType>
 bool isNameCodePoint(CharacterType c)
 {
     return isNameStartCodePoint(c) || isASCIIDigit(c) || c == '-';
-}
-
-inline bool isCSSWideKeyword(CSSValueID valueID)
-{
-    switch (valueID) {
-    case CSSValueInitial:
-    case CSSValueInherit:
-    case CSSValueUnset:
-    case CSSValueRevert:
-    case CSSValueRevertLayer:
-        return true;
-    default:
-        return false;
-    };
 }
 
 inline bool isValidCustomIdentifier(CSSValueID valueID)

@@ -436,15 +436,12 @@ void HTMLVideoElement::ancestorWillEnterFullscreen()
 }
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
+
 bool HTMLVideoElement::webkitWirelessVideoPlaybackDisabled() const
 {
     return mediaSession().wirelessVideoPlaybackDisabled();
 }
 
-void HTMLVideoElement::setWebkitWirelessVideoPlaybackDisabled(bool disabled)
-{
-    setBooleanAttribute(webkitwirelessvideoplaybackdisabledAttr, disabled);
-}
 #endif
 
 void HTMLVideoElement::didMoveToNewDocument(Document& oldDocument, Document& newDocument)
@@ -757,10 +754,10 @@ void HTMLVideoElement::serviceRequestVideoFrameCallbacks(ReducedResolutionSecond
         return;
 
     auto videoFrameMetadata = player()->videoFrameMetadata();
-    if (!videoFrameMetadata || !document().domWindow())
+    if (!videoFrameMetadata || !document().window())
         return;
 
-    processVideoFrameMetadataTimestamps(*videoFrameMetadata, document().domWindow()->protectedPerformance());
+    processVideoFrameMetadataTimestamps(*videoFrameMetadata, document().window()->protectedPerformance());
 
     Ref protectedThis { *this };
 

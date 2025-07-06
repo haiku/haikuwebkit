@@ -46,12 +46,12 @@ public:
     void deref() const final { RefCounted::deref(); }
 
     WebProcessProxy& process() { return m_process; }
+    DrawingAreaIdentifier identifier() const { return m_identifier; }
 
 private:
     RemotePageDrawingAreaProxy(DrawingAreaProxy&, WebProcessProxy&);
 
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) final;
-    bool didReceiveSyncMessage(IPC::Connection&, IPC::Decoder&, UniqueRef<IPC::Encoder>&) final;
 
     WeakPtr<DrawingAreaProxy> m_drawingArea;
     DrawingAreaIdentifier m_identifier;

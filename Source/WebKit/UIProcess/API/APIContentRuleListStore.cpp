@@ -583,21 +583,32 @@ void ContentRuleListStore::getAvailableContentRuleListIdentifiers(CompletionHand
 void ContentRuleListStore::compileContentRuleList(WTF::String&& identifier, WTF::String&& json, CompletionHandler<void(RefPtr<API::ContentRuleList>, std::error_code)> completionHandler)
 {
     auto filePath = constructedPath(m_storePath, identifier);
-    compileContentRuleListFile(WTFMove(filePath), WTFMove(identifier), WTFMove(json), WTFMove(completionHandler));
+    compileContentRuleListFile(WTFMove(filePath), WTFMove(identifier), WTFMove(json), WebCore::ContentExtensions::CSSSelectorsAllowed::Yes, WTFMove(completionHandler));
 }
 
-void ContentRuleListStore::compileContentRuleListFile(WTF::String&& filePath, WTF::String&& identifier, WTF::String&& json, CompletionHandler<void(RefPtr<API::ContentRuleList>, std::error_code)> completionHandler)
+void ContentRuleListStore::compileContentRuleListFile(WTF::String&& filePath, WTF::String&& identifier, WTF::String&& json, WebCore::ContentExtensions::CSSSelectorsAllowed cssSelectorsAllowed, CompletionHandler<void(RefPtr<API::ContentRuleList>, std::error_code)> completionHandler)
 {
     ASSERT(RunLoop::isMain());
 
     WebCore::initializeCommonAtomStrings();
     WebCore::QualifiedName::init();
 
-    auto parsedRules = WebCore::ContentExtensions::parseRuleList(json);
-    if (!parsedRules.has_value())
-        return completionHandler(nullptr, parsedRules.error());
+    Expected<Vector<WebCore::ContentExtensions::ContentExtensionRule>, std::error_code> parsedRules;
+    if (cssSelectorsAllowed == WebCore::ContentExtensions::CSSSelectorsAllowed::Yes) {
+        parsedRules = WebCore::ContentExtensions::parseRuleList(json, cssSelectorsAllowed);
+        if (!parsedRules.has_value())
+            return completionHandler(nullptr, parsedRules.error());
+    }
 
-    protectedCompileQueue()->dispatch([protectedThis = Ref { *this }, filePath = WTFMove(filePath).isolatedCopy(), identifier = WTFMove(identifier).isolatedCopy(), json = WTFMove(json).isolatedCopy(), parsedRules = crossThreadCopy(WTFMove(parsedRules).value()), storePath = m_storePath.isolatedCopy(), completionHandler = WTFMove(completionHandler)] () mutable {
+    protectedCompileQueue()->dispatch([protectedThis = Ref { *this }, filePath = WTFMove(filePath).isolatedCopy(), identifier = WTFMove(identifier).isolatedCopy(), json = WTFMove(json).isolatedCopy(), parsedRules = crossThreadCopy(WTFMove(parsedRules).value()), storePath = m_storePath.isolatedCopy(), completionHandler = WTFMove(completionHandler), cssSelectorsAllowed] () mutable {
+        if (cssSelectorsAllowed == WebCore::ContentExtensions::CSSSelectorsAllowed::No) {
+            auto parsedRulesOnBackgroundQueue = WebCore::ContentExtensions::parseRuleList(json, cssSelectorsAllowed);
+            if (!parsedRulesOnBackgroundQueue.has_value())
+                return completionHandler(nullptr, parsedRulesOnBackgroundQueue.error());
+
+            parsedRules = parsedRulesOnBackgroundQueue.value();
+        }
+
         auto result = compiledToFile(WTFMove(json), WTFMove(parsedRules), filePath);
         if (!result.has_value()) {
             RunLoop::protectedMain()->dispatch([protectedThis = WTFMove(protectedThis), error = WTFMove(result.error()), completionHandler = WTFMove(completionHandler)] () mutable {

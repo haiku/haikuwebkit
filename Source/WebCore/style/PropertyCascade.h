@@ -115,6 +115,7 @@ private:
     static void setPropertyInternal(Property&, CSSPropertyID, CSSValue&, const MatchedProperties&, CascadeLevel);
 
     bool hasProperty(CSSPropertyID, const CSSValue&);
+    bool mayOverrideExistingProperty(CSSPropertyID, const CSSValue&);
 
     unsigned logicalGroupPropertyIndex(CSSPropertyID) const;
     void setLogicalGroupPropertyIndex(CSSPropertyID, unsigned);

@@ -726,7 +726,7 @@ bool Element::removeAttribute(const QualifiedName& name)
 void Element::setBooleanAttribute(const QualifiedName& name, bool value)
 {
     if (value)
-        setAttribute(name, emptyAtom());
+        setAttributeWithoutSynchronization(name, emptyAtom());
     else
         removeAttribute(name);
 }
@@ -1299,7 +1299,7 @@ void Element::scrollTo(const ScrollToOptions& options, ScrollClamping clamping, 
         // If the element is the scrolling element and is not potentially scrollable,
         // invoke scroll() on window with options as the only argument, and terminate these steps.
         // FIXME: Scrolling an independently scrollable body is broken: webkit.org/b/161612.
-        RefPtr window = document->domWindow();
+        RefPtr window = document->window();
         if (!window)
             return;
 
@@ -3286,7 +3286,7 @@ static bool canAttachAuthorShadowRoot(const Element& element)
     }
 
     if (auto localName = element.localName(); Document::validateCustomElementName(localName) == CustomElementNameValidationStatus::Valid) {
-        if (RefPtr window = element.document().domWindow()) {
+        if (RefPtr window = element.document().window()) {
             RefPtr registry = window->customElementRegistry();
             if (registry && registry->isShadowDisabled(localName))
                 return false;
@@ -3508,7 +3508,7 @@ CustomElementReactionQueue* Element::reactionQueue() const
 
 CustomElementRegistry* Element::customElementRegistry() const
 {
-    if (RefPtr window = document().domWindow())
+    if (RefPtr window = document().window())
         window->ensureCustomElementRegistry(); // Create the global registry before querying since registryForElement doesn't ensure it.
     return CustomElementRegistry::registryForElement(*this);
 }
@@ -4944,24 +4944,24 @@ URL Element::getNonEmptyURLAttribute(const QualifiedName& name) const
     return document().completeURL(value);
 }
 
-int Element::getIntegralAttribute(const QualifiedName& attributeName) const
+int Element::integralAttribute(const QualifiedName& attributeName) const
 {
-    return parseHTMLInteger(getAttribute(attributeName)).value_or(0);
+    return parseHTMLInteger(attributeWithoutSynchronization(attributeName)).value_or(0);
 }
 
 void Element::setIntegralAttribute(const QualifiedName& attributeName, int value)
 {
-    setAttribute(attributeName, AtomString::number(value));
+    setAttributeWithoutSynchronization(attributeName, AtomString::number(value));
 }
 
-unsigned Element::getUnsignedIntegralAttribute(const QualifiedName& attributeName) const
+unsigned Element::unsignedIntegralAttribute(const QualifiedName& attributeName) const
 {
-    return parseHTMLNonNegativeInteger(getAttribute(attributeName)).value_or(0);
+    return parseHTMLNonNegativeInteger(attributeWithoutSynchronization(attributeName)).value_or(0);
 }
 
 void Element::setUnsignedIntegralAttribute(const QualifiedName& attributeName, unsigned value)
 {
-    setAttribute(attributeName, AtomString::number(limitToOnlyHTMLNonNegative(value)));
+    setAttributeWithoutSynchronization(attributeName, AtomString::number(limitToOnlyHTMLNonNegative(value)));
 }
 
 bool Element::childShouldCreateRenderer(const Node& child) const
@@ -6309,6 +6309,11 @@ bool Element::hasRandomCachingKeyMap() const
     if (!hasRareData())
         return false;
     return elementRareData()->hasRandomCachingKeyMap();
+}
+
+void Element::setNumericAttribute(const QualifiedName& attributeName, double value)
+{
+    setAttributeWithoutSynchronization(attributeName, AtomString::number(value));
 }
 
 } // namespace WebCore

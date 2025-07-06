@@ -256,7 +256,7 @@ void ARKitInlinePreviewModelPlayerMac::sizeDidChange(WebCore::LayoutSize size)
         if (!strongSelf)
             return;
 
-        auto* drawingArea = page->drawingArea();
+        RefPtr drawingArea = page->drawingArea();
         if (!drawingArea)
             return;
 

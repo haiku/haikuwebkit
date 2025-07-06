@@ -98,7 +98,7 @@ enum class LayoutUpToDate : bool { No, Yes };
 enum class RepaintStatus : uint8_t {
     NeedsNormalRepaint,
     NeedsFullRepaint,
-    NeedsFullRepaintForPositionedMovementLayout
+    NeedsFullRepaintForOutOfFlowMovementLayout
 };
 
 enum ClipRectsType {
@@ -577,6 +577,7 @@ public:
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
         void setHasHDRContent() { hasHDRContent = RequestState::True; }
+        void makeHDRContentFalse() { hasHDRContent = RequestState::False; }
         void makeHDRContentUnknown() { hasHDRContent = RequestState::Unknown; }
         bool isHDRContentSatisfied() const { return hasHDRContent != RequestState::Unknown; }
 #endif
@@ -783,7 +784,7 @@ public:
 
     void setRepaintStatus(RepaintStatus);
     RepaintStatus repaintStatus() const { return m_repaintStatus; }
-    bool needsFullRepaint() const { return m_repaintStatus == RepaintStatus::NeedsFullRepaint || m_repaintStatus == RepaintStatus::NeedsFullRepaintForPositionedMovementLayout; }
+    bool needsFullRepaint() const { return m_repaintStatus == RepaintStatus::NeedsFullRepaint || m_repaintStatus == RepaintStatus::NeedsFullRepaintForOutOfFlowMovementLayout; }
 
     LayoutUnit staticInlinePosition() const { return m_offsetForPosition.width(); }
     LayoutUnit staticBlockPosition() const { return m_offsetForPosition.height(); }

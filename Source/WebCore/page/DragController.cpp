@@ -163,7 +163,7 @@ static RefPtr<DocumentFragment> documentFragmentFromDragData(const DragData& dra
             if (!url.isEmpty()) {
                 Ref document = context.start.document();
                 Ref anchor = HTMLAnchorElement::create(document);
-                anchor->setHref(AtomString { url });
+                anchor->setAttributeWithoutSynchronization(HTMLNames::hrefAttr, AtomString { url });
                 if (title.isEmpty()) {
                     // Try the plain text first because the URL might be normalized or escaped.
                     if (dragData.containsPlainText())

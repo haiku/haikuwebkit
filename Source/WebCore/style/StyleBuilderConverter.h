@@ -97,15 +97,20 @@
 #include "StyleOffsetRotate.h"
 #include "StylePadding.h"
 #include "StylePathData.h"
+#include "StylePerspective.h"
 #include "StylePreferredSize.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
 #include "StyleRayFunction.h"
 #include "StyleReflection.h"
 #include "StyleResolveForFont.h"
+#include "StyleRotate.h"
+#include "StyleSVGPaint.h"
+#include "StyleScale.h"
 #include "StyleScrollMargin.h"
 #include "StyleScrollPadding.h"
 #include "StyleScrollSnapPoints.h"
 #include "StyleTextEdge.h"
+#include "StyleTranslate.h"
 #include "StyleURL.h"
 #include "TabSize.h"
 #include "TextSpacing.h"
@@ -125,7 +130,7 @@ namespace Style {
 
 class BuilderConverter {
 public:
-    template<typename T> static T convertStyleType(BuilderState&, const CSSValue&);
+    template<typename T, typename... Rest> static T convertStyleType(BuilderState&, const CSSValue&, Rest&&...);
 
     static WebCore::Length convertLength(BuilderState&, const CSSValue&);
     static WebCore::Length convertLengthOrAuto(BuilderState&, const CSSValue&);
@@ -146,9 +151,6 @@ public:
     static RefPtr<StyleImage> convertImageOrNone(BuilderState&, CSSValue&);
     static ImageOrientation convertImageOrientation(BuilderState&, const CSSValue&);
     static TransformOperations convertTransform(BuilderState&, const CSSValue&);
-    static RefPtr<RotateTransformOperation> convertRotate(BuilderState&, const CSSValue&);
-    static RefPtr<ScaleTransformOperation> convertScale(BuilderState&, const CSSValue&);
-    static RefPtr<TranslateTransformOperation> convertTranslate(BuilderState&, const CSSValue&);
     static String convertString(BuilderState&, const CSSValue&);
     template<CSSValueID> static String convertStringOrKeyword(BuilderState&, const CSSValue&);
     template<CSSValueID> static String convertCustomIdentOrKeyword(BuilderState&, const CSSValue&);
@@ -185,7 +187,6 @@ public:
     static GridPosition convertGridPosition(BuilderState&, const CSSValue&);
     static GridAutoFlow convertGridAutoFlow(BuilderState&, const CSSValue&);
     static FixedVector<StyleContentAlignmentData> convertContentAlignmentDataList(BuilderState&, const CSSValue&);
-    static std::optional<float> convertPerspective(BuilderState&, const CSSValue&);
     static std::optional<WebCore::Length> convertMarqueeIncrement(BuilderState&, const CSSValue&);
     static FilterOperations convertFilterOperations(BuilderState&, const CSSValue&);
     static FilterOperations convertAppleColorFilterOperations(BuilderState&, const CSSValue&);
@@ -314,8 +315,6 @@ private:
     static GridPosition createGridPosition(BuilderState&, const CSSValue&);
     static NamedGridLinesMap createImplicitNamedGridLinesFromGridArea(BuilderState&, const NamedGridAreaMap&, GridTrackSizingDirection);
 
-    static BasicShape convertBasicShape(BuilderState&, const CSSBasicShapeValue&, std::optional<float> zoom);
-
     static CSSToLengthConversionData cssToLengthConversionDataWithTextZoomFactor(BuilderState&);
 };
 
@@ -375,9 +374,9 @@ inline auto BuilderConverter::requiredFunctionDowncast(BuilderState& builderStat
     return function;
 }
 
-template<typename T> inline T BuilderConverter::convertStyleType(BuilderState& builderState, const CSSValue& value)
+template<typename T, typename... Rest> inline T BuilderConverter::convertStyleType(BuilderState& builderState, const CSSValue& value, Rest&&... rest)
 {
-    return toStyleFromCSSValue<T>(builderState, value);
+    return toStyleFromCSSValue<T>(builderState, value, std::forward<Rest>(rest)...);
 }
 
 inline WebCore::Length BuilderConverter::convertLength(BuilderState& builderState, const CSSValue& value)
@@ -646,30 +645,6 @@ inline TransformOperations BuilderConverter::convertTransform(BuilderState& buil
     return createTransformOperations(value, conversionData);
 }
 
-inline RefPtr<TranslateTransformOperation> BuilderConverter::convertTranslate(BuilderState& builderState, const CSSValue& value)
-{
-    CSSToLengthConversionData conversionData = builderState.useSVGZoomRulesForLength() ?
-        builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f)
-        : builderState.cssToLengthConversionData();
-    return createTranslate(value, conversionData);
-}
-
-inline RefPtr<RotateTransformOperation> BuilderConverter::convertRotate(BuilderState& builderState, const CSSValue& value)
-{
-    CSSToLengthConversionData conversionData = builderState.useSVGZoomRulesForLength() ?
-        builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f)
-        : builderState.cssToLengthConversionData();
-    return createRotate(value, conversionData);
-}
-
-inline RefPtr<ScaleTransformOperation> BuilderConverter::convertScale(BuilderState& builderState, const CSSValue& value)
-{
-    CSSToLengthConversionData conversionData = builderState.useSVGZoomRulesForLength() ?
-        builderState.cssToLengthConversionData().copyWithAdjustedZoom(1.0f)
-        : builderState.cssToLengthConversionData();
-    return createScale(value, conversionData);
-}
-
 inline String BuilderConverter::convertString(BuilderState& builderState, const CSSValue& value)
 {
     auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
@@ -839,7 +814,7 @@ inline RefPtr<PathOperation> BuilderConverter::convertPathOperation(BuilderState
         if (RefPtr ray = dynamicDowncast<CSSRayValue>(singleValue))
             operation = RayPathOperation::create(toStyle(ray->ray(), builderState));
         else if (RefPtr shape = dynamicDowncast<CSSBasicShapeValue>(singleValue))
-            operation = ShapePathOperation::create(convertBasicShape(builderState, *shape, std::nullopt));
+            operation = ShapePathOperation::create(toStyle(shape->shape(), builderState, std::nullopt));
         else
             referenceBox = fromCSSValue<CSSBoxType>(singleValue);
     };
@@ -858,18 +833,6 @@ inline RefPtr<PathOperation> BuilderConverter::convertPathOperation(BuilderState
     }
 
     return operation;
-}
-
-inline BasicShape BuilderConverter::convertBasicShape(BuilderState& builderState, const CSSBasicShapeValue& value, std::optional<float> zoom)
-{
-    return WTF::switchOn(value.shape(),
-        [&](const auto& shape) {
-            return BasicShape { toStyle(shape, builderState) };
-        },
-        [&](const CSS::PathFunction& path) {
-            return BasicShape { overrideToStyle(path, builderState, zoom) };
-        }
-    );
 }
 
 inline Resize BuilderConverter::convertResize(BuilderState& builderState, const CSSValue& value)
@@ -1220,7 +1183,7 @@ inline RefPtr<ShapeValue> BuilderConverter::convertShapeValue(BuilderState& buil
     auto referenceBox = CSSBoxType::BoxMissing;
     auto processSingleValue = [&](const CSSValue& currentValue) {
         if (RefPtr shapeValue = dynamicDowncast<CSSBasicShapeValue>(currentValue))
-            shape = convertBasicShape(builderState, *shapeValue, 1);
+            shape = toStyle(shapeValue->shape(), builderState, 1.0f);
         else
             referenceBox = fromCSSValue<CSSBoxType>(currentValue);
     };
@@ -1285,8 +1248,8 @@ inline std::optional<ScrollbarColor> BuilderConverter::convertScrollbarColor(Bui
         return { };
 
     return ScrollbarColor {
-        builderState.createStyleColor(pair->first()),
-        builderState.createStyleColor(pair->second()),
+        convertStyleType<Color>(builderState, pair->first(), ForVisitedLink::No),
+        convertStyleType<Color>(builderState, pair->second(), ForVisitedLink::No),
     };
 }
 
@@ -1638,28 +1601,6 @@ inline WebCore::Length BuilderConverter::convertTextLengthOrNormal(BuilderState&
     return RenderStyle::zeroLength();
 }
 
-inline std::optional<float> BuilderConverter::convertPerspective(BuilderState& builderState, const CSSValue& value)
-{
-    auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
-    if (!primitiveValue)
-        return { };
-
-    if (primitiveValue->valueID() == CSSValueNone)
-        return RenderStyle::initialPerspective();
-
-    auto& conversionData = builderState.cssToLengthConversionData();
-
-    float perspective = -1;
-    if (primitiveValue->isLength())
-        perspective = primitiveValue->resolveAsLength<float>(conversionData);
-    else if (primitiveValue->isNumber())
-        perspective = primitiveValue->resolveAsNumber<float>(conversionData) * conversionData.zoom();
-    else
-        ASSERT_NOT_REACHED();
-
-    return perspective < 0 ? std::optional<float>(std::nullopt) : std::optional<float>(perspective);
-}
-
 inline std::optional<WebCore::Length> BuilderConverter::convertMarqueeIncrement(BuilderState& builderState, const CSSValue& value)
 {
     auto* primitiveValue = requiredDowncast<CSSPrimitiveValue>(builderState, value);
@@ -1726,7 +1667,7 @@ inline bool BuilderConverter::convertTouchCallout(BuilderState& builderState, co
 #if ENABLE(TOUCH_EVENTS)
 inline Color BuilderConverter::convertTapHighlightColor(BuilderState& builderState, const CSSValue& value)
 {
-    return builderState.createStyleColor(value);
+    return convertStyleType<Color>(builderState, value, ForVisitedLink::No);
 }
 #endif
 

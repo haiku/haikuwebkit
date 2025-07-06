@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -557,14 +557,12 @@ static std::optional<SpecialCaseFontLookupResult> fontDescriptorWithFamilySpecia
     // FIXME: See comment in FontCascadeDescription::effectiveFamilyAt() in FontDescriptionCocoa.cpp
     std::optional<SystemFontKind> systemDesign;
 
-#if HAVE(DESIGN_SYSTEM_UI_FONTS)
     if (equalLettersIgnoringASCIICase(family, "ui-serif"_s))
         systemDesign = SystemFontKind::UISerif;
     else if (equalLettersIgnoringASCIICase(family, "ui-monospace"_s))
         systemDesign = SystemFontKind::UIMonospace;
     else if (equalLettersIgnoringASCIICase(family, "ui-rounded"_s))
         systemDesign = SystemFontKind::UIRounded;
-#endif
 
     if (equalLettersIgnoringASCIICase(family, "-webkit-system-font"_s) || equalLettersIgnoringASCIICase(family, "-apple-system"_s) || equalLettersIgnoringASCIICase(family, "-apple-system-font"_s) || equalLettersIgnoringASCIICase(family, "system-ui"_s) || equalLettersIgnoringASCIICase(family, "ui-sans-serif"_s)) {
         ASSERT(!systemDesign);

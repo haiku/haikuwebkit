@@ -187,7 +187,7 @@ public:
     void setPresentationSize(const WebCore::IntSize&);
 
 #if PLATFORM(COCOA)
-    void setVideoLayerSizeFenced(const WebCore::FloatSize&, WTF::MachSendRight&&);
+    void setVideoLayerSizeFenced(const WebCore::FloatSize&, WTF::MachSendRightAnnotated&&);
 #endif
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
@@ -379,8 +379,8 @@ private:
     void videoFrameForCurrentTimeIfChanged(CompletionHandler<void(std::optional<RemoteVideoFrameProxy::Properties>&&, bool)>&&);
 
     void setShouldDisableHDR(bool);
-    using LayerHostingContextIDCallback = WebCore::MediaPlayer::LayerHostingContextIDCallback;
-    void requestHostingContextID(LayerHostingContextIDCallback&&);
+    using LayerHostingContextCallback = WebCore::MediaPlayer::LayerHostingContextCallback;
+    void requestHostingContext(LayerHostingContextCallback&&);
     void setShouldCheckHardwareSupport(bool);
 #if HAVE(SPATIAL_TRACKING_LABEL)
     void setDefaultSpatialTrackingLabel(const String&);
@@ -427,7 +427,7 @@ private:
     RefPtr<SandboxExtension> m_sandboxExtension;
     Ref<IPC::Connection> m_webProcessConnection;
     RefPtr<WebCore::MediaPlayer> m_player;
-    Vector<LayerHostingContextIDCallback> m_layerHostingContextIDRequests;
+    Vector<LayerHostingContextCallback> m_layerHostingContextRequests;
     std::unique_ptr<LayerHostingContext> m_inlineLayerHostingContext;
 #if ENABLE(VIDEO_PRESENTATION_MODE)
     std::unique_ptr<LayerHostingContext> m_fullscreenLayerHostingContext;

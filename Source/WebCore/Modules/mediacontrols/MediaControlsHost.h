@@ -111,7 +111,7 @@ public:
 
     static String generateUUID();
 
-    Vector<String> shadowRootStyleSheets() const;
+    Vector<String, 2> shadowRootStyleSheets() const;
     static String base64StringForIconNameAndType(const String& iconName, const String& iconType);
     static String formattedStringForDuration(double);
 #if ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2004-2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2004-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -79,7 +79,7 @@ void Widget::removeFromParent()
 
 void Widget::setCursor(const Cursor& cursor)
 {
-    if (auto* view = root())
+    if (RefPtr view = root())
         view->hostWindow()->setCursor(cursor);
 }
 
@@ -87,7 +87,7 @@ void Widget::setCursor(const Cursor& cursor)
 
 IntPoint Widget::convertToRootView(IntPoint localPoint) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentPoint = convertToContainingView(localPoint);
         return parentScrollView->convertToRootView(parentPoint);
     }
@@ -96,7 +96,7 @@ IntPoint Widget::convertToRootView(IntPoint localPoint) const
 
 FloatPoint Widget::convertToRootView(FloatPoint localPoint) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentPoint = convertToContainingView(localPoint);
         return parentScrollView->convertToRootView(parentPoint);
     }
@@ -105,7 +105,7 @@ FloatPoint Widget::convertToRootView(FloatPoint localPoint) const
 
 IntRect Widget::convertToRootView(const IntRect& localRect) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         IntRect parentRect = convertToContainingView(localRect);
         return parentScrollView->convertToRootView(parentRect);
     }
@@ -114,7 +114,7 @@ IntRect Widget::convertToRootView(const IntRect& localRect) const
 
 FloatRect Widget::convertToRootView(const FloatRect& localRect) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         FloatRect parentRect = convertToContainingView(localRect);
         return parentScrollView->convertToRootView(parentRect);
     }
@@ -125,7 +125,7 @@ FloatRect Widget::convertToRootView(const FloatRect& localRect) const
 
 IntPoint Widget::convertFromRootView(IntPoint rootPoint) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         IntPoint parentPoint = parentScrollView->convertFromRootView(rootPoint);
         return convertFromContainingView(parentPoint);
     }
@@ -134,7 +134,7 @@ IntPoint Widget::convertFromRootView(IntPoint rootPoint) const
 
 FloatPoint Widget::convertFromRootView(FloatPoint rootPoint) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         FloatPoint parentPoint = parentScrollView->convertFromRootView(rootPoint);
         return convertFromContainingView(parentPoint);
     }
@@ -143,7 +143,7 @@ FloatPoint Widget::convertFromRootView(FloatPoint rootPoint) const
 
 IntRect Widget::convertFromRootView(const IntRect& rootRect) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         IntRect parentRect = parentScrollView->convertFromRootView(rootRect);
         return convertFromContainingView(parentRect);
     }
@@ -152,7 +152,7 @@ IntRect Widget::convertFromRootView(const IntRect& rootRect) const
 
 FloatRect Widget::convertFromRootView(const FloatRect& rootRect) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         FloatRect parentRect = parentScrollView->convertFromRootView(rootRect);
         return convertFromContainingView(parentRect);
     }
@@ -163,7 +163,7 @@ FloatRect Widget::convertFromRootView(const FloatRect& rootRect) const
 
 IntPoint Widget::convertToContainingWindow(IntPoint localPoint) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentPoint = convertToContainingView(localPoint);
         return parentScrollView->convertToContainingWindow(parentPoint);
     }
@@ -172,7 +172,7 @@ IntPoint Widget::convertToContainingWindow(IntPoint localPoint) const
 
 FloatPoint Widget::convertToContainingWindow(FloatPoint localPoint) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentPoint = convertToContainingView(localPoint);
         return parentScrollView->convertToContainingWindow(parentPoint);
     }
@@ -181,7 +181,7 @@ FloatPoint Widget::convertToContainingWindow(FloatPoint localPoint) const
 
 IntRect Widget::convertToContainingWindow(const IntRect& localRect) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentRect = convertToContainingView(localRect);
         return parentScrollView->convertToContainingWindow(parentRect);
     }
@@ -190,7 +190,7 @@ IntRect Widget::convertToContainingWindow(const IntRect& localRect) const
 
 FloatRect Widget::convertToContainingWindow(const FloatRect& localRect) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentRect = convertToContainingView(localRect);
         return parentScrollView->convertToContainingWindow(parentRect);
     }
@@ -201,7 +201,7 @@ FloatRect Widget::convertToContainingWindow(const FloatRect& localRect) const
 
 IntPoint Widget::convertFromContainingWindow(IntPoint windowPoint) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentPoint = parentScrollView->convertFromContainingWindow(windowPoint);
         return convertFromContainingView(parentPoint);
     }
@@ -210,7 +210,7 @@ IntPoint Widget::convertFromContainingWindow(IntPoint windowPoint) const
 
 FloatPoint Widget::convertFromContainingWindow(FloatPoint windowPoint) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentPoint = parentScrollView->convertFromContainingWindow(windowPoint);
         return convertFromContainingView(parentPoint);
     }
@@ -219,7 +219,7 @@ FloatPoint Widget::convertFromContainingWindow(FloatPoint windowPoint) const
 
 IntRect Widget::convertFromContainingWindow(const IntRect& windowRect) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentRect = parentScrollView->convertFromContainingWindow(windowRect);
         return convertFromContainingView(parentRect);
     }
@@ -228,7 +228,7 @@ IntRect Widget::convertFromContainingWindow(const IntRect& windowRect) const
 
 FloatRect Widget::convertFromContainingWindow(const FloatRect& windowRect) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentRect = parentScrollView->convertFromContainingWindow(windowRect);
         return convertFromContainingView(parentRect);
     }
@@ -239,7 +239,7 @@ FloatRect Widget::convertFromContainingWindow(const FloatRect& windowRect) const
 
 IntPoint Widget::convertToContainingView(IntPoint localPoint) const
 {
-    if (const auto* parentScrollView = parent())
+    if (const RefPtr parentScrollView = parent())
         return parentScrollView->convertChildToSelf(this, localPoint);
 
     return localPoint;
@@ -247,7 +247,7 @@ IntPoint Widget::convertToContainingView(IntPoint localPoint) const
 
 FloatPoint Widget::convertToContainingView(FloatPoint localPoint) const
 {
-    if (const ScrollView* parentScrollView = parent())
+    if (const RefPtr parentScrollView = parent())
         return parentScrollView->convertChildToSelf(this, localPoint);
 
     return localPoint;
@@ -255,7 +255,7 @@ FloatPoint Widget::convertToContainingView(FloatPoint localPoint) const
 
 IntRect Widget::convertToContainingView(const IntRect& localRect) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentRect = localRect;
         parentRect.setLocation(parentScrollView->convertChildToSelf(this, localRect.location()));
         return parentRect;
@@ -265,7 +265,7 @@ IntRect Widget::convertToContainingView(const IntRect& localRect) const
 
 FloatRect Widget::convertToContainingView(const FloatRect& localRect) const
 {
-    if (const ScrollView* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto parentRect = localRect;
         parentRect.setLocation(parentScrollView->convertChildToSelf(this, localRect.location()));
         return parentRect;
@@ -277,7 +277,7 @@ FloatRect Widget::convertToContainingView(const FloatRect& localRect) const
 
 IntPoint Widget::convertFromContainingView(IntPoint parentPoint) const
 {
-    if (const auto* parentScrollView = parent())
+    if (const RefPtr parentScrollView = parent())
         return parentScrollView->convertSelfToChild(this, parentPoint);
 
     return parentPoint;
@@ -286,7 +286,7 @@ IntPoint Widget::convertFromContainingView(IntPoint parentPoint) const
 
 FloatPoint Widget::convertFromContainingView(FloatPoint parentPoint) const
 {
-    if (const auto* parentScrollView = parent())
+    if (const RefPtr parentScrollView = parent())
         return parentScrollView->convertSelfToChild(this, parentPoint);
 
     return parentPoint;
@@ -294,7 +294,7 @@ FloatPoint Widget::convertFromContainingView(FloatPoint parentPoint) const
 
 IntRect Widget::convertFromContainingView(const IntRect& parentRect) const
 {
-    if (const auto* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto localRect = parentRect;
         localRect.setLocation(parentScrollView->convertSelfToChild(this, localRect.location()));
         return localRect;
@@ -305,7 +305,7 @@ IntRect Widget::convertFromContainingView(const IntRect& parentRect) const
 
 FloatRect Widget::convertFromContainingView(const FloatRect& parentRect) const
 {
-    if (const auto* parentScrollView = parent()) {
+    if (const RefPtr parentScrollView = parent()) {
         auto localRect = parentRect;
         localRect.setLocation(parentScrollView->convertSelfToChild(this, localRect.location()));
         return localRect;

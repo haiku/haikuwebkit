@@ -252,7 +252,9 @@ void RenderWidget::paintContents(PaintInfo& paintInfo, const LayoutPoint& paintO
         }
     }
 
-    IntPoint contentPaintOffset = roundedIntPoint(paintOffset + location() + contentBoxRect().location());
+    auto contentPaintOffset = paintOffset + location() + contentBoxRect().location();
+    auto snappedPaintOffset = roundPointToDevicePixels(contentPaintOffset, document().deviceScaleFactor());
+
     // Tell the widget to paint now. This is the only time the widget is allowed
     // to paint itself. That way it will composite properly with z-indexed layers.
     LayoutRect paintRect = paintInfo.rect;
@@ -265,18 +267,18 @@ void RenderWidget::paintContents(PaintInfo& paintInfo, const LayoutPoint& paintO
         }
     }
 
-    IntPoint widgetLocation = m_widget->frameRect().location();
-    IntSize widgetPaintOffset = contentPaintOffset - widgetLocation;
+    auto widgetLocation = m_widget->frameRect().location();
+    auto widgetPaintOffset = snappedPaintOffset - widgetLocation;
     // When painting widgets into compositing layers, tx and ty are relative to the enclosing compositing layer,
     // not the root. In this case, shift the CTM and adjust the paintRect to be root-relative to fix plug-in drawing.
     if (!widgetPaintOffset.isZero()) {
         paintInfo.context().translate(widgetPaintOffset);
-        paintRect.move(-widgetPaintOffset);
+        paintRect.move(-widgetPaintOffset.width(), -widgetPaintOffset.height());
     }
 
     if (paintInfo.regionContext) {
         AffineTransform transform;
-        transform.translate(contentPaintOffset);
+        transform.translate(snappedPaintOffset);
         paintInfo.regionContext->pushTransform(transform);
     }
 

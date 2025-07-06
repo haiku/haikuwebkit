@@ -748,7 +748,7 @@ void RenderTheme::updateControlPartForRenderer(ControlPart& part, const RenderOb
 #endif
 }
 
-OptionSet<ControlStyle::State> RenderTheme::extractControlStyleStatesForRendererInternal(const RenderObject& renderer) const
+OptionSet<ControlStyle::State> RenderTheme::extractControlStyleStatesForRendererInternal(const RenderElement& renderer) const
 {
     OptionSet<ControlStyle::State> states;
     if (isHovered(renderer)) {
@@ -795,29 +795,32 @@ OptionSet<ControlStyle::State> RenderTheme::extractControlStyleStatesForRenderer
     return states;
 }
 
-static const RenderObject* effectiveRendererForAppearance(const RenderObject& renderObject)
+static const RenderElement* effectiveRendererForAppearance(const RenderObject& renderObject)
 {
-    const RenderObject* renderer = &renderObject;
-    auto type = renderObject.style().usedAppearance();
+    auto* renderer = dynamicDowncast<RenderElement>(renderObject);
+    if (!renderer) {
+        ASSERT_NOT_REACHED();
+        return { };
+    }
 
+    auto type = renderer->style().usedAppearance();
     if (type == StyleAppearance::SearchFieldCancelButton
         || type == StyleAppearance::SwitchTrack
         || type == StyleAppearance::SwitchThumb) {
-        RefPtr<Node> input = renderObject.node()->shadowHost();
+        RefPtr<Node> input = renderer->element()->shadowHost();
         if (!input)
-            input = renderObject.node();
+            input = renderer->element();
 
-        renderer = dynamicDowncast<RenderBox>(input->renderer());
+        return dynamicDowncast<RenderBox>(input->renderer());
     }
     return renderer;
 }
 
 OptionSet<ControlStyle::State> RenderTheme::extractControlStyleStatesForRenderer(const RenderObject& renderObject) const
 {
-    auto renderer = effectiveRendererForAppearance(renderObject);
-    if (!renderer)
-        return { };
-    return extractControlStyleStatesForRendererInternal(*renderer);
+    if (auto* renderer = effectiveRendererForAppearance(renderObject))
+        return extractControlStyleStatesForRendererInternal(*renderer);
+    return { };
 }
 
 ControlStyle RenderTheme::extractControlStyleForRenderer(const RenderObject& renderObject) const
@@ -826,13 +829,14 @@ ControlStyle RenderTheme::extractControlStyleForRenderer(const RenderObject& ren
     if (!renderer)
         return { };
 
+    auto& style = renderer->style();
     return {
         extractControlStyleStatesForRendererInternal(*renderer),
-        renderer->style().computedFontSize(),
-        renderer->style().usedZoom(),
-        renderer->style().usedAccentColor(renderObject.styleColorOptions()),
-        renderer->style().visitedDependentColorWithColorFilter(CSSPropertyColor),
-        renderer->style().borderWidth()
+        style.computedFontSize(),
+        style.usedZoom(),
+        style.usedAccentColor(renderObject.styleColorOptions()),
+        style.visitedDependentColorWithColorFilter(CSSPropertyColor),
+        style.borderWidth()
     };
 }
 
@@ -1295,15 +1299,15 @@ bool RenderTheme::isDefault(const RenderObject& o) const
     return o.style().usedAppearance() == StyleAppearance::DefaultButton;
 }
 
-bool RenderTheme::hasListButton(const RenderObject& renderer) const
+bool RenderTheme::hasListButton(const RenderElement& renderer) const
 {
-    RefPtr input = dynamicDowncast<HTMLInputElement>(renderer.generatingNode());
+    RefPtr input = dynamicDowncast<HTMLInputElement>(renderer.generatingElement());
     return input && input->hasDataList();
 }
 
-bool RenderTheme::hasListButtonPressed(const RenderObject& renderer) const
+bool RenderTheme::hasListButtonPressed(const RenderElement& renderer) const
 {
-    RefPtr input = dynamicDowncast<HTMLInputElement>(renderer.generatingNode());
+    RefPtr input = dynamicDowncast<HTMLInputElement>(renderer.generatingElement());
     return input && input->dataListButtonElement() && input->dataListButtonElement()->active();
 }
 

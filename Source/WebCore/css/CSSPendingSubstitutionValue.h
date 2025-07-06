@@ -49,7 +49,7 @@ public:
     bool equals(const CSSPendingSubstitutionValue& other) const { return m_shorthandValue.ptr() == other.m_shorthandValue.ptr(); }
     static String customCSSText(const CSS::SerializationContext&) { return emptyString(); }
 
-    RefPtr<CSSValue> resolveValue(Style::BuilderState&, CSSPropertyID) const;
+    RefPtr<CSSValue> resolveValue(Style::Builder&, CSSPropertyID) const;
 
     IterationStatus customVisitChildren(NOESCAPE const Function<IterationStatus(CSSValue&)>& func) const
     {

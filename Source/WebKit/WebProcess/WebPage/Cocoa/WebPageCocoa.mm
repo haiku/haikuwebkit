@@ -281,7 +281,7 @@ DictionaryPopupInfo WebPage::dictionaryPopupInfoForRange(LocalFrame& frame, cons
 
     IntRect rangeRect = frame.protectedView()->contentsToWindow(quads[0].enclosingBoundingBox());
 
-    const RenderStyle* style = range.protectedStartContainer()->renderStyle();
+    const CheckedPtr style = range.protectedStartContainer()->renderStyle();
     float scaledAscent = style ? style->metricsOfPrimaryFont().intAscent() * pageScaleFactor() : 0;
     dictionaryPopupInfo.origin = FloatPoint(rangeRect.x(), rangeRect.y() + scaledAscent);
 
@@ -486,8 +486,7 @@ void WebPage::bindRemoteAccessibilityFrames(int processIdentifier, WebCore::Fram
         return completionHandler({ }, 0);
     }
 
-    auto* renderer = coreLocalFrame->contentRenderer();
-    if (!renderer) {
+    if (!coreLocalFrame->contentRenderer()) {
         ASSERT_NOT_REACHED();
         return completionHandler({ }, 0);
     }

@@ -62,13 +62,13 @@ void provideUserMediaTo(Page* page, UserMediaClient* client)
 
 void UserMediaController::logGetUserMediaDenial(Document& document)
 {
-    if (RefPtr window = document.domWindow())
+    if (RefPtr window = document.window())
         window->printErrorMessage("Not allowed to call getUserMedia."_s);
 }
 
 void UserMediaController::logGetDisplayMediaDenial(Document& document)
 {
-    if (RefPtr window = document.domWindow())
+    if (RefPtr window = document.window())
         window->printErrorMessage("Not allowed to call getDisplayMedia."_s);
 }
 
@@ -77,7 +77,7 @@ void UserMediaController::logEnumerateDevicesDenial(Document& document)
     // We redo the check to print to the console log.
     PermissionsPolicy::isFeatureEnabled(PermissionsPolicy::Feature::Camera, document);
     PermissionsPolicy::isFeatureEnabled(PermissionsPolicy::Feature::Microphone, document);
-    if (RefPtr window = document.domWindow())
+    if (RefPtr window = document.window())
         window->printErrorMessage("Not allowed to call enumerateDevices."_s);
 }
 

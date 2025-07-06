@@ -127,7 +127,7 @@ void TextIndicatorWindow::setTextIndicator(Ref<WebCore::TextIndicator> textIndic
     [m_textIndicatorView setWantsLayer:YES];
     [m_textIndicatorWindow setContentView:m_textIndicatorView.get()];
 
-    [[m_targetView window] addChildWindow:m_textIndicatorWindow.get() ordered:NSWindowAbove];
+    [[m_targetView.get() window] addChildWindow:m_textIndicatorWindow.get() ordered:NSWindowAbove];
     [m_textIndicatorWindow setReleasedWhenClosed:NO];
 
     if (m_textIndicator->presentationTransition() != WebCore::TextIndicatorPresentationTransition::None)

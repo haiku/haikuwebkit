@@ -244,9 +244,9 @@ private:
 
     MediaStreamTrackPrivate* activeVideoTrack() const;
 
-    LayerHostingContextID hostingContextID() const final;
-    void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRight&&) final;
-    void requestHostingContextID(LayerHostingContextIDCallback&&) final;
+    HostingContext hostingContext() const final;
+    void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRightAnnotated&&) final;
+    void requestHostingContext(LayerHostingContextCallback&&) final;
 
     RefPtr<MediaStreamPrivate> protectedMediaStreamPrivate() const;
 
@@ -320,7 +320,7 @@ private:
 
     std::optional<CGRect> m_storedBounds;
     static NativeImageCreator m_nativeImageCreator;
-    LayerHostingContextIDCallback m_layerHostingContextIDCallback;
+    LayerHostingContextCallback m_layerHostingContextCallback;
     bool m_shouldMaintainAspectRatio { true };
 };
 

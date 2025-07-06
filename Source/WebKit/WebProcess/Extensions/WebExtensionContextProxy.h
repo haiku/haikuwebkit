@@ -211,6 +211,8 @@ private:
 
     // Test
     void dispatchTestMessageEvent(const String& message, const String& argumentJSON, WebExtensionContentWorldType);
+    void dispatchTestStartedEvent(const String& argumentJSON, WebExtensionContentWorldType);
+    void dispatchTestFinishedEvent(const String& argumentJSON, WebExtensionContentWorldType);
 
     // Web Navigation
     void dispatchWebNavigationEvent(WebExtensionEventListenerType, WebExtensionTabIdentifier, const WebExtensionFrameParameters&, WallTime);

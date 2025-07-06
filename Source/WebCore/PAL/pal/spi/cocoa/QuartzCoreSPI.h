@@ -62,14 +62,6 @@ DECLARE_SYSTEM_HEADER
 
 #endif // __OBJC__
 
-#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
-typedef NSString * CADynamicRange;
-
-@interface CALayer (Staging_145326880)
-@property (assign) CADynamicRange preferredDynamicRange;
-@end
-#endif // HAVE(SUPPORT_HDR_DISPLAY_APIS)
-
 #else
 
 #ifdef __OBJC__

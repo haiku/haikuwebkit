@@ -1011,10 +1011,8 @@ css/calc/CSSCalcSymbolTable.cpp
 css/calc/CSSCalcSymbolsAllowed.cpp
 css/calc/CSSCalcTree+CalculationValue.cpp
 css/calc/CSSCalcTree+ComputedStyleDependencies.cpp
-css/calc/CSSCalcTree+ContainerProgressEvaluator.cpp
 css/calc/CSSCalcTree+Copy.cpp
 css/calc/CSSCalcTree+Evaluation.cpp
-css/calc/CSSCalcTree+MediaProgressEvaluator.cpp
 css/calc/CSSCalcTree+Parser.cpp
 css/calc/CSSCalcTree+Serialization.cpp
 css/calc/CSSCalcTree+Simplification.cpp
@@ -1148,7 +1146,6 @@ css/values/color/CSSColorLayers.cpp
 css/values/color/CSSColorLayersResolver.cpp
 css/values/color/CSSColorMix.cpp
 css/values/color/CSSColorMixResolver.cpp
-css/values/color/CSSColorMixSerialization.cpp
 css/values/color/CSSContrastColor.cpp
 css/values/color/CSSContrastColorResolver.cpp
 css/values/color/CSSDynamicRangeLimit.cpp
@@ -2760,13 +2757,6 @@ platform/text/TextSpacing.cpp
 platform/text/UnicodeBidi.cpp
 platform/text/UnicodeHelpers.cpp
 platform/video-codecs/BitReader.cpp
-platform/xr/openxr/OpenXRInput.cpp
-platform/xr/openxr/OpenXRInputSource.cpp
-platform/xr/openxr/OpenXRInstance.cpp
-platform/xr/openxr/OpenXRExtensions.cpp
-platform/xr/openxr/OpenXRLayer.cpp
-platform/xr/openxr/OpenXRSwapchain.cpp
-platform/xr/openxr/PlatformXROpenXR.cpp
 plugins/DOMMimeType.cpp
 plugins/DOMMimeTypeArray.cpp
 plugins/DOMPlugin.cpp
@@ -3105,7 +3095,6 @@ style/AttributeChangeInvalidation.cpp
 style/ChildChangeInvalidation.cpp
 style/ClassChangeInvalidation.cpp
 style/ContainerQueryEvaluator.cpp
-style/CustomPropertyRegistry.cpp
 style/ElementRuleCollector.cpp
 style/HasSelectorFilter.cpp
 style/IdChangeInvalidation.cpp
@@ -3125,8 +3114,10 @@ style/RuleSetBuilder.cpp
 style/StyleAdjuster.cpp
 style/StyleBuilder.cpp
 style/StyleBuilderState.cpp
-style/StyleExtractor.cpp
+style/StyleCustomProperty.cpp
+style/StyleCustomPropertyRegistry.cpp
 style/StyleChange.cpp
+style/StyleExtractor.cpp
 style/StyleFontSizeFunctions.cpp
 style/StyleInterpolation.cpp
 style/StyleInvalidator.cpp
@@ -3206,7 +3197,12 @@ style/values/shapes/StyleXywhFunction.cpp
 style/values/sizing/StyleMaximumSize.cpp
 style/values/sizing/StyleMinimumSize.cpp
 style/values/sizing/StylePreferredSize.cpp
+style/values/svg/StyleSVGPaint.cpp
 style/values/text-decoration/StyleTextShadow.cpp
+style/values/transforms/StyleRotate.cpp
+style/values/transforms/StylePerspective.cpp
+style/values/transforms/StyleScale.cpp
+style/values/transforms/StyleTranslate.cpp
 svg/DocumentSVG.cpp
 svg/SVGAElement.cpp
 svg/SVGAltGlyphDefElement.cpp

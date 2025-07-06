@@ -167,11 +167,6 @@ RenderPtr<RenderElement> HTMLIFrameElement::createElementRenderer(RenderStyle&& 
     return createRenderer<RenderIFrame>(*this, WTFMove(style));
 }
 
-void HTMLIFrameElement::setReferrerPolicyForBindings(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(referrerpolicyAttr, value);
-}
-
 String HTMLIFrameElement::referrerPolicyForBindings() const
 {
     return referrerPolicyToString(referrerPolicy());
@@ -187,11 +182,6 @@ ReferrerPolicy HTMLIFrameElement::referrerPolicy() const
 const AtomString& HTMLIFrameElement::loading() const
 {
     return equalLettersIgnoringASCIICase(attributeWithoutSynchronization(HTMLNames::loadingAttr), "lazy"_s) ? lazyAtom() : eagerAtom();
-}
-
-void HTMLIFrameElement::setLoading(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(loadingAttr, value);
 }
 
 String HTMLIFrameElement::srcdoc() const

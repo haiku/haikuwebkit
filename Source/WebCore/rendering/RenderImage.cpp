@@ -743,6 +743,7 @@ ImageDrawResult RenderImage::paintIntoRect(PaintInfo& paintInfo, const FloatRect
 #if USE(SKIA)
         StrictImageClamping::No,
 #endif
+        paintInfo.paintBehavior.contains(PaintBehavior::DrawsHDRContent) ? DrawsHDRContent::Yes : DrawsHDRContent::No,
         style().dynamicRangeLimit().toPlatformDynamicRangeLimit()
     };
 

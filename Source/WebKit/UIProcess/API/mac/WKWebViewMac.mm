@@ -30,7 +30,6 @@
 
 #import "AppKitSPI.h"
 #import "WKIntelligenceTextEffectCoordinator.h"
-#import "WKTextAnimationType.h"
 #import "WKTextFinderClient.h"
 #import "WKWebViewConfigurationPrivate.h"
 #import "WebBackForwardList.h"
@@ -1385,6 +1384,12 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     _impl->insertText(string, replacementRange);
 }
 
+- (void)_resetSecureInputState
+{
+    if (_impl)
+        _impl->resetSecureInputState();
+}
+
 - (void)_setContentOffsetX:(NSNumber *)x y:(NSNumber *)y animated:(BOOL)animated
 {
     std::optional<int> optionalX = std::nullopt;
@@ -1581,6 +1586,23 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         static_cast<CGFloat>(insets.bottom()),
         static_cast<CGFloat>(insets.right())
     );
+}
+
+- (NSColor *)_overrideTopScrollEdgeEffectColor
+{
+    return _overrideTopScrollEdgeEffectColor.get();
+}
+
+- (void)_setOverrideTopScrollEdgeEffectColor:(NSColor *)color
+{
+    if (_overrideTopScrollEdgeEffectColor == color || [_overrideTopScrollEdgeEffectColor isEqual:color])
+        return;
+
+    _overrideTopScrollEdgeEffectColor = adoptNS(color.copy);
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    [self _updateTopScrollPocketCaptureColor];
+#endif
 }
 
 - (void)_setUsesAutomaticContentInsetBackgroundFill:(BOOL)value

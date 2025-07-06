@@ -43,7 +43,6 @@ public:
 
     DOMTokenList& sandbox();
 
-    void setReferrerPolicyForBindings(const AtomString&);
     String referrerPolicyForBindings() const;
     ReferrerPolicy referrerPolicy() const final;
 

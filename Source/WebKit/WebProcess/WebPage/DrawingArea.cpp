@@ -184,7 +184,7 @@ void DrawingArea::prepopulateRectForZoom(double scale, WebCore::FloatPoint origi
     tileCoverageRect.moveBy(-origin);
     tileCoverageRect.scale(currentPageScale / scale);
 
-    if (auto* tiledBacking = mainFrameTiledBacking())
+    if (CheckedPtr tiledBacking = mainFrameTiledBacking())
         tiledBacking->prepopulateRect(tileCoverageRect);
 }
 

@@ -54,7 +54,6 @@ public:
     virtual ~HTMLAnchorElement();
 
     WEBCORE_EXPORT URL href() const;
-    void setHref(const AtomString&);
 
     const AtomString& name() const;
 
@@ -79,7 +78,6 @@ public:
     WEBCORE_EXPORT bool isSystemPreviewLink();
 #endif
 
-    void setReferrerPolicyForBindings(const AtomString&);
     String referrerPolicyForBindings() const;
     ReferrerPolicy referrerPolicy() const;
 
@@ -128,7 +126,7 @@ private:
     void clearRootEditableElementForSelectionOnMouseDown();
 
     URL fullURL() const final { return href(); }
-    void setFullURL(const URL& fullURL) final { setHref(AtomString { fullURL.string() }); }
+    void setFullURL(const URL&) final;
 
     bool m_hasRootEditableElementForSelectionOnMouseDown { false };
     bool m_wasShiftKeyDownOnMouseDown { false };

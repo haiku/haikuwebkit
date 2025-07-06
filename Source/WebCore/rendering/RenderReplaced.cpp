@@ -158,7 +158,7 @@ void RenderReplaced::intrinsicSizeChanged()
     int scaledWidth = static_cast<int>(cDefaultWidth * style().usedZoom());
     int scaledHeight = static_cast<int>(cDefaultHeight * style().usedZoom());
     m_intrinsicSize = IntSize(scaledWidth, scaledHeight);
-    setNeedsLayoutAndPrefWidthsRecalc();
+    setNeedsLayoutAndPreferredWidthsUpdate();
 }
 
 bool RenderReplaced::shouldDrawSelectionTint() const

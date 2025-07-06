@@ -302,6 +302,9 @@ struct UIEdgeInsets;
 
 - (void)_webView:(WKWebView *)webView startXRSessionWithFeatures:(_WKXRSessionFeatureFlags)features completionHandler:(void (^)(id, UIViewController *))completionHandler WK_API_AVAILABLE(ios(17.4), visionos(1.1));
 
+- (void)_webViewDidEnterStandbyForTesting:(WKWebView *)webView WK_API_AVAILABLE(ios(WK_IOS_TBA));
+- (void)_webViewDidExitStandbyForTesting:(WKWebView *)webView WK_API_AVAILABLE(ios(WK_IOS_TBA));
+
 #else // !TARGET_OS_IPHONE
 
 - (NSViewController *)_presentingViewControllerForWebView:(WKWebView *)webView WK_API_AVAILABLE(macos(13.0));

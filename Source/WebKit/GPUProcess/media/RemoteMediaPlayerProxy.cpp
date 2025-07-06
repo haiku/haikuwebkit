@@ -119,7 +119,7 @@ RemoteMediaPlayerProxy::~RemoteMediaPlayerProxy()
         m_performTaskAtTimeCompletionHandler(std::nullopt);
     setShouldEnableAudioSourceProvider(false);
 
-    for (auto& request : std::exchange(m_layerHostingContextIDRequests, { }))
+    for (auto& request : std::exchange(m_layerHostingContextRequests, { }))
         request({ });
 }
 
@@ -644,7 +644,7 @@ void RemoteMediaPlayerProxy::mediaPlayerRenderingModeChanged()
     protectedConnection()->send(Messages::MediaPlayerPrivateRemote::RenderingModeChanged(), m_id);
 }
 
-void RemoteMediaPlayerProxy::requestHostingContextID(LayerHostingContextIDCallback&& completionHandler)
+void RemoteMediaPlayerProxy::requestHostingContext(LayerHostingContextCallback&& completionHandler)
 {
     completionHandler({ });
 }

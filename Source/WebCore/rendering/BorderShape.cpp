@@ -102,7 +102,7 @@ BorderShape BorderShape::shapeForBorderRect(const RenderStyle& style, const Layo
     return BorderShape { borderRect, usedBorderWidths };
 }
 
-BorderShape BorderShape::shapeForOutlineRect(const RenderStyle& style, const LayoutRect& borderRect, const LayoutRect& outlineBoxRect, const RectEdges<LayoutUnit>& outlineWidths, RectEdges<bool> closedEdges)
+BorderShape BorderShape::shapeForOutsetRect(const RenderStyle& style, const LayoutRect& borderRect, const LayoutRect& outlineBoxRect, const RectEdges<LayoutUnit>& outlineWidths, RectEdges<bool> closedEdges)
 {
     // top, right, bottom, left.
     auto usedOutlineWidths = RectEdges<LayoutUnit> {
@@ -147,6 +147,27 @@ BorderShape BorderShape::shapeForOutlineRect(const RenderStyle& style, const Lay
     }
 
     return BorderShape { outlineBoxRect, usedOutlineWidths };
+}
+
+BorderShape BorderShape::shapeForInsetRect(const RenderStyle& style, const LayoutRect& borderRect, const LayoutRect& insetRect)
+{
+    if (style.hasBorderRadius()) {
+        auto radii = calcRadiiFor(style.borderRadii(), borderRect.size());
+
+        auto leftInset = std::max(insetRect.x() - borderRect.x(), 0_lu);
+        auto topInset = std::max(insetRect.y()- borderRect.y(), 0_lu);
+        auto rightInset = std::max(borderRect.maxX() - insetRect.maxX(), 0_lu);
+        auto bottomInset = std::max(borderRect.maxY() - insetRect.maxY(), 0_lu);
+
+        auto insetWidths = RectEdges<LayoutUnit> { topInset, rightInset, bottomInset, leftInset };
+        auto roundedRect = RoundedRect { borderRect, radii };
+
+        auto insetRoundedRect = computeInnerEdgeRoundedRect(roundedRect, insetWidths);
+
+        return BorderShape { insetRect, { }, insetRoundedRect.radii() };
+    }
+
+    return BorderShape { insetRect, { } };
 }
 
 BorderShape::BorderShape(const LayoutRect& borderRect, const RectEdges<LayoutUnit>& borderWidths)

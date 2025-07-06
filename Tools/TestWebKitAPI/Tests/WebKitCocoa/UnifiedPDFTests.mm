@@ -48,6 +48,7 @@
 #import "WKWebViewForTestingImmediateActions.h"
 #import <WebCore/Color.h>
 #import <WebCore/ColorSerialization.h>
+#import <WebCore/WebEvent.h>
 #import <WebKit/WKNavigationDelegatePrivate.h>
 #import <WebKit/WKPreferencesPrivate.h>
 #import <WebKit/WKWebViewPrivate.h>
@@ -722,6 +723,74 @@ UNIFIED_PDF_TEST(DISABLED_RespectsPageFragment)
 
     EXPECT_NE(colorsWithoutFragment, colorsWithFragment);
 }
+
+#if HAVE(UISCROLLVIEW_ALLOWS_KEYBOARD_SCROLLING)
+
+static void checkKeyboardScrollability(TestWKWebView *webView)
+{
+    auto pressSpacebar = ^(void(^completionHandler)(void)) {
+        RetainPtr firstWebEvent = adoptNS([[WebEvent alloc] initWithKeyEventType:WebEventKeyDown timeStamp:CFAbsoluteTimeGetCurrent() characters:@" " charactersIgnoringModifiers:@" " modifiers:0 isRepeating:NO withFlags:0 withInputManagerHint:nil keyCode:0 isTabKey:NO]);
+
+        RetainPtr secondWebEvent = adoptNS([[WebEvent alloc] initWithKeyEventType:WebEventKeyUp timeStamp:CFAbsoluteTimeGetCurrent() characters:@" " charactersIgnoringModifiers:@" " modifiers:0 isRepeating:NO withFlags:0 withInputManagerHint:nil keyCode:0 isTabKey:NO]);
+
+        [webView handleKeyEvent:firstWebEvent.get() completion:^(WebEvent *theEvent, BOOL wasHandled) {
+            dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.1 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
+                [webView handleKeyEvent:secondWebEvent.get() completion:^(WebEvent *theEvent, BOOL wasHandled) {
+                    completionHandler();
+                }];
+            });
+        }];
+    };
+
+    NSInteger scrollY = [[webView stringByEvaluatingJavaScript:@"window.scrollY"] integerValue];
+    EXPECT_EQ(scrollY, 0);
+
+    __block bool doneWaiting = false;
+
+    pressSpacebar(^{
+        NSInteger scrollY = [[webView stringByEvaluatingJavaScript:@"window.scrollY"] integerValue];
+        EXPECT_GT(scrollY, 0);
+        doneWaiting = true;
+    });
+
+    TestWebKitAPI::Util::run(&doneWaiting);
+}
+
+UNIFIED_PDF_TEST(MainFramePDFIsKeyboardScrollable)
+{
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:CGRectMake(0, 0, 600, 800) configuration:configurationForWebViewTestingUnifiedPDF().get()]);
+    RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"multiple-pages" withExtension:@"pdf"]];
+    [webView synchronouslyLoadRequest:request.get()];
+    [webView waitForNextPresentationUpdate];
+
+    checkKeyboardScrollability(webView.get());
+}
+
+#if ENABLE(IOS_TOUCH_EVENTS)
+
+UNIFIED_PDF_TEST(MainFramePDFIsKeyboardScrollableAfterTap)
+{
+    TestWebKitAPI::Util::instantiateUIApplicationIfNeeded();
+
+    RetainPtr webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configurationForWebViewTestingUnifiedPDF().get()]);
+    RetainPtr preferences = adoptNS([[WKWebpagePreferences alloc] init]);
+    [preferences _setMouseEventPolicy:_WKWebsiteMouseEventPolicySynthesizeTouchEvents];
+    RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"multiple-pages" withExtension:@"pdf"]];
+    [webView synchronouslyLoadRequest:request.get()];
+
+    TestWebKitAPI::MouseEventTestHarness testHarness { webView.get() };
+    testHarness.mouseMove(30, 30);
+    testHarness.mouseDown();
+    testHarness.mouseUp();
+    [webView waitForPendingMouseEvents];
+    [webView waitForNextPresentationUpdate];
+
+    checkKeyboardScrollability(webView.get());
+}
+
+#endif
+
+#endif
 
 } // namespace TestWebKitAPI
 

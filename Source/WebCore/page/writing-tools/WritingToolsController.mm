@@ -307,7 +307,7 @@ void WritingToolsController::proofreadingSessionDidReceiveSuggestions(const Writ
 
     auto adjustedProcessedRangeBeforeReplacement = resolveCharacterRange(sessionRange, { adjustedProcessedRangeLocation, processedRange.length });
 
-    UncheckedKeyHashSet<WTF::UUID> transparentContentMarkerIdentifiers;
+    HashSet<WTF::UUID> transparentContentMarkerIdentifiers;
 
     document->markers().forEach(adjustedProcessedRangeBeforeReplacement, { DocumentMarkerType::TransparentContent }, [&](auto&, auto marker) {
         auto& data = std::get<DocumentMarker::TransparentContentData>(marker.data());

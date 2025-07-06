@@ -2001,6 +2001,32 @@ static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedCustomBooleanAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedCustomBooleanAttr);
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedCustomURLAttr);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedCustomURLAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterUSVStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterUSVStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterIntegralAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterIntegralAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterUnsignedIntegralAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterUnsignedIntegralAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterBooleanAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterBooleanAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterElementAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterElementAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterElementsArrayAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterElementsArrayAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterURLAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterURLAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterUSVURLAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterUSVURLAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterStringAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterStringAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterCustomIntegralAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomIntegralAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterCustomBooleanAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomBooleanAttr);
+static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_reflectedSetterCustomURLAttr);
+static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomURLAttr);
 #if ENABLE(TEST_FEATURE)
 static JSC_DECLARE_CUSTOM_GETTER(jsTestObj_enabledAtRuntimeAttribute);
 static JSC_DECLARE_CUSTOM_SETTER(setJSTestObj_enabledAtRuntimeAttribute);
@@ -2320,7 +2346,7 @@ template<> void JSTestObjDOMConstructor::initializeProperties(VM& vm, JSDOMGloba
 
 /* Hash table for prototype */
 
-static const std::array<HashTableValue, 272> JSTestObjPrototypeTableValues {
+static const std::array<HashTableValue, 285> JSTestObjPrototypeTableValues {
     HashTableValue { "constructor"_s, static_cast<unsigned>(PropertyAttribute::DontEnum), NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObjConstructor, 0 } },
     HashTableValue { "readOnlyLongAttr"_s, JSC::PropertyAttribute::ReadOnly | JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_readOnlyLongAttr, 0 } },
     HashTableValue { "readOnlyStringAttr"_s, JSC::PropertyAttribute::ReadOnly | JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_readOnlyStringAttr, 0 } },
@@ -2372,6 +2398,19 @@ static const std::array<HashTableValue, 272> JSTestObjPrototypeTableValues {
     HashTableValue { "reflectedCustomIntegralAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedCustomIntegralAttr, setJSTestObj_reflectedCustomIntegralAttr } },
     HashTableValue { "reflectedCustomBooleanAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedCustomBooleanAttr, setJSTestObj_reflectedCustomBooleanAttr } },
     HashTableValue { "reflectedCustomURLAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedCustomURLAttr, setJSTestObj_reflectedCustomURLAttr } },
+    HashTableValue { "reflectedSetterStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterStringAttr, setJSTestObj_reflectedSetterStringAttr } },
+    HashTableValue { "reflectedSetterUSVStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterUSVStringAttr, setJSTestObj_reflectedSetterUSVStringAttr } },
+    HashTableValue { "reflectedSetterIntegralAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterIntegralAttr, setJSTestObj_reflectedSetterIntegralAttr } },
+    HashTableValue { "reflectedSetterUnsignedIntegralAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterUnsignedIntegralAttr, setJSTestObj_reflectedSetterUnsignedIntegralAttr } },
+    HashTableValue { "reflectedSetterBooleanAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterBooleanAttr, setJSTestObj_reflectedSetterBooleanAttr } },
+    HashTableValue { "reflectedSetterElementAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterElementAttr, setJSTestObj_reflectedSetterElementAttr } },
+    HashTableValue { "reflectedSetterElementsArrayAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterElementsArrayAttr, setJSTestObj_reflectedSetterElementsArrayAttr } },
+    HashTableValue { "reflectedSetterURLAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterURLAttr, setJSTestObj_reflectedSetterURLAttr } },
+    HashTableValue { "reflectedSetterUSVURLAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterUSVURLAttr, setJSTestObj_reflectedSetterUSVURLAttr } },
+    HashTableValue { "reflectedSetterStringAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterStringAttr, setJSTestObj_reflectedSetterStringAttr } },
+    HashTableValue { "reflectedSetterCustomIntegralAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterCustomIntegralAttr, setJSTestObj_reflectedSetterCustomIntegralAttr } },
+    HashTableValue { "reflectedSetterCustomBooleanAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterCustomBooleanAttr, setJSTestObj_reflectedSetterCustomBooleanAttr } },
+    HashTableValue { "reflectedSetterCustomURLAttr"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_reflectedSetterCustomURLAttr, setJSTestObj_reflectedSetterCustomURLAttr } },
 #if ENABLE(TEST_FEATURE)
     HashTableValue { "enabledAtRuntimeAttribute"_s, JSC::PropertyAttribute::CustomAccessor | JSC::PropertyAttribute::DOMAttribute, NoIntrinsic, { HashTableValue::GetterSetterType, jsTestObj_enabledAtRuntimeAttribute, setJSTestObj_enabledAtRuntimeAttribute } },
 #else
@@ -4260,7 +4299,7 @@ static inline JSValue jsTestObj_reflectedIntegralAttrGetter(JSGlobalObject& lexi
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
     auto throwScope = DECLARE_THROW_SCOPE(vm);
     SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    RELEASE_AND_RETURN(throwScope, (toJS<IDLLong>(lexicalGlobalObject, throwScope, impl.getIntegralAttribute(WebCore::HTMLNames::reflectedintegralattrAttr))));
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLLong>(lexicalGlobalObject, throwScope, impl.integralAttribute(WebCore::HTMLNames::reflectedintegralattrAttr))));
 }
 
 JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedIntegralAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
@@ -4293,7 +4332,7 @@ static inline JSValue jsTestObj_reflectedUnsignedIntegralAttrGetter(JSGlobalObje
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
     auto throwScope = DECLARE_THROW_SCOPE(vm);
     SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    RELEASE_AND_RETURN(throwScope, (toJS<IDLUnsignedLong>(lexicalGlobalObject, throwScope, std::max(0, impl.getIntegralAttribute(WebCore::HTMLNames::reflectedunsignedintegralattrAttr)))));
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLUnsignedLong>(lexicalGlobalObject, throwScope, std::max(0, impl.integralAttribute(WebCore::HTMLNames::reflectedunsignedintegralattrAttr)))));
 }
 
 JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedUnsignedIntegralAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
@@ -4524,7 +4563,7 @@ static inline JSValue jsTestObj_reflectedCustomIntegralAttrGetter(JSGlobalObject
     SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
     auto throwScope = DECLARE_THROW_SCOPE(vm);
     SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
-    RELEASE_AND_RETURN(throwScope, (toJS<IDLLong>(lexicalGlobalObject, throwScope, impl.getIntegralAttribute(WebCore::HTMLNames::customContentIntegralAttrAttr))));
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLLong>(lexicalGlobalObject, throwScope, impl.integralAttribute(WebCore::HTMLNames::customContentIntegralAttrAttr))));
 }
 
 JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedCustomIntegralAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
@@ -4616,6 +4655,435 @@ static inline bool setJSTestObj_reflectedCustomURLAttrSetter(JSGlobalObject& lex
 JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedCustomURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
 {
     return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedCustomURLAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLDOMString>(lexicalGlobalObject, throwScope, impl.reflectedSetterStringAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLDOMString>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedsetterstringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterUSVStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLUSVString>(lexicalGlobalObject, throwScope, impl.reflectedSetterUSVStringAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterUSVStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterUSVStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterUSVStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLUSVString>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedsetterusvstringattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterUSVStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterUSVStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterIntegralAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLLong>(lexicalGlobalObject, throwScope, impl.reflectedSetterIntegralAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterIntegralAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterIntegralAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterIntegralAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLLong>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setIntegralAttribute(WebCore::HTMLNames::reflectedsetterintegralattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterIntegralAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterIntegralAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterUnsignedIntegralAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLUnsignedLong>(lexicalGlobalObject, throwScope, impl.reflectedSetterUnsignedIntegralAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterUnsignedIntegralAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterUnsignedIntegralAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterUnsignedIntegralAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLUnsignedLong>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setUnsignedIntegralAttribute(WebCore::HTMLNames::reflectedsetterunsignedintegralattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterUnsignedIntegralAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterUnsignedIntegralAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterBooleanAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLBoolean>(lexicalGlobalObject, throwScope, impl.reflectedSetterBooleanAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterBooleanAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterBooleanAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterBooleanAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLBoolean>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setBooleanAttribute(WebCore::HTMLNames::reflectedsetterbooleanattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterBooleanAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterBooleanAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterElementAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLInterface<Element>>(lexicalGlobalObject, *thisObject.globalObject(), throwScope, impl.reflectedSetterElementAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterElementAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterElementAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterElementAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLInterface<Element>>(lexicalGlobalObject, value, [](JSC::JSGlobalObject& lexicalGlobalObject, JSC::ThrowScope& scope) { throwAttributeTypeError(lexicalGlobalObject, scope, "TestObject"_s, "reflectedSetterElementAttr"_s, "Element"_s); });
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setElementAttribute(WebCore::HTMLNames::reflectedsetterelementattrAttr, *nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterElementAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterElementAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterElementsArrayAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLFrozenArray<IDLInterface<Element>>>(lexicalGlobalObject, *thisObject.globalObject(), throwScope, impl.reflectedSetterElementsArrayAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterElementsArrayAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterElementsArrayAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterElementsArrayAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLFrozenArray<IDLInterface<Element>>>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setElementsArrayAttribute(WebCore::HTMLNames::reflectedsetterelementsarrayattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterElementsArrayAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterElementsArrayAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterURLAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLDOMString>(lexicalGlobalObject, throwScope, impl.reflectedSetterURLAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterURLAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterURLAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLDOMString>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedsetterurlattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterURLAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterUSVURLAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLUSVString>(lexicalGlobalObject, throwScope, impl.reflectedSetterUSVURLAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterUSVURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterUSVURLAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterUSVURLAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLUSVString>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::reflectedsetterusvurlattrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterUSVURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterUSVURLAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterStringAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLDOMString>(lexicalGlobalObject, throwScope, impl.reflectedSetterStringAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterStringAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterStringAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLDOMString>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::customContentStringAttrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterStringAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterStringAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterCustomIntegralAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLLong>(lexicalGlobalObject, throwScope, impl.reflectedSetterCustomIntegralAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterCustomIntegralAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterCustomIntegralAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterCustomIntegralAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLLong>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setIntegralAttribute(WebCore::HTMLNames::customContentIntegralAttrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomIntegralAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterCustomIntegralAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterCustomBooleanAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLBoolean>(lexicalGlobalObject, throwScope, impl.reflectedSetterCustomBooleanAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterCustomBooleanAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterCustomBooleanAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterCustomBooleanAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLBoolean>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setBooleanAttribute(WebCore::HTMLNames::customContentBooleanAttrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomBooleanAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterCustomBooleanAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
+}
+
+static inline JSValue jsTestObj_reflectedSetterCustomURLAttrGetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    RELEASE_AND_RETURN(throwScope, (toJS<IDLDOMString>(lexicalGlobalObject, throwScope, impl.reflectedSetterCustomURLAttr())));
+}
+
+JSC_DEFINE_CUSTOM_GETTER(jsTestObj_reflectedSetterCustomURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::get<jsTestObj_reflectedSetterCustomURLAttrGetter, CastedThisErrorBehavior::Assert>(*lexicalGlobalObject, thisValue, attributeName);
+}
+
+static inline bool setJSTestObj_reflectedSetterCustomURLAttrSetter(JSGlobalObject& lexicalGlobalObject, JSTestObj& thisObject, JSValue value)
+{
+    SUPPRESS_UNCOUNTED_LOCAL auto& vm = JSC::getVM(&lexicalGlobalObject);
+    UNUSED_PARAM(vm);
+    auto throwScope = DECLARE_THROW_SCOPE(vm);
+    SUPPRESS_UNCOUNTED_LOCAL auto& impl = thisObject.wrapped();
+    auto nativeValueConversionResult = convert<IDLDOMString>(lexicalGlobalObject, value);
+    if (nativeValueConversionResult.hasException(throwScope)) [[unlikely]]
+        return false;
+    invokeFunctorPropagatingExceptionIfNecessary(lexicalGlobalObject, throwScope, [&] {
+        return impl.setAttributeWithoutSynchronization(WebCore::HTMLNames::customContentURLAttrAttr, nativeValueConversionResult.releaseReturnValue());
+    });
+    return true;
+}
+
+JSC_DEFINE_CUSTOM_SETTER(setJSTestObj_reflectedSetterCustomURLAttr, (JSGlobalObject* lexicalGlobalObject, EncodedJSValue thisValue, EncodedJSValue encodedValue, PropertyName attributeName))
+{
+    return IDLAttribute<JSTestObj>::set<setJSTestObj_reflectedSetterCustomURLAttrSetter>(*lexicalGlobalObject, thisValue, encodedValue, attributeName);
 }
 
 #if ENABLE(TEST_FEATURE)

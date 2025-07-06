@@ -671,9 +671,9 @@ void NetworkResourceLoader::transferToNewWebProcess(NetworkConnectionToWebProces
         send(Messages::WebResourceLoader::UpdateResultingClientIdentifier { *parameters.options.resultingClientIdentifier, *m_parameters.options.resultingClientIdentifier });
 
     ASSERT(m_responseCompletionHandler || m_cacheEntryWaitingForContinueDidReceiveResponse || m_serviceWorkerFetchTask);
-    if (m_serviceWorkerRegistration) {
+    if (RefPtr serviceWorkerRegistration = m_serviceWorkerRegistration.get()) {
         if (RefPtr swConnection = newConnection.swConnection())
-            swConnection->transferServiceWorkerLoadToNewWebProcess(*this, *m_serviceWorkerRegistration, m_connection->webProcessIdentifier());
+            swConnection->transferServiceWorkerLoadToNewWebProcess(*this, *serviceWorkerRegistration, m_connection->webProcessIdentifier());
     }
     if (m_workerStart)
         send(Messages::WebResourceLoader::SetWorkerStart { m_workerStart }, coreIdentifier());
@@ -1239,7 +1239,7 @@ std::optional<Seconds> NetworkResourceLoader::validateCacheEntryForMaxAgeCapVali
     }
     
     if (!existingCacheEntryMatchesNewResponse) {
-        if (auto* networkStorageSession = protectedConnectionToWebProcess()->networkProcess().storageSession(sessionID()))
+        if (CheckedPtr networkStorageSession = protectedConnectionToWebProcess()->networkProcess().storageSession(sessionID()))
             return networkStorageSession->maxAgeCacheCap(request);
     }
     return std::nullopt;
@@ -1395,7 +1395,7 @@ void NetworkResourceLoader::didFinishWithRedirectResponse(WebCore::ResourceReque
     redirectResponse.setType(ResourceResponse::Type::Opaqueredirect);
     if (!isCrossOriginPrefetch())
         didReceiveResponse(WTFMove(redirectResponse), PrivateRelayed::No, [] (auto) { });
-    else if (auto* session = protectedConnectionToWebProcess()->networkProcess().networkSession(sessionID()))
+    else if (CheckedPtr session = protectedConnectionToWebProcess()->networkProcess().networkSession(sessionID()))
         session->checkedPrefetchCache()->storeRedirect(request.url(), WTFMove(redirectResponse), WTFMove(redirectRequest));
 
     WebCore::NetworkLoadMetrics networkLoadMetrics;
@@ -1612,7 +1612,7 @@ void NetworkResourceLoader::tryStoreAsCacheEntry()
     }
 
     if (isCrossOriginPrefetch()) {
-        if (auto* session = protectedConnectionToWebProcess()->networkProcess().networkSession(sessionID())) {
+        if (CheckedPtr session = protectedConnectionToWebProcess()->networkProcess().networkSession(sessionID())) {
             LOADER_RELEASE_LOG("tryStoreAsCacheEntry: Storing entry in prefetch cache");
             session->checkedPrefetchCache()->store(m_networkLoad->currentRequest().url(), WTFMove(m_response), m_privateRelayed, m_bufferedDataForCache.take());
         }
@@ -1847,7 +1847,7 @@ bool NetworkResourceLoader::crossOriginAccessControlCheckEnabled() const
 #if !RELEASE_LOG_DISABLED
 bool NetworkResourceLoader::shouldLogCookieInformation(NetworkConnectionToWebProcess& connection, PAL::SessionID sessionID)
 {
-    if (auto* session = connection.networkProcess().networkSession(sessionID))
+    if (CheckedPtr session = connection.networkProcess().networkSession(sessionID))
         return session->shouldLogCookieInformation();
     return false;
 }
@@ -1873,7 +1873,7 @@ void NetworkResourceLoader::logCookieInformation() const
 {
     ASSERT(shouldLogCookieInformation(m_connection, sessionID()));
 
-    auto* networkStorageSession = protectedConnectionToWebProcess()->networkProcess().storageSession(sessionID());
+    CheckedPtr networkStorageSession = protectedConnectionToWebProcess()->networkProcess().storageSession(sessionID());
     ASSERT(networkStorageSession);
 
     logCookieInformation(m_connection, "NetworkResourceLoader"_s, reinterpret_cast<const void*>(this), *networkStorageSession, originalRequest().firstPartyForCookies(), SameSiteInfo::create(originalRequest()), originalRequest().url(), originalRequest().httpReferrer(), frameID(), pageID(), coreIdentifier());
@@ -2074,8 +2074,8 @@ void NetworkResourceLoader::serviceWorkerDidNotHandle(ServiceWorkerFetchTask* fe
     if (abortIfServiceWorkersOnly())
         return;
 
-    if (m_serviceWorkerFetchTask) {
-        auto newRequest = m_serviceWorkerFetchTask->takeRequest();
+    if (RefPtr serviceWorkerFetchTask = m_serviceWorkerFetchTask) {
+        auto newRequest = serviceWorkerFetchTask->takeRequest();
         m_serviceWorkerFetchTask = nullptr;
 
         if (RefPtr networkLoad = m_networkLoad)

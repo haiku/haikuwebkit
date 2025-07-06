@@ -203,7 +203,7 @@ void WebSWClientConnection::whenRegistrationReady(const SecurityOriginData& topO
 
 void WebSWClientConnection::setServiceWorkerClientIsControlled(ScriptExecutionContextIdentifier identifier, ServiceWorkerRegistrationData&& data, CompletionHandler<void(bool)>&& completionHandler)
 {
-    if (auto* loader = DocumentLoader::fromScriptExecutionContextIdentifier(identifier)) {
+    if (RefPtr loader = DocumentLoader::fromScriptExecutionContextIdentifier(identifier)) {
         completionHandler(loader->setControllingServiceWorkerRegistration(WTFMove(data)));
         return;
     }

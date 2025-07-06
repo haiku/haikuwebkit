@@ -52,7 +52,7 @@ RefPtr<LibWebRTCNetworkManager> LibWebRTCNetworkManager::getOrCreate(WebCore::Sc
     if (!document)
         return nullptr;
 
-    auto* networkManager = downcast<LibWebRTCNetworkManager>(document->rtcNetworkManager());
+    RefPtr networkManager = downcast<LibWebRTCNetworkManager>(document->rtcNetworkManager());
     if (!networkManager) {
         auto newNetworkManager = adoptRef(*new LibWebRTCNetworkManager(identifier));
         networkManager = newNetworkManager.ptr();
@@ -111,14 +111,14 @@ void LibWebRTCNetworkManager::StartUpdating()
         if (!protectedThis)
             return;
 
-        auto& monitor = WebProcess::singleton().libWebRTCNetwork().monitor();
+        Ref monitor = WebProcess::singleton().libWebRTCNetwork().monitor();
         if (protectedThis->m_receivedNetworkList) {
             WebCore::LibWebRTCProvider::callOnWebRTCNetworkThread([protectedThis] {
                 protectedThis->SignalNetworksChanged();
             });
-        } else if (monitor.didReceiveNetworkList())
-            protectedThis->networksChanged(monitor.networkList() , monitor.ipv4(), monitor.ipv6());
-        monitor.startUpdating();
+        } else if (monitor->didReceiveNetworkList())
+            protectedThis->networksChanged(monitor->networkList() , monitor->ipv4(), monitor->ipv6());
+        monitor->startUpdating();
     });
 }
 
@@ -208,9 +208,9 @@ void LibWebRTCNetworkManager::signalUsedInterface(String&& name)
     if (!m_allowedInterfaces.add(WTFMove(name)).isNewEntry || m_useMDNSCandidates || !m_enableEnumeratingVisibleNetworkInterfaces)
         return;
 
-    auto& monitor = WebProcess::singleton().libWebRTCNetwork().monitor();
-    if (monitor.didReceiveNetworkList())
-        networksChanged(monitor.networkList() , monitor.ipv4(), monitor.ipv6(), false);
+    Ref monitor = WebProcess::singleton().libWebRTCNetwork().monitor();
+    if (monitor->didReceiveNetworkList())
+        networksChanged(monitor->networkList() , monitor->ipv4(), monitor->ipv6(), false);
 }
 
 void LibWebRTCNetworkManager::networkProcessCrashed()

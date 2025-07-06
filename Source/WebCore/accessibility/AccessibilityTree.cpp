@@ -79,7 +79,7 @@ bool AccessibilityTree::isTreeValid() const
 {
     // A valid tree can only have treeitem or group of treeitems as a child.
     // https://www.w3.org/TR/wai-aria/#tree
-    Node* node = this->node();
+    RefPtr node = this->node();
     if (!node)
         return false;
     
@@ -90,7 +90,7 @@ bool AccessibilityTree::isTreeValid() const
     while (!queue.isEmpty()) {
         Ref child = queue.takeFirst();
 
-        auto* childElement = dynamicDowncast<Element>(child.get());
+        RefPtr childElement = dynamicDowncast<Element>(child);
         if (!childElement)
             continue;
         if (hasRole(*childElement, "treeitem"_s))

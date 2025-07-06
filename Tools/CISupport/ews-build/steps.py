@@ -46,7 +46,7 @@ import socket
 import sys
 import time
 
-from Shared.steps import ShellMixin
+from Shared.steps import ShellMixin, SetBuildSummary
 
 if sys.version_info < (3, 9):  # noqa: UP036
     print('ERROR: Minimum supported Python version for this code is Python 3.9')
@@ -6110,31 +6110,6 @@ class ApplyWatchList(shell.ShellCommandNewStyle):
         if self.results != SUCCESS:
             return {'step': 'Failed to apply watchlist'}
         return super().getResultSummary()
-
-
-class SetBuildSummary(buildstep.BuildStep):
-    name = 'set-build-summary'
-    descriptionDone = ['Set build summary']
-    alwaysRun = True
-    haltOnFailure = False
-    flunkOnFailure = False
-
-    def doStepIf(self, step):
-        return self.getProperty('build_summary', False)
-
-    def hideStepIf(self, results, step):
-        return not self.doStepIf(step)
-
-    def start(self):
-        build_summary = self.getProperty('build_summary', 'build successful')
-        self.finished(SUCCESS)
-        previous_build_summary = self.getProperty('build_summary', '')
-        if RunWebKitTestsInStressMode.FAILURE_MSG_IN_STRESS_MODE in previous_build_summary:
-            self.build.results = FAILURE
-        elif any(s in previous_build_summary for s in ('Committed ', '@', 'Passed', 'Ignored pre-existing failure')):
-            self.build.results = SUCCESS
-        self.build.buildFinished([build_summary], self.build.results)
-        return defer.succeed(None)
 
 
 class PushCommitToWebKitRepo(shell.ShellCommand):

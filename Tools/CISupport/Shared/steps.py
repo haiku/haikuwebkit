@@ -87,6 +87,32 @@ class AddToLogMixin(object):
         log.addStdout(message)
 
 
+class SetBuildSummary(buildstep.BuildStep):
+    name = 'set-build-summary'
+    descriptionDone = ['Set build summary']
+    alwaysRun = True
+    haltOnFailure = False
+    flunkOnFailure = False
+    FAILURE_MSG_IN_STRESS_MODE = 'Found test failures in stress mode'
+
+    def doStepIf(self, step):
+        return self.getProperty('build_summary', False)
+
+    def hideStepIf(self, results, step):
+        return not self.doStepIf(step)
+
+    def start(self):
+        build_summary = self.getProperty('build_summary', 'build successful')
+        self.finished(SUCCESS)
+        previous_build_summary = self.getProperty('build_summary', '')
+        if self.FAILURE_MSG_IN_STRESS_MODE in previous_build_summary:
+            self.build.results = FAILURE
+        elif any(s in previous_build_summary for s in ('Committed ', '@', 'Passed', 'Ignored pre-existing failure')):
+            self.build.results = SUCCESS
+        self.build.buildFinished([build_summary], self.build.results)
+        return defer.succeed(None)
+
+
 class InstallCMake(shell.ShellCommandNewStyle):
     name = 'install-cmake'
     haltOnFailure = True

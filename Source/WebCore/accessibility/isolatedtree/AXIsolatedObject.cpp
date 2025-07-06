@@ -796,63 +796,17 @@ unsigned AXIsolatedObject::unsignedAttributeValue(AXProperty property) const
 
 bool AXIsolatedObject::boolAttributeValue(AXProperty property) const
 {
-    switch (property) {
-    case AXProperty::CanSetFocusAttribute:
-        return hasPropertyFlag(AXPropertyFlag::CanSetFocusAttribute);
-    case AXProperty::CanSetSelectedAttribute:
-        return hasPropertyFlag(AXPropertyFlag::CanSetSelectedAttribute);
-    case AXProperty::CanSetValueAttribute:
-        return hasPropertyFlag(AXPropertyFlag::CanSetValueAttribute);
-    case AXProperty::HasBoldFont:
-        return hasPropertyFlag(AXPropertyFlag::HasBoldFont);
-    case AXProperty::HasClickHandler:
-        return hasPropertyFlag(AXPropertyFlag::HasClickHandler);
-    case AXProperty::HasItalicFont:
-        return hasPropertyFlag(AXPropertyFlag::HasItalicFont);
-    case AXProperty::HasPlainText:
-        return hasPropertyFlag(AXPropertyFlag::HasPlainText);
-    case AXProperty::IsEnabled:
-        return hasPropertyFlag(AXPropertyFlag::IsEnabled);
-    case AXProperty::IsExposedTableCell:
-        return hasPropertyFlag(AXPropertyFlag::IsExposedTableCell);
-    case AXProperty::IsGrabbed:
-        return hasPropertyFlag(AXPropertyFlag::IsGrabbed);
-    case AXProperty::IsIgnored:
-        return hasPropertyFlag(AXPropertyFlag::IsIgnored);
-    case AXProperty::IsInlineText:
-        return hasPropertyFlag(AXPropertyFlag::IsInlineText);
-    case AXProperty::IsKeyboardFocusable:
-        return hasPropertyFlag(AXPropertyFlag::IsKeyboardFocusable);
-    case AXProperty::IsNonLayerSVGObject:
-        return hasPropertyFlag(AXPropertyFlag::IsNonLayerSVGObject);
-    case AXProperty::IsTableRow:
-        return hasPropertyFlag(AXPropertyFlag::IsTableRow);
-    case AXProperty::IsVisited:
-        return hasPropertyFlag(AXPropertyFlag::IsVisited);
-    case AXProperty::SupportsCheckedState:
-        return hasPropertyFlag(AXPropertyFlag::SupportsCheckedState);
-    case AXProperty::SupportsDragging:
-        return hasPropertyFlag(AXPropertyFlag::SupportsDragging);
-    case AXProperty::SupportsExpanded:
-        return hasPropertyFlag(AXPropertyFlag::SupportsExpanded);
-    case AXProperty::SupportsPath:
-        return hasPropertyFlag(AXPropertyFlag::SupportsPath);
-    case AXProperty::SupportsPosInSet:
-        return hasPropertyFlag(AXPropertyFlag::SupportsPosInSet);
-    case AXProperty::SupportsSetSize:
-        return hasPropertyFlag(AXPropertyFlag::SupportsSetSize);
-    default:
-        break;
+    uint16_t propertyIndex = static_cast<uint16_t>(property);
+    if (propertyIndex > lastPropertyFlagIndex) {
+        size_t index = indexOfProperty(property);
+        if (index == notFound)
+            return false;
+        return WTF::switchOn(m_properties[index].second,
+            [] (const bool& typedValue) { return typedValue; },
+            [] (auto&) { return false; }
+        );
     }
-
-    size_t index = indexOfProperty(property);
-    if (index == notFound)
-        return false;
-
-    return WTF::switchOn(m_properties[index].second,
-        [] (const bool& typedValue) { return typedValue; },
-        [] (auto&) { return false; }
-    );
+    return hasPropertyFlag(static_cast<AXPropertyFlag>(1 << propertyIndex));
 }
 
 String AXIsolatedObject::stringAttributeValue(AXProperty property) const
@@ -953,13 +907,6 @@ void AXIsolatedObject::updateBackingStore()
         tree->applyPendingChanges();
     // AXIsolatedTree::applyPendingChanges can cause this object and / or the AXIsolatedTree to be destroyed.
     // Make sure to protect `this` with a Ref before adding more logic to this function.
-}
-
-std::optional<SimpleRange> AXIsolatedObject::visibleCharacterRange() const
-{
-    ASSERT(isMainThread());
-    RefPtr axObject = associatedAXObject();
-    return axObject ? axObject->visibleCharacterRange() : std::nullopt;
 }
 
 std::optional<SimpleRange> AXIsolatedObject::rangeForCharacterRange(const CharacterRange& axRange) const
@@ -1558,7 +1505,7 @@ bool AXIsolatedObject::hasSameFont(AXCoreObject& otherObject)
 
     return Accessibility::retrieveValueFromMainThread<bool>([&otherObject, this] () -> bool {
         if (RefPtr axObject = associatedAXObject()) {
-            if (auto* axOtherObject = downcast<AXIsolatedObject>(otherObject).associatedAXObject())
+            if (RefPtr axOtherObject = downcast<AXIsolatedObject>(otherObject).associatedAXObject())
                 return axObject->hasSameFont(*axOtherObject);
         }
         return false;
@@ -1583,7 +1530,7 @@ bool AXIsolatedObject::hasSameFontColor(AXCoreObject& otherObject)
 
     return Accessibility::retrieveValueFromMainThread<bool>([&otherObject, this] () -> bool {
         if (RefPtr axObject = associatedAXObject()) {
-            if (auto* axOtherObject = downcast<AXIsolatedObject>(otherObject).associatedAXObject())
+            if (RefPtr axOtherObject = downcast<AXIsolatedObject>(otherObject).associatedAXObject())
                 return axObject->hasSameFontColor(*axOtherObject);
         }
         return false;
@@ -1608,7 +1555,7 @@ bool AXIsolatedObject::hasSameStyle(AXCoreObject& otherObject)
 
     return Accessibility::retrieveValueFromMainThread<bool>([&otherObject, this] () -> bool {
         if (RefPtr axObject = associatedAXObject()) {
-            if (auto* axOtherObject = downcast<AXIsolatedObject>(otherObject).associatedAXObject())
+            if (RefPtr axOtherObject = downcast<AXIsolatedObject>(otherObject).associatedAXObject())
                 return axObject->hasSameStyle(*axOtherObject);
         }
         return false;
@@ -1827,8 +1774,8 @@ AXCoreObject::AccessibilityChildrenVector AXIsolatedObject::rowHeaders()
     if (isTable()) {
         auto rowsCopy = rows();
         for (const auto& row : rowsCopy) {
-            if (auto* header = row->rowHeader())
-                headers.append(*header);
+            if (RefPtr header = row->rowHeader())
+                headers.append(header.releaseNonNull());
         }
     } else if (isExposedTableCell()) {
         RefPtr parent = exposedTableAncestor();

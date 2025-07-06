@@ -3080,6 +3080,9 @@
     "imported/w3c/web-platform-tests/fetch/redirect-navigate/preserve-fragment.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/focus/activeelement-after-calling-window-focus.sub.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/html/browsers/browsing-the-web/back-forward-cache/eligibility/dedicated-worker.html": [
         "slow"
     ],

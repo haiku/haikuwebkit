@@ -85,7 +85,9 @@ private:
 #endif
     bool m_enableEnumeratingAllNetworkInterfaces { false };
     bool m_enableEnumeratingVisibleNetworkInterfaces { false };
+#if PLATFORM(COCOA)
     bool m_hasQueriedInterface { false };
+#endif
     HashSet<String> m_allowedInterfaces;
 };
 

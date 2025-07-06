@@ -322,7 +322,7 @@ ExceptionOr<std::optional<RenderingContext>> HTMLCanvasElement::getContext(JSC::
 
     if (isWebGPUType(contextId)) {
         RefPtr<GPU> gpu;
-        if (RefPtr window = document().domWindow()) {
+        if (RefPtr window = document().window()) {
             // FIXME: Should we be instead getting this through jsDynamicCast<JSDOMWindow*>(state)->wrapped().navigator().gpu()?
             gpu = window->protectedNavigator()->gpu();
         }
@@ -370,7 +370,7 @@ CanvasRenderingContext2D* HTMLCanvasElement::createContext2d(const String& type,
 
 #if ENABLE(PIXEL_FORMAT_RGBA16F) && HAVE(SUPPORT_HDR_DISPLAY)
     if (m_context->pixelFormat() == ImageBufferPixelFormat::RGBA16F)
-        document().setHasHDRContent();
+        protectedDocument()->setHasHDRContent();
 #endif
 
 #if USE(CA) || USE(SKIA)
@@ -445,7 +445,7 @@ WebGLRenderingContextBase* HTMLCanvasElement::createContextWebGL(WebGLVersion ty
 #if ENABLE(WEBXR)
     // https://immersive-web.github.io/webxr/#xr-compatible
     if (attrs.xrCompatible) {
-        if (RefPtr window = document().domWindow()) {
+        if (RefPtr window = document().window()) {
             // FIXME: how to make this sync without blocking the main thread?
             // For reference: https://immersive-web.github.io/webxr/#ref-for-dom-webglcontextattributes-xrcompatible
             NavigatorWebXR::xr(window->navigator()).ensureImmersiveXRDeviceIsSelected([]() { });
@@ -536,7 +536,8 @@ GPUCanvasContext* HTMLCanvasElement::createContextWebGPU(const String& type, GPU
     if (!document().settings().webGPUEnabled() || !gpu)
         return nullptr;
 
-    m_context = GPUCanvasContext::create(*this, *gpu);
+    Ref document = this->document();
+    m_context = GPUCanvasContext::create(*this, *gpu, document.ptr());
 
     if (m_context) {
         // Need to make sure a RenderLayer and compositing layer get created for the Canvas.

@@ -61,7 +61,7 @@ void AccessibilityListBox::addChildren()
         m_subtreeDirty = false;
     });
 
-    auto* selectElement = dynamicDowncast<HTMLSelectElement>(node());
+    RefPtr selectElement = dynamicDowncast<HTMLSelectElement>(node());
     if (!selectElement)
         return;
 
@@ -126,13 +126,12 @@ AccessibilityObject* AccessibilityListBox::elementAccessibilityHitTest(const Int
     if (!m_renderer)
         return nullptr;
     
-    Node* node = m_renderer->node();
-    if (!node)
+    if (!m_renderer->node())
         return nullptr;
     
     LayoutRect parentRect = boundingBoxRect();
     
-    AccessibilityObject* listBoxOption = nullptr;
+    RefPtr<AccessibilityObject> listBoxOption;
     const auto& children = const_cast<AccessibilityListBox*>(this)->unignoredChildren();
     unsigned length = children.size();
     for (unsigned i = 0; i < length; ++i) {
@@ -140,13 +139,13 @@ AccessibilityObject* AccessibilityListBox::elementAccessibilityHitTest(const Int
         // The cast to HTMLElement below is safe because the only other possible listItem type
         // would be a WMLElement, but WML builds don't use accessibility features at all.
         if (rect.contains(point)) {
-            listBoxOption = &downcast<AccessibilityObject>(children[i].get());
+            listBoxOption = downcast<AccessibilityObject>(children[i].get());
             break;
         }
     }
     
     if (listBoxOption && !listBoxOption->isIgnored())
-        return listBoxOption;
+        return listBoxOption.get();
     
     return axObjectCache()->getOrCreate(renderer());
 }

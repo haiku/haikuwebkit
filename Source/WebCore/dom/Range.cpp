@@ -1138,7 +1138,7 @@ void Range::updateFromSelection(const SimpleRange& value)
 
 LocalDOMWindow* Range::window() const
 {
-    return m_isAssociatedWithSelection ? m_ownerDocument->domWindow() : nullptr;
+    return m_isAssociatedWithSelection ? m_ownerDocument->window() : nullptr;
 }
 
 SimpleRange makeSimpleRange(const Range& range)

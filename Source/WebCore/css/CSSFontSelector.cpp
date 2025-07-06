@@ -345,7 +345,7 @@ std::optional<AtomString> CSSFontSelector::resolveGenericFamily(const FontDescri
     return std::nullopt;
 }
 
-const FontPaletteValues& CSSFontSelector::lookupFontPaletteValues(const AtomString& familyName, const FontDescription& fontDescription)
+const FontPaletteValues& CSSFontSelector::lookupFontPaletteValues(const AtomString& familyName, const FontDescription& fontDescription) const
 {
     static NeverDestroyed<FontPaletteValues> emptyFontPaletteValues;
     if (fontDescription.fontPalette().type != FontPalette::Type::Custom)
@@ -360,7 +360,7 @@ const FontPaletteValues& CSSFontSelector::lookupFontPaletteValues(const AtomStri
     return iterator->value;
 }
 
-RefPtr<FontFeatureValues> CSSFontSelector::lookupFontFeatureValues(const AtomString& familyName)
+RefPtr<FontFeatureValues> CSSFontSelector::lookupFontFeatureValues(const AtomString& familyName) const
 {
     // https://www.w3.org/TR/css-fonts-3/#font-family-casing
     auto lowercased = familyName.string().convertToLowercaseWithoutLocale();

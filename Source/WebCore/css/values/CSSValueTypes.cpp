@@ -35,19 +35,19 @@
 namespace WebCore {
 namespace CSS {
 
-void Serialize<CustomIdentifier>::operator()(StringBuilder& builder, const SerializationContext&, const CustomIdentifier& value)
+void serializationForCSSCustomIdentifier(StringBuilder& builder, const SerializationContext&, const CustomIdentifier& value)
 {
-    serializeIdentifier(value.value, builder);
+    WebCore::serializeIdentifier(value.value, builder);
 }
 
-void Serialize<WTF::AtomString>::operator()(StringBuilder& builder, const SerializationContext&, const WTF::AtomString& value)
+void serializationForCSSString(StringBuilder& builder, const SerializationContext&, const WTF::AtomString& value)
 {
-    serializeString(value, builder);
+    WebCore::serializeString(value, builder);
 }
 
-void Serialize<WTF::String>::operator()(StringBuilder& builder, const SerializationContext&, const WTF::String& value)
+void serializationForCSSString(StringBuilder& builder, const SerializationContext&, const WTF::String& value)
 {
-    serializeString(value, builder);
+    WebCore::serializeString(value, builder);
 }
 
 Ref<CSSValue> makePrimitiveCSSValue(CSSValueID value)

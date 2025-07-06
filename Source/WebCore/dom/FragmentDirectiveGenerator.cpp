@@ -88,6 +88,8 @@ static VisiblePosition startVisiblePositionForRangeRemovingLeadingWhitespace(con
     CharacterIterator characterIterator(range);
     while (!characterIterator.atEnd() && !characterIterator.text().isEmpty() && isASCIIWhitespace(characterIterator.text()[0]))
         characterIterator.advance(1);
+    if (characterIterator.atEnd())
+        return { makeContainerOffsetPosition(range.end) };
     return { makeContainerOffsetPosition(characterIterator.range().start) };
 }
 
@@ -96,6 +98,8 @@ static VisiblePosition endVisiblePositionForRangeRemovingTrailingWhitespace(cons
     BackwardsCharacterIterator characterIterator(range);
     while (!characterIterator.atEnd() && !characterIterator.text().isEmpty() && isASCIIWhitespace(characterIterator.text()[characterIterator.text().length() - 1]))
         characterIterator.advance(1);
+    if (characterIterator.atEnd())
+        return { makeContainerOffsetPosition(range.start) };
     return { makeContainerOffsetPosition(characterIterator.range().end) };
 }
 
@@ -157,6 +161,9 @@ void FragmentDirectiveGenerator::generateFragmentDirective(const SimpleRange& te
     auto textFromRange = createLiveRange(textFragmentRange)->toString().simplifyWhiteSpace(isASCIIWhitespace);
     VisiblePosition visibleStartPosition = startVisiblePositionForRangeRemovingLeadingWhitespace(textFragmentRange);
     VisiblePosition visibleEndPosition = endVisiblePositionForRangeRemovingTrailingWhitespace(textFragmentRange);
+
+    if (visibleStartPosition == visibleEndPosition)
+        return;
 
     VisiblePosition visiblePrefixEndPosition = beforeStartOfCurrentBlock(visibleStartPosition);
     VisiblePosition visibleSuffixStartPosition = afterEndOfCurrentBlock(visibleEndPosition);

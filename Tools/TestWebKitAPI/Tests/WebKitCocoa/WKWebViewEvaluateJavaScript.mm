@@ -100,12 +100,17 @@ TEST(WKWebView, EvaluateJavaScriptErrorCases)
         "window.webkit.messageHandlers.testHandler.postMessage(document.body);"
         "window.webkit.messageHandlers.testHandler.postMessage('abc');"
         "window.webkit.messageHandlers.testHandler.postMessage(null);"
-        "window.webkit.messageHandlers.testHandler.postMessage(undefined);";
+        "window.webkit.messageHandlers.testHandler.postMessage(undefined);"
+        "window.webkit.messageHandlers.testHandler.postMessage(new DOMException(null, null));"
+        "window.webkit.messageHandlers.testHandler.postMessage(new DOMMatrix());"
+    "";
     [webView evaluateJavaScript:postMessages completionHandler:nil];
     RetainPtr firstMessage = [handler waitForMessage];
     EXPECT_WK_STREQ(firstMessage.get().body, "abc");
     EXPECT_EQ(firstMessage.get().body, firstMessage.get().body);
     EXPECT_EQ([handler waitForMessage].body, NSNull.null);
+    EXPECT_NULL([handler waitForMessage].body);
+    EXPECT_NULL([handler waitForMessage].body);
     EXPECT_NULL([handler waitForMessage].body);
 
     [webView evaluateJavaScript:@"document.body.insertBefore(document, document)" completionHandler:^(id result, NSError *error) {

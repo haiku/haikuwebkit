@@ -25,7 +25,7 @@
 
 namespace JSC {
 
-ALWAYS_INLINE bool regExpTestWatchpointIsValid(VM& vm, JSObject* thisObject)
+ALWAYS_INLINE bool regExpExecWatchpointIsValid(VM& vm, JSObject* thisObject)
 {
     JSGlobalObject* globalObject = thisObject->globalObject();
     RegExpPrototype* regExpPrototype = globalObject->regExpPrototype();

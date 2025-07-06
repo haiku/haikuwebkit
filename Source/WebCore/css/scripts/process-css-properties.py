@@ -3939,9 +3939,9 @@ class GenerateStyleBuilderGenerated:
 
     def _generate_color_property_value_setter(self, to, property, value):
         to.write(f"if (builderState.applyPropertyToRegularStyle())")
-        to.write(f"    builderState.style().{property.codegen_properties.render_style_setter}(builderState.createStyleColor({value}, ForVisitedLink::No));")
+        to.write(f"    builderState.style().{property.codegen_properties.render_style_setter}(BuilderConverter::convertStyleType<Color>(builderState, {value}, ForVisitedLink::No));")
         to.write(f"if (builderState.applyPropertyToVisitedLinkStyle())")
-        to.write(f"    builderState.style().setVisitedLink{property.codegen_properties.render_style_name_for_methods}(builderState.createStyleColor({value}, ForVisitedLink::Yes));")
+        to.write(f"    builderState.style().setVisitedLink{property.codegen_properties.render_style_name_for_methods}(BuilderConverter::convertStyleType<Color>(builderState, {value}, ForVisitedLink::Yes));")
 
     # Animation property setters.
 
@@ -4149,7 +4149,7 @@ class GenerateStyleBuilderGenerated:
                 elif property.codegen_properties.style_builder_conditional_converter:
                     return f"WTFMove(convertedValue.value())"
                 elif property.codegen_properties.color_property and not property.codegen_properties.visited_link_color_support:
-                    return f"builderState.createStyleColor(value, ForVisitedLink::No)"
+                    return f"BuilderConverter::convertStyleType<Color>(builderState, value, ForVisitedLink::No)"
                 else:
                     return "fromCSSValueDeducingType(builderState, value)"
 
@@ -4367,7 +4367,7 @@ class GenerateStyleExtractorGenerated:
     def _generate_color_property_value_serialization_getter(self, to, property):
         to.write(f"if (extractorState.allowVisitedStyle) {{")
         with to.indent():
-            to.write(f"builder.append(serializationForCSS(extractorState.style.visitedDependentColor({property.id})));")
+            to.write(f"builder.append(WebCore::serializationForCSS(extractorState.style.visitedDependentColor({property.id})));")
             to.write(f"return;")
         to.write(f"}}")
         self._generate_property_value_serialization_getter(to, property)
@@ -4667,6 +4667,7 @@ class GenerateStyleExtractorGenerated:
                 headers=[
                     "CSSPrimitiveValueMappings.h",
                     "CSSProperty.h",
+                    "ColorSerialization.h",
                     "RenderStyle.h",
                     "StyleExtractorConverter.h",
                     "StyleExtractorCustom.h",

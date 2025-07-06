@@ -239,7 +239,7 @@ void RenderMathMLBlock::styleDidChange(StyleDifference diff, const RenderStyle* 
 
     // MathML displaystyle changes can affect layout.
     if (oldStyle && style().mathStyle() != oldStyle->mathStyle())
-        setNeedsLayoutAndPrefWidthsRecalc();
+        setNeedsLayoutAndPreferredWidthsUpdate();
 }
 
 void RenderMathMLBlock::insertPositionedChildrenIntoContainingBlock()

@@ -167,7 +167,7 @@ String InspectorDOMStorageAgent::storageId(Storage& storage)
 {
     auto* document = storage.frame()->document();
     ASSERT(document);
-    auto* window = document->domWindow();
+    auto* window = document->window();
     ASSERT(window);
     Ref<SecurityOrigin> securityOrigin = document->securityOrigin();
     bool isLocalStorage = window->optionalLocalStorage() == &storage;

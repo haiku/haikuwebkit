@@ -175,7 +175,7 @@ template<CSSValueID C, typename T> struct FunctionNotation {
 
 template<CSSValueID C, typename T> bool operator==(const UniqueRef<FunctionNotation<C, T>>& a, const UniqueRef<FunctionNotation<C, T>>& b)
 {
-    return a.get() == b.get();
+    return arePointingToEqualData(a, b);
 }
 
 template<size_t, CSSValueID C, typename T> const auto& get(const FunctionNotation<C, T>& function)
@@ -619,6 +619,47 @@ template<size_t I, typename T> decltype(auto) get(const MinimallySerializingSpac
 
 template<typename T> inline constexpr auto TreatAsTupleLike<MinimallySerializingSpaceSeparatedRectEdges<T>> = true;
 template<typename T> inline constexpr auto SerializationSeparator<MinimallySerializingSpaceSeparatedRectEdges<T>> = SerializationSeparatorType::Space;
+
+// MARK: - Logging
+
+template<typename T> void logForCSSOnTupleLike(TextStream& ts, const T& value, ASCIILiteral separator)
+{
+    auto swappedSeparator = ""_s;
+    auto caller = WTF::makeVisitor(
+        [&]<typename U>(const std::optional<U>& element) {
+            if (!element)
+                return;
+            ts << std::exchange(swappedSeparator, separator);
+            ts << *element;
+        },
+        [&]<typename U>(const Markable<U>& element) {
+            if (!element)
+                return;
+            ts << std::exchange(swappedSeparator, separator);
+            ts << *element;
+        },
+        [&](const auto& element) {
+            ts << std::exchange(swappedSeparator, separator);
+            ts << element;
+        }
+    );
+
+    WTF::apply([&](const auto& ...x) { (..., caller(x)); }, value);
+}
+
+template<typename T> void logForCSSOnRangeLike(TextStream& ts, const T& value, ASCIILiteral separator)
+{
+    auto swappedSeparator = ""_s;
+    for (const auto& element : value) {
+        ts << std::exchange(swappedSeparator, separator);
+        ts << element;
+    }
+}
+
+template<typename R> void logForCSSOnVariantLike(TextStream& ts, const R& value)
+{
+    WTF::switchOn(value, [&](const auto& value) { ts << value; });
+}
 
 } // namespace WebCore
 

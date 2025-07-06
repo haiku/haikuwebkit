@@ -815,7 +815,7 @@ void XMLDocumentParser::startElementNs(const xmlChar* xmlLocalName, const xmlCha
 
     bool willConstructCustomElement = false;
     if (!m_parsingFragment) {
-        if (RefPtr window = m_currentNode->document().domWindow()) {
+        if (RefPtr window = m_currentNode->document().window()) {
             if (RefPtr registry = window->customElementRegistry(); registry) [[unlikely]]
                 willConstructCustomElement = registry->findInterface(qName);
         }

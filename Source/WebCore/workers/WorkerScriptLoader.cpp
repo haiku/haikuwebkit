@@ -82,7 +82,7 @@ std::optional<Exception> WorkerScriptLoader::loadSynchronously(ScriptExecutionCo
     m_isCOEPEnabled = scriptExecutionContext->settingsValues().crossOriginEmbedderPolicyEnabled;
     m_advancedPrivacyProtections = scriptExecutionContext->advancedPrivacyProtections();
 
-    auto* serviceWorkerGlobalScope = dynamicDowncast<ServiceWorkerGlobalScope>(workerGlobalScope);
+    RefPtr serviceWorkerGlobalScope = dynamicDowncast<ServiceWorkerGlobalScope>(workerGlobalScope);
     if (serviceWorkerGlobalScope) {
         if (auto* scriptResource = serviceWorkerGlobalScope->scriptResource(url)) {
             m_script = scriptResource->script;
@@ -256,9 +256,9 @@ void WorkerScriptLoader::didReceiveResponse(ScriptExecutionContextIdentifier mai
 
     if (m_topOriginForServiceWorkerRegistration && response.source() == ResourceResponse::Source::MemoryCache && m_context) {
         m_isMatchingServiceWorkerRegistration = true;
-        auto* worker = dynamicDowncast<WorkerGlobalScope>(*m_context);
-        auto& swConnection = worker ? static_cast<SWClientConnection&>(worker->swClientConnection()) : ServiceWorkerProvider::singleton().serviceWorkerConnection();
-        swConnection.matchRegistration(WTFMove(*m_topOriginForServiceWorkerRegistration), response.url(), [this, protectedThis = Ref { *this }, response, mainContext, identifier](auto&& registrationData) mutable {
+        RefPtr worker = dynamicDowncast<WorkerGlobalScope>(*m_context);
+        Ref swConnection = worker ? static_cast<SWClientConnection&>(worker->swClientConnection()) : ServiceWorkerProvider::singleton().serviceWorkerConnection();
+        swConnection->matchRegistration(WTFMove(*m_topOriginForServiceWorkerRegistration), response.url(), [this, protectedThis = Ref { *this }, response, mainContext, identifier](auto&& registrationData) mutable {
             m_isMatchingServiceWorkerRegistration = false;
             if (registrationData && registrationData->activeWorker)
                 setControllingServiceWorker(WTFMove(*registrationData->activeWorker));

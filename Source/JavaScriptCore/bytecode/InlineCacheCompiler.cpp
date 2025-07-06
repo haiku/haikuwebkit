@@ -4565,63 +4565,55 @@ RefPtr<AccessCase> InlineCacheCompiler::tryFoldToMegamorphic(CodeBlock* codeBloc
         case AccessType::InstanceOf:
             return AccessCase::create(vm(), codeBlock, AccessCase::InstanceOfMegamorphic, nullptr);
 
+#if USE(JSVALUE64)
         case AccessType::GetById:
         case AccessType::GetByIdWithThis: {
             auto identifier = m_stubInfo.m_identifier;
-            bool allAreSimpleLoadOrMiss = true;
+            unsigned numberOfUndesiredMegamorphicAccessVariants = 0;
             for (auto& accessCase : cases) {
-                if (accessCase->type() != AccessCase::Load && accessCase->type() != AccessCase::Miss) {
-                    allAreSimpleLoadOrMiss = false;
-                    break;
-                }
-                if (accessCase->usesPolyProto()) {
-                    allAreSimpleLoadOrMiss = false;
-                    break;
-                }
-                if (accessCase->viaGlobalProxy()) {
-                    allAreSimpleLoadOrMiss = false;
-                    break;
-                }
+                if (accessCase->type() != AccessCase::Load && accessCase->type() != AccessCase::Miss)
+                    return nullptr;
+
+                if (accessCase->viaGlobalProxy())
+                    return nullptr;
+
+                if (accessCase->usesPolyProto())
+                    ++numberOfUndesiredMegamorphicAccessVariants;
             }
 
             // Currently, we do not apply megamorphic cache for "length" property since Array#length and String#length are too common.
             if (!canUseMegamorphicGetById(vm(), identifier.uid()))
-                allAreSimpleLoadOrMiss = false;
+                return nullptr;
 
-#if USE(JSVALUE32_64)
-            allAreSimpleLoadOrMiss = false;
-#endif
+            if (numberOfUndesiredMegamorphicAccessVariants) {
+                if ((numberOfUndesiredMegamorphicAccessVariants / static_cast<double>(cases.size())) >= Options::thresholdForUndesiredMegamorphicAccessVariantListSize())
+                    return nullptr;
+            }
 
-            if (allAreSimpleLoadOrMiss)
-                return AccessCase::create(vm(), codeBlock, AccessCase::LoadMegamorphic, useHandlerIC() ? nullptr : identifier);
-            return nullptr;
+            return AccessCase::create(vm(), codeBlock, AccessCase::LoadMegamorphic, useHandlerIC() ? nullptr : identifier);
         }
         case AccessType::GetByVal:
         case AccessType::GetByValWithThis: {
-            bool allAreSimpleLoadOrMiss = true;
+            unsigned numberOfUndesiredMegamorphicAccessVariants = 0;
             for (auto& accessCase : cases) {
-                if (accessCase->type() != AccessCase::Load && accessCase->type() != AccessCase::Miss) {
-                    allAreSimpleLoadOrMiss = false;
-                    break;
-                }
-                if (accessCase->usesPolyProto()) {
-                    allAreSimpleLoadOrMiss = false;
-                    break;
-                }
-                if (accessCase->viaGlobalProxy()) {
-                    allAreSimpleLoadOrMiss = false;
-                    break;
-                }
+                if (accessCase->type() != AccessCase::Load && accessCase->type() != AccessCase::Miss)
+                    return nullptr;
+
+                if (accessCase->viaGlobalProxy())
+                    return nullptr;
+
+                if (accessCase->usesPolyProto())
+                    ++numberOfUndesiredMegamorphicAccessVariants;
             }
 
-#if USE(JSVALUE32_64)
-            allAreSimpleLoadOrMiss = false;
-#endif
+            if (numberOfUndesiredMegamorphicAccessVariants) {
+                if ((numberOfUndesiredMegamorphicAccessVariants / static_cast<double>(cases.size())) >= Options::thresholdForUndesiredMegamorphicAccessVariantListSize())
+                    return nullptr;
+            }
 
-            if (allAreSimpleLoadOrMiss)
-                return AccessCase::create(vm(), codeBlock, AccessCase::IndexedMegamorphicLoad, nullptr);
-            return nullptr;
+            return AccessCase::create(vm(), codeBlock, AccessCase::IndexedMegamorphicLoad, nullptr);
         }
+#endif
         case AccessType::PutByIdStrict:
         case AccessType::PutByIdSloppy: {
             auto identifier = m_stubInfo.m_identifier;
@@ -5121,7 +5113,7 @@ AccessGenerationResult InlineCacheCompiler::compile(const GCSafeConcurrentJSLock
 
     dataLogLnIf(InlineCacheCompilerInternal::verbose, FullCodeOrigin(codeBlock, m_stubInfo.codeOrigin), ": Generating polymorphic access stub for ", listDump(keys));
 
-    MacroAssemblerCodeRef<JITStubRoutinePtrTag> code = FINALIZE_CODE_FOR(codeBlock, linkBuffer, JITStubRoutinePtrTag, categoryName(m_stubInfo.accessType), "%s", toCString("Access stub for ", *codeBlock, " ", m_stubInfo.codeOrigin, "with start: ", m_stubInfo.startLocation, " with return point ", successLabel, ": ", listDump(keys)).data());
+    MacroAssemblerCodeRef<JITStubRoutinePtrTag> code = FINALIZE_CODE_FOR(codeBlock, linkBuffer, JITStubRoutinePtrTag, categoryName(m_stubInfo.accessType), "%s", toCString("Access stub for ", *codeBlock, " ", m_stubInfo.codeOrigin, " with start: ", m_stubInfo.startLocation, " with return point ", successLabel, ": ", listDump(keys)).data());
 
     CodeBlock* owner = codeBlock;
     FixedVector<StructureID> weakStructures(WTFMove(m_weakStructures));
@@ -7586,7 +7578,7 @@ AccessGenerationResult InlineCacheCompiler::compileOneAccessCaseHandler(const Ve
     auto keys = FixedVector<Ref<AccessCase>> { Ref { accessCase } };
     dataLogLnIf(InlineCacheCompilerInternal::verbose, FullCodeOrigin(codeBlock, m_stubInfo.codeOrigin), ": Generating polymorphic access stub for ", listDump(keys));
 
-    MacroAssemblerCodeRef<JITStubRoutinePtrTag> code = FINALIZE_CODE_FOR(codeBlock, linkBuffer, JITStubRoutinePtrTag, categoryName(m_stubInfo.accessType), "%s", toCString("Access stub for ", *codeBlock, " ", m_stubInfo.codeOrigin, "with start: ", m_stubInfo.startLocation, ": ", listDump(keys)).data());
+    MacroAssemblerCodeRef<JITStubRoutinePtrTag> code = FINALIZE_CODE_FOR(codeBlock, linkBuffer, JITStubRoutinePtrTag, categoryName(m_stubInfo.accessType), "%s", toCString("Access stub for ", *codeBlock, " ", m_stubInfo.codeOrigin, " with start: ", m_stubInfo.startLocation, ": ", listDump(keys)).data());
 
     if (statelessType) {
         auto stub = createPreCompiledICJITStubRoutine(WTFMove(code), vm, codeBlock);
@@ -7828,11 +7820,10 @@ AccessGenerationResult PolymorphicAccess::addCases(const GCSafeConcurrentJSLocke
 
 bool PolymorphicAccess::visitWeak(VM& vm)
 {
-    for (unsigned i = 0; i < size(); ++i) {
-        if (!at(i).visitWeak(vm))
-            return false;
-    }
-    return true;
+    bool isValid = true;
+    for (unsigned i = 0; i < size(); ++i)
+        isValid &= at(i).visitWeak(vm);
+    return isValid;
 }
 
 template<typename Visitor>
@@ -7884,24 +7875,17 @@ CallLinkInfo* InlineCacheHandler::callLinkInfoAt(const ConcurrentJSLocker& locke
 
 bool InlineCacheHandler::visitWeak(VM& vm)
 {
+    bool isValid = true;
     for (auto& callLinkInfo : Base::span())
         callLinkInfo.visitWeak(vm);
 
-    if (m_accessCase) {
-        if (!m_accessCase->visitWeak(vm))
-            return false;
-    }
+    if (m_accessCase)
+        isValid &= m_accessCase->visitWeak(vm);
 
-    if (m_stubRoutine) {
-        m_stubRoutine->visitWeak(vm);
-        for (StructureID weakReference : m_stubRoutine->weakStructures()) {
-            Structure* structure = weakReference.decode();
-            if (!vm.heap.isMarked(structure))
-                return false;
-        }
-    }
+    if (m_stubRoutine)
+        isValid &= m_stubRoutine->visitWeak(vm);
 
-    return true;
+    return isValid;
 }
 
 void InlineCacheHandler::addOwner(CodeBlock* codeBlock)

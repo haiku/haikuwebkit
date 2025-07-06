@@ -93,7 +93,6 @@ public:
     String accessKeyLabel() const;
 
     WEBCORE_EXPORT const AtomString& dir() const;
-    WEBCORE_EXPORT void setDir(const AtomString&);
 
     virtual bool isTextControlInnerTextElement() const { return false; }
     virtual bool isSearchFieldResultsButtonElement() const { return false; }
@@ -120,7 +119,6 @@ public:
 #if ENABLE(AUTOCAPITALIZE)
     WEBCORE_EXPORT virtual AutocapitalizeType autocapitalizeType() const;
     WEBCORE_EXPORT const AtomString& autocapitalize() const;
-    WEBCORE_EXPORT void setAutocapitalize(const AtomString& value);
 #endif
 
 #if ENABLE(AUTOCORRECT)
@@ -131,11 +129,9 @@ public:
 
     WEBCORE_EXPORT InputMode canonicalInputMode() const;
     const AtomString& inputMode() const;
-    void setInputMode(const AtomString& value);
 
     WEBCORE_EXPORT EnterKeyHint canonicalEnterKeyHint() const;
     String enterKeyHint() const;
-    void setEnterKeyHint(const AtomString& value);
 
     std::optional<Variant<bool, double, String>> hidden() const;
     void setHidden(const std::optional<Variant<bool, double, String>>&);

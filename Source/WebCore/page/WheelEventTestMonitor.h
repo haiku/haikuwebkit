@@ -70,7 +70,7 @@ public:
     
     void checkShouldFireCallbacks();
 
-    using ScrollableAreaReasonMap = UncheckedKeyHashMap<ScrollingNodeID, OptionSet<DeferReason>>;
+    using ScrollableAreaReasonMap = HashMap<ScrollingNodeID, OptionSet<DeferReason>>;
 
 private:
     void scheduleCallbackCheck();

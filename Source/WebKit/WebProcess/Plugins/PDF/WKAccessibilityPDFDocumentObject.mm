@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -162,7 +162,7 @@
 {
     if (RefPtr plugin = _pdfPlugin.get()) {
         if (RefPtr activeAnnotation = plugin->activeAnnotation()) {
-            if (WebCore::AXObjectCache* existingCache = plugin->axObjectCache()) {
+            if (CheckedPtr existingCache = plugin->axObjectCache()) {
                 if (RefPtr object = existingCache->getOrCreate(activeAnnotation->element())) {
                 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
                     return [object->wrapper() accessibilityAttributeValue:@"_AXAssociatedPluginParent"];
@@ -325,7 +325,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
         if (!activeAnnotation)
             return;
 
-        if (auto* axObjectCache = protectedSelf->_pdfPlugin.get()->axObjectCache()) {
+        if (CheckedPtr axObjectCache = protectedSelf->_pdfPlugin.get()->axObjectCache()) {
             if (RefPtr annotationElementAxObject = axObjectCache->getOrCreate(activeAnnotation->element()))
                 wrapper = annotationElementAxObject->wrapper();
         }

@@ -540,11 +540,11 @@ static Inspector::Protocol::ErrorStringOr<Document*> documentFromFrame(LocalFram
 
 static Inspector::Protocol::ErrorStringOr<IDBFactory*> IDBFactoryFromDocument(Document* document)
 {
-    RefPtr domWindow = document->domWindow();
-    if (!domWindow)
+    RefPtr window = document->window();
+    if (!window)
         return makeUnexpected("Missing window for given document"_s);
 
-    IDBFactory* idbFactory = WindowOrWorkerGlobalScopeIndexedDatabase::indexedDB(*domWindow);
+    IDBFactory* idbFactory = WindowOrWorkerGlobalScopeIndexedDatabase::indexedDB(*window);
     if (!idbFactory)
         makeUnexpected("Missing IndexedDB factory of window for given document"_s);
     

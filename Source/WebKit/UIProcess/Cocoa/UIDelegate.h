@@ -207,6 +207,11 @@ private:
         void stoppedAccessingGamepadsForTesting(WebPageProxy&) final;
 #endif
 
+#if PLATFORM(IOS_FAMILY)
+        void didEnterStandby(WebPageProxy&) final;
+        void didExitStandby(WebPageProxy&) final;
+#endif
+
         id<WKUIDelegatePrivate> uiDelegatePrivate();
 
         WeakPtr<UIDelegate> m_uiDelegate;
@@ -320,6 +325,11 @@ private:
 #if ENABLE(GAMEPAD)
         bool webViewRecentlyAccessedGamepadsForTesting : 1;
         bool webViewStoppedAccessingGamepadsForTesting : 1;
+#endif
+
+#if PLATFORM(IOS_FAMILY)
+        bool webViewDidEnterStandby : 1;
+        bool webViewDidExitStandby : 1;
 #endif
     } m_delegateMethods;
 };

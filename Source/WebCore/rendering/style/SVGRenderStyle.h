@@ -27,6 +27,7 @@
 #include "RenderStyleConstants.h"
 #include "SVGRenderStyleDefs.h"
 #include "StyleRareInheritedData.h"
+#include "StyleSVGPaint.h"
 #include "StyleURL.h"
 #include "WindRule.h"
 
@@ -76,13 +77,9 @@ public:
     static GlyphOrientation initialGlyphOrientationHorizontal() { return GlyphOrientation::Degrees0; }
     static GlyphOrientation initialGlyphOrientationVertical() { return GlyphOrientation::Auto; }
     static float initialFillOpacity() { return 1; }
-    static SVGPaintType initialFillPaintType() { return SVGPaintType::RGBColor; }
-    static Style::Color initialFillPaintColor() { return Color::black; }
-    static Style::URL initialFillPaintUri() { return Style::URL::none(); }
+    static Style::SVGPaint initialFill() { return Style::SVGPaint { Style::SVGPaintType::RGBColor, Style::URL::none(), Color::black }; }
     static float initialStrokeOpacity() { return 1; }
-    static SVGPaintType initialStrokePaintType() { return SVGPaintType::None; }
-    static Style::Color initialStrokePaintColor() { /* No initial value per spec. */ return Color { }; }
-    static Style::URL initialStrokePaintUri() { return Style::URL::none(); }
+    static Style::SVGPaint initialStroke() { return Style::SVGPaint { Style::SVGPaintType::None, Style::URL::none(), Color { } }; }
     static FixedVector<Length> initialStrokeDashArray() { return { }; }
     static float initialStopOpacity() { return 1; }
     static Style::Color initialStopColor() { return Color::black; }
@@ -119,9 +116,11 @@ public:
     void setY(Length&&);
     void setD(RefPtr<StylePathData>&&);
     void setFillOpacity(float);
-    void setFillPaint(SVGPaintType, Style::Color&&, Style::URL&&, bool applyToRegularStyle, bool applyToVisitedLinkStyle);
+    void setFill(Style::SVGPaint&&);
+    void setVisitedLinkFill(Style::SVGPaint&&);
     void setStrokeOpacity(float);
-    void setStrokePaint(SVGPaintType, Style::Color&&, Style::URL&&, bool applyToRegularStyle, bool applyToVisitedLinkStyle);
+    void setStroke(Style::SVGPaint&&);
+    void setVisitedLinkStroke(Style::SVGPaint&&);
 
     void setStrokeDashArray(FixedVector<Length>&&);
     void setStrokeDashOffset(Length&&);
@@ -151,14 +150,10 @@ public:
     TextAnchor textAnchor() const { return static_cast<TextAnchor>(m_inheritedFlags.textAnchor); }
     GlyphOrientation glyphOrientationHorizontal() const { return static_cast<GlyphOrientation>(m_inheritedFlags.glyphOrientationHorizontal); }
     GlyphOrientation glyphOrientationVertical() const { return static_cast<GlyphOrientation>(m_inheritedFlags.glyphOrientationVertical); }
+    const Style::SVGPaint& fill() const { return m_fillData->paint; }
     float fillOpacity() const { return m_fillData->opacity; }
-    SVGPaintType fillPaintType() const { return static_cast<SVGPaintType>(m_fillData->paintType); }
-    const Style::Color& fillPaintColor() const { return m_fillData->paintColor; }
-    const Style::URL& fillPaintUri() const { return m_fillData->paintUri; }
+    const Style::SVGPaint& stroke() const { return m_strokeData->paint; }
     float strokeOpacity() const { return m_strokeData->opacity; }
-    SVGPaintType strokePaintType() const { return static_cast<SVGPaintType>(m_strokeData->paintType); }
-    const Style::Color& strokePaintColor() const { return m_strokeData->paintColor; }
-    const Style::URL& strokePaintUri() const { return m_strokeData->paintUri; }
     const FixedVector<Length>& strokeDashArray() const { return m_strokeData->dashArray; }
     const Length& strokeDashOffset() const { return m_strokeData->dashOffset; }
     float stopOpacity() const { return m_stopData->opacity; }
@@ -179,18 +174,13 @@ public:
     const Style::URL& markerMidResource() const { return m_inheritedResourceData->markerMid; }
     const Style::URL& markerEndResource() const { return m_inheritedResourceData->markerEnd; }
     MaskType maskType() const { return static_cast<MaskType>(m_nonInheritedFlags.flagBits.maskType); }
-
-    SVGPaintType visitedLinkFillPaintType() const { return static_cast<SVGPaintType>(m_fillData->visitedLinkPaintType); }
-    const Style::Color& visitedLinkFillPaintColor() const { return m_fillData->visitedLinkPaintColor; }
-    const Style::URL& visitedLinkFillPaintUri() const { return m_fillData->visitedLinkPaintUri; }
-    SVGPaintType visitedLinkStrokePaintType() const { return static_cast<SVGPaintType>(m_strokeData->visitedLinkPaintType); }
-    const Style::Color& visitedLinkStrokePaintColor() const { return m_strokeData->visitedLinkPaintColor; }
-    const Style::URL& visitedLinkStrokePaintUri() const { return m_strokeData->visitedLinkPaintUri; }
+    const Style::SVGPaint& visitedLinkFill() const { return m_fillData->visitedLinkPaint; }
+    const Style::SVGPaint& visitedLinkStroke() const { return m_strokeData->visitedLinkPaint; }
 
     // convenience
     bool hasMarkers() const { return !markerStartResource().isNone() || !markerMidResource().isNone() || !markerEndResource().isNone(); }
-    bool hasStroke() const { return strokePaintType() != SVGPaintType::None; }
-    bool hasFill() const { return fillPaintType() != SVGPaintType::None; }
+    bool hasStroke() const { return stroke().type != Style::SVGPaintType::None; }
+    bool hasFill() const { return fill().type != Style::SVGPaintType::None; }
 
     void conservativelyCollectChangedAnimatableProperties(const SVGRenderStyle&, CSSPropertiesBitSet&) const;
 
@@ -262,10 +252,8 @@ inline const Length& RenderStyle::cx() const { return svgStyle().cx(); }
 inline const Length& RenderStyle::cy() const { return svgStyle().cy(); }
 inline StylePathData* RenderStyle::d() const { return svgStyle().d(); }
 inline float RenderStyle::fillOpacity() const { return svgStyle().fillOpacity(); }
-inline const Style::Color& RenderStyle::fillPaintColor() const { return svgStyle().fillPaintColor(); }
-inline const Style::Color& RenderStyle::visitedFillPaintColor() const { return svgStyle().visitedLinkFillPaintColor(); }
-inline SVGPaintType RenderStyle::fillPaintType() const { return svgStyle().fillPaintType(); }
-inline SVGPaintType RenderStyle::visitedFillPaintType() const { return svgStyle().visitedLinkFillPaintType(); }
+inline const Style::SVGPaint& RenderStyle::fill() const { return svgStyle().fill(); }
+inline const Style::SVGPaint& RenderStyle::visitedLinkFill() const { return svgStyle().visitedLinkFill(); }
 inline const Style::Color& RenderStyle::floodColor() const { return svgStyle().floodColor(); }
 inline float RenderStyle::floodOpacity() const { return svgStyle().floodOpacity(); }
 inline bool RenderStyle::hasExplicitlySetStrokeWidth() const { return m_rareInheritedData->hasSetStrokeWidth; }
@@ -279,8 +267,8 @@ inline void RenderStyle::setCx(Length&& cx) { accessSVGStyle().setCx(WTFMove(cx)
 inline void RenderStyle::setCy(Length&& cy) { accessSVGStyle().setCy(WTFMove(cy)); }
 inline void RenderStyle::setD(RefPtr<StylePathData>&& d) { accessSVGStyle().setD(WTFMove(d)); }
 inline void RenderStyle::setFillOpacity(float f) { accessSVGStyle().setFillOpacity(f); }
-inline void RenderStyle::setFillPaintColor(Style::Color&& color) { accessSVGStyle().setFillPaint(SVGPaintType::RGBColor, WTFMove(color), Style::URL::none(), true, false); }
-inline void RenderStyle::setVisitedFillPaintColor(Style::Color&& color) { accessSVGStyle().setFillPaint(SVGPaintType::RGBColor, WTFMove(color), Style::URL::none(), false, true); }
+inline void RenderStyle::setFill(Style::SVGPaint&& paint) { accessSVGStyle().setFill(WTFMove(paint)); }
+inline void RenderStyle::setVisitedLinkFill(Style::SVGPaint&& paint) { accessSVGStyle().setVisitedLinkFill(WTFMove(paint)); }
 inline void RenderStyle::setFloodColor(Style::Color&& c) { accessSVGStyle().setFloodColor(WTFMove(c)); }
 inline void RenderStyle::setFloodOpacity(float f) { accessSVGStyle().setFloodOpacity(f); }
 inline void RenderStyle::setLightingColor(Style::Color&& c) { accessSVGStyle().setLightingColor(WTFMove(c)); }
@@ -292,8 +280,8 @@ inline void RenderStyle::setStopOpacity(float f) { accessSVGStyle().setStopOpaci
 inline void RenderStyle::setStrokeDashArray(FixedVector<Length>&& array) { accessSVGStyle().setStrokeDashArray(WTFMove(array)); }
 inline void RenderStyle::setStrokeDashOffset(Length&& d) { accessSVGStyle().setStrokeDashOffset(WTFMove(d)); }
 inline void RenderStyle::setStrokeOpacity(float f) { accessSVGStyle().setStrokeOpacity(f); }
-inline void RenderStyle::setStrokePaintColor(Style::Color&& color) { accessSVGStyle().setStrokePaint(SVGPaintType::RGBColor, WTFMove(color), Style::URL::none(), true, false); }
-inline void RenderStyle::setVisitedStrokePaintColor(Style::Color&& color) { accessSVGStyle().setStrokePaint(SVGPaintType::RGBColor, WTFMove(color), Style::URL::none(), false, true); }
+inline void RenderStyle::setStroke(Style::SVGPaint&& paint) { accessSVGStyle().setStroke(WTFMove(paint)); }
+inline void RenderStyle::setVisitedLinkStroke(Style::SVGPaint&& paint) { accessSVGStyle().setVisitedLinkStroke(WTFMove(paint)); }
 inline void RenderStyle::setX(Length&& x) { accessSVGStyle().setX(WTFMove(x)); }
 inline void RenderStyle::setY(Length&& y) { accessSVGStyle().setY(WTFMove(y)); }
 inline const Style::Color& RenderStyle::stopColor() const { return svgStyle().stopColor(); }
@@ -301,10 +289,8 @@ inline float RenderStyle::stopOpacity() const { return svgStyle().stopOpacity();
 inline const FixedVector<Length>& RenderStyle::strokeDashArray() const { return svgStyle().strokeDashArray(); }
 inline const Length& RenderStyle::strokeDashOffset() const { return svgStyle().strokeDashOffset(); }
 inline float RenderStyle::strokeOpacity() const { return svgStyle().strokeOpacity(); }
-inline const Style::Color& RenderStyle::strokePaintColor() const { return svgStyle().strokePaintColor(); }
-inline const Style::Color& RenderStyle::visitedStrokePaintColor() const { return svgStyle().visitedLinkStrokePaintColor(); }
-inline SVGPaintType RenderStyle::strokePaintType() const { return svgStyle().strokePaintType(); }
-inline SVGPaintType RenderStyle::visitedStrokePaintType() const { return svgStyle().visitedLinkStrokePaintType(); }
+inline const Style::SVGPaint& RenderStyle::stroke() const { return svgStyle().stroke(); }
+inline const Style::SVGPaint& RenderStyle::visitedLinkStroke() const { return svgStyle().visitedLinkStroke(); }
 inline const Length& RenderStyle::strokeWidth() const { return m_rareInheritedData->strokeWidth; }
 inline const Length& RenderStyle::x() const { return svgStyle().x(); }
 inline const Length& RenderStyle::y() const { return svgStyle().y(); }
@@ -364,24 +350,16 @@ inline void SVGRenderStyle::setFillOpacity(float opacity)
         m_fillData.access().opacity = clampedOpacity;
 }
 
-inline void SVGRenderStyle::setFillPaint(SVGPaintType type, Style::Color&& color, Style::URL&& uri, bool applyToRegularStyle, bool applyToVisitedLinkStyle)
+inline void SVGRenderStyle::setFill(Style::SVGPaint&& paint)
 {
-    if (applyToRegularStyle) {
-        if (!(m_fillData->paintType == type))
-            m_fillData.access().paintType = type;
-        if (!(m_fillData->paintColor == color))
-            m_fillData.access().paintColor = color;
-        if (!(m_fillData->paintUri == uri))
-            m_fillData.access().paintUri = uri;
-    }
-    if (applyToVisitedLinkStyle) {
-        if (!(m_fillData->visitedLinkPaintType == type))
-            m_fillData.access().visitedLinkPaintType = type;
-        if (!(m_fillData->visitedLinkPaintColor == color))
-            m_fillData.access().visitedLinkPaintColor = WTFMove(color);
-        if (!(m_fillData->visitedLinkPaintUri == uri))
-            m_fillData.access().visitedLinkPaintUri = WTFMove(uri);
-    }
+    if (m_fillData->paint != paint)
+        m_fillData.access().paint = WTFMove(paint);
+}
+
+inline void SVGRenderStyle::setVisitedLinkFill(Style::SVGPaint&& paint)
+{
+    if (m_fillData->visitedLinkPaint != paint)
+        m_fillData.access().visitedLinkPaint = WTFMove(paint);
 }
 
 inline void SVGRenderStyle::setStrokeOpacity(float opacity)
@@ -391,24 +369,16 @@ inline void SVGRenderStyle::setStrokeOpacity(float opacity)
         m_strokeData.access().opacity = clampedOpacity;
 }
 
-inline void SVGRenderStyle::setStrokePaint(SVGPaintType type, Style::Color&& color, Style::URL&& uri, bool applyToRegularStyle, bool applyToVisitedLinkStyle)
+inline void SVGRenderStyle::setStroke(Style::SVGPaint&& paint)
 {
-    if (applyToRegularStyle) {
-        if (!(m_strokeData->paintType == type))
-            m_strokeData.access().paintType = type;
-        if (!(m_strokeData->paintColor == color))
-            m_strokeData.access().paintColor = color;
-        if (!(m_strokeData->paintUri == uri))
-            m_strokeData.access().paintUri = uri;
-    }
-    if (applyToVisitedLinkStyle) {
-        if (!(m_strokeData->visitedLinkPaintType == type))
-            m_strokeData.access().visitedLinkPaintType = type;
-        if (!(m_strokeData->visitedLinkPaintColor == color))
-            m_strokeData.access().visitedLinkPaintColor = WTFMove(color);
-        if (!(m_strokeData->visitedLinkPaintUri == uri))
-            m_strokeData.access().visitedLinkPaintUri = WTFMove(uri);
-    }
+    if (m_strokeData->paint != paint)
+        m_strokeData.access().paint = WTFMove(paint);
+}
+
+inline void SVGRenderStyle::setVisitedLinkStroke(Style::SVGPaint&& paint)
+{
+    if (m_strokeData->visitedLinkPaint != paint)
+        m_strokeData.access().visitedLinkPaint = WTFMove(paint);
 }
 
 inline void SVGRenderStyle::setStrokeDashArray(FixedVector<Length>&& array)

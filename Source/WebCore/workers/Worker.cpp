@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2008-2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2008-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2009 Google Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -215,7 +215,7 @@ void Worker::notifyFinished(std::optional<ScriptExecutionContextIdentifier> main
         m_scriptLoader = nullptr;
     });
 
-    auto* context = scriptExecutionContext();
+    RefPtr context = scriptExecutionContext();
     if (!context)
         return;
 

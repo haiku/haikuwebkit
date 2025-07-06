@@ -657,9 +657,9 @@ static NSArray * processDataDetectorScannerResults(DDScannerRef scanner, OptionS
             auto newTextNode = Text::create(document, WTFMove(textNodeData));
             parentNode->insertBefore(newTextNode.copyRef(), currentTextNode.get());
 
-            Ref<HTMLAnchorElement> anchorElement = HTMLAnchorElement::create(document);
-            anchorElement->setHref(correspondingURL.get());
-            anchorElement->setDir("ltr"_s);
+            Ref anchorElement = HTMLAnchorElement::create(document);
+            anchorElement->setAttributeWithoutSynchronization(hrefAttr, correspondingURL.get());
+            anchorElement->setAttributeWithoutSynchronization(dirAttr, "ltr"_s);
 
             if (shouldUseLightLinks) {
                 document.updateStyleIfNeeded();

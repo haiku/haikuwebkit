@@ -80,6 +80,10 @@ public:
     WEBCORE_EXPORT void setContentsScale(float);
     WEBCORE_EXPORT float contentsScale() const;
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    WEBCORE_EXPORT bool setNeedsDisplayIfEDRHeadroomExceeds(float);
+#endif
+
     bool acceleratesDrawing() const { return m_acceleratesDrawing; }
     WEBCORE_EXPORT void setAcceleratesDrawing(bool);
 

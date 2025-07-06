@@ -197,7 +197,9 @@ void NetworkProcessProxy::sendCreationParametersToNewProcess()
     parameters.urlSchemesRegisteredAsSecure = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsSecure());
     parameters.urlSchemesRegisteredAsBypassingContentSecurityPolicy = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsBypassingContentSecurityPolicy());
     parameters.urlSchemesRegisteredAsLocal = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsLocal());
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
     parameters.urlSchemesRegisteredAsNoAccess = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsNoAccess());
+#endif
     parameters.cacheModel = LegacyGlobalSettings::singleton().cacheModel();
     parameters.urlSchemesRegisteredForCustomProtocols = WebProcessPool::urlSchemesWithCustomProtocolHandlers();
     parameters.localhostAliasesForTesting = LegacyGlobalSettings::singleton().hostnamesToRegisterAsLocal();

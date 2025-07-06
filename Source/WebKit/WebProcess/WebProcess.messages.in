@@ -40,7 +40,9 @@ messages -> WebProcess : AuxiliaryProcess WantsAsyncDispatchMessage {
     RegisterURLSchemeAsBypassingContentSecurityPolicy(String scheme)
     SetDomainRelaxationForbiddenForURLScheme(String scheme)
     RegisterURLSchemeAsLocal(String scheme)
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
     RegisterURLSchemeAsNoAccess(String scheme)
+#endif
     RegisterURLSchemeAsDisplayIsolated(String scheme)
     RegisterURLSchemeAsCORSEnabled(String scheme)
     RegisterURLSchemeAsCachePartitioned(String scheme)

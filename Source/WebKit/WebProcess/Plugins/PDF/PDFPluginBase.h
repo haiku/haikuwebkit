@@ -340,6 +340,8 @@ public:
 
     virtual void frameViewLayoutOrVisualViewportChanged(const WebCore::IntRect&) { }
 
+    virtual bool delegatesScrollingToMainFrame() const { return false; }
+
 protected:
     virtual double contentScaleFactor() const = 0;
     virtual bool platformPopulateEditorStateIfNeeded(EditorState&) const { return false; }

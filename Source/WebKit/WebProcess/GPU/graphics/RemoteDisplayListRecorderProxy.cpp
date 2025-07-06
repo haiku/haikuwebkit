@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -296,9 +296,26 @@ void RemoteDisplayListRecorderProxy::drawImageBuffer(ImageBuffer& imageBuffer, c
 
 void RemoteDisplayListRecorderProxy::drawNativeImageInternal(NativeImage& image, const FloatRect& destRect, const FloatRect& srcRect, ImagePaintingOptions options)
 {
+#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
+    auto headroom = options.headroom();
+    if (headroom == Headroom::FromImage)
+        headroom = image.headroom();
+    if (m_maxEDRHeadroom) {
+        if (*m_maxEDRHeadroom < headroom) {
+            headroom = *m_maxEDRHeadroom;
+            m_hasPaintedClampedEDRHeadroom = true;
+        }
+    }
+    m_maxPaintedEDRHeadroom = std::max(m_maxPaintedEDRHeadroom, headroom.headroom);
+    ImagePaintingOptions clampedOptions(options, headroom);
+#endif
     appendStateChangeItemIfNecessary();
     recordResourceUse(image);
+#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
+    send(Messages::RemoteDisplayListRecorder::DrawNativeImage(image.renderingResourceIdentifier(), destRect, srcRect, clampedOptions));
+#else
     send(Messages::RemoteDisplayListRecorder::DrawNativeImage(image.renderingResourceIdentifier(), destRect, srcRect, options));
+#endif
 }
 
 void RemoteDisplayListRecorderProxy::drawSystemImage(SystemImage& systemImage, const FloatRect& destinationRect)
@@ -618,7 +635,7 @@ bool RemoteDisplayListRecorderProxy::recordResourceUse(NativeImage& image)
     auto colorSpace = image.colorSpace();
 
     if (image.headroom() > Headroom::None) {
-#if ENABLE(PIXEL_FORMAT_RGBA16F) && HAVE(CORE_GRAPHICS_EXTENDED_SRGB_COLOR_SPACE)
+#if ENABLE(PIXEL_FORMAT_RGBA16F) && USE(CG)
         // The image will be drawn to a Float16 layer, so use extended range sRGB
         // to preserve the HDR contents.
         if (m_contentsFormat && *m_contentsFormat == ContentsFormat::RGBA16F)

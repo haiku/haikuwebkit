@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -526,6 +526,8 @@ public:
 
 #if PLATFORM(COCOA)
     void sendTestMessage(const String& message, id argument);
+    void sendTestStarted(id argument);
+    void sendTestFinished(id argument);
 #endif
 
 #if PLATFORM(COCOA)
@@ -1100,10 +1102,18 @@ private:
     };
 
     size_t m_testMessageListenersCount { 0 };
-    Deque<TestMessage> m_testMessageQueue;
+    size_t m_testStartedListenersCount { 0 };
+    size_t m_testFinishedListenersCount { 0 };
 
-    bool hasTestMessageEventListeners() { return m_testMessageListenersCount; }
-    void flushTestMessageQueueIfNeeded();
+    Deque<TestMessage> m_testMessageQueue;
+    Deque<TestMessage> m_testStartedQueue;
+    Deque<TestMessage> m_testFinishedQueue;
+
+    bool hasTestEventListeners(WebExtensionEventListenerType);
+    void sendQueuedTestMessagesIfNeeded(WebExtensionEventListenerType);
+#if PLATFORM(COCOA)
+    void addTestMessageToQueue(const String& message, id argument, WebExtensionEventListenerType);
+#endif
 };
 
 template<typename T>

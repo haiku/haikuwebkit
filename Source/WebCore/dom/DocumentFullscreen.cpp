@@ -172,7 +172,7 @@ void DocumentFullscreen::requestFullscreen(Ref<Element>&& element, FullscreenChe
     if (auto error = fullscreenElementReadyCheck(checkType, element))
         return handleError(error, EmitErrorEvent::Yes, WTFMove(completionHandler));
 
-    if (RefPtr window = document().domWindow(); !window || !window->consumeTransientActivation())
+    if (RefPtr window = document().window(); !window || !window->consumeTransientActivation())
         return handleError("Cannot request fullscreen without transient activation."_s, EmitErrorEvent::Yes, WTFMove(completionHandler));
 
     if (UserGestureIndicator::processingUserGesture() && UserGestureIndicator::currentUserGesture()->gestureType() == UserGestureType::EscapeKey)

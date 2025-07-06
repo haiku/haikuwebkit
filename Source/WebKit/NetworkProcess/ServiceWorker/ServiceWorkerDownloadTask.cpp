@@ -177,9 +177,9 @@ void ServiceWorkerDownloadTask::start()
 
     m_state = State::Running;
 
-    auto& manager = m_networkProcess->downloadManager();
-    Ref download = Download::create(manager, m_downloadID, *this, *networkSession());
-    manager.dataTaskBecameDownloadTask(m_downloadID, download.copyRef());
+    CheckedRef manager = m_networkProcess->downloadManager();
+    Ref download = Download::create(manager.get(), m_downloadID, *this, *networkSession());
+    manager->dataTaskBecameDownloadTask(m_downloadID, download.copyRef());
     download->didCreateDestination(m_pendingDownloadLocation);
 }
 

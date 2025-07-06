@@ -24,7 +24,7 @@
 
 #include "FontCascade.h"
 #include "LengthFunctions.h"
-#include "RenderElement.h"
+#include "RenderElementInlines.h"
 #include "RenderSVGInlineText.h"
 #include "SVGLengthContext.h"
 #include "SVGRenderStyle.h"

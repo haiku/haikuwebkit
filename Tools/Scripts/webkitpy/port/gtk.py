@@ -175,8 +175,11 @@ class GtkPort(GLibPort):
         configuration['version_name'] = self._display_server.capitalize() if self._display_server else 'Xvfb'
         return configuration
 
+    def get_browser_path(self, browser_name):
+        return self._build_path('bin', browser_name)
+
     def run_minibrowser(self, args):
-        miniBrowser = self._build_path('bin', 'MiniBrowser')
+        miniBrowser = self.get_browser_path('MiniBrowser')
         if not self._filesystem.isfile(miniBrowser):
             print("%s not found... Did you run build-webkit?" % miniBrowser)
             return 1

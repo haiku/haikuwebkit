@@ -36,7 +36,6 @@ SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKSLinearMediaTimeRange)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKSLinearMediaTrack)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKPreviewWindowController)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKRKEntity)
-SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKSTextAnimationManager)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIntelligenceReplacementTextEffectCoordinator)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIntelligenceSmartReplyTextEffectCoordinator)
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKSLinearMediaSpatialVideoMetadata)
@@ -52,3 +51,4 @@ SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentMobileDocumentIn
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentMobileDocumentRequest);
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentRequest);
 SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKIdentityDocumentPresentmentRequestAuthenticationCertificate);
+SOFT_LINK_CLASS_FOR_HEADER(WebKit, WKTextAnimationManager)

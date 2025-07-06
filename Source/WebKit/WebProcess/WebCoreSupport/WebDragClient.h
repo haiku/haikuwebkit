@@ -23,8 +23,7 @@
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef WebDragClient_h
-#define WebDragClient_h
+#pragma once
 
 #if ENABLE(DRAG_SUPPORT)
 
@@ -55,11 +54,11 @@ private:
     void declareAndWriteDragImage(const String& pasteboardName, WebCore::Element&, const URL&, const String&, WebCore::LocalFrame*) override;
 #endif
 
+    RefPtr<WebPage> protectedPage();
+
     WeakPtr<WebPage> m_page;
 };
 
 } // namespace WebKit
 
 #endif // ENABLE(DRAG_SUPPORT)
-
-#endif // WebDragClient_h

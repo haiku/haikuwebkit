@@ -166,7 +166,7 @@ static bool isNonRecoverableError(OSStatus status)
     return status != noErr && status != kVTVideoDecoderReferenceMissingErr;
 }
 
-static RetainPtr<CMVideoFormatDescriptionRef> copyDescriptionExtensionValuesIfNeeded(CMVideoFormatDescriptionRef imageDescription, const CMVideoFormatDescriptionRef originalDescription)
+static RetainPtr<CMVideoFormatDescriptionRef> copyDescriptionExtensionValuesIfNeeded(RetainPtr<CMVideoFormatDescriptionRef>&& imageDescription, const CMVideoFormatDescriptionRef originalDescription)
 {
     if (!canCopyFormatDescriptionExtension())
         return imageDescription;
@@ -197,7 +197,7 @@ static RetainPtr<CMVideoFormatDescriptionRef> copyDescriptionExtensionValuesIfNe
         return imageDescription;
 
     RetainPtr<CFMutableDictionaryRef> copyExtensions;
-    if (RetainPtr extensions = PAL::CMFormatDescriptionGetExtensions(imageDescription))
+    if (RetainPtr extensions = PAL::CMFormatDescriptionGetExtensions(imageDescription.get()))
         copyExtensions = adoptCF(CFDictionaryCreateMutableCopy(kCFAllocatorDefault, CFDictionaryGetCount(extensions.get()) + keysSet, extensions.get()));
     else
         copyExtensions = adoptCF(CFDictionaryCreateMutable(kCFAllocatorDefault, keysSet, &kCFTypeDictionaryKeyCallBacks, &kCFTypeDictionaryValueCallBacks));
@@ -207,8 +207,8 @@ static RetainPtr<CMVideoFormatDescriptionRef> copyDescriptionExtensionValuesIfNe
             CFDictionarySetValue(copyExtensions.get(), keysSpan[index], values[index].get());
     }
 
-    auto codecType = PAL::CMFormatDescriptionGetMediaSubType(imageDescription);
-    auto dimensions = PAL::CMVideoFormatDescriptionGetDimensions(imageDescription);
+    auto codecType = PAL::CMFormatDescriptionGetMediaSubType(imageDescription.get());
+    auto dimensions = PAL::CMVideoFormatDescriptionGetDimensions(imageDescription.get());
 
     CMVideoFormatDescriptionRef newImageDescription;
     if (auto status = PAL::CMVideoFormatDescriptionCreate(kCFAllocatorDefault, codecType, dimensions.width, dimensions.height, copyExtensions.get(), &newImageDescription); status != noErr)
@@ -229,7 +229,7 @@ static Expected<RetainPtr<CMSampleBufferRef>, OSStatus> handleDecompressionOutpu
     CMVideoFormatDescriptionRef rawImageBufferDescription = nullptr;
     if (auto status = PAL::CMVideoFormatDescriptionCreateForImageBuffer(kCFAllocatorDefault, imageBuffer, &rawImageBufferDescription); status != noErr)
         return makeUnexpected(status);
-    RetainPtr<CMVideoFormatDescriptionRef> imageBufferDescription = copyDescriptionExtensionValuesIfNeeded(rawImageBufferDescription, description);
+    RetainPtr imageBufferDescription = copyDescriptionExtensionValuesIfNeeded(adoptCF(rawImageBufferDescription), description);
 
     CMSampleTimingInfo imageBufferTiming {
         presentationDuration,

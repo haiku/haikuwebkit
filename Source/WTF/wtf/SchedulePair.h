@@ -95,7 +95,7 @@ struct SchedulePairHash {
     static constexpr bool safeToCompareToEmptyOrDeleted = true;
 };
 
-typedef UncheckedKeyHashSet<RefPtr<SchedulePair>, SchedulePairHash> SchedulePairHashSet;
+using SchedulePairHashSet = HashSet<RefPtr<SchedulePair>, SchedulePairHash>;
 
 } // namespace WTF
 

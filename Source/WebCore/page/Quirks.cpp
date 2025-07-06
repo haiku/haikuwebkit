@@ -50,6 +50,7 @@
 #include "HTMLTextAreaElement.h"
 #include "HTMLVideoElement.h"
 #include "JSEventListener.h"
+#include "KeyframeEffect.h"
 #include "LayoutUnit.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrameView.h"
@@ -820,7 +821,7 @@ bool Quirks::shouldBypassBackForwardCache() const
 
     // Login issue on bankofamerica.com (rdar://104938789).
     if (m_quirksData.isBankOfAmerica) {
-        if (RefPtr window = document->domWindow()) {
+        if (RefPtr window = document->window()) {
             if (window->hasEventListeners(eventNames().unloadEvent)) {
                 static MainThreadNeverDestroyed<const AtomString> signInId("signIn"_s);
                 static MainThreadNeverDestroyed<const AtomString> loadingClass("loading"_s);
@@ -1083,8 +1084,8 @@ Quirks::StorageAccessResult Quirks::triggerOptionalStorageAccessQuirk(Element& e
 
     RegistrableDomain domain { m_document->url() };
 
-    static NeverDestroyed<UncheckedKeyHashSet<RegistrableDomain>> kinjaQuirks = [] {
-        UncheckedKeyHashSet<RegistrableDomain> set;
+    static NeverDestroyed<HashSet<RegistrableDomain>> kinjaQuirks = [] {
+        HashSet<RegistrableDomain> set;
         set.add(RegistrableDomain::uncheckedCreateFromRegistrableDomainString("jalopnik.com"_s));
         set.add(RegistrableDomain::uncheckedCreateFromRegistrableDomainString("kotaku.com"_s));
         set.add(RegistrableDomain::uncheckedCreateFromRegistrableDomainString("theroot.com"_s));
@@ -1123,11 +1124,11 @@ Quirks::StorageAccessResult Quirks::triggerOptionalStorageAccessQuirk(Element& e
                 return Quirks::StorageAccessResult::ShouldNotCancelEvent;
             }
 
-            RefPtr domWindow = document->domWindow();
-            if (!domWindow)
+            RefPtr window = document->window();
+            if (!window)
                 return Quirks::StorageAccessResult::ShouldNotCancelEvent;
 
-            ExceptionOr<RefPtr<WindowProxy>> proxyOrException =  domWindow->open(*domWindow, *domWindow, kinjaURL->string(), emptyAtom(), loginPopupWindowFeatureString);
+            ExceptionOr<RefPtr<WindowProxy>> proxyOrException =  window->open(*window, *window, kinjaURL->string(), emptyAtom(), loginPopupWindowFeatureString);
             if (proxyOrException.hasException())
                 return Quirks::StorageAccessResult::ShouldNotCancelEvent;
             auto proxy = proxyOrException.releaseReturnValue();
@@ -1894,6 +1895,16 @@ bool Quirks::shouldRewriteMediaRangeRequestForURL(const URL& url) const
     return needsQuirks() && m_quirksData.needsMediaRewriteRangeRequestQuirk && RegistrableDomain(url).string() == "bing.com"_s;
 }
 
+// rdar://106770785
+bool Quirks::shouldPreventKeyframeEffectAcceleration(const KeyframeEffect& effect) const
+{
+    if (!needsQuirks() || !m_quirksData.isEA)
+        return false;
+
+    auto target = Ref { effect }->targetStyleable();
+    return target && Ref { target->element }->localName() == "ea-network-nav"_s;
+}
+
 URL Quirks::topDocumentURL() const
 {
     if (!m_topDocumentURLForTesting.isEmpty()) [[unlikely]]
@@ -2384,6 +2395,16 @@ static void handleESPNQuirks(QuirksData& quirksData, const URL& quirksURL, const
     // espn.com rdar://problem/73227900
     quirksData.shouldDisableEndFullscreenEventWhenEnteringPictureInPictureFromFullscreenQuirk = true;
 #endif
+}
+
+static void handleEAQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
+{
+    if (quirksDomainString != "ea.com"_s)
+        return;
+
+    UNUSED_PARAM(quirksURL);
+    UNUSED_PARAM(documentURL);
+    quirksData.isEA = true;
 }
 
 static void handleGoogleQuirks(QuirksData& quirksData, const URL& quirksURL, const String& quirksDomainString, const URL& documentURL)
@@ -2877,6 +2898,7 @@ void Quirks::determineRelevantQuirks()
 #if PLATFORM(IOS_FAMILY)
         { "disneyplus"_s, &handleDisneyPlusQuirks },
 #endif
+        { "ea"_s, &handleEAQuirks },
         { "espn"_s, &handleESPNQuirks },
 #if ENABLE(VIDEO_PRESENTATION_MODE)
         { "facebook"_s, &handleFacebookQuirks },

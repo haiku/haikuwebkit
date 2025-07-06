@@ -193,7 +193,6 @@ CF_ENUM(CFHTTPCookieStorageAcceptPolicy)
     CFHTTPCookieStorageAcceptPolicyExclusivelyFromMainDocumentDomain = 3,
 };
 
-#if HAVE(NETWORK_CONNECTION_PRIVACY_STANCE)
 typedef enum {
     nw_connection_privacy_stance_unknown = 0,
     nw_connection_privacy_stance_not_eligible = 1,
@@ -201,7 +200,6 @@ typedef enum {
     nw_connection_privacy_stance_failed = 3,
     nw_connection_privacy_stance_direct = 4,
 } nw_connection_privacy_stance_t;
-#endif
 
 #if defined(__OBJC__)
 
@@ -263,9 +261,7 @@ typedef CF_ENUM(int, CFURLCredentialPersistence)
 - (void)_setPreventHSTSStorage:(BOOL)preventHSTSStorage;
 - (void)_setIgnoreHSTS:(BOOL)ignoreHSTS;
 @property (setter=_setProhibitPrivacyProxy:) BOOL _prohibitPrivacyProxy;
-#if HAVE(PRIVACY_PROXY_FAIL_CLOSED_FOR_UNREACHABLE_HOSTS)
 @property (setter=_setPrivacyProxyFailClosedForUnreachableHosts:) BOOL _privacyProxyFailClosedForUnreachableHosts;
-#endif
 #if ENABLE(TRACKER_DISPOSITION)
 @property (setter=_setNeedsNetworkTrackingPrevention:) BOOL _needsNetworkTrackingPrevention;
 #endif
@@ -273,9 +269,7 @@ typedef CF_ENUM(int, CFURLCredentialPersistence)
 @property (setter=_setUseEnhancedPrivacyMode:) BOOL _useEnhancedPrivacyMode;
 @property (setter=_setBlockTrackers:) BOOL _blockTrackers;
 #endif
-#if HAVE(ALLOW_PRIVATE_ACCESS_TOKENS_FOR_THIRD_PARTY)
 @property (setter=_setAllowPrivateAccessTokensForThirdParty:) BOOL _allowPrivateAccessTokensForThirdParty;
-#endif
 #if HAVE(ALLOW_ONLY_PARTITIONED_COOKIES)
 @property (setter=_setAllowOnlyPartitionedCookies:) BOOL _allowOnlyPartitionedCookies;
 #endif
@@ -301,13 +295,9 @@ typedef CF_ENUM(int, CFURLCredentialPersistence)
 - (BOOL)_schemeWasUpgradedDueToDynamicHSTS;
 - (BOOL)_preventHSTSStorage;
 - (BOOL)_ignoreHSTS;
-#if HAVE(NETWORK_CONNECTION_PRIVACY_STANCE)
 @property (setter=_setPrivacyProxyFailClosed:) BOOL _privacyProxyFailClosed;
 @property (readonly) BOOL _useEnhancedPrivacyMode;
-#endif
-#if HAVE(PRIVACY_PROXY_FAIL_CLOSED_FOR_UNREACHABLE_HOSTS)
 @property (readonly) BOOL _privacyProxyFailClosedForUnreachableNonMainHosts;
-#endif
 @end
 
 @interface NSURLResponse ()
@@ -401,10 +391,8 @@ typedef NS_ENUM(NSInteger, NSURLSessionCompanionProxyPreference) {
 @property (assign, readonly) int64_t _responseBodyBytesReceived;
 @property (assign, readonly) int64_t _responseBodyBytesDecoded;
 @property (nullable, copy, readonly) NSString* _interfaceName;
-#if HAVE(NETWORK_CONNECTION_PRIVACY_STANCE)
 @property (assign, readonly) nw_connection_privacy_stance_t _privacyStance;
 @property (nullable, retain, readonly) nw_establishment_report_t _establishmentReport;
-#endif
 @property (assign) SSLProtocol _negotiatedTLSProtocol;
 @property (assign) SSLCipherSuite _negotiatedTLSCipher;
 #if ENABLE(NETWORK_ISSUE_REPORTING)

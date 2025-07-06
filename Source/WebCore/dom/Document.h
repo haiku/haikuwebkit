@@ -635,7 +635,7 @@ public:
     virtual bool isFrameSet() const { return false; }
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    void setHasHDRContent() { m_hasHDRContent = true; }
+    void setHasHDRContent();
     bool hasHDRContent() const { return m_hasHDRContent; }
     bool drawsHDRContent() const;
 #endif
@@ -1012,8 +1012,7 @@ public:
     void createDOMWindow();
     void takeDOMWindowFrom(Document&);
 
-    // FIXME: Consider renaming to window().
-    LocalDOMWindow* domWindow() const { return m_domWindow.get(); }
+    LocalDOMWindow* window() const { return m_domWindow.get(); }
     inline RefPtr<LocalDOMWindow> protectedWindow() const; // Defined in DocumentInlines.h.
 
     // In DOM Level 2, the Document's LocalDOMWindow is called the defaultView.
@@ -1306,6 +1305,7 @@ public:
     void serviceCaretAnimation();
 
     void windowScreenDidChange(PlatformDisplayID);
+    void screenPropertiesDidChange(PlatformDisplayID);
 
     void finishedParsing();
 
@@ -1409,6 +1409,9 @@ public:
     using DisplayChangedObserver = WTF::Observer<void(PlatformDisplayID)>;
     void addDisplayChangedObserver(const DisplayChangedObserver&);
 
+    using ScreenPropertiesChangedObserver = WTF::Observer<void(PlatformDisplayID)>;
+    void addScreenPropertiesChangedObserver(const ScreenPropertiesChangedObserver&);
+
 #if HAVE(SPATIAL_TRACKING_LABEL)
     const String& defaultSpatialTrackingLabel() const;
     void defaultSpatialTrackingLabelChanged(const String&);
@@ -1439,7 +1442,7 @@ public:
     void incrementLoadEventDelayCount() { ++m_loadEventDelayCount; }
     void decrementLoadEventDelayCount();
     bool isDelayingLoadEvent() const { return m_loadEventDelayCount; }
-    void checkCompleted();
+    WEBCORE_EXPORT void checkCompleted();
 
 #if ENABLE(IOS_TOUCH_EVENTS)
 #include <WebKitAdditions/DocumentIOS.h>
@@ -2339,6 +2342,7 @@ private:
 
     WeakHashSet<MediaCanStartListener> m_mediaCanStartListeners;
     WeakHashSet<DisplayChangedObserver> m_displayChangedObservers;
+    WeakHashSet<ScreenPropertiesChangedObserver> m_screenPropertiesChangedObservers;
 
 #if HAVE(SPATIAL_TRACKING_LABEL)
     WeakHashSet<DefaultSpatialTrackingLabelChangedObserver> m_defaultSpatialTrackingLabelChangedObservers;

@@ -169,7 +169,7 @@ void RenderMenuList::adjustInnerStyle()
     } else if (m_optionStyle && document().page()->chrome().selectItemAlignmentFollowsMenuWritingDirection()) {
         if ((m_optionStyle->writingMode().bidiDirection() != innerStyle.writingMode().bidiDirection()
             || m_optionStyle->unicodeBidi() != innerStyle.unicodeBidi()))
-            m_innerBlock->setNeedsLayoutAndPrefWidthsRecalc();
+            m_innerBlock->setNeedsLayoutAndPreferredWidthsUpdate();
         innerStyle.setTextAlign(writingMode().isBidiLTR() ? TextAlignMode::Left : TextAlignMode::Right);
         innerStyle.setDirection(m_optionStyle->writingMode().bidiDirection());
         innerStyle.setUnicodeBidi(m_optionStyle->unicodeBidi());
@@ -249,7 +249,7 @@ void RenderMenuList::updateOptionsWidth()
 
     m_optionsWidth = width;
     if (parent())
-        setNeedsLayoutAndPrefWidthsRecalc();
+        setNeedsLayoutAndPreferredWidthsUpdate();
 }
 
 void RenderMenuList::updateFromElement()

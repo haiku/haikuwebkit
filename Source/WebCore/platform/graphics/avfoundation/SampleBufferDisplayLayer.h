@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "HostingContext.h"
 #include "PlatformLayer.h"
 #include <wtf/AbstractRefCountedAndCanMakeWeakPtr.h>
 #include <wtf/CompletionHandler.h>
@@ -87,7 +88,7 @@ public:
     enum class RenderPolicy { TimingInfo, Immediately };
     virtual void setRenderPolicy(RenderPolicy) { };
 
-    virtual LayerHostingContextID hostingContextID() const { return 0; }
+    virtual HostingContext hostingContext() const { return { }; }
 
 protected:
     explicit SampleBufferDisplayLayer(SampleBufferDisplayLayerClient&);

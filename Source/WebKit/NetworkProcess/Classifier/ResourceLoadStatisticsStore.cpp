@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Apple Inc. All rights reserved.
+ * Copyright (C) 2019-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -604,7 +604,7 @@ void ResourceLoadStatisticsStore::updateClientSideCookiesAgeCap()
 #endif
 
     RunLoop::protectedMain()->dispatch([store = Ref { m_store.get() }, seconds = capTime] () {
-        if (auto* networkSession = store->networkSession()) {
+        if (CheckedPtr networkSession = store->networkSession()) {
             if (CheckedPtr storageSession = networkSession->networkStorageSession())
                 storageSession->setAgeCapForClientSideCookies(seconds);
         }
@@ -924,7 +924,7 @@ void ResourceLoadStatisticsStore::migrateDataToPCMDatabaseIfNecessary()
 
     if (!unattributed.isEmpty() || !attributed.isEmpty()) {
         RunLoop::protectedMain()->dispatch([store = Ref { store() }, unattributed = crossThreadCopy(WTFMove(unattributed)), attributed = crossThreadCopy(WTFMove(attributed))] () mutable {
-            auto* networkSession = store->networkSession();
+            CheckedPtr networkSession = store->networkSession();
             if (!networkSession)
                 return;
 
@@ -1794,7 +1794,7 @@ void ResourceLoadStatisticsStore::grantStorageAccess(SubFrameDomain&& subFrameDo
         std::optional<OrganizationStorageAccessPromptQuirk> additionalDomainGrants;
         CanRequestStorageAccessWithoutUserInteraction canRequestStorageAccessWithoutUserInteraction { CanRequestStorageAccessWithoutUserInteraction::No };
 
-        if (auto* networkSession = store->networkSession()) {
+        if (CheckedPtr networkSession = store->networkSession()) {
             if (CheckedPtr storageSession = networkSession->networkStorageSession()) {
                 additionalDomainGrants = storageSession->storageAccessQuirkForDomainPair(subFrameDomain, topFrameDomain);
                 canRequestStorageAccessWithoutUserInteraction = storageSession->canRequestStorageAccessForLoginOrCompatibilityPurposesWithoutPriorUserInteraction(subFrameDomain, topFrameDomain) ? CanRequestStorageAccessWithoutUserInteraction::Yes : CanRequestStorageAccessWithoutUserInteraction::No;

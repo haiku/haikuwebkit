@@ -31,9 +31,7 @@
 #include "GraphicsLayerContentsDisplayDelegate.h"
 #include "HTMLCanvasElement.h"
 #include "OffscreenCanvas.h"
-#include <wtf/StdLibExtras.h>
 #include <wtf/TZoneMallocInlines.h>
-#include <utility>
 
 namespace WebCore {
 
@@ -49,18 +47,15 @@ PlaceholderRenderingContextSource::PlaceholderRenderingContextSource(Placeholder
 {
 }
 
-void PlaceholderRenderingContextSource::setPlaceholderBuffer(RefPtr<ImageBuffer>&& imageBuffer)
+void PlaceholderRenderingContextSource::setPlaceholderBuffer(ImageBuffer& imageBuffer)
 {
-    RefPtr clone = imageBuffer->clone();
-
     {
         Locker locker { m_lock };
         if (m_delegate)
-            m_delegate->tryCopyToLayer(*imageBuffer);
-        else
-            m_imageBufferForDelegate = WTFMove(imageBuffer);
+            m_delegate->tryCopyToLayer(imageBuffer);
     }
 
+    RefPtr clone = imageBuffer.clone();
     if (!clone)
         return;
     std::unique_ptr serializedClone = ImageBuffer::sinkIntoSerializedImageBuffer(WTFMove(clone));
@@ -81,10 +76,6 @@ void PlaceholderRenderingContextSource::setContentsToLayer(GraphicsLayer& layer)
 {
     Locker locker { m_lock };
     m_delegate = layer.createAsyncContentsDisplayDelegate(m_delegate.get());
-    if (m_imageBufferForDelegate) {
-        m_delegate->tryCopyToLayer(*std::exchange(m_imageBufferForDelegate, nullptr));
-        m_imageBufferForDelegate = nullptr;
-    }
 }
 
 WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(PlaceholderRenderingContext);

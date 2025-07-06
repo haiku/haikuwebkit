@@ -32,6 +32,7 @@
 #include "PlaybackSessionContextIdentifier.h"
 #include <WebCore/AudioSession.h>
 #include <WebCore/CocoaView.h>
+#include <WebCore/HostingContext.h>
 #include <WebCore/MediaPlayerIdentifier.h>
 #include <WebCore/PlatformLayer.h>
 #include <WebCore/PlatformVideoPresentationInterface.h>
@@ -40,6 +41,7 @@
 #include <WebCore/VideoPresentationModel.h>
 #include <wtf/HashMap.h>
 #include <wtf/HashSet.h>
+#include <wtf/MachSendRightAnnotated.h>
 #include <wtf/Observer.h>
 #include <wtf/RefPtr.h>
 #include <wtf/WeakHashSet.h>
@@ -182,14 +184,14 @@ public:
 #if PLATFORM(IOS_FAMILY)
     RefPtr<WebCore::PlatformVideoPresentationInterface> returningToStandbyInterface() const;
     AVPlayerViewController *playerViewController(PlaybackSessionContextIdentifier) const;
-    RetainPtr<WKVideoView> createViewWithID(PlaybackSessionContextIdentifier, WebKit::LayerHostingContextID videoLayerID, const WebCore::FloatSize& initialSize, const WebCore::FloatSize& nativeSize, float hostingScaleFactor);
+    RetainPtr<WKVideoView> createViewWithID(PlaybackSessionContextIdentifier, const WebCore::HostingContext&, const WebCore::FloatSize& initialSize, const WebCore::FloatSize& nativeSize, float hostingScaleFactor);
 #endif
 
 #if ENABLE(LINEAR_MEDIA_PLAYER)
     LMPlayableViewController *playableViewController(PlaybackSessionContextIdentifier) const;
 #endif
 
-    PlatformLayerContainer createLayerWithID(PlaybackSessionContextIdentifier, WebKit::LayerHostingContextID videoLayerID, const WebCore::FloatSize& initialSize, const WebCore::FloatSize& nativeSize, float hostingScaleFactor);
+    PlatformLayerContainer createLayerWithID(PlaybackSessionContextIdentifier, const WebCore::HostingContext&, const WebCore::FloatSize& initialSize, const WebCore::FloatSize& nativeSize, float hostingScaleFactor);
 
     void willRemoveLayerForID(PlaybackSessionContextIdentifier);
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess(IPC::Connection&) const;
@@ -199,10 +201,13 @@ public:
     RefPtr<WebCore::PlatformVideoPresentationInterface> bestVideoForElementFullscreen();
 
 private:
+    friend class RemotePageVideoPresentationManagerProxy;
     friend class VideoPresentationModelContext;
 
     explicit VideoPresentationManagerProxy(WebPageProxy&, PlaybackSessionManagerProxy&);
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) override;
+
+    template <typename Message> void sendToWebProcess(PlaybackSessionContextIdentifier, Message&&);
 
     typedef std::pair<Ref<VideoPresentationModelContext>, Ref<WebCore::PlatformVideoPresentationInterface>> ModelInterfacePair;
     ModelInterfacePair createModelAndInterface(PlaybackSessionContextIdentifier);
@@ -218,10 +223,10 @@ private:
 
     void hasVideoInPictureInPictureDidChange(bool);
 
-    RetainPtr<WKLayerHostView> createLayerHostViewWithID(PlaybackSessionContextIdentifier, WebKit::LayerHostingContextID videoLayerID, const WebCore::FloatSize& initialSize, float hostingScaleFactor);
+    RetainPtr<WKLayerHostView> createLayerHostViewWithID(PlaybackSessionContextIdentifier, const WebCore::HostingContext&, const WebCore::FloatSize& initialSize, float hostingScaleFactor);
 
     // Messages from VideoPresentationManager
-    void setupFullscreenWithID(PlaybackSessionContextIdentifier, WebKit::LayerHostingContextID videoLayerID, const WebCore::FloatRect& screenRect, const WebCore::FloatSize& initialSize, const WebCore::FloatSize& videoDimensions, float hostingScaleFactor, WebCore::HTMLMediaElementEnums::VideoFullscreenMode, bool allowsPictureInPicture, bool standby, bool blocksReturnToFullscreenFromPictureInPicture);
+    void setupFullscreenWithID(PlaybackSessionContextIdentifier, const WebCore::HostingContext&, const WebCore::FloatRect& screenRect, const WebCore::FloatSize& initialSize, const WebCore::FloatSize& videoDimensions, float hostingScaleFactor, WebCore::HTMLMediaElementEnums::VideoFullscreenMode, bool allowsPictureInPicture, bool standby, bool blocksReturnToFullscreenFromPictureInPicture);
     void setInlineRect(PlaybackSessionContextIdentifier, const WebCore::FloatRect& inlineRect, bool visible);
     void setHasVideoContentLayer(PlaybackSessionContextIdentifier, bool value);
     void setHasVideo(PlaybackSessionContextIdentifier, bool);
@@ -291,6 +296,9 @@ private:
     Vector<CompletionHandler<void()>> m_closeCompletionHandlers;
     WeakHashSet<VideoInPictureInPictureDidChangeObserver> m_pipChangeObservers;
     Markable<PlaybackSessionContextIdentifier> m_lastInteractedWithVideo;
+#if ENABLE(MACH_PORT_LAYER_HOSTING)
+    HashMap<PlaybackSessionContextIdentifier, RetainPtr<BELayerHierarchyHandle>> m_layerHandles;
+#endif
 };
 
 } // namespace WebKit

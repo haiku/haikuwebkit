@@ -329,6 +329,7 @@ Tests/WebKitCocoa/WKURLSchemeHandler-leaks.mm
 Tests/WebKitCocoa/WKWebExtension.mm
 Tests/WebKitCocoa/WKWebExtensionAPIAction.mm
 Tests/WebKitCocoa/WKWebExtensionAPIAlarms.mm
+Tests/WebKitCocoa/WKWebExtensionAPIBookmarks.mm
 Tests/WebKitCocoa/WKWebExtensionAPICommands.mm
 Tests/WebKitCocoa/WKWebExtensionAPICookies.mm
 Tests/WebKitCocoa/WKWebExtensionAPIDeclarativeNetRequest.mm

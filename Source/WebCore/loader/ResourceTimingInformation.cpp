@@ -68,7 +68,7 @@ void ResourceTimingInformation::addResourceTiming(CachedResource& resource, Docu
     if (!initiatorDocument)
         return;
 
-    RefPtr initiatorWindow = initiatorDocument->domWindow();
+    RefPtr initiatorWindow = initiatorDocument->window();
     if (!initiatorWindow)
         return;
 

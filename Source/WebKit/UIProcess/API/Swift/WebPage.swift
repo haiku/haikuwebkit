@@ -79,6 +79,9 @@ final public class WebPage {
         /// The page is not currently in a fullscreen state.
         case notInFullscreen
     }
+    
+    // This is based on the XGA standard resolution size.
+    private static let defaultFrame = CGRect(x: 0, y: 0, width: 1024, height: 768)
 
     // MARK: Initializers
 
@@ -149,18 +152,28 @@ final public class WebPage {
 
     // MARK: Properties
 
-    /// The current navigation event, or `nil` if there have been no navigations so far.
-    ///
-    /// This property may be used to observe changes to both an individual navigation, and across navigations.
-    ///
-    /// A new navigation begins when a `NavigationEvent` has a type of `startedProvisionalNavigation`, and is finished once a
-    /// navigation event with a type of `.finished`, `.failedProvisionalNavigation`, or `.failed`.
-    public internal(set) var currentNavigationEvent: WebPage.NavigationEvent? = nil
-
     let configuration: Configuration
 
     /// The webpage's back-forward list.
     public internal(set) var backForwardList: BackForwardList = BackForwardList()
+
+    /// A sequence of all the navigation events that occur throughout the webpage, including both user navigation
+    /// and programmatic navigation.
+    ///
+    /// A specific navigation is comprised of a sequential set of ``NavigationEvent``s; a new navigation begins when an
+    /// event is ``NavigationEvent/startedProvisionalNavigation``.
+    ///
+    /// This property produces a new sequence each time it is called, and starts tracking events as soon as it is created.
+    /// The sequence is indefinite, but may be terminated under several circumstances:
+    ///
+    /// * The owning ``WebPage``'s lifetime ends.
+    /// * An error occurs during navigation, at which point the sequence will throw the error and terminate.
+    /// * The ``Task`` enclosing iteration of the sequence is cancelled.
+    ///
+    /// To track a specific programmatic navigation, use the return value of one of the loading APIs.
+    public var navigations: some AsyncSequence<NavigationEvent, any Error> {
+        createIndefiniteNavigationSequence()
+    }
 
     /// The URL for the current webpage.
     ///
@@ -292,14 +305,18 @@ final public class WebPage {
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     @ObservationIgnored
     @_spi(CrossImportOverlay)
-    public var isBoundToWebView = false
+    public var isBoundToWebView = false {
+        didSet {
+            backingWebView.frame = isBoundToWebView ? .zero : Self.defaultFrame
+        }
+    }
 
     // SPI for the cross-import overlay.
     // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
     @ObservationIgnored
     @_spi(CrossImportOverlay)
     public lazy var backingWebView: WebPageWebView = {
-        let webView = WebPageWebView(frame: .zero, configuration: WKWebViewConfiguration(configuration))
+        let webView = WebPageWebView(frame: Self.defaultFrame, configuration: WKWebViewConfiguration(configuration))
         webView.navigationDelegate = backingNavigationDelegate
         webView.uiDelegate = backingUIDelegate
         #if os(macOS)
@@ -309,6 +326,12 @@ final public class WebPage {
     }()
 
     // MARK: Loading functions
+    
+    @ObservationIgnored
+    private var scopedNavigations: [ObjectIdentifier : AsyncThrowingStream<NavigationEvent, any Error>.Continuation] = [:]
+
+    @ObservationIgnored
+    private var indefiniteNavigations: [UUID : AsyncThrowingStream<NavigationEvent, any Error>.Continuation] = [:]
 
     /// Loads the web content that the specified URL request object references and navigates to that content.
     ///
@@ -318,10 +341,10 @@ final public class WebPage {
     /// Provide the source of this load request for app activity data by setting the attribution parameter on your request.
     ///
     /// - Parameter request: A URL request that specifies the resource to display.
-    /// - Returns: A navigation identifier you use to track the loading progress of the request.
+    /// - Returns: An async sequence you use to track the loading progress of the navigation. If the `Task` enclosing the sequence is cancelled, the page will stop loading all resources.
     @discardableResult
-    public func load(_ request: URLRequest) -> NavigationID? {
-        backingWebView.load(request).map(NavigationID.init(_:))
+    public func load(_ request: URLRequest) -> some AsyncSequence<NavigationEvent, any Error> {
+        toNavigationSequence { $0.load(request) }
     }
 
     /// Loads the content of the specified data object and navigates to it.
@@ -334,9 +357,9 @@ final public class WebPage {
     ///   - mimeType: The MIME type of the information in the data parameter. This parameter must not contain an empty string.
     ///   - characterEncoding: The data's character encoding.
     ///   - baseURL: A URL that you use to resolve relative URLs within the document.
-    /// - Returns: A navigation identifier you use to track the loading progress of the request.
+    /// - Returns: An async sequence you use to track the loading progress of the navigation. If the `Task` enclosing the sequence is cancelled, the page will stop loading all resources.
     @discardableResult
-    public func load(_ data: Data, mimeType: String, characterEncoding: String.Encoding, baseURL: URL) -> NavigationID? {
+    public func load(_ data: Data, mimeType: String, characterEncoding: String.Encoding, baseURL: URL) -> some AsyncSequence<NavigationEvent, any Error> {
         let cfEncoding = CFStringConvertNSStringEncodingToEncoding(characterEncoding.rawValue)
         guard cfEncoding != kCFStringEncodingInvalidId else {
             preconditionFailure("\(characterEncoding) is not a valid character encoding")
@@ -345,9 +368,10 @@ final public class WebPage {
         guard let convertedEncoding = CFStringConvertEncodingToIANACharSetName(cfEncoding) as? String else {
             preconditionFailure("\(characterEncoding) is not a valid character encoding")
         }
-
-        return backingWebView.load(data, mimeType: mimeType, characterEncodingName: convertedEncoding, baseURL: baseURL)
-            .map(NavigationID.init(_:))
+        
+        return toNavigationSequence {
+            $0.load(data, mimeType: mimeType, characterEncodingName: convertedEncoding, baseURL: baseURL)
+        }
     }
 
     /// Loads the contents of the specified HTML string and navigates to it.
@@ -360,7 +384,17 @@ final public class WebPage {
     /// - Parameters:
     ///   - html: The string to use as the contents of the webpage.
     ///   - baseURL: The base URL to use when the system resolves relative URLs within the HTML string.
-    /// - Returns: A navigation identifier you use to track the loading progress of the request.
+    /// - Returns: An async sequence you use to track the loading progress of the navigation. If the `Task` enclosing the sequence is cancelled, the page will stop loading all resources.
+    @discardableResult
+    public func load(html: String, baseURL: URL) -> some AsyncSequence<NavigationEvent, any Error> {
+        toNavigationSequence {
+            $0.loadHTMLString(html, baseURL: baseURL)
+        }
+    }
+
+    @available(*, deprecated, message: "Navigations are now observed using async sequences directly.")
+    @_spi(_)
+    @_disfavoredOverload
     @discardableResult
     public func load(html: String, baseURL: URL) -> NavigationID? {
         backingWebView.loadHTMLString(html, baseURL: baseURL).map(NavigationID.init(_:))
@@ -372,13 +406,13 @@ final public class WebPage {
     ///   - request: A URL request that specifies the base URL and other loading details the system uses to interpret the data you provide.
     ///   - response: A response the system uses to interpret the data you provide.
     ///   - responseData: The data to use as the contents of the webpage.
-    /// - Returns: A navigation identifier you use to track the loading progress of the request.
+    /// - Returns: An async sequence you use to track the loading progress of the navigation. If the `Task` enclosing the sequence is cancelled, the page will stop loading all resources.
     @discardableResult
-    public func load(simulatedRequest request: URLRequest, response: URLResponse, responseData: Data) -> NavigationID? {
-        // `WKWebView` annotates this method as returning non-nil, but it may return nil.
-
-        let navigation = backingWebView.loadSimulatedRequest(request, response: response, responseData: responseData) as WKNavigation?
-        return navigation.map(NavigationID.init(_:))
+    public func load(simulatedRequest request: URLRequest, response: URLResponse, responseData: Data) -> some AsyncSequence<NavigationEvent, any Error> {
+        toNavigationSequence {
+            // `WKWebView` annotates this method as returning non-nil, but it may return nil.
+            $0.loadSimulatedRequest(request, response: response, responseData: responseData) as WKNavigation?
+        }
     }
 
     /// Loads the web content from the HTML you provide as if the HTML were the response to the request.
@@ -386,33 +420,36 @@ final public class WebPage {
     /// - Parameters:
     ///   - request: A URL request that specifies the base URL and other loading details the system uses to interpret the HTML you provide.
     ///   - htmlString: The HTML code you provide in a string to use as the contents of the webpage.
-    /// - Returns: A navigation identifier you use to track the loading progress of the request.
+    /// - Returns: An async sequence you use to track the loading progress of the navigation. If the `Task` enclosing the sequence is cancelled, the page will stop loading all resources.
     @discardableResult
-    public func load(simulatedRequest request: URLRequest, responseHTML htmlString: String) -> NavigationID? {
-        // `WKWebView` annotates this method as returning non-nil, but it may return nil.
-
-        let navigation = backingWebView.loadSimulatedRequest(request, responseHTML: htmlString) as WKNavigation?
-        return navigation.map(NavigationID.init(_:))
+    public func load(simulatedRequest request: URLRequest, responseHTML htmlString: String) -> some AsyncSequence<NavigationEvent, any Error> {
+        toNavigationSequence {
+            // `WKWebView` annotates this method as returning non-nil, but it may return nil.
+            $0.loadSimulatedRequest(request, responseHTML: htmlString) as WKNavigation?
+        }
     }
 
     /// Navigates to an item from the back-forward list and sets it as the current item.
     ///
     /// - Parameter item: The item to navigate to. The item must be in the webpage's back-forward list.
-    /// - Returns: A navigation identifier you use to track the loading progress of the request.
+    /// - Returns: An async sequence you use to track the loading progress of the navigation. If the `Task` enclosing the sequence is cancelled, the page will stop loading all resources.
     @discardableResult
-    public func load(_ item: BackForwardList.Item) -> NavigationID? {
-        backingWebView.go(to: item.wrapped).map(NavigationID.init(_:))
+    public func load(_ item: BackForwardList.Item) -> some AsyncSequence<NavigationEvent, any Error> {
+        toNavigationSequence {
+            $0.go(to: item.wrapped)
+        }
     }
 
     /// Reloads the current webpage.
     ///
     /// - Parameter fromOrigin: If `true`, end-to-end revalidation of the content using cache-validating conditionals
     /// is performed, if possible.
-    /// - Returns: A navigation identifier you use to track the loading progress of the request.
+    /// - Returns: An async sequence you use to track the loading progress of the navigation. If the `Task` enclosing the sequence is cancelled, the page will stop loading all resources.
     @discardableResult
-    public func reload(fromOrigin: Bool = false) -> NavigationID? {
-        let navigation = fromOrigin ? backingWebView.reloadFromOrigin() : backingWebView.reload()
-        return navigation.map(NavigationID.init(_:))
+    public func reload(fromOrigin: Bool = false) -> some AsyncSequence<NavigationEvent, any Error> {
+        toNavigationSequence {
+            fromOrigin ? $0.reloadFromOrigin() : $0.reload()
+        }
     }
 
     /// Stops loading all resources on the current page.
@@ -489,24 +526,6 @@ final public class WebPage {
         return result as! any Sendable
     }
 
-    /// Generates PDF data from the webpage's contents.
-    ///
-    /// - Parameter configuration: The object that specifies the portion of the web view to capture as PDF data.
-    /// - Returns: A data object that contains the PDF data to use for rendering the contents of the webpage.
-    /// - Throws: An error if a problem occurred.
-    public func pdf(configuration: WKPDFConfiguration = .init()) async throws -> Data {
-        try await backingWebView.pdf(configuration: configuration)
-    }
-
-    /// Creates a web archive of the webpage's current contents.
-    public func webArchiveData() async throws -> Data {
-        try await withCheckedThrowingContinuation { continuation in
-            backingWebView.createWebArchiveData {
-                continuation.resume(with: $0)
-            }
-        }
-    }
-
     // MARK: Media functions
 
     /// Pauses playback of all media in the web view.
@@ -543,7 +562,62 @@ final public class WebPage {
         await backingWebView.setMicrophoneCaptureState(state)
     }
 
-    // MARK: Private helper functions
+    // MARK: Helper functions
+
+    func addNavigationEvent(_ event: Result<NavigationEvent, any Error>, for cocoaNavigation: WKNavigation) {
+        scopedNavigations[ObjectIdentifier(cocoaNavigation)]?.yield(with: event)
+
+        if case .success(.finished) = event {
+            scopedNavigations[ObjectIdentifier(cocoaNavigation)]?.finish()
+        }
+
+        for continuation in indefiniteNavigations.values {
+            continuation.yield(with: event)
+        }
+    }
+
+    private func createIndefiniteNavigationSequence() -> some AsyncSequence<NavigationEvent, any Error> {
+        let id = UUID()
+
+        let (stream, continuation) = AsyncThrowingStream.makeStream(of: NavigationEvent.self, throwing: (any Error).self)
+        continuation.onTermination = { [weak self] termination in
+            guard let self else {
+                return
+            }
+            Task { @MainActor in
+                // `stopLoading` is intentionally not called here because the semantics of doing
+                // so would not be well-defined in the case of multiple navigation sequences.
+                indefiniteNavigations[id] = nil
+            }
+        }
+
+        indefiniteNavigations[id] = continuation
+        return stream
+    }
+
+    private func toNavigationSequence(_ load: (WKWebView) -> WKNavigation?) -> some AsyncSequence<NavigationEvent, any Error> {
+        guard let id = load(backingWebView) else {
+            return AsyncThrowingStream { continuation in
+                continuation.finish(throwing: NavigationError.pageClosed)
+            }
+        }
+
+        let (stream, continuation) = AsyncThrowingStream.makeStream(of: NavigationEvent.self, throwing: (any Error).self)
+        continuation.onTermination = { [weak self] termination in
+            guard let self else {
+                return
+            }
+            Task { @MainActor in
+                if case .cancelled = termination {
+                    stopLoading()
+                }
+                scopedNavigations[ObjectIdentifier(id)] = nil
+            }
+        }
+
+        scopedNavigations[ObjectIdentifier(id)] = continuation
+        return stream
+    }
 
     private func createObservation<Value, BackingValue>(
         for keyPath: KeyPath<WebPage, Value>,

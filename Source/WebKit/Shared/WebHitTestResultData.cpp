@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2011 Nokia Corporation and/or its subsidiary(-ies)
+ * Copyright (C) 2013-2025 Apple Inc. All rights reserved.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -117,13 +118,12 @@ WebHitTestResultData::WebHitTestResultData(const HitTestResult& hitTestResult, c
         return;
 
     if (RefPtr image = hitTestResult.image()) {
-        RefPtr<FragmentedSharedBuffer> buffer = image->data();
-        if (buffer)
+        if (RefPtr buffer = image->data())
             imageSharedMemory = WebCore::SharedMemory::copyBuffer(*buffer);
     }
 
     if (RefPtr target = hitTestResult.innerNonSharedNode()) {
-        if (auto renderer = dynamicDowncast<RenderImage>(target->renderer())) {
+        if (CheckedPtr renderer = dynamicDowncast<RenderImage>(target->renderer())) {
             imageBitmap = createShareableBitmap(*renderer);
             if (auto* cachedImage = renderer->cachedImage()) {
                 if (RefPtr image = cachedImage->image())
@@ -211,7 +211,7 @@ IntRect WebHitTestResultData::elementBoundingBoxInWindowCoordinates(const WebCor
     if (!view)
         return IntRect();
 
-    auto* renderer = node->renderer();
+    CheckedPtr renderer = node->renderer();
     if (!renderer)
         return IntRect();
 

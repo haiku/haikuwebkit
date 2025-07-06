@@ -212,7 +212,7 @@ void RenderTreeBuilder::Inline::attachIgnoringContinuation(RenderInline& parent,
 
     auto& childToAdd = *child;
     m_builder.attachToRenderElement(parent, WTFMove(child), beforeChild);
-    childToAdd.setNeedsLayoutAndPrefWidthsRecalc();
+    childToAdd.setNeedsLayoutAndPreferredWidthsUpdate();
 }
 
 void RenderTreeBuilder::Inline::splitFlow(RenderInline& parent, RenderObject* beforeChild, RenderPtr<RenderBlock> newBlockBox, RenderPtr<RenderObject> child, RenderBoxModelObject* oldCont)
@@ -269,7 +269,7 @@ void RenderTreeBuilder::Inline::splitFlow(RenderInline& parent, RenderObject* be
             o = no->nextSibling();
             auto childToMove = m_builder.detachFromRenderElement(*block, *no, WillBeDestroyed::No);
             m_builder.attachToRenderElementInternal(*pre, WTFMove(childToMove));
-            no->setNeedsLayoutAndPrefWidthsRecalc();
+            no->setNeedsLayoutAndPreferredWidthsUpdate();
         }
     }
 
@@ -287,9 +287,9 @@ void RenderTreeBuilder::Inline::splitFlow(RenderInline& parent, RenderObject* be
     // Always just do a full layout in order to ensure that line boxes (especially wrappers for images)
     // get deleted properly. Because objects moves from the pre block into the post block, we want to
     // make new line boxes instead of leaving the old line boxes around.
-    pre->setNeedsLayoutAndPrefWidthsRecalc();
-    block->setNeedsLayoutAndPrefWidthsRecalc();
-    post.setNeedsLayoutAndPrefWidthsRecalc();
+    pre->setNeedsLayoutAndPreferredWidthsUpdate();
+    block->setNeedsLayoutAndPreferredWidthsUpdate();
+    post.setNeedsLayoutAndPreferredWidthsUpdate();
 }
 
 void RenderTreeBuilder::Inline::splitInlines(RenderInline& parent, RenderBlock* fromBlock, RenderBlock* toBlock, RenderBlock* middleBlock, RenderObject* beforeChild, RenderBoxModelObject* oldCont)
@@ -334,7 +334,7 @@ void RenderTreeBuilder::Inline::splitInlines(RenderInline& parent, RenderBlock* 
         auto* newParent = rendererToMove->parent();
         if (CheckedPtr newParentBox = dynamicDowncast<RenderBox>(newParent))
             markBoxForRelayoutAfterSplit(*newParentBox);
-        rendererToMove->setNeedsLayoutAndPrefWidthsRecalc();
+        rendererToMove->setNeedsLayoutAndPreferredWidthsUpdate();
         rendererToMove = nextSibling;
     }
     // Hook |clone| up as the continuation of the middle block.
@@ -372,7 +372,7 @@ void RenderTreeBuilder::Inline::splitInlines(RenderInline& parent, RenderBlock* 
                 auto* next = sibling->nextSibling();
                 auto childToMove = m_builder.detachFromRenderElement(*current, *sibling, WillBeDestroyed::No);
                 m_builder.attachIgnoringContinuation(*cloneInline, WTFMove(childToMove));
-                sibling->setNeedsLayoutAndPrefWidthsRecalc();
+                sibling->setNeedsLayoutAndPreferredWidthsUpdate();
                 sibling = next;
             }
         } else

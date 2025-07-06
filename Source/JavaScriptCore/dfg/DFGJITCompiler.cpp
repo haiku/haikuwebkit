@@ -213,7 +213,10 @@ void JITCompiler::link(LinkBuffer& linkBuffer)
         case SwitchChar:
         case SwitchImm: {
             if (!data.didUseJumpTable) {
-                ASSERT(m_jitCode->m_switchJumpTables[data.switchTableIndex].isEmpty());
+#if ASSERT_ENABLED
+                if (data.hasSwitchTableIndex())
+                    ASSERT(m_jitCode->m_switchJumpTables[data.switchTableIndex].isEmpty());
+#endif
                 continue;
             }
 
@@ -233,7 +236,10 @@ void JITCompiler::link(LinkBuffer& linkBuffer)
 
         case SwitchString: {
             if (!data.didUseJumpTable) {
-                ASSERT(m_jitCode->m_stringSwitchJumpTables[data.switchTableIndex].isEmpty());
+#if ASSERT_ENABLED
+                if (data.hasSwitchTableIndex())
+                    ASSERT(m_jitCode->m_stringSwitchJumpTables[data.switchTableIndex].isEmpty());
+#endif
                 continue;
             }
 

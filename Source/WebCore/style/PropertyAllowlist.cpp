@@ -83,11 +83,13 @@ bool isValidMarkerStyleProperty(CSSPropertyID id)
     case CSSPropertyTextEmphasisPosition:
     case CSSPropertyTextEmphasisStyle:
     case CSSPropertyTextIndent:
+    case CSSPropertyTextOrientation:
     case CSSPropertyTextShadow:
     case CSSPropertyTextTransform:
     case CSSPropertyTextWrapMode:
     case CSSPropertyTextWrapStyle:
     case CSSPropertyUnicodeBidi:
+    case CSSPropertyWebkitTextOrientation:
     case CSSPropertyWordBreak:
     case CSSPropertyWordSpacing:
     case CSSPropertyWhiteSpace:
@@ -101,6 +103,9 @@ bool isValidMarkerStyleProperty(CSSPropertyID id)
     case CSSPropertyAnimationPlayState:
     case CSSPropertyAnimationComposition:
     case CSSPropertyAnimationName:
+    case CSSPropertyAnimationRangeEnd:
+    case CSSPropertyAnimationRangeStart:
+    case CSSPropertyAnimationTimeline:
     case CSSPropertyTransitionBehavior:
     case CSSPropertyTransitionDuration:
     case CSSPropertyTransitionTimingFunction:

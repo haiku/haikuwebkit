@@ -33,8 +33,8 @@
 #import "WKRKEntity.h"
 #import "WKSLinearMediaPlayer.h"
 #import "WKSLinearMediaTypes.h"
-#import "WKSTextAnimationSourceDelegate.h"
 #import "WKStageMode.h"
+#import "WKTextAnimationManagerIOS.h"
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
 #import "WKIdentityDocumentPresentmentController.h"

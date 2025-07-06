@@ -47,6 +47,7 @@
 #import <pal/spi/cocoa/AVFoundationSPI.h>
 #import <wtf/HexNumber.h>
 #import <wtf/Lock.h>
+#import <wtf/MachSendRightAnnotated.h>
 #import <wtf/MainThread.h>
 #import <wtf/NeverDestroyed.h>
 #import <wtf/TZoneMallocInlines.h>
@@ -451,8 +452,8 @@ void MediaPlayerPrivateMediaStreamAVFObjC::layersAreInitialized(IntSize size, bo
 
     m_canEnqueueDisplayLayer = true;
 
-    if (m_layerHostingContextIDCallback)
-        m_layerHostingContextIDCallback(sampleBufferDisplayLayer->hostingContextID());
+    if (m_layerHostingContextCallback)
+        m_layerHostingContextCallback(sampleBufferDisplayLayer->hostingContext());
 }
 
 void MediaPlayerPrivateMediaStreamAVFObjC::destroyLayers()
@@ -1265,12 +1266,12 @@ std::optional<VideoFrameMetadata> MediaPlayerPrivateMediaStreamAVFObjC::videoFra
     return metadata;
 }
 
-LayerHostingContextID MediaPlayerPrivateMediaStreamAVFObjC::hostingContextID() const
+HostingContext MediaPlayerPrivateMediaStreamAVFObjC::hostingContext() const
 {
-    return m_sampleBufferDisplayLayer ? m_sampleBufferDisplayLayer->hostingContextID() : 0;
+    return m_sampleBufferDisplayLayer ? m_sampleBufferDisplayLayer->hostingContext() : HostingContext();
 }
 
-void MediaPlayerPrivateMediaStreamAVFObjC::setVideoLayerSizeFenced(const FloatSize& size, WTF::MachSendRight&& fence)
+void MediaPlayerPrivateMediaStreamAVFObjC::setVideoLayerSizeFenced(const FloatSize& size, WTF::MachSendRightAnnotated&& fence)
 {
     m_isMediaLayerRehosting = false;
 
@@ -1280,16 +1281,17 @@ void MediaPlayerPrivateMediaStreamAVFObjC::setVideoLayerSizeFenced(const FloatSi
 
     m_storedBounds = sampleBufferDisplayLayer->rootLayer().bounds;
     m_storedBounds->size = size;
-    sampleBufferDisplayLayer->updateBoundsAndPosition(*m_storedBounds, WTFMove(fence));
+    sampleBufferDisplayLayer->updateBoundsAndPosition(*m_storedBounds, WTFMove(fence.sendRight));
 }
 
-void MediaPlayerPrivateMediaStreamAVFObjC::requestHostingContextID(LayerHostingContextIDCallback&& callback)
+void MediaPlayerPrivateMediaStreamAVFObjC::requestHostingContext(LayerHostingContextCallback&& callback)
 {
-    if (auto contextID = hostingContextID()) {
-        callback(contextID);
+    auto context = hostingContext();
+    if (context.contextID) {
+        callback(context);
         return;
     }
-    m_layerHostingContextIDCallback = WTFMove(callback);
+    m_layerHostingContextCallback = WTFMove(callback);
 }
 
 void MediaPlayerPrivateMediaStreamAVFObjC::setShouldMaintainAspectRatio(bool shouldMaintainAspectRatio)

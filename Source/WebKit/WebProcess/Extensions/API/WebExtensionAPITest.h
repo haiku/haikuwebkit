@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -47,6 +47,8 @@ public:
 
     void sendMessage(JSContextRef, NSString *message, JSValue *argument);
     WebExtensionAPIEvent& onMessage();
+    WebExtensionAPIEvent& onTestStarted();
+    WebExtensionAPIEvent& onTestFinished();
 
     JSValue *runWithUserGesture(WebFrame&, JSValue *function);
     bool isProcessingUserGesture();
@@ -75,6 +77,8 @@ public:
 
 private:
     RefPtr<WebExtensionAPIEvent> m_onMessage;
+    RefPtr<WebExtensionAPIEvent> m_onTestStarted;
+    RefPtr<WebExtensionAPIEvent> m_onTestFinished;
 
     struct Test {
         String testName;

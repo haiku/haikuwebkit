@@ -307,7 +307,7 @@ public:
     void clearTrimmedMarginsMarkings();
     bool hasTrimmedMargin(std::optional<MarginTrimType>) const;
 
-    LayoutSize offsetFromContainer(RenderElement&, const LayoutPoint&, bool* offsetDependsOnPoint = nullptr) const override;
+    LayoutSize offsetFromContainer(const RenderElement&, const LayoutPoint&, bool* offsetDependsOnPoint = nullptr) const override;
     
     LayoutUnit adjustBorderBoxLogicalWidthForBoxSizing(const Style::Length<CSS::Nonnegative, float>& logicalWidth) const;
     LayoutUnit adjustContentBoxLogicalWidthForBoxSizing(const Style::Length<CSS::Nonnegative, float>& logicalWidth) const;
@@ -497,9 +497,9 @@ public:
     virtual void paintClippingMask(PaintInfo&, const LayoutPoint&);
     void imageChanged(WrappedImagePtr, const IntRect* = nullptr) override;
 
-    // Called when a positioned object moves but doesn't necessarily change size.  A simplified layout is attempted
+    // Called when an out-of-flow box moves but doesn't necessarily change size. A simplified layout is attempted
     // that just updates the object's position. If the size does change, the object remains dirty.
-    bool tryLayoutDoingPositionedMovementOnly()
+    bool tryLayoutDoingOutOfFlowMovementOnly()
     {
         LayoutUnit oldWidth = width();
         updateLogicalWidth();

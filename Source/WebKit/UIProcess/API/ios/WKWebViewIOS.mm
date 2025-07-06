@@ -52,7 +52,6 @@
 #import "WKPasswordView.h"
 #import "WKProcessPoolPrivate.h"
 #import "WKScrollView.h"
-#import "WKTextAnimationType.h"
 #import "WKUIDelegatePrivate.h"
 #import "WKWebViewConfigurationInternal.h"
 #import "WKWebViewContentProvider.h"
@@ -2398,7 +2397,49 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [_scrollView insertSubview:topColorExtensionView.get() aboveSubview:_contentView.get()];
 }
 
+- (void)_updateNeedsTopScrollPocketDueToVisibleContentInset
+{
+    BOOL value = [&] -> BOOL {
+        if ([_scrollView adjustedContentInset].top <= self._computedObscuredInset.top + CGFLOAT_EPSILON)
+            return NO;
+
+        if ([_scrollView _wk_isScrolledBeyondTopExtent])
+            return NO;
+
+        if ([[_scrollView topEdgeEffect].style isEqual:UIScrollEdgeEffectStyle.hardStyle])
+            return NO;
+
+        return [_scrollView contentOffset].y < 0;
+    }();
+
+    if (_needsTopScrollPocketDueToVisibleContentInset == value)
+        return;
+
+    _needsTopScrollPocketDueToVisibleContentInset = value;
+
+    [self _updateHiddenScrollPocketEdges];
+    [self _updateTopScrollPocketCaptureColor];
+}
+
+- (BOOL)_shouldHideTopScrollPocket
+{
+    if (_reasonsToHideTopScrollPocket)
+        return YES;
+
+    if (_needsTopScrollPocketDueToVisibleContentInset)
+        return NO;
+
+    return [self _hasVisibleColorExtensionView:WebCore::BoxSide::Top];
+}
+
 #endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+
+- (void)scrollViewDidChangeAdjustedContentInset:(UIScrollView *)scrollView
+{
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    [self _updateNeedsTopScrollPocketDueToVisibleContentInset];
+#endif
+}
 
 - (void)scrollViewDidScroll:(UIScrollView *)scrollView
 {
@@ -2407,6 +2448,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
         [self _updateFixedColorExtensionViewFrames];
         [self _reinsertTopFixedColorExtensionViewIfNeeded];
+        [self _updateNeedsTopScrollPocketDueToVisibleContentInset];
 #endif
     }
 
@@ -5085,7 +5127,7 @@ ALLOW_DEPRECATED_IMPLEMENTATIONS_END
     if (!_page || !_perProcessState.committedFindLayerID)
         return nil;
 
-    if (auto* drawingArea = _page->drawingArea())
+    if (RefPtr drawingArea = _page->drawingArea())
         return downcast<WebKit::RemoteLayerTreeDrawingAreaProxy>(*drawingArea).remoteLayerTreeHost().layerForID(*_perProcessState.committedFindLayerID);
 
     return nil;

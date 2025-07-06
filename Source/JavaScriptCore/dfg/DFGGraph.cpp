@@ -1130,6 +1130,17 @@ bool Graph::isSafeToLoad(JSObject* base, PropertyOffset offset)
     return m_safeToLoad.contains(std::make_pair(base, offset));
 }
 
+GetByOffsetMethod Graph::promoteToConstant(GetByOffsetMethod method)
+{
+    if (method.kind() == GetByOffsetMethod::LoadFromPrototype
+        && method.prototype()->structure()->dfgShouldWatch()) {
+        if (JSValue constant = tryGetConstantProperty(method.prototype()->value(), method.prototype()->structure(), method.offset()))
+            return GetByOffsetMethod::constant(freeze(constant));
+    }
+
+    return method;
+}
+
 bool Graph::watchGlobalProperty(JSGlobalObject* globalObject, unsigned identifierNumber)
 {
     if (m_plan.isUnlinked())

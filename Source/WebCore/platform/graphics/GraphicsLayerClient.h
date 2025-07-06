@@ -72,6 +72,9 @@ enum class PlatformLayerTreeAsTextFlags : uint8_t {
 enum class GraphicsLayerPaintBehavior : uint8_t {
     DefaultAsynchronousImageDecode = 1 << 0,
     ForceSynchronousImageDecode = 1 << 1,
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    TonemapHDRToDisplayHeadroom = 1 << 2,
+#endif
 };
     
 class GraphicsLayerClient {

@@ -39,11 +39,11 @@ void AXTreeStore<AXIsolatedTree>::applyPendingChangesForAllIsolatedTrees()
     Locker locker { AXTreeStore<AXIsolatedTree>::s_storeLock };
     auto& map = AXTreeStore<AXIsolatedTree>::isolatedTreeMap();
     for (const auto& axIDToTree : map) {
-        if (RefPtr tree = axIDToTree.value.get(); tree && !tree->willBeDestroyed()) {
+        if (RefPtr tree = axIDToTree.value.get()) {
             // Only applyPendingChanges for trees that aren't about to be destroyed.
             // When a tree is destroyed, it tries to remove itself from AXTreeStore,
             // which requires taking s_storeLock, which we hold. This would cause a deadlock.
-            tree->applyPendingChanges();
+            tree->applyPendingChangesUnlessQueuedForDestruction();
         }
     }
 }

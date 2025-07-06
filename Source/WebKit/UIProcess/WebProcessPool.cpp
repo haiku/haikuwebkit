@@ -1002,12 +1002,15 @@ void WebProcessPool::initializeNewWebProcess(WebProcessProxy& process, WebsiteDa
     parameters.overrideLanguages = overrideLanguages();
     LOG_WITH_STREAM(Language, stream << "WebProcessPool is initializing a new web process with overrideLanguages: " << parameters.overrideLanguages);
 
-    parameters.urlSchemesRegisteredAsEmptyDocument = copyToVector(m_schemesToRegisterAsEmptyDocument);
     parameters.urlSchemesRegisteredAsSecure = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsSecure());
     parameters.urlSchemesRegisteredAsBypassingContentSecurityPolicy = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsBypassingContentSecurityPolicy());
-    parameters.urlSchemesForWhichDomainRelaxationIsForbidden = copyToVector(m_schemesToSetDomainRelaxationForbiddenFor);
     parameters.urlSchemesRegisteredAsLocal = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsLocal());
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
     parameters.urlSchemesRegisteredAsNoAccess = copyToVector(LegacyGlobalSettings::singleton().schemesToRegisterAsNoAccess());
+#endif
+
+    parameters.urlSchemesRegisteredAsEmptyDocument = copyToVector(m_schemesToRegisterAsEmptyDocument);
+    parameters.urlSchemesForWhichDomainRelaxationIsForbidden = copyToVector(m_schemesToSetDomainRelaxationForbiddenFor);
     parameters.urlSchemesRegisteredAsDisplayIsolated = copyToVector(m_schemesToRegisterAsDisplayIsolated);
     parameters.urlSchemesRegisteredAsCORSEnabled = copyToVector(m_schemesToRegisterAsCORSEnabled);
     parameters.urlSchemesRegisteredAsAlwaysRevalidated = copyToVector(m_schemesToRegisterAsAlwaysRevalidated);
@@ -1542,6 +1545,7 @@ void WebProcessPool::registerURLSchemeAsLocal(const String& urlScheme)
         networkProcess->send(Messages::NetworkProcess::RegisterURLSchemeAsLocal(urlScheme), 0);
 }
 
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
 void WebProcessPool::registerURLSchemeAsNoAccess(const String& urlScheme)
 {
     LegacyGlobalSettings::singleton().registerURLSchemeAsNoAccess(urlScheme);
@@ -1549,6 +1553,7 @@ void WebProcessPool::registerURLSchemeAsNoAccess(const String& urlScheme)
     for (Ref networkProcess : NetworkProcessProxy::allNetworkProcesses())
         networkProcess->send(Messages::NetworkProcess::RegisterURLSchemeAsNoAccess(urlScheme), 0);
 }
+#endif
 
 void WebProcessPool::registerURLSchemeAsDisplayIsolated(const String& urlScheme)
 {

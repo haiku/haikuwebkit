@@ -55,8 +55,10 @@ class AccessibilityObject;
 class Page;
 enum class AXStreamOptions : uint8_t;
 
+static constexpr uint16_t lastPropertyFlagIndex = 21;
 // The most common boolean properties are stored in a bitfield rather than in a HashMap.
-// If you edit these, update AXIsolatedObject::boolAttributeValue and AXIsolatedObject::setProperty.
+// If you edit these, make sure the corresponding AXProperty is ordered correctly in that
+// enum, and update lastPropertyFlagIndex above.
 enum class AXPropertyFlag : uint32_t {
     CanSetFocusAttribute                          = 1 << 0,
     CanSetSelectedAttribute                       = 1 << 1,
@@ -79,10 +81,34 @@ enum class AXPropertyFlag : uint32_t {
     SupportsExpanded                              = 1 << 18,
     SupportsPath                                  = 1 << 19,
     SupportsPosInSet                              = 1 << 20,
-    SupportsSetSize                               = 1 << 21
+    SupportsSetSize                               = 1 << lastPropertyFlagIndex
 };
 
 enum class AXProperty : uint16_t {
+    CanSetFocusAttribute = 0,
+    CanSetSelectedAttribute = 1,
+    CanSetValueAttribute = 2,
+    HasBoldFont = 3,
+    HasClickHandler = 4,
+    HasItalicFont = 5,
+    HasPlainText = 6,
+    IsEnabled = 7,
+    IsExposedTableCell = 8,
+    IsGrabbed = 9,
+    IsIgnored = 10,
+    IsInlineText = 11,
+    IsKeyboardFocusable = 12,
+    IsNonLayerSVGObject = 13,
+    IsTableRow = 14,
+    IsVisited = 15,
+    SupportsCheckedState = 16,
+    SupportsDragging = 17,
+    SupportsExpanded = 18,
+    SupportsPath = 19,
+    SupportsPosInSet = 20,
+    SupportsSetSize = lastPropertyFlagIndex,
+    // End bool attributes that are matched in order by AXPropertyFlag.
+
     ARIALevel,
     ARIARoleDescription,
 #if !ENABLE(AX_THREAD_TEXT_APIS)
@@ -102,9 +128,6 @@ enum class AXProperty : uint16_t {
     BrailleRoleDescription,
     ButtonState,
     CanBeMultilineTextField,
-    CanSetFocusAttribute,
-    CanSetSelectedAttribute,
-    CanSetValueAttribute,
 #if PLATFORM(MAC)
     CaretBrowsingEnabled,
 #endif
@@ -142,11 +165,7 @@ enum class AXProperty : uint16_t {
 #endif
     TextColor,
     HasApplePDFAnnotationAttribute,
-    HasBoldFont,
-    HasClickHandler,
-    HasItalicFont,
     HasLinethrough,
-    HasPlainText,
     HasRemoteFrameChild,
     InputType,
     IsEditableWebArea,
@@ -160,7 +179,6 @@ enum class AXProperty : uint16_t {
     InitialFrameRect,
     InnerHTML,
     InternalLinkElement,
-    IsGrabbed,
     IsARIAGridRow,
     IsARIATreeGridRow,
     IsAnonymousMathOperator,
@@ -168,15 +186,10 @@ enum class AXProperty : uint16_t {
     IsBusy,
     IsChecked,
     IsColumnHeader,
-    IsEnabled,
     IsExpanded,
     IsExposable,
-    IsExposedTableCell,
     IsFieldset,
-    IsIgnored,
     IsIndeterminate,
-    IsInlineText,
-    IsKeyboardFocusable,
     IsMathElement,
     IsMathFraction,
     IsMathFenced,
@@ -191,7 +204,6 @@ enum class AXProperty : uint16_t {
     IsMathMultiscript,
     IsMathToken,
     IsMultiSelectable,
-    IsNonLayerSVGObject,
     IsPlugin,
     IsPressed,
     IsRequired,
@@ -200,12 +212,10 @@ enum class AXProperty : uint16_t {
     IsSelected,
     IsSelectedOptionActive,
     IsTable,
-    IsTableRow,
     IsTree,
     IsTreeItem,
     IsValueAutofillAvailable,
     IsVisible,
-    IsVisited,
     IsWidget,
     KeyShortcuts,
     Language,
@@ -260,18 +270,12 @@ enum class AXProperty : uint16_t {
     SpeakAs,
     StringValue,
     SubrolePlatformString,
-    SupportsDragging,
     SupportsDropping,
     SupportsARIAOwns,
-    SupportsCheckedState,
     SupportsCurrent,
     SupportsDatetimeAttribute,
-    SupportsExpanded,
     SupportsExpandedTextValue,
     SupportsKeyShortcuts,
-    SupportsPath,
-    SupportsPosInSet,
-    SupportsSetSize,
     TextContentPrefixFromListMarker,
 #if !ENABLE(AX_THREAD_TEXT_APIS)
     // Rather than caching text content as property when ENABLE(AX_THREAD_TEXT_APIS), we should
@@ -401,7 +405,6 @@ public:
     static Ref<AXIsolatedTree> createEmpty(AXObjectCache&);
     constexpr bool isEmptyContentTree() const { return m_isEmptyContentTree; }
     virtual ~AXIsolatedTree();
-    bool willBeDestroyed();
 
     static void removeTreeForPageID(PageIdentifier);
 
@@ -498,14 +501,18 @@ public:
 
     // Relationships between objects.
     std::optional<ListHashSet<AXID>> relatedObjectIDsFor(const AXIsolatedObject&, AXRelation);
-    void relationsNeedUpdate(bool needUpdate) { m_relationsNeedUpdate = needUpdate; }
-    void updateRelations(const HashMap<AXID, AXRelations>&);
+    void markRelationsDirty() { m_relationsNeedUpdate = true; }
+    void updateRelations(HashMap<AXID, AXRelations>&&);
 
     AXCoreObject::AccessibilityChildrenVector sortedLiveRegions();
     AXCoreObject::AccessibilityChildrenVector sortedNonRootWebAreas();
 
+    void markMostRecentlyPaintedTextDirty() { m_mostRecentlyPaintedTextIsDirty = true; }
+    const HashMap<AXID, LineRange>& mostRecentlyPaintedText() const { return m_mostRecentlyPaintedText; }
+
     // Called on AX thread from WebAccessibilityObjectWrapper methods.
     WEBCORE_EXPORT void applyPendingChanges();
+    void applyPendingChangesUnlessQueuedForDestruction();
 
     constexpr AXID treeID() const { return m_id; }
     constexpr ProcessID processID() const { return m_processID; }
@@ -514,7 +521,7 @@ public:
     // Use only if the s_storeLock is already held like in findAXTree.
     WEBCORE_EXPORT OptionSet<ActivityState> lockedPageActivityState() const;
 
-    AXTextMarkerRange selectedTextMarkerRange();
+    AXTextMarkerRange selectedTextMarkerRange() { return m_selectedTextMarkerRange; }
     void setSelectedTextMarkerRange(AXTextMarkerRange&&);
 
     void sortedLiveRegionsDidChange(Vector<AXID>);
@@ -541,6 +548,8 @@ private:
     // We can't destroy the tree on the main-thread (by removing all `Ref`s to it)
     // because it could be being used by the secondary thread to service an AX request.
     void queueForDestruction();
+
+    void applyPendingChangesLocked() WTF_REQUIRES_LOCK(m_changeLogLock);
 
     static HashMap<PageIdentifier, Ref<AXIsolatedTree>>& treePageCache() WTF_REQUIRES_LOCK(s_storeLock);
 
@@ -577,11 +586,8 @@ private:
 
     void objectChangedIgnoredState(const AccessibilityObject&);
 
-    const ProcessID m_processID { legacyPresentingApplicationPID() };
     const WeakPtr<AXObjectCache> m_axObjectCache;
-    OptionSet<ActivityState> m_pageActivityState;
     RefPtr<AXGeometryManager> m_geometryManager;
-    bool m_isEmptyContentTree { false };
     // Reference to a temporary, empty content tree that this tree will replace. Used for updating the empty content tree while this is built.
     RefPtr<AXIsolatedTree> m_replacingTree;
     RefPtr<AccessibilityObject> m_rootOfSubtreeBeingUpdated;
@@ -618,8 +624,6 @@ private:
     // Only accessed on the main thread.
     // Objects whose parent has changed, and said change needs to be synced to the secondary thread.
     HashSet<AXID> m_needsParentUpdate;
-    // Only accessed on the main thread.
-    bool m_isCollectingNodeChanges { false };
 
     // Only accessed on AX thread.
     HashMap<AXID, Ref<AXIsolatedObject>> m_readerThreadNodeMap;
@@ -634,9 +638,17 @@ private:
     HashSet<AXID> m_pendingProtectedFromDeletionIDs WTF_GUARDED_BY_LOCK(m_changeLogLock);
     HashMap<AXID, AXID> m_pendingParentUpdates WTF_GUARDED_BY_LOCK(m_changeLogLock);
     Markable<AXID> m_pendingFocusedNodeID WTF_GUARDED_BY_LOCK(m_changeLogLock);
-    bool m_queuedForDestruction WTF_GUARDED_BY_LOCK(m_changeLogLock) { false };
     std::optional<Vector<AXID>> m_pendingSortedLiveRegionIDs WTF_GUARDED_BY_LOCK(m_changeLogLock);
+
+    // These three are placed here to fit in padding that would otherwise be between m_pendingSortedLiveRegionIDs and m_pendingSortedNonRootWebAreaIDs.
+    OptionSet<ActivityState> m_pageActivityState;
+    bool m_isEmptyContentTree { false };
+    bool m_queuedForDestruction WTF_GUARDED_BY_LOCK(m_changeLogLock) { false };
+
     std::optional<Vector<AXID>> m_pendingSortedNonRootWebAreaIDs WTF_GUARDED_BY_LOCK(m_changeLogLock);
+    std::optional<HashMap<AXID, LineRange>> m_pendingMostRecentlyPaintedText WTF_GUARDED_BY_LOCK(m_changeLogLock);
+    std::optional<HashMap<AXID, AXRelations>> m_pendingRelations WTF_GUARDED_BY_LOCK(m_changeLogLock);
+    std::optional<AXTextMarkerRange> m_pendingSelectedTextMarkerRange WTF_GUARDED_BY_LOCK(m_changeLogLock);
     Markable<AXID> m_focusedNodeID;
     std::atomic<double> m_loadingProgress { 0 };
     std::atomic<double> m_processingProgress { 1 };
@@ -644,14 +656,21 @@ private:
     // Only accessed on the accessibility thread.
     Vector<AXID> m_sortedLiveRegionIDs;
     Vector<AXID> m_sortedNonRootWebAreaIDs;
+    HashMap<AXID, LineRange> m_mostRecentlyPaintedText;
+    HashMap<AXID, AXRelations> m_relations;
 
-    // Relationships between objects.
-    HashMap<AXID, AXRelations> m_relations WTF_GUARDED_BY_LOCK(m_changeLogLock);
     // Set to true by the AXObjectCache and false by AXIsolatedTree.
+    // Both are only to be used on the main-thread.
     bool m_relationsNeedUpdate { true };
+    bool m_mostRecentlyPaintedTextIsDirty { true };
 
     Lock m_changeLogLock;
-    AXTextMarkerRange m_selectedTextMarkerRange WTF_GUARDED_BY_LOCK(m_changeLogLock);
+
+    // Only accessed on the main thread.
+    bool m_isCollectingNodeChanges;
+
+    AXTextMarkerRange m_selectedTextMarkerRange;
+    const ProcessID m_processID { legacyPresentingApplicationPID() };
 
     // Queued node updates used for building a new tree snapshot.
     ListHashSet<AXID> m_needsUpdateChildren;

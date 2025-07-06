@@ -563,7 +563,7 @@ void ServiceWorkerFetchTask::cancelPreloadIfNecessary()
     if (!m_preloader)
         return;
 
-    if (auto* session = this->session())
+    if (CheckedPtr session = this->session())
         session->removeNavigationPreloaderTask(*this);
 
     m_preloader->cancel();

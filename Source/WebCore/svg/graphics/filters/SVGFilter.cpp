@@ -291,7 +291,7 @@ void SVGFilter::mergeEffects(const FilterEffectVector& effects)
     ASSERT(m_effects.size() == effects.size());
 
     for (unsigned index = 0; index < m_effects.size(); ++index) {
-        if (m_effects[index].get() == effects[index].get())
+        if (arePointingToEqualData(m_effects[index], effects[index]))
             continue;
 
         clearEffectResult(m_effects[index]);

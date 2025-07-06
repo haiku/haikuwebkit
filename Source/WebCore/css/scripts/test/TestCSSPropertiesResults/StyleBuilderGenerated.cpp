@@ -254,7 +254,7 @@ public:
     }
     static void applyValueTestColor(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestColor(builderState.createStyleColor(value, ForVisitedLink::No));
+        builderState.style().setTestColor(BuilderConverter::convertStyleType<Color>(builderState, value, ForVisitedLink::No));
     }
     static void applyInitialTestColorAllowsTypesAbsolute(BuilderState& builderState)
     {
@@ -266,7 +266,7 @@ public:
     }
     static void applyValueTestColorAllowsTypesAbsolute(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestColorAllowsTypesAbsolute(builderState.createStyleColor(value, ForVisitedLink::No));
+        builderState.style().setTestColorAllowsTypesAbsolute(BuilderConverter::convertStyleType<Color>(builderState, value, ForVisitedLink::No));
     }
     static void applyInitialTestColorPropertyWithNoVisitedLinkSupport(BuilderState& builderState)
     {
@@ -278,7 +278,7 @@ public:
     }
     static void applyValueTestColorPropertyWithNoVisitedLinkSupport(BuilderState& builderState, CSSValue& value)
     {
-        builderState.style().setTestColorPropertyWithNoVisitedLinkSupport(builderState.createStyleColor(value, ForVisitedLink::No));
+        builderState.style().setTestColorPropertyWithNoVisitedLinkSupport(BuilderConverter::convertStyleType<Color>(builderState, value, ForVisitedLink::No));
     }
     static void applyInitialTestColorPropertyWithVisitedLinkSupport(BuilderState& builderState)
     {
@@ -297,9 +297,9 @@ public:
     static void applyValueTestColorPropertyWithVisitedLinkSupport(BuilderState& builderState, CSSValue& value)
     {
         if (builderState.applyPropertyToRegularStyle())
-            builderState.style().setTestColorPropertyWithVisitedLinkSupport(builderState.createStyleColor(fromCSSValueDeducingType(builderState, value), ForVisitedLink::No));
+            builderState.style().setTestColorPropertyWithVisitedLinkSupport(BuilderConverter::convertStyleType<Color>(builderState, fromCSSValueDeducingType(builderState, value), ForVisitedLink::No));
         if (builderState.applyPropertyToVisitedLinkStyle())
-            builderState.style().setVisitedLinkTestColorPropertyWithVisitedLinkSupport(builderState.createStyleColor(fromCSSValueDeducingType(builderState, value), ForVisitedLink::Yes));
+            builderState.style().setVisitedLinkTestColorPropertyWithVisitedLinkSupport(BuilderConverter::convertStyleType<Color>(builderState, fromCSSValueDeducingType(builderState, value), ForVisitedLink::Yes));
     }
     static void applyInitialTestCustomExtractor(BuilderState& builderState)
     {

@@ -76,12 +76,13 @@ void AccessibilityObject::overrideAttachmentParent(AccessibilityObject* parent)
 {
     if (!isAttachment())
         return;
-    
+
+    RefPtr axParent = parent;
     id parentWrapper = nil;
-    if (parent) {
-        if (parent->isIgnored())
-            parent = parent->parentObjectUnignored();
-        parentWrapper = parent->wrapper();
+    if (axParent) {
+        if (axParent->isIgnored())
+            axParent = axParent->parentObjectUnignored();
+        parentWrapper = axParent->wrapper();
     }
 
 ALLOW_DEPRECATED_DECLARATIONS_BEGIN
@@ -97,7 +98,7 @@ FloatRect AccessibilityObject::primaryScreenRect() const
 FloatRect AccessibilityObject::convertRectToPlatformSpace(const FloatRect& rect, AccessibilityConversionSpace space) const
 {
     // WebKit1 code path... platformWidget() exists.
-    auto* frameView = documentFrameView();
+    RefPtr frameView = documentFrameView();
     if (frameView && frameView->platformWidget()) {
         CGPoint point = CGPointMake(rect.x(), rect.y());
         CGSize size = CGSizeMake(rect.size().width(), rect.size().height());
@@ -157,7 +158,7 @@ AccessibilityObjectInclusion AccessibilityObject::accessibilityPlatformIncludesO
     if (RenderObject* renderer = this->renderer()) {
         // The legend element is ignored if it lives inside of a fieldset element that uses it to generate alternative text.
         if (renderer->isLegend()) {
-            Element* element = this->element();
+            RefPtr element = this->element();
             if (element && ancestorsOfType<HTMLFieldSetElement>(*element).first())
                 return AccessibilityObjectInclusion::IgnoreObject;
         }
@@ -168,13 +169,13 @@ AccessibilityObjectInclusion AccessibilityObject::accessibilityPlatformIncludesO
     
 bool AccessibilityObject::caretBrowsingEnabled() const
 {
-    auto* frame = this->frame();
+    RefPtr frame = this->frame();
     return frame && frame->settings().caretBrowsingEnabled();
 }
 
 void AccessibilityObject::setCaretBrowsingEnabled(bool on)
 {
-    auto* frame = this->frame();
+    RefPtr frame = this->frame();
     if (!frame)
         return;
     frame->settings().setCaretBrowsingEnabled(on);
@@ -421,14 +422,14 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 static void attributedStringSetCompositionAttributes(NSMutableAttributedString *attrString, Node& node, const SimpleRange& textSimpleRange)
 {
 #if HAVE(INLINE_PREDICTIONS)
-    auto& editor = node.document().editor();
-    if (&node != editor.compositionNode())
+    Ref editor = node.document().editor();
+    if (&node != editor->compositionNode())
         return;
 
     auto scope = makeRangeSelectingNodeContents(node);
     auto textRange = characterRange(scope, textSimpleRange);
 
-    auto& annotations = editor.customCompositionAnnotations();
+    auto& annotations = editor->customCompositionAnnotations();
     if (auto it = annotations.find(NSTextCompletionAttributeName); it != annotations.end()) {
         for (auto& annotationRange : it->value) {
             auto intersectionRange = NSIntersectionRange(textRange, annotationRange);
@@ -511,7 +512,7 @@ RetainPtr<NSAttributedString> attributedStringCreate(Node& node, StringView text
 
 Vector<uint8_t> AXRemoteFrame::generateRemoteToken() const
 {
-    if (auto* parent = parentObject()) {
+    if (RefPtr parent = parentObject()) {
         // We use the parent's wrapper so that the remote frame acts as a pass through for the remote token bridge.
         return makeVector([NSAccessibilityRemoteUIElement remoteTokenForLocalUIElement:parent->wrapper()]);
     }

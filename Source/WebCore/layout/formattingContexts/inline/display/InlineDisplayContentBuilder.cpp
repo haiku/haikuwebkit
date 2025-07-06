@@ -603,7 +603,7 @@ struct IsFirstLastIndex {
     std::optional<size_t> first;
     std::optional<size_t> last;
 };
-using IsFirstLastIndexesMap = UncheckedKeyHashMap<const Box*, IsFirstLastIndex>;
+using IsFirstLastIndexesMap = HashMap<const Box*, IsFirstLastIndex>;
 void InlineDisplayContentBuilder::adjustVisualGeometryForDisplayBox(size_t displayBoxNodeIndex, InlineLayoutUnit& contentLineRightEdge, InlineLayoutUnit lineBoxLogicalTop, const DisplayBoxTree& displayBoxTree, InlineDisplay::Boxes& boxes, const IsFirstLastIndexesMap& isFirstLastIndexesMap)
 {
     auto rootWritingMode = root().writingMode();
@@ -1168,7 +1168,7 @@ void InlineDisplayContentBuilder::processRubyContent(InlineDisplay::Boxes& displ
     if (!m_hasSeenRubyBase)
         return;
 
-    UncheckedKeyHashSet<CheckedPtr<const Box>> lineSpanningRubyBaseList;
+    HashSet<CheckedPtr<const Box>> lineSpanningRubyBaseList;
     for (auto& lineRun : lineLayoutResult.inlineContent) {
         if (lineRun.isLineSpanningInlineBoxStart() && lineRun.layoutBox().isRubyBase())
             lineSpanningRubyBaseList.add(&lineRun.layoutBox());

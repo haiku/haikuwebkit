@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,7 +31,7 @@
 #include "CSSPlatformColorResolutionState.h"
 #include "CSSPrimitiveNumericTypes+EvaluateCalc.h"
 #include "CSSRelativeColorResolver.h"
-#include "CSSRelativeColorSerialization.h"
+#include "ColorSerialization.h"
 #include <wtf/Forward.h>
 
 namespace WebCore {
@@ -100,7 +101,30 @@ bool containsCurrentColor(const RelativeColor<Descriptor>& unresolved)
 template<typename D> struct Serialize<RelativeColor<D>> {
     void operator()(StringBuilder& builder, const SerializationContext& context, const RelativeColor<D>& value)
     {
-        serializationForCSSRelativeColor(builder, context, value);
+        if constexpr (D::usesColorFunctionForSerialization) {
+            builder.append("color(from "_s);
+            serializationForCSS(builder, context, value.origin);
+            builder.append(' ', serialization(ColorSpaceFor<typename D::ColorType>));
+        } else {
+            builder.append(D::serializationFunctionName, "(from "_s);
+            serializationForCSS(builder, context, value.origin);
+        }
+
+        auto [c1, c2, c3, alpha] = value.components;
+
+        builder.append(' ');
+        serializationForCSS(builder, context, c1);
+        builder.append(' ');
+        serializationForCSS(builder, context, c2);
+        builder.append(' ');
+        serializationForCSS(builder, context, c3);
+
+        if (alpha) {
+            builder.append(" / "_s);
+            serializationForCSS(builder, context, *alpha);
+        }
+
+        builder.append(')');
     }
 };
 

@@ -1735,7 +1735,7 @@ void CodeBlock::finalizeJITInlineCaches()
 
     forEachStructureStubInfo([&](StructureStubInfo& stubInfo) {
         ConcurrentJSLockerBase locker(NoLockingNecessary);
-        stubInfo.visitWeakReferences(locker, this);
+        stubInfo.visitWeak(locker, this);
         return IterationStatus::Continue;
     });
 }

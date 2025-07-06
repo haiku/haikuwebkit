@@ -903,7 +903,7 @@ void XMLHttpRequest::didFail(std::optional<ScriptExecutionContextIdentifier>, co
 
     bool wasAbortedByClient = false;
     if (auto* document = this->document()) {
-        if (auto* window = document->domWindow())
+        if (auto* window = document->window())
             wasAbortedByClient = window->isStopping();
     }
 

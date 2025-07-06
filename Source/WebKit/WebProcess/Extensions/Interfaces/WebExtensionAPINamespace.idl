@@ -32,6 +32,8 @@
 
     [MainWorldOnly, Dynamic] readonly attribute WebExtensionAPIAlarms alarms;
 
+    [MainWorldOnly, Dynamic, Conditional=WK_WEB_EXTENSIONS_BOOKMARKS] readonly attribute WebExtensionAPIBookmarks bookmarks;
+
     [MainWorldOnly, Dynamic] readonly attribute WebExtensionAPIAction browserAction;
 
     [MainWorldOnly, Dynamic] readonly attribute WebExtensionAPICookies cookies;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -60,11 +60,7 @@ std::optional<DestinationColorSpace> ShareableBitmapConfiguration::validateColor
     if (auto colorSpaceAsRGB = colorSpace->asRGB())
         return colorSpaceAsRGB;
 
-#if HAVE(CORE_GRAPHICS_EXTENDED_SRGB_COLOR_SPACE)
     return DestinationColorSpace::ExtendedSRGB();
-#else
-    return DestinationColorSpace::SRGB();
-#endif
 }
 
 CheckedUint32 ShareableBitmapConfiguration::calculateBitsPerComponent(const DestinationColorSpace& colorSpace)

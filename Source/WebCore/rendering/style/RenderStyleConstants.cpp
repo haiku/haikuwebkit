@@ -1101,9 +1101,9 @@ TextStream& operator<<(TextStream& ts, StyleDifference diff)
     case StyleDifference::Repaint: ts << "repaint"_s; break;
     case StyleDifference::RepaintIfText: ts << "repaint if text"_s; break;
     case StyleDifference::RepaintLayer: ts << "repaint layer"_s; break;
-    case StyleDifference::LayoutPositionedMovementOnly: ts << "layout positioned movement only"_s; break;
+    case StyleDifference::LayoutOutOfFlowMovementOnly: ts << "layout positioned movement only"_s; break;
     case StyleDifference::Overflow: ts << "overflow"_s; break;
-    case StyleDifference::OverflowAndPositionedMovement: ts << "overflow and positioned movement"_s; break;
+    case StyleDifference::OverflowAndOutOfFlowMovement: ts << "overflow and positioned movement"_s; break;
     case StyleDifference::Layout: ts << "layout"_s; break;
     case StyleDifference::NewStyle: ts << "new style"_s; break;
     }

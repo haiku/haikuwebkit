@@ -242,6 +242,10 @@ enum class TapHandlingResult : uint8_t;
 
 - (UIEdgeInsets)currentlyVisibleContentInsetsWithScale:(CGFloat)scaleFactor obscuredInsets:(UIEdgeInsets)obscuredInsets;
 
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+@property (nonatomic, readonly) BOOL _shouldHideTopScrollPocket;
+#endif
+
 @end
 
 _WKTapHandlingResult wkTapHandlingResult(WebKit::TapHandlingResult);

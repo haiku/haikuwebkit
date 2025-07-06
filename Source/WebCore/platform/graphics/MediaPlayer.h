@@ -76,7 +76,7 @@ typedef struct CF_BRIDGED_TYPE(id) __CVBuffer* CVPixelBufferRef;
 #endif
 
 namespace WTF {
-class MachSendRight;
+struct MachSendRightAnnotated;
 }
 
 namespace WebCore {
@@ -107,13 +107,14 @@ class MediaStreamPrivate;
 class NativeImage;
 class PlatformMediaResourceLoader;
 class PlatformTimeRanges;
+class SecurityOriginData;
 class SharedBuffer;
 class TextTrackRepresentation;
 class VideoFrame;
 class VideoTrackPrivate;
 
 struct GraphicsDeviceAdapter;
-class SecurityOriginData;
+struct HostingContext;
 struct VideoFrameMetadata;
 
 struct MediaEngineSupportParameters {
@@ -407,12 +408,12 @@ public:
     bool isVideoFullscreenStandby() const;
 #endif
 
-    using LayerHostingContextIDCallback = CompletionHandler<void(LayerHostingContextID)>;
-    void requestHostingContextID(LayerHostingContextIDCallback&&);
-    LayerHostingContextID hostingContextID() const;
+    using LayerHostingContextCallback = CompletionHandler<void(HostingContext)>;
+    void requestHostingContext(LayerHostingContextCallback&&);
+    HostingContext hostingContext() const;
     FloatSize videoLayerSize() const;
     void videoLayerSizeDidChange(const FloatSize&);
-    void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRight&&);
+    void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRightAnnotated&&);
 
 #if PLATFORM(IOS_FAMILY)
     NSArray *timedMetadata() const;

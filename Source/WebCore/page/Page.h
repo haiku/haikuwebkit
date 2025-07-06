@@ -29,6 +29,7 @@
 #include "FindOptions.h"
 #include "FrameLoaderTypes.h"
 #include "HistoryItem.h"
+#include "ImageTypes.h"
 #include "IntRectHash.h"
 #include "LoadSchedulingMode.h"
 #include "MediaSessionGroupIdentifier.h"
@@ -85,7 +86,7 @@ namespace WTF {
 class SchedulePair;
 class TextStream;
 struct SchedulePairHash;
-using SchedulePairHashSet = UncheckedKeyHashSet<RefPtr<SchedulePair>, SchedulePairHash>;
+using SchedulePairHashSet = HashSet<RefPtr<SchedulePair>, SchedulePairHash>;
 }
 
 namespace WebCore {
@@ -913,8 +914,8 @@ public:
     WEBCORE_EXPORT Color sampledPageTopColor() const;
 
     WEBCORE_EXPORT void updateFixedContainerEdges(OptionSet<BoxSideFlag>);
-    Color lastTopFixedContainerColor() const;
     const FixedContainerEdges& fixedContainerEdges() const { return m_fixedContainerEdgesAndElements.first; }
+    Element* lastFixedContainer(BoxSide) const;
 
 #if ENABLE(WEB_PAGE_SPATIAL_BACKDROP)
     WEBCORE_EXPORT std::optional<SpatialBackdropSource> spatialBackdropSource() const;
@@ -1223,7 +1224,7 @@ public:
     void willBeginScrolling();
     void didFinishScrolling();
 
-    const UncheckedKeyHashSet<WeakRef<LocalFrame>>& rootFrames() const { return m_rootFrames; }
+    const HashSet<WeakRef<LocalFrame>>& rootFrames() const { return m_rootFrames; }
     WEBCORE_EXPORT void addRootFrame(LocalFrame&);
     WEBCORE_EXPORT void removeRootFrame(LocalFrame&);
 
@@ -1343,6 +1344,12 @@ public:
     bool requiresUserGestureForAudioPlayback() const;
     bool requiresUserGestureForVideoPlayback() const;
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    Headroom displayEDRHeadroom() const { return m_displayEDRHeadroom; }
+    void updateDisplayEDRHeadroom();
+    void updateDisplayEDRSuppression();
+#endif
+
 private:
     explicit Page(PageConfiguration&&);
 
@@ -1445,7 +1452,7 @@ private:
     const UniqueRef<ProcessSyncClient> m_processSyncClient;
 
     const UniqueRef<BackForwardController> m_backForwardController;
-    UncheckedKeyHashSet<WeakRef<LocalFrame>> m_rootFrames;
+    HashSet<WeakRef<LocalFrame>> m_rootFrames;
     const UniqueRef<EditorClient> m_editorClient;
     Ref<Frame> m_mainFrame;
     String m_mainFrameURLFragment;
@@ -1772,7 +1779,12 @@ private:
     const UniqueRef<WritingToolsController> m_writingToolsController;
 #endif
 
-    UncheckedKeyHashSet<std::pair<URL, ScriptTelemetryCategory>> m_reportedScriptsWithTelemetry;
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    Headroom m_displayEDRHeadroom { Headroom::None };
+    bool m_suppressEDR { false };
+#endif
+
+    HashSet<std::pair<URL, ScriptTelemetryCategory>> m_reportedScriptsWithTelemetry;
 
     bool m_hasActiveNowPlayingSession { false };
     Timer m_activeNowPlayingSessionUpdateTimer;

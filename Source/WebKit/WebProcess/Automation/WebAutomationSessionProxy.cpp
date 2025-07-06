@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016-2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -215,7 +215,7 @@ static JSValueRef evaluateJavaScriptCallback(JSContextRef context, JSObjectRef f
     ASSERT(JSValueIsNumber(context, arguments[1]));
     ASSERT(JSValueIsObject(context, arguments[2]) || JSValueIsString(context, arguments[2]));
 
-    auto automationSessionProxy = WebProcess::singleton().automationSessionProxy();
+    RefPtr automationSessionProxy = WebProcess::singleton().automationSessionProxy();
     if (!automationSessionProxy)
         return JSValueMakeUndefined(context);
 

@@ -50,12 +50,12 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ScrollingTree);
 
-using OrphanScrollingNodeMap = UncheckedKeyHashMap<ScrollingNodeID, RefPtr<ScrollingTreeNode>>;
+using OrphanScrollingNodeMap = HashMap<ScrollingNodeID, RefPtr<ScrollingTreeNode>>;
 
 struct CommitTreeState {
     // unvisitedNodes starts with all nodes in the map; we remove nodes as we visit them. At the end, it's the unvisited nodes.
     // We can't use orphanNodes for this, because orphanNodes won't contain descendants of removed nodes.
-    UncheckedKeyHashSet<ScrollingNodeID> unvisitedNodes { };
+    HashSet<ScrollingNodeID> unvisitedNodes { };
     // Nodes with non-empty synchronousScrollingReasons.
     HashSet<ScrollingNodeID> synchronousScrollingNodes { };
     // orphanNodes keeps child nodes alive while we rebuild child lists.
@@ -63,7 +63,7 @@ struct CommitTreeState {
     // Hosted subtrees needing attaching to scrolling tree after main commit has finished
     Vector<std::pair<LayerHostingContextIdentifier, Vector<std::unique_ptr<ScrollingStateTree>>>> pendingSubtreesNeedingCommit { };
     // Nodes that are descendants of a frame hosting node.
-    UncheckedKeyHashSet<ScrollingNodeID> hostedScrollingNodes { };
+    HashSet<ScrollingNodeID> hostedScrollingNodes { };
     // This has a value when doing a commit for a hosted subtree.
     RefPtr<ScrollingTreeFrameHostingNode> frameHostingNode { };
     // Identifier for the frame associated with this commit.
@@ -491,7 +491,7 @@ bool ScrollingTree::updateTreeFromStateNodeRecursive(const ScrollingStateNode* s
         m_nodeMap.set(nodeID, node.get());
         {
             Locker locker { m_frameIDMapLock };
-            m_nodeMapPerFrame.ensure(state.frameId, [] { return UncheckedKeyHashSet<ScrollingNodeID> { }; }).iterator->value.add(node->scrollingNodeID());
+            m_nodeMapPerFrame.ensure(state.frameId, [] { return HashSet<ScrollingNodeID> { }; }).iterator->value.add(node->scrollingNodeID());
         }
         node->setFrameIdentifier(state.frameId);
     }
@@ -868,7 +868,7 @@ bool ScrollingTree::hasNodeWithActiveScrollAnimations()
     return !m_treeState.nodesWithActiveScrollAnimations.isEmpty();
 }
 
-UncheckedKeyHashSet<ScrollingNodeID> ScrollingTree::nodesWithActiveScrollAnimations()
+HashSet<ScrollingNodeID> ScrollingTree::nodesWithActiveScrollAnimations()
 {
     Locker locker { m_treeStateLock };
     return m_treeState.nodesWithActiveScrollAnimations;

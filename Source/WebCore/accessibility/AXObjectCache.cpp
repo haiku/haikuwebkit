@@ -228,6 +228,9 @@ std::atomic<bool> AXObjectCache::gForceDeferredSpellChecking = false;
 std::atomic<bool> AXObjectCache::gAccessibilityThreadTextApisEnabled = false;
 #endif
 std::atomic<bool> AXObjectCache::gForceInitialFrameCaching = false;
+#if PLATFORM(COCOA)
+std::atomic<bool> AXObjectCache::gAccessibilityDOMIdentifiersEnabled = false;
+#endif
 
 bool AXObjectCache::accessibilityEnhancedUserInterfaceEnabled()
 {
@@ -287,6 +290,10 @@ AXObjectCache::AXObjectCache(Page& page, Document* document)
 
 #if ENABLE(AX_THREAD_TEXT_APIS)
     gAccessibilityThreadTextApisEnabled = DeprecatedGlobalSettings::accessibilityThreadTextApisEnabled();
+#endif
+
+#if PLATFORM(COCOA)
+    initializeUserDefaultValues();
 #endif
 
     // If loading completed before the cache was created, loading progress will have been reset to zero.
@@ -2067,7 +2074,49 @@ void AXObjectCache::onStyleChange(Element& element, OptionSet<Style::Change> cha
 #endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 }
 
+HashMap<AXID, LineRange> AXObjectCache::mostRecentlyPaintedText()
+{
+    HashMap<AXID, LineRange> recentlyPaintedText;
+    for (auto renderTextToLineRange : m_mostRecentlyPaintedText) {
+        if (RefPtr axObject = getOrCreate(renderTextToLineRange.key))
+            recentlyPaintedText.add(axObject->objectID(), renderTextToLineRange.value);
+    }
+    return recentlyPaintedText;
+}
+
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+void AXObjectCache::onAccessibilityPaintStarted()
+{
+    m_mostRecentlyPaintedText.clear();
+}
+
+void AXObjectCache::onAccessibilityPaintFinished()
+{
+    RefPtr tree = AXIsolatedTree::treeForPageID(m_pageID);
+    if (!tree)
+        return;
+
+    for (auto iterator = m_mostRecentlyPaintedText.begin(); iterator != m_mostRecentlyPaintedText.end(); ++iterator) {
+        const auto& renderText = iterator->key;
+        // FIXME: Use InlineIteratorLogicalOrderTraversal instead. Otherwise we'll do the wrong thing for mixed direction
+        // content. We should do this at the same time AccessibilityRenderObject::textRuns switches to this function.
+        // Tracked by: https://bugs.webkit.org/show_bug.cgi?id=294632
+        if (auto textBox = InlineIterator::lineLeftmostTextBoxFor(renderText)) {
+            // The line index from TextBox::lineIndex is relative to the containing block, which count lines from
+            // other renderers. The LineRange struct we have built expects the start and end line indices to be
+            // relative to just this renderer, so normalize them by getting the first line index for this renderer.
+            size_t firstLineIndexForRenderer = textBox->lineIndex();
+            ASSERT(firstLineIndexForRenderer <= iterator->value.startLineIndex);
+            ASSERT(firstLineIndexForRenderer <= iterator->value.endLineIndex);
+            iterator->value.startLineIndex -= firstLineIndexForRenderer;
+            iterator->value.endLineIndex -= firstLineIndexForRenderer;
+        }
+    }
+
+    tree->markMostRecentlyPaintedTextDirty();
+    startUpdateTreeSnapshotTimer();
+}
+
 bool AXObjectCache::onFontChange(Element& element, const RenderStyle* oldStyle, const RenderStyle* newStyle)
 {
     if (!oldStyle || !newStyle)
@@ -3120,7 +3169,7 @@ void AXObjectCache::handleAttributeChange(Element* element, const QualifiedName&
     else if (attrName == aria_valueminAttr)
         postNotification(element, AXNotification::MinimumValueChanged);
     else if (attrName == aria_multilineAttr) {
-        if (auto* axObject = get(*element)) {
+        if (RefPtr axObject = get(*element)) {
             // The role of textarea and textfield objects is dependent on whether they can span multiple lines, so recompute it here.
             if (axObject->role() == AccessibilityRole::TextArea || axObject->role() == AccessibilityRole::TextField)
                 axObject->updateRole();
@@ -3241,8 +3290,8 @@ void AXObjectCache::dirtyIsolatedTreeRelations()
     AXTRACE("AXObjectCache::dirtyIsolatedTreeRelations"_s);
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    if (auto tree = AXIsolatedTree::treeForPageID(m_pageID))
-        tree->relationsNeedUpdate(true);
+    if (RefPtr tree = AXIsolatedTree::treeForPageID(m_pageID))
+        tree->markRelationsDirty();
     startUpdateTreeSnapshotTimer();
 #endif
 }
@@ -5144,6 +5193,28 @@ void AXObjectCache::onPaint(const Widget& widget, IntRect&& paintRect) const
     if (!m_pageID)
         return;
     m_geometryManager->cacheRect(m_widgetObjectMapping.getOptional(const_cast<Widget&>(widget)), WTFMove(paintRect));
+}
+
+void AXObjectCache::onPaint(const RenderText& renderText, size_t lineIndex)
+{
+    ASSERT(isMainThread());
+
+    if (!m_pageID)
+        return;
+
+    auto ensureResult = m_mostRecentlyPaintedText.ensure(renderText, [&] {
+        return LineRange(lineIndex, lineIndex);
+    });
+    if (!ensureResult.isNewEntry) {
+        auto iterator = ensureResult.iterator;
+        // The goal is for the LineRange we cache to store the first painted line, and last painted line.
+        // So check the |lineIndex| we were given and adjust the cached values if necessary.
+        if (iterator->value.startLineIndex > lineIndex)
+            iterator->value.startLineIndex = lineIndex;
+
+        if (iterator->value.endLineIndex < lineIndex)
+            iterator->value.endLineIndex = lineIndex;
+    }
 }
 #endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
 

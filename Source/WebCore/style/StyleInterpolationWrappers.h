@@ -127,7 +127,7 @@ private:
 // MARK: - Typed Wrappers
 
 template<typename StyleType>
-class StyleTypeWrapper final : public WrapperBase {
+class StyleTypeWrapper : public WrapperBase {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
 public:
     StyleTypeWrapper(CSSPropertyID property, const StyleType& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(StyleType&&))
@@ -137,30 +137,30 @@ public:
     {
     }
 
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
+    bool equals(const RenderStyle& from, const RenderStyle& to) const override
     {
-        if (&a == &b)
+        if (&from == &to)
             return true;
-        return this->value(a) == this->value(b);
+        return Style::equalsForBlending(this->value(from), this->value(to), from, to);
     }
 
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
+    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const override
     {
         return Style::canBlend(this->value(from), this->value(to), from, to);
     }
 
-    bool requiresInterpolationForAccumulativeIteration(const RenderStyle& from, const RenderStyle& to) const final
+    bool requiresInterpolationForAccumulativeIteration(const RenderStyle& from, const RenderStyle& to) const override
     {
         return Style::requiresInterpolationForAccumulativeIteration(this->value(from), this->value(to), from, to);
     }
 
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
+    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const override
     {
         (destination.*m_setter)(Style::blend(this->value(from), this->value(to), from, to, context));
     }
 
 #if !LOG_DISABLED
-    void log(const RenderStyle& from, const RenderStyle& to, const RenderStyle& destination, double progress) const final
+    void log(const RenderStyle& from, const RenderStyle& to, const RenderStyle& destination, double progress) const override
     {
         LOG_WITH_STREAM(Animations, stream << "  blending " << property() << " from " << this->value(from) << " to " << this->value(to) << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << this->value(destination));
     }
@@ -174,6 +174,44 @@ private:
 
     const StyleType& (RenderStyle::*m_getter)() const;
     void (RenderStyle::*m_setter)(StyleType&&);
+};
+
+template<typename T> class VisitedAffectedStyleTypeWrapper : public WrapperBase {
+    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
+public:
+    VisitedAffectedStyleTypeWrapper(CSSPropertyID property, const T& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(T&&), const T& (RenderStyle::*visitedGetter)() const, void (RenderStyle::*visitedSetter)(T&&))
+        : WrapperBase(property)
+        , m_wrapper(StyleTypeWrapper<T>(property, getter, setter))
+        , m_visitedWrapper(StyleTypeWrapper<T>(property, visitedGetter, visitedSetter))
+    {
+    }
+
+    bool equals(const RenderStyle& a, const RenderStyle& b) const override
+    {
+        return m_wrapper.equals(a, b) && m_visitedWrapper.equals(a, b);
+    }
+
+    bool requiresInterpolationForAccumulativeIteration(const RenderStyle& a, const RenderStyle& b) const override
+    {
+        return m_wrapper.requiresInterpolationForAccumulativeIteration(a, b) && m_visitedWrapper.requiresInterpolationForAccumulativeIteration(a, b);
+    }
+
+    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const override
+    {
+        m_wrapper.interpolate(destination, from, to, context);
+        m_visitedWrapper.interpolate(destination, from, to, context);
+    }
+
+#if !LOG_DISABLED
+    void log(const RenderStyle& from, const RenderStyle& to, const RenderStyle& destination, double progress) const override
+    {
+        m_wrapper.log(from, to, destination, progress);
+        m_visitedWrapper.log(from, to, destination, progress);
+    }
+#endif
+
+    StyleTypeWrapper<T> m_wrapper;
+    StyleTypeWrapper<T> m_visitedWrapper;
 };
 
 template<typename T>
@@ -1039,21 +1077,6 @@ public:
     }
 };
 
-template<typename T>
-class IndividualTransformWrapper final : public RefCountedWrapper<T> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    IndividualTransformWrapper(CSSPropertyID property, T* (RenderStyle::*getter)() const, void (RenderStyle::*setter)(RefPtr<T>&&))
-        : RefCountedWrapper<T>(property, getter, setter)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        return arePointingToEqualData(this->value(a), this->value(b));
-    }
-};
-
 class FilterWrapper final : public WrapperWithGetter<const FilterOperations&> {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
 public:
@@ -1264,52 +1287,6 @@ private:
     void (RenderStyle::*m_setter)(FixedVector<ShadowType>&&);
 };
 
-class StyleColorWrapper : public WrapperWithGetter<const Style::Color&> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    StyleColorWrapper(CSSPropertyID property, const Style::Color& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(Style::Color&&))
-        : WrapperWithGetter(property, getter)
-        , m_setter(setter)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const override
-    {
-        if (&a == &b)
-            return true;
-
-        auto& fromStyleColor = value(a);
-        auto& toStyleColor = value(b);
-
-        if (fromStyleColor.isCurrentColor() && toStyleColor.isCurrentColor())
-            return true;
-
-        if (fromStyleColor.isResolvedColor() && toStyleColor.isResolvedColor())
-            return fromStyleColor.resolvedColor() == toStyleColor.resolvedColor();
-
-        return a.colorResolvingCurrentColor(fromStyleColor) == b.colorResolvingCurrentColor(toStyleColor);
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const override
-    {
-        auto& fromStyleColor = value(from);
-        auto& toStyleColor = value(to);
-
-        // We don't animate on currentcolor-only transition.
-        // https://github.com/WebKit/WebKit/blob/main/LayoutTests/imported/w3c/web-platform-tests/css/css-transitions/currentcolor-animation-001.html#L27
-        if (fromStyleColor.isCurrentColor() && toStyleColor.isCurrentColor())
-            return;
-
-        auto fromColor = from.colorResolvingCurrentColor(fromStyleColor);
-        auto toColor = to.colorResolvingCurrentColor(toStyleColor);
-
-        (destination.*m_setter)(blendFunc(fromColor, toColor, context));
-    }
-
-private:
-    void (RenderStyle::*m_setter)(Style::Color&&);
-};
-
 class ColorWrapper final : public WrapperWithGetter<const WebCore::Color&> {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
 public:
@@ -1333,8 +1310,8 @@ class ScrollbarColorWrapper final : public WrapperBase {
 public:
     ScrollbarColorWrapper()
         : WrapperBase(CSSPropertyScrollbarColor)
-        , m_thumbWrapper(StyleColorWrapper(CSSPropertyScrollbarColor, &RenderStyle::scrollbarThumbColor, &RenderStyle::setScrollbarThumbColor))
-        , m_trackWrapper(StyleColorWrapper(CSSPropertyScrollbarColor, &RenderStyle::scrollbarTrackColor, &RenderStyle::setScrollbarTrackColor))
+        , m_thumbWrapper(StyleTypeWrapper<Color>(CSSPropertyScrollbarColor, &RenderStyle::scrollbarThumbColor, &RenderStyle::setScrollbarThumbColor))
+        , m_trackWrapper(StyleTypeWrapper<Color>(CSSPropertyScrollbarColor, &RenderStyle::scrollbarTrackColor, &RenderStyle::setScrollbarTrackColor))
     {
     }
 
@@ -1377,46 +1354,8 @@ public:
 #endif
 
 private:
-    StyleColorWrapper m_thumbWrapper;
-    StyleColorWrapper m_trackWrapper;
-};
-
-class VisitedAffectedStyleColorWrapper : public WrapperBase {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    VisitedAffectedStyleColorWrapper(CSSPropertyID property, const Style::Color& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(Style::Color&&), const Style::Color& (RenderStyle::*visitedGetter)() const, void (RenderStyle::*visitedSetter)(Style::Color&&))
-        : WrapperBase(property)
-        , m_wrapper(StyleColorWrapper(property, getter, setter))
-        , m_visitedWrapper(StyleColorWrapper(property, visitedGetter, visitedSetter))
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const override
-    {
-        return m_wrapper.equals(a, b) && m_visitedWrapper.equals(a, b);
-    }
-
-    bool requiresInterpolationForAccumulativeIteration(const RenderStyle&, const RenderStyle&) const final
-    {
-        return true;
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const override
-    {
-        m_wrapper.interpolate(destination, from, to, context);
-        m_visitedWrapper.interpolate(destination, from, to, context);
-    }
-
-#if !LOG_DISABLED
-    void log(const RenderStyle& from, const RenderStyle& to, const RenderStyle& destination, double progress) const final
-    {
-        m_wrapper.log(from, to, destination, progress);
-        m_visitedWrapper.log(from, to, destination, progress);
-    }
-#endif
-
-    StyleColorWrapper m_wrapper;
-    StyleColorWrapper m_visitedWrapper;
+    StyleTypeWrapper<Color> m_thumbWrapper;
+    StyleTypeWrapper<Color> m_trackWrapper;
 };
 
 class VisitedAffectedColorWrapper final : public WrapperBase {
@@ -1457,18 +1396,18 @@ public:
     ColorWrapper m_visitedWrapper;
 };
 
-class AccentColorWrapper final : public StyleColorWrapper {
+class AccentColorWrapper final : public StyleTypeWrapper<Color> {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
 public:
     AccentColorWrapper()
-        : StyleColorWrapper(CSSPropertyAccentColor, &RenderStyle::accentColor, &RenderStyle::setAccentColor)
+        : StyleTypeWrapper<Color>(CSSPropertyAccentColor, &RenderStyle::accentColor, &RenderStyle::setAccentColor)
     {
     }
 
     bool equals(const RenderStyle& a, const RenderStyle& b) const final
     {
         return a.hasAutoAccentColor() == b.hasAutoAccentColor()
-            && StyleColorWrapper::equals(a, b);
+            && StyleTypeWrapper<Color>::equals(a, b);
     }
 
     bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
@@ -1479,7 +1418,7 @@ public:
     void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
     {
         if (canInterpolate(from, to, context.compositeOperation)) {
-            StyleColorWrapper::interpolate(destination, from, to, context);
+            StyleTypeWrapper<Color>::interpolate(destination, from, to, context);
             return;
         }
 
@@ -1492,11 +1431,11 @@ public:
     }
 };
 
-class CaretColorWrapper final : public VisitedAffectedStyleColorWrapper {
+class CaretColorWrapper final : public VisitedAffectedStyleTypeWrapper<Color> {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
 public:
     CaretColorWrapper()
-        : VisitedAffectedStyleColorWrapper(CSSPropertyCaretColor, &RenderStyle::caretColor, &RenderStyle::setCaretColor, &RenderStyle::visitedLinkCaretColor, &RenderStyle::setVisitedLinkCaretColor)
+        : VisitedAffectedStyleTypeWrapper<Color>(CSSPropertyCaretColor, &RenderStyle::caretColor, &RenderStyle::setCaretColor, &RenderStyle::visitedLinkCaretColor, &RenderStyle::setVisitedLinkCaretColor)
     {
     }
 
@@ -1504,7 +1443,7 @@ public:
     {
         return a.hasAutoCaretColor() == b.hasAutoCaretColor()
             && a.hasVisitedLinkAutoCaretColor() == b.hasVisitedLinkAutoCaretColor()
-            && VisitedAffectedStyleColorWrapper::equals(a, b);
+            && VisitedAffectedStyleTypeWrapper<Color>::equals(a, b);
     }
 
     bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
@@ -1542,111 +1481,6 @@ private:
             return !from.hasVisitedLinkAutoCaretColor() && !to.hasVisitedLinkAutoCaretColor();
         return !from.hasAutoCaretColor() && !to.hasAutoCaretColor();
     }
-};
-
-class SVGPaintWrapper final : public WrapperBase {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    SVGPaintWrapper(CSSPropertyID property, SVGPaintType (RenderStyle::*paintTypeGetter)() const, const Style::Color& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(Style::Color&&))
-        : WrapperBase(property)
-        , m_paintTypeGetter(paintTypeGetter)
-        , m_getter(getter)
-        , m_setter(setter)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        if (&a == &b)
-            return true;
-
-        if ((a.*m_paintTypeGetter)() != (b.*m_paintTypeGetter)())
-            return false;
-
-        // We only support animations between SVGPaints that are pure Color values.
-        // For everything else we must return true for this method, otherwise
-        // we will try to animate between values forever.
-        if ((a.*m_paintTypeGetter)() == SVGPaintType::RGBColor) {
-            auto fromStyleColor = (a.*m_getter)();
-            auto toStyleColor = (b.*m_getter)();
-
-            // We don't animate when both are currentcolor
-            auto fromColor = a.colorResolvingCurrentColor(fromStyleColor);
-            auto toColor = b.colorResolvingCurrentColor(toStyleColor);
-
-            return (fromStyleColor.isCurrentColor() && toStyleColor.isCurrentColor()) || fromColor == toColor;
-        }
-        return true;
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        auto isValidPaintType = [](SVGPaintType paintType) {
-            return paintType == SVGPaintType::RGBColor || paintType == SVGPaintType::CurrentColor;
-        };
-
-        if (!isValidPaintType((from.*m_paintTypeGetter)()) || !isValidPaintType((to.*m_paintTypeGetter)()))
-            return;
-
-        auto fromStyleColor = (from.*m_getter)();
-        auto toStyleColor = (to.*m_getter)();
-
-        // We don't animate when both are currentcolor
-        if (fromStyleColor.isCurrentColor() && toStyleColor.isCurrentColor())
-            return;
-
-        auto fromColor = from.colorResolvingCurrentColor(fromStyleColor);
-        auto toColor = to.colorResolvingCurrentColor(toStyleColor);
-
-        (destination.*m_setter)(blendFunc(fromColor, toColor, context));
-    }
-
-#if !LOG_DISABLED
-    void log(const RenderStyle&, const RenderStyle&, const RenderStyle&, double progress) const final
-    {
-        // FIXME: better logging.
-        LOG_WITH_STREAM(Animations, stream << "  blending SVGPaint at " << TextStream::FormatNumberRespectingIntegers(progress));
-    }
-#endif
-
-private:
-    SVGPaintType (RenderStyle::*m_paintTypeGetter)() const;
-    const Style::Color& (RenderStyle::*m_getter)() const;
-    void (RenderStyle::*m_setter)(Style::Color&&);
-};
-
-class VisitedAffectedSVGPaintWrapper final : public WrapperBase {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    VisitedAffectedSVGPaintWrapper(CSSPropertyID property, SVGPaintType (RenderStyle::*paintTypeGetter)() const, const Style::Color& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(Style::Color&&), SVGPaintType (RenderStyle::*visitedPaintTypeGetter)() const, const Style::Color& (RenderStyle::*visitedGetter)() const, void (RenderStyle::*visitedSetter)(Style::Color&&))
-        : WrapperBase(property)
-        , m_wrapper(SVGPaintWrapper(property, paintTypeGetter, getter, setter))
-        , m_visitedWrapper(SVGPaintWrapper(property, visitedPaintTypeGetter, visitedGetter, visitedSetter))
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        return m_wrapper.equals(a, b) && m_visitedWrapper.equals(a, b);
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        m_wrapper.interpolate(destination, from, to, context);
-        m_visitedWrapper.interpolate(destination, from, to, context);
-    }
-
-#if !LOG_DISABLED
-    void log(const RenderStyle& from, const RenderStyle& to, const RenderStyle& destination, double progress) const final
-    {
-        m_wrapper.log(from, to, destination, progress);
-        m_visitedWrapper.log(from, to, destination, progress);
-    }
-#endif
-
-private:
-    SVGPaintWrapper m_wrapper;
-    SVGPaintWrapper m_visitedWrapper;
 };
 
 class FontWeightWrapper final : public Wrapper<FontSelectionValue> {
@@ -1935,30 +1769,6 @@ public:
         destination.setTextIndentLine(blendingStyle.textIndentLine());
         destination.setTextIndentType(blendingStyle.textIndentType());
         LengthWrapper::interpolate(destination, from, to, context);
-    }
-};
-
-class PerspectiveWrapper final : public FloatWrapper {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    PerspectiveWrapper()
-        : FloatWrapper(CSSPropertyPerspective, &RenderStyle::perspective, &RenderStyle::setPerspective, FloatWrapper::ValueRange::NonNegative)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation compositeOperation) const final
-    {
-        if (!from.hasPerspective() || !to.hasPerspective())
-            return false;
-        return FloatWrapper::canInterpolate(from, to, compositeOperation);
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        if (context.isDiscrete)
-            (destination.*m_setter)(context.progress ? value(to) : value(from));
-        else
-            FloatWrapper::interpolate(destination, from, to, context);
     }
 };
 

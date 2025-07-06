@@ -94,7 +94,6 @@ enum class SDKAlignedBehavior {
     SnapshotAfterScreenUpdates,
     SupportsDeviceOrientationAndMotionPermissionAPI,
     SupportsInitConstructors,
-    SupportsiOSAppsOnMacOS,
     TimerThreadSafetyChecks,
     UIScrollViewDoesNotApplyKeyboardInsetsUnconditionally,
     UnprefixedPlaysInlineAttribute,
@@ -182,26 +181,17 @@ namespace IOSApplication {
 
 WTF_EXPORT_PRIVATE bool isAmazon();
 WTF_EXPORT_PRIVATE bool isAppleWebApp();
-WTF_EXPORT_PRIVATE bool isCrunchyroll();
 WTF_EXPORT_PRIVATE bool isDataActivation();
-WTF_EXPORT_PRIVATE bool isDoubleDown();
 WTF_EXPORT_PRIVATE bool isDumpRenderTree();
-WTF_EXPORT_PRIVATE bool isESPNFantasySports();
 WTF_EXPORT_PRIVATE bool isEssentialSkeleton();
-WTF_EXPORT_PRIVATE bool isFIFACompanion();
 WTF_EXPORT_PRIVATE bool isFeedly();
 WTF_EXPORT_PRIVATE bool isHimalaya();
 WTF_EXPORT_PRIVATE bool isHoYoLAB();
-WTF_EXPORT_PRIVATE bool isJWLibrary();
 WTF_EXPORT_PRIVATE bool isMailCompositionService();
 WTF_EXPORT_PRIVATE bool isMiniBrowser();
 WTF_EXPORT_PRIVATE bool isMobileMail();
 WTF_EXPORT_PRIVATE bool isMobileSafari();
 WTF_EXPORT_PRIVATE bool isNews();
-WTF_EXPORT_PRIVATE bool isNoggin();
-WTF_EXPORT_PRIVATE bool isOKCupid();
-WTF_EXPORT_PRIVATE bool isPaperIO();
-WTF_EXPORT_PRIVATE bool isPocketCity();
 WTF_EXPORT_PRIVATE bool isSafariViewService();
 WTF_EXPORT_PRIVATE bool isStocks();
 WTF_EXPORT_PRIVATE bool isWebBookmarksD();

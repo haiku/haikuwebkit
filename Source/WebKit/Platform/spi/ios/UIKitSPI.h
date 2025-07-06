@@ -813,10 +813,7 @@ typedef NS_ENUM(NSInteger, UIWKGestureType) {
 - (UIPanGestureRecognizer *)gestureRecognizerForInteractiveTransition:(_UINavigationInteractiveTransitionBase *)interactiveTransition WithTarget:(id)target action:(SEL)action;
 @end
 
-@class BKSAnimationFenceHandle;
-
 @interface UIWindow ()
-+ (BKSAnimationFenceHandle *)_synchronizedDrawingFence;
 + (mach_port_t)_synchronizeDrawingAcrossProcesses;
 - (void)_setWindowResolution:(CGFloat)resolution displayIfChanged:(BOOL)displayIfChanged;
 - (uint32_t)_contextId;

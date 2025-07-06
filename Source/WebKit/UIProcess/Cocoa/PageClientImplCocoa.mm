@@ -28,7 +28,6 @@
 
 #import "APIUIClient.h"
 #import "RemoteLayerTreeTransaction.h"
-#import "WKTextAnimationType.h"
 #import "WKWebViewInternal.h"
 #import "WebFullScreenManagerProxy.h"
 #import "WebPageProxy.h"

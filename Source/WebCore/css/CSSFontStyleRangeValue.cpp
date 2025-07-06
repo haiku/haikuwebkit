@@ -44,10 +44,8 @@ String CSSFontStyleRangeValue::customCSSText(const CSS::SerializationContext& co
 
 bool CSSFontStyleRangeValue::equals(const CSSFontStyleRangeValue& other) const
 {
-    if (!obliqueValues)
-        return fontStyleValue.get() == other.fontStyleValue.get();
-    return fontStyleValue.get() == other.fontStyleValue.get()
-        && *obliqueValues == *other.obliqueValues;
+    return arePointingToEqualData(fontStyleValue, other.fontStyleValue)
+        && arePointingToEqualData(obliqueValues, other.obliqueValues);
 }
 
-}
+} // namespace WebCore

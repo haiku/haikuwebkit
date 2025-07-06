@@ -140,7 +140,7 @@ void CachedResourceMediaLoader::notifyFinished(CachedResource& resource, const N
 void CachedResourceMediaLoader::dataReceived(CachedResource& resource, const SharedBuffer&)
 {
     ASSERT(&resource == m_resource);
-    if (auto* data = resource.resourceBuffer())
+    if (RefPtr data = resource.resourceBuffer())
         m_parent.newDataStoredInSharedBuffer(*data);
 }
 
@@ -326,7 +326,7 @@ void WebCoreAVFResourceLoader::startLoading()
     m_isBlob = request.url().protocolIsBlob();
 #endif
 
-    if (auto* loader = parent->player()->cachedResourceLoader()) {
+    if (RefPtr loader = parent->player()->cachedResourceLoader()) {
         m_resourceMediaLoader = CachedResourceMediaLoader::create(*this, *loader, ResourceRequest(request));
         if (m_resourceMediaLoader)
             return;

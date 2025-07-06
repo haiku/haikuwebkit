@@ -948,6 +948,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     css/CSSValueList.h
     css/CSSVariableData.h
     css/CSSVariableReferenceValue.h
+    css/CSSWideKeyword.h
     css/ComputedStyleDependencies.h
     css/DeprecatedCSSOMCounter.h
     css/DeprecatedCSSOMPrimitiveValue.h
@@ -2187,6 +2188,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     platform/graphics/GraphicsStyle.h
     platform/graphics/GraphicsTypes.h
     platform/graphics/GraphicsTypesGL.h
+    platform/graphics/HostingContext.h
     platform/graphics/Icon.h
     platform/graphics/Image.h
     platform/graphics/ImageAdapter.h
@@ -2740,6 +2742,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/ResolvedScopedName.h
     style/ScopedName.h
     style/StyleChange.h
+    style/StyleCustomProperty.h
     style/StyleInterpolationClient.h
     style/StyleScope.h
     style/StyleScopeIdentifier.h
@@ -2781,6 +2784,7 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
 
     style/values/primitives/StylePosition.h
     style/values/primitives/StylePrimitiveNumeric.h
+    style/values/primitives/StylePrimitiveNumericAdaptors.h
     style/values/primitives/StylePrimitiveNumericConcepts.h
     style/values/primitives/StylePrimitiveNumericOrKeyword.h
     style/values/primitives/StylePrimitiveNumericTypes.h
@@ -2807,7 +2811,15 @@ set(WebCore_PRIVATE_FRAMEWORK_HEADERS
     style/values/sizing/StyleMinimumSize.h
     style/values/sizing/StylePreferredSize.h
 
+    style/values/svg/StyleSVGPaint.h
+
     style/values/text-decoration/StyleTextShadow.h
+
+    style/values/transforms/StylePerspective.h
+    style/values/transforms/StyleRotate.h
+    style/values/transforms/StyleScale.h
+    style/values/transforms/StyleTransformOperationWrapper.h
+    style/values/transforms/StyleTranslate.h
 
     style/values/StyleValueTypes.h
 

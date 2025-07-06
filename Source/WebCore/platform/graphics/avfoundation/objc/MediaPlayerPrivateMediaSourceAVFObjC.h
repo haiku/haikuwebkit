@@ -259,7 +259,7 @@ private:
     void notifyActiveSourceBuffersChanged() override;
 
     void setPresentationSize(const IntSize&) final;
-    void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRight&&) final;
+    void setVideoLayerSizeFenced(const FloatSize&, WTF::MachSendRightAnnotated&&) final;
 
     void updateDisplayLayer();
     RefPtr<VideoMediaSampleRenderer> layerOrVideoRenderer() const;

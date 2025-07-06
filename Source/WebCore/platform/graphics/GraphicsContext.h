@@ -239,6 +239,13 @@ public:
     virtual void setLineJoin(LineJoin) = 0;
     virtual void setMiterLimit(float) = 0;
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    virtual void setMaxEDRHeadroom(std::optional<float>) { }
+    virtual float maxPaintedEDRHeadroom() const { return 1; }
+    virtual bool hasPaintedClampedEDRHeadroom() const { return false; }
+    virtual void clearMaxPaintedEDRHeadroom() { }
+#endif
+
     // Images, Patterns, ControlParts, and Media
 
     IntSize compatibleImageBufferSize(const FloatSize&) const;

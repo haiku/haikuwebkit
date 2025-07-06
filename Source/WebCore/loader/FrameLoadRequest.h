@@ -83,8 +83,8 @@ public:
     bool isInitialFrameSrcLoad() const { return m_isInitialFrameSrcLoad; }
     void setIsInitialFrameSrcLoad(bool isInitialFrameSrcLoad) { m_isInitialFrameSrcLoad = isInitialFrameSrcLoad; }
 
-    bool isContentExtensionRedirect() const { return m_isContentExtensionRedirect; }
-    void setIsContentExtensionRedirect(bool isContentExtensionRedirect) { m_isContentExtensionRedirect = isContentExtensionRedirect; }
+    bool isContentRuleListRedirect() const { return m_isContentRuleListRedirect; }
+    void setIsContentRuleListRedirect(bool isContentRuleListRedirect) { m_isContentRuleListRedirect = isContentRuleListRedirect; }
 
     const String& clientRedirectSourceForHistory() const { return m_clientRedirectSourceForHistory; }
     void setClientRedirectSourceForHistory(String&& clientRedirectSourceForHistory) { m_clientRedirectSourceForHistory = WTFMove(clientRedirectSourceForHistory); }
@@ -146,7 +146,7 @@ private:
     InitiatedByMainFrame m_initiatedByMainFrame { InitiatedByMainFrame::Unknown };
     bool m_isRequestFromClientOrUserInput { false };
     bool m_isInitialFrameSrcLoad { false };
-    bool m_isContentExtensionRedirect { false };
+    bool m_isContentRuleListRedirect { false };
     std::optional<OptionSet<AdvancedPrivacyProtections>> m_advancedPrivacyProtections;
     NavigationHistoryBehavior m_navigationHistoryBehavior { NavigationHistoryBehavior::Auto };
     bool m_isFromNavigationAPI { false };

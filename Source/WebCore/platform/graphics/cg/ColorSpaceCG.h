@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -44,7 +44,6 @@ template<> struct CGColorSpaceMapping<ColorSpace::SRGB> {
     }
 };
 
-#if HAVE(CORE_GRAPHICS_ADOBE_RGB_1998_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef adobeRGB1998ColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::A98RGB> {
     static CGColorSpaceRef colorSpace()
@@ -52,11 +51,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::A98RGB> {
         return adobeRGB1998ColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::A98RGB> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_DISPLAY_P3_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef displayP3ColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::DisplayP3> {
     static CGColorSpaceRef colorSpace()
@@ -64,11 +59,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::DisplayP3> {
         return displayP3ColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::DisplayP3> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_EXTENDED_ADOBE_RGB_1998_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef extendedAdobeRGB1998ColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::ExtendedA98RGB> {
     static CGColorSpaceRef colorSpace()
@@ -76,11 +67,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::ExtendedA98RGB> {
         return extendedAdobeRGB1998ColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::ExtendedA98RGB> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_EXTENDED_DISPLAY_P3_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef extendedDisplayP3ColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::ExtendedDisplayP3> {
     static CGColorSpaceRef colorSpace()
@@ -88,11 +75,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::ExtendedDisplayP3> {
         return extendedDisplayP3ColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::ExtendedDisplayP3> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_EXTENDED_ITUR_2020_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef extendedITUR_2020ColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::ExtendedRec2020> {
     static CGColorSpaceRef colorSpace()
@@ -100,11 +83,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::ExtendedRec2020> {
         return extendedITUR_2020ColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::ExtendedRec2020> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_EXTENDED_LINEAR_SRGB_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef extendedLinearSRGBColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::ExtendedLinearSRGB> {
     static CGColorSpaceRef colorSpace()
@@ -112,11 +91,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::ExtendedLinearSRGB> {
         return extendedLinearSRGBColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::ExtendedLinearSRGB> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_EXTENDED_ROMMRGB_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef extendedROMMRGBColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::ExtendedProPhotoRGB> {
     static CGColorSpaceRef colorSpace()
@@ -124,11 +99,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::ExtendedProPhotoRGB> {
         return extendedROMMRGBColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::ExtendedProPhotoRGB> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_EXTENDED_SRGB_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef extendedSRGBColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::ExtendedSRGB> {
     static CGColorSpaceRef colorSpace()
@@ -136,11 +107,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::ExtendedSRGB> {
         return extendedSRGBColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::ExtendedSRGB> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_ITUR_2020_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef ITUR_2020ColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::Rec2020> {
     static CGColorSpaceRef colorSpace()
@@ -148,11 +115,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::Rec2020> {
         return ITUR_2020ColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::Rec2020> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_LINEAR_SRGB_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef linearSRGBColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::LinearSRGB> {
     static CGColorSpaceRef colorSpace()
@@ -160,11 +123,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::LinearSRGB> {
         return linearSRGBColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::LinearSRGB> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_ROMMRGB_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef ROMMRGBColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::ProPhotoRGB> {
     static CGColorSpaceRef colorSpace()
@@ -172,11 +131,7 @@ template<> struct CGColorSpaceMapping<ColorSpace::ProPhotoRGB> {
         return ROMMRGBColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::ProPhotoRGB> { };
-#endif
 
-#if HAVE(CORE_GRAPHICS_XYZ_D50_COLOR_SPACE)
 WEBCORE_EXPORT CGColorSpaceRef xyzD50ColorSpaceSingleton();
 template<> struct CGColorSpaceMapping<ColorSpace::XYZ_D50> {
     static CGColorSpaceRef colorSpace()
@@ -184,9 +139,6 @@ template<> struct CGColorSpaceMapping<ColorSpace::XYZ_D50> {
         return xyzD50ColorSpaceSingleton();
     }
 };
-#else
-template<> struct CGColorSpaceMapping<ColorSpace::XYZ_D50> { };
-#endif
 
 // FIXME: Add support for these once/if CoreGraphics adds support for them.
 template<> struct CGColorSpaceMapping<ColorSpace::HSL> { };

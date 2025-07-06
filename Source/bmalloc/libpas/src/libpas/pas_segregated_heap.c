@@ -209,6 +209,7 @@ void pas_segregated_heap_construct(pas_segregated_heap* segregated_heap,
     PAS_ASSERT(runtime_config->sharing_mode != pas_invalid_sharing_mode);
 
     segregated_heap->runtime_config = runtime_config;
+    segregated_heap->parent_heap = parent_heap;
     
     pas_compact_atomic_segregated_size_directory_ptr_store(
         &segregated_heap->basic_size_directory_and_head, NULL);

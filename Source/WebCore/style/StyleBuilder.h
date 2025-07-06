@@ -25,16 +25,19 @@
 
 #pragma once
 
-#include "CSSCustomPropertyValue.h"
 #include "PropertyCascade.h"
 #include "StyleBuilderState.h"
 #include <wtf/TZoneMalloc.h>
 
 namespace WebCore {
 
+class CSSCustomPropertyValue;
+enum class CSSWideKeyword : uint8_t;
 struct CSSRegisteredCustomProperty;
 
 namespace Style {
+
+class CustomProperty;
 
 class Builder {
     WTF_MAKE_TZONE_ALLOCATED(Builder);
@@ -51,7 +54,7 @@ public:
     void applyProperty(CSSPropertyID propertyID) { applyProperties(propertyID, propertyID); }
     void applyCustomProperty(const AtomString& name);
 
-    RefPtr<const CSSCustomPropertyValue> resolveCustomPropertyForContainerQueries(const CSSCustomPropertyValue&);
+    RefPtr<const CustomProperty> resolveCustomPropertyForContainerQueries(const CSSCustomPropertyValue&);
 
     BuilderState& state() { return m_state; }
 
@@ -69,10 +72,10 @@ private:
     void applyCascadeProperty(const PropertyCascade::Property&);
     void applyRollbackCascadeProperty(const PropertyCascade::Property&, SelectorChecker::LinkMatchMask);
     void applyProperty(CSSPropertyID, CSSValue&, SelectorChecker::LinkMatchMask, CascadeLevel);
-    void applyCustomPropertyValue(const CSSCustomPropertyValue&, ApplyValueType, const CSSRegisteredCustomProperty*);
+    void applyCustomProperty(const AtomString& name, Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>&&, SelectorChecker::LinkMatchMask, CascadeLevel);
 
     Ref<CSSValue> resolveVariableReferences(CSSPropertyID, CSSValue&);
-    RefPtr<CSSCustomPropertyValue> resolveCustomPropertyValue(CSSCustomPropertyValue&);
+    std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> resolveCustomPropertyValue(CSSCustomPropertyValue&);
 
     void applyPageSizeDescriptor(CSSValue&);
 

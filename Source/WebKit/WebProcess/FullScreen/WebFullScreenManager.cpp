@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Apple Inc. All rights reserved.
+ * Copyright (C) 2011-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -65,13 +65,18 @@ using namespace WebCore;
 
 using WebCore::FloatSize;
 
-static WebCore::IntRect screenRectOfContents(WebCore::Element* element)
+static WebCore::IntRect screenRectOfContents(WebCore::Element& element)
 {
-    ASSERT(element);
-    if (!element)
+    CheckedPtr renderer = element.renderer();
+    if (!renderer)
         return { };
 
-    return element->screenRect();
+    LayoutRect topLevelRect;
+    IntRect paintingRect = snappedIntRect(element.renderer()->paintingRootRect(topLevelRect));
+    if (paintingRect.isEmpty())
+        return { };
+
+    return element.document().view()->contentsToScreen(paintingRect);
 }
 
 Ref<WebFullScreenManager> WebFullScreenManager::create(WebPage& page)
@@ -281,7 +286,7 @@ void WebFullScreenManager::enterFullScreenForElement(Element& element, HTMLMedia
     }
 #endif
 
-    m_initialFrame = screenRectOfContents(m_element.get());
+    m_initialFrame = screenRectOfContents(element);
 
 #if ENABLE(VIDEO)
     updateMainVideoElement();
@@ -389,7 +394,7 @@ void WebFullScreenManager::willEnterFullScreen(Element& element, CompletionHandl
     m_page->hidePageBanners();
 #endif
     element.protectedDocument()->updateLayout();
-    m_finalFrame = screenRectOfContents(&element);
+    m_finalFrame = screenRectOfContents(element);
 
     m_page->sendWithAsyncReply(Messages::WebFullScreenManagerProxy::BeganEnterFullScreen(m_initialFrame, m_finalFrame), [this, protectedThis = Ref { *this }, mode, completionHandler = WTFMove(didEnterFullscreenCallback)] (bool success) mutable {
         if (!success && mode != WebCore::HTMLMediaElementEnums::VideoFullscreenModeInWindow) {
@@ -468,7 +473,7 @@ void WebFullScreenManager::willExitFullScreen(CompletionHandler<void()>&& comple
     setPIPStandbyElement(nullptr);
 #endif
 
-    m_finalFrame = screenRectOfContents(m_element.get());
+    m_finalFrame = screenRectOfContents(*m_element);
     if (!m_element->document().fullscreen().willExitFullscreen()) {
         close();
         return completionHandler();
@@ -489,7 +494,7 @@ static Vector<Ref<Element>> collectFullscreenElementsFromElement(Element* elemen
 
     while (element && element->document().fullscreen().fullscreenElement() == element) {
         fullscreenElements.append(*element);
-        auto parentDocument = element->document().parentDocument();
+        RefPtr parentDocument = element->document().parentDocument();
         element = parentDocument ? parentDocument->fullscreen().fullscreenElement() : nullptr;
     }
 

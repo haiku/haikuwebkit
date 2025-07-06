@@ -167,7 +167,7 @@ AccessibilityRole AccessibilityList::determineAccessibilityRoleWithCleanChildren
 
     for (const auto& child : children) {
         RefPtr node = child->node();
-        auto* axChild = dynamicDowncast<AccessibilityObject>(child.get());
+        RefPtr axChild = dynamicDowncast<AccessibilityObject>(child.get());
         if (axChild && axChild->ariaRoleAttribute() == AccessibilityRole::ListItem)
             listItemCount++;
         else if (child->role() == AccessibilityRole::ListItem) {

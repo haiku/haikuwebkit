@@ -117,6 +117,10 @@ public:
     void setNeedsDisplay(const WebCore::IntRect);
     void setNeedsDisplay();
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    bool setNeedsDisplayIfEDRHeadroomExceeds(float);
+#endif
+
     void setDelegatedContents(const PlatformCALayerRemoteDelegatedContents&);
 
     // Returns true if we need to encode the buffer.
@@ -208,6 +212,11 @@ protected:
     WebCore::RepaintRectList m_paintingRects;
 
     MonotonicTime m_lastDisplayTime;
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    float m_edrHeadroom { 1.0f };
+    bool m_hasPaintedClampedEDRHeadroom { false };
+#endif
 };
 
 // The subset of RemoteLayerBackingStore that gets serialized into the UI
@@ -227,7 +236,7 @@ public:
 
     bool isOpaque() const { return m_isOpaque; }
 
-    static RetainPtr<id> layerContentsBufferFromBackendHandle(ImageBufferBackendHandle&&, LayerContentsType);
+    static RetainPtr<id> layerContentsBufferFromBackendHandle(ImageBufferBackendHandle&&, LayerContentsType, bool isDelegatedDisplay);
 
     void dump(WTF::TextStream&) const;
 
@@ -254,6 +263,9 @@ private:
 
     bool m_isOpaque;
     RemoteLayerBackingStore::Type m_type;
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    float m_edrHeadroom;
+#endif
 };
 
 WTF::TextStream& operator<<(WTF::TextStream&, BackingStoreNeedsDisplayReason);

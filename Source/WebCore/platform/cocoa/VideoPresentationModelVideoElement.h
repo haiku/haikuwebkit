@@ -82,7 +82,7 @@ public:
     bool hasVideo() const final { return m_hasVideo; }
     bool isChildOfElementFullscreen() const final { return m_isChildOfElementFullscreen; }
 
-    WEBCORE_EXPORT void setVideoSizeFenced(const FloatSize&, WTF::MachSendRight&&);
+    WEBCORE_EXPORT void setVideoSizeFenced(const FloatSize&, WTF::MachSendRightAnnotated&&);
 
     WEBCORE_EXPORT void requestRouteSharingPolicyAndContextUID(CompletionHandler<void(RouteSharingPolicy, String)>&&) final;
     WEBCORE_EXPORT void setRequiresTextTrackRepresentation(bool) final;

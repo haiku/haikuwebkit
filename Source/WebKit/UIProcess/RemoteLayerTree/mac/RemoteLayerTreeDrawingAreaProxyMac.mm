@@ -448,7 +448,7 @@ void RemoteLayerTreeDrawingAreaProxyMac::sendCommitTransientZoom(double scale, F
         return;
 
     webPageProxy->callAfterNextPresentationUpdate([rootNodeID, webPageProxy]() {
-        if (auto* scrollingCoordinatorProxy = webPageProxy->scrollingCoordinatorProxy())
+        if (CheckedPtr scrollingCoordinatorProxy = webPageProxy->scrollingCoordinatorProxy())
             scrollingCoordinatorProxy->removeWheelEventTestCompletionDeferralForReason(rootNodeID, WheelEventTestMonitorDeferReason::CommittingTransientZoom);
     });
 

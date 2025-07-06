@@ -520,8 +520,12 @@ RetainPtr<NSMenuItem> WebContextMenuProxyMac::createShareMenuItem(ShareMenuItemT
         return nil;
 
     if (usePlaceholder) {
-        shareMenuItem = adoptNS([[NSMenuItem alloc] initWithTitle:[shareMenuItem title] action:@selector(performShare:) keyEquivalent:@""]);
-        [shareMenuItem setTarget:[WKMenuTarget sharedMenuTarget]];
+        RetainPtr placeholder = adoptNS([[NSMenuItem alloc] initWithTitle:[shareMenuItem title] action:@selector(performShare:) keyEquivalent:@""]);
+        [placeholder setTarget:[WKMenuTarget sharedMenuTarget]];
+#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
+        [placeholder _setActionImage:[shareMenuItem _actionImage]];
+#endif
+        shareMenuItem = WTFMove(placeholder);
     } else
         [shareMenuItem setRepresentedObject:sharingServicePicker.get()];
 

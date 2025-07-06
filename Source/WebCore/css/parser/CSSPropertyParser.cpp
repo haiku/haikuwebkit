@@ -61,9 +61,11 @@
 #include "CSSTransformListValue.h"
 #include "CSSVariableParser.h"
 #include "CSSVariableReferenceValue.h"
+#include "CSSWideKeyword.h"
 #include "ComputedStyleDependencies.h"
 #include "StyleBuilder.h"
 #include "StyleBuilderConverter.h"
+#include "StyleCustomProperty.h"
 #include "StylePropertyShorthand.h"
 #include "StylePropertyShorthandFunctions.h"
 #include "StyleRuleType.h"
@@ -78,7 +80,7 @@ namespace WebCore {
 // MARK: - Custom properties
 
 static std::pair<RefPtr<CSSValue>, CSSCustomPropertySyntax::Type> consumeCustomPropertyValueWithSyntax(CSSParserTokenRange&, CSS::PropertyParserState&, const CSSCustomPropertySyntax&);
-static RefPtr<CSSCustomPropertyValue> consumeTypedCustomPropertyValue(CSSParserTokenRange&, CSS::PropertyParserState&, const AtomString& name, const CSSCustomPropertySyntax&, Style::BuilderState&);
+static std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> consumeTypedCustomPropertyValue(CSSParserTokenRange&, CSS::PropertyParserState&, const AtomString& name, const CSSCustomPropertySyntax&, Style::BuilderState&);
 
 // MARK: - Root consumers
 
@@ -189,10 +191,10 @@ bool isCustomPropertyName(StringView propertyName)
 
 // MARK: - CSS-wide keyword value consumer
 
-static RefPtr<CSSPrimitiveValue> consumeCSSWideKeyword(CSSParserTokenRange& range)
+static RefPtr<CSSPrimitiveValue> consumeCSSWideKeywordValue(CSSParserTokenRange& range)
 {
-    CSSParserTokenRange rangeCopy = range;
-    CSSValueID valueID = rangeCopy.consumeIncludingWhitespace().id();
+    auto rangeCopy = range;
+    auto valueID = rangeCopy.consumeIncludingWhitespace().id();
     if (!rangeCopy.atEnd())
         return nullptr;
 
@@ -201,6 +203,21 @@ static RefPtr<CSSPrimitiveValue> consumeCSSWideKeyword(CSSParserTokenRange& rang
 
     range = rangeCopy;
     return CSSPrimitiveValue::create(valueID);
+}
+
+static std::optional<CSSWideKeyword> consumeCSSWideKeyword(CSSParserTokenRange& range)
+{
+    auto rangeCopy = range;
+    auto valueID = rangeCopy.consumeIncludingWhitespace().id();
+    if (!rangeCopy.atEnd())
+        return { };
+
+    auto keyword = parseCSSWideKeyword(valueID);
+    if (!keyword)
+        return { };
+
+    range = rangeCopy;
+    return keyword;
 }
 
 // MARK: - Parser entry points
@@ -273,7 +290,7 @@ RefPtr<CSSValue> CSSPropertyParser::parseStylePropertyLonghand(CSSPropertyID pro
     auto range = tokenizer.tokenRange();
     range.consumeWhitespace();
 
-    if (RefPtr value = consumeCSSWideKeyword(range))
+    if (RefPtr value = consumeCSSWideKeywordValue(range))
         return value;
 
     RefPtr value = CSSPropertyParsing::parseStylePropertyLonghand(range, property, state);
@@ -289,7 +306,7 @@ RefPtr<CSSValue> CSSPropertyParser::parseStylePropertyLonghand(CSSPropertyID pro
 
     range.consumeWhitespace();
 
-    if (RefPtr value = consumeCSSWideKeyword(range))
+    if (RefPtr value = consumeCSSWideKeywordValue(range))
         return value;
 
     auto state = CSS::PropertyParserState {
@@ -336,7 +353,7 @@ RefPtr<CSSValue> CSSPropertyParser::parseCounterStyleDescriptor(CSSPropertyID pr
 
 // MARK: - Custom properties
 
-RefPtr<CSSCustomPropertyValue> CSSPropertyParser::parseTypedCustomPropertyValue(const AtomString& name, const CSSCustomPropertySyntax& syntax, CSSParserTokenRange range, Style::BuilderState& builderState, const CSSParserContext& context)
+std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> CSSPropertyParser::parseTypedCustomPropertyValue(const AtomString& name, const CSSCustomPropertySyntax& syntax, CSSParserTokenRange range, Style::BuilderState& builderState, const CSSParserContext& context)
 {
     auto state = CSS::PropertyParserState {
         .context = context,
@@ -345,13 +362,13 @@ RefPtr<CSSCustomPropertyValue> CSSPropertyParser::parseTypedCustomPropertyValue(
         .important = IsImportant::No,
     };
 
-    RefPtr value = consumeTypedCustomPropertyValue(range, state, name, syntax, builderState);
+    auto value = consumeTypedCustomPropertyValue(range, state, name, syntax, builderState);
     if (!value || !range.atEnd())
-        return nullptr;
+        return { };
     return value;
 }
 
-RefPtr<CSSCustomPropertyValue> CSSPropertyParser::parseTypedCustomPropertyInitialValue(const AtomString& name, const CSSCustomPropertySyntax& syntax, CSSParserTokenRange range, Style::BuilderState& builderState, const CSSParserContext& context)
+RefPtr<const Style::CustomProperty> CSSPropertyParser::parseTypedCustomPropertyInitialValue(const AtomString& name, const CSSCustomPropertySyntax& syntax, CSSParserTokenRange range, Style::BuilderState& builderState, const CSSParserContext& context)
 {
     if (syntax.isUniversal())
         return CSSVariableParser::parseInitialValueForUniversalSyntax(name, range);
@@ -363,14 +380,18 @@ RefPtr<CSSCustomPropertyValue> CSSPropertyParser::parseTypedCustomPropertyInitia
         .important = IsImportant::No,
     };
 
-    RefPtr value = consumeTypedCustomPropertyValue(range, state, name, syntax, builderState);
+    auto value = consumeTypedCustomPropertyValue(range, state, name, syntax, builderState);
     if (!value || !range.atEnd())
-        return nullptr;
+        return { };
 
-    if (value->containsCSSWideKeyword())
-        return nullptr;
-
-    return value;
+    return WTF::switchOn(*value,
+        [](const Ref<const Style::CustomProperty>& resolved) -> RefPtr<const Style::CustomProperty> {
+            return resolved.copyRef();
+        },
+        [](const CSSWideKeyword&) -> RefPtr<const Style::CustomProperty> {
+            return nullptr;
+        }
+    );
 }
 
 ComputedStyleDependencies CSSPropertyParser::collectParsedCustomPropertyValueDependencies(const CSSCustomPropertySyntax& syntax, CSSParserTokenRange range, const CSSParserContext& context)
@@ -487,21 +508,21 @@ std::pair<RefPtr<CSSValue>, CSSCustomPropertySyntax::Type> consumeCustomProperty
     return { nullptr, CSSCustomPropertySyntax::Type::Unknown };
 }
 
-RefPtr<CSSCustomPropertyValue> consumeTypedCustomPropertyValue(CSSParserTokenRange& range, CSS::PropertyParserState& state, const AtomString& name, const CSSCustomPropertySyntax& syntax, Style::BuilderState& builderState)
+std::optional<Variant<Ref<const Style::CustomProperty>, CSSWideKeyword>> consumeTypedCustomPropertyValue(CSSParserTokenRange& range, CSS::PropertyParserState& state, const AtomString& name, const CSSCustomPropertySyntax& syntax, Style::BuilderState& builderState)
 {
     if (syntax.isUniversal())
-        return CSSCustomPropertyValue::createSyntaxAll(name, CSSVariableData::create(range.consumeAll()));
+        return { { Style::CustomProperty::createForVariableData(name, CSSVariableData::create(range.consumeAll())) } };
 
     range.consumeWhitespace();
 
-    if (RefPtr value = consumeCSSWideKeyword(range))
-        return CSSCustomPropertyValue::createWithID(name, value->valueID());
+    if (auto keyword = consumeCSSWideKeyword(range))
+        return { { *keyword } };
 
     auto [value, syntaxType] = consumeCustomPropertyValueWithSyntax(range, state, syntax);
     if (!value)
-        return nullptr;
+        return { };
 
-    auto resolveSyntaxValue = [&, syntaxType = syntaxType](const CSSValue& value) -> std::optional<CSSCustomPropertyValue::SyntaxValue> {
+    auto resolveSyntaxValue = [&, syntaxType = syntaxType](const CSSValue& value) -> std::optional<Style::CustomProperty::Value> {
         switch (syntaxType) {
         case CSSCustomPropertySyntax::Type::LengthPercentage:
         case CSSCustomPropertySyntax::Type::Length: {
@@ -511,28 +532,26 @@ RefPtr<CSSCustomPropertyValue> consumeTypedCustomPropertyValue(CSSParserTokenRan
         case CSSCustomPropertySyntax::Type::Integer:
         case CSSCustomPropertySyntax::Type::Number: {
             auto doubleValue = downcast<CSSPrimitiveValue>(value).resolveAsNumber(builderState.cssToLengthConversionData());
-            return { CSSCustomPropertyValue::NumericSyntaxValue { doubleValue, CSSUnitType::CSS_NUMBER } };
+            return { Style::CustomProperty::Numeric { doubleValue, CSSUnitType::CSS_NUMBER } };
         }
         case CSSCustomPropertySyntax::Type::Percentage: {
             auto doubleValue = downcast<CSSPrimitiveValue>(value).resolveAsPercentage(builderState.cssToLengthConversionData());
-            return { CSSCustomPropertyValue::NumericSyntaxValue { doubleValue, CSSUnitType::CSS_PERCENTAGE } };
+            return { Style::CustomProperty::Numeric { doubleValue, CSSUnitType::CSS_PERCENTAGE } };
         }
         case CSSCustomPropertySyntax::Type::Angle: {
             auto doubleValue = downcast<CSSPrimitiveValue>(value).resolveAsAngle(builderState.cssToLengthConversionData());
-            return { CSSCustomPropertyValue::NumericSyntaxValue { doubleValue, CSSUnitType::CSS_DEG } };
+            return { Style::CustomProperty::Numeric { doubleValue, CSSUnitType::CSS_DEG } };
         }
         case CSSCustomPropertySyntax::Type::Time: {
             auto doubleValue = downcast<CSSPrimitiveValue>(value).resolveAsTime(builderState.cssToLengthConversionData());
-            return { CSSCustomPropertyValue::NumericSyntaxValue { doubleValue, CSSUnitType::CSS_S } };
+            return { Style::CustomProperty::Numeric { doubleValue, CSSUnitType::CSS_S } };
         }
         case CSSCustomPropertySyntax::Type::Resolution: {
             auto doubleValue = downcast<CSSPrimitiveValue>(value).resolveAsResolution(builderState.cssToLengthConversionData());
-            return { CSSCustomPropertyValue::NumericSyntaxValue { doubleValue, CSSUnitType::CSS_DPPX } };
+            return { Style::CustomProperty::Numeric { doubleValue, CSSUnitType::CSS_DPPX } };
         }
-        case CSSCustomPropertySyntax::Type::Color: {
-            auto color = builderState.createStyleColor(value, Style::ForVisitedLink::No);
-            return { WTFMove(color) };
-        }
+        case CSSCustomPropertySyntax::Type::Color:
+            return { Style::toStyleFromCSSValue<Style::Color>(builderState, value, Style::ForVisitedLink::No) };
         case CSSCustomPropertySyntax::Type::Image: {
             auto styleImage = builderState.createStyleImage(value);
             if (!styleImage)
@@ -542,12 +561,12 @@ RefPtr<CSSCustomPropertyValue> consumeTypedCustomPropertyValue(CSSParserTokenRan
         case CSSCustomPropertySyntax::Type::URL:
             return { Style::toStyle(downcast<CSSURLValue>(value).url(), builderState) };
         case CSSCustomPropertySyntax::Type::CustomIdent:
-            return { downcast<CSSPrimitiveValue>(value).stringValue() };
+            return { CustomIdentifier { AtomString { downcast<CSSPrimitiveValue>(value).stringValue() } } };
         case CSSCustomPropertySyntax::Type::String:
-            return { serializeString(downcast<CSSPrimitiveValue>(value).stringValue()) };
+            return { downcast<CSSPrimitiveValue>(value).stringValue() };
         case CSSCustomPropertySyntax::Type::TransformFunction:
         case CSSCustomPropertySyntax::Type::TransformList:
-            return { CSSCustomPropertyValue::TransformSyntaxValue { Style::createTransformOperation(value, builderState.cssToLengthConversionData()) } };
+            return { Style::CustomProperty::Transform { Style::createTransformOperation(value, builderState.cssToLengthConversionData()) } };
         case CSSCustomPropertySyntax::Type::Unknown:
             return { };
         }
@@ -557,20 +576,21 @@ RefPtr<CSSCustomPropertyValue> consumeTypedCustomPropertyValue(CSSParserTokenRan
 
     if (is<CSSValueList>(value.get()) || is<CSSTransformListValue>(value.get())) {
         Ref valueList = downcast<CSSValueContainingVector>(value.releaseNonNull());
-        auto syntaxValueList = CSSCustomPropertyValue::SyntaxValueList { { }, valueList->separator() };
+        auto syntaxValueList = Style::CustomProperty::ValueList { { }, valueList->separator() };
         for (Ref listValue : valueList.get()) {
             auto syntaxValue = resolveSyntaxValue(listValue);
             if (!syntaxValue)
-                return nullptr;
+                return { };
             syntaxValueList.values.append(WTFMove(*syntaxValue));
         }
-        return CSSCustomPropertyValue::createForSyntaxValueList(name, WTFMove(syntaxValueList));
+        return { { Style::CustomProperty::createForValueList(name, WTFMove(syntaxValueList)) } };
     };
 
     auto syntaxValue = resolveSyntaxValue(*value);
     if (!syntaxValue)
-        return nullptr;
-    return CSSCustomPropertyValue::createForSyntaxValue(name, WTFMove(*syntaxValue));
+        return { };
+
+    return { { Style::CustomProperty::createForValue(name, WTFMove(*syntaxValue)) } };
 }
 
 // MARK: - Root consumers
@@ -589,7 +609,7 @@ bool consumeStyleProperty(CSSParserTokenRange& range, const CSSParserContext& co
 
     if (WebCore::isShorthand(property)) {
         auto rangeCopy = range;
-        if (RefPtr keywordValue = consumeCSSWideKeyword(rangeCopy)) {
+        if (RefPtr keywordValue = consumeCSSWideKeywordValue(rangeCopy)) {
             result.addPropertyForAllLonghandsOfCurrentShorthand(state, WTFMove(keywordValue));
             range = rangeCopy;
             return true;
@@ -606,7 +626,7 @@ bool consumeStyleProperty(CSSParserTokenRange& range, const CSSParserContext& co
         }
     } else {
         auto rangeCopy = range;
-        if (RefPtr keywordValue = consumeCSSWideKeyword(rangeCopy)) {
+        if (RefPtr keywordValue = consumeCSSWideKeywordValue(rangeCopy)) {
             result.addProperty(state, property, CSSPropertyInvalid, WTFMove(keywordValue), important);
             range = rangeCopy;
             return true;

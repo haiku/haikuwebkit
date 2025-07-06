@@ -777,6 +777,15 @@ TEST(WKWebExtensionAPIDeclarativeNetRequest, RedirectRule)
     };
 
     auto manager = Util::loadExtension(manifest, resources);
+    auto navigationDelegate = adoptNS([TestNavigationDelegate new]);
+    navigationDelegate.get().decidePolicyForNavigationAction = ^(WKNavigationAction *navigationAction, void (^decisionHandler)(WKNavigationActionPolicy)) {
+        decisionHandler(WKNavigationActionPolicyAllow);
+
+        if ([navigationAction.request.URL.absoluteString isEqual:redirectURL])
+            EXPECT_TRUE(navigationAction.isContentRuleListRedirect);
+    };
+
+    manager.get().defaultTab.webView.navigationDelegate = navigationDelegate.get();
 
     [manager.get().context setPermissionStatus:WKWebExtensionContextPermissionStatusGrantedExplicitly forURL:urlRequest.URL];
 

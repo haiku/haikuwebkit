@@ -123,8 +123,8 @@ std::optional<Variant<RefPtr<WindowProxy>, RefPtr<Element>, RefPtr<HTMLCollectio
 
     Ref element = *documentNamedItem(name);
     if (auto* iframe = dynamicDowncast<HTMLIFrameElement>(element.get()); iframe) [[unlikely]] {
-        if (RefPtr domWindow = iframe->contentWindow())
-            return Variant<RefPtr<WindowProxy>, RefPtr<Element>, RefPtr<HTMLCollection>> { WTFMove(domWindow) };
+        if (RefPtr window = iframe->contentWindow())
+            return Variant<RefPtr<WindowProxy>, RefPtr<Element>, RefPtr<HTMLCollection>> { WTFMove(window) };
     }
 
     return Variant<RefPtr<WindowProxy>, RefPtr<Element>, RefPtr<HTMLCollection>> { RefPtr<Element> { WTFMove(element) } };

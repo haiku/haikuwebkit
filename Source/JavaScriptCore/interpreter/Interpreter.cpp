@@ -451,58 +451,6 @@ bool Interpreter::isOpcode(Opcode opcode)
 }
 #endif // ASSERT_ENABLED
 
-class GetStackTraceFunctor {
-public:
-    GetStackTraceFunctor(VM& vm, JSCell* owner, Vector<StackFrame>& results, size_t framesToSkip, size_t frameCountInResults)
-        : m_vm(vm)
-        , m_owner(owner)
-        , m_results(results)
-        , m_framesToSkip(framesToSkip)
-        , m_frameCountInResults(frameCountInResults)
-    {
-    }
-
-    IterationStatus operator()(StackVisitor& visitor) const
-    {
-        if (m_framesToSkip > 0) {
-            m_framesToSkip--;
-            return IterationStatus::Continue;
-        }
-
-        if (visitor->isImplementationVisibilityPrivate())
-            return IterationStatus::Continue;
-
-        if (m_frameCountInResults < m_results.size()) {
-            if (visitor->isNativeCalleeFrame()) {
-                auto* nativeCallee = visitor->callee().asNativeCallee();
-                switch (nativeCallee->category()) {
-                case NativeCallee::Category::Wasm: {
-                    m_results[m_frameCountInResults++] = StackFrame(visitor->wasmFunctionIndexOrName());
-                    break;
-                }
-                case NativeCallee::Category::InlineCache: {
-                    break;
-                }
-                }
-            } else if (!!visitor->codeBlock() && !visitor->codeBlock()->unlinkedCodeBlock()->isBuiltinFunction())
-                m_results[m_frameCountInResults++] = StackFrame(m_vm, m_owner, visitor->callee().asCell(), visitor->codeBlock(), visitor->bytecodeIndex());
-            else
-                m_results[m_frameCountInResults++] = StackFrame(m_vm, m_owner, visitor->callee().asCell());
-            return IterationStatus::Continue;
-        }
-        return IterationStatus::Done;
-    }
-
-    size_t frameCountInResults() const { return m_frameCountInResults; }
-
-private:
-    VM& m_vm;
-    JSCell* m_owner;
-    Vector<StackFrame>& m_results;
-    mutable size_t m_framesToSkip;
-    mutable size_t m_frameCountInResults;
-};
-
 void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size_t framesToSkip, size_t maxStackSize, JSCell* caller, JSCell* ownerOfCallLinkInfo, CallLinkInfo* callLinkInfo)
 {
     AssertNoGC assertNoGC;
@@ -512,7 +460,6 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
         return;
 
     size_t skippedFrames = 0;
-    size_t visitedFrames = 0;
 
     auto isImplementationVisibilityPrivate = [&](CodeBlock* codeBlock) {
         if (auto* executable = codeBlock->ownerExecutable())
@@ -521,8 +468,10 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
     };
 
     // This is OK since we never cause GC inside it (see AssertNoGC).
-    Vector<std::tuple<CodeBlock*, BytecodeIndex>, 16> reconstructedFrames;
-    auto countFrame = [&](CodeBlock* codeBlock, BytecodeIndex bytecodeIndex) {
+    auto appendFrame = [&](CodeBlock* codeBlock, BytecodeIndex bytecodeIndex) {
+        if (results.size() >= maxStackSize)
+            return IterationStatus::Done;
+
         if (skippedFrames < framesToSkip) {
             skippedFrames++;
             return IterationStatus::Continue;
@@ -530,11 +479,8 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
         if (isImplementationVisibilityPrivate(codeBlock))
             return IterationStatus::Continue;
 
-        reconstructedFrames.append(std::tuple { codeBlock, bytecodeIndex });
-        if (++visitedFrames < maxStackSize)
-            return IterationStatus::Continue;
-
-        return IterationStatus::Done;
+        results.append(StackFrame(vm, owner, codeBlock, bytecodeIndex));
+        return IterationStatus::Continue;
     };
 
     if (!caller && ownerOfCallLinkInfo && callLinkInfo && callLinkInfo->isTailCall()) {
@@ -544,17 +490,20 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
             CodeOrigin codeOrigin = callLinkInfo->codeOrigin();
             if (codeOrigin.inlineCallFrame()) {
                 for (auto currentCodeOrigin = &codeOrigin; currentCodeOrigin && currentCodeOrigin->inlineCallFrame(); currentCodeOrigin = currentCodeOrigin->inlineCallFrame()->getCallerSkippingTailCalls()) {
-                    if (countFrame(baselineCodeBlockForInlineCallFrame(currentCodeOrigin->inlineCallFrame()), currentCodeOrigin->bytecodeIndex()) == IterationStatus::Done)
-                        break;
+                    if (appendFrame(baselineCodeBlockForInlineCallFrame(currentCodeOrigin->inlineCallFrame()), currentCodeOrigin->bytecodeIndex()) == IterationStatus::Done)
+                        return;
                 }
             } else
-                countFrame(codeBlock, codeOrigin.bytecodeIndex());
+                if (appendFrame(codeBlock, codeOrigin.bytecodeIndex())  == IterationStatus::Done)
+                    return;
         }
     }
 
-    size_t skippedFramesInReconstructedFrames = skippedFrames;
     bool foundCaller = !caller;
-    StackVisitor::visit(callFrame, vm, [&] (StackVisitor& visitor) -> IterationStatus {
+    StackVisitor::visit(callFrame, vm, [&] (StackVisitor& visitor) ALWAYS_INLINE_LAMBDA {
+        if (results.size() >= maxStackSize)
+            return IterationStatus::Done;
+
         if (skippedFrames < framesToSkip) {
             skippedFrames++;
             return IterationStatus::Continue;
@@ -570,22 +519,23 @@ void Interpreter::getStackTrace(JSCell* owner, Vector<StackFrame>& results, size
         if (visitor->isImplementationVisibilityPrivate())
             return IterationStatus::Continue;
 
-        if (++visitedFrames < maxStackSize)
-            return IterationStatus::Continue;
-
-        return IterationStatus::Done;
+        if (visitor->isNativeCalleeFrame()) {
+            auto* nativeCallee = visitor->callee().asNativeCallee();
+            switch (nativeCallee->category()) {
+            case NativeCallee::Category::Wasm: {
+                results.append(StackFrame(visitor->wasmFunctionIndexOrName()));
+                break;
+            }
+            case NativeCallee::Category::InlineCache: {
+                break;
+            }
+            }
+        } else if (!!visitor->codeBlock() && !visitor->codeBlock()->unlinkedCodeBlock()->isBuiltinFunction())
+            results.append(StackFrame(vm, owner, visitor->callee().asCell(), visitor->codeBlock(), visitor->bytecodeIndex()));
+        else
+            results.append(StackFrame(vm, owner, visitor->callee().asCell()));
+        return IterationStatus::Continue;
     });
-    if (!visitedFrames)
-        return;
-
-    results.grow(visitedFrames);
-    unsigned index = 0;
-    for (auto [codeBlock, bytecodeIndex] : reconstructedFrames)
-        results[index++] = StackFrame(vm, owner, codeBlock, bytecodeIndex);
-
-    GetStackTraceFunctor functor(vm, owner, results, skippedFrames - skippedFramesInReconstructedFrames, reconstructedFrames.size());
-    StackVisitor::visit(callFrame, vm, functor);
-    ASSERT(functor.frameCountInResults() == results.size());
 }
 
 String Interpreter::stackTraceAsString(VM& vm, const Vector<StackFrame>& stackTrace)
@@ -1438,15 +1388,11 @@ JSValue Interpreter::executeEval(EvalExecutable* eval, JSValue thisValue, JSScop
     ASSERT(&vm == &scope->vm());
     throwScope.assertNoException();
     ASSERT(!vm.isCollectorBusyOnCurrentThread());
-    RELEASE_ASSERT(vm.currentThreadIsHoldingAPILock());
+    ASSERT(vm.currentThreadIsHoldingAPILock());
 
     JSGlobalObject* globalObject = scope->globalObject();
-    VMEntryScope entryScope(vm, globalObject);
     if (!vm.isSafeToRecurseSoft()) [[unlikely]]
         return throwStackOverflowError(globalObject, throwScope);
-
-    if (vm.disallowVMEntryCount) [[unlikely]]
-        return checkVMEntryPermission();
 
     if (vm.traps().needHandling(VMTraps::NonDebuggerAsyncEvents)) [[unlikely]] {
         if (vm.hasExceptionsAfterHandlingTraps())
@@ -1600,7 +1546,7 @@ JSValue Interpreter::executeEval(EvalExecutable* eval, JSValue thisValue, JSScop
     }
     callee->setScope(vm, scope);
     EncodedJSValue result = vmEntryToJavaScriptWith0Arguments(entry, &vm, codeBlock, callee, thisValue);
-    callee->setScope(vm, globalObject->globalScope());
+    callee->setScope(vm, nullptr);
 #else
     RefPtr<JSC::JITCode> jitCode;
     ProtoCallFrame protoCallFrame;
@@ -1630,7 +1576,7 @@ JSValue Interpreter::executeEval(EvalExecutable* eval, JSValue thisValue, JSScop
     // We can replace the current scope for the subsequent run.
     callee->setScope(vm, scope);
     EncodedJSValue result = vmEntryToJavaScript(jitCode->addressForCall(), &vm, &protoCallFrame);
-    callee->setScope(vm, globalObject->globalScope());
+    callee->setScope(vm, nullptr);
 #endif
     ensureStillAliveHere(eval);
     ensureStillAliveHere(codeBlock);

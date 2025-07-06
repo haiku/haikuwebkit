@@ -139,18 +139,18 @@ static NSDictionary *attributesForAttributedStringConversion(bool useInterchange
 static FragmentAndResources createFragmentInternal(LocalFrame& frame, NSAttributedString *string, OptionSet<FragmentCreationOptions> fragmentCreationOptions)
 {
     FragmentAndResources result;
-    Document& document = *frame.document();
+    Ref document = *frame.document();
 
 #if PLATFORM(MAC)
-    auto* view = frame.view();
+    RefPtr view = frame.view();
     LocalDefaultSystemAppearance localAppearance(view ? view->useDarkAppearance() : false);
 #endif
 
     NSArray *subresources = nil;
     NSString *fragmentString = [string _htmlDocumentFragmentString:NSMakeRange(0, [string length]) documentAttributes:attributesForAttributedStringConversion(!fragmentCreationOptions.contains(FragmentCreationOptions::NoInterchangeNewlines)) subresources:&subresources];
 
-    auto fragment = DocumentFragment::create(document);
-    auto dummyBodyToForceInBodyInsertionMode = HTMLBodyElement::create(document);
+    Ref fragment = DocumentFragment::create(document.get());
+    Ref dummyBodyToForceInBodyInsertionMode = HTMLBodyElement::create(document.get());
     auto markup = fragmentCreationOptions.contains(FragmentCreationOptions::SanitizeMarkup) ? sanitizeMarkup(fragmentString) : String(fragmentString);
     fragment->parseHTML(markup, dummyBodyToForceInBodyInsertionMode, { });
 
@@ -304,8 +304,8 @@ static void replaceRichContentWithAttachments(LocalFrame& frame, DocumentFragmen
         urlToResourceMap.set(AtomString { subresource->url().string() }, subresource.copyRef());
 
     Vector<SerializedAttachmentData> serializedAttachmentData;
-    for (auto& attachment : descendantsOfType<HTMLAttachmentElement>(fragment)) {
-        auto resourceURL = HTMLAttachmentElement::archiveResourceURL(attachment.uniqueIdentifier());
+    for (Ref attachment : descendantsOfType<HTMLAttachmentElement>(fragment)) {
+        auto resourceURL = HTMLAttachmentElement::archiveResourceURL(attachment->uniqueIdentifier());
         auto resourceURLAtom = resourceURL.string().toExistingAtomString();
         if (resourceURLAtom.isNull())
             continue;
@@ -314,7 +314,7 @@ static void replaceRichContentWithAttachments(LocalFrame& frame, DocumentFragmen
             continue;
 
         auto& resource = resourceEntry->value;
-        serializedAttachmentData.append({ attachment.uniqueIdentifier(), resource->mimeType(), resource->data().makeContiguous() });
+        serializedAttachmentData.append({ attachment->uniqueIdentifier(), resource->mimeType(), resource->data().makeContiguous() });
     }
 
     if (!serializedAttachmentData.isEmpty())
@@ -322,8 +322,8 @@ static void replaceRichContentWithAttachments(LocalFrame& frame, DocumentFragmen
 
     Vector<Ref<Element>> elementsToRemove;
     Vector<AttachmentInsertionInfo> attachmentInsertionInfo;
-    for (auto& image : descendantsOfType<HTMLImageElement>(fragment)) {
-        auto resourceURLString = image.attributeWithoutSynchronization(HTMLNames::srcAttr);
+    for (Ref image : descendantsOfType<HTMLImageElement>(fragment)) {
+        auto resourceURLString = image->attributeWithoutSynchronization(HTMLNames::srcAttr);
         if (resourceURLString.isEmpty())
             continue;
 
@@ -331,19 +331,19 @@ static void replaceRichContentWithAttachments(LocalFrame& frame, DocumentFragmen
         if (resource == urlToResourceMap.end())
             continue;
 
-        String name = image.attributeWithoutSynchronization(HTMLNames::altAttr);
+        String name = image->attributeWithoutSynchronization(HTMLNames::altAttr);
         if (name.isEmpty())
             name = URL({ }, resourceURLString).lastPathComponent().toString();
         if (name.isEmpty())
             name = "media"_s;
 
-        attachmentInsertionInfo.append({ WTFMove(name), resource->value->mimeType(), resource->value->data().makeContiguous(), image });
+        attachmentInsertionInfo.append({ WTFMove(name), resource->value->mimeType(), resource->value->data().makeContiguous(), image.get() });
     }
 
-    for (auto& object : descendantsOfType<HTMLObjectElement>(fragment)) {
-        auto resourceURLString = object.attributeWithoutSynchronization(HTMLNames::dataAttr);
+    for (Ref object : descendantsOfType<HTMLObjectElement>(fragment)) {
+        auto resourceURLString = object->attributeWithoutSynchronization(HTMLNames::dataAttr);
         if (resourceURLString.isEmpty()) {
-            elementsToRemove.append(object);
+            elementsToRemove.append(object.get());
             continue;
         }
 
@@ -358,10 +358,10 @@ static void replaceRichContentWithAttachments(LocalFrame& frame, DocumentFragmen
         attachmentInsertionInfo.append({ WTFMove(name), resource->value->mimeType(), resource->value->data().makeContiguous(), object });
     }
 
-    for (auto& source : descendantsOfType<HTMLSourceElement>(fragment)) {
-        auto resourceURLString = source.attributeWithoutSynchronization(HTMLNames::srcsetAttr);
+    for (Ref source : descendantsOfType<HTMLSourceElement>(fragment)) {
+        auto resourceURLString = source->attributeWithoutSynchronization(HTMLNames::srcsetAttr);
         if (resourceURLString.isEmpty()) {
-            elementsToRemove.append(source);
+            elementsToRemove.append(source.get());
             continue;
         }
 
@@ -464,11 +464,14 @@ static void simplifyFragmentForSingleTextAttachment(NSAttributedString *string, 
 
 RefPtr<DocumentFragment> createFragment(LocalFrame& frame, NSAttributedString *string, OptionSet<FragmentCreationOptions> fragmentCreationOptions)
 {
-    if (!frame.page() || !frame.document())
+    if (!frame.page())
         return nullptr;
 
-    auto& document = *frame.document();
-    if (!document.isHTMLDocument() || !string)
+    RefPtr document = frame.document();
+    if (!document)
+        return nullptr;
+
+    if (!document->isHTMLDocument() || !string)
         return nullptr;
 
     DeferredLoadingScope scope(frame);
@@ -480,7 +483,7 @@ RefPtr<DocumentFragment> createFragment(LocalFrame& frame, NSAttributedString *s
         return fragmentAndResources.fragment;
 
     if (!DeprecatedGlobalSettings::customPasteboardDataEnabled()) {
-        if (DocumentLoader* loader = frame.loader().documentLoader()) {
+        if (RefPtr loader = frame.loader().documentLoader()) {
             for (auto& resource : fragmentAndResources.resources)
                 loader->addArchiveResource(resource.copyRef());
         }
@@ -495,8 +498,8 @@ RefPtr<DocumentFragment> createFragment(LocalFrame& frame, NSAttributedString *s
     UncheckedKeyHashMap<AtomString, AtomString> blobURLMap;
     for (auto& subresource : fragmentAndResources.resources) {
         Ref data = subresource->data();
-        auto blob = Blob::create(&document, data->copyData(), subresource->mimeType());
-        String blobURL = DOMURL::createObjectURL(document, blob);
+        Ref blob = Blob::create(document.get(), data->copyData(), subresource->mimeType());
+        String blobURL = DOMURL::createObjectURL(*document, blob);
         blobURLMap.set(AtomString { subresource->url().string() }, AtomString { blobURL });
     }
 

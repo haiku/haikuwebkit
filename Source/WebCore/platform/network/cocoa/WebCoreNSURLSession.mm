@@ -76,9 +76,7 @@ static NSDate * __nullable networkLoadMetricsDate(MonotonicTime time)
 @property (readonly, getter=isExpensive) BOOL expensive;
 @property (readonly, getter=isConstrained) BOOL constrained;
 @property (readonly, getter=isMultipath) BOOL multipath;
-#if HAVE(NETWORK_CONNECTION_PRIVACY_STANCE)
 @property (assign, readonly) nw_connection_privacy_stance_t _privacyStance;
-#endif
 @end
 
 @implementation WebCoreNSURLSessionTaskTransactionMetrics {
@@ -172,7 +170,6 @@ static NSDate * __nullable networkLoadMetricsDate(MonotonicTime time)
     return _metrics.isReusedConnection;
 }
 
-#if HAVE(NETWORK_CONNECTION_PRIVACY_STANCE)
 @dynamic _privacyStance;
 - (nw_connection_privacy_stance_t)_privacyStance
 {
@@ -200,7 +197,6 @@ static NSDate * __nullable networkLoadMetricsDate(MonotonicTime time)
     };
     return toConnectionPrivacyStance(_metrics.privacyStance);
 }
-#endif
 
 @dynamic cellular;
 - (BOOL)cellular

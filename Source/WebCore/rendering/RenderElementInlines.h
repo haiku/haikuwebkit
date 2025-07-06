@@ -218,7 +218,7 @@ inline LayoutUnit adjustLayoutUnitForAbsoluteZoom(LayoutUnit value, const Render
 
 inline Element* RenderElement::generatingElement() const
 {
-    return downcast<Element>(RenderObject::generatingNode());
+    return isPseudoElement() ? downcast<PseudoElement>(*element()).hostElement() : element();
 }
 
 } // namespace WebCore

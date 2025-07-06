@@ -1779,6 +1779,9 @@ private:
         case RegExpMatchFastGlobal:
             compileRegExpMatchFastGlobal();
             break;
+        case RegExpSearch:
+            compileRegExpSearch();
+            break;
         case NewRegExp:
             compileNewRegExp();
             break;
@@ -17706,6 +17709,25 @@ IGNORE_CLANG_WARNINGS_END
         LValue argument = lowString(m_node->child2());
         LValue result = vmCall(Int64, operationRegExpMatchFastGlobalString, globalObject, frozenPointer(m_node->cellOperand()), argument);
         setJSValue(result);
+    }
+
+    void compileRegExpSearch()
+    {
+        ASSERT(m_node->child2().useKind() == RegExpObjectUse);
+        LValue globalObject = lowCell(m_node->child1());
+        LValue base = lowRegExpObject(m_node->child2());
+        speculate(
+            ExoticObjectMode, noValue(), nullptr,
+            m_out.testNonZeroPtr(
+                m_out.loadPtr(base, m_heaps.RegExpObject_regExpAndFlags),
+                m_out.constIntPtr(RegExpObject::lastIndexIsNotWritableFlag)));
+        if (m_node->child3().useKind() == StringUse) {
+            LValue argument = lowString(m_node->child3());
+            setInt32(vmCall(Int32, operationRegExpSearchString, globalObject, base, argument));
+            return;
+        }
+        LValue argument = lowJSValue(m_node->child3());
+        setInt32(vmCall(Int32, operationRegExpSearch, globalObject, base, argument));
     }
 
     void compileRegExpTest()

@@ -166,8 +166,8 @@ bool AccessibilityTable::isDataTable() const
             return true;
 
         // If there's a colgroup or col element, it's probably a data table.
-        for (const auto& child : childrenOfType<HTMLElement>(*tableElement)) {
-            auto elementName = child.elementName();
+        for (const Ref child : childrenOfType<HTMLElement>(*tableElement)) {
+            auto elementName = child->elementName();
             if (elementName == ElementName::HTML_col || elementName == ElementName::HTML_colgroup)
                 return true;
         }
@@ -180,7 +180,7 @@ bool AccessibilityTable::isDataTable() const
     // If the author has used ARIA to specify a valid column or row count, assume they
     // want us to treat the table as a data table.
     auto ariaRowOrColCountIsSet = [this] (const QualifiedName& attribute) {
-        int result = getIntegralAttribute(attribute);
+        int result = integralAttribute(attribute);
         return result == -1 || result > 0;
     };
     if (ariaRowOrColCountIsSet(aria_colcountAttr) || ariaRowOrColCountIsSet(aria_rowcountAttr))
@@ -193,7 +193,7 @@ bool AccessibilityTable::isDataTable() const
         didTopSectionCheck = true;
 
         // If the top section has any non-group role, then don't make this a data table. The author probably wants to use the role on the section.
-        if (auto* axTableSection = cache->getOrCreate(*tableSectionElement)) {
+        if (RefPtr axTableSection = cache->getOrCreate(*tableSectionElement)) {
             auto role = axTableSection->role();
             if (!axTableSection->isGroup() && role != AccessibilityRole::Unknown && role != AccessibilityRole::Ignored)
                 return true;
@@ -257,7 +257,7 @@ bool AccessibilityTable::isDataTable() const
                 if (isDataTableBasedOnRowColumnCount())
                     return true;
 
-                if (tableRow->getIntegralAttribute(aria_rowindexAttr) >= 1 || tableRow->getIntegralAttribute(aria_colindexAttr) || hasRole(*tableRow, "row"_s))
+                if (tableRow->integralAttribute(aria_rowindexAttr) >= 1 || tableRow->integralAttribute(aria_colindexAttr) || hasRole(*tableRow, "row"_s))
                     return true;
 
                 // For the first 5 rows, cache the background color so we can check if this table has zebra-striped rows.
@@ -273,8 +273,8 @@ bool AccessibilityTable::isDataTable() const
                 bool isTHCell = cell->elementName() == ElementName::HTML_th;
                 if (!isTHCell && rowIsAllTableHeaderCells)
                     rowIsAllTableHeaderCells = false;
-                if (auto* parentNode = cell->parentNode()) {
-                    auto cellCountForRowIterator = cellCountForEachRow.ensure(parentNode, [&] {
+                if (RefPtr parentNode = cell->parentNode()) {
+                    auto cellCountForRowIterator = cellCountForEachRow.ensure(parentNode.get(), [&] {
                         // If we don't have an entry for this parent yet, it must be the first column.
                         if (!isTHCell && firstColumnHasAllHeaderCells)
                             firstColumnHasAllHeaderCells = false;
@@ -292,13 +292,13 @@ bool AccessibilityTable::isDataTable() const
 
                 // If the author has used ARIA to specify a valid column or row index, assume they want us
                 // to treat the table as a data table.
-                if (cell->getIntegralAttribute(aria_colindexAttr) >= 1 || cell->getIntegralAttribute(aria_rowindexAttr) >= 1)
+                if (cell->integralAttribute(aria_colindexAttr) >= 1 || cell->integralAttribute(aria_rowindexAttr) >= 1)
                     return true;
 
                 // If the author has used ARIA to specify a column or row span, we're supposed to ignore
                 // the value for the purposes of exposing the span. But assume they want us to treat the
                 // table as a data table.
-                if (cell->getIntegralAttribute(aria_colspanAttr) >= 1 || cell->getIntegralAttribute(aria_rowspanAttr) >= 1)
+                if (cell->integralAttribute(aria_colspanAttr) >= 1 || cell->integralAttribute(aria_rowspanAttr) >= 1)
                     return true;
 
                 const auto* cellStyle = styleFrom(*cell);
@@ -802,7 +802,7 @@ AccessibilityObject* AccessibilityTable::headerContainer()
     if (!cache)
         return nullptr;
 
-    auto* tableHeader = downcast<AccessibilityMockObject>(cache->create(AccessibilityRole::TableHeaderContainer));
+    RefPtr tableHeader = downcast<AccessibilityMockObject>(cache->create(AccessibilityRole::TableHeaderContainer));
     tableHeader->setParent(this);
 
     m_headerContainer = tableHeader;
@@ -831,8 +831,8 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityTable::rowHeaders()
     // Sometimes m_rows can be reset during the iteration, we cache it here to be safe.
     AccessibilityChildrenVector rowsCopy = m_rows;
     for (const auto& row : rowsCopy) {
-        if (auto* header = downcast<AccessibilityTableRow>(row.get()).rowHeader())
-            headers.append(*header);
+        if (RefPtr header = downcast<AccessibilityTableRow>(row.get()).rowHeader())
+            headers.append(header.releaseNonNull());
     }
     return headers;
 }
@@ -924,7 +924,7 @@ String AccessibilityTable::title() const
     
     String title;
     // Prefer the table caption if present.
-    if (auto* tableElement = dynamicDowncast<HTMLTableElement>(node())) {
+    if (RefPtr tableElement = dynamicDowncast<HTMLTableElement>(node())) {
         if (RefPtr caption = tableElement->caption())
             title = caption->innerText();
     }
@@ -937,7 +937,7 @@ String AccessibilityTable::title() const
 
 int AccessibilityTable::axColumnCount() const
 {
-    int colCountInt = getIntegralAttribute(aria_colcountAttr);
+    int colCountInt = integralAttribute(aria_colcountAttr);
     // The ARIA spec states, "Authors must set the value of aria-colcount to an integer equal to the
     // number of columns in the full table. If the total number of columns is unknown, authors must
     // set the value of aria-colcount to -1 to indicate that the value should not be calculated by
@@ -950,7 +950,7 @@ int AccessibilityTable::axColumnCount() const
 
 int AccessibilityTable::axRowCount() const
 {
-    int rowCountInt = getIntegralAttribute(aria_rowcountAttr);
+    int rowCountInt = integralAttribute(aria_rowcountAttr);
     // The ARIA spec states, "Authors must set the value of aria-rowcount to an integer equal to the
     // number of rows in the full table. If the total number of rows is unknown, authors must set
     // the value of aria-rowcount to -1 to indicate that the value should not be calculated by the

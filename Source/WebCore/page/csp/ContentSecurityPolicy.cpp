@@ -1223,12 +1223,12 @@ void ContentSecurityPolicy::inheritInsecureNavigationRequestsToUpgradeFromOpener
     m_insecureNavigationRequestsToUpgrade.add(other.m_insecureNavigationRequestsToUpgrade.begin(), other.m_insecureNavigationRequestsToUpgrade.end());
 }
 
-UncheckedKeyHashSet<SecurityOriginData> ContentSecurityPolicy::takeNavigationRequestsToUpgrade()
+HashSet<SecurityOriginData> ContentSecurityPolicy::takeNavigationRequestsToUpgrade()
 {
     return WTFMove(m_insecureNavigationRequestsToUpgrade);
 }
 
-void ContentSecurityPolicy::setInsecureNavigationRequestsToUpgrade(UncheckedKeyHashSet<SecurityOriginData>&& insecureNavigationRequests)
+void ContentSecurityPolicy::setInsecureNavigationRequestsToUpgrade(HashSet<SecurityOriginData>&& insecureNavigationRequests)
 {
     m_insecureNavigationRequestsToUpgrade = WTFMove(insecureNavigationRequests);
 }

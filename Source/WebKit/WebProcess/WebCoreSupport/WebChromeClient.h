@@ -568,6 +568,8 @@ private:
 
     void setNeedsFixedContainerEdgesUpdate() final;
 
+    bool usePluginRendererScrollableArea(WebCore::LocalFrame&) const final;
+
     mutable bool m_cachedMainFrameHasHorizontalScrollbar { false };
     mutable bool m_cachedMainFrameHasVerticalScrollbar { false };
 

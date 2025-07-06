@@ -87,6 +87,10 @@ inline ScrollPaddingEdge forwardInheritedValue(const ScrollPaddingEdge& value) {
 inline MarginEdge forwardInheritedValue(const MarginEdge& value) { auto copy = value; return copy; }
 inline PaddingEdge forwardInheritedValue(const PaddingEdge& value) { auto copy = value; return copy; }
 inline InsetEdge forwardInheritedValue(const InsetEdge& value) { auto copy = value; return copy; }
+inline Perspective forwardInheritedValue(const Perspective& value) { auto copy = value; return copy; }
+inline Rotate forwardInheritedValue(const Rotate& value) { auto copy = value; return copy; }
+inline Scale forwardInheritedValue(const Scale& value) { auto copy = value; return copy; }
+inline Translate forwardInheritedValue(const Translate& value) { auto copy = value; return copy; }
 inline PreferredSize forwardInheritedValue(const PreferredSize& value) { auto copy = value; return copy; }
 inline MinimumSize forwardInheritedValue(const MinimumSize& value) { auto copy = value; return copy; }
 inline MaximumSize forwardInheritedValue(const MaximumSize& value) { auto copy = value; return copy; }
@@ -97,6 +101,7 @@ inline OffsetAnchor forwardInheritedValue(const OffsetAnchor& value) { auto copy
 inline OffsetDistance forwardInheritedValue(const OffsetDistance& value) { auto copy = value; return copy; }
 inline OffsetPosition forwardInheritedValue(const OffsetPosition& value) { auto copy = value; return copy; }
 inline OffsetRotate forwardInheritedValue(const OffsetRotate& value) { auto copy = value; return copy; }
+inline SVGPaint forwardInheritedValue(const SVGPaint& value) { auto copy = value; return copy; }
 inline URL forwardInheritedValue(const URL& value) { auto copy = value; return copy; }
 inline ViewTransitionName forwardInheritedValue(const ViewTransitionName& value) { auto copy = value; return copy; }
 inline FixedVector<WebCore::Length> forwardInheritedValue(const FixedVector<WebCore::Length>& value) { auto copy = value; return copy; }
@@ -611,13 +616,13 @@ inline void BuilderCustom::applyValueCaretColor(BuilderState& builderState, CSSV
         if (value.valueID() == CSSValueAuto)
             builderState.style().setHasAutoCaretColor();
         else
-            builderState.style().setCaretColor(builderState.createStyleColor(value, ForVisitedLink::No));
+            builderState.style().setCaretColor(toStyleFromCSSValue<Color>(builderState, value, ForVisitedLink::No));
     }
     if (builderState.applyPropertyToVisitedLinkStyle()) {
         if (value.valueID() == CSSValueAuto)
             builderState.style().setHasVisitedLinkAutoCaretColor();
         else
-            builderState.style().setVisitedLinkCaretColor(builderState.createStyleColor(value, ForVisitedLink::Yes));
+            builderState.style().setVisitedLinkCaretColor(toStyleFromCSSValue<Color>(builderState, value, ForVisitedLink::Yes));
     }
 }
 
@@ -1223,88 +1228,62 @@ inline void BuilderCustom::applyValueCursor(BuilderState& builderState, CSSValue
     }
 }
 
-inline std::pair<Color, SVGPaintType> colorAndSVGPaintType(BuilderState& builderState, const CSSValue& localValue, Style::URL& url)
-{
-    if (RefPtr localURLValue = dynamicDowncast<CSSURLValue>(localValue)) {
-        url = Style::toStyle(localURLValue->url(), builderState);
-        return { Color::currentColor(), SVGPaintType::URI };
-    }
-    if (RefPtr localPrimitiveValue = dynamicDowncast<CSSPrimitiveValue>(localValue)) {
-        auto valueID = localPrimitiveValue->valueID();
-        if (valueID == CSSValueNone)
-            return { Color::currentColor(), url.isNone() ? SVGPaintType::None : SVGPaintType::URINone };
-        if (valueID == CSSValueCurrentcolor) {
-            builderState.style().setDisallowsFastPathInheritance();
-            return { Color::currentColor(), url.isNone() ? SVGPaintType::CurrentColor : SVGPaintType::URICurrentColor };
-        }
-    }
-
-    return { builderState.createStyleColor(localValue), url.isNone() ? SVGPaintType::RGBColor : SVGPaintType::URIRGBColor };
-}
-
 inline void BuilderCustom::applyInitialFill(BuilderState& builderState)
 {
     auto& svgStyle = builderState.style().accessSVGStyle();
-    svgStyle.setFillPaint(SVGRenderStyle::initialFillPaintType(), SVGRenderStyle::initialFillPaintColor(), SVGRenderStyle::initialFillPaintUri(), builderState.applyPropertyToRegularStyle(), builderState.applyPropertyToVisitedLinkStyle());
+    if (builderState.applyPropertyToRegularStyle())
+        svgStyle.setFill(SVGRenderStyle::initialFill());
+    if (builderState.applyPropertyToVisitedLinkStyle())
+        svgStyle.setVisitedLinkFill(SVGRenderStyle::initialFill());
 }
 
 inline void BuilderCustom::applyInheritFill(BuilderState& builderState)
 {
     auto& svgStyle = builderState.style().accessSVGStyle();
     auto& svgParentStyle = builderState.parentStyle().svgStyle();
-    svgStyle.setFillPaint(forwardInheritedValue(svgParentStyle.fillPaintType()), forwardInheritedValue(svgParentStyle.fillPaintColor()), forwardInheritedValue(svgParentStyle.fillPaintUri()), builderState.applyPropertyToRegularStyle(), builderState.applyPropertyToVisitedLinkStyle());
+
+    if (builderState.applyPropertyToRegularStyle())
+        svgStyle.setFill(forwardInheritedValue(svgParentStyle.fill()));
+    if (builderState.applyPropertyToVisitedLinkStyle())
+        svgStyle.setVisitedLinkFill(forwardInheritedValue(svgParentStyle.fill()));
 }
 
 inline void BuilderCustom::applyValueFill(BuilderState& builderState, CSSValue& value)
 {
     auto& svgStyle = builderState.style().accessSVGStyle();
-    RefPtr<const CSSValue> localValue;
-    auto url = Style::URL::none();
-
-    if (RefPtr list = dynamicDowncast<CSSValueList>(value)) {
-        auto urlValue = BuilderConverter::requiredDowncast<CSSURLValue>(builderState, *list->item(0));
-        if (!urlValue)
-            return;
-        url = Style::toStyle(urlValue->url(), builderState);
-        localValue = list->protectedItem(1);
-        if (!localValue)
-            return;
-    }
-    auto [color, paintType] = colorAndSVGPaintType(builderState, localValue ? *localValue : value, url);
-    svgStyle.setFillPaint(paintType, WTFMove(color), WTFMove(url), builderState.applyPropertyToRegularStyle(), builderState.applyPropertyToVisitedLinkStyle());
+    if (builderState.applyPropertyToRegularStyle())
+        svgStyle.setFill(BuilderConverter::convertStyleType<SVGPaint>(builderState, value, ForVisitedLink::No));
+    if (builderState.applyPropertyToVisitedLinkStyle())
+        svgStyle.setVisitedLinkFill(BuilderConverter::convertStyleType<SVGPaint>(builderState, value, ForVisitedLink::Yes));
 }
 
 inline void BuilderCustom::applyInitialStroke(BuilderState& builderState)
 {
-    SVGRenderStyle& svgStyle = builderState.style().accessSVGStyle();
-    svgStyle.setStrokePaint(SVGRenderStyle::initialStrokePaintType(), SVGRenderStyle::initialStrokePaintColor(), SVGRenderStyle::initialStrokePaintUri(), builderState.applyPropertyToRegularStyle(), builderState.applyPropertyToVisitedLinkStyle());
+    auto& svgStyle = builderState.style().accessSVGStyle();
+    if (builderState.applyPropertyToRegularStyle())
+        svgStyle.setStroke(SVGRenderStyle::initialStroke());
+    if (builderState.applyPropertyToVisitedLinkStyle())
+        svgStyle.setVisitedLinkStroke(SVGRenderStyle::initialStroke());
 }
 
 inline void BuilderCustom::applyInheritStroke(BuilderState& builderState)
 {
     auto& svgStyle = builderState.style().accessSVGStyle();
     auto& svgParentStyle = builderState.parentStyle().svgStyle();
-    svgStyle.setStrokePaint(forwardInheritedValue(svgParentStyle.strokePaintType()), forwardInheritedValue(svgParentStyle.strokePaintColor()), forwardInheritedValue(svgParentStyle.strokePaintUri()), builderState.applyPropertyToRegularStyle(), builderState.applyPropertyToVisitedLinkStyle());
+
+    if (builderState.applyPropertyToRegularStyle())
+        svgStyle.setStroke(forwardInheritedValue(svgParentStyle.stroke()));
+    if (builderState.applyPropertyToVisitedLinkStyle())
+        svgStyle.setVisitedLinkStroke(forwardInheritedValue(svgParentStyle.stroke()));
 }
 
 inline void BuilderCustom::applyValueStroke(BuilderState& builderState, CSSValue& value)
 {
     auto& svgStyle = builderState.style().accessSVGStyle();
-    RefPtr<const CSSValue> localValue;
-    auto url = Style::URL::none();
-
-    if (RefPtr list = dynamicDowncast<CSSValueList>(value)) {
-        auto urlValue = BuilderConverter::requiredDowncast<CSSURLValue>(builderState, *list->item(0));
-        if (!urlValue)
-            return;
-        url = Style::toStyle(urlValue->url(), builderState);
-        localValue = list->protectedItem(1);
-        if (!localValue)
-            return;
-    }
-
-    auto [color, paintType] = colorAndSVGPaintType(builderState, localValue ? *localValue : value, url);
-    svgStyle.setStrokePaint(paintType, WTFMove(color), WTFMove(url), builderState.applyPropertyToRegularStyle(), builderState.applyPropertyToVisitedLinkStyle());
+    if (builderState.applyPropertyToRegularStyle())
+        svgStyle.setStroke(BuilderConverter::convertStyleType<SVGPaint>(builderState, value, ForVisitedLink::No));
+    if (builderState.applyPropertyToVisitedLinkStyle())
+        svgStyle.setVisitedLinkStroke(BuilderConverter::convertStyleType<SVGPaint>(builderState, value, ForVisitedLink::Yes));
 }
 
 inline void BuilderCustom::applyInitialContent(BuilderState& builderState)
@@ -1748,9 +1727,9 @@ inline void BuilderCustom::applyValueStrokeWidth(BuilderState& builderState, CSS
 inline void BuilderCustom::applyValueStrokeColor(BuilderState& builderState, CSSValue& value)
 {
     if (builderState.applyPropertyToRegularStyle())
-        builderState.style().setStrokeColor(builderState.createStyleColor(value, ForVisitedLink::No));
+        builderState.style().setStrokeColor(toStyleFromCSSValue<Color>(builderState, value, ForVisitedLink::No));
     if (builderState.applyPropertyToVisitedLinkStyle())
-        builderState.style().setVisitedLinkStrokeColor(builderState.createStyleColor(value, ForVisitedLink::Yes));
+        builderState.style().setVisitedLinkStrokeColor(toStyleFromCSSValue<Color>(builderState, value, ForVisitedLink::Yes));
     builderState.style().setHasExplicitlySetStrokeColor(true);
 }
 
@@ -1758,11 +1737,11 @@ inline void BuilderCustom::applyValueStrokeColor(BuilderState& builderState, CSS
 inline void BuilderCustom::applyValueColor(BuilderState& builderState, CSSValue& value)
 {
     if (builderState.applyPropertyToRegularStyle()) {
-        auto color = builderState.createStyleColor(value, ForVisitedLink::No);
+        auto color = toStyleFromCSSValue<Color>(builderState, value, ForVisitedLink::No);
         builderState.style().setColor(color.resolveColor(builderState.parentStyle().color()));
     }
     if (builderState.applyPropertyToVisitedLinkStyle()) {
-        auto color = builderState.createStyleColor(value, ForVisitedLink::Yes);
+        auto color = toStyleFromCSSValue<Color>(builderState, value, ForVisitedLink::Yes);
         builderState.style().setVisitedLinkColor(color.resolveColor(builderState.parentStyle().visitedLinkColor()));
     }
 

@@ -386,7 +386,7 @@ static inline const ElementBox& nearestCommonAncestor(const Box& first, const Bo
     if (&firstParent != &rootBox && &secondParent != &rootBox && &firstParent.parent() == &secondParent.parent())
         return firstParent.parent();
 
-    UncheckedKeyHashSet<const ElementBox*> descendantsSet;
+    HashSet<const ElementBox*> descendantsSet;
     for (auto* descendant = &firstParent; descendant != &rootBox; descendant = &descendant->parent())
         descendantsSet.add(descendant);
     for (auto* descendant = &secondParent; descendant != &rootBox; descendant = &descendant->parent()) {

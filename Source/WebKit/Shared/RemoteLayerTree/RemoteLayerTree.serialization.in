@@ -102,6 +102,9 @@ header: "RemoteLayerBackingStore.h"
 [CustomEncoder, CustomHeader, LegacyPopulateFromEmptyConstructor, Nested] class WebKit::RemoteLayerBackingStoreProperties {
     bool m_isOpaque;
     WebKit::RemoteLayerBackingStore::Type m_type;
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    float m_edrHeadroom;
+#endif
     std::optional<WebKit::ImageBufferBackendHandle> m_bufferHandle;
     std::optional<WebKit::RemoteImageBufferSetIdentifier> m_bufferSet;
     std::optional<WebKit::BufferAndBackendInfo> m_frontBufferInfo;
@@ -188,6 +191,9 @@ headers: "LayerProperties.h" "PlatformCALayerRemote.h"
 
 [Nested] struct WebKit::RemoteLayerTreeTransaction::LayerCreationProperties::CustomData {
     uint32_t hostingContextID;
+#if ENABLE(MACH_PORT_LAYER_HOSTING)
+    std::optional<WTF::MachSendRightAnnotated> sendRightAnnotated;
+#endif
     float hostingDeviceScaleFactor;
     bool preservesFlip;
 };

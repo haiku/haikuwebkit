@@ -663,7 +663,7 @@ public:
     void didAddWidgetToRenderTree(Widget&);
     void willRemoveWidgetFromRenderTree(Widget&);
 
-    const UncheckedKeyHashSet<SingleThreadWeakRef<Widget>>& widgetsInRenderTree() const { return m_widgetsInRenderTree; }
+    const HashSet<SingleThreadWeakRef<Widget>>& widgetsInRenderTree() const { return m_widgetsInRenderTree; }
 
     void notifyAllFramesThatContentAreaWillPaint() const;
 
@@ -968,11 +968,11 @@ private:
     const Ref<LocalFrame> m_frame;
     LocalFrameViewLayoutContext m_layoutContext;
 
-    UncheckedKeyHashSet<SingleThreadWeakRef<Widget>> m_widgetsInRenderTree;
+    HashSet<SingleThreadWeakRef<Widget>> m_widgetsInRenderTree;
     std::unique_ptr<ListHashSet<SingleThreadWeakRef<RenderEmbeddedObject>>> m_embeddedObjectsToUpdate;
     std::unique_ptr<SingleThreadWeakHashSet<RenderElement>> m_slowRepaintObjects;
 
-    UncheckedKeyHashMap<ScrollingNodeID, WeakPtr<ScrollableArea>> m_scrollingNodeIDToPluginScrollableAreaMap;
+    HashMap<ScrollingNodeID, WeakPtr<ScrollableArea>> m_scrollingNodeIDToPluginScrollableAreaMap;
 
     RefPtr<ContainerNode> m_maintainScrollPositionAnchor;
     RefPtr<ContainerNode> m_scheduledMaintainScrollPositionAnchor;

@@ -36,6 +36,10 @@
 
 namespace WebCore {
 
+void AXObjectCache::initializeUserDefaultValues()
+{
+}
+
 void AXObjectCache::attachWrapper(AccessibilityObject& object)
 {
     RetainPtr<AccessibilityObjectWrapper> wrapper = adoptNS([[WebAccessibilityObjectWrapper alloc] initWithAccessibilityObject:object]);

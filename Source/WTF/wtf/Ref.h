@@ -327,8 +327,15 @@ inline RefPtr<match_constness_t<Source, Target>> dynamicDowncast(Ref<Source, Ptr
     return static_reference_cast<match_constness_t<Source, Target>>(WTFMove(source));
 }
 
+template<typename T, typename PtrTraits, typename RefDerefTraits>
+inline bool arePointingToEqualData(const Ref<T, PtrTraits, RefDerefTraits>& a, const Ref<T, PtrTraits, RefDerefTraits>& b)
+{
+    return a.ptr() == b.ptr() || a.get() == b.get();
+}
+
 } // namespace WTF
 
 using WTF::Ref;
 using WTF::adoptRef;
+using WTF::arePointingToEqualData;
 using WTF::static_reference_cast;

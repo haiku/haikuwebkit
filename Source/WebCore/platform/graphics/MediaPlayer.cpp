@@ -984,7 +984,7 @@ void MediaPlayer::videoLayerSizeDidChange(const FloatSize& size)
     client().mediaPlayerVideoLayerSizeDidChange(size);
 }
 
-void MediaPlayer::setVideoLayerSizeFenced(const FloatSize& size, WTF::MachSendRight&& fence)
+void MediaPlayer::setVideoLayerSizeFenced(const FloatSize& size, WTF::MachSendRightAnnotated&& fence)
 {
     m_private->setVideoLayerSizeFenced(size, WTFMove(fence));
 }
@@ -1342,14 +1342,14 @@ void MediaPlayer::setShouldMaintainAspectRatio(bool maintainAspectRatio)
     m_private->setShouldMaintainAspectRatio(maintainAspectRatio);
 }
 
-void MediaPlayer::requestHostingContextID(LayerHostingContextIDCallback&& callback)
+void MediaPlayer::requestHostingContext(LayerHostingContextCallback&& callback)
 {
-    return protectedPrivate()->requestHostingContextID(WTFMove(callback));
+    return protectedPrivate()->requestHostingContext(WTFMove(callback));
 }
 
-LayerHostingContextID MediaPlayer::hostingContextID() const
+HostingContext MediaPlayer::hostingContext() const
 {
-    return m_private->hostingContextID();
+    return m_private->hostingContext();
 }
 
 bool MediaPlayer::didPassCORSAccessCheck() const

@@ -43,6 +43,7 @@
 
 namespace WebCore {
 
+class Document;
 class GPUDisplayBufferDisplayDelegate;
 
 class GPUCanvasContextCocoa final : public GPUCanvasContext {
@@ -54,7 +55,7 @@ public:
     using CanvasType = Variant<RefPtr<HTMLCanvasElement>>;
 #endif
 
-    static std::unique_ptr<GPUCanvasContextCocoa> create(CanvasBase&, GPU&);
+    static std::unique_ptr<GPUCanvasContextCocoa> create(CanvasBase&, GPU&, Document*);
 
     DestinationColorSpace colorSpace() const override;
     bool compositingResultsNeedUpdating() const override { return m_compositingResultsNeedsUpdating; }
@@ -75,7 +76,7 @@ public:
     RefPtr<ImageBuffer> transferToImageBuffer() override;
 
 private:
-    explicit GPUCanvasContextCocoa(CanvasBase&, Ref<GPUCompositorIntegration>&&, Ref<GPUPresentationContext>&&);
+    explicit GPUCanvasContextCocoa(CanvasBase&, Ref<GPUCompositorIntegration>&&, Ref<GPUPresentationContext>&&, Document*);
 
     void markContextChangedAndNotifyCanvasObservers();
 
@@ -87,6 +88,7 @@ private:
     CanvasType htmlOrOffscreenCanvas() const;
     ExceptionOr<void> configure(GPUCanvasConfiguration&&, bool);
     void present(uint32_t frameIndex);
+    void updateContentsHeadroom(float);
 
     struct Configuration {
         Ref<GPUDevice> device;
@@ -108,6 +110,9 @@ private:
 
     GPUIntegerCoordinate m_width { 0 };
     GPUIntegerCoordinate m_height { 0 };
+    float m_contentsHeadroom { 0.f };
+    using ScreenPropertiesChangedObserver = Observer<void(PlatformDisplayID)>;
+    std::optional<ScreenPropertiesChangedObserver> m_screenPropertiesChangedObserver;
     bool m_compositingResultsNeedsUpdating { false };
 };
 

@@ -81,7 +81,7 @@ ExceptionOr<Ref<HTMLOptionElement>> HTMLOptionElement::createForLegacyFactoryFun
     }
 
     if (!value.isNull())
-        element->setValue(value);
+        element->setAttributeWithoutSynchronization(valueAttr, value);
     if (defaultSelected)
         element->setAttributeWithoutSynchronization(selectedAttr, emptyAtom());
     element->setSelected(selected);
@@ -216,12 +216,7 @@ String HTMLOptionElement::value() const
     const AtomString& value = attributeWithoutSynchronization(valueAttr);
     if (!value.isNull())
         return value;
-    return collectOptionInnerText().trim(isASCIIWhitespace).simplifyWhiteSpace(isASCIIWhitespace);
-}
-
-void HTMLOptionElement::setValue(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(valueAttr, value);
+    return collectOptionInnerTextCollapsingWhitespace();
 }
 
 bool HTMLOptionElement::selected(AllowStyleInvalidation allowStyleInvalidation) const
@@ -287,12 +282,15 @@ String HTMLOptionElement::label() const
     String label = attributeWithoutSynchronization(labelAttr);
     if (!label.isNull())
         return label;
-    return collectOptionInnerText().trim(isASCIIWhitespace).simplifyWhiteSpace(isASCIIWhitespace);
+    return collectOptionInnerTextCollapsingWhitespace();
 }
 
-void HTMLOptionElement::setLabel(const AtomString& label)
+// Same as label() but ignores the label content attribute in quirks mode for compatibility with other browsers.
+String HTMLOptionElement::displayLabel() const
 {
-    setAttributeWithoutSynchronization(labelAttr, label);
+    if (document().inQuirksMode())
+        return collectOptionInnerTextCollapsingWhitespace();
+    return label();
 }
 
 void HTMLOptionElement::willResetComputedStyle()
@@ -331,6 +329,11 @@ String HTMLOptionElement::collectOptionInnerText() const
             text.append(textNode->data());
     }
     return text.toString();
+}
+
+String HTMLOptionElement::collectOptionInnerTextCollapsingWhitespace() const
+{
+    return collectOptionInnerText().trim(isASCIIWhitespace).simplifyWhiteSpace(isASCIIWhitespace);
 }
 
 } // namespace

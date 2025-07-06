@@ -179,12 +179,7 @@ static void setCGContextPath(CGContextRef context, const Path& path)
 
 static void drawPathWithCGContext(CGContextRef context, CGPathDrawingMode drawingMode, const Path& path)
 {
-#if HAVE(CG_CONTEXT_DRAW_PATH_DIRECT)
     CGContextDrawPathDirect(context, drawingMode, path.platformPath(), nullptr);
-#else
-    setCGContextPath(context, path);
-    CGContextDrawPath(context, drawingMode);
-#endif
 }
 
 static RenderingMode renderingModeForCGContext(CGContextRef cgContext, GraphicsContextCG::CGContextSource source)
@@ -402,10 +397,14 @@ void GraphicsContextCG::drawNativeImageInternal(NativeImage& nativeImage, const 
     if (headroom == Headroom::FromImage)
         headroom = nativeImage.headroom();
 
-    if (headroom > Headroom::None)
+    if (headroom > Headroom::None) {
+        if (m_maxEDRHeadroom)
+            headroom = std::min(headroom.headroom, *m_maxEDRHeadroom);
+        LOG_WITH_STREAM(HDR, stream << "GraphicsContextCG::drawNativeImageInternal setEDRTargetHeadroom " << headroom << " max(" << m_maxEDRHeadroom << ")");
         CGContextSetEDRTargetHeadroom(context, headroom);
+    }
 
-    if (options.dynamicRangeLimit() == PlatformDynamicRangeLimit::standard())
+    if (options.dynamicRangeLimit() == PlatformDynamicRangeLimit::standard() && options.drawsHDRContent() == DrawsHDRContent::Yes)
         setCGDynamicRangeLimitForImage(context, subImage.get(), options.dynamicRangeLimit().value());
 #endif
 
@@ -818,13 +817,11 @@ void GraphicsContextCG::strokePath(const Path& path)
     if (strokePattern())
         applyStrokePattern();
 
-#if USE(CG_CONTEXT_STROKE_LINE_SEGMENTS_WHEN_STROKING_PATH)
     if (auto line = path.singleDataLine()) {
         CGPoint cgPoints[2] { line->start(), line->end() };
         CGContextStrokeLineSegments(context, cgPoints, 2);
         return;
     }
-#endif
 
     drawPathWithCGContext(context, kCGPathStroke, path);
 }
@@ -1542,6 +1539,14 @@ bool GraphicsContextCG::consumeHasDrawn()
     m_hasDrawn = false;
     return hasDrawn;
 }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+void GraphicsContextCG::setMaxEDRHeadroom(std::optional<float> headroom)
+{
+    m_maxEDRHeadroom = headroom;
+}
+#endif
+
 
 }
 

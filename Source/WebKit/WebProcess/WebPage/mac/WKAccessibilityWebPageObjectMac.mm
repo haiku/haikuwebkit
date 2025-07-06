@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Apple Inc. All rights reserved.
+ * Copyright (C) 2011-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -85,7 +85,7 @@ namespace ax = WebCore::Accessibility;
         return;
     }
 
-    auto* corePage = page->corePage();
+    RefPtr corePage = page->corePage();
     if (!corePage) {
         m_parameterizedAttributeNames = @[];
         return;

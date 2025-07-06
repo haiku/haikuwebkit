@@ -38,6 +38,7 @@
 #include "CSSPropertyParserConsumer+Primitives.h"
 #include "CSSTokenizer.h"
 #include "CSSValueKeywords.h"
+#include "StyleCustomProperty.h"
 #include <stack>
 
 namespace WebCore {
@@ -186,7 +187,7 @@ bool isValidConstantReference(CSSParserTokenRange range, const CSSParserContext&
 }
 
 struct VariableType {
-    std::optional<CSSValueID> cssWideKeyword { };
+    std::optional<CSSWideKeyword> cssWideKeyword { };
     bool hasReferences { false };
     bool hasTopLevelBraceBlockWithOtherValues { false };
 };
@@ -198,8 +199,8 @@ static std::optional<VariableType> classifyVariableRange(CSSParserTokenRange ran
     if (range.peek().type() == IdentToken) {
         auto rangeCopy = range;
         CSSValueID id = range.consumeIncludingWhitespace().id();
-        if (range.atEnd() && isCSSWideKeyword(id))
-            return VariableType { id };
+        if (auto keyword = parseCSSWideKeyword(id); range.atEnd() && keyword)
+            return VariableType { *keyword };
         // No fast path, restart with the complete range.
         range = rangeCopy;
     }
@@ -231,7 +232,7 @@ RefPtr<CSSCustomPropertyValue> CSSVariableParser::parseDeclarationValue(const At
         return nullptr;
 
     if (type->cssWideKeyword)
-        return CSSCustomPropertyValue::createWithID(variableName, *type->cssWideKeyword);
+        return CSSCustomPropertyValue::createWithCSSWideKeyword(variableName, *type->cssWideKeyword);
 
     if (type->hasReferences)
         return CSSCustomPropertyValue::createUnresolved(variableName, CSSVariableReferenceValue::create(range, parserContext));
@@ -239,7 +240,7 @@ RefPtr<CSSCustomPropertyValue> CSSVariableParser::parseDeclarationValue(const At
     return CSSCustomPropertyValue::createSyntaxAll(variableName, CSSVariableData::create(range, parserContext));
 }
 
-RefPtr<CSSCustomPropertyValue> CSSVariableParser::parseInitialValueForUniversalSyntax(const AtomString& variableName, CSSParserTokenRange range)
+RefPtr<const Style::CustomProperty> CSSVariableParser::parseInitialValueForUniversalSyntax(const AtomString& variableName, CSSParserTokenRange range)
 {
     if (range.atEnd())
         return nullptr;
@@ -249,7 +250,7 @@ RefPtr<CSSCustomPropertyValue> CSSVariableParser::parseInitialValueForUniversalS
     if (!type || type->cssWideKeyword || type->hasReferences)
         return nullptr;
 
-    return CSSCustomPropertyValue::createSyntaxAll(variableName, CSSVariableData::create(range));
+    return Style::CustomProperty::createForVariableData(variableName, CSSVariableData::create(range));
 }
 
 } // namespace WebCore

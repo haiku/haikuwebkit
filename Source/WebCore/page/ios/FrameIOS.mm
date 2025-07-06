@@ -839,8 +839,8 @@ void LocalFrame::overflowScrollPositionChangedForNode(const IntPoint& position, 
 
 void LocalFrame::resetAllGeolocationPermission()
 {
-    if (document()->domWindow())
-        document()->domWindow()->resetAllGeolocationPermission();
+    if (document()->window())
+        document()->window()->resetAllGeolocationPermission();
 
     for (RefPtr child = tree().firstChild(); child; child = child->tree().nextSibling()) {
         auto* localChild = dynamicDowncast<LocalFrame>(child.get());

@@ -110,6 +110,16 @@ void TileGrid::setScale(float scale)
     m_controller->willRepaintAllTiles(*this);
 }
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+bool TileGrid::setNeedsDisplayIfEDRHeadroomExceeds(float headroom)
+{
+    bool changed = false;
+    for (auto& entry : m_tiles)
+        changed |= entry.value.layer->setNeedsDisplayIfEDRHeadroomExceeds(headroom);
+    return changed;
+}
+#endif
+
 void TileGrid::setNeedsDisplay()
 {
     for (auto& entry : m_tiles) {

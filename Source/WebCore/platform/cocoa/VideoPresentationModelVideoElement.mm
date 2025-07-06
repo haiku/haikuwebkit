@@ -295,7 +295,7 @@ void VideoPresentationModelVideoElement::requestFullscreenMode(HTMLMediaElementE
 
     if (finishedWithMedia && mode == MediaPlayer::VideoFullscreenModeNone) {
         if (videoElement->document().isMediaDocument()) {
-            if (auto* window = videoElement->document().domWindow())
+            if (auto* window = videoElement->document().window())
                 window->history().back();
         }
     }
@@ -310,7 +310,7 @@ void VideoPresentationModelVideoElement::setVideoLayerFrame(FloatRect rect)
         videoElement->setVideoFullscreenFrame(rect);
 }
 
-void VideoPresentationModelVideoElement::setVideoSizeFenced(const FloatSize& size, WTF::MachSendRight&& fence)
+void VideoPresentationModelVideoElement::setVideoSizeFenced(const FloatSize& size, WTF::MachSendRightAnnotated&& fence)
 {
     RefPtr videoElement = m_videoElement;
     if (!videoElement)

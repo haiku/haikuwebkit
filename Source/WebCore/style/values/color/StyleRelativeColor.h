@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,13 +27,12 @@
 #pragma once
 
 #include "CSSColorDescriptors.h"
+#include "CSSPrimitiveNumericTypes+Logging.h"
 #include "CSSRelativeColor.h"
 #include "CSSRelativeColorResolver.h"
-#include "CSSRelativeColorSerialization.h"
-#include "CSSSerializationContext.h"
 #include "Color.h"
-#include "ColorSerialization.h"
 #include "StyleColor.h"
+#include "StylePrimitiveNumericTypes+Logging.h"
 #include "StyleResolvedColor.h"
 #include <wtf/text/TextStream.h>
 
@@ -101,21 +101,23 @@ template<typename D> bool containsCurrentColor(const RelativeColor<D>& relative)
     return WebCore::Style::containsCurrentColor(relative.origin);
 }
 
-template<typename D> void serializationForCSS(StringBuilder& builder, const CSS::SerializationContext& context, const RelativeColor<D>& relative)
-{
-    CSS::serializationForCSSRelativeColor(builder, context, relative);
-}
-
-template<typename D> String serializationForCSS(const CSS::SerializationContext& context, const RelativeColor<D>& relative)
-{
-    StringBuilder builder;
-    serializationForCSS(builder, context, relative);
-    return builder.toString();
-}
-
 template<typename D> WTF::TextStream& operator<<(WTF::TextStream& ts, const RelativeColor<D>& relative)
 {
-    return ts << "relativeColor("_s << serializationForCSS(CSS::defaultSerializationContext(), relative) << ')';
+    using ColorType = typename D::ColorType;
+
+    if constexpr (D::usesColorFunctionForSerialization)
+        ts << "color(from "_s << relative.origin << ' ' << serialization(ColorSpaceFor<ColorType>);
+    else
+        ts << D::serializationFunctionName << "(from "_s << relative.origin;
+
+    auto [c1, c2, c3, alpha] = relative.components;
+    ts << ' ' << c1 << ' ' << c2 << ' ' << c3;
+    if (alpha)
+        ts << " / "_s << *alpha;
+
+    ts << ')';
+
+    return ts;
 }
 
 } // namespace Style

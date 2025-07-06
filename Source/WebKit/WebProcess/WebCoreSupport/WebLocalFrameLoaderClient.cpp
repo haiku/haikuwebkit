@@ -501,7 +501,7 @@ void WebLocalFrameLoaderClient::didSameDocumentNavigationForFrameViaJS(SameDocum
         !!localFrame->opener(), /* hasOpener */
         localFrame->loader().isHTTPFallbackInProgress(),
         false, /* isInitialFrameSrcLoad */
-        false, /* isContentExtensionRedirect */
+        false, /* isContentRuleListRedirect */
         { }, /* openedMainFrameName */
         { }, /* requesterOrigin */
         { }, /* requesterTopOrigin */
@@ -1008,7 +1008,7 @@ void WebLocalFrameLoaderClient::dispatchDecidePolicyForNewWindowAction(const Nav
         navigationAction.newFrameOpenerPolicy() == NewFrameOpenerPolicy::Allow, /* hasOpener */
         localFrame->loader().isHTTPFallbackInProgress(),
         navigationAction.isInitialFrameSrcLoad(),
-        navigationAction.isContentExtensionRedirect(),
+        navigationAction.isContentRuleListRedirect(),
         { }, /* openedMainFrameName */
         { }, /* requesterOrigin */
         { }, /* requesterTopOrigin */

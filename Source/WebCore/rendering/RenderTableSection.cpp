@@ -591,7 +591,10 @@ void RenderTableSection::layoutRows()
 
             relayoutCellIfFlexed(*cell, r, rHeight);
 
-            cell->computeIntrinsicPadding(rHeight);
+            if (cell->computeIntrinsicPadding(rHeight)) {
+                // FIXME: Changing an intrinsic padding shouldn't trigger a relayout as it only shifts the cell inside the row but doesn't change the logical height.
+                cell->setChildNeedsLayout(MarkOnlyThis);
+            }
 
             LayoutRect oldCellRect = cell->frameRect();
 

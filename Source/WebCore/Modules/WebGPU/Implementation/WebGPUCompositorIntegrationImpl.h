@@ -90,6 +90,7 @@ private:
     CompositorIntegrationImpl& operator=(CompositorIntegrationImpl&&) = delete;
 
     void prepareForDisplay(uint32_t frameIndex, CompletionHandler<void()>&&) override;
+    void updateContentsHeadroom(float) override;
 
 #if PLATFORM(COCOA)
     Vector<MachSendRight> recreateRenderBuffers(int width, int height, WebCore::DestinationColorSpace&&, WebCore::AlphaPremultiplication, WebCore::WebGPU::TextureFormat, Device&) override;

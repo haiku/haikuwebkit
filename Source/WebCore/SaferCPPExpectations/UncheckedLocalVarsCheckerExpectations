@@ -23,7 +23,6 @@ Modules/permissions/Permissions.cpp
 Modules/push-api/PushDatabase.cpp
 Modules/speech/SpeechRecognition.cpp
 Modules/storage/WorkerStorageConnection.cpp
-Modules/web-locks/WebLockManager.cpp
 Modules/webaudio/AudioWorkletGlobalScope.cpp
 Modules/webdatabase/SQLStatement.cpp
 Modules/websockets/WebSocket.cpp
@@ -33,20 +32,16 @@ accessibility/AXTextMarker.cpp
 accessibility/AccessibilityListBox.cpp
 accessibility/AccessibilityListBoxOption.cpp
 accessibility/AccessibilityMathMLElement.cpp
-accessibility/AccessibilityMenuListOption.cpp
 accessibility/AccessibilityNodeObject.cpp
 accessibility/AccessibilityObject.cpp
-accessibility/AccessibilityProgressIndicator.cpp
 accessibility/AccessibilityRenderObject.cpp
 accessibility/AccessibilitySVGObject.cpp
-accessibility/AccessibilitySVGRoot.cpp
 accessibility/AccessibilityScrollView.cpp
 accessibility/AccessibilitySlider.cpp
 accessibility/AccessibilityTable.cpp
 accessibility/AccessibilityTableCell.cpp
 accessibility/AccessibilityTableColumn.cpp
 accessibility/AccessibilityTableRow.cpp
-accessibility/AccessibilityTree.cpp
 accessibility/cocoa/AccessibilityObjectCocoa.mm
 accessibility/isolatedtree/AXIsolatedObject.cpp
 accessibility/isolatedtree/AXIsolatedTree.cpp
@@ -57,11 +52,8 @@ animation/AcceleratedEffectStackUpdater.cpp
 animation/BlendingKeyframes.cpp
 animation/DocumentTimeline.cpp
 animation/KeyframeEffect.cpp
-animation/StyleOriginatedAnimation.cpp
-animation/StyleOriginatedAnimationEvent.cpp
 animation/ViewTimeline.cpp
 animation/WebAnimation.cpp
-animation/WebAnimationUtilities.cpp
 bindings/js/JSAttrCustom.cpp
 bindings/js/JSCSSStyleDeclarationCustom.cpp
 bindings/js/JSCustomElementInterface.cpp
@@ -88,7 +80,6 @@ bindings/js/JSWorkerGlobalScopeCustom.cpp
 bindings/js/JSXMLHttpRequestCustom.cpp
 bindings/js/ScheduledAction.cpp
 bindings/js/ScriptModuleLoader.cpp
-bindings/js/WebCoreJSClientData.cpp
 contentextensions/ContentExtensionsBackend.cpp
 css/CSSFontSelector.cpp
 css/CSSStyleSheet.cpp
@@ -99,7 +90,6 @@ css/SelectorFilter.cpp
 css/StyleAttributeMutationScope.h
 css/StyleRuleImport.cpp
 css/StyleSheetContents.cpp
-css/calc/CSSCalcTree+ContainerProgressEvaluator.cpp
 css/parser/SizesAttributeParser.cpp
 css/query/ContainerQueryFeatures.cpp
 css/typedom/ComputedStylePropertyMapReadOnly.cpp
@@ -235,7 +225,6 @@ inspector/InspectorNodeFinder.cpp
 inspector/InspectorOverlay.cpp
 inspector/InspectorStyleSheet.cpp
 inspector/PageDebugger.cpp
-inspector/WebInjectedScriptManager.cpp
 inspector/WorkerToPageFrontendChannel.h
 inspector/agents/InspectorAnimationAgent.cpp
 inspector/agents/InspectorCSSAgent.cpp
@@ -248,7 +237,6 @@ inspector/agents/InspectorLayerTreeAgent.cpp
 inspector/agents/InspectorNetworkAgent.cpp
 inspector/agents/InspectorPageAgent.cpp
 inspector/agents/InspectorTimelineAgent.cpp
-inspector/agents/WebConsoleAgent.cpp
 inspector/agents/page/PageCanvasAgent.cpp
 inspector/agents/page/PageDOMDebuggerAgent.cpp
 inspector/agents/page/PageNetworkAgent.cpp
@@ -369,7 +357,6 @@ platform/CaretAnimator.cpp
 platform/DictationCaretAnimator.cpp
 platform/DragImage.cpp
 platform/ScrollView.cpp
-platform/Widget.cpp
 platform/animation/AcceleratedEffect.cpp
 platform/cocoa/VideoPresentationModelVideoElement.mm
 platform/graphics/GraphicsLayer.cpp
@@ -568,7 +555,6 @@ style/AttributeChangeInvalidation.cpp
 style/ChildChangeInvalidation.cpp
 style/ClassChangeInvalidation.cpp
 style/ContainerQueryEvaluator.cpp
-style/CustomPropertyRegistry.cpp
 style/ElementRuleCollector.cpp
 style/HasSelectorFilter.cpp
 style/IdChangeInvalidation.cpp
@@ -580,6 +566,7 @@ style/StyleBuilder.cpp
 style/StyleBuilderConverter.h
 style/StyleBuilderCustom.h
 style/StyleBuilderStateInlines.h
+style/StyleCustomPropertyRegistry.cpp
 style/StyleExtractor.cpp
 style/StyleExtractorCustom.h
 style/StyleInterpolationFunctions.h
@@ -625,8 +612,6 @@ testing/Internals.mm
 testing/ServiceWorkerInternals.cpp
 testing/js/WebCoreTestSupport.cpp
 workers/WorkerGlobalScope.cpp
-workers/WorkerMessagingProxy.cpp
 workers/WorkerOrWorkletThread.cpp
 workers/WorkerRunLoop.cpp
 workers/service/server/SWServer.cpp
-worklets/Worklet.cpp

@@ -1,4 +1,4 @@
-; Copyright (C) 2010-2024 Apple Inc. All rights reserved.
+; Copyright (C) 2010-2025 Apple Inc. All rights reserved.
 ;
 ; Redistribution and use in source and binary forms, with or without
 ; modification, are permitted provided that the following conditions
@@ -1166,7 +1166,7 @@
 (allow mach-bootstrap
     (apply-message-filter
         (deny mach-message-send (with no-report))
-#if (PLATFORM(IOS) && __IPHONE_OS_VERSION_MIN_REQUIRED >= 170000) || PLATFORM(VISION)
+#if PLATFORM(IOS) || PLATFORM(VISION)
         (with-filter (extension "com.apple.webkit.mach-bootstrap")
             (allow mach-message-send (mach-bootstrap-message-numbers-post-launch)))
 #else

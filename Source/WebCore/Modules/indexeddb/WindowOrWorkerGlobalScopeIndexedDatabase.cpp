@@ -101,15 +101,14 @@ IDBFactory* DOMWindowIndexedDatabase::indexedDB()
     if (!document)
         return nullptr;
 
-    auto* page = document->page();
-    if (!page)
+    if (!document->page())
         return nullptr;
 
     if (!window->isCurrentlyDisplayedInFrame())
         return nullptr;
 
     if (!m_idbFactory) {
-        auto* connectionProxy = document->idbConnectionProxy();
+        RefPtr connectionProxy = document->idbConnectionProxy();
         if (!connectionProxy)
             return nullptr;
 
@@ -132,7 +131,7 @@ WorkerGlobalScopeIndexedDatabase* WorkerGlobalScopeIndexedDatabase::from(WorkerG
 {
     auto* supplement = static_cast<WorkerGlobalScopeIndexedDatabase*>(Supplement<WorkerGlobalScope>::from(&scope, supplementName()));
     if (!supplement) {
-        auto* connectionProxy = scope.idbConnectionProxy();
+        RefPtr connectionProxy = scope.idbConnectionProxy();
         if (!connectionProxy)
             return nullptr;
 

@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,7 +27,6 @@
 #include "config.h"
 #include "StyleResolvedColor.h"
 
-#include "ColorSerialization.h"
 #include "StyleColor.h"
 #include <wtf/text/TextStream.h>
 
@@ -38,18 +38,6 @@ namespace Style {
 Color toStyleColor(const CSS::ResolvedColor& unresolved, ColorResolutionState&)
 {
     return Color { ResolvedColor { unresolved.value } };
-}
-
-// MARK: - Serialization
-
-void serializationForCSS(StringBuilder& builder, const CSS::SerializationContext&, const ResolvedColor& absoluteColor)
-{
-    builder.append(serializationForCSS(absoluteColor.color));
-}
-
-String serializationForCSS(const CSS::SerializationContext&, const ResolvedColor& absoluteColor)
-{
-    return serializationForCSS(absoluteColor.color);
 }
 
 // MARK: - TextStream

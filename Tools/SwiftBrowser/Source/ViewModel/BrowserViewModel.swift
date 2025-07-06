@@ -135,9 +135,9 @@ final class BrowserViewModel {
     }
 
     func didReceiveNavigationEvent(_ event: WebPage.NavigationEvent) {
-        Self.logger.info("Did receive navigation event \(String(describing: event.kind)) for navigation \(String(describing: event.navigationID))")
+        Self.logger.info("Did receive navigation event \(String(describing: event))")
 
-        if case .committed = event.kind {
+        if event == .committed {
             displayedURL = page.url?.absoluteString ?? ""
         }
     }
@@ -153,7 +153,7 @@ final class BrowserViewModel {
 
     func exportAsPDF() {
         Task {
-            let data = try await page.pdf()
+            let data = try await page.exported(as: .pdf)
             exportedPDF = PDF(data: data, title: !page.title.isEmpty ? page.title : nil)
         }
     }

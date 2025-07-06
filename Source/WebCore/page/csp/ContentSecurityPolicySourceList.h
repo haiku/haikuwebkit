@@ -93,7 +93,7 @@ private:
     const ContentSecurityPolicy& m_policy;
     Vector<ContentSecurityPolicySource> m_list;
     MemoryCompactLookupOnlyRobinHoodHashSet<String> m_nonces;
-    UncheckedKeyHashSet<ContentSecurityPolicyHash> m_hashes;
+    HashSet<ContentSecurityPolicyHash> m_hashes;
     OptionSet<ContentSecurityPolicyHashAlgorithm> m_hashAlgorithmsUsed;
     String m_directiveName;
     ContentSecurityPolicyModeForExtension m_contentSecurityPolicyModeForExtension { ContentSecurityPolicyModeForExtension::None };

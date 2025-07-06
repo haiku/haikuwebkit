@@ -417,6 +417,8 @@ RenderLayer::PaintedContentRequest::PaintedContentRequest(const RenderLayer& own
 #if HAVE(SUPPORT_HDR_DISPLAY)
     if (owningLayer.renderer().document().drawsHDRContent())
         makeHDRContentUnknown();
+    else
+        makeHDRContentFalse();
 #else
     UNUSED_PARAM(owningLayer);
 #endif
@@ -2405,7 +2407,7 @@ bool RenderLayer::shouldRepaintAfterLayout() const
 
     // Composited layers that were moved during a positioned movement only
     // layout, don't need to be repainted. They just need to be recomposited.
-    ASSERT(m_repaintStatus == RepaintStatus::NeedsFullRepaintForPositionedMovementLayout);
+    ASSERT(m_repaintStatus == RepaintStatus::NeedsFullRepaintForOutOfFlowMovementLayout);
     return !isComposited() || backing()->paintsIntoCompositedAncestor();
 }
 
@@ -3817,6 +3819,7 @@ void RenderLayer::paintLayerContents(GraphicsContext& context, const LayerPainti
             PaintBehavior::ExcludeReplacedContentExceptForIFrames,
             PaintBehavior::ExcludeText,
             PaintBehavior::FixedAndStickyLayersOnly,
+            PaintBehavior::DrawsHDRContent,
         };
         OptionSet<PaintBehavior> paintBehavior = paintingInfo.paintBehavior & flagsToCopy;
 
@@ -4311,11 +4314,10 @@ void RenderLayer::paintForegroundForFragments(const LayerFragments& layerFragmen
         PaintBehavior::ExcludeReplacedContentExceptForIFrames,
         PaintBehavior::ExcludeText,
         PaintBehavior::FixedAndStickyLayersOnly,
+        PaintBehavior::DontShowVisitedLinks,
+        PaintBehavior::DrawsHDRContent,
     };
     localPaintBehavior.add(localPaintingInfo.paintBehavior & flagsToCopy);
-
-    if (localPaintingInfo.paintBehavior & PaintBehavior::DontShowVisitedLinks)
-        localPaintBehavior.add(PaintBehavior::DontShowVisitedLinks);
 
     GraphicsContextStateSaver stateSaver(context, false);
     RegionContextStateSaver regionContextStateSaver(localPaintingInfo.regionContext);
@@ -4502,7 +4504,11 @@ bool RenderLayer::hitTest(const HitTestRequest& request, const HitTestLocation& 
         // We didn't hit any layer. If we are the root layer and the mouse is -- or just was -- down,
         // return ourselves. We do this so mouse events continue getting delivered after a drag has 
         // exited the WebView, and so hit testing over a scrollbar hits the content document.
-        if (!request.isChildFrameHitTest() && (request.active() || request.release()) && isRenderViewLayer()) {
+        // In addtion, it is possible for the mouse to stay in the document but there is no element.
+        // At that time, the events of the mouse should be fired.
+        LayoutPoint hitPoint = hitTestLocation.point();
+        bool moveRequestIsOverDocument = request.move() && hitTestArea.contains(hitPoint);
+        if (!request.isChildFrameHitTest() && (request.active() || request.release() || moveRequestIsOverDocument) && isRenderViewLayer()) {
             renderer().updateHitTestResult(result, downcast<RenderView>(renderer()).flipForWritingMode(hitTestLocation.point()));
             insideLayer = { this };
         }
@@ -4984,14 +4990,16 @@ RenderLayer::HitLayer RenderLayer::hitTestLayerByApplyingTransform(RenderLayer* 
     //
     // We can't just map hitTestLocation and hitTestRect because they may have been flattened (losing z)
     // by our container.
-    FloatPoint localPoint = newTransformState->mappedPoint();
-    FloatQuad localPointQuad = newTransformState->mappedQuad();
-    LayoutRect localHitTestRect = newTransformState->boundsOfMappedArea();
+    auto localPoint = newTransformState->mappedPoint();
+    auto localHitTestRect = newTransformState->boundsOfMappedArea();
     HitTestLocation newHitTestLocation;
-    if (hitTestLocation.isRectBasedTest())
+    if (hitTestLocation.isRectBasedTest()) {
+        auto localPointQuad = newTransformState->mappedQuad();
         newHitTestLocation = HitTestLocation(localPoint, localPointQuad);
-    else
-        newHitTestLocation = HitTestLocation(flooredLayoutPoint(localPoint));
+    } else {
+        auto localPointQuad = newTransformState->boundsOfMappedQuad();
+        newHitTestLocation = HitTestLocation(localPoint, FloatRect { localPointQuad });
+    }
 
     // Now do a hit test with the root layer shifted to be us.
     return hitTestLayer(this, containerLayer, request, result, localHitTestRect, newHitTestLocation, true, newTransformState.ptr(), zOffset);
@@ -6085,7 +6093,7 @@ void RenderLayer::determineNonLayerDescendantsPaintedContent(PaintedContentReque
 bool RenderLayer::rendererHasHDRContent() const
 {
     if (auto* imageDocument = dynamicDowncast<ImageDocument>(renderer().document()))
-        return imageDocument->hasHDRContent();
+        return imageDocument->drawsHDRContent();
     return WebCore::rendererHasHDRContent(renderer());
 }
 #endif
@@ -6230,7 +6238,7 @@ void RenderLayer::styleChanged(StyleDifference diff, const RenderStyle* oldStyle
         dirtyAncestorChainHasViewportConstrainedDescendantStatus();
 
 #if PLATFORM(IOS_FAMILY) && ENABLE(TOUCH_EVENTS)
-    if (diff == StyleDifference::RecompositeLayer || diff >= StyleDifference::LayoutPositionedMovementOnly)
+    if (diff == StyleDifference::RecompositeLayer || diff >= StyleDifference::LayoutOutOfFlowMovementOnly)
         renderer().document().invalidateRenderingDependentRegions();
 #else
     UNUSED_PARAM(diff);
@@ -6657,6 +6665,7 @@ TextStream& operator<<(TextStream& ts, PaintBehavior behavior)
     case PaintBehavior::ExcludeReplacedContentExceptForIFrames: ts << "ExcludeReplacedContentExceptForIFrames"_s; break;
     case PaintBehavior::ExcludeText: ts << "ExcludeText"_s; break;
     case PaintBehavior::FixedAndStickyLayersOnly: ts << "FixedAndStickyLayersOnly"_s; break;
+    case PaintBehavior::DrawsHDRContent: ts << "DrawsHDRContent"_s; break;
     }
 
     return ts;
@@ -6929,7 +6938,7 @@ void outputLayerPositionTreeRecursive(TextStream& stream, const WebCore::RenderL
 
     stream << " "_s;
 
-    if (layer.repaintStatus() == WebCore::RepaintStatus::NeedsFullRepaintForPositionedMovementLayout)
+    if (layer.repaintStatus() == WebCore::RepaintStatus::NeedsFullRepaintForOutOfFlowMovementLayout)
         stream << "P";
     else if (layer.repaintStatus() == WebCore::RepaintStatus::NeedsFullRepaint)
         stream << "F";

@@ -232,7 +232,7 @@ void FileInputType::createShadowSubtree()
     Ref button = HTMLInputElement::create(inputTag, element->protectedDocument(), nullptr, false);
     {
         ScriptDisallowedScope::EventAllowedScope eventAllowedScopeBeforeAppend { button };
-        button->setType(InputTypeNames::button());
+        button->setAttributeWithoutSynchronization(typeAttr, InputTypeNames::button());
         button->setUserAgentPart(UserAgentParts::fileSelectorButton());
         button->setValue(element->multiple() ? fileButtonChooseMultipleFilesLabel() : fileButtonChooseFileLabel());
     }

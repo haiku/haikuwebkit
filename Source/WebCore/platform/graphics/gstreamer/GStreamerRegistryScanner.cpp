@@ -851,7 +851,17 @@ MediaPlayerEnums::SupportsType GStreamerRegistryScanner::isContentTypeSupported(
             return SupportsType::IsNotSupported;
 
 #if GST_CHECK_VERSION(1, 22, 0)
-        for (const auto& mimeCodec : codecs) {
+        for (const auto& codec : codecs) {
+            // gst_codec_utils_caps_from_mime_codec() expects a four characters string. See also RFC 6381 section 3.3.
+            auto mimeCodec = codec;
+            if (mimeCodec.length() < 4) {
+                if (mimeCodec == "vp8"_s)
+                    mimeCodec = "vp08"_s;
+                else if (mimeCodec == "vp9"_s)
+                    mimeCodec = "vp09"_s;
+                else if (mimeCodec == "av1"_s)
+                    mimeCodec = "av01"_s;
+            }
             auto codecCaps = adoptGRef(gst_codec_utils_caps_from_mime_codec(mimeCodec.ascii().data()));
             if (!codecCaps) {
                 GST_WARNING("Unable to convert codec %s to caps", mimeCodec.ascii().data());

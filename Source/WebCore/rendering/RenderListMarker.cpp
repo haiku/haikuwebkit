@@ -280,7 +280,7 @@ void RenderListMarker::imageChanged(WrappedImagePtr o, const IntRect* rect)
     if (parent()) {
         if (m_image && o == m_image->data()) {
             if (width() != m_image->imageSize(this, style().usedZoom()).width() || height() != m_image->imageSize(this, style().usedZoom()).height() || m_image->errorOccurred())
-                setNeedsLayoutAndPrefWidthsRecalc();
+                setNeedsLayoutAndPreferredWidthsUpdate();
             else
                 repaint();
         }

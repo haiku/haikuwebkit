@@ -1055,11 +1055,11 @@ gboolean webkit_dom_dom_window_webkit_message_handlers_post_message(WebKitDOMDOM
     g_return_val_if_fail(message, FALSE);
 
 #if ENABLE(USER_MESSAGE_HANDLERS)
-    WebCore::LocalDOMWindow* domWindow = WebKit::core(window);
-    if (!domWindow->shouldHaveWebKitNamespaceForWorld(WebCore::mainThreadNormalWorldSingleton()))
+    auto* window = WebKit::core(window);
+    if (!window->shouldHaveWebKitNamespaceForWorld(WebCore::mainThreadNormalWorldSingleton()))
         return FALSE;
 
-    auto webkitNamespace = domWindow->webkitNamespace();
+    auto webkitNamespace = window->webkitNamespace();
     if (!webkitNamespace)
         return FALSE;
 
@@ -1067,7 +1067,7 @@ gboolean webkit_dom_dom_window_webkit_message_handlers_post_message(WebKitDOMDOM
     if (!handler)
         return FALSE;
     
-    auto* scriptExecutionContext = ((WebCore::ContextDestructionObserver*)domWindow)->scriptExecutionContext();
+    auto* scriptExecutionContext = ((WebCore::ContextDestructionObserver*)window)->scriptExecutionContext();
     if (!scriptExecutionContext)
         return FALSE;
     

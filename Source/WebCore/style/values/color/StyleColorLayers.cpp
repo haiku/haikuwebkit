@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -27,7 +28,6 @@
 #include "StyleColorLayers.h"
 
 #include "CSSColorLayersResolver.h"
-#include "CSSColorLayersSerialization.h"
 #include "CSSSerializationContext.h"
 #include "ColorSerialization.h"
 #include "StyleBuilderState.h"
@@ -92,25 +92,16 @@ bool containsCurrentColor(const ColorLayers& colorLayers)
     });
 }
 
-// MARK: - Serialization
-
-void serializationForCSS(StringBuilder& builder, const CSS::SerializationContext& context, const ColorLayers& colorLayers)
-{
-    CSS::serializationForCSSColorLayers(builder, context, colorLayers);
-}
-
-String serializationForCSS(const CSS::SerializationContext& context, const ColorLayers& colorLayers)
-{
-    StringBuilder builder;
-    serializationForCSS(builder, context, colorLayers);
-    return builder.toString();
-}
-
 // MARK: - TextStream
 
 WTF::TextStream& operator<<(WTF::TextStream& ts, const ColorLayers& colorLayers)
 {
-    return ts << serializationForCSS(CSS::defaultSerializationContext(), colorLayers);
+    ts << "color-layers(";
+    if (colorLayers.blendMode != BlendMode::Normal)
+        ts << colorLayers.blendMode << ", "_s;
+    ts << colorLayers.colors << ')';
+
+    return ts;
 }
 
 } // namespace Style

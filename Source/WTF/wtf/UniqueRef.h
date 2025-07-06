@@ -105,14 +105,14 @@ private:
     std::unique_ptr<T> m_ref;
 };
 
-template <typename T>
+template<typename T>
 struct GetPtrHelper<UniqueRef<T>> {
     using PtrType = T*;
     using UnderlyingType = T;
     static T* getPtr(const UniqueRef<T>& p) { return const_cast<T*>(p.ptr()); }
 };
 
-template <typename T>
+template<typename T>
 struct IsSmartPtr<UniqueRef<T>> {
     static constexpr bool value = true;
     static constexpr bool isNullable = false;
@@ -130,9 +130,16 @@ inline bool is(const UniqueRef<ArgType>& source)
     return is<ExpectedType>(source.get());
 }
 
+template<typename T>
+inline bool arePointingToEqualData(const UniqueRef<T>& a, const UniqueRef<T>& b)
+{
+    return a.ptr() == b.ptr() || a.get() == b.get();
+}
+
 } // namespace WTF
 
 using WTF::UniqueRef;
+using WTF::arePointingToEqualData;
 using WTF::makeUniqueRef;
 using WTF::makeUniqueRefWithoutFastMallocCheck;
 using WTF::makeUniqueRefWithoutRefCountedCheck;

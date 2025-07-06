@@ -192,6 +192,13 @@ static AXTextSelectionGranularity platformGranularityForWebCoreGranularity(WebCo
 
 namespace WebCore {
 
+void AXObjectCache::initializeUserDefaultValues()
+{
+    // This is only set in the constructor, so the page must be reloaded if this default is changed.
+    RetainPtr userDefaults = adoptNS([[NSUserDefaults alloc] initWithSuiteName:@"com.apple.Accessibility"]);
+    gAccessibilityDOMIdentifiersEnabled = [userDefaults boolForKey:@"AXEnableWebKitDOMIdentifier"];
+}
+
 void AXObjectCache::attachWrapper(AccessibilityObject& object)
 {
     RetainPtr<WebAccessibilityObjectWrapper> wrapper = adoptNS([[WebAccessibilityObjectWrapper alloc] initWithAccessibilityObject:object]);
@@ -462,18 +469,18 @@ AXTextStateChangeIntent AXObjectCache::inferDirectionFromIntent(AccessibilityObj
 
 void AXObjectCache::postTextSelectionChangePlatformNotification(AccessibilityObject* object, const AXTextStateChangeIntent& originalIntent, const VisibleSelection& selection)
 {
-    if (!object)
-        object = rootWebArea();
+    RefPtr axObject = object;
+    if (!axObject)
+        axObject = rootWebArea();
 
-    if (!object)
+    if (!axObject)
         return;
-    RefPtr protectedObject = object;
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     processQueuedIsolatedNodeUpdates();
 #endif
 
-    auto intent = inferDirectionFromIntent(*object, originalIntent, selection);
+    auto intent = inferDirectionFromIntent(*axObject, originalIntent, selection);
 
     auto userInfo = adoptNS([[NSMutableDictionary alloc] initWithCapacity:5]);
     if (m_isSynchronizingSelection)
@@ -510,17 +517,17 @@ void AXObjectCache::postTextSelectionChangePlatformNotification(AccessibilityObj
             [userInfo setObject:(id)textMarkerRange forKey:NSAccessibilitySelectedTextMarkerRangeAttribute];
     }
 
-    if (id wrapper = object->wrapper()) {
+    if (id wrapper = axObject->wrapper()) {
         [userInfo setObject:wrapper forKey:NSAccessibilityTextChangeElement];
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-        createIsolatedObjectIfNeeded(*object);
+        createIsolatedObjectIfNeeded(*axObject);
 #endif
     }
 
     if (RefPtr root = rootWebArea()) {
         AXPostNotificationWithUserInfo(root->wrapper(), NSAccessibilitySelectedTextChangedNotification, userInfo.get());
-        if (root->wrapper() != object->wrapper())
-            AXPostNotificationWithUserInfo(object->wrapper(), NSAccessibilitySelectedTextChangedNotification, userInfo.get());
+        if (root->wrapper() != axObject->wrapper())
+            AXPostNotificationWithUserInfo(axObject->wrapper(), NSAccessibilitySelectedTextChangedNotification, userInfo.get());
     }
 }
 
@@ -591,48 +598,48 @@ void AXObjectCache::postUserInfoForChanges(AccessibilityObject& rootWebArea, Acc
 
 void AXObjectCache::postTextReplacementPlatformNotification(AccessibilityObject* object, AXTextEditType deletionType, const String& deletedText, AXTextEditType insertionType, const String& insertedText, const VisiblePosition& position)
 {
-    if (!object)
-        object = rootWebArea();
+    RefPtr axObject = object;
+    if (!axObject)
+        axObject = rootWebArea();
 
-    if (!object)
+    if (!axObject)
         return;
-    RefPtr protectedObject = object;
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     processQueuedIsolatedNodeUpdates();
 #endif
 
     auto changes = adoptNS([[NSMutableArray alloc] initWithCapacity:2]);
-    if (NSDictionary *change = textReplacementChangeDictionary(*this, *object, deletionType, deletedText, position))
+    if (NSDictionary *change = textReplacementChangeDictionary(*this, *axObject, deletionType, deletedText, position))
         [changes addObject:change];
-    if (NSDictionary *change = textReplacementChangeDictionary(*this, *object, insertionType, insertedText, position))
+    if (NSDictionary *change = textReplacementChangeDictionary(*this, *axObject, insertionType, insertedText, position))
         [changes addObject:change];
 
     if (RefPtr root = rootWebArea())
-        postUserInfoForChanges(*root, *object, changes.get());
+        postUserInfoForChanges(*root, *axObject, changes.get());
 }
 
 void AXObjectCache::postTextReplacementPlatformNotificationForTextControl(AccessibilityObject* object, const String& deletedText, const String& insertedText)
 {
-    if (!object)
-        object = rootWebArea();
+    RefPtr axObject = object;
+    if (!axObject)
+        axObject = rootWebArea();
 
-    if (!object)
+    if (!axObject)
         return;
-    RefPtr protectedObject = object;
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     processQueuedIsolatedNodeUpdates();
 #endif
 
     auto changes = adoptNS([[NSMutableArray alloc] initWithCapacity:2]);
-    if (NSDictionary *change = textReplacementChangeDictionary(*this, *object, AXTextEditTypeDelete, deletedText, { }))
+    if (NSDictionary *change = textReplacementChangeDictionary(*this, *axObject, AXTextEditTypeDelete, deletedText, { }))
         [changes addObject:change];
-    if (NSDictionary *change = textReplacementChangeDictionary(*this, *object, AXTextEditTypeInsert, insertedText, { }))
+    if (NSDictionary *change = textReplacementChangeDictionary(*this, *axObject, AXTextEditTypeInsert, insertedText, { }))
         [changes addObject:change];
 
     if (RefPtr root = rootWebArea())
-        postUserInfoForChanges(*root, *object, changes.get());
+        postUserInfoForChanges(*root, *axObject, changes.get());
 }
 
 void AXObjectCache::frameLoadingEventPlatformNotification(AccessibilityObject* axFrameObject, AXLoadingEvent loadingEvent)

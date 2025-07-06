@@ -4447,3 +4447,5 @@ imported/w3c/web-platform-tests/wasm/core/simd/simd_f64x2_cmp.wast.js.html [ Tim
 imported/w3c/web-platform-tests/wasm/core/simd/simd_f64x2_pmin_pmax.wast.js.html [ Timeout Pass ]
 
 http/tests/iframe-memory-monitor/media-video-autoplay-in-frames.html [ Skip ]
+
+http/tests/lockdown-mode [ Skip ]

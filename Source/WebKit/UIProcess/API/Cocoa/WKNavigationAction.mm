@@ -219,9 +219,9 @@ static WKSyntheticClickType toWKSyntheticClickType(WebKit::WebMouseEventSyntheti
     return wrapper(_navigationAction->protectedUserInitiatedAction().get());
 }
 
-- (BOOL)_isContentExtensionRedirect
+- (BOOL)isContentRuleListRedirect
 {
-    return _navigationAction->isContentExtensionRedirect();
+    return _navigationAction->isContentRuleListRedirect();
 }
 
 - (BOOL)_isRedirect

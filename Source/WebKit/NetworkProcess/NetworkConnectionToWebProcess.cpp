@@ -193,10 +193,10 @@ NetworkConnectionToWebProcess::~NetworkConnectionToWebProcess()
         completionHandler();
 
 #if HAVE(COOKIE_CHANGE_LISTENER_API)
-    if (auto* networkStorageSession = storageSession())
+    if (CheckedPtr networkStorageSession = storageSession())
         networkStorageSession->stopListeningForCookieChangeNotifications(*this, m_hostsWithCookieListeners);
 #endif
-    if (auto* networkStorageSession = storageSession())
+    if (CheckedPtr networkStorageSession = storageSession())
         networkStorageSession->removeCookiesEnabledStateObserver(*this);
 
 #if USE(LIBWEBRTC)
@@ -798,7 +798,7 @@ void NetworkConnectionToWebProcess::cookiesForDOM(const URL& firstParty, const S
         return completionHandler({ }, false);
     }
 
-    auto* networkStorageSession = storageSession();
+    CheckedPtr networkStorageSession = storageSession();
     if (!networkStorageSession)
         return completionHandler({ }, false);
     auto result = networkStorageSession->cookiesForDOM(firstParty, sameSiteInfo, url, frameID, pageID, includeSecureCookies, ApplyTrackingPrevention::Yes, m_networkProcess->shouldRelaxThirdPartyCookieBlockingForPage(webPageProxyID));
@@ -822,7 +822,7 @@ void NetworkConnectionToWebProcess::setCookiesFromDOM(const URL& firstParty, con
         return;
     }
 
-    auto* networkStorageSession = storageSession();
+    CheckedPtr networkStorageSession = storageSession();
     if (!networkStorageSession)
         return;
     networkStorageSession->setCookiesFromDOM(firstParty, sameSiteInfo, url, frameID, pageID, ApplyTrackingPrevention::Yes, requiresScriptTelemetry, cookieString, m_networkProcess->shouldRelaxThirdPartyCookieBlockingForPage(webPageProxyID));
@@ -846,7 +846,7 @@ void NetworkConnectionToWebProcess::cookiesEnabled(const URL& firstParty, const 
     if (allowCookieAccess != NetworkProcess::AllowCookieAccess::Allow)
         return completionHandler(false);
 
-    auto* networkStorageSession = storageSession();
+    CheckedPtr networkStorageSession = storageSession();
     if (!networkStorageSession) {
         completionHandler(false);
         return;
@@ -867,7 +867,7 @@ void NetworkConnectionToWebProcess::cookieRequestHeaderFieldValue(const URL& fir
         return completionHandler({ }, false);
     }
 
-    auto* networkStorageSession = storageSession();
+    CheckedPtr networkStorageSession = storageSession();
     if (!networkStorageSession)
         return completionHandler({ }, false);
     auto result = networkStorageSession->cookieRequestHeaderFieldValue(firstParty, sameSiteInfo, url, frameID, pageID, includeSecureCookies, ApplyTrackingPrevention::Yes, m_networkProcess->shouldRelaxThirdPartyCookieBlockingForPage(webPageProxyID));
@@ -885,7 +885,7 @@ void NetworkConnectionToWebProcess::getRawCookies(const URL& firstParty, const S
         return completionHandler({ });
     }
 
-    auto* networkStorageSession = storageSession();
+    CheckedPtr networkStorageSession = storageSession();
     if (!networkStorageSession)
         return completionHandler({ });
     Vector<WebCore::Cookie> result;
@@ -900,7 +900,7 @@ void NetworkConnectionToWebProcess::setRawCookie(const URL& firstParty, const UR
     if (allowCookieAccess != NetworkProcess::AllowCookieAccess::Allow)
         return;
 
-    auto* networkStorageSession = storageSession();
+    CheckedPtr networkStorageSession = storageSession();
     if (!networkStorageSession)
         return;
 
@@ -923,7 +923,7 @@ void NetworkConnectionToWebProcess::deleteCookie(const URL& firstParty, const UR
     if (allowCookieAccess != NetworkProcess::AllowCookieAccess::Allow)
         return completionHandler();
 
-    auto* networkStorageSession = storageSession();
+    CheckedPtr networkStorageSession = storageSession();
     if (!networkStorageSession)
         return completionHandler();
     networkStorageSession->deleteCookie(firstParty, url, cookieName, WTFMove(completionHandler));
@@ -940,7 +940,7 @@ void NetworkConnectionToWebProcess::cookiesForDOMAsync(const URL& firstParty, co
         return completionHandler(std::nullopt);
     }
 
-    auto* networkStorageSession = storageSession();
+    CheckedPtr networkStorageSession = storageSession();
     if (!networkStorageSession)
         return completionHandler(std::nullopt);
     auto result = networkStorageSession->cookiesForDOMAsVector(firstParty, sameSiteInfo, url, frameID, pageID, includeSecureCookies, ApplyTrackingPrevention::Yes, m_networkProcess->shouldRelaxThirdPartyCookieBlockingForPage(webPageProxyID), WTFMove(options));
@@ -964,7 +964,7 @@ void NetworkConnectionToWebProcess::setCookieFromDOMAsync(const URL& firstParty,
         return completionHandler(false);
     }
 
-    auto* networkStorageSession = storageSession();
+    CheckedPtr networkStorageSession = storageSession();
     if (!networkStorageSession)
         return completionHandler(false);
 
@@ -987,7 +987,7 @@ void NetworkConnectionToWebProcess::domCookiesForHost(const URL& url, Completion
     if (allowCookieAccess != NetworkProcess::AllowCookieAccess::Allow)
         return completionHandler({ });
 
-    auto* networkStorageSession = storageSession();
+    CheckedPtr networkStorageSession = storageSession();
     if (!networkStorageSession)
         return completionHandler({ });
 
@@ -1022,7 +1022,7 @@ void NetworkConnectionToWebProcess::unsubscribeFromCookieChangeNotifications(con
     bool removed = m_hostsWithCookieListeners.remove(host);
     ASSERT_UNUSED(removed, removed);
 
-    if (auto* networkStorageSession = storageSession())
+    if (CheckedPtr networkStorageSession = storageSession())
         networkStorageSession->stopListeningForCookieChangeNotifications(*this, HashSet<String> { host });
 }
 
@@ -1459,11 +1459,11 @@ void NetworkConnectionToWebProcess::establishSharedWorkerServerConnection()
 
     CONNECTION_RELEASE_LOG(SharedWorker, "establishSharedWorkerServerConnection:");
 
-    auto& server = session->ensureSharedWorkerServer();
-    auto connection = WebSharedWorkerServerConnection::create(m_networkProcess, server, m_connection.get(), m_webProcessIdentifier);
+    CheckedRef server = session->ensureSharedWorkerServer();
+    auto connection = WebSharedWorkerServerConnection::create(m_networkProcess, server.get(), m_connection.get(), m_webProcessIdentifier);
 
     m_sharedWorkerConnection = connection;
-    server.addConnection(WTFMove(connection));
+    server->addConnection(WTFMove(connection));
 }
 
 void NetworkConnectionToWebProcess::closeSharedWorkerContextConnection()

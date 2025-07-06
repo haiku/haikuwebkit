@@ -107,6 +107,9 @@ struct AXTextRun {
     // Convenience methods for TextUnit movement.
     bool startsWithLineBreak() const { return text.startsWith('\n'); }
     bool endsWithLineBreak() const { return text.endsWith('\n'); }
+
+    UChar characterAt(unsigned index) const { return text.characterAt(index); }
+    unsigned textLength() const { return text.length(); }
 };
 
 struct AXTextRuns {

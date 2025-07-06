@@ -159,6 +159,7 @@ public:
 
     LayoutUnit computeTrackBasedSize() const;
 
+    bool hasAllLengthRowSizes() const;
     bool hasAnyPercentSizedRowsIndefiniteHeight() const { return m_hasPercentSizedRowsIndefiniteHeight; }
     bool hasAnyFlexibleMaxTrackBreadth() const { return m_hasFlexibleMaxTrackBreadth; }
     bool hasAnyBaselineAlignmentItem() const { return !m_baselineAlignmentItemsForRows.isEmpty() || !m_baselineAlignmentItemsForColumns.isEmpty(); }

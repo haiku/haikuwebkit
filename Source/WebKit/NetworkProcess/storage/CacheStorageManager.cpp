@@ -309,7 +309,7 @@ void CacheStorageManager::openCache(const String& name, WebCore::DOMCacheEngine:
         return cache->name() == name;
     });
     if (index != notFound)
-        return m_caches[index]->open(WTFMove(callback));
+        return Ref { m_caches[index] }->open(WTFMove(callback));
 
     Ref cache = CacheStorageCache::create(*this, name, createVersion4UUIDString(), m_path, m_queue.copyRef());
     m_caches.append(cache);

@@ -862,10 +862,17 @@ std::optional<LayoutUnit> GridTrackSizingAlgorithm::gridAreaBreadthForGridItem(c
     // logic has not been performed yet, so we will need to do an estimation.
     if (direction == GridTrackSizingDirection::ForRows && (m_sizingState == SizingState::ColumnSizingFirstIteration || m_sizingState == SizingState::ColumnSizingSecondIteration) && !m_renderGrid->areMasonryColumns()) {
         ASSERT(GridLayoutFunctions::isOrthogonalGridItem(*m_renderGrid, gridItem));
-        // FIXME (jfernandez) Content Alignment should account for this heuristic.
-        // https://github.com/w3c/csswg-drafts/issues/2697
-        if (m_sizingState == SizingState::ColumnSizingFirstIteration)
-            return estimatedGridAreaBreadthForGridItem(gridItem, GridTrackSizingDirection::ForRows);
+        if (m_sizingState == SizingState::ColumnSizingFirstIteration) {
+            auto spannedRowsSize = estimatedGridAreaBreadthForGridItem(gridItem, GridTrackSizingDirection::ForRows);
+
+            if (auto availableLogicalHeight = m_renderGrid->availableLogicalHeightForContentBox(); availableLogicalHeight && hasAllLengthRowSizes())  {
+                auto contentDistributionForRows = m_renderGrid->computeContentPositionAndDistributionOffset(GridTrackSizingDirection::ForRows,
+                    *availableLogicalHeight - *spannedRowsSize, m_renderGrid->numTracks(GridTrackSizingDirection::ForRows));
+                auto rowSpanForGridItem = m_renderGrid->gridSpanForGridItem(gridItem, GridTrackSizingDirection::ForRows);
+                return *spannedRowsSize + contentDistributionForRows.distributionOffset * (rowSpanForGridItem.integerSpan() - 1);
+            }
+            return spannedRowsSize;
+        }
         addContentAlignmentOffset = true;
     }
 
@@ -2210,6 +2217,16 @@ GridTrackSizingAlgorithm::StateMachine::~StateMachine()
 bool GridTrackSizingAlgorithm::isDirectionInMasonryDirection() const
 {
     return m_renderGrid->isMasonry(m_direction);
+}
+
+bool GridTrackSizingAlgorithm::hasAllLengthRowSizes() const
+{
+    for (size_t rowIndex = 0; rowIndex < m_renderGrid->numTracks(GridTrackSizingDirection::ForRows); ++rowIndex) {
+        auto trackSize = rawGridTrackSize(GridTrackSizingDirection::ForRows, rowIndex);
+        if (trackSize.type() != GridTrackSizeType::LengthTrackSizing && !trackSize.minTrackBreadth().isLength())
+            return false;
+    }
+    return true;
 }
 
 } // namespace WebCore

@@ -159,7 +159,7 @@ void HTMLTextAreaElement::attributeChanged(const QualifiedName& name, const Atom
         if (m_rows != rows) {
             m_rows = rows;
             if (renderer())
-                renderer()->setNeedsLayoutAndPrefWidthsRecalc();
+                renderer()->setNeedsLayoutAndPreferredWidthsUpdate();
         }
         break;
     }
@@ -168,7 +168,7 @@ void HTMLTextAreaElement::attributeChanged(const QualifiedName& name, const Atom
         if (m_cols != cols) {
             m_cols = cols;
             if (renderer())
-                renderer()->setNeedsLayoutAndPrefWidthsRecalc();
+                renderer()->setNeedsLayoutAndPreferredWidthsUpdate();
         }
         break;
     }
@@ -185,7 +185,7 @@ void HTMLTextAreaElement::attributeChanged(const QualifiedName& name, const Atom
         if (wrap != m_wrap) {
             m_wrap = wrap;
             if (renderer())
-                renderer()->setNeedsLayoutAndPrefWidthsRecalc();
+                renderer()->setNeedsLayoutAndPreferredWidthsUpdate();
         }
         break;
     }

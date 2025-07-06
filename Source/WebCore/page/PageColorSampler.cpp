@@ -340,7 +340,7 @@ Variant<PredominantColorType, Color> PageColorSampler::predominantColor(Page& pa
         if (!color.isVisible())
             continue;
 
-        colorDistribution.add(color.colorWithAlpha(1));
+        colorDistribution.add(color);
     }
 
     if (colorDistribution.isEmpty())

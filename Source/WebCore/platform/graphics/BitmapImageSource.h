@@ -62,7 +62,7 @@ public:
 
     // Decoding & animation
     bool isPendingDecodingAtIndex(unsigned index, SubsamplingLevel, const DecodingOptions&) const;
-    void destroyNativeImageAtIndex(unsigned index);
+    void destroyNativeImageAtIndex(unsigned index, std::optional<ShouldDecodeToHDR> = std::nullopt);
     void imageFrameAtIndexAvailable(unsigned index, ImageAnimatingState, DecodingStatus);
     void imageFrameDecodeAtIndexHasFinished(unsigned index, SubsamplingLevel, ImageAnimatingState, const DecodingOptions&, RefPtr<NativeImage>&&);
 
@@ -75,7 +75,7 @@ public:
     // NativeImage
     DecodingStatus requestNativeImageAtIndexIfNeeded(unsigned index, SubsamplingLevel, ImageAnimatingState, const DecodingOptions&);
 
-    RefPtr<NativeImage> primaryNativeImageIfExists() { return frameAtIndex(primaryFrameIndex()).nativeImage(); }
+    RefPtr<NativeImage> primaryNativeImageIfExists() { return frameAtIndex(primaryFrameIndex()).nativeImage(std::nullopt); }
     RefPtr<NativeImage> primaryNativeImage() final { return nativeImageAtIndex(primaryFrameIndex()); }
 
     // Image Metadata
@@ -162,7 +162,7 @@ private:
     DestinationColorSpace colorSpace() const final { return m_descriptor.colorSpace(); }
     std::optional<Color> singlePixelSolidColor() const final { return m_descriptor.singlePixelSolidColor(); }
     bool hasHDRGainMap() const final { return m_descriptor.hasHDRGainMap(); }
-    bool hasHDRContent() const final { return m_descriptor.hasHDRGainMap() || m_descriptor.hasHDRColorSpace(); }
+    bool hasHDRContent() const final { return m_descriptor.hasHDRGainMap() || m_descriptor.hasHDRColorSpace() || hasHDRContentForTesting(); }
 
     String uti() const final { return m_descriptor.uti(); }
     String filenameExtension() const final { return m_descriptor.filenameExtension(); }
@@ -194,7 +194,7 @@ private:
     void setClearDecoderAfterAsyncFrameRequestForTesting(bool enabled) final { m_clearDecoderAfterAsyncFrameRequestForTesting = enabled; }
     void setAsyncDecodingEnabledForTesting(bool enabled) final { m_isAsyncDecodingEnabledForTesting = enabled; }
     bool isAsyncDecodingEnabledForTesting() const final { return m_isAsyncDecodingEnabledForTesting; }
-    void setHasHDRContentForTesting() final { m_hasHDRContentForTesting = true; }
+    void setHasHDRContentForTesting() final;
     bool hasHDRContentForTesting() const final { return m_hasHDRContentForTesting; }
 
     void dump(TextStream&) const final;

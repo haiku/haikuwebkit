@@ -278,5 +278,5 @@ auto ToPlatform<PositionY>::operator()(const PositionY& positionY) -> WebCore::L
     return toPlatform(positionY.value);
 }
 
-} // namespace CSS
+} // namespace Style
 } // namespace WebCore

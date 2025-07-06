@@ -269,7 +269,8 @@
    {
       "emails" : [
          "ahmad.saleem792@gmail.com",
-         "ahmad.saleem792+github@gmail.com"
+         "ahmad.saleem792+github@gmail.com",
+         "ahmad_saleem@apple.com"
       ],
       "github" : "Ahmad-S792",
       "name" : "Ahmad Saleem",
@@ -2728,6 +2729,18 @@
       "github" : "eddydas",
       "name" : "Eddy Wong",
       "status" : "committer"
+   },
+   {
+      "emails" : [
+         "ycao47@apple.com",
+         "caoyuncong666@gmail.com",
+         "1623295825@qq.com"
+      ],
+      "github" : "Yuncong-Cao",
+      "name" : "Edison Cao",
+      "nicks" : [
+         "Edison"
+      ]
    },
    {
       "emails" : [
@@ -7763,7 +7776,8 @@
          "taher_ali@apple.com"
       ],
       "github" : "nullhook",
-      "name" : "Taher Ali"
+      "name" : "Taher Ali",
+      "status" : "committer"
    },
    {
       "emails" : [

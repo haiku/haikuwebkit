@@ -263,8 +263,8 @@ public:
     // FIXME: This method seems to violate the encapsulation of this class.
     void setResponse(ResourceResponse&& response) { m_response = WTFMove(response); }
 
-    bool isContentExtensionRedirect() const { return m_isContentExtensionRedirect; }
-    void setIsContentExtensionRedirect(bool isContentExtensionRedirect) { m_isContentExtensionRedirect = isContentExtensionRedirect; }
+    bool isContentRuleListRedirect() const { return m_isContentRuleListRedirect; }
+    void setIsContentRuleListRedirect(bool isContentRuleListRedirect) { m_isContentRuleListRedirect = isContentRuleListRedirect; }
 
     bool isClientRedirect() const { return m_isClientRedirect; }
     void setIsClientRedirect(bool isClientRedirect) { m_isClientRedirect = isClientRedirect; }
@@ -797,7 +797,7 @@ private:
     bool m_committed { false };
     bool m_isStopping { false };
     bool m_gotFirstByte { false };
-    bool m_isContentExtensionRedirect { false };
+    bool m_isContentRuleListRedirect { false };
     bool m_isClientRedirect { false };
     bool m_isLoadingMultipartContent { false };
     bool m_isContinuingLoadAfterProvisionalLoadStarted { false };

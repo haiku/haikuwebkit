@@ -101,11 +101,6 @@ const AtomString& HTMLTemplateElement::shadowRootMode() const
     return emptyAtom();
 }
 
-void HTMLTemplateElement::setShadowRootMode(const AtomString& value)
-{
-    setAttribute(HTMLNames::shadowrootmodeAttr, value);
-}
-
 void HTMLTemplateElement::setDeclarativeShadowRoot(ShadowRoot& shadowRoot)
 {
     m_declarativeShadowRoot = shadowRoot;

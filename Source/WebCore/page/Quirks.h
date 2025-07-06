@@ -40,6 +40,7 @@ class EventTarget;
 class EventTypeInfo;
 class HTMLElement;
 class HTMLVideoElement;
+class KeyframeEffect;
 class LayoutUnit;
 class LocalFrame;
 class Node;
@@ -261,6 +262,8 @@ public:
     bool shouldSupportHoverMediaQueries() const;
 
     bool shouldRewriteMediaRangeRequestForURL(const URL&) const;
+
+    bool shouldPreventKeyframeEffectAcceleration(const KeyframeEffect&) const;
 
 private:
     bool needsQuirks() const;

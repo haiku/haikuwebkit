@@ -26,6 +26,7 @@
 #include "RemotePageProxy.h"
 #include "SpeechRecognitionPermissionManager.h"
 #include "UserMediaPermissionRequestProxy.h"
+#include "WebFrameProxy.h"
 #include "WebPageProxy.h"
 #include "WebProcessMessages.h"
 #include "WebProcessProxy.h"
@@ -210,8 +211,8 @@ void UserMediaProcessManager::revokeSandboxExtensionsIfNeeded(WebProcessProxy& p
 
     for (auto& weakRemotePage : process.remotePages()) {
         if (RefPtr remotePage = weakRemotePage.get()) {
-            hasAudioCapture |= remotePage->mediaState().containsAny(MediaProducer::IsCapturingAudioMask);
-            hasVideoCapture |= remotePage->mediaState().containsAny(MediaProducer::IsCapturingVideoMask);
+            hasAudioCapture |= remotePage->mediaState().containsAny(WebCore::MediaProducer::IsCapturingAudioMask);
+            hasVideoCapture |= remotePage->mediaState().containsAny(WebCore::MediaProducer::IsCapturingVideoMask);
         }
     }
 

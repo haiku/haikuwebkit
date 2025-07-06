@@ -43,6 +43,7 @@ extension WKRKEntity {
     weak var delegate: WKRKEntityDelegate?
 
     @nonobjc private var animationPlaybackController: AnimationPlaybackController? = nil
+    @nonobjc private var animationFinishedSubscription: Cancellable?
     @nonobjc private var _duration: TimeInterval? = nil
     @nonobjc private var _playbackRate: Float = 1.0
 
@@ -224,35 +225,20 @@ extension WKRKEntity {
             return
         }
 
-        // This needs to be done within an unstructured async context (Task) because otherwise,
-        // the function will be forced to retain `self` for its lifetime, which will be indefinite
-        // because this async sequence never terminates, leading to a memory leak.
-        //
-        // Using Task avoids this because it allows `self` to be captured weakly, and then in each
-        // iteration of the loop, it is used if it is non-nil.
-        Task { [weak self, entity] in
-            for await event in scene.publisher(for: AnimationEvents.PlaybackCompleted.self, on: entity).values {
-                guard let self else {
-                    break
-                }
-
-                self.onPlaybackCompletedChange(event: event, animation: animation)
+        animationFinishedSubscription = scene.subscribe(to: AnimationEvents.PlaybackCompleted.self, on: entity) { [weak self] event in
+            guard let self,
+                  let playbackController = self.animationPlaybackController,
+                  event.playbackController == playbackController else {
+                Logger.realityKitEntity.error("Cannot schedule the next animation")
+                return
             }
+
+            let startsPaused = !self.loop
+            let animationController = self.entity.playAnimation(animation, startsPaused: startsPaused)
+            animationController.speed = self._playbackRate
+            self.animationPlaybackController = animationController
+            self.animationPlaybackStateDidUpdate()
         }
-    }
-
-    @nonobjc private final func onPlaybackCompletedChange(event: AnimationEvents.PlaybackCompleted, animation: AnimationResource) {
-        guard let playbackController = animationPlaybackController, event.playbackController == playbackController else {
-            Logger.realityKitEntity.error("Cannot schedule the next animation")
-            return
-        }
-
-        let startsPaused = !loop
-        let animationController = entity.playAnimation(animation, startsPaused: startsPaused)
-        animationController.speed = _playbackRate
-
-        animationPlaybackController = animationController
-        animationPlaybackStateDidUpdate()
     }
 
     private static func resizedImage(_ imageSource: CGImageSource) -> CGImage? {

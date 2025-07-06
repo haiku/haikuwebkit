@@ -319,7 +319,7 @@ void BorderPainter::paintOutline(const LayoutRect& paintRect) const
     auto closedEdges = RectEdges<bool> { true };
 
     auto outlineEdgeWidths = RectEdges<LayoutUnit> { outlineWidth };
-    auto outlineShape = BorderShape::shapeForOutlineRect(styleToUse, paintRect, outerRect, outlineEdgeWidths, closedEdges);
+    auto outlineShape = BorderShape::shapeForOutsetRect(styleToUse, paintRect, outerRect, outlineEdgeWidths, closedEdges);
 
     auto bleedAvoidance = BleedAvoidance::ShrinkBackground;
     auto appliedClipAlready = false;

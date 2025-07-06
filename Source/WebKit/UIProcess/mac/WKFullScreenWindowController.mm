@@ -537,6 +537,9 @@ static RetainPtr<CGImageRef> takeWindowSnapshot(CGSWindowID windowID, bool captu
 - (void)_continueExitingFullscreenAfterPostingNotificationAndExitImmediately:(bool)immediately
 {
     RefPtr manager = [self _manager];
+    if (!manager)
+        return;
+
     if (_fullScreenState == InFullScreen) {
         // If we are currently in the InFullScreen state, this notification is unexpected, meaning
         // fullscreen was exited without being initiated by WebKit. Do not return early, but continue to

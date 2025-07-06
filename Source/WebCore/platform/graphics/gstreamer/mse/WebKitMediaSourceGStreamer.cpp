@@ -850,7 +850,7 @@ static gboolean webKitMediaSrcSendEvent(GstElement* element, GstEvent* eventTran
                 wasEventHandledByAnyStream |= wasHandled;
             }
         } else
-            wasEventHandledByAnyStream = GST_ELEMENT_CLASS(webkit_media_src_parent_class)->send_event(element, event.leakRef());
+            wasEventHandledByAnyStream = GST_ELEMENT_CLASS(webkit_media_src_parent_class)->send_event(element, event.ref());
         auto rate = GStreamerQuirksManager::singleton().processWebKitMediaSrcCustomEvent(event, wasEventHandledByAnyStream, wasEventHandledByAllStreams);
         if (rate.has_value())
             source->priv->rate = rate.value();

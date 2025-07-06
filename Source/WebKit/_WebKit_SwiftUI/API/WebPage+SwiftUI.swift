@@ -40,22 +40,4 @@ extension WebPage {
             #endif
         }
     }
-
-    /// Generates an image from the web view’s contents.
-    ///
-    /// - Parameter configuration: The object that specifies the portion of the web page to capture, and other capture-related behaviors.
-    /// - Returns: An image that contains the specified portion of the webpage.
-    /// - Throws: An error if a problem occurred when generating the snapshot.
-    @available(WK_IOS_TBA, WK_MAC_TBA, WK_XROS_TBA, *)
-    @available(watchOS, unavailable)
-    @available(tvOS, unavailable)
-    public func snapshot(_ configuration: WKSnapshotConfiguration = .init()) async throws -> Image? {
-        let cocoaImage = try await backingWebView.takeSnapshot(configuration: configuration)
-
-        #if canImport(UIKit)
-        return Image(uiImage: cocoaImage)
-        #else
-        return Image(nsImage: cocoaImage)
-        #endif
-    }
 }

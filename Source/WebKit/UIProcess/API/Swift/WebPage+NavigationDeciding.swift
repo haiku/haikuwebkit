@@ -64,6 +64,9 @@ extension WebPage {
         public var buttonNumber: Int { wrapped.buttonNumber }
         #endif
 
+        /// Whether or not the navigation is a redirect from a content rule list.
+        public var isContentRuleListRedirect: Bool { wrapped.isContentRuleListRedirect }
+
         // SPI for the cross-import overlay.
         // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
         @_spi(CrossImportOverlay)

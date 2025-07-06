@@ -541,7 +541,9 @@ private:
     void registerURLSchemeAsBypassingContentSecurityPolicy(const String&) const;
     void setDomainRelaxationForbiddenForURLScheme(const String&) const;
     void registerURLSchemeAsLocal(const String&) const;
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
     void registerURLSchemeAsNoAccess(const String&) const;
+#endif
     void registerURLSchemeAsDisplayIsolated(const String&) const;
     void registerURLSchemeAsCORSEnabled(const String&);
     void registerURLSchemeAsAlwaysRevalidated(const String&) const;

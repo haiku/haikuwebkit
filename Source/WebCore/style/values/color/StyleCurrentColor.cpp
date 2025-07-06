@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,23 +27,10 @@
 #include "config.h"
 #include "StyleCurrentColor.h"
 
-#include "CSSSerializationContext.h"
 #include <wtf/text/TextStream.h>
 
 namespace WebCore {
 namespace Style {
-
-// MARK: - Serialization
-
-void serializationForCSS(StringBuilder& builder, const CSS::SerializationContext&, const CurrentColor&)
-{
-    builder.append("currentcolor"_s);
-}
-
-String serializationForCSS(const CSS::SerializationContext&, const CurrentColor&)
-{
-    return "currentcolor"_s;
-}
 
 // MARK: - TextStream
 

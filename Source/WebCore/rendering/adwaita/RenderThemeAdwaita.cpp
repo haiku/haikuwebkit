@@ -208,7 +208,7 @@ Vector<String, 2> RenderThemeAdwaita::mediaControlsScripts()
     return { StringImpl::createWithoutCopying(ModernMediaControlsJavaScript) };
 }
 
-Vector<String> RenderThemeAdwaita::mediaControlsStyleSheets(const HTMLMediaElement&)
+Vector<String, 2> RenderThemeAdwaita::mediaControlsStyleSheets(const HTMLMediaElement&)
 {
     if (m_mediaControlsStyleSheet.isEmpty())
         m_mediaControlsStyleSheet = StringImpl::createWithoutCopying(ModernMediaControlsUserAgentStyleSheet);

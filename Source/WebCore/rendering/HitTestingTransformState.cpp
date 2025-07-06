@@ -74,4 +74,13 @@ LayoutRect HitTestingTransformState::boundsOfMappedArea() const
     return identity.clampedBoundsOfProjectedQuad(m_lastPlanarArea);
 }
 
+LayoutRect HitTestingTransformState::boundsOfMappedQuad() const
+{
+    if (auto inverse = m_accumulatedTransform.inverse())
+        return inverse.value().clampedBoundsOfProjectedQuad(m_lastPlanarQuad);
+    TransformationMatrix identity;
+    return identity.clampedBoundsOfProjectedQuad(m_lastPlanarQuad);
+}
+
+
 } // namespace WebCore

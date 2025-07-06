@@ -65,6 +65,10 @@
 #include <WebCore/ModelContext.h>
 #endif
 
+#if ENABLE(MACH_PORT_LAYER_HOSTING)
+#include <wtf/MachSendRightAnnotated.h>
+#endif
+
 namespace WebKit {
 
 struct LayerProperties;
@@ -89,6 +93,9 @@ public:
         struct NoAdditionalData { };
         struct CustomData {
             uint32_t hostingContextID { 0 };
+#if ENABLE(MACH_PORT_LAYER_HOSTING)
+            std::optional<WTF::MachSendRightAnnotated> sendRightAnnotated;
+#endif
             float hostingDeviceScaleFactor { 1 };
             bool preservesFlip { false };
         };
@@ -121,6 +128,9 @@ public:
 
         std::optional<WebCore::LayerHostingContextIdentifier> hostIdentifier() const;
         uint32_t hostingContextID() const;
+#if ENABLE(MACH_PORT_LAYER_HOSTING)
+        std::optional<WTF::MachSendRightAnnotated> sendRightAnnotated() const;
+#endif
         bool preservesFlip() const;
         float hostingDeviceScaleFactor() const;
 

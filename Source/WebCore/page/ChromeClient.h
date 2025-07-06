@@ -764,6 +764,8 @@ public:
     virtual void foreachRegionInDamageHistoryForTesting(Function<void(const Region&)>&&) const { }
 #endif
 
+    virtual bool usePluginRendererScrollableArea(LocalFrame&) const { return true; }
+
     WEBCORE_EXPORT virtual ~ChromeClient();
 
 protected:

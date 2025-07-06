@@ -62,7 +62,6 @@ const CFStringRef WebCoreCGImagePropertyFrameInfoArray = CFSTR("FrameInfo");
 const CFStringRef WebCoreCGImagePropertyUnclampedDelayTime = CFSTR("UnclampedDelayTime");
 const CFStringRef WebCoreCGImagePropertyDelayTime = CFSTR("DelayTime");
 const CFStringRef WebCoreCGImagePropertyLoopCount = CFSTR("LoopCount");
-const CFStringRef WebCoreCGImagePropertyHeadroom = CFSTR("Headroom");
 
 const CFStringRef kCGImageSourceEnableRestrictedDecoding = CFSTR("kCGImageSourceEnableRestrictedDecoding");
 
@@ -233,18 +232,6 @@ static ImageOrientation orientationFromProperties(CFDictionaryRef imagePropertie
     int exifValue;
     CFNumberGetValue(orientationProperty, kCFNumberIntType, &exifValue);
     return ImageOrientation::fromEXIFValue(exifValue);
-}
-
-static Headroom headroomFromProperties(CFDictionaryRef imageProperties)
-{
-    ASSERT(imageProperties);
-    CFNumberRef headroomProperty = (CFNumberRef)CFDictionaryGetValue(imageProperties, WebCoreCGImagePropertyHeadroom);
-    if (!headroomProperty)
-        return Headroom::None;
-
-    float headroomValue;
-    CFNumberGetValue(headroomProperty, kCFNumberFloatType, &headroomValue);
-    return headroomValue;
 }
 
 static bool mayHaveDensityCorrectedSize(CFDictionaryRef imageProperties)
@@ -614,8 +601,8 @@ bool ImageDecoderCG::fetchFrameMetaDataAtIndex(size_t index, SubsamplingLevel su
         return false;
 
     if (options.hasSizeForDrawing()) {
-        ASSERT(frame.hasNativeImage());
-        frame.m_size = frame.nativeImage()->size();
+        ASSERT(frame.hasNativeImage(options.shouldDecodeToHDR()));
+        frame.m_size = frame.nativeImage(options.shouldDecodeToHDR())->size();
     } else
         frame.m_size = frameSizeFromProperties(properties.get());
 
@@ -626,16 +613,11 @@ bool ImageDecoderCG::fetchFrameMetaDataAtIndex(size_t index, SubsamplingLevel su
     else
         frame.m_densityCorrectedSize = std::nullopt;
 
-    if (frame.hasNativeImage())
-        frame.m_headroom = frame.nativeImage()->headroom();
-
     bool frameIsComplete = frameIsCompleteAtIndex(index);
 
     frame.m_subsamplingLevel = subsamplingLevel;
-    frame.m_decodingOptions = options;
     frame.m_hasAlpha = !frameIsComplete || hasAlpha();
     frame.m_orientation = orientationFromProperties(properties.get());
-    frame.m_headroom = headroomFromProperties(properties.get());
     frame.m_decodingStatus = frameIsComplete ? DecodingStatus::Complete : DecodingStatus::Partial;
     return true;
 }

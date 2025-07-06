@@ -850,8 +850,23 @@ void BackgroundPainter::paintBoxShadow(const LayoutRect& paintRect, const Render
         };
 
         if (!Style::isInset(shadow)) {
-            auto shadowShape = borderShape;
-            shadowShape.inflate(shadowSpread);
+            auto shadowShape = [&] {
+                if (!shadowSpread)
+                    return borderShape;
+
+                if (shadowSpread > 0) {
+                    auto spreadRect = paintRect;
+                    spreadRect.inflate(shadowSpread);
+                    return BorderShape::shapeForOutsetRect(style, paintRect, spreadRect, { }, closedEdges);
+                }
+
+                auto spreadRect = paintRect;
+                auto inflateX = std::max(shadowSpread, -paintRect.width() / 2);
+                auto inflateY = std::max(shadowSpread, -paintRect.height() / 2);
+                spreadRect.inflate(LayoutSize { inflateX, inflateY });
+                return BorderShape::shapeForInsetRect(style, paintRect, spreadRect /* , closedEdges*/);
+            }();
+
             if (shadowShape.isEmpty())
                 continue;
 

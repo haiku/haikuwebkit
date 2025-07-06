@@ -60,7 +60,7 @@ Element* AccessibilityMenuListOption::actionElement() const
 
 bool AccessibilityMenuListOption::isEnabled() const
 {
-    auto* optionElement = this->optionElement();
+    RefPtr optionElement = this->optionElement();
     return optionElement && !optionElement->ownElementDisabled();
 }
 
@@ -71,7 +71,7 @@ bool AccessibilityMenuListOption::isVisible() const
         return false;
 
     // In a single-option select with the popup collapsed, only the selected item is considered visible.
-    auto* ownerSelectElement = optionElement->document().axObjectCache()->getOrCreate(optionElement->ownerSelectElement());
+    RefPtr ownerSelectElement = optionElement->document().axObjectCache()->getOrCreate(optionElement->ownerSelectElement());
     return ownerSelectElement && (!ownerSelectElement->isOffScreen() || isSelected());
 }
 
@@ -83,7 +83,7 @@ bool AccessibilityMenuListOption::isOffScreen() const
 
 bool AccessibilityMenuListOption::isSelected() const
 {
-    auto* optionElement = this->optionElement();
+    RefPtr optionElement = this->optionElement();
     return optionElement && optionElement->selected();
 }
 
@@ -92,7 +92,7 @@ void AccessibilityMenuListOption::setSelected(bool selected)
     if (!canSetSelectedAttribute())
         return;
     
-    if (auto* optionElement = this->optionElement())
+    if (RefPtr optionElement = this->optionElement())
         optionElement->setSelected(selected);
 }
 
@@ -122,7 +122,7 @@ LayoutRect AccessibilityMenuListOption::elementRect() const
 
 String AccessibilityMenuListOption::stringValue() const
 {
-    auto* optionElement = this->optionElement();
+    RefPtr optionElement = this->optionElement();
     return optionElement ? optionElement->label() : String();
 }
 

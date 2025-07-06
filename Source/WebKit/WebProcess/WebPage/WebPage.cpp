@@ -6903,10 +6903,8 @@ void WebPage::wheelEventHandlersChanged(bool hasHandlers)
 
 static bool hasEnabledHorizontalScrollbar(ScrollableArea* scrollableArea)
 {
-    if (Scrollbar* scrollbar = scrollableArea->horizontalScrollbar())
-        return scrollbar->enabled();
-
-    return false;
+    RefPtr scrollbar = scrollableArea->horizontalScrollbar();
+    return scrollbar && scrollbar->enabled();
 }
 
 static bool pageContainsAnyHorizontalScrollbars(LocalFrame* mainFrame)
@@ -9514,7 +9512,7 @@ void WebPage::setAppHighlightsVisibility(WebCore::HighlightVisibility appHighlig
 void WebPage::createMediaSessionCoordinator(const String& identifier, CompletionHandler<void(bool)>&& completionHandler)
 {
     RefPtr document = m_mainFrame->coreLocalFrame()->document();
-    if (!document || !document->domWindow()) {
+    if (!document || !document->window()) {
         completionHandler(false);
         return;
     }
@@ -9871,8 +9869,8 @@ void WebPage::remotePostMessage(WebCore::FrameIdentifier source, const String& s
     RefPtr sourceFrame = WebProcess::singleton().webFrame(source);
     RefPtr sourceWindow = sourceFrame && sourceFrame->coreFrame() ? &sourceFrame->coreFrame()->windowProxy() : nullptr;
 
-    auto& script = targetCoreFrame->script();
-    auto globalObject = script.globalObject(WebCore::mainThreadNormalWorldSingleton());
+    CheckedRef script = targetCoreFrame->script();
+    auto globalObject = script->globalObject(WebCore::mainThreadNormalWorldSingleton());
     if (!globalObject)
         return;
 
@@ -9893,7 +9891,7 @@ void WebPage::renderTreeAsTextForTesting(WebCore::FrameIdentifier frameID, size_
         return completionHandler("Test Error - WebFrame missing LocalFrame in web process"_s);
     }
 
-    auto* renderer = coreLocalFrame->contentRenderer();
+    CheckedPtr renderer = coreLocalFrame->contentRenderer();
     if (!renderer) {
         ASSERT_NOT_REACHED();
         return completionHandler("Test Error - WebFrame missing RenderView in web process"_s);
@@ -9919,7 +9917,7 @@ void WebPage::layerTreeAsTextForTesting(WebCore::FrameIdentifier frameID, size_t
         return completionHandler("Test Error - WebFrame missing LocalFrame in web process"_s);
     }
 
-    auto* renderer = coreLocalFrame->contentRenderer();
+    CheckedPtr renderer = coreLocalFrame->contentRenderer();
     if (!renderer) {
         ASSERT_NOT_REACHED();
         return completionHandler("Test Error - WebFrame missing RenderView in web process"_s);

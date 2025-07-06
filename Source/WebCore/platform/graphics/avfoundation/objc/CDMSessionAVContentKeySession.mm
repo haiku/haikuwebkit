@@ -386,14 +386,11 @@ void CDMSessionAVContentKeySession::addParser(AVStreamDataParser* parser)
 
 bool CDMSessionAVContentKeySession::isAnyKeyUsable(const Keys& keys) const
 {
-    Keys requestKeys = CDMPrivateFairPlayStreaming::keyIDsForRequest(contentKeyRequest().get());
+    auto requestKeys = CDMPrivateFairPlayStreaming::keyIDsForRequest(contentKeyRequest().get());
     for (auto& requestKey : requestKeys) {
-        if (keys.findIf([&] (auto& key) {
-            return key.get() == requestKey.get();
-        }) != notFound)
+        if (keys.containsIf([&](auto& key) { return arePointingToEqualData(key, requestKey); }))
             return true;
     }
-
     return false;
 }
 

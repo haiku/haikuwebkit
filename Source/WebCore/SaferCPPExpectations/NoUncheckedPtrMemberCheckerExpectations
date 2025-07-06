@@ -103,11 +103,11 @@ rendering/svg/legacy/SVGResourcesCache.h
 rendering/updating/RenderTreeBuilder.h
 rendering/updating/RenderTreeBuilderBlock.cpp
 rendering/updating/RenderTreeUpdater.h
-style/CustomPropertyRegistry.h
 style/InlineTextBoxStyle.cpp
 style/PseudoClassChangeInvalidation.h
 style/StyleAdjuster.h
 style/StyleBuilderState.h
+style/StyleCustomPropertyRegistry.h
 style/StyleExtractorState.h
 style/StyleRelations.h
 style/StyleResolver.cpp

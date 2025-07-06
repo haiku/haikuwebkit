@@ -51,8 +51,11 @@ public:
     // overrideBorderWidths describe custom insets from the border box, used instead of the border widths from the style.
     static BorderShape shapeForBorderRect(const RenderStyle&, const LayoutRect& borderRect, const RectEdges<LayoutUnit>& overrideBorderWidths, RectEdges<bool> closedEdges = { true });
 
-    // Create a BorderShape suitable for rendering an outline. borderRect is provided to allow for scaling the corner radii.
-    static BorderShape shapeForOutlineRect(const RenderStyle&, const LayoutRect& borderRect, const LayoutRect& outlineBoxRect, const RectEdges<LayoutUnit>& outlineWidths, RectEdges<bool> closedEdges = { true });
+    // Create a BorderShape suitable for rendering an outline or outset shadow. borderRect is provided to allow for scaling the corner radii.
+    static BorderShape shapeForOutsetRect(const RenderStyle&, const LayoutRect& borderRect, const LayoutRect& outlineBoxRect, const RectEdges<LayoutUnit>& outlineWidths, RectEdges<bool> closedEdges = { true });
+
+    // Create a BorderShape suitable for rendering a shape inset from the box. borderRect is provided to allow for scaling the corner radii.
+    static BorderShape shapeForInsetRect(const RenderStyle&, const LayoutRect& borderRect, const LayoutRect& insetRect);
 
     BorderShape(const LayoutRect& borderRect, const RectEdges<LayoutUnit>& borderWidths);
     BorderShape(const LayoutRect& borderRect, const RectEdges<LayoutUnit>& borderWidths, const RoundedRectRadii&);

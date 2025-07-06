@@ -229,6 +229,9 @@ void RemoteLayerTreeDrawingAreaProxyIOS::setPreferredFramesPerSecond(IPC::Connec
 
 void RemoteLayerTreeDrawingAreaProxyIOS::didRefreshDisplay()
 {
+    if (RefPtr page = this->page())
+        page->didRefreshDisplay();
+
     if (m_needsDisplayRefreshCallbacksForDrawing)
         RemoteLayerTreeDrawingAreaProxy::didRefreshDisplay();
 

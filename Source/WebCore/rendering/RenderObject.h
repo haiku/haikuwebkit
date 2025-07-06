@@ -698,10 +698,10 @@ public:
     bool needsPreferredLogicalWidthsUpdate() const { return m_stateBitfields.hasFlag(StateFlag::PreferredLogicalWidthsNeedUpdate); }
 
     bool selfNeedsLayout() const { return m_stateBitfields.hasFlag(StateFlag::NeedsLayout); }
-    bool needsPositionedMovementLayout() const { return m_stateBitfields.hasFlag(StateFlag::NeedsPositionedMovementLayout); }
-    bool needsPositionedMovementLayoutOnly() const;
+    bool needsOutOfFlowMovementLayout() const { return m_stateBitfields.hasFlag(StateFlag::NeedsOutOfFlowMovementLayout); }
+    bool needsOutOfFlowMovementLayoutOnly() const;
 
-    bool posChildNeedsLayout() const { return m_stateBitfields.hasFlag(StateFlag::PosChildNeedsLayout); }
+    bool outOfFlowChildNeedsLayout() const { return m_stateBitfields.hasFlag(StateFlag::OutOfFlowChildNeedsLayout); }
     bool needsSimplifiedNormalFlowLayout() const { return m_stateBitfields.hasFlag(StateFlag::NeedsSimplifiedNormalFlowLayout); }
     bool needsSimplifiedNormalFlowLayoutOnly() const;
     bool normalChildNeedsLayout() const { return m_stateBitfields.hasFlag(StateFlag::NormalChildNeedsLayout); }
@@ -722,8 +722,6 @@ public:
     // instead. Returns the capture state with this adjustment applied.
     bool effectiveCapturedInViewTransition() const;
 
-    inline bool preservesNewline() const;
-
     inline RenderView& view() const; // Defined in RenderObjectInlines.h
     CheckedRef<RenderView> checkedView() const;
     inline const LocalFrameViewLayoutContext& layoutContext() const;
@@ -737,12 +735,6 @@ public:
     inline RefPtr<Node> protectedNode() const; // Defined in RenderObjectInlines.h
 
     inline Node* nonPseudoNode() const; // Defined in RenderObjectInlines.h
-    inline RefPtr<Node> protectedNonPseudoNode() const; // Defined in RenderObjectInlines.h
-
-    // Returns the styled node that caused the generation of this renderer.
-    // This is the same as node() except for renderers of :before and :after
-    // pseudo elements for which their parent node is returned.
-    inline Node* generatingNode() const; // Defined in RenderObjectInlines.h
 
     inline Document& document() const; // Defined in RenderObjectInlines.h
     inline Ref<Document> protectedDocument() const; // Defined in RenderObjectInlines.h
@@ -767,7 +759,7 @@ public:
     void setNeedsPreferredWidthsUpdate(MarkingBehavior = MarkContainingBlockChain);
     void clearNeedsPreferredWidthsUpdate() { m_stateBitfields.setFlag(StateFlag::PreferredLogicalWidthsNeedUpdate, { }); }
     
-    inline void setNeedsLayoutAndPrefWidthsRecalc();
+    inline void setNeedsLayoutAndPreferredWidthsUpdate();
 
     void setPositionState(PositionType);
     void clearPositionedState() { m_stateBitfields.clearPositionedState(); }
@@ -832,7 +824,7 @@ public:
 
     // Return the offset from the container() renderer (excluding transforms). In multi-column layout,
     // different offsets apply at different points, so return the offset that applies to the given point.
-    virtual LayoutSize offsetFromContainer(RenderElement&, const LayoutPoint&, bool* offsetDependsOnPoint = nullptr) const;
+    virtual LayoutSize offsetFromContainer(const RenderElement&, const LayoutPoint&, bool* offsetDependsOnPoint = nullptr) const;
     // Return the offset from an object up the container() chain. Asserts that none of the intermediate objects have transforms.
     LayoutSize offsetFromAncestorContainer(const RenderElement&) const;
 
@@ -1141,9 +1133,9 @@ protected:
     void setIsBeingDestroyed() { m_stateBitfields.setFlag(StateFlag::BeingDestroyed); }
 
     void scheduleLayout(RenderElement* layoutRoot);
-    void setNeedsPositionedMovementLayoutBit(bool b) { m_stateBitfields.setFlag(StateFlag::NeedsPositionedMovementLayout, b); }
+    void setNeedsOutOfFlowMovementLayoutBit(bool b) { m_stateBitfields.setFlag(StateFlag::NeedsOutOfFlowMovementLayout, b); }
     void setNormalChildNeedsLayoutBit(bool b) { m_stateBitfields.setFlag(StateFlag::NormalChildNeedsLayout, b); }
-    void setPosChildNeedsLayoutBit(bool b) { m_stateBitfields.setFlag(StateFlag::PosChildNeedsLayout, b); }
+    void setOutOfFlowChildNeedsLayoutBit(bool b) { m_stateBitfields.setFlag(StateFlag::OutOfFlowChildNeedsLayout, b); }
     void setNeedsSimplifiedNormalFlowLayoutBit(bool b) { m_stateBitfields.setFlag(StateFlag::NeedsSimplifiedNormalFlowLayout, b); }
     void setOutOfFlowChildNeedsStaticPositionLayoutBit(bool b) { m_stateBitfields.setFlag(StateFlag::OutOfFlowChildNeedsStaticPositionLayout, b); }
 
@@ -1168,7 +1160,7 @@ private:
 
     void addAbsoluteRectForLayer(LayoutRect& result);
     void setLayerNeedsFullRepaint();
-    void setLayerNeedsFullRepaintForPositionedMovementLayout();
+    void setLayerNeedsFullRepaintForOutOfFlowMovementLayout();
 
     void invalidateContainerPreferredLogicalWidths();
 
@@ -1181,8 +1173,6 @@ private:
     };
     WEBCORE_EXPORT static SelectionGeometriesInternal collectSelectionGeometriesInternal(const SimpleRange&);
 #endif
-
-    Node* generatingPseudoHostElement() const;
 
     void propagateRepaintToParentWithOutlineAutoIfNeeded(const RenderLayerModelObject& repaintContainer, const LayoutRect& repaintRect) const;
 
@@ -1205,9 +1195,9 @@ private:
         IsReplacedOrAtomicInline                            = 1 << 1,
         BeingDestroyed                                      = 1 << 2,
         NeedsLayout                                         = 1 << 3,
-        NeedsPositionedMovementLayout                       = 1 << 4,
+        NeedsOutOfFlowMovementLayout                        = 1 << 4,
         NormalChildNeedsLayout                              = 1 << 5,
-        PosChildNeedsLayout                                 = 1 << 6,
+        OutOfFlowChildNeedsLayout                           = 1 << 6,
         NeedsSimplifiedNormalFlowLayout                     = 1 << 7,
         OutOfFlowChildNeedsStaticPositionLayout             = 1 << 8,
         EverHadLayout                                       = 1 << 9,
@@ -1358,7 +1348,7 @@ inline void RenderObject::invalidateBackgroundObscurationStatus()
 inline bool RenderObject::needsSimplifiedNormalFlowLayoutOnly() const
 {
     return needsSimplifiedNormalFlowLayout() && !selfNeedsLayout() && !normalChildNeedsLayout()
-        && !posChildNeedsLayout() && !needsPositionedMovementLayout();
+        && !outOfFlowChildNeedsLayout() && !needsOutOfFlowMovementLayout();
 }
 
 inline RenderFragmentedFlow* RenderObject::enclosingFragmentedFlow() const
@@ -1373,17 +1363,17 @@ inline bool RenderObject::needsLayout() const
 {
     return selfNeedsLayout()
         || normalChildNeedsLayout()
-        || posChildNeedsLayout()
+        || outOfFlowChildNeedsLayout()
         || needsSimplifiedNormalFlowLayout()
-        || needsPositionedMovementLayout();
+        || needsOutOfFlowMovementLayout();
 }
 
-inline bool RenderObject::needsPositionedMovementLayoutOnly() const
+inline bool RenderObject::needsOutOfFlowMovementLayoutOnly() const
 {
-    return needsPositionedMovementLayout()
+    return needsOutOfFlowMovementLayout()
         && !selfNeedsLayout()
         && !normalChildNeedsLayout()
-        && !posChildNeedsLayout()
+        && !outOfFlowChildNeedsLayout()
         && !needsSimplifiedNormalFlowLayout();
 }
 

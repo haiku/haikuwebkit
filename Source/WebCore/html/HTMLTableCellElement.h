@@ -58,7 +58,6 @@ public:
     String axis() const;
     String headers() const;
     WEBCORE_EXPORT const AtomString& scope() const;
-    WEBCORE_EXPORT void setScope(const AtomString&);
 
     WEBCORE_EXPORT HTMLTableCellElement* cellAbove() const;
     WEBCORE_EXPORT RefPtr<HTMLTableCellElement> protectedCellAbove() const;

@@ -189,7 +189,6 @@ void FindController::updateFindUIAfterPageScroll(bool found, const String& strin
             if (pluginView) {
                 if (!shouldDetermineMatchIndex)
                     matchCount = pluginView->countFindMatches(string, core(options), maxMatchCount + 1);
-                shouldShowOverlay = !pluginView->drawsFindOverlay();
             } else
 #endif
             {
@@ -197,11 +196,8 @@ void FindController::updateFindUIAfterPageScroll(bool found, const String& strin
                 matchCount = webPage->protectedCorePage()->markAllMatchesForText(string, core(options), shouldShowHighlight, maxMatchCount + 1);
             }
 
-            // If we have a large number of matches, we don't want to take the time to paint the overlay.
-            if (matchCount > maxMatchCount) {
-                shouldShowOverlay = false;
+            if (matchCount > maxMatchCount)
                 matchCount = static_cast<unsigned>(kWKMoreThanMaximumMatchCount);
-            }
         }
         if (matchCount == static_cast<unsigned>(kWKMoreThanMaximumMatchCount))
             m_foundStringMatchIndex = -1;
@@ -517,7 +513,7 @@ void FindController::didHideFindIndicator()
     
 unsigned FindController::findIndicatorRadius() const
 {
-    return 0;
+    return 3;
 }
     
 bool FindController::shouldHideFindIndicatorOnScroll() const

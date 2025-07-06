@@ -70,8 +70,8 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityARIAGridRow::disclosedRow
     AccessibilityChildrenVector disclosedRows;
     // The contiguous disclosed rows will be the rows in the table that 
     // have an aria-level of plus 1 from this row.
-    RefPtr parent = parentObjectUnignored();
-    if (auto* axTable = dynamicDowncast<AccessibilityTable>(*parent); !axTable || !axTable->isExposable())
+    Ref parent = *parentObjectUnignored();
+    if (RefPtr axTable = dynamicDowncast<AccessibilityTable>(parent); !axTable || !axTable->isExposable())
         return disclosedRows;
 
     // Search for rows that match the correct level. 
@@ -84,9 +84,9 @@ AXCoreObject::AccessibilityChildrenVector AccessibilityARIAGridRow::disclosedRow
     auto allRows = parent->rows();
     int rowCount = allRows.size();
     for (int k = rowIndex + 1; k < rowCount; ++k) {
-        auto& row = allRows[k].get();
+        Ref row = allRows[k];
         // Stop at the first row that doesn't match the correct level.
-        if (row.hierarchicalLevel() != level + 1)
+        if (row->hierarchicalLevel() != level + 1)
             break;
 
         disclosedRows.append(row);
@@ -115,9 +115,9 @@ AccessibilityObject* AccessibilityARIAGridRow::disclosedByRow() const
         return nullptr;
 
     for (int k = index - 1; k >= 0; --k) {
-        auto& row = allRows[k].get();
-        if (row.hierarchicalLevel() == level - 1)
-            return &downcast<AccessibilityObject>(row);
+        Ref row = allRows[k];
+        if (row->hierarchicalLevel() == level - 1)
+            return downcast<AccessibilityObject>(row).ptr();
     }
     return nullptr;
 }

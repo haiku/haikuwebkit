@@ -602,8 +602,7 @@ if X86_64
 end
 end
 
-global _ipint_catch_entry
-_ipint_catch_entry:
+op(ipint_catch_entry, macro()
 if WEBASSEMBLY and (ARM64 or ARM64E or X86_64)
     ipintCatchCommon()
 
@@ -618,9 +617,9 @@ if WEBASSEMBLY and (ARM64 or ARM64E or X86_64)
 else
     break
 end
+end)
 
-global _ipint_catch_all_entry
-_ipint_catch_all_entry:
+op(ipint_catch_all_entry, macro()
 if WEBASSEMBLY and (ARM64 or ARM64E or X86_64)
     ipintCatchCommon()
 
@@ -635,9 +634,9 @@ if WEBASSEMBLY and (ARM64 or ARM64E or X86_64)
 else
     break
 end
+end)
 
-global _ipint_table_catch_entry
-_ipint_table_catch_entry:
+op(ipint_table_catch_entry, macro()
 if WEBASSEMBLY and (ARM64 or ARM64E or X86_64 or ARMv7)
     ipintCatchCommon()
 
@@ -654,9 +653,9 @@ if WEBASSEMBLY and (ARM64 or ARM64E or X86_64 or ARMv7)
 else
     break
 end
+end)
 
-global _ipint_table_catch_ref_entry
-_ipint_table_catch_ref_entry:
+op(ipint_table_catch_ref_entry, macro()
 if WEBASSEMBLY and (ARM64 or ARM64E or X86_64 or ARMv7)
     ipintCatchCommon()
 
@@ -673,9 +672,9 @@ if WEBASSEMBLY and (ARM64 or ARM64E or X86_64 or ARMv7)
 else
     break
 end
+end)
 
-global _ipint_table_catch_all_entry
-_ipint_table_catch_all_entry:
+op(ipint_table_catch_all_entry, macro()
 if WEBASSEMBLY and (ARM64 or ARM64E or X86_64 or ARMv7)
     ipintCatchCommon()
 
@@ -692,9 +691,9 @@ if WEBASSEMBLY and (ARM64 or ARM64E or X86_64 or ARMv7)
 else
     break
 end
+end)
 
-global _ipint_table_catch_allref_entry
-_ipint_table_catch_allref_entry:
+op(ipint_table_catch_allref_entry, macro()
 if WEBASSEMBLY and (ARM64 or ARM64E or X86_64 or ARMv7)
     ipintCatchCommon()
 
@@ -711,6 +710,7 @@ if WEBASSEMBLY and (ARM64 or ARM64E or X86_64 or ARMv7)
 else
     break
 end
+end)
 
 # Trampoline entrypoints
 

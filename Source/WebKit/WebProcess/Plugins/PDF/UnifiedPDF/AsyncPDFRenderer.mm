@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -88,7 +88,7 @@ void AsyncPDFRenderer::teardown()
 {
     for (auto& keyValuePair : m_layerIDtoLayerMap) {
         auto& layer = keyValuePair.value;
-        if (auto* tiledBacking = layer->tiledBacking())
+        if (CheckedPtr tiledBacking = layer->tiledBacking())
             tiledBacking->setClient(nullptr);
     }
 
@@ -110,7 +110,7 @@ void AsyncPDFRenderer::releaseMemory()
 
     for (Ref layer : m_layerIDtoLayerMap.values()) {
         // Ideally we'd be able to make the ImageBuffer memory volatile which would eliminate the need for this callback: webkit.org/b/274878
-        if (auto* tiledBacking = layer->tiledBacking())
+        if (CheckedPtr tiledBacking = layer->tiledBacking())
             removePagePreviewsOutsideCoverageRect(tiledBacking->coverageRect(), presentationController->rowForLayer(layer.ptr()));
     }
 
@@ -119,7 +119,7 @@ void AsyncPDFRenderer::releaseMemory()
 
 void AsyncPDFRenderer::startTrackingLayer(GraphicsLayer& layer)
 {
-    auto* tiledBacking = layer.tiledBacking();
+    CheckedPtr tiledBacking = layer.tiledBacking();
     if (!tiledBacking)
         return;
     tiledBacking->setClient(this);
@@ -129,7 +129,7 @@ void AsyncPDFRenderer::startTrackingLayer(GraphicsLayer& layer)
 
 void AsyncPDFRenderer::stopTrackingLayer(GraphicsLayer& layer)
 {
-    auto* tiledBacking = layer.tiledBacking();
+    CheckedPtr tiledBacking = layer.tiledBacking();
     if (!tiledBacking)
         return;
     auto gridIdentifier = tiledBacking->primaryGridIdentifier();
@@ -698,7 +698,7 @@ void AsyncPDFRenderer::didCompleteTileRender(const TileForGrid& renderKey, PDFTi
     if (!tileGridLayer)
         return;
 
-    auto* tiledBacking = tileGridLayer->tiledBacking();
+    CheckedPtr tiledBacking = tileGridLayer->tiledBacking();
     if (!tiledBacking)
         return;
 
@@ -714,7 +714,7 @@ bool AsyncPDFRenderer::paintTilesForPage(const GraphicsLayer* layer, GraphicsCon
     ASSERT(isMainRunLoop());
     ASSERT(layer);
 
-    auto* tiledBacking = layer->tiledBacking();
+    CheckedPtr tiledBacking = layer->tiledBacking();
     if (!tiledBacking)
         return false;
 
@@ -830,7 +830,7 @@ void AsyncPDFRenderer::setNeedsRenderForRect(GraphicsLayer& layer, const FloatRe
 
     ASSERT(isMainRunLoop());
 
-    auto* tiledBacking = layer.tiledBacking();
+    CheckedPtr tiledBacking = layer.tiledBacking();
     if (!tiledBacking) {
         // We only expect AsyncPDFRenderer to be used with tiled layers.
         ASSERT_NOT_REACHED();

@@ -26,10 +26,8 @@
 import Foundation
 
 extension WebPage {
-    /// An opaque identifier which can be used to uniquely identify a load request for a web page.
-    @available(WK_IOS_TBA, WK_MAC_TBA, WK_XROS_TBA, *)
-    @available(watchOS, unavailable)
-    @available(tvOS, unavailable)
+    @available(*, deprecated, message: "Navigations are now observed using async sequences directly.")
+    @_spi(_)
     public struct NavigationID: Sendable, Hashable, Equatable {
         let rawValue: ObjectIdentifier
 
@@ -39,49 +37,37 @@ extension WebPage {
     }
 
     /// A particular state that occurs during the progression of a navigation.
+    public enum NavigationEvent: Hashable, Sendable {
+        /// This event occurs when the page receives provisional approval to process a navigation request,
+        /// but before it receives a response to that request.
+        case startedProvisionalNavigation
+
+        /// This event occurs when the page received a server redirect for a request.
+        case receivedServerRedirect
+
+        /// This event occurs when the page has started to receive content for the main frame.
+        ///
+        /// This happens immediately before the page starts to update the main frame.
+        case committed
+
+        /// This event occurs once the navigation is complete.
+        case finished
+    }
+
+    /// A specific error that caused a navigation to fail.
     @available(WK_IOS_TBA, WK_MAC_TBA, WK_XROS_TBA, *)
     @available(watchOS, unavailable)
     @available(tvOS, unavailable)
-    public struct NavigationEvent: Sendable {
-        /// A set of values representing the possible types a NavigationEvent can represent.
-        public enum Kind: Sendable {
-            /// This event occurs when the web page receives provisional approval to process a navigation request,
-            /// but before it receives a response to that request.
-            case startedProvisionalNavigation
+    public enum NavigationError: Error {
+        /// An error occurred during the early navigation process.
+        case failedProvisionalNavigation(any Error)
 
-            /// This event occurs when the web page received a server redirect for a request.
-            case receivedServerRedirect
+        /// The navigation could not begin because the page has been closed.
+        case pageClosed
 
-            /// This event occurs when the web page has started to receive content for the main frame.
-            /// This happens immediately before the web page starts to update the main frame.
-            case committed
-
-            /// This event occurs once the navigation is complete.
-            case finished
-
-            /// This event indicates an error occurs during the early navigation process.
-            case failedProvisionalNavigation(underlyingError: any Error)
-
-            /// This event indicates an error occurred during navigation.
-            case failed(underlyingError: any Error)
-        }
-
-        // SPI for testing.
-        // swift-format-ignore: AllPublicDeclarationsHaveDocumentation
-        @_spi(Testing)
-        public init(kind: Kind, navigationID: NavigationID) {
-            self.kind = kind
-            self.navigationID = navigationID
-        }
-
-        /// The type of this navigation event.
-        public let kind: Kind
-
-        /// The ID of the navigation that triggered this event.
-        ///
-        /// Multiple sequential events will have the same navigation identifier.
-        public let navigationID: NavigationID
+        /// The process for the web content of this page was terminated for any reason.
+        case webContentProcessTerminated
     }
 }
 
-#endif
+#endif // ENABLE_SWIFTUI && compiler(>=6.0)

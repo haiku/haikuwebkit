@@ -71,11 +71,6 @@ Ref<HTMLButtonElement> HTMLButtonElement::create(Document& document)
     return adoptRef(*new HTMLButtonElement(buttonTag, document, nullptr));
 }
 
-void HTMLButtonElement::setType(const AtomString& type)
-{
-    setAttributeWithoutSynchronization(typeAttr, type);
-}
-
 RenderPtr<RenderElement> HTMLButtonElement::createElementRenderer(RenderStyle&& style, const RenderTreePosition& position)
 {
     // https://html.spec.whatwg.org/multipage/rendering.html#button-layout
@@ -259,11 +254,6 @@ const AtomString& HTMLButtonElement::command() const
 
     ASSERT_NOT_REACHED();
     return nullAtom();
-}
-
-void HTMLButtonElement::setCommand(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(HTMLNames::commandAttr, value);
 }
 
 void HTMLButtonElement::defaultEventHandler(Event& event)

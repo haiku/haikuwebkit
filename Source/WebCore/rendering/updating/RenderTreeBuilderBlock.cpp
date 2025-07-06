@@ -332,7 +332,7 @@ RenderPtr<RenderObject> RenderTreeBuilder::Block::detach(RenderBlock& parent, Re
         auto& previousBlock = downcast<RenderBlock>(*previousSibling);
         auto& nextBlock = downcast<RenderBlock>(*nextSibling);
 
-        previousBlock.setNeedsLayoutAndPrefWidthsRecalc();
+        previousBlock.setNeedsLayoutAndPreferredWidthsUpdate();
         if (previousBlock.childrenInline() != nextBlock.childrenInline()) {
             auto& inlineChildrenBlock = previousBlock.childrenInline() ? previousBlock : nextBlock;
             auto& blockChildrenBlock = previousBlock.childrenInline() ? nextBlock : previousBlock;
@@ -349,7 +349,7 @@ RenderPtr<RenderObject> RenderTreeBuilder::Block::detach(RenderBlock& parent, Re
             // Now just put the inlineChildrenBlock inside the blockChildrenBlock.
             RenderObject* beforeChild = &previousBlock == &inlineChildrenBlock ? blockChildrenBlock.firstChild() : nullptr;
             m_builder.attachToRenderElementInternal(blockChildrenBlock, WTFMove(blockToMove), beforeChild);
-            nextBlock.setNeedsLayoutAndPrefWidthsRecalc();
+            nextBlock.setNeedsLayoutAndPreferredWidthsUpdate();
 
             // inlineChildrenBlock got reparented to blockChildrenBlock, so it is no longer a child
             // of "this". we null out previousSibling or nextSibling so that is not used later in the function.
@@ -411,7 +411,7 @@ RenderPtr<RenderObject> RenderTreeBuilder::Block::detach(RenderBlock& parent, Re
 
 void RenderTreeBuilder::Block::dropAnonymousBoxChild(RenderBlock& parent, RenderBlock& child)
 {
-    parent.setNeedsLayoutAndPrefWidthsRecalc();
+    parent.setNeedsLayoutAndPreferredWidthsUpdate();
     parent.setChildrenInline(child.childrenInline());
 
     // FIXME: This should really just be a moveAllChilrenTo (see webkit.org/b/182495)

@@ -257,7 +257,7 @@ void RenderListItem::updateValue()
 {
     m_value = std::nullopt;
     if (m_marker)
-        m_marker->setNeedsLayoutAndPrefWidthsRecalc();
+        m_marker->setNeedsLayoutAndPreferredWidthsUpdate();
 }
 
 void RenderListItem::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)
@@ -302,7 +302,7 @@ String RenderListItem::markerTextWithSuffix() const
 void RenderListItem::counterDirectivesChanged()
 {
     if (m_marker)
-        m_marker->setNeedsLayoutAndPrefWidthsRecalc();
+        m_marker->setNeedsLayoutAndPreferredWidthsUpdate();
 
     updateValue();
     auto* list = enclosingList(*this);

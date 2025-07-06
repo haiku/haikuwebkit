@@ -62,7 +62,7 @@ private:
     void didInvalidate(UserContentProvider&) override;
 
     const Ref<UserContentProvider> m_userContentProvider;
-    UncheckedKeyHashMap<std::pair<AtomString, RefPtr<DOMWrapperWorld>>, RefPtr<UserMessageHandler>> m_messageHandlers;
+    HashMap<std::pair<AtomString, RefPtr<DOMWrapperWorld>>, RefPtr<UserMessageHandler>> m_messageHandlers;
 };
 
 } // namespace WebCore

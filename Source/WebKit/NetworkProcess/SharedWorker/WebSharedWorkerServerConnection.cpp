@@ -95,7 +95,7 @@ void WebSharedWorkerServerConnection::requestSharedWorker(WebCore::SharedWorkerK
     MESSAGE_CHECK(sharedWorkerObjectIdentifier.processIdentifier() == m_webProcessIdentifier);
     MESSAGE_CHECK(sharedWorkerKey.name == workerOptions.name);
     CONNECTION_RELEASE_LOG("requestSharedWorker: sharedWorkerObjectIdentifier=%" PUBLIC_LOG_STRING, sharedWorkerObjectIdentifier.toString().utf8().data());
-    if (auto* session = this->session())
+    if (CheckedPtr session = this->session())
         session->ensureSharedWorkerServer().requestSharedWorker(WTFMove(sharedWorkerKey), sharedWorkerObjectIdentifier, WTFMove(port), WTFMove(workerOptions));
 }
 
@@ -103,7 +103,7 @@ void WebSharedWorkerServerConnection::sharedWorkerObjectIsGoingAway(WebCore::Sha
 {
     MESSAGE_CHECK(sharedWorkerObjectIdentifier.processIdentifier() == m_webProcessIdentifier);
     CONNECTION_RELEASE_LOG("sharedWorkerObjectIsGoingAway: sharedWorkerObjectIdentifier=%" PUBLIC_LOG_STRING, sharedWorkerObjectIdentifier.toString().utf8().data());
-    if (auto* session = this->session())
+    if (CheckedPtr session = this->session())
         session->ensureSharedWorkerServer().sharedWorkerObjectIsGoingAway(sharedWorkerKey, sharedWorkerObjectIdentifier);
 }
 
@@ -111,7 +111,7 @@ void WebSharedWorkerServerConnection::suspendForBackForwardCache(WebCore::Shared
 {
     MESSAGE_CHECK(sharedWorkerObjectIdentifier.processIdentifier() == m_webProcessIdentifier);
     CONNECTION_RELEASE_LOG("suspendForBackForwardCache: sharedWorkerObjectIdentifier=%" PUBLIC_LOG_STRING, sharedWorkerObjectIdentifier.toString().utf8().data());
-    if (auto* session = this->session())
+    if (CheckedPtr session = this->session())
         session->ensureSharedWorkerServer().suspendForBackForwardCache(sharedWorkerKey, sharedWorkerObjectIdentifier);
 }
 
@@ -119,7 +119,7 @@ void WebSharedWorkerServerConnection::resumeForBackForwardCache(WebCore::SharedW
 {
     MESSAGE_CHECK(sharedWorkerObjectIdentifier.processIdentifier() == m_webProcessIdentifier);
     CONNECTION_RELEASE_LOG("resumeForBackForwardCache: sharedWorkerObjectIdentifier=%" PUBLIC_LOG_STRING, sharedWorkerObjectIdentifier.toString().utf8().data());
-    if (auto* session = this->session())
+    if (CheckedPtr session = this->session())
         session->ensureSharedWorkerServer().resumeForBackForwardCache(sharedWorkerKey, sharedWorkerObjectIdentifier);
 }
 

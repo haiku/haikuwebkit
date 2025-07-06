@@ -90,7 +90,7 @@ class WPEPortTest(port_testcase.PortTestCase):
         port = self.make_port()
         self._mock_port_cog_is_built(port)
         with patch('os.environ', {}):
-            self.assertEqual(port.browser_name(), "cog")
+            self.assertEqual(port.browser_name(), "minibrowser")
 
     def test_browser_name_override_minibrowser_with_cog_built(self):
         with patch('os.environ', {'WPE_BROWSER': 'MiniBrowser'}):
@@ -112,7 +112,7 @@ class WPEPortTest(port_testcase.PortTestCase):
         with patch('os.environ', {'WPE_BROWSER': 'Mosaic'}):
             port = self.make_port()
             self._mock_port_cog_is_built(port)
-            self.assertEqual(port.browser_name(), "cog")
+            self.assertEqual(port.browser_name(), "minibrowser")
 
     def test_browser_cog_parameters_platform_default(self):
         with patch('os.environ', {'WPE_BROWSER': 'cog'}):
@@ -155,3 +155,13 @@ class WPEPortTest(port_testcase.PortTestCase):
                 self.assertTrue(url in mock_command)
                 self.assertFalse('--platform' in mock_command)
                 self.assertFalse('-P' in mock_command)
+
+    def test_get_browser_path(self):
+        port = self.make_port()
+        self._mock_port_cog_is_built(port)
+        # do not rename or remove port.get_browser_path() without also
+        # updating webkitpy/browserperfdash/plans/browser_binary_size.py
+        mb_path = port.get_browser_path('MiniBrowser')
+        self.assertTrue(mb_path.endswith('/MiniBrowser'))
+        cog_path = port.get_browser_path('cog')
+        self.assertTrue(cog_path.endswith('/cog'))

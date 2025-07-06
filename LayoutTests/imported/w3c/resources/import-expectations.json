@@ -176,7 +176,7 @@
     "web-platform-tests/fetch": "import",
     "web-platform-tests/file-system-access": "import",
     "web-platform-tests/fledge": "skip",
-    "web-platform-tests/focus": "skip",
+    "web-platform-tests/focus": "import",
     "web-platform-tests/font-access": "skip",
     "web-platform-tests/fonts": "import",
     "web-platform-tests/forced-colors-mode": "skip",

@@ -76,7 +76,7 @@ ExceptionOr<void> HTMLDialogElement::show()
 
     queueDialogToggleEventTask(ToggleState::Closed, ToggleState::Open);
 
-    setBooleanAttribute(openAttr, true);
+    setAttributeWithoutSynchronization(openAttr, emptyAtom());
 
     Ref document = this->document();
     m_previouslyFocusedElement = document->focusedElement();
@@ -126,10 +126,10 @@ ExceptionOr<void> HTMLDialogElement::showModal()
 
     queueDialogToggleEventTask(ToggleState::Closed, ToggleState::Open);
 
-    // setBooleanAttribute will dispatch a DOMSubtreeModified event.
+    // setAttributeWihoutSynchronization will dispatch a DOMSubtreeModified event.
     // Postpone callback execution that can potentially make the dialog disconnected.
     EventQueueScope scope;
-    setBooleanAttribute(openAttr, true);
+    setAttributeWithoutSynchronization(openAttr, emptyAtom());
 
     setIsModal(true);
 
@@ -166,7 +166,7 @@ void HTMLDialogElement::close(const String& result)
 
     queueDialogToggleEventTask(ToggleState::Open, ToggleState::Closed);
 
-    setBooleanAttribute(openAttr, false);
+    removeAttribute(openAttr);
 
     if (isModal())
         removeFromTopLayer();
@@ -299,4 +299,9 @@ void HTMLDialogElement::queueDialogToggleEventTask(ToggleState oldState, ToggleS
     RefPtr { m_toggleEventTask }->queue(oldState, newState);
 }
 
-};
+bool HTMLDialogElement::isOpen() const
+{
+    return hasAttributeWithoutSynchronization(HTMLNames::openAttr);
+}
+
+}

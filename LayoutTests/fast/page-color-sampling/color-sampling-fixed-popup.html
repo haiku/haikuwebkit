@@ -39,7 +39,8 @@
         shouldBeNull("edgeColorsBeforeUnparenting.right");
         shouldBeNull("edgeColorsBeforeUnparenting.bottom");
 
-        document.querySelector(".banner").remove();
+        document.querySelector(".banner.one").remove();
+        document.querySelector(".banner.two").style.visibility = "hidden";
         edgeColorsAfterUnparenting = await UIHelper.fixedContainerEdgeColors();
         shouldBeNull("edgeColorsAfterUnparenting.top");
         shouldBeNull("edgeColorsAfterUnparenting.left");
@@ -51,7 +52,10 @@
     </script>
 </head>
 <body>
-<div class="banner">
+<div class="banner one">
+    <div class="banner-content"></div>
+</div>
+<div class="banner two">
     <div class="banner-content"></div>
 </div>
 <div class="tall"></div>

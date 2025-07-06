@@ -28,11 +28,9 @@
 #include "AnchorPositionEvaluator.h"
 #include "CSSCalcRandomCachingKey.h"
 #include "CSSCalcSymbolTable.h"
-#include "CSSCalcTree+ContainerProgressEvaluator.h"
 #include "CSSCalcTree+Copy.h"
 #include "CSSCalcTree+Evaluation.h"
 #include "CSSCalcTree+Mappings.h"
-#include "CSSCalcTree+MediaProgressEvaluator.h"
 #include "CSSCalcTree+NumericIdentity.h"
 #include "CSSCalcTree+Traversal.h"
 #include "CSSCalcTree.h"
@@ -40,8 +38,6 @@
 #include "CSSUnevaluatedCalc.h"
 #include "CalculationCategory.h"
 #include "CalculationExecutor.h"
-#include "ContainerQueryFeatures.h"
-#include "MediaQueryFeatures.h"
 #include "RenderStyle.h"
 #include "RenderStyleInlines.h"
 #include "StyleBuilderState.h"
@@ -51,10 +47,7 @@
 namespace WebCore {
 namespace CSSCalc {
 
-static auto copyAndSimplify(const MQ::MediaProgressProviding*, const SimplificationOptions&) -> const MQ::MediaProgressProviding*;
-static auto copyAndSimplify(const CQ::ContainerProgressProviding*, const SimplificationOptions&) -> const CQ::ContainerProgressProviding*;
 static auto copyAndSimplify(const Random::Sharing&, const SimplificationOptions&) -> Random::Sharing;
-static auto copyAndSimplify(const AtomString&, const SimplificationOptions&) -> AtomString;
 static auto copyAndSimplify(const CSS::Keyword::None&, const SimplificationOptions&) -> CSS::Keyword::None;
 static auto copyAndSimplify(const Children&, const SimplificationOptions&) -> Children;
 static auto copyAndSimplify(const ChildOrNone&, const SimplificationOptions&) -> ChildOrNone;
@@ -1396,53 +1389,6 @@ std::optional<Child> simplify(Progress& root, const SimplificationOptions& optio
     );
 }
 
-std::optional<Child> simplify(MediaProgress& root, const SimplificationOptions& options)
-{
-    ASSERT(root.feature->category() == options.category);
-
-    if (!options.conversionData || !options.conversionData->styleBuilderState())
-        return { };
-
-    return switchTogether(root.start, root.end,
-        [&]<Numeric T>(const T& start, const T& end) -> std::optional<Child> {
-            if (!unitsMatch(start, end, options) || !fullyResolved(start, options))
-                return { };
-
-            Ref document = options.conversionData->styleBuilderState()->document();
-            auto value = evaluateMediaProgress(root, document, *options.conversionData);
-            return makeChild(Number { .value = executeMathOperation<Progress>(value, start.value, end.value) });
-        },
-        [](const auto&, const auto&) -> std::optional<Child> {
-            return { };
-        }
-    );
-}
-
-std::optional<Child> simplify(ContainerProgress& root, const SimplificationOptions& options)
-{
-    ASSERT(root.feature->category() == options.category);
-
-    if (!options.conversionData || !options.conversionData->styleBuilderState() || !options.conversionData->styleBuilderState()->element())
-        return { };
-
-    return switchTogether(root.start, root.end,
-        [&]<Numeric T>(const T& start, const T& end) -> std::optional<Child> {
-            if (!unitsMatch(start, end, options) || !fullyResolved(start, options))
-                return { };
-
-            Ref element = *options.conversionData->styleBuilderState()->element();
-            auto value = evaluateContainerProgress(root, element, *options.conversionData);
-            if (!value)
-                return { };
-
-            return makeChild(Number { .value = executeMathOperation<Progress>(*value, start.value, end.value) });
-        },
-        [](const auto&, const auto&) -> std::optional<Child> {
-            return { };
-        }
-    );
-}
-
 std::optional<Child> simplify(Anchor& anchor, const SimplificationOptions& options)
 {
     if (!options.conversionData || !options.conversionData->styleBuilderState())
@@ -1499,22 +1445,7 @@ std::optional<Child> simplify(AnchorSize& anchorSize, const SimplificationOption
 
 // MARK: Copy & Simplify.
 
-const MQ::MediaProgressProviding* copyAndSimplify(const MQ::MediaProgressProviding* root, const SimplificationOptions&)
-{
-    return root;
-}
-
-const CQ::ContainerProgressProviding* copyAndSimplify(const CQ::ContainerProgressProviding* root, const SimplificationOptions&)
-{
-    return root;
-}
-
 Random::Sharing copyAndSimplify(const Random::Sharing& root, const SimplificationOptions&)
-{
-    return root;
-}
-
-AtomString copyAndSimplify(const AtomString& root, const SimplificationOptions&)
 {
     return root;
 }
@@ -1549,26 +1480,6 @@ template<Leaf Op> static auto copyAndSimplifyChildren(const Op& op, const Simpli
 template<typename Op> static auto copyAndSimplifyChildren(const IndirectNode<Op>& root, const SimplificationOptions& options) -> Op
 {
     return WTF::apply([&](const auto& ...x) { return Op { copyAndSimplify(x, options)... }; } , *root);
-}
-
-static auto copyAndSimplifyChildren(const IndirectNode<MediaProgress>& root, const SimplificationOptions& options) -> MediaProgress
-{
-    // Modify the category to match the media-progress() category following non-"math function" rules.
-    // FIXME: Catching cases like this would be a good reason to make non-"math function" nodes distinct, perhaps even using an explicitly nested Tree in some fashion.
-    SimplificationOptions nestedOptions = options;
-    nestedOptions.category = root->feature->category();
-
-    return WTF::apply([&](const auto& ...x) { return MediaProgress { copyAndSimplify(x, nestedOptions)... }; } , *root);
-}
-
-static auto copyAndSimplifyChildren(const IndirectNode<ContainerProgress>& root, const SimplificationOptions& options) -> ContainerProgress
-{
-    // Modify the category to match the container-progress() category following non-"math function" rules.
-    // FIXME: Catching cases like this would be a good reason to make non-"math function" nodes distinct, perhaps even using an explicitly nested Tree in some fashion.
-    SimplificationOptions nestedOptions = options;
-    nestedOptions.category = root->feature->category();
-
-    return WTF::apply([&](const auto& ...x) { return ContainerProgress { copyAndSimplify(x, nestedOptions)... }; } , *root);
 }
 
 static auto copyAndSimplifyChildren(const IndirectNode<Anchor>& anchor, const SimplificationOptions& options) -> Anchor

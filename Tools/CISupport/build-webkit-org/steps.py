@@ -34,7 +34,7 @@ import re
 import socket
 import sys
 
-from Shared.steps import ShellMixin
+from Shared.steps import ShellMixin, SetBuildSummary
 
 if sys.version_info < (3, 9):  # noqa: UP036
     print('ERROR: Minimum supported Python version for this code is Python 3.9')
@@ -62,6 +62,7 @@ THRESHOLD_FOR_EXCESSIVE_LOGS = 1000000
 MSG_FOR_EXCESSIVE_LOGS = f'Stopped due to excessive logging, limit: {THRESHOLD_FOR_EXCESSIVE_LOGS}'
 HASH_LENGTH_TO_DISPLAY = 8
 SCAN_BUILD_OUTPUT_DIR = 'scan-build-output'
+SAFER_CPP_ARCHIVE_DIR = 'smart-pointer-result-archive'
 
 DNS_NAME = CURRENT_HOSTNAME
 if DNS_NAME in BUILD_WEBKIT_HOSTNAMES:
@@ -1733,7 +1734,7 @@ class ScanBuild(steps.ShellSequence, ShellMixin):
         ]
 
         if rc == SUCCESS:
-            steps_to_add += [ParseStaticAnalyzerResults(), FindUnexpectedStaticAnalyzerResults(), ArchiveStaticAnalyzerResults(), UploadStaticAnalyzerResults(), ExtractStaticAnalyzerTestResults(), DisplaySaferCPPResults()]
+            steps_to_add += [ParseStaticAnalyzerResults(), FindUnexpectedStaticAnalyzerResults(), ArchiveStaticAnalyzerResults(), UploadStaticAnalyzerResults(), ExtractStaticAnalyzerTestResults(), DisplaySaferCPPResults(), CleanSaferCPPArchive(), SetBuildSummary()]
         self.build.addStepsAfterCurrentStep(steps_to_add)
 
         defer.returnValue(rc)
@@ -1763,7 +1764,7 @@ class ParseStaticAnalyzerResults(shell.ShellCommandNewStyle):
 
     @defer.inlineCallbacks
     def run(self):
-        output_dir = f"smart-pointer-result-archive/{self.getProperty('buildnumber')}"
+        output_dir = f"{SAFER_CPP_ARCHIVE_DIR}/{self.getProperty('buildnumber')}"
         self.command = ['python3', 'Tools/Scripts/generate-dirty-files']
         self.command += [os.path.join(self.getProperty('builddir'), f'build/{SCAN_BUILD_OUTPUT_DIR}')]
         self.command += ['--output-dir', os.path.join(self.getProperty('builddir'), output_dir)]
@@ -1807,7 +1808,7 @@ class FindUnexpectedStaticAnalyzerResults(shell.ShellCommandNewStyle):
     @defer.inlineCallbacks
     def run(self):
         self.env[RESULTS_SERVER_API_KEY] = os.getenv(RESULTS_SERVER_API_KEY)
-        results_dir = os.path.join(self.getProperty('builddir'), f"smart-pointer-result-archive/{self.getProperty('buildnumber')}")
+        results_dir = os.path.join(self.getProperty('builddir'), f"{SAFER_CPP_ARCHIVE_DIR}/{self.getProperty('buildnumber')}")
         self.command = ['python3', 'Tools/Scripts/compare-static-analysis-results', results_dir]
         self.command += ['--scan-build-path', '../llvm-project/clang/tools/scan-build/bin/scan-build']
         self.command += ['--build-output', SCAN_BUILD_OUTPUT_DIR, '--check-expectations']
@@ -1865,6 +1866,8 @@ class FindUnexpectedStaticAnalyzerResults(shell.ShellCommandNewStyle):
 
 class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
     name = 'display-safer-cpp-results'
+    haltOnFailure = False
+    flunkOnFailure = True
 
     @defer.inlineCallbacks
     def run(self):
@@ -1917,7 +1920,9 @@ class DisplaySaferCPPResults(buildstep.BuildStep, AddToLogMixin):
                 summary += f'Unexpected failing files: {num_failures} '
             if num_passes:
                 summary += f'Unexpected passing files: {num_passes}'
-        self.build.buildFinished([summary], self.results)
+
+        self.build.results = self.results
+        self.setProperty('build_summary', summary)
         return {'step': summary}
 
     def resultDirectoryURL(self):
@@ -1934,15 +1939,34 @@ class UpdateSaferCPPBaseline(steps.ShellSequence, ShellMixin):
     descriptionDone = ['updated safer cpp baseline']
 
     def run(self):
-        new_dir = f"smart-pointer-result-archive/{self.getProperty('buildnumber')}"
+        new_dir = f"{SAFER_CPP_ARCHIVE_DIR}/{self.getProperty('buildnumber')}"
         self.commands = []
         for command in [
-            self.shell_command(f"rm -r {os.path.join(self.getProperty('builddir'), 'smart-pointer-result-archive/baseline')}"),
-            self.shell_command(f"cp -r {os.path.join(self.getProperty('builddir'), new_dir)} {os.path.join(self.getProperty('builddir'), 'smart-pointer-result-archive/baseline')}")
+            self.shell_command(f"rm -r {os.path.join(self.getProperty('builddir'), f'{SAFER_CPP_ARCHIVE_DIR}/baseline')}"),
+            self.shell_command(f"cp -r {os.path.join(self.getProperty('builddir'), new_dir)} {os.path.join(self.getProperty('builddir'), f'{SAFER_CPP_ARCHIVE_DIR}/baseline')}")
         ]:
             self.commands.append(util.ShellArg(command=command, logname='stdio'))
 
         return super().run()
+
+
+class CleanSaferCPPArchive(shell.ShellCommandNewStyle):
+    name = 'clean-safer-cpp-archive'
+    description = ['cleaning safer cpp archive']
+    descriptionDone = ['cleaned safer cpp archive']
+    haltOnFailure = False
+    flunkOnFailure = False
+    warnOnFailure = False
+
+    def __init__(self, **kwargs):
+        super().__init__(logEnviron=False, **kwargs)
+
+    @defer.inlineCallbacks
+    def run(self):
+        archive_dir = f"{self.getProperty('builddir')}/{SAFER_CPP_ARCHIVE_DIR}/{self.getProperty('buildnumber')}"
+        self.command = ['rm', '-rf', archive_dir]
+        rc = yield super().run()
+        return defer.returnValue(rc)
 
 
 class TransferToS3(master.MasterShellCommandNewStyle):

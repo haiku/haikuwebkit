@@ -801,7 +801,7 @@ unsigned Internals::inflightBeaconsCount() const
     if (!document)
         return 0;
 
-    auto* window = document->domWindow();
+    auto* window = document->window();
     if (!window)
         return 0;
 
@@ -1009,10 +1009,10 @@ void Internals::setOverrideCachePolicy(CachePolicy policy)
 
 ExceptionOr<void> Internals::setCanShowModalDialogOverride(bool allow)
 {
-    if (!contextDocument() || !contextDocument()->domWindow())
+    if (!contextDocument() || !contextDocument()->window())
         return Exception { ExceptionCode::InvalidAccessError };
 
-    contextDocument()->domWindow()->setCanShowModalDialogOverride(allow);
+    contextDocument()->window()->setCanShowModalDialogOverride(allow);
     return { };
 }
 
@@ -1721,19 +1721,19 @@ void Internals::simulateSpeechSynthesizerVoiceListChange()
     }
 
     RefPtr document = contextDocument();
-    if (!document || !document->domWindow())
+    if (!document || !document->window())
         return;
 
-    if (RefPtr synthesis = LocalDOMWindowSpeechSynthesis::speechSynthesis(*document->domWindow()))
+    if (RefPtr synthesis = LocalDOMWindowSpeechSynthesis::speechSynthesis(*document->window()))
         synthesis->simulateVoicesListChange();
 }
 
 void Internals::enableMockSpeechSynthesizer()
 {
     auto document = contextDocument();
-    if (!document || !document->domWindow())
+    if (!document || !document->window())
         return;
-    auto synthesis = LocalDOMWindowSpeechSynthesis::speechSynthesis(*document->domWindow());
+    auto synthesis = LocalDOMWindowSpeechSynthesis::speechSynthesis(*document->window());
     if (!synthesis)
         return;
 
@@ -2124,9 +2124,8 @@ ExceptionOr<RefPtr<ImageData>> Internals::snapshotNode(Node& node)
     if (!imageBuffer)
         return Exception { ExceptionCode::InvalidStateError, "Failed to create snapshot"_s };
 
-    auto size = imageBuffer->logicalSize();
-    IntRect sourceRect(IntPoint(), imageBuffer->calculateBackendSize(size,
-        document->frame()->page()->deviceScaleFactor()));
+    auto logicalSize = imageBuffer->logicalSize();
+    IntRect sourceRect((IntPoint()), IntSize(logicalSize));
 
     PixelBufferFormat destinationFormat {
         AlphaPremultiplication::Unpremultiplied,
@@ -3273,7 +3272,7 @@ RefPtr<WindowProxy> Internals::openDummyInspectorFrontend(const String& url)
     if (!localMainFrame)
         return nullptr;
 
-    RefPtr window = localMainFrame->document()->domWindow();
+    RefPtr window = localMainFrame->document()->window();
     if (!window)
         return nullptr;
 
@@ -5893,7 +5892,7 @@ bool Internals::userIsInteracting()
 bool Internals::hasTransientActivation()
 {
     if (auto* document = contextDocument()) {
-        if (auto* window = document->domWindow())
+        if (auto* window = document->window())
             return window->hasTransientActivation();
     }
     return false;
@@ -5902,7 +5901,7 @@ bool Internals::hasTransientActivation()
 bool Internals::consumeTransientActivation()
 {
     if (auto* document = contextDocument()) {
-        if (auto* window = document->domWindow())
+        if (auto* window = document->window())
             return window->consumeTransientActivation();
     }
     return false;
@@ -5920,7 +5919,7 @@ double Internals::lastHandledUserGestureTimestamp()
 bool Internals::hasHistoryActionActivation()
 {
     if (auto* document = contextDocument()) {
-        if (auto* window = document->domWindow())
+        if (auto* window = document->window())
             return window->hasHistoryActionActivation();
     }
     return false;
@@ -5929,7 +5928,7 @@ bool Internals::hasHistoryActionActivation()
 bool Internals::consumeHistoryActionUserActivation()
 {
     if (auto* document = contextDocument()) {
-        if (auto* window = document->domWindow())
+        if (auto* window = document->window())
             return window->consumeHistoryActionUserActivation();
     }
     return false;
@@ -7340,11 +7339,11 @@ bool Internals::destroySleepDisabler(unsigned identifier)
 ExceptionOr<RefPtr<WebXRTest>> Internals::xrTest()
 {
     auto* document = contextDocument();
-    if (!document || !document->domWindow() || !document->settings().webXREnabled())
+    if (!document || !document->window() || !document->settings().webXREnabled())
         return Exception { ExceptionCode::InvalidAccessError };
 
     if (!m_xrTest) {
-        auto* navigator = contextDocument()->domWindow()->optionalNavigator();
+        auto* navigator = contextDocument()->window()->optionalNavigator();
         if (!navigator)
             return Exception { ExceptionCode::InvalidAccessError };
 
@@ -7463,13 +7462,13 @@ ExceptionOr<void> Internals::registerMockMediaSessionCoordinator(ScriptExecution
         return { };
 
     auto* document = contextDocument();
-    if (!document || !document->domWindow())
+    if (!document || !document->window())
         return Exception { ExceptionCode::InvalidAccessError };
 
     if (!document->settings().mediaSessionCoordinatorEnabled())
         return Exception { ExceptionCode::InvalidAccessError };
 
-    auto& session = NavigatorMediaSession::mediaSession(document->domWindow()->navigator());
+    auto& session = NavigatorMediaSession::mediaSession(document->window()->navigator());
     auto mock = MockMediaSessionCoordinator::create(context, WTFMove(listener));
     m_mockMediaSessionCoordinator = mock.ptr();
     session.coordinator().setMediaSessionCoordinatorPrivate(WTFMove(mock));
@@ -7550,7 +7549,7 @@ bool Internals::rangeIntersectsRange(const AbstractRange& a, const AbstractRange
 String Internals::dumpStyleResolvers()
 {
     auto* document = contextDocument();
-    if (!document || !document->domWindow())
+    if (!document || !document->window())
         return { };
 
     document->updateStyleIfNeeded();
@@ -7720,7 +7719,7 @@ bool Internals::hasScopeBreakingHasSelectors() const
 
 void Internals::setHistoryTotalStateObjectPayloadLimitOverride(uint32_t limit)
 {
-    RefPtr window = contextDocument() ? contextDocument()->domWindow() : nullptr;
+    RefPtr window = contextDocument() ? contextDocument()->window() : nullptr;
     if (!window)
         return;
     window->history().setTotalStateObjectPayloadLimitOverride(limit);

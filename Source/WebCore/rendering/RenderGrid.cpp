@@ -262,7 +262,7 @@ bool RenderGrid::canPerformSimplifiedLayout() const
 {
     // We cannot perform a simplified layout if we need to position the items and we have some
     // positioned items to be laid out.
-    if (currentGrid().needsItemsPlacement() && posChildNeedsLayout())
+    if (currentGrid().needsItemsPlacement() && outOfFlowChildNeedsLayout())
         return false;
 
     return RenderBlock::canPerformSimplifiedLayout();
@@ -383,6 +383,23 @@ static void clearGridItemOverridingSizesBeforeLayout(RenderGrid& renderGrid)
     }
 }
 
+
+bool RenderGrid::hasDefiniteLogicalHeight() const
+{
+    // FIXME: We should use RenderBlock::hasDefiniteLogicalHeight() only but it does not work for out of flow content.
+    return RenderBlock::hasDefiniteLogicalHeight() || overridingBorderBoxLogicalHeight() || computeContentLogicalHeight(style().logicalHeight(), std::nullopt) || shouldComputeLogicalHeightFromAspectRatio();
+}
+
+const std::optional<LayoutUnit> RenderGrid::availableLogicalHeightForContentBox() const
+{
+    if (!hasDefiniteLogicalHeight())
+        return { };
+
+    if (auto overridingLogicalHeight = this->overridingBorderBoxLogicalHeight())
+        return constrainContentBoxLogicalHeightByMinMax(*overridingLogicalHeight - borderAndPaddingLogicalHeight(), { });
+    return availableLogicalHeight(AvailableLogicalHeightType::ExcludeMarginBorderPadding);
+}
+
 void RenderGrid::layoutGrid(RelayoutChildren relayoutChildren)
 {
     LayoutRepainter repainter(*this);
@@ -399,11 +416,6 @@ void RenderGrid::layoutGrid(RelayoutChildren relayoutChildren)
         beginUpdateScrollInfoAfterLayoutTransaction();
 
         LayoutSize previousSize = size();
-
-        // FIXME: We should use RenderBlock::hasDefiniteLogicalHeight() only but it does not work for positioned stuff.
-        // FIXME: Consider caching the hasDefiniteLogicalHeight value throughout the layout.
-        // FIXME: We might need to cache the hasDefiniteLogicalHeight if the call of RenderBlock::hasDefiniteLogicalHeight() causes a relevant performance regression.
-        bool hasDefiniteLogicalHeight = RenderBlock::hasDefiniteLogicalHeight() || overridingBorderBoxLogicalHeight() || computeContentLogicalHeight(style().logicalHeight(), std::nullopt) || shouldComputeLogicalHeightFromAspectRatio();
 
         auto aspectRatioBlockSizeDependentGridItems = computeAspectRatioDependentAndBaselineItems(gridLayoutState);
 
@@ -433,19 +445,14 @@ void RenderGrid::layoutGrid(RelayoutChildren relayoutChildren)
 
         // 2. Next, the track sizing algorithm resolves the sizes of the grid rows,
         // using the grid column sizes calculated in the previous step.
+        auto availableLogicalHeightForContentBox = this->availableLogicalHeightForContentBox();
         bool shouldRecomputeHeight = false;
-        if (!hasDefiniteLogicalHeight) {
+        if (!availableLogicalHeightForContentBox) {
             computeTrackSizesForIndefiniteSize(m_trackSizingAlgorithm, GridTrackSizingDirection::ForRows, gridLayoutState);
             if (shouldApplySizeContainment())
                 shouldRecomputeHeight = true;
-        } else {
-            auto availableLogicalHeightForContentBox = [&] {
-                if (auto overridingLogicalHeight = this->overridingBorderBoxLogicalHeight())
-                    return constrainContentBoxLogicalHeightByMinMax(*overridingLogicalHeight - borderAndPaddingLogicalHeight(), { });
-                return availableLogicalHeight(AvailableLogicalHeightType::ExcludeMarginBorderPadding);
-            };
-            computeTrackSizesForDefiniteSize(GridTrackSizingDirection::ForRows, availableLogicalHeightForContentBox(), gridLayoutState);
-        }
+        } else
+            computeTrackSizesForDefiniteSize(GridTrackSizingDirection::ForRows, *availableLogicalHeightForContentBox, gridLayoutState);
 
         LayoutUnit trackBasedLogicalHeight = borderAndPaddingLogicalHeight() + scrollbarLogicalHeight();
         if (auto size = explicitIntrinsicInnerLogicalSize(GridTrackSizingDirection::ForRows))
@@ -462,7 +469,7 @@ void RenderGrid::layoutGrid(RelayoutChildren relayoutChildren)
 
         // Once grid's indefinite height is resolved, we can compute the
         // available free space for Content Alignment.
-        if (!hasDefiniteLogicalHeight)
+        if (!availableLogicalHeightForContentBox)
             m_trackSizingAlgorithm.setFreeSpace(GridTrackSizingDirection::ForRows, logicalHeight() - trackBasedLogicalHeight);
 
         // 2.5. Compute Content Distribution offsets for rows tracks
@@ -2544,17 +2551,6 @@ void RenderGrid::setLogicalPositionForGridItem(RenderBox& gridItem) const
     // orthogonal flow." However, 'setLogicalLocation' will only take into account the grid item's writing-mode, so the position may need to be transposed.
     LayoutPoint gridItemLocation(logicalOffsetForGridItem(gridItem, GridTrackSizingDirection::ForColumns), logicalOffsetForGridItem(gridItem, GridTrackSizingDirection::ForRows));
     gridItem.setLogicalLocation(GridLayoutFunctions::isOrthogonalGridItem(*this, gridItem) ? gridItemLocation.transposedPoint() : gridItemLocation);
-}
-
-void RenderGrid::setLogicalOffsetForGridItem(RenderBox& gridItem, GridTrackSizingDirection direction) const
-{
-    if (gridItem.parent() != this && hasStaticPositionForGridItem(gridItem, direction))
-        return;
-    // 'setLogicalLeft' and 'setLogicalTop' only take into account the grid item's writing-mode, that's why 'flowAwareDirectionForGridItem' is needed.
-    if (GridLayoutFunctions::flowAwareDirectionForGridItem(*this, gridItem, direction) == GridTrackSizingDirection::ForColumns)
-        gridItem.setLogicalLeft(logicalOffsetForGridItem(gridItem, direction));
-    else
-        gridItem.setLogicalTop(logicalOffsetForGridItem(gridItem, direction));
 }
 
 LayoutUnit RenderGrid::logicalOffsetForGridItem(const RenderBox& gridItem, GridTrackSizingDirection direction) const

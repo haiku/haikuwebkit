@@ -92,7 +92,7 @@ GPUProcess::GPUProcess()
     : m_idleExitTimer(*this, &GPUProcess::tryExitIfUnused)
 {
     RELEASE_LOG(Process, "%p - GPUProcess::GPUProcess:", this);
-#if ASSERT_ENABLED && PLATFORM(COCOA)
+#if ASSERT_ENABLED && PLATFORM(COCOA) && ENABLE(MEDIA_STREAM)
     CoreAudioSharedUnit::singleton().allowStarting();
 #endif
 }

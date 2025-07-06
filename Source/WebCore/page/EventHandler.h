@@ -238,11 +238,11 @@ public:
 
 #if ENABLE(IOS_TOUCH_EVENTS) || ENABLE(IOS_GESTURE_EVENTS)
     using TouchArray = Vector<RefPtr<Touch>>;
-    using EventTargetTouchArrayMap = UncheckedKeyHashMap<Ref<EventTarget>, std::unique_ptr<TouchArray>>;
+    using EventTargetTouchArrayMap = HashMap<Ref<EventTarget>, std::unique_ptr<TouchArray>>;
 #endif
 
 #if ENABLE(IOS_TOUCH_EVENTS) || ENABLE(IOS_GESTURE_EVENTS) || ENABLE(MAC_GESTURE_EVENTS)
-    using EventTargetSet = UncheckedKeyHashSet<RefPtr<EventTarget>>;
+    using EventTargetSet = HashSet<RefPtr<EventTarget>>;
 #endif
 
 #if ENABLE(IOS_TOUCH_EVENTS)
@@ -709,7 +709,7 @@ private:
 #endif
 
 #if ENABLE(TOUCH_EVENTS) && !ENABLE(IOS_TOUCH_EVENTS)
-    using TouchTargetMap = UncheckedKeyHashMap<int, RefPtr<EventTarget>>;
+    using TouchTargetMap = HashMap<int, RefPtr<EventTarget>>;
     TouchTargetMap m_originatingTouchPointTargets;
     RefPtr<Document> m_originatingTouchPointDocument;
     unsigned m_originatingTouchPointTargetKey { 0 };
@@ -734,7 +734,7 @@ private:
 
     TouchArray m_touches;
     RefPtr<Frame> m_touchEventTargetSubframe;
-    UncheckedKeyHashMap<PointerID, std::pair<IntPoint, IntPoint>, WTF::IntHash<PointerID>, WTF::UnsignedWithZeroKeyHashTraits<PointerID>> m_touchLastGlobalPositionAndDeltaMap;
+    HashMap<PointerID, std::pair<IntPoint, IntPoint>, WTF::IntHash<PointerID>, WTF::UnsignedWithZeroKeyHashTraits<PointerID>> m_touchLastGlobalPositionAndDeltaMap;
 #endif
 
 #if PLATFORM(COCOA)

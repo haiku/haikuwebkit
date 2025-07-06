@@ -32,7 +32,6 @@
 #include "pas_all_heap_configs.h"
 #include "pas_bitvector.h"
 #include "pas_committed_pages_vector.h"
-#include "pas_debug_heap.h"
 #include "pas_heap_lock.h"
 #include "pas_large_utility_free_heap.h"
 #include "pas_log.h"
@@ -40,6 +39,7 @@
 #include "pas_scavenger.h"
 #include "pas_segregated_size_directory_inlines.h"
 #include "pas_segregated_page.h"
+#include "pas_system_heap.h"
 #include "pas_thread_local_cache_layout.h"
 #include "pas_thread_local_cache_node.h"
 #include "pas_thread_suspend_lock.h"
@@ -501,7 +501,7 @@ pas_thread_local_cache_get_local_allocator_if_can_set_cache_for_possibly_uniniti
     unsigned allocator_index,
     const pas_heap_config* heap_config)
 {
-    if (!pas_thread_local_cache_can_set() || pas_debug_heap_is_enabled(heap_config->kind))
+    if (!pas_thread_local_cache_can_set() || pas_system_heap_is_enabled(heap_config->kind))
         return pas_local_allocator_result_create_failure();
 
     return pas_thread_local_cache_get_local_allocator_for_possibly_uninitialized_index(

@@ -1367,7 +1367,8 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::truncSaturated(Ext1OpType truncationOp,
 PartialResult WARN_UNUSED_RETURN BBQJIT::addRefI31(ExpressionType value, ExpressionType& result)
 {
     if (value.isConst()) {
-        result = Value::fromI64(JSValue::encode(JSValue(JSValue::Int32Tag, value.asI32() & 0x7fffffff)));
+        uint32_t lo32 = (value.asI32() << 1) >> 1;
+        result = Value::fromI64(JSValue::encode(JSValue(JSValue::Int32Tag, lo32)));
         LOG_INSTRUCTION("RefI31", value, RESULT(result));
         return { };
     }
@@ -1379,7 +1380,9 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addRefI31(ExpressionType value, Express
     Location resultLocation = allocateWithHint(result, initialValue);
 
     LOG_INSTRUCTION("RefI31", value, RESULT(result));
-    m_jit.and32(TrustedImm32(0x7fffffff), initialValue.asGPR(), resultLocation.asGPRlo());
+
+    m_jit.lshift32(TrustedImm32(1), resultLocation.asGPRlo());
+    m_jit.rshift32(TrustedImm32(1), resultLocation.asGPRlo());
     m_jit.move(TrustedImm32(JSValue::Int32Tag), resultLocation.asGPRhi());
     return { };
 }
@@ -1411,8 +1414,6 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addI31GetS(ExpressionType value, Expres
 
     m_jit.move(initialValue.asGPRlo(), resultLocation.asGPR());
 
-    m_jit.lshift32(TrustedImm32(1), resultLocation.asGPR());
-    m_jit.rshift32(TrustedImm32(1), resultLocation.asGPR());
     return { };
 }
 
@@ -1420,7 +1421,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addI31GetU(ExpressionType value, Expres
 {
     if (value.isConst()) {
         if (JSValue::decode(value.asI64()).isNumber())
-            result = Value::fromI32(value.asI64());
+            result = Value::fromI32(value.asI64() & 0x7fffffffu);
         else {
             emitThrowException(ExceptionType::NullI31Get);
             result = Value::fromI32(0);
@@ -1441,7 +1442,7 @@ PartialResult WARN_UNUSED_RETURN BBQJIT::addI31GetU(ExpressionType value, Expres
 
     LOG_INSTRUCTION("I31GetU", value, RESULT(result));
 
-    m_jit.move(initialValue.asGPRlo(), resultLocation.asGPR());
+    m_jit.and32(TrustedImm32(0x7fffffff), initialValue.asGPRlo(), resultLocation.asGPR());
 
     return { };
 }

@@ -1910,7 +1910,8 @@ def runWebAssemblySuite(*optionalTestSpecificOptions)
         run("wasm-bbq-no-consts", "--useWasmLLInt=false", "--useWasmIPInt=false", "--disableBBQConsts=true", *(FTL_OPTIONS + optionalTestSpecificOptions))
         # FIXME: this is a hacky way to check if we use SIMD rdar://138436830
         if $runJITlessWasm and not $testSpecificRequiredOptions.include? "--useWasmSIMD=1"
-          run("wasm-no-wasm-jit", "--useWasmJIT=false", *(FTL_OPTIONS + optionalTestSpecificOptions)) unless $skipModes.include?("wasm-no-wasm-jit".to_sym)
+          run("wasm-no-jit", "--useJIT=false", *(FTL_OPTIONS + optionalTestSpecificOptions)) unless $skipModes.include?("wasm-no-jit".to_sym)
+          run("wasm-no-wasm-jit", "--useBBQJIT=false", "--useOMGJIT=false", *(FTL_OPTIONS + optionalTestSpecificOptions)) unless $skipModes.include?("wasm-no-wasm-jit".to_sym)
         end
         if $isOMGPlatform
             run("wasm-omg", "--useWasmLLInt=true", "--useWasmIPInt=true", "--useBBQJIT=true", "--thresholdForBBQOptimizeAfterWarmUp=0", "--thresholdForBBQOptimizeSoon=0", "--thresholdForOMGOptimizeAfterWarmUp=0", "--thresholdForOMGOptimizeSoon=0", *(FTL_OPTIONS + optionalTestSpecificOptions))
@@ -1943,7 +1944,8 @@ def runV8WebAssemblySuite(*optionalTestSpecificOptions)
         run("wasm-bbq-no-consts", "--useWasmLLInt=false", "--useWasmIPInt=false", "--disableBBQConsts=true", *(FTL_OPTIONS + optionalTestSpecificOptions))
         # FIXME: this is a hacky way to check if we use SIMD rdar://138436830
         if $runJITlessWasm and not $testSpecificRequiredOptions.include? "--useWasmSIMD=1"
-          run("wasm-no-wasm-jit", "--useWasmJIT=false", *(FTL_OPTIONS + optionalTestSpecificOptions)) unless $skipModes.include?("wasm-no-wasm-jit".to_sym)
+          run("wasm-no-jit", "--useJIT=false", *(FTL_OPTIONS + optionalTestSpecificOptions)) unless $skipModes.include?("wasm-no-jit".to_sym)
+          run("wasm-no-wasm-jit", "--useBBQJIT=false", "--useOMGJIT=false", *(FTL_OPTIONS + optionalTestSpecificOptions)) unless $skipModes.include?("wasm-no-wasm-jit".to_sym)
         end
         if $isOMGPlatform
             run("wasm-omg", "--useWasmLLInt=true", "--useWasmIPInt=true", "--useBBQJIT=true", "--thresholdForBBQOptimizeAfterWarmUp=0", "--thresholdForBBQOptimizeSoon=0", "--thresholdForOMGOptimizeAfterWarmUp=0", "--thresholdForOMGOptimizeSoon=0", *(FTL_OPTIONS + optionalTestSpecificOptions))
@@ -2022,7 +2024,8 @@ def runWebAssemblyEmscripten(mode)
         run("wasm-bbq", "--useWasmLLInt=false", "--useWasmIPInt=false", *FTL_OPTIONS) # Doesn't actually depend on FTL, but we enable it on the same platforms for now.
         # FIXME: this is a hacky way to check if we use SIMD rdar://138436830
         if $runJITlessWasm and not $testSpecificRequiredOptions.include? "--useWasmSIMD=1"
-          run("wasm-no-wasm-jit", "--useWasmJIT=false", *FTL_OPTIONS) unless $skipModes.include?("wasm-no-wasm-jit".to_sym)
+          run("wasm-no-jit", "--useJIT=false" *FTL_OPTIONS) unless $skipModes.include?("wasm-no-jit".to_sym)
+          run("wasm-no-wasm-jit", "--useBBQJIT=false", "--useOMGJIT=false" *FTL_OPTIONS) unless $skipModes.include?("wasm-no-wasm-jit".to_sym)
         end
         if $isOMGPlatform
             run("wasm-omg", "--useWasmLLInt=true", "--useWasmIPInt=true", "--useBBQJIT=false", *FTL_OPTIONS)

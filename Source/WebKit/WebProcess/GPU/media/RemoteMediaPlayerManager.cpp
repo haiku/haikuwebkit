@@ -139,9 +139,9 @@ void RemoteMediaPlayerManager::initialize(const WebProcessCreationParameters& pa
     if (parameters.mediaMIMETypes.isEmpty())
         return;
 
-    auto& cache = typeCache(MediaPlayerEnums::MediaEngineIdentifier::AVFoundation);
-    if (cache.isEmpty())
-        cache.addSupportedTypes(parameters.mediaMIMETypes);
+    CheckedRef cache = typeCache(MediaPlayerEnums::MediaEngineIdentifier::AVFoundation);
+    if (cache->isEmpty())
+        cache->addSupportedTypes(parameters.mediaMIMETypes);
 #else
     UNUSED_PARAM(parameters);
 #endif

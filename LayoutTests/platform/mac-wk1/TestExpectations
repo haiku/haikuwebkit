@@ -1063,6 +1063,7 @@ http/tests/local/blob/navigate-blob.html [ Skip ]
 media/no-fullscreen-when-hidden.html [ Skip ]
 fullscreen/full-screen-enter-while-exiting-fully-mid-completion-handler.html [ Skip ]
 fullscreen/full-screen-enter-while-exiting-mid-completion-handler.html [ Skip ]
+fullscreen/fullscreen-zero-height-element-with-non-zero-children.html [ Skip ]
 
 # Multi-process test
 fullscreen/iframe-fullscreen-system-exit.html [ Skip ]
@@ -1822,6 +1823,7 @@ accessibility/mac/position-fixed-top-bottom-properties-relative-frame.html [ Ski
 accessibility/mac/shadow-dom-relative-frame.html [ Skip ]
 accessibility/mac/svg-relative-frame.html [ Skip ]
 accessibility/mac/table-relative-frame.html [ Skip ]
+accessibility/mac/visible-character-range-width-changes.html [ Skip ]
 
 # Skip due to lack of DumpRenderTree `AccessibilityUIElement::stringDescriptionOfAttributeValue` implementation.
 accessibility/mixed-contenteditable-visible-character-range-hang.html [ Skip ]
@@ -1830,7 +1832,6 @@ accessibility/visible-character-range-basic.html [ Skip ]
 accessibility/visible-character-range-height-changes.html [ Skip ]
 accessibility/visible-character-range-scrolling.html [ Skip ]
 accessibility/visible-character-range-vertical-rl.html [ Skip ]
-accessibility/visible-character-range-width-changes.html [ Skip ]
 accessibility/aria-description.html [ Skip ]
 
 # Missing AccessibilityUIElement::focusableAncestor implementation.
@@ -3134,3 +3135,5 @@ http/tests/navigation/ping-attribute/cross-site-url-anchor-cookie.html [ Skip ]
 http/tests/websocket/tests/hybi/websocket-allowed-setting-cookie-as-third-party-with-third-party-cookie-blocking.https.html [ Skip ]
 
 webkit.org/b/294301 http/tests/media/hls/hls-audio-tracks-language.html [ Pass Failure ]
+
+http/tests/lockdown-mode [ Skip ]

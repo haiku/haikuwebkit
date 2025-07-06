@@ -1154,7 +1154,7 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
 
 - (unsigned)_pendingFrameUnloadEventCount
 {
-    return _private->coreFrame->document()->domWindow()->pendingUnloadEventListeners();
+    return _private->coreFrame->document()->window()->pendingUnloadEventListeners();
 }
 
 #if PLATFORM(IOS_FAMILY)
@@ -2049,8 +2049,8 @@ static WebFrameLoadType toWebFrameLoadType(WebCore::FrameLoadType frameLoadType)
     if (frameLoader.subframeLoader().containsPlugins())
         [result setObject:@YES forKey:WebFrameHasPlugins];
     
-    if (auto* domWindow = _private->coreFrame->document()->domWindow()) {
-        if (domWindow->hasEventListeners(WebCore::eventNames().unloadEvent))
+    if (auto* window = _private->coreFrame->document()->window()) {
+        if (window->hasEventListeners(WebCore::eventNames().unloadEvent))
             [result setObject:@YES forKey:WebFrameHasUnloadListener];
     }
     

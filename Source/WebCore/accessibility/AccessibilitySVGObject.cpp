@@ -62,7 +62,7 @@ Ref<AccessibilitySVGObject> AccessibilitySVGObject::create(AXID axID, RenderObje
 
 AccessibilityObject* AccessibilitySVGObject::targetForUseElement() const
 {
-    auto* use = dynamicDowncast<SVGUseElement>(element());
+    RefPtr use = dynamicDowncast<SVGUseElement>(element());
     if (!use)
         return nullptr;
 
@@ -88,18 +88,18 @@ Element* AccessibilitySVGObject::childElementWithMatchingLanguage(ChildrenType& 
     // that child element having a given position. So we'll look for such an element while
     // building the language list and save it as our fallback.
 
-    Element* fallback = nullptr;
+    RefPtr<Element> fallback;
     Vector<String> childLanguageCodes;
     Vector<Element*> elements;
-    for (auto& child : children) {
-        auto& lang = child.attributeWithoutSynchronization(SVGNames::langAttr);
+    for (Ref child : children) {
+        auto& lang = child->attributeWithoutSynchronization(SVGNames::langAttr);
         childLanguageCodes.append(lang);
-        elements.append(&child);
+        elements.append(child.ptr());
 
         // The current draft of the SVG2 spec states if there are multiple equally-valid
         // matches, the first match should be used.
         if (lang.isEmpty() && !fallback)
-            fallback = &child;
+            fallback = child.ptr();
     }
 
     bool exactMatch;
@@ -107,7 +107,7 @@ Element* AccessibilitySVGObject::childElementWithMatchingLanguage(ChildrenType& 
     if (index < childLanguageCodes.size())
         return elements[index];
 
-    return fallback;
+    return fallback.get();
 }
 
 void AccessibilitySVGObject::accessibilityText(Vector<AccessibilityText>& textOrder) const
@@ -138,7 +138,7 @@ String AccessibilitySVGObject::description() const
     RefPtr element = this->element();
     if (element) {
         auto titleElements = childrenOfType<SVGTitleElement>(*element);
-        if (auto* titleChild = childElementWithMatchingLanguage(titleElements))
+        if (RefPtr titleChild = childElementWithMatchingLanguage(titleElements))
             return titleChild->textContent();
     }
 
@@ -201,7 +201,7 @@ bool AccessibilitySVGObject::hasTitleOrDescriptionChild() const
     if (!element)
         return false;
 
-    for (const auto& child : childrenOfType<SVGElement>(*element)) {
+    for (const Ref child : childrenOfType<SVGElement>(*element)) {
         if (is<SVGTitleElement>(child) || is<SVGDescElement>(child))
             return true;
     }
@@ -248,7 +248,7 @@ bool AccessibilitySVGObject::computeIsIgnored() const
     if (m_renderer->isRenderOrLegacyRenderSVGShape()) {
         if (canSetFocusAttribute() || element()->hasEventListeners())
             return false;
-        if (auto* svgParent = Accessibility::findAncestor<AccessibilityObject>(*this, true, [] (const AccessibilityObject& object) {
+        if (RefPtr svgParent = Accessibility::findAncestor<AccessibilityObject>(*this, true, [] (const AccessibilityObject& object) {
             return object.hasAttributesRequiredForInclusion() || object.isAccessibilitySVGRoot();
         }))
             return !svgParent->hasAttributesRequiredForInclusion();
@@ -267,7 +267,7 @@ bool AccessibilitySVGObject::inheritsPresentationalRole() const
     if (role != AccessibilityRole::SVGTextPath && role != AccessibilityRole::SVGTSpan)
         return false;
 
-    for (AccessibilityObject* parent = parentObject(); parent; parent = parent->parentObject()) {
+    for (RefPtr parent = parentObject(); parent; parent = parent->parentObject()) {
         if (is<AccessibilityRenderObject>(*parent) && parent->hasElementName(ElementName::SVG_text))
             return parent->role() == AccessibilityRole::Presentational;
     }

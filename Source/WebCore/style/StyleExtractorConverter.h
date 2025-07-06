@@ -71,7 +71,6 @@
 #include "ContainerNodeInlines.h"
 #include "ContentData.h"
 #include "CursorList.h"
-#include "CustomPropertyRegistry.h"
 #include "DocumentInlines.h"
 #include "FontCascade.h"
 #include "FontSelectionValueInlines.h"
@@ -88,9 +87,7 @@
 #include "RenderInline.h"
 #include "RenderObjectInlines.h"
 #include "RenderStyleInlines.h"
-#include "RotateTransformOperation.h"
 #include "SVGRenderStyle.h"
-#include "ScaleTransformOperation.h"
 #include "ScrollTimeline.h"
 #include "SkewTransformOperation.h"
 #include "StyleAppleColorFilterProperty.h"
@@ -110,16 +107,19 @@
 #include "StyleMinimumSize.h"
 #include "StylePadding.h"
 #include "StylePathData.h"
+#include "StylePerspective.h"
 #include "StylePreferredSize.h"
 #include "StylePrimitiveNumericTypes+CSSValueCreation.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"
 #include "StyleReflection.h"
+#include "StyleRotate.h"
+#include "StyleScale.h"
 #include "StyleScrollMargin.h"
 #include "StyleScrollPadding.h"
 #include "StyleTextShadow.h"
+#include "StyleTranslate.h"
 #include "TimelineRange.h"
 #include "TransformOperationData.h"
-#include "TranslateTransformOperation.h"
 #include "ViewTimeline.h"
 #include "WebAnimationUtilities.h"
 #include <wtf/IteratorRange.h>
@@ -138,7 +138,7 @@ class ExtractorConverter {
 public:
     // MARK: Strong value conversions
 
-    template<typename T> static Ref<CSSValue> convertStyleType(ExtractorState&, const T&);
+    template<typename T, typename... Rest> static Ref<CSSValue> convertStyleType(ExtractorState&, const T&, Rest&&...);
 
     // MARK: Primitive conversions
 
@@ -172,14 +172,13 @@ public:
     // MARK: SVG conversions
 
     static Ref<CSSValue> convertSVGURIReference(ExtractorState&, const URL&);
-    static Ref<CSSValue> convertSVGPaint(ExtractorState&, SVGPaintType, const URL&, const Color&);
 
     // MARK: Transform conversions
 
     static Ref<CSSValue> convertTransformationMatrix(ExtractorState&, const TransformationMatrix&);
     static Ref<CSSValue> convertTransformationMatrix(const RenderStyle&, const TransformationMatrix&);
-    static RefPtr<CSSValue> convertTransformOperation(ExtractorState&, const TransformOperation&);
-    static RefPtr<CSSValue> convertTransformOperation(const RenderStyle&, const TransformOperation&);
+    static Ref<CSSValue> convertTransformOperation(ExtractorState&, const TransformOperation&);
+    static Ref<CSSValue> convertTransformOperation(const RenderStyle&, const TransformOperation&);
 
     // MARK: Shared conversions
 
@@ -189,7 +188,6 @@ public:
     static Ref<CSSValue> convertGlyphOrientationOrAuto(ExtractorState&, GlyphOrientation);
     static Ref<CSSValue> convertListStyleType(ExtractorState&, const ListStyleType&);
     static Ref<CSSValue> convertMarginTrim(ExtractorState&, OptionSet<MarginTrimType>);
-    static Ref<CSSValue> convertBasicShape(ExtractorState&, const BasicShape&, PathConversion = PathConversion::None);
     static Ref<CSSValue> convertShapeValue(ExtractorState&, const ShapeValue*);
     static Ref<CSSValue> convertPathOperation(ExtractorState&, const PathOperation*, PathConversion = PathConversion::None);
     static Ref<CSSValue> convertPathOperationForceAbsolute(ExtractorState&, const PathOperation*);
@@ -334,9 +332,9 @@ public:
 
 // MARK: - Strong value conversions
 
-template<typename T> Ref<CSSValue> ExtractorConverter::convertStyleType(ExtractorState& state, const T& value)
+template<typename T, typename... Rest> Ref<CSSValue> ExtractorConverter::convertStyleType(ExtractorState& state, const T& value, Rest&&... rest)
 {
-    return createCSSValue(state.pool, state.style, value);
+    return createCSSValue(state.pool, state.style, value, std::forward<Rest>(rest)...);
 }
 
 // MARK: - Primitive conversions
@@ -477,22 +475,6 @@ inline Ref<CSSValue> ExtractorConverter::convertSVGURIReference(ExtractorState& 
     return CSSURLValue::create(toCSS(marker, state.style));
 }
 
-inline Ref<CSSValue> ExtractorConverter::convertSVGPaint(ExtractorState& state, SVGPaintType paintType, const URL& url, const Color& color)
-{
-    if (paintType >= SVGPaintType::URINone) {
-        CSSValueListBuilder values;
-        values.append(CSSURLValue::create(toCSS(url, state.style)));
-        if (paintType == SVGPaintType::URINone)
-            values.append(CSSPrimitiveValue::create(CSSValueNone));
-        else if (paintType == SVGPaintType::URICurrentColor || paintType == SVGPaintType::URIRGBColor)
-            values.append(convertStyleType(state, color));
-        return CSSValueList::createSpaceSeparated(WTFMove(values));
-    }
-    if (paintType == SVGPaintType::None)
-        return CSSPrimitiveValue::create(CSSValueNone);
-    return convertStyleType(state, color);
-}
-
 // MARK: - Transform conversions
 
 inline Ref<CSSValue> ExtractorConverter::convertTransformationMatrix(ExtractorState& state, const TransformationMatrix& transform)
@@ -523,12 +505,12 @@ inline Ref<CSSValue> ExtractorConverter::convertTransformationMatrix(const Rende
     return CSSFunctionValue::create(CSSValueMatrix3d, WTFMove(arguments));
 }
 
-inline RefPtr<CSSValue> ExtractorConverter::convertTransformOperation(ExtractorState& state, const TransformOperation& operation)
+inline Ref<CSSValue> ExtractorConverter::convertTransformOperation(ExtractorState& state, const TransformOperation& operation)
 {
     return convertTransformOperation(state.style, operation);
 }
 
-inline RefPtr<CSSValue> ExtractorConverter::convertTransformOperation(const RenderStyle& style, const TransformOperation& operation)
+inline Ref<CSSValue> ExtractorConverter::convertTransformOperation(const RenderStyle& style, const TransformOperation& operation)
 {
     auto translateLength = [&](const auto& length) -> Ref<CSSPrimitiveValue> {
         if (length.isZero())
@@ -616,12 +598,11 @@ inline RefPtr<CSSValue> ExtractorConverter::convertTransformOperation(const Rend
     }
     case TransformOperation::Type::Identity:
     case TransformOperation::Type::None:
-        ASSERT_NOT_REACHED();
-        return nullptr;
+        break;
     }
 
     ASSERT_NOT_REACHED();
-    return nullptr;
+    return CSSPrimitiveValue::create(CSSValueNone);
 }
 
 // MARK: - Shared conversions
@@ -709,20 +690,6 @@ inline Ref<CSSValue> ExtractorConverter::convertMarginTrim(ExtractorState&, Opti
     return CSSValueList::createSpaceSeparated(WTFMove(list));
 }
 
-inline Ref<CSSValue> ExtractorConverter::convertBasicShape(ExtractorState& state, const BasicShape& basicShape, PathConversion pathConversion)
-{
-    return CSSBasicShapeValue::create(
-        WTF::switchOn(basicShape,
-            [&](const auto& shape) {
-                return CSS::BasicShape { toCSS(shape, state.style) };
-            },
-            [&](const PathFunction& path) {
-                return CSS::BasicShape { overrideToCSS(path, state.style, pathConversion) };
-            }
-        )
-    );
-}
-
 inline Ref<CSSValue> ExtractorConverter::convertShapeValue(ExtractorState& state, const ShapeValue* shapeValue)
 {
     if (!shapeValue)
@@ -736,8 +703,8 @@ inline Ref<CSSValue> ExtractorConverter::convertShapeValue(ExtractorState& state
 
     ASSERT(shapeValue->type() == ShapeValue::Type::Shape);
     if (shapeValue->cssBox() == CSSBoxType::BoxMissing)
-        return CSSValueList::createSpaceSeparated(convertBasicShape(state, *shapeValue->shape()));
-    return CSSValueList::createSpaceSeparated(convertBasicShape(state, *shapeValue->shape()), convert(state, shapeValue->cssBox()));
+        return CSSValueList::createSpaceSeparated(convertStyleType(state, *shapeValue->shape()));
+    return CSSValueList::createSpaceSeparated(convertStyleType(state, *shapeValue->shape()), convert(state, shapeValue->cssBox()));
 }
 
 inline Ref<CSSValue> ExtractorConverter::convertPathOperation(ExtractorState& state, const PathOperation* operation, PathConversion conversion)
@@ -748,14 +715,14 @@ inline Ref<CSSValue> ExtractorConverter::convertPathOperation(ExtractorState& st
     switch (operation->type()) {
     case PathOperation::Type::Reference: {
         auto& reference = uncheckedDowncast<ReferencePathOperation>(*operation);
-        return CSSURLValue::create(toCSS(reference.url(), state.style));
+        return convertStyleType(state, reference.url());
     }
 
     case PathOperation::Type::Shape: {
         auto& shape = uncheckedDowncast<ShapePathOperation>(*operation);
         if (shape.referenceBox() == CSSBoxType::BoxMissing)
-            return CSSValueList::createSpaceSeparated(convertBasicShape(state, shape.shape(), conversion));
-        return CSSValueList::createSpaceSeparated(convertBasicShape(state, shape.shape(), conversion), convert(state, shape.referenceBox()));
+            return CSSValueList::createSpaceSeparated(convertStyleType(state, shape.shape(), conversion));
+        return CSSValueList::createSpaceSeparated(convertStyleType(state, shape.shape(), conversion), convert(state, shape.referenceBox()));
     }
 
     case PathOperation::Type::Box: {
@@ -782,7 +749,7 @@ inline Ref<CSSValue> ExtractorConverter::convertDPath(ExtractorState& state, con
 {
     if (!path)
         return CSSPrimitiveValue::create(CSSValueNone);
-    return CSSPathValue::create(overrideToCSS(Ref { *path }->path(), state.style, PathConversion::ForceAbsolute));
+    return CSSPathValue::create(toCSS(Ref { *path }->path(), state.style, PathConversion::ForceAbsolute));
 }
 
 inline Ref<CSSValue> ExtractorConverter::convertStrokeDashArray(ExtractorState& state, const FixedVector<WebCore::Length>& dashes)

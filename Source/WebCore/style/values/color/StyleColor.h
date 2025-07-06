@@ -1,6 +1,7 @@
 /*
  * Copyright (C) 2013 Google Inc. All rights reserved.
  * Copyright (C) 2016-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -167,9 +168,6 @@ private:
 WebCore::Color resolveColor(const Color&, const WebCore::Color& currentColor);
 bool containsCurrentColor(const Color&);
 
-void serializationForCSS(StringBuilder&, const CSS::SerializationContext&, const Color&);
-WEBCORE_EXPORT String serializationForCSS(const CSS::SerializationContext&, const Color&);
-
 template<> struct Serialize<Color> {
     void operator()(StringBuilder&, const CSS::SerializationContext&, const RenderStyle&, const Color&);
 };
@@ -189,9 +187,23 @@ template<> struct ToStyle<CSS::Color> {
     auto operator()(const CSS::Color&, const BuilderState&) -> Color;
 };
 
-template<> struct CSSValueCreation<Color> {
-    Ref<CSSValue> operator()(CSSValuePool&, const RenderStyle&, const Color&);
+template<> struct CSSValueConversion<Color> {
+    auto operator()(BuilderState&, const CSSValue&, ForVisitedLink) -> Color;
 };
+template<> struct CSSValueCreation<Color> {
+    auto operator()(CSSValuePool&, const RenderStyle&, const Color&) -> Ref<CSSValue>;
+};
+
+// MARK: - Blending
+
+template<> struct Blending<Color> {
+    auto equals(const Color&, const Color&, const RenderStyle&, const RenderStyle&) -> bool;
+    auto canBlend(const Color&, const Color&) -> bool;
+    constexpr auto requiresInterpolationForAccumulativeIteration(const Color&, const Color&) -> bool { return true; }
+    auto blend(const Color&, const Color&, const RenderStyle&, const RenderStyle&, const BlendingContext&) -> Color;
+};
+
+// MARK: - Color Implementation
 
 template<typename... F> decltype(auto) Color::switchOn(F&&... f) const
 {

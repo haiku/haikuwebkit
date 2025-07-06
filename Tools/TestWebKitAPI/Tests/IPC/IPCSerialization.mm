@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2023-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2023-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -117,15 +117,10 @@ struct CFHolderForTesting {
         RetainPtr<CGColorRef>,
         RetainPtr<CGColorSpaceRef>,
         RetainPtr<SecCertificateRef>,
-#if USE(SEC_ACCESS_CONTROL)
-        RetainPtr<SecAccessControlRef>,
-#endif
 #if HAVE(SEC_KEYCHAIN)
         RetainPtr<SecKeychainItemRef>,
 #endif
-#if HAVE(SEC_ACCESS_CONTROL)
         RetainPtr<SecAccessControlRef>,
-#endif
         RetainPtr<SecTrustRef>
     >;
 
@@ -328,10 +323,8 @@ CFHolderForTesting cfHolder(CFTypeRef type)
         return { (SecKeychainItemRef)type };
     ALLOW_DEPRECATED_DECLARATIONS_END
 #endif
-#if HAVE(SEC_ACCESS_CONTROL)
     if (typeID == SecAccessControlGetTypeID())
         return { (SecAccessControlRef)type };
-#endif
     if (typeID == SecTrustGetTypeID())
         return { (SecTrustRef)type };
     ASSERT_NOT_REACHED();
@@ -1224,7 +1217,6 @@ TEST(IPCSerialization, Basic)
     EXPECT_TRUE(SecTrustEvaluateWithError(trust.get(), NULL) == errSecSuccess);
     runTestCF({ trust.get() });
 
-#if HAVE(SEC_ACCESS_CONTROL)
     NSDictionary *protection = @{
         (id)kSecUseDataProtectionKeychain : @(YES),
         (id)kSecAttrSynchronizable : @(NO),
@@ -1234,7 +1226,6 @@ TEST(IPCSerialization, Basic)
     auto accessControlRef = adoptCF(SecAccessControlCreateWithFlags(kCFAllocatorDefault, (CFTypeRef)protection, flags, NULL));
     EXPECT_NOT_NULL(accessControlRef);
     runTestCF({ accessControlRef.get() });
-#endif // HAVE(SEC_ACCESS_CONTROL)
 
     // SecKeychainItem
 #if HAVE(SEC_KEYCHAIN)
@@ -1274,9 +1265,7 @@ TEST(IPCSerialization, Basic)
 #if HAVE(SEC_KEYCHAIN)
         (id)keychainItemRef,
 #endif
-#if HAVE(SEC_ACCESS_CONTROL)
         (id)accessControlRef.get(),
-#endif
         @{ @"key": NSNull.null }
     ];
 

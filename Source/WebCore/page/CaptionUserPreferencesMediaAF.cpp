@@ -854,12 +854,12 @@ Vector<RefPtr<AudioTrack>> CaptionUserPreferencesMediaAF::sortedTrackListForMenu
     return tracksForMenu;
 }
 
-Vector<RefPtr<TextTrack>> CaptionUserPreferencesMediaAF::sortedTrackListForMenu(TextTrackList* trackList, UncheckedKeyHashSet<TextTrack::Kind> kinds)
+Vector<RefPtr<TextTrack>> CaptionUserPreferencesMediaAF::sortedTrackListForMenu(TextTrackList* trackList, HashSet<TextTrack::Kind> kinds)
 {
     ASSERT(trackList);
 
     Vector<RefPtr<TextTrack>> tracksForMenu;
-    UncheckedKeyHashSet<String> languagesIncluded;
+    HashSet<String> languagesIncluded;
     CaptionDisplayMode displayMode = captionDisplayMode();
     bool prefersAccessibilityTracks = userPrefersCaptions();
     bool filterTrackList = shouldFilterTrackMenu();

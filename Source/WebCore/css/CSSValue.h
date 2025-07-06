@@ -189,6 +189,8 @@ public:
     bool customMayDependOnBaseURL() const { return false; }
     IterationStatus customVisitChildren(NOESCAPE const Function<IterationStatus(CSSValue&)>&) const { return IterationStatus::Continue; }
 
+    static ASCIILiteral separatorCSSText(ValueSeparator);
+
 protected:
     static const size_t ClassTypeBits = 7;
 
@@ -284,7 +286,6 @@ protected:
     WEBCORE_EXPORT void operator delete(CSSValue*, std::destroying_delete_t);
 
     ValueSeparator separator() const { return static_cast<ValueSeparator>(m_valueSeparator); }
-    static ASCIILiteral separatorCSSText(ValueSeparator);
     ASCIILiteral separatorCSSText() const { return separatorCSSText(separator()); };
 
 private:

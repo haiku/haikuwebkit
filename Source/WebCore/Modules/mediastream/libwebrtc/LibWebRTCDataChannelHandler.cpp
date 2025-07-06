@@ -27,6 +27,7 @@
 
 #if ENABLE(WEB_RTC) && USE(LIBWEBRTC)
 
+#include "ContextDestructionObserverInlines.h"
 #include "EventNames.h"
 #include "LibWebRTCUtils.h"
 #include "RTCDataChannel.h"

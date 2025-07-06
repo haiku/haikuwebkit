@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Samuel Weinig <sam@webkit.org>
+ * Copyright (C) 2024-2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -26,9 +26,6 @@
 #include "StyleContrastColor.h"
 
 #include "CSSContrastColorResolver.h"
-#include "CSSContrastColorSerialization.h"
-#include "CSSSerializationContext.h"
-#include "ColorSerialization.h"
 #include "StyleBuilderState.h"
 #include "StyleColorResolutionState.h"
 #include <wtf/text/TextStream.h>
@@ -77,25 +74,11 @@ bool containsCurrentColor(const ContrastColor& contrastColor)
     return WebCore::Style::containsCurrentColor(contrastColor.color);
 }
 
-// MARK: - Serialization
-
-void serializationForCSS(StringBuilder& builder, const CSS::SerializationContext& context, const ContrastColor& contrastColor)
-{
-    CSS::serializationForCSSContrastColor(builder, context, contrastColor);
-}
-
-String serializationForCSS(const CSS::SerializationContext& context, const ContrastColor& contrastColor)
-{
-    StringBuilder builder;
-    serializationForCSS(builder, context, contrastColor);
-    return builder.toString();
-}
-
 // MARK: - TextStream
 
 WTF::TextStream& operator<<(WTF::TextStream& ts, const ContrastColor& contrastColor)
 {
-    return ts << serializationForCSS(CSS::defaultSerializationContext(), contrastColor);
+    return ts << "contrast-color("_s << contrastColor.color << ")"_s;
 }
 
 } // namespace Style

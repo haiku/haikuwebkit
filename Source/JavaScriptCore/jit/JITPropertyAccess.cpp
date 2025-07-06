@@ -73,9 +73,6 @@ void JIT::emit_op_get_by_val(const JSInstruction* currentInstruction)
     if (isOperandConstantInt(property))
         stubInfo->propertyIsInt32 = true;
 
-    if (bytecode.metadata(m_profiledCodeBlock).m_seenIdentifiers.count() > Options::getByValICMaxNumberOfIdentifiers())
-        stubInfo->canBeMegamorphic = true;
-
     emitJumpSlowCaseIfNotJSCell(baseJSR, base);
     emitArrayProfilingSiteWithCellAndProfile(baseJSR.payloadGPR(), profileGPR, scratch1GPR);
 

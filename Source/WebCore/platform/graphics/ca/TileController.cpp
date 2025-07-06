@@ -235,6 +235,13 @@ void TileController::setAcceleratesDrawing(bool acceleratesDrawing)
     tileGrid().updateTileLayerProperties();
 }
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+bool TileController::setNeedsDisplayIfEDRHeadroomExceeds(float headroom)
+{
+    return tileGrid().setNeedsDisplayIfEDRHeadroomExceeds(headroom);
+}
+#endif
+
 void TileController::setContentsFormat(ContentsFormat contentsFormat)
 {
     if (m_contentsFormat == contentsFormat)

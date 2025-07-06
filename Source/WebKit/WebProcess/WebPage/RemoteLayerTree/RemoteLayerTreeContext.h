@@ -122,7 +122,7 @@ private:
     HashMap<WebCore::PlatformLayerIdentifier, WeakPtr<PlatformCALayerRemote>> m_livePlatformLayers;
     HashMap<WebCore::PlatformLayerIdentifier, WeakPtr<PlatformCALayerRemote>> m_layersWithAnimations;
 #if HAVE(AVKIT)
-    HashMap<WebCore::PlatformLayerIdentifier, PlaybackSessionContextIdentifier> m_videoLayers;
+    HashMap<WebCore::PlatformLayerIdentifier, WebCore::MediaPlayerClientIdentifier> m_videoLayers;
 #endif
 
     HashSet<WeakRef<GraphicsLayerCARemote>> m_liveGraphicsLayers;

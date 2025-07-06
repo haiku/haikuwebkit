@@ -303,7 +303,7 @@ public:
         CompositeOperator globalComposite;
         BlendMode globalBlend;
         AffineTransform transform;
-        bool hasInvertibleTransform;
+        std::optional<AffineTransform> transformInverse;
         Vector<double> lineDash;
         double lineDashOffset;
         bool imageSmoothingEnabled;
@@ -394,6 +394,7 @@ protected:
 
     bool usesCSSCompatibilityParseMode() const { return m_usesCSSCompatibilityParseMode; }
 
+    void updateStateTransform(const AffineTransform&);
 private:
     struct CachedContentsTransparent {
     };
@@ -406,7 +407,6 @@ private:
         DeferrableOneShotTimer evictionTimer;
     };
 
-    void setHasInvertibleTransform(bool);
     void applyLineDash() const;
     void setShadow(const FloatSize& offset, float blur, const Color&);
     void applyShadow();

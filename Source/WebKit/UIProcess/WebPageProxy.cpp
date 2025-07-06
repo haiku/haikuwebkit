@@ -1506,10 +1506,11 @@ void WebPageProxy::swapToProvisionalPage(Ref<ProvisionalPageProxy>&& provisional
 
     m_hasRunningProcess = true;
 
-    ASSERT(!m_drawingArea);
-    setDrawingArea(provisionalPage->takeDrawingArea());
     ASSERT(!m_mainFrame);
     m_mainFrame = provisionalPage->mainFrame();
+    ASSERT(!m_drawingArea);
+    setDrawingArea(provisionalPage->takeDrawingArea());
+
     if (provisionalPage->needsMainFrameObserver())
         m_mainFrame->frameLoadState().addObserver(internals().protectedPageLoadTimingFrameLoadStateObserver());
 
@@ -1679,6 +1680,7 @@ RefPtr<API::Navigation> WebPageProxy::launchProcessForReload()
 
 void WebPageProxy::setDrawingArea(RefPtr<DrawingAreaProxy>&& drawingArea)
 {
+    RELEASE_ASSERT(m_drawingArea != drawingArea);
 #if ENABLE(ASYNC_SCROLLING) && PLATFORM(COCOA)
     // The scrolling coordinator needs to do cleanup before the drawing area goes away.
     m_scrollingCoordinatorProxy = nullptr;
@@ -1689,6 +1691,9 @@ void WebPageProxy::setDrawingArea(RefPtr<DrawingAreaProxy>&& drawingArea)
         m_drawingArea->stopReceivingMessages(legacyMainFrameProcess);
 
     m_drawingArea = WTFMove(drawingArea);
+    protectedBrowsingContextGroup()->forEachRemotePage(*this, [drawingArea = m_drawingArea](auto& remotePageProxy) {
+        remotePageProxy.setDrawingArea(drawingArea.get());
+    });
     if (!m_drawingArea)
         return;
 
@@ -4197,7 +4202,7 @@ void WebPageProxy::handleWheelEventReply(IPC::Connection* connection, const WebW
     MESSAGE_CHECK_BASE(wheelEventCoalescer().hasEventsBeingProcessed(), connection);
 
 #if ENABLE(ASYNC_SCROLLING) && PLATFORM(MAC)
-    if (auto* scrollingCoordinatorProxy = this->scrollingCoordinatorProxy()) {
+    if (CheckedPtr scrollingCoordinatorProxy = this->scrollingCoordinatorProxy()) {
         scrollingCoordinatorProxy->wheelEventHandlingCompleted(platform(event), nodeID, gestureState, wasHandledForScrolling || wasHandledByWebProcess);
         return;
     }
@@ -7297,6 +7302,14 @@ void WebPageProxy::didFinishDocumentLoadForFrame(IPC::Connection& connection, Fr
     }
 }
 
+HashSet<Ref<WebProcessProxy>> WebPageProxy::webContentProcessesWithFrame()
+{
+    HashSet<Ref<WebProcessProxy>> processes;
+    for (RefPtr frame = m_mainFrame; frame; frame = frame->traverseNext().frame)
+        processes.add(frame->process());
+    return processes;
+}
+
 void WebPageProxy::forEachWebContentProcess(NOESCAPE Function<void(WebProcessProxy&, PageIdentifier)>&& function)
 {
     protectedBrowsingContextGroup()->forEachRemotePage(*this, [&] (auto& remotePageProxy) {
@@ -7607,7 +7620,7 @@ void WebPageProxy::viewIsBecomingVisible()
 {
     WEBPAGEPROXY_RELEASE_LOG(ViewState, "viewIsBecomingVisible:");
     protectedLegacyMainFrameProcess()->markProcessAsRecentlyUsed();
-    if (auto* drawingAreaProxy = drawingArea())
+    if (RefPtr drawingAreaProxy = drawingArea())
         drawingAreaProxy->viewIsBecomingVisible();
 #if ENABLE(MEDIA_STREAM)
     if (RefPtr userMediaPermissionRequestManager = m_userMediaPermissionRequestManager)
@@ -7622,7 +7635,7 @@ void WebPageProxy::viewIsBecomingInvisible()
 {
     WEBPAGEPROXY_RELEASE_LOG(ViewState, "viewIsBecomingInvisible:");
     protectedLegacyMainFrameProcess()->pageIsBecomingInvisible(m_webPageID);
-    if (auto* drawingAreaProxy = drawingArea())
+    if (RefPtr drawingAreaProxy = drawingArea())
         drawingAreaProxy->viewIsBecomingInvisible();
 
     RefPtr protectedPageClient { pageClient() };
@@ -8793,6 +8806,18 @@ void WebPageProxy::failedToEnterFullscreen(PlaybackSessionContextIdentifier iden
 {
 }
 
+#if PLATFORM(IOS_FAMILY)
+void WebPageProxy::didEnterStandby(PlaybackSessionContextIdentifier)
+{
+    m_uiClient->didEnterStandby(*this);
+}
+
+void WebPageProxy::didExitStandby(PlaybackSessionContextIdentifier)
+{
+    m_uiClient->didExitStandby(*this);
+}
+#endif
+
 #else
 
 void WebPageProxy::didEnterFullscreen()
@@ -9716,6 +9741,11 @@ RefPtr<PlaybackSessionManagerProxy> WebPageProxy::protectedPlaybackSessionManage
 }
 
 VideoPresentationManagerProxy* WebPageProxy::videoPresentationManager()
+{
+    return m_videoPresentationManager.get();
+}
+
+RefPtr<VideoPresentationManagerProxy> WebPageProxy::protectedVideoPresentationManager()
 {
     return m_videoPresentationManager.get();
 }
@@ -14200,9 +14230,8 @@ void WebPageProxy::callAfterNextPresentationUpdate(CompletionHandler<void()>&& c
 #if PLATFORM(COCOA)
     Ref aggregator = CallbackAggregator::create(WTFMove(callback));
     auto drawingAreaIdentifier = m_drawingArea->identifier();
-    forEachWebContentProcess([&] (auto& process, auto) {
-        process.sendWithAsyncReply(Messages::DrawingArea::DispatchAfterEnsuringDrawing(), [aggregator] { }, drawingAreaIdentifier);
-    });
+    for (Ref process : webContentProcessesWithFrame())
+        process->sendWithAsyncReply(Messages::DrawingArea::DispatchAfterEnsuringDrawing(), [aggregator] { }, drawingAreaIdentifier);
 #elif USE(COORDINATED_GRAPHICS)
     downcast<DrawingAreaProxyCoordinatedGraphics>(*m_drawingArea).dispatchAfterEnsuringDrawing(WTFMove(callback));
 #else

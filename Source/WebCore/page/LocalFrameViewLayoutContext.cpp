@@ -244,6 +244,7 @@ void LocalFrameViewLayoutContext::performLayout(bool canDeferUpdateLayerPosition
         m_firstLayout = false;
     }
 
+    Vector<FloatQuad> layoutAreas;
     {
         TraceScope tracingScope(RenderTreeLayoutStart, RenderTreeLayoutEnd);
         SetForScope layoutPhase(m_layoutPhase, LayoutPhase::InRenderTreeLayout);
@@ -257,6 +258,8 @@ void LocalFrameViewLayoutContext::performLayout(bool canDeferUpdateLayerPosition
 #if ENABLE(TEXT_AUTOSIZING)
         applyTextSizingIfNeeded(*layoutRoot.get());
 #endif
+        layoutRoot->absoluteQuads(layoutAreas);
+
         clearSubtreeLayoutRoot();
         ASSERT(m_percentHeightIgnoreList.isEmptyIgnoringNullReferences());
 
@@ -289,7 +292,7 @@ void LocalFrameViewLayoutContext::performLayout(bool canDeferUpdateLayerPosition
         protectedView()->didLayout(layoutRoot, canDeferUpdateLayerPositions);
         runOrScheduleAsynchronousTasks(canDeferUpdateLayerPositions);
     }
-    InspectorInstrumentation::didLayout(frame, *layoutRoot);
+    InspectorInstrumentation::didLayout(frame, layoutAreas);
     DebugPageOverlays::didLayout(frame);
 }
 

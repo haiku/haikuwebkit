@@ -1799,6 +1799,11 @@ FloatSize WebPageProxy::viewLayoutSize() const
     return internals().viewportConfigurationViewLayoutSize;
 }
 
+void WebPageProxy::didRefreshDisplay()
+{
+    m_configuration->protectedProcessPool()->didRefreshDisplay();
+}
+
 #if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
 
 void WebPageProxy::createPDFPageNumberIndicator(PDFPluginIdentifier identifier, const IntRect& rect, size_t pageCount)

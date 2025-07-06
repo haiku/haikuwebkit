@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Apple Inc. All rights reserved.
+ * Copyright (C) 2021-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -180,13 +180,13 @@ void WebLockManager::request(const String& name, Ref<WebLockGrantedCallback>&& g
 void WebLockManager::request(const String& name, Options&& options, Ref<WebLockGrantedCallback>&& grantedCallback, Ref<DeferredPromise>&& releasePromise)
 {
     UNUSED_PARAM(name);
-    if (!scriptExecutionContext()) {
+    RefPtr context = scriptExecutionContext();
+    if (!context) {
         releasePromise->reject(ExceptionCode::InvalidStateError, "Context is invalid"_s);
         return;
     }
-    auto& context = *scriptExecutionContext();
-    auto* document = dynamicDowncast<Document>(context);
-    if (document && !document->isFullyActive()) {
+
+    if (RefPtr document = dynamicDowncast<Document>(*context); document && !document->isFullyActive()) {
         releasePromise->reject(ExceptionCode::InvalidStateError, "Responsible document is not fully active"_s);
         return;
     }
@@ -290,13 +290,13 @@ void WebLockManager::didCompleteLockRequest(WebLockIdentifier lockIdentifier, bo
 
 void WebLockManager::query(Ref<DeferredPromise>&& promise)
 {
-    if (!scriptExecutionContext()) {
+    RefPtr context = scriptExecutionContext();
+    if (!context) {
         promise->reject(ExceptionCode::InvalidStateError, "Context is invalid"_s);
         return;
     }
-    auto& context = *scriptExecutionContext();
-    auto* document = dynamicDowncast<Document>(context);
-    if (document && !document->isFullyActive()) {
+
+    if (RefPtr document = dynamicDowncast<Document>(*context); document && !document->isFullyActive()) {
         promise->reject(ExceptionCode::InvalidStateError, "Responsible document is not fully active"_s);
         return;
     }

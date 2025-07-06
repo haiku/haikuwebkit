@@ -156,7 +156,7 @@ void RenderListBox::updateFromElement()
 
         computeFirstIndexesVisibleInPaddingBeforeAfterAreas();
 
-        setNeedsLayoutAndPrefWidthsRecalc();
+        setNeedsLayoutAndPreferredWidthsUpdate();
     }
 }
 

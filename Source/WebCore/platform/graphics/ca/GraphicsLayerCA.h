@@ -103,6 +103,7 @@ public:
     WEBCORE_EXPORT void setDrawsContent(bool) override;
 #if HAVE(SUPPORT_HDR_DISPLAY)
     WEBCORE_EXPORT void setDrawsHDRContent(bool) override;
+    WEBCORE_EXPORT void setNeedsDisplayIfEDRHeadroomExceeds(float) override;
 #endif
     WEBCORE_EXPORT void setContentsVisible(bool) override;
     WEBCORE_EXPORT void setAcceleratesDrawing(bool) override;

@@ -189,19 +189,16 @@ void PageTimelineAgent::willLayout()
     pushCurrentRecord(JSON::Object::create(), TimelineRecordType::Layout, true);
 }
 
-void PageTimelineAgent::didLayout(RenderObject& root)
+void PageTimelineAgent::didLayout(const Vector<FloatQuad>& layoutAreas)
 {
     auto* entry = lastRecordEntry();
     if (!entry)
         return;
 
     ASSERT(entry->type == TimelineRecordType::Layout);
-
-    Vector<FloatQuad> quads;
-    root.absoluteQuads(quads);
-    ASSERT(quads.size() >= 1);
-    if (quads.size() >= 1)
-        TimelineRecordFactory::appendLayoutRoot(entry->data.get(), quads[0]);
+    ASSERT(!layoutAreas.isEmpty());
+    if (!layoutAreas.isEmpty())
+        TimelineRecordFactory::appendLayoutRoot(entry->data.get(), layoutAreas[0]);
 
     didCompleteCurrentRecord(TimelineRecordType::Layout);
 }

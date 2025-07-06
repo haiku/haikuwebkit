@@ -553,7 +553,7 @@ void CoordinatedPlatformLayer::setContentsTilePhase(const FloatSize& contentsTil
 void CoordinatedPlatformLayer::setDirtyRegion(Damage&& damage)
 {
     ASSERT(m_lock.isHeld());
-    auto dirtyRegion = damage.nonEmptyRects();
+    auto dirtyRegion = damage.rects();
     if (m_dirtyRegion != dirtyRegion) {
         m_dirtyRegion = WTFMove(dirtyRegion);
         notifyCompositionRequired();

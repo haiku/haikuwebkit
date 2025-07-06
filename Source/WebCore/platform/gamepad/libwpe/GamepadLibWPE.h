@@ -48,6 +48,9 @@ public:
 private:
     void buttonPressedOrReleased(unsigned, bool);
     void absoluteAxisChanged(unsigned, double);
+#if WPE_CHECK_VERSION(1, 16, 2)
+    void analogButtonChanged(unsigned, double);
+#endif
 
     Vector<SharedGamepadValue> m_buttonValues;
     Vector<SharedGamepadValue> m_axisValues;

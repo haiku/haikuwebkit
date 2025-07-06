@@ -69,6 +69,7 @@
 #include "HTMLSourceElement.h"
 #include "HTMLTrackElement.h"
 #include "HTMLVideoElement.h"
+#include "HostingContext.h"
 #include "ImageOverlay.h"
 #include "InbandGenericTextTrack.h"
 #include "InbandTextTrackPrivate.h"
@@ -1369,11 +1370,6 @@ void HTMLMediaElement::setSrcObject(MediaProvider&& mediaProvider)
 #endif
 
     prepareForLoad();
-}
-
-void HTMLMediaElement::setCrossOrigin(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(crossoriginAttr, value);
 }
 
 String HTMLMediaElement::crossOrigin() const
@@ -3780,7 +3776,7 @@ void HTMLMediaElement::fastSeek(const MediaTime& time)
 #if ENABLE(MEDIA_STREAM)
 void HTMLMediaElement::setAudioOutputDevice(String&& deviceId, DOMPromiseDeferred<void>&& promise)
 {
-    RefPtr window = document().domWindow();
+    RefPtr window = document().window();
     RefPtr mediaDevices = window ? NavigatorMediaDevices::mediaDevices(window->navigator()) : nullptr;
     if (!mediaDevices) {
         promise.reject(Exception { ExceptionCode::NotAllowedError });
@@ -7401,7 +7397,7 @@ void HTMLMediaElement::setPlayerIdentifierForVideoElement()
     if (!page || page->mediaPlaybackIsSuspended())
         return;
 
-    RefPtr window = document().domWindow();
+    RefPtr window = document().window();
     if (!window)
         return;
 
@@ -7420,7 +7416,7 @@ void HTMLMediaElement::enterFullscreen(VideoFullscreenMode mode)
     if (!page || page->mediaPlaybackIsSuspended())
         return;
 
-    RefPtr window = document().domWindow();
+    RefPtr window = document().window();
     if (!window)
         return;
 
@@ -8416,7 +8412,7 @@ Vector<RefPtr<PlatformTextTrack>> HTMLMediaElement::outOfBandTrackSources()
             continue;
         }
 
-        outOfBandTrackSources.append(PlatformTextTrack::createOutOfBand(trackElement.label(), trackElement.srclang(), url.string(), toPlatform(track.mode()), toPlatform(kind), track.uniqueId(), trackElement.isDefault()));
+        outOfBandTrackSources.append(PlatformTextTrack::createOutOfBand(trackElement.attributeWithoutSynchronization(labelAttr), trackElement.attributeWithoutSynchronization(srclangAttr), url.string(), toPlatform(track.mode()), toPlatform(kind), track.uniqueId(), trackElement.isDefault()));
     }
 
     return outOfBandTrackSources;
@@ -8713,8 +8709,8 @@ void HTMLMediaElement::updateRateChangeRestrictions()
 
 RefPtr<VideoPlaybackQuality> HTMLMediaElement::getVideoPlaybackQuality() const
 {
-    RefPtr domWindow = document().domWindow();
-    double timestamp = domWindow ? domWindow->nowTimestamp().milliseconds() : 0;
+    RefPtr window = document().window();
+    double timestamp = window ? window->nowTimestamp().milliseconds() : 0;
 
     VideoPlaybackQualityMetrics currentVideoPlaybackQuality;
 #if ENABLE(MEDIA_SOURCE)
@@ -9255,20 +9251,20 @@ bool HTMLMediaElement::shouldOverridePauseDuringRouteChange() const
 #endif
 }
 
-void HTMLMediaElement::requestHostingContextID(Function<void(LayerHostingContextID)>&& completionHandler)
+void HTMLMediaElement::requestHostingContext(Function<void(HostingContext)>&& completionHandler)
 {
     if (RefPtr player = m_player) {
-        player->requestHostingContextID(WTFMove(completionHandler));
+        player->requestHostingContext(WTFMove(completionHandler));
         return;
     }
 
     completionHandler({ });
 }
 
-LayerHostingContextID HTMLMediaElement::layerHostingContextID()
+HostingContext HTMLMediaElement::layerHostingContext()
 {
     if (m_player)
-        return m_player->hostingContextID();
+        return m_player->hostingContext();
     return { };
 }
 
@@ -9284,7 +9280,7 @@ FloatSize HTMLMediaElement::videoLayerSize() const
     return m_videoLayerSize;
 }
 
-void HTMLMediaElement::setVideoLayerSizeFenced(const FloatSize& size, WTF::MachSendRight&& fence)
+void HTMLMediaElement::setVideoLayerSizeFenced(const FloatSize& size, WTF::MachSendRightAnnotated&& fence)
 {
     if (m_videoLayerSize == size)
         return;

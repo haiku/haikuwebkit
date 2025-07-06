@@ -27,11 +27,8 @@
 #include "ScriptTelemetryCategory.h"
 
 #include "AdvancedPrivacyProtections.h"
-
-#if !(USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/ScriptTelemetryCategoryAdditions.cpp>))
 #include <wtf/URL.h>
 #include <wtf/text/MakeString.h>
-#endif
 
 namespace WebCore {
 
@@ -76,13 +73,15 @@ bool shouldEnableScriptTelemetry(ScriptTelemetryCategory category, OptionSet<Adv
     return category != ScriptTelemetryCategory::FormControls;
 }
 
-#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/ScriptTelemetryCategoryAdditions.cpp>)
-#import <WebKitAdditions/ScriptTelemetryCategoryAdditions.cpp>
-#else
 String makeLogMessage(const URL& url, ScriptTelemetryCategory category)
 {
+#if ENABLE(SCRIPT_TELEMETRY)
+    if (category == ScriptTelemetryCategory::Cookies)
+        return makeString("Prevented "_s, url.string(), " from setting long-lived cookies"_s);
+    return makeString("Prevented "_s, url.string(), " from accessing "_s, description(category));
+#else
     return makeString(url.string(), " tried to access "_s, description(category));
-}
 #endif
+}
 
 } // namespace WebCore

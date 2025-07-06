@@ -1105,7 +1105,8 @@ void RenderLayerBacking::updateAfterWidgetResize()
 
     if (auto* innerCompositor = RenderLayerCompositor::frameContentsCompositor(*renderWidget)) {
         innerCompositor->frameViewDidChangeSize();
-        innerCompositor->frameViewDidChangeLocation(flooredIntPoint(contentsBox().location()));
+        auto snappedContentOrigin = roundPointToDevicePixels(contentsBox().location(), deviceScaleFactor());
+        innerCompositor->frameViewDidChangeLocation(snappedContentOrigin);
     }
 
     if (auto* contentsLayer = layerForContents())
@@ -2054,8 +2055,11 @@ void RenderLayerBacking::updateDrawsContent(PaintedContentsInfo& contentsInfo)
         m_backgroundLayer->setDrawsContent(m_backgroundLayerPaintsFixedRootBackground ? hasPaintedContent : contentsInfo.paintsBoxDecorations());
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    if (contentsInfo.paintsHDRContent() || contentsInfo.rendererHasHDRContent())
-        m_graphicsLayer->setDrawsHDRContent(true);
+    m_graphicsLayer->setDrawsHDRContent(contentsInfo.paintsHDRContent() || contentsInfo.rendererHasHDRContent());
+    if (contentsInfo.paintsHDRContent() || contentsInfo.rendererHasHDRContent()) {
+        LOG_WITH_STREAM(HDR, stream << "RenderLayerBacking " << *this << " updateDrawContent headroom " << m_owningLayer.page().displayEDRHeadroom());
+        m_graphicsLayer->setNeedsDisplayIfEDRHeadroomExceeds(m_owningLayer.page().displayEDRHeadroom());
+    }
 #endif
 }
 
@@ -4097,6 +4101,13 @@ void RenderLayerBacking::paintContents(const GraphicsLayer* graphicsLayer, Graph
     LocalDefaultSystemAppearance localAppearance(renderer().useDarkAppearance());
 #endif
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    if (layerPaintBehavior.contains(GraphicsLayerPaintBehavior::TonemapHDRToDisplayHeadroom))
+        context.setMaxEDRHeadroom(m_owningLayer.page().displayEDRHeadroom());
+    else
+        context.setMaxEDRHeadroom(std::nullopt);
+#endif
+
     // The dirtyRect is in the coords of the painting root.
     FloatRect adjustedClipRect = clip;
     adjustedClipRect.move(m_subpixelOffsetFromRenderer);
@@ -4122,6 +4133,11 @@ void RenderLayerBacking::paintContents(const GraphicsLayer* graphicsLayer, Graph
             behavior.add(PaintBehavior::ForceSynchronousImageDecode);
         else if (layerPaintBehavior.contains(GraphicsLayerPaintBehavior::DefaultAsynchronousImageDecode))
             behavior.add(PaintBehavior::DefaultAsynchronousImageDecode);
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        if (graphicsLayer->drawsHDRContent())
+            behavior.add(PaintBehavior::DrawsHDRContent);
+#endif
 
         paintIntoLayer(graphicsLayer, context, dirtyRect, behavior);
 
@@ -4157,6 +4173,9 @@ void RenderLayerBacking::paintContents(const GraphicsLayer* graphicsLayer, Graph
     }
 #ifndef NDEBUG
     renderer().page().setIsPainting(false);
+#endif
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    context.setMaxEDRHeadroom(std::nullopt);
 #endif
 }
 
@@ -4330,17 +4349,17 @@ bool RenderLayerBacking::startAnimation(double timeOffset, const Animation& anim
 
         if (!keyframeStyle)
             continue;
-            
+
         auto* tf = currentKeyframe.timingFunction();
 
         if (currentKeyframe.animatesProperty(CSSPropertyRotate))
-            rotateVector.insert(makeUnique<TransformAnimationValue>(offset, keyframeStyle->rotate(), tf));
+            rotateVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->rotate()).get(), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyScale))
-            scaleVector.insert(makeUnique<TransformAnimationValue>(offset, keyframeStyle->scale(), tf));
+            scaleVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->scale()).get(), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyTranslate))
-            translateVector.insert(makeUnique<TransformAnimationValue>(offset, keyframeStyle->translate(), tf));
+            translateVector.insert(makeUnique<TransformAnimationValue>(offset, Style::toPlatform(keyframeStyle->translate()).get(), tf));
 
         if (currentKeyframe.animatesProperty(CSSPropertyTransform))
             transformVector.insert(makeUnique<TransformAnimationValue>(offset, keyframeStyle->transform(), tf));
@@ -4660,9 +4679,8 @@ TransformationMatrix RenderLayerBacking::transformMatrixForProperty(AnimatedProp
 {
     TransformationMatrix matrix;
 
-    auto applyTransformOperation = [&](TransformOperation* operation) {
-        if (operation)
-            operation->apply(matrix, snappedIntRect(m_owningLayer.rendererBorderBoxRect()).size());
+    auto applyTransformOperation = [&](const auto& operation) {
+        operation.apply(matrix, snappedIntRect(m_owningLayer.rendererBorderBoxRect()).size());
     };
 
     if (property == AnimatedProperty::Translate)
@@ -4672,7 +4690,7 @@ TransformationMatrix RenderLayerBacking::transformMatrixForProperty(AnimatedProp
     else if (property == AnimatedProperty::Rotate)
         applyTransformOperation(renderer().style().rotate());
     else if (property == AnimatedProperty::Transform)
-        renderer().style().transform().apply(matrix, snappedIntRect(m_owningLayer.rendererBorderBoxRect()).size());
+        applyTransformOperation(renderer().style().transform());
     else
         ASSERT_NOT_REACHED();
 

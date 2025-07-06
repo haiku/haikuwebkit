@@ -31,6 +31,8 @@
 #include <WebCore/GamepadProviderClient.h>
 #include <WebCore/NotImplemented.h>
 #include <wpe/wpe-platform.h>
+#include <wtf/NeverDestroyed.h>
+#include <wtf/glib/GUniquePtr.h>
 
 namespace WebKit {
 using namespace WebCore;

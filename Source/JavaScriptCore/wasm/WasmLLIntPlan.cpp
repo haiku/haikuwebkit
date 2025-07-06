@@ -136,22 +136,26 @@ void LLIntPlan::compileFunction(FunctionCodeIndex functionIndex)
     if (!m_callees) {
         auto callee = LLIntCallee::create(*m_wasmInternalFunctions[functionIndex], functionIndexSpace, m_moduleInformation->nameSection->get(functionIndexSpace));
         ASSERT(!callee->entrypoint());
-
-        if (Options::useWasmJIT() && Options::useBBQJIT()) {
-#if ENABLE(JIT)
-            if (m_moduleInformation->usesSIMD(functionIndex))
-                callee->setEntrypoint(LLInt::wasmFunctionEntryThunkSIMD().retaggedCode<WasmEntryPtrTag>());
-            else
-                callee->setEntrypoint(LLInt::wasmFunctionEntryThunk().retaggedCode<WasmEntryPtrTag>());
-#endif
-        } else {
-            if (m_moduleInformation->usesSIMD(functionIndex)) {
-                Locker locker { m_lock };
-                Base::fail(makeString("JIT is disabled, but the entrypoint for "_s, functionIndex.rawIndex(), " requires JIT"_s));
-                return;
-            }
-            callee->setEntrypoint(LLInt::getCodeFunctionPtr<CFunctionPtrTag>(wasm_function_prologue_trampoline));
+        bool usesSIMD = m_moduleInformation->usesSIMD(functionIndex);
+        if (usesSIMD && !Options::useBBQJIT()) {
+            Locker locker { m_lock };
+            Base::fail(makeString("JIT is disabled, but the entrypoint for "_s, functionIndex.rawIndex(), " requires JIT"_s));
+            return;
         }
+
+        CodePtr<WasmEntryPtrTag> entrypoint { };
+#if ENABLE(JIT)
+        if (Options::useJIT()) {
+            if (usesSIMD)
+                entrypoint = LLInt::wasmFunctionEntryThunkSIMD().retaggedCode<WasmEntryPtrTag>();
+            else
+                entrypoint = LLInt::wasmFunctionEntryThunk().retaggedCode<WasmEntryPtrTag>();
+        }
+#endif
+        if (!entrypoint)
+            entrypoint = LLInt::getCodeFunctionPtr<CFunctionPtrTag>(wasm_function_prologue_trampoline);
+
+        callee->setEntrypoint(entrypoint);
         llintCallee = callee.ptr();
         m_calleesVector[functionIndex] = WTFMove(callee);
     } else

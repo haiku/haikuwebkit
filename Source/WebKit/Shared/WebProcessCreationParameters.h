@@ -88,7 +88,9 @@ struct WebProcessCreationParameters {
     Vector<String> urlSchemesRegisteredAsBypassingContentSecurityPolicy;
     Vector<String> urlSchemesForWhichDomainRelaxationIsForbidden;
     Vector<String> urlSchemesRegisteredAsLocal;
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
     Vector<String> urlSchemesRegisteredAsNoAccess;
+#endif
     Vector<String> urlSchemesRegisteredAsDisplayIsolated;
     Vector<String> urlSchemesRegisteredAsCORSEnabled;
     Vector<String> urlSchemesRegisteredAsAlwaysRevalidated;

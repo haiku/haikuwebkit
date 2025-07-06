@@ -232,11 +232,11 @@ ExceptionOr<std::optional<OffscreenRenderingContext>> OffscreenCanvas::getContex
             Ref scriptExecutionContext = *this->scriptExecutionContext();
             if (RefPtr globalScope = dynamicDowncast<WorkerGlobalScope>(scriptExecutionContext)) {
                 if (auto* gpu = globalScope->protectedNavigator()->gpu())
-                    m_context = GPUCanvasContext::create(*this, *gpu);
+                    m_context = GPUCanvasContext::create(*this, *gpu, nullptr);
             } else if (RefPtr document = dynamicDowncast<Document>(scriptExecutionContext)) {
-                if (RefPtr domWindow = document->domWindow()) {
-                    if (auto* gpu = domWindow->protectedNavigator()->gpu())
-                        m_context = GPUCanvasContext::create(*this, *gpu);
+                if (RefPtr window = document->window()) {
+                    if (auto* gpu = window->protectedNavigator()->gpu())
+                        m_context = GPUCanvasContext::create(*this, *gpu, document.get());
                 }
             }
         }
@@ -410,7 +410,7 @@ void OffscreenCanvas::commitToPlaceholderCanvas()
     RefPtr imageBuffer = m_context->surfaceBufferToImageBuffer(CanvasRenderingContext::SurfaceBuffer::DisplayBuffer);
     if (!imageBuffer)
         return;
-    m_placeholderSource->setPlaceholderBuffer(WTFMove(imageBuffer));
+    m_placeholderSource->setPlaceholderBuffer(*imageBuffer);
     }
 
 void OffscreenCanvas::scheduleCommitToPlaceholderCanvas()

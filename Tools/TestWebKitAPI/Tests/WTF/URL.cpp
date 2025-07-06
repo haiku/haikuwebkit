@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011, 2012 Apple Inc. All rights reserved.
+ * Copyright (C) 2011-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -668,6 +668,37 @@ TEST_F(WTF_URL, MoveInvalidatesURL)
 
     url3 = { };
     EXPECT_FALSE(url3.isValid());
+}
+
+TEST_F(WTF_URL, ProtocolIsSecure)
+{
+    const auto httpsURL = createURL("https://example.com/api"_s);
+    EXPECT_TRUE(httpsURL.protocolIsSecure());
+
+    const auto httpURL = createURL("http://example.com/api"_s);
+    EXPECT_FALSE(httpURL.protocolIsSecure());
+
+    // Note: FTPS is not considered secure for WebKit purposes.
+    const auto ftpsURL = createURL("ftps://example.com/api"_s);
+    EXPECT_FALSE(ftpsURL.protocolIsSecure());
+
+    const auto ftpURL = createURL("ftp://example.com/api"_s);
+    EXPECT_FALSE(ftpURL.protocolIsSecure());
+
+    const auto wssURL = createURL("wss://example.com/api"_s);
+    EXPECT_TRUE(wssURL.protocolIsSecure());
+
+    const auto wsURL = createURL("ws://example.com/api"_s);
+    EXPECT_FALSE(wsURL.protocolIsSecure());
+
+    const auto asdfURL = createURL("asdf:///a/b/c"_s);
+    EXPECT_FALSE(asdfURL.protocolIsSecure());
+
+    const auto blobURL = createURL("blob://apple.com"_s);
+    EXPECT_FALSE(blobURL.protocolIsSecure());
+
+    const auto aboutURL = createURL("about://example.com/"_s);
+    EXPECT_FALSE(aboutURL.protocolIsSecure());
 }
 
 } // namespace TestWebKitAPI

@@ -97,6 +97,9 @@ private:
     // The RenderStyle we should use for resolving non-layout-dependent properties.
     const RenderStyle* computeStyle(CSSPropertyID, UpdateLayout, std::unique_ptr<RenderStyle>&) const;
 
+    // The RenderStyle we should use for resolving custom properties.
+    const RenderStyle* computeStyleForCustomProperty(std::unique_ptr<RenderStyle>&) const;
+
     RefPtr<Element> m_element;
     std::optional<Style::PseudoElementIdentifier> m_pseudoElementIdentifier;
     bool m_allowVisitedStyle;

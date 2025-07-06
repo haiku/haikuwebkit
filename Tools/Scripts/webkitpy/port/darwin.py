@@ -31,7 +31,7 @@ from webkitpy.common.system.executive import ScriptError
 from webkitpy.port.apple import ApplePort
 from webkitpy.port.leakdetector import LeakDetector
 
-from webkitcorepy import decorators
+from webkitcorepy import decorators, Version
 
 
 _log = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ _log = logging.getLogger(__name__)
 
 class DarwinPort(ApplePort):
 
-    CURRENT_VERSION = None
+    CURRENT_VERSION = Version(26)
     SDK = None
 
     API_TEST_BINARY_NAMES = ['TestWTF', 'TestWebKitAPI', 'TestIPC', 'TestWGSL']

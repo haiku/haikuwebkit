@@ -28,6 +28,7 @@
 #include "RemoteAcceleratedEffectStack.h"
 #include "RemoteLayerBackingStore.h"
 #include <WebCore/EventRegion.h>
+#include <WebCore/IOSurface.h>
 #include <WebCore/LayerHostingContextIdentifier.h>
 #include <WebCore/PlatformLayerIdentifier.h>
 #include <WebCore/RenderingResourceIdentifier.h>
@@ -127,6 +128,7 @@ public:
     struct CachedContentsBuffer {
         BufferAndBackendInfo imageBufferInfo;
         RetainPtr<id> buffer;
+        std::unique_ptr<WebCore::IOSurface> ioSurface;
     };
 
     Vector<CachedContentsBuffer> takeCachedContentsBuffers() { return std::exchange(m_cachedContentsBuffers, { }); }

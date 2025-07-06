@@ -578,7 +578,7 @@ std::optional<ReducedResolutionSeconds> IntersectionObserver::nowTimestamp() con
         if (!context)
             return std::nullopt;
         auto& document = downcast<Document>(*context);
-        window = document.domWindow();
+        window = document.window();
         if (!window)
             return std::nullopt;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2015 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -780,7 +780,7 @@ void ViewGestureController::applyMagnification()
     if (m_frameHandlesMagnificationGesture) {
         if (RefPtr page = m_webPageProxy.get())
             page->scalePage(m_magnification, roundedIntPoint(m_magnificationOrigin), [] { });
-    } else if (auto* drawingArea = m_webPageProxy ? m_webPageProxy->drawingArea() : nullptr)
+    } else if (RefPtr drawingArea = m_webPageProxy ? m_webPageProxy->drawingArea() : nullptr)
         drawingArea->adjustTransientZoom(m_magnification, scaledMagnificationOrigin(m_magnificationOrigin, m_magnification), m_magnificationOrigin);
 }
 
@@ -800,7 +800,7 @@ void ViewGestureController::endMagnificationGesture()
     if (m_frameHandlesMagnificationGesture)
         page->scalePage(newMagnification, roundedIntPoint(m_magnificationOrigin), [] { });
     else {
-        if (auto drawingArea = page->drawingArea())
+        if (RefPtr drawingArea = page->drawingArea())
             drawingArea->commitTransientZoom(newMagnification, scaledMagnificationOrigin(m_magnificationOrigin, newMagnification));
     }
 

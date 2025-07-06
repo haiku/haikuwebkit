@@ -51,6 +51,10 @@
 #include "MediaSourcePrivateRemote.h"
 #endif
 
+#if ENABLE(MACH_PORT_LAYER_HOSTING)
+#include <wtf/MachSendRightAnnotated.h>
+#endif
+
 namespace WTF {
 class MachSendRight;
 }
@@ -134,9 +138,9 @@ public:
     void firstVideoFrameAvailable();
     void renderingModeChanged();
 #if PLATFORM(COCOA)
-    void layerHostingContextIdChanged(std::optional<WebKit::LayerHostingContextID>&&, const WebCore::FloatSize&);
+    void layerHostingContextChanged(WebCore::HostingContext&&, const WebCore::FloatSize&);
     WebCore::FloatSize videoLayerSize() const final;
-    void setVideoLayerSizeFenced(const WebCore::FloatSize&, WTF::MachSendRight&&) final;
+    void setVideoLayerSizeFenced(const WebCore::FloatSize&, WTF::MachSendRightAnnotated&&) final;
 #endif
 
     void currentTimeChanged(MediaTimeUpdateData&&);
@@ -205,9 +209,13 @@ public:
     const Logger& mediaPlayerLogger() const { return logger(); }
 #endif
 
-    void requestHostingContextID(LayerHostingContextIDCallback&&) override;
-    LayerHostingContextID hostingContextID()const override;
-    void setLayerHostingContextID(LayerHostingContextID  inID);
+    void requestHostingContext(LayerHostingContextCallback&&) override;
+    WebCore::HostingContext hostingContext() const override;
+    void setLayerHostingContext(WebCore::HostingContext&&);
+
+#if ENABLE(MACH_PORT_LAYER_HOSTING)
+    WTF::MachSendRightAnnotated sendRightAnnotated() const { return m_layerHostingContext.sendRightAnnotated; }
+#endif
 
     MediaTime duration() const final;
     MediaTime currentTime() const final;
@@ -553,8 +561,8 @@ private:
     RefPtr<RemoteVideoFrameProxy> m_videoFrameGatheredWithVideoFrameMetadata;
 #endif
 
-    Vector<LayerHostingContextIDCallback> m_layerHostingContextIDRequests;
-    LayerHostingContextID m_layerHostingContextID { 0 };
+    Vector<LayerHostingContextCallback> m_layerHostingContextRequests;
+    WebCore::HostingContext m_layerHostingContext;
     std::optional<WebCore::VideoFrameMetadata> m_videoFrameMetadata;
     bool m_isGatheringVideoFrameMetadata { false };
     String m_defaultSpatialTrackingLabel;

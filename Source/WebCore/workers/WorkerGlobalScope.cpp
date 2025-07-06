@@ -160,7 +160,7 @@ WorkerGlobalScope::~WorkerGlobalScope()
 
 String WorkerGlobalScope::origin() const
 {
-    auto* securityOrigin = this->securityOrigin();
+    RefPtr securityOrigin = this->securityOrigin();
     return securityOrigin ? securityOrigin->toString() : emptyString();
 }
 
@@ -718,8 +718,8 @@ void WorkerGlobalScope::clearDecodedScriptData()
         m_mainScriptSourceProvider->clearDecodedData();
 
     for (auto& sourceProviders : m_importedScriptsSourceProviders.values()) {
-        for (auto& sourceProvider : sourceProviders)
-            sourceProvider.clearDecodedData();
+        for (Ref sourceProvider : sourceProviders)
+            sourceProvider->clearDecodedData();
     }
 }
 
@@ -739,8 +739,8 @@ void WorkerGlobalScope::updateSourceProviderBuffers(const ScriptBuffer& mainScri
         auto it = m_importedScriptsSourceProviders.find(pair.key);
         if (it == m_importedScriptsSourceProviders.end())
             continue;
-        for (auto& sourceProvider : it->value)
-            sourceProvider.tryReplaceScriptBuffer(pair.value);
+        for (Ref sourceProvider : it->value)
+            sourceProvider->tryReplaceScriptBuffer(pair.value);
     }
 }
 

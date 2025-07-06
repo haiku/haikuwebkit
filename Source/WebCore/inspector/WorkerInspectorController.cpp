@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -167,10 +167,11 @@ void WorkerInspectorController::disconnectFrontend(Inspector::DisconnectReason r
 
 void WorkerInspectorController::updateServiceWorkerPageFrontendCount()
 {
-    if (!is<ServiceWorkerGlobalScope>(m_globalScope))
+    RefPtr globalScope = dynamicDowncast<ServiceWorkerGlobalScope>(m_globalScope.get());
+    if (!globalScope)
         return;
 
-    auto serviceWorkerPage = downcast<ServiceWorkerGlobalScope>(m_globalScope.get()).serviceWorkerPage();
+    RefPtr serviceWorkerPage = globalScope->serviceWorkerPage();
     if (!serviceWorkerPage)
         return;
 

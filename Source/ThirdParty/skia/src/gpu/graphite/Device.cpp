@@ -957,7 +957,7 @@ void Device::drawPath(const SkPath& path, const SkPaint& paint, bool pathIsMutab
         if (path.isLine(linePts)) {
             // A line has zero area, so stroke and stroke-and-fill are equivalent
             if (paint.getStyle() != SkPaint::kFill_Style) {
-                this->drawPoints(SkCanvas::kLines_PointMode, 2, linePts, paint);
+                this->drawPoints(SkCanvas::kLines_PointMode, linePts, paint);
             } // and if it's fill, nothing is drawn
             return;
         }
@@ -983,8 +983,13 @@ void Device::drawPath(const SkPath& path, const SkPaint& paint, bool pathIsMutab
                        paint, SkStrokeRec(paint));
 }
 
-void Device::drawPoints(SkCanvas::PointMode mode, size_t count,
-                        const SkPoint* points, const SkPaint& paint) {
+void Device::drawPoints(SkCanvas::PointMode mode, SkSpan<const SkPoint> points,
+                        const SkPaint& paint) {
+    if (points.empty()) {
+        return;
+    }
+    size_t count = points.size();
+
     SkStrokeRec stroke(paint, SkPaint::kStroke_Style);
     size_t next = 0;
     if (mode == SkCanvas::kPoints_PointMode) {
@@ -1310,8 +1315,12 @@ void Device::drawGeometry(const Transform& localToDevice,
         // but preserve LCD coverage if the Renderer uses that.
         rendererCoverage = Coverage::kSingleChannel;
     }
-    bool dstReadRequired =
-            !CanUseHardwareBlending(fRecorder->priv().caps(), blendMode, rendererCoverage);
+
+    TextureFormat targetFormat = TextureInfoPriv::ViewFormat(fDC->target()->textureInfo());
+    bool dstReadRequired = !CanUseHardwareBlending(fRecorder->priv().caps(),
+                                                   targetFormat,
+                                                   blendMode,
+                                                   rendererCoverage);
 
     // A primitive blender should be ignored if there is no primitive color to blend against.
     // Additionally, if a renderer emits a primitive color, then a null primitive blender should
@@ -1374,7 +1383,13 @@ void Device::drawGeometry(const Transform& localToDevice,
     // it to be drawn.
     std::optional<PathAtlas::MaskAndOrigin> atlasMask;  // only used if `pathAtlas != nullptr`
     if (pathAtlas != nullptr) {
-        std::tie(renderer, atlasMask) = pathAtlas->addShape(clip.transformedShapeBounds(),
+        Rect clippedShapeBounds = clip.transformedShapeBounds().makeIntersect(clip.scissor());
+        if (clippedShapeBounds.area() >= 0.8f * clip.transformedShapeBounds().area()) {
+            // The clip isn't excluding very much of the original shape, so store the entire path
+            // in the atlas to avoid redundant entries with slightly different clips.
+            clippedShapeBounds = clip.transformedShapeBounds();
+        }
+        std::tie(renderer, atlasMask) = pathAtlas->addShape(clippedShapeBounds,
                                                             geometry.shape(),
                                                             localToDevice,
                                                             style);
@@ -1388,7 +1403,7 @@ void Device::drawGeometry(const Transform& localToDevice,
             fRecorder->priv().flushTrackedDevices();
 
             // Try inserting the shape again.
-            std::tie(renderer, atlasMask) = pathAtlas->addShape(clip.transformedShapeBounds(),
+            std::tie(renderer, atlasMask) = pathAtlas->addShape(clippedShapeBounds,
                                                                 geometry.shape(),
                                                                 localToDevice,
                                                                 style);

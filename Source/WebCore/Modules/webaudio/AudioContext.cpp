@@ -94,7 +94,7 @@ static bool shouldDocumentAllowWebAudioToAutoPlay(const Document& document)
     RefPtr mainDocument = document.mainFrameDocument();
     if (document.quirks().shouldAutoplayWebAudioForArbitraryUserGesture() && mainDocument && mainDocument->hasHadUserInteraction())
         return true;
-    RefPtr window = document.domWindow();
+    RefPtr window = document.window();
     return window && window->hasTransientActivation();
 }
 
@@ -213,8 +213,8 @@ AudioTimestamp AudioContext::getOutputTimestamp()
 
     DOMHighResTimeStamp performanceTime = 0.0;
     RefPtr document = this->document();
-    if (document && document->domWindow())
-        performanceTime = std::max(document->domWindow()->protectedPerformance()->relativeTimeFromTimeOriginInReducedResolution(position.timestamp), 0.0);
+    if (document && document->window())
+        performanceTime = std::max(document->window()->protectedPerformance()->relativeTimeFromTimeOriginInReducedResolution(position.timestamp), 0.0);
 
     return { position.position.seconds(), performanceTime };
 }
@@ -521,7 +521,7 @@ std::optional<MediaSessionGroupIdentifier> AudioContext::mediaSessionGroupIdenti
 static bool hasPlayBackAudioSession(Document* document)
 {
 #if ENABLE(DOM_AUDIO_SESSION)
-    RefPtr window = document ? document->domWindow() : nullptr;
+    RefPtr window = document ? document->window() : nullptr;
 
     RefPtr navigator = window ? window->optionalNavigator() : nullptr;
     RefPtr audioSession = navigator ? NavigatorAudioSession::audioSession(*navigator) : nullptr;
@@ -557,7 +557,7 @@ std::optional<NowPlayingInfo> AudioContext::nowPlayingInfo() const
 
     RefPtr document = this->document();
     RefPtr page = document ? document->page() : nullptr;
-    RefPtr window = document ? document->domWindow() : nullptr;
+    RefPtr window = document ? document->window() : nullptr;
     if (!page || !window)
         return { };
 

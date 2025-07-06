@@ -47,9 +47,7 @@
 #import "UIKitSPI.h"
 #import "WKBrowserEngineDefinitions.h"
 #import "WKMouseInteraction.h"
-#import "WKSTextAnimationManager.h"
-#import "WKSTextAnimationSourceDelegate.h"
-#import "WKTextAnimationType.h"
+#import "WKTextAnimationManagerIOS.h"
 #import "WKTextSelectionRect.h"
 #import <WebKit/WKActionSheetAssistant.h>
 #import <WebKit/WKAirPlayRoutePicker.h>
@@ -152,7 +150,7 @@ enum class PickerDismissalReason : uint8_t;
 @class WKTextRange;
 @class _WKTextInputContext;
 
-@class WKSTextAnimationManager;
+@class WKTextAnimationManager;
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
 @class WKDigitalCredentialsPicker;
@@ -453,7 +451,7 @@ struct ImageAnalysisContextMenuActionData {
 #if ENABLE(WRITING_TOOLS)
     BOOL _isPresentingWritingTools;
 
-    RetainPtr<WKSTextAnimationManager> _textAnimationManager;
+    RetainPtr<WKTextAnimationManager> _textAnimationManager;
 #endif
 
     enum class SelectionInteractionType : uint8_t {
@@ -702,7 +700,7 @@ struct ImageAnalysisContextMenuActionData {
 #endif
 #if ENABLE(WRITING_TOOLS)
     , WTWritingToolsDelegate
-    , WKSTextAnimationSourceDelegate
+    , WKTextAnimationSourceDelegate
 #endif
 >
 

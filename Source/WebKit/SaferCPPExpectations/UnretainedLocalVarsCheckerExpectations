@@ -1,2 +1,2 @@
 Shared/cf/CoreIPCCFArray.mm
-UIProcess/mac/WKTextAnimationManager.mm
+UIProcess/mac/WKTextAnimationManagerMac.mm

@@ -479,11 +479,6 @@ const AtomString& HTMLElement::dir() const
     return toValidDirValue(attributeWithoutSynchronization(dirAttr));
 }
 
-void HTMLElement::setDir(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(dirAttr, value);
-}
-
 ExceptionOr<void> HTMLElement::setInnerText(String&& text)
 {
     // FIXME: This doesn't take whitespace collapsing into account at all.
@@ -948,11 +943,6 @@ AutocapitalizeType HTMLElement::autocapitalizeType() const
     return autocapitalizeTypeForAttributeValue(attributeWithoutSynchronization(HTMLNames::autocapitalizeAttr));
 }
 
-void HTMLElement::setAutocapitalize(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(autocapitalizeAttr, value);
-}
-
 #endif
 
 #if ENABLE(AUTOCORRECT)
@@ -981,11 +971,6 @@ const AtomString& HTMLElement::inputMode() const
     return stringForInputMode(canonicalInputMode());
 }
 
-void HTMLElement::setInputMode(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(inputmodeAttr, value);
-}
-
 EnterKeyHint HTMLElement::canonicalEnterKeyHint() const
 {
     return enterKeyHintForAttributeValue(attributeWithoutSynchronization(enterkeyhintAttr));
@@ -994,11 +979,6 @@ EnterKeyHint HTMLElement::canonicalEnterKeyHint() const
 String HTMLElement::enterKeyHint() const
 {
     return attributeValueForEnterKeyHint(canonicalEnterKeyHint());
-}
-
-void HTMLElement::setEnterKeyHint(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(enterkeyhintAttr, value);
 }
 
 // https://html.spec.whatwg.org/#dom-hidden
@@ -1101,7 +1081,7 @@ static void runPopoverFocusingSteps(HTMLElement& popover)
         return;
     }
 
-    RefPtr control = popover.hasAttribute(autofocusAttr) ? &popover : popover.findAutofocusDelegate();
+    RefPtr control = popover.hasAttributeWithoutSynchronization(autofocusAttr) ? &popover : popover.findAutofocusDelegate();
     if (!control)
         return;
 

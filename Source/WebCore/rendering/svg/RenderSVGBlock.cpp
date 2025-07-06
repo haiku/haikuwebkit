@@ -194,7 +194,7 @@ const RenderElement* RenderSVGBlock::pushMappingToContainer(const RenderLayerMod
     return SVGRenderSupport::pushMappingToContainer(*this, ancestorToStopAt, geometryMap);
 }
 
-LayoutSize RenderSVGBlock::offsetFromContainer(RenderElement& container, const LayoutPoint&, bool*) const
+LayoutSize RenderSVGBlock::offsetFromContainer(const RenderElement& container, const LayoutPoint&, bool*) const
 {
     ASSERT_UNUSED(container, &container == this->container());
     ASSERT(!isInFlowPositioned());

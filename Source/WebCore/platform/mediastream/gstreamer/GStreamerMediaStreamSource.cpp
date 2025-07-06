@@ -492,9 +492,7 @@ public:
         if (track.isVideo()) {
             m_enoughData = false;
             m_needsDiscont = true;
-            if (!track.enabled())
-                pushBlackFrame();
-            else
+            if (track.enabled())
                 flush();
         }
     }
@@ -557,7 +555,7 @@ public:
             return;
         }
 
-        pushBlackFrame();
+        pushBlackFrame(GST_BUFFER_PTS(gst_sample_get_buffer(sample.get())));
     }
 
     void audioSamplesAvailable(const MediaTime&, const PlatformAudioData& audioData, const AudioStreamDescription&, size_t) final
@@ -632,7 +630,7 @@ private:
         gst_element_send_event(m_src.get(), gst_event_new_flush_stop(FALSE));
     }
 
-    void pushBlackFrame()
+    void pushBlackFrame(GstClockTime timestamp)
     {
         auto width = m_lastKnownSize.width() ? m_lastKnownSize.width() : 320;
         auto height = m_lastKnownSize.height() ? m_lastKnownSize.height() : 240;
@@ -671,7 +669,9 @@ private:
         }
         gst_buffer_add_video_meta_full(buffer.get(), GST_VIDEO_FRAME_FLAG_NONE, GST_VIDEO_INFO_FORMAT(&info), GST_VIDEO_INFO_WIDTH(&info),
             GST_VIDEO_INFO_HEIGHT(&info), GST_VIDEO_INFO_N_PLANES(&info), info.offset, info.stride);
-        GST_BUFFER_DTS(buffer.get()) = GST_BUFFER_PTS(buffer.get()) = gst_element_get_current_running_time(m_parent);
+
+        GST_BUFFER_DTS(buffer.get()) = GST_BUFFER_PTS(buffer.get()) = timestamp;
+
         auto sample = adoptGRef(gst_sample_new(buffer.get(), m_blackFrameCaps.get(), nullptr, nullptr));
         pushSample(WTFMove(sample), "Pushing black video frame"_s);
     }

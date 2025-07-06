@@ -67,9 +67,9 @@ AccessibilityRole AccessibilityTreeItem::determineAccessibilityRole()
 {
     // Walk the parent chain looking for a parent that is a tree. A treeitem is
     // only considered valid if it is in a tree.
-    AccessibilityObject* parent = nullptr;
+    RefPtr<AccessibilityObject> parent;
     for (parent = parentObject(); parent && !parent->isTree(); parent = parent->parentObject()) { }
-    m_isTreeItemValid = parent;
+    m_isTreeItemValid = parent.get();
 
     return AccessibilityRenderObject::determineAccessibilityRole();
 }

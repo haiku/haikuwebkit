@@ -182,7 +182,7 @@ void RenderSVGModelObject::mapLocalToContainer(const RenderLayerModelObject* anc
     mapLocalToSVGContainer(ancestorContainer, transformState, mode, wasFixed);
 }
 
-LayoutSize RenderSVGModelObject::offsetFromContainer(RenderElement& container, const LayoutPoint&, bool*) const
+LayoutSize RenderSVGModelObject::offsetFromContainer(const RenderElement& container, const LayoutPoint&, bool*) const
 {
     ASSERT_UNUSED(container, &container == this->container());
     ASSERT(!isInFlowPositioned());

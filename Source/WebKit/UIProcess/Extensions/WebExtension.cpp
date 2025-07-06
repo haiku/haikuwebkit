@@ -1595,6 +1595,9 @@ const WebExtension::PermissionsSet& WebExtension::supportedPermissions()
 #if ENABLE(WK_WEB_EXTENSIONS_SIDEBAR)
         WebExtensionPermission::sidePanel(),
 #endif
+#if ENABLE(WK_WEB_EXTENSIONS_BOOKMARKS)
+        WebExtensionPermission::bookmarks(),
+#endif
     };
     return permissions;
 }

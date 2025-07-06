@@ -256,7 +256,7 @@ void ImageDocument::createDocumentStructure()
     else
         imageElement->setAttribute(styleAttr, "-webkit-user-select:none; display:block; padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);"_s);
     imageElement->setLoadManually(true);
-    imageElement->setSrc(AtomString { url().string() });
+    imageElement->setAttributeWithoutSynchronization(srcAttr, AtomString { url().string() });
     if (auto* cachedImage = imageElement->cachedImage(); documentLoader && cachedImage)
         cachedImage->setResponse(ResourceResponse { documentLoader->response() });
     body->appendChild(imageElement);
@@ -330,8 +330,8 @@ void ImageDocument::resizeImageToFit()
     LayoutSize imageSize = this->imageSize();
 
     float scale = this->scale();
-    m_imageElement->setWidth(static_cast<int>(imageSize.width() * scale));
-    m_imageElement->setHeight(static_cast<int>(imageSize.height() * scale));
+    m_imageElement->setIntegralAttribute(widthAttr, imageSize.width() * scale);
+    m_imageElement->setIntegralAttribute(heightAttr, imageSize.height() * scale);
 
     m_imageElement->setInlineStyleProperty(CSSPropertyCursor, CSSValueZoomIn);
 }
@@ -342,8 +342,8 @@ void ImageDocument::restoreImageSize()
         return;
 
     LayoutSize imageSize = this->imageSize();
-    m_imageElement->setWidth(imageSize.width().toUnsigned());
-    m_imageElement->setHeight(imageSize.height().toUnsigned());
+    m_imageElement->setUnsignedIntegralAttribute(widthAttr, imageSize.width().toUnsigned());
+    m_imageElement->setUnsignedIntegralAttribute(heightAttr, imageSize.height().toUnsigned());
 
     if (imageFitsInWindow())
         m_imageElement->removeInlineStyleProperty(CSSPropertyCursor);

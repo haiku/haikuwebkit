@@ -97,11 +97,11 @@ public:
     {
         ASSERT(!m_objects.contains(&data));
 
-        auto* domWindow = m_frame->document()->domWindow();
-        if (domWindow && (!m_domWindowObserver || m_domWindowObserver->window() != domWindow)) {
+        auto* window = m_frame->document()->window();
+        if (window && (!m_domWindowObserver || m_domWindowObserver->window() != window)) {
             // New LocalDOMWindow, clear the cache and create a new DOMWindowObserver.
             clear();
-            m_domWindowObserver = makeUnique<DOMWindowObserver>(*domWindow, *this);
+            m_domWindowObserver = makeUnique<DOMWindowObserver>(*window, *this);
         }
 
         m_objects.append(&data);

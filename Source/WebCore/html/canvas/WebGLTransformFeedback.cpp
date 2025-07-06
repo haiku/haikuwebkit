@@ -98,11 +98,11 @@ bool WebGLTransformFeedback::hasEnoughBuffers(GCGLuint numRequired) const
 void WebGLTransformFeedback::addMembersToOpaqueRoots(const AbstractLocker& locker, JSC::AbstractSlotVisitor& visitor)
 {
     for (auto& buffer : m_boundIndexedTransformFeedbackBuffers)
-        addWebCoreOpaqueRoot(visitor, buffer.get());
+        SUPPRESS_UNCOUNTED_ARG addWebCoreOpaqueRoot(visitor, buffer.get());
 
     addWebCoreOpaqueRoot(visitor, m_program.get());
     if (m_program)
-        m_program->addMembersToOpaqueRoots(locker, visitor);
+        SUPPRESS_UNCOUNTED_ARG m_program->addMembersToOpaqueRoots(locker, visitor);
 }
 
 void WebGLTransformFeedback::unbindBuffer(const AbstractLocker&, WebGLBuffer& buffer)

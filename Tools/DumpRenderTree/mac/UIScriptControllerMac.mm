@@ -50,17 +50,6 @@ Ref<UIScriptController> UIScriptController::create(UIScriptContext& context)
     return adoptRef(*new UIScriptControllerMac(context));
 }
 
-void UIScriptControllerMac::doAsyncTask(JSValueRef callback)
-{
-    unsigned callbackID = m_context->prepareForAsyncTask(callback, CallbackTypeNonPersistent);
-
-    WorkQueue::protectedMain()->dispatch([this, protectedThis = Ref { *this }, callbackID] {
-        if (!m_context)
-            return;
-        m_context->asyncTaskComplete(callbackID);
-    });
-}
-
 void UIScriptControllerMac::replaceTextAtRange(JSStringRef text, int location, int length)
 {
     auto textToInsert = adoptCF(JSStringCopyCFString(kCFAllocatorDefault, text));

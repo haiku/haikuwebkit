@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -1298,7 +1298,7 @@ void WebProcess::setMediaAccessibilityPreferences(WebCore::CaptionUserPreference
     WebCore::CaptionUserPreferencesMediaAF::setCachedPreferredLanguages(preferredLanguages);
 
     for (auto& pageGroup : m_pageGroupMap.values()) {
-        if (auto* captionPreferences = pageGroup->corePageGroup()->captionPreferences())
+        if (RefPtr captionPreferences = pageGroup->corePageGroup()->captionPreferences())
             captionPreferences->captionPreferencesChanged();
     }
 }

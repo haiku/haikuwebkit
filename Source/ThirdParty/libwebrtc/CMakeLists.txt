@@ -30,8 +30,6 @@ if (NOT APPLE)
 endif ()
 
 set(webrtc_SOURCES
-    Source/third_party/abseil-cpp/absl/base/inline_variable_test_a.cc
-    Source/third_party/abseil-cpp/absl/base/inline_variable_test_b.cc
     Source/third_party/abseil-cpp/absl/base/internal/atomic_hook_test_helper.cc
     Source/third_party/abseil-cpp/absl/base/internal/cycleclock.cc
     Source/third_party/abseil-cpp/absl/base/internal/exception_safety_testing.cc
@@ -86,7 +84,6 @@ set(webrtc_SOURCES
     Source/third_party/abseil-cpp/absl/random/internal/distribution_test_util.cc
     Source/third_party/abseil-cpp/absl/random/internal/gaussian_distribution_gentables.cc
     Source/third_party/abseil-cpp/absl/random/internal/nanobenchmark.cc
-    Source/third_party/abseil-cpp/absl/random/internal/pool_urbg.cc
     Source/third_party/abseil-cpp/absl/random/internal/randen.cc
     Source/third_party/abseil-cpp/absl/random/internal/randen_detect.cc
     Source/third_party/abseil-cpp/absl/random/internal/randen_hwaes.cc
@@ -101,7 +98,6 @@ set(webrtc_SOURCES
     Source/third_party/abseil-cpp/absl/strings/ascii.cc
     Source/third_party/abseil-cpp/absl/strings/charconv.cc
     Source/third_party/abseil-cpp/absl/strings/cord_analysis.cc
-    Source/third_party/abseil-cpp/absl/strings/cord_buffer.cc
     Source/third_party/abseil-cpp/absl/strings/cord.cc
     Source/third_party/abseil-cpp/absl/strings/escaping.cc
     Source/third_party/abseil-cpp/absl/strings/internal/charconv_bigint.cc
@@ -158,9 +154,6 @@ set(webrtc_SOURCES
     Source/third_party/abseil-cpp/absl/time/internal/cctz/src/zone_info_source.cc
     Source/third_party/abseil-cpp/absl/time/internal/test_util.cc
     Source/third_party/abseil-cpp/absl/time/time.cc
-    Source/third_party/abseil-cpp/absl/types/bad_any_cast.cc
-    Source/third_party/abseil-cpp/absl/types/bad_optional_access.cc
-    Source/third_party/abseil-cpp/absl/types/bad_variant_access.cc
     Source/third_party/boringssl/err_data.c
     Source/third_party/boringssl/src/crypto/asn1/a_bitstr.c
     Source/third_party/boringssl/src/crypto/asn1/a_bool.c

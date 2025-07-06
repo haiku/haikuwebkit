@@ -661,7 +661,6 @@ void Options::setAllJITCodeValidations(bool value)
 static inline void disableAllWasmJITOptions()
 {
     Options::useLLInt() = true;
-    Options::useWasmJIT() = false;
     Options::useBBQJIT() = false;
     Options::useOMGJIT() = false;
 
@@ -694,7 +693,6 @@ static inline void disableAllJITOptions()
 {
     Options::useLLInt() = true;
     Options::useJIT() = false;
-    Options::useWasmJIT() = false;
     disableAllWasmJITOptions();
 
     Options::useBaselineJIT() = false;
@@ -773,7 +771,6 @@ void Options::notifyOptionsChanged()
 
 #if !ENABLE(JIT)
     Options::useJIT() = false;
-    Options::useWasmJIT() = false;
 #endif
 #if !ENABLE(CONCURRENT_JS)
     Options::useConcurrentJIT() = false;
@@ -821,8 +818,6 @@ void Options::notifyOptionsChanged()
         disableAllWasmOptions();
 
     if (!Options::useJIT())
-        Options::useWasmJIT() = false;
-    if (!Options::useWasmJIT())
         disableAllWasmJITOptions();
 
     if (!Options::useWasmLLInt() && !Options::useWasmIPInt())

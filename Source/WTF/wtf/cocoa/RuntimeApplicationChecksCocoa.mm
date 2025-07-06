@@ -155,9 +155,6 @@ static SDKAlignedBehaviors computeSDKAlignedBehaviors()
         disableBehavior(SDKAlignedBehavior::NoPokerBrosBuiltInTagQuirk);
     }
 
-    if (linkedBefore(dyld_late_fall_2020_os_versions, DYLD_IOS_VERSION_14_2, DYLD_MACOSX_VERSION_10_16))
-        disableBehavior(SDKAlignedBehavior::SupportsiOSAppsOnMacOS);
-
     if (linkedBefore(dyld_spring_2021_os_versions, DYLD_IOS_VERSION_14_5, DYLD_MACOSX_VERSION_11_3)) {
         disableBehavior(SDKAlignedBehavior::DataURLFragmentRemoval);
         disableBehavior(SDKAlignedBehavior::HTMLDocumentSupportedPropertyNames);
@@ -545,64 +542,10 @@ bool IOSApplication::isFeedly()
     return isFeedly;
 }
 
-bool IOSApplication::isPocketCity()
-{
-    static bool isPocketCity = applicationBundleIsEqualTo("com.codebrewgames.pocketcity"_s);
-    return isPocketCity;
-}
-
 bool IOSApplication::isEssentialSkeleton()
 {
     static bool isEssentialSkeleton = applicationBundleIsEqualTo("com.3d4medical.EssentialSkeleton"_s);
     return isEssentialSkeleton;
-}
-
-bool IOSApplication::isESPNFantasySports()
-{
-    static bool isESPNFantasySports = applicationBundleIsEqualTo("com.espn.fantasyFootball"_s);
-    return isESPNFantasySports;
-}
-
-bool IOSApplication::isDoubleDown()
-{
-    static bool isDoubleDown = applicationBundleIsEqualTo("com.doubledowninteractive.DDCasino"_s);
-    return isDoubleDown;
-}
-
-bool IOSApplication::isFIFACompanion()
-{
-    static bool isFIFACompanion = applicationBundleIsEqualTo("com.ea.ios.fifaultimate"_s);
-    return isFIFACompanion;
-}
-
-bool IOSApplication::isNoggin()
-{
-    static bool isNoggin = applicationBundleIsEqualTo("com.mtvn.noggin"_s);
-    return isNoggin;
-}
-
-bool IOSApplication::isOKCupid()
-{
-    static bool isOKCupid = applicationBundleIsEqualTo("com.okcupid.app"_s);
-    return isOKCupid;
-}
-
-bool IOSApplication::isJWLibrary()
-{
-    static bool isJWLibrary = applicationBundleIsEqualTo("org.jw.jwlibrary"_s);
-    return isJWLibrary;
-}
-
-bool IOSApplication::isPaperIO()
-{
-    static bool isPaperIO = applicationBundleIsEqualTo("io.voodoo.paperio"_s);
-    return isPaperIO;
-}
-
-bool IOSApplication::isCrunchyroll()
-{
-    static bool isCrunchyroll = applicationBundleIsEqualTo("com.crunchyroll.iphone"_s);
-    return isCrunchyroll;
 }
 
 bool IOSApplication::isUNIQLOApp()

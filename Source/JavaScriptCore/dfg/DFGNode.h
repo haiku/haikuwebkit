@@ -162,28 +162,23 @@ struct DataViewData {
 static_assert(sizeof(DataViewData) == sizeof(uint64_t));
 
 struct BranchTarget {
-    BranchTarget()
-        : block(nullptr)
-        , count(PNaN)
-    {
-    }
-    
+    BranchTarget() = default;
     explicit BranchTarget(BasicBlock* block)
         : block(block)
         , count(PNaN)
     {
     }
-    
+
     void setBytecodeIndex(unsigned bytecodeIndex)
     {
         block = std::bit_cast<BasicBlock*>(static_cast<uintptr_t>(bytecodeIndex));
     }
     unsigned bytecodeIndex() const { return std::bit_cast<uintptr_t>(block); }
-    
+
     void dump(PrintStream&) const;
-    
-    BasicBlock* block;
-    float count;
+
+    BasicBlock* block { nullptr };
+    float count { PNaN };
 };
 
 struct BranchData {
@@ -248,18 +243,19 @@ struct SwitchData {
     // Initializes most fields to obviously invalid values. Anyone
     // constructing this should make sure to initialize everything they
     // care about manually.
-    SwitchData()
-        : switchTableIndex(UINT_MAX)
-        , kind(static_cast<SwitchKind>(-1))
-        , didUseJumpTable(false)
+    SwitchData() = default;
+
+    bool hasSwitchTableIndex() const { return switchTableIndex != std::numeric_limits<size_t>::max(); }
+    void clearSwitchTableIndex()
     {
+        switchTableIndex = std::numeric_limits<size_t>::max();
     }
-    
+
     Vector<SwitchCase> cases;
     BranchTarget fallThrough;
-    size_t switchTableIndex;
-    SwitchKind kind;
-    bool didUseJumpTable;
+    size_t switchTableIndex { std::numeric_limits<size_t>::max() };
+    SwitchKind kind { static_cast<SwitchKind>(-1) };
+    bool didUseJumpTable { false };
 };
 
 struct EntrySwitchData {
@@ -2099,6 +2095,7 @@ public:
         case RegExpTestInline:
         case RegExpMatchFast:
         case RegExpMatchFastGlobal:
+        case RegExpSearch:
         case GetGlobalVar:
         case GetGlobalLexicalVariable:
         case StringReplace:

@@ -98,11 +98,6 @@ double HTMLProgressElement::value() const
     return !std::isfinite(value) || value < 0 ? 0 : std::min(value, max());
 }
 
-void HTMLProgressElement::setValue(double value)
-{
-    setAttributeWithoutSynchronization(valueAttr, AtomString::number(value));
-}
-
 double HTMLProgressElement::max() const
 {
     double max = parseHTMLFloatingPointNumberValue(attributeWithoutSynchronization(maxAttr));

@@ -167,8 +167,15 @@ void ModelProcessModelPlayer::load(WebCore::Model& model, WebCore::LayoutSize si
 
 void ModelProcessModelPlayer::didUnload()
 {
-    RELEASE_ASSERT(modelProcessEnabled());
     RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayer unload model id=%" PRIu64, this, m_id.toUInt64());
+
+    // If the page is closing while the model process disconnection resulted in
+    // this being called, return early.
+    RefPtr strongPage = m_page.get();
+    if (!strongPage || !strongPage->corePage())
+        return;
+
+    RELEASE_ASSERT(modelProcessEnabled());
 
     if (m_client)
         m_client->didUnload(*this);

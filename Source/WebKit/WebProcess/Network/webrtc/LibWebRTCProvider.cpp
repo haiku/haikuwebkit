@@ -86,7 +86,7 @@ rtc::scoped_refptr<webrtc::PeerConnectionInterface> LibWebRTCProvider::createPee
 
 void LibWebRTCProvider::disableNonLocalhostConnections()
 {
-    WebProcess::singleton().libWebRTCNetwork().disableNonLocalhostConnections();
+    WebProcess::singleton().protectedLibWebRTCNetwork()->disableNonLocalhostConnections();
 }
 
 #if PLATFORM(COCOA) && USE(LIBWEBRTC)
@@ -196,7 +196,7 @@ void LibWebRTCProvider::setLoggingLevel(WTFLogLevel level)
 {
     WebCore::LibWebRTCProvider::setLoggingLevel(level);
 #if PLATFORM(COCOA)
-    WebProcess::singleton().libWebRTCCodecs().setLoggingLevel(level);
+    WebProcess::singleton().protectedLibWebRTCCodecs()->setLoggingLevel(level);
 #endif
 }
 

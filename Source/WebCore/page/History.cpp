@@ -303,7 +303,7 @@ ExceptionOr<void> History::stateObjectAdded(RefPtr<SerializedScriptValue>&& data
         return result.releaseException();
 
     if (document->settings().navigationAPIEnabled()) {
-        Ref navigation = document->domWindow()->navigation();
+        Ref navigation = document->window()->navigation();
         if (!navigation->dispatchPushReplaceReloadNavigateEvent(fullURL, historyBehavior == NavigationHistoryBehavior::Push ? NavigationNavigationType::Push : NavigationNavigationType::Replace, true, nullptr, data.get()))
             return { };
     }

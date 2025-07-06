@@ -873,9 +873,9 @@ end
     cCall2(_operationJSToWasmEntryWrapperBuildReturnFrame)
 
 if ARMv7
-    branchIfWasmException(_wasm_throw_from_slow_path_trampoline)
+    branchIfWasmException(.unwind)
 else
-    btpnz r1, _wasm_throw_from_slow_path_trampoline
+    btpnz r1, .unwind
 end
 
     # Clean up and return
@@ -893,7 +893,18 @@ end
 
 .buildEntryFrameThrew:
     getWebAssemblyFunctionAndsetNativeCalleeAndInstance(ws1, ws0)
-    jmp _wasm_throw_from_slow_path_trampoline
+
+.unwind:
+    loadp JSWebAssemblyInstance::m_vm[wasmInstance], a0
+    copyCalleeSavesToVMEntryFrameCalleeSavesBuffer(a0, a1)
+
+if ASSERT_ENABLED
+    storep cfr, JSWebAssemblyInstance::m_temporaryCallFrame[wasmInstance]
+end
+
+    move wasmInstance, a0
+    call _operationWasmUnwind
+    jumpToException()
 end)
 
 # This is the interpreted analogue to WasmBinding.cpp:wasmToWasm
@@ -1018,7 +1029,7 @@ else
 end
 
 if ASSERT_ENABLED
-    storep cfr, (constexpr (JSWebAssemblyInstance::offsetOfTemporaryCallFrame()))[wasmInstance]
+    storep cfr, JSWebAssemblyInstance::m_temporaryCallFrame[wasmInstance]
 end
 
     move wasmInstance, a0
@@ -1156,11 +1167,11 @@ end
     ret
 
 .handleException:
-    loadp (constexpr (JSWebAssemblyInstance::offsetOfVM()))[wasmInstance], a0
+    loadp JSWebAssemblyInstance::m_vm[wasmInstance], a0
     copyCalleeSavesToVMEntryFrameCalleeSavesBuffer(a0, a1)
 
 if ASSERT_ENABLED
-    storep cfr, (constexpr (JSWebAssemblyInstance::offsetOfTemporaryCallFrame()))[wasmInstance]
+    storep cfr, JSWebAssemblyInstance::m_temporaryCallFrame[wasmInstance]
 end
 
     move wasmInstance, a0

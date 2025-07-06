@@ -2845,7 +2845,7 @@ void WebGLRenderingContextBase::makeXRCompatible(MakeXRCompatiblePromise&& promi
         return;
     }
 
-    auto* window = canvas->document().domWindow();
+    auto* window = canvas->document().window();
     if (!window) {
         m_attributes.xrCompatible = false;
         promise.reject(Exception { ExceptionCode::InvalidStateError });

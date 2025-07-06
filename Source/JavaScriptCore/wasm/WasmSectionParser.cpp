@@ -294,7 +294,7 @@ auto SectionParser::parseTableHelper(bool isImport) -> PartialResult
 
     WASM_PARSER_FAIL_IF(!parseValueType(m_info, type), "can't parse Table type"_s);
     WASM_PARSER_FAIL_IF(!isRefType(type), "Table type should be a ref type, got "_s, type);
-    if (!hasInitExpr)
+    if (!hasInitExpr && !isImport)
         WASM_PARSER_FAIL_IF(!isDefaultableType(type), "Table's type must be defaultable"_s);
 
     uint32_t initial;

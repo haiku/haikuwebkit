@@ -403,11 +403,13 @@ public:
     void onStyleChange(Element&, OptionSet<Style::Change>, const RenderStyle* oldStyle, const RenderStyle* newStyle);
     void onStyleChange(RenderText&, StyleDifference, const RenderStyle* oldStyle, const RenderStyle& newStyle);
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
+    void onAccessibilityPaintStarted();
+    void onAccessibilityPaintFinished();
     // Returns true if the font changes, requiring all descendants to update the Font property.
     bool onFontChange(Element&, const RenderStyle*, const RenderStyle*);
     // Returns true if the text color changes, requiring all descendants to update the TextColor property.
     bool onTextColorChange(Element&, const RenderStyle*, const RenderStyle*);
-#endif
+#endif // ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     void onTextSecurityChanged(HTMLInputElement&);
     void onTitleChange(Document&);
     void onValidityChange(Element&);
@@ -501,6 +503,11 @@ public:
     static bool shouldCreateAXThreadCompatibleMarkers() { return gAccessibilityThreadTextApisEnabled && isIsolatedTreeEnabled(); }
 #endif
 
+#if PLATFORM(COCOA)
+    static void initializeUserDefaultValues();
+    static bool accessibilityDOMIdentifiersEnabled() { return gAccessibilityDOMIdentifiersEnabled; }
+#endif
+
     static bool forceInitialFrameCaching() { return gForceInitialFrameCaching; }
     WEBCORE_EXPORT static void setForceInitialFrameCaching(bool);
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
@@ -517,9 +524,11 @@ public:
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
     void onPaint(const RenderObject&, IntRect&&) const;
     void onPaint(const Widget&, IntRect&&) const;
+    void onPaint(const RenderText&, size_t lineIndex);
 #else
     NO_RETURN_DUE_TO_ASSERT void onPaint(const RenderObject&, IntRect&&) const { ASSERT_NOT_REACHED(); }
     NO_RETURN_DUE_TO_ASSERT void onPaint(const Widget&, IntRect&&) const { ASSERT_NOT_REACHED(); }
+    NO_RETURN_DUE_TO_ASSERT void onPaint(const RenderText&, size_t) { ASSERT_NOT_REACHED(); }
 #endif
 
     // Text marker utilities.
@@ -826,6 +835,7 @@ private:
     void relationsNeedUpdate(bool);
     void dirtyIsolatedTreeRelations();
     HashMap<AXID, AXRelations> relations();
+    HashMap<AXID, LineRange> mostRecentlyPaintedText();
     const HashSet<AXID>& relationTargetIDs();
     bool isDescendantOfRelatedNode(Node&);
 
@@ -844,7 +854,6 @@ private:
 
     WeakHashMap<RenderObject, AXID, SingleThreadWeakPtrImpl> m_renderObjectMapping;
     WeakHashMap<Widget, AXID, SingleThreadWeakPtrImpl> m_widgetObjectMapping;
-
     // FIXME: The type for m_nodeObjectMapping really should be:
     // HashMap<WeakRef<Node, WeakPtrImplWithEventTargetData>, AXID>
     // As this guarantees that we've called AXObjectCache::remove(Node&) for every node we store.
@@ -854,6 +863,8 @@ private:
     // This scenario seems extremely rare, and may only happen when the webpage is about to be destroyed anyways,
     // so, go with WeakHashMap now until we find a completely safe solution based on document / frame lifecycles.
     WeakHashMap<Node, Markable<AXID>, WeakPtrImplWithEventTargetData> m_nodeObjectMapping;
+
+    WeakHashMap<RenderText, LineRange, SingleThreadWeakPtrImpl> m_mostRecentlyPaintedText;
 
     std::unique_ptr<AXComputedObjectAttributeCache> m_computedObjectAttributeCache;
 
@@ -867,6 +878,10 @@ private:
 #if ENABLE(AX_THREAD_TEXT_APIS)
     // Accessed on and off the main thread.
     static std::atomic<bool> gAccessibilityThreadTextApisEnabled;
+#endif
+
+#if PLATFORM(COCOA)
+    static std::atomic<bool> gAccessibilityDOMIdentifiersEnabled;
 #endif
 
     Timer m_notificationPostTimer;

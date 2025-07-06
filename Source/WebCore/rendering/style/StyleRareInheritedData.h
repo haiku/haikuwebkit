@@ -114,7 +114,7 @@ public:
     Length wordSpacing;
     float miterLimit;
 
-    DataRef<StyleCustomPropertyData> customProperties;
+    DataRef<Style::CustomPropertyData> customProperties;
 
     // Paged media properties.
     unsigned short widows;

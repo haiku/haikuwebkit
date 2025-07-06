@@ -627,6 +627,7 @@ bool safeToExecute(AbstractStateType& state, Graph& graph, Node* node, bool igno
     case RegExpTestInline:
     case RegExpMatchFast:
     case RegExpMatchFastGlobal:
+    case RegExpSearch:
     case Call:
     case DirectCall:
     case TailCallInlinedCaller:

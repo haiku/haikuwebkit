@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -213,11 +213,11 @@ void WebInspectorClient::showPaintRect(const FloatRect& rect)
 
     paintLayer->addAnimation(fadeKeyframes, FloatSize(), opacityAnimation.ptr(), "opacity"_s, 0);
     
-    GraphicsLayer& rawLayer = paintLayer.get();
+    Ref rawLayer = paintLayer.get();
     m_paintRectLayers.add(WTFMove(paintLayer));
 
-    GraphicsLayer& overlayRootLayer = m_paintRectOverlay->layer();
-    overlayRootLayer.addChild(rawLayer);
+    Ref overlayRootLayer = m_paintRectOverlay->layer();
+    overlayRootLayer->addChild(rawLayer.get());
 }
 
 void WebInspectorClient::animationEndedForLayer(const GraphicsLayer* layer)

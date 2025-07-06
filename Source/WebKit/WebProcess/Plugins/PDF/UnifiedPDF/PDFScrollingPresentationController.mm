@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2024-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -311,11 +311,11 @@ void PDFScrollingPresentationController::updateForCurrentScrollability(OptionSet
 {
     if (!m_contentsLayer)
         return;
-    if (auto* tiledBacking = m_contentsLayer->tiledBacking())
+    if (CheckedPtr tiledBacking = m_contentsLayer->tiledBacking())
         tiledBacking->setScrollability(scrollability);
 
 #if ENABLE(PDFKIT_PAINTED_SELECTIONS)
-    if (auto* tiledBacking = m_selectionLayer->tiledBacking())
+    if (CheckedPtr tiledBacking = m_selectionLayer->tiledBacking())
         tiledBacking->setScrollability(scrollability);
 #endif
 }

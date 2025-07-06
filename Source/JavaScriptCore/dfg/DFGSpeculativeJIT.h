@@ -1692,6 +1692,7 @@ public:
     void compileRegExpMatchFastGlobal(Node*);
     void compileRegExpTest(Node*);
     void compileRegExpTestInline(Node*);
+    void compileRegExpSearch(Node*);
     void compileStringReplace(Node*);
     void compileStringReplaceAll(Node*);
     void compileStringReplaceString(Node*);

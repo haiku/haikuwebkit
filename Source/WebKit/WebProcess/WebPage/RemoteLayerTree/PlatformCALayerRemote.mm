@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2013-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2013-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -203,9 +203,9 @@ void PlatformCALayerRemote::recursiveMarkWillBeDisplayedWithRenderingSuppresion(
         m_properties.backingStoreOrProperties.store->layerWillBeDisplayedWithRenderingSuppression();
 
     for (size_t i = 0; i < m_children.size(); ++i) {
-        PlatformCALayerRemote& child = downcast<PlatformCALayerRemote>(*m_children[i]);
-        ASSERT(child.superlayer() == this);
-        child.recursiveMarkWillBeDisplayedWithRenderingSuppresion();
+        Ref child = downcast<PlatformCALayerRemote>(*m_children[i]);
+        ASSERT(child->superlayer() == this);
+        child->recursiveMarkWillBeDisplayedWithRenderingSuppresion();
     }
 }
 
@@ -251,9 +251,9 @@ void PlatformCALayerRemote::recursiveBuildTransaction(RemoteLayerTreeContext& co
     }
 
     for (size_t i = 0; i < m_children.size(); ++i) {
-        PlatformCALayerRemote& child = downcast<PlatformCALayerRemote>(*m_children[i]);
-        ASSERT(child.superlayer() == this);
-        child.recursiveBuildTransaction(context, transaction);
+        Ref child = downcast<PlatformCALayerRemote>(*m_children[i]);
+        ASSERT(child->superlayer() == this);
+        child->recursiveBuildTransaction(context, transaction);
     }
 
     if (m_maskLayer)
@@ -556,7 +556,7 @@ void PlatformCALayerRemote::setMaskLayer(RefPtr<WebCore::PlatformCALayer>&& laye
 
     PlatformCALayer::setMaskLayer(WTFMove(layer));
 
-    if (auto* layer = maskLayer())
+    if (RefPtr layer = maskLayer())
         m_properties.maskLayerID = layer->layerID();
     else
         m_properties.maskLayerID = { };
@@ -1076,6 +1076,15 @@ void PlatformCALayerRemote::setScrollingNodeID(std::optional<ScrollingNodeID> no
 
     m_properties.scrollingNodeID = nodeID;
     m_properties.notePropertiesChanged(LayerChange::ScrollingNodeIDChanged);
+}
+#endif
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+bool PlatformCALayerRemote::setNeedsDisplayIfEDRHeadroomExceeds(float headroom)
+{
+    if (m_properties.backingStoreOrProperties.store)
+        return m_properties.backingStoreOrProperties.store->setNeedsDisplayIfEDRHeadroomExceeds(headroom);
+    return false;
 }
 #endif
 

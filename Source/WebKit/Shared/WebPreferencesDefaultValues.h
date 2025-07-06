@@ -194,10 +194,6 @@ bool defaultIFrameResourceMonitoringEnabled();
 bool defaultPreferSpatialAudioExperience();
 #endif
 
-#if HAVE(MATERIAL_HOSTING)
-bool defaultHostedBlurMaterialInMediaControlsEnabled();
-#endif
-
 bool defaultMutationEventsEnabled();
 
 bool defaultTrustedTypesEnabled();

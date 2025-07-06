@@ -120,6 +120,32 @@ bool screenSupportsHighDynamicRange(Widget*)
     return false;
 }
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+float currentEDRHeadroomForDisplay(PlatformDisplayID)
+{
+    if (auto data = screenData(primaryScreenDisplayID()))
+        return data->currentEDRHeadroom;
+
+    return [[PAL::getUIScreenClass() mainScreen] currentEDRHeadroom];
+}
+
+float maxEDRHeadroomForDisplay(PlatformDisplayID)
+{
+    if (auto data = screenData(primaryScreenDisplayID()))
+        return data->maxEDRHeadroom;
+
+    return [[PAL::getUIScreenClass() mainScreen] potentialEDRHeadroom];
+}
+
+bool suppressEDRForDisplay(PlatformDisplayID)
+{
+    if (auto data = screenData(primaryScreenDisplayID()))
+        return data->suppressEDR;
+
+    return false;
+}
+#endif
+
 DestinationColorSpace screenColorSpace(Widget* widget)
 {
     UNUSED_PARAM(widget);
@@ -251,6 +277,10 @@ ScreenProperties collectScreenProperties()
         screenData.screenHasInvertedColors = WebCore::screenHasInvertedColors();
         screenData.screenSupportsHighDynamicRange = WebCore::screenSupportsHighDynamicRange(nullptr);
         screenData.scaleFactor = WebCore::screenPPIFactor();
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        screenData.maxEDRHeadroom = [screen potentialEDRHeadroom];
+        screenData.currentEDRHeadroom = [screen currentEDRHeadroom];
+#endif
 
         screenProperties.screenDataMap.set(++displayID, WTFMove(screenData));
 

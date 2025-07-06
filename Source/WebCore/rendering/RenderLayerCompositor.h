@@ -332,7 +332,7 @@ public:
     void collectViewTransitionNewContentLayers(RenderLayer&, Vector<Ref<GraphicsLayer>>&);
 
     // Update the geometry of the layers used for clipping and scrolling in frames.
-    void frameViewDidChangeLocation(const IntPoint& contentsOffset);
+    void frameViewDidChangeLocation(FloatPoint contentsOffset);
     void frameViewDidChangeSize();
     void frameViewDidScroll();
     void frameViewDidAddOrRemoveScrollbars();

@@ -56,10 +56,8 @@ public:
     WEBCORE_EXPORT void setAsync(bool);
     WEBCORE_EXPORT bool async() const;
 
-    WEBCORE_EXPORT void setCrossOrigin(const AtomString&);
     WEBCORE_EXPORT String crossOrigin() const;
 
-    void setReferrerPolicyForBindings(const AtomString&);
     String referrerPolicyForBindings() const;
     ReferrerPolicy referrerPolicy() const final;
 
@@ -68,9 +66,8 @@ public:
 
     static bool supports(StringView type) { return type == "classic"_s || type == "module"_s || type == "importmap"_s; }
 
-    void setFetchPriorityForBindings(const AtomString&);
     String fetchPriorityForBindings() const;
-    RequestPriority fetchPriority() const override;
+    RequestPriority fetchPriority() const final;
 
     WEBCORE_EXPORT DOMTokenList& blocking();
 

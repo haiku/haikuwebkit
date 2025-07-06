@@ -5,6 +5,7 @@
  * Copyright (C) 2003-2023 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Graham Dennis (graham.dennis@gmail.com)
  * Copyright (C) 2014-2021 Google Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -75,7 +76,7 @@ namespace WebCore {
 using namespace CSS::Literals;
 
 inline const Style::Color& RenderStyle::accentColor() const { return m_rareInheritedData->accentColor; }
-inline bool RenderStyle::affectsTransform() const { return hasTransform() || offsetPath() || rotate() || scale() || translate(); }
+inline bool RenderStyle::affectsTransform() const { return hasTransform() || offsetPath() || hasRotate() || hasScale() || hasTranslate(); }
 inline const StyleContentAlignmentData& RenderStyle::alignContent() const { return m_nonInheritedData->miscData->alignContent; }
 inline const StyleSelfAlignmentData& RenderStyle::alignItems() const { return m_nonInheritedData->miscData->alignItems; }
 inline const StyleSelfAlignmentData& RenderStyle::alignSelf() const { return m_nonInheritedData->miscData->alignSelf; }
@@ -335,14 +336,17 @@ inline bool RenderStyle::hasOutOfFlowPosition() const { return position() == Pos
 inline bool RenderStyle::hasOutline() const { return outlineStyle() > BorderStyle::Hidden && outlineWidth() > 0; }
 inline bool RenderStyle::hasOutlineInVisualOverflow() const { return hasOutline() && outlineSize() > 0; }
 inline bool RenderStyle::hasPadding() const { return !Style::isZero(paddingBox()); }
-inline bool RenderStyle::hasPerspective() const { return perspective() != initialPerspective(); }
+inline bool RenderStyle::hasPerspective() const { return !perspective().isNone(); }
 inline bool RenderStyle::hasPositionedMask() const { return maskLayers().hasImage(); }
 inline bool RenderStyle::hasPseudoStyle(PseudoId pseudo) const { return m_nonInheritedFlags.hasPseudoStyle(pseudo); }
+inline bool RenderStyle::hasRotate() const { return !rotate().isNone(); }
+inline bool RenderStyle::hasScale() const { return !scale().isNone(); }
 inline bool RenderStyle::hasStaticBlockPosition(bool horizontal) const { return horizontal ? hasAutoTopAndBottom() : hasAutoLeftAndRight(); }
 inline bool RenderStyle::hasStaticInlinePosition(bool horizontal) const { return horizontal ? hasAutoLeftAndRight() : hasAutoTopAndBottom(); }
 inline bool RenderStyle::hasTextCombine() const { return textCombine() != TextCombine::None; }
 inline bool RenderStyle::hasTransform() const { return !transform().isEmpty() || offsetPath(); }
-inline bool RenderStyle::hasTransformRelatedProperty() const { return hasTransform() || translate() || scale() || rotate() || transformStyle3D() == TransformStyle3D::Preserve3D || hasPerspective(); }
+inline bool RenderStyle::hasTransformRelatedProperty() const { return hasTransform() || hasRotate() || hasScale() || hasTranslate() || transformStyle3D() == TransformStyle3D::Preserve3D || hasPerspective(); }
+inline bool RenderStyle::hasTranslate() const { return !translate().isNone(); }
 inline bool RenderStyle::hasTransitions() const { return transitions() && transitions()->size(); }
 inline bool RenderStyle::hasViewportConstrainedPosition() const { return position() == PositionType::Fixed || position() == PositionType::Sticky; }
 inline bool RenderStyle::hasVisibleBorder() const { return border().hasVisibleBorder(); }
@@ -360,7 +364,7 @@ inline ImageRendering RenderStyle::imageRendering() const { return static_cast<I
 inline const NamedGridLinesMap& RenderStyle::implicitNamedGridColumnLines() const { return m_nonInheritedData->rareData->grid->implicitNamedGridColumnLines; }
 inline const NamedGridLinesMap& RenderStyle::implicitNamedGridRowLines() const { return m_nonInheritedData->rareData->grid->implicitNamedGridRowLines; }
 constexpr auto RenderStyle::individualTransformOperations() -> OptionSet<TransformOperationOption> { return { TransformOperationOption::Translate, TransformOperationOption::Rotate, TransformOperationOption::Scale, TransformOperationOption::Offset }; }
-inline const StyleCustomPropertyData& RenderStyle::inheritedCustomProperties() const { return m_rareInheritedData->customProperties.get(); }
+inline const Style::CustomPropertyData& RenderStyle::inheritedCustomProperties() const { return m_rareInheritedData->customProperties.get(); }
 inline FixedVector<Style::ScopedName> RenderStyle::initialAnchorNames() { return { }; }
 inline NameScope RenderStyle::initialAnchorScope() { return { }; }
 constexpr StyleAppearance RenderStyle::initialAppearance() { return StyleAppearance::None; }
@@ -482,6 +486,7 @@ constexpr OverscrollBehavior RenderStyle::initialOverscrollBehaviorX() { return 
 constexpr OverscrollBehavior RenderStyle::initialOverscrollBehaviorY() { return OverscrollBehavior::Auto; }
 inline Style::PaddingEdge RenderStyle::initialPadding() { return 0_css_px; }
 constexpr PaintOrder RenderStyle::initialPaintOrder() { return PaintOrder::Normal; }
+inline Style::Perspective RenderStyle::initialPerspective() { return CSS::Keyword::None { }; }
 inline Length RenderStyle::initialPerspectiveOriginX() { return { 50.0f, LengthType::Percent }; }
 inline Length RenderStyle::initialPerspectiveOriginY() { return { 50.0f, LengthType::Percent }; }
 constexpr PointerEvents RenderStyle::initialPointerEvents() { return PointerEvents::Auto; }
@@ -546,6 +551,9 @@ constexpr TextZoom RenderStyle::initialTextZoom() { return TextZoom::Normal; }
 constexpr TouchAction RenderStyle::initialTouchActions() { return TouchAction::Auto; }
 inline TransformOperations RenderStyle::initialTransform() { return { }; }
 constexpr TransformBox RenderStyle::initialTransformBox() { return TransformBox::ViewBox; }
+inline Style::Rotate RenderStyle::initialRotate() { return CSS::Keyword::None { }; }
+inline Style::Scale RenderStyle::initialScale() { return CSS::Keyword::None { }; }
+inline Style::Translate RenderStyle::initialTranslate() { return CSS::Keyword::None { }; }
 inline Length RenderStyle::initialTransformOriginX() { return { 50.0f, LengthType::Percent }; }
 inline Length RenderStyle::initialTransformOriginY() { return { 50.0f, LengthType::Percent }; }
 constexpr TransformStyle3D RenderStyle::initialTransformStyle3D() { return TransformStyle3D::Flat; }
@@ -671,7 +679,7 @@ inline size_t RenderStyle::namedGridAreaRowCount() const { return m_nonInherited
 inline const NamedGridLinesMap& RenderStyle::namedGridColumnLines() const { return m_nonInheritedData->rareData->grid->namedGridColumnLines(); }
 inline const NamedGridLinesMap& RenderStyle::namedGridRowLines() const { return m_nonInheritedData->rareData->grid->namedGridRowLines(); }
 inline NBSPMode RenderStyle::nbspMode() const { return static_cast<NBSPMode>(m_rareInheritedData->nbspMode); }
-inline const StyleCustomPropertyData& RenderStyle::nonInheritedCustomProperties() const { return m_nonInheritedData->rareData->customProperties.get(); }
+inline const Style::CustomPropertyData& RenderStyle::nonInheritedCustomProperties() const { return m_nonInheritedData->rareData->customProperties.get(); }
 inline ObjectFit RenderStyle::objectFit() const { return static_cast<ObjectFit>(m_nonInheritedData->miscData->objectFit); }
 inline const LengthPoint& RenderStyle::objectPosition() const { return m_nonInheritedData->miscData->objectPosition; }
 inline const Style::OffsetAnchor& RenderStyle::offsetAnchor() const { return m_nonInheritedData->rareData->offsetAnchor; }
@@ -709,7 +717,7 @@ inline const Style::PaddingEdge& RenderStyle::paddingTop() const { return paddin
 inline const LengthSize& RenderStyle::pageSize() const { return m_nonInheritedData->rareData->pageSize; }
 inline PageSizeType RenderStyle::pageSizeType() const { return static_cast<PageSizeType>(m_nonInheritedData->rareData->pageSizeType); }
 inline PaintOrder RenderStyle::paintOrder() const { return static_cast<PaintOrder>(m_rareInheritedData->paintOrder); }
-inline float RenderStyle::perspective() const { return m_nonInheritedData->rareData->perspective; }
+inline const Style::Perspective& RenderStyle::perspective() const { return m_nonInheritedData->rareData->perspective; }
 inline LengthPoint RenderStyle::perspectiveOrigin() const { return m_nonInheritedData->rareData->perspectiveOrigin(); }
 inline const Length& RenderStyle::perspectiveOriginX() const { return m_nonInheritedData->rareData->perspectiveOriginX; }
 inline const Length& RenderStyle::perspectiveOriginY() const { return m_nonInheritedData->rareData->perspectiveOriginY; }
@@ -722,12 +730,12 @@ inline bool RenderStyle::preserves3D() const { return usedTransformStyle3D() == 
 inline QuotesData* RenderStyle::quotes() const { return m_rareInheritedData->quotes.get(); }
 inline Resize RenderStyle::resize() const { return static_cast<Resize>(m_nonInheritedData->miscData->resize); }
 inline const Style::InsetEdge& RenderStyle::right() const { return m_nonInheritedData->surroundData->inset.right(); }
-inline RotateTransformOperation* RenderStyle::rotate() const { return m_nonInheritedData->rareData->rotate.get(); }
+inline const Style::Rotate& RenderStyle::rotate() const { return m_nonInheritedData->rareData->rotate; }
 inline const GapLength& RenderStyle::rowGap() const { return m_nonInheritedData->rareData->rowGap; }
 inline RubyPosition RenderStyle::rubyPosition() const { return static_cast<RubyPosition>(m_rareInheritedData->rubyPosition); }
 inline RubyAlign RenderStyle::rubyAlign() const { return static_cast<RubyAlign>(m_rareInheritedData->rubyAlign); }
 inline RubyOverhang RenderStyle::rubyOverhang() const { return static_cast<RubyOverhang>(m_rareInheritedData->rubyOverhang); }
-inline ScaleTransformOperation* RenderStyle::scale() const { return m_nonInheritedData->rareData->scale.get(); }
+inline const Style::Scale& RenderStyle::scale() const { return m_nonInheritedData->rareData->scale; }
 inline const FixedVector<Ref<ScrollTimeline>>& RenderStyle::scrollTimelines() const { return m_nonInheritedData->rareData->scrollTimelines; }
 inline const FixedVector<ScrollAxis>& RenderStyle::scrollTimelineAxes() const { return m_nonInheritedData->rareData->scrollTimelineAxes; }
 inline const FixedVector<AtomString>& RenderStyle::scrollTimelineNames() const { return m_nonInheritedData->rareData->scrollTimelineNames; }
@@ -799,9 +807,9 @@ inline float RenderStyle::transformOriginZ() const { return m_nonInheritedData->
 inline TransformStyle3D RenderStyle::transformStyle3D() const { return static_cast<TransformStyle3D>(m_nonInheritedData->rareData->transformStyle3D); }
 inline const AnimationList* RenderStyle::transitions() const { return m_nonInheritedData->miscData->transitions.get(); }
 inline AnimationList* RenderStyle::transitions() { return m_nonInheritedData->miscData->transitions.get(); }
-inline TranslateTransformOperation* RenderStyle::translate() const { return m_nonInheritedData->rareData->translate.get(); }
+inline const Style::Translate& RenderStyle::translate() const { return m_nonInheritedData->rareData->translate; }
 inline bool RenderStyle::useSmoothScrolling() const { return m_nonInheritedData->rareData->useSmoothScrolling; }
-inline float RenderStyle::usedPerspective() const { return std::max(1.0f, perspective()); }
+inline float RenderStyle::usedPerspective() const { return perspective().usedPerspective(); }
 inline TransformStyle3D RenderStyle::usedTransformStyle3D() const { return static_cast<bool>(m_nonInheritedData->rareData->transformStyleForcedToFlat) ? TransformStyle3D::Flat : transformStyle3D(); }
 inline int RenderStyle::usedZIndex() const { return m_nonInheritedData->boxData->usedZIndex(); }
 inline UserDrag RenderStyle::userDrag() const { return static_cast<UserDrag>(m_nonInheritedData->miscData->userDrag); }

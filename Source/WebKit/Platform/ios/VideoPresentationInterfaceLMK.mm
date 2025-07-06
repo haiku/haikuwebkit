@@ -159,7 +159,7 @@ void VideoPresentationInterfaceLMK::enterExternalPlayback(CompletionHandler<void
 {
     ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER);
 
-    if (linearMediaPlayer().presentationState != WKSLinearMediaPresentationStateInline) {
+    if (linearMediaPlayer().presentationState != WKSLinearMediaPresentationStateInline || linearMediaPlayer().isImmersiveVideo) {
         enterHandler(false, nil);
         exitHandler(false);
         return;

@@ -414,7 +414,7 @@ String MediaControlsHost::generateUUID()
     return createVersion4UUIDString();
 }
 
-Vector<String> MediaControlsHost::shadowRootStyleSheets() const
+Vector<String, 2> MediaControlsHost::shadowRootStyleSheets() const
 {
     if (RefPtr mediaElement = m_mediaElement.ptr())
         return RenderTheme::singleton().mediaControlsStyleSheets(*mediaElement);
@@ -909,7 +909,7 @@ RefPtr<MediaSession> MediaControlsHost::mediaSession() const
     if (!mediaElement)
         return { };
 
-    RefPtr window = mediaElement->document().domWindow();
+    RefPtr window = mediaElement->document().window();
     if (!window)
         return { };
 

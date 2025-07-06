@@ -2,8 +2,6 @@
 css-dark-mode [ Pass ]
 css-dark-mode/older-systems [ Skip ]
 
-compositing/contents-format/ipad [ Pass ]
-
 fast/events/ios/ipad [ Pass ]
 fast/forms/ios/ipad [ Pass ]
 

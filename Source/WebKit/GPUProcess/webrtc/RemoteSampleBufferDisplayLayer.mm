@@ -72,6 +72,9 @@ void RemoteSampleBufferDisplayLayer::initialize(bool hideRootLayer, IntSize size
     LayerHostingContextOptions contextOptions;
 #if PLATFORM(IOS_FAMILY)
     contextOptions.canShowWhileLocked = canShowWhileLocked;
+#if USE(EXTENSIONKIT)
+    contextOptions.useHostable = true;
+#endif
 #else
     UNUSED_PARAM(canShowWhileLocked);
 #endif
@@ -82,7 +85,7 @@ void RemoteSampleBufferDisplayLayer::initialize(bool hideRootLayer, IntSize size
 
         protectedThis->m_layerHostingContext = LayerHostingContext::create(contextOptions);
         protectedThis->m_layerHostingContext->setRootLayer(protectedThis->protectedSampleBufferDisplayLayer()->rootLayer());
-        callback(protectedThis->m_layerHostingContext->contextID());
+        callback(protectedThis->m_layerHostingContext->hostingContext());
     });
 }
 

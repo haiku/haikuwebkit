@@ -115,6 +115,10 @@ WEBCORE_EXPORT PlatformDisplayID primaryScreenDisplayID();
 #if HAVE(SUPPORT_HDR_DISPLAY)
 WEBCORE_EXPORT void setScreenContentsFormatsForTesting(OptionSet<ContentsFormat>);
 OptionSet<ContentsFormat> screenContentsFormatsForTesting();
+
+WEBCORE_EXPORT float currentEDRHeadroomForDisplay(PlatformDisplayID);
+WEBCORE_EXPORT float maxEDRHeadroomForDisplay(PlatformDisplayID);
+WEBCORE_EXPORT bool suppressEDRForDisplay(PlatformDisplayID);
 #endif
 
 #if PLATFORM(MAC)

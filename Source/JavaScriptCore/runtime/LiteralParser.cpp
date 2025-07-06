@@ -1398,7 +1398,7 @@ JSValue LiteralParser<CharType, reviverMode>::parseRecursively(VM& vm, uint8_t* 
             };
 
             auto* structure = object->structure();
-            auto property = [&, &vm = vm] ALWAYS_INLINE_LAMBDA -> std::variant<ExistingProperty, Identifier> {
+            auto property = [&, &vm = vm] ALWAYS_INLINE_LAMBDA -> Variant<ExistingProperty, Identifier> {
                 if (Structure* transition = structure->trySingleTransition()) {
                     // This check avoids hash lookup and refcount churn in the common case of a matching single transition.
                     SUPPRESS_UNCOUNTED_ARG if (transition->transitionKind() == TransitionKind::PropertyAddition

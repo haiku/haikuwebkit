@@ -175,7 +175,9 @@ messages -> NetworkProcess : AuxiliaryProcess WantsAsyncDispatchMessage {
     RegisterURLSchemeAsSecure(String scheme)
     RegisterURLSchemeAsBypassingContentSecurityPolicy(String scheme)
     RegisterURLSchemeAsLocal(String scheme)
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
     RegisterURLSchemeAsNoAccess(String scheme)
+#endif
 
     SyncLocalStorage() -> ()
     StoreServiceWorkerRegistrations(PAL::SessionID sessionID) -> ()

@@ -1061,7 +1061,7 @@ Inspector::Protocol::ErrorStringOr<Ref<JSON::ArrayOf<Inspector::Protocol::DOM::E
     if (includeAncestors.value_or(true)) {
         for (RefPtr ancestor = node->parentOrShadowHostNode(); ancestor; ancestor = ancestor->parentOrShadowHostNode())
             ancestors.append(ancestor.get());
-        if (auto* window = node->document().domWindow())
+        if (auto* window = node->document().window())
             ancestors.append(window);
     }
 
@@ -3228,7 +3228,7 @@ Inspector::Protocol::ErrorStringOr<Ref<Inspector::Protocol::DOM::MediaStats>> In
         .release();
     stats->setViewport(WTFMove(viewportJSON));
 
-    if (RefPtr window = mediaElement->document().domWindow())
+    if (RefPtr window = mediaElement->document().window())
         stats->setDevicePixelRatio(window->devicePixelRatio());
 
     if (videoTrack) {

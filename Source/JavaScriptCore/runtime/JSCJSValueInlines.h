@@ -133,7 +133,7 @@ inline double JSValue::toIntegerOrInfinity(JSGlobalObject* globalObject) const
     if (isInt32())
         return asInt32();
     double d = toNumber(globalObject);
-    return trunc(std::isnan(d) ? 0.0 : d + 0.0);
+    return isnan(d) ? 0.0 : trunc(d) + 0.0;
 }
 
 inline bool JSValue::isUInt32() const

@@ -360,7 +360,7 @@ Vector<Ref<StaticRange>> DOMSelection::getComposedRanges(std::optional<Variant<R
     if (!range)
         return { };
 
-    UncheckedKeyHashSet<Ref<ShadowRoot>> shadowRootSet;
+    HashSet<Ref<ShadowRoot>> shadowRootSet;
     if (firstShadowRootOrOptions) {
         if (auto* firstShadowRoot = std::get_if<RefPtr<ShadowRoot>>(&*firstShadowRootOrOptions)) {
             shadowRootSet.reserveInitialCapacity(remainingShadowRoots.size() + 1);

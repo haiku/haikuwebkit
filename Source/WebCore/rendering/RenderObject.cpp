@@ -572,11 +572,11 @@ void RenderObject::clearNeedsLayout(HadSkippedLayout hadSkippedLayout)
     if (hasLayer())
         downcast<RenderLayerModelObject>(*this).layer()->setSelfAndChildrenNeedPositionUpdate();
     m_stateBitfields.clearFlag(StateFlag::NeedsLayout);
-    setPosChildNeedsLayoutBit(false);
+    setOutOfFlowChildNeedsLayoutBit(false);
     setNeedsSimplifiedNormalFlowLayoutBit(false);
     setNormalChildNeedsLayoutBit(false);
     setOutOfFlowChildNeedsStaticPositionLayoutBit(false);
-    setNeedsPositionedMovementLayoutBit(false);
+    setNeedsOutOfFlowMovementLayoutBit(false);
 #if ASSERT_ENABLED
     auto checkIfOutOfFlowDescendantsNeedLayout = [&](auto& renderBlock) {
         if (auto* outOfFlowDescendants = renderBlock.outOfFlowBoxes()) {
@@ -629,11 +629,11 @@ RenderElement* RenderObject::markContainingBlocksForLayout(RenderElement* layout
             // Skip relatively positioned inlines and anonymous blocks to get to the enclosing RenderBlock.
             while (ancestor && (!ancestor->isRenderBlock() || ancestor->isAnonymousBlock()))
                 ancestor = ancestor->container();
-            if (!ancestor || ancestor->posChildNeedsLayout())
+            if (!ancestor || ancestor->outOfFlowChildNeedsLayout())
                 return { };
             if (willSkipRelativelyPositionedInlines)
                 container = ancestor->container();
-            ancestor->setPosChildNeedsLayoutBit(true);
+            ancestor->setOutOfFlowChildNeedsLayoutBit(true);
             simplifiedNormalFlowLayout = true;
         } else if (simplifiedNormalFlowLayout) {
             if (ancestor->needsSimplifiedNormalFlowLayout())
@@ -715,10 +715,10 @@ void RenderObject::setLayerNeedsFullRepaint()
     downcast<RenderLayerModelObject>(*this).checkedLayer()->setRepaintStatus(RepaintStatus::NeedsFullRepaint);
 }
 
-void RenderObject::setLayerNeedsFullRepaintForPositionedMovementLayout()
+void RenderObject::setLayerNeedsFullRepaintForOutOfFlowMovementLayout()
 {
     ASSERT(hasLayer());
-    downcast<RenderLayerModelObject>(*this).checkedLayer()->setRepaintStatus(RepaintStatus::NeedsFullRepaintForPositionedMovementLayout);
+    downcast<RenderLayerModelObject>(*this).checkedLayer()->setRepaintStatus(RepaintStatus::NeedsFullRepaintForOutOfFlowMovementLayout);
 }
 
 static inline RenderBlock* nearestNonAnonymousContainingBlockIncludingSelf(RenderElement* renderer)
@@ -911,7 +911,7 @@ void RenderObject::addAbsoluteRectForLayer(LayoutRect& result)
 // FIXME: change this to use the subtreePaint terminology
 LayoutRect RenderObject::paintingRootRect(LayoutRect& topLevelRect)
 {
-    LayoutRect result = absoluteBoundingBoxRectIgnoringTransforms();
+    LayoutRect result = absoluteBoundingBoxRect();
     topLevelRect = result;
     if (auto* renderElement = dynamicDowncast<RenderElement>(*this)) {
         for (CheckedRef child : childrenOfType<RenderObject>(*renderElement))
@@ -1458,12 +1458,12 @@ void RenderObject::outputRenderObject(TextStream& stream, bool mark, int depth) 
             stream << "[self]";
         if (normalChildNeedsLayout())
             stream << "[normal child]";
-        if (posChildNeedsLayout())
-            stream << "[positioned child]";
+        if (outOfFlowChildNeedsLayout())
+            stream << "[out-of-flow child]";
         if (needsSimplifiedNormalFlowLayout())
             stream << "[simplified]";
-        if (needsPositionedMovementLayout())
-            stream << "[positioned movement]";
+        if (needsOutOfFlowMovementLayout())
+            stream << "[out-of-flow movement]";
         if (outOfFlowChildNeedsStaticPositionLayout())
             stream << "[out of flow child needs parent layout]";
     }
@@ -1622,7 +1622,7 @@ FloatPoint RenderObject::localToContainerPoint(const FloatPoint& localPoint, con
     return transformState.mappedPoint();
 }
 
-LayoutSize RenderObject::offsetFromContainer(RenderElement& container, const LayoutPoint&, bool* offsetDependsOnPoint) const
+LayoutSize RenderObject::offsetFromContainer(const RenderElement& container, const LayoutPoint&, bool* offsetDependsOnPoint) const
 {
     ASSERT(&container == this->container());
 
@@ -2050,11 +2050,6 @@ bool RenderObject::canUpdateSelectionOnRootLineBoxes()
 bool RenderObject::canHaveGeneratedChildren() const
 {
     return canHaveChildren();
-}
-
-Node* RenderObject::generatingPseudoHostElement() const
-{
-    return downcast<PseudoElement>(*node()).hostElement();
 }
 
 void RenderObject::setNeedsBoundariesUpdate()

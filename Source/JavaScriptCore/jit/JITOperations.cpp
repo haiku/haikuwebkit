@@ -421,6 +421,7 @@ static ALWAYS_INLINE JSValue getByIdMegamorphic(JSGlobalObject* globalObject, VM
 
     JSObject* baseObject = asObject(baseValue);
     JSObject* object = baseObject;
+    bool shouldGiveUp = false;
     bool cacheable = true;
     while (true) {
         if (TypeInfo::overridesGetOwnPropertySlot(object->inlineTypeFlags()) && object->type() != ArrayType && object->type() != JSFunctionType && object != globalObject->arrayPrototype()) [[unlikely]] {
@@ -434,7 +435,10 @@ static ALWAYS_INLINE JSValue getByIdMegamorphic(JSGlobalObject* globalObject, VM
         Structure* structure = object->structure();
         bool hasProperty = object->getOwnNonIndexPropertySlot(vm, structure, uid, slot);
         structure = object->structure(); // Reload it again since static-class-table can cause transition. But this transition only affects on this Structure.
-        cacheable &= structure->propertyAccessesAreCacheable();
+        if (!structure->propertyAccessesAreCacheable()) {
+            shouldGiveUp = true;
+            cacheable = false;
+        }
         if (hasProperty) {
             if (cacheable && slot.isCacheableValue() && slot.cachedOffset() <= MegamorphicCache::maxOffset) [[likely]] {
                 if (slot.slotBase() == baseObject || !baseObject->structure()->isDictionary())
@@ -446,13 +450,16 @@ static ALWAYS_INLINE JSValue getByIdMegamorphic(JSGlobalObject* globalObject, VM
                     }
                 }
             } else {
-                if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm))
+                if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm))
                     repatchGetBySlowPathCall(callFrame->codeBlock(), *stubInfo, kind);
             }
             return slot.getValue(globalObject, uid);
         }
 
-        cacheable &= structure->propertyAccessesAreCacheableForAbsence();
+        if (!structure->propertyAccessesAreCacheableForAbsence()) {
+            shouldGiveUp = true;
+            cacheable = false;
+        }
         cacheable &= structure->hasMonoProto();
 
         JSValue prototype = object->getPrototypeDirect();
@@ -465,7 +472,7 @@ static ALWAYS_INLINE JSValue getByIdMegamorphic(JSGlobalObject* globalObject, VM
                 if (!baseObject->structure()->hasBeenFlattenedBefore()) [[likely]]
                     return jsUndefined();
             }
-            if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm))
+            if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm))
                 repatchGetBySlowPathCall(callFrame->codeBlock(), *stubInfo, kind);
             return jsUndefined();
         }
@@ -3626,6 +3633,7 @@ static ALWAYS_INLINE JSValue getByValMegamorphic(JSGlobalObject* globalObject, V
 
     PropertySlot slot(thisValue, PropertySlot::InternalMethodType::Get);
     JSObject* object = baseObject;
+    bool shouldGiveUp = false;
     bool cacheable = true;
     while (true) {
         if (TypeInfo::overridesGetOwnPropertySlot(object->inlineTypeFlags()) && object->type() != ArrayType && object->type() != JSFunctionType && object != globalObject->arrayPrototype()) [[unlikely]] {
@@ -3641,25 +3649,31 @@ static ALWAYS_INLINE JSValue getByValMegamorphic(JSGlobalObject* globalObject, V
         Structure* structure = object->structure();
         bool hasProperty = object->getOwnNonIndexPropertySlot(vm, structure, uid, slot);
         structure = object->structure(); // Reload it again since static-class-table can cause transition. But this transition only affects on this Structure.
-        cacheable &= structure->propertyAccessesAreCacheable();
+        if (!structure->propertyAccessesAreCacheable()) {
+            cacheable = false;
+            shouldGiveUp = true;
+        }
         if (hasProperty) {
             if (cacheable && slot.isCacheableValue() && slot.cachedOffset() <= MegamorphicCache::maxOffset) [[likely]] {
                 if (slot.slotBase() == baseObject || !baseObject->structure()->isDictionary())
                     vm.megamorphicCache()->initAsHit(baseObject->structureID(), uid, slot.slotBase(), slot.cachedOffset(), slot.slotBase() == baseObject);
                 else {
                     if (baseObject->structure()->hasBeenFlattenedBefore()) [[unlikely]] {
-                        if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm))
+                        if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm))
                             repatchGetBySlowPathCall(callFrame->codeBlock(), *stubInfo, kind);
                     }
                 }
             } else {
-                if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm))
+                if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm))
                     repatchGetBySlowPathCall(callFrame->codeBlock(), *stubInfo, kind);
             }
             RELEASE_AND_RETURN(scope, slot.getValue(globalObject, uid));
         }
 
-        cacheable &= structure->propertyAccessesAreCacheableForAbsence();
+        if (!structure->propertyAccessesAreCacheableForAbsence()) {
+            shouldGiveUp = true;
+            cacheable = false;
+        }
         cacheable &= structure->hasMonoProto();
 
         JSValue prototype = object->getPrototypeDirect();
@@ -3673,7 +3687,7 @@ static ALWAYS_INLINE JSValue getByValMegamorphic(JSGlobalObject* globalObject, V
                     return jsUndefined();
             }
 
-            if (stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm))
+            if (shouldGiveUp && stubInfo && stubInfo->considerRepatchingCacheMegamorphic(vm))
                 repatchGetBySlowPathCall(callFrame->codeBlock(), *stubInfo, kind);
             return jsUndefined();
         }

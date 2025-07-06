@@ -222,6 +222,8 @@ JSC_DECLARE_JIT_OPERATION(operationRegExpMatchFastString, EncodedJSValue, (JSGlo
 JSC_DECLARE_JIT_OPERATION(operationRegExpTestString, size_t, (JSGlobalObject*, RegExpObject*, JSString*));
 JSC_DECLARE_JIT_OPERATION(operationRegExpTest, size_t, (JSGlobalObject*, RegExpObject*, EncodedJSValue));
 JSC_DECLARE_JIT_OPERATION(operationRegExpTestGeneric, size_t, (JSGlobalObject*, EncodedJSValue, EncodedJSValue));
+JSC_DECLARE_JIT_OPERATION(operationRegExpSearchString, UCPUStrictInt32, (JSGlobalObject*, RegExpObject*, JSString*));
+JSC_DECLARE_JIT_OPERATION(operationRegExpSearch, UCPUStrictInt32, (JSGlobalObject*, RegExpObject*, EncodedJSValue));
 JSC_DECLARE_NOEXCEPT_JIT_OPERATION(operationCompareStrictEqCell, size_t, (JSGlobalObject*, JSCell* op1, JSCell* op2));
 JSC_DECLARE_JIT_OPERATION(operationSubHeapBigInt, EncodedJSValue, (JSGlobalObject*, JSCell* op1, JSCell* op2));
 JSC_DECLARE_JIT_OPERATION(operationMulHeapBigInt, EncodedJSValue, (JSGlobalObject*, JSCell* op1, JSCell* op2));

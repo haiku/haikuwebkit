@@ -218,9 +218,9 @@ public:
         unsigned blue;
         unsigned alpha;
     };
-    DebugRGBA debugRGBA() const;
+    WEBCORE_EXPORT DebugRGBA debugRGBA() const;
 
-    String debugDescription() const;
+    WEBCORE_EXPORT String debugDescription() const;
 
 private:
     friend void add(Hasher&, const Color&);

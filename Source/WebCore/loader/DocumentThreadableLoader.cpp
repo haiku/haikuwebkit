@@ -683,7 +683,7 @@ void DocumentThreadableLoader::loadRequest(ResourceRequest&& request, SecurityCh
     if (options().initiatorContext == InitiatorContext::Worker)
         finishedTimingForWorkerLoad(resourceTiming);
     else {
-        if (RefPtr window = document().domWindow())
+        if (RefPtr window = document().window())
             window->protectedPerformance()->addResourceTiming(WTFMove(resourceTiming));
     }
 

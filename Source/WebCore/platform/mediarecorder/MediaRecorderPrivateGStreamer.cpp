@@ -161,6 +161,8 @@ MediaRecorderPrivateBackend::~MediaRecorderPrivateBackend()
     if (m_src)
         webkitMediaStreamSrcSignalEndOfStream(WEBKIT_MEDIA_STREAM_SRC(m_src.get()));
     if (m_transcoder) {
+        g_signal_handlers_disconnect_by_data(m_signalAdapter.get(), this);
+        g_signal_handlers_disconnect_by_data(m_pipeline.get(), this);
         unregisterPipeline(m_pipeline);
         disconnectSimpleBusMessageCallback(m_pipeline.get());
         m_pipeline.clear();
@@ -495,6 +497,13 @@ bool MediaRecorderPrivateBackend::preparePipeline()
     if (!webkitGstCheckVersion(1, 26, 3))
         gst_object_ref_sink(pipeline);
     m_pipeline = adoptGRef(pipeline);
+
+    // GstTranscoder uses a static name for its transcodebin element, which is not a bug per-se, but
+    // might be source of trouble for our internal pipeline registry which tracks pipelines per
+    // name. So rename the transcodebin with a unique name.
+    static uint32_t nPipeline = 0;
+    auto pipelineName = makeString("media-recorder-"_s, nPipeline++);
+    gst_object_set_name(GST_OBJECT_CAST(m_pipeline.get()), pipelineName.ascii().data());
 
     auto clock = adoptGRef(gst_system_clock_obtain());
     gst_pipeline_use_clock(GST_PIPELINE(m_pipeline.get()), clock.get());

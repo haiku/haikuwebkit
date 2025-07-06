@@ -69,7 +69,7 @@ namespace WTF {
 #if USE(COCOA_EVENT_LOOP)
 class SchedulePair;
 struct SchedulePairHash;
-using SchedulePairHashSet = UncheckedKeyHashSet<RefPtr<SchedulePair>, SchedulePairHash>;
+using SchedulePairHashSet = HashSet<RefPtr<SchedulePair>, SchedulePairHash>;
 #endif
 
 #if USE(CF)

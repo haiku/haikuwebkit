@@ -173,6 +173,18 @@ static NSString* attributesOfElement(id accessibilityObject)
         // accessibilityAttributeValue: can throw an if an attribute is not returned.
         // For DumpRenderTree's purpose, we should ignore those exceptions
         BEGIN_AX_OBJC_EXCEPTIONS
+        if ([attribute isEqualToString:@"AXVisibleCharacterRange"]) {
+            id value = [accessibilityObject accessibilityAttributeValue:NSAccessibilityRoleAttribute];
+            NSString *role = [value isKindOfClass:[NSString class]] ? (NSString *)value : nil;
+            if (role == nil || [role isEqualToString:@"AXList"] || [role isEqualToString:@"AXLink"] || [role isEqualToString:@"AXGroup"] || [role isEqualToString:@"AXRow"] || [role isEqualToString:@"AXColumn"] || [role isEqualToString:@"AXTable"] || [role isEqualToString:@"AXWebArea"]) {
+                // For some roles, behavior with ITM on and ITM off differ for this API in ways
+                // that are not clearly meaningful to any actual user-facing behavior. Skip dumping this
+                // attribute for all of the "dump every attribute for every element" tests.
+                // We can test visible-character-range in dedicated tests.
+                continue;
+            }
+        }
+
         id valueObject = [accessibilityObject accessibilityAttributeValue:attribute];
         NSString* value = descriptionOfValue(valueObject, accessibilityObject);
 

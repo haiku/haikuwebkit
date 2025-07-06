@@ -57,63 +57,63 @@ void WorkerConsoleClient::messageWithTypeAndLevel(MessageType type, MessageLevel
 void WorkerConsoleClient::count(JSC::JSGlobalObject* exec, const String& label)
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
-    if (auto* worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
+    if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
         InspectorInstrumentation::consoleCount(*worker, exec, label);
 }
 
 void WorkerConsoleClient::countReset(JSC::JSGlobalObject* exec, const String& label)
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
-    if (auto* worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
+    if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
         InspectorInstrumentation::consoleCountReset(*worker, exec, label);
 }
 
 void WorkerConsoleClient::time(JSC::JSGlobalObject* exec, const String& label)
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
-    if (auto* worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
+    if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
         InspectorInstrumentation::startConsoleTiming(*worker, exec, label);
 }
 
 void WorkerConsoleClient::timeLog(JSC::JSGlobalObject* exec, const String& label, Ref<ScriptArguments>&& arguments)
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
-    if (auto* worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
+    if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
         InspectorInstrumentation::logConsoleTiming(*worker, exec, label, WTFMove(arguments));
 }
 
 void WorkerConsoleClient::timeEnd(JSC::JSGlobalObject* exec, const String& label)
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
-    if (auto* worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
+    if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
         InspectorInstrumentation::stopConsoleTiming(*worker, exec, label);
 }
 
 void WorkerConsoleClient::profile(JSC::JSGlobalObject*, const String& title)
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
-    if (auto* worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
+    if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
         InspectorInstrumentation::startProfiling(*worker, title);
 }
 
 void WorkerConsoleClient::profileEnd(JSC::JSGlobalObject*, const String& title)
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
-    if (auto* worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
+    if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
         InspectorInstrumentation::stopProfiling(*worker, title);
 }
 
 void WorkerConsoleClient::takeHeapSnapshot(JSC::JSGlobalObject*, const String& title)
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
-    if (auto* worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
+    if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
         InspectorInstrumentation::takeHeapSnapshot(*worker, title);
 }
 
 void WorkerConsoleClient::timeStamp(JSC::JSGlobalObject*, Ref<ScriptArguments>&& arguments)
 {
     // FIXME: <https://webkit.org/b/217724> Add support for WorkletGlobalScope.
-    if (auto* worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
+    if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(m_globalScope))
         InspectorInstrumentation::consoleTimeStamp(*worker, WTFMove(arguments));
 }
 

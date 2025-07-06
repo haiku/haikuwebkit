@@ -1516,6 +1516,7 @@ JSC_DEFINE_JIT_OPERATION(operationRegExpMatchFastGlobalString, EncodedJSValue, (
         })));
 }
 
+
 JSC_DEFINE_JIT_OPERATION(operationParseIntGenericNoRadix, EncodedJSValue, (JSGlobalObject* globalObject, EncodedJSValue encodedValue))
 {
     VM& vm = globalObject->vm();
@@ -1674,6 +1675,47 @@ JSC_DEFINE_JIT_OPERATION(operationRegExpTestGeneric, size_t, (JSGlobalObject* gl
     if (!input)
         OPERATION_RETURN(scope, false);
     OPERATION_RETURN(scope, regexp->test(globalObject, input));
+}
+
+JSC_DEFINE_JIT_OPERATION(operationRegExpSearchString, UCPUStrictInt32, (JSGlobalObject* globalObject, RegExpObject* regExpObject, JSString* string))
+{
+    SuperSamplerScope superSamplerScope(false);
+
+    VM& vm = globalObject->vm();
+    CallFrame* callFrame = DECLARE_CALL_FRAME(vm);
+    JITOperationPrologueCallFrameTracer tracer(vm, callFrame);
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    auto strView = string->view(globalObject);
+    OPERATION_RETURN_IF_EXCEPTION(scope, 0);
+
+    MatchResult result = globalObject->regExpGlobalData().performMatch(globalObject, regExpObject->regExp(), string, strView, 0);
+
+    OPERATION_RETURN(scope, result ? toUCPUStrictInt32(result.start) : toUCPUStrictInt32(-1));
+}
+
+JSC_DEFINE_JIT_OPERATION(operationRegExpSearch, UCPUStrictInt32, (JSGlobalObject* globalObject, RegExpObject* regExpObject, EncodedJSValue encodedArgument))
+{
+    SuperSamplerScope superSamplerScope(false);
+
+    VM& vm = globalObject->vm();
+    CallFrame* callFrame = DECLARE_CALL_FRAME(vm);
+    JITOperationPrologueCallFrameTracer tracer(vm, callFrame);
+    auto scope = DECLARE_THROW_SCOPE(vm);
+
+    JSValue argument = JSValue::decode(encodedArgument);
+
+    JSString* string = argument.toStringOrNull(globalObject);
+    EXCEPTION_ASSERT(!!scope.exception() == !string);
+    if (!string)
+        OPERATION_RETURN(scope, toUCPUStrictInt32(-1));
+
+    auto strView = string->view(globalObject);
+    OPERATION_RETURN_IF_EXCEPTION(scope, 0);
+
+    MatchResult result = globalObject->regExpGlobalData().performMatch(globalObject, regExpObject->regExp(), string, strView, 0);
+
+    OPERATION_RETURN(scope, result ? toUCPUStrictInt32(result.start) : toUCPUStrictInt32(-1));
 }
 
 JSC_DEFINE_JIT_OPERATION(operationSubHeapBigInt, EncodedJSValue, (JSGlobalObject* globalObject, JSCell* op1, JSCell* op2))
@@ -3900,7 +3942,7 @@ JSC_DEFINE_JIT_OPERATION(operationIsNaN, UCPUStrictInt32, (JSGlobalObject* globa
 
 JSC_DEFINE_NOEXCEPT_JIT_OPERATION(operationToIntegerOrInfinityDouble, EncodedJSValue, (double d))
 {
-    return JSValue::encode(jsNumber(trunc(std::isnan(d) ? 0.0 : d + 0.0)));
+    return JSValue::encode(jsNumber(std::isnan(d) ? 0.0 : trunc(d) + 0.0));
 }
 
 JSC_DEFINE_JIT_OPERATION(operationToIntegerOrInfinityUntyped, EncodedJSValue, (JSGlobalObject* globalObject, EncodedJSValue encodedValue))

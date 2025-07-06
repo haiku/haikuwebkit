@@ -4736,7 +4736,7 @@ void Editor::registerAttachmentIdentifier(const String& identifier, const Attach
         if (!imageData)
             return std::nullopt;
 
-        String name = imageElement->alt();
+        String name = imageElement->attributeWithoutSynchronization(altAttr);
         if (name.isEmpty())
             name = imageElement->document().completeURL(imageElement->imageSourceURL()).lastPathComponent().toString();
 

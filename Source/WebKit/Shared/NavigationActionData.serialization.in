@@ -39,7 +39,7 @@ struct WebKit::NavigationActionData {
     bool hasOpener;
     bool isPerformingHTTPFallback;
     bool isInitialFrameSrcLoad;
-    bool isContentExtensionRedirect;
+    bool isContentRuleListRedirect;
     String openedMainFrameName;
     WebCore::SecurityOriginData requesterOrigin;
     WebCore::SecurityOriginData requesterTopOrigin;

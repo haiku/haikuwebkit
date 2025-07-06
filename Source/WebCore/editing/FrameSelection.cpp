@@ -2381,7 +2381,7 @@ void FrameSelection::updateAppearance()
     // Start blinking with a black caret. Be sure not to restart if we're
     // already blinking in the right location.
     if (shouldBlink && !caretAnimator().isActive()) {
-        if (document && document->domWindow())
+        if (document && document->window())
             caretAnimator().start();
 
         caretAnimator().setVisible(true);

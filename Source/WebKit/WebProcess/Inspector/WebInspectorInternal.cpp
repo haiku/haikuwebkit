@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2010-2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2010-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -182,7 +182,7 @@ void WebInspector::showResources()
 
 void WebInspector::showMainResourceForFrame(WebCore::FrameIdentifier frameIdentifier)
 {
-    WebFrame* frame = WebProcess::singleton().webFrame(frameIdentifier);
+    RefPtr frame = WebProcess::singleton().webFrame(frameIdentifier);
     if (!frame)
         return;
 

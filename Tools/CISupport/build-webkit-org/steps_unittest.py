@@ -2120,6 +2120,10 @@ class TestScanBuild(BuildStepMixinAdditions, unittest.TestCase):
         self.configureStep()
         self.setProperty('builddir', self.WORK_DIR)
         self.setProperty('configuration', 'release')
+        self.setProperty('fullPlatform', 'mac-sonoma')
+        self.setProperty('architecture', 'arm64')
+        next_steps = []
+        self.patch(self.build, 'addStepsAfterCurrentStep', lambda s: next_steps.extend(s))
 
         self.expectRemoteCommands(
             ExpectShell(workdir=self.WORK_DIR,
@@ -2133,7 +2137,21 @@ class TestScanBuild(BuildStepMixinAdditions, unittest.TestCase):
             + 0
         )
         self.expectOutcome(result=SUCCESS, state_string='scan-build found 0 issues')
-        return self.runStep()
+        rc = self.runStep()
+        self.assertEqual(
+            [
+                GenerateS3URL('mac-sonoma-arm64-release-scan-build', extension='txt', content_type='text/plain', additions='13'),
+                UploadFileToS3('build-log.txt', links={'scan-build': 'Full build log'}, content_type='text/plain'),
+                ParseStaticAnalyzerResults(),
+                FindUnexpectedStaticAnalyzerResults(),
+                ArchiveStaticAnalyzerResults(),
+                UploadStaticAnalyzerResults(),
+                ExtractStaticAnalyzerTestResults(),
+                DisplaySaferCPPResults(),
+                CleanSaferCPPArchive(),
+                SetBuildSummary()
+            ], next_steps)
+        return rc
 
     def test_success_with_issues(self):
         self.configureStep()
@@ -2261,6 +2279,34 @@ class TestUpdateSaferCPPBaseline(BuildStepMixinAdditions, unittest.TestCase):
             + 0,
         )
         self.expectOutcome(result=SUCCESS)
+        return self.runStep()
+
+
+class TestCleanSaferCPPArchive(BuildStepMixinAdditions, unittest.TestCase):
+    def setUp(self):
+        return self.setUpBuildStep()
+
+    def tearDown(self):
+        return self.tearDownBuildStep()
+
+    def configureStep(self):
+        self.setupStep(CleanSaferCPPArchive())
+
+    def test_success(self):
+        self.configureStep()
+        self.setProperty('builddir', 'wkdir')
+        self.setProperty('buildnumber', 2)
+
+        self.expectRemoteCommands(
+            ExpectShell(workdir='wkdir',
+                        command=['rm', '-rf', 'wkdir/smart-pointer-result-archive/2'],
+                        logEnviron=False,
+                        timeout=1200,
+                        env={})
+            + ExpectShell.log('stdio', stdout='')
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='cleaned safer cpp archive')
         return self.runStep()
 
 

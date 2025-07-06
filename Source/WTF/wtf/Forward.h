@@ -68,6 +68,7 @@ class WallTime;
 
 struct AnyThreadsAccessTraits;
 struct FastMalloc;
+struct MachSendRightAnnotated;
 struct MainThreadAccessTraits;
 template<typename> struct ObjectIdentifierMainThreadAccessTraits;
 template<typename> struct ObjectIdentifierThreadSafeAccessTraits;
@@ -221,6 +222,7 @@ using WTF::ListHashSet;
 using WTF::Lock;
 using WTF::Logger;
 using WTF::MachSendRight;
+using WTF::MachSendRightAnnotated;
 using WTF::MainThreadDispatcher;
 using WTF::makeUniqueRef;
 using WTF::MonotonicTime;

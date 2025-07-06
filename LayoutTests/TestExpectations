@@ -9,7 +9,6 @@
 apple-visual-effects [ Skip ]
 compositing/ios [ Skip ]
 compositing/cocoa [ Skip ]
-compositing/contents-format/ipad [ Skip ]
 compositing/scrolling/async-overflow-scrolling/mac [ Skip ]
 css3/scroll-snap/ios [ Skip ]
 css3/touch-action [ Skip ]
@@ -888,8 +887,11 @@ imported/w3c/web-platform-tests/workers/modules/dedicated-worker-import-data-url
 # Newly imported WPT ref tests failures.
 imported/w3c/web-platform-tests/compat/webkit-box-fieldset.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/compat/webkit-box-rtl-flex.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/compat/webkit-text-fill-color-property-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/compat/webkit-text-fill-color-property-004.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/compat/webkit-text-fill-color-property-005.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/compat/webkit-box-horizontal-rtl-variants.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/compat/webkit-box-horizontal-reverse-variants.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/encoding/eof-utf-8-one.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/encoding/eof-utf-8-three.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/encoding/eof-utf-8-two.html [ ImageOnlyFailure ]
@@ -2562,13 +2564,7 @@ fast/images/jpegxl-with-color-profile.html [ Skip ]
 fast/images/animated-jpegxl-loop-count.html [ Skip ]
 
 # Only applicable on platforms with HDR support
-compositing/hdr/hdr-basic-canvas.html [ Skip ]
-compositing/hdr/hdr-basic-image.html [ Skip ]
-compositing/hdr/hdr-basic-image-dynamic-range-limit.html [ Skip ]
-compositing/hdr/hdr-background-image.html [ Skip ]
-compositing/hdr/hdr-border-image.html [ Skip ]
-compositing/hdr/hdr-pseudo-before-image.html [ Skip ]
-compositing/hdr/hdr-svg-inline-image.html [ Skip ]
+compositing/hdr [ Skip ]
 fast/images/hdr-basic-image.html [ Skip ]
 fast/images/hdr-basic-image-dynamic-range-limit.html [ Skip ]
 fast/images/hdr-background-image.html [ Skip ]
@@ -5144,7 +5140,6 @@ imported/w3c/web-platform-tests/css/css-writing-modes/table-cell-valign-002.html
 imported/w3c/web-platform-tests/css/css-writing-modes/table-cell-valign-003.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-writing-modes/table-cell-valign-004.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-writing-modes/text-combine-upright-rtl-002.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/css-writing-modes/text-orientation-020.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-writing-modes/test-plan/req-tcu-font.html [ Skip ]
 
 # Untriaged CSSOM-View timeout failures.
@@ -5205,8 +5200,6 @@ webkit.org/b/233196 imported/w3c/web-platform-tests/css/css-flexbox/percentage-h
 # align baseline in flexbox.
 webkit.org/b/221478 imported/w3c/web-platform-tests/css/css-flexbox/dynamic-baseline-change-nested.html [ ImageOnlyFailure ]
 webkit.org/b/221478 imported/w3c/web-platform-tests/css/css-flexbox/dynamic-baseline-change.html [ ImageOnlyFailure ]
-webkit.org/b/221478 imported/w3c/web-platform-tests/css/css-flexbox/align-items-baseline-column-horz.html [ ImageOnlyFailure ]
-webkit.org/b/221478 imported/w3c/web-platform-tests/css/css-flexbox/align-items-baseline-row-vert.html [ ImageOnlyFailure ]
 webkit.org/b/221478 imported/w3c/web-platform-tests/css/css-flexbox/flexbox-align-self-vert-rtl-001.xhtml [ ImageOnlyFailure ]
 webkit.org/b/221478 imported/w3c/web-platform-tests/css/css-flexbox/flexbox-align-self-vert-rtl-002.xhtml [ ImageOnlyFailure ]
 webkit.org/b/221478 imported/w3c/web-platform-tests/css/css-flexbox/flexbox-align-self-vert-rtl-003.xhtml [ ImageOnlyFailure ]
@@ -5357,6 +5350,7 @@ imported/w3c/web-platform-tests/css/css-images/tiled-conic-gradients.html [ Skip
 
 # Untriaged counter failures
 webkit.org/b/214457 imported/w3c/web-platform-tests/css/css-lists/change-list-descendant-display.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-lists/change-list-style-position-002.html [ ImageOnlyFailure ]
 webkit.org/b/214457 imported/w3c/web-platform-tests/css/css-lists/inline-block-list.html [ ImageOnlyFailure ]
 webkit.org/b/214457 imported/w3c/web-platform-tests/css/css-lists/inline-block-list-marker.html [ ImageOnlyFailure ]
 webkit.org/b/214457 imported/w3c/web-platform-tests/css/css-lists/inline-list.html [ ImageOnlyFailure ]
@@ -6391,6 +6385,7 @@ imported/w3c/web-platform-tests/css/css-text-decor/text-shadow/standards-decor-n
 # New failures after import of css/css-variables
 imported/w3c/web-platform-tests/css/css-variables/variable-reference-visited.html [ ImageOnlyFailure ]
 imported/w3c/web-platform-tests/css/css-variables/wide-keyword-fallback-002.html [ ImageOnlyFailure ]
+webkit.org/b/294587 [ Debug ] imported/w3c/web-platform-tests/css/css-variables/variable-css-wide-keywords.html [ Skip ]
 
 # WPT tests that are timing out.
 imported/w3c/web-platform-tests/FileAPI/url/unicode-origin.sub.html [ Skip ]
@@ -7838,9 +7833,10 @@ media/webkit-media-controls-not-visible-after-exiting-fullscreen.html [ Skip ]
 
 webkit.org/b/279297 fast/block/float/float-avoider-with-negative-margin.html [ ImageOnlyFailure ]
 
-# webkit.org/b/280685 imported/w3c/web-platform-tests/css/selectors/featureless-004/5.html are failures.
-imported/w3c/web-platform-tests/css/selectors/featureless-004.html [ ImageOnlyFailure ]
-imported/w3c/web-platform-tests/css/selectors/featureless-005.html [ ImageOnlyFailure ]
+# imported/w3c/web-platform-tests/css/selectors/featureless-004/5.html are failures.
+webkit.org/b/280685 imported/w3c/web-platform-tests/css/selectors/featureless-004.html [ ImageOnlyFailure ]
+webkit.org/b/280685 imported/w3c/web-platform-tests/css/selectors/featureless-005.html [ ImageOnlyFailure ]
+webkit.org/b/294638 imported/w3c/web-platform-tests/css/selectors/focus-visible-018-2.html [ Skip ]
 
 # Skip large regular expression tests on Debug to avoid timeout.
 [ Debug ] fast/regex/slow.html [ Skip ]
@@ -8048,3 +8044,21 @@ webkit.org/b/288957 imported/w3c/web-platform-tests/css/CSS2/tables/table-backgr
 webkit.org/b/288957 imported/w3c/web-platform-tests/css/CSS2/tables/table-backgrounds-bs-colgroup-001.xht [ ImageOnlyFailure ]
 webkit.org/b/288957 imported/w3c/web-platform-tests/css/CSS2/tables/table-backgrounds-bs-column-001.xht [ ImageOnlyFailure ]
 webkit.org/b/288957 imported/w3c/web-platform-tests/css/CSS2/tables/table-cell-001.xht [ ImageOnlyFailure ]
+
+# New imported 'focus' timeout failures
+imported/w3c/web-platform-tests/focus/activeelement-after-calling-window-focus.sub.html [ Skip ]
+imported/w3c/web-platform-tests/focus/activeelement-after-focusing-different-site-iframe-then-immediately-focusing-back.html [ Skip ]
+imported/w3c/web-platform-tests/focus/cross-origin-ancestor-activeelement-after-child-lose-focus.sub.html [ Skip ]
+imported/w3c/web-platform-tests/focus/focus-already-focused-iframe-deep-different-site.html [ Skip ]
+imported/w3c/web-platform-tests/focus/focus-already-focused-iframe-different-site.html [ Skip ]
+imported/w3c/web-platform-tests/focus/focus-event-after-focusing-iframes.html [ Skip ]
+imported/w3c/web-platform-tests/focus/focus-event-after-iframe-gets-focus.html [ Skip ]
+imported/w3c/web-platform-tests/focus/focus-event-after-switching-iframes.sub.html [ Skip ]
+imported/w3c/web-platform-tests/focus/focus-restoration-in-different-site-iframes-window.html [ Skip ]
+imported/w3c/web-platform-tests/focus/focus-restoration-in-different-site-iframes.html [ Skip ]
+imported/w3c/web-platform-tests/focus/hasfocus-different-site.html [ Skip ]
+imported/w3c/web-platform-tests/focus/iframe-activeelement-after-focusing-out-iframes.html [ Skip ]
+imported/w3c/web-platform-tests/focus/iframe-focuses-parent-different-site.html [ Skip ]
+
+# `fillText` after `transferControlToScreen` for canvas doesn't draw
+webkit.org/b/290042 imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.fillText-FontFace.html [ ImageOnlyFailure ]

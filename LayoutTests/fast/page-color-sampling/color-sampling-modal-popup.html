@@ -82,9 +82,9 @@
         await UIHelper.ensurePresentationUpdate();
 
         edgeColorsAfterShowingPopup = await UIHelper.fixedContainerEdgeColors();
-        shouldBeEqualToString("edgeColorsAfterShowingPopup.top", "rgb(128, 128, 128)");
-        shouldBeEqualToString("edgeColorsAfterShowingPopup.left", "rgb(128, 128, 128)");
-        shouldBeEqualToString("edgeColorsAfterShowingPopup.right", "rgb(128, 128, 128)");
+        shouldBeEqualToString("edgeColorsAfterShowingPopup.top", "rgb(255, 0, 0)");
+        shouldBeEqualToString("edgeColorsAfterShowingPopup.left", "rgb(0, 128, 0)");
+        shouldBeEqualToString("edgeColorsAfterShowingPopup.right", "rgb(0, 0, 255)");
         shouldBeEqualToString("edgeColorsAfterShowingPopup.bottom", "rgb(128, 128, 128)");
 
         document.querySelector(".popup").style.display = "none";

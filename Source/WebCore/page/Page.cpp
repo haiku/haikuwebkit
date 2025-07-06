@@ -252,9 +252,9 @@ namespace WebCore {
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(Page);
 
-static UncheckedKeyHashSet<WeakRef<Page>>& allPages()
+static HashSet<WeakRef<Page>>& allPages()
 {
-    static NeverDestroyed<UncheckedKeyHashSet<WeakRef<Page>>> set;
+    static NeverDestroyed<HashSet<WeakRef<Page>>> set;
     return set;
 }
 
@@ -505,6 +505,10 @@ Page::Page(PageConfiguration&& pageConfiguration)
 
 #if PLATFORM(VISION) && ENABLE(GAMEPAD)
     initializeGamepadAccessForPageLoad();
+#endif
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    updateDisplayEDRHeadroom();
 #endif
 
     settingsDidChange();
@@ -1720,8 +1724,16 @@ void Page::screenPropertiesDidChange()
         element.setPreferredDynamicRangeMode(mode);
     });
 #endif
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    updateDisplayEDRHeadroom();
+    updateDisplayEDRSuppression();
+#endif
 
     setNeedsRecalcStyleInAllFrames();
+
+    forEachRenderableDocument([this] (Document& document) {
+        document.screenPropertiesDidChange(m_displayID);
+    });
 }
 
 void Page::windowScreenDidChange(PlatformDisplayID displayID, std::optional<FramesPerSecond> nominalFramesPerSecond)
@@ -2243,7 +2255,7 @@ void Page::updateRendering()
     });
 
     for (auto& document : initialDocuments) {
-        if (document && document->domWindow())
+        if (document && document->window())
             document->protectedWindow()->unfreezeNowTimestamp();
     }
 
@@ -2332,9 +2344,16 @@ void Page::doAfterUpdateRendering()
     m_renderingUpdateRemainingSteps.last().remove(RenderingUpdateStep::AccessibilityRegionUpdate);
     if (shouldUpdateAccessibilityRegions()) {
         m_lastAccessibilityObjectRegionsUpdate = m_lastRenderingUpdateTimestamp;
+
+        if (m_axObjectCache)
+            m_axObjectCache->onAccessibilityPaintStarted();
+
         forEachRenderableDocument([] (Document& document) {
             document.updateAccessibilityObjectRegions();
         });
+
+        if (m_axObjectCache)
+            m_axObjectCache->onAccessibilityPaintFinished();
     }
 #endif
 
@@ -2531,7 +2550,7 @@ bool Page::shouldUpdateAccessibilityRegions() const
         if (RefPtr localMainFrame = this->localMainFrame())
             protectedMainDocument = localMainFrame ? localMainFrame->document() : nullptr;
         else if (RefPtr remoteFrame = dynamicDowncast<RemoteFrame>(mainFrame())) {
-            if (auto* owner = remoteFrame->ownerElement())
+            if (RefPtr owner = remoteFrame->ownerElement())
                 protectedMainDocument = owner->document();
         }
 
@@ -2751,7 +2770,7 @@ const String& Page::userStyleSheet() const
 void Page::userAgentChanged()
 {
     forEachDocument([] (Document& document) {
-        if (RefPtr window = document.domWindow()) {
+        if (RefPtr window = document.window()) {
             if (RefPtr navigator = window->optionalNavigator())
                 navigator->userAgentChanged();
         }
@@ -4459,7 +4478,7 @@ void Page::forEachLocalFrame(NOESCAPE const Function<void(LocalFrame&)>& functor
 
 void Page::forEachWindowEventLoop(NOESCAPE const Function<void(WindowEventLoop&)>& functor)
 {
-    UncheckedKeyHashSet<Ref<WindowEventLoop>> windowEventLoops;
+    HashSet<Ref<WindowEventLoop>> windowEventLoops;
     RefPtr<WindowEventLoop> lastEventLoop;
     for (RefPtr frame = mainFrame(); frame; frame = frame->tree().traverseNext()) {
         RefPtr localFrame = dynamicDowncast<LocalFrame>(*frame);
@@ -5267,29 +5286,52 @@ void Page::updateFixedContainerEdges(BoxSideSet sides)
     if (!frameView)
         return;
 
-    auto [edges, elements] = frameView->fixedContainerEdges(sides);
+    auto [edges, elements] = frameView->fixedContainerEdges([frameView, sides] {
+        auto sidesToSample = sides;
+        auto scrollOffset = frameView->scrollOffset();
+        auto minimumOffset = frameView->minimumScrollOffset();
+        auto maximumOffset = frameView->maximumScrollOffset();
+
+        if (scrollOffset.y() < minimumOffset.y())
+            sidesToSample.remove(BoxSideFlag::Top);
+
+        if (scrollOffset.y() > maximumOffset.y())
+            sidesToSample.remove(BoxSideFlag::Bottom);
+
+        if (scrollOffset.x() < minimumOffset.x())
+            sidesToSample.remove(BoxSideFlag::Left);
+
+        if (scrollOffset.x() > maximumOffset.x())
+            sidesToSample.remove(BoxSideFlag::Right);
+
+        return sidesToSample;
+    }());
+
     for (auto sideFlag : sides) {
         auto side = boxSideFromFlag(sideFlag);
-        if (edges.hasFixedEdge(side))
-            continue;
+        if (!edges.hasFixedEdge(side) || (!edges.predominantColor(side).isVisible() && fixedContainerEdges().predominantColor(side).isVisible())) {
+            WeakPtr lastElement = m_fixedContainerEdgesAndElements.second.at(side);
+            if (!lastElement)
+                continue;
 
-        WeakPtr lastElement = m_fixedContainerEdgesAndElements.second.at(side);
-        if (!lastElement)
-            continue;
+            CheckedPtr renderer = lastElement->renderer();
+            if (!renderer)
+                continue;
 
-        if (!lastElement->renderer())
-            continue;
+            if (renderer->style().usedVisibility() != Visibility::Visible)
+                continue;
 
-        elements.setAt(side, WTFMove(lastElement));
-        edges.colors.setAt(side, m_fixedContainerEdgesAndElements.first->colors.at(side));
+            elements.setAt(side, WTFMove(lastElement));
+            edges.colors.setAt(side, fixedContainerEdges().colors.at(side));
+        }
     }
 
     m_fixedContainerEdgesAndElements = std::make_pair(makeUniqueRef<FixedContainerEdges>(WTFMove(edges)), WTFMove(elements));
 }
 
-Color Page::lastTopFixedContainerColor() const
+Element* Page::lastFixedContainer(BoxSide side) const
 {
-    return m_fixedContainerEdgesAndElements.first->predominantColor(BoxSide::Top);
+    return m_fixedContainerEdgesAndElements.second.at(side).get();
 }
 
 void Page::setPortsForUpgradingInsecureSchemeForTesting(uint16_t upgradeFromInsecurePort, uint16_t upgradeToSecurePort)
@@ -5752,5 +5794,37 @@ bool Page::requiresUserGestureForVideoPlayback() const
         return autoplayPolicy == AutoplayPolicy::Deny;
     return m_settings->requiresUserGestureForVideoPlayback();
 }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+void Page::updateDisplayEDRHeadroom()
+{
+    float headroom = currentEDRHeadroomForDisplay(m_displayID);
+    if (headroom == m_displayEDRHeadroom.headroom)
+        return;
+
+    LOG_WITH_STREAM(HDR, stream << "Page " << this << " updateDisplayEDRHeadroom " << m_displayEDRHeadroom.headroom << " to " << headroom);
+    m_displayEDRHeadroom = headroom;
+
+    forEachDocument([&] (Document& document) {
+        if (!document.drawsHDRContent())
+            return;
+
+        if (RefPtr view = document.view())
+            view->setDescendantsNeedUpdateBackingAndHierarchyTraversal();
+    });
+}
+
+void Page::updateDisplayEDRSuppression()
+{
+    bool suppressEDR = suppressEDRForDisplay(m_displayID);
+    if (suppressEDR == m_suppressEDR)
+        return;
+
+    LOG_WITH_STREAM(HDR, stream << "Page " << this << " updateDisplayEDRSuppression " << m_suppressEDR << " to " << suppressEDR);
+    m_suppressEDR = suppressEDR;
+
+    forceRepaintAllFrames();
+}
+#endif
 
 } // namespace WebCore

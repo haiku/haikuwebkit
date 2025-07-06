@@ -1,5 +1,6 @@
 /*
  * Copyright (C) 2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -66,9 +67,6 @@ inline bool operator==(const UniqueRef<ColorMix>& a, const UniqueRef<ColorMix>& 
 Color toStyleColor(const CSS::ColorMix&, ColorResolutionState&);
 WebCore::Color resolveColor(const ColorMix&, const WebCore::Color& currentColor);
 bool containsCurrentColor(const ColorMix&);
-
-void serializationForCSS(StringBuilder&, const CSS::SerializationContext&, const ColorMix&);
-String serializationForCSS(const CSS::SerializationContext&, const ColorMix&);
 
 WTF::TextStream& operator<<(WTF::TextStream&, const ColorMix&);
 

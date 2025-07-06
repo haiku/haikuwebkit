@@ -448,8 +448,8 @@ void DocumentLoader::notifyFinished(CachedResource& resource, const NetworkLoadM
 #endif
 
     if (RefPtr document = this->document()) {
-        if (RefPtr domWindow = document->domWindow())
-            domWindow->protectedPerformance()->navigationFinished(metrics);
+        if (RefPtr window = document->window())
+            window->protectedPerformance()->navigationFinished(metrics);
     }
 
     ASSERT_UNUSED(resource, m_mainResource == &resource);
@@ -1364,7 +1364,7 @@ void DocumentLoader::commitData(const SharedBuffer& data)
         if (!isLoading())
             return;
 
-        if (RefPtr window = document->domWindow()) {
+        if (RefPtr window = document->window()) {
             window->prewarmLocalStorageIfNecessary();
 
             if (m_mainResource) {

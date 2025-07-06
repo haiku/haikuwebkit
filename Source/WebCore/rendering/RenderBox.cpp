@@ -266,7 +266,7 @@ void RenderBox::styleWillChange(StyleDifference diff, const RenderStyle& newStyl
             if (!oldStyle->hasOutOfFlowPosition() && newStyle.hasOutOfFlowPosition()) {
                 // We are about to go out of flow. Before that takes place, we need to mark the
                 // current containing block chain for preferred widths recalculation.
-                setNeedsLayoutAndPrefWidthsRecalc();
+                setNeedsLayoutAndPreferredWidthsUpdate();
                 if (CheckedPtr flexContainer = dynamicDowncast<RenderFlexibleBox>(parent())) {
                     flexContainer->clearCachedFlexItemIntrinsicContentLogicalHeight(*this);
                     flexContainer->clearCachedMainSizeForFlexItem(*this);
@@ -401,7 +401,7 @@ void RenderBox::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle
         clearGridAreaContentSize();
         if (auto* containingBlock = this->containingBlock(); containingBlock && oldStyle->hasOutOfFlowPosition()) {
             // When going from out-of-flow to inflow, the containing block gains new descendant content and its preferred width becomes invalid.
-            containingBlock->setNeedsLayoutAndPrefWidthsRecalc();
+            containingBlock->setNeedsLayoutAndPreferredWidthsUpdate();
         }
     }
 }
@@ -2454,7 +2454,7 @@ void RenderBox::mapAbsoluteToLocalPoint(OptionSet<MapCoordinatesMode> mode, Tran
     RenderBoxModelObject::mapAbsoluteToLocalPoint(mode, transformState);
 }
 
-LayoutSize RenderBox::offsetFromContainer(RenderElement& container, const LayoutPoint&, bool* offsetDependsOnPoint) const
+LayoutSize RenderBox::offsetFromContainer(const RenderElement& container, const LayoutPoint&, bool* offsetDependsOnPoint) const
 {
     // A fragment "has" boxes inside it without being their container. 
     ASSERT(&container == this->container() || is<RenderFragmentContainer>(container));

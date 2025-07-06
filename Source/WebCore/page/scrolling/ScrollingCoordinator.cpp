@@ -171,7 +171,8 @@ EventTrackingRegions ScrollingCoordinator::absoluteEventTrackingRegionsForFrame(
 
         EventTrackingRegions subframeRegion = absoluteEventTrackingRegionsForFrame(*localSubframe);
         // Map from the frame document to our document.
-        IntPoint offset = subframeView->contentsToContainingViewContents(IntPoint());
+        // Event regions are integral, and can't represent subpixel frame positions.
+        auto offset = subframeView->contentsToContainingViewContents(IntPoint());
 
         // FIXME: this translation ignores non-trival transforms on the frame.
         subframeRegion.translate(toIntSize(offset));

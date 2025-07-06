@@ -36,10 +36,13 @@
 
 namespace WebCore {
 
-class CSSCustomPropertyValue;
 class CSSVariableData;
 class Document;
 class WeakPtrImplWithEventTargetData;
+
+namespace Style {
+class CustomProperty;
+}
 
 enum class ConstantProperty {
     SafeAreaInsetTop,
@@ -58,7 +61,7 @@ class ConstantPropertyMap {
 public:
     explicit ConstantPropertyMap(Document&);
 
-    typedef UncheckedKeyHashMap<AtomString, Ref<CSSCustomPropertyValue>> Values;
+    using Values = UncheckedKeyHashMap<AtomString, Ref<const Style::CustomProperty>>;
     const Values& values() const;
 
     void didChangeSafeAreaInsets();

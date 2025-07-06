@@ -25,25 +25,28 @@
 
 #include "config.h"
 
-#include "TestMain.h"
-#include <glib-object.h>
-#include <glib.h>
-#include <wpe/WPEDisplay.h>
+#include "WPEMockPlatformTest.h"
 
-static void testLoadExternalDisplay(Test*, gconstpointer)
+namespace TestWebKitAPI {
+
+static void testDisplayConnect(WPEMockPlatformTest* test, gconstpointer)
 {
-    WPEDisplay* display = wpe_display_get_default();
+    GUniqueOutPtr<GError> error;
+    g_assert_true(wpe_display_connect(test->display(), &error.outPtr()));
+    g_assert_no_error(error.get());
 
-    g_assert_nonnull(display);
-    g_assert_cmpstr(G_OBJECT_TYPE_NAME(display), ==, "WPEDisplayMock");
-    g_assert_true(display == wpe_display_get_primary());
+    // Can't connect twice.
+    g_assert_false(wpe_display_connect(test->display(), &error.outPtr()));
+    g_assert_error(error.get(), WPE_DISPLAY_ERROR, WPE_DISPLAY_ERROR_CONNECTION_FAILED);
 }
 
 void beforeAll()
 {
-    Test::add("Display", "load-external-display", testLoadExternalDisplay);
+    WPEMockPlatformTest::add("Display", "connect", testDisplayConnect);
 }
 
 void afterAll()
 {
 }
+
+} // namespace TestWebKitAPI

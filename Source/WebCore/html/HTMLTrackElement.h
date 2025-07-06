@@ -52,10 +52,6 @@ public:
     USING_CAN_MAKE_WEAKPTR(HTMLElement);
 
     const AtomString& kind();
-    void setKind(const AtomString&);
-
-    const AtomString& srclang() const;
-    const AtomString& label() const;
     bool isDefault() const;
 
     enum ReadyState { NONE = 0, LOADING = 1, LOADED = 2, TRACK_ERROR = 3 };

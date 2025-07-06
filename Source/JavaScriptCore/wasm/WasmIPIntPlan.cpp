@@ -130,25 +130,26 @@ void IPIntPlan::compileFunction(FunctionCodeIndex functionIndex)
     if (!m_callees) {
         auto callee = IPIntCallee::create(*m_wasmInternalFunctions[functionIndex], functionIndexSpace, m_moduleInformation->nameSection->get(functionIndexSpace));
         ASSERT(!callee->entrypoint());
+        bool usesSIMD = m_moduleInformation->usesSIMD(functionIndex);
+        if (usesSIMD && !Options::useBBQJIT()) {
+            Locker locker { m_lock };
+            Base::fail(makeString("JIT is disabled, but the entrypoint for "_s, functionIndex.rawIndex(), " requires JIT"_s));
+            return;
+        }
 
+        CodePtr<WasmEntryPtrTag> entrypoint { };
 #if ENABLE(JIT)
-        if (Options::useWasmJIT() && Options::useBBQJIT()) {
-            if (m_moduleInformation->usesSIMD(functionIndex))
-                callee->setEntrypoint(LLInt::inPlaceInterpreterSIMDEntryThunk().retaggedCode<WasmEntryPtrTag>());
+        if (Options::useJIT()) {
+            if (usesSIMD)
+                entrypoint = LLInt::inPlaceInterpreterSIMDEntryThunk().retaggedCode<WasmEntryPtrTag>();
             else
-                callee->setEntrypoint(LLInt::inPlaceInterpreterEntryThunk().retaggedCode<WasmEntryPtrTag>());
+                entrypoint = LLInt::inPlaceInterpreterEntryThunk().retaggedCode<WasmEntryPtrTag>();
         }
-#else
-        if (false);
 #endif
-        else {
-            if (m_moduleInformation->usesSIMD(functionIndex)) {
-                Locker locker { m_lock };
-                Base::fail(makeString("JIT is disabled, but the entrypoint for "_s, functionIndex.rawIndex(), " requires JIT"_s));
-                return;
-            }
-            callee->setEntrypoint(LLInt::getCodeFunctionPtr<CFunctionPtrTag>(ipint_trampoline));
-        }
+        if (!entrypoint)
+            entrypoint = LLInt::getCodeFunctionPtr<CFunctionPtrTag>(ipint_trampoline);
+
+        callee->setEntrypoint(entrypoint);
         ipintCallee = callee.ptr();
         m_calleesVector[functionIndex] = WTFMove(callee);
     } else

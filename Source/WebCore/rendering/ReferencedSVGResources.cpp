@@ -169,14 +169,14 @@ ReferencedSVGResources::SVGElementIdentifierAndTagPairs ReferencedSVGResources::
         }
     }
 
-    if (svgStyle.fillPaintType() >= SVGPaintType::URINone) {
-        auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(svgStyle.fillPaintUri(), document);
+    if (svgStyle.fill().type >= Style::SVGPaintType::URINone) {
+        auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(svgStyle.fill().url, document);
         if (!resourceID.isEmpty())
             referencedResources.append({ resourceID, { SVGNames::linearGradientTag, SVGNames::radialGradientTag, SVGNames::patternTag } });
     }
 
-    if (svgStyle.strokePaintType() >= SVGPaintType::URINone) {
-        auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(svgStyle.strokePaintUri(), document);
+    if (svgStyle.stroke().type >= Style::SVGPaintType::URINone) {
+        auto resourceID = SVGURIReference::fragmentIdentifierFromIRIString(svgStyle.stroke().url, document);
         if (!resourceID.isEmpty())
             referencedResources.append({ resourceID, { SVGNames::linearGradientTag, SVGNames::radialGradientTag, SVGNames::patternTag } });
     }

@@ -1,5 +1,5 @@
  /*
- * Copyright (C) 2014-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2014-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -118,10 +118,10 @@ void RemoteLayerBackingStoreCollection::prepareBackingStoresForDisplay(RemoteLay
 bool RemoteLayerBackingStoreCollection::paintReachableBackingStoreContents()
 {
     bool anyNonEmptyDirtyRegion = false;
-    for (auto& backingStore : m_backingStoresNeedingDisplay) {
-        if (!backingStore.hasEmptyDirtyRegion())
+    for (CheckedRef backingStore : m_backingStoresNeedingDisplay) {
+        if (!backingStore->hasEmptyDirtyRegion())
             anyNonEmptyDirtyRegion = true;
-        backingStore.paintContents();
+        backingStore->paintContents();
     }
     return anyNonEmptyDirtyRegion;
 }
@@ -143,9 +143,9 @@ void RemoteLayerBackingStoreCollection::willCommitLayerTree(RemoteLayerTreeTrans
 {
     ASSERT(m_inLayerFlush);
     Vector<WebCore::PlatformLayerIdentifier> newlyUnreachableLayerIDs;
-    for (auto& backingStore : m_liveBackingStore) {
-        if (!m_reachableBackingStoreInLatestFlush.contains(backingStore))
-            newlyUnreachableLayerIDs.append(backingStore.layer().layerID());
+    for (CheckedRef backingStore : m_liveBackingStore) {
+        if (!m_reachableBackingStoreInLatestFlush.contains(backingStore.get()))
+            newlyUnreachableLayerIDs.append(backingStore->layer().layerID());
     }
 
     transaction.setLayerIDsWithNewlyUnreachableBackingStore(newlyUnreachableLayerIDs);
@@ -180,9 +180,9 @@ Vector<std::unique_ptr<ThreadSafeImageBufferSetFlusher>> RemoteLayerBackingStore
 bool RemoteLayerBackingStoreCollection::updateUnreachableBackingStores()
 {
     Vector<WeakPtr<RemoteLayerBackingStore>> newlyUnreachableBackingStore;
-    for (auto& backingStore : m_liveBackingStore) {
-        if (!m_reachableBackingStoreInLatestFlush.contains(backingStore))
-            newlyUnreachableBackingStore.append(backingStore);
+    for (CheckedRef backingStore : m_liveBackingStore) {
+        if (!m_reachableBackingStoreInLatestFlush.contains(backingStore.get()))
+            newlyUnreachableBackingStore.append(backingStore.get());
     }
 
     for (auto& backingStore : newlyUnreachableBackingStore)

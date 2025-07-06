@@ -47,6 +47,11 @@ SimpleRange::SimpleRange(BoundaryPoint&& start, BoundaryPoint&& end)
 {
 }
 
+String SimpleRange::debugDescription() const
+{
+    return makeString("{start: "_s, start.debugDescription(), ", end: "_s, end.debugDescription(), '}');
+}
+
 WeakSimpleRange::WeakSimpleRange(const WeakBoundaryPoint& start, const WeakBoundaryPoint& end)
     : start(start)
     , end(end)

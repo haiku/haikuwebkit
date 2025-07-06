@@ -410,8 +410,15 @@ RetainPtr<id> IOSurface::asCAIOSurfaceLayerContents() const
     // CAIOSurface keeps most of the server-side rendering ojects alive,
     // but doesn't mark the IOSurface as in-use. We can retain it for efficiency
     // without breaking use-counting.
-    if (PAL::canLoad_QuartzCore_CAIOSurfaceCreate())
-        return bridge_id_cast(adoptCF(CAIOSurfaceCreate(m_surface.get())));
+    if (PAL::canLoad_QuartzCore_CAIOSurfaceCreate()) {
+        auto result = adoptCF(CAIOSurfaceCreate(m_surface.get()));
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        // Force CA to reload the headroom, since this doesn't happen automatically.
+        if (m_contentEDRHeadroom && *m_contentEDRHeadroom != 1 && PAL::canLoad_QuartzCore_CAIOSurfaceReloadColorAttributes())
+            CAIOSurfaceReloadColorAttributes(result.get());
+#endif
+        return bridge_id_cast(result);
+    }
     return nil;
 }
 
@@ -684,6 +691,30 @@ void IOSurface::ensureColorSpace()
 
     m_colorSpace = surfaceColorSpace().value_or(DestinationColorSpace::SRGB());
 }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+void IOSurface::setContentEDRHeadroom(float headroom)
+{
+    if (m_contentEDRHeadroom && headroom == m_contentEDRHeadroom)
+        return;
+
+    LOG_WITH_STREAM(HDR, stream << "IOSurface::setContentEDRHeadroom " << this << " " << headroom);
+    m_contentEDRHeadroom = headroom;
+    IOSurfaceSetValue(m_surface.get(), kIOSurfaceContentHeadroom, @(headroom));
+}
+
+std::optional<float> IOSurface::contentEDRHeadroom() const
+{
+    return m_contentEDRHeadroom;
+}
+
+void IOSurface::loadContentEDRHeadroom()
+{
+    m_contentEDRHeadroom = 1;
+    if (auto valueNumber = dynamic_cf_cast<CFNumberRef>(adoptCF(IOSurfaceCopyValue(m_surface.get(), kIOSurfaceContentHeadroom))))
+        CFNumberGetValue(valueNumber.get(), kCFNumberFloat32Type, &m_contentEDRHeadroom.value());
+}
+#endif
 
 std::optional<DestinationColorSpace> IOSurface::surfaceColorSpace() const
 {

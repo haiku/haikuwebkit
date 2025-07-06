@@ -77,15 +77,11 @@ public:
     FileList* filesForBindings() { return files(); }
     void setFilesForBindings(RefPtr<FileList>&& fileList) { return setFiles(WTFMove(fileList), WasSetByJavaScript::Yes); }
     WEBCORE_EXPORT unsigned height() const;
-    WEBCORE_EXPORT void setHeight(unsigned);
     bool indeterminate() const { return m_isIndeterminate; }
     WEBCORE_EXPORT void setIndeterminate(bool);
     WEBCORE_EXPORT RefPtr<HTMLElement> list() const;
     unsigned size() const { return m_size; }
     WEBCORE_EXPORT ExceptionOr<void> setSize(unsigned);
-    WEBCORE_EXPORT const AtomString& defaultValue() const;
-    WEBCORE_EXPORT void setDefaultValue(const AtomString&);
-    WEBCORE_EXPORT void setType(const AtomString&);
     WEBCORE_EXPORT ValueOrReference<String> value() const final;
     WEBCORE_EXPORT ExceptionOr<void> setValue(const String&, TextFieldEventBehavior = DispatchNoEvent, TextControlSetValueSelection = TextControlSetValueSelection::SetSelectionToEnd) final;
     WEBCORE_EXPORT void setValueForUser(const String&);
@@ -97,7 +93,6 @@ public:
     WEBCORE_EXPORT ExceptionOr<void> stepUp(int = 1);
     WEBCORE_EXPORT ExceptionOr<void> stepDown(int = 1);
     WEBCORE_EXPORT unsigned width() const;
-    WEBCORE_EXPORT void setWidth(unsigned);
     bool hasSwitchAttribute() const { return m_hasSwitchAttribute; }
     WEBCORE_EXPORT String validationMessage() const final;
     std::optional<unsigned> selectionStartForBindings() const;
@@ -245,9 +240,6 @@ public:
 
     Vector<String> acceptMIMETypes() const;
     Vector<String> acceptFileExtensions() const;
-    WEBCORE_EXPORT String alt() const;
-
-    URL src() const;
 
     unsigned effectiveMaxLength() const;
 

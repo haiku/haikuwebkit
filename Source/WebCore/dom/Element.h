@@ -196,9 +196,11 @@ public:
     Vector<String> getAttributeNames() const;
 
     // Typed getters and setters for language bindings.
-    WEBCORE_EXPORT int getIntegralAttribute(const QualifiedName& attributeName) const;
+    WEBCORE_EXPORT int integralAttribute(const QualifiedName& attributeName) const;
+    WEBCORE_EXPORT unsigned unsignedIntegralAttribute(const QualifiedName& attributeName) const;
+    WEBCORE_EXPORT void setBooleanAttribute(const QualifiedName& attributeName, bool);
     WEBCORE_EXPORT void setIntegralAttribute(const QualifiedName& attributeName, int value);
-    WEBCORE_EXPORT unsigned getUnsignedIntegralAttribute(const QualifiedName& attributeName) const;
+    WEBCORE_EXPORT void setNumericAttribute(const QualifiedName& attributeName, double value);
     WEBCORE_EXPORT void setUnsignedIntegralAttribute(const QualifiedName& attributeName, unsigned value);
     WEBCORE_EXPORT RefPtr<Element> getElementAttributeForBindings(const QualifiedName& attributeName) const;
     WEBCORE_EXPORT void setElementAttribute(const QualifiedName& attributeName, Element* value);
@@ -370,8 +372,6 @@ public:
     Ref<Element> cloneElementWithoutChildren(Document&, CustomElementRegistry*);
 
     void normalizeAttributes();
-
-    WEBCORE_EXPORT void setBooleanAttribute(const QualifiedName& name, bool);
 
     // For exposing to DOM only.
     WEBCORE_EXPORT NamedNodeMap& attributesMap() const;

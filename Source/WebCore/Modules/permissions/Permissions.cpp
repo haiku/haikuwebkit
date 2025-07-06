@@ -240,11 +240,11 @@ void Permissions::query(JSC::Strong<JSC::JSObject> permissionDescriptorValue, DO
 
 static std::optional<PermissionState> determineGeolocationPermissionState(PermissionState permissionState, const Document& document)
 {
-    RefPtr domWindow = document.domWindow();
-    if (!domWindow)
+    RefPtr window = document.window();
+    if (!window)
         return std::nullopt;
 
-    RefPtr geolocation = NavigatorGeolocation::optionalGeolocation(domWindow->protectedNavigator());
+    RefPtr geolocation = NavigatorGeolocation::optionalGeolocation(window->protectedNavigator());
 
     switch (permissionState) {
     case PermissionState::Granted:

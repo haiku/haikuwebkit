@@ -564,7 +564,7 @@ public:
     String getAttributeTrimmed(const QualifiedName&) const;
 
     String nameAttribute() const final;
-    int getIntegralAttribute(const QualifiedName&) const;
+    int integralAttribute(const QualifiedName&) const;
     bool hasElementName(const ElementName) const final;
     bool hasAttachmentTag() const final { return hasElementName(ElementName::HTML_attachment); }
     bool hasBodyTag() const final { return hasElementName(ElementName::HTML_body); }
@@ -578,7 +578,9 @@ public:
     VisiblePositionRange visiblePositionRange() const override { return { }; }
     AXTextMarkerRange textMarkerRange() const final;
 
-    std::optional<SimpleRange> visibleCharacterRange() const final;
+#if PLATFORM(COCOA)
+    std::optional<NSRange> visibleCharacterRange() const final;
+#endif
     VisiblePositionRange visiblePositionRangeForLine(unsigned) const override { return VisiblePositionRange(); }
 
     static bool replacedNodeNeedsCharacter(Node& replacedNode);
@@ -867,8 +869,8 @@ public:
     private:
         void ensureContentsParentValidity()
         {
-            auto* contentsParent = m_current ? m_current->displayContentsParent() : nullptr;
-            if (contentsParent && m_displayContentsParent && contentsParent != m_displayContentsParent.get())
+            RefPtr contentsParent = m_current ? m_current->displayContentsParent() : nullptr;
+            if (contentsParent && m_displayContentsParent && contentsParent.get() != m_displayContentsParent.get())
                 m_current = nullptr;
         }
 

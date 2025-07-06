@@ -81,7 +81,7 @@ PlatformCALayerRemoteCustom::PlatformCALayerRemoteCustom(WebCore::PlatformCALaye
 }
 
 PlatformCALayerRemoteCustom::PlatformCALayerRemoteCustom(HTMLVideoElement& videoElement, PlatformCALayerClient* owner, RemoteLayerTreeContext& context)
-    : PlatformCALayerRemoteCustom(PlatformCALayer::LayerType::LayerTypeAVPlayerLayer, videoElement.layerHostingContextID(), owner, context)
+    : PlatformCALayerRemoteCustom(PlatformCALayer::LayerType::LayerTypeAVPlayerLayer, videoElement.layerHostingContext().contextID, owner, context)
 {
     m_hasVideo = true;
 }
@@ -139,6 +139,9 @@ void PlatformCALayerRemoteCustom::populateCreationProperties(RemoteLayerTreeTran
 
     properties.additionalData = RemoteLayerTreeTransaction::LayerCreationProperties::CustomData {
         .hostingContextID = hostingContextID(),
+#if ENABLE(MACH_PORT_LAYER_HOSTING)
+        .sendRightAnnotated = sendRightAnnotated(),
+#endif
         .hostingDeviceScaleFactor = context.deviceScaleFactor(),
         .preservesFlip = true
     };

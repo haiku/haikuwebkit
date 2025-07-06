@@ -167,7 +167,7 @@ void RenderTableCell::colSpanOrRowSpanChanged()
 
     // FIXME: I suspect that we could return early here if !m_hasColSpan && !m_hasRowSpan.
 
-    setNeedsLayoutAndPrefWidthsRecalc();
+    setNeedsLayoutAndPreferredWidthsUpdate();
     if (parent() && section())
         section()->setNeedsCellRecalc();
 }
@@ -248,7 +248,7 @@ LayoutRect RenderTableCell::frameRectForStickyPositioning() const
     return returnValue;
 }
 
-void RenderTableCell::computeIntrinsicPadding(LayoutUnit rowHeight)
+bool RenderTableCell::computeIntrinsicPadding(LayoutUnit rowHeight)
 {
     LayoutUnit oldIntrinsicPaddingBefore = intrinsicPaddingBefore();
     LayoutUnit oldIntrinsicPaddingAfter = intrinsicPaddingAfter();
@@ -296,10 +296,7 @@ void RenderTableCell::computeIntrinsicPadding(LayoutUnit rowHeight)
     setIntrinsicPaddingBefore(intrinsicPaddingBefore);
     setIntrinsicPaddingAfter(intrinsicPaddingAfter);
 
-    // FIXME: Changing an intrinsic padding shouldn't trigger a relayout as it only shifts the cell inside the row but
-    // doesn't change the logical height.
-    if (intrinsicPaddingBefore != oldIntrinsicPaddingBefore || intrinsicPaddingAfter != oldIntrinsicPaddingAfter)
-        setNeedsLayout(MarkOnlyThis);
+    return intrinsicPaddingBefore != oldIntrinsicPaddingBefore || intrinsicPaddingAfter != oldIntrinsicPaddingAfter;
 }
 
 void RenderTableCell::updateLogicalWidth()
@@ -417,7 +414,7 @@ void RenderTableCell::setOverridingLogicalHeightFromRowHeight(LayoutUnit rowHeig
     setOverridingBorderBoxLogicalHeight(rowHeight);
 }
 
-LayoutSize RenderTableCell::offsetFromContainer(RenderElement& container, const LayoutPoint& point, bool* offsetDependsOnPoint) const
+LayoutSize RenderTableCell::offsetFromContainer(const RenderElement& container, const LayoutPoint& point, bool* offsetDependsOnPoint) const
 {
     ASSERT(&container == this->container());
 
@@ -506,7 +503,7 @@ static inline void markCellDirtyWhenCollapsedBorderChanges(RenderTableCell* cell
 {
     if (!cell)
         return;
-    cell->setNeedsLayoutAndPrefWidthsRecalc();
+    cell->setNeedsLayoutAndPreferredWidthsUpdate();
 }
 
 void RenderTableCell::styleDidChange(StyleDifference diff, const RenderStyle* oldStyle)

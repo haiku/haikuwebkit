@@ -1860,10 +1860,15 @@ void EventHandler::autoHideCursorTimerFired()
 
 static LayoutPoint documentPointForWindowPoint(LocalFrame& frame, const IntPoint& windowPoint)
 {
-    auto* view = frame.view();
-    // FIXME: Is it really OK to use the wrong coordinates here when view is 0?
-    // Historically the code would just crash; this is clearly no worse than that.
-    return view ? view->windowToContents(windowPoint) : windowPoint;
+    RefPtr view = frame.view();
+    if (!view) {
+        // FIXME: Is it really OK to use the wrong coordinates here when view is 0?
+        // Historically the code would just crash; this is clearly no worse than that.
+        return windowPoint;
+    }
+
+    auto result = view->windowToContents(FloatPoint { windowPoint });
+    return LayoutPoint { result };
 }
 
 std::optional<RemoteUserInputEventData> EventHandler::userInputEventDataForRemoteFrame(const RemoteFrame* remoteFrame, const IntPoint& pointInFrame)
@@ -2139,8 +2144,12 @@ ScrollableArea* EventHandler::enclosingScrollableArea(Node* node) const
         }
 
         if (RefPtr plugin = dynamicDowncast<RenderEmbeddedObject>(renderer)) {
-            if (auto* scrollableArea = plugin->scrollableArea())
-                return scrollableArea;
+            if (auto* scrollableArea = plugin->scrollableArea()) {
+                Ref frame = m_frame.get();
+                RefPtr page = frame->page();
+                if (!page || page->chrome().client().usePluginRendererScrollableArea(frame))
+                    return scrollableArea;
+            }
         }
 
         auto* layer = renderer->enclosingLayer();
@@ -4228,7 +4237,7 @@ void EventHandler::defaultKeyboardEventHandler(KeyboardEvent& event)
 
         if (event.key() == "Escape"_s) {
             if (frame->settings().closeWatcherEnabled())
-                frame->document()->domWindow()->closeWatcherManager().escapeKeyHandler(event);
+                frame->document()->window()->closeWatcherManager().escapeKeyHandler(event);
             if (RefPtr activeModalDialog = frame->document()->activeModalDialog())
                 activeModalDialog->queueCancelTask();
             if (RefPtr topmostAutoPopover = frame->document()->topmostAutoPopover())
@@ -5103,11 +5112,11 @@ Expected<bool, RemoteFrameGeometryTransformer> EventHandler::handleTouchEvent(co
 
     // A different view on the 'touches' list above, filtered and grouped by event target. Used for the
     // 'targetTouches' list in the JS event.
-    typedef UncheckedKeyHashMap<EventTarget*, RefPtr<TouchList>> TargetTouchesMap;
+    typedef HashMap<EventTarget*, RefPtr<TouchList>> TargetTouchesMap;
     TargetTouchesMap touchesByTarget;
 
     // Array of touches per state, used to assemble the 'changedTouches' list in the JS event.
-    typedef UncheckedKeyHashSet<RefPtr<EventTarget>> EventTargetSet;
+    typedef HashSet<RefPtr<EventTarget>> EventTargetSet;
     struct Touches {
         // The touches corresponding to the particular change state this struct instance represents.
         RefPtr<TouchList> m_touches;

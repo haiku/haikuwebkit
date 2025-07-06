@@ -33,7 +33,7 @@
 
 namespace WebCore {
 
-typedef UncheckedKeyHashMap<String, String, ASCIICaseInsensitiveHash> DialogFeaturesMap;
+typedef HashMap<String, String, ASCIICaseInsensitiveHash> DialogFeaturesMap;
 
 static void setWindowFeature(WindowFeatures&, StringView key, StringView value);
 

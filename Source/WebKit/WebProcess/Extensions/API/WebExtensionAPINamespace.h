@@ -30,6 +30,9 @@
 #include "JSWebExtensionAPINamespace.h"
 #include "WebExtensionAPIAction.h"
 #include "WebExtensionAPIAlarms.h"
+#if ENABLE(WK_WEB_EXTENSIONS_BOOKMARKS)
+#include "WebExtensionAPIBookmarks.h"
+#endif
 #include "WebExtensionAPICommands.h"
 #include "WebExtensionAPICookies.h"
 #include "WebExtensionAPIDOM.h"
@@ -87,6 +90,9 @@ public:
     WebExtensionAPISidePanel& sidePanel();
     WebExtensionAPISidebarAction& sidebarAction();
 #endif
+#if ENABLE(WK_WEB_EXTENSIONS_BOOKMARKS)
+    WebExtensionAPIBookmarks& bookmarks();
+#endif
     WebExtensionAPIStorage& storage();
     WebExtensionAPITabs& tabs();
     WebExtensionAPITest& test();
@@ -115,6 +121,9 @@ private:
 #if ENABLE(WK_WEB_EXTENSIONS_SIDEBAR)
     RefPtr<WebExtensionAPISidePanel> m_sidePanel;
     RefPtr<WebExtensionAPISidebarAction> m_sidebarAction;
+#endif
+#if ENABLE(WK_WEB_EXTENSIONS_BOOKMARKS)
+    RefPtr<WebExtensionAPIBookmarks> m_bookmarks;
 #endif
     RefPtr<WebExtensionAPIStorage> m_storage;
     RefPtr<WebExtensionAPITabs> m_tabs;

@@ -442,7 +442,7 @@ private:
     void scrollToRevealTextMatch(const WebFoundTextRange::PDFData&) final;
 
     Vector<WebCore::FloatRect> visibleRectsForFindMatchRects(PDFPageCoverage) const;
-    PDFSelection *selectionFromWebFoundTextRangePDFData(const WebFoundTextRange::PDFData&) const;
+    PDFSelection *selectionFromWebFoundTextRangePDFData(const WebFoundTextRange::PDFData&);
 
     static WebCore::Color selectionTextIndicatorHighlightColor();
     RefPtr<WebCore::TextIndicator> textIndicatorForCurrentSelection(OptionSet<WebCore::TextIndicatorOption>, WebCore::TextIndicatorPresentationTransition) final;
@@ -648,6 +648,8 @@ private:
 
     bool shouldUseInProcessBackingStore() const;
 
+    bool delegatesScrollingToMainFrame() const final;
+
     RefPtr<PDFPresentationController> m_presentationController;
 
     PDFDocumentLayout m_documentLayout;
@@ -730,6 +732,8 @@ private:
 #else
     static constexpr bool hasFullAnnotationSupport = false;
 #endif
+
+    HashMap<WebFoundTextRange::PDFData, RetainPtr<PDFSelection>> m_webFoundTextRangePDFDataSelectionMap;
 };
 
 WTF::TextStream& operator<<(WTF::TextStream&, RepaintRequirement);

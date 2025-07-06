@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -221,9 +221,9 @@ void WebAnimation::setEffectInternal(RefPtr<AnimationEffect>&& newEffect, bool d
 
     auto oldEffect = std::exchange(m_effect, WTFMove(newEffect));
 
-    auto* oldKeyframeEffect = dynamicDowncast<KeyframeEffect>(oldEffect.get());
+    RefPtr oldKeyframeEffect = dynamicDowncast<KeyframeEffect>(oldEffect.get());
     std::optional<const Styleable> previousTarget = oldKeyframeEffect ? oldKeyframeEffect->targetStyleable() : std::nullopt;
-    auto* keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get());
+    RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get());
     std::optional<const Styleable> newTarget = keyframeEffect ? keyframeEffect->targetStyleable() : std::nullopt;
 
     // Update the effect-to-animation relationships and the timeline's animation map.
@@ -285,7 +285,7 @@ void WebAnimation::setTimeline(RefPtr<AnimationTimeline>&& timeline)
     auto toFiniteTimeline = timeline && !timeline->isMonotonic();
 
     // 8. Let the timeline of animation be new timeline.
-    if (auto keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get())) {
+    if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get())) {
         if (auto target = keyframeEffect->targetStyleable()) {
             // In the case of a dstyle-originated animation, we don't want to remove the animation from the relevant maps because
             // while the timeline was set via the API, the element still has a transition or animation set up and we must
@@ -300,7 +300,7 @@ void WebAnimation::setTimeline(RefPtr<AnimationTimeline>&& timeline)
     Ref protectedThis { *this };
     setTimelineInternal(WTFMove(timeline));
 
-    auto* documentTimeline = dynamicDowncast<DocumentTimeline>(m_timeline.get());
+    RefPtr documentTimeline = dynamicDowncast<DocumentTimeline>(m_timeline.get());
     setSuspended(documentTimeline && documentTimeline->animationsAreSuspended());
 
     // 9. Perform the steps corresponding to the first matching condition from the following, if any:
@@ -735,7 +735,7 @@ void WebAnimation::setEffectiveFrameRate(std::optional<FramesPerSecond> effectiv
         return;
 
     std::optional<FramesPerSecond> maximumFrameRate = std::nullopt;
-    if (auto* timeline = dynamicDowncast<DocumentTimeline>(m_timeline.get()))
+    if (RefPtr timeline = dynamicDowncast<DocumentTimeline>(m_timeline.get()))
         maximumFrameRate = timeline->maximumFrameRate();
 
     std::optional<FramesPerSecond> adjustedEffectiveFrameRate;
@@ -819,7 +819,7 @@ void WebAnimation::cancel(Silently silently)
 
         // 2. Reject the current finished promise with a DOMException named "AbortError".
         // 3. Set the [[PromiseIsHandled]] internal slot of the current finished promise to true.
-        if (auto* context = scriptExecutionContext(); context && !m_finishedPromise->isFulfilled()) {
+        if (RefPtr context = scriptExecutionContext(); context && !m_finishedPromise->isFulfilled()) {
             context->eventLoop().queueMicrotask([finishedPromise = WTFMove(m_finishedPromise)]() mutable {
                 finishedPromise->reject(Exception { ExceptionCode::AbortError }, RejectAsHandled::Yes);
             });
@@ -840,7 +840,7 @@ void WebAnimation::cancel(Silently silently)
         //    scheduled event time is an unresolved time value.
         // Otherwise, queue a task to dispatch cancelEvent at animation. The task source for this task is the DOM manipulation task source.
         auto scheduledTime = [&]() -> std::optional<WebAnimationTime> {
-            if (auto* documentTimeline = dynamicDowncast<DocumentTimeline>(m_timeline.get())) {
+            if (RefPtr documentTimeline = dynamicDowncast<DocumentTimeline>(m_timeline.get())) {
                 if (auto currentTime = documentTimeline->currentTime())
                     return documentTimeline->convertTimelineTimeToOriginRelativeTime(*currentTime);
             }
@@ -865,7 +865,7 @@ void WebAnimation::cancel(Silently silently)
 
 void WebAnimation::willChangeRenderer()
 {
-    if (auto keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get()))
+    if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get()))
         keyframeEffect->willChangeRenderer();
 }
 
@@ -940,7 +940,7 @@ void WebAnimation::resetPendingTasks()
 
     // 5. Reject animation's current ready promise with a DOMException named "AbortError".
     // 6. Set the [[PromiseIsHandled]] internal slot of animation’s current ready promise to true.
-    if (auto* context = scriptExecutionContext()) {
+    if (RefPtr context = scriptExecutionContext()) {
         context->eventLoop().queueMicrotask([readyPromise = WTFMove(m_readyPromise)]() mutable {
             if (!readyPromise->isFulfilled())
                 readyPromise->reject(Exception { ExceptionCode::AbortError }, RejectAsHandled::Yes);
@@ -1019,7 +1019,7 @@ void WebAnimation::invalidateEffect()
     if (isEffectInvalidationSuspended())
         return;
 
-    if (auto keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get()))
+    if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get()))
         keyframeEffect->invalidate();
 }
 
@@ -1089,7 +1089,7 @@ void WebAnimation::updateFinishedState(DidSeek didSeek, SynchronouslyNotify sync
             // Otherwise, if synchronously notify is false, queue a microtask to run finish notification steps for animation unless there
             // is already a microtask queued to run those steps for animation.
             m_finishNotificationStepsMicrotaskPending = true;
-            if (auto* context = scriptExecutionContext()) {
+            if (RefPtr context = scriptExecutionContext()) {
                 context->eventLoop().queueMicrotask([this, protectedThis = Ref { *this }] {
                     if (m_finishNotificationStepsMicrotaskPending) {
                         m_finishNotificationStepsMicrotaskPending = false;
@@ -1131,7 +1131,7 @@ void WebAnimation::finishNotificationSteps()
     //    effect end to an origin-relative time.
     //    Otherwise, queue a task to dispatch finishEvent at animation. The task source for this task is the DOM manipulation task source.
     auto scheduledTime = [&]() -> std::optional<WebAnimationTime> {
-        if (auto* documentTimeline = dynamicDowncast<DocumentTimeline>(m_timeline.get())) {
+        if (RefPtr documentTimeline = dynamicDowncast<DocumentTimeline>(m_timeline.get())) {
             if (auto animationEndTime = convertAnimationTimeToTimelineTime(effectEndTime()))
                 return documentTimeline->convertTimelineTimeToOriginRelativeTime(*animationEndTime);
         }
@@ -1139,9 +1139,9 @@ void WebAnimation::finishNotificationSteps()
     }();
     enqueueAnimationPlaybackEvent(eventNames().finishEvent, currentTime(), scheduledTime);
 
-    if (auto keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get())) {
+    if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get())) {
         if (RefPtr target = keyframeEffect->target()) {
-            if (auto* page = target->document().page())
+            if (RefPtr page = target->document().page())
                 page->chrome().client().animationDidFinishForElement(*target);
         }
     }
@@ -1578,7 +1578,7 @@ OptionSet<AnimationImpact> WebAnimation::resolve(RenderStyle& targetStyle, const
         updateFinishedState(DidSeek::No, SynchronouslyNotify::No);
     m_shouldSkipUpdatingFinishedStateWhenResolving = false;
 
-    if (auto keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get()))
+    if (RefPtr keyframeEffect = dynamicDowncast<KeyframeEffect>(m_effect.get()))
         return keyframeEffect->apply(targetStyle, resolutionContext);
     return { };
 }
@@ -1777,7 +1777,7 @@ ExceptionOr<void> WebAnimation::commitStyles()
     Style::Extractor computedStyleExtractor { styledElement.get() };
 
     auto inlineStyle = [&]() {
-        if (auto existinInlineStyle = styledElement->inlineStyle())
+        if (RefPtr existinInlineStyle = styledElement->inlineStyle())
             return existinInlineStyle->mutableCopy();
         auto styleDeclaration = styledElement->document().createCSSStyleDeclaration();
         styleDeclaration->setCssText(styledElement->getAttribute(HTMLNames::styleAttr));

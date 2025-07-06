@@ -76,3 +76,7 @@ WEBLOCALFRAMELOADERCLIENT_DISPATCH_DID_REACH_LAYOUT_MILESTONE, "[webFrameID=%" P
 WEBLOCALFRAMELOADERCLIENT_DISPATCH_DID_FIRST_VISUALLY_NONEMPTY_LAYOUT, "[webFrameID=%" PRIu64 ", webPageID=%" PRIu64 "] WebLocalFrameLoaderClient::dispatchDidReachLayoutMilestone: dispatching DidFirstVisuallyNonEmptyLayoutForFrame", (uint64_t, uint64_t), DEFAULT, Layout
 
 REMOTE_RENDERING_BACKEND_PROXY_CREATED_RENDERING_BACKEND, "[renderingBackend=%" PRIu64 "] Created rendering backend for pageProxyID=%" PRIu64 ", webPageID=%" PRIu64, (uint64_t, uint64_t, uint64_t), DEFAULT, RemoteLayerBuffers
+
+VIDEOPRESENTATIONMANAGER_SETVIDEOLAYERFRAMEFENCED, "VideoPresentationManager::setVideoLayerFrameFenced(%llu): send right %d, fence data size %lu", (uint64_t, int, size_t), INFO, Media
+
+MEDIAPLAYERPRIVATEREMOTE_LAYERHOSTINGCONTEXTCHANGED, "MediaPlayerPrivateRemote::layerHostingContextChanged", (), DEFAULT, Media

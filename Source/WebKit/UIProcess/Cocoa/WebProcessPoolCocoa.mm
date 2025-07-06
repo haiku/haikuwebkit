@@ -850,6 +850,20 @@ void WebProcessPool::registerNotificationObservers()
         setApplicationIsActive(false);
     }];
 
+    m_didChangeScreenParametersNotificationObserver = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationDidChangeScreenParametersNotification object:NSApp queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
+        screenPropertiesChanged();
+    }];
+#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
+    [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationShouldBeginSuppressingHighDynamicRangeContentNotification object:NSApp queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
+        m_suppressEDR = true;
+        screenPropertiesChanged();
+    }];
+    [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationShouldEndSuppressingHighDynamicRangeContentNotification object:NSApp queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
+        m_suppressEDR = false;
+        screenPropertiesChanged();
+    }];
+#endif
+
     addCFNotificationObserver(colorPreferencesDidChangeCallback, AppleColorPreferencesChangedNotification, CFNotificationCenterGetDistributedCenter());
 
     const char* messages[] = { kNotifyDSCacheInvalidation, kNotifyDSCacheInvalidationGroup, kNotifyDSCacheInvalidationHost, kNotifyDSCacheInvalidationService, kNotifyDSCacheInvalidationUser };
@@ -979,6 +993,7 @@ void WebProcessPool::unregisterNotificationObservers()
     [[NSWorkspace.sharedWorkspace notificationCenter] removeObserver:m_accessibilityDisplayOptionsNotificationObserver.get()];
     [[NSNotificationCenter defaultCenter] removeObserver:m_scrollerStyleNotificationObserver.get()];
     [[NSNotificationCenter defaultCenter] removeObserver:m_deactivationObserver.get()];
+    [[NSWorkspace.sharedWorkspace notificationCenter] removeObserver:m_didChangeScreenParametersNotificationObserver.get()];
     removeCFNotificationObserver(AppleColorPreferencesChangedNotification, CFNotificationCenterGetDistributedCenter());
     for (auto token : m_openDirectoryNotifyTokens)
         notify_cancel(token);
@@ -1235,6 +1250,19 @@ void WebProcessPool::notifyPreferencesChanged(const String& domain, const String
 void WebProcessPool::screenPropertiesChanged()
 {
     auto screenProperties = WebCore::collectScreenProperties();
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    if (m_suppressEDR) {
+        for (auto& properties : screenProperties.screenDataMap.values()) {
+            constexpr auto maxStudioDisplayHeadroom = 2.f;
+            constexpr auto threeQuartersStudioDisplayHeadroom = 1.5f;
+            constexpr auto halfMaxHeadroomMultiplier = 0.5f;
+            auto maxHeadroom = std::clamp(properties.maxEDRHeadroom * halfMaxHeadroomMultiplier, std::min(properties.maxEDRHeadroom, threeQuartersStudioDisplayHeadroom), maxStudioDisplayHeadroom);
+            properties.currentEDRHeadroom = maxHeadroom;
+            properties.maxEDRHeadroom = maxHeadroom;
+            properties.suppressEDR = m_suppressEDR;
+        }
+    }
+#endif
     sendToAllProcesses(Messages::WebProcess::SetScreenProperties(screenProperties));
 
 #if PLATFORM(MAC) && ENABLE(GPU_PROCESS)
@@ -1322,6 +1350,19 @@ void WebProcessPool::registerHighDynamicRangeChangeCallback()
     } };
 }
 #endif // PLATFORM(IOS) || PLATFORM(VISION)
+
+#if PLATFORM(IOS_FAMILY)
+void WebProcessPool::didRefreshDisplay()
+{
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    float headroom = currentEDRHeadroomForDisplay(primaryScreenDisplayID());
+    if (m_currentEDRHeadroom != headroom) {
+        m_currentEDRHeadroom = headroom;
+        screenPropertiesChanged();
+    }
+#endif
+}
+#endif
 
 #if ENABLE(EXTENSION_CAPABILITIES)
 ExtensionCapabilityGranter& WebProcessPool::extensionCapabilityGranter()
@@ -1453,6 +1494,8 @@ static void addUserInstalledFontURLs(NSString *path, HashMap<String, URL>& fontU
         if ([utType isSubtypeOfType:UTTypeFont]) {
             URL fontURL(nsFontURL.get());
             RetainPtr fontDescriptors = adoptCF(CTFontManagerCreateFontDescriptorsFromURL(bridge_cast(nsFontURL.get())));
+            if (!fontDescriptors)
+                continue;
             for (CFIndex i = 0; i < CFArrayGetCount(fontDescriptors.get()); ++i) {
                 RetainPtr fontDescriptor = checked_cf_cast<CTFontDescriptorRef>(CFArrayGetValueAtIndex(fontDescriptors.get(), i));
                 if (!fontDescriptor)

@@ -214,7 +214,7 @@ CustomElementRegistry* ShadowRoot::registryForBindings() const
     if (usesNullCustomElementRegistry())
         return nullptr;
     auto* registry = customElementRegistry();
-    if (RefPtr window = document().domWindow(); window && !registry)
+    if (RefPtr window = document().window(); window && !registry)
         registry = &window->ensureCustomElementRegistry();
     return registry;
 }

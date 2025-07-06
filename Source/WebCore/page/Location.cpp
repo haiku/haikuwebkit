@@ -270,7 +270,7 @@ void Location::reload(LocalDOMWindow& activeWindow)
 
     ASSERT(activeWindow.document());
     ASSERT(localFrame->document());
-    ASSERT(localFrame->document()->domWindow());
+    ASSERT(localFrame->document()->window());
 
     Ref activeDocument = *activeWindow.document();
     Ref targetDocument = *localFrame->document();
@@ -279,7 +279,7 @@ void Location::reload(LocalDOMWindow& activeWindow)
     // We allow one page to change the location of another. Why block attempts to reload?
     // Other location operations simply block use of JavaScript URLs cross origin.
     if (!activeDocument->protectedSecurityOrigin()->isSameOriginDomain(targetDocument->protectedSecurityOrigin())) {
-        Ref targetWindow = *targetDocument->domWindow();
+        Ref targetWindow = *targetDocument->window();
         targetWindow->printErrorMessage(targetWindow->crossDomainAccessErrorMessage(activeWindow, IncludeTargetOrigin::Yes));
         return;
     }
@@ -310,7 +310,7 @@ ExceptionOr<void> Location::setLocation(LocalDOMWindow& incumbentWindow, LocalDO
 
     // https://html.spec.whatwg.org/multipage/nav-history-apis.html#the-location-interface:location-object-navigate
     auto historyHandling = NavigationHistoryBehavior::Auto;
-    if (!firstFrame->loader().isComplete() && firstFrame->document() && !firstFrame->document()->domWindow()->hasTransientActivation())
+    if (!firstFrame->loader().isComplete() && firstFrame->document() && !firstFrame->document()->window()->hasTransientActivation())
         historyHandling = NavigationHistoryBehavior::Replace;
 
     ASSERT(frame->window());

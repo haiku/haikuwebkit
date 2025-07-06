@@ -78,7 +78,7 @@ void DOMWindowExtension::resumeFromBackForwardCache()
 {
     ASSERT(frame());
     ASSERT(m_disconnectedFrame == frame());
-    ASSERT(frame()->document()->domWindow() == m_window);
+    ASSERT(frame()->document()->window() == m_window);
 
     m_disconnectedFrame = nullptr;
 

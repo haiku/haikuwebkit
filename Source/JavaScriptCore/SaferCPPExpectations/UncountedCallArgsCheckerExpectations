@@ -27,6 +27,7 @@ bytecode/DirectEvalCodeCache.h
 bytecode/GetByStatus.cpp
 bytecode/InByStatus.cpp
 bytecode/InlineCacheCompiler.cpp
+bytecode/ObjectPropertyConditionSet.cpp
 bytecode/PolyProtoAccessChain.cpp
 bytecode/PropertyCondition.cpp
 bytecode/PutByStatus.cpp
@@ -42,6 +43,7 @@ bytecompiler/NodesCodegen.cpp
 debugger/Debugger.cpp
 dfg/DFGByteCodeParser.cpp
 dfg/DFGCommonData.cpp
+dfg/DFGConstantFoldingPhase.cpp
 dfg/DFGDesiredGlobalProperties.cpp
 dfg/DFGGraph.cpp
 dfg/DFGJITCode.cpp

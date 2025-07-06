@@ -50,7 +50,7 @@ struct LineContent {
     bool endsWithHyphen { false };
     size_t partialTrailingContentLength { 0 };
     std::optional<InlineLayoutUnit> overflowLogicalWidth { };
-    UncheckedKeyHashMap<const Box*, InlineLayoutUnit> rubyBaseAlignmentOffsetList { };
+    HashMap<const Box*, InlineLayoutUnit> rubyBaseAlignmentOffsetList { };
     InlineLayoutUnit rubyAnnotationOffset { 0.f };
 };
 
@@ -1090,7 +1090,7 @@ InlineLayoutUnit LineBuilder::placedClonedDecorationWidth(const InlineContentBre
     // At [4</span></span>] all inline boxes are closed.
     auto& formattingContext = this->formattingContext();
 
-    UncheckedKeyHashSet<const Box*> clonedInlineBoxes;
+    HashSet<const Box*> clonedInlineBoxes;
     auto clonedDecorationEndWidth = InlineLayoutUnit { };
     for (auto* box : m_line.inlineBoxListWithClonedDecorationEnd()) {
         clonedDecorationEndWidth += formattingContext.geometryForBox(*box).borderAndPaddingEnd();

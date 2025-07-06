@@ -340,7 +340,7 @@ CanvasRenderingContext2DBase::State::State()
     , globalAlpha(1)
     , globalComposite(CompositeOperator::SourceOver)
     , globalBlend(BlendMode::Normal)
-    , hasInvertibleTransform(true)
+    , transformInverse(AffineTransform { })
     , lineDashOffset(0)
     , imageSmoothingEnabled(true)
     , imageSmoothingQuality(defaultSmoothingQuality)
@@ -529,12 +529,9 @@ void CanvasRenderingContext2DBase::restore()
     m_path.transform(state().transform);
     m_stateStack.removeLast();
     auto& state = this->state();
-    m_hasInvertibleTransform = state.hasInvertibleTransform;
-    if (hasInvertibleTransform()) {
-        std::optional<AffineTransform> inverse = state.transform.inverse();
-        ASSERT(inverse);
-        m_path.transform(inverse.value());
-    }
+    m_hasInvertibleTransform = state.transformInverse.has_value();
+    if (state.transformInverse.has_value())
+        m_path.transform(*state.transformInverse);
     GraphicsContext* c = drawingContext();
     if (!c)
         return;
@@ -773,12 +770,6 @@ void CanvasRenderingContext2DBase::setLineDashOffset(double offset)
     applyLineDash();
 }
 
-void CanvasRenderingContext2DBase::setHasInvertibleTransform(bool value)
-{
-    modifiableState().hasInvertibleTransform = value;
-    m_hasInvertibleTransform = value;
-}
-
 void CanvasRenderingContext2DBase::applyLineDash() const
 {
     GraphicsContext* c = effectiveDrawingContext();
@@ -856,22 +847,20 @@ void CanvasRenderingContext2DBase::scale(double sx, double sy)
 
     if (!std::isfinite(sx) || !std::isfinite(sy))
         return;
-
+    float floatX = clampToFloat(sx);
+    float floatY = clampToFloat(sy);
     AffineTransform newTransform = state().transform;
-    newTransform.scaleNonUniform(sx, sy);
+    newTransform.scaleNonUniform(floatX, floatY);
     if (state().transform == newTransform)
         return;
 
     realizeSaves();
-
-    if (!sx || !sy) {
-        setHasInvertibleTransform(false);
+    updateStateTransform(newTransform);
+    if (!hasInvertibleTransform()) [[unlikely]]
         return;
-    }
 
-    modifiableState().transform = newTransform;
-    c->scale(FloatSize(sx, sy));
-    m_path.transform(AffineTransform().scaleNonUniform(1.0 / sx, 1.0 / sy));
+    c->scale(FloatSize(floatX, floatY));
+    m_path.transform(AffineTransform().scaleNonUniform(1.0 / floatX, 1.0 / floatY));
 }
 
 void CanvasRenderingContext2DBase::rotate(double angleInRadians)
@@ -891,8 +880,7 @@ void CanvasRenderingContext2DBase::rotate(double angleInRadians)
         return;
 
     realizeSaves();
-
-    modifiableState().transform = newTransform;
+    updateStateTransform(newTransform); // Rotate never causes non-invertible matrices.
     c->rotate(angleInRadians);
     m_path.transform(AffineTransform().rotateRadians(-angleInRadians));
 }
@@ -914,8 +902,10 @@ void CanvasRenderingContext2DBase::translate(double tx, double ty)
         return;
 
     realizeSaves();
-
-    modifiableState().transform = newTransform;
+    updateStateTransform(newTransform);
+    // Translate may end up making infinities which are non-invertible.
+    if (!hasInvertibleTransform()) [[unlikely]]
+        return;
     c->translate(tx, ty);
     m_path.transform(AffineTransform().translate(-tx, -ty));
 }
@@ -937,14 +927,14 @@ void CanvasRenderingContext2DBase::transform(double m11, double m12, double m21,
         return;
 
     realizeSaves();
-
-    if (auto inverse = transform.inverse()) {
-        modifiableState().transform = newTransform;
-        c->concatCTM(transform);
-        m_path.transform(inverse.value());
+    updateStateTransform(newTransform);
+    if (!hasInvertibleTransform()) [[unlikely]]
         return;
-    }
-    setHasInvertibleTransform(false);
+    c->concatCTM(transform); // Note: concat with the incoming transform, not the full transform (newTransform).
+    auto inverse = transform.inverse();
+    ASSERT(inverse);
+    if (inverse)
+        m_path.transform(*inverse);
 }
 
 Ref<DOMMatrix> CanvasRenderingContext2DBase::getTransform() const
@@ -987,10 +977,7 @@ void CanvasRenderingContext2DBase::resetTransform()
     realizeSaves();
 
     c->setCTM(baseTransform());
-    modifiableState().transform = AffineTransform();
-
-
-    setHasInvertibleTransform(true);
+    updateStateTransform({ });
 }
 
 void CanvasRenderingContext2DBase::setStrokeColor(String&& colorString, std::optional<float> alpha)
@@ -3013,6 +3000,14 @@ Ref<TextMetrics> CanvasRenderingContext2DBase::measureTextInternal(const TextRun
     metrics->setActualBoundingBoxRight(fontWidth + glyphOverflow.right + offset.x());
 
     return metrics;
+}
+
+void CanvasRenderingContext2DBase::updateStateTransform(const AffineTransform& transform)
+{
+    auto& state = modifiableState();
+    state.transform = transform;
+    state.transformInverse = transform.inverse();
+    m_hasInvertibleTransform = state.transformInverse.has_value();
 }
 
 FloatPoint CanvasRenderingContext2DBase::textOffset(float width, TextDirection direction)

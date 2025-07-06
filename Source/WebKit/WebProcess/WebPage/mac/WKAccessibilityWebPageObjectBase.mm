@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2011 Apple Inc. All rights reserved.
+ * Copyright (C) 2011-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -57,7 +57,7 @@ namespace ax = WebCore::Accessibility;
     if (!m_page)
         return nullptr;
 
-    auto page = m_page->corePage();
+    RefPtr page = m_page->corePage();
     if (!page)
         return nullptr;
 
@@ -129,7 +129,7 @@ namespace ax = WebCore::Accessibility;
             // try again if necessary.
             RefPtr frame = protectedFrame ? WTFMove(protectedFrame) : [protectedSelf focusedLocalFrame];
 
-            if (auto* root = frame ? cache->rootObjectForFrame(*frame) : nullptr)
+            if (RefPtr root = frame ? cache->rootObjectForFrame(*frame) : nullptr)
                 return root->wrapper();
         }
 
@@ -149,7 +149,7 @@ namespace ax = WebCore::Accessibility;
         [self setPosition:page->accessibilityPosition()];
         [self setSize:page->size()];
 #endif
-        auto* frame = dynamicDowncast<WebCore::LocalFrame>(page->mainFrame());
+        RefPtr frame = dynamicDowncast<WebCore::LocalFrame>(page->mainFrame());
         m_hasMainFramePlugin = frame && frame->document() ? frame->document()->isPluginDocument() : false;
     } else {
         m_pageID = std::nullopt;

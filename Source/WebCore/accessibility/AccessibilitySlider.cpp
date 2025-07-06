@@ -117,21 +117,21 @@ AccessibilityObject* AccessibilitySlider::elementAccessibilityHitTest(const IntP
 
 float AccessibilitySlider::valueForRange() const
 {
-    if (auto* input = inputElement())
+    if (RefPtr input = inputElement())
         return input->value()->toFloat();
     return 0;
 }
 
 float AccessibilitySlider::maxValueForRange() const
 {
-    if (auto* input = inputElement())
+    if (RefPtr input = inputElement())
         return static_cast<float>(input->maximum());
     return 0;
 }
 
 float AccessibilitySlider::minValueForRange() const
 {
-    if (auto* input = inputElement())
+    if (RefPtr input = inputElement())
         return static_cast<float>(input->minimum());
     return 0;
 }

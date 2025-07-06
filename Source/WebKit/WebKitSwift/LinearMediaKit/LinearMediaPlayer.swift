@@ -143,7 +143,7 @@ enum LinearMediaPlayerErrors: Error {
             swiftOnlyData.isImmersiveVideo = newValue
             // FIXME: Should limit ContentTypePublisher to only publish changes to contentType if we have already created a default entity
             // rather than having to use a isImmersive attribute.
-            if !swiftOnlyData.enteredFromInline && swiftOnlyData.defaultEntity != nil {
+            if !swiftOnlyData.enteredFromInline && swiftOnlyData.defaultEntity != nil && swiftOnlyData.presentationState != .external  {
                 contentType = newValue ? .immersive : .planar
             }
         }
@@ -772,7 +772,7 @@ extension WKSLinearMediaPlayer {
         // peculiarEntity. As such, we can't check if the peculiarEntity is set or not.
         // We will return nil here on the first call and will get call back again once
         // peculiarEntity is set.
-        if swiftOnlyData.spatialVideoMetadata != nil && !swiftOnlyData.enteredFromInline {
+        if swiftOnlyData.spatialVideoMetadata != nil && !swiftOnlyData.enteredFromInline && swiftOnlyData.presentationState != .external {
             return swiftOnlyData.peculiarEntity
         }
         if let captionLayer {

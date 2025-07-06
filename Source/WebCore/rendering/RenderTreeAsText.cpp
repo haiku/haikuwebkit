@@ -403,7 +403,7 @@ void writeDebugInfo(TextStream& ts, const RenderObject& object, OptionSet<Render
     }
 
     if (behavior.contains(RenderAsTextFlag::ShowLayoutState)) {
-        bool needsLayout = object.selfNeedsLayout() || object.needsPositionedMovementLayout() || object.posChildNeedsLayout() || object.normalChildNeedsLayout();
+        bool needsLayout = object.selfNeedsLayout() || object.needsOutOfFlowMovementLayout() || object.outOfFlowChildNeedsLayout() || object.normalChildNeedsLayout();
         if (needsLayout)
             ts << " (needs layout:"_s;
         
@@ -413,7 +413,7 @@ void writeDebugInfo(TextStream& ts, const RenderObject& object, OptionSet<Render
             havePrevious = true;
         }
 
-        if (object.needsPositionedMovementLayout()) {
+        if (object.needsOutOfFlowMovementLayout()) {
             if (havePrevious)
                 ts << ',';
             havePrevious = true;
@@ -427,7 +427,7 @@ void writeDebugInfo(TextStream& ts, const RenderObject& object, OptionSet<Render
             ts << " child"_s;
         }
 
-        if (object.posChildNeedsLayout()) {
+        if (object.outOfFlowChildNeedsLayout()) {
             if (havePrevious)
                 ts << ',';
             ts << " positioned child"_s;

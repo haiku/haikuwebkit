@@ -121,9 +121,9 @@ void TextBoxPainter::paint()
     if (m_paintInfo.phase == PaintPhase::Accessibility) {
         if (glyphRotation) {
             auto transform = rotation(m_paintRect, *glyphRotation);
-            m_paintInfo.accessibilityRegionContext()->takeBounds(m_renderer, transform.mapRect(m_paintRect));
+            m_paintInfo.accessibilityRegionContext()->takeBounds(m_renderer, transform.mapRect(m_paintRect), textBox().lineIndex());
         } else
-            m_paintInfo.accessibilityRegionContext()->takeBounds(m_renderer, m_paintRect);
+            m_paintInfo.accessibilityRegionContext()->takeBounds(m_renderer, m_paintRect, textBox().lineIndex());
 
         return;
     }

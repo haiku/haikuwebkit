@@ -147,7 +147,7 @@ WorkerThreadableLoader::MainThreadBridge::MainThreadBridge(ThreadableLoaderClien
     if (optionsCopy->options.serviceWorkersMode == ServiceWorkersMode::All) {
         if (is<ServiceWorkerGlobalScope>(globalScope))
             optionsCopy->options.serviceWorkersMode = ServiceWorkersMode::None;
-        else if (auto* activeServiceWorker = globalScope.activeServiceWorker()) {
+        else if (RefPtr activeServiceWorker = globalScope.activeServiceWorker()) {
             optionsCopy->options.serviceWorkerRegistrationIdentifier = activeServiceWorker->registrationIdentifier();
             optionsCopy->options.serviceWorkersMode = ServiceWorkersMode::All;
         } else if (is<DedicatedWorkerGlobalScope>(globalScope))

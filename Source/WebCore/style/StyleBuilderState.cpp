@@ -76,9 +76,8 @@
 namespace WebCore {
 namespace Style {
 
-BuilderState::BuilderState(Builder& builder, RenderStyle& style, BuilderContext&& context)
-    : m_builder(builder)
-    , m_styleMap(*this)
+BuilderState::BuilderState(RenderStyle& style, BuilderContext&& context)
+    : m_styleMap(*this)
     , m_style(style)
     , m_context(WTFMove(context))
     , m_cssToLengthConversionData(style, *this)
@@ -156,16 +155,6 @@ FilterOperations BuilderState::createAppleColorFilterOperations(const CSSValue& 
 
     Ref filterValue = downcast<CSSAppleColorFilterPropertyValue>(value);
     return createAppleColorFilterOperations(filterValue->filter());
-}
-
-Color BuilderState::createStyleColor(const CSSValue& value, ForVisitedLink forVisitedLink) const
-{
-    if (!element() || !element()->isLink())
-        forVisitedLink = ForVisitedLink::No;
-
-    if (RefPtr color = dynamicDowncast<CSSColorValue>(value))
-        return toStyle(color->color(), *this, forVisitedLink);
-    return toStyle(CSS::Color { CSS::KeywordColor { value.valueID() } }, *this, forVisitedLink);
 }
 
 void BuilderState::registerContentAttribute(const AtomString& attributeLocalName)

@@ -194,11 +194,6 @@ bool HTMLScriptElement::async() const
     return hasAttributeWithoutSynchronization(asyncAttr) || forceAsync();
 }
 
-void HTMLScriptElement::setCrossOrigin(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(crossoriginAttr, value);
-}
-
 String HTMLScriptElement::crossOrigin() const
 {
     return parseCORSSettingsAttribute(attributeWithoutSynchronization(crossoriginAttr));
@@ -294,11 +289,6 @@ Ref<Element> HTMLScriptElement::cloneElementWithoutAttributesAndChildren(Documen
     return adoptRef(*new HTMLScriptElement(tagQName(), document, false, alreadyStarted()));
 }
 
-void HTMLScriptElement::setReferrerPolicyForBindings(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(referrerpolicyAttr, value);
-}
-
 String HTMLScriptElement::referrerPolicyForBindings() const
 {
     return referrerPolicyToString(referrerPolicy());
@@ -307,11 +297,6 @@ String HTMLScriptElement::referrerPolicyForBindings() const
 ReferrerPolicy HTMLScriptElement::referrerPolicy() const
 {
     return parseReferrerPolicy(attributeWithoutSynchronization(referrerpolicyAttr), ReferrerPolicySource::ReferrerPolicyAttribute).value_or(ReferrerPolicy::EmptyString);
-}
-
-void HTMLScriptElement::setFetchPriorityForBindings(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(fetchpriorityAttr, value);
 }
 
 String HTMLScriptElement::fetchPriorityForBindings() const

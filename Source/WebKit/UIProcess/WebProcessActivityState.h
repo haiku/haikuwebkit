@@ -31,6 +31,7 @@ namespace WebKit {
 
 class ProcessAssertion;
 class ProcessThrottlerActivity;
+class ProcessThrottlerTimedActivity;
 class RemotePageProxy;
 class WebPageProxy;
 class WebProcessProxy;

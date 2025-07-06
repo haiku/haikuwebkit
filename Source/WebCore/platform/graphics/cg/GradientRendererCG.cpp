@@ -362,7 +362,6 @@ void GradientRendererCG::drawRadialGradient(CGContextRef platformContext, CGPoin
 
 void GradientRendererCG::drawConicGradient(CGContextRef platformContext, CGPoint center, CGFloat angle)
 {
-#if HAVE(CORE_GRAPHICS_CONIC_GRADIENTS)
     WTF::switchOn(m_strategy,
         [&] (Gradient& gradient) {
             CGContextDrawConicGradient(platformContext, gradient.gradient.get(), center, angle);
@@ -371,11 +370,6 @@ void GradientRendererCG::drawConicGradient(CGContextRef platformContext, CGPoint
             CGContextDrawShading(platformContext, adoptCF(CGShadingCreateConic(shading.colorSpace.get(), center, angle, shading.function.get())).get());
         }
     );
-#else
-    UNUSED_PARAM(platformContext);
-    UNUSED_PARAM(center);
-    UNUSED_PARAM(angle);
-#endif
 }
 
 }

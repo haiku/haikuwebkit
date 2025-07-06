@@ -197,7 +197,7 @@ static const Seconds PostAnimationDelay { 100_ms };
         self.videoLayerFrame = self.bounds;
         if (RefPtr<WebKit::MediaPlayerPrivateRemote> mediaPlayerPrivateRemote = self.mediaPlayerPrivateRemote) {
             MachSendRight fenceSendRight = MachSendRight::adopt([_context createFencePort]);
-            mediaPlayerPrivateRemote->setVideoLayerSizeFenced(WebCore::FloatSize(self.videoLayerFrame.size), WTFMove(fenceSendRight));
+            mediaPlayerPrivateRemote->setVideoLayerSizeFenced(WebCore::FloatSize(self.videoLayerFrame.size), { WTFMove(fenceSendRight), { } });
         }
     }
 

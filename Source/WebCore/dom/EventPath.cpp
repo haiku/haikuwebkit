@@ -118,7 +118,7 @@ void EventPath::buildPath(Node& originalTarget, Event& event)
                 if (auto* document = dynamicDowncast<Document>(*node); document && event.type() != eventNames().loadEvent) {
                     ASSERT(target);
                     if (target) {
-                        if (RefPtr window = document->domWindow())
+                        if (RefPtr window = document->window())
                             m_path.append(EventContext { EventContext::Type::Window, node.get(), window.get(), target.get(), closedShadowDepth });
                     }
                 }

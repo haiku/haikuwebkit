@@ -59,6 +59,7 @@ public:
     const WebGPU::CompositorIntegration& backing() const { return m_backing; }
 
     void paintCompositedResultsToCanvas(WebCore::ImageBuffer&, uint32_t);
+    void updateContentsHeadroom(float);
 
 private:
     GPUCompositorIntegration(Ref<WebGPU::CompositorIntegration>&& backing)

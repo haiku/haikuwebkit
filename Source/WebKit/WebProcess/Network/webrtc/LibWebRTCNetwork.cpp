@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Apple Inc. All rights reserved.
+ * Copyright (C) 2020-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -79,35 +79,36 @@ void LibWebRTCNetwork::networkProcessCrashed()
     setConnection(nullptr);
 
 #if USE(LIBWEBRTC)
-    m_webNetworkMonitor.networkProcessCrashed();
+    protectedMonitor()->networkProcessCrashed();
 #endif
 }
 
 void LibWebRTCNetwork::setConnection(RefPtr<IPC::Connection>&& connection)
 {
 #if USE(LIBWEBRTC)
-    if (m_connection)
-        m_connection->removeMessageReceiver(Messages::LibWebRTCNetwork::messageReceiverName());
+    if (RefPtr connection = m_connection)
+        connection->removeMessageReceiver(Messages::LibWebRTCNetwork::messageReceiverName());
 #endif
     m_connection = WTFMove(connection);
 #if USE(LIBWEBRTC)
     if (m_isActive)
         setSocketFactoryConnection();
-    if (m_connection)
-        m_connection->addMessageReceiver(*this, *this, Messages::LibWebRTCNetwork::messageReceiverName());
+    if (RefPtr connection = m_connection)
+        connection->addMessageReceiver(*this, *this, Messages::LibWebRTCNetwork::messageReceiverName());
 #endif
 }
 
 #if USE(LIBWEBRTC)
 void LibWebRTCNetwork::setSocketFactoryConnection()
 {
-    if (!m_connection) {
+    RefPtr connection = m_connection;
+    if (!connection) {
         WebCore::LibWebRTCProvider::callOnWebRTCNetworkThread([this, protectedThis = Ref { *this }]() mutable {
             m_socketFactory.setConnection(nullptr);
         });
         return;
     }
-    m_connection->sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::CreateRTCProvider(), [this, protectedThis = Ref { *this }, connection = m_connection]() mutable {
+    connection->sendWithAsyncReply(Messages::NetworkConnectionToWebProcess::CreateRTCProvider(), [this, protectedThis = Ref { *this }, connection]() mutable {
         if (!connection->isValid())
             return;
 

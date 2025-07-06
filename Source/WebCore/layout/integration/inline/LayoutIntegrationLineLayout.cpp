@@ -589,7 +589,7 @@ void LineLayout::updateRenderTreePositions(const Vector<LineAdjustment>& lineAdj
         }
     }
 
-    UncheckedKeyHashMap<CheckedRef<const Layout::Box>, LayoutSize> floatPaginationOffsetMap;
+    HashMap<CheckedRef<const Layout::Box>, LayoutSize> floatPaginationOffsetMap;
     if (!lineAdjustments.isEmpty()) {
         for (auto& floatItem : m_blockFormattingState.placedFloats().list()) {
             if (!floatItem.layoutBox() || !floatItem.placedByLine())

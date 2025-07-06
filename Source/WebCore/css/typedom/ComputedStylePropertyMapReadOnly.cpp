@@ -33,6 +33,7 @@
 #include "DocumentInlines.h"
 #include "Element.h"
 #include "RenderStyleInlines.h"
+#include "StyleCustomProperty.h"
 #include "StyleExtractor.h"
 #include "StylePropertyShorthand.h"
 #include "StyleScope.h"
@@ -112,7 +113,16 @@ Vector<StylePropertyMapReadOnly::StylePropertyMapEntry> ComputedStylePropertyMap
 
     for (auto* map : { &nonInheritedCustomProperties, &inheritedCustomProperties }) {
         map->forEach([&](auto& it) {
-            values.append(makeKeyValuePair(it.key, StylePropertyMapReadOnly::reifyValueToVector(document, const_cast<CSSCustomPropertyValue*>(it.value.get()), std::nullopt)));
+            values.append(
+                makeKeyValuePair(
+                    it.key,
+                    StylePropertyMapReadOnly::reifyValueToVector(
+                        document,
+                        computedStyleExtractor.customPropertyValue(it.value->name()),
+                        std::nullopt
+                    )
+                )
+            );
             return IterationStatus::Continue;
         });
     }

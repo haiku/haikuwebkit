@@ -1,5 +1,5 @@
 /*
-* Copyright (C) 2019-2020 Apple Inc. All rights reserved.
+* Copyright (C) 2019-2025 Apple Inc. All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
 * modification, are permitted provided that the following conditions
@@ -288,7 +288,7 @@ void WebResourceLoadObserver::logSubresourceLoading(const LocalFrame* frame, con
     if (!frame)
         return;
 
-    auto* page = frame->page();
+    RefPtr page = frame->page();
     if (!page)
         return;
     const URL& topFrameURL = page->mainFrameURL();
@@ -386,7 +386,7 @@ void WebResourceLoadObserver::logUserInteractionWithReducedTimeResolution(const 
     if (RefPtr frame = document.frame()) {
         if (RefPtr opener = dynamicDowncast<LocalFrame>(frame->opener())) {
             if (RefPtr openerDocument = opener->document()) {
-                if (auto* openerPage = openerDocument->page())
+                if (RefPtr openerPage = openerDocument->page())
                     requestStorageAccessUnderOpener(topFrameDomain, Ref { *WebPage::fromCorePage(*openerPage) }, *openerDocument);
             }
         }

@@ -452,8 +452,7 @@ private:
     VisiblePosition visiblePositionForIndex(int) const final;
     int indexForVisiblePosition(const VisiblePosition&) const final;
     int lineForPosition(const VisiblePosition&) const final;
-    std::optional<SimpleRange> visibleCharacterRange() const final;
-    
+
     // Attribute setters.
     void setARIAGrabbed(bool) final;
     void setIsExpanded(bool) final;
@@ -471,6 +470,7 @@ private:
 #endif
 #if PLATFORM(COCOA)
     void setPreventKeyboardDOMEventDispatch(bool) final;
+    std::optional<NSRange> visibleCharacterRange() const final;
 #endif
 
     String textUnderElement(TextUnderElementMode = { }) const final;

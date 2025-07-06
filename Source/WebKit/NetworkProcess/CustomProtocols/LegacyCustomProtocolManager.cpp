@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012, 2013 Apple Inc. All rights reserved.
+ * Copyright (C) 2012-2025 Apple Inc. All rights reserved.
  * Copyright (C) 2017 Igalia S.L.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -46,7 +46,7 @@ ASCIILiteral LegacyCustomProtocolManager::supplementName()
 LegacyCustomProtocolManager::LegacyCustomProtocolManager(NetworkProcess& networkProcess)
     : m_networkProcess(networkProcess)
 {
-    m_networkProcess->addMessageReceiver(Messages::LegacyCustomProtocolManager::messageReceiverName(), *this);
+    protectedNetworkProcess()->addMessageReceiver(Messages::LegacyCustomProtocolManager::messageReceiverName(), *this);
 }
 
 void LegacyCustomProtocolManager::ref() const

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2016 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -137,8 +137,8 @@ WorkerThreadStartMode WorkerInspectorProxy::workerStartMode(ScriptExecutionConte
 
 auto WorkerInspectorProxy::pageOrWorkerGlobalScopeIdentifier(ScriptExecutionContext& context) -> std::optional<PageOrWorkerGlobalScopeIdentifier>
 {
-    if (auto* document = dynamicDowncast<Document>(context)) {
-        if (auto* page = document->page(); page && page->identifier())
+    if (RefPtr document = dynamicDowncast<Document>(context)) {
+        if (RefPtr page = document->page(); page && page->identifier())
             return PageOrWorkerGlobalScopeIdentifier { *page->identifier() };
         return std::nullopt;
     }

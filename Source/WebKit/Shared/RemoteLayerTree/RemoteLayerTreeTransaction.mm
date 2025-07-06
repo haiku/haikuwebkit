@@ -423,6 +423,15 @@ uint32_t RemoteLayerTreeTransaction::LayerCreationProperties::hostingContextID()
     return 0;
 }
 
+#if ENABLE(MACH_PORT_LAYER_HOSTING)
+std::optional<WTF::MachSendRightAnnotated> RemoteLayerTreeTransaction::LayerCreationProperties::sendRightAnnotated() const
+{
+    if (auto* customData = std::get_if<CustomData>(&additionalData))
+        return customData->sendRightAnnotated;
+    return std::nullopt;
+}
+#endif
+
 bool RemoteLayerTreeTransaction::LayerCreationProperties::preservesFlip() const
 {
     if (auto* customData = std::get_if<CustomData>(&additionalData))

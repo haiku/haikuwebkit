@@ -79,8 +79,6 @@ struct CSSParserContext {
     bool targetTextPseudoElementEnabled : 1 { false };
     bool viewTransitionTypesEnabled : 1 { false };
     bool cssProgressFunctionEnabled : 1 { false };
-    bool cssMediaProgressFunctionEnabled : 1 { false };
-    bool cssContainerProgressFunctionEnabled : 1 { false };
     bool cssRandomFunctionEnabled : 1 { false };
     bool cssTreeCountingFunctionsEnabled : 1 { false };
     bool cssURLModifiersEnabled : 1 { false };

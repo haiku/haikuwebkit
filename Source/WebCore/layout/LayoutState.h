@@ -122,15 +122,15 @@ private:
 
     const Type m_type;
 
-    UncheckedKeyHashMap<const ElementBox*, std::unique_ptr<InlineContentCache>> m_inlineContentCaches;
+    HashMap<const ElementBox*, std::unique_ptr<InlineContentCache>> m_inlineContentCaches;
 
-    UncheckedKeyHashMap<const ElementBox*, std::unique_ptr<BlockFormattingState>> m_blockFormattingStates;
-    UncheckedKeyHashMap<const ElementBox*, std::unique_ptr<TableFormattingState>> m_tableFormattingStates;
+    HashMap<const ElementBox*, std::unique_ptr<BlockFormattingState>> m_blockFormattingStates;
+    HashMap<const ElementBox*, std::unique_ptr<TableFormattingState>> m_tableFormattingStates;
 
 #ifndef NDEBUG
-    UncheckedKeyHashSet<const FormattingContext*> m_formattingContextList;
+    HashSet<const FormattingContext*> m_formattingContextList;
 #endif
-    UncheckedKeyHashMap<const Box*, std::unique_ptr<BoxGeometry>> m_layoutBoxToBoxGeometry;
+    HashMap<const Box*, std::unique_ptr<BoxGeometry>> m_layoutBoxToBoxGeometry;
     QuirksMode m_quirksMode { QuirksMode::No };
 
     const CheckedRef<const ElementBox> m_rootContainer;

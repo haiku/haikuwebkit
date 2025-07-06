@@ -113,8 +113,8 @@ inline JSC::JSValue windowEventHandlerAttribute(DOMWindow& window, const AtomStr
 
 inline JSC::JSValue windowEventHandlerAttribute(HTMLElement& element, const AtomString& eventType, DOMWrapperWorld& isolatedWorld)
 {
-    if (RefPtr domWindow = element.document().domWindow())
-        return eventHandlerAttribute(*domWindow, eventType, isolatedWorld);
+    if (RefPtr window = element.document().window())
+        return eventHandlerAttribute(*window, eventType, isolatedWorld);
     return JSC::jsNull();
 }
 
@@ -127,8 +127,8 @@ inline void setWindowEventHandlerAttribute(DOMWindow& window, const AtomString& 
 template<typename JSMaybeErrorEventListener>
 inline void setWindowEventHandlerAttribute(HTMLElement& element, const AtomString& eventType, JSC::JSValue listener, JSC::JSObject& jsEventTarget)
 {
-    if (RefPtr domWindow = element.document().domWindow())
-        domWindow->setAttributeEventListener<JSMaybeErrorEventListener>(eventType, listener, *jsEventTarget.globalObject());
+    if (RefPtr window = element.document().window())
+        window->setAttributeEventListener<JSMaybeErrorEventListener>(eventType, listener, *jsEventTarget.globalObject());
 }
 
 inline JSC::JSObject* JSEventListener::ensureJSFunction(ScriptExecutionContext& scriptExecutionContext) const

@@ -21,14 +21,8 @@
         iframe.src = 'http://127.0.0.1:8000/site-isolation/resources/localhostiframe.html';
         iframe.onload = ()=> {
             document.body.style = 'background-color:black';
-
-            // FIXME: Removing this setTimeout makes http/tests/site-isolation/edge-sampling-commit-root-frame-load.html
-            // never finish with site isolation off but not on.  Something seems broken
-            // related to WebPage::didFinishLoadInAnotherProcess.  Fix it and remove this setTimeout.
-            setTimeout(()=>{
-                iframe.parentNode.removeChild(iframe);
-                setTimeout(onload, 100)
-            }, 100);
+            iframe.parentNode.removeChild(iframe);
+            setTimeout(onload, 100)
         }
         document.body.appendChild(iframe);
     }

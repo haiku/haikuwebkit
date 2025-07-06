@@ -68,6 +68,17 @@ AXTextMarkerRange AccessibilityObject::textMarkerRangeForNSRange(const NSRange& 
     return { };
 }
 
+std::optional<NSRange> AccessibilityObject::visibleCharacterRange() const
+{
+    std::optional range = simpleRange();
+    if (!range)
+        return std::nullopt;
+
+    auto contentRect = unobscuredContentRect();
+    auto elementRect = snappedIntRect(this->elementRect());
+    return makeNSRange(visibleCharacterRangeInternal(*range, contentRect, elementRect));
+}
+
 // NSAttributedString support.
 
 #ifndef NSAttachmentCharacter
@@ -120,22 +131,22 @@ RetainPtr<NSArray> AccessibilityObject::contentForRange(const SimpleRange& range
     // Iterate over the range to build the AX attributed strings.
     TextIterator it = textIteratorIgnoringFullSizeKana(range);
     for (; !it.atEnd(); it.advance()) {
-        Node& node = it.range().start.container;
+        Ref node = it.range().start.container;
 
         // Non-zero length means textual node, zero length means replaced node (AKA "attachments" in AX).
         if (it.text().length()) {
-            auto listMarkerText = listMarkerTextForNodeAndPosition(&node, makeContainerOffsetPosition(it.range().start));
+            auto listMarkerText = listMarkerTextForNodeAndPosition(node.ptr(), makeContainerOffsetPosition(it.range().start));
             if (!listMarkerText.isEmpty()) {
-                if (auto attrString = attributedStringCreate(node, listMarkerText, it.range(), SpellCheck::No))
+                if (auto attrString = attributedStringCreate(node.get(), listMarkerText, it.range(), SpellCheck::No))
                     [result addObject:attrString.get()];
             }
 
-            if (auto attrString = attributedStringCreate(node, it.text(), it.range(), spellCheck))
+            if (auto attrString = attributedStringCreate(node.get(), it.text(), it.range(), spellCheck))
                 [result addObject:attrString.get()];
         } else {
             if (RefPtr replacedNode = it.node()) {
                 auto* cache = axObjectCache();
-                if (auto* object = cache ? cache->getOrCreate(replacedNode->renderer()) : nullptr)
+                if (RefPtr object = cache ? cache->getOrCreate(replacedNode->renderer()) : nullptr)
                     addObjectWrapperToArray(*object, result.get());
             }
         }

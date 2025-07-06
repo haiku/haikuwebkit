@@ -50,9 +50,24 @@ size_t pas_page_malloc_num_allocated_bytes;
 size_t pas_page_malloc_cached_alignment;
 size_t pas_page_malloc_cached_alignment_shift;
 
+#if defined(MADV_ZERO) && PAS_OS(DARWIN)
+#define PAS_USE_MADV_ZERO 1
+#else
+#define PAS_USE_MADV_ZERO 0
+#endif
+
 #if PAS_OS(DARWIN)
 bool pas_page_malloc_decommit_zero_fill = false;
 #endif /* PAS_OS(DARWIN) */
+
+#if PAS_USE_MADV_ZERO
+/* It is possible that MADV_ZERO is defined but still not supported by the
+ * running OS. In this case, we check once to see if we get ENOSUP, and if
+ * we thereafter short-circuit to the fallback (mmap), thus avoiding the
+ * extra overhead of calling into madvise(MADV_ZERO) every time. */
+static pthread_once_t madv_zero_once_control = PTHREAD_ONCE_INIT;
+static bool madv_zero_supported = false;
+#endif
 
 #if PAS_OS(DARWIN)
 #define PAS_VM_TAG VM_MAKE_TAG(VM_MEMORY_TCMALLOC)
@@ -201,6 +216,32 @@ pas_page_malloc_try_allocate_without_deallocating_padding(
     return result;
 }
 
+#if PAS_USE_MADV_ZERO
+static void pas_page_malloc_zero_fill_latch_if_madv_zero_is_supported(void)
+{
+    /* It is possible that the MADV_ZERO macro is defined but that the kernel
+     * does not actually support it. In this case we want to avoid calling madvise
+     * since it will just return -1 every time, and so just short-circuit
+     * to the mmap fallback instead.
+     * However, we could also get unlucky and have the madvise fail for another
+     * reason (e.g. CoW memory) so we need to make sure we're getting ENOTSUP
+     * and not another error before we latch off madvise. */
+    size_t size;
+    void* base;
+
+    size = PAS_SMALL_PAGE_DEFAULT_SIZE;
+    base = mmap(NULL, PAS_SMALL_PAGE_DEFAULT_SIZE, PROT_NONE, MAP_PRIVATE | MAP_ANON | PAS_NORESERVE, PAS_VM_TAG, 0);
+    PAS_ASSERT(base);
+
+    int rc = madvise(base, size, MADV_ZERO);
+    if (rc)
+        madv_zero_supported = (errno != ENOTSUP);
+    else
+        madv_zero_supported = true;
+    munmap(base, size);
+}
+#endif
+
 void pas_page_malloc_zero_fill(void* base, size_t size)
 {
 #if PAS_OS(WINDOWS)
@@ -223,10 +264,20 @@ void pas_page_malloc_zero_fill(void* base, size_t size)
 
     int flags = MAP_PRIVATE | MAP_ANON | MAP_FIXED | PAS_NORESERVE;
     int tag = PAS_VM_TAG;
+
+#if PAS_USE_MADV_ZERO
+    pthread_once(&madv_zero_once_control, pas_page_malloc_zero_fill_latch_if_madv_zero_is_supported);
+    if (madv_zero_supported) {
+        int rc = madvise(base, size, MADV_ZERO);
+        if (rc != -1)
+            return;
+    }
+#endif /* PAS_USE_MADV_ZERO */
+
     PAS_PROFILE(ZERO_FILL_PAGE, base, size, flags, tag);
     result_ptr = mmap(base, size, PROT_READ | PROT_WRITE, flags, tag, 0);
     PAS_ASSERT(result_ptr == base);
-#endif
+#endif /* PAS_OS(WINDOWS) */
 }
 
 static void commit_impl(void* ptr, size_t size, bool do_mprotect, pas_mmap_capability mmap_capability)

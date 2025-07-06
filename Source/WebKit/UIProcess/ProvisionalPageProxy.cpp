@@ -265,6 +265,7 @@ void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& webs
                 m_needsMainFrameObserver = false;
                 m_messageReceiverRegistration.stopReceivingMessages();
                 m_messageReceiverRegistration.transferMessageReceivingFrom(existingRemotePageProxy->messageReceiverRegistration(), *this);
+                existingRemotePageProxy->setDrawingArea(nullptr);
                 m_needsDidStartProvisionalLoad = false;
                 m_needsCookieAccessAddedInNetworkProcess = true;
                 registerWithInspectorController = false; // FIXME: <rdar://121240770> This is a hack. There seems to be a bug in our interaction with WebPageInspectorController.

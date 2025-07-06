@@ -695,24 +695,9 @@ String HTMLFormElement::action() const
     return document().completeURL(value).string();
 }
 
-void HTMLFormElement::setAction(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(actionAttr, value);
-}
-
-void HTMLFormElement::setEnctype(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(enctypeAttr, value);
-}
-
 String HTMLFormElement::method() const
 {
     return FormSubmission::Attributes::methodString(m_attributes.method());
-}
-
-void HTMLFormElement::setMethod(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(methodAttr, value);
 }
 
 DOMTokenList& HTMLFormElement::relList()
@@ -967,11 +952,6 @@ Vector<Ref<ValidatedFormListedElement>> HTMLFormElement::copyValidatedListedElem
 HTMLFormElement* HTMLFormElement::findClosestFormAncestor(const Element& startElement)
 {
     return const_cast<HTMLFormElement*>(ancestorsOfType<HTMLFormElement>(startElement).first());
-}
-
-void HTMLFormElement::setAutocomplete(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(autocompleteAttr, value);
 }
 
 const AtomString& HTMLFormElement::autocomplete() const

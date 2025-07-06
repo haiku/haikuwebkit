@@ -389,6 +389,7 @@ inline CapabilityLevel canCompile(Node* node)
     case RegExpTestInline:
     case RegExpMatchFast:
     case RegExpMatchFastGlobal:
+    case RegExpSearch:
     case NewRegExp:
     case NewMap:
     case NewSet:

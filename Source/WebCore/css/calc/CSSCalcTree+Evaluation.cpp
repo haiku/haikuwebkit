@@ -28,9 +28,7 @@
 #include "AnchorPositionEvaluator.h"
 #include "CSSCalcRandomCachingKey.h"
 #include "CSSCalcSymbolTable.h"
-#include "CSSCalcTree+ContainerProgressEvaluator.h"
 #include "CSSCalcTree+Mappings.h"
-#include "CSSCalcTree+MediaProgressEvaluator.h"
 #include "CSSCalcTree+Simplification.h"
 #include "CSSCalcTree.h"
 #include "CSSUnevaluatedCalc.h"
@@ -59,8 +57,6 @@ static auto evaluate(const IndirectNode<Min>&, const EvaluationOptions&) -> std:
 static auto evaluate(const IndirectNode<Max>&, const EvaluationOptions&) -> std::optional<double>;
 static auto evaluate(const IndirectNode<Hypot>&, const EvaluationOptions&) -> std::optional<double>;
 static auto evaluate(const IndirectNode<Random>&, const EvaluationOptions&) -> std::optional<double>;
-static auto evaluate(const IndirectNode<MediaProgress>&, const EvaluationOptions&) -> std::optional<double>;
-static auto evaluate(const IndirectNode<ContainerProgress>&, const EvaluationOptions&) -> std::optional<double>;
 static auto evaluate(const IndirectNode<Anchor>&, const EvaluationOptions&) -> std::optional<double>;
 static auto evaluate(const IndirectNode<AnchorSize>&, const EvaluationOptions&) -> std::optional<double>;
 template<typename Op>
@@ -239,45 +235,6 @@ std::optional<double> evaluate(const IndirectNode<Random>& root, const Evaluatio
         return { };
 
     return Calculation::executeOperation<ToCalculationTreeOp<Random>>(*randomBaseValue, *min, *max, *step);
-}
-
-std::optional<double> evaluate(const IndirectNode<MediaProgress>& root, const EvaluationOptions& options)
-{
-    if (!options.conversionData || !options.conversionData->styleBuilderState())
-        return { };
-
-    auto start = evaluate(root->start, options);
-    if (!start)
-        return { };
-
-    auto end = evaluate(root->end, options);
-    if (!end)
-        return { };
-
-    Ref document = options.conversionData->styleBuilderState()->document();
-    auto value = evaluateMediaProgress(root, document, *options.conversionData);
-    return Calculation::executeOperation<ToCalculationTreeOp<Progress>>(value, *start, *end);
-}
-
-std::optional<double> evaluate(const IndirectNode<ContainerProgress>& root, const EvaluationOptions& options)
-{
-    if (!options.conversionData || !options.conversionData->styleBuilderState() || !options.conversionData->styleBuilderState()->element())
-        return { };
-
-    auto start = evaluate(root->start, options);
-    if (!start)
-        return { };
-
-    auto end = evaluate(root->end, options);
-    if (!end)
-        return { };
-
-    Ref element = *options.conversionData->styleBuilderState()->element();
-    auto value = evaluateContainerProgress(root, element, *options.conversionData);
-    if (!value)
-        return { };
-
-    return Calculation::executeOperation<ToCalculationTreeOp<Progress>>(*value, *start, *end);
 }
 
 std::optional<double> evaluate(const IndirectNode<Anchor>& anchor, const EvaluationOptions& options)

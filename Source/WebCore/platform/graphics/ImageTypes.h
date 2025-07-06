@@ -102,6 +102,11 @@ enum class AllowImageSubsampling : bool {
     Yes
 };
 
+enum class DrawsHDRContent : uint8_t {
+    No,
+    Yes
+};
+
 struct Headroom {
     constexpr Headroom(float headroom)
     {

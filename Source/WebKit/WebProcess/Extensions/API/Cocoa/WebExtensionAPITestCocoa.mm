@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -113,6 +113,22 @@ WebExtensionAPIEvent& WebExtensionAPITest::onMessage()
         m_onMessage = WebExtensionAPIEvent::create(*this, WebExtensionEventListenerType::TestOnMessage);
 
     return *m_onMessage;
+}
+
+WebExtensionAPIEvent& WebExtensionAPITest::onTestStarted()
+{
+    if (!m_onTestStarted)
+        m_onTestStarted = WebExtensionAPIEvent::create(*this, WebExtensionEventListenerType::TestOnTestStarted);
+
+    return *m_onTestStarted;
+}
+
+WebExtensionAPIEvent& WebExtensionAPITest::onTestFinished()
+{
+    if (!m_onTestFinished)
+        m_onTestFinished = WebExtensionAPIEvent::create(*this, WebExtensionEventListenerType::TestOnTestFinished);
+
+    return *m_onTestFinished;
 }
 
 JSValue *WebExtensionAPITest::runWithUserGesture(WebFrame& frame, JSValue *function)
@@ -509,6 +525,40 @@ void WebExtensionContextProxy::dispatchTestMessageEvent(const String& message, c
 
     enumerateFramesAndNamespaceObjects([&](auto&, auto& namespaceObject) {
         namespaceObject.test().onMessage().invokeListenersWithArgument(nsMessage.get(), argument);
+    }, toDOMWrapperWorld(contentWorldType));
+}
+
+void WebExtensionContextProxy::dispatchTestStartedEvent(const String& argumentJSON, WebExtensionContentWorldType contentWorldType)
+{
+    id argument = parseJSON(argumentJSON.createNSString().get(), JSONOptions::FragmentsAllowed);
+
+    if (contentWorldType == WebExtensionContentWorldType::WebPage) {
+        enumerateFramesAndWebPageNamespaceObjects([&](auto&, auto& namespaceObject) {
+            namespaceObject.test().onTestStarted().invokeListenersWithArgument(argument);
+        });
+
+        return;
+    }
+
+    enumerateFramesAndNamespaceObjects([&](auto&, auto& namespaceObject) {
+        namespaceObject.test().onTestStarted().invokeListenersWithArgument(argument);
+    }, toDOMWrapperWorld(contentWorldType));
+}
+
+void WebExtensionContextProxy::dispatchTestFinishedEvent(const String& argumentJSON, WebExtensionContentWorldType contentWorldType)
+{
+    id argument = parseJSON(argumentJSON.createNSString().get(), JSONOptions::FragmentsAllowed);
+
+    if (contentWorldType == WebExtensionContentWorldType::WebPage) {
+        enumerateFramesAndWebPageNamespaceObjects([&](auto&, auto& namespaceObject) {
+            namespaceObject.test().onTestFinished().invokeListenersWithArgument(argument);
+        });
+
+        return;
+    }
+
+    enumerateFramesAndNamespaceObjects([&](auto&, auto& namespaceObject) {
+        namespaceObject.test().onTestFinished().invokeListenersWithArgument(argument);
     }, toDOMWrapperWorld(contentWorldType));
 }
 

@@ -175,6 +175,10 @@ ScreenProperties collectScreenProperties()
         screenData.screenSize = FloatSize { CGDisplayScreenSize(displayID) };
         screenData.scaleFactor = screen.backingScaleFactor;
         screenData.screenSupportsHighDynamicRange = screenSupportsHighDynamicRange(displayID, screenData.preferredDynamicRangeMode);
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        screenData.maxEDRHeadroom = [screen maximumPotentialExtendedDynamicRangeColorComponentValue];
+        screenData.currentEDRHeadroom = [screen maximumExtendedDynamicRangeColorComponentValue];
+#endif
 
         screenProperties.screenDataMap.set(displayID, WTFMove(screenData));
         if (!screenProperties.primaryDisplayID)
@@ -320,6 +324,34 @@ FloatRect screenRectForPrimaryScreen()
 {
     return screenRectForDisplay(primaryScreenDisplayID());
 }
+
+#if HAVE(SUPPORT_HDR_DISPLAY)
+float currentEDRHeadroomForDisplay(PlatformDisplayID displayID)
+{
+    if (auto data = screenData(displayID))
+        return data->currentEDRHeadroom;
+
+    ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
+    return screen(displayID).maximumExtendedDynamicRangeColorComponentValue;
+}
+
+float maxEDRHeadroomForDisplay(PlatformDisplayID displayID)
+{
+    if (auto data = screenData(displayID))
+        return data->maxEDRHeadroom;
+
+    ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
+    return screen(displayID).maximumPotentialExtendedDynamicRangeColorComponentValue;
+}
+
+bool suppressEDRForDisplay(PlatformDisplayID displayID)
+{
+    if (auto data = screenData(displayID))
+        return data->suppressEDR;
+
+    return false;
+}
+#endif
 
 FloatRect screenRect(Widget* widget)
 {

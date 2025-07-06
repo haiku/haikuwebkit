@@ -1,0 +1,4 @@
+
+FAIL Check trailing events assert_false: Should have gotten innerbodyfocus,innerbodyblur after willspineventloop expected false got true
+FAIL Check result assert_equals: Check log expected "outeronload,activeElement:BODY,willfocusiframe,didfocusiframe,activeElement:IFRAME,willbluriframe,didbluriframe,activeElement:BODY,willspineventloop,innerbodyfocus,innerbodyblur," but got "outeronload,activeElement:BODY,willfocusiframe,didfocusiframe,activeElement:IFRAME,willbluriframe,didbluriframe,activeElement:IFRAME,willspineventloop,innerbodyfocus,innerbodyblur,"
+

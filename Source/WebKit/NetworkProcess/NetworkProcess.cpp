@@ -343,8 +343,10 @@ void NetworkProcess::initializeNetworkProcess(NetworkProcessCreationParameters&&
     for (auto& scheme : parameters.urlSchemesRegisteredAsLocal)
         registerURLSchemeAsLocal(scheme);
 
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
     for (auto& scheme : parameters.urlSchemesRegisteredAsNoAccess)
         registerURLSchemeAsNoAccess(scheme);
+#endif
     
     for (auto&& websiteDataStoreParameters : WTFMove(parameters.websiteDataStoreParameters))
         addWebsiteDataStore(WTFMove(websiteDataStoreParameters));
@@ -383,7 +385,7 @@ void NetworkProcess::createNetworkConnectionToWebProcess(ProcessIdentifier ident
     ASSERT(!m_webProcessConnections.contains(identifier));
     m_webProcessConnections.add(identifier, WTFMove(newConnection));
 
-    auto* storage = storageSession(sessionID);
+    CheckedPtr storage = storageSession(sessionID);
     completionHandler(WTFMove(connectionIdentifiers->client), storage ? storage->cookieAcceptPolicy() : HTTPCookieAcceptPolicy::Never);
 
     connection->setOnLineState(NetworkStateNotifier::singleton().onLine());
@@ -698,7 +700,7 @@ void NetworkProcess::dumpResourceLoadStatistics(PAL::SessionID sessionID, Comple
 
 void NetworkProcess::updatePrevalentDomainsToBlockCookiesFor(PAL::SessionID sessionID, const Vector<RegistrableDomain>& domainsToBlock, CompletionHandler<void()>&& completionHandler)
 {
-    if (auto* networkStorageSession = storageSession(sessionID))
+    if (CheckedPtr networkStorageSession = storageSession(sessionID))
         networkStorageSession->setPrevalentDomainsToBlockAndDeleteCookiesFor(domainsToBlock);
     completionHandler();
 }
@@ -1084,7 +1086,7 @@ void NetworkProcess::insertExpiredStatisticForTesting(PAL::SessionID sessionID, 
 
 void NetworkProcess::getAllStorageAccessEntries(PAL::SessionID sessionID, CompletionHandler<void(Vector<String> domains)>&& completionHandler)
 {
-    if (auto* networkStorageSession = storageSession(sessionID))
+    if (CheckedPtr networkStorageSession = storageSession(sessionID))
         completionHandler(networkStorageSession->getAllStorageAccessEntries());
     else {
         ASSERT_NOT_REACHED();
@@ -1169,7 +1171,7 @@ void NetworkProcess::hasLocalStorage(PAL::SessionID sessionID, const Registrable
 
 void NetworkProcess::setCacheMaxAgeCapForPrevalentResources(PAL::SessionID sessionID, Seconds seconds, CompletionHandler<void()>&& completionHandler)
 {
-    if (auto* networkStorageSession = storageSession(sessionID))
+    if (CheckedPtr networkStorageSession = storageSession(sessionID))
         networkStorageSession->setCacheMaxAgeCapForPrevalentResources(Seconds { seconds });
     else
         ASSERT_NOT_REACHED();
@@ -1299,7 +1301,7 @@ void NetworkProcess::isResourceLoadStatisticsEphemeral(PAL::SessionID sessionID,
 
 void NetworkProcess::resetCacheMaxAgeCapForPrevalentResources(PAL::SessionID sessionID, CompletionHandler<void()>&& completionHandler)
 {
-    if (auto* networkStorageSession = storageSession(sessionID))
+    if (CheckedPtr networkStorageSession = storageSession(sessionID))
         networkStorageSession->resetCacheMaxAgeCapForPrevalentResources();
     else
         ASSERT_NOT_REACHED();
@@ -1310,7 +1312,7 @@ void NetworkProcess::didCommitCrossSiteLoadWithDataTransfer(PAL::SessionID sessi
 {
     ASSERT(!navigationDataTransfer.isEmpty());
 
-    if (auto* networkStorageSession = storageSession(sessionID)) {
+    if (CheckedPtr networkStorageSession = storageSession(sessionID)) {
         if (!networkStorageSession->shouldBlockThirdPartyCookies(fromDomain))
             return;
 
@@ -1345,7 +1347,7 @@ void NetworkProcess::setCrossSiteLoadWithLinkDecorationForTesting(PAL::SessionID
 
 void NetworkProcess::resetCrossSiteLoadsWithLinkDecorationForTesting(PAL::SessionID sessionID, CompletionHandler<void()>&& completionHandler)
 {
-    if (auto* networkStorageSession = storageSession(sessionID))
+    if (CheckedPtr networkStorageSession = storageSession(sessionID))
         networkStorageSession->resetCrossSiteLoadsWithLinkDecorationForTesting();
     else
         ASSERT_NOT_REACHED();
@@ -1359,7 +1361,7 @@ void NetworkProcess::grantStorageAccessForTesting(PAL::SessionID sessionID, Vect
         completionHandler();
         return;
     }
-    if (auto* networkStorageSession = storageSession(sessionID)) {
+    if (CheckedPtr networkStorageSession = storageSession(sessionID)) {
         for (auto&& subFrameDomain : subFrameDomains)
             networkStorageSession->grantCrossPageStorageAccess(WTFMove(topFrameDomain), WTFMove(subFrameDomain));
     } else
@@ -1450,7 +1452,7 @@ void NetworkProcess::setFirstPartyWebsiteDataRemovalModeForTesting(PAL::SessionI
 
 void NetworkProcess::setToSameSiteStrictCookiesForTesting(PAL::SessionID sessionID, const WebCore::RegistrableDomain& domain, CompletionHandler<void()>&& completionHandler)
 {
-    if (auto* networkStorageSession = storageSession(sessionID))
+    if (CheckedPtr networkStorageSession = storageSession(sessionID))
         networkStorageSession->setAllCookiesToSameSiteStrict(domain, WTFMove(completionHandler));
     else {
         ASSERT_NOT_REACHED();
@@ -1614,7 +1616,7 @@ void NetworkProcess::fetchWebsiteData(PAL::SessionID sessionID, OptionSet<Websit
     CheckedPtr session = networkSession(sessionID);
 
     if (websiteDataTypes.contains(WebsiteDataType::Cookies)) {
-        if (auto* networkStorageSession = storageSession(sessionID))
+        if (CheckedPtr networkStorageSession = storageSession(sessionID))
             networkStorageSession->getHostnamesWithCookies(callbackAggregator->m_websiteData.hostNamesWithCookies);
     }
 
@@ -1745,12 +1747,12 @@ void NetworkProcess::deleteWebsiteDataImpl(PAL::SessionID sessionID, OptionSet<W
 #endif
 
     if (websiteDataTypes.contains(WebsiteDataType::Cookies)) {
-        if (auto* networkStorageSession = storageSession(sessionID))
+        if (CheckedPtr networkStorageSession = storageSession(sessionID))
             networkStorageSession->deleteAllCookiesModifiedSince(modifiedSince, [clearTasksHandler] { });
     }
 
     if (websiteDataTypes.contains(WebsiteDataType::Credentials)) {
-        if (auto* storage = storageSession(sessionID))
+        if (CheckedPtr storage = storageSession(sessionID))
             storage->credentialStorage().clearCredentials();
         if (session)
             session->clearCredentials(modifiedSince);
@@ -1812,7 +1814,7 @@ void NetworkProcess::deleteWebsiteDataForOrigin(PAL::SessionID sessionID, Option
 
     CheckedPtr session = networkSession(sessionID);
     if (websiteDataTypes.contains(WebsiteDataType::Cookies)) {
-        if (auto* networkStorageSession = storageSession(sessionID))
+        if (CheckedPtr networkStorageSession = storageSession(sessionID))
             networkStorageSession->deleteCookies(origin, [clearTasksHandler] { });
     }
     if (websiteDataTypes.contains(WebsiteDataType::DiskCache) && !sessionID.isEphemeral()) {
@@ -1852,7 +1854,7 @@ void NetworkProcess::deleteWebsiteDataForOrigins(PAL::SessionID sessionID, Optio
     CheckedPtr session = networkSession(sessionID);
 
     if (websiteDataTypes.contains(WebsiteDataType::Cookies)) {
-        if (auto* networkStorageSession = storageSession(sessionID))
+        if (CheckedPtr networkStorageSession = storageSession(sessionID))
             networkStorageSession->deleteCookiesForHostnames(cookieHostNames, [clearTasksHandler] { });
     }
 
@@ -1896,7 +1898,7 @@ void NetworkProcess::deleteWebsiteDataForOrigins(PAL::SessionID sessionID, Optio
     }
 
     if (websiteDataTypes.contains(WebsiteDataType::Credentials)) {
-        if (auto* storage = storageSession(sessionID)) {
+        if (CheckedPtr storage = storageSession(sessionID)) {
             for (auto& originData : originDatas)
                 storage->credentialStorage().removeCredentialsWithOrigin(originData);
         }
@@ -1988,7 +1990,7 @@ void NetworkProcess::deleteAndRestrictWebsiteDataForRegistrableDomains(PAL::Sess
     HashSet<String> hostNamesWithHSTSCache;
     auto domainsToDeleteAllScriptWrittenStorageFor = domains.domainsToDeleteAllScriptWrittenStorageFor;
     if (websiteDataTypes.contains(WebsiteDataType::Cookies)) {
-        if (auto* networkStorageSession = storageSession(sessionID)) {
+        if (CheckedPtr networkStorageSession = storageSession(sessionID)) {
             HashSet<String> hostNamesWithCookies;
             Vector<String> hostnamesWithCookiesToDelete;
             Vector<String> hostnamesWithCookiesToDeleteAllButHttpOnly;
@@ -2154,7 +2156,7 @@ void NetworkProcess::registrableDomainsWithWebsiteData(PAL::SessionID sessionID,
     auto& websiteData = callbackAggregator->m_websiteData;
     
     if (websiteDataTypes.contains(WebsiteDataType::Cookies)) {
-        if (auto* networkStorageSession = storageSession(sessionID))
+        if (CheckedPtr networkStorageSession = storageSession(sessionID))
             networkStorageSession->getHostnamesWithCookies(websiteData.hostNamesWithCookies);
     }
     
@@ -2164,7 +2166,7 @@ void NetworkProcess::registrableDomainsWithWebsiteData(PAL::SessionID sessionID,
 #endif
 
     if (websiteDataTypes.contains(WebsiteDataType::Credentials)) {
-        if (auto* networkStorageSession = storageSession(sessionID)) {
+        if (CheckedPtr networkStorageSession = storageSession(sessionID)) {
             auto securityOrigins = networkStorageSession->credentialStorage().originsWithCredentials();
             for (auto& securityOrigin : securityOrigins)
                 callbackAggregator->m_websiteData.entries.append({ securityOrigin, WebsiteDataType::Credentials, 0 });
@@ -2456,10 +2458,12 @@ void NetworkProcess::registerURLSchemeAsLocal(const String& scheme) const
     LegacySchemeRegistry::registerURLSchemeAsLocal(scheme);
 }
 
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
 void NetworkProcess::registerURLSchemeAsNoAccess(const String& scheme) const
 {
     LegacySchemeRegistry::registerURLSchemeAsNoAccess(scheme);
 }
+#endif
 
 void NetworkProcess::syncLocalStorage(CompletionHandler<void()>&& completionHandler)
 {

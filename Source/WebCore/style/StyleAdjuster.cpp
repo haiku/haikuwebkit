@@ -303,7 +303,7 @@ static OptionSet<TouchAction> computeUsedTouchActions(const RenderStyle& style, 
 bool Adjuster::adjustEventListenerRegionTypesForRootStyle(RenderStyle& rootStyle, const Document& document)
 {
     auto regionTypes = computeEventListenerRegionTypes(document, rootStyle, document, { });
-    if (RefPtr window = document.domWindow())
+    if (RefPtr window = document.window())
         regionTypes.add(computeEventListenerRegionTypes(document, rootStyle, *window, { }));
 
     bool changed = regionTypes != rootStyle.eventListenerRegionTypes();

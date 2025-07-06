@@ -116,6 +116,21 @@ enum TestConfidence { "high", "kinda-low" };
     [Reflect=customContentBooleanAttr] attribute boolean reflectedCustomBooleanAttr;
     [Reflect=customContentURLAttr, URL] attribute DOMString reflectedCustomURLAttr;
 
+    // Reflected for setter only DOM attributes
+    [ReflectSetter] attribute DOMString reflectedSetterStringAttr;
+    [ReflectSetter] attribute USVString reflectedSetterUSVStringAttr;
+    [ReflectSetter] attribute long reflectedSetterIntegralAttr;
+    [ReflectSetter] attribute unsigned long reflectedSetterUnsignedIntegralAttr;
+    [ReflectSetter] attribute boolean reflectedSetterBooleanAttr;
+    [ReflectSetter] attribute Element reflectedSetterElementAttr;
+    [ReflectSetter] attribute FrozenArray<Element> reflectedSetterElementsArrayAttr;
+    [ReflectSetter, URL] attribute DOMString reflectedSetterURLAttr;
+    [ReflectSetter, URL] attribute USVString reflectedSetterUSVURLAttr;
+    [ReflectSetter=customContentStringAttr] attribute DOMString reflectedSetterStringAttr;
+    [ReflectSetter=customContentIntegralAttr] attribute long reflectedSetterCustomIntegralAttr;
+    [ReflectSetter=customContentBooleanAttr] attribute boolean reflectedSetterCustomBooleanAttr;
+    [ReflectSetter=customContentURLAttr, URL] attribute DOMString reflectedSetterCustomURLAttr;
+
     // [EnabledByDeprecatedGlobalSetting] attributes and operations.
     [Conditional=TEST_FEATURE, EnabledByDeprecatedGlobalSetting=TestFeatureEnabled&TestFeature1Enabled] attribute DOMString enabledAtRuntimeAttribute;
     [Conditional=TEST_FEATURE, EnabledByDeprecatedGlobalSetting=TestFeatureEnabled] undefined enabledAtRuntimeOperation(DOMString testParam);

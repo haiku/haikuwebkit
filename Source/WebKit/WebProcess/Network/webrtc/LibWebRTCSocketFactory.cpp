@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017 Apple Inc. All rights reserved.
+ * Copyright (C) 2017-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -69,8 +69,8 @@ rtc::AsyncPacketSocket* LibWebRTCSocketFactory::createUdpSocket(WebCore::ScriptE
     ASSERT(!WTF::isMainRunLoop());
     auto socket = makeUnique<LibWebRTCSocket>(*this, contextIdentifier, LibWebRTCSocket::Type::UDP, address, rtc::SocketAddress());
 
-    if (m_connection)
-        m_connection->send(Messages::NetworkRTCProvider::CreateUDPSocket(socket->identifier(), RTCNetwork::SocketAddress(address), minPort, maxPort, pageIdentifier, isFirstParty, isRelayDisabled, domain), 0);
+    if (RefPtr connection = m_connection)
+        connection->send(Messages::NetworkRTCProvider::CreateUDPSocket(socket->identifier(), RTCNetwork::SocketAddress(address), minPort, maxPort, pageIdentifier, isFirstParty, isRelayDisabled, domain), 0);
     else {
         callOnMainRunLoop([] {
             WebProcess::singleton().ensureNetworkProcessConnection();
@@ -91,8 +91,8 @@ rtc::AsyncPacketSocket* LibWebRTCSocketFactory::createClientTcpSocket(WebCore::S
     socket->setState(LibWebRTCSocket::STATE_CONNECTING);
 
     // FIXME: We only transfer options.opts but should also handle other members.
-    if (m_connection)
-        m_connection->send(Messages::NetworkRTCProvider::CreateClientTCPSocket(socket->identifier(), RTCNetwork::SocketAddress(prepareSocketAddress(localAddress, m_disableNonLocalhostConnections)), RTCNetwork::SocketAddress(prepareSocketAddress(remoteAddress, m_disableNonLocalhostConnections)), userAgent, options.opts, pageIdentifier, isFirstParty, isRelayDisabled, domain), 0);
+    if (RefPtr connection = m_connection)
+        connection->send(Messages::NetworkRTCProvider::CreateClientTCPSocket(socket->identifier(), RTCNetwork::SocketAddress(prepareSocketAddress(localAddress, m_disableNonLocalhostConnections)), RTCNetwork::SocketAddress(prepareSocketAddress(remoteAddress, m_disableNonLocalhostConnections)), userAgent, options.opts, pageIdentifier, isFirstParty, isRelayDisabled, domain), 0);
     else {
         callOnMainRunLoop([] {
             WebProcess::singleton().ensureNetworkProcessConnection();

@@ -121,7 +121,7 @@ Variant<std::monostate, Exception, Ref<TrustedHTML>, Ref<TrustedScript>, Ref<Tru
 {
     RefPtr<TrustedTypePolicy> protectedPolicy;
     if (RefPtr document = dynamicDowncast<Document>(scriptExecutionContext)) {
-        if (RefPtr window = document->domWindow())
+        if (RefPtr window = document->window())
             protectedPolicy = WindowOrWorkerGlobalScopeTrustedTypes::trustedTypes(*window)->defaultPolicy();
     } else if (RefPtr workerGlobalScope = dynamicDowncast<WorkerGlobalScope>(scriptExecutionContext))
         protectedPolicy = WindowOrWorkerGlobalScopeTrustedTypes::trustedTypes(*workerGlobalScope)->defaultPolicy();

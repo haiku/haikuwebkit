@@ -244,7 +244,7 @@
 #include "LaunchServicesDatabaseManager.h"
 #endif
 
-#if HAVE(LOCKDOWN_MODE_FRAMEWORK)
+#if ENABLE(LOCKDOWN_MODE_API)
 #import <pal/cocoa/LockdownModeCocoa.h>
 #endif
 
@@ -606,8 +606,10 @@ void WebProcess::initializeWebProcess(WebProcessCreationParameters&& parameters,
     for (auto& scheme : parameters.urlSchemesRegisteredAsLocal)
         registerURLSchemeAsLocal(scheme);
 
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
     for (auto& scheme : parameters.urlSchemesRegisteredAsNoAccess)
         registerURLSchemeAsNoAccess(scheme);
+#endif
 
     for (auto& scheme : parameters.urlSchemesRegisteredAsDisplayIsolated)
         registerURLSchemeAsDisplayIsolated(scheme);
@@ -646,7 +648,7 @@ void WebProcess::initializeWebProcess(WebProcessCreationParameters&& parameters,
     ScriptExecutionContext::setCrossOriginMode(parameters.crossOriginMode);
     DeprecatedGlobalSettings::setArePDFImagesEnabled(!isLockdownModeEnabled());
 
-#if HAVE(LOCKDOWN_MODE_FRAMEWORK)
+#if ENABLE(LOCKDOWN_MODE_API)
     PAL::setLockdownModeEnabledForCurrentProcess(isLockdownModeEnabled());
 #endif
 
@@ -838,10 +840,12 @@ void WebProcess::registerURLSchemeAsLocal(const String& urlScheme) const
     LegacySchemeRegistry::registerURLSchemeAsLocal(urlScheme);
 }
 
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
 void WebProcess::registerURLSchemeAsNoAccess(const String& urlScheme) const
 {
     LegacySchemeRegistry::registerURLSchemeAsNoAccess(urlScheme);
 }
+#endif
 
 void WebProcess::registerURLSchemeAsDisplayIsolated(const String& urlScheme) const
 {
@@ -1362,12 +1366,12 @@ void WebProcess::networkProcessConnectionClosed(NetworkProcessConnection* connec
 
     for (auto& page : m_pageMap.values()) {
         RefPtr corePage = page->corePage();
-        auto idbConnection = corePage->optionalIDBConnection();
+        RefPtr idbConnection = corePage->optionalIDBConnection();
         if (!idbConnection)
             continue;
         
         if (RefPtr existingIDBConnectionToServer = connection->existingIDBConnectionToServer()) {
-            ASSERT_UNUSED(existingIDBConnectionToServer, idbConnection == &existingIDBConnectionToServer->coreConnectionToServer());
+            ASSERT_UNUSED(existingIDBConnectionToServer, idbConnection.get() == &existingIDBConnectionToServer->coreConnectionToServer());
             corePage->clearIDBConnection();
         }
     }

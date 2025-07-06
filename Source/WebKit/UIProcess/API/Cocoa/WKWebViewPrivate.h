@@ -615,6 +615,8 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 
 @property (nonatomic) audit_token_t presentingApplicationAuditToken WK_API_AVAILABLE(macos(15.4), ios(18.4), visionos(2.4));
 
+@property (nonatomic, setter=_setShouldSuppressTopColorExtensionView:) BOOL _shouldSuppressTopColorExtensionView WK_API_AVAILABLE(macos(WK_MAC_TBA), ios(WK_IOS_TBA));
+
 @end
 
 #if TARGET_OS_IPHONE
@@ -880,6 +882,7 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 - (void)_setObscuredContentInsets:(NSEdgeInsets)insets immediate:(BOOL)immediate WK_API_AVAILABLE(macos(WK_MAC_TBA));
 @property (nonatomic, readonly) NSEdgeInsets _obscuredContentInsets WK_API_AVAILABLE(macos(WK_MAC_TBA));
 @property (nonatomic, setter=_setUsesAutomaticContentInsetBackgroundFill:) BOOL _usesAutomaticContentInsetBackgroundFill WK_API_AVAILABLE(macos(WK_MAC_TBA));
+@property (nonatomic, copy, setter=_setOverrideTopScrollEdgeEffectColor:) NSColor *_overrideTopScrollEdgeEffectColor WK_API_AVAILABLE(macos(WK_MAC_TBA));
 
 - (void)_showWritingTools WK_API_AVAILABLE(macos(15.2));
 

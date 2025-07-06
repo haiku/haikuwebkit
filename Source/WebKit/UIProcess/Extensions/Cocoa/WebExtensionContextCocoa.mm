@@ -117,7 +117,7 @@ static NSString * const lastLoadedDeclarativeNetRequestHashStateKey = @"LastLoad
 static NSString * const sessionStorageAllowedInContentScriptsKey = @"SessionStorageAllowedInContentScripts";
 
 // Update this value when any changes are made to the WebExtensionEventListenerType enum.
-static constexpr NSInteger currentBackgroundContentListenerStateVersion = 3;
+static constexpr NSInteger currentBackgroundContentListenerStateVersion = 4;
 
 // Update this value when any changes are made to the rule translation logic in _WKWebExtensionDeclarativeNetRequestRule.
 static constexpr NSInteger currentDeclarativeNetRequestRuleTranslatorVersion = 5;
@@ -4795,7 +4795,7 @@ void WebExtensionContext::compileDeclarativeNetRequestRules(NSArray *rulesData, 
                     }
                 }
 
-                API::ContentRuleListStore::defaultStoreSingleton().compileContentRuleListFile(declarativeNetRequestContentRuleListFilePath(), uniqueIdentifier().isolatedCopy(), String(webKitRules), [this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler), hashOfWebKitRules](RefPtr<API::ContentRuleList> ruleList, std::error_code error) mutable {
+                API::ContentRuleListStore::defaultStoreSingleton().compileContentRuleListFile(declarativeNetRequestContentRuleListFilePath(), uniqueIdentifier().isolatedCopy(), String(webKitRules), WebCore::ContentExtensions::CSSSelectorsAllowed::No, [this, protectedThis = Ref { *this }, completionHandler = WTFMove(completionHandler), hashOfWebKitRules](RefPtr<API::ContentRuleList> ruleList, std::error_code error) mutable {
                     if (error) {
                         RELEASE_LOG_ERROR(Extensions, "Error compiling declarativeNetRequest rules: %{public}s", error.message().c_str());
                         completionHandler(false);
@@ -5017,15 +5017,14 @@ void WebExtensionContext::sendTestMessage(const String& message, id argument)
     if (!isLoaded() || !inTestingMode())
         return;
 
-    if (!hasTestMessageEventListeners()) {
-        m_testMessageQueue.append({ message, argument });
+    constexpr auto eventType = WebExtensionEventListenerType::TestOnMessage;
 
+    if (!hasTestEventListeners(eventType)) {
+        addTestMessageToQueue(message, argument, eventType);
         return;
     }
 
     String argumentJSON = encodeJSONString(argument, JSONOptions::FragmentsAllowed);
-
-    constexpr auto eventType = WebExtensionEventListenerType::TestOnMessage;
 
     sendToProcesses(processes(eventType, WebExtensionContentWorldType::WebPage), Messages::WebExtensionContextProxy::DispatchTestMessageEvent(message, argumentJSON, WebExtensionContentWorldType::WebPage));
 
@@ -5036,11 +5035,117 @@ void WebExtensionContext::sendTestMessage(const String& message, id argument)
     });
 }
 
-void WebExtensionContext::flushTestMessageQueueIfNeeded()
+void WebExtensionContext::sendTestStarted(id argument)
 {
-    while (!m_testMessageQueue.isEmpty()) {
-        auto testMessage = m_testMessageQueue.takeFirst();
-        sendTestMessage(testMessage.message, testMessage.argument.get());
+    ASSERT(isLoaded() && inTestingMode());
+    if (!isLoaded() || !inTestingMode())
+        return;
+
+    constexpr auto type = WebExtensionEventListenerType::TestOnTestStarted;
+
+    if (!hasTestEventListeners(type)) {
+        addTestMessageToQueue(nullString(), argument, type);
+        return;
+    }
+
+    String argumentJSON = encodeJSONString(argument, JSONOptions::FragmentsAllowed);
+
+    sendToProcesses(processes(type, WebExtensionContentWorldType::WebPage), Messages::WebExtensionContextProxy::DispatchTestStartedEvent(argumentJSON, WebExtensionContentWorldType::WebPage));
+
+    sendToContentScriptProcessesForEvent(type, Messages::WebExtensionContextProxy::DispatchTestStartedEvent(argumentJSON, WebExtensionContentWorldType::ContentScript));
+
+    wakeUpBackgroundContentIfNecessaryToFireEvents({ type }, [=, this, protectedThis = Ref { *this }] {
+        sendToProcessesForEvent(type, Messages::WebExtensionContextProxy::DispatchTestStartedEvent(argumentJSON, WebExtensionContentWorldType::Main));
+    });
+}
+
+void WebExtensionContext::sendTestFinished(id argument)
+{
+    ASSERT(isLoaded() && inTestingMode());
+    if (!isLoaded() || !inTestingMode())
+        return;
+
+    constexpr auto type = WebExtensionEventListenerType::TestOnTestFinished;
+
+    if (!hasTestEventListeners(type)) {
+        addTestMessageToQueue(nullString(), argument, type);
+        return;
+    }
+
+    String argumentJSON = encodeJSONString(argument, JSONOptions::FragmentsAllowed);
+
+    sendToProcesses(processes(type, WebExtensionContentWorldType::WebPage), Messages::WebExtensionContextProxy::DispatchTestFinishedEvent(argumentJSON, WebExtensionContentWorldType::WebPage));
+
+    sendToContentScriptProcessesForEvent(type, Messages::WebExtensionContextProxy::DispatchTestFinishedEvent(argumentJSON, WebExtensionContentWorldType::ContentScript));
+
+    wakeUpBackgroundContentIfNecessaryToFireEvents({ type }, [=, this, protectedThis = Ref { *this }] {
+        sendToProcessesForEvent(type, Messages::WebExtensionContextProxy::DispatchTestFinishedEvent(argumentJSON, WebExtensionContentWorldType::Main));
+    });
+}
+
+void WebExtensionContext::addTestMessageToQueue(const String& message, id argument, WebExtensionEventListenerType type)
+{
+    switch (type) {
+    case WebExtensionEventListenerType::TestOnMessage:
+        m_testMessageQueue.append({ message, argument });
+        break;
+
+    case WebExtensionEventListenerType::TestOnTestStarted:
+        m_testStartedQueue.append({ message, argument });
+        break;
+
+    case WebExtensionEventListenerType::TestOnTestFinished:
+        m_testFinishedQueue.append({ message, argument });
+        break;
+
+    default:
+        ASSERT_NOT_REACHED();
+        return;
+    }
+}
+
+void WebExtensionContext::sendQueuedTestMessagesIfNeeded(WebExtensionEventListenerType type)
+{
+    switch (type) {
+    case WebExtensionEventListenerType::TestOnMessage:
+        while (!m_testMessageQueue.isEmpty()) {
+            const auto& testMessage = m_testMessageQueue.takeFirst();
+            sendTestMessage(testMessage.message, testMessage.argument.get());
+        }
+        break;
+
+    case WebExtensionEventListenerType::TestOnTestStarted:
+        while (!m_testStartedQueue.isEmpty()) {
+            const auto& testMessage = m_testStartedQueue.takeFirst();
+            sendTestStarted(testMessage.argument.get());
+        }
+        break;
+
+    case WebExtensionEventListenerType::TestOnTestFinished:
+        while (!m_testFinishedQueue.isEmpty()) {
+            const auto& testMessage = m_testFinishedQueue.takeFirst();
+            sendTestFinished(testMessage.argument.get());
+        }
+        break;
+
+    default:
+        ASSERT_NOT_REACHED();
+        return;
+    }
+}
+
+bool WebExtensionContext::hasTestEventListeners(WebExtensionEventListenerType type)
+{
+    switch (type) {
+    case WebExtensionEventListenerType::TestOnMessage:
+        return m_testMessageListenersCount;
+    case WebExtensionEventListenerType::TestOnTestStarted:
+        return m_testStartedListenersCount;
+    case WebExtensionEventListenerType::TestOnTestFinished:
+        return m_testFinishedListenersCount;
+
+    default:
+        return false;
     }
 }
 

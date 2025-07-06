@@ -169,11 +169,11 @@ struct TextMarkerData {
 
     unsigned offset;
     Position::AnchorType anchorType;
-    Affinity affinity;
 
     unsigned characterStart;
     unsigned characterOffset;
     bool ignored;
+    Affinity affinity;
 
     TextMarkerOrigin origin;
 

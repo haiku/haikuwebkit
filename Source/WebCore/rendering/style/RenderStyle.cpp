@@ -2,6 +2,7 @@
  * Copyright (C) 1999 Antti Koivisto (koivisto@kde.org)
  * Copyright (C) 2004-2023 Apple Inc. All rights reserved.
  * Copyright (C) 2011 Adobe Systems Incorporated. All rights reserved.
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -30,7 +31,6 @@
 #include "ColorBlending.h"
 #include "ContentData.h"
 #include "CursorList.h"
-#include "CustomPropertyRegistry.h"
 #include "FloatRoundedRect.h"
 #include "FontCascade.h"
 #include "FontSelector.h"
@@ -50,6 +50,7 @@
 #include "ScrollAxis.h"
 #include "ScrollbarGutter.h"
 #include "StyleBuilderConverter.h"
+#include "StyleCustomPropertyRegistry.h"
 #include "StyleExtractor.h"
 #include "StyleImage.h"
 #include "StyleInheritedData.h"
@@ -828,8 +829,7 @@ static bool rareDataChangeRequiresLayout(const StyleRareNonInheritedData& first,
 {
     ASSERT(&first != &second);
 
-    if (first.lineClamp != second.lineClamp
-        || first.initialLetter != second.initialLetter)
+    if (first.lineClamp != second.lineClamp || first.initialLetter != second.initialLetter)
         return true;
 
     if (first.shapeMargin != second.shapeMargin)
@@ -845,9 +845,7 @@ static bool rareDataChangeRequiresLayout(const StyleRareNonInheritedData& first,
     if (first.counterDirectives != second.counterDirectives)
         return true;
 
-    if (!arePointingToEqualData(first.scale, second.scale)
-        || !arePointingToEqualData(first.rotate, second.rotate)
-        || !arePointingToEqualData(first.translate, second.translate))
+    if (first.scale != second.scale || first.rotate != second.rotate || first.translate != second.translate)
         changedContextSensitiveProperties.add(StyleDifferenceContextSensitiveProperty::Transform);
 
     if (!arePointingToEqualData(first.offsetPath, second.offsetPath)
@@ -866,9 +864,7 @@ static bool rareDataChangeRequiresLayout(const StyleRareNonInheritedData& first,
         // Don't return; keep looking for another change
     }
 
-    if (first.breakBefore != second.breakBefore
-        || first.breakAfter != second.breakAfter
-        || first.breakInside != second.breakInside)
+    if (first.breakBefore != second.breakBefore || first.breakAfter != second.breakAfter || first.breakInside != second.breakInside)
         return true;
 
     if (first.isolation != second.isolation) {
@@ -1154,18 +1150,13 @@ bool RenderStyle::changeRequiresLayout(const RenderStyle& other, OptionSet<Style
     return false;
 }
 
-bool RenderStyle::changeRequiresPositionedLayoutOnly(const RenderStyle& other, OptionSet<StyleDifferenceContextSensitiveProperty>&) const
+bool RenderStyle::changeRequiresOutOfFlowMovementLayoutOnly(const RenderStyle& other, OptionSet<StyleDifferenceContextSensitiveProperty>&) const
 {
-    if (position() == PositionType::Static)
+    if (position() != PositionType::Absolute)
         return false;
 
-    if (m_nonInheritedData->surroundData->inset != other.m_nonInheritedData->surroundData->inset) {
-        // Optimize for the case where a positioned layer is moving but not changing size.
-        if (position() == PositionType::Absolute && positionChangeIsMovementOnly(m_nonInheritedData->surroundData->inset, other.m_nonInheritedData->surroundData->inset, m_nonInheritedData->boxData->width()))
-            return true;
-    }
-    
-    return false;
+    // Optimize for the case where a out-of-flow box is moving but not changing size.
+    return (m_nonInheritedData->surroundData->inset != other.m_nonInheritedData->surroundData->inset) && positionChangeIsMovementOnly(m_nonInheritedData->surroundData->inset, other.m_nonInheritedData->surroundData->inset, m_nonInheritedData->boxData->width());
 }
 
 static bool miscDataChangeRequiresLayerRepaint(const StyleMiscNonInheritedData& first, const StyleMiscNonInheritedData& second, OptionSet<StyleDifferenceContextSensitiveProperty>& changedContextSensitiveProperties)
@@ -1317,27 +1308,19 @@ inline static bool changedCustomPaintWatchedProperty(const RenderStyle& a, const
 
         for (auto& watchPropertiesMap : { propertiesA, propertiesB }) {
             for (auto& name : watchPropertiesMap) {
-                RefPtr<const CSSValue> valueA;
-                RefPtr<const CSSValue> valueB;
                 if (isCustomPropertyName(name)) {
-                    valueA = a.customPropertyValue(name);
-                    valueB = b.customPropertyValue(name);
-                } else {
-                    CSSPropertyID propertyID = cssPropertyID(name);
-                    if (!propertyID)
-                        continue;
-                    valueA = extractor.propertyValueInStyle(a, propertyID, pool);
-                    valueB = extractor.propertyValueInStyle(b, propertyID, pool);
+                    auto valueA = a.customPropertyValue(name);
+                    auto valueB = b.customPropertyValue(name);
+
+                    if (valueA != valueB && (!valueA || !valueB || *valueA != *valueB))
+                        return true;
+                } else if (auto propertyID = cssPropertyID(name)) {
+                    auto valueA = extractor.propertyValueInStyle(a, propertyID, pool);
+                    auto valueB = extractor.propertyValueInStyle(b, propertyID, pool);
+
+                    if (valueA != valueB && (!valueA || !valueB || *valueA != *valueB))
+                        return true;
                 }
-
-                if ((valueA && !valueB) || (!valueA && valueB))
-                    return true;
-
-                if (!valueA)
-                    continue;
-
-                if (!(*valueA == *valueB))
-                    return true;
             }
         }
     }
@@ -1501,8 +1484,8 @@ StyleDifference RenderStyle::diff(const RenderStyle& other, OptionSet<StyleDiffe
     if (changeRequiresLayout(other, changedContextSensitiveProperties))
         return StyleDifference::Layout;
 
-    if (changeRequiresPositionedLayoutOnly(other, changedContextSensitiveProperties))
-        return StyleDifference::LayoutPositionedMovementOnly;
+    if (changeRequiresOutOfFlowMovementLayoutOnly(other, changedContextSensitiveProperties))
+        return StyleDifference::LayoutOutOfFlowMovementOnly;
 
     if (changeRequiresLayerRepaint(other, changedContextSensitiveProperties))
         return StyleDifference::RepaintLayer;
@@ -1942,11 +1925,11 @@ void RenderStyle::conservativelyCollectChangedAnimatableProperties(const RenderS
             changingProperties.m_properties.set(CSSPropertyClipPath);
         if (first.textDecorationColor != second.textDecorationColor)
             changingProperties.m_properties.set(CSSPropertyTextDecorationColor);
-        if (!arePointingToEqualData(first.rotate, second.rotate))
+        if (first.rotate != second.rotate)
             changingProperties.m_properties.set(CSSPropertyRotate);
-        if (!arePointingToEqualData(first.scale, second.scale))
+        if (first.scale != second.scale)
             changingProperties.m_properties.set(CSSPropertyScale);
-        if (!arePointingToEqualData(first.translate, second.translate))
+        if (first.translate != second.translate)
             changingProperties.m_properties.set(CSSPropertyTranslate);
         if (!arePointingToEqualData(first.offsetPath, second.offsetPath))
             changingProperties.m_properties.set(CSSPropertyOffsetPath);
@@ -2305,21 +2288,6 @@ void RenderStyle::setWillChange(RefPtr<WillChangeData>&& willChangeData)
     m_nonInheritedData.access().rareData.access().willChange = WTFMove(willChangeData);
 }
 
-void RenderStyle::setScale(RefPtr<ScaleTransformOperation>&& t)
-{
-    m_nonInheritedData.access().rareData.access().scale = WTFMove(t);
-}
-
-void RenderStyle::setRotate(RefPtr<RotateTransformOperation>&& t)
-{
-    m_nonInheritedData.access().rareData.access().rotate = WTFMove(t);
-}
-
-void RenderStyle::setTranslate(RefPtr<TranslateTransformOperation>&& t)
-{
-    m_nonInheritedData.access().rareData.access().translate = WTFMove(t);
-}
-
 void RenderStyle::clearCursorList()
 {
     if (m_rareInheritedData->cursorData)
@@ -2405,10 +2373,10 @@ void RenderStyle::setHasAttrContent()
 
 bool RenderStyle::affectedByTransformOrigin() const
 {
-    if (rotate() && !rotate()->isIdentity())
+    if (rotate().affectedByTransformOrigin())
         return true;
 
-    if (scale() && !scale()->isIdentity())
+    if (scale().affectedByTransformOrigin())
         return true;
 
     if (transform().affectedByTransformOrigin())
@@ -2490,22 +2458,16 @@ void RenderStyle::applyCSSTransform(TransformationMatrix& transform, const Trans
     auto& boundingBox = operationData.boundingBox;
 
     // 3. Translate by the computed X, Y, and Z values of translate.
-    if (options.contains(RenderStyle::TransformOperationOption::Translate)) {
-        if (auto* translate = this->translate())
-            translate->apply(transform, boundingBox.size());
-    }
+    if (options.contains(RenderStyle::TransformOperationOption::Translate))
+        translate().apply(transform, boundingBox.size());
 
     // 4. Rotate by the computed <angle> about the specified axis of rotate.
-    if (options.contains(RenderStyle::TransformOperationOption::Rotate)) {
-        if (auto* rotate = this->rotate())
-            rotate->apply(transform, boundingBox.size());
-    }
+    if (options.contains(RenderStyle::TransformOperationOption::Rotate))
+        rotate().apply(transform, boundingBox.size());
 
     // 5. Scale by the computed X, Y, and Z values of scale.
-    if (options.contains(RenderStyle::TransformOperationOption::Scale)) {
-        if (auto* scale = this->scale())
-            scale->apply(transform, boundingBox.size());
-    }
+    if (options.contains(RenderStyle::TransformOperationOption::Scale))
+        scale().apply(transform, boundingBox.size());
 
     // 6. Translate and rotate by the transform specified by offset.
     if (options.contains(RenderStyle::TransformOperationOption::Offset))
@@ -2973,7 +2935,7 @@ const Style::Color& RenderStyle::unresolvedColorForProperty(CSSPropertyID colorP
     case CSSPropertyBorderTopColor:
         return visitedLink ? visitedLinkBorderTopColor() : borderTopColor();
     case CSSPropertyFill:
-        return fillPaintColor();
+        return fill().color;
     case CSSPropertyFloodColor:
         return floodColor();
     case CSSPropertyLightingColor:
@@ -2983,7 +2945,7 @@ const Style::Color& RenderStyle::unresolvedColorForProperty(CSSPropertyID colorP
     case CSSPropertyStopColor:
         return stopColor();
     case CSSPropertyStroke:
-        return strokePaintColor();
+        return stroke().color;
     case CSSPropertyStrokeColor:
         return visitedLink ? visitedLinkStrokeColor() : strokeColor();
     case CSSPropertyBorderBlockEndColor:
@@ -3532,7 +3494,7 @@ void RenderStyle::setColumnStylesFromPaginationMode(PaginationMode paginationMod
 void RenderStyle::deduplicateCustomProperties(const RenderStyle& other)
 {
     auto deduplicate = [&] <typename T> (const DataRef<T>& data, const DataRef<T>& otherData) {
-        auto& properties = const_cast<DataRef<StyleCustomPropertyData>&>(data->customProperties);
+        auto& properties = const_cast<DataRef<Style::CustomPropertyData>&>(data->customProperties);
         auto& otherProperties = otherData->customProperties;
         if (properties.ptr() == otherProperties.ptr() || *properties != *otherProperties)
             return;
@@ -3543,19 +3505,19 @@ void RenderStyle::deduplicateCustomProperties(const RenderStyle& other)
     deduplicate(m_nonInheritedData->rareData, other.m_nonInheritedData->rareData);
 }
 
-void RenderStyle::setCustomPropertyValue(Ref<const CSSCustomPropertyValue>&& value, bool isInherited)
+void RenderStyle::setCustomPropertyValue(Ref<const Style::CustomProperty>&& value, bool isInherited)
 {
     auto& name = value->name();
     if (isInherited) {
-        if (auto* existingValue = m_rareInheritedData->customProperties->get(name); !existingValue || !existingValue->equals(value.get()))
+        if (auto* existingValue = m_rareInheritedData->customProperties->get(name); !existingValue || *existingValue != value.get())
             m_rareInheritedData.access().customProperties.access().set(name, WTFMove(value));
     } else {
-        if (auto* existingValue = m_nonInheritedData->rareData->customProperties->get(name); !existingValue || !existingValue->equals(value.get()))
+        if (auto* existingValue = m_nonInheritedData->rareData->customProperties->get(name); !existingValue || *existingValue != value.get())
             m_nonInheritedData.access().rareData.access().customProperties.access().set(name, WTFMove(value));
     }
 }
 
-const CSSCustomPropertyValue* RenderStyle::customPropertyValue(const AtomString& name) const
+const Style::CustomProperty* RenderStyle::customPropertyValue(const AtomString& name) const
 {
     for (auto* map : { &nonInheritedCustomProperties(), &inheritedCustomProperties() }) {
         if (auto* value = map->get(name))

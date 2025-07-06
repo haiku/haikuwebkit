@@ -96,11 +96,7 @@ private struct MaterialHostingView<P: MaterialHostingProvider>: View {
         case .subduedGlass:
             return ._glass(.regular.forceSubdued())
         case .mediaControlsGlass:
-#if canImport(SwiftUI, _version: 7.0.60)
             return ._glass(.regular.adaptive(false))
-#else
-            return ._glass(.regular)
-#endif
         case .subduedMediaControlsGlass:
             return ._glass(.avplayer.forceSubdued())
         @unknown default:

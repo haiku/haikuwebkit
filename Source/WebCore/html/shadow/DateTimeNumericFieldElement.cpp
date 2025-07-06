@@ -130,8 +130,9 @@ void DateTimeNumericFieldElement::setValueAsIntegerByStepping(int value)
 
 void DateTimeNumericFieldElement::setARIAValueAttributesWithInteger(int value)
 {
-    setAttributeWithoutSynchronization(HTMLNames::aria_valuenowAttr, AtomString::number(value));
-    setAttributeWithoutSynchronization(HTMLNames::aria_valuetextAttr, AtomString::number(value));
+    auto string = AtomString::number(value);
+    setAttributeWithoutSynchronization(HTMLNames::aria_valuenowAttr, string);
+    setAttributeWithoutSynchronization(HTMLNames::aria_valuetextAttr, string);
 }
 
 void DateTimeNumericFieldElement::stepDown()

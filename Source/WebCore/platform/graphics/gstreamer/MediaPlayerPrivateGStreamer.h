@@ -536,7 +536,6 @@ private:
     void configureVideoDecoder(GstElement*);
     void configureElement(GstElement*);
     void configureParsebin(GstElement*);
-    void configureUriDecodebin2(GstElement*);
 
     void configureElementPlatformQuirks(GstElement*);
 

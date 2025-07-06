@@ -82,8 +82,6 @@ static auto toCalculationValue(const NonCanonicalDimension&, const ToConversionO
 static auto toCalculationValue(const Symbol&, const ToConversionOptions&) -> Calculation::Child;
 static auto toCalculationValue(const SiblingCount&, const ToConversionOptions&) -> Calculation::Child;
 static auto toCalculationValue(const SiblingIndex&, const ToConversionOptions&) -> Calculation::Child;
-static auto toCalculationValue(const IndirectNode<MediaProgress>&, const ToConversionOptions&) -> Calculation::Child;
-static auto toCalculationValue(const IndirectNode<ContainerProgress>&, const ToConversionOptions&) -> Calculation::Child;
 static auto toCalculationValue(const IndirectNode<Anchor>&, const ToConversionOptions&) -> Calculation::Child;
 static auto toCalculationValue(const IndirectNode<AnchorSize>&, const ToConversionOptions&) -> Calculation::Child;
 template<typename Op> auto toCalculationValue(const IndirectNode<Op>&, const ToConversionOptions&) -> Calculation::Child;
@@ -326,18 +324,6 @@ Calculation::Child toCalculationValue(const SiblingCount&, const ToConversionOpt
 Calculation::Child toCalculationValue(const SiblingIndex&, const ToConversionOptions&)
 {
     ASSERT_NOT_REACHED("Unevaluated sibling-index() functions are not supported in the Calculation::Tree");
-    return Calculation::number(0);
-}
-
-Calculation::Child toCalculationValue(const IndirectNode<MediaProgress>&, const ToConversionOptions&)
-{
-    ASSERT_NOT_REACHED("Unevaluated media-progress() functions are not supported in the Calculation::Tree");
-    return Calculation::number(0);
-}
-
-Calculation::Child toCalculationValue(const IndirectNode<ContainerProgress>&, const ToConversionOptions&)
-{
-    ASSERT_NOT_REACHED("Unevaluated container-progress() functions are not supported in the Calculation::Tree");
     return Calculation::number(0);
 }
 

@@ -639,6 +639,7 @@ private:
             break;
         }
 
+        // FIXME: handle RegExpSearch here if possible.
         case RegExpExec:
         case RegExpTest:
         case RegExpMatchFast:

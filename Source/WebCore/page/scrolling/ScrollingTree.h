@@ -193,11 +193,11 @@ public:
 
     // A map of overflow scrolling nodes to positioned nodes which need to be updated
     // when the scroller changes, but are not descendants.
-    using RelatedNodesMap = UncheckedKeyHashMap<ScrollingNodeID, Vector<ScrollingNodeID>>;
+    using RelatedNodesMap = HashMap<ScrollingNodeID, Vector<ScrollingNodeID>>;
     RelatedNodesMap& overflowRelatedNodes() { return m_overflowRelatedNodesMap; }
 
-    UncheckedKeyHashSet<Ref<ScrollingTreeOverflowScrollProxyNode>>& activeOverflowScrollProxyNodes() { return m_activeOverflowScrollProxyNodes; }
-    UncheckedKeyHashSet<Ref<ScrollingTreePositionedNode>>& activePositionedNodes() { return m_activePositionedNodes; }
+    HashSet<Ref<ScrollingTreeOverflowScrollProxyNode>>& activeOverflowScrollProxyNodes() { return m_activeOverflowScrollProxyNodes; }
+    HashSet<Ref<ScrollingTreePositionedNode>>& activePositionedNodes() { return m_activePositionedNodes; }
 
     WEBCORE_EXPORT String scrollingTreeAsText(OptionSet<ScrollingStateTreeAsTextBehavior> = { });
 
@@ -277,7 +277,7 @@ protected:
 
     bool hasProcessedWheelEventsRecently();
 
-    UncheckedKeyHashSet<ScrollingNodeID> nodesWithActiveScrollAnimations();
+    HashSet<ScrollingNodeID> nodesWithActiveScrollAnimations();
     WEBCORE_EXPORT void serviceScrollAnimations(MonotonicTime) WTF_REQUIRES_LOCK(m_treeLock);
 
     mutable Lock m_treeLock; // Protects the scrolling tree.
@@ -303,19 +303,19 @@ private:
 
     RefPtr<ScrollingTreeFrameScrollingNode> m_rootNode;
 
-    using ScrollingTreeNodeMap = UncheckedKeyHashMap<ScrollingNodeID, RefPtr<ScrollingTreeNode>>;
+    using ScrollingTreeNodeMap = HashMap<ScrollingNodeID, RefPtr<ScrollingTreeNode>>;
     ScrollingTreeNodeMap m_nodeMap;
 
     Lock m_frameIDMapLock;
-    UncheckedKeyHashMap<FrameIdentifier, UncheckedKeyHashSet<ScrollingNodeID>> m_nodeMapPerFrame WTF_GUARDED_BY_LOCK(m_frameIDMapLock);
+    HashMap<FrameIdentifier, HashSet<ScrollingNodeID>> m_nodeMapPerFrame WTF_GUARDED_BY_LOCK(m_frameIDMapLock);
 
     ScrollingTreeLatchingController m_latchingController;
     ScrollingTreeGestureState m_gestureState;
 
     RelatedNodesMap m_overflowRelatedNodesMap;
 
-    UncheckedKeyHashSet<Ref<ScrollingTreeOverflowScrollProxyNode>> m_activeOverflowScrollProxyNodes;
-    UncheckedKeyHashSet<Ref<ScrollingTreePositionedNode>> m_activePositionedNodes;
+    HashSet<Ref<ScrollingTreeOverflowScrollProxyNode>> m_activeOverflowScrollProxyNodes;
+    HashSet<Ref<ScrollingTreePositionedNode>> m_activePositionedNodes;
 
     struct TreeState {
         EventTrackingRegions eventTrackingRegions;
@@ -323,10 +323,10 @@ private:
         PlatformDisplayID displayID { 0 };
         std::optional<FramesPerSecond> nominalFramesPerSecond;
         std::optional<WheelScrollGestureState> gestureState;
-        UncheckedKeyHashSet<ScrollingNodeID> nodesWithActiveRubberBanding;
-        UncheckedKeyHashSet<ScrollingNodeID> nodesWithActiveScrollSnap;
-        UncheckedKeyHashSet<ScrollingNodeID> nodesWithActiveUserScrolls;
-        UncheckedKeyHashSet<ScrollingNodeID> nodesWithActiveScrollAnimations;
+        HashSet<ScrollingNodeID> nodesWithActiveRubberBanding;
+        HashSet<ScrollingNodeID> nodesWithActiveScrollSnap;
+        HashSet<ScrollingNodeID> nodesWithActiveUserScrolls;
+        HashSet<ScrollingNodeID> nodesWithActiveScrollAnimations;
     };
     
     mutable Lock m_treeStateLock;
@@ -347,8 +347,8 @@ private:
     Lock m_lastWheelEventTimeLock;
     MonotonicTime m_lastWheelEventTime WTF_GUARDED_BY_LOCK(m_lastWheelEventTimeLock);
 
-    UncheckedKeyHashMap<LayerHostingContextIdentifier, Vector<std::unique_ptr<ScrollingStateTree>>> m_hostedSubtreesNeedingPairing;
-    UncheckedKeyHashMap<LayerHostingContextIdentifier, Ref<ScrollingTreeFrameHostingNode>> m_hostedSubtrees;
+    HashMap<LayerHostingContextIdentifier, Vector<std::unique_ptr<ScrollingStateTree>>> m_hostedSubtreesNeedingPairing;
+    HashMap<LayerHostingContextIdentifier, Ref<ScrollingTreeFrameHostingNode>> m_hostedSubtrees;
 
 protected:
     bool m_allowLatching { true };

@@ -34,3 +34,5 @@ if (ENABLE_WPE_PLATFORM)
         WPEPlatform-${WPE_API_VERSION}
     )
 endif ()
+
+add_subdirectory(WPEPlatform)

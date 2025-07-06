@@ -36,8 +36,10 @@
 #import "WKWebExtensionPermission.h"
 #import "WebExtensionControllerProxy.h"
 
-#if ENABLE(INSPECTOR_EXTENSIONS) || ENABLE(WK_WEB_EXTENSIONS_SIDEBAR)
+#if ENABLE(INSPECTOR_EXTENSIONS) || ENABLE(WK_WEB_EXTENSIONS_SIDEBAR) ||  ENABLE(WK_WEB_EXTENSIONS_BOOKMARKS)
 #import "WebPage.h"
+#import <WebCore/Page.h>
+#import <WebCore/Settings.h>
 #endif
 
 namespace WebKit {
@@ -49,6 +51,11 @@ bool WebExtensionAPINamespace::isPropertyAllowed(const ASCIILiteral& name, WebPa
 
     if (name == "action"_s)
         return extensionContext().supportsManifestVersion(3) && objectForKey<NSDictionary>(extensionContext().manifest(), @"action", false);
+
+#if ENABLE(WK_WEB_EXTENSIONS_BOOKMARKS)
+    if (name == "bookmarks"_s)
+        return page->corePage()->settings().webExtensionBookmarksEnabled() && extensionContext().hasPermission("bookmarks"_s);
+#endif
 
     if (name == "commands"_s)
         return objectForKey<NSDictionary>(extensionContext().manifest(), @"commands", false);
@@ -263,6 +270,18 @@ WebExtensionAPISidebarAction& WebExtensionAPINamespace::sidebarAction()
         m_sidebarAction = WebExtensionAPISidebarAction::create(*this);
 
     return *m_sidebarAction;
+}
+#endif
+
+#if ENABLE(WK_WEB_EXTENSIONS_BOOKMARKS)
+WebExtensionAPIBookmarks& WebExtensionAPINamespace::bookmarks()
+{
+    // Documentation: https://developer.mozilla.org/docs/Mozilla/Add-ons/WebExtensions/API/bookmarks
+
+    if (!m_bookmarks)
+        m_bookmarks = WebExtensionAPIBookmarks::create(*this);
+
+    return *m_bookmarks;
 }
 #endif
 

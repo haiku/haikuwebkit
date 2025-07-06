@@ -295,7 +295,9 @@ public:
     void registerURLSchemeAsBypassingContentSecurityPolicy(const String&);
     void setDomainRelaxationForbiddenForURLScheme(const String&);
     void registerURLSchemeAsLocal(const String&);
+#if ENABLE(ALL_LEGACY_REGISTERED_SPECIAL_URL_SCHEMES)
     void registerURLSchemeAsNoAccess(const String&);
+#endif
     void registerURLSchemeAsDisplayIsolated(const String&);
     void registerURLSchemeAsCORSEnabled(const String&);
     void registerURLSchemeAsCachePartitioned(const String&);
@@ -635,6 +637,10 @@ public:
     void registerAdditionalFonts(NSArray *fontNames);
 #endif
 
+#if PLATFORM(IOS_FAMILY)
+    void didRefreshDisplay();
+#endif
+
 private:
     enum class NeedsGlobalStaticInitialization : bool { No, Yes };
     void platformInitialize(NeedsGlobalStaticInitialization);
@@ -841,9 +847,14 @@ private:
     RetainPtr<NSObject> m_accessibilityDisplayOptionsNotificationObserver;
     RetainPtr<NSObject> m_scrollerStyleNotificationObserver;
     RetainPtr<NSObject> m_deactivationObserver;
+    RetainPtr<NSObject> m_didChangeScreenParametersNotificationObserver;
     RetainPtr<WKWebInspectorPreferenceObserver> m_webInspectorPreferenceObserver;
 
     const UniqueRef<PerActivityStateCPUUsageSampler> m_perActivityStateCPUUsageSampler;
+#endif
+
+#if PLATFORM(IOS_FAMILY) && HAVE(SUPPORT_HDR_DISPLAY)
+    float m_currentEDRHeadroom { 1 };
 #endif
 
 #if PLATFORM(COCOA)
@@ -1019,6 +1030,7 @@ private:
 #endif
 
     bool m_hasReceivedAXRequestInUIProcess { false };
+    bool m_suppressEDR { false };
 };
 
 template<typename T>

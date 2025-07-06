@@ -24,7 +24,7 @@
 import json
 import os
 import sqlite3
-import typing
+from typing import Callable, Iterable, Optional
 from pathlib import Path
 
 from .macho import APIReport, objc_fully_qualified_method
@@ -33,7 +33,7 @@ from fnmatch import fnmatch
 
 # Increment this number to force clients to rebuild from scratch, to
 # accomodate schema changes or fix caching bugs.
-VERSION = 1
+VERSION = 2
 
 
 class SDKDB:
@@ -75,6 +75,7 @@ class SDKDB:
                 print(f'Rebuilding {db_file} due to version change')
                 self.con.close()
                 db_file.unlink()
+        self._initialize_temporary_schema()
 
     def _initialize_db(self):
         cur = self.con.cursor()
@@ -86,17 +87,24 @@ class SDKDB:
         if cur.fetchone() == (VERSION,):
             # The database was initialized while we were waiting.
             return
-        cur.execute('CREATE TABLE input_file(name PRIMARY KEY, hash)')
+        cur.execute('CREATE TABLE input_file(path PRIMARY KEY, hash)')
         cur.execute('CREATE TABLE symbol(name, input_file '
-                    'REFERENCES input_file(name) ON DELETE CASCADE)')
+                    'REFERENCES input_file(path) ON DELETE CASCADE)')
         cur.execute('CREATE TABLE objc_class(name, input_file '
-                    'REFERENCES input_file(name) ON DELETE CASCADE)')
+                    'REFERENCES input_file(path) ON DELETE CASCADE)')
         cur.execute('CREATE TABLE objc_selector(name, class, input_file '
-                    'REFERENCES input_file(name) ON DELETE CASCADE)')
+                    'REFERENCES input_file(path) ON DELETE CASCADE)')
         cur.execute('CREATE TABLE meta(key, value)')
         cur.execute('CREATE INDEX symbol_names ON symbol (name)')
         cur.execute('CREATE INDEX selector_names ON objc_selector (name)')
         cur.execute(f'PRAGMA user_version = {VERSION}')
+        self.con.commit()
+
+    def _initialize_temporary_schema(self):
+        cur = self.con.cursor()
+        cur.execute('CREATE TEMPORARY TABLE window(input_file '
+                    'REFERENCES input_file(path))')
+        cur.execute('CREATE INDEX selected_files ON window(input_file)')
         self.con.commit()
 
     def __del__(self):
@@ -119,21 +127,25 @@ class SDKDB:
         else:
             self.con.commit()
 
-    def _cache_hit_preparing_to_insert(self, name: str, hash_: int) -> bool:
+    def _cache_hit_preparing_to_insert(self, file: Path, hash_: int) -> bool:
+        path = str(file.absolute())
         cur = self.con.cursor()
-        cur.execute('SELECT hash from input_file where name = ?', (name,))
+        cur.execute('SELECT hash from input_file where path = ?', (path,))
         if cur.fetchone() == (hash_,):
-            return True
-        cur.execute('INSERT OR REPLACE INTO input_file VALUES (?, ?)',
-                    (name, hash_))
-        return False
+            cached = True
+        else:
+            cur.execute('INSERT OR REPLACE INTO input_file VALUES (?, ?)',
+                        (path, hash_))
+            cached = False
+        cur.execute('INSERT INTO window VALUES (?)', (path,))
+        return cached
 
     def add_partial_sdkdb(self, sdkdb_file: Path, *, spi=False, abi=False,
                           ) -> bool:
         fd = open(sdkdb_file)
         sdkdb_hash = os.fstat(fd.fileno()).st_mtime_ns
 
-        if self._cache_hit_preparing_to_insert(sdkdb_file.name,
+        if self._cache_hit_preparing_to_insert(sdkdb_file,
                                                sdkdb_hash):
             return False
 
@@ -169,7 +181,7 @@ class SDKDB:
 
     def add_binary(self, binary: Path, arch: str) -> bool:
         stat_hash = binary.stat().st_mtime_ns
-        if self._cache_hit_preparing_to_insert(binary.name, stat_hash):
+        if self._cache_hit_preparing_to_insert(binary, stat_hash):
             return False
         report = APIReport.from_binary(binary, arch=arch, exports_only=True)
         for selector in report.methods:
@@ -179,16 +191,19 @@ class SDKDB:
             if m:
                 self._add_objc_selector(m.group('selector'),
                                         m.group('class'), binary)
+            elif symbol.startswith('_OBJC_CLASS_$_'):
+                self._add_objc_class(symbol.removeprefix('_OBJC_CLASS_$_'),
+                                     binary)
             else:
                 self._add_symbol(symbol, binary)
         return True
 
     def add_tbd(self, tbd_file: Path,
-                only_including: typing.Optional[typing.Iterable[str]]) -> bool:
+                only_including: Optional[Iterable[str]]) -> bool:
         fd = open(tbd_file)
         stat_hash = os.fstat(fd.fileno()).st_mtime_ns
 
-        if self._cache_hit_preparing_to_insert(tbd_file.name, stat_hash):
+        if self._cache_hit_preparing_to_insert(tbd_file, stat_hash):
             return False
         for tbd in TBD.from_file(tbd_file):
             if only_including and all(not fnmatch(tbd.install_name, pattern)
@@ -205,21 +220,24 @@ class SDKDB:
 
     def symbol(self, name: str):
         cur = self.con.cursor()
-        cur.execute('SELECT * FROM symbol WHERE name = ? LIMIT 1', (name,))
+        cur.execute('SELECT * FROM symbol NATURAL JOIN window '
+                    'WHERE name = ? LIMIT 1', (name,))
         row = cur.fetchone()
         if row:
             return dict(name=row[0], input_file=row[1])
 
     def objc_class(self, name: str):
         cur = self.con.cursor()
-        cur.execute('SELECT * FROM objc_class WHERE name = ?', (name,))
+        cur.execute('SELECT * FROM objc_class NATURAL JOIN window '
+                    'WHERE name = ?', (name,))
         row = cur.fetchone()
         if row:
             return dict(name=row[0], input_file=row[1])
 
     def objc_selector(self, selector: str):
         cur = self.con.cursor()
-        cur.execute('SELECT * FROM objc_selector WHERE name = ?', (selector,))
+        cur.execute('SELECT * FROM objc_selector NATURAL JOIN window '
+                    'WHERE name = ?', (selector,))
         row = cur.fetchone()
         if row:
             return dict(name=row[0], class_name=row[1], input_file=row[2])
@@ -233,7 +251,7 @@ class SDKDB:
         return row
 
     def _add_objc_interface(self, ent: dict, class_name: str, file: Path,
-                            pred: typing.Callable[[dict], bool]):
+                            pred: Callable[[dict], bool]):
         for key in 'instanceMethods', 'classMethods':
             for method in ent.get(key, []):
                 if pred(method):
@@ -250,17 +268,19 @@ class SDKDB:
 
     def _add_symbol(self, name: str, file: Path):
         cur = self.con.cursor()
-        cur.execute('INSERT INTO symbol VALUES (?, ?)', (name, file.name))
+        cur.execute('INSERT INTO symbol VALUES (?, ?)',
+                    (name, str(file.absolute())))
 
     def _add_objc_class(self, name: str, file: Path):
         cur = self.con.cursor()
-        cur.execute('INSERT INTO objc_class VALUES (?, ?)', (name, file.name))
+        cur.execute('INSERT INTO objc_class VALUES (?, ?)',
+                    (name, str(file.absolute())))
         cur.execute('INSERT INTO symbol VALUES (?, ?)',
-                    (f'_OBJC_CLASS_$_{name}', file.name))
+                    (f'_OBJC_CLASS_$_{name}', str(file.absolute())))
         cur.execute('INSERT INTO symbol VALUES (?, ?)',
-                    (f'_OBJC_METACLASS_$_{name}', file.name))
+                    (f'_OBJC_METACLASS_$_{name}', str(file.absolute())))
 
-    def _add_objc_selector(self, name: str, class_name: str, file: Path):
+    def _add_objc_selector(self, name: str, class_name: Optional[str], file: Path):
         cur = self.con.cursor()
         cur.execute('INSERT INTO objc_selector VALUES (?, ?, ?)',
-                    (name, class_name, file.name))
+                    (name, class_name, str(file.absolute())))

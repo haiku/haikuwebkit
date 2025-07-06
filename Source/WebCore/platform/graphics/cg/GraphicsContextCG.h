@@ -145,6 +145,10 @@ public:
     // Returns true if there has been potential draws since last call.
     bool consumeHasDrawn();
 
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    void setMaxEDRHeadroom(std::optional<float>) final;
+#endif
+
 protected:
     void setCGShadow(const std::optional<GraphicsDropShadow>&, bool shadowsIgnoreTransforms);
     void setCGStyle(const std::optional<GraphicsStyle>&, bool shadowsIgnoreTransforms);
@@ -158,6 +162,9 @@ private:
 
     const RetainPtr<CGContextRef> m_cgContext;
     mutable std::optional<DestinationColorSpace> m_colorSpace;
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    std::optional<float> m_maxEDRHeadroom;
+#endif
     const RenderingMode m_renderingMode : 2; // NOLINT
     const bool m_isLayerCGContext : 1;
     mutable bool m_userToDeviceTransformKnownToBeIdentity : 1 { false };

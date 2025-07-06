@@ -74,7 +74,7 @@ Ref<PlatformCALayer> GraphicsLayerCARemote::createPlatformCALayer(PlatformCALaye
     Ref result = PlatformCALayerRemote::create(layerType, owner, context.get());
 
     if (result->canHaveBackingStore()) {
-        RefPtr localMainFrameView = context->webPage().localMainFrameView();
+        RefPtr localMainFrameView = context->protectedWebPage()->localMainFrameView();
         result->setContentsFormat(PlatformCALayer::contentsFormatForLayer(localMainFrameView.get(), owner));
     }
     return WTFMove(result);

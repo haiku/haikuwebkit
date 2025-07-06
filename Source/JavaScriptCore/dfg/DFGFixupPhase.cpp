@@ -1719,6 +1719,18 @@ private:
             break;
         }
 
+        case RegExpSearch: {
+            fixEdge<KnownCellUse>(node->child1());
+            if (m_graph.isWatchingRegExpPrimordialPropertiesWatchpoint(node))
+                addRegExpSearchPrimordialChecks(node->child2().node());
+            else
+                m_insertionSet.insertNode(m_indexInBlock, SpecNone, ForceOSRExit, node->origin);
+            fixEdge<RegExpObjectUse>(node->child2());
+            if (node->child3()->shouldSpeculateString())
+                fixEdge<StringUse>(node->child3());
+            break;
+        }
+
         case RegExpMatchFast: {
             fixEdge<KnownCellUse>(node->child1());
             fixEdge<RegExpObjectUse>(node->child2());
@@ -4330,6 +4342,34 @@ private:
         emitPrimordialCheckFor(globalObject->regExpProtoUnicodeSetsGetter(), vm().propertyNames->unicodeSets.impl());
         // Check that searchRegExp[Symbol.match] is the primordial RegExp.prototype[Symbol.replace]
         emitPrimordialCheckFor(globalObject->regExpProtoSymbolReplaceFunction(), vm().propertyNames->replaceSymbol.impl());
+    }
+
+    void addRegExpSearchPrimordialChecks(Node* searchRegExp)
+    {
+        Node* node = m_currentNode;
+
+        // Check that structure of searchRegExp is RegExp object
+        m_insertionSet.insertNode(
+            m_indexInBlock, SpecNone, Check, node->origin,
+            Edge(searchRegExp, RegExpObjectUse));
+
+        // Check that searchRegExp.lastIndex is a number
+        Node* lastIndexProperty = m_insertionSet.insertNode(
+            m_indexInBlock, SpecNone, GetRegExpObjectLastIndex, node->origin,
+            Edge(searchRegExp, RegExpObjectUse));
+        m_insertionSet.insertNode(
+            m_indexInBlock, SpecNone, Check, node->origin,
+            Edge(lastIndexProperty, NumberUse));
+
+        // Check that searchRegExp.exec is the primordial RegExp.prototype.exec
+        auto emitPrimordialCheckFor = [&] (JSValue primordialProperty, UniquedStringImpl* propertyUID) {
+            m_graph.identifiers().ensure(propertyUID);
+            auto* data = m_graph.m_getByIdData.add(GetByIdData { CacheableIdentifier::createFromImmortalIdentifier(propertyUID), CacheType::GetByIdPrototype });
+            Node* actualProperty = m_insertionSet.insertNode(m_indexInBlock, SpecNone, TryGetById, node->origin, OpInfo(data), OpInfo(SpecFunction), Edge(searchRegExp, CellUse));
+            m_insertionSet.insertNode(m_indexInBlock, SpecNone, CheckIsConstant, node->origin, OpInfo(m_graph.freeze(primordialProperty)), Edge(actualProperty, CellUse));
+        };
+        JSGlobalObject* globalObject = m_graph.globalObjectFor(node->origin.semantic);
+        emitPrimordialCheckFor(globalObject->regExpProtoExecFunction(), vm().propertyNames->exec.impl());
     }
 
     Node* checkArray(ArrayMode arrayMode, const NodeOrigin& origin, Node* array, Node* index, bool (*storageCheck)(const ArrayMode&) = canCSEStorage)

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,6 +31,7 @@
 #include "WebPageProxyMessages.h"
 #include <WebCore/FrameLoadRequest.h>
 #include <WebCore/FrameTree.h>
+#include <WebCore/HTMLFrameOwnerElement.h>
 #include <WebCore/HitTestResult.h>
 #include <WebCore/PolicyChecker.h>
 #include <WebCore/RemoteFrame.h>
@@ -53,11 +54,16 @@ void WebRemoteFrameClient::frameDetached()
         return;
     }
 
+    RefPtr ownerElement = coreFrame->ownerElement();
+
     if (RefPtr parent = coreFrame->tree().parent()) {
         coreFrame->tree().detachFromParent();
         parent->tree().removeChild(*coreFrame);
     }
     m_frame->invalidate();
+
+    if (ownerElement)
+        ownerElement->protectedDocument()->checkCompleted();
 }
 
 void WebRemoteFrameClient::sizeDidChange(IntSize size)
@@ -150,25 +156,25 @@ void WebRemoteFrameClient::bindRemoteAccessibilityFrames(int processIdentifier, 
 
 void WebRemoteFrameClient::closePage()
 {
-    if (auto* page = m_frame->page())
+    if (RefPtr page = m_frame->page())
         page->sendClose();
 }
 
 void WebRemoteFrameClient::focus()
 {
-    if (auto* page = m_frame->page())
+    if (RefPtr page = m_frame->page())
         page->send(Messages::WebPageProxy::FocusRemoteFrame(m_frame->frameID()));
 }
 
 void WebRemoteFrameClient::unfocus()
 {
-    if (auto* page = m_frame->page())
+    if (RefPtr page = m_frame->page())
         page->send(Messages::WebPageProxy::SetFocus(false));
 }
 
 void WebRemoteFrameClient::documentURLForConsoleLog(CompletionHandler<void(const URL&)>&& completionHandler)
 {
-    if (auto* page = m_frame->page())
+    if (RefPtr page = m_frame->page())
         page->sendWithAsyncReply(Messages::WebPageProxy::DocumentURLForConsoleLog(m_frame->frameID()), WTFMove(completionHandler));
     else
         completionHandler({ });
@@ -207,7 +213,7 @@ void WebRemoteFrameClient::applyWebsitePolicies(WebsitePoliciesData&& websitePol
 
 void WebRemoteFrameClient::updateScrollingMode(ScrollbarMode scrollingMode)
 {
-    if (auto* page = m_frame->page())
+    if (RefPtr page = m_frame->page())
         page->send(Messages::WebPageProxy::UpdateScrollingMode(m_frame->frameID(), scrollingMode));
 }
 

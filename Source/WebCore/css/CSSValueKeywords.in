@@ -1536,8 +1536,6 @@ rem
 to-zero
 // nearest
 // progress
-media-progress
-container-progress
 random
 element-shared
 // fixed

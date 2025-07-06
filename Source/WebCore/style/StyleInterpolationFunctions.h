@@ -52,9 +52,7 @@
 #include "QuotesData.h"
 #include "RenderBox.h"
 #include "RenderStyleSetters.h"
-#include "RotateTransformOperation.h"
 #include "SVGRenderStyle.h"
-#include "ScaleTransformOperation.h"
 #include "ScopedName.h"
 #include "ScrollbarGutter.h"
 #include "Settings.h"
@@ -75,12 +73,12 @@ namespace WebCore::Style::Interpolation {
 
 inline int blendFunc(int from, int to, const Context& context)
 {
-    return blend(from, to, context);
+    return WebCore::blend(from, to, context);
 }
 
 inline double blendFunc(double from, double to, const Context& context)
 {
-    return blend(from, to, context);
+    return WebCore::blend(from, to, context);
 }
 
 inline float blendFunc(float from, float to, const Context& context)
@@ -98,19 +96,19 @@ inline float blendFunc(float from, float to, const Context& context)
 
 inline WebCore::Color blendFunc(const WebCore::Color& from, const WebCore::Color& to, const Context& context)
 {
-    return blend(from, to, context);
+    return WebCore::blend(from, to, context);
 }
 
 inline WebCore::Length blendFunc(const WebCore::Length& from, const WebCore::Length& to, const Context& context, ValueRange valueRange = ValueRange::All)
 {
-    return blend(from, to, context, valueRange);
+    return WebCore::blend(from, to, context, valueRange);
 }
 
 inline GapLength blendFunc(const GapLength& from, const GapLength& to, const Context& context)
 {
     if (from.isNormal() || to.isNormal())
         return context.progress < 0.5 ? from : to;
-    return blend(from.length(), to.length(), context, ValueRange::NonNegative);
+    return WebCore::blend(from.length(), to.length(), context, ValueRange::NonNegative);
 }
 
 inline bool canInterpolateLengthVariants(const GapLength& from, const GapLength& to)
@@ -128,13 +126,13 @@ inline bool lengthVariantRequiresInterpolationForAccumulativeIteration(const Gap
 
 inline TabSize blendFunc(const TabSize& from, const TabSize& to, const Context& context)
 {
-    auto blendedValue = blend(from.value(), to.value(), context);
+    auto blendedValue = WebCore::blend(from.value(), to.value(), context);
     return { blendedValue < 0 ? 0 : blendedValue, from.isSpaces() ? SpaceValueType : LengthValueType };
 }
 
 inline LengthSize blendFunc(const LengthSize& from, const LengthSize& to, const Context& context)
 {
-    return blend(from, to, context, ValueRange::NonNegative);
+    return WebCore::blend(from, to, context, ValueRange::NonNegative);
 }
 
 inline bool canInterpolateLengthVariants(const LengthSize& from, const LengthSize& to)
@@ -152,7 +150,7 @@ inline bool lengthVariantRequiresInterpolationForAccumulativeIteration(const Len
 
 inline LengthPoint blendFunc(const LengthPoint& from, const LengthPoint& to, const Context& context)
 {
-    return blend(from, to, context);
+    return WebCore::blend(from, to, context);
 }
 
 inline TransformOperations blendFunc(const TransformOperations& from, const TransformOperations& to, const Context& context)
@@ -183,108 +181,6 @@ inline TransformOperations blendFunc(const TransformOperations& from, const Tran
     auto* renderBox = dynamicDowncast<RenderBox>(context.client.renderer());
     auto boxSize = renderBox ? renderBox->borderBoxRect().size() : LayoutSize();
     return to.blend(from, context, boxSize, prefix());
-}
-
-inline RefPtr<ScaleTransformOperation> blendFunc(ScaleTransformOperation* from, ScaleTransformOperation* to, const Context& context)
-{
-    if (!from && !to)
-        return nullptr;
-
-    RefPtr<ScaleTransformOperation> identity;
-    if (!from) {
-        identity = ScaleTransformOperation::create(1, 1, 1, to->type());
-        from = identity.get();
-    } else if (!to) {
-        identity = ScaleTransformOperation::create(1, 1, 1, from->type());
-        to = identity.get();
-    }
-
-    // Ensure the two transforms have the same type.
-    if (!from->isSameType(*to)) {
-        RefPtr<ScaleTransformOperation> normalizedFrom;
-        RefPtr<ScaleTransformOperation> normalizedTo;
-        if (from->is3DOperation() || to->is3DOperation()) {
-            normalizedFrom = ScaleTransformOperation::create(from->x(), from->y(), from->z(), TransformOperation::Type::Scale3D);
-            normalizedTo = ScaleTransformOperation::create(to->x(), to->y(), to->z(), TransformOperation::Type::Scale3D);
-        } else {
-            normalizedFrom = ScaleTransformOperation::create(from->x(), from->y(), TransformOperation::Type::Scale);
-            normalizedTo = ScaleTransformOperation::create(to->x(), to->y(), TransformOperation::Type::Scale);
-        }
-        return blendFunc(normalizedFrom.get(), normalizedTo.get(), context);
-    }
-
-    auto blendedOperation = to->blend(from, context);
-    if (auto* scale = dynamicDowncast<ScaleTransformOperation>(blendedOperation.get()))
-        return ScaleTransformOperation::create(scale->x(), scale->y(), scale->z(), scale->type());
-    return nullptr;
-}
-
-inline RefPtr<RotateTransformOperation> blendFunc(RotateTransformOperation* from, RotateTransformOperation* to, const Context& context)
-{
-    if (!from && !to)
-        return nullptr;
-
-    RefPtr<RotateTransformOperation> identity;
-    if (!from) {
-        identity = RotateTransformOperation::create(0, to->type());
-        from = identity.get();
-    } else if (!to) {
-        identity = RotateTransformOperation::create(0, from->type());
-        to = identity.get();
-    }
-
-    // Ensure the two transforms have the same type.
-    if (!from->isSameType(*to)) {
-        RefPtr<RotateTransformOperation> normalizedFrom;
-        RefPtr<RotateTransformOperation> normalizedTo;
-        if (from->is3DOperation() || to->is3DOperation()) {
-            normalizedFrom = RotateTransformOperation::create(from->x(), from->y(), from->z(), from->angle(), TransformOperation::Type::Rotate3D);
-            normalizedTo = RotateTransformOperation::create(to->x(), to->y(), to->z(), to->angle(), TransformOperation::Type::Rotate3D);
-        } else {
-            normalizedFrom = RotateTransformOperation::create(from->angle(), TransformOperation::Type::Rotate);
-            normalizedTo = RotateTransformOperation::create(to->angle(), TransformOperation::Type::Rotate);
-        }
-        return blendFunc(normalizedFrom.get(), normalizedTo.get(), context);
-    }
-
-    auto blendedOperation = to->blend(from, context);
-    if (auto* rotate = dynamicDowncast<RotateTransformOperation>(blendedOperation.get()))
-        return RotateTransformOperation::create(rotate->x(), rotate->y(), rotate->z(), rotate->angle(), rotate->type());
-    return nullptr;
-}
-
-inline RefPtr<TranslateTransformOperation> blendFunc(TranslateTransformOperation* from, TranslateTransformOperation* to, const Context& context)
-{
-    if (!from && !to)
-        return nullptr;
-
-    RefPtr<TranslateTransformOperation> identity;
-    if (!from) {
-        identity = TranslateTransformOperation::create(WebCore::Length(0, LengthType::Fixed), WebCore::Length(0, LengthType::Fixed), WebCore::Length(0, LengthType::Fixed), to->type());
-        from = identity.get();
-    } else if (!to) {
-        identity = TranslateTransformOperation::create(WebCore::Length(0, LengthType::Fixed), WebCore::Length(0, LengthType::Fixed), WebCore::Length(0, LengthType::Fixed), from->type());
-        to = identity.get();
-    }
-
-    // Ensure the two transforms have the same type.
-    if (!from->isSameType(*to)) {
-        RefPtr<TranslateTransformOperation> normalizedFrom;
-        RefPtr<TranslateTransformOperation> normalizedTo;
-        if (from->is3DOperation() || to->is3DOperation()) {
-            normalizedFrom = TranslateTransformOperation::create(from->x(), from->y(), from->z(), TransformOperation::Type::Translate3D);
-            normalizedTo = TranslateTransformOperation::create(to->x(), to->y(), to->z(), TransformOperation::Type::Translate3D);
-        } else {
-            normalizedFrom = TranslateTransformOperation::create(from->x(), from->y(), TransformOperation::Type::Translate);
-            normalizedTo = TranslateTransformOperation::create(to->x(), to->y(), TransformOperation::Type::Translate);
-        }
-        return blendFunc(normalizedFrom.get(), normalizedTo.get(), context);
-    }
-
-    auto blendedOperation = to->blend(from, context);
-    if (auto* translate = dynamicDowncast<TranslateTransformOperation>(blendedOperation.get()))
-        return TranslateTransformOperation::create(translate->x(), translate->y(), translate->z(), translate->type());
-    return nullptr;
 }
 
 inline Ref<TransformOperation> blendFunc(TransformOperation& from, TransformOperation& to, const Context& context)
@@ -577,7 +473,7 @@ inline GridLength blendFunc(const GridLength& from, const GridLength& to, const 
         return context.progress < 0.5 ? from : to;
 
     if (from.isFlex())
-        return GridLength(blend(from.flex(), to.flex(), context));
+        return GridLength(WebCore::blend(from.flex(), to.flex(), context));
 
     return GridLength(blendFunc(from.length(), to.length(), context));
 }

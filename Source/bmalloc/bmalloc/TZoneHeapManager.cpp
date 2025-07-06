@@ -126,7 +126,7 @@ void determineTZoneMallocFallback()
         if (tzoneMallocFallback != TZoneMallocFallback::Undecided)
             return;
 
-        if (Environment::get()->isDebugHeapEnabled()) {
+        if (Environment::get()->isSystemHeapEnabled()) {
             tzoneMallocFallback = TZoneMallocFallback::ForceDebugMalloc;
             return;
         }

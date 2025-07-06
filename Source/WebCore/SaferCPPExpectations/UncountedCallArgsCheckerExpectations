@@ -596,19 +596,6 @@ html/canvas/GPUCanvasContextCocoa.mm
 html/canvas/ImageBitmapRenderingContext.cpp
 html/canvas/OffscreenCanvasRenderingContext2D.cpp
 html/canvas/PlaceholderRenderingContext.cpp
-html/canvas/WebGLDrawBuffers.cpp
-html/canvas/WebGLDrawInstancedBaseVertexBaseInstance.cpp
-html/canvas/WebGLFramebuffer.cpp
-html/canvas/WebGLMultiDraw.cpp
-html/canvas/WebGLMultiDrawInstancedBaseVertexBaseInstance.cpp
-html/canvas/WebGLObject.cpp
-html/canvas/WebGLObject.h
-html/canvas/WebGLProgram.cpp
-html/canvas/WebGLSync.cpp
-html/canvas/WebGLTransformFeedback.cpp
-html/canvas/WebGLVertexArrayObject.cpp
-html/canvas/WebGLVertexArrayObjectBase.cpp
-html/canvas/WebGLVertexArrayObjectOES.cpp
 html/parser/HTMLConstructionSite.cpp
 html/parser/HTMLConstructionSite.h
 html/parser/HTMLParserScheduler.cpp
@@ -827,7 +814,7 @@ platform/graphics/GraphicsLayer.h
 platform/graphics/ImageAdapter.cpp
 platform/graphics/ImageBackingStore.h
 platform/graphics/ImageBufferContextSwitcher.cpp
-platform/graphics/ImageFrame.cpp
+platform/graphics/ImageFrame.h
 platform/graphics/ImageFrameWorkQueue.cpp
 platform/graphics/MediaPlayer.cpp
 platform/graphics/Path.cpp
@@ -985,7 +972,6 @@ rendering/style/StyleCachedImage.cpp
 rendering/style/StyleCanvasImage.cpp
 rendering/style/StyleCrossfadeImage.cpp
 rendering/style/StyleCursorImage.cpp
-rendering/style/StyleCustomPropertyData.cpp
 rendering/style/StyleGeneratedImage.cpp
 rendering/style/StyleMiscNonInheritedData.cpp
 rendering/style/StyleMultiImage.cpp
@@ -1069,6 +1055,9 @@ style/Styleable.cpp
 style/Styleable.h
 style/TransformOperationsBuilder.cpp
 style/UserAgentStyle.cpp
+style/values/transforms/StyleRotate.cpp
+style/values/transforms/StyleScale.cpp
+style/values/transforms/StyleTranslate.cpp
 svg/SVGAElement.cpp
 svg/SVGAElement.h
 svg/SVGAltGlyphElement.cpp

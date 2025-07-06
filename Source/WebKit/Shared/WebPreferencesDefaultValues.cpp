@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018 Apple Inc. All rights reserved.
+ * Copyright (C) 2018-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -116,12 +116,6 @@ bool defaultAppleMailPaginationQuirkEnabled()
 
 bool defaultCaptureAudioInGPUProcessEnabled()
 {
-#if HAVE(REQUIRE_MICROPHONE_CAPTURE_IN_UIPROCESS)
-    // Newer versions can capture microphone in GPUProcess.
-    if (!WTF::MacApplication::isSafari())
-        return false;
-#endif
-
 #if ENABLE(GPU_PROCESS_BY_DEFAULT)
     return true;
 #else

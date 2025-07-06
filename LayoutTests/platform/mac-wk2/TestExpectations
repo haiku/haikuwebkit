@@ -1476,13 +1476,7 @@ webkit.org/b/260113 [ arm64 ] http/wpt/webauthn/ctap-hid-failure.https.html [ Pa
 # This test was added in https://bugs.webkit.org/show_bug.cgi?id=250475 — re-enable it here for Sonoma.
 
 # Only applicable on platforms with HDR support
-[ Sequoia+ ] compositing/hdr/hdr-basic-canvas.html [ Pass ]
-[ Sequoia+ ] compositing/hdr/hdr-basic-image.html [ Pass ]
-[ Sequoia+ ] compositing/hdr/hdr-basic-image-dynamic-range-limit.html [ Pass ]
-[ Sequoia+ ] compositing/hdr/hdr-background-image.html [ Pass ]
-[ Sequoia+ ] compositing/hdr/hdr-border-image.html [ Pass ]
-[ Sequoia+ ] compositing/hdr/hdr-pseudo-before-image.html [ Pass ]
-[ Sequoia+ ] compositing/hdr/hdr-svg-inline-image.html [ Pass ]
+[ Sequoia+ ] compositing/hdr [ Pass ]
 [ Sequoia+ ] fast/images/hdr-basic-image.html [ Pass ]
 [ Sequoia+ ] fast/images/hdr-basic-image-dynamic-range-limit.html [ Pass ]
 [ Sequoia+ ] fast/images/hdr-background-image.html [ Pass ]
@@ -2195,11 +2189,6 @@ webkit.org/b/294087 [ Sequoia ] svg/zoom/page/text-with-non-scaling-stroke.html 
 # webkit.org/b/294272 REGRESSION(295925@main?) [macOS Debug]: 2x tests in fast/scrolling/Mac/scrollbars are flaky crash
 [ Debug ] fast/scrolling/mac/scrollbars/overflow-overlay-scrollbar-reveal.html [ Pass Crash ]
 [ Debug ] fast/scrolling/mac/scrollbars/overlay-scrollbar-reveal.html [ Pass Crash ]
-
-# webkit.org/b/294285 REGRESSION( 295257@main - 295259@main?): [ wk2 Debug ] 3x imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.*.html are flaky crashes.
-[ Debug ] imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.lang.inherit.html [ Pass Crash ]
-[ Debug ] imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.lang.html [ Pass Crash ]
-[ Debug ] imported/w3c/web-platform-tests/html/canvas/offscreen/manual/text/canvas.2d.offscreen.worker.direction.inherit.html [ Pass Crash ]
 
 # It fails only on debug build with '0.01%' difference
 [ Debug ] imported/w3c/web-platform-tests/css/css-fill-stroke/paint-order-001.html [ ImageOnlyFailure ]

@@ -34,6 +34,7 @@
 #include "RemoteVideoFrameIdentifier.h"
 #include "SampleBufferDisplayLayerIdentifier.h"
 #include "SharedVideoFrame.h"
+#include <WebCore/HostingContext.h>
 #include <WebCore/SampleBufferDisplayLayer.h>
 #include <wtf/MediaTime.h>
 #include <wtf/TZoneMalloc.h>
@@ -61,7 +62,7 @@ public:
 
     USING_CAN_MAKE_WEAKPTR(WebCore::SampleBufferDisplayLayerClient);
 
-    using LayerInitializationCallback = CompletionHandler<void(std::optional<LayerHostingContextID>)>;
+    using LayerInitializationCallback = CompletionHandler<void(WebCore::HostingContext)>;
     void initialize(bool hideRootLayer, WebCore::IntSize, bool shouldMaintainAspectRatio, bool canShowWhileLocked, LayerInitializationCallback&&);
 
     // IPC::MessageReceiver

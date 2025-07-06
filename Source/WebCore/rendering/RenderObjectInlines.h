@@ -34,7 +34,6 @@ inline Node& RenderObject::nodeForNonAnonymous() const { ASSERT(!isAnonymous());
 inline bool RenderObject::hasTransformOrPerspective() const { return hasTransformRelatedProperty() && (isTransformed() || style().hasPerspective()); }
 inline bool RenderObject::isAtomicInlineLevelBox() const { return style().isDisplayInlineType() && !(style().display() == DisplayType::Inline && !isReplacedOrAtomicInline()); }
 inline bool RenderObject::isTransformed() const { return hasTransformRelatedProperty() && (style().affectsTransform() || hasSVGTransform()); }
-inline bool RenderObject::preservesNewline() const { return !isRenderSVGInlineText() && style().preserveNewline(); }
 inline Document& RenderObject::document() const { return m_node.get().document(); }
 inline Ref<Document> RenderObject::protectedDocument() const { return document(); }
 inline const LocalFrameViewLayoutContext& RenderObject::layoutContext() const { return view().frameView().layoutContext(); }
@@ -42,8 +41,6 @@ inline bool RenderObject::isBody() const { return node() && node()->hasTagName(H
 inline bool RenderObject::isHR() const { return node() && node()->hasTagName(HTMLNames::hrTag); }
 inline bool RenderObject::isPseudoElement() const { return node() && node()->isPseudoElement(); }
 inline Node* RenderObject::nonPseudoNode() const { return isPseudoElement() ? nullptr : node(); }
-inline RefPtr<Node> RenderObject::protectedNonPseudoNode() const { return nonPseudoNode(); }
-inline Node* RenderObject::generatingNode() const { return isPseudoElement() ? generatingPseudoHostElement() : node(); }
 inline TreeScope& RenderObject::treeScopeForSVGReferences() const { return Ref { m_node.get() }->treeScopeForSVGReferences(); }
 inline WritingMode RenderObject::writingMode() const { return style().writingMode(); }
 
@@ -143,7 +140,7 @@ inline void RenderObject::setNeedsLayout(MarkingBehavior markParents)
         setLayerNeedsFullRepaint();
 }
 
-inline void RenderObject::setNeedsLayoutAndPrefWidthsRecalc()
+inline void RenderObject::setNeedsLayoutAndPreferredWidthsUpdate()
 {
     setNeedsLayout();
     setNeedsPreferredWidthsUpdate();

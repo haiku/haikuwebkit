@@ -28,6 +28,7 @@
 #if ENABLE(WK_WEB_EXTENSIONS)
 
 #import "HTTPServer.h"
+#import "TestWKWebView.h"
 #import "WebExtensionUtilities.h"
 
 namespace TestWebKitAPI {

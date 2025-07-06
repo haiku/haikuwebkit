@@ -641,8 +641,8 @@ AXCoreObject::AccessibilityChildrenVector AXCoreObject::selectedChildren()
         return selectedListItems();
     case AccessibilityRole::Menu:
     case AccessibilityRole::MenuBar:
-        if (auto* descendant = activeDescendant())
-            return { { *descendant } };
+        if (RefPtr descendant = activeDescendant())
+            return { { descendant.releaseNonNull() } };
         if (RefPtr focusedElement = focusedUIElement())
             return { { focusedElement.releaseNonNull() } };
         break;

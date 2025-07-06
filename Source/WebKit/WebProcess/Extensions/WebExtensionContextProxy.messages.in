@@ -92,6 +92,8 @@ messages -> WebExtensionContextProxy {
 
     // Test Events
     DispatchTestMessageEvent(String message, String argumentJSON, WebKit::WebExtensionContentWorldType contentWorldType)
+    DispatchTestStartedEvent(String argumentJSON, WebKit::WebExtensionContentWorldType contentWorldType)
+    DispatchTestFinishedEvent(String argumentJSON, WebKit::WebExtensionContentWorldType contentWorldType)
 
     // Web Navigation
     DispatchWebNavigationEvent(WebKit::WebExtensionEventListenerType type, WebKit::WebExtensionTabIdentifier tabID, struct WebKit::WebExtensionFrameParameters frameParamaters, WallTime timestamp)

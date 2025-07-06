@@ -1210,7 +1210,7 @@ ResourceErrorOr<CachedResourceHandle<CachedResource>> CachedResourceLoader::requ
             }
             if (type == CachedResource::Type::MainResource && RegistrableDomain { resourceRequest.url() } != originalDomain) {
                 FrameLoadRequest frameLoadRequest(frame, ResourceRequest(URL { resourceRequest.url() }));
-                frameLoadRequest.setIsContentExtensionRedirect(true);
+                frameLoadRequest.setIsContentRuleListRedirect(true);
                 frame->loader().load(WTFMove(frameLoadRequest));
                 return makeUnexpected(ResourceError { errorDomainWebKitInternal, 0, url, "Loading in a new process"_s, ResourceError::Type::Cancellation });
             }

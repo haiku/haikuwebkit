@@ -1,6 +1,6 @@
 /*
  * Copyright (C) 2011, 2015 Google Inc. All rights reserved.
- * Copyright (C) 2016-2023 Apple Inc. All rights reserved.
+ * Copyright (C) 2016-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -77,9 +77,8 @@ void injectInternalsObject(JSContextRef context)
     auto scope = DECLARE_CATCH_SCOPE(vm);
     JSLockHolder lock(vm);
     JSDOMGlobalObject* globalObject = jsCast<JSDOMGlobalObject*>(lexicalGlobalObject);
-    ScriptExecutionContext* scriptContext = globalObject->scriptExecutionContext();
-    if (is<Document>(*scriptContext)) {
-        globalObject->putDirect(vm, Identifier::fromString(vm, Internals::internalsId), toJS(lexicalGlobalObject, globalObject, Internals::create(downcast<Document>(*scriptContext))));
+    if (RefPtr document = dynamicDowncast<Document>(*globalObject->scriptExecutionContext())) {
+        globalObject->putDirect(vm, Identifier::fromString(vm, Internals::internalsId), toJS(lexicalGlobalObject, globalObject, Internals::create(*document)));
         Options::useDollarVM() = true;
         globalObject->exposeDollarVM(vm);
     }
@@ -91,15 +90,15 @@ void resetInternalsObject(JSContextRef context)
     JSGlobalObject* lexicalGlobalObject = toJS(context);
     JSLockHolder lock(lexicalGlobalObject);
     JSDOMGlobalObject* globalObject = jsCast<JSDOMGlobalObject*>(lexicalGlobalObject);
-    ScriptExecutionContext* scriptContext = globalObject->scriptExecutionContext();
-    Page* page = downcast<Document>(scriptContext)->frame()->page();
+    Ref document = downcast<Document>(*globalObject->scriptExecutionContext());
+    RefPtr page = document->frame()->page();
     Internals::resetToConsistentState(*page);
-    InternalSettings::from(page)->resetToConsistentState();
+    InternalSettings::from(page.get())->resetToConsistentState();
 }
 
 void monitorWheelEvents(WebCore::LocalFrame& frame, bool clearLatchingState)
 {
-    Page* page = frame.page();
+    RefPtr page = frame.page();
     if (!page)
         return;
 
@@ -108,7 +107,7 @@ void monitorWheelEvents(WebCore::LocalFrame& frame, bool clearLatchingState)
 
 void setWheelEventMonitorTestCallbackAndStartMonitoring(bool expectWheelEndOrCancel, bool expectMomentumEnd, WebCore::LocalFrame& frame, JSContextRef context, JSObjectRef jsCallbackFunction)
 {
-    Page* page = frame.page();
+    RefPtr page = frame.page();
     if (!page || !page->isMonitoringWheelEvents())
         return;
 
@@ -124,7 +123,7 @@ void setWheelEventMonitorTestCallbackAndStartMonitoring(bool expectWheelEndOrCan
 
 void clearWheelEventTestMonitor(WebCore::LocalFrame& frame)
 {
-    Page* page = frame.page();
+    RefPtr page = frame.page();
     if (!page)
         return;
 

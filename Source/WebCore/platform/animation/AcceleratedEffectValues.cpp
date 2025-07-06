@@ -94,7 +94,7 @@ AcceleratedEffectValues AcceleratedEffectValues::clone() const
     };
 }
 
-static LengthPoint nonCalculatedLengthPoint(LengthPoint lengthPoint, const IntSize& borderBoxSize)
+static LengthPoint resolveCalculateValuesFor(const LengthPoint& lengthPoint, IntSize borderBoxSize)
 {
     if (!lengthPoint.x.isCalculated() && !lengthPoint.y.isCalculated())
         return lengthPoint;
@@ -102,6 +102,13 @@ static LengthPoint nonCalculatedLengthPoint(LengthPoint lengthPoint, const IntSi
         { floatValueForLength(lengthPoint.x, borderBoxSize.width()), LengthType::Fixed },
         { floatValueForLength(lengthPoint.y, borderBoxSize.height()), LengthType::Fixed }
     };
+}
+
+template<typename T> static RefPtr<TransformOperation> resolveCalculateValuesForTransformOperation(const T& operation, const IntSize& borderBoxSize)
+{
+    if (!operation)
+        return nullptr;
+    return operation->selfOrCopyWithResolvedCalculatedValues(borderBoxSize);
 }
 
 AcceleratedEffectValues::AcceleratedEffectValues(const RenderStyle& style, const IntRect& borderBoxRect, const RenderLayerModelObject* renderer)
@@ -115,18 +122,13 @@ AcceleratedEffectValues::AcceleratedEffectValues(const RenderStyle& style, const
 
     transformBox = style.transformBox();
     transform = style.transform().selfOrCopyWithResolvedCalculatedValues(borderBoxSize);
-
-    if (auto* srcTranslate = style.translate())
-        translate = srcTranslate->selfOrCopyWithResolvedCalculatedValues(borderBoxSize);
-    if (auto* srcScale = style.scale())
-        scale = srcScale->selfOrCopyWithResolvedCalculatedValues(borderBoxSize);
-    if (auto* srcRotate = style.rotate())
-        rotate = srcRotate->selfOrCopyWithResolvedCalculatedValues(borderBoxSize);
-    transformOrigin = nonCalculatedLengthPoint(style.transformOriginXY(), borderBoxSize);
-
+    translate = resolveCalculateValuesForTransformOperation(Style::toPlatform(style.translate()), borderBoxSize);
+    scale = resolveCalculateValuesForTransformOperation(Style::toPlatform(style.scale()), borderBoxSize);
+    rotate = resolveCalculateValuesForTransformOperation(Style::toPlatform(style.rotate()), borderBoxSize);
+    transformOrigin = resolveCalculateValuesFor(style.transformOriginXY(), borderBoxSize);
     offsetPath = style.offsetPath();
-    offsetPosition = nonCalculatedLengthPoint(Style::toPlatform(style.offsetPosition()), borderBoxSize);
-    offsetAnchor = nonCalculatedLengthPoint(Style::toPlatform(style.offsetAnchor()), borderBoxSize);
+    offsetPosition = resolveCalculateValuesFor(Style::toPlatform(style.offsetPosition()), borderBoxSize);
+    offsetAnchor = resolveCalculateValuesFor(Style::toPlatform(style.offsetAnchor()), borderBoxSize);
     offsetRotate = style.offsetRotate();
     offsetDistance = Style::toPlatform(style.offsetDistance());
     if (offsetDistance.isCalculated() && offsetPath) {

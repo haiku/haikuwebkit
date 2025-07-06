@@ -143,9 +143,9 @@ Ref<HTMLImageElement> HTMLImageElement::createForLegacyFactoryFunction(Document&
 {
     auto image = adoptRef(*new HTMLImageElement(imgTag, document));
     if (width)
-        image->setWidth(width.value());
+        image->setUnsignedIntegralAttribute(widthAttr, width.value());
     if (height)
-        image->setHeight(height.value());
+        image->setUnsignedIntegralAttribute(heightAttr, height.value());
     image->suspendIfNeeded();
     return image;
 }
@@ -715,31 +715,6 @@ RefPtr<HTMLMapElement> HTMLImageElement::associatedMapElement() const
     return treeScope().getImageMap(m_parsedUsemap);
 }
 
-const AtomString& HTMLImageElement::alt() const
-{
-    return attributeWithoutSynchronization(altAttr);
-}
-
-void HTMLImageElement::setHeight(unsigned value)
-{
-    setUnsignedIntegralAttribute(heightAttr, value);
-}
-
-URL HTMLImageElement::src() const
-{
-    return document().completeURL(attributeWithoutSynchronization(srcAttr));
-}
-
-void HTMLImageElement::setSrc(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(srcAttr, value);
-}
-
-void HTMLImageElement::setWidth(unsigned value)
-{
-    setUnsignedIntegralAttribute(widthAttr, value);
-}
-
 int HTMLImageElement::x() const
 {
     protectedDocument()->updateLayoutIgnorePendingStylesheets({ LayoutOptions::TreatContentVisibilityHiddenAsVisible, LayoutOptions::TreatContentVisibilityAutoAsVisible }, this);
@@ -765,11 +740,6 @@ int HTMLImageElement::y() const
 bool HTMLImageElement::complete() const
 {
     return m_imageLoader->imageComplete();
-}
-
-void HTMLImageElement::setDecoding(AtomString&& decodingMode)
-{
-    setAttributeWithoutSynchronization(decodingAttr, WTFMove(decodingMode));
 }
 
 String HTMLImageElement::decoding() const
@@ -845,11 +815,6 @@ bool HTMLImageElement::isServerMap() const
         return false;
 
     return document().completeURL(usemap).isEmpty();
-}
-
-void HTMLImageElement::setCrossOrigin(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(crossoriginAttr, value);
 }
 
 String HTMLImageElement::crossOrigin() const
@@ -1004,20 +969,10 @@ AtomString HTMLImageElement::srcsetForBindings() const
     return getAttributeForBindings(srcsetAttr);
 }
 
-void HTMLImageElement::setSrcsetForBindings(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(srcsetAttr, value);
-}
-
 const AtomString& HTMLImageElement::loadingForBindings() const
 {
     auto& attributeValue = attributeWithoutSynchronization(HTMLNames::loadingAttr);
     return hasLazyLoadableAttributeValue(attributeValue) ? lazyAtom() : eagerAtom();
-}
-
-void HTMLImageElement::setLoadingForBindings(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(loadingAttr, value);
 }
 
 bool HTMLImageElement::isDeferred() const
@@ -1030,11 +985,6 @@ bool HTMLImageElement::isLazyLoadable() const
     if (!document().frame() || !document().frame()->script().canExecuteScripts(ReasonForCallingCanExecuteScripts::NotAboutToExecuteScript))
         return false;
     return hasLazyLoadableAttributeValue(attributeWithoutSynchronization(HTMLNames::loadingAttr));
-}
-
-void HTMLImageElement::setReferrerPolicyForBindings(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(referrerpolicyAttr, value);
 }
 
 String HTMLImageElement::referrerPolicyForBindings() const
@@ -1073,11 +1023,6 @@ Ref<Element> HTMLImageElement::cloneElementWithoutAttributesAndChildren(Document
     cloneAttachmentAssociatedElementWithoutAttributesAndChildren(clone, document);
 #endif
     return clone;
-}
-
-void HTMLImageElement::setFetchPriorityForBindings(const AtomString& value)
-{
-    setAttributeWithoutSynchronization(fetchpriorityAttr, value);
 }
 
 String HTMLImageElement::fetchPriorityForBindings() const

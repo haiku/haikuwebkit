@@ -170,6 +170,9 @@ void RemoteLayerWithRemoteRenderingBackingStore::dump(WTF::TextStream& ts) const
     ts.dumpProperty("buffer set"_s, m_bufferSet);
     ts.dumpProperty("cache identifiers"_s, m_bufferCacheIdentifiers);
     ts.dumpProperty("is opaque"_s, isOpaque());
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    ts.dumpProperty("headroom", m_edrHeadroom);
+#endif
 }
 
 } // namespace WebKit

@@ -4,6 +4,7 @@
  *           (C) 2000 Dirk Mueller (mueller@kde.org)
  * Copyright (C) 2003-2024 Apple Inc. All rights reserved.
  * Copyright (C) 2006 Graham Dennis (graham.dennis@gmail.com)
+ * Copyright (C) 2025 Samuel Weinig <sam@webkit.org>
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Library General Public
@@ -45,15 +46,18 @@
 #include "StyleOffsetDistance.h"
 #include "StyleOffsetPosition.h"
 #include "StyleOffsetRotate.h"
+#include "StylePerspective.h"
 #include "StylePrimitiveNumericTypes.h"
+#include "StyleRotate.h"
+#include "StyleScale.h"
 #include "StyleScrollMargin.h"
 #include "StyleScrollPadding.h"
 #include "StyleScrollSnapPoints.h"
 #include "StyleSelfAlignmentData.h"
 #include "StyleTextEdge.h"
+#include "StyleTranslate.h"
 #include "TextDecorationThickness.h"
 #include "TouchAction.h"
-#include "TranslateTransformOperation.h"
 #include "ViewTimeline.h"
 #include "ViewTransitionName.h"
 #include <memory>
@@ -73,8 +77,6 @@ using namespace CSS::Literals;
 class AnimationList;
 class ContentData;
 class PathOperation;
-class RotateTransformOperation;
-class ScaleTransformOperation;
 class StyleCustomPropertyData;
 class StyleDeprecatedFlexibleBoxData;
 class StyleFilterData;
@@ -89,6 +91,10 @@ class WillChangeData;
 
 struct LengthSize;
 struct StyleMarqueeData;
+
+namespace Style {
+class CustomPropertyData;
+}
 
 // Page size type.
 // StyleRareNonInheritedData::pageSize is meaningful only when
@@ -180,18 +186,18 @@ public:
     Length shapeMargin;
     float shapeImageThreshold;
 
-    float perspective;
+    Style::Perspective perspective;
 
     RefPtr<PathOperation> clipPath;
 
     Style::Color textDecorationColor;
 
-    DataRef<StyleCustomPropertyData> customProperties;
+    DataRef<Style::CustomPropertyData> customProperties;
     HashSet<AtomString> customPaintWatchedProperties;
 
-    RefPtr<RotateTransformOperation> rotate;
-    RefPtr<ScaleTransformOperation> scale;
-    RefPtr<TranslateTransformOperation> translate;
+    Style::Rotate rotate;
+    Style::Scale scale;
+    Style::Translate translate;
     RefPtr<PathOperation> offsetPath;
 
     FixedVector<Style::ScopedName> containerNames;

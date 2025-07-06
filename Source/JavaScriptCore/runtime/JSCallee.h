@@ -67,7 +67,10 @@ public:
 
     void setScope(VM& vm, JSScope* scope)
     {
-        m_scope.set(vm, this, scope);
+        if (scope)
+            m_scope.set(vm, this, scope);
+        else
+            m_scope.clear();
     }
 
     DECLARE_EXPORT_INFO;

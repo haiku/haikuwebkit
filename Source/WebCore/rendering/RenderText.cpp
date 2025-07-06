@@ -434,7 +434,7 @@ void RenderText::styleDidChange(StyleDifference diff, const RenderStyle* oldStyl
     // We do have to schedule layouts, though, since a style change can force us to
     // need to relayout.
     if (diff == StyleDifference::Layout) {
-        setNeedsLayoutAndPrefWidthsRecalc();
+        setNeedsLayoutAndPreferredWidthsUpdate();
         m_knownToHaveNoOverflowAndNoFallbackFonts = false;
     }
 
@@ -1826,7 +1826,7 @@ void RenderText::setTextInternal(const String& text, bool force)
 
     setRenderedText(text);
 
-    setNeedsLayoutAndPrefWidthsRecalc();
+    setNeedsLayoutAndPreferredWidthsUpdate();
     m_knownToHaveNoOverflowAndNoFallbackFonts = false;
 
     if (AXObjectCache* cache = document().existingAXObjectCache())

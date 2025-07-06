@@ -54,7 +54,7 @@ public:
     void boundingRects(Vector<LayoutRect>&, const LayoutPoint& accumulatedOffset) const final;
     void absoluteQuads(Vector<FloatQuad>&, bool* wasFixed) const override;
 
-    LayoutSize offsetFromContainer(RenderElement&, const LayoutPoint&, bool* offsetDependsOnPoint = nullptr) const final;
+    LayoutSize offsetFromContainer(const RenderElement&, const LayoutPoint&, bool* offsetDependsOnPoint = nullptr) const final;
 
     LayoutRect borderBoundingBox() const final
     {

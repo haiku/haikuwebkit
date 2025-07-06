@@ -185,7 +185,7 @@ DOMHighResTimeStamp Event::timeStampForBindings(ScriptExecutionContext& context)
     RefPtr<Performance> performance;
     if (auto* globalScope = dynamicDowncast<WorkerGlobalScope>(context))
         performance = globalScope->performance();
-    else if (RefPtr window = downcast<Document>(context).domWindow())
+    else if (RefPtr window = downcast<Document>(context).window())
         performance = window->performance();
 
     if (!performance)

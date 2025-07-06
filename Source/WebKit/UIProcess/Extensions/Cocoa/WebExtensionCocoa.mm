@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022-2024 Apple Inc. All rights reserved.
+ * Copyright (C) 2022-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -318,21 +318,9 @@ RefPtr<WebCore::Icon> WebExtension::iconForPath(const String& imagePath, RefPtr<
 
     CocoaImage *result;
 
-#if !USE(NSIMAGE_FOR_SVG_SUPPORT)
+#if !USE(APPKIT)
     auto imageType = resourceMIMETypeForPath(imagePath);
     if (equalLettersIgnoringASCIICase(imageType, "image/svg+xml"_s)) {
-#if USE(APPKIT)
-        static Class svgImageRep = NSClassFromString(@"_NSSVGImageRep");
-        RELEASE_ASSERT(svgImageRep);
-
-        _NSSVGImageRep *imageRep = [[svgImageRep alloc] initWithData:imageData];
-        if (!imageRep)
-            return nullptr;
-
-        result = [[NSImage alloc] init];
-        [result addRepresentation:imageRep];
-        result.size = imageRep.size;
-#else
         CGSVGDocumentRef document = CGSVGDocumentCreateFromData(bridge_cast(imageData), nullptr);
         if (!document)
             return nullptr;
@@ -340,9 +328,8 @@ RefPtr<WebCore::Icon> WebExtension::iconForPath(const String& imagePath, RefPtr<
         // Since we need to rasterize, scale the image for the densest display, so it will have enough pixels to be sharp.
         result = [UIImage _imageWithCGSVGDocument:document scale:displayScale orientation:UIImageOrientationUp];
         CGSVGDocumentRelease(document);
-#endif // not USE(APPKIT)
     }
-#endif // !USE(NSIMAGE_FOR_SVG_SUPPORT)
+#endif // !USE(APPKIT)
 
 #if USE(APPKIT)
     if (!result)

@@ -147,6 +147,8 @@ public:
             m_owners.remove(codeBlock);
     }
 
+    bool visitWeakImpl(VM&);
+
 protected:
     void observeZeroRefCountImpl();
     VM& vm() { return m_vm; }

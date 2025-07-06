@@ -421,6 +421,11 @@
             "contextsAllowed": ["attribute"],
             "values": ["*"]
         },
+        "ReflectSetter": {
+            "contextsAllowed": ["attribute"],
+            "values": ["*"],
+            "notes": "Variant of Reflect that relies on C++ implementation for the getter, but automatically generates the setter"
+        },
         "Replaceable": {
             "contextsAllowed": ["attribute"],
             "standard": {

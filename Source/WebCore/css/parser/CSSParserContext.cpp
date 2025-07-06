@@ -106,8 +106,6 @@ CSSParserContext::CSSParserContext(const Document& document, const URL& sheetBas
     , targetTextPseudoElementEnabled { document.settings().targetTextPseudoElementEnabled() }
     , viewTransitionTypesEnabled { document.settings().viewTransitionsEnabled() && document.settings().viewTransitionTypesEnabled() }
     , cssProgressFunctionEnabled { document.settings().cssProgressFunctionEnabled() }
-    , cssMediaProgressFunctionEnabled { document.settings().cssMediaProgressFunctionEnabled() }
-    , cssContainerProgressFunctionEnabled { document.settings().cssContainerProgressFunctionEnabled() }
     , cssRandomFunctionEnabled { document.settings().cssRandomFunctionEnabled() }
     , cssTreeCountingFunctionsEnabled { document.settings().cssTreeCountingFunctionsEnabled() }
     , cssURLModifiersEnabled { document.settings().cssURLModifiersEnabled() }
@@ -148,14 +146,12 @@ void add(Hasher& hasher, const CSSParserContext& context)
         | context.targetTextPseudoElementEnabled            << 20
         | context.viewTransitionTypesEnabled                << 21
         | context.cssProgressFunctionEnabled                << 22
-        | context.cssMediaProgressFunctionEnabled           << 23
-        | context.cssContainerProgressFunctionEnabled       << 24
-        | context.cssRandomFunctionEnabled                  << 25
-        | context.cssTreeCountingFunctionsEnabled           << 26
-        | context.cssURLModifiersEnabled                    << 27
-        | context.cssAxisRelativePositionKeywordsEnabled    << 28
-        | context.cssDynamicRangeLimitMixEnabled            << 29
-        | context.cssConstrainedDynamicRangeLimitEnabled    << 30;
+        | context.cssRandomFunctionEnabled                  << 23
+        | context.cssTreeCountingFunctionsEnabled           << 24
+        | context.cssURLModifiersEnabled                    << 25
+        | context.cssAxisRelativePositionKeywordsEnabled    << 26
+        | context.cssDynamicRangeLimitMixEnabled            << 27
+        | context.cssConstrainedDynamicRangeLimitEnabled    << 28;
     add(hasher, context.baseURL, context.charset, context.propertySettings, context.mode, bits);
 }
 
