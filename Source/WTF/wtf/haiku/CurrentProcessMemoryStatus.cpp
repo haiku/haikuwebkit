@@ -39,25 +39,25 @@ void currentProcessMemoryStatus(ProcessMemoryStatus& memoryStatus)
     memoryStatus.text = 0;
     memoryStatus.data = 0;
 
-	area_info area;
-	ssize_t cookie = 0;
+    area_info area;
+    ssize_t cookie = 0;
 
-	while(get_next_area_info(0, &cookie, &area) == B_OK) {
-		memoryStatus.size += area.size;
+    while(get_next_area_info(0, &cookie, &area) == B_OK) {
+        memoryStatus.size += area.size;
+        memoryStatus.resident += area.ram_size;
 
-		// FIXME check the actual meaning of the flags
-		if (area.lock & (B_LAZY_LOCK | B_FULL_LOCK))
-			memoryStatus.resident += area.size;
-		if (area.copy_count > 0)
-			memoryStatus.shared += area.size;
-		if (area.protection & B_EXECUTE_AREA)
-			memoryStatus.text += area.size;
-		else
-			memoryStatus.data += area.size;
-	}
+        if (area.copy_count > 0)
+            memoryStatus.shared += area.size;
+
+        if (area.protection & B_EXECUTE_AREA)
+            memoryStatus.text += area.size;
+        else
+            memoryStatus.data += area.size;
+    }
 
     memoryStatus.lib = memoryStatus.size;
     memoryStatus.dt = memoryStatus.size;
 }
 
 } // namespace WTF
+
