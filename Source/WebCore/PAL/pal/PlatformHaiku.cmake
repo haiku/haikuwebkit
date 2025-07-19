@@ -7,8 +7,6 @@ list(APPEND PAL_SOURCES
     system/haiku/SoundHaiku.cpp
 
     text/KillRing.cpp
-
-    unix/LoggingUnix.cpp
 )
 
 list(APPEND PAL_LIBRARIES crypto)

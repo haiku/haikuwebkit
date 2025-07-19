@@ -11,7 +11,6 @@ if(USE_CURL)
     platform/network/curl/CurlCacheEntry.cpp
     platform/network/curl/CurlCacheManager.cpp
   )
-  list(APPEND WebCore_LIBRARIES unistring idn2)
 else()
   list(APPEND WebCore_INCLUDE_DIRECTORIES
     "${WEBCORE_DIR}/platform/network/haiku"
@@ -147,6 +146,8 @@ list(APPEND WebCore_SOURCES
 
   platform/text/haiku/StringHaiku.cpp
 
+  platform/unix/LoggingUnix.cpp
+
   rendering/haiku/RenderThemeHaiku.cpp
 
   inspector/LegacyWebSocketInspectorInstrumentation.cpp
@@ -182,7 +183,7 @@ list(APPEND WebCore_LIBRARIES
   ${LIBTASN1_LIBRARIES}
   ${LIBXSLT_LIBRARIES}
   ${PNG_LIBRARY}
-  psl unistring idn2
+  psl
   ${WEBP_LIBRARIES}
   be bsd network bnetapi textencoding translation execinfo shared
 )
