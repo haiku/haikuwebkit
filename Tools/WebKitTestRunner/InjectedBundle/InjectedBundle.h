@@ -221,6 +221,7 @@ void postSynchronousMessage(const char* name, const void* value) = delete;
 
 void postPageMessage(const char* name);
 void postPageMessage(const char* name, bool value);
+void postPageMessage(const char* name, unsigned value);
 void postPageMessage(const char* name, const char* value);
 void postPageMessage(const char* name, WKStringRef value);
 void postPageMessage(const char* name, WKDataRef value);

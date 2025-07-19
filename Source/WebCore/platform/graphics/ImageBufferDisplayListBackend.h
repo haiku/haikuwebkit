@@ -56,7 +56,7 @@ private:
 
     String debugDescription() const final;
 
-    Ref<WebCore::ControlFactory> m_controlFactory;
+    const Ref<WebCore::ControlFactory> m_controlFactory;
     DisplayList::RecorderImpl m_drawingContext;
 };
 

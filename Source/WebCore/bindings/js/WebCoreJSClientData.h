@@ -58,7 +58,7 @@ public:
     static JSHeapData* ensureHeapData(JSC::Heap&);
 
     Lock& lock() { return m_lock; }
-    ExtendedDOMIsoSubspaces& subspaces() { return *m_subspaces.get(); }
+    ExtendedDOMIsoSubspaces& subspaces() { return m_subspaces; }
 
     Vector<JSC::IsoSubspace*>& outputConstraintSpaces() { return m_outputConstraintSpaces; }
 
@@ -108,7 +108,7 @@ private:
     JSC::IsoSubspace m_windowProxySpace;
     JSC::IsoSubspace m_idbSerializationSpace;
 
-    std::unique_ptr<ExtendedDOMIsoSubspaces> m_subspaces;
+    const UniqueRef<ExtendedDOMIsoSubspaces> m_subspaces;
     Vector<JSC::IsoSubspace*> m_outputConstraintSpaces;
 };
 
@@ -169,14 +169,14 @@ public:
     JSC::GCClient::IsoSubspace& windowProxySpace() { return m_windowProxySpace; }
     JSC::GCClient::IsoSubspace& idbSerializationSpace() { return m_idbSerializationSpace; }
 
-    ExtendedDOMClientIsoSubspaces& clientSubspaces() { return *m_clientSubspaces.get(); }
+    ExtendedDOMClientIsoSubspaces& clientSubspaces() { return m_clientSubspaces; }
 
     void addClient(JSVMClientDataClient& client) { m_clients.add(client); }
 
 private:
     bool isWebCoreJSClientData() const final { return true; }
 
-    UncheckedKeyHashSet<DOMWrapperWorld*> m_worldSet;
+    HashSet<DOMWrapperWorld*> m_worldSet;
     RefPtr<DOMWrapperWorld> m_normalWorld;
 
     JSBuiltinFunctions m_builtinFunctions;
@@ -197,7 +197,7 @@ private:
     JSC::GCClient::IsoSubspace m_windowProxySpace;
     JSC::GCClient::IsoSubspace m_idbSerializationSpace;
 
-    std::unique_ptr<ExtendedDOMClientIsoSubspaces> m_clientSubspaces;
+    const UniqueRef<ExtendedDOMClientIsoSubspaces> m_clientSubspaces;
 
     WeakHashSet<JSVMClientDataClient> m_clients;
 };

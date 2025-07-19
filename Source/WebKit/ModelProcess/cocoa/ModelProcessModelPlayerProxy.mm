@@ -49,8 +49,10 @@
 #import <WebKitAdditions/WKREEngine.h>
 #import <pal/spi/cocoa/QuartzCoreSPI.h>
 #import <wtf/BlockPtr.h>
+#import <wtf/Deque.h>
 #import <wtf/MathExtras.h>
 #import <wtf/NakedPtr.h>
+#import <wtf/NeverDestroyed.h>
 #import <wtf/RetainPtr.h>
 #import <wtf/TZoneMallocInlines.h>
 #import <wtf/WeakPtr.h>
@@ -129,22 +131,23 @@ private:
 
 class RKModelLoaderUSD final : public WebCore::REModelLoader, public CanMakeWeakPtr<RKModelLoaderUSD> {
 public:
-    static Ref<RKModelLoaderUSD> create(Model& model, const std::optional<String>& attributionTaskID, REModelLoaderClient& client)
+    static Ref<RKModelLoaderUSD> create(Model& model, const std::optional<String>& attributionTaskID, std::optional<int> entityMemoryLimit, REModelLoaderClient& client)
     {
-        return adoptRef(*new RKModelLoaderUSD(model, attributionTaskID, client));
+        return adoptRef(*new RKModelLoaderUSD(model, attributionTaskID, entityMemoryLimit, client));
     }
 
     virtual ~RKModelLoaderUSD() = default;
 
-    void load();
+    void load(CompletionHandler<void()>&&);
 
     bool isCanceled() const { return m_canceled; }
 
 private:
-    RKModelLoaderUSD(Model& model, const std::optional<String>& attributionTaskID, REModelLoaderClient& client)
+    RKModelLoaderUSD(Model& model, const std::optional<String>& attributionTaskID, std::optional<int> entityMemoryLimit, REModelLoaderClient& client)
         : m_canceled { false }
         , m_model { model }
         , m_attributionTaskID { attributionTaskID }
+        , m_entityMemoryLimit(entityMemoryLimit)
         , m_client { client }
     {
     }
@@ -177,6 +180,7 @@ private:
 
     Ref<Model> m_model;
     std::optional<String> m_attributionTaskID;
+    std::optional<int> m_entityMemoryLimit;
     WeakPtr<REModelLoaderClient> m_client;
 };
 
@@ -188,12 +192,14 @@ static ResourceError toResourceError(String payload, Model& model)
     }] };
 }
 
-void RKModelLoaderUSD::load()
+void RKModelLoaderUSD::load(CompletionHandler<void()>&& completionHandler)
 {
     RetainPtr<NSString> attributionID;
     if (m_attributionTaskID.has_value())
         attributionID = m_attributionTaskID.value().createNSString();
-    [getWKRKEntityClass() loadFromData:m_model->data()->createNSData().get() withAttributionTaskID:attributionID.get() completionHandler:makeBlockPtr([weakThis = WeakPtr { *this }] (WKRKEntity *entity) mutable {
+    [getWKRKEntityClass() loadFromData:m_model->data()->createNSData().get() withAttributionTaskID:attributionID.get() entityMemoryLimit:(m_entityMemoryLimit ? *m_entityMemoryLimit : 0) completionHandler:makeBlockPtr([weakThis = WeakPtr { *this }, completionHandler = WTFMove(completionHandler)] (WKRKEntity *entity) mutable {
+        completionHandler();
+
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
@@ -207,31 +213,79 @@ void RKModelLoaderUSD::load()
     }).get()];
 }
 
-static Ref<REModelLoader> loadREModelUsingRKUSDLoader(Model& model, const std::optional<String>& attributionTaskID, REModelLoaderClient& client)
-{
-    auto loader = RKModelLoaderUSD::create(model, attributionTaskID, client);
+class RKUSDModelLoadScheduler {
+public:
+    static RKUSDModelLoadScheduler& singleton();
+    RKUSDModelLoadScheduler() = default;
 
-    dispatch_async(dispatch_get_main_queue(), [loader] () mutable {
-        loader->load();
+    Ref<REModelLoader> scheduleModelLoad(Model&, const std::optional<String>& attributionTaskID, std::optional<int> entityMemoryLimit, REModelLoaderClient&);
+
+private:
+    void loadNextModel();
+
+    Deque<Ref<RKModelLoaderUSD>> m_pendingLoads;
+    size_t m_inProgressLoadsCount { 0 };
+};
+
+RKUSDModelLoadScheduler& RKUSDModelLoadScheduler::singleton()
+{
+    static auto scheduler = NeverDestroyed<RKUSDModelLoadScheduler>();
+    return scheduler;
+}
+
+Ref<REModelLoader> RKUSDModelLoadScheduler::scheduleModelLoad(Model& model, const std::optional<String>& attributionTaskID, std::optional<int> entityMemoryLimit, REModelLoaderClient& client)
+{
+    auto loader = RKModelLoaderUSD::create(model, attributionTaskID, entityMemoryLimit, client);
+
+    dispatch_async(dispatch_get_main_queue(), [this, loader] () mutable {
+        m_pendingLoads.append(loader);
+        loadNextModel();
     });
 
     return loader;
+}
+
+void RKUSDModelLoadScheduler::loadNextModel()
+{
+    dispatch_assert_queue(dispatch_get_main_queue());
+
+    static const size_t maxLimitOnParallelLoads = 3;
+    if (m_inProgressLoadsCount >= maxLimitOnParallelLoads)
+        return;
+
+    if (m_pendingLoads.isEmpty())
+        return;
+
+    auto nextLoad = m_pendingLoads.takeFirst();
+    if (nextLoad->isCanceled()) {
+        loadNextModel();
+        return;
+    }
+
+    m_inProgressLoadsCount++;
+    nextLoad->load([this] {
+        dispatch_assert_queue(dispatch_get_main_queue());
+        ASSERT(m_inProgressLoadsCount > 0);
+        m_inProgressLoadsCount--;
+        loadNextModel();
+    });
 }
 
 WTF_MAKE_TZONE_ALLOCATED_IMPL(ModelProcessModelPlayerProxy);
 
 uint64_t ModelProcessModelPlayerProxy::gObjectCountForTesting = 0;
 
-Ref<ModelProcessModelPlayerProxy> ModelProcessModelPlayerProxy::create(ModelProcessModelPlayerManagerProxy& manager, WebCore::ModelPlayerIdentifier identifier, Ref<IPC::Connection>&& connection, const std::optional<String>& attributionTaskID)
+Ref<ModelProcessModelPlayerProxy> ModelProcessModelPlayerProxy::create(ModelProcessModelPlayerManagerProxy& manager, WebCore::ModelPlayerIdentifier identifier, Ref<IPC::Connection>&& connection, const std::optional<String>& attributionTaskID, std::optional<int> debugEntityMemoryLimit)
 {
-    return adoptRef(*new ModelProcessModelPlayerProxy(manager, identifier, WTFMove(connection), attributionTaskID));
+    return adoptRef(*new ModelProcessModelPlayerProxy(manager, identifier, WTFMove(connection), attributionTaskID, debugEntityMemoryLimit));
 }
 
-ModelProcessModelPlayerProxy::ModelProcessModelPlayerProxy(ModelProcessModelPlayerManagerProxy& manager, WebCore::ModelPlayerIdentifier identifier, Ref<IPC::Connection>&& connection, const std::optional<String>& attributionTaskID)
+ModelProcessModelPlayerProxy::ModelProcessModelPlayerProxy(ModelProcessModelPlayerManagerProxy& manager, WebCore::ModelPlayerIdentifier identifier, Ref<IPC::Connection>&& connection, const std::optional<String>& attributionTaskID, std::optional<int> debugEntityMemoryLimit)
     : m_id(identifier)
     , m_webProcessConnection(WTFMove(connection))
     , m_manager(manager)
     , m_attributionTaskID(attributionTaskID)
+    , m_debugEntityMemoryLimit(debugEntityMemoryLimit)
     , m_unloadModelTimer(RunLoop::main(), this, &ModelProcessModelPlayerProxy::unloadModelTimerFired)
 {
     RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayerProxy initialized id=%" PRIu64, this, identifier.toUInt64());
@@ -345,6 +399,11 @@ void ModelProcessModelPlayerProxy::unloadModelTimerFired()
     RefPtr strongManager = m_manager.get();
     if (!strongManager)
         return;
+
+    if (m_loader) {
+        m_loader->cancel();
+        m_loader = nullptr;
+    }
 
     RELEASE_LOG(ModelElement, "%p - ModelProcessModelPlayerProxy::unloadModelTimerFired(): inform manager to unload model id=%" PRIu64, this, m_id.toUInt64());
     strongManager->unloadModelPlayer(m_id);
@@ -609,6 +668,8 @@ void ModelProcessModelPlayerProxy::didFailLoading(WebCore::REModelLoader& loader
 
 // MARK: - WebCore::ModelPlayer
 
+static int defaultEntityMemoryLimit = 100; // MB
+
 void ModelProcessModelPlayerProxy::load(WebCore::Model& model, WebCore::LayoutSize layoutSize)
 {
     dispatch_assert_queue(dispatch_get_main_queue());
@@ -619,7 +680,7 @@ void ModelProcessModelPlayerProxy::load(WebCore::Model& model, WebCore::LayoutSi
     WKREEngine::shared().runWithSharedScene([this, protectedThis = Ref { *this }, model = Ref { model }] (RESceneRef scene) {
         m_scene = scene;
         if ([getWKRKEntityClass() isLoadFromDataAvailable])
-            m_loader = loadREModelUsingRKUSDLoader(model.get(), m_attributionTaskID, *this);
+            m_loader = RKUSDModelLoadScheduler::singleton().scheduleModelLoad(model.get(), m_attributionTaskID, m_debugEntityMemoryLimit ? *m_debugEntityMemoryLimit : defaultEntityMemoryLimit, *this);
         else
             m_loader = WebCore::loadREModel(model.get(), *this);
     });

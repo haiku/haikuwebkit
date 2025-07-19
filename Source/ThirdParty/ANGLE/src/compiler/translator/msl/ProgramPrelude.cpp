@@ -2896,42 +2896,116 @@ ANGLE_ALWAYS_INLINE T ANGLE_interpolateAtOffset(T value, float2) { return value;
 
 PROGRAM_PRELUDE_DECLARE(preIncrementInt,
                         R"(
-template <typename T>
-ANGLE_ALWAYS_INLINE thread T &ANGLE_preIncrementInt(thread T &a)
+ANGLE_ALWAYS_INLINE int ANGLE_preIncrementInt(thread int &a)
 {
-    a = as_type<T>(metal::make_unsigned_t<T>(a) + 1);
+    a = as_type<int>(as_type<metal::uint>(a) + 1u);
+    return a;
+}
+
+ANGLE_ALWAYS_INLINE metal::int2 ANGLE_preIncrementInt(thread metal::int2 &a)
+{
+    a = as_type<metal::int2>(as_type<metal::uint2>(a) + 1u);
+    return a;
+}
+
+ANGLE_ALWAYS_INLINE metal::int3 ANGLE_preIncrementInt(thread metal::int3 &a)
+{
+    a = as_type<metal::int3>(as_type<metal::uint3>(a) + 1u);
+    return a;
+}
+
+ANGLE_ALWAYS_INLINE metal::int4 ANGLE_preIncrementInt(thread metal::int4 &a)
+{
+    a = as_type<metal::int4>(as_type<metal::uint4>(a) + 1u);
     return a;
 }
 )")
 
 PROGRAM_PRELUDE_DECLARE(postIncrementInt,
                         R"(
-template <typename T>
-ANGLE_ALWAYS_INLINE T ANGLE_postIncrementInt(thread T &a)
+ANGLE_ALWAYS_INLINE int ANGLE_postIncrementInt(thread int &a)
 {
-    T r = a;
-    a = as_type<T>(metal::make_unsigned_t<T>(a) + 1);
+    int r = a;
+    a = as_type<int>(as_type<metal::uint>(a) + 1u);
+    return r;
+}
+
+ANGLE_ALWAYS_INLINE metal::int2 ANGLE_postIncrementInt(thread metal::int2 &a)
+{
+    metal::int2 r = a;
+    a = as_type<metal::int2>(as_type<metal::uint2>(a) + 1u);
+    return r;
+}
+
+ANGLE_ALWAYS_INLINE metal::int3 ANGLE_postIncrementInt(thread metal::int3 &a)
+{
+    metal::int3 r = a;
+    a = as_type<metal::int3>(as_type<metal::uint3>(a) + 1u);
+    return r;
+}
+
+ANGLE_ALWAYS_INLINE metal::int4 ANGLE_postIncrementInt(thread metal::int4 &a)
+{
+    metal::int4 r = a;
+    a = as_type<metal::int4>(as_type<metal::uint4>(a) + 1u);
     return r;
 }
 )")
 
 PROGRAM_PRELUDE_DECLARE(preDecrementInt,
                         R"(
-template <typename T>
-ANGLE_ALWAYS_INLINE thread T &ANGLE_preDecrementInt(thread T &a)
+ANGLE_ALWAYS_INLINE int ANGLE_preDecrementInt(thread int &a)
 {
-    a = as_type<T>(metal::make_unsigned_t<T>(a) - 1);
+    a = as_type<int>(as_type<metal::uint>(a) - 1u);
+    return a;
+}
+
+ANGLE_ALWAYS_INLINE metal::int2 ANGLE_preDecrementInt(thread metal::int2 &a)
+{
+    a = as_type<metal::int2>(as_type<metal::uint2>(a) - 1u);
+    return a;
+}
+
+ANGLE_ALWAYS_INLINE metal::int3 ANGLE_preDecrementInt(thread metal::int3 &a)
+{
+    a = as_type<metal::int3>(as_type<metal::uint3>(a) - 1u);
+    return a;
+}
+
+ANGLE_ALWAYS_INLINE metal::int4 ANGLE_preDecrementInt(thread metal::int4 &a)
+{
+    a = as_type<metal::int4>(as_type<metal::uint4>(a) - 1u);
     return a;
 }
 )")
 
 PROGRAM_PRELUDE_DECLARE(postDecrementInt,
                         R"(
-template <typename T>
-ANGLE_ALWAYS_INLINE T ANGLE_postDecrementInt(thread T &a)
+ANGLE_ALWAYS_INLINE int ANGLE_postDecrementInt(thread int &a)
 {
-    T r = a;
-    a = as_type<T>(metal::make_unsigned_t<T>(a) - 1);
+    int r = a;
+    a = as_type<int>(as_type<metal::uint>(a) - 1u);
+    return r;
+}
+
+ANGLE_ALWAYS_INLINE metal::int2 ANGLE_postDecrementInt(thread metal::int2 &a)
+{
+    metal::int2 r = a;
+    a = as_type<metal::int2>(as_type<metal::uint2>(a) - 1u);
+    return r;
+}
+
+ANGLE_ALWAYS_INLINE metal::int3 ANGLE_postDecrementInt(thread metal::int3 &a)
+{
+    metal::int3 r = a;
+    a = as_type<metal::int3>(as_type<metal::uint3>(a) - 1u);
+    return r;
+}
+
+ANGLE_ALWAYS_INLINE metal::int4 ANGLE_postDecrementInt(thread metal::int4 &a)
+{
+    metal::int4 r = a;
+    a = as_type<metal::int4>(as_type<metal::uint4>(a) - 1u);
     return r;
 }
 )")

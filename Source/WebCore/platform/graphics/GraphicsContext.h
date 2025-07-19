@@ -34,6 +34,7 @@
 #include "FontCascade.h"
 #include "GraphicsContextState.h"
 #include "Image.h"
+#include "ImageBufferPixelFormat.h"
 #include "ImageOrientation.h"
 #include "ImagePaintingOptions.h"
 #include "IntRect.h"
@@ -242,15 +243,15 @@ public:
 #if HAVE(SUPPORT_HDR_DISPLAY)
     virtual void setMaxEDRHeadroom(std::optional<float>) { }
     virtual float maxPaintedEDRHeadroom() const { return 1; }
-    virtual bool hasPaintedClampedEDRHeadroom() const { return false; }
-    virtual void clearMaxPaintedEDRHeadroom() { }
+    virtual float maxRequestedEDRHeadroom() const { return 1; }
+    virtual void clearMaxEDRHeadrooms() { }
 #endif
 
     // Images, Patterns, ControlParts, and Media
 
     IntSize compatibleImageBufferSize(const FloatSize&) const;
 
-    WEBCORE_EXPORT virtual RefPtr<ImageBuffer> createImageBuffer(const FloatSize&, float resolutionScale = 1, const DestinationColorSpace& = DestinationColorSpace::SRGB(), std::optional<RenderingMode> = std::nullopt, std::optional<RenderingMethod> = std::nullopt) const;
+    WEBCORE_EXPORT virtual RefPtr<ImageBuffer> createImageBuffer(const FloatSize&, float resolutionScale = 1, const DestinationColorSpace& = DestinationColorSpace::SRGB(), std::optional<RenderingMode> = std::nullopt, std::optional<RenderingMethod> = std::nullopt, ImageBufferPixelFormat = ImageBufferPixelFormat::BGRA8) const;
 
     WEBCORE_EXPORT RefPtr<ImageBuffer> createScaledImageBuffer(const FloatSize&, const FloatSize& scale = { 1, 1 }, const DestinationColorSpace& = DestinationColorSpace::SRGB(), std::optional<RenderingMode> = std::nullopt, std::optional<RenderingMethod> = std::nullopt) const;
     WEBCORE_EXPORT RefPtr<ImageBuffer> createScaledImageBuffer(const FloatRect&, const FloatSize& scale = { 1, 1 }, const DestinationColorSpace& = DestinationColorSpace::SRGB(), std::optional<RenderingMode> = std::nullopt, std::optional<RenderingMethod> = std::nullopt) const;

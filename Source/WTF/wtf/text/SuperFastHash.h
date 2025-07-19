@@ -25,8 +25,6 @@
 #include <wtf/Compiler.h>
 #include <wtf/text/StringHasher.h>
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 namespace WTF {
 
 // Paul Hsieh's SuperFastHash
@@ -77,6 +75,7 @@ public:
         addCharactersAssumingAligned(a, b);
     }
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     template<typename T, typename Converter = DefaultConverter>
     void addCharactersAssumingAligned(const T* data, unsigned length)
     {
@@ -121,6 +120,7 @@ public:
         }
         addCharactersAssumingAligned<T, Converter>(data, length);
     }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     template<typename T, typename Converter = DefaultConverter>
     void addCharacters(std::span<const T> data)
@@ -237,6 +237,7 @@ private:
         return result;
     }
 
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
     template<typename T, typename Converter>
     static constexpr unsigned computeHashImpl(const T* characters)
     {
@@ -249,6 +250,7 @@ private:
         }
         return result;
     }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
     unsigned processPendingCharacter() const
     {
@@ -276,7 +278,5 @@ private:
 };
 
 } // namespace WTF
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
 using WTF::SuperFastHash;

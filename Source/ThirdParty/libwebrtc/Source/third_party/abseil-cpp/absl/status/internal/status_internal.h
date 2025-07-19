@@ -100,7 +100,7 @@ class StatusRep {
   // Returns an equivalent heap allocated StatusRep with refcount 1.
   //
   // `this` is not safe to be used after calling as it may have been deleted.
-  StatusRep* absl_nonnull CloneAndUnref() const;
+  absl::Nonnull<StatusRep*> CloneAndUnref() const;
 
  private:
   mutable std::atomic<int32_t> ref_;
@@ -120,8 +120,9 @@ absl::StatusCode MapToLocalCode(int value);
 //
 // This is an internal implementation detail for Abseil logging.
 ABSL_ATTRIBUTE_PURE_FUNCTION
-const char* absl_nonnull MakeCheckFailString(
-    const absl::Status* absl_nonnull status, const char* absl_nonnull prefix);
+absl::Nonnull<std::string*> MakeCheckFailString(
+    absl::Nonnull<const absl::Status*> status,
+    absl::Nonnull<const char*> prefix);
 
 }  // namespace status_internal
 

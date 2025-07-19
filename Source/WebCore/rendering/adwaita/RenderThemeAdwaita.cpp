@@ -301,7 +301,7 @@ bool RenderThemeAdwaita::isControlStyled(const RenderStyle& style) const
 void RenderThemeAdwaita::adjustTextFieldStyle(RenderStyle& style, const Element*) const
 {
     if (!style.hasExplicitlySetBorderRadius())
-        style.setBorderRadius(IntSize(5, 5));
+        style.setBorderRadius({ 5_css_px, 5_css_px });
 }
 
 void RenderThemeAdwaita::adjustTextAreaStyle(RenderStyle& style, const Element* element) const

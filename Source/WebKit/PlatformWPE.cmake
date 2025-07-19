@@ -456,6 +456,10 @@ if (USE_ATK)
     )
 endif ()
 
+if (USE_OPENXR)
+   list(APPEND WebKit_LIBRARIES OpenXR::openxr_loader)
+endif ()
+
 if (USE_CAIRO)
     include(Platform/Cairo.cmake)
     list(APPEND WebKit_LIBRARIES

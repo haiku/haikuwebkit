@@ -260,7 +260,7 @@ void NetworkStorageSession::setAgeCapForClientSideCookies(std::optional<Seconds>
 {
     m_ageCapForClientSideCookies = seconds;
     m_ageCapForClientSideCookiesShort = seconds ? Seconds { seconds->seconds() / 7. } : seconds;
-    m_ageCapForClientSideCookiesForScriptTelemetry = seconds;
+    m_ageCapForClientSideCookiesForScriptTrackingPrivacy = seconds;
 #if ENABLE(JS_COOKIE_CHECKING)
     m_ageCapForClientSideCookiesForLinkDecorationTargetPage = seconds;
 #endif
@@ -269,7 +269,7 @@ void NetworkStorageSession::setAgeCapForClientSideCookies(std::optional<Seconds>
 void NetworkStorageSession::setPrevalentDomainsToBlockAndDeleteCookiesFor(const Vector<RegistrableDomain>& domains)
 {
     m_registrableDomainsToBlockAndDeleteCookiesFor.clear();
-    m_registrableDomainsToBlockAndDeleteCookiesFor.add(domains.begin(), domains.end());
+    m_registrableDomainsToBlockAndDeleteCookiesFor.addAll(domains);
     if (m_thirdPartyCookieBlockingMode == ThirdPartyCookieBlockingMode::OnlyAccordingToPerDomainPolicy)
         cookieEnabledStateMayHaveChanged();
 }
@@ -277,7 +277,7 @@ void NetworkStorageSession::setPrevalentDomainsToBlockAndDeleteCookiesFor(const 
 void NetworkStorageSession::setPrevalentDomainsToBlockButKeepCookiesFor(const Vector<RegistrableDomain>& domains)
 {
     m_registrableDomainsToBlockButKeepCookiesFor.clear();
-    m_registrableDomainsToBlockButKeepCookiesFor.add(domains.begin(), domains.end());
+    m_registrableDomainsToBlockButKeepCookiesFor.addAll(domains);
     if (m_thirdPartyCookieBlockingMode == ThirdPartyCookieBlockingMode::OnlyAccordingToPerDomainPolicy)
         cookieEnabledStateMayHaveChanged();
 }
@@ -285,7 +285,7 @@ void NetworkStorageSession::setPrevalentDomainsToBlockButKeepCookiesFor(const Ve
 void NetworkStorageSession::setDomainsWithUserInteractionAsFirstParty(const Vector<RegistrableDomain>& domains)
 {
     m_registrableDomainsWithUserInteractionAsFirstParty.clear();
-    m_registrableDomainsWithUserInteractionAsFirstParty.add(domains.begin(), domains.end());
+    m_registrableDomainsWithUserInteractionAsFirstParty.addAll(domains);
     if (m_thirdPartyCookieBlockingMode == ThirdPartyCookieBlockingMode::AllOnSitesWithoutUserInteraction)
         cookieEnabledStateMayHaveChanged();
 }
@@ -479,10 +479,10 @@ void NetworkStorageSession::resetManagedDomains()
 }
 #endif
 
-std::optional<Seconds> NetworkStorageSession::clientSideCookieCap(const RegistrableDomain& firstParty, RequiresScriptTelemetry requiresScriptTelemetry, std::optional<PageIdentifier> pageID) const
+std::optional<Seconds> NetworkStorageSession::clientSideCookieCap(const RegistrableDomain& firstParty, RequiresScriptTrackingPrivacy requiresScriptTrackingPrivacy, std::optional<PageIdentifier> pageID) const
 {
-    if (requiresScriptTelemetry == RequiresScriptTelemetry::Yes)
-        return m_ageCapForClientSideCookiesForScriptTelemetry;
+    if (requiresScriptTrackingPrivacy == RequiresScriptTrackingPrivacy::Yes)
+        return m_ageCapForClientSideCookiesForScriptTrackingPrivacy;
 
 #if ENABLE(JS_COOKIE_CHECKING)
     if (!pageID)

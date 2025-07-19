@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2015 Apple Inc. All rights reserved.
+ * Copyright (C) 2015-2025 Apple Inc. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -38,7 +38,7 @@ WKTypeID WKFrameInfoGetTypeID()
 
 WKFrameHandleRef WKFrameInfoCreateFrameHandleRef(WKFrameInfoRef frameInfo)
 {
-    return WebKit::toAPILeakingRef(WebKit::toImpl(frameInfo)->handle());
+    return WebKit::toAPILeakingRef(WebKit::toProtectedImpl(frameInfo)->handle());
 }
 
 WKSecurityOriginRef WKFrameInfoCopySecurityOrigin(WKFrameInfoRef frameInfo)

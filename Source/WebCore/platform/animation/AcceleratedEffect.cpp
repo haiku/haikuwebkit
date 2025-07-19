@@ -82,7 +82,7 @@ AcceleratedEffect::Keyframe AcceleratedEffect::Keyframe::clone() const
     auto clonedAnimatedProperties = m_animatedProperties;
 
     RefPtr<TimingFunction> clonedTimingFunction;
-    if (auto* srcTimingFunction = m_timingFunction.get())
+    if (RefPtr srcTimingFunction = m_timingFunction)
         clonedTimingFunction = srcTimingFunction->clone();
 
     return {
@@ -172,11 +172,11 @@ static CSSPropertyID cssPropertyFromAcceleratedProperty(AcceleratedEffectPropert
 
 RefPtr<AcceleratedEffect> AcceleratedEffect::create(const KeyframeEffect& effect, const IntRect& borderBoxRect, const AcceleratedEffectValues& baseValues, OptionSet<AcceleratedEffectProperty>& disallowedProperties)
 {
-    auto* acceleratedEffect = new AcceleratedEffect(effect, borderBoxRect, disallowedProperties);
+    RefPtr acceleratedEffect = adoptRef(new AcceleratedEffect(effect, borderBoxRect, disallowedProperties));
     acceleratedEffect->validateFilters(baseValues, disallowedProperties);
     if (acceleratedEffect->animatedProperties().isEmpty())
         return nullptr;
-    return adoptRef(*acceleratedEffect);
+    return acceleratedEffect;
 }
 
 Ref<AcceleratedEffect> AcceleratedEffect::create(AnimationEffectTiming timing, Vector<Keyframe>&& keyframes, WebAnimationType type, CompositeOperation composite, RefPtr<TimingFunction>&& defaultKeyframeTimingFunction, OptionSet<WebCore::AcceleratedEffectProperty>&& animatedProperties, bool paused, double playbackRate, std::optional<WebAnimationTime> startTime, std::optional<WebAnimationTime> holdTime)
@@ -191,7 +191,7 @@ Ref<AcceleratedEffect> AcceleratedEffect::clone() const
     });
 
     RefPtr<TimingFunction> clonedDefaultKeyframeTimingFunction;
-    if (auto* defaultKeyframeTimingFunction = m_defaultKeyframeTimingFunction.get())
+    if (RefPtr defaultKeyframeTimingFunction = m_defaultKeyframeTimingFunction)
         clonedDefaultKeyframeTimingFunction = defaultKeyframeTimingFunction->clone();
 
     auto clonedAnimatedProperties = m_animatedProperties;
@@ -211,7 +211,7 @@ AcceleratedEffect::AcceleratedEffect(const KeyframeEffect& effect, const IntRect
     m_animationType = effect.animationType();
 
     ASSERT(effect.animation());
-    if (auto* animation = effect.animation()) {
+    if (RefPtr animation = effect.animation()) {
         m_paused = animation->playState() == WebAnimation::PlayState::Paused;
         m_playbackRate = animation->playbackRate();
         ASSERT(animation->holdTime() || animation->startTime());

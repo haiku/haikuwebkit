@@ -55,10 +55,10 @@ private:
 #else
     ParentalControlsURLFilter();
 #endif
-    RetainPtr<WCRBrowserEngineClient> effectiveWCRBrowserEngineClient();
+    WCRBrowserEngineClient* effectiveWCRBrowserEngineClient();
 
     mutable std::optional<bool> m_isEnabled;
-    RetainPtr<WCRBrowserEngineClient> m_wcrBrowserEngineClient;
+    const RetainPtr<WCRBrowserEngineClient> m_wcrBrowserEngineClient;
 #if HAVE(WEBCONTENTRESTRICTIONS_PATH_SPI)
     String m_configurationPath;
 #endif

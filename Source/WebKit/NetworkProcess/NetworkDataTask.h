@@ -26,6 +26,7 @@
 #pragma once
 
 #include "DownloadID.h"
+#include "NetworkSession.h"
 #include "SandboxExtension.h"
 #include "WebPageProxyIdentifier.h"
 #include <WebCore/Credential.h>
@@ -147,11 +148,15 @@ public:
     virtual void setEmulatedConditions(const std::optional<int64_t>& /* bytesPerSecondLimit */) { }
 #endif
 
-    PAL::SessionID sessionID() const;
+    PAL::SessionID sessionID() const { return m_session->sessionID(); }
+    const NetworkSession* networkSession() const { return m_session.get(); }
+    NetworkSession* networkSession() { return m_session.get(); }
 
-    const NetworkSession* networkSession() const;
-    NetworkSession* networkSession();
-    CheckedPtr<NetworkSession> checkedNetworkSession();
+    CheckedPtr<NetworkSession> checkedNetworkSession()
+    {
+        ASSERT(m_session);
+        return m_session.get();
+    }
 
     virtual void setTimingAllowFailedFlag() { }
 
@@ -171,7 +176,7 @@ protected:
     void restrictRequestReferrerToOriginIfNeeded(WebCore::ResourceRequest&);
     void setBytesTransferredOverNetwork(size_t bytes) { m_bytesTransferredOverNetwork = bytes; }
 
-    WeakPtr<NetworkSession> m_session;
+    const WeakPtr<NetworkSession> m_session;
     WeakPtr<NetworkDataTaskClient> m_client;
     WeakPtr<PendingDownload> m_pendingDownload;
     Markable<DownloadID> m_pendingDownloadID;

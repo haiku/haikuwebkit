@@ -1339,8 +1339,8 @@ template<typename Head, typename... Tail> auto tuple_zip(Head&& head, Tail&& ...
     );
 }
 
-template<typename WordType, typename Func>
-ALWAYS_INLINE constexpr void forEachSetBit(std::span<const WordType> bits, const Func& func)
+template<typename WordType, std::size_t Extent, typename Func>
+ALWAYS_INLINE constexpr void forEachSetBit(std::span<const WordType, Extent> bits, const Func& func)
 {
     constexpr size_t wordSize = sizeof(WordType) * CHAR_BIT;
     for (size_t i = 0; i < bits.size(); ++i) {
@@ -1378,8 +1378,8 @@ ALWAYS_INLINE constexpr void forEachSetBit(std::span<const WordType> bits, const
     }
 }
 
-template<typename WordType, typename Func>
-ALWAYS_INLINE constexpr void forEachSetBit(std::span<const WordType> bits, size_t startIndex, const Func& func)
+template<typename WordType, std::size_t Extent, typename Func>
+ALWAYS_INLINE constexpr void forEachSetBit(std::span<const WordType, Extent> bits, size_t startIndex, const Func& func)
 {
     constexpr size_t wordSize = sizeof(WordType) * CHAR_BIT;
     auto iterate = [&](WordType word, size_t i) ALWAYS_INLINE_LAMBDA {

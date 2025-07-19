@@ -28,6 +28,7 @@
 #include "LazyClassStructure.h"
 #include "RegExpGlobalData.h"
 #include "RuntimeFlags.h"
+#include "SourceTaintedOrigin.h"
 #include "StructureCache.h"
 #include "Watchpoint.h"
 #include "WeakGCSet.h"
@@ -356,7 +357,9 @@ public:
     struct FunctionStructures {
         WriteBarrierStructureID arrowFunctionStructure;
         WriteBarrierStructureID sloppyFunctionStructure;
+        WriteBarrierStructureID sloppyMethodStructure;
         WriteBarrierStructureID strictFunctionStructure;
+        WriteBarrierStructureID strictMethodStructure;
     };
     FunctionStructures m_builtinFunctions;
     FunctionStructures m_ordinaryFunctions;
@@ -866,6 +869,18 @@ public:
             return m_builtinFunctions.strictFunctionStructure.get();
         return m_ordinaryFunctions.strictFunctionStructure.get();
     }
+    Structure* sloppyMethodStructure(bool isBuiltin) const
+    {
+        if (isBuiltin)
+            return m_builtinFunctions.sloppyMethodStructure.get();
+        return m_ordinaryFunctions.sloppyMethodStructure.get();
+    }
+    Structure* strictMethodStructure(bool isBuiltin) const
+    {
+        if (isBuiltin)
+            return m_builtinFunctions.strictMethodStructure.get();
+        return m_ordinaryFunctions.strictMethodStructure.get();
+    }
 
     Structure* boundFunctionStructure() const { return m_boundFunctionStructure.get(); }
     Structure* customGetterFunctionStructure() const { return m_customGetterFunctionStructure.get(this); }
@@ -1126,7 +1141,7 @@ public:
     WriteBarrier<JSObject>* addressOfGlobalThis() { return &m_globalThis; }
     OptionSet<CodeGenerationMode> defaultCodeGenerationMode() const;
 
-    FunctionExecutable* tryGetCachedFunctionExecutableForFunctionConstructor(const Identifier& name, const SourceCode&, LexicallyScopedFeatures, FunctionConstructionMode);
+    FunctionExecutable* tryGetCachedFunctionExecutableForFunctionConstructor(const Identifier& name, StringView program, const SourceOrigin&, SourceTaintedOrigin, const String& sourceURL, const TextPosition& startPosition, LexicallyScopedFeatures, FunctionConstructionMode);
     void cachedFunctionExecutableForFunctionConstructor(FunctionExecutable*);
 
     static inline Structure* createStructure(VM&, JSValue prototype);

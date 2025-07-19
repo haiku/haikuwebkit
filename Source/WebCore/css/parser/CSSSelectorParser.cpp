@@ -1307,18 +1307,15 @@ CSSSelectorList CSSSelectorParser::resolveNestingParent(const CSSSelectorList& n
 {
     MutableCSSSelectorList result;
     CSSSelectorList copiedSelectorList { nestedSelectorList };
-    auto selector = copiedSelectorList.first();
-    while (selector) {
+    for (auto& selector : copiedSelectorList) {
         if (parentResolvedSelectorList) {
             // FIXME: We should build a new MutableCSSSelector from this selector and resolve it
-            const_cast<CSSSelector*>(selector)->resolveNestingParentSelectors(*parentResolvedSelectorList);
+            const_cast<CSSSelector&>(selector).resolveNestingParentSelectors(*parentResolvedSelectorList);
         } else {
             // It's top-level, the nesting parent selector should be replaced by :scope
-            const_cast<CSSSelector*>(selector)->replaceNestingParentByPseudoClassScope();
+            const_cast<CSSSelector&>(selector).replaceNestingParentByPseudoClassScope();
         }
-        auto mutableSelector = makeUnique<MutableCSSSelector>(*selector);
-        result.append(WTFMove(mutableSelector));
-        selector = copiedSelectorList.next(selector);
+        result.append(makeUnique<MutableCSSSelector>(selector));
     }
 
     auto final = CSSSelectorList { WTFMove(result) };

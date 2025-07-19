@@ -599,16 +599,19 @@ void writeResources(TextStream& ts, const RenderObject& renderer, OptionSet<Rend
             }
         }
     }
-    if (auto* resourceClipPath = dynamicDowncast<ReferencePathOperation>(style.clipPath())) {
-        AtomString id = resourceClipPath->fragment();
-        if (LegacyRenderSVGResourceClipper* clipper = getRenderSVGResourceById<LegacyRenderSVGResourceClipper>(renderer.treeScopeForSVGReferences(), id)) {
-            ts << indent << ' ';
-            writeNameAndQuotedValue(ts, "clipPath"_s, id);
-            ts << ' ';
-            writeStandardPrefix(ts, *clipper, behavior, WriteIndentOrNot::No);
-            ts << ' ' << clipper->resourceBoundingBox(renderer, RepaintRectCalculation::Accurate) << '\n';
-        }
-    }
+    WTF::switchOn(style.clipPath(),
+        [&](const Style::ReferencePath& clipPath) {
+            auto id = clipPath.fragment();
+            if (auto* clipper = getRenderSVGResourceById<LegacyRenderSVGResourceClipper>(renderer.treeScopeForSVGReferences(), id)) {
+                ts << indent << ' ';
+                writeNameAndQuotedValue(ts, "clipPath"_s, id);
+                ts << ' ';
+                writeStandardPrefix(ts, *clipper, behavior, WriteIndentOrNot::No);
+                ts << ' ' << clipper->resourceBoundingBox(renderer, RepaintRectCalculation::Accurate) << '\n';
+            }
+        },
+        [&](const auto&) { }
+    );
     if (style.hasFilter()) {
         const FilterOperations& filterOperations = style.filter();
         if (filterOperations.size() == 1) {

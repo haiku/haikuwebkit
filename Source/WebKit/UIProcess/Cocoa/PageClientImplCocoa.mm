@@ -441,7 +441,7 @@ void PageClientImplCocoa::didCommitLayerTree(const RemoteLayerTreeTransaction& t
 {
     if (auto& edges = transaction.fixedContainerEdges())
         [webView() _updateFixedContainerEdges:*edges];
-    [webView() _updateScrollGeometryWithContentOffset:transaction.scrollPosition() contentSize:transaction.contentsSize()];
+    [webView() _updateScrollGeometryWithContentOffset:transaction.scrollPosition() contentSize:transaction.scrollGeometryContentSize()];
 }
 
 } // namespace WebKit

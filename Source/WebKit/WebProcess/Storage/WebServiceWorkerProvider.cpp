@@ -53,7 +53,7 @@ WebServiceWorkerProvider::WebServiceWorkerProvider()
 
 WebCore::SWClientConnection& WebServiceWorkerProvider::serviceWorkerConnection()
 {
-    return WebProcess::singleton().ensureNetworkProcessConnection().serviceWorkerConnection();
+    return WebProcess::singleton().ensureProtectedNetworkProcessConnection()->serviceWorkerConnection();
 }
 
 WebCore::SWClientConnection* WebServiceWorkerProvider::existingServiceWorkerConnection()
@@ -77,7 +77,7 @@ void WebServiceWorkerProvider::updateThrottleState(bool isThrottleable)
 
 void WebServiceWorkerProvider::terminateWorkerForTesting(WebCore::ServiceWorkerIdentifier identifier, CompletionHandler<void()>&& callback)
 {
-    WebProcess::singleton().ensureNetworkProcessConnection().serviceWorkerConnection().terminateWorkerForTesting(identifier, WTFMove(callback));
+    WebProcess::singleton().ensureProtectedNetworkProcessConnection()->protectedServiceWorkerConnection()->terminateWorkerForTesting(identifier, WTFMove(callback));
 }
 
 } // namespace WebKit

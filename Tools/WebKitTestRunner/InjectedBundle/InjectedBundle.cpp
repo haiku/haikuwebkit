@@ -752,6 +752,11 @@ void postPageMessage(const char* name, bool value)
     postPageMessage(name, adoptWK(WKBooleanCreate(value)));
 }
 
+void postPageMessage(const char* name, unsigned value)
+{
+    postPageMessage(name, adoptWK(WKUInt64Create(value)));
+}
+
 void postPageMessage(const char* name, const char* value)
 {
     postPageMessage(name, toWK(value));

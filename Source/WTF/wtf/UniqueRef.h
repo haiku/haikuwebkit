@@ -84,7 +84,6 @@ public:
     T* operator->() const { ASSERT(m_ref); return m_ref.get(); }
 
     operator T&() const { ASSERT(m_ref); return *m_ref; }
-    T& operator*() const { ASSERT(m_ref); return *m_ref.get(); }
 
     std::unique_ptr<T> moveToUniquePtr() { return WTFMove(m_ref); }
 

@@ -39,8 +39,7 @@ template <typename T, typename U, typename = void>
 struct HasConversionOperatorToStatusOr : std::false_type {};
 
 template <typename T, typename U>
-void test(char (*absl_nullable)[sizeof(
-    std::declval<U>().operator absl::StatusOr<T>())]);
+void test(char (*)[sizeof(std::declval<U>().operator absl::StatusOr<T>())]);
 
 template <typename T, typename U>
 struct HasConversionOperatorToStatusOr<T, U, decltype(test<T, U>(0))>
@@ -186,7 +185,7 @@ using IsStatusOrAssignmentValid = absl::conjunction<
 class Helper {
  public:
   // Move type-agnostic error handling to the .cc.
-  static void HandleInvalidStatusCtorArg(Status* absl_nonnull);
+  static void HandleInvalidStatusCtorArg(absl::Nonnull<Status*>);
   [[noreturn]] static void Crash(const absl::Status& status);
 };
 
@@ -195,7 +194,7 @@ class Helper {
 // This abstraction is here mostly for the gcc performance fix.
 template <typename T, typename... Args>
 ABSL_ATTRIBUTE_NONNULL(1)
-void PlacementNew(void* absl_nonnull p, Args&&... args) {
+void PlacementNew(absl::Nonnull<void*> p, Args&&... args) {
   new (p) T(std::forward<Args>(args)...);
 }
 

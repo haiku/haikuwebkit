@@ -250,7 +250,7 @@ static RefPtr<ImageBuffer> copyImageBuffer(Ref<ImageBuffer> source, PreserveReso
     }
     auto copySize = source->logicalSize();
     auto copyScale = preserveResolution == PreserveResolution::Yes ? source->resolutionScale() : 1.f;
-    auto copyBuffer = source->context().createImageBuffer(copySize, copyScale, source->colorSpace(), renderingMode);
+    auto copyBuffer = source->context().createImageBuffer(copySize, copyScale, source->colorSpace(), renderingMode, std::nullopt, source->pixelFormat());
     if (!copyBuffer)
         return nullptr;
     if (source->hasOneRef())

@@ -302,6 +302,9 @@ public:
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
     virtual bool setNeedsDisplayIfEDRHeadroomExceeds(float);
+
+    virtual void setTonemappingEnabled(bool);
+    virtual bool tonemappingEnabled() const;
 #endif
 
 #if HAVE(CORE_ANIMATION_SEPARATED_LAYERS)
@@ -353,7 +356,7 @@ public:
     static void drawRepaintIndicator(GraphicsContext&, PlatformCALayer*, int repaintCount, Color customBackgroundColor = { });
     static CGRect frameForLayer(const PlatformLayer*);
 
-    static ContentsFormat contentsFormatForLayer(Widget* = nullptr, PlatformCALayerClient* = nullptr);
+    static ContentsFormat contentsFormatForLayer(PlatformCALayerClient* = nullptr);
 
     virtual void markFrontBufferVolatileForTesting() { }
     void moveToLayerPool();

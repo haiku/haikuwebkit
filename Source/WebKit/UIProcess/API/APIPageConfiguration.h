@@ -158,6 +158,7 @@ public:
 
     WebKit::WebPageProxy* relatedPage() const;
     void setRelatedPage(WeakPtr<WebKit::WebPageProxy>&& relatedPage) { m_data.relatedPage = WTFMove(relatedPage); }
+    RefPtr<WebKit::WebPageProxy> protectedRelatedPage() const;
 
     WebKit::WebPageProxy* pageToCloneSessionStorageFrom() const;
     void setPageToCloneSessionStorageFrom(WeakPtr<WebKit::WebPageProxy>&&);

@@ -82,7 +82,7 @@ private:
     void layout() final;
     void imageChanged(WrappedImagePtr, const IntRect*) final;
     LayoutUnit lineHeight(bool firstLine, LineDirectionMode, LinePositionMode) const final;
-    LayoutUnit baselinePosition(FontBaseline, bool firstLine, LineDirectionMode, LinePositionMode) const final;
+    LayoutUnit baselinePosition(bool firstLine, LineDirectionMode, LinePositionMode) const final;
     LayoutRect selectionRectForRepaint(const RenderLayerModelObject* repaintContainer, bool clipToVisibleContent) final;
     bool canBeSelectionLeaf() const final { return true; }
     void styleWillChange(StyleDifference, const RenderStyle& newStyle) final;

@@ -69,7 +69,7 @@ public:
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) final;
 
     CGRect bounds() const;
-    void updateBoundsAndPosition(CGRect, std::optional<WTF::MachSendRight>&&);
+    void updateBoundsAndPosition(CGRect, std::optional<WTF::MachSendRightAnnotated>&&);
 
     std::optional<SharedPreferencesForWebProcess> sharedPreferencesForWebProcess() const;
 

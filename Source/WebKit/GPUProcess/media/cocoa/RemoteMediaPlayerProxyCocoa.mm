@@ -125,7 +125,8 @@ void RemoteMediaPlayerProxy::setVideoLayerSizeFenced(const WebCore::FloatSize& s
     if (m_inlineLayerHostingContext) {
 #if USE(EXTENSIONKIT)
 #if ENABLE(MACH_PORT_LAYER_HOSTING)
-        hostingUpdateCoordinator = LayerHostingContext::createHostingUpdateCoordinator(sendRightAnnotated);
+        auto sendRightAnnotatedCopy = sendRightAnnotated;
+        hostingUpdateCoordinator = LayerHostingContext::createHostingUpdateCoordinator(WTFMove(sendRightAnnotatedCopy));
 #else
         hostingUpdateCoordinator = LayerHostingContext::createHostingUpdateCoordinator(sendRightAnnotated.sendRight.sendRight());
 #endif // ENABLE(MACH_PORT_LAYER_HOSTING)

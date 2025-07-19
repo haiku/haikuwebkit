@@ -81,7 +81,7 @@ protected:
     void appendSynchronously(RefPtr<StringImpl>&&) override;
     void finish() override;
 
-    HTMLTreeBuilder& treeBuilder();
+    HTMLTreeBuilder& treeBuilder() { return m_treeBuilder; }
 
 private:
     HTMLDocumentParser(DocumentFragment&, Element& contextElement, OptionSet<ParserContentPolicy>, CustomElementRegistry*);
@@ -143,7 +143,7 @@ private:
 
     HTMLTokenizer m_tokenizer;
     std::unique_ptr<HTMLScriptRunner> m_scriptRunner;
-    std::unique_ptr<HTMLTreeBuilder> m_treeBuilder;
+    const UniqueRef<HTMLTreeBuilder> m_treeBuilder;
     std::unique_ptr<HTMLPreloadScanner> m_preloadScanner;
     std::unique_ptr<HTMLPreloadScanner> m_insertionPreloadScanner;
     RefPtr<HTMLParserScheduler> m_parserScheduler;
@@ -169,12 +169,6 @@ inline HTMLInputStream& HTMLDocumentParser::inputStream()
 inline bool HTMLDocumentParser::hasPreloadScanner() const
 {
     return m_preloadScanner.get();
-}
-
-inline HTMLTreeBuilder& HTMLDocumentParser::treeBuilder()
-{
-    ASSERT(m_treeBuilder);
-    return *m_treeBuilder;
 }
 
 } // namespace WebCore

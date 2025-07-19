@@ -268,6 +268,11 @@ WebPageProxy* PageConfiguration::relatedPage() const
     return m_data.relatedPage.get();
 }
 
+RefPtr<WebPageProxy> PageConfiguration::protectedRelatedPage() const
+{
+    return relatedPage();
+}
+
 WebPageProxy* PageConfiguration::pageToCloneSessionStorageFrom() const
 {
     return m_data.pageToCloneSessionStorageFrom.get();

@@ -28,7 +28,7 @@
 #include "Connection.h"
 #include "MessageReceiver.h"
 #include <WebCore/FrameIdentifier.h>
-#include <WebCore/InspectorClient.h>
+#include <WebCore/InspectorBackendClient.h>
 #include <wtf/Noncopyable.h>
 #include <wtf/ThreadSafeRefCounted.h>
 #include <wtf/text/WTFString.h>
@@ -80,7 +80,7 @@ public:
     void elementSelectionChanged(bool);
     void timelineRecordingChanged(bool);
 
-    void setDeveloperPreferenceOverride(WebCore::InspectorClient::DeveloperPreference, std::optional<bool>);
+    void setDeveloperPreferenceOverride(WebCore::InspectorBackendClient::DeveloperPreference, std::optional<bool>);
 #if ENABLE(INSPECTOR_NETWORK_THROTTLING)
     void setEmulatedConditions(std::optional<int64_t>&& bytesPerSecondLimit);
 #endif
@@ -90,13 +90,13 @@ public:
     void disconnectFromPage() { close(); }
 
 private:
-    friend class WebInspectorClient;
+    friend class WebInspectorBackendClient;
 
     explicit WebInspector(WebPage&);
 
     bool canAttachWindow();
 
-    // Called from WebInspectorClient
+    // Called from WebInspectorBackendClient
     void openLocalInspectorFrontend();
     void closeFrontendConnection();
 

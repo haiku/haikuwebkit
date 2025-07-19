@@ -283,7 +283,7 @@ bool BaseDateAndTimeInputType::valueMissing(const String& value) const
     return protectedElement()->isMutable() && element()->isRequired() && value.isEmpty();
 }
 
-bool BaseDateAndTimeInputType::isKeyboardFocusable(KeyboardEvent*) const
+bool BaseDateAndTimeInputType::isKeyboardFocusable(const FocusEventData&) const
 {
     ASSERT(element());
     Ref input = *element();
@@ -510,7 +510,7 @@ void BaseDateAndTimeInputType::handleFocusEvent(Node* oldFocusedNode, FocusDirec
         // so that this element no longer has focus. In this case, one of the children should
         // not be focused as the element is losing focus entirely.
         if (RefPtr page = element()->document().page())
-            page->checkedFocusController()->advanceFocus(direction, 0);
+            page->focusController().advanceFocus(direction, 0);
 
     } else {
         // If the element received focus in any other direction, transfer focus to the first focusable child.

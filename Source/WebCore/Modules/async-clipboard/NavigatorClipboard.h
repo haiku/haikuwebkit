@@ -48,7 +48,7 @@ private:
     static NavigatorClipboard* from(Navigator&);
     static ASCIILiteral supplementName();
 
-    RefPtr<Clipboard> m_clipboard;
+    const RefPtr<Clipboard> m_clipboard;
     const CheckedRef<Navigator> m_navigator;
 };
 

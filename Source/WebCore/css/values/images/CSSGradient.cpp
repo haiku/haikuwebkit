@@ -33,7 +33,6 @@
 #include "CSSPrimitiveValueMappings.h"
 #include "CalculationValue.h"
 #include "ColorInterpolation.h"
-#include "StyleBuilderConverter.h"
 #include "StyleGradientImage.h"
 #include "StylePosition.h"
 #include "StylePrimitiveNumericTypes+Conversions.h"

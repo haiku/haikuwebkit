@@ -42,6 +42,7 @@
 #include "Navigator.h"
 #include "Page.h"
 #include "PermissionsPolicy.h"
+#include "ScriptExecutionContextInlines.h"
 #include "SecurityOrigin.h"
 #include <JavaScriptCore/ConsoleTypes.h>
 #include <wtf/Ref.h>
@@ -310,8 +311,11 @@ void Geolocation::getCurrentPosition(Ref<PositionCallback>&& successCallback, Re
 {
     RefPtr document = this->document();
     if (!document || !document->isFullyActive()) {
-        if (errorCallback && errorCallback->scriptExecutionContext()) {
-            errorCallback->scriptExecutionContext()->eventLoop().queueTask(TaskSource::Geolocation, [errorCallback] {
+        if (!errorCallback)
+            return;
+
+        if (RefPtr context = errorCallback->scriptExecutionContext()) {
+            context->checkedEventLoop()->queueTask(TaskSource::Geolocation, [errorCallback = WTFMove(errorCallback)] {
                 errorCallback->invoke(GeolocationPositionError::create(GeolocationPositionError::POSITION_UNAVAILABLE, "Document is not fully active"_s));
             });
         }
@@ -328,8 +332,11 @@ int Geolocation::watchPosition(Ref<PositionCallback>&& successCallback, RefPtr<P
 {
     RefPtr document = this->document();
     if (!document || !document->isFullyActive()) {
-        if (errorCallback && errorCallback->scriptExecutionContext()) {
-            errorCallback->scriptExecutionContext()->eventLoop().queueTask(TaskSource::Geolocation, [errorCallback] {
+        if (!errorCallback)
+            return 0;
+
+        if (RefPtr context = errorCallback->scriptExecutionContext()) {
+            context->checkedEventLoop()->queueTask(TaskSource::Geolocation, [errorCallback = WTFMove(errorCallback)] {
                 errorCallback->invoke(GeolocationPositionError::create(GeolocationPositionError::POSITION_UNAVAILABLE, "Document is not fully active"_s));
             });
         }
@@ -342,7 +349,7 @@ int Geolocation::watchPosition(Ref<PositionCallback>&& successCallback, RefPtr<P
     int watchID;
     // Keep asking for the next id until we're given one that we don't already have.
     do {
-        watchID = scriptExecutionContext()->circularSequentialID();
+        watchID = protectedScriptExecutionContext()->circularSequentialID();
     } while (!m_watchers.add(watchID, notifier.copyRef()));
     return watchID;
 }
@@ -438,10 +445,11 @@ void Geolocation::makeCachedPositionCallbacks()
     // All modifications to m_requestsAwaitingCachedPosition are done
     // asynchronously, so we don't need to worry about it being modified from
     // the callbacks.
+    RefPtr lastPosition = this->lastPosition();
     for (auto& notifier : m_requestsAwaitingCachedPosition) {
         // FIXME: This seems wrong, since makeCachedPositionCallbacks() is called in a branch where
         // lastPosition() is known to be null in Geolocation::setIsAllowed().
-        notifier->runSuccessCallback(lastPosition());
+        notifier->runSuccessCallback(lastPosition.get());
 
         // If this is a one-shot request, stop it. Otherwise, if the watch still
         // exists, start the service to get updates.
@@ -470,7 +478,7 @@ void Geolocation::requestTimedOut(GeoNotifier* notifier)
 
 bool Geolocation::haveSuitableCachedPosition(const PositionOptions& options)
 {
-    auto* cachedPosition = lastPosition();
+    RefPtr cachedPosition = lastPosition();
     if (!cachedPosition)
         return false;
     if (!options.maximumAge)
@@ -484,8 +492,8 @@ void Geolocation::clearWatch(int watchID)
     if (watchID <= 0)
         return;
 
-    if (GeoNotifier* notifier = m_watchers.find(watchID))
-        m_pendingForPermissionNotifiers.remove(notifier);
+    if (RefPtr notifier = m_watchers.find(watchID))
+        m_pendingForPermissionNotifiers.remove(notifier.get());
     m_watchers.remove(watchID);
     
     if (!hasListeners())
@@ -640,7 +648,7 @@ void Geolocation::requestPermission()
     if (m_allowGeolocation > Unknown)
         return;
 
-    Page* page = this->page();
+    RefPtr page = this->page();
     if (!page)
         return;
 
@@ -648,7 +656,7 @@ void Geolocation::requestPermission()
     m_hasBeenRequested = true;
 
     // Ask the embedder: it maintains the geolocation challenge policy itself.
-    GeolocationController::from(page)->requestPermission(*this);
+    GeolocationController::from(page.get())->requestPermission(*this);
 }
 
 void Geolocation::revokeAuthorizationTokenIfNecessary()
@@ -656,11 +664,11 @@ void Geolocation::revokeAuthorizationTokenIfNecessary()
     if (m_authorizationToken.isNull())
         return;
 
-    Page* page = this->page();
+    RefPtr page = this->page();
     if (!page)
         return;
 
-    GeolocationController::from(page)->revokeAuthorizationToken(std::exchange(m_authorizationToken, String()));
+    GeolocationController::from(page.get())->revokeAuthorizationToken(std::exchange(m_authorizationToken, String()));
 }
 
 void Geolocation::resetIsAllowed()
@@ -721,21 +729,21 @@ void Geolocation::setError(GeolocationError& error)
 
 bool Geolocation::startUpdating(GeoNotifier* notifier)
 {
-    Page* page = this->page();
+    RefPtr page = this->page();
     if (!page)
         return false;
 
-    GeolocationController::from(page)->addObserver(*this, notifier->options().enableHighAccuracy);
+    GeolocationController::from(page.get())->addObserver(*this, notifier->options().enableHighAccuracy);
     return true;
 }
 
 void Geolocation::stopUpdating()
 {
-    Page* page = this->page();
+    RefPtr page = this->page();
     if (!page)
         return;
 
-    GeolocationController::from(page)->removeObserver(*this);
+    GeolocationController::from(page.get())->removeObserver(*this);
 }
 
 void Geolocation::handlePendingPermissionNotifiers()

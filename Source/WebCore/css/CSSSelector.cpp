@@ -834,11 +834,8 @@ bool CSSSelector::visitAllSimpleSelectors(auto& apply) const
 
         // Visit the selector list member (if any) recursively (such as: :has(<list>), :is(<list>),...)
         if (auto selectorList = current->selectorList()) {
-            auto next = selectorList->first();
-            while (next) {
-                worklist.push(next);
-                next = CSSSelectorList::next(next);
-            }
+            for (auto& selector : *selectorList)
+                worklist.push(&selector);
         }
 
         // Visit the next simple selector

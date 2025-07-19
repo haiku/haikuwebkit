@@ -64,7 +64,7 @@
 #include "IDBIndexIdentifier.h"
 #include "IDBObjectStoreIdentifier.h"
 #include "Icon.h"
-#include "InspectorClient.h"
+#include "InspectorBackendClient.h"
 #include "LocalFrame.h"
 #include "LocalFrameLoaderClient.h"
 #include "ModalContainerTypes.h"
@@ -426,8 +426,8 @@ private:
 #endif
 };
 
-class EmptyInspectorClient final : public InspectorClient {
-    WTF_MAKE_TZONE_ALLOCATED(EmptyInspectorClient);
+class EmptyInspectorBackendClient final : public InspectorBackendClient {
+    WTF_MAKE_TZONE_ALLOCATED(EmptyInspectorBackendClient);
     void inspectedPageDestroyed() final { }
     Inspector::FrontendChannel* openLocalFrontend(InspectorController*) final { return nullptr; }
     void bringFrontendToFront() final { }
@@ -435,7 +435,7 @@ class EmptyInspectorClient final : public InspectorClient {
     void hideHighlight() final { }
 };
 
-WTF_MAKE_TZONE_ALLOCATED_IMPL(EmptyInspectorClient);
+WTF_MAKE_TZONE_ALLOCATED_IMPL(EmptyInspectorBackendClient);
 
 #if ENABLE(APPLE_PAY)
 
@@ -1258,7 +1258,7 @@ PageConfiguration pageConfigurationWithEmptyClients(std::optional<PageIdentifier
     pageConfiguration.dragClient = makeUnique<EmptyDragClient>();
 #endif
 
-    pageConfiguration.inspectorClient = makeUnique<EmptyInspectorClient>();
+    pageConfiguration.inspectorBackendClient = makeUnique<EmptyInspectorBackendClient>();
 
     pageConfiguration.diagnosticLoggingClient = makeUnique<EmptyDiagnosticLoggingClient>();
 

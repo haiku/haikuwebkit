@@ -28,7 +28,7 @@
 #include <sanitizer/lsan_interface.h>
 
 #if ABSL_HAVE_ATTRIBUTE_WEAK
-extern "C" ABSL_ATTRIBUTE_WEAK int __lsan_is_turned_off() { return 0; }
+extern "C" ABSL_ATTRIBUTE_WEAK int __lsan_is_turned_off();
 #endif
 
 namespace absl {
@@ -37,7 +37,7 @@ bool HaveLeakSanitizer() { return true; }
 
 #if ABSL_HAVE_ATTRIBUTE_WEAK
 bool LeakCheckerIsActive() {
-  return __lsan_is_turned_off() == 0;
+  return !(&__lsan_is_turned_off && __lsan_is_turned_off());
 }
 #else
 bool LeakCheckerIsActive() { return true; }

@@ -1,0 +1,4 @@
+
+FAIL Static import of a JSON module should send a valid HTTP Accept header. assert_equals: The HTTP Accept header should be set to 'application/json' when statically importing a JSON module. expected "application/json,*/*;q=0.5" but got "*/*"
+FAIL Dynamic import of a JSON module should send a valid HTTP Accept header. assert_equals: The HTTP Accept header should be set to 'application/json' when dynamically importing a JSON module. expected "application/json,*/*;q=0.5" but got "*/*"
+

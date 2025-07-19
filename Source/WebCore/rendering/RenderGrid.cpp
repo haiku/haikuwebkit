@@ -40,6 +40,7 @@
 #include "RenderObjectInlines.h"
 #include "RenderTreeBuilder.h"
 #include "RenderView.h"
+#include "StylePrimitiveNumericTypes+Evaluation.h"
 #include <wtf/Range.h>
 #include <wtf/Scope.h>
 #include <wtf/TZoneMallocInlines.h>
@@ -194,8 +195,8 @@ bool RenderGrid::explicitGridDidResize(const RenderStyle& oldStyle) const
 {
     return oldStyle.gridColumnTrackSizes().size() != style().gridColumnTrackSizes().size()
         || oldStyle.gridRowTrackSizes().size() != style().gridRowTrackSizes().size()
-        || oldStyle.namedGridAreaColumnCount() != style().namedGridAreaColumnCount()
-        || oldStyle.namedGridAreaRowCount() != style().namedGridAreaRowCount()
+        || oldStyle.gridTemplateAreas().map.columnCount != style().gridTemplateAreas().map.columnCount
+        || oldStyle.gridTemplateAreas().map.rowCount != style().gridTemplateAreas().map.rowCount
         || oldStyle.gridAutoRepeatColumns().size() != style().gridAutoRepeatColumns().size()
         || oldStyle.gridAutoRepeatRows().size() != style().gridAutoRepeatRows().size();
 }
@@ -208,8 +209,8 @@ bool RenderGrid::namedGridLinesDefinitionDidChange(const RenderStyle& oldStyle) 
 
 bool RenderGrid::implicitGridLinesDefinitionDidChange(const RenderStyle& oldStyle) const
 {
-    return oldStyle.implicitNamedGridRowLines().map != style().implicitNamedGridRowLines().map
-        || oldStyle.implicitNamedGridColumnLines().map != style().implicitNamedGridColumnLines().map;
+    return oldStyle.gridTemplateAreas().implicitNamedGridRowLines != style().gridTemplateAreas().implicitNamedGridRowLines
+        || oldStyle.gridTemplateAreas().implicitNamedGridColumnLines != style().gridTemplateAreas().implicitNamedGridColumnLines;
 }
 
 // This method optimizes the gutters computation by skipping the available size
@@ -217,8 +218,8 @@ bool RenderGrid::implicitGridLinesDefinitionDidChange(const RenderStyle& oldStyl
 std::optional<LayoutUnit> RenderGrid::availableSpaceForGutters(GridTrackSizingDirection direction) const
 {
     bool isRowAxis = direction == GridTrackSizingDirection::ForColumns;
-    const GapLength& gapLength = isRowAxis ? style().columnGap() : style().rowGap();
-    if (gapLength.isNormal() || !gapLength.length().isPercentOrCalculated())
+    auto& gap = isRowAxis ? style().columnGap() : style().rowGap();
+    if (!gap.isPercentOrCalculated())
         return std::nullopt;
 
     return isRowAxis ? contentBoxLogicalWidth() : contentBoxLogicalHeight();
@@ -666,8 +667,8 @@ void RenderGrid::layoutMasonry(RelayoutChildren relayoutChildren)
 LayoutUnit RenderGrid::gridGap(GridTrackSizingDirection direction, std::optional<LayoutUnit> availableSize) const
 {
     ASSERT(!availableSize || *availableSize >= 0);
-    const GapLength& gapLength = direction == GridTrackSizingDirection::ForColumns? style().columnGap() : style().rowGap();
-    if (gapLength.isNormal()) {
+    auto& gap = direction == GridTrackSizingDirection::ForColumns? style().columnGap() : style().rowGap();
+    if (gap.isNormal()) {
         if (!isSubgrid(direction))
             return 0_lu;
 
@@ -677,7 +678,7 @@ LayoutUnit RenderGrid::gridGap(GridTrackSizingDirection direction, std::optional
         return downcast<RenderGrid>(parent())->gridGap(parentDirection);
     }
 
-    return valueForLength(gapLength.length(), availableSize.value_or(0));
+    return Style::evaluate(gap, availableSize.value_or(0_lu));
 }
 
 LayoutUnit RenderGrid::gridGap(GridTrackSizingDirection direction) const
@@ -855,15 +856,41 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(GridTrackSizingDirection direc
 
     bool needsToFulfillMinimumSize = false;
     if (!availableSize) {
+        // Both min-width/height and max-width/height calculations may need the containing block size, so it is cached if lazily computed.
+        std::optional<LayoutUnit> cachedContainingBlockAvailableSize;
+        auto containingBlockAvailableSize = [&] -> LayoutUnit {
+            if (cachedContainingBlockAvailableSize)
+                return *cachedContainingBlockAvailableSize;
+            cachedContainingBlockAvailableSize = isRowAxis
+                ? containingBlockLogicalWidthForContent()
+                : containingBlockLogicalHeightForContent(AvailableLogicalHeightType::ExcludeMarginBorderPadding);
+            return *cachedContainingBlockAvailableSize;
+        };
+
         auto& maxSize = isRowAxis ? style().logicalMaxWidth() : style().logicalMaxHeight();
-        std::optional<LayoutUnit> containingBlockAvailableSize;
-        std::optional<LayoutUnit> availableMaxSize;
-        if (maxSize.isSpecified()) {
-            if (maxSize.isPercentOrCalculated())
-                containingBlockAvailableSize = isRowAxis ? containingBlockLogicalWidthForContent() : containingBlockLogicalHeightForContent(AvailableLogicalHeightType::ExcludeMarginBorderPadding);
-            auto maxSizeValue = Style::evaluate(maxSize, valueOrDefault(containingBlockAvailableSize));
-            availableMaxSize = isRowAxis ? adjustContentBoxLogicalWidthForBoxSizing(maxSizeValue, maxSize.type()) : adjustContentBoxLogicalHeightForBoxSizing(maxSizeValue);
-        }
+        auto availableMaxSize = WTF::switchOn(maxSize,
+            [&](const Style::MaximumSize::Fixed& fixedMaxSize) -> std::optional<LayoutUnit> {
+                auto maxSizeValue = LayoutUnit { fixedMaxSize.value };
+                return isRowAxis
+                    ? adjustContentBoxLogicalWidthForBoxSizing(maxSizeValue)
+                    : adjustContentBoxLogicalHeightForBoxSizing(maxSizeValue);
+            },
+            [&](const Style::MaximumSize::Percentage& percentageMaxSize) -> std::optional<LayoutUnit> {
+                auto maxSizeValue = Style::evaluate(percentageMaxSize, containingBlockAvailableSize());
+                return isRowAxis
+                    ? adjustContentBoxLogicalWidthForBoxSizing(maxSizeValue)
+                    : adjustContentBoxLogicalHeightForBoxSizing(maxSizeValue);
+            },
+            [&](const Style::MaximumSize::Calc& calcMaxSize) -> std::optional<LayoutUnit> {
+                auto maxSizeValue = Style::evaluate(calcMaxSize, containingBlockAvailableSize());
+                return isRowAxis
+                    ? adjustContentBoxLogicalWidthForBoxSizing(maxSizeValue)
+                    : adjustContentBoxLogicalHeightForBoxSizing(maxSizeValue);
+            },
+            [&](const auto&) -> std::optional<LayoutUnit> {
+                return { };
+            }
+        );
 
         auto& minSize = isRowAxis ? style().logicalMinWidth() : style().logicalMinHeight();
         auto& minSizeForOrthogonalAxis = isRowAxis ? style().logicalMinHeight() : style().logicalMinWidth();
@@ -873,16 +900,33 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(GridTrackSizingDirection direc
         if (!availableMaxSize && !minSize.isSpecified() && !shouldComputeMinSizeFromAspectRatio && !explicitIntrinsicInnerSize)
             return autoRepeatTrackListLength;
 
-        std::optional<LayoutUnit> availableMinSize;
-        if (minSize.isSpecified()) {
-            if (!containingBlockAvailableSize && minSize.isPercentOrCalculated())
-                containingBlockAvailableSize = isRowAxis ? containingBlockLogicalWidthForContent() : containingBlockLogicalHeightForContent(AvailableLogicalHeightType::ExcludeMarginBorderPadding);
-            auto minSizeValue = Style::evaluate(minSize, valueOrDefault(containingBlockAvailableSize));
-            availableMinSize = isRowAxis ? adjustContentBoxLogicalWidthForBoxSizing(minSizeValue, minSize.type()) : adjustContentBoxLogicalHeightForBoxSizing(minSizeValue);
-        } else if (shouldComputeMinSizeFromAspectRatio) {
-            auto [logicalMinWidth, logicalMaxWidth] = computeMinMaxLogicalWidthFromAspectRatio();
-            availableMinSize = logicalMinWidth;
-        }
+        auto availableMinSize = WTF::switchOn(minSize,
+            [&](const Style::MinimumSize::Fixed& fixedMinSize) -> std::optional<LayoutUnit> {
+                auto minSizeValue = LayoutUnit { fixedMinSize.value };
+                return isRowAxis
+                    ? adjustContentBoxLogicalWidthForBoxSizing(minSizeValue)
+                    : adjustContentBoxLogicalHeightForBoxSizing(minSizeValue);
+            },
+            [&](const Style::MinimumSize::Percentage& percentageMinSize) -> std::optional<LayoutUnit> {
+                auto minSizeValue = Style::evaluate(percentageMinSize, containingBlockAvailableSize());
+                return isRowAxis
+                    ? adjustContentBoxLogicalWidthForBoxSizing(minSizeValue)
+                    : adjustContentBoxLogicalHeightForBoxSizing(minSizeValue);
+            },
+            [&](const Style::MinimumSize::Calc& calcMinSize) -> std::optional<LayoutUnit> {
+                auto minSizeValue = Style::evaluate(calcMinSize, containingBlockAvailableSize());
+                return isRowAxis
+                    ? adjustContentBoxLogicalWidthForBoxSizing(minSizeValue)
+                    : adjustContentBoxLogicalHeightForBoxSizing(minSizeValue);
+            },
+            [&](const auto&) -> std::optional<LayoutUnit> {
+                if (!shouldComputeMinSizeFromAspectRatio)
+                    return { };
+                auto [logicalMinWidth, logicalMaxWidth] = computeMinMaxLogicalWidthFromAspectRatio();
+                return logicalMinWidth;
+            }
+        );
+
         if (!maxSize.isSpecified() || explicitIntrinsicInnerSize)
             needsToFulfillMinimumSize = true;
 
@@ -903,8 +947,8 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(GridTrackSizingDirection direc
 
         auto contributingTrackSize = [&] {
             if (hasDefiniteMaxTrackSizingFunction && hasDefiniteMinTrackSizingFunction)
-                return std::max(valueForLength(minTrackSizingFunction.length(), *availableSize), valueForLength(maxTrackSizingFunction.length(), *availableSize));
-            return hasDefiniteMaxTrackSizingFunction ? valueForLength(maxTrackSizingFunction.length(), *availableSize) : valueForLength(minTrackSizingFunction.length(), *availableSize);
+                return std::max(Style::evaluate(minTrackSizingFunction.length(), *availableSize), Style::evaluate(maxTrackSizingFunction.length(), *availableSize));
+            return hasDefiniteMaxTrackSizingFunction ? Style::evaluate(maxTrackSizingFunction.length(), *availableSize) : Style::evaluate(minTrackSizingFunction.length(), *availableSize);
         };
         autoRepeatTracksSize += contributingTrackSize();
     }
@@ -919,7 +963,7 @@ unsigned RenderGrid::computeAutoRepeatTracksCount(GridTrackSizingDirection direc
     for (const auto& track : trackSizes) {
         bool hasDefiniteMaxTrackBreadth = track.maxTrackBreadth().isLength() && !track.maxTrackBreadth().isContentSized();
         ASSERT(hasDefiniteMaxTrackBreadth || (track.minTrackBreadth().isLength() && !track.minTrackBreadth().isContentSized()));
-        tracksSize += valueForLength(hasDefiniteMaxTrackBreadth ? track.maxTrackBreadth().length() : track.minTrackBreadth().length(), availableSize.value());
+        tracksSize += Style::evaluate(hasDefiniteMaxTrackBreadth ? track.maxTrackBreadth().length() : track.minTrackBreadth().length(), availableSize.value());
     }
 
     // Add gutters as if auto repeat tracks were only repeated once. Gaps between different repetitions will be added later when
@@ -1968,7 +2012,7 @@ bool RenderGrid::isBaselineAlignmentForGridItem(const RenderBox& gridItem, GridT
 }
 
 // FIXME: This logic is shared by RenderFlexibleBox, so it might be refactored somehow.
-LayoutUnit RenderGrid::baselinePosition(FontBaseline, bool, LineDirectionMode direction, LinePositionMode mode) const
+LayoutUnit RenderGrid::baselinePosition(bool, LineDirectionMode direction, LinePositionMode mode) const
 {
     ASSERT_UNUSED(mode, mode == PositionOnContainingLine);
     auto baseline = firstLineBaseline();
@@ -2594,6 +2638,34 @@ void RenderGrid::paintChildren(PaintInfo& paintInfo, const LayoutPoint& paintOff
     ASSERT(!currentGrid().needsItemsPlacement());
     for (RenderBox* gridItem = currentGrid().orderIterator().first(); gridItem; gridItem = currentGrid().orderIterator().next())
         paintChild(*gridItem, paintInfo, paintOffset, forChild, usePrintRect, PaintAsInlineBlock);
+}
+
+bool RenderGrid::hitTestChildren(const HitTestRequest& request, HitTestResult& result, const HitTestLocation& locationInContainer, const LayoutPoint& adjustedLocation, HitTestAction hitTestAction)
+{
+    if (hitTestAction != HitTestForeground)
+        return false;
+
+    LayoutPoint scrolledOffset = hasNonVisibleOverflow() ? adjustedLocation - toLayoutSize(scrollPosition()) : adjustedLocation;
+
+    Vector<RenderBox*> reversedOrderIteratorForHitTesting;
+    for (auto* gridItem = currentGrid().orderIterator().first(); gridItem; gridItem = currentGrid().orderIterator().next()) {
+        if (gridItem->isOutOfFlowPositioned())
+            continue;
+        reversedOrderIteratorForHitTesting.append(gridItem);
+    }
+    reversedOrderIteratorForHitTesting.reverse();
+
+    for (auto* gridItem : reversedOrderIteratorForHitTesting) {
+        if (gridItem->hasSelfPaintingLayer())
+            continue;
+        auto location = flipForWritingModeForChild(*gridItem, scrolledOffset);
+        if (gridItem->hitTest(request, result, locationInContainer, location)) {
+            updateHitTestResult(result, flipForWritingMode(toLayoutPoint(locationInContainer.point() - adjustedLocation)));
+            return true;
+        }
+    }
+
+    return false;
 }
 
 ASCIILiteral RenderGrid::renderName() const

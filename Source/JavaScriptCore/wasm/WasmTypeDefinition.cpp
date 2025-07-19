@@ -584,17 +584,9 @@ RefPtr<RTT> RTT::tryCreateRTT(RTTKind kind, DisplayCount displaySize)
 
 bool RTT::isStrictSubRTT(const RTT& parent) const
 {
-    if (displaySize() > 0) {
-        if (parent.displaySize() > 0) {
-            if (displaySize() <= parent.displaySize())
-                return false;
-            return &parent == displayEntry(displaySize() - parent.displaySize() - 1);
-        }
-        // If not a subtype itself, the parent must be at the top of the display.
-        return &parent == displayEntry(displaySize() - 1);
-    }
-
-    return false;
+    if (displaySize() <= parent.displaySize())
+        return false;
+    return &parent == displayEntry(displaySize() - parent.displaySize() - 1);
 }
 
 const TypeDefinition& TypeInformation::signatureForLLIntBuiltin(LLIntBuiltin builtin)

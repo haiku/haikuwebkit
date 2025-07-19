@@ -15,8 +15,6 @@
 
 #include <errno.h>
 
-#include <string>
-
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
 #include "absl/log/internal/test_actions.h"
@@ -76,14 +74,6 @@ TEST(TailCallsModifiesTest, AtLocationFileLine) {
 
   test_sink.StartCapturingLogs();
   LOG(INFO).AtLocation("/my/very/very/very_long_source_file.cc", 777)
-      << "hello world";
-}
-
-TEST(TailCallsModifiesTest, AtLocationFileLineLifetime) {
-  // The macro takes care to not use this temporary after its lifetime.
-  // The only salient expectation is "no sanitizer diagnostics".
-  LOG(INFO).AtLocation(std::string("/my/very/very/very_long_source_file.cc"),
-                       777)
       << "hello world";
 }
 
@@ -169,8 +159,8 @@ TEST(TailCallsModifiesTest, WithMetadataFrom) {
                  ENCODED_MESSAGE(MatchesEvent(
                      Eq("fake/file"), Eq(123), Eq(absl::UnixEpoch()),
                      Eq(logging::proto::WARNING), Eq(456),
-                     ElementsAre(ValueWithLiteral(Eq("forwarded: ")),
-                                 ValueWithStr(Eq("hello world"))))))));
+                     ElementsAre(EqualsProto(R"pb(literal: "forwarded: ")pb"),
+                                 EqualsProto(R"pb(str: "hello world")pb")))))));
 
   test_sink.StartCapturingLogs();
   LOG(WARNING)
@@ -188,17 +178,18 @@ TEST(TailCallsModifiesTest, WithPerror) {
 
   EXPECT_CALL(
       test_sink,
-      Send(AllOf(
-          TextMessage(AnyOf(Eq("hello world: Bad file number [9]"),
-                            Eq("hello world: Bad file descriptor [9]"),
-                            Eq("hello world: Bad file descriptor [8]"))),
-          ENCODED_MESSAGE(HasValues(ElementsAre(
-              ValueWithLiteral(Eq("hello world")), ValueWithLiteral(Eq(": ")),
-              AnyOf(ValueWithStr(Eq("Bad file number")),
-                    ValueWithStr(Eq("Bad file descriptor"))),
-              ValueWithLiteral(Eq(" [")),
-              AnyOf(ValueWithStr(Eq("8")), ValueWithStr(Eq("9"))),
-              ValueWithLiteral(Eq("]"))))))));
+      Send(AllOf(TextMessage(AnyOf(Eq("hello world: Bad file number [9]"),
+                                   Eq("hello world: Bad file descriptor [9]"),
+                                   Eq("hello world: Bad file descriptor [8]"))),
+                 ENCODED_MESSAGE(HasValues(ElementsAre(
+                     EqualsProto(R"pb(literal: "hello world")pb"),
+                     EqualsProto(R"pb(literal: ": ")pb"),
+                     AnyOf(EqualsProto(R"pb(str: "Bad file number")pb"),
+                           EqualsProto(R"pb(str: "Bad file descriptor")pb")),
+                     EqualsProto(R"pb(literal: " [")pb"),
+                     AnyOf(EqualsProto(R"pb(str: "8")pb"),
+                           EqualsProto(R"pb(str: "9")pb")),
+                     EqualsProto(R"pb(literal: "]")pb")))))));
 
   test_sink.StartCapturingLogs();
   errno = EBADF;

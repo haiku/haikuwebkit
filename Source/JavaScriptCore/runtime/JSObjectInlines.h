@@ -219,7 +219,7 @@ ALWAYS_INLINE bool JSObject::getPropertySlot(JSGlobalObject* globalObject, unsig
         if (!structure->typeInfo().overridesGetPrototype() || slot.internalMethodType() == PropertySlot::InternalMethodType::VMInquiry) [[likely]]
             prototype = object->getPrototypeDirect();
         else {
-            prototype = object->getPrototype(vm, globalObject);
+            prototype = object->getPrototype(globalObject);
             RETURN_IF_EXCEPTION(scope, false);
         }
         if (!prototype.isObject())
@@ -264,7 +264,7 @@ ALWAYS_INLINE bool JSObject::getNonIndexPropertySlot(JSGlobalObject* globalObjec
         if (!structure->typeInfo().overridesGetPrototype() || slot.internalMethodType() == PropertySlot::InternalMethodType::VMInquiry) [[likely]]
             prototype = object->getPrototypeDirect();
         else {
-            prototype = object->getPrototype(vm, globalObject);
+            prototype = object->getPrototype(globalObject);
             RETURN_IF_EXCEPTION(scope, false);
         }
         if (!prototype.isObject())

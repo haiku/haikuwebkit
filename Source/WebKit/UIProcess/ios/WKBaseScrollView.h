@@ -65,7 +65,7 @@ class RemoteLayerTreeHost;
 
 
 - (BOOL)_hasEnoughContentForOverlayRegions;
-- (void)_updateOverlayRegionRects:(const HashSet<WebCore::IntRect>&)overlayRegions;
+- (void)_updateOverlayRegionRects:(const HashSet<WebCore::IntRect>&)overlayRegions whileStable:(BOOL)stable;
 - (void)_associateRelatedLayersForOverlayRegions:(const HashSet<WebCore::PlatformLayerIdentifier>&)relatedLayers with:(const WebKit::RemoteLayerTreeHost&)host;
 - (void)_updateOverlayRegionsBehavior:(BOOL)selected;
 #endif // ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)

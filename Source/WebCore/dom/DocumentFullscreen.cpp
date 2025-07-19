@@ -40,17 +40,19 @@
 #include "FrameDestructionObserverInlines.h"
 #include "HTMLDialogElement.h"
 #include "HTMLIFrameElement.h"
-#include "HTMLMediaElement.h"
+#include "HTMLVideoElement.h"
 #include "JSDOMPromiseDeferred.h"
 #include "LocalDOMWindow.h"
 #include "LocalFrame.h"
 #include "Logging.h"
 #include "NodeInlines.h"
+#include "NodeList.h"
 #include "Page.h"
 #include "PseudoClassChangeInvalidation.h"
 #include "QualifiedName.h"
 #include "Quirks.h"
 #include "RenderBlock.h"
+#include "RenderVideo.h"
 #include "SVGElementTypeHelpers.h"
 #include "SVGSVGElement.h"
 #include "Settings.h"
@@ -132,6 +134,42 @@ static ASCIILiteral fullscreenElementReadyCheck(DocumentFullscreen::FullscreenCh
 void DocumentFullscreen::requestFullscreen(Ref<Element>&& element, FullscreenCheckType checkType, CompletionHandler<void(ExceptionOr<void>)>&& completionHandler, HTMLMediaElementEnums::VideoFullscreenMode mode)
 {
     auto identifier = LOGIDENTIFIER;
+
+    if (protectedDocument()->quirks().shouldEnterNativeFullscreenWhenCallingElementRequestFullscreenQuirk()) {
+        // Translate the request to enter fullscreen into requesting native fullscreen
+        // for the largest inner video element.
+        auto maybeVideoList = element->querySelectorAll("video"_s);
+        if (maybeVideoList.hasException()) {
+            completionHandler({ });
+            return;
+        }
+
+        Ref videoList = maybeVideoList.releaseReturnValue();
+
+        RefPtr<HTMLVideoElement> largestVideo = nullptr;
+        unsigned largestArea = 0;
+        for (unsigned index = 0; index < videoList->length(); ++index) {
+            RefPtr video = downcast<HTMLVideoElement>(videoList->item(index));
+            if (!video)
+                continue;
+
+            CheckedPtr renderer = video->renderer();
+            if (!renderer)
+                continue;
+
+            auto area = renderer->videoBox().area();
+            if (area.hasOverflowed())
+                continue;
+
+            if (area > largestArea)
+                largestVideo = video;
+        }
+        if (largestVideo)
+            largestVideo->webkitRequestFullscreen();
+
+        completionHandler({ });
+        return;
+    }
 
     enum class EmitErrorEvent : bool { No, Yes };
     auto handleError = [element, identifier, weakThis = WeakPtr { *this }](ASCIILiteral message, EmitErrorEvent emitErrorEvent, CompletionHandler<void(ExceptionOr<void>)>&& completionHandler) mutable {

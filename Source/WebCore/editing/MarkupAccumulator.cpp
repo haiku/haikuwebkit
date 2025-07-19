@@ -505,7 +505,7 @@ void MarkupAccumulator::appendNamespace(StringBuilder& result, const AtomString&
         return;
     }
 
-    // Use emptyAtom()s's impl() for null strings since this UncheckedKeyHashMap can't handle nullptr as a key
+    // Use emptyAtom()s's impl() for null strings since this HashMap can't handle nullptr as a key
     auto addResult = namespaces.add(prefix.isNull() ? emptyAtom().impl() : prefix.impl(), namespaceURI.impl());
     if (!addResult.isNewEntry) {
         if (addResult.iterator->value == namespaceURI.impl())
@@ -880,7 +880,7 @@ static bool isElementExcludedByRule(const MarkupExclusionRule& rule, const Eleme
                 continue;
             }
 
-            // FIXME: We might optimize this by using a UncheckedKeyHashMap when there are too many attributes.
+            // FIXME: We might optimize this by using a HashMap when there are too many attributes.
             for (auto& attribute : element.attributes()) {
                 if (!equalIgnoringASCIICase(attribute.localName(), attributeLocalName))
                     continue;

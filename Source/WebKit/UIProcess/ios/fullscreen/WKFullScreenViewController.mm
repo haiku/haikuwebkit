@@ -29,7 +29,6 @@
 #if ENABLE(FULLSCREEN_API) && PLATFORM(IOS_FAMILY)
 
 #import "FullscreenTouchSecheuristic.h"
-#import "LinearMediaKitExtras.h"
 #import "PlaybackSessionManagerProxy.h"
 #import "UIKitUtilities.h"
 #import "VideoPresentationManagerProxy.h"
@@ -55,6 +54,7 @@
 #import <wtf/WeakObjCPtr.h>
 
 #if ENABLE(LINEAR_MEDIA_PLAYER)
+#import "FullscreenClient.h"
 #import "WKSLinearMediaPlayer.h"
 #endif
 
@@ -484,7 +484,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     ASSERT(_valid);
 
     RefPtr page = self._webView._page.get();
-    if (!page || !page->preferences().linearMediaPlayerEnabled()) {
+    if (!page || !page->preferences().linearMediaPlayerEnabled() || page->fullscreenClient().preventDocking(page.get())) {
         [self _removeEnvironmentPickerButtonView];
         [self _removeEnvironmentFullscreenVideoButtonView];
         return;
@@ -510,12 +510,12 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     } else
         [self _removeEnvironmentFullscreenVideoButtonView];
 
-    LMPlayableViewController *playableViewController = videoPresentationInterface ? videoPresentationInterface->playableViewController() : nil;
-    UIViewController *environmentPickerButtonViewController = playableViewController.wks_environmentPickerButtonViewController;
+    WKSPlayableViewControllerHost *playableViewController = videoPresentationInterface ? videoPresentationInterface->playableViewController() : nil;
+    UIViewController *environmentPickerButtonViewController = playableViewController.environmentPickerButtonViewController;
 
     if (environmentPickerButtonViewController) {
-        playableViewController.wks_automaticallyDockOnFullScreenPresentation = YES;
-        playableViewController.wks_dismissFullScreenOnExitingDocking = YES;
+        playableViewController.automaticallyDockOnFullScreenPresentation = YES;
+        playableViewController.dismissFullScreenOnExitingDocking = YES;
     }
 
     if (_environmentPickerButtonViewController == environmentPickerButtonViewController) {

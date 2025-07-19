@@ -105,6 +105,10 @@
         "CustomDeleteProperty": {
             "contextsAllowed": ["interface"]
         },
+        "CustomEnabledBy": {
+            "contextsAllowed": ["attribute", "operation"],
+            "values": ["*"]
+        },
         "CustomGetCallData": {
             "contextsAllowed": ["interface"]
         },

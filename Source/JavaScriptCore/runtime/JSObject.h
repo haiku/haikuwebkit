@@ -119,7 +119,7 @@ public:
     // This is the fully virtual [[GetPrototypeOf]] internal function defined
     // in the ECMAScript 6 specification. Use this when doing a [[GetPrototypeOf]] 
     // operation as dictated in the specification.
-    JSValue getPrototype(VM&, JSGlobalObject*);
+    JSValue getPrototype(JSGlobalObject*);
     JS_EXPORT_PRIVATE static JSValue getPrototype(JSObject*, JSGlobalObject*);
     // This gets the prototype directly off of the structure. This does not do
     // dynamic dispatch on the getPrototype method table method. It is not valid 
@@ -1291,7 +1291,7 @@ inline JSValue JSObject::getPrototypeDirect() const
     return structure()->storedPrototype(this);
 }
 
-inline JSValue JSObject::getPrototype(VM&, JSGlobalObject* globalObject)
+inline JSValue JSObject::getPrototype(JSGlobalObject* globalObject)
 {
     if (!structure()->typeInfo().overridesGetPrototype()) [[likely]]
         return getPrototypeDirect();

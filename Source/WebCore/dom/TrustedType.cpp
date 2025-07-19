@@ -323,11 +323,7 @@ ExceptionOr<bool> canCompile(ScriptExecutionContext& scriptExecutionContext, JSC
                 isTrusted = false;
                 break;
             }
-            if (auto trustedScript = JSTrustedScript::toWrapped(vm, arg)) {
-                if (!trustedScript) {
-                    isTrusted = false;
-                    break;
-                }
+            if (RefPtr trustedScript = JSTrustedScript::toWrapped(vm, arg)) {
                 auto argString = arg.toWTFString(scriptExecutionContext.globalObject());
                 RETURN_IF_EXCEPTION(scope, Exception { ExceptionCode::ExistingExceptionError });
                 if (trustedScript->toString() != argString) {
@@ -362,14 +358,13 @@ bool isEventHandlerAttribute(const QualifiedName& attributeName)
         return false;
 
     // Fast early return for names that don't start with "on".
-    AtomStringImpl& localName = *attributeName.localName().impl();
-    if (localName.length() < 3 || localName[0] != 'o' || localName[1] != 'n')
+    if (!attributeName.localName().startsWith("on"_s))
         return false;
     static const NeverDestroyed<WTF::HashSet<AtomString>> eventHandlerNames([] {
         return eventNames().allEventHandlerNames();
     }());
 
-    return eventHandlerNames->contains(&localName);
+    return eventHandlerNames->contains(attributeName.localName());
 }
 
 } // namespace WebCore

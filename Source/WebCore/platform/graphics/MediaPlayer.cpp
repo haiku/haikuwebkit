@@ -1250,7 +1250,7 @@ void MediaPlayer::getSupportedTypes(HashSet<String>& types)
     for (auto& engine : installedMediaEngines()) {
         HashSet<String> engineTypes;
         engine->getSupportedTypes(engineTypes);
-        types.add(engineTypes.begin(), engineTypes.end());
+        types.addAll(WTFMove(engineTypes));
     }
 } 
 
@@ -1410,7 +1410,7 @@ static void addToHash(HashSet<T>& toHash, HashSet<T>&& fromHash)
     if (toHash.isEmpty())
         toHash = WTFMove(fromHash);
     else
-        toHash.add(fromHash.begin(), fromHash.end());
+        toHash.addAll(WTFMove(fromHash));
 }
     
 HashSet<SecurityOriginData> MediaPlayer::originsInMediaCache(const String& path)

@@ -83,6 +83,7 @@
 #include "Page.h"
 #include "PathUtilities.h"
 #include "PluginViewBase.h"
+#include "PositionInlines.h"
 #include "ProgressTracker.h"
 #include "Range.h"
 #include "RenderButton.h"
@@ -456,7 +457,7 @@ AccessibilityObject* AccessibilityRenderObject::nextSibling() const
 
 static RenderBoxModelObject* nextContinuation(RenderObject& renderer)
 {
-    if (!renderer.isReplacedOrAtomicInline()) {
+    if (!renderer.isBlockLevelReplacedOrAtomicInline()) {
         if (auto* renderInline = dynamicDowncast<RenderInline>(renderer))
             return renderInline->continuation();
     }
@@ -1445,7 +1446,17 @@ AXTextRuns AccessibilityRenderObject::textRuns()
     CheckedPtr renderer = this->renderer();
     if (auto* renderLineBreak = dynamicDowncast<RenderLineBreak>(renderer.get())) {
         auto box = InlineIterator::boxFor(*renderLineBreak);
-        return { renderLineBreak->containingBlock(), { AXTextRun(box ? box->lineIndex() : 0, makeString('\n').isolatedCopy(), { lengthOneDomOffsets }, { 0 }, 0, 0) } };
+
+        return AXTextRuns(
+            renderLineBreak->containingBlock(),
+            { AXTextRun(box ? box->lineIndex() : 0, /* startIndex */ 0, /* endIndex */ 1, { lengthOneDomOffsets }, { 0 }, 0, 0) },
+            makeString('\n').isolatedCopy()
+        );
+    }
+
+    if (is<SVGGraphicsElement>(element())) {
+        // Match TextIterator (and other browsers) and don't emit text positions for SVG graphics elements.
+        return { };
     }
 
     if (isReplacedElement()) {
@@ -1453,7 +1464,14 @@ AXTextRuns AccessibilityRenderObject::textRuns()
         FloatRect rect = frameRect();
         uint16_t width = static_cast<uint16_t>(rect.width());
         uint16_t height = static_cast<uint16_t>(rect.height());
-        return containingBlock ? AXTextRuns(containingBlock, { AXTextRun(0, String(span(objectReplacementCharacter)), { lengthOneDomOffsets }, { width }, height, 0) }) : AXTextRuns();
+        if (!containingBlock)
+            return { };
+
+        return AXTextRuns(
+            containingBlock,
+            { AXTextRun(0, /* startIndex */ 0, /* endIndex */ 1, { lengthOneDomOffsets }, { width }, height, 0) },
+            String(span(objectReplacementCharacter))
+        );
     }
 
     WeakPtr renderText = dynamicDowncast<RenderText>(renderer.get());
@@ -1465,6 +1483,9 @@ AXTextRuns AccessibilityRenderObject::textRuns()
     // first-letter RenderText, meaning we can't recover it later by combining text across AX objects.
 
     Vector<AXTextRun> runs;
+    // The string of all runs concatenated together.
+    StringBuilder fullString;
+    // The string representing a single run, which is eventually rolled up into |fullString|.
     StringBuilder lineString;
     Vector<uint16_t> characterWidths;
     float distanceFromBoundsInDirection = 0;
@@ -1571,25 +1592,41 @@ AXTextRuns AccessibilityRenderObject::textRuns()
     size_t currentLineIndex = textBox ? textBox->lineIndex() : 0;
 
     bool containsOnlyASCII = true;
+
+    auto updateContainsOnlyASCIIFromLineString = [&] {
+        if (containsOnlyASCII) {
+            StringView view = lineString;
+            containsOnlyASCII = view.containsOnlyASCII();
+        }
+    };
+
     while (textBox) {
         size_t newLineIndex = textBox->lineIndex();
         uint16_t startDOMOffset = domOffset(textBox->minimumCaretOffset());
         uint16_t endDOMOffset = domOffset(textBox->maximumCaretOffset());
         if (newLineIndex != currentLineIndex) {
-            auto string = lineString.toString().isolatedCopy();
-            if (containsOnlyASCII)
-                containsOnlyASCII = string.containsOnlyASCII();
+            // The start and end (exclusive) character indices of this run.
+            unsigned startIndex = fullString.length();
+            unsigned endIndex = startIndex + lineString.length();
+
+            updateContainsOnlyASCIIFromLineString();
 
             if (textRunDomOffsets.size() && startDOMOffset != textRunDomOffsets.last()[1]) {
                 // If a space was trimmed in this text run (i.e., there's a gap between the end
                 // of the current run's DOM offset and the start of the next), add it back.
-                string = makeString(string, ' ');
+                lineString.append(' ');
+                ++endIndex;
                 characterWidths.append(0);
+                // We also need to account for this in the DOM offset itself, as otherwise we'll
+                // compute the wrong value when going from rendered-text offset to DOM offset
+                // (e.g. via AXTextRuns::domOffset()).
+                textRunDomOffsets.last()[1] += 1;
             }
-            runs.append({ currentLineIndex, WTFMove(string), { std::exchange(textRunDomOffsets, { }) }, std::exchange(characterWidths, { }), lineHeight, distanceFromBoundsInDirection });
+            runs.append({ currentLineIndex, startIndex, endIndex, { std::exchange(textRunDomOffsets, { }) }, std::exchange(characterWidths, { }), lineHeight, distanceFromBoundsInDirection });
 
             currentLineIndex = newLineIndex;
             // Reset variables used in appendToLineString().
+            fullString.append(lineString.toString());
             lineString.clear();
             accumulatedDistanceFromStart = 0.0;
             lineHeight = 0.0;
@@ -1604,12 +1641,15 @@ AXTextRuns AccessibilityRenderObject::textRuns()
     }
 
     if (!lineString.isEmpty()) {
-        auto string = lineString.toString().isolatedCopy();
-        if (containsOnlyASCII)
-            containsOnlyASCII = string.containsOnlyASCII();
-        runs.append({ currentLineIndex, WTFMove(string), WTFMove(textRunDomOffsets), std::exchange(characterWidths, { }), lineHeight, distanceFromBoundsInDirection });
+        updateContainsOnlyASCIIFromLineString();
+
+        unsigned startIndex = fullString.length();
+        unsigned endIndex = startIndex + lineString.length();
+        runs.append({ currentLineIndex, startIndex, endIndex, WTFMove(textRunDomOffsets), std::exchange(characterWidths, { }), lineHeight, distanceFromBoundsInDirection });
+
+        fullString.append(lineString.toString());
     }
-    return { renderText->containingBlock(), WTFMove(runs), containsOnlyASCII };
+    return { renderText->containingBlock(), WTFMove(runs), fullString.toString().isolatedCopy(), containsOnlyASCII };
 }
 
 AXTextRunLineID AccessibilityRenderObject::listMarkerLineID() const

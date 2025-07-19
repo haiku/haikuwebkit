@@ -540,7 +540,7 @@ ExceptionOr<void> XMLHttpRequest::send(Blob& body)
         }
 
         m_requestEntityBody = FormData::create();
-        m_requestEntityBody->appendBlob(body.url());
+        Ref { *m_requestEntityBody }->appendBlob(body.url());
     }
 
     return createRequest();
@@ -941,9 +941,11 @@ void XMLHttpRequest::didFinishLoading(ScriptExecutionContextIdentifier, std::opt
 
     // Make sure that didSendData() was called at least one before marking the load as complete
     // so that a progress events get fired on m_upload.
-    if (m_uploadListenerFlag && m_requestEntityBody && !m_wasDidSendDataCalledForTotalBytes) {
-        auto bodyLength = m_requestEntityBody->lengthInBytes();
-        didSendData(bodyLength, bodyLength);
+    if (m_uploadListenerFlag) {
+        if (RefPtr requestEntityBody = m_requestEntityBody; requestEntityBody && !m_wasDidSendDataCalledForTotalBytes) {
+            auto bodyLength = requestEntityBody->lengthInBytes();
+            didSendData(bodyLength, bodyLength);
+        }
     }
 
     if (readyState() < HEADERS_RECEIVED)
@@ -1076,7 +1078,7 @@ void XMLHttpRequest::didReceiveData(const SharedBuffer& buffer)
         return;
 
     if (useDecoder)
-        m_responseBuilder.append(m_decoder->decode(buffer.span()));
+        m_responseBuilder.append(Ref { *m_decoder }->decode(buffer.span()));
     else {
         // Buffer binary data.
         m_binaryResponseBuilder.append(buffer);

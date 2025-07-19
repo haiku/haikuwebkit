@@ -66,6 +66,11 @@ public:
 
     static void discoverFromExternalSource(const Document&, CredentialPromise&&, CredentialRequestOptions&&);
 
+    static bool userAgentAllowsProtocol(const String& protocol)
+    {
+        return protocol == "org-iso-mdoc"_s;
+    }
+
 private:
     DigitalCredential(JSC::Strong<JSC::JSObject>&&, IdentityCredentialProtocol);
 

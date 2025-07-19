@@ -349,6 +349,10 @@ if (GTK_UNIX_PRINT_FOUND)
     list(APPEND WebKit_LIBRARIES GTK::UnixPrint)
 endif ()
 
+if (USE_OPENXR)
+   list(APPEND WebKit_LIBRARIES OpenXR::openxr_loader)
+endif ()
+
 if (USE_CAIRO)
     list(APPEND WebKit_SERIALIZATION_IN_FILES
         Shared/cairo/WebCoreFontCairo.serialization.in

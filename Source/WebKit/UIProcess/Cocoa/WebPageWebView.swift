@@ -184,4 +184,10 @@ extension WebPageWebView {
     }
 }
 
+extension WebPageWebView {
+    public func setNeedsScrollGeometryUpdates(_ value: Bool) {
+        self._setNeedsScrollGeometryUpdates(value)
+    }
+}
+
 #endif

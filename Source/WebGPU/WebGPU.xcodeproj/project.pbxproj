@@ -107,9 +107,7 @@
 		3A12AEC328FCE94C00C1B975 /* ASTInterpolateAttribute.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A12AEA928FCE94C00C1B975 /* ASTInterpolateAttribute.h */; };
 		3A12AEC728FCEEC400C1B975 /* ASTStructureMember.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A12AEC428FCEEC400C1B975 /* ASTStructureMember.h */; };
 		3A12AEC828FCEEC400C1B975 /* ASTWhileStatement.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A12AEC528FCEEC400C1B975 /* ASTWhileStatement.h */; };
-		3A12AEC928FCEEC400C1B975 /* ASTStaticAssertStatement.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A12AEC628FCEEC400C1B975 /* ASTStaticAssertStatement.h */; };
 		3A12AECC28FCFA9800C1B975 /* ASTUnsigned32Literal.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A12AECA28FCFA9800C1B975 /* ASTUnsigned32Literal.h */; };
-		3A12AECD28FCFA9800C1B975 /* ASTBitcastExpression.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A12AECB28FCFA9800C1B975 /* ASTBitcastExpression.h */; };
 		3A12AED428FCFC5600C1B975 /* ASTSigned32Literal.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A12AECE28FCFC5500C1B975 /* ASTSigned32Literal.h */; };
 		3A12AED528FCFC5600C1B975 /* ASTAbstractIntegerLiteral.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A12AECF28FCFC5500C1B975 /* ASTAbstractIntegerLiteral.h */; };
 		3A12AED628FCFC5600C1B975 /* ASTBoolLiteral.h in Headers */ = {isa = PBXBuildFile; fileRef = 3A12AED028FCFC5500C1B975 /* ASTBoolLiteral.h */; };
@@ -439,9 +437,7 @@
 		3A12AEA928FCE94C00C1B975 /* ASTInterpolateAttribute.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTInterpolateAttribute.h; sourceTree = "<group>"; };
 		3A12AEC428FCEEC400C1B975 /* ASTStructureMember.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTStructureMember.h; sourceTree = "<group>"; };
 		3A12AEC528FCEEC400C1B975 /* ASTWhileStatement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTWhileStatement.h; sourceTree = "<group>"; };
-		3A12AEC628FCEEC400C1B975 /* ASTStaticAssertStatement.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTStaticAssertStatement.h; sourceTree = "<group>"; };
 		3A12AECA28FCFA9800C1B975 /* ASTUnsigned32Literal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTUnsigned32Literal.h; sourceTree = "<group>"; };
-		3A12AECB28FCFA9800C1B975 /* ASTBitcastExpression.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTBitcastExpression.h; sourceTree = "<group>"; };
 		3A12AECE28FCFC5500C1B975 /* ASTSigned32Literal.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTSigned32Literal.h; sourceTree = "<group>"; };
 		3A12AECF28FCFC5500C1B975 /* ASTAbstractIntegerLiteral.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTAbstractIntegerLiteral.h; sourceTree = "<group>"; };
 		3A12AED028FCFC5500C1B975 /* ASTBoolLiteral.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ASTBoolLiteral.h; sourceTree = "<group>"; };
@@ -808,7 +804,6 @@
 				3AD0D23C2988F3AA0080D728 /* ASTBinaryExpression.cpp */,
 				3AD0D23D2988F3AA0080D728 /* ASTBinaryExpression.h */,
 				3A12AEA728FCE94C00C1B975 /* ASTBindingAttribute.h */,
-				3A12AECB28FCFA9800C1B975 /* ASTBitcastExpression.h */,
 				3A12AED028FCFC5500C1B975 /* ASTBoolLiteral.h */,
 				3A12AE9F28FCE94B00C1B975 /* ASTBreakStatement.h */,
 				97835C9429F7D85A00939EBA /* ASTBuilder.cpp */,
@@ -862,7 +857,6 @@
 				3A12AEA128FCE94B00C1B975 /* ASTSizeAttribute.h */,
 				3A12AE9928FCE94B00C1B975 /* ASTStageAttribute.h */,
 				33EA187827BC22AA00A1DD52 /* ASTStatement.h */,
-				3A12AEC628FCEEC400C1B975 /* ASTStaticAssertStatement.h */,
 				3A9D02A1298390CF00888A75 /* ASTStringDumper.cpp */,
 				3A9D02A3298390CF00888A75 /* ASTStringDumper.h */,
 				33EA187327BC204900A1DD52 /* ASTStructure.h */,
@@ -965,7 +959,6 @@
 				33EA186A27BC1BE600A1DD52 /* ASTAttribute.h in Headers */,
 				3AD0D23F2988F3AB0080D728 /* ASTBinaryExpression.h in Headers */,
 				3A12AEC128FCE94C00C1B975 /* ASTBindingAttribute.h in Headers */,
-				3A12AECD28FCFA9800C1B975 /* ASTBitcastExpression.h in Headers */,
 				3A12AED628FCFC5600C1B975 /* ASTBoolLiteral.h in Headers */,
 				3A12AEB928FCE94C00C1B975 /* ASTBreakStatement.h in Headers */,
 				97835C9329F7C9C600939EBA /* ASTBuilder.h in Headers */,
@@ -1017,7 +1010,6 @@
 				3A12AEBB28FCE94C00C1B975 /* ASTSizeAttribute.h in Headers */,
 				3A12AEB328FCE94C00C1B975 /* ASTStageAttribute.h in Headers */,
 				33EA187927BC22AA00A1DD52 /* ASTStatement.h in Headers */,
-				3A12AEC928FCEEC400C1B975 /* ASTStaticAssertStatement.h in Headers */,
 				3A9D02A6298390CF00888A75 /* ASTStringDumper.h in Headers */,
 				33EA187427BC204900A1DD52 /* ASTStructure.h in Headers */,
 				3A12AEC728FCEEC400C1B975 /* ASTStructureMember.h in Headers */,
@@ -1263,7 +1255,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "if [ -f \"${SCRIPT_INPUT_FILE_0}\" ]\nthen \"${SCRIPT_INPUT_FILE_0}\" \"${BUILT_PRODUCTS_DIR}/JavaScriptCore.framework/JavaScriptCore\"\nfi && touch \"${DERIVED_FILES_DIR}/audit-spi.d\"\n";
+			shellScript = "if [ -f \"${SCRIPT_INPUT_FILE_0}\" ]\nthen \"${SCRIPT_INPUT_FILE_0}\" \"${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH}\" -framework JavaScriptCore --allowlist \"${SRCROOT}/Configurations/AllowedSPI-legacy.toml\" \"${SRCROOT}/Configurations/AllowedSPI.toml\"\nfi && touch \"${DERIVED_FILES_DIR}/audit-spi.d\"\n";
 		};
 /* End PBXShellScriptBuildPhase section */
 

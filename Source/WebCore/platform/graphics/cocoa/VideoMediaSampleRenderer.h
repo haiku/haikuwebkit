@@ -137,6 +137,7 @@ private:
     RetainPtr<CMSampleBufferRef> nextDecodedSample() const;
     CMTime nextDecodedSampleEndTime() const;
     MediaTime lastDecodedSampleTime() const;
+    RetainPtr<CVPixelBufferRef> imageForSample(CMSampleBufferRef) const;
 
     void assignResourceOwner(CMSampleBufferRef);
     bool areSamplesQueuesReadyForMoreMediaData(size_t waterMark) const;
@@ -154,6 +155,7 @@ private:
     RefPtr<WebCoreDecompressionSession> decompressionSession() const;
     bool useDecompressionSessionForProtectedFallback() const;
     bool useDecompressionSessionForProtectedContent() const;
+    bool useStereoDecoding() const;
 
     const RefPtr<WTF::WorkQueue> m_workQueue;
     RetainPtr<AVSampleBufferDisplayLayer> m_displayLayer;
@@ -164,10 +166,12 @@ private:
     TimebaseAndTimerSource m_timebaseAndTimerSource WTF_GUARDED_BY_LOCK(m_lock);
     RefPtr<EffectiveRateChangedListener> m_effectiveRateChangedListener;
     std::atomic<FlushId> m_flushId { 0 };
-    Deque<std::tuple<Ref<const MediaSample>, MediaTime, FlushId>> m_compressedSampleQueue WTF_GUARDED_BY_CAPABILITY(dispatcher().get());
+    Deque<std::tuple<Ref<const MediaSample>, MediaTime, FlushId, bool>> m_compressedSampleQueue WTF_GUARDED_BY_CAPABILITY(dispatcher().get());
     std::atomic<uint32_t> m_compressedSamplesCount { 0 };
     RetainPtr<CMBufferQueueRef> m_decodedSampleQueue; // created on the main thread, immutable after creation.
     RefPtr<WebCoreDecompressionSession> m_decompressionSession WTF_GUARDED_BY_LOCK(m_lock);
+    bool m_decompressionSessionBlocked WTF_GUARDED_BY_CAPABILITY(mainThread) { false };
+    bool m_decompressionSessionWasBlocked { false };
     std::atomic<bool> m_isUsingDecompressionSession { false };
     bool m_isDecodingSample WTF_GUARDED_BY_CAPABILITY(dispatcher().get()) { false };
     bool m_isDisplayingSample WTF_GUARDED_BY_CAPABILITY(dispatcher().get()) { false };
@@ -194,7 +198,6 @@ private:
     MediaTime m_totalFrameDelay { MediaTime::zeroTime() };
 
     // Protected samples
-    bool m_protectedContentEncountered { false };
     bool m_wasProtected { false };
 
     Function<void(const MediaTime&, double)> m_hasAvailableFrameCallback WTF_GUARDED_BY_CAPABILITY(mainThread);

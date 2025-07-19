@@ -223,8 +223,6 @@ constexpr const char *kSkippedMessages[] = {
     "VUID-vkCmdDrawIndexed-None-07835",
     "VUID-VkGraphicsPipelineCreateInfo-Input-08733",
     "VUID-vkCmdDraw-Input-08734",
-    // https://anglebug.com/42266575#comment4
-    "VUID-VkBufferViewCreateInfo-format-08779",
     // https://anglebug.com/42266639
     "VUID-VkVertexInputBindingDivisorDescriptionKHR-divisor-01870",
     "VUID-VkVertexInputBindingDivisorDescription-divisor-01870",
@@ -290,6 +288,12 @@ constexpr const char *kNoListRestartSkippedMessages[] = {
     "VUID-VkPipelineInputAssemblyStateCreateInfo-topology-06252",
 };
 
+// Validation messages that should be ignored only when VK_KHR_maintenance5 is not present.
+constexpr const char *kNoMaintenance5SkippedMessages[] = {
+    // https://anglebug.com/42266575#comment4
+    "VUID-VkBufferViewCreateInfo-format-08779",
+};
+
 // Validation messages that should be ignored only when exposeNonConformantExtensionsAndVersions is
 // enabled on certain test platforms.
 constexpr const char *kExposeNonConformantSkippedMessages[] = {
@@ -340,11 +344,6 @@ constexpr const char *kSkippedMessagesWithDynamicRendering[] = {
     "VUID-vkCmdDrawIndexed-multisampledRenderToSingleSampled-07285",
     "VUID-vkCmdDrawIndexed-multisampledRenderToSingleSampled-07286",
     "VUID-vkCmdDrawIndexed-multisampledRenderToSingleSampled-07287",
-};
-
-constexpr const char *kSkippedMessagesWithoutSwapchainMaintenance1[] = {
-    // https://anglebug.com/408190758
-    "VUID-vkQueueSubmit-pSignalSemaphores-00067",
 };
 
 // Some syncval errors are resolved in the presence of the NONE load or store render pass ops.  For
@@ -502,21 +501,68 @@ constexpr vk::SkippedSyncvalMessage kSkippedSyncvalMessagesWithoutLoadStoreOpNon
     // This error is generated for multiple reasons:
     //
     // - http://anglebug.com/42264926
-    // - http://anglebug.com/42263911: This is resolved with storeOp=NONE
-    {
-        "SYNC-HAZARD-WRITE-AFTER-WRITE",
-        "Access info (usage: SYNC_IMAGE_LAYOUT_TRANSITION, prior_usage: "
-        "SYNC_LATE_FRAGMENT_TESTS_DEPTH_STENCIL_ATTACHMENT_WRITE, write_barriers: 0",
-    },
-    // http://anglebug.com/42264926
-    // http://anglebug.com/42265079
-    // http://anglebug.com/42264496
-    {
-        "SYNC-HAZARD-WRITE-AFTER-WRITE",
-        "with loadOp VK_ATTACHMENT_LOAD_OP_DONT_CARE. Access info "
-        "(usage: "
-        "SYNC_EARLY_FRAGMENT_TESTS_DEPTH_STENCIL_ATTACHMENT_WRITE",
-    },
+    // When feature supportsRenderPassLoadStoreOpNone is disabled, observed below VVL on AMD when
+    // running following test,
+    // dEQP-GLES2.functional.shaders.builtin_variable.pointcoord
+    {"SYNC-HAZARD-WRITE-AFTER-WRITE",
+     nullptr,
+     nullptr,
+     false,
+     {
+         "message_type = BeginRenderingError",
+         "hazard_type = WRITE_AFTER_WRITE",
+         "access = "
+         "VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT(VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_"
+         "BIT)",
+         "prior_access = SYNC_IMAGE_LAYOUT_TRANSITION",
+         "write_barriers = "
+         "VK_PIPELINE_STAGE_2_EARLY_FRAGMENT_TESTS_BIT|VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT("
+         "VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_READ_BIT)",
+         "command = vkCmdBeginRenderingKHR",
+         "prior_command = vkCmdPipelineBarrier",
+         "load_op = VK_ATTACHMENT_LOAD_OP_DONT_CARE",
+     }},
+    // When feature supportsRenderPassLoadStoreOpNone is disabled, observed below VVL on SwiftShader
+    // when
+    // running following test,
+    // dEQP-GLES3.functional.fbo.blit.default_framebuffer.rgb8
+    // TraceTest.life_is_strange
+    {"SYNC-HAZARD-WRITE-AFTER-WRITE",
+     nullptr,
+     nullptr,
+     false,
+     {
+         "message_type = ImageBarrierError",
+         "hazard_type = WRITE_AFTER_WRITE",
+         "access = SYNC_IMAGE_LAYOUT_TRANSITION",
+         "prior_access = "
+         "VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT(VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_"
+         "BIT)",
+         "write_barriers = 0",
+         "command = vkCmdPipelineBarrier",
+         "prior_command = vkCmdEndRenderingKHR",
+     }},
+    // When feature supportsRenderPassLoadStoreOpNone is disabled, observed below VVL on SwiftShader
+    // when
+    // running following test,
+    // ReadOnlyFeedbackLoopTest.ReadOnlyDepthFeedbackLoopDrawThenDepthStencilClear/ES3_Vulkan_SwiftShader
+    // VulkanPerformanceCounterTest.ClearColorBufferAndReadOnlyDepthStencilUsesSingleRenderPass*
+    // VulkanPerformanceCounterTest.ReadOnlyDepthStencilFeedbackLoopUsesSingleRenderPass/ES3_Vulkan_SwiftShader_PreferMonolithicPipelinesOverLibraries_NoMergeProgramPipelineCachesToGlobalCache
+    {"SYNC-HAZARD-WRITE-AFTER-WRITE",
+     nullptr,
+     nullptr,
+     false,
+     {
+         "message_type = ImageBarrierError",
+         "hazard_type = WRITE_AFTER_WRITE",
+         "access = SYNC_IMAGE_LAYOUT_TRANSITION",
+         "prior_access = "
+         "VK_PIPELINE_STAGE_2_LATE_FRAGMENT_TESTS_BIT(VK_ACCESS_2_DEPTH_STENCIL_ATTACHMENT_WRITE_"
+         "BIT)",
+         "write_barriers = 0",
+         "command = vkCmdWaitEvents",
+         "prior_command = vkCmdEndRenderingKHR",
+     }},
 };
 
 // Messages that are only generated with MSRTT emulation.  Some of these are syncval bugs (discussed
@@ -4366,6 +4412,13 @@ void Renderer::initializeValidationMessageSuppressions()
             kExposeNonConformantSkippedMessages + ArraySize(kExposeNonConformantSkippedMessages));
     }
 
+    if (!getFeatures().supportsMaintenance5.enabled)
+    {
+        mSkippedValidationMessages.insert(
+            mSkippedValidationMessages.end(), kNoMaintenance5SkippedMessages,
+            kNoMaintenance5SkippedMessages + ArraySize(kNoMaintenance5SkippedMessages));
+    }
+
     if (getFeatures().useVkEventForImageBarrier.enabled &&
         (!vk::OutsideRenderPassCommandBuffer::ExecutesInline() ||
          !vk::RenderPassCommandBuffer::ExecutesInline()))
@@ -4390,14 +4443,6 @@ void Renderer::initializeValidationMessageSuppressions()
         mSkippedValidationMessages.insert(
             mSkippedValidationMessages.end(), kSkippedMessagesWithDynamicRendering,
             kSkippedMessagesWithDynamicRendering + ArraySize(kSkippedMessagesWithDynamicRendering));
-    }
-
-    if (!getFeatures().supportsSwapchainMaintenance1.enabled)
-    {
-        mSkippedValidationMessages.insert(
-            mSkippedValidationMessages.end(), kSkippedMessagesWithoutSwapchainMaintenance1,
-            kSkippedMessagesWithoutSwapchainMaintenance1 +
-                ArraySize(kSkippedMessagesWithoutSwapchainMaintenance1));
     }
 
     // Build the list of syncval errors that are currently expected and should be skipped.
@@ -5198,6 +5243,13 @@ void Renderer::initFeatures(const vk::ExtensionNameList &deviceExtensionNames,
         &mFeatures, supportsCustomBorderColor,
         mCustomBorderColorFeatures.customBorderColors == VK_TRUE &&
             mCustomBorderColorFeatures.customBorderColorWithoutFormat == VK_TRUE);
+
+    // If format is undefined, the borderColor is VK_BORDER_COLOR_INT_CUSTOM_EXT, and the sampler is
+    // used with an image with a stencil format, then the implementation must source the custom
+    // border color from either the first or second components of the borderColor, although it is
+    // recommended to source it from the first component.
+    ANGLE_FEATURE_CONDITION(&mFeatures, usesSecondComponentForStencilBorderColor,
+                            mFeatures.supportsCustomBorderColor.enabled && isQualcommProprietary);
 
     ANGLE_FEATURE_CONDITION(&mFeatures, supportsMultiDrawIndirect,
                             mPhysicalDeviceFeatures.multiDrawIndirect == VK_TRUE);
@@ -6488,6 +6540,13 @@ VkFormatFeatureFlags Renderer::getImageFormatFeatureBits(
     const VkFormatFeatureFlags featureBits) const
 {
     return getFormatFeatureBits<&VkFormatProperties::optimalTilingFeatures>(formatID, featureBits);
+}
+
+VkFormatFeatureFlags Renderer::getBufferFormatFeatureBits(
+    angle::FormatID formatID,
+    const VkFormatFeatureFlags featureBits) const
+{
+    return getFormatFeatureBits<&VkFormatProperties::bufferFeatures>(formatID, featureBits);
 }
 
 bool Renderer::hasImageFormatFeatureBits(angle::FormatID formatID,

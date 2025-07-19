@@ -27,6 +27,8 @@
 #include "FloatConversion.h"
 #include "FloatPoint.h"
 #include "FloatSize.h"
+#include "LayoutPoint.h"
+#include "LayoutSize.h"
 #include "LayoutUnit.h"
 #include "StylePrimitiveNumericTypes+Calculation.h"
 #include "StylePrimitiveNumericTypes.h"
@@ -44,7 +46,6 @@ template<auto R, typename V> struct Evaluation<Percentage<R, V>> {
     {
         return static_cast<double>(percentage.value) / 100.0;
     }
-
     template<typename Reference> constexpr auto operator()(const Percentage<R, V>& percentage, Reference referenceLength) -> Reference
     {
         return static_cast<Reference>(percentage.value) / 100.0 * referenceLength;
@@ -64,7 +65,6 @@ template<NonCompositeNumeric StyleType> struct Evaluation<StyleType> {
     {
         return static_cast<double>(value.value);
     }
-
     template<typename Reference> constexpr auto operator()(const StyleType& value, Reference) -> Reference
     {
         return static_cast<Reference>(value.value);
@@ -97,6 +97,13 @@ template<typename T> struct Evaluation<SpaceSeparatedPoint<T>> {
             evaluate(value.y(), referenceBox.height())
         };
     }
+    LayoutPoint operator()(const SpaceSeparatedPoint<T>& value, LayoutSize referenceBox)
+    {
+        return {
+            evaluate(value.x(), referenceBox.width()),
+            evaluate(value.y(), referenceBox.height())
+        };
+    }
 };
 
 // MARK: - SpaceSeparatedSize
@@ -109,12 +116,26 @@ template<typename T> struct Evaluation<SpaceSeparatedSize<T>> {
             evaluate(value.height(), referenceBox.height())
         };
     }
+    LayoutSize operator()(const SpaceSeparatedSize<T>& value, LayoutSize referenceBox)
+    {
+        return {
+            evaluate(value.width(), referenceBox.width()),
+            evaluate(value.height(), referenceBox.height())
+        };
+    }
 };
 
 // MARK: - MinimallySerializingSpaceSeparatedSize
 
 template<typename T> struct Evaluation<MinimallySerializingSpaceSeparatedSize<T>> {
     FloatSize operator()(const MinimallySerializingSpaceSeparatedSize<T>& value, FloatSize referenceBox)
+    {
+        return {
+            evaluate(value.width(), referenceBox.width()),
+            evaluate(value.height(), referenceBox.height())
+        };
+    }
+    LayoutSize operator()(const MinimallySerializingSpaceSeparatedSize<T>& value, LayoutSize referenceBox)
     {
         return {
             evaluate(value.width(), referenceBox.width()),

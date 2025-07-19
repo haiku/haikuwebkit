@@ -87,8 +87,9 @@ class BrowserPerfDashRunner(object):
             if not os.path.isdir(plan_dir):
                 raise Exception(f"Can't find plan directory: {plan_dir}")
         self._benchmark_runner_available_plans = BenchmarkRunner.available_plans()
+        self._benchmark_runner_available_plans_split_subtests = self._get_benchmark_runner_split_subtests_plans(self._benchmark_runner_available_plans)
         self._browserperfdash_runner_available_plans = self._load_and_list_plan_plugins()
-        self._available_plans = sorted(self._benchmark_runner_available_plans + list(self._browserperfdash_runner_available_plans.keys()))
+        self._available_plans = sorted(self._benchmark_runner_available_plans + self._benchmark_runner_available_plans_split_subtests + list(self._browserperfdash_runner_available_plans.keys()))
         self._parse_config_file(self._args.config_file)
         self._set_args_default_values_from_config_file()
         self._browser_driver = BrowserDriverFactory.create(self._args.platform, self._args.browser, self._args.browser_args)
@@ -177,13 +178,10 @@ class BrowserPerfDashRunner(object):
         if not found_one_valid_server:
             raise ValueError('At least one server should be defined on the config file "{config_file}"'.format(config_file=config_file))
 
-    def _get_plan_version_hash(self, plan):
-        if self._is_benchmark_runner_plan(plan):
-            return self._calculate_benchmark_runner_plan_version_hash(plan)
-
     # As version of the test we calculate a hash of the contents
     def _get_plan_version_hash(self, plan_name):
         version_hash = hashlib.md5()
+        plan_name = plan_name.removesuffix('-split-subtests')
         if self._is_benchmark_runner_plan(plan_name):
             plan_file_path = os.path.join(self._benchmark_runner_plan_directory, f'{plan_name}.plan')
         else:
@@ -223,6 +221,14 @@ class BrowserPerfDashRunner(object):
         if 'debugOutput' in temp_result_json:
             del temp_result_json['debugOutput']
         return json.dumps(temp_result_json)
+
+    def _get_benchmark_runner_split_subtests_plans(self, benchmark_runner_plans):
+        split_subtests_plans = []
+        for plan in benchmark_runner_plans:
+            assert (not plan.endswith('-split-subtests')), 'Name collision, a plan should not end with the string "-split-subtests"'
+            if BenchmarkRunner.available_subtests(plan):
+                split_subtests_plans.append(f'{plan}-split-subtests')
+        return split_subtests_plans
 
     def _load_and_list_plan_plugins(self):
         plugins = {}
@@ -342,11 +348,81 @@ class BrowserPerfDashRunner(object):
                                         browser_args=self._args.browser_args)
         runner.execute()
 
+    def _run_benchmark_runner_plan_split_subtests(self, plan, result_file_path):
+        plan = plan.removesuffix('-split-subtests')
+        assert(self._is_benchmark_runner_plan(plan)), f'plan {plan} is not a valid benchmark-runner plan'
+        subtests_to_run = BenchmarkRunner.format_subtests(BenchmarkRunner.available_subtests(plan))
+        total_subtests = len(subtests_to_run)
+        _log.info(f'Running the {total_subtests} subtests of benchmark plan {plan} one-by-one')
+        benchmark_name = None
+        split_subtest_data = {}
+        subtests_passed = []
+        subtests_failed = []
+        for current_subtest_index, subtest in enumerate(subtests_to_run):
+            _log.info(f'Running subtest {subtest} of benchmark plan {plan} [{current_subtest_index} of {total_subtests}]')
+            benchmark_runner_class = benchmark_runner_subclasses[self._args.driver]
+            with tempfile.NamedTemporaryFile() as subtest_temp_result_file:
+                try:
+                    runner = benchmark_runner_class(plan,
+                                                    self._args.localCopy,
+                                                    self._args.countOverride,
+                                                    self._args.timeoutOverride,
+                                                    self._args.buildDir,
+                                                    subtest_temp_result_file.name,
+                                                    self._args.platform,
+                                                    self._args.browser,
+                                                    None,
+                                                    subtests=[subtest],
+                                                    browser_args=self._args.browser_args)
+                    runner.execute()
+                except Exception as e:
+                    _log.error(f'subtest {subtest} of benchmark plan {plan} failed with exception: {e}')
+                    subtests_failed.append(subtest)
+                    continue
+                subtest_temp_result_file.flush()
+                subtest_temp_result_file.seek(0)
+                temp_result_json = json.load(subtest_temp_result_file)
+                if 'debugOutput' in temp_result_json:
+                    del temp_result_json['debugOutput']
+
+                benchmark_name_list = list(temp_result_json.keys())
+                assert(len(benchmark_name_list) == 1), "There is more than one main benchmark name in the result data, this is unexpected"
+                if not split_subtest_data:
+                    # This runs only on the first iteration: build the split_subtest_data initial dict and set the value of benchmark_name
+                    benchmark_name = benchmark_name_list[0]
+                    split_subtest_data[benchmark_name] = {'metrics': temp_result_json[benchmark_name]['metrics'], 'tests': {}}
+                else:
+                    assert(benchmark_name == benchmark_name_list[0]), f'Benchmark name should not change between subtests, expected "{benchmark_name}" but got "{benchmark_name_list[0]}"'
+                    assert(split_subtest_data[benchmark_name]['metrics'] == temp_result_json[benchmark_name]['metrics']), 'Metrics aggregation entry should not change between subtests'
+
+                benchmark_subtests = list(temp_result_json[benchmark_name]['tests'].keys())
+                assert(len(benchmark_subtests) == 1), "There is more than one subtest in the data, this is unexpected"
+                subtest_name = benchmark_subtests[0]
+                assert(subtest_name not in split_subtest_data[benchmark_name]['tests']), 'Data for subtest {subtest_name} is repeated'
+                split_subtest_data[benchmark_name]['tests'][subtest_name] = temp_result_json[benchmark_name]['tests'][subtest_name]
+                subtests_passed.append(subtest)
+
+        if not subtests_passed:
+            raise RuntimeError(f'All subtests of benchmark plan {plan} failed: {subtests_failed}')
+        # Append 'split-subtests' to the benchmark name and save the joint data.
+        split_subtest_data[f'{benchmark_name}-split-subtests'] = split_subtest_data.pop(benchmark_name)
+        print(split_subtest_data)
+        with open(result_file_path, 'w') as f:
+            json.dump(split_subtest_data, f, indent=2)
+            f.write("\n")
+
+        _log.info(f'The following subtests of benchmark plan {plan} passed: {subtests_passed}')
+        if len(subtests_failed) > 0:
+            _log.error(f'The following subtests of benchmark plan {plan} failed: {subtests_failed}')
+        return len(subtests_failed)
+
     def _run_plan(self, plan, result_file_path):
         if self._is_benchmark_runner_plan(plan):
             return self._run_benchmark_runner_plan(plan, result_file_path)
         if self.is_browserperfdash_runner_plan(plan):
             return self._browserperfdash_runner_available_plans[plan]['run'](self._browser_driver, result_file_path)
+        if plan.endswith('-split-subtests'):
+            return self._run_benchmark_runner_plan_split_subtests(plan, result_file_path)
         raise NotImplementedError(f'Implementation missing to run plan {plan}')
 
     def _save_to_results_directory(self, plan, upload_worked):
@@ -362,6 +438,7 @@ class BrowserPerfDashRunner(object):
     def run(self):
         failed = []
         worked = []
+        warned = []
         skipped = []
         plan_list = []
         if self._args.plan:
@@ -407,7 +484,8 @@ class BrowserPerfDashRunner(object):
             try:
                 with tempfile.NamedTemporaryFile() as temp_result_file:
                     self._result_data['local_timestamp_teststart'] = datetime.now().strftime('%s')
-                    self._run_plan(plan, temp_result_file.name)
+                    number_failed_subtests = self._run_plan(plan, temp_result_file.name)
+                    subtests_failed = type(number_failed_subtests) is int and number_failed_subtests > 0
                     self._result_data['local_timestamp_testend'] = datetime.now().strftime('%s')
                     _log.info('Finished benchmark plan: {plan_name}'.format(plan_name=plan))
                     # Fill test info for upload
@@ -417,23 +495,32 @@ class BrowserPerfDashRunner(object):
                     self._result_data['test_data'] = self._get_test_data_json_string(temp_result_file)
                     _log.info(f'Uploading results for plan: {plan} and browser {self._args.browser} version {self._result_data["browser_version"]}')
                     upload_worked = self._upload_result()
-                    (worked if upload_worked else failed).append(plan)
+                    if upload_worked:
+                        (warned if subtests_failed else worked).append(plan)
+                    else:
+                        failed.append(plan)
                     if self._args.save_results_directory:
                         self._save_to_results_directory(plan, upload_worked)
             except KeyboardInterrupt:
                 raise
-            except:
+            except Exception as e:
                 failed.append(plan)
-                _log.exception('Error running benchmark plan: {plan_name}'.format(plan_name=plan))
+                _log.exception(f'Error running benchmark plan: {plan}')
+                _log.error(e)
 
+        retcode = 0
         if len(worked) > 0:
-            _log.info('The following benchmark plans have been upload succesfully: {list_plan_worked}'.format(list_plan_worked=worked))
+            _log.info(f'The following benchmark plans have been upload succesfully: {worked}')
+
+        if len(warned) > 0:
+            _log.warning(f'The following benchmark plans have been upload succesfully but had subtests failing: {warned}')
+            retcode += len(warned)
 
         if len(failed) > 0:
-            _log.error('The following benchmark plans have failed to run or to upload: {list_plan_failed}'.format(list_plan_failed=failed))
-            return len(failed)
+            _log.error(f'The following benchmark plans have failed to run or to upload: {failed}')
+            retcode += len(failed)
 
-        return 0
+        return retcode
 
 
 def format_logger(logger):

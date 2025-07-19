@@ -48,7 +48,7 @@ struct SnapOffset {
     bool hasSnapAreaLargerThanViewport;
     Markable<ElementIdentifier> snapTargetID;
     bool isFocused;
-    Vector<size_t> snapAreaIndices;
+    Vector<uint64_t> snapAreaIndices;
 };
 
 template <typename UnitType, typename RectType>

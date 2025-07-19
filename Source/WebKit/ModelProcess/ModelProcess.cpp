@@ -199,6 +199,7 @@ void ModelProcess::initializeModelProcess(ModelProcessCreationParameters&& param
 {
     CompletionHandlerCallingScope callCompletionHandler(WTFMove(completionHandler));
 
+    m_debugEntityMemoryLimit = parameters.debugEntityMemoryLimit;
     WKREEngine::enableRestrictiveRenderingMode(parameters.restrictiveRenderingMode);
 
     applyProcessCreationParameters(WTFMove(parameters.auxiliaryProcessParameters));

@@ -26,10 +26,6 @@
 #include "StyleScrollPadding.h"
 
 #include "LayoutRect.h"
-#include "StyleBuilderConverter.h"
-#include "StyleBuilderState.h"
-#include "StyleExtractorConverter.h"
-#include <wtf/text/TextStream.h>
 
 namespace WebCore {
 namespace Style {
@@ -96,11 +92,6 @@ float Evaluation<ScrollPaddingEdge>::operator()(const ScrollPaddingEdge& edge, f
     return 0;
 }
 
-auto CSSValueConversion<ScrollPaddingEdge>::operator()(BuilderState& state, const CSSValue& value) -> ScrollPaddingEdge
-{
-    return ScrollPaddingEdge { BuilderConverter::convertLengthOrAuto(state, value) };
-}
-
 LayoutBoxExtent extentForRect(const ScrollPaddingBox& padding, const LayoutRect& rect)
 {
     return LayoutBoxExtent {
@@ -109,11 +100,6 @@ LayoutBoxExtent extentForRect(const ScrollPaddingBox& padding, const LayoutRect&
         Style::evaluate(padding.bottom(), rect.height()),
         Style::evaluate(padding.left(), rect.width()),
     };
-}
-
-WTF::TextStream& operator<<(WTF::TextStream& ts, const ScrollPaddingEdge& value)
-{
-    return ts << value.m_value;
 }
 
 } // namespace Style

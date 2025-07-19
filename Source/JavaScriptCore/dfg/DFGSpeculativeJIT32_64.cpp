@@ -2586,6 +2586,11 @@ void SpeculativeJIT::compile(Node* node)
         break;
     }
 
+    case StringCodePointAt: {
+        compileStringCodePointAt(node);
+        break;
+    }
+
     case StringAt:
     case StringCharAt: {
         // Relies on StringCharAt and StringAt node having same basic layout as GetByVal
@@ -4437,7 +4442,6 @@ void SpeculativeJIT::compile(Node* node)
     case DateGetInt32OrNaN:
     case DateGetTime:
     case DateSetTime:
-    case StringCodePointAt:
     case CallWasm:
     case FunctionBind:
     case NewBoundFunction:

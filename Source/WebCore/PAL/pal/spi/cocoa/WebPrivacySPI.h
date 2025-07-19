@@ -180,15 +180,30 @@ typedef void (^WKWPResourcesGetSourceCompletionHandler)(NSString *, NSError *);
 - (void)requestResourceMonitorRulesSource:(WPResourceRequestOptions *)options completionHandler:(WKWPResourcesGetSourceCompletionHandler)completion;
 @end
 
+#if !__has_include(<WebPrivacy/WPFingerprintingScript.h>)
+
+#define WPResourceTypeFingerprintingScripts ((WPResourceType)9)
+
+// Staging declaration for macOS downlevels.
+@interface WPFingerprintingScript : NSObject
+@property (nonatomic, readonly) NSString *host;
+@property (nonatomic, readonly, getter=isFirstParty) BOOL firstParty;
+@property (nonatomic, readonly, getter=isTopDomain) BOOL topDomain;
+@end
+
+using WPFingerprintingScriptCompletionHandler = void (^)(NSArray<WPFingerprintingScript *> *, NSError *);
+
+@interface WPResources (Staging_135619791)
+- (void)requestFingerprintingScripts:(WPResourceRequestOptions *)options completionHandler:(WPFingerprintingScriptCompletionHandler)completion;
+@end
+
+#endif // !__has_include(<WebPrivacy/WPFingerprintingScript.h>)
+
 WTF_EXTERN_C_BEGIN
 
 extern NSString *const WPNotificationUserInfoResourceTypeKey;
 extern NSNotificationName const WPResourceDataChangedNotificationName;
 
 WTF_EXTERN_C_END
-
-#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/WebPrivacySPIAdditions.h>)
-#import <WebKitAdditions/WebPrivacySPIAdditions.h>
-#endif
 
 #endif // ENABLE(ADVANCED_PRIVACY_PROTECTIONS)

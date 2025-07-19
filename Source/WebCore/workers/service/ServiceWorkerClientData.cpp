@@ -44,7 +44,7 @@ static ServiceWorkerClientFrameType toServiceWorkerClientFrameType(ScriptExecuti
     if (!document)
         return ServiceWorkerClientFrameType::None;
 
-    auto* frame = document->frame();
+    RefPtr frame = document->frame();
     if (!frame)
         return ServiceWorkerClientFrameType::None;
 

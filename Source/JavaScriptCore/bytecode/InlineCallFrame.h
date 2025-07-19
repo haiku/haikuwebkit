@@ -128,10 +128,10 @@ struct InlineCallFrame {
         case ProxyObjectInCall:
         case BoundFunctionCall:
         case BoundFunctionTailCall:
-            return CodeForCall;
+            return CodeSpecializationKind::CodeForCall;
         case Construct:
         case ConstructVarargs:
-            return CodeForConstruct;
+            return CodeSpecializationKind::CodeForConstruct;
         }
         RELEASE_ASSERT_NOT_REACHED();
     }

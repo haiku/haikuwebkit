@@ -63,6 +63,7 @@
 #include "StyleFilterImage.h"
 #include "StyleInterpolationClient.h"
 #include "StyleInterpolationContext.h"
+#include "StylePrimitiveNumericTypes+Blending.h"
 #include "StyleResolver.h"
 #include "StyleTextEdge.h"
 #include <algorithm>
@@ -102,26 +103,6 @@ inline WebCore::Color blendFunc(const WebCore::Color& from, const WebCore::Color
 inline WebCore::Length blendFunc(const WebCore::Length& from, const WebCore::Length& to, const Context& context, ValueRange valueRange = ValueRange::All)
 {
     return WebCore::blend(from, to, context, valueRange);
-}
-
-inline GapLength blendFunc(const GapLength& from, const GapLength& to, const Context& context)
-{
-    if (from.isNormal() || to.isNormal())
-        return context.progress < 0.5 ? from : to;
-    return WebCore::blend(from.length(), to.length(), context, ValueRange::NonNegative);
-}
-
-inline bool canInterpolateLengthVariants(const GapLength& from, const GapLength& to)
-{
-    if (from.isNormal() || to.isNormal())
-        return false;
-    bool isLengthPercentage = true;
-    return canInterpolateLengths(from.length(), to.length(), isLengthPercentage);
-}
-
-inline bool lengthVariantRequiresInterpolationForAccumulativeIteration(const GapLength& from, const GapLength& to)
-{
-    return from.isNormal() || to.isNormal() || lengthsRequireInterpolationForAccumulativeIteration(from.length(), to.length());
 }
 
 inline TabSize blendFunc(const TabSize& from, const TabSize& to, const Context& context)
@@ -186,18 +167,6 @@ inline TransformOperations blendFunc(const TransformOperations& from, const Tran
 inline Ref<TransformOperation> blendFunc(TransformOperation& from, TransformOperation& to, const Context& context)
 {
     return to.blend(&from, context);
-}
-
-inline RefPtr<PathOperation> blendFunc(PathOperation* from, PathOperation* to, const Context& context)
-{
-    if (context.isDiscrete) {
-        ASSERT(!context.progress || context.progress == 1);
-        return context.progress ? to : from;
-    }
-
-    ASSERT(from);
-    ASSERT(to);
-    return from->blend(to, context);
 }
 
 inline RefPtr<ShapeValue> blendFunc(ShapeValue* from, ShapeValue* to, const Context& context)
@@ -467,15 +436,14 @@ inline bool canInterpolate(const GridTrackList& from, const GridTrackList& to)
     return true;
 }
 
-inline GridLength blendFunc(const GridLength& from, const GridLength& to, const Context& context)
+inline GridTrackBreadth blendFunc(const GridTrackBreadth& from, const GridTrackBreadth& to, const Context& context)
 {
     if (from.isFlex() != to.isFlex())
         return context.progress < 0.5 ? from : to;
 
     if (from.isFlex())
-        return GridLength(WebCore::blend(from.flex(), to.flex(), context));
-
-    return GridLength(blendFunc(from.length(), to.length(), context));
+        return WebCore::Style::blend(from.flex(), to.flex(), context);
+    return WebCore::Style::blend(from.length(), to.length(), context);
 }
 
 inline GridTrackSize blendFunc(const GridTrackSize& from, const GridTrackSize& to, const Context& context)
@@ -483,18 +451,18 @@ inline GridTrackSize blendFunc(const GridTrackSize& from, const GridTrackSize& t
     if (from.type() != to.type())
         return context.progress < 0.5 ? from : to;
 
-    if (from.type() == LengthTrackSizing) {
+    if (from.type() == GridTrackSizeType::Length) {
         auto length = blendFunc(from.minTrackBreadth(), to.minTrackBreadth(), context);
-        return GridTrackSize(length, LengthTrackSizing);
+        return GridTrackSize(length, GridTrackSizeType::Length);
     }
-    if (from.type() == MinMaxTrackSizing) {
+    if (from.type() == GridTrackSizeType::MinMax) {
         auto minTrackBreadth = blendFunc(from.minTrackBreadth(), to.minTrackBreadth(), context);
         auto maxTrackBreadth = blendFunc(from.maxTrackBreadth(), to.maxTrackBreadth(), context);
         return GridTrackSize(minTrackBreadth, maxTrackBreadth);
     }
 
     auto fitContentBreadth = blendFunc(from.fitContentTrackBreadth(), to.fitContentTrackBreadth(), context);
-    return GridTrackSize(fitContentBreadth, FitContentTrackSizing);
+    return GridTrackSize(fitContentBreadth, GridTrackSizeType::FitContent);
 }
 
 inline RepeatTrackList blendFunc(const RepeatTrackList& from, const RepeatTrackList& to, const Context& context)

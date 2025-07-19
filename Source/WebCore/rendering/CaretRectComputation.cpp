@@ -296,7 +296,7 @@ static LayoutRect computeCaretRectForBox(const RenderBox& renderer, const Inline
     //
     // FIXME: ignoring :first-line, missing good reason to take care of
     auto fontHeight = renderer.style().metricsOfPrimaryFont().height();
-    if (fontHeight > rect.height() || (!renderer.isReplacedOrAtomicInline() && !renderer.isRenderTable()))
+    if (fontHeight > rect.height() || (!renderer.isBlockLevelReplacedOrAtomicInline() && !renderer.isRenderTable()))
         rect.setHeight(fontHeight);
 
     // Move to local coords

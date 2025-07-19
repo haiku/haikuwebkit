@@ -39,7 +39,7 @@
 
 namespace WebCore {
 
-using AccumulatorMap = UncheckedKeyHashMap<WeakRef<ContainerNode, WeakPtrImplWithEventTargetData>, SingleThreadWeakRef<ChildListMutationAccumulator>>;
+using AccumulatorMap = HashMap<WeakRef<ContainerNode, WeakPtrImplWithEventTargetData>, SingleThreadWeakRef<ChildListMutationAccumulator>>;
 static AccumulatorMap& accumulatorMap()
 {
     static NeverDestroyed<AccumulatorMap> map;

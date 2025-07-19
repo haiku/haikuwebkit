@@ -26,8 +26,7 @@
 #include "StyleOffsetAnchor.h"
 
 #include "CSSPositionValue.h"
-#include "StyleBuilderConverter.h"
-#include "StyleBuilderState.h"
+#include "StyleBuilderChecking.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include <wtf/text/TextStream.h>
 
@@ -41,7 +40,7 @@ auto CSSValueConversion<OffsetAnchor>::operator()(BuilderState& state, const CSS
     if (value.valueID() == CSSValueAuto)
         return OffsetAnchor { CSS::Keyword::Auto { } };
 
-    RefPtr positionValue = BuilderConverter::requiredDowncast<CSSPositionValue>(state, value);
+    RefPtr positionValue = requiredDowncast<CSSPositionValue>(state, value);
     if (!positionValue)
         return RenderStyle::initialOffsetAnchor();
     return OffsetAnchor { toStyle(positionValue->position(), state) };

@@ -83,7 +83,7 @@ public:
     bool (*allowExecutionWhenDisabled)(LocalFrame&, EditorCommandSource);
 };
 
-typedef UncheckedKeyHashMap<String, const EditorInternalCommand*, ASCIICaseInsensitiveHash> CommandMap;
+typedef HashMap<String, const EditorInternalCommand*, ASCIICaseInsensitiveHash> CommandMap;
 
 static const bool notTextInsertion = false;
 static const bool isTextInsertion = true;

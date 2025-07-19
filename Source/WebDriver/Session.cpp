@@ -251,7 +251,7 @@ void Session::createTopLevelBrowsingContext(Function<void(CommandResult&&)>&& co
 
         auto handle = response.responseObject->getString("handle"_s);
         if (!handle) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve handle for the new browsing context"_s));
             return;
         }
 
@@ -272,7 +272,7 @@ void Session::handleUserPrompts(Function<void(CommandResult&&)>&& completionHand
 
         auto isShowingJavaScriptDialog = response.responseObject->getBoolean("result"_s);
         if (!isShowingJavaScriptDialog) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not determine if a JavaScript dialog is showing"_s));
             return;
         }
 
@@ -403,13 +403,13 @@ void Session::getCurrentURL(Function<void(CommandResult&&)>&& completionHandler)
 
             auto browsingContext = response.responseObject->getObject("context"_s);
             if (!browsingContext) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve browsing context information"_s));
                 return;
             }
 
             auto url = browsingContext->getString("url"_s);
             if (!url) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve URL from browsing context"_s));
                 return;
             }
 
@@ -523,13 +523,13 @@ void Session::getTitle(Function<void(CommandResult&&)>&& completionHandler)
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve title from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse title from browsing context"_s));
                 return;
             }
 
@@ -555,13 +555,13 @@ void Session::getWindowHandle(Function<void(CommandResult&&)>&& completionHandle
 
         auto browsingContext = response.responseObject->getObject("context"_s);
         if (!browsingContext) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve browsing context information"_s));
             return;
         }
 
         auto handle = browsingContext->getString("handle"_s);
         if (!handle) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve browsing context handle"_s));
             return;
         }
 
@@ -650,7 +650,7 @@ void Session::getWindowHandles(Function<void(CommandResult&&)>&& completionHandl
 
         auto browsingContextArray = response.responseObject->getArray("contexts"_s);
         if (!browsingContextArray) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve browsing contexts"_s));
             return;
         }
 
@@ -658,13 +658,13 @@ void Session::getWindowHandles(Function<void(CommandResult&&)>&& completionHandl
         for (unsigned i = 0; i < browsingContextArray->length(); ++i) {
             auto browsingContext = browsingContextArray->get(i)->asObject();
             if (!browsingContext) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Invalid browsing context information returned"_s));
                 return;
             }
 
             auto handle = browsingContext->getString("handle"_s);
             if (!handle) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "No handle returned for browsing context"_s));
                 return;
             }
 
@@ -700,13 +700,13 @@ void Session::newWindow(std::optional<String> typeHint, Function<void(CommandRes
 
             auto handle = response.responseObject->getString("handle"_s);
             if (!handle) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "No handle returned for the new browsing context"_s));
                 return;
             }
 
             auto presentation = response.responseObject->getString("presentation"_s);
             if (!presentation) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "No presentation returned for the new browsing context"_s));
                 return;
             }
 
@@ -764,7 +764,7 @@ void Session::switchToFrame(RefPtr<JSON::Value>&& frameID, Function<void(Command
 
             auto frameHandle = response.responseObject->getString("result"_s);
             if (!frameHandle) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not resolve child frame handle"_s));
                 return;
             }
 
@@ -818,43 +818,43 @@ void Session::getToplevelBrowsingContextRect(Function<void(CommandResult&&)>&& c
 
         auto browsingContext = response.responseObject->getObject("context"_s);
         if (!browsingContext) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve browsing context information"_s));
             return;
         }
 
         auto windowOrigin = browsingContext->getObject("windowOrigin"_s);
         if (!windowOrigin) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve window origin from browsing context"_s));
             return;
         }
 
         auto x = windowOrigin->getDouble("x"_s);
         if (!x) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve x coordinate from window origin"_s));
             return;
         }
 
         auto y = windowOrigin->getDouble("y"_s);
         if (!y) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve y coordinate from window origin"_s));
             return;
         }
 
         auto windowSize = browsingContext->getObject("windowSize"_s);
         if (!windowSize) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve window size from browsing context"_s));
             return;
         }
 
         auto width = windowSize->getDouble("width"_s);
         if (!width) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve width from window size"_s));
             return;
         }
 
         auto height = windowSize->getDouble("height"_s);
         if (!height) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve height from window size"_s));
             return;
         }
 
@@ -996,13 +996,13 @@ void Session::fullscreenWindow(Function<void(CommandResult&&)>&& completionHandl
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve fullscreen information from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse fullscreen information"_s));
                 return;
             }
 
@@ -1191,13 +1191,13 @@ void Session::findElements(const String& strategy, const String& selector, FindE
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element info from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element info"_s));
                 return;
             }
 
@@ -1256,13 +1256,13 @@ void Session::getActiveElement(Function<void(CommandResult&&)>&& completionHandl
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve active element information from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse active element information"_s));
                 return;
             }
 
@@ -1306,13 +1306,13 @@ void Session::getElementShadowRoot(const String& elementID, Function<void(Comman
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve shadow root information from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse shadow root information"_s));
                 return;
             }
 
@@ -1356,13 +1356,13 @@ void Session::isElementSelected(const String& elementID, Function<void(CommandRe
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element selection state from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element selection state"_s));
                 return;
             }
 
@@ -1373,7 +1373,7 @@ void Session::isElementSelected(const String& elementID, Function<void(CommandRe
 
             auto booleanResult = resultValue->asString();
             if (!booleanResult || booleanResult != "true"_s) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Element selection state is not a boolean"_s));
                 return;
             }
 
@@ -1412,13 +1412,13 @@ void Session::getElementText(const String& elementID, Function<void(CommandResul
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element text from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element text"_s));
                 return;
             }
 
@@ -1456,13 +1456,13 @@ void Session::getElementTagName(const String& elementID, Function<void(CommandRe
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element tag name from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element tag name"_s));
                 return;
             }
 
@@ -1527,13 +1527,13 @@ void Session::isElementEnabled(const String& elementID, Function<void(CommandRes
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element enabled state from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element enabled state"_s));
                 return;
             }
 
@@ -1566,7 +1566,7 @@ void Session::getComputedRole(const String& elementID, Function<void(CommandResu
 
             auto valueString = response.responseObject->getString("role"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve computed role from browsing context"_s));
                 return;
             }
 
@@ -1600,7 +1600,7 @@ void Session::getComputedLabel(const String& elementID, Function<void(CommandRes
 
             auto valueString = response.responseObject->getString("label"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve computed label from browsing context"_s));
                 return;
             }
 
@@ -1639,13 +1639,13 @@ void Session::isElementDisplayed(const String& elementID, Function<void(CommandR
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element display state from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element display state"_s));
                 return;
             }
 
@@ -1684,13 +1684,13 @@ void Session::getElementAttribute(const String& elementID, const String& attribu
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element attribute from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element attribute"_s));
                 return;
             }
 
@@ -1728,13 +1728,13 @@ void Session::getElementProperty(const String& elementID, const String& property
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element property from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element property"_s));
                 return;
             }
 
@@ -1772,13 +1772,13 @@ void Session::getElementCSSValue(const String& elementID, const String& cssPrope
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element CSS value from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element CSS value"_s));
                 return;
             }
 
@@ -1850,13 +1850,13 @@ void Session::elementIsFileUpload(const String& elementID, Function<void(Command
 
         auto valueString = response.responseObject->getString("result"_s);
         if (!valueString) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element file upload information from browsing context"_s));
             return;
         }
 
         auto resultValue = JSON::Value::parseJSON(valueString);
         if (!resultValue) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element file upload information"_s));
             return;
         }
 
@@ -1998,13 +1998,13 @@ void Session::elementIsEditable(const String& elementID, Function<void(CommandRe
 
         auto valueString = response.responseObject->getString("result"_s);
         if (!valueString) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve element editable state from browsing context"_s));
             return;
         }
 
         auto resultValue = JSON::Value::parseJSON(valueString);
         if (!resultValue) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse element editable state"_s));
             return;
         }
 
@@ -2105,7 +2105,7 @@ void Session::setInputFileUploadFiles(const String& elementID, const String& tex
     });
 }
 
-String Session::virtualKeyForKey(UChar key, KeyModifier& modifier)
+String Session::virtualKeyForKey(char16_t key, KeyModifier& modifier)
 {
     // §17.4.2 Keyboard Actions.
     // https://www.w3.org/TR/webdriver/#keyboard-actions
@@ -2388,13 +2388,13 @@ void Session::getPageSource(Function<void(CommandResult&&)>&& completionHandler)
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve page source from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse page source information"_s));
                 return;
             }
 
@@ -2471,13 +2471,13 @@ void Session::executeScript(const String& script, RefPtr<JSON::Array>&& argument
 
             auto valueString = response.responseObject->getString("result"_s);
             if (!valueString) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve script result from browsing context"_s));
                 return;
             }
 
             auto resultValue = JSON::Value::parseJSON(valueString);
             if (!resultValue) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not parse script result"_s));
                 return;
             }
 
@@ -2671,7 +2671,7 @@ void Session::getAllCookies(Function<void(CommandResult&&)>&& completionHandler)
 
             auto cookiesArray = response.responseObject->getArray("cookies"_s);
             if (!cookiesArray) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve cookies from browsing context"_s));
                 return;
             }
 
@@ -2679,13 +2679,13 @@ void Session::getAllCookies(Function<void(CommandResult&&)>&& completionHandler)
             for (unsigned i = 0; i < cookiesArray->length(); ++i) {
                 auto cookieObject = cookiesArray->get(i)->asObject();
                 if (!cookieObject) {
-                    completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                    completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Invalid cookie object in browsing context"_s));
                     return;
                 }
 
                 auto cookie = parseAutomationCookie(*cookieObject);
                 if (!cookie) {
-                    completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                    completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Invalid cookie data in browsing context"_s));
                     return;
                 }
                 cookies->pushObject(serializeCookie(cookie.value()));
@@ -3095,7 +3095,7 @@ void Session::getAlertText(Function<void(CommandResult&&)>&& completionHandler)
 
         auto valueString = response.responseObject->getString("message"_s);
         if (!valueString) {
-            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+            completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve alert text from browsing context"_s));
             return;
         }
 
@@ -3151,7 +3151,7 @@ void Session::takeScreenshot(std::optional<String> elementID, std::optional<bool
 
             auto data = response.responseObject->getString("data"_s);
             if (!data) {
-                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError));
+                completionHandler(CommandResult::fail(CommandResult::ErrorCode::UnknownError, "Could not retrieve screenshot data from browsing context"_s));
                 return;
             }
 

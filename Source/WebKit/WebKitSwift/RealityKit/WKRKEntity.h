@@ -67,7 +67,7 @@ NS_SWIFT_UI_ACTOR
 @property (nonatomic) NSTimeInterval currentTime;
 
 + (BOOL)isLoadFromDataAvailable;
-+ (void)loadFromData:(NSData *)data withAttributionTaskID:(nullable NSString *)attributionTaskId completionHandler:(NS_SWIFT_UI_ACTOR void (^)(WKRKEntity * _Nullable entity))completionHandler;
++ (void)loadFromData:(NSData *)data withAttributionTaskID:(nullable NSString *)attributionTaskId entityMemoryLimit:(NSInteger)entityMemoryLimit completionHandler:(NS_SWIFT_UI_ACTOR void (^)(WKRKEntity * _Nullable entity))completionHandler;
 - (instancetype)initWithCoreEntity:(REEntityRef)coreEntity;
 - (void)setParentCoreEntity:(REEntityRef)parentCoreEntity preservingWorldTransform:(BOOL)preservingWorldTransform;
 - (void)setUpAnimationWithAutoPlay:(BOOL)autoPlay;

@@ -94,6 +94,9 @@ private:
     Ref<Blob> takeAsBlob(ScriptExecutionContext*, const String& contentType);
     void resetConsumePromise();
 
+    RefPtr<ReadableStreamToSharedBufferSink> protectedSink() { return m_sink; }
+    RefPtr<FormDataConsumer> protectedFormDataConsumer() { return m_formDataConsumer; }
+
     Type m_type;
     SharedBufferBuilder m_buffer;
     RefPtr<DeferredPromise> m_consumePromise;

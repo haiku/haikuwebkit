@@ -1,9 +1,4 @@
-NetworkProcess/NetworkProcess.cpp
-NetworkProcess/NetworkSession.cpp
-NetworkProcess/cocoa/NetworkSessionCocoa.mm
 Platform/IPC/ArgumentCoders.h
-UIProcess/WebPageProxy.cpp
-UIProcess/mac/WKTextAnimationManagerMac.mm
 WebProcess/FullScreen/WebFullScreenManager.cpp
 WebProcess/InjectedBundle/API/c/WKBundlePage.cpp
 WebProcess/InjectedBundle/InjectedBundleHitTestResult.cpp

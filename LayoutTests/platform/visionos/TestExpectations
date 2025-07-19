@@ -39,6 +39,7 @@ mathml [ Skip ]
 media [ Skip ]
 memory [ Skip ]
 mhtml [ Skip ]
+overflow [ Skip ]
 overlay-region [ Skip ]
 pageoverlay [ Skip ]
 perf [ Skip ]
@@ -157,6 +158,13 @@ platform/visionos/transforms/separated-image-upgrade.html [ Failure ]
 platform/visionos/transforms/separated-update.html [ Failure ]
 platform/visionos/transforms/separated-video.html [ Failure ]
 platform/visionos/transforms/separated.html [ Failure ]
+
+# Passing as of visionOS 26
+http/wpt/model-element [ Pass ]
+http/tests/security/model-element [ Pass ]
+
+# Tests which pass only with form control refresh enabled (visionOS 26)
+fast/forms/form-control-refresh [ Pass ]
 
 ### END OF Triaged failures
 ###################################################################################################

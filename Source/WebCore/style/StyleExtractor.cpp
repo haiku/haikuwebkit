@@ -272,7 +272,7 @@ String Extractor::customPropertyValueSerialization(const AtomString& propertyNam
 static bool isLayoutDependent(CSSPropertyID propertyID, const RenderStyle* style, const RenderObject* renderer)
 {
     auto isNonReplacedInline = [](auto& renderer) {
-        return renderer.isInline() && !renderer.isReplacedOrAtomicInline();
+        return renderer.isInline() && !renderer.isBlockLevelReplacedOrAtomicInline();
     };
 
     auto formattingContextRootStyle = [](auto& renderer) -> const RenderStyle& {

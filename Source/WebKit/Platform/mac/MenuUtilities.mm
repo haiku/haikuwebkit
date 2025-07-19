@@ -32,7 +32,8 @@
 #import <WebCore/LocalizedStrings.h>
 #import <WebCore/RevealUtilities.h>
 
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
+#if ENABLE(CONTEXT_MENU_IMAGES_ON_MAC)
+#import <WebCore/LocaleToScriptMapping.h>
 #import <pal/spi/mac/NSImageSPI.h>
 #import <pal/spi/mac/NSMenuSPI.h>
 #endif
@@ -84,6 +85,7 @@ SOFT_LINK_CLASS(TelephonyUtilities, TUCall)
 @end
 
 namespace WebKit {
+using namespace WebCore;
 
 #if ENABLE(TELEPHONE_NUMBER_DETECTION)
 
@@ -158,7 +160,7 @@ RetainPtr<NSMenu> menuForTelephoneNumber(const String& telephoneNumber, NSView *
 
 #endif
 
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
+#if ENABLE(CONTEXT_MENU_IMAGES_ON_MAC)
 
 enum class SymbolType : bool { Public, Private };
 
@@ -166,6 +168,28 @@ struct SymbolNameWithType {
     SymbolType type;
     String name;
 };
+
+static std::optional<SymbolNameWithType> symbolForTransformationItem(String symbolName)
+{
+    // The images used for the items in the transformation submenu are not all localized
+    // for the same scripts, so we must ensure that the images are shown only when a
+    // localized version exists for all 3.
+
+    RetainPtr currentLocale = [NSLocale currentLocale];
+    RetainPtr scriptCode = [currentLocale scriptCode];
+    RetainPtr languageCode = [currentLocale languageCode];
+
+    const auto isoScriptCode = scriptCode ? scriptNameToCode(String(scriptCode.get())) : localeToScriptCode(languageCode.get());
+
+    switch (isoScriptCode) {
+    case USCRIPT_CYRILLIC:
+    case USCRIPT_GREEK:
+    case USCRIPT_LATIN:
+        return { { SymbolType::Public, symbolName } };
+    default:
+        return { };
+    }
+}
 
 static std::optional<SymbolNameWithType> symbolNameWithTypeForAction(const WebCore::ContextMenuAction action, bool useAlternateImage)
 {
@@ -235,7 +259,7 @@ static std::optional<SymbolNameWithType> symbolNameWithTypeForAction(const WebCo
     case WebCore::ContextMenuItemTagBold:
         return { { SymbolType::Public, "bold"_s } };
     case WebCore::ContextMenuItemTagCapitalize:
-        return { { SymbolType::Public, "textformat.characters"_s } };
+        return symbolForTransformationItem("textformat.characters"_s);
     case WebCore::ContextMenuItemTagChangeBack:
         return { { SymbolType::Public, "arrow.uturn.backward.circle"_s } };
     case WebCore::ContextMenuItemTagCheckSpelling:
@@ -270,15 +294,16 @@ static std::optional<SymbolNameWithType> symbolNameWithTypeForAction(const WebCo
     case WebCore::ContextMenuItemTagLearnSpelling:
         return { { SymbolType::Public, "text.book.closed"_s } };
     case WebCore::ContextMenuItemTagLeftToRight:
-        return { { SymbolType::Public, [NSMenuItem _systemImageNameForAction:@selector(makeTextWritingDirectionLeftToRight:)] } };
+    case WebCore::ContextMenuItemTagTextDirectionLeftToRight:
+        return { { SymbolType::Public, "arrow.right"_s } };
     case WebCore::ContextMenuItemTagLookUpImage:
         return { { SymbolType::Private, "info.circle.badge.sparkles"_s } };
     case WebCore::ContextMenuItemTagLookUpInDictionary:
         return { { SymbolType::Public, "character.book.closed"_s } };
     case WebCore::ContextMenuItemTagMakeLowerCase:
-        return { { SymbolType::Public, "characters.lowercase"_s } };
+        return symbolForTransformationItem("characters.lowercase"_s);
     case WebCore::ContextMenuItemTagMakeUpperCase:
-        return { { SymbolType::Public, "characters.uppercase"_s } };
+        return symbolForTransformationItem("characters.uppercase"_s);
     case WebCore::ContextMenuItemTagMediaMute:
         return { { SymbolType::Public, "speaker.slash"_s } };
     case WebCore::ContextMenuItemTagMediaPlayPause: {
@@ -307,7 +332,8 @@ static std::optional<SymbolNameWithType> symbolNameWithTypeForAction(const WebCo
     case WebCore::ContextMenuItemTagReload:
         return { { SymbolType::Public, "arrow.clockwise"_s } };
     case WebCore::ContextMenuItemTagRightToLeft:
-        return { { SymbolType::Public, [NSMenuItem _systemImageNameForAction:@selector(makeTextWritingDirectionRightToLeft:)] } };
+    case WebCore::ContextMenuItemTagTextDirectionRightToLeft:
+        return { { SymbolType::Public, "arrow.left"_s } };
     case WebCore::ContextMenuItemTagSearchWeb:
         return { { SymbolType::Public, "magnifyingglass"_s } };
     case WebCore::ContextMenuItemTagShareMenu:
@@ -328,10 +354,6 @@ static std::optional<SymbolNameWithType> symbolNameWithTypeForAction(const WebCo
     case WebCore::ContextMenuItemTagStop:
     case WebCore::ContextMenuItemTagStopSpeaking:
         return { { SymbolType::Public, "stop.fill"_s } };
-    case WebCore::ContextMenuItemTagTextDirectionLeftToRight:
-        return { { SymbolType::Public, "arrow.right"_s } };
-    case WebCore::ContextMenuItemTagTextDirectionRightToLeft:
-        return { { SymbolType::Public, "arrow.left"_s } };
     case WebCore::ContextMenuItemTagToggleMediaControls: {
         const auto symbolName = useAlternateImage ? "eye"_s : "eye.slash"_s;
         return { { SymbolType::Public, symbolName } };

@@ -299,7 +299,7 @@ static void replaceRichContentWithAttachments(LocalFrame& frame, DocumentFragmen
         return;
 
     // FIXME: Handle resources in subframe archives.
-    UncheckedKeyHashMap<AtomString, Ref<ArchiveResource>> urlToResourceMap;
+    HashMap<AtomString, Ref<ArchiveResource>> urlToResourceMap;
     for (auto& subresource : subresources)
         urlToResourceMap.set(AtomString { subresource->url().string() }, subresource.copyRef());
 
@@ -495,7 +495,7 @@ RefPtr<DocumentFragment> createFragment(LocalFrame& frame, NSAttributedString *s
         return WTFMove(fragmentAndResources.fragment);
     }
 
-    UncheckedKeyHashMap<AtomString, AtomString> blobURLMap;
+    HashMap<AtomString, AtomString> blobURLMap;
     for (auto& subresource : fragmentAndResources.resources) {
         Ref data = subresource->data();
         Ref blob = Blob::create(document.get(), data->copyData(), subresource->mimeType());
@@ -545,7 +545,7 @@ static String sanitizeMarkupWithArchive(LocalFrame& frame, Document& destination
         return sanitizedMarkupForFragmentInDocument(WTFMove(fragment), *stagingDocument, msoListQuirks, markupAndArchive.markup);
     }
 
-    UncheckedKeyHashMap<AtomString, AtomString> blobURLMap;
+    HashMap<AtomString, AtomString> blobURLMap;
     for (const Ref<ArchiveResource>& subresource : markupAndArchive.archive->subresources()) {
         auto& subresourceURL = subresource->url();
         if (!shouldReplaceSubresourceURLWithBlobDuringSanitization(subresourceURL))

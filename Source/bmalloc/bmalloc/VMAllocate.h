@@ -46,6 +46,12 @@
 #include <mach/vm_page_size.h>
 #endif
 
+#if defined(MADV_ZERO) && BOS(DARWIN)
+#define BMALLOC_USE_MADV_ZERO 0
+#else
+#define BMALLOC_USE_MADV_ZERO 0
+#endif
+
 BALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
 namespace bmalloc {
@@ -58,6 +64,10 @@ namespace bmalloc {
 #define BMALLOC_NORESERVE MAP_NORESERVE
 #else
 #define BMALLOC_NORESERVE 0
+#endif
+
+#if BMALLOC_USE_MADV_ZERO
+bool isMadvZeroSupported();
 #endif
 
 // The following require platform-specific implementations
@@ -258,6 +268,13 @@ inline void vmZeroAndPurge(void* p, size_t vmSize, VMTag usage)
     vmValidate(p, vmSize);
     int flags = MAP_PRIVATE | MAP_ANON | MAP_FIXED | BMALLOC_NORESERVE;
     int tag = static_cast<int>(usage);
+#if BMALLOC_USE_MADV_ZERO
+    if (isMadvZeroSupported()) {
+        int rc = madvise(p, vmSize, MADV_ZERO);
+        if (rc != -1)
+            return;
+    }
+#endif
     BPROFILE_ZERO_FILL_PAGE(p, vmSize, flags, tag);
     // MAP_ANON guarantees the memory is zeroed. This will also cause
     // page faults on accesses to this range following this call.

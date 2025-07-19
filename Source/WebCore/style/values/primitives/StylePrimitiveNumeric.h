@@ -25,6 +25,7 @@
 #pragma once
 
 #include "CSSPrimitiveNumeric.h"
+#include "StylePrimitiveNumeric+Forward.h"
 #include "StylePrimitiveNumericConcepts.h"
 #include "StyleUnevaluatedCalculation.h"
 #include "StyleValueTypes.h"
@@ -180,66 +181,58 @@ private:
 
 // MARK: Integer Primitive
 
-template<CSS::Range R = CSS::All, typename V = int> struct Integer : PrimitiveNumeric<CSS::Integer<R, V>> {
+template<CSS::Range R, typename V> struct Integer : PrimitiveNumeric<CSS::Integer<R, V>> {
     using Base = PrimitiveNumeric<CSS::Integer<R, V>>;
 };
 
 // MARK: Number Primitive
 
-template<CSS::Range R = CSS::All, typename V = double> struct Number : PrimitiveNumeric<CSS::Number<R, V>> {
+template<CSS::Range R, typename V> struct Number : PrimitiveNumeric<CSS::Number<R, V>> {
     using Base = PrimitiveNumeric<CSS::Number<R, V>>;
     using Base::Base;
-    using MarkableTraits = PrimitiveNumericMarkableTraits<Number>;
 };
 
 // MARK: Percentage Primitive
 
-template<CSS::Range R = CSS::All, typename V = double> struct Percentage : PrimitiveNumeric<CSS::Percentage<R, V>> {
+template<CSS::Range R, typename V> struct Percentage : PrimitiveNumeric<CSS::Percentage<R, V>> {
     using Base = PrimitiveNumeric<CSS::Percentage<R, V>>;
     using Base::Base;
-    using MarkableTraits = PrimitiveNumericMarkableTraits<Percentage>;
 };
 
 // MARK: Dimension Primitives
 
-template<CSS::Range R = CSS::All, typename V = double> struct Angle : PrimitiveNumeric<CSS::Angle<R, V>> {
+template<CSS::Range R, typename V> struct Angle : PrimitiveNumeric<CSS::Angle<R, V>> {
     using Base = PrimitiveNumeric<CSS::Angle<R, V>>;
     using Base::Base;
-    using MarkableTraits = PrimitiveNumericMarkableTraits<Angle>;
 };
-template<CSS::Range R = CSS::All, typename V = float> struct Length : PrimitiveNumeric<CSS::Length<R, V>> {
+template<CSS::Range R, typename V> struct Length : PrimitiveNumeric<CSS::Length<R, V>> {
     using Base = PrimitiveNumeric<CSS::Length<R, V>>;
     using Base::Base;
-    using MarkableTraits = PrimitiveNumericMarkableTraits<Length>;
 };
-template<CSS::Range R = CSS::All, typename V = double> struct Time : PrimitiveNumeric<CSS::Time<R, V>> {
+template<CSS::Range R, typename V> struct Time : PrimitiveNumeric<CSS::Time<R, V>> {
     using Base = PrimitiveNumeric<CSS::Time<R, V>>;
     using Base::Base;
-    using MarkableTraits = PrimitiveNumericMarkableTraits<Time>;
 };
-template<CSS::Range R = CSS::All, typename V = double> struct Frequency : PrimitiveNumeric<CSS::Frequency<R, V>> {
+template<CSS::Range R, typename V> struct Frequency : PrimitiveNumeric<CSS::Frequency<R, V>> {
     using Base = PrimitiveNumeric<CSS::Frequency<R, V>>;
     using Base::Base;
-    using MarkableTraits = PrimitiveNumericMarkableTraits<Frequency>;
 };
-template<CSS::Range R = CSS::Nonnegative, typename V = double> struct Resolution : PrimitiveNumeric<CSS::Resolution<R, V>> {
+template<CSS::Range R, typename V> struct Resolution : PrimitiveNumeric<CSS::Resolution<R, V>> {
     using Base = PrimitiveNumeric<CSS::Resolution<R, V>>;
     using Base::Base;
-    using MarkableTraits = PrimitiveNumericMarkableTraits<Resolution>;
 };
-template<CSS::Range R = CSS::All, typename V = double> struct Flex : PrimitiveNumeric<CSS::Flex<R, V>> {
+template<CSS::Range R, typename V> struct Flex : PrimitiveNumeric<CSS::Flex<R, V>> {
     using Base = PrimitiveNumeric<CSS::Flex<R, V>>;
     using Base::Base;
-    using MarkableTraits = PrimitiveNumericMarkableTraits<Flex>;
 };
 
 // MARK: Dimension + Percentage Primitives
 
-template<CSS::Range R = CSS::All, typename V = float> struct AnglePercentage : PrimitiveNumeric<CSS::AnglePercentage<R, V>> {
+template<CSS::Range R, typename V> struct AnglePercentage : PrimitiveNumeric<CSS::AnglePercentage<R, V>> {
     using Base = PrimitiveNumeric<CSS::AnglePercentage<R, V>>;
     using Base::Base;
 };
-template<CSS::Range R = CSS::All, typename V = float> struct LengthPercentage : PrimitiveNumeric<CSS::LengthPercentage<R, V>> {
+template<CSS::Range R, typename V> struct LengthPercentage : PrimitiveNumeric<CSS::LengthPercentage<R, V>> {
     using Base = PrimitiveNumeric<CSS::LengthPercentage<R, V>>;
     using Base::Base;
 };
@@ -291,6 +284,34 @@ template<WebCore::Style::DimensionPercentageNumeric T>
 struct WTF::FlatteningVariantTraits<T> {
     using TypeList = typename FlatteningVariantTraits<typename T::Representation>::TypeList;
 };
+
+namespace WTF {
+
+template<auto R, typename V>
+struct MarkableTraits<WebCore::Style::Number<R, V>> : WebCore::Style::PrimitiveNumericMarkableTraits<WebCore::Style::Number<R, V>> { };
+
+template<auto R, typename V>
+struct MarkableTraits<WebCore::Style::Percentage<R, V>> : WebCore::Style::PrimitiveNumericMarkableTraits<WebCore::Style::Percentage<R, V>> { };
+
+template<auto R, typename V>
+struct MarkableTraits<WebCore::Style::Angle<R, V>> : WebCore::Style::PrimitiveNumericMarkableTraits<WebCore::Style::Angle<R, V>> { };
+
+template<auto R, typename V>
+struct MarkableTraits<WebCore::Style::Length<R, V>> : WebCore::Style::PrimitiveNumericMarkableTraits<WebCore::Style::Length<R, V>> { };
+
+template<auto R, typename V>
+struct MarkableTraits<WebCore::Style::Time<R, V>> : WebCore::Style::PrimitiveNumericMarkableTraits<WebCore::Style::Time<R, V>> { };
+
+template<auto R, typename V>
+struct MarkableTraits<WebCore::Style::Frequency<R, V>> : WebCore::Style::PrimitiveNumericMarkableTraits<WebCore::Style::Frequency<R, V>> { };
+
+template<auto R, typename V>
+struct MarkableTraits<WebCore::Style::Resolution<R, V>> : WebCore::Style::PrimitiveNumericMarkableTraits<WebCore::Style::Resolution<R, V>> { };
+
+template<auto R, typename V>
+struct MarkableTraits<WebCore::Style::Flex<R, V>> : WebCore::Style::PrimitiveNumericMarkableTraits<WebCore::Style::Flex<R, V>> { };
+
+} // namespace WTF
 
 template<auto R, typename V> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::AnglePercentage<R, V>> = true;
 template<auto R, typename V> inline constexpr auto WebCore::TreatAsVariantLike<WebCore::Style::LengthPercentage<R, V>> = true;

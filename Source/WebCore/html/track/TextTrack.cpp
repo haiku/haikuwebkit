@@ -418,13 +418,13 @@ void TextTrack::removeCuesNotInTimeRanges(const PlatformTimeRanges& buffered)
 
     Vector<Ref<TextTrackCue>> toPurge;
     for (size_t i = 0; i < m_cues->length(); ++i) {
-        auto cue = m_cues->item(i);
+        RefPtr cue = m_cues->item(i);
         ASSERT(cue->track() == this);
 
         PlatformTimeRanges activeCueRange { cue->startMediaTime(), cue->endMediaTime() };
         activeCueRange.intersectWith(buffered);
         if (!activeCueRange.length())
-            toPurge.append(*cue);
+            toPurge.append(cue.releaseNonNull());
     }
 
     if (!toPurge.size())
@@ -455,6 +455,11 @@ VTTRegionList* TextTrack::regions()
     if (m_mode == Mode::Disabled)
         return nullptr;
     return &ensureVTTRegionList();
+}
+
+RefPtr<VTTRegionList> TextTrack::protectedRegions()
+{
+    return regions();
 }
 
 void TextTrack::cueWillChange(TextTrackCue& cue)

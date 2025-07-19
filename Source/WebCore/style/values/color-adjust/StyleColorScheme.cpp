@@ -30,8 +30,7 @@
 #include "CSSColorSchemeValue.h"
 #include "CSSToLengthConversionData.h"
 #include "CSSValueKeywords.h"
-#include "StyleBuilderConverter.h"
-#include "StyleBuilderState.h"
+#include "StyleBuilderChecking.h"
 #include <wtf/text/TextStream.h>
 
 namespace WebCore {
@@ -58,7 +57,7 @@ Ref<CSSValue> CSSValueCreation<ColorScheme>::operator()(CSSValuePool&, const Ren
 
 auto CSSValueConversion<ColorScheme>::operator()(BuilderState& state, const CSSValue& value) -> ColorScheme
 {
-    RefPtr colorSchemeValue = BuilderConverter::requiredDowncast<CSSColorSchemeValue>(state, value);
+    RefPtr colorSchemeValue = requiredDowncast<CSSColorSchemeValue>(state, value);
     if (!colorSchemeValue)
         return { };
     return toStyle(colorSchemeValue->colorScheme(), state);

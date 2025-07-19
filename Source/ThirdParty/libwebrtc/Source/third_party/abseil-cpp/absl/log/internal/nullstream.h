@@ -79,7 +79,6 @@ class NullStream {
     return *this;
   }
   NullStream& InternalStream() { return *this; }
-  void Flush() {}
 };
 template <typename T>
 inline NullStream& operator<<(NullStream& str, const T&) {

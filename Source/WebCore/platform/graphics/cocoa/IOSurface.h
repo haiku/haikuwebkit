@@ -174,7 +174,7 @@ public:
 
     IOSurfaceRef surface() const { return m_surface.get(); }
 
-    WEBCORE_EXPORT RetainPtr<CGContextRef> createPlatformContext(PlatformDisplayID = 0);
+    WEBCORE_EXPORT RetainPtr<CGContextRef> createPlatformContext(PlatformDisplayID = 0, std::optional<CGImageAlphaInfo> = std::nullopt);
 
     struct LockAndContext {
         IOSurface::Locker<AccessMode::ReadWrite> lock;

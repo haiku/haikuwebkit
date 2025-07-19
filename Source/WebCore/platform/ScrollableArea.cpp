@@ -266,6 +266,7 @@ void ScrollableArea::scrollPositionChanged(const ScrollPosition& position)
         scrollbarsController().notifyContentAreaScrolled(scrollPosition() - oldPosition);
         invalidateScrollAnchoringElement();
         updateScrollAnchoringElement();
+        updateAnchorPositionedAfterScroll();
     }
 }
 

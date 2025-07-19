@@ -32,7 +32,6 @@
 #include "SVGInlineTextBoxInlines.h"
 #include "SVGTextBoxPainter.h"
 #include "VisiblePosition.h"
-
 #include <wtf/MathExtras.h>
 
 namespace WebCore {

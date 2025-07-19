@@ -102,5 +102,5 @@ VariationDefaultsMap defaultVariationValues(CTFontRef, ShouldLocalizeAxisNames);
 
 WEBCORE_EXPORT Lock& userInstalledFontMapLock();
 WEBCORE_EXPORT HashMap<String, URL>& userInstalledFontMap() WTF_REQUIRES_LOCK(userInstalledFontMapLock());
-
+WEBCORE_EXPORT HashMap<String, Vector<String>>& userInstalledFontFamilyMap() WTF_REQUIRES_LOCK(userInstalledFontMapLock());
 } // namespace WebCore

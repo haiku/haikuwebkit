@@ -55,9 +55,7 @@ absl_cc_test(
     ${ABSL_TEST_COPTS}
   DEPS
     absl::stacktrace
-    absl::config
     absl::core_headers
-    absl::span
     GTest::gmock_main
 )
 
@@ -176,7 +174,6 @@ absl_cc_library(
     debugging_internal
   HDRS
     "internal/address_is_readable.h"
-    "internal/addresses.h"
     "internal/elf_mem_image.h"
     "internal/vdso_support.h"
   SRCS

@@ -54,7 +54,7 @@ struct Rotate {
     bool isNone() const { return !value; }
     bool isOperation() const { return !!value; }
 
-    template<typename T> bool holdsAlternative() const;
+    template<typename> bool holdsAlternative() const;
     template<typename... F> decltype(auto) switchOn(F&&...) const;
 
     bool operator==(const Rotate& other) const

@@ -132,6 +132,8 @@ protected:
 private:
     GStreamerMediaEndpoint(GStreamerPeerConnectionBackend&);
 
+    RefPtr<GStreamerPeerConnectionBackend> peerConnectionBackend() const;
+
     bool initializePipeline();
     void teardownPipeline();
     void disposeElementChain(GstElement*);
@@ -189,7 +191,7 @@ private:
 
     HashMap<String, RealtimeMediaSource::Type> m_mediaForMid;
 
-    GStreamerPeerConnectionBackend& m_peerConnectionBackend;
+    WeakPtr<GStreamerPeerConnectionBackend> m_peerConnectionBackend;
     GRefPtr<GstElement> m_webrtcBin;
     GRefPtr<GstElement> m_pipeline;
 

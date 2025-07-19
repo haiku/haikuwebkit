@@ -107,6 +107,7 @@ public:
     bool isAlwaysOnLoggingAllowed() const;
 
     const std::optional<String> attributionTaskID() const { return m_attributionTaskID; };
+    std::optional<int> debugEntityMemoryLimit() const;
 
 private:
     ModelConnectionToWebProcess(ModelProcess&, WebCore::ProcessIdentifier, PAL::SessionID, IPC::Connection::Handle&&, ModelProcessConnectionParameters&&, const std::optional<String>&);

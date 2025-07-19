@@ -81,6 +81,8 @@ public:
     virtual bool drawsHDRContent() const { return false; }
 #endif
 
+    virtual OptionSet<ContentsFormat> screenContentsFormats() const = 0;
+
     virtual void platformCALayerLogFilledVisibleFreshTile(unsigned /* blankPixelCount */) { }
 
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)

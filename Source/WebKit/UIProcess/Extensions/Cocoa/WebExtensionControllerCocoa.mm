@@ -330,8 +330,6 @@ bool WebExtensionController::load(WebExtensionContext& extensionContext, NSError
         return false;
     }
 
-    sendToAllProcesses(Messages::WebExtensionControllerProxy::Load(extensionContext.parameters(WebExtensionContext::IncludePrivilegedIdentifier::No)), identifier());
-
     return true;
 }
 
@@ -371,6 +369,11 @@ void WebExtensionController::unloadAll()
     auto contextsCopy = m_extensionContexts;
     for (Ref context : contextsCopy)
         unload(context, nullptr);
+}
+
+void WebExtensionController::dispatchDidLoad(WebExtensionContext& context)
+{
+    sendToAllProcesses(Messages::WebExtensionControllerProxy::Load(context.parameters(WebExtensionContext::IncludePrivilegedIdentifier::No)), identifier());
 }
 
 void WebExtensionController::addPage(WebPageProxy& page)

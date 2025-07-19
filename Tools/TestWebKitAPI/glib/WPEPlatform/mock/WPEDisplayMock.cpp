@@ -31,10 +31,19 @@
 #include <gmodule.h>
 #include <mutex>
 
+#if USE(LIBDRM)
+#include <drm_fourcc.h>
+#endif
+
 struct _WPEDisplayMock {
     WPEDisplay parent;
 
     gboolean isConnected;
+    gboolean useFakeDRMNodes;
+    gboolean useFakeDMABufFormats;
+    gboolean useExplicitSync;
+
+    unsigned inputDevices;
 };
 
 G_DEFINE_DYNAMIC_TYPE(WPEDisplayMock, wpe_display_mock, WPE_TYPE_DISPLAY)
@@ -42,11 +51,6 @@ G_DEFINE_DYNAMIC_TYPE(WPEDisplayMock, wpe_display_mock, WPE_TYPE_DISPLAY)
 static void wpeDisplayMockConstructed(GObject* object)
 {
     G_OBJECT_CLASS(wpe_display_mock_parent_class)->constructed(object);
-
-    // FIXME: wpe platform tests expect the mock display to be the default, but we are using the WebKit
-    // GLib tests helpers that create a headless display. We should not use WebKit GLib tests helpers,
-    // but in the meantime we can just set the mock display as primary on creation.
-    wpe_display_set_primary(WPE_DISPLAY(object));
 }
 
 static void wpeDisplayMockDispose(GObject* object)
@@ -88,7 +92,25 @@ static WPEKeymap* wpeDisplayMockGetKeymap(WPEDisplay* display)
 
 static WPEBufferDMABufFormats* wpeDisplayMockGetPreferredDMABufFormats(WPEDisplay* display)
 {
-    return nullptr;
+    auto* mock = WPE_DISPLAY_MOCK(display);
+    if (!mock->useFakeDMABufFormats)
+        return nullptr;
+
+    auto* builder = wpe_buffer_dma_buf_formats_builder_new(wpe_display_get_drm_render_node(display));
+    wpe_buffer_dma_buf_formats_builder_append_group(builder, wpe_display_get_drm_device(display), WPE_BUFFER_DMA_BUF_FORMAT_USAGE_SCANOUT);
+#if USE(LIBDRM)
+    wpe_buffer_dma_buf_formats_builder_append_format(builder, DRM_FORMAT_XRGB8888, DRM_FORMAT_MOD_VIVANTE_SUPER_TILED);
+    wpe_buffer_dma_buf_formats_builder_append_format(builder, DRM_FORMAT_XRGB8888, DRM_FORMAT_MOD_VIVANTE_TILED);
+#endif
+    wpe_buffer_dma_buf_formats_builder_append_group(builder, nullptr, WPE_BUFFER_DMA_BUF_FORMAT_USAGE_RENDERING);
+#if USE(LIBDRM)
+    wpe_buffer_dma_buf_formats_builder_append_format(builder, DRM_FORMAT_XRGB8888, DRM_FORMAT_MOD_LINEAR);
+    wpe_buffer_dma_buf_formats_builder_append_format(builder, DRM_FORMAT_ARGB8888, DRM_FORMAT_MOD_LINEAR);
+#endif
+    auto* formats = wpe_buffer_dma_buf_formats_builder_end(builder);
+    wpe_buffer_dma_buf_formats_builder_unref(builder);
+
+    return formats;
 }
 
 static guint wpeDisplayMockGetNScreens(WPEDisplay* display)
@@ -103,17 +125,17 @@ static WPEScreen* wpeDisplayMockGetScreen(WPEDisplay* display, guint index)
 
 static const char* wpeDisplayMockGetDRMDevice(WPEDisplay* display)
 {
-    return nullptr;
+    return WPE_DISPLAY_MOCK(display)->useFakeDRMNodes ? "/dev/dri/mock0" : nullptr;
 }
 
 static const char* wpeDisplayMockGetDRMRenderNode(WPEDisplay* display)
 {
-    return nullptr;
+    return WPE_DISPLAY_MOCK(display)->useFakeDRMNodes ? "/dev/dri/mockD128" : nullptr;
 }
 
 static gboolean wpeDisplayMockUseExplicitSync(WPEDisplay* display)
 {
-    return FALSE;
+    return WPE_DISPLAY_MOCK(display)->useExplicitSync;
 }
 
 static void wpe_display_mock_class_init(WPEDisplayMockClass* displayMockClass)
@@ -159,4 +181,37 @@ void wpeDisplayMockRegister(GIOModule* ioModule)
     if (!ioModule)
         g_io_extension_point_register(WPE_DISPLAY_EXTENSION_POINT_NAME);
     g_io_extension_point_implement(WPE_DISPLAY_EXTENSION_POINT_NAME, WPE_TYPE_DISPLAY_MOCK, "wpe-display-mock", G_MAXINT32);
+}
+
+void wpeDisplayMockUseFakeDRMNodes(WPEDisplayMock* mock, gboolean useFakeDRMNodes)
+{
+    mock->useFakeDRMNodes = useFakeDRMNodes;
+}
+
+void wpeDisplayMockUseFakeDMABufFormats(WPEDisplayMock* mock, gboolean useFakeDMABufFormats)
+{
+    mock->useFakeDMABufFormats = useFakeDMABufFormats;
+}
+
+void wpeDisplayMockSetUseExplicitSync(WPEDisplayMock* mock, gboolean useExplicitSync)
+{
+    mock->useExplicitSync = useExplicitSync;
+}
+
+void wpeDisplayMockSetInitialInputDevices(WPEDisplayMock* mock, WPEAvailableInputDevices devices)
+{
+    mock->inputDevices = devices;
+    wpe_display_set_available_input_devices(WPE_DISPLAY(mock), static_cast<WPEAvailableInputDevices>(mock->inputDevices));
+}
+
+void wpeDisplayMockAddInputDevice(WPEDisplayMock* mock, WPEAvailableInputDevices devices)
+{
+    mock->inputDevices |= devices;
+    wpe_display_set_available_input_devices(WPE_DISPLAY(mock), static_cast<WPEAvailableInputDevices>(mock->inputDevices));
+}
+
+void wpeDisplayMockRemoveInputDevice(WPEDisplayMock* mock, WPEAvailableInputDevices devices)
+{
+    mock->inputDevices &= ~devices;
+    wpe_display_set_available_input_devices(WPE_DISPLAY(mock), static_cast<WPEAvailableInputDevices>(mock->inputDevices));
 }

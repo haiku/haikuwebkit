@@ -40,7 +40,7 @@
 #include "IntRect.h"
 #include "NoiseInjectionPolicy.h"
 #include "RenderElementInlines.h"
-#include "ScriptTelemetryCategory.h"
+#include "ScriptTrackingPrivacyCategory.h"
 #include "StyleCanvasImage.h"
 #include "WebCoreOpaqueRoot.h"
 #include "WorkerClient.h"
@@ -61,7 +61,7 @@ static std::optional<uint64_t> canvasNoiseHashSaltIfNeeded(ScriptExecutionContex
 {
     auto policies = context.noiseInjectionPolicies();
     if (policies.contains(NoiseInjectionPolicy::Minimal)
-        || (policies.contains(NoiseInjectionPolicy::Enhanced) && context.requiresScriptExecutionTelemetry(ScriptTelemetryCategory::Canvas)))
+        || (policies.contains(NoiseInjectionPolicy::Enhanced) && context.requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory::Canvas)))
         return context.noiseInjectionHashSalt();
     return { };
 }
@@ -211,9 +211,9 @@ void CanvasBase::notifyObserversCanvasDisplayBufferPrepared()
         observer.canvasDisplayBufferPrepared(*this);
 }
 
-UncheckedKeyHashSet<Element*> CanvasBase::cssCanvasClients() const
+HashSet<Element*> CanvasBase::cssCanvasClients() const
 {
-    UncheckedKeyHashSet<Element*> cssCanvasClients;
+    HashSet<Element*> cssCanvasClients;
     for (auto& observer : m_observers) {
         auto* image = dynamicDowncast<StyleCanvasImage>(observer);
         if (!image)

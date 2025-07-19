@@ -224,8 +224,7 @@ enum class TapHandlingResult : uint8_t;
 - (void)_resetUnobscuredSafeAreaInsets;
 - (void)_resetObscuredInsets;
 
-- (void)_overrideZoomScaleParametersWithMinimumZoomScale:(CGFloat)minimumZoomScale maximumZoomScale:(CGFloat)maximumZoomScale allowUserScaling:(BOOL)allowUserScaling;
-- (void)_clearOverrideZoomScaleParameters;
+@property (nonatomic, setter=_setForcesInitialScaleFactor:) BOOL _forcesInitialScaleFactor;
 
 - (void)_setPointerTouchCompatibilitySimulatorEnabled:(BOOL)enabled;
 

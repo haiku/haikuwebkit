@@ -1339,19 +1339,6 @@ void CSSPrimitiveValue::collectComputedStyleDependencies(ComputedStyleDependenci
         CSS::collectComputedStyleDependencies(dependencies, *lengthUnit);
 }
 
-bool CSSPrimitiveValue::convertingToLengthHasRequiredConversionData(int lengthConversion, const CSSToLengthConversionData& conversionData) const
-{
-    // FIXME: We should probably make CSSPrimitiveValue::resolveAsLengthDouble and
-    // Style::computeNonCalcLengthDouble (which has the style assertion) return
-    // std::optional<double> instead of having this check here.
-
-    bool isFixedNumberConversion = lengthConversion & (FixedIntegerConversion | FixedFloatConversion);
-    if (!isFixedNumberConversion)
-        return true;
-
-    return canResolveDependenciesWithConversionData(conversionData);
-}
-
 IterationStatus CSSPrimitiveValue::customVisitChildren(NOESCAPE const Function<IterationStatus(CSSValue&)>& func) const
 {
     if (RefPtr calc = cssCalcValue()) {

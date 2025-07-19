@@ -1,4 +1,3 @@
-Modules/encryptedmedia/legacy/WebKitMediaKeySession.h
 Modules/websockets/WorkerThreadableWebSocketChannel.h
 accessibility/AXObjectCache.h
 bindings/js/JSLazyEventListener.cpp
@@ -41,8 +40,6 @@ loader/DocumentThreadableLoader.h
 loader/WorkerThreadableLoader.h
 page/FrameSnapshotting.cpp
 page/UndoManager.h
-page/csp/ContentSecurityPolicyDirectiveList.h
-page/csp/ContentSecurityPolicySource.h
 platform/OrientationNotifier.h
 platform/ScrollAnimator.h
 platform/Scrollbar.h
@@ -88,7 +85,6 @@ rendering/RenderText.cpp
 rendering/TableLayout.h
 rendering/TextBoxPainter.h
 rendering/TextDecorationPainter.h
-rendering/TextPainter.h
 rendering/line/BreakingContext.h
 rendering/line/LineBreaker.h
 rendering/line/LineWidth.h
@@ -117,7 +113,3 @@ style/StyleTreeResolver.h
 style/Styleable.h
 style/values/color/StyleColorResolutionState.h
 svg/properties/SVGPropertyOwnerRegistry.h
-workers/DedicatedWorkerThread.h
-workers/service/ServiceWorkerContainer.h
-xml/XMLHttpRequestProgressEventThrottle.h
-xml/XMLHttpRequestUpload.h

@@ -167,7 +167,7 @@ void SVGResourcesCache::clientStyleChanged(RenderElement& renderer, StyleDiffere
         if (!oldStyle)
             return true;
 
-        if (!arePointingToEqualData(oldStyle->clipPath(), newStyle.clipPath()))
+        if (oldStyle->clipPath() != newStyle.clipPath())
             return true;
 
         // RenderSVGResourceMarker only supports SVG <mask> references.

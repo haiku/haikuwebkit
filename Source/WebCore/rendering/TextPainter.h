@@ -18,7 +18,6 @@
  * along with this library; see the file COPYING.LIB.  If not, write to
  * the Free Software Foundation, Inc., 51 Franklin Street, Fifth Floor,
  * Boston, MA 02110-1301, USA.
- *
  */
 
 #pragma once
@@ -43,6 +42,8 @@ struct TextPaintStyle;
 
 namespace Style {
 struct TextShadow;
+template<typename> struct Shadows;
+using TextShadows = Shadows<TextShadow>;
 }
 
 static inline AffineTransform rotation(const FloatRect& boxRect, RotationDirection direction)
@@ -54,7 +55,7 @@ static inline AffineTransform rotation(const FloatRect& boxRect, RotationDirecti
 
 class TextPainter {
 public:
-    TextPainter(GraphicsContext&, const FontCascade&, const RenderStyle&, const TextPaintStyle&, const FixedVector<Style::TextShadow>&, const FilterOperations*, const AtomString& emphasisMark, float emphasisMarkOffset, const RenderCombineText*);
+    TextPainter(GraphicsContext&, const FontCascade&, const RenderStyle&, const TextPaintStyle&, const Style::TextShadows&, const FilterOperations*, const AtomString& emphasisMark, float emphasisMarkOffset, const RenderCombineText*);
 
     void paintRange(const TextRun&, const FloatRect& boxRect, const FloatPoint& textOrigin, unsigned start, unsigned end);
 
@@ -81,19 +82,19 @@ private:
 
     void paintTextOrEmphasisMarks(const FontCascade&, const TextRun&, const AtomString& emphasisMark, float emphasisMarkOffset,
         const FloatPoint& textOrigin, unsigned startOffset, unsigned endOffset);
-    void paintTextWithShadows(const FixedVector<Style::TextShadow>*, const FilterOperations*, const FontCascade&, const TextRun&, const FloatRect& boxRect, const FloatPoint& textOrigin,
+    void paintTextWithShadows(const Style::TextShadows*, const FilterOperations*, const FontCascade&, const TextRun&, const FloatRect& boxRect, const FloatPoint& textOrigin,
         unsigned startOffset, unsigned endOffset, const AtomString& emphasisMark, float emphasisMarkOffset, bool stroked);
     void paintTextAndEmphasisMarksIfNeeded(const TextRun&, const FloatRect& boxRect, const FloatPoint& textOrigin, unsigned startOffset, unsigned endOffset,
-        const TextPaintStyle&, const FixedVector<Style::TextShadow>&, const FilterOperations*);
+        const TextPaintStyle&, const Style::TextShadows&, const FilterOperations*);
 
     GraphicsContext& m_context;
-    const FontCascade& m_font;
-    const RenderStyle& m_renderStyle;
+    const CheckedRef<const FontCascade> m_font;
+    const CheckedRef<const RenderStyle> m_renderStyle;
     TextPaintStyle m_style;
     AtomString m_emphasisMark;
-    const FixedVector<Style::TextShadow>& m_shadow;
+    const Style::TextShadows& m_shadow;
     const FilterOperations* m_shadowColorFilter { nullptr };
-    const RenderCombineText* m_combinedText { nullptr };
+    const CheckedPtr<const RenderCombineText> m_combinedText;
     RefPtr<const DisplayList::DisplayList> m_glyphDisplayList { nullptr };
     float m_emphasisMarkOffset { 0 };
     WritingMode m_writingMode;

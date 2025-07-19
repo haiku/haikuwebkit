@@ -483,7 +483,7 @@ static bool shouldFlexCellChild(const RenderTableCell& cell, const RenderBox& ce
         return false;
     if (cellDescendant.scrollsOverflowY())
         return true;
-    if (cellDescendant.isReplacedOrAtomicInline())
+    if (cellDescendant.isBlockLevelReplacedOrAtomicInline())
         return true;
     return is<HTMLFormControlElement>(cellDescendant.element()) && !is<HTMLFieldSetElement>(cellDescendant.element());
 }

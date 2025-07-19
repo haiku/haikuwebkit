@@ -25,6 +25,7 @@
 
 #import <WebKit/WebKit.h>
 #import <wtf/Forward.h>
+#import <wtf/IterationStatus.h>
 #import <wtf/RetainPtr.h>
 
 @class _WKFrameTreeNode;
@@ -105,6 +106,9 @@ class Color;
 - (UIWKDocumentContext *)synchronouslyRequestDocumentContext:(UIWKDocumentRequest *)request;
 #endif
 #endif // PLATFORM(IOS_FAMILY)
+
+- (CALayer *)firstLayerWithName:(NSString *)layerName;
+- (void)forEachCALayer:(IterationStatus(^)(CALayer *))visitor;
 
 @property (nonatomic, readonly) CGImageRef snapshotAfterScreenUpdates;
 @property (nonatomic, readonly) NSUInteger gpuToWebProcessConnectionCount;
@@ -200,6 +204,7 @@ class Color;
 - (_WKActivatedElementInfo *)activatedElementAtPosition:(CGPoint)position;
 - (void)evaluateJavaScriptAndWaitForInputSessionToChange:(NSString *)script;
 - (WKContentView *)wkContentView;
+- (void)setZoomScaleSimulatingUserTriggeredZoom:(CGFloat)zoomScale;
 @end
 #endif
 

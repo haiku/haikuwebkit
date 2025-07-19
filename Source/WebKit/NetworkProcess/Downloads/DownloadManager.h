@@ -27,7 +27,6 @@
 
 #include "DownloadID.h"
 #include "DownloadMap.h"
-#include "NetworkDataTask.h"
 #include "PendingDownload.h"
 #include "PolicyDecision.h"
 #include "SandboxExtension.h"
@@ -61,6 +60,7 @@ namespace WebKit {
 class AuthenticationManager;
 class Download;
 class NetworkConnectionToWebProcess;
+class NetworkDataTask;
 class NetworkLoad;
 class PendingDownload;
 

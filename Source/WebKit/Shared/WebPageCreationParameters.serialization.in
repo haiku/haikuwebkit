@@ -176,6 +176,8 @@ enum class WebCore::UserInterfaceLayoutDirection : bool;
 
     bool needsFontAttributes;
 
+    bool needsScrollGeometryUpdates;
+
     bool iceCandidateFilteringEnabled;
     bool enumeratingAllNetworkInterfacesEnabled;
 
@@ -270,12 +272,7 @@ enum class WebCore::UserInterfaceLayoutDirection : bool;
     String presentingApplicationBundleIdentifier;
 #endif
 
-    bool hasReceivedAXRequestInUIProcess;
     bool shouldSendConsoleLogsToUIProcessForTesting;
-
-#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    bool defaultContentInsetBackgroundFillEnabled;
-#endif
 }
 
 [Nested] struct WebKit::RemotePageParameters {

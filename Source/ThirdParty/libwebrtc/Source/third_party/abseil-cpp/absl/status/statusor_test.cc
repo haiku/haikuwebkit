@@ -459,7 +459,7 @@ TEST(StatusOr, TestAssignmentStatusOk) {
     EXPECT_EQ(p, *source);
   }
 
-  // Move assignment
+  // Move asssignment
   {
     const auto p = std::make_shared<int>(17);
     absl::StatusOr<std::shared_ptr<int>> source(p);

@@ -133,6 +133,8 @@ public:
 
     void unloadAll();
 
+    void dispatchDidLoad(WebExtensionContext&);
+
     void addPage(WebPageProxy&);
     void removePage(WebPageProxy&);
 

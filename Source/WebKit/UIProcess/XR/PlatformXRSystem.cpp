@@ -153,7 +153,7 @@ void PlatformXRSystem::requestPermissionOnSessionFeatures(IPC::Connection& conne
     }
 
     if (PlatformXR::isImmersive(mode)) {
-        MESSAGE_CHECK_COMPLETION(m_immersiveSessionState == ImmersiveSessionState::Idle, connection, completionHandler({ }));
+        MESSAGE_CHECK_COMPLETION(m_immersiveSessionState == ImmersiveSessionState::Idle || m_immersiveSessionState == ImmersiveSessionState::SessionEndingFromWebContent, connection, completionHandler({ }));
         setImmersiveSessionState(ImmersiveSessionState::RequestingPermissions, [](bool) mutable { });
         m_immersiveSessionGrantedFeatures = std::nullopt;
     }
@@ -316,11 +316,8 @@ void PlatformXRSystem::setImmersiveSessionState(ImmersiveSessionState state, Com
     case ImmersiveSessionState::SessionEndingFromSystem:
         break;
     }
-
-    completion(true);
-#else
-    completion(true);
 #endif
+    completion(true);
 }
 
 void PlatformXRSystem::invalidateImmersiveSessionState(ImmersiveSessionState nextSessionState)
@@ -339,14 +336,14 @@ bool PlatformXRSystem::webXREnabled() const
     return page && page->protectedPreferences()->webXREnabled();
 }
 
-#if !USE(APPLE_INTERNAL_SDK)
+#if !USE(APPLE_INTERNAL_SDK) && !USE(OPENXR)
 
 PlatformXRCoordinator* PlatformXRSystem::xrCoordinator()
 {
     return nullptr;
 }
 
-#endif // !USE(APPLE_INTERNAL_SDK)
+#endif // !USE(APPLE_INTERNAL_SDK) && !USE(OPENXR)
 
 } // namespace WebKit
 

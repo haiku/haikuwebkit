@@ -208,7 +208,7 @@ void RenderFileUploadControl::paintControl(PaintInfo& paintInfo, const LayoutPoi
                 }
             }
 
-            return roundToInt(baselinePosition(AlphabeticBaseline, true, isHorizontalWritingMode ? HorizontalLine : VerticalLine, PositionOnContainingLine));
+            return roundToInt(baselinePosition(true, isHorizontalWritingMode ? HorizontalLine : VerticalLine, PositionOnContainingLine));
         }();
 
         paintInfo.context().setFillColor(style().visitedDependentColorWithColorFilter(CSSPropertyColor));

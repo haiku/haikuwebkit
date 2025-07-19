@@ -42,20 +42,8 @@ struct OffsetAnchor {
     ALWAYS_INLINE bool isAuto() const { return value.x.isAuto(); }
     ALWAYS_INLINE bool isPosition() const { return value.x.isSpecified(); }
 
-    template<typename T> bool holdsAlternative() const
-    {
-             if constexpr (std::same_as<T, CSS::Keyword::Auto>)     return isAuto();
-        else if constexpr (std::same_as<T, Position>)               return isPosition();
-    }
-
-    template<typename... F> decltype(auto) switchOn(F&&... f) const
-    {
-        auto visitor = WTF::makeVisitor(std::forward<F>(f)...);
-
-        if (isAuto())
-            return visitor(CSS::Keyword::Auto { });
-        return visitor(Position { value });
-    }
+    template<typename> bool holdsAlternative() const;
+    template<typename... F> decltype(auto) switchOn(F&&...) const;
 
     bool operator==(const OffsetAnchor&) const = default;
 
@@ -71,6 +59,21 @@ private:
 
     WebCore::LengthPoint value;
 };
+
+template<typename T> bool OffsetAnchor::holdsAlternative() const
+{
+         if constexpr (std::same_as<T, CSS::Keyword::Auto>)     return isAuto();
+    else if constexpr (std::same_as<T, Position>)               return isPosition();
+}
+
+template<typename... F> decltype(auto) OffsetAnchor::switchOn(F&&... f) const
+{
+    auto visitor = WTF::makeVisitor(std::forward<F>(f)...);
+
+    if (isAuto())
+        return visitor(CSS::Keyword::Auto { });
+    return visitor(Position { value });
+}
 
 // MARK: - Conversion
 

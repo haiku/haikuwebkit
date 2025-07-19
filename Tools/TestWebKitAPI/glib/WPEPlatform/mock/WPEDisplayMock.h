@@ -36,5 +36,11 @@ G_DECLARE_FINAL_TYPE(WPEDisplayMock, wpe_display_mock, WPE, DISPLAY_MOCK, WPEDis
 
 void wpeDisplayMockRegister(GIOModule*);
 WPEDisplay* wpeDisplayMockNew();
+void wpeDisplayMockUseFakeDRMNodes(WPEDisplayMock*, gboolean);
+void wpeDisplayMockUseFakeDMABufFormats(WPEDisplayMock*, gboolean);
+void wpeDisplayMockSetUseExplicitSync(WPEDisplayMock*, gboolean);
+void wpeDisplayMockSetInitialInputDevices(WPEDisplayMock*, WPEAvailableInputDevices);
+void wpeDisplayMockAddInputDevice(WPEDisplayMock*, WPEAvailableInputDevices);
+void wpeDisplayMockRemoveInputDevice(WPEDisplayMock*, WPEAvailableInputDevices);
 
 G_END_DECLS

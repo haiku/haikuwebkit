@@ -130,11 +130,6 @@ public:
     uint64_t low() const { return static_cast<uint64_t>(m_data); }
     uint64_t high() const { return static_cast<uint64_t>(m_data >> 64);  }
 
-    struct MarkableTraits {
-        static bool isEmptyValue(const UUID& uuid) { return !uuid; }
-        static UUID emptyValue() { return UUID { UInt128 { 0 } }; }
-    };
-
 private:
     WTF_EXPORT_PRIVATE UUID();
     friend void add(Hasher&, UUID);
@@ -142,6 +137,12 @@ private:
     WTF_EXPORT_PRIVATE static UInt128 generateWeakRandomUUIDVersion4();
 
     UInt128 m_data;
+};
+
+template<>
+struct MarkableTraits<UUID> {
+    static bool isEmptyValue(const UUID& uuid) { return !uuid; }
+    static UUID emptyValue() { return UUID { UInt128 { 0 } }; }
 };
 
 inline void add(Hasher& hasher, UUID uuid)

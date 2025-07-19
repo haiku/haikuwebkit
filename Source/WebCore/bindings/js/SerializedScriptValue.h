@@ -102,6 +102,7 @@ struct ErrorInformation {
     unsigned column { 0 };
     String sourceURL;
     String stack;
+    String cause;
 };
 
 std::optional<ErrorInformation> extractErrorInformationFromErrorInstance(JSC::JSGlobalObject*, JSC::ErrorInstance&);
@@ -234,7 +235,7 @@ private:
         std::unique_ptr<WasmMemoryHandleArray> wasmMemoryHandlesArray { };
 #endif
         Vector<URLKeepingBlobAlive> blobHandles { };
-        size_t memoryCost { 0 };
+        uint64_t memoryCost { 0 };
     };
     friend struct IPC::ArgumentCoder<Internals, void>;
 

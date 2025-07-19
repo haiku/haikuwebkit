@@ -106,7 +106,8 @@ TrackListBase* TrackBase::trackList() const
 
 WebCoreOpaqueRoot TrackBase::opaqueRoot()
 {
-    if (auto trackList = this->trackList())
+    // Runs on GC thread.
+    if (SUPPRESS_UNCOUNTED_LOCAL auto* trackList = this->trackList())
         return trackList->opaqueRoot();
     return WebCoreOpaqueRoot { this };
 }
@@ -172,7 +173,7 @@ void TrackBase::setLanguage(const AtomString& language)
 
     m_validBCP47Language = emptyAtom();
 
-    auto context = scriptExecutionContext();
+    RefPtr context = scriptExecutionContext();
     if (!context)
         return;
 
@@ -200,7 +201,7 @@ WTFLogChannel& TrackBase::logChannel() const
 
 void TrackBase::addClientToTrackPrivateBase(TrackPrivateBaseClient& client, TrackPrivateBase& track)
 {
-    if (auto context = scriptExecutionContext()) {
+    if (RefPtr context = scriptExecutionContext()) {
         m_clientRegistrationId = track.addClient([contextIdentifier = context->identifier()](auto&& task) {
             ScriptExecutionContext::ensureOnContextThread(contextIdentifier, WTFMove(task));
         }, client);

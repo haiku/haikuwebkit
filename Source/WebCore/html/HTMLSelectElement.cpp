@@ -253,7 +253,7 @@ void HTMLSelectElement::remove(int optionIndex)
 
 String HTMLSelectElement::value() const
 {
-    if (protectedDocument()->requiresScriptExecutionTelemetry(ScriptTelemetryCategory::FormControls))
+    if (protectedDocument()->requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory::FormControls))
         return emptyString();
     for (auto& item : listItems()) {
         if (RefPtr option = dynamicDowncast<HTMLOptionElement>(item.get())) {
@@ -326,11 +326,11 @@ int HTMLSelectElement::defaultTabIndex() const
     return 0;
 }
 
-bool HTMLSelectElement::isKeyboardFocusable(KeyboardEvent* event) const
+bool HTMLSelectElement::isKeyboardFocusable(const FocusEventData& focusEventData) const
 {
     if (renderer())
         return isFocusable();
-    return HTMLFormControlElement::isKeyboardFocusable(event);
+    return HTMLFormControlElement::isKeyboardFocusable(focusEventData);
 }
 
 bool HTMLSelectElement::isMouseFocusable() const

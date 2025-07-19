@@ -59,8 +59,8 @@ protected:
     enum class NamedLinesType : bool { NamedLines, AutoRepeatNamedLines };
     void appendLines(Vector<String>&, unsigned index, NamedLinesType) const;
 
-    const OrderedNamedGridLinesMap& m_orderedNamedGridLines;
-    const OrderedNamedGridLinesMap& m_orderedNamedAutoRepeatGridLines;
+    const GridOrderedNamedLinesMap& m_orderedNamedGridLines;
+    const GridOrderedNamedLinesMap& m_orderedNamedAutoRepeatGridLines;
 };
 
 class OrderedNamedLinesCollectorInGridLayout : public OrderedNamedLinesCollector {

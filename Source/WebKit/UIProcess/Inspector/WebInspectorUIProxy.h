@@ -36,7 +36,7 @@
 #include <JavaScriptCore/InspectorFrontendChannel.h>
 #include <WebCore/Color.h>
 #include <WebCore/FloatRect.h>
-#include <WebCore/InspectorClient.h>
+#include <WebCore/InspectorBackendClient.h>
 #include <WebCore/InspectorFrontendClient.h>
 #include <wtf/CheckedPtr.h>
 #include <wtf/Forward.h>
@@ -84,7 +84,7 @@ class WebPreferences;
 class WebInspectorUIExtensionControllerProxy;
 #endif
 
-enum class AttachmentSide {
+enum class AttachmentSide : uint8_t {
     Bottom,
     Right,
     Left,
@@ -224,6 +224,8 @@ private:
     void createFrontendPage();
     void closeFrontendPageAndWindow();
 
+    void dispatchDidChangeLocalInspectorAttachment();
+
     // IPC::MessageReceiver
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&) override;
 
@@ -285,7 +287,7 @@ private:
     void elementSelectionChanged(bool);
     void timelineRecordingChanged(bool);
 
-    void setDeveloperPreferenceOverride(WebCore::InspectorClient::DeveloperPreference, std::optional<bool>);
+    void setDeveloperPreferenceOverride(WebCore::InspectorBackendClient::DeveloperPreference, std::optional<bool>);
 #if ENABLE(INSPECTOR_NETWORK_THROTTLING)
     void setEmulatedConditions(std::optional<int64_t>&& bytesPerSecondLimit);
 #endif
@@ -340,7 +342,7 @@ private:
     bool m_isOpening { false };
     bool m_closing { false };
 
-    AttachmentSide m_attachmentSide {AttachmentSide::Bottom};
+    AttachmentSide m_attachmentSide { AttachmentSide::Bottom };
 
 #if PLATFORM(MAC)
     RetainPtr<WKInspectorViewController> m_inspectorViewController;

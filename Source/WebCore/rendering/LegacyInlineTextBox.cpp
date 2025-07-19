@@ -122,24 +122,6 @@ void LegacyInlineTextBox::setLogicalOverflowRect(const LayoutRect& rect)
     gTextBoxesWithOverflow->add(this, rect);
 }
 
-LayoutUnit LegacyInlineTextBox::baselinePosition(FontBaseline baselineType) const
-{
-    if (!parent())
-        return 0;
-    if (&parent()->renderer() == renderer().parent())
-        return parent()->baselinePosition(baselineType);
-    return downcast<RenderBoxModelObject>(*renderer().parent()).baselinePosition(baselineType, isFirstLine(), isHorizontal() ? HorizontalLine : VerticalLine, PositionOnContainingLine);
-}
-
-LayoutUnit LegacyInlineTextBox::lineHeight() const
-{
-    if (!renderer().parent())
-        return 0;
-    if (&parent()->renderer() == renderer().parent())
-        return parent()->lineHeight();
-    return downcast<RenderBoxModelObject>(*renderer().parent()).lineHeight(isFirstLine(), isHorizontal() ? HorizontalLine : VerticalLine, PositionOnContainingLine);
-}
-
 LayoutUnit LegacyInlineTextBox::selectionTop() const
 {
     return root().selectionTop();

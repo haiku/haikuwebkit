@@ -44,8 +44,9 @@ Ref<WebImage> WebImage::create(const IntSize& size, ImageOptions options, const 
     if (client) {
         auto purpose = options.contains(ImageOption::Shareable) ? RenderingPurpose::ShareableSnapshot : RenderingPurpose::Snapshot;
         purpose = options.contains(ImageOption::Local) ? RenderingPurpose::ShareableLocalSnapshot : purpose;
-        
-        if (auto buffer = client->createImageBuffer(size, RenderingMode::Unaccelerated, purpose, 1, colorSpace, ImageBufferPixelFormat::BGRA8))
+        auto accelerated = (options.contains(ImageOption::Accelerated) && options.contains(ImageOption::SupportsBackendHandleVariant)) ? RenderingMode::Accelerated : RenderingMode::Unaccelerated;
+
+        if (auto buffer = client->createImageBuffer(size, accelerated, purpose, 1, colorSpace, ImageBufferPixelFormat::BGRA8))
             return WebImage::create(buffer.releaseNonNull());
     }
 
@@ -155,6 +156,15 @@ RefPtr<cairo_surface_t> WebImage::createCairoSurface()
 
 std::optional<ShareableBitmap::Handle> WebImage::createHandle(SharedMemory::Protection protection) const
 {
+    auto backendHandle = createImageBufferBackendHandle(protection);
+    if (!backendHandle || !std::holds_alternative<ShareableBitmap::Handle>(*backendHandle))
+        return { };
+
+    return std::get<ShareableBitmap::Handle>(WTFMove(*backendHandle));
+}
+
+std::optional<ImageBufferBackendHandle> WebImage::createImageBufferBackendHandle(SharedMemory::Protection protection) const
+{
     RefPtr buffer = m_buffer;
     if (!buffer)
         return { };
@@ -164,11 +174,7 @@ std::optional<ShareableBitmap::Handle> WebImage::createHandle(SharedMemory::Prot
     if (!sharing)
         return { };
 
-    auto backendHandle = sharing->createBackendHandle(protection);
-    if (!backendHandle)
-        return { };
-
-    return std::get<ShareableBitmap::Handle>(WTFMove(*backendHandle));
+    return sharing->createBackendHandle(protection);
 }
 
 } // namespace WebKit

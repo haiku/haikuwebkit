@@ -983,12 +983,14 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
 
     CGFloat minimumScaleFactor = layerTreeTransaction.minimumScaleFactor();
     CGFloat maximumScaleFactor = layerTreeTransaction.maximumScaleFactor();
+    CGFloat pageScaleFactor = layerTreeTransaction.pageScaleFactor();
     BOOL allowsUserScaling = layerTreeTransaction.allowsUserScaling();
 
-    if (_overriddenZoomScaleParameters) {
-        minimumScaleFactor = _overriddenZoomScaleParameters->minimumZoomScale;
-        maximumScaleFactor = _overriddenZoomScaleParameters->maximumZoomScale;
-        allowsUserScaling = _overriddenZoomScaleParameters->allowUserScaling;
+    if (_forcesInitialScaleFactor) {
+        minimumScaleFactor = layerTreeTransaction.initialScaleFactor();
+        maximumScaleFactor = layerTreeTransaction.initialScaleFactor();
+        pageScaleFactor = layerTreeTransaction.initialScaleFactor();
+        allowsUserScaling = NO;
     }
 
     [_scrollView setMinimumZoomScale:minimumScaleFactor];
@@ -1005,7 +1007,7 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
     WebKit::ScrollingTreeScrollingNodeDelegateIOS::updateScrollViewForOverscrollBehavior(_scrollView.get(), horizontalOverscrollBehavior, verticalOverscrollBehavior, WebKit::ScrollingTreeScrollingNodeDelegateIOS::AllowOverscrollToPreventScrollPropagation::No);
 
     bool hasDockedInputView = !CGRectIsEmpty(_inputViewBoundsInWindow);
-    bool isZoomed = !WebKit::scalesAreEssentiallyEqual(layerTreeTransaction.pageScaleFactor(), layerTreeTransaction.initialScaleFactor()) && (layerTreeTransaction.pageScaleFactor() > layerTreeTransaction.initialScaleFactor());
+    bool isZoomed = !WebKit::scalesAreEssentiallyEqual(pageScaleFactor, layerTreeTransaction.initialScaleFactor()) && (pageScaleFactor > layerTreeTransaction.initialScaleFactor());
 
     bool scrollingNeededToRevealUI = false;
     if (_overriddenLayoutParameters) {
@@ -1021,13 +1023,13 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
     [_scrollView panGestureRecognizer].allowedTouchTypes = scrollingEnabled ? _scrollViewDefaultAllowedTouchTypes.get() : @[ ];
     [_scrollView _setScrollEnabledInternal:YES];
 
-    BOOL shouldUpdateZoomScale = !layerTreeTransaction.scaleWasSetByUIProcess() && ![_scrollView isZooming] && ![_scrollView isZoomBouncing] && ![_scrollView _wk_isZoomAnimating] && !WebKit::scalesAreEssentiallyEqual([_scrollView zoomScale], layerTreeTransaction.pageScaleFactor());
+    BOOL shouldUpdateZoomScale = !layerTreeTransaction.scaleWasSetByUIProcess() && ![_scrollView isZooming] && ![_scrollView isZoomBouncing] && ![_scrollView _wk_isZoomAnimating] && !WebKit::scalesAreEssentiallyEqual([_scrollView zoomScale], pageScaleFactor);
     BOOL shouldUpdateContentOffsetForFittingScale = !shouldUpdateZoomScale && !CGSizeEqualToSize(oldContentSize, newContentSize) && (oldContentSize.height > 0) && self._isDisplayingPDF;
 
     if (shouldUpdateZoomScale || shouldUpdateContentOffsetForFittingScale) {
         if (shouldUpdateZoomScale) {
-            LOG_WITH_STREAM(VisibleRects, stream << " updating scroll view with pageScaleFactor " << layerTreeTransaction.pageScaleFactor());
-            [_scrollView setZoomScale:layerTreeTransaction.pageScaleFactor()];
+            LOG_WITH_STREAM(VisibleRects, stream << " updating scroll view with pageScaleFactor " << pageScaleFactor);
+            [_scrollView setZoomScale:pageScaleFactor];
         }
 
         UIEdgeInsets contentInsets = [_scrollView adjustedContentInset];
@@ -1037,7 +1039,7 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
         // When web-process-originated scale changes occur, pin the
         // scroll position to the top edge of the content,
         // instead of the center (which UIScrollView does by default).
-        CGFloat scaleRatio = layerTreeTransaction.pageScaleFactor() / [_scrollView zoomScale];
+        CGFloat scaleRatio = pageScaleFactor / [_scrollView zoomScale];
         if (shouldUpdateContentOffsetForFittingScale)
             scaleRatio = newContentSize.height / oldContentSize.height;
 
@@ -1125,6 +1127,10 @@ static void changeContentOffsetBoundedInValidRange(UIScrollView *scrollView, Web
             WKWEBVIEW_RELEASE_LOG("%p -[WKWebView _didCommitLayerTree:] - dynamicViewportUpdateMode is NotResizing, but still have a live resizeAnimationView (unpaired begin/endAnimatedResize?)", self);
 
         [self _updateScrollViewForTransaction:layerTreeTransaction];
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+        [self _updateNeedsTopScrollPocketDueToVisibleContentInset];
+#endif
 
         _perProcessState.viewportMetaTagWidth = layerTreeTransaction.viewportMetaTagWidth();
         _perProcessState.viewportMetaTagWidthWasExplicit = layerTreeTransaction.viewportMetaTagWidthWasExplicit();
@@ -1224,7 +1230,7 @@ static CGRect snapRectToScrollViewEdges(CGRect rect, CGRect viewport)
     return CGRectIntersection(rect, viewport);
 }
 
-static void configureScrollViewWithOverlayRegionsIDs(RetainPtr<WKBaseScrollView>& scrollView, const WebKit::RemoteLayerTreeHost& host, const HashSet<WebCore::PlatformLayerIdentifier>& overlayRegionsIDs, const WebKit::RemoteScrollingCoordinatorProxyIOS::OverlayRegionCandidatesMap& candidatesMap)
+static void configureScrollViewWithOverlayRegionsIDs(RetainPtr<WKBaseScrollView>& scrollView, const WebKit::RemoteLayerTreeHost& host, const HashSet<WebCore::PlatformLayerIdentifier>& overlayRegionsIDs, const WebKit::RemoteScrollingCoordinatorProxyIOS::OverlayRegionCandidatesMap& candidatesMap, BOOL stable)
 {
     HashSet<WebCore::IntRect> overlayRegionRects;
     Vector<WebCore::IntRect> fullWidthRects;
@@ -1267,10 +1273,14 @@ static void configureScrollViewWithOverlayRegionsIDs(RetainPtr<WKBaseScrollView>
         if (!overlayView)
             continue;
 
+        auto clippedRegion = node->eventRegion().region();
+
         WKBaseScrollView *enclosingScrollView = nil;
         HashSet<UIView *> overlayAncestorsChain;
         for (UIView *overlayAncestor = (UIView *)overlayView; overlayAncestor; overlayAncestor = [overlayAncestor superview]) {
             overlayAncestorsChain.add(overlayAncestor);
+            if (overlayAncestor.clipsToBounds || overlayAncestor.layer.mask)
+                clippedRegion.intersect(WebCore::enclosingIntRect([overlayAncestor convertRect:overlayAncestor.bounds toView:(UIView *)overlayView]));
             if (auto *layer = dynamic_objc_cast<WKBaseScrollView>(overlayAncestor)) {
                 enclosingScrollView = layer;
                 break;
@@ -1312,7 +1322,7 @@ static void configureScrollViewWithOverlayRegionsIDs(RetainPtr<WKBaseScrollView>
 
         // Overlay regions are positioned relative to the viewport of the scrollview,
         // not the frame (external) nor the bounds (origin moves while scrolling).
-        for (auto regionRect : node->eventRegion().region().rects()) {
+        for (auto regionRect : clippedRegion.rects()) {
             CGRect rect = [overlayView convertRect:regionRect toView:[scrollView superview]];
             CGRect offsetRect = CGRectOffset(rect, -frame.origin.x, -frame.origin.y);
             CGRect snappedRect = snapRectToScrollViewEdges(offsetRect, viewport);
@@ -1363,7 +1373,7 @@ static void configureScrollViewWithOverlayRegionsIDs(RetainPtr<WKBaseScrollView>
     });
 
     [scrollView _updateOverlayRegionsBehavior:YES];
-    [scrollView _updateOverlayRegionRects:overlayRegionRects];
+    [scrollView _updateOverlayRegionRects:overlayRegionRects whileStable:stable];
 
     auto relatedIterator = candidatesMap.find(scrollView);
     if (relatedIterator != candidatesMap.end())
@@ -1453,7 +1463,7 @@ static void configureScrollViewWithOverlayRegionsIDs(RetainPtr<WKBaseScrollView>
     for (auto layerID : fixedIDs)
         addOverlayEventRegions(layerID, overlayRegionsIDs, layerTreeHost);
 
-    configureScrollViewWithOverlayRegionsIDs(overlayRegionScrollView, layerTreeHost, overlayRegionsIDs, candidatesMap);
+    configureScrollViewWithOverlayRegionsIDs(overlayRegionScrollView, layerTreeHost, overlayRegionsIDs, candidatesMap, [self _isInStableState:overlayRegionScrollView.get()]);
 }
 
 - (void)_updateOverlayRegionsForCustomContentView
@@ -1467,7 +1477,7 @@ static void configureScrollViewWithOverlayRegionsIDs(RetainPtr<WKBaseScrollView>
     }
 
     [_scrollView _updateOverlayRegionsBehavior:YES];
-    [_scrollView _updateOverlayRegionRects: { }];
+    [_scrollView _updateOverlayRegionRects: { } whileStable:YES];
 }
 #endif // ENABLE(OVERLAY_REGIONS_IN_EVENT_REGION)
 
@@ -2399,6 +2409,9 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
 - (void)_updateNeedsTopScrollPocketDueToVisibleContentInset
 {
+    if (!std::exchange(_shouldUpdateNeedsTopScrollPocketDueToVisibleContentInset, NO))
+        return;
+
     BOOL value = [&] -> BOOL {
         if ([_scrollView adjustedContentInset].top <= self._computedObscuredInset.top + CGFLOAT_EPSILON)
             return NO;
@@ -2406,7 +2419,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         if ([_scrollView _wk_isScrolledBeyondTopExtent])
             return NO;
 
-        if ([[_scrollView topEdgeEffect].style isEqual:UIScrollEdgeEffectStyle.hardStyle])
+        if ([_scrollView _wk_usesHardTopScrollEdgeEffect])
             return NO;
 
         return [_scrollView contentOffset].y < 0;
@@ -2437,7 +2450,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 - (void)scrollViewDidChangeAdjustedContentInset:(UIScrollView *)scrollView
 {
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    [self _updateNeedsTopScrollPocketDueToVisibleContentInset];
+    _shouldUpdateNeedsTopScrollPocketDueToVisibleContentInset = YES;
 #endif
 }
 
@@ -2448,7 +2461,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
         [self _updateFixedColorExtensionViewFrames];
         [self _reinsertTopFixedColorExtensionViewIfNeeded];
-        [self _updateNeedsTopScrollPocketDueToVisibleContentInset];
+        _shouldUpdateNeedsTopScrollPocketDueToVisibleContentInset = YES;
 #endif
     }
 
@@ -4066,17 +4079,15 @@ static bool isLockdownModeWarningNeeded()
     return axesToPrevent;
 }
 
-- (void)_overrideZoomScaleParametersWithMinimumZoomScale:(CGFloat)minimumZoomScale maximumZoomScale:(CGFloat)maximumZoomScale allowUserScaling:(BOOL)allowUserScaling
+- (BOOL)_forcesInitialScaleFactor
 {
-    _overriddenZoomScaleParameters = { minimumZoomScale, maximumZoomScale, allowUserScaling };
-    [_scrollView setMinimumZoomScale:minimumZoomScale];
-    [_scrollView setMaximumZoomScale:maximumZoomScale];
-    [_scrollView _setZoomEnabledInternal:allowUserScaling && self._allowsMagnification];
+    return _forcesInitialScaleFactor;
 }
 
-- (void)_clearOverrideZoomScaleParameters
+- (void)_setForcesInitialScaleFactor:(BOOL)forcesInitialScaleFactor
 {
-    _overriddenZoomScaleParameters = std::nullopt;
+    _forcesInitialScaleFactor = forcesInitialScaleFactor;
+    [self _doAfterNextPresentationUpdate:^{ }];
 }
 
 - (BOOL)_allowsMagnification
@@ -4796,7 +4807,7 @@ static bool isLockdownModeWarningNeeded()
         return;
     }
 
-    _page->takeSnapshot(WebCore::enclosingIntRect(snapshotRectInContentCoordinates), WebCore::expandedIntSize(WebCore::FloatSize(imageSize)), WebKit::SnapshotOption::ExcludeDeviceScaleFactor, [completionHandler = makeBlockPtr(completionHandler)](std::optional<WebCore::ShareableBitmap::Handle>&& imageHandle) {
+    _page->takeSnapshotLegacy(WebCore::enclosingIntRect(snapshotRectInContentCoordinates), WebCore::expandedIntSize(WebCore::FloatSize(imageSize)), WebKit::SnapshotOption::ExcludeDeviceScaleFactor, [completionHandler = makeBlockPtr(completionHandler)](std::optional<WebCore::ShareableBitmap::Handle>&& imageHandle) {
         if (!imageHandle)
             return completionHandler(nil);
 

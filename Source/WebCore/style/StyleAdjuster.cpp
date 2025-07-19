@@ -439,7 +439,7 @@ static bool shouldTreatAutoZIndexAsZero(const RenderStyle& style)
     return style.hasOpacity()
         || style.hasTransformRelatedProperty()
         || style.hasMask()
-        || style.clipPath()
+        || style.hasClipPath()
         || style.boxReflect()
         || style.hasFilter()
         || style.hasBackdropFilter()
@@ -649,6 +649,12 @@ void Adjuster::adjust(RenderStyle& style) const
 
         if (m_element->invokedPopover())
             style.setIsPopoverInvoker();
+
+        if (m_document->settings().detailsAutoExpandEnabled() && m_element->isInUserAgentShadowTree() && m_element->userAgentPart() == UserAgentParts::detailsContent())
+            style.setAutoRevealsWhenFound();
+
+        if (RefPtr htmlElement = dynamicDowncast<HTMLElement>(element); htmlElement && htmlElement->isHiddenUntilFound())
+            style.setAutoRevealsWhenFound();
     }
 
     if (shouldInheritTextDecorationsInEffect(style, m_element.get()))
@@ -729,7 +735,7 @@ void Adjuster::adjust(RenderStyle& style) const
             || style.hasOpacity()
             || style.overflowY() != Overflow::Visible
             || style.hasClip()
-            || style.clipPath()
+            || style.hasClipPath()
             || style.hasFilter()
             || style.hasIsolation()
             || style.hasMask()
@@ -898,7 +904,7 @@ void Adjuster::adjustSVGElementStyle(RenderStyle& style, const SVGElement& svgEl
     // Some of the rules above were already enforced in StyleResolver::adjust() - for those cases assertions were added.
     if (svgElement.document().settings().layerBasedSVGEngineEnabled() && style.hasAutoUsedZIndex()) {
         // adjust() has already assigned a z-index of 0 if clip / filter is present or the element is the root element.
-        ASSERT(!style.clipPath());
+        ASSERT(!style.hasClipPath());
         ASSERT(!style.hasFilter());
 
         if (svgElement.isOutermostSVGSVGElement()
@@ -952,13 +958,13 @@ void Adjuster::adjustThemeStyle(RenderStyle& style, const RenderStyle& parentSty
     RenderTheme::singleton().adjustStyle(style, parentStyle, m_element.get());
 
     if (style.containsSize()) {
-        if (style.containIntrinsicWidthType() != ContainIntrinsicSizeType::None) {
+        if (!style.containIntrinsicWidth().isNone()) {
             if (isOldWidthAuto)
                 style.setWidth(CSS::Keyword::Auto { });
             if (isOldMinWidthAuto)
                 style.setMinWidth(CSS::Keyword::Auto { });
         }
-        if (style.containIntrinsicHeightType() != ContainIntrinsicSizeType::None) {
+        if (!style.containIntrinsicHeight().isNone()) {
             if (isOldHeightAuto)
                 style.setHeight(CSS::Keyword::Auto { });
             if (isOldMinHeightAuto)
@@ -1070,6 +1076,12 @@ void Adjuster::adjustForSiteSpecificQuirks(RenderStyle& style) const
         auto& animations = style.ensureAnimations();
         animations.append(WTFMove(menuGrowLeftAnimation));
         animations.append(WTFMove(menuFadeInAnimation));
+    }
+
+    if (m_document->quirks().needsFacebookRemoveNotSupportedQuirk()) {
+        static MainThreadNeverDestroyed<const AtomString> className("xnw9j1v"_s);
+        if (is<HTMLDivElement>(*m_element) && m_element->hasClassName(className))
+            style.setEffectiveDisplay(DisplayType::None);
     }
 }
 

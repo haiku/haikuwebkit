@@ -443,7 +443,7 @@ void InspectorFrontendHost::killText(const String& text, bool shouldPrependToKil
     if (!m_frontendPage)
         return;
 
-    RefPtr focusedOrMainFrame = m_frontendPage->checkedFocusController()->focusedOrMainFrame();
+    RefPtr focusedOrMainFrame = m_frontendPage->focusController().focusedOrMainFrame();
     if (!focusedOrMainFrame)
         return;
 

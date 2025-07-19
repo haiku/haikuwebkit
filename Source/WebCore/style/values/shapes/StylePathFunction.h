@@ -92,6 +92,10 @@ template<> struct Blending<Path> {
     auto blend(const Path&, const Path&, const BlendingContext&) -> Path;
 };
 
+// MARK: - Logging
+
+WTF::TextStream& operator<<(WTF::TextStream&, const Path::Data&);
+
 } // namespace Style
 } // namespace WebCore
 

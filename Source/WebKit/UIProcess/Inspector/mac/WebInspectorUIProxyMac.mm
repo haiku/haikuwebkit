@@ -200,6 +200,23 @@ static void* kWindowContentLayoutObserverContext = &kWindowContentLayoutObserver
     return _inspectorProxy ? _inspectorProxy->isUnderTest() : false;
 }
 
+- (BOOL)inspectorViewControllerInspectorIsHorizontallyAttached:(WKInspectorViewController *)inspectorViewController
+{
+    RefPtr inspector = _inspectorProxy.get();
+    if (!inspector->isAttached())
+        return NO;
+
+    switch (inspector->attachmentSide()) {
+    case WebKit::AttachmentSide::Bottom:
+        return NO;
+    case WebKit::AttachmentSide::Right:
+    case WebKit::AttachmentSide::Left:
+        return YES;
+    }
+    ASSERT_NOT_REACHED();
+    return NO;
+}
+
 - (void)inspectorViewController:(WKInspectorViewController *)inspectorViewController willMoveToWindow:(NSWindow *)newWindow
 {
     if (RefPtr proxy = _inspectorProxy.get())
@@ -460,9 +477,9 @@ RefPtr<WebPageProxy> WebInspectorUIProxy::platformCreateFrontendPage()
     RetainPtr inspectedView = inspectedPage->inspectorAttachmentView();
     [[NSNotificationCenter defaultCenter] addObserver:m_objCAdapter.get() selector:@selector(inspectedViewFrameDidChange:) name:NSViewFrameDidChangeNotification object:inspectedView.get()];
 
-    auto configuration = inspectedPage->uiClient().configurationForLocalInspector(*inspectedPage,  *this);
-    m_inspectorViewController = adoptNS([[WKInspectorViewController alloc] initWithConfiguration: WebKit::wrapper(configuration.get()) inspectedPage:inspectedPage.get()]);
-    [m_inspectorViewController.get() setDelegate:m_objCAdapter.get()];
+    Ref configuration = inspectedPage->uiClient().configurationForLocalInspector(*inspectedPage, *this);
+    m_inspectorViewController = adoptNS([[WKInspectorViewController alloc] initWithConfiguration:WebKit::wrapper(configuration.get()) inspectedPage:inspectedPage.get()]);
+    [m_inspectorViewController setDelegate:m_objCAdapter.get()];
 
     RefPtr inspectorPage = [m_inspectorViewController webView]->_page.get();
     ASSERT(inspectorPage);
@@ -764,6 +781,21 @@ void WebInspectorUIProxy::inspectedViewFrameDidChange(CGFloat currentDimension)
     NSRect parentBounds = inspectedView.get().superview.bounds;
     CGFloat inspectedViewTop = NSMaxY(inspectedViewFrame);
 
+    auto frameAdjustedForContentLayoutRect = [&](NSRect frameIgnoringContentLayoutRect) {
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+        bool drawsScrollPocket = inspectedPage->preferences().contentInsetBackgroundFillEnabled() && inspectedPage->pendingOrActualObscuredContentInsets().top();
+        if (drawsScrollPocket)
+            return frameIgnoringContentLayoutRect;
+#endif
+
+        RetainPtr inspectorWindow = [inspectorView window];
+        if (!inspectorWindow)
+            return frameIgnoringContentLayoutRect;
+
+        auto contentLayoutRect = [[inspectedView superview] convertRect:[inspectorWindow contentLayoutRect] fromView:nil];
+        return NSIntersectionRect(frameIgnoringContentLayoutRect, contentLayoutRect);
+    };
+
     switch (m_attachmentSide) {
     case AttachmentSide::Bottom: {
         if (!currentDimension)
@@ -788,12 +820,7 @@ void WebInspectorUIProxy::inspectedViewFrameDidChange(CGFloat currentDimension)
         // Preserve the top position of the inspected view so banners in Safari still work. But don't use that
         // top position for the inspector view since the banners only stretch as wide as the inspected view.
         inspectedViewFrame = NSMakeRect(0, 0, parentWidth - inspectorWidth, inspectedViewTop);
-        newInspectorViewFrame = NSMakeRect(parentWidth - inspectorWidth, 0, inspectorWidth, NSHeight(parentBounds));
-
-        if (NSWindow *inspectorWindow = inspectorView.window) {
-            NSRect contentLayoutRect = [inspectedView.get().superview convertRect:inspectorWindow.contentLayoutRect fromView:nil];
-            newInspectorViewFrame = NSIntersectionRect(newInspectorViewFrame, contentLayoutRect);
-        }
+        newInspectorViewFrame = frameAdjustedForContentLayoutRect(NSMakeRect(parentWidth - inspectorWidth, 0, inspectorWidth, NSHeight(parentBounds)));
         break;
     }
 
@@ -807,12 +834,7 @@ void WebInspectorUIProxy::inspectedViewFrameDidChange(CGFloat currentDimension)
         // Preserve the top position of the inspected view so banners in Safari still work. But don't use that
         // top position for the inspector view since the banners only stretch as wide as the inspected view.
         inspectedViewFrame = NSMakeRect(inspectorWidth, 0, parentWidth - inspectorWidth, inspectedViewTop);
-        newInspectorViewFrame = NSMakeRect(0, 0, inspectorWidth, NSHeight(parentBounds));
-
-        if (NSWindow *inspectorWindow = inspectorView.window) {
-            NSRect contentLayoutRect = [inspectedView.get().superview convertRect:inspectorWindow.contentLayoutRect fromView:nil];
-            newInspectorViewFrame = NSIntersectionRect(newInspectorViewFrame, contentLayoutRect);
-        }
+        newInspectorViewFrame = frameAdjustedForContentLayoutRect(NSMakeRect(0, 0, inspectorWidth, NSHeight(parentBounds)));
         break;
     }
     }
@@ -863,6 +885,8 @@ void WebInspectorUIProxy::platformAttach()
 
     [inspectedView.get().superview addSubview:inspectorView positioned:NSWindowBelow relativeTo:inspectedView.get()];
     [inspectorView.window makeFirstResponder:inspectorView];
+
+    [m_inspectorViewController didAttachOrDetach];
 }
 
 void WebInspectorUIProxy::platformDetach()
@@ -885,6 +909,8 @@ void WebInspectorUIProxy::platformDetach()
         return;
 
     open();
+
+    [m_inspectorViewController didAttachOrDetach];
 }
 
 void WebInspectorUIProxy::platformSetAttachedWindowHeight(unsigned height)

@@ -100,7 +100,7 @@ PDFPluginAnnotation::~PDFPluginAnnotation()
 
     m_eventListener->setAnnotation(nullptr);
 
-    element->document().eventLoop().queueTask(TaskSource::InternalAsyncTask, [weakElement = WeakPtr<Node, WeakPtrImplWithEventTargetData> { element.get() }]() {
+    element->protectedDocument()->checkedEventLoop()->queueTask(TaskSource::InternalAsyncTask, [weakElement = WeakPtr<Node, WeakPtrImplWithEventTargetData> { element.get() }]() {
         if (RefPtr element = weakElement.get())
             element->remove();
     });
@@ -108,7 +108,7 @@ PDFPluginAnnotation::~PDFPluginAnnotation()
 
 void PDFPluginAnnotation::updateGeometry()
 {
-    auto annotationRect = m_plugin->pluginBoundsForAnnotation(m_annotation);
+    auto annotationRect = m_plugin->pluginBoundsForAnnotation(m_annotation.get());
 
     Ref styledElement = downcast<StyledElement>(*element());
     styledElement->setInlineStyleProperty(CSSPropertyWidth, annotationRect.size.width, CSSUnitType::CSS_PX);
@@ -129,8 +129,8 @@ bool PDFPluginAnnotation::handleEvent(Event& event)
 
 void PDFPluginAnnotation::PDFPluginAnnotationEventListener::handleEvent(ScriptExecutionContext&, Event& event)
 {
-    if (m_annotation)
-        m_annotation->handleEvent(event);
+    if (RefPtr annotation = m_annotation.get())
+        annotation->handleEvent(event);
 }
 
 } // namespace WebKit

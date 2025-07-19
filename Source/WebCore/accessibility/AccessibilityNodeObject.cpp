@@ -1224,10 +1224,16 @@ static RefPtr<Element> nodeActionElement(Node& node)
 {
     auto elementName = WebCore::elementName(node);
     if (RefPtr input = dynamicDowncast<HTMLInputElement>(node)) {
-        if (!input->isDisabledFormControl() && (input->isRadioButton() || input->isCheckbox() || input->isTextButton() || input->isFileUpload() || input->isImageButton()))
+        if (!input->isDisabledFormControl() && (input->isRadioButton() || input->isCheckbox() || input->isTextButton() || input->isFileUpload() || input->isImageButton() || input->isTextField()))
             return input;
     } else if (elementName == ElementName::HTML_button || elementName == ElementName::HTML_select)
         return &downcast<Element>(node);
+
+    // Content editable nodes should also be considered action elements, so they can accept presses.
+    if (RefPtr element = dynamicDowncast<Element>(node)) {
+        if (AccessibilityObject::contentEditableAttributeIsEnabled(*element))
+            return element;
+    }
 
     return nullptr;
 }
@@ -1344,14 +1350,16 @@ static bool dispatchSimulatedKeyboardUpDownEvent(AccessibilityObject* object, co
     if (auto* node = object->node()) {
         auto event = KeyboardEvent::create(eventNames().keydownEvent, keyInit, Event::IsTrusted::Yes);
         node->dispatchEvent(event);
-        handled |= event->defaultHandled();
+        handled |= event->defaultHandled(); // The browser handled it.
+        handled |= event->defaultPrevented(); // A JavaScript event listener handled it.
     }
 
     // Ensure node is still valid and wasn't removed after the keydown.
     if (auto* node = object->node()) {
         auto event = KeyboardEvent::create(eventNames().keyupEvent, keyInit, Event::IsTrusted::Yes);
         node->dispatchEvent(event);
-        handled |= event->defaultHandled();
+        handled |= event->defaultHandled(); // The browser handled it.
+        handled |= event->defaultPrevented(); // A JavaScript event listener handled it.
     }
     return handled;
 }
@@ -1934,7 +1942,7 @@ void AccessibilityNodeObject::helpText(Vector<AccessibilityText>& textOrder) con
         auto matchFunc = [] (const AccessibilityObject& object) {
             return object.isFieldset() && !object.ariaDescribedByAttribute().isEmpty();
         };
-        if (const auto* parent = Accessibility::findAncestor<AccessibilityObject>(*this, false, WTFMove(matchFunc)))
+        if (RefPtr parent = Accessibility::findAncestor<AccessibilityObject>(*this, false, WTFMove(matchFunc)))
             textOrder.append(AccessibilityText(parent->ariaDescribedByAttribute(), AccessibilityTextSource::Summary));
     }
 

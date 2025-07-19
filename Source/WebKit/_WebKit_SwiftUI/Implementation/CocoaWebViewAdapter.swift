@@ -192,7 +192,12 @@ class CocoaWebViewAdapter: CocoaView, PlatformTextSearching {
 
     // MARK: Scroll Geometry
 
-    var onScrollGeometryChange: OnScrollGeometryChangeContext?
+    var onScrollGeometryChange: OnScrollGeometryChangeContext? = nil {
+        willSet {
+            webView?.setNeedsScrollGeometryUpdates(newValue != nil)
+        }
+    }
+
     private var currentScrollGeometry = ScrollGeometry(
         contentOffset: .zero,
         contentSize: .zero,

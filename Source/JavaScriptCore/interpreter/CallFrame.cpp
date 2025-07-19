@@ -27,6 +27,7 @@
 #include "CallFrame.h"
 
 #include "CodeBlock.h"
+#include "DebuggerCallFrame.h"
 #include "ExecutableAllocator.h"
 #include "InlineCallFrame.h"
 #include "JSCInlines.h"
@@ -38,6 +39,7 @@
 #include "VMEntryScopeInlines.h"
 #include "WasmContext.h"
 #include <wtf/StringPrintStream.h>
+#include <wtf/URL.h>
 
 WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
 
@@ -314,6 +316,25 @@ void CallFrame::dump(PrintStream& out) const
         }
 
         out.print(")");
+
+        String source = codeBlock->ownerExecutable()->sourceURL();
+        if (!source.isEmpty()) {
+            out.print(" at ");
+
+            URL url = URL(source);
+            if (url.hasPath())
+                out.print(url.lastPathComponent());
+            else
+                out.print(source);
+
+            VM& vm = deprecatedVM();
+
+            if (RefPtr<DebuggerCallFrame> currentDebuggerCallFrame = DebuggerCallFrame::create(vm, const_cast<CallFrame*>(this))) {
+                int lineNumber = currentDebuggerCallFrame->line() + 1;
+                int columnNumber = currentDebuggerCallFrame->column() + 1;
+                out.print(":", lineNumber, ":", columnNumber);
+            }
+        }
 
         return;
     }

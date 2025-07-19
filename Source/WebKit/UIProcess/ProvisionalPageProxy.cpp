@@ -249,7 +249,8 @@ void ProvisionalPageProxy::cancel()
 void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& websitePolicies)
 {
     Ref page = *m_page;
-    m_drawingArea = page->protectedPageClient()->createDrawingAreaProxy(protectedProcess());
+    RefPtr drawingArea = page->protectedPageClient()->createDrawingAreaProxy(protectedProcess());
+    m_drawingArea = drawingArea.copyRef();
 
     bool registerWithInspectorController { true };
     if (websitePolicies)
@@ -278,7 +279,7 @@ void ProvisionalPageProxy::initializeWebPage(RefPtr<API::WebsitePolicies>&& webs
     }
 
     RefPtr mainFrame = m_mainFrame;
-    auto creationParameters = page->creationParametersForProvisionalPage(process, *m_drawingArea, websitePolicies.copyRef(), mainFrame->frameID());
+    auto creationParameters = page->creationParametersForProvisionalPage(process, *drawingArea, websitePolicies.copyRef(), mainFrame->frameID());
     if (preferences->siteIsolationEnabled()) {
         creationParameters.remotePageParameters = RemotePageParameters {
             m_request.url(),

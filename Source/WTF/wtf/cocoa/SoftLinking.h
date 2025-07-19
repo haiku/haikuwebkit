@@ -73,6 +73,17 @@ static void* lib##Library() \
     return dylib; \
 }
 
+#define SOFT_LINK_LIBRARY_WITH_PATH(lib, path) \
+    static void* lib##Library() \
+    { \
+        static void* dylib = ^{ \
+            void *result = dlopen(path #lib ".dylib", RTLD_NOW); \
+            RELEASE_ASSERT_WITH_MESSAGE(result, "%s", dlerror()); \
+            return result; \
+        }(); \
+        return dylib; \
+    }
+
 #define SOFT_LINK_FRAMEWORK(framework) \
     static void* framework##Library() \
     { \

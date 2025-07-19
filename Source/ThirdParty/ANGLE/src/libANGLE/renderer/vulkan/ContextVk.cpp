@@ -840,6 +840,7 @@ ContextVk::ContextVk(const gl::State &state, gl::ErrorSet *errorSet, vk::Rendere
       mClearDepthStencilValue{},
       mClearColorMasks(0),
       mDeferredMemoryBarriers(0),
+      mSampleShadingEnabled(false),
       mFlipYForCurrentSurface(false),
       mFlipViewportForDrawFramebuffer(false),
       mFlipViewportForReadFramebuffer(false),
@@ -2813,15 +2814,15 @@ angle::Result ContextVk::handleDirtyShaderResourcesImpl(CommandBufferHelperT *co
     if (hasUniformBuffers)
     {
         mShaderBuffersDescriptorDesc.updateShaderBuffers(
-            this, commandBufferHelper, *executable, variableInfoMap,
-            mState.getOffsetBindingPointerUniformBuffers(), executable->getUniformBlocks(),
-            executableVk->getUniformBufferDescriptorType(), limits.maxUniformBufferRange,
-            mEmptyBuffer, mShaderBufferWriteDescriptorDescs, mDeferredMemoryBarriers);
+            this, commandBufferHelper, *executable, mState.getOffsetBindingPointerUniformBuffers(),
+            executable->getUniformBlocks(), executableVk->getUniformBufferDescriptorType(),
+            limits.maxUniformBufferRange, mEmptyBuffer, mShaderBufferWriteDescriptorDescs,
+            mDeferredMemoryBarriers);
     }
     if (hasStorageBuffers)
     {
         mShaderBuffersDescriptorDesc.updateShaderBuffers(
-            this, commandBufferHelper, *executable, variableInfoMap,
+            this, commandBufferHelper, *executable,
             mState.getOffsetBindingPointerShaderStorageBuffers(),
             executable->getShaderStorageBlocks(), executableVk->getStorageBufferDescriptorType(),
             limits.maxStorageBufferRange, mEmptyBuffer, mShaderBufferWriteDescriptorDescs,
@@ -2895,16 +2896,14 @@ angle::Result ContextVk::handleDirtyUniformBuffersImpl(CommandBufferT *commandBu
 
     const VkPhysicalDeviceLimits &limits = mRenderer->getPhysicalDeviceProperties().limits;
     ProgramExecutableVk *executableVk    = vk::GetImpl(executable);
-    const ShaderInterfaceVariableInfoMap &variableInfoMap = executableVk->getVariableInfoMap();
 
     gl::ProgramUniformBlockMask dirtyBits = mState.getAndResetDirtyUniformBlocks();
     for (size_t blockIndex : dirtyBits)
     {
         const GLuint binding = executable->getUniformBlockBinding(blockIndex);
         mShaderBuffersDescriptorDesc.updateOneShaderBuffer(
-            this, commandBufferHelper, variableInfoMap,
-            mState.getOffsetBindingPointerUniformBuffers(),
-            executable->getUniformBlocks()[blockIndex], binding,
+            this, commandBufferHelper, blockIndex, executable->getUniformBlocks()[blockIndex],
+            mState.getOffsetBindingPointerUniformBuffers()[binding],
             executableVk->getUniformBufferDescriptorType(), limits.maxUniformBufferRange,
             mEmptyBuffer, mShaderBufferWriteDescriptorDescs, mDeferredMemoryBarriers);
     }
@@ -5872,12 +5871,20 @@ angle::Result ContextVk::syncState(const gl::Context *context,
                 iter.resetLaterBit(gl::state::DIRTY_BIT_UNIFORM_BUFFER_BINDINGS);
                 ANGLE_TRY(invalidateProgramExecutableHelper(context));
 
-                static_assert(
-                    gl::state::DIRTY_BIT_SAMPLE_SHADING > gl::state::DIRTY_BIT_PROGRAM_EXECUTABLE,
-                    "Dirty bit order");
-                if (getFeatures().explicitlyEnablePerSampleShading.enabled)
+                // Handle sample shading state transitions for graphics programs
+                if (programExecutable->hasLinkedGraphicsShader())
                 {
-                    iter.setLaterBit(gl::state::DIRTY_BIT_SAMPLE_SHADING);
+                    const bool programEnablesSampleShading =
+                        programExecutable->enablesPerSampleShading();
+                    if ((mSampleShadingEnabled || programEnablesSampleShading) &&
+                        getFeatures().explicitlyEnablePerSampleShading.enabled)
+                    {
+                        static_assert(gl::state::DIRTY_BIT_SAMPLE_SHADING >
+                                          gl::state::DIRTY_BIT_PROGRAM_EXECUTABLE,
+                                      "Dirty bit order");
+                        iter.setLaterBit(gl::state::DIRTY_BIT_SAMPLE_SHADING);
+                    }
+                    mSampleShadingEnabled = programEnablesSampleShading;
                 }
 
                 break;

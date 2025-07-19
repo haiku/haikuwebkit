@@ -74,6 +74,7 @@ private:
     // ActiveDOMObject.
     void stop() final;
     bool virtualHasPendingActivity() const final;
+    void suspend(ReasonForSuspension) final;
 
     class MainThreadBridge;
     RefPtr<MainThreadBridge> m_mainThreadBridge;

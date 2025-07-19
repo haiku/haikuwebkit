@@ -155,15 +155,15 @@ private:
     // Synchronizes draw state and returns stroke state that needs to be sent inline with the stroke command.
     InlineStrokeData appendStateChangeItemForInlineStrokeIfNecessary();
 
-    RefPtr<WebCore::ImageBuffer> createImageBuffer(const WebCore::FloatSize&, float resolutionScale, const WebCore::DestinationColorSpace&, std::optional<WebCore::RenderingMode>, std::optional<WebCore::RenderingMethod>) const final;
+    RefPtr<WebCore::ImageBuffer> createImageBuffer(const WebCore::FloatSize&, float resolutionScale, const WebCore::DestinationColorSpace&, std::optional<WebCore::RenderingMode>, std::optional<WebCore::RenderingMethod>, WebCore::ImageBufferPixelFormat) const final;
     RefPtr<WebCore::ImageBuffer> createAlignedImageBuffer(const WebCore::FloatSize&, const WebCore::DestinationColorSpace&, std::optional<WebCore::RenderingMethod>) const final;
     RefPtr<WebCore::ImageBuffer> createAlignedImageBuffer(const WebCore::FloatRect&, const WebCore::DestinationColorSpace&, std::optional<WebCore::RenderingMethod>) const final;
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
     void setMaxEDRHeadroom(std::optional<float> headroom) final { m_maxEDRHeadroom = headroom; }
     float maxPaintedEDRHeadroom() const final { return m_maxPaintedEDRHeadroom; }
-    bool hasPaintedClampedEDRHeadroom() const final { return m_hasPaintedClampedEDRHeadroom; }
-    void clearMaxPaintedEDRHeadroom() final { m_maxPaintedEDRHeadroom = 1; m_hasPaintedClampedEDRHeadroom = false; }
+    float maxRequestedEDRHeadroom() const final { return m_maxRequestedEDRHeadroom; }
+    void clearMaxEDRHeadrooms() final { m_maxPaintedEDRHeadroom = 1; m_maxRequestedEDRHeadroom = 1; }
 #endif
 
     const WebCore::RenderingMode m_renderingMode;
@@ -179,7 +179,7 @@ private:
 #if HAVE(SUPPORT_HDR_DISPLAY)
     std::optional<float> m_maxEDRHeadroom;
     float m_maxPaintedEDRHeadroom { 1 };
-    bool m_hasPaintedClampedEDRHeadroom { false };
+    float m_maxRequestedEDRHeadroom { 1 };
 #endif
     // Flag for pending draws. Start with true because we do not know what commands have been scheduled to the context.
     bool m_hasDrawn { true };

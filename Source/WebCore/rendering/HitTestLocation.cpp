@@ -128,7 +128,7 @@ bool HitTestLocation::intersects(const FloatRect& rect) const
     return intersectsRect(rect);
 }
 
-bool HitTestLocation::intersects(const RoundedRect& rect) const
+bool HitTestLocation::intersects(const LayoutRoundedRect& rect) const
 {
     return rect.intersectsQuad(m_transformedRect);
 }

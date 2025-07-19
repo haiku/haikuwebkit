@@ -37,6 +37,7 @@ use constant FileNamePrefix => "JS";
 use Carp qw<longmess>;
 use Data::Dumper;
 use Hasher;
+use List::Util qw(uniq);
 
 my $codeGenerator;
 my $writeDependencies;
@@ -3277,6 +3278,7 @@ sub GenerateHeader
 
     my $numCustomOperations = 0;
     my $numCustomAttributes = 0;
+    my $numCustomEnabledBy = 0;
 
     my $hasDOMJITAttributes = 0;
 
@@ -3285,6 +3287,7 @@ sub GenerateHeader
         foreach my $attribute (@{$interface->attributes}) {
             $numCustomAttributes++ if HasCustomGetter($attribute);
             $numCustomAttributes++ if HasCustomSetter($attribute);
+            $numCustomEnabledBy++ if $attribute->extendedAttributes->{CustomEnabledBy};
             if ($attribute->extendedAttributes->{CachedAttribute}) {
                 my $conditionalString = $codeGenerator->GenerateConditionalString($attribute);
                 push(@headerContent, "#if ${conditionalString}\n") if $conditionalString;
@@ -3350,7 +3353,29 @@ sub GenerateHeader
 
     foreach my $operation (@{$interface->operations}) {
         $numCustomOperations++ if HasCustomMethod($operation);
+        $numCustomEnabledBy++ if $operation->extendedAttributes->{CustomEnabledBy};
     }
+
+    if ($numCustomEnabledBy > 0) {
+        my @customEnabledByMethods = ();
+        push(@headerContent, "\n    // Custom enabled-by\n");
+        foreach my $attribute (@{$interface->attributes}) {
+            if ($attribute->extendedAttributes->{CustomEnabledBy}) {
+                push(@customEnabledByMethods, ToMethodName($attribute->extendedAttributes->{CustomEnabledBy}));
+            }
+        }
+
+        foreach my $operation (@{$interface->operations}) {
+            if ($operation->extendedAttributes->{CustomEnabledBy}) {
+                push(@customEnabledByMethods, ToMethodName($operation->extendedAttributes->{CustomEnabledBy}));
+            }
+        }
+
+        foreach my $customEnabledByMethod (uniq(@customEnabledByMethods)) {
+            push(@headerContent, "    static bool ${customEnabledByMethod}(ScriptExecutionContext*);\n");
+        }
+    }
+
 
     if ($numCustomOperations > 0) {
         my $inAppleCopyright = 0;
@@ -4251,6 +4276,18 @@ sub GenerateRuntimeEnableConditionalStringForExposed
 sub GenerateRuntimeEnableConditionalString
 {
     my ($interface, $context, $globalObjectPtr) = @_;
+
+    if ($context->extendedAttributes->{CustomEnabledBy}) {
+        # Adding CustomEnabledBy to a declaration will override all other runtime enablement conditions.
+        # The caller must implement a static method of the signature:
+        # bool $className::$customEnabledByMethod(ScriptExecutionContext*);
+        my $interfaceName = $interface->type->name;
+        my $className = "JS$interfaceName";
+
+        assert("Must specify value for EnabledForWorld.") if $context->extendedAttributes->{CustomEnabledBy} eq "VALUE_IS_MISSING";
+        my $customEnabledByMethod = ToMethodName($context->extendedAttributes->{CustomEnabledBy});
+        return "${className}::${customEnabledByMethod}(jsCast<JSDOMGlobalObject*>(" . $globalObjectPtr . ")->scriptExecutionContext())";
+    }
 
     my @conjuncts;
     if ($context->extendedAttributes->{SecureContext}) {

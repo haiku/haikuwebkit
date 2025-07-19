@@ -175,7 +175,7 @@ static std::optional<ParentAndBeforeChild> findParentAndBeforeChildForNonSibling
     if (beforeChildContainer->isInline() && child.isInline()) {
         // The before child happens to be a block level box wrapped in an anonymous inline-block in an inline context (e.g. ruby).
         // Let's attach this new child before the anonymous inline-block wrapper.
-        ASSERT(beforeChildContainer->isNonReplacedAtomicInline());
+        ASSERT(beforeChildContainer->isNonReplacedAtomicInlineLevelBox());
         return ParentAndBeforeChild { &parent, beforeChildContainer };
     }
     RELEASE_ASSERT_WITH_SECURITY_IMPLICATION(!beforeChildContainer->isInline() || beforeChildContainer->isRenderTable());

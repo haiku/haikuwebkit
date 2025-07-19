@@ -60,7 +60,6 @@
 #include "absl/base/config.h"
 #include "absl/base/internal/raw_logging.h"
 #include "absl/base/macros.h"
-#include "absl/base/optimization.h"
 #include "absl/container/internal/common.h"
 #include "absl/container/internal/common_policy_traits.h"
 #include "absl/container/internal/compressed_tuple.h"
@@ -225,7 +224,7 @@ struct key_compare_adapter {
 
    public:
     using Base::Base;
-    checked_compare(Compare cmp) : Base(std::move(cmp)) {}  // NOLINT
+    checked_compare(Compare comp) : Base(std::move(comp)) {}  // NOLINT
 
     // Allow converting to Compare for use in key_comp()/value_comp().
     explicit operator Compare() const { return comp(); }
@@ -709,8 +708,6 @@ class btree_node {
   }
 
   // Getter for the parent of this node.
-  // TODO(ezb): assert that the child of the returned node at position
-  // `node_->position()` maps to the current node.
   btree_node *parent() const { return *GetField<0>(); }
   // Getter for whether the node is the root of the tree. The parent of the
   // root of the tree is the leftmost node in the tree which is guaranteed to
@@ -1178,26 +1175,6 @@ class btree_iterator : private btree_iterator_generation_info {
     return distance_slow(other);
   }
 
-  // Advances the iterator by `n`. Values of `n` must not result in going past
-  // the `end` iterator (for a positive `n`) or before the `begin` iterator (for
-  // a negative `n`).
-  btree_iterator &operator+=(difference_type n) {
-    assert_valid_generation(node_);
-    if (n == 0) return *this;
-    if (n < 0) return decrement_n_slow(-n);
-    return increment_n_slow(n);
-  }
-
-  // Moves the iterator by `n` positions backwards. Values of `n` must not
-  // result in going before the `begin` iterator (for a positive `n`) or past
-  // the `end` iterator (for a negative `n`).
-  btree_iterator &operator-=(difference_type n) {
-    assert_valid_generation(node_);
-    if (n == 0) return *this;
-    if (n < 0) return increment_n_slow(-n);
-    return decrement_n_slow(n);
-  }
-
   // Accessors for the key/value the iterator is pointing at.
   reference operator*() const {
     ABSL_HARDENING_ASSERT(node_ != nullptr);
@@ -1300,7 +1277,6 @@ class btree_iterator : private btree_iterator_generation_info {
     increment_slow();
   }
   void increment_slow();
-  btree_iterator &increment_n_slow(difference_type n);
 
   void decrement() {
     assert_valid_generation(node_);
@@ -1310,7 +1286,6 @@ class btree_iterator : private btree_iterator_generation_info {
     decrement_slow();
   }
   void decrement_slow();
-  btree_iterator &decrement_n_slow(difference_type n);
 
   const key_type &key() const {
     return node_->key(static_cast<size_type>(position_));
@@ -2151,128 +2126,50 @@ auto btree_iterator<N, R, P>::distance_slow(const_iterator other) const
 
 template <typename N, typename R, typename P>
 void btree_iterator<N, R, P>::increment_slow() {
-  N* node = node_;
-  int position = position_;
-  if (node->is_leaf()) {
-    assert(position >= node->finish());
-    while (position == node->finish() && !node->is_root()) {
-      assert(node->parent()->child(node->position()) == node);
-      position = node->position();
-      node = node->parent();
+  if (node_->is_leaf()) {
+    assert(position_ >= node_->finish());
+    btree_iterator save(*this);
+    while (position_ == node_->finish() && !node_->is_root()) {
+      assert(node_->parent()->child(node_->position()) == node_);
+      position_ = node_->position();
+      node_ = node_->parent();
     }
     // TODO(ezb): assert we aren't incrementing end() instead of handling.
-    if (position == node->finish()) {
-      return;
+    if (position_ == node_->finish()) {
+      *this = save;
     }
   } else {
-    assert(position < node->finish());
-    node = node->child(static_cast<field_type>(position + 1));
-    while (node->is_internal()) {
-      node = node->start_child();
+    assert(position_ < node_->finish());
+    node_ = node_->child(static_cast<field_type>(position_ + 1));
+    while (node_->is_internal()) {
+      node_ = node_->start_child();
     }
-    position = node->start();
+    position_ = node_->start();
   }
-  *this = {node, position};
 }
 
 template <typename N, typename R, typename P>
 void btree_iterator<N, R, P>::decrement_slow() {
-  N* node = node_;
-  int position = position_;
-  if (node->is_leaf()) {
-    assert(position <= -1);
-    while (position < node->start() && !node->is_root()) {
-      assert(node->parent()->child(node->position()) == node);
-      position = node->position() - 1;
-      node = node->parent();
+  if (node_->is_leaf()) {
+    assert(position_ <= -1);
+    btree_iterator save(*this);
+    while (position_ < node_->start() && !node_->is_root()) {
+      assert(node_->parent()->child(node_->position()) == node_);
+      position_ = node_->position() - 1;
+      node_ = node_->parent();
     }
     // TODO(ezb): assert we aren't decrementing begin() instead of handling.
-    if (position < node->start()) {
-      return;
+    if (position_ < node_->start()) {
+      *this = save;
     }
   } else {
-    assert(position >= node->start());
-    node = node->child(static_cast<field_type>(position));
-    while (node->is_internal()) {
-      node = node->child(node->finish());
+    assert(position_ >= node_->start());
+    node_ = node_->child(static_cast<field_type>(position_));
+    while (node_->is_internal()) {
+      node_ = node_->child(node_->finish());
     }
-    position = node->finish() - 1;
+    position_ = node_->finish() - 1;
   }
-  *this = {node, position};
-}
-
-template <typename N, typename R, typename P>
-btree_iterator<N, R, P> &btree_iterator<N, R, P>::increment_n_slow(
-    difference_type n) {
-  N *node = node_;
-  int position = position_;
-  ABSL_ASSUME(n > 0);
-  while (n > 0) {
-    if (node->is_leaf()) {
-      if (position + n < node->finish()) {
-        position += n;
-        break;
-      } else {
-        n -= node->finish() - position;
-        position = node->finish();
-        btree_iterator save = {node, position};
-        while (position == node->finish() && !node->is_root()) {
-          position = node->position();
-          node = node->parent();
-        }
-        if (position == node->finish()) {
-          ABSL_HARDENING_ASSERT(n == 0);
-          return *this = save;
-        }
-      }
-    } else {
-      --n;
-      assert(position < node->finish());
-      node = node->child(static_cast<field_type>(position + 1));
-      while (node->is_internal()) {
-        node = node->start_child();
-      }
-      position = node->start();
-    }
-  }
-  node_ = node;
-  position_ = position;
-  return *this;
-}
-
-template <typename N, typename R, typename P>
-btree_iterator<N, R, P> &btree_iterator<N, R, P>::decrement_n_slow(
-    difference_type n) {
-  N *node = node_;
-  int position = position_;
-  ABSL_ASSUME(n > 0);
-  while (n > 0) {
-    if (node->is_leaf()) {
-      if (position - n >= node->start()) {
-        position -= n;
-        break;
-      } else {
-        n -= 1 + position - node->start();
-        position = node->start() - 1;
-        while (position < node->start() && !node->is_root()) {
-          position = node->position() - 1;
-          node = node->parent();
-        }
-        ABSL_HARDENING_ASSERT(position >= node->start());
-      }
-    } else {
-      --n;
-      assert(position >= node->start());
-      node = node->child(static_cast<field_type>(position));
-      while (node->is_internal()) {
-        node = node->child(node->finish());
-      }
-      position = node->finish() - 1;
-    }
-  }
-  node_ = node;
-  position_ = position;
-  return *this;
 }
 
 ////

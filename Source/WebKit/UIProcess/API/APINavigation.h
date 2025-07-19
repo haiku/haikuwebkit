@@ -188,6 +188,8 @@ public:
     bool safeBrowsingCheckOngoing();
     void setSafeBrowsingWarning(RefPtr<WebKit::BrowsingWarning>&&);
     RefPtr<WebKit::BrowsingWarning> safeBrowsingWarning();
+    void setSafeBrowsingCheckTimedOut() { m_safeBrowsingCheckTimedOut = true; }
+    bool safeBrowsingCheckTimedOut() { return m_safeBrowsingCheckTimedOut; }
     MonotonicTime requestStart() const { return m_requestStart; }
     void resetRequestStart();
 
@@ -223,6 +225,7 @@ private:
     bool m_isLoadedWithNavigationShared : 1 { false };
     bool m_requestIsFromClientInput : 1 { false };
     bool m_isFromLoadData : 1 { false };
+    bool m_safeBrowsingCheckTimedOut : 1 { false };
     RefPtr<API::WebsitePolicies> m_websitePolicies;
     std::optional<OptionSet<WebCore::AdvancedPrivacyProtections>> m_originatorAdvancedPrivacyProtections;
     MonotonicTime m_requestStart { MonotonicTime::now() };

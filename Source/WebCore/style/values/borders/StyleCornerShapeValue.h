@@ -67,6 +67,9 @@ struct CornerShapeValue {
     bool operator==(const CornerShapeValue&) const = default;
 };
 
+// https://drafts.csswg.org/css-borders-4/#propdef-corner-shape
+using CornerShape = MinimallySerializingSpaceSeparatedRectCorners<CornerShapeValue>;
+
 // MARK: - Conversion
 
 template<> struct CSSValueConversion<CornerShapeValue> { auto operator()(BuilderState&, const CSSValue&) -> CornerShapeValue; };

@@ -2572,19 +2572,19 @@ void WebProcessPool::setPagesControlledByAutomation(bool controlled)
 
 #if ENABLE(ADVANCED_PRIVACY_PROTECTIONS)
 
-void WebProcessPool::observeScriptTelemetryUpdatesIfNeeded()
+void WebProcessPool::observeScriptTrackingPrivacyUpdatesIfNeeded()
 {
-    if (m_scriptTelemetryDataUpdateObserver)
+    if (m_scriptTrackingPrivacyDataUpdateObserver)
         return;
 
-    Ref controller = ScriptTelemetryController::sharedSingleton();
-    m_scriptTelemetryDataUpdateObserver = controller->observeUpdates([weakThis = WeakPtr { *this }] {
+    Ref controller = ScriptTrackingPrivacyController::sharedSingleton();
+    m_scriptTrackingPrivacyDataUpdateObserver = controller->observeUpdates([weakThis = WeakPtr { *this }] {
         RefPtr protectedThis = weakThis.get();
         if (!protectedThis)
             return;
 
-        if (auto data = ScriptTelemetryController::sharedSingleton().cachedListData(); !data.isEmpty())
-            protectedThis->sendToAllProcesses(Messages::WebProcess::UpdateScriptTelemetryFilter(WTFMove(data)));
+        if (auto data = ScriptTrackingPrivacyController::sharedSingleton().cachedListData(); !data.isEmpty())
+            protectedThis->sendToAllProcesses(Messages::WebProcess::UpdateScriptTrackingPrivacyFilter(WTFMove(data)));
     });
     controller->initializeIfNeeded();
 }
@@ -2853,6 +2853,22 @@ String WebProcessPool::platformResourceMonitorRuleListSourceForTesting()
 
 #endif
 
+#endif
+
+#if ENABLE(INITIALIZE_ACCESSIBILITY_ON_DEMAND)
+void WebProcessPool::initializeAccessibilityIfNecessary()
+{
+    RELEASE_LOG(Process, "WebProcessPool::initializeAccessibility");
+    if (m_hasReceivedAXRequestInUIProcess)
+        return;
+
+    for (auto& process : m_processes) {
+        auto handleArray = SandboxExtension::createHandlesForMachLookup({ }, process->auditToken(), SandboxExtension::MachBootstrapOptions::EnableMachBootstrap);
+        process->send(Messages::WebProcess::InitializeAccessibility(WTFMove(handleArray)), 0);
+    }
+
+    m_hasReceivedAXRequestInUIProcess = true;
+}
 #endif
 
 } // namespace WebKit

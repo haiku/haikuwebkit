@@ -40,7 +40,7 @@ RetainPtr<NSMenu> menuForTelephoneNumber(const String& telephoneNumber, NSView *
 NSString *menuItemTitleForTelephoneNumberGroup();
 #endif
 
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
+#if ENABLE(CONTEXT_MENU_IMAGES_ON_MAC)
 void addImageToMenuItem(NSMenuItem*, const WebCore::ContextMenuAction, bool);
 #endif
 

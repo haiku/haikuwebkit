@@ -83,7 +83,6 @@ void RemoteLayerWithRemoteRenderingBackingStore::prepareToDisplay()
 
 void RemoteLayerWithRemoteRenderingBackingStore::clearBackingStore()
 {
-    m_contentsBufferHandle = std::nullopt;
     m_cleared = true;
 }
 
@@ -115,7 +114,7 @@ void RemoteLayerWithRemoteRenderingBackingStore::ensureBackingStore(const Parame
         return;
 
     m_parameters = parameters;
-    m_cleared = true;
+    clearBackingStore();
     if (m_bufferSet) {
         RemoteImageBufferSetConfiguration configuration {
             .logicalSize = size(),
@@ -171,7 +170,8 @@ void RemoteLayerWithRemoteRenderingBackingStore::dump(WTF::TextStream& ts) const
     ts.dumpProperty("cache identifiers"_s, m_bufferCacheIdentifiers);
     ts.dumpProperty("is opaque"_s, isOpaque());
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    ts.dumpProperty("headroom", m_edrHeadroom);
+    ts.dumpProperty("requested-headroom", m_maxRequestedEDRHeadroom);
+    ts.dumpProperty("painted-headroom", m_maxPaintedEDRHeadroom);
 #endif
 }
 

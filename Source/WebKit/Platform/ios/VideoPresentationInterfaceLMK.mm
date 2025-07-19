@@ -28,8 +28,6 @@
 
 #if ENABLE(LINEAR_MEDIA_PLAYER)
 
-#import "LinearMediaKitExtras.h"
-#import "LinearMediaKitSPI.h"
 #import "PlaybackSessionInterfaceLMK.h"
 #import "WKSLinearMediaPlayer.h"
 #import "WKSLinearMediaTypes.h"
@@ -104,8 +102,8 @@ void VideoPresentationInterfaceLMK::setupFullscreen(const WebCore::FloatRect& in
 {
     linearMediaPlayer().contentDimensions = videoDimensions;
     if (!linearMediaPlayer().enteredFromInline && playerViewController()) {
-        playableViewController().wks_automaticallyDockOnFullScreenPresentation = NO;
-        playableViewController().wks_dismissFullScreenOnExitingDocking = NO;
+        playableViewController().automaticallyDockOnFullScreenPresentation = NO;
+        playableViewController().dismissFullScreenOnExitingDocking = NO;
     }
     VideoPresentationInterfaceIOS::setupFullscreen(initialRect, videoDimensions, parentView, mode, allowsPictureInPicturePlayback, standby, blocksReturnToFullscreenFromPictureInPicture);
 }
@@ -175,7 +173,7 @@ void VideoPresentationInterfaceLMK::enterExternalPlayback(CompletionHandler<void
             playbackSessionModel->setSoundStageSize(WebCore::AudioSessionSoundStageSize::Large);
         }
 
-        handler(success, m_playerViewController.get());
+        handler(success, [m_playerViewController viewController]);
     }).get()];
 }
 
@@ -233,7 +231,7 @@ void VideoPresentationInterfaceLMK::didSetVideoReceiverEndpoint()
 
 UIViewController *VideoPresentationInterfaceLMK::playerViewController() const
 {
-    return m_playerViewController.get();
+    return [m_playerViewController viewController];
 }
 
 void VideoPresentationInterfaceLMK::setContentDimensions(const WebCore::FloatSize& contentDimensions)
@@ -287,7 +285,7 @@ void VideoPresentationInterfaceLMK::setupCaptionsLayer(CALayer *, const WebCore:
     [CATransaction commit];
 }
 
-LMPlayableViewController *VideoPresentationInterfaceLMK::playableViewController()
+WKSPlayableViewControllerHost *VideoPresentationInterfaceLMK::playableViewController()
 {
     ensurePlayableViewController();
     return m_playerViewController.get();
@@ -300,7 +298,7 @@ void VideoPresentationInterfaceLMK::ensurePlayableViewController()
 
     ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER);
     m_playerViewController = [linearMediaPlayer() makeViewController];
-    [m_playerViewController view].alpha = 0;
+    [m_playerViewController viewController].view.alpha = 0;
 }
 
 void VideoPresentationInterfaceLMK::swapFullscreenModesWith(VideoPresentationInterfaceIOS& otherInterfaceIOS)

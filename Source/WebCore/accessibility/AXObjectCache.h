@@ -74,7 +74,7 @@ class Scrollbar;
 class ScrollView;
 class VisiblePosition;
 class Widget;
-enum class AXStreamOptions : uint8_t;
+enum class AXStreamOptions : uint16_t;
 
 struct CharacterOffset {
     RefPtr<Node> node;
@@ -135,6 +135,14 @@ struct VisiblePositionIndexRange {
 };
 
 struct AXTreeData {
+    String liveTree;
+    String isolatedTree;
+};
+
+// When this is updated, WebCoreArgumentCoders.serialization.in must be updated as well.
+struct AXDebugInfo {
+    bool isAccessibilityEnabled;
+    bool isAccessibilityThreadInitialized;
     String liveTree;
     String isolatedTree;
 };
@@ -651,7 +659,7 @@ public:
 
     static ASCIILiteral notificationPlatformName(AXNotification);
 
-    AXTreeData treeData(std::optional<OptionSet<AXStreamOptions>> = std::nullopt);
+    WEBCORE_EXPORT AXTreeData treeData(std::optional<OptionSet<AXStreamOptions>> = std::nullopt);
 
     enum class UpdateRelations : bool { No, Yes };
     // Returns the IDs of the objects that relate to the given object with the specified relationship.
@@ -677,6 +685,7 @@ public:
     void willUpdateObjectRegions() { m_geometryManager->willUpdateObjectRegions(); }
     WEBCORE_EXPORT static bool isIsolatedTreeEnabled();
     WEBCORE_EXPORT static void initializeAXThreadIfNeeded();
+    WEBCORE_EXPORT static bool isAXThreadInitialized();
 private:
     static bool clientSupportsIsolatedTree();
     // Propagates the root of the isolated tree back into the Core and WebKit.
@@ -862,7 +871,7 @@ private:
     // clean it up from this map, since existingAXObjectCache fails due to the nullptr m_frame.
     // This scenario seems extremely rare, and may only happen when the webpage is about to be destroyed anyways,
     // so, go with WeakHashMap now until we find a completely safe solution based on document / frame lifecycles.
-    WeakHashMap<Node, Markable<AXID>, WeakPtrImplWithEventTargetData> m_nodeObjectMapping;
+    WeakHashMap<Node, AXID, WeakPtrImplWithEventTargetData> m_nodeObjectMapping;
 
     WeakHashMap<RenderText, LineRange, SingleThreadWeakPtrImpl> m_mostRecentlyPaintedText;
 
@@ -1052,5 +1061,7 @@ bool isRenderHidden(const RenderStyle&);
 bool isVisibilityHidden(const RenderStyle&);
 
 WTF::TextStream& operator<<(WTF::TextStream&, AXNotification);
+
+void dumpAccessibilityTreeToStderr(Document&);
 
 } // namespace WebCore

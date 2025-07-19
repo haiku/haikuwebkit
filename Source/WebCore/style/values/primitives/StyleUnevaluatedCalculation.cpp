@@ -65,7 +65,7 @@ Ref<CalculationValue> UnevaluatedCalculationBase::protectedCalculation() const
 
 bool UnevaluatedCalculationBase::equal(const UnevaluatedCalculationBase& other) const
 {
-    return calc == other.calc;
+    return arePointingToEqualData(calc, other.calc);
 }
 
 } // namespace Style

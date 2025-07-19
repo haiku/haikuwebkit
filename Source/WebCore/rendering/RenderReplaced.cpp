@@ -77,7 +77,7 @@ RenderReplaced::RenderReplaced(Type type, Element& element, RenderStyle&& style,
     , m_intrinsicSize(cDefaultWidth, cDefaultHeight)
 {
     ASSERT(element.isReplaced(this->style()) || type == Type::Image);
-    setReplacedOrAtomicInline(true);
+    setBlockLevelReplacedOrAtomicInline(true);
     ASSERT(isRenderReplaced());
 }
 
@@ -86,7 +86,7 @@ RenderReplaced::RenderReplaced(Type type, Element& element, RenderStyle&& style,
     , m_intrinsicSize(intrinsicSize)
 {
     ASSERT(element.isReplaced(this->style()) || type == Type::Image);
-    setReplacedOrAtomicInline(true);
+    setBlockLevelReplacedOrAtomicInline(true);
     ASSERT(isRenderReplaced());
 }
 
@@ -94,7 +94,7 @@ RenderReplaced::RenderReplaced(Type type, Document& document, RenderStyle&& styl
     : RenderBox(type, document, WTFMove(style), { }, flags)
     , m_intrinsicSize(intrinsicSize)
 {
-    setReplacedOrAtomicInline(true);
+    setBlockLevelReplacedOrAtomicInline(true);
     ASSERT(isRenderReplaced());
 }
 
@@ -458,8 +458,8 @@ void RenderReplaced::computeAspectRatioInformationForRenderBox(RenderBox* conten
     else if (contentRenderer) {
         contentRenderer->computeIntrinsicRatioInformation(intrinsicSize, intrinsicRatio);
 
-        if (style().aspectRatioType() == AspectRatioType::Ratio || (style().aspectRatioType() == AspectRatioType::AutoAndRatio && intrinsicRatio.isEmpty()))
-            intrinsicRatio = FloatSize::narrowPrecision(style().aspectRatioWidth(), style().aspectRatioHeight());
+        if (style().aspectRatio().isRatio() || (style().aspectRatio().isAutoAndRatio() && intrinsicRatio.isEmpty()))
+            intrinsicRatio = FloatSize::narrowPrecision(style().aspectRatioWidth().value, style().aspectRatioHeight().value);
 
         // Handle zoom & vertical writing modes here, as the embedded document doesn't know about them.
         intrinsicSize.scale(style().usedZoom());
@@ -563,8 +563,8 @@ void RenderReplaced::computeIntrinsicRatioInformation(FloatSize& intrinsicSize, 
     intrinsicSize = FloatSize(intrinsicLogicalWidth(), intrinsicLogicalHeight());
 
     if (style().hasAspectRatio()) {
-        intrinsicRatio = FloatSize::narrowPrecision(style().aspectRatioLogicalWidth(), style().aspectRatioLogicalHeight());
-        if (style().aspectRatioType() == AspectRatioType::Ratio || isVideoWithDefaultObjectSize(this))
+        intrinsicRatio = FloatSize::narrowPrecision(style().aspectRatioLogicalWidth().value, style().aspectRatioLogicalHeight().value);
+        if (style().aspectRatio().isRatio() || isVideoWithDefaultObjectSize(this))
             return;
     }
     // Figure out if we need to compute an intrinsic ratio.

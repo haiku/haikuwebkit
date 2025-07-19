@@ -152,6 +152,10 @@ typedef NS_ENUM(NSInteger, _WKImmediateActionType) {
 @class NSImage;
 #endif
 
+#if TARGET_OS_OSX
+@class NSScrollPocket;
+#endif
+
 @protocol WKHistoryDelegatePrivate;
 @protocol _WKAppHighlightDelegate;
 @protocol _WKDiagnosticLoggingDelegate;
@@ -883,6 +887,10 @@ typedef NS_OPTIONS(NSUInteger, _WKWebViewDataType) {
 @property (nonatomic, readonly) NSEdgeInsets _obscuredContentInsets WK_API_AVAILABLE(macos(WK_MAC_TBA));
 @property (nonatomic, setter=_setUsesAutomaticContentInsetBackgroundFill:) BOOL _usesAutomaticContentInsetBackgroundFill WK_API_AVAILABLE(macos(WK_MAC_TBA));
 @property (nonatomic, copy, setter=_setOverrideTopScrollEdgeEffectColor:) NSColor *_overrideTopScrollEdgeEffectColor WK_API_AVAILABLE(macos(WK_MAC_TBA));
+
+#if __MAC_OS_X_VERSION_MIN_REQUIRED >= 260000
+@property (nonatomic, readonly) NSScrollPocket *_topScrollPocket WK_API_AVAILABLE(macos(26.0));
+#endif
 
 - (void)_showWritingTools WK_API_AVAILABLE(macos(15.2));
 

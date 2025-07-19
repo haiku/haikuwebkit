@@ -49,7 +49,7 @@ private:
 
     static ASCIILiteral supplementName();
 
-    RefPtr<WakeLock> m_wakeLock;
+    const RefPtr<WakeLock> m_wakeLock;
     const CheckedRef<Navigator> m_navigator;
 };
 

@@ -34,6 +34,7 @@
 #include "APIUIClient.h"
 #include "InspectorBrowserAgent.h"
 #include "MessageSenderInlines.h"
+#include "PageClient.h"
 #include "WebAutomationSession.h"
 #include "WebFrameProxy.h"
 #include "WebInspectorInterruptDispatcherMessages.h"
@@ -344,6 +345,8 @@ void WebInspectorUIProxy::attach(AttachmentSide side)
     }
 
     platformAttach();
+
+    dispatchDidChangeLocalInspectorAttachment();
 }
 
 void WebInspectorUIProxy::detach()
@@ -360,6 +363,8 @@ void WebInspectorUIProxy::detach()
     protectedInspectorPage()->protectedLegacyMainFrameProcess()->send(Messages::WebInspectorUI::Detached(), m_inspectorPage->webPageIDInMainFrameProcess());
 
     platformDetach();
+
+    dispatchDidChangeLocalInspectorAttachment();
 }
 
 void WebInspectorUIProxy::setAttachedWindowHeight(unsigned height)
@@ -525,6 +530,8 @@ void WebInspectorUIProxy::openLocalInspectorFrontend()
             inspectorPageProcess->send(Messages::WebInspectorUI::Detached(), inspectorPage->webPageIDInMainFrameProcess());
 
         inspectorPageProcess->send(Messages::WebInspectorUI::SetDockingUnavailable(!m_canAttach), inspectorPage->webPageIDInMainFrameProcess());
+
+        dispatchDidChangeLocalInspectorAttachment();
     }
 
     // Notify clients when a local inspector attaches so that it may install delegates prior to the _WKInspector loading its frontend.
@@ -565,6 +572,8 @@ void WebInspectorUIProxy::open()
     }
 
     platformBringToFront();
+
+    dispatchDidChangeLocalInspectorAttachment();
 }
 
 void WebInspectorUIProxy::didClose()
@@ -627,6 +636,8 @@ void WebInspectorUIProxy::closeFrontendPageAndWindow()
     m_canAttach = false;
 
     platformCloseFrontendPageAndWindow();
+
+    dispatchDidChangeLocalInspectorAttachment();
 }
 
 void WebInspectorUIProxy::sendMessageToBackend(const String& message)
@@ -757,27 +768,27 @@ void WebInspectorUIProxy::timelineRecordingChanged(bool active)
     m_isProfilingPage = active;
 }
 
-void WebInspectorUIProxy::setDeveloperPreferenceOverride(WebCore::InspectorClient::DeveloperPreference developerPreference, std::optional<bool> overrideValue)
+void WebInspectorUIProxy::setDeveloperPreferenceOverride(WebCore::InspectorBackendClient::DeveloperPreference developerPreference, std::optional<bool> overrideValue)
 {
     switch (developerPreference) {
-    case InspectorClient::DeveloperPreference::PrivateClickMeasurementDebugModeEnabled:
+    case InspectorBackendClient::DeveloperPreference::PrivateClickMeasurementDebugModeEnabled:
         if (RefPtr inspectedPage = m_inspectedPage.get())
             inspectedPage->protectedWebsiteDataStore()->setPrivateClickMeasurementDebugMode(overrideValue && overrideValue.value());
         return;
 
-    case InspectorClient::DeveloperPreference::ITPDebugModeEnabled:
+    case InspectorBackendClient::DeveloperPreference::ITPDebugModeEnabled:
         if (RefPtr inspectedPage = m_inspectedPage.get())
             inspectedPage->protectedWebsiteDataStore()->setResourceLoadStatisticsDebugMode(overrideValue && overrideValue.value());
         return;
 
-    case InspectorClient::DeveloperPreference::MockCaptureDevicesEnabled:
+    case InspectorBackendClient::DeveloperPreference::MockCaptureDevicesEnabled:
 #if ENABLE(MEDIA_STREAM)
         if (RefPtr inspectedPage = m_inspectedPage.get())
             inspectedPage->setMockCaptureDevicesEnabledOverride(overrideValue);
 #endif // ENABLE(MEDIA_STREAM)
         return;
 
-    case InspectorClient::DeveloperPreference::NeedsSiteSpecificQuirks:
+    case InspectorBackendClient::DeveloperPreference::NeedsSiteSpecificQuirks:
         if (RefPtr inspectedPage = m_inspectedPage.get())
             inspectedPage->protectedPreferences()->setNeedsSiteSpecificQuirksInspectorOverride(overrideValue);
         return;
@@ -863,6 +874,19 @@ RefPtr<WebInspectorUIExtensionControllerProxy> WebInspectorUIProxy::protectedExt
     return extensionController();
 }
 #endif
+
+void WebInspectorUIProxy::dispatchDidChangeLocalInspectorAttachment()
+{
+    RefPtr inspectedPage = m_inspectedPage.get();
+    if (!inspectedPage)
+        return;
+
+    RefPtr pageClient = inspectedPage->pageClient();
+    if (!pageClient)
+        return;
+
+    pageClient->didChangeLocalInspectorAttachment();
+}
 
 // Unsupported configurations can use the stubs provided here.
 

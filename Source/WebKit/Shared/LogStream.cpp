@@ -73,12 +73,17 @@ void LogStream::logOnBehalfOfWebContent(std::span<const uint8_t> logSubsystem, s
     };
 
     bool isValidLogType = logType == OS_LOG_TYPE_DEFAULT || logType == OS_LOG_TYPE_INFO || logType == OS_LOG_TYPE_DEBUG || logType == OS_LOG_TYPE_ERROR || logType == OS_LOG_TYPE_FAULT;
+
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)
-    MESSAGE_CHECK(isNullTerminated(nullTerminatedLogString) && isValidLogType, m_logStreamConnection->connection());
+    RefPtr logConnection = &m_logStreamConnection->connection();
 #else
     RefPtr logConnection = m_logConnection.get();
-    MESSAGE_CHECK(isNullTerminated(nullTerminatedLogString) && isValidLogType, logConnection);
 #endif
+
+    MESSAGE_CHECK(isNullTerminated(nullTerminatedLogString) && isValidLogType, logConnection);
+    MESSAGE_CHECK(logSubsystem.size() <= logSubsystemMaxSize, logConnection);
+    MESSAGE_CHECK(logCategory.size() <= logCategoryMaxSize, logConnection);
+    MESSAGE_CHECK(nullTerminatedLogString.size() <= logStringMaxSize, logConnection);
 
     // os_log_hook on sender side sends a null category and subsystem when logging to OS_LOG_DEFAULT.
     auto osLog = OSObjectPtr<os_log_t>();
@@ -99,7 +104,7 @@ void LogStream::logOnBehalfOfWebContent(std::span<const uint8_t> logSubsystem, s
 
     // Use '%{public}s' in the format string for the preprocessed string from the WebContent process.
     // This should not reveal any redacted information in the string, since it has already been composed in the WebContent process.
-    os_log_with_type(osLogPointer, static_cast<os_log_type_t>(logType), "WP[PID=%d] %{public}s", m_pid, byteCast<char>(nullTerminatedLogString).data());
+    os_log_with_type(osLogPointer, static_cast<os_log_type_t>(logType), "WebContent[%d] %{public}s", m_pid, byteCast<char>(nullTerminatedLogString).data());
 }
 
 #if ENABLE(STREAMING_IPC_IN_LOG_FORWARDING)

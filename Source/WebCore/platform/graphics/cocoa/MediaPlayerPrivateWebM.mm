@@ -97,7 +97,7 @@ MediaPlayerPrivateWebM::MediaPlayerPrivateWebM(MediaPlayer* player)
     , m_appendQueue(WorkQueue::create("MediaPlayerPrivateWebM data parser queue"_s))
     , m_logger(player->mediaPlayerLogger())
     , m_logIdentifier(player->mediaPlayerLogIdentifier())
-    , m_videoLayerManager(makeUnique<VideoLayerManagerObjC>(m_logger, m_logIdentifier))
+    , m_videoLayerManager(makeUniqueRef<VideoLayerManagerObjC>(m_logger, m_logIdentifier))
     , m_listener(WebAVSampleBufferListener::create(*this))
     , m_seekTimer(*this, &MediaPlayerPrivateWebM::seekInternal)
 {
@@ -168,10 +168,8 @@ MediaPlayerPrivateWebM::~MediaPlayerPrivateWebM()
 static HashSet<String>& mimeTypeCache()
 {
     static NeverDestroyed cache = HashSet<String>();
-    if (cache->isEmpty()) {
-        auto types = SourceBufferParserWebM::supportedMIMETypes();
-        cache->add(types.begin(), types.end());
-    }
+    if (cache->isEmpty())
+        cache->addAll(SourceBufferParserWebM::supportedMIMETypes());
     return cache;
 }
 
@@ -309,10 +307,8 @@ void MediaPlayerPrivateWebM::dataReceived(const SharedBuffer& buffer)
         m_contentReceived += size;
     });
 
-    // FIXME: Remove const_cast once https://bugs.webkit.org/show_bug.cgi?id=243370 is fixed.
-    SourceBufferParser::Segment segment(Ref { const_cast<SharedBuffer&>(buffer) });
-    invokeAsync(m_appendQueue, [segment = WTFMove(segment), parser = m_parser]() mutable {
-        return MediaPromise::createAndSettle(parser->appendData(WTFMove(segment)));
+    invokeAsync(m_appendQueue, [buffer = Ref { buffer }, parser = m_parser]() mutable {
+        return MediaPromise::createAndSettle(parser->appendData(WTFMove(buffer)));
     })->whenSettled(RunLoop::protectedMain(), [weakThis = ThreadSafeWeakPtr { *this }](auto&& result) {
         if (RefPtr protectedThis = weakThis.get())
             protectedThis->appendCompleted(!!result);

@@ -63,7 +63,7 @@ static PlatformDisplayID displayID(Widget* widget)
     if (!widget)
         return 0;
 
-    auto* view = widget->root();
+    RefPtr view = widget->root();
     if (!view)
         return 0;
 
@@ -430,20 +430,23 @@ bool screenSupportsExtendedColor(Widget* widget)
 
 bool screenSupportsHighDynamicRange(Widget* widget)
 {
+    return screenSupportsHighDynamicRange(displayID(widget));
+}
+
+bool screenSupportsHighDynamicRange(PlatformDisplayID displayID)
+{
 #if HAVE(SUPPORT_HDR_DISPLAY) && ENABLE(PIXEL_FORMAT_RGBA16F)
     if (screenContentsFormatsForTesting().contains(ContentsFormat::RGBA16F))
         return true;
 #endif
 
-    if (auto data = screenProperties(widget))
+    if (auto data = screenData(displayID))
         return data->screenSupportsHighDynamicRange;
 
     ASSERT(hasProcessPrivilege(ProcessPrivilege::CanCommunicateWithWindowServer));
 #if USE(MEDIATOOLBOX)
-    if (PAL::isMediaToolboxFrameworkAvailable() && PAL::canLoad_MediaToolbox_MTShouldPlayHDRVideo()) {
-        auto displayID = WebCore::displayID(screen(widget));
+    if (PAL::isMediaToolboxFrameworkAvailable() && PAL::canLoad_MediaToolbox_MTShouldPlayHDRVideo())
         return PAL::softLink_MediaToolbox_MTShouldPlayHDRVideo((__bridge CFArrayRef)@[ @(displayID) ]);
-    }
 #endif
     return false;
 }
@@ -502,11 +505,9 @@ NSPoint flipScreenPoint(const NSPoint& screenPoint, NSScreen *screen)
 FloatRect safeScreenFrame(NSScreen* screen)
 {
     FloatRect frame = screen.frame;
-#if HAVE(NSSCREEN_SAFE_AREA)
     auto insets = screen.safeAreaInsets;
     frame.contract(insets.left + insets.right, insets.top + insets.bottom);
     frame.move(insets.left, insets.bottom);
-#endif
     return frame;
 }
 

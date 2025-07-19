@@ -64,7 +64,7 @@ DECLARE_SYSTEM_HEADER
 
 #include <Network/Network.h>
 
-#if HAVE(PRECONNECT_PING) && defined(__OBJC__)
+#if defined(__OBJC__)
 
 @interface _NSHTTPConnectionInfo : NSObject
 - (void)sendPingWithReceiveHandler:(void (^)(NSError * _Nullable error, NSTimeInterval interval))pongHandler;
@@ -75,7 +75,7 @@ DECLARE_SYSTEM_HEADER
 - (void)getUnderlyingHTTPConnectionInfoWithCompletionHandler:(void (^)(_NSHTTPConnectionInfo *connectionInfo))completionHandler;
 @end
 
-#endif // HAVE(PRECONNECT_PING) && defined(__OBJC__)
+#endif // defined(__OBJC__)
 
 #if HAVE(LOGGING_PRIVACY_LEVEL)
 typedef enum {

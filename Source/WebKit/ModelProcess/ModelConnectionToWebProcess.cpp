@@ -233,6 +233,11 @@ bool ModelConnectionToWebProcess::isAlwaysOnLoggingAllowed() const
     return m_sessionID.isAlwaysOnLoggingAllowed() || m_sharedPreferencesForWebProcess.allowPrivacySensitiveOperationsInNonPersistentDataStores;
 }
 
+std::optional<int> ModelConnectionToWebProcess::debugEntityMemoryLimit() const
+{
+    return m_modelProcess->debugEntityMemoryLimit();
+}
+
 } // namespace WebKit
 
 #undef MESSAGE_CHECK

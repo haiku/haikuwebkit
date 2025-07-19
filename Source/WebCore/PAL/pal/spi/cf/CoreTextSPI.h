@@ -242,9 +242,7 @@ CGFloat CTFontGetSbixImageSizeForGlyphAndContentsScale(CTFontRef, const CGGlyph,
 
 CTFontDescriptorOptions CTFontDescriptorGetOptions(CTFontDescriptorRef);
 
-#if HAVE(CTFONT_COPYCOLORGLYPHCOVERAGE)
 CFBitVectorRef CTFontCopyColorGlyphCoverage(CTFontRef);
-#endif
 
 #if HAVE(CTFONTMANAGER_CREATEMEMORYSAFEFONTDESCRIPTORFROMDATA)
 CTFontDescriptorRef CTFontManagerCreateMemorySafeFontDescriptorFromData(CFDataRef);

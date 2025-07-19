@@ -1,0 +1,12 @@
+
+FAIL SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.orderX (remove) assert_equals: initial before expected 3 but got 0
+FAIL SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.orderX (invalid value) assert_equals: initial before expected 3 but got 0
+FAIL SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.orderY (remove) assert_equals: initial before expected 3 but got 0
+FAIL SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.orderY (invalid value) assert_equals: initial before expected 3 but got 0
+PASS SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.targetX (remove)
+PASS SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.targetX (invalid value)
+PASS SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.targetY (remove)
+PASS SVGAnimatedInteger, initial values, SVGFEConvolveMatrixElement.prototype.targetY (invalid value)
+FAIL SVGAnimatedInteger, initial values, SVGFETurbulenceElement.prototype.numOctaves (remove) assert_equals: initial after expected 1 but got 0
+FAIL SVGAnimatedInteger, initial values, SVGFETurbulenceElement.prototype.numOctaves (invalid value) assert_equals: initial after expected 1 but got 0
+

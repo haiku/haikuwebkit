@@ -239,7 +239,7 @@ public:
     void dumpDifferences(TextStream&, const StyleShadowSVGData&) const;
 #endif
 
-    FixedVector<Style::BoxShadow> shadow;
+    Style::BoxShadows shadow;
 
 private:
     StyleShadowSVGData();

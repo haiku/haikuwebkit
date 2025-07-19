@@ -403,6 +403,8 @@ Color RenderThemeMac::platformAutocorrectionReplacementMarkerColor(OptionSet<Sty
     return RenderThemeCocoa::platformAutocorrectionReplacementMarkerColor(options);
 }
 
+#if !ENABLE(FORM_CONTROL_REFRESH)
+
 static Color activeButtonTextColor()
 {
     // FIXME: <rdar://problem/77572622> There is no single corresponding NSColor for ActiveButtonText.
@@ -421,6 +423,8 @@ static Color activeButtonTextColor()
 
     return semanticColorFromNSColor(activeButtonTextColor);
 }
+
+#endif
 
 static SRGBA<uint8_t> menuBackgroundColor()
 {
@@ -654,9 +658,17 @@ Color RenderThemeMac::systemColor(CSSValueID cssValueID, OptionSet<StyleColorOpt
                 return semanticColorFromNSColor(color);
         }
 
+        auto textColorForActiveButton = [&] {
+#if ENABLE(FORM_CONTROL_REFRESH)
+            return buttonTextColor(options, true);
+#else
+            return activeButtonTextColor();
+#endif
+        };
+
         switch (cssValueID) {
         case CSSValueActivebuttontext:
-            return activeButtonTextColor();
+            return textColorForActiveButton();
 
         case CSSValueButtonface:
         case CSSValueThreedface:
@@ -1345,7 +1357,7 @@ void RenderThemeMac::adjustMenuListStyle(RenderStyle& style, const Element* elem
     // system font for the control size instead.
     setFontFromControlSize(style, controlSize);
 
-    style.setBoxShadow({ });
+    style.setBoxShadow(CSS::Keyword::None { });
 }
 
 static Style::PaddingEdge toTruncatedPaddingEdge(auto value)
@@ -1405,7 +1417,9 @@ void RenderThemeMac::adjustMenuListButtonStyle(RenderStyle& style, const Element
     float fontScale = style.computedFontSize() / baseFontSize;
 
     style.resetPadding();
-    style.setBorderRadius(IntSize(int(baseBorderRadius + fontScale - 1), int(baseBorderRadius + fontScale - 1))); // FIXME: Round up?
+
+    auto radius = Style::LengthPercentage<CSS::Nonnegative>::Dimension { std::trunc(baseBorderRadius + fontScale - 1) }; // FIXME: Round up?
+    style.setBorderRadius({ radius, radius });
 
     style.setMinHeight(18_css_px);
 
@@ -1426,13 +1440,13 @@ int RenderThemeMac::minimumMenuListSize(const RenderStyle& style) const
 void RenderThemeMac::adjustSliderTrackStyle(RenderStyle& style, const Element* element) const
 {
     RenderThemeCocoa::adjustSliderTrackStyle(style, element);
-    style.setBoxShadow({ });
+    style.setBoxShadow(CSS::Keyword::None { });
 }
 
 void RenderThemeMac::adjustSliderThumbStyle(RenderStyle& style, const Element* element) const
 {
     RenderThemeCocoa::adjustSliderThumbStyle(style, element);
-    style.setBoxShadow({ });
+    style.setBoxShadow(CSS::Keyword::None { });
 }
 
 std::span<const IntSize, 4> RenderThemeMac::searchFieldSizes() const
@@ -1485,7 +1499,7 @@ void RenderThemeMac::adjustSearchFieldStyle(RenderStyle& style, const Element* e
     // Override padding size to match AppKit text positioning.
     style.setPaddingBox({ toTruncatedPaddingEdge(1 * style.usedZoom()) });
 
-    style.setBoxShadow({ });
+    style.setBoxShadow(CSS::Keyword::None { });
 }
 
 std::span<const IntSize, 4> RenderThemeMac::cancelButtonSizes() const
@@ -1508,7 +1522,7 @@ void RenderThemeMac::adjustSearchFieldCancelButtonStyle(RenderStyle& style, cons
     IntSize size = sizeForSystemFont(style, cancelButtonSizes());
     style.setWidth(Style::PreferredSize::Fixed { static_cast<float>(size.width()) });
     style.setHeight(Style::PreferredSize::Fixed { static_cast<float>(size.height()) });
-    style.setBoxShadow({ });
+    style.setBoxShadow(CSS::Keyword::None { });
 }
 
 constexpr int resultsArrowWidth = 5;
@@ -1539,7 +1553,7 @@ void RenderThemeMac::adjustSearchFieldDecorationPartStyle(RenderStyle& style, co
         heightOffset = emptyResultsOffset;
     style.setWidth(Style::PreferredSize::Fixed { static_cast<float>(size.width() - widthOffset) });
     style.setHeight(Style::PreferredSize::Fixed { static_cast<float>(size.height() - heightOffset) });
-    style.setBoxShadow({ });
+    style.setBoxShadow(CSS::Keyword::None { });
 }
 
 void RenderThemeMac::adjustSearchFieldResultsDecorationPartStyle(RenderStyle& style, const Element* element) const
@@ -1556,7 +1570,7 @@ void RenderThemeMac::adjustSearchFieldResultsDecorationPartStyle(RenderStyle& st
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
     style.setWidth(Style::PreferredSize::Fixed { static_cast<float>(size.width()) });
     style.setHeight(Style::PreferredSize::Fixed { static_cast<float>(size.height()) });
-    style.setBoxShadow({ });
+    style.setBoxShadow(CSS::Keyword::None { });
 }
 
 void RenderThemeMac::adjustSearchFieldResultsButtonStyle(RenderStyle& style, const Element* element) const
@@ -1573,7 +1587,7 @@ void RenderThemeMac::adjustSearchFieldResultsButtonStyle(RenderStyle& style, con
     IntSize size = sizeForSystemFont(style, resultsButtonSizes());
     style.setWidth(Style::PreferredSize::Fixed { static_cast<float>(size.width() + resultsArrowWidth) });
     style.setHeight(Style::PreferredSize::Fixed { static_cast<float>(size.height()) });
-    style.setBoxShadow({ });
+    style.setBoxShadow(CSS::Keyword::None { });
 }
 
 IntSize RenderThemeMac::sliderTickSize() const
@@ -1827,7 +1841,8 @@ static void paintAttachmentIconBackground(const RenderAttachment& attachment, Gr
     if (paintBorder)
         backgroundRect.inflate(-attachmentIconSelectionBorderThickness);
 
-    Color backgroundColor = attachment.style().colorByApplyingColorFilter(attachmentIconBackgroundColor);
+    CheckedRef style = attachment.style();
+    Color backgroundColor = style->colorByApplyingColorFilter(attachmentIconBackgroundColor);
     context.fillRoundedRect(FloatRoundedRect(backgroundRect, FloatRoundedRect::Radii(attachmentIconBackgroundRadius)), backgroundColor);
 
     if (paintBorder) {
@@ -1838,7 +1853,7 @@ static void paintAttachmentIconBackground(const RenderAttachment& attachment, Gr
         Path borderPath;
         borderPath.addRoundedRect(borderRect, iconBackgroundRadiusSize);
 
-        Color borderColor = attachment.style().colorByApplyingColorFilter(attachmentIconBorderColor);
+        Color borderColor = style->colorByApplyingColorFilter(attachmentIconBorderColor);
         context.setStrokeColor(borderColor);
         context.setStrokeThickness(attachmentIconSelectionBorderThickness);
         context.strokePath(borderPath);
@@ -1850,8 +1865,9 @@ static void paintAttachmentIcon(const RenderAttachment& attachment, GraphicsCont
     if (context.paintingDisabled())
         return;
 
-    attachment.attachmentElement().requestIconIfNeededWithSize(layout.iconRect.size());
-    auto icon = attachment.attachmentElement().icon();
+    Ref attachmentElement = attachment.attachmentElement();
+    attachmentElement->requestIconIfNeededWithSize(layout.iconRect.size());
+    auto icon = attachmentElement->icon();
     if (!icon)
         return;
 
@@ -1872,7 +1888,7 @@ static std::pair<RefPtr<Image>, float> createAttachmentPlaceholderImage(float de
 
 static void paintAttachmentIconPlaceholder(const RenderAttachment& attachment, GraphicsContext& context, AttachmentLayout& layout)
 {
-    auto [placeholderImage, imageScale] = createAttachmentPlaceholderImage(attachment.document().deviceScaleFactor(), layout);
+    auto [placeholderImage, imageScale] = createAttachmentPlaceholderImage(attachment.protectedDocument()->deviceScaleFactor(), layout);
 
     // Center the placeholder image where the icon would usually be.
     FloatRect placeholderRect(0, 0, placeholderImage->width() / imageScale, placeholderImage->height() / imageScale);
@@ -1895,12 +1911,12 @@ static void paintAttachmentTitleBackground(const RenderAttachment& attachment, G
     });
 
     Color backgroundColor;
-    if (attachment.frame().selection().isFocusedAndActive())
+    if (attachment.frame().checkedSelection()->isFocusedAndActive())
         backgroundColor = colorFromCocoaColor([NSColor selectedContentBackgroundColor]);
     else
         backgroundColor = attachmentTitleInactiveBackgroundColor;
 
-    backgroundColor = attachment.style().colorByApplyingColorFilter(backgroundColor);
+    backgroundColor = attachment.checkedStyle()->colorByApplyingColorFilter(backgroundColor);
     context.setFillColor(backgroundColor);
 
     Path backgroundPath = PathUtilities::pathWithShrinkWrappedRects(backgroundRects, attachmentTitleBackgroundRadius);
@@ -1927,7 +1943,7 @@ static void paintAttachmentProgress(const RenderAttachment& attachment, Graphics
 
         FloatRect progressRect = progressBounds;
         progressRect.setWidth(progressRect.width() * progress);
-        progressRect = encloseRectToDevicePixels(progressRect, attachment.document().deviceScaleFactor());
+        progressRect = encloseRectToDevicePixels(progressRect, attachment.protectedDocument()->deviceScaleFactor());
 
         context.fillRect(progressRect, attachmentProgressBarFillColor);
     }
@@ -1945,7 +1961,7 @@ static void paintAttachmentPlaceholderBorder(const RenderAttachment& attachment,
     Path borderPath;
     borderPath.addRoundedRect(layout.attachmentRect, FloatSize(attachmentPlaceholderBorderRadius, attachmentPlaceholderBorderRadius));
 
-    Color placeholderBorderColor = attachment.style().colorByApplyingColorFilter(attachmentPlaceholderBorderColor);
+    Color placeholderBorderColor = attachment.checkedStyle()->colorByApplyingColorFilter(attachmentPlaceholderBorderColor);
     context.setStrokeColor(placeholderBorderColor);
     context.setStrokeThickness(attachmentPlaceholderBorderWidth);
     context.setStrokeStyle(StrokeStyle::DashedStroke);
@@ -1962,7 +1978,7 @@ bool RenderThemeMac::paintAttachment(const RenderObject& renderer, const PaintIn
     if (attachment->paintWideLayoutAttachmentOnly(paintInfo, paintRect.location()))
         return true;
 
-    HTMLAttachmentElement& element = attachment->attachmentElement();
+    Ref element = attachment->attachmentElement();
 
     auto layoutStyle = AttachmentLayoutStyle::NonSelected;
     if (attachment->selectionState() != RenderObject::HighlightState::None && paintInfo.phase != PaintPhase::Selection)
@@ -1970,7 +1986,7 @@ bool RenderThemeMac::paintAttachment(const RenderObject& renderer, const PaintIn
 
     AttachmentLayout layout(*attachment, layoutStyle);
 
-    auto& progressString = element.attributeWithoutSynchronization(progressAttr);
+    auto& progressString = element->attributeWithoutSynchronization(progressAttr);
     bool validProgress = false;
     float progress = 0;
     if (!progressString.isEmpty())
@@ -1980,7 +1996,7 @@ bool RenderThemeMac::paintAttachment(const RenderObject& renderer, const PaintIn
     GraphicsContextStateSaver saver(context);
 
     context.translate(toFloatSize(paintRect.location()));
-    context.translate(floorSizeToDevicePixels({ LayoutUnit((paintRect.width() - attachmentIconBackgroundSize) / 2), 0 }, renderer.document().deviceScaleFactor()));
+    context.translate(floorSizeToDevicePixels({ LayoutUnit((paintRect.width() - attachmentIconBackgroundSize) / 2), 0 }, renderer.protectedDocument()->deviceScaleFactor()));
 
     bool usePlaceholder = validProgress && !progress;
 

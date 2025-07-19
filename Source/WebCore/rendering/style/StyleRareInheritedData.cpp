@@ -43,11 +43,12 @@ struct GreaterThanOrSameSizeAsStyleRareInheritedData : public RefCounted<Greater
     void* ownPtrs[1];
     AtomString atomStrings[5];
     void* refPtrs[3];
-    Length lengths[2];
     float secondFloat;
-    TextUnderlineOffset offset;
-    TextEdge lineFitEdge;
-    BlockEllipsis blockEllipsis;
+    Style::TextEmphasisStyle textEmphasisStyle;
+    Style::TextIndent textIndent;
+    Style::TextUnderlineOffset offset;
+    TextEdge textEdges[2];
+    Length length;
     void* customPropertyDataRefs[1];
     unsigned bitfields[7];
     short pagedMediaShorts[2];
@@ -68,6 +69,8 @@ struct GreaterThanOrSameSizeAsStyleRareInheritedData : public RefCounted<Greater
     ListStyleType listStyleType;
 
     Markable<ScrollbarColor> scrollbarColor;
+
+    BlockEllipsis blockEllipsis;
 };
 
 static_assert(sizeof(StyleRareInheritedData) <= sizeof(GreaterThanOrSameSizeAsStyleRareInheritedData), "StyleRareInheritedData should bit pack");
@@ -87,8 +90,10 @@ StyleRareInheritedData::StyleRareInheritedData()
     , visitedLinkCaretColor(Style::Color::currentColor())
     , accentColor(Style::Color::currentColor())
     , dynamicRangeLimit(RenderStyle::initialDynamicRangeLimit())
-    , indent(RenderStyle::initialTextIndent())
+    , textShadow(RenderStyle::initialTextShadow())
     , usedZoom(RenderStyle::initialZoom())
+    , textEmphasisStyle(RenderStyle::initialTextEmphasisStyle())
+    , textIndent(RenderStyle::initialTextIndent())
     , textUnderlineOffset(RenderStyle::initialTextUnderlineOffset())
     , textBoxEdge(RenderStyle::initialTextBoxEdge())
     , lineFitEdge(RenderStyle::initialLineFitEdge())
@@ -107,11 +112,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , userSelect(static_cast<unsigned>(RenderStyle::initialUserSelect()))
     , hyphens(static_cast<unsigned>(Hyphens::Manual))
     , textCombine(static_cast<unsigned>(RenderStyle::initialTextCombine()))
-    , textEmphasisFill(static_cast<unsigned>(TextEmphasisFill::Filled))
-    , textEmphasisMark(static_cast<unsigned>(TextEmphasisMark::None))
     , textEmphasisPosition(static_cast<unsigned>(RenderStyle::initialTextEmphasisPosition().toRaw()))
-    , textIndentLine(static_cast<unsigned>(RenderStyle::initialTextIndentLine()))
-    , textIndentType(static_cast<unsigned>(RenderStyle::initialTextIndentType()))
     , textUnderlinePosition(static_cast<unsigned>(RenderStyle::initialTextUnderlinePosition().toRaw()))
     , lineBoxContain(static_cast<unsigned>(RenderStyle::initialLineBoxContain().toRaw()))
     , imageOrientation(RenderStyle::initialImageOrientation())
@@ -124,6 +125,7 @@ StyleRareInheritedData::StyleRareInheritedData()
     , textAlignLast(static_cast<unsigned>(RenderStyle::initialTextAlignLast()))
     , textJustify(static_cast<unsigned>(RenderStyle::initialTextJustify()))
     , textDecorationSkipInk(static_cast<unsigned>(RenderStyle::initialTextDecorationSkipInk()))
+    , mathStyle(static_cast<unsigned>(RenderStyle::initialMathStyle()))
     , rubyPosition(static_cast<unsigned>(RenderStyle::initialRubyPosition()))
     , rubyAlign(static_cast<unsigned>(RenderStyle::initialRubyAlign()))
     , rubyOverhang(static_cast<unsigned>(RenderStyle::initialRubyOverhang()))
@@ -137,7 +139,6 @@ StyleRareInheritedData::StyleRareInheritedData()
     , joinStyle(static_cast<unsigned>(RenderStyle::initialJoinStyle()))
     , hasSetStrokeWidth(false)
     , hasSetStrokeColor(false)
-    , mathStyle(static_cast<unsigned>(RenderStyle::initialMathStyle()))
     , hasAutoCaretColor(true)
     , hasVisitedLinkAutoCaretColor(true)
     , hasAutoAccentColor(true)
@@ -145,7 +146,9 @@ StyleRareInheritedData::StyleRareInheritedData()
     , isInSubtreeWithBlendMode(false)
     , isForceHidden(false)
     , usedContentVisibility(static_cast<unsigned>(ContentVisibility::Visible))
+    , autoRevealsWhenFound(false)
     , insideDefaultButton(false)
+    , insideDisabledSubmitButton(false)
 #if HAVE(CORE_MATERIAL)
     , usedAppleVisualEffectForSubtree(static_cast<unsigned>(AppleVisualEffect::None))
 #endif
@@ -187,8 +190,9 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , dynamicRangeLimit(o.dynamicRangeLimit)
     , textShadow(o.textShadow)
     , cursorData(o.cursorData)
-    , indent(o.indent)
     , usedZoom(o.usedZoom)
+    , textEmphasisStyle(o.textEmphasisStyle)
+    , textIndent(o.textIndent)
     , textUnderlineOffset(o.textUnderlineOffset)
     , textBoxEdge(o.textBoxEdge)
     , lineFitEdge(o.lineFitEdge)
@@ -208,11 +212,7 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , speakAs(o.speakAs)
     , hyphens(o.hyphens)
     , textCombine(o.textCombine)
-    , textEmphasisFill(o.textEmphasisFill)
-    , textEmphasisMark(o.textEmphasisMark)
     , textEmphasisPosition(o.textEmphasisPosition)
-    , textIndentLine(o.textIndentLine)
-    , textIndentType(o.textIndentType)
     , textUnderlinePosition(o.textUnderlinePosition)
     , lineBoxContain(o.lineBoxContain)
     , imageOrientation(o.imageOrientation)
@@ -225,6 +225,7 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , textAlignLast(o.textAlignLast)
     , textJustify(o.textJustify)
     , textDecorationSkipInk(o.textDecorationSkipInk)
+    , mathStyle(o.mathStyle)
     , rubyPosition(o.rubyPosition)
     , rubyAlign(o.rubyAlign)
     , rubyOverhang(o.rubyOverhang)
@@ -238,7 +239,6 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , joinStyle(o.joinStyle)
     , hasSetStrokeWidth(o.hasSetStrokeWidth)
     , hasSetStrokeColor(o.hasSetStrokeColor)
-    , mathStyle(o.mathStyle)
     , hasAutoCaretColor(o.hasAutoCaretColor)
     , hasVisitedLinkAutoCaretColor(o.hasVisitedLinkAutoCaretColor)
     , hasAutoAccentColor(o.hasAutoAccentColor)
@@ -246,7 +246,9 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
     , isInSubtreeWithBlendMode(o.isInSubtreeWithBlendMode)
     , isForceHidden(o.isForceHidden)
     , usedContentVisibility(o.usedContentVisibility)
+    , autoRevealsWhenFound(o.autoRevealsWhenFound)
     , insideDefaultButton(o.insideDefaultButton)
+    , insideDisabledSubmitButton(o.insideDisabledSubmitButton)
 #if HAVE(CORE_MATERIAL)
     , usedAppleVisualEffectForSubtree(o.usedAppleVisualEffectForSubtree)
 #endif
@@ -262,7 +264,6 @@ inline StyleRareInheritedData::StyleRareInheritedData(const StyleRareInheritedDa
 #if ENABLE(DARK_MODE_CSS)
     , colorScheme(o.colorScheme)
 #endif
-    , textEmphasisCustomMark(o.textEmphasisCustomMark)
     , quotes(o.quotes)
     , appleColorFilter(o.appleColorFilter)
     , lineGrid(o.lineGrid)
@@ -305,8 +306,9 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
 #endif
         && textShadow == o.textShadow
         && arePointingToEqualData(cursorData, o.cursorData)
-        && indent == o.indent
         && usedZoom == o.usedZoom
+        && textEmphasisStyle == o.textEmphasisStyle
+        && textIndent == o.textIndent
         && textUnderlineOffset == o.textUnderlineOffset
         && textBoxEdge == o.textBoxEdge
         && lineFitEdge == o.lineFitEdge
@@ -338,17 +340,12 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && colorScheme == o.colorScheme
 #endif
         && textCombine == o.textCombine
-        && textEmphasisFill == o.textEmphasisFill
-        && textEmphasisMark == o.textEmphasisMark
         && textEmphasisPosition == o.textEmphasisPosition
-        && textIndentLine == o.textIndentLine
-        && textIndentType == o.textIndentType
         && lineBoxContain == o.lineBoxContain
 #if PLATFORM(IOS_FAMILY)
         && touchCalloutEnabled == o.touchCalloutEnabled
 #endif
         && hyphenationString == o.hyphenationString
-        && textEmphasisCustomMark == o.textEmphasisCustomMark
         && arePointingToEqualData(quotes, o.quotes)
         && appleColorFilter == o.appleColorFilter
         && tabSize == o.tabSize
@@ -377,11 +374,13 @@ bool StyleRareInheritedData::operator==(const StyleRareInheritedData& o) const
         && hasAutoAccentColor == o.hasAutoAccentColor
         && isInSubtreeWithBlendMode == o.isInSubtreeWithBlendMode
         && isForceHidden == o.isForceHidden
+        && autoRevealsWhenFound == o.autoRevealsWhenFound
         && usedTouchActions == o.usedTouchActions
         && eventListenerRegionTypes == o.eventListenerRegionTypes
         && effectiveInert == o.effectiveInert
         && usedContentVisibility == o.usedContentVisibility
         && insideDefaultButton == o.insideDefaultButton
+        && insideDisabledSubmitButton == o.insideDisabledSubmitButton
 #if HAVE(CORE_MATERIAL)
         && usedAppleVisualEffectForSubtree == o.usedAppleVisualEffectForSubtree
 #endif
@@ -425,9 +424,10 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
 
     LOG_IF_DIFFERENT(cursorData);
 
-    LOG_IF_DIFFERENT(indent);
     LOG_IF_DIFFERENT(usedZoom);
 
+    LOG_IF_DIFFERENT(textEmphasisStyle);
+    LOG_IF_DIFFERENT(textIndent);
     LOG_IF_DIFFERENT(textUnderlineOffset);
 
     LOG_IF_DIFFERENT(textBoxEdge);
@@ -455,11 +455,7 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
 
     LOG_IF_DIFFERENT_WITH_CAST(Hyphens, hyphens);
     LOG_IF_DIFFERENT_WITH_CAST(TextCombine, textCombine);
-    LOG_IF_DIFFERENT_WITH_CAST(TextEmphasisFill, textEmphasisFill);
-    LOG_IF_DIFFERENT_WITH_CAST(TextEmphasisMark, textEmphasisMark);
     LOG_IF_DIFFERENT_WITH_CAST(TextEmphasisPosition, textEmphasisPosition);
-    LOG_IF_DIFFERENT_WITH_CAST(TextIndentLine, textIndentLine);
-    LOG_IF_DIFFERENT_WITH_CAST(TextIndentType, textIndentType);
     LOG_IF_DIFFERENT_WITH_CAST(TextUnderlinePosition, textUnderlinePosition);
 
     LOG_RAW_OPTIONSET_IF_DIFFERENT(Style::LineBoxContain, lineBoxContain);
@@ -504,10 +500,12 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT_WITH_CAST(bool, effectiveInert);
     LOG_IF_DIFFERENT_WITH_CAST(bool, isInSubtreeWithBlendMode);
     LOG_IF_DIFFERENT_WITH_CAST(bool, isForceHidden);
+    LOG_IF_DIFFERENT_WITH_CAST(bool, autoRevealsWhenFound);
 
     LOG_IF_DIFFERENT_WITH_CAST(ContentVisibility, usedContentVisibility);
 
     LOG_IF_DIFFERENT_WITH_CAST(bool, insideDefaultButton);
+    LOG_IF_DIFFERENT_WITH_CAST(bool, insideDisabledSubmitButton);
 
 #if HAVE(CORE_MATERIAL)
     LOG_IF_DIFFERENT_WITH_CAST(AppleVisualEffect, usedAppleVisualEffectForSubtree);
@@ -529,7 +527,6 @@ void StyleRareInheritedData::dumpDifferences(TextStream& ts, const StyleRareInhe
     LOG_IF_DIFFERENT(colorScheme);
 #endif
 
-    LOG_IF_DIFFERENT(textEmphasisCustomMark);
     LOG_IF_DIFFERENT(quotes);
 
     appleColorFilter->dumpDifferences(ts, other.appleColorFilter);

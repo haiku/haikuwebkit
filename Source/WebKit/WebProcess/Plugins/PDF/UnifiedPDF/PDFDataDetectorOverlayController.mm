@@ -71,7 +71,7 @@ RefPtr<UnifiedPDFPlugin> PDFDataDetectorOverlayController::protectedPlugin() con
     return m_plugin.get();
 }
 
-PageOverlay& PDFDataDetectorOverlayController::installOverlayIfNeeded()
+Ref<PageOverlay> PDFDataDetectorOverlayController::installProtectedOverlayIfNeeded()
 {
     if (m_overlay)
         return *m_overlay;
@@ -157,7 +157,7 @@ bool PDFDataDetectorOverlayController::handleMouseEvent(const WebMouseEvent& eve
     if (auto iterator = m_pdfDataDetectorItemsWithHighlightsMap.find(pageIndex); iterator != m_pdfDataDetectorItemsWithHighlightsMap.end()) {
         for (auto& [dataDetectorItem, coreHighlight] : iterator->value) {
             Boolean isOverButton = NO;
-            if (!PAL::softLink_DataDetectors_DDHighlightPointIsOnHighlight(coreHighlight->highlight(), mousePositionInMainFrameContentsSpace, &isOverButton))
+            if (!PAL::softLink_DataDetectors_DDHighlightPointIsOnHighlight(coreHighlight->protectedHighlight().get(), mousePositionInMainFrameContentsSpace, &isOverButton))
                 continue;
 
             mouseIsOverActiveHighlightButton = isOverButton;
@@ -175,7 +175,7 @@ bool PDFDataDetectorOverlayController::handleMouseEvent(const WebMouseEvent& eve
             previousActiveHighlight->fadeOut();
 
         if (activeHighlight) {
-            installOverlayIfNeeded().protectedLayer()->addChild(activeHighlight->layer());
+            installProtectedOverlayIfNeeded()->protectedLayer()->addChild(activeHighlight->layer());
             activeHighlight->fadeIn();
         }
 

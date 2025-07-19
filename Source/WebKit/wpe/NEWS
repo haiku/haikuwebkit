@@ -1,4 +1,20 @@
 =================
+WPE WebKit 2.49.3
+=================
+
+What's new in WPE WebKit 2.49.3?
+
+  - Add new API to get the theme color of a WebKitWebView.
+  - Add new WPEPlatform API to allow providing rendering synchronization information.
+  - Add support for gamepad analog button events.
+  - Notify automation session on abnormal disconnections.
+  - Fix a crash by ensuring SkiaRecordingResult is destroyed on the main thread.
+  - Fix the build on s390x.
+  - Fix the build with USE_EXTERNAL_HOLEPUNCH=ON.
+  - Fix the build with USE_LIBWEBRTC=ON.
+  - Fix several crashes and rendering issues.
+
+=================
 WPE WebKit 2.49.2
 =================
 

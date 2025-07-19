@@ -168,7 +168,7 @@ protected:
     void insertParagraphSeparatorAtPosition(const Position&, bool useDefaultParagraphElement = false, bool pasteBlockqutoeIntoUnquotedArea = false);
     void insertParagraphSeparator(bool useDefaultParagraphElement = false, bool pasteBlockqutoeIntoUnquotedArea = false);
     void insertLineBreak();
-    void insertTextIntoNode(Text&, unsigned offset, const String& text);
+    void insertTextIntoNode(Text&, unsigned offset, const String& text, AllowPasswordEcho = AllowPasswordEcho::Yes);
     void mergeIdenticalElements(Element&, Element&);
     void rebalanceWhitespace();
     void rebalanceWhitespaceAt(const Position&);
@@ -186,7 +186,7 @@ protected:
     void moveRemainingSiblingsToNewParent(Node*, Node* pastLastNodeToMove, Element& newParent);
     void updatePositionForNodeRemovalPreservingChildren(Position&, Node&);
     void prune(Node*);
-    void replaceTextInNode(Text&, unsigned offset, unsigned count, const String& replacementText);
+    void replaceTextInNode(Text&, unsigned offset, unsigned count, const String& replacementText, AllowPasswordEcho = AllowPasswordEcho::Yes);
     Position replaceSelectedTextInNode(const String&);
     void replaceTextInNodePreservingMarkers(Text&, unsigned offset, unsigned count, const String& replacementText);
     Position positionOutsideTabSpan(const Position&);

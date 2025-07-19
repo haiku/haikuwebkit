@@ -179,8 +179,6 @@ public:
     template<typename T = double> T resolveAsLength(const CSSToLengthConversionData&) const;
     template<typename T = double> T resolveAsLengthNoConversionDataRequired() const;
     template<typename T = double> T resolveAsLengthDeprecated() const;
-    bool convertingToLengthHasRequiredConversionData(int lengthConversion, const CSSToLengthConversionData&) const;
-    template<int> Length convertToLength(const CSSToLengthConversionData&) const;
 
     // MARK: Non-converting
     template<typename T = double> T value(const CSSToLengthConversionData& conversionData) const { return clampTo<T>(doubleValue(conversionData)); }

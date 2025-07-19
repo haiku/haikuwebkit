@@ -76,7 +76,7 @@ RenderPtr<RenderElement> ProgressInnerElement::createElementRenderer(RenderStyle
 
 bool ProgressInnerElement::rendererIsNeeded(const RenderStyle& style)
 {
-    auto* progressRenderer = progressElement()->renderer();
+    CheckedPtr progressRenderer = progressElement()->renderer();
     return progressRenderer && !progressRenderer->style().hasUsedAppearance() && HTMLDivElement::rendererIsNeeded(style);
 }
 

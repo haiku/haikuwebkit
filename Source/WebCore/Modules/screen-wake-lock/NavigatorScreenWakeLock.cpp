@@ -65,7 +65,7 @@ WakeLock& NavigatorScreenWakeLock::wakeLock(Navigator& navigator)
 WakeLock& NavigatorScreenWakeLock::wakeLock()
 {
     if (!m_wakeLock)
-        m_wakeLock = WakeLock::create(downcast<Document>(m_navigator->protectedScriptExecutionContext().get()));
+        lazyInitialize(m_wakeLock, WakeLock::create(downcast<Document>(m_navigator->protectedScriptExecutionContext().get())));
     return *m_wakeLock;
 }
 

@@ -77,7 +77,7 @@ EffectTiming AnimationEffect::getBindingsTiming() const
     return timing;
 }
 
-AnimationEffectTiming::ResolutionData AnimationEffect::resolutionData() const
+AnimationEffectTiming::ResolutionData AnimationEffect::resolutionData(UseCachedCurrentTime useCachedCurrentTime) const
 {
     if (!m_animation)
         return { };
@@ -85,10 +85,10 @@ AnimationEffectTiming::ResolutionData AnimationEffect::resolutionData() const
     RefPtr animation = m_animation.get();
     RefPtr timeline = animation->timeline();
     return {
-        timeline ? timeline->currentTime() : std::nullopt,
+        timeline ? timeline->currentTime(useCachedCurrentTime) : std::nullopt,
         timeline ? timeline->duration() : std::nullopt,
         animation->startTime(),
-        animation->currentTime(),
+        animation->currentTime(useCachedCurrentTime),
         animation->playbackRate()
     };
 }
@@ -106,11 +106,11 @@ ComputedEffectTiming AnimationEffect::getBindingsComputedTiming()
     return getComputedTiming();
 }
 
-ComputedEffectTiming AnimationEffect::getComputedTiming()
+ComputedEffectTiming AnimationEffect::getComputedTiming(UseCachedCurrentTime useCachedCurrentTime)
 {
     updateComputedTimingPropertiesIfNeeded();
 
-    auto data = resolutionData();
+    auto data = resolutionData(useCachedCurrentTime);
     auto resolvedTiming = m_timing.resolve(data);
 
     // https://drafts.csswg.org/web-animations-2/#dom-animationeffect-getcomputedtiming

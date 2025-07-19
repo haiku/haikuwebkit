@@ -149,12 +149,8 @@ VTTCueBox::VTTCueBox(Document& document, VTTCue& cue)
 
 void VTTCueBox::applyCSSPropertiesWithRegion()
 {
-    auto textTrackCue = getCue();
-    ASSERT(!textTrackCue || is<VTTCue>(textTrackCue));
-    if (!textTrackCue)
-        return;
-
-    RefPtr cue = dynamicDowncast<VTTCue>(*textTrackCue);
+    ASSERT(!getCue() || is<VTTCue>(getCue()));
+    RefPtr cue = dynamicDowncast<VTTCue>(getCue());
     if (!cue)
         return;
 
@@ -174,9 +170,8 @@ void VTTCueBox::applyCSSPropertiesWithRegion()
 
 void VTTCueBox::applyCSSProperties()
 {
-    auto textTrackCue = getCue();
-    ASSERT(!textTrackCue || is<VTTCue>(textTrackCue));
-    RefPtr cue = dynamicDowncast<VTTCue>(textTrackCue);
+    ASSERT(!getCue() || is<VTTCue>(getCue()));
+    RefPtr cue = dynamicDowncast<VTTCue>(getCue());
     if (!cue)
         return;
 
@@ -567,9 +562,9 @@ void VTTCue::setTrack(TextTrack* track)
     TextTrackCue::setTrack(track);
     if (!m_parsedRegionId.isEmpty()) {
         if (track != nullptr) {
-            if (auto* regions = track->regions()) {
-                if (auto region = regions->getRegionById(m_parsedRegionId))
-                    m_region = RefPtr<VTTRegion>(region);
+            if (RefPtr regions = track->regions()) {
+                if (RefPtr region = regions->getRegionById(m_parsedRegionId))
+                    m_region = WTFMove(region);
             }
         }
     }

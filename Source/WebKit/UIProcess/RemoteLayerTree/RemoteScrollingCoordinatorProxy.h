@@ -111,6 +111,8 @@ public:
     WebPageProxy& webPageProxy() const;
     Ref<WebPageProxy> protectedWebPageProxy() const;
 
+    void stickyScrollingTreeNodeBeganSticking(WebCore::ScrollingNodeID);
+
     std::optional<WebCore::RequestedScrollData> commitScrollingTreeState(IPC::Connection&, const RemoteScrollingCoordinatorTransaction&, std::optional<WebCore::LayerHostingContextIdentifier> = std::nullopt);
 
     bool hasFixedOrSticky() const;

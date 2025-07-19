@@ -120,6 +120,11 @@ bool screenSupportsHighDynamicRange(Widget*)
     return false;
 }
 
+bool screenSupportsHighDynamicRange(PlatformDisplayID)
+{
+    return screenSupportsHighDynamicRange(nullptr);
+}
+
 #if HAVE(SUPPORT_HDR_DISPLAY)
 float currentEDRHeadroomForDisplay(PlatformDisplayID)
 {

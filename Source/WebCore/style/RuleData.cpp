@@ -94,8 +94,8 @@ static bool selectorCanMatchPseudoElement(const CSSSelector& rootSelector)
             return true;
 
         if (const CSSSelectorList* selectorList = selector->selectorList()) {
-            for (const CSSSelector* subSelector = selectorList->first(); subSelector; subSelector = CSSSelectorList::next(subSelector)) {
-                if (selectorCanMatchPseudoElement(*subSelector))
+            for (auto& subSelector : *selectorList) {
+                if (selectorCanMatchPseudoElement(subSelector))
                     return true;
             }
         }
@@ -123,8 +123,8 @@ static inline PropertyAllowlist determinePropertyAllowlist(const CSSSelector* se
             return propertyAllowlistForPseudoId(PseudoId::Marker);
 
         if (const auto* selectorList = selector->selectorList()) {
-            for (const auto* subSelector = selectorList->first(); subSelector; subSelector = CSSSelectorList::next(subSelector)) {
-                auto allowlistType = determinePropertyAllowlist(subSelector);
+            for (auto& subSelector : *selectorList) {
+                auto allowlistType = determinePropertyAllowlist(&subSelector);
                 if (allowlistType != PropertyAllowlist::None)
                     return allowlistType;
             }

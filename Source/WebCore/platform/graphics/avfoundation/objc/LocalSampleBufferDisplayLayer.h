@@ -74,7 +74,7 @@ public:
     bool didFail() const final;
 
     void updateDisplayMode(bool hideDisplayLayer, bool hideRootLayer) final;
-    void updateBoundsAndPosition(CGRect, std::optional<WTF::MachSendRight>&&) final;
+    void updateBoundsAndPosition(CGRect, std::optional<WTF::MachSendRightAnnotated>&&) final;
 
     void flush() final;
     void flushAndRemoveImage() final;

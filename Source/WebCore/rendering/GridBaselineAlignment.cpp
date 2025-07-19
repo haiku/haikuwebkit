@@ -145,10 +145,10 @@ void GridBaselineAlignment::updateBaselineAlignmentContext(ItemPosition preferen
     // alignment axis.
     auto& baselineAlignmentStateMap = alignmentContextType == GridTrackSizingDirection::ForRows ? m_rowAlignmentContextStates : m_columnAlignmentContextStates;
     // Looking for a compatible baseline-sharing group.
-    if (auto* baselineAlignmentStateSearch = baselineAlignmentStateMap.get(sharedContext))
-        baselineAlignmentStateSearch->updateSharedGroup(gridItem, preference, ascent);
-    else
-        baselineAlignmentStateMap.add(sharedContext, makeUnique<BaselineAlignmentState>(gridItem, preference, ascent));
+    baselineAlignmentStateMap.ensure(sharedContext, [&] {
+        auto alignmentAxis = alignmentContextType == GridTrackSizingDirection::ForColumns ? LogicalBoxAxis::Block : LogicalBoxAxis::Inline;
+        return makeUnique<BaselineAlignmentState>(gridItem, preference, ascent, alignmentAxis, m_writingMode);
+    }).iterator->value->updateSharedGroup(gridItem, preference, ascent);
 }
 
 LayoutUnit GridBaselineAlignment::baselineOffsetForGridItem(ItemPosition preference, unsigned sharedContext, const RenderBox& gridItem, GridTrackSizingDirection alignmentContextType) const

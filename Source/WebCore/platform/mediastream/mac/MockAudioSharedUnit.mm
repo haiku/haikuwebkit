@@ -295,8 +295,7 @@ void MockAudioSharedInternalUnit::reconfigure()
     m_formatDescription = adoptCF(formatDescription);
 
     size_t sampleCount = 2 * rate;
-    m_bipBopBuffer.resize(sampleCount);
-    m_bipBopBuffer.fill(0);
+    m_bipBopBuffer.fill(0, sampleCount);
 
     size_t bipBopSampleCount = ceil(BipBopDuration * rate);
     size_t bipStart = 0;

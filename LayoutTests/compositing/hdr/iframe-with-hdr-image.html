@@ -10,24 +10,7 @@
     <script src="../../resources/ui-helper.js"></script>
 </head>
 <body>
-    <iframe srcdoc="
-        <style>
-        img {
-            width: 200px;
-            height: 200px;
-        }
-        </style>
-        <script>
-        function setHDR(image)
-        {
-            if (window.internals)
-                internals.setHasHDRContentForTesting(image);
-        }
-        </script>
-        <body>
-            <img onload='setHDR(this)' src='../../fast/images/resources/green-400x400.png'>
-        </body>
-    "></iframe>
+    <iframe></iframe>
     <pre id="layers">Layer tree goes here in DRT</pre>
     <script>
         if (window.internals && window.testRunner) {
@@ -38,13 +21,37 @@
         }
         
         const iframe = document.getElementsByTagName('iframe')[0];
-        const loadPromise = new Promise((resolve) => {
+        const frameLoadPromise = new Promise((resolve) => {
             iframe.onload = resolve;
         });
 
+        const imageLoadPromise = new Promise((resolve) => {
+            window.imageLoadResolve = resolve;
+        });
+        
+        iframe.srcdoc = `
+            <style>
+            img {
+                width: 200px;
+                height: 200px;
+            }
+            </style>
+            <script>
+            function imageLoaded(image)
+            {
+                if (window.internals)
+                    internals.setHasHDRContentForTesting(image);
+            
+                parent.imageLoadResolve();
+            }
+            </` + `script>
+            <body>
+            <img onload="imageLoaded(this)" src="../../fast/images/resources/green-400x400.png">
+            </body>
+            `;
+
         (async () => {
-            await loadPromise;
-            await UIHelper.renderingUpdate();
+            await Promise.all([frameLoadPromise, imageLoadPromise]);
 
             if (window.testRunner) {
                 document.getElementById("layers").textContent = internals.layerTreeAsText(document);

@@ -254,20 +254,12 @@ static bool isWebmParserAvailable()
 
 using namespace webm;
 
-static Status segmentReadErrorToWebmStatus(SourceBufferParser::Segment::ReadError error)
-{
-    switch (error) {
-    case SourceBufferParser::Segment::ReadError::EndOfFile: return Status(Status::kEndOfFile);
-    case SourceBufferParser::Segment::ReadError::FatalError: return Status(Status::Code(WebMParser::ErrorCode::ReaderFailed));
-    }
-}
-
 typedef WebMParser::SegmentReader WebMParserSegmentReader;
 
 class WebMParser::SegmentReader final : public webm::Reader {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(WebMParserSegmentReader);
 public:
-    void appendSegment(SourceBufferParser::Segment&& segment)
+    void appendSegment(Ref<const SharedBuffer>&& segment)
     {
         m_data.push_back(WTFMove(segment));
         if (m_currentSegment == m_data.end())
@@ -288,20 +280,17 @@ public:
         while (!outputBuffer.empty() && m_currentSegment != m_data.end()) {
             auto& currentSegment = *m_currentSegment;
 
-            if (m_positionWithinSegment >= currentSegment.size()) {
+            if (m_positionWithinSegment >= currentSegment->size()) {
                 advanceToNextSegment();
                 continue;
             }
-
-            auto readResult = currentSegment.read(outputBuffer, m_positionWithinSegment);
-            if (!readResult.has_value())
-                return segmentReadErrorToWebmStatus(readResult.error());
-            auto lastRead = readResult.value();
+            currentSegment->copyTo(outputBuffer, m_positionWithinSegment);
+            size_t lastRead = std::min(outputBuffer.size(), currentSegment->size() - m_positionWithinSegment);
             m_position += lastRead;
             *numActuallyRead += lastRead;
             m_positionWithinSegment += lastRead;
             skip(outputBuffer, lastRead);
-            if (m_positionWithinSegment == currentSegment.size())
+            if (m_positionWithinSegment == currentSegment->size())
                 advanceToNextSegment();
         }
         if (outputBuffer.empty())
@@ -321,12 +310,12 @@ public:
         while (m_currentSegment != m_data.end()) {
             auto& currentSegment = *m_currentSegment;
 
-            if (m_positionWithinSegment >= currentSegment.size()) {
+            if (m_positionWithinSegment >= currentSegment->size()) {
                 advanceToNextSegment();
                 continue;
             }
 
-            size_t numAvailable = currentSegment.size() - m_positionWithinSegment;
+            size_t numAvailable = currentSegment->size() - m_positionWithinSegment;
 
             if (numToSkip < numAvailable) {
                 *numActuallySkipped += numToSkip;
@@ -358,20 +347,20 @@ public:
         *numActuallyRead = 0;
 
         while (numToRead && m_currentSegment != m_data.end()) {
-            auto& currentSegment = *m_currentSegment;
+            Ref currentSegment = *m_currentSegment;
 
-            if (m_positionWithinSegment >= currentSegment.size()) {
+            if (m_positionWithinSegment >= currentSegment->size()) {
                 advanceToNextSegment();
                 continue;
             }
-            auto rawBlockBuffer = currentSegment.getData(m_positionWithinSegment, numToRead);
+            Ref rawBlockBuffer = currentSegment->getContiguousData(m_positionWithinSegment, numToRead);
             auto lastRead = rawBlockBuffer->size();
-            outputBuffer.append(rawBlockBuffer);
+            outputBuffer.append(WTFMove(rawBlockBuffer));
             m_position += lastRead;
             *numActuallyRead += lastRead;
             m_positionWithinSegment += lastRead;
             numToRead -= lastRead;
-            if (m_positionWithinSegment == currentSegment.size())
+            if (m_positionWithinSegment == currentSegment->size())
                 advanceToNextSegment();
         }
         if (!numToRead)
@@ -408,7 +397,7 @@ public:
 
             rewindAmount -= m_positionWithinSegment;
             --m_currentSegment;
-            m_positionWithinSegment = m_currentSegment->size();
+            m_positionWithinSegment = (*m_currentSegment)->size();
         }
         return true;
     }
@@ -425,14 +414,14 @@ private:
         if (m_currentSegment == m_data.end())
             return;
 
-        ASSERT(m_positionWithinSegment == m_currentSegment->size());
+        ASSERT(m_positionWithinSegment == (*m_currentSegment)->size());
 
         ++m_currentSegment;
         m_positionWithinSegment = 0;
     }
 
-    StdList<SourceBufferParser::Segment> m_data;
-    StdList<SourceBufferParser::Segment>::iterator m_currentSegment { m_data.end() };
+    StdList<Ref<const SharedBuffer>> m_data;
+    StdList<Ref<const SharedBuffer>>::iterator m_currentSegment { m_data.end() };
     size_t m_position { 0 };
     size_t m_positionWithinSegment { 0 };
 };
@@ -533,7 +522,7 @@ void WebMParser::reset()
     m_parser->DidSeek();
 }
 
-ExceptionOr<int> WebMParser::parse(SourceBufferParser::Segment&& segment)
+ExceptionOr<int> WebMParser::parse(Ref<const SharedBuffer>&& segment)
 {
     if (!m_parser)
         return Exception { ExceptionCode::InvalidStateError };
@@ -1636,9 +1625,9 @@ void SourceBufferParserWebM::flushPendingAudioSamples()
     m_queuedAudioDuration = { };
 }
 
-Expected<void, PlatformMediaError> SourceBufferParserWebM::appendData(Segment&& segment, AppendFlags appendFlags)
+Expected<void, PlatformMediaError> SourceBufferParserWebM::appendData(Ref<const SharedBuffer>&& segment, AppendFlags appendFlags)
 {
-    INFO_LOG_IF_POSSIBLE(LOGIDENTIFIER, "flags(", appendFlags == AppendFlags::Discontinuity ? "Discontinuity" : "", "), size(", segment.size(), ")");
+    INFO_LOG_IF_POSSIBLE(LOGIDENTIFIER, "flags(", appendFlags == AppendFlags::Discontinuity ? "Discontinuity" : "", "), size(", segment->size(), ")");
 
     if (appendFlags == AppendFlags::Discontinuity) {
         m_parser.reset();

@@ -64,7 +64,7 @@ public:
 
     void resetObservation(MutationObserverOptions, const MemoryCompactLookupOnlyRobinHoodHashSet<AtomString>& attributeFilter);
     void observedSubtreeNodeWillDetach(Node&);
-    UncheckedKeyHashSet<GCReachableRef<Node>> takeTransientRegistrations();
+    HashSet<GCReachableRef<Node>> takeTransientRegistrations();
     bool hasTransientRegistrations() const { return !m_transientRegistrationNodes.isEmpty(); }
 
     bool shouldReceiveMutationFrom(Node&, MutationObserverOptionType, const QualifiedName* attributeName) const;
@@ -81,7 +81,7 @@ private:
     const Ref<MutationObserver> m_observer;
     WeakRef<Node, WeakPtrImplWithEventTargetData> m_node;
     RefPtr<Node> m_nodeKeptAlive;
-    UncheckedKeyHashSet<GCReachableRef<Node>> m_transientRegistrationNodes;
+    HashSet<GCReachableRef<Node>> m_transientRegistrationNodes;
     MutationObserverOptions m_options;
     MemoryCompactLookupOnlyRobinHoodHashSet<AtomString> m_attributeFilter;
 };

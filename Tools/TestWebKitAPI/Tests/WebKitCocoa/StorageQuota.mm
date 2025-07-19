@@ -307,7 +307,12 @@ TEST(WebKit, QuotaDelegateHidden)
 }
 #endif
 
+// Fixme: rdar://151713831
+#if !defined(NDEBUG)
+TEST(WebKit, DISABLED_QuotaDelegate)
+#else
 TEST(WebKit, QuotaDelegate)
+#endif
 {
     done = false;
     auto storeConfiguration = adoptNS([[_WKWebsiteDataStoreConfiguration alloc] init]);

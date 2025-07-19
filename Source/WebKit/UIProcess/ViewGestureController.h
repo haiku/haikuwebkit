@@ -361,6 +361,8 @@ private:
     GRefPtr<GtkStyleContext> createStyleContext(const char*);
 #endif
 
+    RefPtr<WebBackForwardListItem> itemForSwipeDirection(SwipeDirection) const;
+
     WeakPtr<WebPageProxy> m_webPageProxy;
     WebPageProxyIdentifier m_webPageProxyIdentifier;
     Markable<WebCore::PageIdentifier> m_webPageIDInMainFrameProcess;

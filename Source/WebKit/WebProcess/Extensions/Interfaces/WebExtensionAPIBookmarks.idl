@@ -30,16 +30,16 @@
 ] interface WebExtensionAPIBookmarks {
     [RaisesException, ImplementedAs=createBookmark] void create([NSDictionary] any bookmark, [Optional, CallbackHandler] function callback);
     
-    [RaisesException] void getChildren(DOMString bookmarkIdentifier, [Optional, CallbackHandler] function callback);
+    [RaisesException] void getChildren(DOMString id, [Optional, CallbackHandler] function callback);
     [RaisesException] void getRecent(long numberOfItems, [Optional, CallbackHandler] function callback);
-    [RaisesException] void getSubTree(DOMString bookmarkIdentifier, [Optional, CallbackHandler] function callback);
+    [RaisesException] void getSubTree(DOMString id, [Optional, CallbackHandler] function callback);
     [RaisesException] void getTree([Optional, CallbackHandler] function callback);
     [RaisesException] void get([NSObject] any idOrIdList, [Optional, CallbackHandler] function callback);
 
-    [RaisesException] void remove(DOMString bookmarkIdentifier, [Optional, CallbackHandler] function callback);
-    [RaisesException] void removeTree(DOMString bookmarkIdentifier, [Optional, CallbackHandler] function callback);
+    [RaisesException] void remove(DOMString id, [Optional, CallbackHandler] function callback);
+    [RaisesException] void removeTree(DOMString id, [Optional, CallbackHandler] function callback);
 
     [RaisesException] void search([NSObject] any query, [Optional, CallbackHandler] function callback);
-    [RaisesException] void update(DOMString bookmarkIdentifier, [NSDictionary] any changes, [Optional, CallbackHandler] function callback);
-    [RaisesException] void move(DOMString bookmarkIdentifier, [NSDictionary] any destination, [Optional, CallbackHandler] function callback);
+    [RaisesException] void update(DOMString id, [NSDictionary] any changes, [Optional, CallbackHandler] function callback);
+    [RaisesException] void move(DOMString id, [NSDictionary] any destination, [Optional, CallbackHandler] function callback);
 };

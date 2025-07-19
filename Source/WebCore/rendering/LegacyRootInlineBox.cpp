@@ -65,16 +65,6 @@ LegacyRootInlineBox::~LegacyRootInlineBox()
 {
 }
 
-LayoutUnit LegacyRootInlineBox::baselinePosition(FontBaseline baselineType) const
-{
-    return renderer().baselinePosition(baselineType, isFirstLine(), isHorizontal() ? HorizontalLine : VerticalLine, PositionOfInteriorLineBoxes);
-}
-
-LayoutUnit LegacyRootInlineBox::lineHeight() const
-{
-    return renderer().lineHeight(isFirstLine(), isHorizontal() ? HorizontalLine : VerticalLine, PositionOfInteriorLineBoxes);
-}
-
 void LegacyRootInlineBox::adjustPosition(float dx, float dy)
 {
     LegacyInlineFlowBox::adjustPosition(dx, dy);

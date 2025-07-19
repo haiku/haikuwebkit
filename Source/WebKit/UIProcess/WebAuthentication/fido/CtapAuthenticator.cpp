@@ -190,7 +190,7 @@ void CtapAuthenticator::continueMakeCredentialAfterCheckExcludedCredentials(bool
 {
     Vector<uint8_t> cborCmd;
     auto& options = std::get<PublicKeyCredentialCreationOptions>(requestData().options);
-    Vector<PublicKeyCredentialDescriptor> overrideExcludeCredentials;
+    std::optional<Vector<PublicKeyCredentialDescriptor>> overrideExcludeCredentials;
     if (includeCurrentBatch) {
         ASSERT(m_currentBatch < m_batches.size());
         overrideExcludeCredentials = m_batches[m_currentBatch];
@@ -294,7 +294,10 @@ void CtapAuthenticator::getAssertion()
         if (!m_batches.size())
             return continueGetAssertionAfterCheckAllowCredentials();
         m_currentBatch = 0;
-        Vector<uint8_t> cborCmd = encodeSilentGetAssertion(options.rpId, requestData().hash, m_batches[m_currentBatch], std::nullopt);
+        std::optional<PinParameters> pinParameters;
+        if (!m_pinAuth.isEmpty())
+            pinParameters = PinParameters { pin::kProtocolVersion, m_pinAuth };
+        Vector<uint8_t> cborCmd = encodeSilentGetAssertion(options.rpId, requestData().hash, m_batches[m_currentBatch], pinParameters);
         protectedDriver()->transact(WTFMove(cborCmd), [weakThis = WeakPtr { *this }](Vector<uint8_t>&& data) {
             ASSERT(RunLoop::isMain());
             if (!weakThis)
@@ -317,8 +320,8 @@ void CtapAuthenticator::continueGetAssertionAfterCheckAllowCredentials()
 
     auto internalUVAvailability = m_info.options().userVerificationAvailability();
     Vector<String> authenticatorSupportedExtensions;
-    Vector<PublicKeyCredentialDescriptor> overrideAllowCredentials;
-    if (m_currentBatch < m_batches.size())
+    std::optional<Vector<PublicKeyCredentialDescriptor>> overrideAllowCredentials;
+    if (options.allowCredentials.size() > 1 && m_currentBatch < m_batches.size())
         overrideAllowCredentials = m_batches[m_currentBatch];
     CTAP_RELEASE_LOG("getAssertion uv: %hhu internalUvAvailability %d", options.userVerification, internalUVAvailability);
     // If UV is required, then either built-in uv or a pin will work.

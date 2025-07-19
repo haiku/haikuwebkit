@@ -438,12 +438,14 @@ public:
     std::optional<VisibleContentRectUpdateInfo> lastVisibleContentRectUpdate;
 #endif
 
+    bool needsFixedContainerEdgesUpdateAfterNextCommit { false };
+
 #if ENABLE(VIDEO_PRESENTATION_MODE)
     RunLoop::Timer fullscreenVideoTextRecognitionTimer;
     std::optional<PlaybackSessionContextIdentifier> currentFullscreenVideoSessionIdentifier;
 #endif
 
-#if ENABLE(WEBXR) && !USE(OPENXR)
+#if ENABLE(WEBXR)
     RefPtr<PlatformXRSystem> xrSystem;
 #endif
 

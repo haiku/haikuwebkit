@@ -9,9 +9,7 @@ line2
 
 PASS #target > div 1
 PASS #target > div 2
-FAIL #target > div 3 assert_equals:
-<div data-offset-x="37"></div>
-offsetLeft expected 37 but got 67
+PASS #target > div 3
 PASS #target > div 4
 PASS #target > div 5
 

@@ -25,8 +25,6 @@
 #include <wtf/text/SuperFastHash.h>
 #include <wtf/text/WYHash.h>
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 namespace WTF {
 
 template<typename T, typename Converter>
@@ -47,10 +45,10 @@ constexpr unsigned StringHasher::computeLiteralHashAndMaskTop8Bits(const T (&cha
     constexpr unsigned characterCountWithoutNull = characterCount - 1;
 #if ENABLE(WYHASH_STRING_HASHER)
     if constexpr (characterCountWithoutNull <= smallStringThreshold)
-        return SuperFastHash::computeHashAndMaskTop8Bits<T>(std::span { characters, characterCountWithoutNull });
-    return WYHash::computeHashAndMaskTop8Bits<T>(std::span { characters, characterCountWithoutNull });
+        return SuperFastHash::computeHashAndMaskTop8Bits<T>(unsafeMakeSpan(characters, characterCountWithoutNull));
+    return WYHash::computeHashAndMaskTop8Bits<T>(unsafeMakeSpan(characters, characterCountWithoutNull));
 #else
-    return SuperFastHash::computeHashAndMaskTop8Bits<T>(std::span { characters, characterCountWithoutNull });
+    return SuperFastHash::computeHashAndMaskTop8Bits<T>(unsafeMakeSpan(characters, characterCountWithoutNull));
 #endif
 }
 
@@ -65,12 +63,14 @@ inline void StringHasher::addCharacter(char16_t character)
             m_see2 = m_seed;
             m_pendingHashValue = true;
         }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
         char16_t* p = m_buffer.data();
         while (m_bufferSize >= 24) {
             WYHash::consume24Characters(p, WYHash::Reader16Bit<char16_t>::wyr8, m_seed, m_see1, m_see2);
             p += 24;
             m_bufferSize -= 24;
         }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
         ASSERT(!m_bufferSize);
         m_numberOfProcessedCharacters += smallStringThreshold;
     }
@@ -95,6 +95,7 @@ inline unsigned StringHasher::hashWithTop8BitsMasked()
         unsigned i = m_bufferSize;
         if (i <= 24)
             m_seed ^= m_see1 ^ m_see2;
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
         char16_t* p = m_buffer.data();
         WYHash::handleGreaterThan8CharactersCase(p, i, wyr8, m_seed, m_see1, m_see2);
 
@@ -115,6 +116,7 @@ inline unsigned StringHasher::hashWithTop8BitsMasked()
             a = wyr8(tmpPtr);
             b = wyr8(tmpPtr + 4);
         }
+WTF_ALLOW_UNSAFE_BUFFER_USAGE_END
 
         const uint64_t totalByteCount = (static_cast<uint64_t>(m_numberOfProcessedCharacters) + static_cast<uint64_t>(m_bufferSize)) << 1;
         hashValue = StringHasher::avoidZero(WYHash::handleEndCase(a, b, m_seed, totalByteCount) & StringHasher::maskHash);
@@ -136,5 +138,3 @@ inline unsigned StringHasher::hashWithTop8BitsMasked()
 } // namespace WTF
 
 using WTF::StringHasher;
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

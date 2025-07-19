@@ -36,27 +36,16 @@ struct NameScope {
 
     Type type { Type::None };
     ListHashSet<AtomString> names;
+    Style::ScopeOrdinal scopeOrdinal { Style::ScopeOrdinal::Element };
 
     friend bool operator==(const NameScope&, const NameScope&);
 };
 
 inline bool operator==(const NameScope& lhs, const NameScope& rhs)
 {
-    switch (lhs.type) {
-    case NameScope::Type::None:
-        return rhs.type == NameScope::Type::None;
-
-    case NameScope::Type::All:
-        return rhs.type == NameScope::Type::All;
-
-    case NameScope::Type::Ident:
-        // Two name lists are equal if they contain the same values
-        // in the same order.
-        return std::equal(lhs.names.begin(), lhs.names.end(), rhs.names.begin(), rhs.names.end());
-    }
-
-    ASSERT_NOT_REACHED();
-    return false;
+    return lhs.type == rhs.type && lhs.scopeOrdinal == rhs.scopeOrdinal
+        // Two name lists are equal if they contain the same values in the same order.
+        && (lhs.names.isEmpty() || std::equal(lhs.names.begin(), lhs.names.end(), rhs.names.begin(), rhs.names.end()));
 }
 
 inline TextStream& operator<<(TextStream& ts, const NameScope& scope)
@@ -72,6 +61,7 @@ inline TextStream& operator<<(TextStream& ts, const NameScope& scope)
         ts << "ident: "_s << scope.names;
         break;
     }
+    ts << " (style scope: " << scope.scopeOrdinal << ")";
     return ts;
 }
 

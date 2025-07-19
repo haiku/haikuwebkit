@@ -25,7 +25,7 @@
 
 #pragma once
 
-#import "ScriptTelemetry.h"
+#import "ScriptTrackingPrivacyFilter.h"
 #import <wtf/CompletionHandler.h>
 #import <wtf/ContinuousApproximateTime.h>
 #import <wtf/Function.h>
@@ -152,7 +152,7 @@ private:
     unsigned resourceTypeValue() const final;
 };
 
-class ScriptTelemetryController : public ListDataController<ScriptTelemetryController, ScriptTelemetryRules> {
+class ScriptTrackingPrivacyController : public ListDataController<ScriptTrackingPrivacyController, ScriptTrackingPrivacyRules> {
 private:
     void updateList(CompletionHandler<void()>&&) final;
     void didUpdateCachedListData() final;

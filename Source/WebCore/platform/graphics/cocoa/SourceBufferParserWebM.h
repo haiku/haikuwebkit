@@ -77,7 +77,7 @@ public:
     class SegmentReader;
 
     WEBCORE_EXPORT void createByteRangeSamples();
-    WEBCORE_EXPORT ExceptionOr<int> parse(SourceBufferParser::Segment&&);
+    WEBCORE_EXPORT ExceptionOr<int> parse(Ref<const SharedBuffer>&&);
     WEBCORE_EXPORT void resetState();
     WEBCORE_EXPORT void reset();
     WEBCORE_EXPORT void invalidate();
@@ -337,7 +337,7 @@ public:
     static bool isAvailable();
 
     Type type() const { return Type::WebM; }
-    WEBCORE_EXPORT Expected<void, PlatformMediaError> appendData(Segment&&, AppendFlags = AppendFlags::None) final;
+    WEBCORE_EXPORT Expected<void, PlatformMediaError> appendData(Ref<const SharedBuffer>&&, AppendFlags = AppendFlags::None) final;
     void flushPendingMediaData() final;
     void resetParserState() final { m_parser.resetState(); }
     void invalidate() final;

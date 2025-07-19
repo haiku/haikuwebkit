@@ -279,8 +279,8 @@ private:
     Lock m_loopLock;
 #elif USE(COCOA_EVENT_LOOP)
     static void performWork(void*);
-    RetainPtr<CFRunLoopRef> m_runLoop;
-    RetainPtr<CFRunLoopSourceRef> m_runLoopSource;
+    const RetainPtr<CFRunLoopRef> m_runLoop;
+    const RetainPtr<CFRunLoopSourceRef> m_runLoopSource;
 #elif USE(GLIB_EVENT_LOOP)
     void notify(Event, const char*);
 

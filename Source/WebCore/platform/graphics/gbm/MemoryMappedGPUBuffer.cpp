@@ -235,7 +235,13 @@ bool MemoryMappedGPUBuffer::mapIfNeeded()
     ASSERT(isLinear());
     m_mappedLength = primaryPlaneDmaBufStride() * m_size.height();
     m_mappedData = mmap(nullptr, m_mappedLength, PROT_READ | PROT_WRITE, MAP_SHARED, primaryPlaneDmaBufFD(), 0);
-    return m_mappedData != MAP_FAILED;
+    if (m_mappedData == MAP_FAILED) {
+        m_mappedLength = 0;
+        m_mappedData = nullptr;
+        return false;
+    }
+
+    return true;
 }
 
 void MemoryMappedGPUBuffer::unmapIfNeeded()

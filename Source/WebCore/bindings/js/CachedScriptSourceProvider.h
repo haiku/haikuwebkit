@@ -46,28 +46,20 @@ public:
     unsigned hash() const override;
     StringView source() const override;
 
-    void lockUnderlyingBufferImpl() final
+    JSC::CodeBlockHash codeBlockHashConcurrently(int startOffset, int endOffset, JSC::CodeSpecializationKind kind) override
     {
-        ASSERT(!m_buffer);
-        m_buffer = m_cachedScript->resourceBuffer();
-    }
-
-    void unlockUnderlyingBufferImpl() final
-    {
-        ASSERT(m_buffer);
-        m_buffer = nullptr;
+        return m_cachedScript->codeBlockHashConcurrently(startOffset, endOffset, kind, sourceType() == JSC::SourceProviderSourceType::Module ? CachedScript::ShouldDecodeAsUTF8Only::Yes : CachedScript::ShouldDecodeAsUTF8Only::No);
     }
 
 private:
     CachedScriptSourceProvider(CachedScript* cachedScript, JSC::SourceProviderSourceType sourceType, Ref<CachedScriptFetcher>&& scriptFetcher)
-        : SourceProvider(JSC::SourceOrigin { cachedScript->response().url(), WTFMove(scriptFetcher) }, String(cachedScript->response().url().string()), cachedScript->response().isRedirected() ? String(cachedScript->url().string()) : String(), cachedScript->requiresTelemetry() ? JSC::SourceTaintedOrigin::KnownTainted : JSC::SourceTaintedOrigin::Untainted, TextPosition(), sourceType)
+        : SourceProvider(JSC::SourceOrigin { cachedScript->response().url(), WTFMove(scriptFetcher) }, String(cachedScript->response().url().string()), cachedScript->response().isRedirected() ? String(cachedScript->url().string()) : String(), cachedScript->requiresPrivacyProtections() ? JSC::SourceTaintedOrigin::KnownTainted : JSC::SourceTaintedOrigin::Untainted, TextPosition(), sourceType)
         , m_cachedScript(cachedScript)
     {
         m_cachedScript->addClient(*this);
     }
 
     CachedResourceHandle<CachedScript> m_cachedScript;
-    RefPtr<FragmentedSharedBuffer> m_buffer;
 };
 
 inline unsigned CachedScriptSourceProvider::hash() const

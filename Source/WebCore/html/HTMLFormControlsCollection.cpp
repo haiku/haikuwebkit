@@ -115,7 +115,7 @@ void HTMLFormControlsCollection::updateNamedElementCache() const
 
     auto cache = makeUnique<CollectionNamedElementCache>();
 
-    UncheckedKeyHashSet<AtomString> foundInputElements;
+    HashSet<AtomString> foundInputElements;
 
     ScriptDisallowedScope::InMainThread scriptDisallowedScope;
     for (auto& weakElement : ownerNode().unsafeListedElements()) {

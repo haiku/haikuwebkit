@@ -22,7 +22,7 @@
 
 #if ENABLE(GPU_PROCESS)
 
-[RValue] struct WebKit::GPUProcessCreationParameters {
+[RValue, DebugDecodingFailure] struct WebKit::GPUProcessCreationParameters {
     WebKit::AuxiliaryProcessCreationParameters auxiliaryProcessParameters;
 
 #if ENABLE(MEDIA_STREAM)

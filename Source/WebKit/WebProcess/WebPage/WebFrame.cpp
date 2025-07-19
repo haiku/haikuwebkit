@@ -71,6 +71,7 @@
 #include <WebCore/EventHandler.h>
 #include <WebCore/File.h>
 #include <WebCore/FocusController.h>
+#include <WebCore/FocusEventData.h>
 #include <WebCore/FrameLoader.h>
 #include <WebCore/FrameSnapshotting.h>
 #include <WebCore/HTMLFormElement.h>
@@ -1536,6 +1537,12 @@ std::optional<ResourceResponse> WebFrame::resourceResponseForURL(const URL& url)
         return resource->response();
 
     return std::nullopt;
+}
+
+void WebFrame::findFocusableElementDescendingIntoRemoteFrame(WebCore::FocusDirection, const WebCore::FocusEventData&, CompletionHandler<void(WebCore::FoundElementInRemoteFrame)>&& completionHandler)
+{
+    // FIXME: Implement
+    completionHandler(WebCore::FoundElementInRemoteFrame::No);
 }
 
 } // namespace WebKit

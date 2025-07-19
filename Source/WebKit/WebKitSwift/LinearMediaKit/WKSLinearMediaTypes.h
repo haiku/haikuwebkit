@@ -27,7 +27,7 @@
 
 #if defined(TARGET_OS_VISION) && TARGET_OS_VISION
 
-NS_ASSUME_NONNULL_BEGIN
+NS_HEADER_AUDIT_BEGIN(nullability, sendability)
 
 typedef NS_ENUM(NSInteger, WKSLinearMediaContentMode) {
     WKSLinearMediaContentModeNone = 0,
@@ -60,7 +60,6 @@ typedef NS_ENUM(NSInteger, WKSLinearMediaViewingMode) {
     WKSLinearMediaViewingModeSpatial
 };
 
-API_AVAILABLE(visionos(1.0))
 @interface WKSLinearMediaContentMetadata : NSObject
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
@@ -69,7 +68,6 @@ API_AVAILABLE(visionos(1.0))
 @property (nonatomic, readonly, copy, nullable) NSString *subtitle;
 @end
 
-API_AVAILABLE(visionos(1.0))
 @interface WKSLinearMediaTimeRange : NSObject
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
@@ -78,7 +76,6 @@ API_AVAILABLE(visionos(1.0))
 @property (nonatomic, readonly) NSTimeInterval upperBound;
 @end
 
-API_AVAILABLE(visionos(1.0))
 @interface WKSLinearMediaTrack : NSObject
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
@@ -86,7 +83,6 @@ API_AVAILABLE(visionos(1.0))
 @property (nonatomic, readonly, copy) NSString *localizedDisplayName;
 @end
 
-API_AVAILABLE(visionos(1.0))
 @interface WKSLinearMediaSpatialVideoMetadata : NSObject
 + (instancetype)new NS_UNAVAILABLE;
 - (instancetype)init NS_UNAVAILABLE;
@@ -98,6 +94,19 @@ API_AVAILABLE(visionos(1.0))
 @property (nonatomic, readonly) float disparityAdjustment;
 @end
 
-NS_ASSUME_NONNULL_END
+NS_SWIFT_UI_ACTOR
+@interface WKSPlayableViewControllerHost : NSObject
+
+@property (nonatomic, readonly) UIViewController *viewController;
+
+@property (nonatomic, readonly, nullable) UIViewController *environmentPickerButtonViewController;
+
+@property (nonatomic) BOOL dismissFullScreenOnExitingDocking;
+
+@property (nonatomic) BOOL automaticallyDockOnFullScreenPresentation;
+
+@end
+
+NS_HEADER_AUDIT_END(nullability, sendability)
 
 #endif /* defined(TARGET_OS_VISION) && TARGET_OS_VISION */

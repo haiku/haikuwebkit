@@ -124,13 +124,13 @@ typedef void (^NSWindowSnapshotReadinessHandler) (void);
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
 
-@interface NSScrollPocket (Staging_147805180)
-@property (nonatomic, copy) NSColor *captureColor;
-@end
-
 @interface NSScrollPocket (Staging_151173930)
 - (void)addElementContainer:(NSView *)elementContainer;
 - (void)removeElementContainer:(NSView *)elementContainer;
+@end
+
+@interface NSScrollPocket (Staging_149248735)
+@property (nonatomic) BOOL prefersSolidColorHardPocket;
 @end
 
 #endif

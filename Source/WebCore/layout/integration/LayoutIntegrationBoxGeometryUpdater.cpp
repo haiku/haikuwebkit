@@ -318,7 +318,7 @@ static inline void setIntegrationBaseline(const RenderBox& renderBox, WritingMod
     if (!hasNonSyntheticBaseline())
         return;
 
-    auto baseline = renderBox.baselinePosition(AlphabeticBaseline, false /* firstLine */, writingMode.isHorizontal() ? HorizontalLine : VerticalLine, PositionOnContainingLine);
+    auto baseline = renderBox.baselinePosition(false /* firstLine */, writingMode.isHorizontal() ? HorizontalLine : VerticalLine, PositionOnContainingLine);
     const_cast<Layout::ElementBox&>(*renderBox.layoutBox()).setBaselineForIntegration(baseline);
 }
 

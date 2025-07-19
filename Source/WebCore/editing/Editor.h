@@ -140,6 +140,8 @@ enum class TemporarySelectionOption : uint16_t {
     UserTriggered = 1 << 7,
     
     ForceCenterScroll = 1 << 8,
+
+    OnlyAllowForwardScrolling = 1 << 9
 };
 
 class TemporarySelectionChange {
@@ -452,8 +454,8 @@ public:
 
     VisibleSelection selectionForCommand(Event*);
 
-    PAL::KillRing& killRing() const { return *m_killRing; }
-    SpellChecker& spellChecker() const { return *m_spellChecker; }
+    PAL::KillRing& killRing() const { return m_killRing; }
+    SpellChecker& spellChecker() const { return m_spellChecker; }
 
     EditingBehavior behavior() const;
 

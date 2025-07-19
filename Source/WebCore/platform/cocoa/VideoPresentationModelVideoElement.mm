@@ -200,10 +200,10 @@ void VideoPresentationModelVideoElement::documentFullscreenChanged()
         RefPtr fullscreenElement = fullscreen->fullscreenElement();
         if (!fullscreenElement)
             return false;
-        ContainerNode* ancestor = videoElement->parentNode();
+        RefPtr ancestor = videoElement->parentNode();
         while (ancestor && ancestor != fullscreenElement)
             ancestor = ancestor->parentNode();
-        return !!ancestor;
+        return !!ancestor.get();
     }();
 
     if (std::exchange(m_isChildOfElementFullscreen, isChildOfElementFullscreen) == isChildOfElementFullscreen)
@@ -295,7 +295,7 @@ void VideoPresentationModelVideoElement::requestFullscreenMode(HTMLMediaElementE
 
     if (finishedWithMedia && mode == MediaPlayer::VideoFullscreenModeNone) {
         if (videoElement->document().isMediaDocument()) {
-            if (auto* window = videoElement->document().window())
+            if (RefPtr window = videoElement->document().window())
                 window->history().back();
         }
     }
@@ -364,8 +364,8 @@ void VideoPresentationModelVideoElement::fullscreenModeChanged(HTMLMediaElementE
 
 void VideoPresentationModelVideoElement::requestRouteSharingPolicyAndContextUID(CompletionHandler<void(RouteSharingPolicy, String)>&& completionHandler)
 {
-    auto& session = AudioSession::sharedSession();
-    completionHandler(session.routeSharingPolicy(), session.routingContextUID());
+    Ref session = AudioSession::sharedSession();
+    completionHandler(session->routeSharingPolicy(), session->routingContextUID());
 }
 
 void VideoPresentationModelVideoElement::addClient(VideoPresentationModelClient& client)

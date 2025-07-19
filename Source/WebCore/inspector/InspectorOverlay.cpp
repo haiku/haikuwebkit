@@ -50,7 +50,7 @@
 #include "GraphicsContext.h"
 #include "GridArea.h"
 #include "GridPositionsResolver.h"
-#include "InspectorClient.h"
+#include "InspectorBackendClient.h"
 #include "InspectorController.h"
 #include "InspectorDOMAgent.h"
 #include "IntPoint.h"
@@ -392,7 +392,7 @@ static void drawShapeHighlight(GraphicsContext& context, Node& node, InspectorOv
     context.fillPath(shapePath);
 }
 
-InspectorOverlay::InspectorOverlay(InspectorController& controller, InspectorClient* client)
+InspectorOverlay::InspectorOverlay(InspectorController& controller, InspectorBackendClient* client)
     : m_controller(controller)
     , m_client(client)
     , m_paintRectUpdateTimer(*this, &InspectorOverlay::updatePaintRectsTimerFired)
@@ -1473,12 +1473,12 @@ static Vector<String> authoredGridTrackSizes(Node* node, GridTrackSizingDirectio
     return trackSizes;
 }
 
-static OrderedNamedGridLinesMap gridLineNames(const RenderStyle* renderStyle, GridTrackSizingDirection direction, unsigned expectedLineCount)
+static Style::GridOrderedNamedLinesMap gridLineNames(const RenderStyle* renderStyle, GridTrackSizingDirection direction, unsigned expectedLineCount)
 {
     if (!renderStyle)
         return { };
     
-    OrderedNamedGridLinesMap combinedGridLineNames;
+    Style::GridOrderedNamedLinesMap combinedGridLineNames;
     auto appendLineNames = [&](unsigned index, const Vector<String>& newNames) {
         if (auto result = combinedGridLineNames.map.add(index, newNames); !result.isNewEntry)
             result.iterator->value.appendVector(newNames);
@@ -1498,7 +1498,7 @@ static OrderedNamedGridLinesMap gridLineNames(const RenderStyle* renderStyle, Gr
         ++autoRepeatIndex;
     }
 
-    auto implicitGridLineNames = direction == GridTrackSizingDirection::ForColumns ? renderStyle->implicitNamedGridColumnLines() : renderStyle->implicitNamedGridRowLines();
+    auto& implicitGridLineNames = direction == GridTrackSizingDirection::ForColumns ? renderStyle->gridTemplateAreas().implicitNamedGridColumnLines : renderStyle->gridTemplateAreas().implicitNamedGridRowLines;
     for (auto& [name, indexes] : implicitGridLineNames.map) {
         for (auto i : indexes)
             appendLineNames(i, {name});
@@ -1833,10 +1833,7 @@ std::optional<InspectorOverlay::Highlight::GridHighlightOverlay> InspectorOverla
     }
 
     if (gridOverlay.config.showAreaNames && !renderGrid.isMasonry()) {
-        for (auto& gridArea : node->renderStyle()->namedGridArea().map) {
-            auto& name = gridArea.key;
-            auto& area = gridArea.value;
-
+        for (auto& [name, area] : node->renderStyle()->gridTemplateAreas().map.map) {
             // Named grid areas will always be rectangular per the CSS Grid specification.
             auto columnStartLine = columnLineAt(columnPositions[area.columns.startLine()]);
             auto columnEndLine = columnLineAt(columnPositions[area.columns.endLine() - 1] + columnWidths[area.columns.endLine() - 1]);

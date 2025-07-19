@@ -881,14 +881,14 @@ static BOOL isArrayOfRequestMethodsValid(NSArray<NSString *> *requestMethods)
 
     if ([chromeActionType isEqualToString:declarativeNetRequestRuleActionTypeAllowAllRequests]) {
         triggerDictionary[@"url-filter"] = @".*";
-        triggerDictionary[@"if-frame-url"] = @[ [self _regexURLFilterForChromeURLFilter:condition[declarativeNetRequestRuleConditionURLFilterKey]] ?: condition[declarativeNetRequestRuleConditionRegexFilterKey] ?: @".*" ];
 
-        NSMutableArray *loadContexts = [NSMutableArray array];
         if ([condition[declarativeNetRequestRuleConditionResourceTypeKey] containsObject:@"main_frame"])
-            [loadContexts addObject:@"top-frame"];
-        if ([condition[declarativeNetRequestRuleConditionResourceTypeKey] containsObject:@"sub_frame"])
-            [loadContexts addObject:@"child-frame"];
-        triggerDictionary[@"load-context"] = loadContexts;
+            triggerDictionary[@"if-top-url"] = @[ [self _regexURLFilterForChromeURLFilter:condition[declarativeNetRequestRuleConditionURLFilterKey]] ?: condition[declarativeNetRequestRuleConditionRegexFilterKey] ?: @".*" ];
+        else {
+            // FIXME: rdar://154124673 (dNR: fix sub_frame resourceType allowAllRequests rules)
+            triggerDictionary[@"if-frame-url"] = @[ [self _regexURLFilterForChromeURLFilter:condition[declarativeNetRequestRuleConditionURLFilterKey]] ?: condition[declarativeNetRequestRuleConditionRegexFilterKey] ?: @".*" ];
+            triggerDictionary[@"load-context"] = @[ @"child-frame" ];
+        }
 
         return [convertedRule copy];
     }

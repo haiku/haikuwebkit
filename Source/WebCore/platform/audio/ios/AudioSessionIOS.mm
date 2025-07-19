@@ -122,7 +122,7 @@ Ref<AudioSessionIOS> AudioSessionIOS::create()
 AudioSessionIOS::AudioSessionIOS()
 {
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    m_interruptionObserverHelper = adoptNS([[WebInterruptionObserverHelper alloc] initWithCallback:this]);
+    lazyInitialize(m_interruptionObserverHelper, adoptNS([[WebInterruptionObserverHelper alloc] initWithCallback:this]));
     END_BLOCK_OBJC_EXCEPTIONS
 }
 

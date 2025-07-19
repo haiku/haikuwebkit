@@ -93,7 +93,7 @@ public:
     
     struct TakenRecords {
         Vector<Ref<MutationRecord>> records;
-        UncheckedKeyHashSet<GCReachableRef<Node>> pendingTargets;
+        HashSet<GCReachableRef<Node>> pendingTargets;
     };
     TakenRecords takeRecords();
     void disconnect();
@@ -125,7 +125,7 @@ private:
 
     const Ref<MutationCallback> m_callback;
     Vector<Ref<MutationRecord>> m_records;
-    UncheckedKeyHashSet<GCReachableRef<Node>> m_pendingTargets;
+    HashSet<GCReachableRef<Node>> m_pendingTargets;
     WeakHashSet<MutationObserverRegistration> m_registrations;
     unsigned m_priority;
 };

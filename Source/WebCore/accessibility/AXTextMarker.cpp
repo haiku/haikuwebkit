@@ -59,7 +59,7 @@ TextMarkerData::TextMarkerData(AXObjectCache& cache, const VisiblePosition& visi
 {
     ASSERT(isMainThread());
 #if ENABLE(AX_THREAD_TEXT_APIS)
-    RELEASE_ASSERT(!AXObjectCache::shouldCreateAXThreadCompatibleMarkers());
+    ASSERT(!AXObjectCache::shouldCreateAXThreadCompatibleMarkers());
 #endif
 
     zeroBytes(*this);
@@ -352,7 +352,7 @@ std::optional<CharacterRange> AXTextMarkerRange::characterRange() const
         return std::nullopt;
 
     if (m_start.m_data.characterOffset > m_end.m_data.characterOffset) {
-        TEXT_MARKER_ASSERT_NOT_REACHED("characterRange");
+        ASSERT_NOT_REACHED();
         return std::nullopt;
     }
     return { { m_start.m_data.characterOffset, m_end.m_data.characterOffset - m_start.m_data.characterOffset } };
@@ -575,7 +575,7 @@ String AXTextMarkerRange::toString() const
                 return;
 
             // Like TextIterator, don't emit a newline if the most recently emitted character was already a newline.
-            if (result.length() && result[result.length() - 1] != '\n') {
+            if (!result.length() || result[result.length() - 1] != '\n') {
                 result.append('\n');
                 if (behavior == TextEmissionBehavior::DoubleNewline)
                     result.append('\n');
@@ -588,9 +588,7 @@ String AXTextMarkerRange::toString() const
         // we may want to detect this and try searching AXDirection::Previous?
         RefPtr current = findObjectWithRuns(*start.isolatedObject(), AXDirection::Next, std::nullopt, emitNewlineOnExit);
         while (current && current->objectID() != end.objectID()) {
-            const auto* runs = current->textRuns();
-            for (unsigned i = 0; i < runs->size(); i++)
-                result.append(runs->at(i).text);
+            result.append(current->textRuns()->toStringView());
             current = findObjectWithRuns(*current, AXDirection::Next, std::nullopt, emitNewlineOnExit);
         }
         result.append(end.runs()->substring(0, end.offset()));
@@ -631,7 +629,7 @@ String AXTextMarkerRange::toString() const
 #if ENABLE(AX_THREAD_TEXT_APIS)
 AXTextMarker AXTextMarker::convertToDomOffset() const
 {
-    RELEASE_ASSERT(!isMainThread());
+    ASSERT(!isMainThread());
 
     if (!isValid())
         return { };
@@ -698,7 +696,7 @@ int AXTextMarker::lineIndex() const
         // Start from a line end, so that subsequent calls to nextLineEnd() yield a new line.
         // Otherwise if we started from the middle of a line, we would count the the first line twice.
         auto nextLineEndMarker = currentMarker.nextLineEnd();
-        TEXT_MARKER_ASSERT_DOUBLE(nextLineEndMarker.lineID() == currentMarker.lineID(), "lineIndex", nextLineEndMarker, currentMarker);
+        TEXT_MARKER_ASSERT_DOUBLE(nextLineEndMarker.lineID() == currentMarker.lineID(), nextLineEndMarker, currentMarker);
         currentMarker = WTFMove(nextLineEndMarker);
     }
 
@@ -720,7 +718,7 @@ CharacterRange AXTextMarker::characterRangeForLine(unsigned lineIndex) const
     if (!object || !object->isTextControl())
         return { };
     // This implementation doesn't respect the offset as the only known callsite hardcodes zero. We'll need to make changes to support this if a usecase arrives for it.
-    TEXT_MARKER_ASSERT(!offset(), "characterRangeForLine");
+    TEXT_MARKER_ASSERT(!offset());
 
     std::optional stopAtID = object->idOfNextSiblingIncludingIgnoredOrParent();
     auto textRunMarker = toTextRunMarker(stopAtID);
@@ -747,7 +745,7 @@ CharacterRange AXTextMarker::characterRangeForLine(unsigned lineIndex) const
 AXTextMarkerRange AXTextMarker::markerRangeForLineIndex(unsigned lineIndex) const
 {
     // This implementation doesn't respect the offset as the only known callsite hardcodes zero. We'll need to make changes to support this if a usecase arrives for it.
-    TEXT_MARKER_ASSERT(!offset(), "markerRangeForLineIndex");
+    TEXT_MARKER_ASSERT(!offset());
 
     if (!isValid())
         return { };
@@ -800,7 +798,7 @@ bool AXTextMarker::atLineBoundaryForDirection(AXDirection direction) const
         return toTextRunMarker().atLineBoundaryForDirection(direction);
 
     size_t runIndex = runs()->indexForOffset(offset(), affinity());
-    TEXT_MARKER_ASSERT(runIndex != notFound, "atLineBoundaryForDirection (1)");
+    TEXT_MARKER_ASSERT(runIndex != notFound);
     if (runIndex == notFound)
         return false;
 
@@ -831,7 +829,7 @@ bool AXTextMarker::atLineBoundaryForDirection(AXDirection direction, const AXTex
     // The current line/containing block ends with the current object and runs. Now, check if we are at
     // the start/end of the line using the marker's position within its line.
     unsigned sumToRunIndex = runIndex ? runs->runLengthSumTo(runIndex - 1) : 0;
-    TEXT_MARKER_ASSERT(offset() >= sumToRunIndex, "atLineBoundaryForDirection (2)");
+    TEXT_MARKER_ASSERT(offset() >= sumToRunIndex);
     if (offset() < sumToRunIndex)
         return false;
 
@@ -841,7 +839,7 @@ bool AXTextMarker::atLineBoundaryForDirection(AXDirection direction, const AXTex
 
 unsigned AXTextMarker::offsetFromRoot() const
 {
-    RELEASE_ASSERT(!isMainThread());
+    ASSERT(!isMainThread());
 
     if (!isValid())
         return 0;
@@ -887,7 +885,7 @@ unsigned AXTextMarker::offsetFromRoot() const
         applyNewlineOffset();
 
         // If this assert fails, it means we couldn't navigate from root to `this`, which should never happen.
-        TEXT_MARKER_ASSERT_DOUBLE(hasSameObjectAndOffset(current), "offsetFromRoot", (*this), current);
+        TEXT_MARKER_ASSERT_DOUBLE(hasSameObjectAndOffset(current), (*this), current);
         return offset;
     }
     return 0;
@@ -895,7 +893,7 @@ unsigned AXTextMarker::offsetFromRoot() const
 
 AXTextMarker AXTextMarker::nextMarkerFromOffset(unsigned offset, ForceSingleOffsetMovement forceSingleOffsetMovement, std::optional<AXID> stopAtID) const
 {
-    RELEASE_ASSERT(!isMainThread());
+    ASSERT(!isMainThread());
 
     if (!isValid())
         return { };
@@ -916,7 +914,7 @@ AXTextMarker AXTextMarker::nextMarkerFromOffset(unsigned offset, ForceSingleOffs
 
 AXTextMarker AXTextMarker::findLastBefore(std::optional<AXID> stopAtID) const
 {
-    RELEASE_ASSERT(!isMainThread());
+    ASSERT(!isMainThread());
 
     if (!isValid())
         return { };
@@ -942,7 +940,7 @@ AXTextMarker AXTextMarker::findLastBefore(std::optional<AXID> stopAtID) const
 
 AXTextMarkerRange AXTextMarker::rangeWithSameStyle() const
 {
-    RELEASE_ASSERT(!isMainThread());
+    ASSERT(!isMainThread());
 
     if (!isValid())
         return { };
@@ -995,7 +993,7 @@ static FloatRect viewportRelativeFrameFromRuns(Ref<AXIsolatedObject> object, uns
 
 FloatRect AXTextMarkerRange::viewportRelativeFrame() const
 {
-    RELEASE_ASSERT(!isMainThread());
+    ASSERT(!isMainThread());
 
     auto start = m_start.toTextRunMarker();
     if (!start.isValid())
@@ -1025,7 +1023,7 @@ FloatRect AXTextMarkerRange::viewportRelativeFrame() const
 
 AXTextMarkerRange AXTextMarkerRange::convertToDomOffsetRange() const
 {
-    RELEASE_ASSERT(!isMainThread());
+    ASSERT(!isMainThread());
 
     return {
         m_start.convertToDomOffset(),
@@ -1094,7 +1092,7 @@ AXTextMarker AXTextMarker::findMarker(AXDirection direction, CoalesceObjectBreak
             return AXTextMarker { treeID(), objectID(), direction == AXDirection::Next ? offset() + 1 : offset() - 1 };
         }
 
-        CachedTextBreakIterator iterator(runs->toString(), { }, TextBreakIterator::CaretMode { }, nullAtom());
+        CachedTextBreakIterator iterator(runs->toStringView(), { }, TextBreakIterator::CaretMode { }, nullAtom());
         unsigned newOffset = direction == AXDirection::Next ? iterator.following(offset()).value_or(offset() + 1) : iterator.preceding(offset()).value_or(offset() - 1);
         return AXTextMarker { treeID(), objectID(), newOffset };
     }
@@ -1103,7 +1101,7 @@ AXTextMarker AXTextMarker::findMarker(AXDirection direction, CoalesceObjectBreak
     object = findObjectWithRuns(*object, direction, stopAtID);
     if (object) {
         bool nextRunHasLength = direction == AXDirection::Next ? object->textRuns()->runLength(0) : object->textRuns()->lastRunLength();
-        TEXT_MARKER_ASSERT(nextRunHasLength, "findMarker");
+        TEXT_MARKER_ASSERT(nextRunHasLength);
         if (!nextRunHasLength)
             return { };
 
@@ -1125,7 +1123,7 @@ AXTextMarker AXTextMarker::findLine(AXDirection direction, AXTextUnitBoundary bo
         return toTextRunMarker(stopAtID).findLine(direction, boundary, includeTrailingLineBreak, stopAtID);
 
     size_t runIndex = runs()->indexForOffset(offset(), affinity());
-    TEXT_MARKER_ASSERT(runIndex != notFound, "findLine (1)");
+    TEXT_MARKER_ASSERT(runIndex != notFound);
     if (runIndex == notFound)
         return { };
 
@@ -1179,7 +1177,7 @@ AXTextMarker AXTextMarker::findLine(AXDirection direction, AXTextUnitBoundary bo
     auto startLineID = currentRuns->lineID(runIndex);
     // We found the start run and associated line, now iterate until we find a line boundary.
     while (currentObject) {
-        TEXT_MARKER_ASSERT_SINGLE(currentRuns->size(), "findLine (2)", (*this));
+        TEXT_MARKER_ASSERT_SINGLE(currentRuns->size(), (*this));
         if (!currentRuns->size())
             return { };
 
@@ -1226,7 +1224,7 @@ AXTextMarker AXTextMarker::findParagraph(AXDirection direction, AXTextUnitBounda
         return toTextRunMarker().findParagraph(direction, boundary);
 
     size_t runIndex = runs()->indexForOffset(offset(), affinity());
-    TEXT_MARKER_ASSERT(runIndex != notFound, "findParagraph");
+    TEXT_MARKER_ASSERT(runIndex != notFound);
     if (runIndex == notFound)
         return { };
 
@@ -1240,20 +1238,20 @@ AXTextMarker AXTextMarker::findParagraph(AXDirection direction, AXTextUnitBounda
     unsigned offsetInStartLine = offset() - sumToRunIndex;
 
     while (currentObject) {
-        TEXT_MARKER_ASSERT_SINGLE(currentRuns->size(), "findParagraph", (*this));
+        TEXT_MARKER_ASSERT_SINGLE(currentRuns->size(), (*this));
         if (!currentRuns->size())
             return { };
 
         for (size_t i = runIndex; i < currentRuns->size() && i >= 0; direction == AXDirection::Next ? i++ : i--) {
             // If a text run starts or ends with a newline character, that indicates a paragraph boundary. However, if the direction
             // is Next, and our starting offset points to the end of the line (past the newline character), we are past the boundary.
-            if (currentRuns->at(i).endsWithLineBreak() && (i != runIndex || (direction == AXDirection::Next && currentRuns->runLength(i) != offsetInStartLine))) {
+            if (currentRuns->runEndsWithLineBreak(i) && (i != runIndex || (direction == AXDirection::Next && currentRuns->runLength(i) != offsetInStartLine))) {
                 unsigned sumIncludingCurrentLine = currentRuns->runLengthSumTo(i);
                 unsigned newlineOffsetConsideringDirection = direction == AXDirection::Next ? sumIncludingCurrentLine - 1 : sumIncludingCurrentLine;
                 return { *currentObject, newlineOffsetConsideringDirection, origin };
             }
 
-            if (currentRuns->at(i).startsWithLineBreak() && (i != runIndex || (direction == AXDirection::Previous && offsetInStartLine))) {
+            if (currentRuns->runStartsWithLineBreak(i) && (i != runIndex || (direction == AXDirection::Previous && offsetInStartLine))) {
                 unsigned sumUpToCurrentLine = i ? currentRuns->runLengthSumTo(i - 1) : 0;
                 unsigned newlineOffsetConsideringDirection = direction == AXDirection::Next ? 0 : 1;
                 return { *currentObject, sumUpToCurrentLine + newlineOffsetConsideringDirection, origin };
@@ -1307,7 +1305,7 @@ AXTextMarker AXTextMarker::findWordOrSentence(AXDirection direction, bool findWo
     // Functions to update resultMarker for word and sentence text units.
     auto updateWordResultMarker = [&] () {
         if (direction == AXDirection::Previous && boundary == AXTextUnitBoundary::Start) {
-            TEXT_MARKER_ASSERT_SINGLE(offset <= flattenedRuns.length(), "findWordOrSentence", (*this));
+            TEXT_MARKER_ASSERT_SINGLE(offset <= flattenedRuns.length(), (*this));
             int previousWordStart = findNextWordFromIndex(flattenedRuns, offset, false);
             if (previousWordStart <= objectBorder)
                 resultMarker = AXTextMarker(*currentObject, previousWordStart, origin);
@@ -1372,7 +1370,7 @@ AXTextMarker AXTextMarker::findWordOrSentence(AXDirection direction, bool findWo
                 return resultMarker;
 
             currentRuns = currentObject->textRuns();
-            String newRunsFlattenedString = currentRuns->toString();
+            StringView newRunsFlattenedString = currentRuns->toStringView();
             if (direction == AXDirection::Previous) {
                 flattenedRuns = makeString(newRunsFlattenedString, flattenedRuns);
                 offset += newRunsFlattenedString.length();
@@ -1458,7 +1456,7 @@ AXTextMarker AXTextMarker::toTextRunMarker(std::optional<AXID> stopAtID) const
     if (!current)
         return { };
 
-    TEXT_MARKER_ASSERT(offset() >= precedingOffset, "toTextRunMarker (2)");
+    TEXT_MARKER_ASSERT(offset() >= precedingOffset);
     if (offset() < precedingOffset)
         return *this;
 

@@ -35,6 +35,7 @@
 namespace WebCore {
 
 class Document;
+class GraphicsLayer;
 class HTMLElement;
 class HTMLImageElement;
 class HTMLSpanElement;
@@ -121,6 +122,7 @@ struct EnclosingLayerInfomation {
     CheckedPtr<RenderLayer> startLayer;
     CheckedPtr<RenderLayer> endLayer;
     CheckedPtr<RenderLayer> enclosingLayer;
+    RefPtr<GraphicsLayer> enclosingGraphicsLayer;
     std::optional<PlatformLayerIdentifier> enclosingGraphicsLayerID;
 };
 

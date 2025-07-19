@@ -278,8 +278,10 @@ AVVideoCaptureSource::~AVVideoCaptureSource()
 void AVVideoCaptureSource::verifyIsCapturing()
 {
     ASSERT(m_isRunning);
-    if (m_lastFramesCount != m_framesCount) {
-        m_lastFramesCount = m_framesCount;
+
+    uint64_t framesCount = m_framesCount;
+    if (m_lastFramesCount != framesCount) {
+        m_lastFramesCount = framesCount;
         return;
     }
 
@@ -292,6 +294,8 @@ void AVVideoCaptureSource::updateVerifyCapturingTimer()
     if (!m_isRunning || m_interrupted) {
         if (m_verifyCapturingTimer)
             m_verifyCapturingTimer->stop();
+        m_framesCount = 0;
+        m_lastFramesCount = 0;
         return;
     }
 
@@ -827,8 +831,25 @@ double AVVideoCaptureSource::facingModeFitnessScoreAdjustment() const
 void AVVideoCaptureSource::applyFrameRateAndZoomWithPreset(double requestedFrameRate, double requestedZoom, std::optional<VideoPreset>&& preset)
 {
     requestedZoom *= m_zoomScaleFactor;
-    if (m_currentFrameRate == requestedFrameRate && m_currentZoom == requestedZoom && preset && m_currentPreset && preset->format() == m_currentPreset->format())
+    bool isSamePresetAndFrameRate = m_currentFrameRate == requestedFrameRate && preset && m_currentPreset && preset->format() == m_currentPreset->format();
+    if (isSamePresetAndFrameRate && m_currentZoom == requestedZoom)
         return;
+
+    if (isSamePresetAndFrameRate) {
+        ALWAYS_LOG_IF_POSSIBLE(LOGIDENTIFIER, ", applying zoom only");
+        if (!lockForConfiguration())
+            return;
+
+        @try {
+            [device() setVideoZoomFactor:requestedZoom];
+            m_currentZoom = requestedZoom;
+        } @catch(NSException *exception) {
+            ERROR_LOG_IF_POSSIBLE(LOGIDENTIFIER, "error applying zoom ", exception.name, ", reason : ", exception.reason);
+        }
+
+        [device() unlockForConfiguration];
+        return;
+    }
 
     beginConfigurationForConstraintsIfNeeded();
 

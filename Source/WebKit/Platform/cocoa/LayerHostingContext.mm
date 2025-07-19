@@ -41,9 +41,6 @@
 #import <BrowserEngineKit/BELayerHierarchy.h>
 #import <BrowserEngineKit/BELayerHierarchyHandle.h>
 #import <BrowserEngineKit/BELayerHierarchyHostingTransactionCoordinator.h>
-#if ENABLE(MACH_PORT_LAYER_HOSTING)
-#import <BrowserEngineKit/BrowserEngineKit_Private.h>
-#endif
 #endif
 
 namespace WebKit {
@@ -195,10 +192,11 @@ WTF::MachSendRightAnnotated LayerHostingContext::sendRightAnnotated() const
     return { WTFMove(sendRight), FixedVector<uint8_t> { span(dataRepresentation.get()) } };
 }
 
-RetainPtr<BELayerHierarchyHostingTransactionCoordinator> LayerHostingContext::createHostingUpdateCoordinator(const WTF::MachSendRightAnnotated& sendRightAnnotated)
+RetainPtr<BELayerHierarchyHostingTransactionCoordinator> LayerHostingContext::createHostingUpdateCoordinator(WTF::MachSendRightAnnotated&& sendRightAnnotated)
 {
+    // We are leaking the send right here, since [BELayerHierarchyHostingTransactionCoordinator coordinatorWithPort] takes ownership of the send right, even in the error case.
     NSError *error = nil;
-    auto coordinator = [BELayerHierarchyHostingTransactionCoordinator coordinatorWithPort:sendRightAnnotated.sendRight.sendRight() data:toNSData(sendRightAnnotated.data.span()).get() error:&error];
+    auto coordinator = [BELayerHierarchyHostingTransactionCoordinator coordinatorWithPort:sendRightAnnotated.sendRight.leakSendRight() data:toNSData(sendRightAnnotated.data.span()).get() error:&error];
     if (error)
         RELEASE_LOG_ERROR(Process, "Could not create update coordinator, error = %@", error);
     return coordinator;
@@ -217,7 +215,7 @@ WTF::MachSendRightAnnotated LayerHostingContext::fence(BELayerHierarchyHostingTr
 
 RetainPtr<BELayerHierarchyHandle> LayerHostingContext::createHostingHandle(WTF::MachSendRightAnnotated&& sendRightAnnotated)
 {
-    // We are leaking the send right here, since [BELayerHierarchyHandle handleWithPort] takes ownership of the send right.
+    // We are leaking the send right here, since [BELayerHierarchyHandle handleWithPort] takes ownership of the send right, even in the error case.
     NSError *error = nil;
     auto handle = [BELayerHierarchyHandle handleWithPort:sendRightAnnotated.sendRight.leakSendRight() data:toNSData(sendRightAnnotated.data.span()).get() error:&error];
     if (error)

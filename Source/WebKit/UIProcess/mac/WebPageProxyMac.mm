@@ -61,6 +61,7 @@
 #import <WebCore/DragItem.h>
 #import <WebCore/GraphicsLayer.h>
 #import <WebCore/LegacyNSPasteboardTypes.h>
+#import <WebCore/Pasteboard.h>
 #import <WebCore/Quirks.h>
 #import <WebCore/SharedBuffer.h>
 #import <WebCore/TextAlternativeWithRange.h>
@@ -71,6 +72,7 @@
 #import <pal/spi/cocoa/WritingToolsSPI.h>
 #import <pal/spi/mac/NSApplicationSPI.h>
 #import <pal/spi/mac/NSMenuSPI.h>
+#import <pal/spi/mac/NSPasteboardSPI.h>
 #import <wtf/FileHandle.h>
 #import <wtf/FileSystem.h>
 #import <wtf/ProcessPrivilege.h>
@@ -174,9 +176,12 @@ void WebPageProxy::stopSpeaking()
 void WebPageProxy::searchTheWeb(const String& string)
 {
     RetainPtr pasteboard = [NSPasteboard pasteboardWithUniqueName];
-    [pasteboard declareTypes:@[legacyStringPasteboardType()] owner:nil];
+    [pasteboard clearContents];
+    if (sessionID().isEphemeral())
+        [pasteboard _setExpirationDate:[NSDate dateWithTimeIntervalSinceNow:pasteboardExpirationDelay.seconds()]];
+    [pasteboard addTypes:@[legacyStringPasteboardType()] owner:nil];
     [pasteboard setString:string.createNSString().get() forType:legacyStringPasteboardType()];
-    
+
     NSPerformService(@"Search With %WebSearchProvider@", pasteboard.get());
 }
 
@@ -615,29 +620,24 @@ void WebPageProxy::showPDFContextMenu(const WebKit::PDFContextMenu& contextMenu,
 
         RetainPtr nsItem = adoptNS([[NSMenuItem alloc] init]);
 
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
-        auto shouldSetImage = m_preferences->contextMenuImagesForInternalClientsEnabled();
-#endif
         if (isOpenWithDefaultViewerItem) {
             RetainPtr defaultPDFViewerPath = [[[NSWorkspace sharedWorkspace] URLForApplicationToOpenContentType:UTTypePDF] path];
             RetainPtr defaultPDFViewerName = [[NSFileManager defaultManager] displayNameAtPath:defaultPDFViewerPath.get()];
 
             String itemTitle = contextMenuItemPDFOpenWithDefaultViewer(defaultPDFViewerName.get());
             [nsItem setTitle:itemTitle.createNSString().get()];
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
-            if (shouldSetImage) {
-                RetainPtr icon = [[NSWorkspace sharedWorkspace] iconForFile:defaultPDFViewerPath.get()];
-                [icon setSize:NSMakeSize(16.f, 16.f)];
-                [nsItem _setActionImage:icon.get()];
-            }
+#if ENABLE(CONTEXT_MENU_IMAGES_ON_MAC)
+            RetainPtr icon = [[NSWorkspace sharedWorkspace] iconForFile:defaultPDFViewerPath.get()];
+            [icon setSize:NSMakeSize(16.f, 16.f)];
+            [nsItem _setActionImage:icon.get()];
 #endif
         } else
             [nsItem setTitle:item.title.createNSString().get()];
 
         [nsItem setEnabled:item.enabled == ContextMenuItemEnablement::Enabled];
         [nsItem setState:item.state];
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
-        if (shouldSetImage && ![nsItem _hasActionImage])
+#if ENABLE(CONTEXT_MENU_IMAGES_ON_MAC)
+        if (![nsItem _hasActionImage])
             addImageToMenuItem(nsItem.get(), item.action, false);
 #endif
         if (item.hasAction == ContextMenuItemHasAction::Yes) {
@@ -955,7 +955,10 @@ void WebPageProxy::handleContextMenuCopySubject(const String& preferredMIMEType)
 
     RetainPtr<NSPasteboard> pasteboard = NSPasteboard.generalPasteboard;
     RetainPtr pasteboardType = bridge_cast(type.get());
-    [pasteboard declareTypes:@[pasteboardType.get()] owner:nil];
+    [pasteboard clearContents];
+    if (sessionID().isEphemeral())
+        [pasteboard _setExpirationDate:[NSDate dateWithTimeIntervalSinceNow:pasteboardExpirationDelay.seconds()]];
+    [pasteboard addTypes:@[pasteboardType.get()] owner:nil];
     [pasteboard setData:data.get() forType:pasteboardType.get()];
 }
 

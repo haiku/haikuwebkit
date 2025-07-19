@@ -113,13 +113,11 @@ bool AVAssetMIMETypeCache::canDecodeExtendedType(const ContentType& typeParamete
 
     ASSERT(isAvailable());
 
-#if HAVE(AVURLASSET_ISPLAYABLEEXTENDEDMIMETYPEWITHOPTIONS)
-    if (PAL::canLoad_AVFoundation_AVURLAssetExtendedMIMETypePlayabilityTreatPlaylistMIMETypesAsISOBMFFMediaDataContainersKey()
-        && [PAL::getAVURLAssetClass() respondsToSelector:@selector(isPlayableExtendedMIMEType:options:)]) {
+    if (PAL::canLoad_AVFoundation_AVURLAssetExtendedMIMETypePlayabilityTreatPlaylistMIMETypesAsISOBMFFMediaDataContainersKey()) {
         if ([PAL::getAVURLAssetClass() isPlayableExtendedMIMEType:type.raw().createNSString().get() options:@{ AVURLAssetExtendedMIMETypePlayabilityTreatPlaylistMIMETypesAsISOBMFFMediaDataContainersKey: @YES }])
             return true;
     } else
-#endif
+
     if ([PAL::getAVURLAssetClass() isPlayableExtendedMIMEType:type.raw().createNSString().get()])
         return true;
 

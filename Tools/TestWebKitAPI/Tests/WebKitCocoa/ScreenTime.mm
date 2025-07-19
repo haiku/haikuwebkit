@@ -96,14 +96,6 @@ static void testSuppressUsageRecordingWithDataStore(RetainPtr<WKWebsiteDataStore
 @property (setter=setURLIsBlocked:) BOOL URLIsBlocked;
 @end
 
-@interface STWebpageController (Staging_138865295)
-@property (nonatomic, copy) NSString *profileIdentifier;
-@end
-
-@interface STWebHistory (Staging_140439004)
-- (void)fetchAllHistoryWithCompletionHandler:(void (^)(NSSet<NSURL *> *urls, NSError *error))completionHandler;
-@end
-
 @interface WKWebView (Internal)
 - (STWebpageController *)_screenTimeWebpageController;
 #if PLATFORM(MAC)
@@ -327,9 +319,6 @@ TEST(ScreenTime, IsBlockedByScreenTimeKVO)
 
 TEST(ScreenTime, IdentifierNil)
 {
-    if (![PAL::getSTWebpageControllerClass() instancesRespondToSelector:@selector(setProfileIdentifier:)])
-        return;
-
     __block bool done = false;
     __block NSString *identifier = @"testing123";
 
@@ -353,9 +342,6 @@ TEST(ScreenTime, IdentifierNil)
 
 TEST(ScreenTime, IdentifierString)
 {
-    if (![PAL::getSTWebpageControllerClass() instancesRespondToSelector:@selector(setProfileIdentifier:)])
-        return;
-
     __block bool done = false;
     __block RetainPtr identifier = @"";
 
@@ -421,7 +407,9 @@ TEST(ScreenTime, WKWebViewFillsStackView)
 
     RetainPtr webView = webViewForScreenTimeTests(nil, NO);
     [webView setTranslatesAutoresizingMaskIntoConstraints:NO];
-    [webView synchronouslyLoadHTMLString:@"<style> body { background-color: red; } </style>"];
+
+    RetainPtr request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://webkit.org"]];
+    [webView synchronouslyLoadSimulatedRequest:request.get() responseHTMLString:@""];
 
 #if PLATFORM(MAC)
     RetainPtr stackView = adoptNS([[NSStackView alloc] init]);
@@ -578,9 +566,6 @@ TEST(ScreenTime, WebContentIsNotClickableBehindBlurredBlockingView)
 
 TEST(ScreenTime, FetchData)
 {
-    if (![PAL::getSTWebHistoryClass() instancesRespondToSelector:@selector(fetchAllHistoryWithCompletionHandler:)])
-        return;
-
     __block RetainPtr<NSSet<NSURL *>> urls;
     InstanceMethodSwizzler swizzler {
         PAL::getSTWebHistoryClass(),
@@ -599,7 +584,8 @@ TEST(ScreenTime, FetchData)
     [configuration setWebsiteDataStore:websiteDataStore.get()];
 
     RetainPtr webView = webViewForScreenTimeTests(configuration.get());
-    [webView synchronouslyLoadHTMLString:@"https://www.webkit.org/"];
+    RetainPtr request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"http://webkit.org"]];
+    [webView synchronouslyLoadSimulatedRequest:request.get() responseHTMLString:@""];
 
     __block bool done = false;
     [websiteDataStore fetchDataRecordsOfTypes:dataTypeScreenTime.get() completionHandler:^(NSArray<WKWebsiteDataRecord *> *dataRecords) {
@@ -612,9 +598,6 @@ TEST(ScreenTime, FetchData)
 
 TEST(ScreenTime, RemoveDataWithTimeInterval)
 {
-    if (![PAL::getSTWebHistoryClass() instancesRespondToSelector:@selector(deleteHistoryDuringInterval:)])
-        return;
-
     __block bool removedHistory = false;
     InstanceMethodSwizzler swizzler {
         PAL::getSTWebHistoryClass(),
@@ -648,9 +631,6 @@ TEST(ScreenTime, RemoveDataWithTimeInterval)
 
 TEST(ScreenTime, RemoveData)
 {
-    if (![PAL::getSTWebHistoryClass() instancesRespondToSelector:@selector(fetchAllHistoryWithCompletionHandler:)])
-        return;
-
     __block RetainPtr<NSSet<NSURL *>> fetchedURLs = adoptNS([[NSSet alloc] initWithArray:@[
         adoptNS([[NSURL alloc] initWithString:@"https://www.github.com/WebKit/WebKit"]).get(),
         adoptNS([[NSURL alloc] initWithString:@"https://www.github.com/APPLE"]).get(),
@@ -683,7 +663,8 @@ TEST(ScreenTime, RemoveData)
     [configuration setWebsiteDataStore:websiteDataStore.get()];
 
     RetainPtr webView = webViewForScreenTimeTests(configuration.get());
-    [webView synchronouslyLoadHTMLString:@"https://www.github.com/WebKit/WebKit"];
+    RetainPtr request = [NSURLRequest requestWithURL:[NSURL URLWithString:@"https://www.github.com/WebKit/WebKit"]];
+    [webView synchronouslyLoadSimulatedRequest:request.get() responseHTMLString:@""];
 
     __block bool done = false;
     [websiteDataStore fetchDataRecordsOfTypes:dataTypeScreenTime.get() completionHandler:^(NSArray<WKWebsiteDataRecord *> *dataRecords) {

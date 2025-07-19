@@ -52,6 +52,7 @@ ShareableBitmapConfiguration::ShareableBitmapConfiguration(const IntSize& size, 
 #endif
 {
     ASSERT(!m_size.isEmpty());
+    ASSERT(headroom >= Headroom::None);
 }
 
 ShareableBitmapConfiguration::ShareableBitmapConfiguration(const IntSize& size, std::optional<DestinationColorSpace> colorSpace, Headroom headroom, bool isOpaque, unsigned bitsPerComponent, unsigned bytesPerPixel, unsigned bytesPerRow
@@ -75,6 +76,7 @@ ShareableBitmapConfiguration::ShareableBitmapConfiguration(const IntSize& size, 
 {
     // This constructor is called when decoding ShareableBitmapConfiguration. So this constructor
     // will behave like the default constructor if a null ShareableBitmapHandle was encoded.
+    ASSERT(headroom >= Headroom::None);
 }
 
 CheckedUint32 ShareableBitmapConfiguration::calculateSizeInBytes(const IntSize& size, const DestinationColorSpace& colorSpace)
@@ -92,6 +94,7 @@ RefPtr<ShareableBitmap> ShareableBitmap::create(const ShareableBitmapConfigurati
     if (!sharedMemory)
         return nullptr;
 
+    ASSERT(configuration.headroom() >= Headroom::None);
     return adoptRef(new ShareableBitmap(configuration, sharedMemory.releaseNonNull()));
 }
 
@@ -171,6 +174,7 @@ ShareableBitmap::ShareableBitmap(ShareableBitmapConfiguration configuration, Ref
     : m_configuration(configuration)
     , m_sharedMemory(WTFMove(sharedMemory))
 {
+    ASSERT(m_configuration.headroom() >= Headroom::None);
 }
 
 std::span<const uint8_t> ShareableBitmap::span() const

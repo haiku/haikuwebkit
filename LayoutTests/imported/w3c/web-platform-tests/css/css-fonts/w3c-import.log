@@ -633,6 +633,8 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/font-variant-caps-07-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/font-variant-caps-07.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/font-variant-caps-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/font-variant-caps-invalidation-container-sizing-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/font-variant-caps-invalidation-container-sizing-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/font-variant-caps-invalidation-container-sizing.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/font-variant-caps-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/font-variant-caps.html
@@ -974,6 +976,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/variation-sequences-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/variation-sequences-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/variation-sequences.html
+/LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/w3c-import.log
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/web-font-no-longer-accessible-when-stylesheet-removed-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/web-font-no-longer-accessible-when-stylesheet-removed-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/css/css-fonts/web-font-no-longer-accessible-when-stylesheet-removed.html

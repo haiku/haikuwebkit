@@ -54,6 +54,12 @@ void SourceProvider::unlockUnderlyingBuffer()
         unlockUnderlyingBufferImpl();
 }
 
+CodeBlockHash SourceProvider::codeBlockHashConcurrently(int startOffset, int endOffset, CodeSpecializationKind kind)
+{
+    auto entireSourceCode = source();
+    return CodeBlockHash { entireSourceCode.substring(startOffset, endOffset - startOffset), entireSourceCode, kind };
+}
+
 void SourceProvider::lockUnderlyingBufferImpl() { }
 
 void SourceProvider::unlockUnderlyingBufferImpl() { }

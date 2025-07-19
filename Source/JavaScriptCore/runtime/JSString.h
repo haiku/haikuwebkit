@@ -61,7 +61,7 @@ JSString* jsString(VM&, RefPtr<AtomStringImpl>&&);
 JSString* jsString(VM&, Ref<AtomStringImpl>&&);
 JSString* jsString(VM&, Ref<StringImpl>&&);
 
-JSString* jsSingleCharacterString(VM&, UChar);
+JSString* jsSingleCharacterString(VM&, char16_t);
 JSString* jsSingleCharacterString(VM&, LChar);
 JSString* jsSubstring(VM&, const String&, unsigned offset, unsigned length);
 
@@ -133,6 +133,9 @@ public:
     static constexpr uintptr_t isRopeInPointer = 0x1;
 
     static constexpr unsigned maxLengthForOnStackResolve = 2048;
+
+    template<typename CharacterType>
+    inline void resolveToBuffer(std::span<CharacterType>);
 
 private:
     String& uninitializedValueInternal() const
@@ -274,7 +277,7 @@ public:
 
     bool is8Bit() const;
 
-    ALWAYS_INLINE JSString* tryReplaceOneChar(JSGlobalObject*, UChar, JSString* replacement);
+    ALWAYS_INLINE JSString* tryReplaceOneChar(JSGlobalObject*, char16_t, JSString* replacement);
 
     bool isSubstring() const;
 protected:
@@ -283,7 +286,7 @@ protected:
 
     JS_EXPORT_PRIVATE bool equalSlowCase(JSGlobalObject*, JSString* other) const;
 
-    inline JSString* tryReplaceOneCharImpl(JSGlobalObject*, UChar search, JSString* replacement, uint8_t* stackLimit, bool& found);
+    inline JSString* tryReplaceOneCharImpl(JSGlobalObject*, char16_t search, JSString* replacement, uint8_t* stackLimit, bool& found);
 
     uintptr_t fiberConcurrently() const { return m_fiber; }
 
@@ -304,7 +307,7 @@ private:
     friend JSString* jsString(JSGlobalObject*, JSString*, JSString*, JSString*);
     friend JSString* jsString(JSGlobalObject*, const String&, const String&, const String&);
     friend JS_EXPORT_PRIVATE JSString* jsStringWithCacheSlowCase(VM&, StringImpl&);
-    friend JSString* jsSingleCharacterString(VM&, UChar);
+    friend JSString* jsSingleCharacterString(VM&, char16_t);
     friend JSString* jsSingleCharacterString(VM&, LChar);
     friend JSString* jsNontrivialString(VM&, const String&);
     friend JSString* jsNontrivialString(VM&, String&&);
@@ -799,7 +802,7 @@ inline JSString* jsEmptyString(VM& vm)
     return vm.smallStrings.emptyString();
 }
 
-ALWAYS_INLINE JSString* jsSingleCharacterString(VM& vm, UChar c)
+ALWAYS_INLINE JSString* jsSingleCharacterString(VM& vm, char16_t c)
 {
     if constexpr (validateDFGDoesGC)
         vm.verifyCanGC();
@@ -1189,3 +1192,26 @@ inline bool JSString::isSubstring() const
 }
 
 } // namespace JSC
+namespace WTF {
+
+template<>
+class StringTypeAdapter<JSC::JSString*> {
+public:
+    StringTypeAdapter(JSC::JSString* string)
+        : m_string(string)
+    {
+    }
+
+    unsigned length() const { return m_string->length(); }
+    bool is8Bit() const { return m_string->is8Bit(); }
+    template<typename CharacterType>
+    void writeTo(std::span<CharacterType> destination) const
+    {
+        m_string->resolveToBuffer(destination.first(m_string->length()));
+    }
+
+private:
+    JSC::JSString* m_string { nullptr };
+};
+
+} // namespace WTF

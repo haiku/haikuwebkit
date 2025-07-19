@@ -133,6 +133,7 @@ public:
     WEBCORE_EXPORT EnterKeyHint canonicalEnterKeyHint() const;
     String enterKeyHint() const;
 
+    bool isHiddenUntilFound() const;
     std::optional<Variant<bool, double, String>> hidden() const;
     void setHidden(const std::optional<Variant<bool, double, String>>&);
 
@@ -195,7 +196,7 @@ protected:
 
     virtual void effectiveSpellcheckAttributeChanged(bool);
 
-    using EventHandlerNameMap = UncheckedKeyHashMap<AtomString, AtomString>;
+    using EventHandlerNameMap = HashMap<AtomString, AtomString>;
     static const AtomString& eventNameForEventHandlerAttribute(const QualifiedName& attributeName, const EventHandlerNameMap&);
 
 private:

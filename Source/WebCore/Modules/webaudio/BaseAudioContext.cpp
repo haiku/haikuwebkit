@@ -77,7 +77,7 @@
 #include "PlatformMediaSessionManager.h"
 #include "ScriptController.h"
 #include "ScriptProcessorNode.h"
-#include "ScriptTelemetryCategory.h"
+#include "ScriptTrackingPrivacyCategory.h"
 #include "StereoPannerNode.h"
 #include "StereoPannerOptions.h"
 #include "WaveShaperNode.h"
@@ -128,7 +128,7 @@ static OptionSet<NoiseInjectionPolicy> effectiveNoiseInjectionPolicies(Document&
     auto documentPolicies = document.noiseInjectionPolicies();
     if (documentPolicies.contains(NoiseInjectionPolicy::Minimal))
         policies.add(NoiseInjectionPolicy::Minimal);
-    if (documentPolicies.contains(NoiseInjectionPolicy::Enhanced) && document.requiresScriptExecutionTelemetry(ScriptTelemetryCategory::Audio))
+    if (documentPolicies.contains(NoiseInjectionPolicy::Enhanced) && document.requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory::Audio))
         policies.add(NoiseInjectionPolicy::Enhanced);
     return policies;
 }

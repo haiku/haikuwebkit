@@ -79,26 +79,27 @@ struct BuilderPositionTryFallback {
 };
 
 struct BuilderContext {
-    const Ref<const Document> document;
-    const RenderStyle& parentStyle;
-    const RenderStyle* rootElementStyle = nullptr;
-    RefPtr<const Element> element = nullptr;
+    const RefPtr<const Document> document { };
+    const RenderStyle* parentStyle { };
+    const RenderStyle* rootElementStyle { };
+    RefPtr<const Element> element { };
     CheckedPtr<TreeResolutionState> treeResolutionState { };
     std::optional<BuilderPositionTryFallback> positionTryFallback { };
 };
 
 class BuilderState {
 public:
+    BuilderState(RenderStyle&);
     BuilderState(RenderStyle&, BuilderContext&&);
 
     RenderStyle& style() { return m_style; }
     const RenderStyle& style() const { return m_style; }
 
-    const RenderStyle& parentStyle() const { return m_context.parentStyle; }
+    const RenderStyle& parentStyle() const { return *m_context.parentStyle; }
     const RenderStyle* rootElementStyle() const { return m_context.rootElementStyle; }
 
-    const Document& document() const { return m_context.document.get(); }
-    Ref<const Document> protectedDocument() const { return m_context.document; }
+    const Document& document() const { return *m_context.document; }
+    Ref<const Document> protectedDocument() const { return *m_context.document; }
     const Element* element() const { return m_context.element.get(); }
 
     inline void setZoom(float);
@@ -224,9 +225,9 @@ private:
 
     const CSSToLengthConversionData m_cssToLengthConversionData;
 
-    UncheckedKeyHashSet<AtomString> m_appliedCustomProperties;
-    UncheckedKeyHashSet<AtomString> m_inProgressCustomProperties;
-    UncheckedKeyHashSet<AtomString> m_inCycleCustomProperties;
+    HashSet<AtomString> m_appliedCustomProperties;
+    HashSet<AtomString> m_inProgressCustomProperties;
+    HashSet<AtomString> m_inCycleCustomProperties;
     WTF::BitSet<cssPropertyIDEnumValueCount> m_inProgressProperties;
     WTF::BitSet<cssPropertyIDEnumValueCount> m_invalidAtComputedValueTimeProperties;
 

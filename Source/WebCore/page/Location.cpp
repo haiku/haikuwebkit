@@ -36,6 +36,7 @@
 #include "LocalFrame.h"
 #include "NavigationScheduler.h"
 #include "SecurityOrigin.h"
+#include "ServiceWorkerContainer.h"
 #include <wtf/TZoneMallocInlines.h>
 #include <wtf/URL.h>
 #include <wtf/text/MakeString.h>
@@ -286,6 +287,15 @@ void Location::reload(LocalDOMWindow& activeWindow)
 
     if (targetDocument->url().protocolIsJavaScript())
         return;
+
+    if (targetDocument->quirks().shouldDelayReloadWhenRegisteringServiceWorker()) {
+        if (RefPtr container = targetDocument->serviceWorkerContainer()) {
+            container->whenRegisterJobsAreFinished([localFrame, activeDocument] {
+                localFrame->protectedNavigationScheduler()->scheduleRefresh(activeDocument);
+            });
+            return;
+        }
+    }
 
     localFrame->protectedNavigationScheduler()->scheduleRefresh(activeDocument);
 }

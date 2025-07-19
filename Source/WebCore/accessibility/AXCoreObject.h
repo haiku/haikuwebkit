@@ -1143,6 +1143,16 @@ public:
 #endif
     virtual AXCoreObject* parentObject() const = 0;
     virtual AXCoreObject* parentObjectUnignored() const;
+    AXCoreObject* parentInCoreTree() const
+    {
+        // Returns the parent in the "core", platform-agnostic accessibility tree, which is not necessarily
+        // the same parent that is actually exposed to assistive technologies (i.e. one that is unignored).
+#if ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
+        return parentObject();
+#else
+        return parentObjectUnignored();
+#endif // ENABLE(INCLUDE_IGNORED_IN_CORE_AX_TREE)
+    }
 
     virtual AccessibilityChildrenVector findMatchingObjects(AccessibilitySearchCriteria&&) = 0;
     virtual bool isDescendantOfRole(AccessibilityRole) const = 0;
@@ -1968,6 +1978,19 @@ String roleToPlatformString(AccessibilityRole);
 #if ENABLE(AX_THREAD_TEXT_APIS)
 std::optional<AXTextMarkerRange> markerRangeFrom(NSRange, const AXCoreObject&);
 #endif
+
+// Intended to work with size-types (like IntSize) or rect-types (like LayoutRect).
+template <typename SizeOrRectType>
+void adjustControlSize(SizeOrRectType& sizeOrRect)
+{
+    // It's very common for web developers to have a "screenreader only" CSS class that makes important
+    // elements like controls unrendered (e.g. via opacity:0 or CSS clipping) with a width and height
+    // of 1px. VoiceOver on macOS won't draw a cursor for 1px-large elements, so enforce a minimum size of 2px.
+    if (sizeOrRect.width() < 2)
+        sizeOrRect.setWidth(2);
+    if (sizeOrRect.height() < 2)
+        sizeOrRect.setHeight(2);
+}
 
 } // namespace Accessibility
 

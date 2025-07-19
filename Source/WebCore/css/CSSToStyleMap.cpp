@@ -178,20 +178,19 @@ void CSSToStyleMap::mapFillRepeat(CSSPropertyID propertyID, FillLayer& layer, co
 
 static inline bool convertToLengthSize(const CSSValue& value, Style::BuilderState& builderState, LengthSize& size)
 {
-    auto& conversionData = builderState.cssToLengthConversionData();
     if (value.isPair()) {
-        auto pair = Style::BuilderConverter::requiredPairDowncast<CSSPrimitiveValue>(builderState, value);
+        auto pair = Style::requiredPairDowncast<CSSPrimitiveValue>(builderState, value);
         if (!pair)
             return false;
-        size.width = pair->first.convertToLength<AnyConversion>(conversionData);
-        size.height = pair->second.convertToLength<AnyConversion>(conversionData);
+        size.width = Style::BuilderConverter::convertLengthOrAuto(builderState, pair->first);
+        size.height = Style::BuilderConverter::convertLengthOrAuto(builderState, pair->second);
     } else {
-        auto primitiveValue = Style::BuilderConverter::requiredDowncast<CSSPrimitiveValue>(builderState, value);
+        auto primitiveValue = Style::requiredDowncast<CSSPrimitiveValue>(builderState, value);
         if (!primitiveValue)
             return false;
-        size.width = primitiveValue->convertToLength<AnyConversion>(conversionData);
+        size.width = Style::BuilderConverter::convertLengthOrAuto(builderState, *primitiveValue);
     }
-    return !size.width.isUndefined() && !size.height.isUndefined();
+    return true;
 }
 
 void CSSToStyleMap::mapFillSize(CSSPropertyID propertyID, FillLayer& layer, const CSSValue& value)
@@ -386,7 +385,7 @@ void CSSToStyleMap::mapAnimationName(Animation& layer, const CSSValue& value)
         return;
 
     if (primitiveValue->valueID() == CSSValueNone)
-        layer.setIsNoneAnimation(true);
+        layer.setName(Animation::initialName());
     else
         layer.setName({ AtomString { primitiveValue->stringValue() }, m_builderState.styleScopeOrdinal(), primitiveValue->isCustomIdent() });
 }
@@ -633,7 +632,7 @@ LengthBox CSSToStyleMap::mapNinePieceImageQuad(const CSSValue& value)
 
 Length CSSToStyleMap::mapNinePieceImageSide(const CSSValue& value)
 {
-    auto primitiveValue = Style::BuilderConverter::requiredDowncast<CSSPrimitiveValue>(m_builderState, value);
+    auto primitiveValue = Style::requiredDowncast<CSSPrimitiveValue>(m_builderState, value);
     if (!primitiveValue)
         return { };
     if (primitiveValue->valueID() == CSSValueAuto)

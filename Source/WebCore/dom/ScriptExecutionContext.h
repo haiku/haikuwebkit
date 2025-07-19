@@ -105,7 +105,7 @@ enum class CrossOriginMode : bool;
 enum class LoadedFromOpaqueSource : bool;
 enum class NoiseInjectionPolicy : uint8_t;
 enum class ReasonForSuspension : uint8_t;
-enum class ScriptTelemetryCategory : uint8_t;
+enum class ScriptTrackingPrivacyCategory : uint8_t;
 enum class StorageBlockingPolicy : uint8_t;
 enum class TaskSource : uint8_t;
 struct CryptoKeyData;
@@ -188,6 +188,7 @@ public:
     virtual void addConsoleMessage(MessageSource, MessageLevel, const String& message, unsigned long requestIdentifier = 0) = 0;
 
     virtual SecurityOrigin& topOrigin() const = 0;
+    Ref<SecurityOrigin> protectedTopOrigin() const;
 
     virtual bool shouldBypassMainWorldContentSecurityPolicy() const { return false; }
 
@@ -234,7 +235,7 @@ public:
     WEBCORE_EXPORT void ref();
     WEBCORE_EXPORT void deref();
 
-    WEBCORE_EXPORT bool requiresScriptExecutionTelemetry(ScriptTelemetryCategory);
+    WEBCORE_EXPORT bool requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory);
 
     class Task {
         WTF_MAKE_TZONE_ALLOCATED(Task);
@@ -416,11 +417,11 @@ private:
     void checkConsistency() const;
     WEBCORE_EXPORT GuaranteedSerialFunctionDispatcher& nativePromiseDispatcher();
 
-    UncheckedKeyHashSet<MessagePort*> m_messagePorts;
-    UncheckedKeyHashSet<ContextDestructionObserver*> m_destructionObservers;
-    UncheckedKeyHashSet<ActiveDOMObject*> m_activeDOMObjects;
+    HashSet<MessagePort*> m_messagePorts;
+    HashSet<ContextDestructionObserver*> m_destructionObservers;
+    HashSet<ActiveDOMObject*> m_activeDOMObjects;
 
-    UncheckedKeyHashMap<int, RefPtr<DOMTimer>> m_timeouts;
+    HashMap<int, RefPtr<DOMTimer>> m_timeouts;
 
     struct PendingException;
     std::unique_ptr<Vector<std::unique_ptr<PendingException>>> m_pendingExceptions;
@@ -440,12 +441,12 @@ private:
 #endif
 
     RefPtr<ServiceWorker> m_activeServiceWorker;
-    UncheckedKeyHashMap<ServiceWorkerIdentifier, ServiceWorker*> m_serviceWorkers;
+    HashMap<ServiceWorkerIdentifier, ServiceWorker*> m_serviceWorkers;
 
     String m_domainForCachePartition;
     mutable ScriptExecutionContextIdentifier m_identifier;
 
-    UncheckedKeyHashMap<NotificationCallbackIdentifier, CompletionHandler<void()>> m_notificationCallbacks;
+    HashMap<NotificationCallbackIdentifier, CompletionHandler<void()>> m_notificationCallbacks;
 
     StorageBlockingPolicy m_storageBlockingPolicy;
     ReasonForSuspension m_reasonForSuspendingActiveDOMObjects { static_cast<ReasonForSuspension>(-1) };

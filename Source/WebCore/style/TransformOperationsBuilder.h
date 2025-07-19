@@ -41,8 +41,10 @@ class TransformOperations;
 
 namespace Style {
 
-Ref<TransformOperation> createTransformOperation(const CSSValue&, const CSSToLengthConversionData&);
-TransformOperations createTransformOperations(const CSSValue&, const CSSToLengthConversionData&);
+class BuilderState;
+
+RefPtr<TransformOperation> createTransformOperation(const CSSValue&, BuilderState&);
+TransformOperations createTransformOperations(const CSSValue&, BuilderState&);
 
 } // namespace Style
 } // namespace WebCore

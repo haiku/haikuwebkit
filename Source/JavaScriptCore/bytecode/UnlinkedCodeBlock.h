@@ -133,6 +133,9 @@ struct UnlinkedSimpleJumpTable {
     }
 
     int32_t defaultOffset() const { return m_defaultOffset; }
+
+    // Returns true if this is a list-style jump table (key-offset pairs), used for sparse switches.
+    bool isList() const { return m_min == INT32_MAX; }
 };
 
 class UnlinkedCodeBlock : public JSCell {

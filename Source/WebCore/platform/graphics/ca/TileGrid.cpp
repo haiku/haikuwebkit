@@ -220,12 +220,18 @@ void TileGrid::updateTileLayerProperties()
     bool opaque = m_controller->tilesAreOpaque();
     Color tileDebugBorderColor = m_controller->tileDebugBorderColor();
     float tileDebugBorderWidth = m_controller->tileDebugBorderWidth();
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    bool tonemappingEnabled = m_controller->tonemappingEnabled();
+#endif
     for (auto& tileInfo : m_tiles.values()) {
         tileInfo.layer->setAcceleratesDrawing(acceleratesDrawing);
         tileInfo.layer->setContentsFormat(contentsFormat);
         tileInfo.layer->setOpaque(opaque);
         tileInfo.layer->setBorderColor(tileDebugBorderColor);
         tileInfo.layer->setBorderWidth(tileDebugBorderWidth);
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        tileInfo.layer->setTonemappingEnabled(tonemappingEnabled);
+#endif
     }
 }
 
@@ -822,6 +828,13 @@ bool TileGrid::platformCALayerNeedsPlatformContext(const PlatformCALayer* layer)
     if (auto* layerOwner = m_controller->rootLayer().owner())
         return layerOwner->platformCALayerNeedsPlatformContext(layer);
     return false;
+}
+
+OptionSet<ContentsFormat> TileGrid::screenContentsFormats() const
+{
+    if (auto* layerOwner = m_controller->rootLayer().owner())
+        return layerOwner->screenContentsFormats();
+    return { };
 }
 
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)

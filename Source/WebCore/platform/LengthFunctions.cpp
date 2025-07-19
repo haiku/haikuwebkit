@@ -41,12 +41,6 @@ LayoutUnit valueForLength(const Length& length, LayoutUnit maximumValue)
     return valueForLengthWithLazyMaximum<LayoutUnit, LayoutUnit>(length, [&] ALWAYS_INLINE_LAMBDA { return maximumValue; });
 }
 
-// FIXME: when subpixel layout is supported this copy of floatValueForLength() can be removed. See bug 71143.
-float floatValueForLength(const Length& length, LayoutUnit maximumValue)
-{
-    return valueForLengthWithLazyMaximum<float, LayoutUnit>(length, [&] ALWAYS_INLINE_LAMBDA { return maximumValue; });
-}
-
 float floatValueForLength(const Length& length, float maximumValue)
 {
     return valueForLengthWithLazyMaximum<float, float>(length, [&] ALWAYS_INLINE_LAMBDA { return maximumValue; });

@@ -28,6 +28,7 @@
 
 #include "RenderStyleDifference.h"
 #include "RenderStyleInlines.h"
+#include "StylePrimitiveNumericTypes+Logging.h"
 
 namespace WebCore {
 
@@ -78,4 +79,4 @@ void StyleFlexibleBoxData::dumpDifferences(TextStream& ts, const StyleFlexibleBo
 }
 #endif // !LOG_DISABLED
 
-}
+} // namespace WebCore

@@ -665,25 +665,37 @@ static void autoActivateFont(const String& name, CGFloat size)
 }
 #endif
 
+static void registerFontIfNeeded(const String& family) WTF_REQUIRES_LOCK(userInstalledFontMapLock())
+{
+    if (auto fontURL = userInstalledFontMap().getOptional(family)) {
+        RELEASE_LOG_FORWARDABLE(Fonts, FONTCACHECORETEXT_REGISTER_FONT, family.utf8().data(), fontURL->string().utf8().data());
+        RetainPtr cfURL = fontURL->createCFURL();
+
+        CFErrorRef error = nullptr;
+        if (!CTFontManagerRegisterFontsForURL(cfURL.get(), kCTFontManagerScopeProcess, &error)) {
+            RetainPtr descriptionCF = adoptCF(CFErrorCopyDescription(error));
+            String error(descriptionCF.get());
+            RELEASE_LOG_FORWARDABLE(Fonts, FONTCACHECORETEXT_REGISTER_ERROR, family.utf8().data(), error.utf8().data());
+        }
+
+        userInstalledFontMap().removeIf([&](auto& keyAndValue) {
+            return keyAndValue.value == fontURL;
+        });
+    }
+}
+
 std::unique_ptr<FontPlatformData> FontCache::createFontPlatformData(const FontDescription& fontDescription, const AtomString& family, const FontCreationContext& fontCreationContext, OptionSet<FontLookupOptions> options)
 {
     {
         Locker locker(userInstalledFontMapLock());
         if (!userInstalledFontMap().isEmpty()) {
-            auto fontKey = family.string().convertToASCIILowercase();
-            if (auto fontURL = userInstalledFontMap().getOptional(fontKey)) {
-                RELEASE_LOG(Fonts, "FontCache user installed fonts contains family %{private}s with fontURL %{private}s", family.string().utf8().data(), fontURL->string().utf8().data());
-                RetainPtr cfURL = fontURL->createCFURL();
-
-                CFErrorRef error = nullptr;
-                if (!CTFontManagerRegisterFontsForURL(cfURL.get(), kCTFontManagerScopeProcess, &error)) {
-                    RetainPtr descriptionCF = adoptCF(CFErrorCopyDescription(error));
-                    String error(descriptionCF.get());
-                    RELEASE_LOG(Fonts, "Could not register font family %{private}s, error %s", family.string().utf8().data(), error.utf8().data());
-                }
-                userInstalledFontMap().removeIf([&](auto& keyAndValue) {
-                    return keyAndValue.value == fontURL;
-                });
+            auto fontFamily = family.string().convertToASCIILowercase();
+            registerFontIfNeeded(fontFamily);
+            auto fontNames = userInstalledFontFamilyMap().find(fontFamily);
+            if (fontNames != userInstalledFontFamilyMap().end()) {
+                for (auto& fontName : fontNames->value)
+                    registerFontIfNeeded(fontName);
+                userInstalledFontFamilyMap().remove(fontNames);
             }
         }
     }
@@ -1014,6 +1026,12 @@ HashMap<String, URL>& userInstalledFontMap()
 {
     static NeverDestroyed<HashMap<String, URL>> fontMap;
     return fontMap.get();
+}
+
+HashMap<String, Vector<String>>& userInstalledFontFamilyMap()
+{
+    static NeverDestroyed<HashMap<String, Vector<String>>> fontFamilyMap;
+    return fontFamilyMap.get();
 }
 
 Lock& userInstalledFontMapLock()

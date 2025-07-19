@@ -31,7 +31,7 @@
 #include "LegacySchemeRegistry.h"
 #include "LocalFrame.h"
 #include "Page.h"
-#include "ScriptTelemetryCategory.h"
+#include "ScriptTrackingPrivacyCategory.h"
 #include "SecurityOrigin.h"
 #include "StorageArea.h"
 #include "StorageType.h"
@@ -63,7 +63,7 @@ Storage::~Storage()
 
 unsigned Storage::length() const
 {
-    if (requiresScriptExecutionTelemetry())
+    if (requiresScriptTrackingPrivacyProtection())
         return 0;
 
     return m_storageArea->length();
@@ -71,7 +71,7 @@ unsigned Storage::length() const
 
 String Storage::key(unsigned index) const
 {
-    if (requiresScriptExecutionTelemetry())
+    if (requiresScriptTrackingPrivacyProtection())
         return { };
 
     return m_storageArea->key(index);
@@ -79,7 +79,7 @@ String Storage::key(unsigned index) const
 
 String Storage::getItem(const String& key) const
 {
-    if (requiresScriptExecutionTelemetry())
+    if (requiresScriptTrackingPrivacyProtection())
         return { };
 
     return m_storageArea->item(key);
@@ -91,7 +91,7 @@ ExceptionOr<void> Storage::setItem(const String& key, const String& value)
     if (!frame)
         return Exception { ExceptionCode::InvalidAccessError };
 
-    if (requiresScriptExecutionTelemetry())
+    if (requiresScriptTrackingPrivacyProtection())
         return { };
 
     bool quotaException = false;
@@ -107,7 +107,7 @@ ExceptionOr<void> Storage::removeItem(const String& key)
     if (!frame)
         return Exception { ExceptionCode::InvalidAccessError };
 
-    if (requiresScriptExecutionTelemetry())
+    if (requiresScriptTrackingPrivacyProtection())
         return { };
 
     m_storageArea->removeItem(*frame, key);
@@ -147,10 +147,10 @@ Ref<StorageArea> Storage::protectedArea() const
     return m_storageArea;
 }
 
-bool Storage::requiresScriptExecutionTelemetry() const
+bool Storage::requiresScriptTrackingPrivacyProtection() const
 {
     RefPtr document = window() ? window()->document() : nullptr;
-    return document && document->requiresScriptExecutionTelemetry(ScriptTelemetryCategory::LocalStorage);
+    return document && document->requiresScriptTrackingPrivacyProtection(ScriptTrackingPrivacyCategory::LocalStorage);
 }
 
 } // namespace WebCore

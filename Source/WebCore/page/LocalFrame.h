@@ -223,7 +223,7 @@ public:
     WEBCORE_EXPORT float frameScaleFactor() const;
 
     void deviceOrPageScaleFactorChanged();
-    
+
 #if ENABLE(DATA_DETECTION)
     DataDetectionResultsStorage* dataDetectionResultsIfExists() const { return m_dataDetectionResults.get(); }
     WEBCORE_EXPORT DataDetectionResultsStorage& dataDetectionResults();

@@ -55,9 +55,9 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(ServiceWorker);
 
 Ref<ServiceWorker> ServiceWorker::getOrCreate(ScriptExecutionContext& context, ServiceWorkerData&& data)
 {
-    if (auto existingServiceWorker = context.serviceWorker(data.identifier))
-        return *existingServiceWorker;
-    auto serviceWorker = adoptRef(*new ServiceWorker(context, WTFMove(data)));
+    if (RefPtr existingServiceWorker = context.serviceWorker(data.identifier))
+        return existingServiceWorker.releaseNonNull();
+    Ref serviceWorker = adoptRef(*new ServiceWorker(context, WTFMove(data)));
     serviceWorker->suspendIfNeeded();
     return serviceWorker;
 }
@@ -76,7 +76,7 @@ ServiceWorker::ServiceWorker(ScriptExecutionContext& context, ServiceWorkerData&
 
 ServiceWorker::~ServiceWorker()
 {
-    if (auto* context = scriptExecutionContext())
+    if (RefPtr context = scriptExecutionContext())
         context->unregisterServiceWorker(*this);
 }
 
@@ -95,7 +95,7 @@ void ServiceWorker::updateState(State state)
 SWClientConnection& ServiceWorker::swConnection()
 {
     ASSERT(scriptExecutionContext());
-    if (auto* worker = dynamicDowncast<WorkerGlobalScope>(scriptExecutionContext()))
+    if (RefPtr worker = dynamicDowncast<WorkerGlobalScope>(scriptExecutionContext()))
         return worker->swClientConnection();
     return ServiceWorkerProvider::singleton().serviceWorkerConnection();
 }
@@ -115,12 +115,12 @@ ExceptionOr<void> ServiceWorker::postMessage(JSC::JSGlobalObject& globalObject, 
     if (portsOrException.hasException())
         return portsOrException.releaseException();
 
-    auto& context = *scriptExecutionContext();
+    Ref context = *scriptExecutionContext();
     // FIXME: Maybe we could use a ScriptExecutionContextIdentifier for service workers too.
     ServiceWorkerOrClientIdentifier sourceIdentifier = [&]() -> ServiceWorkerOrClientIdentifier {
-        if (auto* serviceWorker = dynamicDowncast<ServiceWorkerGlobalScope>(context))
+        if (RefPtr serviceWorker = dynamicDowncast<ServiceWorkerGlobalScope>(context))
             return serviceWorker->thread().identifier();
-        return context.identifier();
+        return context->identifier();
     }();
 
     MessageWithMessagePorts message { messageData.releaseReturnValue(), portsOrException.releaseReturnValue() };

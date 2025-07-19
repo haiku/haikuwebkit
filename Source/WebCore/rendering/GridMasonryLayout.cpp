@@ -67,8 +67,7 @@ void GridMasonryLayout::performMasonryPlacement(const GridTrackSizingAlgorithm& 
 
 void GridMasonryLayout::resizeAndResetRunningPositions()
 {
-    m_runningPositions.resize(m_gridAxisTracksCount);
-    m_runningPositions.fill(LayoutUnit());
+    m_runningPositions.fill(LayoutUnit(), m_gridAxisTracksCount);
 }
 
 void GridMasonryLayout::placeMasonryItems(const GridTrackSizingAlgorithm& algorithm, GridMasonryLayout::MasonryLayoutPhase layoutPhase)

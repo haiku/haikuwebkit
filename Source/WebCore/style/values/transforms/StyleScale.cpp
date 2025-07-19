@@ -25,8 +25,7 @@
 #include "config.h"
 #include "StyleScale.h"
 
-#include "StyleBuilderConverter.h"
-#include "StyleBuilderState.h"
+#include "StyleBuilderChecking.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 
 namespace WebCore {
@@ -54,7 +53,7 @@ auto CSSValueConversion<Scale>::operator()(BuilderState& state, const CSSValue& 
         return CSS::Keyword::None { };
     }
 
-    auto list = BuilderConverter::requiredListDowncast<CSSValueList, CSSPrimitiveValue>(state, value);
+    auto list = requiredListDowncast<CSSValueList, CSSPrimitiveValue>(state, value);
     if (!list)
         return CSS::Keyword::None { };
 

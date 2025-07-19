@@ -255,7 +255,7 @@ void Pasteboard::write(const Color& color)
 
 static NSFileWrapper* fileWrapper(const PasteboardImage& pasteboardImage)
 {
-    auto wrapper = adoptNS([[NSFileWrapper alloc] initRegularFileWithContents:pasteboardImage.resourceData->makeContiguous()->createNSData().get()]);
+    auto wrapper = adoptNS([[NSFileWrapper alloc] initRegularFileWithContents:Ref { *pasteboardImage.resourceData }->makeContiguous()->createNSData().get()]);
     [wrapper setPreferredFilename:suggestedFilenameWithMIMEType(pasteboardImage.url.url.createNSURL().get(), pasteboardImage.resourceMIMEType)];
     return wrapper.autorelease();
 }
@@ -273,7 +273,7 @@ static void writeFileWrapperAsRTFDAttachment(NSFileWrapper *wrapper, const Strin
 
 void Pasteboard::write(const PasteboardImage& pasteboardImage)
 {
-    CFDataRef imageData = pasteboardImage.image->adapter().tiffRepresentation();
+    CFDataRef imageData = Ref { *pasteboardImage.image }->adapter().tiffRepresentation();
     if (!imageData)
         return;
 
@@ -860,7 +860,7 @@ ALLOW_DEPRECATED_DECLARATIONS_BEGIN
         return pasteboardBuffer.data;
 ALLOW_DEPRECATED_DECLARATIONS_END
 
-    auto sourceData = pasteboardBuffer.data->createCFData();
+    auto sourceData = Ref { *pasteboardBuffer.data }->createCFData();
     auto sourceType = pasteboardBuffer.type.createCFString();
 
     const void* key = kCGImageSourceTypeIdentifierHint;

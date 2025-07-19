@@ -47,13 +47,13 @@
 #include <wtf/ThreadSafeWeakPtr.h>
 
 OBJC_CLASS AVPlayerViewController;
-OBJC_CLASS LMPlayableViewController;
 OBJC_CLASS UIImage;
 OBJC_CLASS UIViewController;
 OBJC_CLASS UIWindow;
 OBJC_CLASS UIView;
 OBJC_CLASS CALayer;
 OBJC_CLASS NSError;
+OBJC_CLASS WKSPlayableViewControllerHost;
 OBJC_CLASS WebAVPlayerController;
 
 namespace WebCore {
@@ -177,7 +177,7 @@ public:
     WEBCORE_EXPORT std::optional<MediaPlayerIdentifier> playerIdentifier() const;
 
 #if ENABLE(LINEAR_MEDIA_PLAYER)
-    virtual LMPlayableViewController *playableViewController() { return nil; }
+    virtual WKSPlayableViewControllerHost *playableViewController() { return nil; }
 #endif
 
     virtual void swapFullscreenModesWith(VideoPresentationInterfaceIOS&) { }

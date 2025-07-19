@@ -120,7 +120,7 @@ static NSString * const sessionStorageAllowedInContentScriptsKey = @"SessionStor
 static constexpr NSInteger currentBackgroundContentListenerStateVersion = 4;
 
 // Update this value when any changes are made to the rule translation logic in _WKWebExtensionDeclarativeNetRequestRule.
-static constexpr NSInteger currentDeclarativeNetRequestRuleTranslatorVersion = 5;
+static constexpr NSInteger currentDeclarativeNetRequestRuleTranslatorVersion = 6;
 
 @interface _WKWebExtensionContextDelegate : NSObject <WKNavigationDelegate, WKUIDelegate> {
     WeakPtr<WebKit::WebExtensionContext> _webExtensionContext;
@@ -382,6 +382,11 @@ bool WebExtensionContext::load(WebExtensionController& controller, String storag
 
         loadDeclarativeNetRequestRulesetStateFromStorage();
         loadDeclarativeNetRequestRules([](bool) { });
+
+        // Notify the WebProcess that the extension loaded before we inject content scripts.
+        // This will ensure that the content world is set up correctly (e.g. configured with the `browser` namespace).
+        if (RefPtr controller = extensionController())
+            controller->dispatchDidLoad(*this);
 
         addInjectedContent();
     });
@@ -3056,18 +3061,7 @@ NSArray *WebExtensionContext::platformMenuItems(const WebExtensionTab& tab) cons
     contextParameters.tabIdentifier = tab.identifier();
     contextParameters.frameURL = tab.url();
 
-#if USE(APPKIT)
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
-    RefPtr page = [tab.webView() _page].get();
-    bool allowTopLevelImages = page && page->preferences().contextMenuImagesForInternalClientsEnabled();
-#else
-    bool allowTopLevelImages = false;
-#endif
-#else
-    bool allowTopLevelImages = true;
-#endif
-
-    if (auto *menuItem = singleMenuItemOrExtensionItemWithSubmenu(contextParameters, allowTopLevelImages))
+    if (auto *menuItem = singleMenuItemOrExtensionItemWithSubmenu(contextParameters))
         return @[ menuItem ];
     return @[ ];
 }
@@ -3104,7 +3098,7 @@ void WebExtensionContext::performMenuItem(WebExtensionMenuItem& menuItem, const 
     fireMenusClickedEventIfNeeded(menuItem, wasChecked, contextParameters);
 }
 
-CocoaMenuItem *WebExtensionContext::singleMenuItemOrExtensionItemWithSubmenu(const WebExtensionMenuItemContextParameters& contextParameters, const bool allowTopLevelImages) const
+CocoaMenuItem *WebExtensionContext::singleMenuItemOrExtensionItemWithSubmenu(const WebExtensionMenuItemContextParameters& contextParameters) const
 {
 #if USE(APPKIT)
     auto *menuItems = WebExtensionMenuItem::matchingPlatformMenuItems(mainMenuItems(), contextParameters);
@@ -3112,8 +3106,9 @@ CocoaMenuItem *WebExtensionContext::singleMenuItemOrExtensionItemWithSubmenu(con
         return nil;
 
     if (menuItems.count == 1) {
-        if (!allowTopLevelImages)
-            dynamic_objc_cast<NSMenuItem>(menuItems.firstObject).image = nil;
+#if !ENABLE(CONTEXT_MENU_IMAGES_ON_MAC)
+        dynamic_objc_cast<NSMenuItem>(menuItems.firstObject).image = nil;
+#endif
         return menuItems.firstObject;
     }
 
@@ -3124,7 +3119,6 @@ CocoaMenuItem *WebExtensionContext::singleMenuItemOrExtensionItemWithSubmenu(con
 
     return extensionItem;
 #else
-    UNUSED_PARAM(allowTopLevelImages);
     auto *menuItems = WebExtensionMenuItem::matchingPlatformMenuItems(mainMenuItems(), contextParameters);
     if (!menuItems.count)
         return nil;
@@ -3207,14 +3201,7 @@ void WebExtensionContext::addItemsToContextMenu(WebPageProxy& page, const Contex
     if (contextParameters.types.isEmpty())
         contextParameters.types.add(frameInfo.isMainFrame ? WebExtensionMenuItemContextType::Page : WebExtensionMenuItemContextType::Frame);
 
-    // Don't allow images for the top-level items unless an internal client has
-    // enabled them, it isn't typical on macOS for menus.
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
-    bool allowTopLevelImages = page.preferences().contextMenuImagesForInternalClientsEnabled();
-#else
-    bool allowTopLevelImages = false;
-#endif
-    if (auto *menuItem = singleMenuItemOrExtensionItemWithSubmenu(contextParameters, allowTopLevelImages))
+    if (auto *menuItem = singleMenuItemOrExtensionItemWithSubmenu(contextParameters))
         [menu addItem:menuItem];
 }
 #endif
@@ -3508,6 +3495,9 @@ WKWebViewConfiguration *WebExtensionContext::webViewConfiguration(WebViewPurpose
         configuration._weakWebExtensionController = extensionController()->wrapper();
         configuration.webExtensionController = nil;
     }
+
+    if (purpose == WebViewPurpose::Popup || purpose == WebViewPurpose::Sidebar)
+        configuration._drawsBackground = NO;
 
     auto *preferences = configuration.preferences;
     preferences._javaScriptCanAccessClipboard = hasPermission(WKWebExtensionPermissionClipboardWrite);

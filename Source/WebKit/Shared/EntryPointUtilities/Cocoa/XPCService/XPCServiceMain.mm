@@ -80,9 +80,7 @@ static void initializeCFPrefs()
 #if ENABLE(CFPREFS_DIRECT_MODE)
     // Enable CFPrefs direct mode to avoid unsuccessfully attempting to connect to the daemon and getting blocked by the sandbox.
     _CFPrefsSetDirectModeEnabled(YES);
-#if HAVE(CF_PREFS_SET_READ_ONLY)
     _CFPrefsSetReadOnly(YES);
-#endif
 #endif // ENABLE(CFPREFS_DIRECT_MODE)
 }
 

@@ -119,6 +119,8 @@ private:
     void clearBrowsingWarningIfForMainFrameNavigation() override;
     bool hasBrowsingWarning() const override;
 
+    void didChangeLocalInspectorAttachment() final;
+
     bool showShareSheet(WebCore::ShareDataWithParsedURL&&, WTF::CompletionHandler<void(bool)>&&) override;
 
 #if HAVE(DIGITAL_CREDENTIALS_UI)
@@ -211,7 +213,7 @@ private:
     void removeAllPDFHUDs() override;
 
 #if ENABLE(FULLSCREEN_API)
-    WebFullScreenManagerProxyClient& fullScreenManagerProxyClient() override;
+    WebFullScreenManagerProxyClient& fullScreenManagerProxyClient() final;
 #endif
 
 #if ENABLE(FULLSCREEN_API)
@@ -278,7 +280,7 @@ private:
     _WKRemoteObjectRegistry *remoteObjectRegistry() override;
 
 #if ENABLE(WIRELESS_PLAYBACK_TARGET)
-    WebCore::WebMediaSessionManager& mediaSessionManager() override;
+    WebCore::WebMediaSessionManager& mediaSessionManager() final;
 #endif
 
     void refView() override;
@@ -322,6 +324,8 @@ private:
     void didExitFullscreen() final { }
     void didCleanupFullscreen() final { }
 #endif
+
+    CheckedPtr<WebViewImpl> checkedImpl() const { return m_impl.get(); }
 
     WeakObjCPtr<NSView> m_view;
     WeakPtr<WebViewImpl> m_impl;

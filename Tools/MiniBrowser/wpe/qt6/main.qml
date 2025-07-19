@@ -113,6 +113,10 @@ Window {
                     if (loadRequest.errorString)
                         console.log('WPEView error: ' + loadRequest.errorString);
                 }
+
+                onUrlChanged: function() {
+                    url_bar.text = web_view.url;
+                }
             }
         }
     }

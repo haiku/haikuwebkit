@@ -34,14 +34,10 @@ namespace WebCore {
 DEFINE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleGridData);
 
 StyleGridData::StyleGridData()
-    : implicitNamedGridColumnLines(RenderStyle::initialNamedGridColumnLines())
-    , implicitNamedGridRowLines(RenderStyle::initialNamedGridRowLines())
-    , gridAutoFlow(RenderStyle::initialGridAutoFlow())
+    : gridAutoFlow(RenderStyle::initialGridAutoFlow())
     , gridAutoRows(RenderStyle::initialGridAutoRows())
     , gridAutoColumns(RenderStyle::initialGridAutoColumns())
-    , namedGridArea(RenderStyle::initialNamedGridArea())
-    , namedGridAreaRowCount(RenderStyle::initialNamedGridAreaCount())
-    , namedGridAreaColumnCount(RenderStyle::initialNamedGridAreaCount())
+    , gridTemplateAreas(RenderStyle::initialGridTemplateAreas())
     , m_gridColumnTrackSizes(RenderStyle::initialGridColumnTrackSizes())
     , m_gridRowTrackSizes(RenderStyle::initialGridRowTrackSizes())
     , m_namedGridColumnLines(RenderStyle::initialNamedGridColumnLines())
@@ -67,14 +63,10 @@ StyleGridData::StyleGridData()
 
 inline StyleGridData::StyleGridData(const StyleGridData& o)
     : RefCounted<StyleGridData>()
-    , implicitNamedGridColumnLines(o.implicitNamedGridColumnLines)
-    , implicitNamedGridRowLines(o.implicitNamedGridRowLines)
     , gridAutoFlow(o.gridAutoFlow)
     , gridAutoRows(o.gridAutoRows)
     , gridAutoColumns(o.gridAutoColumns)
-    , namedGridArea(o.namedGridArea)
-    , namedGridAreaRowCount(o.namedGridAreaRowCount)
-    , namedGridAreaColumnCount(o.namedGridAreaColumnCount)
+    , gridTemplateAreas(o.gridTemplateAreas)
     , m_columns(o.m_columns)
     , m_rows(o.m_rows)
     , m_gridColumnTrackSizes(o.m_gridColumnTrackSizes)
@@ -104,14 +96,10 @@ bool StyleGridData::operator==(const StyleGridData& o) const
 {
     return m_columns == o.m_columns
         && m_rows == o.m_rows
-        && implicitNamedGridColumnLines == o.implicitNamedGridColumnLines
-        && implicitNamedGridRowLines == o.implicitNamedGridRowLines
         && gridAutoFlow == o.gridAutoFlow
         && gridAutoRows == o.gridAutoRows
         && gridAutoColumns == o.gridAutoColumns
-        && namedGridArea == o.namedGridArea
-        && namedGridAreaRowCount == o.namedGridAreaRowCount
-        && namedGridAreaColumnCount == o.namedGridAreaColumnCount
+        && gridTemplateAreas == o.gridTemplateAreas
         && m_masonryRows == o.m_masonryRows
         && m_masonryColumns == o.m_masonryColumns;
 }
@@ -128,7 +116,7 @@ void StyleGridData::setColumns(const GridTrackList& list)
     computeCachedTrackData(m_columns, m_gridColumnTrackSizes, m_namedGridColumnLines, m_orderedNamedGridColumnLines, m_gridAutoRepeatColumns, m_autoRepeatNamedGridColumnLines, m_autoRepeatOrderedNamedGridColumnLines, m_autoRepeatColumnsInsertionPoint, m_autoRepeatColumnsType, m_subgridColumns, m_masonryColumns);
 }
 
-static void createGridLineNamesList(const Vector<String>& names, unsigned currentNamedGridLine, NamedGridLinesMap& namedGridLines, OrderedNamedGridLinesMap& orderedNamedGridLines)
+static void createGridLineNamesList(const Vector<String>& names, unsigned currentNamedGridLine, Style::GridNamedLinesMap& namedGridLines, Style::GridOrderedNamedLinesMap& orderedNamedGridLines)
 {
     auto orderedResult = orderedNamedGridLines.map.add(currentNamedGridLine, Vector<String>());
 
@@ -140,7 +128,7 @@ static void createGridLineNamesList(const Vector<String>& names, unsigned curren
     }
 }
 
-void StyleGridData::computeCachedTrackData(const GridTrackList& list, Vector<GridTrackSize>& sizes, NamedGridLinesMap& namedLines, OrderedNamedGridLinesMap& orderedNamedLines, Vector<GridTrackSize>& autoRepeatSizes, NamedGridLinesMap& autoRepeatNamedLines, OrderedNamedGridLinesMap& autoRepeatOrderedNamedLines, unsigned& autoRepeatInsertionPoint, AutoRepeatType& autoRepeatType, bool& subgrid, bool& masonry)
+void StyleGridData::computeCachedTrackData(const GridTrackList& list, Vector<GridTrackSize>& sizes, Style::GridNamedLinesMap& namedLines, Style::GridOrderedNamedLinesMap& orderedNamedLines, Vector<GridTrackSize>& autoRepeatSizes, Style::GridNamedLinesMap& autoRepeatNamedLines, Style::GridOrderedNamedLinesMap& autoRepeatOrderedNamedLines, unsigned& autoRepeatInsertionPoint, AutoRepeatType& autoRepeatType, bool& subgrid, bool& masonry)
 {
     sizes.clear();
     namedLines.map.clear();
@@ -242,11 +230,6 @@ WTF::TextStream& operator<<(WTF::TextStream& ts, const GridTrackEntry& entry)
 
     WTF::visit(visitor, entry);
     return ts;
-}
-
-WTF::TextStream& operator<<(WTF::TextStream& ts, const NamedGridLinesMap& namedGridLinesMap)
-{
-    return ts << namedGridLinesMap.map;
 }
 
 Ref<StyleGridData> StyleGridData::copy() const

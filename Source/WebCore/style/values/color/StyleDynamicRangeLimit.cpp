@@ -31,8 +31,7 @@
 #include "CSSDynamicRangeLimitMix.h"
 #include "CSSDynamicRangeLimitValue.h"
 #include "PlatformDynamicRangeLimit.h"
-#include "StyleBuilderConverter.h"
-#include "StyleBuilderState.h"
+#include "StyleBuilderChecking.h"
 #include "StyleDynamicRangeLimitMix.h"
 
 namespace WebCore {
@@ -100,7 +99,7 @@ auto CSSValueConversion<DynamicRangeLimit>::operator()(BuilderState& state, cons
         return CSS::Keyword::NoLimit { };
     }
 
-    RefPtr dynamicRangeLimit = BuilderConverter::requiredDowncast<CSSDynamicRangeLimitValue>(state, value);
+    RefPtr dynamicRangeLimit = requiredDowncast<CSSDynamicRangeLimitValue>(state, value);
     if (!dynamicRangeLimit)
         return CSS::Keyword::NoLimit { };
     return toStyle(dynamicRangeLimit->dynamicRangeLimit(), state);

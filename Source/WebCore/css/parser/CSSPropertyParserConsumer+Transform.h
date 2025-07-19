@@ -57,7 +57,7 @@ RefPtr<CSSValue> consumeScale(CSSParserTokenRange&, CSS::PropertyParserState&);
 RefPtr<CSSValue> consumeRotate(CSSParserTokenRange&, CSS::PropertyParserState&);
 
 // MARK: <'transform'> parsing (raw)
-std::optional<TransformOperations> parseTransformRaw(const String&, const CSSParserContext&, const CSSToLengthConversionData&);
+std::optional<TransformOperations> parseTransformRaw(const String&, const CSSParserContext&);
 
 } // namespace CSSPropertyParserHelpers
 } // namespace WebCore

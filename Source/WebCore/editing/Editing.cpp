@@ -34,6 +34,7 @@
 #include "Editor.h"
 #include "ElementChildIteratorInlines.h"
 #include "ElementInlines.h"
+#include "GraphicsLayer.h"
 #include "HTMLBodyElement.h"
 #include "HTMLDListElement.h"
 #include "HTMLDivElement.h"
@@ -1574,7 +1575,7 @@ EnclosingLayerInfomation computeEnclosingLayer(const SimpleRange& range)
         if (!identifier)
             continue;
 
-        return { startLayer, endLayer, layer, identifier };
+        return { WTFMove(startLayer), WTFMove(endLayer), WTFMove(layer), WTFMove(graphicsLayer), WTFMove(identifier) };
     }
     return { };
 }

@@ -127,7 +127,7 @@ PluginInfo PDFPluginBase::pluginInfo()
 }
 
 PDFPluginBase::PDFPluginBase(HTMLPlugInElement& element)
-    : m_frame(*WebFrame::fromCoreFrame(*element.document().frame()))
+    : m_frame(*WebFrame::fromCoreFrame(*element.protectedDocument()->protectedFrame()))
     , m_element(element)
 #if HAVE(INCREMENTAL_PDF_APIS)
     , m_incrementalPDFLoadingEnabled(element.document().settings().incrementalPDFLoadingEnabled())
@@ -142,7 +142,8 @@ PDFPluginBase::PDFPluginBase(HTMLPlugInElement& element)
 PDFPluginBase::~PDFPluginBase()
 {
 #if ENABLE(PDF_HUD)
-    if (RefPtr page = m_frame ? m_frame->page() : nullptr)
+    RefPtr frame = m_frame.get();
+    if (RefPtr page = frame ? frame->page() : nullptr)
         page->removePDFHUD(*this);
 #endif
 
@@ -157,8 +158,8 @@ void PDFPluginBase::teardown()
     }
 
 #if HAVE(INCREMENTAL_PDF_APIS)
-    if (m_incrementalLoader) {
-        m_incrementalLoader->clear();
+    if (RefPtr incrementalLoader = m_incrementalLoader) {
+        incrementalLoader->clear();
         m_incrementalLoader = nullptr;
     }
 #endif
@@ -173,8 +174,8 @@ void PDFPluginBase::teardown()
     if (auto existingCompletionHandler = std::exchange(m_pendingOpenCompletionHandler, { })) {
         // FrameInfo can't be default-constructed; the receiving process will ASSERT if it is.
         std::optional<FrameInfoData> frameInfo;
-        if (m_frame)
-            frameInfo = m_frame->info();
+        if (RefPtr frame = m_frame.get())
+            frameInfo = frame->info();
         existingCompletionHandler({ }, WTFMove(frameInfo), { });
     }
 #endif // ENABLE(PDF_HUD)
@@ -182,8 +183,10 @@ void PDFPluginBase::teardown()
     if (isLocked())
         teardownPasswordEntryForm();
 
-    if (m_pdfTestCallback && m_element)
-        m_element->pluginDestroyedWithPendingPDFTestCallback(WTFMove(m_pdfTestCallback));
+    if (m_pdfTestCallback) {
+        if (RefPtr element = m_element.get())
+            element->pluginDestroyedWithPendingPDFTestCallback(WTFMove(m_pdfTestCallback));
+    }
 }
 
 WebPage* PDFPluginBase::webPage() const
@@ -194,9 +197,19 @@ WebPage* PDFPluginBase::webPage() const
 
 Page* PDFPluginBase::page() const
 {
-    if (RefPtr coreFrame = m_frame ? m_frame->coreLocalFrame() : nullptr)
+    RefPtr frame = m_frame.get();
+    if (!frame)
+        return nullptr;
+
+    if (RefPtr coreFrame = frame->coreLocalFrame())
         return coreFrame->page();
+
     return nullptr;
+}
+
+RefPtr<WebCore::GraphicsLayer> PDFPluginBase::protectedGraphicsLayer() const
+{
+    return graphicsLayer();
 }
 
 void PDFPluginBase::setView(PluginView& view)
@@ -228,17 +241,18 @@ void PDFPluginBase::destroy()
 
 void PDFPluginBase::createPDFDocument()
 {
-    m_pdfDocument = adoptNS([allocPDFDocumentInstance() initWithData:originalData()]);
+    m_pdfDocument = adoptNS([allocPDFDocumentInstance() initWithData:RetainPtr { originalData() }.get()]);
 }
 
 bool PDFPluginBase::isFullFramePlugin() const
 {
     // <object> or <embed> plugins will appear to be in their parent frame, so we have to
     // check whether our frame's widget is exactly our PluginView.
-    if (!m_frame || !m_frame->coreLocalFrame())
+    RefPtr frame = m_frame.get();
+    if (!frame || !frame->coreLocalFrame())
         return false;
 
-    RefPtr document = dynamicDowncast<PluginDocument>(m_frame->coreLocalFrame()->document());
+    RefPtr document = dynamicDowncast<PluginDocument>(frame->coreLocalFrame()->document());
     return document && document->pluginWidget() == m_view;
 }
 
@@ -247,7 +261,8 @@ bool PDFPluginBase::handlesPageScaleFactor() const
 #if PLATFORM(IOS_FAMILY)
     return false;
 #else
-    return m_frame && m_frame->isMainFrame() && isFullFramePlugin();
+    RefPtr frame = m_frame.get();
+    return frame && frame->isMainFrame() && isFullFramePlugin();
 #endif
 }
 
@@ -258,9 +273,14 @@ bool PDFPluginBase::isLocked() const
 
 void PDFPluginBase::notifySelectionChanged()
 {
-    if (!m_frame || !m_frame->page())
+    RefPtr frame = m_frame.get();
+    if (!frame)
         return;
-    m_frame->protectedPage()->didChangeSelection(*m_frame->protectedCoreLocalFrame());
+    RefPtr page = frame->page();
+    if (!page)
+        return;
+
+    page->didChangeSelection(*frame->protectedCoreLocalFrame());
 }
 
 NSData *PDFPluginBase::originalData() const
@@ -473,8 +493,8 @@ void PDFPluginBase::streamDidReceiveData(const SharedBuffer& buffer)
     LOG_WITH_STREAM(IncrementalPDF, stream << "PDFPluginBase::streamDidReceiveData() - received " << buffer.size() << " bytes, total streamed bytes " << streamedBytes);
 
 #if HAVE(INCREMENTAL_PDF_APIS)
-    if (m_incrementalLoader)
-        m_incrementalLoader->incrementalPDFStreamDidReceiveData(buffer);
+    if (RefPtr incrementalLoader = m_incrementalLoader)
+        incrementalLoader->incrementalPDFStreamDidReceiveData(buffer);
 #endif
 
     incrementalLoadingDidProgress();
@@ -492,10 +512,11 @@ void PDFPluginBase::streamDidFinishLoading()
 
     auto incrementalPDFStreamDidFinishLoading = [&]() {
 #if HAVE(INCREMENTAL_PDF_APIS)
-        if (!m_incrementalLoader)
+        RefPtr incrementalLoader = m_incrementalLoader;
+        if (!incrementalLoader)
             return false;
 
-        m_incrementalLoader->incrementalPDFStreamDidFinishLoading();
+        incrementalLoader->incrementalPDFStreamDidFinishLoading();
         return m_incrementalPDFLoadingEnabled.load();
 #else
         return false;
@@ -526,8 +547,8 @@ void PDFPluginBase::streamDidFail()
         m_data = nil;
     }
 #if HAVE(INCREMENTAL_PDF_APIS)
-    if (m_incrementalLoader)
-        m_incrementalLoader->incrementalPDFStreamDidFail();
+    if (RefPtr incrementalLoader = m_incrementalLoader)
+        incrementalLoader->incrementalPDFStreamDidFail();
 #endif
 
     incrementalLoadingDidCancel();
@@ -571,10 +592,11 @@ void PDFPluginBase::startByteRangeRequest(NetscapePlugInStreamLoaderClient& stre
     if (!m_incrementalLoader)
         return;
 
-    if (!m_frame)
+    RefPtr frame = m_frame.get();
+    if (!frame)
         return;
 
-    RefPtr coreFrame = m_frame->coreLocalFrame();
+    RefPtr coreFrame = frame->coreLocalFrame();
     if (!coreFrame)
         return;
 
@@ -588,7 +610,7 @@ void PDFPluginBase::startByteRangeRequest(NetscapePlugInStreamLoaderClient& stre
     resourceRequest.setHTTPHeaderField(HTTPHeaderName::Range, makeString("bytes="_s, position, '-', position + count - 1));
     resourceRequest.setCachePolicy(ResourceRequestCachePolicy::DoNotUseAnyCache);
 
-    WebProcess::singleton().webLoaderStrategy().schedulePluginStreamLoad(*coreFrame, streamLoaderClient, WTFMove(resourceRequest), [incrementalLoader = Ref { *m_incrementalLoader }, requestIdentifier] (RefPtr<NetscapePlugInStreamLoader>&& streamLoader) {
+    WebProcess::singleton().protectedWebLoaderStrategy()->schedulePluginStreamLoad(*coreFrame, streamLoaderClient, WTFMove(resourceRequest), [incrementalLoader = Ref { *m_incrementalLoader }, requestIdentifier] (RefPtr<NetscapePlugInStreamLoader>&& streamLoader) {
         incrementalLoader->streamLoaderDidStart(requestIdentifier, WTFMove(streamLoader));
     });
 }
@@ -610,8 +632,8 @@ void PDFPluginBase::receivedNonLinearizedPDFSentinel()
         return;
     }
 
-    if (m_incrementalLoader)
-        m_incrementalLoader->receivedNonLinearizedPDFSentinel();
+    if (RefPtr incrementalLoader = m_incrementalLoader)
+        incrementalLoader->receivedNonLinearizedPDFSentinel();
 
     incrementalLoadingDidCancel();
 
@@ -627,13 +649,18 @@ void PDFPluginBase::receivedNonLinearizedPDFSentinel()
 
 void PDFPluginBase::performWebSearch(const String& query)
 {
-    if (!m_frame || !m_frame->page())
-        return;
-
     if (!query)
         return;
 
-    m_frame->protectedPage()->send(Messages::WebPageProxy::SearchTheWeb(query));
+    RefPtr frame = m_frame.get();
+    if (!frame)
+        return;
+
+    RefPtr page = frame->page();
+    if (!page)
+        return;
+
+    page->send(Messages::WebPageProxy::SearchTheWeb(query));
 }
 
 void PDFPluginBase::addArchiveResource()
@@ -641,13 +668,14 @@ void PDFPluginBase::addArchiveResource()
     // FIXME: It's a hack to force add a resource to DocumentLoader. PDF documents should just be fetched as CachedResources.
 
     // Add just enough data for context menu handling and web archives to work.
+    Ref view = *m_view;
     RetainPtr headers = @{ @"Content-Disposition": m_suggestedFilename.createNSString().get(), @"Content-Type" : @"application/pdf" };
-    RetainPtr response = adoptNS([[NSHTTPURLResponse alloc] initWithURL:m_view->mainResourceURL().createNSURL().get() statusCode:200 HTTPVersion:(NSString*)kCFHTTPVersion1_1 headerFields:headers.get()]);
+    RetainPtr response = adoptNS([[NSHTTPURLResponse alloc] initWithURL:view->mainResourceURL().createNSURL().get() statusCode:200 HTTPVersion:(NSString*)kCFHTTPVersion1_1 headerFields:headers.get()]);
     ResourceResponse synthesizedResponse(response.get());
 
     RetainPtr data = originalData();
-    auto resource = ArchiveResource::create(SharedBuffer::create(data.get()), m_view->mainResourceURL(), "application/pdf"_s, String(), String(), synthesizedResponse);
-    m_view->frame()->document()->loader()->addArchiveResource(resource.releaseNonNull());
+    auto resource = ArchiveResource::create(SharedBuffer::create(data.get()), view->mainResourceURL(), "application/pdf"_s, String(), String(), synthesizedResponse);
+    view->protectedFrame()->protectedDocument()->protectedLoader()->addArchiveResource(resource.releaseNonNull());
 }
 
 void PDFPluginBase::tryRunScriptsInPDFDocument()
@@ -655,7 +683,7 @@ void PDFPluginBase::tryRunScriptsInPDFDocument()
     if (!m_pdfDocument || !m_documentFinishedLoading || m_didRunScripts)
         return;
 
-    PDFScriptEvaluation::runScripts([m_pdfDocument documentRef], [this, protectedThis = Ref { *this }] {
+    PDFScriptEvaluation::runScripts(RetainPtr { [m_pdfDocument documentRef] }.get(), [this, protectedThis = Ref { *this }] {
         print();
     });
     m_didRunScripts = true;
@@ -728,16 +756,16 @@ FloatSize PDFPluginBase::pdfDocumentSizeForPrinting() const
 
 void PDFPluginBase::invalidateRect(const IntRect& rect)
 {
-    if (!m_view)
+    RefPtr view = m_view.get();
+    if (!view)
         return;
 
-    m_view->invalidateRect(rect);
+    view->invalidateRect(rect);
 }
 
 IntRect PDFPluginBase::boundsOnScreen() const
 {
-    Ref protectedThis { *this };
-    return WebCore::Accessibility::retrieveValueFromMainThread<WebCore::IntRect>([&protectedThis] () -> WebCore::IntRect {
+    return WebCore::Accessibility::retrieveValueFromMainThread<WebCore::IntRect>([protectedThis = Ref { *this }]() -> WebCore::IntRect {
         FloatRect bounds = FloatRect(FloatPoint(), protectedThis->size());
         FloatRect rectInRootViewCoordinates = valueOrDefault(protectedThis->m_rootViewToPluginTransform.inverse()).mapRect(bounds);
         RefPtr page = protectedThis->page();
@@ -760,13 +788,18 @@ void PDFPluginBase::updateControlTints(GraphicsContext& graphicsContext)
 
 IntRect PDFPluginBase::scrollCornerRect() const
 {
-    if (!m_horizontalScrollbar || !m_verticalScrollbar)
+    RefPtr horizontalScrollbar = m_horizontalScrollbar;
+    if (!horizontalScrollbar)
         return IntRect();
-    if (m_horizontalScrollbar->isOverlayScrollbar()) {
-        ASSERT(m_verticalScrollbar->isOverlayScrollbar());
+    RefPtr verticalScrollbar = m_verticalScrollbar;
+    if (!verticalScrollbar)
+        return IntRect();
+    if (horizontalScrollbar->isOverlayScrollbar()) {
+        ASSERT(verticalScrollbar->isOverlayScrollbar());
         return IntRect();
     }
-    return IntRect(m_view->width() - m_verticalScrollbar->width(), m_view->height() - m_horizontalScrollbar->height(), m_verticalScrollbar->width(), m_horizontalScrollbar->height());
+    Ref view = *m_view;
+    return IntRect(view->width() - verticalScrollbar->width(), view->height() - horizontalScrollbar->height(), verticalScrollbar->width(), horizontalScrollbar->height());
 }
 
 ScrollableArea* PDFPluginBase::enclosingScrollableArea() const
@@ -801,7 +834,7 @@ bool PDFPluginBase::formControlRefreshEnabled() const
 
 IntRect PDFPluginBase::scrollableAreaBoundingBox(bool*) const
 {
-    return m_view->frameRect();
+    return protectedView()->frameRect();
 }
 
 void PDFPluginBase::setScrollOffset(const ScrollOffset& offset)
@@ -893,32 +926,36 @@ void PDFPluginBase::scrollbarStyleChanged(ScrollbarStyle style, bool forceUpdate
 
 IntRect PDFPluginBase::convertFromScrollbarToContainingView(const Scrollbar& scrollbar, const IntRect& scrollbarRect) const
 {
+    Ref view = *m_view;
     IntRect rect = scrollbarRect;
-    rect.move(scrollbar.location() - m_view->location());
+    rect.move(scrollbar.location() - view->location());
 
-    return m_view->frame()->protectedView()->convertFromRendererToContainingView(m_view->pluginElement().renderer(), rect);
+    return view->frame()->protectedView()->convertFromRendererToContainingView(view->pluginElement().checkedRenderer().get(), rect);
 }
 
 IntRect PDFPluginBase::convertFromContainingViewToScrollbar(const Scrollbar& scrollbar, const IntRect& parentRect) const
 {
-    IntRect rect = m_view->frame()->protectedView()->convertFromContainingViewToRenderer(m_view->pluginElement().renderer(), parentRect);
-    rect.move(m_view->location() - scrollbar.location());
+    Ref view = *m_view;
+    IntRect rect = view->frame()->protectedView()->convertFromContainingViewToRenderer(view->pluginElement().checkedRenderer().get(), parentRect);
+    rect.move(view->location() - scrollbar.location());
 
     return rect;
 }
 
 IntPoint PDFPluginBase::convertFromScrollbarToContainingView(const Scrollbar& scrollbar, const IntPoint& scrollbarPoint) const
 {
+    Ref view = *m_view;
     IntPoint point = scrollbarPoint;
-    point.move(scrollbar.location() - m_view->location());
+    point.move(scrollbar.location() - view->location());
 
-    return m_view->frame()->protectedView()->convertFromRendererToContainingView(m_view->pluginElement().renderer(), point);
+    return view->frame()->protectedView()->convertFromRendererToContainingView(view->pluginElement().checkedRenderer().get(), point);
 }
 
 IntPoint PDFPluginBase::convertFromContainingViewToScrollbar(const Scrollbar& scrollbar, const IntPoint& parentPoint) const
 {
-    IntPoint point = m_view->frame()->protectedView()->convertFromContainingViewToRenderer(m_view->pluginElement().renderer(), parentPoint);
-    point.move(m_view->location() - scrollbar.location());
+    Ref view = *m_view;
+    IntPoint point = view->frame()->protectedView()->convertFromContainingViewToRenderer(view->pluginElement().checkedRenderer().get(), parentPoint);
+    point.move(view->location() - scrollbar.location());
 
     return point;
 }
@@ -930,36 +967,39 @@ String PDFPluginBase::debugDescription() const
 
 void PDFPluginBase::willDetachRenderer()
 {
-    if (!m_frame || !m_frame->coreLocalFrame())
+    RefPtr frame = m_frame.get();
+    if (!frame || !frame->coreLocalFrame())
         return;
-    if (RefPtr frameView = m_frame->coreLocalFrame()->view())
+    if (RefPtr frameView = frame->coreLocalFrame()->view())
         frameView->removeScrollableArea(this);
 }
 
 IntRect PDFPluginBase::viewRelativeVerticalScrollbarRect() const
 {
-    if (!m_verticalScrollbar)
+    RefPtr verticalScrollbar = m_verticalScrollbar;
+    if (!verticalScrollbar)
         return { };
 
     auto scrollbarRect = IntRect({ }, size());
-    scrollbarRect.shiftXEdgeTo(scrollbarRect.maxX() - m_verticalScrollbar->width());
+    scrollbarRect.shiftXEdgeTo(scrollbarRect.maxX() - verticalScrollbar->width());
 
-    if (m_horizontalScrollbar)
-        scrollbarRect.contract(0, m_horizontalScrollbar->height());
+    if (RefPtr horizontalScrollbar = m_horizontalScrollbar)
+        scrollbarRect.contract(0, horizontalScrollbar->height());
 
     return scrollbarRect;
 }
 
 IntRect PDFPluginBase::viewRelativeHorizontalScrollbarRect() const
 {
-    if (!m_horizontalScrollbar)
+    RefPtr horizontalScrollbar = m_horizontalScrollbar;
+    if (!horizontalScrollbar)
         return { };
 
     auto scrollbarRect = IntRect({ }, size());
-    scrollbarRect.shiftYEdgeTo(scrollbarRect.maxY() - m_horizontalScrollbar->height());
+    scrollbarRect.shiftYEdgeTo(scrollbarRect.maxY() - horizontalScrollbar->height());
 
-    if (m_verticalScrollbar)
-        scrollbarRect.contract(m_verticalScrollbar->width(), 0);
+    if (RefPtr verticalScrollbar = m_verticalScrollbar)
+        scrollbarRect.contract(verticalScrollbar->width(), 0);
 
     return scrollbarRect;
 }
@@ -981,44 +1021,52 @@ void PDFPluginBase::updateScrollbars()
     if (m_hasBeenDestroyed)
         return;
 
-    bool hadScrollbars = m_horizontalScrollbar || m_verticalScrollbar;
+    RefPtr horizontalScrollbar = m_horizontalScrollbar;
+    RefPtr verticalScrollbar = m_verticalScrollbar;
+
+    bool hadScrollbars = horizontalScrollbar || verticalScrollbar;
     auto pdfDocumentSize = contentsSize();
 
-    if (m_horizontalScrollbar) {
+    if (horizontalScrollbar) {
         if (m_size.width() >= pdfDocumentSize.width())
             destroyScrollbar(ScrollbarOrientation::Horizontal);
-    } else if (m_size.width() < pdfDocumentSize.width())
-        m_horizontalScrollbar = createScrollbar(ScrollbarOrientation::Horizontal);
+    } else if (m_size.width() < pdfDocumentSize.width()) {
+        horizontalScrollbar = createScrollbar(ScrollbarOrientation::Horizontal);
+        m_horizontalScrollbar = horizontalScrollbar.copyRef();
+    }
 
-    if (m_verticalScrollbar) {
+    if (verticalScrollbar) {
         if (m_size.height() >= pdfDocumentSize.height())
             destroyScrollbar(ScrollbarOrientation::Vertical);
-    } else if (m_size.height() < pdfDocumentSize.height())
-        m_verticalScrollbar = createScrollbar(ScrollbarOrientation::Vertical);
+    } else if (m_size.height() < pdfDocumentSize.height()) {
+        verticalScrollbar = createScrollbar(ScrollbarOrientation::Vertical);
+        m_verticalScrollbar = verticalScrollbar.copyRef();
+    }
 
-    if (m_horizontalScrollbar) {
+    if (horizontalScrollbar) {
         auto scrollbarRect = viewRelativeHorizontalScrollbarRect();
-        scrollbarRect.moveBy(m_view->location());
-        m_horizontalScrollbar->setFrameRect(scrollbarRect);
+        scrollbarRect.moveBy(protectedView()->location());
+        horizontalScrollbar->setFrameRect(scrollbarRect);
 
-        m_horizontalScrollbar->setSteps(Scrollbar::pixelsPerLineStep(), firstPageHeight());
-        m_horizontalScrollbar->setProportion(scrollbarRect.width(), pdfDocumentSize.width());
+        horizontalScrollbar->setSteps(Scrollbar::pixelsPerLineStep(), firstPageHeight());
+        horizontalScrollbar->setProportion(scrollbarRect.width(), pdfDocumentSize.width());
     }
 
-    if (m_verticalScrollbar) {
+    if (verticalScrollbar) {
         auto scrollbarRect = viewRelativeVerticalScrollbarRect();
-        scrollbarRect.moveBy(m_view->location());
-        m_verticalScrollbar->setFrameRect(scrollbarRect);
+        scrollbarRect.moveBy(protectedView()->location());
+        verticalScrollbar->setFrameRect(scrollbarRect);
 
-        m_verticalScrollbar->setSteps(Scrollbar::pixelsPerLineStep(), firstPageHeight());
-        m_verticalScrollbar->setProportion(scrollbarRect.height(), pdfDocumentSize.height());
+        verticalScrollbar->setSteps(Scrollbar::pixelsPerLineStep(), firstPageHeight());
+        verticalScrollbar->setProportion(scrollbarRect.height(), pdfDocumentSize.height());
     }
 
-    RefPtr frameView = m_frame ? m_frame->coreLocalFrame()->view() : nullptr;
+    RefPtr frame = m_frame.get();
+    RefPtr frameView = frame ? frame->coreLocalFrame()->view() : nullptr;
     if (!frameView)
         return;
 
-    bool hasScrollbars = m_horizontalScrollbar || m_verticalScrollbar;
+    bool hasScrollbars = horizontalScrollbar || verticalScrollbar;
     if (hadScrollbars != hasScrollbars) {
         if (hasScrollbars)
             frameView->addScrollableArea(this);
@@ -1039,7 +1087,7 @@ Ref<Scrollbar> PDFPluginBase::createScrollbar(ScrollbarOrientation orientation)
             scrollAnimator().setWheelEventTestMonitor(page->wheelEventTestMonitor());
     }
 
-    if (RefPtr frame = m_view->frame()) {
+    if (RefPtr frame = protectedView()->frame()) {
         if (RefPtr frameView = frame->view())
             frameView->addChild(widget);
     }
@@ -1060,31 +1108,34 @@ void PDFPluginBase::destroyScrollbar(ScrollbarOrientation orientation)
 
 void PDFPluginBase::wantsWheelEventsChanged()
 {
-    if (!m_element)
+    RefPtr element = m_element.get();
+    if (!element)
         return;
 
-    if (!m_frame || !m_frame->coreLocalFrame())
+    RefPtr frame = m_frame.get();
+    if (!frame || !frame->coreLocalFrame())
         return;
 
-    RefPtr document = m_frame->coreLocalFrame()->document();
+    RefPtr document = frame->coreLocalFrame()->document();
     if (!document)
         return;
 
     if (wantsWheelEvents())
-        document->didAddWheelEventHandler(*m_element);
+        document->didAddWheelEventHandler(*element);
     else
-        document->didRemoveWheelEventHandler(*m_element, EventHandlerRemoval::All);
+        document->didRemoveWheelEventHandler(*element, EventHandlerRemoval::All);
 }
 
 void PDFPluginBase::print()
 {
     if (RefPtr page = this->page())
-        page->chrome().print(*m_frame->coreLocalFrame());
+        page->chrome().print(*protectedFrame()->protectedCoreLocalFrame());
 }
 
 std::optional<PageIdentifier> PDFPluginBase::pageIdentifier() const
 {
-    return m_frame && m_frame->coreLocalFrame() ? m_frame->coreLocalFrame()->pageID() : std::nullopt;
+    RefPtr frame = m_frame.get();
+    return frame && frame->coreLocalFrame() ? frame->coreLocalFrame()->pageID() : std::nullopt;
 }
 
 NSString *PDFPluginBase::stringPasteboardType()
@@ -1161,13 +1212,13 @@ void PDFPluginBase::writeItemsToGeneralPasteboard(Vector<PasteboardItem>&& paste
             continue;
         }
 
-        if ([type isEqualToString:htmlPasteboardType()])
+        if ([type isEqualToString:RetainPtr { htmlPasteboardType() }.get()])
             ensureContent(pasteboardContent)->dataInHTMLFormat = String { adoptNS([[NSString alloc] initWithData:data.get() encoding:NSUTF8StringEncoding]).autorelease() };
-        else if ([type isEqualToString:rtfPasteboardType()])
+        else if ([type isEqualToString:RetainPtr { rtfPasteboardType() }.get()])
             ensureContent(pasteboardContent)->dataInRTFFormat = SharedBuffer::create(data.get());
-        else if ([type isEqualToString:stringPasteboardType()])
+        else if ([type isEqualToString:RetainPtr { stringPasteboardType() }.get()])
             ensureContent(pasteboardContent)->dataInStringFormat = String { adoptNS([[NSString alloc] initWithData:data.get() encoding:NSUTF8StringEncoding]).autorelease() };
-        else if ([type isEqualToString:urlPasteboardType()]) {
+        else if ([type isEqualToString:RetainPtr { urlPasteboardType() }.get()]) {
             URL url { [NSURL URLWithDataRepresentation:data.get() relativeToURL:nil] };
             URL sanitizedURL { applyLinkDecorationFiltering(url) };
             pasteboardURL = PasteboardURL {
@@ -1202,7 +1253,7 @@ void PDFPluginBase::updateHUDLocation()
 {
     if (!shouldShowHUD())
         return;
-    m_frame->protectedPage()->updatePDFHUDLocation(*this, frameForHUDInRootViewCoordinates());
+    protectedFrame()->protectedPage()->updatePDFHUDLocation(*this, frameForHUDInRootViewCoordinates());
 }
 
 IntRect PDFPluginBase::frameForHUDInRootViewCoordinates() const
@@ -1227,16 +1278,16 @@ void PDFPluginBase::save(CompletionHandler<void(const String&, const URL&, std::
 
     RetainPtr data = liveData();
     URL url;
-    if (m_frame)
-        url = m_frame->url();
+    if (RefPtr frame = m_frame.get())
+        url = frame->url();
     completionHandler(m_suggestedFilename, url, span(data.get()));
 }
 
 void PDFPluginBase::openWithPreview(CompletionHandler<void(const String&, std::optional<FrameInfoData>&&, std::span<const uint8_t>)>&& completionHandler)
 {
     std::optional<FrameInfoData> frameInfo;
-    if (m_frame)
-        frameInfo = m_frame->info();
+    if (RefPtr frame = m_frame.get())
+        frameInfo = frame->info();
 
     if (!m_documentFinishedLoading) {
         if (auto existingCompletionHandler = std::exchange(m_pendingOpenCompletionHandler, WTFMove(completionHandler))) {
@@ -1254,10 +1305,14 @@ void PDFPluginBase::openWithPreview(CompletionHandler<void(const String&, std::o
 
 void PDFPluginBase::notifyCursorChanged(WebCore::PlatformCursorType cursorType)
 {
-    if (!m_frame || !m_frame->page())
+    RefPtr frame = m_frame.get();
+    if (!frame)
+        return;
+    RefPtr page = frame->page();
+    if (!page)
         return;
 
-    m_frame->protectedPage()->send(Messages::WebPageProxy::SetCursor(WebCore::Cursor::fromType(cursorType)));
+    page->send(Messages::WebPageProxy::SetCursor(WebCore::Cursor::fromType(cursorType)));
 }
 
 bool PDFPluginBase::supportsForms() const
@@ -1268,7 +1323,8 @@ bool PDFPluginBase::supportsForms() const
 
 bool PDFPluginBase::showContextMenuAtPoint(const IntPoint& point)
 {
-    RefPtr frameView = m_frame ? m_frame->coreLocalFrame()->view() : nullptr;
+    RefPtr frame = m_frame.get();
+    RefPtr frameView = frame ? frame->coreLocalFrame()->view() : nullptr;
     if (!frameView)
         return false;
     IntPoint contentsPoint = frameView->contentsToRootView(point);
@@ -1292,9 +1348,19 @@ bool PDFPluginBase::performImmediateActionHitTestAtLocation(const WebCore::Float
 WebCore::AXObjectCache* PDFPluginBase::axObjectCache() const
 {
     ASSERT(isMainRunLoop());
-    if (!m_frame || !m_frame->coreLocalFrame() || !m_frame->coreLocalFrame()->document())
+    RefPtr frame = m_frame.get();
+    if (!frame)
         return nullptr;
-    return m_frame->coreLocalFrame()->document()->axObjectCache();
+
+    RefPtr coreFrame = frame->coreLocalFrame();
+    if (!coreFrame)
+        return nullptr;
+
+    RefPtr document = coreFrame->document();
+    if (!document)
+        return nullptr;
+
+    return document->axObjectCache();
 }
 
 WebCore::IntPoint PDFPluginBase::lastKnownMousePositionInView() const
@@ -1309,17 +1375,18 @@ void PDFPluginBase::navigateToURL(const URL& url, std::optional<PlatformMouseEve
     if (url.protocolIsJavaScript())
         return;
 
-    RefPtr frame = m_frame ? m_frame->coreLocalFrame() : nullptr;
-    if (!frame)
+    RefPtr frame = m_frame.get();
+    RefPtr coreFrame = frame ? frame->coreLocalFrame() : nullptr;
+    if (!coreFrame)
         return;
 
     RefPtr<Event> coreEvent;
     if (event || m_lastMouseEvent) {
-        auto platformEvent = event ? WTFMove(*event) : platform(*m_lastMouseEvent);
-        coreEvent = MouseEvent::create(eventNames().clickEvent, &frame->windowProxy(), platformEvent, { }, { }, 0, 0);
+        auto platformEvent = event ? WTFMove(*event) : platform(CheckedRef { *m_lastMouseEvent }.get());
+        coreEvent = MouseEvent::create(eventNames().clickEvent, &coreFrame->windowProxy(), platformEvent, { }, { }, 0, 0);
     }
 
-    frame->loader().changeLocation(url, emptyAtom(), coreEvent.get(), ReferrerPolicy::NoReferrer, ShouldOpenExternalURLsPolicy::ShouldAllow);
+    coreFrame->loader().changeLocation(url, emptyAtom(), coreEvent.get(), ReferrerPolicy::NoReferrer, ShouldOpenExternalURLsPolicy::ShouldAllow);
 }
 
 #if PLATFORM(MAC)
@@ -1340,7 +1407,8 @@ id PDFPluginBase::accessibilityAssociatedPluginParentForElement(Element* element
     if (m_activeAnnotation->element() != element)
         return nil;
 
-    return [m_activeAnnotation->annotation() accessibilityNode];
+    RetainPtr annotation = m_activeAnnotation->annotation();
+    return [annotation accessibilityNode];
 #endif
 
     return nil;
@@ -1445,7 +1513,7 @@ void PDFPluginBase::registerPDFTest(RefPtr<WebCore::VoidCallback>&& callback)
 
 std::optional<FrameIdentifier> PDFPluginBase::rootFrameID() const
 {
-    return m_view->frame()->rootFrame().frameID();
+    return protectedView()->frame()->rootFrame().frameID();
 }
 
 // FIXME: Share more of the style sheet between the embed/non-embed case.
@@ -1550,7 +1618,7 @@ String PDFPluginBase::annotationStyle() const
 
 Color PDFPluginBase::pluginBackgroundColor()
 {
-    static NeverDestroyed color = roundAndClampToSRGBALossy([CocoaColor grayColor].CGColor);
+    static NeverDestroyed color = roundAndClampToSRGBALossy(RetainPtr { [CocoaColor grayColor].CGColor }.get());
     return color.get();
 }
 
@@ -1561,6 +1629,16 @@ unsigned PDFPluginBase::countFindMatches(const String& target, WebCore::FindOpti
 
     NSStringCompareOptions nsOptions = options.contains(FindOption::CaseInsensitive) ? NSCaseInsensitiveSearch : 0;
     return [[m_pdfDocument findString:target.createNSString().get() withOptions:nsOptions] count];
+}
+
+RefPtr<PluginView> PDFPluginBase::protectedView() const
+{
+    return m_view.get();
+}
+
+RefPtr<WebFrame> PDFPluginBase::protectedFrame() const
+{
+    return m_frame.get();
 }
 
 } // namespace WebKit

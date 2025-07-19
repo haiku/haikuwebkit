@@ -513,7 +513,7 @@ RefPtr<BackgroundFetch> BackgroundFetch::createFromStore(std::span<const uint8_t
     if (!registrationKeyScope)
         return nullptr;
 
-    auto* registration = server.getRegistration({ WTFMove(*registrationKeyOrigin), WTFMove(*registrationKeyScope) });
+    RefPtr registration = server.getRegistration({ WTFMove(*registrationKeyOrigin), WTFMove(*registrationKeyScope) });
     if (!registration) {
         RELEASE_LOG_ERROR(ServiceWorker, "BackgroundFetch::createFromStore missing registration");
         return nullptr;

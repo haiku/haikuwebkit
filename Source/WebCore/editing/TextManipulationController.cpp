@@ -126,7 +126,7 @@ public:
 
 private:
     const Vector<ExclusionRule>& m_rules;
-    UncheckedKeyHashMap<Ref<Element>, ExclusionRule::Type> m_cache;
+    HashMap<Ref<Element>, ExclusionRule::Type> m_cache;
 };
 
 TextManipulationController::TextManipulationController(Document& document)
@@ -839,7 +839,7 @@ auto TextManipulationController::replace(const ManipulationItemData& item, const
         return ManipulationFailure::Type::ContentChanged;
 
     size_t currentTokenIndex = 0;
-    UncheckedKeyHashMap<TextManipulationTokenIdentifier, TokenExchangeData> tokenExchangeMap;
+    HashMap<TextManipulationTokenIdentifier, TokenExchangeData> tokenExchangeMap;
     RefPtr<Node> commonAncestor;
     RefPtr<Node> firstContentNode;
     RefPtr<Node> lastChildOfCommonAncestorInRange;

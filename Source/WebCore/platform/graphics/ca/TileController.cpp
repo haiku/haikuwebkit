@@ -240,6 +240,20 @@ bool TileController::setNeedsDisplayIfEDRHeadroomExceeds(float headroom)
 {
     return tileGrid().setNeedsDisplayIfEDRHeadroomExceeds(headroom);
 }
+
+void TileController::setTonemappingEnabled(bool enabled)
+{
+    if (m_tonemappingEnabled == enabled)
+        return;
+
+    m_tonemappingEnabled = enabled;
+    tileGrid().updateTileLayerProperties();
+}
+
+bool TileController::tonemappingEnabled() const
+{
+    return m_tonemappingEnabled;
+}
 #endif
 
 void TileController::setContentsFormat(ContentsFormat contentsFormat)
@@ -867,6 +881,9 @@ Ref<PlatformCALayer> TileController::createTileLayer(const IntRect& tileRect, Ti
     layer->setContentsScale(m_deviceScaleFactor * temporaryScaleFactor);
     layer->setAcceleratesDrawing(m_acceleratesDrawing);
     layer->setContentsFormat(m_contentsFormat);
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    layer->setTonemappingEnabled(m_tonemappingEnabled);
+#endif
     layer->setNeedsDisplay();
     return layer;
 }

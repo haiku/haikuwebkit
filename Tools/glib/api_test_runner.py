@@ -184,6 +184,10 @@ class TestRunner(object):
         timeout = self._options.timeout
         wpe_legacy_api = self._use_wpe_legacy_api()
         env = self._weston_env if self.is_wpe_platform_wayland_test(test_program) else self._test_env
+        if self.is_wpe_platform_test(test_program):
+            # WPE Platform tests can run without swrast since nothing is rendered.
+            env = dict(env)
+            env.pop('LIBGL_ALWAYS_SOFTWARE')
 
         def is_slow_test(test, subtest):
             return self._expectations.is_slow(test, subtest)
@@ -288,6 +292,9 @@ class TestRunner(object):
         raise NotImplementedError
 
     def is_qt_test(self, test_program):
+        raise NotImplementedError
+
+    def is_wpe_platform_test(self, test_program):
         raise NotImplementedError
 
     def is_wpe_platform_wayland_test(self, test_program):

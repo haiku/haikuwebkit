@@ -118,10 +118,13 @@ void ReferencedSVGResources::removeClientForTarget(TreeScope& treeScope, const A
 ReferencedSVGResources::SVGElementIdentifierAndTagPairs ReferencedSVGResources::referencedSVGResourceIDs(const RenderStyle& style, const Document& document)
 {
     SVGElementIdentifierAndTagPairs referencedResources;
-    if (auto* clipPath = dynamicDowncast<ReferencePathOperation>(style.clipPath())) {
-        if (!clipPath->fragment().isEmpty())
-            referencedResources.append({ clipPath->fragment(), { SVGNames::clipPathTag } });
-    }
+    WTF::switchOn(style.clipPath(),
+        [&](const Style::ReferencePath& clipPath) {
+            if (!clipPath.fragment().isEmpty())
+                referencedResources.append({ clipPath.fragment(), { SVGNames::clipPathTag } });
+        },
+        [](const auto&) { }
+    );
 
     if (style.hasFilter()) {
         const auto& filterOperations = style.filter();
@@ -228,7 +231,7 @@ RefPtr<SVGElement> ReferencedSVGResources::elementForResourceIDs(TreeScope& tree
     return nullptr;
 }
 
-RefPtr<SVGClipPathElement> ReferencedSVGResources::referencedClipPathElement(TreeScope& treeScope, const ReferencePathOperation& clipPath)
+RefPtr<SVGClipPathElement> ReferencedSVGResources::referencedClipPathElement(TreeScope& treeScope, const Style::ReferencePath& clipPath)
 {
     if (clipPath.fragment().isEmpty())
         return nullptr;
@@ -276,7 +279,7 @@ RefPtr<SVGFilterElement> ReferencedSVGResources::referencedFilterElement(TreeSco
     return downcast<SVGFilterElement>(elementForResourceID(treeScope, referenceFilter.fragment(), SVGNames::filterTag));
 }
 
-LegacyRenderSVGResourceClipper* ReferencedSVGResources::referencedClipperRenderer(TreeScope& treeScope, const ReferencePathOperation& clipPath)
+LegacyRenderSVGResourceClipper* ReferencedSVGResources::referencedClipperRenderer(TreeScope& treeScope, const Style::ReferencePath& clipPath)
 {
     if (clipPath.fragment().isEmpty())
         return nullptr;

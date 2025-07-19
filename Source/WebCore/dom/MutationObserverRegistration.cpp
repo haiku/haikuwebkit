@@ -79,7 +79,7 @@ void MutationObserverRegistration::observedSubtreeNodeWillDetach(Node& node)
     m_transientRegistrationNodes.add(node);
 }
 
-UncheckedKeyHashSet<GCReachableRef<Node>> MutationObserverRegistration::takeTransientRegistrations()
+HashSet<GCReachableRef<Node>> MutationObserverRegistration::takeTransientRegistrations()
 {
     if (m_transientRegistrationNodes.isEmpty()) {
         ASSERT(!m_nodeKeptAlive);

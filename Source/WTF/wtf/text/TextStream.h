@@ -236,6 +236,13 @@ TextStream& operator<<(TextStream& ts, const Markable<T, Traits>& item)
     return ts << "unset"_s;
 }
 
+template<typename... Ts>
+TextStream& operator<<(TextStream& ts, const Variant<Ts...>& variant)
+{
+    WTF::switchOn(variant, [&](const auto& alternative) { ts << alternative; });
+    return ts;
+}
+
 template<typename SizedContainer>
 TextStream& streamSizedContainer(TextStream& ts, const SizedContainer& sizedContainer)
 {
@@ -389,6 +396,9 @@ struct supports_text_stream_insertion<Markable<T, Traits>> : supports_text_strea
 template<typename T>
 struct supports_text_stream_insertion<OptionSet<T>> : supports_text_stream_insertion<T> { };
 
+template<typename... Ts>
+struct supports_text_stream_insertion<Variant<Ts...>> : std::conjunction<supports_text_stream_insertion<Ts>...> { };
+
 template<typename T>
 struct supports_text_stream_insertion<std::optional<T>> : supports_text_stream_insertion<T> { };
 
@@ -409,6 +419,9 @@ struct supports_text_stream_insertion<std::array<T, size>> : supports_text_strea
 
 template<typename T, typename U>
 struct supports_text_stream_insertion<std::pair<T, U>> : std::conjunction<supports_text_stream_insertion<T>, supports_text_stream_insertion<U>> { };
+
+template<typename... Ts>
+struct supports_text_stream_insertion<std::tuple<Ts...>> : std::conjunction<supports_text_stream_insertion<Ts>...> { };
 
 template<typename T>
 struct ValueOrEllipsis {

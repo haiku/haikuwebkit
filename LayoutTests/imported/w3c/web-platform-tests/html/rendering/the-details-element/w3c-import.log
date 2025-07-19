@@ -23,6 +23,7 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-before-expected-mismatch.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-before.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-blockification.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-display-type-001-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-display-type-001-ref-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-display-type-001-ref.html
@@ -55,6 +56,12 @@ List of files:
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-revert-expected.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-revert-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-revert.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-summary-display-inline-001-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-summary-display-inline-001-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-summary-display-inline-001.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-summary-display-inline-002-expected.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-summary-display-inline-002-ref.html
+/LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-summary-display-inline-002.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/details-two-pages-print-ref.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/empty-crash.html
 /LayoutTests/imported/w3c/web-platform-tests/html/rendering/the-details-element/single-summary.html

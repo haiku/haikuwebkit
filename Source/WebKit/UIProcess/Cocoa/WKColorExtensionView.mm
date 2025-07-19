@@ -43,6 +43,7 @@
         return nil;
 
     _delegate = delegate;
+    self.hidden = YES;
     return self;
 }
 

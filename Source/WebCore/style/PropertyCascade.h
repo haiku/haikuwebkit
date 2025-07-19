@@ -65,7 +65,7 @@ public:
 
     static IncludedProperties normalProperties() { return { normalPropertyTypes() }; }
 
-    PropertyCascade(const MatchResult&, CascadeLevel, IncludedProperties&&, const UncheckedKeyHashSet<AnimatableCSSProperty>* = nullptr, const StyleProperties* positionTryFallbackProperties = nullptr);
+    PropertyCascade(const MatchResult&, CascadeLevel, IncludedProperties&&, const HashSet<AnimatableCSSProperty>* = nullptr, const StyleProperties* positionTryFallbackProperties = nullptr);
     PropertyCascade(const PropertyCascade&, CascadeLevel, std::optional<ScopeOrdinal> rollbackScope = { }, std::optional<CascadeLayerPriority> maximumCascadeLayerPriorityForRollback = { });
 
     ~PropertyCascade();
@@ -93,9 +93,9 @@ public:
     const Property& customProperty(const AtomString&) const;
 
     std::span<const CSSPropertyID> logicalGroupPropertyIDs() const;
-    const UncheckedKeyHashMap<AtomString, Property>& customProperties() const { return m_customProperties; }
+    const HashMap<AtomString, Property>& customProperties() const { return m_customProperties; }
 
-    const UncheckedKeyHashSet<AnimatableCSSProperty> overriddenAnimatedProperties() const;
+    const HashSet<AnimatableCSSProperty> overriddenAnimatedProperties() const;
 
     PropertyBitSet& propertyIsPresent() { return m_propertyIsPresent; }
     const PropertyBitSet& propertyIsPresent() const { return m_propertyIsPresent; }
@@ -128,10 +128,10 @@ private:
     const std::optional<CascadeLayerPriority> m_maximumCascadeLayerPriorityForRollback;
 
     struct AnimationLayer {
-        AnimationLayer(const UncheckedKeyHashSet<AnimatableCSSProperty>&);
+        AnimationLayer(const HashSet<AnimatableCSSProperty>&);
 
-        const UncheckedKeyHashSet<AnimatableCSSProperty>& properties;
-        UncheckedKeyHashSet<AnimatableCSSProperty> overriddenProperties;
+        const HashSet<AnimatableCSSProperty>& properties;
+        HashSet<AnimatableCSSProperty> overriddenProperties;
         bool hasCustomProperties { false };
         bool hasFontSize { false };
         bool hasLineHeight { false };
@@ -159,7 +159,7 @@ private:
     CSSPropertyID m_lowestSeenLogicalGroupProperty { lastLogicalGroupProperty };
     CSSPropertyID m_highestSeenLogicalGroupProperty { firstLogicalGroupProperty };
 
-    UncheckedKeyHashMap<AtomString, Property> m_customProperties;
+    HashMap<AtomString, Property> m_customProperties;
 };
 
 inline bool PropertyCascade::hasNormalProperty(CSSPropertyID id) const

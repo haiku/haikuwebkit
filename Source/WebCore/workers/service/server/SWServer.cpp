@@ -43,6 +43,7 @@
 #include "SWServerToContextConnection.h"
 #include "SWServerWorker.h"
 #include "SecurityOrigin.h"
+#include "SecurityPolicy.h"
 #include "ServiceWorkerClientType.h"
 #include "ServiceWorkerContextData.h"
 #include "ServiceWorkerJobData.h"
@@ -278,8 +279,8 @@ Vector<ServiceWorkerRegistrationData> SWServer::getRegistrations(const SecurityO
     Vector<Ref<SWServerRegistration>> matchingRegistrations;
     for (auto& item : m_scopeToRegistrationMap) {
         if (item.key.originIsMatching(topOrigin, clientURL)) {
-            auto& registration = item.value.get();
-            matchingRegistrations.append(registration);
+            Ref registration = item.value.get();
+            matchingRegistrations.append(WTFMove(registration));
         }
     }
     // The specification mandates that registrations are returned in the insertion order.
@@ -568,15 +569,6 @@ void SWServer::resolveUnregistrationJob(const ServiceWorkerJobData& jobData, con
     connection->resolveUnregistrationJobInClient(jobData.identifier().jobIdentifier, registrationKey, unregistrationResult);
 }
 
-URL static inline originURL(const SecurityOrigin& origin)
-{
-    URL url;
-    url.setProtocol(origin.protocol());
-    url.setHost(origin.host());
-    url.setPort(origin.port());
-    return url;
-}
-
 ResourceRequest SWServer::createScriptRequest(const URL& url, const ServiceWorkerJobData& jobData, SWServerRegistration& registration)
 {
     ResourceRequest request { URL { url } };
@@ -589,7 +581,7 @@ ResourceRequest SWServer::createScriptRequest(const URL& url, const ServiceWorke
     request.setFirstPartyForCookies(topOrigin->toURL());
 
     request.setHTTPHeaderField(HTTPHeaderName::Origin, origin->toString());
-    request.setHTTPReferrer(originURL(origin).string());
+    request.setHTTPReferrer(SecurityPolicy::referrerToOriginString(jobData.scriptURL));
     request.setHTTPUserAgent(serviceWorkerClientUserAgent(ClientOrigin { jobData.topOrigin, SecurityOrigin::create(jobData.scriptURL)->data() }));
     request.setPriority(ResourceLoadPriority::Low);
     request.setIsAppInitiated(registration.isAppInitiated());
@@ -1187,6 +1179,18 @@ void SWServer::updateAppInitiatedValueForWorkers(const ClientOrigin& clientOrigi
     }
 }
 
+#if ASSERT_ENABLED
+template<typename Clients>
+bool validateClientOrigin(const Clients& clients, ScriptExecutionContextIdentifier clientIdentifier, const ClientOrigin& clientOrigin)
+{
+    auto iterator = clients.find(clientIdentifier);
+    if (iterator == clients.end())
+        return false;
+
+    return iterator->value->url.protocolIsAbout() || clientOrigin.clientOrigin == SecurityOriginData::fromURLWithoutStrictOpaqueness(iterator->value->url);
+}
+#endif
+
 void SWServer::registerServiceWorkerClient(ClientOrigin&& clientOrigin, ServiceWorkerClientData&& data, const std::optional<ServiceWorkerRegistrationIdentifier>& controllingServiceWorkerRegistrationIdentifier, String&& userAgent, IsBeingCreatedClient isBeingCreatedClient)
 {
     auto clientIdentifier = data.identifier;
@@ -1200,6 +1204,7 @@ void SWServer::registerServiceWorkerClient(ClientOrigin&& clientOrigin, ServiceW
     auto addResult = m_visibleClientIdToInternalClientIdMap.add(data.identifier.object().toString(), clientIdentifier);
     if (!addResult.isNewEntry) {
         auto registeredClientIdentifier = addResult.iterator->value;
+        ASSERT(validateClientOrigin(m_clientsById, registeredClientIdentifier, clientOrigin));
         if (registeredClientIdentifier.processIdentifier() == clientIdentifier.processIdentifier()) {
             ASSERT(m_visibleClientIdToInternalClientIdMap.get(data.identifier.object().toString()) == clientIdentifier);
             ASSERT(m_clientsById.contains(clientIdentifier));

@@ -796,9 +796,7 @@ private:
                 return WebsiteData::Entry { SecurityOriginData::fromURL(url), WebsiteDataType::ScreenTime, 0 };
             });
             callbackAggregator->addWebsiteData(WTFMove(websiteData));
-        }, CompletionHandlerCallThread::AnyThread });
-        // FIXME: Remove CompletionHandlerCallThread::AnyThread above once rdar://145889845 is widely available.
-        // Screen Time might not call the completion handler, so allow the completion handler to be called from any thread.
+        } });
     }
 #endif
 
@@ -2585,7 +2583,7 @@ void WebsiteDataStore::clearBundleIdentifierInNetworkProcess(CompletionHandler<v
     protectedNetworkProcess()->clearBundleIdentifier(WTFMove(completionHandler));
 }
 
-void WebsiteDataStore::countNonDefaultSessionSets(CompletionHandler<void(size_t)>&& completionHandler)
+void WebsiteDataStore::countNonDefaultSessionSets(CompletionHandler<void(uint64_t)>&& completionHandler)
 {
     protectedNetworkProcess()->sendWithAsyncReply(Messages::NetworkProcess::CountNonDefaultSessionSets(m_sessionID), WTFMove(completionHandler));
 }

@@ -142,7 +142,7 @@ void CachedPage::restore(Page& page)
 
     // Restore the focus appearance for the focused element.
     // FIXME: Right now we don't support pages w/ frames in the b/f cache.  This may need to be tweaked when we add support for that.
-    RefPtr focusedOrMainFrame = page.checkedFocusController()->focusedOrMainFrame();
+    RefPtr focusedOrMainFrame = page.focusController().focusedOrMainFrame();
     if (!focusedOrMainFrame)
         return;
 

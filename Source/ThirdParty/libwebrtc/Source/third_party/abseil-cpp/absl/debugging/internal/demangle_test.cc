@@ -556,15 +556,14 @@ TEST(Demangle, Clones) {
   EXPECT_TRUE(Demangle("_ZL3Foov.part.9.165493.constprop.775.31805", tmp,
                        sizeof(tmp)));
   EXPECT_STREQ("Foo()", tmp);
-  // Other suffixes should demangle too.
-  EXPECT_TRUE(Demangle("_ZL3Foov.", tmp, sizeof(tmp)));
-  EXPECT_STREQ("Foo()", tmp);
-  EXPECT_TRUE(Demangle("_ZL3Foov.abc123", tmp, sizeof(tmp)));
-  EXPECT_STREQ("Foo()", tmp);
-  EXPECT_TRUE(Demangle("_ZL3Foov.clone.", tmp, sizeof(tmp)));
-  EXPECT_STREQ("Foo()", tmp);
-  EXPECT_TRUE(Demangle("_ZL3Foov.isra.2.constprop.", tmp, sizeof(tmp)));
-  EXPECT_STREQ("Foo()", tmp);
+  // Invalid (. without anything else), should not demangle.
+  EXPECT_FALSE(Demangle("_ZL3Foov.", tmp, sizeof(tmp)));
+  // Invalid (. with mix of alpha and digits), should not demangle.
+  EXPECT_FALSE(Demangle("_ZL3Foov.abc123", tmp, sizeof(tmp)));
+  // Invalid (.clone. not followed by number), should not demangle.
+  EXPECT_FALSE(Demangle("_ZL3Foov.clone.", tmp, sizeof(tmp)));
+  // Invalid (.constprop. not followed by number), should not demangle.
+  EXPECT_FALSE(Demangle("_ZL3Foov.isra.2.constprop.", tmp, sizeof(tmp)));
 }
 
 TEST(Demangle, Discriminators) {
@@ -2016,13 +2015,6 @@ TEST(DemangleRegression, DeeplyNestedArrayType) {
     data += "A1_";
   }
   TestOnInput(data.c_str());
-}
-
-TEST(DemangleRegression, ShortOutputBuffer) {
-  // This should not crash.
-  char buffer[1];
-  EXPECT_FALSE(
-      absl::debugging_internal::Demangle("_ZZ2wwE", buffer, sizeof(buffer)));
 }
 
 struct Base {

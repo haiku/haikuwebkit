@@ -25,9 +25,8 @@
 
 import AVFoundation
 import Combine
-import RealityFoundation
+import RealityKit
 import UIKit
-import WebKitSwift
 import os
 
 #if canImport(AVKit, _version: 1270)
@@ -64,7 +63,7 @@ private class SwiftOnlyData: NSObject {
     var videoReceiverEndpointObserver: Cancellable?
 
     var isImmersiveVideo = false
-    weak var viewController: PlayableViewController?
+    weak var viewController: WKSPlayableViewControllerHost?
     weak var defaultEntity: Entity?
 }
 
@@ -72,7 +71,7 @@ enum LinearMediaPlayerErrors: Error {
     case invalidStateError
 }
 
-@_objcImplementation extension WKSLinearMediaPlayer {
+@objc @implementation extension WKSLinearMediaPlayer {
     weak var delegate: WKSLinearMediaPlayerDelegate?
 
     var selectedPlaybackRate = 1.0
@@ -190,21 +189,21 @@ enum LinearMediaPlayerErrors: Error {
         "AVKit.AVPlayerPlayable"
     }
 
-    func makeViewController() -> PlayableViewController {
+    func makeViewController() -> WKSPlayableViewControllerHost {
         Logger.linearMediaPlayer.log("\(#function)")
 
         if let viewController = swiftOnlyData.viewController {
             return viewController
         }
-        let viewController = PlayableViewController()
+        let viewController = WKSPlayableViewControllerHost()
         viewController.playable = self
         viewController.prefersAutoDimming = true
-        swiftOnlyData.viewController = viewController;
+        swiftOnlyData.viewController = viewController
 
         return viewController
     }
     
-    func enterExternalPresentation(completionHandler: @escaping (Bool, (any Error)?) -> Void) {
+    func enterExternalPresentation(completionHandler: @MainActor @Sendable @escaping (Bool, (any Error)?) -> Void) {
         Logger.linearMediaPlayer.log("\(#function)")
 
         switch presentationState {
@@ -222,7 +221,7 @@ enum LinearMediaPlayerErrors: Error {
         }
     }
     
-    func exitExternalPresentation(completionHandler: @escaping (Bool, (any Error)?) -> Void) {
+    func exitExternalPresentation(completionHandler: @MainActor @Sendable @escaping (Bool, (any Error)?) -> Void) {
         Logger.linearMediaPlayer.log("\(#function)")
 
         switch presentationState {
@@ -241,7 +240,7 @@ enum LinearMediaPlayerErrors: Error {
         }
     }
 
-    func enterFullscreen(completionHandler: @escaping (Bool, (any Error)?) -> Void) {
+    func enterFullscreen(completionHandler: @MainActor @Sendable @escaping (Bool, (any Error)?) -> Void) {
         Logger.linearMediaPlayer.log("\(#function)")
 
         if let enterFullscreenCompletionHandler = enterFullscreenCompletionHandler {
@@ -250,7 +249,7 @@ enum LinearMediaPlayerErrors: Error {
             self.enterFullscreenCompletionHandler = nil
         }
 
-        maybeCreateSpatialOrImmersiveEntity();
+        maybeCreateSpatialOrImmersiveEntity()
 
         switch presentationState {
         case .inline, .enteringFullscreen, .exitingFullscreen:
@@ -265,7 +264,7 @@ enum LinearMediaPlayerErrors: Error {
         }
     }
 
-    func exitFullscreen(completionHandler: @escaping (Bool, (any Error)?) -> Void) {
+    func exitFullscreen(completionHandler: @MainActor @Sendable @escaping (Bool, (any Error)?) -> Void) {
         Logger.linearMediaPlayer.log("\(#function)")
 
         if let exitFullscreenCompletionHandler = exitFullscreenCompletionHandler {
@@ -318,7 +317,7 @@ extension WKSLinearMediaPlayer {
         }
         let metadata = swiftOnlyData.spatialVideoMetadata!
         swiftOnlyData.peculiarEntity = ContentType.makeSpatialEntity(videoMetadata: metadata.metadata, extruded: true)
-        swiftOnlyData.peculiarEntity?.screenMode = spatialImmersive ? .immersive : .portal;
+        swiftOnlyData.peculiarEntity?.screenMode = spatialImmersive ? .immersive : .portal
 // FIXME (147782145): Define a clang module for XPC to be used in Public SDK builds
 #if canImport(XPC)
         swiftOnlyData.videoReceiverEndpointObserver = swiftOnlyData.peculiarEntity?.videoReceiverEndpointPublisher.sink {
@@ -335,13 +334,29 @@ extension WKSLinearMediaPlayer {
             return
         }
         if swiftOnlyData.peculiarEntity == nil { return }
-        swiftOnlyData.videoReceiverEndpointObserver = nil;
-        swiftOnlyData.peculiarEntity = nil;
-        contentType = .none; // this causes a call to makeDefaultEntity
+        swiftOnlyData.videoReceiverEndpointObserver = nil
+        swiftOnlyData.peculiarEntity = nil
+        contentType = .none // this causes a call to makeDefaultEntity
     }
 }
 
-@_spi(Internal) extension WKSLinearMediaPlayer: @retroactive Playable {
+#endif // os(visionOS)
+
+#if compiler(>=6.0)
+#if os(visionOS)
+@_spi(Internal) extension WKSLinearMediaPlayer: @preconcurrency Playable {
+}
+#endif
+#else
+#if os(visionOS)
+@_spi(Internal) extension WKSLinearMediaPlayer: Playable {
+}
+#endif
+#endif
+
+#if os(visionOS)
+
+@_spi(Internal) extension WKSLinearMediaPlayer {
     public var selectedPlaybackRatePublisher: AnyPublisher<Double, Never> {
         publisher(for: \.selectedPlaybackRate).eraseToAnyPublisher()
     }

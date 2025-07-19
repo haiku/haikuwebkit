@@ -347,6 +347,11 @@ void TestRunner::findStringMatchesInPage(JSContextRef context, JSStringRef targe
     }
 }
 
+void TestRunner::indicateFindMatch(JSContextRef context, uint32_t index)
+{
+    postPageMessage("IndicateFindMatch", index);
+}
+
 void TestRunner::replaceFindMatchesAtIndices(JSContextRef context, JSValueRef matchIndicesAsValue, JSStringRef replacementText, bool selectionOnly)
 {
     auto& bundle = InjectedBundle::singleton();

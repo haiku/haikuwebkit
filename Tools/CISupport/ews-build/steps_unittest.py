@@ -1025,6 +1025,19 @@ class TestCleanUpGitIndexLock(BuildStepMixinAdditions, unittest.TestCase):
         self.expectOutcome(result=SUCCESS, state_string='Deleted .git/index.lock')
         return self.runStep()
 
+    def test_success_different_workdir(self):
+        self.setupStep(CleanUpGitIndexLock(workdir='build/OpenSource'))
+        self.expectRemoteCommands(
+            ExpectShell(workdir='build/OpenSource',
+                        timeout=120,
+                        logEnviron=False,
+                        command=['rm', '-f', '.git/index.lock'],
+                        )
+            + 0,
+        )
+        self.expectOutcome(result=SUCCESS, state_string='Deleted .git/index.lock')
+        return self.runStep()
+
     def test_success_ios(self):
         self.setupStep(CleanUpGitIndexLock())
         self.setProperty('platform', 'ios-16')

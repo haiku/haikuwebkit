@@ -192,7 +192,7 @@ bool SearchInputType::sizeShouldIncludeDecoration(int, int& preferredSize) const
     return false;
 }
 
-float SearchInputType::decorationWidth() const
+float SearchInputType::decorationWidth(float) const
 {
     float width = 0;
     if (RefPtr resultsButton = m_resultsButton; resultsButton && resultsButton->renderStyle()) {

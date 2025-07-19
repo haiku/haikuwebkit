@@ -36,11 +36,9 @@
 #include <limits>
 #include <random>
 #include <string>
-#include <type_traits>
 
 #include "gmock/gmock.h"
 #include "gtest/gtest.h"
-#include "absl/random/random.h"
 #include "absl/strings/str_format.h"
 #include "absl/time/time.h"
 
@@ -76,8 +74,6 @@ MATCHER_P(TimevalMatcher, tv, "") {
 }
 
 TEST(Duration, ConstExpr) {
-  static_assert(std::is_trivially_destructible<absl::Duration>::value,
-                "Duration is documented as being trivially destructible");
   constexpr absl::Duration d0 = absl::ZeroDuration();
   static_assert(d0 == absl::ZeroDuration(), "ZeroDuration()");
   constexpr absl::Duration d1 = absl::Seconds(1);
@@ -1515,7 +1511,9 @@ TEST(Duration, ToDoubleSecondsCheckEdgeCases) {
 }
 
 TEST(Duration, ToDoubleSecondsCheckRandom) {
-  absl::InsecureBitGen gen;
+  std::random_device rd;
+  std::seed_seq seed({rd(), rd(), rd(), rd(), rd(), rd(), rd(), rd()});
+  std::mt19937_64 gen(seed);
   // We want doubles distributed from 1/8ns up to 2^63, where
   // as many values are tested from 1ns to 2ns as from 1sec to 2sec,
   // so even distribute along a log-scale of those values, and

@@ -65,10 +65,11 @@
 
 - (void)showContextMenu
 {
-    if (!_impl)
+    CheckedPtr impl = _impl.get();
+    if (!impl)
         return;
 
-    RetainPtr view = _impl->view();
+    RetainPtr view = impl->view();
     if (!view)
         return;
 
@@ -89,10 +90,11 @@
 
 - (void)_callDidFinishPresentationIfNeeded
 {
-    if (!_impl || _isHighlightingItem)
+    CheckedPtr impl = _impl.get();
+    if (!impl || _isHighlightingItem)
         return;
 
-    _impl->didFinishPresentation(self);
+    impl->didFinishPresentation(self);
 }
 
 #pragma mark - RVPresenterHighlightDelegate

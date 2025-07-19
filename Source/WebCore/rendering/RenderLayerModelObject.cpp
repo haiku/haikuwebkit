@@ -280,7 +280,7 @@ TransformationMatrix* RenderLayerModelObject::layerTransform() const
 
 void RenderLayerModelObject::updateLayerTransform()
 {
-    if (auto* box = dynamicDowncast<RenderBox>(this); box && style().offsetPath() && MotionPath::needsUpdateAfterContainingBlockLayout(*style().offsetPath())) {
+    if (auto* box = dynamicDowncast<RenderBox>(this); box && MotionPath::needsUpdateAfterContainingBlockLayout(style().offsetPath())) {
         if (auto* containingBlock = this->containingBlock()) {
             view().frameView().layoutContext().setBoxNeedsTransformUpdateAfterContainerLayout(*box, *containingBlock);
             return;
@@ -453,19 +453,23 @@ RenderSVGResourceClipper* RenderLayerModelObject::svgClipperResourceFromStyle() 
     if (!document().settings().layerBasedSVGEngineEnabled())
         return nullptr;
 
-    RefPtr referenceClipPathOperation = dynamicDowncast<ReferencePathOperation>(style().clipPath());
-    if (!referenceClipPathOperation)
-        return nullptr;
+    return WTF::switchOn(style().clipPath(),
+        [&](const Style::ReferencePath& clipPath) -> RenderSVGResourceClipper* {
+            if (RefPtr referencedClipPathElement = ReferencedSVGResources::referencedClipPathElement(treeScopeForSVGReferences(), clipPath)) {
+                if (auto* referencedClipperRenderer = dynamicDowncast<RenderSVGResourceClipper>(referencedClipPathElement->renderer()))
+                    return referencedClipperRenderer;
+            }
 
-    if (RefPtr referencedClipPathElement = ReferencedSVGResources::referencedClipPathElement(treeScopeForSVGReferences(), *referenceClipPathOperation)) {
-        if (auto* referencedClipperRenderer = dynamicDowncast<RenderSVGResourceClipper>(referencedClipPathElement->renderer()))
-            return referencedClipperRenderer;
-    }
+            if (auto* svgElement = dynamicDowncast<SVGElement>(this->element()))
+                document().addPendingSVGResource(clipPath.fragment(), *svgElement);
 
-    if (auto* svgElement = dynamicDowncast<SVGElement>(this->element()))
-        document().addPendingSVGResource(referenceClipPathOperation->fragment(), *svgElement);
+            return nullptr;
 
-    return nullptr;
+        },
+        [&](const auto&) -> RenderSVGResourceClipper* {
+            return nullptr;
+        }
+    );
 }
 
 RenderSVGResourceFilter* RenderLayerModelObject::svgFilterResourceFromStyle() const
@@ -588,17 +592,18 @@ RenderSVGResourcePaintServer* RenderLayerModelObject::svgStrokePaintServerResour
 
 LegacyRenderSVGResourceClipper* RenderLayerModelObject::legacySVGClipperResourceFromStyle() const
 {
-    RefPtr referenceClipPathOperation = dynamicDowncast<ReferencePathOperation>(style().clipPath());
-    if (!referenceClipPathOperation)
-        return nullptr;
-
-    return ReferencedSVGResources::referencedClipperRenderer(treeScopeForSVGReferences(), *referenceClipPathOperation);
+    return WTF::switchOn(style().clipPath(),
+        [&](const Style::ReferencePath& clipPath) -> LegacyRenderSVGResourceClipper* {
+            return ReferencedSVGResources::referencedClipperRenderer(treeScopeForSVGReferences(), clipPath);
+        },
+        [&](const auto&) -> LegacyRenderSVGResourceClipper* {
+            return nullptr;
+        }
+    );
 }
 
 bool RenderLayerModelObject::pointInSVGClippingArea(const FloatPoint& point) const
 {
-    auto* clipPathOperation = style().clipPath();
-
     auto clipPathReferenceBox = [&](CSSBoxType boxType) -> FloatRect {
         FloatRect referenceBox;
         switch (boxType) {
@@ -627,24 +632,25 @@ bool RenderLayerModelObject::pointInSVGClippingArea(const FloatPoint& point) con
         return referenceBox;
     };
 
-    if (auto* clipPath = dynamicDowncast<ShapePathOperation>(clipPathOperation)) {
-        auto referenceBox = clipPathReferenceBox(clipPath->referenceBox());
-        if (!referenceBox.contains(point))
-            return false;
-        return clipPath->pathForReferenceRect(referenceBox).contains(point, clipPath->windRule());
-    }
-
-    if (auto* clipPath = dynamicDowncast<BoxPathOperation>(clipPathOperation)) {
-        auto referenceBox = clipPathReferenceBox(clipPath->referenceBox());
-        if (!referenceBox.contains(point))
-            return false;
-        return clipPath->pathForReferenceRect(FloatRoundedRect { referenceBox }).contains(point);
-    }
-
-    if (auto* referencedClipperRenderer = svgClipperResourceFromStyle())
-        return referencedClipperRenderer->hitTestClipContent(objectBoundingBox(), LayoutPoint(point));
-
-    return true;
+    return WTF::switchOn(style().clipPath(),
+        [&](const Style::BasicShapePath& clipPath) {
+            auto referenceBox = clipPathReferenceBox(clipPath.referenceBox());
+            if (!referenceBox.contains(point))
+                return false;
+            return Style::path(clipPath.shape(), referenceBox).contains(point, Style::windRule(clipPath.shape()));
+        },
+        [&](const Style::BoxPath& clipPath) {
+            auto referenceBox = clipPathReferenceBox(clipPath.referenceBox());
+            if (!referenceBox.contains(point))
+                return false;
+            return FloatRoundedRect { referenceBox }.path().contains(point);
+        },
+        [&](const auto&) {
+            if (auto* referencedClipperRenderer = svgClipperResourceFromStyle())
+                return referencedClipperRenderer->hitTestClipContent(objectBoundingBox(), LayoutPoint(point));
+            return true;
+        }
+    );
 }
 
 CheckedPtr<RenderLayer> RenderLayerModelObject::checkedLayer() const

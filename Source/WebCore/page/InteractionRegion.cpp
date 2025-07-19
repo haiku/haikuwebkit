@@ -250,7 +250,7 @@ static bool hasTransparentContainerStyle(const RenderStyle& style)
     return !style.hasBackground()
         && !style.hasOutline()
         && !style.hasBoxShadow()
-        && !style.clipPath()
+        && !style.hasClipPath()
         && !style.hasExplicitlySetBorderRadius()
         // No visible borders or borders that do not create a complete box.
         && (!style.hasVisibleBorder()
@@ -490,7 +490,7 @@ std::optional<InteractionRegion> interactionRegionForRenderedRegion(RenderObject
         return std::nullopt;
     }
 
-    bool isInlineNonBlock = renderer.isInline() && !renderer.isReplacedOrAtomicInline();
+    bool isInlineNonBlock = renderer.isInline() && !renderer.isBlockLevelReplacedOrAtomicInline();
     bool isPhoto = false;
 
     float minimumContentHintArea = 200 * 200;
@@ -550,11 +550,10 @@ std::optional<InteractionRegion> interactionRegionForRenderedRegion(RenderObject
     std::optional<Path> clipPath = std::nullopt;
 
     auto& style = regionRenderer.style();
-    RefPtr styleClipPath = style.clipPath();
 
-    if (!hasRotationOrShear && styleClipPath && styleClipPath->type() == PathOperation::Type::Shape && originalElement) {
+    if (auto basicShapePath = style.clipPath().tryBasicShape(); !hasRotationOrShear && originalElement && basicShapePath) {
         auto size = boundingSize(regionRenderer, transform);
-        auto path = styleClipPath->getPath(TransformOperationData(FloatRect(FloatPoint(), size)));
+        auto path = Style::tryPath(*basicShapePath, TransformOperationData(FloatRect(FloatPoint(), size)));
 
         if (path && !clipOffset.isZero())
             path->translate(clipOffset);

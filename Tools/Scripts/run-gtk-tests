@@ -86,6 +86,9 @@ class GtkTestRunner(TestRunner):
     def is_qt_test(self, test_program):
         return False
 
+    def is_wpe_platform_test(self, test_program):
+        return False
+
     def is_wpe_platform_wayland_test(self, test_program):
         return False
 

@@ -176,12 +176,11 @@ private:
 
 RefPtr<PlatformResourceMediaLoader> PlatformResourceMediaLoader::create(WebCoreAVFResourceLoader& parent, PlatformMediaResourceLoader& loader, ResourceRequest&& request)
 {
-    auto resource = loader.requestResource(WTFMove(request), PlatformMediaResourceLoader::LoadOption::DisallowCaching);
+    RefPtr resource = loader.requestResource(WTFMove(request), PlatformMediaResourceLoader::LoadOption::DisallowCaching);
     if (!resource)
         return nullptr;
-    auto* resourcePointer = resource.get();
-    auto client = adoptRef(*new PlatformResourceMediaLoader { parent, resource.releaseNonNull() });
-    resourcePointer->setClient(client.copyRef());
+    Ref client = adoptRef(*new PlatformResourceMediaLoader { parent, *resource });
+    resource->setClient(client.copyRef());
     return client;
 }
 

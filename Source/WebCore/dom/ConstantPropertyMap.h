@@ -61,7 +61,7 @@ class ConstantPropertyMap {
 public:
     explicit ConstantPropertyMap(Document&);
 
-    using Values = UncheckedKeyHashMap<AtomString, Ref<const Style::CustomProperty>>;
+    using Values = HashMap<AtomString, Ref<const Style::CustomProperty>>;
     const Values& values() const;
 
     void didChangeSafeAreaInsets();

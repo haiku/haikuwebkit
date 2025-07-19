@@ -71,7 +71,7 @@ enum {
 - (BOOL)_containsItemMatchingEvent:(NSEvent *)event includingDisabledItems:(BOOL)includingDisabledItems;
 @end
 
-#if ENABLE(CONTEXT_MENU_IMAGES_FOR_INTERNAL_CLIENTS)
+#if ENABLE(CONTEXT_MENU_IMAGES_ON_MAC)
 @interface NSMenuItem (Staging_138651669)
 
 + (NSString *)_systemImageNameForAction:(SEL)action;

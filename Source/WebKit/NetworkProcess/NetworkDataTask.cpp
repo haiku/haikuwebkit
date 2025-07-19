@@ -208,27 +208,6 @@ void NetworkDataTask::setH2PingCallback(const URL& url, CompletionHandler<void(E
     completionHandler(makeUnexpected(internalError(url)));
 }
 
-PAL::SessionID NetworkDataTask::sessionID() const
-{
-    return m_session->sessionID();
-}
-
-const NetworkSession* NetworkDataTask::networkSession() const
-{
-    return m_session.get();
-}
-
-NetworkSession* NetworkDataTask::networkSession()
-{
-    return m_session.get();
-}
-
-CheckedPtr<NetworkSession> NetworkDataTask::checkedNetworkSession()
-{
-    ASSERT(m_session);
-    return m_session.get();
-}
-
 void NetworkDataTask::restrictRequestReferrerToOriginIfNeeded(WebCore::ResourceRequest& request)
 {
     CheckedPtr session = m_session.get();

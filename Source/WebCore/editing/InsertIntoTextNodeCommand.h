@@ -33,15 +33,15 @@ class Text;
 
 class InsertIntoTextNodeCommand : public SimpleEditCommand {
 public:
-    static Ref<InsertIntoTextNodeCommand> create(Ref<Text>&& node, unsigned offset, const String& text, EditAction editingAction = EditAction::Insert)
+    static Ref<InsertIntoTextNodeCommand> create(Ref<Text>&& node, unsigned offset, const String& text, AllowPasswordEcho allowPasswordEcho = AllowPasswordEcho::Yes, EditAction editingAction = EditAction::Insert)
     {
-        return adoptRef(*new InsertIntoTextNodeCommand(WTFMove(node), offset, text, editingAction));
+        return adoptRef(*new InsertIntoTextNodeCommand(WTFMove(node), offset, text, allowPasswordEcho, editingAction));
     }
 
     const String& insertedText();
 
 protected:
-    InsertIntoTextNodeCommand(Ref<Text>&& node, unsigned offset, const String& text, EditAction editingAction);
+    InsertIntoTextNodeCommand(Ref<Text>&& node, unsigned offset, const String& text, AllowPasswordEcho, EditAction editingAction);
 
 private:
     void doApply() override;
@@ -51,10 +51,13 @@ private:
 #ifndef NDEBUG
     void getNodesInCommand(NodeSet&) override;
 #endif
+
+    bool shouldEnablePasswordEcho() const;
     
     const Ref<Text> m_node;
     unsigned m_offset;
     String m_text;
+    AllowPasswordEcho m_allowPasswordEcho { AllowPasswordEcho::Yes };
 };
 
 inline const String& InsertIntoTextNodeCommand::insertedText()

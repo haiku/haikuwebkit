@@ -37,7 +37,7 @@
 #endif
 #endif
 
-#if ENABLE(MEDIA_SESSION_COORDINATOR)
+#if ENABLE(MEDIA_SESSION_COORDINATOR) || HAVE(DIGITAL_CREDENTIALS_UI)
 #import "WebProcess.h"
 #import <wtf/cocoa/Entitlements.h>
 #endif
@@ -121,15 +121,6 @@ bool defaultCaptureAudioInGPUProcessEnabled()
 #else
     return false;
 #endif
-}
-
-bool defaultCaptureAudioInUIProcessEnabled()
-{
-#if PLATFORM(MAC)
-    return !defaultCaptureAudioInGPUProcessEnabled();
-#endif
-
-    return false;
 }
 
 bool defaultManageCaptureStatusBarInGPUProcessEnabled()
@@ -245,7 +236,17 @@ bool defaultGamepadVibrationActuatorEnabled()
 bool defaultDigitalCredentialsEnabled()
 {
 #if HAVE(DIGITAL_CREDENTIALS_UI)
-    return true;
+    static dispatch_once_t onceToken;
+    static bool enabled { false };
+    dispatch_once(&onceToken, ^{
+        auto entitlementChecker = [inWebProcess = isInWebProcess()](auto entitlement) {
+            if (inWebProcess)
+                return WebProcess::singleton().parentProcessHasEntitlement(entitlement);
+            return WTF::processHasEntitlement(entitlement);
+        };
+        enabled = entitlementChecker("com.apple.developer.web-browser"_s) || entitlementChecker("com.apple.developer.identity-document-services.web-presentment-controller"_s);
+    });
+    return enabled;
 #else
     return false;
 #endif
@@ -398,8 +399,15 @@ bool defaultTrustedTypesEnabled()
 #endif
 }
 
-#if !ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+#if !PLATFORM(COCOA)
 bool defaultContentInsetBackgroundFillEnabled()
+{
+    return false;
+}
+#endif
+
+#if !PLATFORM(COCOA)
+bool defaultTopContentInsetBackgroundCanChangeAfterScrolling()
 {
     return false;
 }

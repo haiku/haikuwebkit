@@ -75,7 +75,7 @@ Ref<PlatformCALayer> GraphicsLayerCARemote::createPlatformCALayer(PlatformCALaye
 
     if (result->canHaveBackingStore()) {
         RefPtr localMainFrameView = context->protectedWebPage()->localMainFrameView();
-        result->setContentsFormat(PlatformCALayer::contentsFormatForLayer(localMainFrameView.get(), owner));
+        result->setContentsFormat(PlatformCALayer::contentsFormatForLayer(owner));
     }
     return WTFMove(result);
 }
@@ -143,7 +143,7 @@ public:
         , m_drawingArea(identifier)
     { }
 
-    bool tryCopyToLayer(ImageBuffer& buffer) final
+    bool tryCopyToLayer(ImageBuffer& buffer, bool opaque) final
     {
         auto clone = buffer.clone();
         if (!clone)
@@ -162,9 +162,22 @@ public:
             Locker locker { m_surfaceLock };
             m_surfaceBackendHandle = ImageBufferBackendHandle { *backendHandle };
             m_surfaceIdentifier = clone->renderingResourceIdentifier();
+            m_contentsFormat = convertToContentsFormat(clone->pixelFormat());
+            m_opaque = opaque;
         }
 
-        m_connection->send(Messages::RemoteLayerTreeDrawingAreaProxy::AsyncSetLayerContents(*m_layerID, WTFMove(*backendHandle), clone->renderingResourceIdentifier()), m_drawingArea.toUInt64());
+#if HAVE(SUPPORT_HDR_DISPLAY)
+#if ENABLE(PIXEL_FORMAT_RGBA16F)
+        bool hasExtendedDynamicRangeContent = convertToContentsFormat(clone->pixelFormat()) == ContentsFormat::RGBA16F;
+#else
+        bool hasExtendedDynamicRangeContent = false;
+#endif
+        RemoteLayerBackingStoreProperties properties(WTFMove(*backendHandle), clone->renderingResourceIdentifier(), opaque, hasExtendedDynamicRangeContent);
+#else
+        RemoteLayerBackingStoreProperties properties(WTFMove(*backendHandle), clone->renderingResourceIdentifier(), opaque);
+#endif
+
+        m_connection->send(Messages::RemoteLayerTreeDrawingAreaProxy::AsyncSetLayerContents(*m_layerID, WTFMove(properties)), m_drawingArea.toUInt64());
 
         return true;
     }
@@ -172,8 +185,11 @@ public:
     void display(PlatformCALayer& layer) final
     {
         Locker locker { m_surfaceLock };
-        if (m_surfaceBackendHandle)
+        if (m_surfaceBackendHandle) {
+            downcast<PlatformCALayerRemote>(layer).setOpaque(m_opaque);
+            downcast<PlatformCALayerRemote>(layer).setContentsFormat(m_contentsFormat);
             downcast<PlatformCALayerRemote>(layer).setRemoteDelegatedContents({ ImageBufferBackendHandle { *m_surfaceBackendHandle }, { }, std::optional<RenderingResourceIdentifier>(m_surfaceIdentifier) });
+        }
     }
 
     void setDestinationLayerID(WebCore::PlatformLayerIdentifier layerID)
@@ -190,6 +206,8 @@ private:
     Lock m_surfaceLock;
     std::optional<ImageBufferBackendHandle> m_surfaceBackendHandle WTF_GUARDED_BY_LOCK(m_surfaceLock);
     Markable<WebCore::RenderingResourceIdentifier> m_surfaceIdentifier WTF_GUARDED_BY_LOCK(m_surfaceLock);
+    ContentsFormat m_contentsFormat WTF_GUARDED_BY_LOCK(m_surfaceLock) { ContentsFormat::RGBA8 };
+    bool m_opaque WTF_GUARDED_BY_LOCK(m_surfaceLock) { false };
 };
 
 } // namespace WebKit
@@ -238,6 +256,9 @@ void GraphicsLayerCARemote::setLayerContentsToImageBuffer(PlatformCALayer* layer
     ASSERT(backendHandle);
 
     layer->setAcceleratesDrawing(true);
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    layer->setTonemappingEnabled(true);
+#endif
     downcast<PlatformCALayerRemote>(layer)->setRemoteDelegatedContents({ ImageBufferBackendHandle { *backendHandle }, { }, std::nullopt  });
 }
 

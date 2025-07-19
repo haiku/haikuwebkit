@@ -54,7 +54,8 @@ public:
     {
     }
 
-    CodeBlockHash(const SourceCode&, CodeSpecializationKind);
+    JS_EXPORT_PRIVATE CodeBlockHash(const SourceCode&, CodeSpecializationKind);
+    JS_EXPORT_PRIVATE CodeBlockHash(StringView codeBlockSourceCode, StringView entireSourceCode, CodeSpecializationKind);
 
     explicit CodeBlockHash(std::span<const char, stringLength>);
 

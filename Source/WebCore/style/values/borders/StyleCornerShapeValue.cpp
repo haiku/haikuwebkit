@@ -28,8 +28,7 @@
 #include "CSSFunctionValue.h"
 #include "CSSPrimitiveValue.h"
 #include "CSSValuePool.h"
-#include "StyleBuilderConverter.h"
-#include "StyleBuilderState.h"
+#include "StyleBuilderChecking.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include "StylePrimitiveNumericTypes+CSSValueCreation.h"
 
@@ -62,7 +61,7 @@ auto CSSValueConversion<CornerShapeValue>::operator()(BuilderState& state, const
         return CornerShapeValue::round();
     }
 
-    auto superellipseFunction = BuilderConverter::requiredFunctionDowncast<CSSValueSuperellipse, CSSPrimitiveValue>(state, value);
+    auto superellipseFunction = requiredFunctionDowncast<CSSValueSuperellipse, CSSPrimitiveValue>(state, value);
     if (!superellipseFunction)
         return CornerShapeValue::round();
 

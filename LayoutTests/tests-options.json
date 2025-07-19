@@ -1904,6 +1904,9 @@
     "imported/w3c/web-platform-tests/css/css-content/content-none-select-1.html": [
         "slow"
     ],
+    "imported/w3c/web-platform-tests/css/css-font-loading/idlharness.https.html": [
+        "slow"
+    ],
     "imported/w3c/web-platform-tests/css/css-fonts/discrete-no-interpolation.html": [
         "slow"
     ],
@@ -3627,6 +3630,9 @@
         "slow"
     ],
     "imported/w3c/web-platform-tests/html/dom/reflection-text.html": [
+        "slow"
+    ],
+    "imported/w3c/web-platform-tests/html/editing/the-hidden-attribute/beforematch-scroll-to-text-fragment.html": [
         "slow"
     ],
     "imported/w3c/web-platform-tests/html/infrastructure/urls/resolving-urls/query-encoding/utf-16le.html": [

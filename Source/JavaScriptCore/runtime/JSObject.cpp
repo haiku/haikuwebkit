@@ -693,7 +693,7 @@ bool ordinarySetWithOwnDescriptor(JSGlobalObject* globalObject, JSObject* object
 
         if (!ownDescriptorFound) {
             // 9.1.9.1-3-a Let parent be ? O.[[GetPrototypeOf]]().
-            JSValue prototype = current->getPrototype(vm, globalObject);
+            JSValue prototype = current->getPrototype(globalObject);
             RETURN_IF_EXCEPTION(scope, false);
 
             // 9.1.9.1-3-b If parent is not null, then
@@ -892,7 +892,7 @@ bool JSObject::putInlineSlow(JSGlobalObject* globalObject, PropertyName property
             break;
         }
 
-        JSValue prototype = obj->getPrototype(vm, globalObject);
+        JSValue prototype = obj->getPrototype(globalObject);
         RETURN_IF_EXCEPTION(scope, false);
         if (prototype.isNull())
             break;
@@ -2119,7 +2119,7 @@ bool JSObject::setPrototypeWithCycleCheck(VM& vm, JSGlobalObject* globalObject, 
 
     if (this->structure()->isImmutablePrototypeExoticObject()) {
         // This implements https://tc39.github.io/ecma262/#sec-set-immutable-prototype.
-        if (this->getPrototype(vm, globalObject) == prototype)
+        if (this->getPrototype(globalObject) == prototype)
             return true;
 
         return typeError(globalObject, scope, shouldThrowIfCantSet, "Cannot set prototype of immutable prototype object"_s);
@@ -2665,7 +2665,7 @@ bool JSObject::defaultHasInstance(JSGlobalObject* globalObject, JSValue value, J
 
     JSObject* object = asObject(value);
     while (true) {
-        JSValue objectValue = object->getPrototype(vm, globalObject);
+        JSValue objectValue = object->getPrototype(globalObject);
         RETURN_IF_EXCEPTION(scope, false);
         if (!objectValue.isObject())
             return false;
@@ -2696,7 +2696,7 @@ void JSObject::getPropertyNames(JSGlobalObject* globalObject, PropertyNameArray&
         object->methodTable()->getOwnPropertyNames(object, globalObject, propertyNames, mode);
         RETURN_IF_EXCEPTION(scope, void());
 
-        JSValue prototype = object->getPrototype(vm, globalObject);
+        JSValue prototype = object->getPrototype(globalObject);
         RETURN_IF_EXCEPTION(scope, void());
         if (prototype.isNull())
             break;
@@ -3160,7 +3160,7 @@ bool JSObject::attemptToInterceptPutByIndexOnHoleForPrototype(JSGlobalObject* gl
             return true;
         }
         
-        JSValue prototypeValue = current->getPrototype(vm, globalObject);
+        JSValue prototypeValue = current->getPrototype(globalObject);
         RETURN_IF_EXCEPTION(scope, false);
         if (prototypeValue.isNull())
             return false;
@@ -3174,7 +3174,7 @@ bool JSObject::attemptToInterceptPutByIndexOnHole(JSGlobalObject* globalObject, 
     VM& vm = globalObject->vm();
     auto scope = DECLARE_THROW_SCOPE(vm);
 
-    JSValue prototypeValue = getPrototype(vm, globalObject);
+    JSValue prototypeValue = getPrototype(globalObject);
     RETURN_IF_EXCEPTION(scope, false);
     if (prototypeValue.isNull())
         return false;

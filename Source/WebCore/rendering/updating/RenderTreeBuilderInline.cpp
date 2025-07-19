@@ -56,7 +56,7 @@ static bool canUseAsParentForContinuation(const RenderObject* renderer)
 
 static RenderBoxModelObject* nextContinuation(const RenderBoxModelObject* renderer)
 {
-    if (CheckedPtr renderInline = dynamicDowncast<RenderInline>(*renderer); renderInline && !renderInline->isReplacedOrAtomicInline())
+    if (CheckedPtr renderInline = dynamicDowncast<RenderInline>(*renderer); renderInline && !renderInline->isBlockLevelReplacedOrAtomicInline())
         return renderInline->continuation();
     return renderer->inlineContinuation();
 }

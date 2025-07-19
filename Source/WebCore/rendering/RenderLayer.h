@@ -107,7 +107,6 @@ enum ClipRectsType {
     AbsoluteClipRects, // Relative to the RenderView's layer. Used for compositing overlap testing.
     NumCachedClipRectsTypes,
     AllClipRectTypes,
-    TemporaryClipRects
 };
 
 enum ShouldRespectOverflowClip {
@@ -148,6 +147,7 @@ struct ScrollRectToVisibleOptions {
     const ScrollAlignment& alignY { ScrollAlignment::alignCenterIfNeeded };
     ShouldAllowCrossOriginScrolling shouldAllowCrossOriginScrolling { ShouldAllowCrossOriginScrolling::No };
     ScrollBehavior behavior { ScrollBehavior::Auto };
+    OnlyAllowForwardScrolling onlyAllowForwardScrolling { OnlyAllowForwardScrolling::No };
     std::optional<LayoutRect> visibilityCheckRect { std::nullopt };
 };
 
@@ -691,10 +691,13 @@ public:
     enum class ClipRectsOption : uint8_t {
         RespectOverflowClip         = 1 << 0,
         IncludeOverlayScrollbarSize = 1 << 1,
+        Temporary                   = 1 << 2,
+        OutsideFilter               = 1 << 3,
     };
 
     static constexpr OptionSet<ClipRectsOption> clipRectOptionsForPaintingOverflowContents = { };
     static constexpr OptionSet<ClipRectsOption> clipRectDefaultOptions = { ClipRectsOption::RespectOverflowClip };
+    static constexpr OptionSet<ClipRectsOption> clipRectTemporaryOptions = { ClipRectsOption::RespectOverflowClip, ClipRectsOption::Temporary };
 
     struct ClipRectsContext {
         ClipRectsContext(const RenderLayer* inRootLayer, ClipRectsType inClipRectsType, OptionSet<ClipRectsOption> inOptions = clipRectDefaultOptions)
@@ -1019,7 +1022,6 @@ private:
         OverlapTestRequestMap* overlapTestRequests; // May be null.
         OptionSet<PaintBehavior> paintBehavior;
         bool requireSecurityOriginAccessForWidgets;
-        bool clipToDirtyRect { true };
         RegionContext* regionContext { nullptr };
     };
 
@@ -1181,7 +1183,7 @@ private:
 
     bool shouldHaveFiltersForPainting(GraphicsContext&, OptionSet<PaintLayerFlag>, OptionSet<PaintBehavior>) const;
     RenderLayerFilters* filtersForPainting(GraphicsContext&, OptionSet<PaintLayerFlag>, OptionSet<PaintBehavior>);
-    GraphicsContext* setupFilters(GraphicsContext& destinationContext, LayerPaintingInfo&, OptionSet<PaintLayerFlag>, const LayoutSize& offsetFromRoot, const ClipRect& backgroundRect);
+    GraphicsContext* setupFilters(GraphicsContext& destinationContext, LayerPaintingInfo&, OptionSet<PaintLayerFlag>&, const LayoutSize& offsetFromRoot, const ClipRect& backgroundRect);
     void applyFilters(GraphicsContext& originalContext, const LayerPaintingInfo&, OptionSet<PaintBehavior>, const ClipRect& backgroundRect);
 
     void paintLayer(GraphicsContext&, const LayerPaintingInfo&, OptionSet<PaintLayerFlag>);
@@ -1277,7 +1279,7 @@ private:
     void setIntrinsicallyComposited(bool);
     void updateAlwaysIncludedInZOrderLists();
 
-    Ref<ClipRects> parentClipRects(const ClipRectsContext&) const;
+    RefPtr<ClipRects> parentClipRects(const ClipRectsContext&) const;
     ClipRect backgroundClipRect(const ClipRectsContext&) const;
 
     RenderLayer* enclosingTransformedAncestor() const;
@@ -1398,6 +1400,7 @@ private:
     bool m_hasAlwaysIncludedInZOrderListsDescendantsStatusDirty : 1 { true };
 
     bool m_wasOmittedFromZOrderTree : 1 { false };
+    bool m_suppressAncestorClippingInsideFilter : 1 { false };
 
     const CheckedRef<RenderLayerModelObject> m_renderer;
 
@@ -1440,6 +1443,9 @@ private:
 
     std::unique_ptr<TransformationMatrix> m_transform;
 
+    // If the RenderLayer contains an anchor-positioned box, this is the "default scroll shift"
+    // for scroll compensation purpose. This offset aligns the anchor-positioned box with the anchor
+    // after scroll, and is applied as a transform.
     std::optional<LayoutSize> m_snapshottedScrollOffsetForAnchorPositioning;
 
     // May ultimately be extended to many replicas (with their own paint order).
@@ -1524,6 +1530,7 @@ bool compositedWithOwnBackingStore(const RenderLayer&);
 WTF::TextStream& operator<<(WTF::TextStream&, ClipRectsType);
 WTF::TextStream& operator<<(WTF::TextStream&, const RenderLayer&);
 WTF::TextStream& operator<<(WTF::TextStream&, const RenderLayer::ClipRectsContext&);
+WTF::TextStream& operator<<(WTF::TextStream&, RenderLayer::ClipRectsOption);
 WTF::TextStream& operator<<(WTF::TextStream&, IndirectCompositingReason);
 WTF::TextStream& operator<<(WTF::TextStream&, PaintBehavior);
 WTF::TextStream& operator<<(WTF::TextStream&, RenderLayer::PaintLayerFlag);

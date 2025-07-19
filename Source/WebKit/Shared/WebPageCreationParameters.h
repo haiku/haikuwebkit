@@ -254,6 +254,8 @@ struct WebPageCreationParameters {
 
     bool needsFontAttributes { false };
 
+    bool needsScrollGeometryUpdates { false };
+
     // WebRTC members.
     bool iceCandidateFilteringEnabled { true };
     bool enumeratingAllNetworkInterfacesEnabled { false };
@@ -348,12 +350,7 @@ struct WebPageCreationParameters {
 #if PLATFORM(COCOA)
     String presentingApplicationBundleIdentifier;
 #endif
-    bool hasReceivedAXRequestInUIProcess { false };
     bool shouldSendConsoleLogsToUIProcessForTesting { false };
-
-#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    bool defaultContentInsetBackgroundFillEnabled { false };
-#endif
 };
 
 } // namespace WebKit

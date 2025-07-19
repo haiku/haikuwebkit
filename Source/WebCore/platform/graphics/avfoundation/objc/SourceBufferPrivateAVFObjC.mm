@@ -456,7 +456,8 @@ Ref<MediaPromise> SourceBufferPrivateAVFObjC::appendInternal(Ref<SharedBuffer>&&
                 protectedThis->didProvideContentKeyRequestInitializationDataForTrackID(WTFMove(initData), trackID, nullptr);
         });
 
-        return MediaPromise::createAndSettle(parser->appendData(WTFMove(data)));
+        Ref ensureDestroyedSharedBuffer = WTFMove(data);
+        return MediaPromise::createAndSettle(parser->appendData(WTFMove(ensureDestroyedSharedBuffer)));
     })->whenSettled(RunLoop::currentSingleton(), [weakThis = ThreadSafeWeakPtr { *this }](auto&& result) {
         if (RefPtr protectedThis = weakThis.get())
             protectedThis->appendCompleted(!!result);
@@ -714,7 +715,7 @@ void SourceBufferPrivateAVFObjC::setCDMInstance(CDMInstance* instance)
             for (auto& pair : m_audioRenderers)
                 [cdmInstance->contentKeySession() removeContentKeyRecipient:pair.second.get()];
         }
-        cdmInstance->removeKeyStatusesChangedObserver(*m_keyStatusesChangedObserver);
+        cdmInstance->removeKeyStatusesChangedObserver(m_keyStatusesChangedObserver);
     }
 
     m_cdmInstance = fpsInstance;
@@ -727,7 +728,7 @@ void SourceBufferPrivateAVFObjC::setCDMInstance(CDMInstance* instance)
             for (auto& pair : m_audioRenderers)
                 [cdmInstance->contentKeySession() addContentKeyRecipient:pair.second.get()];
         }
-        cdmInstance->addKeyStatusesChangedObserver(*m_keyStatusesChangedObserver);
+        cdmInstance->addKeyStatusesChangedObserver(m_keyStatusesChangedObserver);
     }
 
     attemptToDecrypt();

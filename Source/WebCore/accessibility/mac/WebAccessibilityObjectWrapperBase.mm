@@ -338,7 +338,7 @@ NSArray *makeNSArray(const WebCore::AXCoreObject::AccessibilityChildrenVector& c
     // If it does become invalidated, self.axBackingObject will be nil.
     retainPtr(self).autorelease();
 
-    auto* backingObject = self.axBackingObject;
+    RefPtr<AXCoreObject> backingObject = self.axBackingObject;
     if (!backingObject) {
         if (!isMainThread()) {
             // It's possible our backing object just hasn't been attached yet.
@@ -515,7 +515,7 @@ static void convertPathToScreenSpaceFunction(PathConversionInfo& conversion, con
 #endif // ENABLE(AX_THREAD_TEXT_APIS)
 
     return Accessibility::retrieveValueFromMainThread<NSRange>([protectedSelf = retainPtr(self)] () -> NSRange {
-        auto backingObject = protectedSelf.get().baseUpdateBackingStore;
+        RefPtr<AXCoreObject> backingObject = protectedSelf.get().baseUpdateBackingStore;
         if (!backingObject)
             return NSMakeRange(NSNotFound, 0);
 
@@ -552,13 +552,13 @@ NSRange makeNSRange(std::optional<SimpleRange> range)
     if (!range)
         return NSMakeRange(NSNotFound, 0);
     
-    auto& document = range->start.document();
-    auto* frame = document.frame();
+    Ref document = range->start.document();
+    RefPtr frame = document->frame();
     if (!frame)
         return NSMakeRange(NSNotFound, 0);
 
-    auto* rootEditableElement = frame->selection().selection().rootEditableElement();
-    auto* scope = rootEditableElement ? rootEditableElement : document.documentElement();
+    RefPtr rootEditableElement = frame->selection().selection().rootEditableElement();
+    RefPtr scope = rootEditableElement ? rootEditableElement : document->documentElement();
     if (!scope)
         return NSMakeRange(NSNotFound, 0);
 
@@ -582,8 +582,8 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
     // directly in the document DOM, so serialization is problematic. Our solution is
     // to use the root editable element of the selection start as the positional base.
     // That fits with AppKit's idea of an input context.
-    auto selectionRoot = document->frame()->selection().selection().rootEditableElement();
-    auto scope = selectionRoot ? selectionRoot : document->documentElement();
+    RefPtr selectionRoot = document->frame()->selection().selection().rootEditableElement();
+    RefPtr scope = selectionRoot ? selectionRoot : document->documentElement();
     if (!scope)
         return std::nullopt;
 
@@ -593,15 +593,15 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
 - (WebCore::AXCoreObject*)baseUpdateBackingStore
 {
 #if PLATFORM(MAC)
-    auto* backingObject = self.updateObjectBackingStore;
+    RefPtr<AXCoreObject> backingObject = self.updateObjectBackingStore;
     if (!backingObject)
         return nullptr;
 #else
     if (![self _prepareAccessibilityCall])
         return nullptr;
-    auto* backingObject = self.axBackingObject;
+    RefPtr<AXCoreObject> backingObject = self.axBackingObject;
 #endif
-    return backingObject;
+    return backingObject.get();
 }
 
 - (NSArray<NSDictionary *> *)lineRectsAndText
@@ -638,7 +638,7 @@ std::optional<SimpleRange> makeDOMRange(Document* document, NSRange range)
             else if ([item isKindOfClass:WebAccessibilityObjectWrapper.class]) {
 #if PLATFORM(MAC)
                 auto *wrapper = static_cast<WebAccessibilityObjectWrapper *>(item);
-                auto* object = wrapper.axBackingObject;
+                RefPtr<AXCoreObject> object = wrapper.axBackingObject;
                 if (!object)
                     continue;
 

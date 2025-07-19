@@ -501,7 +501,7 @@ void ApplicationCacheGroup::abort(LocalFrame& frame)
     if (m_completionType != None)
         return;
 
-    frame.protectedDocument()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Debug, "Application Cache download process was aborted."_s);
+    frame.protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Debug, "Application Cache download process was aborted."_s);
     cacheUpdateFailed();
 }
 
@@ -544,7 +544,7 @@ void ApplicationCacheGroup::didFinishLoadingEntry(URL&& entryURL)
     // FIXME: Should we break earlier and prevent redownloading on later page loads?
     if (m_originQuotaExceededPreviously && m_availableSpaceInQuota < m_cacheBeingUpdated->estimatedSizeInStorage()) {
         m_currentResource = nullptr;
-        m_frame->protectedDocument()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Error, "Application Cache update failed, because size quota was exceeded."_s);
+        m_frame->protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Error, "Application Cache update failed, because size quota was exceeded."_s);
         cacheUpdateFailed();
         return;
     }
@@ -568,7 +568,7 @@ void ApplicationCacheGroup::didFailLoadingEntry(ApplicationCacheResourceLoader::
     m_pendingEntries.remove(url.string());
 
     if ((type & ApplicationCacheResource::Explicit) || (type & ApplicationCacheResource::Fallback)) {
-        m_frame->protectedDocument()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Error, makeString("Application Cache update failed, because "_s, url.stringCenterEllipsizedToLength(), (m_entryLoader && m_entryLoader->hasRedirection() ? " was redirected."_s : " could not be fetched."_s)));
+        m_frame->protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Error, makeString("Application Cache update failed, because "_s, url.stringCenterEllipsizedToLength(), (m_entryLoader && m_entryLoader->hasRedirection() ? " was redirected."_s : " could not be fetched."_s)));
         // Note that cacheUpdateFailed() can cause the cache group to be deleted.
         cacheUpdateFailed();
         return;
@@ -597,7 +597,7 @@ void ApplicationCacheGroup::didFinishLoadingManifest()
 
     if (!isUpgradeAttempt && !m_manifestResource) {
         // The server returned 304 Not Modified even though we didn't send a conditional request.
-        m_frame->protectedDocument()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Error, "Application Cache manifest could not be fetched because of an unexpected 304 Not Modified server response."_s);
+        m_frame->protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Error, "Application Cache manifest could not be fetched because of an unexpected 304 Not Modified server response."_s);
         cacheUpdateFailed();
         return;
     }
@@ -622,7 +622,7 @@ void ApplicationCacheGroup::didFinishLoadingManifest()
     auto manifest = parseApplicationCacheManifest(m_manifestURL, m_manifestResource->response().mimeType(), m_manifestResource->data().makeContiguous()->span());
     if (!manifest) {
         // At the time of this writing, lack of "CACHE MANIFEST" signature is the only reason for parseManifest to fail.
-        m_frame->protectedDocument()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Error, "Application Cache manifest could not be parsed. Does it start with CACHE MANIFEST?"_s);
+        m_frame->protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Error, "Application Cache manifest could not be parsed. Does it start with CACHE MANIFEST?"_s);
         cacheUpdateFailed();
         return;
     }
@@ -678,17 +678,17 @@ void ApplicationCacheGroup::didFailLoadingManifest(ApplicationCacheResourceLoade
         break;
     case ApplicationCacheResourceLoader::Error::NotFound:
         InspectorInstrumentation::didFailLoading(m_frame.get(), m_frame->loader().protectedDocumentLoader().get(), *m_currentResourceIdentifier, m_frame->loader().cancelledError(m_manifestLoader->resource()->resourceRequest()));
-        m_frame->protectedDocument()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Error, makeString("Application Cache manifest could not be fetched, because the manifest had a "_s, m_manifestLoader->resource()->response().httpStatusCode(), " response."_s));
+        m_frame->protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Error, makeString("Application Cache manifest could not be fetched, because the manifest had a "_s, m_manifestLoader->resource()->response().httpStatusCode(), " response."_s));
         manifestNotFound();
         break;
     case ApplicationCacheResourceLoader::Error::NotOK:
         InspectorInstrumentation::didFailLoading(m_frame.get(), m_frame->loader().protectedDocumentLoader().get(), *m_currentResourceIdentifier, m_frame->loader().cancelledError(m_manifestLoader->resource()->resourceRequest()));
-        m_frame->protectedDocument()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Error, makeString("Application Cache manifest could not be fetched, because the manifest had a "_s, m_manifestLoader->resource()->response().httpStatusCode(), " response."_s));
+        m_frame->protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Error, makeString("Application Cache manifest could not be fetched, because the manifest had a "_s, m_manifestLoader->resource()->response().httpStatusCode(), " response."_s));
         cacheUpdateFailed();
         break;
     case ApplicationCacheResourceLoader::Error::RedirectForbidden:
         InspectorInstrumentation::didFailLoading(m_frame.get(), m_frame->loader().protectedDocumentLoader().get(), *m_currentResourceIdentifier, m_frame->loader().cancelledError(m_manifestLoader->resource()->resourceRequest()));
-        m_frame->protectedDocument()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Error, "Application Cache manifest could not be fetched, because a redirection was attempted."_s);
+        m_frame->protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Error, "Application Cache manifest could not be fetched, because a redirection was attempted."_s);
         cacheUpdateFailed();
         break;
     case ApplicationCacheResourceLoader::Error::CannotCreateResource:
@@ -848,7 +848,7 @@ void ApplicationCacheGroup::checkIfLoadIsComplete()
                 // We ran out of space for this origin. Fall down to the normal error handling
                 // after recording this state.
                 m_originQuotaExceededPreviously = true;
-                m_frame->protectedDocument()->addConsoleMessage(MessageSource::AppCache, MessageLevel::Error, "Application Cache update failed, because size quota was exceeded."_s);
+                m_frame->protectedDocument()->addConsoleMessage(MessageSource::Other, MessageLevel::Error, "Application Cache update failed, because size quota was exceeded."_s);
             }
 
             if (failureReason == ApplicationCacheStorage::TotalQuotaReached && !m_calledReachedMaxAppCacheSize) {

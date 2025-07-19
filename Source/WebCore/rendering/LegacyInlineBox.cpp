@@ -146,16 +146,6 @@ float LegacyInlineBox::logicalHeight() const
     return result;
 }
 
-LayoutUnit LegacyInlineBox::baselinePosition(FontBaseline baselineType) const
-{
-    return boxModelObject()->baselinePosition(baselineType, m_bitfields.firstLine(), isHorizontal() ? HorizontalLine : VerticalLine, PositionOnContainingLine);
-}
-
-LayoutUnit LegacyInlineBox::lineHeight() const
-{
-    return boxModelObject()->lineHeight(m_bitfields.firstLine(), isHorizontal() ? HorizontalLine : VerticalLine, PositionOnContainingLine);
-}
-
 int LegacyInlineBox::caretMinOffset() const
 { 
     return renderer().caretMinOffset();

@@ -4513,25 +4513,18 @@ void BBQJIT::emitSlowPathRTTCheck(MacroAssembler::Label returnLabel, TypeIndex t
     m_jit.loadPtr(Address(calleeRTT, FuncRefTable::Function::offsetOfFunction() + WasmToWasmImportableFunction::offsetOfRTT()), calleeRTT);
     m_jit.load32(Address(calleeRTT, RTT::offsetOfDisplaySize()), rttSize);
 
-    auto notGreaterThanZero = m_jit.branch32(CCallHelpers::BelowOrEqual, rttSize, TrustedImm32(0));
+    JIT_COMMENT(m_jit, "RTT::isStrictSubRTT()");
+    auto displaySmallerThanParent = m_jit.branch32(CCallHelpers::BelowOrEqual, rttSize, TrustedImm32(signatureRTT->displaySize()));
 
-    // Check the parent pointer in the RTT display against the signature pointer we have.
-    bool parentRTTHasEntries = signatureRTT->displaySize() > 0;
     GPRReg index = rttSize;
     auto scale = static_cast<CCallHelpers::Scale>(std::bit_width(sizeof(uintptr_t) - 1));
     auto rttBaseIndex = CCallHelpers::BaseIndex(calleeRTT, index, scale, RTT::offsetOfPayload());
-    MacroAssembler::Jump displaySmallerThanParent;
-    if (parentRTTHasEntries)
-        displaySmallerThanParent = m_jit.branch32(CCallHelpers::BelowOrEqual, rttSize, TrustedImm32(signatureRTT->displaySize()));
-    m_jit.sub32(TrustedImm32(1 + (parentRTTHasEntries ? signatureRTT->displaySize() : 0)), index);
+    m_jit.sub32(TrustedImm32(1 + signatureRTT->displaySize()), index);
     m_jit.loadPtr(rttBaseIndex, calleeRTT);
     auto rttEqual = m_jit.branchPtr(CCallHelpers::Equal, calleeRTT, TrustedImmPtr(signatureRTT.get()));
     rttEqual.linkTo(returnLabel, &m_jit);
 
-    notGreaterThanZero.link(&m_jit);
-    if (displaySmallerThanParent.isSet())
-        displaySmallerThanParent.link(&m_jit);
-
+    displaySmallerThanParent.link(&m_jit);
     emitThrowException(ExceptionType::BadSignature);
 }
 

@@ -368,7 +368,15 @@ TextIterator::TextIterator(const SimpleRange& range, TextIteratorBehaviors behav
 {
     ASSERT(!m_behaviors.contains(TextIteratorBehavior::EmitsObjectReplacementCharacters) || !m_behaviors.contains(TextIteratorBehavior::EmitsObjectReplacementCharactersForImages));
 
-    range.start.protectedDocument()->updateLayoutIgnorePendingStylesheets(m_behaviors.contains(TextIteratorBehavior::EntersSkippedContentRelevantToUser) ? OptionSet<LayoutOptions> { LayoutOptions::TreatContentVisibilityAutoAsVisible } : OptionSet<LayoutOptions> { });
+    OptionSet<LayoutOptions> findInPageLayoutOptions;
+    if (m_behaviors.contains(TextIteratorBehavior::EntersSkippedContentRelevantToUser)) {
+        findInPageLayoutOptions.add(LayoutOptions::TreatContentVisibilityAutoAsVisible);
+
+        // FIXME: Use a more tailored layout option to avoid laying out all c-v: hidden subtrees.
+        if (range.start.protectedDocument()->settings().detailsAutoExpandEnabled())
+            findInPageLayoutOptions.add(LayoutOptions::TreatContentVisibilityHiddenAsVisible);
+    }
+    range.start.protectedDocument()->updateLayoutIgnorePendingStylesheets(findInPageLayoutOptions);
 
     m_startContainer = range.start.container.ptr();
     m_startOffset = range.start.offset;
@@ -455,7 +463,7 @@ static bool isRendererAccessible(const RenderObject* renderer, TextIteratorBehav
     if (renderer->isSkippedContent()) {
         if (!behaviors.contains(TextIteratorBehavior::EntersSkippedContentRelevantToUser))
             return false;
-        return style.usedContentVisibility() == ContentVisibility::Auto;
+        return style.usedContentVisibility() == ContentVisibility::Auto || style.autoRevealsWhenFound();
     }
 
     return true;
@@ -466,7 +474,10 @@ static bool isConsideredSkippedContent(const RenderBox* renderBox, TextIteratorB
     if (!renderBox || !isSkippedContentRoot(*renderBox))
         return false;
 
-    return behaviors.contains(TextIteratorBehavior::EntersSkippedContentRelevantToUser) ? renderBox->style().usedContentVisibility() == ContentVisibility::Hidden : true;
+    if (behaviors.contains(TextIteratorBehavior::EntersSkippedContentRelevantToUser))
+        return renderBox->style().usedContentVisibility() == ContentVisibility::Hidden && !renderBox->style().autoRevealsWhenFound();
+
+    return true;
 }
 
 void TextIterator::advance()

@@ -218,15 +218,14 @@ public:
         return Seconds(reduced);
     }
 
-    struct MarkableTraits;
-
 private:
     double m_value { 0 };
 };
 
 WTF_EXPORT_PRIVATE void sleep(Seconds);
 
-struct Seconds::MarkableTraits {
+template<>
+struct MarkableTraits<Seconds> {
     static bool isEmptyValue(Seconds seconds)
     {
         return seconds.isNaN();

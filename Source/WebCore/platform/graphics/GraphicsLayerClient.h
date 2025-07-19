@@ -25,6 +25,7 @@
 
 #pragma once
 
+#include "ContentsFormat.h"
 #include "LayerTreeAsTextOptions.h"
 #include "TiledBacking.h"
 #include "TransformationMatrix.h"
@@ -147,6 +148,8 @@ public:
     virtual bool layerNeedsPlatformContext(const GraphicsLayer*) const { return false; }
 
     virtual bool backdropRootIsOpaque(const GraphicsLayer*) const { return false; }
+
+    virtual OptionSet<ContentsFormat> screenContentsFormats() const { return { }; }
 
 #ifndef NDEBUG
     // RenderLayerBacking overrides this to verify that it is not

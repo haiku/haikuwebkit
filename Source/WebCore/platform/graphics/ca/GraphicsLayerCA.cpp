@@ -338,7 +338,7 @@ Ref<PlatformCALayer> GraphicsLayerCA::createPlatformCALayer(PlatformCALayer::Lay
     auto result = PlatformCALayerCocoa::create(layerType, owner);
 
     if (result->canHaveBackingStore()) {
-        auto contentsFormat = PlatformCALayer::contentsFormatForLayer(nullptr, owner);
+        auto contentsFormat = PlatformCALayer::contentsFormatForLayer(owner);
         result->setContentsFormat(contentsFormat);
     }
 
@@ -743,6 +743,15 @@ void GraphicsLayerCA::setDrawsHDRContent(bool drawsHDRContent)
 
     GraphicsLayer::setDrawsHDRContent(drawsHDRContent);
     noteLayerPropertyChanged(DrawsHDRContentChanged | DebugIndicatorsChanged);
+}
+
+void GraphicsLayerCA::setTonemappingEnabled(bool tonemappingEnabled)
+{
+    if (tonemappingEnabled == m_tonemappingEnabled)
+        return;
+
+    GraphicsLayer::setTonemappingEnabled(tonemappingEnabled);
+    noteLayerPropertyChanged(TonemappingEnabledChanged);
 }
 
 void GraphicsLayerCA::setNeedsDisplayIfEDRHeadroomExceeds(float headroom)
@@ -1469,6 +1478,9 @@ void GraphicsLayerCA::setContentsDisplayDelegate(RefPtr<GraphicsLayerContentsDis
         // backing store settings accordingly.
         contentsLayer->setBackingStoreAttached(true);
         contentsLayer->setAcceleratesDrawing(true);
+#if HAVE(SUPPORT_HDR_DISPLAY)
+        contentsLayer->setTonemappingEnabled(true);
+#endif
         delegate->prepareToDelegateDisplay(contentsLayer);
     }
 
@@ -2157,6 +2169,9 @@ void GraphicsLayerCA::commitLayerChangesBeforeSublayers(CommitState& commitState
 #if HAVE(SUPPORT_HDR_DISPLAY)
     if (m_uncommittedChanges & DrawsHDRContentChanged)
         updateDrawsHDRContent();
+
+    if (m_uncommittedChanges & TonemappingEnabledChanged)
+        updateTonemappingEnabled();
 #endif
 
     if (m_uncommittedChanges & NameChanged)
@@ -3334,10 +3349,20 @@ void GraphicsLayerCA::updateReplicatedLayers()
 #if HAVE(SUPPORT_HDR_DISPLAY)
 void GraphicsLayerCA::updateDrawsHDRContent()
 {
-    auto contentsFormat = PlatformCALayer::contentsFormatForLayer(nullptr, this);
+    auto contentsFormat = PlatformCALayer::contentsFormatForLayer(this);
     protectedLayer()->setContentsFormat(contentsFormat);
 }
+
+void GraphicsLayerCA::updateTonemappingEnabled()
+{
+    protectedLayer()->setTonemappingEnabled(m_tonemappingEnabled);
+}
 #endif
+
+OptionSet<ContentsFormat> GraphicsLayerCA::screenContentsFormats() const
+{
+    return client().screenContentsFormats();
+}
 
 // For now, this assumes that layers only ever have one replica, so replicaIndices contains only 0 and 1.
 GraphicsLayerCA::CloneID GraphicsLayerCA::ReplicaState::cloneID() const
@@ -4666,6 +4691,7 @@ ASCIILiteral GraphicsLayerCA::layerChangeAsString(LayerChange layerChange)
 #endif
 #if HAVE(SUPPORT_HDR_DISPLAY)
     case LayerChange::DrawsHDRContentChanged: return "DrawsHDRContentChanged"_s;
+    case LayerChange::TonemappingEnabledChanged: return "TonemappingEnabledChanged"_s;
 #endif
     }
     ASSERT_NOT_REACHED();

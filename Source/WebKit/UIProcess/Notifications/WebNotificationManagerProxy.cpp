@@ -226,12 +226,12 @@ void WebNotificationManagerProxy::providerDidClickNotification(WebNotificationId
     if (it == m_globalNotificationMap.end())
         return;
 
-    dispatchDidClickNotification(m_notifications.get(it->value));
+    providerDidClickNotification(it->value);
 }
 
 void WebNotificationManagerProxy::providerDidClickNotification(const WTF::UUID& coreNotificationID)
 {
-    dispatchDidClickNotification(m_notifications.get(coreNotificationID));
+    dispatchDidClickNotification(RefPtr { m_notifications.get(coreNotificationID) }.get());
 }
 
 void WebNotificationManagerProxy::providerDidCloseNotifications(API::Array* globalNotificationIDs)

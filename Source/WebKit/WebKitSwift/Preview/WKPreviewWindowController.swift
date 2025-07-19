@@ -24,7 +24,6 @@
 #if ENABLE_QUICKLOOK_FULLSCREEN
 
 import OSLog
-import WebKitSwift
 
 #if USE_APPLE_INTERNAL_SDK
 @_spi(PreviewApplication) internal import QuickLook

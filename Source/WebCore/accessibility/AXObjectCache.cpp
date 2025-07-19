@@ -535,7 +535,7 @@ AccessibilityObject* AXObjectCache::focusedObjectForPage(const Page* page)
         return nullptr;
 
     // get the focused node in the page
-    RefPtr focusedOrMainFrame = page->checkedFocusController()->focusedOrMainFrame();
+    RefPtr focusedOrMainFrame = page->focusController().focusedOrMainFrame();
     if (!focusedOrMainFrame)
         return nullptr;
     RefPtr document = focusedOrMainFrame->document();
@@ -1739,23 +1739,24 @@ void AXObjectCache::postNotification(RenderObject* renderer, AXNotification noti
 
 void AXObjectCache::postNotification(Node* node, AXNotification notification, PostTarget postTarget)
 {
-    if (!node)
+    RefPtr axNode = node;
+    if (!axNode)
         return;
     
     stopCachingComputedObjectAttributes();
 
     // Get an accessibility object that already exists. One should not be created here
     // because a render update may be in progress and creating an AX object can re-trigger a layout
-    RefPtr<AccessibilityObject> object = get(*node);
-    while (!object && node) {
-        node = node->parentNode();
-        object = get(node);
+    RefPtr object = get(*axNode);
+    while (!object && axNode) {
+        axNode = axNode->parentNode();
+        object = get(axNode.get());
     }
     
-    if (!node)
+    if (!axNode)
         return;
     
-    postNotification(object.get(), node->protectedDocument().ptr(), notification, postTarget);
+    postNotification(object.get(), axNode->protectedDocument().ptr(), notification, postTarget);
 }
 
 void AXObjectCache::postNotification(AccessibilityObject* object, Document* document, AXNotification notification, PostTarget postTarget)
@@ -1766,22 +1767,23 @@ void AXObjectCache::postNotification(AccessibilityObject* object, Document* docu
 
     stopCachingComputedObjectAttributes();
 
-    if (object && postTarget == PostTarget::ObservableParent)
-        object = object->observableObject();
+    RefPtr axObject = object;
+    if (axObject && postTarget == PostTarget::ObservableParent)
+        axObject = axObject->observableObject();
 
-    if (!object && document)
-        object = get(document->renderView());
+    if (!axObject && document)
+        axObject = get(document->renderView());
 
-    if (!object)
+    if (!axObject)
         return;
 
 #if PLATFORM(COCOA)
     if (notification == AXNotification::ValueChanged
-        && enqueuePasswordNotification(*object, { }))
+        && enqueuePasswordNotification(*axObject, { }))
         return;
 #endif
 
-    m_notificationsToPost.append(std::make_pair(Ref { *object }, notification));
+    m_notificationsToPost.append(std::make_pair(axObject.releaseNonNull(), notification));
     if (!m_notificationPostTimer.isActive())
         m_notificationPostTimer.startOneShot(0_s);
 }
@@ -2473,27 +2475,28 @@ void AXObjectCache::postTextStateChangeNotification(AccessibilityObject* object,
     stopCachingComputedObjectAttributes();
 
 #if PLATFORM(COCOA) || USE(ATSPI)
-    if (object) {
-        if (auto* observableObject = object->observableObject())
-            object = observableObject;
+    RefPtr axObject = object;
+    if (axObject) {
+        if (RefPtr observableObject = axObject->observableObject())
+            axObject = observableObject;
     }
 
-    if (!object)
-        object = rootWebArea();
+    if (!axObject)
+        axObject = rootWebArea();
 
-    if (object) {
+    if (axObject) {
         const AXTextStateChangeIntent& newIntent = (intent.type == AXTextStateChangeTypeUnknown || (m_isSynchronizingSelection && m_textSelectionIntent.type != AXTextStateChangeTypeUnknown)) ? m_textSelectionIntent : intent;
 
 #if PLATFORM(COCOA)
-        if (enqueuePasswordNotification(*object, { newIntent, { }, { }, selection }))
+        if (enqueuePasswordNotification(*axObject, { newIntent, { }, { }, selection }))
             return;
 #endif
 
-        postTextSelectionChangePlatformNotification(object, newIntent, selection);
+        postTextSelectionChangePlatformNotification(axObject.get(), newIntent, selection);
     }
 
 #if ENABLE(ACCESSIBILITY_ISOLATED_TREE)
-    onSelectedTextChanged(selection, object);
+    onSelectedTextChanged(selection, axObject.get());
 #endif
 #else // PLATFORM(COCOA) || USE(ATSPI)
     UNUSED_PARAM(object);
@@ -3942,17 +3945,18 @@ std::optional<TextMarkerData> AXObjectCache::textMarkerDataForVisiblePosition(co
         if (isRendererReplacedElement(node->renderer()) || is<RenderLineBreak>(node->renderer()))
             return createFromRendererAndOffset(*node->renderer(), domOffset);
 
-        CheckedPtr<const RenderText> renderText = dynamicDowncast<RenderText>(node ? node->renderer() : nullptr);
+        CheckedPtr<const RenderText> renderText = nullptr;
+
+        auto boxAndOffset = visiblePosition.inlineBoxAndOffset();
+        if (boxAndOffset.box) {
+            renderText = dynamicDowncast<RenderText>(boxAndOffset.box->renderer());
+            domOffset = boxAndOffset.offset;
+        }
 
         if (!renderText) {
-            auto boxAndOffset = visiblePosition.inlineBoxAndOffset();
-            if (!boxAndOffset.box)
-                return std::nullopt;
-
-            renderText = dynamicDowncast<RenderText>(boxAndOffset.box->renderer());
+            renderText = dynamicDowncast<RenderText>(node ? node->renderer() : nullptr);
             if (!renderText)
                 return std::nullopt;
-            domOffset = boxAndOffset.offset;
         }
 
         auto [textBox, orderCache] = InlineIterator::firstTextBoxInLogicalOrderFor(*renderText);
@@ -3974,7 +3978,7 @@ std::optional<TextMarkerData> AXObjectCache::textMarkerDataForVisiblePosition(co
             previousEndDomOffset = textBox->maximumCaretOffset();
             previousLineIndex = newLineIndex;
         }
-        RELEASE_ASSERT(domOffset >= differenceBetweenDomAndRenderedOffsets);
+        ASSERT(domOffset >= differenceBetweenDomAndRenderedOffsets);
         unsigned renderedOffset = domOffset - differenceBetweenDomAndRenderedOffsets;
         return createFromRendererAndOffset(const_cast<RenderText&>(*renderText), renderedOffset);
     }
@@ -5338,6 +5342,14 @@ AccessibilityObject* AXObjectCache::rootWebArea()
     return root->webAreaObject();
 }
 
+void dumpAccessibilityTreeToStderr(Document& document)
+{
+    if (CheckedPtr cache = document.existingAXObjectCache()) {
+        AXTreeData data = cache->treeData();
+        SAFE_FPRINTF(stderr, "==AX Trees==\n%s\n%s\n", data.liveTree.utf8(), data.isolatedTree.utf8());
+    }
+}
+
 AXTreeData AXObjectCache::treeData(std::optional<OptionSet<AXStreamOptions>> additionalOptions)
 {
     ASSERT(isMainThread());
@@ -5348,7 +5360,7 @@ AXTreeData AXObjectCache::treeData(std::optional<OptionSet<AXStreamOptions>> add
     stream << "\nAXObjectTree:\n";
     RefPtr document = this->document();
     if (RefPtr root = document ? get(document->view()) : nullptr) {
-        OptionSet<AXStreamOptions> options = { AXStreamOptions::ObjectID, AXStreamOptions::ParentID, AXStreamOptions::Role, AXStreamOptions::IdentifierAttribute, AXStreamOptions::OuterHTML };
+        OptionSet<AXStreamOptions> options = { AXStreamOptions::ObjectID, AXStreamOptions::ParentID, AXStreamOptions::Role };
         if (additionalOptions)
             options |= additionalOptions.value();
         streamSubtree(stream, *root, options);
@@ -5361,7 +5373,7 @@ AXTreeData AXObjectCache::treeData(std::optional<OptionSet<AXStreamOptions>> add
         stream << "\nAXIsolatedTree:\n";
         RefPtr tree = getOrCreateIsolatedTree();
         if (RefPtr root = tree ? tree->rootNode() : nullptr) {
-            OptionSet<AXStreamOptions> options = { AXStreamOptions::ObjectID, AXStreamOptions::ParentID };
+            OptionSet<AXStreamOptions> options = { AXStreamOptions::ObjectID, AXStreamOptions::ParentID, AXStreamOptions::Role };
             if (additionalOptions)
                 options |= additionalOptions.value();
             streamSubtree(stream, root.releaseNonNull(), options);

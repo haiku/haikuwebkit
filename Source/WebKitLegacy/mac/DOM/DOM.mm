@@ -468,7 +468,7 @@ id <DOMEventTarget> kit(EventTarget* target)
     Page* page = core(self)->document().page();
     if (!page)
         return nil;
-    return kit(page->focusController().nextFocusableElement(*core(self)));
+    return kit(page->focusController().nextFocusableElement(*core(self)).element.get());
 }
 
 - (DOMNode *)previousFocusNode
@@ -476,7 +476,7 @@ id <DOMEventTarget> kit(EventTarget* target)
     Page* page = core(self)->document().page();
     if (!page)
         return nil;
-    return kit(page->focusController().previousFocusableElement(*core(self)));
+    return kit(page->focusController().previousFocusableElement(*core(self)).element.get());
 }
 
 #endif // PLATFORM(IOS_FAMILY)

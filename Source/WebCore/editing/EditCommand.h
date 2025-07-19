@@ -43,7 +43,9 @@ class Element;
 ASCIILiteral inputTypeNameForEditingAction(EditAction);
 bool isInputMethodComposingForEditingAction(EditAction);
 
-using NodeSet = UncheckedKeyHashSet<Ref<Node>>;
+using NodeSet = HashSet<Ref<Node>>;
+
+enum class AllowPasswordEcho : bool { No, Yes };
 
 class EditCommand : public RefCounted<EditCommand> {
 public:

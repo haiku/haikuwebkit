@@ -267,6 +267,8 @@ public:
     void invalidateScrollAnchoringElement() final;
     ScrollAnchoringController* scrollAnchoringController() { return m_scrollAnchoringController.get(); }
 
+    void updateAnchorPositionedAfterScroll() final;
+
     void createScrollbarsController() final;
 
     std::optional<FrameIdentifier> rootFrameID() const final;

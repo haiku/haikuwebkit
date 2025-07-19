@@ -355,7 +355,7 @@ void WebSocketChannel::didReceiveMessageError(String&& errorMessage)
 
 void WebSocketChannel::networkProcessCrashed()
 {
-    didReceiveMessageError("WebSocket network error: Network process crashed."_s);
+    fail("WebSocket network error: Network process crashed."_s);
 }
 
 void WebSocketChannel::suspend()

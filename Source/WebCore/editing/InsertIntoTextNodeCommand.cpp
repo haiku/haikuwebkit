@@ -41,19 +41,34 @@
 
 namespace WebCore {
 
-InsertIntoTextNodeCommand::InsertIntoTextNodeCommand(Ref<Text>&& node, unsigned offset, const String& text, EditAction editingAction)
+InsertIntoTextNodeCommand::InsertIntoTextNodeCommand(Ref<Text>&& node, unsigned offset, const String& text, AllowPasswordEcho allowPasswordEcho, EditAction editingAction)
     : SimpleEditCommand(node->document(), editingAction)
     , m_node(WTFMove(node))
     , m_offset(offset)
     , m_text(text)
+    , m_allowPasswordEcho(allowPasswordEcho)
 {
     ASSERT(m_offset <= m_node->length());
     ASSERT(!m_text.isEmpty());
 }
 
+bool InsertIntoTextNodeCommand::shouldEnablePasswordEcho() const
+{
+    if (m_allowPasswordEcho != AllowPasswordEcho::Yes)
+        return false;
+
+    if (!document().settings().passwordEchoEnabled())
+        return false;
+
+    if (document().editor().client()->shouldSuppressPasswordEcho())
+        return false;
+
+    return true;
+}
+
 void InsertIntoTextNodeCommand::doApply()
 {
-    bool passwordEchoEnabled = document().settings().passwordEchoEnabled() && !document().editor().client()->shouldSuppressPasswordEcho();
+    bool passwordEchoEnabled = shouldEnablePasswordEcho();
 
     if (passwordEchoEnabled)
         document().updateLayoutIgnorePendingStylesheets();

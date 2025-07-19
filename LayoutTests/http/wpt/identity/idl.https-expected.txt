@@ -82,4 +82,6 @@ PASS DigitalCredential interface: existence and properties of interface prototyp
 PASS DigitalCredential interface: existence and properties of interface prototype object's @@unscopables property
 PASS DigitalCredential interface: attribute protocol
 PASS DigitalCredential interface: attribute data
+PASS DigitalCredential interface: operation userAgentAllowsProtocol(DOMString)
+PASS DigitalCredential interface: operation toJSON()
 

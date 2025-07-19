@@ -42,7 +42,7 @@ struct Perspective {
     bool isNone() const { return !m_value; }
     bool isLength() const { return !!m_value; }
 
-    template<typename T> bool holdsAlternative() const;
+    template<typename> bool holdsAlternative() const;
     template<typename... F> decltype(auto) switchOn(F&&...) const;
 
     bool operator==(const Perspective&) const = default;

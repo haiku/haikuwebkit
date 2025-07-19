@@ -54,7 +54,7 @@ final class WKNavigationDelegateAdapter: NSObject, WKNavigationDelegate {
         }
     }
     
-    private func failNavigationProgress(kind: some Error, cocoaNavigation: WKNavigation!) {
+    private func failNavigationProgress(kind: some Error, cocoaNavigation: WKNavigation?) {
         owner?.addNavigationEvent(.failure(kind), for: cocoaNavigation)
     }
 
@@ -80,6 +80,10 @@ final class WKNavigationDelegateAdapter: NSObject, WKNavigationDelegate {
 
     func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: any Error) {
         failNavigationProgress(kind: error, cocoaNavigation: navigation)
+    }
+
+    func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+        failNavigationProgress(kind: WebPage.NavigationError.webContentProcessTerminated, cocoaNavigation: nil)
     }
 
     // MARK: Back-forward list support

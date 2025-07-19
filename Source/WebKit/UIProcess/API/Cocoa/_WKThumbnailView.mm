@@ -34,6 +34,7 @@
 #import "WKViewInternal.h"
 #import "WKWebViewInternal.h"
 #import "WebPageProxy.h"
+#import <WebCore/IOSurface.h>
 #import <WebCore/ShareableBitmap.h>
 #import <pal/spi/cg/CoreGraphicsSPI.h>
 #import <wtf/MathExtras.h>
@@ -146,7 +147,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
         static_cast<int>(obscuredContentInsets.left()),
         static_cast<int>(obscuredContentInsets.top())
     });
-    WebKit::SnapshotOptions options { WebKit::SnapshotOption::InViewCoordinates, WebKit::SnapshotOption::UseScreenColorSpace };
+    WebKit::SnapshotOptions options { WebKit::SnapshotOption::InViewCoordinates, WebKit::SnapshotOption::UseScreenColorSpace, WebKit::SnapshotOption::Accelerated };
     WebCore::IntSize bitmapSize = snapshotRect.size();
     bitmapSize.scale(_scale * webPageProxy->deviceScaleFactor());
 
@@ -161,13 +162,35 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 
     _lastSnapshotScale = _scale;
     _lastSnapshotMaximumSize = _maximumSnapshotSize;
-    webPageProxy->takeSnapshot(snapshotRect, bitmapSize, options, [thumbnailView](std::optional<WebCore::ShareableBitmap::Handle>&& imageHandle) {
+    webPageProxy->takeSnapshot(snapshotRect, bitmapSize, options, [thumbnailView](std::optional<WebKit::ImageBufferBackendHandle>&& imageHandle) {
         if (!imageHandle)
             return;
-        auto bitmap = WebCore::ShareableBitmap::create(WTFMove(*imageHandle), WebCore::SharedMemory::Protection::ReadOnly);
-        RetainPtr<CGImageRef> cgImage = bitmap ? bitmap->makeCGImage() : nullptr;
-        tracePoint(TakeSnapshotEnd, !!cgImage);
-        [thumbnailView _didTakeSnapshot:cgImage.get()];
+        RetainPtr<id> contents;
+        CGSize size;
+        WTF::switchOn(*imageHandle,
+            [&contents, &size] (WebCore::ShareableBitmap::Handle& handle) {
+                if (auto bitmap = WebCore::ShareableBitmap::create(WTFMove(handle), WebCore::SharedMemory::Protection::ReadOnly)) {
+                    RetainPtr image = bitmap->makeCGImage();
+                    contents = bridge_id_cast(image);
+                    size = CGSizeMake(CGImageGetWidth(image.get()), CGImageGetHeight(image.get()));
+                }
+            }
+#if PLATFORM(COCOA)
+            , [&] (MachSendRight& machSendRight) {
+                if (auto surface = WebCore::IOSurface::createFromSendRight(WTFMove(machSendRight))) {
+                    contents = surface->asLayerContents();
+                    size = CGSizeMake(surface->size().width(), surface->size().height());
+                }
+            }
+#endif
+#if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
+            , [&] (WebCore::DynamicContentScalingDisplayList& handle) {
+                ASSERT_NOT_REACHED();
+            }
+#endif
+        );
+        tracePoint(TakeSnapshotEnd, !!contents);
+        [thumbnailView _didTakeSnapshot:contents.get() size:size];
     });
 }
 
@@ -241,15 +264,15 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     [self requestSnapshot];
 }
 
-- (void)_didTakeSnapshot:(CGImageRef)image
+- (void)_didTakeSnapshot:(id)image size:(CGSize)size
 {
     [self willChangeValueForKey:@"snapshotSize"];
 
-    _snapshotSize = CGSizeMake(CGImageGetWidth(image), CGImageGetHeight(image));
+    _snapshotSize = size;
     _waitingForSnapshot = NO;
     self.layer.sublayers = @[];
     self.layer.contentsGravity = kCAGravityResizeAspectFill;
-    self.layer.contents = (__bridge id)image;
+    self.layer.contents = image;
 
     // If we got a scale change while snapshotting, we'll take another snapshot once the first one returns.
     if (_snapshotWasDeferred) {

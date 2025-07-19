@@ -115,22 +115,22 @@ bool HTMLAnchorElement::isInteractiveContent() const
     return isLink();
 }
 
-bool HTMLAnchorElement::isKeyboardFocusable(KeyboardEvent* event) const
+bool HTMLAnchorElement::isKeyboardFocusable(const FocusEventData& focusEventData) const
 {
     if (!isFocusable())
         return false;
 
     // Anchor is focusable if the base element supports focus and is focusable.
     if (isFocusable() && Element::supportsFocus())
-        return HTMLElement::isKeyboardFocusable(event);
+        return HTMLElement::isKeyboardFocusable(focusEventData);
 
     RefPtr frame = document().frame();
     if (!frame)
         return false;
 
-    if (isLink() && !frame->eventHandler().tabsToLinks(event))
+    if (isLink() && !frame->eventHandler().tabsToLinks(focusEventData))
         return false;
-    return HTMLElement::isKeyboardFocusable(event);
+    return HTMLElement::isKeyboardFocusable(focusEventData);
 }
 
 static void appendServerMapMousePosition(StringBuilder& url, Event& event)

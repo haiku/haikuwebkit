@@ -152,6 +152,12 @@ void RemoteScrollingTree::scrollingTreeNodeDidEndScrollSnapping(ScrollingNodeID 
         scrollingCoordinatorProxy->scrollingTreeNodeDidEndScrollSnapping(nodeID);
 }
 
+void RemoteScrollingTree::stickyScrollingTreeNodeBeganSticking(ScrollingNodeID nodeID)
+{
+    if (CheckedPtr scrollingCoordinatorProxy = m_scrollingCoordinatorProxy.get())
+        scrollingCoordinatorProxy->stickyScrollingTreeNodeBeganSticking(nodeID);
+}
+
 Ref<ScrollingTreeNode> RemoteScrollingTree::createScrollingTreeNode(ScrollingNodeType nodeType, ScrollingNodeID nodeID)
 {
     switch (nodeType) {

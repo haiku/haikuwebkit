@@ -28,6 +28,8 @@
 #if ENABLE(WEB_AUDIO)
 
 #include "AudioContext.h"
+#include "ExceptionCode.h"
+#include "ExceptionOr.h"
 #include <JavaScriptCore/JSCInlines.h>
 #include <JavaScriptCore/TypedArrayInlines.h>
 #include <JavaScriptCore/TypedArrays.h>
@@ -147,7 +149,7 @@ bool WaveShaperNode::propagatesSilence() const
         return false;
 
     Locker locker { AdoptLock, waveShaperProcessor()->processLock() };
-    auto curve = waveShaperProcessor()->curve();
+    RefPtr curve = waveShaperProcessor()->curve();
     return !curve || !curve->length();
 }
 

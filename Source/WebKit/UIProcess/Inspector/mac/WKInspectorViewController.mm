@@ -29,6 +29,7 @@
 #if PLATFORM(MAC)
 
 #import "APINavigation.h"
+#import "AppKitSPI.h"
 #import "WKContextMenuItemTypes.h"
 #import "WKInspectorResourceURLSchemeHandler.h"
 #import "WKInspectorWKWebView.h"
@@ -220,6 +221,27 @@ static void* const safeAreaInsetsKVOContext = (void*)&safeAreaInsetsKVOContext;
 + (NSURL *)URLForInspectorResource:(NSString *)resource
 {
     return [NSURL URLWithString:adoptNS([[NSString alloc] initWithFormat:@"%@:///%@", WKInspectorResourceScheme, resource]).get()].URLByStandardizingPath;
+}
+
+- (void)didAttachOrDetach
+{
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    RetainPtr attachedView = [self _horizontallyAttachedInspectedWebView];
+    [_webView _setOverrideTopScrollEdgeEffectColor:[attachedView _topScrollPocket].captureColor];
+    [_webView _setAlwaysPrefersSolidColorHardPocket:!!attachedView];
+    [_webView _updateHiddenScrollPocketEdges];
+#endif
+}
+
+- (WKWebView *)_horizontallyAttachedInspectedWebView
+{
+    if (![_delegate inspectorViewControllerInspectorIsHorizontallyAttached:self])
+        return nil;
+
+    if (RefPtr inspectedPage = _inspectedPage.get())
+        return inspectedPage->cocoaView().get();
+
+    return nil;
 }
 
 // MARK: WKUIDelegate methods

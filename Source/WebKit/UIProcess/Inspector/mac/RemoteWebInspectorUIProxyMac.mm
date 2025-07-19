@@ -93,6 +93,11 @@
     return self.protectedInspectorProxy->isUnderTest();
 }
 
+- (BOOL)inspectorViewControllerInspectorIsHorizontallyAttached:(WKInspectorViewController *)inspectorViewController
+{
+    return NO;
+}
+
 @end
 
 namespace WebKit {

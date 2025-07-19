@@ -137,7 +137,7 @@ const unichar WebNextLineCharacter = 0x0085;
 static const CGFloat defaultFontSize = 12;
 static const CGFloat minimumFontSize = 1;
 
-using NodeSet = UncheckedKeyHashSet<Ref<Node>>;
+using NodeSet = HashSet<Ref<Node>>;
 
 class HTMLConverterCaches {
     WTF_MAKE_TZONE_ALLOCATED(HTMLConverterCaches);
@@ -156,7 +156,7 @@ public:
     bool isAncestorsOfStartToBeConverted(Node& node) const { return m_ancestorsUnderCommonAncestor.contains(&node); }
 
 private:
-    UncheckedKeyHashMap<Element*, std::unique_ptr<WebCore::Style::Extractor>> m_computedStyles;
+    HashMap<Element*, std::unique_ptr<WebCore::Style::Extractor>> m_computedStyles;
     NodeSet m_ancestorsUnderCommonAncestor;
 };
 
@@ -187,9 +187,9 @@ private:
     Position m_end;
     DocumentLoader* m_dataSource { nullptr };
     
-    UncheckedKeyHashMap<RefPtr<Element>, RetainPtr<NSDictionary>> m_attributesForElements;
-    UncheckedKeyHashMap<RetainPtr<CFTypeRef>, RefPtr<Element>> m_textTableFooters;
-    UncheckedKeyHashMap<RefPtr<Element>, RetainPtr<NSDictionary>> m_aggregatedAttributesForElements;
+    HashMap<RefPtr<Element>, RetainPtr<NSDictionary>> m_attributesForElements;
+    HashMap<RetainPtr<CFTypeRef>, RefPtr<Element>> m_textTableFooters;
+    HashMap<RefPtr<Element>, RetainPtr<NSDictionary>> m_aggregatedAttributesForElements;
 
     UserSelectNoneStateCache m_userSelectNoneStateCache;
     bool m_ignoreUserSelectNoneContent { false };

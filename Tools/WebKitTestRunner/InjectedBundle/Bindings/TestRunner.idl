@@ -154,6 +154,7 @@ interface TestRunner {
     // Text search testing.
     Promise<boolean> findString(DOMString target, object optionsArray);
     undefined findStringMatchesInPage(DOMString target, object optionsArray);
+    undefined indicateFindMatch(unsigned long matchIndex);
     undefined replaceFindMatchesAtIndices(object matchIndicesArray, DOMString replacementText, boolean selectionOnly);
 
     // Evaluating script in a special context.

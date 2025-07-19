@@ -43,7 +43,7 @@ ABSL_NAMESPACE_BEGIN
 //
 // Returns the value of the Minimum Log Level parameter.
 // This function is async-signal-safe.
-[[nodiscard]] absl::LogSeverityAtLeast MinLogLevel();
+ABSL_MUST_USE_RESULT absl::LogSeverityAtLeast MinLogLevel();
 
 // SetMinLogLevel()
 //
@@ -82,7 +82,7 @@ class ScopedMinLogLevel final {
 //
 // Returns the value of the Stderr Threshold parameter.
 // This function is async-signal-safe.
-[[nodiscard]] absl::LogSeverityAtLeast StderrThreshold();
+ABSL_MUST_USE_RESULT absl::LogSeverityAtLeast StderrThreshold();
 
 // SetStderrThreshold()
 //
@@ -118,7 +118,8 @@ class ScopedStderrThreshold final {
 //
 // Returns true if we should log a backtrace at the specified location.
 namespace log_internal {
-[[nodiscard]] bool ShouldLogBacktraceAt(absl::string_view file, int line);
+ABSL_MUST_USE_RESULT bool ShouldLogBacktraceAt(absl::string_view file,
+                                               int line);
 }  // namespace log_internal
 
 // SetLogBacktraceLocation()
@@ -144,7 +145,7 @@ void ClearLogBacktraceLocation();
 //
 // Returns the value of the Prepend Log Prefix option.
 // This function is async-signal-safe.
-[[nodiscard]] bool ShouldPrependLogPrefix();
+ABSL_MUST_USE_RESULT bool ShouldPrependLogPrefix();
 
 // EnableLogPrefix()
 //

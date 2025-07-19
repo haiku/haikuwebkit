@@ -48,6 +48,7 @@
 #import "WebInspectorInternal.h"
 #import "WebPage.h"
 #import "WebPageGroupProxy.h"
+#import "WebPreferencesDefaultValues.h"
 #import "WebProcessCreationParameters.h"
 #import "WebProcessDataStoreParameters.h"
 #import "WebProcessMessages.h"
@@ -308,7 +309,7 @@ static Boolean isAXAuthenticatedCallback(audit_token_t auditToken)
     bool authenticated = false;
     // IPC must be done on the main runloop, so dispatch it to avoid crashes when the secondary AX thread handles this callback.
     callOnMainRunLoopAndWait([&authenticated, auditToken] {
-        auto sendResult = WebProcess::singleton().parentProcessConnection()->sendSync(Messages::WebProcessProxy::IsAXAuthenticated(auditToken), 0);
+        auto sendResult = WebProcess::singleton().protectedParentProcessConnection()->sendSync(Messages::WebProcessProxy::IsAXAuthenticated(auditToken), 0);
         std::tie(authenticated) = sendResult.takeReplyOr(false);
     });
     return authenticated;
@@ -433,7 +434,7 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
         videoDecoderBehavior.add(VideoDecoderBehavior::EnableAVIF);
     }
 
-#if HAVE(CGIMAGESOURCE_ENABLE_RESTRICTED_DECODING)
+#if USE(CG)
     if (parameters.enableDecodingHEIC || parameters.enableDecodingAVIF) {
         static bool restricted { false };
         if (!std::exchange(restricted, true)) {
@@ -535,7 +536,7 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
         setMediaMIMETypes(parameters.mediaMIMETypes);
     else {
         AVAssetMIMETypeCache::singleton().setCacheMIMETypesCallback([protectedThis = Ref { *this }](const Vector<String>& types) {
-            protectedThis->parentProcessConnection()->send(Messages::WebProcessProxy::CacheMediaMIMETypes(types), 0);
+            protectedThis->protectedParentProcessConnection()->send(Messages::WebProcessProxy::CacheMediaMIMETypes(types), 0);
         });
     }
 
@@ -596,6 +597,10 @@ void WebProcess::platformInitializeWebProcess(WebProcessCreationParameters& para
             WEBPROCESS_RELEASE_LOG(Sandbox, "Enabling ParentProcessCanEnableQuickLookStateFlag state flag, status = %d", status);
         }
     }
+#endif
+
+#if HAVE(LIQUID_GLASS)
+    setLiquidGlassEnabled(parameters.isLiquidGlassEnabled);
 #endif
 
 #if HAVE(VIDEO_RESTRICTED_DECODING) && (PLATFORM(MAC) || PLATFORM(MACCATALYST)) && !ENABLE(TRUSTD_BLOCKING_IN_WEBCONTENT)
@@ -871,12 +876,23 @@ void WebProcess::registerLogHook()
         auto logChannel = unsafeSpan8IncludingNullTerminator(msg->subsystem);
         auto logCategory = unsafeSpan8IncludingNullTerminator(msg->category);
 
+        if (logCategory.size() > logCategoryMaxSize)
+            return;
+        if (logChannel.size() > logSubsystemMaxSize)
+            return;
+
         if (type == OS_LOG_TYPE_FAULT)
             type = OS_LOG_TYPE_ERROR;
 
         if (char* messageString = os_log_copy_message_string(msg)) {
             auto logString = unsafeSpan8IncludingNullTerminator(messageString);
-            WebProcess::singleton().sendLogOnStream(logChannel, logCategory, logString, type);
+            if (logString.size() > logStringMaxSize) {
+                auto mutableLogString = spanConstCast<LChar>(logString);
+                mutableLogString = mutableLogString.subspan(0, logStringMaxSize);
+                mutableLogString.back() = 0;
+                WebProcess::singleton().sendLogOnStream(logChannel, logCategory, mutableLogString, type);
+            } else
+                WebProcess::singleton().sendLogOnStream(logChannel, logCategory, logString, type);
             free(messageString);
         }
     }).get());
@@ -1137,7 +1153,7 @@ void WebProcess::updateCPUMonitorState(CPUMonitorUpdateReason reason)
                 WEBPROCESS_RELEASE_LOG_ERROR_WITH_THIS(protectedThis.get(), ProcessSuspension, "updateCPUMonitorState: Service worker process exceeded CPU limit of %.1f%% (was using %.1f%%)", protectedThis->m_cpuLimit.value() * 100, cpuUsage * 100);
             else
                 WEBPROCESS_RELEASE_LOG_ERROR_WITH_THIS(protectedThis.get(), ProcessSuspension, "updateCPUMonitorState: WebProcess exceeded CPU limit of %.1f%% (was using %.1f%%) hasVisiblePages? %d", protectedThis->m_cpuLimit.value() * 100, cpuUsage * 100, protectedThis->hasVisibleWebPage());
-            protectedThis->parentProcessConnection()->send(Messages::WebProcessProxy::DidExceedCPULimit(), 0);
+            protectedThis->protectedParentProcessConnection()->send(Messages::WebProcessProxy::DidExceedCPULimit(), 0);
         });
     } else if (reason == CPUMonitorUpdateReason::VisibilityHasChanged) {
         // If the visibility has changed, stop the CPU monitor before setting its limit. This is needed because the CPU usage can vary wildly based on visibility and we would
@@ -1510,7 +1526,7 @@ void WebProcess::didWriteToPasteboardAsynchronously(const String& pasteboardName
 void WebProcess::waitForPendingPasteboardWritesToFinish(const String& pasteboardName)
 {
     while (m_pendingPasteboardWriteCounts.contains(pasteboardName)) {
-        if (parentProcessConnection()->waitForAndDispatchImmediately<Messages::WebProcess::DidWriteToPasteboardAsynchronously>(0, 1_s, IPC::WaitForOption::InterruptWaitingIfSyncMessageArrives) != IPC::Error::NoError) {
+        if (protectedParentProcessConnection()->waitForAndDispatchImmediately<Messages::WebProcess::DidWriteToPasteboardAsynchronously>(0, 1_s, IPC::WaitForOption::InterruptWaitingIfSyncMessageArrives) != IPC::Error::NoError) {
             m_pendingPasteboardWriteCounts.removeAll(pasteboardName);
             break;
         }
@@ -1558,8 +1574,8 @@ void WebProcess::openDirectoryCacheInvalidated(SandboxExtension::Handle&& handle
 #if PLATFORM(MAC) || PLATFORM(MACCATALYST)
 void WebProcess::revokeLaunchServicesSandboxExtension()
 {
-    if (m_launchServicesExtension) {
-        m_launchServicesExtension->revoke();
+    if (RefPtr launchServicesExtension = m_launchServicesExtension) {
+        launchServicesExtension->revoke();
         m_launchServicesExtension = nullptr;
     }
 }
@@ -1640,13 +1656,39 @@ void WebProcess::registerAdditionalFonts(AdditionalFonts&& fonts)
     CTFontManagerRegisterFontURLs((__bridge CFArrayRef)fontURLs.get(), kCTFontManagerScopeProcess, true, blockPtr.get());
 }
 
-void WebProcess::registerFontMap(HashMap<String, URL>&& fontMap, Vector<SandboxExtension::Handle>&& sandboxExtensions)
+void WebProcess::registerFontMap(HashMap<String, URL>&& fontMap, HashMap<String, Vector<String>>&& fontFamilyMap, Vector<SandboxExtension::Handle>&& sandboxExtensions)
 {
     RELEASE_LOG(Process, "WebProcess::registerFontMap");
     SandboxExtension::consumePermanently(sandboxExtensions);
     Locker locker(userInstalledFontMapLock());
     userInstalledFontMap() = WTFMove(fontMap);
+    userInstalledFontFamilyMap() = WTFMove(fontFamilyMap);
 }
+
+#if ENABLE(INITIALIZE_ACCESSIBILITY_ON_DEMAND)
+void WebProcess::initializeAccessibility(Vector<SandboxExtension::Handle>&& handles)
+{
+#if ASSERT_ENABLED
+    static bool hasInitializedAccessibility = false;
+    ASSERT_UNUSED(hasInitializedAccessibility, !hasInitializedAccessibility);
+    hasInitializedAccessibility = true;
+#endif
+
+    RELEASE_LOG(Process, "WebProcess::initializeAccessibility, pid = %d", getpid());
+    auto extensions = WTF::compactMap(WTFMove(handles), [](SandboxExtension::Handle&& handle) -> RefPtr<SandboxExtension> {
+        auto extension = SandboxExtension::create(WTFMove(handle));
+        if (extension)
+            extension->consume();
+        return extension;
+    });
+
+    [NSApplication _accessibilityInitialize];
+
+    for (auto& extension : extensions)
+        extension->revoke();
+}
+#endif
+
 
 } // namespace WebKit
 

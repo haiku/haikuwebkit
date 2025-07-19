@@ -1207,7 +1207,7 @@ public:
 #endif
 
 private:
-    using ObjectPoolMap = UncheckedKeyHashMap<JSObject*, uint32_t>;
+    using ObjectPoolMap = HashMap<JSObject*, uint32_t>;
 
     CloneSerializer(JSGlobalObject* lexicalGlobalObject, Vector<Ref<MessagePort>>& messagePorts, Vector<RefPtr<JSC::ArrayBuffer>>& arrayBuffers, const Vector<RefPtr<ImageBitmap>>& imageBitmaps,
 #if ENABLE(OFFSCREEN_CANVAS_IN_WORKERS)
@@ -2012,6 +2012,7 @@ private:
                 write(errorInformation->column);
                 writeNullableString(errorInformation->sourceURL);
                 writeNullableString(errorInformation->stack);
+                writeNullableString(errorInformation->cause);
                 return true;
             }
             if (obj->inherits<JSMessagePort>()) {
@@ -2725,9 +2726,9 @@ private:
 #if ENABLE(MEDIA_SOURCE_IN_WORKERS)
     ObjectPoolMap m_transferredMediaSourceHandles;
 #endif
-    typedef UncheckedKeyHashMap<RefPtr<AtomStringImpl>, uint32_t, IdentifierRepHash> StringConstantPool;
+    typedef HashMap<RefPtr<AtomStringImpl>, uint32_t, IdentifierRepHash> StringConstantPool;
     StringConstantPool m_constantPool;
-    using ImageDataPool = UncheckedKeyHashMap<Ref<ImageData>, uint32_t>;
+    using ImageDataPool = HashMap<Ref<ImageData>, uint32_t>;
     ImageDataPool m_imageDataPool;
     SerializationContext m_context;
     ArrayBufferContentsArray& m_sharedBuffers;
@@ -5191,7 +5192,13 @@ private:
                 fail();
                 return JSValue();
             }
-            return ErrorInstance::create(m_lexicalGlobalObject, WTFMove(message), toErrorType(serializedErrorType), { line, column }, WTFMove(sourceURL), WTFMove(stackString));
+            String causeString;
+            if (!readNullableString(causeString)) {
+                SERIALIZE_TRACE("FAIL deserialize");
+                fail();
+                return JSValue();
+            }
+            return ErrorInstance::create(m_lexicalGlobalObject, WTFMove(message), toErrorType(serializedErrorType), { line, column }, WTFMove(sourceURL), WTFMove(stackString), WTFMove(causeString));
         }
         case ObjectReferenceTag: {
             auto index = readConstantPoolIndex(m_objectPool);
@@ -6070,7 +6077,7 @@ static ExceptionOr<std::unique_ptr<ArrayBufferContentsArray>> transferArrayBuffe
 
     auto contents = makeUnique<ArrayBufferContentsArray>(arrayBuffers.size());
 
-    UncheckedKeyHashSet<JSC::ArrayBuffer*> visited;
+    HashSet<JSC::ArrayBuffer*> visited;
     for (size_t arrayBufferIndex = 0; arrayBufferIndex < arrayBuffers.size(); arrayBufferIndex++) {
         if (visited.contains(arrayBuffers[arrayBufferIndex].get()))
             continue;
@@ -6135,7 +6142,7 @@ static Exception exceptionForSerializationFailure(SerializationReturnCode code)
 
 static bool containsDuplicates(const Vector<RefPtr<ImageBitmap>>& imageBitmaps)
 {
-    UncheckedKeyHashSet<ImageBitmap*> visited;
+    HashSet<ImageBitmap*> visited;
     for (auto& imageBitmap : imageBitmaps) {
         if (!visited.add(imageBitmap.get()))
             return true;
@@ -6146,7 +6153,7 @@ static bool containsDuplicates(const Vector<RefPtr<ImageBitmap>>& imageBitmaps)
 #if ENABLE(OFFSCREEN_CANVAS_IN_WORKERS)
 static bool canOffscreenCanvasesDetach(const Vector<RefPtr<OffscreenCanvas>>& offscreenCanvases)
 {
-    UncheckedKeyHashSet<OffscreenCanvas*> visited;
+    HashSet<OffscreenCanvas*> visited;
     for (auto& offscreenCanvas : offscreenCanvases) {
         if (!offscreenCanvas->canDetach())
             return false;
@@ -6161,7 +6168,7 @@ static bool canOffscreenCanvasesDetach(const Vector<RefPtr<OffscreenCanvas>>& of
 #if ENABLE(WEB_RTC)
 static bool canDetachRTCDataChannels(const Vector<Ref<RTCDataChannel>>& channels)
 {
-    UncheckedKeyHashSet<RTCDataChannel*> visited;
+    HashSet<RTCDataChannel*> visited;
     for (auto& channel : channels) {
         if (!channel->canDetach())
             return false;
@@ -6176,7 +6183,7 @@ static bool canDetachRTCDataChannels(const Vector<Ref<RTCDataChannel>>& channels
 #if ENABLE(MEDIA_STREAM)
 static bool canDetachMediaStreamTracks(const Vector<Ref<MediaStreamTrack>>& tracks)
 {
-    UncheckedKeyHashSet<MediaStreamTrack*> visited;
+    HashSet<MediaStreamTrack*> visited;
     for (auto& track : tracks) {
         if (!visited.add(track.ptr()))
             return false;
@@ -6188,7 +6195,7 @@ static bool canDetachMediaStreamTracks(const Vector<Ref<MediaStreamTrack>>& trac
 #if ENABLE(MEDIA_SOURCE_IN_WORKERS)
 static bool canDetachMediaSourceHandles(const Vector<Ref<MediaSourceHandle>>& handles)
 {
-    UncheckedKeyHashSet<MediaSourceHandle*> visited;
+    HashSet<MediaSourceHandle*> visited;
     for (auto& handle : handles) {
         if (!handle->canDetach())
             return false;
@@ -6238,7 +6245,7 @@ ExceptionOr<Ref<SerializedScriptValue>> SerializedScriptValue::create(JSGlobalOb
     Vector<Ref<MediaStreamTrack>> transferredMediaStreamTracks;
 #endif
 
-    UncheckedKeyHashSet<JSC::JSObject*> uniqueTransferables;
+    HashSet<JSC::JSObject*> uniqueTransferables;
     for (auto& transferable : transferList) {
         if (!uniqueTransferables.add(transferable.get()).isNewEntry)
             return Exception { ExceptionCode::DataCloneError, "Duplicate transferable for structured clone"_s };
@@ -6710,7 +6717,15 @@ std::optional<ErrorInformation> extractErrorInformationFromErrorInstance(JSC::JS
     }
     RETURN_IF_EXCEPTION(scope, std::nullopt);
 
-    return { ErrorInformation { errorTypeString, message, line, column, sourceURL, stack } };
+    PropertyDescriptor causeDescriptor;
+    String cause;
+    if (errorInstance.getOwnPropertyDescriptor(lexicalGlobalObject, vm.propertyNames->cause, causeDescriptor) && causeDescriptor.isDataDescriptor()) {
+        EXCEPTION_ASSERT(!scope.exception());
+        cause = causeDescriptor.value().toWTFString(lexicalGlobalObject);
+    }
+    RETURN_IF_EXCEPTION(scope, std::nullopt);
+
+    return { ErrorInformation { errorTypeString, message, line, column, sourceURL, stack, cause } };
 }
 
 } // namespace WebCore

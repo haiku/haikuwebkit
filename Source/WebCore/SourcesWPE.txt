@@ -97,3 +97,5 @@ platform/wpe/PasteboardWPE.cpp
 platform/wpe/PlatformScreenWPE.cpp
 
 platform/xdg/MIMETypeRegistryXdg.cpp
+
+platform/xr/openxr/PlatformXROpenXR.cpp

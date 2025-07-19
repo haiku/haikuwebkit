@@ -45,6 +45,7 @@
 #include "CSSValuePool.h"
 #include "DocumentInlines.h"
 #include "Element.h"
+#include "EventTargetInlines.h"
 #include "FontCascade.h"
 #include "GeometryUtilities.h"
 #include "InspectorInstrumentation.h"
@@ -1279,7 +1280,7 @@ void KeyframeEffect::updateBlendingKeyframes(RenderStyle& elementStyle, const St
     setBlendingKeyframes(WTFMove(blendingKeyframes));
 }
 
-const UncheckedKeyHashSet<AnimatableCSSProperty>& KeyframeEffect::animatedProperties()
+const HashSet<AnimatableCSSProperty>& KeyframeEffect::animatedProperties()
 {
     if (!m_blendingKeyframes.isEmpty())
         return m_blendingKeyframes.properties();
@@ -1712,7 +1713,7 @@ bool KeyframeEffect::isRunningAcceleratedAnimationForProperty(CSSPropertyID prop
     return Style::Interpolation::isAccelerated(property, document()->settings()) && m_blendingKeyframes.properties().contains(property);
 }
 
-static bool propertiesContainTransformRelatedProperty(const UncheckedKeyHashSet<AnimatableCSSProperty>& properties)
+static bool propertiesContainTransformRelatedProperty(const HashSet<AnimatableCSSProperty>& properties)
 {
     return properties.contains(CSSPropertyTranslate)
         || properties.contains(CSSPropertyScale)
@@ -1824,7 +1825,12 @@ void KeyframeEffect::getAnimatedStyle(std::unique_ptr<RenderStyle>& animatedStyl
     if (!renderer() || !animation())
         return;
 
-    auto computedTiming = getComputedTiming();
+    // In case we are running accelerated, we want to use a live, non-cached current time so that any geometry
+    // computation that may rely on this computed style has the most current information. Indeed, when using
+    // accelerated effects, we may not update animations in WebCore and thus will fail to have a meaningful
+    // cached current time.
+    auto useCachedCurrentTime = isRunningAccelerated() ? UseCachedCurrentTime::No : UseCachedCurrentTime::Yes;
+    auto computedTiming = getComputedTiming(useCachedCurrentTime);
     LOG_WITH_STREAM(Animations, stream << "KeyframeEffect " << this << " getAnimatedStyle - progress " << computedTiming.progress);
     if (!computedTiming.progress)
         return;
@@ -2021,7 +2027,7 @@ bool KeyframeEffect::preventsAcceleration() const
     // to an element, either through the underlying style, or through a keyframe.
     if (auto target = targetStyleable()) {
         if (auto* lastStyleChangeEventStyle = target->lastStyleChangeEventStyle()) {
-            if (lastStyleChangeEventStyle->offsetPath())
+            if (lastStyleChangeEventStyle->hasOffsetPath())
                 return true;
         }
     }
@@ -2796,9 +2802,9 @@ void KeyframeEffect::computeHasImplicitKeyframeForAcceleratedProperty()
             // We keep three property lists, one which contains all properties seen across keyframes
             // which will be filtered eventually to only contain implicit properties, one containing
             // properties seen on the 0% keyframe and one containing properties seen on the 100% keyframe.
-            UncheckedKeyHashSet<CSSPropertyID> implicitProperties;
-            UncheckedKeyHashSet<CSSPropertyID> explicitZeroProperties;
-            UncheckedKeyHashSet<CSSPropertyID> explicitOneProperties;
+            HashSet<CSSPropertyID> implicitProperties;
+            HashSet<CSSPropertyID> explicitZeroProperties;
+            HashSet<CSSPropertyID> explicitOneProperties;
             auto styleProperties = keyframe.style;
             for (auto propertyReference : styleProperties.get()) {
                 auto computedOffset = keyframe.computedOffset;
@@ -3091,7 +3097,7 @@ void KeyframeEffect::lastStyleChangeEventStyleDidChange(const RenderStyle* previ
 #endif
 
     auto hasMotionPath = [](const RenderStyle* style) {
-        return style && style->offsetPath();
+        return style && style->hasOffsetPath();
     };
 
     if (hasMotionPath(previousStyle) != hasMotionPath(currentStyle))

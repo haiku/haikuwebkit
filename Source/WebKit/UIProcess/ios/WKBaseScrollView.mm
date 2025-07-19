@@ -261,7 +261,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #else
 - (BOOL)_hasEnoughContentForOverlayRegions { return false; }
 - (void)_updateOverlayRegionsBehavior:(BOOL)selected { }
-- (void)_updateOverlayRegionRects:(const HashSet<WebCore::IntRect>&)overlayRegions { }
+- (void)_updateOverlayRegionRects:(const HashSet<WebCore::IntRect>&)overlayRegions whileStable:(BOOL)stable { }
 - (void)_associateRelatedLayersForOverlayRegions:(const HashSet<WebCore::PlatformLayerIdentifier>&)relatedLayers with:(const WebKit::RemoteLayerTreeHost&)host { }
 - (void)_updateOverlayRegions:(NSArray<NSData *> *)overlayRegions { }
 #endif

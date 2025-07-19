@@ -197,14 +197,10 @@ void Font::platformInit()
     }
 
     if (CTFontGetSymbolicTraits(getCTFont()) & kCTFontTraitColorGlyphs) {
-#if HAVE(CTFONT_COPYCOLORGLYPHCOVERAGE)
         if (RetainPtr cfBitVector = adoptCF(CTFontCopyColorGlyphCoverage(getCTFont())))
             m_emojiType = SomeEmojiGlyphs { BitVector(cfBitVector.get()) };
         else
             m_emojiType = NoEmojiGlyphs { };
-#else
-        m_emojiType = AllEmojiGlyphs { };
-#endif
     } else
         m_emojiType = NoEmojiGlyphs { };
 

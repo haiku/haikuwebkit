@@ -658,7 +658,7 @@ static void writeLayers(TextStream& ts, const RenderLayer& rootLayer, RenderLaye
     ClipRect damageRect;
     ClipRect clipRectToApply;
     LayoutSize offsetFromRoot = layer.offsetFromAncestor(&rootLayer);
-    layer.calculateRects(RenderLayer::ClipRectsContext(&rootLayer, TemporaryClipRects), paintDirtyRect, layerBounds, damageRect, clipRectToApply, offsetFromRoot);
+    layer.calculateRects(RenderLayer::ClipRectsContext(&rootLayer, PaintingClipRects, RenderLayer::clipRectTemporaryOptions), paintDirtyRect, layerBounds, damageRect, clipRectToApply, offsetFromRoot);
 
     // Ensure our lists are up-to-date.
     layer.updateLayerListsIfNeeded();
@@ -690,8 +690,8 @@ static void writeLayers(TextStream& ts, const RenderLayer& rootLayer, RenderLaye
         
         if (behavior.contains(RenderAsTextFlag::ShowLayerFragments)) {
             LayerFragments layerFragments;
-            layer.collectFragments(layerFragments, &rootLayer, paintDirtyRect, RenderLayer::PaginationInclusionMode::ExcludeCompositedPaginatedLayers, TemporaryClipRects, { RenderLayer::ClipRectsOption::RespectOverflowClip }, offsetFromRoot);
-            
+            layer.collectFragments(layerFragments, &rootLayer, paintDirtyRect, RenderLayer::PaginationInclusionMode::ExcludeCompositedPaginatedLayers, PaintingClipRects, RenderLayer::clipRectTemporaryOptions, offsetFromRoot);
+
             if (layerFragments.size() > 1) {
                 TextStream::IndentScope indentScope(ts, 2);
                 for (unsigned i = 0; i < layerFragments.size(); ++i) {

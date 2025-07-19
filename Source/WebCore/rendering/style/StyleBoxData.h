@@ -91,11 +91,11 @@ private:
 
     int m_specifiedZIndex;
     int m_usedZIndex;
-    unsigned m_hasAutoSpecifiedZIndex : 1;
-    unsigned m_hasAutoUsedZIndex : 1;
-    unsigned m_boxSizing : 1; // BoxSizing
-    unsigned m_boxDecorationBreak : 1; // BoxDecorationBreak
-    unsigned m_verticalAlign : 4; // VerticalAlign
+    PREFERRED_TYPE(bool) unsigned m_hasAutoSpecifiedZIndex : 1;
+    PREFERRED_TYPE(bool) unsigned m_hasAutoUsedZIndex : 1;
+    PREFERRED_TYPE(BoxSizing) unsigned m_boxSizing : 1;
+    PREFERRED_TYPE(BoxDecorationBreak) unsigned m_boxDecorationBreak : 1;
+    PREFERRED_TYPE(VerticalAlign) unsigned m_verticalAlign : 4;
 };
 
 } // namespace WebCore

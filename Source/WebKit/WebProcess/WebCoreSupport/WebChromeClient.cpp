@@ -152,7 +152,7 @@
 #include <WebCore/GraphicsContextGL.h>
 #endif
 
-#if ENABLE(WEBXR) && !USE(OPENXR)
+#if ENABLE(WEBXR)
 #include "PlatformXRSystemProxy.h"
 #endif
 
@@ -2145,6 +2145,14 @@ void WebChromeClient::textAutosizingUsesIdempotentModeChanged()
 
 #endif
 
+bool WebChromeClient::needsScrollGeometryUpdates() const
+{
+    if (RefPtr page = m_page.get())
+        return page->needsScrollGeometryUpdates();
+
+    return false;
+}
+
 #if ENABLE(META_VIEWPORT)
 
 double WebChromeClient::baseViewportLayoutSizeScaleFactor() const
@@ -2167,7 +2175,7 @@ void WebChromeClient::showMediaControlsContextMenu(FloatRect&& targetFrame, Vect
 
 #endif // ENABLE(MEDIA_CONTROLS_CONTEXT_MENUS) && USE(UICONTEXTMENU)
 
-#if ENABLE(WEBXR) && !USE(OPENXR)
+#if ENABLE(WEBXR)
 void WebChromeClient::enumerateImmersiveXRDevices(CompletionHandler<void(const PlatformXR::Instance::DeviceList&)>&& completionHandler)
 {
     if (RefPtr page = m_page.get())
@@ -2336,9 +2344,9 @@ void WebChromeClient::getImageBufferResourceLimitsForTesting(CompletionHandler<v
 }
 #endif
 
-bool WebChromeClient::requiresScriptTelemetryForURL(const URL& url, const SecurityOrigin& topOrigin) const
+bool WebChromeClient::requiresScriptTrackingPrivacyProtections(const URL& url, const SecurityOrigin& topOrigin) const
 {
-    return WebProcess::singleton().requiresScriptTelemetryForURL(url, topOrigin);
+    return WebProcess::singleton().requiresScriptTrackingPrivacyProtections(url, topOrigin);
 }
 
 void WebChromeClient::callAfterPendingSyntheticClick(CompletionHandler<void(SyntheticClickResult)>&& completion)

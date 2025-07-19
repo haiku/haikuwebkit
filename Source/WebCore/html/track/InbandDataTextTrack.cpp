@@ -78,7 +78,7 @@ void InbandDataTextTrack::addDataCue(const MediaTime& start, const MediaTime& en
         return;
     }
 
-    auto* textTrackList = downcast<TextTrackList>(trackList());
+    RefPtr textTrackList = downcast<TextTrackList>(trackList());
     if (end.isPositiveInfinite()) {
         if (textTrackList && textTrackList->duration().isValid())
             cue->setEndTime(textTrackList->duration());
@@ -111,7 +111,7 @@ void InbandDataTextTrack::updateDataCue(const MediaTime& start, const MediaTime&
     cue->willChange();
 
     MediaTime end = inEnd;
-    auto* textTrackList = downcast<TextTrackList>(trackList());
+    RefPtr textTrackList = downcast<TextTrackList>(trackList());
     if (end.isPositiveInfinite() && textTrackList && textTrackList->duration().isValid())
         end = textTrackList->duration();
     else
@@ -138,7 +138,7 @@ ExceptionOr<void> InbandDataTextTrack::removeCue(TextTrackCue& cue)
 {
     ASSERT(cue.cueType() == TextTrackCue::Data);
 
-    if (auto platformValue = const_cast<SerializedPlatformDataCue*>(downcast<DataCue>(cue).platformValue()))
+    if (RefPtr platformValue = const_cast<SerializedPlatformDataCue*>(downcast<DataCue>(cue).platformValue()))
         removeDataCue({ }, { }, *platformValue);
 
     return InbandTextTrack::removeCue(cue);

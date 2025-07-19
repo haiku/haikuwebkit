@@ -260,6 +260,8 @@ public:
     void logFilledVisibleFreshTile(unsigned) override;
     bool needsPixelAligment() const override { return !m_isMainFrameRenderViewLayer; }
 
+    OptionSet<ContentsFormat> screenContentsFormats() const override;
+
     LayoutSize subpixelOffsetFromRenderer() const { return m_subpixelOffsetFromRenderer; }
 
     TransformationMatrix transformMatrixForProperty(AnimatedProperty) const final;

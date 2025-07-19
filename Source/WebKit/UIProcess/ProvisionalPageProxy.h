@@ -37,7 +37,6 @@
 #include <WebCore/DiagnosticLoggingClient.h>
 #include <WebCore/FrameIdentifier.h>
 #include <WebCore/FrameLoaderClient.h>
-#include <WebCore/HistoryItem.h>
 #include <WebCore/NavigationIdentifier.h>
 #include <WebCore/ProcessSwapDisposition.h>
 #include <WebCore/ResourceRequest.h>

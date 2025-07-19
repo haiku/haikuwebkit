@@ -6754,7 +6754,11 @@ AccessGenerationResult InlineCacheCompiler::compileHandler(const GCSafeConcurren
         }
     }
     poly.append(&accessCase);
-    dataLogLnIf(InlineCacheCompilerInternal::verbose, "Generate with m_list: ", listDump(poly));
+    dataLogLnIf(InlineCacheCompilerInternal::verbose, "Generate with m_list: ", poly.size(), " elements");
+    if constexpr (InlineCacheCompilerInternal::verbose) {
+        for (unsigned i = 0; i < poly.size(); ++i)
+            dataLogLn("  m_list[", i , "] = ", *poly[i]);
+    }
 
     Vector<WatchpointSet*, 8> additionalWatchpointSets;
     if (auto megamorphicCase = tryFoldToMegamorphic(codeBlock, poly.span()))

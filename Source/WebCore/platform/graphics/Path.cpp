@@ -195,7 +195,7 @@ void Path::addRoundedRect(const FloatRect& rect, const FloatSize& roundingRadii,
         ensureProtectedImpl()->add(PathRoundedRect { calculateEvenRoundedRect(rect, roundingRadii), strategy });
 }
 
-void Path::addRoundedRect(const RoundedRect& rect)
+void Path::addRoundedRect(const LayoutRoundedRect& rect)
 {
     addRoundedRect(FloatRoundedRect(rect));
 }

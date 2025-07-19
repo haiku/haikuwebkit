@@ -82,6 +82,13 @@ static NSString *overrideBundleIdentifier(id, SEL)
 - (void)_lookup:(id)sender;
 @end
 
+#if PLATFORM(IOS_FAMILY)
+@interface WKWebView (UIScrollViewDelegate)
+- (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView;
+- (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view;
+@end
+#endif
+
 @implementation WKWebView (TestWebKitAPI)
 
 - (void)loadTestPageNamed:(NSString *)pageName
@@ -713,6 +720,37 @@ static WebEvent *unwrap(BEKeyEntry *event)
 {
     auto rect = [self elementRectFromSelector:selector];
     return CGPointMake(CGRectGetMidX(rect), CGRectGetMidY(rect));
+}
+
+static IterationStatus forEachCALayer(CALayer *layer, IterationStatus(^visitor)(CALayer *))
+{
+    if (visitor(layer) == IterationStatus::Done)
+        return IterationStatus::Done;
+
+    for (CALayer *sublayer in layer.sublayers) {
+        if (forEachCALayer(sublayer, visitor) == IterationStatus::Done)
+            return IterationStatus::Done;
+    }
+
+    return IterationStatus::Continue;
+}
+
+- (void)forEachCALayer:(IterationStatus(^)(CALayer *))visitor
+{
+    forEachCALayer(self.layer, visitor);
+}
+
+- (CALayer *)firstLayerWithName:(NSString *)layerName
+{
+    __block RetainPtr<CALayer> result;
+    [self forEachCALayer:^(CALayer *layer) {
+        if (![layer.name isEqualToString:@"Gesture Swipe Snapshot Layer"])
+            return IterationStatus::Continue;
+
+        result = layer;
+        return IterationStatus::Done;
+    }];
+    return result.autorelease();
 }
 
 - (CGImageRef)snapshotAfterScreenUpdates
@@ -1362,6 +1400,21 @@ static WKContentView *recursiveFindWKContentView(UIView *view)
 - (WKContentView *)wkContentView
 {
     return recursiveFindWKContentView(self);
+}
+
+- (void)setZoomScaleSimulatingUserTriggeredZoom:(CGFloat)zoomScale
+{
+    InstanceMethodSwizzler gestureSwizzler {
+        [UIPinchGestureRecognizer class],
+        @selector(state),
+        imp_implementationWithBlock(^UIGestureRecognizerState {
+            return UIGestureRecognizerStateBegan;
+        })
+    };
+
+    RetainPtr scrollView = [self scrollView];
+    [self scrollViewWillBeginZooming:scrollView.get() withView:[self viewForZoomingInScrollView:scrollView.get()]];
+    [scrollView setZoomScale:zoomScale];
 }
 
 @end

@@ -44,6 +44,8 @@
 #include "CSSToLengthConversionData.h"
 #include "CSSValueList.h"
 #include "CSSValuePool.h"
+#include "RenderStyle.h"
+#include "StyleBuilderState.h"
 #include "TransformOperations.h"
 #include "TransformOperationsBuilder.h"
 
@@ -410,7 +412,7 @@ RefPtr<CSSValue> consumeScale(CSSParserTokenRange& range, CSS::PropertyParserSta
     return CSSValueList::createSpaceSeparated(x.releaseNonNull());
 }
 
-std::optional<TransformOperations> parseTransformRaw(const String& string, const CSSParserContext& context, const CSSToLengthConversionData& conversionData)
+std::optional<TransformOperations> parseTransformRaw(const String& string, const CSSParserContext& context)
 {
     auto tokenizer = CSSTokenizer(string);
     auto range = tokenizer.tokenRange();
@@ -429,10 +431,13 @@ std::optional<TransformOperations> parseTransformRaw(const String& string, const
     if (!range.atEnd())
         return { };
 
-    if (!parsedValue->canResolveDependenciesWithConversionData(conversionData))
+    auto dummyStyle = RenderStyle::create();
+    auto dummyState = Style::BuilderState { dummyStyle };
+
+    if (!parsedValue->canResolveDependenciesWithConversionData(dummyState.cssToLengthConversionData()))
         return { };
 
-    return Style::createTransformOperations(*parsedValue, conversionData);
+    return Style::createTransformOperations(*parsedValue, dummyState);
 }
 
 } // namespace CSSPropertyParserHelpers

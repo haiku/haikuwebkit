@@ -55,7 +55,7 @@ BadStatusOrAccess& BadStatusOrAccess::operator=(BadStatusOrAccess&& other) {
 BadStatusOrAccess::BadStatusOrAccess(BadStatusOrAccess&& other)
     : status_(std::move(other.status_)) {}
 
-const char* absl_nonnull BadStatusOrAccess::what() const noexcept {
+absl::Nonnull<const char*> BadStatusOrAccess::what() const noexcept {
   InitWhat();
   return what_.c_str();
 }
@@ -70,7 +70,7 @@ void BadStatusOrAccess::InitWhat() const {
 
 namespace internal_statusor {
 
-void Helper::HandleInvalidStatusCtorArg(absl::Status* absl_nonnull status) {
+void Helper::HandleInvalidStatusCtorArg(absl::Nonnull<absl::Status*> status) {
   const char* kMessage =
       "An OK status is not a valid constructor argument to StatusOr<T>";
 #ifdef NDEBUG

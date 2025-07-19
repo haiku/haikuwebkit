@@ -34,7 +34,6 @@
 #include "DOMCSSNamespace.h"
 #include "Document.h"
 #include "StyleBuilder.h"
-#include "StyleBuilderConverter.h"
 #include "StyleCustomPropertyRegistry.h"
 #include "StyleResolver.h"
 #include "StyleScope.h"

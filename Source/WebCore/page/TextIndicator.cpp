@@ -168,7 +168,7 @@ static bool hasNonInlineOrReplacedElements(const SimpleRange& range)
 {
     for (auto& node : intersectingNodes(range)) {
         auto renderer = node.renderer();
-        if (renderer && (!renderer->isInline() || renderer->isReplacedOrAtomicInline()))
+        if (renderer && (!renderer->isInline() || renderer->isBlockLevelReplacedOrAtomicInline()))
             return true;
     }
     return false;
@@ -386,8 +386,7 @@ static bool initializeIndicator(TextIndicatorData& data, LocalFrame& frame, cons
         return rect;
     });
 
-    auto [startLayer, endLayer, enclosingLayer, enclosingGraphicsLayerID] = computeEnclosingLayer(range);
-    data.enclosingGraphicsLayerID = enclosingGraphicsLayerID;
+    data.enclosingGraphicsLayerID = computeEnclosingLayer(range).enclosingGraphicsLayerID;
 
     // Store the selection rect in window coordinates, to be used subsequently
     // to determine if the indicator and selection still precisely overlap.

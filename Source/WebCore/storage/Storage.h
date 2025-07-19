@@ -57,7 +57,7 @@ public:
 private:
     Storage(LocalDOMWindow&, Ref<StorageArea>&&);
 
-    bool requiresScriptExecutionTelemetry() const;
+    bool requiresScriptTrackingPrivacyProtection() const;
 
     const Ref<StorageArea> m_storageArea;
 };

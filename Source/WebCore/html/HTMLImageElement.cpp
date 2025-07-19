@@ -584,7 +584,7 @@ unsigned HTMLImageElement::width()
     if (!box)
         return 0;
     LayoutRect contentRect = box->contentBoxRect();
-    return adjustForAbsoluteZoom(snappedIntRect(contentRect).width(), *box);
+    return adjustLayoutUnitForAbsoluteZoom(contentRect.width(), *box).round();
 }
 
 unsigned HTMLImageElement::height()
@@ -607,7 +607,7 @@ unsigned HTMLImageElement::height()
     if (!box)
         return 0;
     LayoutRect contentRect = box->contentBoxRect();
-    return adjustForAbsoluteZoom(snappedIntRect(contentRect).height(), *box);
+    return adjustLayoutUnitForAbsoluteZoom(contentRect.height(), *box).round();
 }
 
 float HTMLImageElement::effectiveImageDevicePixelRatio() const

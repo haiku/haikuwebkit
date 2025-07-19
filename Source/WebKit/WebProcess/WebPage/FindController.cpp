@@ -37,6 +37,7 @@
 #include <WebCore/BoundaryPointInlines.h>
 #include <WebCore/DocumentInlines.h>
 #include <WebCore/DocumentMarkerController.h>
+#include <WebCore/FindRevealAlgorithms.h>
 #include <WebCore/FloatQuad.h>
 #include <WebCore/FocusController.h>
 #include <WebCore/FrameSelection.h>
@@ -504,7 +505,9 @@ void FindController::didFindString()
     if (!selectedFrame)
         return;
 
-    selectedFrame->checkedSelection()->revealSelection();
+    CheckedRef selection = selectedFrame->selection();
+    selection->revealSelection();
+    revealClosedDetailsAndHiddenUntilFoundAncestors(*selection->selection().start().protectedAnchorNode());
 }
 
 void FindController::didHideFindIndicator()

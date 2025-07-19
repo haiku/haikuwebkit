@@ -111,3 +111,5 @@ platform/unix/LoggingUnix.cpp
 platform/unix/SharedMemoryUnix.cpp
 
 platform/xdg/MIMETypeRegistryXdg.cpp
+
+platform/xr/openxr/PlatformXROpenXR.cpp

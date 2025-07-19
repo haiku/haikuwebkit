@@ -106,6 +106,18 @@
         _runOpenPanelWithParameters(webView, parameters, frame, completionHandler);
 }
 
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+
+- (NSColor *)_webView:(WKWebView *)webView adjustedColorForTopContentInsetColor:(NSColor *)proposedColor
+{
+    if (_adjustedColorForTopContentInsetColor)
+        return _adjustedColorForTopContentInsetColor(webView, proposedColor);
+
+    return proposedColor;
+}
+
+#endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+
 #endif // PLATFORM(MAC)
 
 - (void)webViewDidClose:(WKWebView *)webView

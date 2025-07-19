@@ -550,8 +550,22 @@ void InteractionRegionOverlay::drawRect(PageOverlay&, GraphicsContext& context, 
         bool shouldClip = valueForSetting("clip"_s);
         Vector<Path> clipPaths;
 
-        if (shouldClip)
-            clipPaths = pathsForRect(region->rectInLayerCoordinates, region->cornerRadius);
+        if (shouldClip) {
+            const auto rectInLayerCoordinates = region->rectInLayerCoordinates;
+
+            if (auto clipPath = region->clipPath) {
+                Path existingClip = *clipPath;
+                AffineTransform transform;
+
+                transform.translate(rectInLayerCoordinates.location());
+                if (RefPtr page = m_page.get())
+                    transform.scale(page->pageScaleFactor());
+
+                existingClip.transform(transform);
+                clipPaths.append(existingClip);
+            } else
+                clipPaths = pathsForRect(rectInLayerCoordinates, region->cornerRadius);
+        }
 
         bool shouldUseBackdropGradient = !shouldClip || !region || (!valueForSetting("wash"_s) && valueForSetting("clip"_s));
 

@@ -290,7 +290,7 @@ struct FrameData {
     };
 
     struct ExternalTextureData {
-        size_t reusableTextureIndex = 0;
+        uint64_t reusableTextureIndex = 0;
         ExternalTexture colorTexture;
         ExternalTexture depthStencilBuffer;
     };

@@ -56,8 +56,8 @@ shouldBe(new Date(8.64e15).setDate(new Date(8.64e15).getDate() + 1).valueOf(), N
 
 // Testing setMonth()
 shouldBe(new Date(0).setMonth(Infinity).valueOf(), NaN);
-// shouldBe(new Date(0).setMonth(1.79769e+308).valueOf(), NaN);
-// shouldBe(new Date(0).setMonth(-1.79769e+308).valueOf(), NaN);
+shouldBe(new Date(0).setMonth(1.79769e+308).valueOf(), NaN);
+shouldBe(new Date(0).setMonth(-1.79769e+308).valueOf(), NaN);
 shouldBe(new Date(8.64e15).setMonth(new Date(8.64e15).getMonth()).valueOf(), 8.64e15);
 shouldBe(new Date(8.64e15).setMonth(new Date(8.64e15).getMonth() + 1).valueOf(), NaN);
 
@@ -113,8 +113,8 @@ shouldBe(new Date(8.64e15).setUTCDate(new Date(8.64e15).getUTCDate() + 1).valueO
 
 // Testing setUTCMonth()
 shouldBe(new Date(0).setUTCMonth(Infinity).valueOf(), NaN);
-// shouldBe(new Date(0).setUTCMonth(1.79769e+308).valueOf(), NaN);
-// shouldBe(new Date(0).setUTCMonth(-1.79769e+308).valueOf(), NaN);
+shouldBe(new Date(0).setUTCMonth(1.79769e+308).valueOf(), NaN);
+shouldBe(new Date(0).setUTCMonth(-1.79769e+308).valueOf(), NaN);
 shouldBe(new Date(8.64e15).setUTCMonth(new Date(8.64e15).getUTCMonth()).valueOf(), 8.64e15);
 shouldBe(new Date(8.64e15).setUTCMonth(new Date(8.64e15).getUTCMonth() + 1).valueOf(), NaN);
 

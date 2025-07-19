@@ -358,6 +358,10 @@ void WebLockManager::clientIsGoingAway()
     if (m_pendingRequests.isEmpty() && m_releasePromises.isEmpty())
         return;
 
+    // Reject all pending promises before clearing
+    for (auto& pair : m_releasePromises)
+        pair.value->reject(ExceptionCode::AbortError, "Promise was rejected because the browsing context is going away"_s);
+
     m_pendingRequests.clear();
     m_releasePromises.clear();
 
@@ -368,6 +372,14 @@ void WebLockManager::clientIsGoingAway()
 bool WebLockManager::virtualHasPendingActivity() const
 {
     return !m_pendingRequests.isEmpty() || !m_releasePromises.isEmpty();
+}
+
+void WebLockManager::suspend(ReasonForSuspension reason)
+{
+    if (reason == ReasonForSuspension::PageWillBeSuspended || reason == ReasonForSuspension::BackForwardCache)
+        clientIsGoingAway();
+
+    ActiveDOMObject::suspend(reason);
 }
 
 } // namespace WebCore

@@ -98,15 +98,17 @@ static inline bool isNumberInput(const Element* element)
 
 std::optional<Style::UnadjustedStyle> TextControlInnerContainer::resolveCustomStyle(const Style::ResolutionContext& resolutionContext, const RenderStyle* shadowHostStyle)
 {
+    RefPtr shadowHost = this->shadowHost();
     auto elementStyle = resolveStyle(resolutionContext);
-    if (isStrongPasswordTextField(shadowHost())) {
-        elementStyle.style->setFlexWrap(FlexWrap::Wrap);
-        elementStyle.style->setOverflowX(Overflow::Hidden);
-        elementStyle.style->setOverflowY(Overflow::Hidden);
+    CheckedRef elementStyleStyle = *elementStyle.style;
+    if (isStrongPasswordTextField(shadowHost.get())) {
+        elementStyleStyle->setFlexWrap(FlexWrap::Wrap);
+        elementStyleStyle->setOverflowX(Overflow::Hidden);
+        elementStyleStyle->setOverflowY(Overflow::Hidden);
     }
 
     if (shadowHostStyle)
-        RenderTheme::singleton().adjustTextControlInnerContainerStyle(*elementStyle.style, *shadowHostStyle, shadowHost());
+        RenderTheme::singleton().adjustTextControlInnerContainerStyle(elementStyleStyle.get(), *shadowHostStyle, shadowHost.get());
 
     return elementStyle;
 }
@@ -208,10 +210,11 @@ RenderTextControlInnerBlock* TextControlInnerTextElement::renderer() const
 
 std::optional<Style::UnadjustedStyle> TextControlInnerTextElement::resolveCustomStyle(const Style::ResolutionContext&, const RenderStyle* shadowHostStyle)
 {
-    auto style = downcast<HTMLTextFormControlElement>(*shadowHost()).createInnerTextStyle(*shadowHostStyle);
+    Ref shadowHost = *this->shadowHost();
+    auto style = downcast<HTMLTextFormControlElement>(shadowHost.get()).createInnerTextStyle(*shadowHostStyle);
 
     if (shadowHostStyle)
-        RenderTheme::singleton().adjustTextControlInnerTextStyle(style, *shadowHostStyle, shadowHost());
+        RenderTheme::singleton().adjustTextControlInnerTextStyle(style, *shadowHostStyle, shadowHost.ptr());
 
     return Style::UnadjustedStyle { makeUnique<RenderStyle>(WTFMove(style)) };
 }
@@ -236,16 +239,17 @@ std::optional<Style::UnadjustedStyle> TextControlPlaceholderElement::resolveCust
     auto style = resolveStyle(resolutionContext);
 
     Ref controlElement = downcast<HTMLTextFormControlElement>(*containingShadowRoot()->host());
-    style.style->setDisplay(controlElement->isPlaceholderVisible() ? DisplayType::Block : DisplayType::None);
+    CheckedRef styleStyle = *style.style;
+    styleStyle->setDisplay(controlElement->isPlaceholderVisible() ? DisplayType::Block : DisplayType::None);
 
     if (RefPtr inputElement = dynamicDowncast<HTMLInputElement>(controlElement)) {
-        style.style->setTextOverflow(inputElement->shouldTruncateText(*shadowHostStyle) ? TextOverflow::Ellipsis : TextOverflow::Clip);
-        style.style->setPaddingTop(0_css_px);
-        style.style->setPaddingBottom(0_css_px);
+        styleStyle->setTextOverflow(inputElement->shouldTruncateText(*shadowHostStyle) ? TextOverflow::Ellipsis : TextOverflow::Clip);
+        styleStyle->setPaddingTop(0_css_px);
+        styleStyle->setPaddingBottom(0_css_px);
     }
 
     if (shadowHostStyle)
-        RenderTheme::singleton().adjustTextControlInnerPlaceholderStyle(*style.style, *shadowHostStyle, shadowHost());
+        RenderTheme::singleton().adjustTextControlInnerPlaceholderStyle(styleStyle.get(), *shadowHostStyle, protectedShadowHost().get());
 
     return style;
 }
@@ -305,14 +309,13 @@ void SearchFieldResultsButtonElement::defaultEventHandler(Event& event)
             input->focus();
             input->select();
 #if !PLATFORM(IOS_FAMILY)
-            document().updateStyleIfNeeded();
+            protectedDocument()->updateStyleIfNeeded();
 
-            if (auto* renderer = input->renderer()) {
-                auto& searchFieldRenderer = downcast<RenderSearchField>(*renderer);
-                if (searchFieldRenderer.popupIsVisible())
-                    searchFieldRenderer.hidePopup();
+            if (CheckedPtr searchFieldRenderer = dynamicDowncast<RenderSearchField>(input->renderer())) {
+                if (searchFieldRenderer->popupIsVisible())
+                    searchFieldRenderer->hidePopup();
                 else if (input->maxResults() > 0)
-                    searchFieldRenderer.showPopup();
+                    searchFieldRenderer->showPopup();
             }
 #endif
             event.setDefaultHandled();

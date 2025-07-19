@@ -42,7 +42,6 @@
 #import <wtf/cocoa/TypeCastsCocoa.h>
 
 static constexpr CGFloat indicatorFontSize = 16;
-static constexpr CGFloat indicatorLabelOpacity = 0.4;
 static constexpr CGFloat indicatorCornerRadius = 7;
 static constexpr CGFloat indicatorMargin = 20;
 static constexpr CGFloat indicatorVerticalPadding = 6;
@@ -102,7 +101,6 @@ static constexpr Seconds indicatorMoveDuration { 0.3_s };
     [_label setFont:[UIFont boldSystemFontOfSize:indicatorFontSize]];
     if (shouldUseBlurEffectForBackdrop)
         [_label setTextColor:[UIColor blackColor]];
-    [_label setAlpha:indicatorLabelOpacity];
     [_label setAdjustsFontSizeToFitWidth:YES];
     [_label setAutoresizingMask:UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight];
     WebCore::PlatformCAFilters::setBlendingFiltersOnLayer([_label layer], WebCore::BlendMode::PlusDarker);
@@ -167,9 +165,15 @@ static constexpr Seconds indicatorMoveDuration { 0.3_s };
 
 - (void)hide:(NSTimer *)timer
 {
-    [UIView animateWithDuration:indicatorFadeOutDuration.seconds() animations:[view = retainPtr(self)] {
+    auto animations = [view = retainPtr(self)] {
         [view setAlpha:0];
-    }];
+    };
+#if HAVE(UI_VIEW_ANIMATION_OPTION_FLUSH_UPDATES)
+    static constexpr auto animationOptions = UIViewAnimationOptionFlushUpdates;
+#else
+    static constexpr auto animationOptions = 0;
+#endif
+    [UIView animateWithDuration:indicatorFadeOutDuration.seconds() delay:0 options:animationOptions animations:animations completion:nil];
 
     [std::exchange(_timer, nil) invalidate];
 }

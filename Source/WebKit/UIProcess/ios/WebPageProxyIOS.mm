@@ -1806,7 +1806,7 @@ void WebPageProxy::didRefreshDisplay()
 
 #if ENABLE(PDF_PAGE_NUMBER_INDICATOR)
 
-void WebPageProxy::createPDFPageNumberIndicator(PDFPluginIdentifier identifier, const IntRect& rect, size_t pageCount)
+void WebPageProxy::createPDFPageNumberIndicator(PDFPluginIdentifier identifier, const IntRect& rect, uint64_t pageCount)
 {
     if (RefPtr pageClient = this->pageClient())
         pageClient->createPDFPageNumberIndicator(identifier, rect, pageCount);
@@ -1824,7 +1824,7 @@ void WebPageProxy::updatePDFPageNumberIndicatorLocation(PDFPluginIdentifier iden
         pageClient->updatePDFPageNumberIndicatorLocation(identifier, rect);
 }
 
-void WebPageProxy::updatePDFPageNumberIndicatorCurrentPage(PDFPluginIdentifier identifier, size_t pageIndex)
+void WebPageProxy::updatePDFPageNumberIndicatorCurrentPage(PDFPluginIdentifier identifier, uint64_t pageIndex)
 {
     if (RefPtr pageClient = this->pageClient())
         pageClient->updatePDFPageNumberIndicatorCurrentPage(identifier, pageIndex);

@@ -68,6 +68,7 @@ private:
     bool platformCALayerDrawsContent() const override { return true; }
     void platformCALayerPaintContents(PlatformCALayer*, GraphicsContext&, const FloatRect&, OptionSet<GraphicsLayerPaintBehavior>) override;
     float platformCALayerDeviceScaleFactor() const override;
+    OptionSet<ContentsFormat> screenContentsFormats() const override;
 
     void updateTimerFired();
     

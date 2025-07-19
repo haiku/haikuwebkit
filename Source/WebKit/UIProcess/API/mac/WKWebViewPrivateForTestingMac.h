@@ -61,8 +61,6 @@
 - (void)_createFlagsChangedEventMonitorForTesting;
 - (BOOL)_hasFlagsChangedEventMonitorForTesting;
 
-@property (nonatomic, readonly) NSView *_scrollPocketForTesting;
-
 @end
 
 #endif // !TARGET_OS_IPHONE

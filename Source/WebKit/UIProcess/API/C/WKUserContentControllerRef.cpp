@@ -47,29 +47,29 @@ WKUserContentControllerRef WKUserContentControllerCreate()
 
 WKArrayRef WKUserContentControllerCopyUserScripts(WKUserContentControllerRef userContentControllerRef)
 {
-    return toAPILeakingRef(toImpl(userContentControllerRef)->userScripts().copy());
+    return toAPILeakingRef(toProtectedImpl(userContentControllerRef)->userScripts().copy());
 }
 
 void WKUserContentControllerAddUserScript(WKUserContentControllerRef userContentControllerRef, WKUserScriptRef userScriptRef)
 {
-    toImpl(userContentControllerRef)->addUserScript(*toImpl(userScriptRef), InjectUserScriptImmediately::No);
+    toProtectedImpl(userContentControllerRef)->addUserScript(*toProtectedImpl(userScriptRef), InjectUserScriptImmediately::No);
 }
 
 void WKUserContentControllerRemoveAllUserScripts(WKUserContentControllerRef userContentControllerRef)
 {
-    toImpl(userContentControllerRef)->removeAllUserScripts();
+    toProtectedImpl(userContentControllerRef)->removeAllUserScripts();
 }
 
 void WKUserContentControllerAddUserContentFilter(WKUserContentControllerRef userContentControllerRef, WKUserContentFilterRef userContentFilterRef)
 {
 #if ENABLE(CONTENT_EXTENSIONS)
-    toImpl(userContentControllerRef)->addContentRuleList(*toImpl(userContentFilterRef));
+    toProtectedImpl(userContentControllerRef)->addContentRuleList(*toProtectedImpl(userContentFilterRef));
 #endif
 }
 
 void WKUserContentControllerRemoveAllUserContentFilters(WKUserContentControllerRef userContentControllerRef)
 {
 #if ENABLE(CONTENT_EXTENSIONS)
-    toImpl(userContentControllerRef)->removeAllContentRuleLists();
+    toProtectedImpl(userContentControllerRef)->removeAllContentRuleLists();
 #endif
 }

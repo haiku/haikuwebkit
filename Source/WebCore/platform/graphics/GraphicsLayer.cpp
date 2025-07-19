@@ -454,6 +454,12 @@ void GraphicsLayer::setDrawsHDRContent(bool b)
     m_drawsHDRContent = b;
 }
 
+void GraphicsLayer::setTonemappingEnabled(bool b)
+{
+    ASSERT(m_type != Type::Structural);
+    m_tonemappingEnabled = b;
+}
+
 void GraphicsLayer::setNeedsDisplayIfEDRHeadroomExceeds(float)
 {
 }

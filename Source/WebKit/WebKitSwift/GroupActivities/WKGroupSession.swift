@@ -36,7 +36,6 @@ internal import GroupActivities_SPI
 @_implementationOnly import GroupActivities_SPI
 #endif
 #endif
-import WebKitSwift
 
 extension WKGroupSessionState {
     fileprivate init(_ state: GroupSession<URLActivity>.State) {

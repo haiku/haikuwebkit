@@ -56,7 +56,8 @@ DestinationColorSpace PlatformImageNativeImageBackend::colorSpace() const
 Headroom PlatformImageNativeImageBackend::headroom() const
 {
 #if HAVE(SUPPORT_HDR_DISPLAY)
-    return CGImageGetContentHeadroom(m_platformImage.get());
+    float headroom = CGImageGetContentHeadroom(m_platformImage.get());
+    return Headroom(std::max<float>(headroom, Headroom::None));
 #else
     return Headroom::None;
 #endif

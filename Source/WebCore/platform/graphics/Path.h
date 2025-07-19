@@ -38,8 +38,8 @@
 namespace WebCore {
 
 class GraphicsContext;
+class LayoutRoundedRect;
 class PathTraversalState;
-class RoundedRect;
 
 class Path {
     WTF_MAKE_TZONE_ALLOCATED(Path);
@@ -69,7 +69,7 @@ public:
     WEBCORE_EXPORT void addRoundedRect(const FloatRoundedRect&, PathRoundedRect::Strategy = PathRoundedRect::Strategy::PreferNative);
     void addRoundedRect(const FloatRect&, const FloatSize& roundingRadii, PathRoundedRect::Strategy = PathRoundedRect::Strategy::PreferNative);
     void addContinuousRoundedRect(const FloatRect&, float cornerWidth, float cornerHeight);
-    void addRoundedRect(const RoundedRect&);
+    void addRoundedRect(const LayoutRoundedRect&);
     void closeSubpath();
 
     WEBCORE_EXPORT void addPath(const Path&, const AffineTransform&);

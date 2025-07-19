@@ -74,7 +74,7 @@ static float getAVSpeechUtteranceMaximumSpeechRate()
     // Hold a Ref to the utterance so that it won't disappear until the synth is done with it.
     RefPtr<WebCore::PlatformSpeechSynthesisUtterance> m_utterance;
 
-    RetainPtr<AVSpeechSynthesizer> m_synthesizer;
+    const RetainPtr<AVSpeechSynthesizer> m_synthesizer;
 }
 
 - (WebSpeechSynthesisWrapper *)initWithSpeechSynthesizer:(WebCore::PlatformSpeechSynthesizer*)synthesizer;
@@ -127,7 +127,7 @@ static float getAVSpeechUtteranceMaximumSpeechRate()
     
     BEGIN_BLOCK_OBJC_EXCEPTIONS
     if (!m_synthesizer) {
-        m_synthesizer = adoptNS([PAL::allocAVSpeechSynthesizerInstance() init]);
+        lazyInitialize(m_synthesizer, adoptNS([PAL::allocAVSpeechSynthesizerInstance() init]));
         [m_synthesizer setDelegate:self];
     }
     
@@ -293,17 +293,10 @@ void PlatformSpeechSynthesizer::initializeVoiceList()
         return;
 
     BEGIN_BLOCK_OBJC_EXCEPTIONS
-    NSArray<AVSpeechSynthesisVoice *> *voices = nil;
     // SpeechSynthesis replaces on-device compact with higher quality compact voices. These
     // are not available to WebKit so we're losing these default voices for WebSpeech.
-    // FIXME: Remove respondsToSelector check when is available on all SDKs.
-    if ([PAL::getAVSpeechSynthesisVoiceClass() respondsToSelector:@selector(speechVoicesIncludingSuperCompact)])
-        voices = [PAL::getAVSpeechSynthesisVoiceClass() speechVoicesIncludingSuperCompact];
-    else
-        voices = [PAL::getAVSpeechSynthesisVoiceClass() speechVoices];
-
     // Only show built-in voices when requesting through WebKit to reduce fingerprinting surface area.
-    for (AVSpeechSynthesisVoice *voice in voices) {
+    for (AVSpeechSynthesisVoice *voice in [PAL::getAVSpeechSynthesisVoiceClass() speechVoicesIncludingSuperCompact]) {
         if (voice.isSystemVoice)
             m_voiceList.append(PlatformSpeechSynthesisVoice::create(voice.identifier, voice.name, voice.language, true, true));
     }

@@ -94,8 +94,8 @@ private:
     const Ref<Document> m_document;
     ListHashSet<RefPtr<ContainerNode>> m_roots;
     ListHashSet<RefPtr<Element>> m_rebuildRoots;
-    UncheckedKeyHashMap<RefPtr<const Element>, ElementUpdate> m_elements;
-    UncheckedKeyHashMap<RefPtr<const Text>, TextUpdate> m_texts;
+    HashMap<RefPtr<const Element>, ElementUpdate> m_elements;
+    HashMap<RefPtr<const Text>, TextUpdate> m_texts;
     std::unique_ptr<RenderStyle> m_initialContainingBlockUpdate;
 };
 

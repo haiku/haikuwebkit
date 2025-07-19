@@ -1007,7 +1007,7 @@ JSC_DEFINE_CUSTOM_SETTER(testCustomValueSetter, (JSGlobalObject* lexicalGlobalOb
     return GlobalObject::testCustomSetterImpl(lexicalGlobalObject, thisObject, encodedValue, "_testCustomValueSetter"_s);
 }
 
-static UChar pathSeparator()
+static char16_t pathSeparator()
 {
 #if OS(WINDOWS)
     return '\\';
@@ -3178,9 +3178,7 @@ JSC_DEFINE_HOST_FUNCTION(functionGenerateHeapSnapshot, (JSGlobalObject* globalOb
         return encodedJSUndefined();
     }
 
-    EncodedJSValue result = JSValue::encode(JSONParse(globalObject, jsonString));
-    scope.releaseAssertNoException();
-    return result;
+    RELEASE_AND_RETURN(scope, JSValue::encode(JSONParse(globalObject, jsonString)));
 }
 
 JSC_DEFINE_HOST_FUNCTION(functionGenerateHeapSnapshotForGCDebugging, (JSGlobalObject* globalObject, CallFrame*))

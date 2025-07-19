@@ -1601,9 +1601,20 @@ ALLOW_DEPRECATED_DECLARATIONS_END
     _overrideTopScrollEdgeEffectColor = adoptNS(color.copy);
 
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
-    [self _updateTopScrollPocketCaptureColor];
+    [self _doAfterAdjustingColorForTopContentInsetFromUIDelegate:[strongSelf = RetainPtr { self }] {
+        [strongSelf _updateTopScrollPocketCaptureColor];
+    }];
 #endif
 }
+
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+
+- (NSScrollPocket *)_topScrollPocket
+{
+    return _impl->topScrollPocket();
+}
+
+#endif
 
 - (void)_setUsesAutomaticContentInsetBackgroundFill:(BOOL)value
 {
@@ -1615,6 +1626,7 @@ ALLOW_DEPRECATED_DECLARATIONS_END
 #if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
     _impl->updateTopScrollPocketStyle();
     _impl->updateScrollPocketVisibilityWhenScrolledToTop();
+    _impl->updateTopScrollPocketCaptureColor();
 #endif
 }
 

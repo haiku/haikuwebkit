@@ -47,8 +47,8 @@
 #include <wtf/WeakHashSet.h>
 #include <wtf/text/WTFString.h>
 
-OBJC_CLASS LMPlayableViewController;
 OBJC_CLASS WKLayerHostView;
+OBJC_CLASS WKSPlayableViewControllerHost;
 OBJC_CLASS WKVideoView;
 OBJC_CLASS WebAVPlayerLayer;
 OBJC_CLASS WebAVPlayerLayerView;
@@ -188,7 +188,7 @@ public:
 #endif
 
 #if ENABLE(LINEAR_MEDIA_PLAYER)
-    LMPlayableViewController *playableViewController(PlaybackSessionContextIdentifier) const;
+    WKSPlayableViewControllerHost *playableViewController(PlaybackSessionContextIdentifier) const;
 #endif
 
     PlatformLayerContainer createLayerWithID(PlaybackSessionContextIdentifier, const WebCore::HostingContext&, const WebCore::FloatSize& initialSize, const WebCore::FloatSize& nativeSize, float hostingScaleFactor);
@@ -287,18 +287,13 @@ private:
     bool m_mockVideoPresentationModeEnabled { false };
     WebCore::FloatSize m_mockPictureInPictureWindowSize { DefaultMockPictureInPictureWindowWidth, DefaultMockPictureInPictureWindowHeight };
 
-    Ref<PlaybackSessionManagerProxy> protectedPlaybackSessionManagerProxy() const;
-
     WeakPtr<WebPageProxy> m_page;
-    Ref<PlaybackSessionManagerProxy> m_playbackSessionManagerProxy;
+    const Ref<PlaybackSessionManagerProxy> m_playbackSessionManagerProxy;
     HashMap<PlaybackSessionContextIdentifier, ModelInterfacePair> m_contextMap;
     HashMap<PlaybackSessionContextIdentifier, int> m_clientCounts;
     Vector<CompletionHandler<void()>> m_closeCompletionHandlers;
     WeakHashSet<VideoInPictureInPictureDidChangeObserver> m_pipChangeObservers;
     Markable<PlaybackSessionContextIdentifier> m_lastInteractedWithVideo;
-#if ENABLE(MACH_PORT_LAYER_HOSTING)
-    HashMap<PlaybackSessionContextIdentifier, RetainPtr<BELayerHierarchyHandle>> m_layerHandles;
-#endif
 };
 
 } // namespace WebKit

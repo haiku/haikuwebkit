@@ -298,7 +298,11 @@ void EventRegionContext::shrinkWrapInteractionRegions()
         bool canUseSingleRect = true;
         Vector<InteractionRegion> toAddAfterMerge;
         Vector<FloatRect> discoveredRects;
+        Vector<Path> discoveredClipPaths;
+
         discoveredRects.reserveInitialCapacity(discoveredRegions.size());
+        discoveredClipPaths.reserveInitialCapacity(discoveredRegions.size());
+
         for (const auto& discoveredRegion : discoveredRegions) {
             auto previousArea = layerBounds.area();
             auto rect = discoveredRegion.rectInLayerCoordinates;
@@ -313,18 +317,37 @@ void EventRegionContext::shrinkWrapInteractionRegions()
             auto hint = m_interactionRectsAndContentHints.get(rectForTracking);
             if (hint != region.contentHint)
                 toAddAfterMerge.append(discoveredRegion);
-            else if (growth > std::numeric_limits<float>::epsilon())
-                discoveredRects.append(rect);
+            else if (growth > std::numeric_limits<float>::epsilon()) {
+                // If the discovered region's shape should not be a rounded-rect
+                // with uniform corner radii, its clipPath will be non-empty.
+                if (auto clipPath = discoveredRegion.clipPath) {
+                    AffineTransform transform;
+                    transform.translate(discoveredRegion.rectInLayerCoordinates.location());
+
+                    Path foundPath = *clipPath;
+                    foundPath.transform(transform);
+
+                    discoveredClipPaths.append(foundPath);
+                } else
+                    discoveredRects.append(rect);
+            }
         }
 
         if (canUseSingleRect)
             region.rectInLayerCoordinates = layerBounds;
         else {
-            Path path = PathUtilities::pathWithShrinkWrappedRects(discoveredRects, region.cornerRadius);
-            region.rectInLayerCoordinates = layerBounds;
+            Path shrinkWrappedRects = PathUtilities::pathWithShrinkWrappedRects(discoveredRects, region.cornerRadius);
+
+            Path path;
+            path.addPath(shrinkWrappedRects, { });
+            for (Path clipPath : discoveredClipPaths)
+                path.addPath(clipPath, { });
+
             path.translate(-toFloatSize(layerBounds.location()));
+
             region.clipPath = path;
             region.cornerRadius = 0;
+            region.rectInLayerCoordinates = layerBounds;
         }
 
         auto finalRegionRectForTracking = enclosingIntRect(region.rectInLayerCoordinates);

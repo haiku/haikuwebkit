@@ -270,6 +270,7 @@ bool hasCapacityToUseLargeGigacage();
     v(Bool, useMovHintRemoval, true, Normal, nullptr) \
     v(Bool, usePutStackSinking, true, Normal, nullptr) \
     v(Bool, useObjectAllocationSinking, true, Normal, nullptr) \
+    v(Bool, verboseObjectAllocationSinking, false, Normal, nullptr) \
     v(Bool, useValueRepElimination, true, Normal, nullptr) \
     v(Bool, useArityFixupInlining, true, Normal, nullptr) \
     v(Bool, logExecutableAllocation, false, Normal, nullptr) \
@@ -308,7 +309,7 @@ bool hasCapacityToUseLargeGigacage();
     v(Unsigned, maximumFunctionForClosureCallInlineCandidateBytecodeCostForFTL, 100, Normal, nullptr) \
     v(Unsigned, maximumFunctionForConstructInlineCandidateBytecodeCostForFTL, 100, Normal, nullptr) \
     \
-    v(Unsigned, maximumFTLCandidateBytecodeCost, 20000, Normal, nullptr) \
+    v(Unsigned, maximumFTLCandidateBytecodeCost, 60000, Normal, nullptr) \
     \
     v(Double, ratioFTLNodesToBytecodeCost, 1.9, Normal, "Ratio converting FTL # of DFG nodes to approx bytecode cost") \
     \
@@ -625,7 +626,7 @@ bool hasCapacityToUseLargeGigacage();
     v(Bool, forceAllFunctionsToUseSIMD, false, Normal, "Force all functions to act conservatively w.r.t fp/vector registers for testing."_s) \
     v(Bool, useOMGInlining, true, Normal, "Use OMG inlining"_s) \
     v(Bool, freeRetiredWasmCode, true, Normal, "free BBQ/OMG-OSR wasm code once it's no longer reachable."_s) \
-    v(Bool, useArrayAllocationSinking, true, Normal, "free BBQ/OMG-OSR wasm code once it's no longer reachable."_s) \
+    v(Bool, useArrayAllocationSinking, true, Normal, nullptr) \
     v(Bool, dumpFTLCodeSize, false, Normal, nullptr) \
     v(Bool, dumpOptimizationTracing, false, Normal, nullptr) \
     v(Unsigned, markedBlockDumpInfoCount, 0, Normal, nullptr) /* FIXME: rdar://139998916 */ \

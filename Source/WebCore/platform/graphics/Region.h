@@ -75,7 +75,7 @@ public:
 
     struct Span {
         int y { 0 };
-        size_t segmentIndex { 0 };
+        uint64_t segmentIndex { 0 };
 
         friend bool operator==(const Span&, const Span&) = default;
     };

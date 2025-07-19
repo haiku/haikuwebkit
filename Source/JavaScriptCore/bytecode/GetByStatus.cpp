@@ -544,6 +544,9 @@ GetByStatus GetByStatus::computeFor(JSGlobalObject* globalObject, const Structur
                 return std::nullopt;
             }
 
+            if (currentStructure->hasPolyProto())
+                return std::nullopt;
+
             JSValue value = currentStructure->prototypeForLookup(globalObject);
             if (!value)
                 return std::nullopt;

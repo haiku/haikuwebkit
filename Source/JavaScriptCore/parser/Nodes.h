@@ -94,7 +94,7 @@ namespace JSC {
     }
 
     struct SwitchInfo {
-        enum SwitchType : uint8_t { SwitchNone, SwitchImmediate, SwitchCharacter, SwitchString };
+        enum class SwitchType : uint8_t { None, Immediate, Character, ImmediateList, CharacterList, String };
         uint32_t bytecodeOffset;
         SwitchType switchType;
     };

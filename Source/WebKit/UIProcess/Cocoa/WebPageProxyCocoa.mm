@@ -66,6 +66,7 @@
 #import "WebScreenOrientationManagerProxy.h"
 #import "WebsiteDataStore.h"
 #import <Foundation/NSURLRequest.h>
+#import <WebCore/AXObjectCache.h>
 #import <WebCore/AppHighlight.h>
 #import <WebCore/ApplePayAMSUIRequest.h>
 #import <WebCore/DictationAlternative.h>
@@ -174,6 +175,9 @@ void WebPageProxy::didCommitLayerTree(const RemoteLayerTreeTransaction& layerTre
             stopMakingViewBlankDueToLackOfRenderingUpdateIfNecessary();
             internals().lastVisibleContentRectUpdate = { };
         }
+
+        if (std::exchange(internals().needsFixedContainerEdgesUpdateAfterNextCommit, false))
+            protectedLegacyMainFrameProcess()->send(Messages::WebPage::SetNeedsFixedContainerEdgesUpdate(), webPageIDInMainFrameProcess());
     }
 
     if (RefPtr pageClient = this->pageClient())
@@ -255,9 +259,11 @@ void WebPageProxy::beginSafeBrowsingCheck(const URL& url, RefPtr<API::Navigation
             for (SSBServiceLookupResult *lookupResult in [result serviceLookupResults]) {
                 if (lookupResult.isPhishing || lookupResult.isMalware || lookupResult.isUnwantedSoftware) {
                     navigation->setSafeBrowsingWarning(BrowsingWarning::create(url, forMainFrameNavigation, BrowsingWarning::SafeBrowsingWarningData { lookupResult }));
-                    return;
+                    break;
                 }
             }
+            if (!navigation->safeBrowsingCheckOngoing() && navigation->safeBrowsingWarning() && navigation->safeBrowsingCheckTimedOut())
+                frame->protectedPage()->showBrowsingWarning(navigation->safeBrowsingWarning());
         });
     });
 
@@ -1752,17 +1758,23 @@ String WebPageProxy::presentingApplicationBundleIdentifier() const
     return { };
 }
 
-#if ENABLE(INITIALIZE_ACCESSIBILITY_ON_DEMAND)
-void WebPageProxy::initializeAccessibility()
-{
-    RELEASE_LOG(Process, "WebPageProxy::initializeAccessibility");
-    if (!hasRunningProcess())
-        return;
+NSDictionary *WebPageProxy::getAccessibilityWebProcessDebugInfo()
+    {
+        const Seconds messageTimeout(2);
+        auto sendResult = protectedLegacyMainFrameProcess()->sendSync(Messages::WebPage::GetAccessibilityWebProcessDebugInfo(), webPageIDInMainFrameProcess(), messageTimeout);
 
-    auto handleArray = SandboxExtension::createHandlesForMachLookup({ }, protectedLegacyMainFrameProcess()->auditToken(), SandboxExtension::MachBootstrapOptions::EnableMachBootstrap);
-    protectedLegacyMainFrameProcess()->send(Messages::WebPage::InitializeAccessibility(WTFMove(handleArray)), webPageIDInMainFrameProcess());
-}
-#endif
+        if (!sendResult.succeeded())
+            return @{ };
+
+        auto [result] = sendResult.takeReplyOr(WebCore::AXDebugInfo({ 0, 0 }));
+
+        return @{
+            @"axIsEnabled": [NSNumber numberWithBool:result.isAccessibilityEnabled],
+            @"axIsThreadInitialized": [NSNumber numberWithBool:result.isAccessibilityThreadInitialized],
+            @"axLiveTree": result.liveTree.createNSString().get(),
+            @"axIsolatedTree": result.isolatedTree.createNSString().get()
+        };
+    }
 
 } // namespace WebKit
 

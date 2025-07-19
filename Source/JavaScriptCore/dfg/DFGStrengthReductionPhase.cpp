@@ -491,31 +491,71 @@ private:
         case MakeRope:
         case MakeAtomString:
         case StrCat: {
-            String leftString = m_node->child1()->tryGetString(m_graph);
-            if (!leftString)
+            // Constant folding.
+            String string0 = m_node->child1()->tryGetString(m_graph);
+            if (!string0) {
+                if (m_node->child2() && m_node->child3()) {
+                    String string1 = m_node->child2()->tryGetString(m_graph);
+                    if (!string1)
+                        break;
+                    String string2 = m_node->child3()->tryGetString(m_graph);
+                    if (!string2)
+                        break;
+
+                    StringBuilder builder;
+                    builder.append(string1);
+                    builder.append(string2);
+                    if (!builder.hasOverflowed()) {
+                        LazyJSValue value = LazyJSValue::newString(m_graph, builder.toString());
+                        auto* constant = m_insertionSet.insertNode(m_nodeIndex, SpecNone, LazyJSConstant, m_node->origin, OpInfo(m_graph.m_lazyJSValues.add(value)));
+                        m_node->child2().setNode(constant);
+                        m_node->child3() = Edge();
+                        m_changed = true;
+                    }
+                }
                 break;
+            }
+
             if (!m_node->child2()) {
                 ASSERT(!m_node->child3());
+                convertToLazyJSValue(m_node, LazyJSValue::newString(m_graph, string0));
+                m_changed = true;
                 break;
             }
-            String rightString = m_node->child2()->tryGetString(m_graph);
-            if (!rightString)
+
+            String string1 = m_node->child2()->tryGetString(m_graph);
+            if (!string1)
                 break;
-            String extraString;
-            if (m_node->child3()) {
-                extraString = m_node->child3()->tryGetString(m_graph);
-                if (!extraString)
-                    break;
-            }
 
             StringBuilder builder;
-            builder.append(leftString);
-            builder.append(rightString);
-            if (!!extraString)
-                builder.append(extraString);
+            builder.append(string0);
+            builder.append(string1);
+            if (!m_node->child3()) {
+                if (!builder.hasOverflowed()) {
+                    convertToLazyJSValue(m_node, LazyJSValue::newString(m_graph, builder.toString()));
+                    m_changed = true;
+                }
+                break;
+            }
 
-            convertToLazyJSValue(m_node, LazyJSValue::newString(m_graph, builder.toString()));
-            m_changed = true;
+            String string2 = m_node->child3()->tryGetString(m_graph);
+            if (!string2) {
+                if (!builder.hasOverflowed()) {
+                    LazyJSValue value = LazyJSValue::newString(m_graph, builder.toString());
+                    auto* constant = m_insertionSet.insertNode(m_nodeIndex, SpecNone, LazyJSConstant, m_node->origin, OpInfo(m_graph.m_lazyJSValues.add(value)));
+                    m_node->child1().setNode(constant);
+                    m_node->child2() = m_node->child3();
+                    m_node->child3() = Edge();
+                    m_changed = true;
+                }
+                break;
+            }
+
+            builder.append(string2);
+            if (!builder.hasOverflowed()) {
+                convertToLazyJSValue(m_node, LazyJSValue::newString(m_graph, builder.toString()));
+                m_changed = true;
+            }
             break;
         }
 

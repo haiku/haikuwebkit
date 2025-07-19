@@ -68,6 +68,10 @@
 #include "absl/strings/string_view.h"
 #include "absl/types/optional.h"
 
+// TODO: crbug.com/1491724 - Remove include below when other third_party
+// libraries stop silently rely on it.
+#include "absl/strings/str_cat.h"
+
 namespace absl {
 ABSL_NAMESPACE_BEGIN
 
@@ -623,15 +627,15 @@ class ABSL_ATTRIBUTE_TRIVIAL_ABI Status final {
 
   // REQUIRES: !ok()
   // Ensures rep is not inlined or shared with any other Status.
-  static status_internal::StatusRep* absl_nonnull PrepareToModify(
+  static absl::Nonnull<status_internal::StatusRep*> PrepareToModify(
       uintptr_t rep);
 
   // MSVC 14.0 limitation requires the const.
   static constexpr const char kMovedFromString[] =
       "Status accessed after move.";
 
-  static const std::string* absl_nonnull EmptyString();
-  static const std::string* absl_nonnull MovedFromString();
+  static absl::Nonnull<const std::string*> EmptyString();
+  static absl::Nonnull<const std::string*> MovedFromString();
 
   // Returns whether rep contains an inlined representation.
   // See rep_ for details.
@@ -649,8 +653,8 @@ class ABSL_ATTRIBUTE_TRIVIAL_ABI Status final {
 
   // Converts between StatusRep* and the external uintptr_t representation used
   // by rep_. See rep_ for details.
-  static uintptr_t PointerToRep(status_internal::StatusRep* absl_nonnull r);
-  static const status_internal::StatusRep* absl_nonnull RepToPointer(
+  static uintptr_t PointerToRep(absl::Nonnull<status_internal::StatusRep*> r);
+  static absl::Nonnull<const status_internal::StatusRep*> RepToPointer(
       uintptr_t r);
 
   static std::string ToStringSlow(uintptr_t rep, StatusToStringMode mode);
@@ -902,14 +906,14 @@ constexpr uintptr_t Status::MovedFromRep() {
   return CodeToInlinedRep(absl::StatusCode::kInternal) | 2;
 }
 
-inline const status_internal::StatusRep* absl_nonnull Status::RepToPointer(
+inline absl::Nonnull<const status_internal::StatusRep*> Status::RepToPointer(
     uintptr_t rep) {
   assert(!IsInlined(rep));
   return reinterpret_cast<const status_internal::StatusRep*>(rep);
 }
 
 inline uintptr_t Status::PointerToRep(
-    status_internal::StatusRep* absl_nonnull rep) {
+    absl::Nonnull<status_internal::StatusRep*> rep) {
   return reinterpret_cast<uintptr_t>(rep);
 }
 
@@ -934,7 +938,7 @@ inline Status CancelledError() { return Status(absl::StatusCode::kCancelled); }
 // If the status's message is empty, the empty string is returned.
 //
 // StatusMessageAsCStr exists for C support. Use `status.message()` in C++.
-const char* absl_nonnull StatusMessageAsCStr(
+absl::Nonnull<const char*> StatusMessageAsCStr(
     const Status& status ABSL_ATTRIBUTE_LIFETIME_BOUND);
 
 ABSL_NAMESPACE_END

@@ -243,7 +243,9 @@ void RenderThemeIOS::adjustRadioStyle(RenderStyle& style, const Element*) const
     auto size = std::max(style.computedFontSize(), 10.0f);
     style.setWidth(Style::PreferredSize::Fixed { size });
     style.setHeight(Style::PreferredSize::Fixed { size });
-    style.setBorderRadius({ static_cast<int>(size / 2), static_cast<int>(size / 2) });
+
+    auto radius = Style::LengthPercentage<CSS::Nonnegative>::Dimension { std::trunc(size / 2.0f) };
+    style.setBorderRadius({ radius, radius });
 }
 
 static void applyCommonNonCapsuleBorderRadiusToStyle(RenderStyle& style)
@@ -251,8 +253,8 @@ static void applyCommonNonCapsuleBorderRadiusToStyle(RenderStyle& style)
     if (style.hasExplicitlySetBorderRadius())
         return;
 
-    constexpr int commonNonCapsuleBorderRadius = 5;
-    style.setBorderRadius({ { commonNonCapsuleBorderRadius, LengthType::Fixed }, { commonNonCapsuleBorderRadius, LengthType::Fixed } });
+    constexpr auto commonNonCapsuleBorderRadius = 5_css_px;
+    style.setBorderRadius({ commonNonCapsuleBorderRadius, commonNonCapsuleBorderRadius });
 }
 
 void RenderThemeIOS::adjustTextFieldStyle(RenderStyle& style, const Element* element) const
@@ -426,15 +428,19 @@ void RenderThemeIOS::adjustRoundBorderRadius(RenderStyle& style, RenderBox& box)
     auto minDimension = std::min(box.width(), box.height());
 
     if ((is<RenderButton>(box) || is<RenderMenuList>(box)) && boxLogicalHeight >= largeButtonSize) {
-        auto largeButtonBorderRadius = minDimension * largeButtonBorderRadiusRatio;
-        style.setBorderRadius({ { largeButtonBorderRadius, LengthType::Fixed }, { largeButtonBorderRadius, LengthType::Fixed } });
+        auto largeButtonBorderRadius = Style::LengthPercentage<CSS::Nonnegative>::Dimension { minDimension * largeButtonBorderRadiusRatio };
+        style.setBorderRadius({ largeButtonBorderRadius, largeButtonBorderRadius });
         return;
     }
 
     // FIXME: We should not be relying on border radius for the appearance of our controls <rdar://problem/7675493>.
-    auto borderRadius = LengthSize { { minDimension / 2, LengthType::Fixed }, { boxLogicalHeight / 2, LengthType::Fixed } };
+    auto borderRadius = Style::BorderRadiusValue {
+        Style::LengthPercentage<CSS::Nonnegative>::Dimension { minDimension / 2 },
+        Style::LengthPercentage<CSS::Nonnegative>::Dimension { boxLogicalHeight / 2 },
+    };
     if (!style.writingMode().isHorizontal())
-        borderRadius = { borderRadius.height, borderRadius.width };
+        borderRadius = { borderRadius.height(), borderRadius.width() };
+
     style.setBorderRadius(WTFMove(borderRadius));
 }
 
@@ -636,8 +642,8 @@ void RenderThemeIOS::paintMenuListButtonDecorations(const RenderBox& box, const 
     context.fillPath(glyphPath);
 }
 
-constexpr CGFloat kTrackThickness = 4.0;
-constexpr CGFloat kTrackRadius = kTrackThickness / 2.0;
+constexpr auto defaultTrackThickness = 4.0;
+constexpr auto defaultTrackRadius = defaultTrackThickness / 2.0;
 constexpr auto defaultSliderThumbSize = 16_css_px;
 
 void RenderThemeIOS::adjustSliderTrackStyle(RenderStyle& style, const Element* element) const
@@ -652,8 +658,8 @@ void RenderThemeIOS::adjustSliderTrackStyle(RenderStyle& style, const Element* e
     RenderTheme::adjustSliderTrackStyle(style, element);
 
     // FIXME: We should not be relying on border radius for the appearance of our controls <rdar://problem/7675493>.
-    int radius = static_cast<int>(kTrackRadius);
-    style.setBorderRadius({ { radius, LengthType::Fixed }, { radius, LengthType::Fixed } });
+    constexpr auto radius = Style::LengthPercentage<CSS::Nonnegative>::Dimension { defaultTrackRadius };
+    style.setBorderRadius({ radius, radius });
 }
 
 constexpr auto nativeControlBorderInlineSize = 1.0f;
@@ -682,8 +688,8 @@ bool RenderThemeIOS::paintSliderTrack(const RenderObject& box, const PaintInfo& 
             trackClip.setWidth(trackClip.width() - 2);
             trackClip.setX(trackClip.x() + 1);
         }
-        trackClip.setHeight(kTrackThickness);
-        trackClip.setY(rect.y() + rect.height() / 2 - kTrackThickness / 2);
+        trackClip.setHeight(defaultTrackThickness);
+        trackClip.setY(rect.y() + rect.height() / 2 - defaultTrackThickness / 2);
         break;
     case StyleAppearance::SliderVertical:
         isHorizontal = false;
@@ -692,8 +698,8 @@ bool RenderThemeIOS::paintSliderTrack(const RenderObject& box, const PaintInfo& 
             trackClip.setHeight(trackClip.height() - 2);
             trackClip.setY(trackClip.y() + 1);
         }
-        trackClip.setWidth(kTrackThickness);
-        trackClip.setX(rect.x() + rect.width() / 2 - kTrackThickness / 2);
+        trackClip.setWidth(defaultTrackThickness);
+        trackClip.setX(rect.x() + rect.width() / 2 - defaultTrackThickness / 2);
         break;
     default:
         ASSERT_NOT_REACHED();
@@ -701,8 +707,8 @@ bool RenderThemeIOS::paintSliderTrack(const RenderObject& box, const PaintInfo& 
 
     auto styleColorOptions = box.styleColorOptions();
 
-    auto cornerWidth = trackClip.width() < kTrackThickness ? trackClip.width() / 2.0f : kTrackRadius;
-    auto cornerHeight = trackClip.height() < kTrackThickness ? trackClip.height() / 2.0f : kTrackRadius;
+    auto cornerWidth = trackClip.width() < defaultTrackThickness ? trackClip.width() / 2.0f : defaultTrackRadius;
+    auto cornerHeight = trackClip.height() < defaultTrackThickness ? trackClip.height() / 2.0f : defaultTrackRadius;
 
     FloatRoundedRect::Radii cornerRadii(cornerWidth, cornerHeight);
     FloatRoundedRect innerBorder(trackClip, cornerRadii);
@@ -752,7 +758,7 @@ void RenderThemeIOS::adjustSliderThumbSize(RenderStyle& style, const Element* el
         return;
 
     // Enforce "border-radius: 50%".
-    style.setBorderRadius({ { 50, LengthType::Percent }, { 50, LengthType::Percent } });
+    style.setBorderRadius({ 50_css_percentage, 50_css_percentage });
 
     // Enforce a 16x16 size if no size is provided.
     if (style.width().isIntrinsicOrLegacyIntrinsicOrAuto() || style.height().isAuto()) {

@@ -172,7 +172,8 @@ struct string_generator {
 //
 // On a table of size N, keep deleting the LRU entry and add a random one.
 void BM_CacheInSteadyState(benchmark::State& state) {
-  absl::InsecureBitGen rng;
+  std::random_device rd;
+  std::mt19937 rng(rd());
   string_generator gen{12};
   StringTable t;
   std::deque<std::string> keys;
@@ -249,7 +250,8 @@ void BM_EndComparison(benchmark::State& state) {
 BENCHMARK(BM_EndComparison);
 
 void BM_Iteration(benchmark::State& state) {
-  absl::InsecureBitGen rng;
+  std::random_device rd;
+  std::mt19937 rng(rd());
   string_generator gen{12};
   StringTable t;
 
@@ -291,7 +293,8 @@ BENCHMARK(BM_Iteration)
     ->ArgPair(1000, 10);
 
 void BM_CopyCtorSparseInt(benchmark::State& state) {
-  absl::InsecureBitGen rng;
+  std::random_device rd;
+  std::mt19937 rng(rd());
   IntTable t;
   std::uniform_int_distribution<uint64_t> dist(0, ~uint64_t{});
 
@@ -309,7 +312,8 @@ void BM_CopyCtorSparseInt(benchmark::State& state) {
 BENCHMARK(BM_CopyCtorSparseInt)->Range(1, 4096);
 
 void BM_CopyCtorInt(benchmark::State& state) {
-  absl::InsecureBitGen rng;
+  std::random_device rd;
+  std::mt19937 rng(rd());
   IntTable t;
   std::uniform_int_distribution<uint64_t> dist(0, ~uint64_t{});
 
@@ -326,7 +330,8 @@ void BM_CopyCtorInt(benchmark::State& state) {
 BENCHMARK(BM_CopyCtorInt)->Range(0, 4096);
 
 void BM_CopyCtorString(benchmark::State& state) {
-  absl::InsecureBitGen rng;
+  std::random_device rd;
+  std::mt19937 rng(rd());
   StringTable t;
   std::uniform_int_distribution<uint64_t> dist(0, ~uint64_t{});
 
@@ -343,7 +348,8 @@ void BM_CopyCtorString(benchmark::State& state) {
 BENCHMARK(BM_CopyCtorString)->Range(0, 4096);
 
 void BM_CopyAssign(benchmark::State& state) {
-  absl::InsecureBitGen rng;
+  std::random_device rd;
+  std::mt19937 rng(rd());
   IntTable t;
   std::uniform_int_distribution<uint64_t> dist(0, ~uint64_t{});
   while (t.size() < state.range(0)) {
@@ -359,7 +365,8 @@ void BM_CopyAssign(benchmark::State& state) {
 BENCHMARK(BM_CopyAssign)->Range(128, 4096);
 
 void BM_RangeCtor(benchmark::State& state) {
-  absl::InsecureBitGen rng;
+  std::random_device rd;
+  std::mt19937 rng(rd());
   std::uniform_int_distribution<uint64_t> dist(0, ~uint64_t{});
   std::vector<int> values;
   const size_t desired_size = state.range(0);
@@ -411,17 +418,7 @@ void BM_ReserveIntTable(benchmark::State& state) {
     }
   }
 }
-BENCHMARK(BM_ReserveIntTable)
-    ->Arg(1)
-    ->Arg(2)
-    ->Arg(4)
-    ->Arg(8)
-    ->Arg(16)
-    ->Arg(32)
-    ->Arg(64)
-    ->Arg(128)
-    ->Arg(256)
-    ->Arg(512);
+BENCHMARK(BM_ReserveIntTable)->Range(1, 64);
 
 void BM_ReserveStringTable(benchmark::State& state) {
   constexpr size_t kBatchSize = 1024;
@@ -440,17 +437,7 @@ void BM_ReserveStringTable(benchmark::State& state) {
     }
   }
 }
-BENCHMARK(BM_ReserveStringTable)
-    ->Arg(1)
-    ->Arg(2)
-    ->Arg(4)
-    ->Arg(8)
-    ->Arg(16)
-    ->Arg(32)
-    ->Arg(64)
-    ->Arg(128)
-    ->Arg(256)
-    ->Arg(512);
+BENCHMARK(BM_ReserveStringTable)->Range(1, 64);
 
 // Like std::iota, except that ctrl_t doesn't support operator++.
 template <typename CtrlIter>

@@ -54,16 +54,16 @@ PROGRESSTRACKER_PROGRESSSTARTED, "ProgressTracker::progressStarted: frameID %" P
 PROGRESSTRACKER_PROGRESSCOMPLETED, "ProgressTracker::progressCompleted: frameID %" PRIu64 ", value %f, tracked frames %d, originating frameID %" PRIu64 ", isMainLoad %d", (uint64_t, double, int, uint64_t, int), DEFAULT, Network
 PROGRESSTRACKER_FINALPROGRESSCOMPLETE, "ProgressTracker::finalProgressComplete: value %f, tracked frames %d, originating frameID %" PRIu64 ", isMainLoad %d, isMainLoadProgressing %d", (double, int, uint64_t, int, int), DEFAULT, Network
 
-FRAMELOADER_SETPROVISIONALDOCUMENTLOADER, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::setProvisionalDocumentLoader: Setting provisional document loader to %lx (was %lx)", (uint64_t, uint64_t, int, uintptr_t, uintptr_t), DEFAULT, ResourceLoading
+FRAMELOADER_SETPROVISIONALDOCUMENTLOADER, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::setProvisionalDocumentLoader: Setting provisional document loader to %" PRIu64 " (was %" PRIu64 ")", (uint64_t, uint64_t, int, uint64_t, uint64_t), DEFAULT, ResourceLoading
 FRAMELOADER_SETSTATE_MAIN_FRAME_LOAD_COMPLETED, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::setState: main frame load completed", (uint64_t, uint64_t, int), DEFAULT, ResourceLoading
-FRAMELOADER_SETPOLICYDOCUMENTLOADER, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::setPolicyDocumentLoader: Setting policy document loader to %lx (was %lx)", (uint64_t, uint64_t, int, uintptr_t, uintptr_t), DEFAULT, ResourceLoading
-FRAMELOADER_TRANSITIONTOCOMMITTED, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::transitionToCommitted: Clearing provisional document loader (m_provisionalDocumentLoader=%lx)", (uint64_t, uint64_t, int, uintptr_t), DEFAULT, ResourceLoading
-FRAMELOADER_SETDOCUMENTLOADER, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::setDocumentLoader: Setting document loader to %lx (was %lx)", (uint64_t, uint64_t, int, uintptr_t, uintptr_t), DEFAULT, ResourceLoading
-FRAMELOADER_STOPALLLOADERS_CLEARING_PROVISIONAL_DOCUMENT_LOADER, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::stopAllLoaders: Clearing provisional document loader (m_provisionalDocumentLoader=%lx)", (uint64_t, uint64_t, int, uintptr_t), DEFAULT, ResourceLoading
+FRAMELOADER_SETPOLICYDOCUMENTLOADER, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::setPolicyDocumentLoader: Setting policy document loader to %" PRIu64 " (was %" PRIu64 ")", (uint64_t, uint64_t, int, uint64_t, uint64_t), DEFAULT, ResourceLoading
+FRAMELOADER_TRANSITIONTOCOMMITTED, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::transitionToCommitted: Clearing provisional document loader (m_provisionalDocumentLoader=%" PRIu64 ")", (uint64_t, uint64_t, int, uint64_t), DEFAULT, ResourceLoading
+FRAMELOADER_SETDOCUMENTLOADER, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::setDocumentLoader: Setting document loader to %" PRIu64 " (was %" PRIu64 ")", (uint64_t, uint64_t, int, uint64_t, uint64_t), DEFAULT, ResourceLoading
+FRAMELOADER_STOPALLLOADERS_CLEARING_PROVISIONAL_DOCUMENT_LOADER, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::stopAllLoaders: Clearing provisional document loader (m_provisionalDocumentLoader=%" PRIu64 ")", (uint64_t, uint64_t, int, uint64_t), DEFAULT, ResourceLoading
 FRAMELOADER_LOADWITHDOCUMENTLOADER_FRAME_LOAD_STARTED, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::loadWithDocumentLoader: frame load started", (uint64_t, uint64_t, int), DEFAULT, ResourceLoading
 FRAMELOADER_LOADWITHDOCUMENTLOADER_MAIN_FRAME_LOAD_STARTED, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::loadWithDocumentLoader: main frame load started", (uint64_t, uint64_t, int), DEFAULT, ResourceLoading
-FRAMELOADER_STOPALLLOADERS, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::stopAllLoaders: m_provisionalDocumentLoader=%lx, m_documentLoader=%lx", (uint64_t, uint64_t, int, uintptr_t, uintptr_t), DEFAULT, ResourceLoading
-FRAMELOADER_CONTINUELOADAFTERNAVIGATIONPOLICY, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::continueLoadAfterNavigationPolicy: Setting provisional document loader (m_provisionalDocumentLoader=%lx)", (uint64_t, uint64_t, int, uintptr_t), DEFAULT, ResourceLoading
+FRAMELOADER_STOPALLLOADERS, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::stopAllLoaders: m_provisionalDocumentLoader=%" PRIu64 ", m_documentLoader=%" PRIu64 "", (uint64_t, uint64_t, int, uint64_t, uint64_t), DEFAULT, ResourceLoading
+FRAMELOADER_CONTINUELOADAFTERNAVIGATIONPOLICY, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::continueLoadAfterNavigationPolicy: Setting provisional document loader (m_provisionalDocumentLoader=%" PRIu64 ")", (uint64_t, uint64_t, int, uint64_t), DEFAULT, ResourceLoading
 FRAMELOADER_PREPAREFORLOADSTART, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::prepareForLoadStart: Starting frame load", (uint64_t, uint64_t, int), DEFAULT, ResourceLoading
 FRAMELOADER_CHANGELOCATION, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::changeLocation: frame load started", (uint64_t, uint64_t, int), DEFAULT, ResourceLoading
 FRAMELOADER_LOADFRAMEREQUEST_FRAME_LOAD_STARTED, "[pageID=%" PRIu64 " frameID=%" PRIu64 " isMainFrame=%d] FrameLoader::loadFrameRequest: frame load started", (uint64_t, uint64_t, int), DEFAULT, ResourceLoading
@@ -121,7 +121,7 @@ HTMLMEDIAELEMENT_MEDIAENGINEWASUPDATED, "HTMLMediaElement::mediaEngineWasUpdated
 HTMLVIDEOELEMENT_MEDIAPLAYERRENDERINGMODECHANGED, "HTMLVideoElement::mediaPlayerRenderingModeChanged(%" PRIX64 ")", (uint64_t), DEFAULT, Media
 
 PERFORMANCELOGGING_MEMORY_USAGE_INFO, "Memory usage info dump at %s:", (CString), DEFAULT, PerformanceLogging
-PERFORMANCELOGGING_MEMORY_USAGE_FOR_KEY, "  %s: %zu", (CString, size_t), DEFAULT, PerformanceLogging
+PERFORMANCELOGGING_MEMORY_USAGE_FOR_KEY, "  %s: %llu", (CString, uint64_t), DEFAULT, PerformanceLogging
 
 PERFORMANCEMONITOR_MEASURE_POSTLOAD_CPUUSAGE, "PerformanceMonitor::measurePostLoadCPUUsage: Process was using %.1f%% CPU after the page load.", (double), DEFAULT, PerformanceLogging
 PERFORMANCEMONITOR_MEASURE_POSTLOAD_MEMORYUSAGE, "PerformanceMonitor::measurePostLoadMemoryUsage: Process was using %" PRIu64 " bytes of memory after the page load.", (uint64_t), DEFAULT, PerformanceLogging
@@ -137,5 +137,8 @@ LOCALFRAMEVIEW_FIRING_RESIZE_EVENTS_DISABLED_FOR_PAGE, "[pageID=%" PRIu64 ", fra
 LOCALFRAMEVIEW_NOT_PAINTING_LAYOUT_NEEDED, "    [pageID=%" PRIu64 ", frameID=%" PRIu64 ", isMainFrame=%d] LocalFrameView::paintContents: Not painting because render tree needs layout", (uint64_t, uint64_t, int), DEFAULT, Layout
 
 SERVICEWORKERTHREADPROXY_REMOVEFETCH, "ServiceWorkerThreadProxy::removeFetch %llu", (uint64_t), DEFAULT, ServiceWorker
+
+FONTCACHECORETEXT_REGISTER_FONT, "Registering font %{private}s with fontURL %{private}s", (CString, CString), DEFAULT, Fonts
+FONTCACHECORETEXT_REGISTER_ERROR, "Could not register font %{private}s, error %s", (CString, CString), DEFAULT, Fonts
 
 WEBCORE_TEST_LOG, "WebCore log message for testing (%u)", (unsigned), DEFAULT, Testing

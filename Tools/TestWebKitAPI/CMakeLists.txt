@@ -212,6 +212,7 @@ if (ENABLE_WEBCORE)
         Tests/WebCore/IntRectTests.cpp
         Tests/WebCore/IntSizeTests.cpp
         Tests/WebCore/KeyedCoding.cpp
+        Tests/WebCore/LayoutRoundedRectTests.cpp
         Tests/WebCore/LayoutUnitTests.cpp
         Tests/WebCore/MIMESniffer.cpp
         Tests/WebCore/MIMETypeRegistry.cpp

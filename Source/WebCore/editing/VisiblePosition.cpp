@@ -136,7 +136,7 @@ Position VisiblePosition::leftVisuallyDistinctCandidate() const
         CheckedPtr renderer = &box->renderer();
 
         while (true) {
-            if ((renderer->isReplacedOrAtomicInline() || renderer->isBR()) && offset == box->rightmostCaretOffset())
+            if ((renderer->isBlockLevelReplacedOrAtomicInline() || renderer->isBR()) && offset == box->rightmostCaretOffset())
                 return box->isLeftToRightDirection() ? previousVisuallyDistinctCandidate(m_deepPosition) : nextVisuallyDistinctCandidate(m_deepPosition);
 
             if (!renderer->node()) {
@@ -301,7 +301,7 @@ Position VisiblePosition::rightVisuallyDistinctCandidate() const
         CheckedPtr renderer = &box->renderer();
 
         while (true) {
-            if ((renderer->isReplacedOrAtomicInline() || renderer->isBR()) && offset == box->leftmostCaretOffset())
+            if ((renderer->isBlockLevelReplacedOrAtomicInline() || renderer->isBR()) && offset == box->leftmostCaretOffset())
                 return box->isLeftToRightDirection() ? nextVisuallyDistinctCandidate(m_deepPosition) : previousVisuallyDistinctCandidate(m_deepPosition);
 
             if (!renderer->node()) {

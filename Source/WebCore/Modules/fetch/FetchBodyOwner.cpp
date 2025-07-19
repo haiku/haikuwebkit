@@ -68,8 +68,8 @@ void FetchBodyOwner::stop()
 
     if (m_blobLoader) {
         bool isUniqueReference = hasOneRef();
-        if (m_blobLoader->loader)
-            m_blobLoader->loader->stop();
+        if (CheckedPtr loader = m_blobLoader->loader.get())
+            loader->stop();
         // After that point, 'this' may be destroyed, since unsetPendingActivity should have been called.
         ASSERT_UNUSED(isUniqueReference, isUniqueReference || !m_blobLoader);
     }
@@ -275,9 +275,9 @@ void FetchBodyOwner::loadBlob(const Blob& blob, FetchBodyConsumer* consumer)
     }
 
     m_blobLoader.emplace(*this);
-    m_blobLoader->loader = makeUnique<FetchLoader>(*m_blobLoader, consumer);
+    m_blobLoader->loader = makeUnique<FetchLoader>(CheckedRef { *m_blobLoader }.get(), consumer);
 
-    m_blobLoader->loader->start(*protectedScriptExecutionContext(), blob);
+    CheckedRef { *m_blobLoader->loader }->start(*protectedScriptExecutionContext(), blob);
     if (!m_blobLoader->loader->isStarted()) {
         m_body->loadingFailed(Exception { ExceptionCode::TypeError, "Blob loading failed"_s });
         m_blobLoader = std::nullopt;

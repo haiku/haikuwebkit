@@ -106,7 +106,7 @@ public:
 #if ENABLE(MACH_PORT_LAYER_HOSTING)
     WTF::MachSendRightAnnotated sendRightAnnotated() const;
     static RetainPtr<BELayerHierarchyHandle> createHostingHandle(WTF::MachSendRightAnnotated&&);
-    static RetainPtr<BELayerHierarchyHostingTransactionCoordinator> createHostingUpdateCoordinator(const WTF::MachSendRightAnnotated&);
+    static RetainPtr<BELayerHierarchyHostingTransactionCoordinator> createHostingUpdateCoordinator(WTF::MachSendRightAnnotated&&);
     static WTF::MachSendRightAnnotated fence(BELayerHierarchyHostingTransactionCoordinator *);
 #else
     OSObjectPtr<xpc_object_t> xpcRepresentation() const;

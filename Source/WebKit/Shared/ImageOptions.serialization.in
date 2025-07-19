@@ -35,4 +35,5 @@ header: "ImageOptions.h"
     VisibleContentRect,
     FullContentRect,
     TransparentBackground,
+    Accelerated,
 };

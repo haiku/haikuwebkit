@@ -62,12 +62,12 @@ WTF_MAKE_TZONE_OR_ISO_ALLOCATED_IMPL(ServiceWorkerRegistration);
 
 Ref<ServiceWorkerRegistration> ServiceWorkerRegistration::getOrCreate(ScriptExecutionContext& context, Ref<ServiceWorkerContainer>&& container, ServiceWorkerRegistrationData&& data)
 {
-    if (auto* registration = container->registration(data.identifier)) {
+    if (RefPtr registration = container->registration(data.identifier)) {
         ASSERT(!registration->isContextStopped());
-        return *registration;
+        return registration.releaseNonNull();
     }
 
-    auto registration = adoptRef(*new ServiceWorkerRegistration(context, WTFMove(container), WTFMove(data)));
+    Ref registration = adoptRef(*new ServiceWorkerRegistration(context, WTFMove(container), WTFMove(data)));
     registration->suspendIfNeeded();
     return registration;
 }
@@ -157,13 +157,13 @@ void ServiceWorkerRegistration::update(Ref<DeferredPromise>&& promise)
         return;
     }
 
-    auto* newestWorker = getNewestWorker();
+    RefPtr newestWorker = getNewestWorker();
     if (!newestWorker) {
         promise->reject(Exception(ExceptionCode::InvalidStateError, "newestWorker is null"_s));
         return;
     }
 
-    if (auto* serviceWorkerGlobalScope = dynamicDowncast<ServiceWorkerGlobalScope>(scriptExecutionContext()); serviceWorkerGlobalScope && serviceWorkerGlobalScope->serviceWorker().state() == ServiceWorkerState::Installing) {
+    if (RefPtr serviceWorkerGlobalScope = dynamicDowncast<ServiceWorkerGlobalScope>(scriptExecutionContext()); serviceWorkerGlobalScope && serviceWorkerGlobalScope->serviceWorker().state() == ServiceWorkerState::Installing) {
         promise->reject(Exception(ExceptionCode::InvalidStateError, "service worker is installing"_s));
         return;
     }
@@ -329,7 +329,7 @@ void ServiceWorkerRegistration::showNotification(ScriptExecutionContext& context
         }
 #endif
 
-        if (auto* pushEvent = serviceWorkerGlobalScope->pushEvent()) {
+        if (RefPtr pushEvent = serviceWorkerGlobalScope->pushEvent()) {
             auto& globalObject = *JSC::jsCast<JSDOMGlobalObject*>(promise->globalObject());
             auto& jsPromise = *JSC::jsCast<JSC::JSPromise*>(promise->promise());
             pushEvent->waitUntil(DOMPromise::create(globalObject, jsPromise));

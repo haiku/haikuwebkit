@@ -185,7 +185,8 @@ void WebFullScreenManagerProxy::attachToNewClient(WebFullScreenManagerProxyClien
 
 bool WebFullScreenManagerProxy::isFullScreen()
 {
-    return m_client && m_client->isFullScreen();
+    CheckedPtr client = m_client;
+    return client && client->isFullScreen();
 }
 
 bool WebFullScreenManagerProxy::blocksReturnToFullscreenFromPictureInPicture() const

@@ -30,16 +30,17 @@
 #include "NinePieceImage.h"
 #include "RectCorners.h"
 #include "RectEdges.h"
+#include "StyleBorderRadius.h"
 #include "StyleCornerShapeValue.h"
 
 namespace WebCore {
 
-class OutlineValue;
+using namespace CSS::Literals;
 
 class BorderData {
     friend class RenderStyle;
 public:
-    using Radii = RectCorners<LengthSize>;
+    using Radii = Style::BorderRadius;
 
     bool hasBorder() const
     {
@@ -58,7 +59,7 @@ public:
 
     bool hasBorderRadius() const
     {
-        return m_radii.anyOf([](auto& corner) { return !corner.isEmpty(); });
+        return m_radii.anyOf([](auto& corner) { return !Style::isEmpty(corner); });
     }
 
     template<BoxSide side>
@@ -83,7 +84,6 @@ public:
 
     bool isEquivalentForPainting(const BorderData& other, bool currentColorDiffers) const;
 
-    friend bool operator==(const BorderData&, const BorderData&) = default;
 
     const BorderValue& left() const { return m_edges.left(); }
     const BorderValue& right() const { return m_edges.right(); }
@@ -92,10 +92,11 @@ public:
 
     const NinePieceImage& image() const { return m_image; }
 
-    const LengthSize& topLeftRadius() const { return m_radii.topLeft(); }
-    const LengthSize& topRightRadius() const { return m_radii.topRight(); }
-    const LengthSize& bottomLeftRadius() const { return m_radii.bottomLeft(); }
-    const LengthSize& bottomRightRadius() const { return m_radii.bottomRight(); }
+    const Style::BorderRadiusValue& topLeftRadius() const { return m_radii.topLeft(); }
+    const Style::BorderRadiusValue& topRightRadius() const { return m_radii.topRight(); }
+    const Style::BorderRadiusValue& bottomLeftRadius() const { return m_radii.bottomLeft(); }
+    const Style::BorderRadiusValue& bottomRightRadius() const { return m_radii.bottomRight(); }
+    const Style::BorderRadius& radii() const { return m_radii; }
 
     const Style::CornerShapeValue& topLeftCornerShape() const { return m_cornerShapes.topLeft(); }
     const Style::CornerShapeValue& topRightCornerShape() const { return m_cornerShapes.topRight(); }
@@ -104,17 +105,17 @@ public:
 
     void dump(TextStream&, DumpStyleValues = DumpStyleValues::All) const;
 
+    bool operator==(const BorderData&) const = default;
+
 private:
     bool containsCurrentColor() const;
 
     RectEdges<BorderValue> m_edges;
     NinePieceImage m_image;
-    RectCorners<LengthSize> m_radii { LengthSize { LengthType::Fixed, LengthType::Fixed } };
-    RectCorners<Style::CornerShapeValue> m_cornerShapes { Style::CornerShapeValue::round() };
+    Style::BorderRadius m_radii { Style::BorderRadiusValue { 0_css_px, 0_css_px } };
+    Style::CornerShape m_cornerShapes { Style::CornerShapeValue::round() };
 };
 
-WTF::TextStream& operator<<(WTF::TextStream&, const BorderValue&);
-WTF::TextStream& operator<<(WTF::TextStream&, const OutlineValue&);
 WTF::TextStream& operator<<(WTF::TextStream&, const BorderData&);
 
 } // namespace WebCore

@@ -66,7 +66,7 @@ ABSL_NAMESPACE_BEGIN
 //        {"$who", "Bob"},
 //        {"#Noun", "Apples"}});
 //   EXPECT_EQ("Bob bought 5 Apples. Thanks Bob!", s);
-[[nodiscard]] std::string StrReplaceAll(
+ABSL_MUST_USE_RESULT std::string StrReplaceAll(
     absl::string_view s,
     std::initializer_list<std::pair<absl::string_view, absl::string_view>>
         replacements);
@@ -114,7 +114,7 @@ std::string StrReplaceAll(absl::string_view s,
 int StrReplaceAll(
     std::initializer_list<std::pair<absl::string_view, absl::string_view>>
         replacements,
-    std::string* absl_nonnull target);
+    absl::Nonnull<std::string*> target);
 
 // Overload of `StrReplaceAll()` to replace patterns within a given output
 // string *in place* with replacements provided within a container of key/value
@@ -130,7 +130,7 @@ int StrReplaceAll(
 //  EXPECT_EQ("if (ptr &lt; &amp;foo)", s);
 template <typename StrToStrMapping>
 int StrReplaceAll(const StrToStrMapping& replacements,
-                  std::string* absl_nonnull target);
+                  absl::Nonnull<std::string*> target);
 
 // Implementation details only, past this point.
 namespace strings_internal {
@@ -187,8 +187,8 @@ std::vector<ViableSubstitution> FindSubstitutions(
 }
 
 int ApplySubstitutions(absl::string_view s,
-                       std::vector<ViableSubstitution>* absl_nonnull subs_ptr,
-                       std::string* absl_nonnull result_ptr);
+                       absl::Nonnull<std::vector<ViableSubstitution>*> subs_ptr,
+                       absl::Nonnull<std::string*> result_ptr);
 
 }  // namespace strings_internal
 
@@ -204,7 +204,7 @@ std::string StrReplaceAll(absl::string_view s,
 
 template <typename StrToStrMapping>
 int StrReplaceAll(const StrToStrMapping& replacements,
-                  std::string* absl_nonnull target) {
+                  absl::Nonnull<std::string*> target) {
   auto subs = strings_internal::FindSubstitutions(*target, replacements);
   if (subs.empty()) return 0;
 

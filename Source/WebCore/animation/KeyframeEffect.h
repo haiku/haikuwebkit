@@ -98,8 +98,8 @@ public:
     };
 
     struct ComputedKeyframe : BaseComputedKeyframe {
-        UncheckedKeyHashMap<CSSPropertyID, String> styleStrings;
-        UncheckedKeyHashMap<AtomString, String> customStyleStrings;
+        HashMap<CSSPropertyID, String> styleStrings;
+        HashMap<AtomString, String> customStyleStrings;
     };
 
     struct ParsedKeyframe : ComputedKeyframe {
@@ -158,10 +158,10 @@ public:
 
     void computeStyleOriginatedAnimationBlendingKeyframes(const RenderStyle* oldStyle, const RenderStyle& newStyle, const Style::ResolutionContext&);
     const BlendingKeyframes& blendingKeyframes() const { return m_blendingKeyframes; }
-    const UncheckedKeyHashSet<AnimatableCSSProperty>& animatedProperties();
+    const HashSet<AnimatableCSSProperty>& animatedProperties();
     bool animatesProperty(const AnimatableCSSProperty&) const;
-    const UncheckedKeyHashSet<AnimatableCSSProperty>& acceleratedProperties() const { return m_acceleratedProperties; }
-    const UncheckedKeyHashSet<AnimatableCSSProperty>& acceleratedPropertiesWithImplicitKeyframe() const { return m_acceleratedPropertiesWithImplicitKeyframe; }
+    const HashSet<AnimatableCSSProperty>& acceleratedProperties() const { return m_acceleratedProperties; }
+    const HashSet<AnimatableCSSProperty>& acceleratedPropertiesWithImplicitKeyframe() const { return m_acceleratedPropertiesWithImplicitKeyframe; }
 
     bool computeExtentOfTransformAnimation(LayoutRect&) const;
     bool computeTransformedExtentViaTransformList(const FloatRect&, const RenderStyle&, LayoutRect&) const;
@@ -300,9 +300,9 @@ private:
     WeakPtr<Document, WeakPtrImplWithEventTargetData> m_document;
 
     BlendingKeyframes m_blendingKeyframes { };
-    UncheckedKeyHashSet<AnimatableCSSProperty> m_animatedProperties;
-    UncheckedKeyHashSet<AnimatableCSSProperty> m_acceleratedProperties;
-    UncheckedKeyHashSet<AnimatableCSSProperty> m_acceleratedPropertiesWithImplicitKeyframe;
+    HashSet<AnimatableCSSProperty> m_animatedProperties;
+    HashSet<AnimatableCSSProperty> m_acceleratedProperties;
+    HashSet<AnimatableCSSProperty> m_acceleratedPropertiesWithImplicitKeyframe;
     Vector<ParsedKeyframe> m_parsedKeyframes;
     Vector<AcceleratedAction> m_pendingAcceleratedActions;
     RefPtr<Element> m_target;

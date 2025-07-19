@@ -172,3 +172,7 @@ id <_WKFullscreenDelegate> WKPageGetFullscreenDelegate(WKPageRef page)
 #endif
 }
 
+NSDictionary *WKPageGetAccessibilityWebProcessDebugInfo(WKPageRef pageRef)
+{
+    return WebKit::toImpl(pageRef)->getAccessibilityWebProcessDebugInfo();
+}

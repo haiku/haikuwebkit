@@ -167,6 +167,7 @@ private:
 #if ENABLE(RE_DYNAMIC_CONTENT_SCALING)
     std::optional<DynamicContentScalingDisplayList> platformCALayerDynamicContentScalingDisplayList(const PlatformCALayer*) const override;
 #endif
+    OptionSet<ContentsFormat> screenContentsFormats() const override;
 
     TileGridIdentifier m_identifier;
     const CheckedRef<TileController> m_controller;

@@ -90,12 +90,6 @@
 - (void)_handleWebPushAction:(_WKWebPushAction *)webPushAction;
 @end
 
-#if ENABLE(SCREEN_TIME)
-@interface STWebHistory (Staging_140439004)
-- (void)fetchAllHistoryWithCompletionHandler:(void (^)(NSSet<NSURL *> *urls, NSError *error))completionHandler;
-@end
-#endif
-
 class WebsiteDataStoreClient final : public WebKit::WebsiteDataStoreClient {
     WTF_MAKE_TZONE_ALLOCATED_INLINE(WebsiteDataStoreClient);
 public:
@@ -1258,9 +1252,9 @@ struct WKWebsiteData {
     return !!WebKit::NetworkProcessProxy::defaultNetworkProcess();
 }
 
-- (void)_countNonDefaultSessionSets:(void(^)(size_t))completionHandler
+- (void)_countNonDefaultSessionSets:(void(^)(uint64_t))completionHandler
 {
-    _websiteDataStore->countNonDefaultSessionSets([completionHandler = makeBlockPtr(completionHandler)] (size_t count) {
+    _websiteDataStore->countNonDefaultSessionSets([completionHandler = makeBlockPtr(completionHandler)] (uint64_t count) {
         completionHandler(count);
     });
 }

@@ -176,9 +176,8 @@ GstPadProbeReturn RealtimeIncomingSourceGStreamer::handleDownstreamEvent(GstElem
 
     forEachClient([&](auto* appsrc) {
         auto pad = adoptGRef(gst_element_get_static_pad(appsrc, "src"));
-        GRefPtr eventCopy(event);
-        GST_DEBUG_OBJECT(sink, "Forwarding event %" GST_PTR_FORMAT " to client %" GST_PTR_FORMAT, eventCopy.get(), appsrc);
-        gst_pad_push_event(pad.get(), eventCopy.leakRef());
+        GST_DEBUG_OBJECT(sink, "Forwarding event %" GST_PTR_FORMAT " to client %" GST_PTR_FORMAT, event.get(), appsrc);
+        gst_pad_push_event(pad.get(), event.ref());
     });
 
     return GST_PAD_PROBE_OK;

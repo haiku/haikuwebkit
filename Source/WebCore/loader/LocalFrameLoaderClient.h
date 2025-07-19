@@ -30,6 +30,7 @@
 #pragma once
 
 #include "FrameLoaderClient.h"
+#include "IntPoint.h"
 #include "LayoutMilestone.h"
 #include "LinkIcon.h"
 #include "LoaderMalloc.h"

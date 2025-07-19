@@ -26,8 +26,7 @@
 #include "StyleOffsetPosition.h"
 
 #include "CSSPositionValue.h"
-#include "StyleBuilderConverter.h"
-#include "StyleBuilderState.h"
+#include "StyleBuilderChecking.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 #include <wtf/text/TextStream.h>
 
@@ -43,7 +42,7 @@ auto CSSValueConversion<OffsetPosition>::operator()(BuilderState& state, const C
     if (value.valueID() == CSSValueNormal)
         return OffsetPosition { CSS::Keyword::Normal { } };
 
-    RefPtr positionValue = BuilderConverter::requiredDowncast<CSSPositionValue>(state, value);
+    RefPtr positionValue = requiredDowncast<CSSPositionValue>(state, value);
     if (!positionValue)
         return RenderStyle::initialOffsetPosition();
     return OffsetPosition { toStyle(positionValue->position(), state) };

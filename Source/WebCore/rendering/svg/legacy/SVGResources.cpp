@@ -242,15 +242,17 @@ std::unique_ptr<SVGResources> SVGResources::buildCachedResources(const RenderEle
 
     std::unique_ptr<SVGResources> foundResources;
     if (clipperFilterMaskerTags().contains(tagName)) {
-        if (auto* clipPath = dynamicDowncast<ReferencePathOperation>(style.clipPath())) {
-            // FIXME: -webkit-clip-path should support external resources
-            // https://bugs.webkit.org/show_bug.cgi?id=127032
-            AtomString id(clipPath->fragment());
-            if (auto* clipper = getRenderSVGResourceById<LegacyRenderSVGResourceClipper>(treeScope, id))
-                ensureResources(foundResources).setClipper(clipper);
-            else
-                treeScope->addPendingSVGResource(id, element);
-        }
+        WTF::switchOn(style.clipPath(),
+            [&](const Style::ReferencePath& clipPath) {
+                // FIXME: -webkit-clip-path should support external resources
+                // https://bugs.webkit.org/show_bug.cgi?id=127032
+                if (auto* clipper = getRenderSVGResourceById<LegacyRenderSVGResourceClipper>(treeScope, clipPath.fragment()))
+                    ensureResources(foundResources).setClipper(clipper);
+                else
+                    treeScope->addPendingSVGResource(clipPath.fragment(), element);
+            },
+            [&](const auto&) { }
+        );
 
         if (style.hasFilter()) {
             const FilterOperations& filterOperations = style.filter();

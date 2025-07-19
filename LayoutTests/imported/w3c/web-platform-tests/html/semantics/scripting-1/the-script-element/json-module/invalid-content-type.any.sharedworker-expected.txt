@@ -5,4 +5,10 @@ PASS Try importing JSON module with MIME type text/x-json
 PASS Try importing JSON module with MIME type text/json+blah
 PASS Try importing JSON module with MIME type application/blahjson
 PASS Try importing JSON module with MIME type image/json
+PASS Try importing JSON module with MIME type text+json
+PASS Try importing JSON module with MIME type json+json
+FAIL Try importing JSON module with MIME type text/json/json+json assert_unreached: Should have rejected: Import of a JSON module with MIME type text/json/json+json should fail Reached unreachable code
+PASS Try importing JSON module with MIME type text/html;+json
+PASS Try importing JSON module with MIME type text/html+json+xml
+PASS Try importing JSON module with MIME type text/json/json
 

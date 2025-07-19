@@ -108,7 +108,7 @@ enum class DrawsHDRContent : uint8_t {
 };
 
 struct Headroom {
-    constexpr Headroom(float headroom)
+    constexpr explicit Headroom(float headroom)
     {
         this->headroom = headroom;
     }
@@ -123,8 +123,8 @@ struct Headroom {
     float headroom;
 };
 
-constexpr const Headroom Headroom::FromImage = { 0 };
-constexpr const Headroom Headroom::None = { 1 };
+constexpr const Headroom Headroom::FromImage = Headroom { 0 };
+constexpr const Headroom Headroom::None = Headroom { 1 };
 
 #if USE(SKIA)
 enum class StrictImageClamping : bool {

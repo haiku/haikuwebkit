@@ -54,6 +54,7 @@
 #import "WebPageGroup.h"
 #import "WebPageMessages.h"
 #import "WebPageProxy.h"
+#import "WebPreferencesDefaultValues.h"
 #import "WebPreferencesKeys.h"
 #import "WebPrivacyHelpers.h"
 #import "WebProcessCache.h"
@@ -92,6 +93,7 @@
 #import <wtf/cocoa/RuntimeApplicationChecksCocoa.h>
 #import <wtf/cocoa/TypeCastsCocoa.h>
 #import <wtf/spi/cocoa/NSObjCRuntimeSPI.h>
+#import <wtf/spi/cocoa/XTSPI.h>
 #import <wtf/spi/darwin/SandboxSPI.h>
 #import <wtf/spi/darwin/dyldSPI.h>
 #import <wtf/text/TextStream.h>
@@ -187,6 +189,11 @@ SOFT_LINK(BackBoardServices, BKSDisplayBrightnessGetCurrent, float, (), ());
 SOFT_LINK_LIBRARY_OPTIONAL(libAccessibility)
 SOFT_LINK_OPTIONAL(libAccessibility, _AXSReduceMotionAutoplayAnimatedImagesEnabled, Boolean, (), ());
 SOFT_LINK_CONSTANT_MAY_FAIL(libAccessibility, kAXSReduceMotionAutoplayAnimatedImagesChangedNotification, CFStringRef)
+#endif
+
+#if PLATFORM(MAC)
+SOFT_LINK_LIBRARY_WITH_PATH(libFontRegistry, "/System/Library/Frameworks/ApplicationServices.framework/Frameworks/ATS.framework/Versions/A/Resources/")
+SOFT_LINK(libFontRegistry, XTCopyPropertiesForAllFonts, CFArrayRef, (CFSetRef propertyKeys, XTScope scope), (propertyKeys, scope));
 #endif
 
 #define WEBPROCESSPOOL_RELEASE_LOG(channel, fmt, ...) RELEASE_LOG(channel, "%p - WebProcessPool::" fmt, this, ##__VA_ARGS__)
@@ -524,13 +531,21 @@ ALLOW_DEPRECATED_DECLARATIONS_END
             parameters.storageAccessPromptQuirksDomains.add(domain);
     }
 
-    parameters.scriptTelemetryRules = ScriptTelemetryController::sharedSingleton().cachedListData();
+    parameters.scriptTrackingPrivacyRules = ScriptTrackingPrivacyController::sharedSingleton().cachedListData();
 #endif // ENABLE(ADVANCED_PRIVACY_PROTECTIONS)
 
 #if ENABLE(NOTIFY_BLOCKING)
     parameters.notifyState = WTF::map(m_notifyState, [] (auto&& item) {
         return std::make_pair(item.key, item.value);
     });
+#endif
+
+#if ENABLE(INITIALIZE_ACCESSIBILITY_ON_DEMAND)
+    parameters.shouldInitializeAccessibility = m_hasReceivedAXRequestInUIProcess;
+#endif
+
+#if HAVE(LIQUID_GLASS)
+    parameters.isLiquidGlassEnabled = isLiquidGlassEnabled();
 #endif
 }
 
@@ -854,13 +869,11 @@ void WebProcessPool::registerNotificationObservers()
         screenPropertiesChanged();
     }];
 #if HAVE(SUPPORT_HDR_DISPLAY_APIS)
-    [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationShouldBeginSuppressingHighDynamicRangeContentNotification object:NSApp queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
-        m_suppressEDR = true;
-        screenPropertiesChanged();
+    m_didBeginSuppressingHighDynamicRange = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationShouldBeginSuppressingHighDynamicRangeContentNotification object:NSApp queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
+        suppressEDR(true);
     }];
-    [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationShouldEndSuppressingHighDynamicRangeContentNotification object:NSApp queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
-        m_suppressEDR = false;
-        screenPropertiesChanged();
+    m_didEndSuppressingHighDynamicRange = [[NSNotificationCenter defaultCenter] addObserverForName:NSApplicationShouldEndSuppressingHighDynamicRangeContentNotification object:NSApp queue:[NSOperationQueue currentQueue] usingBlock:^(NSNotification *notification) {
+        suppressEDR(false);
     }];
 #endif
 
@@ -993,7 +1006,11 @@ void WebProcessPool::unregisterNotificationObservers()
     [[NSWorkspace.sharedWorkspace notificationCenter] removeObserver:m_accessibilityDisplayOptionsNotificationObserver.get()];
     [[NSNotificationCenter defaultCenter] removeObserver:m_scrollerStyleNotificationObserver.get()];
     [[NSNotificationCenter defaultCenter] removeObserver:m_deactivationObserver.get()];
-    [[NSWorkspace.sharedWorkspace notificationCenter] removeObserver:m_didChangeScreenParametersNotificationObserver.get()];
+    [[NSNotificationCenter defaultCenter] removeObserver:m_didChangeScreenParametersNotificationObserver.get()];
+#if HAVE(SUPPORT_HDR_DISPLAY_APIS)
+    [[NSNotificationCenter defaultCenter] removeObserver:m_didBeginSuppressingHighDynamicRange.get()];
+    [[NSNotificationCenter defaultCenter] removeObserver:m_didEndSuppressingHighDynamicRange.get()];
+#endif
     removeCFNotificationObserver(AppleColorPreferencesChangedNotification, CFNotificationCenterGetDistributedCenter());
     for (auto token : m_openDirectoryNotifyTokens)
         notify_cancel(token);
@@ -1253,13 +1270,10 @@ void WebProcessPool::screenPropertiesChanged()
 #if HAVE(SUPPORT_HDR_DISPLAY)
     if (m_suppressEDR) {
         for (auto& properties : screenProperties.screenDataMap.values()) {
-            constexpr auto maxStudioDisplayHeadroom = 2.f;
-            constexpr auto threeQuartersStudioDisplayHeadroom = 1.5f;
-            constexpr auto halfMaxHeadroomMultiplier = 0.5f;
-            auto maxHeadroom = std::clamp(properties.maxEDRHeadroom * halfMaxHeadroomMultiplier, std::min(properties.maxEDRHeadroom, threeQuartersStudioDisplayHeadroom), maxStudioDisplayHeadroom);
-            properties.currentEDRHeadroom = maxHeadroom;
-            properties.maxEDRHeadroom = maxHeadroom;
-            properties.suppressEDR = m_suppressEDR;
+            constexpr auto maxSuppressedHeadroom = 1.6f;
+            auto suppressedHeadroom = std::min(maxSuppressedHeadroom, properties.currentEDRHeadroom);
+            properties.currentEDRHeadroom = suppressedHeadroom;
+            properties.suppressEDR = true;
         }
     }
 #endif
@@ -1364,6 +1378,19 @@ void WebProcessPool::didRefreshDisplay()
 }
 #endif
 
+void WebProcessPool::suppressEDR(bool suppressEDR)
+{
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    if (m_suppressEDR == suppressEDR)
+        return;
+
+    m_suppressEDR = suppressEDR;
+    screenPropertiesChanged();
+#else
+    UNUSED_PARAM(m_suppressEDR);
+#endif
+}
+
 #if ENABLE(EXTENSION_CAPABILITIES)
 ExtensionCapabilityGranter& WebProcessPool::extensionCapabilityGranter()
 {
@@ -1467,6 +1494,7 @@ String WebProcessPool::platformResourceMonitorRuleListSourceForTesting()
 }
 #endif
 
+#if PLATFORM(MAC)
 static Vector<SandboxExtension::Handle> sandboxExtensionsForUserInstalledFonts(const Vector<URL>& fontPathURLs, std::optional<audit_token_t> auditToken)
 {
     Vector<SandboxExtension::Handle> handles;
@@ -1482,65 +1510,62 @@ static Vector<SandboxExtension::Handle> sandboxExtensionsForUserInstalledFonts(c
     return handles;
 }
 
-static void addUserInstalledFontURLs(NSString *path, HashMap<String, URL>& fontURLs, Vector<URL>& sandboxExtensionURLs)
-{
-    bool didAddFontToMap = false;
-
-    RetainPtr enumerator = [NSFileManager.defaultManager enumeratorAtPath:path];
-
-    for (NSString *font in enumerator.get()) {
-        RetainPtr nsFontURL = [NSURL fileURLWithPath:[path stringByAppendingPathComponent:font]];
-        RetainPtr utType = [UTType typeWithFilenameExtension:nsFontURL.get().pathExtension];
-        if ([utType isSubtypeOfType:UTTypeFont]) {
-            URL fontURL(nsFontURL.get());
-            RetainPtr fontDescriptors = adoptCF(CTFontManagerCreateFontDescriptorsFromURL(bridge_cast(nsFontURL.get())));
-            if (!fontDescriptors)
-                continue;
-            for (CFIndex i = 0; i < CFArrayGetCount(fontDescriptors.get()); ++i) {
-                RetainPtr fontDescriptor = checked_cf_cast<CTFontDescriptorRef>(CFArrayGetValueAtIndex(fontDescriptors.get(), i));
-                if (!fontDescriptor)
-                    continue;
-                RetainPtr fontNameAttribute = adoptCF(checked_cf_cast<CFStringRef>(CTFontDescriptorCopyAttribute(fontDescriptor.get(), kCTFontNameAttribute)));
-                RetainPtr fontDisplayNameAttribute = adoptCF(checked_cf_cast<CFStringRef>(CTFontDescriptorCopyAttribute(fontDescriptor.get(), kCTFontDisplayNameAttribute)));
-                RetainPtr fontFamilyNameAttribute = adoptCF(checked_cf_cast<CFStringRef>(CTFontDescriptorCopyAttribute(fontDescriptor.get(), kCTFontFamilyNameAttribute)));
-                String fontName(fontNameAttribute.get());
-                String fontDisplayName(fontDisplayNameAttribute.get());
-                String fontFamilyName(fontFamilyNameAttribute.get());
-                fontURLs.add(fontName.convertToASCIILowercase(), fontURL);
-                fontURLs.add(fontFamilyName.convertToASCIILowercase(), fontURL);
-                didAddFontToMap = true;
-                RELEASE_LOG(Process, "Registering font name %{private}s, display name %{private}s, family name %{private}s,  with URL %{private}s", fontName.utf8().data(), fontDisplayName.utf8().data(), fontFamilyName.utf8().data(), fontURL.string().utf8().data());
-            }
-        }
-    }
-
-    if (didAddFontToMap) {
-        RetainPtr pathURL = adoptNS([[NSURL alloc] initFileURLWithPath:path isDirectory:YES]);
-        sandboxExtensionURLs.append(URL(pathURL.get()));
-    }
-}
-
 void WebProcessPool::registerUserInstalledFonts(WebProcessProxy& process)
 {
     if (m_userInstalledFontURLs) {
-        process.send(Messages::WebProcess::RegisterFontMap(*m_userInstalledFontURLs, sandboxExtensionsForUserInstalledFonts(*m_sandboxExtensionURLs, process.auditToken())), 0);
+        process.send(Messages::WebProcess::RegisterFontMap(*m_userInstalledFontURLs, *m_userInstalledFontFamilyMap,  sandboxExtensionsForUserInstalledFonts(*m_sandboxExtensionURLs, process.auditToken())), 0);
         return;
     }
 
-    RetainPtr userInstalledFontsPath = [NSHomeDirectory() stringByAppendingPathComponent:@"Library/Fonts"];
-
     HashMap<String, URL> fontURLs;
+    HashMap<String, Vector<String>> fontFamilyMap;
     Vector<URL> sandboxExtensionURLs;
-    addUserInstalledFontURLs(userInstalledFontsPath.get(), fontURLs, sandboxExtensionURLs);
-    addUserInstalledFontURLs(@"/Library/Fonts", fontURLs, sandboxExtensionURLs);
-    addUserInstalledFontURLs(@"/System/Library/AssetsV2/com_apple_MobileAsset_Font7", fontURLs, sandboxExtensionURLs);
 
-    process.send(Messages::WebProcess::RegisterFontMap(fontURLs, sandboxExtensionsForUserInstalledFonts(sandboxExtensionURLs, process.auditToken())), 0);
+    RELEASE_LOG(Process, "WebProcessPool::registerUserInstalledFonts: start registering fonts");
+    RetainPtr requestedProperties = [NSSet setWithArray:@[@"NSFontNameAttribute", @"NSFontFamilyAttribute", @"NSCTFontFileURLAttribute", @"NSCTFontUserInstalledAttribute"]];
+    RetainPtr fontProperties = adoptCF(XTCopyPropertiesForAllFonts(bridge_cast(requestedProperties.get()), kXTScopeAll));
+    if (!fontProperties)
+        return;
+    for (CFIndex i = 0; i < CFArrayGetCount(fontProperties.get()); ++i) {
+        RetainPtr fontDictionary = checked_cf_cast<CFDictionaryRef>(CFArrayGetValueAtIndex(fontProperties.get(), i));
+        if (!fontDictionary)
+            continue;
+        RetainPtr cfFontURL = checked_cf_cast<CFURLRef>(CFDictionaryGetValue(fontDictionary.get(), CFSTR("NSCTFontFileURLAttribute")));
+        URL fontURL(cfFontURL.get());
+        if (fontURL.string().startsWith("file:///System/Library/Fonts/"_s))
+            continue;
+        if (fontURL.string().startsWith("file:///System/Library/PrivateFrameworks/"_s))
+            continue;
+        RetainPtr fontNameAttribute = checked_cf_cast<CFStringRef>(CFDictionaryGetValue(fontDictionary.get(), CFSTR("NSFontNameAttribute")));
+        RetainPtr fontFamilyNameAttribute = checked_cf_cast<CFStringRef>(CFDictionaryGetValue(fontDictionary.get(), CFSTR("NSFontFamilyAttribute")));
+        String fontName(fontNameAttribute.get());
+        String fontFamilyName(fontFamilyNameAttribute.get());
+        auto fontNameLowerCase = fontName.convertToASCIILowercase();
+        if (fontNameLowerCase.isEmpty())
+            continue;
+        fontURLs.add(fontNameLowerCase, fontURL);
+        auto fontFamilyNameLowerCase = fontFamilyName.convertToASCIILowercase();
+        if (fontFamilyNameLowerCase.isEmpty())
+            continue;
+        auto fontNames = fontFamilyMap.find(fontFamilyNameLowerCase);
+        if (fontNames != fontFamilyMap.end())
+            fontNames->value.append(fontNameLowerCase);
+        else {
+            Vector<String> fontNames { fontNameLowerCase };
+            fontFamilyMap.add(fontFamilyNameLowerCase, WTFMove(fontNames));
+        }
+    }
+    RELEASE_LOG(Process, "WebProcessPool::registerUserInstalledFonts: done registering fonts");
+
+    RetainPtr assetFontURL = adoptNS([[NSURL alloc] initFileURLWithPath:@"/System/Library/AssetsV2/com_apple_MobileAsset_Font7" isDirectory:YES]);
+    sandboxExtensionURLs.append(URL(assetFontURL.get()));
+
+    process.send(Messages::WebProcess::RegisterFontMap(fontURLs, fontFamilyMap, sandboxExtensionsForUserInstalledFonts(sandboxExtensionURLs, process.auditToken())), 0);
     m_userInstalledFontURLs = WTFMove(fontURLs);
+    m_userInstalledFontFamilyMap = WTFMove(fontFamilyMap);
     m_sandboxExtensionURLs = WTFMove(sandboxExtensionURLs);
 }
 
-#if PLATFORM(MAC)
 void WebProcessPool::registerAdditionalFonts(NSArray *fontNames)
 {
     if (!fontNames)
@@ -1548,6 +1573,7 @@ void WebProcessPool::registerAdditionalFonts(NSArray *fontNames)
 
     if (!m_userInstalledFontURLs) {
         m_userInstalledFontURLs = HashMap<String, URL>();
+        m_userInstalledFontFamilyMap = HashMap<String, Vector<String>>();
         m_sandboxExtensionURLs = Vector<URL>();
     }
 
@@ -1566,11 +1592,11 @@ void WebProcessPool::registerAdditionalFonts(NSArray *fontNames)
     for (Ref process : m_processes) {
         if (!process->canSendMessage())
             continue;
-        process->send(Messages::WebProcess::RegisterFontMap(*m_userInstalledFontURLs, sandboxExtensionsForUserInstalledFonts(*m_sandboxExtensionURLs, process->auditToken())), 0);
+        process->send(Messages::WebProcess::RegisterFontMap(*m_userInstalledFontURLs, *m_userInstalledFontFamilyMap, sandboxExtensionsForUserInstalledFonts(*m_sandboxExtensionURLs, process->auditToken())), 0);
     }
 
 }
-#endif
+#endif // PLATFORM(MAC)
 
 static URL fontURLFromName(ASCIILiteral fontName)
 {

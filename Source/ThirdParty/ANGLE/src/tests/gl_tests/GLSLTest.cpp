@@ -593,6 +593,29 @@ TEST_P(GLSLTest, SwizzledChainedAssignIncrement)
     EXPECT_PIXEL_COLOR_EQ(0, 0, GLColor(75, 75, 38, 38));
 }
 
+// This shader uses chained assign-equals ops with swizzle, often reusing the same variable
+// as part of a swizzle, ivec variant
+TEST_P(GLSLTest, SwizzledChainedAssignIncrementIvec)
+{
+    constexpr char kFS[] = R"(
+precision mediump float;
+void main() {
+    ivec2 v = ivec2(1,5);
+    // at the end of next statement, values in
+    // v.x = 12, v.y = 12
+    v.xy += v.yx += v.xy;
+    // v1 and v2, both are initialized with (12,12)
+    ivec2 v1 = v, v2 = v;
+    v1.xy += v2.yx += ++(v.xy);  // v1 = 37, v2 = 25 each
+    v1.xy += v2.yx += (v.xy)++;  // v1 = 75, v2 = 38 each
+    gl_FragColor = vec4(vec2(v1),vec2(v2))/255.;  // 75, 75, 38, 38
+})";
+    ANGLE_GL_PROGRAM(program, essl1_shaders::vs::Simple(), kFS);
+    drawQuad(program, essl1_shaders::PositionAttrib(), 0.5f);
+    ASSERT_GL_NO_ERROR();
+    EXPECT_PIXEL_COLOR_EQ(0, 0, GLColor(75, 75, 38, 38));
+}
+
 TEST_P(GLSLTest, NamelessScopedStructs)
 {
     constexpr char kFS[] = R"(precision mediump float;
@@ -7389,6 +7412,180 @@ TEST_P(GLSLTest_ES31, VaryingTessellationSampleInAndOut)
     ASSERT_GL_NO_ERROR();
 }
 
+// Test that GetProgramiv with tessellation parameters generates an INVALID_OPERATION error when
+// there is no tessellation shader.
+TEST_P(GLSLTest_ES31, ValidateGetProgramivNoTessellationShader)
+{
+    ANGLE_SKIP_TEST_IF(!IsGLExtensionEnabled("GL_EXT_tessellation_shader"));
+
+    constexpr char kVS[] =
+        R"(#version 310 es
+
+        precision highp float;
+        in vec4 inputAttribute;
+
+        void main()
+        {
+            gl_Position = inputAttribute;
+        })";
+
+    constexpr char kFS[] =
+        R"(#version 310 es
+
+        precision highp float;
+        layout(location = 0) out mediump vec4 color;
+
+        void main()
+        {
+            color = vec4(1.0, 0.0, 0.0, 1.0);
+        })";
+
+    ANGLE_GL_PROGRAM(program, kVS, kFS);
+
+    GLint params = 0;
+
+    glGetProgramiv(program, GL_TESS_CONTROL_OUTPUT_VERTICES_EXT, &params);
+    EXPECT_GL_ERROR(GL_INVALID_OPERATION);
+
+    glGetProgramiv(program, GL_TESS_GEN_MODE, &params);
+    EXPECT_GL_ERROR(GL_INVALID_OPERATION);
+
+    glGetProgramiv(program, GL_TESS_GEN_SPACING, &params);
+    EXPECT_GL_ERROR(GL_INVALID_OPERATION);
+}
+
+// Test that GetProgramiv with tessellation parameters generates an INVALID_OPERATION error when
+// there is no tessellation control shader.
+TEST_P(GLSLTest_ES31, ValidateGetProgramivNoTessellationControlShader)
+{
+    ANGLE_SKIP_TEST_IF(!IsGLExtensionEnabled("GL_EXT_tessellation_shader"));
+
+    constexpr char kVS[] =
+        R"(#version 310 es
+
+        precision highp float;
+        in vec4 inputAttribute;
+
+        void main()
+        {
+            gl_Position = inputAttribute;
+        })";
+
+    static const char kTES[] =
+        "#version 310 es\n"
+        "#extension GL_EXT_tessellation_shader : require\n"
+        "layout(triangles, fractional_even_spacing, cw, point_mode) in;\n"
+        "void main(void)\n"
+        "{}";
+
+    constexpr char kFS[] =
+        R"(#version 310 es
+
+        precision highp float;
+        layout(location = 0) out mediump vec4 color;
+
+        void main()
+        {
+            color = vec4(1.0, 0.0, 0.0, 1.0);
+        })";
+
+    GLuint vs      = CompileShader(GL_VERTEX_SHADER, kVS);
+    GLuint tes     = CompileShader(GL_TESS_EVALUATION_SHADER, kTES);
+    GLuint fs      = CompileShader(GL_FRAGMENT_SHADER, kFS);
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vs);
+    glAttachShader(program, tes);
+    glAttachShader(program, fs);
+    glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_TRUE);
+    glLinkProgram(program);
+    ASSERT_GL_NO_ERROR();
+
+    GLint params = 0;
+
+    glGetProgramiv(program, GL_TESS_CONTROL_OUTPUT_VERTICES_EXT, &params);
+    EXPECT_GL_ERROR(GL_INVALID_OPERATION);
+
+    glGetProgramiv(program, GL_TESS_GEN_MODE, &params);
+    EXPECT_EQ(static_cast<GLint>(GL_TRIANGLES), params);
+    glGetProgramiv(program, GL_TESS_GEN_SPACING, &params);
+    EXPECT_EQ(static_cast<GLint>(GL_FRACTIONAL_EVEN), params);
+
+    glDetachShader(program, vs);
+    glDetachShader(program, tes);
+    glDetachShader(program, fs);
+    glDeleteShader(vs);
+    glDeleteShader(tes);
+    glDeleteShader(fs);
+    glDeleteProgram(program);
+    ASSERT_GL_NO_ERROR();
+}
+
+// Test that GetProgramiv with tessellation parameters generates an INVALID_OPERATION error when
+// there is no tessellation evaluation shader.
+TEST_P(GLSLTest_ES31, ValidateGetProgramivNoTessellationEvaluationShader)
+{
+    ANGLE_SKIP_TEST_IF(!IsGLExtensionEnabled("GL_EXT_tessellation_shader"));
+
+    constexpr char kVS[] =
+        R"(#version 310 es
+
+        precision highp float;
+        in vec4 inputAttribute;
+
+        void main()
+        {
+            gl_Position = inputAttribute;
+        })";
+
+    static const char kTCS[] =
+        "#version 310 es\n"
+        "#extension GL_EXT_tessellation_shader : require\n"
+        "layout(vertices = 3) out;\n"
+        "void main(void)\n"
+        "{}";
+
+    constexpr char kFS[] =
+        R"(#version 310 es
+
+        precision highp float;
+        layout(location = 0) out mediump vec4 color;
+
+        void main()
+        {
+            color = vec4(1.0, 0.0, 0.0, 1.0);
+        })";
+
+    GLuint vs      = CompileShader(GL_VERTEX_SHADER, kVS);
+    GLuint tcs     = CompileShader(GL_TESS_CONTROL_SHADER, kTCS);
+    GLuint fs      = CompileShader(GL_FRAGMENT_SHADER, kFS);
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vs);
+    glAttachShader(program, tcs);
+    glAttachShader(program, fs);
+    glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_TRUE);
+    glLinkProgram(program);
+    ASSERT_GL_NO_ERROR();
+
+    GLint params = 0;
+    glGetProgramiv(program, GL_TESS_CONTROL_OUTPUT_VERTICES_EXT, &params);
+    EXPECT_EQ(3, params);
+
+    glGetProgramiv(program, GL_TESS_GEN_MODE, &params);
+    EXPECT_GL_ERROR(GL_INVALID_OPERATION);
+
+    glGetProgramiv(program, GL_TESS_GEN_SPACING, &params);
+    EXPECT_GL_ERROR(GL_INVALID_OPERATION);
+
+    glDetachShader(program, vs);
+    glDetachShader(program, tcs);
+    glDetachShader(program, fs);
+    glDeleteShader(vs);
+    glDeleteShader(tcs);
+    glDeleteShader(fs);
+    glDeleteProgram(program);
+    ASSERT_GL_NO_ERROR();
+}
+
 // Test that `smooth sample` and `flat sample` pass the validation.
 TEST_P(GLSLTest_ES3, AliasedSampleQualifiers)
 {
@@ -10765,6 +10962,43 @@ void main()
     ASSERT_NE(uloc, -1);
     glUniform2f(uloc, 0, 1);
     drawQuad(program, essl3_shaders::PositionAttrib(), 0.5f);
+    EXPECT_PIXEL_COLOR_EQ(0, 0, GLColor::white);
+}
+
+// Test that modf(u, v.x) works correctly.
+TEST_P(GLSLTest_ES3, ModFIntegerToSwizzle)
+{
+    constexpr char kFS[] = R"(#version 300 es
+precision highp float;
+out vec4 o;
+uniform vec2 u;
+bool isEq(vec2 a, vec2 b) { return all(lessThan(abs(a-b), vec2(0.001))); }
+void main()
+{
+    vec4 i1;
+    vec2 r1 = modf(u, i1.xy);
+    vec2 r2;
+    r2.x = modf(u.x, i1.z);
+    r2.y = modf(u.y, i1.w);
+    vec2 i2;
+    vec2 r4 = modf(u, i2.yx);
+
+    o = vec4(0.0, 0.0, 0.0, 1.0);
+    if (isEq(r1, vec2(0.14, 0.15)) && isEq(i1.xy, vec2(3.0, 4.0)))
+        o.r = 1.0;
+    if (isEq(r2, vec2(0.14, 0.15)) && isEq(i1.zw, vec2(3.0, 4.0)))
+        o.g = 1.0;
+    if (isEq(r4, vec2(0.14, 0.15)) && isEq(i2, vec2(4.0, 3.0)))
+        o.b = 1.0;
+})";
+    ANGLE_GL_PROGRAM(program, essl3_shaders::vs::Simple(), kFS);
+    glUseProgram(program);
+    ASSERT_GL_NO_ERROR();
+    GLint uloc = glGetUniformLocation(program, "u");
+    ASSERT_NE(uloc, -1);
+    glUniform2f(uloc, 3.14f, 4.15f);
+    drawQuad(program, essl3_shaders::PositionAttrib(), 0.5f);
+    ASSERT_GL_NO_ERROR();
     EXPECT_PIXEL_COLOR_EQ(0, 0, GLColor::white);
 }
 
@@ -15885,6 +16119,66 @@ void main() {
     GLint compileResult;
     glGetShaderiv(shader, GL_COMPILE_STATUS, &compileResult);
     EXPECT_NE(compileResult, 0);
+}
+
+// Test that separable program with multiple shaders with mismatching shader interface works.
+TEST_P(GLSLTest_ES31, SeparableProgramWithMismatchingShaderInterface)
+{
+    ANGLE_SKIP_TEST_IF(!IsVulkan());
+    constexpr char kVS[] =
+        "#version 300 es\n"
+        "in vec4 a_position;\n"
+        "out float out_val;\n"
+        "void main()\n"
+        "{\n"
+        "    gl_Position = a_position;\n"
+        "}\n";
+
+    constexpr char kFS[] =
+        "#version 300 es\n"
+        "precision highp float;\n"
+        "out vec4 fragColor;\n"
+        "void main()\n"
+        "{\n"
+        "    fragColor = vec4(1.0, 0.0, 0.0, 1.0);\n"
+        "}\n";
+
+    GLuint vs      = CompileShader(GL_VERTEX_SHADER, kVS);
+    GLuint fs      = CompileShader(GL_FRAGMENT_SHADER, kFS);
+    GLuint program = glCreateProgram();
+    glAttachShader(program, vs);
+    glAttachShader(program, fs);
+
+    glProgramParameteri(program, GL_PROGRAM_SEPARABLE, GL_TRUE);
+    glLinkProgram(program);
+    EXPECT_GL_NO_ERROR();
+
+    GLuint pipeline = 0;
+    glGenProgramPipelines(1, &pipeline);
+    glBindProgramPipeline(pipeline);
+    glUseProgramStages(pipeline, GL_VERTEX_SHADER_BIT, program);
+    glUseProgramStages(pipeline, GL_FRAGMENT_SHADER_BIT, program);
+
+    std::array<Vector3, 6> quadVertices = ANGLETestBase::GetQuadVertices();
+    GLint positionLocation              = glGetAttribLocation(program, "a_position");
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glVertexAttribPointer(positionLocation, 3, GL_FLOAT, GL_FALSE, 0, quadVertices.data());
+    glEnableVertexAttribArray(positionLocation);
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glDisableVertexAttribArray(positionLocation);
+    glVertexAttribPointer(positionLocation, 4, GL_FLOAT, GL_FALSE, 0, nullptr);
+    ASSERT_GL_NO_ERROR();
+    EXPECT_PIXEL_COLOR_EQ(0, 0, GLColor::red);
+    ASSERT_GL_NO_ERROR();
+
+    glDetachShader(program, vs);
+    glDetachShader(program, fs);
+    glDeleteShader(vs);
+    glDeleteShader(fs);
+    glDeleteProgram(program);
+    glDeleteProgramPipelines(1, &pipeline);
+
+    ASSERT_GL_NO_ERROR();
 }
 
 // Regression test based on fuzzer issue resulting in an AST validation failure.  Struct definition

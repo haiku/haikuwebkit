@@ -662,7 +662,7 @@ private:
             // Allocate storage for the dense dominance matrix. 
             m_results.grow(numBlocks);
             for (unsigned i = numBlocks; i--;)
-                m_results[i].resize(numBlocks);
+                m_results[i].grow(numBlocks);
             m_scratch.resize(numBlocks);
 
             // We know that the entry block is only dominated by itself.

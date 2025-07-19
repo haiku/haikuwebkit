@@ -98,9 +98,9 @@ public:
     ~CurrentEventScope();
 
 private:
-    RetainPtr<WebEvent> m_savedCurrentEvent;
+    const RetainPtr<WebEvent> m_savedCurrentEvent;
 #if ASSERT_ENABLED
-    RetainPtr<WebEvent> m_event;
+    const RetainPtr<WebEvent> m_event;
 #endif
 };
 
@@ -191,7 +191,7 @@ void EventHandler::focusDocumentView()
     }
 
     RELEASE_ASSERT(page == m_frame->page());
-    page->checkedFocusController()->setFocusedFrame(protectedFrame().ptr());
+    page->focusController().setFocusedFrame(protectedFrame().ptr());
 }
 
 bool EventHandler::passWidgetMouseDownEventToWidget(const MouseEventWithHitTestResults& event)

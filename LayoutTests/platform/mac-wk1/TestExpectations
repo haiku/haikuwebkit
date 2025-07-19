@@ -54,6 +54,9 @@ imported/w3c/web-platform-tests/webcodecs [ Skip ]
 # Features not supported in WebKit1
 #//////////////////////////////////////////////////////////////////////////////////////////
 
+# Below test not suppored because it uses navigator.locks.query()
+fast/css/vertical-align-rem-on-root.html [ Skip ]
+
 fast/css-custom-paint [ Skip ]
 imported/w3c/web-platform-tests/css/css-properties-values-api/ [ Skip ]
 css-custom-properties-api [ Skip ]
@@ -1045,6 +1048,7 @@ webkit.org/b/156069 imported/w3c/web-platform-tests/html/semantics/text-level-se
 webkit.org/b/156069 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-area-element/area-download-click.html [ Skip ]
 webkit.org/b/156069 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/iframe_sandbox_anchor_download_allow_downloads.tentative.html [ Skip ]
 webkit.org/b/156069 imported/w3c/web-platform-tests/html/semantics/embedded-content/the-iframe-element/iframe_sandbox_anchor_download_block_downloads.tentative.html [ Skip ]
+webkit.org/b/156069 http/tests/download/iframe-usdz-download.html [ Skip ]
 
 # no support for waitUntilDownloadFinished on WK1.
 http/tests/download/anchor-download-redirect-same-origin-top-level.html [ Skip ]
@@ -1063,7 +1067,6 @@ http/tests/local/blob/navigate-blob.html [ Skip ]
 media/no-fullscreen-when-hidden.html [ Skip ]
 fullscreen/full-screen-enter-while-exiting-fully-mid-completion-handler.html [ Skip ]
 fullscreen/full-screen-enter-while-exiting-mid-completion-handler.html [ Skip ]
-fullscreen/fullscreen-zero-height-element-with-non-zero-children.html [ Skip ]
 
 # Multi-process test
 fullscreen/iframe-fullscreen-system-exit.html [ Skip ]
@@ -1795,6 +1798,11 @@ http/tests/download/convert-cached-load-to-download.html [ Skip ]
 
 # Can't load application/octet-stream in WK1
 http/tests/mime/html-with-nosniff-html.html [ Skip ]
+
+# testRunner.findString function is WK2-only, not implemented for WK1.
+editing/text-iterator/find-in-page-in-hidden-until-found.html [ Skip ]
+editing/text-iterator/find-in-page-in-closed-details.html [ Skip ]
+editing/text-iterator/find-in-page-in-summary-of-closed-details.html [ Skip ]
 
 # dumpPolicyDelegateCallbacks is not supported in DumpRenderTree
 fast/loader/iframe-src-invalid-url.html [ Skip ]
@@ -2895,10 +2903,6 @@ webkit.org/b/270310 [ Sonoma+ ] imported/w3c/web-platform-tests/html/semantics/i
 
 webkit.org/b/270385 [ Sonoma+ ] fast/images/jpegxl-with-color-profile.html [ ImageOnlyFailure ]
 
-# webkit.org/b/270199 [ MacOS WK1 Debug ] fast/frames/lots-of-iframes.html and fast/frames/lots-of-objects.html are consistent/flaky timeouts
-[ Debug ] fast/frames/lots-of-iframes.html [ Pass Timeout ]
-[ Debug ] fast/frames/lots-of-objects.html [ Pass Timeout ]
-
 webkit.org/b/271423 [ Sonoma+ arm64 ] imported/w3c/web-platform-tests/html/canvas/element/manual/imagebitmap/createImageBitmap-exif-orientation.html [ Failure ]
 webkit.org/b/271423 [ Sonoma+ arm64 ] imported/w3c/web-platform-tests/html/canvas/element/manual/imagebitmap/createImageBitmap-exif-orientation_none.html [ Failure ]
 webkit.org/b/271423 [ Sonoma+ arm64 ] imported/w3c/web-platform-tests/html/canvas/element/manual/imagebitmap/imagebitmap-replication-exif-orientation.html [ Failure ]
@@ -3023,10 +3027,11 @@ webkit.org/b/281594 imported/w3c/web-platform-tests/html/semantics/document-meta
 [ Sequoia+ ] http/tests/cookies/same-site/fetch-after-navigating-iframe-in-cross-origin-page.html [ Failure ]
 [ Sequoia+ ] http/tests/cookies/same-site/popup-cross-site-post.html [ Failure ]
 
-webkit.org/b/283013 [ Sequoia+ ] imported/w3c/web-platform-tests/css/css-color/predefined-011.html [ ImageOnlyFailure ]
-webkit.org/b/283013 [ Sequoia+ ] imported/w3c/web-platform-tests/css/css-color/predefined-012.html [ ImageOnlyFailure ]
-webkit.org/b/283013 [ Sequoia+ ] imported/w3c/web-platform-tests/css/css-color/rec2020-001.html [ ImageOnlyFailure ]
-webkit.org/b/283013 [ Sequoia+ ] imported/w3c/web-platform-tests/css/css-color/relative-currentcolor-rec2020-01.html [ ImageOnlyFailure ]
+# webkit.org/b/283013 (REGRESSION (Sequoia): [ Sequoia wk1 ] 4 WPT tests in css/css-color/*. html are a consistent image failure)
+[ Sequoia+ ] imported/w3c/web-platform-tests/css/css-color/predefined-011.html [ Skip ]
+[ Sequoia+ ] imported/w3c/web-platform-tests/css/css-color/predefined-012.html [ Skip ]
+[ Sequoia+ ] imported/w3c/web-platform-tests/css/css-color/rec2020-001.html [ Skip ]
+[ Sequoia+ ] imported/w3c/web-platform-tests/css/css-color/relative-currentcolor-rec2020-01.html [ Skip ]
 
 # Skipping as this test was added for a fix only intended for WK2.
 webkit.org/b/284068 [ Sequoia+ ] http/tests/download/anchor-download-redirect-cross-origin.html [ Skip ]
@@ -3137,3 +3142,19 @@ http/tests/websocket/tests/hybi/websocket-allowed-setting-cookie-as-third-party-
 webkit.org/b/294301 http/tests/media/hls/hls-audio-tracks-language.html [ Pass Failure ]
 
 http/tests/lockdown-mode [ Skip ]
+
+imported/w3c/web-platform-tests/css/css-transforms/individual-transform/individual-transform-3.html [ ImageOnlyFailure ]
+imported/w3c/web-platform-tests/css/css-images/gradient/conic-gradient-001.html [ ImageOnlyFailure ]
+
+webkit.org/b/295119  imported/w3c/web-platform-tests/css/css-fonts/font-size-adjust-text-orientation.html [ Pass ImageOnlyFailure ]
+
+# # FIXME: Needs bug.
+# fast/forms/indeterminate-progress-inline-height.html [ Failure ]
+# fast/forms/range/slider-mouse-events.html [ Failure ]
+# fast/forms/search/search-zoom-computed-style-height.html [ Failure ]
+# fast/forms/text-control-intrinsic-widths.html [ Failure ]
+# fast/repaint/checkbox-overflow-vertical-rl.html [ Failure ]
+# imported/w3c/web-platform-tests/css/css-color/system-color-consistency.html [ Failure ]
+# imported/w3c/web-platform-tests/html/rendering/widgets/field-sizing-input-number.html [ Failure ]
+# platform/mac/fast/text/line-break-locale.html [ Failure ]
+# fast/forms/appearance-default-button.html [ ImageOnlyFailure ]

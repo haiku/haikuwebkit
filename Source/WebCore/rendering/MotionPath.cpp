@@ -43,40 +43,58 @@ static FloatPoint offsetFromContainer(const RenderObject& renderer, RenderBlock&
     return FloatPoint(FloatPoint(offsetFromContainingBlock) - referenceRect.location());
 }
 
-static FloatRoundedRect containingBlockRectForRenderer(const RenderObject& renderer, RenderBlock& container, const PathOperation& operation)
+static FloatRoundedRect containingBlockRectForRenderer(const RenderObject& renderer, RenderBlock& container, const Style::OffsetPath& offsetPath)
 {
-    auto referenceRect = container.referenceBoxRect(operation.referenceBox());
-    if (is<BoxPathOperation>(operation)) {
-        auto borderShape = BorderShape::shapeForBorderRect(container.style(), LayoutRect(referenceRect));
-        return borderShape.deprecatedPixelSnappedRoundedRect(container.document().deviceScaleFactor());
-    }
-
-    auto snappedRect = snapRectToDevicePixelsIfNeeded(container.referenceBoxRect(operation.referenceBox()), downcast<RenderLayerModelObject>(renderer));
-    return FloatRoundedRect(snappedRect);
+    return WTF::switchOn(offsetPath,
+        [&](const Style::BoxPath& offsetPath) -> FloatRoundedRect {
+            auto referenceBox = offsetPath.referenceBox();
+            auto referenceRect = container.referenceBoxRect(referenceBox);
+            auto borderShape = BorderShape::shapeForBorderRect(container.style(), LayoutRect(referenceRect));
+            return borderShape.deprecatedPixelSnappedRoundedRect(container.document().deviceScaleFactor());
+        },
+        [&](const auto& offsetPath) -> FloatRoundedRect {
+            auto referenceBox = offsetPath.referenceBox();
+            auto snappedRect = snapRectToDevicePixelsIfNeeded(container.referenceBoxRect(referenceBox), downcast<RenderLayerModelObject>(renderer));
+            return FloatRoundedRect { snappedRect };
+        },
+        [&](const CSS::Keyword::None&) -> FloatRoundedRect {
+            RELEASE_ASSERT_NOT_REACHED();
+        }
+    );
 }
 
-static FloatPoint normalPositionForOffsetPath(PathOperation* operation, const FloatRect& referenceRect)
+static FloatPoint normalPositionForOffsetPath(const Style::OffsetPath& offsetPath, const FloatRect& referenceRect)
 {
-    if (is<RayPathOperation>(operation) || is<ShapePathOperation>(operation))
+    if (WTF::holdsAlternative<Style::RayPath>(offsetPath) || WTF::holdsAlternative<Style::BasicShapePath>(offsetPath))
         return referenceRect.center();
     return { };
 }
 
 std::optional<MotionPathData> MotionPath::motionPathDataForRenderer(const RenderElement& renderer)
 {
-    auto pathOperation = renderer.style().offsetPath();
-    if (!is<RenderLayerModelObject>(renderer) || !pathOperation)
+    if (!is<RenderLayerModelObject>(renderer))
         return std::nullopt;
 
-    auto* shapeOperation = dynamicDowncast<ShapePathOperation>(pathOperation);
-    if (shapeOperation && std::holds_alternative<Style::PathFunction>(shapeOperation->shape()))
+    auto& offsetPath = renderer.style().offsetPath();
+    bool canBuildMotionPathData = WTF::switchOn(offsetPath,
+        [](const CSS::Keyword::None&) {
+            return false;
+        },
+        [](const Style::BasicShapePath& offsetPath) {
+            return !std::holds_alternative<Style::PathFunction>(offsetPath.shape());
+        },
+        [](const auto&) {
+            return true;
+        }
+    );
+    if (!canBuildMotionPathData)
         return std::nullopt;
 
     auto startingPositionForOffsetPosition = [&](const Style::OffsetPosition& offsetPosition, const FloatRect& referenceRect, RenderBlock& container) -> FloatPoint {
         return WTF::switchOn(offsetPosition,
             [&](const CSS::Keyword::Normal&) -> FloatPoint {
                 // If offset-position is normal, the element does not have an offset starting position.
-                return normalPositionForOffsetPath(pathOperation, referenceRect);
+                return normalPositionForOffsetPath(offsetPath, referenceRect);
             },
             [&](const CSS::Keyword::Auto&) -> FloatPoint  {
                 // If offset-position is auto, use top / left corner of the box.
@@ -93,17 +111,23 @@ std::optional<MotionPathData> MotionPath::motionPathDataForRenderer(const Render
         return std::nullopt;
 
     MotionPathData data;
-    data.containingBlockBoundingRect = containingBlockRectForRenderer(renderer, *container, *pathOperation);
+    data.containingBlockBoundingRect = containingBlockRectForRenderer(renderer, *container, offsetPath);
     data.offsetFromContainingBlock = offsetFromContainer(renderer, *container, data.containingBlockBoundingRect.rect());
 
-    auto offsetPosition = renderer.style().offsetPosition();
-    if (is<ShapePathOperation>(pathOperation))
-        data.usedStartingPosition = startingPositionForOffsetPosition(offsetPosition, data.containingBlockBoundingRect.rect(), *container);
+    auto& offsetPosition = renderer.style().offsetPosition();
 
-    if (auto* rayPathOperation = dynamicDowncast<RayPathOperation>(pathOperation)) {
-        auto startingPosition = rayPathOperation->ray()->position;
-        data.usedStartingPosition = startingPosition ? Style::evaluate(*startingPosition, data.containingBlockBoundingRect.rect().size()) : startingPositionForOffsetPosition(offsetPosition, data.containingBlockBoundingRect.rect(), *container);
-    }
+    WTF::switchOn(offsetPath,
+        [&](const Style::BasicShapePath&) {
+            data.usedStartingPosition = startingPositionForOffsetPosition(offsetPosition, data.containingBlockBoundingRect.rect(), *container);
+        },
+        [&](const Style::RayPath& offsetPath) {
+            auto startingPosition = offsetPath.ray()->position;
+            data.usedStartingPosition = startingPosition
+                ? Style::evaluate(*startingPosition, data.containingBlockBoundingRect.rect().size())
+                : startingPositionForOffsetPosition(offsetPosition, data.containingBlockBoundingRect.rect(), *container);
+        },
+        [&](const auto&) { }
+    );
 
     return data;
 }
@@ -127,7 +151,7 @@ static PathTraversalState traversalStateAtDistance(const Path& path, const Style
     return path.traversalStateAtLength(resolvedLength);
 }
 
-void MotionPath::applyMotionPathTransform(TransformationMatrix& matrix, const TransformOperationData& transformData, const FloatPoint& transformOrigin, const PathOperation& offsetPath, const Style::OffsetAnchor& offsetAnchor, const Style::OffsetDistance& offsetDistance, const Style::OffsetRotate& offsetRotate, TransformBox transformBox)
+void MotionPath::applyMotionPathTransform(TransformationMatrix& matrix, const TransformOperationData& transformData, const FloatPoint& transformOrigin, const Style::OffsetPath& offsetPath, const Style::OffsetAnchor& offsetAnchor, const Style::OffsetDistance& offsetDistance, const Style::OffsetRotate& offsetRotate, TransformBox transformBox)
 {
     auto boundingBox = transformData.boundingBox;
     auto anchor = transformOrigin;
@@ -139,7 +163,7 @@ void MotionPath::applyMotionPathTransform(TransformationMatrix& matrix, const Tr
     );
 
     // Shift element to the point on path specified by offset-path and offset-distance.
-    auto path = offsetPath.getPath(transformData);
+    auto path = Style::tryPath(offsetPath, transformData);
     if (!path)
         return;
 
@@ -169,17 +193,19 @@ void MotionPath::applyMotionPathTransform(TransformationMatrix& matrix, const Tr
 
 void MotionPath::applyMotionPathTransform(const RenderStyle& style, const TransformOperationData& transformData, TransformationMatrix& matrix)
 {
-    auto* offsetPath = style.offsetPath();
-    if (!offsetPath)
+    auto& offsetPath = style.offsetPath();
+    if (WTF::holdsAlternative<CSS::Keyword::None>(offsetPath))
         return;
 
     auto transformOrigin = style.computeTransformOrigin(transformData.boundingBox).xy();
-    applyMotionPathTransform(matrix, transformData, transformOrigin, *offsetPath, style.offsetAnchor(), style.offsetDistance(), style.offsetRotate(), style.transformBox());
+    applyMotionPathTransform(matrix, transformData, transformOrigin, offsetPath, style.offsetAnchor(), style.offsetDistance(), style.offsetRotate(), style.transformBox());
 }
 
-bool MotionPath::needsUpdateAfterContainingBlockLayout(const PathOperation& pathOperation)
+bool MotionPath::needsUpdateAfterContainingBlockLayout(const Style::OffsetPath& offsetPath)
 {
-    return is<RayPathOperation>(pathOperation) || is<BoxPathOperation>(pathOperation) || is<ShapePathOperation>(pathOperation);
+    return WTF::holdsAlternative<Style::RayPath>(offsetPath)
+        || WTF::holdsAlternative<Style::BoxPath>(offsetPath)
+        || WTF::holdsAlternative<Style::BasicShapePath>(offsetPath);
 }
 
 static double lengthForRayPath(const Style::Ray& ray, const MotionPathData& data)

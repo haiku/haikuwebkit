@@ -24,7 +24,7 @@
 #if ENABLE_SWIFTUI && canImport(Testing) && compiler(>=6.0)
 
 import Testing
-import WebKit
+@_spi(Testing) import WebKit
 
 extension RangeReplaceableCollection {
     fileprivate init<Failure>(
@@ -142,6 +142,40 @@ struct WebPageNavigationTests {
         }
 
         #expect(actualEvents == expectedEvents)
+    }
+
+    @Test
+    func failedNavigationWithWebContentProcessTerminated() async throws {
+        var configuration = WebPage.Configuration()
+        configuration.urlSchemeHandlers[NeverLoadingSchemeHandler.scheme] = NeverLoadingSchemeHandler()
+
+        let page = WebPage(configuration: configuration)
+        let sequence = page.load(URLRequest(url: URL(string: "never-loading:///index.html")!))
+
+        // FIXME: `#expect` should work here, but a Swift Testing issue causes the test to hang.
+        do {
+            for try await event in sequence {
+                if event == .startedProvisionalNavigation {
+                    page.terminateWebContentProcess()
+                }
+            }
+            Issue.record("Terminating the web content process should trigger an error and therefore the loop should never finish.")
+        } catch {
+            #expect(error is WebPage.NavigationError)
+        }
+    }
+
+    @Test
+    func navigationProceedsAfterDiscardingNavigationStream() async throws {
+        let page = WebPage()
+
+        let html = "<title>A title</title>"
+        page.load(html: html, baseURL: .aboutBlank)
+
+        // A timeout is used since observing the navigation sequence itself alters the outcome of this test.
+        try await Task.sleep(for: .seconds(10))
+
+        #expect(page.title == "A title")
     }
 }
 

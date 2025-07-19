@@ -751,21 +751,66 @@ bool isKnownTrackerAddressOrDomain(StringView) { return false; }
 
 #endif
 
-#if USE(APPLE_INTERNAL_SDK) && __has_include(<WebKitAdditions/WebPrivacyHelpersAdditions.mm>)
-#import <WebKitAdditions/WebPrivacyHelpersAdditions.mm>
+void ScriptTrackingPrivacyController::updateList(CompletionHandler<void()>&& completion)
+{
+    ASSERT(RunLoop::isMain());
+#if ENABLE(SCRIPT_TRACKING_PRIVACY_PROTECTIONS)
+    if (!PAL::isWebPrivacyFrameworkAvailable() || ![PAL::getWPResourcesClass() instancesRespondToSelector:@selector(requestFingerprintingScripts:completionHandler:)]) {
+        RunLoop::protectedMain()->dispatch(WTFMove(completion));
+        return;
+    }
+
+    static MainRunLoopNeverDestroyed<Vector<CompletionHandler<void()>, 1>> pendingCompletionHandlers;
+    pendingCompletionHandlers->append(WTFMove(completion));
+    if (pendingCompletionHandlers->size() > 1)
+        return;
+
+    RetainPtr options = adoptNS([PAL::allocWPResourceRequestOptionsInstance() init]);
+    [options setAfterUpdates:NO];
+
+    [[PAL::getWPResourcesClass() sharedInstance] requestFingerprintingScripts:options.get() completionHandler:^(NSArray<WPFingerprintingScript *> *scripts, NSError *error) {
+        auto callCompletionHandlers = makeScopeExit([&] {
+            for (auto& completionHandler : std::exchange(pendingCompletionHandlers.get(), { }))
+                completionHandler();
+        });
+
+        if (error) {
+            RELEASE_LOG_ERROR(ResourceLoadStatistics, "Failed to request known fingerprinting scripts from WebPrivacy: %@", error);
+            return;
+        }
+
+        ScriptTrackingPrivacyRules result;
+        for (WPFingerprintingScript *script in scripts) {
+            if (script.firstParty) {
+                if (script.topDomain)
+                    result.firstPartyTopDomains.append(script.host);
+                else
+                    result.firstPartyHosts.append(script.host);
+            } else {
+                if (script.topDomain)
+                    result.thirdPartyTopDomains.append(script.host);
+                else
+                    result.thirdPartyHosts.append(script.host);
+            }
+        }
+        setCachedListData(WTFMove(result));
+    }];
 #else
-void ScriptTelemetryController::updateList(CompletionHandler<void()>&& completion)
-{
     RunLoop::protectedMain()->dispatch(WTFMove(completion));
-}
 #endif
-
-unsigned ScriptTelemetryController::resourceTypeValue() const
-{
-    return 9;
 }
 
-void ScriptTelemetryController::didUpdateCachedListData()
+WPResourceType ScriptTrackingPrivacyController::resourceType() const
+{
+    return WPResourceTypeFingerprintingScripts;
+}
+
+unsigned ScriptTrackingPrivacyController::resourceTypeValue() const
+{
+    return WPResourceTypeFingerprintingScripts;
+}
+
+void ScriptTrackingPrivacyController::didUpdateCachedListData()
 {
     m_cachedListData.firstPartyTopDomains.shrinkToFit();
     m_cachedListData.firstPartyHosts.shrinkToFit();

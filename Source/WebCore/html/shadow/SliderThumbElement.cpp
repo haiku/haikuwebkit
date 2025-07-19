@@ -138,13 +138,14 @@ void RenderSliderContainer::layout()
     ASSERT(element()->shadowHost());
     Ref input = downcast<HTMLInputElement>(*protectedElement()->shadowHost());
     bool isVertical = hasVerticalAppearance(input);
-    mutableStyle().setFlexDirection(isVertical && writingMode().isHorizontal() ? FlexDirection::Column : FlexDirection::Row);
+    CheckedRef mutableStyle = this->mutableStyle();
+    mutableStyle->setFlexDirection(isVertical && writingMode().isHorizontal() ? FlexDirection::Column : FlexDirection::Row);
     auto oldTextDirection = writingMode().computedTextDirection();
     if (isVertical) {
         // FIXME: Work around rounding issues in RTL vertical sliders. We want them to
         // render identically to LTR vertical sliders. We can remove this work around when
         // subpixel rendering is enabled on all ports.
-        mutableStyle().setDirection(TextDirection::LTR);
+        mutableStyle->setDirection(TextDirection::LTR);
     }
 
     CheckedPtr thumb = input->sliderThumbElement() ? input->protectedSliderThumbElement()->renderBox() : nullptr;
@@ -156,7 +157,7 @@ void RenderSliderContainer::layout()
 
     RenderFlexibleBox::layout();
 
-    mutableStyle().setDirection(oldTextDirection);
+    mutableStyle->setDirection(oldTextDirection);
     // These should always exist, unless someone mutates the shadow DOM (e.g., in the inspector).
     if (!thumb || !track)
         return;
@@ -207,8 +208,8 @@ void SliderThumbElement::setPositionFromValue()
     // Since the code to calculate position is in the RenderSliderThumb layout
     // path, we don't actually update the value here. Instead, we poke at the
     // renderer directly to trigger layout.
-    if (renderer())
-        renderer()->setNeedsLayout();
+    if (CheckedPtr renderer = this->renderer())
+        renderer->setNeedsLayout();
 }
 
 bool SliderThumbElement::isDisabledFormControl() const
@@ -279,7 +280,7 @@ void SliderThumbElement::setPositionFromPoint(const LayoutPoint& absolutePoint)
     auto stepRange = input->createStepRange(AnyStepHandling::Reject);
     auto value = stepRange.clampValue(stepRange.valueFromProportion(fraction));
 
-    const LayoutUnit snappingThreshold = renderer()->theme().sliderTickSnappingThreshold();
+    const LayoutUnit snappingThreshold = checkedRenderer()->theme().sliderTickSnappingThreshold();
     if (snappingThreshold > 0) {
         if (std::optional<Decimal> closest = input->findClosestTickMarkValue(value)) {
             double closestFraction = stepRange.proportionFromValue(*closest).toDouble();
@@ -296,8 +297,8 @@ void SliderThumbElement::setPositionFromPoint(const LayoutPoint& absolutePoint)
 
     // FIXME: This is no longer being set from renderer. Consider updating the method name.
     input->setValueFromRenderer(valueString);
-    if (renderer())
-        renderer()->setNeedsLayout();
+    if (CheckedPtr renderer = this->renderer())
+        renderer->setNeedsLayout();
 }
 
 void SliderThumbElement::startDragging()
@@ -316,8 +317,8 @@ void SliderThumbElement::stopDragging()
     if (RefPtr frame = document().frame())
         frame->eventHandler().setCapturingMouseEventsElement(nullptr);
     m_inDragMode = false;
-    if (renderer())
-        renderer()->setNeedsLayout();
+    if (CheckedPtr renderer = this->renderer())
+        renderer->setNeedsLayout();
 }
 
 void SliderThumbElement::defaultEventHandler(Event& event)

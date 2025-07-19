@@ -108,10 +108,10 @@
         effect = adoptNS([PAL::alloc_WTReplaceSourceTextEffectInstance() initWithChunk:chunk.get() effectView:_effectView.get()]);
 
         effect.get().preCompletion = makeBlockPtr([weakWebView = WeakPtr<WebKit::WebViewImpl>(_webView), uuid = RetainPtr(uuid), runMode = data.runMode] {
-            auto strongWebView = weakWebView.get();
+            CheckedPtr webView = weakWebView.get();
             auto animationID = WTF::UUID::fromNSUUID(uuid.get());
-            if (strongWebView && animationID)
-                strongWebView->page().callCompletionHandlerForAnimationID(*animationID, runMode);
+            if (webView && animationID)
+                webView->page().callCompletionHandlerForAnimationID(*animationID, runMode);
         }).get();
 
         effect.get().completion = makeBlockPtr([weakSelf = WeakObjCPtr<WKTextAnimationManager>(self), uuid = RetainPtr(uuid)] {
@@ -131,16 +131,15 @@
         effect = adoptNS([PAL::alloc_WTReplaceDestinationTextEffectInstance() initWithChunk:chunk.get() effectView:_effectView.get()]);
 
         effect.get().preCompletion = makeBlockPtr([weakWebView = WeakPtr<WebKit::WebViewImpl>(_webView), remainingID = *data.unanimatedRangeUUID] {
-            auto strongWebView = weakWebView.get();
-            if (strongWebView)
-                strongWebView->page().updateUnderlyingTextVisibilityForTextAnimationID(remainingID, false);
+            if (CheckedPtr webView = weakWebView.get())
+                webView->page().updateUnderlyingTextVisibilityForTextAnimationID(remainingID, false);
         }).get();
 
         effect.get().completion = makeBlockPtr([weakSelf = WeakObjCPtr<WKTextAnimationManager>(self), weakWebView = WeakPtr<WebKit::WebViewImpl>(_webView), remainingID = *data.unanimatedRangeUUID, uuid = RetainPtr(uuid), runMode = data.runMode, effect = WeakObjCPtr<id<_WTTextEffect>>(effect.get())] {
             if (auto strongEffect = effect.get())
                 [strongEffect setCompletion:nil];
 
-            auto strongWebView = weakWebView.get();
+            CheckedPtr webView = weakWebView.get();
             auto animationID = WTF::UUID::fromNSUUID(uuid.get());
 
             auto strongSelf = weakSelf.get();
@@ -152,13 +151,13 @@
             if (![strongSelf hasActiveTextAnimationType])
                 [strongSelf hideTextAnimationView];
 
-            if (!strongWebView || !animationID)
+            if (!webView || !animationID)
                 return;
 
-            strongWebView->page().didEndPartialIntelligenceTextAnimationImpl();
+            webView->page().didEndPartialIntelligenceTextAnimationImpl();
 
-            strongWebView->page().updateUnderlyingTextVisibilityForTextAnimationID(remainingID, true);
-            strongWebView->page().callCompletionHandlerForAnimationID(*animationID, runMode);
+            webView->page().updateUnderlyingTextVisibilityForTextAnimationID(remainingID, true);
+            webView->page().callCompletionHandlerForAnimationID(*animationID, runMode);
         }).get();
 
         break;
@@ -246,13 +245,13 @@
         }
 
         RetainPtr textPreviews = adoptNS([[NSMutableArray alloc] initWithCapacity:textIndicator->textRectsInBoundingRectCoordinates().size()]);
-        CGImageRef snapshotPlatformImage = snapshotImage->platformImage().get();
+        RetainPtr snapshotPlatformImage = snapshotImage->platformImage();
         CGRect snapshotRectInBoundingRectCoordinates = textIndicator->textBoundingRectInRootViewCoordinates();
 
         for (auto textRectInSnapshotCoordinates : textIndicator->textRectsInBoundingRectCoordinates()) {
             CGRect textLineFrameInBoundingRectCoordinates = CGRectOffset(textRectInSnapshotCoordinates, snapshotRectInBoundingRectCoordinates.origin.x, snapshotRectInBoundingRectCoordinates.origin.y);
             textRectInSnapshotCoordinates.scale(textIndicator->contentImageScaleFactor());
-            [textPreviews addObject:adoptNS([PAL::alloc_WTTextPreviewInstance() initWithSnapshotImage:adoptCF(CGImageCreateWithImageInRect(snapshotPlatformImage, textRectInSnapshotCoordinates)).get() presentationFrame:textLineFrameInBoundingRectCoordinates]).get()];
+            [textPreviews addObject:adoptNS([PAL::alloc_WTTextPreviewInstance() initWithSnapshotImage:adoptCF(CGImageCreateWithImageInRect(snapshotPlatformImage.get(), textRectInSnapshotCoordinates)).get() presentationFrame:textLineFrameInBoundingRectCoordinates]).get()];
         }
 
         completionHandler(textPreviews.get());
@@ -265,7 +264,7 @@
     WebCore::IntSize bitmapSize(rect.size.width, rect.size.height);
     bitmapSize.scale(deviceScale, deviceScale);
 
-    _webView->page().takeSnapshot(WebCore::IntRect(rect), bitmapSize, WebKit::SnapshotOption::Shareable, [rect, completionHandler = makeBlockPtr(completionHandler)](std::optional<WebCore::ShareableBitmap::Handle>&& imageHandle) {
+    _webView->page().takeSnapshotLegacy(WebCore::IntRect(rect), bitmapSize, WebKit::SnapshotOption::Shareable, [rect, completionHandler = makeBlockPtr(completionHandler)](std::optional<WebCore::ShareableBitmap::Handle>&& imageHandle) {
         if (!imageHandle) {
             completionHandler(nil);
             return;

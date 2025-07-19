@@ -78,7 +78,7 @@ private:
     void sweep();
 
     SingleThreadWeakRef<const Resolver> m_owner;
-    UncheckedKeyHashMap<unsigned, Vector<Entry>, AlreadyHashed> m_entries;
+    HashMap<unsigned, Vector<Entry>, AlreadyHashed> m_entries;
     Timer m_sweepTimer;
     unsigned m_additionsSinceLastSweep { 0 };
 };

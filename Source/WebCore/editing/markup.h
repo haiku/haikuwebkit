@@ -56,7 +56,7 @@ struct SimpleRange;
 
 template<typename> class ExceptionOr;
 
-void replaceSubresourceURLs(Ref<DocumentFragment>&&, UncheckedKeyHashMap<AtomString, AtomString>&&);
+void replaceSubresourceURLs(Ref<DocumentFragment>&&, HashMap<AtomString, AtomString>&&);
 void removeSubresourceURLAttributes(Ref<DocumentFragment>&&, Function<bool(const URL&)> shouldRemoveURL);
 
 Ref<Page> createPageForSanitizingWebContent();
@@ -78,7 +78,7 @@ private:
     enum class State : uint8_t { NotUserSelectNone, Mixed, OnlyUserSelectNone };
     State computeState(Node&);
 
-    UncheckedKeyHashMap<Ref<Node>, State> m_cache;
+    HashMap<Ref<Node>, State> m_cache;
     bool m_useComposedTree;
 };
 

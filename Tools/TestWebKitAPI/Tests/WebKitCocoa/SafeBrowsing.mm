@@ -370,8 +370,7 @@ static Vector<URL> urls;
 
 @end
 
-// FIXME: Re-enable this test once webkit.org/b/292932 is resolved.
-TEST(SafeBrowsing, DISABLED_URLObservation)
+TEST(SafeBrowsing, URLObservation)
 {
     ClassMethodSwizzler swizzler(objc_getClass("SSBLookupContext"), @selector(sharedLookupContext), [TestLookupContext methodForSelector:@selector(sharedLookupContext)]);
 
@@ -789,6 +788,29 @@ TEST(SafeBrowsing, PostResponseInjectedBundleSkipsDecidePolicyForResponse)
     [webView setNavigationDelegate:delegate.get()];
     [webView evaluateJavaScript:@"window.location = 'https://example2.com/test'" completionHandler:nil];
 
+    while (![webView _safeBrowsingWarning])
+        TestWebKitAPI::Util::spinRunLoop();
+}
+
+TEST(SafeBrowsing, PostTimeout)
+{
+    delayDuration = 100_ms;
+    TestWebKitAPI::HTTPServer server({
+        { "/test"_s, { "test"_s } },
+    }, TestWebKitAPI::HTTPServer::Protocol::HttpsProxy);
+    auto configuration = server.httpsProxyConfiguration();
+
+    ClassMethodSwizzler swizzler(objc_getClass("SSBLookupContext"), @selector(sharedLookupContext), [DelayedLookupContext methodForSelector:@selector(sharedLookupContext)]);
+
+    auto webView = adoptNS([[TestWKWebView alloc] initWithFrame:NSMakeRect(0, 0, 800, 600) configuration:configuration]);
+    [webView configuration].preferences.fraudulentWebsiteWarningEnabled = YES;
+    auto delegate = adoptNS([TestNavigationDelegate new]);
+    [delegate allowAnyTLSCertificate];
+    [webView setNavigationDelegate:delegate.get()];
+
+    [webView evaluateJavaScript:@"window.location = 'https://example2.com/test'" completionHandler:nil];
+
+    EXPECT_WK_STREQ([webView title], "");
     while (![webView _safeBrowsingWarning])
         TestWebKitAPI::Util::spinRunLoop();
 }

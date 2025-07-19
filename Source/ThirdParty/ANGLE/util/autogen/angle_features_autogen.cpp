@@ -454,6 +454,7 @@ constexpr PackedEnumMap<Feature, const char *> kFeatureNames = {{
     {Feature::UseResetCommandBufferBitForSecondaryPools, "useResetCommandBufferBitForSecondaryPools"},
     {Feature::UseShadowBuffersWhenAppropriate, "useShadowBuffersWhenAppropriate"},
     {Feature::UsesNativeBuiltinClKernel, "usesNativeBuiltinClKernel"},
+    {Feature::UsesSecondComponentForStencilBorderColor, "usesSecondComponentForStencilBorderColor"},
     {Feature::UseStencilOpDynamicState, "useStencilOpDynamicState"},
     {Feature::UseStencilTestEnableDynamicState, "useStencilTestEnableDynamicState"},
     {Feature::UseSystemMemoryForConstantBuffers, "useSystemMemoryForConstantBuffers"},

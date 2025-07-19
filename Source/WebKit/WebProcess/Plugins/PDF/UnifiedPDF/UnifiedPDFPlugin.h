@@ -97,6 +97,7 @@ public:
     RepaintRequirements finishAnnotationTracking(PDFAnnotation* annotationUnderMouse, WebEventType, WebMouseEventButton);
 
     PDFAnnotation *trackedAnnotation() const { return m_trackedAnnotation.get(); }
+    RetainPtr<PDFAnnotation> protectedTrackedAnnotation() const { return m_trackedAnnotation; }
     bool isBeingHovered() const;
 
 private:
@@ -144,7 +145,7 @@ public:
     WebCore::LocalFrameView* frameView() const;
     WebCore::FrameView* mainFrameView() const;
 
-    CGRect pluginBoundsForAnnotation(RetainPtr<PDFAnnotation>&) const final;
+    CGRect pluginBoundsForAnnotation(PDFAnnotation*) const final;
     void setActiveAnnotation(SetActiveAnnotationParams&&) final;
     void focusNextAnnotation() final;
     void focusPreviousAnnotation() final;
@@ -240,7 +241,7 @@ private:
     bool isUnifiedPDFPlugin() const override { return true; }
 
     WebCore::PluginLayerHostingStrategy layerHostingStrategy() const override { return WebCore::PluginLayerHostingStrategy::GraphicsLayer; }
-    WebCore::GraphicsLayer* graphicsLayer() const override;
+    WebCore::GraphicsLayer* graphicsLayer() const override { return m_rootLayer.get(); }
 
     void teardown() override;
 
@@ -649,6 +650,11 @@ private:
     bool shouldUseInProcessBackingStore() const;
 
     bool delegatesScrollingToMainFrame() const final;
+
+    RefPtr<PDFPresentationController> protectedPresentationController() const;
+
+    RefPtr<WebCore::GraphicsLayer> protectedScrollContainerLayer() const { return m_scrollContainerLayer; }
+    RefPtr<WebCore::GraphicsLayer> protectedOverflowControlsContainer() const { return m_overflowControlsContainer; }
 
     RefPtr<PDFPresentationController> m_presentationController;
 

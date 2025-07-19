@@ -197,6 +197,11 @@ Ref<WindowProxy> Frame::protectedWindowProxy() const
     return m_windowProxy;
 }
 
+RefPtr<DOMWindow> Frame::protectedWindow() const
+{
+    return window();
+}
+
 Ref<NavigationScheduler> Frame::protectedNavigationScheduler() const
 {
     return m_navigationScheduler.get();

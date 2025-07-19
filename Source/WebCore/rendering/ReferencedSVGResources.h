@@ -38,7 +38,6 @@ class Document;
 class LegacyRenderSVGResourceClipper;
 class LegacyRenderSVGResourceContainer;
 class QualifiedName;
-class ReferencePathOperation;
 class RenderElement;
 class RenderSVGResourceFilter;
 class RenderStyle;
@@ -52,6 +51,7 @@ class TreeScope;
 
 namespace Style {
 class ReferenceFilterOperation;
+struct ReferencePath;
 struct URL;
 }
 
@@ -68,13 +68,13 @@ public:
     void updateReferencedResources(TreeScope&, const SVGElementIdentifierAndTagPairs&);
 
     // Legacy: Clipping needs a renderer, filters use an element.
-    static LegacyRenderSVGResourceClipper* referencedClipperRenderer(TreeScope&, const ReferencePathOperation&);
+    static LegacyRenderSVGResourceClipper* referencedClipperRenderer(TreeScope&, const Style::ReferencePath&);
     static RefPtr<SVGFilterElement> referencedFilterElement(TreeScope&, const Style::ReferenceFilterOperation&);
 
     static LegacyRenderSVGResourceContainer* referencedRenderResource(TreeScope&, const AtomString& fragment);
 
     // LBSE: All element based.
-    static RefPtr<SVGClipPathElement> referencedClipPathElement(TreeScope&, const ReferencePathOperation&);
+    static RefPtr<SVGClipPathElement> referencedClipPathElement(TreeScope&, const Style::ReferencePath&);
     static RefPtr<SVGMarkerElement> referencedMarkerElement(TreeScope&, const Style::URL&);
     static RefPtr<SVGMaskElement> referencedMaskElement(TreeScope&, const StyleImage&);
     static RefPtr<SVGMaskElement> referencedMaskElement(TreeScope&, const AtomString&);

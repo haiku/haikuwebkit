@@ -374,7 +374,7 @@ private:
     };
 ALLOW_NEW_API_WITHOUT_GUARDS_BEGIN
     HashMap<RetainPtr<CFTypeRef>, AudioRendererProperties> m_sampleBufferAudioRendererMap;
-    RetainPtr<AVSampleBufferRenderSynchronizer> m_synchronizer;
+    const RetainPtr<AVSampleBufferRenderSynchronizer> m_synchronizer;
 ALLOW_NEW_API_WITHOUT_GUARDS_END
     mutable MediaPlayer::CurrentTimeDidChangeCallback m_currentTimeDidChangeCallback;
     RetainPtr<id> m_timeChangedObserver;
@@ -412,7 +412,7 @@ ALLOW_NEW_API_WITHOUT_GUARDS_END
 #endif
     const Ref<const Logger> m_logger;
     const uint64_t m_logIdentifier;
-    std::unique_ptr<VideoLayerManagerObjC> m_videoLayerManager;
+    const UniqueRef<VideoLayerManagerObjC> m_videoLayerManager;
     const Ref<EffectiveRateChangedListener> m_effectiveRateChangedListener;
     uint64_t m_sampleCount { 0 };
     RetainPtr<id> m_videoFrameMetadataGatheringObserver;

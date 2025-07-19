@@ -410,51 +410,52 @@ inline FloatRect clipPathReferenceBox(const RenderElement& renderer, CSSBoxType 
 
 inline bool isPointInCSSClippingArea(const RenderElement& renderer, const FloatPoint& point)
 {
-    RefPtr clipPathOperation = renderer.style().clipPath();
-    if (auto* clipPath = dynamicDowncast<ShapePathOperation>(clipPathOperation.get())) {
-        FloatRect referenceBox = clipPathReferenceBox(renderer, clipPath->referenceBox());
-        if (!referenceBox.contains(point))
-            return false;
-        return clipPath->pathForReferenceRect(referenceBox).contains(point, clipPath->windRule());
-    }
-    if (auto* clipPath = dynamicDowncast<BoxPathOperation>(clipPathOperation.get())) {
-        FloatRect referenceBox = clipPathReferenceBox(renderer, clipPath->referenceBox());
-        if (!referenceBox.contains(point))
-            return false;
-        return clipPath->pathForReferenceRect(FloatRoundedRect { referenceBox }).contains(point);
-    }
-
-    return true;
+    return WTF::switchOn(renderer.style().clipPath(),
+        [&](const Style::BasicShapePath& clipPath) {
+            auto referenceBox = clipPathReferenceBox(renderer, clipPath.referenceBox());
+            if (!referenceBox.contains(point))
+                return false;
+            return Style::path(clipPath.shape(), referenceBox).contains(point, Style::windRule(clipPath.shape()));
+        },
+        [&](const Style::BoxPath& clipPath) {
+            auto referenceBox = clipPathReferenceBox(renderer, clipPath.referenceBox());
+            if (!referenceBox.contains(point))
+                return false;
+            return FloatRoundedRect { referenceBox }.path().contains(point);
+        },
+        [&](const auto&) {
+            return true;
+        }
+    );
 }
 
 void SVGRenderSupport::clipContextToCSSClippingArea(GraphicsContext& context, const RenderElement& renderer)
 {
-    RefPtr clipPathOperation = renderer.style().clipPath();
-    if (auto* clipPath = dynamicDowncast<ShapePathOperation>(clipPathOperation.get())) {
-        auto localToParentTransform = renderer.localToParentTransform();
+    WTF::switchOn(renderer.style().clipPath(),
+        [&](const Style::BasicShapePath& clipPath) {
+            auto localToParentTransform = renderer.localToParentTransform();
 
-        auto referenceBox = clipPathReferenceBox(renderer, clipPath->referenceBox());
-        referenceBox = localToParentTransform.mapRect(referenceBox);
+            auto referenceBox = clipPathReferenceBox(renderer, clipPath.referenceBox());
+            referenceBox = localToParentTransform.mapRect(referenceBox);
 
-        auto path = clipPath->pathForReferenceRect(referenceBox);
-        path.transform(valueOrDefault(localToParentTransform.inverse()));
+            auto path = Style::path(clipPath.shape(), referenceBox);
+            path.transform(valueOrDefault(localToParentTransform.inverse()));
 
-        context.clipPath(path, clipPath->windRule());
-        return;
-    }
-
-    if (auto* clipPath = dynamicDowncast<BoxPathOperation>(clipPathOperation.get())) {
-        FloatRect referenceBox = clipPathReferenceBox(renderer, clipPath->referenceBox());
-        context.clipPath(clipPath->pathForReferenceRect(FloatRoundedRect { referenceBox }));
-    }
+            context.clipPath(path, Style::windRule(clipPath.shape()));
+        },
+        [&](const Style::BoxPath& clipPath) {
+            auto referenceBox = clipPathReferenceBox(renderer, clipPath.referenceBox());
+            context.clipPath(FloatRoundedRect { referenceBox }.path());
+        },
+        [&](const auto&) { }
+    );
 }
 
 bool SVGRenderSupport::pointInClippingArea(const RenderElement& renderer, const FloatPoint& point)
 {
     RELEASE_ASSERT(!renderer.document().settings().layerBasedSVGEngineEnabled());
 
-    RefPtr clipPathOperation = renderer.style().clipPath();
-    if (is<ShapePathOperation>(clipPathOperation) || is<BoxPathOperation>(clipPathOperation))
+    if (WTF::holdsAlternative<Style::BasicShapePath>(renderer.style().clipPath()) || WTF::holdsAlternative<Style::BoxPath>(renderer.style().clipPath()))
         return isPointInCSSClippingArea(renderer, point);
 
     // We just take clippers into account to determine if a point is on the node. The Specification may

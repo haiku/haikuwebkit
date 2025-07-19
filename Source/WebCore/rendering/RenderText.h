@@ -242,8 +242,8 @@ private:
     // FIXME: This should probably be part of the text sizing structures in Document instead. That would save some memory.
     float m_candidateComputedTextSize { 0 };
 #endif
-    Markable<float, WTF::FloatMarkableTraits> m_minWidth;
-    Markable<float, WTF::FloatMarkableTraits> m_maxWidth;
+    Markable<float> m_minWidth;
+    Markable<float> m_maxWidth;
     float m_beginMinWidth { 0 };
     float m_endMinWidth { 0 };
 
@@ -351,6 +351,11 @@ inline const RenderStyle* RenderText::targetTextPseudoStyle() const
 inline RenderText* Text::renderer() const
 {
     return downcast<RenderText>(Node::renderer());
+}
+
+inline CheckedPtr<RenderText> Text::checkedRenderer() const
+{
+    return renderer();
 }
 
 inline void RenderText::resetMinMaxWidth()

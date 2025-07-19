@@ -129,9 +129,9 @@ TextTrack* TextTrackList::getTrackById(const AtomString& id) const
     // TextTrackList object whose id IDL attribute would return a value equal
     // to the value of the id argument.
     for (unsigned i = 0; i < length(); ++i) {
-        auto& track = *item(i);
-        if (track.id() == id)
-            return &track;
+        Ref track = *item(i);
+        if (track->id() == id)
+            return track.ptr();
     }
 
     // When no tracks match the given argument, the method must return null.
@@ -141,9 +141,9 @@ TextTrack* TextTrackList::getTrackById(const AtomString& id) const
 TextTrack* TextTrackList::getTrackById(TrackID id) const
 {
     for (unsigned i = 0; i < length(); ++i) {
-        auto& track = *item(i);
-        if (track.trackId() == id)
-            return &track;
+        Ref track = *item(i);
+        if (track->trackId() == id)
+            return track.ptr();
     }
     return nullptr;
 }

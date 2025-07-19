@@ -47,10 +47,8 @@
 // iterator at the current position. Another important difference is that
 // key-types must be copy-constructible.
 //
-// There are other API differences: first, btree iterators can be subtracted,
-// and this is faster than using `std::distance`. Additionally, btree
-// iterators can be advanced via `operator+=` and `operator-=`, which is faster
-// than using `std::advance`.
+// Another API difference is that btree iterators can be subtracted, and this
+// is faster than using std::distance.
 //
 // B-tree maps are not exception-safe.
 
@@ -117,8 +115,8 @@ class ABSL_ATTRIBUTE_OWNER btree_map
   //
   // * Copy assignment operator
   //
-  //   absl::btree_map<int, std::string> map4;
-  //   map4 = map3;
+  //  absl::btree_map<int, std::string> map4;
+  //  map4 = map3;
   //
   // * Move constructor
   //
@@ -555,8 +553,8 @@ class ABSL_ATTRIBUTE_OWNER btree_multimap
   //
   // * Copy assignment operator
   //
-  //   absl::btree_multimap<int, std::string> map4;
-  //   map4 = map3;
+  //  absl::btree_multimap<int, std::string> map4;
+  //  map4 = map3;
   //
   // * Move constructor
   //

@@ -25,49 +25,16 @@
 #include "config.h"
 #include "StyleFlexBasis.h"
 
-#include "StyleBuilderConverter.h"
-#include "StyleBuilderState.h"
-#include <wtf/text/TextStream.h>
+#include "StylePreferredSize.h"
 
 namespace WebCore {
 namespace Style {
 
 std::optional<PreferredSize> FlexBasis::tryPreferredSize() const
 {
-    if (m_value.isContent())
+    if (isContent())
         return { };
     return PreferredSize { WebCore::Length { m_value } };
-}
-
-// MARK: - Conversion
-
-auto CSSValueConversion<FlexBasis>::operator()(BuilderState& state, const CSSValue& value) -> FlexBasis
-{
-    return FlexBasis { BuilderConverter::convertLengthSizing(state, value) };
-}
-
-// MARK: - Blending
-
-auto Blending<FlexBasis>::canBlend(const FlexBasis& a, const FlexBasis& b) -> bool
-{
-    return WebCore::canInterpolateLengths(a.m_value, b.m_value, true);
-}
-
-auto Blending<FlexBasis>::requiresInterpolationForAccumulativeIteration(const FlexBasis& a, const FlexBasis& b) -> bool
-{
-    return WebCore::lengthsRequireInterpolationForAccumulativeIteration(a.m_value, b.m_value);
-}
-
-auto Blending<FlexBasis>::blend(const FlexBasis& a, const FlexBasis& b, const BlendingContext& context) -> FlexBasis
-{
-    return FlexBasis { WebCore::blend(a.m_value, b.m_value, context, ValueRange::NonNegative) };
-}
-
-// MARK: - Logging
-
-WTF::TextStream& operator<<(WTF::TextStream& ts, const FlexBasis& value)
-{
-    return ts << value.m_value;
 }
 
 } // namespace Style

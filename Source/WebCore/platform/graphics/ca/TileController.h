@@ -82,6 +82,8 @@ public:
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
     WEBCORE_EXPORT bool setNeedsDisplayIfEDRHeadroomExceeds(float);
+    WEBCORE_EXPORT void setTonemappingEnabled(bool);
+    WEBCORE_EXPORT bool tonemappingEnabled() const;
 #endif
 
     bool acceleratesDrawing() const { return m_acceleratesDrawing; }
@@ -274,6 +276,9 @@ private:
     bool m_tileSizeLocked { false };
     bool m_haveExternalVelocityData { false };
     bool m_isTileSizeUpdateDelayDisabledForTesting { false };
+#if HAVE(SUPPORT_HDR_DISPLAY)
+    bool m_tonemappingEnabled { false };
+#endif
 
     ContentsFormat m_contentsFormat { ContentsFormat::RGBA8 };
 

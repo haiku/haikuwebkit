@@ -178,9 +178,14 @@ Ref<PlatformCALayer> PlatformCALayer::createCompatibleLayerOrTakeFromPool(Platfo
     return layer;
 }
 
-ContentsFormat PlatformCALayer::contentsFormatForLayer(Widget* widget, PlatformCALayerClient* client)
+ContentsFormat PlatformCALayer::contentsFormatForLayer(PlatformCALayerClient* client)
 {
-    auto contentsFormats = screenContentsFormats(widget);
+    OptionSet<ContentsFormat> contentsFormats;
+    if (client)
+        contentsFormats = client->screenContentsFormats();
+    if (contentsFormats.isEmpty())
+        contentsFormats = screenContentsFormats(nullptr);
+
 #if ENABLE(PIXEL_FORMAT_RGBA16F)
     if (client && client->drawsHDRContent() && contentsFormats.contains(ContentsFormat::RGBA16F))
         return ContentsFormat::RGBA16F;
@@ -255,6 +260,15 @@ void PlatformCALayer::setAcceleratedEffectsAndBaseValues(const AcceleratedEffect
 
 #if HAVE(SUPPORT_HDR_DISPLAY)
 bool PlatformCALayer::setNeedsDisplayIfEDRHeadroomExceeds(float)
+{
+    return false;
+}
+
+void PlatformCALayer::setTonemappingEnabled(bool)
+{
+}
+
+bool PlatformCALayer::tonemappingEnabled() const
 {
     return false;
 }

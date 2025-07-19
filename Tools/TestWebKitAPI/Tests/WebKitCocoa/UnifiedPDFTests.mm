@@ -63,11 +63,6 @@
 @end
 
 #if PLATFORM(IOS_FAMILY)
-@interface WKWebView ()
-- (UIView *)viewForZoomingInScrollView:(UIScrollView *)scrollView;
-- (void)scrollViewWillBeginZooming:(UIScrollView *)scrollView withView:(UIView *)view;
-@end
-
 @interface UIPrintInteractionController ()
 - (BOOL)_setupPrintPanel:(void (^)(UIPrintInteractionController *printInteractionController, BOOL completed, NSError *error))completion;
 - (void)_generatePrintPreview:(void (^)(NSURL *previewPDF, BOOL shouldRenderOnChosenPaper))completionHandler;
@@ -564,20 +559,11 @@ UNIFIED_PDF_TEST(KeepRelativeScrollPositionAfterZoomingAndViewportUpdate)
 
     RetainPtr request = [NSURLRequest requestWithURL:[NSBundle.test_resourcesBundle URLForResource:@"multiple-pages" withExtension:@"pdf"]];
     [webView synchronouslyLoadRequest:request.get()];
+
+    [webView waitForNextVisibleContentRectUpdate];
     [webView waitForNextPresentationUpdate];
 
-    {
-        InstanceMethodSwizzler lookupSwizzler {
-            [UIPinchGestureRecognizer class],
-            @selector(state),
-            imp_implementationWithBlock(^UIGestureRecognizerState {
-                return UIGestureRecognizerStateBegan;
-            })
-        };
-
-        [webView scrollViewWillBeginZooming:scrollView.get() withView:[webView viewForZoomingInScrollView:scrollView.get()]];
-        [scrollView setZoomScale:3];
-    }
+    [webView setZoomScaleSimulatingUserTriggeredZoom:3];
 
     [scrollView setContentOffset:CGPointMake([scrollView contentSize].width - [scrollView frame].size.width, 12000)];
     [webView waitForNextVisibleContentRectUpdate];

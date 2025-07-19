@@ -723,21 +723,6 @@ private:
     }
 };
 
-class TextEmphasisStyleWrapper final : public DiscreteWrapper<TextEmphasisMark> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    TextEmphasisStyleWrapper()
-        : DiscreteWrapper(CSSPropertyTextEmphasisStyle, &RenderStyle::textEmphasisMark, &RenderStyle::setTextEmphasisMark)
-    {
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        destination.setTextEmphasisFill((context.progress > 0.5 ? to : from).textEmphasisFill());
-        DiscreteWrapper::interpolate(destination, from, to, context);
-    }
-};
-
 // MARK: - Customized Wrappers
 
 class GridTemplateWrapper final : public Wrapper<const GridTrackList&> {
@@ -795,36 +780,6 @@ public:
 
     DiscreteWrapper<NinePieceImageRule> m_horizontalWrapper;
     DiscreteWrapper<NinePieceImageRule> m_verticalWrapper;
-};
-
-class ContainIntrinsicLengthWrapper final : public OptionalLengthWrapper {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    ContainIntrinsicLengthWrapper(CSSPropertyID property, std::optional<WebCore::Length> (RenderStyle::*getter)() const, void (RenderStyle::*setter)(std::optional<WebCore::Length>), ContainIntrinsicSizeType (RenderStyle::*typeGetter)() const, void (RenderStyle::*typeSetter)(ContainIntrinsicSizeType))
-        : OptionalLengthWrapper(property, getter, setter, { Flags::NegativeLengthsAreInvalid })
-        , m_containIntrinsicSizeTypeGetter(typeGetter)
-        , m_containIntrinsicSizeTypeSetter(typeSetter)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation operation) const final
-    {
-        if ((from.*m_containIntrinsicSizeTypeGetter)() != (to.*m_containIntrinsicSizeTypeGetter)())
-            return false;
-        return OptionalLengthWrapper::canInterpolate(from, to, operation);
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        auto type = context.progress < 0.5 ? (from.*m_containIntrinsicSizeTypeGetter)() : (to.*m_containIntrinsicSizeTypeGetter)();
-        (destination.*m_containIntrinsicSizeTypeSetter)(type);
-
-        OptionalLengthWrapper::interpolate(destination, from, to, context);
-    }
-
-private:
-    ContainIntrinsicSizeType (RenderStyle::*m_containIntrinsicSizeTypeGetter)() const;
-    void (RenderStyle::*m_containIntrinsicSizeTypeSetter)(ContainIntrinsicSizeType);
 };
 
 class LengthBoxWrapper : public WrapperWithGetter<const LengthBox&> {
@@ -924,37 +879,6 @@ public:
     {
         LengthBoxWrapper::interpolate(destination, from, to, context);
         destination.setHasClip(true);
-    }
-};
-
-class PathOperationWrapper final : public RefCountedWrapper<PathOperation> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    PathOperationWrapper(CSSPropertyID property, PathOperation* (RenderStyle::*getter)() const, void (RenderStyle::*setter)(RefPtr<PathOperation>&&))
-        : RefCountedWrapper(property, getter, setter)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        // If the style pointers are the same, don't bother doing the test.
-        if (&a == &b)
-            return true;
-
-        auto* clipPathA = value(a);
-        auto* clipPathB = value(b);
-        if (clipPathA == clipPathB)
-            return true;
-        if (!clipPathA || !clipPathB)
-            return false;
-        return *clipPathA == *clipPathB;
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const override
-    {
-        auto* fromPath = value(from);
-        auto* toPath = value(to);
-        return fromPath && toPath && fromPath->canBlend(*toPath);
     }
 };
 
@@ -1165,11 +1089,13 @@ inline const TextShadow& shadowForInterpolation(const TextShadow&)
     return defaultShadowData.get();
 }
 
-template<typename ShadowType> class ShadowWrapper final : public WrapperWithGetter<const FixedVector<ShadowType>&> {
+template<typename ShadowListType> class ShadowWrapper final : public WrapperWithGetter<const ShadowListType&> {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
 public:
-    ShadowWrapper(CSSPropertyID property, const FixedVector<ShadowType>& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(FixedVector<ShadowType>&&))
-        : WrapperWithGetter<const FixedVector<ShadowType>&>(property, getter)
+    using ShadowType = typename ShadowListType::value_type;
+
+    ShadowWrapper(CSSPropertyID property, const ShadowListType& (RenderStyle::*getter)() const, void (RenderStyle::*setter)(ShadowListType&&))
+        : WrapperWithGetter<const ShadowListType&>(property, getter)
         , m_setter(setter)
     {
     }
@@ -1218,7 +1144,7 @@ public:
 
         if (context.isDiscrete) {
             ASSERT(!context.progress || context.progress == 1.0);
-            (destination.*m_setter)(FixedVector<ShadowType> { context.progress ? toShadowList : fromShadowList });
+            (destination.*m_setter)(ShadowListType { context.progress ? toShadowList : fromShadowList });
             return;
         }
 
@@ -1226,41 +1152,41 @@ public:
         auto toLength = toShadowList.size();
 
         if (!fromLength && !toLength)
-            (destination.*m_setter)({ });
+            (destination.*m_setter)(CSS::Keyword::None { });
         else if (fromLength == toLength)
             (destination.*m_setter)(blendMatchedShadowLists(fromShadowList, toShadowList, fromLength, fromStyle, toStyle, context));
         else
             (destination.*m_setter)(blendMismatchedShadowLists(fromShadowList, toShadowList, fromLength, toLength, fromStyle, toStyle, context));
     }
 
-    FixedVector<ShadowType> addShadowLists(const FixedVector<ShadowType>& fromShadowList, const FixedVector<ShadowType>& toShadowList, size_t fromLength, size_t toLength) const
+    ShadowListType addShadowLists(const ShadowListType& fromShadowList, const ShadowListType& toShadowList, size_t fromLength, size_t toLength) const
     {
         auto combinedSize = fromLength + toLength;
-        return FixedVector<ShadowType>::createWithSizeFromGenerator(combinedSize, [&](auto index) -> ShadowType {
+        return { FixedVector<ShadowType>::createWithSizeFromGenerator(combinedSize, [&](auto index) -> ShadowType {
             if (index < toLength)
                 return toShadowList[index];
             return fromShadowList[index - toLength];
-        });
+        }) };
     }
 
-    FixedVector<ShadowType> blendMatchedShadowLists(const FixedVector<ShadowType>& fromShadowList, const FixedVector<ShadowType>& toShadowList, size_t length, const RenderStyle& fromStyle, const RenderStyle& toStyle, const Context& context) const
+    ShadowListType blendMatchedShadowLists(const ShadowListType& fromShadowList, const ShadowListType& toShadowList, size_t length, const RenderStyle& fromStyle, const RenderStyle& toStyle, const Context& context) const
     {
         // from or to might be empty in which case we don't want to do additivity, but do replace instead.
-        if (!fromShadowList.isEmpty() && !toShadowList.isEmpty() && context.compositeOperation == CompositeOperation::Add)
+        if (!fromShadowList.isNone() && !toShadowList.isNone() && context.compositeOperation == CompositeOperation::Add)
             return addShadowLists(fromShadowList, toShadowList, length, length);
 
-        return FixedVector<ShadowType>::createWithSizeFromGenerator(length, [&](auto index) -> ShadowType {
+        return { FixedVector<ShadowType>::createWithSizeFromGenerator(length, [&](auto index) -> ShadowType {
             return Style::blend(fromShadowList[index], toShadowList[index], fromStyle, toStyle, context);
-        });
+        }) };
     }
 
-    FixedVector<ShadowType> blendMismatchedShadowLists(const FixedVector<ShadowType>& fromShadowList, const FixedVector<ShadowType>& toShadowList, size_t fromLength, size_t toLength, const RenderStyle& fromStyle, const RenderStyle& toStyle, const Context& context) const
+    ShadowListType blendMismatchedShadowLists(const ShadowListType& fromShadowList, const ShadowListType& toShadowList, size_t fromLength, size_t toLength, const RenderStyle& fromStyle, const RenderStyle& toStyle, const Context& context) const
     {
-        if (!fromShadowList.isEmpty() && !toShadowList.isEmpty() && context.compositeOperation != CompositeOperation::Replace)
+        if (!fromShadowList.isNone() && !toShadowList.isNone() && context.compositeOperation != CompositeOperation::Replace)
             return addShadowLists(fromShadowList, toShadowList, fromLength, toLength);
 
         auto maxLength = std::max(fromLength, toLength);
-        return FixedVector<ShadowType>::createWithSizeFromGenerator(maxLength, [&](auto index) -> ShadowType {
+        return { FixedVector<ShadowType>::createWithSizeFromGenerator(maxLength, [&](auto index) -> ShadowType {
             auto indexFromEnd = maxLength - index - 1;
             bool hasFrom = indexFromEnd < fromLength;
             bool hasTo = indexFromEnd < toLength;
@@ -1280,11 +1206,11 @@ public:
             }
 
             RELEASE_ASSERT_NOT_REACHED();
-        });
+        }) };
     }
 
 private:
-    void (RenderStyle::*m_setter)(FixedVector<ShadowType>&&);
+    void (RenderStyle::*m_setter)(ShadowListType&&);
 };
 
 class ColorWrapper final : public WrapperWithGetter<const WebCore::Color&> {
@@ -1609,46 +1535,6 @@ public:
     }
 };
 
-class TextUnderlineOffsetWrapper final : public WrapperWithGetter<TextUnderlineOffset> {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    TextUnderlineOffsetWrapper()
-        : WrapperWithGetter(CSSPropertyTextUnderlineOffset, &RenderStyle::textUnderlineOffset)
-    {
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        auto fromTextUnderlineOffset = from.textUnderlineOffset();
-        auto toTextUnderlineOffset = to.textUnderlineOffset();
-        if (fromTextUnderlineOffset.isAuto() || toTextUnderlineOffset.isAuto())
-            return false;
-
-        auto fromValue = fromTextUnderlineOffset.resolve(from.computedFontSize());
-        auto toValue = toTextUnderlineOffset.resolve(to.computedFontSize());
-        return fromValue != toValue;
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        auto blendedTextUnderlineOffset = [&]() -> TextUnderlineOffset {
-            if (context.isDiscrete)
-                return (!context.progress ? from : to).textUnderlineOffset();
-
-            auto fromTextUnderlineOffset = from.textUnderlineOffset();
-            auto toTextUnderlineOffset = to.textUnderlineOffset();
-
-            auto fromValue = fromTextUnderlineOffset.resolve(from.computedFontSize());
-            auto toValue = toTextUnderlineOffset.resolve(to.computedFontSize());
-
-            auto blendedValue = blendFunc(fromValue, toValue, context);
-            return TextUnderlineOffset::createWithLength(WebCore::Length(clampTo<float>(blendedValue, minValueForCssLength, maxValueForCssLength), LengthType::Fixed));
-        };
-
-        destination.setTextUnderlineOffset(blendedTextUnderlineOffset());
-    }
-};
-
 class TextDecorationThicknessWrapper final : public WrapperWithGetter<TextDecorationThickness> {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
 public:
@@ -1737,41 +1623,6 @@ public:
     }
 };
 
-class TextIndentWrapper final : public LengthWrapper {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    TextIndentWrapper()
-        : LengthWrapper(CSSPropertyTextIndent, &RenderStyle::textIndent, &RenderStyle::setTextIndent, LengthWrapper::Flags::IsLengthPercentage)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        if (a.textIndentLine() != b.textIndentLine())
-            return false;
-        if (a.textIndentType() != b.textIndentType())
-            return false;
-        return LengthWrapper::equals(a, b);
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation compositeOperation) const final
-    {
-        if (from.textIndentLine() != to.textIndentLine())
-            return false;
-        if (from.textIndentType() != to.textIndentType())
-            return false;
-        return LengthWrapper::canInterpolate(from, to, compositeOperation);
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        auto& blendingStyle = context.isDiscrete && context.progress ? to : from;
-        destination.setTextIndentLine(blendingStyle.textIndentLine());
-        destination.setTextIndentType(blendingStyle.textIndentType());
-        LengthWrapper::interpolate(destination, from, to, context);
-    }
-};
-
 class TabSizeWrapper final : public Wrapper<const TabSize&> {
     WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
 public:
@@ -1792,50 +1643,6 @@ public:
         else
             Wrapper::interpolate(destination, from, to, context);
     }
-};
-
-class AspectRatioWrapper final : public WrapperBase {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    AspectRatioWrapper()
-        : WrapperBase(CSSPropertyAspectRatio)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        if (&a == &b)
-            return true;
-
-        return a.aspectRatioType() == b.aspectRatioType() && a.aspectRatioWidth() == b.aspectRatioWidth() && a.aspectRatioHeight() == b.aspectRatioHeight();
-    }
-
-    bool canInterpolate(const RenderStyle& from, const RenderStyle& to, CompositeOperation) const final
-    {
-        return (from.aspectRatioType() == AspectRatioType::Ratio && to.aspectRatioType() == AspectRatioType::Ratio) || (from.aspectRatioType() == AspectRatioType::AutoAndRatio && to.aspectRatioType() == AspectRatioType::AutoAndRatio);
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        destination.setAspectRatioType(context.progress < 0.5 ? from.aspectRatioType() : to.aspectRatioType());
-        if (!context.isDiscrete) {
-            auto aspectRatioDst = WebCore::blend(std::log(from.logicalAspectRatio()), std::log(to.logicalAspectRatio()), context);
-            destination.setAspectRatio(std::exp(aspectRatioDst), 1);
-            return;
-        }
-        // For auto/auto-zero aspect-ratio we use discrete values, we can't use general
-        // logic since logicalAspectRatio asserts on aspect-ratio type.
-        ASSERT(!context.progress || context.progress == 1);
-        auto& applicableStyle = context.progress ? to : from;
-        destination.setAspectRatio(applicableStyle.aspectRatioWidth(), applicableStyle.aspectRatioHeight());
-    }
-
-#if !LOG_DISABLED
-    void log(const RenderStyle& from, const RenderStyle& to, const RenderStyle& destination, double progress) const final
-    {
-        LOG_WITH_STREAM(Animations, stream << "  blending " << property() << " from " << from.logicalAspectRatio() << " to " << to.logicalAspectRatio() << " at " << TextStream::FormatNumberRespectingIntegers(progress) << " -> " << destination.logicalAspectRatio());
-    }
-#endif
 };
 
 class CounterWrapper final : public WrapperBase {
@@ -1903,49 +1710,6 @@ public:
             else
                 updateDirective(it->value, directive);
         }
-    }
-
-#if !LOG_DISABLED
-    void log(const RenderStyle&, const RenderStyle&, const RenderStyle&, double progress) const final
-    {
-        LOG_WITH_STREAM(Animations, stream << " blending " << property() << " at " << TextStream::FormatNumberRespectingIntegers(progress) << ".");
-    }
-#endif
-};
-
-class GridTemplateAreasWrapper final : public WrapperBase {
-    WTF_MAKE_FAST_ALLOCATED_WITH_HEAP_IDENTIFIER(Animation);
-public:
-    GridTemplateAreasWrapper()
-        : WrapperBase(CSSPropertyGridTemplateAreas)
-    {
-    }
-
-    bool equals(const RenderStyle& a, const RenderStyle& b) const final
-    {
-        return a.implicitNamedGridColumnLines().map == b.implicitNamedGridColumnLines().map
-            && a.implicitNamedGridRowLines().map == b.implicitNamedGridRowLines().map
-            && a.namedGridArea().map == b.namedGridArea().map
-            && a.namedGridAreaRowCount() == b.namedGridAreaRowCount()
-            && a.namedGridAreaColumnCount() == b.namedGridAreaColumnCount();
-    }
-
-    bool canInterpolate(const RenderStyle&, const RenderStyle&, CompositeOperation) const final
-    {
-        return false;
-    }
-
-    void interpolate(RenderStyle& destination, const RenderStyle& from, const RenderStyle& to, const Context& context) const final
-    {
-        ASSERT(context.isDiscrete);
-        ASSERT(!context.progress || context.progress == 1);
-
-        auto& source = context.progress ? to : from;
-        destination.setImplicitNamedGridColumnLines(source.implicitNamedGridColumnLines());
-        destination.setImplicitNamedGridRowLines(source.implicitNamedGridRowLines());
-        destination.setNamedGridArea(source.namedGridArea());
-        destination.setNamedGridAreaRowCount(source.namedGridAreaRowCount());
-        destination.setNamedGridAreaColumnCount(source.namedGridAreaColumnCount());
     }
 
 #if !LOG_DISABLED

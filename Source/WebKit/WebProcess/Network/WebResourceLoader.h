@@ -73,8 +73,7 @@ public:
     void didReceiveMessage(IPC::Connection&, IPC::Decoder&);
 
     WebCore::ResourceLoader* resourceLoader() const { return m_coreLoader.get(); }
-
-    RefPtr<WebCore::ResourceLoader> protectedCoreLoader() const;
+    RefPtr<WebCore::ResourceLoader> protectedResourceLoader() const;
 
     void detachFromCoreLoader();
 

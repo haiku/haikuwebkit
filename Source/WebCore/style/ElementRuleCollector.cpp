@@ -665,11 +665,11 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
             unsigned distance = 0;
             const auto* ancestor = &element();
             while (ancestor) {
-                for (const auto* selector = selectorList.first(); selector; selector = CSSSelectorList::next(selector)) {
+                for (auto& selector : selectorList) {
                     auto appendIfMatch = [&] (const ContainerNode* previousScopingRoot = nullptr) {
                         auto subContext = context;
                         subContext.scope = previousScopingRoot;
-                        auto match = checker.match(*selector, *ancestor, subContext);
+                        auto match = checker.match(selector, *ancestor, subContext);
                         if (match)
                             scopingRoots.append({ ancestor, distance });
                     };
@@ -710,8 +710,8 @@ std::pair<bool, std::optional<Vector<ElementRuleCollector::ScopingRootWithDistan
             Vector<ScopingRootWithDistance> scopingRootsWithinScope;
             for (auto scopingRootWithDistance : scopingRoots) {
                 bool anyScopingLimitMatch = false;
-                for (const auto* selector = scopeEnd.first(); selector; selector = CSSSelectorList::next(selector)) {
-                    if (match(scopingRootWithDistance.scopingRoot.get(), selector)) {
+                for (auto& selector : scopeEnd) {
+                    if (match(scopingRootWithDistance.scopingRoot.get(), &selector)) {
                         anyScopingLimitMatch = true;
                         break;
                     }

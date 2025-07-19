@@ -312,7 +312,7 @@ private:
         WebProcess::singleton().protectedParentProcessConnection()->sendWithAsyncReply(Messages::WebUserContentControllerProxy::DidPostMessage(webPage->webPageProxyIdentifier(), webFrame->info(), m_identifier, *message), [completionHandler = WTFMove(completionHandler), context](Expected<WebKit::JavaScriptEvaluationResult, String>&& result) {
             if (!result)
                 return completionHandler(JSC::jsUndefined(), result.error());
-            completionHandler(toJS(toJS(context.get()), result->toJS(context.get())), { });
+            completionHandler(toJS(toJS(context.get()), result->toJS(context.get()).get()), { });
         }, m_controller->identifier());
     }
 

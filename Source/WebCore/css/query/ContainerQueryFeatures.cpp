@@ -179,7 +179,7 @@ struct StyleFeatureSchema : public FeatureSchema {
             // Resolve the queried custom property value for var() references, css-wide keywords and registered properties.
             auto builderContext = Style::BuilderContext {
                 context.document.get(),
-                *context.conversionData.parentStyle(),
+                context.conversionData.parentStyle(),
                 context.conversionData.rootStyle(),
                 context.conversionData.elementForContainerUnitResolution()
             };

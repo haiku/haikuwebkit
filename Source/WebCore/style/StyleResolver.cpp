@@ -305,7 +305,7 @@ BuilderContext Resolver::builderContext(State& state)
 {
     return {
         document(),
-        *state.parentStyle(),
+        state.parentStyle(),
         state.rootElementStyle(),
         state.element(),
         state.treeResolutionState()
@@ -475,7 +475,7 @@ Vector<Ref<StyleRuleKeyframe>> Resolver::keyframeRulesForName(const AtomString& 
         return &CubicBezierTimingFunction::defaultTimingFunction();
     };
 
-    UncheckedKeyHashSet<RefPtr<const TimingFunction>> timingFunctions;
+    HashSet<RefPtr<const TimingFunction>> timingFunctions;
     auto uniqueTimingFunctionForKeyframe = [&](Ref<StyleRuleKeyframe> keyframe) -> RefPtr<const TimingFunction> {
         auto timingFunction = timingFunctionForKeyframe(keyframe);
         for (auto existingTimingFunction : timingFunctions) {
@@ -491,7 +491,7 @@ Vector<Ref<StyleRuleKeyframe>> Resolver::keyframeRulesForName(const AtomString& 
 
     using KeyframeUniqueKey = std::tuple<StyleRuleKeyframe::Key, RefPtr<const TimingFunction>, CompositeOperation>;
     auto hasDuplicateKeys = [&]() -> bool {
-        UncheckedKeyHashSet<KeyframeUniqueKey> uniqueKeyframeKeys;
+        HashSet<KeyframeUniqueKey> uniqueKeyframeKeys;
         for (auto& keyframe : *keyframes) {
             auto compositeOperation = compositeOperationForKeyframe(keyframe);
             auto timingFunction = uniqueTimingFunctionForKeyframe(keyframe);
@@ -509,7 +509,7 @@ Vector<Ref<StyleRuleKeyframe>> Resolver::keyframeRulesForName(const AtomString& 
     // Merge keyframes with a similar offset and timing function ensuring that merged keyframes
     // move to the end of the list if the offset is a timeline range.
     Vector<Ref<StyleRuleKeyframe>> deduplicatedKeyframes;
-    UncheckedKeyHashMap<KeyframeUniqueKey, Ref<StyleRuleKeyframe>> keyframesMap;
+    HashMap<KeyframeUniqueKey, Ref<StyleRuleKeyframe>> keyframesMap;
     for (auto& originalKeyframe : *keyframes) {
         auto compositeOperation = compositeOperationForKeyframe(originalKeyframe);
         auto timingFunction = uniqueTimingFunctionForKeyframe(originalKeyframe);

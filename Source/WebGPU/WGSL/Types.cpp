@@ -179,11 +179,6 @@ void Type::dump(PrintStream& out) const
         },
         [&](const TypeConstructor& constructor) {
             out.print(constructor.name);
-        },
-        [&](const Bottom&) {
-            // Bottom is an implementation detail and should never leak, but we
-            // keep the ability to print it in debug to help when dumping types
-            out.print("⊥");
         });
 }
 
@@ -381,9 +376,6 @@ std::optional<unsigned> Type::maybeSize() const
         },
         [&](const TypeConstructor&) -> std::optional<unsigned> {
             return std::nullopt;
-        },
-        [&](const Bottom&) -> std::optional<unsigned> {
-            return std::nullopt;
         });
 }
 
@@ -464,9 +456,6 @@ unsigned Type::alignment() const
             return a.element->alignment();
         },
         [&](const TypeConstructor&) -> unsigned {
-            RELEASE_ASSERT_NOT_REACHED();
-        },
-        [&](const Bottom&) -> unsigned {
             RELEASE_ASSERT_NOT_REACHED();
         });
 }
@@ -559,9 +548,6 @@ bool Type::isConstructible() const
         },
         [&](const TypeConstructor&) -> bool {
             return false;
-        },
-        [&](const Bottom&) -> bool {
-            return true;
         });
 }
 
@@ -632,9 +618,6 @@ bool Type::isStorable() const
         },
         [&](const Pointer&) -> bool {
             return false;
-        },
-        [&](const Bottom&) -> bool {
-            return true;
         });
 }
 
@@ -705,9 +688,6 @@ bool Type::isHostShareable() const
         },
         [&](const Pointer&) -> bool {
             return false;
-        },
-        [&](const Bottom&) -> bool {
-            return true;
         });
 }
 
@@ -778,9 +758,6 @@ bool Type::hasFixedFootprint() const
         },
         [&](const Pointer&) -> bool {
             return false;
-        },
-        [&](const Bottom&) -> bool {
-            return true;
         });
 }
 
@@ -851,9 +828,6 @@ bool Type::hasCreationFixedFootprint() const
         },
         [&](const Pointer&) -> bool {
             return false;
-        },
-        [&](const Bottom&) -> bool {
-            return true;
         });
 }
 

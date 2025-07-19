@@ -22,7 +22,7 @@
 #pragma once
 
 #include "FloatQuad.h"
-#include "RoundedRect.h"
+#include "LayoutRoundedRect.h"
 
 namespace WebCore {
 
@@ -55,7 +55,7 @@ public:
 
     WEBCORE_EXPORT bool intersects(const LayoutRect&) const;
     bool intersects(const FloatRect&) const;
-    bool intersects(const RoundedRect&) const;
+    bool intersects(const LayoutRoundedRect&) const;
 
     const FloatPoint& transformedPoint() const { return m_transformedPoint; }
     const FloatQuad& transformedRect() const { return m_transformedRect; }

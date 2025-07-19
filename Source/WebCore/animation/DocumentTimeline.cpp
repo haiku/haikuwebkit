@@ -127,10 +127,10 @@ unsigned DocumentTimeline::numberOfActiveAnimationsForTesting() const
     return count;
 }
 
-std::optional<WebAnimationTime> DocumentTimeline::currentTime()
+std::optional<WebAnimationTime> DocumentTimeline::currentTime(UseCachedCurrentTime useCachedCurrentTime)
 {
     if (auto* controller = this->controller()) {
-        if (auto currentTime = controller->currentTime())
+        if (auto currentTime = controller->currentTime(useCachedCurrentTime))
             return *currentTime - m_originTime;
         return std::nullopt;
     }
@@ -247,7 +247,7 @@ IGNORE_GCC_WARNINGS_END
         return property;
     };
 
-    UncheckedKeyHashSet<AnimatableCSSProperty> propertiesToMatch;
+    HashSet<AnimatableCSSProperty> propertiesToMatch;
     for (auto property : keyframeEffect->animatedProperties())
         propertiesToMatch.add(resolvedProperty(property));
 
@@ -420,7 +420,7 @@ void DocumentTimeline::applyPendingAcceleratedAnimations()
 
     auto acceleratedAnimationsPendingRunningStateChange = std::exchange(m_acceleratedAnimationsPendingRunningStateChange, { });
 
-    UncheckedKeyHashSet<KeyframeEffectStack*> keyframeEffectStacksToUpdate;
+    HashSet<KeyframeEffectStack*> keyframeEffectStacksToUpdate;
 
     bool hasForcedLayout = false;
     for (auto& animation : acceleratedAnimationsPendingRunningStateChange) {

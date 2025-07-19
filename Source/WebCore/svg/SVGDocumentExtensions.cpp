@@ -54,7 +54,7 @@ static bool animationsPausedForDocument(Document& document)
 
 SVGDocumentExtensions::SVGDocumentExtensions(Document& document)
     : m_document(document)
-    , m_resourcesCache(makeUnique<SVGResourcesCache>())
+    , m_resourcesCache(makeUniqueRef<SVGResourcesCache>())
     , m_areAnimationsPaused(animationsPausedForDocument(document))
 {
 }

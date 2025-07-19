@@ -42,7 +42,8 @@ ABSL_NAMESPACE_BEGIN
 namespace {
 // Append is merely a version of memcpy that returns the address of the byte
 // after the area just overwritten.
-inline char* absl_nonnull Append(char* absl_nonnull out, const AlphaNum& x) {
+inline absl::Nonnull<char*> Append(absl::Nonnull<char*> out,
+                                   const AlphaNum& x) {
   // memcpy is allowed to overwrite arbitrary memory, so doing this after the
   // call would force an extra fetch of x.size().
   char* after = out + x.size();
@@ -158,7 +159,7 @@ std::string CatPieces(std::initializer_list<absl::string_view> pieces) {
   assert(((src).size() == 0) ||      \
          (uintptr_t((src).data() - (dest).data()) > uintptr_t((dest).size())))
 
-void AppendPieces(std::string* absl_nonnull dest,
+void AppendPieces(absl::Nonnull<std::string*> dest,
                   std::initializer_list<absl::string_view> pieces) {
   size_t old_size = dest->size();
   size_t to_append = 0;
@@ -182,7 +183,7 @@ void AppendPieces(std::string* absl_nonnull dest,
 
 }  // namespace strings_internal
 
-void StrAppend(std::string* absl_nonnull dest, const AlphaNum& a) {
+void StrAppend(absl::Nonnull<std::string*> dest, const AlphaNum& a) {
   ASSERT_NO_OVERLAP(*dest, a);
   std::string::size_type old_size = dest->size();
   STLStringAppendUninitializedAmortized(dest, a.size());
@@ -192,7 +193,7 @@ void StrAppend(std::string* absl_nonnull dest, const AlphaNum& a) {
   assert(out == begin + dest->size());
 }
 
-void StrAppend(std::string* absl_nonnull dest, const AlphaNum& a,
+void StrAppend(absl::Nonnull<std::string*> dest, const AlphaNum& a,
                const AlphaNum& b) {
   ASSERT_NO_OVERLAP(*dest, a);
   ASSERT_NO_OVERLAP(*dest, b);
@@ -205,7 +206,7 @@ void StrAppend(std::string* absl_nonnull dest, const AlphaNum& a,
   assert(out == begin + dest->size());
 }
 
-void StrAppend(std::string* absl_nonnull dest, const AlphaNum& a,
+void StrAppend(absl::Nonnull<std::string*> dest, const AlphaNum& a,
                const AlphaNum& b, const AlphaNum& c) {
   ASSERT_NO_OVERLAP(*dest, a);
   ASSERT_NO_OVERLAP(*dest, b);
@@ -220,7 +221,7 @@ void StrAppend(std::string* absl_nonnull dest, const AlphaNum& a,
   assert(out == begin + dest->size());
 }
 
-void StrAppend(std::string* absl_nonnull dest, const AlphaNum& a,
+void StrAppend(absl::Nonnull<std::string*> dest, const AlphaNum& a,
                const AlphaNum& b, const AlphaNum& c, const AlphaNum& d) {
   ASSERT_NO_OVERLAP(*dest, a);
   ASSERT_NO_OVERLAP(*dest, b);

@@ -289,10 +289,11 @@ class RetiredFlagObj final : public CommandLineFlag {
 
 }  // namespace
 
-void Retire(const char* name, FlagFastTypeId type_id, unsigned char* buf) {
+void Retire(const char* name, FlagFastTypeId type_id, char* buf) {
   static_assert(sizeof(RetiredFlagObj) == kRetiredFlagObjSize, "");
   static_assert(alignof(RetiredFlagObj) == kRetiredFlagObjAlignment, "");
-  auto* flag = ::new (buf) flags_internal::RetiredFlagObj(name, type_id);
+  auto* flag = ::new (static_cast<void*>(buf))
+      flags_internal::RetiredFlagObj(name, type_id);
   FlagRegistry::GlobalRegistry().RegisterFlag(*flag, nullptr);
 }
 

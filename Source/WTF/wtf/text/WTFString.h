@@ -41,8 +41,6 @@ class BString;
 #include <wtf/text/win/WCharStringExtras.h>
 #endif
 
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_BEGIN
-
 namespace WTF {
 
 // Declarations of string operations
@@ -573,7 +571,7 @@ inline String operator""_str(const char* characters, size_t)
 
 inline String operator""_str(const char16_t* characters, size_t length)
 {
-    return String({ characters, length });
+    return String(unsafeMakeSpan(characters, length));
 }
 
 } // inline StringLiterals
@@ -596,5 +594,3 @@ using WTF::reverseFind;
 using WTF::codePointCompareLessThan;
 
 #include <wtf/text/AtomString.h>
-
-WTF_ALLOW_UNSAFE_BUFFER_USAGE_END

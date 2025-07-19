@@ -153,8 +153,8 @@ public:
     static const Scope* forOrdinal(const Element&, ScopeOrdinal);
 
     struct LayoutDependencyUpdateContext {
-        UncheckedKeyHashSet<CheckedRef<const Element>> invalidatedContainers;
-        UncheckedKeyHashSet<CheckedRef<const Element>> invalidatedAnchorPositioned;
+        HashSet<CheckedRef<const Element>> invalidatedContainers;
+        HashSet<CheckedRef<const Element>> invalidatedAnchorPositioned;
     };
     bool invalidateForLayoutDependencies(LayoutDependencyUpdateContext&);
 
@@ -179,7 +179,7 @@ private:
     void updateActiveStyleSheets(UpdateType);
     void scheduleUpdate(UpdateType);
 
-    using ResolverScopes = UncheckedKeyHashMap<Ref<Resolver>, Vector<WeakPtr<Scope>>>;
+    using ResolverScopes = HashMap<Ref<Resolver>, Vector<WeakPtr<Scope>>>;
     ResolverScopes collectResolverScopes();
     template <typename TestFunction> void evaluateMediaQueries(TestFunction&&);
 
@@ -236,7 +236,7 @@ private:
 
     Timer m_pendingUpdateTimer;
 
-    mutable UncheckedKeyHashSet<SingleThreadWeakRef<const CSSStyleSheet>> m_weakCopyOfActiveStyleSheetListForFastLookup;
+    mutable HashSet<SingleThreadWeakRef<const CSSStyleSheet>> m_weakCopyOfActiveStyleSheetListForFastLookup;
 
     // Track the currently loading top-level stylesheets needed for rendering.
     // Sheets loaded using the @import directive are not included in this count.
@@ -274,7 +274,7 @@ private:
     const UniqueRef<CSSCounterStyleRegistry> m_counterStyleRegistry;
 
     // FIXME: These (and some things above) are only relevant for the root scope.
-    UncheckedKeyHashMap<ResolverSharingKey, Ref<Resolver>> m_sharedShadowTreeResolvers;
+    HashMap<ResolverSharingKey, Ref<Resolver>> m_sharedShadowTreeResolvers;
 
     AnchorPositionedToAnchorMap m_anchorPositionedToAnchorMap;
 };

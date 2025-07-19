@@ -1048,14 +1048,14 @@ glong webkit_dom_dom_window_get_orientation(WebKitDOMDOMWindow* self)
 #endif /* ENABLE(ORIENTATION_EVENTS) */
 }
 
-gboolean webkit_dom_dom_window_webkit_message_handlers_post_message(WebKitDOMDOMWindow* window, const gchar* handlerName, const gchar* message)
+gboolean webkit_dom_dom_window_webkit_message_handlers_post_message(WebKitDOMDOMWindow* self, const gchar* handlerName, const gchar* message)
 {
-    g_return_val_if_fail(WEBKIT_DOM_IS_DOM_WINDOW(window), FALSE);
+    g_return_val_if_fail(WEBKIT_DOM_IS_DOM_WINDOW(self), FALSE);
     g_return_val_if_fail(handlerName, FALSE);
     g_return_val_if_fail(message, FALSE);
 
 #if ENABLE(USER_MESSAGE_HANDLERS)
-    auto* window = WebKit::core(window);
+    auto* window = WebKit::core(self);
     if (!window->shouldHaveWebKitNamespaceForWorld(WebCore::mainThreadNormalWorldSingleton()))
         return FALSE;
 

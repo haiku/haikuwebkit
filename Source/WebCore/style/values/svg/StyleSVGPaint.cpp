@@ -26,9 +26,10 @@
 #include "StyleSVGPaint.h"
 
 #include "AnimationUtilities.h"
+#include "CSSURLValue.h"
 #include "ColorBlending.h"
-#include "StyleBuilderConverter.h"
-#include "StyleBuilderState.h"
+#include "RenderStyle.h"
+#include "StyleBuilderChecking.h"
 #include "StyleColor.h"
 #include "StyleForVisitedLink.h"
 #include <wtf/text/TextStream.h>
@@ -41,8 +42,8 @@ auto CSSValueConversion<SVGPaint>::operator()(BuilderState& state, const CSSValu
     // <paint> = none | <color> | <url> [none | <color>]? 
 
     if (RefPtr list = dynamicDowncast<CSSValueList>(value)) {
-        RefPtr firstValue = list->protectedItem(0);
-        RefPtr urlValue = BuilderConverter::requiredDowncast<CSSURLValue>(state, *firstValue);
+        RefPtr firstValue = list->item(0);
+        RefPtr urlValue = requiredDowncast<CSSURLValue>(state, *firstValue);
         if (!urlValue) {
             return {
                 .type = SVGPaintType::None,
@@ -60,7 +61,7 @@ auto CSSValueConversion<SVGPaint>::operator()(BuilderState& state, const CSSValu
             };
         }
 
-        RefPtr secondItem = list->protectedItem(1);
+        RefPtr secondItem = list->item(1);
         if (RefPtr primitiveValue = dynamicDowncast<const CSSPrimitiveValue>(secondItem)) {
             switch (primitiveValue->valueID()) {
             case CSSValueNone:
@@ -84,7 +85,7 @@ auto CSSValueConversion<SVGPaint>::operator()(BuilderState& state, const CSSValu
         return {
             .type = SVGPaintType::URIRGBColor,
             .url = WTFMove(url),
-            .color = toStyleFromCSSValue<Color>(state, *list->item(1), forVisitedLink)
+            .color = toStyleFromCSSValue<Color>(state, *list->protectedItem(1), forVisitedLink)
         };
     }
 

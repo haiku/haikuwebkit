@@ -293,6 +293,12 @@
 #define USE_EMPTYXR 1
 #endif
 #endif
+#else
+#if !defined(HAVE_WEBXR_INTERNALS) && !HAVE(WEBXR_INTERNALS)
+#if !USE(OPENXR)
+#define USE_EMPTYXR 1
+#endif
+#endif
 #endif
 
 #if PLATFORM(IOS_FAMILY)
@@ -336,7 +342,7 @@
 #define USE_AVIF 0
 #endif
 
-#if PLATFORM(COCOA) && HAVE(CGSTYLE_COLORMATRIX_BLUR)
+#if PLATFORM(COCOA)
 #define USE_GRAPHICS_CONTEXT_FILTERS 1
 #endif
 

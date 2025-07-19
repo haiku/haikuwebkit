@@ -45,6 +45,7 @@
 #include "CSSValueList.h"
 #include "CSSValuePool.h"
 #include "GridArea.h"
+#include "GridPosition.h"
 #include <wtf/Vector.h>
 #include <wtf/text/StringView.h>
 
@@ -98,41 +99,44 @@ static Vector<String> parseGridTemplateAreasColumnNames(StringView gridRowNames)
     return columnNames;
 }
 
-bool parseGridTemplateAreasRow(StringView gridRowNames, NamedGridAreaMap& gridAreaMap, size_t rowCount, size_t& columnCount)
+bool parseGridTemplateAreasRow(StringView gridRowNames, CSS::GridNamedAreaMap& gridAreaMap)
 {
     if (gridRowNames.containsOnly<isCSSSpace>())
         return false;
 
     auto columnNames = parseGridTemplateAreasColumnNames(gridRowNames);
-    if (!rowCount) {
-        columnCount = columnNames.size();
-        if (!columnCount)
+    if (!gridAreaMap.rowCount) {
+        gridAreaMap.columnCount = columnNames.size();
+        if (!gridAreaMap.columnCount)
             return false;
-    } else if (columnCount != columnNames.size()) {
+    } else if (gridAreaMap.columnCount != columnNames.size()) {
         // The declaration is invalid if all the rows don't have the number of columns.
         return false;
     }
 
-    for (size_t currentColumn = 0; currentColumn < columnCount; ++currentColumn) {
-        const String& gridAreaName = columnNames[currentColumn];
+    for (size_t currentColumn = 0; currentColumn < gridAreaMap.columnCount; ++currentColumn) {
+        auto& gridAreaName = columnNames[currentColumn];
 
         // Unnamed areas are always valid (we consider them to be 1x1).
         if (gridAreaName == "."_s)
             continue;
 
-        size_t lookAheadColumn = currentColumn + 1;
-        while (lookAheadColumn < columnCount && columnNames[lookAheadColumn] == gridAreaName)
+        auto lookAheadColumn = currentColumn + 1;
+        while (lookAheadColumn < gridAreaMap.columnCount && columnNames[lookAheadColumn] == gridAreaName)
             lookAheadColumn++;
 
         auto result = gridAreaMap.map.ensure(gridAreaName, [&] {
-            return GridArea(GridSpan::translatedDefiniteGridSpan(rowCount, rowCount + 1), GridSpan::translatedDefiniteGridSpan(currentColumn, lookAheadColumn));
+            return GridArea {
+                GridSpan::translatedDefiniteGridSpan(gridAreaMap.rowCount, gridAreaMap.rowCount + 1),
+                GridSpan::translatedDefiniteGridSpan(currentColumn, lookAheadColumn)
+            };
         });
         if (!result.isNewEntry) {
             auto& gridArea = result.iterator->value;
 
             // The following checks test that the grid area is a single filled-in rectangle.
             // 1. The new row is adjacent to the previously parsed row.
-            if (rowCount != gridArea.rows.endLine())
+            if (gridAreaMap.rowCount != gridArea.rows.endLine())
                 return false;
 
             // 2. The new area starts at the same position as the previously parsed area.
@@ -148,9 +152,9 @@ bool parseGridTemplateAreasRow(StringView gridRowNames, NamedGridAreaMap& gridAr
         currentColumn = lookAheadColumn - 1;
     }
 
+    ++gridAreaMap.rowCount;
     return true;
 }
-
 
 RefPtr<CSSValue> consumeGridLine(CSSParserTokenRange& range, CSS::PropertyParserState& state)
 {
@@ -453,17 +457,14 @@ RefPtr<CSSValue> consumeGridTemplateAreas(CSSParserTokenRange& range, CSS::Prope
     if (range.peek().id() == CSSValueNone)
         return consumeIdent(range);
 
-    NamedGridAreaMap map;
-    size_t rowCount = 0;
-    size_t columnCount = 0;
+    CSS::GridNamedAreaMap map;
     while (range.peek().type() == StringToken) {
-        if (!parseGridTemplateAreasRow(range.consumeIncludingWhitespace().value(), map, rowCount, columnCount))
+        if (!parseGridTemplateAreasRow(range.consumeIncludingWhitespace().value(), map))
             return nullptr;
-        ++rowCount;
     }
-    if (!rowCount)
+    if (!map.rowCount)
         return nullptr;
-    return CSSGridTemplateAreasValue::create(WTFMove(map), rowCount, columnCount);
+    return CSSGridTemplateAreasValue::create({ WTFMove(map) });
 }
 
 RefPtr<CSSValue> consumeGridAutoFlow(CSSParserTokenRange& range, CSS::PropertyParserState&)

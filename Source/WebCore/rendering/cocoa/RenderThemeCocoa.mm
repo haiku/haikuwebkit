@@ -261,7 +261,7 @@ void RenderThemeCocoa::paintFileUploadIconDecorations(const RenderObject&, const
         thumbnailRect.contract(kMultipleThumbnailShrinkSize, kMultipleThumbnailShrinkSize);
 
         // Background picture frame and simple background icon with a gradient matching the button.
-        auto backgroundImageColor = buttonRenderer.style().visitedDependentColor(CSSPropertyBackgroundColor);
+        auto backgroundImageColor = buttonRenderer.checkedStyle()->visitedDependentColor(CSSPropertyBackgroundColor);
         paintInfo.context().fillRoundedRect(FloatRoundedRect(thumbnailPictureFrameRect, cornerSize, cornerSize, cornerSize, cornerSize), pictureFrameColor);
         paintInfo.context().fillRect(thumbnailRect, backgroundImageColor);
 
@@ -278,7 +278,7 @@ void RenderThemeCocoa::paintFileUploadIconDecorations(const RenderObject&, const
 
 Seconds RenderThemeCocoa::animationRepeatIntervalForProgressBar(const RenderProgress& renderer) const
 {
-    return renderer.page().preferredRenderingUpdateInterval();
+    return renderer.protectedPage()->preferredRenderingUpdateInterval();
 }
 
 #if ENABLE(APPLE_PAY)
@@ -296,8 +296,8 @@ void RenderThemeCocoa::adjustApplePayButtonStyle(RenderStyle& style, const Eleme
     style.setMinHeight(Style::MinimumSize::Fixed { applePayButtonMinimumHeight });
 
     if (!style.hasExplicitlySetBorderRadius()) {
-        auto cornerRadius = PKApplePayButtonDefaultCornerRadius;
-        style.setBorderRadius({ { cornerRadius, LengthType::Fixed }, { cornerRadius, LengthType::Fixed } });
+        auto radius = Style::LengthPercentage<CSS::Nonnegative>::Dimension { static_cast<float>(PKApplePayButtonDefaultCornerRadius) };
+        style.setBorderRadius({ radius, radius });
     }
 }
 
@@ -617,7 +617,7 @@ constexpr auto checkboxRadioBorderWidthForVectorBasedControls = 1.5f;
 
 static bool controlIsFocusedWithOutlineStyleAutoForVectorBasedControls(const RenderObject& renderer)
 {
-    return RenderTheme::singleton().isFocused(renderer) && renderer.style().hasAutoOutlineStyle();
+    return RenderTheme::singleton().isFocused(renderer) && renderer.style().outlineStyle() == OutlineStyle::Auto;
 }
 
 static constexpr auto checkboxRadioBorderDisabledOpacityForVectorBasedControls = 0.5f;
@@ -809,11 +809,6 @@ Color RenderThemeCocoa::checkboxRadioBackgroundColorForVectorBasedControls(const
     return backgroundColor;
 }
 
-bool RenderThemeCocoa::adjustCheckboxStyleForVectorBasedControls(RenderStyle&, const Element*) const
-{
-    return false;
-}
-
 bool RenderThemeCocoa::paintCheckboxForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
 {
     // FIXME: A pre-existing flicker issue caused by a delay between the pressed state ending
@@ -924,11 +919,6 @@ bool RenderThemeCocoa::paintCheckboxForVectorBasedControls(const RenderObject& b
     context.fillPath(glyphPath);
 
     return true;
-}
-
-bool RenderThemeCocoa::adjustRadioStyleForVectorBasedControls(RenderStyle&, const Element*) const
-{
-    return false;
 }
 
 bool RenderThemeCocoa::paintRadioForVectorBasedControls(const RenderObject& box, const PaintInfo& paintInfo, const FloatRect& rect)
@@ -1221,6 +1211,18 @@ bool RenderThemeCocoa::adjustColorWellSwatchStyleForVectorBasedControls(RenderSt
     return false;
 }
 
+static void applyPaddingIfNotExplicitlySet(RenderStyle& style, Style::PaddingBox paddingBox)
+{
+    if (!style.hasExplicitlySetPaddingLeft())
+        style.setPaddingLeft(WTFMove(paddingBox.left()));
+    if (!style.hasExplicitlySetPaddingTop())
+        style.setPaddingTop(WTFMove(paddingBox.top()));
+    if (!style.hasExplicitlySetPaddingRight())
+        style.setPaddingRight(WTFMove(paddingBox.right()));
+    if (!style.hasExplicitlySetPaddingBottom())
+        style.setPaddingBottom(WTFMove(paddingBox.bottom()));
+}
+
 bool RenderThemeCocoa::adjustColorWellSwatchWrapperStyleForVectorBasedControls(RenderStyle& style, const Element* element) const
 {
 #if PLATFORM(IOS_FAMILY)
@@ -1231,7 +1233,8 @@ bool RenderThemeCocoa::adjustColorWellSwatchWrapperStyleForVectorBasedControls(R
     if (!formControlRefreshEnabled(element))
         return false;
 
-    style.setPaddingBox(Style::PaddingBox { 0_css_px });
+    applyPaddingIfNotExplicitlySet(style, Style::PaddingBox { 0_css_px });
+
     return true;
 #endif
 }
@@ -1652,9 +1655,6 @@ static void applyEmPadding(RenderStyle& style, const Element* element, float pad
     if (!element)
         return;
 
-    if (style.hasExplicitlySetPadding())
-        return;
-
     Ref paddingInline = CSSPrimitiveValue::create(paddingInlineEm, CSSUnitType::CSS_EM);
     Ref paddingBlock = CSSPrimitiveValue::create(paddingBlockEm, CSSUnitType::CSS_EM);
 
@@ -1676,9 +1676,6 @@ static void applyEmPaddingForNumberField(RenderStyle& style, const Element* elem
     if (!element)
         return;
 
-    if (style.hasExplicitlySetPadding())
-        return;
-
     Ref paddingInlineStart = CSSPrimitiveValue::create(inlineStartPadding, CSSUnitType::CSS_EM);
     Ref paddingInlineEndAndBlock = CSSPrimitiveValue::create(inlineEndAndBlockPadding, CSSUnitType::CSS_EM);
     Ref document = element->document();
@@ -1689,7 +1686,7 @@ static void applyEmPaddingForNumberField(RenderStyle& style, const Element* elem
     Style::PaddingBox paddingBox { paddingInlineEndAndBlockPixels };
     paddingBox.setStart(paddingInlineStartPixels, style.writingMode());
 
-    style.setPaddingBox(WTFMove(paddingBox));
+    applyPaddingIfNotExplicitlySet(style, paddingBox);
 }
 #endif
 
@@ -1704,8 +1701,8 @@ bool RenderThemeCocoa::adjustTextFieldStyleForVectorBasedControls(RenderStyle& s
         return false;
 
 #if PLATFORM(IOS_FAMILY)
-    if (RefPtr input = dynamicDowncast<HTMLInputElement>(*element); input && input->hasDataList() && !style.hasExplicitlySetPadding())
-        style.setPaddingBox(Style::PaddingBox { 1_css_px });
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(*element); input && input->hasDataList())
+        applyPaddingIfNotExplicitlySet(style, { 1_css_px });
     else
         applyEmPadding(style, element, standardTextControlInlinePaddingEm, standardTextControlBlockPaddingEm);
 #else
@@ -2006,8 +2003,6 @@ bool RenderThemeCocoa::paintTextAreaDecorationsForVectorBasedControls(const Rend
 
 static void applyCommonButtonPaddingToStyleForVectorBasedControls(RenderStyle& style, const Element& element)
 {
-    // FIXME: This is a copy of applyCommonButtonPaddingToStyle(...) from RenderThemeIOS. Refactor to remove duplicate code.
-
     Document& document = element.document();
     Ref emSize = CSSPrimitiveValue::create(0.5, CSSUnitType::CSS_EM);
     // We don't need this element's parent style to calculate `em` units, so it's okay to pass nullptr for it here.
@@ -2017,14 +2012,13 @@ static void applyCommonButtonPaddingToStyleForVectorBasedControls(RenderStyle& s
     if (!style.writingMode().isHorizontal())
         paddingBox = { paddingBox.left(), paddingBox.top(), paddingBox.right(), paddingBox.bottom() };
 
-    style.setPaddingBox(WTFMove(paddingBox));
+    applyPaddingIfNotExplicitlySet(style, paddingBox);
 }
 
 static void adjustSelectListButtonStyleForVectorBasedControls(RenderStyle& style, const Element& element)
 {
     // FIXME: This is a copy of adjustSelectListButtonStyle(...) from RenderThemeIOS. Refactor to remove duplicate code.
 
-    // Enforce "padding: 0 0.5em".
     applyCommonButtonPaddingToStyleForVectorBasedControls(style, element);
 
     // Enforce "line-height: normal".
@@ -2053,7 +2047,6 @@ static void adjustInputElementButtonStyleForVectorBasedControls(RenderStyle& sty
 {
     // FIXME: This is a copy of adjustInputElementButtonStyle(...) from RenderThemeIOS. Refactor to remove duplicate code.
 
-    // Always Enforce "padding: 0 0.5em".
     applyCommonButtonPaddingToStyleForVectorBasedControls(style, inputElement);
 
     // Don't adjust the style if the width is specified.
@@ -2092,9 +2085,14 @@ bool RenderThemeCocoa::adjustMenuListStyleForVectorBasedControls(RenderStyle& st
 
     RenderTheme::adjustMenuListStyle(style, element);
 
+    if (!style.hasExplicitlySetColor()) {
+        const auto styleColorOptions = element->document().styleColorOptions(&style);
+        style.setColor(buttonTextColor(styleColorOptions, !element->isDisabledFormControl()));
+    }
+
     style.setWhiteSpaceCollapse(WhiteSpaceCollapse::Preserve);
     style.setTextWrapMode(TextWrapMode::NoWrap);
-    style.setBoxShadow({ });
+    style.setBoxShadow(CSS::Keyword::None  { });
 
     return true;
 }
@@ -2148,43 +2146,11 @@ bool RenderThemeCocoa::paintMenuListButtonForVectorBasedControls(const RenderObj
 #endif
 }
 
-#if !PLATFORM(MAC)
-
-static void adjustButtonLikeControlStyleForVectorBasedControls(RenderStyle& style, const Element* element)
+Color RenderThemeCocoa::buttonTextColor(OptionSet<StyleColorOptions> options, bool enabled) const
 {
-    // FIXME: This is a modified version of adjustButtonLikeControlStyle(...) from RenderThemeIOS. Refactor to remove duplicate code.
-
-    if (PAL::currentUserInterfaceIdiomIsVision())
-        return;
-
-    if (!element || element->isDisabledFormControl())
-        return;
-
-    const auto styleColorOptions = element->document().styleColorOptions(&style);
-
-    if (!style.hasAutoAccentColor()) {
-        auto isSubmitStyleButton = false;
-
-        if (RefPtr input = dynamicDowncast<HTMLInputElement>(element))
-            isSubmitStyleButton = input->isSubmitButton();
-
-        if (RefPtr button = dynamicDowncast<HTMLButtonElement>(element))
-            isSubmitStyleButton = isSubmitStyleButton || button->isExplicitlySetSubmitButton();
-
-        auto tintColor = style.usedAccentColor(styleColorOptions);
-        if (!isSubmitStyleButton)
-            style.setColor(WTFMove(tintColor));
-    }
-
-    if (!element->active())
-        return;
-
-    auto textColor = style.color();
-    if (textColor.isValid())
-        style.setColor(platformAdjustedColorForPressedState(textColor, styleColorOptions));
+    const auto cssValue = enabled ? CSSValueAppleSystemLabel : CSSValueAppleSystemTertiaryLabel;
+    return systemColor(cssValue, options);
 }
-
-#endif
 
 bool RenderThemeCocoa::adjustButtonStyleForVectorBasedControls(RenderStyle& style, const Element* element) const
 {
@@ -2196,21 +2162,32 @@ bool RenderThemeCocoa::adjustButtonStyleForVectorBasedControls(RenderStyle& styl
 #endif
 
     auto isSubmitButton = false;
-    auto isDisabledFormControl = false;
-    if (RefPtr input = dynamicDowncast<HTMLInputElement>(element)) {
+    if (RefPtr input = dynamicDowncast<HTMLInputElement>(element))
         isSubmitButton = input->isSubmitButton();
-        isDisabledFormControl = input->isDisabledFormControl();
-    }
 
-    if (isSubmitButton && !style.hasExplicitlySetColor()) {
+    auto isEnabled = true;
+    if (RefPtr input = dynamicDowncast<HTMLFormControlElement>(element))
+        isEnabled = !input->isDisabledFormControl();
+
+    const auto styleColorOptions = element->document().styleColorOptions(&style);
+
+    auto adjustStyleForSubmitButton = [&] {
 #if PLATFORM(MAC)
-        style.setInsideDefaultButton(true);
-        const Color enabledColor = style.color();
+        style.setColor(buttonTextColor(styleColorOptions, isEnabled));
+        if (isEnabled)
+            style.setInsideDefaultButton(true);
+        else
+            style.setInsideDisabledSubmitButton(true);
 #else
-        const Color enabledColor = Color::white;
+        style.setColor(isEnabled ? Color::white : disabledSubmitButtonTextColor());
 #endif
-        if (isDisabledFormControl)
-            style.setColor(enabledColor.colorWithAlphaMultipliedBy(0.8f));
+    };
+
+    if (!style.hasExplicitlySetColor()) {
+        if (isSubmitButton)
+            adjustStyleForSubmitButton();
+        else
+            style.setColor(buttonTextColor(styleColorOptions, isEnabled));
     }
 
 #if PLATFORM(IOS_FAMILY)
@@ -2239,11 +2216,8 @@ bool RenderThemeCocoa::adjustButtonStyleForVectorBasedControls(RenderStyle& styl
     if (!style.writingMode().isHorizontal())
         paddingBox = { paddingBox.left(), paddingBox.top(), paddingBox.right(), paddingBox.bottom() };
 
-    style.setPaddingBox(WTFMove(paddingBox));
+    applyPaddingIfNotExplicitlySet(style, paddingBox);
 
-#if PLATFORM(IOS_FAMILY)
-    adjustButtonLikeControlStyleForVectorBasedControls(style, element);
-#endif
     return true;
 }
 
@@ -2269,7 +2243,10 @@ bool RenderThemeCocoa::adjustMenuListButtonStyleForVectorBasedControls(RenderSty
     if (!element)
         return true;
 
-    adjustButtonLikeControlStyleForVectorBasedControls(style, element);
+    if (!style.hasExplicitlySetColor()) {
+        const auto styleColorOptions = element->document().styleColorOptions(&style);
+        style.setColor(buttonTextColor(styleColorOptions, !element->isDisabledFormControl()));
+    }
 
     // Enforce some default styles in the case that this is a non-multiple <select> element,
     // or a date input. We don't force these if this is just an element with
@@ -2298,12 +2275,6 @@ bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(cons
 
     CheckedRef style = box.style();
     auto styleColorOptions = box.styleColorOptions();
-
-    auto states = extractControlStyleStatesForRenderer(box);
-    bool isPressed = states.contains(ControlStyle::State::Pressed);
-#if PLATFORM(MAC)
-    bool isWindowActive = states.contains(ControlStyle::State::WindowActive);
-#endif
 
     Path glyphPath;
     FloatSize glyphSize;
@@ -2388,20 +2359,9 @@ bool RenderThemeCocoa::paintMenuListButtonDecorationsForVectorBasedControls(cons
     transform.scale(glyphScale);
     glyphPath.transform(transform);
 
-#if PLATFORM(MAC)
-    auto decorationColor = isWindowActive ? controlTintColor(style, styleColorOptions) : systemColor(CSSValueAppleSystemLabel, styleColorOptions);
-#else
-    auto decorationColor = style->color();
-#endif
+    const auto decorationColor = buttonTextColor(styleColorOptions, isEnabled(box));
 
-    if (isPressed)
-        decorationColor = platformAdjustedColorForPressedState(decorationColor, styleColorOptions);
-
-    if (isEnabled(box))
-        context.setFillColor(decorationColor);
-    else
-        context.setFillColor(systemColor(CSSValueAppleSystemTertiaryLabel, styleColorOptions));
-
+    context.setFillColor(decorationColor);
     context.fillPath(glyphPath);
     return true;
 }
@@ -2728,7 +2688,7 @@ static bool hasVisibleSliderThumbDescendant(const RenderObject& box)
     if (!renderBox)
         return false;
 
-    while (CheckedPtr childBox = renderBox->lastChildBox())
+    while (CheckedPtr childBox = dynamicDowncast<RenderBox>(renderBox->lastChild()))
         renderBox = childBox;
 
     CheckedRef style = renderBox->style();
@@ -3018,7 +2978,7 @@ bool RenderThemeCocoa::adjustSliderThumbStyleForVectorBasedControls(RenderStyle&
         return false;
 
     RenderTheme::adjustSliderThumbStyle(style, element);
-    style.setBoxShadow({ });
+    style.setBoxShadow(CSS::Keyword::None { });
 
     return true;
 }
@@ -3590,13 +3550,66 @@ bool RenderThemeCocoa::adjustTextControlInnerTextStyleForVectorBasedControls(Ren
     return true;
 }
 
+Color RenderThemeCocoa::disabledSubmitButtonTextColor() const
+{
+    static constexpr auto textColor = SRGBA<uint8_t> { 255, 255, 255, 204 }; // opacity 0.8f
+    return textColor;
+}
+
+bool RenderThemeCocoa::mayNeedBleedAvoidance(const RenderStyle& style) const
+{
+    if (style.nativeAppearanceDisabled())
+        return true;
+
+    switch (style.usedAppearance()) {
+    case StyleAppearance::BorderlessAttachment:
+    case StyleAppearance::Button:
+    case StyleAppearance::Checkbox:
+#if PLATFORM(MAC)
+    case StyleAppearance::ColorWell:
+    case StyleAppearance::ColorWellSwatch:
+#endif
+    case StyleAppearance::DefaultButton:
+    case StyleAppearance::InnerSpinButton:
+    case StyleAppearance::ListButton:
+#if PLATFORM(MAC)
+    case StyleAppearance::Menulist:
+#else
+    case StyleAppearance::MenulistButton:
+#endif
+    case StyleAppearance::Meter:
+    case StyleAppearance::ProgressBar:
+    case StyleAppearance::PushButton:
+    case StyleAppearance::Radio:
+    case StyleAppearance::SearchField:
+#if PLATFORM(MAC)
+    case StyleAppearance::SearchFieldCancelButton:
+#endif
+    case StyleAppearance::SearchFieldDecoration:
+    case StyleAppearance::SearchFieldResultsButton:
+    case StyleAppearance::SearchFieldResultsDecoration:
+    case StyleAppearance::SquareButton:
+    case StyleAppearance::SliderHorizontal:
+    case StyleAppearance::SliderThumbHorizontal:
+    case StyleAppearance::SliderThumbVertical:
+    case StyleAppearance::SliderVertical:
+    case StyleAppearance::TextArea:
+    case StyleAppearance::TextField:
+    case StyleAppearance::SwitchThumb:
+    case StyleAppearance::SwitchTrack:
+        return false;
+    default:
+        return true;
+    }
+}
+
 #endif
 
 void RenderThemeCocoa::adjustCheckboxStyle(RenderStyle& style, const Element* element) const
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
-    if (adjustCheckboxStyleForVectorBasedControls(style, element))
-        return;
+    if (formControlRefreshEnabled(element))
+        style.resetBorder();
 #endif
 
     RenderTheme::adjustCheckboxStyle(style, element);
@@ -3615,8 +3628,8 @@ bool RenderThemeCocoa::paintCheckbox(const RenderObject& box, const PaintInfo& p
 void RenderThemeCocoa::adjustRadioStyle(RenderStyle& style, const Element* element) const
 {
 #if ENABLE(FORM_CONTROL_REFRESH)
-    if (adjustRadioStyleForVectorBasedControls(style, element))
-        return;
+    if (formControlRefreshEnabled(element))
+        style.resetBorder();
 #endif
 
     RenderTheme::adjustRadioStyle(style, element);
@@ -4102,8 +4115,8 @@ void RenderThemeCocoa::adjustSwitchStyle(RenderStyle& style, const Element* elem
 
     adjustSwitchStyleDisplay(style);
 
-    if (style.hasAutoOutlineStyle())
-        style.setOutlineStyle(BorderStyle::None);
+    if (style.outlineStyle() == OutlineStyle::Auto)
+        style.setOutlineStyle(OutlineStyle::None);
 #endif
 }
 

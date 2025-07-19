@@ -32,7 +32,6 @@
 #include <utility>
 
 #include "absl/base/attributes.h"
-#include "absl/base/casts.h"
 #include "absl/base/config.h"
 #include "absl/base/nullability.h"
 #include "absl/base/optimization.h"
@@ -64,51 +63,45 @@
 #endif
 
 #define ABSL_LOG_INTERNAL_CHECK_OP(name, op, val1, val1_text, val2, val2_text) \
-  while (const char* absl_nullable absl_log_internal_check_op_result           \
-         [[maybe_unused]] = ::absl::log_internal::name##Impl(                  \
-             ::absl::log_internal::GetReferenceableValue(val1),                \
-             ::absl::log_internal::GetReferenceableValue(val2),                \
-             ABSL_LOG_INTERNAL_STRIP_STRING_LITERAL(val1_text " " #op          \
-                                                              " " val2_text))) \
+  while (::std::string* absl_log_internal_check_op_result                      \
+             ABSL_LOG_INTERNAL_ATTRIBUTE_UNUSED_IF_STRIP_LOG =                 \
+                 ::absl::log_internal::name##Impl(                             \
+                     ::absl::log_internal::GetReferenceableValue(val1),        \
+                     ::absl::log_internal::GetReferenceableValue(val2),        \
+                     ABSL_LOG_INTERNAL_STRIP_STRING_LITERAL(                   \
+                         val1_text " " #op " " val2_text)))                    \
     ABSL_LOG_INTERNAL_CONDITION_FATAL(STATELESS, true)                         \
-  ABSL_LOG_INTERNAL_CHECK(::absl::implicit_cast<const char* absl_nonnull>(     \
-                              absl_log_internal_check_op_result))              \
-      .InternalStream()
-#define ABSL_LOG_INTERNAL_QCHECK_OP(name, op, val1, val1_text, val2,        \
-                                    val2_text)                              \
-  while (const char* absl_nullable absl_log_internal_qcheck_op_result =     \
-             ::absl::log_internal::name##Impl(                              \
-                 ::absl::log_internal::GetReferenceableValue(val1),         \
-                 ::absl::log_internal::GetReferenceableValue(val2),         \
-                 ABSL_LOG_INTERNAL_STRIP_STRING_LITERAL(                    \
-                     val1_text " " #op " " val2_text)))                     \
-    ABSL_LOG_INTERNAL_CONDITION_QFATAL(STATELESS, true)                     \
-  ABSL_LOG_INTERNAL_QCHECK(::absl::implicit_cast<const char* absl_nonnull>( \
-                               absl_log_internal_qcheck_op_result))         \
-      .InternalStream()
+  ABSL_LOG_INTERNAL_CHECK(*absl_log_internal_check_op_result).InternalStream()
+#define ABSL_LOG_INTERNAL_QCHECK_OP(name, op, val1, val1_text, val2, \
+                                    val2_text)                       \
+  while (::std::string* absl_log_internal_qcheck_op_result =         \
+             ::absl::log_internal::name##Impl(                       \
+                 ::absl::log_internal::GetReferenceableValue(val1),  \
+                 ::absl::log_internal::GetReferenceableValue(val2),  \
+                 ABSL_LOG_INTERNAL_STRIP_STRING_LITERAL(             \
+                     val1_text " " #op " " val2_text)))              \
+    ABSL_LOG_INTERNAL_CONDITION_QFATAL(STATELESS, true)              \
+  ABSL_LOG_INTERNAL_QCHECK(*absl_log_internal_qcheck_op_result).InternalStream()
 #define ABSL_LOG_INTERNAL_CHECK_STROP(func, op, expected, s1, s1_text, s2,     \
                                       s2_text)                                 \
-  while (const char* absl_nullable absl_log_internal_check_strop_result =      \
+  while (::std::string* absl_log_internal_check_strop_result =                 \
              ::absl::log_internal::Check##func##expected##Impl(                \
                  (s1), (s2),                                                   \
                  ABSL_LOG_INTERNAL_STRIP_STRING_LITERAL(s1_text " " #op        \
                                                                 " " s2_text))) \
     ABSL_LOG_INTERNAL_CONDITION_FATAL(STATELESS, true)                         \
-  ABSL_LOG_INTERNAL_CHECK(::absl::implicit_cast<const char* absl_nonnull>(     \
-                              absl_log_internal_check_strop_result))           \
+  ABSL_LOG_INTERNAL_CHECK(*absl_log_internal_check_strop_result)               \
       .InternalStream()
 #define ABSL_LOG_INTERNAL_QCHECK_STROP(func, op, expected, s1, s1_text, s2,    \
                                        s2_text)                                \
-  while (const char* absl_nullable absl_log_internal_qcheck_strop_result =     \
+  while (::std::string* absl_log_internal_qcheck_strop_result =                \
              ::absl::log_internal::Check##func##expected##Impl(                \
                  (s1), (s2),                                                   \
                  ABSL_LOG_INTERNAL_STRIP_STRING_LITERAL(s1_text " " #op        \
                                                                 " " s2_text))) \
     ABSL_LOG_INTERNAL_CONDITION_QFATAL(STATELESS, true)                        \
-  ABSL_LOG_INTERNAL_QCHECK(::absl::implicit_cast<const char* absl_nonnull>(    \
-                               absl_log_internal_qcheck_strop_result))         \
+  ABSL_LOG_INTERNAL_QCHECK(*absl_log_internal_qcheck_strop_result)             \
       .InternalStream()
-
 // This one is tricky:
 // * We must evaluate `val` exactly once, yet we need to do two things with it:
 //   evaluate `.ok()` and (sometimes) `.ToString()`.
@@ -133,41 +126,37 @@
 //   string literal and abort without doing any streaming.  We don't need to
 //   strip the call to stringify the non-ok `Status` as long as we don't log it;
 //   dropping the `Status`'s message text is out of scope.
-#define ABSL_LOG_INTERNAL_CHECK_OK(val, val_text)                          \
-  for (::std::pair<const ::absl::Status* absl_nonnull,                     \
-                   const char* absl_nullable>                              \
-           absl_log_internal_check_ok_goo;                                 \
-       absl_log_internal_check_ok_goo.first =                              \
-           ::absl::log_internal::AsStatus(val),                            \
-       absl_log_internal_check_ok_goo.second =                             \
-           ABSL_PREDICT_TRUE(absl_log_internal_check_ok_goo.first->ok())   \
-               ? nullptr                                                   \
-               : ::absl::status_internal::MakeCheckFailString(             \
-                     absl_log_internal_check_ok_goo.first,                 \
-                     ABSL_LOG_INTERNAL_STRIP_STRING_LITERAL(val_text       \
-                                                            " is OK")),    \
-       !ABSL_PREDICT_TRUE(absl_log_internal_check_ok_goo.first->ok());)    \
-    ABSL_LOG_INTERNAL_CONDITION_FATAL(STATELESS, true)                     \
-  ABSL_LOG_INTERNAL_CHECK(::absl::implicit_cast<const char* absl_nonnull>( \
-                              absl_log_internal_check_ok_goo.second))      \
+#define ABSL_LOG_INTERNAL_CHECK_OK(val, val_text)                        \
+  for (::std::pair<const ::absl::Status*, ::std::string*>                \
+           absl_log_internal_check_ok_goo;                               \
+       absl_log_internal_check_ok_goo.first =                            \
+           ::absl::log_internal::AsStatus(val),                          \
+       absl_log_internal_check_ok_goo.second =                           \
+           ABSL_PREDICT_TRUE(absl_log_internal_check_ok_goo.first->ok()) \
+               ? nullptr                                                 \
+               : ::absl::status_internal::MakeCheckFailString(           \
+                     absl_log_internal_check_ok_goo.first,               \
+                     ABSL_LOG_INTERNAL_STRIP_STRING_LITERAL(val_text     \
+                                                            " is OK")),  \
+       !ABSL_PREDICT_TRUE(absl_log_internal_check_ok_goo.first->ok());)  \
+    ABSL_LOG_INTERNAL_CONDITION_FATAL(STATELESS, true)                   \
+  ABSL_LOG_INTERNAL_CHECK(*absl_log_internal_check_ok_goo.second)        \
       .InternalStream()
-#define ABSL_LOG_INTERNAL_QCHECK_OK(val, val_text)                          \
-  for (::std::pair<const ::absl::Status* absl_nonnull,                      \
-                   const char* absl_nullable>                               \
-           absl_log_internal_qcheck_ok_goo;                                 \
-       absl_log_internal_qcheck_ok_goo.first =                              \
-           ::absl::log_internal::AsStatus(val),                             \
-       absl_log_internal_qcheck_ok_goo.second =                             \
-           ABSL_PREDICT_TRUE(absl_log_internal_qcheck_ok_goo.first->ok())   \
-               ? nullptr                                                    \
-               : ::absl::status_internal::MakeCheckFailString(              \
-                     absl_log_internal_qcheck_ok_goo.first,                 \
-                     ABSL_LOG_INTERNAL_STRIP_STRING_LITERAL(val_text        \
-                                                            " is OK")),     \
-       !ABSL_PREDICT_TRUE(absl_log_internal_qcheck_ok_goo.first->ok());)    \
-    ABSL_LOG_INTERNAL_CONDITION_QFATAL(STATELESS, true)                     \
-  ABSL_LOG_INTERNAL_QCHECK(::absl::implicit_cast<const char* absl_nonnull>( \
-                               absl_log_internal_qcheck_ok_goo.second))     \
+#define ABSL_LOG_INTERNAL_QCHECK_OK(val, val_text)                        \
+  for (::std::pair<const ::absl::Status*, ::std::string*>                 \
+           absl_log_internal_qcheck_ok_goo;                               \
+       absl_log_internal_qcheck_ok_goo.first =                            \
+           ::absl::log_internal::AsStatus(val),                           \
+       absl_log_internal_qcheck_ok_goo.second =                           \
+           ABSL_PREDICT_TRUE(absl_log_internal_qcheck_ok_goo.first->ok()) \
+               ? nullptr                                                  \
+               : ::absl::status_internal::MakeCheckFailString(            \
+                     absl_log_internal_qcheck_ok_goo.first,               \
+                     ABSL_LOG_INTERNAL_STRIP_STRING_LITERAL(val_text      \
+                                                            " is OK")),   \
+       !ABSL_PREDICT_TRUE(absl_log_internal_qcheck_ok_goo.first->ok());)  \
+    ABSL_LOG_INTERNAL_CONDITION_QFATAL(STATELESS, true)                   \
+  ABSL_LOG_INTERNAL_QCHECK(*absl_log_internal_qcheck_ok_goo.second)       \
       .InternalStream()
 
 namespace absl {
@@ -178,8 +167,9 @@ template <typename T>
 class StatusOr;
 
 namespace status_internal {
-ABSL_ATTRIBUTE_PURE_FUNCTION const char* absl_nonnull MakeCheckFailString(
-    const absl::Status* absl_nonnull status, const char* absl_nonnull prefix);
+ABSL_ATTRIBUTE_PURE_FUNCTION absl::Nonnull<std::string*> MakeCheckFailString(
+    absl::Nonnull<const absl::Status*> status,
+    absl::Nonnull<const char*> prefix);
 }  // namespace status_internal
 
 namespace log_internal {
@@ -187,11 +177,9 @@ namespace log_internal {
 // Convert a Status or a StatusOr to its underlying status value.
 //
 // (This implementation does not require a dep on absl::Status to work.)
-inline const absl::Status* absl_nonnull AsStatus(const absl::Status& s) {
-  return &s;
-}
+inline const absl::Status* AsStatus(const absl::Status& s) { return &s; }
 template <typename T>
-const absl::Status* absl_nonnull AsStatus(const absl::StatusOr<T>& s) {
+const absl::Status* AsStatus(const absl::StatusOr<T>& s) {
   return &s.status();
 }
 
@@ -200,14 +188,14 @@ const absl::Status* absl_nonnull AsStatus(const absl::StatusOr<T>& s) {
 class CheckOpMessageBuilder final {
  public:
   // Inserts `exprtext` and ` (` to the stream.
-  explicit CheckOpMessageBuilder(const char* absl_nonnull exprtext);
+  explicit CheckOpMessageBuilder(const char* exprtext);
   ~CheckOpMessageBuilder() = default;
   // For inserting the first variable.
   std::ostream& ForVar1() { return stream_; }
   // For inserting the second variable (adds an intermediate ` vs. `).
   std::ostream& ForVar2();
   // Get the result (inserts the closing `)`).
-  const char* absl_nonnull NewString();
+  std::string* NewString();
 
  private:
   std::ostringstream stream_;
@@ -224,7 +212,7 @@ inline void MakeCheckOpValueString(std::ostream& os, const T& v) {
 void MakeCheckOpValueString(std::ostream& os, char v);
 void MakeCheckOpValueString(std::ostream& os, signed char v);
 void MakeCheckOpValueString(std::ostream& os, unsigned char v);
-void MakeCheckOpValueString(std::ostream& os, const void* absl_nullable p);
+void MakeCheckOpValueString(std::ostream& os, const void* p);
 
 namespace detect_specialization {
 
@@ -266,9 +254,8 @@ float operator<<(std::ostream&, float value);
 double operator<<(std::ostream&, double value);
 long double operator<<(std::ostream&, long double value);
 bool operator<<(std::ostream&, bool value);
-const void* absl_nullable operator<<(std::ostream&,
-                                     const void* absl_nullable value);
-const void* absl_nullable operator<<(std::ostream&, std::nullptr_t);
+const void* operator<<(std::ostream&, const void* value);
+const void* operator<<(std::ostream&, std::nullptr_t);
 
 // These `char` overloads are specified like this in the standard, so we have to
 // write them exactly the same to ensure the call is ambiguous.
@@ -282,14 +269,13 @@ signed char operator<<(std::basic_ostream<char, Traits>&, signed char);
 template <typename Traits>
 unsigned char operator<<(std::basic_ostream<char, Traits>&, unsigned char);
 template <typename Traits>
-const char* absl_nonnull operator<<(std::basic_ostream<char, Traits>&,
-                                    const char* absl_nonnull);
+const char* operator<<(std::basic_ostream<char, Traits>&, const char*);
 template <typename Traits>
-const signed char* absl_nonnull operator<<(std::basic_ostream<char, Traits>&,
-                                           const signed char* absl_nonnull);
+const signed char* operator<<(std::basic_ostream<char, Traits>&,
+                              const signed char*);
 template <typename Traits>
-const unsigned char* absl_nonnull operator<<(std::basic_ostream<char, Traits>&,
-                                             const unsigned char* absl_nonnull);
+const unsigned char* operator<<(std::basic_ostream<char, Traits>&,
+                                const unsigned char*);
 
 // This overload triggers when the call is not ambiguous.
 // It means that T is being printed with some overload not on this list.
@@ -314,8 +300,7 @@ class StringifySink {
 
   void Append(absl::string_view text);
   void Append(size_t length, char ch);
-  friend void AbslFormatFlush(StringifySink* absl_nonnull sink,
-                              absl::string_view text);
+  friend void AbslFormatFlush(StringifySink* sink, absl::string_view text);
 
  private:
   std::ostream& os_;
@@ -353,12 +338,11 @@ using CheckOpStreamType = decltype(detect_specialization::Detect<T>(0));
 
 // Build the error message string.  Specify no inlining for code size.
 template <typename T1, typename T2>
-ABSL_ATTRIBUTE_RETURNS_NONNULL const char* absl_nonnull MakeCheckOpString(
-    T1 v1, T2 v2, const char* absl_nonnull exprtext) ABSL_ATTRIBUTE_NOINLINE;
+ABSL_ATTRIBUTE_RETURNS_NONNULL std::string* MakeCheckOpString(
+    T1 v1, T2 v2, const char* exprtext) ABSL_ATTRIBUTE_NOINLINE;
 
 template <typename T1, typename T2>
-const char* absl_nonnull MakeCheckOpString(T1 v1, T2 v2,
-                                           const char* absl_nonnull exprtext) {
+std::string* MakeCheckOpString(T1 v1, T2 v2, const char* exprtext) {
   CheckOpMessageBuilder comb(exprtext);
   MakeCheckOpValueString(comb.ForVar1(), v1);
   MakeCheckOpValueString(comb.ForVar2(), v2);
@@ -368,8 +352,7 @@ const char* absl_nonnull MakeCheckOpString(T1 v1, T2 v2,
 // Add a few commonly used instantiations as extern to reduce size of objects
 // files.
 #define ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(x) \
-  extern template const char* absl_nonnull MakeCheckOpString(   \
-      x, x, const char* absl_nonnull)
+  extern template std::string* MakeCheckOpString(x, x, const char*)
 ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(bool);
 ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(int64_t);
 ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(uint64_t);
@@ -379,12 +362,10 @@ ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(char);
 ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(unsigned char);
 ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const std::string&);
 ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const absl::string_view&);
-ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const char* absl_nonnull);
-ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(
-    const signed char* absl_nonnull);
-ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(
-    const unsigned char* absl_nonnull);
-ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const void* absl_nonnull);
+ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const char*);
+ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const signed char*);
+ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const unsigned char*);
+ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const void*);
 #undef ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN
 
 // `ABSL_LOG_INTERNAL_CHECK_OP_IMPL_RESULT` skips formatting the Check_OP result
@@ -395,7 +376,7 @@ ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const void* absl_nonnull);
   ((::absl::LogSeverity::kFatal >=                                       \
     static_cast<::absl::LogSeverity>(ABSL_MIN_LOG_LEVEL))                \
        ? MakeCheckOpString<U1, U2>(v1, v2, exprtext)                     \
-       : "")
+       : new std::string())
 #else
 #define ABSL_LOG_INTERNAL_CHECK_OP_IMPL_RESULT(U1, U2, v1, v2, exprtext) \
   MakeCheckOpString<U1, U2>(v1, v2, exprtext)
@@ -407,8 +388,8 @@ ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const void* absl_nonnull);
 // type.
 #define ABSL_LOG_INTERNAL_CHECK_OP_IMPL(name, op)                          \
   template <typename T1, typename T2>                                      \
-  inline constexpr const char* absl_nullable name##Impl(                   \
-      const T1& v1, const T2& v2, const char* absl_nonnull exprtext) {     \
+  inline constexpr ::std::string* name##Impl(const T1& v1, const T2& v2,   \
+                                             const char* exprtext) {       \
     using U1 = CheckOpStreamType<T1>;                                      \
     using U2 = CheckOpStreamType<T2>;                                      \
     return ABSL_PREDICT_TRUE(v1 op v2)                                     \
@@ -416,8 +397,8 @@ ABSL_LOG_INTERNAL_DEFINE_MAKE_CHECK_OP_STRING_EXTERN(const void* absl_nonnull);
                : ABSL_LOG_INTERNAL_CHECK_OP_IMPL_RESULT(U1, U2, U1(v1),    \
                                                         U2(v2), exprtext); \
   }                                                                        \
-  inline constexpr const char* absl_nullable name##Impl(                   \
-      int v1, int v2, const char* absl_nonnull exprtext) {                 \
+  inline constexpr ::std::string* name##Impl(int v1, int v2,               \
+                                             const char* exprtext) {       \
     return name##Impl<int, int>(v1, v2, exprtext);                         \
   }
 
@@ -430,18 +411,14 @@ ABSL_LOG_INTERNAL_CHECK_OP_IMPL(Check_GT, >)
 #undef ABSL_LOG_INTERNAL_CHECK_OP_IMPL_RESULT
 #undef ABSL_LOG_INTERNAL_CHECK_OP_IMPL
 
-const char* absl_nullable CheckstrcmptrueImpl(
-    const char* absl_nullable s1, const char* absl_nullable s2,
-    const char* absl_nonnull exprtext);
-const char* absl_nullable CheckstrcmpfalseImpl(
-    const char* absl_nullable s1, const char* absl_nullable s2,
-    const char* absl_nonnull exprtext);
-const char* absl_nullable CheckstrcasecmptrueImpl(
-    const char* absl_nullable s1, const char* absl_nullable s2,
-    const char* absl_nonnull exprtext);
-const char* absl_nullable CheckstrcasecmpfalseImpl(
-    const char* absl_nullable s1, const char* absl_nullable s2,
-    const char* absl_nonnull exprtext);
+std::string* CheckstrcmptrueImpl(const char* s1, const char* s2,
+                                 const char* exprtext);
+std::string* CheckstrcmpfalseImpl(const char* s1, const char* s2,
+                                  const char* exprtext);
+std::string* CheckstrcasecmptrueImpl(const char* s1, const char* s2,
+                                     const char* exprtext);
+std::string* CheckstrcasecmpfalseImpl(const char* s1, const char* s2,
+                                      const char* exprtext);
 
 // `CHECK_EQ` and friends want to pass their arguments by reference, however
 // this winds up exposing lots of cases where people have defined and
@@ -449,8 +426,6 @@ const char* absl_nullable CheckstrcasecmpfalseImpl(
 // file), meaning they are not referenceable.  This function avoids that problem
 // for integers (the most common cases) by overloading for every primitive
 // integer type, even the ones we discourage, and returning them by value.
-// NOLINTBEGIN(runtime/int)
-// NOLINTBEGIN(google-runtime-int)
 template <typename T>
 inline constexpr const T& GetReferenceableValue(const T& t) {
   return t;
@@ -460,25 +435,27 @@ inline constexpr unsigned char GetReferenceableValue(unsigned char t) {
   return t;
 }
 inline constexpr signed char GetReferenceableValue(signed char t) { return t; }
-inline constexpr short GetReferenceableValue(short t) { return t; }
-inline constexpr unsigned short GetReferenceableValue(unsigned short t) {
+inline constexpr short GetReferenceableValue(short t) { return t; }  // NOLINT
+inline constexpr unsigned short GetReferenceableValue(               // NOLINT
+    unsigned short t) {                                              // NOLINT
   return t;
 }
 inline constexpr int GetReferenceableValue(int t) { return t; }
 inline constexpr unsigned int GetReferenceableValue(unsigned int t) {
   return t;
 }
-inline constexpr long GetReferenceableValue(long t) { return t; }
-inline constexpr unsigned long GetReferenceableValue(unsigned long t) {
+inline constexpr long GetReferenceableValue(long t) { return t; }  // NOLINT
+inline constexpr unsigned long GetReferenceableValue(              // NOLINT
+    unsigned long t) {                                             // NOLINT
   return t;
 }
-inline constexpr long long GetReferenceableValue(long long t) { return t; }
-inline constexpr unsigned long long GetReferenceableValue(
-    unsigned long long t) {
+inline constexpr long long GetReferenceableValue(long long t) {  // NOLINT
   return t;
 }
-// NOLINTEND(google-runtime-int)
-// NOLINTEND(runtime/int)
+inline constexpr unsigned long long GetReferenceableValue(  // NOLINT
+    unsigned long long t) {                                 // NOLINT
+  return t;
+}
 
 }  // namespace log_internal
 ABSL_NAMESPACE_END

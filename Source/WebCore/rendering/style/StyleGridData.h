@@ -29,6 +29,9 @@
 #include "GridTrackSize.h"
 #include "RenderStyleConstants.h"
 #include "StyleContentAlignmentData.h"
+#include "StyleGridNamedLinesMap.h"
+#include "StyleGridOrderedNamedLinesMap.h"
+#include "StyleGridTemplateAreas.h"
 #include <wtf/FixedVector.h>
 #include <wtf/Ref.h>
 #include <wtf/RefCounted.h>
@@ -37,16 +40,6 @@
 #include <wtf/text/WTFString.h>
 
 namespace WebCore {
-
-struct NamedGridLinesMap {
-    HashMap<String, Vector<unsigned>> map;
-
-    friend bool operator==(const NamedGridLinesMap&, const NamedGridLinesMap&) = default;
-};
-
-struct OrderedNamedGridLinesMap {
-    HashMap<unsigned, Vector<String>, IntHash<unsigned>, WTF::UnsignedWithZeroKeyHashTraits<unsigned>> map;
-};
 
 typedef Variant<GridTrackSize, Vector<String>> RepeatEntry;
 typedef Vector<RepeatEntry> RepeatTrackList;
@@ -82,7 +75,6 @@ inline WTF::TextStream& operator<<(WTF::TextStream& stream, const GridTrackList&
 
 WTF::TextStream& operator<<(WTF::TextStream&, const RepeatEntry&);
 WTF::TextStream& operator<<(WTF::TextStream&, const GridTrackEntry&);
-WTF::TextStream& operator<<(WTF::TextStream&, const NamedGridLinesMap&);
 
 DECLARE_ALLOCATOR_WITH_HEAP_IDENTIFIER(StyleGridData);
 class StyleGridData : public RefCounted<StyleGridData> {
@@ -103,16 +95,16 @@ public:
     const Vector<GridTrackSize>& gridColumnTrackSizes() const { return m_gridColumnTrackSizes; }
     const Vector<GridTrackSize>& gridRowTrackSizes() const { return m_gridRowTrackSizes; }
 
-    const NamedGridLinesMap& namedGridColumnLines() const { return m_namedGridColumnLines; };
-    const NamedGridLinesMap& namedGridRowLines() const { return m_namedGridRowLines; };
+    const Style::GridNamedLinesMap& namedGridColumnLines() const { return m_namedGridColumnLines; };
+    const Style::GridNamedLinesMap& namedGridRowLines() const { return m_namedGridRowLines; };
 
-    const OrderedNamedGridLinesMap& orderedNamedGridColumnLines() const { return m_orderedNamedGridColumnLines; }
-    const OrderedNamedGridLinesMap& orderedNamedGridRowLines() const { return m_orderedNamedGridRowLines; }
+    const Style::GridOrderedNamedLinesMap& orderedNamedGridColumnLines() const { return m_orderedNamedGridColumnLines; }
+    const Style::GridOrderedNamedLinesMap& orderedNamedGridRowLines() const { return m_orderedNamedGridRowLines; }
 
-    const NamedGridLinesMap& autoRepeatNamedGridColumnLines() const { return m_autoRepeatNamedGridColumnLines; }
-    const NamedGridLinesMap& autoRepeatNamedGridRowLines() const { return m_autoRepeatNamedGridRowLines; }
-    const OrderedNamedGridLinesMap& autoRepeatOrderedNamedGridColumnLines() const { return m_autoRepeatOrderedNamedGridColumnLines; }
-    const OrderedNamedGridLinesMap& autoRepeatOrderedNamedGridRowLines() const { return m_autoRepeatOrderedNamedGridRowLines; }
+    const Style::GridNamedLinesMap& autoRepeatNamedGridColumnLines() const { return m_autoRepeatNamedGridColumnLines; }
+    const Style::GridNamedLinesMap& autoRepeatNamedGridRowLines() const { return m_autoRepeatNamedGridRowLines; }
+    const Style::GridOrderedNamedLinesMap& autoRepeatOrderedNamedGridColumnLines() const { return m_autoRepeatOrderedNamedGridColumnLines; }
+    const Style::GridOrderedNamedLinesMap& autoRepeatOrderedNamedGridRowLines() const { return m_autoRepeatOrderedNamedGridRowLines; }
 
     const Vector<GridTrackSize>& gridAutoRepeatColumns() const { return m_gridAutoRepeatColumns; }
     const Vector<GridTrackSize>& gridAutoRepeatRows() const { return m_gridAutoRepeatRows; }
@@ -132,22 +124,15 @@ public:
     const GridTrackList& columns() const { return m_columns; }
     const GridTrackList& rows() const { return m_rows; }
 
-    NamedGridLinesMap implicitNamedGridColumnLines;
-    NamedGridLinesMap implicitNamedGridRowLines;
-
     unsigned gridAutoFlow : GridAutoFlowBits;
 
     Vector<GridTrackSize> gridAutoRows;
     Vector<GridTrackSize> gridAutoColumns;
 
-    NamedGridAreaMap namedGridArea;
-    // Because namedGridArea doesn't store the unnamed grid areas, we need to keep track
-    // of the explicit grid size defined by both named and unnamed grid areas.
-    unsigned namedGridAreaRowCount;
-    unsigned namedGridAreaColumnCount;
+    Style::GridTemplateAreas gridTemplateAreas;
 
 private:
-    void computeCachedTrackData(const GridTrackList&, Vector<GridTrackSize>& sizes, NamedGridLinesMap& namedLines, OrderedNamedGridLinesMap& orderedNamedLines, Vector<GridTrackSize>& autoRepeatSizes, NamedGridLinesMap& autoRepeatNamedLines, OrderedNamedGridLinesMap& autoRepeatOrderedNamedLines, unsigned& autoRepeatInsertionPoint, AutoRepeatType&, bool& subgrid, bool& masonry);
+    void computeCachedTrackData(const GridTrackList&, Vector<GridTrackSize>& sizes, Style::GridNamedLinesMap&, Style::GridOrderedNamedLinesMap&, Vector<GridTrackSize>& autoRepeatSizes, Style::GridNamedLinesMap& autoRepeatNamedLines, Style::GridOrderedNamedLinesMap& autoRepeatOrderedNamedLines, unsigned& autoRepeatInsertionPoint, AutoRepeatType&, bool& subgrid, bool& masonry);
 
     GridTrackList m_columns;
     GridTrackList m_rows;
@@ -156,16 +141,15 @@ private:
     Vector<GridTrackSize> m_gridColumnTrackSizes;
     Vector<GridTrackSize> m_gridRowTrackSizes;
 
-    NamedGridLinesMap m_namedGridColumnLines;
-    NamedGridLinesMap m_namedGridRowLines;
+    Style::GridNamedLinesMap m_namedGridColumnLines;
+    Style::GridNamedLinesMap m_namedGridRowLines;
+    Style::GridOrderedNamedLinesMap m_orderedNamedGridColumnLines;
+    Style::GridOrderedNamedLinesMap m_orderedNamedGridRowLines;
 
-    OrderedNamedGridLinesMap m_orderedNamedGridColumnLines;
-    OrderedNamedGridLinesMap m_orderedNamedGridRowLines;
-
-    NamedGridLinesMap m_autoRepeatNamedGridColumnLines;
-    NamedGridLinesMap m_autoRepeatNamedGridRowLines;
-    OrderedNamedGridLinesMap m_autoRepeatOrderedNamedGridColumnLines;
-    OrderedNamedGridLinesMap m_autoRepeatOrderedNamedGridRowLines;
+    Style::GridNamedLinesMap m_autoRepeatNamedGridColumnLines;
+    Style::GridNamedLinesMap m_autoRepeatNamedGridRowLines;
+    Style::GridOrderedNamedLinesMap m_autoRepeatOrderedNamedGridColumnLines;
+    Style::GridOrderedNamedLinesMap m_autoRepeatOrderedNamedGridRowLines;
 
     Vector<GridTrackSize> m_gridAutoRepeatColumns;
     Vector<GridTrackSize> m_gridAutoRepeatRows;

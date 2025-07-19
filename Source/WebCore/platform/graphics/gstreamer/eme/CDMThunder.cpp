@@ -501,7 +501,11 @@ void CDMInstanceSessionThunder::requestLicense(LicenseType licenseType, KeyGroup
 
     // FIXME: UUID or system ID?
     auto instance = cdmInstanceThunder();
-    ASSERT(instance);
+    if (!instance) {
+        GST_WARNING("no instance, bailing out");
+        callback(WTFMove(initDataSharedBuffer), { }, false, Failed);
+        return;
+    }
     m_initData = InitData(instance->keySystem(), WTFMove(initDataSharedBuffer));
 
     GST_TRACE("Going to request a new session id, init data size %zu", m_initData.payload()->size());

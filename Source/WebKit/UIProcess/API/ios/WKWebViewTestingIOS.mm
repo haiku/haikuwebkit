@@ -335,6 +335,25 @@ static void dumpUIView(TextStream& ts, UIView *view)
     return _page->scrollbarStateForScrollingNodeID(scrollingNodeID, isVertical).createNSString().autorelease();
 }
 
+- (UIView *)_colorExtensionViewForTesting:(UIRectEdge)edge
+{
+#if ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    switch (edge) {
+    case UIRectEdgeTop:
+        return _fixedColorExtensionViews.at(WebCore::BoxSide::Top).get();
+    case UIRectEdgeLeft:
+        return _fixedColorExtensionViews.at(WebCore::BoxSide::Left).get();
+    case UIRectEdgeBottom:
+        return _fixedColorExtensionViews.at(WebCore::BoxSide::Bottom).get();
+    case UIRectEdgeRight:
+        return _fixedColorExtensionViews.at(WebCore::BoxSide::Right).get();
+    default:
+        break;
+    }
+#endif // ENABLE(CONTENT_INSET_BACKGROUND_FILL)
+    return nil;
+}
+
 - (NSNumber *)_stableStateOverride
 {
     // For subclasses to override.

@@ -25,8 +25,7 @@
 #include "config.h"
 #include "StylePerspective.h"
 
-#include "StyleBuilderConverter.h"
-#include "StyleBuilderState.h"
+#include "StyleBuilderChecking.h"
 #include "StylePrimitiveNumericTypes+Blending.h"
 
 namespace WebCore {
@@ -36,7 +35,7 @@ namespace Style {
 
 auto CSSValueConversion<Perspective>::operator()(BuilderState& state, const CSSValue& value) -> Perspective
 {
-    RefPtr primitiveValue = BuilderConverter::requiredDowncast<CSSPrimitiveValue>(state, value);
+    RefPtr primitiveValue = requiredDowncast<CSSPrimitiveValue>(state, value);
     if (!primitiveValue)
         return CSS::Keyword::None { };
 

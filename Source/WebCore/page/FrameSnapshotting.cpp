@@ -111,6 +111,8 @@ RefPtr<ImageBuffer> snapshotFrameRectWithClip(LocalFrame& frame, const IntRect& 
         paintBehavior.add(PaintBehavior::ExcludeText);
     if (options.flags.contains(SnapshotFlags::FixedAndStickyLayersOnly))
         paintBehavior.add(PaintBehavior::FixedAndStickyLayersOnly);
+    if (options.flags.contains(SnapshotFlags::DraggableElement))
+        paintBehavior.add(PaintBehavior::DraggableSnapshot);
 
     // Other paint behaviors are set by paintContentsForSnapshot.
     frame.view()->setPaintBehavior(paintBehavior);
