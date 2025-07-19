@@ -55,7 +55,6 @@ LIST(APPEND WebKitLegacy_SOURCES
     haiku/WebCoreSupport/FrameNetworkingContextHaiku.cpp
     haiku/WebCoreSupport/FullscreenVideoController.cpp
     haiku/WebCoreSupport/IconDatabase.cpp
-    haiku/WebCoreSupport/InspectorClientHaiku.cpp
     haiku/WebCoreSupport/LegacyHistoryItemClient.cpp
     haiku/WebCoreSupport/NotificationClientHaiku.cpp
     haiku/WebCoreSupport/PlatformStrategiesHaiku.cpp
@@ -95,6 +94,9 @@ LIST(APPEND WebKitLegacy_SOURCES
     WebCoreSupport/WebSocketChannel.cpp
 )
 
+# FIXME there is something not working right: WebCore should already depend on PAL and WTF, but
+# it doesn't depend on WTF currently. So we have to add both explicitly here, in the right order
+# since they are static libraries.
 LIST(APPEND WebKitLegacy_LIBRARIES
     ${LIBXML2_LIBRARIES}
     ${SQLITE_LIBRARIES}
@@ -102,7 +104,7 @@ LIST(APPEND WebKitLegacy_LIBRARIES
     ${JPEG_LIBRARY}
     ${CMAKE_DL_LIBS}
     be bnetapi GL shared translation tracker
-    WebCore WTF
+    WebCore PAL WTF
 )
 
 INSTALL(FILES
