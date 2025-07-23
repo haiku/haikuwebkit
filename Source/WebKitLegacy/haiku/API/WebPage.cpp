@@ -38,6 +38,7 @@
 #include "EditorClientHaiku.h"
 #include "FrameLoaderClientHaiku.h"
 #include "IconDatabase.h"
+#include "InspectorClientHaiku.h"
 #include "LegacyHistoryItemClient.h"
 #include "NotificationClientHaiku.h"
 #include "PageStorageSessionProvider.h"
@@ -314,6 +315,7 @@ BWebPage::BWebPage(BWebView* webView, BPrivate::Network::BUrlContext* context)
 
     // alternativeText
     pageClients.dragClient = std::make_unique<DragClientHaiku>(webView);
+    pageClients.inspectorBackendClient = std::make_unique<InspectorClientHaiku>();
     pageClients.diagnosticLoggingClient = std::make_unique<WebKit::WebDiagnosticLoggingClient>();
     pageClients.applicationCacheStorage = &WebApplicationCache::storage();
     pageClients.databaseProvider = &WebDatabaseProvider::singleton();
