@@ -28,39 +28,26 @@
 #include <wtf/text/WTFString.h>
 #include "Language.h"
 
-/* Can't include these the normal way, because WTF header names collide. */
-#include <locale/Collator.h>
-#include <support/Locker.h>
-
-#include <Locale.h>
 #include <LocaleRoster.h>
-#include <stdio.h>
+#include <Message.h>
 
 
 namespace WTF {
 
-void setPlatformUserPreferredLanguagesChangedCallback(void (*)()) { }
-
-static String platformLanguage()
-{
-	static BString locale;
-	static bool initialized = false;
-	if (!initialized) {
-		initialized = true;
-		BLanguage language;
-		if (BLocale::Default()->GetLanguage(&language) == B_OK)
-			locale = language.ID();
-		else
-			locale = "c";
-		locale.ReplaceAll('_', '-');
-	}
-	return String::fromUTF8(locale.String());
-}
-
 Vector<String> platformUserPreferredLanguages(WTF::ShouldMinimizeLanguages)
 {
     Vector<String> userPreferredLanguages;
-    userPreferredLanguages.append(platformLanguage());
+    BMessage languages;
+    if (BLocaleRoster::Default()->GetPreferredLanguages(&languages) == B_OK) {
+        BString language;
+        int32 i = 0;
+        while (languages.FindString("language", i++, &language) == B_OK) {
+            language.ReplaceAll('_', '-');
+            userPreferredLanguages.append(String::fromUTF8(language.String()));
+        }
+    }
+    if (userPreferredLanguages.isEmpty())
+        userPreferredLanguages.append("en"_s);
     return userPreferredLanguages;
 }
 
